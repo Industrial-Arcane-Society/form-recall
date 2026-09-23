@@ -1,0 +1,1110 @@
+[
+ {
+  "id": "A01",
+  "class": "基础体",
+  "err": "",
+  "bbox": [
+   128.0,
+   86.0,
+   14.0
+  ],
+  "total": 1.0,
+  "s_bbox": 1.0,
+  "s_holes": 1.0,
+  "s_pockets": 1.0,
+  "got_holes": [],
+  "got_pockets": 0,
+  "sec": 0.0
+ },
+ {
+  "id": "A02",
+  "class": "基础体",
+  "err": "",
+  "bbox": [
+   96.0,
+   64.0,
+   18.0
+  ],
+  "total": 1.0,
+  "s_bbox": 1.0,
+  "s_holes": 1.0,
+  "s_pockets": 1.0,
+  "got_holes": [],
+  "got_pockets": 0,
+  "sec": 0.0
+ },
+ {
+  "id": "A03",
+  "class": "基础体",
+  "err": "",
+  "bbox": [
+   48.0,
+   48.0,
+   48.0
+  ],
+  "total": 1.0,
+  "s_bbox": 1.0,
+  "s_holes": 1.0,
+  "s_pockets": 1.0,
+  "got_holes": [],
+  "got_pockets": 0,
+  "sec": 0.0
+ },
+ {
+  "id": "A04",
+  "class": "基础体",
+  "err": "",
+  "bbox": [
+   58.0,
+   58.0,
+   96.0
+  ],
+  "total": 1.0,
+  "s_bbox": 1.0,
+  "s_holes": 1.0,
+  "s_pockets": 1.0,
+  "got_holes": [],
+  "got_pockets": 0,
+  "sec": 0.0
+ },
+ {
+  "id": "A05",
+  "class": "基础体",
+  "err": "",
+  "bbox": [
+   50.0,
+   60.0,
+   84.0
+  ],
+  "total": 0.97,
+  "s_bbox": 0.9393939393939394,
+  "s_holes": 1.0,
+  "s_pockets": 1.0,
+  "got_holes": [],
+  "got_pockets": 0,
+  "sec": 0.0
+ },
+ {
+  "id": "A06",
+  "class": "基础体",
+  "err": "",
+  "bbox": [
+   72.0,
+   72.0,
+   52.0
+  ],
+  "total": 1.0,
+  "s_bbox": 1.0,
+  "s_holes": 1.0,
+  "s_pockets": 1.0,
+  "got_holes": [],
+  "got_pockets": 0,
+  "sec": 0.0
+ },
+ {
+  "id": "A07",
+  "class": "基础体",
+  "err": "",
+  "bbox": [
+   46.0,
+   46.0,
+   68.0
+  ],
+  "total": 1.0,
+  "s_bbox": 1.0,
+  "s_holes": 1.0,
+  "s_pockets": 1.0,
+  "got_holes": [],
+  "got_pockets": 0,
+  "sec": 0.0
+ },
+ {
+  "id": "A08",
+  "class": "基础体",
+  "err": "",
+  "bbox": [
+   30.0,
+   30.0,
+   120.0
+  ],
+  "total": 0.97,
+  "s_bbox": 0.9407894736842106,
+  "s_holes": 1.0,
+  "s_pockets": 1.0,
+  "got_holes": [],
+  "got_pockets": 0,
+  "sec": 0.1
+ },
+ {
+  "id": "A09",
+  "class": "基础体",
+  "err": "",
+  "bbox": [
+   62.0,
+   62.0,
+   62.0
+  ],
+  "total": 1.0,
+  "s_bbox": 1.0,
+  "s_holes": 1.0,
+  "s_pockets": 1.0,
+  "got_holes": [],
+  "got_pockets": 0,
+  "sec": 0.0
+ },
+ {
+  "id": "A10",
+  "class": "基础体",
+  "err": "",
+  "bbox": [
+   85.0,
+   85.0,
+   49.07
+  ],
+  "total": 0.961,
+  "s_bbox": 0.9222395833333333,
+  "s_holes": 1.0,
+  "s_pockets": 1.0,
+  "got_holes": [
+   {
+    "dia": 20.0,
+    "through": true,
+    "count": 1
+   }
+  ],
+  "got_pockets": 0,
+  "sec": 0.0
+ },
+ {
+  "id": "A11",
+  "class": "基础体",
+  "err": "",
+  "bbox": [
+   210.0,
+   140.0,
+   22.0
+  ],
+  "total": 1.0,
+  "s_bbox": 1.0,
+  "s_holes": 1.0,
+  "s_pockets": 1.0,
+  "got_holes": [],
+  "got_pockets": 1,
+  "sec": 0.0
+ },
+ {
+  "id": "A12",
+  "class": "基础体",
+  "err": "",
+  "bbox": [
+   76.0,
+   76.0,
+   118.0
+  ],
+  "total": 1.0,
+  "s_bbox": 1.0,
+  "s_holes": 1.0,
+  "s_pockets": 1.0,
+  "got_holes": [
+   {
+    "dia": 30.0,
+    "through": true,
+    "count": 1
+   }
+  ],
+  "got_pockets": 0,
+  "sec": 0.0
+ },
+ {
+  "id": "A13",
+  "class": "基础体",
+  "err": "",
+  "bbox": [
+   30.0,
+   30.0,
+   120.0
+  ],
+  "total": 0.9,
+  "s_bbox": 0.8007518796992481,
+  "s_holes": 1.0,
+  "s_pockets": 1.0,
+  "got_holes": [
+   {
+    "dia": 12.0,
+    "through": true,
+    "count": 1
+   }
+  ],
+  "got_pockets": 0,
+  "sec": 0.1
+ },
+ {
+  "id": "A14",
+  "class": "板类",
+  "err": "",
+  "bbox": [
+   200.0,
+   150.0,
+   12.0
+  ],
+  "total": 0.76,
+  "s_bbox": 1.0,
+  "s_holes": 0.4,
+  "s_pockets": 1.0,
+  "got_holes": [
+   {
+    "dia": 8.0,
+    "through": true,
+    "count": 1
+   }
+  ],
+  "got_pockets": 0,
+  "sec": 0.0
+ },
+ {
+  "id": "A15",
+  "class": "板类",
+  "err": "",
+  "bbox": [
+   165.0,
+   120.0,
+   10.0
+  ],
+  "total": 0.829,
+  "s_bbox": 1.0,
+  "s_holes": 0.5714285714285715,
+  "s_pockets": 1.0,
+  "got_holes": [
+   {
+    "dia": 6.5,
+    "through": true,
+    "count": 1
+   },
+   {
+    "dia": 25.0,
+    "through": true,
+    "count": 1
+   }
+  ],
+  "got_pockets": 0,
+  "sec": 0.0
+ },
+ {
+  "id": "A16",
+  "class": "板类",
+  "err": "",
+  "bbox": [
+   240.0,
+   160.0,
+   14.0
+  ],
+  "total": 0.76,
+  "s_bbox": 1.0,
+  "s_holes": 0.4,
+  "s_pockets": 1.0,
+  "got_holes": [
+   {
+    "dia": 11.0,
+    "through": true,
+    "count": 4
+   }
+  ],
+  "got_pockets": 0,
+  "sec": 0.0
+ },
+ {
+  "id": "A17",
+  "class": "板类",
+  "err": "",
+  "bbox": [
+   6.6,
+   6.6,
+   6.0
+  ],
+  "total": 0.332,
+  "s_bbox": 0.2866666666666666,
+  "s_holes": 0.2222222222222222,
+  "s_pockets": 1.0,
+  "got_holes": [
+   {
+    "dia": 6.6,
+    "through": false,
+    "count": 1
+   }
+  ],
+  "got_pockets": 0,
+  "sec": 0.0
+ },
+ {
+  "id": "A18",
+  "class": "板类",
+  "err": "",
+  "bbox": [
+   210.0,
+   130.0,
+   12.0
+  ],
+  "total": 0.829,
+  "s_bbox": 1.0,
+  "s_holes": 0.5714285714285715,
+  "s_pockets": 1.0,
+  "got_holes": [
+   {
+    "dia": 40.0,
+    "through": true,
+    "count": 1
+   },
+   {
+    "dia": 8.0,
+    "through": true,
+    "count": 1
+   }
+  ],
+  "got_pockets": 0,
+  "sec": 0.0
+ },
+ {
+  "id": "A19",
+  "class": "板类",
+  "err": "",
+  "bbox": [
+   260.0,
+   180.0,
+   20.0
+  ],
+  "total": 0.76,
+  "s_bbox": 1.0,
+  "s_holes": 0.4,
+  "s_pockets": 1.0,
+  "got_holes": [
+   {
+    "dia": 10.0,
+    "through": true,
+    "count": 1
+   }
+  ],
+  "got_pockets": 1,
+  "sec": 0.0
+ },
+ {
+  "id": "A20",
+  "class": "板类",
+  "err": "",
+  "bbox": [
+   320.0,
+   210.0,
+   16.0
+  ],
+  "total": 0.71,
+  "s_bbox": 1.0,
+  "s_holes": 0.4,
+  "s_pockets": 0.5,
+  "got_holes": [
+   {
+    "dia": 8.5,
+    "through": true,
+    "count": 1
+   }
+  ],
+  "got_pockets": 1,
+  "sec": 0.0
+ },
+ {
+  "id": "A21",
+  "class": "板类",
+  "err": "",
+  "bbox": [
+   14.0,
+   14.0,
+   120.0
+  ],
+  "total": 0.235,
+  "s_bbox": 0.04148148148148149,
+  "s_holes": 0.2857142857142857,
+  "s_pockets": 1.0,
+  "got_holes": [
+   {
+    "dia": 14.0,
+    "through": true,
+    "count": 6
+   }
+  ],
+  "got_pockets": 1,
+  "sec": 0.0
+ },
+ {
+  "id": "A22",
+  "class": "板类",
+  "err": "",
+  "bbox": [
+   200.0,
+   150.0,
+   12.0
+  ],
+  "total": 0.829,
+  "s_bbox": 1.0,
+  "s_holes": 0.5714285714285715,
+  "s_pockets": 1.0,
+  "got_holes": [
+   {
+    "dia": 8.0,
+    "through": true,
+    "count": 1
+   },
+   {
+    "dia": 30.0,
+    "through": false,
+    "count": 1
+   }
+  ],
+  "got_pockets": 0,
+  "sec": 0.0
+ },
+ {
+  "id": "A23",
+  "class": "板类",
+  "err": "",
+  "bbox": [
+   180.0,
+   120.0,
+   15.0
+  ],
+  "total": 0.745,
+  "s_bbox": 1.0,
+  "s_holes": 0.3636363636363636,
+  "s_pockets": 1.0,
+  "got_holes": [
+   {
+    "dia": 9.0,
+    "through": false,
+    "count": 1
+   },
+   {
+    "dia": 45.0,
+    "through": true,
+    "count": 1
+   }
+  ],
+  "got_pockets": 0,
+  "sec": 0.0
+ },
+ {
+  "id": "A24",
+  "class": "板类",
+  "err": "",
+  "bbox": [
+   350.0,
+   240.0,
+   20.0
+  ],
+  "total": 0.76,
+  "s_bbox": 1.0,
+  "s_holes": 0.4,
+  "s_pockets": 1.0,
+  "got_holes": [
+   {
+    "dia": 12.0,
+    "through": true,
+    "count": 1
+   }
+  ],
+  "got_pockets": 0,
+  "sec": 0.0
+ },
+ {
+  "id": "A25",
+  "class": "板类",
+  "err": "",
+  "bbox": [
+   120.0,
+   80.0,
+   6.0
+  ],
+  "total": 0.76,
+  "s_bbox": 1.0,
+  "s_holes": 0.4,
+  "s_pockets": 1.0,
+  "got_holes": [
+   {
+    "dia": 4.5,
+    "through": true,
+    "count": 1
+   }
+  ],
+  "got_pockets": 0,
+  "sec": 0.0
+ },
+ {
+  "id": "A26",
+  "class": "板类",
+  "err": "",
+  "bbox": [
+   600.0,
+   400.0,
+   30.0
+  ],
+  "total": 0.66,
+  "s_bbox": 1.0,
+  "s_holes": 0.4,
+  "s_pockets": 0.0,
+  "got_holes": [
+   {
+    "dia": 18.0,
+    "through": true,
+    "count": 1
+   }
+  ],
+  "got_pockets": 0,
+  "sec": 0.0
+ },
+ {
+  "id": "A27",
+  "class": "盘类",
+  "err": "",
+  "bbox": [
+   165.0,
+   165.0,
+   18.0
+  ],
+  "total": 0.778,
+  "s_bbox": 1.0,
+  "s_holes": 0.4444444444444445,
+  "s_pockets": 1.0,
+  "got_holes": [
+   {
+    "dia": 62.0,
+    "through": true,
+    "count": 1
+   },
+   {
+    "dia": 11.0,
+    "through": true,
+    "count": 6
+   }
+  ],
+  "got_pockets": 0,
+  "sec": 0.3
+ },
+ {
+  "id": "A28",
+  "class": "盘类",
+  "err": "",
+  "bbox": [
+   40.0,
+   40.0,
+   120.0
+  ],
+  "total": 0.469,
+  "s_bbox": 0.2807017543859649,
+  "s_holes": 0.5714285714285715,
+  "s_pockets": 1.0,
+  "got_holes": [
+   {
+    "dia": 40.0,
+    "through": true,
+    "count": 1
+   },
+   {
+    "dia": 6.5,
+    "through": true,
+    "count": 4
+   }
+  ],
+  "got_pockets": 0,
+  "sec": 0.0
+ },
+ {
+  "id": "A29",
+  "class": "盘类",
+  "err": "没有从描述中识别出建模指令。",
+  "bbox": null,
+  "total": 0.1,
+  "s_bbox": 0.0,
+  "s_holes": 0.0,
+  "s_pockets": 1.0,
+  "got_holes": [],
+  "got_pockets": 0,
+  "sec": 0.0
+ },
+ {
+  "id": "A30",
+  "class": "盘类",
+  "err": "",
+  "bbox": [
+   210.0,
+   210.0,
+   20.0
+  ],
+  "total": 0.69,
+  "s_bbox": 0.888888888888889,
+  "s_holes": 0.3636363636363636,
+  "s_pockets": 1.0,
+  "got_holes": [
+   {
+    "dia": 80.0,
+    "through": true,
+    "count": 1
+   },
+   {
+    "dia": 14.0,
+    "through": true,
+    "count": 8
+   }
+  ],
+  "got_pockets": 0,
+  "sec": 0.6
+ },
+ {
+  "id": "A31",
+  "class": "盘类",
+  "err": "",
+  "bbox": [
+   64.0,
+   64.0,
+   120.0
+  ],
+  "total": 0.375,
+  "s_bbox": 0.14918414918414916,
+  "s_holes": 0.5,
+  "s_pockets": 1.0,
+  "got_holes": [
+   {
+    "dia": 64.0,
+    "through": true,
+    "count": 1
+   },
+   {
+    "dia": 14.0,
+    "through": true,
+    "count": 5
+   }
+  ],
+  "got_pockets": 0,
+  "sec": 0.0
+ },
+ {
+  "id": "A32",
+  "class": "盘类",
+  "err": "",
+  "bbox": [
+   140.0,
+   60.0,
+   16.0
+  ],
+  "total": 0.611,
+  "s_bbox": 0.8095238095238096,
+  "s_holes": 0.2666666666666667,
+  "s_pockets": 1.0,
+  "got_holes": [
+   {
+    "dia": 52.0,
+    "through": true,
+    "count": 1
+   },
+   {
+    "dia": 9.0,
+    "through": false,
+    "count": 6
+   }
+  ],
+  "got_pockets": 0,
+  "sec": 0.0
+ },
+ {
+  "id": "A33",
+  "class": "盘类",
+  "err": "",
+  "bbox": [
+   165.0,
+   165.0,
+   20.0
+  ],
+  "total": 0.778,
+  "s_bbox": 1.0,
+  "s_holes": 0.4444444444444445,
+  "s_pockets": 1.0,
+  "got_holes": [
+   {
+    "dia": 75.0,
+    "through": true,
+    "count": 1
+   },
+   {
+    "dia": 12.0,
+    "through": true,
+    "count": 6
+   }
+  ],
+  "got_pockets": 0,
+  "sec": 0.3
+ },
+ {
+  "id": "A34",
+  "class": "盘类",
+  "err": "",
+  "bbox": [
+   38.0,
+   38.0,
+   120.0
+  ],
+  "total": 0.433,
+  "s_bbox": 0.6666666666666666,
+  "s_holes": 0.0,
+  "s_pockets": 1.0,
+  "got_holes": [
+   {
+    "dia": 38.0,
+    "through": true,
+    "count": 1
+   }
+  ],
+  "got_pockets": 0,
+  "sec": 0.0
+ },
+ {
+  "id": "A35",
+  "class": "盘类",
+  "err": "",
+  "bbox": [
+   62.0,
+   62.0,
+   120.0
+  ],
+  "total": 0.501,
+  "s_bbox": 0.3444444444444444,
+  "s_holes": 0.5714285714285715,
+  "s_pockets": 1.0,
+  "got_holes": [
+   {
+    "dia": 62.0,
+    "through": true,
+    "count": 1
+   },
+   {
+    "dia": 8.0,
+    "through": true,
+    "count": 4
+   }
+  ],
+  "got_pockets": 0,
+  "sec": 0.0
+ },
+ {
+  "id": "A36",
+  "class": "盘类",
+  "err": "",
+  "bbox": [
+   250.0,
+   250.0,
+   20.0
+  ],
+  "total": 0.707,
+  "s_bbox": 1.0,
+  "s_holes": 0.2666666666666667,
+  "s_pockets": 1.0,
+  "got_holes": [
+   {
+    "dia": 110.0,
+    "through": true,
+    "count": 1
+   },
+   {
+    "dia": 11.0,
+    "through": true,
+    "count": 12
+   }
+  ],
+  "got_pockets": 0,
+  "sec": 1.1
+ },
+ {
+  "id": "A37",
+  "class": "盘类",
+  "err": "",
+  "bbox": [
+   6.0,
+   6.0,
+   120.0
+  ],
+  "total": 0.272,
+  "s_bbox": 0.07692307692307694,
+  "s_holes": 0.33333333333333337,
+  "s_pockets": 1.0,
+  "got_holes": [
+   {
+    "dia": 6.0,
+    "through": true,
+    "count": 4
+   }
+  ],
+  "got_pockets": 0,
+  "sec": 0.0
+ },
+ {
+  "id": "A38",
+  "class": "盘类",
+  "err": "",
+  "bbox": [
+   60.0,
+   60.0,
+   120.0
+  ],
+  "total": 0.389,
+  "s_bbox": 0.22222222222222224,
+  "s_holes": 0.4444444444444445,
+  "s_pockets": 1.0,
+  "got_holes": [
+   {
+    "dia": 60.0,
+    "through": true,
+    "count": 1
+   },
+   {
+    "dia": 10.0,
+    "through": true,
+    "count": 6
+   }
+  ],
+  "got_pockets": 0,
+  "sec": 0.0
+ },
+ {
+  "id": "A39",
+  "class": "管件/回转体",
+  "err": "",
+  "bbox": [
+   50.0,
+   50.0,
+   65.0
+  ],
+  "total": 1.0,
+  "s_bbox": 1.0,
+  "s_holes": 1.0,
+  "s_pockets": 1.0,
+  "got_holes": [
+   {
+    "dia": 38.0,
+    "through": true,
+    "count": 1
+   }
+  ],
+  "got_pockets": 0,
+  "sec": 0.0
+ },
+ {
+  "id": "A40",
+  "class": "管件/回转体",
+  "err": "",
+  "bbox": [
+   33.0,
+   33.0,
+   4.0
+  ],
+  "total": 0.448,
+  "s_bbox": 0.6969696969696969,
+  "s_holes": 0.0,
+  "s_pockets": 1.0,
+  "got_holes": [],
+  "got_pockets": 0,
+  "sec": 0.0
+ },
+ {
+  "id": "A41",
+  "class": "管件/回转体",
+  "err": "没有从描述中识别出建模指令。",
+  "bbox": null,
+  "total": 0.1,
+  "s_bbox": 0.0,
+  "s_holes": 0.0,
+  "s_pockets": 1.0,
+  "got_holes": [],
+  "got_pockets": 0,
+  "sec": 0.0
+ },
+ {
+  "id": "A42",
+  "class": "管件/回转体",
+  "err": "",
+  "bbox": [
+   30.0,
+   30.0,
+   120.0
+  ],
+  "total": 0.843,
+  "s_bbox": 0.6868686868686869,
+  "s_holes": 1.0,
+  "s_pockets": 1.0,
+  "got_holes": [
+   {
+    "dia": 14.0,
+    "through": true,
+    "count": 1
+   }
+  ],
+  "got_pockets": 0,
+  "sec": 0.2
+ },
+ {
+  "id": "A43",
+  "class": "管件/回转体",
+  "err": "",
+  "bbox": [
+   80.0,
+   80.0,
+   120.0
+  ],
+  "total": 0.544,
+  "s_bbox": 0.888888888888889,
+  "s_holes": 0.0,
+  "s_pockets": 1.0,
+  "got_holes": [
+   {
+    "dia": 63.0,
+    "through": true,
+    "count": 1
+   }
+  ],
+  "got_pockets": 0,
+  "sec": 0.0
+ },
+ {
+  "id": "A44",
+  "class": "管件/回转体",
+  "err": "",
+  "bbox": [
+   30.0,
+   30.0,
+   120.0
+  ],
+  "total": 0.775,
+  "s_bbox": 0.5495495495495496,
+  "s_holes": 1.0,
+  "s_pockets": 1.0,
+  "got_holes": [],
+  "got_pockets": 0,
+  "sec": 0.1
+ },
+ {
+  "id": "A45",
+  "class": "管件/回转体",
+  "err": "没有从描述中识别出建模指令。",
+  "bbox": null,
+  "total": 0.1,
+  "s_bbox": 0.0,
+  "s_holes": 0.0,
+  "s_pockets": 1.0,
+  "got_holes": [],
+  "got_pockets": 0,
+  "sec": 0.0
+ },
+ {
+  "id": "A46",
+  "class": "管件/回转体",
+  "err": "",
+  "bbox": [
+   68.0,
+   68.0,
+   96.0
+  ],
+  "total": 1.0,
+  "s_bbox": 1.0,
+  "s_holes": 1.0,
+  "s_pockets": 1.0,
+  "got_holes": [
+   {
+    "dia": 54.0,
+    "through": true,
+    "count": 1
+   }
+  ],
+  "got_pockets": 0,
+  "sec": 0.0
+ },
+ {
+  "id": "A47",
+  "class": "管件/回转体",
+  "err": "",
+  "bbox": [
+   100.0,
+   100.0,
+   120.0
+  ],
+  "total": 0.576,
+  "s_bbox": 0.9523809523809524,
+  "s_holes": 0.0,
+  "s_pockets": 1.0,
+  "got_holes": [
+   {
+    "dia": 76.0,
+    "through": true,
+    "count": 1
+   }
+  ],
+  "got_pockets": 0,
+  "sec": 0.0
+ },
+ {
+  "id": "A48",
+  "class": "管件/回转体",
+  "err": "",
+  "bbox": [
+   85.0,
+   85.0,
+   120.0
+  ],
+  "total": 0.489,
+  "s_bbox": 0.7777777777777778,
+  "s_holes": 0.0,
+  "s_pockets": 1.0,
+  "got_holes": [
+   {
+    "dia": 85.0,
+    "through": true,
+    "count": 1
+   }
+  ],
+  "got_pockets": 0,
+  "sec": 0.0
+ },
+ {
+  "id": "A49",
+  "class": "管件/回转体",
+  "err": "",
+  "bbox": [
+   84.0,
+   84.0,
+   13.0
+  ],
+  "total": 0.621,
+  "s_bbox": 0.6420289855072464,
+  "s_holes": 0.5,
+  "s_pockets": 1.0,
+  "got_holes": [
+   {
+    "dia": 84.0,
+    "through": false,
+    "count": 1
+   },
+   {
+    "dia": 6.0,
+    "through": true,
+    "count": 4
+   }
+  ],
+  "got_pockets": 0,
+  "sec": 0.1
+ },
+ {
+  "id": "A50",
+  "class": "管件/回转体",
+  "err": "没有从描述中识别出建模指令。",
+  "bbox": null,
+  "total": 0.5,
+  "s_bbox": 0.0,
+  "s_holes": 1.0,
+  "s_pockets": 1.0,
+  "got_holes": [],
+  "got_pockets": 0,
+  "sec": 0.0
+ }
+]

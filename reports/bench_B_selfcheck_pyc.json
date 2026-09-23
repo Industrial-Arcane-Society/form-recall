@@ -1,0 +1,1390 @@
+[
+ {
+  "id": "B01",
+  "total": 1.0,
+  "s_bbox": 1.0,
+  "s_holes": 1.0,
+  "s_pockets": 1.0,
+  "exp_bbox": [
+   160.0,
+   90.0,
+   24.0
+  ],
+  "got_bbox": [
+   160.0,
+   90.0,
+   24.0
+  ],
+  "exp_holes": [],
+  "got_holes": [],
+  "exp_pockets": 1,
+  "got_pockets": 1,
+  "err": "",
+  "sec": 0.0
+ },
+ {
+  "id": "B02",
+  "total": 0.778,
+  "s_bbox": 1.0,
+  "s_holes": 0.444,
+  "s_pockets": 1.0,
+  "exp_bbox": [
+   120.0,
+   120.0,
+   14.0
+  ],
+  "got_bbox": [
+   120.0,
+   120.0,
+   14.0
+  ],
+  "exp_holes": [
+   30.0,
+   8.0,
+   8.0,
+   8.0,
+   8.0,
+   8.0,
+   8.0
+  ],
+  "got_holes": [
+   30.0,
+   8.0
+  ],
+  "exp_pockets": 0,
+  "got_pockets": 0,
+  "err": "",
+  "sec": 0.7
+ },
+ {
+  "id": "B03",
+  "total": 0.76,
+  "s_bbox": 1.0,
+  "s_holes": 0.4,
+  "s_pockets": 1.0,
+  "exp_bbox": [
+   200.0,
+   120.0,
+   16.0
+  ],
+  "got_bbox": [
+   200.0,
+   120.0,
+   16.0
+  ],
+  "exp_holes": [
+   9.0,
+   9.0,
+   9.0,
+   9.0
+  ],
+  "got_holes": [
+   9.0
+  ],
+  "exp_pockets": 0,
+  "got_pockets": 0,
+  "err": "",
+  "sec": 0.0
+ },
+ {
+  "id": "B04",
+  "total": 0.4,
+  "s_bbox": 0.0,
+  "s_holes": 1.0,
+  "s_pockets": 0.0,
+  "exp_bbox": [
+   180.0,
+   110.0,
+   60.0
+  ],
+  "got_bbox": null,
+  "exp_holes": [],
+  "got_holes": [],
+  "exp_pockets": 1,
+  "got_pockets": 0,
+  "err": "没有从描述中识别出建模指令。",
+  "sec": 0.0
+ },
+ {
+  "id": "B05",
+  "total": 0.767,
+  "s_bbox": 1.0,
+  "s_holes": 0.667,
+  "s_pockets": 0.0,
+  "exp_bbox": [
+   85.0,
+   85.0,
+   70.0
+  ],
+  "got_bbox": [
+   85.0,
+   85.0,
+   70.0
+  ],
+  "exp_holes": [
+   50.0,
+   20.0
+  ],
+  "got_holes": [
+   20.0
+  ],
+  "exp_pockets": 0,
+  "got_pockets": 1,
+  "err": "",
+  "sec": 0.0
+ },
+ {
+  "id": "B06",
+  "total": 0.4,
+  "s_bbox": 0.0,
+  "s_holes": 1.0,
+  "s_pockets": 0.0,
+  "exp_bbox": [
+   150.0,
+   100.0,
+   40.0
+  ],
+  "got_bbox": null,
+  "exp_holes": [],
+  "got_holes": [],
+  "exp_pockets": 1,
+  "got_pockets": 0,
+  "err": "没有从描述中识别出建模指令。",
+  "sec": 0.0
+ },
+ {
+  "id": "B07",
+  "total": 0.678,
+  "s_bbox": 1.0,
+  "s_holes": 0.444,
+  "s_pockets": 0.0,
+  "exp_bbox": [
+   140.0,
+   140.0,
+   18.0
+  ],
+  "got_bbox": [
+   140.0,
+   140.0,
+   18.0
+  ],
+  "exp_holes": [
+   50.0,
+   11.0,
+   11.0,
+   11.0,
+   11.0
+  ],
+  "got_holes": [
+   18.0,
+   50.0,
+   14.0,
+   11.0
+  ],
+  "exp_pockets": 1,
+  "got_pockets": 0,
+  "err": "",
+  "sec": 1.0
+ },
+ {
+  "id": "B08",
+  "total": 0.76,
+  "s_bbox": 1.0,
+  "s_holes": 0.4,
+  "s_pockets": 1.0,
+  "exp_bbox": [
+   130.0,
+   80.0,
+   20.0
+  ],
+  "got_bbox": [
+   130.0,
+   80.0,
+   20.0
+  ],
+  "exp_holes": [
+   11.0,
+   11.0,
+   11.0,
+   11.0,
+   18.0,
+   18.0,
+   18.0,
+   18.0
+  ],
+  "got_holes": [
+   11.0,
+   18.0
+  ],
+  "exp_pockets": 0,
+  "got_pockets": 0,
+  "err": "",
+  "sec": 0.0
+ },
+ {
+  "id": "B09",
+  "total": 0.903,
+  "s_bbox": 0.806,
+  "s_holes": 1.0,
+  "s_pockets": 1.0,
+  "exp_bbox": [
+   220.0,
+   140.0,
+   43.0
+  ],
+  "got_bbox": [
+   220.0,
+   140.0,
+   18.0
+  ],
+  "exp_holes": [
+   16.0
+  ],
+  "got_holes": [
+   16.0
+  ],
+  "exp_pockets": 0,
+  "got_pockets": 0,
+  "err": "",
+  "sec": 0.0
+ },
+ {
+  "id": "B10",
+  "total": 0.315,
+  "s_bbox": 0.074,
+  "s_holes": 0.571,
+  "s_pockets": 0.5,
+  "exp_bbox": [
+   260.0,
+   180.0,
+   90.0
+  ],
+  "got_bbox": [
+   20.0,
+   12.0,
+   7.0
+  ],
+  "exp_holes": [
+   45.0,
+   10.0,
+   10.0,
+   10.0,
+   10.0
+  ],
+  "got_holes": [
+   10.0,
+   45.0
+  ],
+  "exp_pockets": 2,
+  "got_pockets": 1,
+  "err": "",
+  "sec": 0.0
+ },
+ {
+  "id": "B11",
+  "total": 0.632,
+  "s_bbox": 0.905,
+  "s_holes": 0.2,
+  "s_pockets": 1.0,
+  "exp_bbox": [
+   160.0,
+   160.0,
+   35.0
+  ],
+  "got_bbox": [
+   160.0,
+   160.0,
+   45.0
+  ],
+  "exp_holes": [
+   100.0,
+   9.0,
+   9.0,
+   9.0,
+   9.0,
+   9.0,
+   9.0,
+   9.0,
+   9.0
+  ],
+  "got_holes": [
+   9.0
+  ],
+  "exp_pockets": 0,
+  "got_pockets": 0,
+  "err": "",
+  "sec": 0.2
+ },
+ {
+  "id": "B12",
+  "total": 0.411,
+  "s_bbox": 0.364,
+  "s_holes": 0.571,
+  "s_pockets": 0.0,
+  "exp_bbox": [
+   300.0,
+   200.0,
+   25.0
+  ],
+  "got_bbox": [
+   40.0,
+   40.0,
+   19.0
+  ],
+  "exp_holes": [
+   40.0,
+   12.0,
+   12.0,
+   12.0,
+   12.0
+  ],
+  "got_holes": [
+   40.0,
+   12.0
+  ],
+  "exp_pockets": 2,
+  "got_pockets": 0,
+  "err": "",
+  "sec": 0.1
+ },
+ {
+  "id": "B13",
+  "total": 0.829,
+  "s_bbox": 1.0,
+  "s_holes": 0.571,
+  "s_pockets": 1.0,
+  "exp_bbox": [
+   240.0,
+   160.0,
+   20.0
+  ],
+  "got_bbox": [
+   240.0,
+   160.0,
+   20.0
+  ],
+  "exp_holes": [
+   50.0,
+   8.0,
+   8.0,
+   8.0,
+   8.0
+  ],
+  "got_holes": [
+   8.0,
+   50.0
+  ],
+  "exp_pockets": 1,
+  "got_pockets": 1,
+  "err": "",
+  "sec": 0.0
+ },
+ {
+  "id": "B14",
+  "total": 0.999,
+  "s_bbox": 0.999,
+  "s_holes": 1.0,
+  "s_pockets": 1.0,
+  "exp_bbox": [
+   64.0,
+   64.0,
+   20.0
+  ],
+  "got_bbox": [
+   63.98,
+   63.797,
+   20.0
+  ],
+  "exp_holes": [
+   15.0
+  ],
+  "got_holes": [
+   15.0
+  ],
+  "exp_pockets": 0,
+  "got_pockets": 0,
+  "err": "",
+  "sec": 0.1
+ },
+ {
+  "id": "B15",
+  "total": 1.0,
+  "s_bbox": 1.0,
+  "s_holes": 1.0,
+  "s_pockets": 1.0,
+  "exp_bbox": [
+   78.0,
+   78.0,
+   30.0
+  ],
+  "got_bbox": [
+   77.962,
+   77.962,
+   30.0
+  ],
+  "exp_holes": [
+   22.0
+  ],
+  "got_holes": [
+   22.0
+  ],
+  "exp_pockets": 0,
+  "got_pockets": 0,
+  "err": "",
+  "sec": 0.1
+ },
+ {
+  "id": "B16",
+  "total": 0.778,
+  "s_bbox": 1.0,
+  "s_holes": 0.444,
+  "s_pockets": 1.0,
+  "exp_bbox": [
+   168.0,
+   168.0,
+   35.0
+  ],
+  "got_bbox": [
+   167.97,
+   167.97,
+   35.0
+  ],
+  "exp_holes": [
+   30.0,
+   14.0,
+   14.0,
+   14.0,
+   14.0,
+   14.0,
+   14.0
+  ],
+  "got_holes": [
+   30.0,
+   14.0
+  ],
+  "exp_pockets": 0,
+  "got_pockets": 0,
+  "err": "",
+  "sec": 4.2
+ },
+ {
+  "id": "B17",
+  "total": 0.5,
+  "s_bbox": 0.0,
+  "s_holes": 1.0,
+  "s_pockets": 1.0,
+  "exp_bbox": [
+   102.0,
+   102.0,
+   40.0
+  ],
+  "got_bbox": null,
+  "exp_holes": [
+   25.0
+  ],
+  "got_holes": [
+   25.0
+  ],
+  "exp_pockets": 0,
+  "got_pockets": 0,
+  "err": "BuildAborted: 模型过于复杂 (274115 个面)",
+  "sec": 15.5
+ },
+ {
+  "id": "B18",
+  "total": 0.944,
+  "s_bbox": 0.888,
+  "s_holes": 1.0,
+  "s_pockets": 1.0,
+  "exp_bbox": [
+   108.0,
+   108.0,
+   30.0
+  ],
+  "got_bbox": [
+   107.729,
+   107.942,
+   40.0
+  ],
+  "exp_holes": [
+   20.0
+  ],
+  "got_holes": [
+   20.0
+  ],
+  "exp_pockets": 0,
+  "got_pockets": 0,
+  "err": "",
+  "sec": 0.7
+ },
+ {
+  "id": "B19",
+  "total": 0.367,
+  "s_bbox": 0.0,
+  "s_holes": 0.667,
+  "s_pockets": 1.0,
+  "exp_bbox": [
+   83.0,
+   83.0,
+   12.0
+  ],
+  "got_bbox": null,
+  "exp_holes": [
+   20.0
+  ],
+  "got_holes": [
+   11.52,
+   20.0
+  ],
+  "exp_pockets": 0,
+  "got_pockets": 0,
+  "err": "",
+  "sec": 0.1
+ },
+ {
+  "id": "B20",
+  "total": 0.43,
+  "s_bbox": 0.341,
+  "s_holes": 0.4,
+  "s_pockets": 1.0,
+  "exp_bbox": [
+   46.0,
+   46.0,
+   20.0
+  ],
+  "got_bbox": [
+   80.0,
+   80.0,
+   30.0
+  ],
+  "exp_holes": [
+   12.0,
+   5.0,
+   5.0,
+   5.0,
+   5.0,
+   5.0,
+   5.0
+  ],
+  "got_holes": [
+   20.0,
+   12.0,
+   5.0
+  ],
+  "exp_pockets": 0,
+  "got_pockets": 0,
+  "err": "",
+  "sec": 4.4
+ },
+ {
+  "id": "B21",
+  "total": 0.9,
+  "s_bbox": 1.0,
+  "s_holes": 1.0,
+  "s_pockets": 0.0,
+  "exp_bbox": [
+   105.75,
+   105.75,
+   28.0
+  ],
+  "got_bbox": [
+   105.668,
+   105.733,
+   28.0
+  ],
+  "exp_holes": [
+   32.0
+  ],
+  "got_holes": [
+   32.0
+  ],
+  "exp_pockets": 1,
+  "got_pockets": 0,
+  "err": "",
+  "sec": 0.8
+ },
+ {
+  "id": "B22",
+  "total": 0.245,
+  "s_bbox": 0.0,
+  "s_holes": 0.364,
+  "s_pockets": 1.0,
+  "exp_bbox": [
+   104.0,
+   104.0,
+   45.0
+  ],
+  "got_bbox": null,
+  "exp_holes": [
+   28.0,
+   12.0,
+   12.0,
+   12.0,
+   12.0,
+   12.0,
+   12.0,
+   12.0,
+   12.0
+  ],
+  "got_holes": [
+   28.0,
+   12.0
+  ],
+  "exp_pockets": 0,
+  "got_pockets": 0,
+  "err": "BuildAborted: 计算超时 (25 秒)",
+  "sec": 25.2
+ },
+ {
+  "id": "B23",
+  "total": 0.958,
+  "s_bbox": 0.916,
+  "s_holes": 1.0,
+  "s_pockets": 1.0,
+  "exp_bbox": [
+   160.0,
+   160.0,
+   40.0
+  ],
+  "got_bbox": [
+   159.949,
+   159.494,
+   50.0
+  ],
+  "exp_holes": [
+   32.0
+  ],
+  "got_holes": [
+   32.0
+  ],
+  "exp_pockets": 0,
+  "got_pockets": 0,
+  "err": "",
+  "sec": 1.0
+ },
+ {
+  "id": "B24",
+  "total": 0.321,
+  "s_bbox": 0.086,
+  "s_holes": 0.444,
+  "s_pockets": 1.0,
+  "exp_bbox": [
+   108.0,
+   108.0,
+   14.0
+  ],
+  "got_bbox": [
+   14.0,
+   14.0,
+   108.0
+  ],
+  "exp_holes": [
+   25.0,
+   10.0,
+   10.0,
+   10.0,
+   10.0,
+   10.0
+  ],
+  "got_holes": [
+   13.44,
+   25.0,
+   10.0
+  ],
+  "exp_pockets": 0,
+  "got_pockets": 0,
+  "err": "",
+  "sec": 0.1
+ },
+ {
+  "id": "B25",
+  "total": 0.778,
+  "s_bbox": 1.0,
+  "s_holes": 0.444,
+  "s_pockets": 1.0,
+  "exp_bbox": [
+   126.0,
+   126.0,
+   32.0
+  ],
+  "got_bbox": [
+   125.978,
+   125.978,
+   32.0
+  ],
+  "exp_holes": [
+   30.0,
+   18.0,
+   18.0,
+   18.0,
+   18.0,
+   18.0,
+   18.0
+  ],
+  "got_holes": [
+   30.0,
+   18.0
+  ],
+  "exp_pockets": 0,
+  "got_pockets": 0,
+  "err": "",
+  "sec": 4.3
+ },
+ {
+  "id": "B26",
+  "total": 0.974,
+  "s_bbox": 0.948,
+  "s_holes": 1.0,
+  "s_pockets": 1.0,
+  "exp_bbox": [
+   130.0,
+   130.0,
+   40.0
+  ],
+  "got_bbox": [
+   121.326,
+   118.483,
+   40.0
+  ],
+  "exp_holes": [
+   30.0
+  ],
+  "got_holes": [
+   30.0
+  ],
+  "exp_pockets": 0,
+  "got_pockets": 0,
+  "err": "",
+  "sec": 0.2
+ },
+ {
+  "id": "B27",
+  "total": 0.874,
+  "s_bbox": 0.948,
+  "s_holes": 1.0,
+  "s_pockets": 0.0,
+  "exp_bbox": [
+   160.0,
+   160.0,
+   45.0
+  ],
+  "got_bbox": [
+   149.324,
+   145.825,
+   45.0
+  ],
+  "exp_holes": [
+   40.0
+  ],
+  "got_holes": [
+   40.0
+  ],
+  "exp_pockets": 0,
+  "got_pockets": 1,
+  "err": "",
+  "sec": 0.3
+ },
+ {
+  "id": "B28",
+  "total": 0.322,
+  "s_bbox": 0.443,
+  "s_holes": 0.0,
+  "s_pockets": 1.0,
+  "exp_bbox": [
+   212.0,
+   70.0,
+   32.0
+  ],
+  "got_bbox": [
+   70.0,
+   70.0,
+   120.0
+  ],
+  "exp_holes": [
+   48.0,
+   18.0
+  ],
+  "got_holes": [
+   70.0,
+   34.0
+  ],
+  "exp_pockets": 0,
+  "got_pockets": 0,
+  "err": "",
+  "sec": 0.0
+ },
+ {
+  "id": "B29",
+  "total": 0.324,
+  "s_bbox": 0.449,
+  "s_holes": 0.0,
+  "s_pockets": 1.0,
+  "exp_bbox": [
+   162.0,
+   56.0,
+   22.0
+  ],
+  "got_bbox": [
+   56.0,
+   56.0,
+   120.0
+  ],
+  "exp_holes": [
+   38.0,
+   14.0
+  ],
+  "got_holes": [
+   56.0
+  ],
+  "exp_pockets": 0,
+  "got_pockets": 0,
+  "err": "",
+  "sec": 0.0
+ },
+ {
+  "id": "B30",
+  "total": 0.837,
+  "s_bbox": 0.673,
+  "s_holes": 1.0,
+  "s_pockets": 1.0,
+  "exp_bbox": [
+   320.0,
+   131.0,
+   131.0
+  ],
+  "got_bbox": [
+   619.2,
+   128.0,
+   128.0
+  ],
+  "exp_holes": [],
+  "got_holes": [],
+  "exp_pockets": 0,
+  "got_pockets": 0,
+  "err": "",
+  "sec": 0.0
+ },
+ {
+  "id": "B31",
+  "total": 0.922,
+  "s_bbox": 0.845,
+  "s_holes": 1.0,
+  "s_pockets": 1.0,
+  "exp_bbox": [
+   480.0,
+   140.0,
+   140.0
+  ],
+  "got_bbox": [
+   662.4,
+   134.0,
+   134.0
+  ],
+  "exp_holes": [],
+  "got_holes": [],
+  "exp_pockets": 0,
+  "got_pockets": 0,
+  "err": "",
+  "sec": 0.0
+ },
+ {
+  "id": "B32",
+  "total": 1.0,
+  "s_bbox": 1.0,
+  "s_holes": 1.0,
+  "s_pockets": 1.0,
+  "exp_bbox": [
+   380.0,
+   48.0,
+   48.0
+  ],
+  "got_bbox": [
+   380.0,
+   48.0,
+   48.0
+  ],
+  "exp_holes": [],
+  "got_holes": [],
+  "exp_pockets": 0,
+  "got_pockets": 0,
+  "err": "",
+  "sec": 0.0
+ },
+ {
+  "id": "B33",
+  "total": 0.967,
+  "s_bbox": 0.933,
+  "s_holes": 1.0,
+  "s_pockets": 1.0,
+  "exp_bbox": [
+   460.0,
+   60.0,
+   60.0
+  ],
+  "got_bbox": [
+   460.0,
+   54.0,
+   54.0
+  ],
+  "exp_holes": [],
+  "got_holes": [],
+  "exp_pockets": 0,
+  "got_pockets": 0,
+  "err": "",
+  "sec": 0.0
+ },
+ {
+  "id": "B34",
+  "total": 0.733,
+  "s_bbox": 1.0,
+  "s_holes": 0.333,
+  "s_pockets": 1.0,
+  "exp_bbox": [
+   380.0,
+   380.0,
+   28.0
+  ],
+  "got_bbox": [
+   380.0,
+   380.0,
+   28.0
+  ],
+  "exp_holes": [
+   50.0,
+   12.0,
+   12.0,
+   12.0,
+   12.0,
+   12.0,
+   12.0,
+   12.0,
+   12.0
+  ],
+  "got_holes": [
+   28.0,
+   50.0,
+   12.0
+  ],
+  "exp_pockets": 0,
+  "got_pockets": 0,
+  "err": "",
+  "sec": 6.6
+ },
+ {
+  "id": "B35",
+  "total": 0.76,
+  "s_bbox": 1.0,
+  "s_holes": 0.4,
+  "s_pockets": 1.0,
+  "exp_bbox": [
+   420.0,
+   420.0,
+   35.0
+  ],
+  "got_bbox": [
+   420.0,
+   420.0,
+   35.0
+  ],
+  "exp_holes": [
+   60.0,
+   14.0,
+   14.0,
+   14.0,
+   14.0,
+   14.0,
+   14.0
+  ],
+  "got_holes": [
+   35.0,
+   60.0,
+   14.0
+  ],
+  "exp_pockets": 0,
+  "got_pockets": 0,
+  "err": "",
+  "sec": 4.8
+ },
+ {
+  "id": "B36",
+  "total": 0.875,
+  "s_bbox": 0.75,
+  "s_holes": 1.0,
+  "s_pockets": 1.0,
+  "exp_bbox": [
+   160.0,
+   160.0,
+   45.0
+  ],
+  "got_bbox": [
+   100.0,
+   100.0,
+   45.0
+  ],
+  "exp_holes": [
+   30.0
+  ],
+  "got_holes": [
+   30.0
+  ],
+  "exp_pockets": 0,
+  "got_pockets": 0,
+  "err": "",
+  "sec": 0.7
+ },
+ {
+  "id": "B37",
+  "total": 0.833,
+  "s_bbox": 0.667,
+  "s_holes": 1.0,
+  "s_pockets": 1.0,
+  "exp_bbox": [
+   120.0,
+   120.0,
+   25.0
+  ],
+  "got_bbox": [
+   120.0,
+   120.0,
+   80.0
+  ],
+  "exp_holes": [],
+  "got_holes": [],
+  "exp_pockets": 0,
+  "got_pockets": 0,
+  "err": "",
+  "sec": 0.3
+ },
+ {
+  "id": "B38",
+  "total": 0.907,
+  "s_bbox": 0.815,
+  "s_holes": 1.0,
+  "s_pockets": 1.0,
+  "exp_bbox": [
+   145.0,
+   145.0,
+   45.0
+  ],
+  "got_bbox": [
+   145.0,
+   145.0,
+   20.0
+  ],
+  "exp_holes": [
+   6.0
+  ],
+  "got_holes": [
+   6.0
+  ],
+  "exp_pockets": 0,
+  "got_pockets": 0,
+  "err": "",
+  "sec": 0.0
+ },
+ {
+  "id": "B39",
+  "total": 0.875,
+  "s_bbox": 0.75,
+  "s_holes": 1.0,
+  "s_pockets": 1.0,
+  "exp_bbox": [
+   40.0,
+   40.0,
+   150.0
+  ],
+  "got_bbox": [
+   24.989,
+   24.989,
+   150.0
+  ],
+  "exp_holes": [],
+  "got_holes": [],
+  "exp_pockets": 0,
+  "got_pockets": 0,
+  "err": "",
+  "sec": 0.0
+ },
+ {
+  "id": "B40",
+  "total": 0.519,
+  "s_bbox": 0.839,
+  "s_holes": 0.0,
+  "s_pockets": 1.0,
+  "exp_bbox": [
+   62.0,
+   62.0,
+   16.0
+  ],
+  "got_bbox": [
+   47.0,
+   47.0,
+   16.0
+  ],
+  "exp_holes": [
+   30.0
+  ],
+  "got_holes": [
+   20.0
+  ],
+  "exp_pockets": 0,
+  "got_pockets": 0,
+  "err": "",
+  "sec": 0.0
+ },
+ {
+  "id": "B41",
+  "total": 0.507,
+  "s_bbox": 0.815,
+  "s_holes": 0.0,
+  "s_pockets": 1.0,
+  "exp_bbox": [
+   72.0,
+   72.0,
+   24.75
+  ],
+  "got_bbox": [
+   52.0,
+   52.0,
+   24.75
+  ],
+  "exp_holes": [
+   35.0
+  ],
+  "got_holes": [
+   25.0
+  ],
+  "exp_pockets": 0,
+  "got_pockets": 0,
+  "err": "",
+  "sec": 0.0
+ },
+ {
+  "id": "B42",
+  "total": 0.307,
+  "s_bbox": 0.415,
+  "s_holes": 0.0,
+  "s_pockets": 1.0,
+  "exp_bbox": [
+   65.0,
+   65.0,
+   18.0
+  ],
+  "got_bbox": [
+   35.0,
+   35.0,
+   3.0
+  ],
+  "exp_holes": [
+   40.0
+  ],
+  "got_holes": [
+   20.0
+  ],
+  "exp_pockets": 0,
+  "got_pockets": 0,
+  "err": "",
+  "sec": 0.1
+ },
+ {
+  "id": "B43",
+  "total": 0.817,
+  "s_bbox": 0.635,
+  "s_holes": 1.0,
+  "s_pockets": 1.0,
+  "exp_bbox": [
+   18.0,
+   18.0,
+   87.5
+  ],
+  "got_bbox": [
+   12.0,
+   12.0,
+   50.0
+  ],
+  "exp_holes": [],
+  "got_holes": [],
+  "exp_pockets": 0,
+  "got_pockets": 0,
+  "err": "",
+  "sec": 0.0
+ },
+ {
+  "id": "B44",
+  "total": 1.0,
+  "s_bbox": 1.0,
+  "s_holes": 1.0,
+  "s_pockets": 1.0,
+  "exp_bbox": [
+   24.0,
+   24.0,
+   13.0
+  ],
+  "got_bbox": [
+   24.0,
+   24.0,
+   13.0
+  ],
+  "exp_holes": [
+   16.0
+  ],
+  "got_holes": [
+   16.0
+  ],
+  "exp_pockets": 0,
+  "got_pockets": 0,
+  "err": "",
+  "sec": 0.0
+ },
+ {
+  "id": "B45",
+  "total": 0.963,
+  "s_bbox": 0.926,
+  "s_holes": 1.0,
+  "s_pockets": 1.0,
+  "exp_bbox": [
+   14.0,
+   9.0,
+   70.0
+  ],
+  "got_bbox": [
+   14.0,
+   7.0,
+   70.0
+  ],
+  "exp_holes": [],
+  "got_holes": [],
+  "exp_pockets": 0,
+  "got_pockets": 0,
+  "err": "",
+  "sec": 0.0
+ },
+ {
+  "id": "B46",
+  "total": 0.441,
+  "s_bbox": 0.681,
+  "s_holes": 0.0,
+  "s_pockets": 1.0,
+  "exp_bbox": [
+   46.0,
+   46.0,
+   2.5
+  ],
+  "got_bbox": [
+   24.0,
+   24.0,
+   2.5
+  ],
+  "exp_holes": [
+   37.0
+  ],
+  "got_holes": [
+   20.0
+  ],
+  "exp_pockets": 0,
+  "got_pockets": 0,
+  "err": "",
+  "sec": 0.0
+ },
+ {
+  "id": "B47",
+  "total": 0.431,
+  "s_bbox": 0.863,
+  "s_holes": 0.0,
+  "s_pockets": 0.0,
+  "exp_bbox": [
+   120.0,
+   120.0,
+   85.0
+  ],
+  "got_bbox": [
+   120.0,
+   120.0,
+   120.0
+  ],
+  "exp_holes": [
+   32.0
+  ],
+  "got_holes": [
+   120.0,
+   10.0
+  ],
+  "exp_pockets": 1,
+  "got_pockets": 0,
+  "err": "",
+  "sec": 0.0
+ },
+ {
+  "id": "B48",
+  "total": 0.415,
+  "s_bbox": 0.63,
+  "s_holes": 0.0,
+  "s_pockets": 1.0,
+  "exp_bbox": [
+   62.0,
+   62.0,
+   8.0
+  ],
+  "got_bbox": [
+   47.0,
+   47.0,
+   3.0
+  ],
+  "exp_holes": [
+   45.0
+  ],
+  "got_holes": [
+   30.0
+  ],
+  "exp_pockets": 0,
+  "got_pockets": 0,
+  "err": "",
+  "sec": 0.0
+ },
+ {
+  "id": "B49",
+  "total": 0.956,
+  "s_bbox": 0.913,
+  "s_holes": 1.0,
+  "s_pockets": 1.0,
+  "exp_bbox": [
+   46.0,
+   46.0,
+   95.0
+  ],
+  "got_bbox": [
+   39.996,
+   39.99,
+   95.0
+  ],
+  "exp_holes": [],
+  "got_holes": [],
+  "exp_pockets": 0,
+  "got_pockets": 0,
+  "err": "",
+  "sec": 0.0
+ },
+ {
+  "id": "B50",
+  "total": 0.865,
+  "s_bbox": 0.73,
+  "s_holes": 1.0,
+  "s_pockets": 1.0,
+  "exp_bbox": [
+   45.0,
+   45.0,
+   140.0
+  ],
+  "got_bbox": [
+   30.0,
+   30.0,
+   120.0
+  ],
+  "exp_holes": [],
+  "got_holes": [],
+  "exp_pockets": 0,
+  "got_pockets": 0,
+  "err": "",
+  "sec": 0.1
+ }
+]

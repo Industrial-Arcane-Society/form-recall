@@ -1,0 +1,3192 @@
+{
+ "round": 1,
+ "time": "2026-09-21 23:29:40",
+ "total": 138,
+ "passed": 138,
+ "failed": 0,
+ "accuracy": 100.0,
+ "fail_reasons": {},
+ "rows": [
+  {
+   "case": {
+    "p": "多槽带轮 内径25 外径100 宽度30 槽数3",
+    "kind": "vbelt_pulley",
+    "want": {
+     "grooves": 3,
+     "bore_d": 25
+    }
+   },
+   "pass": true,
+   "fails": [],
+   "info": {
+    "ok": true,
+    "kinds": [
+     "vbelt_pulley"
+    ],
+    "warnings": [
+     "3 个 A 型槽的标准槽间距 e=15 mm，轮缘宽度至少需 46.3197 mm；已按标准取 46.3197 mm（原输入的 30 mm 不足，强行压缩会使相邻槽干涉）"
+    ],
+    "steps": 10
+   }
+  },
+  {
+   "case": {
+    "p": "V带轮 基准直径120 内径30 轮宽40 槽数4 A型",
+    "kind": "vbelt_pulley",
+    "want": {
+     "grooves": 4,
+     "groove_type": "A",
+     "bore_d": 30
+    }
+   },
+   "pass": true,
+   "fails": [],
+   "info": {
+    "ok": true,
+    "kinds": [
+     "vbelt_pulley"
+    ],
+    "warnings": [
+     "基准直径 ⌀120 不在 A 型标准系列中，已吸附到标准值 ⌀118（外径 ⌀123.5）",
+     "4 个 A 型槽的标准槽间距 e=15 mm，轮缘宽度至少需 61.6536 mm；已按标准取 61.6536 mm（原输入的 40 mm 不足，强行压缩会使相邻槽干涉）"
+    ],
+    "steps": 10
+   }
+  },
+  {
+   "case": {
+    "p": "皮带轮 节圆直径80 内径20 宽度20 槽数2 Z型",
+    "kind": "vbelt_pulley",
+    "want": {
+     "grooves": 2,
+     "groove_type": "Z",
+     "bore_d": 20
+    }
+   },
+   "pass": true,
+   "fails": [],
+   "info": {
+    "ok": true,
+    "kinds": [
+     "vbelt_pulley"
+    ],
+    "warnings": [
+     "2 个 Z 型槽的标准槽间距 e=12 mm，轮缘宽度至少需 24.7802 mm；已按标准取 24.7802 mm（原输入的 20 mm 不足，强行压缩会使相邻槽干涉）"
+    ],
+    "steps": 10
+   }
+  },
+  {
+   "case": {
+    "p": "多楔带轮 直径200 孔径45 槽数5 B型",
+    "kind": "vbelt_pulley",
+    "want": {
+     "grooves": 5,
+     "groove_type": "B",
+     "bore_d": 45
+    }
+   },
+   "pass": true,
+   "fails": [],
+   "info": {
+    "ok": true,
+    "kinds": [
+     "vbelt_pulley"
+    ],
+    "warnings": [
+     "5 个 B 型槽的标准槽间距 e=19 mm，轮缘宽度至少需 97.4375 mm；已按标准取 97.4375 mm（原输入的 87.5897 mm 不足，强行压缩会使相邻槽干涉）"
+    ],
+    "steps": 10
+   }
+  },
+  {
+   "case": {
+    "p": "窄V带轮 SPB 基准直径180 内径40 槽数5",
+    "kind": "vbelt_pulley",
+    "want": {
+     "grooves": 5,
+     "groove_type": "B",
+     "bore_d": 40
+    }
+   },
+   "pass": true,
+   "fails": [],
+   "info": {
+    "ok": true,
+    "kinds": [
+     "vbelt_pulley"
+    ],
+    "warnings": [
+     "5 个 B 型槽的标准槽间距 e=19 mm，轮缘宽度至少需 97.0183 mm；已按标准取 97.0183 mm（原输入的 87.7256 mm 不足，强行压缩会使相邻槽干涉）"
+    ],
+    "steps": 10
+   }
+  },
+  {
+   "case": {
+    "p": "带轮 d25 D100 B30 n3 A型",
+    "kind": "vbelt_pulley",
+    "want": {
+     "grooves": 3,
+     "groove_type": "A",
+     "bore_d": 25
+    }
+   },
+   "pass": true,
+   "fails": [],
+   "info": {
+    "ok": true,
+    "kinds": [
+     "vbelt_pulley"
+    ],
+    "warnings": [
+     "3 个 A 型槽的标准槽间距 e=15 mm，轮缘宽度至少需 46.3197 mm；已按标准取 46.3197 mm（原输入的 30 mm 不足，强行压缩会使相邻槽干涉）"
+    ],
+    "steps": 10
+   }
+  },
+  {
+   "case": {
+    "p": "V带轮 Ø25 基准直径Ø100 宽30 槽数3 A",
+    "kind": "vbelt_pulley",
+    "want": {
+     "grooves": 3,
+     "groove_type": "A"
+    }
+   },
+   "pass": true,
+   "fails": [],
+   "info": {
+    "ok": true,
+    "kinds": [
+     "vbelt_pulley"
+    ],
+    "warnings": [
+     "3 个 A 型槽的标准槽间距 e=15 mm，轮缘宽度至少需 46.3197 mm；已按标准取 46.3197 mm（原输入的 30 mm 不足，强行压缩会使相邻槽干涉）",
+     "这些参数没写，已按零件库典型值代入：d（可在右侧「参数」页改）"
+    ],
+    "steps": 10
+   }
+  },
+  {
+   "case": {
+    "p": "多槽带轮 孔径25mm 基准直径100mm 轮宽30mm 槽数3",
+    "kind": "vbelt_pulley",
+    "want": {
+     "grooves": 3,
+     "bore_d": 25
+    }
+   },
+   "pass": true,
+   "fails": [],
+   "info": {
+    "ok": true,
+    "kinds": [
+     "vbelt_pulley"
+    ],
+    "warnings": [
+     "3 个 A 型槽的标准槽间距 e=15 mm，轮缘宽度至少需 46.3197 mm；已按标准取 46.3197 mm（原输入的 30 mm 不足，强行压缩会使相邻槽干涉）"
+    ],
+    "steps": 11
+   }
+  },
+  {
+   "case": {
+    "p": "3槽A型V带轮 内径25 宽30",
+    "kind": "vbelt_pulley",
+    "want": {
+     "grooves": 3,
+     "groove_type": "A"
+    }
+   },
+   "pass": true,
+   "fails": [],
+   "info": {
+    "ok": true,
+    "kinds": [
+     "vbelt_pulley"
+    ],
+    "warnings": [
+     "3 个 A 型槽的标准槽间距 e=15 mm，轮缘宽度至少需 46.3197 mm；已按标准取 46.3197 mm（原输入的 30 mm 不足，强行压缩会使相邻槽干涉）",
+     "这些参数没写，已按零件库典型值代入：d（可在右侧「参数」页改）"
+    ],
+    "steps": 10
+   }
+  },
+  {
+   "case": {
+    "p": "双槽带轮 基准直径80 内径20",
+    "kind": "vbelt_pulley",
+    "want": {}
+   },
+   "pass": true,
+   "fails": [],
+   "info": {
+    "ok": true,
+    "kinds": [
+     "vbelt_pulley"
+    ],
+    "warnings": [
+     "2 个 Z 型槽的标准槽间距 e=12 mm，轮缘宽度至少需 24.7802 mm；已按标准取 24.7802 mm（原输入的 19.2771 mm 不足，强行压缩会使相邻槽干涉）"
+    ],
+    "steps": 10
+   }
+  },
+  {
+   "case": {
+    "p": "带轮 外径100 内径25 宽度30 3个槽 A型",
+    "kind": "vbelt_pulley",
+    "want": {
+     "grooves": 3,
+     "groove_type": "A"
+    }
+   },
+   "pass": true,
+   "fails": [],
+   "info": {
+    "ok": true,
+    "kinds": [
+     "vbelt_pulley"
+    ],
+    "warnings": [
+     "3 个 A 型槽的标准槽间距 e=15 mm，轮缘宽度至少需 46.3197 mm；已按标准取 46.3197 mm（原输入的 39.3185 mm 不足，强行压缩会使相邻槽干涉）"
+    ],
+    "steps": 11
+   }
+  },
+  {
+   "case": {
+    "p": "四槽V带轮 基准直径160 内径35 A型",
+    "kind": "vbelt_pulley",
+    "want": {
+     "groove_type": "A"
+    }
+   },
+   "pass": true,
+   "fails": [],
+   "info": {
+    "ok": true,
+    "kinds": [
+     "vbelt_pulley"
+    ],
+    "warnings": [
+     "4 个 A 型槽的标准槽间距 e=15 mm，轮缘宽度至少需 61.6536 mm；已按标准取 61.6536 mm（原输入的 54.2129 mm 不足，强行压缩会使相邻槽干涉）"
+    ],
+    "steps": 10
+   }
+  },
+  {
+   "case": {
+    "p": "多槽带轮 基准直径315 内径50 槽数6 C型",
+    "kind": "vbelt_pulley",
+    "want": {
+     "grooves": 6,
+     "groove_type": "C"
+    }
+   },
+   "pass": true,
+   "fails": [],
+   "info": {
+    "ok": true,
+    "kinds": [
+     "vbelt_pulley"
+    ],
+    "warnings": [
+     "6 个 C 型槽的标准槽间距 e=25.5 mm，轮缘宽度至少需 156.348 mm；已按标准取 156.348 mm（原输入的 143.194 mm 不足，强行压缩会使相邻槽干涉）"
+    ],
+    "steps": 11
+   }
+  },
+  {
+   "case": {
+    "p": "V带轮 基准直径400 内径60 槽数8 D型",
+    "kind": "vbelt_pulley",
+    "want": {
+     "grooves": 8,
+     "groove_type": "D"
+    }
+   },
+   "pass": true,
+   "fails": [],
+   "info": {
+    "ok": true,
+    "kinds": [
+     "vbelt_pulley"
+    ],
+    "warnings": [
+     "8 个 D 型槽的标准槽间距 e=37 mm，轮缘宽度至少需 299.704 mm；已按标准取 299.704 mm（原输入的 280.422 mm 不足，强行压缩会使相邻槽干涉）"
+    ],
+    "steps": 11
+   }
+  },
+  {
+   "case": {
+    "p": "小带轮 基准直径50 内径12 槽数1 Z型",
+    "kind": "vbelt_pulley",
+    "want": {
+     "grooves": 1,
+     "groove_type": "Z"
+    }
+   },
+   "pass": true,
+   "fails": [],
+   "info": {
+    "ok": true,
+    "kinds": [
+     "vbelt_pulley"
+    ],
+    "warnings": [
+     "1 个 Z 型槽的标准槽间距 e=12 mm，轮缘宽度至少需 12.5144 mm；已按标准取 12.5144 mm（原输入的 7.35302 mm 不足，强行压缩会使相邻槽干涉）"
+    ],
+    "steps": 10
+   }
+  },
+  {
+   "case": {
+    "p": "同步带轮 节圆直径80 内径20 宽30 齿数20 XL型",
+    "kind": "timing_pulley",
+    "want": {
+     "teeth": 20,
+     "tooth_type": "XL",
+     "bore_d": 20
+    }
+   },
+   "pass": true,
+   "fails": [],
+   "info": {
+    "ok": true,
+    "kinds": [
+     "timing_pulley"
+    ],
+    "warnings": [
+     "这些参数没写，已按零件库典型值代入：d（可在右侧「参数」页改）"
+    ],
+    "steps": 7
+   }
+  },
+  {
+   "case": {
+    "p": "同步带轮 节圆直径120 内径30 齿数36 5M型",
+    "kind": "timing_pulley",
+    "want": {
+     "teeth": 36,
+     "tooth_type": "5M"
+    }
+   },
+   "pass": true,
+   "fails": [],
+   "info": {
+    "ok": true,
+    "kinds": [
+     "timing_pulley"
+    ],
+    "warnings": [
+     "这些参数没写，已按零件库典型值代入：B（可在右侧「参数」页改）"
+    ],
+    "steps": 7
+   }
+  },
+  {
+   "case": {
+    "p": "同步轮 齿数24 节圆直径60 内径15 T5型",
+    "kind": "timing_pulley",
+    "want": {
+     "teeth": 24,
+     "tooth_type": "T5"
+    }
+   },
+   "pass": true,
+   "fails": [],
+   "info": {
+    "ok": true,
+    "kinds": [
+     "timing_pulley"
+    ],
+    "warnings": [
+     "这些参数没写，已按零件库典型值代入：B（可在右侧「参数」页改）"
+    ],
+    "steps": 7
+   }
+  },
+  {
+   "case": {
+    "p": "圆弧齿带轮 节圆直径100 内径25 齿数32 8M型",
+    "kind": "timing_pulley",
+    "want": {
+     "teeth": 32,
+     "tooth_type": "8M"
+    }
+   },
+   "pass": true,
+   "fails": [],
+   "info": {
+    "ok": true,
+    "kinds": [
+     "timing_pulley"
+    ],
+    "warnings": [
+     "这些参数没写，已按零件库典型值代入：B（可在右侧「参数」页改）"
+    ],
+    "steps": 7
+   }
+  },
+  {
+   "case": {
+    "p": "多槽带轮 内径25 外径100 宽度30 槽数3 A型",
+    "kind": "vbelt_pulley",
+    "want": {
+     "grooves": 3,
+     "groove_type": "A",
+     "bore_d": 25
+    }
+   },
+   "pass": true,
+   "fails": [],
+   "info": {
+    "ok": true,
+    "kinds": [
+     "vbelt_pulley"
+    ],
+    "warnings": [
+     "3 个 A 型槽的标准槽间距 e=15 mm，轮缘宽度至少需 46.3197 mm；已按标准取 46.3197 mm（原输入的 30 mm 不足，强行压缩会使相邻槽干涉）"
+    ],
+    "steps": 10
+   }
+  },
+  {
+   "case": {
+    "p": "SPA型V带轮 基准直径140 内径32 槽数4",
+    "kind": "vbelt_pulley",
+    "want": {
+     "groove_type": "A"
+    }
+   },
+   "pass": true,
+   "fails": [],
+   "info": {
+    "ok": true,
+    "kinds": [
+     "vbelt_pulley"
+    ],
+    "warnings": [
+     "4 个 A 型槽的标准槽间距 e=15 mm，轮缘宽度至少需 61.6536 mm；已按标准取 61.6536 mm（原输入的 54.2129 mm 不足，强行压缩会使相邻槽干涉）"
+    ],
+    "steps": 10
+   }
+  },
+  {
+   "case": {
+    "p": "SPC带轮 基准直径250 内径55 槽数6",
+    "kind": "vbelt_pulley",
+    "want": {
+     "groove_type": "C"
+    }
+   },
+   "pass": true,
+   "fails": [],
+   "info": {
+    "ok": true,
+    "kinds": [
+     "vbelt_pulley"
+    ],
+    "warnings": [
+     "6 个 C 型槽的标准槽间距 e=25.5 mm，轮缘宽度至少需 156.348 mm；已按标准取 156.348 mm（原输入的 143.194 mm 不足，强行压缩会使相邻槽干涉）"
+    ],
+    "steps": 11
+   }
+  },
+  {
+   "case": {
+    "p": "Y型带轮 基准直径40 内径10 槽数1 宽20",
+    "kind": "vbelt_pulley",
+    "want": {
+     "groove_type": "Y"
+    }
+   },
+   "pass": true,
+   "fails": [],
+   "info": {
+    "ok": true,
+    "kinds": [
+     "vbelt_pulley"
+    ],
+    "warnings": [],
+    "steps": 10
+   }
+  },
+  {
+   "case": {
+    "p": "V带轮 槽型B 基准直径200 孔径45 槽数5",
+    "kind": "vbelt_pulley",
+    "want": {
+     "groove_type": "B",
+     "grooves": 5
+    }
+   },
+   "pass": true,
+   "fails": [],
+   "info": {
+    "ok": true,
+    "kinds": [
+     "vbelt_pulley"
+    ],
+    "warnings": [
+     "5 个 B 型槽的标准槽间距 e=19 mm，轮缘宽度至少需 97.4375 mm；已按标准取 97.4375 mm（原输入的 87.5897 mm 不足，强行压缩会使相邻槽干涉）"
+    ],
+    "steps": 11
+   }
+  },
+  {
+   "case": {
+    "p": "皮带轮 基准直径112 内孔28 槽数3 带型A",
+    "kind": "vbelt_pulley",
+    "want": {
+     "groove_type": "A",
+     "grooves": 3
+    }
+   },
+   "pass": true,
+   "fails": [],
+   "info": {
+    "ok": true,
+    "kinds": [
+     "vbelt_pulley"
+    ],
+    "warnings": [
+     "3 个 A 型槽的标准槽间距 e=15 mm，轮缘宽度至少需 46.3197 mm；已按标准取 46.3197 mm（原输入的 39.3185 mm 不足，强行压缩会使相邻槽干涉）"
+    ],
+    "steps": 10
+   }
+  },
+  {
+   "case": {
+    "p": "B带轮 基准直径180 内径40 槽数4",
+    "kind": "vbelt_pulley",
+    "want": {
+     "groove_type": "B"
+    }
+   },
+   "pass": true,
+   "fails": [],
+   "info": {
+    "ok": true,
+    "kinds": [
+     "vbelt_pulley"
+    ],
+    "warnings": [
+     "4 个 B 型槽的标准槽间距 e=19 mm，轮缘宽度至少需 78.0183 mm；已按标准取 78.0183 mm（原输入的 68.7256 mm 不足，强行压缩会使相邻槽干涉）"
+    ],
+    "steps": 10
+   }
+  },
+  {
+   "case": {
+    "p": "Z带轮 基准直径63 内径12 槽数2",
+    "kind": "vbelt_pulley",
+    "want": {
+     "groove_type": "Z"
+    }
+   },
+   "pass": true,
+   "fails": [],
+   "info": {
+    "ok": true,
+    "kinds": [
+     "vbelt_pulley"
+    ],
+    "warnings": [
+     "2 个 Z 型槽的标准槽间距 e=12 mm，轮缘宽度至少需 24.7802 mm；已按标准取 24.7802 mm（原输入的 19.2771 mm 不足，强行压缩会使相邻槽干涉）"
+    ],
+    "steps": 10
+   }
+  },
+  {
+   "case": {
+    "p": "同步带轮 XL型 节圆直径50 内径12 齿数10",
+    "kind": "timing_pulley",
+    "want": {
+     "tooth_type": "XL",
+     "teeth": 10
+    }
+   },
+   "pass": true,
+   "fails": [],
+   "info": {
+    "ok": true,
+    "kinds": [
+     "timing_pulley"
+    ],
+    "warnings": [
+     "这些参数没写，已按零件库典型值代入：B（可在右侧「参数」页改）"
+    ],
+    "steps": 7
+   }
+  },
+  {
+   "case": {
+    "p": "同步带轮 齿数40 节圆直径200 内径40 14M型",
+    "kind": "timing_pulley",
+    "want": {
+     "tooth_type": "14M",
+     "teeth": 40
+    }
+   },
+   "pass": true,
+   "fails": [],
+   "info": {
+    "ok": true,
+    "kinds": [
+     "timing_pulley"
+    ],
+    "warnings": [
+     "这些参数没写，已按零件库典型值代入：B（可在右侧「参数」页改）"
+    ],
+    "steps": 7
+   }
+  },
+  {
+   "case": {
+    "p": "带轮 节圆直径90 内径20 齿数18 L型",
+    "kind": "timing_pulley",
+    "want": {
+     "tooth_type": "L"
+    }
+   },
+   "pass": true,
+   "fails": [],
+   "info": {
+    "ok": true,
+    "kinds": [
+     "timing_pulley"
+    ],
+    "warnings": [
+     "这些参数没写，已按零件库典型值代入：B（可在右侧「参数」页改）"
+    ],
+    "steps": 7
+   }
+  },
+  {
+   "case": {
+    "p": "多槽带轮 槽数9 基准直径450 内径70 E型",
+    "kind": "vbelt_pulley",
+    "want": {
+     "grooves": 9,
+     "groove_type": "E"
+    }
+   },
+   "pass": true,
+   "fails": [],
+   "info": {
+    "ok": true,
+    "kinds": [
+     "vbelt_pulley"
+    ],
+    "warnings": [
+     "9 个 E 型槽的标准槽间距 e=44.5 mm，轮缘宽度至少需 404.115 mm；已按标准取 404.115 mm（原输入的 381.389 mm 不足，强行压缩会使相邻槽干涉）"
+    ],
+    "steps": 11
+   }
+  },
+  {
+   "case": {
+    "p": "齿轮 模数3 齿数24 厚20",
+    "kind": "gear",
+    "want": {}
+   },
+   "pass": true,
+   "fails": [],
+   "info": {
+    "ok": true,
+    "kinds": [
+     "gear"
+    ],
+    "warnings": [],
+    "steps": 1
+   }
+  },
+  {
+   "case": {
+    "p": "法兰 外径160 内径60 厚20 均布6个直径12的螺栓孔",
+    "kind": "flange",
+    "want": {}
+   },
+   "pass": true,
+   "fails": [],
+   "info": {
+    "ok": true,
+    "kinds": [
+     "cylinder",
+     "hole"
+    ],
+    "warnings": [
+     "这些参数没写，已按零件库典型值代入：d（可在右侧「参数」页改）"
+    ],
+    "steps": 1
+   }
+  },
+  {
+   "case": {
+    "p": "深沟球轴承 内径20 外径47 宽度14",
+    "kind": "bearing",
+    "want": {}
+   },
+   "pass": true,
+   "fails": [],
+   "info": {
+    "ok": true,
+    "kinds": [
+     "cylinder",
+     "hole"
+    ],
+    "warnings": [],
+    "steps": 1
+   }
+  },
+  {
+   "case": {
+    "p": "阶梯轴 直径40 长60 直径30 长50 直径20 长40",
+    "kind": "shaft",
+    "want": {}
+   },
+   "pass": true,
+   "fails": [],
+   "info": {
+    "ok": true,
+    "kinds": [
+     "cylinder",
+     "cylinder",
+     "cylinder"
+    ],
+    "warnings": [],
+    "steps": 3
+   }
+  },
+  {
+   "case": {
+    "p": "底板 200×150×12 四角各打一个直径8的通孔",
+    "kind": "box",
+    "want": {}
+   },
+   "pass": true,
+   "fails": [],
+   "info": {
+    "ok": true,
+    "kinds": [
+     "box",
+     "hole"
+    ],
+    "warnings": [],
+    "steps": 3
+   }
+  },
+  {
+   "case": {
+    "p": "圆柱 直径60 高120",
+    "kind": "cylinder",
+    "want": {}
+   },
+   "pass": true,
+   "fails": [],
+   "info": {
+    "ok": true,
+    "kinds": [
+     "cylinder"
+    ],
+    "warnings": [],
+    "steps": 1
+   }
+  },
+  {
+   "case": {
+    "p": "链轮 内径25 外径120 宽度20",
+    "kind": "sprocket",
+    "want": {}
+   },
+   "pass": true,
+   "fails": [],
+   "info": {
+    "ok": true,
+    "kinds": [
+     "cylinder",
+     "hole"
+    ],
+    "warnings": [],
+    "steps": 1
+   }
+  },
+  {
+   "case": {
+    "p": "皮带轮 基准直径315 内径50 槽数6 C型",
+    "kind": "vbelt_pulley",
+    "want": {
+     "grooves": 6,
+     "groove_type": "C",
+     "bore_d": 50
+    }
+   },
+   "pass": true,
+   "fails": [],
+   "info": {
+    "ok": true,
+    "kinds": [
+     "vbelt_pulley"
+    ],
+    "warnings": [
+     "6 个 C 型槽的标准槽间距 e=25.5 mm，轮缘宽度至少需 156.348 mm；已按标准取 156.348 mm（原输入的 143.194 mm 不足，强行压缩会使相邻槽干涉）"
+    ],
+    "steps": 11
+   }
+  },
+  {
+   "case": {
+    "p": "多楔带轮 基准直径112 内孔28 槽数3 带型SPA",
+    "kind": "vbelt_pulley",
+    "want": {
+     "grooves": 3,
+     "groove_type": "A",
+     "bore_d": 28
+    }
+   },
+   "pass": true,
+   "fails": [],
+   "info": {
+    "ok": true,
+    "kinds": [
+     "vbelt_pulley"
+    ],
+    "warnings": [
+     "3 个 A 型槽的标准槽间距 e=15 mm，轮缘宽度至少需 46.3197 mm；已按标准取 46.3197 mm（原输入的 39.3185 mm 不足，强行压缩会使相邻槽干涉）"
+    ],
+    "steps": 10
+   }
+  },
+  {
+   "case": {
+    "p": "同步带轮 XL型 节圆直径50 内径12 齿数10 宽10",
+    "kind": "timing_pulley",
+    "want": {
+     "teeth": 10,
+     "tooth_type": "XL",
+     "bore_d": 12
+    }
+   },
+   "pass": true,
+   "fails": [],
+   "info": {
+    "ok": true,
+    "kinds": [
+     "timing_pulley"
+    ],
+    "warnings": [],
+    "steps": 7
+   }
+  },
+  {
+   "case": {
+    "p": "同步带轮 节圆直径200 内径40 齿数40 14M型 宽40",
+    "kind": "timing_pulley",
+    "want": {
+     "teeth": 40,
+     "tooth_type": "14M",
+     "bore_d": 40
+    }
+   },
+   "pass": true,
+   "fails": [],
+   "info": {
+    "ok": true,
+    "kinds": [
+     "timing_pulley"
+    ],
+    "warnings": [],
+    "steps": 7
+   }
+  },
+  {
+   "case": {
+    "p": "皮带轮 4槽 Z型 内径12 基准直径45",
+    "kind": "vbelt_pulley",
+    "want": {
+     "grooves": 4,
+     "groove_type": "Z",
+     "bore_d": 12.0
+    },
+    "generated_in_round": 2
+   },
+   "pass": true,
+   "fails": [],
+   "info": {
+    "ok": true,
+    "kinds": [
+     "vbelt_pulley"
+    ],
+    "warnings": [
+     "4 个 Z 型槽的标准槽间距 e=12 mm，轮缘宽度至少需 48.5144 mm；已按标准取 48.5144 mm（原输入的 43.353 mm 不足，强行压缩会使相邻槽干涉）"
+    ],
+    "steps": 10
+   }
+  },
+  {
+   "case": {
+    "p": "多楔带轮 基准直径106 内径25 轮宽40 槽数5 槽型A",
+    "kind": "vbelt_pulley",
+    "want": {
+     "grooves": 5,
+     "groove_type": "A",
+     "bore_d": 25
+    },
+    "generated_in_round": 2
+   },
+   "pass": true,
+   "fails": [],
+   "info": {
+    "ok": true,
+    "kinds": [
+     "vbelt_pulley"
+    ],
+    "warnings": [
+     "5 个 A 型槽的标准槽间距 e=15 mm，轮缘宽度至少需 76.3197 mm；已按标准取 76.3197 mm（原输入的 40 mm 不足，强行压缩会使相邻槽干涉）"
+    ],
+    "steps": 10
+   }
+  },
+  {
+   "case": {
+    "p": "窄V带轮 内径12 基准直径80 宽度40 6个槽 B型",
+    "kind": "vbelt_pulley",
+    "want": {
+     "grooves": 6,
+     "groove_type": "B",
+     "bore_d": 12.0
+    },
+    "generated_in_round": 2
+   },
+   "pass": true,
+   "fails": [],
+   "info": {
+    "ok": true,
+    "kinds": [
+     "vbelt_pulley"
+    ],
+    "warnings": [
+     "6 个 B 型槽的标准槽间距 e=19 mm，轮缘宽度至少需 115.604 mm；已按标准取 115.604 mm（原输入的 106.86 mm 不足，强行压缩会使相邻槽干涉）"
+    ],
+    "steps": 11
+   }
+  },
+  {
+   "case": {
+    "p": "多槽带轮 基准直径143 内径25 槽数1 C型",
+    "kind": "vbelt_pulley",
+    "want": {
+     "grooves": 1,
+     "groove_type": "C",
+     "bore_d": 25
+    },
+    "generated_in_round": 2
+   },
+   "pass": true,
+   "fails": [],
+   "info": {
+    "ok": true,
+    "kinds": [
+     "vbelt_pulley"
+    ],
+    "warnings": [
+     "1 个 C 型槽的标准槽间距 e=25.5 mm，轮缘宽度至少需 28.2927 mm；已按标准取 28.2927 mm（原输入的 15.8808 mm 不足，强行压缩会使相邻槽干涉）"
+    ],
+    "steps": 10
+   }
+  },
+  {
+   "case": {
+    "p": "V带轮 2槽 D型 内径55 基准直径163",
+    "kind": "vbelt_pulley",
+    "want": {
+     "grooves": 2,
+     "groove_type": "D",
+     "bore_d": 55
+    },
+    "generated_in_round": 2
+   },
+   "pass": true,
+   "fails": [],
+   "info": {
+    "ok": true,
+    "kinds": [
+     "vbelt_pulley"
+    ],
+    "warnings": [
+     "2 个 D 型槽的标准槽间距 e=37 mm，轮缘宽度至少需 76.9318 mm；已按标准取 76.9318 mm（原输入的 58.7363 mm 不足，强行压缩会使相邻槽干涉）"
+    ],
+    "steps": 10
+   }
+  },
+  {
+   "case": {
+    "p": "皮带轮 基准直径183 内径25 轮宽40 槽数3 槽型E",
+    "kind": "vbelt_pulley",
+    "want": {
+     "grooves": 3,
+     "groove_type": "E",
+     "bore_d": 25
+    },
+    "generated_in_round": 2
+   },
+   "pass": true,
+   "fails": [],
+   "info": {
+    "ok": true,
+    "kinds": [
+     "vbelt_pulley"
+    ],
+    "warnings": [
+     "3 个 E 型槽的标准槽间距 e=44.5 mm，轮缘宽度至少需 136.206 mm；已按标准取 136.206 mm（原输入的 40 mm 不足，强行压缩会使相邻槽干涉）"
+    ],
+    "steps": 10
+   }
+  },
+  {
+   "case": {
+    "p": "多楔带轮 内径55 基准直径203 宽度40 4个槽 Y型",
+    "kind": "vbelt_pulley",
+    "want": {
+     "grooves": 4,
+     "groove_type": "Y",
+     "bore_d": 55
+    },
+    "generated_in_round": 2
+   },
+   "pass": true,
+   "fails": [],
+   "info": {
+    "ok": true,
+    "kinds": [
+     "vbelt_pulley"
+    ],
+    "warnings": [
+     "4 个 Y 型槽的标准槽间距 e=8 mm，轮缘宽度至少需 32.5367 mm；已按标准取 32.5367 mm（原输入的 28.1982 mm 不足，强行压缩会使相邻槽干涉）"
+    ],
+    "steps": 11
+   }
+  },
+  {
+   "case": {
+    "p": "窄V带轮 基准直径40 内径12 槽数5 Z型",
+    "kind": "vbelt_pulley",
+    "want": {
+     "grooves": 5,
+     "groove_type": "Z",
+     "bore_d": 12.0
+    },
+    "generated_in_round": 2
+   },
+   "pass": true,
+   "fails": [],
+   "info": {
+    "ok": true,
+    "kinds": [
+     "vbelt_pulley"
+    ],
+    "warnings": [
+     "5 个 Z 型槽的标准槽间距 e=12 mm，轮缘宽度至少需 60.5144 mm；已按标准取 60.5144 mm（原输入的 55.353 mm 不足，强行压缩会使相邻槽干涉）"
+    ],
+    "steps": 10
+   }
+  },
+  {
+   "case": {
+    "p": "多槽带轮 6槽 A型 内径12 基准直径71",
+    "kind": "vbelt_pulley",
+    "want": {
+     "grooves": 6,
+     "groove_type": "A",
+     "bore_d": 12.0
+    },
+    "generated_in_round": 2
+   },
+   "pass": true,
+   "fails": [],
+   "info": {
+    "ok": true,
+    "kinds": [
+     "vbelt_pulley"
+    ],
+    "warnings": [
+     "6 个 A 型槽的标准槽间距 e=15 mm，轮缘宽度至少需 91.3197 mm；已按标准取 91.3197 mm（原输入的 84.3185 mm 不足，强行压缩会使相邻槽干涉）"
+    ],
+    "steps": 10
+   }
+  },
+  {
+   "case": {
+    "p": "V带轮 基准直径106 内径25 轮宽40 槽数1 槽型B",
+    "kind": "vbelt_pulley",
+    "want": {
+     "grooves": 1,
+     "groove_type": "B",
+     "bore_d": 25
+    },
+    "generated_in_round": 2
+   },
+   "pass": true,
+   "fails": [],
+   "info": {
+    "ok": true,
+    "kinds": [
+     "vbelt_pulley"
+    ],
+    "warnings": [],
+    "steps": 10
+   }
+  },
+  {
+   "case": {
+    "p": "皮带轮 内径55 基准直径123 宽度40 2个槽 C型",
+    "kind": "vbelt_pulley",
+    "want": {
+     "grooves": 2,
+     "groove_type": "C",
+     "bore_d": 55
+    },
+    "generated_in_round": 2
+   },
+   "pass": true,
+   "fails": [],
+   "info": {
+    "ok": true,
+    "kinds": [
+     "vbelt_pulley"
+    ],
+    "warnings": [
+     "2 个 C 型槽的标准槽间距 e=25.5 mm，轮缘宽度至少需 53.7927 mm；已按标准取 53.7927 mm（原输入的 41.3808 mm 不足，强行压缩会使相邻槽干涉）"
+    ],
+    "steps": 11
+   }
+  },
+  {
+   "case": {
+    "p": "多楔带轮 基准直径143 内径25 槽数3 D型",
+    "kind": "vbelt_pulley",
+    "want": {
+     "grooves": 3,
+     "groove_type": "D",
+     "bore_d": 25
+    },
+    "generated_in_round": 2
+   },
+   "pass": true,
+   "fails": [],
+   "info": {
+    "ok": true,
+    "kinds": [
+     "vbelt_pulley"
+    ],
+    "warnings": [
+     "3 个 D 型槽的标准槽间距 e=37 mm，轮缘宽度至少需 113.932 mm；已按标准取 113.932 mm（原输入的 95.7363 mm 不足，强行压缩会使相邻槽干涉）"
+    ],
+    "steps": 10
+   }
+  },
+  {
+   "case": {
+    "p": "V带轮 基准直径143 内径12 槽数5 E型",
+    "kind": "vbelt_pulley",
+    "want": {
+     "grooves": 5,
+     "groove_type": "E",
+     "bore_d": 12
+    },
+    "generated_in_round": 3
+   },
+   "pass": true,
+   "fails": [],
+   "info": {
+    "ok": true,
+    "kinds": [
+     "vbelt_pulley"
+    ],
+    "warnings": [
+     "5 个 E 型槽的标准槽间距 e=44.5 mm，轮缘宽度至少需 225.206 mm；已按标准取 225.206 mm（原输入的 203.762 mm 不足，强行压缩会使相邻槽干涉）"
+    ],
+    "steps": 10
+   }
+  },
+  {
+   "case": {
+    "p": "皮带轮 6槽 Y型 内径30 基准直径163",
+    "kind": "vbelt_pulley",
+    "want": {
+     "grooves": 6,
+     "groove_type": "Y",
+     "bore_d": 30
+    },
+    "generated_in_round": 3
+   },
+   "pass": true,
+   "fails": [],
+   "info": {
+    "ok": true,
+    "kinds": [
+     "vbelt_pulley"
+    ],
+    "warnings": [
+     "6 个 Y 型槽的标准槽间距 e=8 mm，轮缘宽度至少需 48.3542 mm；已按标准取 48.3542 mm（原输入的 44.2603 mm 不足，强行压缩会使相邻槽干涉）"
+    ],
+    "steps": 10
+   }
+  },
+  {
+   "case": {
+    "p": "多楔带轮 基准直径20 内径12 轮宽40 槽数1 槽型Z",
+    "kind": "vbelt_pulley",
+    "want": {
+     "grooves": 1,
+     "groove_type": "Z",
+     "bore_d": 12
+    },
+    "generated_in_round": 3
+   },
+   "pass": true,
+   "fails": [],
+   "info": {
+    "ok": true,
+    "kinds": [
+     "vbelt_pulley"
+    ],
+    "warnings": [],
+    "steps": 10
+   }
+  },
+  {
+   "case": {
+    "p": "窄V带轮 内径30 基准直径112 宽度40 2个槽 A型",
+    "kind": "vbelt_pulley",
+    "want": {
+     "grooves": 2,
+     "groove_type": "A",
+     "bore_d": 30
+    },
+    "generated_in_round": 3
+   },
+   "pass": true,
+   "fails": [],
+   "info": {
+    "ok": true,
+    "kinds": [
+     "vbelt_pulley"
+    ],
+    "warnings": [
+     "2 个 A 型槽的标准槽间距 e=15 mm，轮缘宽度至少需 31.3197 mm；已按标准取 31.3197 mm（原输入的 24.3185 mm 不足，强行压缩会使相邻槽干涉）"
+    ],
+    "steps": 11
+   }
+  },
+  {
+   "case": {
+    "p": "多槽带轮 基准直径75 内径12 槽数3 B型",
+    "kind": "vbelt_pulley",
+    "want": {
+     "grooves": 3,
+     "groove_type": "B",
+     "bore_d": 12
+    },
+    "generated_in_round": 3
+   },
+   "pass": true,
+   "fails": [],
+   "info": {
+    "ok": true,
+    "kinds": [
+     "vbelt_pulley"
+    ],
+    "warnings": [
+     "3 个 B 型槽的标准槽间距 e=19 mm，轮缘宽度至少需 58.6038 mm；已按标准取 58.6038 mm（原输入的 49.8599 mm 不足，强行压缩会使相邻槽干涉）"
+    ],
+    "steps": 10
+   }
+  },
+  {
+   "case": {
+    "p": "V带轮 4槽 C型 内径30 基准直径83",
+    "kind": "vbelt_pulley",
+    "want": {
+     "grooves": 4,
+     "groove_type": "C",
+     "bore_d": 30
+    },
+    "generated_in_round": 3
+   },
+   "pass": true,
+   "fails": [],
+   "info": {
+    "ok": true,
+    "kinds": [
+     "vbelt_pulley"
+    ],
+    "warnings": [
+     "4 个 C 型槽的标准槽间距 e=25.5 mm，轮缘宽度至少需 104.244 mm；已按标准取 104.244 mm（原输入的 92.565 mm 不足，强行压缩会使相邻槽干涉）"
+    ],
+    "steps": 10
+   }
+  },
+  {
+   "case": {
+    "p": "皮带轮 基准直径103 内径12 轮宽40 槽数5 槽型D",
+    "kind": "vbelt_pulley",
+    "want": {
+     "grooves": 5,
+     "groove_type": "D",
+     "bore_d": 12
+    },
+    "generated_in_round": 3
+   },
+   "pass": true,
+   "fails": [],
+   "info": {
+    "ok": true,
+    "kinds": [
+     "vbelt_pulley"
+    ],
+    "warnings": [
+     "5 个 D 型槽的标准槽间距 e=37 mm，轮缘宽度至少需 187.168 mm；已按标准取 187.168 mm（原输入的 40 mm 不足，强行压缩会使相邻槽干涉）"
+    ],
+    "steps": 10
+   }
+  },
+  {
+   "case": {
+    "p": "多楔带轮 内径30 基准直径123 宽度40 6个槽 E型",
+    "kind": "vbelt_pulley",
+    "want": {
+     "grooves": 6,
+     "groove_type": "E",
+     "bore_d": 30
+    },
+    "generated_in_round": 3
+   },
+   "pass": true,
+   "fails": [],
+   "info": {
+    "ok": true,
+    "kinds": [
+     "vbelt_pulley"
+    ],
+    "warnings": [
+     "6 个 E 型槽的标准槽间距 e=44.5 mm，轮缘宽度至少需 269.706 mm；已按标准取 269.706 mm（原输入的 248.262 mm 不足，强行压缩会使相邻槽干涉）"
+    ],
+    "steps": 11
+   }
+  },
+  {
+   "case": {
+    "p": "窄V带轮 基准直径143 内径12 槽数1 Y型",
+    "kind": "vbelt_pulley",
+    "want": {
+     "grooves": 1,
+     "groove_type": "Y",
+     "bore_d": 12
+    },
+    "generated_in_round": 3
+   },
+   "pass": true,
+   "fails": [],
+   "info": {
+    "ok": true,
+    "kinds": [
+     "vbelt_pulley"
+    ],
+    "warnings": [
+     "1 个 Y 型槽的标准槽间距 e=8 mm，轮缘宽度至少需 8.35425 mm；已按标准取 8.35425 mm（原输入的 4.26026 mm 不足，强行压缩会使相邻槽干涉）"
+    ],
+    "steps": 10
+   }
+  },
+  {
+   "case": {
+    "p": "多槽带轮 2槽 Z型 内径30 基准直径125",
+    "kind": "vbelt_pulley",
+    "want": {
+     "grooves": 2,
+     "groove_type": "Z",
+     "bore_d": 30
+    },
+    "generated_in_round": 3
+   },
+   "pass": true,
+   "fails": [],
+   "info": {
+    "ok": true,
+    "kinds": [
+     "vbelt_pulley"
+    ],
+    "warnings": [
+     "2 个 Z 型槽的标准槽间距 e=12 mm，轮缘宽度至少需 25.0489 mm；已按标准取 25.0489 mm（原输入的 19.2003 mm 不足，强行压缩会使相邻槽干涉）"
+    ],
+    "steps": 10
+   }
+  },
+  {
+   "case": {
+    "p": "V带轮 基准直径75 内径12 轮宽40 槽数3 槽型A",
+    "kind": "vbelt_pulley",
+    "want": {
+     "grooves": 3,
+     "groove_type": "A",
+     "bore_d": 12
+    },
+    "generated_in_round": 3
+   },
+   "pass": true,
+   "fails": [],
+   "info": {
+    "ok": true,
+    "kinds": [
+     "vbelt_pulley"
+    ],
+    "warnings": [
+     "3 个 A 型槽的标准槽间距 e=15 mm，轮缘宽度至少需 46.3197 mm；已按标准取 46.3197 mm（原输入的 40 mm 不足，强行压缩会使相邻槽干涉）"
+    ],
+    "steps": 10
+   }
+  },
+  {
+   "case": {
+    "p": "皮带轮 内径30 基准直径100 宽度40 4个槽 B型",
+    "kind": "vbelt_pulley",
+    "want": {
+     "grooves": 4,
+     "groove_type": "B",
+     "bore_d": 30
+    },
+    "generated_in_round": 3
+   },
+   "pass": true,
+   "fails": [],
+   "info": {
+    "ok": true,
+    "kinds": [
+     "vbelt_pulley"
+    ],
+    "warnings": [
+     "4 个 B 型槽的标准槽间距 e=19 mm，轮缘宽度至少需 77.6038 mm；已按标准取 77.6038 mm（原输入的 68.8599 mm 不足，强行压缩会使相邻槽干涉）"
+    ],
+    "steps": 11
+   }
+  },
+  {
+   "case": {
+    "p": "V带轮 4槽 C型 内径12 基准直径83",
+    "kind": "vbelt_pulley",
+    "want": {
+     "grooves": 4,
+     "groove_type": "C",
+     "bore_d": 12.0
+    },
+    "generated_in_round": 2
+   },
+   "pass": true,
+   "fails": [],
+   "info": {
+    "ok": true,
+    "kinds": [
+     "vbelt_pulley"
+    ],
+    "warnings": [
+     "4 个 C 型槽的标准槽间距 e=25.5 mm，轮缘宽度至少需 104.244 mm；已按标准取 104.244 mm（原输入的 92.565 mm 不足，强行压缩会使相邻槽干涉）"
+    ],
+    "steps": 10
+   }
+  },
+  {
+   "case": {
+    "p": "皮带轮 基准直径103 内径25 轮宽40 槽数5 槽型D",
+    "kind": "vbelt_pulley",
+    "want": {
+     "grooves": 5,
+     "groove_type": "D",
+     "bore_d": 25
+    },
+    "generated_in_round": 2
+   },
+   "pass": true,
+   "fails": [],
+   "info": {
+    "ok": true,
+    "kinds": [
+     "vbelt_pulley"
+    ],
+    "warnings": [
+     "5 个 D 型槽的标准槽间距 e=37 mm，轮缘宽度至少需 187.168 mm；已按标准取 187.168 mm（原输入的 40 mm 不足，强行压缩会使相邻槽干涉）"
+    ],
+    "steps": 10
+   }
+  },
+  {
+   "case": {
+    "p": "多楔带轮 内径55 基准直径123 宽度40 6个槽 E型",
+    "kind": "vbelt_pulley",
+    "want": {
+     "grooves": 6,
+     "groove_type": "E",
+     "bore_d": 55
+    },
+    "generated_in_round": 2
+   },
+   "pass": true,
+   "fails": [],
+   "info": {
+    "ok": true,
+    "kinds": [
+     "vbelt_pulley"
+    ],
+    "warnings": [
+     "6 个 E 型槽的标准槽间距 e=44.5 mm，轮缘宽度至少需 269.706 mm；已按标准取 269.706 mm（原输入的 248.262 mm 不足，强行压缩会使相邻槽干涉）"
+    ],
+    "steps": 11
+   }
+  },
+  {
+   "case": {
+    "p": "窄V带轮 基准直径143 内径25 槽数1 Y型",
+    "kind": "vbelt_pulley",
+    "want": {
+     "grooves": 1,
+     "groove_type": "Y",
+     "bore_d": 25
+    },
+    "generated_in_round": 2
+   },
+   "pass": true,
+   "fails": [],
+   "info": {
+    "ok": true,
+    "kinds": [
+     "vbelt_pulley"
+    ],
+    "warnings": [
+     "1 个 Y 型槽的标准槽间距 e=8 mm，轮缘宽度至少需 8.35425 mm；已按标准取 8.35425 mm（原输入的 4.26026 mm 不足，强行压缩会使相邻槽干涉）"
+    ],
+    "steps": 10
+   }
+  },
+  {
+   "case": {
+    "p": "多槽带轮 2槽 Z型 内径55 基准直径100",
+    "kind": "vbelt_pulley",
+    "want": {
+     "grooves": 2,
+     "groove_type": "Z",
+     "bore_d": 55
+    },
+    "generated_in_round": 2
+   },
+   "pass": true,
+   "fails": [],
+   "info": {
+    "ok": true,
+    "kinds": [
+     "vbelt_pulley"
+    ],
+    "warnings": [
+     "2 个 Z 型槽的标准槽间距 e=12 mm，轮缘宽度至少需 24.7802 mm；已按标准取 24.7802 mm（原输入的 19.2771 mm 不足，强行压缩会使相邻槽干涉）"
+    ],
+    "steps": 10
+   }
+  },
+  {
+   "case": {
+    "p": "V带轮 基准直径118 内径25 轮宽40 槽数3 槽型A",
+    "kind": "vbelt_pulley",
+    "want": {
+     "grooves": 3,
+     "groove_type": "A",
+     "bore_d": 25
+    },
+    "generated_in_round": 2
+   },
+   "pass": true,
+   "fails": [],
+   "info": {
+    "ok": true,
+    "kinds": [
+     "vbelt_pulley"
+    ],
+    "warnings": [
+     "3 个 A 型槽的标准槽间距 e=15 mm，轮缘宽度至少需 46.3197 mm；已按标准取 46.3197 mm（原输入的 40 mm 不足，强行压缩会使相邻槽干涉）"
+    ],
+    "steps": 10
+   }
+  },
+  {
+   "case": {
+    "p": "皮带轮 内径55 基准直径100 宽度40 4个槽 B型",
+    "kind": "vbelt_pulley",
+    "want": {
+     "grooves": 4,
+     "groove_type": "B",
+     "bore_d": 55
+    },
+    "generated_in_round": 2
+   },
+   "pass": true,
+   "fails": [],
+   "info": {
+    "ok": true,
+    "kinds": [
+     "vbelt_pulley"
+    ],
+    "warnings": [
+     "4 个 B 型槽的标准槽间距 e=19 mm，轮缘宽度至少需 77.6038 mm；已按标准取 77.6038 mm（原输入的 68.8599 mm 不足，强行压缩会使相邻槽干涉）"
+    ],
+    "steps": 11
+   }
+  },
+  {
+   "case": {
+    "p": "多楔带轮 基准直径63 内径25 槽数5 C型",
+    "kind": "vbelt_pulley",
+    "want": {
+     "grooves": 5,
+     "groove_type": "C",
+     "bore_d": 25
+    },
+    "generated_in_round": 2
+   },
+   "pass": true,
+   "fails": [],
+   "info": {
+    "ok": true,
+    "kinds": [
+     "vbelt_pulley"
+    ],
+    "warnings": [
+     "5 个 C 型槽的标准槽间距 e=25.5 mm，轮缘宽度至少需 129.744 mm；已按标准取 129.744 mm（原输入的 118.065 mm 不足，强行压缩会使相邻槽干涉）"
+    ],
+    "steps": 10
+   }
+  },
+  {
+   "case": {
+    "p": "窄V带轮 6槽 D型 内径12 基准直径83",
+    "kind": "vbelt_pulley",
+    "want": {
+     "grooves": 6,
+     "groove_type": "D",
+     "bore_d": 12.0
+    },
+    "generated_in_round": 2
+   },
+   "pass": true,
+   "fails": [],
+   "info": {
+    "ok": true,
+    "kinds": [
+     "vbelt_pulley"
+    ],
+    "warnings": [
+     "6 个 D 型槽的标准槽间距 e=37 mm，轮缘宽度至少需 224.168 mm；已按标准取 224.168 mm（原输入的 207.047 mm 不足，强行压缩会使相邻槽干涉）"
+    ],
+    "steps": 10
+   }
+  },
+  {
+   "case": {
+    "p": "多槽带轮 基准直径103 内径25 轮宽40 槽数1 槽型E",
+    "kind": "vbelt_pulley",
+    "want": {
+     "grooves": 1,
+     "groove_type": "E",
+     "bore_d": 25
+    },
+    "generated_in_round": 2
+   },
+   "pass": true,
+   "fails": [],
+   "info": {
+    "ok": true,
+    "kinds": [
+     "vbelt_pulley"
+    ],
+    "warnings": [
+     "1 个 E 型槽的标准槽间距 e=44.5 mm，轮缘宽度至少需 46.3082 mm；已按标准取 46.3082 mm（原输入的 40 mm 不足，强行压缩会使相邻槽干涉）"
+    ],
+    "steps": 10
+   }
+  },
+  {
+   "case": {
+    "p": "V带轮 内径55 基准直径123 宽度40 2个槽 Y型",
+    "kind": "vbelt_pulley",
+    "want": {
+     "grooves": 2,
+     "groove_type": "Y",
+     "bore_d": 55
+    },
+    "generated_in_round": 2
+   },
+   "pass": true,
+   "fails": [],
+   "info": {
+    "ok": true,
+    "kinds": [
+     "vbelt_pulley"
+    ],
+    "warnings": [
+     "2 个 Y 型槽的标准槽间距 e=8 mm，轮缘宽度至少需 16.3542 mm；已按标准取 16.3542 mm（原输入的 12.2603 mm 不足，强行压缩会使相邻槽干涉）"
+    ],
+    "steps": 11
+   }
+  },
+  {
+   "case": {
+    "p": "皮带轮 基准直径90 内径25 槽数3 Z型",
+    "kind": "vbelt_pulley",
+    "want": {
+     "grooves": 3,
+     "groove_type": "Z",
+     "bore_d": 25
+    },
+    "generated_in_round": 2
+   },
+   "pass": true,
+   "fails": [],
+   "info": {
+    "ok": true,
+    "kinds": [
+     "vbelt_pulley"
+    ],
+    "warnings": [
+     "3 个 Z 型槽的标准槽间距 e=12 mm，轮缘宽度至少需 36.7802 mm；已按标准取 36.7802 mm（原输入的 31.2771 mm 不足，强行压缩会使相邻槽干涉）"
+    ],
+    "steps": 10
+   }
+  },
+  {
+   "case": {
+    "p": "多槽带轮 基准直径85 内径12 槽数5 A型",
+    "kind": "vbelt_pulley",
+    "want": {
+     "grooves": 5,
+     "groove_type": "A",
+     "bore_d": 12
+    },
+    "generated_in_round": 3
+   },
+   "pass": true,
+   "fails": [],
+   "info": {
+    "ok": true,
+    "kinds": [
+     "vbelt_pulley"
+    ],
+    "warnings": [
+     "5 个 A 型槽的标准槽间距 e=15 mm，轮缘宽度至少需 76.3197 mm；已按标准取 76.3197 mm（原输入的 69.3185 mm 不足，强行压缩会使相邻槽干涉）"
+    ],
+    "steps": 10
+   }
+  },
+  {
+   "case": {
+    "p": "V带轮 6槽 B型 内径30 基准直径125",
+    "kind": "vbelt_pulley",
+    "want": {
+     "grooves": 6,
+     "groove_type": "B",
+     "bore_d": 30
+    },
+    "generated_in_round": 3
+   },
+   "pass": true,
+   "fails": [],
+   "info": {
+    "ok": true,
+    "kinds": [
+     "vbelt_pulley"
+    ],
+    "warnings": [
+     "6 个 B 型槽的标准槽间距 e=19 mm，轮缘宽度至少需 116.018 mm；已按标准取 116.018 mm（原输入的 106.726 mm 不足，强行压缩会使相邻槽干涉）"
+    ],
+    "steps": 10
+   }
+  },
+  {
+   "case": {
+    "p": "皮带轮 基准直径183 内径12 轮宽40 槽数1 槽型C",
+    "kind": "vbelt_pulley",
+    "want": {
+     "grooves": 1,
+     "groove_type": "C",
+     "bore_d": 12
+    },
+    "generated_in_round": 3
+   },
+   "pass": true,
+   "fails": [],
+   "info": {
+    "ok": true,
+    "kinds": [
+     "vbelt_pulley"
+    ],
+    "warnings": [],
+    "steps": 10
+   }
+  },
+  {
+   "case": {
+    "p": "多楔带轮 内径30 基准直径203 宽度40 2个槽 D型",
+    "kind": "vbelt_pulley",
+    "want": {
+     "grooves": 2,
+     "groove_type": "D",
+     "bore_d": 30
+    },
+    "generated_in_round": 3
+   },
+   "pass": true,
+   "fails": [],
+   "info": {
+    "ok": true,
+    "kinds": [
+     "vbelt_pulley"
+    ],
+    "warnings": [
+     "2 个 D 型槽的标准槽间距 e=37 mm，轮缘宽度至少需 77.7042 mm；已按标准取 77.7042 mm（原输入的 58.4219 mm 不足，强行压缩会使相邻槽干涉）"
+    ],
+    "steps": 11
+   }
+  },
+  {
+   "case": {
+    "p": "窄V带轮 基准直径63 内径12 槽数3 E型",
+    "kind": "vbelt_pulley",
+    "want": {
+     "grooves": 3,
+     "groove_type": "E",
+     "bore_d": 12
+    },
+    "generated_in_round": 3
+   },
+   "pass": true,
+   "fails": [],
+   "info": {
+    "ok": true,
+    "kinds": [
+     "vbelt_pulley"
+    ],
+    "warnings": [
+     "3 个 E 型槽的标准槽间距 e=44.5 mm，轮缘宽度至少需 135.308 mm；已按标准取 135.308 mm（原输入的 115.13 mm 不足，强行压缩会使相邻槽干涉）"
+    ],
+    "steps": 10
+   }
+  },
+  {
+   "case": {
+    "p": "多槽带轮 4槽 Y型 内径30 基准直径83",
+    "kind": "vbelt_pulley",
+    "want": {
+     "grooves": 4,
+     "groove_type": "Y",
+     "bore_d": 30
+    },
+    "generated_in_round": 3
+   },
+   "pass": true,
+   "fails": [],
+   "info": {
+    "ok": true,
+    "kinds": [
+     "vbelt_pulley"
+    ],
+    "warnings": [
+     "4 个 Y 型槽的标准槽间距 e=8 mm，轮缘宽度至少需 32.1739 mm；已按标准取 32.1739 mm（原输入的 28.3217 mm 不足，强行压缩会使相邻槽干涉）"
+    ],
+    "steps": 10
+   }
+  },
+  {
+   "case": {
+    "p": "V带轮 基准直径50 内径12 轮宽40 槽数5 槽型Z",
+    "kind": "vbelt_pulley",
+    "want": {
+     "grooves": 5,
+     "groove_type": "Z",
+     "bore_d": 12
+    },
+    "generated_in_round": 3
+   },
+   "pass": true,
+   "fails": [],
+   "info": {
+    "ok": true,
+    "kinds": [
+     "vbelt_pulley"
+    ],
+    "warnings": [
+     "5 个 Z 型槽的标准槽间距 e=12 mm，轮缘宽度至少需 60.5144 mm；已按标准取 60.5144 mm（原输入的 40 mm 不足，强行压缩会使相邻槽干涉）"
+    ],
+    "steps": 10
+   }
+  },
+  {
+   "case": {
+    "p": "皮带轮 内径30 基准直径125 宽度40 6个槽 A型",
+    "kind": "vbelt_pulley",
+    "want": {
+     "grooves": 6,
+     "groove_type": "A",
+     "bore_d": 30
+    },
+    "generated_in_round": 3
+   },
+   "pass": true,
+   "fails": [],
+   "info": {
+    "ok": true,
+    "kinds": [
+     "vbelt_pulley"
+    ],
+    "warnings": [
+     "6 个 A 型槽的标准槽间距 e=15 mm，轮缘宽度至少需 91.6536 mm；已按标准取 91.6536 mm（原输入的 84.2129 mm 不足，强行压缩会使相邻槽干涉）"
+    ],
+    "steps": 11
+   }
+  },
+  {
+   "case": {
+    "p": "多楔带轮 基准直径95 内径12 槽数1 B型",
+    "kind": "vbelt_pulley",
+    "want": {
+     "grooves": 1,
+     "groove_type": "B",
+     "bore_d": 12
+    },
+    "generated_in_round": 3
+   },
+   "pass": true,
+   "fails": [],
+   "info": {
+    "ok": true,
+    "kinds": [
+     "vbelt_pulley"
+    ],
+    "warnings": [
+     "1 个 B 型槽的标准槽间距 e=19 mm，轮缘宽度至少需 20.6038 mm；已按标准取 20.6038 mm（原输入的 11.8599 mm 不足，强行压缩会使相邻槽干涉）"
+    ],
+    "steps": 10
+   }
+  },
+  {
+   "case": {
+    "p": "窄V带轮 2槽 C型 内径30 基准直径163",
+    "kind": "vbelt_pulley",
+    "want": {
+     "grooves": 2,
+     "groove_type": "C",
+     "bore_d": 30
+    },
+    "generated_in_round": 3
+   },
+   "pass": true,
+   "fails": [],
+   "info": {
+    "ok": true,
+    "kinds": [
+     "vbelt_pulley"
+    ],
+    "warnings": [
+     "2 个 C 型槽的标准槽间距 e=25.5 mm，轮缘宽度至少需 53.7927 mm；已按标准取 53.7927 mm（原输入的 41.3808 mm 不足，强行压缩会使相邻槽干涉）"
+    ],
+    "steps": 10
+   }
+  },
+  {
+   "case": {
+    "p": "多槽带轮 基准直径183 内径12 轮宽40 槽数3 槽型D",
+    "kind": "vbelt_pulley",
+    "want": {
+     "grooves": 3,
+     "groove_type": "D",
+     "bore_d": 12
+    },
+    "generated_in_round": 3
+   },
+   "pass": true,
+   "fails": [],
+   "info": {
+    "ok": true,
+    "kinds": [
+     "vbelt_pulley"
+    ],
+    "warnings": [
+     "3 个 D 型槽的标准槽间距 e=37 mm，轮缘宽度至少需 113.932 mm；已按标准取 113.932 mm（原输入的 40 mm 不足，强行压缩会使相邻槽干涉）"
+    ],
+    "steps": 10
+   }
+  },
+  {
+   "case": {
+    "p": "V带轮 内径30 基准直径203 宽度40 4个槽 E型",
+    "kind": "vbelt_pulley",
+    "want": {
+     "grooves": 4,
+     "groove_type": "E",
+     "bore_d": 30
+    },
+    "generated_in_round": 3
+   },
+   "pass": true,
+   "fails": [],
+   "info": {
+    "ok": true,
+    "kinds": [
+     "vbelt_pulley"
+    ],
+    "warnings": [
+     "4 个 E 型槽的标准槽间距 e=44.5 mm，轮缘宽度至少需 181.615 mm；已按标准取 181.615 mm（原输入的 158.889 mm 不足，强行压缩会使相邻槽干涉）"
+    ],
+    "steps": 11
+   }
+  },
+  {
+   "case": {
+    "p": "多槽带轮 4槽 Y型 内径12 基准直径83",
+    "kind": "vbelt_pulley",
+    "want": {
+     "grooves": 4,
+     "groove_type": "Y",
+     "bore_d": 12.0
+    },
+    "generated_in_round": 2
+   },
+   "pass": true,
+   "fails": [],
+   "info": {
+    "ok": true,
+    "kinds": [
+     "vbelt_pulley"
+    ],
+    "warnings": [
+     "4 个 Y 型槽的标准槽间距 e=8 mm，轮缘宽度至少需 32.1739 mm；已按标准取 32.1739 mm（原输入的 28.3217 mm 不足，强行压缩会使相邻槽干涉）"
+    ],
+    "steps": 10
+   }
+  },
+  {
+   "case": {
+    "p": "V带轮 基准直径40 内径12 轮宽40 槽数5 槽型Z",
+    "kind": "vbelt_pulley",
+    "want": {
+     "grooves": 5,
+     "groove_type": "Z",
+     "bore_d": 12.0
+    },
+    "generated_in_round": 2
+   },
+   "pass": true,
+   "fails": [],
+   "info": {
+    "ok": true,
+    "kinds": [
+     "vbelt_pulley"
+    ],
+    "warnings": [
+     "5 个 Z 型槽的标准槽间距 e=12 mm，轮缘宽度至少需 60.5144 mm；已按标准取 60.5144 mm（原输入的 40 mm 不足，强行压缩会使相邻槽干涉）"
+    ],
+    "steps": 10
+   }
+  },
+  {
+   "case": {
+    "p": "皮带轮 内径12 基准直径90 宽度40 6个槽 A型",
+    "kind": "vbelt_pulley",
+    "want": {
+     "grooves": 6,
+     "groove_type": "A",
+     "bore_d": 12.0
+    },
+    "generated_in_round": 2
+   },
+   "pass": true,
+   "fails": [],
+   "info": {
+    "ok": true,
+    "kinds": [
+     "vbelt_pulley"
+    ],
+    "warnings": [
+     "6 个 A 型槽的标准槽间距 e=15 mm，轮缘宽度至少需 91.3197 mm；已按标准取 91.3197 mm（原输入的 84.3185 mm 不足，强行压缩会使相邻槽干涉）"
+    ],
+    "steps": 11
+   }
+  },
+  {
+   "case": {
+    "p": "多楔带轮 基准直径95 内径25 槽数1 B型",
+    "kind": "vbelt_pulley",
+    "want": {
+     "grooves": 1,
+     "groove_type": "B",
+     "bore_d": 25
+    },
+    "generated_in_round": 2
+   },
+   "pass": true,
+   "fails": [],
+   "info": {
+    "ok": true,
+    "kinds": [
+     "vbelt_pulley"
+    ],
+    "warnings": [
+     "1 个 B 型槽的标准槽间距 e=19 mm，轮缘宽度至少需 20.6038 mm；已按标准取 20.6038 mm（原输入的 11.8599 mm 不足，强行压缩会使相邻槽干涉）"
+    ],
+    "steps": 10
+   }
+  },
+  {
+   "case": {
+    "p": "窄V带轮 2槽 C型 内径55 基准直径163",
+    "kind": "vbelt_pulley",
+    "want": {
+     "grooves": 2,
+     "groove_type": "C",
+     "bore_d": 55
+    },
+    "generated_in_round": 2
+   },
+   "pass": true,
+   "fails": [],
+   "info": {
+    "ok": true,
+    "kinds": [
+     "vbelt_pulley"
+    ],
+    "warnings": [
+     "2 个 C 型槽的标准槽间距 e=25.5 mm，轮缘宽度至少需 53.7927 mm；已按标准取 53.7927 mm（原输入的 41.3808 mm 不足，强行压缩会使相邻槽干涉）"
+    ],
+    "steps": 10
+   }
+  },
+  {
+   "case": {
+    "p": "多槽带轮 基准直径183 内径25 轮宽40 槽数3 槽型D",
+    "kind": "vbelt_pulley",
+    "want": {
+     "grooves": 3,
+     "groove_type": "D",
+     "bore_d": 25
+    },
+    "generated_in_round": 2
+   },
+   "pass": true,
+   "fails": [],
+   "info": {
+    "ok": true,
+    "kinds": [
+     "vbelt_pulley"
+    ],
+    "warnings": [
+     "3 个 D 型槽的标准槽间距 e=37 mm，轮缘宽度至少需 113.932 mm；已按标准取 113.932 mm（原输入的 40 mm 不足，强行压缩会使相邻槽干涉）"
+    ],
+    "steps": 10
+   }
+  },
+  {
+   "case": {
+    "p": "V带轮 内径55 基准直径203 宽度40 4个槽 E型",
+    "kind": "vbelt_pulley",
+    "want": {
+     "grooves": 4,
+     "groove_type": "E",
+     "bore_d": 55
+    },
+    "generated_in_round": 2
+   },
+   "pass": true,
+   "fails": [],
+   "info": {
+    "ok": true,
+    "kinds": [
+     "vbelt_pulley"
+    ],
+    "warnings": [
+     "4 个 E 型槽的标准槽间距 e=44.5 mm，轮缘宽度至少需 181.615 mm；已按标准取 181.615 mm（原输入的 158.889 mm 不足，强行压缩会使相邻槽干涉）"
+    ],
+    "steps": 11
+   }
+  },
+  {
+   "case": {
+    "p": "皮带轮 基准直径63 内径25 槽数5 Y型",
+    "kind": "vbelt_pulley",
+    "want": {
+     "grooves": 5,
+     "groove_type": "Y",
+     "bore_d": 25
+    },
+    "generated_in_round": 2
+   },
+   "pass": true,
+   "fails": [],
+   "info": {
+    "ok": true,
+    "kinds": [
+     "vbelt_pulley"
+    ],
+    "warnings": [
+     "5 个 Y 型槽的标准槽间距 e=8 mm，轮缘宽度至少需 40.1739 mm；已按标准取 40.1739 mm（原输入的 36.3217 mm 不足，强行压缩会使相邻槽干涉）"
+    ],
+    "steps": 10
+   }
+  },
+  {
+   "case": {
+    "p": "多楔带轮 6槽 Z型 内径12 基准直径35.5",
+    "kind": "vbelt_pulley",
+    "want": {
+     "grooves": 6,
+     "groove_type": "Z",
+     "bore_d": 12.0
+    },
+    "generated_in_round": 2
+   },
+   "pass": true,
+   "fails": [],
+   "info": {
+    "ok": true,
+    "kinds": [
+     "vbelt_pulley"
+    ],
+    "warnings": [
+     "6 个 Z 型槽的标准槽间距 e=12 mm，轮缘宽度至少需 72.5144 mm；已按标准取 72.5144 mm（原输入的 67.353 mm 不足，强行压缩会使相邻槽干涉）"
+    ],
+    "steps": 10
+   }
+  },
+  {
+   "case": {
+    "p": "窄V带轮 基准直径50 内径25 轮宽40 槽数1 槽型A",
+    "kind": "vbelt_pulley",
+    "want": {
+     "grooves": 1,
+     "groove_type": "A",
+     "bore_d": 25
+    },
+    "generated_in_round": 2
+   },
+   "pass": true,
+   "fails": [],
+   "info": {
+    "ok": true,
+    "kinds": [
+     "vbelt_pulley"
+    ],
+    "warnings": [],
+    "steps": 10
+   }
+  },
+  {
+   "case": {
+    "p": "多槽带轮 内径55 基准直径125 宽度40 2个槽 B型",
+    "kind": "vbelt_pulley",
+    "want": {
+     "grooves": 2,
+     "groove_type": "B",
+     "bore_d": 55
+    },
+    "generated_in_round": 2
+   },
+   "pass": true,
+   "fails": [],
+   "info": {
+    "ok": true,
+    "kinds": [
+     "vbelt_pulley"
+    ],
+    "warnings": [
+     "2 个 B 型槽的标准槽间距 e=19 mm，轮缘宽度至少需 40.0183 mm；已按标准取 40.0183 mm（原输入的 30.7256 mm 不足，强行压缩会使相邻槽干涉）"
+    ],
+    "steps": 11
+   }
+  },
+  {
+   "case": {
+    "p": "V带轮 基准直径143 内径25 槽数3 C型",
+    "kind": "vbelt_pulley",
+    "want": {
+     "grooves": 3,
+     "groove_type": "C",
+     "bore_d": 25
+    },
+    "generated_in_round": 2
+   },
+   "pass": true,
+   "fails": [],
+   "info": {
+    "ok": true,
+    "kinds": [
+     "vbelt_pulley"
+    ],
+    "warnings": [
+     "3 个 C 型槽的标准槽间距 e=25.5 mm，轮缘宽度至少需 79.2927 mm；已按标准取 79.2927 mm（原输入的 66.8808 mm 不足，强行压缩会使相邻槽干涉）"
+    ],
+    "steps": 10
+   }
+  },
+  {
+   "case": {
+    "p": "窄V带轮 基准直径143 内径12 槽数5 D型",
+    "kind": "vbelt_pulley",
+    "want": {
+     "grooves": 5,
+     "groove_type": "D",
+     "bore_d": 12
+    },
+    "generated_in_round": 3
+   },
+   "pass": true,
+   "fails": [],
+   "info": {
+    "ok": true,
+    "kinds": [
+     "vbelt_pulley"
+    ],
+    "warnings": [
+     "5 个 D 型槽的标准槽间距 e=37 mm，轮缘宽度至少需 187.932 mm；已按标准取 187.932 mm（原输入的 169.736 mm 不足，强行压缩会使相邻槽干涉）"
+    ],
+    "steps": 10
+   }
+  },
+  {
+   "case": {
+    "p": "多槽带轮 6槽 E型 内径30 基准直径163",
+    "kind": "vbelt_pulley",
+    "want": {
+     "grooves": 6,
+     "groove_type": "E",
+     "bore_d": 30
+    },
+    "generated_in_round": 3
+   },
+   "pass": true,
+   "fails": [],
+   "info": {
+    "ok": true,
+    "kinds": [
+     "vbelt_pulley"
+    ],
+    "warnings": [
+     "6 个 E 型槽的标准槽间距 e=44.5 mm，轮缘宽度至少需 269.706 mm；已按标准取 269.706 mm（原输入的 248.262 mm 不足，强行压缩会使相邻槽干涉）"
+    ],
+    "steps": 10
+   }
+  },
+  {
+   "case": {
+    "p": "V带轮 基准直径183 内径12 轮宽40 槽数1 槽型Y",
+    "kind": "vbelt_pulley",
+    "want": {
+     "grooves": 1,
+     "groove_type": "Y",
+     "bore_d": 12
+    },
+    "generated_in_round": 3
+   },
+   "pass": true,
+   "fails": [],
+   "info": {
+    "ok": true,
+    "kinds": [
+     "vbelt_pulley"
+    ],
+    "warnings": [],
+    "steps": 10
+   }
+  },
+  {
+   "case": {
+    "p": "皮带轮 内径30 基准直径125 宽度40 2个槽 Z型",
+    "kind": "vbelt_pulley",
+    "want": {
+     "grooves": 2,
+     "groove_type": "Z",
+     "bore_d": 30
+    },
+    "generated_in_round": 3
+   },
+   "pass": true,
+   "fails": [],
+   "info": {
+    "ok": true,
+    "kinds": [
+     "vbelt_pulley"
+    ],
+    "warnings": [
+     "2 个 Z 型槽的标准槽间距 e=12 mm，轮缘宽度至少需 25.0489 mm；已按标准取 25.0489 mm（原输入的 19.2003 mm 不足，强行压缩会使相邻槽干涉）"
+    ],
+    "steps": 11
+   }
+  },
+  {
+   "case": {
+    "p": "多楔带轮 基准直径95 内径12 槽数3 A型",
+    "kind": "vbelt_pulley",
+    "want": {
+     "grooves": 3,
+     "groove_type": "A",
+     "bore_d": 12
+    },
+    "generated_in_round": 3
+   },
+   "pass": true,
+   "fails": [],
+   "info": {
+    "ok": true,
+    "kinds": [
+     "vbelt_pulley"
+    ],
+    "warnings": [
+     "3 个 A 型槽的标准槽间距 e=15 mm，轮缘宽度至少需 46.3197 mm；已按标准取 46.3197 mm（原输入的 39.3185 mm 不足，强行压缩会使相邻槽干涉）"
+    ],
+    "steps": 10
+   }
+  },
+  {
+   "case": {
+    "p": "窄V带轮 4槽 B型 内径30 基准直径90",
+    "kind": "vbelt_pulley",
+    "want": {
+     "grooves": 4,
+     "groove_type": "B",
+     "bore_d": 30
+    },
+    "generated_in_round": 3
+   },
+   "pass": true,
+   "fails": [],
+   "info": {
+    "ok": true,
+    "kinds": [
+     "vbelt_pulley"
+    ],
+    "warnings": [
+     "4 个 B 型槽的标准槽间距 e=19 mm，轮缘宽度至少需 77.6038 mm；已按标准取 77.6038 mm（原输入的 68.8599 mm 不足，强行压缩会使相邻槽干涉）"
+    ],
+    "steps": 10
+   }
+  },
+  {
+   "case": {
+    "p": "多槽带轮 基准直径103 内径12 轮宽40 槽数5 槽型C",
+    "kind": "vbelt_pulley",
+    "want": {
+     "grooves": 5,
+     "groove_type": "C",
+     "bore_d": 12
+    },
+    "generated_in_round": 3
+   },
+   "pass": true,
+   "fails": [],
+   "info": {
+    "ok": true,
+    "kinds": [
+     "vbelt_pulley"
+    ],
+    "warnings": [
+     "5 个 C 型槽的标准槽间距 e=25.5 mm，轮缘宽度至少需 129.744 mm；已按标准取 129.744 mm（原输入的 40 mm 不足，强行压缩会使相邻槽干涉）"
+    ],
+    "steps": 10
+   }
+  },
+  {
+   "case": {
+    "p": "V带轮 内径30 基准直径123 宽度40 6个槽 D型",
+    "kind": "vbelt_pulley",
+    "want": {
+     "grooves": 6,
+     "groove_type": "D",
+     "bore_d": 30
+    },
+    "generated_in_round": 3
+   },
+   "pass": true,
+   "fails": [],
+   "info": {
+    "ok": true,
+    "kinds": [
+     "vbelt_pulley"
+    ],
+    "warnings": [
+     "6 个 D 型槽的标准槽间距 e=37 mm，轮缘宽度至少需 224.932 mm；已按标准取 224.932 mm（原输入的 206.736 mm 不足，强行压缩会使相邻槽干涉）"
+    ],
+    "steps": 11
+   }
+  },
+  {
+   "case": {
+    "p": "皮带轮 基准直径143 内径12 槽数1 E型",
+    "kind": "vbelt_pulley",
+    "want": {
+     "grooves": 1,
+     "groove_type": "E",
+     "bore_d": 12
+    },
+    "generated_in_round": 3
+   },
+   "pass": true,
+   "fails": [],
+   "info": {
+    "ok": true,
+    "kinds": [
+     "vbelt_pulley"
+    ],
+    "warnings": [
+     "1 个 E 型槽的标准槽间距 e=44.5 mm，轮缘宽度至少需 47.2062 mm；已按标准取 47.2062 mm（原输入的 25.7615 mm 不足，强行压缩会使相邻槽干涉）"
+    ],
+    "steps": 10
+   }
+  },
+  {
+   "case": {
+    "p": "多楔带轮 2槽 Y型 内径30 基准直径163",
+    "kind": "vbelt_pulley",
+    "want": {
+     "grooves": 2,
+     "groove_type": "Y",
+     "bore_d": 30
+    },
+    "generated_in_round": 3
+   },
+   "pass": true,
+   "fails": [],
+   "info": {
+    "ok": true,
+    "kinds": [
+     "vbelt_pulley"
+    ],
+    "warnings": [
+     "2 个 Y 型槽的标准槽间距 e=8 mm，轮缘宽度至少需 16.3542 mm；已按标准取 16.3542 mm（原输入的 12.2603 mm 不足，强行压缩会使相邻槽干涉）"
+    ],
+    "steps": 10
+   }
+  },
+  {
+   "case": {
+    "p": "窄V带轮 基准直径112 内径12 轮宽40 槽数3 槽型Z",
+    "kind": "vbelt_pulley",
+    "want": {
+     "grooves": 3,
+     "groove_type": "Z",
+     "bore_d": 12
+    },
+    "generated_in_round": 3
+   },
+   "pass": true,
+   "fails": [],
+   "info": {
+    "ok": true,
+    "kinds": [
+     "vbelt_pulley"
+    ],
+    "warnings": [],
+    "steps": 10
+   }
+  },
+  {
+   "case": {
+    "p": "多槽带轮 内径30 基准直径56 宽度40 4个槽 A型",
+    "kind": "vbelt_pulley",
+    "want": {
+     "grooves": 4,
+     "groove_type": "A",
+     "bore_d": 30
+    },
+    "generated_in_round": 3
+   },
+   "pass": true,
+   "fails": [],
+   "info": {
+    "ok": true,
+    "kinds": [
+     "vbelt_pulley"
+    ],
+    "warnings": [
+     "4 个 A 型槽的标准槽间距 e=15 mm，轮缘宽度至少需 60.9894 mm；已按标准取 60.9894 mm（原输入的 54.4229 mm 不足，强行压缩会使相邻槽干涉）"
+    ],
+    "steps": 11
+   }
+  },
+  {
+   "case": {
+    "p": "窄V带轮 4槽 B型 内径12 基准直径90",
+    "kind": "vbelt_pulley",
+    "want": {
+     "grooves": 4,
+     "groove_type": "B",
+     "bore_d": 12.0
+    },
+    "generated_in_round": 2
+   },
+   "pass": true,
+   "fails": [],
+   "info": {
+    "ok": true,
+    "kinds": [
+     "vbelt_pulley"
+    ],
+    "warnings": [
+     "4 个 B 型槽的标准槽间距 e=19 mm，轮缘宽度至少需 77.6038 mm；已按标准取 77.6038 mm（原输入的 68.8599 mm 不足，强行压缩会使相邻槽干涉）"
+    ],
+    "steps": 10
+   }
+  },
+  {
+   "case": {
+    "p": "多槽带轮 基准直径103 内径25 轮宽40 槽数5 槽型C",
+    "kind": "vbelt_pulley",
+    "want": {
+     "grooves": 5,
+     "groove_type": "C",
+     "bore_d": 25
+    },
+    "generated_in_round": 2
+   },
+   "pass": true,
+   "fails": [],
+   "info": {
+    "ok": true,
+    "kinds": [
+     "vbelt_pulley"
+    ],
+    "warnings": [
+     "5 个 C 型槽的标准槽间距 e=25.5 mm，轮缘宽度至少需 129.744 mm；已按标准取 129.744 mm（原输入的 40 mm 不足，强行压缩会使相邻槽干涉）"
+    ],
+    "steps": 10
+   }
+  },
+  {
+   "case": {
+    "p": "V带轮 内径55 基准直径123 宽度40 6个槽 D型",
+    "kind": "vbelt_pulley",
+    "want": {
+     "grooves": 6,
+     "groove_type": "D",
+     "bore_d": 55
+    },
+    "generated_in_round": 2
+   },
+   "pass": true,
+   "fails": [],
+   "info": {
+    "ok": true,
+    "kinds": [
+     "vbelt_pulley"
+    ],
+    "warnings": [
+     "6 个 D 型槽的标准槽间距 e=37 mm，轮缘宽度至少需 224.932 mm；已按标准取 224.932 mm（原输入的 206.736 mm 不足，强行压缩会使相邻槽干涉）"
+    ],
+    "steps": 11
+   }
+  },
+  {
+   "case": {
+    "p": "皮带轮 基准直径143 内径25 槽数1 E型",
+    "kind": "vbelt_pulley",
+    "want": {
+     "grooves": 1,
+     "groove_type": "E",
+     "bore_d": 25
+    },
+    "generated_in_round": 2
+   },
+   "pass": true,
+   "fails": [],
+   "info": {
+    "ok": true,
+    "kinds": [
+     "vbelt_pulley"
+    ],
+    "warnings": [
+     "1 个 E 型槽的标准槽间距 e=44.5 mm，轮缘宽度至少需 47.2062 mm；已按标准取 47.2062 mm（原输入的 25.7615 mm 不足，强行压缩会使相邻槽干涉）"
+    ],
+    "steps": 10
+   }
+  },
+  {
+   "case": {
+    "p": "多楔带轮 2槽 Y型 内径55 基准直径163",
+    "kind": "vbelt_pulley",
+    "want": {
+     "grooves": 2,
+     "groove_type": "Y",
+     "bore_d": 55
+    },
+    "generated_in_round": 2
+   },
+   "pass": true,
+   "fails": [],
+   "info": {
+    "ok": true,
+    "kinds": [
+     "vbelt_pulley"
+    ],
+    "warnings": [
+     "2 个 Y 型槽的标准槽间距 e=8 mm，轮缘宽度至少需 16.3542 mm；已按标准取 16.3542 mm（原输入的 12.2603 mm 不足，强行压缩会使相邻槽干涉）"
+    ],
+    "steps": 10
+   }
+  },
+  {
+   "case": {
+    "p": "窄V带轮 基准直径90 内径25 轮宽40 槽数3 槽型Z",
+    "kind": "vbelt_pulley",
+    "want": {
+     "grooves": 3,
+     "groove_type": "Z",
+     "bore_d": 25
+    },
+    "generated_in_round": 2
+   },
+   "pass": true,
+   "fails": [],
+   "info": {
+    "ok": true,
+    "kinds": [
+     "vbelt_pulley"
+    ],
+    "warnings": [],
+    "steps": 10
+   }
+  },
+  {
+   "case": {
+    "p": "多槽带轮 内径55 基准直径100 宽度40 4个槽 A型",
+    "kind": "vbelt_pulley",
+    "want": {
+     "grooves": 4,
+     "groove_type": "A",
+     "bore_d": 55
+    },
+    "generated_in_round": 2
+   },
+   "pass": true,
+   "fails": [],
+   "info": {
+    "ok": true,
+    "kinds": [
+     "vbelt_pulley"
+    ],
+    "warnings": [
+     "4 个 A 型槽的标准槽间距 e=15 mm，轮缘宽度至少需 61.3197 mm；已按标准取 61.3197 mm（原输入的 54.3185 mm 不足，强行压缩会使相邻槽干涉）"
+    ],
+    "steps": 11
+   }
+  },
+  {
+   "case": {
+    "p": "V带轮 基准直径118 内径25 槽数5 B型",
+    "kind": "vbelt_pulley",
+    "want": {
+     "grooves": 5,
+     "groove_type": "B",
+     "bore_d": 25
+    },
+    "generated_in_round": 2
+   },
+   "pass": true,
+   "fails": [],
+   "info": {
+    "ok": true,
+    "kinds": [
+     "vbelt_pulley"
+    ],
+    "warnings": [
+     "5 个 B 型槽的标准槽间距 e=19 mm，轮缘宽度至少需 96.6038 mm；已按标准取 96.6038 mm（原输入的 87.8599 mm 不足，强行压缩会使相邻槽干涉）"
+    ],
+    "steps": 10
+   }
+  },
+  {
+   "case": {
+    "p": "皮带轮 6槽 C型 内径12 基准直径83",
+    "kind": "vbelt_pulley",
+    "want": {
+     "grooves": 6,
+     "groove_type": "C",
+     "bore_d": 12.0
+    },
+    "generated_in_round": 2
+   },
+   "pass": true,
+   "fails": [],
+   "info": {
+    "ok": true,
+    "kinds": [
+     "vbelt_pulley"
+    ],
+    "warnings": [
+     "6 个 C 型槽的标准槽间距 e=25.5 mm，轮缘宽度至少需 155.244 mm；已按标准取 155.244 mm（原输入的 143.565 mm 不足，强行压缩会使相邻槽干涉）"
+    ],
+    "steps": 10
+   }
+  },
+  {
+   "case": {
+    "p": "多楔带轮 基准直径103 内径25 轮宽40 槽数1 槽型D",
+    "kind": "vbelt_pulley",
+    "want": {
+     "grooves": 1,
+     "groove_type": "D",
+     "bore_d": 25
+    },
+    "generated_in_round": 2
+   },
+   "pass": true,
+   "fails": [],
+   "info": {
+    "ok": true,
+    "kinds": [
+     "vbelt_pulley"
+    ],
+    "warnings": [],
+    "steps": 10
+   }
+  },
+  {
+   "case": {
+    "p": "窄V带轮 内径55 基准直径123 宽度40 2个槽 E型",
+    "kind": "vbelt_pulley",
+    "want": {
+     "grooves": 2,
+     "groove_type": "E",
+     "bore_d": 55
+    },
+    "generated_in_round": 2
+   },
+   "pass": true,
+   "fails": [],
+   "info": {
+    "ok": true,
+    "kinds": [
+     "vbelt_pulley"
+    ],
+    "warnings": [
+     "2 个 E 型槽的标准槽间距 e=44.5 mm，轮缘宽度至少需 91.7062 mm；已按标准取 91.7062 mm（原输入的 70.2615 mm 不足，强行压缩会使相邻槽干涉）"
+    ],
+    "steps": 11
+   }
+  },
+  {
+   "case": {
+    "p": "多槽带轮 基准直径143 内径25 槽数3 Y型",
+    "kind": "vbelt_pulley",
+    "want": {
+     "grooves": 3,
+     "groove_type": "Y",
+     "bore_d": 25
+    },
+    "generated_in_round": 2
+   },
+   "pass": true,
+   "fails": [],
+   "info": {
+    "ok": true,
+    "kinds": [
+     "vbelt_pulley"
+    ],
+    "warnings": [
+     "3 个 Y 型槽的标准槽间距 e=8 mm，轮缘宽度至少需 24.3542 mm；已按标准取 24.3542 mm（原输入的 20.2603 mm 不足，强行压缩会使相邻槽干涉）"
+    ],
+    "steps": 10
+   }
+  },
+  {
+   "case": {
+    "p": "多楔带轮 基准直径50 内径12 槽数5 Z型",
+    "kind": "vbelt_pulley",
+    "want": {
+     "grooves": 5,
+     "groove_type": "Z",
+     "bore_d": 12
+    },
+    "generated_in_round": 3
+   },
+   "pass": true,
+   "fails": [],
+   "info": {
+    "ok": true,
+    "kinds": [
+     "vbelt_pulley"
+    ],
+    "warnings": [
+     "5 个 Z 型槽的标准槽间距 e=12 mm，轮缘宽度至少需 60.5144 mm；已按标准取 60.5144 mm（原输入的 55.353 mm 不足，强行压缩会使相邻槽干涉）"
+    ],
+    "steps": 10
+   }
+  },
+  {
+   "case": {
+    "p": "窄V带轮 6槽 A型 内径30 基准直径71",
+    "kind": "vbelt_pulley",
+    "want": {
+     "grooves": 6,
+     "groove_type": "A",
+     "bore_d": 30
+    },
+    "generated_in_round": 3
+   },
+   "pass": true,
+   "fails": [],
+   "info": {
+    "ok": true,
+    "kinds": [
+     "vbelt_pulley"
+    ],
+    "warnings": [
+     "6 个 A 型槽的标准槽间距 e=15 mm，轮缘宽度至少需 91.3197 mm；已按标准取 91.3197 mm（原输入的 84.3185 mm 不足，强行压缩会使相邻槽干涉）"
+    ],
+    "steps": 10
+   }
+  },
+  {
+   "case": {
+    "p": "多槽带轮 基准直径85 内径12 轮宽40 槽数1 槽型B",
+    "kind": "vbelt_pulley",
+    "want": {
+     "grooves": 1,
+     "groove_type": "B",
+     "bore_d": 12
+    },
+    "generated_in_round": 3
+   },
+   "pass": true,
+   "fails": [],
+   "info": {
+    "ok": true,
+    "kinds": [
+     "vbelt_pulley"
+    ],
+    "warnings": [],
+    "steps": 10
+   }
+  },
+  {
+   "case": {
+    "p": "V带轮 内径30 基准直径203 宽度40 2个槽 C型",
+    "kind": "vbelt_pulley",
+    "want": {
+     "grooves": 2,
+     "groove_type": "C",
+     "bore_d": 30
+    },
+    "generated_in_round": 3
+   },
+   "pass": true,
+   "fails": [],
+   "info": {
+    "ok": true,
+    "kinds": [
+     "vbelt_pulley"
+    ],
+    "warnings": [
+     "2 个 C 型槽的标准槽间距 e=25.5 mm，轮缘宽度至少需 54.3478 mm；已按标准取 54.3478 mm（原输入的 41.1945 mm 不足，强行压缩会使相邻槽干涉）"
+    ],
+    "steps": 11
+   }
+  },
+  {
+   "case": {
+    "p": "皮带轮 基准直径63 内径12 槽数3 D型",
+    "kind": "vbelt_pulley",
+    "want": {
+     "grooves": 3,
+     "groove_type": "D",
+     "bore_d": 12
+    },
+    "generated_in_round": 3
+   },
+   "pass": true,
+   "fails": [],
+   "info": {
+    "ok": true,
+    "kinds": [
+     "vbelt_pulley"
+    ],
+    "warnings": [
+     "3 个 D 型槽的标准槽间距 e=37 mm，轮缘宽度至少需 113.168 mm；已按标准取 113.168 mm（原输入的 96.0472 mm 不足，强行压缩会使相邻槽干涉）"
+    ],
+    "steps": 10
+   }
+  },
+  {
+   "case": {
+    "p": "多楔带轮 4槽 E型 内径30 基准直径83",
+    "kind": "vbelt_pulley",
+    "want": {
+     "grooves": 4,
+     "groove_type": "E",
+     "bore_d": 30
+    },
+    "generated_in_round": 3
+   },
+   "pass": true,
+   "fails": [],
+   "info": {
+    "ok": true,
+    "kinds": [
+     "vbelt_pulley"
+    ],
+    "warnings": [
+     "4 个 E 型槽的标准槽间距 e=44.5 mm，轮缘宽度至少需 179.808 mm；已按标准取 179.808 mm（原输入的 159.63 mm 不足，强行压缩会使相邻槽干涉）"
+    ],
+    "steps": 10
+   }
+  },
+  {
+   "case": {
+    "p": "窄V带轮 基准直径103 内径12 轮宽40 槽数5 槽型Y",
+    "kind": "vbelt_pulley",
+    "want": {
+     "grooves": 5,
+     "groove_type": "Y",
+     "bore_d": 12
+    },
+    "generated_in_round": 3
+   },
+   "pass": true,
+   "fails": [],
+   "info": {
+    "ok": true,
+    "kinds": [
+     "vbelt_pulley"
+    ],
+    "warnings": [
+     "5 个 Y 型槽的标准槽间距 e=8 mm，轮缘宽度至少需 40.1739 mm；已按标准取 40.1739 mm（原输入的 40 mm 不足，强行压缩会使相邻槽干涉）"
+    ],
+    "steps": 10
+   }
+  },
+  {
+   "case": {
+    "p": "多槽带轮 内径12 基准直径45 宽度40 6个槽 Z型",
+    "kind": "vbelt_pulley",
+    "want": {
+     "grooves": 6,
+     "groove_type": "Z",
+     "bore_d": 12.0
+    },
+    "generated_in_round": 3
+   },
+   "pass": true,
+   "fails": [],
+   "info": {
+    "ok": true,
+    "kinds": [
+     "vbelt_pulley"
+    ],
+    "warnings": [
+     "6 个 Z 型槽的标准槽间距 e=12 mm，轮缘宽度至少需 72.5144 mm；已按标准取 72.5144 mm（原输入的 67.353 mm 不足，强行压缩会使相邻槽干涉）"
+    ],
+    "steps": 11
+   }
+  },
+  {
+   "case": {
+    "p": "V带轮 基准直径106 内径12 槽数1 A型",
+    "kind": "vbelt_pulley",
+    "want": {
+     "grooves": 1,
+     "groove_type": "A",
+     "bore_d": 12
+    },
+    "generated_in_round": 3
+   },
+   "pass": true,
+   "fails": [],
+   "info": {
+    "ok": true,
+    "kinds": [
+     "vbelt_pulley"
+    ],
+    "warnings": [
+     "1 个 A 型槽的标准槽间距 e=15 mm，轮缘宽度至少需 16.3197 mm；已按标准取 16.3197 mm（原输入的 9.31848 mm 不足，强行压缩会使相邻槽干涉）"
+    ],
+    "steps": 10
+   }
+  },
+  {
+   "case": {
+    "p": "皮带轮 2槽 B型 内径30 基准直径112",
+    "kind": "vbelt_pulley",
+    "want": {
+     "grooves": 2,
+     "groove_type": "B",
+     "bore_d": 30
+    },
+    "generated_in_round": 3
+   },
+   "pass": true,
+   "fails": [],
+   "info": {
+    "ok": true,
+    "kinds": [
+     "vbelt_pulley"
+    ],
+    "warnings": [
+     "2 个 B 型槽的标准槽间距 e=19 mm，轮缘宽度至少需 39.6038 mm；已按标准取 39.6038 mm（原输入的 30.8599 mm 不足，强行压缩会使相邻槽干涉）"
+    ],
+    "steps": 10
+   }
+  },
+  {
+   "case": {
+    "p": "多楔带轮 基准直径183 内径12 轮宽40 槽数3 槽型C",
+    "kind": "vbelt_pulley",
+    "want": {
+     "grooves": 3,
+     "groove_type": "C",
+     "bore_d": 12
+    },
+    "generated_in_round": 3
+   },
+   "pass": true,
+   "fails": [],
+   "info": {
+    "ok": true,
+    "kinds": [
+     "vbelt_pulley"
+    ],
+    "warnings": [
+     "3 个 C 型槽的标准槽间距 e=25.5 mm，轮缘宽度至少需 79.2927 mm；已按标准取 79.2927 mm（原输入的 40 mm 不足，强行压缩会使相邻槽干涉）"
+    ],
+    "steps": 10
+   }
+  },
+  {
+   "case": {
+    "p": "窄V带轮 内径30 基准直径203 宽度40 4个槽 D型",
+    "kind": "vbelt_pulley",
+    "want": {
+     "grooves": 4,
+     "groove_type": "D",
+     "bore_d": 30
+    },
+    "generated_in_round": 3
+   },
+   "pass": true,
+   "fails": [],
+   "info": {
+    "ok": true,
+    "kinds": [
+     "vbelt_pulley"
+    ],
+    "warnings": [
+     "4 个 D 型槽的标准槽间距 e=37 mm，轮缘宽度至少需 151.704 mm；已按标准取 151.704 mm（原输入的 132.422 mm 不足，强行压缩会使相邻槽干涉）"
+    ],
+    "steps": 11
+   }
+  }
+ ]
+}

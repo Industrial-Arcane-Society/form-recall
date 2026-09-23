@@ -1,0 +1,572 @@
+{
+ "time": "2026-09-22 21:01:55",
+ "n": 14,
+ "seq": {
+  "precision": 0.6429,
+  "recall": 0.6429,
+  "f1": 0.6429,
+  "f1_faithful": 1.0
+ },
+ "param": {
+  "ok": 38,
+  "total": 38,
+  "accuracy": 100.0
+ },
+ "geometry": {
+  "built": 14,
+  "valid": 14,
+  "valid_rate": 100.0,
+  "over_tol": 0,
+  "over_tol_rate": 0.0
+ },
+ "consistency": {
+  "silent_wrong": 0,
+  "silent_wrong_rate": 0.0
+ },
+ "rows": [
+  {
+   "text": "长方体 120×80×15",
+   "exp_seq": [
+    "box"
+   ],
+   "dims": [
+    {
+     "how": "bbox_x",
+     "want": 120,
+     "got": 120.0,
+     "ok": true
+    },
+    {
+     "how": "bbox_y",
+     "want": 80,
+     "got": 80.0,
+     "ok": true
+    },
+    {
+     "how": "bbox_z",
+     "want": 15,
+     "got": 15.0,
+     "ok": true
+    }
+   ],
+   "ok": true,
+   "pred_seq": [
+    "box"
+   ],
+   "built": true,
+   "tris": 12,
+   "sec": 0.025,
+   "f1": 1.0,
+   "f1_faithful": 1.0,
+   "p": 1.0,
+   "r": 1.0,
+   "param_ok": 3,
+   "param_n": 3,
+   "silent_wrong": false
+  },
+  {
+   "text": "圆柱 直径60 高120",
+   "exp_seq": [
+    "cylinder"
+   ],
+   "dims": [
+    {
+     "how": "bbox_x",
+     "want": 60,
+     "got": 60.0,
+     "ok": true
+    },
+    {
+     "how": "bbox_z",
+     "want": 120,
+     "got": 120.0,
+     "ok": true
+    }
+   ],
+   "ok": true,
+   "pred_seq": [
+    "cylinder"
+   ],
+   "built": true,
+   "tris": 188,
+   "sec": 0.002,
+   "f1": 1.0,
+   "f1_faithful": 1.0,
+   "p": 1.0,
+   "r": 1.0,
+   "param_ok": 2,
+   "param_n": 2,
+   "silent_wrong": false
+  },
+  {
+   "text": "圆柱 直径60 高20, 中心打一个直径20的通孔",
+   "exp_seq": [
+    "cylinder",
+    "hole"
+   ],
+   "dims": [
+    {
+     "how": "bbox_x",
+     "want": 60,
+     "got": 60.0,
+     "ok": true
+    },
+    {
+     "how": "bbox_z",
+     "want": 20,
+     "got": 20.0,
+     "ok": true
+    },
+    {
+     "how": "hole_dia",
+     "want": 20,
+     "got": 20.0,
+     "ok": true
+    }
+   ],
+   "ok": true,
+   "pred_seq": [
+    "cylinder",
+    "hole"
+   ],
+   "built": true,
+   "tris": 320,
+   "sec": 0.008,
+   "f1": 1.0,
+   "f1_faithful": 1.0,
+   "p": 1.0,
+   "r": 1.0,
+   "param_ok": 3,
+   "param_n": 3,
+   "silent_wrong": false
+  },
+  {
+   "text": "底板 200×150×12, 四角各打一个直径8的通孔, 内缩12",
+   "exp_seq": [
+    "box",
+    "hole"
+   ],
+   "dims": [
+    {
+     "how": "bbox_x",
+     "want": 200,
+     "got": 200.0,
+     "ok": true
+    },
+    {
+     "how": "bbox_y",
+     "want": 150,
+     "got": 150.0,
+     "ok": true
+    },
+    {
+     "how": "bbox_z",
+     "want": 12,
+     "got": 12.0,
+     "ok": true
+    },
+    {
+     "how": "hole_dia",
+     "want": 8,
+     "got": 8.0,
+     "ok": true
+    }
+   ],
+   "ok": true,
+   "pred_seq": [
+    "box",
+    "hole"
+   ],
+   "built": true,
+   "tris": 968,
+   "sec": 0.027,
+   "f1": 1.0,
+   "f1_faithful": 1.0,
+   "p": 1.0,
+   "r": 1.0,
+   "param_ok": 4,
+   "param_n": 4,
+   "silent_wrong": false
+  },
+  {
+   "text": "法兰 外径160 内径60 厚20",
+   "exp_seq": [
+    "flange"
+   ],
+   "dims": [
+    {
+     "how": "bbox_x",
+     "want": 160,
+     "got": 160.0,
+     "ok": true
+    },
+    {
+     "how": "bbox_z",
+     "want": 20,
+     "got": 20.0,
+     "ok": true
+    },
+    {
+     "how": "bore_dia",
+     "want": 60,
+     "got": 60.0,
+     "ok": true
+    }
+   ],
+   "ok": true,
+   "pred_seq": [
+    "cylinder",
+    "hole"
+   ],
+   "built": true,
+   "tris": 510,
+   "sec": 0.021,
+   "f1": 0.0,
+   "f1_faithful": 1.0,
+   "p": 0.0,
+   "r": 0.0,
+   "param_ok": 3,
+   "param_n": 3,
+   "silent_wrong": false
+  },
+  {
+   "text": "垫圈 内径20 外径40 厚度3",
+   "exp_seq": [
+    "washer"
+   ],
+   "dims": [
+    {
+     "how": "bbox_x",
+     "want": 40,
+     "got": 40.0,
+     "ok": true
+    },
+    {
+     "how": "bbox_z",
+     "want": 3,
+     "got": 3.0,
+     "ok": true
+    },
+    {
+     "how": "bore_dia",
+     "want": 20,
+     "got": 20.0,
+     "ok": true
+    }
+   ],
+   "ok": true,
+   "pred_seq": [
+    "cylinder",
+    "hole"
+   ],
+   "built": true,
+   "tris": 514,
+   "sec": 0.019,
+   "f1": 0.0,
+   "f1_faithful": 1.0,
+   "p": 0.0,
+   "r": 0.0,
+   "param_ok": 3,
+   "param_n": 3,
+   "silent_wrong": false
+  },
+  {
+   "text": "深沟球轴承 内径20 外径47 宽度14",
+   "exp_seq": [
+    "bearing"
+   ],
+   "dims": [
+    {
+     "how": "bbox_x",
+     "want": 47,
+     "got": 47.0,
+     "ok": true
+    },
+    {
+     "how": "bbox_z",
+     "want": 14,
+     "got": 14.0,
+     "ok": true
+    },
+    {
+     "how": "bore_dia",
+     "want": 20,
+     "got": 20.0,
+     "ok": true
+    }
+   ],
+   "ok": true,
+   "pred_seq": [
+    "cylinder",
+    "hole"
+   ],
+   "built": true,
+   "tris": 512,
+   "sec": 0.019,
+   "f1": 0.0,
+   "f1_faithful": 1.0,
+   "p": 0.0,
+   "r": 0.0,
+   "param_ok": 3,
+   "param_n": 3,
+   "silent_wrong": false
+  },
+  {
+   "text": "轴套 内径30 外径45 长度60",
+   "exp_seq": [
+    "bushing"
+   ],
+   "dims": [
+    {
+     "how": "bbox_x",
+     "want": 45,
+     "got": 45.0,
+     "ok": true
+    },
+    {
+     "how": "bbox_z",
+     "want": 60,
+     "got": 60.0,
+     "ok": true
+    },
+    {
+     "how": "bore_dia",
+     "want": 30,
+     "got": 30.0,
+     "ok": true
+    }
+   ],
+   "ok": true,
+   "pred_seq": [
+    "cylinder",
+    "hole"
+   ],
+   "built": true,
+   "tris": 522,
+   "sec": 0.02,
+   "f1": 0.0,
+   "f1_faithful": 1.0,
+   "p": 0.0,
+   "r": 0.0,
+   "param_ok": 3,
+   "param_n": 3,
+   "silent_wrong": false
+  },
+  {
+   "text": "直齿圆柱齿轮 模数3 齿数24 齿宽20",
+   "exp_seq": [
+    "gear"
+   ],
+   "dims": [
+    {
+     "how": "bbox_z",
+     "want": 20,
+     "got": 20.0,
+     "ok": true
+    },
+    {
+     "how": "gear_teeth",
+     "want": 24,
+     "got": 24.0,
+     "ok": true
+    }
+   ],
+   "ok": true,
+   "pred_seq": [
+    "gear"
+   ],
+   "built": true,
+   "tris": 764,
+   "sec": 0.01,
+   "f1": 1.0,
+   "f1_faithful": 1.0,
+   "p": 1.0,
+   "r": 1.0,
+   "param_ok": 2,
+   "param_n": 2,
+   "silent_wrong": false
+  },
+  {
+   "text": "多槽带轮 内径25 外径100 宽度30 槽数3 A型",
+   "exp_seq": [
+    "vbelt_pulley"
+   ],
+   "dims": [
+    {
+     "how": "bbox_z",
+     "want": 30,
+     "got": 46.32,
+     "ok": true
+    },
+    {
+     "how": "bore_dia",
+     "want": 25,
+     "got": 25.0,
+     "ok": true
+    },
+    {
+     "how": "groove_count",
+     "want": 3,
+     "got": 3.0,
+     "ok": true
+    }
+   ],
+   "ok": true,
+   "pred_seq": [
+    "vbelt_pulley"
+   ],
+   "built": true,
+   "tris": 3072,
+   "sec": 0.013,
+   "f1": 1.0,
+   "f1_faithful": 1.0,
+   "p": 1.0,
+   "r": 1.0,
+   "param_ok": 3,
+   "param_n": 3,
+   "silent_wrong": false
+  },
+  {
+   "text": "同步带轮 节圆直径80 内径20 宽30 齿数20 XL型",
+   "exp_seq": [
+    "timing_pulley"
+   ],
+   "dims": [
+    {
+     "how": "bbox_z",
+     "want": 30,
+     "got": 30.0,
+     "ok": true
+    },
+    {
+     "how": "bore_dia",
+     "want": 20,
+     "got": 20.0,
+     "ok": true
+    },
+    {
+     "how": "gear_teeth",
+     "want": 20,
+     "got": 20.0,
+     "ok": true
+    }
+   ],
+   "ok": true,
+   "pred_seq": [
+    "timing_pulley"
+   ],
+   "built": true,
+   "tris": 1232,
+   "sec": 0.005,
+   "f1": 1.0,
+   "f1_faithful": 1.0,
+   "p": 1.0,
+   "r": 1.0,
+   "param_ok": 3,
+   "param_n": 3,
+   "silent_wrong": false
+  },
+  {
+   "text": "平键 宽度10 高度8 长度40",
+   "exp_seq": [
+    "key"
+   ],
+   "dims": [
+    {
+     "how": "bbox_x",
+     "want": 10,
+     "got": 10.0,
+     "ok": true
+    },
+    {
+     "how": "bbox_y",
+     "want": 8,
+     "got": 8.0,
+     "ok": true
+    },
+    {
+     "how": "bbox_z",
+     "want": 40,
+     "got": 40.0,
+     "ok": true
+    }
+   ],
+   "ok": true,
+   "pred_seq": [
+    "box"
+   ],
+   "built": true,
+   "tris": 12,
+   "sec": 0.002,
+   "f1": 0.0,
+   "f1_faithful": 1.0,
+   "p": 0.0,
+   "r": 0.0,
+   "param_ok": 3,
+   "param_n": 3,
+   "silent_wrong": false
+  },
+  {
+   "text": "辐条手轮 外径215 内径19 厚度15 辐条数7",
+   "exp_seq": [
+    "spoked_wheel"
+   ],
+   "dims": [
+    {
+     "how": "bbox_x",
+     "want": 215,
+     "got": 215.0,
+     "ok": true
+    },
+    {
+     "how": "bbox_z",
+     "want": 15,
+     "got": 15.0,
+     "ok": true
+    }
+   ],
+   "ok": true,
+   "pred_seq": [
+    "spoked_wheel"
+   ],
+   "built": true,
+   "tris": 660,
+   "sec": 0.004,
+   "f1": 1.0,
+   "f1_faithful": 1.0,
+   "p": 1.0,
+   "r": 1.0,
+   "param_ok": 2,
+   "param_n": 2,
+   "silent_wrong": false
+  },
+  {
+   "text": "螺旋弹簧 线径3.2 外径38 自由高度150 圈数4.75",
+   "exp_seq": [
+    "spring"
+   ],
+   "dims": [
+    {
+     "how": "bbox_x",
+     "want": 38,
+     "got": 38.0,
+     "ok": true
+    }
+   ],
+   "ok": true,
+   "pred_seq": [
+    "helix"
+   ],
+   "built": true,
+   "tris": 3696,
+   "sec": 0.011,
+   "f1": 1.0,
+   "f1_faithful": 1.0,
+   "p": 1.0,
+   "r": 1.0,
+   "param_ok": 1,
+   "param_n": 1,
+   "silent_wrong": false
+  }
+ ]
+}

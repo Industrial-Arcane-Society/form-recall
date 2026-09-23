@@ -1,0 +1,326 @@
+' ===========================================================================
+'  CATIA V5 build core  -  shared by the CATScript macro and the push script
+'
+'  PURE ASCII ON PURPOSE: CATIA's CATScript loader rejects UTF-16/UTF-8-BOM
+'  files (it reads the BOM as an invalid "?" character). All Chinese text is
+'  produced by the Python backend at run time, never stored here.
+'
+'  Requires these globals in the host script:
+'      gPart  - the Part object
+'      gBody  - the part body (use MainBodyOf(gPart), NOT Bodies.Item(..))
+'      gSF    - ShapeFactory
+'      gHB    - set to Nothing before use (holder for offset planes)
+'
+'  Feature record layout (pipe separated, 10 fields):
+'      kind|cx|cy|z|n1|n2|n3|n4|name|profile
+'      n1,n2 = length,width (rect)   n3 = radius   n4 = height/depth
+'      profile = "x1,y1;x2,y2;..." (optional closed polygon)
+'
+'  Three CATIA quirks handled here (all found by testing on a real V5-6R2023):
+'   1. Bodies.Item("PartBody") fails on a localized CATIA (the Chinese UI names
+'      the part body differently) -> use Part.MainBody instead.
+'   2. A sketch on an offset (hybrid) plane cannot be drawn unless you call
+'      Sketch.OpenEdition first -> CreateClosedCircle fails otherwise.
+'   3. Appending the offset plane to a hybrid body switches Part.InWorkObject
+'      to that hybrid body, and AddNewPad/AddNewPocket then fail with
+'      "method AddNewPad failed" -> restore InWorkObject to the part body.
+' ===========================================================================
+
+
+' ---------------------------------------------------------------------------
+'  Part body lookup that survives localization.
+' ---------------------------------------------------------------------------
+Function MainBodyOf(p)
+    Dim b
+    On Error Resume Next
+    Set b = p.MainBody
+    If Err.Number = 0 And Not b Is Nothing Then
+        Set MainBodyOf = b
+        Exit Function
+    End If
+    Err.Clear
+    Set b = p.Bodies.Item("PartBody")
+    If Err.Number = 0 And Not b Is Nothing Then
+        Set MainBodyOf = b
+        Exit Function
+    End If
+    Err.Clear
+    Set b = p.Bodies.Item(1)
+    If Err.Number = 0 And Not b Is Nothing Then
+        Set MainBodyOf = b
+        Exit Function
+    End If
+    Err.Clear
+    Set b = p.Bodies.Add("PartBody")
+    Set MainBodyOf = b
+End Function
+
+
+' ---------------------------------------------------------------------------
+'  MakeSketch(ax, off): create an opened sketch on a support plane.
+'
+'  `ax` is the feature axis letter (X/Y/Z) and `off` is the offset along it.
+'  The support plane must be perpendicular to that axis:
+'      Z -> PlaneXY   X -> PlaneYZ   Y -> PlaneZX
+'  Older 10-field tables have no axis field; the caller defaults it to "Z".
+'
+'  NOTE: the datum offset plane route (HybridShapeFactory) is REQUIRED here.
+'  Sketch.SetAbsoluteAxisData looks like a way to move a PlaneXY sketch up to z,
+'  but it is silently ignored by CATIA V5-6R2023: the axis reads back as
+'  (0,0,0) and every feature ends up at z=0 - a wrong model with no error at all.
+'  Verified instead: offset planes do work from outside (cscript + COM), which is
+'  exactly how both channels build now.
+' ---------------------------------------------------------------------------
+Function MakeSketch(ax, off)
+    Dim sk
+    On Error Resume Next
+    Err.Clear
+    Set sk = gBody.Sketches.Add(PlaneAt(ax, off))
+    If Err.Number <> 0 Then
+        LogDebug "MakeSketch(" & ax & "," & off & ") Sketches.Add failed: " & Err.Description
+        Err.Clear
+        On Error GoTo 0
+        Exit Function
+    End If
+    sk.OpenEdition
+    Err.Clear
+    On Error GoTo 0
+    Set MakeSketch = sk
+End Function
+
+
+Sub BuildOne(rec)
+    Dim f
+    f = Split(rec, "|")
+    Dim kind, cx, cy, z, n1, n2, n3, n4, nm, prof, ax
+    kind = f(0)
+    cx = CDbl(f(1)) : cy = CDbl(f(2)) : z = CDbl(f(3))
+    n1 = CDbl(f(4)) : n2 = CDbl(f(5)) : n3 = CDbl(f(6)) : n4 = CDbl(f(7))
+    nm = f(8) : prof = f(9)
+    ' field 11 = axis letter; older 10-field tables simply have no axis -> Z
+    ax = "Z"
+    If UBound(f) >= 10 Then
+        If Len(f(10)) > 0 Then ax = UCase(f(10))
+    End If
+
+    ' Guard: a zero-thickness pad/pocket is not a no-op in CATIA, it puts the
+    ' whole Part into an update-error state and every later Sketches.Add fails
+    ' (measured on a real V5-6R2023: "Method Update failed" then "Object required").
+    ' Refuse it here instead of poisoning the part.
+    If n4 <= 0 Then
+        LogDebug "  BuildOne: refusing zero thickness on " & kind & " (" & nm & ")"
+        Err.Raise 424, "AI Modeler", "zero thickness feature refused"
+    End If
+
+    Dim sk, f2d
+    Set sk = MakeSketch(ax, z)
+    If IsObject(sk) Then
+        Set f2d = sk.Factory2D
+    End If
+    If Not IsObject(f2d) Then
+        LogDebug "  BuildOne: no sketch at " & ax & "=" & z
+        Err.Raise 424, "AI Modeler", "cannot create sketch"
+    End If
+
+    If Left(kind, 6) = "circle" Then
+        f2d.CreateClosedCircle cx, cy, n3
+    ElseIf Len(prof) > 0 Then
+        DrawProfile f2d, cx, cy, prof
+    Else
+        Dim x0, y0, x1, y1
+        x0 = cx - n1 / 2 : y0 = cy - n2 / 2
+        x1 = cx + n1 / 2 : y1 = cy + n2 / 2
+        f2d.CreateLine x0, y0, x1, y0
+        f2d.CreateLine x1, y0, x1, y1
+        f2d.CreateLine x1, y1, x0, y1
+        f2d.CreateLine x0, y1, x0, y0
+    End If
+
+    sk.CloseEdition
+    gPart.Update
+
+    ' quirk 3: make sure new material features land in the solid body
+    On Error Resume Next
+    gPart.InWorkObject = gBody
+    Err.Clear
+    On Error GoTo 0
+
+    Dim feat
+    If kind = "shaft" Then
+        ' Revolved shaft: calling AddNewShaft through automation breaks the
+        ' session on this CATIA build (measured), so the exporter approximates
+        ' revolve bodies with layered pads. This branch is only a backstop.
+        ' NOTE: keep this file PURE ASCII - CATIA's CATScript loader rejects
+        ' non-ASCII here (it reads them as invalid characters). Chinese text is
+        ' produced by the Python backend at run time, never stored in this file.
+        LogDebug "  BuildOne: shaft not supported, skipped"
+        Err.Raise 424, "AI Modeler", "shaft unsupported (use layered pads)"
+    ElseIf Right(kind, 4) = "_pad" Then
+        Set feat = gSF.AddNewPad(sk, n4)
+    Else
+        ' cut: build a pocket and flip it if CATIA reports an update problem
+        Set feat = gSF.AddNewPocket(sk, n4)
+        On Error Resume Next
+        Err.Clear
+        gPart.Update
+        If Err.Number <> 0 Then
+            Err.Clear
+            If FlipFeature(feat) Then gPart.Update
+            Err.Clear
+        End If
+        On Error GoTo 0
+    End If
+
+    If IsObject(feat) Then
+        On Error Resume Next
+        If Len(nm) > 0 Then feat.Name = nm
+        Err.Clear
+        On Error GoTo 0
+    End If
+    gPart.Update
+End Sub
+
+
+Sub DrawProfile(f2d, cx, cy, prof)
+    Dim pts, i, pair, xy
+    pts = Split(prof, ";")
+    Dim xs(), ys()
+    ReDim xs(UBound(pts))
+    ReDim ys(UBound(pts))
+    For i = 0 To UBound(pts)
+        xy = Split(pts(i), ",")
+        xs(i) = cx + CDbl(xy(0))
+        ys(i) = cy + CDbl(xy(1))
+    Next
+    Dim n, x1, y1, x2, y2
+    n = UBound(pts) + 1
+    For i = 0 To n - 1
+        x1 = xs(i) : y1 = ys(i)
+        x2 = xs((i + 1) Mod n) : y2 = ys((i + 1) Mod n)
+        If Abs(x1 - x2) > 0.0000001 Or Abs(y1 - y2) > 0.0000001 Then
+            f2d.CreateLine x1, y1, x2, y2
+        End If
+    Next
+End Sub
+
+
+' ---------------------------------------------------------------------------
+'  Debug log (no-op when the host does not set gLogPath).
+'  Both hosts set it: the macro writes to %TEMP%\ai_modeler_macro.log,
+'  the push script writes next to its own .vbs file.
+' ---------------------------------------------------------------------------
+Sub LogDebug(msg)
+    On Error Resume Next
+    If Len(gLogPath) = 0 Then Exit Sub
+    Dim ts
+    Set ts = gFso.OpenTextFile(gLogPath, 8, True)
+    ts.WriteLine Time & "  " & msg
+    ts.Close
+    Err.Clear
+End Sub
+
+
+' ---------------------------------------------------------------------------
+'  Sketch support plane for any axis: PlaneXY for Z, PlaneYZ for X, PlaneZX for Y.
+' ---------------------------------------------------------------------------
+Function PlaneAt(ax, z)
+    Dim base
+    If ax = "X" Then
+        Set base = gPart.OriginElements.PlaneYZ
+    ElseIf ax = "Y" Then
+        Set base = gPart.OriginElements.PlaneZX
+    Else
+        Set base = gPart.OriginElements.PlaneXY
+    End If
+    If Abs(z) < 0.000001 Then
+        Set PlaneAt = base
+        Exit Function
+    End If
+    Dim hsf, ref, off
+    Err.Clear
+    Set hsf = gPart.HybridShapeFactory
+    LogDebug "PlaneAt(" & ax & "," & z & ") hsf=" & IsObject(hsf)
+    Err.Clear
+    Set ref = gPart.CreateReferenceFromObject(base)
+    Err.Clear
+    Set off = hsf.AddNewPlaneOffset(ref, z, False)
+    LogDebug "  AddNewPlaneOffset off=" & IsObject(off) & " err=" & Err.Number
+    Err.Clear
+    If IsObject(off) Then
+        On Error Resume Next
+        LogDebug "    plane offset value = " & off.Offset.Value
+        Err.Clear
+        On Error GoTo 0
+    End If
+    ' gHB can be in three states and each needs different handling:
+    '   Empty   -> "gHB Is Nothing" raises "Object required" (424)
+    '   Nothing -> IsObject(gHB) is TRUE in VBScript, so IsObject cannot be used
+    '              as a "is it usable?" test (this bug cost a long debug session)
+    '   object  -> fine
+    ' Normalise Empty to Nothing first, then test with "Is Nothing".
+    On Error Resume Next
+    If IsEmpty(gHB) Then Set gHB = Nothing
+    Err.Clear
+    On Error GoTo 0
+    If gHB Is Nothing Then
+        On Error Resume Next
+        Err.Clear
+        Set gHB = gPart.HybridBodies.Add()
+        LogDebug "    HybridBodies.Add gHB=" & IsObject(gHB) & " err=" & Err.Number & _
+                 " " & Err.Description
+        Err.Clear
+        On Error GoTo 0
+    End If
+    ' Appending the plane to the hybrid body is cosmetic: the sketch is created
+    ' on the plane object itself, so the feature still lands at the right z.
+    ' (In-session CATScript this append can fail; from cscript it is tolerated.)
+    On Error Resume Next
+    Err.Clear
+    gHB.AppendHybridShape off
+    LogDebug "  AppendHybridShape err=" & Err.Number & " " & Err.Description
+    Err.Clear
+    On Error GoTo 0
+    gPart.Update
+    LogDebug "  update err=" & Err.Number
+    Set PlaneAt = off
+End Function
+
+
+Function FlipFeature(feat)
+    On Error Resume Next
+    feat.ReverseDirection
+    If Err.Number = 0 Then FlipFeature = True : Exit Function
+    Err.Clear
+    feat.Reverse
+    If Err.Number = 0 Then FlipFeature = True : Exit Function
+    Err.Clear
+    feat.DirectionOrientation = 1
+    If Err.Number = 0 Then FlipFeature = True : Exit Function
+    FlipFeature = False
+End Function
+
+
+' ---------------------------------------------------------------------------
+'  Optional volume measurement (needs the SPA workbench to be licensed).
+'  Kept for environments where GetWorkbench("SPAWorkbench") works; the current
+'  build does not depend on it (the flip above is driven by update errors).
+' ---------------------------------------------------------------------------
+Function VolumeOf()
+    On Error Resume Next
+    Dim spa, ref, m, v
+    Set spa = gPart.GetWorkbench("SPAWorkbench")
+    If Err.Number <> 0 Then
+        VolumeOf = Empty
+        Err.Clear
+        Exit Function
+    End If
+    Set ref = gPart.CreateReferenceFromObject(gPart.MainBody)
+    Set m = spa.GetMeasurable(ref)
+    v = m.Volume
+    If Err.Number <> 0 Then
+        VolumeOf = Empty
+        Err.Clear
+        Exit Function
+    End If
+    VolumeOf = v
+End Function

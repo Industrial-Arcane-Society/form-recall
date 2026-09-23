@@ -1,0 +1,5956 @@
+{
+ "avg": 84.51,
+ "ge95": 4,
+ "total": 297,
+ "rows": [
+  {
+   "model": "m5x8",
+   "group": "螺钉",
+   "S": 0.0,
+   "err": "照片对不可用（两帧背景整体变化）"
+  },
+  {
+   "model": "m5x10",
+   "group": "螺钉",
+   "S": 0.0,
+   "err": "照片对不可用（两帧背景整体变化）"
+  },
+  {
+   "model": "m5x12",
+   "group": "螺钉",
+   "S": 0.0,
+   "err": "照片对不可用（两帧背景整体变化）"
+  },
+  {
+   "model": "m5x16",
+   "group": "螺钉",
+   "S": 0.0,
+   "err": "照片对不可用（两帧背景整体变化）"
+  },
+  {
+   "model": "m5x20",
+   "group": "螺钉",
+   "S": 0.0,
+   "err": "照片对不可用（两帧背景整体变化）"
+  },
+  {
+   "model": "m5x25",
+   "group": "螺钉",
+   "S": 0.0,
+   "err": "照片对不可用（两帧背景整体变化）"
+  },
+  {
+   "model": "m5x30",
+   "group": "螺钉",
+   "S": 0.0,
+   "err": "照片对不可用（两帧背景整体变化）"
+  },
+  {
+   "model": "m5x35",
+   "group": "螺钉",
+   "S": 0.0,
+   "err": "照片对不可用（两帧背景整体变化）"
+  },
+  {
+   "model": "m5x40",
+   "group": "螺钉",
+   "S": 0.0,
+   "err": "照片对不可用（两帧背景整体变化）"
+  },
+  {
+   "model": "m5x45",
+   "group": "螺钉",
+   "S": 0.0,
+   "err": "照片对不可用（两帧背景整体变化）"
+  },
+  {
+   "model": "m5x50",
+   "group": "螺钉",
+   "S": 0.0,
+   "err": "照片对不可用（两帧背景整体变化）"
+  },
+  {
+   "model": "m6x12",
+   "group": "螺钉",
+   "S": 0.0,
+   "err": "照片对不可用（两帧背景整体变化）"
+  },
+  {
+   "model": "m6x20",
+   "group": "螺钉",
+   "S": 0.0,
+   "err": "照片对不可用（两帧背景整体变化）"
+  },
+  {
+   "model": "m6x25",
+   "group": "螺钉",
+   "S": 0.0,
+   "err": "照片对不可用（两帧背景整体变化）"
+  },
+  {
+   "model": "m6x30",
+   "group": "螺钉",
+   "S": 0.0,
+   "err": "照片对不可用（两帧背景整体变化）"
+  },
+  {
+   "model": "m6x35",
+   "group": "螺钉",
+   "S": 0.0,
+   "err": "照片对不可用（两帧背景整体变化）"
+  },
+  {
+   "model": "m6x40",
+   "group": "螺钉",
+   "S": 0.0,
+   "err": "照片对不可用（两帧背景整体变化）"
+  },
+  {
+   "model": "m6x45",
+   "group": "螺钉",
+   "S": 0.0,
+   "err": "照片对不可用（两帧背景整体变化）"
+  },
+  {
+   "model": "m8x12",
+   "group": "螺钉",
+   "S": 0.0,
+   "err": "照片对不可用（两帧背景整体变化）"
+  },
+  {
+   "model": "m8x16",
+   "group": "螺钉",
+   "S": 0.0,
+   "err": "照片对不可用（两帧背景整体变化）"
+  },
+  {
+   "model": "m8x20",
+   "group": "螺钉",
+   "S": 0.0,
+   "err": "照片对不可用（两帧背景整体变化）"
+  },
+  {
+   "model": "m8x25",
+   "group": "螺钉",
+   "S": 0.0,
+   "err": "照片对不可用（两帧背景整体变化）"
+  },
+  {
+   "model": "m8x30",
+   "group": "螺钉",
+   "S": 0.0,
+   "err": "照片对不可用（两帧背景整体变化）"
+  },
+  {
+   "model": "m8x35",
+   "group": "螺钉",
+   "S": 0.0,
+   "err": "照片对不可用（两帧背景整体变化）"
+  },
+  {
+   "model": "m8x40",
+   "group": "螺钉",
+   "S": 0.0,
+   "err": "照片对不可用（两帧背景整体变化）"
+  },
+  {
+   "model": "m8x45",
+   "group": "螺钉",
+   "S": 0.0,
+   "err": "照片对不可用（两帧背景整体变化）"
+  },
+  {
+   "model": "m8x50",
+   "group": "螺钉",
+   "S": 0.0,
+   "err": "照片对不可用（两帧背景整体变化）"
+  },
+  {
+   "model": "m8x55",
+   "group": "螺钉",
+   "S": 0.0,
+   "err": "照片对不可用（两帧背景整体变化）"
+  },
+  {
+   "model": "m8x60",
+   "group": "螺钉",
+   "S": 0.0,
+   "err": "照片对不可用（两帧背景整体变化）"
+  },
+  {
+   "model": "m10x16",
+   "group": "螺钉",
+   "S": 0.0,
+   "err": "照片对不可用（两帧背景整体变化）"
+  },
+  {
+   "model": "m10x25",
+   "group": "螺钉",
+   "S": 0.0,
+   "err": "照片对不可用（两帧背景整体变化）"
+  },
+  {
+   "model": "m10x30",
+   "group": "螺钉",
+   "S": 0.0,
+   "err": "照片对不可用（两帧背景整体变化）"
+  },
+  {
+   "model": "m10x35",
+   "group": "螺钉",
+   "S": 0.0,
+   "err": "照片对不可用（两帧背景整体变化）"
+  },
+  {
+   "model": "m10x40",
+   "group": "螺钉",
+   "S": 0.0,
+   "err": "照片对不可用（两帧背景整体变化）"
+  },
+  {
+   "model": "m10x45",
+   "group": "螺钉",
+   "S": 0.0,
+   "err": "照片对不可用（两帧背景整体变化）"
+  },
+  {
+   "model": "m10x50",
+   "group": "螺钉",
+   "S": 0.0,
+   "err": "照片对不可用（两帧背景整体变化）"
+  },
+  {
+   "model": "m10x55",
+   "group": "螺钉",
+   "S": 0.0,
+   "err": "照片对不可用（两帧背景整体变化）"
+  },
+  {
+   "model": "m10x60",
+   "group": "螺钉",
+   "S": 0.0,
+   "err": "照片对不可用（两帧背景整体变化）"
+  },
+  {
+   "model": "m10x65",
+   "group": "螺钉",
+   "S": 0.0,
+   "err": "照片对不可用（两帧背景整体变化）"
+  },
+  {
+   "model": "m10x70",
+   "group": "螺钉",
+   "S": 0.0,
+   "err": "照片对不可用（两帧背景整体变化）"
+  },
+  {
+   "model": "m10x80",
+   "group": "螺钉",
+   "S": 0.0,
+   "err": "照片对不可用（两帧背景整体变化）"
+  },
+  {
+   "model": "m12x30",
+   "group": "螺钉",
+   "S": 0.0,
+   "err": "照片对不可用（两帧背景整体变化）"
+  },
+  {
+   "model": "m12x35",
+   "group": "螺钉",
+   "S": 0.0,
+   "err": "照片对不可用（两帧背景整体变化）"
+  },
+  {
+   "model": "m12x40",
+   "group": "螺钉",
+   "S": 0.0,
+   "err": "照片对不可用（两帧背景整体变化）"
+  },
+  {
+   "model": "m12x45",
+   "group": "螺钉",
+   "S": 0.0,
+   "err": "照片对不可用（两帧背景整体变化）"
+  },
+  {
+   "model": "m12x50",
+   "group": "螺钉",
+   "S": 0.0,
+   "err": "照片对不可用（两帧背景整体变化）"
+  },
+  {
+   "model": "m12x55",
+   "group": "螺钉",
+   "S": 0.0,
+   "err": "照片对不可用（两帧背景整体变化）"
+  },
+  {
+   "model": "m12x60",
+   "group": "螺钉",
+   "S": 0.0,
+   "err": "照片对不可用（两帧背景整体变化）"
+  },
+  {
+   "model": "m12x65",
+   "group": "螺钉",
+   "S": 0.0,
+   "err": "照片对不可用（两帧背景整体变化）"
+  },
+  {
+   "model": "m12x70",
+   "group": "螺钉",
+   "S": 0.0,
+   "err": "照片对不可用（两帧背景整体变化）"
+  },
+  {
+   "model": "m12x80",
+   "group": "螺钉",
+   "S": 0.0,
+   "err": "照片对不可用（两帧背景整体变化）"
+  },
+  {
+   "model": "m12x90",
+   "group": "螺钉",
+   "S": 0.0,
+   "err": "照片对不可用（两帧背景整体变化）"
+  },
+  {
+   "model": "m12x100",
+   "group": "螺钉",
+   "S": 0.0,
+   "err": "照片对不可用（两帧背景整体变化）"
+  },
+  {
+   "model": "m12x110",
+   "group": "螺钉",
+   "S": 0.0,
+   "err": "照片对不可用（两帧背景整体变化）"
+  },
+  {
+   "model": "egt001 sw80x088",
+   "group": "10_Tuenkers EGT Gripper-EGT001",
+   "S": 0.0,
+   "err": "照片对不可用（两帧背景整体变化）"
+  },
+  {
+   "model": "egt001 sw80x118",
+   "group": "10_Tuenkers EGT Gripper-EGT001",
+   "S": 0.0,
+   "err": "照片对不可用（两帧背景整体变化）"
+  },
+  {
+   "model": "egt001 sw80x148",
+   "group": "10_Tuenkers EGT Gripper-EGT001",
+   "prompt": "EGT型材 EGT001 SW80x148",
+   "view": "iso(-45,35)",
+   "S": 58.2,
+   "iou": 63.1,
+   "chamfer": 30.42,
+   "iou_strict": 44.9,
+   "pose": [
+    72.0,
+    -8.0,
+    32.0
+   ],
+   "ai_img": "零件AI建模图片\\10_Tuenkers EGT Gripper-EGT001\\egt001 sw80x148.png",
+   "real_img": "零件真实图片_带背景\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x148.png"
+  },
+  {
+   "model": "egt001 sw80x178",
+   "group": "10_Tuenkers EGT Gripper-EGT001",
+   "prompt": "EGT型材 EGT001 SW80x178",
+   "view": "iso(-45,35)",
+   "S": 86.5,
+   "iou": 91.8,
+   "chamfer": 12.22,
+   "iou_strict": 82.0,
+   "pose": [
+    0.0,
+    8.0,
+    0.0
+   ],
+   "ai_img": "零件AI建模图片\\10_Tuenkers EGT Gripper-EGT001\\egt001 sw80x178.png",
+   "real_img": "零件真实图片_带背景\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x178.png"
+  },
+  {
+   "model": "egt001 sw80x208",
+   "group": "10_Tuenkers EGT Gripper-EGT001",
+   "prompt": "EGT型材 EGT001 SW80x208",
+   "view": "iso(-45,35)",
+   "S": 85.8,
+   "iou": 91.0,
+   "chamfer": 12.7,
+   "iou_strict": 80.2,
+   "pose": [
+    0.0,
+    8.0,
+    -2.0
+   ],
+   "ai_img": "零件AI建模图片\\10_Tuenkers EGT Gripper-EGT001\\egt001 sw80x208.png",
+   "real_img": "零件真实图片_带背景\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x208.png"
+  },
+  {
+   "model": "egt001 sw80x238",
+   "group": "10_Tuenkers EGT Gripper-EGT001",
+   "prompt": "EGT型材 EGT001 SW80x238",
+   "view": "iso(-45,35)",
+   "S": 85.9,
+   "iou": 90.7,
+   "chamfer": 12.32,
+   "iou_strict": 79.5,
+   "pose": [
+    0.0,
+    8.0,
+    0.0
+   ],
+   "ai_img": "零件AI建模图片\\10_Tuenkers EGT Gripper-EGT001\\egt001 sw80x238.png",
+   "real_img": "零件真实图片_带背景\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x238.png"
+  },
+  {
+   "model": "egt001 sw80x298",
+   "group": "10_Tuenkers EGT Gripper-EGT001",
+   "prompt": "EGT型材 EGT001 SW80x298",
+   "view": "iso(-45,35)",
+   "S": 84.2,
+   "iou": 88.0,
+   "chamfer": 12.74,
+   "iou_strict": 74.7,
+   "pose": [
+    -3.0,
+    6.0,
+    -6.0
+   ],
+   "ai_img": "零件AI建模图片\\10_Tuenkers EGT Gripper-EGT001\\egt001 sw80x298.png",
+   "real_img": "零件真实图片_带背景\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x298.png"
+  },
+  {
+   "model": "egt001 sw80x328",
+   "group": "10_Tuenkers EGT Gripper-EGT001",
+   "prompt": "EGT型材 EGT001 SW80x328",
+   "view": "iso(-45,35)",
+   "S": 86.1,
+   "iou": 90.0,
+   "chamfer": 11.56,
+   "iou_strict": 77.6,
+   "pose": [
+    0.0,
+    2.0,
+    -4.0
+   ],
+   "ai_img": "零件AI建模图片\\10_Tuenkers EGT Gripper-EGT001\\egt001 sw80x328.png",
+   "real_img": "零件真实图片_带背景\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x328.png"
+  },
+  {
+   "model": "egt001 sw80x358",
+   "group": "10_Tuenkers EGT Gripper-EGT001",
+   "prompt": "EGT型材 EGT001 SW80x358",
+   "view": "iso(-45,35)",
+   "S": 89.1,
+   "iou": 91.8,
+   "chamfer": 8.89,
+   "iou_strict": 81.0,
+   "pose": [
+    0.0,
+    4.0,
+    -2.0
+   ],
+   "ai_img": "零件AI建模图片\\10_Tuenkers EGT Gripper-EGT001\\egt001 sw80x358.png",
+   "real_img": "零件真实图片_带背景\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x358.png"
+  },
+  {
+   "model": "egt001 sw80x388",
+   "group": "10_Tuenkers EGT Gripper-EGT001",
+   "prompt": "EGT型材 EGT001 SW80x388",
+   "view": "iso(-45,35)",
+   "S": 89.6,
+   "iou": 92.2,
+   "chamfer": 8.44,
+   "iou_strict": 81.5,
+   "pose": [
+    0.0,
+    4.0,
+    -4.0
+   ],
+   "ai_img": "零件AI建模图片\\10_Tuenkers EGT Gripper-EGT001\\egt001 sw80x388.png",
+   "real_img": "零件真实图片_带背景\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x388.png"
+  },
+  {
+   "model": "egt001 sw80x418",
+   "group": "10_Tuenkers EGT Gripper-EGT001",
+   "prompt": "EGT型材 EGT001 SW80x418",
+   "view": "iso(-45,35)",
+   "S": 89.3,
+   "iou": 91.8,
+   "chamfer": 8.55,
+   "iou_strict": 80.6,
+   "pose": [
+    0.0,
+    2.0,
+    -4.0
+   ],
+   "ai_img": "零件AI建模图片\\10_Tuenkers EGT Gripper-EGT001\\egt001 sw80x418.png",
+   "real_img": "零件真实图片_带背景\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x418.png"
+  },
+  {
+   "model": "egt001 sw80x448",
+   "group": "10_Tuenkers EGT Gripper-EGT001",
+   "prompt": "EGT型材 EGT001 SW80x448",
+   "view": "iso(-45,35)",
+   "S": 89.8,
+   "iou": 92.0,
+   "chamfer": 8.04,
+   "iou_strict": 80.9,
+   "pose": [
+    0.0,
+    4.0,
+    -4.0
+   ],
+   "ai_img": "零件AI建模图片\\10_Tuenkers EGT Gripper-EGT001\\egt001 sw80x448.png",
+   "real_img": "零件真实图片_带背景\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x448.png"
+  },
+  {
+   "model": "egt001 sw80x478",
+   "group": "10_Tuenkers EGT Gripper-EGT001",
+   "prompt": "EGT型材 EGT001 SW80x478",
+   "view": "iso(-45,35)",
+   "S": 90.2,
+   "iou": 92.1,
+   "chamfer": 7.64,
+   "iou_strict": 80.9,
+   "pose": [
+    0.0,
+    4.0,
+    -4.0
+   ],
+   "ai_img": "零件AI建模图片\\10_Tuenkers EGT Gripper-EGT001\\egt001 sw80x478.png",
+   "real_img": "零件真实图片_带背景\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x478.png"
+  },
+  {
+   "model": "egt001 sw80x508",
+   "group": "10_Tuenkers EGT Gripper-EGT001",
+   "prompt": "EGT型材 EGT001 SW80x508",
+   "view": "iso(-45,35)",
+   "S": 90.0,
+   "iou": 91.8,
+   "chamfer": 7.74,
+   "iou_strict": 80.2,
+   "pose": [
+    0.0,
+    4.0,
+    -4.0
+   ],
+   "ai_img": "零件AI建模图片\\10_Tuenkers EGT Gripper-EGT001\\egt001 sw80x508.png",
+   "real_img": "零件真实图片_带背景\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x508.png"
+  },
+  {
+   "model": "egt001 sw80x538",
+   "group": "10_Tuenkers EGT Gripper-EGT001",
+   "prompt": "EGT型材 EGT001 SW80x538",
+   "view": "iso(-45,35)",
+   "S": 90.2,
+   "iou": 91.9,
+   "chamfer": 7.51,
+   "iou_strict": 80.3,
+   "pose": [
+    0.0,
+    4.0,
+    -4.0
+   ],
+   "ai_img": "零件AI建模图片\\10_Tuenkers EGT Gripper-EGT001\\egt001 sw80x538.png",
+   "real_img": "零件真实图片_带背景\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x538.png"
+  },
+  {
+   "model": "egt001 sw80x568",
+   "group": "10_Tuenkers EGT Gripper-EGT001",
+   "prompt": "EGT型材 EGT001 SW80x568",
+   "view": "iso(-45,35)",
+   "S": 90.6,
+   "iou": 91.7,
+   "chamfer": 6.85,
+   "iou_strict": 79.8,
+   "pose": [
+    0.0,
+    2.0,
+    -2.0
+   ],
+   "ai_img": "零件AI建模图片\\10_Tuenkers EGT Gripper-EGT001\\egt001 sw80x568.png",
+   "real_img": "零件真实图片_带背景\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x568.png"
+  },
+  {
+   "model": "egt001 sw80x598",
+   "group": "10_Tuenkers EGT Gripper-EGT001",
+   "prompt": "EGT型材 EGT001 SW80x598",
+   "view": "iso(-45,35)",
+   "S": 91.3,
+   "iou": 92.3,
+   "chamfer": 6.27,
+   "iou_strict": 80.8,
+   "pose": [
+    0.0,
+    2.0,
+    -2.0
+   ],
+   "ai_img": "零件AI建模图片\\10_Tuenkers EGT Gripper-EGT001\\egt001 sw80x598.png",
+   "real_img": "零件真实图片_带背景\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x598.png"
+  },
+  {
+   "model": "egt001 sw80x628",
+   "group": "10_Tuenkers EGT Gripper-EGT001",
+   "S": 0.0,
+   "err": "照片对不可用（两帧背景整体变化）"
+  },
+  {
+   "model": "egt001 sw80x658",
+   "group": "10_Tuenkers EGT Gripper-EGT001",
+   "prompt": "EGT型材 EGT001 SW80x658",
+   "view": "iso(-45,35)",
+   "S": 91.1,
+   "iou": 91.9,
+   "chamfer": 6.34,
+   "iou_strict": 79.7,
+   "pose": [
+    0.0,
+    4.0,
+    -2.0
+   ],
+   "ai_img": "零件AI建模图片\\10_Tuenkers EGT Gripper-EGT001\\egt001 sw80x658.png",
+   "real_img": "零件真实图片_带背景\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x658.png"
+  },
+  {
+   "model": "egt001 sw80x688",
+   "group": "10_Tuenkers EGT Gripper-EGT001",
+   "prompt": "EGT型材 EGT001 SW80x688",
+   "view": "iso(-45,35)",
+   "S": 90.8,
+   "iou": 91.6,
+   "chamfer": 6.47,
+   "iou_strict": 78.9,
+   "pose": [
+    0.0,
+    2.0,
+    -4.0
+   ],
+   "ai_img": "零件AI建模图片\\10_Tuenkers EGT Gripper-EGT001\\egt001 sw80x688.png",
+   "real_img": "零件真实图片_带背景\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x688.png"
+  },
+  {
+   "model": "egt001 sw80x718",
+   "group": "10_Tuenkers EGT Gripper-EGT001",
+   "prompt": "EGT型材 EGT001 SW80x718",
+   "view": "iso(-45,35)",
+   "S": 90.8,
+   "iou": 91.4,
+   "chamfer": 6.33,
+   "iou_strict": 78.7,
+   "pose": [
+    0.0,
+    2.0,
+    -2.0
+   ],
+   "ai_img": "零件AI建模图片\\10_Tuenkers EGT Gripper-EGT001\\egt001 sw80x718.png",
+   "real_img": "零件真实图片_带背景\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x718.png"
+  },
+  {
+   "model": "egt001 sw80x748",
+   "group": "10_Tuenkers EGT Gripper-EGT001",
+   "prompt": "EGT型材 EGT001 SW80x748",
+   "view": "iso(-45,35)",
+   "S": 90.9,
+   "iou": 91.6,
+   "chamfer": 6.38,
+   "iou_strict": 78.6,
+   "pose": [
+    0.0,
+    2.0,
+    -4.0
+   ],
+   "ai_img": "零件AI建模图片\\10_Tuenkers EGT Gripper-EGT001\\egt001 sw80x748.png",
+   "real_img": "零件真实图片_带背景\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x748.png"
+  },
+  {
+   "model": "egt001 sw80x778",
+   "group": "10_Tuenkers EGT Gripper-EGT001",
+   "prompt": "EGT型材 EGT001 SW80x778",
+   "view": "iso(-45,35)",
+   "S": 86.2,
+   "iou": 85.7,
+   "chamfer": 8.71,
+   "iou_strict": 68.2,
+   "pose": [
+    -1.5,
+    6.0,
+    -10.0
+   ],
+   "ai_img": "零件AI建模图片\\10_Tuenkers EGT Gripper-EGT001\\egt001 sw80x778.png",
+   "real_img": "零件真实图片_带背景\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x778.png"
+  },
+  {
+   "model": "egt001 sw80x808",
+   "group": "10_Tuenkers EGT Gripper-EGT001",
+   "prompt": "EGT型材 EGT001 SW80x808",
+   "view": "iso4(135,35)",
+   "S": 52.6,
+   "iou": 26.0,
+   "chamfer": 13.58,
+   "iou_strict": 13.7,
+   "pose": [
+    -16.5,
+    6.0,
+    -16.0
+   ],
+   "ai_img": "零件AI建模图片\\10_Tuenkers EGT Gripper-EGT001\\egt001 sw80x808.png",
+   "real_img": "零件真实图片_带背景\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x808.png"
+  },
+  {
+   "model": "egt001 sw80x838",
+   "group": "10_Tuenkers EGT Gripper-EGT001",
+   "prompt": "EGT型材 EGT001 SW80x838",
+   "view": "iso(-45,35)",
+   "S": 91.4,
+   "iou": 91.3,
+   "chamfer": 5.49,
+   "iou_strict": 77.8,
+   "pose": [
+    0.0,
+    2.0,
+    0.0
+   ],
+   "ai_img": "零件AI建模图片\\10_Tuenkers EGT Gripper-EGT001\\egt001 sw80x838.png",
+   "real_img": "零件真实图片_带背景\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x838.png"
+  },
+  {
+   "model": "egt001 sw80x868",
+   "group": "10_Tuenkers EGT Gripper-EGT001",
+   "prompt": "EGT型材 EGT001 SW80x868",
+   "view": "iso(-45,35)",
+   "S": 91.3,
+   "iou": 91.2,
+   "chamfer": 5.58,
+   "iou_strict": 77.3,
+   "pose": [
+    0.0,
+    2.0,
+    -2.0
+   ],
+   "ai_img": "零件AI建模图片\\10_Tuenkers EGT Gripper-EGT001\\egt001 sw80x868.png",
+   "real_img": "零件真实图片_带背景\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x868.png"
+  },
+  {
+   "model": "egt001 sw80x898",
+   "group": "10_Tuenkers EGT Gripper-EGT001",
+   "prompt": "EGT型材 EGT001 SW80x898",
+   "view": "iso(-45,35)",
+   "S": 90.9,
+   "iou": 90.8,
+   "chamfer": 5.82,
+   "iou_strict": 76.5,
+   "pose": [
+    0.0,
+    2.0,
+    -2.0
+   ],
+   "ai_img": "零件AI建模图片\\10_Tuenkers EGT Gripper-EGT001\\egt001 sw80x898.png",
+   "real_img": "零件真实图片_带背景\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x898.png"
+  },
+  {
+   "model": "egt001 sw80x928",
+   "group": "10_Tuenkers EGT Gripper-EGT001",
+   "prompt": "EGT型材 EGT001 SW80x928",
+   "view": "iso(-45,35)",
+   "S": 90.8,
+   "iou": 90.6,
+   "chamfer": 5.83,
+   "iou_strict": 76.2,
+   "pose": [
+    0.0,
+    2.0,
+    -2.0
+   ],
+   "ai_img": "零件AI建模图片\\10_Tuenkers EGT Gripper-EGT001\\egt001 sw80x928.png",
+   "real_img": "零件真实图片_带背景\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x928.png"
+  },
+  {
+   "model": "egt001 sw80x958",
+   "group": "10_Tuenkers EGT Gripper-EGT001",
+   "prompt": "EGT型材 EGT001 SW80x958",
+   "view": "iso(-45,35)",
+   "S": 88.6,
+   "iou": 89.5,
+   "chamfer": 8.06,
+   "iou_strict": 74.1,
+   "pose": [
+    0.0,
+    4.0,
+    -6.0
+   ],
+   "ai_img": "零件AI建模图片\\10_Tuenkers EGT Gripper-EGT001\\egt001 sw80x958.png",
+   "real_img": "零件真实图片_带背景\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x958.png"
+  },
+  {
+   "model": "egt001 sw80x988",
+   "group": "10_Tuenkers EGT Gripper-EGT001",
+   "prompt": "EGT型材 EGT001 SW80x988",
+   "view": "iso(-45,35)",
+   "S": 91.0,
+   "iou": 90.6,
+   "chamfer": 5.57,
+   "iou_strict": 75.6,
+   "pose": [
+    0.0,
+    2.0,
+    -2.0
+   ],
+   "ai_img": "零件AI建模图片\\10_Tuenkers EGT Gripper-EGT001\\egt001 sw80x988.png",
+   "real_img": "零件真实图片_带背景\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x988.png"
+  },
+  {
+   "model": "egt001 sw80x1018",
+   "group": "10_Tuenkers EGT Gripper-EGT001",
+   "prompt": "EGT型材 EGT001 SW80x1018",
+   "view": "iso(-45,35)",
+   "S": 91.2,
+   "iou": 90.6,
+   "chamfer": 5.31,
+   "iou_strict": 75.6,
+   "pose": [
+    0.0,
+    0.0,
+    -2.0
+   ],
+   "ai_img": "零件AI建模图片\\10_Tuenkers EGT Gripper-EGT001\\egt001 sw80x1018.png",
+   "real_img": "零件真实图片_带背景\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x1018.png"
+  },
+  {
+   "model": "egt001 sw80x1048",
+   "group": "10_Tuenkers EGT Gripper-EGT001",
+   "prompt": "EGT型材 EGT001 SW80x1048",
+   "view": "iso(-45,35)",
+   "S": 52.5,
+   "iou": 21.6,
+   "chamfer": 10.76,
+   "iou_strict": 11.1,
+   "pose": [
+    16.5,
+    -12.0,
+    -10.0
+   ],
+   "ai_img": "零件AI建模图片\\10_Tuenkers EGT Gripper-EGT001\\egt001 sw80x1048.png",
+   "real_img": "零件真实图片_带背景\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x1048.png"
+  },
+  {
+   "model": "egt001 sw80x1078",
+   "group": "10_Tuenkers EGT Gripper-EGT001",
+   "prompt": "EGT型材 EGT001 SW80x1078",
+   "view": "iso(-45,35)",
+   "S": 91.3,
+   "iou": 90.6,
+   "chamfer": 5.25,
+   "iou_strict": 75.5,
+   "pose": [
+    0.0,
+    2.0,
+    -2.0
+   ],
+   "ai_img": "零件AI建模图片\\10_Tuenkers EGT Gripper-EGT001\\egt001 sw80x1078.png",
+   "real_img": "零件真实图片_带背景\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x1078.png"
+  },
+  {
+   "model": "egt001 sw80x1108",
+   "group": "10_Tuenkers EGT Gripper-EGT001",
+   "prompt": "EGT型材 EGT001 SW80x1108",
+   "view": "iso(-45,35)",
+   "S": 90.9,
+   "iou": 90.1,
+   "chamfer": 5.47,
+   "iou_strict": 74.3,
+   "pose": [
+    0.0,
+    2.0,
+    -2.0
+   ],
+   "ai_img": "零件AI建模图片\\10_Tuenkers EGT Gripper-EGT001\\egt001 sw80x1108.png",
+   "real_img": "零件真实图片_带背景\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x1108.png"
+  },
+  {
+   "model": "egt001 sw80x1138",
+   "group": "10_Tuenkers EGT Gripper-EGT001",
+   "prompt": "EGT型材 EGT001 SW80x1138",
+   "view": "iso(-45,35)",
+   "S": 91.0,
+   "iou": 90.1,
+   "chamfer": 5.29,
+   "iou_strict": 74.4,
+   "pose": [
+    0.0,
+    0.0,
+    -2.0
+   ],
+   "ai_img": "零件AI建模图片\\10_Tuenkers EGT Gripper-EGT001\\egt001 sw80x1138.png",
+   "real_img": "零件真实图片_带背景\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x1138.png"
+  },
+  {
+   "model": "egt001 sw80x1168",
+   "group": "10_Tuenkers EGT Gripper-EGT001",
+   "prompt": "EGT型材 EGT001 SW80x1168",
+   "view": "iso(-45,35)",
+   "S": 91.3,
+   "iou": 90.5,
+   "chamfer": 5.15,
+   "iou_strict": 74.6,
+   "pose": [
+    0.0,
+    2.0,
+    -2.0
+   ],
+   "ai_img": "零件AI建模图片\\10_Tuenkers EGT Gripper-EGT001\\egt001 sw80x1168.png",
+   "real_img": "零件真实图片_带背景\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x1168.png"
+  },
+  {
+   "model": "egt001 sw80x1198",
+   "group": "10_Tuenkers EGT Gripper-EGT001",
+   "prompt": "EGT型材 EGT001 SW80x1198",
+   "view": "iso(-45,35)",
+   "S": 91.1,
+   "iou": 90.2,
+   "chamfer": 5.19,
+   "iou_strict": 74.0,
+   "pose": [
+    0.0,
+    2.0,
+    -2.0
+   ],
+   "ai_img": "零件AI建模图片\\10_Tuenkers EGT Gripper-EGT001\\egt001 sw80x1198.png",
+   "real_img": "零件真实图片_带背景\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x1198.png"
+  },
+  {
+   "model": "egt001 sw80x1228",
+   "group": "10_Tuenkers EGT Gripper-EGT001",
+   "prompt": "EGT型材 EGT001 SW80x1228",
+   "view": "iso(-45,35)",
+   "S": 90.7,
+   "iou": 89.5,
+   "chamfer": 5.25,
+   "iou_strict": 72.8,
+   "pose": [
+    0.0,
+    0.0,
+    -2.0
+   ],
+   "ai_img": "零件AI建模图片\\10_Tuenkers EGT Gripper-EGT001\\egt001 sw80x1228.png",
+   "real_img": "零件真实图片_带背景\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x1228.png"
+  },
+  {
+   "model": "egt001 sw80x1258",
+   "group": "10_Tuenkers EGT Gripper-EGT001",
+   "prompt": "EGT型材 EGT001 SW80x1258",
+   "view": "iso(-45,35)",
+   "S": 90.9,
+   "iou": 89.6,
+   "chamfer": 5.15,
+   "iou_strict": 72.9,
+   "pose": [
+    0.0,
+    0.0,
+    -2.0
+   ],
+   "ai_img": "零件AI建模图片\\10_Tuenkers EGT Gripper-EGT001\\egt001 sw80x1258.png",
+   "real_img": "零件真实图片_带背景\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x1258.png"
+  },
+  {
+   "model": "egt001 sw80x1288",
+   "group": "10_Tuenkers EGT Gripper-EGT001",
+   "prompt": "EGT型材 EGT001 SW80x1288",
+   "view": "iso(-45,35)",
+   "S": 90.6,
+   "iou": 89.2,
+   "chamfer": 5.2,
+   "iou_strict": 72.1,
+   "pose": [
+    0.0,
+    2.0,
+    0.0
+   ],
+   "ai_img": "零件AI建模图片\\10_Tuenkers EGT Gripper-EGT001\\egt001 sw80x1288.png",
+   "real_img": "零件真实图片_带背景\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x1288.png"
+  },
+  {
+   "model": "egt001 sw80x1318",
+   "group": "10_Tuenkers EGT Gripper-EGT001",
+   "prompt": "EGT型材 EGT001 SW80x1318",
+   "view": "iso(-45,35)",
+   "S": 90.9,
+   "iou": 89.6,
+   "chamfer": 5.11,
+   "iou_strict": 72.3,
+   "pose": [
+    0.0,
+    2.0,
+    -2.0
+   ],
+   "ai_img": "零件AI建模图片\\10_Tuenkers EGT Gripper-EGT001\\egt001 sw80x1318.png",
+   "real_img": "零件真实图片_带背景\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x1318.png"
+  },
+  {
+   "model": "egt001 sw80x1348",
+   "group": "10_Tuenkers EGT Gripper-EGT001",
+   "prompt": "EGT型材 EGT001 SW80x1348",
+   "view": "iso(-45,35)",
+   "S": 90.9,
+   "iou": 89.5,
+   "chamfer": 5.09,
+   "iou_strict": 72.2,
+   "pose": [
+    0.0,
+    2.0,
+    -2.0
+   ],
+   "ai_img": "零件AI建模图片\\10_Tuenkers EGT Gripper-EGT001\\egt001 sw80x1348.png",
+   "real_img": "零件真实图片_带背景\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x1348.png"
+  },
+  {
+   "model": "egt001 sw80x1378",
+   "group": "10_Tuenkers EGT Gripper-EGT001",
+   "prompt": "EGT型材 EGT001 SW80x1378",
+   "view": "iso(-45,35)",
+   "S": 90.9,
+   "iou": 89.5,
+   "chamfer": 5.07,
+   "iou_strict": 71.9,
+   "pose": [
+    0.0,
+    2.0,
+    -2.0
+   ],
+   "ai_img": "零件AI建模图片\\10_Tuenkers EGT Gripper-EGT001\\egt001 sw80x1378.png",
+   "real_img": "零件真实图片_带背景\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x1378.png"
+  },
+  {
+   "model": "egt001 sw80x1408",
+   "group": "10_Tuenkers EGT Gripper-EGT001",
+   "prompt": "EGT型材 EGT001 SW80x1408",
+   "view": "iso(-45,35)",
+   "S": 90.7,
+   "iou": 89.2,
+   "chamfer": 5.02,
+   "iou_strict": 71.3,
+   "pose": [
+    0.0,
+    0.0,
+    -2.0
+   ],
+   "ai_img": "零件AI建模图片\\10_Tuenkers EGT Gripper-EGT001\\egt001 sw80x1408.png",
+   "real_img": "零件真实图片_带背景\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x1408.png"
+  },
+  {
+   "model": "egt001 sw80x1438",
+   "group": "10_Tuenkers EGT Gripper-EGT001",
+   "prompt": "EGT型材 EGT001 SW80x1438",
+   "view": "iso(-45,35)",
+   "S": 90.5,
+   "iou": 88.9,
+   "chamfer": 5.09,
+   "iou_strict": 70.7,
+   "pose": [
+    0.0,
+    2.0,
+    0.0
+   ],
+   "ai_img": "零件AI建模图片\\10_Tuenkers EGT Gripper-EGT001\\egt001 sw80x1438.png",
+   "real_img": "零件真实图片_带背景\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x1438.png"
+  },
+  {
+   "model": "egt001 sw80x1468",
+   "group": "10_Tuenkers EGT Gripper-EGT001",
+   "prompt": "EGT型材 EGT001 SW80x1468",
+   "view": "iso(-45,35)",
+   "S": 90.4,
+   "iou": 88.7,
+   "chamfer": 5.17,
+   "iou_strict": 70.2,
+   "pose": [
+    0.0,
+    0.0,
+    -2.0
+   ],
+   "ai_img": "零件AI建模图片\\10_Tuenkers EGT Gripper-EGT001\\egt001 sw80x1468.png",
+   "real_img": "零件真实图片_带背景\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x1468.png"
+  },
+  {
+   "model": "egt001 sw80x1498",
+   "group": "10_Tuenkers EGT Gripper-EGT001",
+   "prompt": "EGT型材 EGT001 SW80x1498",
+   "view": "iso(-45,35)",
+   "S": 90.5,
+   "iou": 88.7,
+   "chamfer": 5.05,
+   "iou_strict": 70.2,
+   "pose": [
+    0.0,
+    2.0,
+    0.0
+   ],
+   "ai_img": "零件AI建模图片\\10_Tuenkers EGT Gripper-EGT001\\egt001 sw80x1498.png",
+   "real_img": "零件真实图片_带背景\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x1498.png"
+  },
+  {
+   "model": "egt001 sw80x1528",
+   "group": "10_Tuenkers EGT Gripper-EGT001",
+   "prompt": "EGT型材 EGT001 SW80x1528",
+   "view": "iso(-45,35)",
+   "S": 90.3,
+   "iou": 88.6,
+   "chamfer": 5.16,
+   "iou_strict": 69.7,
+   "pose": [
+    0.0,
+    2.0,
+    -2.0
+   ],
+   "ai_img": "零件AI建模图片\\10_Tuenkers EGT Gripper-EGT001\\egt001 sw80x1528.png",
+   "real_img": "零件真实图片_带背景\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x1528.png"
+  },
+  {
+   "model": "egt001 sw80x1558",
+   "group": "10_Tuenkers EGT Gripper-EGT001",
+   "prompt": "EGT型材 EGT001 SW80x1558",
+   "view": "iso(-45,35)",
+   "S": 90.2,
+   "iou": 88.4,
+   "chamfer": 5.19,
+   "iou_strict": 69.3,
+   "pose": [
+    0.0,
+    0.0,
+    -2.0
+   ],
+   "ai_img": "零件AI建模图片\\10_Tuenkers EGT Gripper-EGT001\\egt001 sw80x1558.png",
+   "real_img": "零件真实图片_带背景\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x1558.png"
+  },
+  {
+   "model": "egt001 sw80x1588",
+   "group": "10_Tuenkers EGT Gripper-EGT001",
+   "prompt": "EGT型材 EGT001 SW80x1588",
+   "view": "iso(-45,35)",
+   "S": 90.3,
+   "iou": 88.4,
+   "chamfer": 5.07,
+   "iou_strict": 69.1,
+   "pose": [
+    0.0,
+    0.0,
+    -2.0
+   ],
+   "ai_img": "零件AI建模图片\\10_Tuenkers EGT Gripper-EGT001\\egt001 sw80x1588.png",
+   "real_img": "零件真实图片_带背景\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x1588.png"
+  },
+  {
+   "model": "egt001 sw80x1618",
+   "group": "10_Tuenkers EGT Gripper-EGT001",
+   "prompt": "EGT型材 EGT001 SW80x1618",
+   "view": "iso4(135,35)",
+   "S": 65.5,
+   "iou": 41.9,
+   "chamfer": 7.1,
+   "iou_strict": 22.4,
+   "pose": [
+    -6.0,
+    10.0,
+    2.0
+   ],
+   "ai_img": "零件AI建模图片\\10_Tuenkers EGT Gripper-EGT001\\egt001 sw80x1618.png",
+   "real_img": "零件真实图片_带背景\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x1618.png"
+  },
+  {
+   "model": "egt001 sw80x1648",
+   "group": "10_Tuenkers EGT Gripper-EGT001",
+   "prompt": "EGT型材 EGT001 SW80x1648",
+   "view": "iso(-45,35)",
+   "S": 90.2,
+   "iou": 88.1,
+   "chamfer": 5.07,
+   "iou_strict": 68.5,
+   "pose": [
+    0.0,
+    0.0,
+    -2.0
+   ],
+   "ai_img": "零件AI建模图片\\10_Tuenkers EGT Gripper-EGT001\\egt001 sw80x1648.png",
+   "real_img": "零件真实图片_带背景\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x1648.png"
+  },
+  {
+   "model": "egt001 sw80x1678",
+   "group": "10_Tuenkers EGT Gripper-EGT001",
+   "prompt": "EGT型材 EGT001 SW80x1678",
+   "view": "iso(-45,35)",
+   "S": 90.2,
+   "iou": 88.1,
+   "chamfer": 5.03,
+   "iou_strict": 68.4,
+   "pose": [
+    0.0,
+    0.0,
+    -2.0
+   ],
+   "ai_img": "零件AI建模图片\\10_Tuenkers EGT Gripper-EGT001\\egt001 sw80x1678.png",
+   "real_img": "零件真实图片_带背景\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x1678.png"
+  },
+  {
+   "model": "egt001 sw80x1708",
+   "group": "10_Tuenkers EGT Gripper-EGT001",
+   "prompt": "EGT型材 EGT001 SW80x1708",
+   "view": "iso(-45,35)",
+   "S": 90.3,
+   "iou": 88.3,
+   "chamfer": 4.95,
+   "iou_strict": 68.5,
+   "pose": [
+    0.0,
+    0.0,
+    -2.0
+   ],
+   "ai_img": "零件AI建模图片\\10_Tuenkers EGT Gripper-EGT001\\egt001 sw80x1708.png",
+   "real_img": "零件真实图片_带背景\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x1708.png"
+  },
+  {
+   "model": "egt001 sw80x1738",
+   "group": "10_Tuenkers EGT Gripper-EGT001",
+   "prompt": "EGT型材 EGT001 SW80x1738",
+   "view": "iso(-45,35)",
+   "S": 90.1,
+   "iou": 87.9,
+   "chamfer": 4.96,
+   "iou_strict": 67.7,
+   "pose": [
+    0.0,
+    2.0,
+    0.0
+   ],
+   "ai_img": "零件AI建模图片\\10_Tuenkers EGT Gripper-EGT001\\egt001 sw80x1738.png",
+   "real_img": "零件真实图片_带背景\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x1738.png"
+  },
+  {
+   "model": "egt001 sw80x1768",
+   "group": "10_Tuenkers EGT Gripper-EGT001",
+   "prompt": "EGT型材 EGT001 SW80x1768",
+   "view": "iso(-45,35)",
+   "S": 89.9,
+   "iou": 87.7,
+   "chamfer": 5.11,
+   "iou_strict": 67.3,
+   "pose": [
+    0.0,
+    0.0,
+    -2.0
+   ],
+   "ai_img": "零件AI建模图片\\10_Tuenkers EGT Gripper-EGT001\\egt001 sw80x1768.png",
+   "real_img": "零件真实图片_带背景\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x1768.png"
+  },
+  {
+   "model": "egt001 sw80x1798",
+   "group": "10_Tuenkers EGT Gripper-EGT001",
+   "prompt": "EGT型材 EGT001 SW80x1798",
+   "view": "iso(-45,35)",
+   "S": 89.7,
+   "iou": 87.3,
+   "chamfer": 5.18,
+   "iou_strict": 66.6,
+   "pose": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "ai_img": "零件AI建模图片\\10_Tuenkers EGT Gripper-EGT001\\egt001 sw80x1798.png",
+   "real_img": "零件真实图片_带背景\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x1798.png"
+  },
+  {
+   "model": "egt001 sw80x1828",
+   "group": "10_Tuenkers EGT Gripper-EGT001",
+   "prompt": "EGT型材 EGT001 SW80x1828",
+   "view": "iso(-45,35)",
+   "S": 90.1,
+   "iou": 87.8,
+   "chamfer": 4.95,
+   "iou_strict": 67.3,
+   "pose": [
+    0.0,
+    2.0,
+    -2.0
+   ],
+   "ai_img": "零件AI建模图片\\10_Tuenkers EGT Gripper-EGT001\\egt001 sw80x1828.png",
+   "real_img": "零件真实图片_带背景\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x1828.png"
+  },
+  {
+   "model": "egt001 sw80x1858",
+   "group": "10_Tuenkers EGT Gripper-EGT001",
+   "prompt": "EGT型材 EGT001 SW80x1858",
+   "view": "iso(-45,35)",
+   "S": 90.2,
+   "iou": 87.8,
+   "chamfer": 4.91,
+   "iou_strict": 67.4,
+   "pose": [
+    0.0,
+    0.0,
+    -2.0
+   ],
+   "ai_img": "零件AI建模图片\\10_Tuenkers EGT Gripper-EGT001\\egt001 sw80x1858.png",
+   "real_img": "零件真实图片_带背景\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x1858.png"
+  },
+  {
+   "model": "egt001 sw80x1888",
+   "group": "10_Tuenkers EGT Gripper-EGT001",
+   "prompt": "EGT型材 EGT001 SW80x1888",
+   "view": "iso(-45,35)",
+   "S": 89.9,
+   "iou": 87.5,
+   "chamfer": 5.0,
+   "iou_strict": 66.5,
+   "pose": [
+    0.0,
+    2.0,
+    -2.0
+   ],
+   "ai_img": "零件AI建模图片\\10_Tuenkers EGT Gripper-EGT001\\egt001 sw80x1888.png",
+   "real_img": "零件真实图片_带背景\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x1888.png"
+  },
+  {
+   "model": "egt001 sw80x1918",
+   "group": "10_Tuenkers EGT Gripper-EGT001",
+   "prompt": "EGT型材 EGT001 SW80x1918",
+   "view": "iso(-45,35)",
+   "S": 90.0,
+   "iou": 87.6,
+   "chamfer": 4.91,
+   "iou_strict": 66.6,
+   "pose": [
+    0.0,
+    0.0,
+    -2.0
+   ],
+   "ai_img": "零件AI建模图片\\10_Tuenkers EGT Gripper-EGT001\\egt001 sw80x1918.png",
+   "real_img": "零件真实图片_带背景\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x1918.png"
+  },
+  {
+   "model": "egt001 sw80x1948",
+   "group": "10_Tuenkers EGT Gripper-EGT001",
+   "prompt": "EGT型材 EGT001 SW80x1948",
+   "view": "iso(-45,35)",
+   "S": 90.0,
+   "iou": 87.5,
+   "chamfer": 4.91,
+   "iou_strict": 66.3,
+   "pose": [
+    0.0,
+    2.0,
+    -2.0
+   ],
+   "ai_img": "零件AI建模图片\\10_Tuenkers EGT Gripper-EGT001\\egt001 sw80x1948.png",
+   "real_img": "零件真实图片_带背景\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x1948.png"
+  },
+  {
+   "model": "egt001 sw80x1978",
+   "group": "10_Tuenkers EGT Gripper-EGT001",
+   "prompt": "EGT型材 EGT001 SW80x1978",
+   "view": "iso(-45,35)",
+   "S": 89.8,
+   "iou": 87.2,
+   "chamfer": 4.99,
+   "iou_strict": 65.8,
+   "pose": [
+    0.0,
+    2.0,
+    0.0
+   ],
+   "ai_img": "零件AI建模图片\\10_Tuenkers EGT Gripper-EGT001\\egt001 sw80x1978.png",
+   "real_img": "零件真实图片_带背景\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x1978.png"
+  },
+  {
+   "model": "egt001 sw80x2008",
+   "group": "10_Tuenkers EGT Gripper-EGT001",
+   "prompt": "EGT型材 EGT001 SW80x2008",
+   "view": "iso(-45,35)",
+   "S": 89.9,
+   "iou": 87.4,
+   "chamfer": 4.92,
+   "iou_strict": 65.9,
+   "pose": [
+    0.0,
+    2.0,
+    -2.0
+   ],
+   "ai_img": "零件AI建模图片\\10_Tuenkers EGT Gripper-EGT001\\egt001 sw80x2008.png",
+   "real_img": "零件真实图片_带背景\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x2008.png"
+  },
+  {
+   "model": "egt001 sw80x2038",
+   "group": "10_Tuenkers EGT Gripper-EGT001",
+   "prompt": "EGT型材 EGT001 SW80x2038",
+   "view": "iso4(135,35)",
+   "S": 60.5,
+   "iou": 93.6,
+   "chamfer": 47.35,
+   "iou_strict": 78.8,
+   "pose": [
+    -90.0,
+    2.0,
+    0.0
+   ],
+   "ai_img": "零件AI建模图片\\10_Tuenkers EGT Gripper-EGT001\\egt001 sw80x2038.png",
+   "real_img": "零件真实图片_带背景\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x2038.png"
+  },
+  {
+   "model": "egt001 sw80x2068",
+   "group": "10_Tuenkers EGT Gripper-EGT001",
+   "prompt": "EGT型材 EGT001 SW80x2068",
+   "view": "iso(-45,35)",
+   "S": 89.8,
+   "iou": 87.2,
+   "chamfer": 4.91,
+   "iou_strict": 65.5,
+   "pose": [
+    0.0,
+    0.0,
+    -2.0
+   ],
+   "ai_img": "零件AI建模图片\\10_Tuenkers EGT Gripper-EGT001\\egt001 sw80x2068.png",
+   "real_img": "零件真实图片_带背景\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x2068.png"
+  },
+  {
+   "model": "egt001 sw80x2098",
+   "group": "10_Tuenkers EGT Gripper-EGT001",
+   "prompt": "EGT型材 EGT001 SW80x2098",
+   "view": "iso(-45,35)",
+   "S": 89.8,
+   "iou": 87.2,
+   "chamfer": 4.91,
+   "iou_strict": 65.3,
+   "pose": [
+    0.0,
+    2.0,
+    -2.0
+   ],
+   "ai_img": "零件AI建模图片\\10_Tuenkers EGT Gripper-EGT001\\egt001 sw80x2098.png",
+   "real_img": "零件真实图片_带背景\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x2098.png"
+  },
+  {
+   "model": "egt001 sw80x2128",
+   "group": "10_Tuenkers EGT Gripper-EGT001",
+   "prompt": "EGT型材 EGT001 SW80x2128",
+   "view": "iso(-45,35)",
+   "S": 90.0,
+   "iou": 87.4,
+   "chamfer": 4.78,
+   "iou_strict": 65.7,
+   "pose": [
+    0.0,
+    0.0,
+    -2.0
+   ],
+   "ai_img": "零件AI建模图片\\10_Tuenkers EGT Gripper-EGT001\\egt001 sw80x2128.png",
+   "real_img": "零件真实图片_带背景\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x2128.png"
+  },
+  {
+   "model": "egt001 sw80x2158",
+   "group": "10_Tuenkers EGT Gripper-EGT001",
+   "prompt": "EGT型材 EGT001 SW80x2158",
+   "view": "iso(-45,35)",
+   "S": 89.8,
+   "iou": 87.0,
+   "chamfer": 4.88,
+   "iou_strict": 64.9,
+   "pose": [
+    0.0,
+    2.0,
+    -2.0
+   ],
+   "ai_img": "零件AI建模图片\\10_Tuenkers EGT Gripper-EGT001\\egt001 sw80x2158.png",
+   "real_img": "零件真实图片_带背景\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x2158.png"
+  },
+  {
+   "model": "egt001 sw80x2188",
+   "group": "10_Tuenkers EGT Gripper-EGT001",
+   "prompt": "EGT型材 EGT001 SW80x2188",
+   "view": "iso(-45,35)",
+   "S": 89.4,
+   "iou": 86.6,
+   "chamfer": 5.05,
+   "iou_strict": 64.1,
+   "pose": [
+    0.0,
+    0.0,
+    -2.0
+   ],
+   "ai_img": "零件AI建模图片\\10_Tuenkers EGT Gripper-EGT001\\egt001 sw80x2188.png",
+   "real_img": "零件真实图片_带背景\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x2188.png"
+  },
+  {
+   "model": "egt001 sw80x2218",
+   "group": "10_Tuenkers EGT Gripper-EGT001",
+   "prompt": "EGT型材 EGT001 SW80x2218",
+   "view": "iso(-45,35)",
+   "S": 89.4,
+   "iou": 86.4,
+   "chamfer": 5.02,
+   "iou_strict": 63.6,
+   "pose": [
+    0.0,
+    0.0,
+    -2.0
+   ],
+   "ai_img": "零件AI建模图片\\10_Tuenkers EGT Gripper-EGT001\\egt001 sw80x2218.png",
+   "real_img": "零件真实图片_带背景\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x2218.png"
+  },
+  {
+   "model": "egt001 sw80x2248",
+   "group": "10_Tuenkers EGT Gripper-EGT001",
+   "prompt": "EGT型材 EGT001 SW80x2248",
+   "view": "iso(-45,35)",
+   "S": 89.3,
+   "iou": 86.4,
+   "chamfer": 5.02,
+   "iou_strict": 63.5,
+   "pose": [
+    0.0,
+    0.0,
+    -2.0
+   ],
+   "ai_img": "零件AI建模图片\\10_Tuenkers EGT Gripper-EGT001\\egt001 sw80x2248.png",
+   "real_img": "零件真实图片_带背景\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x2248.png"
+  },
+  {
+   "model": "egt001 sw80x2278",
+   "group": "10_Tuenkers EGT Gripper-EGT001",
+   "prompt": "EGT型材 EGT001 SW80x2278",
+   "view": "iso(-45,35)",
+   "S": 89.5,
+   "iou": 86.5,
+   "chamfer": 4.94,
+   "iou_strict": 63.6,
+   "pose": [
+    0.0,
+    2.0,
+    -2.0
+   ],
+   "ai_img": "零件AI建模图片\\10_Tuenkers EGT Gripper-EGT001\\egt001 sw80x2278.png",
+   "real_img": "零件真实图片_带背景\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x2278.png"
+  },
+  {
+   "model": "egt001 sw80x2308",
+   "group": "10_Tuenkers EGT Gripper-EGT001",
+   "prompt": "EGT型材 EGT001 SW80x2308",
+   "view": "iso(-45,35)",
+   "S": 89.3,
+   "iou": 86.3,
+   "chamfer": 4.99,
+   "iou_strict": 63.1,
+   "pose": [
+    0.0,
+    0.0,
+    -2.0
+   ],
+   "ai_img": "零件AI建模图片\\10_Tuenkers EGT Gripper-EGT001\\egt001 sw80x2308.png",
+   "real_img": "零件真实图片_带背景\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x2308.png"
+  },
+  {
+   "model": "egt001 sw80x2338",
+   "group": "10_Tuenkers EGT Gripper-EGT001",
+   "prompt": "EGT型材 EGT001 SW80x2338",
+   "view": "iso(-45,35)",
+   "S": 89.5,
+   "iou": 86.4,
+   "chamfer": 4.89,
+   "iou_strict": 63.3,
+   "pose": [
+    0.0,
+    0.0,
+    -2.0
+   ],
+   "ai_img": "零件AI建模图片\\10_Tuenkers EGT Gripper-EGT001\\egt001 sw80x2338.png",
+   "real_img": "零件真实图片_带背景\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x2338.png"
+  },
+  {
+   "model": "egt001 sw80x2368",
+   "group": "10_Tuenkers EGT Gripper-EGT001",
+   "prompt": "EGT型材 EGT001 SW80x2368",
+   "view": "iso(-45,35)",
+   "S": 89.5,
+   "iou": 86.4,
+   "chamfer": 4.87,
+   "iou_strict": 63.1,
+   "pose": [
+    0.0,
+    0.0,
+    -2.0
+   ],
+   "ai_img": "零件AI建模图片\\10_Tuenkers EGT Gripper-EGT001\\egt001 sw80x2368.png",
+   "real_img": "零件真实图片_带背景\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x2368.png"
+  },
+  {
+   "model": "egt001 sw80x2398",
+   "group": "10_Tuenkers EGT Gripper-EGT001",
+   "prompt": "EGT型材 EGT001 SW80x2398",
+   "view": "iso(-45,35)",
+   "S": 89.3,
+   "iou": 86.1,
+   "chamfer": 4.97,
+   "iou_strict": 62.7,
+   "pose": [
+    0.0,
+    0.0,
+    -2.0
+   ],
+   "ai_img": "零件AI建模图片\\10_Tuenkers EGT Gripper-EGT001\\egt001 sw80x2398.png",
+   "real_img": "零件真实图片_带背景\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x2398.png"
+  },
+  {
+   "model": "egt001 sw80x2428",
+   "group": "10_Tuenkers EGT Gripper-EGT001",
+   "prompt": "EGT型材 EGT001 SW80x2428",
+   "view": "iso(-45,35)",
+   "S": 89.3,
+   "iou": 86.2,
+   "chamfer": 4.92,
+   "iou_strict": 62.9,
+   "pose": [
+    0.0,
+    0.0,
+    -2.0
+   ],
+   "ai_img": "零件AI建模图片\\10_Tuenkers EGT Gripper-EGT001\\egt001 sw80x2428.png",
+   "real_img": "零件真实图片_带背景\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x2428.png"
+  },
+  {
+   "model": "egt001 sw80x2458",
+   "group": "10_Tuenkers EGT Gripper-EGT001",
+   "prompt": "EGT型材 EGT001 SW80x2458",
+   "view": "iso(-45,35)",
+   "S": 89.4,
+   "iou": 86.3,
+   "chamfer": 4.86,
+   "iou_strict": 62.8,
+   "pose": [
+    0.0,
+    2.0,
+    -4.0
+   ],
+   "ai_img": "零件AI建模图片\\10_Tuenkers EGT Gripper-EGT001\\egt001 sw80x2458.png",
+   "real_img": "零件真实图片_带背景\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x2458.png"
+  },
+  {
+   "model": "egt001 sw80x2488",
+   "group": "10_Tuenkers EGT Gripper-EGT001",
+   "prompt": "EGT型材 EGT001 SW80x2488",
+   "view": "iso(-45,35)",
+   "S": 89.2,
+   "iou": 86.0,
+   "chamfer": 4.93,
+   "iou_strict": 62.1,
+   "pose": [
+    0.0,
+    2.0,
+    -4.0
+   ],
+   "ai_img": "零件AI建模图片\\10_Tuenkers EGT Gripper-EGT001\\egt001 sw80x2488.png",
+   "real_img": "零件真实图片_带背景\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x2488.png"
+  },
+  {
+   "model": "egt001 sw80x2518",
+   "group": "10_Tuenkers EGT Gripper-EGT001",
+   "prompt": "EGT型材 EGT001 SW80x2518",
+   "view": "iso(-45,35)",
+   "S": 89.3,
+   "iou": 86.2,
+   "chamfer": 4.88,
+   "iou_strict": 62.3,
+   "pose": [
+    0.0,
+    2.0,
+    -2.0
+   ],
+   "ai_img": "零件AI建模图片\\10_Tuenkers EGT Gripper-EGT001\\egt001 sw80x2518.png",
+   "real_img": "零件真实图片_带背景\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x2518.png"
+  },
+  {
+   "model": "egt001 sw80x2548",
+   "group": "10_Tuenkers EGT Gripper-EGT001",
+   "prompt": "EGT型材 EGT001 SW80x2548",
+   "view": "iso(-45,35)",
+   "S": 89.3,
+   "iou": 86.0,
+   "chamfer": 4.85,
+   "iou_strict": 62.2,
+   "pose": [
+    0.0,
+    0.0,
+    -2.0
+   ],
+   "ai_img": "零件AI建模图片\\10_Tuenkers EGT Gripper-EGT001\\egt001 sw80x2548.png",
+   "real_img": "零件真实图片_带背景\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x2548.png"
+  },
+  {
+   "model": "egt001 sw80x2578",
+   "group": "10_Tuenkers EGT Gripper-EGT001",
+   "prompt": "EGT型材 EGT001 SW80x2578",
+   "view": "iso(-45,35)",
+   "S": 89.3,
+   "iou": 85.9,
+   "chamfer": 4.84,
+   "iou_strict": 61.9,
+   "pose": [
+    0.0,
+    0.0,
+    -2.0
+   ],
+   "ai_img": "零件AI建模图片\\10_Tuenkers EGT Gripper-EGT001\\egt001 sw80x2578.png",
+   "real_img": "零件真实图片_带背景\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x2578.png"
+  },
+  {
+   "model": "egt001 sw80x2608",
+   "group": "10_Tuenkers EGT Gripper-EGT001",
+   "prompt": "EGT型材 EGT001 SW80x2608",
+   "view": "iso(-45,35)",
+   "S": 89.1,
+   "iou": 85.7,
+   "chamfer": 4.89,
+   "iou_strict": 61.2,
+   "pose": [
+    0.0,
+    2.0,
+    -2.0
+   ],
+   "ai_img": "零件AI建模图片\\10_Tuenkers EGT Gripper-EGT001\\egt001 sw80x2608.png",
+   "real_img": "零件真实图片_带背景\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x2608.png"
+  },
+  {
+   "model": "egt001 sw80x2638",
+   "group": "10_Tuenkers EGT Gripper-EGT001",
+   "prompt": "EGT型材 EGT001 SW80x2638",
+   "view": "iso(-45,35)",
+   "S": 89.2,
+   "iou": 85.9,
+   "chamfer": 4.84,
+   "iou_strict": 61.8,
+   "pose": [
+    0.0,
+    0.0,
+    -2.0
+   ],
+   "ai_img": "零件AI建模图片\\10_Tuenkers EGT Gripper-EGT001\\egt001 sw80x2638.png",
+   "real_img": "零件真实图片_带背景\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x2638.png"
+  },
+  {
+   "model": "egt001 sw80x2668",
+   "group": "10_Tuenkers EGT Gripper-EGT001",
+   "prompt": "EGT型材 EGT001 SW80x2668",
+   "view": "iso(-45,35)",
+   "S": 72.1,
+   "iou": 53.0,
+   "chamfer": 5.75,
+   "iou_strict": 29.2,
+   "pose": [
+    3.0,
+    0.0,
+    -2.0
+   ],
+   "ai_img": "零件AI建模图片\\10_Tuenkers EGT Gripper-EGT001\\egt001 sw80x2668.png",
+   "real_img": "零件真实图片_带背景\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x2668.png"
+  },
+  {
+   "model": "egt001 sw80x2698",
+   "group": "10_Tuenkers EGT Gripper-EGT001",
+   "prompt": "EGT型材 EGT001 SW80x2698",
+   "view": "iso(-45,35)",
+   "S": 89.1,
+   "iou": 85.6,
+   "chamfer": 4.82,
+   "iou_strict": 60.9,
+   "pose": [
+    0.0,
+    2.0,
+    -2.0
+   ],
+   "ai_img": "零件AI建模图片\\10_Tuenkers EGT Gripper-EGT001\\egt001 sw80x2698.png",
+   "real_img": "零件真实图片_带背景\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x2698.png"
+  },
+  {
+   "model": "egt001 sw80x2728",
+   "group": "10_Tuenkers EGT Gripper-EGT001",
+   "prompt": "EGT型材 EGT001 SW80x2728",
+   "view": "iso(-45,35)",
+   "S": 89.5,
+   "iou": 86.1,
+   "chamfer": 4.66,
+   "iou_strict": 61.6,
+   "pose": [
+    0.0,
+    2.0,
+    -2.0
+   ],
+   "ai_img": "零件AI建模图片\\10_Tuenkers EGT Gripper-EGT001\\egt001 sw80x2728.png",
+   "real_img": "零件真实图片_带背景\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x2728.png"
+  },
+  {
+   "model": "egt001 sw80x2758",
+   "group": "10_Tuenkers EGT Gripper-EGT001",
+   "prompt": "EGT型材 EGT001 SW80x2758",
+   "view": "iso(-45,35)",
+   "S": 89.1,
+   "iou": 85.6,
+   "chamfer": 4.8,
+   "iou_strict": 60.6,
+   "pose": [
+    0.0,
+    2.0,
+    -2.0
+   ],
+   "ai_img": "零件AI建模图片\\10_Tuenkers EGT Gripper-EGT001\\egt001 sw80x2758.png",
+   "real_img": "零件真实图片_带背景\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x2758.png"
+  },
+  {
+   "model": "egt001 sw80x2788",
+   "group": "10_Tuenkers EGT Gripper-EGT001",
+   "prompt": "EGT型材 EGT001 SW80x2788",
+   "view": "iso(-45,35)",
+   "S": 88.9,
+   "iou": 85.5,
+   "chamfer": 4.96,
+   "iou_strict": 60.4,
+   "pose": [
+    0.0,
+    0.0,
+    -4.0
+   ],
+   "ai_img": "零件AI建模图片\\10_Tuenkers EGT Gripper-EGT001\\egt001 sw80x2788.png",
+   "real_img": "零件真实图片_带背景\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x2788.png"
+  },
+  {
+   "model": "egt001 sw80x2818",
+   "group": "10_Tuenkers EGT Gripper-EGT001",
+   "prompt": "EGT型材 EGT001 SW80x2818",
+   "view": "iso4(135,35)",
+   "S": 60.5,
+   "iou": 33.3,
+   "chamfer": 8.07,
+   "iou_strict": 14.8,
+   "pose": [
+    -6.0,
+    12.0,
+    -6.0
+   ],
+   "ai_img": "零件AI建模图片\\10_Tuenkers EGT Gripper-EGT001\\egt001 sw80x2818.png",
+   "real_img": "零件真实图片_带背景\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x2818.png"
+  },
+  {
+   "model": "egt001 sw80x2848",
+   "group": "10_Tuenkers EGT Gripper-EGT001",
+   "prompt": "EGT型材 EGT001 SW80x2848",
+   "view": "iso(-45,35)",
+   "S": 88.8,
+   "iou": 85.2,
+   "chamfer": 4.94,
+   "iou_strict": 59.8,
+   "pose": [
+    0.0,
+    2.0,
+    -4.0
+   ],
+   "ai_img": "零件AI建模图片\\10_Tuenkers EGT Gripper-EGT001\\egt001 sw80x2848.png",
+   "real_img": "零件真实图片_带背景\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x2848.png"
+  },
+  {
+   "model": "egt001 sw80x2878",
+   "group": "10_Tuenkers EGT Gripper-EGT001",
+   "prompt": "EGT型材 EGT001 SW80x2878",
+   "view": "iso(-45,35)",
+   "S": 88.9,
+   "iou": 85.1,
+   "chamfer": 4.8,
+   "iou_strict": 59.7,
+   "pose": [
+    0.0,
+    2.0,
+    0.0
+   ],
+   "ai_img": "零件AI建模图片\\10_Tuenkers EGT Gripper-EGT001\\egt001 sw80x2878.png",
+   "real_img": "零件真实图片_带背景\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x2878.png"
+  },
+  {
+   "model": "egt001 sw80x2908",
+   "group": "10_Tuenkers EGT Gripper-EGT001",
+   "prompt": "EGT型材 EGT001 SW80x2908",
+   "view": "iso(-45,35)",
+   "S": 88.9,
+   "iou": 85.1,
+   "chamfer": 4.77,
+   "iou_strict": 59.6,
+   "pose": [
+    0.0,
+    2.0,
+    0.0
+   ],
+   "ai_img": "零件AI建模图片\\10_Tuenkers EGT Gripper-EGT001\\egt001 sw80x2908.png",
+   "real_img": "零件真实图片_带背景\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x2908.png"
+  },
+  {
+   "model": "egt001 sw80x2938",
+   "group": "10_Tuenkers EGT Gripper-EGT001",
+   "prompt": "EGT型材 EGT001 SW80x2938",
+   "view": "iso(-45,35)",
+   "S": 88.9,
+   "iou": 85.1,
+   "chamfer": 4.78,
+   "iou_strict": 59.4,
+   "pose": [
+    0.0,
+    2.0,
+    -2.0
+   ],
+   "ai_img": "零件AI建模图片\\10_Tuenkers EGT Gripper-EGT001\\egt001 sw80x2938.png",
+   "real_img": "零件真实图片_带背景\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x2938.png"
+  },
+  {
+   "model": "egt001 sw80x2968",
+   "group": "10_Tuenkers EGT Gripper-EGT001",
+   "prompt": "EGT型材 EGT001 SW80x2968",
+   "view": "iso(-45,35)",
+   "S": 89.0,
+   "iou": 85.2,
+   "chamfer": 4.72,
+   "iou_strict": 59.4,
+   "pose": [
+    0.0,
+    2.0,
+    0.0
+   ],
+   "ai_img": "零件AI建模图片\\10_Tuenkers EGT Gripper-EGT001\\egt001 sw80x2968.png",
+   "real_img": "零件真实图片_带背景\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x2968.png"
+  },
+  {
+   "model": "egt001 sw80x2998",
+   "group": "10_Tuenkers EGT Gripper-EGT001",
+   "prompt": "EGT型材 EGT001 SW80x2998",
+   "view": "iso(-45,35)",
+   "S": 88.9,
+   "iou": 85.3,
+   "chamfer": 4.85,
+   "iou_strict": 59.6,
+   "pose": [
+    0.0,
+    0.0,
+    -4.0
+   ],
+   "ai_img": "零件AI建模图片\\10_Tuenkers EGT Gripper-EGT001\\egt001 sw80x2998.png",
+   "real_img": "零件真实图片_带背景\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x2998.png"
+  },
+  {
+   "model": "egt001 sw80x3028",
+   "group": "10_Tuenkers EGT Gripper-EGT001",
+   "prompt": "EGT型材 EGT001 SW80x3028",
+   "view": "iso(-45,35)",
+   "S": 88.8,
+   "iou": 85.2,
+   "chamfer": 4.91,
+   "iou_strict": 59.3,
+   "pose": [
+    0.0,
+    0.0,
+    -4.0
+   ],
+   "ai_img": "零件AI建模图片\\10_Tuenkers EGT Gripper-EGT001\\egt001 sw80x3028.png",
+   "real_img": "零件真实图片_带背景\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x3028.png"
+  },
+  {
+   "model": "egt001 sw80x3058",
+   "group": "10_Tuenkers EGT Gripper-EGT001",
+   "prompt": "EGT型材 EGT001 SW80x3058",
+   "view": "iso(-45,35)",
+   "S": 88.8,
+   "iou": 85.0,
+   "chamfer": 4.82,
+   "iou_strict": 59.3,
+   "pose": [
+    0.0,
+    0.0,
+    -2.0
+   ],
+   "ai_img": "零件AI建模图片\\10_Tuenkers EGT Gripper-EGT001\\egt001 sw80x3058.png",
+   "real_img": "零件真实图片_带背景\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x3058.png"
+  },
+  {
+   "model": "egt001 sw80x3088",
+   "group": "10_Tuenkers EGT Gripper-EGT001",
+   "prompt": "EGT型材 EGT001 SW80x3088",
+   "view": "iso(-45,35)",
+   "S": 88.6,
+   "iou": 84.7,
+   "chamfer": 4.9,
+   "iou_strict": 58.6,
+   "pose": [
+    0.0,
+    0.0,
+    -2.0
+   ],
+   "ai_img": "零件AI建模图片\\10_Tuenkers EGT Gripper-EGT001\\egt001 sw80x3088.png",
+   "real_img": "零件真实图片_带背景\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x3088.png"
+  },
+  {
+   "model": "egt001 sw80x3118",
+   "group": "10_Tuenkers EGT Gripper-EGT001",
+   "prompt": "EGT型材 EGT001 SW80x3118",
+   "view": "iso(-45,35)",
+   "S": 88.7,
+   "iou": 84.8,
+   "chamfer": 4.87,
+   "iou_strict": 58.4,
+   "pose": [
+    0.0,
+    2.0,
+    -2.0
+   ],
+   "ai_img": "零件AI建模图片\\10_Tuenkers EGT Gripper-EGT001\\egt001 sw80x3118.png",
+   "real_img": "零件真实图片_带背景\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x3118.png"
+  },
+  {
+   "model": "egt001 sw80x3148",
+   "group": "10_Tuenkers EGT Gripper-EGT001",
+   "prompt": "EGT型材 EGT001 SW80x3148",
+   "view": "iso(-45,35)",
+   "S": 88.5,
+   "iou": 84.5,
+   "chamfer": 4.91,
+   "iou_strict": 58.2,
+   "pose": [
+    0.0,
+    0.0,
+    -2.0
+   ],
+   "ai_img": "零件AI建模图片\\10_Tuenkers EGT Gripper-EGT001\\egt001 sw80x3148.png",
+   "real_img": "零件真实图片_带背景\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x3148.png"
+  },
+  {
+   "model": "egt001 sw80x3178",
+   "group": "10_Tuenkers EGT Gripper-EGT001",
+   "prompt": "EGT型材 EGT001 SW80x3178",
+   "view": "iso(-45,35)",
+   "S": 88.7,
+   "iou": 84.8,
+   "chamfer": 4.85,
+   "iou_strict": 58.2,
+   "pose": [
+    0.0,
+    2.0,
+    -2.0
+   ],
+   "ai_img": "零件AI建模图片\\10_Tuenkers EGT Gripper-EGT001\\egt001 sw80x3178.png",
+   "real_img": "零件真实图片_带背景\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x3178.png"
+  },
+  {
+   "model": "egt001 sw80x3208",
+   "group": "10_Tuenkers EGT Gripper-EGT001",
+   "prompt": "EGT型材 EGT001 SW80x3208",
+   "view": "iso(-45,35)",
+   "S": 88.6,
+   "iou": 84.7,
+   "chamfer": 4.86,
+   "iou_strict": 58.1,
+   "pose": [
+    0.0,
+    0.0,
+    -4.0
+   ],
+   "ai_img": "零件AI建模图片\\10_Tuenkers EGT Gripper-EGT001\\egt001 sw80x3208.png",
+   "real_img": "零件真实图片_带背景\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x3208.png"
+  },
+  {
+   "model": "egt001 sw80x3238",
+   "group": "10_Tuenkers EGT Gripper-EGT001",
+   "prompt": "EGT型材 EGT001 SW80x3238",
+   "view": "iso(-45,35)",
+   "S": 88.6,
+   "iou": 84.7,
+   "chamfer": 4.85,
+   "iou_strict": 57.9,
+   "pose": [
+    0.0,
+    0.0,
+    -4.0
+   ],
+   "ai_img": "零件AI建模图片\\10_Tuenkers EGT Gripper-EGT001\\egt001 sw80x3238.png",
+   "real_img": "零件真实图片_带背景\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x3238.png"
+  },
+  {
+   "model": "egt001 sw80x3268",
+   "group": "10_Tuenkers EGT Gripper-EGT001",
+   "prompt": "EGT型材 EGT001 SW80x3268",
+   "view": "iso(-45,35)",
+   "S": 88.5,
+   "iou": 84.5,
+   "chamfer": 4.87,
+   "iou_strict": 57.6,
+   "pose": [
+    0.0,
+    2.0,
+    -2.0
+   ],
+   "ai_img": "零件AI建模图片\\10_Tuenkers EGT Gripper-EGT001\\egt001 sw80x3268.png",
+   "real_img": "零件真实图片_带背景\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x3268.png"
+  },
+  {
+   "model": "egt001 sw80x3298",
+   "group": "10_Tuenkers EGT Gripper-EGT001",
+   "prompt": "EGT型材 EGT001 SW80x3298",
+   "view": "iso(-45,35)",
+   "S": 88.6,
+   "iou": 84.6,
+   "chamfer": 4.83,
+   "iou_strict": 57.7,
+   "pose": [
+    0.0,
+    2.0,
+    -2.0
+   ],
+   "ai_img": "零件AI建模图片\\10_Tuenkers EGT Gripper-EGT001\\egt001 sw80x3298.png",
+   "real_img": "零件真实图片_带背景\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x3298.png"
+  },
+  {
+   "model": "egt001 sw80x3328",
+   "group": "10_Tuenkers EGT Gripper-EGT001",
+   "prompt": "EGT型材 EGT001 SW80x3328",
+   "view": "iso(-45,35)",
+   "S": 88.5,
+   "iou": 84.4,
+   "chamfer": 4.9,
+   "iou_strict": 57.3,
+   "pose": [
+    0.0,
+    2.0,
+    -2.0
+   ],
+   "ai_img": "零件AI建模图片\\10_Tuenkers EGT Gripper-EGT001\\egt001 sw80x3328.png",
+   "real_img": "零件真实图片_带背景\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x3328.png"
+  },
+  {
+   "model": "egt001 sw80x3358",
+   "group": "10_Tuenkers EGT Gripper-EGT001",
+   "prompt": "EGT型材 EGT001 SW80x3358",
+   "view": "iso(-45,35)",
+   "S": 88.4,
+   "iou": 84.2,
+   "chamfer": 4.85,
+   "iou_strict": 57.2,
+   "pose": [
+    0.0,
+    0.0,
+    -2.0
+   ],
+   "ai_img": "零件AI建模图片\\10_Tuenkers EGT Gripper-EGT001\\egt001 sw80x3358.png",
+   "real_img": "零件真实图片_带背景\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x3358.png"
+  },
+  {
+   "model": "egt001 sw80x3388",
+   "group": "10_Tuenkers EGT Gripper-EGT001",
+   "prompt": "EGT型材 EGT001 SW80x3388",
+   "view": "iso(-45,35)",
+   "S": 88.5,
+   "iou": 84.4,
+   "chamfer": 4.87,
+   "iou_strict": 57.1,
+   "pose": [
+    0.0,
+    0.0,
+    -4.0
+   ],
+   "ai_img": "零件AI建模图片\\10_Tuenkers EGT Gripper-EGT001\\egt001 sw80x3388.png",
+   "real_img": "零件真实图片_带背景\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x3388.png"
+  },
+  {
+   "model": "egt001 sw80x3418",
+   "group": "10_Tuenkers EGT Gripper-EGT001",
+   "prompt": "EGT型材 EGT001 SW80x3418",
+   "view": "iso(-45,35)",
+   "S": 88.4,
+   "iou": 84.2,
+   "chamfer": 4.82,
+   "iou_strict": 57.1,
+   "pose": [
+    0.0,
+    0.0,
+    -2.0
+   ],
+   "ai_img": "零件AI建模图片\\10_Tuenkers EGT Gripper-EGT001\\egt001 sw80x3418.png",
+   "real_img": "零件真实图片_带背景\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x3418.png"
+  },
+  {
+   "model": "egt001 sw80x3448",
+   "group": "10_Tuenkers EGT Gripper-EGT001",
+   "prompt": "EGT型材 EGT001 SW80x3448",
+   "view": "iso(-45,35)",
+   "S": 88.4,
+   "iou": 84.2,
+   "chamfer": 4.86,
+   "iou_strict": 56.6,
+   "pose": [
+    0.0,
+    2.0,
+    -2.0
+   ],
+   "ai_img": "零件AI建模图片\\10_Tuenkers EGT Gripper-EGT001\\egt001 sw80x3448.png",
+   "real_img": "零件真实图片_带背景\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x3448.png"
+  },
+  {
+   "model": "egt001 sw80x3478",
+   "group": "10_Tuenkers EGT Gripper-EGT001",
+   "prompt": "EGT型材 EGT001 SW80x3478",
+   "view": "iso(-45,35)",
+   "S": 88.5,
+   "iou": 84.3,
+   "chamfer": 4.83,
+   "iou_strict": 56.8,
+   "pose": [
+    0.0,
+    2.0,
+    -2.0
+   ],
+   "ai_img": "零件AI建模图片\\10_Tuenkers EGT Gripper-EGT001\\egt001 sw80x3478.png",
+   "real_img": "零件真实图片_带背景\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x3478.png"
+  },
+  {
+   "model": "egt001 sw80x3508",
+   "group": "10_Tuenkers EGT Gripper-EGT001",
+   "prompt": "EGT型材 EGT001 SW80x3508",
+   "view": "iso(-45,35)",
+   "S": 88.5,
+   "iou": 84.3,
+   "chamfer": 4.69,
+   "iou_strict": 56.7,
+   "pose": [
+    0.0,
+    0.0,
+    -2.0
+   ],
+   "ai_img": "零件AI建模图片\\10_Tuenkers EGT Gripper-EGT001\\egt001 sw80x3508.png",
+   "real_img": "零件真实图片_带背景\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x3508.png"
+  },
+  {
+   "model": "egt001 sw80x3538",
+   "group": "10_Tuenkers EGT Gripper-EGT001",
+   "prompt": "EGT型材 EGT001 SW80x3538",
+   "view": "iso(-45,35)",
+   "S": 88.3,
+   "iou": 83.9,
+   "chamfer": 4.78,
+   "iou_strict": 56.0,
+   "pose": [
+    0.0,
+    0.0,
+    -2.0
+   ],
+   "ai_img": "零件AI建模图片\\10_Tuenkers EGT Gripper-EGT001\\egt001 sw80x3538.png",
+   "real_img": "零件真实图片_带背景\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x3538.png"
+  },
+  {
+   "model": "egt001 sw80x3568",
+   "group": "10_Tuenkers EGT Gripper-EGT001",
+   "prompt": "EGT型材 EGT001 SW80x3568",
+   "view": "iso(-45,35)",
+   "S": 63.0,
+   "iou": 33.1,
+   "chamfer": 4.61,
+   "iou_strict": 15.6,
+   "pose": [
+    4.5,
+    -2.0,
+    -2.0
+   ],
+   "ai_img": "零件AI建模图片\\10_Tuenkers EGT Gripper-EGT001\\egt001 sw80x3568.png",
+   "real_img": "零件真实图片_带背景\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x3568.png"
+  },
+  {
+   "model": "egt001 sw80x3598",
+   "group": "10_Tuenkers EGT Gripper-EGT001",
+   "prompt": "EGT型材 EGT001 SW80x3598",
+   "view": "iso(-45,35)",
+   "S": 88.2,
+   "iou": 83.8,
+   "chamfer": 4.76,
+   "iou_strict": 55.6,
+   "pose": [
+    0.0,
+    0.0,
+    -2.0
+   ],
+   "ai_img": "零件AI建模图片\\10_Tuenkers EGT Gripper-EGT001\\egt001 sw80x3598.png",
+   "real_img": "零件真实图片_带背景\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x3598.png"
+  },
+  {
+   "model": "egt001 sw80x3628",
+   "group": "10_Tuenkers EGT Gripper-EGT001",
+   "prompt": "EGT型材 EGT001 SW80x3628",
+   "view": "iso(-45,35)",
+   "S": 88.3,
+   "iou": 83.9,
+   "chamfer": 4.7,
+   "iou_strict": 55.7,
+   "pose": [
+    0.0,
+    0.0,
+    -2.0
+   ],
+   "ai_img": "零件AI建模图片\\10_Tuenkers EGT Gripper-EGT001\\egt001 sw80x3628.png",
+   "real_img": "零件真实图片_带背景\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x3628.png"
+  },
+  {
+   "model": "egt001 sw80x3658",
+   "group": "10_Tuenkers EGT Gripper-EGT001",
+   "prompt": "EGT型材 EGT001 SW80x3658",
+   "view": "iso(-45,35)",
+   "S": 88.2,
+   "iou": 83.6,
+   "chamfer": 4.73,
+   "iou_strict": 55.2,
+   "pose": [
+    0.0,
+    2.0,
+    -2.0
+   ],
+   "ai_img": "零件AI建模图片\\10_Tuenkers EGT Gripper-EGT001\\egt001 sw80x3658.png",
+   "real_img": "零件真实图片_带背景\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x3658.png"
+  },
+  {
+   "model": "egt001 sw80x3688",
+   "group": "10_Tuenkers EGT Gripper-EGT001",
+   "prompt": "EGT型材 EGT001 SW80x3688",
+   "view": "iso(-45,35)",
+   "S": 88.2,
+   "iou": 83.6,
+   "chamfer": 4.74,
+   "iou_strict": 55.1,
+   "pose": [
+    0.0,
+    0.0,
+    -2.0
+   ],
+   "ai_img": "零件AI建模图片\\10_Tuenkers EGT Gripper-EGT001\\egt001 sw80x3688.png",
+   "real_img": "零件真实图片_带背景\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x3688.png"
+  },
+  {
+   "model": "egt001 sw80x3718",
+   "group": "10_Tuenkers EGT Gripper-EGT001",
+   "prompt": "EGT型材 EGT001 SW80x3718",
+   "view": "iso(-45,35)",
+   "S": 88.3,
+   "iou": 83.8,
+   "chamfer": 4.69,
+   "iou_strict": 55.3,
+   "pose": [
+    0.0,
+    0.0,
+    -2.0
+   ],
+   "ai_img": "零件AI建模图片\\10_Tuenkers EGT Gripper-EGT001\\egt001 sw80x3718.png",
+   "real_img": "零件真实图片_带背景\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x3718.png"
+  },
+  {
+   "model": "egt001 sw80x3748",
+   "group": "10_Tuenkers EGT Gripper-EGT001",
+   "prompt": "EGT型材 EGT001 SW80x3748",
+   "view": "iso(-45,35)",
+   "S": 88.3,
+   "iou": 83.8,
+   "chamfer": 4.69,
+   "iou_strict": 55.2,
+   "pose": [
+    0.0,
+    0.0,
+    -2.0
+   ],
+   "ai_img": "零件AI建模图片\\10_Tuenkers EGT Gripper-EGT001\\egt001 sw80x3748.png",
+   "real_img": "零件真实图片_带背景\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x3748.png"
+  },
+  {
+   "model": "egt001 sw80x3778",
+   "group": "10_Tuenkers EGT Gripper-EGT001",
+   "prompt": "EGT型材 EGT001 SW80x3778",
+   "view": "iso(-45,35)",
+   "S": 88.0,
+   "iou": 83.4,
+   "chamfer": 4.77,
+   "iou_strict": 54.5,
+   "pose": [
+    0.0,
+    0.0,
+    -2.0
+   ],
+   "ai_img": "零件AI建模图片\\10_Tuenkers EGT Gripper-EGT001\\egt001 sw80x3778.png",
+   "real_img": "零件真实图片_带背景\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x3778.png"
+  },
+  {
+   "model": "egt001 sw80x3808",
+   "group": "10_Tuenkers EGT Gripper-EGT001",
+   "prompt": "EGT型材 EGT001 SW80x3808",
+   "view": "iso(-45,35)",
+   "S": 88.2,
+   "iou": 83.6,
+   "chamfer": 4.69,
+   "iou_strict": 54.9,
+   "pose": [
+    0.0,
+    0.0,
+    -2.0
+   ],
+   "ai_img": "零件AI建模图片\\10_Tuenkers EGT Gripper-EGT001\\egt001 sw80x3808.png",
+   "real_img": "零件真实图片_带背景\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x3808.png"
+  },
+  {
+   "model": "egt001 sw80x3838",
+   "group": "10_Tuenkers EGT Gripper-EGT001",
+   "prompt": "EGT型材 EGT001 SW80x3838",
+   "view": "iso(-45,35)",
+   "S": 88.1,
+   "iou": 83.5,
+   "chamfer": 4.73,
+   "iou_strict": 54.5,
+   "pose": [
+    0.0,
+    0.0,
+    -2.0
+   ],
+   "ai_img": "零件AI建模图片\\10_Tuenkers EGT Gripper-EGT001\\egt001 sw80x3838.png",
+   "real_img": "零件真实图片_带背景\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x3838.png"
+  },
+  {
+   "model": "egt001 sw80x3868",
+   "group": "10_Tuenkers EGT Gripper-EGT001",
+   "prompt": "EGT型材 EGT001 SW80x3868",
+   "view": "iso(-45,35)",
+   "S": 88.0,
+   "iou": 83.4,
+   "chamfer": 4.79,
+   "iou_strict": 54.3,
+   "pose": [
+    0.0,
+    2.0,
+    -2.0
+   ],
+   "ai_img": "零件AI建模图片\\10_Tuenkers EGT Gripper-EGT001\\egt001 sw80x3868.png",
+   "real_img": "零件真实图片_带背景\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x3868.png"
+  },
+  {
+   "model": "egt001 sw80x3898",
+   "group": "10_Tuenkers EGT Gripper-EGT001",
+   "prompt": "EGT型材 EGT001 SW80x3898",
+   "view": "iso(-45,35)",
+   "S": 87.9,
+   "iou": 83.2,
+   "chamfer": 4.83,
+   "iou_strict": 53.9,
+   "pose": [
+    0.0,
+    2.0,
+    -2.0
+   ],
+   "ai_img": "零件AI建模图片\\10_Tuenkers EGT Gripper-EGT001\\egt001 sw80x3898.png",
+   "real_img": "零件真实图片_带背景\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x3898.png"
+  },
+  {
+   "model": "egt001 sw80x3928",
+   "group": "10_Tuenkers EGT Gripper-EGT001",
+   "prompt": "EGT型材 EGT001 SW80x3928",
+   "view": "iso(-45,35)",
+   "S": 88.0,
+   "iou": 83.4,
+   "chamfer": 4.76,
+   "iou_strict": 54.2,
+   "pose": [
+    0.0,
+    2.0,
+    -2.0
+   ],
+   "ai_img": "零件AI建模图片\\10_Tuenkers EGT Gripper-EGT001\\egt001 sw80x3928.png",
+   "real_img": "零件真实图片_带背景\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x3928.png"
+  },
+  {
+   "model": "egt001 sw80x3958",
+   "group": "10_Tuenkers EGT Gripper-EGT001",
+   "prompt": "EGT型材 EGT001 SW80x3958",
+   "view": "iso(-45,35)",
+   "S": 87.8,
+   "iou": 83.1,
+   "chamfer": 4.81,
+   "iou_strict": 53.6,
+   "pose": [
+    0.0,
+    2.0,
+    -2.0
+   ],
+   "ai_img": "零件AI建模图片\\10_Tuenkers EGT Gripper-EGT001\\egt001 sw80x3958.png",
+   "real_img": "零件真实图片_带背景\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x3958.png"
+  },
+  {
+   "model": "egt001 sw80x3988",
+   "group": "10_Tuenkers EGT Gripper-EGT001",
+   "prompt": "EGT型材 EGT001 SW80x3988",
+   "view": "iso(-45,35)",
+   "S": 87.8,
+   "iou": 83.0,
+   "chamfer": 4.8,
+   "iou_strict": 53.4,
+   "pose": [
+    0.0,
+    2.0,
+    -2.0
+   ],
+   "ai_img": "零件AI建模图片\\10_Tuenkers EGT Gripper-EGT001\\egt001 sw80x3988.png",
+   "real_img": "零件真实图片_带背景\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x3988.png"
+  },
+  {
+   "model": "egt001 sw80x4018",
+   "group": "10_Tuenkers EGT Gripper-EGT001",
+   "prompt": "EGT型材 EGT001 SW80x4018",
+   "view": "iso(-45,35)",
+   "S": 87.9,
+   "iou": 83.2,
+   "chamfer": 4.75,
+   "iou_strict": 53.7,
+   "pose": [
+    0.0,
+    2.0,
+    -2.0
+   ],
+   "ai_img": "零件AI建模图片\\10_Tuenkers EGT Gripper-EGT001\\egt001 sw80x4018.png",
+   "real_img": "零件真实图片_带背景\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x4018.png"
+  },
+  {
+   "model": "egt001 sw80x4048",
+   "group": "10_Tuenkers EGT Gripper-EGT001",
+   "prompt": "EGT型材 EGT001 SW80x4048",
+   "view": "iso(-45,35)",
+   "S": 87.8,
+   "iou": 83.0,
+   "chamfer": 4.8,
+   "iou_strict": 53.3,
+   "pose": [
+    0.0,
+    2.0,
+    -2.0
+   ],
+   "ai_img": "零件AI建模图片\\10_Tuenkers EGT Gripper-EGT001\\egt001 sw80x4048.png",
+   "real_img": "零件真实图片_带背景\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x4048.png"
+  },
+  {
+   "model": "egt001 sw80x4078",
+   "group": "10_Tuenkers EGT Gripper-EGT001",
+   "prompt": "EGT型材 EGT001 SW80x4078",
+   "view": "iso(-45,35)",
+   "S": 87.8,
+   "iou": 83.0,
+   "chamfer": 4.8,
+   "iou_strict": 53.1,
+   "pose": [
+    0.0,
+    2.0,
+    -2.0
+   ],
+   "ai_img": "零件AI建模图片\\10_Tuenkers EGT Gripper-EGT001\\egt001 sw80x4078.png",
+   "real_img": "零件真实图片_带背景\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x4078.png"
+  },
+  {
+   "model": "egt002 sw50x088",
+   "group": "11_Tuenkers EGT Gripper-EGT002",
+   "S": 0.0,
+   "err": "照片对不可用（两帧背景整体变化）"
+  },
+  {
+   "model": "egt002 sw50x118",
+   "group": "11_Tuenkers EGT Gripper-EGT002",
+   "S": 0.0,
+   "err": "照片对不可用（两帧背景整体变化）"
+  },
+  {
+   "model": "egt002 sw50x148",
+   "group": "11_Tuenkers EGT Gripper-EGT002",
+   "S": 0.0,
+   "err": "照片对不可用（两帧背景整体变化）"
+  },
+  {
+   "model": "egt002 sw50x178",
+   "group": "11_Tuenkers EGT Gripper-EGT002",
+   "S": 0.0,
+   "err": "照片对不可用（两帧背景整体变化）"
+  },
+  {
+   "model": "egt002 sw50x208",
+   "group": "11_Tuenkers EGT Gripper-EGT002",
+   "S": 0.0,
+   "err": "照片对不可用（两帧背景整体变化）"
+  },
+  {
+   "model": "egt002 sw50x238",
+   "group": "11_Tuenkers EGT Gripper-EGT002",
+   "S": 0.0,
+   "err": "照片对不可用（两帧背景整体变化）"
+  },
+  {
+   "model": "egt002 sw50x268",
+   "group": "11_Tuenkers EGT Gripper-EGT002",
+   "S": 0.0,
+   "err": "照片对不可用（两帧背景整体变化）"
+  },
+  {
+   "model": "egt002 sw50x298",
+   "group": "11_Tuenkers EGT Gripper-EGT002",
+   "prompt": "EGT型材 EGT002 SW50x298",
+   "view": "iso(-45,35)",
+   "S": 83.5,
+   "iou": 87.8,
+   "chamfer": 13.53,
+   "iou_strict": 74.4,
+   "pose": [
+    0.0,
+    30.0,
+    4.0
+   ],
+   "ai_img": "零件AI建模图片\\11_Tuenkers EGT Gripper-EGT002\\egt002 sw50x298.png",
+   "real_img": "零件真实图片_带背景\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x298.png"
+  },
+  {
+   "model": "egt002 sw50x328",
+   "group": "11_Tuenkers EGT Gripper-EGT002",
+   "prompt": "EGT型材 EGT002 SW50x328",
+   "view": "iso4(135,35)",
+   "S": 84.1,
+   "iou": 88.1,
+   "chamfer": 12.95,
+   "iou_strict": 74.7,
+   "pose": [
+    0.0,
+    22.0,
+    10.0
+   ],
+   "ai_img": "零件AI建模图片\\11_Tuenkers EGT Gripper-EGT002\\egt002 sw50x328.png",
+   "real_img": "零件真实图片_带背景\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x328.png"
+  },
+  {
+   "model": "egt002 sw50x358",
+   "group": "11_Tuenkers EGT Gripper-EGT002",
+   "prompt": "EGT型材 EGT002 SW50x358",
+   "view": "iso4(135,35)",
+   "S": 84.7,
+   "iou": 88.4,
+   "chamfer": 12.35,
+   "iou_strict": 74.8,
+   "pose": [
+    0.0,
+    20.0,
+    10.0
+   ],
+   "ai_img": "零件AI建模图片\\11_Tuenkers EGT Gripper-EGT002\\egt002 sw50x358.png",
+   "real_img": "零件真实图片_带背景\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x358.png"
+  },
+  {
+   "model": "egt002 sw50x388",
+   "group": "11_Tuenkers EGT Gripper-EGT002",
+   "prompt": "EGT型材 EGT002 SW50x388",
+   "view": "iso(-45,35)",
+   "S": 85.4,
+   "iou": 88.7,
+   "chamfer": 11.68,
+   "iou_strict": 74.8,
+   "pose": [
+    0.0,
+    24.0,
+    6.0
+   ],
+   "ai_img": "零件AI建模图片\\11_Tuenkers EGT Gripper-EGT002\\egt002 sw50x388.png",
+   "real_img": "零件真实图片_带背景\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x388.png"
+  },
+  {
+   "model": "egt002 sw50x418",
+   "group": "11_Tuenkers EGT Gripper-EGT002",
+   "prompt": "EGT型材 EGT002 SW50x418",
+   "view": "iso(-45,35)",
+   "S": 85.5,
+   "iou": 88.7,
+   "chamfer": 11.59,
+   "iou_strict": 74.6,
+   "pose": [
+    0.0,
+    24.0,
+    6.0
+   ],
+   "ai_img": "零件AI建模图片\\11_Tuenkers EGT Gripper-EGT002\\egt002 sw50x418.png",
+   "real_img": "零件真实图片_带背景\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x418.png"
+  },
+  {
+   "model": "egt002 sw50x448",
+   "group": "11_Tuenkers EGT Gripper-EGT002",
+   "prompt": "EGT型材 EGT002 SW50x448",
+   "view": "iso(-45,35)",
+   "S": 86.7,
+   "iou": 89.1,
+   "chamfer": 10.28,
+   "iou_strict": 74.9,
+   "pose": [
+    0.0,
+    18.0,
+    6.0
+   ],
+   "ai_img": "零件AI建模图片\\11_Tuenkers EGT Gripper-EGT002\\egt002 sw50x448.png",
+   "real_img": "零件真实图片_带背景\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x448.png"
+  },
+  {
+   "model": "egt002 sw50x478",
+   "group": "11_Tuenkers EGT Gripper-EGT002",
+   "prompt": "EGT型材 EGT002 SW50x478",
+   "view": "iso(-45,35)",
+   "S": 87.0,
+   "iou": 89.2,
+   "chamfer": 9.87,
+   "iou_strict": 74.7,
+   "pose": [
+    0.0,
+    16.0,
+    6.0
+   ],
+   "ai_img": "零件AI建模图片\\11_Tuenkers EGT Gripper-EGT002\\egt002 sw50x478.png",
+   "real_img": "零件真实图片_带背景\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x478.png"
+  },
+  {
+   "model": "egt002 sw50x508",
+   "group": "11_Tuenkers EGT Gripper-EGT002",
+   "prompt": "EGT型材 EGT002 SW50x508",
+   "view": "iso(-45,35)",
+   "S": 88.0,
+   "iou": 89.4,
+   "chamfer": 8.79,
+   "iou_strict": 74.6,
+   "pose": [
+    0.0,
+    12.0,
+    6.0
+   ],
+   "ai_img": "零件AI建模图片\\11_Tuenkers EGT Gripper-EGT002\\egt002 sw50x508.png",
+   "real_img": "零件真实图片_带背景\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x508.png"
+  },
+  {
+   "model": "egt002 sw50x538",
+   "group": "11_Tuenkers EGT Gripper-EGT002",
+   "prompt": "EGT型材 EGT002 SW50x538",
+   "view": "iso(-45,35)",
+   "S": 88.0,
+   "iou": 89.4,
+   "chamfer": 8.74,
+   "iou_strict": 74.5,
+   "pose": [
+    0.0,
+    12.0,
+    6.0
+   ],
+   "ai_img": "零件AI建模图片\\11_Tuenkers EGT Gripper-EGT002\\egt002 sw50x538.png",
+   "real_img": "零件真实图片_带背景\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x538.png"
+  },
+  {
+   "model": "egt002 sw50x568",
+   "group": "11_Tuenkers EGT Gripper-EGT002",
+   "prompt": "EGT型材 EGT002 SW50x568",
+   "view": "iso(-45,35)",
+   "S": 88.7,
+   "iou": 89.7,
+   "chamfer": 7.93,
+   "iou_strict": 74.3,
+   "pose": [
+    0.0,
+    12.0,
+    4.0
+   ],
+   "ai_img": "零件AI建模图片\\11_Tuenkers EGT Gripper-EGT002\\egt002 sw50x568.png",
+   "real_img": "零件真实图片_带背景\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x568.png"
+  },
+  {
+   "model": "egt002 sw50x598",
+   "group": "11_Tuenkers EGT Gripper-EGT002",
+   "prompt": "EGT型材 EGT002 SW50x598",
+   "view": "iso(-45,35)",
+   "S": 87.6,
+   "iou": 88.9,
+   "chamfer": 8.94,
+   "iou_strict": 73.2,
+   "pose": [
+    0.0,
+    14.0,
+    6.0
+   ],
+   "ai_img": "零件AI建模图片\\11_Tuenkers EGT Gripper-EGT002\\egt002 sw50x598.png",
+   "real_img": "零件真实图片_带背景\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x598.png"
+  },
+  {
+   "model": "egt002 sw50x628",
+   "group": "11_Tuenkers EGT Gripper-EGT002",
+   "prompt": "EGT型材 EGT002 SW50x628",
+   "view": "iso(-45,35)",
+   "S": 87.7,
+   "iou": 88.8,
+   "chamfer": 8.79,
+   "iou_strict": 72.9,
+   "pose": [
+    0.0,
+    12.0,
+    6.0
+   ],
+   "ai_img": "零件AI建模图片\\11_Tuenkers EGT Gripper-EGT002\\egt002 sw50x628.png",
+   "real_img": "零件真实图片_带背景\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x628.png"
+  },
+  {
+   "model": "egt002 sw50x658",
+   "group": "11_Tuenkers EGT Gripper-EGT002",
+   "prompt": "EGT型材 EGT002 SW50x658",
+   "view": "iso(-45,35)",
+   "S": 88.0,
+   "iou": 88.8,
+   "chamfer": 8.29,
+   "iou_strict": 72.4,
+   "pose": [
+    0.0,
+    10.0,
+    6.0
+   ],
+   "ai_img": "零件AI建模图片\\11_Tuenkers EGT Gripper-EGT002\\egt002 sw50x658.png",
+   "real_img": "零件真实图片_带背景\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x658.png"
+  },
+  {
+   "model": "egt002 sw50x688",
+   "group": "11_Tuenkers EGT Gripper-EGT002",
+   "prompt": "EGT型材 EGT002 SW50x688",
+   "view": "iso(-45,35)",
+   "S": 88.0,
+   "iou": 88.3,
+   "chamfer": 7.99,
+   "iou_strict": 71.3,
+   "pose": [
+    0.0,
+    12.0,
+    4.0
+   ],
+   "ai_img": "零件AI建模图片\\11_Tuenkers EGT Gripper-EGT002\\egt002 sw50x688.png",
+   "real_img": "零件真实图片_带背景\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x688.png"
+  },
+  {
+   "model": "egt002 sw50x718",
+   "group": "11_Tuenkers EGT Gripper-EGT002",
+   "prompt": "EGT型材 EGT002 SW50x718",
+   "view": "iso(-45,35)",
+   "S": 88.3,
+   "iou": 88.3,
+   "chamfer": 7.58,
+   "iou_strict": 70.9,
+   "pose": [
+    0.0,
+    8.0,
+    6.0
+   ],
+   "ai_img": "零件AI建模图片\\11_Tuenkers EGT Gripper-EGT002\\egt002 sw50x718.png",
+   "real_img": "零件真实图片_带背景\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x718.png"
+  },
+  {
+   "model": "egt002 sw50x748",
+   "group": "11_Tuenkers EGT Gripper-EGT002",
+   "prompt": "EGT型材 EGT002 SW50x748",
+   "view": "iso(-45,35)",
+   "S": 87.9,
+   "iou": 88.1,
+   "chamfer": 8.0,
+   "iou_strict": 70.6,
+   "pose": [
+    0.0,
+    8.0,
+    6.0
+   ],
+   "ai_img": "零件AI建模图片\\11_Tuenkers EGT Gripper-EGT002\\egt002 sw50x748.png",
+   "real_img": "零件真实图片_带背景\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x748.png"
+  },
+  {
+   "model": "egt002 sw50x778",
+   "group": "11_Tuenkers EGT Gripper-EGT002",
+   "prompt": "EGT型材 EGT002 SW50x778",
+   "view": "iso(-45,35)",
+   "S": 88.1,
+   "iou": 88.2,
+   "chamfer": 7.82,
+   "iou_strict": 70.8,
+   "pose": [
+    0.0,
+    8.0,
+    6.0
+   ],
+   "ai_img": "零件AI建模图片\\11_Tuenkers EGT Gripper-EGT002\\egt002 sw50x778.png",
+   "real_img": "零件真实图片_带背景\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x778.png"
+  },
+  {
+   "model": "egt002 sw50x808",
+   "group": "11_Tuenkers EGT Gripper-EGT002",
+   "prompt": "EGT型材 EGT002 SW50x808",
+   "view": "iso(-45,35)",
+   "S": 88.5,
+   "iou": 87.8,
+   "chamfer": 7.02,
+   "iou_strict": 69.9,
+   "pose": [
+    0.0,
+    8.0,
+    4.0
+   ],
+   "ai_img": "零件AI建模图片\\11_Tuenkers EGT Gripper-EGT002\\egt002 sw50x808.png",
+   "real_img": "零件真实图片_带背景\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x808.png"
+  },
+  {
+   "model": "egt002 sw50x838",
+   "group": "11_Tuenkers EGT Gripper-EGT002",
+   "prompt": "EGT型材 EGT002 SW50x838",
+   "view": "iso(-45,35)",
+   "S": 88.8,
+   "iou": 87.8,
+   "chamfer": 6.63,
+   "iou_strict": 69.5,
+   "pose": [
+    0.0,
+    6.0,
+    4.0
+   ],
+   "ai_img": "零件AI建模图片\\11_Tuenkers EGT Gripper-EGT002\\egt002 sw50x838.png",
+   "real_img": "零件真实图片_带背景\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x838.png"
+  },
+  {
+   "model": "egt002 sw50x868",
+   "group": "11_Tuenkers EGT Gripper-EGT002",
+   "prompt": "EGT型材 EGT002 SW50x868",
+   "view": "iso(-45,35)",
+   "S": 88.5,
+   "iou": 87.7,
+   "chamfer": 6.95,
+   "iou_strict": 69.4,
+   "pose": [
+    0.0,
+    8.0,
+    4.0
+   ],
+   "ai_img": "零件AI建模图片\\11_Tuenkers EGT Gripper-EGT002\\egt002 sw50x868.png",
+   "real_img": "零件真实图片_带背景\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x868.png"
+  },
+  {
+   "model": "egt002 sw50x898",
+   "group": "11_Tuenkers EGT Gripper-EGT002",
+   "prompt": "EGT型材 EGT002 SW50x898",
+   "view": "iso(-45,35)",
+   "S": 88.2,
+   "iou": 87.3,
+   "chamfer": 7.11,
+   "iou_strict": 68.3,
+   "pose": [
+    0.0,
+    10.0,
+    4.0
+   ],
+   "ai_img": "零件AI建模图片\\11_Tuenkers EGT Gripper-EGT002\\egt002 sw50x898.png",
+   "real_img": "零件真实图片_带背景\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x898.png"
+  },
+  {
+   "model": "egt002 sw50x928",
+   "group": "11_Tuenkers EGT Gripper-EGT002",
+   "prompt": "EGT型材 EGT002 SW50x928",
+   "view": "iso(-45,35)",
+   "S": 87.9,
+   "iou": 87.1,
+   "chamfer": 7.35,
+   "iou_strict": 67.7,
+   "pose": [
+    0.0,
+    10.0,
+    4.0
+   ],
+   "ai_img": "零件AI建模图片\\11_Tuenkers EGT Gripper-EGT002\\egt002 sw50x928.png",
+   "real_img": "零件真实图片_带背景\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x928.png"
+  },
+  {
+   "model": "egt002 sw50x958",
+   "group": "11_Tuenkers EGT Gripper-EGT002",
+   "prompt": "EGT型材 EGT002 SW50x958",
+   "view": "iso(-45,35)",
+   "S": 88.1,
+   "iou": 87.3,
+   "chamfer": 7.25,
+   "iou_strict": 68.2,
+   "pose": [
+    0.0,
+    10.0,
+    4.0
+   ],
+   "ai_img": "零件AI建模图片\\11_Tuenkers EGT Gripper-EGT002\\egt002 sw50x958.png",
+   "real_img": "零件真实图片_带背景\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x958.png"
+  },
+  {
+   "model": "egt002 sw50x988",
+   "group": "11_Tuenkers EGT Gripper-EGT002",
+   "prompt": "EGT型材 EGT002 SW50x988",
+   "view": "iso(-45,35)",
+   "S": 88.4,
+   "iou": 86.9,
+   "chamfer": 6.59,
+   "iou_strict": 66.9,
+   "pose": [
+    0.0,
+    8.0,
+    4.0
+   ],
+   "ai_img": "零件AI建模图片\\11_Tuenkers EGT Gripper-EGT002\\egt002 sw50x988.png",
+   "real_img": "零件真实图片_带背景\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x988.png"
+  },
+  {
+   "model": "egt002 sw50x1018",
+   "group": "11_Tuenkers EGT Gripper-EGT002",
+   "prompt": "EGT型材 EGT002 SW50x1018",
+   "view": "iso(-45,35)",
+   "S": 88.4,
+   "iou": 86.8,
+   "chamfer": 6.54,
+   "iou_strict": 66.7,
+   "pose": [
+    0.0,
+    6.0,
+    4.0
+   ],
+   "ai_img": "零件AI建模图片\\11_Tuenkers EGT Gripper-EGT002\\egt002 sw50x1018.png",
+   "real_img": "零件真实图片_带背景\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x1018.png"
+  },
+  {
+   "model": "egt002 sw50x1048",
+   "group": "11_Tuenkers EGT Gripper-EGT002",
+   "prompt": "EGT型材 EGT002 SW50x1048",
+   "view": "iso(-45,35)",
+   "S": 87.7,
+   "iou": 85.1,
+   "chamfer": 6.29,
+   "iou_strict": 62.9,
+   "pose": [
+    1.5,
+    2.0,
+    6.0
+   ],
+   "ai_img": "零件AI建模图片\\11_Tuenkers EGT Gripper-EGT002\\egt002 sw50x1048.png",
+   "real_img": "零件真实图片_带背景\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x1048.png"
+  },
+  {
+   "model": "egt002 sw50x1078",
+   "group": "11_Tuenkers EGT Gripper-EGT002",
+   "prompt": "EGT型材 EGT002 SW50x1078",
+   "view": "iso(-45,35)",
+   "S": 87.9,
+   "iou": 86.6,
+   "chamfer": 7.03,
+   "iou_strict": 66.3,
+   "pose": [
+    0.0,
+    8.0,
+    4.0
+   ],
+   "ai_img": "零件AI建模图片\\11_Tuenkers EGT Gripper-EGT002\\egt002 sw50x1078.png",
+   "real_img": "零件真实图片_带背景\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x1078.png"
+  },
+  {
+   "model": "egt002 sw50x1108",
+   "group": "11_Tuenkers EGT Gripper-EGT002",
+   "prompt": "EGT型材 EGT002 SW50x1108",
+   "view": "iso(-45,35)",
+   "S": 87.9,
+   "iou": 86.2,
+   "chamfer": 6.81,
+   "iou_strict": 65.1,
+   "pose": [
+    0.0,
+    8.0,
+    4.0
+   ],
+   "ai_img": "零件AI建模图片\\11_Tuenkers EGT Gripper-EGT002\\egt002 sw50x1108.png",
+   "real_img": "零件真实图片_带背景\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x1108.png"
+  },
+  {
+   "model": "egt002 sw50x1138",
+   "group": "11_Tuenkers EGT Gripper-EGT002",
+   "prompt": "EGT型材 EGT002 SW50x1138",
+   "view": "iso(-45,35)",
+   "S": 88.2,
+   "iou": 86.1,
+   "chamfer": 6.31,
+   "iou_strict": 65.1,
+   "pose": [
+    0.0,
+    6.0,
+    2.0
+   ],
+   "ai_img": "零件AI建模图片\\11_Tuenkers EGT Gripper-EGT002\\egt002 sw50x1138.png",
+   "real_img": "零件真实图片_带背景\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x1138.png"
+  },
+  {
+   "model": "egt002 sw50x1168",
+   "group": "11_Tuenkers EGT Gripper-EGT002",
+   "prompt": "EGT型材 EGT002 SW50x1168",
+   "view": "iso(-45,35)",
+   "S": 88.1,
+   "iou": 85.9,
+   "chamfer": 6.31,
+   "iou_strict": 64.4,
+   "pose": [
+    0.0,
+    8.0,
+    2.0
+   ],
+   "ai_img": "零件AI建模图片\\11_Tuenkers EGT Gripper-EGT002\\egt002 sw50x1168.png",
+   "real_img": "零件真实图片_带背景\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x1168.png"
+  },
+  {
+   "model": "egt002 sw50x1198",
+   "group": "11_Tuenkers EGT Gripper-EGT002",
+   "prompt": "EGT型材 EGT002 SW50x1198",
+   "view": "iso(-45,35)",
+   "S": 88.0,
+   "iou": 85.7,
+   "chamfer": 6.35,
+   "iou_strict": 63.7,
+   "pose": [
+    0.0,
+    6.0,
+    4.0
+   ],
+   "ai_img": "零件AI建模图片\\11_Tuenkers EGT Gripper-EGT002\\egt002 sw50x1198.png",
+   "real_img": "零件真实图片_带背景\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x1198.png"
+  },
+  {
+   "model": "egt002 sw50x1228",
+   "group": "11_Tuenkers EGT Gripper-EGT002",
+   "prompt": "EGT型材 EGT002 SW50x1228",
+   "view": "iso(-45,35)",
+   "S": 87.7,
+   "iou": 85.6,
+   "chamfer": 6.66,
+   "iou_strict": 63.4,
+   "pose": [
+    0.0,
+    6.0,
+    4.0
+   ],
+   "ai_img": "零件AI建模图片\\11_Tuenkers EGT Gripper-EGT002\\egt002 sw50x1228.png",
+   "real_img": "零件真实图片_带背景\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x1228.png"
+  },
+  {
+   "model": "egt002 sw50x1258",
+   "group": "11_Tuenkers EGT Gripper-EGT002",
+   "prompt": "EGT型材 EGT002 SW50x1258",
+   "view": "iso(-45,35)",
+   "S": 87.9,
+   "iou": 85.7,
+   "chamfer": 6.45,
+   "iou_strict": 63.6,
+   "pose": [
+    0.0,
+    4.0,
+    4.0
+   ],
+   "ai_img": "零件AI建模图片\\11_Tuenkers EGT Gripper-EGT002\\egt002 sw50x1258.png",
+   "real_img": "零件真实图片_带背景\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x1258.png"
+  },
+  {
+   "model": "egt002 sw50x1288",
+   "group": "11_Tuenkers EGT Gripper-EGT002",
+   "prompt": "EGT型材 EGT002 SW50x1288",
+   "view": "iso(-45,35)",
+   "S": 87.7,
+   "iou": 85.3,
+   "chamfer": 6.5,
+   "iou_strict": 62.5,
+   "pose": [
+    0.0,
+    6.0,
+    4.0
+   ],
+   "ai_img": "零件AI建模图片\\11_Tuenkers EGT Gripper-EGT002\\egt002 sw50x1288.png",
+   "real_img": "零件真实图片_带背景\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x1288.png"
+  },
+  {
+   "model": "egt002 sw50x1318",
+   "group": "11_Tuenkers EGT Gripper-EGT002",
+   "prompt": "EGT型材 EGT002 SW50x1318",
+   "view": "iso(-45,35)",
+   "S": 87.8,
+   "iou": 84.8,
+   "chamfer": 6.01,
+   "iou_strict": 62.0,
+   "pose": [
+    0.0,
+    8.0,
+    0.0
+   ],
+   "ai_img": "零件AI建模图片\\11_Tuenkers EGT Gripper-EGT002\\egt002 sw50x1318.png",
+   "real_img": "零件真实图片_带背景\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x1318.png"
+  },
+  {
+   "model": "egt002 sw50x1348",
+   "group": "11_Tuenkers EGT Gripper-EGT002",
+   "prompt": "EGT型材 EGT002 SW50x1348",
+   "view": "iso(-45,35)",
+   "S": 87.9,
+   "iou": 85.0,
+   "chamfer": 6.06,
+   "iou_strict": 61.7,
+   "pose": [
+    0.0,
+    4.0,
+    4.0
+   ],
+   "ai_img": "零件AI建模图片\\11_Tuenkers EGT Gripper-EGT002\\egt002 sw50x1348.png",
+   "real_img": "零件真实图片_带背景\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x1348.png"
+  },
+  {
+   "model": "egt002 sw50x1378",
+   "group": "11_Tuenkers EGT Gripper-EGT002",
+   "prompt": "EGT型材 EGT002 SW50x1378",
+   "view": "iso(-45,35)",
+   "S": 87.8,
+   "iou": 84.9,
+   "chamfer": 6.09,
+   "iou_strict": 61.3,
+   "pose": [
+    0.0,
+    4.0,
+    4.0
+   ],
+   "ai_img": "零件AI建模图片\\11_Tuenkers EGT Gripper-EGT002\\egt002 sw50x1378.png",
+   "real_img": "零件真实图片_带背景\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x1378.png"
+  },
+  {
+   "model": "egt002 sw50x1408",
+   "group": "11_Tuenkers EGT Gripper-EGT002",
+   "prompt": "EGT型材 EGT002 SW50x1408",
+   "view": "iso(-45,35)",
+   "S": 87.5,
+   "iou": 84.7,
+   "chamfer": 6.32,
+   "iou_strict": 60.7,
+   "pose": [
+    0.0,
+    4.0,
+    4.0
+   ],
+   "ai_img": "零件AI建模图片\\11_Tuenkers EGT Gripper-EGT002\\egt002 sw50x1408.png",
+   "real_img": "零件真实图片_带背景\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x1408.png"
+  },
+  {
+   "model": "egt002 sw50x1438",
+   "group": "11_Tuenkers EGT Gripper-EGT002",
+   "prompt": "EGT型材 EGT002 SW50x1438",
+   "view": "iso(-45,35)",
+   "S": 87.6,
+   "iou": 84.5,
+   "chamfer": 6.11,
+   "iou_strict": 60.4,
+   "pose": [
+    0.0,
+    6.0,
+    2.0
+   ],
+   "ai_img": "零件AI建模图片\\11_Tuenkers EGT Gripper-EGT002\\egt002 sw50x1438.png",
+   "real_img": "零件真实图片_带背景\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x1438.png"
+  },
+  {
+   "model": "egt002 sw50x1468",
+   "group": "11_Tuenkers EGT Gripper-EGT002",
+   "prompt": "EGT型材 EGT002 SW50x1468",
+   "view": "iso(-45,35)",
+   "S": 87.9,
+   "iou": 84.5,
+   "chamfer": 5.63,
+   "iou_strict": 60.1,
+   "pose": [
+    0.0,
+    4.0,
+    2.0
+   ],
+   "ai_img": "零件AI建模图片\\11_Tuenkers EGT Gripper-EGT002\\egt002 sw50x1468.png",
+   "real_img": "零件真实图片_带背景\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x1468.png"
+  },
+  {
+   "model": "egt002 sw50x1498",
+   "group": "11_Tuenkers EGT Gripper-EGT002",
+   "prompt": "EGT型材 EGT002 SW50x1498",
+   "view": "iso(-45,35)",
+   "S": 87.7,
+   "iou": 84.3,
+   "chamfer": 5.8,
+   "iou_strict": 59.8,
+   "pose": [
+    0.0,
+    4.0,
+    2.0
+   ],
+   "ai_img": "零件AI建模图片\\11_Tuenkers EGT Gripper-EGT002\\egt002 sw50x1498.png",
+   "real_img": "零件真实图片_带背景\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x1498.png"
+  },
+  {
+   "model": "egt002 sw50x1528",
+   "group": "11_Tuenkers EGT Gripper-EGT002",
+   "prompt": "EGT型材 EGT002 SW50x1528",
+   "view": "iso(-45,35)",
+   "S": 87.2,
+   "iou": 83.5,
+   "chamfer": 5.99,
+   "iou_strict": 58.8,
+   "pose": [
+    0.0,
+    6.0,
+    0.0
+   ],
+   "ai_img": "零件AI建模图片\\11_Tuenkers EGT Gripper-EGT002\\egt002 sw50x1528.png",
+   "real_img": "零件真实图片_带背景\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x1528.png"
+  },
+  {
+   "model": "egt002 sw50x1558",
+   "group": "11_Tuenkers EGT Gripper-EGT002",
+   "prompt": "EGT型材 EGT002 SW50x1558",
+   "view": "iso(-45,35)",
+   "S": 87.2,
+   "iou": 83.9,
+   "chamfer": 6.2,
+   "iou_strict": 59.2,
+   "pose": [
+    0.0,
+    4.0,
+    2.0
+   ],
+   "ai_img": "零件AI建模图片\\11_Tuenkers EGT Gripper-EGT002\\egt002 sw50x1558.png",
+   "real_img": "零件真实图片_带背景\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x1558.png"
+  },
+  {
+   "model": "egt002 sw50x1588",
+   "group": "11_Tuenkers EGT Gripper-EGT002",
+   "prompt": "EGT型材 EGT002 SW50x1588",
+   "view": "iso(-45,35)",
+   "S": 87.6,
+   "iou": 83.9,
+   "chamfer": 5.69,
+   "iou_strict": 58.6,
+   "pose": [
+    0.0,
+    4.0,
+    2.0
+   ],
+   "ai_img": "零件AI建模图片\\11_Tuenkers EGT Gripper-EGT002\\egt002 sw50x1588.png",
+   "real_img": "零件真实图片_带背景\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x1588.png"
+  },
+  {
+   "model": "egt002 sw50x1618",
+   "group": "11_Tuenkers EGT Gripper-EGT002",
+   "prompt": "EGT型材 EGT002 SW50x1618",
+   "view": "iso4(135,35)",
+   "S": 52.6,
+   "iou": 17.8,
+   "chamfer": 8.24,
+   "iou_strict": 8.2,
+   "pose": [
+    -10.5,
+    16.0,
+    -6.0
+   ],
+   "ai_img": "零件AI建模图片\\11_Tuenkers EGT Gripper-EGT002\\egt002 sw50x1618.png",
+   "real_img": "零件真实图片_带背景\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x1618.png"
+  },
+  {
+   "model": "egt002 sw50x1648",
+   "group": "11_Tuenkers EGT Gripper-EGT002",
+   "prompt": "EGT型材 EGT002 SW50x1648",
+   "view": "iso(-45,35)",
+   "S": 87.3,
+   "iou": 83.4,
+   "chamfer": 5.78,
+   "iou_strict": 57.6,
+   "pose": [
+    0.0,
+    4.0,
+    2.0
+   ],
+   "ai_img": "零件AI建模图片\\11_Tuenkers EGT Gripper-EGT002\\egt002 sw50x1648.png",
+   "real_img": "零件真实图片_带背景\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x1648.png"
+  },
+  {
+   "model": "egt002 sw50x1678",
+   "group": "11_Tuenkers EGT Gripper-EGT002",
+   "prompt": "EGT型材 EGT002 SW50x1678",
+   "view": "iso(-45,35)",
+   "S": 87.1,
+   "iou": 83.2,
+   "chamfer": 5.87,
+   "iou_strict": 57.0,
+   "pose": [
+    0.0,
+    4.0,
+    2.0
+   ],
+   "ai_img": "零件AI建模图片\\11_Tuenkers EGT Gripper-EGT002\\egt002 sw50x1678.png",
+   "real_img": "零件真实图片_带背景\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x1678.png"
+  },
+  {
+   "model": "egt002 sw50x1708",
+   "group": "11_Tuenkers EGT Gripper-EGT002",
+   "prompt": "EGT型材 EGT002 SW50x1708",
+   "view": "iso(-45,35)",
+   "S": 87.2,
+   "iou": 83.4,
+   "chamfer": 5.83,
+   "iou_strict": 57.1,
+   "pose": [
+    0.0,
+    4.0,
+    2.0
+   ],
+   "ai_img": "零件AI建模图片\\11_Tuenkers EGT Gripper-EGT002\\egt002 sw50x1708.png",
+   "real_img": "零件真实图片_带背景\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x1708.png"
+  },
+  {
+   "model": "egt002 sw50x1738",
+   "group": "11_Tuenkers EGT Gripper-EGT002",
+   "prompt": "EGT型材 EGT002 SW50x1738",
+   "view": "iso(-45,35)",
+   "S": 87.5,
+   "iou": 83.3,
+   "chamfer": 5.48,
+   "iou_strict": 56.9,
+   "pose": [
+    0.0,
+    4.0,
+    0.0
+   ],
+   "ai_img": "零件AI建模图片\\11_Tuenkers EGT Gripper-EGT002\\egt002 sw50x1738.png",
+   "real_img": "零件真实图片_带背景\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x1738.png"
+  },
+  {
+   "model": "egt002 sw50x1768",
+   "group": "11_Tuenkers EGT Gripper-EGT002",
+   "prompt": "EGT型材 EGT002 SW50x1768",
+   "view": "iso(-45,35)",
+   "S": 87.1,
+   "iou": 82.9,
+   "chamfer": 5.73,
+   "iou_strict": 56.0,
+   "pose": [
+    0.0,
+    4.0,
+    2.0
+   ],
+   "ai_img": "零件AI建模图片\\11_Tuenkers EGT Gripper-EGT002\\egt002 sw50x1768.png",
+   "real_img": "零件真实图片_带背景\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x1768.png"
+  },
+  {
+   "model": "egt002 sw50x1798",
+   "group": "11_Tuenkers EGT Gripper-EGT002",
+   "prompt": "EGT型材 EGT002 SW50x1798",
+   "view": "iso(-45,35)",
+   "S": 87.2,
+   "iou": 82.8,
+   "chamfer": 5.5,
+   "iou_strict": 55.7,
+   "pose": [
+    0.0,
+    2.0,
+    2.0
+   ],
+   "ai_img": "零件AI建模图片\\11_Tuenkers EGT Gripper-EGT002\\egt002 sw50x1798.png",
+   "real_img": "零件真实图片_带背景\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x1798.png"
+  },
+  {
+   "model": "egt002 sw50x1828",
+   "group": "11_Tuenkers EGT Gripper-EGT002",
+   "prompt": "EGT型材 EGT002 SW50x1828",
+   "view": "iso(-45,35)",
+   "S": 87.2,
+   "iou": 82.8,
+   "chamfer": 5.56,
+   "iou_strict": 55.6,
+   "pose": [
+    0.0,
+    2.0,
+    2.0
+   ],
+   "ai_img": "零件AI建模图片\\11_Tuenkers EGT Gripper-EGT002\\egt002 sw50x1828.png",
+   "real_img": "零件真实图片_带背景\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x1828.png"
+  },
+  {
+   "model": "egt002 sw50x1858",
+   "group": "11_Tuenkers EGT Gripper-EGT002",
+   "prompt": "EGT型材 EGT002 SW50x1858",
+   "view": "iso(-45,35)",
+   "S": 87.0,
+   "iou": 82.7,
+   "chamfer": 5.6,
+   "iou_strict": 55.2,
+   "pose": [
+    0.0,
+    2.0,
+    2.0
+   ],
+   "ai_img": "零件AI建模图片\\11_Tuenkers EGT Gripper-EGT002\\egt002 sw50x1858.png",
+   "real_img": "零件真实图片_带背景\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x1858.png"
+  },
+  {
+   "model": "egt002 sw50x1888",
+   "group": "11_Tuenkers EGT Gripper-EGT002",
+   "prompt": "EGT型材 EGT002 SW50x1888",
+   "view": "iso(-45,35)",
+   "S": 87.0,
+   "iou": 82.5,
+   "chamfer": 5.62,
+   "iou_strict": 54.9,
+   "pose": [
+    0.0,
+    2.0,
+    2.0
+   ],
+   "ai_img": "零件AI建模图片\\11_Tuenkers EGT Gripper-EGT002\\egt002 sw50x1888.png",
+   "real_img": "零件真实图片_带背景\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x1888.png"
+  },
+  {
+   "model": "egt002 sw50x1918",
+   "group": "11_Tuenkers EGT Gripper-EGT002",
+   "prompt": "EGT型材 EGT002 SW50x1918",
+   "view": "iso(-45,35)",
+   "S": 86.9,
+   "iou": 82.3,
+   "chamfer": 5.56,
+   "iou_strict": 54.4,
+   "pose": [
+    0.0,
+    2.0,
+    2.0
+   ],
+   "ai_img": "零件AI建模图片\\11_Tuenkers EGT Gripper-EGT002\\egt002 sw50x1918.png",
+   "real_img": "零件真实图片_带背景\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x1918.png"
+  },
+  {
+   "model": "egt002 sw50x1948",
+   "group": "11_Tuenkers EGT Gripper-EGT002",
+   "prompt": "EGT型材 EGT002 SW50x1948",
+   "view": "iso(-45,35)",
+   "S": 86.7,
+   "iou": 82.0,
+   "chamfer": 5.6,
+   "iou_strict": 53.7,
+   "pose": [
+    0.0,
+    2.0,
+    2.0
+   ],
+   "ai_img": "零件AI建模图片\\11_Tuenkers EGT Gripper-EGT002\\egt002 sw50x1948.png",
+   "real_img": "零件真实图片_带背景\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x1948.png"
+  },
+  {
+   "model": "egt002 sw50x1978",
+   "group": "11_Tuenkers EGT Gripper-EGT002",
+   "prompt": "EGT型材 EGT002 SW50x1978",
+   "view": "iso(-45,35)",
+   "S": 86.8,
+   "iou": 82.0,
+   "chamfer": 5.48,
+   "iou_strict": 53.7,
+   "pose": [
+    0.0,
+    4.0,
+    2.0
+   ],
+   "ai_img": "零件AI建模图片\\11_Tuenkers EGT Gripper-EGT002\\egt002 sw50x1978.png",
+   "real_img": "零件真实图片_带背景\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x1978.png"
+  },
+  {
+   "model": "egt002 sw50x2008",
+   "group": "11_Tuenkers EGT Gripper-EGT002",
+   "prompt": "EGT型材 EGT002 SW50x2008",
+   "view": "iso(-45,35)",
+   "S": 86.7,
+   "iou": 82.0,
+   "chamfer": 5.56,
+   "iou_strict": 53.5,
+   "pose": [
+    0.0,
+    2.0,
+    2.0
+   ],
+   "ai_img": "零件AI建模图片\\11_Tuenkers EGT Gripper-EGT002\\egt002 sw50x2008.png",
+   "real_img": "零件真实图片_带背景\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x2008.png"
+  },
+  {
+   "model": "egt002 sw50x2038",
+   "group": "11_Tuenkers EGT Gripper-EGT002",
+   "prompt": "EGT型材 EGT002 SW50x2038",
+   "view": "iso(-45,35)",
+   "S": 82.1,
+   "iou": 73.0,
+   "chamfer": 5.81,
+   "iou_strict": 43.3,
+   "pose": [
+    1.5,
+    2.0,
+    4.0
+   ],
+   "ai_img": "零件AI建模图片\\11_Tuenkers EGT Gripper-EGT002\\egt002 sw50x2038.png",
+   "real_img": "零件真实图片_带背景\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x2038.png"
+  },
+  {
+   "model": "egt002 sw50x2068",
+   "group": "11_Tuenkers EGT Gripper-EGT002",
+   "prompt": "EGT型材 EGT002 SW50x2068",
+   "view": "iso(-45,35)",
+   "S": 86.7,
+   "iou": 81.8,
+   "chamfer": 5.5,
+   "iou_strict": 53.0,
+   "pose": [
+    0.0,
+    2.0,
+    2.0
+   ],
+   "ai_img": "零件AI建模图片\\11_Tuenkers EGT Gripper-EGT002\\egt002 sw50x2068.png",
+   "real_img": "零件真实图片_带背景\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x2068.png"
+  },
+  {
+   "model": "egt002 sw50x2098",
+   "group": "11_Tuenkers EGT Gripper-EGT002",
+   "prompt": "EGT型材 EGT002 SW50x2098",
+   "view": "iso(-45,35)",
+   "S": 86.4,
+   "iou": 81.4,
+   "chamfer": 5.62,
+   "iou_strict": 52.2,
+   "pose": [
+    0.0,
+    2.0,
+    2.0
+   ],
+   "ai_img": "零件AI建模图片\\11_Tuenkers EGT Gripper-EGT002\\egt002 sw50x2098.png",
+   "real_img": "零件真实图片_带背景\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x2098.png"
+  },
+  {
+   "model": "egt002 sw50x2128",
+   "group": "11_Tuenkers EGT Gripper-EGT002",
+   "prompt": "EGT型材 EGT002 SW50x2128",
+   "view": "iso(-45,35)",
+   "S": 86.5,
+   "iou": 81.5,
+   "chamfer": 5.53,
+   "iou_strict": 52.2,
+   "pose": [
+    0.0,
+    2.0,
+    2.0
+   ],
+   "ai_img": "零件AI建模图片\\11_Tuenkers EGT Gripper-EGT002\\egt002 sw50x2128.png",
+   "real_img": "零件真实图片_带背景\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x2128.png"
+  },
+  {
+   "model": "egt002 sw50x2158",
+   "group": "11_Tuenkers EGT Gripper-EGT002",
+   "prompt": "EGT型材 EGT002 SW50x2158",
+   "view": "iso(-45,35)",
+   "S": 86.4,
+   "iou": 81.3,
+   "chamfer": 5.58,
+   "iou_strict": 51.8,
+   "pose": [
+    0.0,
+    2.0,
+    2.0
+   ],
+   "ai_img": "零件AI建模图片\\11_Tuenkers EGT Gripper-EGT002\\egt002 sw50x2158.png",
+   "real_img": "零件真实图片_带背景\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x2158.png"
+  },
+  {
+   "model": "egt002 sw50x2188",
+   "group": "11_Tuenkers EGT Gripper-EGT002",
+   "prompt": "EGT型材 EGT002 SW50x2188",
+   "view": "iso(-45,35)",
+   "S": 86.3,
+   "iou": 81.2,
+   "chamfer": 5.64,
+   "iou_strict": 51.5,
+   "pose": [
+    0.0,
+    2.0,
+    4.0
+   ],
+   "ai_img": "零件AI建模图片\\11_Tuenkers EGT Gripper-EGT002\\egt002 sw50x2188.png",
+   "real_img": "零件真实图片_带背景\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x2188.png"
+  },
+  {
+   "model": "egt002 sw50x2218",
+   "group": "11_Tuenkers EGT Gripper-EGT002",
+   "prompt": "EGT型材 EGT002 SW50x2218",
+   "view": "iso(-45,35)",
+   "S": 86.4,
+   "iou": 81.3,
+   "chamfer": 5.52,
+   "iou_strict": 51.5,
+   "pose": [
+    0.0,
+    2.0,
+    2.0
+   ],
+   "ai_img": "零件AI建模图片\\11_Tuenkers EGT Gripper-EGT002\\egt002 sw50x2218.png",
+   "real_img": "零件真实图片_带背景\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x2218.png"
+  },
+  {
+   "model": "egt002 sw50x2248",
+   "group": "11_Tuenkers EGT Gripper-EGT002",
+   "prompt": "EGT型材 EGT002 SW50x2248",
+   "view": "iso(-45,35)",
+   "S": 86.7,
+   "iou": 81.9,
+   "chamfer": 5.46,
+   "iou_strict": 52.4,
+   "pose": [
+    0.0,
+    2.0,
+    4.0
+   ],
+   "ai_img": "零件AI建模图片\\11_Tuenkers EGT Gripper-EGT002\\egt002 sw50x2248.png",
+   "real_img": "零件真实图片_带背景\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x2248.png"
+  },
+  {
+   "model": "egt002 sw50x2278",
+   "group": "11_Tuenkers EGT Gripper-EGT002",
+   "prompt": "EGT型材 EGT002 SW50x2278",
+   "view": "iso(-45,35)",
+   "S": 86.4,
+   "iou": 81.2,
+   "chamfer": 5.52,
+   "iou_strict": 51.2,
+   "pose": [
+    0.0,
+    2.0,
+    0.0
+   ],
+   "ai_img": "零件AI建模图片\\11_Tuenkers EGT Gripper-EGT002\\egt002 sw50x2278.png",
+   "real_img": "零件真实图片_带背景\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x2278.png"
+  },
+  {
+   "model": "egt002 sw50x2308",
+   "group": "11_Tuenkers EGT Gripper-EGT002",
+   "prompt": "EGT型材 EGT002 SW50x2308",
+   "view": "iso(-45,35)",
+   "S": 86.4,
+   "iou": 81.3,
+   "chamfer": 5.51,
+   "iou_strict": 51.3,
+   "pose": [
+    0.0,
+    0.0,
+    2.0
+   ],
+   "ai_img": "零件AI建模图片\\11_Tuenkers EGT Gripper-EGT002\\egt002 sw50x2308.png",
+   "real_img": "零件真实图片_带背景\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x2308.png"
+  },
+  {
+   "model": "egt002 sw50x2338",
+   "group": "11_Tuenkers EGT Gripper-EGT002",
+   "prompt": "EGT型材 EGT002 SW50x2338",
+   "view": "iso(-45,35)",
+   "S": 86.0,
+   "iou": 80.7,
+   "chamfer": 5.62,
+   "iou_strict": 50.2,
+   "pose": [
+    0.0,
+    2.0,
+    4.0
+   ],
+   "ai_img": "零件AI建模图片\\11_Tuenkers EGT Gripper-EGT002\\egt002 sw50x2338.png",
+   "real_img": "零件真实图片_带背景\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x2338.png"
+  },
+  {
+   "model": "egt002 sw50x2368",
+   "group": "11_Tuenkers EGT Gripper-EGT002",
+   "prompt": "EGT型材 EGT002 SW50x2368",
+   "view": "iso(-45,35)",
+   "S": 86.3,
+   "iou": 81.0,
+   "chamfer": 5.47,
+   "iou_strict": 50.7,
+   "pose": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "ai_img": "零件AI建模图片\\11_Tuenkers EGT Gripper-EGT002\\egt002 sw50x2368.png",
+   "real_img": "零件真实图片_带背景\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x2368.png"
+  },
+  {
+   "model": "egt002 sw50x2398",
+   "group": "11_Tuenkers EGT Gripper-EGT002",
+   "prompt": "EGT型材 EGT002 SW50x2398",
+   "view": "iso(-45,35)",
+   "S": 86.1,
+   "iou": 80.7,
+   "chamfer": 5.51,
+   "iou_strict": 50.1,
+   "pose": [
+    0.0,
+    2.0,
+    4.0
+   ],
+   "ai_img": "零件AI建模图片\\11_Tuenkers EGT Gripper-EGT002\\egt002 sw50x2398.png",
+   "real_img": "零件真实图片_带背景\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x2398.png"
+  },
+  {
+   "model": "egt002 sw50x2428",
+   "group": "11_Tuenkers EGT Gripper-EGT002",
+   "prompt": "EGT型材 EGT002 SW50x2428",
+   "view": "iso(-45,35)",
+   "S": 86.2,
+   "iou": 80.8,
+   "chamfer": 5.48,
+   "iou_strict": 50.1,
+   "pose": [
+    0.0,
+    0.0,
+    2.0
+   ],
+   "ai_img": "零件AI建模图片\\11_Tuenkers EGT Gripper-EGT002\\egt002 sw50x2428.png",
+   "real_img": "零件真实图片_带背景\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x2428.png"
+  },
+  {
+   "model": "egt002 sw50x2458",
+   "group": "11_Tuenkers EGT Gripper-EGT002",
+   "prompt": "EGT型材 EGT002 SW50x2458",
+   "view": "iso(-45,35)",
+   "S": 86.3,
+   "iou": 80.9,
+   "chamfer": 5.44,
+   "iou_strict": 50.2,
+   "pose": [
+    0.0,
+    0.0,
+    2.0
+   ],
+   "ai_img": "零件AI建模图片\\11_Tuenkers EGT Gripper-EGT002\\egt002 sw50x2458.png",
+   "real_img": "零件真实图片_带背景\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x2458.png"
+  },
+  {
+   "model": "egt002 sw50x2488",
+   "group": "11_Tuenkers EGT Gripper-EGT002",
+   "prompt": "EGT型材 EGT002 SW50x2488",
+   "view": "iso(-45,35)",
+   "S": 86.1,
+   "iou": 80.7,
+   "chamfer": 5.47,
+   "iou_strict": 49.7,
+   "pose": [
+    0.0,
+    0.0,
+    4.0
+   ],
+   "ai_img": "零件AI建模图片\\11_Tuenkers EGT Gripper-EGT002\\egt002 sw50x2488.png",
+   "real_img": "零件真实图片_带背景\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x2488.png"
+  },
+  {
+   "model": "egt002 sw50x2518",
+   "group": "11_Tuenkers EGT Gripper-EGT002",
+   "prompt": "EGT型材 EGT002 SW50x2518",
+   "view": "iso(-45,35)",
+   "S": 86.0,
+   "iou": 80.4,
+   "chamfer": 5.52,
+   "iou_strict": 49.3,
+   "pose": [
+    0.0,
+    2.0,
+    4.0
+   ],
+   "ai_img": "零件AI建模图片\\11_Tuenkers EGT Gripper-EGT002\\egt002 sw50x2518.png",
+   "real_img": "零件真实图片_带背景\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x2518.png"
+  },
+  {
+   "model": "egt002 sw50x2548",
+   "group": "11_Tuenkers EGT Gripper-EGT002",
+   "prompt": "EGT型材 EGT002 SW50x2548",
+   "view": "iso(-45,35)",
+   "S": 86.4,
+   "iou": 80.9,
+   "chamfer": 5.34,
+   "iou_strict": 50.0,
+   "pose": [
+    0.0,
+    0.0,
+    2.0
+   ],
+   "ai_img": "零件AI建模图片\\11_Tuenkers EGT Gripper-EGT002\\egt002 sw50x2548.png",
+   "real_img": "零件真实图片_带背景\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x2548.png"
+  },
+  {
+   "model": "egt002 sw50x2578",
+   "group": "11_Tuenkers EGT Gripper-EGT002",
+   "prompt": "EGT型材 EGT002 SW50x2578",
+   "view": "iso(-45,35)",
+   "S": 86.1,
+   "iou": 80.6,
+   "chamfer": 5.42,
+   "iou_strict": 49.4,
+   "pose": [
+    0.0,
+    0.0,
+    2.0
+   ],
+   "ai_img": "零件AI建模图片\\11_Tuenkers EGT Gripper-EGT002\\egt002 sw50x2578.png",
+   "real_img": "零件真实图片_带背景\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x2578.png"
+  },
+  {
+   "model": "egt002 sw50x2608",
+   "group": "11_Tuenkers EGT Gripper-EGT002",
+   "prompt": "EGT型材 EGT002 SW50x2608",
+   "view": "iso4(135,35)",
+   "S": 68.5,
+   "iou": 43.6,
+   "chamfer": 4.35,
+   "iou_strict": 20.8,
+   "pose": [
+    -3.0,
+    8.0,
+    -2.0
+   ],
+   "ai_img": "零件AI建模图片\\11_Tuenkers EGT Gripper-EGT002\\egt002 sw50x2608.png",
+   "real_img": "零件真实图片_带背景\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x2608.png"
+  },
+  {
+   "model": "egt002 sw50x2638",
+   "group": "11_Tuenkers EGT Gripper-EGT002",
+   "prompt": "EGT型材 EGT002 SW50x2638",
+   "view": "iso(-45,35)",
+   "S": 85.9,
+   "iou": 80.1,
+   "chamfer": 5.46,
+   "iou_strict": 48.3,
+   "pose": [
+    0.0,
+    2.0,
+    2.0
+   ],
+   "ai_img": "零件AI建模图片\\11_Tuenkers EGT Gripper-EGT002\\egt002 sw50x2638.png",
+   "real_img": "零件真实图片_带背景\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x2638.png"
+  },
+  {
+   "model": "egt002 sw50x2668",
+   "group": "11_Tuenkers EGT Gripper-EGT002",
+   "prompt": "EGT型材 EGT002 SW50x2668",
+   "view": "iso(-45,35)",
+   "S": 86.0,
+   "iou": 80.3,
+   "chamfer": 5.42,
+   "iou_strict": 48.7,
+   "pose": [
+    0.0,
+    2.0,
+    2.0
+   ],
+   "ai_img": "零件AI建模图片\\11_Tuenkers EGT Gripper-EGT002\\egt002 sw50x2668.png",
+   "real_img": "零件真实图片_带背景\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x2668.png"
+  },
+  {
+   "model": "egt002 sw50x2698",
+   "group": "11_Tuenkers EGT Gripper-EGT002",
+   "prompt": "EGT型材 EGT002 SW50x2698",
+   "view": "iso(-45,35)",
+   "S": 86.0,
+   "iou": 80.2,
+   "chamfer": 5.4,
+   "iou_strict": 48.5,
+   "pose": [
+    0.0,
+    2.0,
+    2.0
+   ],
+   "ai_img": "零件AI建模图片\\11_Tuenkers EGT Gripper-EGT002\\egt002 sw50x2698.png",
+   "real_img": "零件真实图片_带背景\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x2698.png"
+  },
+  {
+   "model": "egt002 sw50x2728",
+   "group": "11_Tuenkers EGT Gripper-EGT002",
+   "prompt": "EGT型材 EGT002 SW50x2728",
+   "view": "iso(-45,35)",
+   "S": 86.0,
+   "iou": 80.3,
+   "chamfer": 5.39,
+   "iou_strict": 48.5,
+   "pose": [
+    0.0,
+    0.0,
+    2.0
+   ],
+   "ai_img": "零件AI建模图片\\11_Tuenkers EGT Gripper-EGT002\\egt002 sw50x2728.png",
+   "real_img": "零件真实图片_带背景\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x2728.png"
+  },
+  {
+   "model": "egt002 sw50x2758",
+   "group": "11_Tuenkers EGT Gripper-EGT002",
+   "prompt": "EGT型材 EGT002 SW50x2758",
+   "view": "iso(-45,35)",
+   "S": 86.0,
+   "iou": 80.2,
+   "chamfer": 5.33,
+   "iou_strict": 48.3,
+   "pose": [
+    0.0,
+    0.0,
+    2.0
+   ],
+   "ai_img": "零件AI建模图片\\11_Tuenkers EGT Gripper-EGT002\\egt002 sw50x2758.png",
+   "real_img": "零件真实图片_带背景\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x2758.png"
+  },
+  {
+   "model": "egt002 sw50x2788",
+   "group": "11_Tuenkers EGT Gripper-EGT002",
+   "prompt": "EGT型材 EGT002 SW50x2788",
+   "view": "iso(-45,35)",
+   "S": 85.8,
+   "iou": 79.9,
+   "chamfer": 5.43,
+   "iou_strict": 47.7,
+   "pose": [
+    0.0,
+    0.0,
+    2.0
+   ],
+   "ai_img": "零件AI建模图片\\11_Tuenkers EGT Gripper-EGT002\\egt002 sw50x2788.png",
+   "real_img": "零件真实图片_带背景\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x2788.png"
+  },
+  {
+   "model": "egt002 sw50x2818",
+   "group": "11_Tuenkers EGT Gripper-EGT002",
+   "prompt": "EGT型材 EGT002 SW50x2818",
+   "view": "iso(-45,35)",
+   "S": 86.0,
+   "iou": 80.1,
+   "chamfer": 5.3,
+   "iou_strict": 47.8,
+   "pose": [
+    0.0,
+    0.0,
+    2.0
+   ],
+   "ai_img": "零件AI建模图片\\11_Tuenkers EGT Gripper-EGT002\\egt002 sw50x2818.png",
+   "real_img": "零件真实图片_带背景\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x2818.png"
+  },
+  {
+   "model": "egt002 sw50x2848",
+   "group": "11_Tuenkers EGT Gripper-EGT002",
+   "prompt": "EGT型材 EGT002 SW50x2848",
+   "view": "iso(-45,35)",
+   "S": 78.5,
+   "iou": 65.8,
+   "chamfer": 5.8,
+   "iou_strict": 33.3,
+   "pose": [
+    1.5,
+    6.0,
+    6.0
+   ],
+   "ai_img": "零件AI建模图片\\11_Tuenkers EGT Gripper-EGT002\\egt002 sw50x2848.png",
+   "real_img": "零件真实图片_带背景\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x2848.png"
+  },
+  {
+   "model": "egt002 sw50x2878",
+   "group": "11_Tuenkers EGT Gripper-EGT002",
+   "prompt": "EGT型材 EGT002 SW50x2878",
+   "view": "iso4(135,35)",
+   "S": 58.0,
+   "iou": 24.0,
+   "chamfer": 5.24,
+   "iou_strict": 10.1,
+   "pose": [
+    -6.0,
+    6.0,
+    0.0
+   ],
+   "ai_img": "零件AI建模图片\\11_Tuenkers EGT Gripper-EGT002\\egt002 sw50x2878.png",
+   "real_img": "零件真实图片_带背景\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x2878.png"
+  },
+  {
+   "model": "egt002 sw50x2908",
+   "group": "11_Tuenkers EGT Gripper-EGT002",
+   "prompt": "EGT型材 EGT002 SW50x2908",
+   "view": "iso(-45,35)",
+   "S": 85.8,
+   "iou": 79.8,
+   "chamfer": 5.33,
+   "iou_strict": 47.2,
+   "pose": [
+    0.0,
+    2.0,
+    2.0
+   ],
+   "ai_img": "零件AI建模图片\\11_Tuenkers EGT Gripper-EGT002\\egt002 sw50x2908.png",
+   "real_img": "零件真实图片_带背景\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x2908.png"
+  },
+  {
+   "model": "egt002 sw50x2938",
+   "group": "11_Tuenkers EGT Gripper-EGT002",
+   "prompt": "EGT型材 EGT002 SW50x2938",
+   "view": "iso(-45,35)",
+   "S": 86.0,
+   "iou": 80.0,
+   "chamfer": 5.24,
+   "iou_strict": 47.5,
+   "pose": [
+    0.0,
+    0.0,
+    2.0
+   ],
+   "ai_img": "零件AI建模图片\\11_Tuenkers EGT Gripper-EGT002\\egt002 sw50x2938.png",
+   "real_img": "零件真实图片_带背景\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x2938.png"
+  },
+  {
+   "model": "egt002 sw50x2968",
+   "group": "11_Tuenkers EGT Gripper-EGT002",
+   "prompt": "EGT型材 EGT002 SW50x2968",
+   "view": "iso(-45,35)",
+   "S": 85.9,
+   "iou": 79.9,
+   "chamfer": 5.24,
+   "iou_strict": 47.3,
+   "pose": [
+    0.0,
+    2.0,
+    2.0
+   ],
+   "ai_img": "零件AI建模图片\\11_Tuenkers EGT Gripper-EGT002\\egt002 sw50x2968.png",
+   "real_img": "零件真实图片_带背景\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x2968.png"
+  },
+  {
+   "model": "egt002 sw50x2998",
+   "group": "11_Tuenkers EGT Gripper-EGT002",
+   "prompt": "EGT型材 EGT002 SW50x2998",
+   "view": "iso(-45,35)",
+   "S": 85.9,
+   "iou": 79.8,
+   "chamfer": 5.28,
+   "iou_strict": 47.1,
+   "pose": [
+    0.0,
+    2.0,
+    2.0
+   ],
+   "ai_img": "零件AI建模图片\\11_Tuenkers EGT Gripper-EGT002\\egt002 sw50x2998.png",
+   "real_img": "零件真实图片_带背景\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x2998.png"
+  },
+  {
+   "model": "egt002 sw50x3028",
+   "group": "11_Tuenkers EGT Gripper-EGT002",
+   "prompt": "EGT型材 EGT002 SW50x3028",
+   "view": "iso(-45,35)",
+   "S": 85.7,
+   "iou": 79.6,
+   "chamfer": 5.3,
+   "iou_strict": 46.6,
+   "pose": [
+    0.0,
+    2.0,
+    2.0
+   ],
+   "ai_img": "零件AI建模图片\\11_Tuenkers EGT Gripper-EGT002\\egt002 sw50x3028.png",
+   "real_img": "零件真实图片_带背景\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x3028.png"
+  },
+  {
+   "model": "egt002 sw50x3058",
+   "group": "11_Tuenkers EGT Gripper-EGT002",
+   "prompt": "EGT型材 EGT002 SW50x3058",
+   "view": "iso(-45,35)",
+   "S": 85.8,
+   "iou": 79.7,
+   "chamfer": 5.26,
+   "iou_strict": 46.7,
+   "pose": [
+    0.0,
+    2.0,
+    2.0
+   ],
+   "ai_img": "零件AI建模图片\\11_Tuenkers EGT Gripper-EGT002\\egt002 sw50x3058.png",
+   "real_img": "零件真实图片_带背景\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x3058.png"
+  },
+  {
+   "model": "egt002 sw50x3088",
+   "group": "11_Tuenkers EGT Gripper-EGT002",
+   "prompt": "EGT型材 EGT002 SW50x3088",
+   "view": "iso(-45,35)",
+   "S": 85.8,
+   "iou": 79.7,
+   "chamfer": 5.25,
+   "iou_strict": 46.6,
+   "pose": [
+    0.0,
+    2.0,
+    2.0
+   ],
+   "ai_img": "零件AI建模图片\\11_Tuenkers EGT Gripper-EGT002\\egt002 sw50x3088.png",
+   "real_img": "零件真实图片_带背景\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x3088.png"
+  },
+  {
+   "model": "egt002 sw50x3118",
+   "group": "11_Tuenkers EGT Gripper-EGT002",
+   "prompt": "EGT型材 EGT002 SW50x3118",
+   "view": "iso(-45,35)",
+   "S": 85.8,
+   "iou": 79.7,
+   "chamfer": 5.23,
+   "iou_strict": 46.6,
+   "pose": [
+    0.0,
+    2.0,
+    2.0
+   ],
+   "ai_img": "零件AI建模图片\\11_Tuenkers EGT Gripper-EGT002\\egt002 sw50x3118.png",
+   "real_img": "零件真实图片_带背景\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x3118.png"
+  },
+  {
+   "model": "egt002 sw50x3148",
+   "group": "11_Tuenkers EGT Gripper-EGT002",
+   "prompt": "EGT型材 EGT002 SW50x3148",
+   "view": "iso(-45,35)",
+   "S": 46.8,
+   "iou": 8.9,
+   "chamfer": 9.96,
+   "iou_strict": 3.5,
+   "pose": [
+    -13.5,
+    10.0,
+    -4.0
+   ],
+   "ai_img": "零件AI建模图片\\11_Tuenkers EGT Gripper-EGT002\\egt002 sw50x3148.png",
+   "real_img": "零件真实图片_带背景\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x3148.png"
+  },
+  {
+   "model": "egt002 sw50x3178",
+   "group": "11_Tuenkers EGT Gripper-EGT002",
+   "prompt": "EGT型材 EGT002 SW50x3178",
+   "view": "iso(-45,35)",
+   "S": 85.8,
+   "iou": 79.5,
+   "chamfer": 5.2,
+   "iou_strict": 46.1,
+   "pose": [
+    0.0,
+    2.0,
+    2.0
+   ],
+   "ai_img": "零件AI建模图片\\11_Tuenkers EGT Gripper-EGT002\\egt002 sw50x3178.png",
+   "real_img": "零件真实图片_带背景\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x3178.png"
+  },
+  {
+   "model": "egt002 sw50x3208",
+   "group": "11_Tuenkers EGT Gripper-EGT002",
+   "prompt": "EGT型材 EGT002 SW50x3208",
+   "view": "iso(-45,35)",
+   "S": 85.6,
+   "iou": 79.3,
+   "chamfer": 5.28,
+   "iou_strict": 45.6,
+   "pose": [
+    0.0,
+    2.0,
+    2.0
+   ],
+   "ai_img": "零件AI建模图片\\11_Tuenkers EGT Gripper-EGT002\\egt002 sw50x3208.png",
+   "real_img": "零件真实图片_带背景\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x3208.png"
+  },
+  {
+   "model": "egt002 sw50x3238",
+   "group": "11_Tuenkers EGT Gripper-EGT002",
+   "prompt": "EGT型材 EGT002 SW50x3238",
+   "view": "iso(-45,35)",
+   "S": 85.6,
+   "iou": 79.3,
+   "chamfer": 5.24,
+   "iou_strict": 45.6,
+   "pose": [
+    0.0,
+    2.0,
+    2.0
+   ],
+   "ai_img": "零件AI建模图片\\11_Tuenkers EGT Gripper-EGT002\\egt002 sw50x3238.png",
+   "real_img": "零件真实图片_带背景\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x3238.png"
+  },
+  {
+   "model": "egt002 sw50x3268",
+   "group": "11_Tuenkers EGT Gripper-EGT002",
+   "prompt": "EGT型材 EGT002 SW50x3268",
+   "view": "iso(-45,35)",
+   "S": 67.1,
+   "iou": 43.7,
+   "chamfer": 6.16,
+   "iou_strict": 17.6,
+   "pose": [
+    3.0,
+    4.0,
+    2.0
+   ],
+   "ai_img": "零件AI建模图片\\11_Tuenkers EGT Gripper-EGT002\\egt002 sw50x3268.png",
+   "real_img": "零件真实图片_带背景\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x3268.png"
+  },
+  {
+   "model": "egt002 sw50x3298",
+   "group": "11_Tuenkers EGT Gripper-EGT002",
+   "prompt": "EGT型材 EGT002 SW50x3298",
+   "view": "iso(-45,35)",
+   "S": 85.7,
+   "iou": 79.3,
+   "chamfer": 5.19,
+   "iou_strict": 45.5,
+   "pose": [
+    0.0,
+    2.0,
+    2.0
+   ],
+   "ai_img": "零件AI建模图片\\11_Tuenkers EGT Gripper-EGT002\\egt002 sw50x3298.png",
+   "real_img": "零件真实图片_带背景\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x3298.png"
+  },
+  {
+   "model": "egt002 sw50x3328",
+   "group": "11_Tuenkers EGT Gripper-EGT002",
+   "prompt": "EGT型材 EGT002 SW50x3328",
+   "view": "iso(-45,35)",
+   "S": 85.4,
+   "iou": 78.9,
+   "chamfer": 5.26,
+   "iou_strict": 44.7,
+   "pose": [
+    0.0,
+    2.0,
+    2.0
+   ],
+   "ai_img": "零件AI建模图片\\11_Tuenkers EGT Gripper-EGT002\\egt002 sw50x3328.png",
+   "real_img": "零件真实图片_带背景\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x3328.png"
+  },
+  {
+   "model": "egt002 sw50x3358",
+   "group": "11_Tuenkers EGT Gripper-EGT002",
+   "prompt": "EGT型材 EGT002 SW50x3358",
+   "view": "iso(-45,35)",
+   "S": 85.5,
+   "iou": 79.0,
+   "chamfer": 5.23,
+   "iou_strict": 44.9,
+   "pose": [
+    0.0,
+    2.0,
+    2.0
+   ],
+   "ai_img": "零件AI建模图片\\11_Tuenkers EGT Gripper-EGT002\\egt002 sw50x3358.png",
+   "real_img": "零件真实图片_带背景\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x3358.png"
+  },
+  {
+   "model": "egt002 sw50x3388",
+   "group": "11_Tuenkers EGT Gripper-EGT002",
+   "prompt": "EGT型材 EGT002 SW50x3388",
+   "view": "iso(-45,35)",
+   "S": 85.5,
+   "iou": 79.0,
+   "chamfer": 5.25,
+   "iou_strict": 44.9,
+   "pose": [
+    0.0,
+    2.0,
+    2.0
+   ],
+   "ai_img": "零件AI建模图片\\11_Tuenkers EGT Gripper-EGT002\\egt002 sw50x3388.png",
+   "real_img": "零件真实图片_带背景\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x3388.png"
+  },
+  {
+   "model": "egt002 sw50x3418",
+   "group": "11_Tuenkers EGT Gripper-EGT002",
+   "prompt": "EGT型材 EGT002 SW50x3418",
+   "view": "iso(-45,35)",
+   "S": 85.5,
+   "iou": 79.0,
+   "chamfer": 5.2,
+   "iou_strict": 44.7,
+   "pose": [
+    0.0,
+    2.0,
+    4.0
+   ],
+   "ai_img": "零件AI建模图片\\11_Tuenkers EGT Gripper-EGT002\\egt002 sw50x3418.png",
+   "real_img": "零件真实图片_带背景\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x3418.png"
+  },
+  {
+   "model": "egt002 sw50x3448",
+   "group": "11_Tuenkers EGT Gripper-EGT002",
+   "prompt": "EGT型材 EGT002 SW50x3448",
+   "view": "iso(-45,35)",
+   "S": 85.5,
+   "iou": 78.9,
+   "chamfer": 5.19,
+   "iou_strict": 44.5,
+   "pose": [
+    0.0,
+    2.0,
+    2.0
+   ],
+   "ai_img": "零件AI建模图片\\11_Tuenkers EGT Gripper-EGT002\\egt002 sw50x3448.png",
+   "real_img": "零件真实图片_带背景\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x3448.png"
+  },
+  {
+   "model": "egt002 sw50x3478",
+   "group": "11_Tuenkers EGT Gripper-EGT002",
+   "prompt": "EGT型材 EGT002 SW50x3478",
+   "view": "iso(-45,35)",
+   "S": 85.5,
+   "iou": 79.0,
+   "chamfer": 5.17,
+   "iou_strict": 44.6,
+   "pose": [
+    0.0,
+    2.0,
+    2.0
+   ],
+   "ai_img": "零件AI建模图片\\11_Tuenkers EGT Gripper-EGT002\\egt002 sw50x3478.png",
+   "real_img": "零件真实图片_带背景\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x3478.png"
+  },
+  {
+   "model": "egt002 sw50x3508",
+   "group": "11_Tuenkers EGT Gripper-EGT002",
+   "prompt": "EGT型材 EGT002 SW50x3508",
+   "view": "iso(-45,35)",
+   "S": 85.3,
+   "iou": 78.7,
+   "chamfer": 5.21,
+   "iou_strict": 44.0,
+   "pose": [
+    0.0,
+    2.0,
+    2.0
+   ],
+   "ai_img": "零件AI建模图片\\11_Tuenkers EGT Gripper-EGT002\\egt002 sw50x3508.png",
+   "real_img": "零件真实图片_带背景\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x3508.png"
+  },
+  {
+   "model": "egt002 sw50x3538",
+   "group": "11_Tuenkers EGT Gripper-EGT002",
+   "prompt": "EGT型材 EGT002 SW50x3538",
+   "view": "iso(-45,35)",
+   "S": 85.4,
+   "iou": 78.8,
+   "chamfer": 5.18,
+   "iou_strict": 44.1,
+   "pose": [
+    0.0,
+    2.0,
+    2.0
+   ],
+   "ai_img": "零件AI建模图片\\11_Tuenkers EGT Gripper-EGT002\\egt002 sw50x3538.png",
+   "real_img": "零件真实图片_带背景\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x3538.png"
+  },
+  {
+   "model": "egt002 sw50x3568",
+   "group": "11_Tuenkers EGT Gripper-EGT002",
+   "prompt": "EGT型材 EGT002 SW50x3568",
+   "view": "iso(-45,35)",
+   "S": 85.3,
+   "iou": 78.6,
+   "chamfer": 5.21,
+   "iou_strict": 43.8,
+   "pose": [
+    0.0,
+    2.0,
+    2.0
+   ],
+   "ai_img": "零件AI建模图片\\11_Tuenkers EGT Gripper-EGT002\\egt002 sw50x3568.png",
+   "real_img": "零件真实图片_带背景\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x3568.png"
+  },
+  {
+   "model": "egt002 sw50x3598",
+   "group": "11_Tuenkers EGT Gripper-EGT002",
+   "prompt": "EGT型材 EGT002 SW50x3598",
+   "view": "iso(-45,35)",
+   "S": 82.2,
+   "iou": 71.8,
+   "chamfer": 4.82,
+   "iou_strict": 37.6,
+   "pose": [
+    1.5,
+    2.0,
+    0.0
+   ],
+   "ai_img": "零件AI建模图片\\11_Tuenkers EGT Gripper-EGT002\\egt002 sw50x3598.png",
+   "real_img": "零件真实图片_带背景\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x3598.png"
+  },
+  {
+   "model": "egt002 sw50x3628",
+   "group": "11_Tuenkers EGT Gripper-EGT002",
+   "prompt": "EGT型材 EGT002 SW50x3628",
+   "view": "iso(-45,35)",
+   "S": 85.5,
+   "iou": 78.8,
+   "chamfer": 5.11,
+   "iou_strict": 43.9,
+   "pose": [
+    0.0,
+    2.0,
+    2.0
+   ],
+   "ai_img": "零件AI建模图片\\11_Tuenkers EGT Gripper-EGT002\\egt002 sw50x3628.png",
+   "real_img": "零件真实图片_带背景\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x3628.png"
+  },
+  {
+   "model": "egt002 sw50x3658",
+   "group": "11_Tuenkers EGT Gripper-EGT002",
+   "prompt": "EGT型材 EGT002 SW50x3658",
+   "view": "iso(-45,35)",
+   "S": 85.3,
+   "iou": 78.5,
+   "chamfer": 5.21,
+   "iou_strict": 43.4,
+   "pose": [
+    0.0,
+    2.0,
+    2.0
+   ],
+   "ai_img": "零件AI建模图片\\11_Tuenkers EGT Gripper-EGT002\\egt002 sw50x3658.png",
+   "real_img": "零件真实图片_带背景\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x3658.png"
+  },
+  {
+   "model": "egt002 sw50x3688",
+   "group": "11_Tuenkers EGT Gripper-EGT002",
+   "prompt": "EGT型材 EGT002 SW50x3688",
+   "view": "iso(-45,35)",
+   "S": 85.2,
+   "iou": 78.4,
+   "chamfer": 5.21,
+   "iou_strict": 43.2,
+   "pose": [
+    0.0,
+    2.0,
+    4.0
+   ],
+   "ai_img": "零件AI建模图片\\11_Tuenkers EGT Gripper-EGT002\\egt002 sw50x3688.png",
+   "real_img": "零件真实图片_带背景\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x3688.png"
+  },
+  {
+   "model": "egt002 sw50x3718",
+   "group": "11_Tuenkers EGT Gripper-EGT002",
+   "prompt": "EGT型材 EGT002 SW50x3718",
+   "view": "iso(-45,35)",
+   "S": 85.2,
+   "iou": 78.4,
+   "chamfer": 5.22,
+   "iou_strict": 43.1,
+   "pose": [
+    0.0,
+    2.0,
+    4.0
+   ],
+   "ai_img": "零件AI建模图片\\11_Tuenkers EGT Gripper-EGT002\\egt002 sw50x3718.png",
+   "real_img": "零件真实图片_带背景\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x3718.png"
+  },
+  {
+   "model": "egt002 sw50x3748",
+   "group": "11_Tuenkers EGT Gripper-EGT002",
+   "prompt": "EGT型材 EGT002 SW50x3748",
+   "view": "iso(-45,35)",
+   "S": 85.3,
+   "iou": 78.6,
+   "chamfer": 5.18,
+   "iou_strict": 43.3,
+   "pose": [
+    0.0,
+    2.0,
+    2.0
+   ],
+   "ai_img": "零件AI建模图片\\11_Tuenkers EGT Gripper-EGT002\\egt002 sw50x3748.png",
+   "real_img": "零件真实图片_带背景\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x3748.png"
+  },
+  {
+   "model": "egt002 sw50x3778",
+   "group": "11_Tuenkers EGT Gripper-EGT002",
+   "prompt": "EGT型材 EGT002 SW50x3778",
+   "view": "iso(-45,35)",
+   "S": 85.1,
+   "iou": 78.2,
+   "chamfer": 5.26,
+   "iou_strict": 42.8,
+   "pose": [
+    0.0,
+    2.0,
+    4.0
+   ],
+   "ai_img": "零件AI建模图片\\11_Tuenkers EGT Gripper-EGT002\\egt002 sw50x3778.png",
+   "real_img": "零件真实图片_带背景\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x3778.png"
+  },
+  {
+   "model": "egt002 sw50x3808",
+   "group": "11_Tuenkers EGT Gripper-EGT002",
+   "prompt": "EGT型材 EGT002 SW50x3808",
+   "view": "iso(-45,35)",
+   "S": 85.3,
+   "iou": 78.5,
+   "chamfer": 5.18,
+   "iou_strict": 43.1,
+   "pose": [
+    0.0,
+    2.0,
+    2.0
+   ],
+   "ai_img": "零件AI建模图片\\11_Tuenkers EGT Gripper-EGT002\\egt002 sw50x3808.png",
+   "real_img": "零件真实图片_带背景\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x3808.png"
+  },
+  {
+   "model": "egt002 sw50x3838",
+   "group": "11_Tuenkers EGT Gripper-EGT002",
+   "prompt": "EGT型材 EGT002 SW50x3838",
+   "view": "iso4(135,35)",
+   "S": 84.8,
+   "iou": 77.8,
+   "chamfer": 5.38,
+   "iou_strict": 41.9,
+   "pose": [
+    0.0,
+    0.0,
+    2.0
+   ],
+   "ai_img": "零件AI建模图片\\11_Tuenkers EGT Gripper-EGT002\\egt002 sw50x3838.png",
+   "real_img": "零件真实图片_带背景\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x3838.png"
+  },
+  {
+   "model": "egt002 sw50x3868",
+   "group": "11_Tuenkers EGT Gripper-EGT002",
+   "prompt": "EGT型材 EGT002 SW50x3868",
+   "view": "iso4(135,35)",
+   "S": 84.8,
+   "iou": 77.8,
+   "chamfer": 5.3,
+   "iou_strict": 41.7,
+   "pose": [
+    0.0,
+    2.0,
+    4.0
+   ],
+   "ai_img": "零件AI建模图片\\11_Tuenkers EGT Gripper-EGT002\\egt002 sw50x3868.png",
+   "real_img": "零件真实图片_带背景\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x3868.png"
+  },
+  {
+   "model": "egt002 sw50x3898",
+   "group": "11_Tuenkers EGT Gripper-EGT002",
+   "prompt": "EGT型材 EGT002 SW50x3898",
+   "view": "iso(-45,35)",
+   "S": 85.2,
+   "iou": 78.4,
+   "chamfer": 5.17,
+   "iou_strict": 42.9,
+   "pose": [
+    0.0,
+    2.0,
+    4.0
+   ],
+   "ai_img": "零件AI建模图片\\11_Tuenkers EGT Gripper-EGT002\\egt002 sw50x3898.png",
+   "real_img": "零件真实图片_带背景\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x3898.png"
+  },
+  {
+   "model": "egt002 sw50x3928",
+   "group": "11_Tuenkers EGT Gripper-EGT002",
+   "prompt": "EGT型材 EGT002 SW50x3928",
+   "view": "iso4(135,35)",
+   "S": 85.0,
+   "iou": 78.1,
+   "chamfer": 5.25,
+   "iou_strict": 42.3,
+   "pose": [
+    0.0,
+    2.0,
+    2.0
+   ],
+   "ai_img": "零件AI建模图片\\11_Tuenkers EGT Gripper-EGT002\\egt002 sw50x3928.png",
+   "real_img": "零件真实图片_带背景\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x3928.png"
+  },
+  {
+   "model": "egt002 sw50x3958",
+   "group": "11_Tuenkers EGT Gripper-EGT002",
+   "prompt": "EGT型材 EGT002 SW50x3958",
+   "view": "iso(-45,35)",
+   "S": 85.0,
+   "iou": 78.0,
+   "chamfer": 5.23,
+   "iou_strict": 42.1,
+   "pose": [
+    0.0,
+    2.0,
+    2.0
+   ],
+   "ai_img": "零件AI建模图片\\11_Tuenkers EGT Gripper-EGT002\\egt002 sw50x3958.png",
+   "real_img": "零件真实图片_带背景\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x3958.png"
+  },
+  {
+   "model": "egt002 sw50x3988",
+   "group": "11_Tuenkers EGT Gripper-EGT002",
+   "prompt": "EGT型材 EGT002 SW50x3988",
+   "view": "iso(-45,35)",
+   "S": 85.0,
+   "iou": 78.0,
+   "chamfer": 5.23,
+   "iou_strict": 41.9,
+   "pose": [
+    0.0,
+    2.0,
+    2.0
+   ],
+   "ai_img": "零件AI建模图片\\11_Tuenkers EGT Gripper-EGT002\\egt002 sw50x3988.png",
+   "real_img": "零件真实图片_带背景\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x3988.png"
+  },
+  {
+   "model": "egt002 sw50x4018",
+   "group": "11_Tuenkers EGT Gripper-EGT002",
+   "prompt": "EGT型材 EGT002 SW50x4018",
+   "view": "iso(-45,35)",
+   "S": 85.0,
+   "iou": 78.0,
+   "chamfer": 5.19,
+   "iou_strict": 42.0,
+   "pose": [
+    0.0,
+    2.0,
+    0.0
+   ],
+   "ai_img": "零件AI建模图片\\11_Tuenkers EGT Gripper-EGT002\\egt002 sw50x4018.png",
+   "real_img": "零件真实图片_带背景\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x4018.png"
+  },
+  {
+   "model": "egt002 sw50x4048",
+   "group": "11_Tuenkers EGT Gripper-EGT002",
+   "prompt": "EGT型材 EGT002 SW50x4048",
+   "view": "iso(-45,35)",
+   "S": 85.0,
+   "iou": 77.9,
+   "chamfer": 5.12,
+   "iou_strict": 41.7,
+   "pose": [
+    0.0,
+    2.0,
+    2.0
+   ],
+   "ai_img": "零件AI建模图片\\11_Tuenkers EGT Gripper-EGT002\\egt002 sw50x4048.png",
+   "real_img": "零件真实图片_带背景\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x4048.png"
+  },
+  {
+   "model": "egt002 sw50x4078",
+   "group": "11_Tuenkers EGT Gripper-EGT002",
+   "prompt": "EGT型材 EGT002 SW50x4078",
+   "view": "iso(-45,35)",
+   "S": 85.0,
+   "iou": 77.9,
+   "chamfer": 5.1,
+   "iou_strict": 41.5,
+   "pose": [
+    0.0,
+    2.0,
+    2.0
+   ],
+   "ai_img": "零件AI建模图片\\11_Tuenkers EGT Gripper-EGT002\\egt002 sw50x4078.png",
+   "real_img": "零件真实图片_带背景\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x4078.png"
+  },
+  {
+   "model": "egt006 d30x073",
+   "group": "12_Tuenkers EGT Gripper-EGT006",
+   "S": 0.0,
+   "err": "照片对不可用（两帧背景整体变化）"
+  },
+  {
+   "model": "egt006 d30x088",
+   "group": "12_Tuenkers EGT Gripper-EGT006",
+   "S": 0.0,
+   "err": "照片对不可用（两帧背景整体变化）"
+  },
+  {
+   "model": "egt006 d30x103",
+   "group": "12_Tuenkers EGT Gripper-EGT006",
+   "S": 0.0,
+   "err": "照片对不可用（两帧背景整体变化）"
+  },
+  {
+   "model": "egt006 d30x118",
+   "group": "12_Tuenkers EGT Gripper-EGT006",
+   "prompt": "EGT型材 EGT006 D30x118",
+   "view": "top(-90,89)",
+   "S": 77.9,
+   "iou": 75.2,
+   "chamfer": 12.68,
+   "iou_strict": 55.3,
+   "pose": [
+    -22.5,
+    28.0,
+    -4.0
+   ],
+   "ai_img": "零件AI建模图片\\12_Tuenkers EGT Gripper-EGT006\\egt006 d30x118.png",
+   "real_img": "零件真实图片_带背景\\12_Tuenkers EGT Gripper-EGT006\\EGT006 D30x118.png"
+  },
+  {
+   "model": "egt006 d30x133",
+   "group": "12_Tuenkers EGT Gripper-EGT006",
+   "prompt": "EGT型材 EGT006 D30x133",
+   "view": "top(-90,89)",
+   "S": 76.0,
+   "iou": 69.1,
+   "chamfer": 11.1,
+   "iou_strict": 47.5,
+   "pose": [
+    -21.0,
+    10.0,
+    0.0
+   ],
+   "ai_img": "零件AI建模图片\\12_Tuenkers EGT Gripper-EGT006\\egt006 d30x133.png",
+   "real_img": "零件真实图片_带背景\\12_Tuenkers EGT Gripper-EGT006\\EGT006 D30x133.png"
+  },
+  {
+   "model": "egt006 d30x148",
+   "group": "12_Tuenkers EGT Gripper-EGT006",
+   "prompt": "EGT型材 EGT006 D30x148",
+   "view": "iso4(135,35)",
+   "S": 67.6,
+   "iou": 68.0,
+   "chamfer": 21.39,
+   "iou_strict": 47.6,
+   "pose": [
+    7.5,
+    46.0,
+    16.0
+   ],
+   "ai_img": "零件AI建模图片\\12_Tuenkers EGT Gripper-EGT006\\egt006 d30x148.png",
+   "real_img": "零件真实图片_带背景\\12_Tuenkers EGT Gripper-EGT006\\EGT006 D30x148.png"
+  },
+  {
+   "model": "egt006 d30x163",
+   "group": "12_Tuenkers EGT Gripper-EGT006",
+   "prompt": "EGT型材 EGT006 D30x163",
+   "view": "top(-90,89)",
+   "S": 71.3,
+   "iou": 66.6,
+   "chamfer": 15.6,
+   "iou_strict": 44.2,
+   "pose": [
+    -22.5,
+    26.0,
+    8.0
+   ],
+   "ai_img": "零件AI建模图片\\12_Tuenkers EGT Gripper-EGT006\\egt006 d30x163.png",
+   "real_img": "零件真实图片_带背景\\12_Tuenkers EGT Gripper-EGT006\\EGT006 D30x163.png"
+  },
+  {
+   "model": "egt006 d30x178",
+   "group": "12_Tuenkers EGT Gripper-EGT006",
+   "prompt": "EGT型材 EGT006 D30x178",
+   "view": "iso4(135,35)",
+   "S": 66.7,
+   "iou": 61.7,
+   "chamfer": 18.39,
+   "iou_strict": 40.2,
+   "pose": [
+    10.5,
+    40.0,
+    10.0
+   ],
+   "ai_img": "零件AI建模图片\\12_Tuenkers EGT Gripper-EGT006\\egt006 d30x178.png",
+   "real_img": "零件真实图片_带背景\\12_Tuenkers EGT Gripper-EGT006\\EGT006 D30x178.png"
+  },
+  {
+   "model": "egt006 d30x193",
+   "group": "12_Tuenkers EGT Gripper-EGT006",
+   "prompt": "EGT型材 EGT006 D30x193",
+   "view": "iso(-45,35)",
+   "S": 64.4,
+   "iou": 57.4,
+   "chamfer": 18.63,
+   "iou_strict": 36.2,
+   "pose": [
+    10.5,
+    46.0,
+    12.0
+   ],
+   "ai_img": "零件AI建模图片\\12_Tuenkers EGT Gripper-EGT006\\egt006 d30x193.png",
+   "real_img": "零件真实图片_带背景\\12_Tuenkers EGT Gripper-EGT006\\EGT006 D30x193.png"
+  },
+  {
+   "model": "egt006 d30x208",
+   "group": "12_Tuenkers EGT Gripper-EGT006",
+   "prompt": "EGT型材 EGT006 D30x208",
+   "view": "iso4(135,35)",
+   "S": 58.8,
+   "iou": 46.3,
+   "chamfer": 18.66,
+   "iou_strict": 27.4,
+   "pose": [
+    13.5,
+    72.0,
+    4.0
+   ],
+   "ai_img": "零件AI建模图片\\12_Tuenkers EGT Gripper-EGT006\\egt006 d30x208.png",
+   "real_img": "零件真实图片_带背景\\12_Tuenkers EGT Gripper-EGT006\\EGT006 D30x208.png"
+  },
+  {
+   "model": "egt006 d30x223",
+   "group": "12_Tuenkers EGT Gripper-EGT006",
+   "prompt": "EGT型材 EGT006 D30x223",
+   "view": "iso(-45,35)",
+   "S": 61.9,
+   "iou": 50.8,
+   "chamfer": 17.68,
+   "iou_strict": 30.3,
+   "pose": [
+    12.0,
+    44.0,
+    12.0
+   ],
+   "ai_img": "零件AI建模图片\\12_Tuenkers EGT Gripper-EGT006\\egt006 d30x223.png",
+   "real_img": "零件真实图片_带背景\\12_Tuenkers EGT Gripper-EGT006\\EGT006 D30x223.png"
+  },
+  {
+   "model": "egt006 d30x238",
+   "group": "12_Tuenkers EGT Gripper-EGT006",
+   "prompt": "EGT型材 EGT006 D30x238",
+   "view": "iso(-45,35)",
+   "S": 61.1,
+   "iou": 48.6,
+   "chamfer": 17.18,
+   "iou_strict": 28.4,
+   "pose": [
+    12.0,
+    40.0,
+    12.0
+   ],
+   "ai_img": "零件AI建模图片\\12_Tuenkers EGT Gripper-EGT006\\egt006 d30x238.png",
+   "real_img": "零件真实图片_带背景\\12_Tuenkers EGT Gripper-EGT006\\EGT006 D30x238.png"
+  },
+  {
+   "model": "egt006 d30x253",
+   "group": "12_Tuenkers EGT Gripper-EGT006",
+   "prompt": "EGT型材 EGT006 D30x253",
+   "view": "iso(-45,35)",
+   "S": 59.0,
+   "iou": 44.1,
+   "chamfer": 17.05,
+   "iou_strict": 24.7,
+   "pose": [
+    13.5,
+    42.0,
+    10.0
+   ],
+   "ai_img": "零件AI建模图片\\12_Tuenkers EGT Gripper-EGT006\\egt006 d30x253.png",
+   "real_img": "零件真实图片_带背景\\12_Tuenkers EGT Gripper-EGT006\\EGT006 D30x253.png"
+  },
+  {
+   "model": "egt006 d30x268",
+   "group": "12_Tuenkers EGT Gripper-EGT006",
+   "prompt": "EGT型材 EGT006 D30x268",
+   "view": "iso4(135,35)",
+   "S": 58.0,
+   "iou": 40.9,
+   "chamfer": 16.27,
+   "iou_strict": 22.3,
+   "pose": [
+    13.5,
+    38.0,
+    10.0
+   ],
+   "ai_img": "零件AI建模图片\\12_Tuenkers EGT Gripper-EGT006\\egt006 d30x268.png",
+   "real_img": "零件真实图片_带背景\\12_Tuenkers EGT Gripper-EGT006\\EGT006 D30x268.png"
+  },
+  {
+   "model": "egt006 d30x283",
+   "group": "12_Tuenkers EGT Gripper-EGT006",
+   "prompt": "EGT型材 EGT006 D30x283",
+   "view": "iso(-45,35)",
+   "S": 57.0,
+   "iou": 38.0,
+   "chamfer": 15.68,
+   "iou_strict": 20.2,
+   "pose": [
+    13.5,
+    40.0,
+    6.0
+   ],
+   "ai_img": "零件AI建模图片\\12_Tuenkers EGT Gripper-EGT006\\egt006 d30x283.png",
+   "real_img": "零件真实图片_带背景\\12_Tuenkers EGT Gripper-EGT006\\EGT006 D30x283.png"
+  },
+  {
+   "model": "egt006 d30x298",
+   "group": "12_Tuenkers EGT Gripper-EGT006",
+   "prompt": "EGT型材 EGT006 D30x298",
+   "view": "iso(-45,35)",
+   "S": 54.9,
+   "iou": 33.3,
+   "chamfer": 15.38,
+   "iou_strict": 17.2,
+   "pose": [
+    15.0,
+    38.0,
+    6.0
+   ],
+   "ai_img": "零件AI建模图片\\12_Tuenkers EGT Gripper-EGT006\\egt006 d30x298.png",
+   "real_img": "零件真实图片_带背景\\12_Tuenkers EGT Gripper-EGT006\\EGT006 D30x298.png"
+  },
+  {
+   "model": "egt006 d30x313",
+   "group": "12_Tuenkers EGT Gripper-EGT006",
+   "prompt": "EGT型材 EGT006 D30x313",
+   "view": "iso(-45,35)",
+   "S": 54.0,
+   "iou": 31.4,
+   "chamfer": 15.21,
+   "iou_strict": 15.8,
+   "pose": [
+    15.0,
+    38.0,
+    4.0
+   ],
+   "ai_img": "零件AI建模图片\\12_Tuenkers EGT Gripper-EGT006\\egt006 d30x313.png",
+   "real_img": "零件真实图片_带背景\\12_Tuenkers EGT Gripper-EGT006\\EGT006 D30x313.png"
+  },
+  {
+   "model": "egt006 d30x328",
+   "group": "12_Tuenkers EGT Gripper-EGT006",
+   "prompt": "EGT型材 EGT006 D30x328",
+   "view": "iso(-45,35)",
+   "S": 52.7,
+   "iou": 28.9,
+   "chamfer": 15.35,
+   "iou_strict": 14.2,
+   "pose": [
+    15.0,
+    36.0,
+    4.0
+   ],
+   "ai_img": "零件AI建模图片\\12_Tuenkers EGT Gripper-EGT006\\egt006 d30x328.png",
+   "real_img": "零件真实图片_带背景\\12_Tuenkers EGT Gripper-EGT006\\EGT006 D30x328.png"
+  },
+  {
+   "model": "egt006 d30x343",
+   "group": "12_Tuenkers EGT Gripper-EGT006",
+   "prompt": "EGT型材 EGT006 D30x343",
+   "view": "iso(-45,35)",
+   "S": 53.2,
+   "iou": 29.5,
+   "chamfer": 15.02,
+   "iou_strict": 14.6,
+   "pose": [
+    13.5,
+    38.0,
+    4.0
+   ],
+   "ai_img": "零件AI建模图片\\12_Tuenkers EGT Gripper-EGT006\\egt006 d30x343.png",
+   "real_img": "零件真实图片_带背景\\12_Tuenkers EGT Gripper-EGT006\\EGT006 D30x343.png"
+  },
+  {
+   "model": "egt006 d30x358",
+   "group": "12_Tuenkers EGT Gripper-EGT006",
+   "prompt": "EGT型材 EGT006 D30x358",
+   "view": "iso4(135,35)",
+   "S": 52.9,
+   "iou": 28.5,
+   "chamfer": 14.86,
+   "iou_strict": 13.8,
+   "pose": [
+    13.5,
+    36.0,
+    2.0
+   ],
+   "ai_img": "零件AI建模图片\\12_Tuenkers EGT Gripper-EGT006\\egt006 d30x358.png",
+   "real_img": "零件真实图片_带背景\\12_Tuenkers EGT Gripper-EGT006\\EGT006 D30x358.png"
+  },
+  {
+   "model": "egt006 d30x373",
+   "group": "12_Tuenkers EGT Gripper-EGT006",
+   "prompt": "EGT型材 EGT006 D30x373",
+   "view": "iso4(135,35)",
+   "S": 51.8,
+   "iou": 25.8,
+   "chamfer": 14.5,
+   "iou_strict": 12.4,
+   "pose": [
+    15.0,
+    34.0,
+    0.0
+   ],
+   "ai_img": "零件AI建模图片\\12_Tuenkers EGT Gripper-EGT006\\egt006 d30x373.png",
+   "real_img": "零件真实图片_带背景\\12_Tuenkers EGT Gripper-EGT006\\EGT006 D30x373.png"
+  },
+  {
+   "model": "egt006 d30x1000",
+   "group": "12_Tuenkers EGT Gripper-EGT006",
+   "prompt": "EGT型材 EGT006 D30x1000",
+   "view": "iso(-45,35)",
+   "S": 86.6,
+   "iou": 82.9,
+   "chamfer": 6.3,
+   "iou_strict": 57.3,
+   "pose": [
+    0.0,
+    6.0,
+    2.0
+   ],
+   "ai_img": "零件AI建模图片\\12_Tuenkers EGT Gripper-EGT006\\egt006 d30x1000.png",
+   "real_img": "零件真实图片_带背景\\12_Tuenkers EGT Gripper-EGT006\\EGT006 D30x1000.png"
+  },
+  {
+   "model": "egt023",
+   "group": "13_Tuenkers EGT Gripper-EGT Connector",
+   "prompt": "EGT连接件 EGT023.stp",
+   "view": "iso(-45,35)",
+   "S": 67.2,
+   "iou": 73.1,
+   "chamfer": 25.18,
+   "iou_strict": 55.6,
+   "pose": [
+    36.0,
+    -34.0,
+    58.0
+   ],
+   "ai_img": "零件AI建模图片\\13_Tuenkers EGT Gripper-EGT Connector\\egt023.png",
+   "real_img": "零件真实图片_带背景\\13_Tuenkers EGT Gripper-EGT Connector\\EGT023.png"
+  },
+  {
+   "model": "egt217",
+   "group": "13_Tuenkers EGT Gripper-EGT Connector",
+   "S": 0.0,
+   "err": "照片对不可用（两帧背景整体变化）"
+  },
+  {
+   "model": "egt218",
+   "group": "13_Tuenkers EGT Gripper-EGT Connector",
+   "S": 0.0,
+   "err": "照片对不可用（两帧背景整体变化）"
+  },
+  {
+   "model": "egt230",
+   "group": "13_Tuenkers EGT Gripper-EGT Connector",
+   "prompt": "EGT连接件 EGT230.stp",
+   "view": "iso4(135,35)",
+   "S": 79.9,
+   "iou": 84.4,
+   "chamfer": 16.04,
+   "iou_strict": 67.2,
+   "pose": [
+    3.0,
+    28.0,
+    -8.0
+   ],
+   "ai_img": "零件AI建模图片\\13_Tuenkers EGT Gripper-EGT Connector\\egt230.png",
+   "real_img": "零件真实图片_带背景\\13_Tuenkers EGT Gripper-EGT Connector\\EGT230.png"
+  },
+  {
+   "model": "egt231",
+   "group": "13_Tuenkers EGT Gripper-EGT Connector",
+   "S": 0.0,
+   "err": "照片对不可用（两帧背景整体变化）"
+  },
+  {
+   "model": "egt232",
+   "group": "13_Tuenkers EGT Gripper-EGT Connector",
+   "prompt": "EGT连接件 EGT232.stp",
+   "view": "iso4(135,35)",
+   "S": 82.1,
+   "iou": 86.2,
+   "chamfer": 14.36,
+   "iou_strict": 72.1,
+   "pose": [
+    -1.5,
+    38.0,
+    -16.0
+   ],
+   "ai_img": "零件AI建模图片\\13_Tuenkers EGT Gripper-EGT Connector\\egt232.png",
+   "real_img": "零件真实图片_带背景\\13_Tuenkers EGT Gripper-EGT Connector\\EGT232.png"
+  },
+  {
+   "model": "egt235",
+   "group": "13_Tuenkers EGT Gripper-EGT Connector",
+   "prompt": "EGT连接件 EGT235.stp",
+   "view": "iso4(135,35)",
+   "S": 82.1,
+   "iou": 87.0,
+   "chamfer": 14.78,
+   "iou_strict": 72.9,
+   "pose": [
+    -4.5,
+    34.0,
+    -6.0
+   ],
+   "ai_img": "零件AI建模图片\\13_Tuenkers EGT Gripper-EGT Connector\\egt235.png",
+   "real_img": "零件真实图片_带背景\\13_Tuenkers EGT Gripper-EGT Connector\\EGT235.png"
+  },
+  {
+   "model": "egt287-1",
+   "group": "13_Tuenkers EGT Gripper-EGT Connector",
+   "S": 0.0,
+   "err": "照片对不可用（两帧背景整体变化）"
+  },
+  {
+   "model": "egt287-2",
+   "group": "13_Tuenkers EGT Gripper-EGT Connector",
+   "S": 0.0,
+   "err": "照片对不可用（两帧背景整体变化）"
+  },
+  {
+   "model": "kms-m15-g14-h04",
+   "group": "分气块",
+   "S": 0.0,
+   "err": "照片对不可用（两帧背景整体变化）"
+  },
+  {
+   "model": "kms-m15-g14-h06",
+   "group": "分气块",
+   "S": 0.0,
+   "err": "照片对不可用（两帧背景整体变化）"
+  },
+  {
+   "model": "kms-m15-g14-h08",
+   "group": "分气块",
+   "S": 0.0,
+   "err": "照片对不可用（两帧背景整体变化）"
+  },
+  {
+   "model": "kms-m15-g14-h10",
+   "group": "分气块",
+   "prompt": "分气块 KMS-M15-G14-H10",
+   "view": "iso(-45,35)",
+   "S": 72.7,
+   "iou": 76.2,
+   "chamfer": 20.03,
+   "iou_strict": 58.7,
+   "pose": [
+    -13.5,
+    12.0,
+    6.0
+   ],
+   "ai_img": "零件AI建模图片\\分气块\\kms-m15-g14-h10.png",
+   "real_img": "零件真实图片_带背景\\分气块\\KMS-M15-G14-H10.png"
+  },
+  {
+   "model": "kms-m15-g14-h12",
+   "group": "分气块",
+   "prompt": "分气块 KMS-M15-G14-H12",
+   "view": "iso(-45,35)",
+   "S": 73.4,
+   "iou": 73.4,
+   "chamfer": 17.39,
+   "iou_strict": 55.5,
+   "pose": [
+    -12.0,
+    14.0,
+    8.0
+   ],
+   "ai_img": "零件AI建模图片\\分气块\\kms-m15-g14-h12.png",
+   "real_img": "零件真实图片_带背景\\分气块\\KMS-M15-G14-H12.png"
+  },
+  {
+   "model": "kms-m01-d159-a20",
+   "group": "定位销",
+   "S": 0.0,
+   "err": "照片对不可用（两帧背景整体变化）"
+  },
+  {
+   "model": "kms-m01-p077-a20",
+   "group": "定位销",
+   "S": 0.0,
+   "err": "照片对不可用（两帧背景整体变化）"
+  },
+  {
+   "model": "kms-m01-p079-a20",
+   "group": "定位销",
+   "S": 0.0,
+   "err": "照片对不可用（两帧背景整体变化）"
+  },
+  {
+   "model": "kms-m01-p079-a30",
+   "group": "定位销",
+   "S": 0.0,
+   "err": "照片对不可用（两帧背景整体变化）"
+  },
+  {
+   "model": "kms-m01-p097-a15",
+   "group": "定位销",
+   "S": 0.0,
+   "err": "照片对不可用（两帧背景整体变化）"
+  },
+  {
+   "model": "kms-m01-p097-a20",
+   "group": "定位销",
+   "S": 0.0,
+   "err": "照片对不可用（两帧背景整体变化）"
+  },
+  {
+   "model": "kms-m01-p097-a30",
+   "group": "定位销",
+   "S": 0.0,
+   "err": "照片对不可用（两帧背景整体变化）"
+  },
+  {
+   "model": "kms-m01-p099-a15",
+   "group": "定位销",
+   "S": 0.0,
+   "err": "照片对不可用（两帧背景整体变化）"
+  },
+  {
+   "model": "kms-m01-p099-a20",
+   "group": "定位销",
+   "S": 0.0,
+   "err": "照片对不可用（两帧背景整体变化）"
+  },
+  {
+   "model": "kms-m01-p099-a30",
+   "group": "定位销",
+   "S": 0.0,
+   "err": "照片对不可用（两帧背景整体变化）"
+  },
+  {
+   "model": "kms-m01-p117-a15",
+   "group": "定位销",
+   "S": 0.0,
+   "err": "照片对不可用（两帧背景整体变化）"
+  },
+  {
+   "model": "kms-m01-p117-a20",
+   "group": "定位销",
+   "S": 0.0,
+   "err": "照片对不可用（两帧背景整体变化）"
+  },
+  {
+   "model": "kms-m01-p117-a30",
+   "group": "定位销",
+   "S": 0.0,
+   "err": "照片对不可用（两帧背景整体变化）"
+  },
+  {
+   "model": "kms-m01-p119-a20",
+   "group": "定位销",
+   "S": 0.0,
+   "err": "照片对不可用（两帧背景整体变化）"
+  },
+  {
+   "model": "kms-m01-p119-a30",
+   "group": "定位销",
+   "S": 0.0,
+   "err": "照片对不可用（两帧背景整体变化）"
+  },
+  {
+   "model": "kms-m01-p157-a20",
+   "group": "定位销",
+   "S": 0.0,
+   "err": "照片对不可用（两帧背景整体变化）"
+  },
+  {
+   "model": "kms-m01-p157-a30",
+   "group": "定位销",
+   "S": 0.0,
+   "err": "照片对不可用（两帧背景整体变化）"
+  },
+  {
+   "model": "kms-m01-p159-a15",
+   "group": "定位销",
+   "S": 0.0,
+   "err": "照片对不可用（两帧背景整体变化）"
+  },
+  {
+   "model": "kms-m01-p159-a20",
+   "group": "定位销",
+   "S": 0.0,
+   "err": "照片对不可用（两帧背景整体变化）"
+  },
+  {
+   "model": "kms-m01-p159-a30",
+   "group": "定位销",
+   "S": 0.0,
+   "err": "照片对不可用（两帧背景整体变化）"
+  },
+  {
+   "model": "kms-m01-p189-a30",
+   "group": "定位销",
+   "S": 0.0,
+   "err": "照片对不可用（两帧背景整体变化）"
+  },
+  {
+   "model": "kms-m01-p299-a20",
+   "group": "定位销",
+   "S": 0.0,
+   "err": "照片对不可用（两帧背景整体变化）"
+  },
+  {
+   "model": "kms-m05-010-100-d",
+   "group": "支座",
+   "prompt": "支座 KMS-M05-010-100-D",
+   "view": "iso4(135,35)",
+   "S": 86.5,
+   "iou": 89.6,
+   "chamfer": 10.86,
+   "iou_strict": 79.2,
+   "pose": [
+    55.5,
+    56.0,
+    26.0
+   ],
+   "ai_img": "零件AI建模图片\\支座\\kms-m05-010-100-d.png",
+   "real_img": "零件真实图片_带背景\\支座\\KMS-M05-010-100-D.png"
+  },
+  {
+   "model": "kms-m05-010-150-d",
+   "group": "支座",
+   "prompt": "支座 KMS-M05-010-150-D",
+   "view": "iso4(135,35)",
+   "S": 94.7,
+   "iou": 95.0,
+   "chamfer": 3.57,
+   "iou_strict": 88.0,
+   "pose": [
+    36.0,
+    74.0,
+    10.0
+   ],
+   "ai_img": "零件AI建模图片\\支座\\kms-m05-010-150-d.png",
+   "real_img": "零件真实图片_带背景\\支座\\KMS-M05-010-150-D.png"
+  },
+  {
+   "model": "kms-m05-010-200-d",
+   "group": "支座",
+   "prompt": "支座 KMS-M05-010-200-D",
+   "view": "iso4(135,35)",
+   "S": 94.7,
+   "iou": 96.0,
+   "chamfer": 4.33,
+   "iou_strict": 90.0,
+   "pose": [
+    21.0,
+    76.0,
+    -4.0
+   ],
+   "ai_img": "零件AI建模图片\\支座\\kms-m05-010-200-d.png",
+   "real_img": "零件真实图片_带背景\\支座\\KMS-M05-010-200-D.png"
+  },
+  {
+   "model": "kms-m05-010-250-d",
+   "group": "支座",
+   "prompt": "支座 KMS-M05-010-250-D",
+   "view": "iso4(135,35)",
+   "S": 95.0,
+   "iou": 98.2,
+   "chamfer": 5.39,
+   "iou_strict": 94.0,
+   "pose": [
+    18.0,
+    58.0,
+    -4.0
+   ],
+   "ai_img": "零件AI建模图片\\支座\\kms-m05-010-250-d.png",
+   "real_img": "零件真实图片_带背景\\支座\\KMS-M05-010-250-D.png"
+  },
+  {
+   "model": "kms-m05-010-300-d",
+   "group": "支座",
+   "prompt": "支座 KMS-M05-010-300-D",
+   "view": "iso4(135,35)",
+   "S": 95.1,
+   "iou": 98.1,
+   "chamfer": 5.06,
+   "iou_strict": 93.7,
+   "pose": [
+    15.0,
+    52.0,
+    -4.0
+   ],
+   "ai_img": "零件AI建模图片\\支座\\kms-m05-010-300-d.png",
+   "real_img": "零件真实图片_带背景\\支座\\KMS-M05-010-300-D.png"
+  },
+  {
+   "model": "kms-m05-010-350-d",
+   "group": "支座",
+   "prompt": "支座 KMS-M05-010-350-D",
+   "view": "iso4(135,35)",
+   "S": 95.2,
+   "iou": 97.8,
+   "chamfer": 4.78,
+   "iou_strict": 92.8,
+   "pose": [
+    12.0,
+    46.0,
+    -4.0
+   ],
+   "ai_img": "零件AI建模图片\\支座\\kms-m05-010-350-d.png",
+   "real_img": "零件真实图片_带背景\\支座\\KMS-M05-010-350-D.png"
+  },
+  {
+   "model": "kms-m05-010-400-d",
+   "group": "支座",
+   "prompt": "支座 KMS-M05-010-400-D",
+   "view": "iso4(135,35)",
+   "S": 96.1,
+   "iou": 98.2,
+   "chamfer": 3.89,
+   "iou_strict": 93.4,
+   "pose": [
+    10.5,
+    46.0,
+    -4.0
+   ],
+   "ai_img": "零件AI建模图片\\支座\\kms-m05-010-400-d.png",
+   "real_img": "零件真实图片_带背景\\支座\\KMS-M05-010-400-D.png"
+  },
+  {
+   "model": "lz01001001_h100",
+   "group": "支座(铝)",
+   "S": 0.0,
+   "err": "照片对不可用（两帧背景整体变化）"
+  },
+  {
+   "model": "lz01001002_h200",
+   "group": "支座(铝)",
+   "prompt": "支座(铝) LZ01001002_H200",
+   "view": "top(-90,89)",
+   "S": 70.6,
+   "iou": 75.6,
+   "chamfer": 22.47,
+   "iou_strict": 54.3,
+   "pose": [
+    -45.0,
+    46.0,
+    14.0
+   ],
+   "ai_img": "零件AI建模图片\\支座(铝)\\lz01001002_h200.png",
+   "real_img": "零件真实图片_带背景\\支座(铝)\\LZ01001002_H200.png"
+  },
+  {
+   "model": "lz01001003_h300",
+   "group": "支座(铝)",
+   "prompt": "支座(铝) LZ01001003_H300",
+   "view": "top(-90,89)",
+   "S": 75.3,
+   "iou": 78.1,
+   "chamfer": 17.96,
+   "iou_strict": 56.7,
+   "pose": [
+    -40.5,
+    32.0,
+    6.0
+   ],
+   "ai_img": "零件AI建模图片\\支座(铝)\\lz01001003_h300.png",
+   "real_img": "零件真实图片_带背景\\支座(铝)\\LZ01001003_H300.png"
+  },
+  {
+   "model": "lz01001004_h400",
+   "group": "支座(铝)",
+   "prompt": "支座(铝) LZ01001004_H400",
+   "view": "iso(-45,35)",
+   "S": 66.6,
+   "iou": 64.5,
+   "chamfer": 20.44,
+   "iou_strict": 43.8,
+   "pose": [
+    13.5,
+    36.0,
+    24.0
+   ],
+   "ai_img": "零件AI建模图片\\支座(铝)\\lz01001004_h400.png",
+   "real_img": "零件真实图片_带背景\\支座(铝)\\LZ01001004_H400.png"
+  },
+  {
+   "model": "lz01001005_h500",
+   "group": "支座(铝)",
+   "S": 0.0,
+   "err": "照片对不可用（两帧背景整体变化）"
+  },
+  {
+   "model": "kms-m14-010",
+   "group": "标牌",
+   "S": 0.0,
+   "err": "照片对不可用（两帧背景整体变化）"
+  },
+  {
+   "model": "kms-m14-020",
+   "group": "标牌",
+   "S": 0.0,
+   "err": "照片对不可用（两帧背景整体变化）"
+  },
+  {
+   "model": "kms-m14-030",
+   "group": "标牌",
+   "S": 0.0,
+   "err": "照片对不可用（两帧背景整体变化）"
+  },
+  {
+   "model": "kms-m11-h30x25-ud",
+   "group": "止块",
+   "S": 0.0,
+   "err": "照片对不可用（两帧背景整体变化）"
+  },
+  {
+   "model": "kms-m11-h30x25-wd",
+   "group": "止块",
+   "S": 0.0,
+   "err": "照片对不可用（两帧背景整体变化）"
+  },
+  {
+   "model": "kms-m11-h30x50-ud",
+   "group": "止块",
+   "S": 0.0,
+   "err": "照片对不可用（两帧背景整体变化）"
+  },
+  {
+   "model": "kms-m11-h30x50-wd",
+   "group": "止块",
+   "S": 0.0,
+   "err": "照片对不可用（两帧背景整体变化）"
+  },
+  {
+   "model": "kms-m11-v30x50-ud",
+   "group": "止块",
+   "S": 0.0,
+   "err": "照片对不可用（两帧背景整体变化）"
+  },
+  {
+   "model": "kms-m11-v30x50-wd",
+   "group": "止块",
+   "S": 0.0,
+   "err": "照片对不可用（两帧背景整体变化）"
+  },
+  {
+   "model": "kms-m06-010-k63",
+   "group": "气缸连接块",
+   "S": 0.0,
+   "err": "照片对不可用（两帧背景整体变化）"
+  },
+  {
+   "model": "kms-m06-010-k80",
+   "group": "气缸连接块",
+   "S": 0.0,
+   "err": "照片对不可用（两帧背景整体变化）"
+  },
+  {
+   "model": "kms-m06-011-k63",
+   "group": "气缸连接块",
+   "S": 0.0,
+   "err": "照片对不可用（两帧背景整体变化）"
+  },
+  {
+   "model": "kms-m05-020-200",
+   "group": "补高台",
+   "S": 0.0,
+   "err": "照片对不可用（两帧背景整体变化）"
+  },
+  {
+   "model": "kms-m05-020-300",
+   "group": "补高台",
+   "prompt": "补高台 KMS-M05-020-300",
+   "view": "iso(-45,35)",
+   "S": 65.5,
+   "iou": 68.8,
+   "chamfer": 24.7,
+   "iou_strict": 50.3,
+   "pose": [
+    57.0,
+    22.0,
+    -2.0
+   ],
+   "ai_img": "零件AI建模图片\\补高台\\kms-m05-020-300.png",
+   "real_img": "零件真实图片_带背景\\补高台\\KMS-M05-020-300.png"
+  },
+  {
+   "model": "kms-m02-h03-20-rd",
+   "group": "销座",
+   "S": 0.0,
+   "err": "照片对不可用（两帧背景整体变化）"
+  },
+  {
+   "model": "kms-m02-h04-20-rm",
+   "group": "销座",
+   "S": 0.0,
+   "err": "照片对不可用（两帧背景整体变化）"
+  },
+  {
+   "model": "kms-m02-h04-20-td",
+   "group": "销座",
+   "S": 0.0,
+   "err": "照片对不可用（两帧背景整体变化）"
+  },
+  {
+   "model": "kms-m02-h04-20-tm",
+   "group": "销座",
+   "S": 0.0,
+   "err": "照片对不可用（两帧背景整体变化）"
+  },
+  {
+   "model": "kms-m02-v03-20-rm",
+   "group": "销座",
+   "S": 0.0,
+   "err": "照片对不可用（两帧背景整体变化）"
+  },
+  {
+   "model": "kms-m02-v04-20-pd",
+   "group": "销座",
+   "S": 0.0,
+   "err": "照片对不可用（两帧背景整体变化）"
+  },
+  {
+   "model": "kms-m02-v04-20-pm",
+   "group": "销座",
+   "S": 0.0,
+   "err": "照片对不可用（两帧背景整体变化）"
+  },
+  {
+   "model": "kms-m02-v04-20-rm",
+   "group": "销座",
+   "S": 0.0,
+   "err": "照片对不可用（两帧背景整体变化）"
+  },
+  {
+   "model": "kms-m02-v04-20-sd",
+   "group": "销座",
+   "S": 0.0,
+   "err": "照片对不可用（两帧背景整体变化）"
+  },
+  {
+   "model": "kms-m02-v04-20-sm",
+   "group": "销座",
+   "S": 0.0,
+   "err": "照片对不可用（两帧背景整体变化）"
+  },
+  {
+   "model": "kms-m02-v04-20-tm",
+   "group": "销座",
+   "S": 0.0,
+   "err": "照片对不可用（两帧背景整体变化）"
+  },
+  {
+   "model": "kms-m02-v04-24-rm",
+   "group": "销座",
+   "S": 0.0,
+   "err": "照片对不可用（两帧背景整体变化）"
+  },
+  {
+   "model": "kms-m02-v04-24-sm",
+   "group": "销座",
+   "S": 0.0,
+   "err": "照片对不可用（两帧背景整体变化）"
+  },
+  {
+   "model": "kms-m13-m05-p02-v04",
+   "group": "阀岛",
+   "S": 0.0,
+   "err": "照片对不可用（两帧背景整体变化）"
+  },
+  {
+   "model": "kms-m13-m08-p05-v09",
+   "group": "阀岛",
+   "S": 0.0,
+   "err": "照片对不可用（两帧背景整体变化）"
+  },
+  {
+   "model": "kms-m13-m08-p05-v10",
+   "group": "阀岛",
+   "prompt": "阀岛 KMS-M13-M08-P05-V10",
+   "view": "top(-90,89)",
+   "S": 64.5,
+   "iou": 84.4,
+   "chamfer": 36.11,
+   "iou_strict": 68.2,
+   "pose": [
+    31.5,
+    8.0,
+    -2.0
+   ],
+   "ai_img": "零件AI建模图片\\阀岛\\kms-m13-m08-p05-v10.png",
+   "real_img": "零件真实图片_带背景\\阀岛\\KMS-M13-M08-P05-V10.png"
+  },
+  {
+   "model": "kms-m13-m08-p06-v09",
+   "group": "阀岛",
+   "S": 0.0,
+   "err": "照片对不可用（两帧背景整体变化）"
+  },
+  {
+   "model": "kms-m13-m08-p06-v10",
+   "group": "阀岛",
+   "prompt": "阀岛 KMS-M13-M08-P06-V10",
+   "view": "top(-90,89)",
+   "S": 64.5,
+   "iou": 83.3,
+   "chamfer": 35.38,
+   "iou_strict": 65.2,
+   "pose": [
+    33.0,
+    -2.0,
+    2.0
+   ],
+   "ai_img": "零件AI建模图片\\阀岛\\kms-m13-m08-p06-v10.png",
+   "real_img": "零件真实图片_带背景\\阀岛\\KMS-M13-M08-P06-V10.png"
+  },
+  {
+   "model": "kms-m09-h03-20-20",
+   "group": "50x20x5",
+   "S": 0.0,
+   "err": "照片对不可用（两帧背景整体变化）"
+  },
+  {
+   "model": "kms-m09-h04-20-20",
+   "group": "65x20x5",
+   "S": 0.0,
+   "err": "照片对不可用（两帧背景整体变化）"
+  },
+  {
+   "model": "kms-m09-h06-50-20",
+   "group": "50x50x5",
+   "S": 0.0,
+   "err": "照片对不可用（两帧背景整体变化）"
+  },
+  {
+   "model": "kms-m09-s02-50-02",
+   "group": "50x50x5",
+   "S": 0.0,
+   "err": "照片对不可用（两帧背景整体变化）"
+  },
+  {
+   "model": "kms-m09-s02-50-03",
+   "group": "50x50x5",
+   "S": 0.0,
+   "err": "照片对不可用（两帧背景整体变化）"
+  },
+  {
+   "model": "kms-m09-s02-50-05",
+   "group": "50x50x5",
+   "S": 0.0,
+   "err": "照片对不可用（两帧背景整体变化）"
+  },
+  {
+   "model": "kms-m09-s02-50-10",
+   "group": "50x50x5",
+   "S": 0.0,
+   "err": "照片对不可用（两帧背景整体变化）"
+  },
+  {
+   "model": "kms-m09-s03-20-02",
+   "group": "50x20x5",
+   "S": 0.0,
+   "err": "照片对不可用（两帧背景整体变化）"
+  },
+  {
+   "model": "kms-m09-s03-20-03",
+   "group": "50x20x5",
+   "S": 0.0,
+   "err": "照片对不可用（两帧背景整体变化）"
+  },
+  {
+   "model": "kms-m09-s03-20-05",
+   "group": "50x20x5",
+   "S": 0.0,
+   "err": "照片对不可用（两帧背景整体变化）"
+  },
+  {
+   "model": "kms-m09-s03-20-10",
+   "group": "50x20x5",
+   "S": 0.0,
+   "err": "照片对不可用（两帧背景整体变化）"
+  },
+  {
+   "model": "kms-m09-s04-20-02",
+   "group": "65x20x5",
+   "S": 0.0,
+   "err": "照片对不可用（两帧背景整体变化）"
+  },
+  {
+   "model": "kms-m09-s04-20-03",
+   "group": "65x20x5",
+   "S": 0.0,
+   "err": "照片对不可用（两帧背景整体变化）"
+  },
+  {
+   "model": "kms-m09-s04-20-05",
+   "group": "65x20x5",
+   "S": 0.0,
+   "err": "照片对不可用（两帧背景整体变化）"
+  },
+  {
+   "model": "kms-m09-s04-20-10",
+   "group": "65x20x5",
+   "S": 0.0,
+   "err": "照片对不可用（两帧背景整体变化）"
+  },
+  {
+   "model": "mgpa50-50z-p3dwase",
+   "group": "SMC",
+   "S": 0.0,
+   "err": "照片对不可用（两帧背景整体变化）"
+  },
+  {
+   "model": "ula63040ak0",
+   "group": "双导杆气缸",
+   "S": 0.0,
+   "err": "照片对不可用（两帧背景整体变化）"
+  },
+  {
+   "model": "ula63060ak0",
+   "group": "双导杆气缸",
+   "prompt": "双导杆气缸 ULA63060AK0",
+   "view": "top(-90,89)",
+   "S": 88.7,
+   "iou": 90.7,
+   "chamfer": 8.7,
+   "iou_strict": 80.1,
+   "pose": [
+    -60.0,
+    16.0,
+    -10.0
+   ],
+   "ai_img": "零件AI建模图片\\双导杆气缸\\ula63060ak0.png",
+   "real_img": "零件真实图片_带背景\\双导杆气缸\\ULA63060AK0.png"
+  },
+  {
+   "model": "gb825_88_m16",
+   "group": "吊环",
+   "S": 0.0,
+   "err": "照片对不可用（两帧背景整体变化）"
+  },
+  {
+   "model": "gb825_88_m20",
+   "group": "吊环",
+   "prompt": "吊环 GB825_88_M20",
+   "view": "iso(-45,35)",
+   "S": 88.2,
+   "iou": 88.6,
+   "chamfer": 7.9,
+   "iou_strict": 76.3,
+   "pose": [
+    1.5,
+    4.0,
+    -4.0
+   ],
+   "ai_img": "零件AI建模图片\\吊环\\gb825_88_m20.png",
+   "real_img": "零件真实图片_带背景\\吊环\\GB825_88_M20.png"
+  },
+  {
+   "model": "gb825_88_m24",
+   "group": "吊环",
+   "S": 0.0,
+   "err": "照片对不可用（两帧背景整体变化）"
+  },
+  {
+   "model": "bes m08mg1-psc20a-s04g-w",
+   "group": "接近开关",
+   "S": 0.0,
+   "err": "照片对不可用（两帧背景整体变化）"
+  },
+  {
+   "model": "bes_m12mi_psc30a_s04g_w09",
+   "group": "接近开关",
+   "S": 0.0,
+   "err": "照片对不可用（两帧背景整体变化）"
+  },
+  {
+   "model": "bes_m18mi_psc80a_s04g_w33",
+   "group": "接近开关",
+   "S": 0.0,
+   "err": "照片对不可用（两帧背景整体变化）"
+  }
+ ]
+}

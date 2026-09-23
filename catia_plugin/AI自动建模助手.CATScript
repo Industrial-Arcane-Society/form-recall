@@ -1,0 +1,60 @@
+' ===========================================================================
+'  AI Modeler  -  CATIA V5 plugin (CATScript macro)
+'
+'  What it does:
+'    launches the Python backend, which shows a PERSISTENT Chinese dialog:
+'    type a description -> the model is built in CATIA and shown (CATIA is
+'    brought to the front, view fitted) -> the dialog stays open so you can
+'    type the next part. Nothing is saved automatically: use Ctrl+S in CATIA.
+'
+'  It deliberately does NOT wait for that dialog: CATIA's script host runs
+'  macros synchronously, so waiting would freeze CATIA and you could neither
+'  look at the model nor save it.
+'
+'  Why so thin: building inside CATIA's own script host needs Generative Shape
+'  Design datum planes (HybridShapeFactory / HybridBodies), which turned out to
+'  be unreliable there (AppendHybridShape fails with "Object required" depending
+'  on session state). External COM automation has no such problem, and it is the
+'  path that has been verified end to end - so the macro delegates to it.
+'
+'  !! THIS FILE MUST STAY PURE ASCII !!
+'  CATIA's CATScript loader does not accept UTF-16 or UTF-8-with-BOM files: the
+'  BOM shows up as a single "?" and the whole script fails with
+'  ScriptingERR_1002 / "Invalid character" on line 1.
+'  All Chinese text comes from the Python backend at run time.
+'
+'  Install: python tools\install_catia_plugin.py   (or run connect_catia.py)
+'  Use    : CATIA -> Tools -> Macro -> Macros... -> pick this file -> Run
+' ===========================================================================
+Language = "VBScript"
+
+' The two paths below are ASCII-only expressions: any non-ASCII character (a
+' Chinese folder name, for instance) is written as ChrW(...). Do not turn them
+' back into plain string constants.
+Dim PYTHON_EXE, PROJECT_DIR
+PYTHON_EXE  = "C:\Users\25643\AppData\Local\Programs\Python\Python314\python.exe"
+PROJECT_DIR = "C:\Users\25643\Desktop\ai" & ChrW(33258) & ChrW(21160) & ChrW(24314) & ChrW(27169) & ChrW(25554) & ChrW(20214)
+
+
+Sub CATMain()
+    Dim fso, tmpDir, outFile, cmd, sh
+
+    Set fso = CreateObject("Scripting.FileSystemObject")
+    tmpDir = fso.GetSpecialFolder(2)
+    outFile = fso.BuildPath(tmpDir, "aim_macro_out.txt")
+
+    cmd = "cmd /c cd /d """ & PROJECT_DIR & """ && """ & PYTHON_EXE & _
+          """ -m ai_modeler --catia-macro """ & outFile & """"
+
+    ' start it hidden and DO NOT wait: the dialog runs on its own, CATIA stays usable
+    On Error Resume Next
+    Set sh = CreateObject("WScript.Shell")
+    sh.Run cmd, 0, False
+    If Err.Number <> 0 Then
+        MsgBox "Cannot run the Python backend." & vbCrLf & vbCrLf & _
+               "Run this command manually to see the error:" & vbCrLf & cmd, _
+               16, "AI Modeler"
+        Err.Clear
+    End If
+    On Error GoTo 0
+End Sub

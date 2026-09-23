@@ -1,0 +1,284 @@
+{
+ "cases": 15,
+ "features": 20,
+ "dim_total": 61,
+ "traceable": 61,
+ "untraceable": 0,
+ "kernel_only": 32,
+ "traceable_pct": 100.0,
+ "feat_with_text": 0,
+ "provenance": {
+  "explicit": 42,
+  "default": 5,
+  "standard": 9,
+  "derived": 5
+ },
+ "rows": [
+  {
+   "text": "长方体的长120 宽80 高15",
+   "n_feat": 1,
+   "steps": 1,
+   "prov": {
+    "explicit": 3,
+    "default": 1
+   },
+   "untraceable": [],
+   "kernel_only": [
+    "box.corner_mode",
+    "box.base"
+   ],
+   "feat_with_text": 0,
+   "kinds": [
+    "box"
+   ]
+  },
+  {
+   "text": "圆柱 直径60 高120",
+   "n_feat": 1,
+   "steps": 1,
+   "prov": {
+    "explicit": 2
+   },
+   "untraceable": [],
+   "kernel_only": [
+    "cylinder.radius2",
+    "cylinder.base",
+    "cylinder.segments"
+   ],
+   "feat_with_text": 0,
+   "kinds": [
+    "cylinder"
+   ]
+  },
+  {
+   "text": "法兰 外径160 内径60 厚20",
+   "n_feat": 2,
+   "steps": 1,
+   "prov": {
+    "explicit": 3,
+    "default": 1
+   },
+   "untraceable": [],
+   "kernel_only": [
+    "cylinder.base",
+    "cylinder.segments",
+    "hole.pos",
+    "hole.segments"
+   ],
+   "feat_with_text": 0,
+   "kinds": [
+    "cylinder",
+    "hole"
+   ]
+  },
+  {
+   "text": "垫圈 内径20 外径40 厚度3",
+   "n_feat": 2,
+   "steps": 1,
+   "prov": {
+    "explicit": 4
+   },
+   "untraceable": [],
+   "kernel_only": [
+    "cylinder.base",
+    "cylinder.segments",
+    "hole.pos",
+    "hole.segments"
+   ],
+   "feat_with_text": 0,
+   "kinds": [
+    "cylinder",
+    "hole"
+   ]
+  },
+  {
+   "text": "深沟球轴承 6204",
+   "n_feat": 2,
+   "steps": 1,
+   "prov": {
+    "standard": 4
+   },
+   "untraceable": [],
+   "kernel_only": [
+    "cylinder.base",
+    "cylinder.segments",
+    "hole.pos",
+    "hole.segments"
+   ],
+   "feat_with_text": 0,
+   "kinds": [
+    "cylinder",
+    "hole"
+   ]
+  },
+  {
+   "text": "轴承 6305",
+   "n_feat": 2,
+   "steps": 1,
+   "prov": {
+    "standard": 4
+   },
+   "untraceable": [],
+   "kernel_only": [
+    "cylinder.base",
+    "cylinder.segments",
+    "hole.pos",
+    "hole.segments"
+   ],
+   "feat_with_text": 0,
+   "kinds": [
+    "cylinder",
+    "hole"
+   ]
+  },
+  {
+   "text": "轴套 内径30 外径45 长度60",
+   "n_feat": 2,
+   "steps": 1,
+   "prov": {
+    "explicit": 4
+   },
+   "untraceable": [],
+   "kernel_only": [
+    "cylinder.base",
+    "cylinder.segments",
+    "hole.pos",
+    "hole.segments"
+   ],
+   "feat_with_text": 0,
+   "kinds": [
+    "cylinder",
+    "hole"
+   ]
+  },
+  {
+   "text": "直齿圆柱齿轮 模数3 齿数24 齿宽20",
+   "n_feat": 1,
+   "steps": 1,
+   "prov": {
+    "explicit": 3
+   },
+   "untraceable": [],
+   "kernel_only": [
+    "gear.base"
+   ],
+   "feat_with_text": 0,
+   "kinds": [
+    "gear"
+   ]
+  },
+  {
+   "text": "多槽带轮 内径25 外径100 宽度30 槽数3 A型",
+   "n_feat": 1,
+   "steps": 10,
+   "prov": {
+    "explicit": 4,
+    "derived": 1,
+    "standard": 1
+   },
+   "untraceable": [],
+   "kernel_only": [],
+   "feat_with_text": 0,
+   "kinds": [
+    "vbelt_pulley"
+   ]
+  },
+  {
+   "text": "同步带轮 节圆直径50 内径12 齿数10 宽10",
+   "n_feat": 1,
+   "steps": 7,
+   "prov": {
+    "explicit": 4,
+    "default": 1
+   },
+   "untraceable": [],
+   "kernel_only": [],
+   "feat_with_text": 0,
+   "kinds": [
+    "timing_pulley"
+   ]
+  },
+  {
+   "text": "同步带轮 节圆直径50 10齿 宽10",
+   "n_feat": 1,
+   "steps": 7,
+   "prov": {
+    "explicit": 3,
+    "default": 2
+   },
+   "untraceable": [],
+   "kernel_only": [],
+   "feat_with_text": 0,
+   "kinds": [
+    "timing_pulley"
+   ]
+  },
+  {
+   "text": "平键 宽度10 高度8 长度40",
+   "n_feat": 1,
+   "steps": 1,
+   "prov": {
+    "explicit": 3
+   },
+   "untraceable": [],
+   "kernel_only": [
+    "box.base"
+   ],
+   "feat_with_text": 0,
+   "kinds": [
+    "box"
+   ]
+  },
+  {
+   "text": "螺栓 螺纹规格16 长度80",
+   "n_feat": 1,
+   "steps": 1,
+   "prov": {
+    "explicit": 2,
+    "derived": 2
+   },
+   "untraceable": [],
+   "kernel_only": [
+    "hex_bolt.segments"
+   ],
+   "feat_with_text": 0,
+   "kinds": [
+    "hex_bolt"
+   ]
+  },
+  {
+   "text": "螺旋弹簧 线径3.2 外径38 自由高度150 圈数4.75",
+   "n_feat": 1,
+   "steps": 1,
+   "prov": {
+    "explicit": 4
+   },
+   "untraceable": [],
+   "kernel_only": [
+    "helix.seg_per_turn",
+    "helix.wire_seg",
+    "helix.taper",
+    "helix.taper_start"
+   ],
+   "feat_with_text": 0,
+   "kinds": [
+    "helix"
+   ]
+  },
+  {
+   "text": "辐条手轮 外径215 内径19 厚度15 辐条数7",
+   "n_feat": 1,
+   "steps": 1,
+   "prov": {
+    "explicit": 3,
+    "derived": 2
+   },
+   "untraceable": [],
+   "kernel_only": [],
+   "feat_with_text": 0,
+   "kinds": [
+    "spoked_wheel"
+   ]
+  }
+ ]
+}

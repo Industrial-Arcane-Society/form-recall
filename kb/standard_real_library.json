@@ -1,0 +1,1759 @@
+{
+ "groups": {
+  "分气块": {
+   "count": 5,
+   "provenance": "explicit",
+   "items": [
+    {
+     "model": "KMS-M15-G14-H04",
+     "file": "KMS-M15-G14-H04.stp",
+     "envelope": [
+      80.0,
+      65.0,
+      35.0
+     ],
+     "n_solids": 1,
+     "n_faces": 1452,
+     "n_cylinders": 10,
+     "cyl_diameters": {
+      "15": 2,
+      "11": 6,
+      "6.6": 2
+     },
+     "trust": "exact"
+    },
+    {
+     "model": "KMS-M15-G14-H06",
+     "file": "KMS-M15-G14-H06.stp",
+     "envelope": [
+      120.0,
+      65.0,
+      35.0
+     ],
+     "n_solids": 1,
+     "n_faces": 1462,
+     "n_cylinders": 12,
+     "cyl_diameters": {
+      "15": 2,
+      "11": 8,
+      "6.6": 2
+     },
+     "trust": "exact"
+    },
+    {
+     "model": "KMS-M15-G14-H08",
+     "file": "KMS-M15-G14-H08.stp",
+     "envelope": [
+      160.0,
+      65.0,
+      35.0
+     ],
+     "n_solids": 1,
+     "n_faces": 1472,
+     "n_cylinders": 14,
+     "cyl_diameters": {
+      "15": 2,
+      "11": 10,
+      "6.6": 2
+     },
+     "trust": "exact"
+    },
+    {
+     "model": "KMS-M15-G14-H10",
+     "file": "KMS-M15-G14-H10.stp",
+     "envelope": [
+      200.0,
+      65.0,
+      35.0
+     ],
+     "n_solids": 1,
+     "n_faces": 1482,
+     "n_cylinders": 16,
+     "cyl_diameters": {
+      "15": 2,
+      "11": 12,
+      "6.6": 2
+     },
+     "trust": "exact"
+    },
+    {
+     "model": "KMS-M15-G14-H12",
+     "file": "KMS-M15-G14-H12.stp",
+     "envelope": [
+      240.0,
+      65.0,
+      35.0
+     ],
+     "n_solids": 1,
+     "n_faces": 1492,
+     "n_cylinders": 18,
+     "cyl_diameters": {
+      "15": 2,
+      "11": 14,
+      "6.6": 2
+     },
+     "trust": "exact"
+    }
+   ]
+  },
+  "定位销": {
+   "count": 22,
+   "provenance": "explicit",
+   "items": [
+    {
+     "model": "KMS-M01-D159-A20",
+     "file": "KMS-M01-D159-A20.stp",
+     "envelope": [
+      22.0,
+      22.0,
+      72.095
+     ],
+     "n_solids": 1,
+     "n_faces": 33,
+     "n_cylinders": 4,
+     "cyl_diameters": {
+      "22": 1,
+      "15.9": 1,
+      "10": 1,
+      "5.4": 1
+     },
+     "trust": "exact"
+    },
+    {
+     "model": "KMS-M01-P077-A20",
+     "file": "KMS-M01-P077-A20.stp",
+     "envelope": [
+      22.0,
+      22.0,
+      60.09
+     ],
+     "n_solids": 1,
+     "n_faces": 26,
+     "n_cylinders": 4,
+     "cyl_diameters": {
+      "22": 1,
+      "10": 1,
+      "7.7": 1,
+      "5.4": 1
+     },
+     "trust": "exact"
+    },
+    {
+     "model": "KMS-M01-P079-A20",
+     "file": "KMS-M01-P079-A20.stp",
+     "envelope": [
+      22.0,
+      22.0,
+      60.269
+     ],
+     "n_solids": 1,
+     "n_faces": 26,
+     "n_cylinders": 4,
+     "cyl_diameters": {
+      "22": 1,
+      "10": 1,
+      "7.9": 1,
+      "5.4": 1
+     },
+     "trust": "exact"
+    },
+    {
+     "model": "KMS-M01-P079-A30",
+     "file": "KMS-M01-P079-A30.stp",
+     "envelope": [
+      22.0,
+      22.0,
+      70.269
+     ],
+     "n_solids": 1,
+     "n_faces": 26,
+     "n_cylinders": 4,
+     "cyl_diameters": {
+      "22": 1,
+      "10": 1,
+      "7.9": 1,
+      "5.4": 1
+     },
+     "trust": "exact"
+    },
+    {
+     "model": "KMS-M01-P097-A15",
+     "file": "KMS-M01-P097-A15.stp",
+     "envelope": [
+      22.0,
+      22.0,
+      57.308
+     ],
+     "n_solids": 1,
+     "n_faces": 26,
+     "n_cylinders": 4,
+     "cyl_diameters": {
+      "22": 1,
+      "10": 1,
+      "9.7": 1,
+      "5.4": 1
+     },
+     "trust": "exact"
+    },
+    {
+     "model": "KMS-M01-P097-A20",
+     "file": "KMS-M01-P097-A20.stp",
+     "envelope": [
+      22.0,
+      22.0,
+      62.308
+     ],
+     "n_solids": 1,
+     "n_faces": 26,
+     "n_cylinders": 4,
+     "cyl_diameters": {
+      "22": 1,
+      "10": 1,
+      "9.7": 1,
+      "5.4": 1
+     },
+     "trust": "exact"
+    },
+    {
+     "model": "KMS-M01-P097-A30",
+     "file": "KMS-M01-P097-A30.stp",
+     "envelope": [
+      22.0,
+      22.0,
+      72.308
+     ],
+     "n_solids": 1,
+     "n_faces": 26,
+     "n_cylinders": 4,
+     "cyl_diameters": {
+      "22": 1,
+      "10": 1,
+      "9.7": 1,
+      "5.4": 1
+     },
+     "trust": "exact"
+    },
+    {
+     "model": "KMS-M01-P099-A15",
+     "file": "KMS-M01-P099-A15.stp",
+     "envelope": [
+      22.0,
+      22.0,
+      57.51
+     ],
+     "n_solids": 1,
+     "n_faces": 26,
+     "n_cylinders": 4,
+     "cyl_diameters": {
+      "22": 1,
+      "10": 1,
+      "9.9": 1,
+      "5.4": 1
+     },
+     "trust": "exact"
+    },
+    {
+     "model": "KMS-M01-P099-A20",
+     "file": "KMS-M01-P099-A20.stp",
+     "envelope": [
+      22.0,
+      22.0,
+      62.51
+     ],
+     "n_solids": 1,
+     "n_faces": 26,
+     "n_cylinders": 4,
+     "cyl_diameters": {
+      "22": 1,
+      "10": 1,
+      "9.9": 1,
+      "5.4": 1
+     },
+     "trust": "exact"
+    },
+    {
+     "model": "KMS-M01-P099-A30",
+     "file": "KMS-M01-P099-A30.stp",
+     "envelope": [
+      22.0,
+      22.0,
+      72.51
+     ],
+     "n_solids": 1,
+     "n_faces": 26,
+     "n_cylinders": 4,
+     "cyl_diameters": {
+      "22": 1,
+      "10": 1,
+      "9.9": 1,
+      "5.4": 1
+     },
+     "trust": "exact"
+    },
+    {
+     "model": "KMS-M01-P117-A15",
+     "file": "KMS-M01-P117-A15.stp",
+     "envelope": [
+      22.0,
+      22.0,
+      60.716
+     ],
+     "n_solids": 1,
+     "n_faces": 26,
+     "n_cylinders": 4,
+     "cyl_diameters": {
+      "22": 1,
+      "11.7": 1,
+      "10": 1,
+      "5.4": 1
+     },
+     "trust": "exact"
+    },
+    {
+     "model": "KMS-M01-P117-A20",
+     "file": "KMS-M01-P117-A20.stp",
+     "envelope": [
+      22.0,
+      22.0,
+      65.716
+     ],
+     "n_solids": 1,
+     "n_faces": 26,
+     "n_cylinders": 4,
+     "cyl_diameters": {
+      "22": 1,
+      "11.7": 1,
+      "10": 1,
+      "5.4": 1
+     },
+     "trust": "exact"
+    },
+    {
+     "model": "KMS-M01-P117-A30",
+     "file": "KMS-M01-P117-A30.stp",
+     "envelope": [
+      22.0,
+      22.0,
+      75.716
+     ],
+     "n_solids": 1,
+     "n_faces": 26,
+     "n_cylinders": 4,
+     "cyl_diameters": {
+      "22": 1,
+      "11.7": 1,
+      "10": 1,
+      "5.4": 1
+     },
+     "trust": "exact"
+    },
+    {
+     "model": "KMS-M01-P119-A20",
+     "file": "KMS-M01-P119-A20.stp",
+     "envelope": [
+      22.0,
+      22.0,
+      65.906
+     ],
+     "n_solids": 1,
+     "n_faces": 26,
+     "n_cylinders": 4,
+     "cyl_diameters": {
+      "22": 1,
+      "11.9": 1,
+      "10": 1,
+      "5.4": 1
+     },
+     "trust": "exact"
+    },
+    {
+     "model": "KMS-M01-P119-A30",
+     "file": "KMS-M01-P119-A30.stp",
+     "envelope": [
+      22.0,
+      22.0,
+      75.906
+     ],
+     "n_solids": 1,
+     "n_faces": 26,
+     "n_cylinders": 4,
+     "cyl_diameters": {
+      "22": 1,
+      "11.9": 1,
+      "10": 1,
+      "5.4": 1
+     },
+     "trust": "exact"
+    },
+    {
+     "model": "KMS-M01-P157-A20",
+     "file": "KMS-M01-P157-A20.stp",
+     "envelope": [
+      22.0,
+      22.0,
+      71.922
+     ],
+     "n_solids": 1,
+     "n_faces": 26,
+     "n_cylinders": 4,
+     "cyl_diameters": {
+      "22": 1,
+      "15.7": 1,
+      "10": 1,
+      "5.4": 1
+     },
+     "trust": "exact"
+    },
+    {
+     "model": "KMS-M01-P157-A30",
+     "file": "KMS-M01-P157-A30.stp",
+     "envelope": [
+      22.0,
+      22.0,
+      81.922
+     ],
+     "n_solids": 1,
+     "n_faces": 26,
+     "n_cylinders": 4,
+     "cyl_diameters": {
+      "22": 1,
+      "15.7": 1,
+      "10": 1,
+      "5.4": 1
+     },
+     "trust": "exact"
+    },
+    {
+     "model": "KMS-M01-P159-A15",
+     "file": "KMS-M01-P159-A15.stp",
+     "envelope": [
+      22.0,
+      22.0,
+      72.095
+     ],
+     "n_solids": 1,
+     "n_faces": 26,
+     "n_cylinders": 4,
+     "cyl_diameters": {
+      "22": 1,
+      "15.9": 1,
+      "10": 1,
+      "5.4": 1
+     },
+     "trust": "exact"
+    },
+    {
+     "model": "KMS-M01-P159-A20",
+     "file": "KMS-M01-P159-A20.stp",
+     "envelope": [
+      22.0,
+      22.0,
+      72.095
+     ],
+     "n_solids": 1,
+     "n_faces": 26,
+     "n_cylinders": 4,
+     "cyl_diameters": {
+      "22": 1,
+      "15.9": 1,
+      "10": 1,
+      "5.4": 1
+     },
+     "trust": "exact"
+    },
+    {
+     "model": "KMS-M01-P159-A30",
+     "file": "KMS-M01-P159-A30.stp",
+     "envelope": [
+      22.0,
+      22.0,
+      82.095
+     ],
+     "n_solids": 1,
+     "n_faces": 26,
+     "n_cylinders": 4,
+     "cyl_diameters": {
+      "22": 1,
+      "15.9": 1,
+      "10": 1,
+      "5.4": 1
+     },
+     "trust": "exact"
+    },
+    {
+     "model": "KMS-M01-P189-A30",
+     "file": "KMS-M01-P189-A30.stp",
+     "envelope": [
+      22.0,
+      22.0,
+      84.312
+     ],
+     "n_solids": 1,
+     "n_faces": 26,
+     "n_cylinders": 4,
+     "cyl_diameters": {
+      "22": 1,
+      "17.9": 1,
+      "10": 1,
+      "5.4": 1
+     },
+     "trust": "exact"
+    },
+    {
+     "model": "KMS-M01-P299-A20",
+     "file": "KMS-M01-P299-A20.stp",
+     "envelope": [
+      29.9,
+      29.9,
+      82.795
+     ],
+     "n_solids": 1,
+     "n_faces": 22,
+     "n_cylinders": 3,
+     "cyl_diameters": {
+      "29.9": 1,
+      "16": 1,
+      "8.6": 1
+     },
+     "trust": "exact"
+    }
+   ]
+  },
+  "支座": {
+   "count": 7,
+   "provenance": "explicit",
+   "items": [
+    {
+     "model": "KMS-M05-010-100-D",
+     "file": "KMS-M05-010-100-D.stp",
+     "envelope": [
+      110.0,
+      140.0,
+      155.0
+     ],
+     "n_solids": 3,
+     "n_faces": 44,
+     "n_cylinders": 12,
+     "cyl_diameters": {
+      "14": 4,
+      "12": 4,
+      "10": 2,
+      "8": 2
+     },
+     "trust": "exact"
+    },
+    {
+     "model": "KMS-M05-010-150-D",
+     "file": "KMS-M05-010-150-D.stp",
+     "envelope": [
+      110.0,
+      143.0,
+      205.0
+     ],
+     "n_solids": 3,
+     "n_faces": 46,
+     "n_cylinders": 12,
+     "cyl_diameters": {
+      "14": 4,
+      "12": 4,
+      "10": 2,
+      "8": 2
+     },
+     "trust": "exact"
+    },
+    {
+     "model": "KMS-M05-010-200-D",
+     "file": "KMS-M05-010-200-D.stp",
+     "envelope": [
+      110.0,
+      143.0,
+      255.0
+     ],
+     "n_solids": 3,
+     "n_faces": 46,
+     "n_cylinders": 12,
+     "cyl_diameters": {
+      "14": 4,
+      "12": 4,
+      "10": 2,
+      "8": 2
+     },
+     "trust": "exact"
+    },
+    {
+     "model": "KMS-M05-010-250-D",
+     "file": "KMS-M05-010-250-D.stp",
+     "envelope": [
+      110.0,
+      143.0,
+      305.0
+     ],
+     "n_solids": 3,
+     "n_faces": 46,
+     "n_cylinders": 12,
+     "cyl_diameters": {
+      "14": 4,
+      "12": 4,
+      "10": 2,
+      "8": 2
+     },
+     "trust": "exact"
+    },
+    {
+     "model": "KMS-M05-010-300-D",
+     "file": "KMS-M05-010-300-D.stp",
+     "envelope": [
+      110.0,
+      143.0,
+      355.0
+     ],
+     "n_solids": 3,
+     "n_faces": 46,
+     "n_cylinders": 12,
+     "cyl_diameters": {
+      "14": 4,
+      "12": 4,
+      "10": 2,
+      "8": 2
+     },
+     "trust": "exact"
+    },
+    {
+     "model": "KMS-M05-010-350-D",
+     "file": "KMS-M05-010-350-D.stp",
+     "envelope": [
+      110.0,
+      143.0,
+      405.0
+     ],
+     "n_solids": 3,
+     "n_faces": 46,
+     "n_cylinders": 12,
+     "cyl_diameters": {
+      "14": 4,
+      "12": 4,
+      "10": 2,
+      "8": 2
+     },
+     "trust": "exact"
+    },
+    {
+     "model": "KMS-M05-010-400-D",
+     "file": "KMS-M05-010-400-D.stp",
+     "envelope": [
+      110.0,
+      143.0,
+      455.0
+     ],
+     "n_solids": 3,
+     "n_faces": 46,
+     "n_cylinders": 12,
+     "cyl_diameters": {
+      "14": 4,
+      "12": 4,
+      "10": 2,
+      "8": 2
+     },
+     "trust": "exact"
+    }
+   ]
+  },
+  "支座(铝)": {
+   "count": 5,
+   "provenance": "explicit",
+   "items": [
+    {
+     "model": "LZ01001001_H100",
+     "file": "LZ01001001_H100.stp",
+     "envelope": [
+      165.0,
+      75.0,
+      124.0
+     ],
+     "n_solids": 25,
+     "n_faces": 468,
+     "n_cylinders": 216,
+     "cyl_diameters": {
+      "22.303": 8,
+      "14": 8,
+      "12.632": 4,
+      "10": 2,
+      "9.929": 4,
+      "9": 8,
+      "8": 4,
+      "6.411": 4,
+      "3.2": 24,
+      "2": 12,
+      "1.6": 12,
+      "1.2": 8,
+      "0.8": 56,
+      "0.4": 54,
+      "0.2": 8
+     },
+     "trust": "exact"
+    },
+    {
+     "model": "LZ01001002_H200",
+     "file": "LZ01001002_H200.stp",
+     "envelope": [
+      265.0,
+      75.0,
+      124.0
+     ],
+     "n_solids": 13,
+     "n_faces": 293,
+     "n_cylinders": 135,
+     "cyl_diameters": {
+      "25": 8,
+      "22.303": 4,
+      "14": 8,
+      "12.632": 2,
+      "10": 2,
+      "9.929": 2,
+      "9": 8,
+      "8": 4,
+      "6.411": 2,
+      "4.134": 4,
+      "3.2": 12,
+      "2.5": 4,
+      "2": 6,
+      "1.6": 6,
+      "1.2": 4,
+      "0.8": 28,
+      "0.4": 27,
+      "0.2": 4
+     },
+     "trust": "exact"
+    },
+    {
+     "model": "LZ01001003_H300",
+     "file": "LZ01001003_H300.stp",
+     "envelope": [
+      365.0,
+      75.0,
+      124.0
+     ],
+     "n_solids": 13,
+     "n_faces": 305,
+     "n_cylinders": 143,
+     "cyl_diameters": {
+      "25": 16,
+      "22.303": 4,
+      "14": 8,
+      "12.632": 2,
+      "10": 2,
+      "9.929": 2,
+      "9": 8,
+      "8": 4,
+      "6.411": 2,
+      "4.134": 4,
+      "3.2": 12,
+      "2.5": 4,
+      "2": 6,
+      "1.6": 6,
+      "1.2": 4,
+      "0.8": 28,
+      "0.4": 27,
+      "0.2": 4
+     },
+     "trust": "exact"
+    },
+    {
+     "model": "LZ01001004_H400",
+     "file": "LZ01001004_H400.stp",
+     "envelope": [
+      465.0,
+      124.0,
+      75.0
+     ],
+     "n_solids": 13,
+     "n_faces": 305,
+     "n_cylinders": 143,
+     "cyl_diameters": {
+      "25": 16,
+      "22.303": 4,
+      "14": 8,
+      "12.632": 2,
+      "10": 2,
+      "9.929": 2,
+      "9": 8,
+      "8": 4,
+      "6.411": 2,
+      "4.134": 4,
+      "3.2": 12,
+      "2.5": 4,
+      "2": 6,
+      "1.6": 6,
+      "1.2": 4,
+      "0.8": 28,
+      "0.4": 27,
+      "0.2": 4
+     },
+     "trust": "exact"
+    },
+    {
+     "model": "LZ01001005_H500",
+     "file": "LZ01001005_H500.stp",
+     "envelope": [
+      565.0,
+      124.0,
+      75.0
+     ],
+     "n_solids": 13,
+     "n_faces": 305,
+     "n_cylinders": 143,
+     "cyl_diameters": {
+      "25": 16,
+      "22.303": 4,
+      "14": 8,
+      "12.632": 2,
+      "10": 2,
+      "9.929": 2,
+      "9": 8,
+      "8": 4,
+      "6.411": 2,
+      "4.134": 4,
+      "3.2": 12,
+      "2.5": 4,
+      "2": 6,
+      "1.6": 6,
+      "1.2": 4,
+      "0.8": 28,
+      "0.4": 27,
+      "0.2": 4
+     },
+     "trust": "exact"
+    }
+   ]
+  },
+  "标牌": {
+   "count": 3,
+   "provenance": "explicit",
+   "items": [
+    {
+     "model": "KMS-M14-010",
+     "file": "KMS-M14-010.stp",
+     "envelope": [
+      80.0,
+      150.0,
+      2.002
+     ],
+     "n_solids": 1,
+     "n_faces": 6413,
+     "n_cylinders": 23,
+     "cyl_diameters": {
+      "20.354": 2,
+      "11.195": 1,
+      "9.159": 1,
+      "5.699": 1,
+      "4": 4,
+      "3.2": 4,
+      "2.035": 4,
+      "1.221": 6
+     },
+     "trust": "exact"
+    },
+    {
+     "model": "KMS-M14-020",
+     "file": "KMS-M14-020.stp",
+     "envelope": [
+      15.0,
+      30.0,
+      1.002
+     ],
+     "n_solids": 1,
+     "n_faces": 227,
+     "n_cylinders": 2,
+     "cyl_diameters": {
+      "2.5": 2
+     },
+     "trust": "exact"
+    },
+    {
+     "model": "KMS-M14-030",
+     "file": "KMS-M14-030.stp",
+     "envelope": [
+      50.0,
+      50.0,
+      1.002
+     ],
+     "n_solids": 1,
+     "n_faces": 1271,
+     "n_cylinders": 3,
+     "cyl_diameters": {
+      "50": 1,
+      "6.6": 2
+     },
+     "trust": "exact"
+    }
+   ]
+  },
+  "止块": {
+   "count": 6,
+   "provenance": "explicit",
+   "items": [
+    {
+     "model": "KMS-M11-H30x25-UD",
+     "file": "KMS-M11-H30x25-UD.stp",
+     "envelope": [
+      25.0,
+      30.0,
+      28.0
+     ],
+     "n_solids": 1,
+     "n_faces": 21,
+     "n_cylinders": 4,
+     "cyl_diameters": {
+      "14": 1,
+      "9": 1,
+      "2": 2
+     },
+     "trust": "exact"
+    },
+    {
+     "model": "KMS-M11-H30x25-WD",
+     "file": "KMS-M11-H30x25-WD.stp",
+     "envelope": [
+      25.0,
+      30.0,
+      25.0
+     ],
+     "n_solids": 1,
+     "n_faces": 21,
+     "n_cylinders": 4,
+     "cyl_diameters": {
+      "14": 1,
+      "9": 1,
+      "2": 2
+     },
+     "trust": "exact"
+    },
+    {
+     "model": "KMS-M11-H30x50-UD",
+     "file": "KMS-M11-H30x50-UD.stp",
+     "envelope": [
+      50.0,
+      30.0,
+      28.0
+     ],
+     "n_solids": 1,
+     "n_faces": 26,
+     "n_cylinders": 6,
+     "cyl_diameters": {
+      "14": 2,
+      "9": 2,
+      "2": 2
+     },
+     "trust": "exact"
+    },
+    {
+     "model": "KMS-M11-H30x50-WD",
+     "file": "KMS-M11-H30x50-WD.stp",
+     "envelope": [
+      50.0,
+      30.0,
+      25.0
+     ],
+     "n_solids": 1,
+     "n_faces": 26,
+     "n_cylinders": 6,
+     "cyl_diameters": {
+      "14": 2,
+      "9": 2,
+      "2": 2
+     },
+     "trust": "exact"
+    },
+    {
+     "model": "KMS-M11-V30x50-UD",
+     "file": "KMS-M11-V30x50-UD.stp",
+     "envelope": [
+      50.0,
+      30.0,
+      28.0
+     ],
+     "n_solids": 1,
+     "n_faces": 26,
+     "n_cylinders": 5,
+     "cyl_diameters": {
+      "14": 2,
+      "9": 2,
+      "8": 1
+     },
+     "trust": "exact"
+    },
+    {
+     "model": "KMS-M11-V30x50-WD",
+     "file": "KMS-M11-V30x50-WD.stp",
+     "envelope": [
+      50.0,
+      30.0,
+      24.0
+     ],
+     "n_solids": 1,
+     "n_faces": 24,
+     "n_cylinders": 4,
+     "cyl_diameters": {
+      "14": 2,
+      "9": 2
+     },
+     "trust": "exact"
+    }
+   ]
+  },
+  "气缸连接块": {
+   "count": 3,
+   "provenance": "explicit",
+   "items": [
+    {
+     "model": "KMS-M06-010-K63",
+     "file": "KMS-M06-010-K63.stp",
+     "envelope": [
+      32.0,
+      54.0,
+      55.0
+     ],
+     "n_solids": 1,
+     "n_faces": 34,
+     "n_cylinders": 11,
+     "cyl_diameters": {
+      "17": 2,
+      "11": 2,
+      "9": 4,
+      "8": 3
+     },
+     "trust": "exact"
+    },
+    {
+     "model": "KMS-M06-010-K80",
+     "file": "KMS-M06-010-K80.stp",
+     "envelope": [
+      32.0,
+      76.0,
+      80.0
+     ],
+     "n_solids": 1,
+     "n_faces": 34,
+     "n_cylinders": 11,
+     "cyl_diameters": {
+      "17": 2,
+      "11": 6,
+      "8": 3
+     },
+     "trust": "exact"
+    },
+    {
+     "model": "KMS-M06-011-K63",
+     "file": "KMS-M06-011-K63.stp",
+     "envelope": [
+      32.0,
+      77.0,
+      55.0
+     ],
+     "n_solids": 1,
+     "n_faces": 28,
+     "n_cylinders": 9,
+     "cyl_diameters": {
+      "11": 2,
+      "9": 4,
+      "8": 3
+     },
+     "trust": "exact"
+    }
+   ]
+  },
+  "补高台": {
+   "count": 2,
+   "provenance": "explicit",
+   "items": [
+    {
+     "model": "KMS-M05-020-200",
+     "file": "KMS-M05-020-200.stp",
+     "envelope": [
+      170.0,
+      185.0,
+      200.0
+     ],
+     "n_solids": 4,
+     "n_faces": 51,
+     "n_cylinders": 12,
+     "cyl_diameters": {
+      "14": 4,
+      "10.1": 4,
+      "10": 4
+     },
+     "trust": "exact"
+    },
+    {
+     "model": "KMS-M05-020-300",
+     "file": "KMS-M05-020-300.stp",
+     "envelope": [
+      170.0,
+      185.0,
+      300.0
+     ],
+     "n_solids": 4,
+     "n_faces": 51,
+     "n_cylinders": 12,
+     "cyl_diameters": {
+      "14": 4,
+      "10.1": 4,
+      "10": 4
+     },
+     "trust": "exact"
+    }
+   ]
+  },
+  "销座": {
+   "count": 13,
+   "provenance": "explicit",
+   "items": [
+    {
+     "model": "KMS-M02-H03-20-RD",
+     "file": "KMS-M02-H03-20-RD.stp",
+     "envelope": [
+      20.0,
+      75.0,
+      35.0
+     ],
+     "n_solids": 1,
+     "n_faces": 18,
+     "n_cylinders": 4,
+     "cyl_diameters": {
+      "10": 1,
+      "9": 1,
+      "8": 2
+     },
+     "trust": "exact"
+    },
+    {
+     "model": "KMS-M02-H04-20-RM",
+     "file": "KMS-M02-H04-20-RM.stp",
+     "envelope": [
+      20.0,
+      90.0,
+      35.0
+     ],
+     "n_solids": 1,
+     "n_faces": 20,
+     "n_cylinders": 5,
+     "cyl_diameters": {
+      "10": 1,
+      "8": 2,
+      "6.647": 2
+     },
+     "trust": "exact"
+    },
+    {
+     "model": "KMS-M02-H04-20-TD",
+     "file": "KMS-M02-H04-20-TD.stp",
+     "envelope": [
+      20.0,
+      90.0,
+      35.0
+     ],
+     "n_solids": 1,
+     "n_faces": 20,
+     "n_cylinders": 5,
+     "cyl_diameters": {
+      "10": 1,
+      "9": 2,
+      "8": 2
+     },
+     "trust": "exact"
+    },
+    {
+     "model": "KMS-M02-H04-20-TM",
+     "file": "KMS-M02-H04-20-TM.stp",
+     "envelope": [
+      20.0,
+      90.0,
+      35.0
+     ],
+     "n_solids": 1,
+     "n_faces": 20,
+     "n_cylinders": 5,
+     "cyl_diameters": {
+      "10": 1,
+      "8": 2,
+      "6.647": 2
+     },
+     "trust": "exact"
+    },
+    {
+     "model": "KMS-M02-V03-20-RM",
+     "file": "KMS-M02-V03-20-RM.stp",
+     "envelope": [
+      20.0,
+      45.0,
+      50.0
+     ],
+     "n_solids": 1,
+     "n_faces": 24,
+     "n_cylinders": 4,
+     "cyl_diameters": {
+      "10": 1,
+      "8": 2,
+      "6.647": 1
+     },
+     "trust": "exact"
+    },
+    {
+     "model": "KMS-M02-V04-20-PD",
+     "file": "KMS-M02-V04-20-PD.stp",
+     "envelope": [
+      20.0,
+      45.0,
+      65.0
+     ],
+     "n_solids": 1,
+     "n_faces": 22,
+     "n_cylinders": 5,
+     "cyl_diameters": {
+      "10": 1,
+      "9": 2,
+      "8": 2
+     },
+     "trust": "exact"
+    },
+    {
+     "model": "KMS-M02-V04-20-PM",
+     "file": "KMS-M02-V04-20-PM.stp",
+     "envelope": [
+      20.0,
+      45.0,
+      65.0
+     ],
+     "n_solids": 1,
+     "n_faces": 22,
+     "n_cylinders": 5,
+     "cyl_diameters": {
+      "10": 1,
+      "8": 2,
+      "6.647": 2
+     },
+     "trust": "exact"
+    },
+    {
+     "model": "KMS-M02-V04-20-RM",
+     "file": "KMS-M02-V04-20-RM.stp",
+     "envelope": [
+      20.0,
+      45.0,
+      65.0
+     ],
+     "n_solids": 1,
+     "n_faces": 26,
+     "n_cylinders": 5,
+     "cyl_diameters": {
+      "10": 1,
+      "8": 2,
+      "6.647": 2
+     },
+     "trust": "exact"
+    },
+    {
+     "model": "KMS-M02-V04-20-SD",
+     "file": "KMS-M02-V04-20-SD.stp",
+     "envelope": [
+      20.0,
+      45.0,
+      65.0
+     ],
+     "n_solids": 1,
+     "n_faces": 22,
+     "n_cylinders": 5,
+     "cyl_diameters": {
+      "10": 1,
+      "8": 4
+     },
+     "trust": "exact"
+    },
+    {
+     "model": "KMS-M02-V04-20-SM",
+     "file": "KMS-M02-V04-20-SM.stp",
+     "envelope": [
+      20.0,
+      45.0,
+      65.0
+     ],
+     "n_solids": 1,
+     "n_faces": 22,
+     "n_cylinders": 5,
+     "cyl_diameters": {
+      "10": 1,
+      "8": 2,
+      "6.647": 2
+     },
+     "trust": "exact"
+    },
+    {
+     "model": "KMS-M02-V04-20-TM",
+     "file": "KMS-M02-V04-20-TM.stp",
+     "envelope": [
+      20.0,
+      45.0,
+      65.0
+     ],
+     "n_solids": 1,
+     "n_faces": 26,
+     "n_cylinders": 5,
+     "cyl_diameters": {
+      "10": 1,
+      "8": 2,
+      "6.647": 2
+     },
+     "trust": "exact"
+    },
+    {
+     "model": "KMS-M02-V04-24-RM",
+     "file": "KMS-M02-V04-24-RM.stp",
+     "envelope": [
+      24.0,
+      47.0,
+      65.0
+     ],
+     "n_solids": 1,
+     "n_faces": 26,
+     "n_cylinders": 5,
+     "cyl_diameters": {
+      "16": 1,
+      "8": 2,
+      "6.647": 2
+     },
+     "trust": "exact"
+    },
+    {
+     "model": "KMS-M02-V04-24-SM",
+     "file": "KMS-M02-V04-24-SM.stp",
+     "envelope": [
+      24.0,
+      47.0,
+      65.0
+     ],
+     "n_solids": 1,
+     "n_faces": 22,
+     "n_cylinders": 5,
+     "cyl_diameters": {
+      "16": 1,
+      "8": 2,
+      "6.647": 2
+     },
+     "trust": "exact"
+    }
+   ]
+  },
+  "阀岛": {
+   "count": 5,
+   "provenance": "explicit",
+   "items": [
+    {
+     "model": "KMS-M13-M05-P02-V04",
+     "file": "KMS-M13-M05-P02-V04.stp",
+     "envelope": [
+      255.0,
+      500.0,
+      183.0
+     ],
+     "n_solids": 9,
+     "n_faces": 200,
+     "n_cylinders": 80,
+     "cyl_diameters": {
+      "20": 10,
+      "18": 1,
+      "15": 5,
+      "14": 1,
+      "10": 7,
+      "9": 6,
+      "7": 10,
+      "6": 11,
+      "4.917": 7,
+      "4.8": 10,
+      "4.134": 12
+     },
+     "trust": "exact"
+    },
+    {
+     "model": "KMS-M13-M08-P05-V09",
+     "file": "KMS-M13-M08-P05-V09.stp",
+     "envelope": [
+      255.0,
+      800.0,
+      183.0
+     ],
+     "n_solids": 9,
+     "n_faces": 200,
+     "n_cylinders": 80,
+     "cyl_diameters": {
+      "20": 10,
+      "18": 1,
+      "15": 5,
+      "14": 1,
+      "10": 7,
+      "9": 6,
+      "7": 10,
+      "6": 11,
+      "4.917": 7,
+      "4.8": 10,
+      "4.134": 12
+     },
+     "trust": "exact"
+    },
+    {
+     "model": "KMS-M13-M08-P05-V10",
+     "file": "KMS-M13-M08-P05-V10.stp",
+     "envelope": [
+      255.0,
+      800.0,
+      183.0
+     ],
+     "n_solids": 9,
+     "n_faces": 200,
+     "n_cylinders": 80,
+     "cyl_diameters": {
+      "20": 10,
+      "18": 1,
+      "15": 5,
+      "14": 1,
+      "10": 7,
+      "9": 6,
+      "7": 10,
+      "6": 11,
+      "4.917": 7,
+      "4.8": 10,
+      "4.134": 12
+     },
+     "trust": "exact"
+    },
+    {
+     "model": "KMS-M13-M08-P06-V09",
+     "file": "KMS-M13-M08-P06-V09.stp",
+     "envelope": [
+      255.0,
+      800.0,
+      183.0
+     ],
+     "n_solids": 9,
+     "n_faces": 200,
+     "n_cylinders": 80,
+     "cyl_diameters": {
+      "20": 10,
+      "18": 1,
+      "15": 5,
+      "14": 1,
+      "10": 7,
+      "9": 6,
+      "7": 10,
+      "6": 11,
+      "4.917": 7,
+      "4.8": 10,
+      "4.134": 12
+     },
+     "trust": "exact"
+    },
+    {
+     "model": "KMS-M13-M08-P06-V10",
+     "file": "KMS-M13-M08-P06-V10.stp",
+     "envelope": [
+      255.0,
+      800.0,
+      183.0
+     ],
+     "n_solids": 9,
+     "n_faces": 200,
+     "n_cylinders": 80,
+     "cyl_diameters": {
+      "20": 10,
+      "18": 1,
+      "15": 5,
+      "14": 1,
+      "10": 7,
+      "9": 6,
+      "7": 10,
+      "6": 11,
+      "4.917": 7,
+      "4.8": 10,
+      "4.134": 12
+     },
+     "trust": "exact"
+    }
+   ]
+  }
+ },
+ "shims": {
+  "count": 18,
+  "provenance": "explicit",
+  "items": [
+   {
+    "model": "50x20x5",
+    "group": "50x20x5",
+    "file": "50x20x5.stp",
+    "envelope": null,
+    "n_solids": 0,
+    "n_faces": 0,
+    "cyl_diameters": {},
+    "trust": "no_geometry"
+   },
+   {
+    "model": "50x50x5",
+    "group": "50x50x5",
+    "file": "50x50x5.stp",
+    "envelope": null,
+    "n_solids": 0,
+    "n_faces": 0,
+    "cyl_diameters": {},
+    "trust": "no_geometry"
+   },
+   {
+    "model": "65x20x5",
+    "group": "65x20x5",
+    "file": "65x20x5.stp",
+    "envelope": null,
+    "n_solids": 0,
+    "n_faces": 0,
+    "cyl_diameters": {},
+    "trust": "no_geometry"
+   },
+   {
+    "model": "KMS-M09-H03-20-20",
+    "group": "50x20x5",
+    "file": "KMS-M09-H03-20-20.stp",
+    "envelope": [
+     20.0,
+     50.0,
+     2.0
+    ],
+    "n_solids": 1,
+    "n_faces": 12,
+    "cyl_diameters": {
+     "9": 3
+    },
+    "trust": "exact"
+   },
+   {
+    "model": "KMS-M09-H04-20-20",
+    "group": "65x20x5",
+    "file": "KMS-M09-H04-20-20.stp",
+    "envelope": [
+     20.0,
+     65.0,
+     2.0
+    ],
+    "n_solids": 1,
+    "n_faces": 14,
+    "cyl_diameters": {
+     "9": 4
+    },
+    "trust": "exact"
+   },
+   {
+    "model": "KMS-M09-H06-50-20",
+    "group": "50x50x5",
+    "file": "KMS-M09-H06-50-20.stp",
+    "envelope": [
+     50.0,
+     50.0,
+     2.0
+    ],
+    "n_solids": 1,
+    "n_faces": 18,
+    "cyl_diameters": {
+     "9": 6
+    },
+    "trust": "exact"
+   },
+   {
+    "model": "KMS-M09-S02-50-02",
+    "group": "50x50x5",
+    "file": "KMS-M09-S02-50-02.stp",
+    "envelope": [
+     50.0,
+     50.0,
+     0.2
+    ],
+    "n_solids": 1,
+    "n_faces": 14,
+    "cyl_diameters": {
+     "9": 2
+    },
+    "trust": "exact"
+   },
+   {
+    "model": "KMS-M09-S02-50-03",
+    "group": "50x50x5",
+    "file": "KMS-M09-S02-50-03.stp",
+    "envelope": [
+     50.0,
+     50.0,
+     0.3
+    ],
+    "n_solids": 1,
+    "n_faces": 14,
+    "cyl_diameters": {
+     "9": 2
+    },
+    "trust": "exact"
+   },
+   {
+    "model": "KMS-M09-S02-50-05",
+    "group": "50x50x5",
+    "file": "KMS-M09-S02-50-05.stp",
+    "envelope": [
+     50.0,
+     50.0,
+     0.5
+    ],
+    "n_solids": 1,
+    "n_faces": 14,
+    "cyl_diameters": {
+     "9": 2
+    },
+    "trust": "exact"
+   },
+   {
+    "model": "KMS-M09-S02-50-10",
+    "group": "50x50x5",
+    "file": "KMS-M09-S02-50-10.stp",
+    "envelope": [
+     50.0,
+     50.0,
+     1.0
+    ],
+    "n_solids": 1,
+    "n_faces": 14,
+    "cyl_diameters": {
+     "9": 2
+    },
+    "trust": "exact"
+   },
+   {
+    "model": "KMS-M09-S03-20-02",
+    "group": "50x20x5",
+    "file": "KMS-M09-S03-20-02.stp",
+    "envelope": [
+     20.0,
+     50.0,
+     0.2
+    ],
+    "n_solids": 1,
+    "n_faces": 18,
+    "cyl_diameters": {
+     "9": 3
+    },
+    "trust": "exact"
+   },
+   {
+    "model": "KMS-M09-S03-20-03",
+    "group": "50x20x5",
+    "file": "KMS-M09-S03-20-03.stp",
+    "envelope": [
+     20.0,
+     50.0,
+     0.3
+    ],
+    "n_solids": 1,
+    "n_faces": 18,
+    "cyl_diameters": {
+     "9": 3
+    },
+    "trust": "exact"
+   },
+   {
+    "model": "KMS-M09-S03-20-05",
+    "group": "50x20x5",
+    "file": "KMS-M09-S03-20-05.stp",
+    "envelope": [
+     20.0,
+     50.0,
+     0.5
+    ],
+    "n_solids": 1,
+    "n_faces": 18,
+    "cyl_diameters": {
+     "9": 3
+    },
+    "trust": "exact"
+   },
+   {
+    "model": "KMS-M09-S03-20-10",
+    "group": "50x20x5",
+    "file": "KMS-M09-S03-20-10.stp",
+    "envelope": [
+     20.0,
+     50.0,
+     1.0
+    ],
+    "n_solids": 1,
+    "n_faces": 18,
+    "cyl_diameters": {
+     "9": 3
+    },
+    "trust": "exact"
+   },
+   {
+    "model": "KMS-M09-S04-20-02",
+    "group": "65x20x5",
+    "file": "KMS-M09-S04-20-02.stp",
+    "envelope": [
+     20.0,
+     65.0,
+     0.2
+    ],
+    "n_solids": 1,
+    "n_faces": 22,
+    "cyl_diameters": {
+     "9": 4
+    },
+    "trust": "exact"
+   },
+   {
+    "model": "KMS-M09-S04-20-03",
+    "group": "65x20x5",
+    "file": "KMS-M09-S04-20-03.stp",
+    "envelope": [
+     20.0,
+     65.0,
+     0.3
+    ],
+    "n_solids": 1,
+    "n_faces": 22,
+    "cyl_diameters": {
+     "9": 4
+    },
+    "trust": "exact"
+   },
+   {
+    "model": "KMS-M09-S04-20-05",
+    "group": "65x20x5",
+    "file": "KMS-M09-S04-20-05.stp",
+    "envelope": [
+     20.0,
+     65.0,
+     0.5
+    ],
+    "n_solids": 1,
+    "n_faces": 22,
+    "cyl_diameters": {
+     "9": 4
+    },
+    "trust": "exact"
+   },
+   {
+    "model": "KMS-M09-S04-20-10",
+    "group": "65x20x5",
+    "file": "KMS-M09-S04-20-10.stp",
+    "envelope": [
+     20.0,
+     65.0,
+     1.0
+    ],
+    "n_solids": 1,
+    "n_faces": 22,
+    "cyl_diameters": {
+     "9": 4
+    },
+    "trust": "exact"
+   }
+  ]
+ }
+}

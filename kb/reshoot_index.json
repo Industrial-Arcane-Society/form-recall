@@ -1,0 +1,4150 @@
+{
+ "n": 518,
+ "ok": 518,
+ "items": [
+  {
+   "model": "EGT001 SW80x088",
+   "group": "10_Tuenkers EGT Gripper-EGT001",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\外购件\\EGT型材库\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x088.CATPart",
+   "img": "零件真实图片_带背景\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x088.png",
+   "bg": "零件真实图片_带背景\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x088_bg.png",
+   "ok": true
+  },
+  {
+   "model": "EGT001 SW80x1018",
+   "group": "10_Tuenkers EGT Gripper-EGT001",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\外购件\\EGT型材库\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x1018.CATPart",
+   "img": "零件真实图片_带背景\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x1018.png",
+   "bg": "零件真实图片_带背景\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x1018_bg.png",
+   "ok": true
+  },
+  {
+   "model": "EGT001 SW80x1048",
+   "group": "10_Tuenkers EGT Gripper-EGT001",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\外购件\\EGT型材库\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x1048.CATPart",
+   "img": "零件真实图片_带背景\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x1048.png",
+   "bg": "零件真实图片_带背景\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x1048_bg.png",
+   "ok": true
+  },
+  {
+   "model": "EGT001 SW80x1078",
+   "group": "10_Tuenkers EGT Gripper-EGT001",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\外购件\\EGT型材库\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x1078.CATPart",
+   "img": "零件真实图片_带背景\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x1078.png",
+   "bg": "零件真实图片_带背景\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x1078_bg.png",
+   "ok": true
+  },
+  {
+   "model": "EGT001 SW80x1108",
+   "group": "10_Tuenkers EGT Gripper-EGT001",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\外购件\\EGT型材库\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x1108.CATPart",
+   "img": "零件真实图片_带背景\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x1108.png",
+   "bg": "零件真实图片_带背景\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x1108_bg.png",
+   "ok": true
+  },
+  {
+   "model": "EGT001 SW80x1138",
+   "group": "10_Tuenkers EGT Gripper-EGT001",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\外购件\\EGT型材库\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x1138.CATPart",
+   "img": "零件真实图片_带背景\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x1138.png",
+   "bg": "零件真实图片_带背景\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x1138_bg.png",
+   "ok": true
+  },
+  {
+   "model": "EGT001 SW80x1168",
+   "group": "10_Tuenkers EGT Gripper-EGT001",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\外购件\\EGT型材库\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x1168.CATPart",
+   "img": "零件真实图片_带背景\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x1168.png",
+   "bg": "零件真实图片_带背景\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x1168_bg.png",
+   "ok": true
+  },
+  {
+   "model": "EGT001 SW80x118",
+   "group": "10_Tuenkers EGT Gripper-EGT001",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\外购件\\EGT型材库\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x118.CATPart",
+   "img": "零件真实图片_带背景\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x118.png",
+   "bg": "零件真实图片_带背景\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x118_bg.png",
+   "ok": true
+  },
+  {
+   "model": "EGT001 SW80x1198",
+   "group": "10_Tuenkers EGT Gripper-EGT001",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\外购件\\EGT型材库\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x1198.CATPart",
+   "img": "零件真实图片_带背景\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x1198.png",
+   "bg": "零件真实图片_带背景\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x1198_bg.png",
+   "ok": true
+  },
+  {
+   "model": "EGT001 SW80x1228",
+   "group": "10_Tuenkers EGT Gripper-EGT001",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\外购件\\EGT型材库\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x1228.CATPart",
+   "img": "零件真实图片_带背景\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x1228.png",
+   "bg": "零件真实图片_带背景\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x1228_bg.png",
+   "ok": true
+  },
+  {
+   "model": "EGT001 SW80x1258",
+   "group": "10_Tuenkers EGT Gripper-EGT001",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\外购件\\EGT型材库\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x1258.CATPart",
+   "img": "零件真实图片_带背景\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x1258.png",
+   "bg": "零件真实图片_带背景\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x1258_bg.png",
+   "ok": true
+  },
+  {
+   "model": "EGT001 SW80x1288",
+   "group": "10_Tuenkers EGT Gripper-EGT001",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\外购件\\EGT型材库\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x1288.CATPart",
+   "img": "零件真实图片_带背景\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x1288.png",
+   "bg": "零件真实图片_带背景\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x1288_bg.png",
+   "ok": true
+  },
+  {
+   "model": "EGT001 SW80x1318",
+   "group": "10_Tuenkers EGT Gripper-EGT001",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\外购件\\EGT型材库\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x1318.CATPart",
+   "img": "零件真实图片_带背景\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x1318.png",
+   "bg": "零件真实图片_带背景\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x1318_bg.png",
+   "ok": true
+  },
+  {
+   "model": "EGT001 SW80x1348",
+   "group": "10_Tuenkers EGT Gripper-EGT001",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\外购件\\EGT型材库\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x1348.CATPart",
+   "img": "零件真实图片_带背景\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x1348.png",
+   "bg": "零件真实图片_带背景\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x1348_bg.png",
+   "ok": true
+  },
+  {
+   "model": "EGT001 SW80x1378",
+   "group": "10_Tuenkers EGT Gripper-EGT001",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\外购件\\EGT型材库\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x1378.CATPart",
+   "img": "零件真实图片_带背景\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x1378.png",
+   "bg": "零件真实图片_带背景\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x1378_bg.png",
+   "ok": true
+  },
+  {
+   "model": "EGT001 SW80x1408",
+   "group": "10_Tuenkers EGT Gripper-EGT001",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\外购件\\EGT型材库\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x1408.CATPart",
+   "img": "零件真实图片_带背景\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x1408.png",
+   "bg": "零件真实图片_带背景\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x1408_bg.png",
+   "ok": true
+  },
+  {
+   "model": "EGT001 SW80x1438",
+   "group": "10_Tuenkers EGT Gripper-EGT001",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\外购件\\EGT型材库\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x1438.CATPart",
+   "img": "零件真实图片_带背景\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x1438.png",
+   "bg": "零件真实图片_带背景\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x1438_bg.png",
+   "ok": true
+  },
+  {
+   "model": "EGT001 SW80x1468",
+   "group": "10_Tuenkers EGT Gripper-EGT001",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\外购件\\EGT型材库\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x1468.CATPart",
+   "img": "零件真实图片_带背景\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x1468.png",
+   "bg": "零件真实图片_带背景\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x1468_bg.png",
+   "ok": true
+  },
+  {
+   "model": "EGT001 SW80x148",
+   "group": "10_Tuenkers EGT Gripper-EGT001",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\外购件\\EGT型材库\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x148.CATPart",
+   "img": "零件真实图片_带背景\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x148.png",
+   "bg": "零件真实图片_带背景\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x148_bg.png",
+   "ok": true
+  },
+  {
+   "model": "EGT001 SW80x1498",
+   "group": "10_Tuenkers EGT Gripper-EGT001",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\外购件\\EGT型材库\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x1498.CATPart",
+   "img": "零件真实图片_带背景\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x1498.png",
+   "bg": "零件真实图片_带背景\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x1498_bg.png",
+   "ok": true
+  },
+  {
+   "model": "EGT001 SW80x1528",
+   "group": "10_Tuenkers EGT Gripper-EGT001",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\外购件\\EGT型材库\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x1528.CATPart",
+   "img": "零件真实图片_带背景\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x1528.png",
+   "bg": "零件真实图片_带背景\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x1528_bg.png",
+   "ok": true
+  },
+  {
+   "model": "EGT001 SW80x1558",
+   "group": "10_Tuenkers EGT Gripper-EGT001",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\外购件\\EGT型材库\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x1558.CATPart",
+   "img": "零件真实图片_带背景\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x1558.png",
+   "bg": "零件真实图片_带背景\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x1558_bg.png",
+   "ok": true
+  },
+  {
+   "model": "EGT001 SW80x1588",
+   "group": "10_Tuenkers EGT Gripper-EGT001",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\外购件\\EGT型材库\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x1588.CATPart",
+   "img": "零件真实图片_带背景\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x1588.png",
+   "bg": "零件真实图片_带背景\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x1588_bg.png",
+   "ok": true
+  },
+  {
+   "model": "EGT001 SW80x1618",
+   "group": "10_Tuenkers EGT Gripper-EGT001",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\外购件\\EGT型材库\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x1618.CATPart",
+   "img": "零件真实图片_带背景\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x1618.png",
+   "bg": "零件真实图片_带背景\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x1618_bg.png",
+   "ok": true
+  },
+  {
+   "model": "EGT001 SW80x1648",
+   "group": "10_Tuenkers EGT Gripper-EGT001",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\外购件\\EGT型材库\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x1648.CATPart",
+   "img": "零件真实图片_带背景\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x1648.png",
+   "bg": "零件真实图片_带背景\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x1648_bg.png",
+   "ok": true
+  },
+  {
+   "model": "EGT001 SW80x1678",
+   "group": "10_Tuenkers EGT Gripper-EGT001",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\外购件\\EGT型材库\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x1678.CATPart",
+   "img": "零件真实图片_带背景\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x1678.png",
+   "bg": "零件真实图片_带背景\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x1678_bg.png",
+   "ok": true
+  },
+  {
+   "model": "EGT001 SW80x1708",
+   "group": "10_Tuenkers EGT Gripper-EGT001",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\外购件\\EGT型材库\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x1708.CATPart",
+   "img": "零件真实图片_带背景\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x1708.png",
+   "bg": "零件真实图片_带背景\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x1708_bg.png",
+   "ok": true
+  },
+  {
+   "model": "EGT001 SW80x1738",
+   "group": "10_Tuenkers EGT Gripper-EGT001",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\外购件\\EGT型材库\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x1738.CATPart",
+   "img": "零件真实图片_带背景\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x1738.png",
+   "bg": "零件真实图片_带背景\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x1738_bg.png",
+   "ok": true
+  },
+  {
+   "model": "EGT001 SW80x1768",
+   "group": "10_Tuenkers EGT Gripper-EGT001",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\外购件\\EGT型材库\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x1768.CATPart",
+   "img": "零件真实图片_带背景\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x1768.png",
+   "bg": "零件真实图片_带背景\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x1768_bg.png",
+   "ok": true
+  },
+  {
+   "model": "EGT001 SW80x178",
+   "group": "10_Tuenkers EGT Gripper-EGT001",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\外购件\\EGT型材库\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x178.CATPart",
+   "img": "零件真实图片_带背景\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x178.png",
+   "bg": "零件真实图片_带背景\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x178_bg.png",
+   "ok": true
+  },
+  {
+   "model": "EGT001 SW80x1798",
+   "group": "10_Tuenkers EGT Gripper-EGT001",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\外购件\\EGT型材库\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x1798.CATPart",
+   "img": "零件真实图片_带背景\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x1798.png",
+   "bg": "零件真实图片_带背景\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x1798_bg.png",
+   "ok": true
+  },
+  {
+   "model": "EGT001 SW80x1828",
+   "group": "10_Tuenkers EGT Gripper-EGT001",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\外购件\\EGT型材库\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x1828.CATPart",
+   "img": "零件真实图片_带背景\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x1828.png",
+   "bg": "零件真实图片_带背景\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x1828_bg.png",
+   "ok": true
+  },
+  {
+   "model": "EGT001 SW80x1858",
+   "group": "10_Tuenkers EGT Gripper-EGT001",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\外购件\\EGT型材库\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x1858.CATPart",
+   "img": "零件真实图片_带背景\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x1858.png",
+   "bg": "零件真实图片_带背景\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x1858_bg.png",
+   "ok": true
+  },
+  {
+   "model": "EGT001 SW80x1888",
+   "group": "10_Tuenkers EGT Gripper-EGT001",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\外购件\\EGT型材库\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x1888.CATPart",
+   "img": "零件真实图片_带背景\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x1888.png",
+   "bg": "零件真实图片_带背景\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x1888_bg.png",
+   "ok": true
+  },
+  {
+   "model": "EGT001 SW80x1918",
+   "group": "10_Tuenkers EGT Gripper-EGT001",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\外购件\\EGT型材库\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x1918.CATPart",
+   "img": "零件真实图片_带背景\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x1918.png",
+   "bg": "零件真实图片_带背景\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x1918_bg.png",
+   "ok": true
+  },
+  {
+   "model": "EGT001 SW80x1948",
+   "group": "10_Tuenkers EGT Gripper-EGT001",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\外购件\\EGT型材库\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x1948.CATPart",
+   "img": "零件真实图片_带背景\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x1948.png",
+   "bg": "零件真实图片_带背景\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x1948_bg.png",
+   "ok": true
+  },
+  {
+   "model": "EGT001 SW80x1978",
+   "group": "10_Tuenkers EGT Gripper-EGT001",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\外购件\\EGT型材库\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x1978.CATPart",
+   "img": "零件真实图片_带背景\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x1978.png",
+   "bg": "零件真实图片_带背景\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x1978_bg.png",
+   "ok": true
+  },
+  {
+   "model": "EGT001 SW80x2008",
+   "group": "10_Tuenkers EGT Gripper-EGT001",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\外购件\\EGT型材库\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x2008.CATPart",
+   "img": "零件真实图片_带背景\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x2008.png",
+   "bg": "零件真实图片_带背景\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x2008_bg.png",
+   "ok": true
+  },
+  {
+   "model": "EGT001 SW80x2038",
+   "group": "10_Tuenkers EGT Gripper-EGT001",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\外购件\\EGT型材库\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x2038.CATPart",
+   "img": "零件真实图片_带背景\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x2038.png",
+   "bg": "零件真实图片_带背景\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x2038_bg.png",
+   "ok": true
+  },
+  {
+   "model": "EGT001 SW80x2068",
+   "group": "10_Tuenkers EGT Gripper-EGT001",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\外购件\\EGT型材库\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x2068.CATPart",
+   "img": "零件真实图片_带背景\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x2068.png",
+   "bg": "零件真实图片_带背景\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x2068_bg.png",
+   "ok": true
+  },
+  {
+   "model": "EGT001 SW80x208",
+   "group": "10_Tuenkers EGT Gripper-EGT001",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\外购件\\EGT型材库\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x208.CATPart",
+   "img": "零件真实图片_带背景\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x208.png",
+   "bg": "零件真实图片_带背景\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x208_bg.png",
+   "ok": true
+  },
+  {
+   "model": "EGT001 SW80x2098",
+   "group": "10_Tuenkers EGT Gripper-EGT001",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\外购件\\EGT型材库\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x2098.CATPart",
+   "img": "零件真实图片_带背景\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x2098.png",
+   "bg": "零件真实图片_带背景\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x2098_bg.png",
+   "ok": true
+  },
+  {
+   "model": "EGT001 SW80x2128",
+   "group": "10_Tuenkers EGT Gripper-EGT001",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\外购件\\EGT型材库\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x2128.CATPart",
+   "img": "零件真实图片_带背景\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x2128.png",
+   "bg": "零件真实图片_带背景\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x2128_bg.png",
+   "ok": true
+  },
+  {
+   "model": "EGT001 SW80x2158",
+   "group": "10_Tuenkers EGT Gripper-EGT001",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\外购件\\EGT型材库\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x2158.CATPart",
+   "img": "零件真实图片_带背景\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x2158.png",
+   "bg": "零件真实图片_带背景\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x2158_bg.png",
+   "ok": true
+  },
+  {
+   "model": "EGT001 SW80x2188",
+   "group": "10_Tuenkers EGT Gripper-EGT001",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\外购件\\EGT型材库\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x2188.CATPart",
+   "img": "零件真实图片_带背景\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x2188.png",
+   "bg": "零件真实图片_带背景\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x2188_bg.png",
+   "ok": true
+  },
+  {
+   "model": "EGT001 SW80x2218",
+   "group": "10_Tuenkers EGT Gripper-EGT001",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\外购件\\EGT型材库\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x2218.CATPart",
+   "img": "零件真实图片_带背景\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x2218.png",
+   "bg": "零件真实图片_带背景\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x2218_bg.png",
+   "ok": true
+  },
+  {
+   "model": "EGT001 SW80x2248",
+   "group": "10_Tuenkers EGT Gripper-EGT001",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\外购件\\EGT型材库\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x2248.CATPart",
+   "img": "零件真实图片_带背景\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x2248.png",
+   "bg": "零件真实图片_带背景\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x2248_bg.png",
+   "ok": true
+  },
+  {
+   "model": "EGT001 SW80x2278",
+   "group": "10_Tuenkers EGT Gripper-EGT001",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\外购件\\EGT型材库\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x2278.CATPart",
+   "img": "零件真实图片_带背景\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x2278.png",
+   "bg": "零件真实图片_带背景\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x2278_bg.png",
+   "ok": true
+  },
+  {
+   "model": "EGT001 SW80x2308",
+   "group": "10_Tuenkers EGT Gripper-EGT001",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\外购件\\EGT型材库\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x2308.CATPart",
+   "img": "零件真实图片_带背景\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x2308.png",
+   "bg": "零件真实图片_带背景\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x2308_bg.png",
+   "ok": true
+  },
+  {
+   "model": "EGT001 SW80x2338",
+   "group": "10_Tuenkers EGT Gripper-EGT001",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\外购件\\EGT型材库\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x2338.CATPart",
+   "img": "零件真实图片_带背景\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x2338.png",
+   "bg": "零件真实图片_带背景\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x2338_bg.png",
+   "ok": true
+  },
+  {
+   "model": "EGT001 SW80x2368",
+   "group": "10_Tuenkers EGT Gripper-EGT001",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\外购件\\EGT型材库\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x2368.CATPart",
+   "img": "零件真实图片_带背景\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x2368.png",
+   "bg": "零件真实图片_带背景\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x2368_bg.png",
+   "ok": true
+  },
+  {
+   "model": "EGT001 SW80x238",
+   "group": "10_Tuenkers EGT Gripper-EGT001",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\外购件\\EGT型材库\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x238.CATPart",
+   "img": "零件真实图片_带背景\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x238.png",
+   "bg": "零件真实图片_带背景\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x238_bg.png",
+   "ok": true
+  },
+  {
+   "model": "EGT001 SW80x2398",
+   "group": "10_Tuenkers EGT Gripper-EGT001",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\外购件\\EGT型材库\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x2398.CATPart",
+   "img": "零件真实图片_带背景\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x2398.png",
+   "bg": "零件真实图片_带背景\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x2398_bg.png",
+   "ok": true
+  },
+  {
+   "model": "EGT001 SW80x2428",
+   "group": "10_Tuenkers EGT Gripper-EGT001",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\外购件\\EGT型材库\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x2428.CATPart",
+   "img": "零件真实图片_带背景\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x2428.png",
+   "bg": "零件真实图片_带背景\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x2428_bg.png",
+   "ok": true
+  },
+  {
+   "model": "EGT001 SW80x2458",
+   "group": "10_Tuenkers EGT Gripper-EGT001",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\外购件\\EGT型材库\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x2458.CATPart",
+   "img": "零件真实图片_带背景\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x2458.png",
+   "bg": "零件真实图片_带背景\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x2458_bg.png",
+   "ok": true
+  },
+  {
+   "model": "EGT001 SW80x2488",
+   "group": "10_Tuenkers EGT Gripper-EGT001",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\外购件\\EGT型材库\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x2488.CATPart",
+   "img": "零件真实图片_带背景\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x2488.png",
+   "bg": "零件真实图片_带背景\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x2488_bg.png",
+   "ok": true
+  },
+  {
+   "model": "EGT001 SW80x2518",
+   "group": "10_Tuenkers EGT Gripper-EGT001",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\外购件\\EGT型材库\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x2518.CATPart",
+   "img": "零件真实图片_带背景\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x2518.png",
+   "bg": "零件真实图片_带背景\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x2518_bg.png",
+   "ok": true
+  },
+  {
+   "model": "EGT001 SW80x2548",
+   "group": "10_Tuenkers EGT Gripper-EGT001",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\外购件\\EGT型材库\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x2548.CATPart",
+   "img": "零件真实图片_带背景\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x2548.png",
+   "bg": "零件真实图片_带背景\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x2548_bg.png",
+   "ok": true
+  },
+  {
+   "model": "EGT001 SW80x2578",
+   "group": "10_Tuenkers EGT Gripper-EGT001",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\外购件\\EGT型材库\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x2578.CATPart",
+   "img": "零件真实图片_带背景\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x2578.png",
+   "bg": "零件真实图片_带背景\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x2578_bg.png",
+   "ok": true
+  },
+  {
+   "model": "EGT001 SW80x2608",
+   "group": "10_Tuenkers EGT Gripper-EGT001",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\外购件\\EGT型材库\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x2608.CATPart",
+   "img": "零件真实图片_带背景\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x2608.png",
+   "bg": "零件真实图片_带背景\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x2608_bg.png",
+   "ok": true
+  },
+  {
+   "model": "EGT001 SW80x2638",
+   "group": "10_Tuenkers EGT Gripper-EGT001",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\外购件\\EGT型材库\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x2638.CATPart",
+   "img": "零件真实图片_带背景\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x2638.png",
+   "bg": "零件真实图片_带背景\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x2638_bg.png",
+   "ok": true
+  },
+  {
+   "model": "EGT001 SW80x2668",
+   "group": "10_Tuenkers EGT Gripper-EGT001",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\外购件\\EGT型材库\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x2668.CATPart",
+   "img": "零件真实图片_带背景\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x2668.png",
+   "bg": "零件真实图片_带背景\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x2668_bg.png",
+   "ok": true
+  },
+  {
+   "model": "EGT001 SW80x2698",
+   "group": "10_Tuenkers EGT Gripper-EGT001",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\外购件\\EGT型材库\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x2698.CATPart",
+   "img": "零件真实图片_带背景\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x2698.png",
+   "bg": "零件真实图片_带背景\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x2698_bg.png",
+   "ok": true
+  },
+  {
+   "model": "EGT001 SW80x2728",
+   "group": "10_Tuenkers EGT Gripper-EGT001",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\外购件\\EGT型材库\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x2728.CATPart",
+   "img": "零件真实图片_带背景\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x2728.png",
+   "bg": "零件真实图片_带背景\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x2728_bg.png",
+   "ok": true
+  },
+  {
+   "model": "EGT001 SW80x2758",
+   "group": "10_Tuenkers EGT Gripper-EGT001",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\外购件\\EGT型材库\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x2758.CATPart",
+   "img": "零件真实图片_带背景\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x2758.png",
+   "bg": "零件真实图片_带背景\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x2758_bg.png",
+   "ok": true
+  },
+  {
+   "model": "EGT001 SW80x2788",
+   "group": "10_Tuenkers EGT Gripper-EGT001",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\外购件\\EGT型材库\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x2788.CATPart",
+   "img": "零件真实图片_带背景\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x2788.png",
+   "bg": "零件真实图片_带背景\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x2788_bg.png",
+   "ok": true
+  },
+  {
+   "model": "EGT001 SW80x2818",
+   "group": "10_Tuenkers EGT Gripper-EGT001",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\外购件\\EGT型材库\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x2818.CATPart",
+   "img": "零件真实图片_带背景\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x2818.png",
+   "bg": "零件真实图片_带背景\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x2818_bg.png",
+   "ok": true
+  },
+  {
+   "model": "EGT001 SW80x2848",
+   "group": "10_Tuenkers EGT Gripper-EGT001",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\外购件\\EGT型材库\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x2848.CATPart",
+   "img": "零件真实图片_带背景\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x2848.png",
+   "bg": "零件真实图片_带背景\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x2848_bg.png",
+   "ok": true
+  },
+  {
+   "model": "EGT001 SW80x2878",
+   "group": "10_Tuenkers EGT Gripper-EGT001",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\外购件\\EGT型材库\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x2878.CATPart",
+   "img": "零件真实图片_带背景\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x2878.png",
+   "bg": "零件真实图片_带背景\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x2878_bg.png",
+   "ok": true
+  },
+  {
+   "model": "EGT001 SW80x2908",
+   "group": "10_Tuenkers EGT Gripper-EGT001",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\外购件\\EGT型材库\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x2908.CATPart",
+   "img": "零件真实图片_带背景\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x2908.png",
+   "bg": "零件真实图片_带背景\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x2908_bg.png",
+   "ok": true
+  },
+  {
+   "model": "EGT001 SW80x2938",
+   "group": "10_Tuenkers EGT Gripper-EGT001",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\外购件\\EGT型材库\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x2938.CATPart",
+   "img": "零件真实图片_带背景\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x2938.png",
+   "bg": "零件真实图片_带背景\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x2938_bg.png",
+   "ok": true
+  },
+  {
+   "model": "EGT001 SW80x2968",
+   "group": "10_Tuenkers EGT Gripper-EGT001",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\外购件\\EGT型材库\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x2968.CATPart",
+   "img": "零件真实图片_带背景\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x2968.png",
+   "bg": "零件真实图片_带背景\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x2968_bg.png",
+   "ok": true
+  },
+  {
+   "model": "EGT001 SW80x298",
+   "group": "10_Tuenkers EGT Gripper-EGT001",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\外购件\\EGT型材库\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x298.CATPart",
+   "img": "零件真实图片_带背景\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x298.png",
+   "bg": "零件真实图片_带背景\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x298_bg.png",
+   "ok": true
+  },
+  {
+   "model": "EGT001 SW80x2998",
+   "group": "10_Tuenkers EGT Gripper-EGT001",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\外购件\\EGT型材库\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x2998.CATPart",
+   "img": "零件真实图片_带背景\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x2998.png",
+   "bg": "零件真实图片_带背景\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x2998_bg.png",
+   "ok": true
+  },
+  {
+   "model": "EGT001 SW80x3028",
+   "group": "10_Tuenkers EGT Gripper-EGT001",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\外购件\\EGT型材库\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x3028.CATPart",
+   "img": "零件真实图片_带背景\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x3028.png",
+   "bg": "零件真实图片_带背景\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x3028_bg.png",
+   "ok": true
+  },
+  {
+   "model": "EGT001 SW80x3058",
+   "group": "10_Tuenkers EGT Gripper-EGT001",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\外购件\\EGT型材库\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x3058.CATPart",
+   "img": "零件真实图片_带背景\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x3058.png",
+   "bg": "零件真实图片_带背景\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x3058_bg.png",
+   "ok": true
+  },
+  {
+   "model": "EGT001 SW80x3088",
+   "group": "10_Tuenkers EGT Gripper-EGT001",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\外购件\\EGT型材库\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x3088.CATPart",
+   "img": "零件真实图片_带背景\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x3088.png",
+   "bg": "零件真实图片_带背景\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x3088_bg.png",
+   "ok": true
+  },
+  {
+   "model": "EGT001 SW80x3118",
+   "group": "10_Tuenkers EGT Gripper-EGT001",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\外购件\\EGT型材库\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x3118.CATPart",
+   "img": "零件真实图片_带背景\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x3118.png",
+   "bg": "零件真实图片_带背景\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x3118_bg.png",
+   "ok": true
+  },
+  {
+   "model": "EGT001 SW80x3148",
+   "group": "10_Tuenkers EGT Gripper-EGT001",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\外购件\\EGT型材库\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x3148.CATPart",
+   "img": "零件真实图片_带背景\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x3148.png",
+   "bg": "零件真实图片_带背景\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x3148_bg.png",
+   "ok": true
+  },
+  {
+   "model": "EGT001 SW80x3178",
+   "group": "10_Tuenkers EGT Gripper-EGT001",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\外购件\\EGT型材库\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x3178.CATPart",
+   "img": "零件真实图片_带背景\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x3178.png",
+   "bg": "零件真实图片_带背景\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x3178_bg.png",
+   "ok": true
+  },
+  {
+   "model": "EGT001 SW80x3208",
+   "group": "10_Tuenkers EGT Gripper-EGT001",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\外购件\\EGT型材库\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x3208.CATPart",
+   "img": "零件真实图片_带背景\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x3208.png",
+   "bg": "零件真实图片_带背景\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x3208_bg.png",
+   "ok": true
+  },
+  {
+   "model": "EGT001 SW80x3238",
+   "group": "10_Tuenkers EGT Gripper-EGT001",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\外购件\\EGT型材库\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x3238.CATPart",
+   "img": "零件真实图片_带背景\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x3238.png",
+   "bg": "零件真实图片_带背景\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x3238_bg.png",
+   "ok": true
+  },
+  {
+   "model": "EGT001 SW80x3268",
+   "group": "10_Tuenkers EGT Gripper-EGT001",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\外购件\\EGT型材库\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x3268.CATPart",
+   "img": "零件真实图片_带背景\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x3268.png",
+   "bg": "零件真实图片_带背景\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x3268_bg.png",
+   "ok": true
+  },
+  {
+   "model": "EGT001 SW80x328",
+   "group": "10_Tuenkers EGT Gripper-EGT001",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\外购件\\EGT型材库\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x328.CATPart",
+   "img": "零件真实图片_带背景\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x328.png",
+   "bg": "零件真实图片_带背景\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x328_bg.png",
+   "ok": true
+  },
+  {
+   "model": "EGT001 SW80x3298",
+   "group": "10_Tuenkers EGT Gripper-EGT001",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\外购件\\EGT型材库\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x3298.CATPart",
+   "img": "零件真实图片_带背景\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x3298.png",
+   "bg": "零件真实图片_带背景\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x3298_bg.png",
+   "ok": true
+  },
+  {
+   "model": "EGT001 SW80x3328",
+   "group": "10_Tuenkers EGT Gripper-EGT001",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\外购件\\EGT型材库\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x3328.CATPart",
+   "img": "零件真实图片_带背景\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x3328.png",
+   "bg": "零件真实图片_带背景\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x3328_bg.png",
+   "ok": true
+  },
+  {
+   "model": "EGT001 SW80x3358",
+   "group": "10_Tuenkers EGT Gripper-EGT001",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\外购件\\EGT型材库\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x3358.CATPart",
+   "img": "零件真实图片_带背景\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x3358.png",
+   "bg": "零件真实图片_带背景\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x3358_bg.png",
+   "ok": true
+  },
+  {
+   "model": "EGT001 SW80x3388",
+   "group": "10_Tuenkers EGT Gripper-EGT001",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\外购件\\EGT型材库\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x3388.CATPart",
+   "img": "零件真实图片_带背景\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x3388.png",
+   "bg": "零件真实图片_带背景\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x3388_bg.png",
+   "ok": true
+  },
+  {
+   "model": "EGT001 SW80x3418",
+   "group": "10_Tuenkers EGT Gripper-EGT001",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\外购件\\EGT型材库\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x3418.CATPart",
+   "img": "零件真实图片_带背景\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x3418.png",
+   "bg": "零件真实图片_带背景\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x3418_bg.png",
+   "ok": true
+  },
+  {
+   "model": "EGT001 SW80x3448",
+   "group": "10_Tuenkers EGT Gripper-EGT001",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\外购件\\EGT型材库\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x3448.CATPart",
+   "img": "零件真实图片_带背景\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x3448.png",
+   "bg": "零件真实图片_带背景\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x3448_bg.png",
+   "ok": true
+  },
+  {
+   "model": "EGT001 SW80x3478",
+   "group": "10_Tuenkers EGT Gripper-EGT001",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\外购件\\EGT型材库\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x3478.CATPart",
+   "img": "零件真实图片_带背景\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x3478.png",
+   "bg": "零件真实图片_带背景\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x3478_bg.png",
+   "ok": true
+  },
+  {
+   "model": "EGT001 SW80x3508",
+   "group": "10_Tuenkers EGT Gripper-EGT001",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\外购件\\EGT型材库\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x3508.CATPart",
+   "img": "零件真实图片_带背景\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x3508.png",
+   "bg": "零件真实图片_带背景\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x3508_bg.png",
+   "ok": true
+  },
+  {
+   "model": "EGT001 SW80x3538",
+   "group": "10_Tuenkers EGT Gripper-EGT001",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\外购件\\EGT型材库\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x3538.CATPart",
+   "img": "零件真实图片_带背景\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x3538.png",
+   "bg": "零件真实图片_带背景\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x3538_bg.png",
+   "ok": true
+  },
+  {
+   "model": "EGT001 SW80x3568",
+   "group": "10_Tuenkers EGT Gripper-EGT001",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\外购件\\EGT型材库\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x3568.CATPart",
+   "img": "零件真实图片_带背景\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x3568.png",
+   "bg": "零件真实图片_带背景\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x3568_bg.png",
+   "ok": true
+  },
+  {
+   "model": "EGT001 SW80x358",
+   "group": "10_Tuenkers EGT Gripper-EGT001",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\外购件\\EGT型材库\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x358.CATPart",
+   "img": "零件真实图片_带背景\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x358.png",
+   "bg": "零件真实图片_带背景\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x358_bg.png",
+   "ok": true
+  },
+  {
+   "model": "EGT001 SW80x3598",
+   "group": "10_Tuenkers EGT Gripper-EGT001",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\外购件\\EGT型材库\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x3598.CATPart",
+   "img": "零件真实图片_带背景\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x3598.png",
+   "bg": "零件真实图片_带背景\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x3598_bg.png",
+   "ok": true
+  },
+  {
+   "model": "EGT001 SW80x3628",
+   "group": "10_Tuenkers EGT Gripper-EGT001",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\外购件\\EGT型材库\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x3628.CATPart",
+   "img": "零件真实图片_带背景\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x3628.png",
+   "bg": "零件真实图片_带背景\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x3628_bg.png",
+   "ok": true
+  },
+  {
+   "model": "EGT001 SW80x3658",
+   "group": "10_Tuenkers EGT Gripper-EGT001",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\外购件\\EGT型材库\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x3658.CATPart",
+   "img": "零件真实图片_带背景\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x3658.png",
+   "bg": "零件真实图片_带背景\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x3658_bg.png",
+   "ok": true
+  },
+  {
+   "model": "EGT001 SW80x3688",
+   "group": "10_Tuenkers EGT Gripper-EGT001",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\外购件\\EGT型材库\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x3688.CATPart",
+   "img": "零件真实图片_带背景\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x3688.png",
+   "bg": "零件真实图片_带背景\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x3688_bg.png",
+   "ok": true
+  },
+  {
+   "model": "EGT001 SW80x3718",
+   "group": "10_Tuenkers EGT Gripper-EGT001",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\外购件\\EGT型材库\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x3718.CATPart",
+   "img": "零件真实图片_带背景\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x3718.png",
+   "bg": "零件真实图片_带背景\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x3718_bg.png",
+   "ok": true
+  },
+  {
+   "model": "EGT001 SW80x3748",
+   "group": "10_Tuenkers EGT Gripper-EGT001",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\外购件\\EGT型材库\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x3748.CATPart",
+   "img": "零件真实图片_带背景\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x3748.png",
+   "bg": "零件真实图片_带背景\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x3748_bg.png",
+   "ok": true
+  },
+  {
+   "model": "EGT001 SW80x3778",
+   "group": "10_Tuenkers EGT Gripper-EGT001",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\外购件\\EGT型材库\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x3778.CATPart",
+   "img": "零件真实图片_带背景\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x3778.png",
+   "bg": "零件真实图片_带背景\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x3778_bg.png",
+   "ok": true
+  },
+  {
+   "model": "EGT001 SW80x3808",
+   "group": "10_Tuenkers EGT Gripper-EGT001",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\外购件\\EGT型材库\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x3808.CATPart",
+   "img": "零件真实图片_带背景\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x3808.png",
+   "bg": "零件真实图片_带背景\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x3808_bg.png",
+   "ok": true
+  },
+  {
+   "model": "EGT001 SW80x3838",
+   "group": "10_Tuenkers EGT Gripper-EGT001",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\外购件\\EGT型材库\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x3838.CATPart",
+   "img": "零件真实图片_带背景\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x3838.png",
+   "bg": "零件真实图片_带背景\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x3838_bg.png",
+   "ok": true
+  },
+  {
+   "model": "EGT001 SW80x3868",
+   "group": "10_Tuenkers EGT Gripper-EGT001",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\外购件\\EGT型材库\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x3868.CATPart",
+   "img": "零件真实图片_带背景\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x3868.png",
+   "bg": "零件真实图片_带背景\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x3868_bg.png",
+   "ok": true
+  },
+  {
+   "model": "EGT001 SW80x388",
+   "group": "10_Tuenkers EGT Gripper-EGT001",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\外购件\\EGT型材库\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x388.CATPart",
+   "img": "零件真实图片_带背景\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x388.png",
+   "bg": "零件真实图片_带背景\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x388_bg.png",
+   "ok": true
+  },
+  {
+   "model": "EGT001 SW80x3898",
+   "group": "10_Tuenkers EGT Gripper-EGT001",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\外购件\\EGT型材库\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x3898.CATPart",
+   "img": "零件真实图片_带背景\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x3898.png",
+   "bg": "零件真实图片_带背景\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x3898_bg.png",
+   "ok": true
+  },
+  {
+   "model": "EGT001 SW80x3928",
+   "group": "10_Tuenkers EGT Gripper-EGT001",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\外购件\\EGT型材库\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x3928.CATPart",
+   "img": "零件真实图片_带背景\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x3928.png",
+   "bg": "零件真实图片_带背景\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x3928_bg.png",
+   "ok": true
+  },
+  {
+   "model": "EGT001 SW80x3958",
+   "group": "10_Tuenkers EGT Gripper-EGT001",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\外购件\\EGT型材库\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x3958.CATPart",
+   "img": "零件真实图片_带背景\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x3958.png",
+   "bg": "零件真实图片_带背景\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x3958_bg.png",
+   "ok": true
+  },
+  {
+   "model": "EGT001 SW80x3988",
+   "group": "10_Tuenkers EGT Gripper-EGT001",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\外购件\\EGT型材库\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x3988.CATPart",
+   "img": "零件真实图片_带背景\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x3988.png",
+   "bg": "零件真实图片_带背景\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x3988_bg.png",
+   "ok": true
+  },
+  {
+   "model": "EGT001 SW80x4018",
+   "group": "10_Tuenkers EGT Gripper-EGT001",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\外购件\\EGT型材库\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x4018.CATPart",
+   "img": "零件真实图片_带背景\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x4018.png",
+   "bg": "零件真实图片_带背景\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x4018_bg.png",
+   "ok": true
+  },
+  {
+   "model": "EGT001 SW80x4048",
+   "group": "10_Tuenkers EGT Gripper-EGT001",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\外购件\\EGT型材库\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x4048.CATPart",
+   "img": "零件真实图片_带背景\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x4048.png",
+   "bg": "零件真实图片_带背景\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x4048_bg.png",
+   "ok": true
+  },
+  {
+   "model": "EGT001 SW80x4078",
+   "group": "10_Tuenkers EGT Gripper-EGT001",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\外购件\\EGT型材库\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x4078.CATPart",
+   "img": "零件真实图片_带背景\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x4078.png",
+   "bg": "零件真实图片_带背景\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x4078_bg.png",
+   "ok": true
+  },
+  {
+   "model": "EGT001 SW80x418",
+   "group": "10_Tuenkers EGT Gripper-EGT001",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\外购件\\EGT型材库\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x418.CATPart",
+   "img": "零件真实图片_带背景\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x418.png",
+   "bg": "零件真实图片_带背景\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x418_bg.png",
+   "ok": true
+  },
+  {
+   "model": "EGT001 SW80x448",
+   "group": "10_Tuenkers EGT Gripper-EGT001",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\外购件\\EGT型材库\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x448.CATPart",
+   "img": "零件真实图片_带背景\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x448.png",
+   "bg": "零件真实图片_带背景\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x448_bg.png",
+   "ok": true
+  },
+  {
+   "model": "EGT001 SW80x478",
+   "group": "10_Tuenkers EGT Gripper-EGT001",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\外购件\\EGT型材库\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x478.CATPart",
+   "img": "零件真实图片_带背景\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x478.png",
+   "bg": "零件真实图片_带背景\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x478_bg.png",
+   "ok": true
+  },
+  {
+   "model": "EGT001 SW80x508",
+   "group": "10_Tuenkers EGT Gripper-EGT001",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\外购件\\EGT型材库\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x508.CATPart",
+   "img": "零件真实图片_带背景\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x508.png",
+   "bg": "零件真实图片_带背景\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x508_bg.png",
+   "ok": true
+  },
+  {
+   "model": "EGT001 SW80x538",
+   "group": "10_Tuenkers EGT Gripper-EGT001",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\外购件\\EGT型材库\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x538.CATPart",
+   "img": "零件真实图片_带背景\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x538.png",
+   "bg": "零件真实图片_带背景\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x538_bg.png",
+   "ok": true
+  },
+  {
+   "model": "EGT001 SW80x568",
+   "group": "10_Tuenkers EGT Gripper-EGT001",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\外购件\\EGT型材库\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x568.CATPart",
+   "img": "零件真实图片_带背景\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x568.png",
+   "bg": "零件真实图片_带背景\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x568_bg.png",
+   "ok": true
+  },
+  {
+   "model": "EGT001 SW80x598",
+   "group": "10_Tuenkers EGT Gripper-EGT001",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\外购件\\EGT型材库\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x598.CATPart",
+   "img": "零件真实图片_带背景\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x598.png",
+   "bg": "零件真实图片_带背景\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x598_bg.png",
+   "ok": true
+  },
+  {
+   "model": "EGT001 SW80x628",
+   "group": "10_Tuenkers EGT Gripper-EGT001",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\外购件\\EGT型材库\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x628.CATPart",
+   "img": "零件真实图片_带背景\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x628.png",
+   "bg": "零件真实图片_带背景\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x628_bg.png",
+   "ok": true
+  },
+  {
+   "model": "EGT001 SW80x658",
+   "group": "10_Tuenkers EGT Gripper-EGT001",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\外购件\\EGT型材库\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x658.CATPart",
+   "img": "零件真实图片_带背景\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x658.png",
+   "bg": "零件真实图片_带背景\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x658_bg.png",
+   "ok": true
+  },
+  {
+   "model": "EGT001 SW80x688",
+   "group": "10_Tuenkers EGT Gripper-EGT001",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\外购件\\EGT型材库\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x688.CATPart",
+   "img": "零件真实图片_带背景\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x688.png",
+   "bg": "零件真实图片_带背景\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x688_bg.png",
+   "ok": true
+  },
+  {
+   "model": "EGT001 SW80x718",
+   "group": "10_Tuenkers EGT Gripper-EGT001",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\外购件\\EGT型材库\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x718.CATPart",
+   "img": "零件真实图片_带背景\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x718.png",
+   "bg": "零件真实图片_带背景\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x718_bg.png",
+   "ok": true
+  },
+  {
+   "model": "EGT001 SW80x748",
+   "group": "10_Tuenkers EGT Gripper-EGT001",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\外购件\\EGT型材库\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x748.CATPart",
+   "img": "零件真实图片_带背景\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x748.png",
+   "bg": "零件真实图片_带背景\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x748_bg.png",
+   "ok": true
+  },
+  {
+   "model": "EGT001 SW80x778",
+   "group": "10_Tuenkers EGT Gripper-EGT001",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\外购件\\EGT型材库\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x778.CATPart",
+   "img": "零件真实图片_带背景\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x778.png",
+   "bg": "零件真实图片_带背景\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x778_bg.png",
+   "ok": true
+  },
+  {
+   "model": "EGT001 SW80x808",
+   "group": "10_Tuenkers EGT Gripper-EGT001",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\外购件\\EGT型材库\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x808.CATPart",
+   "img": "零件真实图片_带背景\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x808.png",
+   "bg": "零件真实图片_带背景\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x808_bg.png",
+   "ok": true
+  },
+  {
+   "model": "EGT001 SW80x838",
+   "group": "10_Tuenkers EGT Gripper-EGT001",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\外购件\\EGT型材库\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x838.CATPart",
+   "img": "零件真实图片_带背景\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x838.png",
+   "bg": "零件真实图片_带背景\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x838_bg.png",
+   "ok": true
+  },
+  {
+   "model": "EGT001 SW80x868",
+   "group": "10_Tuenkers EGT Gripper-EGT001",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\外购件\\EGT型材库\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x868.CATPart",
+   "img": "零件真实图片_带背景\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x868.png",
+   "bg": "零件真实图片_带背景\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x868_bg.png",
+   "ok": true
+  },
+  {
+   "model": "EGT001 SW80x898",
+   "group": "10_Tuenkers EGT Gripper-EGT001",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\外购件\\EGT型材库\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x898.CATPart",
+   "img": "零件真实图片_带背景\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x898.png",
+   "bg": "零件真实图片_带背景\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x898_bg.png",
+   "ok": true
+  },
+  {
+   "model": "EGT001 SW80x928",
+   "group": "10_Tuenkers EGT Gripper-EGT001",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\外购件\\EGT型材库\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x928.CATPart",
+   "img": "零件真实图片_带背景\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x928.png",
+   "bg": "零件真实图片_带背景\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x928_bg.png",
+   "ok": true
+  },
+  {
+   "model": "EGT001 SW80x958",
+   "group": "10_Tuenkers EGT Gripper-EGT001",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\外购件\\EGT型材库\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x958.CATPart",
+   "img": "零件真实图片_带背景\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x958.png",
+   "bg": "零件真实图片_带背景\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x958_bg.png",
+   "ok": true
+  },
+  {
+   "model": "EGT001 SW80x988",
+   "group": "10_Tuenkers EGT Gripper-EGT001",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\外购件\\EGT型材库\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x988.CATPart",
+   "img": "零件真实图片_带背景\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x988.png",
+   "bg": "零件真实图片_带背景\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x988_bg.png",
+   "ok": true
+  },
+  {
+   "model": "EGT002 SW50x088",
+   "group": "11_Tuenkers EGT Gripper-EGT002",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\外购件\\EGT型材库\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x088.CATPart",
+   "img": "零件真实图片_带背景\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x088.png",
+   "bg": "零件真实图片_带背景\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x088_bg.png",
+   "ok": true
+  },
+  {
+   "model": "EGT002 SW50x1018",
+   "group": "11_Tuenkers EGT Gripper-EGT002",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\外购件\\EGT型材库\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x1018.CATPart",
+   "img": "零件真实图片_带背景\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x1018.png",
+   "bg": "零件真实图片_带背景\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x1018_bg.png",
+   "ok": true
+  },
+  {
+   "model": "EGT002 SW50x1048",
+   "group": "11_Tuenkers EGT Gripper-EGT002",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\外购件\\EGT型材库\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x1048.CATPart",
+   "img": "零件真实图片_带背景\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x1048.png",
+   "bg": "零件真实图片_带背景\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x1048_bg.png",
+   "ok": true
+  },
+  {
+   "model": "EGT002 SW50x1078",
+   "group": "11_Tuenkers EGT Gripper-EGT002",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\外购件\\EGT型材库\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x1078.CATPart",
+   "img": "零件真实图片_带背景\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x1078.png",
+   "bg": "零件真实图片_带背景\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x1078_bg.png",
+   "ok": true
+  },
+  {
+   "model": "EGT002 SW50x1108",
+   "group": "11_Tuenkers EGT Gripper-EGT002",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\外购件\\EGT型材库\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x1108.CATPart",
+   "img": "零件真实图片_带背景\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x1108.png",
+   "bg": "零件真实图片_带背景\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x1108_bg.png",
+   "ok": true
+  },
+  {
+   "model": "EGT002 SW50x1138",
+   "group": "11_Tuenkers EGT Gripper-EGT002",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\外购件\\EGT型材库\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x1138.CATPart",
+   "img": "零件真实图片_带背景\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x1138.png",
+   "bg": "零件真实图片_带背景\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x1138_bg.png",
+   "ok": true
+  },
+  {
+   "model": "EGT002 SW50x1168",
+   "group": "11_Tuenkers EGT Gripper-EGT002",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\外购件\\EGT型材库\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x1168.CATPart",
+   "img": "零件真实图片_带背景\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x1168.png",
+   "bg": "零件真实图片_带背景\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x1168_bg.png",
+   "ok": true
+  },
+  {
+   "model": "EGT002 SW50x118",
+   "group": "11_Tuenkers EGT Gripper-EGT002",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\外购件\\EGT型材库\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x118.CATPart",
+   "img": "零件真实图片_带背景\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x118.png",
+   "bg": "零件真实图片_带背景\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x118_bg.png",
+   "ok": true
+  },
+  {
+   "model": "EGT002 SW50x1198",
+   "group": "11_Tuenkers EGT Gripper-EGT002",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\外购件\\EGT型材库\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x1198.CATPart",
+   "img": "零件真实图片_带背景\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x1198.png",
+   "bg": "零件真实图片_带背景\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x1198_bg.png",
+   "ok": true
+  },
+  {
+   "model": "EGT002 SW50x1228",
+   "group": "11_Tuenkers EGT Gripper-EGT002",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\外购件\\EGT型材库\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x1228.CATPart",
+   "img": "零件真实图片_带背景\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x1228.png",
+   "bg": "零件真实图片_带背景\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x1228_bg.png",
+   "ok": true
+  },
+  {
+   "model": "EGT002 SW50x1258",
+   "group": "11_Tuenkers EGT Gripper-EGT002",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\外购件\\EGT型材库\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x1258.CATPart",
+   "img": "零件真实图片_带背景\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x1258.png",
+   "bg": "零件真实图片_带背景\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x1258_bg.png",
+   "ok": true
+  },
+  {
+   "model": "EGT002 SW50x1288",
+   "group": "11_Tuenkers EGT Gripper-EGT002",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\外购件\\EGT型材库\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x1288.CATPart",
+   "img": "零件真实图片_带背景\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x1288.png",
+   "bg": "零件真实图片_带背景\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x1288_bg.png",
+   "ok": true
+  },
+  {
+   "model": "EGT002 SW50x1318",
+   "group": "11_Tuenkers EGT Gripper-EGT002",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\外购件\\EGT型材库\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x1318.CATPart",
+   "img": "零件真实图片_带背景\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x1318.png",
+   "bg": "零件真实图片_带背景\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x1318_bg.png",
+   "ok": true
+  },
+  {
+   "model": "EGT002 SW50x1348",
+   "group": "11_Tuenkers EGT Gripper-EGT002",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\外购件\\EGT型材库\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x1348.CATPart",
+   "img": "零件真实图片_带背景\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x1348.png",
+   "bg": "零件真实图片_带背景\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x1348_bg.png",
+   "ok": true
+  },
+  {
+   "model": "EGT002 SW50x1378",
+   "group": "11_Tuenkers EGT Gripper-EGT002",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\外购件\\EGT型材库\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x1378.CATPart",
+   "img": "零件真实图片_带背景\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x1378.png",
+   "bg": "零件真实图片_带背景\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x1378_bg.png",
+   "ok": true
+  },
+  {
+   "model": "EGT002 SW50x1408",
+   "group": "11_Tuenkers EGT Gripper-EGT002",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\外购件\\EGT型材库\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x1408.CATPart",
+   "img": "零件真实图片_带背景\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x1408.png",
+   "bg": "零件真实图片_带背景\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x1408_bg.png",
+   "ok": true
+  },
+  {
+   "model": "EGT002 SW50x1438",
+   "group": "11_Tuenkers EGT Gripper-EGT002",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\外购件\\EGT型材库\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x1438.CATPart",
+   "img": "零件真实图片_带背景\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x1438.png",
+   "bg": "零件真实图片_带背景\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x1438_bg.png",
+   "ok": true
+  },
+  {
+   "model": "EGT002 SW50x1468",
+   "group": "11_Tuenkers EGT Gripper-EGT002",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\外购件\\EGT型材库\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x1468.CATPart",
+   "img": "零件真实图片_带背景\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x1468.png",
+   "bg": "零件真实图片_带背景\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x1468_bg.png",
+   "ok": true
+  },
+  {
+   "model": "EGT002 SW50x148",
+   "group": "11_Tuenkers EGT Gripper-EGT002",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\外购件\\EGT型材库\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x148.CATPart",
+   "img": "零件真实图片_带背景\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x148.png",
+   "bg": "零件真实图片_带背景\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x148_bg.png",
+   "ok": true
+  },
+  {
+   "model": "EGT002 SW50x1498",
+   "group": "11_Tuenkers EGT Gripper-EGT002",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\外购件\\EGT型材库\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x1498.CATPart",
+   "img": "零件真实图片_带背景\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x1498.png",
+   "bg": "零件真实图片_带背景\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x1498_bg.png",
+   "ok": true
+  },
+  {
+   "model": "EGT002 SW50x1528",
+   "group": "11_Tuenkers EGT Gripper-EGT002",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\外购件\\EGT型材库\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x1528.CATPart",
+   "img": "零件真实图片_带背景\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x1528.png",
+   "bg": "零件真实图片_带背景\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x1528_bg.png",
+   "ok": true
+  },
+  {
+   "model": "EGT002 SW50x1558",
+   "group": "11_Tuenkers EGT Gripper-EGT002",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\外购件\\EGT型材库\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x1558.CATPart",
+   "img": "零件真实图片_带背景\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x1558.png",
+   "bg": "零件真实图片_带背景\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x1558_bg.png",
+   "ok": true
+  },
+  {
+   "model": "EGT002 SW50x1588",
+   "group": "11_Tuenkers EGT Gripper-EGT002",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\外购件\\EGT型材库\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x1588.CATPart",
+   "img": "零件真实图片_带背景\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x1588.png",
+   "bg": "零件真实图片_带背景\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x1588_bg.png",
+   "ok": true
+  },
+  {
+   "model": "EGT002 SW50x1618",
+   "group": "11_Tuenkers EGT Gripper-EGT002",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\外购件\\EGT型材库\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x1618.CATPart",
+   "img": "零件真实图片_带背景\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x1618.png",
+   "bg": "零件真实图片_带背景\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x1618_bg.png",
+   "ok": true
+  },
+  {
+   "model": "EGT002 SW50x1648",
+   "group": "11_Tuenkers EGT Gripper-EGT002",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\外购件\\EGT型材库\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x1648.CATPart",
+   "img": "零件真实图片_带背景\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x1648.png",
+   "bg": "零件真实图片_带背景\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x1648_bg.png",
+   "ok": true
+  },
+  {
+   "model": "EGT002 SW50x1678",
+   "group": "11_Tuenkers EGT Gripper-EGT002",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\外购件\\EGT型材库\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x1678.CATPart",
+   "img": "零件真实图片_带背景\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x1678.png",
+   "bg": "零件真实图片_带背景\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x1678_bg.png",
+   "ok": true
+  },
+  {
+   "model": "EGT002 SW50x1708",
+   "group": "11_Tuenkers EGT Gripper-EGT002",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\外购件\\EGT型材库\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x1708.CATPart",
+   "img": "零件真实图片_带背景\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x1708.png",
+   "bg": "零件真实图片_带背景\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x1708_bg.png",
+   "ok": true
+  },
+  {
+   "model": "EGT002 SW50x1738",
+   "group": "11_Tuenkers EGT Gripper-EGT002",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\外购件\\EGT型材库\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x1738.CATPart",
+   "img": "零件真实图片_带背景\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x1738.png",
+   "bg": "零件真实图片_带背景\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x1738_bg.png",
+   "ok": true
+  },
+  {
+   "model": "EGT002 SW50x1768",
+   "group": "11_Tuenkers EGT Gripper-EGT002",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\外购件\\EGT型材库\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x1768.CATPart",
+   "img": "零件真实图片_带背景\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x1768.png",
+   "bg": "零件真实图片_带背景\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x1768_bg.png",
+   "ok": true
+  },
+  {
+   "model": "EGT002 SW50x178",
+   "group": "11_Tuenkers EGT Gripper-EGT002",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\外购件\\EGT型材库\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x178.CATPart",
+   "img": "零件真实图片_带背景\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x178.png",
+   "bg": "零件真实图片_带背景\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x178_bg.png",
+   "ok": true
+  },
+  {
+   "model": "EGT002 SW50x1798",
+   "group": "11_Tuenkers EGT Gripper-EGT002",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\外购件\\EGT型材库\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x1798.CATPart",
+   "img": "零件真实图片_带背景\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x1798.png",
+   "bg": "零件真实图片_带背景\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x1798_bg.png",
+   "ok": true
+  },
+  {
+   "model": "EGT002 SW50x1828",
+   "group": "11_Tuenkers EGT Gripper-EGT002",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\外购件\\EGT型材库\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x1828.CATPart",
+   "img": "零件真实图片_带背景\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x1828.png",
+   "bg": "零件真实图片_带背景\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x1828_bg.png",
+   "ok": true
+  },
+  {
+   "model": "EGT002 SW50x1858",
+   "group": "11_Tuenkers EGT Gripper-EGT002",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\外购件\\EGT型材库\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x1858.CATPart",
+   "img": "零件真实图片_带背景\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x1858.png",
+   "bg": "零件真实图片_带背景\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x1858_bg.png",
+   "ok": true
+  },
+  {
+   "model": "EGT002 SW50x1888",
+   "group": "11_Tuenkers EGT Gripper-EGT002",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\外购件\\EGT型材库\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x1888.CATPart",
+   "img": "零件真实图片_带背景\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x1888.png",
+   "bg": "零件真实图片_带背景\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x1888_bg.png",
+   "ok": true
+  },
+  {
+   "model": "EGT002 SW50x1918",
+   "group": "11_Tuenkers EGT Gripper-EGT002",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\外购件\\EGT型材库\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x1918.CATPart",
+   "img": "零件真实图片_带背景\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x1918.png",
+   "bg": "零件真实图片_带背景\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x1918_bg.png",
+   "ok": true
+  },
+  {
+   "model": "EGT002 SW50x1948",
+   "group": "11_Tuenkers EGT Gripper-EGT002",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\外购件\\EGT型材库\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x1948.CATPart",
+   "img": "零件真实图片_带背景\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x1948.png",
+   "bg": "零件真实图片_带背景\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x1948_bg.png",
+   "ok": true
+  },
+  {
+   "model": "EGT002 SW50x1978",
+   "group": "11_Tuenkers EGT Gripper-EGT002",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\外购件\\EGT型材库\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x1978.CATPart",
+   "img": "零件真实图片_带背景\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x1978.png",
+   "bg": "零件真实图片_带背景\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x1978_bg.png",
+   "ok": true
+  },
+  {
+   "model": "EGT002 SW50x2008",
+   "group": "11_Tuenkers EGT Gripper-EGT002",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\外购件\\EGT型材库\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x2008.CATPart",
+   "img": "零件真实图片_带背景\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x2008.png",
+   "bg": "零件真实图片_带背景\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x2008_bg.png",
+   "ok": true
+  },
+  {
+   "model": "EGT002 SW50x2038",
+   "group": "11_Tuenkers EGT Gripper-EGT002",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\外购件\\EGT型材库\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x2038.CATPart",
+   "img": "零件真实图片_带背景\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x2038.png",
+   "bg": "零件真实图片_带背景\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x2038_bg.png",
+   "ok": true
+  },
+  {
+   "model": "EGT002 SW50x2068",
+   "group": "11_Tuenkers EGT Gripper-EGT002",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\外购件\\EGT型材库\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x2068.CATPart",
+   "img": "零件真实图片_带背景\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x2068.png",
+   "bg": "零件真实图片_带背景\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x2068_bg.png",
+   "ok": true
+  },
+  {
+   "model": "EGT002 SW50x208",
+   "group": "11_Tuenkers EGT Gripper-EGT002",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\外购件\\EGT型材库\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x208.CATPart",
+   "img": "零件真实图片_带背景\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x208.png",
+   "bg": "零件真实图片_带背景\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x208_bg.png",
+   "ok": true
+  },
+  {
+   "model": "EGT002 SW50x2098",
+   "group": "11_Tuenkers EGT Gripper-EGT002",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\外购件\\EGT型材库\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x2098.CATPart",
+   "img": "零件真实图片_带背景\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x2098.png",
+   "bg": "零件真实图片_带背景\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x2098_bg.png",
+   "ok": true
+  },
+  {
+   "model": "EGT002 SW50x2128",
+   "group": "11_Tuenkers EGT Gripper-EGT002",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\外购件\\EGT型材库\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x2128.CATPart",
+   "img": "零件真实图片_带背景\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x2128.png",
+   "bg": "零件真实图片_带背景\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x2128_bg.png",
+   "ok": true
+  },
+  {
+   "model": "EGT002 SW50x2158",
+   "group": "11_Tuenkers EGT Gripper-EGT002",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\外购件\\EGT型材库\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x2158.CATPart",
+   "img": "零件真实图片_带背景\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x2158.png",
+   "bg": "零件真实图片_带背景\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x2158_bg.png",
+   "ok": true
+  },
+  {
+   "model": "EGT002 SW50x2188",
+   "group": "11_Tuenkers EGT Gripper-EGT002",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\外购件\\EGT型材库\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x2188.CATPart",
+   "img": "零件真实图片_带背景\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x2188.png",
+   "bg": "零件真实图片_带背景\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x2188_bg.png",
+   "ok": true
+  },
+  {
+   "model": "EGT002 SW50x2218",
+   "group": "11_Tuenkers EGT Gripper-EGT002",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\外购件\\EGT型材库\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x2218.CATPart",
+   "img": "零件真实图片_带背景\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x2218.png",
+   "bg": "零件真实图片_带背景\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x2218_bg.png",
+   "ok": true
+  },
+  {
+   "model": "EGT002 SW50x2248",
+   "group": "11_Tuenkers EGT Gripper-EGT002",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\外购件\\EGT型材库\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x2248.CATPart",
+   "img": "零件真实图片_带背景\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x2248.png",
+   "bg": "零件真实图片_带背景\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x2248_bg.png",
+   "ok": true
+  },
+  {
+   "model": "EGT002 SW50x2278",
+   "group": "11_Tuenkers EGT Gripper-EGT002",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\外购件\\EGT型材库\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x2278.CATPart",
+   "img": "零件真实图片_带背景\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x2278.png",
+   "bg": "零件真实图片_带背景\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x2278_bg.png",
+   "ok": true
+  },
+  {
+   "model": "EGT002 SW50x2308",
+   "group": "11_Tuenkers EGT Gripper-EGT002",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\外购件\\EGT型材库\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x2308.CATPart",
+   "img": "零件真实图片_带背景\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x2308.png",
+   "bg": "零件真实图片_带背景\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x2308_bg.png",
+   "ok": true
+  },
+  {
+   "model": "EGT002 SW50x2338",
+   "group": "11_Tuenkers EGT Gripper-EGT002",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\外购件\\EGT型材库\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x2338.CATPart",
+   "img": "零件真实图片_带背景\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x2338.png",
+   "bg": "零件真实图片_带背景\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x2338_bg.png",
+   "ok": true
+  },
+  {
+   "model": "EGT002 SW50x2368",
+   "group": "11_Tuenkers EGT Gripper-EGT002",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\外购件\\EGT型材库\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x2368.CATPart",
+   "img": "零件真实图片_带背景\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x2368.png",
+   "bg": "零件真实图片_带背景\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x2368_bg.png",
+   "ok": true
+  },
+  {
+   "model": "EGT002 SW50x238",
+   "group": "11_Tuenkers EGT Gripper-EGT002",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\外购件\\EGT型材库\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x238.CATPart",
+   "img": "零件真实图片_带背景\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x238.png",
+   "bg": "零件真实图片_带背景\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x238_bg.png",
+   "ok": true
+  },
+  {
+   "model": "EGT002 SW50x2398",
+   "group": "11_Tuenkers EGT Gripper-EGT002",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\外购件\\EGT型材库\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x2398.CATPart",
+   "img": "零件真实图片_带背景\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x2398.png",
+   "bg": "零件真实图片_带背景\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x2398_bg.png",
+   "ok": true
+  },
+  {
+   "model": "EGT002 SW50x2428",
+   "group": "11_Tuenkers EGT Gripper-EGT002",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\外购件\\EGT型材库\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x2428.CATPart",
+   "img": "零件真实图片_带背景\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x2428.png",
+   "bg": "零件真实图片_带背景\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x2428_bg.png",
+   "ok": true
+  },
+  {
+   "model": "EGT002 SW50x2458",
+   "group": "11_Tuenkers EGT Gripper-EGT002",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\外购件\\EGT型材库\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x2458.CATPart",
+   "img": "零件真实图片_带背景\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x2458.png",
+   "bg": "零件真实图片_带背景\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x2458_bg.png",
+   "ok": true
+  },
+  {
+   "model": "EGT002 SW50x2488",
+   "group": "11_Tuenkers EGT Gripper-EGT002",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\外购件\\EGT型材库\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x2488.CATPart",
+   "img": "零件真实图片_带背景\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x2488.png",
+   "bg": "零件真实图片_带背景\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x2488_bg.png",
+   "ok": true
+  },
+  {
+   "model": "EGT002 SW50x2518",
+   "group": "11_Tuenkers EGT Gripper-EGT002",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\外购件\\EGT型材库\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x2518.CATPart",
+   "img": "零件真实图片_带背景\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x2518.png",
+   "bg": "零件真实图片_带背景\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x2518_bg.png",
+   "ok": true
+  },
+  {
+   "model": "EGT002 SW50x2548",
+   "group": "11_Tuenkers EGT Gripper-EGT002",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\外购件\\EGT型材库\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x2548.CATPart",
+   "img": "零件真实图片_带背景\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x2548.png",
+   "bg": "零件真实图片_带背景\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x2548_bg.png",
+   "ok": true
+  },
+  {
+   "model": "EGT002 SW50x2578",
+   "group": "11_Tuenkers EGT Gripper-EGT002",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\外购件\\EGT型材库\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x2578.CATPart",
+   "img": "零件真实图片_带背景\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x2578.png",
+   "bg": "零件真实图片_带背景\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x2578_bg.png",
+   "ok": true
+  },
+  {
+   "model": "EGT002 SW50x2608",
+   "group": "11_Tuenkers EGT Gripper-EGT002",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\外购件\\EGT型材库\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x2608.CATPart",
+   "img": "零件真实图片_带背景\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x2608.png",
+   "bg": "零件真实图片_带背景\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x2608_bg.png",
+   "ok": true
+  },
+  {
+   "model": "EGT002 SW50x2638",
+   "group": "11_Tuenkers EGT Gripper-EGT002",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\外购件\\EGT型材库\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x2638.CATPart",
+   "img": "零件真实图片_带背景\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x2638.png",
+   "bg": "零件真实图片_带背景\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x2638_bg.png",
+   "ok": true
+  },
+  {
+   "model": "EGT002 SW50x2668",
+   "group": "11_Tuenkers EGT Gripper-EGT002",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\外购件\\EGT型材库\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x2668.CATPart",
+   "img": "零件真实图片_带背景\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x2668.png",
+   "bg": "零件真实图片_带背景\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x2668_bg.png",
+   "ok": true
+  },
+  {
+   "model": "EGT002 SW50x268",
+   "group": "11_Tuenkers EGT Gripper-EGT002",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\外购件\\EGT型材库\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x268.CATPart",
+   "img": "零件真实图片_带背景\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x268.png",
+   "bg": "零件真实图片_带背景\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x268_bg.png",
+   "ok": true
+  },
+  {
+   "model": "EGT002 SW50x2698",
+   "group": "11_Tuenkers EGT Gripper-EGT002",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\外购件\\EGT型材库\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x2698.CATPart",
+   "img": "零件真实图片_带背景\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x2698.png",
+   "bg": "零件真实图片_带背景\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x2698_bg.png",
+   "ok": true
+  },
+  {
+   "model": "EGT002 SW50x2728",
+   "group": "11_Tuenkers EGT Gripper-EGT002",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\外购件\\EGT型材库\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x2728.CATPart",
+   "img": "零件真实图片_带背景\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x2728.png",
+   "bg": "零件真实图片_带背景\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x2728_bg.png",
+   "ok": true
+  },
+  {
+   "model": "EGT002 SW50x2758",
+   "group": "11_Tuenkers EGT Gripper-EGT002",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\外购件\\EGT型材库\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x2758.CATPart",
+   "img": "零件真实图片_带背景\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x2758.png",
+   "bg": "零件真实图片_带背景\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x2758_bg.png",
+   "ok": true
+  },
+  {
+   "model": "EGT002 SW50x2788",
+   "group": "11_Tuenkers EGT Gripper-EGT002",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\外购件\\EGT型材库\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x2788.CATPart",
+   "img": "零件真实图片_带背景\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x2788.png",
+   "bg": "零件真实图片_带背景\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x2788_bg.png",
+   "ok": true
+  },
+  {
+   "model": "EGT002 SW50x2818",
+   "group": "11_Tuenkers EGT Gripper-EGT002",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\外购件\\EGT型材库\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x2818.CATPart",
+   "img": "零件真实图片_带背景\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x2818.png",
+   "bg": "零件真实图片_带背景\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x2818_bg.png",
+   "ok": true
+  },
+  {
+   "model": "EGT002 SW50x2848",
+   "group": "11_Tuenkers EGT Gripper-EGT002",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\外购件\\EGT型材库\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x2848.CATPart",
+   "img": "零件真实图片_带背景\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x2848.png",
+   "bg": "零件真实图片_带背景\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x2848_bg.png",
+   "ok": true
+  },
+  {
+   "model": "EGT002 SW50x2878",
+   "group": "11_Tuenkers EGT Gripper-EGT002",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\外购件\\EGT型材库\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x2878.CATPart",
+   "img": "零件真实图片_带背景\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x2878.png",
+   "bg": "零件真实图片_带背景\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x2878_bg.png",
+   "ok": true
+  },
+  {
+   "model": "EGT002 SW50x2908",
+   "group": "11_Tuenkers EGT Gripper-EGT002",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\外购件\\EGT型材库\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x2908.CATPart",
+   "img": "零件真实图片_带背景\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x2908.png",
+   "bg": "零件真实图片_带背景\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x2908_bg.png",
+   "ok": true
+  },
+  {
+   "model": "EGT002 SW50x2938",
+   "group": "11_Tuenkers EGT Gripper-EGT002",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\外购件\\EGT型材库\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x2938.CATPart",
+   "img": "零件真实图片_带背景\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x2938.png",
+   "bg": "零件真实图片_带背景\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x2938_bg.png",
+   "ok": true
+  },
+  {
+   "model": "EGT002 SW50x2968",
+   "group": "11_Tuenkers EGT Gripper-EGT002",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\外购件\\EGT型材库\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x2968.CATPart",
+   "img": "零件真实图片_带背景\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x2968.png",
+   "bg": "零件真实图片_带背景\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x2968_bg.png",
+   "ok": true
+  },
+  {
+   "model": "EGT002 SW50x298",
+   "group": "11_Tuenkers EGT Gripper-EGT002",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\外购件\\EGT型材库\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x298.CATPart",
+   "img": "零件真实图片_带背景\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x298.png",
+   "bg": "零件真实图片_带背景\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x298_bg.png",
+   "ok": true
+  },
+  {
+   "model": "EGT002 SW50x2998",
+   "group": "11_Tuenkers EGT Gripper-EGT002",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\外购件\\EGT型材库\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x2998.CATPart",
+   "img": "零件真实图片_带背景\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x2998.png",
+   "bg": "零件真实图片_带背景\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x2998_bg.png",
+   "ok": true
+  },
+  {
+   "model": "EGT002 SW50x3028",
+   "group": "11_Tuenkers EGT Gripper-EGT002",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\外购件\\EGT型材库\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x3028.CATPart",
+   "img": "零件真实图片_带背景\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x3028.png",
+   "bg": "零件真实图片_带背景\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x3028_bg.png",
+   "ok": true
+  },
+  {
+   "model": "EGT002 SW50x3058",
+   "group": "11_Tuenkers EGT Gripper-EGT002",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\外购件\\EGT型材库\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x3058.CATPart",
+   "img": "零件真实图片_带背景\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x3058.png",
+   "bg": "零件真实图片_带背景\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x3058_bg.png",
+   "ok": true
+  },
+  {
+   "model": "EGT002 SW50x3088",
+   "group": "11_Tuenkers EGT Gripper-EGT002",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\外购件\\EGT型材库\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x3088.CATPart",
+   "img": "零件真实图片_带背景\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x3088.png",
+   "bg": "零件真实图片_带背景\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x3088_bg.png",
+   "ok": true
+  },
+  {
+   "model": "EGT002 SW50x3118",
+   "group": "11_Tuenkers EGT Gripper-EGT002",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\外购件\\EGT型材库\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x3118.CATPart",
+   "img": "零件真实图片_带背景\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x3118.png",
+   "bg": "零件真实图片_带背景\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x3118_bg.png",
+   "ok": true
+  },
+  {
+   "model": "EGT002 SW50x3148",
+   "group": "11_Tuenkers EGT Gripper-EGT002",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\外购件\\EGT型材库\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x3148.CATPart",
+   "img": "零件真实图片_带背景\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x3148.png",
+   "bg": "零件真实图片_带背景\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x3148_bg.png",
+   "ok": true
+  },
+  {
+   "model": "EGT002 SW50x3178",
+   "group": "11_Tuenkers EGT Gripper-EGT002",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\外购件\\EGT型材库\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x3178.CATPart",
+   "img": "零件真实图片_带背景\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x3178.png",
+   "bg": "零件真实图片_带背景\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x3178_bg.png",
+   "ok": true
+  },
+  {
+   "model": "EGT002 SW50x3208",
+   "group": "11_Tuenkers EGT Gripper-EGT002",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\外购件\\EGT型材库\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x3208.CATPart",
+   "img": "零件真实图片_带背景\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x3208.png",
+   "bg": "零件真实图片_带背景\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x3208_bg.png",
+   "ok": true
+  },
+  {
+   "model": "EGT002 SW50x3238",
+   "group": "11_Tuenkers EGT Gripper-EGT002",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\外购件\\EGT型材库\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x3238.CATPart",
+   "img": "零件真实图片_带背景\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x3238.png",
+   "bg": "零件真实图片_带背景\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x3238_bg.png",
+   "ok": true
+  },
+  {
+   "model": "EGT002 SW50x3268",
+   "group": "11_Tuenkers EGT Gripper-EGT002",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\外购件\\EGT型材库\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x3268.CATPart",
+   "img": "零件真实图片_带背景\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x3268.png",
+   "bg": "零件真实图片_带背景\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x3268_bg.png",
+   "ok": true
+  },
+  {
+   "model": "EGT002 SW50x328",
+   "group": "11_Tuenkers EGT Gripper-EGT002",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\外购件\\EGT型材库\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x328.CATPart",
+   "img": "零件真实图片_带背景\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x328.png",
+   "bg": "零件真实图片_带背景\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x328_bg.png",
+   "ok": true
+  },
+  {
+   "model": "EGT002 SW50x3298",
+   "group": "11_Tuenkers EGT Gripper-EGT002",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\外购件\\EGT型材库\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x3298.CATPart",
+   "img": "零件真实图片_带背景\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x3298.png",
+   "bg": "零件真实图片_带背景\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x3298_bg.png",
+   "ok": true
+  },
+  {
+   "model": "EGT002 SW50x3328",
+   "group": "11_Tuenkers EGT Gripper-EGT002",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\外购件\\EGT型材库\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x3328.CATPart",
+   "img": "零件真实图片_带背景\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x3328.png",
+   "bg": "零件真实图片_带背景\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x3328_bg.png",
+   "ok": true
+  },
+  {
+   "model": "EGT002 SW50x3358",
+   "group": "11_Tuenkers EGT Gripper-EGT002",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\外购件\\EGT型材库\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x3358.CATPart",
+   "img": "零件真实图片_带背景\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x3358.png",
+   "bg": "零件真实图片_带背景\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x3358_bg.png",
+   "ok": true
+  },
+  {
+   "model": "EGT002 SW50x3388",
+   "group": "11_Tuenkers EGT Gripper-EGT002",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\外购件\\EGT型材库\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x3388.CATPart",
+   "img": "零件真实图片_带背景\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x3388.png",
+   "bg": "零件真实图片_带背景\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x3388_bg.png",
+   "ok": true
+  },
+  {
+   "model": "EGT002 SW50x3418",
+   "group": "11_Tuenkers EGT Gripper-EGT002",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\外购件\\EGT型材库\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x3418.CATPart",
+   "img": "零件真实图片_带背景\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x3418.png",
+   "bg": "零件真实图片_带背景\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x3418_bg.png",
+   "ok": true
+  },
+  {
+   "model": "EGT002 SW50x3448",
+   "group": "11_Tuenkers EGT Gripper-EGT002",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\外购件\\EGT型材库\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x3448.CATPart",
+   "img": "零件真实图片_带背景\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x3448.png",
+   "bg": "零件真实图片_带背景\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x3448_bg.png",
+   "ok": true
+  },
+  {
+   "model": "EGT002 SW50x3478",
+   "group": "11_Tuenkers EGT Gripper-EGT002",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\外购件\\EGT型材库\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x3478.CATPart",
+   "img": "零件真实图片_带背景\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x3478.png",
+   "bg": "零件真实图片_带背景\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x3478_bg.png",
+   "ok": true
+  },
+  {
+   "model": "EGT002 SW50x3508",
+   "group": "11_Tuenkers EGT Gripper-EGT002",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\外购件\\EGT型材库\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x3508.CATPart",
+   "img": "零件真实图片_带背景\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x3508.png",
+   "bg": "零件真实图片_带背景\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x3508_bg.png",
+   "ok": true
+  },
+  {
+   "model": "EGT002 SW50x3538",
+   "group": "11_Tuenkers EGT Gripper-EGT002",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\外购件\\EGT型材库\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x3538.CATPart",
+   "img": "零件真实图片_带背景\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x3538.png",
+   "bg": "零件真实图片_带背景\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x3538_bg.png",
+   "ok": true
+  },
+  {
+   "model": "EGT002 SW50x3568",
+   "group": "11_Tuenkers EGT Gripper-EGT002",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\外购件\\EGT型材库\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x3568.CATPart",
+   "img": "零件真实图片_带背景\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x3568.png",
+   "bg": "零件真实图片_带背景\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x3568_bg.png",
+   "ok": true
+  },
+  {
+   "model": "EGT002 SW50x358",
+   "group": "11_Tuenkers EGT Gripper-EGT002",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\外购件\\EGT型材库\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x358.CATPart",
+   "img": "零件真实图片_带背景\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x358.png",
+   "bg": "零件真实图片_带背景\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x358_bg.png",
+   "ok": true
+  },
+  {
+   "model": "EGT002 SW50x3598",
+   "group": "11_Tuenkers EGT Gripper-EGT002",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\外购件\\EGT型材库\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x3598.CATPart",
+   "img": "零件真实图片_带背景\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x3598.png",
+   "bg": "零件真实图片_带背景\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x3598_bg.png",
+   "ok": true
+  },
+  {
+   "model": "EGT002 SW50x3628",
+   "group": "11_Tuenkers EGT Gripper-EGT002",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\外购件\\EGT型材库\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x3628.CATPart",
+   "img": "零件真实图片_带背景\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x3628.png",
+   "bg": "零件真实图片_带背景\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x3628_bg.png",
+   "ok": true
+  },
+  {
+   "model": "EGT002 SW50x3658",
+   "group": "11_Tuenkers EGT Gripper-EGT002",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\外购件\\EGT型材库\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x3658.CATPart",
+   "img": "零件真实图片_带背景\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x3658.png",
+   "bg": "零件真实图片_带背景\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x3658_bg.png",
+   "ok": true
+  },
+  {
+   "model": "EGT002 SW50x3688",
+   "group": "11_Tuenkers EGT Gripper-EGT002",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\外购件\\EGT型材库\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x3688.CATPart",
+   "img": "零件真实图片_带背景\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x3688.png",
+   "bg": "零件真实图片_带背景\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x3688_bg.png",
+   "ok": true
+  },
+  {
+   "model": "EGT002 SW50x3718",
+   "group": "11_Tuenkers EGT Gripper-EGT002",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\外购件\\EGT型材库\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x3718.CATPart",
+   "img": "零件真实图片_带背景\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x3718.png",
+   "bg": "零件真实图片_带背景\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x3718_bg.png",
+   "ok": true
+  },
+  {
+   "model": "EGT002 SW50x3748",
+   "group": "11_Tuenkers EGT Gripper-EGT002",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\外购件\\EGT型材库\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x3748.CATPart",
+   "img": "零件真实图片_带背景\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x3748.png",
+   "bg": "零件真实图片_带背景\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x3748_bg.png",
+   "ok": true
+  },
+  {
+   "model": "EGT002 SW50x3778",
+   "group": "11_Tuenkers EGT Gripper-EGT002",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\外购件\\EGT型材库\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x3778.CATPart",
+   "img": "零件真实图片_带背景\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x3778.png",
+   "bg": "零件真实图片_带背景\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x3778_bg.png",
+   "ok": true
+  },
+  {
+   "model": "EGT002 SW50x3808",
+   "group": "11_Tuenkers EGT Gripper-EGT002",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\外购件\\EGT型材库\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x3808.CATPart",
+   "img": "零件真实图片_带背景\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x3808.png",
+   "bg": "零件真实图片_带背景\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x3808_bg.png",
+   "ok": true
+  },
+  {
+   "model": "EGT002 SW50x3838",
+   "group": "11_Tuenkers EGT Gripper-EGT002",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\外购件\\EGT型材库\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x3838.CATPart",
+   "img": "零件真实图片_带背景\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x3838.png",
+   "bg": "零件真实图片_带背景\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x3838_bg.png",
+   "ok": true
+  },
+  {
+   "model": "EGT002 SW50x3868",
+   "group": "11_Tuenkers EGT Gripper-EGT002",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\外购件\\EGT型材库\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x3868.CATPart",
+   "img": "零件真实图片_带背景\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x3868.png",
+   "bg": "零件真实图片_带背景\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x3868_bg.png",
+   "ok": true
+  },
+  {
+   "model": "EGT002 SW50x388",
+   "group": "11_Tuenkers EGT Gripper-EGT002",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\外购件\\EGT型材库\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x388.CATPart",
+   "img": "零件真实图片_带背景\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x388.png",
+   "bg": "零件真实图片_带背景\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x388_bg.png",
+   "ok": true
+  },
+  {
+   "model": "EGT002 SW50x3898",
+   "group": "11_Tuenkers EGT Gripper-EGT002",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\外购件\\EGT型材库\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x3898.CATPart",
+   "img": "零件真实图片_带背景\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x3898.png",
+   "bg": "零件真实图片_带背景\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x3898_bg.png",
+   "ok": true
+  },
+  {
+   "model": "EGT002 SW50x3928",
+   "group": "11_Tuenkers EGT Gripper-EGT002",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\外购件\\EGT型材库\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x3928.CATPart",
+   "img": "零件真实图片_带背景\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x3928.png",
+   "bg": "零件真实图片_带背景\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x3928_bg.png",
+   "ok": true
+  },
+  {
+   "model": "EGT002 SW50x3958",
+   "group": "11_Tuenkers EGT Gripper-EGT002",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\外购件\\EGT型材库\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x3958.CATPart",
+   "img": "零件真实图片_带背景\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x3958.png",
+   "bg": "零件真实图片_带背景\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x3958_bg.png",
+   "ok": true
+  },
+  {
+   "model": "EGT002 SW50x3988",
+   "group": "11_Tuenkers EGT Gripper-EGT002",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\外购件\\EGT型材库\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x3988.CATPart",
+   "img": "零件真实图片_带背景\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x3988.png",
+   "bg": "零件真实图片_带背景\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x3988_bg.png",
+   "ok": true
+  },
+  {
+   "model": "EGT002 SW50x4018",
+   "group": "11_Tuenkers EGT Gripper-EGT002",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\外购件\\EGT型材库\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x4018.CATPart",
+   "img": "零件真实图片_带背景\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x4018.png",
+   "bg": "零件真实图片_带背景\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x4018_bg.png",
+   "ok": true
+  },
+  {
+   "model": "EGT002 SW50x4048",
+   "group": "11_Tuenkers EGT Gripper-EGT002",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\外购件\\EGT型材库\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x4048.CATPart",
+   "img": "零件真实图片_带背景\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x4048.png",
+   "bg": "零件真实图片_带背景\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x4048_bg.png",
+   "ok": true
+  },
+  {
+   "model": "EGT002 SW50x4078",
+   "group": "11_Tuenkers EGT Gripper-EGT002",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\外购件\\EGT型材库\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x4078.CATPart",
+   "img": "零件真实图片_带背景\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x4078.png",
+   "bg": "零件真实图片_带背景\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x4078_bg.png",
+   "ok": true
+  },
+  {
+   "model": "EGT002 SW50x418",
+   "group": "11_Tuenkers EGT Gripper-EGT002",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\外购件\\EGT型材库\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x418.CATPart",
+   "img": "零件真实图片_带背景\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x418.png",
+   "bg": "零件真实图片_带背景\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x418_bg.png",
+   "ok": true
+  },
+  {
+   "model": "EGT002 SW50x448",
+   "group": "11_Tuenkers EGT Gripper-EGT002",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\外购件\\EGT型材库\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x448.CATPart",
+   "img": "零件真实图片_带背景\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x448.png",
+   "bg": "零件真实图片_带背景\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x448_bg.png",
+   "ok": true
+  },
+  {
+   "model": "EGT002 SW50x478",
+   "group": "11_Tuenkers EGT Gripper-EGT002",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\外购件\\EGT型材库\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x478.CATPart",
+   "img": "零件真实图片_带背景\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x478.png",
+   "bg": "零件真实图片_带背景\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x478_bg.png",
+   "ok": true
+  },
+  {
+   "model": "EGT002 SW50x508",
+   "group": "11_Tuenkers EGT Gripper-EGT002",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\外购件\\EGT型材库\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x508.CATPart",
+   "img": "零件真实图片_带背景\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x508.png",
+   "bg": "零件真实图片_带背景\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x508_bg.png",
+   "ok": true
+  },
+  {
+   "model": "EGT002 SW50x538",
+   "group": "11_Tuenkers EGT Gripper-EGT002",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\外购件\\EGT型材库\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x538.CATPart",
+   "img": "零件真实图片_带背景\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x538.png",
+   "bg": "零件真实图片_带背景\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x538_bg.png",
+   "ok": true
+  },
+  {
+   "model": "EGT002 SW50x568",
+   "group": "11_Tuenkers EGT Gripper-EGT002",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\外购件\\EGT型材库\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x568.CATPart",
+   "img": "零件真实图片_带背景\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x568.png",
+   "bg": "零件真实图片_带背景\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x568_bg.png",
+   "ok": true
+  },
+  {
+   "model": "EGT002 SW50x598",
+   "group": "11_Tuenkers EGT Gripper-EGT002",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\外购件\\EGT型材库\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x598.CATPart",
+   "img": "零件真实图片_带背景\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x598.png",
+   "bg": "零件真实图片_带背景\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x598_bg.png",
+   "ok": true
+  },
+  {
+   "model": "EGT002 SW50x628",
+   "group": "11_Tuenkers EGT Gripper-EGT002",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\外购件\\EGT型材库\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x628.CATPart",
+   "img": "零件真实图片_带背景\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x628.png",
+   "bg": "零件真实图片_带背景\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x628_bg.png",
+   "ok": true
+  },
+  {
+   "model": "EGT002 SW50x658",
+   "group": "11_Tuenkers EGT Gripper-EGT002",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\外购件\\EGT型材库\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x658.CATPart",
+   "img": "零件真实图片_带背景\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x658.png",
+   "bg": "零件真实图片_带背景\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x658_bg.png",
+   "ok": true
+  },
+  {
+   "model": "EGT002 SW50x688",
+   "group": "11_Tuenkers EGT Gripper-EGT002",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\外购件\\EGT型材库\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x688.CATPart",
+   "img": "零件真实图片_带背景\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x688.png",
+   "bg": "零件真实图片_带背景\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x688_bg.png",
+   "ok": true
+  },
+  {
+   "model": "EGT002 SW50x718",
+   "group": "11_Tuenkers EGT Gripper-EGT002",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\外购件\\EGT型材库\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x718.CATPart",
+   "img": "零件真实图片_带背景\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x718.png",
+   "bg": "零件真实图片_带背景\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x718_bg.png",
+   "ok": true
+  },
+  {
+   "model": "EGT002 SW50x748",
+   "group": "11_Tuenkers EGT Gripper-EGT002",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\外购件\\EGT型材库\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x748.CATPart",
+   "img": "零件真实图片_带背景\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x748.png",
+   "bg": "零件真实图片_带背景\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x748_bg.png",
+   "ok": true
+  },
+  {
+   "model": "EGT002 SW50x778",
+   "group": "11_Tuenkers EGT Gripper-EGT002",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\外购件\\EGT型材库\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x778.CATPart",
+   "img": "零件真实图片_带背景\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x778.png",
+   "bg": "零件真实图片_带背景\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x778_bg.png",
+   "ok": true
+  },
+  {
+   "model": "EGT002 SW50x808",
+   "group": "11_Tuenkers EGT Gripper-EGT002",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\外购件\\EGT型材库\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x808.CATPart",
+   "img": "零件真实图片_带背景\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x808.png",
+   "bg": "零件真实图片_带背景\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x808_bg.png",
+   "ok": true
+  },
+  {
+   "model": "EGT002 SW50x838",
+   "group": "11_Tuenkers EGT Gripper-EGT002",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\外购件\\EGT型材库\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x838.CATPart",
+   "img": "零件真实图片_带背景\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x838.png",
+   "bg": "零件真实图片_带背景\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x838_bg.png",
+   "ok": true
+  },
+  {
+   "model": "EGT002 SW50x868",
+   "group": "11_Tuenkers EGT Gripper-EGT002",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\外购件\\EGT型材库\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x868.CATPart",
+   "img": "零件真实图片_带背景\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x868.png",
+   "bg": "零件真实图片_带背景\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x868_bg.png",
+   "ok": true
+  },
+  {
+   "model": "EGT002 SW50x898",
+   "group": "11_Tuenkers EGT Gripper-EGT002",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\外购件\\EGT型材库\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x898.CATPart",
+   "img": "零件真实图片_带背景\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x898.png",
+   "bg": "零件真实图片_带背景\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x898_bg.png",
+   "ok": true
+  },
+  {
+   "model": "EGT002 SW50x928",
+   "group": "11_Tuenkers EGT Gripper-EGT002",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\外购件\\EGT型材库\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x928.CATPart",
+   "img": "零件真实图片_带背景\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x928.png",
+   "bg": "零件真实图片_带背景\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x928_bg.png",
+   "ok": true
+  },
+  {
+   "model": "EGT002 SW50x958",
+   "group": "11_Tuenkers EGT Gripper-EGT002",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\外购件\\EGT型材库\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x958.CATPart",
+   "img": "零件真实图片_带背景\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x958.png",
+   "bg": "零件真实图片_带背景\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x958_bg.png",
+   "ok": true
+  },
+  {
+   "model": "EGT002 SW50x988",
+   "group": "11_Tuenkers EGT Gripper-EGT002",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\外购件\\EGT型材库\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x988.CATPart",
+   "img": "零件真实图片_带背景\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x988.png",
+   "bg": "零件真实图片_带背景\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x988_bg.png",
+   "ok": true
+  },
+  {
+   "model": "EGT006 D30x073",
+   "group": "12_Tuenkers EGT Gripper-EGT006",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\外购件\\EGT型材库\\12_Tuenkers EGT Gripper-EGT006\\EGT006 D30x073.CATPart",
+   "img": "零件真实图片_带背景\\12_Tuenkers EGT Gripper-EGT006\\EGT006 D30x073.png",
+   "bg": "零件真实图片_带背景\\12_Tuenkers EGT Gripper-EGT006\\EGT006 D30x073_bg.png",
+   "ok": true
+  },
+  {
+   "model": "EGT006 D30x088",
+   "group": "12_Tuenkers EGT Gripper-EGT006",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\外购件\\EGT型材库\\12_Tuenkers EGT Gripper-EGT006\\EGT006 D30x088.CATPart",
+   "img": "零件真实图片_带背景\\12_Tuenkers EGT Gripper-EGT006\\EGT006 D30x088.png",
+   "bg": "零件真实图片_带背景\\12_Tuenkers EGT Gripper-EGT006\\EGT006 D30x088_bg.png",
+   "ok": true
+  },
+  {
+   "model": "EGT006 D30x1000",
+   "group": "12_Tuenkers EGT Gripper-EGT006",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\外购件\\EGT型材库\\12_Tuenkers EGT Gripper-EGT006\\EGT006 D30x1000.CATPart",
+   "img": "零件真实图片_带背景\\12_Tuenkers EGT Gripper-EGT006\\EGT006 D30x1000.png",
+   "bg": "零件真实图片_带背景\\12_Tuenkers EGT Gripper-EGT006\\EGT006 D30x1000_bg.png",
+   "ok": true
+  },
+  {
+   "model": "EGT006 D30x103",
+   "group": "12_Tuenkers EGT Gripper-EGT006",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\外购件\\EGT型材库\\12_Tuenkers EGT Gripper-EGT006\\EGT006 D30x103.CATPart",
+   "img": "零件真实图片_带背景\\12_Tuenkers EGT Gripper-EGT006\\EGT006 D30x103.png",
+   "bg": "零件真实图片_带背景\\12_Tuenkers EGT Gripper-EGT006\\EGT006 D30x103_bg.png",
+   "ok": true
+  },
+  {
+   "model": "EGT006 D30x118",
+   "group": "12_Tuenkers EGT Gripper-EGT006",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\外购件\\EGT型材库\\12_Tuenkers EGT Gripper-EGT006\\EGT006 D30x118.CATPart",
+   "img": "零件真实图片_带背景\\12_Tuenkers EGT Gripper-EGT006\\EGT006 D30x118.png",
+   "bg": "零件真实图片_带背景\\12_Tuenkers EGT Gripper-EGT006\\EGT006 D30x118_bg.png",
+   "ok": true
+  },
+  {
+   "model": "EGT006 D30x133",
+   "group": "12_Tuenkers EGT Gripper-EGT006",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\外购件\\EGT型材库\\12_Tuenkers EGT Gripper-EGT006\\EGT006 D30x133.CATPart",
+   "img": "零件真实图片_带背景\\12_Tuenkers EGT Gripper-EGT006\\EGT006 D30x133.png",
+   "bg": "零件真实图片_带背景\\12_Tuenkers EGT Gripper-EGT006\\EGT006 D30x133_bg.png",
+   "ok": true
+  },
+  {
+   "model": "EGT006 D30x148",
+   "group": "12_Tuenkers EGT Gripper-EGT006",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\外购件\\EGT型材库\\12_Tuenkers EGT Gripper-EGT006\\EGT006 D30x148.CATPart",
+   "img": "零件真实图片_带背景\\12_Tuenkers EGT Gripper-EGT006\\EGT006 D30x148.png",
+   "bg": "零件真实图片_带背景\\12_Tuenkers EGT Gripper-EGT006\\EGT006 D30x148_bg.png",
+   "ok": true
+  },
+  {
+   "model": "EGT006 D30x163",
+   "group": "12_Tuenkers EGT Gripper-EGT006",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\外购件\\EGT型材库\\12_Tuenkers EGT Gripper-EGT006\\EGT006 D30x163.CATPart",
+   "img": "零件真实图片_带背景\\12_Tuenkers EGT Gripper-EGT006\\EGT006 D30x163.png",
+   "bg": "零件真实图片_带背景\\12_Tuenkers EGT Gripper-EGT006\\EGT006 D30x163_bg.png",
+   "ok": true
+  },
+  {
+   "model": "EGT006 D30x178",
+   "group": "12_Tuenkers EGT Gripper-EGT006",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\外购件\\EGT型材库\\12_Tuenkers EGT Gripper-EGT006\\EGT006 D30x178.CATPart",
+   "img": "零件真实图片_带背景\\12_Tuenkers EGT Gripper-EGT006\\EGT006 D30x178.png",
+   "bg": "零件真实图片_带背景\\12_Tuenkers EGT Gripper-EGT006\\EGT006 D30x178_bg.png",
+   "ok": true
+  },
+  {
+   "model": "EGT006 D30x193",
+   "group": "12_Tuenkers EGT Gripper-EGT006",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\外购件\\EGT型材库\\12_Tuenkers EGT Gripper-EGT006\\EGT006 D30x193.CATPart",
+   "img": "零件真实图片_带背景\\12_Tuenkers EGT Gripper-EGT006\\EGT006 D30x193.png",
+   "bg": "零件真实图片_带背景\\12_Tuenkers EGT Gripper-EGT006\\EGT006 D30x193_bg.png",
+   "ok": true
+  },
+  {
+   "model": "EGT006 D30x208",
+   "group": "12_Tuenkers EGT Gripper-EGT006",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\外购件\\EGT型材库\\12_Tuenkers EGT Gripper-EGT006\\EGT006 D30x208.CATPart",
+   "img": "零件真实图片_带背景\\12_Tuenkers EGT Gripper-EGT006\\EGT006 D30x208.png",
+   "bg": "零件真实图片_带背景\\12_Tuenkers EGT Gripper-EGT006\\EGT006 D30x208_bg.png",
+   "ok": true
+  },
+  {
+   "model": "EGT006 D30x223",
+   "group": "12_Tuenkers EGT Gripper-EGT006",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\外购件\\EGT型材库\\12_Tuenkers EGT Gripper-EGT006\\EGT006 D30x223.CATPart",
+   "img": "零件真实图片_带背景\\12_Tuenkers EGT Gripper-EGT006\\EGT006 D30x223.png",
+   "bg": "零件真实图片_带背景\\12_Tuenkers EGT Gripper-EGT006\\EGT006 D30x223_bg.png",
+   "ok": true
+  },
+  {
+   "model": "EGT006 D30x238",
+   "group": "12_Tuenkers EGT Gripper-EGT006",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\外购件\\EGT型材库\\12_Tuenkers EGT Gripper-EGT006\\EGT006 D30x238.CATPart",
+   "img": "零件真实图片_带背景\\12_Tuenkers EGT Gripper-EGT006\\EGT006 D30x238.png",
+   "bg": "零件真实图片_带背景\\12_Tuenkers EGT Gripper-EGT006\\EGT006 D30x238_bg.png",
+   "ok": true
+  },
+  {
+   "model": "EGT006 D30x253",
+   "group": "12_Tuenkers EGT Gripper-EGT006",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\外购件\\EGT型材库\\12_Tuenkers EGT Gripper-EGT006\\EGT006 D30x253.CATPart",
+   "img": "零件真实图片_带背景\\12_Tuenkers EGT Gripper-EGT006\\EGT006 D30x253.png",
+   "bg": "零件真实图片_带背景\\12_Tuenkers EGT Gripper-EGT006\\EGT006 D30x253_bg.png",
+   "ok": true
+  },
+  {
+   "model": "EGT006 D30x268",
+   "group": "12_Tuenkers EGT Gripper-EGT006",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\外购件\\EGT型材库\\12_Tuenkers EGT Gripper-EGT006\\EGT006 D30x268.CATPart",
+   "img": "零件真实图片_带背景\\12_Tuenkers EGT Gripper-EGT006\\EGT006 D30x268.png",
+   "bg": "零件真实图片_带背景\\12_Tuenkers EGT Gripper-EGT006\\EGT006 D30x268_bg.png",
+   "ok": true
+  },
+  {
+   "model": "EGT006 D30x283",
+   "group": "12_Tuenkers EGT Gripper-EGT006",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\外购件\\EGT型材库\\12_Tuenkers EGT Gripper-EGT006\\EGT006 D30x283.CATPart",
+   "img": "零件真实图片_带背景\\12_Tuenkers EGT Gripper-EGT006\\EGT006 D30x283.png",
+   "bg": "零件真实图片_带背景\\12_Tuenkers EGT Gripper-EGT006\\EGT006 D30x283_bg.png",
+   "ok": true
+  },
+  {
+   "model": "EGT006 D30x298",
+   "group": "12_Tuenkers EGT Gripper-EGT006",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\外购件\\EGT型材库\\12_Tuenkers EGT Gripper-EGT006\\EGT006 D30x298.CATPart",
+   "img": "零件真实图片_带背景\\12_Tuenkers EGT Gripper-EGT006\\EGT006 D30x298.png",
+   "bg": "零件真实图片_带背景\\12_Tuenkers EGT Gripper-EGT006\\EGT006 D30x298_bg.png",
+   "ok": true
+  },
+  {
+   "model": "EGT006 D30x313",
+   "group": "12_Tuenkers EGT Gripper-EGT006",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\外购件\\EGT型材库\\12_Tuenkers EGT Gripper-EGT006\\EGT006 D30x313.CATPart",
+   "img": "零件真实图片_带背景\\12_Tuenkers EGT Gripper-EGT006\\EGT006 D30x313.png",
+   "bg": "零件真实图片_带背景\\12_Tuenkers EGT Gripper-EGT006\\EGT006 D30x313_bg.png",
+   "ok": true
+  },
+  {
+   "model": "EGT006 D30x328",
+   "group": "12_Tuenkers EGT Gripper-EGT006",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\外购件\\EGT型材库\\12_Tuenkers EGT Gripper-EGT006\\EGT006 D30x328.CATPart",
+   "img": "零件真实图片_带背景\\12_Tuenkers EGT Gripper-EGT006\\EGT006 D30x328.png",
+   "bg": "零件真实图片_带背景\\12_Tuenkers EGT Gripper-EGT006\\EGT006 D30x328_bg.png",
+   "ok": true
+  },
+  {
+   "model": "EGT006 D30x343",
+   "group": "12_Tuenkers EGT Gripper-EGT006",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\外购件\\EGT型材库\\12_Tuenkers EGT Gripper-EGT006\\EGT006 D30x343.CATPart",
+   "img": "零件真实图片_带背景\\12_Tuenkers EGT Gripper-EGT006\\EGT006 D30x343.png",
+   "bg": "零件真实图片_带背景\\12_Tuenkers EGT Gripper-EGT006\\EGT006 D30x343_bg.png",
+   "ok": true
+  },
+  {
+   "model": "EGT006 D30x358",
+   "group": "12_Tuenkers EGT Gripper-EGT006",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\外购件\\EGT型材库\\12_Tuenkers EGT Gripper-EGT006\\EGT006 D30x358.CATPart",
+   "img": "零件真实图片_带背景\\12_Tuenkers EGT Gripper-EGT006\\EGT006 D30x358.png",
+   "bg": "零件真实图片_带背景\\12_Tuenkers EGT Gripper-EGT006\\EGT006 D30x358_bg.png",
+   "ok": true
+  },
+  {
+   "model": "EGT006 D30x373",
+   "group": "12_Tuenkers EGT Gripper-EGT006",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\外购件\\EGT型材库\\12_Tuenkers EGT Gripper-EGT006\\EGT006 D30x373.CATPart",
+   "img": "零件真实图片_带背景\\12_Tuenkers EGT Gripper-EGT006\\EGT006 D30x373.png",
+   "bg": "零件真实图片_带背景\\12_Tuenkers EGT Gripper-EGT006\\EGT006 D30x373_bg.png",
+   "ok": true
+  },
+  {
+   "model": "EGT013 300x450 SW80",
+   "group": "13_Tuenkers EGT Gripper-EGT Connector",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\外购件\\EGT型材库\\13_Tuenkers EGT Gripper-EGT Connector\\EGT013 300x450 SW80.CATPart",
+   "img": "零件真实图片_带背景\\13_Tuenkers EGT Gripper-EGT Connector\\EGT013 300x450 SW80.png",
+   "bg": "零件真实图片_带背景\\13_Tuenkers EGT Gripper-EGT Connector\\EGT013 300x450 SW80_bg.png",
+   "ok": true
+  },
+  {
+   "model": "EGT016.1 300x450 SW80",
+   "group": "13_Tuenkers EGT Gripper-EGT Connector",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\外购件\\EGT型材库\\13_Tuenkers EGT Gripper-EGT Connector\\EGT016.1 300x450 SW80.CATPart",
+   "img": "零件真实图片_带背景\\13_Tuenkers EGT Gripper-EGT Connector\\EGT016.1 300x450 SW80.png",
+   "bg": "零件真实图片_带背景\\13_Tuenkers EGT Gripper-EGT Connector\\EGT016.1 300x450 SW80_bg.png",
+   "ok": true
+  },
+  {
+   "model": "EGT017.1 450x600 SW80",
+   "group": "13_Tuenkers EGT Gripper-EGT Connector",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\外购件\\EGT型材库\\13_Tuenkers EGT Gripper-EGT Connector\\EGT017.1 450x600 SW80.CATPart",
+   "img": "零件真实图片_带背景\\13_Tuenkers EGT Gripper-EGT Connector\\EGT017.1 450x600 SW80.png",
+   "bg": "零件真实图片_带背景\\13_Tuenkers EGT Gripper-EGT Connector\\EGT017.1 450x600 SW80_bg.png",
+   "ok": true
+  },
+  {
+   "model": "EGT018 300x450 SW50",
+   "group": "13_Tuenkers EGT Gripper-EGT Connector",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\外购件\\EGT型材库\\13_Tuenkers EGT Gripper-EGT Connector\\EGT018 300x450 SW50.CATPart",
+   "img": "零件真实图片_带背景\\13_Tuenkers EGT Gripper-EGT Connector\\EGT018 300x450 SW50.png",
+   "bg": "零件真实图片_带背景\\13_Tuenkers EGT Gripper-EGT Connector\\EGT018 300x450 SW50_bg.png",
+   "ok": true
+  },
+  {
+   "model": "EGT023",
+   "group": "13_Tuenkers EGT Gripper-EGT Connector",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\外购件\\EGT型材库\\13_Tuenkers EGT Gripper-EGT Connector\\EGT023.CATPart",
+   "img": "零件真实图片_带背景\\13_Tuenkers EGT Gripper-EGT Connector\\EGT023.png",
+   "bg": "零件真实图片_带背景\\13_Tuenkers EGT Gripper-EGT Connector\\EGT023_bg.png",
+   "ok": true
+  },
+  {
+   "model": "EGT046 225x315 SW80",
+   "group": "13_Tuenkers EGT Gripper-EGT Connector",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\外购件\\EGT型材库\\13_Tuenkers EGT Gripper-EGT Connector\\EGT046 225x315 SW80.CATPart",
+   "img": "零件真实图片_带背景\\13_Tuenkers EGT Gripper-EGT Connector\\EGT046 225x315 SW80.png",
+   "bg": "零件真实图片_带背景\\13_Tuenkers EGT Gripper-EGT Connector\\EGT046 225x315 SW80_bg.png",
+   "ok": true
+  },
+  {
+   "model": "EGT052 225x315 SW80",
+   "group": "13_Tuenkers EGT Gripper-EGT Connector",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\外购件\\EGT型材库\\13_Tuenkers EGT Gripper-EGT Connector\\EGT052 225x315 SW80.CATPart",
+   "img": "零件真实图片_带背景\\13_Tuenkers EGT Gripper-EGT Connector\\EGT052 225x315 SW80.png",
+   "bg": "零件真实图片_带背景\\13_Tuenkers EGT Gripper-EGT Connector\\EGT052 225x315 SW80_bg.png",
+   "ok": true
+  },
+  {
+   "model": "EGT054 225x315 SW80",
+   "group": "13_Tuenkers EGT Gripper-EGT Connector",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\外购件\\EGT型材库\\13_Tuenkers EGT Gripper-EGT Connector\\EGT054 225x315 SW80.CATPart",
+   "img": "零件真实图片_带背景\\13_Tuenkers EGT Gripper-EGT Connector\\EGT054 225x315 SW80.png",
+   "bg": "零件真实图片_带背景\\13_Tuenkers EGT Gripper-EGT Connector\\EGT054 225x315 SW80_bg.png",
+   "ok": true
+  },
+  {
+   "model": "EGT080 SW80SW80",
+   "group": "13_Tuenkers EGT Gripper-EGT Connector",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\外购件\\EGT型材库\\13_Tuenkers EGT Gripper-EGT Connector\\EGT080 SW80SW80.CATPart",
+   "img": "零件真实图片_带背景\\13_Tuenkers EGT Gripper-EGT Connector\\EGT080 SW80SW80.png",
+   "bg": "零件真实图片_带背景\\13_Tuenkers EGT Gripper-EGT Connector\\EGT080 SW80SW80_bg.png",
+   "ok": true
+  },
+  {
+   "model": "EGT081 SW80SW80",
+   "group": "13_Tuenkers EGT Gripper-EGT Connector",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\外购件\\EGT型材库\\13_Tuenkers EGT Gripper-EGT Connector\\EGT081 SW80SW80.CATPart",
+   "img": "零件真实图片_带背景\\13_Tuenkers EGT Gripper-EGT Connector\\EGT081 SW80SW80.png",
+   "bg": "零件真实图片_带背景\\13_Tuenkers EGT Gripper-EGT Connector\\EGT081 SW80SW80_bg.png",
+   "ok": true
+  },
+  {
+   "model": "EGT082 SW80SW50",
+   "group": "13_Tuenkers EGT Gripper-EGT Connector",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\外购件\\EGT型材库\\13_Tuenkers EGT Gripper-EGT Connector\\EGT082 SW80SW50.CATPart",
+   "img": "零件真实图片_带背景\\13_Tuenkers EGT Gripper-EGT Connector\\EGT082 SW80SW50.png",
+   "bg": "零件真实图片_带背景\\13_Tuenkers EGT Gripper-EGT Connector\\EGT082 SW80SW50_bg.png",
+   "ok": true
+  },
+  {
+   "model": "EGT083 SW80SW50",
+   "group": "13_Tuenkers EGT Gripper-EGT Connector",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\外购件\\EGT型材库\\13_Tuenkers EGT Gripper-EGT Connector\\EGT083 SW80SW50.CATPart",
+   "img": "零件真实图片_带背景\\13_Tuenkers EGT Gripper-EGT Connector\\EGT083 SW80SW50.png",
+   "bg": "零件真实图片_带背景\\13_Tuenkers EGT Gripper-EGT Connector\\EGT083 SW80SW50_bg.png",
+   "ok": true
+  },
+  {
+   "model": "EGT084 SW50SW50",
+   "group": "13_Tuenkers EGT Gripper-EGT Connector",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\外购件\\EGT型材库\\13_Tuenkers EGT Gripper-EGT Connector\\EGT084 SW50SW50.CATPart",
+   "img": "零件真实图片_带背景\\13_Tuenkers EGT Gripper-EGT Connector\\EGT084 SW50SW50.png",
+   "bg": "零件真实图片_带背景\\13_Tuenkers EGT Gripper-EGT Connector\\EGT084 SW50SW50_bg.png",
+   "ok": true
+  },
+  {
+   "model": "EGT085 SW50SW50",
+   "group": "13_Tuenkers EGT Gripper-EGT Connector",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\外购件\\EGT型材库\\13_Tuenkers EGT Gripper-EGT Connector\\EGT085 SW50SW50.CATPart",
+   "img": "零件真实图片_带背景\\13_Tuenkers EGT Gripper-EGT Connector\\EGT085 SW50SW50.png",
+   "bg": "零件真实图片_带背景\\13_Tuenkers EGT Gripper-EGT Connector\\EGT085 SW50SW50_bg.png",
+   "ok": true
+  },
+  {
+   "model": "EGT086 SW80SW50",
+   "group": "13_Tuenkers EGT Gripper-EGT Connector",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\外购件\\EGT型材库\\13_Tuenkers EGT Gripper-EGT Connector\\EGT086 SW80SW50.CATPart",
+   "img": "零件真实图片_带背景\\13_Tuenkers EGT Gripper-EGT Connector\\EGT086 SW80SW50.png",
+   "bg": "零件真实图片_带背景\\13_Tuenkers EGT Gripper-EGT Connector\\EGT086 SW80SW50_bg.png",
+   "ok": true
+  },
+  {
+   "model": "EGT087 SW50SW50",
+   "group": "13_Tuenkers EGT Gripper-EGT Connector",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\外购件\\EGT型材库\\13_Tuenkers EGT Gripper-EGT Connector\\EGT087 SW50SW50.CATPart",
+   "img": "零件真实图片_带背景\\13_Tuenkers EGT Gripper-EGT Connector\\EGT087 SW50SW50.png",
+   "bg": "零件真实图片_带背景\\13_Tuenkers EGT Gripper-EGT Connector\\EGT087 SW50SW50_bg.png",
+   "ok": true
+  },
+  {
+   "model": "EGT088 SW80SW80",
+   "group": "13_Tuenkers EGT Gripper-EGT Connector",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\外购件\\EGT型材库\\13_Tuenkers EGT Gripper-EGT Connector\\EGT088 SW80SW80.CATPart",
+   "img": "零件真实图片_带背景\\13_Tuenkers EGT Gripper-EGT Connector\\EGT088 SW80SW80.png",
+   "bg": "零件真实图片_带背景\\13_Tuenkers EGT Gripper-EGT Connector\\EGT088 SW80SW80_bg.png",
+   "ok": true
+  },
+  {
+   "model": "EGT089 SW80SW80SW80",
+   "group": "13_Tuenkers EGT Gripper-EGT Connector",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\外购件\\EGT型材库\\13_Tuenkers EGT Gripper-EGT Connector\\EGT089 SW80SW80SW80.CATPart",
+   "img": "零件真实图片_带背景\\13_Tuenkers EGT Gripper-EGT Connector\\EGT089 SW80SW80SW80.png",
+   "bg": "零件真实图片_带背景\\13_Tuenkers EGT Gripper-EGT Connector\\EGT089 SW80SW80SW80_bg.png",
+   "ok": true
+  },
+  {
+   "model": "EGT090 SW80SW80SW50",
+   "group": "13_Tuenkers EGT Gripper-EGT Connector",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\外购件\\EGT型材库\\13_Tuenkers EGT Gripper-EGT Connector\\EGT090 SW80SW80SW50.CATPart",
+   "img": "零件真实图片_带背景\\13_Tuenkers EGT Gripper-EGT Connector\\EGT090 SW80SW80SW50.png",
+   "bg": "零件真实图片_带背景\\13_Tuenkers EGT Gripper-EGT Connector\\EGT090 SW80SW80SW50_bg.png",
+   "ok": true
+  },
+  {
+   "model": "EGT091 SW50SW50SW50",
+   "group": "13_Tuenkers EGT Gripper-EGT Connector",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\外购件\\EGT型材库\\13_Tuenkers EGT Gripper-EGT Connector\\EGT091 SW50SW50SW50.CATPart",
+   "img": "零件真实图片_带背景\\13_Tuenkers EGT Gripper-EGT Connector\\EGT091 SW50SW50SW50.png",
+   "bg": "零件真实图片_带背景\\13_Tuenkers EGT Gripper-EGT Connector\\EGT091 SW50SW50SW50_bg.png",
+   "ok": true
+  },
+  {
+   "model": "EGT100 SW80RD30-X90",
+   "group": "13_Tuenkers EGT Gripper-EGT Connector",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\外购件\\EGT型材库\\13_Tuenkers EGT Gripper-EGT Connector\\EGT100 SW80RD30-X90.CATPart",
+   "img": "零件真实图片_带背景\\13_Tuenkers EGT Gripper-EGT Connector\\EGT100 SW80RD30-X90.png",
+   "bg": "零件真实图片_带背景\\13_Tuenkers EGT Gripper-EGT Connector\\EGT100 SW80RD30-X90_bg.png",
+   "ok": true
+  },
+  {
+   "model": "EGT103 SW80RD30-L90",
+   "group": "13_Tuenkers EGT Gripper-EGT Connector",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\外购件\\EGT型材库\\13_Tuenkers EGT Gripper-EGT Connector\\EGT103 SW80RD30-L90.CATPart",
+   "img": "零件真实图片_带背景\\13_Tuenkers EGT Gripper-EGT Connector\\EGT103 SW80RD30-L90.png",
+   "bg": "零件真实图片_带背景\\13_Tuenkers EGT Gripper-EGT Connector\\EGT103 SW80RD30-L90_bg.png",
+   "ok": true
+  },
+  {
+   "model": "EGT105 SW50RD30-X90",
+   "group": "13_Tuenkers EGT Gripper-EGT Connector",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\外购件\\EGT型材库\\13_Tuenkers EGT Gripper-EGT Connector\\EGT105 SW50RD30-X90.CATPart",
+   "img": "零件真实图片_带背景\\13_Tuenkers EGT Gripper-EGT Connector\\EGT105 SW50RD30-X90.png",
+   "bg": "零件真实图片_带背景\\13_Tuenkers EGT Gripper-EGT Connector\\EGT105 SW50RD30-X90_bg.png",
+   "ok": true
+  },
+  {
+   "model": "EGT119 SW80RD30-90",
+   "group": "13_Tuenkers EGT Gripper-EGT Connector",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\外购件\\EGT型材库\\13_Tuenkers EGT Gripper-EGT Connector\\EGT119 SW80RD30-90.CATPart",
+   "img": "零件真实图片_带背景\\13_Tuenkers EGT Gripper-EGT Connector\\EGT119 SW80RD30-90.png",
+   "bg": "零件真实图片_带背景\\13_Tuenkers EGT Gripper-EGT Connector\\EGT119 SW80RD30-90_bg.png",
+   "ok": true
+  },
+  {
+   "model": "EGT120 SW50RD30-90",
+   "group": "13_Tuenkers EGT Gripper-EGT Connector",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\外购件\\EGT型材库\\13_Tuenkers EGT Gripper-EGT Connector\\EGT120 SW50RD30-90.CATPart",
+   "img": "零件真实图片_带背景\\13_Tuenkers EGT Gripper-EGT Connector\\EGT120 SW50RD30-90.png",
+   "bg": "零件真实图片_带背景\\13_Tuenkers EGT Gripper-EGT Connector\\EGT120 SW50RD30-90_bg.png",
+   "ok": true
+  },
+  {
+   "model": "EGT142 RD30-30-X90",
+   "group": "13_Tuenkers EGT Gripper-EGT Connector",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\外购件\\EGT型材库\\13_Tuenkers EGT Gripper-EGT Connector\\EGT142 RD30-30-X90.CATPart",
+   "img": "零件真实图片_带背景\\13_Tuenkers EGT Gripper-EGT Connector\\EGT142 RD30-30-X90.png",
+   "bg": "零件真实图片_带背景\\13_Tuenkers EGT Gripper-EGT Connector\\EGT142 RD30-30-X90_bg.png",
+   "ok": true
+  },
+  {
+   "model": "EGT143 RD30-30-L90",
+   "group": "13_Tuenkers EGT Gripper-EGT Connector",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\外购件\\EGT型材库\\13_Tuenkers EGT Gripper-EGT Connector\\EGT143 RD30-30-L90.CATPart",
+   "img": "零件真实图片_带背景\\13_Tuenkers EGT Gripper-EGT Connector\\EGT143 RD30-30-L90.png",
+   "bg": "零件真实图片_带背景\\13_Tuenkers EGT Gripper-EGT Connector\\EGT143 RD30-30-L90_bg.png",
+   "ok": true
+  },
+  {
+   "model": "EGT144 RD30-30-L135",
+   "group": "13_Tuenkers EGT Gripper-EGT Connector",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\外购件\\EGT型材库\\13_Tuenkers EGT Gripper-EGT Connector\\EGT144 RD30-30-L135.CATPart",
+   "img": "零件真实图片_带背景\\13_Tuenkers EGT Gripper-EGT Connector\\EGT144 RD30-30-L135.png",
+   "bg": "零件真实图片_带背景\\13_Tuenkers EGT Gripper-EGT Connector\\EGT144 RD30-30-L135_bg.png",
+   "ok": true
+  },
+  {
+   "model": "EGT160 70x70x15",
+   "group": "13_Tuenkers EGT Gripper-EGT Connector",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\外购件\\EGT型材库\\13_Tuenkers EGT Gripper-EGT Connector\\EGT160 70x70x15.CATPart",
+   "img": "零件真实图片_带背景\\13_Tuenkers EGT Gripper-EGT Connector\\EGT160 70x70x15.png",
+   "bg": "零件真实图片_带背景\\13_Tuenkers EGT Gripper-EGT Connector\\EGT160 70x70x15_bg.png",
+   "ok": true
+  },
+  {
+   "model": "EGT171 RD30-K40-HLR (Al)",
+   "group": "13_Tuenkers EGT Gripper-EGT Connector",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\外购件\\EGT型材库\\13_Tuenkers EGT Gripper-EGT Connector\\EGT171 RD30-K40-HLR (Al).CATPart",
+   "img": "零件真实图片_带背景\\13_Tuenkers EGT Gripper-EGT Connector\\EGT171 RD30-K40-HLR (Al).png",
+   "bg": "零件真实图片_带背景\\13_Tuenkers EGT Gripper-EGT Connector\\EGT171 RD30-K40-HLR (Al)_bg.png",
+   "ok": true
+  },
+  {
+   "model": "EGT172 RD30-K40-HU (Al)",
+   "group": "13_Tuenkers EGT Gripper-EGT Connector",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\外购件\\EGT型材库\\13_Tuenkers EGT Gripper-EGT Connector\\EGT172 RD30-K40-HU (Al).CATPart",
+   "img": "零件真实图片_带背景\\13_Tuenkers EGT Gripper-EGT Connector\\EGT172 RD30-K40-HU (Al).png",
+   "bg": "零件真实图片_带背景\\13_Tuenkers EGT Gripper-EGT Connector\\EGT172 RD30-K40-HU (Al)_bg.png",
+   "ok": true
+  },
+  {
+   "model": "EGT173 RD30-K40-VLR",
+   "group": "13_Tuenkers EGT Gripper-EGT Connector",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\外购件\\EGT型材库\\13_Tuenkers EGT Gripper-EGT Connector\\EGT173 RD30-K40-VLR.CATPart",
+   "img": "零件真实图片_带背景\\13_Tuenkers EGT Gripper-EGT Connector\\EGT173 RD30-K40-VLR.png",
+   "bg": "零件真实图片_带背景\\13_Tuenkers EGT Gripper-EGT Connector\\EGT173 RD30-K40-VLR_bg.png",
+   "ok": true
+  },
+  {
+   "model": "EGT174 RD30-K40-VU",
+   "group": "13_Tuenkers EGT Gripper-EGT Connector",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\外购件\\EGT型材库\\13_Tuenkers EGT Gripper-EGT Connector\\EGT174 RD30-K40-VU.CATPart",
+   "img": "零件真实图片_带背景\\13_Tuenkers EGT Gripper-EGT Connector\\EGT174 RD30-K40-VU.png",
+   "bg": "零件真实图片_带背景\\13_Tuenkers EGT Gripper-EGT Connector\\EGT174 RD30-K40-VU_bg.png",
+   "ok": true
+  },
+  {
+   "model": "EGT177-I RD30-K50_63-HLR (I)",
+   "group": "13_Tuenkers EGT Gripper-EGT Connector",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\外购件\\EGT型材库\\13_Tuenkers EGT Gripper-EGT Connector\\EGT177-I RD30-K50_63-HLR (I).CATPart",
+   "img": "零件真实图片_带背景\\13_Tuenkers EGT Gripper-EGT Connector\\EGT177-I RD30-K50_63-HLR (I).png",
+   "bg": "零件真实图片_带背景\\13_Tuenkers EGT Gripper-EGT Connector\\EGT177-I RD30-K50_63-HLR (I)_bg.png",
+   "ok": true
+  },
+  {
+   "model": "EGT179 RD30-K50_63-VLR",
+   "group": "13_Tuenkers EGT Gripper-EGT Connector",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\外购件\\EGT型材库\\13_Tuenkers EGT Gripper-EGT Connector\\EGT179 RD30-K50_63-VLR.CATPart",
+   "img": "零件真实图片_带背景\\13_Tuenkers EGT Gripper-EGT Connector\\EGT179 RD30-K50_63-VLR.png",
+   "bg": "零件真实图片_带背景\\13_Tuenkers EGT Gripper-EGT Connector\\EGT179 RD30-K50_63-VLR_bg.png",
+   "ok": true
+  },
+  {
+   "model": "EGT180 RD30-K50_63-VU",
+   "group": "13_Tuenkers EGT Gripper-EGT Connector",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\外购件\\EGT型材库\\13_Tuenkers EGT Gripper-EGT Connector\\EGT180 RD30-K50_63-VU.CATPart",
+   "img": "零件真实图片_带背景\\13_Tuenkers EGT Gripper-EGT Connector\\EGT180 RD30-K50_63-VU.png",
+   "bg": "零件真实图片_带背景\\13_Tuenkers EGT Gripper-EGT Connector\\EGT180 RD30-K50_63-VU_bg.png",
+   "ok": true
+  },
+  {
+   "model": "EGT182 RD30-50_63",
+   "group": "13_Tuenkers EGT Gripper-EGT Connector",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\外购件\\EGT型材库\\13_Tuenkers EGT Gripper-EGT Connector\\EGT182 RD30-50_63.CATPart",
+   "img": "零件真实图片_带背景\\13_Tuenkers EGT Gripper-EGT Connector\\EGT182 RD30-50_63.png",
+   "bg": "零件真实图片_带背景\\13_Tuenkers EGT Gripper-EGT Connector\\EGT182 RD30-50_63_bg.png",
+   "ok": true
+  },
+  {
+   "model": "EGT183 RD30-5063",
+   "group": "13_Tuenkers EGT Gripper-EGT Connector",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\外购件\\EGT型材库\\13_Tuenkers EGT Gripper-EGT Connector\\EGT183 RD30-5063.CATPart",
+   "img": "零件真实图片_带背景\\13_Tuenkers EGT Gripper-EGT Connector\\EGT183 RD30-5063.png",
+   "bg": "零件真实图片_带背景\\13_Tuenkers EGT Gripper-EGT Connector\\EGT183 RD30-5063_bg.png",
+   "ok": true
+  },
+  {
+   "model": "EGT184-2 M8x40",
+   "group": "13_Tuenkers EGT Gripper-EGT Connector",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\外购件\\EGT型材库\\13_Tuenkers EGT Gripper-EGT Connector\\EGT184-2 M8x40.CATPart",
+   "img": "零件真实图片_带背景\\13_Tuenkers EGT Gripper-EGT Connector\\EGT184-2 M8x40.png",
+   "bg": "零件真实图片_带背景\\13_Tuenkers EGT Gripper-EGT Connector\\EGT184-2 M8x40_bg.png",
+   "ok": true
+  },
+  {
+   "model": "EGT190 28.5-28",
+   "group": "13_Tuenkers EGT Gripper-EGT Connector",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\外购件\\EGT型材库\\13_Tuenkers EGT Gripper-EGT Connector\\EGT190 28.5-28.CATPart",
+   "img": "零件真实图片_带背景\\13_Tuenkers EGT Gripper-EGT Connector\\EGT190 28.5-28.png",
+   "bg": "零件真实图片_带背景\\13_Tuenkers EGT Gripper-EGT Connector\\EGT190 28.5-28_bg.png",
+   "ok": true
+  },
+  {
+   "model": "EGT192 20-30",
+   "group": "13_Tuenkers EGT Gripper-EGT Connector",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\外购件\\EGT型材库\\13_Tuenkers EGT Gripper-EGT Connector\\EGT192 20-30.CATPart",
+   "img": "零件真实图片_带背景\\13_Tuenkers EGT Gripper-EGT Connector\\EGT192 20-30.png",
+   "bg": "零件真实图片_带背景\\13_Tuenkers EGT Gripper-EGT Connector\\EGT192 20-30_bg.png",
+   "ok": true
+  },
+  {
+   "model": "EGT200 RD30",
+   "group": "13_Tuenkers EGT Gripper-EGT Connector",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\外购件\\EGT型材库\\13_Tuenkers EGT Gripper-EGT Connector\\EGT200 RD30.CATPart",
+   "img": "零件真实图片_带背景\\13_Tuenkers EGT Gripper-EGT Connector\\EGT200 RD30.png",
+   "bg": "零件真实图片_带背景\\13_Tuenkers EGT Gripper-EGT Connector\\EGT200 RD30_bg.png",
+   "ok": true
+  },
+  {
+   "model": "EGT201 M6x36 RD30",
+   "group": "13_Tuenkers EGT Gripper-EGT Connector",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\外购件\\EGT型材库\\13_Tuenkers EGT Gripper-EGT Connector\\EGT201 M6x36 RD30.CATPart",
+   "img": "零件真实图片_带背景\\13_Tuenkers EGT Gripper-EGT Connector\\EGT201 M6x36 RD30.png",
+   "bg": "零件真实图片_带背景\\13_Tuenkers EGT Gripper-EGT Connector\\EGT201 M6x36 RD30_bg.png",
+   "ok": true
+  },
+  {
+   "model": "EGT203 RD30",
+   "group": "13_Tuenkers EGT Gripper-EGT Connector",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\外购件\\EGT型材库\\13_Tuenkers EGT Gripper-EGT Connector\\EGT203 RD30.CATPart",
+   "img": "零件真实图片_带背景\\13_Tuenkers EGT Gripper-EGT Connector\\EGT203 RD30.png",
+   "bg": "零件真实图片_带背景\\13_Tuenkers EGT Gripper-EGT Connector\\EGT203 RD30_bg.png",
+   "ok": true
+  },
+  {
+   "model": "EGT205 RD30",
+   "group": "13_Tuenkers EGT Gripper-EGT Connector",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\外购件\\EGT型材库\\13_Tuenkers EGT Gripper-EGT Connector\\EGT205 RD30.CATPart",
+   "img": "零件真实图片_带背景\\13_Tuenkers EGT Gripper-EGT Connector\\EGT205 RD30.png",
+   "bg": "零件真实图片_带背景\\13_Tuenkers EGT Gripper-EGT Connector\\EGT205 RD30_bg.png",
+   "ok": true
+  },
+  {
+   "model": "EGT208 SW80",
+   "group": "13_Tuenkers EGT Gripper-EGT Connector",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\外购件\\EGT型材库\\13_Tuenkers EGT Gripper-EGT Connector\\EGT208 SW80.CATPart",
+   "img": "零件真实图片_带背景\\13_Tuenkers EGT Gripper-EGT Connector\\EGT208 SW80.png",
+   "bg": "零件真实图片_带背景\\13_Tuenkers EGT Gripper-EGT Connector\\EGT208 SW80_bg.png",
+   "ok": true
+  },
+  {
+   "model": "EGT209 SW50",
+   "group": "13_Tuenkers EGT Gripper-EGT Connector",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\外购件\\EGT型材库\\13_Tuenkers EGT Gripper-EGT Connector\\EGT209 SW50.CATPart",
+   "img": "零件真实图片_带背景\\13_Tuenkers EGT Gripper-EGT Connector\\EGT209 SW50.png",
+   "bg": "零件真实图片_带背景\\13_Tuenkers EGT Gripper-EGT Connector\\EGT209 SW50_bg.png",
+   "ok": true
+  },
+  {
+   "model": "EGT210 PLATE",
+   "group": "13_Tuenkers EGT Gripper-EGT Connector",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\外购件\\EGT型材库\\13_Tuenkers EGT Gripper-EGT Connector\\EGT210 PLATE.CATPart",
+   "img": "零件真实图片_带背景\\13_Tuenkers EGT Gripper-EGT Connector\\EGT210 PLATE.png",
+   "bg": "零件真实图片_带背景\\13_Tuenkers EGT Gripper-EGT Connector\\EGT210 PLATE_bg.png",
+   "ok": true
+  },
+  {
+   "model": "EGT211 90GRAD",
+   "group": "13_Tuenkers EGT Gripper-EGT Connector",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\外购件\\EGT型材库\\13_Tuenkers EGT Gripper-EGT Connector\\EGT211 90GRAD.CATPart",
+   "img": "零件真实图片_带背景\\13_Tuenkers EGT Gripper-EGT Connector\\EGT211 90GRAD.png",
+   "bg": "零件真实图片_带背景\\13_Tuenkers EGT Gripper-EGT Connector\\EGT211 90GRAD_bg.png",
+   "ok": true
+  },
+  {
+   "model": "EGT213 M5-M6",
+   "group": "13_Tuenkers EGT Gripper-EGT Connector",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\外购件\\EGT型材库\\13_Tuenkers EGT Gripper-EGT Connector\\EGT213 M5-M6.CATPart",
+   "img": "零件真实图片_带背景\\13_Tuenkers EGT Gripper-EGT Connector\\EGT213 M5-M6.png",
+   "bg": "零件真实图片_带背景\\13_Tuenkers EGT Gripper-EGT Connector\\EGT213 M5-M6_bg.png",
+   "ok": true
+  },
+  {
+   "model": "EGT214 M8",
+   "group": "13_Tuenkers EGT Gripper-EGT Connector",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\外购件\\EGT型材库\\13_Tuenkers EGT Gripper-EGT Connector\\EGT214 M8.CATPart",
+   "img": "零件真实图片_带背景\\13_Tuenkers EGT Gripper-EGT Connector\\EGT214 M8.png",
+   "bg": "零件真实图片_带背景\\13_Tuenkers EGT Gripper-EGT Connector\\EGT214 M8_bg.png",
+   "ok": true
+  },
+  {
+   "model": "EGT215 SW80_SW50",
+   "group": "13_Tuenkers EGT Gripper-EGT Connector",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\外购件\\EGT型材库\\13_Tuenkers EGT Gripper-EGT Connector\\EGT215 SW80_SW50.CATPart",
+   "img": "零件真实图片_带背景\\13_Tuenkers EGT Gripper-EGT Connector\\EGT215 SW80_SW50.png",
+   "bg": "零件真实图片_带背景\\13_Tuenkers EGT Gripper-EGT Connector\\EGT215 SW80_SW50_bg.png",
+   "ok": true
+  },
+  {
+   "model": "EGT217",
+   "group": "13_Tuenkers EGT Gripper-EGT Connector",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\外购件\\EGT型材库\\13_Tuenkers EGT Gripper-EGT Connector\\EGT217.CATPart",
+   "img": "零件真实图片_带背景\\13_Tuenkers EGT Gripper-EGT Connector\\EGT217.png",
+   "bg": "零件真实图片_带背景\\13_Tuenkers EGT Gripper-EGT Connector\\EGT217_bg.png",
+   "ok": true
+  },
+  {
+   "model": "EGT218",
+   "group": "13_Tuenkers EGT Gripper-EGT Connector",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\外购件\\EGT型材库\\13_Tuenkers EGT Gripper-EGT Connector\\EGT218.CATPart",
+   "img": "零件真实图片_带背景\\13_Tuenkers EGT Gripper-EGT Connector\\EGT218.png",
+   "bg": "零件真实图片_带背景\\13_Tuenkers EGT Gripper-EGT Connector\\EGT218_bg.png",
+   "ok": true
+  },
+  {
+   "model": "EGT220 L315x30x15",
+   "group": "13_Tuenkers EGT Gripper-EGT Connector",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\外购件\\EGT型材库\\13_Tuenkers EGT Gripper-EGT Connector\\EGT220 L315x30x15.CATPart",
+   "img": "零件真实图片_带背景\\13_Tuenkers EGT Gripper-EGT Connector\\EGT220 L315x30x15.png",
+   "bg": "零件真实图片_带背景\\13_Tuenkers EGT Gripper-EGT Connector\\EGT220 L315x30x15_bg.png",
+   "ok": true
+  },
+  {
+   "model": "EGT230",
+   "group": "13_Tuenkers EGT Gripper-EGT Connector",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\外购件\\EGT型材库\\13_Tuenkers EGT Gripper-EGT Connector\\EGT230.CATPart",
+   "img": "零件真实图片_带背景\\13_Tuenkers EGT Gripper-EGT Connector\\EGT230.png",
+   "bg": "零件真实图片_带背景\\13_Tuenkers EGT Gripper-EGT Connector\\EGT230_bg.png",
+   "ok": true
+  },
+  {
+   "model": "EGT231",
+   "group": "13_Tuenkers EGT Gripper-EGT Connector",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\外购件\\EGT型材库\\13_Tuenkers EGT Gripper-EGT Connector\\EGT231.CATPart",
+   "img": "零件真实图片_带背景\\13_Tuenkers EGT Gripper-EGT Connector\\EGT231.png",
+   "bg": "零件真实图片_带背景\\13_Tuenkers EGT Gripper-EGT Connector\\EGT231_bg.png",
+   "ok": true
+  },
+  {
+   "model": "EGT232",
+   "group": "13_Tuenkers EGT Gripper-EGT Connector",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\外购件\\EGT型材库\\13_Tuenkers EGT Gripper-EGT Connector\\EGT232.CATPart",
+   "img": "零件真实图片_带背景\\13_Tuenkers EGT Gripper-EGT Connector\\EGT232.png",
+   "bg": "零件真实图片_带背景\\13_Tuenkers EGT Gripper-EGT Connector\\EGT232_bg.png",
+   "ok": true
+  },
+  {
+   "model": "EGT235",
+   "group": "13_Tuenkers EGT Gripper-EGT Connector",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\外购件\\EGT型材库\\13_Tuenkers EGT Gripper-EGT Connector\\EGT235.CATPart",
+   "img": "零件真实图片_带背景\\13_Tuenkers EGT Gripper-EGT Connector\\EGT235.png",
+   "bg": "零件真实图片_带背景\\13_Tuenkers EGT Gripper-EGT Connector\\EGT235_bg.png",
+   "ok": true
+  },
+  {
+   "model": "EGT237 SW80SW80",
+   "group": "13_Tuenkers EGT Gripper-EGT Connector",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\外购件\\EGT型材库\\13_Tuenkers EGT Gripper-EGT Connector\\EGT237 SW80SW80.CATPart",
+   "img": "零件真实图片_带背景\\13_Tuenkers EGT Gripper-EGT Connector\\EGT237 SW80SW80.png",
+   "bg": "零件真实图片_带背景\\13_Tuenkers EGT Gripper-EGT Connector\\EGT237 SW80SW80_bg.png",
+   "ok": true
+  },
+  {
+   "model": "EGT244 SW50",
+   "group": "13_Tuenkers EGT Gripper-EGT Connector",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\外购件\\EGT型材库\\13_Tuenkers EGT Gripper-EGT Connector\\EGT244 SW50.CATPart",
+   "img": "零件真实图片_带背景\\13_Tuenkers EGT Gripper-EGT Connector\\EGT244 SW50.png",
+   "bg": "零件真实图片_带背景\\13_Tuenkers EGT Gripper-EGT Connector\\EGT244 SW50_bg.png",
+   "ok": true
+  },
+  {
+   "model": "EGT245 SW80",
+   "group": "13_Tuenkers EGT Gripper-EGT Connector",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\外购件\\EGT型材库\\13_Tuenkers EGT Gripper-EGT Connector\\EGT245 SW80.CATPart",
+   "img": "零件真实图片_带背景\\13_Tuenkers EGT Gripper-EGT Connector\\EGT245 SW80.png",
+   "bg": "零件真实图片_带背景\\13_Tuenkers EGT Gripper-EGT Connector\\EGT245 SW80_bg.png",
+   "ok": true
+  },
+  {
+   "model": "EGT257 SW50",
+   "group": "13_Tuenkers EGT Gripper-EGT Connector",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\外购件\\EGT型材库\\13_Tuenkers EGT Gripper-EGT Connector\\EGT257 SW50.CATPart",
+   "img": "零件真实图片_带背景\\13_Tuenkers EGT Gripper-EGT Connector\\EGT257 SW50.png",
+   "bg": "零件真实图片_带背景\\13_Tuenkers EGT Gripper-EGT Connector\\EGT257 SW50_bg.png",
+   "ok": true
+  },
+  {
+   "model": "EGT258 SW80",
+   "group": "13_Tuenkers EGT Gripper-EGT Connector",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\外购件\\EGT型材库\\13_Tuenkers EGT Gripper-EGT Connector\\EGT258 SW80.CATPart",
+   "img": "零件真实图片_带背景\\13_Tuenkers EGT Gripper-EGT Connector\\EGT258 SW80.png",
+   "bg": "零件真实图片_带背景\\13_Tuenkers EGT Gripper-EGT Connector\\EGT258 SW80_bg.png",
+   "ok": true
+  },
+  {
+   "model": "EGT274 SW50-40V",
+   "group": "13_Tuenkers EGT Gripper-EGT Connector",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\外购件\\EGT型材库\\13_Tuenkers EGT Gripper-EGT Connector\\EGT274 SW50-40V.CATPart",
+   "img": "零件真实图片_带背景\\13_Tuenkers EGT Gripper-EGT Connector\\EGT274 SW50-40V.png",
+   "bg": "零件真实图片_带背景\\13_Tuenkers EGT Gripper-EGT Connector\\EGT274 SW50-40V_bg.png",
+   "ok": true
+  },
+  {
+   "model": "EGT275 SW50-50_63V",
+   "group": "13_Tuenkers EGT Gripper-EGT Connector",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\外购件\\EGT型材库\\13_Tuenkers EGT Gripper-EGT Connector\\EGT275 SW50-50_63V.CATPart",
+   "img": "零件真实图片_带背景\\13_Tuenkers EGT Gripper-EGT Connector\\EGT275 SW50-50_63V.png",
+   "bg": "零件真实图片_带背景\\13_Tuenkers EGT Gripper-EGT Connector\\EGT275 SW50-50_63V_bg.png",
+   "ok": true
+  },
+  {
+   "model": "EGT276 SW50-50_63H",
+   "group": "13_Tuenkers EGT Gripper-EGT Connector",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\外购件\\EGT型材库\\13_Tuenkers EGT Gripper-EGT Connector\\EGT276 SW50-50_63H.CATPart",
+   "img": "零件真实图片_带背景\\13_Tuenkers EGT Gripper-EGT Connector\\EGT276 SW50-50_63H.png",
+   "bg": "零件真实图片_带背景\\13_Tuenkers EGT Gripper-EGT Connector\\EGT276 SW50-50_63H_bg.png",
+   "ok": true
+  },
+  {
+   "model": "EGT287-1",
+   "group": "13_Tuenkers EGT Gripper-EGT Connector",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\外购件\\EGT型材库\\13_Tuenkers EGT Gripper-EGT Connector\\EGT287-1.CATPart",
+   "img": "零件真实图片_带背景\\13_Tuenkers EGT Gripper-EGT Connector\\EGT287-1.png",
+   "bg": "零件真实图片_带背景\\13_Tuenkers EGT Gripper-EGT Connector\\EGT287-1_bg.png",
+   "ok": true
+  },
+  {
+   "model": "EGT287-2",
+   "group": "13_Tuenkers EGT Gripper-EGT Connector",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\外购件\\EGT型材库\\13_Tuenkers EGT Gripper-EGT Connector\\EGT287-2.CATPart",
+   "img": "零件真实图片_带背景\\13_Tuenkers EGT Gripper-EGT Connector\\EGT287-2.png",
+   "bg": "零件真实图片_带背景\\13_Tuenkers EGT Gripper-EGT Connector\\EGT287-2_bg.png",
+   "ok": true
+  },
+  {
+   "model": "EGT288 85x80x50",
+   "group": "13_Tuenkers EGT Gripper-EGT Connector",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\外购件\\EGT型材库\\13_Tuenkers EGT Gripper-EGT Connector\\EGT288 85x80x50.CATPart",
+   "img": "零件真实图片_带背景\\13_Tuenkers EGT Gripper-EGT Connector\\EGT288 85x80x50.png",
+   "bg": "零件真实图片_带背景\\13_Tuenkers EGT Gripper-EGT Connector\\EGT288 85x80x50_bg.png",
+   "ok": true
+  },
+  {
+   "model": "EGT289 D30",
+   "group": "13_Tuenkers EGT Gripper-EGT Connector",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\外购件\\EGT型材库\\13_Tuenkers EGT Gripper-EGT Connector\\EGT289 D30.CATPart",
+   "img": "零件真实图片_带背景\\13_Tuenkers EGT Gripper-EGT Connector\\EGT289 D30.png",
+   "bg": "零件真实图片_带背景\\13_Tuenkers EGT Gripper-EGT Connector\\EGT289 D30_bg.png",
+   "ok": true
+  },
+  {
+   "model": "VGT181 RD30-V40",
+   "group": "13_Tuenkers EGT Gripper-EGT Connector",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\外购件\\EGT型材库\\13_Tuenkers EGT Gripper-EGT Connector\\VGT181 RD30-V40.CATPart",
+   "img": "零件真实图片_带背景\\13_Tuenkers EGT Gripper-EGT Connector\\VGT181 RD30-V40.png",
+   "bg": "零件真实图片_带背景\\13_Tuenkers EGT Gripper-EGT Connector\\VGT181 RD30-V40_bg.png",
+   "ok": true
+  },
+  {
+   "model": "VGT182 RD30-K40",
+   "group": "13_Tuenkers EGT Gripper-EGT Connector",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\外购件\\EGT型材库\\13_Tuenkers EGT Gripper-EGT Connector\\VGT182 RD30-K40.CATPart",
+   "img": "零件真实图片_带背景\\13_Tuenkers EGT Gripper-EGT Connector\\VGT182 RD30-K40.png",
+   "bg": "零件真实图片_带背景\\13_Tuenkers EGT Gripper-EGT Connector\\VGT182 RD30-K40_bg.png",
+   "ok": true
+  },
+  {
+   "model": "MGPA50-50Z-P3DWASE",
+   "group": "SMC",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\外购件\\SMC\\MGPA50-50Z-P3DWASE.CATPart",
+   "img": "零件真实图片_带背景\\SMC\\MGPA50-50Z-P3DWASE.png",
+   "bg": "零件真实图片_带背景\\SMC\\MGPA50-50Z-P3DWASE_bg.png",
+   "ok": true
+  },
+  {
+   "model": "ULA63040AK0",
+   "group": "双导杆气缸",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\外购件\\UNIVER\\双导杆气缸\\ULA63040AK0.CATPart",
+   "img": "零件真实图片_带背景\\双导杆气缸\\ULA63040AK0.png",
+   "bg": "零件真实图片_带背景\\双导杆气缸\\ULA63040AK0_bg.png",
+   "ok": true
+  },
+  {
+   "model": "ULA63060AK0",
+   "group": "双导杆气缸",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\外购件\\UNIVER\\双导杆气缸\\ULA63060AK0.CATPart",
+   "img": "零件真实图片_带背景\\双导杆气缸\\ULA63060AK0.png",
+   "bg": "零件真实图片_带背景\\双导杆气缸\\ULA63060AK0_bg.png",
+   "ok": true
+  },
+  {
+   "model": "UCBH50OCSK0105",
+   "group": "夹紧气缸",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\外购件\\UNIVER\\夹紧气缸\\UCBH50OCSK0105.CATPart",
+   "img": "零件真实图片_带背景\\夹紧气缸\\UCBH50OCSK0105.png",
+   "bg": "零件真实图片_带背景\\夹紧气缸\\UCBH50OCSK0105_bg.png",
+   "ok": true
+  },
+  {
+   "model": "UCBH50VCSK0105",
+   "group": "夹紧气缸",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\外购件\\UNIVER\\夹紧气缸\\UCBH50VCSK0105.CATPart",
+   "img": "零件真实图片_带背景\\夹紧气缸\\UCBH50VCSK0105.png",
+   "bg": "零件真实图片_带背景\\夹紧气缸\\UCBH50VCSK0105_bg.png",
+   "ok": true
+  },
+  {
+   "model": "UCBH63OESK0105",
+   "group": "夹紧气缸",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\外购件\\UNIVER\\夹紧气缸\\UCBH63OESK0105.CATPart",
+   "img": "零件真实图片_带背景\\夹紧气缸\\UCBH63OESK0105.png",
+   "bg": "零件真实图片_带背景\\夹紧气缸\\UCBH63OESK0105_bg.png",
+   "ok": true
+  },
+  {
+   "model": "UCBH63VEAK0135",
+   "group": "夹紧气缸",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\外购件\\UNIVER\\夹紧气缸\\UCBH63VEAK0135.CATPart",
+   "img": "零件真实图片_带背景\\夹紧气缸\\UCBH63VEAK0135.png",
+   "bg": "零件真实图片_带背景\\夹紧气缸\\UCBH63VEAK0135_bg.png",
+   "ok": true
+  },
+  {
+   "model": "UCBM63OESK0105",
+   "group": "手动夹紧气缸",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\外购件\\UNIVER\\手动夹紧气缸\\UCBM63OESK0105.CATPart",
+   "img": "零件真实图片_带背景\\手动夹紧气缸\\UCBM63OESK0105.png",
+   "bg": "零件真实图片_带背景\\手动夹紧气缸\\UCBM63OESK0105_bg.png",
+   "ok": true
+  },
+  {
+   "model": "UCBM63VESK0135",
+   "group": "手动夹紧气缸",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\外购件\\UNIVER\\手动夹紧气缸\\UCBM63VESK0135.CATPart",
+   "img": "零件真实图片_带背景\\手动夹紧气缸\\UCBM63VESK0135.png",
+   "bg": "零件真实图片_带背景\\手动夹紧气缸\\UCBM63VESK0135_bg.png",
+   "ok": true
+  },
+  {
+   "model": "GB825_88_M16",
+   "group": "吊环",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\外购件\\吊环\\GB825_88_M16.CATPart",
+   "img": "零件真实图片_带背景\\吊环\\GB825_88_M16.png",
+   "bg": "零件真实图片_带背景\\吊环\\GB825_88_M16_bg.png",
+   "ok": true
+  },
+  {
+   "model": "GB825_88_M20",
+   "group": "吊环",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\外购件\\吊环\\GB825_88_M20.CATPart",
+   "img": "零件真实图片_带背景\\吊环\\GB825_88_M20.png",
+   "bg": "零件真实图片_带背景\\吊环\\GB825_88_M20_bg.png",
+   "ok": true
+  },
+  {
+   "model": "GB825_88_M24",
+   "group": "吊环",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\外购件\\吊环\\GB825_88_M24.CATPart",
+   "img": "零件真实图片_带背景\\吊环\\GB825_88_M24.png",
+   "bg": "零件真实图片_带背景\\吊环\\GB825_88_M24_bg.png",
+   "ok": true
+  },
+  {
+   "model": "BES M08MG1-PSC20A-S04G-W",
+   "group": "接近开关",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\外购件\\接近开关\\BES M08MG1-PSC20A-S04G-W.CATPart",
+   "img": "零件真实图片_带背景\\接近开关\\BES M08MG1-PSC20A-S04G-W.png",
+   "bg": "零件真实图片_带背景\\接近开关\\BES M08MG1-PSC20A-S04G-W_bg.png",
+   "ok": true
+  },
+  {
+   "model": "BES_M12MI_PSC30A_S04G_W09",
+   "group": "接近开关",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\外购件\\接近开关\\BES_M12MI_PSC30A_S04G_W09.CATPart",
+   "img": "零件真实图片_带背景\\接近开关\\BES_M12MI_PSC30A_S04G_W09.png",
+   "bg": "零件真实图片_带背景\\接近开关\\BES_M12MI_PSC30A_S04G_W09_bg.png",
+   "ok": true
+  },
+  {
+   "model": "BES_M18MI_PSC80A_S04G_W33",
+   "group": "接近开关",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\外购件\\接近开关\\BES_M18MI_PSC80A_S04G_W33.CATPart",
+   "img": "零件真实图片_带背景\\接近开关\\BES_M18MI_PSC80A_S04G_W33.png",
+   "bg": "零件真实图片_带背景\\接近开关\\BES_M18MI_PSC80A_S04G_W33_bg.png",
+   "ok": true
+  },
+  {
+   "model": "KMS-M15-G14-H04",
+   "group": "分气块",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\标准件\\分气块\\KMS-M15-G14-H04.CATPart",
+   "img": "零件真实图片_带背景\\分气块\\KMS-M15-G14-H04.png",
+   "bg": "零件真实图片_带背景\\分气块\\KMS-M15-G14-H04_bg.png",
+   "ok": true
+  },
+  {
+   "model": "KMS-M15-G14-H06",
+   "group": "分气块",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\标准件\\分气块\\KMS-M15-G14-H06.CATPart",
+   "img": "零件真实图片_带背景\\分气块\\KMS-M15-G14-H06.png",
+   "bg": "零件真实图片_带背景\\分气块\\KMS-M15-G14-H06_bg.png",
+   "ok": true
+  },
+  {
+   "model": "KMS-M15-G14-H08",
+   "group": "分气块",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\标准件\\分气块\\KMS-M15-G14-H08.CATPart",
+   "img": "零件真实图片_带背景\\分气块\\KMS-M15-G14-H08.png",
+   "bg": "零件真实图片_带背景\\分气块\\KMS-M15-G14-H08_bg.png",
+   "ok": true
+  },
+  {
+   "model": "KMS-M15-G14-H10",
+   "group": "分气块",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\标准件\\分气块\\KMS-M15-G14-H10.CATPart",
+   "img": "零件真实图片_带背景\\分气块\\KMS-M15-G14-H10.png",
+   "bg": "零件真实图片_带背景\\分气块\\KMS-M15-G14-H10_bg.png",
+   "ok": true
+  },
+  {
+   "model": "KMS-M15-G14-H12",
+   "group": "分气块",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\标准件\\分气块\\KMS-M15-G14-H12.CATPart",
+   "img": "零件真实图片_带背景\\分气块\\KMS-M15-G14-H12.png",
+   "bg": "零件真实图片_带背景\\分气块\\KMS-M15-G14-H12_bg.png",
+   "ok": true
+  },
+  {
+   "model": "KMS-M09-H03-20-20",
+   "group": "50x20x5",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\标准件\\垫片垫块\\50x20x5\\KMS-M09-H03-20-20.CATPart",
+   "img": "零件真实图片_带背景\\50x20x5\\KMS-M09-H03-20-20.png",
+   "bg": "零件真实图片_带背景\\50x20x5\\KMS-M09-H03-20-20_bg.png",
+   "ok": true
+  },
+  {
+   "model": "KMS-M09-S03-20-02",
+   "group": "50x20x5",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\标准件\\垫片垫块\\50x20x5\\KMS-M09-S03-20-02.CATPart",
+   "img": "零件真实图片_带背景\\50x20x5\\KMS-M09-S03-20-02.png",
+   "bg": "零件真实图片_带背景\\50x20x5\\KMS-M09-S03-20-02_bg.png",
+   "ok": true
+  },
+  {
+   "model": "KMS-M09-S03-20-03",
+   "group": "50x20x5",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\标准件\\垫片垫块\\50x20x5\\KMS-M09-S03-20-03.CATPart",
+   "img": "零件真实图片_带背景\\50x20x5\\KMS-M09-S03-20-03.png",
+   "bg": "零件真实图片_带背景\\50x20x5\\KMS-M09-S03-20-03_bg.png",
+   "ok": true
+  },
+  {
+   "model": "KMS-M09-S03-20-05",
+   "group": "50x20x5",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\标准件\\垫片垫块\\50x20x5\\KMS-M09-S03-20-05.CATPart",
+   "img": "零件真实图片_带背景\\50x20x5\\KMS-M09-S03-20-05.png",
+   "bg": "零件真实图片_带背景\\50x20x5\\KMS-M09-S03-20-05_bg.png",
+   "ok": true
+  },
+  {
+   "model": "KMS-M09-S03-20-10",
+   "group": "50x20x5",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\标准件\\垫片垫块\\50x20x5\\KMS-M09-S03-20-10.CATPart",
+   "img": "零件真实图片_带背景\\50x20x5\\KMS-M09-S03-20-10.png",
+   "bg": "零件真实图片_带背景\\50x20x5\\KMS-M09-S03-20-10_bg.png",
+   "ok": true
+  },
+  {
+   "model": "KMS-M09-H06-50-20",
+   "group": "50x50x5",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\标准件\\垫片垫块\\50x50x5\\KMS-M09-H06-50-20.CATPart",
+   "img": "零件真实图片_带背景\\50x50x5\\KMS-M09-H06-50-20.png",
+   "bg": "零件真实图片_带背景\\50x50x5\\KMS-M09-H06-50-20_bg.png",
+   "ok": true
+  },
+  {
+   "model": "KMS-M09-S02-50-02",
+   "group": "50x50x5",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\标准件\\垫片垫块\\50x50x5\\KMS-M09-S02-50-02.CATPart",
+   "img": "零件真实图片_带背景\\50x50x5\\KMS-M09-S02-50-02.png",
+   "bg": "零件真实图片_带背景\\50x50x5\\KMS-M09-S02-50-02_bg.png",
+   "ok": true
+  },
+  {
+   "model": "KMS-M09-S02-50-03",
+   "group": "50x50x5",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\标准件\\垫片垫块\\50x50x5\\KMS-M09-S02-50-03.CATPart",
+   "img": "零件真实图片_带背景\\50x50x5\\KMS-M09-S02-50-03.png",
+   "bg": "零件真实图片_带背景\\50x50x5\\KMS-M09-S02-50-03_bg.png",
+   "ok": true
+  },
+  {
+   "model": "KMS-M09-S02-50-05",
+   "group": "50x50x5",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\标准件\\垫片垫块\\50x50x5\\KMS-M09-S02-50-05.CATPart",
+   "img": "零件真实图片_带背景\\50x50x5\\KMS-M09-S02-50-05.png",
+   "bg": "零件真实图片_带背景\\50x50x5\\KMS-M09-S02-50-05_bg.png",
+   "ok": true
+  },
+  {
+   "model": "KMS-M09-S02-50-10",
+   "group": "50x50x5",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\标准件\\垫片垫块\\50x50x5\\KMS-M09-S02-50-10.CATPart",
+   "img": "零件真实图片_带背景\\50x50x5\\KMS-M09-S02-50-10.png",
+   "bg": "零件真实图片_带背景\\50x50x5\\KMS-M09-S02-50-10_bg.png",
+   "ok": true
+  },
+  {
+   "model": "KMS-M09-H04-20-20",
+   "group": "65x20x5",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\标准件\\垫片垫块\\65x20x5\\KMS-M09-H04-20-20.CATPart",
+   "img": "零件真实图片_带背景\\65x20x5\\KMS-M09-H04-20-20.png",
+   "bg": "零件真实图片_带背景\\65x20x5\\KMS-M09-H04-20-20_bg.png",
+   "ok": true
+  },
+  {
+   "model": "KMS-M09-S04-20-02",
+   "group": "65x20x5",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\标准件\\垫片垫块\\65x20x5\\KMS-M09-S04-20-02.CATPart",
+   "img": "零件真实图片_带背景\\65x20x5\\KMS-M09-S04-20-02.png",
+   "bg": "零件真实图片_带背景\\65x20x5\\KMS-M09-S04-20-02_bg.png",
+   "ok": true
+  },
+  {
+   "model": "KMS-M09-S04-20-03",
+   "group": "65x20x5",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\标准件\\垫片垫块\\65x20x5\\KMS-M09-S04-20-03.CATPart",
+   "img": "零件真实图片_带背景\\65x20x5\\KMS-M09-S04-20-03.png",
+   "bg": "零件真实图片_带背景\\65x20x5\\KMS-M09-S04-20-03_bg.png",
+   "ok": true
+  },
+  {
+   "model": "KMS-M09-S04-20-05",
+   "group": "65x20x5",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\标准件\\垫片垫块\\65x20x5\\KMS-M09-S04-20-05.CATPart",
+   "img": "零件真实图片_带背景\\65x20x5\\KMS-M09-S04-20-05.png",
+   "bg": "零件真实图片_带背景\\65x20x5\\KMS-M09-S04-20-05_bg.png",
+   "ok": true
+  },
+  {
+   "model": "KMS-M09-S04-20-10",
+   "group": "65x20x5",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\标准件\\垫片垫块\\65x20x5\\KMS-M09-S04-20-10.CATPart",
+   "img": "零件真实图片_带背景\\65x20x5\\KMS-M09-S04-20-10.png",
+   "bg": "零件真实图片_带背景\\65x20x5\\KMS-M09-S04-20-10_bg.png",
+   "ok": true
+  },
+  {
+   "model": "KMS-M01-D159-A20",
+   "group": "定位销",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\标准件\\定位销\\KMS-M01-D159-A20.CATPart",
+   "img": "零件真实图片_带背景\\定位销\\KMS-M01-D159-A20.png",
+   "bg": "零件真实图片_带背景\\定位销\\KMS-M01-D159-A20_bg.png",
+   "ok": true
+  },
+  {
+   "model": "KMS-M01-P077-A20",
+   "group": "定位销",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\标准件\\定位销\\KMS-M01-P077-A20.CATPart",
+   "img": "零件真实图片_带背景\\定位销\\KMS-M01-P077-A20.png",
+   "bg": "零件真实图片_带背景\\定位销\\KMS-M01-P077-A20_bg.png",
+   "ok": true
+  },
+  {
+   "model": "KMS-M01-P079-A20",
+   "group": "定位销",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\标准件\\定位销\\KMS-M01-P079-A20.CATPart",
+   "img": "零件真实图片_带背景\\定位销\\KMS-M01-P079-A20.png",
+   "bg": "零件真实图片_带背景\\定位销\\KMS-M01-P079-A20_bg.png",
+   "ok": true
+  },
+  {
+   "model": "KMS-M01-P079-A30",
+   "group": "定位销",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\标准件\\定位销\\KMS-M01-P079-A30.CATPart",
+   "img": "零件真实图片_带背景\\定位销\\KMS-M01-P079-A30.png",
+   "bg": "零件真实图片_带背景\\定位销\\KMS-M01-P079-A30_bg.png",
+   "ok": true
+  },
+  {
+   "model": "KMS-M01-P097-A15",
+   "group": "定位销",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\标准件\\定位销\\KMS-M01-P097-A15.CATPart",
+   "img": "零件真实图片_带背景\\定位销\\KMS-M01-P097-A15.png",
+   "bg": "零件真实图片_带背景\\定位销\\KMS-M01-P097-A15_bg.png",
+   "ok": true
+  },
+  {
+   "model": "KMS-M01-P097-A20",
+   "group": "定位销",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\标准件\\定位销\\KMS-M01-P097-A20.CATPart",
+   "img": "零件真实图片_带背景\\定位销\\KMS-M01-P097-A20.png",
+   "bg": "零件真实图片_带背景\\定位销\\KMS-M01-P097-A20_bg.png",
+   "ok": true
+  },
+  {
+   "model": "KMS-M01-P097-A30",
+   "group": "定位销",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\标准件\\定位销\\KMS-M01-P097-A30.CATPart",
+   "img": "零件真实图片_带背景\\定位销\\KMS-M01-P097-A30.png",
+   "bg": "零件真实图片_带背景\\定位销\\KMS-M01-P097-A30_bg.png",
+   "ok": true
+  },
+  {
+   "model": "KMS-M01-P099-A15",
+   "group": "定位销",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\标准件\\定位销\\KMS-M01-P099-A15.CATPart",
+   "img": "零件真实图片_带背景\\定位销\\KMS-M01-P099-A15.png",
+   "bg": "零件真实图片_带背景\\定位销\\KMS-M01-P099-A15_bg.png",
+   "ok": true
+  },
+  {
+   "model": "KMS-M01-P099-A20",
+   "group": "定位销",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\标准件\\定位销\\KMS-M01-P099-A20.CATPart",
+   "img": "零件真实图片_带背景\\定位销\\KMS-M01-P099-A20.png",
+   "bg": "零件真实图片_带背景\\定位销\\KMS-M01-P099-A20_bg.png",
+   "ok": true
+  },
+  {
+   "model": "KMS-M01-P099-A30",
+   "group": "定位销",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\标准件\\定位销\\KMS-M01-P099-A30.CATPart",
+   "img": "零件真实图片_带背景\\定位销\\KMS-M01-P099-A30.png",
+   "bg": "零件真实图片_带背景\\定位销\\KMS-M01-P099-A30_bg.png",
+   "ok": true
+  },
+  {
+   "model": "KMS-M01-P117-A15",
+   "group": "定位销",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\标准件\\定位销\\KMS-M01-P117-A15.CATPart",
+   "img": "零件真实图片_带背景\\定位销\\KMS-M01-P117-A15.png",
+   "bg": "零件真实图片_带背景\\定位销\\KMS-M01-P117-A15_bg.png",
+   "ok": true
+  },
+  {
+   "model": "KMS-M01-P117-A20",
+   "group": "定位销",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\标准件\\定位销\\KMS-M01-P117-A20.CATPart",
+   "img": "零件真实图片_带背景\\定位销\\KMS-M01-P117-A20.png",
+   "bg": "零件真实图片_带背景\\定位销\\KMS-M01-P117-A20_bg.png",
+   "ok": true
+  },
+  {
+   "model": "KMS-M01-P117-A30",
+   "group": "定位销",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\标准件\\定位销\\KMS-M01-P117-A30.CATPart",
+   "img": "零件真实图片_带背景\\定位销\\KMS-M01-P117-A30.png",
+   "bg": "零件真实图片_带背景\\定位销\\KMS-M01-P117-A30_bg.png",
+   "ok": true
+  },
+  {
+   "model": "KMS-M01-P119-A20",
+   "group": "定位销",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\标准件\\定位销\\KMS-M01-P119-A20.CATPart",
+   "img": "零件真实图片_带背景\\定位销\\KMS-M01-P119-A20.png",
+   "bg": "零件真实图片_带背景\\定位销\\KMS-M01-P119-A20_bg.png",
+   "ok": true
+  },
+  {
+   "model": "KMS-M01-P119-A30",
+   "group": "定位销",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\标准件\\定位销\\KMS-M01-P119-A30.CATPart",
+   "img": "零件真实图片_带背景\\定位销\\KMS-M01-P119-A30.png",
+   "bg": "零件真实图片_带背景\\定位销\\KMS-M01-P119-A30_bg.png",
+   "ok": true
+  },
+  {
+   "model": "KMS-M01-P157-A20",
+   "group": "定位销",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\标准件\\定位销\\KMS-M01-P157-A20.CATPart",
+   "img": "零件真实图片_带背景\\定位销\\KMS-M01-P157-A20.png",
+   "bg": "零件真实图片_带背景\\定位销\\KMS-M01-P157-A20_bg.png",
+   "ok": true
+  },
+  {
+   "model": "KMS-M01-P157-A30",
+   "group": "定位销",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\标准件\\定位销\\KMS-M01-P157-A30.CATPart",
+   "img": "零件真实图片_带背景\\定位销\\KMS-M01-P157-A30.png",
+   "bg": "零件真实图片_带背景\\定位销\\KMS-M01-P157-A30_bg.png",
+   "ok": true
+  },
+  {
+   "model": "KMS-M01-P159-A15",
+   "group": "定位销",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\标准件\\定位销\\KMS-M01-P159-A15.CATPart",
+   "img": "零件真实图片_带背景\\定位销\\KMS-M01-P159-A15.png",
+   "bg": "零件真实图片_带背景\\定位销\\KMS-M01-P159-A15_bg.png",
+   "ok": true
+  },
+  {
+   "model": "KMS-M01-P159-A20",
+   "group": "定位销",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\标准件\\定位销\\KMS-M01-P159-A20.CATPart",
+   "img": "零件真实图片_带背景\\定位销\\KMS-M01-P159-A20.png",
+   "bg": "零件真实图片_带背景\\定位销\\KMS-M01-P159-A20_bg.png",
+   "ok": true
+  },
+  {
+   "model": "KMS-M01-P159-A30",
+   "group": "定位销",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\标准件\\定位销\\KMS-M01-P159-A30.CATPart",
+   "img": "零件真实图片_带背景\\定位销\\KMS-M01-P159-A30.png",
+   "bg": "零件真实图片_带背景\\定位销\\KMS-M01-P159-A30_bg.png",
+   "ok": true
+  },
+  {
+   "model": "KMS-M01-P189-A30",
+   "group": "定位销",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\标准件\\定位销\\KMS-M01-P189-A30.CATPart",
+   "img": "零件真实图片_带背景\\定位销\\KMS-M01-P189-A30.png",
+   "bg": "零件真实图片_带背景\\定位销\\KMS-M01-P189-A30_bg.png",
+   "ok": true
+  },
+  {
+   "model": "KMS-M01-P299-A20",
+   "group": "定位销",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\标准件\\定位销\\KMS-M01-P299-A20.CATPart",
+   "img": "零件真实图片_带背景\\定位销\\KMS-M01-P299-A20.png",
+   "bg": "零件真实图片_带背景\\定位销\\KMS-M01-P299-A20_bg.png",
+   "ok": true
+  },
+  {
+   "model": "LZ01001001_H100",
+   "group": "支座(铝)",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\标准件\\支座(铝)\\LZ01001001_H100.CATPart",
+   "img": "零件真实图片_带背景\\支座(铝)\\LZ01001001_H100.png",
+   "bg": "零件真实图片_带背景\\支座(铝)\\LZ01001001_H100_bg.png",
+   "ok": true
+  },
+  {
+   "model": "LZ01001002_H200",
+   "group": "支座(铝)",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\标准件\\支座(铝)\\LZ01001002_H200.CATPart",
+   "img": "零件真实图片_带背景\\支座(铝)\\LZ01001002_H200.png",
+   "bg": "零件真实图片_带背景\\支座(铝)\\LZ01001002_H200_bg.png",
+   "ok": true
+  },
+  {
+   "model": "LZ01001003_H300",
+   "group": "支座(铝)",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\标准件\\支座(铝)\\LZ01001003_H300.CATPart",
+   "img": "零件真实图片_带背景\\支座(铝)\\LZ01001003_H300.png",
+   "bg": "零件真实图片_带背景\\支座(铝)\\LZ01001003_H300_bg.png",
+   "ok": true
+  },
+  {
+   "model": "LZ01001004_H400",
+   "group": "支座(铝)",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\标准件\\支座(铝)\\LZ01001004_H400.CATPart",
+   "img": "零件真实图片_带背景\\支座(铝)\\LZ01001004_H400.png",
+   "bg": "零件真实图片_带背景\\支座(铝)\\LZ01001004_H400_bg.png",
+   "ok": true
+  },
+  {
+   "model": "LZ01001005_H500",
+   "group": "支座(铝)",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\标准件\\支座(铝)\\LZ01001005_H500.CATPart",
+   "img": "零件真实图片_带背景\\支座(铝)\\LZ01001005_H500.png",
+   "bg": "零件真实图片_带背景\\支座(铝)\\LZ01001005_H500_bg.png",
+   "ok": true
+  },
+  {
+   "model": "KMS-M05-010-100-D",
+   "group": "支座",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\标准件\\支座\\KMS-M05-010-100-D.CATPart",
+   "img": "零件真实图片_带背景\\支座\\KMS-M05-010-100-D.png",
+   "bg": "零件真实图片_带背景\\支座\\KMS-M05-010-100-D_bg.png",
+   "ok": true
+  },
+  {
+   "model": "KMS-M05-010-150-D",
+   "group": "支座",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\标准件\\支座\\KMS-M05-010-150-D.CATPart",
+   "img": "零件真实图片_带背景\\支座\\KMS-M05-010-150-D.png",
+   "bg": "零件真实图片_带背景\\支座\\KMS-M05-010-150-D_bg.png",
+   "ok": true
+  },
+  {
+   "model": "KMS-M05-010-200-D",
+   "group": "支座",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\标准件\\支座\\KMS-M05-010-200-D.CATPart",
+   "img": "零件真实图片_带背景\\支座\\KMS-M05-010-200-D.png",
+   "bg": "零件真实图片_带背景\\支座\\KMS-M05-010-200-D_bg.png",
+   "ok": true
+  },
+  {
+   "model": "KMS-M05-010-250-D",
+   "group": "支座",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\标准件\\支座\\KMS-M05-010-250-D.CATPart",
+   "img": "零件真实图片_带背景\\支座\\KMS-M05-010-250-D.png",
+   "bg": "零件真实图片_带背景\\支座\\KMS-M05-010-250-D_bg.png",
+   "ok": true
+  },
+  {
+   "model": "KMS-M05-010-300-D",
+   "group": "支座",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\标准件\\支座\\KMS-M05-010-300-D.CATPart",
+   "img": "零件真实图片_带背景\\支座\\KMS-M05-010-300-D.png",
+   "bg": "零件真实图片_带背景\\支座\\KMS-M05-010-300-D_bg.png",
+   "ok": true
+  },
+  {
+   "model": "KMS-M05-010-350-D",
+   "group": "支座",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\标准件\\支座\\KMS-M05-010-350-D.CATPart",
+   "img": "零件真实图片_带背景\\支座\\KMS-M05-010-350-D.png",
+   "bg": "零件真实图片_带背景\\支座\\KMS-M05-010-350-D_bg.png",
+   "ok": true
+  },
+  {
+   "model": "KMS-M05-010-400-D",
+   "group": "支座",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\标准件\\支座\\KMS-M05-010-400-D.CATPart",
+   "img": "零件真实图片_带背景\\支座\\KMS-M05-010-400-D.png",
+   "bg": "零件真实图片_带背景\\支座\\KMS-M05-010-400-D_bg.png",
+   "ok": true
+  },
+  {
+   "model": "KMS-M14-010",
+   "group": "标牌",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\标准件\\标牌\\KMS-M14-010.CATPart",
+   "img": "零件真实图片_带背景\\标牌\\KMS-M14-010.png",
+   "bg": "零件真实图片_带背景\\标牌\\KMS-M14-010_bg.png",
+   "ok": true
+  },
+  {
+   "model": "KMS-M14-020",
+   "group": "标牌",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\标准件\\标牌\\KMS-M14-020.CATPart",
+   "img": "零件真实图片_带背景\\标牌\\KMS-M14-020.png",
+   "bg": "零件真实图片_带背景\\标牌\\KMS-M14-020_bg.png",
+   "ok": true
+  },
+  {
+   "model": "KMS-M14-030",
+   "group": "标牌",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\标准件\\标牌\\KMS-M14-030.CATPart",
+   "img": "零件真实图片_带背景\\标牌\\KMS-M14-030.png",
+   "bg": "零件真实图片_带背景\\标牌\\KMS-M14-030_bg.png",
+   "ok": true
+  },
+  {
+   "model": "KMS-M11-H30x25-UD",
+   "group": "止块",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\标准件\\止块\\KMS-M11-H30x25-UD.CATPart",
+   "img": "零件真实图片_带背景\\止块\\KMS-M11-H30x25-UD.png",
+   "bg": "零件真实图片_带背景\\止块\\KMS-M11-H30x25-UD_bg.png",
+   "ok": true
+  },
+  {
+   "model": "KMS-M11-H30x25-WD",
+   "group": "止块",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\标准件\\止块\\KMS-M11-H30x25-WD.CATPart",
+   "img": "零件真实图片_带背景\\止块\\KMS-M11-H30x25-WD.png",
+   "bg": "零件真实图片_带背景\\止块\\KMS-M11-H30x25-WD_bg.png",
+   "ok": true
+  },
+  {
+   "model": "KMS-M11-H30x50-UD",
+   "group": "止块",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\标准件\\止块\\KMS-M11-H30x50-UD.CATPart",
+   "img": "零件真实图片_带背景\\止块\\KMS-M11-H30x50-UD.png",
+   "bg": "零件真实图片_带背景\\止块\\KMS-M11-H30x50-UD_bg.png",
+   "ok": true
+  },
+  {
+   "model": "KMS-M11-H30x50-WD",
+   "group": "止块",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\标准件\\止块\\KMS-M11-H30x50-WD.CATPart",
+   "img": "零件真实图片_带背景\\止块\\KMS-M11-H30x50-WD.png",
+   "bg": "零件真实图片_带背景\\止块\\KMS-M11-H30x50-WD_bg.png",
+   "ok": true
+  },
+  {
+   "model": "KMS-M11-V30x50-UD",
+   "group": "止块",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\标准件\\止块\\KMS-M11-V30x50-UD.CATPart",
+   "img": "零件真实图片_带背景\\止块\\KMS-M11-V30x50-UD.png",
+   "bg": "零件真实图片_带背景\\止块\\KMS-M11-V30x50-UD_bg.png",
+   "ok": true
+  },
+  {
+   "model": "KMS-M11-V30x50-WD",
+   "group": "止块",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\标准件\\止块\\KMS-M11-V30x50-WD.CATPart",
+   "img": "零件真实图片_带背景\\止块\\KMS-M11-V30x50-WD.png",
+   "bg": "零件真实图片_带背景\\止块\\KMS-M11-V30x50-WD_bg.png",
+   "ok": true
+  },
+  {
+   "model": "KMS-M06-010-K63",
+   "group": "气缸连接块",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\标准件\\气缸连接块\\KMS-M06-010-K63.CATPart",
+   "img": "零件真实图片_带背景\\气缸连接块\\KMS-M06-010-K63.png",
+   "bg": "零件真实图片_带背景\\气缸连接块\\KMS-M06-010-K63_bg.png",
+   "ok": true
+  },
+  {
+   "model": "KMS-M06-010-K80",
+   "group": "气缸连接块",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\标准件\\气缸连接块\\KMS-M06-010-K80.CATPart",
+   "img": "零件真实图片_带背景\\气缸连接块\\KMS-M06-010-K80.png",
+   "bg": "零件真实图片_带背景\\气缸连接块\\KMS-M06-010-K80_bg.png",
+   "ok": true
+  },
+  {
+   "model": "KMS-M06-011-K63",
+   "group": "气缸连接块",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\标准件\\气缸连接块\\KMS-M06-011-K63.CATPart",
+   "img": "零件真实图片_带背景\\气缸连接块\\KMS-M06-011-K63.png",
+   "bg": "零件真实图片_带背景\\气缸连接块\\KMS-M06-011-K63_bg.png",
+   "ok": true
+  },
+  {
+   "model": "KMS-M05-020-200",
+   "group": "补高台",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\标准件\\补高台\\KMS-M05-020-200.CATPart",
+   "img": "零件真实图片_带背景\\补高台\\KMS-M05-020-200.png",
+   "bg": "零件真实图片_带背景\\补高台\\KMS-M05-020-200_bg.png",
+   "ok": true
+  },
+  {
+   "model": "KMS-M05-020-300",
+   "group": "补高台",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\标准件\\补高台\\KMS-M05-020-300.CATPart",
+   "img": "零件真实图片_带背景\\补高台\\KMS-M05-020-300.png",
+   "bg": "零件真实图片_带背景\\补高台\\KMS-M05-020-300_bg.png",
+   "ok": true
+  },
+  {
+   "model": "KMS-M02-H03-20-RD",
+   "group": "销座",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\标准件\\销座\\KMS-M02-H03-20-RD.CATPart",
+   "img": "零件真实图片_带背景\\销座\\KMS-M02-H03-20-RD.png",
+   "bg": "零件真实图片_带背景\\销座\\KMS-M02-H03-20-RD_bg.png",
+   "ok": true
+  },
+  {
+   "model": "KMS-M02-H04-20-RM",
+   "group": "销座",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\标准件\\销座\\KMS-M02-H04-20-RM.CATPart",
+   "img": "零件真实图片_带背景\\销座\\KMS-M02-H04-20-RM.png",
+   "bg": "零件真实图片_带背景\\销座\\KMS-M02-H04-20-RM_bg.png",
+   "ok": true
+  },
+  {
+   "model": "KMS-M02-H04-20-TD",
+   "group": "销座",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\标准件\\销座\\KMS-M02-H04-20-TD.CATPart",
+   "img": "零件真实图片_带背景\\销座\\KMS-M02-H04-20-TD.png",
+   "bg": "零件真实图片_带背景\\销座\\KMS-M02-H04-20-TD_bg.png",
+   "ok": true
+  },
+  {
+   "model": "KMS-M02-H04-20-TM",
+   "group": "销座",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\标准件\\销座\\KMS-M02-H04-20-TM.CATPart",
+   "img": "零件真实图片_带背景\\销座\\KMS-M02-H04-20-TM.png",
+   "bg": "零件真实图片_带背景\\销座\\KMS-M02-H04-20-TM_bg.png",
+   "ok": true
+  },
+  {
+   "model": "KMS-M02-V03-20-RM",
+   "group": "销座",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\标准件\\销座\\KMS-M02-V03-20-RM.CATPart",
+   "img": "零件真实图片_带背景\\销座\\KMS-M02-V03-20-RM.png",
+   "bg": "零件真实图片_带背景\\销座\\KMS-M02-V03-20-RM_bg.png",
+   "ok": true
+  },
+  {
+   "model": "KMS-M02-V04-20-PD",
+   "group": "销座",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\标准件\\销座\\KMS-M02-V04-20-PD.CATPart",
+   "img": "零件真实图片_带背景\\销座\\KMS-M02-V04-20-PD.png",
+   "bg": "零件真实图片_带背景\\销座\\KMS-M02-V04-20-PD_bg.png",
+   "ok": true
+  },
+  {
+   "model": "KMS-M02-V04-20-PM",
+   "group": "销座",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\标准件\\销座\\KMS-M02-V04-20-PM.CATPart",
+   "img": "零件真实图片_带背景\\销座\\KMS-M02-V04-20-PM.png",
+   "bg": "零件真实图片_带背景\\销座\\KMS-M02-V04-20-PM_bg.png",
+   "ok": true
+  },
+  {
+   "model": "KMS-M02-V04-20-RM",
+   "group": "销座",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\标准件\\销座\\KMS-M02-V04-20-RM.CATPart",
+   "img": "零件真实图片_带背景\\销座\\KMS-M02-V04-20-RM.png",
+   "bg": "零件真实图片_带背景\\销座\\KMS-M02-V04-20-RM_bg.png",
+   "ok": true
+  },
+  {
+   "model": "KMS-M02-V04-20-SD",
+   "group": "销座",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\标准件\\销座\\KMS-M02-V04-20-SD.CATPart",
+   "img": "零件真实图片_带背景\\销座\\KMS-M02-V04-20-SD.png",
+   "bg": "零件真实图片_带背景\\销座\\KMS-M02-V04-20-SD_bg.png",
+   "ok": true
+  },
+  {
+   "model": "KMS-M02-V04-20-SM",
+   "group": "销座",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\标准件\\销座\\KMS-M02-V04-20-SM.CATPart",
+   "img": "零件真实图片_带背景\\销座\\KMS-M02-V04-20-SM.png",
+   "bg": "零件真实图片_带背景\\销座\\KMS-M02-V04-20-SM_bg.png",
+   "ok": true
+  },
+  {
+   "model": "KMS-M02-V04-20-TM",
+   "group": "销座",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\标准件\\销座\\KMS-M02-V04-20-TM.CATPart",
+   "img": "零件真实图片_带背景\\销座\\KMS-M02-V04-20-TM.png",
+   "bg": "零件真实图片_带背景\\销座\\KMS-M02-V04-20-TM_bg.png",
+   "ok": true
+  },
+  {
+   "model": "KMS-M02-V04-24-RM",
+   "group": "销座",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\标准件\\销座\\KMS-M02-V04-24-RM.CATPart",
+   "img": "零件真实图片_带背景\\销座\\KMS-M02-V04-24-RM.png",
+   "bg": "零件真实图片_带背景\\销座\\KMS-M02-V04-24-RM_bg.png",
+   "ok": true
+  },
+  {
+   "model": "KMS-M02-V04-24-SM",
+   "group": "销座",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\标准件\\销座\\KMS-M02-V04-24-SM.CATPart",
+   "img": "零件真实图片_带背景\\销座\\KMS-M02-V04-24-SM.png",
+   "bg": "零件真实图片_带背景\\销座\\KMS-M02-V04-24-SM_bg.png",
+   "ok": true
+  },
+  {
+   "model": "KMS-M13-M05-P02-V04",
+   "group": "阀岛",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\标准件\\阀岛\\KMS-M13-M05-P02-V04.CATPart",
+   "img": "零件真实图片_带背景\\阀岛\\KMS-M13-M05-P02-V04.png",
+   "bg": "零件真实图片_带背景\\阀岛\\KMS-M13-M05-P02-V04_bg.png",
+   "ok": true
+  },
+  {
+   "model": "KMS-M13-M08-P05-V09",
+   "group": "阀岛",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\标准件\\阀岛\\KMS-M13-M08-P05-V09.CATPart",
+   "img": "零件真实图片_带背景\\阀岛\\KMS-M13-M08-P05-V09.png",
+   "bg": "零件真实图片_带背景\\阀岛\\KMS-M13-M08-P05-V09_bg.png",
+   "ok": true
+  },
+  {
+   "model": "KMS-M13-M08-P05-V10",
+   "group": "阀岛",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\标准件\\阀岛\\KMS-M13-M08-P05-V10.CATPart",
+   "img": "零件真实图片_带背景\\阀岛\\KMS-M13-M08-P05-V10.png",
+   "bg": "零件真实图片_带背景\\阀岛\\KMS-M13-M08-P05-V10_bg.png",
+   "ok": true
+  },
+  {
+   "model": "KMS-M13-M08-P06-V09",
+   "group": "阀岛",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\标准件\\阀岛\\KMS-M13-M08-P06-V09.CATPart",
+   "img": "零件真实图片_带背景\\阀岛\\KMS-M13-M08-P06-V09.png",
+   "bg": "零件真实图片_带背景\\阀岛\\KMS-M13-M08-P06-V09_bg.png",
+   "ok": true
+  },
+  {
+   "model": "KMS-M13-M08-P06-V10",
+   "group": "阀岛",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\标准件\\阀岛\\KMS-M13-M08-P06-V10.CATPart",
+   "img": "零件真实图片_带背景\\阀岛\\KMS-M13-M08-P06-V10.png",
+   "bg": "零件真实图片_带背景\\阀岛\\KMS-M13-M08-P06-V10_bg.png",
+   "ok": true
+  },
+  {
+   "model": "M10X80",
+   "group": "螺钉",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\螺钉\\M10X80.CATPart",
+   "img": "零件真实图片_带背景\\螺钉\\M10X80.png",
+   "bg": "零件真实图片_带背景\\螺钉\\M10X80_bg.png",
+   "ok": true
+  },
+  {
+   "model": "M10x16",
+   "group": "螺钉",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\螺钉\\M10x16.CATPart",
+   "img": "零件真实图片_带背景\\螺钉\\M10x16.png",
+   "bg": "零件真实图片_带背景\\螺钉\\M10x16_bg.png",
+   "ok": true
+  },
+  {
+   "model": "M10x25",
+   "group": "螺钉",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\螺钉\\M10x25.CATPart",
+   "img": "零件真实图片_带背景\\螺钉\\M10x25.png",
+   "bg": "零件真实图片_带背景\\螺钉\\M10x25_bg.png",
+   "ok": true
+  },
+  {
+   "model": "M10x30",
+   "group": "螺钉",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\螺钉\\M10x30.CATPart",
+   "img": "零件真实图片_带背景\\螺钉\\M10x30.png",
+   "bg": "零件真实图片_带背景\\螺钉\\M10x30_bg.png",
+   "ok": true
+  },
+  {
+   "model": "M10x35",
+   "group": "螺钉",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\螺钉\\M10x35.CATPart",
+   "img": "零件真实图片_带背景\\螺钉\\M10x35.png",
+   "bg": "零件真实图片_带背景\\螺钉\\M10x35_bg.png",
+   "ok": true
+  },
+  {
+   "model": "M10x40",
+   "group": "螺钉",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\螺钉\\M10x40.CATPart",
+   "img": "零件真实图片_带背景\\螺钉\\M10x40.png",
+   "bg": "零件真实图片_带背景\\螺钉\\M10x40_bg.png",
+   "ok": true
+  },
+  {
+   "model": "M10x45",
+   "group": "螺钉",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\螺钉\\M10x45.CATPart",
+   "img": "零件真实图片_带背景\\螺钉\\M10x45.png",
+   "bg": "零件真实图片_带背景\\螺钉\\M10x45_bg.png",
+   "ok": true
+  },
+  {
+   "model": "M10x50",
+   "group": "螺钉",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\螺钉\\M10x50.CATPart",
+   "img": "零件真实图片_带背景\\螺钉\\M10x50.png",
+   "bg": "零件真实图片_带背景\\螺钉\\M10x50_bg.png",
+   "ok": true
+  },
+  {
+   "model": "M10x55",
+   "group": "螺钉",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\螺钉\\M10x55.CATPart",
+   "img": "零件真实图片_带背景\\螺钉\\M10x55.png",
+   "bg": "零件真实图片_带背景\\螺钉\\M10x55_bg.png",
+   "ok": true
+  },
+  {
+   "model": "M10x60",
+   "group": "螺钉",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\螺钉\\M10x60.CATPart",
+   "img": "零件真实图片_带背景\\螺钉\\M10x60.png",
+   "bg": "零件真实图片_带背景\\螺钉\\M10x60_bg.png",
+   "ok": true
+  },
+  {
+   "model": "M10x65",
+   "group": "螺钉",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\螺钉\\M10x65.CATPart",
+   "img": "零件真实图片_带背景\\螺钉\\M10x65.png",
+   "bg": "零件真实图片_带背景\\螺钉\\M10x65_bg.png",
+   "ok": true
+  },
+  {
+   "model": "M10x70",
+   "group": "螺钉",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\螺钉\\M10x70.CATPart",
+   "img": "零件真实图片_带背景\\螺钉\\M10x70.png",
+   "bg": "零件真实图片_带背景\\螺钉\\M10x70_bg.png",
+   "ok": true
+  },
+  {
+   "model": "M12x100",
+   "group": "螺钉",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\螺钉\\M12x100.CATPart",
+   "img": "零件真实图片_带背景\\螺钉\\M12x100.png",
+   "bg": "零件真实图片_带背景\\螺钉\\M12x100_bg.png",
+   "ok": true
+  },
+  {
+   "model": "M12x110",
+   "group": "螺钉",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\螺钉\\M12x110.CATPart",
+   "img": "零件真实图片_带背景\\螺钉\\M12x110.png",
+   "bg": "零件真实图片_带背景\\螺钉\\M12x110_bg.png",
+   "ok": true
+  },
+  {
+   "model": "M12x120_",
+   "group": "螺钉",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\螺钉\\M12x120_.CATPart",
+   "img": "零件真实图片_带背景\\螺钉\\M12x120_.png",
+   "bg": "零件真实图片_带背景\\螺钉\\M12x120__bg.png",
+   "ok": true
+  },
+  {
+   "model": "M12x30",
+   "group": "螺钉",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\螺钉\\M12x30.CATPart",
+   "img": "零件真实图片_带背景\\螺钉\\M12x30.png",
+   "bg": "零件真实图片_带背景\\螺钉\\M12x30_bg.png",
+   "ok": true
+  },
+  {
+   "model": "M12x35",
+   "group": "螺钉",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\螺钉\\M12x35.CATPart",
+   "img": "零件真实图片_带背景\\螺钉\\M12x35.png",
+   "bg": "零件真实图片_带背景\\螺钉\\M12x35_bg.png",
+   "ok": true
+  },
+  {
+   "model": "M12x40",
+   "group": "螺钉",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\螺钉\\M12x40.CATPart",
+   "img": "零件真实图片_带背景\\螺钉\\M12x40.png",
+   "bg": "零件真实图片_带背景\\螺钉\\M12x40_bg.png",
+   "ok": true
+  },
+  {
+   "model": "M12x45",
+   "group": "螺钉",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\螺钉\\M12x45.CATPart",
+   "img": "零件真实图片_带背景\\螺钉\\M12x45.png",
+   "bg": "零件真实图片_带背景\\螺钉\\M12x45_bg.png",
+   "ok": true
+  },
+  {
+   "model": "M12x50",
+   "group": "螺钉",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\螺钉\\M12x50.CATPart",
+   "img": "零件真实图片_带背景\\螺钉\\M12x50.png",
+   "bg": "零件真实图片_带背景\\螺钉\\M12x50_bg.png",
+   "ok": true
+  },
+  {
+   "model": "M12x55",
+   "group": "螺钉",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\螺钉\\M12x55.CATPart",
+   "img": "零件真实图片_带背景\\螺钉\\M12x55.png",
+   "bg": "零件真实图片_带背景\\螺钉\\M12x55_bg.png",
+   "ok": true
+  },
+  {
+   "model": "M12x60",
+   "group": "螺钉",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\螺钉\\M12x60.CATPart",
+   "img": "零件真实图片_带背景\\螺钉\\M12x60.png",
+   "bg": "零件真实图片_带背景\\螺钉\\M12x60_bg.png",
+   "ok": true
+  },
+  {
+   "model": "M12x65",
+   "group": "螺钉",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\螺钉\\M12x65.CATPart",
+   "img": "零件真实图片_带背景\\螺钉\\M12x65.png",
+   "bg": "零件真实图片_带背景\\螺钉\\M12x65_bg.png",
+   "ok": true
+  },
+  {
+   "model": "M12x70",
+   "group": "螺钉",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\螺钉\\M12x70.CATPart",
+   "img": "零件真实图片_带背景\\螺钉\\M12x70.png",
+   "bg": "零件真实图片_带背景\\螺钉\\M12x70_bg.png",
+   "ok": true
+  },
+  {
+   "model": "M12x80",
+   "group": "螺钉",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\螺钉\\M12x80.CATPart",
+   "img": "零件真实图片_带背景\\螺钉\\M12x80.png",
+   "bg": "零件真实图片_带背景\\螺钉\\M12x80_bg.png",
+   "ok": true
+  },
+  {
+   "model": "M12x90",
+   "group": "螺钉",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\螺钉\\M12x90.CATPart",
+   "img": "零件真实图片_带背景\\螺钉\\M12x90.png",
+   "bg": "零件真实图片_带背景\\螺钉\\M12x90_bg.png",
+   "ok": true
+  },
+  {
+   "model": "M5x10",
+   "group": "螺钉",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\螺钉\\M5x10.CATPart",
+   "img": "零件真实图片_带背景\\螺钉\\M5x10.png",
+   "bg": "零件真实图片_带背景\\螺钉\\M5x10_bg.png",
+   "ok": true
+  },
+  {
+   "model": "M5x12",
+   "group": "螺钉",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\螺钉\\M5x12.CATPart",
+   "img": "零件真实图片_带背景\\螺钉\\M5x12.png",
+   "bg": "零件真实图片_带背景\\螺钉\\M5x12_bg.png",
+   "ok": true
+  },
+  {
+   "model": "M5x16",
+   "group": "螺钉",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\螺钉\\M5x16.CATPart",
+   "img": "零件真实图片_带背景\\螺钉\\M5x16.png",
+   "bg": "零件真实图片_带背景\\螺钉\\M5x16_bg.png",
+   "ok": true
+  },
+  {
+   "model": "M5x20",
+   "group": "螺钉",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\螺钉\\M5x20.CATPart",
+   "img": "零件真实图片_带背景\\螺钉\\M5x20.png",
+   "bg": "零件真实图片_带背景\\螺钉\\M5x20_bg.png",
+   "ok": true
+  },
+  {
+   "model": "M5x25",
+   "group": "螺钉",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\螺钉\\M5x25.CATPart",
+   "img": "零件真实图片_带背景\\螺钉\\M5x25.png",
+   "bg": "零件真实图片_带背景\\螺钉\\M5x25_bg.png",
+   "ok": true
+  },
+  {
+   "model": "M5x30",
+   "group": "螺钉",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\螺钉\\M5x30.CATPart",
+   "img": "零件真实图片_带背景\\螺钉\\M5x30.png",
+   "bg": "零件真实图片_带背景\\螺钉\\M5x30_bg.png",
+   "ok": true
+  },
+  {
+   "model": "M5x35",
+   "group": "螺钉",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\螺钉\\M5x35.CATPart",
+   "img": "零件真实图片_带背景\\螺钉\\M5x35.png",
+   "bg": "零件真实图片_带背景\\螺钉\\M5x35_bg.png",
+   "ok": true
+  },
+  {
+   "model": "M5x40",
+   "group": "螺钉",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\螺钉\\M5x40.CATPart",
+   "img": "零件真实图片_带背景\\螺钉\\M5x40.png",
+   "bg": "零件真实图片_带背景\\螺钉\\M5x40_bg.png",
+   "ok": true
+  },
+  {
+   "model": "M5x45",
+   "group": "螺钉",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\螺钉\\M5x45.CATPart",
+   "img": "零件真实图片_带背景\\螺钉\\M5x45.png",
+   "bg": "零件真实图片_带背景\\螺钉\\M5x45_bg.png",
+   "ok": true
+  },
+  {
+   "model": "M5x50",
+   "group": "螺钉",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\螺钉\\M5x50.CATPart",
+   "img": "零件真实图片_带背景\\螺钉\\M5x50.png",
+   "bg": "零件真实图片_带背景\\螺钉\\M5x50_bg.png",
+   "ok": true
+  },
+  {
+   "model": "M5x8",
+   "group": "螺钉",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\螺钉\\M5x8.CATPart",
+   "img": "零件真实图片_带背景\\螺钉\\M5x8.png",
+   "bg": "零件真实图片_带背景\\螺钉\\M5x8_bg.png",
+   "ok": true
+  },
+  {
+   "model": "M6x12",
+   "group": "螺钉",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\螺钉\\M6x12.CATPart",
+   "img": "零件真实图片_带背景\\螺钉\\M6x12.png",
+   "bg": "零件真实图片_带背景\\螺钉\\M6x12_bg.png",
+   "ok": true
+  },
+  {
+   "model": "M6x20",
+   "group": "螺钉",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\螺钉\\M6x20.CATPart",
+   "img": "零件真实图片_带背景\\螺钉\\M6x20.png",
+   "bg": "零件真实图片_带背景\\螺钉\\M6x20_bg.png",
+   "ok": true
+  },
+  {
+   "model": "M6x25",
+   "group": "螺钉",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\螺钉\\M6x25.CATPart",
+   "img": "零件真实图片_带背景\\螺钉\\M6x25.png",
+   "bg": "零件真实图片_带背景\\螺钉\\M6x25_bg.png",
+   "ok": true
+  },
+  {
+   "model": "M6x30",
+   "group": "螺钉",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\螺钉\\M6x30.CATPart",
+   "img": "零件真实图片_带背景\\螺钉\\M6x30.png",
+   "bg": "零件真实图片_带背景\\螺钉\\M6x30_bg.png",
+   "ok": true
+  },
+  {
+   "model": "M6x35",
+   "group": "螺钉",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\螺钉\\M6x35.CATPart",
+   "img": "零件真实图片_带背景\\螺钉\\M6x35.png",
+   "bg": "零件真实图片_带背景\\螺钉\\M6x35_bg.png",
+   "ok": true
+  },
+  {
+   "model": "M6x40",
+   "group": "螺钉",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\螺钉\\M6x40.CATPart",
+   "img": "零件真实图片_带背景\\螺钉\\M6x40.png",
+   "bg": "零件真实图片_带背景\\螺钉\\M6x40_bg.png",
+   "ok": true
+  },
+  {
+   "model": "M6x45",
+   "group": "螺钉",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\螺钉\\M6x45.CATPart",
+   "img": "零件真实图片_带背景\\螺钉\\M6x45.png",
+   "bg": "零件真实图片_带背景\\螺钉\\M6x45_bg.png",
+   "ok": true
+  },
+  {
+   "model": "M8x12",
+   "group": "螺钉",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\螺钉\\M8x12.CATPart",
+   "img": "零件真实图片_带背景\\螺钉\\M8x12.png",
+   "bg": "零件真实图片_带背景\\螺钉\\M8x12_bg.png",
+   "ok": true
+  },
+  {
+   "model": "M8x16",
+   "group": "螺钉",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\螺钉\\M8x16.CATPart",
+   "img": "零件真实图片_带背景\\螺钉\\M8x16.png",
+   "bg": "零件真实图片_带背景\\螺钉\\M8x16_bg.png",
+   "ok": true
+  },
+  {
+   "model": "M8x20",
+   "group": "螺钉",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\螺钉\\M8x20.CATPart",
+   "img": "零件真实图片_带背景\\螺钉\\M8x20.png",
+   "bg": "零件真实图片_带背景\\螺钉\\M8x20_bg.png",
+   "ok": true
+  },
+  {
+   "model": "M8x25",
+   "group": "螺钉",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\螺钉\\M8x25.CATPart",
+   "img": "零件真实图片_带背景\\螺钉\\M8x25.png",
+   "bg": "零件真实图片_带背景\\螺钉\\M8x25_bg.png",
+   "ok": true
+  },
+  {
+   "model": "M8x30",
+   "group": "螺钉",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\螺钉\\M8x30.CATPart",
+   "img": "零件真实图片_带背景\\螺钉\\M8x30.png",
+   "bg": "零件真实图片_带背景\\螺钉\\M8x30_bg.png",
+   "ok": true
+  },
+  {
+   "model": "M8x35",
+   "group": "螺钉",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\螺钉\\M8x35.CATPart",
+   "img": "零件真实图片_带背景\\螺钉\\M8x35.png",
+   "bg": "零件真实图片_带背景\\螺钉\\M8x35_bg.png",
+   "ok": true
+  },
+  {
+   "model": "M8x40",
+   "group": "螺钉",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\螺钉\\M8x40.CATPart",
+   "img": "零件真实图片_带背景\\螺钉\\M8x40.png",
+   "bg": "零件真实图片_带背景\\螺钉\\M8x40_bg.png",
+   "ok": true
+  },
+  {
+   "model": "M8x45",
+   "group": "螺钉",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\螺钉\\M8x45.CATPart",
+   "img": "零件真实图片_带背景\\螺钉\\M8x45.png",
+   "bg": "零件真实图片_带背景\\螺钉\\M8x45_bg.png",
+   "ok": true
+  },
+  {
+   "model": "M8x50",
+   "group": "螺钉",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\螺钉\\M8x50.CATPart",
+   "img": "零件真实图片_带背景\\螺钉\\M8x50.png",
+   "bg": "零件真实图片_带背景\\螺钉\\M8x50_bg.png",
+   "ok": true
+  },
+  {
+   "model": "M8x55",
+   "group": "螺钉",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\螺钉\\M8x55.CATPart",
+   "img": "零件真实图片_带背景\\螺钉\\M8x55.png",
+   "bg": "零件真实图片_带背景\\螺钉\\M8x55_bg.png",
+   "ok": true
+  },
+  {
+   "model": "M8x60",
+   "group": "螺钉",
+   "src": "C:\\Users\\25643\\Desktop\\零件参数\\螺钉\\M8x60.CATPart",
+   "img": "零件真实图片_带背景\\螺钉\\M8x60.png",
+   "bg": "零件真实图片_带背景\\螺钉\\M8x60_bg.png",
+   "ok": true
+  }
+ ]
+}

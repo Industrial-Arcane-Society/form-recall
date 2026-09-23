@@ -1,0 +1,184 @@
+Language="VBSCRIPT"
+
+'================================================================
+' CATIA V5 - Batch export to STEP   (v4, ASCII-only source)
+'
+'   How to run:
+'     CATIA -> Tools -> Macro -> Macros... -> pick this file -> Run
+'
+'   Two known CATIA pitfalls handled here:
+'     1. Chinese characters in paths can HANG CATIA on export.
+'        -> input files are first copied to an ASCII staging folder.
+'     2. Writing this .CATScript as UTF-16 makes CATIA report
+'        "invalid character" at column 0 -> keep this file pure ASCII.
+'
+'   Output folder defaults to %TEMP%\catia_step_out (ASCII).
+'   If you want progress logs, use tools\catia_export_step.vbs instead.
+'================================================================
+
+Option Explicit
+
+Dim fso, sStage, nOk, nErr, sFmt, nSeq
+
+Sub CATMain()
+    Dim sIn, sOut, sTmp
+
+    Set fso = CreateObject("Scripting.FileSystemObject")
+
+    ' --- staging folder under %TEMP% (writing to C:\ root fails, error 70) ---
+    sTmp = CreateObject("WScript.Shell").ExpandEnvironmentStrings("%TEMP%")
+    If sTmp = "" Or sTmp = "%TEMP%" Then sTmp = fso.GetSpecialFolder(2)
+    sStage = fso.BuildPath(sTmp, "catia_step_stage")
+
+    ' --- default input: C:\Users\25643\Desktop\<two CJK chars> ---
+    Dim sDefIn
+    sDefIn = "C:\Users\25643\Desktop\" & ChrW(38646) & ChrW(20214)
+
+    sIn = InputBox("Input folder (contains CATPart / CATProduct):", _
+                   "Batch export STEP", sDefIn)
+    If sIn = "" Then Exit Sub
+    If Not fso.FolderExists(sIn) Then
+        MsgBox "Folder not found: " & sIn, 16, "Batch export STEP"
+        Exit Sub
+    End If
+
+    sOut = InputBox("Output folder (ASCII path recommended):", _
+                    "Batch export STEP", fso.BuildPath(sTmp, "catia_step_out"))
+    If sOut = "" Then Exit Sub
+    If Not fso.FolderExists(sOut) Then MakeDirs sOut
+    If Not fso.FolderExists(sOut) Then
+        MsgBox "Cannot create output folder: " & sOut, 16, "Batch export STEP"
+        Exit Sub
+    End If
+
+    ' --- prepare ASCII staging folder ---
+    On Error Resume Next
+    If fso.FolderExists(sStage) Then fso.DeleteFolder sStage, True
+    On Error GoTo 0
+    MakeDirs sStage
+    If Not fso.FolderExists(sStage) Then
+        MsgBox "Cannot create staging folder: " & sStage, 16, "Batch export STEP"
+        Exit Sub
+    End If
+
+    nOk = 0 : nErr = 0 : sFmt = "" : nSeq = 0
+
+    Walk sIn, sOut, 0
+
+    On Error Resume Next
+    fso.DeleteFolder sStage, True
+    On Error GoTo 0
+
+    MsgBox "Done." & vbCrLf & _
+           "OK: " & nOk & vbCrLf & _
+           "Failed: " & nErr & vbCrLf & vbCrLf & _
+           "Output: " & sOut & vbCrLf & _
+           "Working export format: " & sFmt, 64, "Batch export STEP"
+End Sub
+
+
+'----------------------------------------------------------------
+' Recursive walk: copy each file to ASCII stage, then export
+'----------------------------------------------------------------
+Sub Walk(sDir, sOutDir, iDepth)
+    Dim oFolder, oFile, oSub, sExt, sTmp, sTarget
+    If iDepth > 8 Then Exit Sub
+    Set oFolder = fso.GetFolder(sDir)
+
+    For Each oFile In oFolder.Files
+        sExt = LCase(fso.GetExtensionName(oFile.Name))
+        If sExt = "catpart" Or sExt = "catproduct" Then
+            nSeq = nSeq + 1
+            ' ASCII staging name; keeps Chinese names away from CATIA
+            sTmp = sStage & "\p" & Right("000000" & CStr(nSeq), 6) & "." & sExt
+            On Error Resume Next
+            Err.Clear
+            oFile.Copy sTmp, True
+            On Error GoTo 0
+            If fso.FileExists(sTmp) Then
+                sTarget = fso.BuildPath(sOutDir, fso.GetBaseName(oFile.Name) & ".stp")
+                If ExportOne(sTmp, sTarget) Then
+                    nOk = nOk + 1
+                Else
+                    nErr = nErr + 1
+                End If
+            Else
+                nErr = nErr + 1
+            End If
+        End If
+    Next
+
+    For Each oSub In oFolder.SubFolders
+        Walk oSub.Path, sOutDir, iDepth + 1
+    Next
+End Sub
+
+
+'----------------------------------------------------------------
+' Export one document; try both format strings
+'----------------------------------------------------------------
+Function ExportOne(sSrc, sTarget)
+    Dim oDoc, aFmt, k, bOk
+    ExportOne = False
+
+    On Error Resume Next
+    Err.Clear
+    Set oDoc = CATIA.Documents.Open(sSrc)
+    If Err.Number <> 0 Then
+        On Error GoTo 0
+        Exit Function
+    End If
+    On Error GoTo 0
+
+    If sFmt <> "" Then
+        aFmt = Array(sFmt)
+    Else
+        aFmt = Array("stp", "step")
+    End If
+
+    bOk = False
+    For k = 0 To UBound(aFmt)
+        On Error Resume Next
+        Err.Clear
+        oDoc.ExportData sTarget, aFmt(k)
+        If Err.Number = 0 Then
+            bOk = True
+            If sFmt = "" Then sFmt = aFmt(k)
+            On Error GoTo 0
+            Exit For
+        End If
+        On Error GoTo 0
+    Next
+
+    On Error Resume Next
+    oDoc.Close
+    On Error GoTo 0
+
+    If bOk And fso.FileExists(sTarget) Then ExportOne = True
+End Function
+
+
+'----------------------------------------------------------------
+' Create folders level by level (CreateFolder does not create parents)
+'   First segment is a drive letter like "C:" - never call CreateFolder on it.
+'----------------------------------------------------------------
+Sub MakeDirs(sPath)
+    Dim aParts, k, sCur
+    If sPath = "" Then Exit Sub
+    If fso.FolderExists(sPath) Then Exit Sub
+    aParts = Split(sPath, "\")
+    If UBound(aParts) < 1 Then Exit Sub
+    sCur = aParts(0)                     ' drive, e.g. "C:"
+    For k = 1 To UBound(aParts)
+        If aParts(k) <> "" Then
+            If Right(sCur, 1) = "\" Then
+                sCur = sCur & aParts(k)
+            Else
+                sCur = sCur & "\" & aParts(k)
+            End If
+            On Error Resume Next
+            If Not fso.FolderExists(sCur) Then fso.CreateFolder sCur
+            On Error GoTo 0
+        End If
+    Next
+End Sub

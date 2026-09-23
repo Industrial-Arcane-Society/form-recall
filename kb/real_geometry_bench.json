@@ -1,0 +1,258 @@
+{
+ "total": 593,
+ "hit": 589,
+ "rate": 99.66,
+ "tol_mm": 0.05,
+ "sub": {
+  "category": 593,
+  "model": 593,
+  "buildable": 593,
+  "size": 591
+ },
+ "by_group": {
+  "内六角螺钉": {
+   "hit": 110,
+   "total": 110
+  },
+  "EGT型材": {
+   "hit": 289,
+   "total": 289
+  },
+  "EGT型材(简写)": {
+   "hit": 18,
+   "total": 18
+  },
+  "EGT连接件": {
+   "hit": 73,
+   "total": 73
+  },
+  "分气块": {
+   "hit": 5,
+   "total": 5
+  },
+  "定位销": {
+   "hit": 22,
+   "total": 22
+  },
+  "支座": {
+   "hit": 7,
+   "total": 7
+  },
+  "支座(铝)": {
+   "hit": 5,
+   "total": 5
+  },
+  "标牌": {
+   "hit": 3,
+   "total": 3
+  },
+  "止块": {
+   "hit": 6,
+   "total": 6
+  },
+  "气缸连接块": {
+   "hit": 3,
+   "total": 3
+  },
+  "补高台": {
+   "hit": 2,
+   "total": 2
+  },
+  "销座": {
+   "hit": 13,
+   "total": 13
+  },
+  "阀岛": {
+   "hit": 5,
+   "total": 5
+  },
+  "垫片垫块": {
+   "hit": 15,
+   "total": 15
+  },
+  "双导杆气缸": {
+   "hit": 5,
+   "total": 5
+  },
+  "夹紧气缸": {
+   "hit": 4,
+   "total": 4
+  },
+  "手动夹紧气缸": {
+   "hit": 2,
+   "total": 2
+  },
+  "吊环": {
+   "hit": 3,
+   "total": 3
+  },
+  "接近开关": {
+   "hit": 1,
+   "total": 3
+  }
+ },
+ "fails": [
+  {
+   "case_id": "pur:BES_M12MI_PSC30A_S04G_W09",
+   "group": "接近开关",
+   "prompt": "接近开关 BES_M12MI_PSC30A_S04G_W09",
+   "model": "BES_M12MI_PSC30A_S04G_W09",
+   "checks": {
+    "category": true,
+    "model": true,
+    "buildable": true,
+    "size": true,
+    "mesh_size": false
+   },
+   "fails": [
+    "**建出来的网格** (71.0, 19.63, 17.0) ≠ STEP 实测 (65.0, 19.63, 17.0)"
+   ],
+   "cat": "接近开关",
+   "expect_cat": "接近开关",
+   "real_model": "BES_M12MI_PSC30A_S04G_W09",
+   "notes": [],
+   "real_params": {
+    "W": 9.0,
+    "code": "BES_M12MI_PSC30A_S04G_W09",
+    "__text": "接近开关 BES_M12MI_PSC30A_S04G_W09",
+    "__real": {
+     "model": "BES_M12MI_PSC30A_S04G_W09",
+     "src": "接近开关",
+     "desc": "接近开关",
+     "brand": "BALLUFF",
+     "envelope": [
+      65.0,
+      19.63,
+      17.0
+     ],
+     "trust": "exact",
+     "n_solids": 3,
+     "n_faces": 139,
+     "n_cylinders": 38,
+     "cyl_diameters": {
+      "12": 4,
+      "10.917": 4,
+      "10.5": 2,
+      "10.4": 2,
+      "10.35": 2,
+      "8.64": 2,
+      "8.335": 2,
+      "8.3": 1,
+      "2.5": 8,
+      "1.2": 1,
+      "1": 6,
+      "0.3": 4
+     },
+     "file": "BES_M12MI_PSC30A_S04G_W09.stp",
+     "provenance": "explicit"
+    },
+    "__real_model": "BES_M12MI_PSC30A_S04G_W09",
+    "__real_source": "kb/purchased_library.json（接近开关，CATIA 导出 STEP 实测）",
+    "L": 65.0,
+    "H": 17.0,
+    "D": 65.0,
+    "__env_sorted": [
+     65.0,
+     19.63,
+     17.0
+    ]
+   },
+   "got_env": [
+    65.0,
+    19.63,
+    17.0
+   ],
+   "unverifiable": null,
+   "mesh_env": [
+    71.0,
+    19.63,
+    17.0
+   ],
+   "ms": 31.6,
+   "hit": false
+  },
+  {
+   "case_id": "pur:BES_M18MI_PSC80A_S04G_W33",
+   "group": "接近开关",
+   "prompt": "接近开关 BES_M18MI_PSC80A_S04G_W33",
+   "model": "BES_M18MI_PSC80A_S04G_W33",
+   "checks": {
+    "category": true,
+    "model": true,
+    "buildable": true,
+    "size": true,
+    "mesh_size": false
+   },
+   "fails": [
+    "**建出来的网格** (75.5, 30.0, 27.713) ≠ STEP 实测 (66.0, 30.0, 27.713)"
+   ],
+   "cat": "接近开关",
+   "expect_cat": "接近开关",
+   "real_model": "BES_M18MI_PSC80A_S04G_W33",
+   "notes": [],
+   "real_params": {
+    "W": 33.0,
+    "code": "BES_M18MI_PSC80A_S04G_W33",
+    "__text": "接近开关 BES_M18MI_PSC80A_S04G_W33",
+    "__real": {
+     "model": "BES_M18MI_PSC80A_S04G_W33",
+     "src": "接近开关",
+     "desc": "接近开关",
+     "brand": "BALLUFF",
+     "envelope": [
+      66.0,
+      27.713,
+      30.0
+     ],
+     "trust": "exact",
+     "n_solids": 5,
+     "n_faces": 250,
+     "n_cylinders": 97,
+     "cyl_diameters": {
+      "30": 4,
+      "19": 24,
+      "18": 2,
+      "16.917": 4,
+      "16.5": 2,
+      "12": 2,
+      "10.4": 4,
+      "10.35": 2,
+      "9.45": 4,
+      "9.25": 4,
+      "8.34": 2,
+      "2.75": 24,
+      "2.5": 8,
+      "1.2": 1,
+      "1": 6,
+      "0.3": 4
+     },
+     "file": "BES_M18MI_PSC80A_S04G_W33.stp",
+     "provenance": "explicit"
+    },
+    "__real_model": "BES_M18MI_PSC80A_S04G_W33",
+    "__real_source": "kb/purchased_library.json（接近开关，CATIA 导出 STEP 实测）",
+    "L": 66.0,
+    "H": 27.713,
+    "D": 66.0,
+    "__env_sorted": [
+     66.0,
+     30.0,
+     27.713
+    ]
+   },
+   "got_env": [
+    66.0,
+    30.0,
+    27.713
+   ],
+   "unverifiable": null,
+   "mesh_env": [
+    75.5,
+    30.0,
+    27.713
+   ],
+   "ms": 13.3,
+   "hit": false
+  }
+ ]
+}

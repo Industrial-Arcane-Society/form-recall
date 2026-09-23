@@ -1,0 +1,159 @@
+# ---------------------------------------------------------------------------
+# 通用辅助函数 (只使用 CATIA V5 最稳定的 API: Sketch / Pad / Pocket / Shaft)
+# ---------------------------------------------------------------------------
+import sys
+
+TOL = 1e-6
+
+
+def _axis_of(entry):
+    """取特征轴向字母。`plane` 既可能是轴字母(X/Y/Z)，也可能是老写法平面名(XY/YZ/ZX)。"""
+    pl = str(entry.get('plane') or 'Z').upper()
+    if pl in ('X', 'Y', 'Z'):
+        return pl
+    return {'XY': 'Z', 'YZ': 'X', 'ZX': 'Y'}.get(pl, 'Z')
+
+
+def _plane_for(part, z, ax='Z'):
+    """返回垂直于 `ax`、沿 `ax` 偏移 `z` 的平面引用；偏移为 0 时直接用基准面。
+
+    草图支撑面必须垂直于特征的轴：Z→PlaneXY、X→PlaneYZ、Y→PlaneZX。
+    老实现一律用 PlaneXY，于是 Y 轴的环体（吊环）会被画在错误的平面上。
+    """
+    base = {'X': part.OriginElements.PlaneYZ,
+            'Y': part.OriginElements.PlaneZX}.get(ax, part.OriginElements.PlaneXY)
+    if abs(z) < 1e-9:
+        return base
+    hsf = part.HybridShapeFactory
+    ref = part.CreateReferenceFromObject(base)
+    off = hsf.AddNewPlaneOffset(ref, float(z), False)
+    body = None
+    for hb in part.HybridBodies:
+        body = hb
+        break
+    if body is None:
+        body = part.HybridBodies.Add()
+    body.AppendHybridShape(off)
+    part.Update()
+    return off
+
+
+def _new_sketch(part, body, z, ax='Z'):
+    sk = body.Sketches.Add(_plane_for(part, z, ax))
+    return sk, sk.Factory2D
+
+
+def _rect_points(cx, cy, l, w):
+    x0, y0 = cx - l / 2.0, cy - w / 2.0
+    x1, y1 = cx + l / 2.0, cy + w / 2.0
+    return [(x0, y0), (x1, y0), (x1, y1), (x0, y1)]
+
+
+def _draw_profile(f2d, entry):
+    """在草图里绘制轮廓: 圆用 CreateClosedCircle, 其它用闭合折线。"""
+    prof = entry.get('profile') or []
+    if entry['kind'].startswith('circle'):
+        f2d.CreateClosedCircle(entry['cx'], entry['cy'], entry['r'])
+        return
+    if prof:
+        pts = [(entry['cx'] + x, entry['cy'] + y) for (x, y) in prof]
+    else:
+        pts = _rect_points(entry['cx'], entry['cy'], entry['l'], entry['w'])
+    n = len(pts)
+    for i in range(n):
+        x1, y1 = pts[i]
+        x2, y2 = pts[(i + 1) % n]
+        if abs(x1 - x2) < TOL and abs(y1 - y2) < TOL:
+            continue
+        f2d.CreateLine(x1, y1, x2, y2)
+
+
+def _volume_of(part):
+    """用 SPA 工作台测量当前实体体积, 用于自动纠正切除方向。"""
+    try:
+        spa = part.GetWorkbench('SPAWorkbench')
+        ref = part.CreateReferenceFromObject(part.MainBody)
+        return float(spa.GetMeasurable(ref).Volume)
+    except Exception:
+        return None
+
+
+def _flip(feature):
+    """尝试翻转切除方向, 兼容不同 CATIA 版本的方法名。"""
+    for name in ('ReverseDirection', 'Reverse', 'InvertDirection'):
+        try:
+            getattr(feature, name)()
+            return True
+        except Exception:
+            pass
+    try:
+        feature.DirectionOrientation = 1
+        return True
+    except Exception:
+        pass
+    return False
+
+
+def make_pad(part, body, sf, entry):
+    sk, f2d = _new_sketch(part, body, entry['z'], _axis_of(entry))
+    _draw_profile(f2d, entry)
+    sk.CloseEdition()
+    part.Update()
+    feat = sf.AddNewPad(sk, entry['h'])
+    feat.Name = entry['name'] or 'Pad'
+    part.Update()
+    return feat
+
+
+def make_shaft(part, body, sf, entry):
+    """旋转体: profile 为 [[半径, 轴向坐标], ...] 的闭合轮廓。"""
+    sk, f2d = _new_sketch(part, body, 0.0)
+    prof = entry['profile']
+    pts = [(entry['cx'] + r, entry['cy'] + zz) for (r, zz) in prof]
+    n = len(pts)
+    for i in range(n):
+        x1, y1 = pts[i]
+        x2, y2 = pts[(i + 1) % n]
+        if abs(x1 - x2) < TOL and abs(y1 - y2) < TOL:
+            continue
+        f2d.CreateLine(x1, y1, x2, y2)
+    sk.CloseEdition()
+    part.Update()
+    feat = sf.AddNewShaft(sk)
+    try:
+        feat.FirstAngle = 360.0
+        feat.SecondAngle = 0.0
+    except Exception:
+        pass
+    feat.Name = entry['name'] or 'Shaft'
+    part.Update()
+    return feat
+
+
+def make_cut(part, body, sf, entry):
+    """凹槽(切除)。根据体积变化自动纠正方向, 不依赖版本的默认方向约定。"""
+    before = _volume_of(part)
+    sk, f2d = _new_sketch(part, body, entry['z'], _axis_of(entry))
+    _draw_profile(f2d, entry)
+    sk.CloseEdition()
+    part.Update()
+    feat = sf.AddNewPocket(sk, entry['depth'])
+    feat.Name = entry['name'] or 'Pocket'
+    part.Update()
+    after = _volume_of(part)
+    if before is not None and after is not None and after > before + 1e-6:
+        if _flip(feat):
+            part.Update()
+    return feat
+
+
+def build_body(part, entry):
+    body = part.Bodies.Item('PartBody')
+    sf = part.ShapeFactory
+    if entry['kind'] == 'shaft':
+        return make_shaft(part, body, sf, entry)
+    if entry['kind'].endswith('_pad'):
+        return make_pad(part, body, sf, entry)
+    if entry['kind'].endswith('_cut'):
+        return make_cut(part, body, sf, entry)
+    raise ValueError('未知特征类型: %s' % entry['kind'])

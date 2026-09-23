@@ -1,0 +1,12 @@
+{
+ "log_lines": 35,
+ "best": {
+  "round": 2,
+  "rate": 100.0,
+  "hit": 591,
+  "total": 591,
+  "converged": true
+ },
+ "target": 95.0,
+ "injected": 3
+}

@@ -1,0 +1,3621 @@
+{
+ "source": "CATIA 导出 STEP 实测（55 件）+ ISO 4762 / GB/T 97.1 / GB/T 93",
+ "law": {
+  "envelope": [
+   "平垫外径(GB/T 97.1)",
+   "平垫外径(GB/T 97.1)",
+   "公称长度 + 头高(ISO 4762)"
+  ],
+  "note": "表里 110 行 = 55 个模型 × 2 个类型标签（带弹垫 / 带弹垫和平垫），两标签指向同一文件，实测几何完全相同；每个模型含 3 个实体（螺钉 + 弹垫 + 平垫）"
+ },
+ "verified": {
+  "pass": 54,
+  "fail": 1
+ },
+ "bolts": {
+  "M5x8": {
+   "model": "M5x8",
+   "spec": "M5",
+   "length": 8.0,
+   "shank_d": 5.0,
+   "head_d": 8.5,
+   "head_h": 5.0,
+   "hex_s": 4.0,
+   "flat_washer": {
+    "d_in": 5.3,
+    "d_out": 10.0,
+    "t": 1.0
+   },
+   "spring_washer": {
+    "d_in": 5.1,
+    "d_out": 8.8,
+    "t": 1.2
+   },
+   "total_h": 13.0,
+   "envelope": [
+    10.0,
+    10.0,
+    13.0
+   ],
+   "envelope_measured": [
+    10.0,
+    10.0,
+    13.0
+   ],
+   "cyl_diameters": {
+    "10": 2,
+    "8.8": 2,
+    "8.5": 2,
+    "5.3": 2,
+    "5.1": 2,
+    "5": 2
+   },
+   "assembly_insert_pt": [
+    0,
+    0,
+    -1
+   ],
+   "assembly_orient": [
+    [
+     0,
+     1,
+     0
+    ],
+    [
+     1,
+     0,
+     0
+    ],
+    [
+     0,
+     0,
+     -1
+    ]
+   ],
+   "table_type_label": "内六角螺栓-带弹垫和平垫",
+   "n_solids": 3,
+   "n_faces": 26,
+   "provenance": "explicit",
+   "source": "实测 STEP M5x8.stp",
+   "residual_mm": 0.0
+  },
+  "M5x10": {
+   "model": "M5x10",
+   "spec": "M5",
+   "length": 10.0,
+   "shank_d": 5.0,
+   "head_d": 8.5,
+   "head_h": 5.0,
+   "hex_s": 4.0,
+   "flat_washer": {
+    "d_in": 5.3,
+    "d_out": 10.0,
+    "t": 1.0
+   },
+   "spring_washer": {
+    "d_in": 5.1,
+    "d_out": 8.8,
+    "t": 1.2
+   },
+   "total_h": 15.0,
+   "envelope": [
+    10.0,
+    10.0,
+    15.0
+   ],
+   "envelope_measured": [
+    10.0,
+    10.0,
+    15.0
+   ],
+   "cyl_diameters": {
+    "10": 2,
+    "8.8": 2,
+    "8.5": 2,
+    "5.3": 2,
+    "5.1": 2,
+    "5": 2
+   },
+   "assembly_insert_pt": [
+    0,
+    0,
+    -1
+   ],
+   "assembly_orient": [
+    [
+     0,
+     1,
+     0
+    ],
+    [
+     1,
+     0,
+     0
+    ],
+    [
+     0,
+     0,
+     -1
+    ]
+   ],
+   "table_type_label": "内六角螺栓-带弹垫和平垫",
+   "n_solids": 3,
+   "n_faces": 26,
+   "provenance": "explicit",
+   "source": "实测 STEP M5x10.stp",
+   "residual_mm": 0.0
+  },
+  "M5x12": {
+   "model": "M5x12",
+   "spec": "M5",
+   "length": 12.0,
+   "shank_d": 5.0,
+   "head_d": 8.5,
+   "head_h": 5.0,
+   "hex_s": 4.0,
+   "flat_washer": {
+    "d_in": 5.3,
+    "d_out": 10.0,
+    "t": 1.0
+   },
+   "spring_washer": {
+    "d_in": 5.1,
+    "d_out": 8.8,
+    "t": 1.2
+   },
+   "total_h": 17.0,
+   "envelope": [
+    10.0,
+    10.0,
+    17.0
+   ],
+   "envelope_measured": [
+    10.0,
+    10.0,
+    17.0
+   ],
+   "cyl_diameters": {
+    "10": 2,
+    "8.8": 2,
+    "8.5": 2,
+    "5.3": 2,
+    "5.1": 2,
+    "5": 2
+   },
+   "assembly_insert_pt": [
+    0,
+    0,
+    -1
+   ],
+   "assembly_orient": [
+    [
+     0,
+     1,
+     0
+    ],
+    [
+     1,
+     0,
+     0
+    ],
+    [
+     0,
+     0,
+     -1
+    ]
+   ],
+   "table_type_label": "内六角螺栓-带弹垫和平垫",
+   "n_solids": 3,
+   "n_faces": 26,
+   "provenance": "explicit",
+   "source": "实测 STEP M5x12.stp",
+   "residual_mm": 0.0
+  },
+  "M5x16": {
+   "model": "M5x16",
+   "spec": "M5",
+   "length": 16.0,
+   "shank_d": 5.0,
+   "head_d": 8.5,
+   "head_h": 5.0,
+   "hex_s": 4.0,
+   "flat_washer": {
+    "d_in": 5.3,
+    "d_out": 10.0,
+    "t": 1.0
+   },
+   "spring_washer": {
+    "d_in": 5.1,
+    "d_out": 8.8,
+    "t": 1.2
+   },
+   "total_h": 21.0,
+   "envelope": [
+    10.0,
+    10.0,
+    21.0
+   ],
+   "envelope_measured": [
+    10.0,
+    10.0,
+    21.0
+   ],
+   "cyl_diameters": {
+    "10": 2,
+    "8.8": 2,
+    "8.5": 2,
+    "5.3": 2,
+    "5.1": 2,
+    "5": 2
+   },
+   "assembly_insert_pt": [
+    0,
+    0,
+    -1
+   ],
+   "assembly_orient": [
+    [
+     0,
+     1,
+     0
+    ],
+    [
+     1,
+     0,
+     0
+    ],
+    [
+     0,
+     0,
+     -1
+    ]
+   ],
+   "table_type_label": "内六角螺栓-带弹垫和平垫",
+   "n_solids": 3,
+   "n_faces": 26,
+   "provenance": "explicit",
+   "source": "实测 STEP M5x16.stp",
+   "residual_mm": 0.0
+  },
+  "M5x20": {
+   "model": "M5x20",
+   "spec": "M5",
+   "length": 20.0,
+   "shank_d": 5.0,
+   "head_d": 8.5,
+   "head_h": 5.0,
+   "hex_s": 4.0,
+   "flat_washer": {
+    "d_in": 5.3,
+    "d_out": 10.0,
+    "t": 1.0
+   },
+   "spring_washer": {
+    "d_in": 5.1,
+    "d_out": 8.8,
+    "t": 1.2
+   },
+   "total_h": 25.0,
+   "envelope": [
+    10.0,
+    10.0,
+    25.0
+   ],
+   "envelope_measured": [
+    10.0,
+    10.0,
+    25.0
+   ],
+   "cyl_diameters": {
+    "10": 2,
+    "8.8": 2,
+    "8.5": 2,
+    "5.3": 2,
+    "5.1": 2,
+    "5": 2
+   },
+   "assembly_insert_pt": [
+    0,
+    0,
+    -1
+   ],
+   "assembly_orient": [
+    [
+     0,
+     1,
+     0
+    ],
+    [
+     1,
+     0,
+     0
+    ],
+    [
+     0,
+     0,
+     -1
+    ]
+   ],
+   "table_type_label": "内六角螺栓-带弹垫和平垫",
+   "n_solids": 3,
+   "n_faces": 26,
+   "provenance": "explicit",
+   "source": "实测 STEP M5x20.stp",
+   "residual_mm": 0.0
+  },
+  "M5x25": {
+   "model": "M5x25",
+   "spec": "M5",
+   "length": 25.0,
+   "shank_d": 5.0,
+   "head_d": 8.5,
+   "head_h": 5.0,
+   "hex_s": 4.0,
+   "flat_washer": {
+    "d_in": 5.3,
+    "d_out": 10.0,
+    "t": 1.0
+   },
+   "spring_washer": {
+    "d_in": 5.1,
+    "d_out": 8.8,
+    "t": 1.2
+   },
+   "total_h": 30.0,
+   "envelope": [
+    10.0,
+    10.0,
+    30.0
+   ],
+   "envelope_measured": [
+    10.0,
+    10.0,
+    30.0
+   ],
+   "cyl_diameters": {
+    "10": 2,
+    "8.8": 2,
+    "8.5": 2,
+    "5.3": 2,
+    "5.1": 2,
+    "5": 2
+   },
+   "assembly_insert_pt": [
+    0,
+    0,
+    -1
+   ],
+   "assembly_orient": [
+    [
+     0,
+     1,
+     0
+    ],
+    [
+     1,
+     0,
+     0
+    ],
+    [
+     0,
+     0,
+     -1
+    ]
+   ],
+   "table_type_label": "内六角螺栓-带弹垫和平垫",
+   "n_solids": 3,
+   "n_faces": 26,
+   "provenance": "explicit",
+   "source": "实测 STEP M5x25.stp",
+   "residual_mm": 0.0
+  },
+  "M5x30": {
+   "model": "M5x30",
+   "spec": "M5",
+   "length": 30.0,
+   "shank_d": 5.0,
+   "head_d": 8.5,
+   "head_h": 5.0,
+   "hex_s": 4.0,
+   "flat_washer": {
+    "d_in": 5.3,
+    "d_out": 10.0,
+    "t": 1.0
+   },
+   "spring_washer": {
+    "d_in": 5.1,
+    "d_out": 8.8,
+    "t": 1.2
+   },
+   "total_h": 35.0,
+   "envelope": [
+    10.0,
+    10.0,
+    35.0
+   ],
+   "envelope_measured": [
+    10.0,
+    10.0,
+    35.0
+   ],
+   "cyl_diameters": {
+    "10": 2,
+    "8.8": 2,
+    "8.5": 2,
+    "5.3": 2,
+    "5.1": 2,
+    "5": 2
+   },
+   "assembly_insert_pt": [
+    0,
+    0,
+    -1
+   ],
+   "assembly_orient": [
+    [
+     0,
+     1,
+     0
+    ],
+    [
+     1,
+     0,
+     0
+    ],
+    [
+     0,
+     0,
+     -1
+    ]
+   ],
+   "table_type_label": "内六角螺栓-带弹垫和平垫",
+   "n_solids": 3,
+   "n_faces": 26,
+   "provenance": "explicit",
+   "source": "实测 STEP M5x30.stp",
+   "residual_mm": 0.0
+  },
+  "M5x35": {
+   "model": "M5x35",
+   "spec": "M5",
+   "length": 35.0,
+   "shank_d": 5.0,
+   "head_d": 8.5,
+   "head_h": 5.0,
+   "hex_s": 4.0,
+   "flat_washer": {
+    "d_in": 5.3,
+    "d_out": 10.0,
+    "t": 1.0
+   },
+   "spring_washer": {
+    "d_in": 5.1,
+    "d_out": 8.8,
+    "t": 1.2
+   },
+   "total_h": 40.0,
+   "envelope": [
+    10.0,
+    10.0,
+    40.0
+   ],
+   "envelope_measured": [
+    10.0,
+    10.0,
+    40.0
+   ],
+   "cyl_diameters": {
+    "10": 2,
+    "8.8": 2,
+    "8.5": 2,
+    "5.3": 2,
+    "5.1": 2,
+    "5": 2
+   },
+   "assembly_insert_pt": [
+    0,
+    0,
+    -1
+   ],
+   "assembly_orient": [
+    [
+     0,
+     1,
+     0
+    ],
+    [
+     1,
+     0,
+     0
+    ],
+    [
+     0,
+     0,
+     -1
+    ]
+   ],
+   "table_type_label": "内六角螺栓-带弹垫和平垫",
+   "n_solids": 3,
+   "n_faces": 26,
+   "provenance": "explicit",
+   "source": "实测 STEP M5x35.stp",
+   "residual_mm": 0.0
+  },
+  "M5x40": {
+   "model": "M5x40",
+   "spec": "M5",
+   "length": 40.0,
+   "shank_d": 5.0,
+   "head_d": 8.5,
+   "head_h": 5.0,
+   "hex_s": 4.0,
+   "flat_washer": {
+    "d_in": 5.3,
+    "d_out": 10.0,
+    "t": 1.0
+   },
+   "spring_washer": {
+    "d_in": 5.1,
+    "d_out": 8.8,
+    "t": 1.2
+   },
+   "total_h": 45.0,
+   "envelope": [
+    10.0,
+    10.0,
+    45.0
+   ],
+   "envelope_measured": [
+    10.0,
+    10.0,
+    45.0
+   ],
+   "cyl_diameters": {
+    "10": 2,
+    "8.8": 2,
+    "8.5": 2,
+    "5.3": 2,
+    "5.1": 2,
+    "5": 2
+   },
+   "assembly_insert_pt": [
+    0,
+    0,
+    -1
+   ],
+   "assembly_orient": [
+    [
+     0,
+     1,
+     0
+    ],
+    [
+     1,
+     0,
+     0
+    ],
+    [
+     0,
+     0,
+     -1
+    ]
+   ],
+   "table_type_label": "内六角螺栓-带弹垫和平垫",
+   "n_solids": 3,
+   "n_faces": 26,
+   "provenance": "explicit",
+   "source": "实测 STEP M5x40.stp",
+   "residual_mm": 0.0
+  },
+  "M5x45": {
+   "model": "M5x45",
+   "spec": "M5",
+   "length": 45.0,
+   "shank_d": 5.0,
+   "head_d": 8.5,
+   "head_h": 5.0,
+   "hex_s": 4.0,
+   "flat_washer": {
+    "d_in": 5.3,
+    "d_out": 10.0,
+    "t": 1.0
+   },
+   "spring_washer": {
+    "d_in": 5.1,
+    "d_out": 8.8,
+    "t": 1.2
+   },
+   "total_h": 50.0,
+   "envelope": [
+    10.0,
+    10.0,
+    50.0
+   ],
+   "envelope_measured": [
+    10.0,
+    10.0,
+    50.0
+   ],
+   "cyl_diameters": {
+    "10": 2,
+    "8.8": 2,
+    "8.5": 2,
+    "5.3": 2,
+    "5.1": 2,
+    "5": 2
+   },
+   "assembly_insert_pt": [
+    0,
+    0,
+    -1
+   ],
+   "assembly_orient": [
+    [
+     0,
+     1,
+     0
+    ],
+    [
+     1,
+     0,
+     0
+    ],
+    [
+     0,
+     0,
+     -1
+    ]
+   ],
+   "table_type_label": "内六角螺栓-带弹垫和平垫",
+   "n_solids": 3,
+   "n_faces": 26,
+   "provenance": "explicit",
+   "source": "实测 STEP M5x45.stp",
+   "residual_mm": 0.0
+  },
+  "M5x50": {
+   "model": "M5x50",
+   "spec": "M5",
+   "length": 50.0,
+   "shank_d": 5.0,
+   "head_d": 8.5,
+   "head_h": 5.0,
+   "hex_s": 4.0,
+   "flat_washer": {
+    "d_in": 5.3,
+    "d_out": 10.0,
+    "t": 1.0
+   },
+   "spring_washer": {
+    "d_in": 5.1,
+    "d_out": 8.8,
+    "t": 1.2
+   },
+   "total_h": 55.0,
+   "envelope": [
+    10.0,
+    10.0,
+    55.0
+   ],
+   "envelope_measured": [
+    10.0,
+    10.0,
+    55.0
+   ],
+   "cyl_diameters": {
+    "10": 2,
+    "8.8": 2,
+    "8.5": 2,
+    "5.3": 2,
+    "5.1": 2,
+    "5": 2
+   },
+   "assembly_insert_pt": [
+    0,
+    0,
+    -1
+   ],
+   "assembly_orient": [
+    [
+     0,
+     1,
+     0
+    ],
+    [
+     1,
+     0,
+     0
+    ],
+    [
+     0,
+     0,
+     -1
+    ]
+   ],
+   "table_type_label": "内六角螺栓-带弹垫和平垫",
+   "n_solids": 3,
+   "n_faces": 26,
+   "provenance": "explicit",
+   "source": "实测 STEP M5x50.stp",
+   "residual_mm": 0.0
+  },
+  "M6x12": {
+   "model": "M6x12",
+   "spec": "M6",
+   "length": 12.0,
+   "shank_d": 6.0,
+   "head_d": 10.0,
+   "head_h": 6.0,
+   "hex_s": 5.0,
+   "flat_washer": {
+    "d_in": 6.4,
+    "d_out": 12.0,
+    "t": 1.6
+   },
+   "spring_washer": {
+    "d_in": 6.1,
+    "d_out": 9.9,
+    "t": 1.5
+   },
+   "total_h": 18.0,
+   "envelope": [
+    12.0,
+    12.0,
+    18.0
+   ],
+   "envelope_measured": [
+    12.0,
+    12.0,
+    18.0
+   ],
+   "cyl_diameters": {
+    "12": 2,
+    "10": 2,
+    "9.9": 2,
+    "6.4": 2,
+    "6.1": 2,
+    "6": 2
+   },
+   "assembly_insert_pt": [
+    0,
+    0,
+    -3.2
+   ],
+   "assembly_orient": [
+    [
+     0,
+     1,
+     0
+    ],
+    [
+     1,
+     0,
+     0
+    ],
+    [
+     0,
+     0,
+     -1
+    ]
+   ],
+   "table_type_label": "内六角螺栓-带弹垫和平垫",
+   "n_solids": 3,
+   "n_faces": 26,
+   "provenance": "explicit",
+   "source": "实测 STEP M6x12.stp",
+   "residual_mm": 0.0
+  },
+  "M6x20": {
+   "model": "M6x20",
+   "spec": "M6",
+   "length": 20.0,
+   "shank_d": 6.0,
+   "head_d": 10.0,
+   "head_h": 6.0,
+   "hex_s": 5.0,
+   "flat_washer": {
+    "d_in": 6.4,
+    "d_out": 12.0,
+    "t": 1.6
+   },
+   "spring_washer": {
+    "d_in": 6.1,
+    "d_out": 9.9,
+    "t": 1.5
+   },
+   "total_h": 26.0,
+   "envelope": [
+    12.0,
+    12.0,
+    26.0
+   ],
+   "envelope_measured": [
+    12.0,
+    12.0,
+    26.0
+   ],
+   "cyl_diameters": {
+    "12": 2,
+    "10": 2,
+    "9.9": 2,
+    "6.4": 2,
+    "6.1": 2,
+    "6": 2
+   },
+   "assembly_insert_pt": [
+    0,
+    0,
+    -3.2
+   ],
+   "assembly_orient": [
+    [
+     0,
+     1,
+     0
+    ],
+    [
+     1,
+     0,
+     0
+    ],
+    [
+     0,
+     0,
+     -1
+    ]
+   ],
+   "table_type_label": "内六角螺栓-带弹垫和平垫",
+   "n_solids": 3,
+   "n_faces": 26,
+   "provenance": "explicit",
+   "source": "实测 STEP M6x20.stp",
+   "residual_mm": 0.0
+  },
+  "M6x25": {
+   "model": "M6x25",
+   "spec": "M6",
+   "length": 25.0,
+   "shank_d": 6.0,
+   "head_d": 10.0,
+   "head_h": 6.0,
+   "hex_s": 5.0,
+   "flat_washer": {
+    "d_in": 6.4,
+    "d_out": 12.0,
+    "t": 1.6
+   },
+   "spring_washer": {
+    "d_in": 6.1,
+    "d_out": 9.9,
+    "t": 1.5
+   },
+   "total_h": 31.0,
+   "envelope": [
+    12.0,
+    12.0,
+    31.0
+   ],
+   "envelope_measured": [
+    12.0,
+    12.0,
+    31.0
+   ],
+   "cyl_diameters": {
+    "12": 2,
+    "10": 2,
+    "9.9": 2,
+    "6.4": 2,
+    "6.1": 2,
+    "6": 2
+   },
+   "assembly_insert_pt": [
+    0,
+    0,
+    -3.2
+   ],
+   "assembly_orient": [
+    [
+     0,
+     1,
+     0
+    ],
+    [
+     1,
+     0,
+     0
+    ],
+    [
+     0,
+     0,
+     -1
+    ]
+   ],
+   "table_type_label": "内六角螺栓-带弹垫和平垫",
+   "n_solids": 3,
+   "n_faces": 26,
+   "provenance": "explicit",
+   "source": "实测 STEP M6x25.stp",
+   "residual_mm": 0.0
+  },
+  "M6x30": {
+   "model": "M6x30",
+   "spec": "M6",
+   "length": 30.0,
+   "shank_d": 6.0,
+   "head_d": 10.0,
+   "head_h": 6.0,
+   "hex_s": 5.0,
+   "flat_washer": {
+    "d_in": 6.4,
+    "d_out": 12.0,
+    "t": 1.6
+   },
+   "spring_washer": {
+    "d_in": 6.1,
+    "d_out": 9.9,
+    "t": 1.5
+   },
+   "total_h": 36.0,
+   "envelope": [
+    12.0,
+    12.0,
+    36.0
+   ],
+   "envelope_measured": [
+    12.0,
+    12.0,
+    36.0
+   ],
+   "cyl_diameters": {
+    "12": 2,
+    "10": 2,
+    "9.9": 2,
+    "6.4": 2,
+    "6.1": 2,
+    "6": 2
+   },
+   "assembly_insert_pt": [
+    0,
+    0,
+    -3.6
+   ],
+   "assembly_orient": [
+    [
+     0,
+     1,
+     0
+    ],
+    [
+     1,
+     0,
+     0
+    ],
+    [
+     0,
+     0,
+     -1
+    ]
+   ],
+   "table_type_label": "内六角螺栓-带弹垫和平垫",
+   "n_solids": 3,
+   "n_faces": 26,
+   "provenance": "explicit",
+   "source": "实测 STEP M6x30.stp",
+   "residual_mm": 0.0
+  },
+  "M6x35": {
+   "model": "M6x35",
+   "spec": "M6",
+   "length": 35.0,
+   "shank_d": 6.0,
+   "head_d": 10.0,
+   "head_h": 6.0,
+   "hex_s": 5.0,
+   "flat_washer": {
+    "d_in": 6.4,
+    "d_out": 12.0,
+    "t": 1.6
+   },
+   "spring_washer": {
+    "d_in": 6.1,
+    "d_out": 9.9,
+    "t": 1.5
+   },
+   "total_h": 41.0,
+   "envelope": [
+    12.0,
+    12.0,
+    41.0
+   ],
+   "envelope_measured": [
+    12.0,
+    12.0,
+    41.0
+   ],
+   "cyl_diameters": {
+    "12": 2,
+    "10": 2,
+    "9.9": 2,
+    "6.4": 2,
+    "6.1": 2,
+    "6": 2
+   },
+   "assembly_insert_pt": [
+    0,
+    0,
+    -2.7
+   ],
+   "assembly_orient": [
+    [
+     0,
+     1,
+     0
+    ],
+    [
+     1,
+     0,
+     0
+    ],
+    [
+     0,
+     0,
+     -1
+    ]
+   ],
+   "table_type_label": "内六角螺栓-带弹垫和平垫",
+   "n_solids": 3,
+   "n_faces": 26,
+   "provenance": "explicit",
+   "source": "实测 STEP M6x35.stp",
+   "residual_mm": 0.0
+  },
+  "M6x40": {
+   "model": "M6x40",
+   "spec": "M6",
+   "length": 40.0,
+   "shank_d": 6.0,
+   "head_d": 10.0,
+   "head_h": 6.0,
+   "hex_s": 5.0,
+   "flat_washer": {
+    "d_in": 6.4,
+    "d_out": 12.0,
+    "t": 1.6
+   },
+   "spring_washer": {
+    "d_in": 6.1,
+    "d_out": 9.9,
+    "t": 1.5
+   },
+   "total_h": 46.0,
+   "envelope": [
+    12.0,
+    12.0,
+    46.0
+   ],
+   "envelope_measured": [
+    12.0,
+    12.0,
+    46.0
+   ],
+   "cyl_diameters": {
+    "12": 2,
+    "10": 2,
+    "9.9": 2,
+    "6.4": 2,
+    "6.1": 2,
+    "6": 2
+   },
+   "assembly_insert_pt": [
+    0,
+    0,
+    -2.7
+   ],
+   "assembly_orient": [
+    [
+     0,
+     1,
+     0
+    ],
+    [
+     1,
+     0,
+     0
+    ],
+    [
+     0,
+     0,
+     -1
+    ]
+   ],
+   "table_type_label": "内六角螺栓-带弹垫和平垫",
+   "n_solids": 3,
+   "n_faces": 26,
+   "provenance": "explicit",
+   "source": "实测 STEP M6x40.stp",
+   "residual_mm": 0.0
+  },
+  "M6x45": {
+   "model": "M6x45",
+   "spec": "M6",
+   "length": 45.0,
+   "shank_d": 6.0,
+   "head_d": 10.0,
+   "head_h": 6.0,
+   "hex_s": 5.0,
+   "flat_washer": {
+    "d_in": 6.4,
+    "d_out": 12.0,
+    "t": 1.6
+   },
+   "spring_washer": {
+    "d_in": 6.1,
+    "d_out": 9.9,
+    "t": 1.5
+   },
+   "total_h": 51.0,
+   "envelope": [
+    12.0,
+    12.0,
+    51.0
+   ],
+   "envelope_measured": [
+    12.0,
+    12.0,
+    51.0
+   ],
+   "cyl_diameters": {
+    "12": 2,
+    "10": 2,
+    "9.9": 2,
+    "6.4": 2,
+    "6.1": 2,
+    "6": 2
+   },
+   "assembly_insert_pt": [
+    0,
+    0,
+    -2.7
+   ],
+   "assembly_orient": [
+    [
+     0,
+     1,
+     0
+    ],
+    [
+     1,
+     0,
+     0
+    ],
+    [
+     0,
+     0,
+     -1
+    ]
+   ],
+   "table_type_label": "内六角螺栓-带弹垫和平垫",
+   "n_solids": 3,
+   "n_faces": 26,
+   "provenance": "explicit",
+   "source": "实测 STEP M6x45.stp",
+   "residual_mm": 0.0
+  },
+  "M8x12": {
+   "model": "M8x12",
+   "spec": "M8",
+   "length": 12.0,
+   "shank_d": 8.0,
+   "head_d": 13.0,
+   "head_h": 8.0,
+   "hex_s": 6.0,
+   "flat_washer": {
+    "d_in": 8.4,
+    "d_out": 16.0,
+    "t": 1.6
+   },
+   "spring_washer": {
+    "d_in": 8.1,
+    "d_out": 12.7,
+    "t": 2.0
+   },
+   "total_h": 20.0,
+   "envelope": [
+    16.0,
+    16.0,
+    20.0
+   ],
+   "envelope_measured": [
+    16.0,
+    16.0,
+    20.0
+   ],
+   "cyl_diameters": {
+    "16": 2,
+    "13": 2,
+    "12.7": 2,
+    "8.4": 2,
+    "8.1": 2,
+    "8": 2
+   },
+   "assembly_insert_pt": [
+    0,
+    0,
+    -2.7
+   ],
+   "assembly_orient": [
+    [
+     0,
+     1,
+     0
+    ],
+    [
+     1,
+     0,
+     0
+    ],
+    [
+     0,
+     0,
+     -1
+    ]
+   ],
+   "table_type_label": "内六角螺栓-带弹垫和平垫",
+   "n_solids": 3,
+   "n_faces": 26,
+   "provenance": "explicit",
+   "source": "实测 STEP M8x12.stp",
+   "residual_mm": 0.0
+  },
+  "M8x16": {
+   "model": "M8x16",
+   "spec": "M8",
+   "length": 16.0,
+   "shank_d": 8.0,
+   "head_d": 13.0,
+   "head_h": 8.0,
+   "hex_s": 6.0,
+   "flat_washer": {
+    "d_in": 8.4,
+    "d_out": 16.0,
+    "t": 1.6
+   },
+   "spring_washer": {
+    "d_in": 8.1,
+    "d_out": 12.7,
+    "t": 2.0
+   },
+   "total_h": 24.0,
+   "envelope": [
+    16.0,
+    16.0,
+    24.0
+   ],
+   "envelope_measured": [
+    16.0,
+    16.0,
+    24.0
+   ],
+   "cyl_diameters": {
+    "16": 2,
+    "13": 2,
+    "12.7": 2,
+    "8.4": 2,
+    "8.1": 2,
+    "8": 2
+   },
+   "assembly_insert_pt": [
+    0,
+    0,
+    -3.6
+   ],
+   "assembly_orient": [
+    [
+     0,
+     1,
+     0
+    ],
+    [
+     1,
+     0,
+     0
+    ],
+    [
+     0,
+     0,
+     -1
+    ]
+   ],
+   "table_type_label": "内六角螺栓-带弹垫和平垫",
+   "n_solids": 3,
+   "n_faces": 26,
+   "provenance": "explicit",
+   "source": "实测 STEP M8x16.stp",
+   "residual_mm": 0.0
+  },
+  "M8x20": {
+   "model": "M8x20",
+   "spec": "M8",
+   "length": 20.0,
+   "shank_d": 8.0,
+   "head_d": 13.0,
+   "head_h": 8.0,
+   "hex_s": 6.0,
+   "flat_washer": {
+    "d_in": 8.4,
+    "d_out": 16.0,
+    "t": 1.6
+   },
+   "spring_washer": {
+    "d_in": 8.1,
+    "d_out": 12.7,
+    "t": 2.0
+   },
+   "total_h": 28.0,
+   "envelope": [
+    16.0,
+    16.0,
+    28.0
+   ],
+   "envelope_measured": [
+    16.0,
+    16.0,
+    28.0
+   ],
+   "cyl_diameters": {
+    "16": 2,
+    "13": 2,
+    "12.7": 2,
+    "8.4": 2,
+    "8.1": 2,
+    "8": 2
+   },
+   "assembly_insert_pt": [
+    0,
+    0,
+    -3.6
+   ],
+   "assembly_orient": [
+    [
+     0,
+     1,
+     0
+    ],
+    [
+     1,
+     0,
+     0
+    ],
+    [
+     0,
+     0,
+     -1
+    ]
+   ],
+   "table_type_label": "内六角螺栓-带弹垫和平垫",
+   "n_solids": 3,
+   "n_faces": 26,
+   "provenance": "explicit",
+   "source": "实测 STEP M8x20.stp",
+   "residual_mm": 0.0
+  },
+  "M8x25": {
+   "model": "M8x25",
+   "spec": "M8",
+   "length": 25.0,
+   "shank_d": 8.0,
+   "head_d": 13.0,
+   "head_h": 8.0,
+   "hex_s": 6.0,
+   "flat_washer": {
+    "d_in": 8.4,
+    "d_out": 16.0,
+    "t": 1.6
+   },
+   "spring_washer": {
+    "d_in": 8.1,
+    "d_out": 12.7,
+    "t": 2.0
+   },
+   "total_h": 33.0,
+   "envelope": [
+    16.0,
+    16.0,
+    33.0
+   ],
+   "envelope_measured": [
+    16.0,
+    16.0,
+    33.0
+   ],
+   "cyl_diameters": {
+    "16": 2,
+    "13": 2,
+    "12.7": 2,
+    "8.4": 2,
+    "8.1": 2,
+    "8": 2
+   },
+   "assembly_insert_pt": [
+    0,
+    0,
+    -3.6
+   ],
+   "assembly_orient": [
+    [
+     0,
+     1,
+     0
+    ],
+    [
+     1,
+     0,
+     0
+    ],
+    [
+     0,
+     0,
+     -1
+    ]
+   ],
+   "table_type_label": "内六角螺栓-带弹垫和平垫",
+   "n_solids": 3,
+   "n_faces": 26,
+   "provenance": "explicit",
+   "source": "实测 STEP M8x25.stp",
+   "residual_mm": 0.0
+  },
+  "M8x30": {
+   "model": "M8x30",
+   "spec": "M8",
+   "length": 30.0,
+   "shank_d": 8.0,
+   "head_d": 13.0,
+   "head_h": 8.0,
+   "hex_s": 6.0,
+   "flat_washer": {
+    "d_in": 8.4,
+    "d_out": 16.0,
+    "t": 1.6
+   },
+   "spring_washer": {
+    "d_in": 8.1,
+    "d_out": 12.7,
+    "t": 2.0
+   },
+   "total_h": 38.0,
+   "envelope": [
+    16.0,
+    16.0,
+    38.0
+   ],
+   "envelope_measured": [
+    16.0,
+    16.0,
+    38.0
+   ],
+   "cyl_diameters": {
+    "16": 2,
+    "13": 2,
+    "12.7": 2,
+    "8.4": 2,
+    "8.1": 2,
+    "8": 2
+   },
+   "assembly_insert_pt": [
+    0,
+    0,
+    -3.6
+   ],
+   "assembly_orient": [
+    [
+     0,
+     1,
+     0
+    ],
+    [
+     1,
+     0,
+     0
+    ],
+    [
+     0,
+     0,
+     -1
+    ]
+   ],
+   "table_type_label": "内六角螺栓-带弹垫和平垫",
+   "n_solids": 3,
+   "n_faces": 26,
+   "provenance": "explicit",
+   "source": "实测 STEP M8x30.stp",
+   "residual_mm": 0.0
+  },
+  "M8x35": {
+   "model": "M8x35",
+   "spec": "M8",
+   "length": 35.0,
+   "shank_d": 8.0,
+   "head_d": 13.0,
+   "head_h": 8.0,
+   "hex_s": 6.0,
+   "flat_washer": {
+    "d_in": 8.4,
+    "d_out": 16.0,
+    "t": 1.6
+   },
+   "spring_washer": {
+    "d_in": 8.1,
+    "d_out": 12.7,
+    "t": 2.0
+   },
+   "total_h": 43.0,
+   "envelope": [
+    16.0,
+    16.0,
+    43.0
+   ],
+   "envelope_measured": [
+    16.0,
+    16.0,
+    43.0
+   ],
+   "cyl_diameters": {
+    "16": 2,
+    "13": 2,
+    "12.7": 2,
+    "8.4": 2,
+    "8.1": 2,
+    "8": 2
+   },
+   "assembly_insert_pt": [
+    0,
+    0,
+    -3.6
+   ],
+   "assembly_orient": [
+    [
+     0,
+     1,
+     0
+    ],
+    [
+     1,
+     0,
+     0
+    ],
+    [
+     0,
+     0,
+     -1
+    ]
+   ],
+   "table_type_label": "内六角螺栓-带弹垫和平垫",
+   "n_solids": 3,
+   "n_faces": 26,
+   "provenance": "explicit",
+   "source": "实测 STEP M8x35.stp",
+   "residual_mm": 0.0
+  },
+  "M8x40": {
+   "model": "M8x40",
+   "spec": "M8",
+   "length": 40.0,
+   "shank_d": 8.0,
+   "head_d": 13.0,
+   "head_h": 8.0,
+   "hex_s": 6.0,
+   "flat_washer": {
+    "d_in": 8.4,
+    "d_out": 16.0,
+    "t": 1.6
+   },
+   "spring_washer": {
+    "d_in": 8.1,
+    "d_out": 12.7,
+    "t": 2.0
+   },
+   "total_h": 48.0,
+   "envelope": [
+    16.0,
+    16.0,
+    48.0
+   ],
+   "envelope_measured": [
+    16.0,
+    16.0,
+    48.0
+   ],
+   "cyl_diameters": {
+    "16": 2,
+    "13": 2,
+    "12.7": 2,
+    "8.4": 2,
+    "8.1": 2,
+    "8": 2
+   },
+   "assembly_insert_pt": [
+    0,
+    0,
+    -3.6
+   ],
+   "assembly_orient": [
+    [
+     0,
+     1,
+     0
+    ],
+    [
+     1,
+     0,
+     0
+    ],
+    [
+     0,
+     0,
+     -1
+    ]
+   ],
+   "table_type_label": "内六角螺栓-带弹垫和平垫",
+   "n_solids": 3,
+   "n_faces": 26,
+   "provenance": "explicit",
+   "source": "实测 STEP M8x40.stp",
+   "residual_mm": 0.0
+  },
+  "M8x45": {
+   "model": "M8x45",
+   "spec": "M8",
+   "length": 45.0,
+   "shank_d": 8.0,
+   "head_d": 13.0,
+   "head_h": 8.0,
+   "hex_s": 6.0,
+   "flat_washer": {
+    "d_in": 8.4,
+    "d_out": 16.0,
+    "t": 1.6
+   },
+   "spring_washer": {
+    "d_in": 8.1,
+    "d_out": 12.7,
+    "t": 2.0
+   },
+   "total_h": 53.0,
+   "envelope": [
+    16.0,
+    16.0,
+    53.0
+   ],
+   "envelope_measured": [
+    16.0,
+    16.0,
+    53.0
+   ],
+   "cyl_diameters": {
+    "16": 2,
+    "13": 2,
+    "12.7": 2,
+    "8.4": 2,
+    "8.1": 2,
+    "8": 2
+   },
+   "assembly_insert_pt": [
+    0,
+    0,
+    -3.6
+   ],
+   "assembly_orient": [
+    [
+     0,
+     1,
+     0
+    ],
+    [
+     1,
+     0,
+     0
+    ],
+    [
+     0,
+     0,
+     -1
+    ]
+   ],
+   "table_type_label": "内六角螺栓-带弹垫和平垫",
+   "n_solids": 3,
+   "n_faces": 26,
+   "provenance": "explicit",
+   "source": "实测 STEP M8x45.stp",
+   "residual_mm": 0.0
+  },
+  "M8x50": {
+   "model": "M8x50",
+   "spec": "M8",
+   "length": 50.0,
+   "shank_d": 8.0,
+   "head_d": 13.0,
+   "head_h": 8.0,
+   "hex_s": 6.0,
+   "flat_washer": {
+    "d_in": 8.4,
+    "d_out": 16.0,
+    "t": 1.6
+   },
+   "spring_washer": {
+    "d_in": 8.1,
+    "d_out": 12.7,
+    "t": 2.0
+   },
+   "total_h": 58.0,
+   "envelope": [
+    16.0,
+    16.0,
+    58.0
+   ],
+   "envelope_measured": [
+    16.0,
+    16.0,
+    58.0
+   ],
+   "cyl_diameters": {
+    "16": 2,
+    "13": 2,
+    "12.7": 2,
+    "8.4": 2,
+    "8.1": 2,
+    "8": 2
+   },
+   "assembly_insert_pt": [
+    0,
+    0,
+    -3.6
+   ],
+   "assembly_orient": [
+    [
+     0,
+     1,
+     0
+    ],
+    [
+     1,
+     0,
+     0
+    ],
+    [
+     0,
+     0,
+     -1
+    ]
+   ],
+   "table_type_label": "内六角螺栓-带弹垫和平垫",
+   "n_solids": 3,
+   "n_faces": 26,
+   "provenance": "explicit",
+   "source": "实测 STEP M8x50.stp",
+   "residual_mm": 0.0
+  },
+  "M8x55": {
+   "model": "M8x55",
+   "spec": "M8",
+   "length": 55.0,
+   "shank_d": 8.0,
+   "head_d": 13.0,
+   "head_h": 8.0,
+   "hex_s": 6.0,
+   "flat_washer": {
+    "d_in": 8.4,
+    "d_out": 16.0,
+    "t": 1.6
+   },
+   "spring_washer": {
+    "d_in": 8.1,
+    "d_out": 12.7,
+    "t": 2.0
+   },
+   "total_h": 63.0,
+   "envelope": [
+    16.0,
+    16.0,
+    63.0
+   ],
+   "envelope_measured": [
+    16.0,
+    16.0,
+    63.0
+   ],
+   "cyl_diameters": {
+    "16": 2,
+    "13": 2,
+    "12.7": 2,
+    "8.4": 2,
+    "8.1": 2,
+    "8": 2
+   },
+   "assembly_insert_pt": [
+    0,
+    0,
+    -3.6
+   ],
+   "assembly_orient": [
+    [
+     0,
+     1,
+     0
+    ],
+    [
+     1,
+     0,
+     0
+    ],
+    [
+     0,
+     0,
+     -1
+    ]
+   ],
+   "table_type_label": "内六角螺栓-带弹垫和平垫",
+   "n_solids": 3,
+   "n_faces": 26,
+   "provenance": "explicit",
+   "source": "实测 STEP M8x55.stp",
+   "residual_mm": 0.0
+  },
+  "M8x60": {
+   "model": "M8x60",
+   "spec": "M8",
+   "length": 60.0,
+   "shank_d": 8.0,
+   "head_d": 13.0,
+   "head_h": 8.0,
+   "hex_s": 6.0,
+   "flat_washer": {
+    "d_in": 8.4,
+    "d_out": 16.0,
+    "t": 1.6
+   },
+   "spring_washer": {
+    "d_in": 8.1,
+    "d_out": 12.7,
+    "t": 2.0
+   },
+   "total_h": 68.0,
+   "envelope": [
+    16.0,
+    16.0,
+    68.0
+   ],
+   "envelope_measured": [
+    16.0,
+    16.0,
+    68.0
+   ],
+   "cyl_diameters": {
+    "16": 2,
+    "13": 2,
+    "12.7": 2,
+    "8.4": 2,
+    "8.1": 2,
+    "8": 2
+   },
+   "assembly_insert_pt": [
+    0,
+    0,
+    -3.6
+   ],
+   "assembly_orient": [
+    [
+     0,
+     1,
+     0
+    ],
+    [
+     1,
+     0,
+     0
+    ],
+    [
+     0,
+     0,
+     -1
+    ]
+   ],
+   "table_type_label": "内六角螺栓-带弹垫和平垫",
+   "n_solids": 3,
+   "n_faces": 26,
+   "provenance": "explicit",
+   "source": "实测 STEP M8x60.stp",
+   "residual_mm": 0.0
+  },
+  "M10x16": {
+   "model": "M10x16",
+   "spec": "M10",
+   "length": 16.0,
+   "shank_d": 10.0,
+   "head_d": 16.0,
+   "head_h": 10.0,
+   "hex_s": 8.0,
+   "flat_washer": {
+    "d_in": 10.5,
+    "d_out": 20.0,
+    "t": 2.0
+   },
+   "spring_washer": {
+    "d_in": 10.2,
+    "d_out": 16.0,
+    "t": 2.5
+   },
+   "total_h": 26.0,
+   "envelope": [
+    20.0,
+    20.0,
+    26.0
+   ],
+   "envelope_measured": [
+    20.0,
+    20.0,
+    26.0
+   ],
+   "cyl_diameters": {
+    "20": 2,
+    "16": 4,
+    "10.5": 2,
+    "10.2": 2,
+    "10": 2
+   },
+   "assembly_insert_pt": [
+    0,
+    0,
+    -3.6
+   ],
+   "assembly_orient": [
+    [
+     0,
+     1,
+     0
+    ],
+    [
+     1,
+     0,
+     0
+    ],
+    [
+     0,
+     0,
+     -1
+    ]
+   ],
+   "table_type_label": "内六角螺栓-带弹垫和平垫",
+   "n_solids": 3,
+   "n_faces": 26,
+   "provenance": "explicit",
+   "source": "实测 STEP M10x16.stp",
+   "residual_mm": 0.0
+  },
+  "M10x25": {
+   "model": "M10x25",
+   "spec": "M10",
+   "length": 25.0,
+   "shank_d": 10.0,
+   "head_d": 16.0,
+   "head_h": 10.0,
+   "hex_s": 8.0,
+   "flat_washer": {
+    "d_in": 10.5,
+    "d_out": 20.0,
+    "t": 2.0
+   },
+   "spring_washer": {
+    "d_in": 10.2,
+    "d_out": 16.0,
+    "t": 2.5
+   },
+   "total_h": 35.0,
+   "envelope": [
+    20.0,
+    20.0,
+    35.0
+   ],
+   "envelope_measured": [
+    20.0,
+    20.0,
+    35.0
+   ],
+   "cyl_diameters": {
+    "20": 2,
+    "16": 4,
+    "10.5": 2,
+    "10.2": 2,
+    "10": 2
+   },
+   "assembly_insert_pt": [
+    0,
+    0,
+    -3.6
+   ],
+   "assembly_orient": [
+    [
+     0,
+     1,
+     0
+    ],
+    [
+     1,
+     0,
+     0
+    ],
+    [
+     0,
+     0,
+     -1
+    ]
+   ],
+   "table_type_label": "内六角螺栓-带弹垫和平垫",
+   "n_solids": 3,
+   "n_faces": 26,
+   "provenance": "explicit",
+   "source": "实测 STEP M10x25.stp",
+   "residual_mm": 0.0
+  },
+  "M10x30": {
+   "model": "M10x30",
+   "spec": "M10",
+   "length": 30.0,
+   "shank_d": 10.0,
+   "head_d": 16.0,
+   "head_h": 10.0,
+   "hex_s": 8.0,
+   "flat_washer": {
+    "d_in": 10.5,
+    "d_out": 20.0,
+    "t": 2.0
+   },
+   "spring_washer": {
+    "d_in": 10.2,
+    "d_out": 16.0,
+    "t": 2.5
+   },
+   "total_h": 40.0,
+   "envelope": [
+    20.0,
+    20.0,
+    40.0
+   ],
+   "envelope_measured": [
+    20.0,
+    20.0,
+    40.0
+   ],
+   "cyl_diameters": {
+    "20": 2,
+    "16": 4,
+    "10.5": 2,
+    "10.2": 2,
+    "10": 2
+   },
+   "assembly_insert_pt": [
+    0,
+    0,
+    -3.6
+   ],
+   "assembly_orient": [
+    [
+     0,
+     1,
+     0
+    ],
+    [
+     1,
+     0,
+     0
+    ],
+    [
+     0,
+     0,
+     -1
+    ]
+   ],
+   "table_type_label": "内六角螺栓-带弹垫和平垫",
+   "n_solids": 3,
+   "n_faces": 26,
+   "provenance": "explicit",
+   "source": "实测 STEP M10x30.stp",
+   "residual_mm": 0.0
+  },
+  "M10x35": {
+   "model": "M10x35",
+   "spec": "M10",
+   "length": 35.0,
+   "shank_d": 10.0,
+   "head_d": 16.0,
+   "head_h": 10.0,
+   "hex_s": 8.0,
+   "flat_washer": {
+    "d_in": 10.5,
+    "d_out": 20.0,
+    "t": 2.0
+   },
+   "spring_washer": {
+    "d_in": 10.2,
+    "d_out": 16.0,
+    "t": 2.5
+   },
+   "total_h": 45.0,
+   "envelope": [
+    20.0,
+    20.0,
+    45.0
+   ],
+   "envelope_measured": [
+    20.0,
+    20.0,
+    45.0
+   ],
+   "cyl_diameters": {
+    "20": 2,
+    "16": 4,
+    "10.5": 2,
+    "10.2": 2,
+    "10": 2
+   },
+   "assembly_insert_pt": [
+    0,
+    0,
+    -3.6
+   ],
+   "assembly_orient": [
+    [
+     0,
+     1,
+     0
+    ],
+    [
+     1,
+     0,
+     0
+    ],
+    [
+     0,
+     0,
+     -1
+    ]
+   ],
+   "table_type_label": "内六角螺栓-带弹垫和平垫",
+   "n_solids": 3,
+   "n_faces": 26,
+   "provenance": "explicit",
+   "source": "实测 STEP M10x35.stp",
+   "residual_mm": 0.0
+  },
+  "M10x40": {
+   "model": "M10x40",
+   "spec": "M10",
+   "length": 40.0,
+   "shank_d": 10.0,
+   "head_d": 16.0,
+   "head_h": 10.0,
+   "hex_s": 8.0,
+   "flat_washer": {
+    "d_in": 10.5,
+    "d_out": 20.0,
+    "t": 2.0
+   },
+   "spring_washer": {
+    "d_in": 10.2,
+    "d_out": 16.0,
+    "t": 2.5
+   },
+   "total_h": 50.0,
+   "envelope": [
+    20.0,
+    20.0,
+    50.0
+   ],
+   "envelope_measured": [
+    20.0,
+    20.0,
+    50.0
+   ],
+   "cyl_diameters": {
+    "20": 2,
+    "16": 4,
+    "10.5": 2,
+    "10.2": 2,
+    "10": 2
+   },
+   "assembly_insert_pt": [
+    0,
+    0,
+    -3.6
+   ],
+   "assembly_orient": [
+    [
+     0,
+     1,
+     0
+    ],
+    [
+     1,
+     0,
+     0
+    ],
+    [
+     0,
+     0,
+     -1
+    ]
+   ],
+   "table_type_label": "内六角螺栓-带弹垫和平垫",
+   "n_solids": 3,
+   "n_faces": 26,
+   "provenance": "explicit",
+   "source": "实测 STEP M10x40.stp",
+   "residual_mm": 0.0
+  },
+  "M10x45": {
+   "model": "M10x45",
+   "spec": "M10",
+   "length": 45.0,
+   "shank_d": 10.0,
+   "head_d": 16.0,
+   "head_h": 10.0,
+   "hex_s": 8.0,
+   "flat_washer": {
+    "d_in": 10.5,
+    "d_out": 20.0,
+    "t": 2.0
+   },
+   "spring_washer": {
+    "d_in": 10.2,
+    "d_out": 16.0,
+    "t": 2.5
+   },
+   "total_h": 55.0,
+   "envelope": [
+    20.0,
+    20.0,
+    55.0
+   ],
+   "envelope_measured": [
+    20.0,
+    20.0,
+    55.0
+   ],
+   "cyl_diameters": {
+    "20": 2,
+    "16": 4,
+    "10.5": 2,
+    "10.2": 2,
+    "10": 2
+   },
+   "assembly_insert_pt": [
+    0,
+    0,
+    -3.6
+   ],
+   "assembly_orient": [
+    [
+     0,
+     1,
+     0
+    ],
+    [
+     1,
+     0,
+     0
+    ],
+    [
+     0,
+     0,
+     -1
+    ]
+   ],
+   "table_type_label": "内六角螺栓-带弹垫和平垫",
+   "n_solids": 3,
+   "n_faces": 26,
+   "provenance": "explicit",
+   "source": "实测 STEP M10x45.stp",
+   "residual_mm": 0.0
+  },
+  "M10x50": {
+   "model": "M10x50",
+   "spec": "M10",
+   "length": 50.0,
+   "shank_d": 10.0,
+   "head_d": 16.0,
+   "head_h": 10.0,
+   "hex_s": 8.0,
+   "flat_washer": {
+    "d_in": 10.5,
+    "d_out": 20.0,
+    "t": 2.0
+   },
+   "spring_washer": {
+    "d_in": 10.2,
+    "d_out": 16.0,
+    "t": 2.5
+   },
+   "total_h": 60.0,
+   "envelope": [
+    20.0,
+    20.0,
+    60.0
+   ],
+   "envelope_measured": [
+    20.0,
+    20.0,
+    60.0
+   ],
+   "cyl_diameters": {
+    "20": 2,
+    "16": 4,
+    "10.5": 2,
+    "10.2": 2,
+    "10": 2
+   },
+   "assembly_insert_pt": [
+    0,
+    0,
+    -3.6
+   ],
+   "assembly_orient": [
+    [
+     0,
+     1,
+     0
+    ],
+    [
+     1,
+     0,
+     0
+    ],
+    [
+     0,
+     0,
+     -1
+    ]
+   ],
+   "table_type_label": "内六角螺栓-带弹垫和平垫",
+   "n_solids": 3,
+   "n_faces": 26,
+   "provenance": "explicit",
+   "source": "实测 STEP M10x50.stp",
+   "residual_mm": 0.0
+  },
+  "M10x55": {
+   "model": "M10x55",
+   "spec": "M10",
+   "length": 55.0,
+   "shank_d": 10.0,
+   "head_d": 16.0,
+   "head_h": 10.0,
+   "hex_s": 8.0,
+   "flat_washer": {
+    "d_in": 10.5,
+    "d_out": 20.0,
+    "t": 2.0
+   },
+   "spring_washer": {
+    "d_in": 10.2,
+    "d_out": 16.0,
+    "t": 2.5
+   },
+   "total_h": 65.0,
+   "envelope": [
+    20.0,
+    20.0,
+    65.0
+   ],
+   "envelope_measured": [
+    20.0,
+    20.0,
+    65.0
+   ],
+   "cyl_diameters": {
+    "20": 2,
+    "16": 4,
+    "10.5": 2,
+    "10.2": 2,
+    "10": 2
+   },
+   "assembly_insert_pt": [
+    0,
+    0,
+    -3.6
+   ],
+   "assembly_orient": [
+    [
+     0,
+     1,
+     0
+    ],
+    [
+     1,
+     0,
+     0
+    ],
+    [
+     0,
+     0,
+     -1
+    ]
+   ],
+   "table_type_label": "内六角螺栓-带弹垫和平垫",
+   "n_solids": 3,
+   "n_faces": 26,
+   "provenance": "explicit",
+   "source": "实测 STEP M10x55.stp",
+   "residual_mm": 0.0
+  },
+  "M10x60": {
+   "model": "M10x60",
+   "spec": "M10",
+   "length": 60.0,
+   "shank_d": 10.0,
+   "head_d": 16.0,
+   "head_h": 10.0,
+   "hex_s": 8.0,
+   "flat_washer": {
+    "d_in": 10.5,
+    "d_out": 20.0,
+    "t": 2.0
+   },
+   "spring_washer": {
+    "d_in": 10.2,
+    "d_out": 16.0,
+    "t": 2.5
+   },
+   "total_h": 70.0,
+   "envelope": [
+    20.0,
+    20.0,
+    70.0
+   ],
+   "envelope_measured": [
+    20.0,
+    20.0,
+    70.0
+   ],
+   "cyl_diameters": {
+    "20": 2,
+    "16": 4,
+    "10.5": 2,
+    "10.2": 2,
+    "10": 2
+   },
+   "assembly_insert_pt": [
+    0,
+    0,
+    -3.6
+   ],
+   "assembly_orient": [
+    [
+     0,
+     1,
+     0
+    ],
+    [
+     1,
+     0,
+     0
+    ],
+    [
+     0,
+     0,
+     -1
+    ]
+   ],
+   "table_type_label": "内六角螺栓-带弹垫和平垫",
+   "n_solids": 3,
+   "n_faces": 26,
+   "provenance": "explicit",
+   "source": "实测 STEP M10x60.stp",
+   "residual_mm": 0.0
+  },
+  "M10x65": {
+   "model": "M10x65",
+   "spec": "M10",
+   "length": 65.0,
+   "shank_d": 10.0,
+   "head_d": 16.0,
+   "head_h": 10.0,
+   "hex_s": 8.0,
+   "flat_washer": {
+    "d_in": 10.5,
+    "d_out": 20.0,
+    "t": 2.0
+   },
+   "spring_washer": {
+    "d_in": 10.2,
+    "d_out": 16.0,
+    "t": 2.5
+   },
+   "total_h": 75.0,
+   "envelope": [
+    20.0,
+    20.0,
+    75.0
+   ],
+   "envelope_measured": [
+    20.0,
+    20.0,
+    75.0
+   ],
+   "cyl_diameters": {
+    "20": 2,
+    "16": 4,
+    "10.5": 2,
+    "10.2": 2,
+    "10": 2
+   },
+   "assembly_insert_pt": [
+    0,
+    0,
+    -4.5
+   ],
+   "assembly_orient": [
+    [
+     0,
+     1,
+     0
+    ],
+    [
+     1,
+     0,
+     0
+    ],
+    [
+     0,
+     0,
+     -1
+    ]
+   ],
+   "table_type_label": "内六角螺栓-带弹垫和平垫",
+   "n_solids": 3,
+   "n_faces": 26,
+   "provenance": "explicit",
+   "source": "实测 STEP M10x65.stp",
+   "residual_mm": 0.0
+  },
+  "M10x70": {
+   "model": "M10x70",
+   "spec": "M10",
+   "length": 70.0,
+   "shank_d": 10.0,
+   "head_d": 16.0,
+   "head_h": 10.0,
+   "hex_s": 8.0,
+   "flat_washer": {
+    "d_in": 10.5,
+    "d_out": 20.0,
+    "t": 2.0
+   },
+   "spring_washer": {
+    "d_in": 10.2,
+    "d_out": 16.0,
+    "t": 2.5
+   },
+   "total_h": 80.0,
+   "envelope": [
+    20.0,
+    20.0,
+    80.0
+   ],
+   "envelope_measured": [
+    20.0,
+    20.0,
+    80.0
+   ],
+   "cyl_diameters": {
+    "20": 2,
+    "16": 4,
+    "10.5": 2,
+    "10.2": 2,
+    "10": 2
+   },
+   "assembly_insert_pt": [
+    0,
+    0,
+    -4.5
+   ],
+   "assembly_orient": [
+    [
+     0,
+     1,
+     0
+    ],
+    [
+     1,
+     0,
+     0
+    ],
+    [
+     0,
+     0,
+     -1
+    ]
+   ],
+   "table_type_label": "内六角螺栓-带弹垫和平垫",
+   "n_solids": 3,
+   "n_faces": 26,
+   "provenance": "explicit",
+   "source": "实测 STEP M10x70.stp",
+   "residual_mm": 0.0
+  },
+  "M10x80": {
+   "model": "M10x80",
+   "spec": "M10",
+   "length": 80.0,
+   "shank_d": 10.0,
+   "head_d": 16.0,
+   "head_h": 10.0,
+   "hex_s": 8.0,
+   "flat_washer": {
+    "d_in": 10.5,
+    "d_out": 20.0,
+    "t": 2.0
+   },
+   "spring_washer": {
+    "d_in": 10.2,
+    "d_out": 16.0,
+    "t": 2.5
+   },
+   "total_h": 90.0,
+   "envelope": [
+    20.0,
+    20.0,
+    90.0
+   ],
+   "envelope_measured": [
+    20.0,
+    20.0,
+    90.0
+   ],
+   "cyl_diameters": {
+    "20": 2,
+    "16": 4,
+    "10.5": 2,
+    "10.2": 2,
+    "10": 2
+   },
+   "assembly_insert_pt": [
+    0,
+    0,
+    -4.5
+   ],
+   "assembly_orient": [
+    [
+     0,
+     1,
+     0
+    ],
+    [
+     1,
+     0,
+     0
+    ],
+    [
+     0,
+     0,
+     -1
+    ]
+   ],
+   "table_type_label": "内六角螺栓-带弹垫和平垫",
+   "n_solids": 3,
+   "n_faces": 26,
+   "provenance": "explicit",
+   "source": "实测 STEP M10X80.stp",
+   "residual_mm": 0.0
+  },
+  "M12x30": {
+   "model": "M12x30",
+   "spec": "M12",
+   "length": 30.0,
+   "shank_d": 12.0,
+   "head_d": 18.0,
+   "head_h": 12.0,
+   "hex_s": 10.0,
+   "flat_washer": {
+    "d_in": 13.0,
+    "d_out": 24.0,
+    "t": 2.5
+   },
+   "spring_washer": {
+    "d_in": 12.2,
+    "d_out": 18.0,
+    "t": 3.0
+   },
+   "total_h": 42.0,
+   "envelope": [
+    24.0,
+    24.0,
+    42.0
+   ],
+   "envelope_measured": [
+    24.0,
+    24.0,
+    42.0
+   ],
+   "cyl_diameters": {
+    "24": 2,
+    "18": 4,
+    "13": 2,
+    "12.2": 2,
+    "12": 2
+   },
+   "assembly_insert_pt": [
+    0,
+    0,
+    -2.5
+   ],
+   "assembly_orient": [
+    [
+     0,
+     1,
+     0
+    ],
+    [
+     1,
+     0,
+     0
+    ],
+    [
+     0,
+     0,
+     -1
+    ]
+   ],
+   "table_type_label": "内六角螺栓-带弹垫和平垫",
+   "n_solids": 3,
+   "n_faces": 26,
+   "provenance": "explicit",
+   "source": "实测 STEP M12x30.stp",
+   "residual_mm": 0.0
+  },
+  "M12x35": {
+   "model": "M12x35",
+   "spec": "M12",
+   "length": 35.0,
+   "shank_d": 12.0,
+   "head_d": 18.0,
+   "head_h": 12.0,
+   "hex_s": 10.0,
+   "flat_washer": {
+    "d_in": 13.0,
+    "d_out": 24.0,
+    "t": 2.5
+   },
+   "spring_washer": {
+    "d_in": 12.2,
+    "d_out": 18.0,
+    "t": 3.0
+   },
+   "total_h": 47.0,
+   "envelope": [
+    24.0,
+    24.0,
+    47.0
+   ],
+   "envelope_measured": [
+    24.0,
+    24.0,
+    47.0
+   ],
+   "cyl_diameters": {
+    "24": 2,
+    "18": 4,
+    "13": 2,
+    "12.2": 2,
+    "12": 2
+   },
+   "assembly_insert_pt": [
+    0,
+    0,
+    -2.5
+   ],
+   "assembly_orient": [
+    [
+     0,
+     1,
+     0
+    ],
+    [
+     1,
+     0,
+     0
+    ],
+    [
+     0,
+     0,
+     -1
+    ]
+   ],
+   "table_type_label": "内六角螺栓-带弹垫和平垫",
+   "n_solids": 3,
+   "n_faces": 26,
+   "provenance": "explicit",
+   "source": "实测 STEP M12x35.stp",
+   "residual_mm": 0.0
+  },
+  "M12x40": {
+   "model": "M12x40",
+   "spec": "M12",
+   "length": 40.0,
+   "shank_d": 12.0,
+   "head_d": 18.0,
+   "head_h": 12.0,
+   "hex_s": 10.0,
+   "flat_washer": {
+    "d_in": 13.0,
+    "d_out": 24.0,
+    "t": 2.5
+   },
+   "spring_washer": {
+    "d_in": 12.2,
+    "d_out": 18.0,
+    "t": 3.0
+   },
+   "total_h": 52.0,
+   "envelope": [
+    24.0,
+    24.0,
+    52.0
+   ],
+   "envelope_measured": [
+    24.0,
+    24.0,
+    57.0
+   ],
+   "cyl_diameters": {
+    "24": 2,
+    "18": 4,
+    "13": 2,
+    "12.2": 2,
+    "12": 2
+   },
+   "assembly_insert_pt": [
+    0,
+    0,
+    -2.5
+   ],
+   "assembly_orient": [
+    [
+     0,
+     1,
+     0
+    ],
+    [
+     1,
+     0,
+     0
+    ],
+    [
+     0,
+     0,
+     -1
+    ]
+   ],
+   "table_type_label": "内六角螺栓-带弹垫和平垫",
+   "n_solids": 3,
+   "n_faces": 26,
+   "provenance": "explicit",
+   "source": "实测 STEP M12x40.stp",
+   "residual_mm": 5.0
+  },
+  "M12x45": {
+   "model": "M12x45",
+   "spec": "M12",
+   "length": 45.0,
+   "shank_d": 12.0,
+   "head_d": 18.0,
+   "head_h": 12.0,
+   "hex_s": 10.0,
+   "flat_washer": {
+    "d_in": 13.0,
+    "d_out": 24.0,
+    "t": 2.5
+   },
+   "spring_washer": {
+    "d_in": 12.2,
+    "d_out": 18.0,
+    "t": 3.0
+   },
+   "total_h": 57.0,
+   "envelope": [
+    24.0,
+    24.0,
+    57.0
+   ],
+   "envelope_measured": [
+    24.0,
+    24.0,
+    57.0
+   ],
+   "cyl_diameters": {
+    "24": 2,
+    "18": 4,
+    "13": 2,
+    "12.2": 2,
+    "12": 2
+   },
+   "assembly_insert_pt": [
+    0,
+    0,
+    -2.5
+   ],
+   "assembly_orient": [
+    [
+     0,
+     1,
+     0
+    ],
+    [
+     1,
+     0,
+     0
+    ],
+    [
+     0,
+     0,
+     -1
+    ]
+   ],
+   "table_type_label": "内六角螺栓-带弹垫和平垫",
+   "n_solids": 3,
+   "n_faces": 26,
+   "provenance": "explicit",
+   "source": "实测 STEP M12x45.stp",
+   "residual_mm": 0.0
+  },
+  "M12x50": {
+   "model": "M12x50",
+   "spec": "M12",
+   "length": 50.0,
+   "shank_d": 12.0,
+   "head_d": 18.0,
+   "head_h": 12.0,
+   "hex_s": 10.0,
+   "flat_washer": {
+    "d_in": 13.0,
+    "d_out": 24.0,
+    "t": 2.5
+   },
+   "spring_washer": {
+    "d_in": 12.2,
+    "d_out": 18.0,
+    "t": 3.0
+   },
+   "total_h": 62.0,
+   "envelope": [
+    24.0,
+    24.0,
+    62.0
+   ],
+   "envelope_measured": [
+    24.0,
+    24.0,
+    62.0
+   ],
+   "cyl_diameters": {
+    "24": 2,
+    "18": 4,
+    "13": 2,
+    "12.2": 2,
+    "12": 2
+   },
+   "assembly_insert_pt": [
+    0,
+    0,
+    -2.5
+   ],
+   "assembly_orient": [
+    [
+     0,
+     1,
+     0
+    ],
+    [
+     1,
+     0,
+     0
+    ],
+    [
+     0,
+     0,
+     -1
+    ]
+   ],
+   "table_type_label": "内六角螺栓-带弹垫和平垫",
+   "n_solids": 3,
+   "n_faces": 26,
+   "provenance": "explicit",
+   "source": "实测 STEP M12x50.stp",
+   "residual_mm": 0.0
+  },
+  "M12x55": {
+   "model": "M12x55",
+   "spec": "M12",
+   "length": 55.0,
+   "shank_d": 12.0,
+   "head_d": 18.0,
+   "head_h": 12.0,
+   "hex_s": 10.0,
+   "flat_washer": {
+    "d_in": 13.0,
+    "d_out": 24.0,
+    "t": 2.5
+   },
+   "spring_washer": {
+    "d_in": 12.2,
+    "d_out": 18.0,
+    "t": 3.0
+   },
+   "total_h": 67.0,
+   "envelope": [
+    24.0,
+    24.0,
+    67.0
+   ],
+   "envelope_measured": [
+    24.0,
+    24.0,
+    67.0
+   ],
+   "cyl_diameters": {
+    "24": 2,
+    "18": 4,
+    "13": 2,
+    "12.2": 2,
+    "12": 2
+   },
+   "assembly_insert_pt": [
+    0,
+    0,
+    -2.5
+   ],
+   "assembly_orient": [
+    [
+     0,
+     1,
+     0
+    ],
+    [
+     1,
+     0,
+     0
+    ],
+    [
+     0,
+     0,
+     -1
+    ]
+   ],
+   "table_type_label": "内六角螺栓-带弹垫和平垫",
+   "n_solids": 3,
+   "n_faces": 26,
+   "provenance": "explicit",
+   "source": "实测 STEP M12x55.stp",
+   "residual_mm": 0.0
+  },
+  "M12x60": {
+   "model": "M12x60",
+   "spec": "M12",
+   "length": 60.0,
+   "shank_d": 12.0,
+   "head_d": 18.0,
+   "head_h": 12.0,
+   "hex_s": 10.0,
+   "flat_washer": {
+    "d_in": 13.0,
+    "d_out": 24.0,
+    "t": 2.5
+   },
+   "spring_washer": {
+    "d_in": 12.2,
+    "d_out": 18.0,
+    "t": 3.0
+   },
+   "total_h": 72.0,
+   "envelope": [
+    24.0,
+    24.0,
+    72.0
+   ],
+   "envelope_measured": [
+    24.0,
+    24.0,
+    72.0
+   ],
+   "cyl_diameters": {
+    "24": 2,
+    "18": 4,
+    "13": 2,
+    "12.2": 2,
+    "12": 2
+   },
+   "assembly_insert_pt": [
+    0,
+    0,
+    -2.5
+   ],
+   "assembly_orient": [
+    [
+     0,
+     1,
+     0
+    ],
+    [
+     1,
+     0,
+     0
+    ],
+    [
+     0,
+     0,
+     -1
+    ]
+   ],
+   "table_type_label": "内六角螺栓-带弹垫和平垫",
+   "n_solids": 3,
+   "n_faces": 26,
+   "provenance": "explicit",
+   "source": "实测 STEP M12x60.stp",
+   "residual_mm": 0.0
+  },
+  "M12x65": {
+   "model": "M12x65",
+   "spec": "M12",
+   "length": 65.0,
+   "shank_d": 12.0,
+   "head_d": 18.0,
+   "head_h": 12.0,
+   "hex_s": 10.0,
+   "flat_washer": {
+    "d_in": 13.0,
+    "d_out": 24.0,
+    "t": 2.5
+   },
+   "spring_washer": {
+    "d_in": 12.2,
+    "d_out": 18.0,
+    "t": 3.0
+   },
+   "total_h": 77.0,
+   "envelope": [
+    24.0,
+    24.0,
+    77.0
+   ],
+   "envelope_measured": [
+    24.0,
+    24.0,
+    77.0
+   ],
+   "cyl_diameters": {
+    "24": 2,
+    "18": 4,
+    "13": 2,
+    "12.2": 2,
+    "12": 2
+   },
+   "assembly_insert_pt": [
+    0,
+    0,
+    -2.5
+   ],
+   "assembly_orient": [
+    [
+     0,
+     1,
+     0
+    ],
+    [
+     1,
+     0,
+     0
+    ],
+    [
+     0,
+     0,
+     -1
+    ]
+   ],
+   "table_type_label": "内六角螺栓-带弹垫和平垫",
+   "n_solids": 3,
+   "n_faces": 26,
+   "provenance": "explicit",
+   "source": "实测 STEP M12x65.stp",
+   "residual_mm": 0.0
+  },
+  "M12x70": {
+   "model": "M12x70",
+   "spec": "M12",
+   "length": 70.0,
+   "shank_d": 12.0,
+   "head_d": 18.0,
+   "head_h": 12.0,
+   "hex_s": 10.0,
+   "flat_washer": {
+    "d_in": 13.0,
+    "d_out": 24.0,
+    "t": 2.5
+   },
+   "spring_washer": {
+    "d_in": 12.2,
+    "d_out": 18.0,
+    "t": 3.0
+   },
+   "total_h": 82.0,
+   "envelope": [
+    24.0,
+    24.0,
+    82.0
+   ],
+   "envelope_measured": [
+    24.0,
+    24.0,
+    82.0
+   ],
+   "cyl_diameters": {
+    "24": 2,
+    "18": 4,
+    "13": 2,
+    "12.2": 2,
+    "12": 2
+   },
+   "assembly_insert_pt": [
+    0,
+    0,
+    -2.5
+   ],
+   "assembly_orient": [
+    [
+     0,
+     1,
+     0
+    ],
+    [
+     1,
+     0,
+     0
+    ],
+    [
+     0,
+     0,
+     -1
+    ]
+   ],
+   "table_type_label": "内六角螺栓-带弹垫和平垫",
+   "n_solids": 3,
+   "n_faces": 26,
+   "provenance": "explicit",
+   "source": "实测 STEP M12x70.stp",
+   "residual_mm": 0.0
+  },
+  "M12x80": {
+   "model": "M12x80",
+   "spec": "M12",
+   "length": 80.0,
+   "shank_d": 12.0,
+   "head_d": 18.0,
+   "head_h": 12.0,
+   "hex_s": 10.0,
+   "flat_washer": {
+    "d_in": 13.0,
+    "d_out": 24.0,
+    "t": 2.5
+   },
+   "spring_washer": {
+    "d_in": 12.2,
+    "d_out": 18.0,
+    "t": 3.0
+   },
+   "total_h": 92.0,
+   "envelope": [
+    24.0,
+    24.0,
+    92.0
+   ],
+   "envelope_measured": [
+    24.0,
+    24.0,
+    92.0
+   ],
+   "cyl_diameters": {
+    "24": 2,
+    "18": 4,
+    "13": 2,
+    "12.2": 2,
+    "12": 2
+   },
+   "assembly_insert_pt": [
+    0,
+    0,
+    -2.5
+   ],
+   "assembly_orient": [
+    [
+     0,
+     1,
+     0
+    ],
+    [
+     1,
+     0,
+     0
+    ],
+    [
+     0,
+     0,
+     -1
+    ]
+   ],
+   "table_type_label": "内六角螺栓-带弹垫和平垫",
+   "n_solids": 3,
+   "n_faces": 26,
+   "provenance": "explicit",
+   "source": "实测 STEP M12x80.stp",
+   "residual_mm": 0.0
+  },
+  "M12x90": {
+   "model": "M12x90",
+   "spec": "M12",
+   "length": 90.0,
+   "shank_d": 12.0,
+   "head_d": 18.0,
+   "head_h": 12.0,
+   "hex_s": 10.0,
+   "flat_washer": {
+    "d_in": 13.0,
+    "d_out": 24.0,
+    "t": 2.5
+   },
+   "spring_washer": {
+    "d_in": 12.2,
+    "d_out": 18.0,
+    "t": 3.0
+   },
+   "total_h": 102.0,
+   "envelope": [
+    24.0,
+    24.0,
+    102.0
+   ],
+   "envelope_measured": [
+    24.0,
+    24.0,
+    102.0
+   ],
+   "cyl_diameters": {
+    "24": 2,
+    "18": 4,
+    "13": 2,
+    "12.2": 2,
+    "12": 2
+   },
+   "assembly_insert_pt": [
+    0,
+    0,
+    -2.5
+   ],
+   "assembly_orient": [
+    [
+     0,
+     1,
+     0
+    ],
+    [
+     1,
+     0,
+     0
+    ],
+    [
+     0,
+     0,
+     -1
+    ]
+   ],
+   "table_type_label": "内六角螺栓-带弹垫和平垫",
+   "n_solids": 3,
+   "n_faces": 26,
+   "provenance": "explicit",
+   "source": "实测 STEP M12x90.stp",
+   "residual_mm": 0.0
+  },
+  "M12x100": {
+   "model": "M12x100",
+   "spec": "M12",
+   "length": 100.0,
+   "shank_d": 12.0,
+   "head_d": 18.0,
+   "head_h": 12.0,
+   "hex_s": 10.0,
+   "flat_washer": {
+    "d_in": 13.0,
+    "d_out": 24.0,
+    "t": 2.5
+   },
+   "spring_washer": {
+    "d_in": 12.2,
+    "d_out": 18.0,
+    "t": 3.0
+   },
+   "total_h": 112.0,
+   "envelope": [
+    24.0,
+    24.0,
+    112.0
+   ],
+   "envelope_measured": [
+    24.0,
+    24.0,
+    112.0
+   ],
+   "cyl_diameters": {
+    "24": 2,
+    "18": 4,
+    "13": 2,
+    "12.2": 2,
+    "12": 2
+   },
+   "assembly_insert_pt": [
+    0,
+    0,
+    -2.5
+   ],
+   "assembly_orient": [
+    [
+     0,
+     1,
+     0
+    ],
+    [
+     1,
+     0,
+     0
+    ],
+    [
+     0,
+     0,
+     -1
+    ]
+   ],
+   "table_type_label": "内六角螺栓-带弹垫和平垫",
+   "n_solids": 3,
+   "n_faces": 26,
+   "provenance": "explicit",
+   "source": "实测 STEP M12x100.stp",
+   "residual_mm": 0.0
+  },
+  "M12x110": {
+   "model": "M12x110",
+   "spec": "M12",
+   "length": 110.0,
+   "shank_d": 12.0,
+   "head_d": 18.0,
+   "head_h": 12.0,
+   "hex_s": 10.0,
+   "flat_washer": {
+    "d_in": 13.0,
+    "d_out": 24.0,
+    "t": 2.5
+   },
+   "spring_washer": {
+    "d_in": 12.2,
+    "d_out": 18.0,
+    "t": 3.0
+   },
+   "total_h": 122.0,
+   "envelope": [
+    24.0,
+    24.0,
+    122.0
+   ],
+   "envelope_measured": [
+    24.0,
+    24.0,
+    122.0
+   ],
+   "cyl_diameters": {
+    "24": 2,
+    "18": 4,
+    "13": 2,
+    "12.2": 2,
+    "12": 2
+   },
+   "assembly_insert_pt": [
+    0,
+    0,
+    -2.5
+   ],
+   "assembly_orient": [
+    [
+     0,
+     1,
+     0
+    ],
+    [
+     1,
+     0,
+     0
+    ],
+    [
+     0,
+     0,
+     -1
+    ]
+   ],
+   "table_type_label": "内六角螺栓-带弹垫和平垫",
+   "n_solids": 3,
+   "n_faces": 26,
+   "provenance": "explicit",
+   "source": "实测 STEP M12x110.stp",
+   "residual_mm": 0.0
+  },
+  "M12x120": {
+   "model": "M12x120",
+   "spec": "M12",
+   "length": 120.0,
+   "shank_d": 12.0,
+   "head_d": 18.0,
+   "head_h": 12.0,
+   "hex_s": 10.0,
+   "flat_washer": {
+    "d_in": 13.0,
+    "d_out": 24.0,
+    "t": 2.5
+   },
+   "spring_washer": {
+    "d_in": 12.2,
+    "d_out": 18.0,
+    "t": 3.0
+   },
+   "total_h": 132.0,
+   "envelope": [
+    24.0,
+    24.0,
+    132.0
+   ],
+   "envelope_measured": [
+    24.0,
+    24.0,
+    132.0
+   ],
+   "cyl_diameters": {
+    "24": 2,
+    "18": 4,
+    "13": 2,
+    "12.2": 2,
+    "12": 2
+   },
+   "assembly_insert_pt": [
+    0,
+    0,
+    -2.5
+   ],
+   "assembly_orient": [
+    [
+     0,
+     1,
+     0
+    ],
+    [
+     1,
+     0,
+     0
+    ],
+    [
+     0,
+     0,
+     -1
+    ]
+   ],
+   "table_type_label": "内六角螺栓-带弹垫和平垫",
+   "n_solids": 3,
+   "n_faces": 26,
+   "provenance": "explicit",
+   "source": "实测 STEP M12x120_.stp",
+   "residual_mm": 0.0
+  }
+ }
+}

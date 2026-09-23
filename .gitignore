@@ -1,0 +1,37 @@
+# ---- Python ----
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+.pytest_cache/
+.mypy_cache/
+
+# ---- 编辑器 / 系统 ----
+.vscode/
+.idea/
+Thumbs.db
+desktop.ini
+
+# ---- 临时产物 ----
+_selftest_out/
+*.tmp
+*.log
+catia_*.py
+
+# ---- 大数据（可重建，不进版本库；详见 README 第三节）----
+#  OpenCASCADE 离线轮子（513 MB）：python tools\fetch_ocp_wheel.py
+_wheels/
+#  实测 B-Rep 网格（约 120 MB）：python tools\build_real_brep.py --src <STEP目录>
+kb/real_brep/
+kb/real_brep_coarse/
+#  真实照片与渲染图（可用 scripts 重建，需要 CATIA 拍一部分）
+零件真实图片/
+零件真实图片_带背景/
+零件AI建模图片/
+零件比对图/
+#  原始零件目录（客户资料，别上传）
+零件参数/
+
+# ---- 例外：examples 里的样例要保留 ----
+!examples/**

@@ -1,0 +1,8314 @@
+{
+ "n": 521,
+ "ok": 518,
+ "fail": 3,
+ "tol": 1.5,
+ "items": [
+  {
+   "model": "EGT001 SW80x088",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\外购件\\EGT型材库\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x088.stp",
+   "ok": true,
+   "nv": 3200,
+   "nt": 3148,
+   "volume": 162530.63,
+   "bbox": [
+    -40.0,
+    0.0,
+    -40.0,
+    40.0,
+    88.0,
+    40.0
+   ]
+  },
+  {
+   "model": "EGT001 SW80x1018",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\外购件\\EGT型材库\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x1018.stp",
+   "ok": true,
+   "nv": 29984,
+   "nt": 29932,
+   "volume": 1882984.18,
+   "bbox": [
+    -40.0,
+    0.0,
+    -40.0,
+    40.0,
+    1018.0,
+    40.0
+   ]
+  },
+  {
+   "model": "EGT001 SW80x1048",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\外购件\\EGT型材库\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x1048.stp",
+   "ok": true,
+   "nv": 30848,
+   "nt": 30796,
+   "volume": 1938482.68,
+   "bbox": [
+    -40.0,
+    0.0,
+    -40.0,
+    40.0,
+    1048.0,
+    40.0
+   ]
+  },
+  {
+   "model": "EGT001 SW80x1078",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\外购件\\EGT型材库\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x1078.stp",
+   "ok": true,
+   "nv": 31712,
+   "nt": 31660,
+   "volume": 1993981.21,
+   "bbox": [
+    -40.0,
+    0.0,
+    -40.0,
+    40.0,
+    1078.0,
+    40.0
+   ]
+  },
+  {
+   "model": "EGT001 SW80x1108",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\外购件\\EGT型材库\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x1108.stp",
+   "ok": true,
+   "nv": 32576,
+   "nt": 32524,
+   "volume": 2049479.77,
+   "bbox": [
+    -40.0,
+    0.0,
+    -40.0,
+    40.0,
+    1108.0,
+    40.0
+   ]
+  },
+  {
+   "model": "EGT001 SW80x1138",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\外购件\\EGT型材库\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x1138.stp",
+   "ok": true,
+   "nv": 33440,
+   "nt": 33388,
+   "volume": 2104978.53,
+   "bbox": [
+    -40.0,
+    0.0,
+    -40.0,
+    40.0,
+    1138.0,
+    40.0
+   ]
+  },
+  {
+   "model": "EGT001 SW80x1168",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\外购件\\EGT型材库\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x1168.stp",
+   "ok": true,
+   "nv": 34304,
+   "nt": 34252,
+   "volume": 2160476.48,
+   "bbox": [
+    -40.0,
+    0.0,
+    -40.0,
+    40.0,
+    1168.0,
+    40.0
+   ]
+  },
+  {
+   "model": "EGT001 SW80x118",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\外购件\\EGT型材库\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x118.stp",
+   "ok": true,
+   "nv": 4064,
+   "nt": 4012,
+   "volume": 218029.03,
+   "bbox": [
+    -40.0,
+    0.0,
+    -40.0,
+    40.0,
+    118.0,
+    40.0
+   ]
+  },
+  {
+   "model": "EGT001 SW80x1198",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\外购件\\EGT型材库\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x1198.stp",
+   "ok": true,
+   "nv": 35168,
+   "nt": 35116,
+   "volume": 2215975.3,
+   "bbox": [
+    -40.0,
+    0.0,
+    -40.0,
+    40.0,
+    1198.0,
+    40.0
+   ]
+  },
+  {
+   "model": "EGT001 SW80x1228",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\外购件\\EGT型材库\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x1228.stp",
+   "ok": true,
+   "nv": 36032,
+   "nt": 35980,
+   "volume": 2271474.22,
+   "bbox": [
+    -40.0,
+    0.0,
+    -40.0,
+    40.0,
+    1228.0,
+    40.0
+   ]
+  },
+  {
+   "model": "EGT001 SW80x1258",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\外购件\\EGT型材库\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x1258.stp",
+   "ok": true,
+   "nv": 36896,
+   "nt": 36844,
+   "volume": 2326972.98,
+   "bbox": [
+    -40.0,
+    0.0,
+    -40.0,
+    40.0,
+    1258.0,
+    40.0
+   ]
+  },
+  {
+   "model": "EGT001 SW80x1288",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\外购件\\EGT型材库\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x1288.stp",
+   "ok": true,
+   "nv": 37760,
+   "nt": 37708,
+   "volume": 2382470.99,
+   "bbox": [
+    -40.0,
+    0.0,
+    -40.0,
+    40.0,
+    1288.0,
+    40.0
+   ]
+  },
+  {
+   "model": "EGT001 SW80x1318",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\外购件\\EGT型材库\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x1318.stp",
+   "ok": true,
+   "nv": 38624,
+   "nt": 38572,
+   "volume": 2437969.92,
+   "bbox": [
+    -40.0,
+    0.0,
+    -40.0,
+    40.0,
+    1318.0,
+    40.0
+   ]
+  },
+  {
+   "model": "EGT001 SW80x1348",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\外购件\\EGT型材库\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x1348.stp",
+   "ok": true,
+   "nv": 39488,
+   "nt": 39436,
+   "volume": 2493468.73,
+   "bbox": [
+    -40.0,
+    0.0,
+    -40.0,
+    40.0,
+    1348.0,
+    40.0
+   ]
+  },
+  {
+   "model": "EGT001 SW80x1378",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\外购件\\EGT型材库\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x1378.stp",
+   "ok": true,
+   "nv": 40352,
+   "nt": 40300,
+   "volume": 2548968.41,
+   "bbox": [
+    -40.0,
+    0.0,
+    -40.0,
+    40.0,
+    1378.0,
+    40.0
+   ]
+  },
+  {
+   "model": "EGT001 SW80x1408",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\外购件\\EGT型材库\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x1408.stp",
+   "ok": true,
+   "nv": 41216,
+   "nt": 41164,
+   "volume": 2604465.98,
+   "bbox": [
+    -40.0,
+    0.0,
+    -40.0,
+    40.0,
+    1408.0,
+    40.0
+   ]
+  },
+  {
+   "model": "EGT001 SW80x1438",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\外购件\\EGT型材库\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x1438.stp",
+   "ok": true,
+   "nv": 42080,
+   "nt": 42028,
+   "volume": 2659964.72,
+   "bbox": [
+    -40.0,
+    0.0,
+    -40.0,
+    40.0,
+    1438.0,
+    40.0
+   ]
+  },
+  {
+   "model": "EGT001 SW80x1468",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\外购件\\EGT型材库\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x1468.stp",
+   "ok": true,
+   "nv": 42944,
+   "nt": 42892,
+   "volume": 2715464.4,
+   "bbox": [
+    -40.0,
+    0.0,
+    -40.0,
+    40.0,
+    1468.0,
+    40.0
+   ]
+  },
+  {
+   "model": "EGT001 SW80x148",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\外购件\\EGT型材库\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x148.stp",
+   "ok": true,
+   "nv": 4928,
+   "nt": 4876,
+   "volume": 273527.43,
+   "bbox": [
+    -40.0,
+    0.0,
+    -40.0,
+    40.0,
+    148.0,
+    40.0
+   ]
+  },
+  {
+   "model": "EGT001 SW80x1498",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\外购件\\EGT型材库\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x1498.stp",
+   "ok": true,
+   "nv": 43808,
+   "nt": 43756,
+   "volume": 2770962.25,
+   "bbox": [
+    -40.0,
+    0.0,
+    -40.0,
+    40.0,
+    1498.0,
+    40.0
+   ]
+  },
+  {
+   "model": "EGT001 SW80x1528",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\外购件\\EGT型材库\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x1528.stp",
+   "ok": true,
+   "nv": 44672,
+   "nt": 44620,
+   "volume": 2826461.41,
+   "bbox": [
+    -40.0,
+    0.0,
+    -40.0,
+    40.0,
+    1528.0,
+    40.0
+   ]
+  },
+  {
+   "model": "EGT001 SW80x1558",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\外购件\\EGT型材库\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x1558.stp",
+   "ok": true,
+   "nv": 45536,
+   "nt": 45484,
+   "volume": 2881958.97,
+   "bbox": [
+    -40.0,
+    0.0,
+    -40.0,
+    40.0,
+    1558.0,
+    40.0
+   ]
+  },
+  {
+   "model": "EGT001 SW80x1588",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\外购件\\EGT型材库\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x1588.stp",
+   "ok": true,
+   "nv": 46400,
+   "nt": 46348,
+   "volume": 2937458.33,
+   "bbox": [
+    -40.0,
+    0.0,
+    -40.0,
+    40.0,
+    1588.0,
+    40.0
+   ]
+  },
+  {
+   "model": "EGT001 SW80x1618",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\外购件\\EGT型材库\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x1618.stp",
+   "ok": true,
+   "nv": 47264,
+   "nt": 47212,
+   "volume": 2992957.28,
+   "bbox": [
+    -40.0,
+    0.0,
+    -40.0,
+    40.0,
+    1618.0,
+    40.0
+   ]
+  },
+  {
+   "model": "EGT001 SW80x1648",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\外购件\\EGT型材库\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x1648.stp",
+   "ok": true,
+   "nv": 48128,
+   "nt": 48076,
+   "volume": 3048455.2,
+   "bbox": [
+    -40.0,
+    0.0,
+    -40.0,
+    40.0,
+    1648.0,
+    40.0
+   ]
+  },
+  {
+   "model": "EGT001 SW80x1678",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\外购件\\EGT型材库\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x1678.stp",
+   "ok": true,
+   "nv": 48992,
+   "nt": 48940,
+   "volume": 3103953.4,
+   "bbox": [
+    -40.0,
+    0.0,
+    -40.0,
+    40.0,
+    1678.0,
+    40.0
+   ]
+  },
+  {
+   "model": "EGT001 SW80x1708",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\外购件\\EGT型材库\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x1708.stp",
+   "ok": true,
+   "nv": 49856,
+   "nt": 49804,
+   "volume": 3159454.07,
+   "bbox": [
+    -40.0,
+    0.0,
+    -40.0,
+    40.0,
+    1708.0,
+    40.0
+   ]
+  },
+  {
+   "model": "EGT001 SW80x1738",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\外购件\\EGT型材库\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x1738.stp",
+   "ok": true,
+   "nv": 50720,
+   "nt": 50668,
+   "volume": 3214952.19,
+   "bbox": [
+    -40.0,
+    0.0,
+    -40.0,
+    40.0,
+    1738.0,
+    40.0
+   ]
+  },
+  {
+   "model": "EGT001 SW80x1768",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\外购件\\EGT型材库\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x1768.stp",
+   "ok": true,
+   "nv": 51584,
+   "nt": 51532,
+   "volume": 3270451.99,
+   "bbox": [
+    -40.0,
+    0.0,
+    -40.0,
+    40.0,
+    1768.0,
+    40.0
+   ]
+  },
+  {
+   "model": "EGT001 SW80x178",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\外购件\\EGT型材库\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x178.stp",
+   "ok": true,
+   "nv": 5792,
+   "nt": 5740,
+   "volume": 329025.81,
+   "bbox": [
+    -40.0,
+    0.0,
+    -40.0,
+    40.0,
+    178.0,
+    40.0
+   ]
+  },
+  {
+   "model": "EGT001 SW80x1798",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\外购件\\EGT型材库\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x1798.stp",
+   "ok": true,
+   "nv": 52448,
+   "nt": 52396,
+   "volume": 3325951.86,
+   "bbox": [
+    -40.0,
+    0.0,
+    -40.0,
+    40.0,
+    1798.0,
+    40.0
+   ]
+  },
+  {
+   "model": "EGT001 SW80x1828",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\外购件\\EGT型材库\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x1828.stp",
+   "ok": true,
+   "nv": 53312,
+   "nt": 53260,
+   "volume": 3381451.13,
+   "bbox": [
+    -40.0,
+    0.0,
+    -40.0,
+    40.0,
+    1828.0,
+    40.0
+   ]
+  },
+  {
+   "model": "EGT001 SW80x1858",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\外购件\\EGT型材库\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x1858.stp",
+   "ok": true,
+   "nv": 54176,
+   "nt": 54124,
+   "volume": 3436948.21,
+   "bbox": [
+    -40.0,
+    0.0,
+    -40.0,
+    40.0,
+    1858.0,
+    40.0
+   ]
+  },
+  {
+   "model": "EGT001 SW80x1888",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\外购件\\EGT型材库\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x1888.stp",
+   "ok": true,
+   "nv": 55040,
+   "nt": 54988,
+   "volume": 3492449.68,
+   "bbox": [
+    -40.0,
+    0.0,
+    -40.0,
+    40.0,
+    1888.0,
+    40.0
+   ]
+  },
+  {
+   "model": "EGT001 SW80x1918",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\外购件\\EGT型材库\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x1918.stp",
+   "ok": true,
+   "nv": 55904,
+   "nt": 55852,
+   "volume": 3547947.44,
+   "bbox": [
+    -40.0,
+    0.0,
+    -40.0,
+    40.0,
+    1918.0,
+    40.0
+   ]
+  },
+  {
+   "model": "EGT001 SW80x1948",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\外购件\\EGT型材库\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x1948.stp",
+   "ok": true,
+   "nv": 56768,
+   "nt": 56716,
+   "volume": 3603446.31,
+   "bbox": [
+    -40.0,
+    0.0,
+    -40.0,
+    40.0,
+    1948.0,
+    40.0
+   ]
+  },
+  {
+   "model": "EGT001 SW80x1978",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\外购件\\EGT型材库\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x1978.stp",
+   "ok": true,
+   "nv": 57632,
+   "nt": 57580,
+   "volume": 3658945.83,
+   "bbox": [
+    -40.0,
+    0.0,
+    -40.0,
+    40.0,
+    1978.0,
+    40.0
+   ]
+  },
+  {
+   "model": "EGT001 SW80x2008",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\外购件\\EGT型材库\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x2008.stp",
+   "ok": true,
+   "nv": 58496,
+   "nt": 58444,
+   "volume": 3714448.26,
+   "bbox": [
+    -40.0,
+    0.0,
+    -40.0,
+    40.0,
+    2008.0,
+    40.0
+   ]
+  },
+  {
+   "model": "EGT001 SW80x2038",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\外购件\\EGT型材库\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x2038.stp",
+   "ok": true,
+   "nv": 59360,
+   "nt": 59308,
+   "volume": 3769943.45,
+   "bbox": [
+    -40.0,
+    0.0,
+    -40.0,
+    40.0,
+    2038.0,
+    40.0
+   ]
+  },
+  {
+   "model": "EGT001 SW80x2068",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\外购件\\EGT型材库\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x2068.stp",
+   "ok": true,
+   "nv": 60224,
+   "nt": 60172,
+   "volume": 3825444.68,
+   "bbox": [
+    -40.0,
+    0.0,
+    -40.0,
+    40.0,
+    2068.0,
+    40.0
+   ]
+  },
+  {
+   "model": "EGT001 SW80x208",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\外购件\\EGT型材库\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x208.stp",
+   "ok": true,
+   "nv": 6656,
+   "nt": 6604,
+   "volume": 384524.43,
+   "bbox": [
+    -40.0,
+    0.0,
+    -40.0,
+    40.0,
+    208.0,
+    40.0
+   ]
+  },
+  {
+   "model": "EGT001 SW80x2098",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\外购件\\EGT型材库\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x2098.stp",
+   "ok": true,
+   "nv": 61088,
+   "nt": 61036,
+   "volume": 3880942.78,
+   "bbox": [
+    -40.0,
+    0.0,
+    -40.0,
+    40.0,
+    2098.0,
+    40.0
+   ]
+  },
+  {
+   "model": "EGT001 SW80x2128",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\外购件\\EGT型材库\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x2128.stp",
+   "ok": true,
+   "nv": 61952,
+   "nt": 61900,
+   "volume": 3936443.07,
+   "bbox": [
+    -40.0,
+    0.0,
+    -40.0,
+    40.0,
+    2128.0,
+    40.0
+   ]
+  },
+  {
+   "model": "EGT001 SW80x2158",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\外购件\\EGT型材库\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x2158.stp",
+   "ok": true,
+   "nv": 62816,
+   "nt": 62764,
+   "volume": 3991943.55,
+   "bbox": [
+    -40.0,
+    0.0,
+    -40.0,
+    40.0,
+    2158.0,
+    40.0
+   ]
+  },
+  {
+   "model": "EGT001 SW80x2188",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\外购件\\EGT型材库\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x2188.stp",
+   "ok": true,
+   "nv": 63680,
+   "nt": 63628,
+   "volume": 4047442.84,
+   "bbox": [
+    -40.0,
+    0.0,
+    -40.0,
+    40.0,
+    2188.0,
+    40.0
+   ]
+  },
+  {
+   "model": "EGT001 SW80x2218",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\外购件\\EGT型材库\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x2218.stp",
+   "ok": true,
+   "nv": 64544,
+   "nt": 64492,
+   "volume": 4102940.58,
+   "bbox": [
+    -40.0,
+    0.0,
+    -40.0,
+    40.0,
+    2218.0,
+    40.0
+   ]
+  },
+  {
+   "model": "EGT001 SW80x2248",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\外购件\\EGT型材库\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x2248.stp",
+   "ok": true,
+   "nv": 65408,
+   "nt": 65356,
+   "volume": 4158441.51,
+   "bbox": [
+    -40.0,
+    0.0,
+    -40.0,
+    40.0,
+    2248.0,
+    40.0
+   ]
+  },
+  {
+   "model": "EGT001 SW80x2278",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\外购件\\EGT型材库\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x2278.stp",
+   "ok": true,
+   "nv": 66272,
+   "nt": 66220,
+   "volume": 4213937.53,
+   "bbox": [
+    -40.0,
+    0.0,
+    -40.0,
+    40.0,
+    2278.0,
+    40.0
+   ]
+  },
+  {
+   "model": "EGT001 SW80x2308",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\外购件\\EGT型材库\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x2308.stp",
+   "ok": true,
+   "nv": 67136,
+   "nt": 67084,
+   "volume": 4269437.23,
+   "bbox": [
+    -40.0,
+    0.0,
+    -40.0,
+    40.0,
+    2308.0,
+    40.0
+   ]
+  },
+  {
+   "model": "EGT001 SW80x2338",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\外购件\\EGT型材库\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x2338.stp",
+   "ok": true,
+   "nv": 68000,
+   "nt": 67948,
+   "volume": 4324937.71,
+   "bbox": [
+    -40.0,
+    0.0,
+    -40.0,
+    40.0,
+    2338.0,
+    40.0
+   ]
+  },
+  {
+   "model": "EGT001 SW80x2368",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\外购件\\EGT型材库\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x2368.stp",
+   "ok": true,
+   "nv": 68864,
+   "nt": 68812,
+   "volume": 4380438.5,
+   "bbox": [
+    -40.0,
+    0.0,
+    -40.0,
+    40.0,
+    2368.0,
+    40.0
+   ]
+  },
+  {
+   "model": "EGT001 SW80x238",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\外购件\\EGT型材库\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x238.stp",
+   "ok": true,
+   "nv": 7520,
+   "nt": 7468,
+   "volume": 440022.85,
+   "bbox": [
+    -40.0,
+    0.0,
+    -40.0,
+    40.0,
+    238.0,
+    40.0
+   ]
+  },
+  {
+   "model": "EGT001 SW80x2398",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\外购件\\EGT型材库\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x2398.stp",
+   "ok": true,
+   "nv": 69728,
+   "nt": 69676,
+   "volume": 4435937.85,
+   "bbox": [
+    -40.0,
+    0.0,
+    -40.0,
+    40.0,
+    2398.0,
+    40.0
+   ]
+  },
+  {
+   "model": "EGT001 SW80x2428",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\外购件\\EGT型材库\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x2428.stp",
+   "ok": true,
+   "nv": 70592,
+   "nt": 70540,
+   "volume": 4491436.85,
+   "bbox": [
+    -40.0,
+    0.0,
+    -40.0,
+    40.0,
+    2428.0,
+    40.0
+   ]
+  },
+  {
+   "model": "EGT001 SW80x2458",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\外购件\\EGT型材库\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x2458.stp",
+   "ok": true,
+   "nv": 71456,
+   "nt": 71404,
+   "volume": 4546933.61,
+   "bbox": [
+    -40.0,
+    0.0,
+    -40.0,
+    40.0,
+    2458.0,
+    40.0
+   ]
+  },
+  {
+   "model": "EGT001 SW80x2488",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\外购件\\EGT型材库\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x2488.stp",
+   "ok": true,
+   "nv": 72320,
+   "nt": 72268,
+   "volume": 4602435.23,
+   "bbox": [
+    -40.0,
+    0.0,
+    -40.0,
+    40.0,
+    2488.0,
+    40.0
+   ]
+  },
+  {
+   "model": "EGT001 SW80x2518",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\外购件\\EGT型材库\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x2518.stp",
+   "ok": true,
+   "nv": 73184,
+   "nt": 73132,
+   "volume": 4657933.15,
+   "bbox": [
+    -40.0,
+    0.0,
+    -40.0,
+    40.0,
+    2518.0,
+    40.0
+   ]
+  },
+  {
+   "model": "EGT001 SW80x2548",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\外购件\\EGT型材库\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x2548.stp",
+   "ok": true,
+   "nv": 74048,
+   "nt": 73996,
+   "volume": 4713435.74,
+   "bbox": [
+    -40.0,
+    0.0,
+    -40.0,
+    40.0,
+    2548.0,
+    40.0
+   ]
+  },
+  {
+   "model": "EGT001 SW80x2578",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\外购件\\EGT型材库\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x2578.stp",
+   "ok": true,
+   "nv": 74912,
+   "nt": 74860,
+   "volume": 4768935.63,
+   "bbox": [
+    -40.0,
+    0.0,
+    -40.0,
+    40.0,
+    2578.0,
+    40.0
+   ]
+  },
+  {
+   "model": "EGT001 SW80x2608",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\外购件\\EGT型材库\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x2608.stp",
+   "ok": true,
+   "nv": 75776,
+   "nt": 75724,
+   "volume": 4824435.49,
+   "bbox": [
+    -40.0,
+    0.0,
+    -40.0,
+    40.0,
+    2608.0,
+    40.0
+   ]
+  },
+  {
+   "model": "EGT001 SW80x2638",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\外购件\\EGT型材库\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x2638.stp",
+   "ok": true,
+   "nv": 76640,
+   "nt": 76588,
+   "volume": 4879928.84,
+   "bbox": [
+    -40.0,
+    0.0,
+    -40.0,
+    40.0,
+    2638.0,
+    40.0
+   ]
+  },
+  {
+   "model": "EGT001 SW80x2668",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\外购件\\EGT型材库\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x2668.stp",
+   "ok": true,
+   "nv": 77504,
+   "nt": 77452,
+   "volume": 4935436.28,
+   "bbox": [
+    -40.0,
+    0.0,
+    -40.0,
+    40.0,
+    2668.0,
+    40.0
+   ]
+  },
+  {
+   "model": "EGT001 SW80x2698",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\外购件\\EGT型材库\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x2698.stp",
+   "ok": true,
+   "nv": 78368,
+   "nt": 78316,
+   "volume": 4990933.48,
+   "bbox": [
+    -40.0,
+    0.0,
+    -40.0,
+    40.0,
+    2698.0,
+    40.0
+   ]
+  },
+  {
+   "model": "EGT001 SW80x2728",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\外购件\\EGT型材库\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x2728.stp",
+   "ok": true,
+   "nv": 79232,
+   "nt": 79180,
+   "volume": 5046435.89,
+   "bbox": [
+    -40.0,
+    0.0,
+    -40.0,
+    40.0,
+    2728.0,
+    40.0
+   ]
+  },
+  {
+   "model": "EGT001 SW80x2758",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\外购件\\EGT型材库\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x2758.stp",
+   "ok": true,
+   "nv": 80096,
+   "nt": 80044,
+   "volume": 5101933.94,
+   "bbox": [
+    -40.0,
+    0.0,
+    -40.0,
+    40.0,
+    2758.0,
+    40.0
+   ]
+  },
+  {
+   "model": "EGT001 SW80x2788",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\外购件\\EGT型材库\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x2788.stp",
+   "ok": true,
+   "nv": 80960,
+   "nt": 80908,
+   "volume": 5157438.3,
+   "bbox": [
+    -40.0,
+    0.0,
+    -40.0,
+    40.0,
+    2788.0,
+    40.0
+   ]
+  },
+  {
+   "model": "EGT001 SW80x2818",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\外购件\\EGT型材库\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x2818.stp",
+   "ok": true,
+   "nv": 81824,
+   "nt": 81772,
+   "volume": 5212932.47,
+   "bbox": [
+    -40.0,
+    0.0,
+    -40.0,
+    40.0,
+    2818.0,
+    40.0
+   ]
+  },
+  {
+   "model": "EGT001 SW80x2848",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\外购件\\EGT型材库\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x2848.stp",
+   "ok": true,
+   "nv": 82688,
+   "nt": 82636,
+   "volume": 5268432.57,
+   "bbox": [
+    -40.0,
+    0.0,
+    -40.0,
+    40.0,
+    2848.0,
+    40.0
+   ]
+  },
+  {
+   "model": "EGT001 SW80x2878",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\外购件\\EGT型材库\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x2878.stp",
+   "ok": true,
+   "nv": 83552,
+   "nt": 83500,
+   "volume": 5323929.59,
+   "bbox": [
+    -40.0,
+    0.0,
+    -40.0,
+    40.0,
+    2878.0,
+    40.0
+   ]
+  },
+  {
+   "model": "EGT001 SW80x2908",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\外购件\\EGT型材库\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x2908.stp",
+   "ok": true,
+   "nv": 84416,
+   "nt": 84364,
+   "volume": 5379430.21,
+   "bbox": [
+    -40.0,
+    0.0,
+    -40.0,
+    40.0,
+    2908.0,
+    40.0
+   ]
+  },
+  {
+   "model": "EGT001 SW80x2938",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\外购件\\EGT型材库\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x2938.stp",
+   "ok": true,
+   "nv": 85280,
+   "nt": 85228,
+   "volume": 5434931.53,
+   "bbox": [
+    -40.0,
+    0.0,
+    -40.0,
+    40.0,
+    2938.0,
+    40.0
+   ]
+  },
+  {
+   "model": "EGT001 SW80x2968",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\外购件\\EGT型材库\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x2968.stp",
+   "ok": true,
+   "nv": 86144,
+   "nt": 86092,
+   "volume": 5490433.91,
+   "bbox": [
+    -40.0,
+    0.0,
+    -40.0,
+    40.0,
+    2968.0,
+    40.0
+   ]
+  },
+  {
+   "model": "EGT001 SW80x298",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\外购件\\EGT型材库\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x298.stp",
+   "ok": true,
+   "nv": 9248,
+   "nt": 9196,
+   "volume": 551019.81,
+   "bbox": [
+    -40.0,
+    0.0,
+    -40.0,
+    40.0,
+    298.0,
+    40.0
+   ]
+  },
+  {
+   "model": "EGT001 SW80x2998",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\外购件\\EGT型材库\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x2998.stp",
+   "ok": true,
+   "nv": 87008,
+   "nt": 86956,
+   "volume": 5545927.82,
+   "bbox": [
+    -40.0,
+    0.0,
+    -40.0,
+    40.0,
+    2998.0,
+    40.0
+   ]
+  },
+  {
+   "model": "EGT001 SW80x3028",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\外购件\\EGT型材库\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x3028.stp",
+   "ok": true,
+   "nv": 87872,
+   "nt": 87820,
+   "volume": 5601434.4,
+   "bbox": [
+    -40.0,
+    0.0,
+    -40.0,
+    40.0,
+    3028.0,
+    40.0
+   ]
+  },
+  {
+   "model": "EGT001 SW80x3058",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\外购件\\EGT型材库\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x3058.stp",
+   "ok": true,
+   "nv": 88736,
+   "nt": 88684,
+   "volume": 5656932.23,
+   "bbox": [
+    -40.0,
+    0.0,
+    -40.0,
+    40.0,
+    3058.0,
+    40.0
+   ]
+  },
+  {
+   "model": "EGT001 SW80x3088",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\外购件\\EGT型材库\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x3088.stp",
+   "ok": true,
+   "nv": 89600,
+   "nt": 89548,
+   "volume": 5712429.29,
+   "bbox": [
+    -40.0,
+    0.0,
+    -40.0,
+    40.0,
+    3088.0,
+    40.0
+   ]
+  },
+  {
+   "model": "EGT001 SW80x3118",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\外购件\\EGT型材库\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x3118.stp",
+   "ok": true,
+   "nv": 90464,
+   "nt": 90412,
+   "volume": 5767934.67,
+   "bbox": [
+    -40.0,
+    0.0,
+    -40.0,
+    40.0,
+    3118.0,
+    40.0
+   ]
+  },
+  {
+   "model": "EGT001 SW80x3148",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\外购件\\EGT型材库\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x3148.stp",
+   "ok": true,
+   "nv": 91328,
+   "nt": 91276,
+   "volume": 5823433.63,
+   "bbox": [
+    -40.0,
+    0.0,
+    -40.0,
+    40.0,
+    3148.0,
+    40.0
+   ]
+  },
+  {
+   "model": "EGT001 SW80x3178",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\外购件\\EGT型材库\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x3178.stp",
+   "ok": true,
+   "nv": 92192,
+   "nt": 92140,
+   "volume": 5878932.53,
+   "bbox": [
+    -40.0,
+    0.0,
+    -40.0,
+    40.0,
+    3178.0,
+    40.0
+   ]
+  },
+  {
+   "model": "EGT001 SW80x3208",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\外购件\\EGT型材库\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x3208.stp",
+   "ok": true,
+   "nv": 93056,
+   "nt": 93004,
+   "volume": 5934421.67,
+   "bbox": [
+    -40.0,
+    0.0,
+    -40.0,
+    40.0,
+    3208.0,
+    40.0
+   ]
+  },
+  {
+   "model": "EGT001 SW80x3238",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\外购件\\EGT型材库\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x3238.stp",
+   "ok": true,
+   "nv": 93920,
+   "nt": 93868,
+   "volume": 5989923.87,
+   "bbox": [
+    -40.0,
+    0.0,
+    -40.0,
+    40.0,
+    3238.0,
+    40.0
+   ]
+  },
+  {
+   "model": "EGT001 SW80x3268",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\外购件\\EGT型材库\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x3268.stp",
+   "ok": true,
+   "nv": 94784,
+   "nt": 94732,
+   "volume": 6045425.26,
+   "bbox": [
+    -40.0,
+    0.0,
+    -40.0,
+    40.0,
+    3268.0,
+    40.0
+   ]
+  },
+  {
+   "model": "EGT001 SW80x328",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\外购件\\EGT型材库\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x328.stp",
+   "ok": true,
+   "nv": 10112,
+   "nt": 10060,
+   "volume": 606518.13,
+   "bbox": [
+    -40.0,
+    0.0,
+    -40.0,
+    40.0,
+    328.0,
+    40.0
+   ]
+  },
+  {
+   "model": "EGT001 SW80x3298",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\外购件\\EGT型材库\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x3298.stp",
+   "ok": true,
+   "nv": 95648,
+   "nt": 95596,
+   "volume": 6100939.01,
+   "bbox": [
+    -40.0,
+    0.0,
+    -40.0,
+    40.0,
+    3298.0,
+    40.0
+   ]
+  },
+  {
+   "model": "EGT001 SW80x3328",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\外购件\\EGT型材库\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x3328.stp",
+   "ok": true,
+   "nv": 96512,
+   "nt": 96460,
+   "volume": 6156437.23,
+   "bbox": [
+    -40.0,
+    0.0,
+    -40.0,
+    40.0,
+    3328.0,
+    40.0
+   ]
+  },
+  {
+   "model": "EGT001 SW80x3358",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\外购件\\EGT型材库\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x3358.stp",
+   "ok": true,
+   "nv": 97376,
+   "nt": 97324,
+   "volume": 6211927.06,
+   "bbox": [
+    -40.0,
+    0.0,
+    -40.0,
+    40.0,
+    3358.0,
+    40.0
+   ]
+  },
+  {
+   "model": "EGT001 SW80x3388",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\外购件\\EGT型材库\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x3388.stp",
+   "ok": true,
+   "nv": 98240,
+   "nt": 98188,
+   "volume": 6267429.91,
+   "bbox": [
+    -40.0,
+    0.0,
+    -40.0,
+    40.0,
+    3388.0,
+    40.0
+   ]
+  },
+  {
+   "model": "EGT001 SW80x3418",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\外购件\\EGT型材库\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x3418.stp",
+   "ok": true,
+   "nv": 99104,
+   "nt": 99052,
+   "volume": 6322920.37,
+   "bbox": [
+    -40.0,
+    0.0,
+    -40.0,
+    40.0,
+    3418.0,
+    40.0
+   ]
+  },
+  {
+   "model": "EGT001 SW80x3448",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\外购件\\EGT型材库\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x3448.stp",
+   "ok": true,
+   "nv": 99968,
+   "nt": 99916,
+   "volume": 6378422.66,
+   "bbox": [
+    -40.0,
+    0.0,
+    -40.0,
+    40.0,
+    3448.0,
+    40.0
+   ]
+  },
+  {
+   "model": "EGT001 SW80x3478",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\外购件\\EGT型材库\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x3478.stp",
+   "ok": true,
+   "nv": 100832,
+   "nt": 100780,
+   "volume": 6433930.2,
+   "bbox": [
+    -40.0,
+    0.0,
+    -40.0,
+    40.0,
+    3478.0,
+    40.0
+   ]
+  },
+  {
+   "model": "EGT001 SW80x3508",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\外购件\\EGT型材库\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x3508.stp",
+   "ok": true,
+   "nv": 101696,
+   "nt": 101644,
+   "volume": 6489427.78,
+   "bbox": [
+    -40.0,
+    0.0,
+    -40.0,
+    40.0,
+    3508.0,
+    40.0
+   ]
+  },
+  {
+   "model": "EGT001 SW80x3538",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\外购件\\EGT型材库\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x3538.stp",
+   "ok": true,
+   "nv": 102560,
+   "nt": 102508,
+   "volume": 6544921.59,
+   "bbox": [
+    -40.0,
+    0.0,
+    -40.0,
+    40.0,
+    3538.0,
+    40.0
+   ]
+  },
+  {
+   "model": "EGT001 SW80x3568",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\外购件\\EGT型材库\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x3568.stp",
+   "ok": true,
+   "nv": 103424,
+   "nt": 103372,
+   "volume": 6600422.18,
+   "bbox": [
+    -40.0,
+    0.0,
+    -40.0,
+    40.0,
+    3568.0,
+    40.0
+   ]
+  },
+  {
+   "model": "EGT001 SW80x358",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\外购件\\EGT型材库\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x358.stp",
+   "ok": true,
+   "nv": 10976,
+   "nt": 10924,
+   "volume": 662016.58,
+   "bbox": [
+    -40.0,
+    0.0,
+    -40.0,
+    40.0,
+    358.0,
+    40.0
+   ]
+  },
+  {
+   "model": "EGT001 SW80x3598",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\外购件\\EGT型材库\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x3598.stp",
+   "ok": true,
+   "nv": 104288,
+   "nt": 104236,
+   "volume": 6655925.82,
+   "bbox": [
+    -40.0,
+    0.0,
+    -40.0,
+    40.0,
+    3598.0,
+    40.0
+   ]
+  },
+  {
+   "model": "EGT001 SW80x3628",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\外购件\\EGT型材库\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x3628.stp",
+   "ok": true,
+   "nv": 105152,
+   "nt": 105100,
+   "volume": 6711423.59,
+   "bbox": [
+    -40.0,
+    0.0,
+    -40.0,
+    40.0,
+    3628.0,
+    40.0
+   ]
+  },
+  {
+   "model": "EGT001 SW80x3658",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\外购件\\EGT型材库\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x3658.stp",
+   "ok": true,
+   "nv": 106016,
+   "nt": 105964,
+   "volume": 6766920.05,
+   "bbox": [
+    -40.0,
+    0.0,
+    -40.0,
+    40.0,
+    3658.0,
+    40.0
+   ]
+  },
+  {
+   "model": "EGT001 SW80x3688",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\外购件\\EGT型材库\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x3688.stp",
+   "ok": true,
+   "nv": 106880,
+   "nt": 106828,
+   "volume": 6822417.12,
+   "bbox": [
+    -40.0,
+    0.0,
+    -40.0,
+    40.0,
+    3688.0,
+    40.0
+   ]
+  },
+  {
+   "model": "EGT001 SW80x3718",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\外购件\\EGT型材库\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x3718.stp",
+   "ok": true,
+   "nv": 107744,
+   "nt": 107692,
+   "volume": 6877929.66,
+   "bbox": [
+    -40.0,
+    0.0,
+    -40.0,
+    40.0,
+    3718.0,
+    40.0
+   ]
+  },
+  {
+   "model": "EGT001 SW80x3748",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\外购件\\EGT型材库\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x3748.stp",
+   "ok": true,
+   "nv": 108608,
+   "nt": 108556,
+   "volume": 6933432.9,
+   "bbox": [
+    -40.0,
+    0.0,
+    -40.0,
+    40.0,
+    3748.0,
+    40.0
+   ]
+  },
+  {
+   "model": "EGT001 SW80x3778",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\外购件\\EGT型材库\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x3778.stp",
+   "ok": true,
+   "nv": 109472,
+   "nt": 109420,
+   "volume": 6988920.98,
+   "bbox": [
+    -40.0,
+    0.0,
+    -40.0,
+    40.0,
+    3778.0,
+    40.0
+   ]
+  },
+  {
+   "model": "EGT001 SW80x3808",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\外购件\\EGT型材库\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x3808.stp",
+   "ok": true,
+   "nv": 110336,
+   "nt": 110284,
+   "volume": 7044430.84,
+   "bbox": [
+    -40.0,
+    0.0,
+    -40.0,
+    40.0,
+    3808.0,
+    40.0
+   ]
+  },
+  {
+   "model": "EGT001 SW80x3838",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\外购件\\EGT型材库\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x3838.stp",
+   "ok": true,
+   "nv": 111200,
+   "nt": 111148,
+   "volume": 7099935.3,
+   "bbox": [
+    -40.0,
+    0.0,
+    -40.0,
+    40.0,
+    3838.0,
+    40.0
+   ]
+  },
+  {
+   "model": "EGT001 SW80x3868",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\外购件\\EGT型材库\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x3868.stp",
+   "ok": true,
+   "nv": 112064,
+   "nt": 112012,
+   "volume": 7155422.74,
+   "bbox": [
+    -40.0,
+    0.0,
+    -40.0,
+    40.0,
+    3868.0,
+    40.0
+   ]
+  },
+  {
+   "model": "EGT001 SW80x388",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\外购件\\EGT型材库\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x388.stp",
+   "ok": true,
+   "nv": 11840,
+   "nt": 11788,
+   "volume": 717514.79,
+   "bbox": [
+    -40.0,
+    0.0,
+    -40.0,
+    40.0,
+    388.0,
+    40.0
+   ]
+  },
+  {
+   "model": "EGT001 SW80x3898",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\外购件\\EGT型材库\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x3898.stp",
+   "ok": true,
+   "nv": 112928,
+   "nt": 112876,
+   "volume": 7210918.05,
+   "bbox": [
+    -40.0,
+    0.0,
+    -40.0,
+    40.0,
+    3898.0,
+    40.0
+   ]
+  },
+  {
+   "model": "EGT001 SW80x3928",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\外购件\\EGT型材库\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x3928.stp",
+   "ok": true,
+   "nv": 113792,
+   "nt": 113740,
+   "volume": 7266415.95,
+   "bbox": [
+    -40.0,
+    0.0,
+    -40.0,
+    40.0,
+    3928.0,
+    40.0
+   ]
+  },
+  {
+   "model": "EGT001 SW80x3958",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\外购件\\EGT型材库\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x3958.stp",
+   "ok": true,
+   "nv": 114656,
+   "nt": 114604,
+   "volume": 7321938.6,
+   "bbox": [
+    -40.0,
+    0.0,
+    -40.0,
+    40.0,
+    3958.0,
+    40.0
+   ]
+  },
+  {
+   "model": "EGT001 SW80x3988",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\外购件\\EGT型材库\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x3988.stp",
+   "ok": true,
+   "nv": 115520,
+   "nt": 115468,
+   "volume": 7377436.22,
+   "bbox": [
+    -40.0,
+    0.0,
+    -40.0,
+    40.0,
+    3988.0,
+    40.0
+   ]
+  },
+  {
+   "model": "EGT001 SW80x4018",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\外购件\\EGT型材库\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x4018.stp",
+   "ok": true,
+   "nv": 116384,
+   "nt": 116332,
+   "volume": 7432927.87,
+   "bbox": [
+    -40.0,
+    0.0,
+    -40.0,
+    40.0,
+    4018.0,
+    40.0
+   ]
+  },
+  {
+   "model": "EGT001 SW80x4048",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\外购件\\EGT型材库\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x4048.stp",
+   "ok": true,
+   "nv": 117248,
+   "nt": 117196,
+   "volume": 7488426.55,
+   "bbox": [
+    -40.0,
+    0.0,
+    -40.0,
+    40.0,
+    4048.0,
+    40.0
+   ]
+  },
+  {
+   "model": "EGT001 SW80x4078",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\外购件\\EGT型材库\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x4078.stp",
+   "ok": true,
+   "nv": 118112,
+   "nt": 118060,
+   "volume": 7543924.05,
+   "bbox": [
+    -40.0,
+    0.0,
+    -40.0,
+    40.0,
+    4078.0,
+    40.0
+   ]
+  },
+  {
+   "model": "EGT001 SW80x418",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\外购件\\EGT型材库\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x418.stp",
+   "ok": true,
+   "nv": 12704,
+   "nt": 12652,
+   "volume": 773013.08,
+   "bbox": [
+    -40.0,
+    0.0,
+    -40.0,
+    40.0,
+    418.0,
+    40.0
+   ]
+  },
+  {
+   "model": "EGT001 SW80x448",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\外购件\\EGT型材库\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x448.stp",
+   "ok": true,
+   "nv": 13568,
+   "nt": 13516,
+   "volume": 828511.66,
+   "bbox": [
+    -40.0,
+    0.0,
+    -40.0,
+    40.0,
+    448.0,
+    40.0
+   ]
+  },
+  {
+   "model": "EGT001 SW80x478",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\外购件\\EGT型材库\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x478.stp",
+   "ok": true,
+   "nv": 14432,
+   "nt": 14380,
+   "volume": 884009.92,
+   "bbox": [
+    -40.0,
+    0.0,
+    -40.0,
+    40.0,
+    478.0,
+    40.0
+   ]
+  },
+  {
+   "model": "EGT001 SW80x508",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\外购件\\EGT型材库\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x508.stp",
+   "ok": true,
+   "nv": 15296,
+   "nt": 15244,
+   "volume": 939508.39,
+   "bbox": [
+    -40.0,
+    0.0,
+    -40.0,
+    40.0,
+    508.0,
+    40.0
+   ]
+  },
+  {
+   "model": "EGT001 SW80x538",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\外购件\\EGT型材库\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x538.stp",
+   "ok": true,
+   "nv": 16160,
+   "nt": 16108,
+   "volume": 995006.91,
+   "bbox": [
+    -40.0,
+    0.0,
+    -40.0,
+    40.0,
+    538.0,
+    40.0
+   ]
+  },
+  {
+   "model": "EGT001 SW80x568",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\外购件\\EGT型材库\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x568.stp",
+   "ok": true,
+   "nv": 17024,
+   "nt": 16972,
+   "volume": 1050505.52,
+   "bbox": [
+    -40.0,
+    0.0,
+    -40.0,
+    40.0,
+    568.0,
+    40.0
+   ]
+  },
+  {
+   "model": "EGT001 SW80x598",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\外购件\\EGT型材库\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x598.stp",
+   "ok": true,
+   "nv": 17888,
+   "nt": 17836,
+   "volume": 1106004.42,
+   "bbox": [
+    -40.0,
+    0.0,
+    -40.0,
+    40.0,
+    598.0,
+    40.0
+   ]
+  },
+  {
+   "model": "EGT001 SW80x628",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\外购件\\EGT型材库\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x628.stp",
+   "ok": true,
+   "nv": 18752,
+   "nt": 18700,
+   "volume": 1161502.87,
+   "bbox": [
+    -40.0,
+    0.0,
+    -40.0,
+    40.0,
+    628.0,
+    40.0
+   ]
+  },
+  {
+   "model": "EGT001 SW80x658",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\外购件\\EGT型材库\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x658.stp",
+   "ok": true,
+   "nv": 19616,
+   "nt": 19564,
+   "volume": 1217000.83,
+   "bbox": [
+    -40.0,
+    0.0,
+    -40.0,
+    40.0,
+    658.0,
+    40.0
+   ]
+  },
+  {
+   "model": "EGT001 SW80x688",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\外购件\\EGT型材库\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x688.stp",
+   "ok": true,
+   "nv": 20480,
+   "nt": 20428,
+   "volume": 1272499.36,
+   "bbox": [
+    -40.0,
+    0.0,
+    -40.0,
+    40.0,
+    688.0,
+    40.0
+   ]
+  },
+  {
+   "model": "EGT001 SW80x718",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\外购件\\EGT型材库\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x718.stp",
+   "ok": true,
+   "nv": 21344,
+   "nt": 21292,
+   "volume": 1327998.0,
+   "bbox": [
+    -40.0,
+    0.0,
+    -40.0,
+    40.0,
+    718.0,
+    40.0
+   ]
+  },
+  {
+   "model": "EGT001 SW80x748",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\外购件\\EGT型材库\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x748.stp",
+   "ok": true,
+   "nv": 22208,
+   "nt": 22156,
+   "volume": 1383496.59,
+   "bbox": [
+    -40.0,
+    0.0,
+    -40.0,
+    40.0,
+    748.0,
+    40.0
+   ]
+  },
+  {
+   "model": "EGT001 SW80x778",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\外购件\\EGT型材库\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x778.stp",
+   "ok": true,
+   "nv": 23072,
+   "nt": 23020,
+   "volume": 1438995.47,
+   "bbox": [
+    -40.0,
+    0.0,
+    -40.0,
+    40.0,
+    778.0,
+    40.0
+   ]
+  },
+  {
+   "model": "EGT001 SW80x808",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\外购件\\EGT型材库\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x808.stp",
+   "ok": true,
+   "nv": 23936,
+   "nt": 23884,
+   "volume": 1494494.23,
+   "bbox": [
+    -40.0,
+    0.0,
+    -40.0,
+    40.0,
+    808.0,
+    40.0
+   ]
+  },
+  {
+   "model": "EGT001 SW80x838",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\外购件\\EGT型材库\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x838.stp",
+   "ok": true,
+   "nv": 24800,
+   "nt": 24748,
+   "volume": 1549992.63,
+   "bbox": [
+    -40.0,
+    0.0,
+    -40.0,
+    40.0,
+    838.0,
+    40.0
+   ]
+  },
+  {
+   "model": "EGT001 SW80x868",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\外购件\\EGT型材库\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x868.stp",
+   "ok": true,
+   "nv": 25664,
+   "nt": 25612,
+   "volume": 1605491.25,
+   "bbox": [
+    -40.0,
+    0.0,
+    -40.0,
+    40.0,
+    868.0,
+    40.0
+   ]
+  },
+  {
+   "model": "EGT001 SW80x898",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\外购件\\EGT型材库\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x898.stp",
+   "ok": true,
+   "nv": 26528,
+   "nt": 26476,
+   "volume": 1660989.78,
+   "bbox": [
+    -40.0,
+    0.0,
+    -40.0,
+    40.0,
+    898.0,
+    40.0
+   ]
+  },
+  {
+   "model": "EGT001 SW80x928",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\外购件\\EGT型材库\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x928.stp",
+   "ok": true,
+   "nv": 27392,
+   "nt": 27340,
+   "volume": 1716488.51,
+   "bbox": [
+    -40.0,
+    0.0,
+    -40.0,
+    40.0,
+    928.0,
+    40.0
+   ]
+  },
+  {
+   "model": "EGT001 SW80x958",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\外购件\\EGT型材库\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x958.stp",
+   "ok": true,
+   "nv": 28256,
+   "nt": 28204,
+   "volume": 1771987.07,
+   "bbox": [
+    -40.0,
+    0.0,
+    -40.0,
+    40.0,
+    958.0,
+    40.0
+   ]
+  },
+  {
+   "model": "EGT001 SW80x988",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\外购件\\EGT型材库\\10_Tuenkers EGT Gripper-EGT001\\EGT001 SW80x988.stp",
+   "ok": true,
+   "nv": 29120,
+   "nt": 29068,
+   "volume": 1827485.5,
+   "bbox": [
+    -40.0,
+    0.0,
+    -40.0,
+    40.0,
+    988.0,
+    40.0
+   ]
+  },
+  {
+   "model": "EGT002 SW50x088",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\外购件\\EGT型材库\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x088.stp",
+   "ok": true,
+   "nv": 2688,
+   "nt": 2656,
+   "volume": 62600.22,
+   "bbox": [
+    0.0,
+    -25.0,
+    -25.0,
+    88.0,
+    25.0,
+    25.0
+   ]
+  },
+  {
+   "model": "EGT002 SW50x1018",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\外购件\\EGT型材库\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x1018.stp",
+   "ok": true,
+   "nv": 29472,
+   "nt": 29440,
+   "volume": 727302.31,
+   "bbox": [
+    0.0,
+    -25.0,
+    -25.0,
+    1018.0,
+    25.0,
+    25.0
+   ]
+  },
+  {
+   "model": "EGT002 SW50x1048",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\外购件\\EGT型材库\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x1048.stp",
+   "ok": true,
+   "nv": 30336,
+   "nt": 30304,
+   "volume": 748743.83,
+   "bbox": [
+    0.0,
+    -25.0,
+    -25.0,
+    1048.0,
+    25.0,
+    25.0
+   ]
+  },
+  {
+   "model": "EGT002 SW50x1078",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\外购件\\EGT型材库\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x1078.stp",
+   "ok": true,
+   "nv": 31200,
+   "nt": 31168,
+   "volume": 770186.01,
+   "bbox": [
+    0.0,
+    -25.0,
+    -25.0,
+    1078.0,
+    25.0,
+    25.0
+   ]
+  },
+  {
+   "model": "EGT002 SW50x1108",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\外购件\\EGT型材库\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x1108.stp",
+   "ok": true,
+   "nv": 32064,
+   "nt": 32032,
+   "volume": 791628.34,
+   "bbox": [
+    0.0,
+    -25.0,
+    -25.0,
+    1108.0,
+    25.0,
+    25.0
+   ]
+  },
+  {
+   "model": "EGT002 SW50x1138",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\外购件\\EGT型材库\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x1138.stp",
+   "ok": true,
+   "nv": 32928,
+   "nt": 32896,
+   "volume": 813069.85,
+   "bbox": [
+    0.0,
+    -25.0,
+    -25.0,
+    1138.0,
+    25.0,
+    25.0
+   ]
+  },
+  {
+   "model": "EGT002 SW50x1168",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\外购件\\EGT型材库\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x1168.stp",
+   "ok": true,
+   "nv": 33792,
+   "nt": 33760,
+   "volume": 834511.81,
+   "bbox": [
+    0.0,
+    -25.0,
+    -25.0,
+    1168.0,
+    25.0,
+    25.0
+   ]
+  },
+  {
+   "model": "EGT002 SW50x118",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\外购件\\EGT型材库\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x118.stp",
+   "ok": true,
+   "nv": 3552,
+   "nt": 3520,
+   "volume": 84042.26,
+   "bbox": [
+    0.0,
+    -25.0,
+    -25.0,
+    118.0,
+    25.0,
+    25.0
+   ]
+  },
+  {
+   "model": "EGT002 SW50x1198",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\外购件\\EGT型材库\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x1198.stp",
+   "ok": true,
+   "nv": 34656,
+   "nt": 34624,
+   "volume": 855954.08,
+   "bbox": [
+    0.0,
+    -25.0,
+    -25.0,
+    1198.0,
+    25.0,
+    25.0
+   ]
+  },
+  {
+   "model": "EGT002 SW50x1228",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\外购件\\EGT型材库\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x1228.stp",
+   "ok": true,
+   "nv": 35520,
+   "nt": 35488,
+   "volume": 877395.48,
+   "bbox": [
+    0.0,
+    -25.0,
+    -25.0,
+    1228.0,
+    25.0,
+    25.0
+   ]
+  },
+  {
+   "model": "EGT002 SW50x1258",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\外购件\\EGT型材库\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x1258.stp",
+   "ok": true,
+   "nv": 36384,
+   "nt": 36352,
+   "volume": 898837.97,
+   "bbox": [
+    0.0,
+    -25.0,
+    -25.0,
+    1258.0,
+    25.0,
+    25.0
+   ]
+  },
+  {
+   "model": "EGT002 SW50x1288",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\外购件\\EGT型材库\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x1288.stp",
+   "ok": true,
+   "nv": 37248,
+   "nt": 37216,
+   "volume": 920280.11,
+   "bbox": [
+    0.0,
+    -25.0,
+    -25.0,
+    1288.0,
+    25.0,
+    25.0
+   ]
+  },
+  {
+   "model": "EGT002 SW50x1318",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\外购件\\EGT型材库\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x1318.stp",
+   "ok": true,
+   "nv": 38112,
+   "nt": 38080,
+   "volume": 941721.75,
+   "bbox": [
+    0.0,
+    -25.0,
+    -25.0,
+    1318.0,
+    25.0,
+    25.0
+   ]
+  },
+  {
+   "model": "EGT002 SW50x1348",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\外购件\\EGT型材库\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x1348.stp",
+   "ok": true,
+   "nv": 38976,
+   "nt": 38944,
+   "volume": 963163.45,
+   "bbox": [
+    0.0,
+    -25.0,
+    -25.0,
+    1348.0,
+    25.0,
+    25.0
+   ]
+  },
+  {
+   "model": "EGT002 SW50x1378",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\外购件\\EGT型材库\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x1378.stp",
+   "ok": true,
+   "nv": 39840,
+   "nt": 39808,
+   "volume": 984605.72,
+   "bbox": [
+    0.0,
+    -25.0,
+    -25.0,
+    1378.0,
+    25.0,
+    25.0
+   ]
+  },
+  {
+   "model": "EGT002 SW50x1408",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\外购件\\EGT型材库\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x1408.stp",
+   "ok": true,
+   "nv": 40704,
+   "nt": 40672,
+   "volume": 1006047.49,
+   "bbox": [
+    0.0,
+    -25.0,
+    -25.0,
+    1408.0,
+    25.0,
+    25.0
+   ]
+  },
+  {
+   "model": "EGT002 SW50x1438",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\外购件\\EGT型材库\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x1438.stp",
+   "ok": true,
+   "nv": 41568,
+   "nt": 41536,
+   "volume": 1027489.73,
+   "bbox": [
+    0.0,
+    -25.0,
+    -25.0,
+    1438.0,
+    25.0,
+    25.0
+   ]
+  },
+  {
+   "model": "EGT002 SW50x1468",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\外购件\\EGT型材库\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x1468.stp",
+   "ok": true,
+   "nv": 42432,
+   "nt": 42400,
+   "volume": 1048932.11,
+   "bbox": [
+    0.0,
+    -25.0,
+    -25.0,
+    1468.0,
+    25.0,
+    25.0
+   ]
+  },
+  {
+   "model": "EGT002 SW50x148",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\外购件\\EGT型材库\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x148.stp",
+   "ok": true,
+   "nv": 4416,
+   "nt": 4384,
+   "volume": 105484.29,
+   "bbox": [
+    0.0,
+    -25.0,
+    -25.0,
+    148.0,
+    25.0,
+    25.0
+   ]
+  },
+  {
+   "model": "EGT002 SW50x1498",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\外购件\\EGT型材库\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x1498.stp",
+   "ok": true,
+   "nv": 43296,
+   "nt": 43264,
+   "volume": 1070373.71,
+   "bbox": [
+    0.0,
+    -25.0,
+    -25.0,
+    1498.0,
+    25.0,
+    25.0
+   ]
+  },
+  {
+   "model": "EGT002 SW50x1528",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\外购件\\EGT型材库\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x1528.stp",
+   "ok": true,
+   "nv": 44160,
+   "nt": 44128,
+   "volume": 1091815.78,
+   "bbox": [
+    0.0,
+    -25.0,
+    -25.0,
+    1528.0,
+    25.0,
+    25.0
+   ]
+  },
+  {
+   "model": "EGT002 SW50x1558",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\外购件\\EGT型材库\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x1558.stp",
+   "ok": true,
+   "nv": 45024,
+   "nt": 44992,
+   "volume": 1113258.47,
+   "bbox": [
+    0.0,
+    -25.0,
+    -25.0,
+    1558.0,
+    25.0,
+    25.0
+   ]
+  },
+  {
+   "model": "EGT002 SW50x1588",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\外购件\\EGT型材库\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x1588.stp",
+   "ok": true,
+   "nv": 45888,
+   "nt": 45856,
+   "volume": 1134698.84,
+   "bbox": [
+    0.0,
+    -25.0,
+    -25.0,
+    1588.0,
+    25.0,
+    25.0
+   ]
+  },
+  {
+   "model": "EGT002 SW50x1618",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\外购件\\EGT型材库\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x1618.stp",
+   "ok": true,
+   "nv": 46752,
+   "nt": 46720,
+   "volume": 1156140.72,
+   "bbox": [
+    0.0,
+    -25.0,
+    -25.0,
+    1618.0,
+    25.0,
+    25.0
+   ]
+  },
+  {
+   "model": "EGT002 SW50x1648",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\外购件\\EGT型材库\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x1648.stp",
+   "ok": true,
+   "nv": 47616,
+   "nt": 47584,
+   "volume": 1177583.68,
+   "bbox": [
+    0.0,
+    -25.0,
+    -25.0,
+    1648.0,
+    25.0,
+    25.0
+   ]
+  },
+  {
+   "model": "EGT002 SW50x1678",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\外购件\\EGT型材库\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x1678.stp",
+   "ok": true,
+   "nv": 48480,
+   "nt": 48448,
+   "volume": 1199024.76,
+   "bbox": [
+    0.0,
+    -25.0,
+    -25.0,
+    1678.0,
+    25.0,
+    25.0
+   ]
+  },
+  {
+   "model": "EGT002 SW50x1708",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\外购件\\EGT型材库\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x1708.stp",
+   "ok": true,
+   "nv": 49344,
+   "nt": 49312,
+   "volume": 1220467.56,
+   "bbox": [
+    0.0,
+    -25.0,
+    -25.0,
+    1708.0,
+    25.0,
+    25.0
+   ]
+  },
+  {
+   "model": "EGT002 SW50x1738",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\外购件\\EGT型材库\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x1738.stp",
+   "ok": true,
+   "nv": 50208,
+   "nt": 50176,
+   "volume": 1241910.56,
+   "bbox": [
+    0.0,
+    -25.0,
+    -25.0,
+    1738.0,
+    25.0,
+    25.0
+   ]
+  },
+  {
+   "model": "EGT002 SW50x1768",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\外购件\\EGT型材库\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x1768.stp",
+   "ok": true,
+   "nv": 51072,
+   "nt": 51040,
+   "volume": 1263349.74,
+   "bbox": [
+    0.0,
+    -25.0,
+    -25.0,
+    1768.0,
+    25.0,
+    25.0
+   ]
+  },
+  {
+   "model": "EGT002 SW50x178",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\外购件\\EGT型材库\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x178.stp",
+   "ok": true,
+   "nv": 5280,
+   "nt": 5248,
+   "volume": 126926.29,
+   "bbox": [
+    0.0,
+    -25.0,
+    -25.0,
+    178.0,
+    25.0,
+    25.0
+   ]
+  },
+  {
+   "model": "EGT002 SW50x1798",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\外购件\\EGT型材库\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x1798.stp",
+   "ok": true,
+   "nv": 51936,
+   "nt": 51904,
+   "volume": 1284793.23,
+   "bbox": [
+    0.0,
+    -25.0,
+    -25.0,
+    1798.0,
+    25.0,
+    25.0
+   ]
+  },
+  {
+   "model": "EGT002 SW50x1828",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\外购件\\EGT型材库\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x1828.stp",
+   "ok": true,
+   "nv": 52800,
+   "nt": 52768,
+   "volume": 1306235.83,
+   "bbox": [
+    0.0,
+    -25.0,
+    -25.0,
+    1828.0,
+    25.0,
+    25.0
+   ]
+  },
+  {
+   "model": "EGT002 SW50x1858",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\外购件\\EGT型材库\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x1858.stp",
+   "ok": true,
+   "nv": 53664,
+   "nt": 53632,
+   "volume": 1327676.66,
+   "bbox": [
+    0.0,
+    -25.0,
+    -25.0,
+    1858.0,
+    25.0,
+    25.0
+   ]
+  },
+  {
+   "model": "EGT002 SW50x1888",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\外购件\\EGT型材库\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x1888.stp",
+   "ok": true,
+   "nv": 54528,
+   "nt": 54496,
+   "volume": 1349119.35,
+   "bbox": [
+    0.0,
+    -25.0,
+    -25.0,
+    1888.0,
+    25.0,
+    25.0
+   ]
+  },
+  {
+   "model": "EGT002 SW50x1918",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\外购件\\EGT型材库\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x1918.stp",
+   "ok": true,
+   "nv": 55392,
+   "nt": 55360,
+   "volume": 1370562.67,
+   "bbox": [
+    0.0,
+    -25.0,
+    -25.0,
+    1918.0,
+    25.0,
+    25.0
+   ]
+  },
+  {
+   "model": "EGT002 SW50x1948",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\外购件\\EGT型材库\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x1948.stp",
+   "ok": true,
+   "nv": 56256,
+   "nt": 56224,
+   "volume": 1392003.17,
+   "bbox": [
+    0.0,
+    -25.0,
+    -25.0,
+    1948.0,
+    25.0,
+    25.0
+   ]
+  },
+  {
+   "model": "EGT002 SW50x1978",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\外购件\\EGT型材库\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x1978.stp",
+   "ok": true,
+   "nv": 57120,
+   "nt": 57088,
+   "volume": 1413443.16,
+   "bbox": [
+    0.0,
+    -25.0,
+    -25.0,
+    1978.0,
+    25.0,
+    25.0
+   ]
+  },
+  {
+   "model": "EGT002 SW50x2008",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\外购件\\EGT型材库\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x2008.stp",
+   "ok": true,
+   "nv": 57984,
+   "nt": 57952,
+   "volume": 1434887.06,
+   "bbox": [
+    0.0,
+    -25.0,
+    -25.0,
+    2008.0,
+    25.0,
+    25.0
+   ]
+  },
+  {
+   "model": "EGT002 SW50x2038",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\外购件\\EGT型材库\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x2038.stp",
+   "ok": true,
+   "nv": 58848,
+   "nt": 58816,
+   "volume": 1456327.66,
+   "bbox": [
+    0.0,
+    -25.0,
+    -25.0,
+    2038.0,
+    25.0,
+    25.0
+   ]
+  },
+  {
+   "model": "EGT002 SW50x2068",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\外购件\\EGT型材库\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x2068.stp",
+   "ok": true,
+   "nv": 59712,
+   "nt": 59680,
+   "volume": 1477770.79,
+   "bbox": [
+    0.0,
+    -25.0,
+    -25.0,
+    2068.0,
+    25.0,
+    25.0
+   ]
+  },
+  {
+   "model": "EGT002 SW50x208",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\外购件\\EGT型材库\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x208.stp",
+   "ok": true,
+   "nv": 6144,
+   "nt": 6112,
+   "volume": 148368.34,
+   "bbox": [
+    0.0,
+    -25.0,
+    -25.0,
+    208.0,
+    25.0,
+    25.0
+   ]
+  },
+  {
+   "model": "EGT002 SW50x2098",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\外购件\\EGT型材库\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x2098.stp",
+   "ok": true,
+   "nv": 60576,
+   "nt": 60544,
+   "volume": 1499213.08,
+   "bbox": [
+    0.0,
+    -25.0,
+    -25.0,
+    2098.0,
+    25.0,
+    25.0
+   ]
+  },
+  {
+   "model": "EGT002 SW50x2128",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\外购件\\EGT型材库\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x2128.stp",
+   "ok": true,
+   "nv": 61440,
+   "nt": 61408,
+   "volume": 1520653.66,
+   "bbox": [
+    0.0,
+    -25.0,
+    -25.0,
+    2128.0,
+    25.0,
+    25.0
+   ]
+  },
+  {
+   "model": "EGT002 SW50x2158",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\外购件\\EGT型材库\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x2158.stp",
+   "ok": true,
+   "nv": 62304,
+   "nt": 62272,
+   "volume": 1542094.73,
+   "bbox": [
+    0.0,
+    -25.0,
+    -25.0,
+    2158.0,
+    25.0,
+    25.0
+   ]
+  },
+  {
+   "model": "EGT002 SW50x2188",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\外购件\\EGT型材库\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x2188.stp",
+   "ok": true,
+   "nv": 63168,
+   "nt": 63136,
+   "volume": 1563537.24,
+   "bbox": [
+    0.0,
+    -25.0,
+    -25.0,
+    2188.0,
+    25.0,
+    25.0
+   ]
+  },
+  {
+   "model": "EGT002 SW50x2218",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\外购件\\EGT型材库\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x2218.stp",
+   "ok": true,
+   "nv": 64032,
+   "nt": 64000,
+   "volume": 1584979.08,
+   "bbox": [
+    0.0,
+    -25.0,
+    -25.0,
+    2218.0,
+    25.0,
+    25.0
+   ]
+  },
+  {
+   "model": "EGT002 SW50x2248",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\外购件\\EGT型材库\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x2248.stp",
+   "ok": true,
+   "nv": 64896,
+   "nt": 64864,
+   "volume": 1606421.57,
+   "bbox": [
+    0.0,
+    -25.0,
+    -25.0,
+    2248.0,
+    25.0,
+    25.0
+   ]
+  },
+  {
+   "model": "EGT002 SW50x2278",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\外购件\\EGT型材库\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x2278.stp",
+   "ok": true,
+   "nv": 65760,
+   "nt": 65728,
+   "volume": 1627865.84,
+   "bbox": [
+    0.0,
+    -25.0,
+    -25.0,
+    2278.0,
+    25.0,
+    25.0
+   ]
+  },
+  {
+   "model": "EGT002 SW50x2308",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\外购件\\EGT型材库\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x2308.stp",
+   "ok": true,
+   "nv": 66624,
+   "nt": 66592,
+   "volume": 1649306.16,
+   "bbox": [
+    0.0,
+    -25.0,
+    -25.0,
+    2308.0,
+    25.0,
+    25.0
+   ]
+  },
+  {
+   "model": "EGT002 SW50x2338",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\外购件\\EGT型材库\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x2338.stp",
+   "ok": true,
+   "nv": 67488,
+   "nt": 67456,
+   "volume": 1670745.88,
+   "bbox": [
+    0.0,
+    -25.0,
+    -25.0,
+    2338.0,
+    25.0,
+    25.0
+   ]
+  },
+  {
+   "model": "EGT002 SW50x2368",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\外购件\\EGT型材库\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x2368.stp",
+   "ok": true,
+   "nv": 68352,
+   "nt": 68320,
+   "volume": 1692189.71,
+   "bbox": [
+    0.0,
+    -25.0,
+    -25.0,
+    2368.0,
+    25.0,
+    25.0
+   ]
+  },
+  {
+   "model": "EGT002 SW50x238",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\外购件\\EGT型材库\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x238.stp",
+   "ok": true,
+   "nv": 7008,
+   "nt": 6976,
+   "volume": 169810.37,
+   "bbox": [
+    0.0,
+    -25.0,
+    -25.0,
+    238.0,
+    25.0,
+    25.0
+   ]
+  },
+  {
+   "model": "EGT002 SW50x2398",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\外购件\\EGT型材库\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x2398.stp",
+   "ok": true,
+   "nv": 69216,
+   "nt": 69184,
+   "volume": 1713631.57,
+   "bbox": [
+    0.0,
+    -25.0,
+    -25.0,
+    2398.0,
+    25.0,
+    25.0
+   ]
+  },
+  {
+   "model": "EGT002 SW50x2428",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\外购件\\EGT型材库\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x2428.stp",
+   "ok": true,
+   "nv": 70080,
+   "nt": 70048,
+   "volume": 1735074.47,
+   "bbox": [
+    0.0,
+    -25.0,
+    -25.0,
+    2428.0,
+    25.0,
+    25.0
+   ]
+  },
+  {
+   "model": "EGT002 SW50x2458",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\外购件\\EGT型材库\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x2458.stp",
+   "ok": true,
+   "nv": 70944,
+   "nt": 70912,
+   "volume": 1756517.18,
+   "bbox": [
+    0.0,
+    -25.0,
+    -25.0,
+    2458.0,
+    25.0,
+    25.0
+   ]
+  },
+  {
+   "model": "EGT002 SW50x2488",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\外购件\\EGT型材库\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x2488.stp",
+   "ok": true,
+   "nv": 71808,
+   "nt": 71776,
+   "volume": 1777958.76,
+   "bbox": [
+    0.0,
+    -25.0,
+    -25.0,
+    2488.0,
+    25.0,
+    25.0
+   ]
+  },
+  {
+   "model": "EGT002 SW50x2518",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\外购件\\EGT型材库\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x2518.stp",
+   "ok": true,
+   "nv": 72672,
+   "nt": 72640,
+   "volume": 1799400.68,
+   "bbox": [
+    0.0,
+    -25.0,
+    -25.0,
+    2518.0,
+    25.0,
+    25.0
+   ]
+  },
+  {
+   "model": "EGT002 SW50x2548",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\外购件\\EGT型材库\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x2548.stp",
+   "ok": true,
+   "nv": 73536,
+   "nt": 73504,
+   "volume": 1820839.91,
+   "bbox": [
+    0.0,
+    -25.0,
+    -25.0,
+    2548.0,
+    25.0,
+    25.0
+   ]
+  },
+  {
+   "model": "EGT002 SW50x2578",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\外购件\\EGT型材库\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x2578.stp",
+   "ok": true,
+   "nv": 74400,
+   "nt": 74368,
+   "volume": 1842284.46,
+   "bbox": [
+    0.0,
+    -25.0,
+    -25.0,
+    2578.0,
+    25.0,
+    25.0
+   ]
+  },
+  {
+   "model": "EGT002 SW50x2608",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\外购件\\EGT型材库\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x2608.stp",
+   "ok": true,
+   "nv": 75264,
+   "nt": 75232,
+   "volume": 1863725.33,
+   "bbox": [
+    0.0,
+    -25.0,
+    -25.0,
+    2608.0,
+    25.0,
+    25.0
+   ]
+  },
+  {
+   "model": "EGT002 SW50x2638",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\外购件\\EGT型材库\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x2638.stp",
+   "ok": true,
+   "nv": 76128,
+   "nt": 76096,
+   "volume": 1885168.04,
+   "bbox": [
+    0.0,
+    -25.0,
+    -25.0,
+    2638.0,
+    25.0,
+    25.0
+   ]
+  },
+  {
+   "model": "EGT002 SW50x2668",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\外购件\\EGT型材库\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x2668.stp",
+   "ok": true,
+   "nv": 76992,
+   "nt": 76960,
+   "volume": 1906609.84,
+   "bbox": [
+    0.0,
+    -25.0,
+    -25.0,
+    2668.0,
+    25.0,
+    25.0
+   ]
+  },
+  {
+   "model": "EGT002 SW50x268",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\外购件\\EGT型材库\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x268.stp",
+   "ok": true,
+   "nv": 7872,
+   "nt": 7840,
+   "volume": 191252.38,
+   "bbox": [
+    0.0,
+    -25.0,
+    -25.0,
+    268.0,
+    25.0,
+    25.0
+   ]
+  },
+  {
+   "model": "EGT002 SW50x2698",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\外购件\\EGT型材库\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x2698.stp",
+   "ok": true,
+   "nv": 77856,
+   "nt": 77824,
+   "volume": 1928051.47,
+   "bbox": [
+    0.0,
+    -25.0,
+    -25.0,
+    2698.0,
+    25.0,
+    25.0
+   ]
+  },
+  {
+   "model": "EGT002 SW50x2728",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\外购件\\EGT型材库\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x2728.stp",
+   "ok": true,
+   "nv": 78720,
+   "nt": 78688,
+   "volume": 1949491.83,
+   "bbox": [
+    0.0,
+    -25.0,
+    -25.0,
+    2728.0,
+    25.0,
+    25.0
+   ]
+  },
+  {
+   "model": "EGT002 SW50x2758",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\外购件\\EGT型材库\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x2758.stp",
+   "ok": true,
+   "nv": 79584,
+   "nt": 79552,
+   "volume": 1970933.9,
+   "bbox": [
+    0.0,
+    -25.0,
+    -25.0,
+    2758.0,
+    25.0,
+    25.0
+   ]
+  },
+  {
+   "model": "EGT002 SW50x2788",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\外购件\\EGT型材库\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x2788.stp",
+   "ok": true,
+   "nv": 80448,
+   "nt": 80416,
+   "volume": 1992376.52,
+   "bbox": [
+    0.0,
+    -25.0,
+    -25.0,
+    2788.0,
+    25.0,
+    25.0
+   ]
+  },
+  {
+   "model": "EGT002 SW50x2818",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\外购件\\EGT型材库\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x2818.stp",
+   "ok": true,
+   "nv": 81312,
+   "nt": 81280,
+   "volume": 2013819.0,
+   "bbox": [
+    0.0,
+    -25.0,
+    -25.0,
+    2818.0,
+    25.0,
+    25.0
+   ]
+  },
+  {
+   "model": "EGT002 SW50x2848",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\外购件\\EGT型材库\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x2848.stp",
+   "ok": true,
+   "nv": 82176,
+   "nt": 82144,
+   "volume": 2035259.96,
+   "bbox": [
+    0.0,
+    -25.0,
+    -25.0,
+    2848.0,
+    25.0,
+    25.0
+   ]
+  },
+  {
+   "model": "EGT002 SW50x2878",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\外购件\\EGT型材库\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x2878.stp",
+   "ok": true,
+   "nv": 83040,
+   "nt": 83008,
+   "volume": 2056701.86,
+   "bbox": [
+    0.0,
+    -25.0,
+    -25.0,
+    2878.0,
+    25.0,
+    25.0
+   ]
+  },
+  {
+   "model": "EGT002 SW50x2908",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\外购件\\EGT型材库\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x2908.stp",
+   "ok": true,
+   "nv": 83904,
+   "nt": 83872,
+   "volume": 2078142.38,
+   "bbox": [
+    0.0,
+    -25.0,
+    -25.0,
+    2908.0,
+    25.0,
+    25.0
+   ]
+  },
+  {
+   "model": "EGT002 SW50x2938",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\外购件\\EGT型材库\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x2938.stp",
+   "ok": true,
+   "nv": 84768,
+   "nt": 84736,
+   "volume": 2099585.01,
+   "bbox": [
+    0.0,
+    -25.0,
+    -25.0,
+    2938.0,
+    25.0,
+    25.0
+   ]
+  },
+  {
+   "model": "EGT002 SW50x2968",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\外购件\\EGT型材库\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x2968.stp",
+   "ok": true,
+   "nv": 85632,
+   "nt": 85600,
+   "volume": 2121026.08,
+   "bbox": [
+    0.0,
+    -25.0,
+    -25.0,
+    2968.0,
+    25.0,
+    25.0
+   ]
+  },
+  {
+   "model": "EGT002 SW50x298",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\外购件\\EGT型材库\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x298.stp",
+   "ok": true,
+   "nv": 8736,
+   "nt": 8704,
+   "volume": 212694.4,
+   "bbox": [
+    0.0,
+    -25.0,
+    -25.0,
+    298.0,
+    25.0,
+    25.0
+   ]
+  },
+  {
+   "model": "EGT002 SW50x2998",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\外购件\\EGT型材库\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x2998.stp",
+   "ok": true,
+   "nv": 86496,
+   "nt": 86464,
+   "volume": 2142469.43,
+   "bbox": [
+    0.0,
+    -25.0,
+    -25.0,
+    2998.0,
+    25.0,
+    25.0
+   ]
+  },
+  {
+   "model": "EGT002 SW50x3028",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\外购件\\EGT型材库\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x3028.stp",
+   "ok": true,
+   "nv": 87360,
+   "nt": 87328,
+   "volume": 2163909.34,
+   "bbox": [
+    0.0,
+    -25.0,
+    -25.0,
+    3028.0,
+    25.0,
+    25.0
+   ]
+  },
+  {
+   "model": "EGT002 SW50x3058",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\外购件\\EGT型材库\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x3058.stp",
+   "ok": true,
+   "nv": 88224,
+   "nt": 88192,
+   "volume": 2185350.99,
+   "bbox": [
+    0.0,
+    -25.0,
+    -25.0,
+    3058.0,
+    25.0,
+    25.0
+   ]
+  },
+  {
+   "model": "EGT002 SW50x3088",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\外购件\\EGT型材库\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x3088.stp",
+   "ok": true,
+   "nv": 89088,
+   "nt": 89056,
+   "volume": 2206792.75,
+   "bbox": [
+    0.0,
+    -25.0,
+    -25.0,
+    3088.0,
+    25.0,
+    25.0
+   ]
+  },
+  {
+   "model": "EGT002 SW50x3118",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\外购件\\EGT型材库\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x3118.stp",
+   "ok": true,
+   "nv": 89952,
+   "nt": 89920,
+   "volume": 2228234.67,
+   "bbox": [
+    0.0,
+    -25.0,
+    -25.0,
+    3118.0,
+    25.0,
+    25.0
+   ]
+  },
+  {
+   "model": "EGT002 SW50x3148",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\外购件\\EGT型材库\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x3148.stp",
+   "ok": true,
+   "nv": 90816,
+   "nt": 90784,
+   "volume": 2249677.51,
+   "bbox": [
+    0.0,
+    -25.0,
+    -25.0,
+    3148.0,
+    25.0,
+    25.0
+   ]
+  },
+  {
+   "model": "EGT002 SW50x3178",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\外购件\\EGT型材库\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x3178.stp",
+   "ok": true,
+   "nv": 91680,
+   "nt": 91648,
+   "volume": 2271116.39,
+   "bbox": [
+    0.0,
+    -25.0,
+    -25.0,
+    3178.0,
+    25.0,
+    25.0
+   ]
+  },
+  {
+   "model": "EGT002 SW50x3208",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\外购件\\EGT型材库\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x3208.stp",
+   "ok": true,
+   "nv": 92544,
+   "nt": 92512,
+   "volume": 2292560.18,
+   "bbox": [
+    0.0,
+    -25.0,
+    -25.0,
+    3208.0,
+    25.0,
+    25.0
+   ]
+  },
+  {
+   "model": "EGT002 SW50x3238",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\外购件\\EGT型材库\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x3238.stp",
+   "ok": true,
+   "nv": 93408,
+   "nt": 93376,
+   "volume": 2314003.16,
+   "bbox": [
+    0.0,
+    -25.0,
+    -25.0,
+    3238.0,
+    25.0,
+    25.0
+   ]
+  },
+  {
+   "model": "EGT002 SW50x3268",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\外购件\\EGT型材库\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x3268.stp",
+   "ok": true,
+   "nv": 94272,
+   "nt": 94240,
+   "volume": 2335440.63,
+   "bbox": [
+    0.0,
+    -25.0,
+    -25.0,
+    3268.0,
+    25.0,
+    25.0
+   ]
+  },
+  {
+   "model": "EGT002 SW50x328",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\外购件\\EGT型材库\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x328.stp",
+   "ok": true,
+   "nv": 9600,
+   "nt": 9568,
+   "volume": 234136.39,
+   "bbox": [
+    0.0,
+    -25.0,
+    -25.0,
+    328.0,
+    25.0,
+    25.0
+   ]
+  },
+  {
+   "model": "EGT002 SW50x3298",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\外购件\\EGT型材库\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x3298.stp",
+   "ok": true,
+   "nv": 95136,
+   "nt": 95104,
+   "volume": 2356885.06,
+   "bbox": [
+    0.0,
+    -25.0,
+    -25.0,
+    3298.0,
+    25.0,
+    25.0
+   ]
+  },
+  {
+   "model": "EGT002 SW50x3328",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\外购件\\EGT型材库\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x3328.stp",
+   "ok": true,
+   "nv": 96000,
+   "nt": 95968,
+   "volume": 2378326.89,
+   "bbox": [
+    0.0,
+    -25.0,
+    -25.0,
+    3328.0,
+    25.0,
+    25.0
+   ]
+  },
+  {
+   "model": "EGT002 SW50x3358",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\外购件\\EGT型材库\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x3358.stp",
+   "ok": true,
+   "nv": 96864,
+   "nt": 96832,
+   "volume": 2399769.29,
+   "bbox": [
+    0.0,
+    -25.0,
+    -25.0,
+    3358.0,
+    25.0,
+    25.0
+   ]
+  },
+  {
+   "model": "EGT002 SW50x3388",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\外购件\\EGT型材库\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x3388.stp",
+   "ok": true,
+   "nv": 97728,
+   "nt": 97696,
+   "volume": 2421210.81,
+   "bbox": [
+    0.0,
+    -25.0,
+    -25.0,
+    3388.0,
+    25.0,
+    25.0
+   ]
+  },
+  {
+   "model": "EGT002 SW50x3418",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\外购件\\EGT型材库\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x3418.stp",
+   "ok": true,
+   "nv": 98592,
+   "nt": 98560,
+   "volume": 2442651.42,
+   "bbox": [
+    0.0,
+    -25.0,
+    -25.0,
+    3418.0,
+    25.0,
+    25.0
+   ]
+  },
+  {
+   "model": "EGT002 SW50x3448",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\外购件\\EGT型材库\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x3448.stp",
+   "ok": true,
+   "nv": 99456,
+   "nt": 99424,
+   "volume": 2464093.77,
+   "bbox": [
+    0.0,
+    -25.0,
+    -25.0,
+    3448.0,
+    25.0,
+    25.0
+   ]
+  },
+  {
+   "model": "EGT002 SW50x3478",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\外购件\\EGT型材库\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x3478.stp",
+   "ok": true,
+   "nv": 100320,
+   "nt": 100288,
+   "volume": 2485532.62,
+   "bbox": [
+    0.0,
+    -25.0,
+    -25.0,
+    3478.0,
+    25.0,
+    25.0
+   ]
+  },
+  {
+   "model": "EGT002 SW50x3508",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\外购件\\EGT型材库\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x3508.stp",
+   "ok": true,
+   "nv": 101184,
+   "nt": 101152,
+   "volume": 2506978.41,
+   "bbox": [
+    0.0,
+    -25.0,
+    -25.0,
+    3508.0,
+    25.0,
+    25.0
+   ]
+  },
+  {
+   "model": "EGT002 SW50x3538",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\外购件\\EGT型材库\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x3538.stp",
+   "ok": true,
+   "nv": 102048,
+   "nt": 102016,
+   "volume": 2528417.54,
+   "bbox": [
+    0.0,
+    -25.0,
+    -25.0,
+    3538.0,
+    25.0,
+    25.0
+   ]
+  },
+  {
+   "model": "EGT002 SW50x3568",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\外购件\\EGT型材库\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x3568.stp",
+   "ok": true,
+   "nv": 102912,
+   "nt": 102880,
+   "volume": 2549862.97,
+   "bbox": [
+    0.0,
+    -25.0,
+    -25.0,
+    3568.0,
+    25.0,
+    25.0
+   ]
+  },
+  {
+   "model": "EGT002 SW50x358",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\外购件\\EGT型材库\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x358.stp",
+   "ok": true,
+   "nv": 10464,
+   "nt": 10432,
+   "volume": 255578.44,
+   "bbox": [
+    0.0,
+    -25.0,
+    -25.0,
+    358.0,
+    25.0,
+    25.0
+   ]
+  },
+  {
+   "model": "EGT002 SW50x3598",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\外购件\\EGT型材库\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x3598.stp",
+   "ok": true,
+   "nv": 103776,
+   "nt": 103744,
+   "volume": 2571304.84,
+   "bbox": [
+    0.0,
+    -25.0,
+    -25.0,
+    3598.0,
+    25.0,
+    25.0
+   ]
+  },
+  {
+   "model": "EGT002 SW50x3628",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\外购件\\EGT型材库\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x3628.stp",
+   "ok": true,
+   "nv": 104640,
+   "nt": 104608,
+   "volume": 2592746.21,
+   "bbox": [
+    0.0,
+    -25.0,
+    -25.0,
+    3628.0,
+    25.0,
+    25.0
+   ]
+  },
+  {
+   "model": "EGT002 SW50x3658",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\外购件\\EGT型材库\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x3658.stp",
+   "ok": true,
+   "nv": 105504,
+   "nt": 105472,
+   "volume": 2614186.1,
+   "bbox": [
+    0.0,
+    -25.0,
+    -25.0,
+    3658.0,
+    25.0,
+    25.0
+   ]
+  },
+  {
+   "model": "EGT002 SW50x3688",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\外购件\\EGT型材库\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x3688.stp",
+   "ok": true,
+   "nv": 106368,
+   "nt": 106336,
+   "volume": 2635627.32,
+   "bbox": [
+    0.0,
+    -25.0,
+    -25.0,
+    3688.0,
+    25.0,
+    25.0
+   ]
+  },
+  {
+   "model": "EGT002 SW50x3718",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\外购件\\EGT型材库\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x3718.stp",
+   "ok": true,
+   "nv": 107232,
+   "nt": 107200,
+   "volume": 2657069.65,
+   "bbox": [
+    0.0,
+    -25.0,
+    -25.0,
+    3718.0,
+    25.0,
+    25.0
+   ]
+  },
+  {
+   "model": "EGT002 SW50x3748",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\外购件\\EGT型材库\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x3748.stp",
+   "ok": true,
+   "nv": 108096,
+   "nt": 108064,
+   "volume": 2678510.73,
+   "bbox": [
+    0.0,
+    -25.0,
+    -25.0,
+    3748.0,
+    25.0,
+    25.0
+   ]
+  },
+  {
+   "model": "EGT002 SW50x3778",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\外购件\\EGT型材库\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x3778.stp",
+   "ok": true,
+   "nv": 108960,
+   "nt": 108928,
+   "volume": 2699962.72,
+   "bbox": [
+    0.0,
+    -25.0,
+    -25.0,
+    3778.0,
+    25.0,
+    25.0
+   ]
+  },
+  {
+   "model": "EGT002 SW50x3808",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\外购件\\EGT型材库\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x3808.stp",
+   "ok": true,
+   "nv": 109824,
+   "nt": 109792,
+   "volume": 2721394.96,
+   "bbox": [
+    0.0,
+    -25.0,
+    -25.0,
+    3808.0,
+    25.0,
+    25.0
+   ]
+  },
+  {
+   "model": "EGT002 SW50x3838",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\外购件\\EGT型材库\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x3838.stp",
+   "ok": true,
+   "nv": 110688,
+   "nt": 110656,
+   "volume": 2742830.22,
+   "bbox": [
+    0.0,
+    -25.0,
+    -25.0,
+    3838.0,
+    25.0,
+    25.0
+   ]
+  },
+  {
+   "model": "EGT002 SW50x3868",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\外购件\\EGT型材库\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x3868.stp",
+   "ok": true,
+   "nv": 111552,
+   "nt": 111520,
+   "volume": 2764276.06,
+   "bbox": [
+    0.0,
+    -25.0,
+    -25.0,
+    3868.0,
+    25.0,
+    25.0
+   ]
+  },
+  {
+   "model": "EGT002 SW50x388",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\外购件\\EGT型材库\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x388.stp",
+   "ok": true,
+   "nv": 11328,
+   "nt": 11296,
+   "volume": 277020.5,
+   "bbox": [
+    0.0,
+    -25.0,
+    -25.0,
+    388.0,
+    25.0,
+    25.0
+   ]
+  },
+  {
+   "model": "EGT002 SW50x3898",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\外购件\\EGT型材库\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x3898.stp",
+   "ok": true,
+   "nv": 112416,
+   "nt": 112384,
+   "volume": 2785717.1,
+   "bbox": [
+    0.0,
+    -25.0,
+    -25.0,
+    3898.0,
+    25.0,
+    25.0
+   ]
+  },
+  {
+   "model": "EGT002 SW50x3928",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\外购件\\EGT型材库\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x3928.stp",
+   "ok": true,
+   "nv": 113280,
+   "nt": 113248,
+   "volume": 2807165.72,
+   "bbox": [
+    0.0,
+    -25.0,
+    -25.0,
+    3928.0,
+    25.0,
+    25.0
+   ]
+  },
+  {
+   "model": "EGT002 SW50x3958",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\外购件\\EGT型材库\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x3958.stp",
+   "ok": true,
+   "nv": 114144,
+   "nt": 114112,
+   "volume": 2828606.23,
+   "bbox": [
+    0.0,
+    -25.0,
+    -25.0,
+    3958.0,
+    25.0,
+    25.0
+   ]
+  },
+  {
+   "model": "EGT002 SW50x3988",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\外购件\\EGT型材库\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x3988.stp",
+   "ok": true,
+   "nv": 115008,
+   "nt": 114976,
+   "volume": 2850043.74,
+   "bbox": [
+    0.0,
+    -25.0,
+    -25.0,
+    3988.0,
+    25.0,
+    25.0
+   ]
+  },
+  {
+   "model": "EGT002 SW50x4018",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\外购件\\EGT型材库\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x4018.stp",
+   "ok": true,
+   "nv": 115872,
+   "nt": 115840,
+   "volume": 2871484.21,
+   "bbox": [
+    0.0,
+    -25.0,
+    -25.0,
+    4018.0,
+    25.0,
+    25.0
+   ]
+  },
+  {
+   "model": "EGT002 SW50x4048",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\外购件\\EGT型材库\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x4048.stp",
+   "ok": true,
+   "nv": 116736,
+   "nt": 116704,
+   "volume": 2892925.36,
+   "bbox": [
+    0.0,
+    -25.0,
+    -25.0,
+    4048.0,
+    25.0,
+    25.0
+   ]
+  },
+  {
+   "model": "EGT002 SW50x4078",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\外购件\\EGT型材库\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x4078.stp",
+   "ok": true,
+   "nv": 117600,
+   "nt": 117568,
+   "volume": 2914375.05,
+   "bbox": [
+    0.0,
+    -25.0,
+    -25.0,
+    4078.0,
+    25.0,
+    25.0
+   ]
+  },
+  {
+   "model": "EGT002 SW50x418",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\外购件\\EGT型材库\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x418.stp",
+   "ok": true,
+   "nv": 12192,
+   "nt": 12160,
+   "volume": 298462.62,
+   "bbox": [
+    0.0,
+    -25.0,
+    -25.0,
+    418.0,
+    25.0,
+    25.0
+   ]
+  },
+  {
+   "model": "EGT002 SW50x448",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\外购件\\EGT型材库\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x448.stp",
+   "ok": true,
+   "nv": 13056,
+   "nt": 13024,
+   "volume": 319904.55,
+   "bbox": [
+    0.0,
+    -25.0,
+    -25.0,
+    448.0,
+    25.0,
+    25.0
+   ]
+  },
+  {
+   "model": "EGT002 SW50x478",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\外购件\\EGT型材库\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x478.stp",
+   "ok": true,
+   "nv": 13920,
+   "nt": 13888,
+   "volume": 341346.65,
+   "bbox": [
+    0.0,
+    -25.0,
+    -25.0,
+    478.0,
+    25.0,
+    25.0
+   ]
+  },
+  {
+   "model": "EGT002 SW50x508",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\外购件\\EGT型材库\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x508.stp",
+   "ok": true,
+   "nv": 14784,
+   "nt": 14752,
+   "volume": 362788.67,
+   "bbox": [
+    0.0,
+    -25.0,
+    -25.0,
+    508.0,
+    25.0,
+    25.0
+   ]
+  },
+  {
+   "model": "EGT002 SW50x538",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\外购件\\EGT型材库\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x538.stp",
+   "ok": true,
+   "nv": 15648,
+   "nt": 15616,
+   "volume": 384230.67,
+   "bbox": [
+    0.0,
+    -25.0,
+    -25.0,
+    538.0,
+    25.0,
+    25.0
+   ]
+  },
+  {
+   "model": "EGT002 SW50x568",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\外购件\\EGT型材库\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x568.stp",
+   "ok": true,
+   "nv": 16512,
+   "nt": 16480,
+   "volume": 405672.7,
+   "bbox": [
+    0.0,
+    -25.0,
+    -25.0,
+    568.0,
+    25.0,
+    25.0
+   ]
+  },
+  {
+   "model": "EGT002 SW50x598",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\外购件\\EGT型材库\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x598.stp",
+   "ok": true,
+   "nv": 17376,
+   "nt": 17344,
+   "volume": 427114.64,
+   "bbox": [
+    0.0,
+    -25.0,
+    -25.0,
+    598.0,
+    25.0,
+    25.0
+   ]
+  },
+  {
+   "model": "EGT002 SW50x628",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\外购件\\EGT型材库\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x628.stp",
+   "ok": true,
+   "nv": 18240,
+   "nt": 18208,
+   "volume": 448556.64,
+   "bbox": [
+    0.0,
+    -25.0,
+    -25.0,
+    628.0,
+    25.0,
+    25.0
+   ]
+  },
+  {
+   "model": "EGT002 SW50x658",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\外购件\\EGT型材库\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x658.stp",
+   "ok": true,
+   "nv": 19104,
+   "nt": 19072,
+   "volume": 469998.81,
+   "bbox": [
+    0.0,
+    -25.0,
+    -25.0,
+    658.0,
+    25.0,
+    25.0
+   ]
+  },
+  {
+   "model": "EGT002 SW50x688",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\外购件\\EGT型材库\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x688.stp",
+   "ok": true,
+   "nv": 19968,
+   "nt": 19936,
+   "volume": 491440.79,
+   "bbox": [
+    0.0,
+    -25.0,
+    -25.0,
+    688.0,
+    25.0,
+    25.0
+   ]
+  },
+  {
+   "model": "EGT002 SW50x718",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\外购件\\EGT型材库\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x718.stp",
+   "ok": true,
+   "nv": 20832,
+   "nt": 20800,
+   "volume": 512882.8,
+   "bbox": [
+    0.0,
+    -25.0,
+    -25.0,
+    718.0,
+    25.0,
+    25.0
+   ]
+  },
+  {
+   "model": "EGT002 SW50x748",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\外购件\\EGT型材库\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x748.stp",
+   "ok": true,
+   "nv": 21696,
+   "nt": 21664,
+   "volume": 534324.85,
+   "bbox": [
+    0.0,
+    -25.0,
+    -25.0,
+    748.0,
+    25.0,
+    25.0
+   ]
+  },
+  {
+   "model": "EGT002 SW50x778",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\外购件\\EGT型材库\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x778.stp",
+   "ok": true,
+   "nv": 22560,
+   "nt": 22528,
+   "volume": 555766.73,
+   "bbox": [
+    0.0,
+    -25.0,
+    -25.0,
+    778.0,
+    25.0,
+    25.0
+   ]
+  },
+  {
+   "model": "EGT002 SW50x808",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\外购件\\EGT型材库\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x808.stp",
+   "ok": true,
+   "nv": 23424,
+   "nt": 23392,
+   "volume": 577208.61,
+   "bbox": [
+    0.0,
+    -25.0,
+    -25.0,
+    808.0,
+    25.0,
+    25.0
+   ]
+  },
+  {
+   "model": "EGT002 SW50x838",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\外购件\\EGT型材库\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x838.stp",
+   "ok": true,
+   "nv": 24288,
+   "nt": 24256,
+   "volume": 598650.61,
+   "bbox": [
+    0.0,
+    -25.0,
+    -25.0,
+    838.0,
+    25.0,
+    25.0
+   ]
+  },
+  {
+   "model": "EGT002 SW50x868",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\外购件\\EGT型材库\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x868.stp",
+   "ok": true,
+   "nv": 25152,
+   "nt": 25120,
+   "volume": 620092.27,
+   "bbox": [
+    0.0,
+    -25.0,
+    -25.0,
+    868.0,
+    25.0,
+    25.0
+   ]
+  },
+  {
+   "model": "EGT002 SW50x898",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\外购件\\EGT型材库\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x898.stp",
+   "ok": true,
+   "nv": 26016,
+   "nt": 25984,
+   "volume": 641534.58,
+   "bbox": [
+    0.0,
+    -25.0,
+    -25.0,
+    898.0,
+    25.0,
+    25.0
+   ]
+  },
+  {
+   "model": "EGT002 SW50x928",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\外购件\\EGT型材库\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x928.stp",
+   "ok": true,
+   "nv": 26880,
+   "nt": 26848,
+   "volume": 662976.57,
+   "bbox": [
+    0.0,
+    -25.0,
+    -25.0,
+    928.0,
+    25.0,
+    25.0
+   ]
+  },
+  {
+   "model": "EGT002 SW50x958",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\外购件\\EGT型材库\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x958.stp",
+   "ok": true,
+   "nv": 27744,
+   "nt": 27712,
+   "volume": 684418.22,
+   "bbox": [
+    0.0,
+    -25.0,
+    -25.0,
+    958.0,
+    25.0,
+    25.0
+   ]
+  },
+  {
+   "model": "EGT002 SW50x988",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\外购件\\EGT型材库\\11_Tuenkers EGT Gripper-EGT002\\EGT002 SW50x988.stp",
+   "ok": true,
+   "nv": 28608,
+   "nt": 28576,
+   "volume": 705860.1,
+   "bbox": [
+    0.0,
+    -25.0,
+    -25.0,
+    988.0,
+    25.0,
+    25.0
+   ]
+  },
+  {
+   "model": "EGT006 D30x073",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\外购件\\EGT型材库\\12_Tuenkers EGT Gripper-EGT006\\EGT006 D30x073.stp",
+   "ok": true,
+   "nv": 5936,
+   "nt": 5888,
+   "volume": 12649.35,
+   "bbox": [
+    0.0,
+    -15.0,
+    -14.999,
+    73.0,
+    15.0,
+    14.999
+   ]
+  },
+  {
+   "model": "EGT006 D30x088",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\外购件\\EGT型材库\\12_Tuenkers EGT Gripper-EGT006\\EGT006 D30x088.stp",
+   "ok": true,
+   "nv": 7086,
+   "nt": 7030,
+   "volume": 15350.45,
+   "bbox": [
+    0.0,
+    -15.0,
+    -14.999,
+    88.0,
+    15.0,
+    14.999
+   ]
+  },
+  {
+   "model": "EGT006 D30x1000",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\外购件\\EGT型材库\\12_Tuenkers EGT Gripper-EGT006\\EGT006 D30x1000.stp",
+   "ok": true,
+   "nv": 76086,
+   "nt": 75550,
+   "volume": 175213.39,
+   "bbox": [
+    0.0,
+    -15.0,
+    -14.999,
+    1000.0,
+    15.0,
+    14.999
+   ]
+  },
+  {
+   "model": "EGT006 D30x103",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\外购件\\EGT型材库\\12_Tuenkers EGT Gripper-EGT006\\EGT006 D30x103.stp",
+   "ok": true,
+   "nv": 8236,
+   "nt": 8172,
+   "volume": 17921.28,
+   "bbox": [
+    0.0,
+    -15.0,
+    -14.999,
+    103.0,
+    15.0,
+    14.999
+   ]
+  },
+  {
+   "model": "EGT006 D30x118",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\外购件\\EGT型材库\\12_Tuenkers EGT Gripper-EGT006\\EGT006 D30x118.stp",
+   "ok": true,
+   "nv": 9386,
+   "nt": 9314,
+   "volume": 20560.19,
+   "bbox": [
+    0.0,
+    -15.0,
+    -14.999,
+    118.0,
+    15.0,
+    14.999
+   ]
+  },
+  {
+   "model": "EGT006 D30x133",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\外购件\\EGT型材库\\12_Tuenkers EGT Gripper-EGT006\\EGT006 D30x133.stp",
+   "ok": true,
+   "nv": 10536,
+   "nt": 10456,
+   "volume": 23206.18,
+   "bbox": [
+    0.0,
+    -15.0,
+    -14.999,
+    133.0,
+    15.0,
+    14.999
+   ]
+  },
+  {
+   "model": "EGT006 D30x148",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\外购件\\EGT型材库\\12_Tuenkers EGT Gripper-EGT006\\EGT006 D30x148.stp",
+   "ok": true,
+   "nv": 11686,
+   "nt": 11598,
+   "volume": 25776.99,
+   "bbox": [
+    0.0,
+    -15.0,
+    -14.999,
+    148.0,
+    15.0,
+    14.999
+   ]
+  },
+  {
+   "model": "EGT006 D30x163",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\外购件\\EGT型材库\\12_Tuenkers EGT Gripper-EGT006\\EGT006 D30x163.stp",
+   "ok": true,
+   "nv": 12836,
+   "nt": 12740,
+   "volume": 28429.4,
+   "bbox": [
+    0.0,
+    -15.0,
+    -14.999,
+    163.0,
+    15.0,
+    14.999
+   ]
+  },
+  {
+   "model": "EGT006 D30x178",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\外购件\\EGT型材库\\12_Tuenkers EGT Gripper-EGT006\\EGT006 D30x178.stp",
+   "ok": true,
+   "nv": 13986,
+   "nt": 13882,
+   "volume": 31069.22,
+   "bbox": [
+    0.0,
+    -15.0,
+    -14.999,
+    178.0,
+    15.0,
+    14.999
+   ]
+  },
+  {
+   "model": "EGT006 D30x193",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\外购件\\EGT型材库\\12_Tuenkers EGT Gripper-EGT006\\EGT006 D30x193.stp",
+   "ok": true,
+   "nv": 15136,
+   "nt": 15024,
+   "volume": 33646.92,
+   "bbox": [
+    0.0,
+    -15.0,
+    -14.999,
+    193.0,
+    15.0,
+    14.999
+   ]
+  },
+  {
+   "model": "EGT006 D30x208",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\外购件\\EGT型材库\\12_Tuenkers EGT Gripper-EGT006\\EGT006 D30x208.stp",
+   "ok": true,
+   "nv": 16286,
+   "nt": 16166,
+   "volume": 36285.1,
+   "bbox": [
+    0.0,
+    -15.0,
+    -14.999,
+    208.0,
+    15.0,
+    14.999
+   ]
+  },
+  {
+   "model": "EGT006 D30x223",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\外购件\\EGT型材库\\12_Tuenkers EGT Gripper-EGT006\\EGT006 D30x223.stp",
+   "ok": true,
+   "nv": 17436,
+   "nt": 17308,
+   "volume": 38924.95,
+   "bbox": [
+    0.0,
+    -15.0,
+    -14.999,
+    223.0,
+    15.0,
+    14.999
+   ]
+  },
+  {
+   "model": "EGT006 D30x238",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\外购件\\EGT型材库\\12_Tuenkers EGT Gripper-EGT006\\EGT006 D30x238.stp",
+   "ok": true,
+   "nv": 18586,
+   "nt": 18450,
+   "volume": 41577.36,
+   "bbox": [
+    0.0,
+    -15.0,
+    -14.999,
+    238.0,
+    15.0,
+    14.999
+   ]
+  },
+  {
+   "model": "EGT006 D30x253",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\外购件\\EGT型材库\\12_Tuenkers EGT Gripper-EGT006\\EGT006 D30x253.stp",
+   "ok": true,
+   "nv": 19736,
+   "nt": 19592,
+   "volume": 44134.68,
+   "bbox": [
+    0.0,
+    -15.0,
+    -14.999,
+    253.0,
+    15.0,
+    14.999
+   ]
+  },
+  {
+   "model": "EGT006 D30x268",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\外购件\\EGT型材库\\12_Tuenkers EGT Gripper-EGT006\\EGT006 D30x268.stp",
+   "ok": true,
+   "nv": 20886,
+   "nt": 20734,
+   "volume": 46774.52,
+   "bbox": [
+    0.0,
+    -15.0,
+    -14.999,
+    268.0,
+    15.0,
+    14.999
+   ]
+  },
+  {
+   "model": "EGT006 D30x283",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\外购件\\EGT型材库\\12_Tuenkers EGT Gripper-EGT006\\EGT006 D30x283.stp",
+   "ok": true,
+   "nv": 22036,
+   "nt": 21876,
+   "volume": 49433.08,
+   "bbox": [
+    0.0,
+    -15.0,
+    -14.999,
+    283.0,
+    15.0,
+    14.999
+   ]
+  },
+  {
+   "model": "EGT006 D30x298",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\外购件\\EGT型材库\\12_Tuenkers EGT Gripper-EGT006\\EGT006 D30x298.stp",
+   "ok": true,
+   "nv": 23186,
+   "nt": 23018,
+   "volume": 52024.3,
+   "bbox": [
+    0.0,
+    -15.0,
+    -14.999,
+    298.0,
+    15.0,
+    14.999
+   ]
+  },
+  {
+   "model": "EGT006 D30x313",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\外购件\\EGT型材库\\12_Tuenkers EGT Gripper-EGT006\\EGT006 D30x313.stp",
+   "ok": true,
+   "nv": 24336,
+   "nt": 24160,
+   "volume": 54630.19,
+   "bbox": [
+    0.0,
+    -15.0,
+    -14.999,
+    313.0,
+    15.0,
+    14.999
+   ]
+  },
+  {
+   "model": "EGT006 D30x328",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\外购件\\EGT型材库\\12_Tuenkers EGT Gripper-EGT006\\EGT006 D30x328.stp",
+   "ok": true,
+   "nv": 25486,
+   "nt": 25302,
+   "volume": 57282.62,
+   "bbox": [
+    0.0,
+    -15.0,
+    -14.999,
+    328.0,
+    15.0,
+    14.999
+   ]
+  },
+  {
+   "model": "EGT006 D30x343",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\外购件\\EGT型材库\\12_Tuenkers EGT Gripper-EGT006\\EGT006 D30x343.stp",
+   "ok": true,
+   "nv": 26636,
+   "nt": 26444,
+   "volume": 59873.81,
+   "bbox": [
+    0.0,
+    -15.0,
+    -14.999,
+    343.0,
+    15.0,
+    14.999
+   ]
+  },
+  {
+   "model": "EGT006 D30x358",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\外购件\\EGT型材库\\12_Tuenkers EGT Gripper-EGT006\\EGT006 D30x358.stp",
+   "ok": true,
+   "nv": 27786,
+   "nt": 27586,
+   "volume": 62560.59,
+   "bbox": [
+    0.0,
+    -15.0,
+    -14.999,
+    358.0,
+    15.0,
+    14.999
+   ]
+  },
+  {
+   "model": "EGT006 D30x373",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\外购件\\EGT型材库\\12_Tuenkers EGT Gripper-EGT006\\EGT006 D30x373.stp",
+   "ok": true,
+   "nv": 28936,
+   "nt": 28728,
+   "volume": 65138.27,
+   "bbox": [
+    0.0,
+    -15.0,
+    -14.999,
+    373.0,
+    15.0,
+    14.999
+   ]
+  },
+  {
+   "model": "EGT013 300x450 SW80",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\外购件\\EGT型材库\\13_Tuenkers EGT Gripper-EGT Connector\\EGT013 300x450 SW80.stp",
+   "ok": true,
+   "nv": 20052,
+   "nt": 20532,
+   "volume": 3922213.96,
+   "bbox": [
+    -240.0,
+    -165.0,
+    -0.0,
+    240.0,
+    165.0,
+    74.0
+   ]
+  },
+  {
+   "model": "EGT016.1 300x450 SW80",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\外购件\\EGT型材库\\13_Tuenkers EGT Gripper-EGT Connector\\EGT016.1 300x450 SW80.stp",
+   "ok": true,
+   "nv": 20486,
+   "nt": 20406,
+   "volume": 3853058.52,
+   "bbox": [
+    -240.0,
+    -165.0,
+    -0.0,
+    240.0,
+    165.0,
+    74.0
+   ]
+  },
+  {
+   "model": "EGT017.1 450x600 SW80",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\外购件\\EGT型材库\\13_Tuenkers EGT Gripper-EGT Connector\\EGT017.1 450x600 SW80.stp",
+   "ok": true,
+   "nv": 25072,
+   "nt": 24780,
+   "volume": 7781462.45,
+   "bbox": [
+    -315.0,
+    -240.0,
+    -55.0,
+    315.0,
+    240.0,
+    24.0
+   ]
+  },
+  {
+   "model": "EGT018 300x450 SW50",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\外购件\\EGT型材库\\13_Tuenkers EGT Gripper-EGT Connector\\EGT018 300x450 SW50.stp",
+   "ok": true,
+   "nv": 22550,
+   "nt": 22362,
+   "volume": 3581291.7,
+   "bbox": [
+    -240.0,
+    -165.0,
+    -0.0,
+    240.0,
+    165.0,
+    62.0
+   ]
+  },
+  {
+   "model": "EGT023",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\外购件\\EGT型材库\\13_Tuenkers EGT Gripper-EGT Connector\\EGT023.stp",
+   "ok": true,
+   "nv": 11190,
+   "nt": 10666,
+   "volume": 644059.59,
+   "bbox": [
+    -0.0,
+    -93.0,
+    19.0,
+    176.0,
+    93.0,
+    129.8
+   ]
+  },
+  {
+   "model": "EGT046 225x315 SW80",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\外购件\\EGT型材库\\13_Tuenkers EGT Gripper-EGT Connector\\EGT046 225x315 SW80.stp",
+   "ok": true,
+   "nv": 40294,
+   "nt": 44376,
+   "volume": 2828611.26,
+   "bbox": [
+    -112.5,
+    -157.5,
+    -24.0,
+    112.5,
+    157.5,
+    62.0
+   ]
+  },
+  {
+   "model": "EGT052 225x315 SW80",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\外购件\\EGT型材库\\13_Tuenkers EGT Gripper-EGT Connector\\EGT052 225x315 SW80.stp",
+   "ok": true,
+   "nv": 20488,
+   "nt": 19682,
+   "volume": 2364901.51,
+   "bbox": [
+    -112.5,
+    -157.5,
+    -17.0,
+    112.5,
+    157.5,
+    62.0
+   ]
+  },
+  {
+   "model": "EGT054 225x315 SW80",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\外购件\\EGT型材库\\13_Tuenkers EGT Gripper-EGT Connector\\EGT054 225x315 SW80.stp",
+   "ok": true,
+   "nv": 34360,
+   "nt": 33126,
+   "volume": 3690416.04,
+   "bbox": [
+    -131.298,
+    -138.907,
+    -0.0,
+    103.588,
+    182.634,
+    248.0
+   ]
+  },
+  {
+   "model": "EGT080 SW80SW80",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\外购件\\EGT型材库\\13_Tuenkers EGT Gripper-EGT Connector\\EGT080 SW80SW80.stp",
+   "ok": true,
+   "nv": 32176,
+   "nt": 36286,
+   "volume": 519283.52,
+   "bbox": [
+    -74.0,
+    -74.0,
+    11.676,
+    74.0,
+    74.0,
+    108.331
+   ]
+  },
+  {
+   "model": "EGT081 SW80SW80",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\外购件\\EGT型材库\\13_Tuenkers EGT Gripper-EGT Connector\\EGT081 SW80SW80.stp",
+   "ok": true,
+   "nv": 21301,
+   "nt": 23968,
+   "volume": 210405.38,
+   "bbox": [
+    -133.0,
+    11.667,
+    -45.783,
+    -11.67,
+    133.0,
+    45.785
+   ]
+  },
+  {
+   "model": "EGT082 SW80SW50",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\外购件\\EGT型材库\\13_Tuenkers EGT Gripper-EGT Connector\\EGT082 SW80SW50.stp",
+   "ok": true,
+   "nv": 8406,
+   "nt": 7986,
+   "volume": 479296.23,
+   "bbox": [
+    -74.0,
+    -74.0,
+    11.676,
+    74.0,
+    74.0,
+    118.931
+   ]
+  },
+  {
+   "model": "EGT083 SW80SW50",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\外购件\\EGT型材库\\13_Tuenkers EGT Gripper-EGT Connector\\EGT083 SW80SW50.stp",
+   "ok": true,
+   "nv": 6640,
+   "nt": 6318,
+   "volume": 189457.09,
+   "bbox": [
+    -133.0,
+    11.668,
+    -45.785,
+    -1.061,
+    133.0,
+    45.785
+   ]
+  },
+  {
+   "model": "EGT084 SW50SW50",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\外购件\\EGT型材库\\13_Tuenkers EGT Gripper-EGT Connector\\EGT084 SW50SW50.stp",
+   "ok": true,
+   "nv": 6810,
+   "nt": 6454,
+   "volume": 360120.18,
+   "bbox": [
+    -74.0,
+    -74.0,
+    1.061,
+    74.0,
+    74.0,
+    88.939
+   ]
+  },
+  {
+   "model": "EGT085 SW50SW50",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\外购件\\EGT型材库\\13_Tuenkers EGT Gripper-EGT Connector\\EGT085 SW50SW50.stp",
+   "ok": true,
+   "nv": 6576,
+   "nt": 6266,
+   "volume": 187251.96,
+   "bbox": [
+    -133.0,
+    1.061,
+    -35.178,
+    -1.061,
+    133.0,
+    35.178
+   ]
+  },
+  {
+   "model": "EGT086 SW80SW50",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\外购件\\EGT型材库\\13_Tuenkers EGT Gripper-EGT Connector\\EGT086 SW80SW50.stp",
+   "ok": true,
+   "nv": 21813,
+   "nt": 24702,
+   "volume": 163216.66,
+   "bbox": [
+    76.0,
+    -51.663,
+    -33.403,
+    164.0,
+    57.152,
+    75.413
+   ]
+  },
+  {
+   "model": "EGT087 SW50SW50",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\外购件\\EGT型材库\\13_Tuenkers EGT Gripper-EGT Connector\\EGT087 SW50SW50.stp",
+   "ok": true,
+   "nv": 22001,
+   "nt": 24922,
+   "volume": 160139.01,
+   "bbox": [
+    62.934,
+    -35.178,
+    1.064,
+    164.0,
+    35.178,
+    106.758
+   ]
+  },
+  {
+   "model": "EGT088 SW80SW80",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\外购件\\EGT型材库\\13_Tuenkers EGT Gripper-EGT Connector\\EGT088 SW80SW80.stp",
+   "ok": true,
+   "nv": 22119,
+   "nt": 25070,
+   "volume": 193315.31,
+   "bbox": [
+    91.496,
+    -45.785,
+    11.668,
+    194.0,
+    45.785,
+    120.484
+   ]
+  },
+  {
+   "model": "EGT089 SW80SW80SW80",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\外购件\\EGT型材库\\13_Tuenkers EGT Gripper-EGT Connector\\EGT089 SW80SW80SW80.stp",
+   "ok": true,
+   "nv": 9862,
+   "nt": 9374,
+   "volume": 457494.25,
+   "bbox": [
+    -163.0,
+    -16.569,
+    -16.569,
+    16.569,
+    163.0,
+    163.0
+   ]
+  },
+  {
+   "model": "EGT090 SW80SW80SW50",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\外购件\\EGT型材库\\13_Tuenkers EGT Gripper-EGT Connector\\EGT090 SW80SW80SW50.stp",
+   "ok": true,
+   "nv": 9796,
+   "nt": 9308,
+   "volume": 399128.25,
+   "bbox": [
+    -163.0,
+    -16.569,
+    -16.569,
+    16.569,
+    163.0,
+    133.0
+   ]
+  },
+  {
+   "model": "EGT091 SW50SW50SW50",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\外购件\\EGT型材库\\13_Tuenkers EGT Gripper-EGT Connector\\EGT091 SW50SW50SW50.stp",
+   "ok": true,
+   "nv": 34421,
+   "nt": 37806,
+   "volume": 362035.36,
+   "bbox": [
+    -133.0,
+    -10.355,
+    -10.355,
+    10.355,
+    133.0,
+    133.0
+   ]
+  },
+  {
+   "model": "EGT100 SW80RD30-X90",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\外购件\\EGT型材库\\13_Tuenkers EGT Gripper-EGT Connector\\EGT100 SW80RD30-X90.stp",
+   "ok": true,
+   "nv": 13144,
+   "nt": 13950,
+   "volume": 209616.36,
+   "bbox": [
+    -44.0,
+    -46.386,
+    12.092,
+    44.0,
+    46.386,
+    108.1
+   ]
+  },
+  {
+   "model": "EGT103 SW80RD30-L90",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\外购件\\EGT型材库\\13_Tuenkers EGT Gripper-EGT Connector\\EGT103 SW80RD30-L90.stp",
+   "ok": true,
+   "nv": 13258,
+   "nt": 13634,
+   "volume": 210065.16,
+   "bbox": [
+    -44.0,
+    -46.331,
+    13.699,
+    44.0,
+    46.331,
+    119.553
+   ]
+  },
+  {
+   "model": "EGT105 SW50RD30-X90",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\外购件\\EGT型材库\\13_Tuenkers EGT Gripper-EGT Connector\\EGT105 SW50RD30-X90.stp",
+   "ok": true,
+   "nv": 12706,
+   "nt": 13110,
+   "volume": 131129.13,
+   "bbox": [
+    -29.0,
+    -35.685,
+    1.394,
+    29.0,
+    35.873,
+    93.1
+   ]
+  },
+  {
+   "model": "EGT119 SW80RD30-90",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\外购件\\EGT型材库\\13_Tuenkers EGT Gripper-EGT Connector\\EGT119 SW80RD30-90.stp",
+   "ok": true,
+   "nv": 3426,
+   "nt": 3252,
+   "volume": 79728.91,
+   "bbox": [
+    -39.0,
+    -85.0,
+    -44.0,
+    14.0,
+    -11.317,
+    44.0
+   ]
+  },
+  {
+   "model": "EGT120 SW50RD30-90",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\外购件\\EGT型材库\\13_Tuenkers EGT Gripper-EGT Connector\\EGT120 SW50RD30-90.stp",
+   "ok": true,
+   "nv": 3444,
+   "nt": 3266,
+   "volume": 60019.95,
+   "bbox": [
+    -31.465,
+    -70.0,
+    -39.0,
+    31.466,
+    -0.712,
+    14.0
+   ]
+  },
+  {
+   "model": "EGT142 RD30-30-X90",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\外购件\\EGT型材库\\13_Tuenkers EGT Gripper-EGT Connector\\EGT142 RD30-30-X90.stp",
+   "ok": true,
+   "nv": 2008,
+   "nt": 1916,
+   "volume": 45669.76,
+   "bbox": [
+    -18.0,
+    -28.0,
+    -20.0,
+    20.0,
+    58.0,
+    18.0
+   ]
+  },
+  {
+   "model": "EGT143 RD30-30-L90",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\外购件\\EGT型材库\\13_Tuenkers EGT Gripper-EGT Connector\\EGT143 RD30-30-L90.stp",
+   "ok": true,
+   "nv": 2442,
+   "nt": 2336,
+   "volume": 52003.27,
+   "bbox": [
+    -19.092,
+    -28.0,
+    -22.617,
+    22.602,
+    56.0,
+    19.092
+   ]
+  },
+  {
+   "model": "EGT144 RD30-30-L135",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\外购件\\EGT型材库\\13_Tuenkers EGT Gripper-EGT Connector\\EGT144 RD30-30-L135.stp",
+   "ok": true,
+   "nv": 2116,
+   "nt": 2020,
+   "volume": 56765.38,
+   "bbox": [
+    -20.0,
+    -28.0,
+    -18.0,
+    18.0,
+    64.347,
+    41.565
+   ]
+  },
+  {
+   "model": "EGT160 70x70x15",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\外购件\\EGT型材库\\13_Tuenkers EGT Gripper-EGT Connector\\EGT160 70x70x15.stp",
+   "ok": true,
+   "nv": 2274,
+   "nt": 2216,
+   "volume": 80459.36,
+   "bbox": [
+    -25.0,
+    0.0,
+    0.0,
+    25.0,
+    70.0,
+    70.0
+   ]
+  },
+  {
+   "model": "EGT171 RD30-K40-HLR (Al)",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\外购件\\EGT型材库\\13_Tuenkers EGT Gripper-EGT Connector\\EGT171 RD30-K40-HLR (Al).stp",
+   "ok": true,
+   "nv": 3066,
+   "nt": 2938,
+   "volume": 97910.97,
+   "bbox": [
+    -20.0,
+    -57.0,
+    -29.1,
+    20.0,
+    16.0,
+    20.0
+   ]
+  },
+  {
+   "model": "EGT172 RD30-K40-HU (Al)",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\外购件\\EGT型材库\\13_Tuenkers EGT Gripper-EGT Connector\\EGT172 RD30-K40-HU (Al).stp",
+   "ok": true,
+   "nv": 3312,
+   "nt": 3178,
+   "volume": 130175.23,
+   "bbox": [
+    -25.0,
+    -37.0,
+    -60.1,
+    25.0,
+    16.0,
+    16.0
+   ]
+  },
+  {
+   "model": "EGT173 RD30-K40-VLR",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\外购件\\EGT型材库\\13_Tuenkers EGT Gripper-EGT Connector\\EGT173 RD30-K40-VLR.stp",
+   "ok": true,
+   "nv": 9349,
+   "nt": 9052,
+   "volume": 180556.82,
+   "bbox": [
+    -45.6,
+    -28.0,
+    -33.1,
+    69.0,
+    28.0,
+    67.0
+   ]
+  },
+  {
+   "model": "EGT174 RD30-K40-VU",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\外购件\\EGT型材库\\13_Tuenkers EGT Gripper-EGT Connector\\EGT174 RD30-K40-VU.stp",
+   "ok": true,
+   "nv": 2406,
+   "nt": 2316,
+   "volume": 109814.47,
+   "bbox": [
+    -20.0,
+    -24.0,
+    -81.0,
+    38.0,
+    24.0,
+    26.0
+   ]
+  },
+  {
+   "model": "EGT177-I RD30-K50_63-HLR (I)",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\外购件\\EGT型材库\\13_Tuenkers EGT Gripper-EGT Connector\\EGT177-I RD30-K50_63-HLR (I).stp",
+   "ok": true,
+   "nv": 3492,
+   "nt": 3348,
+   "volume": 135582.05,
+   "bbox": [
+    -27.5,
+    -20.0,
+    0.0,
+    27.5,
+    28.9,
+    73.0
+   ]
+  },
+  {
+   "model": "EGT179 RD30-K50_63-VLR",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\外购件\\EGT型材库\\13_Tuenkers EGT Gripper-EGT Connector\\EGT179 RD30-K50_63-VLR.stp",
+   "ok": true,
+   "nv": 9190,
+   "nt": 8588,
+   "volume": 243559.28,
+   "bbox": [
+    -28.0,
+    -88.0,
+    -33.1,
+    28.0,
+    49.9,
+    91.5
+   ]
+  },
+  {
+   "model": "EGT180 RD30-K50_63-VU",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\外购件\\EGT型材库\\13_Tuenkers EGT Gripper-EGT Connector\\EGT180 RD30-K50_63-VU.stp",
+   "ok": true,
+   "nv": 2365,
+   "nt": 2236,
+   "volume": 186783.94,
+   "bbox": [
+    -28.5,
+    -25.0,
+    -101.0,
+    58.0,
+    25.0,
+    30.0
+   ]
+  },
+  {
+   "model": "EGT182 RD30-50_63",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\外购件\\EGT型材库\\13_Tuenkers EGT Gripper-EGT Connector\\EGT182 RD30-50_63.stp",
+   "ok": true,
+   "nv": 2604,
+   "nt": 2540,
+   "volume": 81405.41,
+   "bbox": [
+    -27.0,
+    -18.0,
+    -28.0,
+    27.0,
+    25.0,
+    81.5
+   ]
+  },
+  {
+   "model": "EGT183 RD30-5063",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\外购件\\EGT型材库\\13_Tuenkers EGT Gripper-EGT Connector\\EGT183 RD30-5063.stp",
+   "ok": true,
+   "nv": 3138,
+   "nt": 3060,
+   "volume": 103518.03,
+   "bbox": [
+    -27.0,
+    -106.0,
+    -28.0,
+    27.0,
+    25.0,
+    81.5
+   ]
+  },
+  {
+   "model": "EGT184-2 M8x40",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\外购件\\EGT型材库\\13_Tuenkers EGT Gripper-EGT Connector\\EGT184-2 M8x40.stp",
+   "ok": true,
+   "nv": 5584,
+   "nt": 5040,
+   "volume": 68175.71,
+   "bbox": [
+    -18.0,
+    -25.0,
+    0.0,
+    39.0,
+    25.0,
+    138.0
+   ]
+  },
+  {
+   "model": "EGT190 28.5-28",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\外购件\\EGT型材库\\13_Tuenkers EGT Gripper-EGT Connector\\EGT190 28.5-28.stp",
+   "ok": true,
+   "nv": 6388,
+   "nt": 7196,
+   "volume": 53225.95,
+   "bbox": [
+    -5.0,
+    -29.0,
+    -16.5,
+    63.0,
+    29.0,
+    16.5
+   ]
+  },
+  {
+   "model": "EGT192 20-30",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\外购件\\EGT型材库\\13_Tuenkers EGT Gripper-EGT Connector\\EGT192 20-30.stp",
+   "ok": true,
+   "nv": 1670,
+   "nt": 1564,
+   "volume": 78203.12,
+   "bbox": [
+    -19.0,
+    -17.405,
+    -12.5,
+    19.0,
+    17.471,
+    350.5
+   ]
+  },
+  {
+   "model": "EGT200 RD30",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\外购件\\EGT型材库\\13_Tuenkers EGT Gripper-EGT Connector\\EGT200 RD30.stp",
+   "ok": true,
+   "nv": 1234,
+   "nt": 1128,
+   "volume": 1054.6,
+   "bbox": [
+    0.0,
+    -4.663,
+    8.6,
+    56.0,
+    4.663,
+    11.7
+   ]
+  },
+  {
+   "model": "EGT201 M6x36 RD30",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\外购件\\EGT型材库\\13_Tuenkers EGT Gripper-EGT Connector\\EGT201 M6x36 RD30.stp",
+   "ok": true,
+   "nv": 779,
+   "nt": 788,
+   "volume": 1508.96,
+   "bbox": [
+    -4.973,
+    -4.999,
+    -35.1,
+    4.973,
+    4.999,
+    6.9
+   ]
+  },
+  {
+   "model": "EGT203 RD30",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\外购件\\EGT型材库\\13_Tuenkers EGT Gripper-EGT Connector\\EGT203 RD30.stp",
+   "ok": true,
+   "nv": 1531,
+   "nt": 1554,
+   "volume": 9775.94,
+   "bbox": [
+    -11.416,
+    -58.1,
+    -11.5,
+    11.416,
+    25.0,
+    11.5
+   ]
+  },
+  {
+   "model": "EGT205 RD30",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\外购件\\EGT型材库\\13_Tuenkers EGT Gripper-EGT Connector\\EGT205 RD30.stp",
+   "ok": true,
+   "nv": 1638,
+   "nt": 1452,
+   "volume": 18077.28,
+   "bbox": [
+    -28.0,
+    -29.0,
+    -9.9,
+    -13.0,
+    29.0,
+    33.1
+   ]
+  },
+  {
+   "model": "EGT208 SW80",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\外购件\\EGT型材库\\13_Tuenkers EGT Gripper-EGT Connector\\EGT208 SW80.stp",
+   "ok": true,
+   "nv": 27447,
+   "nt": 30756,
+   "volume": 999388.04,
+   "bbox": [
+    -25.0,
+    -25.0,
+    0.0,
+    150.0,
+    105.0,
+    224.0
+   ]
+  },
+  {
+   "model": "EGT209 SW50",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\外购件\\EGT型材库\\13_Tuenkers EGT Gripper-EGT Connector\\EGT209 SW50.stp",
+   "ok": true,
+   "nv": 27061,
+   "nt": 30272,
+   "volume": 932284.42,
+   "bbox": [
+    -40.0,
+    -40.0,
+    0.0,
+    135.0,
+    90.0,
+    224.0
+   ]
+  },
+  {
+   "model": "EGT210 PLATE",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\外购件\\EGT型材库\\13_Tuenkers EGT Gripper-EGT Connector\\EGT210 PLATE.stp",
+   "ok": true,
+   "nv": 11936,
+   "nt": 13308,
+   "volume": 427298.99,
+   "bbox": [
+    -157.5,
+    -60.0,
+    -16.5,
+    157.5,
+    19.5,
+    55.0
+   ]
+  },
+  {
+   "model": "EGT211 90GRAD",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\外购件\\EGT型材库\\13_Tuenkers EGT Gripper-EGT Connector\\EGT211 90GRAD.stp",
+   "ok": true,
+   "nv": 9147,
+   "nt": 10406,
+   "volume": 316730.59,
+   "bbox": [
+    -19.5,
+    -112.5,
+    -14.5,
+    60.0,
+    112.5,
+    55.5
+   ]
+  },
+  {
+   "model": "EGT213 M5-M6",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\外购件\\EGT型材库\\13_Tuenkers EGT Gripper-EGT Connector\\EGT213 M5-M6.stp",
+   "ok": true,
+   "nv": 2100,
+   "nt": 2004,
+   "volume": 2248.26,
+   "bbox": [
+    -5.51,
+    -5.55,
+    -12.5,
+    65.485,
+    5.55,
+    5.8
+   ]
+  },
+  {
+   "model": "EGT214 M8",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\外购件\\EGT型材库\\13_Tuenkers EGT Gripper-EGT Connector\\EGT214 M8.stp",
+   "ok": true,
+   "nv": 1048,
+   "nt": 1300,
+   "volume": 944.52,
+   "bbox": [
+    -7.459,
+    -7.499,
+    -0.0,
+    7.459,
+    7.499,
+    15.6
+   ]
+  },
+  {
+   "model": "EGT215 SW80_SW50",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\外购件\\EGT型材库\\13_Tuenkers EGT Gripper-EGT Connector\\EGT215 SW80_SW50.stp",
+   "ok": true,
+   "nv": 1630,
+   "nt": 1846,
+   "volume": 1301.61,
+   "bbox": [
+    -6.22,
+    -6.784,
+    -6.9,
+    17.789,
+    6.857,
+    6.9
+   ]
+  },
+  {
+   "model": "EGT217",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\外购件\\EGT型材库\\13_Tuenkers EGT Gripper-EGT Connector\\EGT217.stp",
+   "ok": true,
+   "nv": 4662,
+   "nt": 4734,
+   "volume": 70740.29,
+   "bbox": [
+    -33.0,
+    -6.5,
+    -40.0,
+    35.0,
+    22.457,
+    32.6
+   ]
+  },
+  {
+   "model": "EGT218",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\外购件\\EGT型材库\\13_Tuenkers EGT Gripper-EGT Connector\\EGT218.stp",
+   "ok": true,
+   "nv": 8400,
+   "nt": 7796,
+   "volume": 104957.25,
+   "bbox": [
+    -29.0,
+    -29.0,
+    -32.6,
+    29.0,
+    29.0,
+    30.0
+   ]
+  },
+  {
+   "model": "EGT220 L315x30x15",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\外购件\\EGT型材库\\13_Tuenkers EGT Gripper-EGT Connector\\EGT220 L315x30x15.stp",
+   "ok": true,
+   "nv": 1786,
+   "nt": 1722,
+   "volume": 135499.32,
+   "bbox": [
+    -157.5,
+    -15.0,
+    -8.4,
+    157.5,
+    15.0,
+    15.0
+   ]
+  },
+  {
+   "model": "EGT230",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\外购件\\EGT型材库\\13_Tuenkers EGT Gripper-EGT Connector\\EGT230.stp",
+   "ok": true,
+   "nv": 10620,
+   "nt": 11816,
+   "volume": 641706.62,
+   "bbox": [
+    -44.0,
+    -58.5,
+    -12.5,
+    44.0,
+    272.5,
+    98.0
+   ]
+  },
+  {
+   "model": "EGT231",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\外购件\\EGT型材库\\13_Tuenkers EGT Gripper-EGT Connector\\EGT231.stp",
+   "ok": true,
+   "nv": 10930,
+   "nt": 12260,
+   "volume": 597795.14,
+   "bbox": [
+    -44.0,
+    -272.5,
+    -12.5,
+    44.0,
+    12.5,
+    60.0
+   ]
+  },
+  {
+   "model": "EGT232",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\外购件\\EGT型材库\\13_Tuenkers EGT Gripper-EGT Connector\\EGT232.stp",
+   "ok": true,
+   "nv": 11120,
+   "nt": 12392,
+   "volume": 525734.13,
+   "bbox": [
+    -44.0,
+    11.667,
+    -45.783,
+    44.0,
+    272.5,
+    45.785
+   ]
+  },
+  {
+   "model": "EGT235",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\外购件\\EGT型材库\\13_Tuenkers EGT Gripper-EGT Connector\\EGT235.stp",
+   "ok": true,
+   "nv": 11178,
+   "nt": 12316,
+   "volume": 466992.62,
+   "bbox": [
+    -44.0,
+    1.061,
+    -35.176,
+    44.0,
+    240.0,
+    42.5
+   ]
+  },
+  {
+   "model": "EGT237 SW80SW80",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\外购件\\EGT型材库\\13_Tuenkers EGT Gripper-EGT Connector\\EGT237 SW80SW80.stp",
+   "ok": true,
+   "nv": 3248,
+   "nt": 3124,
+   "volume": 549963.91,
+   "bbox": [
+    -285.46,
+    -30.0,
+    -48.0,
+    154.38,
+    182.131,
+    48.0
+   ]
+  },
+  {
+   "model": "EGT244 SW50",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\外购件\\EGT型材库\\13_Tuenkers EGT Gripper-EGT Connector\\EGT244 SW50.stp",
+   "ok": true,
+   "nv": 7862,
+   "nt": 8226,
+   "volume": 101177.69,
+   "bbox": [
+    -48.5,
+    -35.285,
+    1.533,
+    33.5,
+    35.284,
+    47.0
+   ]
+  },
+  {
+   "model": "EGT245 SW80",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\外购件\\EGT型材库\\13_Tuenkers EGT Gripper-EGT Connector\\EGT245 SW80.stp",
+   "ok": true,
+   "nv": 10063,
+   "nt": 10320,
+   "volume": 109107.69,
+   "bbox": [
+    -46.0,
+    -45.891,
+    12.139,
+    31.0,
+    45.878,
+    60.0
+   ]
+  },
+  {
+   "model": "EGT257 SW50",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\外购件\\EGT型材库\\13_Tuenkers EGT Gripper-EGT Connector\\EGT257 SW50.stp",
+   "ok": true,
+   "nv": 4478,
+   "nt": 5210,
+   "volume": 5593.06,
+   "bbox": [
+    -24.3,
+    -24.3,
+    -0.0,
+    24.3,
+    24.3,
+    8.2
+   ]
+  },
+  {
+   "model": "EGT258 SW80",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\外购件\\EGT型材库\\13_Tuenkers EGT Gripper-EGT Connector\\EGT258 SW80.stp",
+   "ok": true,
+   "nv": 5321,
+   "nt": 4905,
+   "volume": 12679.9,
+   "bbox": [
+    -39.25,
+    -39.25,
+    0.0,
+    39.25,
+    39.25,
+    8.6
+   ]
+  },
+  {
+   "model": "EGT274 SW50-40V",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\外购件\\EGT型材库\\13_Tuenkers EGT Gripper-EGT Connector\\EGT274 SW50-40V.stp",
+   "ok": true,
+   "nv": 10798,
+   "nt": 11410,
+   "volume": 198367.97,
+   "bbox": [
+    -44.4,
+    -35.175,
+    30.0,
+    79.0,
+    35.176,
+    194.0
+   ]
+  },
+  {
+   "model": "EGT275 SW50-50_63V",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\外购件\\EGT型材库\\13_Tuenkers EGT Gripper-EGT Connector\\EGT275 SW50-50_63V.stp",
+   "ok": true,
+   "nv": 16600,
+   "nt": 18005,
+   "volume": 262673.44,
+   "bbox": [
+    -58.176,
+    -35.347,
+    -44.0,
+    88.0,
+    35.347,
+    144.0
+   ]
+  },
+  {
+   "model": "EGT276 SW50-50_63H",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\外购件\\EGT型材库\\13_Tuenkers EGT Gripper-EGT Connector\\EGT276 SW50-50_63H.stp",
+   "ok": true,
+   "nv": 15003,
+   "nt": 15988,
+   "volume": 209291.52,
+   "bbox": [
+    -52.0,
+    -26.0,
+    -38.06,
+    89.06,
+    26.0,
+    101.5
+   ]
+  },
+  {
+   "model": "EGT287-1",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\外购件\\EGT型材库\\13_Tuenkers EGT Gripper-EGT Connector\\EGT287-1.stp",
+   "ok": true,
+   "nv": 1368,
+   "nt": 1340,
+   "volume": 104688.26,
+   "bbox": [
+    -25.0,
+    -40.0,
+    -100.0,
+    25.0,
+    25.0,
+    0.0
+   ]
+  },
+  {
+   "model": "EGT287-2",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\外购件\\EGT型材库\\13_Tuenkers EGT Gripper-EGT Connector\\EGT287-2.stp",
+   "ok": true,
+   "nv": 976,
+   "nt": 944,
+   "volume": 100994.46,
+   "bbox": [
+    -25.0,
+    -40.0,
+    -97.0,
+    25.0,
+    25.0,
+    3.0
+   ]
+  },
+  {
+   "model": "EGT288 85x80x50",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\外购件\\EGT型材库\\13_Tuenkers EGT Gripper-EGT Connector\\EGT288 85x80x50.stp",
+   "ok": true,
+   "nv": 1630,
+   "nt": 1612,
+   "volume": 103681.22,
+   "bbox": [
+    -25.0,
+    -60.0,
+    0.0,
+    25.0,
+    25.0,
+    80.0
+   ]
+  },
+  {
+   "model": "EGT289 D30",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\外购件\\EGT型材库\\13_Tuenkers EGT Gripper-EGT Connector\\EGT289 D30.stp",
+   "ok": true,
+   "nv": 4470,
+   "nt": 4452,
+   "volume": 34700.99,
+   "bbox": [
+    -25.0,
+    -25.0,
+    0.0,
+    25.0,
+    25.0,
+    63.0
+   ]
+  },
+  {
+   "model": "VGT181 RD30-V40",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\外购件\\EGT型材库\\13_Tuenkers EGT Gripper-EGT Connector\\VGT181 RD30-V40.stp",
+   "ok": true,
+   "nv": 3100,
+   "nt": 2996,
+   "volume": 94340.24,
+   "bbox": [
+    -27.0,
+    -82.0,
+    -28.0,
+    27.0,
+    25.0,
+    65.0
+   ]
+  },
+  {
+   "model": "VGT182 RD30-K40",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\外购件\\EGT型材库\\13_Tuenkers EGT Gripper-EGT Connector\\VGT182 RD30-K40.stp",
+   "ok": true,
+   "nv": 4878,
+   "nt": 4656,
+   "volume": 100051.74,
+   "bbox": [
+    -27.0,
+    -82.0,
+    -28.0,
+    27.0,
+    44.0,
+    65.0
+   ]
+  },
+  {
+   "model": "MGPA50-50Z-P3DWASE",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\外购件\\SMC\\MGPA50-50Z-P3DWASE.stp",
+   "ok": true,
+   "nv": 7936,
+   "nt": 7816,
+   "volume": 861719.77,
+   "bbox": [
+    -33.0,
+    -74.0,
+    -32.0,
+    108.5,
+    74.0,
+    32.0
+   ]
+  },
+  {
+   "model": "ULA63040AK0",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\外购件\\UNIVER\\双导杆气缸\\ULA63040AK0.stp",
+   "ok": true,
+   "nv": 33085,
+   "nt": 37965,
+   "volume": 1556439.22,
+   "bbox": [
+    -62.05,
+    -25.487,
+    -293.0,
+    90.0,
+    25.487,
+    126.0
+   ]
+  },
+  {
+   "model": "ULA63060AK0",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\外购件\\UNIVER\\双导杆气缸\\ULA63060AK0.stp",
+   "ok": true,
+   "nv": 32993,
+   "nt": 37771,
+   "volume": 1639793.69,
+   "bbox": [
+    -69.158,
+    -161.05,
+    -25.487,
+    82.892,
+    277.95,
+    25.487
+   ]
+  },
+  {
+   "model": "UCBH50OCSK0105",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\外购件\\UNIVER\\夹紧气缸\\UCBH50OCSK0105.stp",
+   "ok": true,
+   "nv": 44872,
+   "nt": 51206,
+   "volume": 1527601.67,
+   "bbox": [
+    -144.0,
+    -317.5,
+    -36.0,
+    106.0,
+    63.0,
+    36.0
+   ]
+  },
+  {
+   "model": "UCBH50VCSK0105",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\外购件\\UNIVER\\夹紧气缸\\UCBH50VCSK0105.stp",
+   "ok": true,
+   "nv": 44041,
+   "nt": 50302,
+   "volume": 1526707.6,
+   "bbox": [
+    1148.0,
+    -962.0,
+    339.0,
+    1297.0,
+    -500.5,
+    411.0
+   ]
+  },
+  {
+   "model": "UCBH63OESK0105",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\外购件\\UNIVER\\夹紧气缸\\UCBH63OESK0105.stp",
+   "ok": true,
+   "nv": 41252,
+   "nt": 46620,
+   "volume": 1821932.46,
+   "bbox": [
+    380.5,
+    -855.0,
+    574.15,
+    459.5,
+    -393.5,
+    755.0
+   ]
+  },
+  {
+   "model": "UCBH63VEAK0135",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\外购件\\UNIVER\\夹紧气缸\\UCBH63VEAK0135.stp",
+   "ok": true,
+   "nv": 47840,
+   "nt": 53584,
+   "volume": 1843213.4,
+   "bbox": [
+    -144.0,
+    -317.5,
+    -39.5,
+    108.9,
+    73.0,
+    39.5
+   ]
+  },
+  {
+   "model": "UCBM63OESK0105",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\外购件\\UNIVER\\手动夹紧气缸\\UCBM63OESK0105.stp",
+   "ok": true,
+   "nv": 42416,
+   "nt": 48860,
+   "volume": 1842787.69,
+   "bbox": [
+    -73.0,
+    -317.5,
+    -102.75,
+    106.0,
+    144.0,
+    55.0
+   ]
+  },
+  {
+   "model": "UCBM63VESK0135",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\外购件\\UNIVER\\手动夹紧气缸\\UCBM63VESK0135.stp",
+   "ok": true,
+   "nv": 42416,
+   "nt": 48860,
+   "volume": 1842787.68,
+   "bbox": [
+    -144.0,
+    -317.5,
+    -102.75,
+    106.0,
+    125.873,
+    55.0
+   ]
+  },
+  {
+   "model": "GB825_88_M16",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\外购件\\吊环\\GB825_88_M16.stp",
+   "ok": true,
+   "nv": 1745,
+   "nt": 2526,
+   "volume": 35343.5,
+   "bbox": [
+    -31.455,
+    -17.5,
+    -27.0,
+    31.455,
+    17.5,
+    62.5
+   ]
+  },
+  {
+   "model": "GB825_88_M20",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\外购件\\吊环\\GB825_88_M20.stp",
+   "ok": true,
+   "nv": 1260,
+   "nt": 1792,
+   "volume": 54218.62,
+   "bbox": [
+    3240.0,
+    -300.948,
+    1377.0,
+    3280.0,
+    -229.052,
+    1480.0
+   ]
+  },
+  {
+   "model": "GB825_88_M24",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\外购件\\吊环\\GB825_88_M24.stp",
+   "ok": true,
+   "nv": 1866,
+   "nt": 2818,
+   "volume": 117336.19,
+   "bbox": [
+    -38.495,
+    -25.914,
+    -40.0,
+    38.495,
+    25.96,
+    84.291
+   ]
+  },
+  {
+   "model": "BES M08MG1-PSC20A-S04G-W",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\外购件\\接近开关\\BES M08MG1-PSC20A-S04G-W.stp",
+   "ok": true,
+   "nv": 792,
+   "nt": 728,
+   "volume": 4903.0,
+   "bbox": [
+    0.0,
+    -7.506,
+    -6.5,
+    65.0,
+    7.506,
+    6.5
+   ]
+  },
+  {
+   "model": "BES_M12MI_PSC30A_S04G_W09",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\外购件\\接近开关\\BES_M12MI_PSC30A_S04G_W09.stp",
+   "ok": true,
+   "nv": 2768,
+   "nt": 2584,
+   "volume": 7702.63,
+   "bbox": [
+    -0.0,
+    -9.815,
+    -8.5,
+    65.0,
+    9.815,
+    8.5
+   ]
+  },
+  {
+   "model": "BES_M18MI_PSC80A_S04G_W33",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\外购件\\接近开关\\BES_M18MI_PSC80A_S04G_W33.stp",
+   "ok": true,
+   "nv": 5270,
+   "nt": 4978,
+   "volume": 16730.78,
+   "bbox": [
+    -0.0,
+    -14.985,
+    -15.0,
+    66.0,
+    14.985,
+    15.0
+   ]
+  },
+  {
+   "model": "KMS-M15-G14-H04",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\标准件\\分气块\\KMS-M15-G14-H04.stp",
+   "ok": true,
+   "nv": 10380,
+   "nt": 7732,
+   "volume": 145016.49,
+   "bbox": [
+    -80.0,
+    -32.5,
+    0.0,
+    0.0,
+    32.5,
+    35.0
+   ]
+  },
+  {
+   "model": "KMS-M15-G14-H06",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\标准件\\分气块\\KMS-M15-G14-H06.stp",
+   "ok": true,
+   "nv": 10892,
+   "nt": 8284,
+   "volume": 219571.25,
+   "bbox": [
+    -120.0,
+    -32.5,
+    0.0,
+    0.0,
+    32.5,
+    35.0
+   ]
+  },
+  {
+   "model": "KMS-M15-G14-H08",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\标准件\\分气块\\KMS-M15-G14-H08.stp",
+   "ok": true,
+   "nv": 11404,
+   "nt": 8836,
+   "volume": 294126.04,
+   "bbox": [
+    -160.0,
+    -32.5,
+    0.0,
+    0.0,
+    32.5,
+    35.0
+   ]
+  },
+  {
+   "model": "KMS-M15-G14-H10",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\标准件\\分气块\\KMS-M15-G14-H10.stp",
+   "ok": true,
+   "nv": 11916,
+   "nt": 9388,
+   "volume": 368678.58,
+   "bbox": [
+    -200.0,
+    -32.5,
+    0.0,
+    0.0,
+    32.5,
+    35.0
+   ]
+  },
+  {
+   "model": "KMS-M15-G14-H12",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\标准件\\分气块\\KMS-M15-G14-H12.stp",
+   "ok": true,
+   "nv": 12428,
+   "nt": 9940,
+   "volume": 443233.32,
+   "bbox": [
+    -240.0,
+    -32.5,
+    0.0,
+    0.0,
+    32.5,
+    35.0
+   ]
+  },
+  {
+   "model": "50x20x5",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\标准件\\垫片垫块\\50x20x5\\50x20x5.stp",
+   "ok": false,
+   "err": "RuntimeError: 三角化为空"
+  },
+  {
+   "model": "KMS-M09-H03-20-20",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\标准件\\垫片垫块\\50x20x5\\KMS-M09-H03-20-20.stp",
+   "ok": true,
+   "nv": 348,
+   "nt": 336,
+   "volume": 1622.0,
+   "bbox": [
+    -10.0,
+    0.0,
+    0.0,
+    10.0,
+    50.0,
+    2.0
+   ]
+  },
+  {
+   "model": "KMS-M09-S03-20-02",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\标准件\\垫片垫块\\50x20x5\\KMS-M09-S03-20-02.stp",
+   "ok": true,
+   "nv": 240,
+   "nt": 204,
+   "volume": 127.1,
+   "bbox": [
+    -10.0,
+    0.0,
+    -0.0,
+    10.0,
+    50.0,
+    0.2
+   ]
+  },
+  {
+   "model": "KMS-M09-S03-20-03",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\标准件\\垫片垫块\\50x20x5\\KMS-M09-S03-20-03.stp",
+   "ok": true,
+   "nv": 240,
+   "nt": 204,
+   "volume": 190.65,
+   "bbox": [
+    -10.0,
+    0.0,
+    0.0,
+    10.0,
+    50.0,
+    0.3
+   ]
+  },
+  {
+   "model": "KMS-M09-S03-20-05",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\标准件\\垫片垫块\\50x20x5\\KMS-M09-S03-20-05.stp",
+   "ok": true,
+   "nv": 240,
+   "nt": 204,
+   "volume": 317.75,
+   "bbox": [
+    -10.0,
+    0.0,
+    0.0,
+    10.0,
+    50.0,
+    0.5
+   ]
+  },
+  {
+   "model": "KMS-M09-S03-20-10",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\标准件\\垫片垫块\\50x20x5\\KMS-M09-S03-20-10.stp",
+   "ok": true,
+   "nv": 240,
+   "nt": 204,
+   "volume": 635.5,
+   "bbox": [
+    -10.0,
+    0.0,
+    0.0,
+    10.0,
+    50.0,
+    1.0
+   ]
+  },
+  {
+   "model": "50x50x5",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\标准件\\垫片垫块\\50x50x5\\50x50x5.stp",
+   "ok": false,
+   "err": "RuntimeError: 三角化为空"
+  },
+  {
+   "model": "KMS-M09-H06-50-20",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\标准件\\垫片垫块\\50x50x5\\KMS-M09-H06-50-20.stp",
+   "ok": true,
+   "nv": 672,
+   "nt": 660,
+   "volume": 4244.0,
+   "bbox": [
+    -25.0,
+    0.0,
+    -0.0,
+    25.0,
+    50.0,
+    2.0
+   ]
+  },
+  {
+   "model": "KMS-M09-S02-50-02",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\标准件\\垫片垫块\\50x50x5\\KMS-M09-S02-50-02.stp",
+   "ok": true,
+   "nv": 168,
+   "nt": 140,
+   "volume": 343.4,
+   "bbox": [
+    -25.0,
+    0.0,
+    -0.0,
+    25.0,
+    50.0,
+    0.2
+   ]
+  },
+  {
+   "model": "KMS-M09-S02-50-03",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\标准件\\垫片垫块\\50x50x5\\KMS-M09-S02-50-03.stp",
+   "ok": true,
+   "nv": 168,
+   "nt": 140,
+   "volume": 515.1,
+   "bbox": [
+    -25.0,
+    0.0,
+    0.0,
+    25.0,
+    50.0,
+    0.3
+   ]
+  },
+  {
+   "model": "KMS-M09-S02-50-05",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\标准件\\垫片垫块\\50x50x5\\KMS-M09-S02-50-05.stp",
+   "ok": true,
+   "nv": 168,
+   "nt": 140,
+   "volume": 858.5,
+   "bbox": [
+    -25.0,
+    0.0,
+    0.0,
+    25.0,
+    50.0,
+    0.5
+   ]
+  },
+  {
+   "model": "KMS-M09-S02-50-10",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\标准件\\垫片垫块\\50x50x5\\KMS-M09-S02-50-10.stp",
+   "ok": true,
+   "nv": 168,
+   "nt": 140,
+   "volume": 1717.0,
+   "bbox": [
+    -25.0,
+    0.0,
+    0.0,
+    25.0,
+    50.0,
+    1.0
+   ]
+  },
+  {
+   "model": "65x20x5",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\标准件\\垫片垫块\\65x20x5\\65x20x5.stp",
+   "ok": false,
+   "err": "RuntimeError: 三角化为空"
+  },
+  {
+   "model": "KMS-M09-H04-20-20",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\标准件\\垫片垫块\\65x20x5\\KMS-M09-H04-20-20.stp",
+   "ok": true,
+   "nv": 456,
+   "nt": 444,
+   "volume": 2096.0,
+   "bbox": [
+    -10.0,
+    0.0,
+    0.0,
+    10.0,
+    65.0,
+    2.0
+   ]
+  },
+  {
+   "model": "KMS-M09-S04-20-02",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\标准件\\垫片垫块\\65x20x5\\KMS-M09-S04-20-02.stp",
+   "ok": true,
+   "nv": 312,
+   "nt": 268,
+   "volume": 162.8,
+   "bbox": [
+    -10.0,
+    0.0,
+    -0.0,
+    10.0,
+    65.0,
+    0.2
+   ]
+  },
+  {
+   "model": "KMS-M09-S04-20-03",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\标准件\\垫片垫块\\65x20x5\\KMS-M09-S04-20-03.stp",
+   "ok": true,
+   "nv": 312,
+   "nt": 268,
+   "volume": 244.2,
+   "bbox": [
+    -10.0,
+    0.0,
+    0.0,
+    10.0,
+    65.0,
+    0.3
+   ]
+  },
+  {
+   "model": "KMS-M09-S04-20-05",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\标准件\\垫片垫块\\65x20x5\\KMS-M09-S04-20-05.stp",
+   "ok": true,
+   "nv": 312,
+   "nt": 268,
+   "volume": 407.0,
+   "bbox": [
+    -10.0,
+    0.0,
+    0.0,
+    10.0,
+    65.0,
+    0.5
+   ]
+  },
+  {
+   "model": "KMS-M09-S04-20-10",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\标准件\\垫片垫块\\65x20x5\\KMS-M09-S04-20-10.stp",
+   "ok": true,
+   "nv": 312,
+   "nt": 268,
+   "volume": 814.0,
+   "bbox": [
+    -10.0,
+    0.0,
+    0.0,
+    10.0,
+    65.0,
+    1.0
+   ]
+  },
+  {
+   "model": "KMS-M01-D159-A20",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\标准件\\定位销\\KMS-M01-D159-A20.stp",
+   "ok": true,
+   "nv": 996,
+   "nt": 1160,
+   "volume": 8165.85,
+   "bbox": [
+    -10.998,
+    -10.0,
+    -28.0,
+    10.0,
+    10.94,
+    44.095
+   ]
+  },
+  {
+   "model": "KMS-M01-P077-A20",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\标准件\\定位销\\KMS-M01-P077-A20.stp",
+   "ok": true,
+   "nv": 950,
+   "nt": 1134,
+   "volume": 4427.62,
+   "bbox": [
+    -10.998,
+    -10.958,
+    -28.0,
+    10.0,
+    10.94,
+    32.09
+   ]
+  },
+  {
+   "model": "KMS-M01-P079-A20",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\标准件\\定位销\\KMS-M01-P079-A20.stp",
+   "ok": true,
+   "nv": 950,
+   "nt": 1134,
+   "volume": 4483.87,
+   "bbox": [
+    -10.998,
+    -10.958,
+    -28.0,
+    10.0,
+    10.94,
+    32.269
+   ]
+  },
+  {
+   "model": "KMS-M01-P079-A30",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\标准件\\定位销\\KMS-M01-P079-A30.stp",
+   "ok": true,
+   "nv": 950,
+   "nt": 1134,
+   "volume": 4969.28,
+   "bbox": [
+    -10.998,
+    -10.958,
+    -28.0,
+    10.0,
+    10.94,
+    42.269
+   ]
+  },
+  {
+   "model": "KMS-M01-P097-A15",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\标准件\\定位销\\KMS-M01-P097-A15.stp",
+   "ok": true,
+   "nv": 952,
+   "nt": 1138,
+   "volume": 4772.08,
+   "bbox": [
+    -10.998,
+    -10.958,
+    -28.0,
+    10.0,
+    10.94,
+    29.308
+   ]
+  },
+  {
+   "model": "KMS-M01-P097-A20",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\标准件\\定位销\\KMS-M01-P097-A20.stp",
+   "ok": true,
+   "nv": 952,
+   "nt": 1138,
+   "volume": 5137.98,
+   "bbox": [
+    -10.998,
+    -10.958,
+    -28.0,
+    10.0,
+    10.94,
+    34.308
+   ]
+  },
+  {
+   "model": "KMS-M01-P097-A30",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\标准件\\定位销\\KMS-M01-P097-A30.stp",
+   "ok": true,
+   "nv": 952,
+   "nt": 1138,
+   "volume": 5869.79,
+   "bbox": [
+    -10.998,
+    -10.958,
+    -28.0,
+    10.0,
+    10.94,
+    44.308
+   ]
+  },
+  {
+   "model": "KMS-M01-P099-A15",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\标准件\\定位销\\KMS-M01-P099-A15.stp",
+   "ok": true,
+   "nv": 952,
+   "nt": 1138,
+   "volume": 4834.28,
+   "bbox": [
+    -10.998,
+    -10.958,
+    -28.0,
+    10.0,
+    10.94,
+    29.51
+   ]
+  },
+  {
+   "model": "KMS-M01-P099-A20",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\标准件\\定位销\\KMS-M01-P099-A20.stp",
+   "ok": true,
+   "nv": 952,
+   "nt": 1138,
+   "volume": 5215.43,
+   "bbox": [
+    -10.998,
+    -10.958,
+    -28.0,
+    10.0,
+    10.94,
+    34.51
+   ]
+  },
+  {
+   "model": "KMS-M01-P099-A30",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\标准件\\定位销\\KMS-M01-P099-A30.stp",
+   "ok": true,
+   "nv": 952,
+   "nt": 1138,
+   "volume": 5977.72,
+   "bbox": [
+    -10.998,
+    -10.958,
+    -28.0,
+    10.0,
+    10.94,
+    44.51
+   ]
+  },
+  {
+   "model": "KMS-M01-P117-A15",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\标准件\\定位销\\KMS-M01-P117-A15.stp",
+   "ok": true,
+   "nv": 956,
+   "nt": 1146,
+   "volume": 5566.89,
+   "bbox": [
+    -10.998,
+    -10.958,
+    -28.0,
+    10.0,
+    10.94,
+    32.716
+   ]
+  },
+  {
+   "model": "KMS-M01-P117-A20",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\标准件\\定位销\\KMS-M01-P117-A20.stp",
+   "ok": true,
+   "nv": 956,
+   "nt": 1146,
+   "volume": 6099.24,
+   "bbox": [
+    -10.998,
+    -10.958,
+    -28.0,
+    10.0,
+    10.94,
+    37.716
+   ]
+  },
+  {
+   "model": "KMS-M01-P117-A30",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\标准件\\定位销\\KMS-M01-P117-A30.stp",
+   "ok": true,
+   "nv": 956,
+   "nt": 1146,
+   "volume": 7163.94,
+   "bbox": [
+    -10.998,
+    -10.958,
+    -28.0,
+    10.0,
+    10.94,
+    47.716
+   ]
+  },
+  {
+   "model": "KMS-M01-P119-A20",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\标准件\\定位销\\KMS-M01-P119-A20.stp",
+   "ok": true,
+   "nv": 956,
+   "nt": 1146,
+   "volume": 6200.29,
+   "bbox": [
+    -10.998,
+    -10.958,
+    -28.0,
+    10.0,
+    10.94,
+    37.906
+   ]
+  },
+  {
+   "model": "KMS-M01-P119-A30",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\标准件\\定位销\\KMS-M01-P119-A30.stp",
+   "ok": true,
+   "nv": 956,
+   "nt": 1146,
+   "volume": 7301.7,
+   "bbox": [
+    -10.998,
+    -10.958,
+    -28.0,
+    10.0,
+    10.94,
+    47.906
+   ]
+  },
+  {
+   "model": "KMS-M01-P157-A20",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\标准件\\定位销\\KMS-M01-P157-A20.stp",
+   "ok": true,
+   "nv": 942,
+   "nt": 1118,
+   "volume": 8834.92,
+   "bbox": [
+    -10.998,
+    -10.958,
+    -28.0,
+    10.0,
+    10.94,
+    43.922
+   ]
+  },
+  {
+   "model": "KMS-M01-P157-A30",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\标准件\\定位销\\KMS-M01-P157-A30.stp",
+   "ok": true,
+   "nv": 942,
+   "nt": 1118,
+   "volume": 10752.06,
+   "bbox": [
+    -10.998,
+    -10.958,
+    -28.0,
+    10.0,
+    10.94,
+    53.922
+   ]
+  },
+  {
+   "model": "KMS-M01-P159-A15",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\标准件\\定位销\\KMS-M01-P159-A15.stp",
+   "ok": true,
+   "nv": 940,
+   "nt": 1114,
+   "volume": 9000.12,
+   "bbox": [
+    -10.998,
+    -10.958,
+    -28.0,
+    10.0,
+    10.94,
+    44.095
+   ]
+  },
+  {
+   "model": "KMS-M01-P159-A20",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\标准件\\定位销\\KMS-M01-P159-A20.stp",
+   "ok": true,
+   "nv": 940,
+   "nt": 1114,
+   "volume": 9000.12,
+   "bbox": [
+    -10.998,
+    -10.958,
+    -28.0,
+    10.0,
+    10.94,
+    44.095
+   ]
+  },
+  {
+   "model": "KMS-M01-P159-A30",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\标准件\\定位销\\KMS-M01-P159-A30.stp",
+   "ok": true,
+   "nv": 940,
+   "nt": 1114,
+   "volume": 10966.41,
+   "bbox": [
+    -10.998,
+    -10.958,
+    -28.0,
+    10.0,
+    10.94,
+    54.095
+   ]
+  },
+  {
+   "model": "KMS-M01-P189-A30",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\标准件\\定位销\\KMS-M01-P189-A30.stp",
+   "ok": true,
+   "nv": 942,
+   "nt": 1118,
+   "volume": 13252.13,
+   "bbox": [
+    -10.998,
+    -10.958,
+    -28.0,
+    10.0,
+    10.94,
+    56.312
+   ]
+  },
+  {
+   "model": "KMS-M01-P299-A20",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\标准件\\定位销\\KMS-M01-P299-A20.stp",
+   "ok": true,
+   "nv": 830,
+   "nt": 1012,
+   "volume": 30506.48,
+   "bbox": [
+    -14.948,
+    -14.926,
+    -28.0,
+    14.948,
+    14.942,
+    54.795
+   ]
+  },
+  {
+   "model": "LZ01001001_H100",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\标准件\\支座(铝)\\LZ01001001_H100.stp",
+   "ok": true,
+   "nv": 6344,
+   "nt": 5472,
+   "volume": 474409.64,
+   "bbox": [
+    -26.0,
+    -37.5,
+    -27.0,
+    139.0,
+    37.5,
+    97.0
+   ]
+  },
+  {
+   "model": "LZ01001002_H200",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\标准件\\支座(铝)\\LZ01001002_H200.stp",
+   "ok": true,
+   "nv": 4872,
+   "nt": 4406,
+   "volume": 597479.01,
+   "bbox": [
+    -0.0,
+    -37.5,
+    -124.0,
+    265.0,
+    37.5,
+    0.0
+   ]
+  },
+  {
+   "model": "LZ01001003_H300",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\标准件\\支座(铝)\\LZ01001003_H300.stp",
+   "ok": true,
+   "nv": 5180,
+   "nt": 4698,
+   "volume": 781162.14,
+   "bbox": [
+    -0.0,
+    -37.5,
+    -124.0,
+    365.0,
+    37.5,
+    0.0
+   ]
+  },
+  {
+   "model": "LZ01001004_H400",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\标准件\\支座(铝)\\LZ01001004_H400.stp",
+   "ok": true,
+   "nv": 5176,
+   "nt": 4694,
+   "volume": 989362.52,
+   "bbox": [
+    -0.0,
+    0.0,
+    -37.5,
+    465.0,
+    124.0,
+    37.5
+   ]
+  },
+  {
+   "model": "LZ01001005_H500",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\标准件\\支座(铝)\\LZ01001005_H500.stp",
+   "ok": true,
+   "nv": 5176,
+   "nt": 4694,
+   "volume": 1197562.9,
+   "bbox": [
+    -0.0,
+    0.0,
+    -37.5,
+    565.0,
+    124.0,
+    37.5
+   ]
+  },
+  {
+   "model": "KMS-M05-010-100-D",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\标准件\\支座\\KMS-M05-010-100-D.stp",
+   "ok": true,
+   "nv": 1380,
+   "nt": 1340,
+   "volume": 573279.18,
+   "bbox": [
+    -55.0,
+    -2.0,
+    0.0,
+    55.0,
+    138.0,
+    155.0
+   ]
+  },
+  {
+   "model": "KMS-M05-010-150-D",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\标准件\\支座\\KMS-M05-010-150-D.stp",
+   "ok": true,
+   "nv": 1392,
+   "nt": 1348,
+   "volume": 716229.2,
+   "bbox": [
+    -55.0,
+    -5.0,
+    0.0,
+    55.0,
+    138.0,
+    205.0
+   ]
+  },
+  {
+   "model": "KMS-M05-010-200-D",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\标准件\\支座\\KMS-M05-010-200-D.stp",
+   "ok": true,
+   "nv": 1392,
+   "nt": 1348,
+   "volume": 864129.22,
+   "bbox": [
+    -55.0,
+    -5.0,
+    0.0,
+    55.0,
+    138.0,
+    255.0
+   ]
+  },
+  {
+   "model": "KMS-M05-010-250-D",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\标准件\\支座\\KMS-M05-010-250-D.stp",
+   "ok": true,
+   "nv": 1392,
+   "nt": 1348,
+   "volume": 1012029.14,
+   "bbox": [
+    -55.0,
+    -5.0,
+    0.0,
+    55.0,
+    138.0,
+    305.0
+   ]
+  },
+  {
+   "model": "KMS-M05-010-300-D",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\标准件\\支座\\KMS-M05-010-300-D.stp",
+   "ok": true,
+   "nv": 1392,
+   "nt": 1348,
+   "volume": 1159929.16,
+   "bbox": [
+    -55.0,
+    -5.0,
+    0.0,
+    55.0,
+    138.0,
+    355.0
+   ]
+  },
+  {
+   "model": "KMS-M05-010-350-D",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\标准件\\支座\\KMS-M05-010-350-D.stp",
+   "ok": true,
+   "nv": 1392,
+   "nt": 1348,
+   "volume": 1307829.24,
+   "bbox": [
+    -55.0,
+    -5.0,
+    0.0,
+    55.0,
+    138.0,
+    405.0
+   ]
+  },
+  {
+   "model": "KMS-M05-010-400-D",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\标准件\\支座\\KMS-M05-010-400-D.stp",
+   "ok": true,
+   "nv": 1392,
+   "nt": 1348,
+   "volume": 1455729.15,
+   "bbox": [
+    -55.0,
+    -5.0,
+    0.0,
+    55.0,
+    138.0,
+    455.0
+   ]
+  },
+  {
+   "model": "KMS-M14-010",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\标准件\\标牌\\KMS-M14-010.stp",
+   "ok": true,
+   "nv": 38716,
+   "nt": 26144,
+   "volume": 23935.79,
+   "bbox": [
+    -40.0,
+    -75.0,
+    0.0,
+    40.0,
+    75.0,
+    2.002
+   ]
+  },
+  {
+   "model": "KMS-M14-020",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\标准件\\标牌\\KMS-M14-020.stp",
+   "ok": true,
+   "nv": 1512,
+   "nt": 1076,
+   "volume": 440.3,
+   "bbox": [
+    -7.5,
+    -15.0,
+    0.0,
+    7.5,
+    15.0,
+    1.002
+   ]
+  },
+  {
+   "model": "KMS-M14-030",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\标准件\\标牌\\KMS-M14-030.stp",
+   "ok": true,
+   "nv": 7644,
+   "nt": 5196,
+   "volume": 1876.93,
+   "bbox": [
+    -24.818,
+    -25.0,
+    0.0,
+    24.818,
+    25.0,
+    1.002
+   ]
+  },
+  {
+   "model": "KMS-M11-H30x25-UD",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\标准件\\止块\\KMS-M11-H30x25-UD.stp",
+   "ok": true,
+   "nv": 362,
+   "nt": 326,
+   "volume": 12337.02,
+   "bbox": [
+    -12.5,
+    -15.0,
+    -9.0,
+    12.5,
+    15.0,
+    19.0
+   ]
+  },
+  {
+   "model": "KMS-M11-H30x25-WD",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\标准件\\止块\\KMS-M11-H30x25-WD.stp",
+   "ok": true,
+   "nv": 362,
+   "nt": 326,
+   "volume": 11583.03,
+   "bbox": [
+    -12.5,
+    -15.0,
+    -26.0,
+    12.5,
+    15.0,
+    -1.0
+   ]
+  },
+  {
+   "model": "KMS-M11-H30x50-UD",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\标准件\\止块\\KMS-M11-H30x50-UD.stp",
+   "ok": true,
+   "nv": 564,
+   "nt": 524,
+   "volume": 24675.0,
+   "bbox": [
+    -25.0,
+    -15.0,
+    12.0,
+    25.0,
+    15.0,
+    40.0
+   ]
+  },
+  {
+   "model": "KMS-M11-H30x50-WD",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\标准件\\止块\\KMS-M11-H30x50-WD.stp",
+   "ok": true,
+   "nv": 606,
+   "nt": 566,
+   "volume": 24058.36,
+   "bbox": [
+    -25.0,
+    -15.0,
+    -5.0,
+    25.0,
+    15.0,
+    20.0
+   ]
+  },
+  {
+   "model": "KMS-M11-V30x50-UD",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\标准件\\止块\\KMS-M11-V30x50-UD.stp",
+   "ok": true,
+   "nv": 650,
+   "nt": 606,
+   "volume": 27419.46,
+   "bbox": [
+    -37.5,
+    -15.0,
+    -11.0,
+    12.5,
+    15.0,
+    17.0
+   ]
+  },
+  {
+   "model": "KMS-M11-V30x50-WD",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\标准件\\止块\\KMS-M11-V30x50-WD.stp",
+   "ok": true,
+   "nv": 548,
+   "nt": 508,
+   "volume": 20043.43,
+   "bbox": [
+    -37.5,
+    -15.0,
+    -28.0,
+    12.5,
+    15.0,
+    -4.0
+   ]
+  },
+  {
+   "model": "KMS-M06-010-K63",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\标准件\\气缸连接块\\KMS-M06-010-K63.stp",
+   "ok": true,
+   "nv": 1404,
+   "nt": 1376,
+   "volume": 69786.34,
+   "bbox": [
+    -0.0,
+    0.0,
+    0.0,
+    32.0,
+    54.0,
+    55.0
+   ]
+  },
+  {
+   "model": "KMS-M06-010-K80",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\标准件\\气缸连接块\\KMS-M06-010-K80.stp",
+   "ok": true,
+   "nv": 1332,
+   "nt": 1304,
+   "volume": 163321.7,
+   "bbox": [
+    -0.0,
+    0.0,
+    0.0,
+    32.0,
+    76.0,
+    80.0
+   ]
+  },
+  {
+   "model": "KMS-M06-011-K63",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\标准件\\气缸连接块\\KMS-M06-011-K63.stp",
+   "ok": true,
+   "nv": 1180,
+   "nt": 1160,
+   "volume": 113403.44,
+   "bbox": [
+    0.0,
+    0.0,
+    0.0,
+    32.0,
+    77.0,
+    55.0
+   ]
+  },
+  {
+   "model": "KMS-M05-020-200",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\标准件\\补高台\\KMS-M05-020-200.stp",
+   "ok": true,
+   "nv": 1410,
+   "nt": 1356,
+   "volume": 1467059.5,
+   "bbox": [
+    -85.0,
+    -5.0,
+    -0.0,
+    85.0,
+    180.0,
+    200.0
+   ]
+  },
+  {
+   "model": "KMS-M05-020-300",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\标准件\\补高台\\KMS-M05-020-300.stp",
+   "ok": true,
+   "nv": 1526,
+   "nt": 1472,
+   "volume": 1863207.75,
+   "bbox": [
+    -85.0,
+    -5.0,
+    -0.0,
+    85.0,
+    180.0,
+    300.0
+   ]
+  },
+  {
+   "model": "KMS-M02-H03-20-RD",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\标准件\\销座\\KMS-M02-H03-20-RD.stp",
+   "ok": true,
+   "nv": 524,
+   "nt": 504,
+   "volume": 44911.55,
+   "bbox": [
+    -10.0,
+    -65.0,
+    -30.0,
+    10.0,
+    10.0,
+    5.0
+   ]
+  },
+  {
+   "model": "KMS-M02-H04-20-RM",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\标准件\\销座\\KMS-M02-H04-20-RM.stp",
+   "ok": true,
+   "nv": 632,
+   "nt": 612,
+   "volume": 55296.98,
+   "bbox": [
+    -10.0,
+    -80.0,
+    -30.0,
+    10.0,
+    10.0,
+    5.0
+   ]
+  },
+  {
+   "model": "KMS-M02-H04-20-TD",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\标准件\\销座\\KMS-M02-H04-20-TD.stp",
+   "ok": true,
+   "nv": 632,
+   "nt": 612,
+   "volume": 54151.55,
+   "bbox": [
+    -10.0,
+    -80.0,
+    -30.0,
+    10.0,
+    10.0,
+    5.0
+   ]
+  },
+  {
+   "model": "KMS-M02-H04-20-TM",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\标准件\\销座\\KMS-M02-H04-20-TM.stp",
+   "ok": true,
+   "nv": 632,
+   "nt": 612,
+   "volume": 55296.98,
+   "bbox": [
+    -10.0,
+    -80.0,
+    -30.0,
+    10.0,
+    10.0,
+    5.0
+   ]
+  },
+  {
+   "model": "KMS-M02-V03-20-RM",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\标准件\\销座\\KMS-M02-V03-20-RM.stp",
+   "ok": true,
+   "nv": 624,
+   "nt": 636,
+   "volume": 30752.96,
+   "bbox": [
+    -10.0,
+    -35.0,
+    -45.0,
+    10.0,
+    10.0,
+    5.0
+   ]
+  },
+  {
+   "model": "KMS-M02-V04-20-PD",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\标准件\\销座\\KMS-M02-V04-20-PD.stp",
+   "ok": true,
+   "nv": 644,
+   "nt": 620,
+   "volume": 35851.56,
+   "bbox": [
+    -10.0,
+    -35.0,
+    -60.0,
+    10.0,
+    10.0,
+    5.0
+   ]
+  },
+  {
+   "model": "KMS-M02-V04-20-PM",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\标准件\\销座\\KMS-M02-V04-20-PM.stp",
+   "ok": true,
+   "nv": 644,
+   "nt": 620,
+   "volume": 36996.98,
+   "bbox": [
+    -10.0,
+    -35.0,
+    -60.0,
+    10.0,
+    10.0,
+    5.0
+   ]
+  },
+  {
+   "model": "KMS-M02-V04-20-RM",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\标准件\\销座\\KMS-M02-V04-20-RM.stp",
+   "ok": true,
+   "nv": 752,
+   "nt": 764,
+   "volume": 36594.54,
+   "bbox": [
+    -10.0,
+    -35.0,
+    -60.0,
+    10.0,
+    10.0,
+    5.0
+   ]
+  },
+  {
+   "model": "KMS-M02-V04-20-SD",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\标准件\\销座\\KMS-M02-V04-20-SD.stp",
+   "ok": true,
+   "nv": 644,
+   "nt": 620,
+   "volume": 36380.44,
+   "bbox": [
+    -10.0,
+    -35.0,
+    -60.0,
+    10.0,
+    10.0,
+    5.0
+   ]
+  },
+  {
+   "model": "KMS-M02-V04-20-SM",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\标准件\\销座\\KMS-M02-V04-20-SM.stp",
+   "ok": true,
+   "nv": 644,
+   "nt": 620,
+   "volume": 36996.98,
+   "bbox": [
+    -10.0,
+    -35.0,
+    -60.0,
+    10.0,
+    10.0,
+    5.0
+   ]
+  },
+  {
+   "model": "KMS-M02-V04-20-TM",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\标准件\\销座\\KMS-M02-V04-20-TM.stp",
+   "ok": true,
+   "nv": 752,
+   "nt": 764,
+   "volume": 36594.54,
+   "bbox": [
+    -10.0,
+    -35.0,
+    -60.0,
+    10.0,
+    10.0,
+    5.0
+   ]
+  },
+  {
+   "model": "KMS-M02-V04-24-RM",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\标准件\\销座\\KMS-M02-V04-24-RM.stp",
+   "ok": true,
+   "nv": 752,
+   "nt": 764,
+   "volume": 42932.21,
+   "bbox": [
+    -12.0,
+    -35.0,
+    -60.0,
+    12.0,
+    12.0,
+    5.0
+   ]
+  },
+  {
+   "model": "KMS-M02-V04-24-SM",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\标准件\\销座\\KMS-M02-V04-24-SM.stp",
+   "ok": true,
+   "nv": 644,
+   "nt": 620,
+   "volume": 42661.52,
+   "bbox": [
+    -12.0,
+    -35.0,
+    -60.0,
+    12.0,
+    12.0,
+    5.0
+   ]
+  },
+  {
+   "model": "KMS-M13-M05-P02-V04",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\标准件\\阀岛\\KMS-M13-M05-P02-V04.stp",
+   "ok": true,
+   "nv": 6824,
+   "nt": 6696,
+   "volume": 1759481.6,
+   "bbox": [
+    0.0,
+    -250.0,
+    -0.0,
+    255.0,
+    250.0,
+    180.0
+   ]
+  },
+  {
+   "model": "KMS-M13-M08-P05-V09",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\标准件\\阀岛\\KMS-M13-M08-P05-V09.stp",
+   "ok": true,
+   "nv": 6824,
+   "nt": 6696,
+   "volume": 2752166.36,
+   "bbox": [
+    0.0,
+    -400.0,
+    -0.0,
+    255.0,
+    400.0,
+    180.0
+   ]
+  },
+  {
+   "model": "KMS-M13-M08-P05-V10",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\标准件\\阀岛\\KMS-M13-M08-P05-V10.stp",
+   "ok": true,
+   "nv": 6824,
+   "nt": 6696,
+   "volume": 2752166.36,
+   "bbox": [
+    0.0,
+    -400.0,
+    -0.0,
+    255.0,
+    400.0,
+    180.0
+   ]
+  },
+  {
+   "model": "KMS-M13-M08-P06-V09",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\标准件\\阀岛\\KMS-M13-M08-P06-V09.stp",
+   "ok": true,
+   "nv": 6824,
+   "nt": 6696,
+   "volume": 2752166.36,
+   "bbox": [
+    0.0,
+    -400.0,
+    -0.0,
+    255.0,
+    400.0,
+    180.0
+   ]
+  },
+  {
+   "model": "KMS-M13-M08-P06-V10",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\标准件\\阀岛\\KMS-M13-M08-P06-V10.stp",
+   "ok": true,
+   "nv": 6824,
+   "nt": 6696,
+   "volume": 2752166.36,
+   "bbox": [
+    0.0,
+    -400.0,
+    -0.0,
+    255.0,
+    400.0,
+    180.0
+   ]
+  },
+  {
+   "model": "M10X80",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\螺钉\\M10X80.stp",
+   "ok": true,
+   "nv": 684,
+   "nt": 644,
+   "volume": 8682.38,
+   "bbox": [
+    -10.0,
+    -9.927,
+    -80.0,
+    10.0,
+    9.927,
+    10.0
+   ]
+  },
+  {
+   "model": "M10x16",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\螺钉\\M10x16.stp",
+   "ok": true,
+   "nv": 684,
+   "nt": 644,
+   "volume": 3704.62,
+   "bbox": [
+    -10.0,
+    -9.927,
+    -15.1,
+    10.0,
+    9.927,
+    10.9
+   ]
+  },
+  {
+   "model": "M10x25",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\螺钉\\M10x25.stp",
+   "ok": true,
+   "nv": 684,
+   "nt": 644,
+   "volume": 4404.62,
+   "bbox": [
+    -10.0,
+    -9.927,
+    -24.1,
+    10.0,
+    9.927,
+    10.9
+   ]
+  },
+  {
+   "model": "M10x30",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\螺钉\\M10x30.stp",
+   "ok": true,
+   "nv": 684,
+   "nt": 644,
+   "volume": 4793.5,
+   "bbox": [
+    -10.0,
+    -9.927,
+    -29.1,
+    10.0,
+    9.927,
+    10.9
+   ]
+  },
+  {
+   "model": "M10x35",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\螺钉\\M10x35.stp",
+   "ok": true,
+   "nv": 684,
+   "nt": 644,
+   "volume": 5182.39,
+   "bbox": [
+    -10.0,
+    -9.927,
+    -34.1,
+    10.0,
+    9.927,
+    10.9
+   ]
+  },
+  {
+   "model": "M10x40",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\螺钉\\M10x40.stp",
+   "ok": true,
+   "nv": 684,
+   "nt": 644,
+   "volume": 5571.28,
+   "bbox": [
+    -10.0,
+    -9.927,
+    -39.1,
+    10.0,
+    9.927,
+    10.9
+   ]
+  },
+  {
+   "model": "M10x45",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\螺钉\\M10x45.stp",
+   "ok": true,
+   "nv": 684,
+   "nt": 644,
+   "volume": 5960.17,
+   "bbox": [
+    -10.0,
+    -9.927,
+    -44.1,
+    10.0,
+    9.927,
+    10.9
+   ]
+  },
+  {
+   "model": "M10x50",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\螺钉\\M10x50.stp",
+   "ok": true,
+   "nv": 684,
+   "nt": 644,
+   "volume": 6349.06,
+   "bbox": [
+    -10.0,
+    -9.927,
+    -49.1,
+    10.0,
+    9.927,
+    10.9
+   ]
+  },
+  {
+   "model": "M10x55",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\螺钉\\M10x55.stp",
+   "ok": true,
+   "nv": 684,
+   "nt": 644,
+   "volume": 6737.94,
+   "bbox": [
+    -10.0,
+    -9.927,
+    -54.1,
+    10.0,
+    9.927,
+    10.9
+   ]
+  },
+  {
+   "model": "M10x60",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\螺钉\\M10x60.stp",
+   "ok": true,
+   "nv": 684,
+   "nt": 644,
+   "volume": 7126.83,
+   "bbox": [
+    -10.0,
+    -9.927,
+    -59.1,
+    10.0,
+    9.927,
+    10.9
+   ]
+  },
+  {
+   "model": "M10x65",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\螺钉\\M10x65.stp",
+   "ok": true,
+   "nv": 684,
+   "nt": 644,
+   "volume": 7515.72,
+   "bbox": [
+    -10.0,
+    -9.927,
+    -65.0,
+    10.0,
+    9.927,
+    10.0
+   ]
+  },
+  {
+   "model": "M10x70",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\螺钉\\M10x70.stp",
+   "ok": true,
+   "nv": 684,
+   "nt": 644,
+   "volume": 7904.61,
+   "bbox": [
+    -10.0,
+    -9.927,
+    -70.0,
+    10.0,
+    9.927,
+    10.0
+   ]
+  },
+  {
+   "model": "M12x100",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\螺钉\\M12x100.stp",
+   "ok": true,
+   "nv": 684,
+   "nt": 644,
+   "volume": 14836.33,
+   "bbox": [
+    -12.0,
+    -11.913,
+    -97.5,
+    12.0,
+    11.913,
+    14.5
+   ]
+  },
+  {
+   "model": "M12x110",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\螺钉\\M12x110.stp",
+   "ok": true,
+   "nv": 684,
+   "nt": 644,
+   "volume": 15956.32,
+   "bbox": [
+    -12.0,
+    -11.913,
+    -107.5,
+    12.0,
+    11.913,
+    14.5
+   ]
+  },
+  {
+   "model": "M12x120_",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\螺钉\\M12x120_.stp",
+   "ok": true,
+   "nv": 684,
+   "nt": 644,
+   "volume": 17076.32,
+   "bbox": [
+    -12.0,
+    -11.913,
+    -117.5,
+    12.0,
+    11.913,
+    14.5
+   ]
+  },
+  {
+   "model": "M12x30",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\螺钉\\M12x30.stp",
+   "ok": true,
+   "nv": 684,
+   "nt": 644,
+   "volume": 6996.34,
+   "bbox": [
+    -12.0,
+    -11.913,
+    -30.0,
+    12.0,
+    11.913,
+    12.0
+   ]
+  },
+  {
+   "model": "M12x35",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\螺钉\\M12x35.stp",
+   "ok": true,
+   "nv": 684,
+   "nt": 644,
+   "volume": 7556.34,
+   "bbox": [
+    -12.0,
+    -11.913,
+    -35.0,
+    12.0,
+    11.913,
+    12.0
+   ]
+  },
+  {
+   "model": "M12x40",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\螺钉\\M12x40.stp",
+   "ok": true,
+   "nv": 684,
+   "nt": 644,
+   "volume": 8676.34,
+   "bbox": [
+    -12.0,
+    -11.913,
+    -42.5,
+    12.0,
+    11.913,
+    14.5
+   ]
+  },
+  {
+   "model": "M12x45",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\螺钉\\M12x45.stp",
+   "ok": true,
+   "nv": 684,
+   "nt": 644,
+   "volume": 8676.34,
+   "bbox": [
+    -12.0,
+    -11.913,
+    -42.5,
+    12.0,
+    11.913,
+    14.5
+   ]
+  },
+  {
+   "model": "M12x50",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\螺钉\\M12x50.stp",
+   "ok": true,
+   "nv": 684,
+   "nt": 644,
+   "volume": 9236.34,
+   "bbox": [
+    -12.0,
+    -11.913,
+    -47.5,
+    12.0,
+    11.913,
+    14.5
+   ]
+  },
+  {
+   "model": "M12x55",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\螺钉\\M12x55.stp",
+   "ok": true,
+   "nv": 684,
+   "nt": 644,
+   "volume": 9796.34,
+   "bbox": [
+    -12.0,
+    -11.913,
+    -52.5,
+    12.0,
+    11.913,
+    14.5
+   ]
+  },
+  {
+   "model": "M12x60",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\螺钉\\M12x60.stp",
+   "ok": true,
+   "nv": 684,
+   "nt": 644,
+   "volume": 10356.34,
+   "bbox": [
+    -12.0,
+    -11.913,
+    -57.5,
+    12.0,
+    11.913,
+    14.5
+   ]
+  },
+  {
+   "model": "M12x65",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\螺钉\\M12x65.stp",
+   "ok": true,
+   "nv": 684,
+   "nt": 644,
+   "volume": 10916.33,
+   "bbox": [
+    -12.0,
+    -11.913,
+    -62.5,
+    12.0,
+    11.913,
+    14.5
+   ]
+  },
+  {
+   "model": "M12x70",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\螺钉\\M12x70.stp",
+   "ok": true,
+   "nv": 684,
+   "nt": 644,
+   "volume": 11476.33,
+   "bbox": [
+    -12.0,
+    -11.913,
+    -67.5,
+    12.0,
+    11.913,
+    14.5
+   ]
+  },
+  {
+   "model": "M12x80",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\螺钉\\M12x80.stp",
+   "ok": true,
+   "nv": 684,
+   "nt": 644,
+   "volume": 12596.33,
+   "bbox": [
+    -12.0,
+    -11.913,
+    -77.5,
+    12.0,
+    11.913,
+    14.5
+   ]
+  },
+  {
+   "model": "M12x90",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\螺钉\\M12x90.stp",
+   "ok": true,
+   "nv": 684,
+   "nt": 644,
+   "volume": 13716.33,
+   "bbox": [
+    -12.0,
+    -11.913,
+    -87.5,
+    12.0,
+    11.913,
+    14.5
+   ]
+  },
+  {
+   "model": "M5x10",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\螺钉\\M5x10.stp",
+   "ok": true,
+   "nv": 684,
+   "nt": 644,
+   "volume": 560.71,
+   "bbox": [
+    -5.0,
+    -4.964,
+    -8.4,
+    5.0,
+    4.964,
+    6.6
+   ]
+  },
+  {
+   "model": "M5x12",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\螺钉\\M5x12.stp",
+   "ok": true,
+   "nv": 684,
+   "nt": 644,
+   "volume": 599.59,
+   "bbox": [
+    -5.0,
+    -4.964,
+    -10.4,
+    5.0,
+    4.964,
+    6.6
+   ]
+  },
+  {
+   "model": "M5x16",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\螺钉\\M5x16.stp",
+   "ok": true,
+   "nv": 684,
+   "nt": 644,
+   "volume": 677.37,
+   "bbox": [
+    -5.0,
+    -4.964,
+    -14.4,
+    5.0,
+    4.964,
+    6.6
+   ]
+  },
+  {
+   "model": "M5x20",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\螺钉\\M5x20.stp",
+   "ok": true,
+   "nv": 684,
+   "nt": 644,
+   "volume": 755.15,
+   "bbox": [
+    -5.0,
+    -4.964,
+    -18.4,
+    5.0,
+    4.964,
+    6.6
+   ]
+  },
+  {
+   "model": "M5x25",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\螺钉\\M5x25.stp",
+   "ok": true,
+   "nv": 684,
+   "nt": 644,
+   "volume": 852.37,
+   "bbox": [
+    -5.0,
+    -4.964,
+    -23.4,
+    5.0,
+    4.964,
+    6.6
+   ]
+  },
+  {
+   "model": "M5x30",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\螺钉\\M5x30.stp",
+   "ok": true,
+   "nv": 684,
+   "nt": 644,
+   "volume": 949.59,
+   "bbox": [
+    -5.0,
+    -4.964,
+    -28.4,
+    5.0,
+    4.964,
+    6.6
+   ]
+  },
+  {
+   "model": "M5x35",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\螺钉\\M5x35.stp",
+   "ok": true,
+   "nv": 684,
+   "nt": 644,
+   "volume": 1046.82,
+   "bbox": [
+    -5.0,
+    -4.964,
+    -33.4,
+    5.0,
+    4.964,
+    6.6
+   ]
+  },
+  {
+   "model": "M5x40",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\螺钉\\M5x40.stp",
+   "ok": true,
+   "nv": 684,
+   "nt": 644,
+   "volume": 1144.04,
+   "bbox": [
+    -5.0,
+    -4.964,
+    -38.4,
+    5.0,
+    4.964,
+    6.6
+   ]
+  },
+  {
+   "model": "M5x45",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\螺钉\\M5x45.stp",
+   "ok": true,
+   "nv": 684,
+   "nt": 644,
+   "volume": 1241.26,
+   "bbox": [
+    -5.0,
+    -4.964,
+    -43.4,
+    5.0,
+    4.964,
+    6.6
+   ]
+  },
+  {
+   "model": "M5x50",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\螺钉\\M5x50.stp",
+   "ok": true,
+   "nv": 684,
+   "nt": 644,
+   "volume": 1338.48,
+   "bbox": [
+    -5.0,
+    -4.964,
+    -48.4,
+    5.0,
+    4.964,
+    6.6
+   ]
+  },
+  {
+   "model": "M5x8",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\螺钉\\M5x8.stp",
+   "ok": true,
+   "nv": 684,
+   "nt": 644,
+   "volume": 521.82,
+   "bbox": [
+    -5.0,
+    -4.964,
+    -6.4,
+    5.0,
+    4.964,
+    6.6
+   ]
+  },
+  {
+   "model": "M6x12",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\螺钉\\M6x12.stp",
+   "ok": true,
+   "nv": 684,
+   "nt": 644,
+   "volume": 941.6,
+   "bbox": [
+    -6.0,
+    -5.956,
+    -12.0,
+    6.0,
+    5.956,
+    6.0
+   ]
+  },
+  {
+   "model": "M6x20",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\螺钉\\M6x20.stp",
+   "ok": true,
+   "nv": 684,
+   "nt": 644,
+   "volume": 1165.6,
+   "bbox": [
+    -6.0,
+    -5.956,
+    -20.0,
+    6.0,
+    5.956,
+    6.0
+   ]
+  },
+  {
+   "model": "M6x25",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\螺钉\\M6x25.stp",
+   "ok": true,
+   "nv": 684,
+   "nt": 644,
+   "volume": 1305.6,
+   "bbox": [
+    -6.0,
+    -5.956,
+    -25.0,
+    6.0,
+    5.956,
+    6.0
+   ]
+  },
+  {
+   "model": "M6x30",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\螺钉\\M6x30.stp",
+   "ok": true,
+   "nv": 684,
+   "nt": 644,
+   "volume": 1445.6,
+   "bbox": [
+    -6.0,
+    -5.956,
+    -30.4,
+    6.0,
+    5.956,
+    5.6
+   ]
+  },
+  {
+   "model": "M6x35",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\螺钉\\M6x35.stp",
+   "ok": true,
+   "nv": 684,
+   "nt": 644,
+   "volume": 1585.6,
+   "bbox": [
+    -6.0,
+    -5.956,
+    -34.5,
+    6.0,
+    5.956,
+    6.5
+   ]
+  },
+  {
+   "model": "M6x40",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\螺钉\\M6x40.stp",
+   "ok": true,
+   "nv": 684,
+   "nt": 644,
+   "volume": 1725.6,
+   "bbox": [
+    -6.0,
+    -5.956,
+    -39.5,
+    6.0,
+    5.956,
+    6.5
+   ]
+  },
+  {
+   "model": "M6x45",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\螺钉\\M6x45.stp",
+   "ok": true,
+   "nv": 684,
+   "nt": 644,
+   "volume": 1865.6,
+   "bbox": [
+    -6.0,
+    -5.956,
+    -44.5,
+    6.0,
+    5.956,
+    6.5
+   ]
+  },
+  {
+   "model": "M8x12",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\螺钉\\M8x12.stp",
+   "ok": true,
+   "nv": 684,
+   "nt": 644,
+   "volume": 1903.78,
+   "bbox": [
+    -8.0,
+    -7.942,
+    -11.1,
+    8.0,
+    7.942,
+    8.9
+   ]
+  },
+  {
+   "model": "M8x16",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\螺钉\\M8x16.stp",
+   "ok": true,
+   "nv": 684,
+   "nt": 644,
+   "volume": 2102.89,
+   "bbox": [
+    -8.0,
+    -7.942,
+    -16.4,
+    8.0,
+    7.942,
+    7.6
+   ]
+  },
+  {
+   "model": "M8x20",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\螺钉\\M8x20.stp",
+   "ok": true,
+   "nv": 684,
+   "nt": 644,
+   "volume": 2302.0,
+   "bbox": [
+    -8.0,
+    -7.942,
+    -20.0,
+    8.0,
+    7.942,
+    8.0
+   ]
+  },
+  {
+   "model": "M8x25",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\螺钉\\M8x25.stp",
+   "ok": true,
+   "nv": 684,
+   "nt": 644,
+   "volume": 2550.89,
+   "bbox": [
+    -8.0,
+    -7.942,
+    -25.0,
+    8.0,
+    7.942,
+    8.0
+   ]
+  },
+  {
+   "model": "M8x30",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\螺钉\\M8x30.stp",
+   "ok": true,
+   "nv": 684,
+   "nt": 644,
+   "volume": 2799.78,
+   "bbox": [
+    -8.0,
+    -7.942,
+    -30.0,
+    8.0,
+    7.942,
+    8.0
+   ]
+  },
+  {
+   "model": "M8x35",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\螺钉\\M8x35.stp",
+   "ok": true,
+   "nv": 684,
+   "nt": 644,
+   "volume": 3048.67,
+   "bbox": [
+    -8.0,
+    -7.942,
+    -35.0,
+    8.0,
+    7.942,
+    8.0
+   ]
+  },
+  {
+   "model": "M8x40",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\螺钉\\M8x40.stp",
+   "ok": true,
+   "nv": 684,
+   "nt": 644,
+   "volume": 3297.56,
+   "bbox": [
+    -8.0,
+    -7.942,
+    -40.0,
+    8.0,
+    7.942,
+    8.0
+   ]
+  },
+  {
+   "model": "M8x45",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\螺钉\\M8x45.stp",
+   "ok": true,
+   "nv": 684,
+   "nt": 644,
+   "volume": 3546.44,
+   "bbox": [
+    -8.0,
+    -7.942,
+    -45.0,
+    8.0,
+    7.942,
+    8.0
+   ]
+  },
+  {
+   "model": "M8x50",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\螺钉\\M8x50.stp",
+   "ok": true,
+   "nv": 684,
+   "nt": 644,
+   "volume": 3795.33,
+   "bbox": [
+    -8.0,
+    -7.942,
+    -50.0,
+    8.0,
+    7.942,
+    8.0
+   ]
+  },
+  {
+   "model": "M8x55",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\螺钉\\M8x55.stp",
+   "ok": true,
+   "nv": 684,
+   "nt": 644,
+   "volume": 4044.22,
+   "bbox": [
+    -8.0,
+    -7.942,
+    -55.0,
+    8.0,
+    7.942,
+    8.0
+   ]
+  },
+  {
+   "model": "M8x60",
+   "src": "C:\\Users\\25643\\AppData\\Local\\Temp\\catia_step_out\\螺钉\\M8x60.stp",
+   "ok": true,
+   "nv": 684,
+   "nt": 644,
+   "volume": 4293.11,
+   "bbox": [
+    -8.0,
+    -7.942,
+    -60.0,
+    8.0,
+    7.942,
+    8.0
+   ]
+  }
+ ]
+}
