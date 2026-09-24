@@ -54,7 +54,7 @@ def run_py(script, args=(), title=None, quiet=False, cwd=None):
 
 
 # --------------------------------------------------------------------- 状态
-def status():
+def status(offline=False):
     """返回一个字典：队友的新提交、我这边的改动、建议动作。"""
     git = find_git()
     pack, work = GS.DEF_PACK, GS.default_work()
@@ -69,8 +69,16 @@ def status():
     if not os.path.isdir(os.path.join(pack, ".git")):
         st["error"] = "协作包不是 git 仓库：%s（跑一次 scripts\\06_初始化Git仓库.ps1）" % pack
         return st
-    if tok:
-        run(git, ["fetch", "origin", "main"], pack, token=tok, quiet=True)
+    st["net"] = True
+    if tok and not offline:
+        print(C_DIM + "  正在查询 GitHub……（最多等 20 秒，网络不通就直接按本地状态显示）" + C_END)
+        rc, _, err = run(git, ["fetch", "origin", "main"], pack, token=tok, quiet=True, timeout=20)
+        if rc != 0:
+            st["net"] = False
+            print(C_WARN + "  连不上 GitHub（%s）—— 下面按本地已知状态显示，"
+                  "拉取/推送时会再试一次。" % (err.strip()[:60] or "超时") + C_END)
+    elif offline:
+        st["net"] = False
     rc, head, _ = GS.g(git, ["rev-parse", "HEAD"], pack)
     rc2, remote, _ = GS.g(git, ["rev-parse", "origin/main"], pack)
     if head and remote and head != remote:
@@ -103,6 +111,8 @@ def show_status(st):
     if st.get("error"):
         print(C_ERR + "  [!] %s" % st["error"] + C_END)
         return
+    if not st.get("net", True):
+        print(C_WARN + "  [离线] 这次没连上 GitHub，显示的可能是旧状态" + C_END)
     b, w, n = st["behind"], st["ws_changed"], st["ws_new"]
     if b:
         print("  " + C_WARN + "↓ 队友有 %d 个新提交等着你拉" % b + C_END)
@@ -318,13 +328,24 @@ def wait_key(prompt="\n按回车回到菜单……"):
 
 def main():
     import console_io
-    console_io.setup()
+    log = console_io.setup(os.path.join(GS.default_work(), "_sync_assistant.log"))
     enable_color()
+    # ⚠ 第一行必须**立刻**打印：以前要等 status()（里面含联网 fetch）跑完才打印，
+    #   网络一卡，用户双击后看到的就是**纯黑窗口**，分不清是在跑还是已经死了。
+    print(C_HEAD + "  同步助手 启动中……" + C_END, flush=True)
+    if log:
+        print(C_DIM + "  本次全过程记录在：%s（出问题看它）" % log + C_END, flush=True)
     try:
         return _main_loop()
     except UserExit:
         print(C_DIM + "  没有更多输入了，已退出（未执行任何未确认的动作）。" + C_END)
         return 0
+    except Exception:
+        import traceback
+        print(C_ERR + "\n  出现未预料的错误：" + C_END)
+        traceback.print_exc()
+        print(C_DIM + "  完整记录见 " + str(log) + C_END)
+        return 9
 
 
 def _main_loop():

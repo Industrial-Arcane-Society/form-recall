@@ -199,11 +199,9 @@ def mirror(git, old, new, pack, work, backup, dry):
         if not os.path.exists(src):
             acts.append(("源缺失", rel)); continue
         existed = os.path.exists(dst)
-        # 内容比较用 git 自己的哈希（会按 .gitattributes 归一化换行），
-        # 否则"只是 CRLF/LF 不同"也会被当成改动，白白重写一遍、还多出一份备份。
-        src_sha = blob_sha(git, new, rel, pack)
-        dst_sha = file_sha(git, dst, rel, pack) if existed else ""
-        same = existed and src_sha and src_sha == dst_sha
+        # 内容比较走 _same_content（文本忽略 CRLF/LF 差异），
+        # 否则"只是换行符不同"也会被当成改动，白白重写一遍、还多出一份备份。
+        same = existed and _same_content(src, dst)
         if same:
             acts.append(("已一致", rel)); continue
         if not dry:
@@ -216,6 +214,38 @@ def mirror(git, old, new, pack, work, backup, dry):
             shutil.copy2(src, dst)
         acts.append(("更新" if existed else "新增", rel))
     return acts, ts, backed
+
+
+def _head_is_text(path, n=8192):
+    """粗判是不是文本（有没有 NUL 字节）——决定比较时要不要归一化换行。"""
+    try:
+        with open(path, "rb") as f:
+            return b"\x00" not in f.read(n)
+    except OSError:
+        return True
+
+
+def _same_content(pack_file, ws_file):
+    """按 git 的语义比内容：文本文件忽略 CRLF/LF 差异，二进制逐字节比。
+
+    ⚠ 为什么不用 `git hash-object` 逐个比（血的教训）：
+      之前对仓库里 **609 个文件**每个都起一次 `git hash-object` + `git rev-parse`
+      （约 1200 次进程启动）。Windows 上每次 ~30ms → **刷新一次状态要 30 秒**，
+      用户双击后看到的就是"半天什么都不出来"，以为是黑屏死机。
+      改成纯 Python 读文件比较后是亚秒级，而且不用起任何进程。
+    """
+    try:
+        with open(pack_file, "rb") as f:
+            a = f.read()
+        with open(ws_file, "rb") as f:
+            b = f.read()
+    except OSError:
+        return False
+    if a == b:
+        return True
+    if _head_is_text(pack_file) and _head_is_text(ws_file):
+        return a.replace(b"\r\n", b"\n") == b.replace(b"\r\n", b"\n")
+    return False
 
 
 def scan_out(git, pack, work):
@@ -231,9 +261,8 @@ def scan_out(git, pack, work):
         if not os.path.exists(ws):
             missing.append(rel)
             continue
-        a = blob_sha(git, "HEAD", rel, pack)
-        b = file_sha(git, ws, rel, pack)
-        if a and b and a != b:
+        pk = os.path.join(pack, rel.replace("/", os.sep))
+        if not _same_content(pk, ws):
             differing.append(rel)
     # 工作区里多出来的文件（仓库没有的）——排掉明显的数据/临时产物，剩下的交给
     # check_share_pack.py 用统一口径判断"该不该进包"

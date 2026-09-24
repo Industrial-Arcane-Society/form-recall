@@ -131,14 +131,26 @@ def find_git():
     return which("git")
 
 
-def run(git, args, cwd, token=None, owner=DEF_OWNER, quiet=False):
+def run(git, args, cwd, token=None, owner=DEF_OWNER, quiet=False, timeout=90):
+    """跑一次 git。
+
+    timeout 是必须的（血的教训）：以前这里没有超时，`git fetch` 在"网络慢/被防火墙挡"
+    的环境下会一直挂着，而菜单的第一行输出要等它返回才打印 ——
+    用户双击后看到的就是**纯黑窗口、什么都没有**，完全无法判断是死是活。
+    现在超时返回 (124, "", "timeout")，调用方照常继续（用本地状态在线下工作）。
+    """
     env = dict(os.environ)
     env["GIT_TERMINAL_PROMPT"] = "0"
     if token:
         env["GH_TOKEN"] = token          # 只在这里出现，不进命令行
         args = ["-c", "credential.helper=",
                 "-c", "credential.helper=!f() { echo username=%s; echo password=$GH_TOKEN; }; f" % owner] + args
-    p = subprocess.run([git] + args, cwd=cwd, env=env, capture_output=True)
+    try:
+        p = subprocess.run([git] + args, cwd=cwd, env=env, capture_output=True, timeout=timeout)
+    except subprocess.TimeoutExpired:
+        if not quiet:
+            print("   [git] 超时（%ds）：%s —— 网络可能不通，先用本地状态继续" % (timeout, " ".join(args[:2])))
+        return 124, "", "timeout after %ds" % timeout
     out, err = p.stdout.decode("utf-8", "replace"), p.stderr.decode("utf-8", "replace")
     if not quiet and err.strip():
         print("   [git] " + err.strip()[:400])
