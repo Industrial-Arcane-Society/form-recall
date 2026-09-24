@@ -122,6 +122,36 @@ python tools\check_catia_export_real.py  # CATIA 通道
 
 详见 `CONTRIBUTING.md`。
 
+### 拿到队友的更新
+
+**情况一：你就在本仓库目录里工作**（克隆下来直接用）→ 普通 git 就够：
+
+```powershell
+git pull
+python -m ai_modeler --selftest      # 应 35/35，再动手
+```
+
+**情况二："仓库 + 另一个带大数据的工作目录"**（本项目作者的用法：
+仓库里只有代码，`kb/real_brep*`/`_wheels`/照片都在另一个非 git 的工作目录里）→ 用同步工具，
+它会拉取 → 把改动按你原来的目录布局落到工作目录 → 跑自检 → 不对劲还能回滚：
+
+```powershell
+python tools\git_sync.py check              # 只读：队友改了什么
+python tools\git_sync.py pull               # 拉取 + 落到工作目录 + 自检
+python tools\git_sync.py pull --gates full  # 顺带跑几何判据
+python tools\git_sync.py rollback           # 门禁没过 → 退回更新前
+```
+
+详见 `docs/用队友的更新_操作手册.md`。
+
+### 把自己的改动推上去
+
+```powershell
+python tools\push_to_github.py status   # 只读：看本地比远端多了什么
+python tools\push_to_github.py push     # 提交 + 推送（用 GitHub Desktop 已登录的令牌，不用手输密码）
+python tools\push_to_github.py verify   # 从 GitHub 侧核对
+```
+
 **第一次上手？** 按 `docs\更新协作包到私密仓库.md` 走一遍（含实测踩到的 5 个坑）：
 
 ```powershell
