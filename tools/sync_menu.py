@@ -59,7 +59,7 @@ def status():
     git = find_git()
     pack, work = GS.DEF_PACK, GS.default_work()
     tok, _ = github_token()
-    st = {"behind": 0, "behind_list": [], "ws_changed": 0, "ws_new": 0,
+    st = {"behind": 0, "behind_list": [], "ws_changed": 0, "ws_new": 0, "ws_new_list": [],
           "ws_list": [], "pack_ok": None, "error": None, "git": git,
           "pack": pack, "work": work}
 
@@ -88,6 +88,7 @@ def status():
         st["ws_list"] = differing
         st["ws_changed"] = len(differing)
         st["ws_new"] = len(new)
+        st["ws_new_list"] = new
     except Exception as e:
         st["error"] = "扫描工作区失败：%s" % e
     return st
@@ -117,6 +118,8 @@ def show_status(st):
             print(C_DIM + "      " + l + C_END)
         if w > 5:
             print(C_DIM + "      ... 还有 %d 个" % (w - 5) + C_END)
+        for l in st.get("ws_new_list", [])[:3]:
+            print(C_DIM + "      [新] " + l + C_END)
     else:
         print("  " + C_OK + "[OK] 你这边没有未同步的改动" + C_END)
     hr()

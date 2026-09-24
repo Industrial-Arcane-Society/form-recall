@@ -59,8 +59,23 @@ def default_work():
 ARCHIVE_MAP = [("docs/历史报告/", ""), ("启动脚本/", "")]
 
 #: 工作区路径 ↔ 仓库路径 不一致的（打包时就是这样映射的，这里取反）
-WS_PATH_MAP = {"AI训练提示词": "datasets/训练提示词",
-               "零件比对图": "reports/跑图对比"}
+#  注意"零件比对图"这条：仓库里是 reports/跑图对比/零件比对图/<型号>/<图>，
+#  工作区里是 零件比对图/<型号>/<图> —— 少一层、不能多套一层（实测写成
+#  "reports/跑图对比" 会变成 零件比对图/零件比对图/... 于是 121 张图全被判成"缺失"）。
+WS_PATH_MAP = {
+    # 数据集：工作区叫 AI训练提示词，仓库里归档成 datasets/训练提示词
+    "AI训练提示词": "datasets/训练提示词",
+    # 对比图：工作区 零件比对图/<型号>/，仓库 reports/跑图对比/零件比对图/<型号>/
+    "零件比对图": "reports/跑图对比/零件比对图",
+    # 打包时挪过位置/改过名的文件（不映射的话，"拉取"会把更新写到新目录、而不是你原来那份）
+    "doc_extract.py": "tools/doc_extract.py",
+    "AI建模助手_云端训练与工作流升级方案.docx": "docs/云端训练与工作流升级方案.docx",
+    "AI自动建模插件_沟通解读与可执行方案.docx": "docs/需求沟通解读与可执行方案.docx",
+    "share_pack_files/docs/PR与分支流程.md": "docs/PR与分支流程.md",
+    "share_pack_files/docs/PR与分支流程.docx": "docs/PR与分支流程.docx",
+    "share_pack_files/上传GitHub私密仓库并邀请协作者.md": "上传GitHub私密仓库并邀请协作者.md",
+    "share_pack_files/上传GitHub私密仓库并邀请协作者.docx": "上传GitHub私密仓库并邀请协作者.docx",
+}
 
 #: 这些"整理过"的目录，其文件名在**工作区根目录**里也算对应（如 docs/CATIA_MCP说明.md ↔ 根目录同名文件）
 CURATED_PREFIXES = ("docs/", "datasets/", "启动脚本/")
@@ -68,7 +83,9 @@ CURATED_PREFIXES = ("docs/", "datasets/", "启动脚本/")
 #: 工作区里多出来、但明确不进仓库的（本机配置 / 爬取原件 / 缓存）
 NEW_SKIP_NAMES = {"config.json", "cache_online.json", "_mig_dbg.json", "_target_urls.json",
                   "ai建模插件.doc", "零件比对图.zip", "handbook_grid.jsonl",
-                  "handbook_target.jsonl", "papers_cn_cache.json", "ai_render_index.json"}
+                  "handbook_target.jsonl", "papers_cn_cache.json", "ai_render_index.json",
+                  # 打包校验报告：每次跑 check_share_pack 都会重建，不是"新写的代码"
+                  "协作包完整性检查.md"}
 
 #: 这些在仓库里是数据/产物，不要镜像回工作区（都是大数据，本来也不会出现在 diff 里）
 NEVER_MIRROR = ("kb/real_brep", "kb/real_brep_coarse", "_wheels", "零件真实图片",
@@ -288,6 +305,7 @@ def main():
     ap.add_argument("--no-mirror", action="store_true", help="只更新协作包，不动工作区")
     ap.add_argument("--gates", choices=["fast", "full", "none"], default="fast")
     ap.add_argument("--dry-run", action="store_true")
+    ap.add_argument("--verbose", action="store_true", help="out 模式下列出全部明细")
     ap.add_argument("--owner", default=DEF_OWNER)
     ap.add_argument("--repo", default=DEF_REPO)
     a = ap.parse_args()
@@ -303,15 +321,24 @@ def main():
     if a.mode == "out":
         print("工作区 %s  →  协作包 %s" % (work, pack))
         acts, missing, new = do_out(git, pack, work, a.dry_run)
+        verbose = a.verbose
         print("\n=== 送进协作包：%d 个文件 ===" % len(acts))
         for k, rel in acts:
             print("     [%s] %s" % (k, rel))
         if not acts:
             print("     （工作区与仓库内容一致，没有要送的改动）")
         if missing:
-            print("\n注意：仓库里有、工作区里没有的（不会自动删，自己确认）：")
-            for m in missing[:20]:
-                print("     " + m)
+            # 这些多半是"只在仓库里维护"的文件（.github/、LICENSE、examples/ 等），
+            # 列全了太吵；默认只说数量，要看明细加 --verbose。
+            print("\n注意：仓库里有、工作区里没有的 %d 个（不会被自动删）" % len(missing))
+            if verbose:
+                for m in missing:
+                    print("     " + m)
+            else:
+                for m in missing[:5]:
+                    print("     " + m)
+                if len(missing) > 5:
+                    print("     ... 还有 %d 个（要全看：加 --verbose）" % (len(missing) - 5))
         if new:
             print("\n工作区里多出来的新文件 %d 个（要不要进仓库，由 sync_menu / check_share_pack 判断）：" % len(new))
             for n in new[:20]:
