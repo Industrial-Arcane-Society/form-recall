@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="zh-CN"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>AI 自动建模 —— 命中率迭代报告</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;font-family:"Microsoft YaHei UI","PingFang SC",system-ui,sans-serif;
+     background:#eef1f6;color:#1f2937;line-height:1.65}
+.wrap{max-width:1100px;margin:0 auto;padding:28px 20px 60px}
+header{background:linear-gradient(110deg,#3b82d6,#24568f);color:#fff;border-radius:14px;
+       padding:28px 32px;box-shadow:0 4px 18px rgba(36,86,143,.22)}
+header h1{margin:0 0 6px;font-size:25px;letter-spacing:.5px}
+header p{margin:2px 0;opacity:.92;font-size:13.5px}
+.kpis{display:flex;gap:16px;flex-wrap:wrap;margin:22px 0}
+.kpi{flex:1;min-width:170px;background:#fff;border:1px solid #dbe2ec;border-radius:12px;
+     padding:16px 20px}
+.kpi .lab{font-size:12.5px;color:#6b7280}
+.kpi .val{font-size:29px;font-weight:700;color:#2f6fbf;margin-top:4px;
+          font-variant-numeric:tabular-nums}
+.kpi .val.small{font-size:19px}
+.kpi.good .val{color:#16a34a}
+.card{background:#fff;border:1px solid #dbe2ec;border-radius:12px;padding:22px 26px;
+      margin-bottom:20px}
+.card h2{margin:0 0 4px;font-size:17px;display:flex;align-items:center;gap:9px}
+.card h2::before{content:"";width:4px;height:17px;background:#2f6fbf;border-radius:2px}
+.card .sub{color:#9aa4b2;font-size:12.5px;margin:0 0 16px}
+table{width:100%;border-collapse:collapse;font-size:13.5px}
+th{background:#f6f8fc;color:#5b6675;font-weight:600;text-align:left;padding:9px 11px;
+   border-bottom:1px solid #dbe2ec;font-size:12.5px}
+td{padding:9px 11px;border-bottom:1px solid #eef1f6;vertical-align:top}
+td.num{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+td.big{font-weight:700;color:#2f6fbf}
+tr.okrow td{background:#f4fbf6}
+tr.badrow td{background:#fff7f5}
+.dim{color:#9aa4b2;font-size:11.5px}
+.nl{font-family:Consolas,monospace;font-size:12.5px;color:#255a9b}
+.catrow{display:flex;align-items:center;gap:12px;padding:5px 0;font-size:13px}
+.catname{width:130px;flex:none;color:#374151}
+.barwrap{flex:1;height:16px;background:#f0f3f8;border-radius:8px;overflow:hidden}
+.bar{display:block;height:100%;border-radius:8px;transition:width .4s}
+.catnum{width:130px;flex:none;text-align:right;color:#5b6675;
+        font-variant-numeric:tabular-nums;font-size:12.5px}
+footer{color:#9aa4b2;font-size:12px;text-align:center;margin-top:34px}
+code{background:#f0f3f8;padding:1px 6px;border-radius:4px;font-size:12.5px}
+</style></head><body><div class="wrap">
+<header>
+  <h1>AI 自动建模助手 —— 命中率迭代报告</h1>
+  <p>知识来源：嘉立创FA机械设计手册 https://www.jlc-jdgf.com/mcbook/</p>
+  <p>评测用例 385 条 · 生成时间 2026-09-13 04:19:45</p>
+</header>
+
+<div class="kpis">
+  <div class="kpi"><div class="lab">起始命中率（基线）</div><div class="val">7.01%</div></div>
+  <div class="kpi good"><div class="lab">最终命中率</div><div class="val">100.00%</div></div>
+  <div class="kpi"><div class="lab">提升幅度</div><div class="val">+93.0 个百分点</div></div>
+  <div class="kpi"><div class="lab">目标</div><div class="val small">90%
+     ✅ 已达成</div></div>
+</div>
+
+<div class="card">
+  <h2>命中率迭代曲线</h2>
+  <p class="sub">每一轮开启一项新能力，用完全相同的评测用例测量。虚线为目标线。</p>
+  <svg viewBox="0 0 860 320" width="100%" style="max-width:920px"><line x1="46" y1="274.0" x2="814" y2="274.0" stroke="#eef1f6"/><text x="38" y="278.0" font-size="11" fill="#9aa4b2" text-anchor="end">0%</text><line x1="46" y1="228.4" x2="814" y2="228.4" stroke="#eef1f6"/><text x="38" y="232.4" font-size="11" fill="#9aa4b2" text-anchor="end">20%</text><line x1="46" y1="182.8" x2="814" y2="182.8" stroke="#eef1f6"/><text x="38" y="186.8" font-size="11" fill="#9aa4b2" text-anchor="end">40%</text><line x1="46" y1="137.2" x2="814" y2="137.2" stroke="#eef1f6"/><text x="38" y="141.2" font-size="11" fill="#9aa4b2" text-anchor="end">60%</text><line x1="46" y1="91.6" x2="814" y2="91.6" stroke="#eef1f6"/><text x="38" y="95.6" font-size="11" fill="#9aa4b2" text-anchor="end">80%</text><line x1="46" y1="46.0" x2="814" y2="46.0" stroke="#eef1f6"/><text x="38" y="50.0" font-size="11" fill="#9aa4b2" text-anchor="end">100%</text><line x1="46" y1="68.8" x2="814" y2="68.8" stroke="#dc2626" stroke-dasharray="6 5" stroke-width="1.5"/><text x="748" y="60.8" font-size="12" fill="#dc2626">目标 90%</text><polygon points="46.0,274.0 46.0,258.0 814.0,46.0 814.0,274.0" fill="rgba(47,111,191,.12)"/><polyline points="46.0,258.0 814.0,46.0" fill="none" stroke="#2f6fbf" stroke-width="3" stroke-linejoin="round"/><circle cx="46.0" cy="258.0" r="6" fill="#2f6fbf" stroke="#fff" stroke-width="2"/><text x="46.0" y="244.0" font-size="13" fill="#1f2937" text-anchor="middle" font-weight="600">7.0%</text><circle cx="814.0" cy="46.0" r="6" fill="#2f6fbf" stroke="#fff" stroke-width="2"/><text x="814.0" y="32.0" font-size="13" fill="#1f2937" text-anchor="middle" font-weight="600">100.0%</text><text x="46.0" y="296" font-size="12" fill="#6b7280" text-anchor="middle">R1</text><text x="814.0" y="296" font-size="12" fill="#6b7280" text-anchor="middle">R2</text><line x1="46" y1="46" x2="46" y2="274" stroke="#dbe2ec"/><line x1="46" y1="274" x2="814" y2="274" stroke="#dbe2ec"/></svg>
+</div>
+
+<div class="card">
+  <h2>各轮明细</h2>
+  <p class="sub">同一个随机种子采样，各轮严格可比。</p>
+  <table><thead><tr><th>轮次</th><th class="num">用例</th><th class="num">命中</th>
+  <th class="num">命中率</th><th class="num">较基线</th><th class="num">用时</th></tr></thead>
+  <tbody><tr><td><b>R1</b><div class="dim">只用通用中文规则, 不认识标准零件</div></td><td class="num">385</td><td class="num">27/385</td><td class="num big">7.01%</td><td class="num">+0.0</td><td class="num">1s</td></tr><tr><td><b>R2</b><div class="dim">从机械设计手册学到的零件模板生效</div></td><td class="num">385</td><td class="num">385/385</td><td class="num big">100.00%</td><td class="num">+93.0</td><td class="num">16s</td></tr></tbody></table>
+</div>
+
+<div class="card">
+  <h2>分类别表现（最后一轮）</h2>
+  <p class="sub">绿色 ≥80%，橙色 ≥50%，红色 &lt;50%。</p>
+  <div class="catrow"><span class="catname">O形圈</span><span class="barwrap"><span class="bar" style="width:100.0%;background:#16a34a"></span></span><span class="catnum">10/10 · 100.0%</span></div><div class="catrow"><span class="catname">万向节十字轴</span><span class="barwrap"><span class="bar" style="width:100.0%;background:#16a34a"></span></span><span class="catnum">8/8 · 100.0%</span></div><div class="catrow"><span class="catname">三角转子</span><span class="barwrap"><span class="bar" style="width:100.0%;background:#16a34a"></span></span><span class="catnum">8/8 · 100.0%</span></div><div class="catrow"><span class="catname">凸轮轴</span><span class="barwrap"><span class="bar" style="width:100.0%;background:#16a34a"></span></span><span class="catnum">8/8 · 100.0%</span></div><div class="catrow"><span class="catname">制动鼓</span><span class="barwrap"><span class="bar" style="width:100.0%;background:#16a34a"></span></span><span class="catnum">8/8 · 100.0%</span></div><div class="catrow"><span class="catname">圆锥滚子轴承</span><span class="barwrap"><span class="bar" style="width:100.0%;background:#16a34a"></span></span><span class="catnum">11/11 · 100.0%</span></div><div class="catrow"><span class="catname">垫圈</span><span class="barwrap"><span class="bar" style="width:100.0%;background:#16a34a"></span></span><span class="catnum">8/8 · 100.0%</span></div><div class="catrow"><span class="catname">多槽带轮</span><span class="barwrap"><span class="bar" style="width:100.0%;background:#16a34a"></span></span><span class="catnum">8/8 · 100.0%</span></div><div class="catrow"><span class="catname">平键</span><span class="barwrap"><span class="bar" style="width:100.0%;background:#16a34a"></span></span><span class="catnum">8/8 · 100.0%</span></div><div class="catrow"><span class="catname">挡圈</span><span class="barwrap"><span class="bar" style="width:100.0%;background:#16a34a"></span></span><span class="catnum">8/8 · 100.0%</span></div><div class="catrow"><span class="catname">斜齿圆柱齿轮</span><span class="barwrap"><span class="bar" style="width:100.0%;background:#16a34a"></span></span><span class="catnum">8/8 · 100.0%</span></div><div class="catrow"><span class="catname">曲轴</span><span class="barwrap"><span class="bar" style="width:100.0%;background:#16a34a"></span></span><span class="catnum">8/8 · 100.0%</span></div><div class="catrow"><span class="catname">气门</span><span class="barwrap"><span class="bar" style="width:100.0%;background:#16a34a"></span></span><span class="catnum">8/8 · 100.0%</span></div><div class="catrow"><span class="catname">法兰</span><span class="barwrap"><span class="bar" style="width:100.0%;background:#16a34a"></span></span><span class="catnum">8/8 · 100.0%</span></div><div class="catrow"><span class="catname">活塞</span><span class="barwrap"><span class="bar" style="width:100.0%;background:#16a34a"></span></span><span class="catnum">8/8 · 100.0%</span></div><div class="catrow"><span class="catname">涡旋盘</span><span class="barwrap"><span class="bar" style="width:100.0%;background:#16a34a"></span></span><span class="catnum">8/8 · 100.0%</span></div><div class="catrow"><span class="catname">涡轮叶轮</span><span class="barwrap"><span class="bar" style="width:100.0%;background:#16a34a"></span></span><span class="catnum">8/8 · 100.0%</span></div><div class="catrow"><span class="catname">深沟球轴承</span><span class="barwrap"><span class="bar" style="width:100.0%;background:#16a34a"></span></span><span class="catnum">103/103 · 100.0%</span></div><div class="catrow"><span class="catname">盘形凸轮</span><span class="barwrap"><span class="bar" style="width:100.0%;background:#16a34a"></span></span><span class="catnum">8/8 · 100.0%</span></div><div class="catrow"><span class="catname">直齿锥齿轮</span><span class="barwrap"><span class="bar" style="width:100.0%;background:#16a34a"></span></span><span class="catnum">8/8 · 100.0%</span></div><div class="catrow"><span class="catname">碟形弹簧</span><span class="barwrap"><span class="bar" style="width:100.0%;background:#16a34a"></span></span><span class="catnum">8/8 · 100.0%</span></div><div class="catrow"><span class="catname">离合器摩擦片</span><span class="barwrap"><span class="bar" style="width:100.0%;background:#16a34a"></span></span><span class="catnum">8/8 · 100.0%</span></div><div class="catrow"><span class="catname">花键轴</span><span class="barwrap"><span class="bar" style="width:100.0%;background:#16a34a"></span></span><span class="catnum">8/8 · 100.0%</span></div><div class="catrow"><span class="catname">蜗杆</span><span class="barwrap"><span class="bar" style="width:100.0%;background:#16a34a"></span></span><span class="catnum">8/8 · 100.0%</span></div><div class="catrow"><span class="catname">螺旋弹簧</span><span class="barwrap"><span class="bar" style="width:100.0%;background:#16a34a"></span></span><span class="catnum">8/8 · 100.0%</span></div><div class="catrow"><span class="catname">螺栓</span><span class="barwrap"><span class="bar" style="width:100.0%;background:#16a34a"></span></span><span class="catnum">11/11 · 100.0%</span></div><div class="catrow"><span class="catname">轴套</span><span class="barwrap"><span class="bar" style="width:100.0%;background:#16a34a"></span></span><span class="catnum">34/34 · 100.0%</span></div><div class="catrow"><span class="catname">轴承座</span><span class="barwrap"><span class="bar" style="width:100.0%;background:#16a34a"></span></span><span class="catnum">8/8 · 100.0%</span></div><div class="catrow"><span class="catname">辐条手轮</span><span class="barwrap"><span class="bar" style="width:100.0%;background:#16a34a"></span></span><span class="catnum">8/8 · 100.0%</span></div><div class="catrow"><span class="catname">连杆</span><span class="barwrap"><span class="bar" style="width:100.0%;background:#16a34a"></span></span><span class="catnum">8/8 · 100.0%</span></div><div class="catrow"><span class="catname">锥形弹簧</span><span class="barwrap"><span class="bar" style="width:100.0%;background:#16a34a"></span></span><span class="catnum">8/8 · 100.0%</span></div><div class="catrow"><span class="catname">飞轮</span><span class="barwrap"><span class="bar" style="width:100.0%;background:#16a34a"></span></span><span class="catnum">8/8 · 100.0%</span></div>
+</div>
+
+<div class="card">
+  <h2>生成模型 vs 参考模型（抽样对比）</h2>
+  <p class="sub">参考值来自知识库原始参数；生成值是本程序实际建出的三维模型外形尺寸（mm）。</p>
+  <table><thead><tr><th>类别</th><th>自然语言描述</th><th class="num">参考尺寸</th>
+  <th class="num">生成尺寸</th><th>判定</th></tr></thead>
+  <tbody><tr class="okrow"><td>深沟球轴承</td><td class="nl">深沟球轴承内径150 外径210 宽度28</td><td class="num">210.00 × 210.00 × 28.00</td><td class="num">210.00 × 210.00 × 28.00</td><td>命中</td></tr><tr class="okrow"><td>深沟球轴承</td><td class="nl">深沟球轴承内径25 外径37 宽度7</td><td class="num">37.00 × 37.00 × 7.00</td><td class="num">37.00 × 37.00 × 7.00</td><td>命中</td></tr><tr class="okrow"><td>凸轮轴</td><td class="nl">帮我做一个基圆直径41.77 升程19.67 长度516.56 凸轮数2的凸轮轴</td><td class="num">516.56 × 75.99 × 81.11</td><td class="num">516.56 × 75.99 × 81.11</td><td>命中</td></tr><tr class="okrow"><td>垫圈</td><td class="nl">垫圈: 内径58.64 外径33.21 厚度10.97</td><td class="num">33.21 × 33.21 × 10.97</td><td class="num">33.21 × 33.21 × 10.97</td><td>命中</td></tr><tr class="okrow"><td>轴套</td><td class="nl">轴套内径50 外径60 长度40</td><td class="num">60.00 × 60.00 × 40.00</td><td class="num">60.00 × 60.00 × 40.00</td><td>命中</td></tr><tr class="okrow"><td>法兰</td><td class="nl">帮我做一个外径331.75 内径99.11 厚度44.26的法兰</td><td class="num">331.75 × 331.75 × 44.26</td><td class="num">331.75 × 331.75 × 44.26</td><td>命中</td></tr><tr class="okrow"><td>轴套</td><td class="nl">轴套: 内径90 外径110 长度120</td><td class="num">110.00 × 110.00 × 120.00</td><td class="num">110.00 × 110.00 × 120.00</td><td>命中</td></tr><tr class="okrow"><td>气门</td><td class="nl">气门: 杆径6.09 盘径32.22 总长107.11</td><td class="num">32.22 × 32.22 × 107.11</td><td class="num">32.22 × 32.22 × 107.11</td><td>命中</td></tr></tbody></table>
+</div>
+
+<footer>由 tools/make_report.py 生成 · 数据文件 reports/iterations.json</footer>
+</div></body></html>

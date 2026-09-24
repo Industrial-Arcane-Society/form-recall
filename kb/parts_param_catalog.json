@@ -1,0 +1,541 @@
+{
+ "source": "C:\\Users\\25643\\Desktop\\零件参数",
+ "n_catpart": 518,
+ "n_catproduct": 3,
+ "total_bytes": 932131680,
+ "families": {
+  "外购件/EGT型材库": 362,
+  "螺钉/": 55,
+  "标准件/定位销": 22,
+  "标准件/垫片垫块": 15,
+  "标准件/销座": 13,
+  "外购件/UNIVER": 8,
+  "标准件/支座": 7,
+  "标准件/止块": 6,
+  "标准件/分气块": 5,
+  "标准件/支座(铝)": 5,
+  "标准件/阀岛": 5,
+  "外购件/吊环": 3,
+  "外购件/接近开关": 3,
+  "标准件/标牌": 3,
+  "标准件/气缸连接块": 3,
+  "标准件/补高台": 2,
+  "外购件/SMC": 1
+ },
+ "parts_with_params_in_name": 377,
+ "param_examples": [
+  {
+   "file": "EGT001 SW80x088.CATPart",
+   "params": [
+    80.0,
+    88.0
+   ],
+   "from": "EGT001 SW80x088"
+  },
+  {
+   "file": "EGT001 SW80x1018.CATPart",
+   "params": [
+    80.0,
+    1018.0
+   ],
+   "from": "EGT001 SW80x1018"
+  },
+  {
+   "file": "EGT001 SW80x1048.CATPart",
+   "params": [
+    80.0,
+    1048.0
+   ],
+   "from": "EGT001 SW80x1048"
+  },
+  {
+   "file": "EGT001 SW80x1078.CATPart",
+   "params": [
+    80.0,
+    1078.0
+   ],
+   "from": "EGT001 SW80x1078"
+  },
+  {
+   "file": "EGT001 SW80x1108.CATPart",
+   "params": [
+    80.0,
+    1108.0
+   ],
+   "from": "EGT001 SW80x1108"
+  },
+  {
+   "file": "EGT001 SW80x1138.CATPart",
+   "params": [
+    80.0,
+    1138.0
+   ],
+   "from": "EGT001 SW80x1138"
+  },
+  {
+   "file": "EGT001 SW80x1168.CATPart",
+   "params": [
+    80.0,
+    1168.0
+   ],
+   "from": "EGT001 SW80x1168"
+  },
+  {
+   "file": "EGT001 SW80x118.CATPart",
+   "params": [
+    80.0,
+    118.0
+   ],
+   "from": "EGT001 SW80x118"
+  },
+  {
+   "file": "EGT001 SW80x1198.CATPart",
+   "params": [
+    80.0,
+    1198.0
+   ],
+   "from": "EGT001 SW80x1198"
+  },
+  {
+   "file": "EGT001 SW80x1228.CATPart",
+   "params": [
+    80.0,
+    1228.0
+   ],
+   "from": "EGT001 SW80x1228"
+  },
+  {
+   "file": "EGT001 SW80x1258.CATPart",
+   "params": [
+    80.0,
+    1258.0
+   ],
+   "from": "EGT001 SW80x1258"
+  },
+  {
+   "file": "EGT001 SW80x1288.CATPart",
+   "params": [
+    80.0,
+    1288.0
+   ],
+   "from": "EGT001 SW80x1288"
+  },
+  {
+   "file": "EGT001 SW80x1318.CATPart",
+   "params": [
+    80.0,
+    1318.0
+   ],
+   "from": "EGT001 SW80x1318"
+  },
+  {
+   "file": "EGT001 SW80x1348.CATPart",
+   "params": [
+    80.0,
+    1348.0
+   ],
+   "from": "EGT001 SW80x1348"
+  },
+  {
+   "file": "EGT001 SW80x1378.CATPart",
+   "params": [
+    80.0,
+    1378.0
+   ],
+   "from": "EGT001 SW80x1378"
+  },
+  {
+   "file": "EGT001 SW80x1408.CATPart",
+   "params": [
+    80.0,
+    1408.0
+   ],
+   "from": "EGT001 SW80x1408"
+  },
+  {
+   "file": "EGT001 SW80x1438.CATPart",
+   "params": [
+    80.0,
+    1438.0
+   ],
+   "from": "EGT001 SW80x1438"
+  },
+  {
+   "file": "EGT001 SW80x1468.CATPart",
+   "params": [
+    80.0,
+    1468.0
+   ],
+   "from": "EGT001 SW80x1468"
+  },
+  {
+   "file": "EGT001 SW80x148.CATPart",
+   "params": [
+    80.0,
+    148.0
+   ],
+   "from": "EGT001 SW80x148"
+  },
+  {
+   "file": "EGT001 SW80x1498.CATPart",
+   "params": [
+    80.0,
+    1498.0
+   ],
+   "from": "EGT001 SW80x1498"
+  },
+  {
+   "file": "EGT001 SW80x1528.CATPart",
+   "params": [
+    80.0,
+    1528.0
+   ],
+   "from": "EGT001 SW80x1528"
+  },
+  {
+   "file": "EGT001 SW80x1558.CATPart",
+   "params": [
+    80.0,
+    1558.0
+   ],
+   "from": "EGT001 SW80x1558"
+  },
+  {
+   "file": "EGT001 SW80x1588.CATPart",
+   "params": [
+    80.0,
+    1588.0
+   ],
+   "from": "EGT001 SW80x1588"
+  },
+  {
+   "file": "EGT001 SW80x1618.CATPart",
+   "params": [
+    80.0,
+    1618.0
+   ],
+   "from": "EGT001 SW80x1618"
+  },
+  {
+   "file": "EGT001 SW80x1648.CATPart",
+   "params": [
+    80.0,
+    1648.0
+   ],
+   "from": "EGT001 SW80x1648"
+  },
+  {
+   "file": "EGT001 SW80x1678.CATPart",
+   "params": [
+    80.0,
+    1678.0
+   ],
+   "from": "EGT001 SW80x1678"
+  },
+  {
+   "file": "EGT001 SW80x1708.CATPart",
+   "params": [
+    80.0,
+    1708.0
+   ],
+   "from": "EGT001 SW80x1708"
+  },
+  {
+   "file": "EGT001 SW80x1738.CATPart",
+   "params": [
+    80.0,
+    1738.0
+   ],
+   "from": "EGT001 SW80x1738"
+  },
+  {
+   "file": "EGT001 SW80x1768.CATPart",
+   "params": [
+    80.0,
+    1768.0
+   ],
+   "from": "EGT001 SW80x1768"
+  },
+  {
+   "file": "EGT001 SW80x178.CATPart",
+   "params": [
+    80.0,
+    178.0
+   ],
+   "from": "EGT001 SW80x178"
+  },
+  {
+   "file": "EGT001 SW80x1798.CATPart",
+   "params": [
+    80.0,
+    1798.0
+   ],
+   "from": "EGT001 SW80x1798"
+  },
+  {
+   "file": "EGT001 SW80x1828.CATPart",
+   "params": [
+    80.0,
+    1828.0
+   ],
+   "from": "EGT001 SW80x1828"
+  },
+  {
+   "file": "EGT001 SW80x1858.CATPart",
+   "params": [
+    80.0,
+    1858.0
+   ],
+   "from": "EGT001 SW80x1858"
+  },
+  {
+   "file": "EGT001 SW80x1888.CATPart",
+   "params": [
+    80.0,
+    1888.0
+   ],
+   "from": "EGT001 SW80x1888"
+  },
+  {
+   "file": "EGT001 SW80x1918.CATPart",
+   "params": [
+    80.0,
+    1918.0
+   ],
+   "from": "EGT001 SW80x1918"
+  },
+  {
+   "file": "EGT001 SW80x1948.CATPart",
+   "params": [
+    80.0,
+    1948.0
+   ],
+   "from": "EGT001 SW80x1948"
+  },
+  {
+   "file": "EGT001 SW80x1978.CATPart",
+   "params": [
+    80.0,
+    1978.0
+   ],
+   "from": "EGT001 SW80x1978"
+  },
+  {
+   "file": "EGT001 SW80x2008.CATPart",
+   "params": [
+    80.0,
+    2008.0
+   ],
+   "from": "EGT001 SW80x2008"
+  },
+  {
+   "file": "EGT001 SW80x2038.CATPart",
+   "params": [
+    80.0,
+    2038.0
+   ],
+   "from": "EGT001 SW80x2038"
+  },
+  {
+   "file": "EGT001 SW80x2068.CATPart",
+   "params": [
+    80.0,
+    2068.0
+   ],
+   "from": "EGT001 SW80x2068"
+  }
+ ],
+ "bolt_library": {
+  "rows": 110,
+  "types": {
+   "内六角螺栓-带弹垫": 55,
+   "内六角螺栓-带弹垫和平垫": 55
+  },
+  "specs": {
+   "M10": 24,
+   "M12": 28,
+   "M5": 22,
+   "M6": 14,
+   "M8": 22
+  },
+  "sample": [
+   {
+    "sheet": "用户导入螺栓库",
+    "文件名": "M10x16.CATPart",
+    "螺栓类型": "内六角螺栓-带弹垫",
+    "螺纹规格": "M10",
+    "长度": "16",
+    "Xx": "0",
+    "Xy": "1",
+    "Xz": "0",
+    "Yx": "1",
+    "Yy": "0",
+    "Yz": "0",
+    "Zx": "0",
+    "Zy": "0",
+    "Zz": "-1",
+    "X0": "0",
+    "Y0": "0",
+    "Z0": "-3.6"
+   },
+   {
+    "sheet": "用户导入螺栓库",
+    "文件名": "M10x25.CATPart",
+    "螺栓类型": "内六角螺栓-带弹垫",
+    "螺纹规格": "M10",
+    "长度": "25",
+    "Xx": "0",
+    "Xy": "1",
+    "Xz": "0",
+    "Yx": "1",
+    "Yy": "0",
+    "Yz": "0",
+    "Zx": "0",
+    "Zy": "0",
+    "Zz": "-1",
+    "X0": "0",
+    "Y0": "0",
+    "Z0": "-3.6"
+   },
+   {
+    "sheet": "用户导入螺栓库",
+    "文件名": "M10x30.CATPart",
+    "螺栓类型": "内六角螺栓-带弹垫",
+    "螺纹规格": "M10",
+    "长度": "30",
+    "Xx": "0",
+    "Xy": "1",
+    "Xz": "0",
+    "Yx": "1",
+    "Yy": "0",
+    "Yz": "0",
+    "Zx": "0",
+    "Zy": "0",
+    "Zz": "-1",
+    "X0": "0",
+    "Y0": "0",
+    "Z0": "-3.6"
+   },
+   {
+    "sheet": "用户导入螺栓库",
+    "文件名": "M10x35.CATPart",
+    "螺栓类型": "内六角螺栓-带弹垫",
+    "螺纹规格": "M10",
+    "长度": "35",
+    "Xx": "0",
+    "Xy": "1",
+    "Xz": "0",
+    "Yx": "1",
+    "Yy": "0",
+    "Yz": "0",
+    "Zx": "0",
+    "Zy": "0",
+    "Zz": "-1",
+    "X0": "0",
+    "Y0": "0",
+    "Z0": "-3.6"
+   },
+   {
+    "sheet": "用户导入螺栓库",
+    "文件名": "M10x40.CATPart",
+    "螺栓类型": "内六角螺栓-带弹垫",
+    "螺纹规格": "M10",
+    "长度": "40",
+    "Xx": "0",
+    "Xy": "1",
+    "Xz": "0",
+    "Yx": "1",
+    "Yy": "0",
+    "Yz": "0",
+    "Zx": "0",
+    "Zy": "0",
+    "Zz": "-1",
+    "X0": "0",
+    "Y0": "0",
+    "Z0": "-3.6"
+   },
+   {
+    "sheet": "用户导入螺栓库",
+    "文件名": "M10x45.CATPart",
+    "螺栓类型": "内六角螺栓-带弹垫",
+    "螺纹规格": "M10",
+    "长度": "45",
+    "Xx": "0",
+    "Xy": "1",
+    "Xz": "0",
+    "Yx": "1",
+    "Yy": "0",
+    "Yz": "0",
+    "Zx": "0",
+    "Zy": "0",
+    "Zz": "-1",
+    "X0": "0",
+    "Y0": "0",
+    "Z0": "-3.6"
+   }
+  ]
+ },
+ "purchased": {
+  "rows": 1880,
+  "sheets": {
+   "EGT型材": 376,
+   "SMC": 376,
+   "UNIVER": 376,
+   "吊环": 376,
+   "接近开关": 376
+  },
+  "brands": {
+   "": 1500,
+   "TUNKERS": 363,
+   "UNIVER": 8,
+   "SMC": 3,
+   "市购": 3,
+   "BALLUFF": 3
+  },
+  "sample": [
+   {
+    "sheet": "EGT型材",
+    "序号": "1",
+    "描述": "型材",
+    "品牌": "TUNKERS",
+    "型号": "EGT001 SW80x088"
+   },
+   {
+    "sheet": "EGT型材",
+    "序号": "2",
+    "描述": "型材",
+    "品牌": "TUNKERS",
+    "型号": "EGT001 SW80x118"
+   },
+   {
+    "sheet": "EGT型材",
+    "序号": "3",
+    "描述": "型材",
+    "品牌": "TUNKERS",
+    "型号": "EGT001 SW80x148"
+   },
+   {
+    "sheet": "EGT型材",
+    "序号": "4",
+    "描述": "型材",
+    "品牌": "TUNKERS",
+    "型号": "EGT001 SW80x178"
+   },
+   {
+    "sheet": "EGT型材",
+    "序号": "5",
+    "描述": "型材",
+    "品牌": "TUNKERS",
+    "型号": "EGT001 SW80x208"
+   },
+   {
+    "sheet": "EGT型材",
+    "序号": "6",
+    "描述": "型材",
+    "品牌": "TUNKERS",
+    "型号": "EGT001 SW80x238"
+   }
+  ]
+ },
+ "limitation": "CATPart 二进制只含元数据字符串（V5 版本/PN/容器标签），不含 B-rep 几何与特征树 —— 实测确认，故**外形学不到**；可学的是参数体系（族/规格/型号/参数组合）。"
+}

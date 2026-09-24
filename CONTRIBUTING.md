@@ -45,11 +45,6 @@ python tools\compare_ai_vs_photos.py --all --montage 20
 * 新增判据/检查：放 `tools\`，并在 `README.md` 的判据表里登记；
 * 不要把大数据提交进仓库（见 `README.md` 第三节）。
 
-## 四·补、PR 模板
-
-开 PR 时 GitHub 会自动带出 `.github/pull_request_template.md`，
-其中**判据对比表**与**回滚点**两节是必填（见 `docs/PR与分支流程.md`）。
-
 ## 五、提交与分支
 
 ```

@@ -1,4 +1,4 @@
-# 01 安装依赖（可选；核心功能不需要任何第三方库）
+﻿# 01 安装依赖（可选；核心功能不需要任何第三方库）
 # 用法：powershell -ExecutionPolicy Bypass -File scripts\01_安装依赖.ps1
 $ErrorActionPreference = "Stop"
 $root = Split-Path -Parent $PSScriptRoot

@@ -1,4 +1,4 @@
-# 02 跑一遍完整闭环（重建数据 → 出掩码 → 比对 → 出报告）
+﻿# 02 跑一遍完整闭环（重建数据 → 出掩码 → 比对 → 出报告）
 # 用法：powershell -ExecutionPolicy Bypass -File scripts\02_跑全流程.ps1
 #   可选参数：-StepDir "C:\path\to\step"   指定 CATIA 导出的 STEP 目录
 param(

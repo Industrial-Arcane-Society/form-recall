@@ -1,0 +1,165 @@
+{
+ "_about": "公开可访问的文献（含方法要点与页面摘录），用于可升级方向论证",
+ "_note": "知网需登录且检索结果为 JS 渲染，本文件不含伪造的知网题录",
+ "count": 10,
+ "papers": [
+  {
+   "title": "Automated CAD Modeling Sequence Generation from Text Descriptions via Transformer-Based Large Language Models",
+   "venue": "ACL 2025 (Long Papers)",
+   "url": "https://aclanthology.org/2025.acl-long.1054/",
+   "topic": "A. 文本 -> CAD 建模序列",
+   "why": "把自然语言映射成**带顺序的建模操作序列**（而不是一步生成网格），与本项目的“中文描述 -> 特征树”完全同构；它的评测口径（序列级/参数级/几何级）可以直接搬来做我们的验收指标",
+   "fetched": "2026-09-20 19:45",
+   "page_chars": 15576,
+   "evidence_keys": [
+    "parameter",
+    "sequence",
+    "accuracy"
+   ],
+   "excerpt": "Automated CAD Modeling Sequence Generation from Text Descriptions via Transformer-Based Large Language Models - ACL Anthology ACL Anthology About Announcements Communication channels Related work Copyright Credits Volunteer Development Feedback Using Author directory Citing papers Links in the Anthology Data access All FAQs Details Anthology identifiers Names ORCID iDs DOIs Verified authors Contributions Submissions Corrections Maintain author pages Attachments GitHub Automated CAD Modeling Sequence Generation from Text Descriptions via Transformer-Based Large Language Models JianXing Liao , Junyan Xu , Yatao Sun , Maowen Tang , Sicheng He , Jingxian Liao , Shui Yu , Yun Li , Xiaohong Guan Correct Metadata for Use this form to create a GitHub issue with structured data describing the correction. You will need a GitHub account. Once you create that issue, the correction will be reviewed b"
+  },
+  {
+   "title": "CAD-Llama: Leveraging Large Language Models for Computer-Aided Design Parametric 3D Generation",
+   "venue": "CVPR 2025",
+   "url": "https://openaccess.thecvf.com/content/CVPR2025/papers/Li_CAD-Llama_Leveraging_Large_Language_Models_for_Computer-Aided_Design_Parametric_3D_CVPR_2025_paper.pdf",
+   "topic": "A. 文本 -> CAD 建模序列",
+   "why": "核心思想:**把 CAD 命令序列当成语言来建模**（含参数占位），用 LLM 生成可编辑的**参数化**结果；对我们的启示是把“提示词”编译成规范化 DSL（草图->约束->拉伸->切除->修饰），而不是靠关键词替换",
+   "fetched": "2026-09-20 19:45",
+   "page_chars": 4561142,
+   "evidence_keys": [
+    "parameter",
+    "sequence",
+    "dimension",
+    "sketch",
+    "extrude",
+    "ablation",
+    "IoU",
+    "chamfer"
+   ],
+   "excerpt": "%PDF-1.5 %¿÷¢þ 1 0 obj > endobj 2 0 obj > endobj 3 0 obj > endobj 4 0 obj > endobj 5 0 obj > stream CAD-Llama: Leveraging Large Language Models for Computer-Aided Design Parametric 3D Model Generation 2025-06-02T01:42:31.114920+00:00 pikepdf 9.8.1 Jiahao Li Weijian Ma Xueyang Li Yunzhong Lou Guichun Zhou Xiangdong Zhou IEEE Conference on Computer Vision and Pattern Recognition endstream endobj 6 0 obj > stream xí[koÛ¸Òþþþ ~Üà ¢x\u0011I\u0001\u0007 ¤IÓ[¦IÛ4],\u0016­$j|[Ùîí×gHÉÖÅNÜ³çãÖ\u0014%\u000eGÃápæá±,fiÍRÆLà¿ÂO0aqLK',± \u0013¹D30âbXªAbYêp\u0007ª:¦¸ZÍ$ñ@!ÁH¡]J e\u0016\u00020\u0013ãJ\u0005³\u0016ú1YAÄ:\u0007æ\u0018J3 I÷9E÷\u0016q\u0018«¥±Ta \u0017ºþ9¼5G\u0012ï,G#ö'ûý÷\u0006­\\Ó*a#Ø¾q&²¸n¢V Î\u0016-äÛD§¤;\u000fòÉ\u0002¶ \u0019?Ìf/óâî ·#~xùýÆ\u000fø!?âÇü\u0015?ãçüâ× Ç\u0019/ø\u0017þÀÇ|ÂgyYL|Î¿ïA ÿ¾ a?½½ù\u000f\u0002û«\u000f/¼*÷³ëùÁÛÅóÙûç×wpf ÿrrW )d ËQ¾Ü#¹H];pÐÁF+ªå\u0014«Z}+~fåp-î÷àÐã\u0006Á8£öE\u0015br·GË¯Õ:ÌH ©FYyïÑB_·N?²É Ze£?\\Ý¢? MËêOÛ~cõ\u0019\u0019¥\u0010F©8\u0012zÓú2î®Õ\u0018}àùwãl´ÈÝìÂ9\u0011.\u0012ðéOÐV^\u0000\u0011$Jð6uÇ@N³Å²Ì"
+  },
+  {
+   "title": "Pointer-CAD v2: Plan-Then-Construct CAD Generation with Dimension-Aware Parametric Precision",
+   "venue": "arXiv",
+   "url": "https://ar5iv.labs.arxiv.org/html/2606.29301",
+   "topic": "D. 尺寸精度",
+   "why": "**Plan-Then-Construct（先规划再构造）+ 尺寸感知**：先输出建模计划，再把尺寸数值单独注入，避免“结构对、尺寸飘”。可直接用于我们「先出特征计划 -> 再填标准尺寸」的两段式解析",
+   "fetched": "2026-09-20 19:45",
+   "page_chars": 83106,
+   "evidence_keys": [
+    "parameter",
+    "sequence",
+    "constraint",
+    "tolerance",
+    "dimension",
+    "chain-of-thought",
+    "retrieval",
+    "sketch",
+    "extrude",
+    "ablation",
+    "accuracy",
+    "IoU",
+    "chamfer"
+   ],
+   "excerpt": "[2606.29301] Pointer-CAD v2: Plan-Then-Construct CAD Generation with Dimension-Aware Parametric Precision Pointer-CAD v2: Plan-Then-Construct CAD Generation with Dimension-Aware Parametric Precision Dacheng Qi Affiliation: The University of Hong Kong, Hong Kong SAR Affiliation: Shenzhen Loop Area Institute, Shenzhen, China Affiliation: TranscEngram, Shenzhen, China Chenyu Wang Affiliation: The University of Hong Kong, Hong Kong SAR Affiliation: Shenzhen Loop Area Institute, Shenzhen, China Affiliation: TranscEngram, Shenzhen, China Jingwei Xu Affiliation: Monash University, Melbourne, Australia Yi Ma Affiliation: The University of Hong Kong, Hong Kong SAR Affiliation: Shenzhen Loop Area Institute, Shenzhen, China Affiliation: TranscEngram, Shenzhen, China Affiliation: University of California, Berkeley, USA Shenghua Gao E-mail gaosh@hku.hk Thanks: Corresponding author: Affiliation: The U"
+  },
+  {
+   "title": "Semantic Direct Modeling",
+   "venue": "arXiv 2504.13893",
+   "url": "https://ar5iv.labs.arxiv.org/html/2504.13893",
+   "topic": "C. 特征识别与设计意图",
+   "why": "语义直接建模：在**已有几何**上按语义定位并修改面/特征（“把这个面偏移 2mm”），对应我们的「参数页改尺寸即时重建」，可用它的面-特征映射提升可编辑性",
+   "fetched": "2026-09-20 19:45",
+   "page_chars": 57114,
+   "evidence_keys": [
+    "parameter",
+    "sequence",
+    "feature recognition",
+    "dimension",
+    "chain-of-thought",
+    "retrieval",
+    "sketch",
+    "accuracy",
+    "IoU"
+   ],
+   "excerpt": "[2504.13893] Semantic Direct Modeling Semantic Direct Modeling Journal: Elsevier Qiang Zou Email: qiangzou@cad.zju.edu.cn Corresponding author: Corresponding author. Shuo Liu Address: State Key Laboratory of CAD & \\& CG, Zhejiang University, Hangzhou, 310058, China Abstract Current direct modeling systems limit users to low-level interactions with vertices, edges, and faces, forcing designers to manage detailed geometric elements rather than focusing on high-level design intent. This paper introduces semantic direct modeling (SDM), a novel approach that lifts direct modeling from low-level geometric modifications to high-level semantic interactions. This is achieved by utilizing a large language model (LLM) fine-tuned with CAD-specific prompts, which can guide the LLM to reason through design intent and accurately interpret CAD commands, thereby allowing designers to express their intent"
+  },
+  {
+   "title": "Labeling CAD Parts to capture Design Intent for LLMs through Machining Feature Recognition",
+   "venue": "CIRP Design 2026 / Procedia CIRP",
+   "url": "https://www.sciencedirect.com/science/article/pii/S2212827126007948",
+   "topic": "C. 特征识别与设计意图",
+   "why": "把 CAD 零件**标注成带设计意图的数据**（加工特征 = 孔/槽/圆角/倒角）再喂给 LLM；正是我们“提示词 -> 特征”对照表该有的形式：每个特征带类型、参数、依据",
+   "fetched": "2026-09-20 19:45",
+   "page_chars": 0,
+   "error": "HTTPError: HTTP Error 403: Forbidden"
+  },
+  {
+   "title": "MBD 技术在汽车尺寸工程数字化虚拟匹配中的运用",
+   "venue": "《汽车工艺与材料》(知网/万方收录)",
+   "url": "https://www.auto1950.com/cn/article/pdf/preview/10.16173/j.cnki.ame.2024.11.008.pdf",
+   "topic": "B. 汽车零件精度",
+   "why": "汽车行业的尺寸工程做法：**MBD（基于模型的定义）+ 虚拟匹配**，把公差、基准、测量点写进模型并做装配偏差分析。对我们的启示:给特征加**基准/公差/测量点**三元信息，才能进企业实测",
+   "fetched": "2026-09-20 19:45",
+   "page_chars": 1181910,
+   "evidence_keys": [],
+   "excerpt": "%PDF-1.6 %å¿å« 3 0 obj >/Font >>>/Rotate 0 /Type /Page >> endobj 10 0 obj >/Font >>>/Rotate 0 /Type /Page >> endobj 14 0 obj >/Font >>>/Rotate 0 /Type /Page >> endobj 18 0 obj >/Font >>>/Rotate 0 /Type /Page >> endobj 22 0 obj >/Font >>>/Rotate 0 /Type /Page >> endobj 26 0 obj >/Font >>>/Rotate 0 /Type /Page >> endobj 29 0 obj >/ExtGState >/Font >/ProcSet [/PDF /Text /ImageC ] /Properties >/XObject >>>/Subtype /Form /Type /XObject >> stream H´WÛn\u001bÉ\u0011}çWô£\u0014@Ã¾_\u0000ÁHÙÆ\u0006^GY\u0011ØÅÂ hÙVmIE>>§ª{.lrJ\u0006£\u0007qÎLw®ê:ÕU_gó«õÃ8?ÿ¸üáRHñâÅâr)f_g:6ÆzQ~¼ÒFD\u0017¢x¸ý,îgó§Û\u000fë ¯ð71³þ÷çoOí\"Õl¾¼bó(\u0010û\u0014¯gJ|\u0017³ùk¼ÿøïúÄ×ÕYh4ø¥HÂ$×¤ º±Ñ\u001b±ºËW ­dR2Ë\u0017«Ìæ«Ux\"Öß>«ääi~¯Ú\u0005­MB6Ra ÷\u0018&æBh©-\u000f\u0003q\u0019w.öå©'bo_,ë1Jí\u000f[¾º a/W³¿ýM\u0013¿ ¿ºyØÜ|yú¶Þ[ò b_¬V:/Äó@à ü\u0005§>´Å)Óx\u001bEô\u0018k \u0003\u0017o ÂÇðS±q Ns±wü\"g ìÅx sÀ \u0001¥'ÇEÓ± |N¹&ÐwÝDìÛÏ?ðÂ\"\u0014v^(\u0013ó8) [B \u00104°¾@b°Ø³j_l³EçKE;g(Ö\u0010rpú\u0000:çã g%G¥ù»W0\u0018qQ²rG{ \u001b²ÏØB"
+  },
+  {
+   "title": "基于 CAD 制图的汽车发动机核心零部件维修建模与精度优化研究",
+   "venue": "万方（期刊论文）",
+   "url": "https://d.wanfangdata.com.cn/periodical/CiBQZXJpb2RpY2FsQ0hJU29scjkyMDI2MDYwMjE2MjUxORIObnJqcGoyMDI2MDcwMzMaCGlzM2xkaTNt",
+   "topic": "B. 汽车零件精度",
+   "why": "中文文献里汽车核心零部件**建模 + 精度优化**的典型思路：先建参数化基准模型，再用实测数据反求修正量（误差补偿）",
+   "fetched": "2026-09-20 19:45",
+   "page_chars": 864,
+   "evidence_keys": [],
+   "excerpt": "万方数据知识服务平台 检测到您正在使用 Safari 浏览器，可能影响导出功能的正常使用，建议您下载 Google Chrome 、 Microsoft Edge 、 Firefox 。 X 您使用的浏览器版本过低，为了更好的使用体验，请升级浏览器至IE9及以上，推荐使用 chrome浏览器 。 X 学术导航 学术期刊 学位论文 会议论文 科技报告 专利 标准 科技成果 法律法规 智研平台 会员 绑定机构 扫描成功 请在APP上操作 打开万方数据APP，点击右上角\"扫一扫\"，扫描二维码即可将您登录的个人账号与机构账号绑定，绑定后您可在APP上享有机构权限，如需更换机构账号，可到个人中心解绑。 登录机构账号 登录 / 注册 登录 / 注册 机构登录 --> 复制成功 设置 万方会员 暂未开通会员 开通即享超值福利、会员权益 优质内容推荐 立即开通 个人中心 我的智研 订阅 收藏 退出登录 简 繁 帮助 客户服务 问卷调查 关于我们 公司首页 加入我们 网站地图 官方店铺 万方数据微博 万方数据公众号 网络出版服务许可证：(署)网出证(京)字第072号 药品医疗器械网络信息服务备案：(京)网药械信息备字（2023）第 00470 号 信息网络传播视听节目许可证 许可证号：0108284 万方数据知识服务平台--国家科技支撑计划资助项目（编号：2006BAH03B01） 万方数据学术资源发现获取服务系统[简称：万方智搜] V3.0 证书号：软著登字第11363462号 京ICP证：010071 营业执照 京公网安备11010802020237号 京ICP备08100800号-1 ©北京万方数据股份有限公司 万方数据电子出版社 在线客服 客服电话：4000115888 客服邮箱：service@wanfangdata.com.cn 违法和不良信息举报电话：4000115888 举报邮箱：problem@wanfangdata.com.cn 举报专区：https://www.12377.cn/ x 回到 顶部"
+  },
+  {
+   "title": "Computational Intelligence-Driven Innovation in Vehicle Body Design Automation",
+   "venue": "IEEE",
+   "url": "https://ieeexplore.ieee.org/abstract/document/11196624",
+   "topic": "B. 汽车零件精度",
+   "why": "车身设计自动化的计算智能路线（含参数化 + 优化 + 代理模型），可用于论证“标准数据 + 优化”这条升级线的行业价值",
+   "fetched": "2026-09-20 19:45",
+   "page_chars": 836,
+   "evidence_keys": [],
+   "excerpt": "Computational Intelligence-Driven Innovation in Vehicle Body Design Automation | IEEE Conference Publication | IEEE Xplore --> --> IEEE Account Change Username/Password Update Address Purchase Details Payment Options Order History View Purchased Documents Profile Information Communications Preferences Profession and Education Technical Interests Need Help? US & Canada: +1 800 678 4333 Worldwide: +1 732 981 0060 Contact & Support About IEEE Xplore Contact Us Help Accessibility Terms of Use Nondiscrimination Policy Sitemap Privacy & Opting Out of Cookies A not-for-profit organization, IEEE is the world's largest technical professional organization dedicated to advancing technology for the benefit of humanity. © Copyright 2026 IEEE - All rights reserved. Use of this web site signifies your agreement to the terms and conditions."
+  },
+  {
+   "title": "KPI-Conditioned Generative Design of Automotive Hood Inner Panels: A Two-Stage Retrieval-Generation Pipeline",
+   "venue": "arXiv",
+   "url": "https://arxiv.org/pdf/2608.22457v1",
+   "topic": "E. 检索增强 / 两段式生成",
+   "why": "**两段式 检索-生成**（先检索相近案例，再生成）—— 与我们「先查标准件库/手册数据，再生成几何」的做法同源，可作为 RAG 升级的依据",
+   "fetched": "2026-09-20 19:45",
+   "page_chars": 1166959,
+   "evidence_keys": [],
+   "excerpt": "%PDF-1.3 %Äåòåë§ó ÐÄÆ 3 0 obj > stream x\u0001µ\\KãHn¾óWhVRª$Q|SrÍxÜ3³Þõú9vÙ\u0017kO\u0013á#ö°1ÿ?Â \u000fù ÙÝTí::B,f\"\u0000\u0012W&ûÏ7Þ\\~üµÞüòë¦Ò¿þ¦ªl:{?ê\u0006¿ý¸é¯·òVwíæ?m~xßtàQ7uWö×vsnÚª-Þÿ´¹¼¿£yóþ?Ã7/÷ÿÝüö]çZx0Ä\u0003\u0010·}ÙÕc\u0018\u0004}\u0010ñ¹*«jh7ï¿\u0014ø\u0015~ñhFÐ^w×M\u0007\u0006tL,3ü7ÿÍËæ\\o\u000eÛÍ 7ïXÇFaòS´×¾ [;â°[/ ¢U&ú\u0001L\bõd¢«²ë \u0019ÀÄþ L4Ã³ñr?¼\u0014ÂÓý\u0005ïíæðj\u000fÍ6\u0014cT\u000e' §·P\u0017\u0006º@ÐfÍ\u0000QàD\u0004\" B¶\u0013Ú±sÅÈ[UÖ×ª½5\bË®ïnU\u0003å+Çê&­\u00151¶\u001b´Ñ\" ÃmÐ¤\u000f\u0012w¡ÊLH\u000f*ï3\u0002\u0019òKõ´3Ô'\u0007³}Cê*¡÷câ_ ;f.ù¦Z¶¯¨\u001b \" ÊÇD\u0017l¥_£\u000eªëÕUHF\u0010 SçãÞM}¸\u0016§ÊÊ) \u0016\u0002k\"\u000fN²¼)ÒÌ? ß&\u0006ÃáÈUæ9Âr)\u0001­oÏ AÎÀ\u0004+YöIÔÝÇôÄ°C¨äÎ${¶/IM -00!¤$r4©áªRp@\u0000Q\u000es¡\u0012|£Sw(¢QB _\u0014(¶ÍAù\u0013+ENþY÷ Éæ 9\u0013\u0014 =ç}>;£g+Zó4*¨o·òÚÕ0 Óí#¶ymà\u001ats\u0016À£­ÆøËH¾\u00121¢6r\u0018OZz\u0014ÇDö²hÒM1ç\u001aL\u0014\u0014i¾ÚWñ\u000e\b:.Nº^³0nl\u001aÔUPÜ;Ï\u0018þp §Å£(Î±EùðvÅÍ¦@¢u©À\u0018Ää¦áÄy\u0018TdèÙArx@Fø=eA Ê\u0016\u0016kÁ \u0010V`gÙZÆ¡Írq2¥Ã¯\"6õ\u0012% \u0015EµH³H7DÁ¹8)]¶¢@CÒÉ \u0000Hô\u0011¤1'¼\u0002ÍúÍÆ-U+®@O7\u0007iÜ#! ÀÌpWÁßÕ\u0012Kí \u0011\u0002TÂ \u0013_!çÉ9`_\u000fe=âöñyFè#9àÄÐ·uÙµPæù\u0014(ýÉýÍË\u0003. ¶×"
+  },
+  {
+   "title": "A Multidisciplinary Design and Optimization (MDO) Agent Driven by Large Language Models",
+   "venue": "arXiv 2511.17511",
+   "url": "https://ar5iv.labs.arxiv.org/html/2511.17511",
+   "topic": "A. 文本 -> CAD 建模序列",
+   "why": "LLM 作为**调度器**调用专业求解器（多学科设计优化 Agent）；对应我们的 MCP 工具化路线：让 AI 调“带标准约束的建模工具”",
+   "fetched": "2026-09-20 19:46",
+   "page_chars": 63510,
+   "evidence_keys": [
+    "parameter",
+    "sequence",
+    "constraint",
+    "dimension",
+    "chain-of-thought",
+    "retrieval",
+    "sketch",
+    "extrude",
+    "accuracy",
+    "IoU",
+    "validity"
+   ],
+   "excerpt": "[2511.17511] A Multidisciplinary Design and Optimization (MDO) Agent Driven by Large Language Models A Multidisciplinary Design and Optimization (MDO) Agent Driven by Large Language Models Journal: Advanced Engineering Informatics Bingkun Guo Address: State Key Laboratory of Fluid Power Transmission and Control, Zhejiang University, Hangzhou, 310027, PR China Wentian Li Address: State Key Laboratory of Fluid Power Transmission and Control, Zhejiang University, Hangzhou, 310027, PR China Xiaojian Liu Address: State Key Laboratory of Fluid Power Transmission and Control, Zhejiang University, Hangzhou, 310027, PR China Jiaqi Luo Address: School of Aeronautics and Astronautics, Zhejiang University, Hangzhou 310027, PR China Zibin Yu Address: China Ship Development and Design Center, Wuhan, 430064, PR China Dalong Dong Address: China Ship Development and Design Center, Wuhan, 430064, PR China"
+  }
+ ]
+}

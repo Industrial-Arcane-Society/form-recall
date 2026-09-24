@@ -1,0 +1,7 @@
+{
+ "_说明": "复制成 config.json 并按本机情况修改；config.json 已被 .gitignore 忽略",
+ "catia": {
+  "install_dir": "C:/Program Files/Dassault Systemes/B27/win_b64"
+ },
+ "model_library": ""
+}

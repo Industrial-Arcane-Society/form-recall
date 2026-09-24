@@ -1,4 +1,4 @@
-# 04 验收基准（改代码前后都跑这个，任何一项变红就回滚）
+﻿# 04 验收基准（改代码前后都跑这个，任何一项变红就回滚）
 # 用法：powershell -ExecutionPolicy Bypass -File scripts\04_验收基准.ps1
 $ErrorActionPreference = "Continue"
 $root = Split-Path -Parent $PSScriptRoot

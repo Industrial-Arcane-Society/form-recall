@@ -1,0 +1,185 @@
+{
+ "standard": "KMS-M01（实测）",
+ "source": "CATIA 导出的 STEP 实测",
+ "count": 22,
+ "pins": {
+  "KMS-M01-D159-A20": {
+   "p": null,
+   "d_spec": 15.9,
+   "d_loc": 15.9,
+   "d_base": 22.0,
+   "d_tail": 5.4,
+   "length": 71.595
+  },
+  "KMS-M01-P077-A20": {
+   "p": 77,
+   "d_spec": 7.7,
+   "d_loc": 7.7,
+   "d_base": 22.0,
+   "d_tail": 5.4,
+   "length": 60.09
+  },
+  "KMS-M01-P079-A20": {
+   "p": 79,
+   "d_spec": 7.9,
+   "d_loc": 7.9,
+   "d_base": 22.0,
+   "d_tail": 5.4,
+   "length": 60.269
+  },
+  "KMS-M01-P079-A30": {
+   "p": 79,
+   "d_spec": 7.9,
+   "d_loc": 7.9,
+   "d_base": 22.0,
+   "d_tail": 5.4,
+   "length": 70.269
+  },
+  "KMS-M01-P097-A15": {
+   "p": 97,
+   "d_spec": 9.7,
+   "d_loc": 9.7,
+   "d_base": 22.0,
+   "d_tail": 5.4,
+   "length": 57.308
+  },
+  "KMS-M01-P097-A20": {
+   "p": 97,
+   "d_spec": 9.7,
+   "d_loc": 9.7,
+   "d_base": 22.0,
+   "d_tail": 5.4,
+   "length": 62.308
+  },
+  "KMS-M01-P097-A30": {
+   "p": 97,
+   "d_spec": 9.7,
+   "d_loc": 9.7,
+   "d_base": 22.0,
+   "d_tail": 5.4,
+   "length": 72.308
+  },
+  "KMS-M01-P099-A15": {
+   "p": 99,
+   "d_spec": 9.9,
+   "d_loc": 9.9,
+   "d_base": 22.0,
+   "d_tail": 5.4,
+   "length": 57.51
+  },
+  "KMS-M01-P099-A20": {
+   "p": 99,
+   "d_spec": 9.9,
+   "d_loc": 9.9,
+   "d_base": 22.0,
+   "d_tail": 5.4,
+   "length": 62.51
+  },
+  "KMS-M01-P099-A30": {
+   "p": 99,
+   "d_spec": 9.9,
+   "d_loc": 9.9,
+   "d_base": 22.0,
+   "d_tail": 5.4,
+   "length": 72.51
+  },
+  "KMS-M01-P117-A15": {
+   "p": 117,
+   "d_spec": 11.7,
+   "d_loc": 11.7,
+   "d_base": 22.0,
+   "d_tail": 5.4,
+   "length": 60.716
+  },
+  "KMS-M01-P117-A20": {
+   "p": 117,
+   "d_spec": 11.7,
+   "d_loc": 11.7,
+   "d_base": 22.0,
+   "d_tail": 5.4,
+   "length": 65.716
+  },
+  "KMS-M01-P117-A30": {
+   "p": 117,
+   "d_spec": 11.7,
+   "d_loc": 11.7,
+   "d_base": 22.0,
+   "d_tail": 5.4,
+   "length": 75.716
+  },
+  "KMS-M01-P119-A20": {
+   "p": 119,
+   "d_spec": 11.9,
+   "d_loc": 11.9,
+   "d_base": 22.0,
+   "d_tail": 5.4,
+   "length": 65.906
+  },
+  "KMS-M01-P119-A30": {
+   "p": 119,
+   "d_spec": 11.9,
+   "d_loc": 11.9,
+   "d_base": 22.0,
+   "d_tail": 5.4,
+   "length": 75.906
+  },
+  "KMS-M01-P157-A20": {
+   "p": 157,
+   "d_spec": 15.7,
+   "d_loc": 15.7,
+   "d_base": 22.0,
+   "d_tail": 5.4,
+   "length": 71.922
+  },
+  "KMS-M01-P157-A30": {
+   "p": 157,
+   "d_spec": 15.7,
+   "d_loc": 15.7,
+   "d_base": 22.0,
+   "d_tail": 5.4,
+   "length": 81.922
+  },
+  "KMS-M01-P159-A15": {
+   "p": 159,
+   "d_spec": 15.9,
+   "d_loc": 15.9,
+   "d_base": 22.0,
+   "d_tail": 5.4,
+   "length": 72.095
+  },
+  "KMS-M01-P159-A20": {
+   "p": 159,
+   "d_spec": 15.9,
+   "d_loc": 15.9,
+   "d_base": 22.0,
+   "d_tail": 5.4,
+   "length": 72.095
+  },
+  "KMS-M01-P159-A30": {
+   "p": 159,
+   "d_spec": 15.9,
+   "d_loc": 15.9,
+   "d_base": 22.0,
+   "d_tail": 5.4,
+   "length": 82.095
+  },
+  "KMS-M01-P189-A30": {
+   "p": 189,
+   "d_spec": 17.9,
+   "d_loc": 17.9,
+   "d_base": 22.0,
+   "d_tail": 5.4,
+   "length": 84.312
+  },
+  "KMS-M01-P299-A20": {
+   "p": 299,
+   "d_spec": 29.9,
+   "d_loc": 29.9,
+   "d_base": 29.9,
+   "d_tail": 8.6,
+   "length": 82.795
+  }
+ },
+ "p_decode": "P码/10 = 定位段直径",
+ "a_decode": "A15=基准, A20=+5.00, A30=+15.00（实测增量）"
+}

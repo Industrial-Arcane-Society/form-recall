@@ -1,21 +1,55 @@
-* text=auto eol=lf
+# ============================================================
+#  .gitattributes —— 管的是"进仓库时怎么存、检出到你机器上变成什么样"
+#  这个项目是 Windows + CATIA，所以**换行符必须显式写死**，
+#  不能靠每个人各自的 core.autocrlf（每个人设置不一样，仓库立刻变脏）。
+# ============================================================
 
-# 二进制（避免换行/编码被改）
-*.png  binary
-*.jpg  binary
-*.docx binary
-*.npz  binary
-*.stp  binary
-*.CATPart binary
-*.xlsx binary
+# 默认：交给 git 判断是不是文本，但**不强制**换行（下面按类型逐条写死）
+* text=auto
 
-# 中文文本按 UTF-8 处理（Windows 上有些编辑器会猜成 GBK）
-*.py   text working-tree-encoding=UTF-8
-*.md   text working-tree-encoding=UTF-8
-*.json text working-tree-encoding=UTF-8
+# ---- Windows 脚本必须是 CRLF ----
+#  .ps1 / .bat / .vbs 在 Windows 上跑，CRLF 是唯一稳妥的选择。
+#  （实测：git 默认会把它们存成 LF，队友克隆出来就变成 LF 的 .bat，
+#    cmd 处理标签、goto、括号块时会出现难查的怪问题。）
+*.ps1  text eol=crlf
+*.bat  text eol=crlf
+*.cmd  text eol=crlf
 *.vbs  text eol=crlf
-*.txt  text working-tree-encoding=UTF-8
+*.CATScript     text eol=crlf
+*.CATScript.tpl text eol=crlf
 
-# 让 GitHub 把 .CATScript 认成 VBScript，语法高亮更好看
-*.CATScript linguist-language=VBScript
-*.vbs.txt   linguist-language=VBScript
+# ---- 跨平台源码/数据统一 LF ----
+*.py    text eol=lf
+*.md    text eol=lf
+*.json  text eol=lf
+*.jsonl text eol=lf
+*.txt   text eol=lf
+*.yml   text eol=lf
+*.yaml  text eol=lf
+*.toml  text eol=lf
+*.cfg   text eol=lf
+
+# ---- 二进制：绝不碰（换行/编码都不许改）----
+*.png    binary
+*.jpg    binary
+*.jpeg   binary
+*.bmp    binary
+*.ico    binary
+*.docx   binary
+*.xlsx   binary
+*.pdf    binary
+*.zip    binary
+*.npz    binary
+*.stp    binary
+*.step   binary
+*.stl    binary
+*.CATPart binary
+*.CATProduct binary
+
+# ⚠ 不要写 working-tree-encoding=UTF-8：
+#   它会让 git 按 UTF-8 重新编码工作区文件，而我们的 .bat/.vbs 是 **GBK(ANSI)**
+#   （cmd 与 Windows Script Host 只认 GBK），加了这条会把中文彻底改坏。
+
+# 让 GitHub 把 CATIA 脚本认成 VBScript，语法高亮更好看
+*.CATScript   linguist-language=VBScript
+*.vbs.txt     linguist-language=VBScript

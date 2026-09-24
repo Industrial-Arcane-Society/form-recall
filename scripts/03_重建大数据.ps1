@@ -1,4 +1,4 @@
-# 03 重建"没进仓库的大数据"（按需执行）
+﻿# 03 重建"没进仓库的大数据"（按需执行）
 # 用法：powershell -ExecutionPolicy Bypass -File scripts\03_重建大数据.ps1
 #   -What 可选：ocp / brep / photos / renders / all（默认 all）
 param([string]$What = "all")
