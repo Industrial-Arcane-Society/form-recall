@@ -151,12 +151,20 @@ def head_sha(git, cwd, ref="HEAD"):
 
 
 def main():
+    import console_io
+    console_io.setup()
     ap = argparse.ArgumentParser()
     ap.add_argument("mode", choices=["status", "push", "verify"])
     ap.add_argument("--owner", default=DEF_OWNER)
     ap.add_argument("--repo", default=DEF_REPO)
     ap.add_argument("--pack", default=DEF_PACK)
     ap.add_argument("--message", default=None)
+    ap.add_argument("--rewrite", action="store_true",
+                    help="重写远端历史：不接远端已有提交，用当前 HEAD 覆盖 main"
+                         "（本地已经 reset 过、想丢掉某些提交时用）")
+    ap.add_argument("--force", action="store_true",
+                    help="历史被本地改写时用（走 --force-with-lease，比 --force 安全："
+                         "队友推了新东西就拒绝，不会覆盖他的提交）")
     a = ap.parse_args()
     pack = os.path.abspath(a.pack)
     git = find_git()
@@ -188,9 +196,12 @@ def main():
             return 0
 
         # ---- push ----
-        if remote_ok:
+        if remote_ok and not a.rewrite:
             run(git, ["reset", "--soft", "origin/main"], pack, quiet=True)
             print("  已接上远端历史（保留原有提交）")
+        elif a.rewrite:
+            print("  --rewrite：**不**接远端历史，用当前 HEAD 直接覆盖远端 main"
+                  "（必须配 --force-with-lease；队友推了新东西会被拒绝）")
         run(git, ["add", "-A"], pack, quiet=True)
         rc, out, _ = run(git, ["diff", "--cached", "--name-only"], pack, quiet=True)
         n = len([l for l in out.splitlines() if l.strip()])
@@ -205,8 +216,10 @@ def main():
             if p.returncode != 0:
                 print("  提交失败：" + p.stderr.decode("utf-8", "replace")[:300])
                 return 3
-        rc, out, err = run(git, ["push", "origin", "main"], pack, token=tok)
-        print("  push 退出码 %d" % rc)
+        rc, out, err = run(git, ["push"] + (["--force-with-lease"] if a.force else []) + ["origin", "main"],
+                           pack, token=tok)
+        print("  push 退出码 %d%s" % (rc, "（--force-with-lease：历史被本地改写时用，"
+                                   "若队友已推新提交会被拒绝，不会覆盖他的东西）" if a.force else ""))
         print("  " + (err.strip().splitlines()[-1] if err.strip() else out.strip()))
         return 0 if rc == 0 else 4
 
