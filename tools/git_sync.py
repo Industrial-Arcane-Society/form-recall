@@ -40,8 +40,20 @@ from push_to_github import DEF_OWNER, DEF_REPO, find_git, github_token, run   # 
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 DEF_PACK = r"C:\Users\25643\Desktop\AI建模助手_协作包"
-DEF_WORK = ROOT
+DEF_WORK = r"C:\Users\25643\Desktop\ai自动建模插件"
 STATE_NAME = "git_sync_state.json"
+
+
+def default_work():
+    """判断"我"是谁：脚本装在协作包里就说明工作区是另一个目录，反之亦然。
+
+    这样同一份工具在两个目录里都能正确工作（双击哪个都行）。
+    """
+    here = os.path.abspath(ROOT)
+    pack = os.path.abspath(DEF_PACK)
+    if os.path.normcase(here) == os.path.normcase(pack):
+        return DEF_WORK
+    return here
 
 #: 仓库里被"重新归档"过的目录 → 在工作区里其实在根目录（保持你原来的布局，不另建目录）
 ARCHIVE_MAP = [("docs/历史报告/", ""), ("启动脚本/", "")]
@@ -159,6 +171,58 @@ def mirror(git, old, new, pack, work, backup, dry):
     return acts, ts, backed
 
 
+def scan_out(git, pack, work):
+    """工作区相对仓库的改动：返回 (内容不同的已跟踪文件, 工作区里缺的, 工作区里多出来的新文件)。
+
+    用途：把"我在工作目录改的东西"送进协作包，然后才能提交推上去。
+    """
+    rc, out, _ = g(git, ["ls-files"], pack)
+    tracked = [l for l in out.splitlines() if l.strip()]
+    differing, missing = [], []
+    for rel in tracked:
+        ws = ws_target(rel, work)
+        if not os.path.exists(ws):
+            missing.append(rel)
+            continue
+        a = blob_sha(git, "HEAD", rel, pack)
+        b = file_sha(git, ws, rel, pack)
+        if a and b and a != b:
+            differing.append(rel)
+    # 工作区里多出来的文件（仓库没有的）——排掉明显的数据/临时产物，剩下的交给
+    # check_share_pack.py 用统一口径判断"该不该进包"
+    tracked_ws = {os.path.normcase(ws_target(r, work)) for r in tracked}
+    new = []
+    for dp, dns, fns in os.walk(work):
+        dns[:] = [d for d in dns
+                  if d not in ("__pycache__", ".git", "_mirror_backup", "_selftest_out",
+                               ".pytest_cache", "share_pack_files", "_wheels")]
+        for fn in fns:
+            p = os.path.join(dp, fn)
+            rel_ws = os.path.relpath(p, work).replace("\\", "/")
+            if any(rel_ws == n or rel_ws.startswith(n) for n in NEVER_MIRROR):
+                continue
+            if fn.startswith("_") or os.path.splitext(fn)[1].lower() in (".pyc", ".pyo", ".log", ".tmp"):
+                continue
+            if os.path.normcase(p) in tracked_ws:
+                continue
+            new.append(rel_ws)
+    return sorted(differing), sorted(missing), sorted(new)
+
+
+def do_out(git, pack, work, dry):
+    """把工作区改过的文件（已跟踪的）镜像进协作包。返回动作列表。"""
+    differing, missing, new = scan_out(git, pack, work)
+    acts = []
+    for rel in differing:
+        src = ws_target(rel, work)
+        dst = os.path.join(pack, rel.replace("/", os.sep))
+        if not dry:
+            os.makedirs(os.path.dirname(dst), exist_ok=True)
+            shutil.copy2(src, dst)
+        acts.append(("送进包", rel))
+    return acts, missing, new
+
+
 def gates(work, mode):
     """跑门禁。返回 {名称: 结果文本}，并判断是否通过。"""
     out = {}
@@ -183,9 +247,9 @@ def gates(work, mode):
 
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("mode", choices=["check", "pull", "rollback"])
+    ap.add_argument("mode", choices=["check", "pull", "out", "rollback"])
     ap.add_argument("--pack", default=DEF_PACK)
-    ap.add_argument("--work", default=DEF_WORK)
+    ap.add_argument("--work", default=None)
     ap.add_argument("--ref", default="origin/main", help="要拉的分支（默认 origin/main）")
     ap.add_argument("--no-mirror", action="store_true", help="只更新协作包，不动工作区")
     ap.add_argument("--gates", choices=["fast", "full", "none"], default="fast")
@@ -193,12 +257,32 @@ def main():
     ap.add_argument("--owner", default=DEF_OWNER)
     ap.add_argument("--repo", default=DEF_REPO)
     a = ap.parse_args()
-    pack, work = os.path.abspath(a.pack), os.path.abspath(a.work)
+    pack = os.path.abspath(a.pack)
+    work = os.path.abspath(a.work) if a.work else default_work()
     git = find_git()
     if not git:
         print("找不到 git"); return 1
     tok, user = github_token()
     is_local_ref = not a.ref.startswith("origin/")
+
+    # ---- 把工作区的改动送进协作包（推之前必须先做这一步）----
+    if a.mode == "out":
+        print("工作区 %s  →  协作包 %s" % (work, pack))
+        acts, missing, new = do_out(git, pack, work, a.dry_run)
+        print("\n=== 送进协作包：%d 个文件 ===" % len(acts))
+        for k, rel in acts:
+            print("     [%s] %s" % (k, rel))
+        if not acts:
+            print("     （工作区与仓库内容一致，没有要送的改动）")
+        if missing:
+            print("\n注意：仓库里有、工作区里没有的（不会自动删，自己确认）：")
+            for m in missing[:20]:
+                print("     " + m)
+        if new:
+            print("\n工作区里多出来的新文件 %d 个（要不要进仓库，由 sync_menu / check_share_pack 判断）：" % len(new))
+            for n in new[:20]:
+                print("     " + n)
+        return 0
 
     if a.mode == "rollback":
         st = load_state(pack)
