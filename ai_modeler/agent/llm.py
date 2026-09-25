@@ -210,16 +210,15 @@ def _siliconflow_thinking_params(cfg):
     与 ``reasoning_effort`` 字符串会被它静默忽略（后者只对 DeepSeek-V4/GLM
     系列生效）。文档: https://docs.siliconflow.cn/docs/api/chat-completions-post
 
-    档位映射（沿设置界面"none 不发送推理参数"的既有语义）:
+    档位映射:
       · thinking 键（布尔/字典，程序化配置存在时优先）:
           False / {'type':'disabled'} → enable_thinking=False（真正关闭）
           True  / {'type':'enabled'}  → enable_thinking=True（max 档加预算）
       · 否则按 reasoning_effort：
           max / xhigh / ultra → enable_thinking=True + thinking_budget=32768
           low / medium / high → enable_thinking=True
-          none / auto / 空   → 不发送开关，保持服务端默认
-            （Kimi-K2.7 等推理模型在 SiliconFlow 默认就会思考，
-             思考链经流式增量实时显示；实测见修复说明）
+          none / disabled     → enable_thinking=False
+          auto / 空           → 不发送开关，保持服务端默认
     """
     thinking = (cfg or {}).get('thinking')
     effort = str((cfg or {}).get('reasoning_effort') or '').strip().lower()
@@ -239,6 +238,8 @@ def _siliconflow_thinking_params(cfg):
             if effort in _SF_BUDGET_MAX_WORDS:
                 params['thinking_budget'] = 32768
             return params
+    if effort in {'none', 'disabled', 'off'}:
+        return {'enable_thinking': False}
     if effort in _SF_BUDGET_MAX_WORDS:
         return {'enable_thinking': True, 'thinking_budget': 32768}
     if effort in {'low', 'medium', 'high'}:

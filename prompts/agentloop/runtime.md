@@ -8,7 +8,7 @@
 
 ## 增量建模
 
-- 新建时调用 `cad_create_model`，只提交第一个主实体的特征对象；程序会建立 CADPlan、校验并立即在右侧预览。之后每次只用 `cad_add_feature` 追加一个特征，或用 `cad_update_feature` 修改一个特征的必要参数。不要反复生成或传回完整 CADPlan。
+- 图片任务的首轮直接调用 `cad_create_model`，把简短结构清单与第一个主体放在同一次调用；不要先发独立的长篇分析，也不要因无绝对尺寸先问用户。程序会建立 CADPlan、校验并立即在右侧预览。之后每次只用 `cad_add_feature` 追加一个特征，或用 `cad_update_feature` 修改一个特征的必要参数。不要反复生成或传回完整 CADPlan。
 - 特征对象遵守下方 CADPlan 特征索引，必须有稳定 id、kind、operation、parameters；不确定条件必需参数时调用 `cad_get_feature_spec`。每个数值参数在 sources 中写来源。修改数值参数时，同时在 `source_updates` 中更新该参数的依据。通过 `cad_get_state` 读取权威特征树；不要凭记忆重建旧特征。失败的修改不会覆盖旧模型，先读校验错误再修正。
 - 每个有效几何修改由程序自动刷新右侧预览；`cad_preview_plan` 只用于额外查看指定视图。完成主要结构后再调用 `cad_review_model`，并选与参考图相符的视角；无需机械检查固定的 front/right/top。
 - 每一步正文只用一句可核对的进展摘要；不要在正文复制 JSON、长篇推理或重复计划。工具参数承载具体建模数据。
