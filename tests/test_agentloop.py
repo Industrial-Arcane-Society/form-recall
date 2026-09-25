@@ -163,13 +163,45 @@ class AgentLoopTests(unittest.TestCase):
                 [{"role": "user", "content": "Return JSON."}],
                 {"base_url": "https://api.deepseek.com/v1",
                  "model": "deepseek-flash", "api_key": "test-only"},
-                tools=agentloop.TOOLS)
+                tools=agentloop.TOOLS, tool_choice={
+                    "type": "function", "function": {"name": "cad_create_model"}})
         request = opener.call_args.args[0]
         payload = json.loads(request.data.decode("utf-8"))
         self.assertEqual("https://api.deepseek.com/responses", request.full_url)
         self.assertEqual("high", payload["reasoning"]["effort"])
+        self.assertEqual({"type": "function", "name": "cad_create_model"},
+                         payload["tool_choice"])
         self.assertEqual("stop", result["_finish_reason"])
         self.assertEqual("high", result["_request_reasoning_effort"])
+
+    def test_siliconflow_k27_forwards_named_choice_and_keeps_auto_default(self):
+        tool = {"type": "function", "function": {
+            "name": "cad_create_model",
+            "parameters": {"type": "object", "properties": {}}}}
+        payloads = []
+
+        def open_request(request, timeout=None):
+            payloads.append(json.loads(request.data.decode("utf-8")))
+            chunk = {"id": "chat-test", "choices": [
+                {"delta": {}, "finish_reason": "stop"}]}
+            stream = "data: %s\n\ndata: [DONE]\n\n" % json.dumps(chunk)
+            return io.BytesIO(stream.encode("utf-8"))
+
+        cfg = {"base_url": "https://api.siliconflow.cn/v1",
+               "model": "moonshotai/Kimi-K2.7-Code", "api_key": "test-only",
+               "reasoning_effort": "none"}
+        with mock.patch.object(llm.urllib.request, "urlopen", side_effect=open_request):
+            llm.chat_completion([{"role": "user", "content": "Build."}], cfg,
+                                tools=[tool], tool_choice={
+                                    "type": "function",
+                                    "function": {"name": "cad_create_model"}})
+            llm.chat_completion([{"role": "user", "content": "Continue."}], cfg,
+                                tools=[tool])
+
+        self.assertEqual({"type": "function", "function": {
+            "name": "cad_create_model"}}, payloads[0]["tool_choice"])
+        self.assertFalse(payloads[0]["enable_thinking"])
+        self.assertEqual("auto", payloads[1]["tool_choice"])
 
     def test_empty_provider_response_reports_finish_reason(self):
         state = {"deadline": time.monotonic() + 10}

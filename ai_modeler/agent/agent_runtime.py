@@ -58,6 +58,36 @@ def _explicit_modeling_request(prompt: str) -> bool:
         r"add|remove|resize|modify)", text, re.IGNORECASE))
 
 
+def _requires_image_bootstrap(prompt: str, image_paths: list,
+                              current_plan: Optional[dict]) -> bool:
+    """Require an initial CAD candidate for a new image modeling turn.
+
+    An attached image is the modeling request by default. Clear image Q&A stays
+    conversational, while a supplied plan means the user is continuing an
+    existing model and the normal model-directed routing remains in control.
+    """
+    return bool(image_paths and not isinstance(current_plan, dict)
+                and not _explicit_image_question(prompt))
+
+
+def _required_tool_only(tools: list, name: str, required_fields=()) -> list:
+    """Return one copied function schema with any call-specific required keys."""
+    for tool in tools or []:
+        if (not isinstance(tool, dict) or tool.get("type") != "function"
+                or (tool.get("function") or {}).get("name") != name):
+            continue
+        function = dict(tool["function"])
+        parameters = dict(function.get("parameters") or {})
+        required = list(parameters.get("required") or [])
+        for field in required_fields:
+            if field not in required:
+                required.append(field)
+        parameters["required"] = required
+        function["parameters"] = parameters
+        return [dict(tool, function=function)]
+    raise cad.AgentLoopError("AgentLoop 缺少必需工具：%s" % name)
+
+
 def _tool(name: str, description: str, properties: dict, required=None):
     return {
         "type": "function",
@@ -500,10 +530,19 @@ def _is_transient_error(error: Exception) -> bool:
                               "temporarily unavailable", "network is unreachable")))
 
 
-def _call_model(messages, state, tools, output_tokens):
+def _is_tool_choice_unsupported(error: Exception) -> bool:
+    text = str(error).lower()
+    mentions_choice = "tool_choice" in text or "tool choice" in text
+    return mentions_choice and any(marker in text for marker in (
+        "not support", "unsupported", "invalid", "unknown", "unrecognized",
+        "doesn't support", "does not support", "不支持", "无效"))
+
+
+def _call_model(messages, state, tools, output_tokens, tool_choice=None):
     deadline = state["deadline"]
     compact_retry_used = False
     transient_attempt = 0
+    tool_choice_fallback_used = False
     while True:
         cad._check_cancel(state.get("cancel_event"), deadline)
         _compact_messages(messages, state)
@@ -531,7 +570,7 @@ def _call_model(messages, state, tools, output_tokens):
         cad._emit(state.get("progress"), "模型等待中：" + detail)
         try:
             reply = llm.chat_completion(
-                messages, model_cfg, tools=tools,
+                messages, model_cfg, tools=tools, tool_choice=tool_choice,
                 timeout=cad._remaining_timeout(deadline), max_tokens=output_tokens,
                 cancel_event=state.get("cancel_event"),
                 progress=lambda event: llm.emit_stream_progress(
@@ -543,6 +582,14 @@ def _call_model(messages, state, tools, output_tokens):
         except Exception as exc:
             cad._record_model_call(state, "agent_loop", messages, output_tokens,
                                    error=exc)
+            if (tool_choice is not None and not tool_choice_fallback_used
+                    and _is_tool_choice_unsupported(exc)):
+                tool_choice_fallback_used = True
+                tool_choice = None
+                cad._emit(
+                    state.get("progress"),
+                    "模型接口不支持指定工具名；改用仅开放 cad_create_model 的自动选择重试。")
+                continue
             if _is_context_error(exc) and not compact_retry_used:
                 compact_retry_used = _compact_messages(messages, state, force=True)
                 if compact_retry_used:
@@ -1678,6 +1725,8 @@ def run_dynamic_loop(prompt: str, image_paths: list, model_cfg: dict,
         "reason": "本轮由统一 AgentLoop 按需调用工具；图片建模默认先生成可见候选。",
     }
     tools = _build_tools(state)
+    image_bootstrap = _requires_image_bootstrap(
+        prompt, image_paths, current_plan)
     output_tokens = MAX_OUTPUT_TOKENS
     no_progress_finals = 0
     state["truncated_responses"] = 0
@@ -1686,11 +1735,25 @@ def run_dynamic_loop(prompt: str, image_paths: list, model_cfg: dict,
         cad._check_cancel(cancel_event, state["deadline"])
         state["request_phase"] = "主循环第 %d 轮" % turn_index
         cad._emit(state.get("progress"), "准备 AgentLoop 第 %d 轮：整理当前证据…" % turn_index)
-        reply = _call_model(messages, state, tools, output_tokens)
+        require_create_model = image_bootstrap and turn_index == 1
+        call_tools = (_required_tool_only(
+            tools, "cad_create_model", required_fields=("reference_reading",))
+            if require_create_model else tools)
+        reply = _call_model(
+            messages, state, call_tools, output_tokens,
+            tool_choice=(
+                {"type": "function", "function": {"name": "cad_create_model"}}
+                if require_create_model else None))
         if not state.get("reference_reading"):
             _capture_reference_reading(state, cad._message_text(reply))
         _compact_main_reference_images(messages, state)
         calls = reply.get("tool_calls") or []
+        if require_create_model and not any(
+                str(((call.get("function") or {}).get("name") or ""))
+                == "cad_create_model" for call in calls):
+            raise cad.AgentLoopError(
+                "带参考图的新建模请求已指定 cad_create_model，"
+                "但当前模型仍未返回该工具调用；请确认该模型支持 function calling 后重试。")
         if not calls:
             content = cad._message_text(reply).strip()
             if reply.get("_finish_reason") == "length":

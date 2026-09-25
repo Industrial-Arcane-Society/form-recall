@@ -359,6 +359,18 @@ def _responses_tools(tools):
     return result
 
 
+def _responses_tool_choice(tool_choice):
+    """Convert a Chat Completions named choice to Responses API shape."""
+    if not isinstance(tool_choice, dict):
+        return tool_choice
+    function = tool_choice.get('function')
+    if tool_choice.get('type') == 'function' and isinstance(function, dict):
+        name = function.get('name')
+        if name:
+            return {'type': 'function', 'name': name}
+    return tool_choice
+
+
 class ModelRequestCancelled(RuntimeError):
     """用户点了「停止」：请求在发出前或流式接收途中被主动中断。
 
@@ -579,7 +591,8 @@ def _responses_to_chat_message(response, final_event, payload):
 
 
 def _deepseek_responses_completion(messages, cfg, tools, timeout, max_tokens,
-                                   temperature, progress=None, cancel_event=None):
+                                   temperature, progress=None, cancel_event=None,
+                                   tool_choice=None):
     _check_cancelled(cancel_event)
     model = cfg.get('model') or 'deepseek-flash'
     base = (cfg.get('base_url') or '').rstrip('/')
@@ -607,7 +620,7 @@ def _deepseek_responses_completion(messages, cfg, tools, timeout, max_tokens,
     converted_tools = _responses_tools(tools)
     if converted_tools:
         payload['tools'] = converted_tools
-        payload['tool_choice'] = 'auto'
+        payload['tool_choice'] = _responses_tool_choice(tool_choice) or 'auto'
     request = urllib.request.Request(
         _responses_endpoint(base),
         data=json.dumps(payload, ensure_ascii=False).encode('utf-8'),
@@ -864,7 +877,7 @@ def _chat_stream_to_message(stream, payload):
 
 def chat_completion(messages, cfg: dict, tools=None, timeout=180,
                     max_tokens=4096, temperature=0.1, progress=None,
-                    cancel_event=None):
+                    cancel_event=None, tool_choice=None):
     """Call a configured model and normalize its reply for the local AgentLoop.
 
     Official DeepSeek endpoints use the Responses API with SSE streaming;
@@ -888,7 +901,8 @@ def chat_completion(messages, cfg: dict, tools=None, timeout=180,
     if _is_deepseek_responses(base, model):
         return _deepseek_responses_completion(
             messages, cfg, tools, timeout, max_tokens, temperature,
-            progress=progress, cancel_event=cancel_event)
+            progress=progress, cancel_event=cancel_event,
+            tool_choice=tool_choice)
 
     payload = {
         'model': model,
@@ -922,7 +936,7 @@ def chat_completion(messages, cfg: dict, tools=None, timeout=180,
         payload['thinking'] = {'type': 'disabled'}
     if tools:
         payload['tools'] = tools
-        payload['tool_choice'] = 'auto'
+        payload['tool_choice'] = tool_choice or 'auto'
     request = urllib.request.Request(
         base + '/chat/completions', data=json.dumps(payload).encode('utf-8'),
         headers={'Content-Type': 'application/json',
