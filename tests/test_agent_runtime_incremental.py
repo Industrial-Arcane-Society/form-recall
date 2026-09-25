@@ -83,6 +83,30 @@ def _reading(**overrides):
 
 
 class IncrementalAgentTests(unittest.TestCase):
+    def test_main_loop_drops_source_pixels_after_read_but_keeps_review_copy(self):
+        image_part = {"type": "image_url", "image_url": {"url": "data:image/png;base64,abc"}}
+        transcript_message = {"role": "user", "content": [
+            {"type": "text", "text": "复刻这个零件"}, image_part]}
+        main_messages = [dict(transcript_message)]
+        prefix_messages = list(main_messages)
+        review_messages = [dict(transcript_message)]
+        state = {"reference_reading": _reading(),
+                 "active_reference_images": ["reference.png"]}
+
+        removed = agent_runtime._compact_main_reference_images(main_messages, state)
+
+        self.assertEqual(1, removed)
+        self.assertTrue(state["reference_images_compacted"])
+        self.assertEqual(1, state["reference_image_handling"][
+            "image_parts_removed_from_main_context"])
+        self.assertEqual(["reference.png"], state["reference_image_handling"][
+            "preserved_for_multimodal_review"])
+        self.assertEqual([{"type": "text", "text": "复刻这个零件"}],
+                         main_messages[0]["content"])
+        self.assertNotIn("image_url", json.dumps(prefix_messages, ensure_ascii=False))
+        self.assertIn("image_url", json.dumps(review_messages, ensure_ascii=False))
+        self.assertEqual(0, agent_runtime._compact_main_reference_images(main_messages, state))
+
     def test_transaction_preserves_other_features_and_sources(self):
         plan = plan_state.create("Part", _feature())
         self.assertEqual("valid", cadplan.validate_plan(plan)["state"])

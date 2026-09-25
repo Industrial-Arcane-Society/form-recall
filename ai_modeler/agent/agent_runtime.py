@@ -1530,6 +1530,7 @@ def _result_from_state(status: dict, state: dict, reply: str,
         "truncated_responses": state.get("truncated_responses", 0),
         "tool_trace": list(state.get("tool_trace", [])),
         "review_history": list(state.get("review_history", [])),
+        "reference_image_handling": state.get("reference_image_handling"),
         "conversation_summary": state.get("conversation_summary", ""),
         "summary_through": state.get("conversation_summary_through", 0),
         "session_dir": str(state.get("session_dir", "")),
@@ -1643,6 +1644,41 @@ def _drop_old_view_messages(messages: list) -> None:
             "当前模型单视图（本地网格）"))]
 
 
+def _compact_main_reference_images(messages: list, state: dict) -> int:
+    """Stop replaying source pixels after reading, while retaining review evidence."""
+    if not state.get("reference_reading"):
+        return 0
+    removed = 0
+    for message in messages:
+        if not isinstance(message, dict) or message.get("role") != "user":
+            continue
+        content = message.get("content")
+        if not isinstance(content, list):
+            continue
+        retained = []
+        for part in content:
+            if isinstance(part, dict) and part.get("type") in {"image_url", "input_image"}:
+                removed += 1
+            else:
+                retained.append(part)
+        if len(retained) != len(content):
+            message["content"] = retained
+    if removed:
+        state["reference_images_compacted"] = True
+        state["reference_images_removed_from_main_loop"] = (
+            state.get("reference_images_removed_from_main_loop", 0) + removed)
+        state["reference_image_handling"] = {
+            "read_manifest_available": True,
+            "image_parts_removed_from_main_context": state[
+                "reference_images_removed_from_main_loop"],
+            "preserved_for_multimodal_review": list(state.get("active_reference_images") or []),
+        }
+        cad._emit(
+            state.get("progress"),
+            "参考图已完成结构读取；主循环后续不再重复上传原图，独立多模态复核仍保留原图。")
+    return removed
+
+
 def _build_tools(state: dict) -> list:
     tools = list(AGENT_TOOLS)
     if not state.get("cfg", {}).get("online", {}).get("enabled", True):
@@ -1733,6 +1769,7 @@ def run_dynamic_loop(prompt: str, image_paths: list, model_cfg: dict,
         reply = _call_model(messages, state, tools, output_tokens)
         if not state.get("reference_reading"):
             _capture_reference_reading(state, cad._message_text(reply))
+        _compact_main_reference_images(messages, state)
         calls = reply.get("tool_calls") or []
         if not calls:
             content = cad._message_text(reply).strip()
