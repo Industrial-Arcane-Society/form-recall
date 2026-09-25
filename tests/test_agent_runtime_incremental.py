@@ -127,15 +127,34 @@ class IncrementalAgentTests(unittest.TestCase):
                          imported["features"][0]["sources"]["length"]["type"])
         self.assertEqual("user", imported["features"][0]["sources"]["width"]["type"])
 
-    def test_image_bootstrap_excludes_questions_and_existing_models(self):
-        self.assertTrue(agent_runtime._requires_image_bootstrap(
+    def test_initial_bootstrap_excludes_questions_and_existing_models(self):
+        self.assertTrue(agent_runtime._requires_initial_model_creation(
             "复刻这个", ["reference.png"], None))
-        self.assertFalse(agent_runtime._requires_image_bootstrap(
+        self.assertFalse(agent_runtime._requires_initial_model_creation(
             "这张图片是什么？", ["reference.png"], None))
-        self.assertFalse(agent_runtime._requires_image_bootstrap(
+        for question in ("这张图怎么建模", "请问这张图怎么建模",
+                         "请分析这张图能怎么建模"):
+            self.assertTrue(agent_runtime._explicit_image_question(question), question)
+            self.assertFalse(agent_runtime._requires_initial_model_creation(
+                question, ["reference.png"], None), question)
+        self.assertTrue(agent_runtime._requires_initial_model_creation(
+            "按图复刻", ["reference.png"], None))
+        self.assertFalse(agent_runtime._requires_initial_model_creation(
             "修改一下", ["reference.png"], {"features": []}))
-        self.assertFalse(agent_runtime._requires_image_bootstrap(
-            "复刻这个", [], None))
+        self.assertTrue(agent_runtime._requires_initial_model_creation(
+            "建立一个长方体", [], None))
+        self.assertTrue(agent_runtime._requires_initial_model_creation(
+            "按刚才图片新建模型", [], None))
+        self.assertFalse(agent_runtime._requires_initial_model_creation(
+            "你好", [], None))
+        text_tool = agent_runtime._initial_creation_tools(
+            agent_runtime.AGENT_TOOLS, has_reference_images=False)[0]
+        image_tool = agent_runtime._initial_creation_tools(
+            agent_runtime.AGENT_TOOLS, has_reference_images=True)[0]
+        self.assertNotIn("reference_reading",
+                         text_tool["function"]["parameters"]["required"])
+        self.assertIn("reference_reading",
+                      image_tool["function"]["parameters"]["required"])
 
     def test_text_build_saves_editable_project_and_mesh(self):
         replies = [
@@ -144,8 +163,19 @@ class IncrementalAgentTests(unittest.TestCase):
             {"content": "finish", "tool_calls": [
                 _call("cad_finish", {"summary": "已生成本地模型。"}, 2)]},
         ]
+        requests = []
+
+        def completion(_messages, _cfg, **kwargs):
+            requests.append({
+                "tool_choice": kwargs.get("tool_choice") or "auto",
+                "tools": [row["function"]["name"] for row in kwargs.get("tools") or []],
+                "required": next((row["function"]["parameters"].get("required")
+                                  for row in kwargs.get("tools") or []), []),
+            })
+            return replies.pop(0)
+
         with tempfile.TemporaryDirectory() as directory, mock.patch.object(
-                agent_runtime.llm, "chat_completion", side_effect=lambda *_a, **_k: replies.pop(0)):
+                agent_runtime.llm, "chat_completion", side_effect=completion):
             result = agentloop.run_agent_loop(
                 "建立长方体", cfg={"llm": {"model": "mock", "base_url": "http://mock"},
                                    "online": {"enabled": False}}, output_dir=directory)
@@ -153,6 +183,12 @@ class IncrementalAgentTests(unittest.TestCase):
             self.assertEqual("passed", result["local_geometry_checks"]["state"])
             self.assertTrue(Path(result["output_paths"]["aimodel"]).is_file())
             self.assertTrue(Path(result["output_paths"]["stl"]).is_file())
+        self.assertEqual({"type": "function", "function": {
+            "name": "cad_create_model"}}, requests[0]["tool_choice"])
+        self.assertEqual(["cad_create_model"], requests[0]["tools"])
+        self.assertNotIn("reference_reading", requests[0]["required"])
+        self.assertEqual("required", requests[1]["tool_choice"])
+        self.assertGreater(len(requests[1]["tools"]), 1)
 
     def test_image_question_stays_conversational_without_forced_tool(self):
         requests = []
@@ -169,17 +205,21 @@ class IncrementalAgentTests(unittest.TestCase):
             image.write_bytes(_PIXEL)
             with mock.patch.object(agent_runtime.llm, "chat_completion",
                                    side_effect=completion):
-                result = agentloop.run_agent_loop(
-                    "这张图片是什么？", image_paths=[str(image)],
+                results = [agentloop.run_agent_loop(
+                    prompt, image_paths=[str(image)],
                     cfg={"llm": {"model": "mock", "base_url": "http://mock"},
                          "online": {"enabled": False}}, output_dir=directory)
+                    for prompt in ("这张图片是什么？", "这张图怎么建模",
+                                   "请问这张图怎么建模")]
 
-        self.assertEqual("conversation", result["state"])
-        self.assertEqual("auto", requests[0]["tool_choice"])
-        self.assertIn("cad_create_model", requests[0]["tools"])
-        self.assertGreater(len(requests[0]["tools"]), 1)
+        self.assertEqual(["conversation"] * 3,
+                         [result["state"] for result in results])
+        self.assertEqual(["auto"] * 3,
+                         [request["tool_choice"] for request in requests])
+        self.assertTrue(all("cad_create_model" in request["tools"]
+                            and len(request["tools"]) > 1 for request in requests))
 
-    def test_existing_model_image_followup_keeps_auto_routing(self):
+    def test_existing_model_image_modification_requires_tool_action(self):
         requests = []
 
         def completion(_messages, _cfg, **kwargs):
@@ -202,7 +242,7 @@ class IncrementalAgentTests(unittest.TestCase):
                          "online": {"enabled": False}}, output_dir=directory)
 
         self.assertEqual("needs_user_input", result["state"])
-        self.assertEqual("auto", requests[0]["tool_choice"])
+        self.assertEqual("required", requests[0]["tool_choice"])
         self.assertIn("cad_create_model", requests[0]["tools"])
         self.assertGreater(len(requests[0]["tools"]), 1)
 
@@ -263,7 +303,7 @@ class IncrementalAgentTests(unittest.TestCase):
                                    side_effect=completion), mock.patch.object(
                     agentloop, "_run_json_object", side_effect=review):
                 result = agentloop.run_agent_loop(
-                    "按两张图建模", image_paths=images,
+                    "按图复刻", image_paths=images,
                     cfg={"llm": {"model": "mock", "base_url": "http://mock"},
                          "online": {"enabled": False}}, output_dir=directory)
             finishes = [row["result"]["state"] for row in result["tool_trace"]
@@ -273,7 +313,7 @@ class IncrementalAgentTests(unittest.TestCase):
             "name": "cad_create_model"}}, requests[0]["tool_choice"])
         self.assertEqual(["cad_create_model"], requests[0]["tools"])
         self.assertIn("reference_reading", requests[0]["required"])
-        self.assertEqual("auto", requests[1]["tool_choice"])
+        self.assertEqual("required", requests[1]["tool_choice"])
         self.assertGreater(len(requests[1]["tools"]), 1)
 
     def test_named_tool_choice_rejection_falls_back_to_auto_once(self):
@@ -294,6 +334,28 @@ class IncrementalAgentTests(unittest.TestCase):
         self.assertEqual("created", result["content"])
         self.assertEqual(selected, completion.call_args_list[0].kwargs["tool_choice"])
         self.assertIsNone(completion.call_args_list[1].kwargs["tool_choice"])
+
+    def test_required_tool_choice_rejection_falls_back_and_surfaces_warning(self):
+        state = {"deadline": time.monotonic() + 10, "model_cfg": {
+            "model": "mock", "base_url": "https://provider.example/v1"}}
+        with mock.patch.object(
+                agent_runtime.llm, "chat_completion",
+                side_effect=[RuntimeError(
+                    "Thinking mode does not support tool_choice=required"),
+                    {"content": "继续建模", "tool_calls": []}]) as completion:
+            reply = agent_runtime._call_model(
+                [{"role": "user", "content": "继续建模"}], state,
+                agent_runtime.AGENT_TOOLS, 1024, tool_choice="required")
+
+        self.assertEqual("继续建模", reply["content"])
+        self.assertEqual("required", completion.call_args_list[0].kwargs["tool_choice"])
+        self.assertIsNone(completion.call_args_list[1].kwargs["tool_choice"])
+        self.assertTrue(state["tool_choice_required_unsupported"])
+        result = agent_runtime._result_from_state(
+            {"state": "needs_user_input"}, state, "当前候选已保留。")
+        warning = state["tool_choice_compatibility_warning"]
+        self.assertIn(warning, result["warnings"])
+        self.assertIn(warning, result["reply"])
 
     def test_web_search_is_model_available_without_prompt_keywords(self):
         state = {"cfg": {"online": {"enabled": True}},

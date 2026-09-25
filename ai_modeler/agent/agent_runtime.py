@@ -43,6 +43,12 @@ def _explicit_image_question(prompt: str) -> bool:
         r"(?:请问)?这是什么(?:东西|零件|结构|模型)?[？?。!！]*$",
         r"(?:这张|这幅|这个|该)?(?:图片|图像|照片|图)\s*.{0,8}(?:是什么|显示什么|画的什么|写了什么)",
         r"(?:描述|解释|识别|概括|总结)(?:一下)?(?:这张|这幅|这个|该)?(?:图片|图像|照片|图)",
+        r"(?:这张|这幅|这个|该|根据|按照)?(?:图片|图像|照片|图).{0,24}"
+        r"(?:怎么|如何|怎样|能否|可不可以|可以).{0,12}"
+        r"(?:建模|创建|生成|制作|复刻|还原)",
+        r"(?:分析|讨论|说明).{0,16}(?:这张|这幅|这个|该)?(?:图片|图像|照片|图)"
+        r".{0,20}(?:怎么|如何|怎样|能否).{0,12}"
+        r"(?:建模|创建|生成|制作|复刻|还原)",
         r"(?:what is this|describe (?:the )?(?:image|picture|photo)|identify (?:the )?(?:image|picture|photo)|read the text)",
     )
     return any(re.search(pattern, text, re.IGNORECASE) for pattern in patterns)
@@ -54,20 +60,27 @@ def _explicit_modeling_request(prompt: str) -> bool:
         return False
     return bool(re.search(
         r"(?:创建|建立|生成|建模|绘制|画出|制作|复刻|还原|添加|增加|删除|移除|"
-        r"修改|调整|缩小|放大|打孔|切除|拉伸|旋转|create|build|model|draw|"
+        r"修改|调整|缩小|放大|打孔|切除|拉伸|旋转|新建|create|build|model|draw|"
         r"add|remove|resize|modify)", text, re.IGNORECASE))
 
 
-def _requires_image_bootstrap(prompt: str, image_paths: list,
-                              current_plan: Optional[dict]) -> bool:
-    """Require an initial CAD candidate for a new image modeling turn.
+def _modeling_expected(prompt: str, image_paths: list) -> bool:
+    if image_paths:
+        return not _explicit_image_question(prompt)
+    return _explicit_modeling_request(prompt)
 
-    An attached image is the modeling request by default. Clear image Q&A stays
-    conversational, while a supplied plan means the user is continuing an
-    existing model and the normal model-directed routing remains in control.
+
+def _requires_initial_model_creation(prompt: str, image_paths: list,
+                                     current_plan: Optional[dict]) -> bool:
+    """Require an initial CAD candidate for a new modeling turn.
+
+    An attached image is the modeling request by default; explicit image Q&A
+    stays conversational. Explicit text modeling requests also start directly
+    with the first feature. A supplied plan means this is an existing-model
+    continuation, so the model can choose any appropriate tool.
     """
-    return bool(image_paths and not isinstance(current_plan, dict)
-                and not _explicit_image_question(prompt))
+    return bool(_modeling_expected(prompt, image_paths)
+                and not isinstance(current_plan, dict))
 
 
 def _required_tool_only(tools: list, name: str, required_fields=()) -> list:
@@ -86,6 +99,11 @@ def _required_tool_only(tools: list, name: str, required_fields=()) -> list:
         function["parameters"] = parameters
         return [dict(tool, function=function)]
     raise cad.AgentLoopError("AgentLoop 缺少必需工具：%s" % name)
+
+
+def _initial_creation_tools(tools: list, has_reference_images: bool) -> list:
+    required_fields = ("reference_reading",) if has_reference_images else ()
+    return _required_tool_only(tools, "cad_create_model", required_fields)
 
 
 def _tool(name: str, description: str, properties: dict, required=None):
@@ -585,10 +603,19 @@ def _call_model(messages, state, tools, output_tokens, tool_choice=None):
             if (tool_choice is not None and not tool_choice_fallback_used
                     and _is_tool_choice_unsupported(exc)):
                 tool_choice_fallback_used = True
+                if tool_choice == "required":
+                    state["tool_choice_required_unsupported"] = True
+                    warning = (
+                        "模型接口拒绝 tool_choice=required；本轮已回退到自动工具选择，"
+                        "并继续保留工具执行与几何验收。")
+                else:
+                    warning = (
+                        "模型接口不支持指定工具名；首轮改用仅开放 cad_create_model "
+                        "的自动工具选择。")
+                state["tool_choice_compatibility_warning"] = warning
                 tool_choice = None
                 cad._emit(
-                    state.get("progress"),
-                    "模型接口不支持指定工具名；改用仅开放 cad_create_model 的自动选择重试。")
+                    state.get("progress"), warning)
                 continue
             if _is_context_error(exc) and not compact_retry_used:
                 compact_retry_used = _compact_messages(messages, state, force=True)
@@ -1475,11 +1502,17 @@ def _result_from_state(status: dict, state: dict, reply: str,
             summary += "仍有 %d 项视觉差异未解决。" % len(
                 state["open_multiview_findings"])
         reply = str(reply or "").rstrip() + summary
+    warnings = list(preview.get("warnings") or [])
+    compatibility_warning = state.get("tool_choice_compatibility_warning")
+    if compatibility_warning and compatibility_warning not in warnings:
+        warnings.append(compatibility_warning)
+        reply = str(reply or "").rstrip() + "\n\n兼容性提示：" + compatibility_warning
     return {
         "state": status.get("state", "previewed"),
         "plan": plan,
         "validation": status.get("validation") or state.get("plan_validation"),
         "preview": preview,
+        "warnings": warnings,
         "dimension_assumptions": assumptions,
         "local_geometry_checks": preview.get("local_geometry_checks"),
         "recognition": state.get("recognition"),
@@ -1666,9 +1699,7 @@ def run_dynamic_loop(prompt: str, image_paths: list, model_cfg: dict,
     # Start a first candidate when this turn actually includes an image.
     # Historical reference images remain review evidence, but a text-only
     # follow-up such as "okay" must not silently restart modeling.
-    state["modeling_expected"] = bool(
-        (image_paths and not _explicit_image_question(prompt))
-        or _explicit_modeling_request(prompt))
+    state["modeling_expected"] = _modeling_expected(prompt, image_paths)
     state["current_plan"] = current_plan if isinstance(current_plan, dict) else None
     state["plan_validation"] = (_validation_result(current_plan)
                                 if isinstance(current_plan, dict) else None)
@@ -1725,7 +1756,7 @@ def run_dynamic_loop(prompt: str, image_paths: list, model_cfg: dict,
         "reason": "本轮由统一 AgentLoop 按需调用工具；图片建模默认先生成可见候选。",
     }
     tools = _build_tools(state)
-    image_bootstrap = _requires_image_bootstrap(
+    initial_model_bootstrap = _requires_initial_model_creation(
         prompt, image_paths, current_plan)
     output_tokens = MAX_OUTPUT_TOKENS
     no_progress_finals = 0
@@ -1735,15 +1766,21 @@ def run_dynamic_loop(prompt: str, image_paths: list, model_cfg: dict,
         cad._check_cancel(cancel_event, state["deadline"])
         state["request_phase"] = "主循环第 %d 轮" % turn_index
         cad._emit(state.get("progress"), "准备 AgentLoop 第 %d 轮：整理当前证据…" % turn_index)
-        require_create_model = image_bootstrap and turn_index == 1
-        call_tools = (_required_tool_only(
-            tools, "cad_create_model", required_fields=("reference_reading",))
+        require_create_model = initial_model_bootstrap and turn_index == 1
+        call_tools = (_initial_creation_tools(
+            tools, bool(state.get("has_reference_images")))
             if require_create_model else tools)
+        require_action_tool = bool(
+            state.get("modeling_expected")
+            and (isinstance(state.get("current_plan"), dict)
+                 or state.get("agent_started"))
+            and not state.get("tool_choice_required_unsupported"))
         reply = _call_model(
             messages, state, call_tools, output_tokens,
             tool_choice=(
                 {"type": "function", "function": {"name": "cad_create_model"}}
-                if require_create_model else None))
+                if require_create_model else
+                "required" if require_action_tool else None))
         if not state.get("reference_reading"):
             _capture_reference_reading(state, cad._message_text(reply))
         _compact_main_reference_images(messages, state)
@@ -1752,7 +1789,7 @@ def run_dynamic_loop(prompt: str, image_paths: list, model_cfg: dict,
                 str(((call.get("function") or {}).get("name") or ""))
                 == "cad_create_model" for call in calls):
             raise cad.AgentLoopError(
-                "带参考图的新建模请求已指定 cad_create_model，"
+                "新建模请求已指定 cad_create_model，"
                 "但当前模型仍未返回该工具调用；请确认该模型支持 function calling 后重试。")
         if not calls:
             content = cad._message_text(reply).strip()
