@@ -389,7 +389,7 @@ def _check_cancelled(cancel_event):
 
 
 def describe_stream_progress(event):
-    """Describe stream activity without embedding reasoning text in a status label."""
+    """Describe the kind of stream data received without mislabeling answer text as reasoning."""
     if not isinstance(event, dict):
         return '正在接收模型流式响应'
     kind = str(event.get('event') or '')
@@ -399,14 +399,16 @@ def describe_stream_progress(event):
     visible_output = str(event.get('visible_output') or '').strip()
     if kind == 'response.created':
         return '服务端已接收请求'
-    if visible_output:
-        return '模型正在思考；进展摘要：%s' % visible_output[-480:]
-    if reasoning_chars:
-        return '模型正在思考；推理流已接收 %s 字符' % reasoning_chars
-    if output_chars:
-        return '模型正在生成答复；已收到 %s 字符' % output_chars
     if argument_chars:
         return '模型正在形成工具调用；已收到 %s 字符的参数流' % argument_chars
+    has_output = output_chars > 0 or bool(visible_output)
+    if reasoning_chars and has_output:
+        return ('已收到推理流 %s 字符；模型正在输出答复文本，已收到 %s 字符'
+                % (reasoning_chars, output_chars or len(visible_output)))
+    if reasoning_chars:
+        return '模型正在推理；已收到 %s 字符的推理流' % reasoning_chars
+    if has_output:
+        return '模型正在输出答复文本；已收到 %s 字符' % (output_chars or len(visible_output))
     if kind.startswith('response.'):
         return '模型正在处理（%s）' % kind[len('response.'):]
     return '正在接收模型流式响应'
