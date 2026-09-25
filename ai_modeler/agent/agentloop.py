@@ -53,6 +53,7 @@ MAX_CONTEXT_SUMMARY_CHARS = 32000
 CONTEXT_SUMMARY_BATCH_MESSAGES = 8
 DEFAULT_TOTAL_TIMEOUT = 1800
 DEFAULT_REQUEST_TIMEOUT = 600
+RUN_CHECKPOINT_INTERVAL_SECONDS = 15.0
 
 TOOLS = [
     {
@@ -206,9 +207,122 @@ def _image_parts_in_messages(messages):
     return count
 
 
+def _begin_model_call(state, phase, messages, max_tokens, timeout=None,
+                      tool_choice=None):
+    """Persist which provider operation is active before entering the stream."""
+    model_cfg = state.get("model_cfg") or {}
+    state["active_request"] = {
+        "index": len(state.get("model_calls", [])) + 1,
+        "status": "waiting",
+        "phase": str(phase),
+        "model": str(model_cfg.get("model") or ""),
+        "api_protocol": ("responses" if llm._is_deepseek_responses(
+            model_cfg.get("base_url"), model_cfg.get("model")) else "chat_completions"),
+        "requested_at": datetime.now().astimezone().isoformat(timespec="seconds"),
+        "timeout_seconds": timeout,
+        "max_output_tokens": int(max_tokens),
+        "image_parts_in_request": _image_parts_in_messages(messages),
+        "tool_choice": tool_choice,
+        "stream_progress": {
+            "event_count": 0,
+            "reasoning_chars": 0,
+            "answer_chars": 0,
+            "tool_argument_chars": 0,
+        },
+    }
+    state["_active_request_started_monotonic"] = time.monotonic()
+    state["_active_request_checkpoint_monotonic"] = time.monotonic()
+    _checkpoint_run_record(state)
+
+
+def _stream_progress_callback(state, detail):
+    """Track response-channel counts without retaining reasoning or answer text."""
+    def on_event(event):
+        now = time.monotonic()
+        active = state.get("active_request")
+        if isinstance(active, dict) and isinstance(event, dict):
+            active["status"] = "streaming"
+            counters = active.setdefault("stream_progress", {})
+            counters["event_count"] = int(counters.get("event_count", 0)) + 1
+            counters["last_event"] = str(event.get("event") or "")[:100]
+            for source, target in (("reasoning_chars", "reasoning_chars"),
+                                   ("output_chars", "answer_chars"),
+                                   ("tool_argument_chars", "tool_argument_chars")):
+                value = event.get(source)
+                if isinstance(value, (int, float)) and not isinstance(value, bool):
+                    counters[target] = max(0, int(value))
+            elapsed = event.get("elapsed_seconds")
+            if isinstance(elapsed, (int, float)) and not isinstance(elapsed, bool):
+                if "first_event_seconds" not in counters:
+                    counters["first_event_seconds"] = round(float(elapsed), 2)
+                counters["last_event_seconds"] = round(float(elapsed), 2)
+            active["last_progress_at"] = datetime.now().astimezone().isoformat(
+                timespec="seconds")
+            last_checkpoint = state.get("_active_request_checkpoint_monotonic", now)
+            if now - last_checkpoint >= RUN_CHECKPOINT_INTERVAL_SECONDS:
+                _checkpoint_run_record(state)
+                state["_active_request_checkpoint_monotonic"] = now
+        llm.emit_stream_progress(
+            event,
+            lambda message: _emit(state.get("progress"), message),
+            detail=detail)
+    return on_event
+
+
+def _checkpoint_run_record(state, error=None):
+    """Atomically persist a resumable snapshot while the agent is still running."""
+    session_dir = state.get("session_dir")
+    started_at = state.get("run_started_at")
+    if not session_dir or not started_at:
+        return None
+    latest_geometry = state.get("latest_geometry_review") or {}
+    latest_similarity = state.get("latest_similarity_review") or {}
+    result = {
+        "state": state.get("run_status") or "running",
+        "plan": state.get("current_plan"),
+        "validation": state.get("plan_validation"),
+        "preview": state.get("latest_preview") or {},
+        "review": latest_geometry.get("result"),
+        "similarity": latest_similarity.get("result"),
+        "review_history": state.get("review_history", []),
+        "tool_trace": state.get("tool_trace", []),
+        "questions": state.get("pending_questions", []),
+        "output_paths": state.get("checkpoint_output_paths", {}),
+        "output_warning": state.get("checkpoint_output_warning"),
+    }
+    try:
+        return _write_run_record(
+            session_dir, state.get("run_prompt", ""),
+            state.get("run_image_paths", []), state,
+            result=result, error=error, cfg=state.get("cfg"),
+            started_at=started_at)
+    except Exception as exc:
+        state["run_record_checkpoint_error"] = str(exc)[:300]
+        _emit(state.get("progress"), "运行记录检查点写入失败；建模继续：%s" % exc)
+        return None
+
+
 def _record_model_call(state, phase, messages, max_tokens, reply=None, error=None):
     """Keep non-sensitive evidence about each provider request and response."""
     response = _message_text(reply) if isinstance(reply, dict) else ""
+    active = state.get("active_request")
+    active = active if isinstance(active, dict) else {}
+    active_started = state.pop("_active_request_started_monotonic", None)
+    duration = (max(0.0, time.monotonic() - active_started)
+                if isinstance(active_started, (int, float)) else None)
+    stream_progress = active.get("stream_progress") or {}
+    tool_calls = reply.get("tool_calls") or [] if isinstance(reply, dict) else []
+    tool_call_names = []
+    tool_argument_lengths = []
+    for call in tool_calls:
+        if not isinstance(call, dict):
+            continue
+        function = call.get("function") or {}
+        if not isinstance(function, dict):
+            continue
+        tool_call_names.append(str(function.get("name") or "")[:120])
+        arguments = function.get("arguments")
+        tool_argument_lengths.append(len(arguments) if isinstance(arguments, str) else 0)
     usage = reply.get("_usage") if isinstance(reply, dict) else None
     error_text = str(error)[:500] if error else None
     model_cfg = state.get("model_cfg") or {}
@@ -220,6 +334,7 @@ def _record_model_call(state, phase, messages, max_tokens, reply=None, error=Non
     if not protocol:
         protocol = ("responses" if llm._is_deepseek_responses(
             model_cfg.get("base_url"), model_name) else "chat_completions")
+    reasoning_content = reply.get("reasoning_content") if isinstance(reply, dict) else None
     state.setdefault("model_calls", []).append({
         "phase": str(phase),
         "model": model_name,
@@ -234,23 +349,40 @@ def _record_model_call(state, phase, messages, max_tokens, reply=None, error=Non
         "response_id": reply.get("_response_id") if isinstance(reply, dict) else None,
         "thinking": reply.get("_request_thinking") if isinstance(reply, dict) else None,
         "reasoning_effort": reply.get("_request_reasoning_effort") if isinstance(reply, dict) else None,
+        "tool_choice": active.get("tool_choice"),
+        "tool_call_names": tool_call_names,
+        "tool_argument_lengths": tool_argument_lengths,
+        "duration_seconds": round(duration, 2) if duration is not None else None,
+        "stream_event_count": stream_progress.get("event_count", 0),
+        "first_event_seconds": stream_progress.get("first_event_seconds"),
+        "last_event_seconds": stream_progress.get("last_event_seconds"),
+        "reasoning_chars": max(
+            int(stream_progress.get("reasoning_chars", 0) or 0),
+            len(reasoning_content) if isinstance(reasoning_content, str) else 0),
+        "answer_chars": max(
+            int(stream_progress.get("answer_chars", 0) or 0), len(response)),
+        "tool_argument_chars": max(
+            int(stream_progress.get("tool_argument_chars", 0) or 0),
+            sum(tool_argument_lengths)),
+        "request_timeout_seconds": active.get("timeout_seconds"),
         "usage": usage if isinstance(usage, dict) else None,
         "error": error_text,
     })
+    state["active_request"] = None
+    state.pop("_active_request_checkpoint_monotonic", None)
+    _checkpoint_run_record(state, error=error)
 
 
 def _completion(messages, cfg, timeout, max_tokens, state, phase):
     model = str((cfg or {}).get("model") or "默认模型")
     detail = "%s · %s" % (phase, model)
     _emit(state.get("progress"), "模型等待中：" + detail)
+    _begin_model_call(state, phase, messages, max_tokens, timeout=timeout)
     try:
         reply = llm.chat_completion(
             messages, cfg, timeout=timeout, max_tokens=max_tokens,
             cancel_event=(state or {}).get("cancel_event"),
-            progress=lambda event: llm.emit_stream_progress(
-                event,
-                lambda message: _emit(state.get("progress"), message),
-                detail=detail))
+            progress=_stream_progress_callback(state, detail))
     except Exception as exc:
         _record_model_call(state, phase, messages, max_tokens, error=exc)
         raise
@@ -471,15 +603,16 @@ def _run_tools(transcript: List[Dict[str, Any]], cfg: dict,
             detail = phase + (" · %s 视图" % view if view else "")
             model = str((cfg or {}).get("model") or "默认模型")
             _emit(state.get("progress"), "模型等待中：%s · %s" % (detail, model))
+            timeout = _remaining_timeout(state["deadline"])
+            _begin_model_call(
+                state, phase, messages, output_budget, timeout=timeout,
+                tool_choice="auto" if phase_tools else None)
             reply = llm.chat_completion(
                 messages, cfg, tools=phase_tools,
-                timeout=_remaining_timeout(state["deadline"]),
+                timeout=timeout,
                 max_tokens=output_budget,
                 cancel_event=cancel_event,
-                progress=lambda event: llm.emit_stream_progress(
-                    event,
-                    lambda message: _emit(state.get("progress"), message),
-                    detail=detail))
+                progress=_stream_progress_callback(state, detail))
         except Exception as exc:
             _record_model_call(state, phase, messages, output_budget, error=exc)
             raise
@@ -552,6 +685,7 @@ def _run_tools(transcript: List[Dict[str, Any]], cfg: dict,
                 "arguments": args if isinstance(args, dict) else {},
                 "result": result,
             })
+            _checkpoint_run_record(state)
             messages.append({"role": "tool", "tool_call_id": call_id,
                              "name": name, "content": _json_text(result)})
             _emit(state.get("progress"), "工具完成：%s" % (name or "unknown"))
@@ -1779,6 +1913,7 @@ def _write_run_record(session_dir, prompt, image_paths, state,
         },
         "selected_reference_images": state.get("selected_reference_images", []),
         "active_reference_images": state.get("active_reference_images", []),
+        "active_request": state.get("active_request"),
         "model_calls": state.get("model_calls", []),
         "temporary_review_images": state.get("temporary_review_images", []),
         "recognition": state.get("recognition"),
@@ -1804,6 +1939,8 @@ def _write_run_record(session_dir, prompt, image_paths, state,
             },
         },
         "loop_state": {
+            "agent_turn": state.get("agent_turn"),
+            "no_progress_finals": state.get("no_progress_finals"),
             "context_compactions": state.get("context_compactions", 0),
             "truncated_responses": state.get("truncated_responses", 0),
             "stagnation_warnings": state.get("stagnation_warnings", 0),
@@ -2096,8 +2233,16 @@ def run_agent_loop(prompt: str, image_paths=None, cfg=None,
                    on_preview=None) -> Dict[str, Any]:
     """Run the bounded multimodal AgentLoop and persist a local, redacted run record."""
     started_at = datetime.now().astimezone().isoformat(timespec="seconds")
+    image_paths = list(image_paths or [])
     session_dir = _make_session_dir(output_dir)
-    state = {}
+    state = {
+        "session_dir": session_dir,
+        "run_started_at": started_at,
+        "run_prompt": str(prompt or ""),
+        "run_image_paths": image_paths,
+        "cfg": cfg if isinstance(cfg, dict) else {},
+        "run_status": "running",
+    }
     try:
         result = _run_agent_loop_impl(
             prompt, image_paths=image_paths, cfg=cfg,
@@ -2108,9 +2253,26 @@ def run_agent_loop(prompt: str, image_paths=None, cfg=None,
             current_document=current_document,
             on_preview=on_preview,
             _session_dir=session_dir, _state_out=state)
-    except Exception as exc:
+    except KeyboardInterrupt:
+        state["run_status"] = "interrupted"
+        active_request = state.get("active_request")
+        if isinstance(active_request, dict):
+            active_request["status"] = "interrupted"
+            active_request["interrupted_at"] = datetime.now().astimezone().isoformat(
+                timespec="seconds")
         paths, save_warning = _save_local_candidate(
             session_dir, state.get("current_plan"), state.get("latest_preview"))
+        state["checkpoint_output_paths"] = paths
+        state["checkpoint_output_warning"] = save_warning
+        _checkpoint_run_record(
+            state, error="KeyboardInterrupt: run stopped by operator")
+        raise
+    except Exception as exc:
+        state["run_status"] = "failed"
+        paths, save_warning = _save_local_candidate(
+            session_dir, state.get("current_plan"), state.get("latest_preview"))
+        state["checkpoint_output_paths"] = paths
+        state["checkpoint_output_warning"] = save_warning
         timed_out = isinstance(exc, AgentLoopError) and "超时" in str(exc)
         if (timed_out and isinstance(state.get("current_plan"), dict)
                 and state.get("latest_preview")):

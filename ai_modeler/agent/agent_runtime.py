@@ -587,14 +587,15 @@ def _call_model(messages, state, tools, output_tokens, tool_choice=None):
             detail += " · 推理强度 %s" % effort
         cad._emit(state.get("progress"), "模型等待中：" + detail)
         try:
+            request_timeout = cad._remaining_timeout(deadline)
+            cad._begin_model_call(
+                state, request_phase, messages, output_tokens,
+                timeout=request_timeout, tool_choice=tool_choice)
             reply = llm.chat_completion(
                 messages, model_cfg, tools=tools, tool_choice=tool_choice,
-                timeout=cad._remaining_timeout(deadline), max_tokens=output_tokens,
+                timeout=request_timeout, max_tokens=output_tokens,
                 cancel_event=state.get("cancel_event"),
-                progress=lambda event: llm.emit_stream_progress(
-                    event,
-                    lambda message: cad._emit(state.get("progress"), message),
-                    detail=detail))
+                progress=cad._stream_progress_callback(state, detail))
         except llm.ModelRequestCancelled:
             raise                     # 用户主动停止：绝不重试/降级
         except Exception as exc:
@@ -1760,10 +1761,12 @@ def run_dynamic_loop(prompt: str, image_paths: list, model_cfg: dict,
         prompt, image_paths, current_plan)
     output_tokens = MAX_OUTPUT_TOKENS
     no_progress_finals = 0
+    state["no_progress_finals"] = 0
     state["truncated_responses"] = 0
 
     for turn_index in range(1, MAX_AGENT_TURNS + 1):
         cad._check_cancel(cancel_event, state["deadline"])
+        state["agent_turn"] = turn_index
         state["request_phase"] = "主循环第 %d 轮" % turn_index
         cad._emit(state.get("progress"), "准备 AgentLoop 第 %d 轮：整理当前证据…" % turn_index)
         require_create_model = initial_model_bootstrap and turn_index == 1
@@ -1805,6 +1808,7 @@ def run_dynamic_loop(prompt: str, image_paths: list, model_cfg: dict,
             if not state.get("agent_started"):
                 if state.get("modeling_expected"):
                     no_progress_finals += 1
+                    state["no_progress_finals"] = no_progress_finals
                     assistant_message = {"role": "assistant", "content": content}
                     if reply.get("reasoning_content") is not None:
                         assistant_message["reasoning_content"] = reply["reasoning_content"]
@@ -1832,6 +1836,7 @@ def run_dynamic_loop(prompt: str, image_paths: list, model_cfg: dict,
                 return _result_from_state(gate, state, content)
 
             no_progress_finals += 1
+            state["no_progress_finals"] = no_progress_finals
             assistant_message = {"role": "assistant", "content": content}
             if reply.get("reasoning_content") is not None:
                 assistant_message["reasoning_content"] = reply["reasoning_content"]
@@ -1899,6 +1904,7 @@ def run_dynamic_loop(prompt: str, image_paths: list, model_cfg: dict,
                 "arguments": args if isinstance(args, dict) else {},
                 "result": result, "result_summary": str(summary)[:1000],
             })
+            cad._checkpoint_run_record(state)
             messages.append({"role": "tool", "tool_call_id": call_id,
                              "name": name, "content": json.dumps(
                                  result, ensure_ascii=False, separators=(",", ":"))})
@@ -1915,6 +1921,7 @@ def run_dynamic_loop(prompt: str, image_paths: list, model_cfg: dict,
                     [str(row) for row in blockers])
             if _state_progress_key(state) != previous_progress:
                 no_progress_finals = 0
+                state["no_progress_finals"] = 0
                 state["stagnant_tool_calls"] = 0
                 state["stagnation_warnings"] = 0
             else:

@@ -488,6 +488,77 @@ class AgentLoopTests(unittest.TestCase):
         self.assertNotIn(secret, contents)
         self.assertIn("[REDACTED]", record["error"])
 
+    def test_model_stream_checkpoint_keeps_channel_metrics_without_text(self):
+        with tempfile.TemporaryDirectory() as temp:
+            state = {
+                "model_cfg": {"base_url": "https://api.siliconflow.cn/v1",
+                              "model": "moonshotai/Kimi-K2.7-Code"},
+                "cfg": {"llm": {"model": "moonshotai/Kimi-K2.7-Code"}},
+                "session_dir": Path(temp), "run_started_at": "2026-09-26T00:00:00+08:00",
+                "run_prompt": "复刻", "run_image_paths": [], "run_status": "running",
+                "model_calls": [], "tool_trace": [],
+            }
+            agentloop._begin_model_call(
+                state, "agent_loop", [{"role": "user", "content": "复刻"}],
+                65536, timeout=600, tool_choice="required")
+            state["_active_request_checkpoint_monotonic"] = time.monotonic() - 20
+            progress = agentloop._stream_progress_callback(state, "主循环")
+            progress({
+                "event": "chat.completion.delta", "reasoning_delta": "PRIVATE THOUGHT",
+                "reasoning_chars": 37, "output_chars": 21,
+                "visible_output": "VISIBLE ANSWER", "tool_argument_chars": 59,
+                "elapsed_seconds": 4.2,
+            })
+            interim = json.loads((Path(temp) / "run.json").read_text(encoding="utf-8"))
+            self.assertEqual(1, interim["active_request"]["stream_progress"]["event_count"])
+            self.assertEqual(37, interim["active_request"]["stream_progress"]["reasoning_chars"])
+            agentloop._record_model_call(
+                state, "agent_loop", [{"role": "user", "content": "复刻"}], 65536,
+                reply={"content": "VISIBLE ANSWER", "reasoning_content": "PRIVATE THOUGHT",
+                       "_finish_reason": "tool_calls", "tool_calls": [{
+                           "function": {"name": "cad_create_model",
+                                        "arguments": '{"name":"body"}'}}]})
+            record = json.loads((Path(temp) / "run.json").read_text(encoding="utf-8"))
+
+        call = record["model_calls"][0]
+        self.assertEqual("running", record["state"])
+        self.assertEqual(["cad_create_model"], call["tool_call_names"])
+        self.assertEqual(37, call["reasoning_chars"])
+        self.assertEqual(21, call["answer_chars"])
+        self.assertEqual(59, call["tool_argument_chars"])
+        self.assertEqual(600, call["request_timeout_seconds"])
+        self.assertIsNone(record["active_request"])
+        serialized = json.dumps(record, ensure_ascii=False)
+        self.assertNotIn("PRIVATE THOUGHT", serialized)
+        self.assertNotIn("VISIBLE ANSWER", serialized)
+
+    def test_keyboard_interrupt_keeps_interrupted_run_record(self):
+        with tempfile.TemporaryDirectory() as temp:
+            def interrupt(*_args, **kwargs):
+                state = kwargs["_state_out"]
+                state["active_request"] = {
+                    "phase": "similarity_review", "status": "streaming",
+                    "stream_progress": {"event_count": 3, "reasoning_chars": 0,
+                                        "answer_chars": 280, "tool_argument_chars": 0},
+                }
+                raise KeyboardInterrupt()
+
+            with mock.patch.object(agentloop, "_run_agent_loop_impl", side_effect=interrupt):
+                with self.assertRaises(KeyboardInterrupt):
+                    agentloop.run_agent_loop(
+                        "复刻", cfg={"llm": {"base_url": "https://example.test/v1",
+                                            "model": "vision-test"}},
+                        output_dir=Path(temp) / "sessions")
+
+            record_path = next((Path(temp) / "sessions").glob("*/run.json"))
+            record = json.loads(record_path.read_text(encoding="utf-8"))
+
+        self.assertEqual("interrupted", record["state"])
+        self.assertEqual("复刻", record["input"]["prompt"])
+        self.assertEqual("interrupted", record["active_request"]["status"])
+        self.assertEqual(280, record["active_request"]["stream_progress"]["answer_chars"])
+        self.assertIn("KeyboardInterrupt", record["error"])
+
     def test_web_search_tool_uses_configured_online_search(self):
         state = {"cfg": {"online": {"enabled": True, "timeout": 5}},
                  "web_search_calls": 0}
