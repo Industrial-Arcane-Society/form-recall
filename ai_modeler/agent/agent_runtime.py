@@ -1712,6 +1712,130 @@ def _execute_tool(name: str, args: dict, state: dict, source_messages: list):
     return {"state": "invalid", "error": "未知 Agent 工具：%s" % name}, False
 
 
+_CAD_MUTATION_TOOLS = {
+    "cad_create_model", "cad_add_feature", "cad_update_feature",
+    "cad_remove_feature",
+}
+
+
+def _stable_json(value) -> str:
+    return json.dumps(value, ensure_ascii=False, sort_keys=True,
+                      separators=(",", ":"), default=str)
+
+
+def _mutation_intent(name: str, args: dict, plan_revision) -> Optional[dict]:
+    """Identify the logical edit independent of its changing parameter values."""
+    if name not in _CAD_MUTATION_TOOLS:
+        return None
+    target = {}
+    if name in {"cad_create_model", "cad_add_feature"}:
+        feature = args.get("first_feature" if name == "cad_create_model" else "feature")
+        if isinstance(feature, dict):
+            target = {key: feature.get(key) for key in ("id", "kind", "operation")}
+        if name == "cad_create_model":
+            target["name"] = args.get("name")
+    else:
+        target["feature_id"] = args.get("feature_id")
+    return {"plan_revision": plan_revision or 0, "tool": name, "target": target}
+
+
+def _deterministic_validation_errors(result: dict) -> Optional[list]:
+    """Return stable SDK validation errors; exclude transient/tool exceptions."""
+    if not isinstance(result, dict) or result.get("state") != "invalid":
+        return None
+    validation = result.get("validation")
+    if not isinstance(validation, dict) or validation.get("state") != "invalid":
+        return None
+    errors = validation.get("errors")
+    if not isinstance(errors, list) or not errors:
+        return None
+    normalized = []
+    for error in errors:
+        if not isinstance(error, dict) or not error.get("code") or not error.get("path"):
+            return None
+        normalized.append({
+            "code": str(error["code"]),
+            "path": str(error["path"]),
+            "message": str(error.get("message") or ""),
+        })
+    return sorted(normalized, key=lambda row: (row["code"], row["path"], row["message"]))
+
+
+def _repeated_mutation_failure(previous: dict, repeat_count: int,
+                               plan_revision) -> dict:
+    return {
+        "state": "repeated_failed_action",
+        "validation": previous.get("validation"),
+        "error": previous.get("error") or "CADPlan 校验未通过。",
+        "mutation": previous.get("mutation"),
+        "plan_revision": plan_revision or 0,
+        "repeat_count": repeat_count,
+        "instruction": (
+            "此 mutation 在当前 CADPlan 版本中已经因相同校验错误失败。"
+            "不要再次提交；本轮已停止重复尝试并保留原候选。"),
+    }
+
+
+def _execute_tool_with_mutation_guard(name: str, args: dict, state: dict,
+                                      source_messages: list):
+    """Run a mutation once per deterministic failure; stop on the same failure."""
+    intent = _mutation_intent(name, args, state.get("plan_revision"))
+    if intent is None:
+        result, should_stop = _execute_tool(name, args, state, source_messages)
+        return result, should_stop, None
+
+    intent_key = _stable_json(intent)
+    arguments_key = _stable_json(args)
+    history = state.setdefault("_failed_mutations_by_plan", {})
+    prior_failures = history.get(intent_key) or []
+
+    # Exact retries are deterministic at an unchanged plan revision. Return the
+    # preserved SDK error without invoking plan construction/validation again.
+    exact_prior = next((row for row in reversed(prior_failures)
+                        if row.get("arguments_key") == arguments_key), None)
+    if exact_prior:
+        repeated = _repeated_mutation_failure(
+            exact_prior, exact_prior.get("repeat_count", 1) + 1,
+            state.get("plan_revision"))
+        stop = {"mutation": intent, "validation": repeated.get("validation"),
+                "repeat_count": repeated["repeat_count"]}
+        return repeated, True, stop
+
+    result, should_stop = _execute_tool(name, args, state, source_messages)
+    errors = _deterministic_validation_errors(result)
+    if errors is None:
+        return result, should_stop, None
+
+    error_key = _stable_json(errors)
+    previous = next((row for row in reversed(prior_failures)
+                     if row.get("error_key") == error_key), None)
+    if previous:
+        repeat_count = previous.get("repeat_count", 1) + 1
+        previous["repeat_count"] = repeat_count
+        previous["arguments_key"] = arguments_key
+        repeated = _repeated_mutation_failure(
+            {"validation": result.get("validation"), "error": result.get("error"),
+             "mutation": intent}, repeat_count, state.get("plan_revision"))
+        stop = {"mutation": intent, "validation": repeated.get("validation"),
+                "repeat_count": repeat_count}
+        return repeated, True, stop
+
+    retryable = dict(result)
+    retryable["retry_guidance"] = (
+        "这是该 mutation 在当前 CADPlan 版本中首次出现的确定性校验错误。"
+        "请依据 validation.errors 修正对应字段；不要原样重试。"
+        "如果修正后仍是相同校验错误，AgentLoop 会停止重复提交并保留原候选。")
+    history.setdefault(intent_key, []).append({
+        "arguments_key": arguments_key,
+        "error_key": error_key,
+        "validation": retryable.get("validation"),
+        "error": retryable.get("error"),
+        "mutation": intent,
+        "repeat_count": 1,
+    })
+    return retryable, should_stop, None
+
+
 def _drop_old_view_messages(messages: list) -> None:
     """Keep user reference images, but only one generated inspection image."""
     messages[:] = [row for row in messages if not (
@@ -1800,6 +1924,7 @@ def run_dynamic_loop(prompt: str, image_paths: list, model_cfg: dict,
     state["completion_approved"] = False
     state["stagnant_tool_calls"] = 0
     state["stagnation_warnings"] = 0
+    state["_failed_mutations_by_plan"] = {}
     state["tool_calls"] = state.get("tool_calls", 0)
     state["tool_trace"] = state.get("tool_trace", [])
     state["review_history"] = state.get("review_history", [])
@@ -1945,6 +2070,7 @@ def run_dynamic_loop(prompt: str, image_paths: list, model_cfg: dict,
                       "模型进展摘要：" + visible_commentary[:900])
         stop_for_user = False
         stagnation_nudge = False
+        repeated_mutation_stop = None
         inspection_image = None
         for call in calls:
             if state.get("tool_calls", 0) >= cad.MAX_TOOL_CALLS:
@@ -1969,7 +2095,9 @@ def run_dynamic_loop(prompt: str, image_paths: list, model_cfg: dict,
                 cad._emit(
                     state.get("progress"),
                     "Agent 决策摘要：" + _tool_progress_summary(name, args))
-                result, should_stop = _execute_tool(name, args, state, source_messages)
+                result, should_stop, repeated_mutation_stop = (
+                    _execute_tool_with_mutation_guard(
+                        name, args, state, source_messages))
                 if name == "cad_preview_plan" and result.get("state") == "previewed":
                     inspection_image = result.get("preview_image")
             except Exception as exc:
@@ -2012,6 +2140,28 @@ def run_dynamic_loop(prompt: str, image_paths: list, model_cfg: dict,
             if should_stop:
                 stop_for_user = True
                 break
+            if repeated_mutation_stop:
+                break
+        if repeated_mutation_stop:
+            errors = _deterministic_validation_errors({
+                "state": "invalid",
+                "validation": repeated_mutation_stop.get("validation"),
+            }) or []
+            blockers = ["%s %s: %s" % (
+                row.get("code"), row.get("path"), row.get("message"))
+                for row in errors]
+            mutation = repeated_mutation_stop.get("mutation") or {}
+            target = (mutation.get("target") or {}).get("id") or (
+                (mutation.get("target") or {}).get("feature_id")) or "模型"
+            reply_text = (
+                "同一 CADPlan 版本中，对特征 %s 的 %s 操作再次触发相同的确定性校验错误。"
+                "AgentLoop 已停止重复提交；当前候选保持不变并已保留。\n校验错误：\n- %s"
+                % (target, mutation.get("tool") or "CAD", "\n- ".join(blockers)))
+            status = {"state": "previewed" if state.get("latest_preview")
+                      else "needs_user_input", "validation": state.get("plan_validation")}
+            return _result_from_state(
+                status, state, reply_text, blockers or [
+                    "重复 mutation 在当前 CADPlan 版本中持续失败；原候选已保留。"])
         if inspection_image and os.path.isfile(inspection_image):
             _drop_old_view_messages(messages)
             messages.append({"role": "user", "content": [

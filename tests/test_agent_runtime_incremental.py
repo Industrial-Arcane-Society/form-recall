@@ -1033,6 +1033,53 @@ class IncrementalAgentTests(unittest.TestCase):
         stored = next(f for f in state["current_plan"]["features"] if f["id"] == "pat")
         self.assertEqual("pattern_source", stored["relations"][0]["type"])
 
+    def test_repeated_deterministic_mutation_error_stops_and_keeps_candidate(self):
+        base = plan_state.create("Part", _feature())
+        calls = []
+
+        def invalid_pattern(step):
+            return {"feature": {
+                "id": "bad-pattern", "kind": "pattern", "operation": "cut",
+                "parameters": {"mode": "linear", "count": 3, "step": step},
+                "relations": [{"relation_type": "pattern_source", "target": "base"}],
+                "sources": {key: {"type": "derived", "evidence": "test"}
+                            for key in ("mode", "count", "step")},
+            }}
+
+        for first_step, second_step in (([0, 0, 10], [0, 0, 10]),
+                                        ([0, 0, 10], [0, 0, 11])):
+            with self.subTest(second_step=second_step), tempfile.TemporaryDirectory() as directory:
+                steps = [invalid_pattern(first_step), invalid_pattern(second_step)]
+                requests = []
+
+                def completion(*_args, **_kwargs):
+                    requests.append(True)
+                    return {"content": "尝试添加阵列", "tool_calls": [
+                        _call("cad_add_feature", steps.pop(0), len(requests))]}
+
+                with mock.patch.object(agent_runtime.llm, "chat_completion",
+                                       side_effect=completion), mock.patch.object(
+                        agent_runtime, "_execute_tool",
+                        wraps=agent_runtime._execute_tool) as execute_tool:
+                    result = agentloop.run_agent_loop(
+                        "在现有模型中添加一个竖直阵列", current_plan=base,
+                        cfg={"llm": {"model": "mock", "base_url": "http://mock"},
+                             "online": {"enabled": False}}, output_dir=directory)
+
+                self.assertEqual(2, len(requests))
+                self.assertEqual(1 if first_step == second_step else 2,
+                                 execute_tool.call_count)
+                self.assertEqual(2, len(result["tool_trace"]))
+                first_result = result["tool_trace"][0]["result"]
+                repeated_result = result["tool_trace"][1]["result"]
+                self.assertEqual("invalid", first_result["state"])
+                self.assertIn("retry_guidance", first_result)
+                self.assertEqual("repeated_failed_action", repeated_result["state"])
+                self.assertEqual("invalid_relation", repeated_result[
+                    "validation"]["errors"][0]["code"])
+                self.assertIn("停止重复提交", result["reply"])
+                self.assertEqual(base, result["plan"])
+
     def test_each_feature_reports_what_it_did_to_the_material(self):
         """The screw run inferred its cuts from volume arithmetic for 18 rounds."""
         base = plan_state.create("Part", _feature())
