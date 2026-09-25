@@ -2,6 +2,8 @@
 
 读图只为开始建模服务。把主体外形与图中可见的重复特征按区域分组，写成 `reference_reading`，并放进同一次 `cad_create_model` 调用。不要先输出长篇推理或等待用户给尺寸。
 
+`reference_reading` 是给建模工具使用的结构化证据，应由 `cad_create_model` 的工具参数承载；不要在普通正文重复输出 JSON 或展开教程式读图说明。首轮正文只保留一句简短行动进展，并在同一轮调用 `cad_create_model` 创建主体。看不清的关系简要放入 `uncertainties`，继续建立有依据的候选；确实无法开始时，只提出一个具体、可回答的澄清问题。
+
 ```json
 {
   "feature_groups": [
