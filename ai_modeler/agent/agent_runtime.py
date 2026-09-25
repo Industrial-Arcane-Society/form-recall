@@ -122,6 +122,83 @@ def _tool(name: str, description: str, properties: dict, required=None):
     }
 
 
+_SOURCE_TOOL_SCHEMA = {
+    "type": "object",
+    "additionalProperties": False,
+    "properties": {
+        "type": {"type": "string", "enum": [
+            "user", "image_estimate", "derived", "existing_model"]},
+        "evidence": {"type": "string"},
+        "note": {"type": "string"},
+    },
+    "required": ["type"],
+}
+
+_RELATION_TOOL_SCHEMA = {
+    "type": "object",
+    "additionalProperties": False,
+    "properties": {
+        "type": {"type": "string", "enum": ["depends_on", "pattern_source"]},
+        "feature_id": {"type": "string", "minLength": 1},
+    },
+    "required": ["type", "feature_id"],
+}
+
+_FEATURE_TOOL_SCHEMA = {
+    "type": "object",
+    "additionalProperties": False,
+    "properties": {
+        "id": {"type": "string", "minLength": 1},
+        "kind": {"type": "string", "enum": list(cad.cadplan.FEATURE_SPECS)},
+        "operation": {"type": "string", "enum": ["add", "cut"]},
+        "parameters": {
+            "type": "object",
+            "description": ("CADPlan 参数对象。hole 常用 diameter/through/pos/point/axis；"
+                            "pattern 常用 mode/count/step；长度和坐标用 mm。"),
+            "additionalProperties": True,
+        },
+        "sources": {
+            "type": "object",
+            "additionalProperties": _SOURCE_TOOL_SCHEMA,
+        },
+        "relations": {
+            "type": "array",
+            "items": _RELATION_TOOL_SCHEMA,
+        },
+        "name": {"type": "string"},
+        "note": {"type": "string"},
+    },
+    "required": ["id", "kind", "operation", "parameters"],
+}
+
+_REFERENCE_READING_TOOL_SCHEMA = {
+    "type": "object",
+    "additionalProperties": False,
+    "properties": {
+        "feature_groups": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+                "type": "object",
+                "additionalProperties": False,
+                "properties": {
+                    "id": {"type": "string", "minLength": 1},
+                    "kind": {"type": "string", "minLength": 1},
+                    "quantity": {"type": "integer", "minimum": 1},
+                    "region": {"type": "string", "minLength": 1},
+                    "arrangement": {"type": "string", "minLength": 1},
+                    "evidence": {"type": "string", "minLength": 1},
+                },
+                "required": ["id", "kind", "quantity", "region",
+                             "arrangement", "evidence"],
+            },
+        },
+        "uncertainties": {"type": "array", "items": {"type": "string"}},
+    },
+    "required": ["feature_groups"],
+}
+
+
 AGENT_TOOLS = [
     _tool(
         "web_search",
@@ -138,14 +215,14 @@ AGENT_TOOLS = [
         "cad_create_model",
         "建立本地可编辑模型，包含第一个主实体特征。程序统一使用 mm/deg、校验并立即预览；parameters 放纯数值，sources 在特征对象中单独放来源。"
         "有参考图时在本次调用附上简短 reference_reading.feature_groups：按可见区域列出主体和重复特征的 kind、quantity、region、arrangement、evidence。不要推断图外的连接关系；颜色不能证明多个面上的开口属于同一特征。将关键不确定性留给后续单视图复核。",
-        {"name": {"type": "string"}, "first_feature": {"type": "object"},
-         "reference_reading": {"type": "object"}},
+        {"name": {"type": "string"}, "first_feature": _FEATURE_TOOL_SCHEMA,
+         "reference_reading": _REFERENCE_READING_TOOL_SCHEMA},
         ["name", "first_feature"],
     ),
     _tool(
         "cad_add_feature",
         "只追加一个可编辑特征。程序合成并校验整份 CADPlan，成功后立即更新右侧预览。",
-        {"feature": {"type": "object"}}, ["feature"],
+        {"feature": _FEATURE_TOOL_SCHEMA}, ["feature"],
     ),
     _tool(
         "cad_update_feature",

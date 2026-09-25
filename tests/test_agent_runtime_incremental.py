@@ -156,6 +156,24 @@ class IncrementalAgentTests(unittest.TestCase):
         self.assertIn("reference_reading",
                       image_tool["function"]["parameters"]["required"])
 
+    def test_model_tools_publish_structured_feature_and_relation_schema(self):
+        tools = {row["function"]["name"]: row["function"]["parameters"]
+                 for row in agent_runtime.AGENT_TOOLS}
+        create_feature = tools["cad_create_model"]["properties"]["first_feature"]
+        add_feature = tools["cad_add_feature"]["properties"]["feature"]
+        self.assertEqual(create_feature, add_feature)
+        self.assertEqual(["id", "kind", "operation", "parameters"],
+                         add_feature["required"])
+        relation = add_feature["properties"]["relations"]["items"]
+        self.assertEqual(["type", "feature_id"], relation["required"])
+        self.assertEqual(["depends_on", "pattern_source"],
+                         relation["properties"]["type"]["enum"])
+        self.assertFalse(relation["additionalProperties"])
+        reading_group = tools["cad_create_model"]["properties"][
+            "reference_reading"]["properties"]["feature_groups"]["items"]
+        self.assertEqual(["id", "kind", "quantity", "region", "arrangement",
+                          "evidence"], reading_group["required"])
+
     def test_text_build_saves_editable_project_and_mesh(self):
         replies = [
             {"content": "create", "tool_calls": [

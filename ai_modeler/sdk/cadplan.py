@@ -98,7 +98,8 @@ FEATURE_SPECS = {
                     "矩形/圆角矩形凹槽；当前仅支持 Z 轴。",
                     ("length", "width", "depth", "x", "y", "axis", "corner", "corner_mode")),
     "pattern": _spec(("mode", "count"), "exact",
-                     "转换为显式复制的 CATIA 操作；source 关系必须指向紧邻的前一特征。",
+                     "转换为显式复制的 CATIA 操作；relations 示例："
+                     "[{\"type\":\"pattern_source\",\"feature_id\":\"紧邻前一特征的 id\"}]。",
                      ("mode", "count", "step", "axis", "angle", "full", "center")),
     "helix": _spec(("radius", "wire_r", "height", "turns"), "unsupported",
                    "弹簧/螺旋不能由当前草图、凸台和凹槽通道表达。",
