@@ -263,6 +263,25 @@ class CADPlanSDKTests(unittest.TestCase):
         self.assertEqual("invalid", result["state"])
         self.assertIn("non_positive_dimension", {item["code"] for item in result["errors"]})
 
+    def test_invalid_pattern_relation_feedback_shows_exact_json_shape(self):
+        plan = _plan("pattern")
+        plan["features"][1]["relations"] = [
+            {"relation_type": "pattern_source", "target": "base"}]
+
+        result = validate_plan(plan)
+
+        self.assertEqual("invalid", result["state"])
+        messages = " ".join(item["message"] for item in result["errors"])
+        self.assertIn("type", messages)
+        self.assertIn("feature_id", messages)
+        self.assertIn("pattern_source", messages)
+
+        plan["features"][1]["relations"] = {"pattern_source": "base"}
+        result = validate_plan(plan)
+        messages = " ".join(item["message"] for item in result["errors"])
+        self.assertIn("relations 必须是数组", messages)
+        self.assertIn("feature_id", messages)
+
     def test_existing_model_provenance_requires_an_explanatory_note(self):
         import jsonschema
 

@@ -583,14 +583,19 @@ def validate_plan(plan: Any) -> Dict[str, Any]:
         relations = feature.get("relations", [])
         if not isinstance(relations, list):
             errors.append({"code": "invalid_relations", "path": path + ".relations",
-                           "message": "relations 必须是数组。"})
+                           "message": ("relations 必须是数组，例如："
+                                       "[{\"type\":\"pattern_source\","
+                                       "\"feature_id\":\"上一个特征ID\"}]。")})
             relations = []
         pattern_sources = []
         for ri, relation in enumerate(relations):
             rpath = "%s.relations[%d]" % (path, ri)
             if not isinstance(relation, dict) or relation.get("type") not in {"depends_on", "pattern_source"}:
                 errors.append({"code": "invalid_relation", "path": rpath,
-                               "message": "关系类型必须是 depends_on 或 pattern_source。"})
+                               "message": ("关系项必须使用 type 字段（depends_on 或 pattern_source）"
+                                           "和 feature_id 字段，例如："
+                                           "{\"type\":\"pattern_source\","
+                                           "\"feature_id\":\"上一个特征ID\"}。")})
                 continue
             if set(relation) - {"type", "feature_id"}:
                 errors.append({"code": "unknown_field", "path": rpath,
@@ -598,7 +603,8 @@ def validate_plan(plan: Any) -> Dict[str, Any]:
             target = relation.get("feature_id")
             if target not in ids or ids.get(target, index) >= index:
                 errors.append({"code": "invalid_relation_target", "path": rpath + ".feature_id",
-                               "message": "关系必须指向此前定义的特征。"})
+                               "message": ("feature_id 必须填写此前定义特征的 id；"
+                                           "pattern_source 还必须指向紧邻的前一个特征。")})
             if relation.get("type") == "pattern_source":
                 pattern_sources.append(target)
         if kind == "pattern":
