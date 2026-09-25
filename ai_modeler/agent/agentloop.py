@@ -598,6 +598,10 @@ def _split_view_review(plan, final_preview, source_messages, cfg, state,
     previous_open_findings = previous_open_findings or []
     review_views = list(views or ("iso",))
     expected_images = list(state.get("active_reference_images") or [])
+    reference_reading = state.get("reference_reading") or {}
+    expected_feature_groups = [row for row in
+                               reference_reading.get("feature_groups", [])
+                               if isinstance(row, dict) and str(row.get("id") or "").strip()]
     review_cfg = dict(cfg or {})
     if str(review_cfg.get("reasoning_effort") or "").lower() == "auto":
         review_cfg["reasoning_effort"] = "high"
@@ -633,6 +637,12 @@ def _split_view_review(plan, final_preview, source_messages, cfg, state,
                 },
                 "previous_open_findings_to_recheck": per_view_findings,
                 "reference_images_to_account_for": expected_images,
+                "required_reference_feature_groups": expected_feature_groups,
+                "feature_group_check_instruction": (
+                    "Inspect every required feature group that is visible in the supplied reference/model pair. "
+                    "Return one checks item per visible group with feature_group_id, area='feature_group', "
+                    "status, reference_evidence and model_evidence. Do not merge groups because of color. "
+                    "If a group is not visible in this pair, omit it; another selected view must check it."),
             }
             messages = [dict(message) for message in (source_messages or [])]
             messages.append({
@@ -683,6 +693,10 @@ def _split_view_review(plan, final_preview, source_messages, cfg, state,
                 continue
             check = dict(check)
             check["view"] = view
+            group_id = str(check.get("feature_group_id") or "").strip()
+            if group_id and group_id not in {str(row.get("id"))
+                                             for row in expected_feature_groups}:
+                review_gaps.append("%s 视图返回了未知的参考特征组 %s。" % (view, group_id))
             if not check.get("id") and check.get("area"):
                 check["id"] = "%s.%s" % (view, check["area"])
             if (str(check.get("status") or "").lower() == "match"
@@ -797,6 +811,19 @@ def _split_view_review(plan, final_preview, source_messages, cfg, state,
             "feature_ids": check.get("feature_ids") or [],
             "affected_parameters": check.get("affected_parameters") or [],
         })
+    feature_group_checks = []
+    for group in expected_feature_groups:
+        group_id = str(group.get("id"))
+        matching = [check for check in combined_checks
+                    if str(check.get("feature_group_id") or "") == group_id]
+        feature_group_checks.append({"feature_group_id": group_id,
+                                     "checks": matching,
+                                     "status": ("passed" if any(
+                                         str(check.get("status") or "").lower() == "match"
+                                         for check in matching) else "needs_review")})
+        if not matching:
+            review_gaps.append("参考特征组 %s（%s）尚未在任何可比单视图中核对。" % (
+                group_id, group.get("region") or group.get("kind") or ""))
     confidence = min(confidences) if confidences else 0.0
     has_geometry_issue = bool(combined_issues) or any(
         str(check.get("status") or "").lower() in {"mismatch", "partial"}
@@ -816,6 +843,7 @@ def _split_view_review(plan, final_preview, source_messages, cfg, state,
         "confidence": confidence,
         "single_view_reports": reports,
         "local_image_comparisons": local_image_comparisons,
+        "feature_group_checks": feature_group_checks,
         "plan": None,
     }
     if phase == "similarity_review":

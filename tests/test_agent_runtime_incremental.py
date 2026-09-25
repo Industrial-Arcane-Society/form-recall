@@ -31,21 +31,54 @@ def _call(name, arguments, number):
 
 
 def _reading(**overrides):
-    """A valid first look: four numbers plus one relation (reference_read.md).
-
-    No axis is named anywhere: for a part built from scratch, which horizontal
-    axis is called X is a free convention.
-    """
+    """A valid visible feature inventory with unique physical hole counts."""
     reading = {
         "visible_openings": 9,
-        "hole_count": 6,
+        "hole_count": 9,
         "walls": 2,
         "hole_vs_walls": "through_thickness",
-        "evidence": "左侧 3 个孔口与槽内侧 3 个孔口是同一组孔的两端，归并后 6 个孔；"
-                    "孔口椭圆短轴与两壁分开的方向平行",
-        "color_usage": "颜色仅用于区分面与特征",
+        "feature_groups": [
+            {"id": "left-face-holes", "kind": "hole", "quantity": 3,
+             "visible_openings": 3, "region": "left face",
+             "arrangement": "three vertical positions",
+             "evidence": "three distinct openings on the left face"},
+            {"id": "center-face-holes", "kind": "hole", "quantity": 3,
+             "visible_openings": 3, "region": "recessed center face",
+             "arrangement": "three vertical positions",
+             "evidence": "three distinct openings on the recessed center face"},
+            {"id": "right-face-holes", "kind": "hole", "quantity": 3,
+             "visible_openings": 3, "region": "right face",
+             "arrangement": "three vertical positions",
+             "evidence": "three distinct openings on the right face"},
+            {"id": "main-body", "kind": "body", "quantity": 1,
+             "visible_openings": 0, "region": "whole part",
+             "arrangement": "single connected body",
+             "evidence": "one connected outer body"},
+        ],
+        "evidence": "每个面上的孔位分属可见区域；颜色本身不用于把孔口合并",
+        "color_usage": "颜色只区分面和特征，不单独证明孔口属于同一孔",
     }
     reading.update(overrides)
+    if "feature_groups" not in overrides:
+        quantity = reading["hole_count"]
+        openings = reading["visible_openings"]
+        if quantity == 0:
+            reading["feature_groups"] = [
+                {"id": "main-body", "kind": "body", "quantity": 1,
+                 "visible_openings": 0, "region": "whole part",
+                 "arrangement": "single body",
+                 "evidence": "one continuous outer body"}]
+        elif (quantity, openings) != (9, 9):
+            reading["feature_groups"] = [
+                {"id": "holes", "kind": "hole", "quantity": quantity,
+                 "visible_openings": openings, "region": "visible part faces",
+                 "arrangement": "grouped by distinct physical hole axes",
+                 "evidence": "counted from the visible hole mouths and their alignment"},
+                {"id": "main-body", "kind": "body", "quantity": 1,
+                 "visible_openings": 0, "region": "whole part",
+                 "arrangement": "single body",
+                 "evidence": "one connected outer body"},
+            ]
     return reading
 
 
@@ -119,7 +152,13 @@ class IncrementalAgentTests(unittest.TestCase):
                      "category": "geometry", "status": "match", "item": area,
                      "reference_evidence": "reference outline",
                      "model_evidence": "model outline", "evidence": "same outline"}
-                    for area in agentloop.REVIEW_VIEW_AREAS[view]],
+                    for area in agentloop.REVIEW_VIEW_AREAS[view]] + [
+                    {"id": view + ".feature_group.main-body",
+                     "feature_group_id": "main-body", "view": view,
+                     "area": "feature_group", "category": "geometry",
+                     "status": "match", "item": "outer body",
+                     "reference_evidence": "one body",
+                     "model_evidence": "one body", "evidence": "same outline"}],
                 "issues": [], "resolved_findings": [], "questions": [],
                 "confidence": 0.1,
             }
@@ -294,6 +333,56 @@ class IncrementalAgentTests(unittest.TestCase):
                                 and row.get("status") == "mismatch"
                                 for row in result["checks"]))
             self.assertTrue(state["temporary_review_images"][0]["deleted"])
+
+    def test_visual_review_must_check_every_declared_feature_group(self):
+        plan = plan_state.create("Part", _feature("image_estimate"))
+        group = {"id": "body-outline", "kind": "body", "quantity": 1,
+                 "visible_openings": 0, "region": "whole part",
+                 "arrangement": "single connected body",
+                 "evidence": "one outer silhouette"}
+        with tempfile.TemporaryDirectory() as directory:
+            reference = Path(directory) / "reference.png"
+            model_image = Path(directory) / "candidate.png"
+            cadplan.preview_plan(plan, str(reference), view_set="iso")
+            preview = cadplan.preview_plan(plan, str(model_image), view_set="iso")
+            preview["preview_image"] = str(model_image)
+            base_checks = [
+                {"id": "iso." + area, "area": area, "category": "geometry",
+                 "status": "match", "item": area,
+                 "reference_evidence": "same outline",
+                 "model_evidence": "same outline", "evidence": "overlap"}
+                for area in agentloop.REVIEW_VIEW_AREAS["iso"]]
+            response = {
+                "reference_images": [{"image": "reference.png", "source_view": "iso",
+                                      "comparable": True, "visible_evidence": "same body"}],
+                "checks": base_checks, "issues": [], "resolved_findings": [],
+                "questions": [], "confidence": 1.0,
+            }
+            state = {
+                "deadline": time.monotonic() + 30, "session_dir": Path(directory),
+                "preview_calls": 0, "active_reference_images": ["reference.png"],
+                "reference_image_paths": {"reference.png": str(reference)},
+                "reference_reading": {"feature_groups": [group]},
+            }
+            with mock.patch.object(agentloop, "_run_json_object", return_value=response):
+                missing = agentloop._split_view_review(
+                    plan, preview, [], {}, state, None, "multiview_check", 1,
+                    "复刻", views=["iso"])
+            self.assertEqual("inspect", missing["decision"])
+            self.assertTrue(any("body-outline" in gap for gap in missing["review_gaps"]))
+
+            response["checks"].append({
+                "id": "iso.feature_group.body-outline", "feature_group_id": "body-outline",
+                "area": "feature_group", "category": "geometry", "status": "match",
+                "item": "outer body", "reference_evidence": "single body",
+                "model_evidence": "single body", "evidence": "same silhouette"})
+            state["preview_calls"] = 0
+            with mock.patch.object(agentloop, "_run_json_object", return_value=response):
+                complete = agentloop._split_view_review(
+                    plan, preview, [], {}, state, None, "multiview_check", 2,
+                    "复刻", views=["iso"])
+            self.assertEqual("accept", complete["decision"])
+            self.assertEqual("passed", complete["feature_group_checks"][0]["status"])
 
     def test_unmeasured_scanline_ratio_evidence_is_refused(self):
         feature = _feature("image_estimate")
@@ -476,7 +565,7 @@ class IncrementalAgentTests(unittest.TestCase):
                  "session_dir": Path(tempfile.mkdtemp())}
         refused = agent_runtime._apply_incremental(
             "cad_create_model", {"name": "Part", "first_feature": _feature()}, state)
-        self.assertEqual("invalid", refused["state"])
+        self.assertEqual("needs_reference_reading", refused["state"])
         self.assertTrue(any("reference_reading" in row
                             for row in refused["reference_reading_blockers"]))
         self.assertIsNone(state.get("current_plan"))
@@ -486,38 +575,61 @@ class IncrementalAgentTests(unittest.TestCase):
             {"name": "Part", "first_feature": _feature(),
              "reference_reading": self._reading()}, state)
         self.assertNotEqual("invalid", accepted["state"])
-        self.assertEqual(6, state["reference_reading"]["hole_count"])
+        self.assertEqual(9, state["reference_reading"]["hole_count"])
 
-    def test_the_reading_is_small_and_never_names_an_axis(self):
-        """Four numbers plus one relation. No coordinate frame, no sign, no faces."""
+    def test_reference_inventory_does_not_halve_openings_or_merge_regions(self):
+        """Distinct visible regions remain distinct physical feature groups."""
         reading = self._reading()
         self.assertEqual([], agent_runtime._reference_reading_blockers(reading))
         self.assertEqual({"visible_openings", "hole_count", "walls", "hole_vs_walls",
-                          "evidence", "color_usage"}, set(reading))
+                          "feature_groups", "evidence", "color_usage"}, set(reading))
 
         for missing in ("visible_openings", "hole_count", "walls", "hole_vs_walls",
-                        "color_usage"):
+                        "feature_groups", "color_usage"):
             partial = self._reading()
             del partial[missing]
             blockers = agent_runtime._reference_reading_blockers(partial)
             self.assertTrue(any(missing in row for row in blockers), missing)
 
         counted_wrong = self._reading(hole_count=9, visible_openings=9,
-                                      evidence="数了 9 个孔口就是 9 个孔")
+                                      evidence="九个独立表面孔口对应九个物理孔位")
         self.assertEqual([], agent_runtime._reference_reading_blockers(counted_wrong),
-                         "a 9/9 count is legal when only one end of each hole is visible")
+                         "do not divide a 9-opening count by two without coaxial evidence")
 
         too_many = self._reading(hole_count=12, visible_openings=9)
         self.assertTrue(any("不能大于" in row
                             for row in agent_runtime._reference_reading_blockers(too_many)))
 
-        vague = self._reading(evidence="孔看起来是通孔")
-        self.assertTrue(any("模糊词" in row
-                            for row in agent_runtime._reference_reading_blockers(vague)))
+        uncertain = self._reading(evidence="同轴关系无法从当前视角确认，暂按独立孔位保留")
+        self.assertEqual([], agent_runtime._reference_reading_blockers(uncertain))
+
+        inconsistent_groups = self._reading(
+            hole_count=6, feature_groups=self._reading()["feature_groups"])
+        self.assertTrue(any("孔组 quantity 合计" in row for row in
+                            agent_runtime._reference_reading_blockers(inconsistent_groups)))
 
         bad_relation = self._reading(hole_vs_walls="maybe_along")
         self.assertTrue(any("hole_vs_walls" in row for row in
                             agent_runtime._reference_reading_blockers(bad_relation)))
+
+    def test_hole_coverage_counts_single_holes_and_repeated_layouts(self):
+        plan = {"features": [
+            {"id": "h1", "kind": "hole", "operation": "cut",
+             "parameters": {"pos": "point"}},
+            {"id": "h2", "kind": "hole", "operation": "cut",
+             "parameters": {"pos": "pcd", "count": 3}},
+            {"id": "h3", "kind": "hole", "operation": "cut",
+             "parameters": {"pos": "corners"}},
+        ]}
+        self.assertEqual(8, agent_runtime._planned_hole_quantity(plan))
+        patterned = {"features": [
+            {"id": "h1", "kind": "hole", "operation": "cut",
+             "parameters": {"pos": "point"}},
+            {"id": "pattern", "kind": "pattern", "operation": "cut",
+             "parameters": {"count": 3},
+             "relations": [{"type": "pattern_source", "feature_id": "h1"}]},
+        ]}
+        self.assertEqual(3, agent_runtime._planned_hole_quantity(patterned))
 
     def test_hole_direction_is_checked_against_the_slot_the_program_finds(self):
         """The exact failure: a slot narrow along X, holes drilled along Y."""
@@ -566,6 +678,9 @@ class IncrementalAgentTests(unittest.TestCase):
         state = {"has_reference_images": True}
         message = ('读图结果：\n```json\n'
                    '{"visible_openings": 0, "hole_count": 0, "walls": 0,\n'
+                   ' "feature_groups": [{"id":"body","kind":"body","quantity":1, '
+                   '"visible_openings":0,"region":"whole part","arrangement":"single body", '
+                   '"evidence":"one continuous body"}],\n'
                    ' "hole_vs_walls": "none", "evidence": "顶部圆形是凸起圆柱，不是孔口",\n'
                    ' "color_usage": "颜色仅用于区分面与特征"}\n```\n开始建模。')
         self.assertTrue(agent_runtime._capture_reference_reading(state, message))
@@ -579,13 +694,8 @@ class IncrementalAgentTests(unittest.TestCase):
         self.assertFalse(agent_runtime._capture_reference_reading(state, cad_plan))
         self.assertNotIn("reference_reading", state)
 
-    def test_a_declared_hole_count_does_not_block_a_legit_revision(self):
-        """The reading is a self-check, not a contract the geometry must obey.
-
-        A count mismatch is worth surfacing to the modeller, but blocking on it
-        cost rounds whenever a reading legitimately changed while building, and
-        the mesh already verifies every hole that actually exists.
-        """
+    def test_declared_hole_count_blocks_finish_until_model_covers_it(self):
+        """A candidate missing visible holes cannot pass its visual finish gate."""
         plan = plan_state.create("Part", _feature())
         fingerprint = agent_runtime.cad._geometry_plan_fingerprint(plan)
         state = {
@@ -596,11 +706,12 @@ class IncrementalAgentTests(unittest.TestCase):
             "has_reference_images": True,
             "reference_reading": _reading(),
         }
-        self.assertEqual([], agent_runtime._reference_reading_blockers(
-            state["reference_reading"], plan, final=True))
+        blockers = agent_runtime._reference_reading_blockers(
+            state["reference_reading"], plan, final=True)
+        self.assertTrue(any("当前模型有 0" in row for row in blockers), blockers)
         gate = agent_runtime._finish_gate(state)
-        self.assertEqual("needs_visual_review", gate["state"])
-        self.assertTrue(all("孔数" not in str(row) for row in gate["blockers"]))
+        self.assertEqual("needs_feature_coverage", gate["state"])
+        self.assertTrue(any("要求 9 个" in str(row) for row in gate["blockers"]))
 
 
     def test_a_view_the_reference_cannot_speak_to_does_not_block(self):
