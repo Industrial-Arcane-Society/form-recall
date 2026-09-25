@@ -4,6 +4,8 @@
 
 先对 `reference_images_to_account_for` 中每张原图报告其视角、它是否与当前模型视图可比，以及该原图可见的具体证据；不可比时标 `comparable=false`，不要硬判 match。对 `required_areas` 的每一项，分别写 `reference_evidence`（原图所见）与 `model_evidence`（当前单视图所见），再判断 `match|mismatch|partial|unknown`。比较外轮廓与长宽厚比例、加料和切除的数量及位置、孔槽尺寸等级、前后错层和可见贯穿结果。背景颜色、网格线与绘图风格不算零件几何。没有绝对标注时比较相对比例，不要求制造尺寸。
 
+核对中间区域时，区分有边界、可见的后退实体平面与背景连续穿过的空隙；不得把退台面误判为空槽，也不得漏数该面上的孔口。只有原图/当前单视图能支持背景贯通时，才报告开口或通槽。
+
 发现偏差时给出可复核的原图/模型对照、受影响 `feature_ids` 和 `affected_parameters`；不能定位时说明原因。`previous_open_findings_to_recheck` 只是待核验线索。只有新版视图确实显示问题消失，并有对应的 match 检查时才填 `resolved_findings`。不要为了结束任务把不可见项目标成 match。`confidence` 只是诊断信息，不可取代证据。
 
 严格返回一个 JSON 对象，不要 Markdown：

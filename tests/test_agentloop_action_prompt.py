@@ -29,6 +29,14 @@ class AgentLoopActionPromptTests(unittest.TestCase):
         self.assertIn("首轮正文只保留一句简短行动进展", self.reference_read)
         self.assertIn("并在同一轮调用 `cad_create_model` 创建主体", self.reference_read)
 
+    def test_visual_prompts_distinguish_recessed_surfaces_from_open_voids(self):
+        self.assertIn("有边界的内侧平面", self.reference_read)
+        self.assertIn("背景连续穿过", self.reference_read)
+        self.assertIn("阴影、颜色和遮挡本身都不能证明材料缺失", self.reference_read)
+        similarity = (ROOT / "prompts" / "agentloop" / "similarity_review.md").read_text(encoding="utf-8")
+        self.assertIn("实体内侧平面还是背景穿过的空隙", similarity)
+        self.assertIn("后退平面上的特征", similarity)
+
 
 if __name__ == "__main__":
     unittest.main()
