@@ -129,7 +129,8 @@ FEATURE_SPECS = {
                         ("teeth", "module", "height", "cone_deg", "bore_d",
                          "center", "segments")),
     "crankshaft": _spec(("length", "main_d", "pin_d", "stroke", "throws"), "approximate",
-                        "CATIA 按 X 轴布置主轴颈、交替偏置连杆颈和圆盘曲柄臂近似，曲柄臂轮廓被简化。",
+                        "CATIA 按 X 轴布置主轴颈、交替偏置连杆颈和哑铃形曲柄臂"
+                        "(主轴圆 + 连杆颈圆外公切凸包)，曲柄臂外形被简化。",
                         ("length", "main_d", "pin_d", "stroke", "throws", "center", "segments")),
     "camshaft": _spec(("length", "journal_d", "base_d", "lift", "lobes", "lobe_deg"), "approximate",
                       "CATIA 凸轮沿轴向等分布置，相位需核对。",
@@ -807,7 +808,15 @@ def _local_geometry_checks(body, size, feature_manifest, length_factor=1.0):
                     sample = list(center)
                     sample[side_index] += direction * radius * 1.25
                     ring_hits.append(_ray_surface_crossings(triangles, sample, axis))
-            status = ("verified_open" if center_hits == 0 and any(ring_hits)
+            # `any(ring_hits)` only asked whether *some* material surrounds the
+            # hole, so a hole whose bore spills past the part's edge still
+            # reported verified_open -- while the reviewer kept (correctly) seeing
+            # a half-circle notch, and the model kept rebuilding the whole part to
+            # explain the difference. Requiring the whole ring to sit in material
+            # turns that argument into a mesh fact.
+            supported = [hits >= 1 for hits in ring_hits]
+            status = ("verified_open" if center_hits == 0 and all(supported)
+                      else "opening_clipped" if center_hits == 0 and any(supported)
                       else "blocked" if center_hits > 0 and any(ring_hits)
                       else "inconclusive")
             hole_mesh_checks.append({
@@ -815,6 +824,7 @@ def _local_geometry_checks(body, size, feature_manifest, length_factor=1.0):
                 "center_mm": center, "status": status,
                 "axis_surface_crossings": center_hits,
                 "surrounding_surface_crossings": ring_hits,
+                "ring_supported": supported,
                 "method": "axis ray against local triangle mesh",
             })
     return {

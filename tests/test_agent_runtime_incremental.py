@@ -30,6 +30,25 @@ def _call(name, arguments, number):
             "function": {"name": name, "arguments": json.dumps(arguments)}}
 
 
+def _reading(**overrides):
+    """A valid first look: four numbers plus one relation (reference_read.md).
+
+    No axis is named anywhere: for a part built from scratch, which horizontal
+    axis is called X is a free convention.
+    """
+    reading = {
+        "visible_openings": 9,
+        "hole_count": 6,
+        "walls": 2,
+        "hole_vs_walls": "through_thickness",
+        "evidence": "左侧 3 个孔口与槽内侧 3 个孔口是同一组孔的两端，归并后 6 个孔；"
+                    "孔口椭圆短轴与两壁分开的方向平行",
+        "color_usage": "颜色仅用于区分面与特征",
+    }
+    reading.update(overrides)
+    return reading
+
+
 class IncrementalAgentTests(unittest.TestCase):
     def test_transaction_preserves_other_features_and_sources(self):
         plan = plan_state.create("Part", _feature())
@@ -73,7 +92,10 @@ class IncrementalAgentTests(unittest.TestCase):
 
     def test_multiview_review_must_cover_both_reference_images(self):
         steps = [
-            ("cad_create_model", {"name": "Part", "first_feature": _feature("image_estimate")}),
+            ("cad_create_model", {"name": "Part", "first_feature": _feature("image_estimate"),
+                                  "reference_reading": _reading(
+                                      visible_openings=0, hole_count=0,
+                                      hole_vs_walls="none")}),
             ("cad_review_model", {"review_type": "geometry", "views": ["iso"]}),
             ("cad_finish", {}),
             ("cad_review_model", {"review_type": "geometry", "views": ["front"]}),
@@ -360,6 +382,8 @@ class IncrementalAgentTests(unittest.TestCase):
             "latest_preview": {"local_geometry_checks": {"state": "passed"}},
             "preview_geometry_fingerprint": fingerprint,
             "has_reference_images": True,
+            "reference_reading": _reading(visible_openings=0, hole_count=0,
+                                          hole_vs_walls="none"),
             "reviewed_view_status": {"iso": "passed"},
             "active_reference_images": ["ref.png"],
             "reference_images_reviewed": ["ref.png"],
@@ -368,15 +392,43 @@ class IncrementalAgentTests(unittest.TestCase):
         }
 
         gate = agent_runtime._finish_gate(state)
-        self.assertFalse(gate["ready"])
-        self.assertEqual("needs_visual_review", gate["state"])
-        self.assertTrue(any("正交视图" in str(row) for row in gate["blockers"]))
+        self.assertTrue(gate["ready"], gate.get("blockers"))
+        self.assertNotEqual("needs_visual_review", gate.get("state"))
 
-        # Reviewing the same claim from an orthographic view clears this rule.
-        state["latest_geometry_review"]["views"] = ["front"]
-        next_gate = agent_runtime._finish_gate(state)
-        self.assertFalse(any("正交视图" in str(row)
-                             for row in next_gate.get("blockers") or []))
+    def test_iso_only_review_is_not_forced_to_add_orthographic_views(self):
+        """A single isometric reference cannot be checked against front/right.
+
+        An earlier rule demanded an orthographic review whenever the iso review
+        mentioned depth. The model obeyed, those views came back `unknown`, the
+        gate could not close, and it re-reviewed them for seventeen rounds. The
+        through-slot risk that rule aimed at is covered by the mesh instead.
+        """
+        plan = plan_state.create("Part", _feature("image_estimate"))
+        fingerprint = agent_runtime.cad._geometry_plan_fingerprint(plan)
+        review = {"decision": "accept", "issues": [], "resolved_findings": [],
+                  "questions": [], "review_gaps": [],
+                  "checks": [{"id": "iso." + area, "view": "iso", "area": area,
+                              "category": "geometry", "status": "match", "item": area,
+                              "evidence": "e", "reference_evidence": "e",
+                              "model_evidence": "e"}
+                             for area in agentloop.REVIEW_VIEW_AREAS["iso"]]}
+        gate = agent_runtime._finish_gate({
+            "current_plan": plan,
+            "plan_geometry_fingerprint": fingerprint,
+            "latest_preview": {"local_geometry_checks": {"state": "passed"}},
+            "preview_geometry_fingerprint": fingerprint,
+            "has_reference_images": True,
+            "reference_reading": _reading(visible_openings=0, hole_count=0,
+                                          hole_vs_walls="none"),
+            "reviewed_view_status": {"iso": "passed"},
+            "active_reference_images": ["ref.png"],
+            "reference_images_reviewed": ["ref.png"],
+            "latest_geometry_review": {"geometry_fingerprint": fingerprint,
+                                       "views": ["iso"], "result": review},
+        })
+        self.assertTrue(gate["ready"], gate.get("blockers"))
+        self.assertTrue(all("正交视图" not in str(row)
+                            for row in gate.get("blockers") or []))
 
     def test_mismatched_canvas_yields_advisory_not_silence(self):
         try:
@@ -386,7 +438,14 @@ class IncrementalAgentTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as directory:
             reference = Path(directory) / "reference.png"
             model = Path(directory) / "model.png"
-            grid = Image.new("RGB", (300, 300), (120, 30, 90))
+            # A CAD screenshot: the background is a magenta GRADIENT crossed by a
+            # grid. One modal border colour would classify the whole canvas as
+            # foreground, so this pins the per-row background estimator.
+            grid = Image.new("RGB", (300, 300))
+            for y in range(300):
+                row_color = (100 + y // 3, 30 + y // 6, 80 + y // 4)
+                for x in range(300):
+                    grid.putpixel((x, y), row_color)
             for offset in range(0, 300, 20):
                 for step in range(300):
                     grid.putpixel((offset, step), (220, 160, 190))
@@ -404,6 +463,349 @@ class IncrementalAgentTests(unittest.TestCase):
         self.assertNotIn("passed", comparison)
         self.assertIsNotNone(comparison["aspect_delta"])
         self.assertIn("neither", comparison["scope"])
+        # The measured reference silhouette must be the pasted part (140x160),
+        # never the 300x300 canvas.
+        self.assertAlmostEqual(140 / 160, comparison["reference_aspect"], delta=0.08)
+
+    @staticmethod
+    def _reading(**overrides):
+        return _reading(**overrides)
+
+    def test_reference_reading_is_required_before_geometry(self):
+        state = {"has_reference_images": True, "tool_calls": 0, "plan_revision": 0,
+                 "session_dir": Path(tempfile.mkdtemp())}
+        refused = agent_runtime._apply_incremental(
+            "cad_create_model", {"name": "Part", "first_feature": _feature()}, state)
+        self.assertEqual("invalid", refused["state"])
+        self.assertTrue(any("reference_reading" in row
+                            for row in refused["reference_reading_blockers"]))
+        self.assertIsNone(state.get("current_plan"))
+
+        accepted = agent_runtime._apply_incremental(
+            "cad_create_model",
+            {"name": "Part", "first_feature": _feature(),
+             "reference_reading": self._reading()}, state)
+        self.assertNotEqual("invalid", accepted["state"])
+        self.assertEqual(6, state["reference_reading"]["hole_count"])
+
+    def test_the_reading_is_small_and_never_names_an_axis(self):
+        """Four numbers plus one relation. No coordinate frame, no sign, no faces."""
+        reading = self._reading()
+        self.assertEqual([], agent_runtime._reference_reading_blockers(reading))
+        self.assertEqual({"visible_openings", "hole_count", "walls", "hole_vs_walls",
+                          "evidence", "color_usage"}, set(reading))
+
+        for missing in ("visible_openings", "hole_count", "walls", "hole_vs_walls",
+                        "color_usage"):
+            partial = self._reading()
+            del partial[missing]
+            blockers = agent_runtime._reference_reading_blockers(partial)
+            self.assertTrue(any(missing in row for row in blockers), missing)
+
+        counted_wrong = self._reading(hole_count=9, visible_openings=9,
+                                      evidence="数了 9 个孔口就是 9 个孔")
+        self.assertEqual([], agent_runtime._reference_reading_blockers(counted_wrong),
+                         "a 9/9 count is legal when only one end of each hole is visible")
+
+        too_many = self._reading(hole_count=12, visible_openings=9)
+        self.assertTrue(any("不能大于" in row
+                            for row in agent_runtime._reference_reading_blockers(too_many)))
+
+        vague = self._reading(evidence="孔看起来是通孔")
+        self.assertTrue(any("模糊词" in row
+                            for row in agent_runtime._reference_reading_blockers(vague)))
+
+        bad_relation = self._reading(hole_vs_walls="maybe_along")
+        self.assertTrue(any("hole_vs_walls" in row for row in
+                            agent_runtime._reference_reading_blockers(bad_relation)))
+
+    def test_hole_direction_is_checked_against_the_slot_the_program_finds(self):
+        """The exact failure: a slot narrow along X, holes drilled along Y."""
+        plan = plan_state.create("Part", _feature())
+        plan = plan_state.add(plan, {
+            "id": "slot", "kind": "box", "operation": "cut",
+            "parameters": {"length": 15, "width": 50, "height": 35, "center": [0, 0, 42.5]},
+            "sources": {key: {"type": "user"} for key in
+                        ("length", "width", "height", "center")}})
+        plan = plan_state.add(plan, {
+            "id": "h1", "kind": "hole", "operation": "cut",
+            "parameters": {"diameter": 10, "through": True, "pos": "point",
+                           "point": [0, 0, 0], "axis": "Y"},
+            "sources": {key: {"type": "user"} for key in ("diameter", "point", "axis")}})
+        self.assertEqual("X", agent_runtime._slot_narrow_axis(plan))
+
+        reading = self._reading(hole_vs_walls="through_thickness")
+        drift = agent_runtime._reference_reading_blockers(reading, plan)
+        self.assertTrue(any("孔方向与读图声明矛盾" in row for row in drift), drift)
+
+        state = {"has_reference_images": True, "reference_reading": reading}
+        refused = agent_runtime._set_plan({"plan": plan}, state)
+        self.assertEqual("invalid", refused["state"])
+        self.assertTrue(any("孔方向与读图声明矛盾" in row
+                            for row in refused["reference_reading_blockers"]))
+
+        aligned = plan_state.update(
+            plan, "h1", parameter_updates={"axis": "X"},
+            source_updates={"axis": {"type": "user"}})
+        self.assertEqual([], agent_runtime._reference_reading_blockers(reading, aligned))
+
+        # The mirror case: holes parallel to the wall faces must be perpendicular.
+        parallel = self._reading(hole_vs_walls="along_face")
+        self.assertEqual([], agent_runtime._reference_reading_blockers(parallel, plan))
+        self.assertTrue(any("孔方向与读图声明矛盾" in row
+                            for row in agent_runtime._reference_reading_blockers(
+                                parallel, aligned)))
+
+    def test_a_reading_written_in_the_message_is_adopted(self):
+        """The model narrates the reading; that must count as having done it.
+
+        In the plate run its very first reading was correct -- zero openings, no
+        walls -- but it was written in the message text while the tool argument
+        was empty, so two consecutive turns were rejected for a missing field.
+        """
+        state = {"has_reference_images": True}
+        message = ('读图结果：\n```json\n'
+                   '{"visible_openings": 0, "hole_count": 0, "walls": 0,\n'
+                   ' "hole_vs_walls": "none", "evidence": "顶部圆形是凸起圆柱，不是孔口",\n'
+                   ' "color_usage": "颜色仅用于区分面与特征"}\n```\n开始建模。')
+        self.assertTrue(agent_runtime._capture_reference_reading(state, message))
+        self.assertEqual(0, state["reference_reading"]["walls"])
+        self.assertEqual("message_text", state["reference_reading_source"])
+
+        # A CADPlan blob in the same message must not be mistaken for a reading.
+        state = {"has_reference_images": True}
+        cad_plan = json.dumps({"schema_version": "1.0", "name": "p",
+                               "features": [{"id": "a", "kind": "box"}]})
+        self.assertFalse(agent_runtime._capture_reference_reading(state, cad_plan))
+        self.assertNotIn("reference_reading", state)
+
+    def test_a_declared_hole_count_does_not_block_a_legit_revision(self):
+        """The reading is a self-check, not a contract the geometry must obey.
+
+        A count mismatch is worth surfacing to the modeller, but blocking on it
+        cost rounds whenever a reading legitimately changed while building, and
+        the mesh already verifies every hole that actually exists.
+        """
+        plan = plan_state.create("Part", _feature())
+        fingerprint = agent_runtime.cad._geometry_plan_fingerprint(plan)
+        state = {
+            "current_plan": plan,
+            "plan_geometry_fingerprint": fingerprint,
+            "latest_preview": {"local_geometry_checks": {"state": "passed"}},
+            "preview_geometry_fingerprint": fingerprint,
+            "has_reference_images": True,
+            "reference_reading": _reading(),
+        }
+        self.assertEqual([], agent_runtime._reference_reading_blockers(
+            state["reference_reading"], plan, final=True))
+        gate = agent_runtime._finish_gate(state)
+        self.assertEqual("needs_visual_review", gate["state"])
+        self.assertTrue(all("孔数" not in str(row) for row in gate["blockers"]))
+
+
+    def test_a_view_the_reference_cannot_speak_to_does_not_block(self):
+        """A single isometric reference has no front/right view to compare with.
+
+        The reviewer correctly marks those comparable=false; treating that as an
+        unresolved defect made the gate demand evidence the user never provided,
+        and the model answered by re-reviewing views in a loop for 17 rounds.
+        """
+        plan = plan_state.create("Part", _feature("image_estimate"))
+        fingerprint = agent_runtime.cad._geometry_plan_fingerprint(plan)
+        review = {
+            "decision": "accept",
+            "checks": [{"id": "iso." + area, "view": "iso", "area": area,
+                        "category": "geometry", "status": "match", "item": area,
+                        "evidence": "e", "reference_evidence": "e", "model_evidence": "e"}
+                       for area in agentloop.REVIEW_VIEW_AREAS["iso"]],
+            "issues": [], "resolved_findings": [], "questions": [], "review_gaps": [],
+        }
+        single_view_reports = [
+            {"view": "iso", "checks": review["checks"],
+             "reference_images": [{"image": "ref.png", "comparable": True,
+                                   "visible_evidence": "等轴测视图可见"}]},
+            {"view": "front", "checks": [], "reference_images": [
+                {"image": "ref.png", "comparable": False,
+                 "visible_evidence": "参考图没有正视视图"}]},
+        ]
+        state = {
+            "current_plan": plan,
+            "plan_geometry_fingerprint": fingerprint,
+            "latest_preview": {"local_geometry_checks": {"state": "passed"}},
+            "preview_geometry_fingerprint": fingerprint,
+            "has_reference_images": True,
+            "reference_reading": _reading(visible_openings=0, hole_count=0,
+                                          hole_vs_walls="none"),
+            "latest_geometry_review": {"geometry_fingerprint": fingerprint,
+                                       "views": ["iso"], "result": review},
+            "reviewed_view_status": {
+                "iso": agent_runtime._view_status(
+                    {"view": "iso", "checks": review["checks"],
+                     "reference_images": [{"image": "ref.png", "comparable": True,
+                                           "visible_evidence": "等轴测视图可见"}]}),
+                "front": agent_runtime._view_status(
+                    {"view": "front", "checks": [],
+                     "reference_images": [{"image": "ref.png", "comparable": False,
+                                           "visible_evidence": "参考图没有正视视图"}]}),
+            },
+        }
+        self.assertEqual({"iso": "passed", "front": "not_comparable"},
+                         state["reviewed_view_status"])
+
+        gate = agent_runtime._finish_gate(state)
+        self.assertTrue(gate["ready"], gate.get("blockers"))
+        self.assertEqual("reviewed", gate["state"])
+
+    def test_repeated_identical_finish_is_bounded(self):
+        plan = plan_state.create("Part", _feature("user"))
+        state = {"current_plan": plan, "tool_calls": 0}
+        results = [agent_runtime._execute_tool("cad_finish", {}, state, [])[0]
+                   for _ in range(agent_runtime.MAX_IDENTICAL_FINISHES)]
+        self.assertEqual([1, 2, 3], [row["repeat_count"] for row in results])
+        self.assertIn("finish_deadlock", state)
+
+    def test_hole_opening_clipped_by_the_part_edge_is_caught(self):
+        """The 47-round failure: a bore spilling past the wall edge.
+
+        Mesh verification used to accept it (`any(ring)`), so the program said the
+        holes were fine while the reviewer kept seeing half-circle notches, and
+        the model rebuilt the whole part three times to explain the difference.
+        """
+        def box(fid, length, width, height, center):
+            return {"id": fid, "kind": "box", "operation": "add",
+                    "parameters": {"length": length, "width": width, "height": height,
+                                   "center": center},
+                    "sources": {key: {"type": "user"} for key in
+                                ("length", "width", "height", "center")}}
+
+        def hole(fid, point):
+            return {"id": fid, "kind": "hole", "operation": "cut",
+                    "parameters": {"diameter": 10, "through": True, "pos": "point",
+                                   "point": point, "axis": "X"},
+                    "sources": {key: {"type": "user"} for key in
+                                ("diameter", "point", "axis")}}
+
+        body = plan_state.create("Part", box("body", 60, 40, 70, [0, 0, 35]))
+        spilling = plan_state.add(body, hole("hole_edge", [-20, -20, 55]))
+        checks = cadplan.preview_plan(spilling)["local_geometry_checks"]
+        self.assertEqual("failed", checks["state"])
+        row = checks["through_hole_mesh_checks"][0]
+        self.assertEqual("opening_clipped", row["status"])
+        self.assertIn(False, row["ring_supported"])
+
+        centered = plan_state.add(body, hole("hole_middle", [-20, -13.5, 55]))
+        self.assertEqual(
+            "passed",
+            cadplan.preview_plan(centered)["local_geometry_checks"]["state"])
+
+        fingerprint = agent_runtime.cad._geometry_plan_fingerprint(spilling)
+        gate = agent_runtime._finish_gate({
+            "current_plan": spilling,
+            "plan_geometry_fingerprint": fingerprint,
+            "preview_geometry_fingerprint": fingerprint,
+            "latest_preview": {"local_geometry_checks": checks},
+        })
+        self.assertFalse(gate["ready"])
+        self.assertEqual("local_geometry_failed", gate["state"])
+        self.assertTrue(any("半圆缺口" in row and "hole_edge" in row
+                            for row in gate["blockers"]), gate["blockers"])
+
+    def test_coincident_cut_face_is_reported_not_measured(self):
+        """Exact face coincidence corrupts this kernel's boolean.
+
+        Measured: a box/prism cut whose bottom face is exactly coplanar with the
+        solid's top face removes 300/346 mm^3 where it must remove 0; moving it
+        0.001 mm gives 0.00. The screw run inferred its cuts from those volumes
+        for eighteen rounds, so the coincidence is now reported outright.
+        """
+        solid = plan_state.create("Part", _feature())
+
+        def fresh():
+            state = {"current_plan": solid, "plan_revision": 1, "tool_calls": 0,
+                     "preview_calls": 0, "session_dir": Path(tempfile.mkdtemp()),
+                     "plan_geometry_fingerprint":
+                         agent_runtime.cad._geometry_plan_fingerprint(solid)}
+            agent_runtime._preview_plan({"view_set": "iso"}, state)
+            return state
+
+        def cut(center_z):
+            return {"id": "c", "kind": "box", "operation": "cut",
+                    "parameters": {"length": 5, "width": 5, "height": 5,
+                                   "center": [0, 0, center_z]},
+                    "sources": {key: {"type": "derived", "evidence": "e"}
+                                for key in ("length", "width", "height", "center")}}
+
+        solid_bbox = (agent_runtime.cad.cadplan.preview_plan(solid)
+                      .get("dimensions") or {}).get("bbox")
+        top = solid_bbox[5]
+        # Bottom face exactly on the solid's top face.
+        result = agent_runtime._apply_incremental(
+            "cad_add_feature", {"feature": cut(top + 2.5)}, fresh())
+        warning = str((result.get("feature_effect") or {}).get("warning"))
+        self.assertIn("完全重合", warning)
+        self.assertIn("0.001", warning)
+
+        # 0.001 mm past it: no coincidence warning.
+        result = agent_runtime._apply_incremental(
+            "cad_add_feature", {"feature": cut(top + 2.501)}, fresh())
+        self.assertNotIn("完全重合",
+                         str((result.get("feature_effect") or {}).get("warning")))
+
+    def test_relations_edit_is_not_treated_as_cosmetic_churn(self):
+        """The screw run: fields={'relations': ...} answered "unchanged" forever.
+
+        A relation moves the geometry fingerprint without touching a numeric
+        parameter, so the anti-churn guard read it as a 0.000 mm micro-nudge and
+        rejected it. The model retried six times, then deleted and rebuilt the
+        feature.
+        """
+        plan = plan_state.create("Part", _feature())
+        plan = plan_state.add(plan, {
+            "id": "pat", "kind": "pattern", "operation": "cut",
+            "parameters": {"mode": "linear", "count": 3, "step": [0, 0, 5], "axis": "Z"},
+            "relations": [{"feature_id": "base", "type": "depends_on"}],
+            "sources": {key: {"type": "derived", "evidence": "e"}
+                        for key in ("mode", "count", "step", "axis")}})
+        state = {"current_plan": plan, "plan_revision": 1, "tool_calls": 0,
+                 "preview_calls": 0, "session_dir": Path(tempfile.mkdtemp()),
+                 "plan_geometry_fingerprint":
+                     agent_runtime.cad._geometry_plan_fingerprint(plan)}
+        result = agent_runtime._apply_incremental("cad_update_feature", {
+            "feature_id": "pat",
+            "fields": {"relations": [{"feature_id": "base",
+                                      "type": "pattern_source"}]}}, state)
+        self.assertNotEqual("unchanged", result["state"])
+        stored = next(f for f in state["current_plan"]["features"] if f["id"] == "pat")
+        self.assertEqual("pattern_source", stored["relations"][0]["type"])
+
+    def test_each_feature_reports_what_it_did_to_the_material(self):
+        """The screw run inferred its cuts from volume arithmetic for 18 rounds."""
+        base = plan_state.create("Part", _feature())
+
+        def fresh():
+            state = {"current_plan": base, "plan_revision": 1, "tool_calls": 0,
+                     "preview_calls": 0, "session_dir": Path(tempfile.mkdtemp()),
+                     "plan_geometry_fingerprint":
+                         agent_runtime.cad._geometry_plan_fingerprint(base)}
+            agent_runtime._preview_plan({"view_set": "iso"}, state)
+            return state
+
+        def cut(fid, center):
+            return {"id": fid, "kind": "box", "operation": "cut",
+                    "parameters": {"length": 5, "width": 5, "height": 5,
+                                   "center": center},
+                    "sources": {key: {"type": "derived", "evidence": "e"}
+                                for key in ("length", "width", "height", "center")}}
+
+        air = agent_runtime._apply_incremental(
+            "cad_add_feature", {"feature": cut("in_air", [0, 0, 500])}, fresh())
+        effect = air.get("feature_effect") or {}
+        self.assertEqual(0.0, effect.get("volume_delta_mm3"))
+        self.assertIn("没有改变材料", str(effect.get("warning")))
+
+        real = agent_runtime._apply_incremental(
+            "cad_add_feature", {"feature": cut("real", [0, 0, 0])}, fresh())
+        self.assertLess((real.get("feature_effect") or {}).get("volume_delta_mm3", 0), 0)
 
 
 if __name__ == "__main__":

@@ -358,6 +358,23 @@ def _responses_tools(tools):
     return result
 
 
+class ModelRequestCancelled(RuntimeError):
+    """用户点了「停止」：请求在发出前或流式接收途中被主动中断。
+
+    与普通运行错误分开，调用方据此走"已取消"收尾而不是"失败"告警，
+    且绝不能进入重试/降级逻辑。
+    """
+
+
+def _cancel_requested(cancel_event):
+    return cancel_event is not None and cancel_event.is_set()
+
+
+def _check_cancelled(cancel_event):
+    if _cancel_requested(cancel_event):
+        raise ModelRequestCancelled('用户已请求停止：正在中断本次模型请求。')
+
+
 def describe_stream_progress(event):
     """Describe stream activity without embedding reasoning text in a status label."""
     if not isinstance(event, dict):
@@ -396,7 +413,7 @@ def emit_stream_progress(event, callback, detail=''):
             callback('模型思考链增量：' + reasoning_delta)
 
 
-def _read_responses_stream(response, progress=None):
+def _read_responses_stream(response, progress=None, cancel_event=None):
     event_name = ''
     data_lines = []
     final_response = None
@@ -466,6 +483,11 @@ def _read_responses_stream(response, progress=None):
             'response.created', 'response.completed', 'response.incomplete', 'response.failed'})
 
     for raw_line in response:
+        if _cancel_requested(cancel_event):
+            raise ModelRequestCancelled(
+                '用户已请求停止：已中断 DeepSeek Responses 流（中断前已接收 '
+                'reasoning %s 字符 / output %s 字符）。'
+                % (reasoning_chars, output_chars))
         line = raw_line.decode('utf-8', errors='replace').rstrip('\r\n')
         if not line:
             consume_event()
@@ -556,7 +578,8 @@ def _responses_to_chat_message(response, final_event, payload):
 
 
 def _deepseek_responses_completion(messages, cfg, tools, timeout, max_tokens,
-                                   temperature, progress=None):
+                                   temperature, progress=None, cancel_event=None):
+    _check_cancelled(cancel_event)
     model = cfg.get('model') or 'deepseek-flash'
     base = (cfg.get('base_url') or '').rstrip('/')
     effort = str(cfg.get('reasoning_effort') or '').strip().lower()
@@ -595,7 +618,8 @@ def _deepseek_responses_completion(messages, cfg, tools, timeout, max_tokens,
         method='POST')
     try:
         with urllib.request.urlopen(request, timeout=timeout) as response:
-            result, final_event = _read_responses_stream(response, progress=progress)
+            result, final_event = _read_responses_stream(
+                response, progress=progress, cancel_event=cancel_event)
     except urllib.error.HTTPError as exc:
         try:
             reason = exc.read().decode('utf-8', errors='replace')[:2000]
@@ -607,7 +631,7 @@ def _deepseek_responses_completion(messages, cfg, tools, timeout, max_tokens,
     return _responses_to_chat_message(result, final_event, payload)
 
 
-def _read_chat_completions_stream(response, progress=None):
+def _read_chat_completions_stream(response, progress=None, cancel_event=None):
     r"""Consume an OpenAI-compatible chat/completions SSE stream.
 
     Streaming is what makes thinking chains visible for reasoning models on
@@ -728,6 +752,11 @@ def _read_chat_completions_stream(response, progress=None):
         emit()
 
     for raw_line in response:
+        if _cancel_requested(cancel_event):
+            raise ModelRequestCancelled(
+                '用户已请求停止：已中断模型流（中断前已接收 reasoning %s 字符 / '
+                'output %s 字符 / 工具参数 %s 字符）。'
+                % (reasoning_chars, output_chars, tool_argument_chars))
         line = raw_line.decode('utf-8', errors='replace').rstrip('\r\n')
         body_lines.append(line)
         if not line:
@@ -833,11 +862,14 @@ def _chat_stream_to_message(stream, payload):
 
 
 def chat_completion(messages, cfg: dict, tools=None, timeout=180,
-                    max_tokens=4096, temperature=0.1, progress=None):
+                    max_tokens=4096, temperature=0.1, progress=None,
+                    cancel_event=None):
     """Call a configured model and normalize its reply for the local AgentLoop.
 
     Official DeepSeek endpoints use the Responses API with SSE streaming;
     other OpenAI-compatible providers keep the Chat Completions adapter.
+    ``cancel_event``（threading.Event）被置位时：请求尚未发出则不发，
+    已在流式接收中则当场断开连接（停止按钮真正生效的关键）。
     """
     cfg = cfg if isinstance(cfg, dict) else {}
     base = (cfg.get('base_url') or '').rstrip('/')
@@ -846,6 +878,8 @@ def chat_completion(messages, cfg: dict, tools=None, timeout=180,
     if not base:
         raise RuntimeError('未配置大模型接口地址')
 
+    _check_cancelled(cancel_event)
+
     ok, detail = ensure_local_server(cfg)
     if not ok:
         raise RuntimeError(detail)
@@ -853,7 +887,7 @@ def chat_completion(messages, cfg: dict, tools=None, timeout=180,
     if _is_deepseek_responses(base, model):
         return _deepseek_responses_completion(
             messages, cfg, tools, timeout, max_tokens, temperature,
-            progress=progress)
+            progress=progress, cancel_event=cancel_event)
 
     payload = {
         'model': model,
@@ -895,7 +929,8 @@ def chat_completion(messages, cfg: dict, tools=None, timeout=180,
                  'Authorization': 'Bearer ' + key})
     try:
         with urllib.request.urlopen(request, timeout=timeout) as response:
-            stream = _read_chat_completions_stream(response, progress=progress)
+            stream = _read_chat_completions_stream(
+                response, progress=progress, cancel_event=cancel_event)
     except urllib.error.HTTPError as exc:
         try:
             reason = exc.read().decode('utf-8', errors='replace')[:1000]

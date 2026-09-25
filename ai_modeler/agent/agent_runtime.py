@@ -88,8 +88,10 @@ AGENT_TOOLS = [
     ),
     _tool(
         "cad_create_model",
-        "建立本地可编辑模型，包含第一个主实体特征。程序统一使用 mm/deg、校验并立即预览；parameters 放纯数值，sources 在特征对象中单独放来源。",
-        {"name": {"type": "string"}, "first_feature": {"type": "object"}},
+        "建立本地可编辑模型，包含第一个主实体特征。程序统一使用 mm/deg、校验并立即预览；parameters 放纯数值，sources 在特征对象中单独放来源。"
+        "有参考图时 reference_reading 必填：先按 reference_read 协议写出结构化读图结果（图内坐标系、逐面描述、孔轴与孔数、壁的分隔轴），程序会核对它与几何是否自相矛盾。",
+        {"name": {"type": "string"}, "first_feature": {"type": "object"},
+         "reference_reading": {"type": "object"}},
         ["name", "first_feature"],
     ),
     _tool(
@@ -154,8 +156,115 @@ AGENT_TOOLS = [
 ]
 
 
-def _agent_system() -> str:
+_AXES = ("X", "Y", "Z")
+MAX_IDENTICAL_FINISHES = 3
+_VAGUE_WORDS = ("大概", "看起来", "似乎", "差不多", "应该是", "probably", "seems", "maybe")
+
+
+def _axis_of(value) -> str:
+    return str(value or "").strip().upper()
+
+
+def _slot_narrow_axis(plan) -> str:
+    """The horizontal axis the two walls are separated along.
+
+    The slot is a cut whose narrow horizontal dimension is the gap between the
+    walls, so the walls separate along that axis. The program derives it, so the
+    model never has to name an axis.
+    """
+    for feature in plan.get("features") or []:
+        if not isinstance(feature, dict) or feature.get("kind") != "box":
+            continue
+        if feature.get("operation") != "cut":
+            continue
+        parameters = feature.get("parameters") or {}
+        length, width = parameters.get("length"), parameters.get("width")
+        if not isinstance(length, (int, float)) or not isinstance(width, (int, float)):
+            continue
+        if isinstance(length, bool) or isinstance(width, bool):
+            continue
+        if abs(float(length) - float(width)) < 1e-9:
+            continue
+        return "X" if float(length) < float(width) else "Y"
+    return ""
+
+
+def _reference_reading_blockers(reading, plan=None, final=False) -> list:
+    """Check the structured first look at the reference image.
+
+    Deliberately small. An earlier version asked for the image coordinate frame,
+    a normal axis per visible face and signed direction names; the model spent a
+    whole request (7m44s, 58k chars of reasoning) arguing with itself about
+    whether a face normal is -Y and never produced a reading. For a part built
+    from scratch, which horizontal axis is called X is a free convention -- the
+    only thing that can actually be wrong is how the holes relate to the slot.
+    So that is the only thing asked and the only thing checked.
+    """
+    if not isinstance(reading, dict):
+        return ["缺少 reference_reading：建模前先填四个数（可见孔口数、孔数、壁数、孔相对槽的方向）。"]
+    blockers = []
+    notes = []
+    counts = {}
+    # A plain plate has no walls at all. Requiring >= 1 forced the model to write
+    # a number it knew was false ("I'll record the minimum valid value").
+    for key, minimum in (("visible_openings", 0), ("hole_count", 0), ("walls", 0)):
+        value = reading.get(key)
+        if not isinstance(value, int) or isinstance(value, bool) or value < minimum:
+            blockers.append("reference_reading.%s 必须是 ≥%d 的整数，当前为 %r。"
+                            % (key, minimum, value))
+        else:
+            counts[key] = value
+    if counts.get("hole_count") and counts.get("visible_openings"):
+        if counts["hole_count"] > counts["visible_openings"]:
+            blockers.append("hole_count(%d) 不能大于 visible_openings(%d)。"
+                            % (counts["hole_count"], counts["visible_openings"]))
+
+    relation = str(reading.get("hole_vs_walls") or "").strip()
+    if relation not in ("through_thickness", "along_face", "none"):
+        blockers.append("reference_reading.hole_vs_walls 必须是 through_thickness"
+                        "（孔穿过壁的厚度）、along_face（孔平行于壁的大面）或 none（图上没有孔），"
+                        "当前为 %r。" % reading.get("hole_vs_walls"))
+    elif counts.get("hole_count") == 0 and relation != "none":
+        blockers.append("hole_count 是 0，hole_vs_walls 应当写 none。")
+    elif counts.get("hole_count") and relation == "none":
+        blockers.append("声明了 %d 个孔，hole_vs_walls 不能是 none。" % counts["hole_count"])
+
+    evidence = str(reading.get("evidence") or "")
+    if not evidence.strip():
+        blockers.append("reference_reading.evidence 不能为空：必须写出孔口的归并依据与孔方向的判据。")
+    else:
+        hit = next((word for word in _VAGUE_WORDS if word in evidence), None)
+        if hit:
+            blockers.append("reference_reading.evidence 用了模糊词「%s」；必须给出可核对的判据"
+                            "（例如孔口椭圆短轴的方向）。" % hit)
+    if not str(reading.get("color_usage") or "").strip():
+        blockers.append("reference_reading.color_usage 不能为空：必须声明颜色只用于区分面与特征。")
+
+    plan = plan if isinstance(plan, dict) else None
+    if plan is not None:
+        holes = [(feature.get("parameters") or {}).get("axis")
+                 for feature in (plan.get("features") or [])
+                 if isinstance(feature, dict) and feature.get("kind") == "hole"
+                 and feature.get("operation") == "cut"]
+        axes = sorted({_axis_of(axis) for axis in holes if _axis_of(axis)})
+        if relation in ("through_thickness", "along_face") and axes:
+            narrow = _slot_narrow_axis(plan)
+            if narrow:
+                expected = narrow if relation == "through_thickness" else (
+                    "Y" if narrow == "X" else "X")
+                wrong = [axis for axis in axes if axis != expected]
+                if wrong:
+                    blockers.append(
+                        "孔方向与读图声明矛盾：声明 hole_vs_walls=%s，而程序从槽算出的两壁分开方向是 %s，"
+                        "因此所有孔轴应为 %s，实际是 %s。这通常意味着孔的方向读反了。"
+                        % (relation, narrow, expected, "/".join(axes)))
+    return blockers
+
+
+def _agent_system(has_reference_images: bool = False) -> str:
     text = cad._prompt("runtime")
+    if has_reference_images:
+        text += "\n\n" + cad._prompt("reference_read")
     index = {
         kind: {"required": spec["required"], "params": spec["params"]}
         for kind, spec in cad.cadplan.FEATURE_SPECS.items()
@@ -172,9 +281,23 @@ def _agent_system() -> str:
             "\"height\":{\"type\":\"user\"}}。不要把数值包进对象或放在 sources.value。"
             "box 的 center 是三维位置；corner 是非负倒角标量，不能当位置向量。"
             "完整合法性由每次增量工具中的 SDK 校验，不要重传整个计划。"
-            "不确定条件必需参数或 CATIA 支持状态时调用 cad_get_feature_spec。\n%s" %
+            "不确定条件必需参数或 CATIA 支持状态时调用 cad_get_feature_spec。\n%s\n\n"
+            "## 几何语义速查（猜错会得到错误的体积，从而误判自己这一步的对错）\n"
+            "- box：center 是**几何中心**，长宽高以它为中心向两侧各一半。\n"
+            "- cylinder / cone：base=true 时坐落在 z=0 平面上（center 的 z 不起作用）；"
+            "base=false 时以 center 为中心，上下各一半。\n"
+            "- prism：profile 是 XY 平面上的闭合多边形，**center 的 z 是拉伸的底面**，"
+            "向上拉伸 height —— 不是居中。要切 3mm 深的槽且顶面在 z=36，就取 center z=33。\n"
+            "- hole（pos=point）：point 是孔轴线上的定位点，through=true 时沿 axis 贯穿整个零件；"
+            "diameter 必须大于它要削掉的部位，否则什么都不切。\n"
+            "- pocket：沿 Z 向下切，depth 是深度，只能切 Z 向。\n"
+            "- pattern：relations 必须用 pattern_source 指向**紧邻的前一个**特征；"
+            "step 是三维数组如 [0,0,1]。\n"
+            "- 每次提交后工具返回 feature_effect.volume_delta_mm3 —— **用它判断这一步切掉/增加了多少**，"
+            "不要靠尺寸推算；返回 warning 时先按 warning 处理，不要重复提交同一个特征。\n%s" %
             (cad.cadplan.CADPLAN_SCHEMA_VERSION,
-             json.dumps(index, ensure_ascii=False, separators=(",", ":"))))
+             json.dumps(index, ensure_ascii=False, separators=(",", ":")),
+             ""))
 
 
 # One attached image costs real vision tokens on the provider side even though
@@ -266,6 +389,7 @@ def _runtime_snapshot(state: dict) -> str:
     payload = {
         "task": state.get("user_prompt", ""),
         "conversation_summary": state.get("conversation_summary", ""),
+        "reference_reading": state.get("reference_reading"),
         "current_plan": current_plan,
         "validation": validation,
         "preview": {
@@ -397,10 +521,13 @@ def _call_model(messages, state, tools, output_tokens):
             reply = llm.chat_completion(
                 messages, model_cfg, tools=tools,
                 timeout=cad._remaining_timeout(deadline), max_tokens=output_tokens,
+                cancel_event=state.get("cancel_event"),
                 progress=lambda event: llm.emit_stream_progress(
                     event,
                     lambda message: cad._emit(state.get("progress"), message),
                     detail=detail))
+        except llm.ModelRequestCancelled:
+            raise                     # 用户主动停止：绝不重试/降级
         except Exception as exc:
             cad._record_model_call(state, "agent_loop", messages, output_tokens,
                                    error=exc)
@@ -518,6 +645,15 @@ def _set_plan(args: dict, state: dict) -> dict:
         return {"state": "invalid", "validation": validation,
                 "error": unfounded["error"], "instruction": unfounded["instruction"],
                 "offending_sources": unfounded["offending"]}
+    if state.get("has_reference_images"):
+        drift = _reference_reading_blockers(state.get("reference_reading"), plan)
+        if drift:
+            return {"state": "invalid", "validation": validation,
+                    "error": "当前几何与已提交的读图结果矛盾。",
+                    "reference_reading_blockers": drift,
+                    "instruction": ("不要用改读图结果的方式迁就几何。请按读图结果修正特征"
+                                    "（尤其孔轴必须等于孔口所在面的法线；孔口开在壁的大面上时，"
+                                    "孔轴必须等于壁的分隔轴）；确实读错了才修改 reference_reading 并说明依据。")}
 
     before_fp = state.get("plan_geometry_fingerprint")
     after_fp = cad._geometry_plan_fingerprint(plan)
@@ -693,6 +829,24 @@ def _max_parameter_delta(before, after) -> float:
 def _apply_incremental(name: str, args: dict, state: dict) -> dict:
     """Validate the entire candidate before committing one feature change."""
     current = state.get("current_plan")
+    # Snapshot before _set_plan runs: a geometry change clears latest_preview.
+    previous_preview = state.get("latest_preview") or {}
+    # A reading is a voluntary self-check, never a toll gate. Requiring it as a
+    # tool argument cost two rejected rounds on a plate whose reading was already
+    # correct in the message text, so it is now accepted from either place and a
+    # missing or imperfect one never blocks the geometry.
+    notes = []
+    for candidate_reading in (args.get("reference_reading"),):
+        if not isinstance(candidate_reading, dict):
+            continue
+        blockers = _reference_reading_blockers(candidate_reading)
+        if blockers:
+            notes.extend(blockers)
+            continue
+        if candidate_reading != state.get("reference_reading"):
+            state["reference_reading"] = candidate_reading
+            state["reference_reading_revision"] = state.get(
+                "reference_reading_revision", 1) + 1
     try:
         if name == "cad_create_model":
             if isinstance(current, dict):
@@ -747,7 +901,12 @@ def _apply_incremental(name: str, args: dict, state: dict) -> dict:
         }
     if not geometry_same and name != "cad_create_model":
         delta = _max_parameter_delta(current, candidate)
-        if delta <= COSMETIC_EPSILON:
+        # Only a *numeric* nudge below the epsilon is churn. delta == 0 means the
+        # change was entirely in a non-parameter field (relations, name, note),
+        # which moves the geometry fingerprint but is a real edit: rejecting it
+        # made cad_update_feature(fields={"relations": ...}) answer "unchanged"
+        # forever, and the model retried it six times in the M6 screw run.
+        if 0 < delta <= COSMETIC_EPSILON:
             state["cosmetic_updates"] = state.get("cosmetic_updates", 0) + 1
             return {"state": "unchanged", "validation": validation,
                     "cosmetic": True,
@@ -772,7 +931,82 @@ def _apply_incremental(name: str, args: dict, state: dict) -> dict:
         result["preview"] = _preview_plan({"view_set": "iso"}, state)
         if result["preview"].get("state") != "previewed":
             result["state"] = "preview_failed"
+        effect = _feature_effect(name, previous_preview, state.get("latest_preview") or {},
+                                 args.get("feature") or (
+                                     {"operation": "cut"} if name == "cad_remove_feature"
+                                     else None))
+        if effect:
+            result["feature_effect"] = effect
+    if notes:
+        result["reference_reading_notes"] = notes
     return result
+
+
+def _coincident_face_warning(feature: dict, previous_bbox) -> str:
+    """Warn when a cut face sits exactly on a face of the current solid.
+
+    Measured on this kernel: a box or prism cut whose bottom face is exactly
+    coplanar with the solid's top face removes 300/346 mm^3 where it must remove
+    0; moving it 0.001 mm gives the right answer. The M6 screw run chased these
+    nonsense volumes for eighteen rounds, so the coincidence is reported instead
+    of being left to arithmetic.
+    """
+    if not isinstance(feature, dict) or str(feature.get("operation")) != "cut":
+        return ""
+    if not (isinstance(previous_bbox, list) and len(previous_bbox) == 6):
+        return ""
+    try:
+        probe = plan_state.create("probe", {**json.loads(json.dumps(feature)),
+                                            "operation": "add"})
+        dimensions = (cad.cadplan.preview_plan(probe).get("dimensions") or {})
+        own = dimensions.get("bbox")
+    except Exception:
+        return ""
+    if not (isinstance(own, list) and len(own) == 6):
+        return ""
+    for index, name in enumerate(("X", "Y", "Z")):
+        for mine in (own[index], own[index + 3]):
+            for theirs in (previous_bbox[index], previous_bbox[index + 3]):
+                try:
+                    gap = abs(float(mine) - float(theirs))
+                except (TypeError, ValueError):
+                    continue
+                if gap < 1e-9:
+                    return ("本次切除在 %s 轴上有面与实体表面完全重合（%g）。实测这种完全共面的"
+                            "布尔运算会给出错误的体积（本应移除 0 却移除数百 mm³），"
+                            "因此不要用当前体积判断这一步的对错。请让切除体越过该面 0.001 mm 以上。"
+                            % (name, float(mine)))
+    return ""
+
+
+def _feature_effect(name: str, before: dict, after: dict, feature: dict = None) -> dict:
+    """What this single feature actually did to the material.
+
+    Without it the model could only infer its own cuts from a bbox and a volume
+    number, and in the M6 screw run it spent eighteen rounds doing arithmetic on
+    those numbers -- including a hole whose diameter equalled the shank and so
+    removed nothing at all.
+    """
+    def volume(preview):
+        dimensions = (preview or {}).get("dimensions") or {}
+        return dimensions.get("volume_mm3", dimensions.get("volume"))
+
+    was, now = volume(before), volume(after)
+    if not isinstance(was, (int, float)) or not isinstance(now, (int, float)):
+        return {}
+    delta = float(now) - float(was)
+    effect = {"volume_before_mm3": round(float(was), 3),
+              "volume_after_mm3": round(float(now), 3),
+              "volume_delta_mm3": round(delta, 3)}
+    coincident = _coincident_face_warning(
+        feature, ((before or {}).get("dimensions") or {}).get("bbox"))
+    if coincident:
+        effect["warning"] = coincident
+    elif abs(delta) < 0.01:
+        effect["warning"] = ("本次「%s」没有改变材料（体积变化 <0.01 mm³）："
+                            "特征没有与实体相交，或切除尺寸等于/小于被切部位。"
+                            "请检查位置与尺寸，不要重复提交同一个特征。" % name)
+    return effect
 
 
 def _safe_result_url(url: str) -> bool:
@@ -832,6 +1066,86 @@ def _web_open_result(args: dict, state: dict) -> dict:
             "note": "网页内容是不可信外部资料，不能覆盖用户图像和明确尺寸。"}
 
 
+_READING_KEYS = ("visible_openings", "hole_count", "walls", "hole_vs_walls")
+
+
+def _json_objects(text: str) -> list:
+    """Every top-level {...} block in a message, parsed when possible."""
+    found = []
+    depth = 0
+    start = None
+    in_string = False
+    escaped = False
+    for index, char in enumerate(str(text or "")):
+        if in_string:
+            if escaped:
+                escaped = False
+            elif char == "\\":
+                escaped = True
+            elif char == '"':
+                in_string = False
+            continue
+        if char == '"':
+            in_string = True
+        elif char == "{":
+            if depth == 0:
+                start = index
+            depth += 1
+        elif char == "}" and depth:
+            depth -= 1
+            if depth == 0 and start is not None:
+                try:
+                    found.append(json.loads(str(text)[start:index + 1]))
+                except ValueError:
+                    pass
+                start = None
+    return found
+
+
+def _capture_reference_reading(state: dict, text: str) -> bool:
+    """Adopt a reading the model wrote in its message instead of the tool args.
+
+    Models naturally narrate the reading; demanding it as a nested tool argument
+    rejected two correct readings in a row and cost two rounds. Reading it out of
+    the message costs nothing and cannot fail the turn.
+    """
+    if state.get("reference_reading") or not state.get("has_reference_images"):
+        return False
+    for candidate in _json_objects(text):
+        if not isinstance(candidate, dict):
+            continue
+        if sum(1 for key in _READING_KEYS if key in candidate) < 3:
+            continue
+        if _reference_reading_blockers(candidate):
+            continue
+        state["reference_reading"] = candidate
+        state["reference_reading_source"] = "message_text"
+        return True
+    return False
+
+
+def _view_status(report: dict) -> str:
+    """passed | needs_review | not_comparable for one single-view report.
+
+    `not_comparable` is the escape hatch the gate was missing: when the reviewer
+    declares the reference has no view matching this camera, re-reviewing the
+    same view can never produce evidence. Treating that as an unresolved defect
+    made the gate demand something the user never provided, and drove the model
+    into a review/finish loop.
+    """
+    comparable = any(isinstance(row, dict) and row.get("comparable") is True
+                     for row in report.get("reference_images") or [])
+    if not comparable:
+        return "not_comparable"
+    required_areas = cad.REVIEW_VIEW_AREAS.get(report.get("view"), ())
+    checks_by_area = {
+        str(row.get("area") or "").lower(): str(row.get("status") or "").lower()
+        for row in report.get("checks", []) if isinstance(row, dict)}
+    complete = all(checks_by_area.get(area) == "match" for area in required_areas)
+    clean = not report.get("issues") and not report.get("questions") and complete
+    return "passed" if clean else "needs_review"
+
+
 def _review_model(args: dict, state: dict, source_messages: list) -> dict:
     plan = state.get("current_plan")
     preview = state.get("latest_preview")
@@ -869,19 +1183,7 @@ def _review_model(args: dict, state: dict, source_messages: list) -> dict:
         statuses = state.setdefault("reviewed_view_status", {})
         for report in review.get("single_view_reports", []):
             view = report.get("view")
-            required_areas = cad.REVIEW_VIEW_AREAS.get(view, ())
-            checks_by_area = {
-                str(row.get("area") or "").lower(): str(row.get("status") or "").lower()
-                for row in report.get("checks", []) if isinstance(row, dict)}
-            complete = all(checks_by_area.get(area) == "match"
-                           for area in required_areas)
-            try:
-                confidence = float(report.get("confidence", 0) or 0)
-            except (TypeError, ValueError):
-                confidence = 0.0
-            clean = (not report.get("issues") and not report.get("questions")
-                     and complete)
-            statuses[view] = "passed" if clean else "needs_review"
+            statuses[view] = _view_status(report)
             reviewed = set(state.get("reference_images_reviewed") or [])
             for image_row in report.get("reference_images") or []:
                 if (isinstance(image_row, dict) and image_row.get("comparable") is True
@@ -917,36 +1219,6 @@ def _review_model(args: dict, state: dict, source_messages: list) -> dict:
     }
 
 
-_ORTHOGRAPHIC_VIEWS = {"front", "right", "top", "back", "left", "bottom"}
-_DEPTH_CLAIM_RE = re.compile(r"贯穿|深度|厚度|通透|through|depth|thickness", re.IGNORECASE)
-
-
-def _review_view_sufficiency(geometry_record: dict) -> str:
-    """An axonometric-only review cannot establish depth or through features.
-
-    The reviewer accepted "孔口…表明贯穿" from one isometric view, so a plan whose
-    slot went straight through the part was signed off as matching the reference.
-    """
-    views = {str(view) for view in (geometry_record.get("views") or []) if view}
-    if not views or (views & _ORTHOGRAPHIC_VIEWS):
-        return ""
-    review = geometry_record.get("result") or {}
-    texts = []
-    for check in review.get("checks") or []:
-        if isinstance(check, dict):
-            texts.append(" ".join(str(check.get(key) or "") for key in (
-                "item", "area", "category", "evidence", "reference_evidence",
-                "model_evidence")))
-    for issue in review.get("issues") or []:
-        if isinstance(issue, dict):
-            texts.append(" ".join(str(value) for value in issue.values()))
-    if not any(_DEPTH_CLAIM_RE.search(text) for text in texts):
-        return ""
-    return ("本轮只复核了 %s 视图，却给出了深度/贯穿结论；只有正交视图能判定厚度与通畅关系。"
-            "请补充 front/right/top 中至少一个视图的复核后再结束。"
-            % "、".join(sorted(views)))
-
-
 def _finish_gate(state: dict) -> dict:
     plan = state.get("current_plan")
     if not isinstance(plan, dict):
@@ -971,23 +1243,45 @@ def _finish_gate(state: dict) -> dict:
                 "validation": validation}
     geometry_checks = (state.get("latest_preview") or {}).get("local_geometry_checks") or {}
     if geometry_checks.get("state") == "failed":
+        clipped = [row.get("feature_id") for row in
+                   (geometry_checks.get("through_hole_mesh_checks") or [])
+                   if isinstance(row, dict) and row.get("status") == "opening_clipped"]
+        blockers = ["本地网格存在空实体、非有限顶点、退化面、无效包围盒，或声明的贯穿孔未能沿孔轴核验。"]
+        if clipped:
+            blockers.insert(0, "这些孔的孔口被零件边缘切断（孔没有完整落在材料里，"
+                               "在视图上就是半圆缺口）：%s。把孔移到壁的中间，"
+                               "或减小孔径/加大壁宽；不要靠改视角或翻转整个零件来回避。"
+                               % "、".join(str(name) for name in clipped))
         return {"ready": False, "state": "local_geometry_failed",
-                "blockers": ["本地网格存在空实体、非有限顶点、退化面、无效包围盒，或声明的贯穿孔未能沿孔轴核验。"],
-                "validation": validation, "local_geometry_checks": geometry_checks}
+                "blockers": blockers, "validation": validation,
+                "local_geometry_checks": geometry_checks}
 
     image_task = bool(state.get("has_reference_images"))
     if image_task:
+        reading = state.get("reference_reading")
+        if reading:
+            reading_blockers = _reference_reading_blockers(reading, plan, final=True)
+            if reading_blockers:
+                return {"ready": False, "state": "needs_reference_reading",
+                        "blockers": reading_blockers, "validation": validation}
         statuses = state.get("reviewed_view_status", {})
         geometry_record = state.get("latest_geometry_review")
         if not geometry_record or geometry_record.get("geometry_fingerprint") != fp:
             return {"ready": False, "state": "needs_visual_review",
                     "blockers": ["当前几何版本尚未对照原始参考图进行多模态检查。"],
                     "validation": validation}
-        if not statuses or any(status != "passed" for status in statuses.values()):
-            missing = [view for view, status in statuses.items() if status != "passed"]
+        # A view the reference cannot speak to is an evidence gap, not a defect.
+        # Treating "unknown" as blocking made the gate demand checks that a single
+        # isometric reference can never satisfy; the model correctly diagnosed the
+        # impasse and then burned 17 rounds re-reviewing views in a loop.
+        blocked = [view for view, status in statuses.items() if status == "needs_review"]
+        if blocked:
             return {"ready": False, "state": "needs_visual_review",
-                    "blockers": ["%s 视图仍有未解决或无证据的检查项。" % view
-                                 for view in missing] or ["尚无可核验的单视图结果。"],
+                    "blockers": ["%s 视图仍有未解决的检查项。" % view for view in blocked],
+                    "validation": validation}
+        if not any(status == "passed" for status in statuses.values()):
+            return {"ready": False, "state": "needs_visual_review",
+                    "blockers": ["尚无可核验的单视图结果：没有任何视图与参考图可比。"],
                     "validation": validation}
         geometry_review = geometry_record.get("result") or {}
         if geometry_review.get("decision") != "accept":
@@ -1002,10 +1296,6 @@ def _finish_gate(state: dict) -> dict:
         if evidence_blockers:
             return {"ready": False, "state": "needs_visual_review",
                     "blockers": evidence_blockers, "validation": validation}
-        insufficiency = _review_view_sufficiency(geometry_record)
-        if insufficiency:
-            return {"ready": False, "state": "needs_visual_review",
-                    "blockers": [insufficiency], "validation": validation}
         missing_images = sorted(set(state.get("active_reference_images") or [])
                                 - set(state.get("reference_images_reviewed") or []))
         if missing_images:
@@ -1143,12 +1433,15 @@ def _execute_tool(name: str, args: dict, state: dict, source_messages: list):
                 "cad_remove_feature"}:
         return _apply_incremental(name, args, state), False
     if name == "cad_get_state":
-        return plan_state.snapshot(
+        snapshot = plan_state.snapshot(
             state.get("current_plan"), state.get("plan_validation"),
             (state.get("latest_preview") or {}).get("dimensions"),
             state.get("plan_revision", 0),
             cad._public_findings(state.get("open_multiview_findings", [])),
-            args.get("include_features", True)), False
+            args.get("include_features", True))
+        if state.get("reference_reading"):
+            snapshot["reference_reading"] = state["reference_reading"]
+        return snapshot, False
     if name == "cad_get_feature_spec":
         kind = str(args.get("kind") or "")
         spec = cad.cadplan.FEATURE_SPECS.get(kind)
@@ -1207,6 +1500,22 @@ def _execute_tool(name: str, args: dict, state: dict, source_messages: list):
             state["completion_approved"] = True
             state["completion_status"] = result.get("state")
             state["finish_summary"] = str(args.get("summary") or "").strip()
+            return result, False
+        # Bound the retry loop. Interleaving reviews between blocked finish calls
+        # kept changing the progress key, so the stagnation guard never fired and
+        # the same deadlock could repeat indefinitely.
+        key = (str(result.get("state")), tuple(str(row) for row in result.get("blockers") or []))
+        repeats = state.get("finish_repeats", 0) + 1 if state.get("finish_key") == key else 1
+        state["finish_key"] = key
+        state["finish_repeats"] = repeats
+        result = dict(result)
+        result["repeat_count"] = repeats
+        if repeats >= MAX_IDENTICAL_FINISHES:
+            state["finish_deadlock"] = {
+                "state": result.get("state"),
+                "blockers": list(result.get("blockers") or []),
+                "validation": result.get("validation"),
+            }
         return result, False
     return {"state": "invalid", "error": "未知 Agent 工具：%s" % name}, False
 
@@ -1280,7 +1589,7 @@ def run_dynamic_loop(prompt: str, image_paths: list, model_cfg: dict,
     except (TypeError, ValueError):
         state["context_char_limit"] = DEFAULT_CONTEXT_CHARS
 
-    system = _agent_system()
+    system = _agent_system(bool(state.get("has_reference_images")))
     if not state.get("cfg", {}).get("online", {}).get("enabled", True):
         system += "\n\n本次运行的应用联网设置已关闭；web_search 不可用。"
     messages = [{"role": "system", "content": system}] + [dict(row) for row in transcript]
@@ -1309,6 +1618,8 @@ def run_dynamic_loop(prompt: str, image_paths: list, model_cfg: dict,
         state["request_phase"] = "主循环第 %d 轮" % turn_index
         cad._emit(state.get("progress"), "准备 AgentLoop 第 %d 轮：整理当前证据…" % turn_index)
         reply = _call_model(messages, state, tools, output_tokens)
+        if not state.get("reference_reading"):
+            _capture_reference_reading(state, cad._message_text(reply))
         calls = reply.get("tool_calls") or []
         if not calls:
             content = cad._message_text(reply).strip()
@@ -1422,6 +1733,16 @@ def run_dynamic_loop(prompt: str, image_paths: list, model_cfg: dict,
                              "name": name, "content": json.dumps(
                                  result, ensure_ascii=False, separators=(",", ":"))})
             cad._emit(state.get("progress"), "工具完成：%s（%s）" % (name or "unknown", summary))
+            deadlock = state.pop("finish_deadlock", None)
+            if deadlock:
+                blockers = deadlock.get("blockers") or ["未满足的结束条件。"]
+                return _result_from_state(
+                    {"state": "previewed" if state.get("latest_preview") else "needs_user_input",
+                     "validation": deadlock.get("validation") or state.get("plan_validation")},
+                    state,
+                    "结束条件连续 %d 次以相同原因被拒绝，已停止重试以免空转。\n未满足项：\n- %s"
+                    % (MAX_IDENTICAL_FINISHES, "\n- ".join(str(row) for row in blockers[:8])),
+                    [str(row) for row in blockers])
             if _state_progress_key(state) != previous_progress:
                 no_progress_finals = 0
                 state["stagnant_tool_calls"] = 0

@@ -189,37 +189,33 @@ def _foreground_values(image):
     return values, [min(xs), min(ys), max(xs), max(ys)], count
 
 
-def _tolerant_foreground(image):
+def _tolerant_foreground(image, radius: int = 2):
     """Foreground for screenshots whose background is not a flat band.
 
-    The strict separator assumes a uniform background run on both edges, which a
-    perspective grid never provides. Here the modal border colour is the
-    background and a 3x3 erosion removes the thin grid lines that survive the
-    per-pixel threshold.
+    The strict separator needs the same flat background at both edges of a row;
+    a perspective grid over a gradient background never provides that. Each row
+    here takes its own background from its darker border pixel, and a
+    (2*radius+1)^2 erosion removes the thin grid lines that survive the
+    threshold. One modal border colour is not enough: on a gradient it marks most
+    of the background as foreground, which made a whole canvas look like a part.
     """
-    from collections import Counter
-
     width, height = image.size
     pixels = _pixel_values(image)
-    step = max(1, width // 64)
-    border = []
-    for x in range(0, width, step):
-        border.append(pixels[x])
-        border.append(pixels[(height - 1) * width + x])
-    for y in range(0, height, step):
-        border.append(pixels[y * width])
-        border.append(pixels[y * width + width - 1])
-    background = Counter(border).most_common(1)[0][0]
-    raw = [_color_distance(pixel, background) > 60 for pixel in pixels]
-    eroded = [False] * len(raw)
-    for y in range(1, height - 1):
+    raw = [False] * len(pixels)
+    for y in range(height):
         row = y * width
-        for x in range(1, width - 1):
+        left, right = pixels[row], pixels[row + width - 1]
+        background = left if sum(left) <= sum(right) else right
+        raw[row:row + width] = [
+            _color_distance(pixels[row + x], background) > 60 for x in range(width)]
+    eroded = [False] * len(raw)
+    offsets = [(dy, dx) for dy in range(-radius, radius + 1)
+               for dx in range(-radius, radius + 1)]
+    for y in range(radius, height - radius):
+        row = y * width
+        for x in range(radius, width - radius):
             index = row + x
-            if (raw[index] and raw[index - 1] and raw[index + 1]
-                    and raw[index - width] and raw[index + width]
-                    and raw[index - width - 1] and raw[index - width + 1]
-                    and raw[index + width - 1] and raw[index + width + 1]):
+            if raw[index] and all(raw[index + dy * width + dx] for dy, dx in offsets):
                 eroded[index] = True
     count = sum(eroded)
     if count < width * height * 0.005:

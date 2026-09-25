@@ -246,6 +246,7 @@ def _completion(messages, cfg, timeout, max_tokens, state, phase):
     try:
         reply = llm.chat_completion(
             messages, cfg, timeout=timeout, max_tokens=max_tokens,
+            cancel_event=(state or {}).get("cancel_event"),
             progress=lambda event: llm.emit_stream_progress(
                 event,
                 lambda message: _emit(state.get("progress"), message),
@@ -474,6 +475,7 @@ def _run_tools(transcript: List[Dict[str, Any]], cfg: dict,
                 messages, cfg, tools=phase_tools,
                 timeout=_remaining_timeout(state["deadline"]),
                 max_tokens=output_budget,
+                cancel_event=cancel_event,
                 progress=lambda event: llm.emit_stream_progress(
                     event,
                     lambda message: _emit(state.get("progress"), message),
@@ -1688,11 +1690,14 @@ def _summarize_conversation_history(rows, previous_summary, cfg, deadline,
                                    4096, state, "context_summary")
         else:
             response = llm.chat_completion(
-                messages, cfg, timeout=_remaining_timeout(deadline), max_tokens=4096)
+                messages, cfg, timeout=_remaining_timeout(deadline), max_tokens=4096,
+                cancel_event=cancel_event)
         value = llm._extract_json(_message_text(response))
         summary = str(value.get("summary") or "").strip() if isinstance(value, dict) else ""
         if not summary:
             summary = _message_text(response).strip()
+    except llm.ModelRequestCancelled:
+        raise                     # 用户停止不是"摘要失败"，绝不静默回退继续跑
     except Exception:
         # Keep the turn usable if a provider cannot summarize. The extractive
         # fallback is explicit text from the old turns, never invented state.
