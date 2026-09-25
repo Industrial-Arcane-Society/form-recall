@@ -200,6 +200,36 @@ def _is_siliconflow_host(base_url):
 
 
 _SF_BUDGET_MAX_WORDS = {'max', 'xhigh', 'ultra'}
+_SF_THINKING_BUDGET_MIN = 128
+_SF_THINKING_BUDGET_MAX = 32768
+
+
+def _siliconflow_kimi_thinking_budget(cfg):
+    """Return a validated/clamped explicit budget for SiliconFlow Kimi models.
+
+    The optional JSON field is an integer. Integral numeric strings/floats are
+    accepted for compatibility with hand-edited configs; non-integral values
+    are rejected instead of silently changing the user's setting.
+    """
+    cfg = cfg or {}
+    model = str(cfg.get('model') or '').strip().lower()
+    if not model.startswith('moonshotai/kimi-'):
+        return None
+    if 'thinking_budget' not in cfg or cfg.get('thinking_budget') is None:
+        return None
+    value = cfg.get('thinking_budget')
+    if isinstance(value, bool):
+        raise ValueError('thinking_budget 必须是 128 到 32768 范围内的整数。')
+    if isinstance(value, int):
+        budget = value
+    elif isinstance(value, float) and value.is_integer():
+        budget = int(value)
+    elif isinstance(value, str) and re.fullmatch(r'[+-]?\d+', value.strip()):
+        budget = int(value.strip())
+    else:
+        raise ValueError('thinking_budget 必须是 128 到 32768 范围内的整数。')
+    return max(_SF_THINKING_BUDGET_MIN,
+               min(_SF_THINKING_BUDGET_MAX, budget))
 
 
 def _siliconflow_thinking_params(cfg):
@@ -209,6 +239,9 @@ def _siliconflow_thinking_params(cfg):
     thinking_budget(128..32768)；OpenAI Responses 风格的 ``thinking`` 对象
     与 ``reasoning_effort`` 字符串会被它静默忽略（后者只对 DeepSeek-V4/GLM
     系列生效）。文档: https://docs.siliconflow.cn/docs/api/chat-completions-post
+
+    可选 ``thinking_budget`` JSON 字段只用于 moonshotai/Kimi-*；值会
+    约束到 SiliconFlow API 接受的 128..32768 范围。显式值覆盖 max 档默认预算。
 
     档位映射:
       · thinking 键（布尔/字典，程序化配置存在时优先）:
@@ -220,30 +253,47 @@ def _siliconflow_thinking_params(cfg):
           none / disabled     → enable_thinking=False
           auto / 空           → 不发送开关，保持服务端默认
     """
-    thinking = (cfg or {}).get('thinking')
-    effort = str((cfg or {}).get('reasoning_effort') or '').strip().lower()
+    cfg = cfg or {}
+    thinking = cfg.get('thinking')
+    effort = str(cfg.get('reasoning_effort') or '').strip().lower()
+
+    budget = _siliconflow_kimi_thinking_budget(cfg)
+
+    def disabled_params():
+        return {'enable_thinking': False}
+
     if isinstance(thinking, bool):
         if not thinking:
-            return {'enable_thinking': False}
+            return disabled_params()
         params = {'enable_thinking': True}
-        if effort in _SF_BUDGET_MAX_WORDS:
-            params['thinking_budget'] = 32768
+        if budget is not None:
+            params['thinking_budget'] = budget
+        elif effort in _SF_BUDGET_MAX_WORDS:
+            params['thinking_budget'] = _SF_THINKING_BUDGET_MAX
         return params
     if isinstance(thinking, dict):
         kind = str(thinking.get('type') or '').strip().lower()
         if kind in {'disabled', 'none', 'off', 'false'}:
-            return {'enable_thinking': False}
+            return disabled_params()
         if kind in {'enabled', 'on', 'true'}:
             params = {'enable_thinking': True}
-            if effort in _SF_BUDGET_MAX_WORDS:
-                params['thinking_budget'] = 32768
+            if budget is not None:
+                params['thinking_budget'] = budget
+            elif effort in _SF_BUDGET_MAX_WORDS:
+                params['thinking_budget'] = _SF_THINKING_BUDGET_MAX
             return params
     if effort in {'none', 'disabled', 'off'}:
-        return {'enable_thinking': False}
+        return disabled_params()
     if effort in _SF_BUDGET_MAX_WORDS:
-        return {'enable_thinking': True, 'thinking_budget': 32768}
+        return {'enable_thinking': True,
+                'thinking_budget': budget or _SF_THINKING_BUDGET_MAX}
     if effort in {'low', 'medium', 'high'}:
-        return {'enable_thinking': True}
+        params = {'enable_thinking': True}
+        if budget is not None:
+            params['thinking_budget'] = budget
+        return params
+    if budget is not None:
+        return {'thinking_budget': budget}
     return {}
 
 
