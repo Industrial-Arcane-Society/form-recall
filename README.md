@@ -19,18 +19,23 @@
 
 | 目录 / 文件 | 说明 |
 |---|---|
-| `ai_modeler/` | **插件源码**：自然语言解析、几何内核（BSP + 直写网格 + OCCT 后端）、零件库、CATIA 导出、界面、MCP 服务 |
-| `tools/` | **工具与基准**：几何/图像判据、渲染、比对、STEP 特征提取、OpenCASCADE 建库、一键闭环脚本 |
+| `ai_modeler/` | **插件源码**：按 `agent/`、`sdk/`、`core/`、`parts/`、`catia_backend/`、`ui/`、`runtime/` 分层；包结构说明见 `ai_modeler/README.md` |
+| `tools/` | **开发与数据工具**：几何/图像判据、渲染、比对、STEP 特征提取、建库和打包；分类索引见 `tools/README.md`。现有脚本路径作为兼容入口保留 |
 | `catia_plugin/` | CATIA 侧宏（`AI自动建模助手.CATScript`）与安装脚本 |
 | `datasets/训练提示词/` | 1828 条提示词（训练/测试集、负例、说明），可直接拿去做提示词↔模型训练 |
-| `docs/` | 设计文档：升级方向、云端训练与工作流方案、全流程说明、CATIA 连接操作说明、**协作包更新教程** |
+| `docs/architecture/` | AgentLoop、CADPlan SDK、CATIA MCP 和接口设计 |
+| `docs/guides/` | CATIA 操作、安装和日常使用说明 |
+| `docs/collaboration/` | Git 分支、协作包、上传与协作流程 |
+| `docs/planning/` | 需求梳理、升级方案和项目流程资料 |
 | `docs/历史报告/` | 原项目顶层散落的历史 Word/Markdown 报告（带轮复盘、阶段报告、升级对比、细节复现度报告等），按时间留痕 |
+| `artifacts/` | 本地生成的模型、预览、AgentLoop 运行记录、自检输出和模型截图；不作为源码目录 |
+| `.cache/` | 本机搜索缓存等可重建数据；已加入 Git 忽略 |
 | `reports/` | 各类报告（Markdown + Word），含判据报告与故障复盘 |
 | `reports/跑图对比/` | **最近几轮的跑图对比**：AI 建模图 vs 真实照片，并排拼图（121 张） |
 | `examples/` | 样例数据：每族 1 组真实照片（含背景帧）+ 1 个 AI 渲染样本（含掩码） |
 | `kb/` | 知识库：**运行时依赖的标准表/词表/实测特征**（螺栓、轴承、带轮、链轮、销、纠错词表、12 MB 实测特征库）。`kb/README_数据说明.md` 写清了每个文件谁在用、哪些不带、怎么重建 |
 | `scripts/` | 一键脚本：装依赖 / 跑全流程 / 重建大数据 / 跑验收基准 / **打包协作包** / **初始化 Git 仓库** |
-| `启动脚本/` | 双击即用的 Windows 脚本：启动程序、连接 CATIA、安装插件、装桌面快捷方式 |
+| `启动脚本/` | 双击即用的 Windows 脚本：启动程序、连接 CATIA、安装插件、装桌面快捷方式及 STEP 导出宏 |
 | `.gitignore` / `.gitattributes` | 数据策略（哪些大文件不进库）与换行策略（`.ps1/.bat/.vbs` 固定 CRLF、源码固定 LF）。**改完这两个文件要跑 `tools\check_share_pack.py` 复核** |
 | `README.md` | 本文件 |
 | `CONTRIBUTING.md` | 协作约定：怎么改、怎么验、怎么提 |
@@ -74,7 +79,7 @@ python tools\check_catia_export_real.py  # CATIA 通道
 | 未包含 | 体积 | 怎么重建 |
 |---|---|---|
 | `_wheels/`（OCP 的离线轮子） | ~513 MB | `python tools\fetch_ocp_wheel.py` 自动下载 |
-| `kb/real_brep*/`（实测 B-Rep 网格，518 件） | ~120 MB | 先让 CATIA 导出 STEP（`导出真实几何_双击运行.vbs`），再 `python tools\build_real_brep.py --src <STEP 目录>` |
+| `kb/real_brep*/`（实测 B-Rep 网格，518 件） | ~120 MB | 先让 CATIA 导出 STEP（`启动脚本/导出真实几何_双击运行.vbs`），再 `python tools\build_real_brep.py --src <STEP 目录>` |
 | `零件真实图片/`（518 张整窗截图） | ~11 MB | 用 `tools\capture_real_images.py`（需 CATIA 会话） |
 | `零件真实图片_带背景/`（518×2 双帧） | ~17 MB | `python tools\reshoot_real_parts.py`（需 CATIA 会话） |
 | `零件AI建模图片/`（447 渲染图 + 掩码） | ~3 MB | `python tools\render_ai_masks.py --all` |
@@ -113,6 +118,28 @@ python tools\check_catia_export_real.py  # CATIA 通道
 
 ---
 
+## 面向 LLM 的结构化建模接口
+
+多模态模型可按 prompts/CADPlan-LLM.md 与 schemas/cadplan-v1.schema.json
+生成 CADPlan，再调用 Python SDK 与 CLI；缺少必需参数或数值来源时，接口会返回待确认项。
+详细字段、CATIA 特征支持状态、严格模式和输出文件见 docs/architecture/CADPlan-SDK.md。
+
+常用命令：python -m ai_modeler --cadplan validate .\plan.json、
+python -m ai_modeler --cadplan preview .\plan.json、
+python -m ai_modeler --cadplan build .\plan.json --catpart .\out\part.CATPart。
+
+预览会返回可打开的正视 / 右视 / 俯视 PNG；建模结果还会包含三视图和
+等轴测四视图。LLM 应先查看预览，建模后再查看输出图片，发现偏差就修订
+CADPlan 并重建。预览图来自本地网格内核，不能替代 CATIA B-Rep 检查。
+
+### 桌面 AgentLoop
+
+运行 `python -m ai_modeler` 打开对话界面。输入框支持 **Ctrl+V 直接粘贴剪贴板图片**，
+也可以选择多张参考图；文字仍使用原有粘贴行为。启用 AgentLoop 的服务端模型必须同时
+支持图像输入与工具调用。Agent 按识别、CADPlan 生成、多视图检查、相似审查四阶段工作，
+最终在本地渲染器显示网格，不会自动同步到 CATIA。工具栏可保存扩展多视图，文件菜单可选三视图或扩展视图。
+详细说明见 [docs/architecture/AgentLoop.md](docs/architecture/AgentLoop.md)。
+
 ## 五、协作方式
 
 * 分支：`main` 保持可发布；功能走 `feat/xxx`，修复走 `fix/xxx`；
@@ -142,7 +169,7 @@ python tools\git_sync.py pull --gates full  # 顺带跑几何判据
 python tools\git_sync.py rollback           # 门禁没过 → 退回更新前
 ```
 
-详见 `docs/用队友的更新_操作手册.md`。
+详见 `docs/guides/用队友的更新_操作手册.md`。
 
 ### 把自己的改动推上去
 

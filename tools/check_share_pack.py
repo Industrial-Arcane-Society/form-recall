@@ -34,12 +34,12 @@ REPORTS = os.path.join(ROOT, "reports")
 PATH_MAP = {
     "AI训练提示词": "datasets/训练提示词",
     "零件比对图": "reports/跑图对比",
-    "操作说明_CATIA连接版.md": "docs/操作说明_CATIA连接版.md",
+    "操作说明_CATIA连接版.md": "docs/guides/操作说明_CATIA连接版.md",
     "README_upstream.md": "README_upstream.md",
 }
 #: 明确不进包的本机/临时文件（列出来，避免误判"漏了"）
 NOT_PACKED = {
-    "config.json", "cache_online.json", "_mig_dbg.json", "_target_urls.json",
+    "config.json", ".cache/online.json", "_mig_dbg.json", "_target_urls.json",
     "ai建模插件.doc", "AI建模训练提示词_使用说明.docx",
     "零件比对图.zip",                    # 图片压缩包（数据，见 kb/README_数据说明.md）
     "handbook_grid.jsonl", "handbook_target.jsonl",   # 手册爬取原件 41.8+10.5 MB
@@ -51,7 +51,7 @@ NOT_PACKED = {
 #: EXCLUDE_TOP 按"从项目根算起的路径"匹配 —— 必须这样区分：
 #:   包里有 `reports/跑图对比/零件比对图/`（121 张判据对比图，是要带上的），
 #:   只按名字匹配会把"漏了这 121 张"误判成"有意排除"，等于放过了真的漏。
-EXCLUDE_DIRS = {"_wheels", "__pycache__", ".git", "_selftest_out", ".pytest_cache",
+EXCLUDE_DIRS = {"_wheels", "__pycache__", ".git", ".cache", "artifacts", ".pytest_cache",
                 "share_pack_files"}      # 打包暂存区：内容已按最终路径进包
 EXCLUDE_TOP = {"kb/real_brep", "kb/real_brep_coarse", "零件参数",
                "零件真实图片", "零件真实图片_带背景", "零件AI建模图片", "零件比对图"}
@@ -61,18 +61,22 @@ EXCLUDE_PREFIX = "_"
 
 #: 必须存在的关键文件（少一个就是打包事故）
 MUST = [
-    "ai_modeler/catia_export.py", "ai_modeler/kernel.py", "ai_modeler/docmodel.py",
-    "ai_modeler/partlib.py", "ai_modeler/realparts.py", "ai_modeler/reallib.py",
-    "ai_modeler/realholes.py", "ai_modeler/realsolid.py", "ai_modeler/directmesh.py",
-    "ai_modeler/occ_kernel.py", "ai_modeler/nlparser.py", "ai_modeler/app.py",
-    "ai_modeler/selftest.py", "ai_modeler/__init__.py", "ai_modeler/__main__.py",
+    "ai_modeler/agent/agentloop.py", "ai_modeler/agent/llm.py",
+    "ai_modeler/sdk/cadplan.py", "ai_modeler/core/kernel.py",
+    "ai_modeler/core/docmodel.py", "ai_modeler/core/nlparser.py",
+    "ai_modeler/catia_backend/catia_export.py", "ai_modeler/parts/partlib.py",
+    "ai_modeler/parts/realparts.py", "ai_modeler/parts/reallib.py",
+    "ai_modeler/parts/realholes.py", "ai_modeler/parts/realsolid.py",
+    "ai_modeler/core/directmesh.py", "ai_modeler/core/occ_kernel.py",
+    "ai_modeler/ui/app.py", "ai_modeler/runtime/selftest.py",
+    "ai_modeler/catia_export.py", "ai_modeler/__init__.py", "ai_modeler/__main__.py",
     "catia_plugin/AI自动建模助手.CATScript",
     "tools/bench_detail_fidelity.py", "tools/compare_ai_vs_photos.py",
     "tools/render_ai_masks.py", "tools/build_real_brep.py",
     "tools/check_share_pack.py",
     "README.md", "CONTRIBUTING.md", "LICENSE", ".gitignore",
     "scripts/01_安装依赖.ps1", "scripts/04_验收基准.ps1",
-    "scripts/05_打包协作包.ps1", "docs/更新协作包到私密仓库.md",
+    "scripts/05_打包协作包.ps1", "docs/collaboration/更新协作包到私密仓库.md",
     ".gitattributes", ".github/pull_request_template.md",
     ".github/workflows/acceptance.yml",
     # 运行时依赖的知识库（缺了会 ModuleNotFoundError 或 FileNotFoundError）

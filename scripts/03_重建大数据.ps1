@@ -18,7 +18,7 @@ function Do-Brep {
     Write-Host "== 实测 B-Rep 库（需要 STEP）==" -ForegroundColor Cyan
     $d = "$env:TEMP\catia_step_out"
     if (Test-Path $d) { python tools\build_real_brep.py --src $d --tol 0.3 } else {
-        Write-Host "  没有 $d：先在 CATIA 里双击『导出真实几何_双击运行.vbs』" -ForegroundColor Yellow
+        Write-Host "  没有 $d：先在 CATIA 里双击『启动脚本/导出真实几何_双击运行.vbs』" -ForegroundColor Yellow
     }
 }
 function Do-Photos {

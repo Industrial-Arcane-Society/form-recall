@@ -7,13 +7,13 @@
 
 | 文件 | 谁在读 | 作用 |
 |---|---|---|
-| `auto_parts.json` | `ai_modeler/partlib.py` | 零件族定义与参数范围 |
+| `auto_parts.json` | `ai_modeler/parts/partlib.py` | 零件族定义与参数范围 |
 | `bolt_std.json` | `ai_modeler/std_bolt.py` | 螺栓标准表（M 系列螺距/头径） |
 | `bearing_std.json` | `ai_modeler/std_bearing.py` | 轴承标准表（内径/外径/宽度） |
 | `pulley_std.json` | `ai_modeler/std_pulley.py` | 同步带轮齿形与标准轮 |
 | `sprocket_std.json` | `ai_modeler/std_sprocket.py` | 链轮标准表 |
 | `pin_real_std.json` | `ai_modeler/std_pin.py` | 实测销轴标准表 |
-| `intent_corrections.json` | `ai_modeler/corrections.py` | 提示词纠错词表（自学习结果） |
+| `intent_corrections.json` | `ai_modeler/core/corrections.py` | 提示词纠错词表（自学习结果） |
 | `real_features.json`(12.3MB) | `realholes.py` / `realsolid.py` | 实测特征库（孔位/型腔），A′ 阶段核心 |
 | `real_brep_index.json` | `realsolid.py` | 实测 B-Rep 索引（文件本身不进包，见第 3 节） |
 | `catia_catalogs.json`(1.3MB) | `catialib.py` | CATIA 目录号对照 |
@@ -43,5 +43,5 @@
 | `零件真实图片*/`、`零件AI建模图片/`、`零件比对图/` | 数 GB | 现场照片与渲染图 | 由 `tools\reshoot_real_parts.py` 重新采集 |
 
 **注意**：第 3 节里的 `real_brep*` 没有进包，所以**只克隆仓库跑不出实测 B-Rep 路径**，
-这时程序会自动退回参数化建模（`ai_modeler/realsolid.py` 里 `available()` 返回 False）。
+这时程序会自动退回参数化建模（`ai_modeler/parts/realsolid.py` 里 `available()` 返回 False）。
 要跑满精度，需要按第 3 节的办法重建这两份网格。

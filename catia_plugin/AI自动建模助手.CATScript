@@ -32,8 +32,8 @@ Language = "VBScript"
 ' Chinese folder name, for instance) is written as ChrW(...). Do not turn them
 ' back into plain string constants.
 Dim PYTHON_EXE, PROJECT_DIR
-PYTHON_EXE  = "C:\Users\25643\AppData\Local\Programs\Python\Python314\python.exe"
-PROJECT_DIR = "C:\Users\25643\Desktop\ai" & ChrW(33258) & ChrW(21160) & ChrW(24314) & ChrW(27169) & ChrW(25554) & ChrW(20214)
+PYTHON_EXE  = "C:\Users\lycohana\AppData\Local\Programs\Python\Python311\python.exe"
+PROJECT_DIR = "C:\Users\lycohana\Desktop\code\AI-_-"
 
 
 Sub CATMain()

@@ -15,7 +15,7 @@ if (Test-Path $StepDir) {
     python tools\build_real_brep.py --src $StepDir --tol 0.3
     python tools\build_real_brep.py --src $StepDir --tol 1.5 --out "kb\real_brep_coarse" --index "kb\real_brep_coarse_index.json"
 } else {
-    Write-Host "  找不到 $StepDir —— 先在 CATIA 里跑『导出真实几何_双击运行.vbs』" -ForegroundColor Yellow
+    Write-Host "  找不到 $StepDir —— 先在 CATIA 里跑『启动脚本/导出真实几何_双击运行.vbs』" -ForegroundColor Yellow
 }
 
 Write-Host "== 2/5 渲染 AI 侧轮廓掩码（447 件约 10 分钟）==" -ForegroundColor Cyan

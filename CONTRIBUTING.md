@@ -41,7 +41,7 @@ python tools\compare_ai_vs_photos.py --all --montage 20
 ## 四、代码约定
 
 * 注释写**为什么**，尤其是"踩过的坑"（本项目大量注释都是实测教训，请保留风格）；
-* 新增零件族：在 `ai_modeler/realparts.py` 的 `families` 定义里加一条，并在 `BUILDERS` 登记；
+* 新增零件族：在 `ai_modeler/parts/realparts.py` 的 `families` 定义里加一条，并在 `BUILDERS` 登记；
 * 新增判据/检查：放 `tools\`，并在 `README.md` 的判据表里登记；
 * 不要把大数据提交进仓库（见 `README.md` 第三节）。
 

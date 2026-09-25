@@ -227,7 +227,7 @@ def main():
         print("  远端文件数：%d" % len(files))
         paths = {t["path"] for t in files}
         must = ["ai_modeler/catia_export.py", "kb/README_数据说明.md", "kb/auto_parts.json",
-                "docs/更新协作包到私密仓库.md", "scripts/06_初始化Git仓库.ps1",
+                "docs/collaboration/更新协作包到私密仓库.md", "scripts/06_初始化Git仓库.ps1",
                 ".gitattributes", ".github/workflows/acceptance.yml"]
         lack = [m for m in must if m not in paths]
         print("  关键文件：%s" % ("全部存在" if not lack else "**缺 %s**" % lack))

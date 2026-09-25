@@ -27,7 +27,7 @@ ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 DEF_SRC = r"C:\Users\25643\Desktop\AI建模助手_协作包"
 DEF_OUT = r"C:\Users\25643\Desktop\AI建模助手_协作包.zip"
 #: 目录名匹配（这些名字在哪儿都是临时产物）
-SKIP_NAMES = {".git", "__pycache__", ".pytest_cache", "_selftest_out", "_wheels"}
+SKIP_NAMES = {".git", "__pycache__", ".pytest_cache", ".cache", "artifacts", "_wheels"}
 #: 相对包根的路径匹配（大数据/客户资料；与 .gitignore 的数据策略一致）
 #: ⚠ 必须写成"从包根算起的路径"，不能只写目录名：
 #:   包里有 `reports/跑图对比/零件比对图/`（121 张判据对比图，**是要带上的**），
@@ -38,9 +38,10 @@ SKIP_EXT = {".pyc", ".pyo"}
 #: 打完包必须能在 zip 里找到（正斜杠写法，跨平台一致）
 MUST = [".gitignore", ".gitattributes", ".github/workflows/acceptance.yml",
         ".github/pull_request_template.md",
-        "ai_modeler/catia_export.py", "ai_modeler/realsolid.py",
+        "ai_modeler/catia_export.py", "ai_modeler/catia_backend/catia_export.py",
+        "ai_modeler/parts/realsolid.py", "ai_modeler/sdk/cadplan.py",
         "kb/README_数据说明.md", "kb/auto_parts.json", "kb/real_features.json",
-        "docs/更新协作包到私密仓库.md", "scripts/05_打包协作包.ps1",
+        "docs/collaboration/更新协作包到私密仓库.md", "scripts/05_打包协作包.ps1",
         "tools/check_share_pack.py"]
 
 
