@@ -70,7 +70,7 @@ class Renderer:
         self.w = int(w)
         self.h = int(h)
         self.fb = bytearray(self.w * self.h * 3)
-        self.zb = array('f', [1e30]) * (self.w * self.h)
+        self.zb = array('f', [-1e30]) * (self.w * self.h)
 
     def _fill_bg(self):
         w, h, fb = self.w, self.h, self.fb
@@ -84,10 +84,11 @@ class Renderer:
     # ------------------------------------------------------------------
     def render(self, polys: Sequence[K.Polygon], view: str = 'iso',
                light=(0.42, -0.52, 0.74), base=(0.60, 0.67, 0.78),
-               edges: bool = True, margin: float = 0.09,
+               edges: bool = False, margin: float = 0.09,
                spin_deg: float = 0.0,
                scale_override=None) -> bool:
         self._fill_bg()
+        self.zb = array('f', [-1e30]) * (self.w * self.h)
         tris = K.polygons_to_triangles(polys)
         if not tris:
             return False
@@ -174,7 +175,7 @@ class Renderer:
                     continue
                 z = z0 + (z1 - z0) * w1 + (z2 - z0) * w0
                 idx = row + px
-                if z >= zb[idx] or z <= -1e29:
+                if z <= zb[idx]:
                     continue
                 zb[idx] = z
                 o = idx * 3

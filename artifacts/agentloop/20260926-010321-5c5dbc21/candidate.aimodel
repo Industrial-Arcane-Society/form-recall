@@ -1,0 +1,56 @@
+{
+  "format": "ai-modeler",
+  "version": 1,
+  "name": "rect_plate_with_hole",
+  "source_prompt": "画一个 120×80×15 的长方体, 四角圆角 R8, 在中心打一个直径 20 的通孔",
+  "features": [
+    {
+      "kind": "box",
+      "params": {
+        "length": 120.0,
+        "width": 80.0,
+        "height": 15.0,
+        "center": [
+          0.0,
+          0.0,
+          7.5
+        ],
+        "corner": 8.0,
+        "corner_mode": "fillet",
+        "base": false
+      },
+      "op": "add",
+      "name": "长方体",
+      "note": "",
+      "enabled": true,
+      "provenance": {
+        "length": "user",
+        "width": "user",
+        "height": "user",
+        "center": "derived",
+        "corner": "user",
+        "corner_mode": "user"
+      }
+    },
+    {
+      "kind": "hole",
+      "params": {
+        "diameter": 20.0,
+        "through": true,
+        "pos": "center",
+        "axis": "Z"
+      },
+      "op": "cut",
+      "name": "孔",
+      "note": "",
+      "enabled": true,
+      "provenance": {
+        "diameter": "user",
+        "through": "user",
+        "pos": "derived",
+        "axis": "derived"
+      }
+    }
+  ],
+  "exported_at": "2026-09-26 01:03:58"
+}

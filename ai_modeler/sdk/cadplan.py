@@ -129,7 +129,7 @@ FEATURE_SPECS = {
                         ("teeth", "module", "height", "cone_deg", "bore_d",
                          "center", "segments")),
     "crankshaft": _spec(("length", "main_d", "pin_d", "stroke", "throws"), "approximate",
-                        "CATIA 以圆柱主轴颈和连杆颈近似，曲柄臂形状被简化。",
+                        "CATIA 按 X 轴布置主轴颈、交替偏置连杆颈和圆盘曲柄臂近似，曲柄臂轮廓被简化。",
                         ("length", "main_d", "pin_d", "stroke", "throws", "center", "segments")),
     "camshaft": _spec(("length", "journal_d", "base_d", "lift", "lobes", "lobe_deg"), "approximate",
                       "CATIA 凸轮沿轴向等分布置，相位需核对。",
@@ -738,6 +738,108 @@ def _catia_operations(features: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
     return operations
 
 
+def _ray_surface_crossings(triangles, point, axis):
+    """Count distinct surface crossings of an axis-parallel ray at a point."""
+    axis_index = {"X": 0, "Y": 1, "Z": 2}.get(str(axis).upper(), 2)
+    u, v = [index for index in (0, 1, 2) if index != axis_index]
+    hits = []
+    for a, b, c, _tag in triangles:
+        den = ((b[v] - c[v]) * (a[u] - c[u]) +
+               (c[u] - b[u]) * (a[v] - c[v]))
+        if abs(den) < 1e-10:
+            continue
+        w1 = ((b[v] - c[v]) * (point[u] - c[u]) +
+              (c[u] - b[u]) * (point[v] - c[v])) / den
+        w2 = ((c[v] - a[v]) * (point[u] - c[u]) +
+              (a[u] - c[u]) * (point[v] - c[v])) / den
+        w3 = 1.0 - w1 - w2
+        if min(w1, w2, w3) < -1e-7:
+            continue
+        axial = w1 * a[axis_index] + w2 * b[axis_index] + w3 * c[axis_index]
+        if all(abs(axial - old) > 1e-5 for old in hits):
+            hits.append(axial)
+    return len(hits)
+
+
+def _local_geometry_checks(body, size, feature_manifest, length_factor=1.0):
+    """Report deterministic mesh facts without claiming CATIA verification."""
+    nonfinite_vertices = 0
+    degenerate_faces = 0
+    for polygon in body:
+        points = polygon.points()
+        if any(not all(math.isfinite(float(axis)) for axis in point)
+               for point in points):
+            nonfinite_vertices += 1
+            continue
+        if len(points) < 3 or len({tuple(point) for point in points}) < 3:
+            degenerate_faces += 1
+    size_values = list(size) if size else None
+    invalid_bbox = (not size_values or len(size_values) != 3
+                    or any(not math.isfinite(float(v)) or v <= 0
+                           for v in size_values))
+    inventory = [
+        {"feature_id": feature_id, "kind": feature.get("kind"),
+         "operation": feature.get("operation"),
+         "parameters": feature.get("parameters")}
+        for feature_id, feature in feature_manifest.items()
+        if feature.get("kind") == "hole"
+    ]
+    hole_mesh_checks = []
+    point_holes = [row for row in inventory
+                   if row["parameters"].get("pos") == "point"
+                   and row["parameters"].get("through") is True
+                   and isinstance(row["parameters"].get("point"), list)
+                   and len(row["parameters"]["point"]) == 3]
+    if point_holes and body:
+        from ai_modeler.core import kernel as K
+        triangles = K.polygons_to_triangles(body)
+        for hole in point_holes:
+            params = hole["parameters"]
+            center = [float(value) * length_factor for value in params["point"]]
+            axis = str(params.get("axis") or "Z").upper()
+            axis_index = {"X": 0, "Y": 1, "Z": 2}.get(axis, 2)
+            side = [index for index in (0, 1, 2) if index != axis_index]
+            radius = float(params.get("diameter", 0)) * length_factor / 2.0
+            center_hits = _ray_surface_crossings(triangles, center, axis)
+            ring_hits = []
+            for side_index in side:
+                for direction in (-1, 1):
+                    sample = list(center)
+                    sample[side_index] += direction * radius * 1.25
+                    ring_hits.append(_ray_surface_crossings(triangles, sample, axis))
+            status = ("verified_open" if center_hits == 0 and any(ring_hits)
+                      else "blocked" if center_hits > 0 and any(ring_hits)
+                      else "inconclusive")
+            hole_mesh_checks.append({
+                "feature_id": hole["feature_id"], "axis": axis,
+                "center_mm": center, "status": status,
+                "axis_surface_crossings": center_hits,
+                "surrounding_surface_crossings": ring_hits,
+                "method": "axis ray against local triangle mesh",
+            })
+    return {
+        "state": "failed" if (not body or invalid_bbox or nonfinite_vertices
+                              or degenerate_faces
+                              or any(row["status"] != "verified_open"
+                                     for row in hole_mesh_checks)) else "passed",
+        "source": "AI Modeler local mesh kernel",
+        "face_count": len(body), "bbox_size_mm": size_values,
+        "bbox_ratios_from_mesh": ({
+            "front_width_height": size_values[0] / size_values[2],
+            "depth_height": size_values[1] / size_values[2],
+            "top_width_depth": size_values[0] / size_values[1],
+        } if not invalid_bbox else None),
+        "feature_count_from_plan": len(feature_manifest),
+        "feature_ids_from_plan": list(feature_manifest),
+        "nonfinite_face_count": nonfinite_vertices,
+        "degenerate_face_count": degenerate_faces,
+        "hole_features_from_plan": inventory,
+        "through_hole_mesh_checks": hole_mesh_checks,
+        "hole_visibility": "requires_multimodal_view_review",
+        "through_hole_result": "measured_for_point_holes_only" if point_holes else "not_measured",
+    }
+
+
 def _preview_internal(plan: Any):
     """Return the public preview plus its private build state for build_plan."""
     data, pair, validation = _doc_or_error(plan)
@@ -780,6 +882,9 @@ def _preview_internal(plan: Any):
         "warnings": warnings,
         "feature_manifest": manifest,
         "build_log": list(doc.last_log),
+        "local_geometry_checks": _local_geometry_checks(
+            body, stats.get("size"), manifest,
+            LENGTH_UNITS[data["units"]["length"]]),
     }
     result["orthographic_layout"] = _orthographic_layout(stats.get("size"))
     return result, doc, manifest, data, body
@@ -806,11 +911,12 @@ def preview_plan(plan: Any, image_path: Optional[str] = None,
     a multimodal caller can open it after reading this result. This is a local
     kernel preview, not a screenshot or measurement of a CATIA B-Rep. ``three``
     writes front/right/top; ``extended`` writes iso/front/right/top/back/left/
-    bottom at one shared scale.
+    bottom at one shared scale. A standard view name writes only that view.
     """
-    if view_set not in {"three", "extended"}:
+    single_views = {"iso", "front", "right", "top", "back", "left", "bottom"}
+    if view_set not in {"three", "extended"} | single_views:
         return {"state": "invalid_view_set", "catia_executed": False,
-                "error": "view_set 必须是 three 或 extended。"}
+                "error": "view_set 必须是 three、extended 或一个标准单视图名称。"}
     result, _doc, _manifest, _data, body = _preview_internal(plan)
     if result.get("state") != "previewed" or not body:
         return result
@@ -830,17 +936,21 @@ def preview_plan(plan: Any, image_path: Optional[str] = None,
         if view_set == "three":
             views = ["front", "right", "top"]
             softrender.save_three_view(body, str(target), tile=THREE_VIEW_TILE_PX)
-        else:
+        elif view_set == "extended":
             views = ["iso", "front", "right", "top", "back", "left", "bottom"]
             softrender.save_multiview(body, str(target), views=views,
                                       tile=THREE_VIEW_TILE_PX, columns=3)
+        else:
+            views = [view_set]
+            softrender.save_multiview(body, str(target), views=views,
+                                      tile=(660, 520), columns=1)
     except Exception as exc:
         return {**result, "state": "preview_image_failed",
                 "preview_image_error": str(exc)}
     result["preview_image"] = str(target)
     result["preview_image_views"] = views
     result["preview_image_view_set"] = view_set
-    result["preview_image_grid_columns"] = 3 if view_set == "extended" else 3
+    result["preview_image_grid_columns"] = 1 if view_set in single_views else 3
     result["preview_image_source"] = "AI Modeler local mesh kernel; not CATIA B-Rep"
     result["preview_image_layout"] = result.get("orthographic_layout")
     return result

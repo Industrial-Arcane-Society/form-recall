@@ -14,6 +14,7 @@ import traceback
 import tkinter as tk
 import tkinter.font as tkfont
 from tkinter import filedialog, messagebox, ttk
+from urllib.parse import urlparse
 
 from ai_modeler import __version__
 from ai_modeler.core import exporters, kernel as K
@@ -168,7 +169,9 @@ class App(tk.Tk):
         self._agent_context = []
         self._agent_context_summary = ''
         self._agent_summary_through = 0
+        self._agent_total_tokens = 0
         self._last_plan = None
+        self._pending_agent_plan = None
         self._active_request = None
         self._agent_live_photo = None
         self._last_agent_preview_path = None
@@ -261,12 +264,12 @@ class App(tk.Tk):
             vm.add_command(label=label, command=lambda k=key: self.viewer.set_view(k))
         vm.add_separator()
         vm.add_command(label='适应窗口', accelerator='F', command=lambda: self.viewer.fit_view())
-        self.var_edges = tk.BooleanVar(value=True)
-        self.var_grid = tk.BooleanVar(value=True)
+        self.var_edges = tk.BooleanVar(value=False)
+        self.var_grid = tk.BooleanVar(value=False)
         self.var_axes = tk.BooleanVar(value=True)
         self.var_persp = tk.BooleanVar(value=True)
-        vm.add_checkbutton(label='显示边线', variable=self.var_edges, command=self._sync_view)
-        vm.add_checkbutton(label='显示网格', variable=self.var_grid, command=self._sync_view)
+        vm.add_checkbutton(label='显示特征边线', variable=self.var_edges, command=self._sync_view)
+        vm.add_checkbutton(label='显示参考网格', variable=self.var_grid, command=self._sync_view)
         vm.add_checkbutton(label='显示坐标轴', variable=self.var_axes, command=self._sync_view)
         vm.add_checkbutton(label='透视投影', variable=self.var_persp, command=self._sync_view)
         vm.add_separator()
@@ -322,6 +325,10 @@ class App(tk.Tk):
                        command=lambda k=key: self.viewer.set_view(k)).pack(side='left', padx=1)
         ttk.Button(bar, text='适应窗口', style='Ghost.TButton',
                    command=lambda: self.viewer.fit_view()).pack(side='left', padx=1)
+        ttk.Checkbutton(bar, text='辅助线', variable=self.var_edges,
+                        command=self._sync_view).pack(side='left', padx=(9, 2))
+        ttk.Checkbutton(bar, text='网格', variable=self.var_grid,
+                        command=self._sync_view).pack(side='left', padx=(2, 1))
 
         self._tool_sep(bar)
         ttk.Button(bar, text='▦ 多视图 PNG', style='Ghost.TButton',
@@ -529,21 +536,40 @@ class App(tk.Tk):
 
         self.tab_agent = tk.Frame(self.nb, bg=TH.PANEL)
         self.nb.add(self.tab_agent, text='Agent')
+        self.lbl_token = tk.Label(
+            self.tab_agent, text='Token 估算：—', bg=TH.PANEL, fg=TH.TEXT_MUTE,
+            font=TH.F['small'], anchor='w', justify='left', wraplength=270)
+        self.lbl_token.pack(fill='x', padx=12, pady=(8, 0))
+        self._agent_thinking_expanded = False
+        self._agent_thinking_title = '模型思考（待机）'
+        self.agent_thinking_header = tk.Frame(self.tab_agent, bg=TH.PANEL)
+        self.agent_thinking_header.pack(fill='x', padx=10, pady=(8, 2))
+        self.btn_agent_thinking = tk.Button(
+            self.agent_thinking_header, text='▶ 模型思考（待机）',
+            command=self._toggle_agent_thinking_panel,
+            bg=TH.PANEL, fg=TH.TEXT_DIM, activebackground=TH.PANEL,
+            activeforeground=TH.TEXT, relief='flat', bd=0,
+            anchor='w', padx=4, pady=3, font=TH.F['body_b'], cursor='hand2')
+        self.btn_agent_thinking.pack(fill='x')
+        self.agent_thinking_body = tk.Frame(self.tab_agent, bg=TH.PANEL)
         self.lbl_agent_stage = tk.Label(
-            self.tab_agent, text='等待任务', bg=TH.PANEL, fg=TH.TEXT_DIM,
+            self.agent_thinking_body, text='等待任务', bg=TH.PANEL, fg=TH.TEXT_DIM,
             font=TH.F['body_b'], anchor='w', justify='left', wraplength=270)
-        self.lbl_agent_stage.pack(fill='x', padx=12, pady=(12, 4))
+        self.lbl_agent_stage.pack(fill='x', padx=12, pady=(2, 4))
+        self.lbl_agent_detail = tk.Label(
+            self.agent_thinking_body, text='', bg=TH.PANEL, fg=TH.TEXT_MUTE,
+            font=TH.F['small'], anchor='nw', justify='left', wraplength=270)
+        self.lbl_agent_detail.pack(fill='x', padx=12, pady=(2, 8))
         self.lbl_agent_preview = tk.Label(
             self.tab_agent, text='建模过程中生成的预览会显示在这里。',
             bg=TH.VIEW_BOT, fg=TH.TEXT_MUTE, font=TH.F['small'],
             justify='center', wraplength=270, compound='top')
         self.lbl_agent_preview.pack(fill='x', padx=10, pady=6)
-        self.lbl_agent_detail = tk.Label(
-            self.tab_agent, text='', bg=TH.PANEL, fg=TH.TEXT_MUTE,
-            font=TH.F['small'], anchor='nw', justify='left', wraplength=270)
-        self.lbl_agent_detail.pack(fill='x', padx=12, pady=(2, 8))
+        self.agent_thinking_body.pack(
+            fill='x', padx=2, pady=(0, 2), before=self.lbl_agent_preview)
+        self.agent_thinking_body.pack_forget()
         self.txt_agent_events = tk.Text(
-            self.tab_agent, height=8, width=26, wrap='word',
+            self.agent_thinking_body, height=7, width=26, wrap='word',
             font=TH.F['mono_s'], relief='flat', bd=0,
             bg=TH.PANEL, fg=TH.TEXT_DIM, padx=12, pady=8)
         self.txt_agent_events.pack(fill='both', expand=True, padx=4, pady=(0, 8))
@@ -863,7 +889,9 @@ class App(tk.Tk):
         self._agent_context = []
         self._agent_context_summary = ''
         self._agent_summary_through = 0
+        self._agent_total_tokens = 0
         self._last_plan = None
+        self._pending_agent_plan = None
         self.reference_images = []
         self._clear_agent_live_preview()
         self.txt_agent_events.configure(state='normal')
@@ -947,6 +975,7 @@ class App(tk.Tk):
             return
 
         self._last_plan = None
+        self._pending_agent_plan = None
         quick = NLP.parse(text)
         if quick.ok:
             self._agent_context.append({'role': 'user', 'content': text})
@@ -987,10 +1016,59 @@ class App(tk.Tk):
             return
         self.txt_agent_events.configure(state='normal')
         self.txt_agent_events.insert('end', str(message) + '\n')
-        if int(self.txt_agent_events.index('end-1c').split('.')[0]) > 240:
-            self.txt_agent_events.delete('1.0', '41.0')
         self.txt_agent_events.see('end')
         self.txt_agent_events.configure(state='disabled')
+
+    def _append_agent_reasoning(self, delta):
+        """Append a streamed model reasoning delta to the live panel."""
+        if not delta or not hasattr(self, 'txt_agent_events'):
+            return
+        if not getattr(self, '_agent_reasoning_block_open', False):
+            request_number = max(1, int(getattr(
+                self, '_agent_reasoning_request_count', 1)))
+            detail = str(getattr(self, '_agent_reasoning_request_detail', '') or '').strip()
+            heading = '模型思考链 · 第 %d 次请求' % request_number
+            if detail:
+                heading += ' · ' + detail
+            self.txt_agent_events.configure(state='normal')
+            if self.txt_agent_events.index('end-1c') != '1.0':
+                self.txt_agent_events.insert('end', '\n')
+            self.txt_agent_events.insert('end', heading + '\n')
+            self._agent_reasoning_block_open = True
+        self.txt_agent_events.configure(state='normal')
+        self.txt_agent_events.insert('end', str(delta))
+        self.txt_agent_events.see('end')
+        self.txt_agent_events.configure(state='disabled')
+
+    def _finish_agent_reasoning_block(self):
+        if not getattr(self, '_agent_reasoning_block_open', False):
+            return
+        self.txt_agent_events.configure(state='normal')
+        self.txt_agent_events.insert('end', '\n')
+        self.txt_agent_events.see('end')
+        self.txt_agent_events.configure(state='disabled')
+        self._agent_reasoning_block_open = False
+
+    def _set_agent_thinking_panel(self, expanded, title=None):
+        """Show live thinking activity while a model request is in flight."""
+        if title is not None:
+            self._agent_thinking_title = str(title)
+        self._agent_thinking_expanded = bool(expanded)
+        if self._agent_thinking_expanded:
+            if self.agent_thinking_body.winfo_manager() != 'pack':
+                self.agent_thinking_body.pack(
+                    fill='x', padx=2, pady=(0, 2), before=self.lbl_agent_preview)
+            arrow = '▼ '
+        else:
+            self.agent_thinking_body.pack_forget()
+            arrow = '▶ '
+        self.btn_agent_thinking.configure(
+            text=arrow + self._agent_thinking_title)
+
+    def _toggle_agent_thinking_panel(self):
+        self._set_agent_thinking_panel(
+            not self._agent_thinking_expanded,
+            self._agent_thinking_title)
 
     def _clear_agent_live_preview(self):
         self._last_agent_preview_path = None
@@ -1009,6 +1087,14 @@ class App(tk.Tk):
             self.lbl_agent_stage.configure(text='等待任务')
         if hasattr(self, 'lbl_agent_detail'):
             self.lbl_agent_detail.configure(text='')
+        if hasattr(self, 'lbl_token'):
+            self.lbl_token.configure(text='Token 估算：—')
+        if hasattr(self, 'btn_agent_thinking'):
+            self._set_agent_thinking_panel(False, '模型思考（待机）')
+
+    @staticmethod
+    def _fmt_tokens(n):
+        return '{:,}'.format(int(n or 0))
 
     def _show_agent_live_preview(self, payload):
         """Display a worker-produced PNG in the right Agent tab on Tk's UI thread."""
@@ -1049,12 +1135,20 @@ class App(tk.Tk):
         from ai_modeler.agent import agentloop
         self._busy = True
         self._t0 = time.time()
+        self._agent_wait_started = None
+        self._agent_wait_detail = ''
+        self._agent_stream_detail = ''
+        self._agent_wait_seconds = -1
+        self._agent_wait_rendered_stream = None
+        self._agent_reasoning_request_count = 0
+        self._agent_reasoning_request_detail = ''
+        self._agent_reasoning_block_open = False
         agent_cfg = self.cfg.get('agentloop', {}) if isinstance(self.cfg.get('agentloop'), dict) else {}
         try:
             self._budget_s = max(60.0, min(1800.0,
-                                           float(agent_cfg.get('total_timeout_sec', 600))))
+                                           float(agent_cfg.get('total_timeout_sec', 1800))))
         except (TypeError, ValueError):
-            self._budget_s = 600.0
+            self._budget_s = 1800.0
         self._cancel = threading.Event()
         self.lbl_busy.configure(text='AgentLoop 运行中…')
         try:
@@ -1062,9 +1156,10 @@ class App(tk.Tk):
         except Exception:
             pass
         self.progress.configure(value=0)
-        self.status('Agent 正在判断本轮工作范围…')
-        self.lbl_agent_stage.configure(text='正在判断本轮需要的工作…')
-        self.lbl_agent_detail.configure(text='等待回合路由结果')
+        self.status('正在准备建模请求…')
+        self.lbl_agent_stage.configure(text='准备本轮上下文…')
+        self.lbl_agent_detail.configure(text='正在整理对话与参考图片；模型请求开始后会显示等待时间。')
+        self._set_agent_thinking_panel(False, '正在准备模型请求')
         self.txt_agent_events.configure(state='normal')
         self.txt_agent_events.delete('1.0', 'end')
         self.txt_agent_events.configure(state='disabled')
@@ -1075,9 +1170,10 @@ class App(tk.Tk):
         context = [dict(item) for item in self._agent_context[:-1]]
         context_summary = self._agent_context_summary
         summary_through = self._agent_summary_through
-        current_plan = json.loads(json.dumps(self._last_plan)) if self._last_plan else None
+        resumable_plan = self._pending_agent_plan or self._last_plan
+        current_plan = json.loads(json.dumps(resumable_plan)) if resumable_plan else None
         current_document = None
-        if hasattr(self.doc, 'features'):
+        if self._pending_agent_plan is None and hasattr(self.doc, 'features'):
             document_snapshot = {
                 'name': self.doc.name,
                 'features': [feature.to_dict() for feature in self.doc.features],
@@ -1132,6 +1228,39 @@ class App(tk.Tk):
         threading.Thread(target=work, daemon=True).start()
         self.after(80, self._poll_agent)
 
+    def _refresh_agent_wait_clock(self):
+        """Keep the model request visibly alive while the worker is blocked on HTTP."""
+        started = getattr(self, '_agent_wait_started', None)
+        if started is None:
+            return
+        elapsed = max(0, int(time.monotonic() - started))
+        stream_detail = getattr(self, '_agent_stream_detail', '')
+        if (elapsed == getattr(self, '_agent_wait_seconds', -1)
+                and stream_detail == getattr(self, '_agent_wait_rendered_stream', None)):
+            return
+        self._agent_wait_seconds = elapsed
+        self._agent_wait_rendered_stream = stream_detail
+        minutes, seconds = divmod(elapsed, 60)
+        clock = '%02d:%02d' % (minutes, seconds)
+        if '推理' in stream_detail or '思考' in stream_detail:
+            stage = '模型正在思考'
+        elif '生成答复' in stream_detail:
+            stage = '模型正在生成答复'
+        elif '工具调用' in stream_detail:
+            stage = '模型正在准备工具调用'
+        else:
+            stage = '模型响应等待中'
+        self.lbl_agent_stage.configure(text=stage + ' · ' + clock)
+        detail_lines = [self._agent_wait_detail or '正在等待模型处理本轮输入']
+        if stream_detail:
+            detail_lines.append(stream_detail)
+        detail_lines.append('已等待 %s；模型返回后会继续执行建模与复核。' % clock)
+        self.lbl_agent_detail.configure(
+            text='\n'.join(detail_lines))
+        self._set_agent_thinking_panel(
+            self._agent_thinking_expanded,
+            '%s · %s' % (stage, clock))
+
     def _poll_agent(self):
         if not self._q:
             return
@@ -1139,17 +1268,76 @@ class App(tk.Tk):
             while True:
                 kind, value, detail = self._q.get_nowait()
                 if kind == 'agent_progress':
+                    value = str(value)
+                    if value.startswith('模型等待中：'):
+                        self._finish_agent_reasoning_block()
+                        self._agent_reasoning_request_count += 1
+                        self._agent_reasoning_request_detail = value[len('模型等待中：'):].strip()
+                        self._agent_wait_started = time.monotonic()
+                        self._agent_wait_detail = value[len('模型等待中：'):].strip()
+                        self._agent_stream_detail = ''
+                        self._agent_wait_seconds = -1
+                        self._agent_wait_rendered_stream = None
+                        self._set_agent_thinking_panel(True, '模型正在思考')
+                        self._append_agent_event(value)
+                        self._refresh_agent_wait_clock()
+                        self.status('模型正在处理当前请求…', TH.WARN)
+                        continue
+                    if value.startswith('模型思考链增量：'):
+                        self._append_agent_reasoning(
+                            value[len('模型思考链增量：'):])
+                        continue
+                    if value.startswith('模型流式状态：'):
+                        self._agent_stream_detail = value[len('模型流式状态：'):].strip()
+                        self._refresh_agent_wait_clock()
+                        continue
+                    if value.startswith('模型进展摘要：'):
+                        summary = value[len('模型进展摘要：'):].strip()
+                        self.lbl_agent_detail.configure(text=summary[:1200])
+                        self._set_agent_thinking_panel(False, '模型判断摘要（已收起）')
+                        self._append_agent_event('模型判断摘要：' + summary)
+                        continue
+                    if value.startswith('Agent 决策摘要：'):
+                        summary = value[len('Agent 决策摘要：'):].strip()
+                        self.lbl_agent_detail.configure(text=summary[:1200])
+                        self._set_agent_thinking_panel(False, '下一步：' + summary[:56])
+                        self._append_agent_event('下一步：' + summary)
+                        continue
+                    if value.startswith('模型响应已返回：'):
+                        self._finish_agent_reasoning_block()
+                        self._agent_wait_started = None
+                        self._agent_stream_detail = ''
+                        self._agent_wait_seconds = -1
+                        self._agent_wait_rendered_stream = None
+                        self.lbl_agent_stage.configure(text='模型已返回 · 正在处理结果…')
+                        self.lbl_agent_detail.configure(
+                            text='思考状态已自动收起。\n' +
+                                 value[len('模型响应已返回：'):].strip())
+                        self._set_agent_thinking_panel(False, '思考已完成（已收起）')
+                        self._append_agent_event(value)
+                        continue
+                    self._agent_wait_started = None
+                    self._agent_stream_detail = ''
+                    self._set_agent_thinking_panel(False, '思考阶段结束')
                     self._append_chat('system', value)
                     self.lbl_agent_stage.configure(text=str(value))
                     self._append_agent_event(value)
                     self.status(value)
                     continue
                 if kind == 'agent_preview':
+                    self._finish_agent_reasoning_block()
+                    self._agent_wait_started = None
+                    self._agent_stream_detail = ''
+                    self._set_agent_thinking_panel(False, '正在查看建模预览')
                     request = self._active_request or {}
                     if value.get('request_id') == request.get('id'):
                         self._show_agent_live_preview(value)
                         self.status('建模过程预览已更新', TH.WARN)
                     continue
+                self._agent_wait_started = None
+                self._finish_agent_reasoning_block()
+                self._agent_stream_detail = ''
+                self._set_agent_thinking_panel(False, '正在整理本轮结果')
                 self._unlock_ui()
                 request = self._active_request or {'text': '', 'images': []}
                 text = request['text']
@@ -1159,6 +1347,13 @@ class App(tk.Tk):
                         'conversation_summary', self._agent_context_summary)
                     self._agent_summary_through = result.get(
                         'summary_through', self._agent_summary_through)
+                    run_tokens = int(float(
+                        (result.get('llm_usage') or {}).get('total_tokens') or 0) or 0)
+                    if run_tokens:
+                        self._agent_total_tokens += run_tokens
+                    self.lbl_token.configure(text='Token 估算：本轮 %s · 累计 %s' % (
+                        self._fmt_tokens(run_tokens),
+                        self._fmt_tokens(self._agent_total_tokens)))
                     reply = result.get('reply', 'AgentLoop 已结束。')
                     self._append_chat('assistant', reply)
                     assistant_context = {'role': 'assistant', 'content': reply}
@@ -1172,21 +1367,49 @@ class App(tk.Tk):
                         assistant_context['image_paths'] = [self._last_agent_preview_path]
                         assistant_context['image_role'] = 'local_preview'
                     self._agent_context.append(assistant_context)
-                    self.log('AgentLoop 状态：%s；复核轮次：%s；自动返修：%s；工具调用：%s；预览：%s' %
+                    request_efforts = []
+                    for call in result.get('model_calls', []):
+                        if not isinstance(call, dict):
+                            continue
+                        effort = call.get('reasoning_effort')
+                        thinking = call.get('thinking')
+                        if effort:
+                            label = str(effort)
+                        elif isinstance(thinking, dict) and thinking.get('type'):
+                            label = 'thinking:%s' % thinking['type']
+                        else:
+                            label = '服务商默认'
+                        if label not in request_efforts:
+                            request_efforts.append(label)
+                    request_effort_text = '、'.join(request_efforts) or '未记录'
+                    self.log('AgentLoop 状态：%s；复核轮次：%s；自动返修：%s；函数工具：%s；LLM 请求：%s；截断续接：%s；请求思考强度：%s；请求图像块：%s；预览：%s' %
                              (result.get('state'), result.get('review_rounds', 0),
                               result.get('repair_cycles', 0), result.get('tool_calls', 0),
+                              result.get('model_call_count', 0),
+                              result.get('truncated_responses', 0),
+                              request_effort_text,
+                              result.get('image_parts_in_request', 0),
                               result.get('preview_calls', 0)))
                     if result.get('preview', {}).get('preview_image'):
                         self.log('本地复核图：' + result['preview']['preview_image'])
                     if result.get('run_record'):
                         self.log('AgentLoop 运行记录：' + result['run_record'])
+                    for label, path in (result.get('output_paths') or {}).items():
+                        if path:
+                            self.log('本地%s：%s' % (label, path))
+                    if result.get('output_warning'):
+                        self.log(result['output_warning'])
                     routing = result.get('routing') or {}
                     self.lbl_agent_stage.configure(
                         text='本轮完成 · %s' % (routing.get('action') or result.get('state')))
+                    self._set_agent_thinking_panel(False, '思考已完成（已收起）')
                     self.lbl_agent_detail.configure(
-                        text='工作流：%s\n复核：%s（%s 轮）\n工具调用：%s · 预览：%s\n%s' % (
+                        text='工作流：%s\n复核：%s（%s 轮）\n函数工具：%s · LLM 请求：%s · 截断续接：%s\n请求思考强度：%s\n请求图像块：%s · 预览：%s\n%s' % (
                             routing.get('action', '—'), routing.get('review_mode', '—'),
                             result.get('review_rounds', 0), result.get('tool_calls', 0),
+                            result.get('model_call_count', 0),
+                            result.get('truncated_responses', 0), request_effort_text,
+                            result.get('image_parts_in_request', 0),
                             result.get('preview_calls', 0), routing.get('reason', '')))
                     if result.get('state') == 'conversation':
                         self._append_agent_event('连续对话已回复；当前模型与特征树保持不变。')
@@ -1195,6 +1418,7 @@ class App(tk.Tk):
                         try:
                             from ai_modeler.sdk import cadplan
                             self._agent_candidate_notice = None
+                            self._pending_agent_plan = None
                             self._last_plan = result['plan']
                             plan_doc = cadplan.plan_to_document(self._last_plan)
                             plan_doc.source_prompt = text
@@ -1207,6 +1431,7 @@ class App(tk.Tk):
                             self.log(message)
                             self.status('CADPlan 转换失败', TH.ERR)
                     elif result.get('state') in {'previewed', 'reviewed'}:
+                        self._pending_agent_plan = None
                         candidate_shown = self._show_agent_candidate(text, result)
                         if candidate_shown and result.get('state') == 'reviewed':
                             self.status('多视图检查已通过；未运行独立相似度审查', TH.WARN)
@@ -1215,6 +1440,12 @@ class App(tk.Tk):
                         else:
                             self.status('AgentLoop 已生成结果，但候选无法显示', TH.ERR)
                     else:
+                        pending_plan = result.get('plan')
+                        pending_validation = result.get('validation') or {}
+                        if (isinstance(pending_plan, dict)
+                                and pending_validation.get('state')
+                                in {'valid', 'needs_confirmation'}):
+                            self._pending_agent_plan = pending_plan
                         candidate_shown = self._show_agent_candidate(text, result)
                         if candidate_shown:
                             self.status('AgentLoop 尚未接受；当前仅显示候选模型', TH.WARN)
@@ -1228,6 +1459,7 @@ class App(tk.Tk):
                     self.log(detail or '')
                     self.lbl_agent_stage.configure(text='本轮失败')
                     self.lbl_agent_detail.configure(text=str(value)[:1200])
+                    self._set_agent_thinking_panel(False, '本轮失败（思考已收起）')
                     self._append_agent_event(message)
                     self.status('AgentLoop 未完成', TH.ERR)
                 self._active_request = None
@@ -1236,7 +1468,12 @@ class App(tk.Tk):
                 return
         except queue.Empty:
             pass
+        self._refresh_agent_wait_clock()
         if self._cancel is not None and self._cancel.is_set():
+            self._agent_wait_started = None
+            self._agent_stream_detail = ''
+            self._finish_agent_reasoning_block()
+            self._set_agent_thinking_panel(False, '本轮已取消')
             self._q = queue.Queue()
             self._active_request = None
             self._unlock_ui()
@@ -1245,6 +1482,10 @@ class App(tk.Tk):
             self._resume_pending_request()
             return
         if time.time() - getattr(self, '_t0', time.time()) > self._budget_s + 15:
+            self._agent_wait_started = None
+            self._agent_stream_detail = ''
+            self._finish_agent_reasoning_block()
+            self._set_agent_thinking_panel(False, '本轮超时（思考已收起）')
             if self._cancel is not None:
                 self._cancel.set()
             self._q = queue.Queue()
@@ -1674,6 +1915,7 @@ class App(tk.Tk):
 
     def clear_features(self):
         self._last_plan = None
+        self._pending_agent_plan = None
         self._clear_agent_live_preview()
         self.doc = DM.Document('Part1')
         self.refresh_tree()
@@ -1700,6 +1942,7 @@ class App(tk.Tk):
             d = json.load(open(p, 'r', encoding='utf-8'))
             self.doc = DM.Document.from_dict(d)
             self._last_plan = None
+            self._pending_agent_plan = None
             self._clear_agent_live_preview()
             self.current_path = p
             self.title('%s — %s' % (APP_TITLE, os.path.basename(p)))
@@ -2205,7 +2448,7 @@ class App(tk.Tk):
     def show_llm_config(self):
         win = tk.Toplevel(self)
         win.title('多模态 AgentLoop 设置')
-        win.geometry('600x340')
+        win.geometry('600x390')
         llm = self.cfg.setdefault('llm', {'enabled': False, 'base_url':
                                           'https://api.openai.com/v1', 'model': 'gpt-4o-mini',
                                           'api_key': ''})
@@ -2213,6 +2456,19 @@ class App(tk.Tk):
         v_url = tk.StringVar(value=llm.get('base_url', ''))
         v_model = tk.StringVar(value=llm.get('model', ''))
         v_key = tk.StringVar(value=llm.get('api_key', ''))
+        model_host = ''
+        try:
+            model_host = (urlparse(llm.get('base_url', '')).hostname or '').lower()
+        except Exception:
+            pass
+        default_effort = ('high' if model_host == 'api.deepseek.com'
+                          and str(llm.get('model') or '').lower()
+                          in {'deepseek-flash', 'deepseek-v4-pro'} else 'none')
+        reasoning_default = str(llm.get('reasoning_effort', default_effort)
+                                or default_effort).lower()
+        if reasoning_default == 'auto':
+            reasoning_default = default_effort
+        v_reasoning = tk.StringVar(value=reasoning_default)
         frm = ttk.Frame(win, padding=14)
         frm.pack(fill='both', expand=True)
         ttk.Checkbutton(frm, text='启用多模态 AgentLoop',
@@ -2222,23 +2478,36 @@ class App(tk.Tk):
             ttk.Label(frm, text=label).grid(row=i, column=0, sticky='w', pady=4)
             ent = ttk.Entry(frm, textvariable=var, width=48, show='*' if label == 'API Key' else '')
             ent.grid(row=i, column=1, sticky='ew', pady=4)
+        ttk.Label(frm, text='思考强度').grid(row=4, column=0, sticky='w', pady=4)
+        ttk.Combobox(frm, textvariable=v_reasoning,
+                     values=('none', 'low', 'high', 'max'),
+                     state='readonly', width=14).grid(
+                         row=4, column=1, sticky='w', pady=4)
         frm.columnconfigure(1, weight=1)
         ttk.Label(frm, text='启用后，Agent 会先理解本轮对话，再自行选择回答、修改模型或执行完整建模复核。\n'
                             '服务端模型必须同时支持图像输入和工具调用；不支持时会明确报错，不回退到猜测。\n'
+                            '思考强度（DeepSeek 官方接口）：默认 high；none=关闭思考；low/high/max 对应官方 effort。\n'
+                            '思考强度（SiliconFlow，如 Kimi-K2.7-Code）：low/high=开启思考；max=开启并给最大思考预算 32768；\n'
+                            'none=不发送开关，按服务端默认（Kimi 等推理模型默认会思考）；思考过程将流式实时显示。\n'
+                            '其他 OpenAI 兼容服务请按其参数支持情况选择；none 不发送推理参数。\n'
                             '关闭时仅使用内置文本规则；图片输入需要启用兼容的多模态模型。',
                   font=('Microsoft YaHei UI', 8), foreground='#7f8c9b',
-                  justify='left').grid(row=4, column=0, columnspan=2, sticky='w', pady=8)
+                  justify='left').grid(row=5, column=0, columnspan=2, sticky='w', pady=8)
 
         def save():
-            self.cfg['llm'] = {'enabled': bool(v_en.get()), 'base_url': v_url.get().strip(),
-                               'model': v_model.get().strip(), 'api_key': v_key.get().strip()}
+            llm_cfg = dict(llm)
+            llm_cfg.update({'enabled': bool(v_en.get()), 'base_url': v_url.get().strip(),
+                            'model': v_model.get().strip(), 'api_key': v_key.get().strip()})
+            llm_cfg.pop('thinking', None)
+            llm_cfg['reasoning_effort'] = v_reasoning.get()
+            self.cfg['llm'] = llm_cfg
             cfgmod.save(self.cfg)
             self.btn_model.configure(text=self._model_button_text())
             self.status('大模型设置已保存')
             win.destroy()
 
         ttk.Button(frm, text='保存', style='Accent.TButton', command=save).grid(
-            row=5, column=1, sticky='e', pady=6)
+            row=6, column=1, sticky='e', pady=6)
 
     def run_selfcheck(self):
         lines = []

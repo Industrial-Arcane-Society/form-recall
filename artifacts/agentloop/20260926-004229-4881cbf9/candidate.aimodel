@@ -1,0 +1,32 @@
+{
+  "format": "ai-modeler",
+  "version": 1,
+  "name": "涡轮叶轮",
+  "source_prompt": "涡轮叶轮 轮毂直径30 外径120 高度40 叶片数9 扭转角55",
+  "features": [
+    {
+      "kind": "impeller",
+      "params": {
+        "blade_t": 4.0,
+        "blades": 9,
+        "height": 40.0,
+        "hub_d": 30.0,
+        "tip_d": 120.0,
+        "twist_deg": 55.0
+      },
+      "op": "add",
+      "name": "叶轮",
+      "note": "",
+      "enabled": true,
+      "provenance": {
+        "hub_d": "user",
+        "tip_d": "user",
+        "height": "user",
+        "blades": "user",
+        "twist_deg": "user",
+        "blade_t": "image_estimate"
+      }
+    }
+  ],
+  "exported_at": "2026-09-26 00:42:39"
+}

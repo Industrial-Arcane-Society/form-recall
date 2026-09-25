@@ -1,0 +1,51 @@
+CATIA <COMObject <unknown>>
+documents=2
+  doc[1] Part1.CATPart
+  doc[2] Product1.CATProduct
+active=Part1.CATPart
+part=Part1
+inwork=曲轴
+bodies=1
+  BODY 零件几何体 (?)
+    shapes=12
+    [1] ?                曲轴  sketch=草图.1
+    [2] ?                曲轴  sketch=草图.2
+    [3] ?                曲轴  sketch=草图.3
+    [4] ?                曲轴  sketch=草图.4
+    [5] ?                曲轴  sketch=草图.5
+    [6] ?                曲轴  sketch=草图.6
+    [7] ?                曲轴  sketch=草图.7
+    [8] ?                曲轴  sketch=草图.8
+    [9] ?                曲轴  sketch=草图.9
+    [10] ?                曲轴  sketch=草图.10
+    [11] ?                曲轴  sketch=草图.11
+    [12] ?                曲轴  sketch=草图.12
+hybridbodies=1
+  HB 几何图形集.1
+    [1] ?                        平面.1
+    [2] ?                        平面.2
+    [3] ?                        平面.3
+    [4] ?                        平面.4
+    [5] ?                        平面.5
+    [6] ?                        平面.6
+    [7] ?                        平面.7
+    [8] ?                        平面.8
+    [9] ?                        平面.9
+    [10] ?                        平面.10
+    [11] ?                        平面.11
+    [12] ?                        平面.12
+    [13] ?                        平面.13
+    [14] ?                        平面.14
+    [15] ?                        平面.15
+    [16] ?                        平面.16
+    [17] ?                        平面.17
+    [18] ?                        平面.18
+    [19] ?                        平面.19
+    [20] ?                        平面.20
+    [21] ?                        平面.21
+    [22] ?                        平面.22
+    [23] ?                        平面.23
+    [24] ?                        平面.24
+    [25] ?                        平面.25
+part.Update() -> FAILED: (-2147352567, '发生意外。', (0, 'CATIAPart', '方法 Update 失败', None, 0, -2147467259), None)
+volume error: <unknown>.GetWorkbench

@@ -93,17 +93,16 @@ class Viewer3D(tk.Canvas):
                            highlightthickness=0, **kw)
         self.cam = Camera()
         self.polys: List[K.Polygon] = []
-        self.show_edges = True
+        self.show_edges = False
         self.show_axes = True
-        self.show_grid = True
+        self.show_grid = False
         self.max_faces = 9000
         self._drag = None
         self._last = (0, 0)
         self._model_bbox = None
         self._info_lines: List[str] = []
         self._dragging = False
-        self.edge_limit = 1400      # 面数超过这个值就不描边, 否则会变成一团线
-        self.edge_color = '#1a2430'
+        self.edge_limit = 2500      # 辅助线只标折角和轮廓，不描绘三角剖分线
         self.bind('<ButtonPress-1>', self._on_press)
         self.bind('<B1-Motion>', self._on_drag)
         self.bind('<ButtonRelease-1>', self._on_release)
@@ -143,10 +142,12 @@ class Viewer3D(tk.Canvas):
             self.redraw()
             return
         cx, cy, cz = (bb[0] + bb[3]) / 2.0, (bb[1] + bb[4]) / 2.0, (bb[2] + bb[5]) / 2.0
-        size = max(bb[3] - bb[0], bb[4] - bb[1], bb[5] - bb[2], 1.0)
+        dx, dy, dz = bb[3] - bb[0], bb[4] - bb[1], bb[5] - bb[2]
+        radius = max(0.5, 0.5 * math.sqrt(dx * dx + dy * dy + dz * dz))
         self.cam.target = (cx, cy, cz)
-        fov = self.cam.fov if self.cam.perspective else math.radians(60.0)
-        self.cam.distance = max(size, 1.0) / (2.0 * math.tan(fov / 2.0)) * 2.35
+        w, h = max(self.winfo_width(), 60), max(self.winfo_height(), 60)
+        half_angle = math.atan(math.tan(self.cam.fov / 2.0) * min(1.0, w / h))
+        self.cam.distance = max(radius + 1.0, radius / math.sin(half_angle) * 1.12)
         self.redraw()
 
     def set_view(self, name: str):
@@ -210,6 +211,40 @@ class Viewer3D(tk.Canvas):
     def _draw_background(self, w, h):
         TH.gradient(self, 0, 0, w, h, TH.VIEW_TOP, TH.VIEW_BOT, tag='bgrad')
 
+    def _feature_edges(self, eye):
+        """找出轮廓和明显折角，跳过圆柱分段与共面剖分接缝。"""
+        adjacent = {}
+
+        def key(v):
+            return tuple(round(value, 5) for value in v)
+
+        def edge_key(a, b):
+            ka, kb = key(a), key(b)
+            return (ka, kb) if ka < kb else (kb, ka)
+
+        for polygon in self.polys:
+            points = polygon.points()
+            if len(points) < 3:
+                continue
+            normal = _norm(polygon.plane.normal)
+            to_eye = _norm((eye[0] - points[0][0], eye[1] - points[0][1],
+                            eye[2] - points[0][2]))
+            facing = _dot(normal, to_eye) > 0.0
+            for index, point in enumerate(points):
+                edge = edge_key(point, points[(index + 1) % len(points)])
+                adjacent.setdefault(edge, []).append((normal, facing))
+
+        cos_limit = math.cos(math.radians(35.0))
+        visible = set()
+        for edge, sides in adjacent.items():
+            if len(sides) == 1:
+                visible.add(edge)
+            elif len(sides) == 2:
+                (a, front_a), (b, front_b) = sides
+                if front_a != front_b or abs(_dot(a, b)) < cos_limit:
+                    visible.add(edge)
+        return visible, edge_key
+
     def redraw(self):
         self.delete('all')
         w = max(self.winfo_width(), 60)
@@ -253,7 +288,6 @@ class Viewer3D(tk.Canvas):
                 continue
             depth = zsum / len(cam_pts)
             # 背面剔除: 面法向与视线方向
-            view_dir = _norm((p.plane.normal and (p.plane.normal[0], p.plane.normal[1], p.plane.normal[2])))
             to_eye = _norm((eye[0] - pts[0][0], eye[1] - pts[0][1], eye[2] - pts[0][2]))
             facing = _dot(_norm(n), to_eye)
             if facing <= 0.0:
@@ -284,29 +318,31 @@ class Viewer3D(tk.Canvas):
             shade = max(0.34, min(1.18, shade))
             base = _hex_rgb(PALETTE[p.tag % len(PALETTE)])
             color = _rgb_hex((base[0] * shade, base[1] * shade, base[2] * shade))
-            faces.append((depth, screen, color, area))
+            faces.append((depth, screen, color, area, pts))
 
         if len(faces) > self.max_faces:
             faces.sort(key=lambda t: -t[3])
             faces = faces[:self.max_faces]
         faces.sort(key=lambda t: -t[0])
 
-        # 面片很密的时候逐面描边会糊成一团线; 拖动过程中也降质以保证流畅
+        # 仅在静止时绘制真实轮廓/折角；每个三角面都描边会出现密集辅助线。
         want_edges = self.show_edges and len(faces) <= self.edge_limit and not self._dragging
-        for (_d, screen, color, _a) in faces:
+        visible_edges, edge_key = self._feature_edges(eye) if want_edges else (set(), None)
+        for (_d, screen, color, _a, points) in faces:
             flat = []
             for (sx, sy) in screen:
                 flat.append(sx)
                 flat.append(sy)
+            self.create_polygon(flat, fill=color, outline=color, width=0)
             if want_edges:
-                # 用比面色略深的同色系描边, 比纯黑柔和得多
-                r = int(color[1:3], 16) * 0.55
-                g = int(color[3:5], 16) * 0.55
-                b = int(color[5:7], 16) * 0.55
-                self.create_polygon(flat, fill=color, width=1,
-                                    outline='#%02x%02x%02x' % (int(r), int(g), int(b)))
-            else:
-                self.create_polygon(flat, fill=color, outline=color, width=0)
+                line_color = _rgb_hex(tuple(channel * 0.67
+                                            for channel in _hex_rgb(color)))
+                for index, point in enumerate(points):
+                    if edge_key(point, points[(index + 1) % len(points)]) not in visible_edges:
+                        continue
+                    a = screen[index]
+                    b = screen[(index + 1) % len(screen)]
+                    self.create_line(a[0], a[1], b[0], b[1], fill=line_color, width=1)
 
         if self.show_axes:
             self._draw_axes(eye, fwd, right, up, f, cx, cy, w, h)
@@ -338,7 +374,10 @@ class Viewer3D(tk.Canvas):
                 return None
             x = _dot((dx, dy, dz), right)
             y = _dot((dx, dy, dz), up)
-            return (cx + f * x / z, cy - f * y / z)
+            if self.cam.perspective:
+                return (cx + f * x / z, cy - f * y / z)
+            scale = f / max(self.cam.distance, 1e-6)
+            return (cx + scale * x, cy - scale * y)
 
         for (a, b) in segs:
             pa, pb = proj(a), proj(b)

@@ -1,0 +1,40 @@
+shapes=12
+[ 1] name='曲轴' sketch='草图.1' len=? secondlen=? axis=<This object does not support enumeration>
+[ 2] name='曲轴' sketch='草图.2' len=? secondlen=? axis=<This object does not support enumeration>
+[ 3] name='曲轴' sketch='草图.3' len=? secondlen=? axis=<This object does not support enumeration>
+[ 4] name='曲轴' sketch='草图.4' len=? secondlen=? axis=<This object does not support enumeration>
+[ 5] name='曲轴' sketch='草图.5' len=? secondlen=? axis=<This object does not support enumeration>
+[ 6] name='曲轴' sketch='草图.6' len=? secondlen=? axis=<This object does not support enumeration>
+[ 7] name='曲轴' sketch='草图.7' len=? secondlen=? axis=<This object does not support enumeration>
+[ 8] name='曲轴' sketch='草图.8' len=? secondlen=? axis=<This object does not support enumeration>
+[ 9] name='曲轴' sketch='草图.9' len=? secondlen=? axis=<This object does not support enumeration>
+[10] name='曲轴' sketch='草图.10' len=? secondlen=? axis=<This object does not support enumeration>
+[11] name='曲轴' sketch='草图.11' len=? secondlen=? axis=<This object does not support enumeration>
+[12] name='曲轴' sketch='草图.12' len=? secondlen=? axis=<This object does not support enumeration>
+
+hybridbody='几何图形集.1' shapes=25
+  [ 1] '平面.1' offset=-350.0
+  [ 2] '平面.2' offset=-330.167
+  [ 3] '平面.3' offset=-316.168
+  [ 4] '平面.4' offset=-267.167
+  [ 5] '平面.5' offset=-253.168
+  [ 6] '平面.6' offset=-213.5
+  [ 7] '平面.7' offset=-199.501
+  [ 8] '平面.8' offset=-150.5
+  [ 9] '平面.9' offset=-136.501
+  [10] '平面.10' offset=-96.8333
+  [11] '平面.11' offset=-82.8343
+  [12] '平面.12' offset=-33.8333
+  [13] '平面.13' offset=-19.8343
+  [14] '平面.14' offset=19.8333
+  [15] '平面.15' offset=33.8323
+  [16] '平面.16' offset=82.8333
+  [17] '平面.17' offset=96.8323
+  [18] '平面.18' offset=136.5
+  [19] '平面.19' offset=150.499
+  [20] '平面.20' offset=199.5
+  [21] '平面.21' offset=213.499
+  [22] '平面.22' offset=253.167
+  [23] '平面.23' offset=267.166
+  [24] '平面.24' offset=316.167
+  [25] '平面.25' offset=330.166

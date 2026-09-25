@@ -1,0 +1,30 @@
+{
+  "format": "ai-modeler",
+  "version": 1,
+  "name": "六拐曲轴",
+  "source_prompt": "曲轴 主轴颈50 连杆颈42 行程86 拐数6",
+  "features": [
+    {
+      "kind": "crankshaft",
+      "params": {
+        "length": 700.0,
+        "main_d": 50.0,
+        "pin_d": 42.0,
+        "stroke": 86.0,
+        "throws": 6
+      },
+      "op": "add",
+      "name": "曲轴",
+      "note": "",
+      "enabled": true,
+      "provenance": {
+        "length": "derived",
+        "main_d": "user",
+        "pin_d": "user",
+        "stroke": "user",
+        "throws": "user"
+      }
+    }
+  ],
+  "exported_at": "2026-09-26 01:20:24"
+}

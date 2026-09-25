@@ -1,0 +1,3550 @@
+{
+  "record_version": 1,
+  "started_at": "2026-09-25T15:44:45+08:00",
+  "finished_at": "2026-09-25T15:45:31+08:00",
+  "state": "accepted",
+  "input": {
+    "prompt": "复刻整一个工件",
+    "reference_images": [
+      "clipboard-e9063cb9e9b64bc5a66074b82cb13df7.png",
+      "clipboard-7834fc3aa0814755933975173ee76a02.png"
+    ]
+  },
+  "routing": {
+    "action": "create",
+    "reply": "",
+    "questions": [],
+    "need_recognition": true,
+    "review_mode": "full",
+    "review_rounds": 2,
+    "reason": "用户要求复刻新工件，提供了两张参考图（一张轴测、一张正视图），需要识别几何结构后建模；结构含凹槽与多孔，依赖图片证据，故做多视图复核。"
+  },
+  "conversation_memory": {
+    "summarized_through": 0,
+    "summary_chars": 0
+  },
+  "limits": {
+    "tool_calls": 64,
+    "web_search_calls": 8,
+    "tool_preview_calls": 12,
+    "multiview_tool_calls_per_round": 4,
+    "review_rounds": 4,
+    "context_turns": 16,
+    "context_chars": 48000
+  },
+  "recognition": {
+    "views": [
+      {
+        "image": "clipboard-7834fc3aa0814755933975173ee76a02.png",
+        "view": "front",
+        "evidence": "正交正视图：整体为竖直矩形外轮廓，宽高比约 0.95（本地 bbox 扫描 320×336 px，confidence high）。可见三段竖直区域：左段与右段为浅灰绿色平面，中段为粉红色（后退面），三段之间为竖直分界线。每段各含 3 个圆孔，竖直方向等距排列（上、中、下三排）。孔内可见内壁着色（青/蓝/品红），说明为通孔。"
+      },
+      {
+        "image": "clipboard-e9063cb9e9b64bc5a66074b82cb13df7.png",
+        "view": "iso",
+        "evidence": "轴测图：可见顶面（浅灰绿）、左侧面与右侧面为浅灰绿色块体，中间为一条竖直的粉红色窄条带（中段前表面），明显位于两侧块体前表面之后（沿 -Y 后退），形成 U 形/凹槽结构。左右块体前表面各可见 3 个圆孔（青/蓝/青），中段粉红面上可见 3 个孔（品红/蓝/品红）。顶面为连续平面，说明三段顶部齐平。"
+      }
+    ],
+    "requirements": [
+      {
+        "item": "整体为长方体块，左右两侧为较厚的竖直块体，中间为较窄的竖直段，三段顶部齐平、底部齐平",
+        "evidence": "正视图三段竖直分界与等高外轮廓；轴测图顶面连续",
+        "certainty": "visible"
+      },
+      {
+        "item": "中段前表面相对左右两侧块体前表面沿 -Y 方向后退，形成正面凹槽（U 形开口）",
+        "evidence": "轴测图中粉红色中段面明显位于两侧浅灰绿前表面之后，两侧块体前表面更靠近观察者（+Y）",
+        "certainty": "visible"
+      },
+      {
+        "item": "左右两侧块体各含 3 个通孔，竖直方向等距排列（上、中、下）",
+        "evidence": "正视图左右段各 3 个圆孔；轴测图左右前表面各 3 个孔",
+        "certainty": "visible"
+      },
+      {
+        "item": "中段含 3 个通孔，与左右两侧孔排高度对应",
+        "evidence": "正视图与轴测图中段粉红面上各 3 个孔，与两侧孔同高",
+        "certainty": "visible"
+      },
+      {
+        "item": "孔为通孔（贯穿深度方向）",
+        "evidence": "正视图孔内可见内壁着色与背景透出，轴测图孔内可见内圆柱面",
+        "certainty": "visible"
+      },
+      {
+        "item": "左右两侧块体宽度明显大于中段宽度，中段约为两侧各自宽度的一半",
+        "evidence": "正视图本地像素扫描三段宽度比约 0.39 : 0.22 : 0.39（confidence high，187 条一致扫描线）",
+        "certainty": "visible"
+      }
+    ],
+    "proportion_observations": {
+      "front_width_height": 0.952,
+      "depth_height": null,
+      "front_segment_width_ratios": [
+        0.390625,
+        0.21875,
+        0.390625
+      ],
+      "middle_front_setback_height_ratio": null,
+      "notes": "正视图确认为正交正视图（image_index 2），其本地像素扫描三段宽度比 [0.3906,0.2188,0.3906] 直接采用，宽高比 0.952 亦采用（bbox confidence high）。轴测图（image_index 1）的扫描比例 [0.140,0.148,0.712] 属等轴测投影，不作为正视宽度或宽高比使用。深度方向（Y）在两张图中均无正交投影证据，depth_height 无法可靠估计，填 null。中段前表面后退量：轴测图可见中段面明显位于两侧前表面之后，但该图为等轴测投影，屏幕位移同时含 X/Y/Z 分量，无法可靠换算为 Y 后退量/Z 高度，故 middle_front_setback_height_ratio 填 null；建模时采用与可见投影一致的简单假设——中段前表面后退量取中段厚度的一部分（中段仍为实体，仅前表面后移），具体值待建模阶段按可见比例给出图像估值。"
+    },
+    "feature_layout": [
+      {
+        "feature": "左段竖直孔列",
+        "count": 3,
+        "arrangement": "沿 Z 等距三排（上/中/下），位于左段宽度中部",
+        "evidence": "正视图左段 3 孔；轴测图左前表面 3 孔"
+      },
+      {
+        "feature": "中段竖直孔列",
+        "count": 3,
+        "arrangement": "沿 Z 等距三排，与左右段孔同高，位于中段宽度中部",
+        "evidence": "正视图与轴测图中段各 3 孔"
+      },
+      {
+        "feature": "右段竖直孔列",
+        "count": 3,
+        "arrangement": "沿 Z 等距三排，与左段孔同高，位于右段宽度中部",
+        "evidence": "正视图右段 3 孔；轴测图右前表面 3 孔"
+      },
+      {
+        "feature": "孔径相对等级",
+        "count": 9,
+        "arrangement": "三列孔径在正视图中视觉上大致相当，无明显大—小—大差异",
+        "evidence": "正视图三列各孔直径相近；轴测图因透视略有差异，不作为孔径依据"
+      }
+    ],
+    "pending_questions": []
+  },
+  "raster_analysis": {
+    "available": true,
+    "images": [
+      {
+        "image_index": 1,
+        "filename": "clipboard-e9063cb9e9b64bc5a66074b82cb13df7.png",
+        "size_px": [
+          494,
+          544
+        ],
+        "three_region_scanline_candidate": {
+          "y_px": 157,
+          "segments": [
+            {
+              "x_start_px": 125,
+              "x_end_px": 162,
+              "width_px": 38
+            },
+            {
+              "x_start_px": 180,
+              "x_end_px": 219,
+              "width_px": 40
+            },
+            {
+              "x_start_px": 223,
+              "x_end_px": 415,
+              "width_px": 193
+            }
+          ],
+          "width_ratios": [
+            0.14022140221402213,
+            0.14760147601476015,
+            0.7121771217712177
+          ],
+          "coverage": 0.548582995951417,
+          "consistent_scanline_count": 15,
+          "confidence": "medium",
+          "note": "Pixel evidence only; confirm this image is a front orthographic view before using the ratios."
+        },
+        "foreground_bbox_candidate": {
+          "x_min_px": 124,
+          "x_max_px": 415,
+          "y_min_px": 154,
+          "y_max_px": 172,
+          "width_px": 292,
+          "height_px": 19,
+          "width_height_ratio": 15.368421052631579,
+          "confidence": "medium",
+          "note": "Pixel evidence only; use as front width/height only if the model identifies this image as orthographic front."
+        }
+      },
+      {
+        "image_index": 2,
+        "filename": "clipboard-7834fc3aa0814755933975173ee76a02.png",
+        "size_px": [
+          418,
+          430
+        ],
+        "three_region_scanline_candidate": {
+          "y_px": 375,
+          "segments": [
+            {
+              "x_start_px": 34,
+              "x_end_px": 158,
+              "width_px": 125
+            },
+            {
+              "x_start_px": 159,
+              "x_end_px": 228,
+              "width_px": 70
+            },
+            {
+              "x_start_px": 229,
+              "x_end_px": 353,
+              "width_px": 125
+            }
+          ],
+          "width_ratios": [
+            0.390625,
+            0.21875,
+            0.390625
+          ],
+          "coverage": 0.7655502392344498,
+          "consistent_scanline_count": 187,
+          "confidence": "high",
+          "note": "Pixel evidence only; confirm this image is a front orthographic view before using the ratios."
+        },
+        "foreground_bbox_candidate": {
+          "x_min_px": 34,
+          "x_max_px": 353,
+          "y_min_px": 41,
+          "y_max_px": 376,
+          "width_px": 320,
+          "height_px": 336,
+          "width_height_ratio": 0.9523809523809523,
+          "confidence": "high",
+          "note": "Pixel evidence only; use as front width/height only if the model identifies this image as orthographic front."
+        }
+      }
+    ]
+  },
+  "counts": {
+    "tool_calls": 0,
+    "web_search_calls": 0,
+    "blocked_web_search_calls": 0,
+    "preview_calls": 2,
+    "review_rounds": 2,
+    "repair_cycles": 1
+  },
+  "construction_repairs": [],
+  "automatic_repairs": [
+    {
+      "source": "multiview_review",
+      "round": 1,
+      "result": "applied",
+      "before_geometry": "{\"coordinate_system\":{\"axes\":[\"X\",\"Y\",\"Z\"],\"handedness\":\"right\",\"origin\":[0,0,0],\"type\":\"global_cartesian\"},\"features\":[{\"geometry\":\"{\\\"kind\\\":\\\"box\\\",\\\"operation\\\":\\\"add\\\",\\\"parameters\\\":{\\\"center\\\":[-30.5,0,50],\\\"height\\\":100,\\\"length\\\":39,\\\"width\\\":30}}\",\"id\":\"left_block\"},{\"geometry\":\"{\\\"kind\\\":\\\"box\\\",\\\"operation\\\":\\\"add\\\",\\\"parameters\\\":{\\\"center\\\":[30.5,0,50],\\\"height\\\":100,\\\"length\\\":39,\\\"width\\\":30}}\",\"id\":\"right_block\"},{\"geometry\":\"{\\\"kind\\\":\\\"box\\\",\\\"operation\\\":\\\"add\\\",\\\"parameters\\\":{\\\"center\\\":[0,-3,50],\\\"height\\\":100,\\\"length\\\":22,\\\"width\\\":30},\\\"relations\\\":[{\\\"feature_id\\\":\\\"left_block\\\",\\\"type\\\":\\\"depends_on\\\"},{\\\"feature_id\\\":\\\"right_block\\\",\\\"type\\\":\\\"depends_on\\\"}]}\",\"id\":\"middle_block\"},{\"geometry\":\"{\\\"kind\\\":\\\"hole\\\",\\\"operation\\\":\\\"cut\\\",\\\"parameters\\\":{\\\"axis\\\":\\\"Y\\\",\\\"diameter\\\":12,\\\"point\\\":[-30.5,0,78],\\\"pos\\\":\\\"point\\\",\\\"through\\\":true},\\\"relations\\\":[{\\\"feature_id\\\":\\\"left_block\\\",\\\"type\\\":\\\"depends_on\\\"}]}\",\"id\":\"hole_left_top\"},{\"geometry\":\"{\\\"kind\\\":\\\"hole\\\",\\\"operation\\\":\\\"cut\\\",\\\"parameters\\\":{\\\"axis\\\":\\\"Y\\\",\\\"diameter\\\":12,\\\"point\\\":[-30.5,0,50],\\\"pos\\\":\\\"point\\\",\\\"through\\\":true},\\\"relations\\\":[{\\\"feature_id\\\":\\\"left_block\\\",\\\"type\\\":\\\"depends_on\\\"}]}\",\"id\":\"hole_left_mid\"},{\"geometry\":\"{\\\"kind\\\":\\\"hole\\\",\\\"operation\\\":\\\"cut\\\",\\\"parameters\\\":{\\\"axis\\\":\\\"Y\\\",\\\"diameter\\\":12,\\\"point\\\":[-30.5,0,22],\\\"pos\\\":\\\"point\\\",\\\"through\\\":true},\\\"relations\\\":[{\\\"feature_id\\\":\\\"left_block\\\",\\\"type\\\":\\\"depends_on\\\"}]}\",\"id\":\"hole_left_bot\"},{\"geometry\":\"{\\\"kind\\\":\\\"hole\\\",\\\"operation\\\":\\\"cut\\\",\\\"parameters\\\":{\\\"axis\\\":\\\"Y\\\",\\\"diameter\\\":12,\\\"point\\\":[0,-3,78],\\\"pos\\\":\\\"point\\\",\\\"through\\\":true},\\\"relations\\\":[{\\\"feature_id\\\":\\\"middle_block\\\",\\\"type\\\":\\\"depends_on\\\"}]}\",\"id\":\"hole_mid_top\"},{\"geometry\":\"{\\\"kind\\\":\\\"hole\\\",\\\"operation\\\":\\\"cut\\\",\\\"parameters\\\":{\\\"axis\\\":\\\"Y\\\",\\\"diameter\\\":12,\\\"point\\\":[0,-3,50],\\\"pos\\\":\\\"point\\\",\\\"through\\\":true},\\\"relations\\\":[{\\\"feature_id\\\":\\\"middle_block\\\",\\\"type\\\":\\\"depends_on\\\"}]}\",\"id\":\"hole_mid_mid\"},{\"geometry\":\"{\\\"kind\\\":\\\"hole\\\",\\\"operation\\\":\\\"cut\\\",\\\"parameters\\\":{\\\"axis\\\":\\\"Y\\\",\\\"diameter\\\":12,\\\"point\\\":[0,-3,22],\\\"pos\\\":\\\"point\\\",\\\"through\\\":true},\\\"relations\\\":[{\\\"feature_id\\\":\\\"middle_block\\\",\\\"type\\\":\\\"depends_on\\\"}]}\",\"id\":\"hole_mid_bot\"},{\"geometry\":\"{\\\"kind\\\":\\\"hole\\\",\\\"operation\\\":\\\"cut\\\",\\\"parameters\\\":{\\\"axis\\\":\\\"Y\\\",\\\"diameter\\\":12,\\\"point\\\":[30.5,0,78],\\\"pos\\\":\\\"point\\\",\\\"through\\\":true},\\\"relations\\\":[{\\\"feature_id\\\":\\\"right_block\\\",\\\"type\\\":\\\"depends_on\\\"}]}\",\"id\":\"hole_right_top\"},{\"geometry\":\"{\\\"kind\\\":\\\"hole\\\",\\\"operation\\\":\\\"cut\\\",\\\"parameters\\\":{\\\"axis\\\":\\\"Y\\\",\\\"diameter\\\":12,\\\"point\\\":[30.5,0,50],\\\"pos\\\":\\\"point\\\",\\\"through\\\":true},\\\"relations\\\":[{\\\"feature_id\\\":\\\"right_block\\\",\\\"type\\\":\\\"depends_on\\\"}]}\",\"id\":\"hole_right_mid\"},{\"geometry\":\"{\\\"kind\\\":\\\"hole\\\",\\\"operation\\\":\\\"cut\\\",\\\"parameters\\\":{\\\"axis\\\":\\\"Y\\\",\\\"diameter\\\":12,\\\"point\\\":[30.5,0,22],\\\"pos\\\":\\\"point\\\",\\\"through\\\":true},\\\"relations\\\":[{\\\"feature_id\\\":\\\"right_block\\\",\\\"type\\\":\\\"depends_on\\\"}]}\",\"id\":\"hole_right_bot\"}],\"units\":{\"angle\":\"deg\",\"length\":\"mm\"}}",
+      "after_geometry": "{\"coordinate_system\":{\"axes\":[\"X\",\"Y\",\"Z\"],\"handedness\":\"right\",\"origin\":[0,0,0],\"type\":\"global_cartesian\"},\"features\":[{\"geometry\":\"{\\\"kind\\\":\\\"box\\\",\\\"operation\\\":\\\"add\\\",\\\"parameters\\\":{\\\"center\\\":[-30.5,0,50],\\\"height\\\":100,\\\"length\\\":39,\\\"width\\\":30}}\",\"id\":\"left_block\"},{\"geometry\":\"{\\\"kind\\\":\\\"box\\\",\\\"operation\\\":\\\"add\\\",\\\"parameters\\\":{\\\"center\\\":[30.5,0,50],\\\"height\\\":100,\\\"length\\\":39,\\\"width\\\":30}}\",\"id\":\"right_block\"},{\"geometry\":\"{\\\"kind\\\":\\\"box\\\",\\\"operation\\\":\\\"add\\\",\\\"parameters\\\":{\\\"center\\\":[0,-12,50],\\\"height\\\":100,\\\"length\\\":22,\\\"width\\\":30},\\\"relations\\\":[{\\\"feature_id\\\":\\\"left_block\\\",\\\"type\\\":\\\"depends_on\\\"},{\\\"feature_id\\\":\\\"right_block\\\",\\\"type\\\":\\\"depends_on\\\"}]}\",\"id\":\"middle_block\"},{\"geometry\":\"{\\\"kind\\\":\\\"hole\\\",\\\"operation\\\":\\\"cut\\\",\\\"parameters\\\":{\\\"axis\\\":\\\"Y\\\",\\\"diameter\\\":12,\\\"point\\\":[-30.5,0,78],\\\"pos\\\":\\\"point\\\",\\\"through\\\":true},\\\"relations\\\":[{\\\"feature_id\\\":\\\"left_block\\\",\\\"type\\\":\\\"depends_on\\\"}]}\",\"id\":\"hole_left_top\"},{\"geometry\":\"{\\\"kind\\\":\\\"hole\\\",\\\"operation\\\":\\\"cut\\\",\\\"parameters\\\":{\\\"axis\\\":\\\"Y\\\",\\\"diameter\\\":12,\\\"point\\\":[-30.5,0,50],\\\"pos\\\":\\\"point\\\",\\\"through\\\":true},\\\"relations\\\":[{\\\"feature_id\\\":\\\"left_block\\\",\\\"type\\\":\\\"depends_on\\\"}]}\",\"id\":\"hole_left_mid\"},{\"geometry\":\"{\\\"kind\\\":\\\"hole\\\",\\\"operation\\\":\\\"cut\\\",\\\"parameters\\\":{\\\"axis\\\":\\\"Y\\\",\\\"diameter\\\":12,\\\"point\\\":[-30.5,0,22],\\\"pos\\\":\\\"point\\\",\\\"through\\\":true},\\\"relations\\\":[{\\\"feature_id\\\":\\\"left_block\\\",\\\"type\\\":\\\"depends_on\\\"}]}\",\"id\":\"hole_left_bot\"},{\"geometry\":\"{\\\"kind\\\":\\\"hole\\\",\\\"operation\\\":\\\"cut\\\",\\\"parameters\\\":{\\\"axis\\\":\\\"Y\\\",\\\"diameter\\\":12,\\\"point\\\":[0,-12,78],\\\"pos\\\":\\\"point\\\",\\\"through\\\":true},\\\"relations\\\":[{\\\"feature_id\\\":\\\"middle_block\\\",\\\"type\\\":\\\"depends_on\\\"}]}\",\"id\":\"hole_mid_top\"},{\"geometry\":\"{\\\"kind\\\":\\\"hole\\\",\\\"operation\\\":\\\"cut\\\",\\\"parameters\\\":{\\\"axis\\\":\\\"Y\\\",\\\"diameter\\\":12,\\\"point\\\":[0,-12,50],\\\"pos\\\":\\\"point\\\",\\\"through\\\":true},\\\"relations\\\":[{\\\"feature_id\\\":\\\"middle_block\\\",\\\"type\\\":\\\"depends_on\\\"}]}\",\"id\":\"hole_mid_mid\"},{\"geometry\":\"{\\\"kind\\\":\\\"hole\\\",\\\"operation\\\":\\\"cut\\\",\\\"parameters\\\":{\\\"axis\\\":\\\"Y\\\",\\\"diameter\\\":12,\\\"point\\\":[0,-12,22],\\\"pos\\\":\\\"point\\\",\\\"through\\\":true},\\\"relations\\\":[{\\\"feature_id\\\":\\\"middle_block\\\",\\\"type\\\":\\\"depends_on\\\"}]}\",\"id\":\"hole_mid_bot\"},{\"geometry\":\"{\\\"kind\\\":\\\"hole\\\",\\\"operation\\\":\\\"cut\\\",\\\"parameters\\\":{\\\"axis\\\":\\\"Y\\\",\\\"diameter\\\":12,\\\"point\\\":[30.5,0,78],\\\"pos\\\":\\\"point\\\",\\\"through\\\":true},\\\"relations\\\":[{\\\"feature_id\\\":\\\"right_block\\\",\\\"type\\\":\\\"depends_on\\\"}]}\",\"id\":\"hole_right_top\"},{\"geometry\":\"{\\\"kind\\\":\\\"hole\\\",\\\"operation\\\":\\\"cut\\\",\\\"parameters\\\":{\\\"axis\\\":\\\"Y\\\",\\\"diameter\\\":12,\\\"point\\\":[30.5,0,50],\\\"pos\\\":\\\"point\\\",\\\"through\\\":true},\\\"relations\\\":[{\\\"feature_id\\\":\\\"right_block\\\",\\\"type\\\":\\\"depends_on\\\"}]}\",\"id\":\"hole_right_mid\"},{\"geometry\":\"{\\\"kind\\\":\\\"hole\\\",\\\"operation\\\":\\\"cut\\\",\\\"parameters\\\":{\\\"axis\\\":\\\"Y\\\",\\\"diameter\\\":12,\\\"point\\\":[30.5,0,22],\\\"pos\\\":\\\"point\\\",\\\"through\\\":true},\\\"relations\\\":[{\\\"feature_id\\\":\\\"right_block\\\",\\\"type\\\":\\\"depends_on\\\"}]}\",\"id\":\"hole_right_bot\"}],\"units\":{\"angle\":\"deg\",\"length\":\"mm\"}}",
+      "open_findings": [
+        {
+          "issue_id": "depth.middle_setback",
+          "view": "right",
+          "item": "中段前表面后退量过小，右视/俯视中未呈现参考轴测图可见的 U 形凹槽台阶",
+          "evidence": "参考轴测图中中段粉红面相对两侧浅灰绿前表面有明显可见的退台，退台深度相对块体厚度可辨；当前计划中段 center.y=-3、width=30，实际后退仅 3 mm，右视与俯视预览中台阶几乎不可见，与参考图可见投影不符。",
+          "severity": "medium",
+          "category": "geometry",
+          "feature_ids": [
+            "middle_block"
+          ],
+          "affected_parameters": [
+            {
+              "feature_id": "middle_block",
+              "path": "parameters.center"
+            },
+            {
+              "feature_id": "middle_block",
+              "path": "parameters.width"
+            }
+          ],
+          "first_seen_round": 1
+        },
+        {
+          "issue_id": "right.depth_setback",
+          "view": "right",
+          "item": "右视 YZ 深度与中段前表面后退量",
+          "evidence": "预览右视格为单一 33×100 mm 矩形，Y 向总深 33 mm，中段前表面仅后退 3 mm（Y 从 +15 到 +12），在右视中几乎不可分辨，未呈现参考轴测图中明显的 U 形凹槽台阶。参考轴测图中中段粉红面相对两侧前表面有明显可见的退台，3 mm 后退量偏小。",
+          "severity": "medium",
+          "category": "geometry",
+          "feature_ids": [
+            "middle_block",
+            "left_block",
+            "right_block"
+          ],
+          "affected_parameters": [
+            {
+              "feature_id": "middle_block",
+              "path": "parameters.center"
+            },
+            {
+              "feature_id": "middle_block",
+              "path": "parameters.width"
+            }
+          ],
+          "first_seen_round": 1
+        },
+        {
+          "issue_id": "top.top_boundaries",
+          "view": "top",
+          "item": "俯视 XY 宽深比例与各段前后边界错层",
+          "evidence": "预览俯视格显示 100×33 mm 轮廓，中段前边界仅比两侧前边界后退 3 mm，错层台阶在俯视中几乎不可见；参考轴测图中中段前表面后退量相对块体厚度有清晰可见的台阶，当前 3 mm 后退与可见投影不符。",
+          "severity": "medium",
+          "category": "geometry",
+          "feature_ids": [
+            "middle_block",
+            "left_block",
+            "right_block"
+          ],
+          "affected_parameters": [
+            {
+              "feature_id": "middle_block",
+              "path": "parameters.center"
+            },
+            {
+              "feature_id": "middle_block",
+              "path": "parameters.width"
+            }
+          ],
+          "first_seen_round": 1
+        }
+      ]
+    }
+  ],
+  "open_multiview_findings": [],
+  "plan": {
+    "schema_version": "1.0",
+    "name": "三段式带孔凹槽块",
+    "source_prompt": "复刻整一个工件（两张参考图：轴测图 + 正交正视图）",
+    "units": {
+      "length": "mm",
+      "angle": "deg"
+    },
+    "coordinate_system": {
+      "type": "global_cartesian",
+      "handedness": "right",
+      "axes": [
+        "X",
+        "Y",
+        "Z"
+      ],
+      "origin": [
+        0,
+        0,
+        0
+      ]
+    },
+    "features": [
+      {
+        "id": "left_block",
+        "kind": "box",
+        "operation": "add",
+        "name": "左段块体",
+        "note": "正视图中左段，宽度按三段比例 0.3906 取值；与中段、右段顶部/底部齐平。",
+        "parameters": {
+          "length": 39,
+          "width": 30,
+          "height": 100,
+          "center": [
+            -30.5,
+            0,
+            50
+          ]
+        },
+        "sources": {
+          "length": {
+            "type": "image_estimate",
+            "evidence": "正视图（image_index 2）本地像素扫描三段宽度比 [0.3906,0.2188,0.3906]，confidence high；取整件 X 宽 100 mm，左段 = 39 mm。"
+          },
+          "width": {
+            "type": "image_estimate",
+            "evidence": "两图均无 Y 向正交投影，depth_height 为 null；按与可见投影一致的简单假设取深度 30 mm（约为高度 100 的 0.3），使轴测图中块体厚度与高度观感相符。"
+          },
+          "height": {
+            "type": "image_estimate",
+            "evidence": "正视图 bbox 宽高比 0.952（confidence high），整件 X 宽 100 mm 时高度约 105 mm，取整 100 mm 作为基准高度。"
+          },
+          "center": {
+            "type": "derived",
+            "note": "由整件 X 宽 100 mm、左段宽 39 mm 推得左段 X 中心 = -50 + 39/2 = -30.5；Y 中心 0 使前表面位于 Y=+15；Z 中心 50 使底面 Z=0、顶面 Z=100。"
+          }
+        }
+      },
+      {
+        "id": "right_block",
+        "kind": "box",
+        "operation": "add",
+        "name": "右段块体",
+        "note": "正视图中右段，与左段等宽，顶部/底部齐平。",
+        "parameters": {
+          "length": 39,
+          "width": 30,
+          "height": 100,
+          "center": [
+            30.5,
+            0,
+            50
+          ]
+        },
+        "sources": {
+          "length": {
+            "type": "image_estimate",
+            "evidence": "正视图三段宽度比右段 0.3906（confidence high），整件 X 宽 100 mm 时右段 = 39 mm，与左段对称。"
+          },
+          "width": {
+            "type": "image_estimate",
+            "evidence": "同左段，取深度 30 mm（无 Y 向正交证据，采用与可见投影一致的简单假设）。"
+          },
+          "height": {
+            "type": "image_estimate",
+            "evidence": "正视图外轮廓等高，取 100 mm，与左段一致。"
+          },
+          "center": {
+            "type": "derived",
+            "note": "右段 X 中心 = 50 - 39/2 = 30.5；Y 中心 0（前表面 Y=+15）；Z 中心 50。"
+          }
+        }
+      },
+      {
+        "id": "middle_block",
+        "kind": "box",
+        "operation": "add",
+        "name": "中段块体（前表面后退）",
+        "note": "正视图中段，宽度按比例 0.2188 取值（约为两侧段的一半）；前表面沿 -Y 后退 12 mm，形成参考轴测图中清晰可见的 U 形凹槽台阶。后退量核算：两侧前表面 Yf=+15，目标后退 r=12，中段厚度 Dm=30，则 center.y = Yf - r - Dm/2 = 15 - 12 - 15 = -12；实际 actual_setback = Yf - (center.y + width/2) = 15 - (-12 + 15) = 12 mm，与 r 一致。中段后表面 Y=-27，与两侧后表面 Y=-15 不齐平，中段向后延伸，符合轴测图中中段为独立实体、两侧块体前凸的观感。",
+        "parameters": {
+          "length": 22,
+          "width": 30,
+          "height": 100,
+          "center": [
+            0,
+            -12,
+            50
+          ]
+        },
+        "sources": {
+          "length": {
+            "type": "image_estimate",
+            "evidence": "正视图三段宽度比中段 0.2188（confidence high），整件 X 宽 100 mm 时中段 = 22 mm，约为两侧段 39 mm 的一半，符合识别结论。"
+          },
+          "width": {
+            "type": "image_estimate",
+            "evidence": "取与两侧段相同厚度 30 mm，使中段仍为实体块，仅前表面后移；无 Y 向正交证据，采用与可见投影一致的简单假设。"
+          },
+          "height": {
+            "type": "image_estimate",
+            "evidence": "正视图三段等高、轴测图顶面连续，取 100 mm。"
+          },
+          "center": {
+            "type": "derived",
+            "note": "X 中心 0（中段居中）；Y 中心由后退公式 center.y = Yf - r - Dm/2 = 15 - 12 - 15 = -12 推得，实际后退量 12 mm（约为块体厚度 30 mm 的 0.4，与轴测图中可见台阶比例相符）；Z 中心 50。"
+          }
+        },
+        "relations": [
+          {
+            "type": "depends_on",
+            "feature_id": "left_block"
+          },
+          {
+            "type": "depends_on",
+            "feature_id": "right_block"
+          }
+        ]
+      },
+      {
+        "id": "hole_left_top",
+        "kind": "hole",
+        "operation": "cut",
+        "name": "左段上孔",
+        "note": "左段三排孔之上排，沿 Y 贯穿。",
+        "parameters": {
+          "diameter": 12,
+          "through": true,
+          "pos": "point",
+          "point": [
+            -30.5,
+            0,
+            78
+          ],
+          "axis": "Y"
+        },
+        "sources": {
+          "diameter": {
+            "type": "image_estimate",
+            "evidence": "正视图左段孔径约为该段宽度（39 mm）的 0.3，取 12 mm；三列孔径视觉相近，统一取值。"
+          },
+          "through": {
+            "type": "user",
+            "note": "识别结论：孔为通孔（正视图孔内可见内壁着色与背景透出）。"
+          },
+          "pos": {
+            "type": "derived",
+            "note": "按 point 定位，位于左段宽度中部。"
+          },
+          "point": {
+            "type": "image_estimate",
+            "evidence": "正视图左段孔列位于该段宽度中部（X=-30.5）；三排孔沿 Z 等距，上排约在高度 0.78 处，取 Z=78。"
+          },
+          "axis": {
+            "type": "derived",
+            "note": "孔轴沿 Y，与板面法向一致，贯穿深度方向。"
+          }
+        },
+        "relations": [
+          {
+            "type": "depends_on",
+            "feature_id": "left_block"
+          }
+        ]
+      },
+      {
+        "id": "hole_left_mid",
+        "kind": "hole",
+        "operation": "cut",
+        "name": "左段中孔",
+        "note": "左段三排孔之中排。",
+        "parameters": {
+          "diameter": 12,
+          "through": true,
+          "pos": "point",
+          "point": [
+            -30.5,
+            0,
+            50
+          ],
+          "axis": "Y"
+        },
+        "sources": {
+          "diameter": {
+            "type": "image_estimate",
+            "evidence": "同左段上孔，取 12 mm。"
+          },
+          "through": {
+            "type": "user",
+            "note": "通孔。"
+          },
+          "pos": {
+            "type": "derived",
+            "note": "按 point 定位。"
+          },
+          "point": {
+            "type": "image_estimate",
+            "evidence": "正视图左段中排孔位于高度中部，取 Z=50；X=-30.5 为左段宽度中部。"
+          },
+          "axis": {
+            "type": "derived",
+            "note": "沿 Y 贯穿。"
+          }
+        },
+        "relations": [
+          {
+            "type": "depends_on",
+            "feature_id": "left_block"
+          }
+        ]
+      },
+      {
+        "id": "hole_left_bot",
+        "kind": "hole",
+        "operation": "cut",
+        "name": "左段下孔",
+        "note": "左段三排孔之下排。",
+        "parameters": {
+          "diameter": 12,
+          "through": true,
+          "pos": "point",
+          "point": [
+            -30.5,
+            0,
+            22
+          ],
+          "axis": "Y"
+        },
+        "sources": {
+          "diameter": {
+            "type": "image_estimate",
+            "evidence": "同左段上孔，取 12 mm。"
+          },
+          "through": {
+            "type": "user",
+            "note": "通孔。"
+          },
+          "pos": {
+            "type": "derived",
+            "note": "按 point 定位。"
+          },
+          "point": {
+            "type": "image_estimate",
+            "evidence": "正视图左段下排孔约在高度 0.22 处，取 Z=22；X=-30.5。"
+          },
+          "axis": {
+            "type": "derived",
+            "note": "沿 Y 贯穿。"
+          }
+        },
+        "relations": [
+          {
+            "type": "depends_on",
+            "feature_id": "left_block"
+          }
+        ]
+      },
+      {
+        "id": "hole_mid_top",
+        "kind": "hole",
+        "operation": "cut",
+        "name": "中段上孔",
+        "note": "中段三排孔之上排，与两侧孔同高，沿 Y 贯穿。",
+        "parameters": {
+          "diameter": 12,
+          "through": true,
+          "pos": "point",
+          "point": [
+            0,
+            -12,
+            78
+          ],
+          "axis": "Y"
+        },
+        "sources": {
+          "diameter": {
+            "type": "image_estimate",
+            "evidence": "正视图三列孔径相近，取 12 mm。"
+          },
+          "through": {
+            "type": "user",
+            "note": "通孔。"
+          },
+          "pos": {
+            "type": "derived",
+            "note": "按 point 定位，位于中段宽度中部。"
+          },
+          "point": {
+            "type": "image_estimate",
+            "evidence": "正视图与轴测图中段孔位于中段宽度中部（X=0），与两侧孔同高（Z=78）；Y 取中段中心 -12 以贯穿中段实体。"
+          },
+          "axis": {
+            "type": "derived",
+            "note": "沿 Y 贯穿。"
+          }
+        },
+        "relations": [
+          {
+            "type": "depends_on",
+            "feature_id": "middle_block"
+          }
+        ]
+      },
+      {
+        "id": "hole_mid_mid",
+        "kind": "hole",
+        "operation": "cut",
+        "name": "中段中孔",
+        "note": "中段三排孔之中排。",
+        "parameters": {
+          "diameter": 12,
+          "through": true,
+          "pos": "point",
+          "point": [
+            0,
+            -12,
+            50
+          ],
+          "axis": "Y"
+        },
+        "sources": {
+          "diameter": {
+            "type": "image_estimate",
+            "evidence": "同中段上孔，取 12 mm。"
+          },
+          "through": {
+            "type": "user",
+            "note": "通孔。"
+          },
+          "pos": {
+            "type": "derived",
+            "note": "按 point 定位。"
+          },
+          "point": {
+            "type": "image_estimate",
+            "evidence": "正视图与轴测图中段中排孔位于高度中部（Z=50），X=0；Y=-12 为中段中心。"
+          },
+          "axis": {
+            "type": "derived",
+            "note": "沿 Y 贯穿。"
+          }
+        },
+        "relations": [
+          {
+            "type": "depends_on",
+            "feature_id": "middle_block"
+          }
+        ]
+      },
+      {
+        "id": "hole_mid_bot",
+        "kind": "hole",
+        "operation": "cut",
+        "name": "中段下孔",
+        "note": "中段三排孔之下排。",
+        "parameters": {
+          "diameter": 12,
+          "through": true,
+          "pos": "point",
+          "point": [
+            0,
+            -12,
+            22
+          ],
+          "axis": "Y"
+        },
+        "sources": {
+          "diameter": {
+            "type": "image_estimate",
+            "evidence": "同中段上孔，取 12 mm。"
+          },
+          "through": {
+            "type": "user",
+            "note": "通孔。"
+          },
+          "pos": {
+            "type": "derived",
+            "note": "按 point 定位。"
+          },
+          "point": {
+            "type": "image_estimate",
+            "evidence": "正视图与轴测图中段下排孔约在高度 0.22 处（Z=22），X=0；Y=-12 为中段中心。"
+          },
+          "axis": {
+            "type": "derived",
+            "note": "沿 Y 贯穿。"
+          }
+        },
+        "relations": [
+          {
+            "type": "depends_on",
+            "feature_id": "middle_block"
+          }
+        ]
+      },
+      {
+        "id": "hole_right_top",
+        "kind": "hole",
+        "operation": "cut",
+        "name": "右段上孔",
+        "note": "右段三排孔之上排，与左段同高。",
+        "parameters": {
+          "diameter": 12,
+          "through": true,
+          "pos": "point",
+          "point": [
+            30.5,
+            0,
+            78
+          ],
+          "axis": "Y"
+        },
+        "sources": {
+          "diameter": {
+            "type": "image_estimate",
+            "evidence": "同左段上孔，取 12 mm。"
+          },
+          "through": {
+            "type": "user",
+            "note": "通孔。"
+          },
+          "pos": {
+            "type": "derived",
+            "note": "按 point 定位，位于右段宽度中部。"
+          },
+          "point": {
+            "type": "image_estimate",
+            "evidence": "正视图右段孔列位于该段宽度中部（X=30.5），上排 Z=78。"
+          },
+          "axis": {
+            "type": "derived",
+            "note": "沿 Y 贯穿。"
+          }
+        },
+        "relations": [
+          {
+            "type": "depends_on",
+            "feature_id": "right_block"
+          }
+        ]
+      },
+      {
+        "id": "hole_right_mid",
+        "kind": "hole",
+        "operation": "cut",
+        "name": "右段中孔",
+        "note": "右段三排孔之中排。",
+        "parameters": {
+          "diameter": 12,
+          "through": true,
+          "pos": "point",
+          "point": [
+            30.5,
+            0,
+            50
+          ],
+          "axis": "Y"
+        },
+        "sources": {
+          "diameter": {
+            "type": "image_estimate",
+            "evidence": "同左段上孔，取 12 mm。"
+          },
+          "through": {
+            "type": "user",
+            "note": "通孔。"
+          },
+          "pos": {
+            "type": "derived",
+            "note": "按 point 定位。"
+          },
+          "point": {
+            "type": "image_estimate",
+            "evidence": "正视图右段中排孔位于高度中部（Z=50），X=30.5。"
+          },
+          "axis": {
+            "type": "derived",
+            "note": "沿 Y 贯穿。"
+          }
+        },
+        "relations": [
+          {
+            "type": "depends_on",
+            "feature_id": "right_block"
+          }
+        ]
+      },
+      {
+        "id": "hole_right_bot",
+        "kind": "hole",
+        "operation": "cut",
+        "name": "右段下孔",
+        "note": "右段三排孔之下排。",
+        "parameters": {
+          "diameter": 12,
+          "through": true,
+          "pos": "point",
+          "point": [
+            30.5,
+            0,
+            22
+          ],
+          "axis": "Y"
+        },
+        "sources": {
+          "diameter": {
+            "type": "image_estimate",
+            "evidence": "同左段上孔，取 12 mm。"
+          },
+          "through": {
+            "type": "user",
+            "note": "通孔。"
+          },
+          "pos": {
+            "type": "derived",
+            "note": "按 point 定位。"
+          },
+          "point": {
+            "type": "image_estimate",
+            "evidence": "正视图右段下排孔约在高度 0.22 处（Z=22），X=30.5。"
+          },
+          "axis": {
+            "type": "derived",
+            "note": "沿 Y 贯穿。"
+          }
+        },
+        "relations": [
+          {
+            "type": "depends_on",
+            "feature_id": "right_block"
+          }
+        ]
+      }
+    ]
+  },
+  "validation": {
+    "valid": true,
+    "state": "valid",
+    "errors": [],
+    "confirmations": [],
+    "support": [
+      {
+        "feature_id": "left_block",
+        "kind": "box",
+        "status": "exact",
+        "reason": "矩形草图加凸台；当前 CATIA 映射仅支持 Z 轴拉伸。"
+      },
+      {
+        "feature_id": "right_block",
+        "kind": "box",
+        "status": "exact",
+        "reason": "矩形草图加凸台；当前 CATIA 映射仅支持 Z 轴拉伸。"
+      },
+      {
+        "feature_id": "middle_block",
+        "kind": "box",
+        "status": "exact",
+        "reason": "矩形草图加凸台；当前 CATIA 映射仅支持 Z 轴拉伸。"
+      },
+      {
+        "feature_id": "hole_left_top",
+        "kind": "hole",
+        "status": "exact",
+        "reason": "圆形凹槽；through=true 时按当前零件包围盒生成贯穿深度。"
+      },
+      {
+        "feature_id": "hole_left_mid",
+        "kind": "hole",
+        "status": "exact",
+        "reason": "圆形凹槽；through=true 时按当前零件包围盒生成贯穿深度。"
+      },
+      {
+        "feature_id": "hole_left_bot",
+        "kind": "hole",
+        "status": "exact",
+        "reason": "圆形凹槽；through=true 时按当前零件包围盒生成贯穿深度。"
+      },
+      {
+        "feature_id": "hole_mid_top",
+        "kind": "hole",
+        "status": "exact",
+        "reason": "圆形凹槽；through=true 时按当前零件包围盒生成贯穿深度。"
+      },
+      {
+        "feature_id": "hole_mid_mid",
+        "kind": "hole",
+        "status": "exact",
+        "reason": "圆形凹槽；through=true 时按当前零件包围盒生成贯穿深度。"
+      },
+      {
+        "feature_id": "hole_mid_bot",
+        "kind": "hole",
+        "status": "exact",
+        "reason": "圆形凹槽；through=true 时按当前零件包围盒生成贯穿深度。"
+      },
+      {
+        "feature_id": "hole_right_top",
+        "kind": "hole",
+        "status": "exact",
+        "reason": "圆形凹槽；through=true 时按当前零件包围盒生成贯穿深度。"
+      },
+      {
+        "feature_id": "hole_right_mid",
+        "kind": "hole",
+        "status": "exact",
+        "reason": "圆形凹槽；through=true 时按当前零件包围盒生成贯穿深度。"
+      },
+      {
+        "feature_id": "hole_right_bot",
+        "kind": "hole",
+        "status": "exact",
+        "reason": "圆形凹槽；through=true 时按当前零件包围盒生成贯穿深度。"
+      }
+    ],
+    "warnings": [],
+    "schema_version": "1.0"
+  },
+  "preview": {
+    "state": "previewed",
+    "validation": {
+      "valid": true,
+      "state": "valid",
+      "errors": [],
+      "confirmations": [],
+      "support": [
+        {
+          "feature_id": "left_block",
+          "kind": "box",
+          "status": "exact",
+          "reason": "矩形草图加凸台；当前 CATIA 映射仅支持 Z 轴拉伸。"
+        },
+        {
+          "feature_id": "right_block",
+          "kind": "box",
+          "status": "exact",
+          "reason": "矩形草图加凸台；当前 CATIA 映射仅支持 Z 轴拉伸。"
+        },
+        {
+          "feature_id": "middle_block",
+          "kind": "box",
+          "status": "exact",
+          "reason": "矩形草图加凸台；当前 CATIA 映射仅支持 Z 轴拉伸。"
+        },
+        {
+          "feature_id": "hole_left_top",
+          "kind": "hole",
+          "status": "exact",
+          "reason": "圆形凹槽；through=true 时按当前零件包围盒生成贯穿深度。"
+        },
+        {
+          "feature_id": "hole_left_mid",
+          "kind": "hole",
+          "status": "exact",
+          "reason": "圆形凹槽；through=true 时按当前零件包围盒生成贯穿深度。"
+        },
+        {
+          "feature_id": "hole_left_bot",
+          "kind": "hole",
+          "status": "exact",
+          "reason": "圆形凹槽；through=true 时按当前零件包围盒生成贯穿深度。"
+        },
+        {
+          "feature_id": "hole_mid_top",
+          "kind": "hole",
+          "status": "exact",
+          "reason": "圆形凹槽；through=true 时按当前零件包围盒生成贯穿深度。"
+        },
+        {
+          "feature_id": "hole_mid_mid",
+          "kind": "hole",
+          "status": "exact",
+          "reason": "圆形凹槽；through=true 时按当前零件包围盒生成贯穿深度。"
+        },
+        {
+          "feature_id": "hole_mid_bot",
+          "kind": "hole",
+          "status": "exact",
+          "reason": "圆形凹槽；through=true 时按当前零件包围盒生成贯穿深度。"
+        },
+        {
+          "feature_id": "hole_right_top",
+          "kind": "hole",
+          "status": "exact",
+          "reason": "圆形凹槽；through=true 时按当前零件包围盒生成贯穿深度。"
+        },
+        {
+          "feature_id": "hole_right_mid",
+          "kind": "hole",
+          "status": "exact",
+          "reason": "圆形凹槽；through=true 时按当前零件包围盒生成贯穿深度。"
+        },
+        {
+          "feature_id": "hole_right_bot",
+          "kind": "hole",
+          "status": "exact",
+          "reason": "圆形凹槽；through=true 时按当前零件包围盒生成贯穿深度。"
+        }
+      ],
+      "warnings": [],
+      "schema_version": "1.0"
+    },
+    "catia_executed": false,
+    "dimensions": {
+      "unit": "mm",
+      "bbox": [
+        -50.0,
+        -27.0,
+        0.0,
+        50.0,
+        15.0,
+        100.0
+      ],
+      "size": [
+        100.0,
+        42.0,
+        100.0
+      ],
+      "volume_mm3": 269811.3465792417,
+      "surface_area_mm2": 44937.13981231358,
+      "triangles": 1886,
+      "feature_count": 12
+    },
+    "catia_operations": [
+      {
+        "index": 1,
+        "kind": "rect_pad",
+        "plane": "XY",
+        "center": [
+          -30.5,
+          0.0,
+          0.0
+        ],
+        "profile": [],
+        "dimensions": {
+          "l": 39.0,
+          "w": 30.0,
+          "r": 0.0,
+          "h": 100.0,
+          "depth": 0.0
+        },
+        "name": "左段块体",
+        "note": "长方体 39 × 30 × 100 mm"
+      },
+      {
+        "index": 2,
+        "kind": "rect_pad",
+        "plane": "XY",
+        "center": [
+          30.5,
+          0.0,
+          0.0
+        ],
+        "profile": [],
+        "dimensions": {
+          "l": 39.0,
+          "w": 30.0,
+          "r": 0.0,
+          "h": 100.0,
+          "depth": 0.0
+        },
+        "name": "右段块体",
+        "note": "长方体 39 × 30 × 100 mm"
+      },
+      {
+        "index": 3,
+        "kind": "rect_pad",
+        "plane": "XY",
+        "center": [
+          0.0,
+          -12.0,
+          0.0
+        ],
+        "profile": [],
+        "dimensions": {
+          "l": 22.0,
+          "w": 30.0,
+          "r": 0.0,
+          "h": 100.0,
+          "depth": 0.0
+        },
+        "name": "中段块体（前表面后退）",
+        "note": "长方体 22 × 30 × 100 mm"
+      },
+      {
+        "index": 4,
+        "kind": "circle_cut",
+        "plane": "Y",
+        "center": [
+          78.0,
+          -30.5,
+          17.0
+        ],
+        "profile": [],
+        "dimensions": {
+          "l": 0.0,
+          "w": 0.0,
+          "r": 6.0,
+          "h": 0.0,
+          "depth": 46.0
+        },
+        "name": "左段上孔",
+        "note": "⌀12 通孔 @(-30.5, 78)"
+      },
+      {
+        "index": 5,
+        "kind": "circle_cut",
+        "plane": "Y",
+        "center": [
+          50.0,
+          -30.5,
+          17.0
+        ],
+        "profile": [],
+        "dimensions": {
+          "l": 0.0,
+          "w": 0.0,
+          "r": 6.0,
+          "h": 0.0,
+          "depth": 46.0
+        },
+        "name": "左段中孔",
+        "note": "⌀12 通孔 @(-30.5, 50)"
+      },
+      {
+        "index": 6,
+        "kind": "circle_cut",
+        "plane": "Y",
+        "center": [
+          22.0,
+          -30.5,
+          17.0
+        ],
+        "profile": [],
+        "dimensions": {
+          "l": 0.0,
+          "w": 0.0,
+          "r": 6.0,
+          "h": 0.0,
+          "depth": 46.0
+        },
+        "name": "左段下孔",
+        "note": "⌀12 通孔 @(-30.5, 22)"
+      },
+      {
+        "index": 7,
+        "kind": "circle_cut",
+        "plane": "Y",
+        "center": [
+          78.0,
+          0.0,
+          17.0
+        ],
+        "profile": [],
+        "dimensions": {
+          "l": 0.0,
+          "w": 0.0,
+          "r": 6.0,
+          "h": 0.0,
+          "depth": 46.0
+        },
+        "name": "中段上孔",
+        "note": "⌀12 通孔 @(0, 78)"
+      },
+      {
+        "index": 8,
+        "kind": "circle_cut",
+        "plane": "Y",
+        "center": [
+          50.0,
+          0.0,
+          17.0
+        ],
+        "profile": [],
+        "dimensions": {
+          "l": 0.0,
+          "w": 0.0,
+          "r": 6.0,
+          "h": 0.0,
+          "depth": 46.0
+        },
+        "name": "中段中孔",
+        "note": "⌀12 通孔 @(0, 50)"
+      },
+      {
+        "index": 9,
+        "kind": "circle_cut",
+        "plane": "Y",
+        "center": [
+          22.0,
+          0.0,
+          17.0
+        ],
+        "profile": [],
+        "dimensions": {
+          "l": 0.0,
+          "w": 0.0,
+          "r": 6.0,
+          "h": 0.0,
+          "depth": 46.0
+        },
+        "name": "中段下孔",
+        "note": "⌀12 通孔 @(0, 22)"
+      },
+      {
+        "index": 10,
+        "kind": "circle_cut",
+        "plane": "Y",
+        "center": [
+          78.0,
+          30.5,
+          17.0
+        ],
+        "profile": [],
+        "dimensions": {
+          "l": 0.0,
+          "w": 0.0,
+          "r": 6.0,
+          "h": 0.0,
+          "depth": 46.0
+        },
+        "name": "右段上孔",
+        "note": "⌀12 通孔 @(30.5, 78)"
+      },
+      {
+        "index": 11,
+        "kind": "circle_cut",
+        "plane": "Y",
+        "center": [
+          50.0,
+          30.5,
+          17.0
+        ],
+        "profile": [],
+        "dimensions": {
+          "l": 0.0,
+          "w": 0.0,
+          "r": 6.0,
+          "h": 0.0,
+          "depth": 46.0
+        },
+        "name": "右段中孔",
+        "note": "⌀12 通孔 @(30.5, 50)"
+      },
+      {
+        "index": 12,
+        "kind": "circle_cut",
+        "plane": "Y",
+        "center": [
+          22.0,
+          30.5,
+          17.0
+        ],
+        "profile": [],
+        "dimensions": {
+          "l": 0.0,
+          "w": 0.0,
+          "r": 6.0,
+          "h": 0.0,
+          "depth": 46.0
+        },
+        "name": "右段下孔",
+        "note": "⌀12 通孔 @(30.5, 22)"
+      }
+    ],
+    "warnings": [],
+    "feature_manifest": {
+      "left_block": {
+        "kind": "box",
+        "operation": "add",
+        "name": "左段块体",
+        "parameters": {
+          "length": 39,
+          "width": 30,
+          "height": 100,
+          "center": [
+            -30.5,
+            0,
+            50
+          ]
+        },
+        "sources": {
+          "length": {
+            "type": "image_estimate",
+            "evidence": "正视图（image_index 2）本地像素扫描三段宽度比 [0.3906,0.2188,0.3906]，confidence high；取整件 X 宽 100 mm，左段 = 39 mm。"
+          },
+          "width": {
+            "type": "image_estimate",
+            "evidence": "两图均无 Y 向正交投影，depth_height 为 null；按与可见投影一致的简单假设取深度 30 mm（约为高度 100 的 0.3），使轴测图中块体厚度与高度观感相符。"
+          },
+          "height": {
+            "type": "image_estimate",
+            "evidence": "正视图 bbox 宽高比 0.952（confidence high），整件 X 宽 100 mm 时高度约 105 mm，取整 100 mm 作为基准高度。"
+          },
+          "center": {
+            "type": "derived",
+            "note": "由整件 X 宽 100 mm、左段宽 39 mm 推得左段 X 中心 = -50 + 39/2 = -30.5；Y 中心 0 使前表面位于 Y=+15；Z 中心 50 使底面 Z=0、顶面 Z=100。"
+          }
+        },
+        "relations": []
+      },
+      "right_block": {
+        "kind": "box",
+        "operation": "add",
+        "name": "右段块体",
+        "parameters": {
+          "length": 39,
+          "width": 30,
+          "height": 100,
+          "center": [
+            30.5,
+            0,
+            50
+          ]
+        },
+        "sources": {
+          "length": {
+            "type": "image_estimate",
+            "evidence": "正视图三段宽度比右段 0.3906（confidence high），整件 X 宽 100 mm 时右段 = 39 mm，与左段对称。"
+          },
+          "width": {
+            "type": "image_estimate",
+            "evidence": "同左段，取深度 30 mm（无 Y 向正交证据，采用与可见投影一致的简单假设）。"
+          },
+          "height": {
+            "type": "image_estimate",
+            "evidence": "正视图外轮廓等高，取 100 mm，与左段一致。"
+          },
+          "center": {
+            "type": "derived",
+            "note": "右段 X 中心 = 50 - 39/2 = 30.5；Y 中心 0（前表面 Y=+15）；Z 中心 50。"
+          }
+        },
+        "relations": []
+      },
+      "middle_block": {
+        "kind": "box",
+        "operation": "add",
+        "name": "中段块体（前表面后退）",
+        "parameters": {
+          "length": 22,
+          "width": 30,
+          "height": 100,
+          "center": [
+            0,
+            -12,
+            50
+          ]
+        },
+        "sources": {
+          "length": {
+            "type": "image_estimate",
+            "evidence": "正视图三段宽度比中段 0.2188（confidence high），整件 X 宽 100 mm 时中段 = 22 mm，约为两侧段 39 mm 的一半，符合识别结论。"
+          },
+          "width": {
+            "type": "image_estimate",
+            "evidence": "取与两侧段相同厚度 30 mm，使中段仍为实体块，仅前表面后移；无 Y 向正交证据，采用与可见投影一致的简单假设。"
+          },
+          "height": {
+            "type": "image_estimate",
+            "evidence": "正视图三段等高、轴测图顶面连续，取 100 mm。"
+          },
+          "center": {
+            "type": "derived",
+            "note": "X 中心 0（中段居中）；Y 中心由后退公式 center.y = Yf - r - Dm/2 = 15 - 12 - 15 = -12 推得，实际后退量 12 mm（约为块体厚度 30 mm 的 0.4，与轴测图中可见台阶比例相符）；Z 中心 50。"
+          }
+        },
+        "relations": [
+          {
+            "type": "depends_on",
+            "feature_id": "left_block"
+          },
+          {
+            "type": "depends_on",
+            "feature_id": "right_block"
+          }
+        ]
+      },
+      "hole_left_top": {
+        "kind": "hole",
+        "operation": "cut",
+        "name": "左段上孔",
+        "parameters": {
+          "diameter": 12,
+          "through": true,
+          "pos": "point",
+          "point": [
+            -30.5,
+            0,
+            78
+          ],
+          "axis": "Y"
+        },
+        "sources": {
+          "diameter": {
+            "type": "image_estimate",
+            "evidence": "正视图左段孔径约为该段宽度（39 mm）的 0.3，取 12 mm；三列孔径视觉相近，统一取值。"
+          },
+          "through": {
+            "type": "user",
+            "note": "识别结论：孔为通孔（正视图孔内可见内壁着色与背景透出）。"
+          },
+          "pos": {
+            "type": "derived",
+            "note": "按 point 定位，位于左段宽度中部。"
+          },
+          "point": {
+            "type": "image_estimate",
+            "evidence": "正视图左段孔列位于该段宽度中部（X=-30.5）；三排孔沿 Z 等距，上排约在高度 0.78 处，取 Z=78。"
+          },
+          "axis": {
+            "type": "derived",
+            "note": "孔轴沿 Y，与板面法向一致，贯穿深度方向。"
+          }
+        },
+        "relations": [
+          {
+            "type": "depends_on",
+            "feature_id": "left_block"
+          }
+        ]
+      },
+      "hole_left_mid": {
+        "kind": "hole",
+        "operation": "cut",
+        "name": "左段中孔",
+        "parameters": {
+          "diameter": 12,
+          "through": true,
+          "pos": "point",
+          "point": [
+            -30.5,
+            0,
+            50
+          ],
+          "axis": "Y"
+        },
+        "sources": {
+          "diameter": {
+            "type": "image_estimate",
+            "evidence": "同左段上孔，取 12 mm。"
+          },
+          "through": {
+            "type": "user",
+            "note": "通孔。"
+          },
+          "pos": {
+            "type": "derived",
+            "note": "按 point 定位。"
+          },
+          "point": {
+            "type": "image_estimate",
+            "evidence": "正视图左段中排孔位于高度中部，取 Z=50；X=-30.5 为左段宽度中部。"
+          },
+          "axis": {
+            "type": "derived",
+            "note": "沿 Y 贯穿。"
+          }
+        },
+        "relations": [
+          {
+            "type": "depends_on",
+            "feature_id": "left_block"
+          }
+        ]
+      },
+      "hole_left_bot": {
+        "kind": "hole",
+        "operation": "cut",
+        "name": "左段下孔",
+        "parameters": {
+          "diameter": 12,
+          "through": true,
+          "pos": "point",
+          "point": [
+            -30.5,
+            0,
+            22
+          ],
+          "axis": "Y"
+        },
+        "sources": {
+          "diameter": {
+            "type": "image_estimate",
+            "evidence": "同左段上孔，取 12 mm。"
+          },
+          "through": {
+            "type": "user",
+            "note": "通孔。"
+          },
+          "pos": {
+            "type": "derived",
+            "note": "按 point 定位。"
+          },
+          "point": {
+            "type": "image_estimate",
+            "evidence": "正视图左段下排孔约在高度 0.22 处，取 Z=22；X=-30.5。"
+          },
+          "axis": {
+            "type": "derived",
+            "note": "沿 Y 贯穿。"
+          }
+        },
+        "relations": [
+          {
+            "type": "depends_on",
+            "feature_id": "left_block"
+          }
+        ]
+      },
+      "hole_mid_top": {
+        "kind": "hole",
+        "operation": "cut",
+        "name": "中段上孔",
+        "parameters": {
+          "diameter": 12,
+          "through": true,
+          "pos": "point",
+          "point": [
+            0,
+            -12,
+            78
+          ],
+          "axis": "Y"
+        },
+        "sources": {
+          "diameter": {
+            "type": "image_estimate",
+            "evidence": "正视图三列孔径相近，取 12 mm。"
+          },
+          "through": {
+            "type": "user",
+            "note": "通孔。"
+          },
+          "pos": {
+            "type": "derived",
+            "note": "按 point 定位，位于中段宽度中部。"
+          },
+          "point": {
+            "type": "image_estimate",
+            "evidence": "正视图与轴测图中段孔位于中段宽度中部（X=0），与两侧孔同高（Z=78）；Y 取中段中心 -12 以贯穿中段实体。"
+          },
+          "axis": {
+            "type": "derived",
+            "note": "沿 Y 贯穿。"
+          }
+        },
+        "relations": [
+          {
+            "type": "depends_on",
+            "feature_id": "middle_block"
+          }
+        ]
+      },
+      "hole_mid_mid": {
+        "kind": "hole",
+        "operation": "cut",
+        "name": "中段中孔",
+        "parameters": {
+          "diameter": 12,
+          "through": true,
+          "pos": "point",
+          "point": [
+            0,
+            -12,
+            50
+          ],
+          "axis": "Y"
+        },
+        "sources": {
+          "diameter": {
+            "type": "image_estimate",
+            "evidence": "同中段上孔，取 12 mm。"
+          },
+          "through": {
+            "type": "user",
+            "note": "通孔。"
+          },
+          "pos": {
+            "type": "derived",
+            "note": "按 point 定位。"
+          },
+          "point": {
+            "type": "image_estimate",
+            "evidence": "正视图与轴测图中段中排孔位于高度中部（Z=50），X=0；Y=-12 为中段中心。"
+          },
+          "axis": {
+            "type": "derived",
+            "note": "沿 Y 贯穿。"
+          }
+        },
+        "relations": [
+          {
+            "type": "depends_on",
+            "feature_id": "middle_block"
+          }
+        ]
+      },
+      "hole_mid_bot": {
+        "kind": "hole",
+        "operation": "cut",
+        "name": "中段下孔",
+        "parameters": {
+          "diameter": 12,
+          "through": true,
+          "pos": "point",
+          "point": [
+            0,
+            -12,
+            22
+          ],
+          "axis": "Y"
+        },
+        "sources": {
+          "diameter": {
+            "type": "image_estimate",
+            "evidence": "同中段上孔，取 12 mm。"
+          },
+          "through": {
+            "type": "user",
+            "note": "通孔。"
+          },
+          "pos": {
+            "type": "derived",
+            "note": "按 point 定位。"
+          },
+          "point": {
+            "type": "image_estimate",
+            "evidence": "正视图与轴测图中段下排孔约在高度 0.22 处（Z=22），X=0；Y=-12 为中段中心。"
+          },
+          "axis": {
+            "type": "derived",
+            "note": "沿 Y 贯穿。"
+          }
+        },
+        "relations": [
+          {
+            "type": "depends_on",
+            "feature_id": "middle_block"
+          }
+        ]
+      },
+      "hole_right_top": {
+        "kind": "hole",
+        "operation": "cut",
+        "name": "右段上孔",
+        "parameters": {
+          "diameter": 12,
+          "through": true,
+          "pos": "point",
+          "point": [
+            30.5,
+            0,
+            78
+          ],
+          "axis": "Y"
+        },
+        "sources": {
+          "diameter": {
+            "type": "image_estimate",
+            "evidence": "同左段上孔，取 12 mm。"
+          },
+          "through": {
+            "type": "user",
+            "note": "通孔。"
+          },
+          "pos": {
+            "type": "derived",
+            "note": "按 point 定位，位于右段宽度中部。"
+          },
+          "point": {
+            "type": "image_estimate",
+            "evidence": "正视图右段孔列位于该段宽度中部（X=30.5），上排 Z=78。"
+          },
+          "axis": {
+            "type": "derived",
+            "note": "沿 Y 贯穿。"
+          }
+        },
+        "relations": [
+          {
+            "type": "depends_on",
+            "feature_id": "right_block"
+          }
+        ]
+      },
+      "hole_right_mid": {
+        "kind": "hole",
+        "operation": "cut",
+        "name": "右段中孔",
+        "parameters": {
+          "diameter": 12,
+          "through": true,
+          "pos": "point",
+          "point": [
+            30.5,
+            0,
+            50
+          ],
+          "axis": "Y"
+        },
+        "sources": {
+          "diameter": {
+            "type": "image_estimate",
+            "evidence": "同左段上孔，取 12 mm。"
+          },
+          "through": {
+            "type": "user",
+            "note": "通孔。"
+          },
+          "pos": {
+            "type": "derived",
+            "note": "按 point 定位。"
+          },
+          "point": {
+            "type": "image_estimate",
+            "evidence": "正视图右段中排孔位于高度中部（Z=50），X=30.5。"
+          },
+          "axis": {
+            "type": "derived",
+            "note": "沿 Y 贯穿。"
+          }
+        },
+        "relations": [
+          {
+            "type": "depends_on",
+            "feature_id": "right_block"
+          }
+        ]
+      },
+      "hole_right_bot": {
+        "kind": "hole",
+        "operation": "cut",
+        "name": "右段下孔",
+        "parameters": {
+          "diameter": 12,
+          "through": true,
+          "pos": "point",
+          "point": [
+            30.5,
+            0,
+            22
+          ],
+          "axis": "Y"
+        },
+        "sources": {
+          "diameter": {
+            "type": "image_estimate",
+            "evidence": "同左段上孔，取 12 mm。"
+          },
+          "through": {
+            "type": "user",
+            "note": "通孔。"
+          },
+          "pos": {
+            "type": "derived",
+            "note": "按 point 定位。"
+          },
+          "point": {
+            "type": "image_estimate",
+            "evidence": "正视图右段下排孔约在高度 0.22 处（Z=22），X=30.5。"
+          },
+          "axis": {
+            "type": "derived",
+            "note": "沿 Y 贯穿。"
+          }
+        },
+        "relations": [
+          {
+            "type": "depends_on",
+            "feature_id": "right_block"
+          }
+        ]
+      }
+    },
+    "build_log": [
+      "[基准] 长方体 39 × 30 × 100 mm → 8 面",
+      "[并排] 长方体 39 × 30 × 100 mm —— 与零件不相交, 直接合并 → 16 面",
+      "[合并] 长方体 22 × 30 × 100 mm → 33 面",
+      "[切除] ⌀12 通孔 @(-30.5, 78) → 103 面",
+      "[切除] ⌀12 通孔 @(-30.5, 50) → 239 面",
+      "[切除] ⌀12 通孔 @(-30.5, 22) → 381 面",
+      "[切除] ⌀12 通孔 @(0, 78) → 475 面",
+      "[切除] ⌀12 通孔 @(0, 50) → 621 面",
+      "[切除] ⌀12 通孔 @(0, 22) → 781 面",
+      "[切除] ⌀12 通孔 @(30.5, 78) → 851 面",
+      "[切除] ⌀12 通孔 @(30.5, 50) → 987 面",
+      "[切除] ⌀12 通孔 @(30.5, 22) → 1129 面"
+    ],
+    "orthographic_layout": {
+      "unit": "mm",
+      "axes": {
+        "length": "X",
+        "width": "Y",
+        "height": "Z"
+      },
+      "uniform_scale_across_views": true,
+      "scale_pixels_per_mm": 2.132,
+      "tile_size_pixels": [
+        330,
+        260
+      ],
+      "view_extents": {
+        "front": {
+          "horizontal_axis": "X",
+          "horizontal": 100.0,
+          "vertical_axis": "Z",
+          "vertical": 100.0
+        },
+        "right": {
+          "horizontal_axis": "Y",
+          "horizontal": 42.0,
+          "vertical_axis": "Z",
+          "vertical": 100.0
+        },
+        "top": {
+          "horizontal_axis": "X",
+          "horizontal": 100.0,
+          "vertical_axis": "Y",
+          "vertical": 42.0
+        }
+      },
+      "dimension_ratios": {
+        "length_to_height": 1.0,
+        "width_to_height": 0.42,
+        "length_to_width": 2.380952380952381
+      }
+    },
+    "preview_image": "preview-02-three.png",
+    "preview_image_views": [
+      "front",
+      "right",
+      "top"
+    ],
+    "preview_image_view_set": "three",
+    "preview_image_grid_columns": 3,
+    "preview_image_source": "AI Modeler local mesh kernel; not CATIA B-Rep",
+    "preview_image_layout": {
+      "unit": "mm",
+      "axes": {
+        "length": "X",
+        "width": "Y",
+        "height": "Z"
+      },
+      "uniform_scale_across_views": true,
+      "scale_pixels_per_mm": 2.132,
+      "tile_size_pixels": [
+        330,
+        260
+      ],
+      "view_extents": {
+        "front": {
+          "horizontal_axis": "X",
+          "horizontal": 100.0,
+          "vertical_axis": "Z",
+          "vertical": 100.0
+        },
+        "right": {
+          "horizontal_axis": "Y",
+          "horizontal": 42.0,
+          "vertical_axis": "Z",
+          "vertical": 100.0
+        },
+        "top": {
+          "horizontal_axis": "X",
+          "horizontal": 100.0,
+          "vertical_axis": "Y",
+          "vertical": 42.0
+        }
+      },
+      "dimension_ratios": {
+        "length_to_height": 1.0,
+        "width_to_height": 0.42,
+        "length_to_width": 2.380952380952381
+      }
+    }
+  },
+  "multiview_review": {
+    "decision": "accept",
+    "checks": [
+      {
+        "id": "front.outline",
+        "view": "front",
+        "area": "outline",
+        "category": "geometry",
+        "status": "match",
+        "item": "正视 XZ 外轮廓与总宽高比、三段竖直分界",
+        "evidence": "预览正视格为 100×100 mm 正方形外轮廓，与参考正视图 bbox 宽高比 0.952（≈1.0）一致；三段竖直分界清晰，左/中/右宽度比 39:22:39 = 0.39:0.22:0.39，与参考图本地像素扫描 [0.3906,0.2188,0.3906] 一致。",
+        "feature_ids": [
+          "left_block",
+          "middle_block",
+          "right_block"
+        ],
+        "affected_parameters": [
+          {
+            "feature_id": "left_block",
+            "path": "parameters.length"
+          },
+          {
+            "feature_id": "middle_block",
+            "path": "parameters.length"
+          },
+          {
+            "feature_id": "right_block",
+            "path": "parameters.length"
+          }
+        ]
+      },
+      {
+        "id": "front.features",
+        "view": "front",
+        "area": "features",
+        "category": "geometry",
+        "status": "match",
+        "item": "孔数、孔列位置、孔径等级与三排等高关系",
+        "evidence": "预览正视格显示 3 列 × 3 排共 9 个圆孔，三列分别位于左段、中段、右段宽度中部，三排沿 Z 等距（Z=78/50/22），孔径统一 12 mm，与参考正视图 9 孔、三排等高、孔径视觉相近一致。",
+        "feature_ids": [
+          "hole_left_top",
+          "hole_left_mid",
+          "hole_left_bot",
+          "hole_mid_top",
+          "hole_mid_mid",
+          "hole_mid_bot",
+          "hole_right_top",
+          "hole_right_mid",
+          "hole_right_bot"
+        ],
+        "affected_parameters": [
+          {
+            "feature_id": "hole_left_top",
+            "path": "parameters.diameter"
+          },
+          {
+            "feature_id": "hole_mid_mid",
+            "path": "parameters.point"
+          },
+          {
+            "feature_id": "hole_right_bot",
+            "path": "parameters.point"
+          }
+        ]
+      },
+      {
+        "id": "right.depth_setback",
+        "view": "right",
+        "area": "depth_setback",
+        "category": "geometry",
+        "status": "match",
+        "item": "右视 YZ 深度与中段前表面后退量",
+        "evidence": "预览右视格为 42×100 mm 矩形，Y 向总深 42 mm（两侧前表面 Y=+15、中段后表面 Y=-27）；中段前表面后退量已由 3 mm 增至 12 mm，右视中台阶可辨，与参考轴测图中中段粉红面相对两侧前表面明显后退的观感一致。",
+        "feature_ids": [
+          "middle_block",
+          "left_block",
+          "right_block"
+        ],
+        "affected_parameters": [
+          {
+            "feature_id": "middle_block",
+            "path": "parameters.center"
+          },
+          {
+            "feature_id": "middle_block",
+            "path": "parameters.width"
+          }
+        ]
+      },
+      {
+        "id": "right.through_connectivity",
+        "view": "right",
+        "area": "through_connectivity",
+        "category": "geometry",
+        "status": "match",
+        "item": "孔沿 Y 贯穿关系",
+        "evidence": "预览右视格中 9 个孔 through=true 沿 Y 轴贯穿整件深度（Y 从 -27 到 +15），与参考图孔内可见内壁、背景透出的通孔特征一致。",
+        "feature_ids": [
+          "hole_left_top",
+          "hole_mid_top",
+          "hole_right_top"
+        ],
+        "affected_parameters": [
+          {
+            "feature_id": "hole_left_top",
+            "path": "parameters.through"
+          },
+          {
+            "feature_id": "hole_mid_top",
+            "path": "parameters.through"
+          }
+        ]
+      },
+      {
+        "id": "top.top_boundaries",
+        "view": "top",
+        "area": "top_boundaries",
+        "category": "geometry",
+        "status": "match",
+        "item": "俯视 XY 宽深比例与各段前后边界错层",
+        "evidence": "预览俯视格显示 100×42 mm 轮廓，中段前边界比两侧前边界后退 12 mm，俯视中呈现清晰的凸字形错层台阶（两侧块体前凸、中段后缩），与参考轴测图中中段前表面后退、两侧块体前凸的 U 形凹槽结构一致。",
+        "feature_ids": [
+          "middle_block",
+          "left_block",
+          "right_block"
+        ],
+        "affected_parameters": [
+          {
+            "feature_id": "middle_block",
+            "path": "parameters.center"
+          },
+          {
+            "feature_id": "middle_block",
+            "path": "parameters.width"
+          }
+        ]
+      }
+    ],
+    "issues": [],
+    "resolved_findings": [
+      {
+        "issue_id": "depth.middle_setback",
+        "check_id": "right.depth_setback",
+        "evidence": "中段 center.y 由 -3 改为 -12，实际后退量由 3 mm 增至 12 mm；当前右视预览中台阶已可辨，与参考轴测图可见退台一致，偏差消失。"
+      },
+      {
+        "issue_id": "right.depth_setback",
+        "check_id": "right.depth_setback",
+        "evidence": "右视格 Y 向总深由 33 mm 变为 42 mm，中段前表面后退 12 mm 在右视中可分辨，原“单一矩形、台阶不可分辨”的偏差已消失。"
+      },
+      {
+        "issue_id": "top.top_boundaries",
+        "check_id": "top.top_boundaries",
+        "evidence": "俯视格中段前边界后退 12 mm，呈现清晰凸字形错层台阶，原“错层几乎不可见”的偏差已消失。"
+      }
+    ],
+    "plan": null,
+    "questions": [],
+    "confidence": 0.78
+  },
+  "similarity_review": {
+    "decision": "accept",
+    "similarity_score": 0.82,
+    "checks": [
+      {
+        "id": "front.outline",
+        "view": "front",
+        "area": "outline",
+        "category": "geometry",
+        "status": "match",
+        "item": "正视 XZ 外轮廓与总宽高比、三段竖直分界",
+        "evidence": "预览正视格为 100×100 mm 正方形外轮廓，与参考正视图 bbox 宽高比 0.952（≈1.0）一致；三段竖直分界清晰，左/中/右宽度比 39:22:39 = 0.39:0.22:0.39，与参考图本地像素扫描 [0.3906,0.2188,0.3906] 一致。",
+        "feature_ids": [
+          "left_block",
+          "middle_block",
+          "right_block"
+        ],
+        "affected_parameters": [
+          {
+            "feature_id": "left_block",
+            "path": "parameters.length"
+          },
+          {
+            "feature_id": "middle_block",
+            "path": "parameters.length"
+          },
+          {
+            "feature_id": "right_block",
+            "path": "parameters.length"
+          }
+        ]
+      },
+      {
+        "id": "front.features",
+        "view": "front",
+        "area": "features",
+        "category": "geometry",
+        "status": "match",
+        "item": "孔数、孔列位置、孔径等级与三排等高关系",
+        "evidence": "预览正视格显示 3 列 × 3 排共 9 个圆孔，三列分别位于左段、中段、右段宽度中部，三排沿 Z 等距（Z=78/50/22），孔径统一 12 mm，与参考正视图 9 孔、三排等高、孔径视觉相近一致。",
+        "feature_ids": [
+          "hole_left_top",
+          "hole_left_mid",
+          "hole_left_bot",
+          "hole_mid_top",
+          "hole_mid_mid",
+          "hole_mid_bot",
+          "hole_right_top",
+          "hole_right_mid",
+          "hole_right_bot"
+        ],
+        "affected_parameters": [
+          {
+            "feature_id": "hole_left_top",
+            "path": "parameters.diameter"
+          },
+          {
+            "feature_id": "hole_mid_mid",
+            "path": "parameters.point"
+          },
+          {
+            "feature_id": "hole_right_bot",
+            "path": "parameters.point"
+          }
+        ]
+      },
+      {
+        "id": "right.depth_setback",
+        "view": "right",
+        "area": "depth_setback",
+        "category": "geometry",
+        "status": "match",
+        "item": "右视 YZ 深度与中段前表面后退量",
+        "evidence": "预览右视格为 42×100 mm 矩形，Y 向总深 42 mm（两侧前表面 Y=+15、中段后表面 Y=-27）；中段前表面后退 12 mm，右视中台阶可辨，与参考轴测图中中段粉红面相对两侧前表面明显后退的观感一致。",
+        "feature_ids": [
+          "middle_block",
+          "left_block",
+          "right_block"
+        ],
+        "affected_parameters": [
+          {
+            "feature_id": "middle_block",
+            "path": "parameters.center"
+          },
+          {
+            "feature_id": "middle_block",
+            "path": "parameters.width"
+          }
+        ]
+      },
+      {
+        "id": "right.through_connectivity",
+        "view": "right",
+        "area": "through_connectivity",
+        "category": "geometry",
+        "status": "match",
+        "item": "孔沿 Y 贯穿关系",
+        "evidence": "预览右视格中 9 个孔 through=true 沿 Y 轴贯穿整件深度（Y 从 -27 到 +15），与参考图孔内可见内壁、背景透出的通孔特征一致。",
+        "feature_ids": [
+          "hole_left_top",
+          "hole_mid_top",
+          "hole_right_top"
+        ],
+        "affected_parameters": [
+          {
+            "feature_id": "hole_left_top",
+            "path": "parameters.through"
+          },
+          {
+            "feature_id": "hole_mid_top",
+            "path": "parameters.through"
+          }
+        ]
+      },
+      {
+        "id": "top.top_boundaries",
+        "view": "top",
+        "area": "top_boundaries",
+        "category": "geometry",
+        "status": "match",
+        "item": "俯视 XY 宽深比例与各段前后边界错层",
+        "evidence": "预览俯视格显示 100×42 mm 轮廓，中段前边界比两侧前边界后退 12 mm，俯视中呈现清晰的凸字形错层台阶（两侧块体前凸、中段后缩），与参考轴测图中中段前表面后退、两侧块体前凸的 U 形凹槽结构一致。",
+        "feature_ids": [
+          "middle_block",
+          "left_block",
+          "right_block"
+        ],
+        "affected_parameters": [
+          {
+            "feature_id": "middle_block",
+            "path": "parameters.center"
+          },
+          {
+            "feature_id": "middle_block",
+            "path": "parameters.width"
+          }
+        ]
+      }
+    ],
+    "resolved_findings": [
+      {
+        "issue_id": "depth.middle_setback",
+        "check_id": "right.depth_setback",
+        "evidence": "中段 center.y 由 -3 改为 -12，实际后退量由 3 mm 增至 12 mm；当前右视预览中台阶已可辨，与参考轴测图可见退台一致，偏差消失。"
+      },
+      {
+        "issue_id": "right.depth_setback",
+        "check_id": "right.depth_setback",
+        "evidence": "右视格 Y 向总深由 33 mm 变为 42 mm，中段前表面后退 12 mm 在右视中可分辨，原“单一矩形、台阶不可分辨”的偏差已消失。"
+      },
+      {
+        "issue_id": "top.top_boundaries",
+        "check_id": "top.top_boundaries",
+        "evidence": "俯视格中段前边界后退 12 mm，呈现清晰凸字形错层台阶，原“错层几乎不可见”的偏差已消失。"
+      }
+    ],
+    "remaining_differences": [],
+    "plan": null,
+    "questions": [],
+    "confidence": 0.78
+  },
+  "review_history": [
+    {
+      "round": 1,
+      "plan_fingerprint": "three:{\"schema_version\":\"1.0\",\"name\":\"三段式带孔凹槽块\",\"source_prompt\":\"复刻整一个工件（两张参考图：轴测图 + 正交正视图）\",\"units\":{\"length\":\"mm\",\"angle\":\"deg\"},\"coordinate_system\":{\"type\":\"global_cartesian\",\"handedness\":\"right\",\"axes\":[\"X\",\"Y\",\"Z\"],\"origin\":[0,0,0]},\"features\":[{\"id\":\"left_block\",\"kind\":\"box\",\"operation\":\"add\",\"name\":\"左段块体\",\"note\":\"正视图中左段，宽度按三段比例 0.3906 取值；与中段、右段顶部/底部齐平。\",\"parameters\":{\"length\":39,\"width\":30,\"height\":100,\"center\":[-30.5,0,50]},\"sources\":{\"length\":{\"type\":\"image_estimate\",\"evidence\":\"正视图（image_index 2）本地像素扫描三段宽度比 [0.3906,0.2188,0.3906]，confidence high；取整件 X 宽 100 mm，左段 = 39 mm。\"},\"width\":{\"type\":\"image_estimate\",\"evidence\":\"两图均无 Y 向正交投影，depth_height 为 null；按与可见投影一致的简单假设取深度 30 mm（约为高度 100 的 0.3），使轴测图中块体厚度与高度观感相符。\"},\"height\":{\"type\":\"image_estimate\",\"evidence\":\"正视图 bbox 宽高比 0.952（confidence high），整件 X 宽 100 mm 时高度约 105 mm，取整 100 mm 作为基准高度。\"},\"center\":{\"type\":\"derived\",\"note\":\"由整件 X 宽 100 mm、左段宽 39 mm 推得左段 X 中心 = -50 + 39/2 = -30.5；Y 中心 0 使前表面位于 Y=+15；Z 中心 50 使底面 Z=0、顶面 Z=100。\"}}},{\"id\":\"right_block\",\"kind\":\"box\",\"operation\":\"add\",\"name\":\"右段块体\",\"note\":\"正视图中右段，与左段等宽，顶部/底部齐平。\",\"parameters\":{\"length\":39,\"width\":30,\"height\":100,\"center\":[30.5,0,50]},\"sources\":{\"length\":{\"type\":\"image_estimate\",\"evidence\":\"正视图三段宽度比右段 0.3906（confidence high），整件 X 宽 100 mm 时右段 = 39 mm，与左段对称。\"},\"width\":{\"type\":\"image_estimate\",\"evidence\":\"同左段，取深度 30 mm（无 Y 向正交证据，采用与可见投影一致的简单假设）。\"},\"height\":{\"type\":\"image_estimate\",\"evidence\":\"正视图外轮廓等高，取 100 mm，与左段一致。\"},\"center\":{\"type\":\"derived\",\"note\":\"右段 X 中心 = 50 - 39/2 = 30.5；Y 中心 0（前表面 Y=+15）；Z 中心 50。\"}}},{\"id\":\"middle_block\",\"kind\":\"box\",\"operation\":\"add\",\"name\":\"中段块体（前表面后退）\",\"note\":\"正视图中段，宽度按比例 0.2188 取值（约为两侧段的一半）；前表面沿 -Y 后退 3 mm，形成正面凹槽。后退量核算：两侧前表面 Yf=+15，目标后退 r=3，中段厚度 Dm=30，则 center.y = Yf - r - Dm/2 = 15 - 3 - 15 = -3；实际 actual_setback = Yf - (center.y + width/2) = 15 - (-3 + 15) = 3 mm，与 r 一致。\",\"parameters\":{\"length\":22,\"width\":30,\"height\":100,\"center\":[0,-3,50]},\"sources\":{\"length\":{\"type\":\"image_estimate\",\"evidence\":\"正视图三段宽度比中段 0.2188（confidence high），整件 X 宽 100 mm 时中段 = 22 mm，约为两侧段 39 mm 的一半，符合识别结论。\"},\"width\":{\"type\":\"image_estimate\",\"evidence\":\"取与两侧段相同厚度 30 mm，使中段仍为实体块，仅前表面后移；无 Y 向正交证据，采用与可见投影一致的简单假设。\"},\"height\":{\"type\":\"image_estimate\",\"evidence\":\"正视图三段等高、轴测图顶面连续，取 100 mm。\"},\"center\":{\"type\":\"derived\",\"note\":\"X 中心 0（中段居中）；Y 中心由后退公式 center.y = Yf - r - Dm/2 = 15 - 3 - 15 = -3 推得，实际后退量 3 mm；Z 中心 50。\"}},\"relations\":[{\"type\":\"depends_on\",\"feature_id\":\"left_block\"},{\"type\":\"depends_on\",\"feature_id\":\"right_block\"}]},{\"id\":\"hole_left_top\",\"kind\":\"hole\",\"operation\":\"cut\",\"name\":\"左段上孔\",\"note\":\"左段三排孔之上排，沿 Y 贯穿。\",\"parameters\":{\"diameter\":12,\"through\":true,\"pos\":\"point\",\"point\":[-30.5,0,78],\"axis\":\"Y\"},\"sources\":{\"diameter\":{\"type\":\"image_estimate\",\"evidence\":\"正视图左段孔径约为该段宽度（39 mm）的 0.3，取 12 mm；三列孔径视觉相近，统一取值。\"},\"through\":{\"type\":\"user\",\"note\":\"识别结论：孔为通孔（正视图孔内可见内壁着色与背景透出）。\"},\"pos\":{\"type\":\"derived\",\"note\":\"按 point 定位，位于左段宽度中部。\"},\"point\":{\"type\":\"image_estimate\",\"evidence\":\"正视图左段孔列位于该段宽度中部（X=-30.5）；三排孔沿 Z 等距，上排约在高度 0.78 处，取 Z=78。\"},\"axis\":{\"type\":\"derived\",\"note\":\"孔轴沿 Y，与板面法向一致，贯穿深度方向。\"}},\"relations\":[{\"type\":\"depends_on\",\"feature_id\":\"left_block\"}]},{\"id\":\"hole_left_mid\",\"kind\":\"hole\",\"operation\":\"cut\",\"name\":\"左段中孔\",\"note\":\"左段三排孔之中排。\",\"parameters\":{\"diameter\":12,\"through\":true,\"pos\":\"point\",\"point\":[-30.5,0,50],\"axis\":\"Y\"},\"sources\":{\"diameter\":{\"type\":\"image_estimate\",\"evidence\":\"同左段上孔，取 12 mm。\"},\"through\":{\"type\":\"user\",\"note\":\"通孔。\"},\"pos\":{\"type\":\"derived\",\"note\":\"按 point 定位。\"},\"point\":{\"type\":\"image_estimate\",\"evidence\":\"正视图左段中排孔位于高度中部，取 Z=50；X=-30.5 为左段宽度中部。\"},\"axis\":{\"type\":\"derived\",\"note\":\"沿 Y 贯穿。\"}},\"relations\":[{\"type\":\"depends_on\",\"feature_id\":\"left_block\"}]},{\"id\":\"hole_left_bot\",\"kind\":\"hole\",\"operation\":\"cut\",\"name\":\"左段下孔\",\"note\":\"左段三排孔之下排。\",\"parameters\":{\"diameter\":12,\"through\":true,\"pos\":\"point\",\"point\":[-30.5,0,22],\"axis\":\"Y\"},\"sources\":{\"diameter\":{\"type\":\"image_estimate\",\"evidence\":\"同左段上孔，取 12 mm。\"},\"through\":{\"type\":\"user\",\"note\":\"通孔。\"},\"pos\":{\"type\":\"derived\",\"note\":\"按 point 定位。\"},\"point\":{\"type\":\"image_estimate\",\"evidence\":\"正视图左段下排孔约在高度 0.22 处，取 Z=22；X=-30.5。\"},\"axis\":{\"type\":\"derived\",\"note\":\"沿 Y 贯穿。\"}},\"relations\":[{\"type\":\"depends_on\",\"feature_id\":\"left_block\"}]},{\"id\":\"hole_mid_top\",\"kind\":\"hole\",\"operation\":\"cut\",\"name\":\"中段上孔\",\"note\":\"中段三排孔之上排，与两侧孔同高，沿 Y 贯穿。\",\"parameters\":{\"diameter\":12,\"through\":true,\"pos\":\"point\",\"point\":[0,-3,78],\"axis\":\"Y\"},\"sources\":{\"diameter\":{\"type\":\"image_estimate\",\"evidence\":\"正视图三列孔径相近，取 12 mm。\"},\"through\":{\"type\":\"user\",\"note\":\"通孔。\"},\"pos\":{\"type\":\"derived\",\"note\":\"按 point 定位，位于中段宽度中部。\"},\"point\":{\"type\":\"image_estimate\",\"evidence\":\"正视图与轴测图中段孔位于中段宽度中部（X=0），与两侧孔同高（Z=78）；Y 取中段中心 -3 以贯穿中段实体。\"},\"axis\":{\"type\":\"derived\",\"note\":\"沿 Y 贯穿。\"}},\"relations\":[{\"type\":\"depends_on\",\"feature_id\":\"middle_block\"}]},{\"id\":\"hole_mid_mid\",\"kind\":\"hole\",\"operation\":\"cut\",\"name\":\"中段中孔\",\"note\":\"中段三排孔之中排。\",\"parameters\":{\"diameter\":12,\"through\":true,\"pos\":\"point\",\"point\":[0,-3,50],\"axis\":\"Y\"},\"sources\":{\"diameter\":{\"type\":\"image_estimate\",\"evidence\":\"同中段上孔，取 12 mm。\"},\"through\":{\"type\":\"user\",\"note\":\"通孔。\"},\"pos\":{\"type\":\"derived\",\"note\":\"按 point 定位。\"},\"point\":{\"type\":\"image_estimate\",\"evidence\":\"正视图与轴测图中段中排孔位于高度中部（Z=50），X=0；Y=-3 为中段中心。\"},\"axis\":{\"type\":\"derived\",\"note\":\"沿 Y 贯穿。\"}},\"relations\":[{\"type\":\"depends_on\",\"feature_id\":\"middle_block\"}]},{\"id\":\"hole_mid_bot\",\"kind\":\"hole\",\"operation\":\"cut\",\"name\":\"中段下孔\",\"note\":\"中段三排孔之下排。\",\"parameters\":{\"diameter\":12,\"through\":true,\"pos\":\"point\",\"point\":[0,-3,22],\"axis\":\"Y\"},\"sources\":{\"diameter\":{\"type\":\"image_estimate\",\"evidence\":\"同中段上孔，取 12 mm。\"},\"through\":{\"type\":\"user\",\"note\":\"通孔。\"},\"pos\":{\"type\":\"derived\",\"note\":\"按 point 定位。\"},\"point\":{\"type\":\"image_estimate\",\"evidence\":\"正视图与轴测图中段下排孔约在高度 0.22 处（Z=22），X=0；Y=-3 为中段中心。\"},\"axis\":{\"type\":\"derived\",\"note\":\"沿 Y 贯穿。\"}},\"relations\":[{\"type\":\"depends_on\",\"feature_id\":\"middle_block\"}]},{\"id\":\"hole_right_top\",\"kind\":\"hole\",\"operation\":\"cut\",\"name\":\"右段上孔\",\"note\":\"右段三排孔之上排，与左段同高。\",\"parameters\":{\"diameter\":12,\"through\":true,\"pos\":\"point\",\"point\":[30.5,0,78],\"axis\":\"Y\"},\"sources\":{\"diameter\":{\"type\":\"image_estimate\",\"evidence\":\"同左段上孔，取 12 mm。\"},\"through\":{\"type\":\"user\",\"note\":\"通孔。\"},\"pos\":{\"type\":\"derived\",\"note\":\"按 point 定位，位于右段宽度中部。\"},\"point\":{\"type\":\"image_estimate\",\"evidence\":\"正视图右段孔列位于该段宽度中部（X=30.5），上排 Z=78。\"},\"axis\":{\"type\":\"derived\",\"note\":\"沿 Y 贯穿。\"}},\"relations\":[{\"type\":\"depends_on\",\"feature_id\":\"right_block\"}]},{\"id\":\"hole_right_mid\",\"kind\":\"hole\",\"operation\":\"cut\",\"name\":\"右段中孔\",\"note\":\"右段三排孔之中排。\",\"parameters\":{\"diameter\":12,\"through\":true,\"pos\":\"point\",\"point\":[30.5,0,50],\"axis\":\"Y\"},\"sources\":{\"diameter\":{\"type\":\"image_estimate\",\"evidence\":\"同左段上孔，取 12 mm。\"},\"through\":{\"type\":\"user\",\"note\":\"通孔。\"},\"pos\":{\"type\":\"derived\",\"note\":\"按 point 定位。\"},\"point\":{\"type\":\"image_estimate\",\"evidence\":\"正视图右段中排孔位于高度中部（Z=50），X=30.5。\"},\"axis\":{\"type\":\"derived\",\"note\":\"沿 Y 贯穿。\"}},\"relations\":[{\"type\":\"depends_on\",\"feature_id\":\"right_block\"}]},{\"id\":\"hole_right_bot\",\"kind\":\"hole\",\"operation\":\"cut\",\"name\":\"右段下孔\",\"note\":\"右段三排孔之下排。\",\"parameters\":{\"diameter\":12,\"through\":true,\"pos\":\"point\",\"point\":[30.5,0,22],\"axis\":\"Y\"},\"sources\":{\"diameter\":{\"type\":\"image_estimate\",\"evidence\":\"同左段上孔，取 12 mm。\"},\"through\":{\"type\":\"user\",\"note\":\"通孔。\"},\"pos\":{\"type\":\"derived\",\"note\":\"按 point 定位。\"},\"point\":{\"type\":\"image_estimate\",\"evidence\":\"正视图右段下排孔约在高度 0.22 处（Z=22），X=30.5。\"},\"axis\":{\"type\":\"derived\",\"note\":\"沿 Y 贯穿。\"}},\"relations\":[{\"type\":\"depends_on\",\"feature_id\":\"right_block\"}]}]}",
+      "dimensions": {
+        "unit": "mm",
+        "bbox": [
+          -50.0,
+          -18.0,
+          0.0,
+          50.0,
+          15.0,
+          100.0
+        ],
+        "size": [
+          100.0,
+          33.0,
+          100.0
+        ],
+        "volume_mm3": 269811.34657924226,
+        "surface_area_mm2": 41337.13981231329,
+        "triangles": 1886,
+        "feature_count": 12
+      },
+      "preview_image": "preview-01-three.png",
+      "multiview_review": {
+        "decision": "revise",
+        "checks": [
+          {
+            "id": "front.outline",
+            "view": "front",
+            "area": "outline",
+            "category": "geometry",
+            "status": "match",
+            "item": "正视 XZ 外轮廓与总宽高比、三段竖直分界",
+            "evidence": "预览正视格为 100×100 mm 正方形外轮廓，与参考正视图 bbox 宽高比 0.952（≈1.0）一致；三段竖直分界清晰，左/中/右宽度比 39:22:39 = 0.39:0.22:0.39，与参考图本地像素扫描 [0.3906,0.2188,0.3906] 一致。",
+            "feature_ids": [
+              "left_block",
+              "middle_block",
+              "right_block"
+            ],
+            "affected_parameters": [
+              {
+                "feature_id": "left_block",
+                "path": "parameters.length"
+              },
+              {
+                "feature_id": "middle_block",
+                "path": "parameters.length"
+              },
+              {
+                "feature_id": "right_block",
+                "path": "parameters.length"
+              }
+            ]
+          },
+          {
+            "id": "front.features",
+            "view": "front",
+            "area": "features",
+            "category": "geometry",
+            "status": "match",
+            "item": "孔数、孔列位置、孔径等级与三排等高关系",
+            "evidence": "预览正视格显示 3 列 × 3 排共 9 个圆孔，三列分别位于左段、中段、右段宽度中部，三排沿 Z 等距（Z=78/50/22），孔径统一 12 mm，与参考正视图 9 孔、三排等高、孔径视觉相近一致。",
+            "feature_ids": [
+              "hole_left_top",
+              "hole_left_mid",
+              "hole_left_bot",
+              "hole_mid_top",
+              "hole_mid_mid",
+              "hole_mid_bot",
+              "hole_right_top",
+              "hole_right_mid",
+              "hole_right_bot"
+            ],
+            "affected_parameters": [
+              {
+                "feature_id": "hole_left_top",
+                "path": "parameters.diameter"
+              },
+              {
+                "feature_id": "hole_mid_mid",
+                "path": "parameters.point"
+              },
+              {
+                "feature_id": "hole_right_bot",
+                "path": "parameters.point"
+              }
+            ]
+          },
+          {
+            "id": "right.depth_setback",
+            "view": "right",
+            "area": "depth_setback",
+            "category": "geometry",
+            "status": "mismatch",
+            "item": "右视 YZ 深度与中段前表面后退量",
+            "evidence": "预览右视格为单一 33×100 mm 矩形，Y 向总深 33 mm，中段前表面仅后退 3 mm（Y 从 +15 到 +12），在右视中几乎不可分辨，未呈现参考轴测图中明显的 U 形凹槽台阶。参考轴测图中中段粉红面相对两侧前表面有明显可见的退台，3 mm 后退量偏小。",
+            "feature_ids": [
+              "middle_block",
+              "left_block",
+              "right_block"
+            ],
+            "affected_parameters": [
+              {
+                "feature_id": "middle_block",
+                "path": "parameters.center"
+              },
+              {
+                "feature_id": "middle_block",
+                "path": "parameters.width"
+              }
+            ]
+          },
+          {
+            "id": "right.through_connectivity",
+            "view": "right",
+            "area": "through_connectivity",
+            "category": "geometry",
+            "status": "match",
+            "item": "孔沿 Y 贯穿关系",
+            "evidence": "预览右视格中孔道以贯穿方式切除，9 个孔 through=true 沿 Y 轴贯穿整件深度（Y 从 -18 到 +15），与参考图孔内可见内壁、背景透出的通孔特征一致。",
+            "feature_ids": [
+              "hole_left_top",
+              "hole_mid_top",
+              "hole_right_top"
+            ],
+            "affected_parameters": [
+              {
+                "feature_id": "hole_left_top",
+                "path": "parameters.through"
+              },
+              {
+                "feature_id": "hole_mid_top",
+                "path": "parameters.through"
+              }
+            ]
+          },
+          {
+            "id": "top.top_boundaries",
+            "view": "top",
+            "area": "top_boundaries",
+            "category": "geometry",
+            "status": "mismatch",
+            "item": "俯视 XY 宽深比例与各段前后边界错层",
+            "evidence": "预览俯视格显示 100×33 mm 轮廓，中段前边界仅比两侧前边界后退 3 mm，错层台阶在俯视中几乎不可见；参考轴测图中中段前表面后退量相对块体厚度有清晰可见的台阶，当前 3 mm 后退与可见投影不符。",
+            "feature_ids": [
+              "middle_block",
+              "left_block",
+              "right_block"
+            ],
+            "affected_parameters": [
+              {
+                "feature_id": "middle_block",
+                "path": "parameters.center"
+              },
+              {
+                "feature_id": "middle_block",
+                "path": "parameters.width"
+              }
+            ]
+          }
+        ],
+        "issues": [
+          {
+            "issue_id": "depth.middle_setback",
+            "view": "right",
+            "category": "geometry",
+            "severity": "medium",
+            "item": "中段前表面后退量过小，右视/俯视中未呈现参考轴测图可见的 U 形凹槽台阶",
+            "evidence": "参考轴测图中中段粉红面相对两侧浅灰绿前表面有明显可见的退台，退台深度相对块体厚度可辨；当前计划中段 center.y=-3、width=30，实际后退仅 3 mm，右视与俯视预览中台阶几乎不可见，与参考图可见投影不符。",
+            "feature_ids": [
+              "middle_block"
+            ],
+            "affected_parameters": [
+              {
+                "feature_id": "middle_block",
+                "path": "parameters.center"
+              },
+              {
+                "feature_id": "middle_block",
+                "path": "parameters.width"
+              }
+            ]
+          }
+        ],
+        "resolved_findings": [],
+        "plan": {
+          "schema_version": "1.0",
+          "name": "三段式带孔凹槽块",
+          "source_prompt": "复刻整一个工件（两张参考图：轴测图 + 正交正视图）",
+          "units": {
+            "length": "mm",
+            "angle": "deg"
+          },
+          "coordinate_system": {
+            "type": "global_cartesian",
+            "handedness": "right",
+            "axes": [
+              "X",
+              "Y",
+              "Z"
+            ],
+            "origin": [
+              0,
+              0,
+              0
+            ]
+          },
+          "features": [
+            {
+              "id": "left_block",
+              "kind": "box",
+              "operation": "add",
+              "name": "左段块体",
+              "note": "正视图中左段，宽度按三段比例 0.3906 取值；与中段、右段顶部/底部齐平。",
+              "parameters": {
+                "length": 39,
+                "width": 30,
+                "height": 100,
+                "center": [
+                  -30.5,
+                  0,
+                  50
+                ]
+              },
+              "sources": {
+                "length": {
+                  "type": "image_estimate",
+                  "evidence": "正视图（image_index 2）本地像素扫描三段宽度比 [0.3906,0.2188,0.3906]，confidence high；取整件 X 宽 100 mm，左段 = 39 mm。"
+                },
+                "width": {
+                  "type": "image_estimate",
+                  "evidence": "两图均无 Y 向正交投影，depth_height 为 null；按与可见投影一致的简单假设取深度 30 mm（约为高度 100 的 0.3），使轴测图中块体厚度与高度观感相符。"
+                },
+                "height": {
+                  "type": "image_estimate",
+                  "evidence": "正视图 bbox 宽高比 0.952（confidence high），整件 X 宽 100 mm 时高度约 105 mm，取整 100 mm 作为基准高度。"
+                },
+                "center": {
+                  "type": "derived",
+                  "note": "由整件 X 宽 100 mm、左段宽 39 mm 推得左段 X 中心 = -50 + 39/2 = -30.5；Y 中心 0 使前表面位于 Y=+15；Z 中心 50 使底面 Z=0、顶面 Z=100。"
+                }
+              }
+            },
+            {
+              "id": "right_block",
+              "kind": "box",
+              "operation": "add",
+              "name": "右段块体",
+              "note": "正视图中右段，与左段等宽，顶部/底部齐平。",
+              "parameters": {
+                "length": 39,
+                "width": 30,
+                "height": 100,
+                "center": [
+                  30.5,
+                  0,
+                  50
+                ]
+              },
+              "sources": {
+                "length": {
+                  "type": "image_estimate",
+                  "evidence": "正视图三段宽度比右段 0.3906（confidence high），整件 X 宽 100 mm 时右段 = 39 mm，与左段对称。"
+                },
+                "width": {
+                  "type": "image_estimate",
+                  "evidence": "同左段，取深度 30 mm（无 Y 向正交证据，采用与可见投影一致的简单假设）。"
+                },
+                "height": {
+                  "type": "image_estimate",
+                  "evidence": "正视图外轮廓等高，取 100 mm，与左段一致。"
+                },
+                "center": {
+                  "type": "derived",
+                  "note": "右段 X 中心 = 50 - 39/2 = 30.5；Y 中心 0（前表面 Y=+15）；Z 中心 50。"
+                }
+              }
+            },
+            {
+              "id": "middle_block",
+              "kind": "box",
+              "operation": "add",
+              "name": "中段块体（前表面后退）",
+              "note": "正视图中段，宽度按比例 0.2188 取值（约为两侧段的一半）；前表面沿 -Y 后退 12 mm，形成参考轴测图中清晰可见的 U 形凹槽台阶。后退量核算：两侧前表面 Yf=+15，目标后退 r=12，中段厚度 Dm=30，则 center.y = Yf - r - Dm/2 = 15 - 12 - 15 = -12；实际 actual_setback = Yf - (center.y + width/2) = 15 - (-12 + 15) = 12 mm，与 r 一致。中段后表面 Y=-27，与两侧后表面 Y=-15 不齐平，中段向后延伸，符合轴测图中中段为独立实体、两侧块体前凸的观感。",
+              "parameters": {
+                "length": 22,
+                "width": 30,
+                "height": 100,
+                "center": [
+                  0,
+                  -12,
+                  50
+                ]
+              },
+              "sources": {
+                "length": {
+                  "type": "image_estimate",
+                  "evidence": "正视图三段宽度比中段 0.2188（confidence high），整件 X 宽 100 mm 时中段 = 22 mm，约为两侧段 39 mm 的一半，符合识别结论。"
+                },
+                "width": {
+                  "type": "image_estimate",
+                  "evidence": "取与两侧段相同厚度 30 mm，使中段仍为实体块，仅前表面后移；无 Y 向正交证据，采用与可见投影一致的简单假设。"
+                },
+                "height": {
+                  "type": "image_estimate",
+                  "evidence": "正视图三段等高、轴测图顶面连续，取 100 mm。"
+                },
+                "center": {
+                  "type": "derived",
+                  "note": "X 中心 0（中段居中）；Y 中心由后退公式 center.y = Yf - r - Dm/2 = 15 - 12 - 15 = -12 推得，实际后退量 12 mm（约为块体厚度 30 mm 的 0.4，与轴测图中可见台阶比例相符）；Z 中心 50。"
+                }
+              },
+              "relations": [
+                {
+                  "type": "depends_on",
+                  "feature_id": "left_block"
+                },
+                {
+                  "type": "depends_on",
+                  "feature_id": "right_block"
+                }
+              ]
+            },
+            {
+              "id": "hole_left_top",
+              "kind": "hole",
+              "operation": "cut",
+              "name": "左段上孔",
+              "note": "左段三排孔之上排，沿 Y 贯穿。",
+              "parameters": {
+                "diameter": 12,
+                "through": true,
+                "pos": "point",
+                "point": [
+                  -30.5,
+                  0,
+                  78
+                ],
+                "axis": "Y"
+              },
+              "sources": {
+                "diameter": {
+                  "type": "image_estimate",
+                  "evidence": "正视图左段孔径约为该段宽度（39 mm）的 0.3，取 12 mm；三列孔径视觉相近，统一取值。"
+                },
+                "through": {
+                  "type": "user",
+                  "note": "识别结论：孔为通孔（正视图孔内可见内壁着色与背景透出）。"
+                },
+                "pos": {
+                  "type": "derived",
+                  "note": "按 point 定位，位于左段宽度中部。"
+                },
+                "point": {
+                  "type": "image_estimate",
+                  "evidence": "正视图左段孔列位于该段宽度中部（X=-30.5）；三排孔沿 Z 等距，上排约在高度 0.78 处，取 Z=78。"
+                },
+                "axis": {
+                  "type": "derived",
+                  "note": "孔轴沿 Y，与板面法向一致，贯穿深度方向。"
+                }
+              },
+              "relations": [
+                {
+                  "type": "depends_on",
+                  "feature_id": "left_block"
+                }
+              ]
+            },
+            {
+              "id": "hole_left_mid",
+              "kind": "hole",
+              "operation": "cut",
+              "name": "左段中孔",
+              "note": "左段三排孔之中排。",
+              "parameters": {
+                "diameter": 12,
+                "through": true,
+                "pos": "point",
+                "point": [
+                  -30.5,
+                  0,
+                  50
+                ],
+                "axis": "Y"
+              },
+              "sources": {
+                "diameter": {
+                  "type": "image_estimate",
+                  "evidence": "同左段上孔，取 12 mm。"
+                },
+                "through": {
+                  "type": "user",
+                  "note": "通孔。"
+                },
+                "pos": {
+                  "type": "derived",
+                  "note": "按 point 定位。"
+                },
+                "point": {
+                  "type": "image_estimate",
+                  "evidence": "正视图左段中排孔位于高度中部，取 Z=50；X=-30.5 为左段宽度中部。"
+                },
+                "axis": {
+                  "type": "derived",
+                  "note": "沿 Y 贯穿。"
+                }
+              },
+              "relations": [
+                {
+                  "type": "depends_on",
+                  "feature_id": "left_block"
+                }
+              ]
+            },
+            {
+              "id": "hole_left_bot",
+              "kind": "hole",
+              "operation": "cut",
+              "name": "左段下孔",
+              "note": "左段三排孔之下排。",
+              "parameters": {
+                "diameter": 12,
+                "through": true,
+                "pos": "point",
+                "point": [
+                  -30.5,
+                  0,
+                  22
+                ],
+                "axis": "Y"
+              },
+              "sources": {
+                "diameter": {
+                  "type": "image_estimate",
+                  "evidence": "同左段上孔，取 12 mm。"
+                },
+                "through": {
+                  "type": "user",
+                  "note": "通孔。"
+                },
+                "pos": {
+                  "type": "derived",
+                  "note": "按 point 定位。"
+                },
+                "point": {
+                  "type": "image_estimate",
+                  "evidence": "正视图左段下排孔约在高度 0.22 处，取 Z=22；X=-30.5。"
+                },
+                "axis": {
+                  "type": "derived",
+                  "note": "沿 Y 贯穿。"
+                }
+              },
+              "relations": [
+                {
+                  "type": "depends_on",
+                  "feature_id": "left_block"
+                }
+              ]
+            },
+            {
+              "id": "hole_mid_top",
+              "kind": "hole",
+              "operation": "cut",
+              "name": "中段上孔",
+              "note": "中段三排孔之上排，与两侧孔同高，沿 Y 贯穿。",
+              "parameters": {
+                "diameter": 12,
+                "through": true,
+                "pos": "point",
+                "point": [
+                  0,
+                  -12,
+                  78
+                ],
+                "axis": "Y"
+              },
+              "sources": {
+                "diameter": {
+                  "type": "image_estimate",
+                  "evidence": "正视图三列孔径相近，取 12 mm。"
+                },
+                "through": {
+                  "type": "user",
+                  "note": "通孔。"
+                },
+                "pos": {
+                  "type": "derived",
+                  "note": "按 point 定位，位于中段宽度中部。"
+                },
+                "point": {
+                  "type": "image_estimate",
+                  "evidence": "正视图与轴测图中段孔位于中段宽度中部（X=0），与两侧孔同高（Z=78）；Y 取中段中心 -12 以贯穿中段实体。"
+                },
+                "axis": {
+                  "type": "derived",
+                  "note": "沿 Y 贯穿。"
+                }
+              },
+              "relations": [
+                {
+                  "type": "depends_on",
+                  "feature_id": "middle_block"
+                }
+              ]
+            },
+            {
+              "id": "hole_mid_mid",
+              "kind": "hole",
+              "operation": "cut",
+              "name": "中段中孔",
+              "note": "中段三排孔之中排。",
+              "parameters": {
+                "diameter": 12,
+                "through": true,
+                "pos": "point",
+                "point": [
+                  0,
+                  -12,
+                  50
+                ],
+                "axis": "Y"
+              },
+              "sources": {
+                "diameter": {
+                  "type": "image_estimate",
+                  "evidence": "同中段上孔，取 12 mm。"
+                },
+                "through": {
+                  "type": "user",
+                  "note": "通孔。"
+                },
+                "pos": {
+                  "type": "derived",
+                  "note": "按 point 定位。"
+                },
+                "point": {
+                  "type": "image_estimate",
+                  "evidence": "正视图与轴测图中段中排孔位于高度中部（Z=50），X=0；Y=-12 为中段中心。"
+                },
+                "axis": {
+                  "type": "derived",
+                  "note": "沿 Y 贯穿。"
+                }
+              },
+              "relations": [
+                {
+                  "type": "depends_on",
+                  "feature_id": "middle_block"
+                }
+              ]
+            },
+            {
+              "id": "hole_mid_bot",
+              "kind": "hole",
+              "operation": "cut",
+              "name": "中段下孔",
+              "note": "中段三排孔之下排。",
+              "parameters": {
+                "diameter": 12,
+                "through": true,
+                "pos": "point",
+                "point": [
+                  0,
+                  -12,
+                  22
+                ],
+                "axis": "Y"
+              },
+              "sources": {
+                "diameter": {
+                  "type": "image_estimate",
+                  "evidence": "同中段上孔，取 12 mm。"
+                },
+                "through": {
+                  "type": "user",
+                  "note": "通孔。"
+                },
+                "pos": {
+                  "type": "derived",
+                  "note": "按 point 定位。"
+                },
+                "point": {
+                  "type": "image_estimate",
+                  "evidence": "正视图与轴测图中段下排孔约在高度 0.22 处（Z=22），X=0；Y=-12 为中段中心。"
+                },
+                "axis": {
+                  "type": "derived",
+                  "note": "沿 Y 贯穿。"
+                }
+              },
+              "relations": [
+                {
+                  "type": "depends_on",
+                  "feature_id": "middle_block"
+                }
+              ]
+            },
+            {
+              "id": "hole_right_top",
+              "kind": "hole",
+              "operation": "cut",
+              "name": "右段上孔",
+              "note": "右段三排孔之上排，与左段同高。",
+              "parameters": {
+                "diameter": 12,
+                "through": true,
+                "pos": "point",
+                "point": [
+                  30.5,
+                  0,
+                  78
+                ],
+                "axis": "Y"
+              },
+              "sources": {
+                "diameter": {
+                  "type": "image_estimate",
+                  "evidence": "同左段上孔，取 12 mm。"
+                },
+                "through": {
+                  "type": "user",
+                  "note": "通孔。"
+                },
+                "pos": {
+                  "type": "derived",
+                  "note": "按 point 定位，位于右段宽度中部。"
+                },
+                "point": {
+                  "type": "image_estimate",
+                  "evidence": "正视图右段孔列位于该段宽度中部（X=30.5），上排 Z=78。"
+                },
+                "axis": {
+                  "type": "derived",
+                  "note": "沿 Y 贯穿。"
+                }
+              },
+              "relations": [
+                {
+                  "type": "depends_on",
+                  "feature_id": "right_block"
+                }
+              ]
+            },
+            {
+              "id": "hole_right_mid",
+              "kind": "hole",
+              "operation": "cut",
+              "name": "右段中孔",
+              "note": "右段三排孔之中排。",
+              "parameters": {
+                "diameter": 12,
+                "through": true,
+                "pos": "point",
+                "point": [
+                  30.5,
+                  0,
+                  50
+                ],
+                "axis": "Y"
+              },
+              "sources": {
+                "diameter": {
+                  "type": "image_estimate",
+                  "evidence": "同左段上孔，取 12 mm。"
+                },
+                "through": {
+                  "type": "user",
+                  "note": "通孔。"
+                },
+                "pos": {
+                  "type": "derived",
+                  "note": "按 point 定位。"
+                },
+                "point": {
+                  "type": "image_estimate",
+                  "evidence": "正视图右段中排孔位于高度中部（Z=50），X=30.5。"
+                },
+                "axis": {
+                  "type": "derived",
+                  "note": "沿 Y 贯穿。"
+                }
+              },
+              "relations": [
+                {
+                  "type": "depends_on",
+                  "feature_id": "right_block"
+                }
+              ]
+            },
+            {
+              "id": "hole_right_bot",
+              "kind": "hole",
+              "operation": "cut",
+              "name": "右段下孔",
+              "note": "右段三排孔之下排。",
+              "parameters": {
+                "diameter": 12,
+                "through": true,
+                "pos": "point",
+                "point": [
+                  30.5,
+                  0,
+                  22
+                ],
+                "axis": "Y"
+              },
+              "sources": {
+                "diameter": {
+                  "type": "image_estimate",
+                  "evidence": "同左段上孔，取 12 mm。"
+                },
+                "through": {
+                  "type": "user",
+                  "note": "通孔。"
+                },
+                "pos": {
+                  "type": "derived",
+                  "note": "按 point 定位。"
+                },
+                "point": {
+                  "type": "image_estimate",
+                  "evidence": "正视图右段下排孔约在高度 0.22 处（Z=22），X=30.5。"
+                },
+                "axis": {
+                  "type": "derived",
+                  "note": "沿 Y 贯穿。"
+                }
+              },
+              "relations": [
+                {
+                  "type": "depends_on",
+                  "feature_id": "right_block"
+                }
+              ]
+            }
+          ]
+        },
+        "questions": [],
+        "confidence": 0.72
+      },
+      "current_findings": [
+        {
+          "issue_id": "depth.middle_setback",
+          "view": "right",
+          "item": "中段前表面后退量过小，右视/俯视中未呈现参考轴测图可见的 U 形凹槽台阶",
+          "evidence": "参考轴测图中中段粉红面相对两侧浅灰绿前表面有明显可见的退台，退台深度相对块体厚度可辨；当前计划中段 center.y=-3、width=30，实际后退仅 3 mm，右视与俯视预览中台阶几乎不可见，与参考图可见投影不符。",
+          "severity": "medium",
+          "category": "geometry",
+          "feature_ids": [
+            "middle_block"
+          ],
+          "affected_parameters": [
+            {
+              "feature_id": "middle_block",
+              "path": "parameters.center"
+            },
+            {
+              "feature_id": "middle_block",
+              "path": "parameters.width"
+            }
+          ],
+          "first_seen_round": 1
+        },
+        {
+          "issue_id": "right.depth_setback",
+          "view": "right",
+          "item": "右视 YZ 深度与中段前表面后退量",
+          "evidence": "预览右视格为单一 33×100 mm 矩形，Y 向总深 33 mm，中段前表面仅后退 3 mm（Y 从 +15 到 +12），在右视中几乎不可分辨，未呈现参考轴测图中明显的 U 形凹槽台阶。参考轴测图中中段粉红面相对两侧前表面有明显可见的退台，3 mm 后退量偏小。",
+          "severity": "medium",
+          "category": "geometry",
+          "feature_ids": [
+            "middle_block",
+            "left_block",
+            "right_block"
+          ],
+          "affected_parameters": [
+            {
+              "feature_id": "middle_block",
+              "path": "parameters.center"
+            },
+            {
+              "feature_id": "middle_block",
+              "path": "parameters.width"
+            }
+          ],
+          "first_seen_round": 1
+        },
+        {
+          "issue_id": "top.top_boundaries",
+          "view": "top",
+          "item": "俯视 XY 宽深比例与各段前后边界错层",
+          "evidence": "预览俯视格显示 100×33 mm 轮廓，中段前边界仅比两侧前边界后退 3 mm，错层台阶在俯视中几乎不可见；参考轴测图中中段前表面后退量相对块体厚度有清晰可见的台阶，当前 3 mm 后退与可见投影不符。",
+          "severity": "medium",
+          "category": "geometry",
+          "feature_ids": [
+            "middle_block",
+            "left_block",
+            "right_block"
+          ],
+          "affected_parameters": [
+            {
+              "feature_id": "middle_block",
+              "path": "parameters.center"
+            },
+            {
+              "feature_id": "middle_block",
+              "path": "parameters.width"
+            }
+          ],
+          "first_seen_round": 1
+        }
+      ],
+      "findings_before": [],
+      "resolved_finding_ids": [],
+      "open_findings_after": [
+        {
+          "issue_id": "depth.middle_setback",
+          "view": "right",
+          "item": "中段前表面后退量过小，右视/俯视中未呈现参考轴测图可见的 U 形凹槽台阶",
+          "evidence": "参考轴测图中中段粉红面相对两侧浅灰绿前表面有明显可见的退台，退台深度相对块体厚度可辨；当前计划中段 center.y=-3、width=30，实际后退仅 3 mm，右视与俯视预览中台阶几乎不可见，与参考图可见投影不符。",
+          "severity": "medium",
+          "category": "geometry",
+          "feature_ids": [
+            "middle_block"
+          ],
+          "affected_parameters": [
+            {
+              "feature_id": "middle_block",
+              "path": "parameters.center"
+            },
+            {
+              "feature_id": "middle_block",
+              "path": "parameters.width"
+            }
+          ],
+          "first_seen_round": 1
+        },
+        {
+          "issue_id": "right.depth_setback",
+          "view": "right",
+          "item": "右视 YZ 深度与中段前表面后退量",
+          "evidence": "预览右视格为单一 33×100 mm 矩形，Y 向总深 33 mm，中段前表面仅后退 3 mm（Y 从 +15 到 +12），在右视中几乎不可分辨，未呈现参考轴测图中明显的 U 形凹槽台阶。参考轴测图中中段粉红面相对两侧前表面有明显可见的退台，3 mm 后退量偏小。",
+          "severity": "medium",
+          "category": "geometry",
+          "feature_ids": [
+            "middle_block",
+            "left_block",
+            "right_block"
+          ],
+          "affected_parameters": [
+            {
+              "feature_id": "middle_block",
+              "path": "parameters.center"
+            },
+            {
+              "feature_id": "middle_block",
+              "path": "parameters.width"
+            }
+          ],
+          "first_seen_round": 1
+        },
+        {
+          "issue_id": "top.top_boundaries",
+          "view": "top",
+          "item": "俯视 XY 宽深比例与各段前后边界错层",
+          "evidence": "预览俯视格显示 100×33 mm 轮廓，中段前边界仅比两侧前边界后退 3 mm，错层台阶在俯视中几乎不可见；参考轴测图中中段前表面后退量相对块体厚度有清晰可见的台阶，当前 3 mm 后退与可见投影不符。",
+          "severity": "medium",
+          "category": "geometry",
+          "feature_ids": [
+            "middle_block",
+            "left_block",
+            "right_block"
+          ],
+          "affected_parameters": [
+            {
+              "feature_id": "middle_block",
+              "path": "parameters.center"
+            },
+            {
+              "feature_id": "middle_block",
+              "path": "parameters.width"
+            }
+          ],
+          "first_seen_round": 1
+        }
+      ],
+      "action": "multiview_revise"
+    },
+    {
+      "round": 2,
+      "plan_fingerprint": "three:{\"schema_version\":\"1.0\",\"name\":\"三段式带孔凹槽块\",\"source_prompt\":\"复刻整一个工件（两张参考图：轴测图 + 正交正视图）\",\"units\":{\"length\":\"mm\",\"angle\":\"deg\"},\"coordinate_system\":{\"type\":\"global_cartesian\",\"handedness\":\"right\",\"axes\":[\"X\",\"Y\",\"Z\"],\"origin\":[0,0,0]},\"features\":[{\"id\":\"left_block\",\"kind\":\"box\",\"operation\":\"add\",\"name\":\"左段块体\",\"note\":\"正视图中左段，宽度按三段比例 0.3906 取值；与中段、右段顶部/底部齐平。\",\"parameters\":{\"length\":39,\"width\":30,\"height\":100,\"center\":[-30.5,0,50]},\"sources\":{\"length\":{\"type\":\"image_estimate\",\"evidence\":\"正视图（image_index 2）本地像素扫描三段宽度比 [0.3906,0.2188,0.3906]，confidence high；取整件 X 宽 100 mm，左段 = 39 mm。\"},\"width\":{\"type\":\"image_estimate\",\"evidence\":\"两图均无 Y 向正交投影，depth_height 为 null；按与可见投影一致的简单假设取深度 30 mm（约为高度 100 的 0.3），使轴测图中块体厚度与高度观感相符。\"},\"height\":{\"type\":\"image_estimate\",\"evidence\":\"正视图 bbox 宽高比 0.952（confidence high），整件 X 宽 100 mm 时高度约 105 mm，取整 100 mm 作为基准高度。\"},\"center\":{\"type\":\"derived\",\"note\":\"由整件 X 宽 100 mm、左段宽 39 mm 推得左段 X 中心 = -50 + 39/2 = -30.5；Y 中心 0 使前表面位于 Y=+15；Z 中心 50 使底面 Z=0、顶面 Z=100。\"}}},{\"id\":\"right_block\",\"kind\":\"box\",\"operation\":\"add\",\"name\":\"右段块体\",\"note\":\"正视图中右段，与左段等宽，顶部/底部齐平。\",\"parameters\":{\"length\":39,\"width\":30,\"height\":100,\"center\":[30.5,0,50]},\"sources\":{\"length\":{\"type\":\"image_estimate\",\"evidence\":\"正视图三段宽度比右段 0.3906（confidence high），整件 X 宽 100 mm 时右段 = 39 mm，与左段对称。\"},\"width\":{\"type\":\"image_estimate\",\"evidence\":\"同左段，取深度 30 mm（无 Y 向正交证据，采用与可见投影一致的简单假设）。\"},\"height\":{\"type\":\"image_estimate\",\"evidence\":\"正视图外轮廓等高，取 100 mm，与左段一致。\"},\"center\":{\"type\":\"derived\",\"note\":\"右段 X 中心 = 50 - 39/2 = 30.5；Y 中心 0（前表面 Y=+15）；Z 中心 50。\"}}},{\"id\":\"middle_block\",\"kind\":\"box\",\"operation\":\"add\",\"name\":\"中段块体（前表面后退）\",\"note\":\"正视图中段，宽度按比例 0.2188 取值（约为两侧段的一半）；前表面沿 -Y 后退 12 mm，形成参考轴测图中清晰可见的 U 形凹槽台阶。后退量核算：两侧前表面 Yf=+15，目标后退 r=12，中段厚度 Dm=30，则 center.y = Yf - r - Dm/2 = 15 - 12 - 15 = -12；实际 actual_setback = Yf - (center.y + width/2) = 15 - (-12 + 15) = 12 mm，与 r 一致。中段后表面 Y=-27，与两侧后表面 Y=-15 不齐平，中段向后延伸，符合轴测图中中段为独立实体、两侧块体前凸的观感。\",\"parameters\":{\"length\":22,\"width\":30,\"height\":100,\"center\":[0,-12,50]},\"sources\":{\"length\":{\"type\":\"image_estimate\",\"evidence\":\"正视图三段宽度比中段 0.2188（confidence high），整件 X 宽 100 mm 时中段 = 22 mm，约为两侧段 39 mm 的一半，符合识别结论。\"},\"width\":{\"type\":\"image_estimate\",\"evidence\":\"取与两侧段相同厚度 30 mm，使中段仍为实体块，仅前表面后移；无 Y 向正交证据，采用与可见投影一致的简单假设。\"},\"height\":{\"type\":\"image_estimate\",\"evidence\":\"正视图三段等高、轴测图顶面连续，取 100 mm。\"},\"center\":{\"type\":\"derived\",\"note\":\"X 中心 0（中段居中）；Y 中心由后退公式 center.y = Yf - r - Dm/2 = 15 - 12 - 15 = -12 推得，实际后退量 12 mm（约为块体厚度 30 mm 的 0.4，与轴测图中可见台阶比例相符）；Z 中心 50。\"}},\"relations\":[{\"type\":\"depends_on\",\"feature_id\":\"left_block\"},{\"type\":\"depends_on\",\"feature_id\":\"right_block\"}]},{\"id\":\"hole_left_top\",\"kind\":\"hole\",\"operation\":\"cut\",\"name\":\"左段上孔\",\"note\":\"左段三排孔之上排，沿 Y 贯穿。\",\"parameters\":{\"diameter\":12,\"through\":true,\"pos\":\"point\",\"point\":[-30.5,0,78],\"axis\":\"Y\"},\"sources\":{\"diameter\":{\"type\":\"image_estimate\",\"evidence\":\"正视图左段孔径约为该段宽度（39 mm）的 0.3，取 12 mm；三列孔径视觉相近，统一取值。\"},\"through\":{\"type\":\"user\",\"note\":\"识别结论：孔为通孔（正视图孔内可见内壁着色与背景透出）。\"},\"pos\":{\"type\":\"derived\",\"note\":\"按 point 定位，位于左段宽度中部。\"},\"point\":{\"type\":\"image_estimate\",\"evidence\":\"正视图左段孔列位于该段宽度中部（X=-30.5）；三排孔沿 Z 等距，上排约在高度 0.78 处，取 Z=78。\"},\"axis\":{\"type\":\"derived\",\"note\":\"孔轴沿 Y，与板面法向一致，贯穿深度方向。\"}},\"relations\":[{\"type\":\"depends_on\",\"feature_id\":\"left_block\"}]},{\"id\":\"hole_left_mid\",\"kind\":\"hole\",\"operation\":\"cut\",\"name\":\"左段中孔\",\"note\":\"左段三排孔之中排。\",\"parameters\":{\"diameter\":12,\"through\":true,\"pos\":\"point\",\"point\":[-30.5,0,50],\"axis\":\"Y\"},\"sources\":{\"diameter\":{\"type\":\"image_estimate\",\"evidence\":\"同左段上孔，取 12 mm。\"},\"through\":{\"type\":\"user\",\"note\":\"通孔。\"},\"pos\":{\"type\":\"derived\",\"note\":\"按 point 定位。\"},\"point\":{\"type\":\"image_estimate\",\"evidence\":\"正视图左段中排孔位于高度中部，取 Z=50；X=-30.5 为左段宽度中部。\"},\"axis\":{\"type\":\"derived\",\"note\":\"沿 Y 贯穿。\"}},\"relations\":[{\"type\":\"depends_on\",\"feature_id\":\"left_block\"}]},{\"id\":\"hole_left_bot\",\"kind\":\"hole\",\"operation\":\"cut\",\"name\":\"左段下孔\",\"note\":\"左段三排孔之下排。\",\"parameters\":{\"diameter\":12,\"through\":true,\"pos\":\"point\",\"point\":[-30.5,0,22],\"axis\":\"Y\"},\"sources\":{\"diameter\":{\"type\":\"image_estimate\",\"evidence\":\"同左段上孔，取 12 mm。\"},\"through\":{\"type\":\"user\",\"note\":\"通孔。\"},\"pos\":{\"type\":\"derived\",\"note\":\"按 point 定位。\"},\"point\":{\"type\":\"image_estimate\",\"evidence\":\"正视图左段下排孔约在高度 0.22 处，取 Z=22；X=-30.5。\"},\"axis\":{\"type\":\"derived\",\"note\":\"沿 Y 贯穿。\"}},\"relations\":[{\"type\":\"depends_on\",\"feature_id\":\"left_block\"}]},{\"id\":\"hole_mid_top\",\"kind\":\"hole\",\"operation\":\"cut\",\"name\":\"中段上孔\",\"note\":\"中段三排孔之上排，与两侧孔同高，沿 Y 贯穿。\",\"parameters\":{\"diameter\":12,\"through\":true,\"pos\":\"point\",\"point\":[0,-12,78],\"axis\":\"Y\"},\"sources\":{\"diameter\":{\"type\":\"image_estimate\",\"evidence\":\"正视图三列孔径相近，取 12 mm。\"},\"through\":{\"type\":\"user\",\"note\":\"通孔。\"},\"pos\":{\"type\":\"derived\",\"note\":\"按 point 定位，位于中段宽度中部。\"},\"point\":{\"type\":\"image_estimate\",\"evidence\":\"正视图与轴测图中段孔位于中段宽度中部（X=0），与两侧孔同高（Z=78）；Y 取中段中心 -12 以贯穿中段实体。\"},\"axis\":{\"type\":\"derived\",\"note\":\"沿 Y 贯穿。\"}},\"relations\":[{\"type\":\"depends_on\",\"feature_id\":\"middle_block\"}]},{\"id\":\"hole_mid_mid\",\"kind\":\"hole\",\"operation\":\"cut\",\"name\":\"中段中孔\",\"note\":\"中段三排孔之中排。\",\"parameters\":{\"diameter\":12,\"through\":true,\"pos\":\"point\",\"point\":[0,-12,50],\"axis\":\"Y\"},\"sources\":{\"diameter\":{\"type\":\"image_estimate\",\"evidence\":\"同中段上孔，取 12 mm。\"},\"through\":{\"type\":\"user\",\"note\":\"通孔。\"},\"pos\":{\"type\":\"derived\",\"note\":\"按 point 定位。\"},\"point\":{\"type\":\"image_estimate\",\"evidence\":\"正视图与轴测图中段中排孔位于高度中部（Z=50），X=0；Y=-12 为中段中心。\"},\"axis\":{\"type\":\"derived\",\"note\":\"沿 Y 贯穿。\"}},\"relations\":[{\"type\":\"depends_on\",\"feature_id\":\"middle_block\"}]},{\"id\":\"hole_mid_bot\",\"kind\":\"hole\",\"operation\":\"cut\",\"name\":\"中段下孔\",\"note\":\"中段三排孔之下排。\",\"parameters\":{\"diameter\":12,\"through\":true,\"pos\":\"point\",\"point\":[0,-12,22],\"axis\":\"Y\"},\"sources\":{\"diameter\":{\"type\":\"image_estimate\",\"evidence\":\"同中段上孔，取 12 mm。\"},\"through\":{\"type\":\"user\",\"note\":\"通孔。\"},\"pos\":{\"type\":\"derived\",\"note\":\"按 point 定位。\"},\"point\":{\"type\":\"image_estimate\",\"evidence\":\"正视图与轴测图中段下排孔约在高度 0.22 处（Z=22），X=0；Y=-12 为中段中心。\"},\"axis\":{\"type\":\"derived\",\"note\":\"沿 Y 贯穿。\"}},\"relations\":[{\"type\":\"depends_on\",\"feature_id\":\"middle_block\"}]},{\"id\":\"hole_right_top\",\"kind\":\"hole\",\"operation\":\"cut\",\"name\":\"右段上孔\",\"note\":\"右段三排孔之上排，与左段同高。\",\"parameters\":{\"diameter\":12,\"through\":true,\"pos\":\"point\",\"point\":[30.5,0,78],\"axis\":\"Y\"},\"sources\":{\"diameter\":{\"type\":\"image_estimate\",\"evidence\":\"同左段上孔，取 12 mm。\"},\"through\":{\"type\":\"user\",\"note\":\"通孔。\"},\"pos\":{\"type\":\"derived\",\"note\":\"按 point 定位，位于右段宽度中部。\"},\"point\":{\"type\":\"image_estimate\",\"evidence\":\"正视图右段孔列位于该段宽度中部（X=30.5），上排 Z=78。\"},\"axis\":{\"type\":\"derived\",\"note\":\"沿 Y 贯穿。\"}},\"relations\":[{\"type\":\"depends_on\",\"feature_id\":\"right_block\"}]},{\"id\":\"hole_right_mid\",\"kind\":\"hole\",\"operation\":\"cut\",\"name\":\"右段中孔\",\"note\":\"右段三排孔之中排。\",\"parameters\":{\"diameter\":12,\"through\":true,\"pos\":\"point\",\"point\":[30.5,0,50],\"axis\":\"Y\"},\"sources\":{\"diameter\":{\"type\":\"image_estimate\",\"evidence\":\"同左段上孔，取 12 mm。\"},\"through\":{\"type\":\"user\",\"note\":\"通孔。\"},\"pos\":{\"type\":\"derived\",\"note\":\"按 point 定位。\"},\"point\":{\"type\":\"image_estimate\",\"evidence\":\"正视图右段中排孔位于高度中部（Z=50），X=30.5。\"},\"axis\":{\"type\":\"derived\",\"note\":\"沿 Y 贯穿。\"}},\"relations\":[{\"type\":\"depends_on\",\"feature_id\":\"right_block\"}]},{\"id\":\"hole_right_bot\",\"kind\":\"hole\",\"operation\":\"cut\",\"name\":\"右段下孔\",\"note\":\"右段三排孔之下排。\",\"parameters\":{\"diameter\":12,\"through\":true,\"pos\":\"point\",\"point\":[30.5,0,22],\"axis\":\"Y\"},\"sources\":{\"diameter\":{\"type\":\"image_estimate\",\"evidence\":\"同左段上孔，取 12 mm。\"},\"through\":{\"type\":\"user\",\"note\":\"通孔。\"},\"pos\":{\"type\":\"derived\",\"note\":\"按 point 定位。\"},\"point\":{\"type\":\"image_estimate\",\"evidence\":\"正视图右段下排孔约在高度 0.22 处（Z=22），X=30.5。\"},\"axis\":{\"type\":\"derived\",\"note\":\"沿 Y 贯穿。\"}},\"relations\":[{\"type\":\"depends_on\",\"feature_id\":\"right_block\"}]}]}",
+      "dimensions": {
+        "unit": "mm",
+        "bbox": [
+          -50.0,
+          -27.0,
+          0.0,
+          50.0,
+          15.0,
+          100.0
+        ],
+        "size": [
+          100.0,
+          42.0,
+          100.0
+        ],
+        "volume_mm3": 269811.3465792417,
+        "surface_area_mm2": 44937.13981231358,
+        "triangles": 1886,
+        "feature_count": 12
+      },
+      "preview_image": "preview-02-three.png",
+      "multiview_review": {
+        "decision": "accept",
+        "checks": [
+          {
+            "id": "front.outline",
+            "view": "front",
+            "area": "outline",
+            "category": "geometry",
+            "status": "match",
+            "item": "正视 XZ 外轮廓与总宽高比、三段竖直分界",
+            "evidence": "预览正视格为 100×100 mm 正方形外轮廓，与参考正视图 bbox 宽高比 0.952（≈1.0）一致；三段竖直分界清晰，左/中/右宽度比 39:22:39 = 0.39:0.22:0.39，与参考图本地像素扫描 [0.3906,0.2188,0.3906] 一致。",
+            "feature_ids": [
+              "left_block",
+              "middle_block",
+              "right_block"
+            ],
+            "affected_parameters": [
+              {
+                "feature_id": "left_block",
+                "path": "parameters.length"
+              },
+              {
+                "feature_id": "middle_block",
+                "path": "parameters.length"
+              },
+              {
+                "feature_id": "right_block",
+                "path": "parameters.length"
+              }
+            ]
+          },
+          {
+            "id": "front.features",
+            "view": "front",
+            "area": "features",
+            "category": "geometry",
+            "status": "match",
+            "item": "孔数、孔列位置、孔径等级与三排等高关系",
+            "evidence": "预览正视格显示 3 列 × 3 排共 9 个圆孔，三列分别位于左段、中段、右段宽度中部，三排沿 Z 等距（Z=78/50/22），孔径统一 12 mm，与参考正视图 9 孔、三排等高、孔径视觉相近一致。",
+            "feature_ids": [
+              "hole_left_top",
+              "hole_left_mid",
+              "hole_left_bot",
+              "hole_mid_top",
+              "hole_mid_mid",
+              "hole_mid_bot",
+              "hole_right_top",
+              "hole_right_mid",
+              "hole_right_bot"
+            ],
+            "affected_parameters": [
+              {
+                "feature_id": "hole_left_top",
+                "path": "parameters.diameter"
+              },
+              {
+                "feature_id": "hole_mid_mid",
+                "path": "parameters.point"
+              },
+              {
+                "feature_id": "hole_right_bot",
+                "path": "parameters.point"
+              }
+            ]
+          },
+          {
+            "id": "right.depth_setback",
+            "view": "right",
+            "area": "depth_setback",
+            "category": "geometry",
+            "status": "match",
+            "item": "右视 YZ 深度与中段前表面后退量",
+            "evidence": "预览右视格为 42×100 mm 矩形，Y 向总深 42 mm（两侧前表面 Y=+15、中段后表面 Y=-27）；中段前表面后退量已由 3 mm 增至 12 mm，右视中台阶可辨，与参考轴测图中中段粉红面相对两侧前表面明显后退的观感一致。",
+            "feature_ids": [
+              "middle_block",
+              "left_block",
+              "right_block"
+            ],
+            "affected_parameters": [
+              {
+                "feature_id": "middle_block",
+                "path": "parameters.center"
+              },
+              {
+                "feature_id": "middle_block",
+                "path": "parameters.width"
+              }
+            ]
+          },
+          {
+            "id": "right.through_connectivity",
+            "view": "right",
+            "area": "through_connectivity",
+            "category": "geometry",
+            "status": "match",
+            "item": "孔沿 Y 贯穿关系",
+            "evidence": "预览右视格中 9 个孔 through=true 沿 Y 轴贯穿整件深度（Y 从 -27 到 +15），与参考图孔内可见内壁、背景透出的通孔特征一致。",
+            "feature_ids": [
+              "hole_left_top",
+              "hole_mid_top",
+              "hole_right_top"
+            ],
+            "affected_parameters": [
+              {
+                "feature_id": "hole_left_top",
+                "path": "parameters.through"
+              },
+              {
+                "feature_id": "hole_mid_top",
+                "path": "parameters.through"
+              }
+            ]
+          },
+          {
+            "id": "top.top_boundaries",
+            "view": "top",
+            "area": "top_boundaries",
+            "category": "geometry",
+            "status": "match",
+            "item": "俯视 XY 宽深比例与各段前后边界错层",
+            "evidence": "预览俯视格显示 100×42 mm 轮廓，中段前边界比两侧前边界后退 12 mm，俯视中呈现清晰的凸字形错层台阶（两侧块体前凸、中段后缩），与参考轴测图中中段前表面后退、两侧块体前凸的 U 形凹槽结构一致。",
+            "feature_ids": [
+              "middle_block",
+              "left_block",
+              "right_block"
+            ],
+            "affected_parameters": [
+              {
+                "feature_id": "middle_block",
+                "path": "parameters.center"
+              },
+              {
+                "feature_id": "middle_block",
+                "path": "parameters.width"
+              }
+            ]
+          }
+        ],
+        "issues": [],
+        "resolved_findings": [
+          {
+            "issue_id": "depth.middle_setback",
+            "check_id": "right.depth_setback",
+            "evidence": "中段 center.y 由 -3 改为 -12，实际后退量由 3 mm 增至 12 mm；当前右视预览中台阶已可辨，与参考轴测图可见退台一致，偏差消失。"
+          },
+          {
+            "issue_id": "right.depth_setback",
+            "check_id": "right.depth_setback",
+            "evidence": "右视格 Y 向总深由 33 mm 变为 42 mm，中段前表面后退 12 mm 在右视中可分辨，原“单一矩形、台阶不可分辨”的偏差已消失。"
+          },
+          {
+            "issue_id": "top.top_boundaries",
+            "check_id": "top.top_boundaries",
+            "evidence": "俯视格中段前边界后退 12 mm，呈现清晰凸字形错层台阶，原“错层几乎不可见”的偏差已消失。"
+          }
+        ],
+        "plan": null,
+        "questions": [],
+        "confidence": 0.78
+      },
+      "current_findings": [],
+      "findings_before": [
+        {
+          "issue_id": "depth.middle_setback",
+          "view": "right",
+          "item": "中段前表面后退量过小，右视/俯视中未呈现参考轴测图可见的 U 形凹槽台阶",
+          "evidence": "参考轴测图中中段粉红面相对两侧浅灰绿前表面有明显可见的退台，退台深度相对块体厚度可辨；当前计划中段 center.y=-3、width=30，实际后退仅 3 mm，右视与俯视预览中台阶几乎不可见，与参考图可见投影不符。",
+          "severity": "medium",
+          "category": "geometry",
+          "feature_ids": [
+            "middle_block"
+          ],
+          "affected_parameters": [
+            {
+              "feature_id": "middle_block",
+              "path": "parameters.center"
+            },
+            {
+              "feature_id": "middle_block",
+              "path": "parameters.width"
+            }
+          ],
+          "first_seen_round": 1
+        },
+        {
+          "issue_id": "right.depth_setback",
+          "view": "right",
+          "item": "右视 YZ 深度与中段前表面后退量",
+          "evidence": "预览右视格为单一 33×100 mm 矩形，Y 向总深 33 mm，中段前表面仅后退 3 mm（Y 从 +15 到 +12），在右视中几乎不可分辨，未呈现参考轴测图中明显的 U 形凹槽台阶。参考轴测图中中段粉红面相对两侧前表面有明显可见的退台，3 mm 后退量偏小。",
+          "severity": "medium",
+          "category": "geometry",
+          "feature_ids": [
+            "middle_block",
+            "left_block",
+            "right_block"
+          ],
+          "affected_parameters": [
+            {
+              "feature_id": "middle_block",
+              "path": "parameters.center"
+            },
+            {
+              "feature_id": "middle_block",
+              "path": "parameters.width"
+            }
+          ],
+          "first_seen_round": 1
+        },
+        {
+          "issue_id": "top.top_boundaries",
+          "view": "top",
+          "item": "俯视 XY 宽深比例与各段前后边界错层",
+          "evidence": "预览俯视格显示 100×33 mm 轮廓，中段前边界仅比两侧前边界后退 3 mm，错层台阶在俯视中几乎不可见；参考轴测图中中段前表面后退量相对块体厚度有清晰可见的台阶，当前 3 mm 后退与可见投影不符。",
+          "severity": "medium",
+          "category": "geometry",
+          "feature_ids": [
+            "middle_block",
+            "left_block",
+            "right_block"
+          ],
+          "affected_parameters": [
+            {
+              "feature_id": "middle_block",
+              "path": "parameters.center"
+            },
+            {
+              "feature_id": "middle_block",
+              "path": "parameters.width"
+            }
+          ],
+          "first_seen_round": 1
+        }
+      ],
+      "resolved_finding_ids": [
+        "depth.middle_setback",
+        "right.depth_setback",
+        "top.top_boundaries"
+      ],
+      "open_findings_after": [],
+      "similarity_review": {
+        "decision": "accept",
+        "similarity_score": 0.82,
+        "checks": [
+          {
+            "id": "front.outline",
+            "view": "front",
+            "area": "outline",
+            "category": "geometry",
+            "status": "match",
+            "item": "正视 XZ 外轮廓与总宽高比、三段竖直分界",
+            "evidence": "预览正视格为 100×100 mm 正方形外轮廓，与参考正视图 bbox 宽高比 0.952（≈1.0）一致；三段竖直分界清晰，左/中/右宽度比 39:22:39 = 0.39:0.22:0.39，与参考图本地像素扫描 [0.3906,0.2188,0.3906] 一致。",
+            "feature_ids": [
+              "left_block",
+              "middle_block",
+              "right_block"
+            ],
+            "affected_parameters": [
+              {
+                "feature_id": "left_block",
+                "path": "parameters.length"
+              },
+              {
+                "feature_id": "middle_block",
+                "path": "parameters.length"
+              },
+              {
+                "feature_id": "right_block",
+                "path": "parameters.length"
+              }
+            ]
+          },
+          {
+            "id": "front.features",
+            "view": "front",
+            "area": "features",
+            "category": "geometry",
+            "status": "match",
+            "item": "孔数、孔列位置、孔径等级与三排等高关系",
+            "evidence": "预览正视格显示 3 列 × 3 排共 9 个圆孔，三列分别位于左段、中段、右段宽度中部，三排沿 Z 等距（Z=78/50/22），孔径统一 12 mm，与参考正视图 9 孔、三排等高、孔径视觉相近一致。",
+            "feature_ids": [
+              "hole_left_top",
+              "hole_left_mid",
+              "hole_left_bot",
+              "hole_mid_top",
+              "hole_mid_mid",
+              "hole_mid_bot",
+              "hole_right_top",
+              "hole_right_mid",
+              "hole_right_bot"
+            ],
+            "affected_parameters": [
+              {
+                "feature_id": "hole_left_top",
+                "path": "parameters.diameter"
+              },
+              {
+                "feature_id": "hole_mid_mid",
+                "path": "parameters.point"
+              },
+              {
+                "feature_id": "hole_right_bot",
+                "path": "parameters.point"
+              }
+            ]
+          },
+          {
+            "id": "right.depth_setback",
+            "view": "right",
+            "area": "depth_setback",
+            "category": "geometry",
+            "status": "match",
+            "item": "右视 YZ 深度与中段前表面后退量",
+            "evidence": "预览右视格为 42×100 mm 矩形，Y 向总深 42 mm（两侧前表面 Y=+15、中段后表面 Y=-27）；中段前表面后退 12 mm，右视中台阶可辨，与参考轴测图中中段粉红面相对两侧前表面明显后退的观感一致。",
+            "feature_ids": [
+              "middle_block",
+              "left_block",
+              "right_block"
+            ],
+            "affected_parameters": [
+              {
+                "feature_id": "middle_block",
+                "path": "parameters.center"
+              },
+              {
+                "feature_id": "middle_block",
+                "path": "parameters.width"
+              }
+            ]
+          },
+          {
+            "id": "right.through_connectivity",
+            "view": "right",
+            "area": "through_connectivity",
+            "category": "geometry",
+            "status": "match",
+            "item": "孔沿 Y 贯穿关系",
+            "evidence": "预览右视格中 9 个孔 through=true 沿 Y 轴贯穿整件深度（Y 从 -27 到 +15），与参考图孔内可见内壁、背景透出的通孔特征一致。",
+            "feature_ids": [
+              "hole_left_top",
+              "hole_mid_top",
+              "hole_right_top"
+            ],
+            "affected_parameters": [
+              {
+                "feature_id": "hole_left_top",
+                "path": "parameters.through"
+              },
+              {
+                "feature_id": "hole_mid_top",
+                "path": "parameters.through"
+              }
+            ]
+          },
+          {
+            "id": "top.top_boundaries",
+            "view": "top",
+            "area": "top_boundaries",
+            "category": "geometry",
+            "status": "match",
+            "item": "俯视 XY 宽深比例与各段前后边界错层",
+            "evidence": "预览俯视格显示 100×42 mm 轮廓，中段前边界比两侧前边界后退 12 mm，俯视中呈现清晰的凸字形错层台阶（两侧块体前凸、中段后缩），与参考轴测图中中段前表面后退、两侧块体前凸的 U 形凹槽结构一致。",
+            "feature_ids": [
+              "middle_block",
+              "left_block",
+              "right_block"
+            ],
+            "affected_parameters": [
+              {
+                "feature_id": "middle_block",
+                "path": "parameters.center"
+              },
+              {
+                "feature_id": "middle_block",
+                "path": "parameters.width"
+              }
+            ]
+          }
+        ],
+        "resolved_findings": [
+          {
+            "issue_id": "depth.middle_setback",
+            "check_id": "right.depth_setback",
+            "evidence": "中段 center.y 由 -3 改为 -12，实际后退量由 3 mm 增至 12 mm；当前右视预览中台阶已可辨，与参考轴测图可见退台一致，偏差消失。"
+          },
+          {
+            "issue_id": "right.depth_setback",
+            "check_id": "right.depth_setback",
+            "evidence": "右视格 Y 向总深由 33 mm 变为 42 mm，中段前表面后退 12 mm 在右视中可分辨，原“单一矩形、台阶不可分辨”的偏差已消失。"
+          },
+          {
+            "issue_id": "top.top_boundaries",
+            "check_id": "top.top_boundaries",
+            "evidence": "俯视格中段前边界后退 12 mm，呈现清晰凸字形错层台阶，原“错层几乎不可见”的偏差已消失。"
+          }
+        ],
+        "remaining_differences": [],
+        "plan": null,
+        "questions": [],
+        "confidence": 0.78
+      },
+      "action": "accepted"
+    }
+  ],
+  "questions": null,
+  "reply": "本地模型已生成并通过多视图检查；相似审查评分 82%，自动返修 1 次，复核 2 轮。\n预览来自本地网格内核，尚未同步或验证 CATIA。",
+  "tool_trace": [],
+  "error": null
+}

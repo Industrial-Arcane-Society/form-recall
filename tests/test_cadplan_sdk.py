@@ -224,9 +224,12 @@ class CADPlanSDKTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as temp:
             path = Path(temp) / "plan.json"
             path.write_text(json.dumps(plan), encoding="utf-8")
+            # The child writes UTF-8 (its support matrix carries Chinese notes).
+            # Without an explicit encoding, Windows decodes its stdout as GBK,
+            # the reader thread dies, and stdout comes back as None.
             process = subprocess.run(
                 [sys.executable, "-m", "ai_modeler", "--cadplan", "validate", str(path)],
-                capture_output=True, text=True, check=False,
+                capture_output=True, text=True, encoding="utf-8", check=False,
             )
         self.assertEqual(0, process.returncode, process.stderr)
         result = json.loads(process.stdout)

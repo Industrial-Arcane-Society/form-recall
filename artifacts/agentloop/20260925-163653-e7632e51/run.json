@@ -1,0 +1,4390 @@
+{
+  "record_version": 1,
+  "started_at": "2026-09-25T16:36:53+08:00",
+  "finished_at": "2026-09-25T16:37:25+08:00",
+  "state": "needs_user_input",
+  "input": {
+    "prompt": "这样的",
+    "reference_images": [
+      "clipboard-753b21b1397446c58933d2c4fd444dcc.png"
+    ]
+  },
+  "routing": {
+    "action": "edit",
+    "reply": "",
+    "questions": [],
+    "need_recognition": true,
+    "review_mode": "full",
+    "review_rounds": 3,
+    "reason": "用户提供新的正面清晰参考图，明确面板为横长矩形（宽高比约2:1），与当前模型竖放面板及缺失振膜凸台的问题一致，属于对当前模型的几何修正。需重新识别新图以校正面板朝向、振膜同心椭圆结构及端部缺口方向，并做多视图复核。"
+  },
+  "conversation_memory": {
+    "summarized_through": 0,
+    "summary_chars": 0
+  },
+  "limits": {
+    "tool_calls": 256,
+    "web_search_calls": 32,
+    "tool_preview_calls": 64,
+    "multiview_tool_calls_per_round": 8,
+    "review_rounds": 9,
+    "context_turns": 128,
+    "context_chars": 500000,
+    "context_summary_chars": 32000
+  },
+  "selected_reference_images": [
+    "clipboard-753b21b1397446c58933d2c4fd444dcc.png",
+    "clipboard-8863bfb4ceb34be98c1ca411cb6b115e.png",
+    "clipboard-8f9da1f1ece44b0aa8b62cd70451e83d.png",
+    "clipboard-af164988bcbc4e5da25da797cfd454c5.png"
+  ],
+  "model_calls": [
+    {
+      "phase": "turn_router",
+      "model": "deepseek-flash",
+      "max_output_tokens": 4096,
+      "image_parts_in_request": 4,
+      "response_received": true,
+      "reference_image_names": [
+        "clipboard-753b21b1397446c58933d2c4fd444dcc.png",
+        "clipboard-8863bfb4ceb34be98c1ca411cb6b115e.png",
+        "clipboard-8f9da1f1ece44b0aa8b62cd70451e83d.png",
+        "clipboard-af164988bcbc4e5da25da797cfd454c5.png"
+      ],
+      "generated_view": null,
+      "response_chars": 225,
+      "finish_reason": "stop",
+      "usage": {
+        "prompt_tokens": 7460,
+        "completion_tokens": 106,
+        "total_tokens": 7566
+      },
+      "error": null
+    },
+    {
+      "phase": "recognition",
+      "model": "deepseek-flash",
+      "max_output_tokens": 8192,
+      "image_parts_in_request": 4,
+      "response_received": true,
+      "reference_image_names": [
+        "clipboard-753b21b1397446c58933d2c4fd444dcc.png",
+        "clipboard-8863bfb4ceb34be98c1ca411cb6b115e.png",
+        "clipboard-8f9da1f1ece44b0aa8b62cd70451e83d.png",
+        "clipboard-af164988bcbc4e5da25da797cfd454c5.png"
+      ],
+      "generated_view": null,
+      "response_chars": 2486,
+      "finish_reason": "stop",
+      "usage": {
+        "prompt_tokens": 8673,
+        "completion_tokens": 1116,
+        "total_tokens": 9789
+      },
+      "error": null
+    },
+    {
+      "phase": "construction",
+      "model": "deepseek-flash",
+      "max_output_tokens": 16384,
+      "image_parts_in_request": 4,
+      "response_received": true,
+      "reference_image_names": [
+        "clipboard-753b21b1397446c58933d2c4fd444dcc.png",
+        "clipboard-8863bfb4ceb34be98c1ca411cb6b115e.png",
+        "clipboard-8f9da1f1ece44b0aa8b62cd70451e83d.png",
+        "clipboard-af164988bcbc4e5da25da797cfd454c5.png"
+      ],
+      "generated_view": null,
+      "response_chars": 5249,
+      "finish_reason": "stop",
+      "usage": {
+        "prompt_tokens": 29625,
+        "completion_tokens": 1974,
+        "total_tokens": 31599
+      },
+      "error": null
+    },
+    {
+      "phase": "multiview_check",
+      "model": "deepseek-flash",
+      "max_output_tokens": 8192,
+      "image_parts_in_request": 5,
+      "response_received": true,
+      "reference_image_names": [
+        "clipboard-753b21b1397446c58933d2c4fd444dcc.png",
+        "clipboard-8863bfb4ceb34be98c1ca411cb6b115e.png",
+        "clipboard-8f9da1f1ece44b0aa8b62cd70451e83d.png",
+        "clipboard-af164988bcbc4e5da25da797cfd454c5.png"
+      ],
+      "generated_view": "front",
+      "response_chars": 1902,
+      "finish_reason": "stop",
+      "usage": {
+        "prompt_tokens": 7838,
+        "completion_tokens": 686,
+        "total_tokens": 8524
+      },
+      "error": null
+    },
+    {
+      "phase": "multiview_check",
+      "model": "deepseek-flash",
+      "max_output_tokens": 8192,
+      "image_parts_in_request": 5,
+      "response_received": true,
+      "reference_image_names": [
+        "clipboard-753b21b1397446c58933d2c4fd444dcc.png",
+        "clipboard-8863bfb4ceb34be98c1ca411cb6b115e.png",
+        "clipboard-8f9da1f1ece44b0aa8b62cd70451e83d.png",
+        "clipboard-af164988bcbc4e5da25da797cfd454c5.png"
+      ],
+      "generated_view": "right",
+      "response_chars": 2051,
+      "finish_reason": "stop",
+      "usage": {
+        "prompt_tokens": 7842,
+        "completion_tokens": 763,
+        "total_tokens": 8605
+      },
+      "error": null
+    },
+    {
+      "phase": "multiview_check",
+      "model": "deepseek-flash",
+      "max_output_tokens": 8192,
+      "image_parts_in_request": 5,
+      "response_received": true,
+      "reference_image_names": [
+        "clipboard-753b21b1397446c58933d2c4fd444dcc.png",
+        "clipboard-8863bfb4ceb34be98c1ca411cb6b115e.png",
+        "clipboard-8f9da1f1ece44b0aa8b62cd70451e83d.png",
+        "clipboard-af164988bcbc4e5da25da797cfd454c5.png"
+      ],
+      "generated_view": "top",
+      "response_chars": 1534,
+      "finish_reason": "stop",
+      "usage": {
+        "prompt_tokens": 7837,
+        "completion_tokens": 587,
+        "total_tokens": 8424
+      },
+      "error": null
+    }
+  ],
+  "temporary_review_images": [
+    {
+      "filename": "single-review-r01-multiview_check-front.png",
+      "deleted": true,
+      "error": null
+    },
+    {
+      "filename": "single-review-r01-multiview_check-right.png",
+      "deleted": true,
+      "error": null
+    },
+    {
+      "filename": "single-review-r01-multiview_check-top.png",
+      "deleted": true,
+      "error": null
+    }
+  ],
+  "recognition": {
+    "views": [
+      {
+        "image": "clipboard-753b21b1397446c58933d2c4fd444dcc.png",
+        "view": "front",
+        "evidence": "近正交正视（略俯视）的扬声器模块正面：横长矩形金属面板，四角各一圆孔；面板中央为同心椭圆振膜——最外圈椭圆环（长轴沿X），其内一圈椭圆台阶，中心为圆形凸台（略偏右）；面板右侧边缘伸出红黑双导线（用户要求不建模）。面板宽高比约2:1，四角孔为圆角矩形面板上的通孔。"
+      }
+    ],
+    "requirements": [
+      {
+        "item": "复刻该扬声器模块外形，不包含导线",
+        "evidence": "用户文字“尝试复刻这个工件，不要带上线”",
+        "certainty": "explicit"
+      },
+      {
+        "item": "面板为横长矩形，宽高比约2:1，四角圆角",
+        "evidence": "本轮正视图：面板外轮廓宽约2倍高，四角可见圆角",
+        "certainty": "visible"
+      },
+      {
+        "item": "面板四角各一个安装通孔，孔径约为面板宽度的0.06~0.08",
+        "evidence": "本轮正视图四角圆孔，孔径相对面板宽度较小且四孔一致",
+        "certainty": "visible"
+      },
+      {
+        "item": "面板中央有同心椭圆振膜：外椭圆环、内椭圆台阶、中心圆形凸台，长轴沿X方向",
+        "evidence": "本轮正视图中央可见三层同心椭圆/圆结构，外椭圆长轴约为面板宽度的0.5",
+        "certainty": "visible"
+      },
+      {
+        "item": "振膜凸起相对面板厚度很小，整体为薄面板+浅凸台",
+        "evidence": "本轮正视图振膜凸起在正视中几乎不产生侧向阴影，凸起高度远小于面板宽度",
+        "certainty": "visible"
+      },
+      {
+        "item": "本体位于面板背面，深度明显大于面板厚度",
+        "evidence": "前几轮图2、图3斜视显示本体为厚块，面板为薄板",
+        "certainty": "visible"
+      },
+      {
+        "item": "本体远离面板一端有上下凸台形成的缺口/台阶",
+        "evidence": "前几轮图2、图3端部可见缺口台阶",
+        "certainty": "visible"
+      }
+    ],
+    "proportion_observations": {
+      "front_width_height": 2.0,
+      "depth_height": null,
+      "front_segment_width_ratios": null,
+      "middle_front_setback_height_ratio": null,
+      "notes": "本轮图为近正交正视（略俯视），面板外轮廓宽/高≈2.0（像素约 880×440），据此取 front_width_height=2.0。该图非严格正交且无像素扫描候选（three_region_scanline_candidate 与 foreground_bbox_candidate 均为 null），故未采用扫描比例。面板为单一矩形，无沿X的三段分段，front_segment_width_ratios 不适用，填 null。depth_height 需侧视/斜视深度证据，本轮仅正视，填 null；前几轮斜视图显示本体深度约为面板高度的0.5~0.7，但斜投影包围盒不可直接当真实比例，故不写入。middle_front_setback_height_ratio 不适用（无中段后退结构），填 null。绝对尺度不可由图片确定：图中无任何尺寸标注或已知标准件参照，后续建模需选一个合理名义总尺寸（如面板宽39 mm、高19.5 mm，与历史特征树“长方体 39×30”量级一致）再按上述比例派生。振膜外椭圆长轴约为面板宽度的0.50，内椭圆约为0.34，中心凸台直径约为0.16，均为图像估值。"
+    },
+    "feature_layout": [
+      {
+        "feature": "面板外轮廓",
+        "type": "矩形+四角圆角",
+        "position": "整体外形，横长",
+        "evidence": "本轮正视图",
+        "certainty": "visible"
+      },
+      {
+        "feature": "安装孔×4",
+        "type": "通孔",
+        "position": "面板四角，距边缘约孔径的1.5~2倍",
+        "evidence": "本轮正视图四角圆孔",
+        "certainty": "visible"
+      },
+      {
+        "feature": "振膜外椭圆环",
+        "type": "椭圆凸台",
+        "position": "面板中央，长轴沿X，长轴≈面板宽0.50",
+        "evidence": "本轮正视图中央最外圈椭圆",
+        "certainty": "visible"
+      },
+      {
+        "feature": "振膜内椭圆台阶",
+        "type": "椭圆凸台",
+        "position": "外椭圆内，长轴≈面板宽0.34",
+        "evidence": "本轮正视图第二圈椭圆",
+        "certainty": "visible"
+      },
+      {
+        "feature": "中心凸台",
+        "type": "圆形凸台",
+        "position": "振膜中心，直径≈面板宽0.16",
+        "evidence": "本轮正视图中心圆凸台",
+        "certainty": "visible"
+      },
+      {
+        "feature": "本体",
+        "type": "长方体",
+        "position": "面板背面(-Y侧)，深度大于面板厚度",
+        "evidence": "前几轮图2、图3斜视",
+        "certainty": "visible"
+      },
+      {
+        "feature": "端部缺口",
+        "type": "台阶/切除",
+        "position": "本体远离面板一端，上下两侧",
+        "evidence": "前几轮图2、图3端部缺口",
+        "certainty": "visible"
+      },
+      {
+        "feature": "导线",
+        "type": "不建模",
+        "position": "面板右侧伸出",
+        "evidence": "用户明确要求不带上线",
+        "certainty": "explicit"
+      }
+    ],
+    "pending_questions": []
+  },
+  "raster_analysis": {
+    "available": true,
+    "images": [
+      {
+        "image_index": 1,
+        "filename": "clipboard-753b21b1397446c58933d2c4fd444dcc.png",
+        "size_px": [
+          640,
+          480
+        ],
+        "three_region_scanline_candidate": null,
+        "foreground_bbox_candidate": null
+      }
+    ]
+  },
+  "counts": {
+    "tool_calls": 0,
+    "web_search_calls": 0,
+    "blocked_web_search_calls": 0,
+    "preview_calls": 4,
+    "review_rounds": 1,
+    "repair_cycles": 0,
+    "llm_requests": 6,
+    "image_parts_in_request": 27,
+    "llm_usage": {
+      "prompt_tokens": 69275.0,
+      "completion_tokens": 5232.0,
+      "total_tokens": 74507.0
+    }
+  },
+  "construction_repairs": [],
+  "automatic_repairs": [],
+  "open_multiview_findings": [
+    {
+      "issue_id": "front.diaphragm_missing",
+      "phase": "multiview",
+      "view": "front",
+      "item": "正视图中缺少中央椭圆振膜凸起",
+      "evidence": "参考图正视可见明显的椭圆振膜外圈、内圈和中心凸台，占据面板中央约一半宽度；当前单视图面板中央为空白平面，无任何凸起轮廓，说明振膜特征未在正视方向正确生成或未凸出面板前表面。",
+      "severity": "high",
+      "category": "geometry",
+      "feature_ids": [
+        "diaphragm_outer",
+        "diaphragm_inner",
+        "diaphragm_center"
+      ],
+      "affected_parameters": [
+        {
+          "feature_id": "diaphragm_outer",
+          "path": "parameters.center"
+        },
+        {
+          "feature_id": "diaphragm_outer",
+          "path": "parameters.radius"
+        },
+        {
+          "feature_id": "diaphragm_outer",
+          "path": "parameters.height"
+        },
+        {
+          "feature_id": "diaphragm_inner",
+          "path": "parameters.center"
+        },
+        {
+          "feature_id": "diaphragm_center",
+          "path": "parameters.center"
+        }
+      ],
+      "baseline_path_values": {
+        "diaphragm_outer.parameters.center": {
+          "present": true,
+          "value": [
+            0,
+            -15,
+            9.75
+          ]
+        },
+        "diaphragm_outer.parameters.radius": {
+          "present": true,
+          "value": 9.75
+        },
+        "diaphragm_outer.parameters.height": {
+          "present": true,
+          "value": 2
+        },
+        "diaphragm_inner.parameters.center": {
+          "present": true,
+          "value": [
+            0,
+            -16.5,
+            9.75
+          ]
+        },
+        "diaphragm_center.parameters.center": {
+          "present": true,
+          "value": [
+            0,
+            -17.5,
+            9.75
+          ]
+        }
+      },
+      "baseline_feature_values": {
+        "diaphragm_outer": "{\"kind\":\"cylinder\",\"operation\":\"add\",\"parameters\":{\"axis\":\"Y\",\"center\":[0,-15,9.75],\"height\":2,\"radius\":9.75},\"relations\":[{\"feature_id\":\"panel\",\"type\":\"depends_on\"}]}",
+        "diaphragm_inner": "{\"kind\":\"cylinder\",\"operation\":\"add\",\"parameters\":{\"axis\":\"Y\",\"center\":[0,-16.5,9.75],\"height\":1.5,\"radius\":6.6},\"relations\":[{\"feature_id\":\"diaphragm_outer\",\"type\":\"depends_on\"}]}",
+        "diaphragm_center": "{\"kind\":\"cylinder\",\"operation\":\"add\",\"parameters\":{\"axis\":\"Y\",\"center\":[0,-17.5,9.75],\"height\":1,\"radius\":3.1},\"relations\":[{\"feature_id\":\"diaphragm_inner\",\"type\":\"depends_on\"}]}"
+      },
+      "first_seen_round": 1
+    },
+    {
+      "issue_id": "right.end_step_direction",
+      "phase": "multiview",
+      "view": "right",
+      "item": "端部缺口方向错误：应位于 X 端而非 Y 端",
+      "evidence": "原始参考图图2、图3显示本体长度方向端部有上下凸台形成的缺口，深度方向为平整端面；当前 right 视图却在 +Y 方向出现阶梯凸起，与参考图不符。",
+      "severity": "high",
+      "category": "geometry",
+      "feature_ids": [
+        "end_step",
+        "body"
+      ],
+      "affected_parameters": [
+        {
+          "feature_id": "end_step",
+          "path": "parameters.center"
+        },
+        {
+          "feature_id": "end_step",
+          "path": "parameters.length"
+        },
+        {
+          "feature_id": "end_step",
+          "path": "parameters.width"
+        }
+      ],
+      "baseline_path_values": {
+        "end_step.parameters.center": {
+          "present": true,
+          "value": [
+            35,
+            0,
+            9.75
+          ]
+        },
+        "end_step.parameters.length": {
+          "present": true,
+          "value": 8
+        },
+        "end_step.parameters.width": {
+          "present": true,
+          "value": 22
+        }
+      },
+      "baseline_feature_values": {
+        "end_step": "{\"kind\":\"box\",\"operation\":\"cut\",\"parameters\":{\"center\":[35,0,9.75],\"height\":6.5,\"length\":8,\"width\":22}}",
+        "body": "{\"kind\":\"box\",\"operation\":\"add\",\"parameters\":{\"center\":[0,0,9.75],\"height\":19.5,\"length\":39,\"width\":22}}"
+      },
+      "first_seen_round": 1
+    },
+    {
+      "issue_id": "right.hole_through_not_visible",
+      "phase": "multiview",
+      "view": "right",
+      "item": "安装孔贯穿关系在 right 视图不可见",
+      "evidence": "参考图显示四角孔为通孔，当前 right 视图为实心矩形，无法确认孔道贯穿，需在后续视图中核验。",
+      "severity": "medium",
+      "category": "geometry",
+      "feature_ids": [
+        "hole_1",
+        "hole_2",
+        "hole_3",
+        "hole_4"
+      ],
+      "affected_parameters": [
+        {
+          "feature_id": "hole_1",
+          "path": "parameters.through"
+        }
+      ],
+      "baseline_path_values": {
+        "hole_1.parameters.through": {
+          "present": true,
+          "value": true
+        }
+      },
+      "baseline_feature_values": {
+        "hole_1": "{\"kind\":\"hole\",\"operation\":\"cut\",\"parameters\":{\"axis\":\"Y\",\"diameter\":3,\"point\":[-16,-12.5,16.5],\"pos\":\"point\",\"through\":true},\"relations\":[{\"feature_id\":\"panel\",\"type\":\"depends_on\"}]}",
+        "hole_2": "{\"kind\":\"hole\",\"operation\":\"cut\",\"parameters\":{\"axis\":\"Y\",\"diameter\":3,\"point\":[16,-12.5,16.5],\"pos\":\"point\",\"through\":true},\"relations\":[{\"feature_id\":\"panel\",\"type\":\"depends_on\"}]}",
+        "hole_3": "{\"kind\":\"hole\",\"operation\":\"cut\",\"parameters\":{\"axis\":\"Y\",\"diameter\":3,\"point\":[-16,-12.5,3],\"pos\":\"point\",\"through\":true},\"relations\":[{\"feature_id\":\"panel\",\"type\":\"depends_on\"}]}",
+        "hole_4": "{\"kind\":\"hole\",\"operation\":\"cut\",\"parameters\":{\"axis\":\"Y\",\"diameter\":3,\"point\":[16,-12.5,3],\"pos\":\"point\",\"through\":true},\"relations\":[{\"feature_id\":\"panel\",\"type\":\"depends_on\"}]}"
+      },
+      "first_seen_round": 1
+    },
+    {
+      "issue_id": "top.body_depth_ratio",
+      "phase": "multiview",
+      "view": "top",
+      "item": "本体深度过大，与参考图比例不符",
+      "evidence": "参考图正面视图中本体深度约为面板高度的 0.5~0.7 倍（≈10~14 mm），当前计划 width=22 mm，俯视图宽深比≈1.8，明显偏大。",
+      "severity": "high",
+      "category": "geometry",
+      "feature_ids": [
+        "body"
+      ],
+      "affected_parameters": [
+        {
+          "feature_id": "body",
+          "path": "parameters.width"
+        }
+      ],
+      "baseline_path_values": {
+        "body.parameters.width": {
+          "present": true,
+          "value": 22
+        }
+      },
+      "baseline_feature_values": {
+        "body": "{\"kind\":\"box\",\"operation\":\"add\",\"parameters\":{\"center\":[0,0,9.75],\"height\":19.5,\"length\":39,\"width\":22}}"
+      },
+      "first_seen_round": 1
+    },
+    {
+      "issue_id": "top.end_step_position",
+      "phase": "multiview",
+      "view": "top",
+      "item": "端部缺口位置与参考图不符",
+      "evidence": "当前俯视图缺口出现在底部中央，而参考图显示缺口位于面板右侧端部；计划中 end_step 的 center X=35 与俯视图实际显示位置不一致。",
+      "severity": "medium",
+      "category": "geometry",
+      "feature_ids": [
+        "end_step"
+      ],
+      "affected_parameters": [
+        {
+          "feature_id": "end_step",
+          "path": "parameters.center"
+        }
+      ],
+      "baseline_path_values": {
+        "end_step.parameters.center": {
+          "present": true,
+          "value": [
+            35,
+            0,
+            9.75
+          ]
+        }
+      },
+      "baseline_feature_values": {
+        "end_step": "{\"kind\":\"box\",\"operation\":\"cut\",\"parameters\":{\"center\":[35,0,9.75],\"height\":6.5,\"length\":8,\"width\":22}}"
+      },
+      "first_seen_round": 1
+    },
+    {
+      "issue_id": "front.outline",
+      "phase": "multiview",
+      "view": "front",
+      "item": "面板外轮廓与振膜凸起",
+      "evidence": "原始参考图（clipboard-753b21b1397446c58933d2c4fd444dcc.png）正视面板为横长矩形，宽/高≈2.0，中央有显著凸起的椭圆振膜（外椭圆长轴约占面板宽0.5，内圈与中心凸台层层叠起）。当前单视图仅显示一个纯矩形面板，宽/高≈2.0 与参考一致，但完全没有中央振膜凸起轮廓，说明 diaphragm_outer/inner/center 未在正视投影中体现。",
+      "severity": "medium",
+      "category": "geometry",
+      "feature_ids": [
+        "panel",
+        "diaphragm_outer",
+        "diaphragm_inner",
+        "diaphragm_center"
+      ],
+      "affected_parameters": [
+        {
+          "feature_id": "diaphragm_outer",
+          "path": "parameters.center"
+        },
+        {
+          "feature_id": "diaphragm_outer",
+          "path": "parameters.radius"
+        },
+        {
+          "feature_id": "diaphragm_inner",
+          "path": "parameters.center"
+        },
+        {
+          "feature_id": "diaphragm_center",
+          "path": "parameters.center"
+        }
+      ],
+      "baseline_path_values": {
+        "diaphragm_outer.parameters.center": {
+          "present": true,
+          "value": [
+            0,
+            -15,
+            9.75
+          ]
+        },
+        "diaphragm_outer.parameters.radius": {
+          "present": true,
+          "value": 9.75
+        },
+        "diaphragm_inner.parameters.center": {
+          "present": true,
+          "value": [
+            0,
+            -16.5,
+            9.75
+          ]
+        },
+        "diaphragm_center.parameters.center": {
+          "present": true,
+          "value": [
+            0,
+            -17.5,
+            9.75
+          ]
+        }
+      },
+      "baseline_feature_values": {
+        "panel": "{\"kind\":\"box\",\"operation\":\"add\",\"parameters\":{\"center\":[0,-12.5,9.75],\"height\":19.5,\"length\":39,\"width\":3}}",
+        "diaphragm_outer": "{\"kind\":\"cylinder\",\"operation\":\"add\",\"parameters\":{\"axis\":\"Y\",\"center\":[0,-15,9.75],\"height\":2,\"radius\":9.75},\"relations\":[{\"feature_id\":\"panel\",\"type\":\"depends_on\"}]}",
+        "diaphragm_inner": "{\"kind\":\"cylinder\",\"operation\":\"add\",\"parameters\":{\"axis\":\"Y\",\"center\":[0,-16.5,9.75],\"height\":1.5,\"radius\":6.6},\"relations\":[{\"feature_id\":\"diaphragm_outer\",\"type\":\"depends_on\"}]}",
+        "diaphragm_center": "{\"kind\":\"cylinder\",\"operation\":\"add\",\"parameters\":{\"axis\":\"Y\",\"center\":[0,-17.5,9.75],\"height\":1,\"radius\":3.1},\"relations\":[{\"feature_id\":\"diaphragm_inner\",\"type\":\"depends_on\"}]}"
+      },
+      "first_seen_round": 1
+    },
+    {
+      "issue_id": "front.features",
+      "phase": "multiview",
+      "view": "front",
+      "item": "四角安装孔数量与位置",
+      "evidence": "原始参考图四角各有一个圆孔，孔径约为面板宽度的0.06~0.08，距边缘约3~4 mm。当前单视图四角各有一个圆孔，数量、四角对称布置与相对孔径等级与参考一致；但参考图中孔位于面板四角且振膜凸起占据中央，当前视图因缺少振膜凸起，孔与中央特征的相对关系无法核对。",
+      "severity": "low",
+      "category": "geometry",
+      "feature_ids": [
+        "hole_1",
+        "hole_2",
+        "hole_3",
+        "hole_4"
+      ],
+      "affected_parameters": [
+        {
+          "feature_id": "hole_1",
+          "path": "parameters.point"
+        },
+        {
+          "feature_id": "hole_2",
+          "path": "parameters.point"
+        },
+        {
+          "feature_id": "hole_3",
+          "path": "parameters.point"
+        },
+        {
+          "feature_id": "hole_4",
+          "path": "parameters.point"
+        }
+      ],
+      "baseline_path_values": {
+        "hole_1.parameters.point": {
+          "present": true,
+          "value": [
+            -16,
+            -12.5,
+            16.5
+          ]
+        },
+        "hole_2.parameters.point": {
+          "present": true,
+          "value": [
+            16,
+            -12.5,
+            16.5
+          ]
+        },
+        "hole_3.parameters.point": {
+          "present": true,
+          "value": [
+            -16,
+            -12.5,
+            3
+          ]
+        },
+        "hole_4.parameters.point": {
+          "present": true,
+          "value": [
+            16,
+            -12.5,
+            3
+          ]
+        }
+      },
+      "baseline_feature_values": {
+        "hole_1": "{\"kind\":\"hole\",\"operation\":\"cut\",\"parameters\":{\"axis\":\"Y\",\"diameter\":3,\"point\":[-16,-12.5,16.5],\"pos\":\"point\",\"through\":true},\"relations\":[{\"feature_id\":\"panel\",\"type\":\"depends_on\"}]}",
+        "hole_2": "{\"kind\":\"hole\",\"operation\":\"cut\",\"parameters\":{\"axis\":\"Y\",\"diameter\":3,\"point\":[16,-12.5,16.5],\"pos\":\"point\",\"through\":true},\"relations\":[{\"feature_id\":\"panel\",\"type\":\"depends_on\"}]}",
+        "hole_3": "{\"kind\":\"hole\",\"operation\":\"cut\",\"parameters\":{\"axis\":\"Y\",\"diameter\":3,\"point\":[-16,-12.5,3],\"pos\":\"point\",\"through\":true},\"relations\":[{\"feature_id\":\"panel\",\"type\":\"depends_on\"}]}",
+        "hole_4": "{\"kind\":\"hole\",\"operation\":\"cut\",\"parameters\":{\"axis\":\"Y\",\"diameter\":3,\"point\":[16,-12.5,3],\"pos\":\"point\",\"through\":true},\"relations\":[{\"feature_id\":\"panel\",\"type\":\"depends_on\"}]}"
+      },
+      "first_seen_round": 1
+    },
+    {
+      "issue_id": "right.depth_setback",
+      "phase": "multiview",
+      "view": "right",
+      "item": "右侧视图深度方向退台与端部缺口方向",
+      "evidence": "当前 right 视图（YZ）显示一个近似 22×19.5 的矩形主体，仅在图像右侧（+Y 方向）出现阶梯状凸起，即退台/缺口出现在深度方向端部；而原始参考图（图2、图3）显示端部缺口位于本体长度方向（X 端）的上下两侧，深度方向（Y）为平整端面，无阶梯。CADPlan 中 end_step 切除中心为 [35,0,9.75]、尺寸 8×22×6.5，沿 X 端切除，right 视图本应显示为完整矩形，不应出现右侧阶梯。当前视图与计划参数不一致，说明端部缺口被错误地投影/建模在 Y 方向。",
+      "severity": "medium",
+      "category": "geometry",
+      "feature_ids": [
+        "end_step",
+        "body"
+      ],
+      "affected_parameters": [
+        {
+          "feature_id": "end_step",
+          "path": "parameters.center"
+        },
+        {
+          "feature_id": "end_step",
+          "path": "parameters.length"
+        },
+        {
+          "feature_id": "end_step",
+          "path": "parameters.width"
+        }
+      ],
+      "baseline_path_values": {
+        "end_step.parameters.center": {
+          "present": true,
+          "value": [
+            35,
+            0,
+            9.75
+          ]
+        },
+        "end_step.parameters.length": {
+          "present": true,
+          "value": 8
+        },
+        "end_step.parameters.width": {
+          "present": true,
+          "value": 22
+        }
+      },
+      "baseline_feature_values": {
+        "end_step": "{\"kind\":\"box\",\"operation\":\"cut\",\"parameters\":{\"center\":[35,0,9.75],\"height\":6.5,\"length\":8,\"width\":22}}",
+        "body": "{\"kind\":\"box\",\"operation\":\"add\",\"parameters\":{\"center\":[0,0,9.75],\"height\":19.5,\"length\":39,\"width\":22}}"
+      },
+      "first_seen_round": 1
+    },
+    {
+      "issue_id": "right.through_connectivity",
+      "phase": "multiview",
+      "view": "right",
+      "item": "安装孔沿 Y 向贯穿与振膜凸台遮挡关系",
+      "evidence": "原始参考图（图1、本轮图）显示四角安装孔为沿面板法向（Y）的通孔，从正面贯穿面板与本体；当前 right 视图为实心矩形，未见孔道贯穿的开口或遮挡变化，无法确认孔是否真正贯穿至背面。CADPlan 中 hole_1~hole_4 均设 through=true、axis=Y，但 right 视图未体现贯穿特征。",
+      "severity": "low",
+      "category": "geometry",
+      "feature_ids": [
+        "hole_1",
+        "hole_2",
+        "hole_3",
+        "hole_4"
+      ],
+      "affected_parameters": [
+        {
+          "feature_id": "hole_1",
+          "path": "parameters.through"
+        },
+        {
+          "feature_id": "hole_2",
+          "path": "parameters.through"
+        },
+        {
+          "feature_id": "hole_3",
+          "path": "parameters.through"
+        },
+        {
+          "feature_id": "hole_4",
+          "path": "parameters.through"
+        }
+      ],
+      "baseline_path_values": {
+        "hole_1.parameters.through": {
+          "present": true,
+          "value": true
+        },
+        "hole_2.parameters.through": {
+          "present": true,
+          "value": true
+        },
+        "hole_3.parameters.through": {
+          "present": true,
+          "value": true
+        },
+        "hole_4.parameters.through": {
+          "present": true,
+          "value": true
+        }
+      },
+      "baseline_feature_values": {
+        "hole_1": "{\"kind\":\"hole\",\"operation\":\"cut\",\"parameters\":{\"axis\":\"Y\",\"diameter\":3,\"point\":[-16,-12.5,16.5],\"pos\":\"point\",\"through\":true},\"relations\":[{\"feature_id\":\"panel\",\"type\":\"depends_on\"}]}",
+        "hole_2": "{\"kind\":\"hole\",\"operation\":\"cut\",\"parameters\":{\"axis\":\"Y\",\"diameter\":3,\"point\":[16,-12.5,16.5],\"pos\":\"point\",\"through\":true},\"relations\":[{\"feature_id\":\"panel\",\"type\":\"depends_on\"}]}",
+        "hole_3": "{\"kind\":\"hole\",\"operation\":\"cut\",\"parameters\":{\"axis\":\"Y\",\"diameter\":3,\"point\":[-16,-12.5,3],\"pos\":\"point\",\"through\":true},\"relations\":[{\"feature_id\":\"panel\",\"type\":\"depends_on\"}]}",
+        "hole_4": "{\"kind\":\"hole\",\"operation\":\"cut\",\"parameters\":{\"axis\":\"Y\",\"diameter\":3,\"point\":[16,-12.5,3],\"pos\":\"point\",\"through\":true},\"relations\":[{\"feature_id\":\"panel\",\"type\":\"depends_on\"}]}"
+      },
+      "first_seen_round": 1
+    },
+    {
+      "issue_id": "top.top_boundaries",
+      "phase": "multiview",
+      "view": "top",
+      "item": "端部缺口在俯视图中的位置与形状",
+      "evidence": "当前 top 视图底部中央出现一个向下凸出的梯形台阶，位于 X 方向中间偏右，而计划中 end_step 切除位于 +X 端（center X=35），俯视图中应表现为 +X 端（右侧）的缺口，而非底部中央的凸起。参考图正面视图中端部缺口位于面板右侧边缘附近，与当前俯视图所示位置不一致。",
+      "severity": "medium",
+      "category": "geometry",
+      "feature_ids": [
+        "end_step"
+      ],
+      "affected_parameters": [
+        {
+          "feature_id": "end_step",
+          "path": "parameters.center"
+        }
+      ],
+      "baseline_path_values": {
+        "end_step.parameters.center": {
+          "present": true,
+          "value": [
+            35,
+            0,
+            9.75
+          ]
+        }
+      },
+      "baseline_feature_values": {
+        "end_step": "{\"kind\":\"box\",\"operation\":\"cut\",\"parameters\":{\"center\":[35,0,9.75],\"height\":6.5,\"length\":8,\"width\":22}}"
+      },
+      "first_seen_round": 1
+    }
+  ],
+  "plan": {
+    "schema_version": "1.0",
+    "name": "Speaker module (no cable)",
+    "source_prompt": "尝试复刻这个工件，不要带上线",
+    "units": {
+      "length": "mm",
+      "angle": "deg"
+    },
+    "coordinate_system": {
+      "type": "global_cartesian",
+      "handedness": "right",
+      "axes": [
+        "X",
+        "Y",
+        "Z"
+      ],
+      "origin": [
+        0,
+        0,
+        0
+      ]
+    },
+    "features": [
+      {
+        "id": "body",
+        "kind": "box",
+        "operation": "add",
+        "name": "本体",
+        "note": "深色长方体本体，正面(-Y侧)贴面板，背面(+Y)为平整端面；导线不建模",
+        "parameters": {
+          "length": 39,
+          "width": 22,
+          "height": 19.5,
+          "center": [
+            0,
+            0,
+            9.75
+          ]
+        },
+        "sources": {
+          "length": {
+            "type": "image_estimate",
+            "evidence": "本轮正视面板宽/高≈2.0，取名义面板宽39 mm（与历史特征树“长方体 39×30”量级一致），本体长度与面板同宽"
+          },
+          "width": {
+            "type": "image_estimate",
+            "evidence": "前几轮图2、图3斜视显示本体深度明显大于面板厚度，约为面板高度的0.5~0.7倍；取22 mm（≈1.13×19.5），不确定性中等"
+          },
+          "height": {
+            "type": "image_estimate",
+            "evidence": "本轮正视面板高为名义基准19.5 mm（=39/2.0），本体高度与面板等高"
+          },
+          "center": {
+            "type": "derived",
+            "note": "本体底面置于Z=0，中心Z=height/2=9.75；X、Y居中于原点"
+          }
+        }
+      },
+      {
+        "id": "panel",
+        "kind": "box",
+        "operation": "add",
+        "name": "面板",
+        "note": "金属矩形面板，横长，位于本体正面(-Y侧)",
+        "parameters": {
+          "length": 39,
+          "width": 3,
+          "height": 19.5,
+          "center": [
+            0,
+            -12.5,
+            9.75
+          ]
+        },
+        "sources": {
+          "length": {
+            "type": "image_estimate",
+            "evidence": "本轮正视面板宽度与本体同宽，取39 mm"
+          },
+          "width": {
+            "type": "image_estimate",
+            "evidence": "本轮正视振膜凸起几乎无侧向阴影，面板为薄板，取3 mm"
+          },
+          "height": {
+            "type": "image_estimate",
+            "evidence": "本轮正视面板宽/高≈2.0，取高19.5 mm"
+          },
+          "center": {
+            "type": "derived",
+            "note": "面板前表面Y=-14，后表面Y=-11，与本体前表面Y=-11贴合；中心Y=-12.5"
+          }
+        }
+      },
+      {
+        "id": "end_step",
+        "kind": "box",
+        "operation": "cut",
+        "name": "端部缺口",
+        "note": "本体远离面板一侧端部（+X端）上下各一处凸台形成的缺口，用一次切除近似",
+        "parameters": {
+          "length": 8,
+          "width": 22,
+          "height": 6.5,
+          "center": [
+            35,
+            0,
+            9.75
+          ]
+        },
+        "sources": {
+          "length": {
+            "type": "image_estimate",
+            "evidence": "前几轮图2、图3端部台阶约占本体长度1/5，取8 mm"
+          },
+          "width": {
+            "type": "image_estimate",
+            "evidence": "缺口贯穿本体整个深度，取22 mm"
+          },
+          "height": {
+            "type": "image_estimate",
+            "evidence": "前几轮图2端部缺口高度约占本体高度1/3，取6.5 mm"
+          },
+          "center": {
+            "type": "derived",
+            "note": "切除位于+X端，中心X=39-8/2=35，Z居中9.75"
+          }
+        }
+      },
+      {
+        "id": "hole_1",
+        "kind": "hole",
+        "operation": "cut",
+        "name": "安装孔1",
+        "parameters": {
+          "diameter": 3,
+          "through": true,
+          "pos": "point",
+          "point": [
+            -16,
+            -12.5,
+            16.5
+          ],
+          "axis": "Y"
+        },
+        "sources": {
+          "diameter": {
+            "type": "image_estimate",
+            "evidence": "本轮正视四角孔径约为面板宽度的0.06~0.08，取3 mm"
+          },
+          "through": {
+            "type": "user",
+            "note": "面板安装孔为通孔"
+          },
+          "pos": {
+            "type": "derived",
+            "note": "四角布置，取point模式"
+          },
+          "point": {
+            "type": "image_estimate",
+            "evidence": "本轮正视左上角孔，距左边缘约3.5 mm、距上边缘约3 mm"
+          },
+          "axis": {
+            "type": "derived",
+            "note": "孔轴沿面板法向Y"
+          }
+        },
+        "relations": [
+          {
+            "type": "depends_on",
+            "feature_id": "panel"
+          }
+        ]
+      },
+      {
+        "id": "hole_2",
+        "kind": "hole",
+        "operation": "cut",
+        "name": "安装孔2",
+        "parameters": {
+          "diameter": 3,
+          "through": true,
+          "pos": "point",
+          "point": [
+            16,
+            -12.5,
+            16.5
+          ],
+          "axis": "Y"
+        },
+        "sources": {
+          "diameter": {
+            "type": "image_estimate",
+            "evidence": "本轮正视四角孔径一致，取3 mm"
+          },
+          "through": {
+            "type": "user",
+            "note": "面板安装孔为通孔"
+          },
+          "pos": {
+            "type": "derived",
+            "note": "四角布置，取point模式"
+          },
+          "point": {
+            "type": "image_estimate",
+            "evidence": "本轮正视右上角孔，与左上孔对称"
+          },
+          "axis": {
+            "type": "derived",
+            "note": "孔轴沿面板法向Y"
+          }
+        },
+        "relations": [
+          {
+            "type": "depends_on",
+            "feature_id": "panel"
+          }
+        ]
+      },
+      {
+        "id": "hole_3",
+        "kind": "hole",
+        "operation": "cut",
+        "name": "安装孔3",
+        "parameters": {
+          "diameter": 3,
+          "through": true,
+          "pos": "point",
+          "point": [
+            -16,
+            -12.5,
+            3
+          ],
+          "axis": "Y"
+        },
+        "sources": {
+          "diameter": {
+            "type": "image_estimate",
+            "evidence": "本轮正视四角孔径一致，取3 mm"
+          },
+          "through": {
+            "type": "user",
+            "note": "面板安装孔为通孔"
+          },
+          "pos": {
+            "type": "derived",
+            "note": "四角布置，取point模式"
+          },
+          "point": {
+            "type": "image_estimate",
+            "evidence": "本轮正视左下角孔，与左上孔对称"
+          },
+          "axis": {
+            "type": "derived",
+            "note": "孔轴沿面板法向Y"
+          }
+        },
+        "relations": [
+          {
+            "type": "depends_on",
+            "feature_id": "panel"
+          }
+        ]
+      },
+      {
+        "id": "hole_4",
+        "kind": "hole",
+        "operation": "cut",
+        "name": "安装孔4",
+        "parameters": {
+          "diameter": 3,
+          "through": true,
+          "pos": "point",
+          "point": [
+            16,
+            -12.5,
+            3
+          ],
+          "axis": "Y"
+        },
+        "sources": {
+          "diameter": {
+            "type": "image_estimate",
+            "evidence": "本轮正视四角孔径一致，取3 mm"
+          },
+          "through": {
+            "type": "user",
+            "note": "面板安装孔为通孔"
+          },
+          "pos": {
+            "type": "derived",
+            "note": "四角布置，取point模式"
+          },
+          "point": {
+            "type": "image_estimate",
+            "evidence": "本轮正视右下角孔，与右上孔对称"
+          },
+          "axis": {
+            "type": "derived",
+            "note": "孔轴沿面板法向Y"
+          }
+        },
+        "relations": [
+          {
+            "type": "depends_on",
+            "feature_id": "panel"
+          }
+        ]
+      },
+      {
+        "id": "diaphragm_outer",
+        "kind": "cylinder",
+        "operation": "add",
+        "name": "振膜外凸台",
+        "note": "椭圆振膜用等半径圆柱近似（当前内核无椭圆特征），长轴沿X",
+        "parameters": {
+          "radius": 9.75,
+          "height": 2,
+          "center": [
+            0,
+            -15,
+            9.75
+          ],
+          "axis": "Y"
+        },
+        "sources": {
+          "radius": {
+            "type": "image_estimate",
+            "evidence": "本轮正视外椭圆长轴≈面板宽0.50≈19.5 mm，取半径9.75 mm近似"
+          },
+          "height": {
+            "type": "image_estimate",
+            "evidence": "本轮正视振膜凸起高度很小，取2 mm"
+          },
+          "center": {
+            "type": "derived",
+            "note": "位于面板中心，凸出面板前表面Y=-14之外，中心Y=-15"
+          },
+          "axis": {
+            "type": "derived",
+            "note": "沿面板法向Y"
+          }
+        },
+        "relations": [
+          {
+            "type": "depends_on",
+            "feature_id": "panel"
+          }
+        ]
+      },
+      {
+        "id": "diaphragm_inner",
+        "kind": "cylinder",
+        "operation": "add",
+        "name": "振膜内台阶",
+        "parameters": {
+          "radius": 6.6,
+          "height": 1.5,
+          "center": [
+            0,
+            -16.5,
+            9.75
+          ],
+          "axis": "Y"
+        },
+        "sources": {
+          "radius": {
+            "type": "image_estimate",
+            "evidence": "本轮正视内椭圆长轴≈面板宽0.34≈13.3 mm，取半径6.6 mm"
+          },
+          "height": {
+            "type": "image_estimate",
+            "evidence": "本轮正视内台阶略高于外凸台，取1.5 mm"
+          },
+          "center": {
+            "type": "derived",
+            "note": "叠于外凸台之上，中心Y=-16.5"
+          },
+          "axis": {
+            "type": "derived",
+            "note": "沿面板法向Y"
+          }
+        },
+        "relations": [
+          {
+            "type": "depends_on",
+            "feature_id": "diaphragm_outer"
+          }
+        ]
+      },
+      {
+        "id": "diaphragm_center",
+        "kind": "cylinder",
+        "operation": "add",
+        "name": "中心凸台",
+        "parameters": {
+          "radius": 3.1,
+          "height": 1,
+          "center": [
+            0,
+            -17.5,
+            9.75
+          ],
+          "axis": "Y"
+        },
+        "sources": {
+          "radius": {
+            "type": "image_estimate",
+            "evidence": "本轮正视中心凸台直径≈面板宽0.16≈6.2 mm，取半径3.1 mm"
+          },
+          "height": {
+            "type": "image_estimate",
+            "evidence": "本轮正视中心凸台高度很小，取1 mm"
+          },
+          "center": {
+            "type": "derived",
+            "note": "位于椭圆中心，中心Y=-17.5"
+          },
+          "axis": {
+            "type": "derived",
+            "note": "沿面板法向Y"
+          }
+        },
+        "relations": [
+          {
+            "type": "depends_on",
+            "feature_id": "diaphragm_inner"
+          }
+        ]
+      }
+    ],
+    "pending_questions": []
+  },
+  "validation": {
+    "valid": true,
+    "state": "valid",
+    "errors": [],
+    "confirmations": [],
+    "support": [
+      {
+        "feature_id": "body",
+        "kind": "box",
+        "status": "exact",
+        "reason": "矩形草图加凸台；当前 CATIA 映射仅支持 Z 轴拉伸。"
+      },
+      {
+        "feature_id": "panel",
+        "kind": "box",
+        "status": "exact",
+        "reason": "矩形草图加凸台；当前 CATIA 映射仅支持 Z 轴拉伸。"
+      },
+      {
+        "feature_id": "end_step",
+        "kind": "box",
+        "status": "exact",
+        "reason": "矩形草图加凸台；当前 CATIA 映射仅支持 Z 轴拉伸。"
+      },
+      {
+        "feature_id": "hole_1",
+        "kind": "hole",
+        "status": "exact",
+        "reason": "圆形凹槽；through=true 时按当前零件包围盒生成贯穿深度。"
+      },
+      {
+        "feature_id": "hole_2",
+        "kind": "hole",
+        "status": "exact",
+        "reason": "圆形凹槽；through=true 时按当前零件包围盒生成贯穿深度。"
+      },
+      {
+        "feature_id": "hole_3",
+        "kind": "hole",
+        "status": "exact",
+        "reason": "圆形凹槽；through=true 时按当前零件包围盒生成贯穿深度。"
+      },
+      {
+        "feature_id": "hole_4",
+        "kind": "hole",
+        "status": "exact",
+        "reason": "圆形凹槽；through=true 时按当前零件包围盒生成贯穿深度。"
+      },
+      {
+        "feature_id": "diaphragm_outer",
+        "kind": "cylinder",
+        "status": "exact",
+        "reason": "等半径时为圆草图加凸台；圆锥台会近似，非 Z 轴圆锥台暂不支持。"
+      },
+      {
+        "feature_id": "diaphragm_inner",
+        "kind": "cylinder",
+        "status": "exact",
+        "reason": "等半径时为圆草图加凸台；圆锥台会近似，非 Z 轴圆锥台暂不支持。"
+      },
+      {
+        "feature_id": "diaphragm_center",
+        "kind": "cylinder",
+        "status": "exact",
+        "reason": "等半径时为圆草图加凸台；圆锥台会近似，非 Z 轴圆锥台暂不支持。"
+      }
+    ],
+    "warnings": [],
+    "schema_version": "1.0"
+  },
+  "preview": {
+    "state": "previewed",
+    "validation": {
+      "valid": true,
+      "state": "valid",
+      "errors": [],
+      "confirmations": [],
+      "support": [
+        {
+          "feature_id": "body",
+          "kind": "box",
+          "status": "exact",
+          "reason": "矩形草图加凸台；当前 CATIA 映射仅支持 Z 轴拉伸。"
+        },
+        {
+          "feature_id": "panel",
+          "kind": "box",
+          "status": "exact",
+          "reason": "矩形草图加凸台；当前 CATIA 映射仅支持 Z 轴拉伸。"
+        },
+        {
+          "feature_id": "end_step",
+          "kind": "box",
+          "status": "exact",
+          "reason": "矩形草图加凸台；当前 CATIA 映射仅支持 Z 轴拉伸。"
+        },
+        {
+          "feature_id": "hole_1",
+          "kind": "hole",
+          "status": "exact",
+          "reason": "圆形凹槽；through=true 时按当前零件包围盒生成贯穿深度。"
+        },
+        {
+          "feature_id": "hole_2",
+          "kind": "hole",
+          "status": "exact",
+          "reason": "圆形凹槽；through=true 时按当前零件包围盒生成贯穿深度。"
+        },
+        {
+          "feature_id": "hole_3",
+          "kind": "hole",
+          "status": "exact",
+          "reason": "圆形凹槽；through=true 时按当前零件包围盒生成贯穿深度。"
+        },
+        {
+          "feature_id": "hole_4",
+          "kind": "hole",
+          "status": "exact",
+          "reason": "圆形凹槽；through=true 时按当前零件包围盒生成贯穿深度。"
+        },
+        {
+          "feature_id": "diaphragm_outer",
+          "kind": "cylinder",
+          "status": "exact",
+          "reason": "等半径时为圆草图加凸台；圆锥台会近似，非 Z 轴圆锥台暂不支持。"
+        },
+        {
+          "feature_id": "diaphragm_inner",
+          "kind": "cylinder",
+          "status": "exact",
+          "reason": "等半径时为圆草图加凸台；圆锥台会近似，非 Z 轴圆锥台暂不支持。"
+        },
+        {
+          "feature_id": "diaphragm_center",
+          "kind": "cylinder",
+          "status": "exact",
+          "reason": "等半径时为圆草图加凸台；圆锥台会近似，非 Z 轴圆锥台暂不支持。"
+        }
+      ],
+      "warnings": [],
+      "schema_version": "1.0"
+    },
+    "catia_executed": false,
+    "dimensions": {
+      "unit": "mm",
+      "bbox": [
+        -19.5,
+        -17.5,
+        0.0,
+        19.5,
+        11.0,
+        19.5
+      ],
+      "size": [
+        39.0,
+        28.5,
+        19.5
+      ],
+      "volume_mm3": 18846.274600339042,
+      "surface_area_mm2": 5472.724104480928,
+      "triangles": 6948,
+      "feature_count": 10
+    },
+    "catia_operations": [
+      {
+        "index": 1,
+        "kind": "rect_pad",
+        "plane": "XY",
+        "center": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "profile": [],
+        "dimensions": {
+          "l": 39.0,
+          "w": 22.0,
+          "r": 0.0,
+          "h": 19.5,
+          "depth": 0.0
+        },
+        "name": "本体",
+        "note": "长方体 39 × 22 × 19.5 mm"
+      },
+      {
+        "index": 2,
+        "kind": "rect_pad",
+        "plane": "XY",
+        "center": [
+          0.0,
+          -12.5,
+          0.0
+        ],
+        "profile": [],
+        "dimensions": {
+          "l": 39.0,
+          "w": 3.0,
+          "r": 0.0,
+          "h": 19.5,
+          "depth": 0.0
+        },
+        "name": "面板",
+        "note": "长方体 39 × 3 × 19.5 mm"
+      },
+      {
+        "index": 3,
+        "kind": "rect_cut",
+        "plane": "XY",
+        "center": [
+          35.0,
+          0.0,
+          13.0
+        ],
+        "profile": [],
+        "dimensions": {
+          "l": 8.0,
+          "w": 22.0,
+          "r": 0.0,
+          "h": 6.5,
+          "depth": 6.5
+        },
+        "name": "端部缺口",
+        "note": "长方体 8 × 22 × 6.5 mm"
+      },
+      {
+        "index": 4,
+        "kind": "circle_cut",
+        "plane": "Y",
+        "center": [
+          16.5,
+          -16.0,
+          13.0
+        ],
+        "profile": [],
+        "dimensions": {
+          "l": 0.0,
+          "w": 0.0,
+          "r": 1.5,
+          "h": 0.0,
+          "depth": 32.5
+        },
+        "name": "安装孔1",
+        "note": "⌀3 通孔 @(-16, 16.5)"
+      },
+      {
+        "index": 5,
+        "kind": "circle_cut",
+        "plane": "Y",
+        "center": [
+          16.5,
+          16.0,
+          13.0
+        ],
+        "profile": [],
+        "dimensions": {
+          "l": 0.0,
+          "w": 0.0,
+          "r": 1.5,
+          "h": 0.0,
+          "depth": 32.5
+        },
+        "name": "安装孔2",
+        "note": "⌀3 通孔 @(16, 16.5)"
+      },
+      {
+        "index": 6,
+        "kind": "circle_cut",
+        "plane": "Y",
+        "center": [
+          3.0,
+          -16.0,
+          13.0
+        ],
+        "profile": [],
+        "dimensions": {
+          "l": 0.0,
+          "w": 0.0,
+          "r": 1.5,
+          "h": 0.0,
+          "depth": 32.5
+        },
+        "name": "安装孔3",
+        "note": "⌀3 通孔 @(-16, 3)"
+      },
+      {
+        "index": 7,
+        "kind": "circle_cut",
+        "plane": "Y",
+        "center": [
+          3.0,
+          16.0,
+          13.0
+        ],
+        "profile": [],
+        "dimensions": {
+          "l": 0.0,
+          "w": 0.0,
+          "r": 1.5,
+          "h": 0.0,
+          "depth": 32.5
+        },
+        "name": "安装孔4",
+        "note": "⌀3 通孔 @(16, 3)"
+      },
+      {
+        "index": 8,
+        "kind": "circle_pad",
+        "plane": "Y",
+        "center": [
+          9.75,
+          0.0,
+          -15.0
+        ],
+        "profile": [],
+        "dimensions": {
+          "l": 0.0,
+          "w": 0.0,
+          "r": 9.75,
+          "h": 2.0,
+          "depth": 0.0
+        },
+        "name": "振膜外凸台",
+        "note": "圆柱 ⌀19.5 × 2 mm"
+      },
+      {
+        "index": 9,
+        "kind": "circle_pad",
+        "plane": "Y",
+        "center": [
+          9.75,
+          0.0,
+          -16.5
+        ],
+        "profile": [],
+        "dimensions": {
+          "l": 0.0,
+          "w": 0.0,
+          "r": 6.6,
+          "h": 1.5,
+          "depth": 0.0
+        },
+        "name": "振膜内台阶",
+        "note": "圆柱 ⌀13.2 × 1.5 mm"
+      },
+      {
+        "index": 10,
+        "kind": "circle_pad",
+        "plane": "Y",
+        "center": [
+          9.75,
+          0.0,
+          -17.5
+        ],
+        "profile": [],
+        "dimensions": {
+          "l": 0.0,
+          "w": 0.0,
+          "r": 3.1,
+          "h": 1.0,
+          "depth": 0.0
+        },
+        "name": "中心凸台",
+        "note": "圆柱 ⌀6.2 × 1 mm"
+      }
+    ],
+    "warnings": [],
+    "feature_manifest": {
+      "body": {
+        "kind": "box",
+        "operation": "add",
+        "name": "本体",
+        "parameters": {
+          "length": 39,
+          "width": 22,
+          "height": 19.5,
+          "center": [
+            0,
+            0,
+            9.75
+          ]
+        },
+        "sources": {
+          "length": {
+            "type": "image_estimate",
+            "evidence": "本轮正视面板宽/高≈2.0，取名义面板宽39 mm（与历史特征树“长方体 39×30”量级一致），本体长度与面板同宽"
+          },
+          "width": {
+            "type": "image_estimate",
+            "evidence": "前几轮图2、图3斜视显示本体深度明显大于面板厚度，约为面板高度的0.5~0.7倍；取22 mm（≈1.13×19.5），不确定性中等"
+          },
+          "height": {
+            "type": "image_estimate",
+            "evidence": "本轮正视面板高为名义基准19.5 mm（=39/2.0），本体高度与面板等高"
+          },
+          "center": {
+            "type": "derived",
+            "note": "本体底面置于Z=0，中心Z=height/2=9.75；X、Y居中于原点"
+          }
+        },
+        "relations": []
+      },
+      "panel": {
+        "kind": "box",
+        "operation": "add",
+        "name": "面板",
+        "parameters": {
+          "length": 39,
+          "width": 3,
+          "height": 19.5,
+          "center": [
+            0,
+            -12.5,
+            9.75
+          ]
+        },
+        "sources": {
+          "length": {
+            "type": "image_estimate",
+            "evidence": "本轮正视面板宽度与本体同宽，取39 mm"
+          },
+          "width": {
+            "type": "image_estimate",
+            "evidence": "本轮正视振膜凸起几乎无侧向阴影，面板为薄板，取3 mm"
+          },
+          "height": {
+            "type": "image_estimate",
+            "evidence": "本轮正视面板宽/高≈2.0，取高19.5 mm"
+          },
+          "center": {
+            "type": "derived",
+            "note": "面板前表面Y=-14，后表面Y=-11，与本体前表面Y=-11贴合；中心Y=-12.5"
+          }
+        },
+        "relations": []
+      },
+      "end_step": {
+        "kind": "box",
+        "operation": "cut",
+        "name": "端部缺口",
+        "parameters": {
+          "length": 8,
+          "width": 22,
+          "height": 6.5,
+          "center": [
+            35,
+            0,
+            9.75
+          ]
+        },
+        "sources": {
+          "length": {
+            "type": "image_estimate",
+            "evidence": "前几轮图2、图3端部台阶约占本体长度1/5，取8 mm"
+          },
+          "width": {
+            "type": "image_estimate",
+            "evidence": "缺口贯穿本体整个深度，取22 mm"
+          },
+          "height": {
+            "type": "image_estimate",
+            "evidence": "前几轮图2端部缺口高度约占本体高度1/3，取6.5 mm"
+          },
+          "center": {
+            "type": "derived",
+            "note": "切除位于+X端，中心X=39-8/2=35，Z居中9.75"
+          }
+        },
+        "relations": []
+      },
+      "hole_1": {
+        "kind": "hole",
+        "operation": "cut",
+        "name": "安装孔1",
+        "parameters": {
+          "diameter": 3,
+          "through": true,
+          "pos": "point",
+          "point": [
+            -16,
+            -12.5,
+            16.5
+          ],
+          "axis": "Y"
+        },
+        "sources": {
+          "diameter": {
+            "type": "image_estimate",
+            "evidence": "本轮正视四角孔径约为面板宽度的0.06~0.08，取3 mm"
+          },
+          "through": {
+            "type": "user",
+            "note": "面板安装孔为通孔"
+          },
+          "pos": {
+            "type": "derived",
+            "note": "四角布置，取point模式"
+          },
+          "point": {
+            "type": "image_estimate",
+            "evidence": "本轮正视左上角孔，距左边缘约3.5 mm、距上边缘约3 mm"
+          },
+          "axis": {
+            "type": "derived",
+            "note": "孔轴沿面板法向Y"
+          }
+        },
+        "relations": [
+          {
+            "type": "depends_on",
+            "feature_id": "panel"
+          }
+        ]
+      },
+      "hole_2": {
+        "kind": "hole",
+        "operation": "cut",
+        "name": "安装孔2",
+        "parameters": {
+          "diameter": 3,
+          "through": true,
+          "pos": "point",
+          "point": [
+            16,
+            -12.5,
+            16.5
+          ],
+          "axis": "Y"
+        },
+        "sources": {
+          "diameter": {
+            "type": "image_estimate",
+            "evidence": "本轮正视四角孔径一致，取3 mm"
+          },
+          "through": {
+            "type": "user",
+            "note": "面板安装孔为通孔"
+          },
+          "pos": {
+            "type": "derived",
+            "note": "四角布置，取point模式"
+          },
+          "point": {
+            "type": "image_estimate",
+            "evidence": "本轮正视右上角孔，与左上孔对称"
+          },
+          "axis": {
+            "type": "derived",
+            "note": "孔轴沿面板法向Y"
+          }
+        },
+        "relations": [
+          {
+            "type": "depends_on",
+            "feature_id": "panel"
+          }
+        ]
+      },
+      "hole_3": {
+        "kind": "hole",
+        "operation": "cut",
+        "name": "安装孔3",
+        "parameters": {
+          "diameter": 3,
+          "through": true,
+          "pos": "point",
+          "point": [
+            -16,
+            -12.5,
+            3
+          ],
+          "axis": "Y"
+        },
+        "sources": {
+          "diameter": {
+            "type": "image_estimate",
+            "evidence": "本轮正视四角孔径一致，取3 mm"
+          },
+          "through": {
+            "type": "user",
+            "note": "面板安装孔为通孔"
+          },
+          "pos": {
+            "type": "derived",
+            "note": "四角布置，取point模式"
+          },
+          "point": {
+            "type": "image_estimate",
+            "evidence": "本轮正视左下角孔，与左上孔对称"
+          },
+          "axis": {
+            "type": "derived",
+            "note": "孔轴沿面板法向Y"
+          }
+        },
+        "relations": [
+          {
+            "type": "depends_on",
+            "feature_id": "panel"
+          }
+        ]
+      },
+      "hole_4": {
+        "kind": "hole",
+        "operation": "cut",
+        "name": "安装孔4",
+        "parameters": {
+          "diameter": 3,
+          "through": true,
+          "pos": "point",
+          "point": [
+            16,
+            -12.5,
+            3
+          ],
+          "axis": "Y"
+        },
+        "sources": {
+          "diameter": {
+            "type": "image_estimate",
+            "evidence": "本轮正视四角孔径一致，取3 mm"
+          },
+          "through": {
+            "type": "user",
+            "note": "面板安装孔为通孔"
+          },
+          "pos": {
+            "type": "derived",
+            "note": "四角布置，取point模式"
+          },
+          "point": {
+            "type": "image_estimate",
+            "evidence": "本轮正视右下角孔，与右上孔对称"
+          },
+          "axis": {
+            "type": "derived",
+            "note": "孔轴沿面板法向Y"
+          }
+        },
+        "relations": [
+          {
+            "type": "depends_on",
+            "feature_id": "panel"
+          }
+        ]
+      },
+      "diaphragm_outer": {
+        "kind": "cylinder",
+        "operation": "add",
+        "name": "振膜外凸台",
+        "parameters": {
+          "radius": 9.75,
+          "height": 2,
+          "center": [
+            0,
+            -15,
+            9.75
+          ],
+          "axis": "Y"
+        },
+        "sources": {
+          "radius": {
+            "type": "image_estimate",
+            "evidence": "本轮正视外椭圆长轴≈面板宽0.50≈19.5 mm，取半径9.75 mm近似"
+          },
+          "height": {
+            "type": "image_estimate",
+            "evidence": "本轮正视振膜凸起高度很小，取2 mm"
+          },
+          "center": {
+            "type": "derived",
+            "note": "位于面板中心，凸出面板前表面Y=-14之外，中心Y=-15"
+          },
+          "axis": {
+            "type": "derived",
+            "note": "沿面板法向Y"
+          }
+        },
+        "relations": [
+          {
+            "type": "depends_on",
+            "feature_id": "panel"
+          }
+        ]
+      },
+      "diaphragm_inner": {
+        "kind": "cylinder",
+        "operation": "add",
+        "name": "振膜内台阶",
+        "parameters": {
+          "radius": 6.6,
+          "height": 1.5,
+          "center": [
+            0,
+            -16.5,
+            9.75
+          ],
+          "axis": "Y"
+        },
+        "sources": {
+          "radius": {
+            "type": "image_estimate",
+            "evidence": "本轮正视内椭圆长轴≈面板宽0.34≈13.3 mm，取半径6.6 mm"
+          },
+          "height": {
+            "type": "image_estimate",
+            "evidence": "本轮正视内台阶略高于外凸台，取1.5 mm"
+          },
+          "center": {
+            "type": "derived",
+            "note": "叠于外凸台之上，中心Y=-16.5"
+          },
+          "axis": {
+            "type": "derived",
+            "note": "沿面板法向Y"
+          }
+        },
+        "relations": [
+          {
+            "type": "depends_on",
+            "feature_id": "diaphragm_outer"
+          }
+        ]
+      },
+      "diaphragm_center": {
+        "kind": "cylinder",
+        "operation": "add",
+        "name": "中心凸台",
+        "parameters": {
+          "radius": 3.1,
+          "height": 1,
+          "center": [
+            0,
+            -17.5,
+            9.75
+          ],
+          "axis": "Y"
+        },
+        "sources": {
+          "radius": {
+            "type": "image_estimate",
+            "evidence": "本轮正视中心凸台直径≈面板宽0.16≈6.2 mm，取半径3.1 mm"
+          },
+          "height": {
+            "type": "image_estimate",
+            "evidence": "本轮正视中心凸台高度很小，取1 mm"
+          },
+          "center": {
+            "type": "derived",
+            "note": "位于椭圆中心，中心Y=-17.5"
+          },
+          "axis": {
+            "type": "derived",
+            "note": "沿面板法向Y"
+          }
+        },
+        "relations": [
+          {
+            "type": "depends_on",
+            "feature_id": "diaphragm_inner"
+          }
+        ]
+      }
+    },
+    "build_log": [
+      "[基准] 长方体 39 × 22 × 19.5 mm → 8 面",
+      "[合并] 长方体 39 × 3 × 19.5 mm → 14 面",
+      "[跳过] 长方体 8 × 22 × 6.5 mm —— 与零件不相交",
+      "[切除] ⌀3 通孔 @(-16, 16.5) → 84 面",
+      "[切除] ⌀3 通孔 @(16, 16.5) → 184 面",
+      "[切除] ⌀3 通孔 @(-16, 3) → 286 面",
+      "[切除] ⌀3 通孔 @(16, 3) → 370 面",
+      "[合并] 圆柱 ⌀19.5 × 2 mm → 1157 面",
+      "[合并] 圆柱 ⌀13.2 × 1.5 mm → 2158 面",
+      "[合并] 圆柱 ⌀6.2 × 1 mm → 3560 面"
+    ],
+    "orthographic_layout": {
+      "unit": "mm",
+      "axes": {
+        "length": "X",
+        "width": "Y",
+        "height": "Z"
+      },
+      "uniform_scale_across_views": true,
+      "scale_pixels_per_mm": 5.466666666666667,
+      "tile_size_pixels": [
+        330,
+        260
+      ],
+      "view_extents": {
+        "front": {
+          "horizontal_axis": "X",
+          "horizontal": 39.0,
+          "vertical_axis": "Z",
+          "vertical": 19.5
+        },
+        "right": {
+          "horizontal_axis": "Y",
+          "horizontal": 28.5,
+          "vertical_axis": "Z",
+          "vertical": 19.5
+        },
+        "top": {
+          "horizontal_axis": "X",
+          "horizontal": 39.0,
+          "vertical_axis": "Y",
+          "vertical": 28.5
+        }
+      },
+      "dimension_ratios": {
+        "length_to_height": 2.0,
+        "width_to_height": 1.4615384615384615,
+        "length_to_width": 1.368421052631579
+      }
+    },
+    "preview_image": "preview-01-three.png",
+    "preview_image_views": [
+      "front",
+      "right",
+      "top"
+    ],
+    "preview_image_view_set": "three",
+    "preview_image_grid_columns": 3,
+    "preview_image_source": "AI Modeler local mesh kernel; not CATIA B-Rep",
+    "preview_image_layout": {
+      "unit": "mm",
+      "axes": {
+        "length": "X",
+        "width": "Y",
+        "height": "Z"
+      },
+      "uniform_scale_across_views": true,
+      "scale_pixels_per_mm": 5.466666666666667,
+      "tile_size_pixels": [
+        330,
+        260
+      ],
+      "view_extents": {
+        "front": {
+          "horizontal_axis": "X",
+          "horizontal": 39.0,
+          "vertical_axis": "Z",
+          "vertical": 19.5
+        },
+        "right": {
+          "horizontal_axis": "Y",
+          "horizontal": 28.5,
+          "vertical_axis": "Z",
+          "vertical": 19.5
+        },
+        "top": {
+          "horizontal_axis": "X",
+          "horizontal": 39.0,
+          "vertical_axis": "Y",
+          "vertical": 28.5
+        }
+      },
+      "dimension_ratios": {
+        "length_to_height": 2.0,
+        "width_to_height": 1.4615384615384615,
+        "length_to_width": 1.368421052631579
+      }
+    }
+  },
+  "multiview_review": {
+    "decision": "ask_user",
+    "checks": [
+      {
+        "id": "front.outline",
+        "view": "front",
+        "area": "outline",
+        "category": "geometry",
+        "status": "mismatch",
+        "item": "面板外轮廓与振膜凸起",
+        "evidence": "原始参考图（clipboard-753b21b1397446c58933d2c4fd444dcc.png）正视面板为横长矩形，宽/高≈2.0，中央有显著凸起的椭圆振膜（外椭圆长轴约占面板宽0.5，内圈与中心凸台层层叠起）。当前单视图仅显示一个纯矩形面板，宽/高≈2.0 与参考一致，但完全没有中央振膜凸起轮廓，说明 diaphragm_outer/inner/center 未在正视投影中体现。",
+        "feature_ids": [
+          "panel",
+          "diaphragm_outer",
+          "diaphragm_inner",
+          "diaphragm_center"
+        ],
+        "affected_parameters": [
+          {
+            "feature_id": "diaphragm_outer",
+            "path": "parameters.center"
+          },
+          {
+            "feature_id": "diaphragm_outer",
+            "path": "parameters.radius"
+          },
+          {
+            "feature_id": "diaphragm_inner",
+            "path": "parameters.center"
+          },
+          {
+            "feature_id": "diaphragm_center",
+            "path": "parameters.center"
+          }
+        ]
+      },
+      {
+        "id": "front.features",
+        "view": "front",
+        "area": "features",
+        "category": "geometry",
+        "status": "partial",
+        "item": "四角安装孔数量与位置",
+        "evidence": "原始参考图四角各有一个圆孔，孔径约为面板宽度的0.06~0.08，距边缘约3~4 mm。当前单视图四角各有一个圆孔，数量、四角对称布置与相对孔径等级与参考一致；但参考图中孔位于面板四角且振膜凸起占据中央，当前视图因缺少振膜凸起，孔与中央特征的相对关系无法核对。",
+        "feature_ids": [
+          "hole_1",
+          "hole_2",
+          "hole_3",
+          "hole_4"
+        ],
+        "affected_parameters": [
+          {
+            "feature_id": "hole_1",
+            "path": "parameters.point"
+          },
+          {
+            "feature_id": "hole_2",
+            "path": "parameters.point"
+          },
+          {
+            "feature_id": "hole_3",
+            "path": "parameters.point"
+          },
+          {
+            "feature_id": "hole_4",
+            "path": "parameters.point"
+          }
+        ]
+      },
+      {
+        "id": "right.depth_setback",
+        "view": "right",
+        "area": "depth_setback",
+        "category": "geometry",
+        "status": "mismatch",
+        "item": "右侧视图深度方向退台与端部缺口方向",
+        "evidence": "当前 right 视图（YZ）显示一个近似 22×19.5 的矩形主体，仅在图像右侧（+Y 方向）出现阶梯状凸起，即退台/缺口出现在深度方向端部；而原始参考图（图2、图3）显示端部缺口位于本体长度方向（X 端）的上下两侧，深度方向（Y）为平整端面，无阶梯。CADPlan 中 end_step 切除中心为 [35,0,9.75]、尺寸 8×22×6.5，沿 X 端切除，right 视图本应显示为完整矩形，不应出现右侧阶梯。当前视图与计划参数不一致，说明端部缺口被错误地投影/建模在 Y 方向。",
+        "feature_ids": [
+          "end_step",
+          "body"
+        ],
+        "affected_parameters": [
+          {
+            "feature_id": "end_step",
+            "path": "parameters.center"
+          },
+          {
+            "feature_id": "end_step",
+            "path": "parameters.length"
+          },
+          {
+            "feature_id": "end_step",
+            "path": "parameters.width"
+          }
+        ]
+      },
+      {
+        "id": "right.through_connectivity",
+        "view": "right",
+        "area": "through_connectivity",
+        "category": "geometry",
+        "status": "partial",
+        "item": "安装孔沿 Y 向贯穿与振膜凸台遮挡关系",
+        "evidence": "原始参考图（图1、本轮图）显示四角安装孔为沿面板法向（Y）的通孔，从正面贯穿面板与本体；当前 right 视图为实心矩形，未见孔道贯穿的开口或遮挡变化，无法确认孔是否真正贯穿至背面。CADPlan 中 hole_1~hole_4 均设 through=true、axis=Y，但 right 视图未体现贯穿特征。",
+        "feature_ids": [
+          "hole_1",
+          "hole_2",
+          "hole_3",
+          "hole_4"
+        ],
+        "affected_parameters": [
+          {
+            "feature_id": "hole_1",
+            "path": "parameters.through"
+          },
+          {
+            "feature_id": "hole_2",
+            "path": "parameters.through"
+          },
+          {
+            "feature_id": "hole_3",
+            "path": "parameters.through"
+          },
+          {
+            "feature_id": "hole_4",
+            "path": "parameters.through"
+          }
+        ]
+      },
+      {
+        "id": "top.top_boundaries",
+        "view": "top",
+        "area": "top_boundaries",
+        "category": "geometry",
+        "status": "mismatch",
+        "item": "XY 宽深比例与分段前后边界",
+        "evidence": "原始参考图（clipboard-753b21b1397446c58933d2c4fd444dcc.png）为正面视图，可见面板宽/高≈2.0，本体在面板后方，深度方向仅能看到很窄的侧壁；当前 top 视图显示一个近似 39×22 的矩形（宽深比≈1.8），即本体深度几乎与面板宽度相当，与参考图中本体深度明显小于面板宽度的比例不符。参考图中本体深度约为面板高度的 0.5~0.7 倍（≈10~14 mm），而计划取 width=22 mm。",
+        "feature_ids": [
+          "body"
+        ],
+        "affected_parameters": [
+          {
+            "feature_id": "body",
+            "path": "parameters.width"
+          }
+        ]
+      },
+      {
+        "id": "top.top_boundaries",
+        "view": "top",
+        "area": "top_boundaries",
+        "category": "geometry",
+        "status": "mismatch",
+        "item": "端部缺口在俯视图中的位置与形状",
+        "evidence": "当前 top 视图底部中央出现一个向下凸出的梯形台阶，位于 X 方向中间偏右，而计划中 end_step 切除位于 +X 端（center X=35），俯视图中应表现为 +X 端（右侧）的缺口，而非底部中央的凸起。参考图正面视图中端部缺口位于面板右侧边缘附近，与当前俯视图所示位置不一致。",
+        "feature_ids": [
+          "end_step"
+        ],
+        "affected_parameters": [
+          {
+            "feature_id": "end_step",
+            "path": "parameters.center"
+          }
+        ]
+      }
+    ],
+    "issues": [
+      {
+        "issue_id": "front.diaphragm_missing",
+        "view": "front",
+        "category": "geometry",
+        "severity": "high",
+        "item": "正视图中缺少中央椭圆振膜凸起",
+        "evidence": "参考图正视可见明显的椭圆振膜外圈、内圈和中心凸台，占据面板中央约一半宽度；当前单视图面板中央为空白平面，无任何凸起轮廓，说明振膜特征未在正视方向正确生成或未凸出面板前表面。",
+        "feature_ids": [
+          "diaphragm_outer",
+          "diaphragm_inner",
+          "diaphragm_center"
+        ],
+        "affected_parameters": [
+          {
+            "feature_id": "diaphragm_outer",
+            "path": "parameters.center"
+          },
+          {
+            "feature_id": "diaphragm_outer",
+            "path": "parameters.radius"
+          },
+          {
+            "feature_id": "diaphragm_outer",
+            "path": "parameters.height"
+          },
+          {
+            "feature_id": "diaphragm_inner",
+            "path": "parameters.center"
+          },
+          {
+            "feature_id": "diaphragm_center",
+            "path": "parameters.center"
+          }
+        ]
+      },
+      {
+        "issue_id": "right.end_step_direction",
+        "view": "right",
+        "category": "geometry",
+        "severity": "high",
+        "item": "端部缺口方向错误：应位于 X 端而非 Y 端",
+        "evidence": "原始参考图图2、图3显示本体长度方向端部有上下凸台形成的缺口，深度方向为平整端面；当前 right 视图却在 +Y 方向出现阶梯凸起，与参考图不符。",
+        "feature_ids": [
+          "end_step",
+          "body"
+        ],
+        "affected_parameters": [
+          {
+            "feature_id": "end_step",
+            "path": "parameters.center"
+          },
+          {
+            "feature_id": "end_step",
+            "path": "parameters.length"
+          },
+          {
+            "feature_id": "end_step",
+            "path": "parameters.width"
+          }
+        ]
+      },
+      {
+        "issue_id": "right.hole_through_not_visible",
+        "view": "right",
+        "category": "geometry",
+        "severity": "medium",
+        "item": "安装孔贯穿关系在 right 视图不可见",
+        "evidence": "参考图显示四角孔为通孔，当前 right 视图为实心矩形，无法确认孔道贯穿，需在后续视图中核验。",
+        "feature_ids": [
+          "hole_1",
+          "hole_2",
+          "hole_3",
+          "hole_4"
+        ],
+        "affected_parameters": [
+          {
+            "feature_id": "hole_1",
+            "path": "parameters.through"
+          }
+        ]
+      },
+      {
+        "issue_id": "top.body_depth_ratio",
+        "view": "top",
+        "category": "geometry",
+        "severity": "high",
+        "item": "本体深度过大，与参考图比例不符",
+        "evidence": "参考图正面视图中本体深度约为面板高度的 0.5~0.7 倍（≈10~14 mm），当前计划 width=22 mm，俯视图宽深比≈1.8，明显偏大。",
+        "feature_ids": [
+          "body"
+        ],
+        "affected_parameters": [
+          {
+            "feature_id": "body",
+            "path": "parameters.width"
+          }
+        ]
+      },
+      {
+        "issue_id": "top.end_step_position",
+        "view": "top",
+        "category": "geometry",
+        "severity": "medium",
+        "item": "端部缺口位置与参考图不符",
+        "evidence": "当前俯视图缺口出现在底部中央，而参考图显示缺口位于面板右侧端部；计划中 end_step 的 center X=35 与俯视图实际显示位置不一致。",
+        "feature_ids": [
+          "end_step"
+        ],
+        "affected_parameters": [
+          {
+            "feature_id": "end_step",
+            "path": "parameters.center"
+          }
+        ]
+      },
+      {
+        "issue_id": "front.outline",
+        "view": "front",
+        "category": "geometry",
+        "severity": "high",
+        "item": "面板外轮廓与振膜凸起",
+        "evidence": "原始参考图（clipboard-753b21b1397446c58933d2c4fd444dcc.png）正视面板为横长矩形，宽/高≈2.0，中央有显著凸起的椭圆振膜（外椭圆长轴约占面板宽0.5，内圈与中心凸台层层叠起）。当前单视图仅显示一个纯矩形面板，宽/高≈2.0 与参考一致，但完全没有中央振膜凸起轮廓，说明 diaphragm_outer/inner/center 未在正视投影中体现。",
+        "feature_ids": [
+          "panel",
+          "diaphragm_outer",
+          "diaphragm_inner",
+          "diaphragm_center"
+        ],
+        "affected_parameters": [
+          {
+            "feature_id": "diaphragm_outer",
+            "path": "parameters.center"
+          },
+          {
+            "feature_id": "diaphragm_outer",
+            "path": "parameters.radius"
+          },
+          {
+            "feature_id": "diaphragm_inner",
+            "path": "parameters.center"
+          },
+          {
+            "feature_id": "diaphragm_center",
+            "path": "parameters.center"
+          }
+        ]
+      },
+      {
+        "issue_id": "front.features",
+        "view": "front",
+        "category": "geometry",
+        "severity": "medium",
+        "item": "四角安装孔数量与位置",
+        "evidence": "原始参考图四角各有一个圆孔，孔径约为面板宽度的0.06~0.08，距边缘约3~4 mm。当前单视图四角各有一个圆孔，数量、四角对称布置与相对孔径等级与参考一致；但参考图中孔位于面板四角且振膜凸起占据中央，当前视图因缺少振膜凸起，孔与中央特征的相对关系无法核对。",
+        "feature_ids": [
+          "hole_1",
+          "hole_2",
+          "hole_3",
+          "hole_4"
+        ],
+        "affected_parameters": [
+          {
+            "feature_id": "hole_1",
+            "path": "parameters.point"
+          },
+          {
+            "feature_id": "hole_2",
+            "path": "parameters.point"
+          },
+          {
+            "feature_id": "hole_3",
+            "path": "parameters.point"
+          },
+          {
+            "feature_id": "hole_4",
+            "path": "parameters.point"
+          }
+        ]
+      },
+      {
+        "issue_id": "right.depth_setback",
+        "view": "right",
+        "category": "geometry",
+        "severity": "high",
+        "item": "右侧视图深度方向退台与端部缺口方向",
+        "evidence": "当前 right 视图（YZ）显示一个近似 22×19.5 的矩形主体，仅在图像右侧（+Y 方向）出现阶梯状凸起，即退台/缺口出现在深度方向端部；而原始参考图（图2、图3）显示端部缺口位于本体长度方向（X 端）的上下两侧，深度方向（Y）为平整端面，无阶梯。CADPlan 中 end_step 切除中心为 [35,0,9.75]、尺寸 8×22×6.5，沿 X 端切除，right 视图本应显示为完整矩形，不应出现右侧阶梯。当前视图与计划参数不一致，说明端部缺口被错误地投影/建模在 Y 方向。",
+        "feature_ids": [
+          "end_step",
+          "body"
+        ],
+        "affected_parameters": [
+          {
+            "feature_id": "end_step",
+            "path": "parameters.center"
+          },
+          {
+            "feature_id": "end_step",
+            "path": "parameters.length"
+          },
+          {
+            "feature_id": "end_step",
+            "path": "parameters.width"
+          }
+        ]
+      },
+      {
+        "issue_id": "right.through_connectivity",
+        "view": "right",
+        "category": "geometry",
+        "severity": "medium",
+        "item": "安装孔沿 Y 向贯穿与振膜凸台遮挡关系",
+        "evidence": "原始参考图（图1、本轮图）显示四角安装孔为沿面板法向（Y）的通孔，从正面贯穿面板与本体；当前 right 视图为实心矩形，未见孔道贯穿的开口或遮挡变化，无法确认孔是否真正贯穿至背面。CADPlan 中 hole_1~hole_4 均设 through=true、axis=Y，但 right 视图未体现贯穿特征。",
+        "feature_ids": [
+          "hole_1",
+          "hole_2",
+          "hole_3",
+          "hole_4"
+        ],
+        "affected_parameters": [
+          {
+            "feature_id": "hole_1",
+            "path": "parameters.through"
+          },
+          {
+            "feature_id": "hole_2",
+            "path": "parameters.through"
+          },
+          {
+            "feature_id": "hole_3",
+            "path": "parameters.through"
+          },
+          {
+            "feature_id": "hole_4",
+            "path": "parameters.through"
+          }
+        ]
+      },
+      {
+        "issue_id": "top.top_boundaries",
+        "view": "top",
+        "category": "geometry",
+        "severity": "high",
+        "item": "XY 宽深比例与分段前后边界",
+        "evidence": "原始参考图（clipboard-753b21b1397446c58933d2c4fd444dcc.png）为正面视图，可见面板宽/高≈2.0，本体在面板后方，深度方向仅能看到很窄的侧壁；当前 top 视图显示一个近似 39×22 的矩形（宽深比≈1.8），即本体深度几乎与面板宽度相当，与参考图中本体深度明显小于面板宽度的比例不符。参考图中本体深度约为面板高度的 0.5~0.7 倍（≈10~14 mm），而计划取 width=22 mm。",
+        "feature_ids": [
+          "body"
+        ],
+        "affected_parameters": [
+          {
+            "feature_id": "body",
+            "path": "parameters.width"
+          }
+        ]
+      },
+      {
+        "issue_id": "top.top_boundaries",
+        "view": "top",
+        "category": "geometry",
+        "severity": "high",
+        "item": "端部缺口在俯视图中的位置与形状",
+        "evidence": "当前 top 视图底部中央出现一个向下凸出的梯形台阶，位于 X 方向中间偏右，而计划中 end_step 切除位于 +X 端（center X=35），俯视图中应表现为 +X 端（右侧）的缺口，而非底部中央的凸起。参考图正面视图中端部缺口位于面板右侧边缘附近，与当前俯视图所示位置不一致。",
+        "feature_ids": [
+          "end_step"
+        ],
+        "affected_parameters": [
+          {
+            "feature_id": "end_step",
+            "path": "parameters.center"
+          }
+        ]
+      }
+    ],
+    "resolved_findings": [],
+    "questions": [],
+    "confidence": 0.55,
+    "single_view_reports": [
+      {
+        "view": "front",
+        "checks": [
+          {
+            "id": "front.outline",
+            "view": "front",
+            "area": "outline",
+            "category": "geometry",
+            "status": "mismatch",
+            "item": "面板外轮廓与振膜凸起",
+            "evidence": "原始参考图（clipboard-753b21b1397446c58933d2c4fd444dcc.png）正视面板为横长矩形，宽/高≈2.0，中央有显著凸起的椭圆振膜（外椭圆长轴约占面板宽0.5，内圈与中心凸台层层叠起）。当前单视图仅显示一个纯矩形面板，宽/高≈2.0 与参考一致，但完全没有中央振膜凸起轮廓，说明 diaphragm_outer/inner/center 未在正视投影中体现。",
+            "feature_ids": [
+              "panel",
+              "diaphragm_outer",
+              "diaphragm_inner",
+              "diaphragm_center"
+            ],
+            "affected_parameters": [
+              {
+                "feature_id": "diaphragm_outer",
+                "path": "parameters.center"
+              },
+              {
+                "feature_id": "diaphragm_outer",
+                "path": "parameters.radius"
+              },
+              {
+                "feature_id": "diaphragm_inner",
+                "path": "parameters.center"
+              },
+              {
+                "feature_id": "diaphragm_center",
+                "path": "parameters.center"
+              }
+            ]
+          },
+          {
+            "id": "front.features",
+            "view": "front",
+            "area": "features",
+            "category": "geometry",
+            "status": "partial",
+            "item": "四角安装孔数量与位置",
+            "evidence": "原始参考图四角各有一个圆孔，孔径约为面板宽度的0.06~0.08，距边缘约3~4 mm。当前单视图四角各有一个圆孔，数量、四角对称布置与相对孔径等级与参考一致；但参考图中孔位于面板四角且振膜凸起占据中央，当前视图因缺少振膜凸起，孔与中央特征的相对关系无法核对。",
+            "feature_ids": [
+              "hole_1",
+              "hole_2",
+              "hole_3",
+              "hole_4"
+            ],
+            "affected_parameters": [
+              {
+                "feature_id": "hole_1",
+                "path": "parameters.point"
+              },
+              {
+                "feature_id": "hole_2",
+                "path": "parameters.point"
+              },
+              {
+                "feature_id": "hole_3",
+                "path": "parameters.point"
+              },
+              {
+                "feature_id": "hole_4",
+                "path": "parameters.point"
+              }
+            ]
+          }
+        ],
+        "issues": [
+          {
+            "issue_id": "front.diaphragm_missing",
+            "view": "front",
+            "category": "geometry",
+            "severity": "high",
+            "item": "正视图中缺少中央椭圆振膜凸起",
+            "evidence": "参考图正视可见明显的椭圆振膜外圈、内圈和中心凸台，占据面板中央约一半宽度；当前单视图面板中央为空白平面，无任何凸起轮廓，说明振膜特征未在正视方向正确生成或未凸出面板前表面。",
+            "feature_ids": [
+              "diaphragm_outer",
+              "diaphragm_inner",
+              "diaphragm_center"
+            ],
+            "affected_parameters": [
+              {
+                "feature_id": "diaphragm_outer",
+                "path": "parameters.center"
+              },
+              {
+                "feature_id": "diaphragm_outer",
+                "path": "parameters.radius"
+              },
+              {
+                "feature_id": "diaphragm_outer",
+                "path": "parameters.height"
+              },
+              {
+                "feature_id": "diaphragm_inner",
+                "path": "parameters.center"
+              },
+              {
+                "feature_id": "diaphragm_center",
+                "path": "parameters.center"
+              }
+            ]
+          }
+        ],
+        "confidence": 0.9
+      },
+      {
+        "view": "right",
+        "checks": [
+          {
+            "id": "right.depth_setback",
+            "view": "right",
+            "area": "depth_setback",
+            "category": "geometry",
+            "status": "mismatch",
+            "item": "右侧视图深度方向退台与端部缺口方向",
+            "evidence": "当前 right 视图（YZ）显示一个近似 22×19.5 的矩形主体，仅在图像右侧（+Y 方向）出现阶梯状凸起，即退台/缺口出现在深度方向端部；而原始参考图（图2、图3）显示端部缺口位于本体长度方向（X 端）的上下两侧，深度方向（Y）为平整端面，无阶梯。CADPlan 中 end_step 切除中心为 [35,0,9.75]、尺寸 8×22×6.5，沿 X 端切除，right 视图本应显示为完整矩形，不应出现右侧阶梯。当前视图与计划参数不一致，说明端部缺口被错误地投影/建模在 Y 方向。",
+            "feature_ids": [
+              "end_step",
+              "body"
+            ],
+            "affected_parameters": [
+              {
+                "feature_id": "end_step",
+                "path": "parameters.center"
+              },
+              {
+                "feature_id": "end_step",
+                "path": "parameters.length"
+              },
+              {
+                "feature_id": "end_step",
+                "path": "parameters.width"
+              }
+            ]
+          },
+          {
+            "id": "right.through_connectivity",
+            "view": "right",
+            "area": "through_connectivity",
+            "category": "geometry",
+            "status": "partial",
+            "item": "安装孔沿 Y 向贯穿与振膜凸台遮挡关系",
+            "evidence": "原始参考图（图1、本轮图）显示四角安装孔为沿面板法向（Y）的通孔，从正面贯穿面板与本体；当前 right 视图为实心矩形，未见孔道贯穿的开口或遮挡变化，无法确认孔是否真正贯穿至背面。CADPlan 中 hole_1~hole_4 均设 through=true、axis=Y，但 right 视图未体现贯穿特征。",
+            "feature_ids": [
+              "hole_1",
+              "hole_2",
+              "hole_3",
+              "hole_4"
+            ],
+            "affected_parameters": [
+              {
+                "feature_id": "hole_1",
+                "path": "parameters.through"
+              },
+              {
+                "feature_id": "hole_2",
+                "path": "parameters.through"
+              },
+              {
+                "feature_id": "hole_3",
+                "path": "parameters.through"
+              },
+              {
+                "feature_id": "hole_4",
+                "path": "parameters.through"
+              }
+            ]
+          }
+        ],
+        "issues": [
+          {
+            "issue_id": "right.end_step_direction",
+            "view": "right",
+            "category": "geometry",
+            "severity": "high",
+            "item": "端部缺口方向错误：应位于 X 端而非 Y 端",
+            "evidence": "原始参考图图2、图3显示本体长度方向端部有上下凸台形成的缺口，深度方向为平整端面；当前 right 视图却在 +Y 方向出现阶梯凸起，与参考图不符。",
+            "feature_ids": [
+              "end_step",
+              "body"
+            ],
+            "affected_parameters": [
+              {
+                "feature_id": "end_step",
+                "path": "parameters.center"
+              },
+              {
+                "feature_id": "end_step",
+                "path": "parameters.length"
+              },
+              {
+                "feature_id": "end_step",
+                "path": "parameters.width"
+              }
+            ]
+          },
+          {
+            "issue_id": "right.hole_through_not_visible",
+            "view": "right",
+            "category": "geometry",
+            "severity": "medium",
+            "item": "安装孔贯穿关系在 right 视图不可见",
+            "evidence": "参考图显示四角孔为通孔，当前 right 视图为实心矩形，无法确认孔道贯穿，需在后续视图中核验。",
+            "feature_ids": [
+              "hole_1",
+              "hole_2",
+              "hole_3",
+              "hole_4"
+            ],
+            "affected_parameters": [
+              {
+                "feature_id": "hole_1",
+                "path": "parameters.through"
+              }
+            ]
+          }
+        ],
+        "confidence": 0.55
+      },
+      {
+        "view": "top",
+        "checks": [
+          {
+            "id": "top.top_boundaries",
+            "view": "top",
+            "area": "top_boundaries",
+            "category": "geometry",
+            "status": "mismatch",
+            "item": "XY 宽深比例与分段前后边界",
+            "evidence": "原始参考图（clipboard-753b21b1397446c58933d2c4fd444dcc.png）为正面视图，可见面板宽/高≈2.0，本体在面板后方，深度方向仅能看到很窄的侧壁；当前 top 视图显示一个近似 39×22 的矩形（宽深比≈1.8），即本体深度几乎与面板宽度相当，与参考图中本体深度明显小于面板宽度的比例不符。参考图中本体深度约为面板高度的 0.5~0.7 倍（≈10~14 mm），而计划取 width=22 mm。",
+            "feature_ids": [
+              "body"
+            ],
+            "affected_parameters": [
+              {
+                "feature_id": "body",
+                "path": "parameters.width"
+              }
+            ]
+          },
+          {
+            "id": "top.top_boundaries",
+            "view": "top",
+            "area": "top_boundaries",
+            "category": "geometry",
+            "status": "mismatch",
+            "item": "端部缺口在俯视图中的位置与形状",
+            "evidence": "当前 top 视图底部中央出现一个向下凸出的梯形台阶，位于 X 方向中间偏右，而计划中 end_step 切除位于 +X 端（center X=35），俯视图中应表现为 +X 端（右侧）的缺口，而非底部中央的凸起。参考图正面视图中端部缺口位于面板右侧边缘附近，与当前俯视图所示位置不一致。",
+            "feature_ids": [
+              "end_step"
+            ],
+            "affected_parameters": [
+              {
+                "feature_id": "end_step",
+                "path": "parameters.center"
+              }
+            ]
+          }
+        ],
+        "issues": [
+          {
+            "issue_id": "top.body_depth_ratio",
+            "view": "top",
+            "category": "geometry",
+            "severity": "high",
+            "item": "本体深度过大，与参考图比例不符",
+            "evidence": "参考图正面视图中本体深度约为面板高度的 0.5~0.7 倍（≈10~14 mm），当前计划 width=22 mm，俯视图宽深比≈1.8，明显偏大。",
+            "feature_ids": [
+              "body"
+            ],
+            "affected_parameters": [
+              {
+                "feature_id": "body",
+                "path": "parameters.width"
+              }
+            ]
+          },
+          {
+            "issue_id": "top.end_step_position",
+            "view": "top",
+            "category": "geometry",
+            "severity": "medium",
+            "item": "端部缺口位置与参考图不符",
+            "evidence": "当前俯视图缺口出现在底部中央，而参考图显示缺口位于面板右侧端部；计划中 end_step 的 center X=35 与俯视图实际显示位置不一致。",
+            "feature_ids": [
+              "end_step"
+            ],
+            "affected_parameters": [
+              {
+                "feature_id": "end_step",
+                "path": "parameters.center"
+              }
+            ]
+          }
+        ],
+        "confidence": 0.6
+      }
+    ],
+    "plan": null
+  },
+  "similarity_review": null,
+  "review_history": [
+    {
+      "round": 1,
+      "plan_fingerprint": "three:{\"schema_version\":\"1.0\",\"name\":\"Speaker module (no cable)\",\"source_prompt\":\"尝试复刻这个工件，不要带上线\",\"units\":{\"length\":\"mm\",\"angle\":\"deg\"},\"coordinate_system\":{\"type\":\"global_cartesian\",\"handedness\":\"right\",\"axes\":[\"X\",\"Y\",\"Z\"],\"origin\":[0,0,0]},\"features\":[{\"id\":\"body\",\"kind\":\"box\",\"operation\":\"add\",\"name\":\"本体\",\"note\":\"深色长方体本体，正面(-Y侧)贴面板，背面(+Y)为平整端面；导线不建模\",\"parameters\":{\"length\":39,\"width\":22,\"height\":19.5,\"center\":[0,0,9.75]},\"sources\":{\"length\":{\"type\":\"image_estimate\",\"evidence\":\"本轮正视面板宽/高≈2.0，取名义面板宽39 mm（与历史特征树“长方体 39×30”量级一致），本体长度与面板同宽\"},\"width\":{\"type\":\"image_estimate\",\"evidence\":\"前几轮图2、图3斜视显示本体深度明显大于面板厚度，约为面板高度的0.5~0.7倍；取22 mm（≈1.13×19.5），不确定性中等\"},\"height\":{\"type\":\"image_estimate\",\"evidence\":\"本轮正视面板高为名义基准19.5 mm（=39/2.0），本体高度与面板等高\"},\"center\":{\"type\":\"derived\",\"note\":\"本体底面置于Z=0，中心Z=height/2=9.75；X、Y居中于原点\"}}},{\"id\":\"panel\",\"kind\":\"box\",\"operation\":\"add\",\"name\":\"面板\",\"note\":\"金属矩形面板，横长，位于本体正面(-Y侧)\",\"parameters\":{\"length\":39,\"width\":3,\"height\":19.5,\"center\":[0,-12.5,9.75]},\"sources\":{\"length\":{\"type\":\"image_estimate\",\"evidence\":\"本轮正视面板宽度与本体同宽，取39 mm\"},\"width\":{\"type\":\"image_estimate\",\"evidence\":\"本轮正视振膜凸起几乎无侧向阴影，面板为薄板，取3 mm\"},\"height\":{\"type\":\"image_estimate\",\"evidence\":\"本轮正视面板宽/高≈2.0，取高19.5 mm\"},\"center\":{\"type\":\"derived\",\"note\":\"面板前表面Y=-14，后表面Y=-11，与本体前表面Y=-11贴合；中心Y=-12.5\"}}},{\"id\":\"end_step\",\"kind\":\"box\",\"operation\":\"cut\",\"name\":\"端部缺口\",\"note\":\"本体远离面板一侧端部（+X端）上下各一处凸台形成的缺口，用一次切除近似\",\"parameters\":{\"length\":8,\"width\":22,\"height\":6.5,\"center\":[35,0,9.75]},\"sources\":{\"length\":{\"type\":\"image_estimate\",\"evidence\":\"前几轮图2、图3端部台阶约占本体长度1/5，取8 mm\"},\"width\":{\"type\":\"image_estimate\",\"evidence\":\"缺口贯穿本体整个深度，取22 mm\"},\"height\":{\"type\":\"image_estimate\",\"evidence\":\"前几轮图2端部缺口高度约占本体高度1/3，取6.5 mm\"},\"center\":{\"type\":\"derived\",\"note\":\"切除位于+X端，中心X=39-8/2=35，Z居中9.75\"}}},{\"id\":\"hole_1\",\"kind\":\"hole\",\"operation\":\"cut\",\"name\":\"安装孔1\",\"parameters\":{\"diameter\":3,\"through\":true,\"pos\":\"point\",\"point\":[-16,-12.5,16.5],\"axis\":\"Y\"},\"sources\":{\"diameter\":{\"type\":\"image_estimate\",\"evidence\":\"本轮正视四角孔径约为面板宽度的0.06~0.08，取3 mm\"},\"through\":{\"type\":\"user\",\"note\":\"面板安装孔为通孔\"},\"pos\":{\"type\":\"derived\",\"note\":\"四角布置，取point模式\"},\"point\":{\"type\":\"image_estimate\",\"evidence\":\"本轮正视左上角孔，距左边缘约3.5 mm、距上边缘约3 mm\"},\"axis\":{\"type\":\"derived\",\"note\":\"孔轴沿面板法向Y\"}},\"relations\":[{\"type\":\"depends_on\",\"feature_id\":\"panel\"}]},{\"id\":\"hole_2\",\"kind\":\"hole\",\"operation\":\"cut\",\"name\":\"安装孔2\",\"parameters\":{\"diameter\":3,\"through\":true,\"pos\":\"point\",\"point\":[16,-12.5,16.5],\"axis\":\"Y\"},\"sources\":{\"diameter\":{\"type\":\"image_estimate\",\"evidence\":\"本轮正视四角孔径一致，取3 mm\"},\"through\":{\"type\":\"user\",\"note\":\"面板安装孔为通孔\"},\"pos\":{\"type\":\"derived\",\"note\":\"四角布置，取point模式\"},\"point\":{\"type\":\"image_estimate\",\"evidence\":\"本轮正视右上角孔，与左上孔对称\"},\"axis\":{\"type\":\"derived\",\"note\":\"孔轴沿面板法向Y\"}},\"relations\":[{\"type\":\"depends_on\",\"feature_id\":\"panel\"}]},{\"id\":\"hole_3\",\"kind\":\"hole\",\"operation\":\"cut\",\"name\":\"安装孔3\",\"parameters\":{\"diameter\":3,\"through\":true,\"pos\":\"point\",\"point\":[-16,-12.5,3],\"axis\":\"Y\"},\"sources\":{\"diameter\":{\"type\":\"image_estimate\",\"evidence\":\"本轮正视四角孔径一致，取3 mm\"},\"through\":{\"type\":\"user\",\"note\":\"面板安装孔为通孔\"},\"pos\":{\"type\":\"derived\",\"note\":\"四角布置，取point模式\"},\"point\":{\"type\":\"image_estimate\",\"evidence\":\"本轮正视左下角孔，与左上孔对称\"},\"axis\":{\"type\":\"derived\",\"note\":\"孔轴沿面板法向Y\"}},\"relations\":[{\"type\":\"depends_on\",\"feature_id\":\"panel\"}]},{\"id\":\"hole_4\",\"kind\":\"hole\",\"operation\":\"cut\",\"name\":\"安装孔4\",\"parameters\":{\"diameter\":3,\"through\":true,\"pos\":\"point\",\"point\":[16,-12.5,3],\"axis\":\"Y\"},\"sources\":{\"diameter\":{\"type\":\"image_estimate\",\"evidence\":\"本轮正视四角孔径一致，取3 mm\"},\"through\":{\"type\":\"user\",\"note\":\"面板安装孔为通孔\"},\"pos\":{\"type\":\"derived\",\"note\":\"四角布置，取point模式\"},\"point\":{\"type\":\"image_estimate\",\"evidence\":\"本轮正视右下角孔，与右上孔对称\"},\"axis\":{\"type\":\"derived\",\"note\":\"孔轴沿面板法向Y\"}},\"relations\":[{\"type\":\"depends_on\",\"feature_id\":\"panel\"}]},{\"id\":\"diaphragm_outer\",\"kind\":\"cylinder\",\"operation\":\"add\",\"name\":\"振膜外凸台\",\"note\":\"椭圆振膜用等半径圆柱近似（当前内核无椭圆特征），长轴沿X\",\"parameters\":{\"radius\":9.75,\"height\":2,\"center\":[0,-15,9.75],\"axis\":\"Y\"},\"sources\":{\"radius\":{\"type\":\"image_estimate\",\"evidence\":\"本轮正视外椭圆长轴≈面板宽0.50≈19.5 mm，取半径9.75 mm近似\"},\"height\":{\"type\":\"image_estimate\",\"evidence\":\"本轮正视振膜凸起高度很小，取2 mm\"},\"center\":{\"type\":\"derived\",\"note\":\"位于面板中心，凸出面板前表面Y=-14之外，中心Y=-15\"},\"axis\":{\"type\":\"derived\",\"note\":\"沿面板法向Y\"}},\"relations\":[{\"type\":\"depends_on\",\"feature_id\":\"panel\"}]},{\"id\":\"diaphragm_inner\",\"kind\":\"cylinder\",\"operation\":\"add\",\"name\":\"振膜内台阶\",\"parameters\":{\"radius\":6.6,\"height\":1.5,\"center\":[0,-16.5,9.75],\"axis\":\"Y\"},\"sources\":{\"radius\":{\"type\":\"image_estimate\",\"evidence\":\"本轮正视内椭圆长轴≈面板宽0.34≈13.3 mm，取半径6.6 mm\"},\"height\":{\"type\":\"image_estimate\",\"evidence\":\"本轮正视内台阶略高于外凸台，取1.5 mm\"},\"center\":{\"type\":\"derived\",\"note\":\"叠于外凸台之上，中心Y=-16.5\"},\"axis\":{\"type\":\"derived\",\"note\":\"沿面板法向Y\"}},\"relations\":[{\"type\":\"depends_on\",\"feature_id\":\"diaphragm_outer\"}]},{\"id\":\"diaphragm_center\",\"kind\":\"cylinder\",\"operation\":\"add\",\"name\":\"中心凸台\",\"parameters\":{\"radius\":3.1,\"height\":1,\"center\":[0,-17.5,9.75],\"axis\":\"Y\"},\"sources\":{\"radius\":{\"type\":\"image_estimate\",\"evidence\":\"本轮正视中心凸台直径≈面板宽0.16≈6.2 mm，取半径3.1 mm\"},\"height\":{\"type\":\"image_estimate\",\"evidence\":\"本轮正视中心凸台高度很小，取1 mm\"},\"center\":{\"type\":\"derived\",\"note\":\"位于椭圆中心，中心Y=-17.5\"},\"axis\":{\"type\":\"derived\",\"note\":\"沿面板法向Y\"}},\"relations\":[{\"type\":\"depends_on\",\"feature_id\":\"diaphragm_inner\"}]}],\"pending_questions\":[]}",
+      "dimensions": {
+        "unit": "mm",
+        "bbox": [
+          -19.5,
+          -17.5,
+          0.0,
+          19.5,
+          11.0,
+          19.5
+        ],
+        "size": [
+          39.0,
+          28.5,
+          19.5
+        ],
+        "volume_mm3": 18846.274600339042,
+        "surface_area_mm2": 5472.724104480928,
+        "triangles": 6948,
+        "feature_count": 10
+      },
+      "preview_image": "preview-01-three.png",
+      "multiview_review": {
+        "decision": "ask_user",
+        "checks": [
+          {
+            "id": "front.outline",
+            "view": "front",
+            "area": "outline",
+            "category": "geometry",
+            "status": "mismatch",
+            "item": "面板外轮廓与振膜凸起",
+            "evidence": "原始参考图（clipboard-753b21b1397446c58933d2c4fd444dcc.png）正视面板为横长矩形，宽/高≈2.0，中央有显著凸起的椭圆振膜（外椭圆长轴约占面板宽0.5，内圈与中心凸台层层叠起）。当前单视图仅显示一个纯矩形面板，宽/高≈2.0 与参考一致，但完全没有中央振膜凸起轮廓，说明 diaphragm_outer/inner/center 未在正视投影中体现。",
+            "feature_ids": [
+              "panel",
+              "diaphragm_outer",
+              "diaphragm_inner",
+              "diaphragm_center"
+            ],
+            "affected_parameters": [
+              {
+                "feature_id": "diaphragm_outer",
+                "path": "parameters.center"
+              },
+              {
+                "feature_id": "diaphragm_outer",
+                "path": "parameters.radius"
+              },
+              {
+                "feature_id": "diaphragm_inner",
+                "path": "parameters.center"
+              },
+              {
+                "feature_id": "diaphragm_center",
+                "path": "parameters.center"
+              }
+            ]
+          },
+          {
+            "id": "front.features",
+            "view": "front",
+            "area": "features",
+            "category": "geometry",
+            "status": "partial",
+            "item": "四角安装孔数量与位置",
+            "evidence": "原始参考图四角各有一个圆孔，孔径约为面板宽度的0.06~0.08，距边缘约3~4 mm。当前单视图四角各有一个圆孔，数量、四角对称布置与相对孔径等级与参考一致；但参考图中孔位于面板四角且振膜凸起占据中央，当前视图因缺少振膜凸起，孔与中央特征的相对关系无法核对。",
+            "feature_ids": [
+              "hole_1",
+              "hole_2",
+              "hole_3",
+              "hole_4"
+            ],
+            "affected_parameters": [
+              {
+                "feature_id": "hole_1",
+                "path": "parameters.point"
+              },
+              {
+                "feature_id": "hole_2",
+                "path": "parameters.point"
+              },
+              {
+                "feature_id": "hole_3",
+                "path": "parameters.point"
+              },
+              {
+                "feature_id": "hole_4",
+                "path": "parameters.point"
+              }
+            ]
+          },
+          {
+            "id": "right.depth_setback",
+            "view": "right",
+            "area": "depth_setback",
+            "category": "geometry",
+            "status": "mismatch",
+            "item": "右侧视图深度方向退台与端部缺口方向",
+            "evidence": "当前 right 视图（YZ）显示一个近似 22×19.5 的矩形主体，仅在图像右侧（+Y 方向）出现阶梯状凸起，即退台/缺口出现在深度方向端部；而原始参考图（图2、图3）显示端部缺口位于本体长度方向（X 端）的上下两侧，深度方向（Y）为平整端面，无阶梯。CADPlan 中 end_step 切除中心为 [35,0,9.75]、尺寸 8×22×6.5，沿 X 端切除，right 视图本应显示为完整矩形，不应出现右侧阶梯。当前视图与计划参数不一致，说明端部缺口被错误地投影/建模在 Y 方向。",
+            "feature_ids": [
+              "end_step",
+              "body"
+            ],
+            "affected_parameters": [
+              {
+                "feature_id": "end_step",
+                "path": "parameters.center"
+              },
+              {
+                "feature_id": "end_step",
+                "path": "parameters.length"
+              },
+              {
+                "feature_id": "end_step",
+                "path": "parameters.width"
+              }
+            ]
+          },
+          {
+            "id": "right.through_connectivity",
+            "view": "right",
+            "area": "through_connectivity",
+            "category": "geometry",
+            "status": "partial",
+            "item": "安装孔沿 Y 向贯穿与振膜凸台遮挡关系",
+            "evidence": "原始参考图（图1、本轮图）显示四角安装孔为沿面板法向（Y）的通孔，从正面贯穿面板与本体；当前 right 视图为实心矩形，未见孔道贯穿的开口或遮挡变化，无法确认孔是否真正贯穿至背面。CADPlan 中 hole_1~hole_4 均设 through=true、axis=Y，但 right 视图未体现贯穿特征。",
+            "feature_ids": [
+              "hole_1",
+              "hole_2",
+              "hole_3",
+              "hole_4"
+            ],
+            "affected_parameters": [
+              {
+                "feature_id": "hole_1",
+                "path": "parameters.through"
+              },
+              {
+                "feature_id": "hole_2",
+                "path": "parameters.through"
+              },
+              {
+                "feature_id": "hole_3",
+                "path": "parameters.through"
+              },
+              {
+                "feature_id": "hole_4",
+                "path": "parameters.through"
+              }
+            ]
+          },
+          {
+            "id": "top.top_boundaries",
+            "view": "top",
+            "area": "top_boundaries",
+            "category": "geometry",
+            "status": "mismatch",
+            "item": "XY 宽深比例与分段前后边界",
+            "evidence": "原始参考图（clipboard-753b21b1397446c58933d2c4fd444dcc.png）为正面视图，可见面板宽/高≈2.0，本体在面板后方，深度方向仅能看到很窄的侧壁；当前 top 视图显示一个近似 39×22 的矩形（宽深比≈1.8），即本体深度几乎与面板宽度相当，与参考图中本体深度明显小于面板宽度的比例不符。参考图中本体深度约为面板高度的 0.5~0.7 倍（≈10~14 mm），而计划取 width=22 mm。",
+            "feature_ids": [
+              "body"
+            ],
+            "affected_parameters": [
+              {
+                "feature_id": "body",
+                "path": "parameters.width"
+              }
+            ]
+          },
+          {
+            "id": "top.top_boundaries",
+            "view": "top",
+            "area": "top_boundaries",
+            "category": "geometry",
+            "status": "mismatch",
+            "item": "端部缺口在俯视图中的位置与形状",
+            "evidence": "当前 top 视图底部中央出现一个向下凸出的梯形台阶，位于 X 方向中间偏右，而计划中 end_step 切除位于 +X 端（center X=35），俯视图中应表现为 +X 端（右侧）的缺口，而非底部中央的凸起。参考图正面视图中端部缺口位于面板右侧边缘附近，与当前俯视图所示位置不一致。",
+            "feature_ids": [
+              "end_step"
+            ],
+            "affected_parameters": [
+              {
+                "feature_id": "end_step",
+                "path": "parameters.center"
+              }
+            ]
+          }
+        ],
+        "issues": [
+          {
+            "issue_id": "front.diaphragm_missing",
+            "view": "front",
+            "category": "geometry",
+            "severity": "high",
+            "item": "正视图中缺少中央椭圆振膜凸起",
+            "evidence": "参考图正视可见明显的椭圆振膜外圈、内圈和中心凸台，占据面板中央约一半宽度；当前单视图面板中央为空白平面，无任何凸起轮廓，说明振膜特征未在正视方向正确生成或未凸出面板前表面。",
+            "feature_ids": [
+              "diaphragm_outer",
+              "diaphragm_inner",
+              "diaphragm_center"
+            ],
+            "affected_parameters": [
+              {
+                "feature_id": "diaphragm_outer",
+                "path": "parameters.center"
+              },
+              {
+                "feature_id": "diaphragm_outer",
+                "path": "parameters.radius"
+              },
+              {
+                "feature_id": "diaphragm_outer",
+                "path": "parameters.height"
+              },
+              {
+                "feature_id": "diaphragm_inner",
+                "path": "parameters.center"
+              },
+              {
+                "feature_id": "diaphragm_center",
+                "path": "parameters.center"
+              }
+            ]
+          },
+          {
+            "issue_id": "right.end_step_direction",
+            "view": "right",
+            "category": "geometry",
+            "severity": "high",
+            "item": "端部缺口方向错误：应位于 X 端而非 Y 端",
+            "evidence": "原始参考图图2、图3显示本体长度方向端部有上下凸台形成的缺口，深度方向为平整端面；当前 right 视图却在 +Y 方向出现阶梯凸起，与参考图不符。",
+            "feature_ids": [
+              "end_step",
+              "body"
+            ],
+            "affected_parameters": [
+              {
+                "feature_id": "end_step",
+                "path": "parameters.center"
+              },
+              {
+                "feature_id": "end_step",
+                "path": "parameters.length"
+              },
+              {
+                "feature_id": "end_step",
+                "path": "parameters.width"
+              }
+            ]
+          },
+          {
+            "issue_id": "right.hole_through_not_visible",
+            "view": "right",
+            "category": "geometry",
+            "severity": "medium",
+            "item": "安装孔贯穿关系在 right 视图不可见",
+            "evidence": "参考图显示四角孔为通孔，当前 right 视图为实心矩形，无法确认孔道贯穿，需在后续视图中核验。",
+            "feature_ids": [
+              "hole_1",
+              "hole_2",
+              "hole_3",
+              "hole_4"
+            ],
+            "affected_parameters": [
+              {
+                "feature_id": "hole_1",
+                "path": "parameters.through"
+              }
+            ]
+          },
+          {
+            "issue_id": "top.body_depth_ratio",
+            "view": "top",
+            "category": "geometry",
+            "severity": "high",
+            "item": "本体深度过大，与参考图比例不符",
+            "evidence": "参考图正面视图中本体深度约为面板高度的 0.5~0.7 倍（≈10~14 mm），当前计划 width=22 mm，俯视图宽深比≈1.8，明显偏大。",
+            "feature_ids": [
+              "body"
+            ],
+            "affected_parameters": [
+              {
+                "feature_id": "body",
+                "path": "parameters.width"
+              }
+            ]
+          },
+          {
+            "issue_id": "top.end_step_position",
+            "view": "top",
+            "category": "geometry",
+            "severity": "medium",
+            "item": "端部缺口位置与参考图不符",
+            "evidence": "当前俯视图缺口出现在底部中央，而参考图显示缺口位于面板右侧端部；计划中 end_step 的 center X=35 与俯视图实际显示位置不一致。",
+            "feature_ids": [
+              "end_step"
+            ],
+            "affected_parameters": [
+              {
+                "feature_id": "end_step",
+                "path": "parameters.center"
+              }
+            ]
+          },
+          {
+            "issue_id": "front.outline",
+            "view": "front",
+            "category": "geometry",
+            "severity": "high",
+            "item": "面板外轮廓与振膜凸起",
+            "evidence": "原始参考图（clipboard-753b21b1397446c58933d2c4fd444dcc.png）正视面板为横长矩形，宽/高≈2.0，中央有显著凸起的椭圆振膜（外椭圆长轴约占面板宽0.5，内圈与中心凸台层层叠起）。当前单视图仅显示一个纯矩形面板，宽/高≈2.0 与参考一致，但完全没有中央振膜凸起轮廓，说明 diaphragm_outer/inner/center 未在正视投影中体现。",
+            "feature_ids": [
+              "panel",
+              "diaphragm_outer",
+              "diaphragm_inner",
+              "diaphragm_center"
+            ],
+            "affected_parameters": [
+              {
+                "feature_id": "diaphragm_outer",
+                "path": "parameters.center"
+              },
+              {
+                "feature_id": "diaphragm_outer",
+                "path": "parameters.radius"
+              },
+              {
+                "feature_id": "diaphragm_inner",
+                "path": "parameters.center"
+              },
+              {
+                "feature_id": "diaphragm_center",
+                "path": "parameters.center"
+              }
+            ]
+          },
+          {
+            "issue_id": "front.features",
+            "view": "front",
+            "category": "geometry",
+            "severity": "medium",
+            "item": "四角安装孔数量与位置",
+            "evidence": "原始参考图四角各有一个圆孔，孔径约为面板宽度的0.06~0.08，距边缘约3~4 mm。当前单视图四角各有一个圆孔，数量、四角对称布置与相对孔径等级与参考一致；但参考图中孔位于面板四角且振膜凸起占据中央，当前视图因缺少振膜凸起，孔与中央特征的相对关系无法核对。",
+            "feature_ids": [
+              "hole_1",
+              "hole_2",
+              "hole_3",
+              "hole_4"
+            ],
+            "affected_parameters": [
+              {
+                "feature_id": "hole_1",
+                "path": "parameters.point"
+              },
+              {
+                "feature_id": "hole_2",
+                "path": "parameters.point"
+              },
+              {
+                "feature_id": "hole_3",
+                "path": "parameters.point"
+              },
+              {
+                "feature_id": "hole_4",
+                "path": "parameters.point"
+              }
+            ]
+          },
+          {
+            "issue_id": "right.depth_setback",
+            "view": "right",
+            "category": "geometry",
+            "severity": "high",
+            "item": "右侧视图深度方向退台与端部缺口方向",
+            "evidence": "当前 right 视图（YZ）显示一个近似 22×19.5 的矩形主体，仅在图像右侧（+Y 方向）出现阶梯状凸起，即退台/缺口出现在深度方向端部；而原始参考图（图2、图3）显示端部缺口位于本体长度方向（X 端）的上下两侧，深度方向（Y）为平整端面，无阶梯。CADPlan 中 end_step 切除中心为 [35,0,9.75]、尺寸 8×22×6.5，沿 X 端切除，right 视图本应显示为完整矩形，不应出现右侧阶梯。当前视图与计划参数不一致，说明端部缺口被错误地投影/建模在 Y 方向。",
+            "feature_ids": [
+              "end_step",
+              "body"
+            ],
+            "affected_parameters": [
+              {
+                "feature_id": "end_step",
+                "path": "parameters.center"
+              },
+              {
+                "feature_id": "end_step",
+                "path": "parameters.length"
+              },
+              {
+                "feature_id": "end_step",
+                "path": "parameters.width"
+              }
+            ]
+          },
+          {
+            "issue_id": "right.through_connectivity",
+            "view": "right",
+            "category": "geometry",
+            "severity": "medium",
+            "item": "安装孔沿 Y 向贯穿与振膜凸台遮挡关系",
+            "evidence": "原始参考图（图1、本轮图）显示四角安装孔为沿面板法向（Y）的通孔，从正面贯穿面板与本体；当前 right 视图为实心矩形，未见孔道贯穿的开口或遮挡变化，无法确认孔是否真正贯穿至背面。CADPlan 中 hole_1~hole_4 均设 through=true、axis=Y，但 right 视图未体现贯穿特征。",
+            "feature_ids": [
+              "hole_1",
+              "hole_2",
+              "hole_3",
+              "hole_4"
+            ],
+            "affected_parameters": [
+              {
+                "feature_id": "hole_1",
+                "path": "parameters.through"
+              },
+              {
+                "feature_id": "hole_2",
+                "path": "parameters.through"
+              },
+              {
+                "feature_id": "hole_3",
+                "path": "parameters.through"
+              },
+              {
+                "feature_id": "hole_4",
+                "path": "parameters.through"
+              }
+            ]
+          },
+          {
+            "issue_id": "top.top_boundaries",
+            "view": "top",
+            "category": "geometry",
+            "severity": "high",
+            "item": "XY 宽深比例与分段前后边界",
+            "evidence": "原始参考图（clipboard-753b21b1397446c58933d2c4fd444dcc.png）为正面视图，可见面板宽/高≈2.0，本体在面板后方，深度方向仅能看到很窄的侧壁；当前 top 视图显示一个近似 39×22 的矩形（宽深比≈1.8），即本体深度几乎与面板宽度相当，与参考图中本体深度明显小于面板宽度的比例不符。参考图中本体深度约为面板高度的 0.5~0.7 倍（≈10~14 mm），而计划取 width=22 mm。",
+            "feature_ids": [
+              "body"
+            ],
+            "affected_parameters": [
+              {
+                "feature_id": "body",
+                "path": "parameters.width"
+              }
+            ]
+          },
+          {
+            "issue_id": "top.top_boundaries",
+            "view": "top",
+            "category": "geometry",
+            "severity": "high",
+            "item": "端部缺口在俯视图中的位置与形状",
+            "evidence": "当前 top 视图底部中央出现一个向下凸出的梯形台阶，位于 X 方向中间偏右，而计划中 end_step 切除位于 +X 端（center X=35），俯视图中应表现为 +X 端（右侧）的缺口，而非底部中央的凸起。参考图正面视图中端部缺口位于面板右侧边缘附近，与当前俯视图所示位置不一致。",
+            "feature_ids": [
+              "end_step"
+            ],
+            "affected_parameters": [
+              {
+                "feature_id": "end_step",
+                "path": "parameters.center"
+              }
+            ]
+          }
+        ],
+        "resolved_findings": [],
+        "questions": [],
+        "confidence": 0.55,
+        "single_view_reports": [
+          {
+            "view": "front",
+            "checks": [
+              {
+                "id": "front.outline",
+                "view": "front",
+                "area": "outline",
+                "category": "geometry",
+                "status": "mismatch",
+                "item": "面板外轮廓与振膜凸起",
+                "evidence": "原始参考图（clipboard-753b21b1397446c58933d2c4fd444dcc.png）正视面板为横长矩形，宽/高≈2.0，中央有显著凸起的椭圆振膜（外椭圆长轴约占面板宽0.5，内圈与中心凸台层层叠起）。当前单视图仅显示一个纯矩形面板，宽/高≈2.0 与参考一致，但完全没有中央振膜凸起轮廓，说明 diaphragm_outer/inner/center 未在正视投影中体现。",
+                "feature_ids": [
+                  "panel",
+                  "diaphragm_outer",
+                  "diaphragm_inner",
+                  "diaphragm_center"
+                ],
+                "affected_parameters": [
+                  {
+                    "feature_id": "diaphragm_outer",
+                    "path": "parameters.center"
+                  },
+                  {
+                    "feature_id": "diaphragm_outer",
+                    "path": "parameters.radius"
+                  },
+                  {
+                    "feature_id": "diaphragm_inner",
+                    "path": "parameters.center"
+                  },
+                  {
+                    "feature_id": "diaphragm_center",
+                    "path": "parameters.center"
+                  }
+                ]
+              },
+              {
+                "id": "front.features",
+                "view": "front",
+                "area": "features",
+                "category": "geometry",
+                "status": "partial",
+                "item": "四角安装孔数量与位置",
+                "evidence": "原始参考图四角各有一个圆孔，孔径约为面板宽度的0.06~0.08，距边缘约3~4 mm。当前单视图四角各有一个圆孔，数量、四角对称布置与相对孔径等级与参考一致；但参考图中孔位于面板四角且振膜凸起占据中央，当前视图因缺少振膜凸起，孔与中央特征的相对关系无法核对。",
+                "feature_ids": [
+                  "hole_1",
+                  "hole_2",
+                  "hole_3",
+                  "hole_4"
+                ],
+                "affected_parameters": [
+                  {
+                    "feature_id": "hole_1",
+                    "path": "parameters.point"
+                  },
+                  {
+                    "feature_id": "hole_2",
+                    "path": "parameters.point"
+                  },
+                  {
+                    "feature_id": "hole_3",
+                    "path": "parameters.point"
+                  },
+                  {
+                    "feature_id": "hole_4",
+                    "path": "parameters.point"
+                  }
+                ]
+              }
+            ],
+            "issues": [
+              {
+                "issue_id": "front.diaphragm_missing",
+                "view": "front",
+                "category": "geometry",
+                "severity": "high",
+                "item": "正视图中缺少中央椭圆振膜凸起",
+                "evidence": "参考图正视可见明显的椭圆振膜外圈、内圈和中心凸台，占据面板中央约一半宽度；当前单视图面板中央为空白平面，无任何凸起轮廓，说明振膜特征未在正视方向正确生成或未凸出面板前表面。",
+                "feature_ids": [
+                  "diaphragm_outer",
+                  "diaphragm_inner",
+                  "diaphragm_center"
+                ],
+                "affected_parameters": [
+                  {
+                    "feature_id": "diaphragm_outer",
+                    "path": "parameters.center"
+                  },
+                  {
+                    "feature_id": "diaphragm_outer",
+                    "path": "parameters.radius"
+                  },
+                  {
+                    "feature_id": "diaphragm_outer",
+                    "path": "parameters.height"
+                  },
+                  {
+                    "feature_id": "diaphragm_inner",
+                    "path": "parameters.center"
+                  },
+                  {
+                    "feature_id": "diaphragm_center",
+                    "path": "parameters.center"
+                  }
+                ]
+              }
+            ],
+            "confidence": 0.9
+          },
+          {
+            "view": "right",
+            "checks": [
+              {
+                "id": "right.depth_setback",
+                "view": "right",
+                "area": "depth_setback",
+                "category": "geometry",
+                "status": "mismatch",
+                "item": "右侧视图深度方向退台与端部缺口方向",
+                "evidence": "当前 right 视图（YZ）显示一个近似 22×19.5 的矩形主体，仅在图像右侧（+Y 方向）出现阶梯状凸起，即退台/缺口出现在深度方向端部；而原始参考图（图2、图3）显示端部缺口位于本体长度方向（X 端）的上下两侧，深度方向（Y）为平整端面，无阶梯。CADPlan 中 end_step 切除中心为 [35,0,9.75]、尺寸 8×22×6.5，沿 X 端切除，right 视图本应显示为完整矩形，不应出现右侧阶梯。当前视图与计划参数不一致，说明端部缺口被错误地投影/建模在 Y 方向。",
+                "feature_ids": [
+                  "end_step",
+                  "body"
+                ],
+                "affected_parameters": [
+                  {
+                    "feature_id": "end_step",
+                    "path": "parameters.center"
+                  },
+                  {
+                    "feature_id": "end_step",
+                    "path": "parameters.length"
+                  },
+                  {
+                    "feature_id": "end_step",
+                    "path": "parameters.width"
+                  }
+                ]
+              },
+              {
+                "id": "right.through_connectivity",
+                "view": "right",
+                "area": "through_connectivity",
+                "category": "geometry",
+                "status": "partial",
+                "item": "安装孔沿 Y 向贯穿与振膜凸台遮挡关系",
+                "evidence": "原始参考图（图1、本轮图）显示四角安装孔为沿面板法向（Y）的通孔，从正面贯穿面板与本体；当前 right 视图为实心矩形，未见孔道贯穿的开口或遮挡变化，无法确认孔是否真正贯穿至背面。CADPlan 中 hole_1~hole_4 均设 through=true、axis=Y，但 right 视图未体现贯穿特征。",
+                "feature_ids": [
+                  "hole_1",
+                  "hole_2",
+                  "hole_3",
+                  "hole_4"
+                ],
+                "affected_parameters": [
+                  {
+                    "feature_id": "hole_1",
+                    "path": "parameters.through"
+                  },
+                  {
+                    "feature_id": "hole_2",
+                    "path": "parameters.through"
+                  },
+                  {
+                    "feature_id": "hole_3",
+                    "path": "parameters.through"
+                  },
+                  {
+                    "feature_id": "hole_4",
+                    "path": "parameters.through"
+                  }
+                ]
+              }
+            ],
+            "issues": [
+              {
+                "issue_id": "right.end_step_direction",
+                "view": "right",
+                "category": "geometry",
+                "severity": "high",
+                "item": "端部缺口方向错误：应位于 X 端而非 Y 端",
+                "evidence": "原始参考图图2、图3显示本体长度方向端部有上下凸台形成的缺口，深度方向为平整端面；当前 right 视图却在 +Y 方向出现阶梯凸起，与参考图不符。",
+                "feature_ids": [
+                  "end_step",
+                  "body"
+                ],
+                "affected_parameters": [
+                  {
+                    "feature_id": "end_step",
+                    "path": "parameters.center"
+                  },
+                  {
+                    "feature_id": "end_step",
+                    "path": "parameters.length"
+                  },
+                  {
+                    "feature_id": "end_step",
+                    "path": "parameters.width"
+                  }
+                ]
+              },
+              {
+                "issue_id": "right.hole_through_not_visible",
+                "view": "right",
+                "category": "geometry",
+                "severity": "medium",
+                "item": "安装孔贯穿关系在 right 视图不可见",
+                "evidence": "参考图显示四角孔为通孔，当前 right 视图为实心矩形，无法确认孔道贯穿，需在后续视图中核验。",
+                "feature_ids": [
+                  "hole_1",
+                  "hole_2",
+                  "hole_3",
+                  "hole_4"
+                ],
+                "affected_parameters": [
+                  {
+                    "feature_id": "hole_1",
+                    "path": "parameters.through"
+                  }
+                ]
+              }
+            ],
+            "confidence": 0.55
+          },
+          {
+            "view": "top",
+            "checks": [
+              {
+                "id": "top.top_boundaries",
+                "view": "top",
+                "area": "top_boundaries",
+                "category": "geometry",
+                "status": "mismatch",
+                "item": "XY 宽深比例与分段前后边界",
+                "evidence": "原始参考图（clipboard-753b21b1397446c58933d2c4fd444dcc.png）为正面视图，可见面板宽/高≈2.0，本体在面板后方，深度方向仅能看到很窄的侧壁；当前 top 视图显示一个近似 39×22 的矩形（宽深比≈1.8），即本体深度几乎与面板宽度相当，与参考图中本体深度明显小于面板宽度的比例不符。参考图中本体深度约为面板高度的 0.5~0.7 倍（≈10~14 mm），而计划取 width=22 mm。",
+                "feature_ids": [
+                  "body"
+                ],
+                "affected_parameters": [
+                  {
+                    "feature_id": "body",
+                    "path": "parameters.width"
+                  }
+                ]
+              },
+              {
+                "id": "top.top_boundaries",
+                "view": "top",
+                "area": "top_boundaries",
+                "category": "geometry",
+                "status": "mismatch",
+                "item": "端部缺口在俯视图中的位置与形状",
+                "evidence": "当前 top 视图底部中央出现一个向下凸出的梯形台阶，位于 X 方向中间偏右，而计划中 end_step 切除位于 +X 端（center X=35），俯视图中应表现为 +X 端（右侧）的缺口，而非底部中央的凸起。参考图正面视图中端部缺口位于面板右侧边缘附近，与当前俯视图所示位置不一致。",
+                "feature_ids": [
+                  "end_step"
+                ],
+                "affected_parameters": [
+                  {
+                    "feature_id": "end_step",
+                    "path": "parameters.center"
+                  }
+                ]
+              }
+            ],
+            "issues": [
+              {
+                "issue_id": "top.body_depth_ratio",
+                "view": "top",
+                "category": "geometry",
+                "severity": "high",
+                "item": "本体深度过大，与参考图比例不符",
+                "evidence": "参考图正面视图中本体深度约为面板高度的 0.5~0.7 倍（≈10~14 mm），当前计划 width=22 mm，俯视图宽深比≈1.8，明显偏大。",
+                "feature_ids": [
+                  "body"
+                ],
+                "affected_parameters": [
+                  {
+                    "feature_id": "body",
+                    "path": "parameters.width"
+                  }
+                ]
+              },
+              {
+                "issue_id": "top.end_step_position",
+                "view": "top",
+                "category": "geometry",
+                "severity": "medium",
+                "item": "端部缺口位置与参考图不符",
+                "evidence": "当前俯视图缺口出现在底部中央，而参考图显示缺口位于面板右侧端部；计划中 end_step 的 center X=35 与俯视图实际显示位置不一致。",
+                "feature_ids": [
+                  "end_step"
+                ],
+                "affected_parameters": [
+                  {
+                    "feature_id": "end_step",
+                    "path": "parameters.center"
+                  }
+                ]
+              }
+            ],
+            "confidence": 0.6
+          }
+        ],
+        "plan": null
+      },
+      "current_findings": [
+        {
+          "issue_id": "front.diaphragm_missing",
+          "view": "front",
+          "item": "正视图中缺少中央椭圆振膜凸起",
+          "evidence": "参考图正视可见明显的椭圆振膜外圈、内圈和中心凸台，占据面板中央约一半宽度；当前单视图面板中央为空白平面，无任何凸起轮廓，说明振膜特征未在正视方向正确生成或未凸出面板前表面。",
+          "severity": "high",
+          "category": "geometry",
+          "feature_ids": [
+            "diaphragm_outer",
+            "diaphragm_inner",
+            "diaphragm_center"
+          ],
+          "affected_parameters": [
+            {
+              "feature_id": "diaphragm_outer",
+              "path": "parameters.center"
+            },
+            {
+              "feature_id": "diaphragm_outer",
+              "path": "parameters.radius"
+            },
+            {
+              "feature_id": "diaphragm_outer",
+              "path": "parameters.height"
+            },
+            {
+              "feature_id": "diaphragm_inner",
+              "path": "parameters.center"
+            },
+            {
+              "feature_id": "diaphragm_center",
+              "path": "parameters.center"
+            }
+          ],
+          "first_seen_round": 1
+        },
+        {
+          "issue_id": "right.end_step_direction",
+          "view": "right",
+          "item": "端部缺口方向错误：应位于 X 端而非 Y 端",
+          "evidence": "原始参考图图2、图3显示本体长度方向端部有上下凸台形成的缺口，深度方向为平整端面；当前 right 视图却在 +Y 方向出现阶梯凸起，与参考图不符。",
+          "severity": "high",
+          "category": "geometry",
+          "feature_ids": [
+            "end_step",
+            "body"
+          ],
+          "affected_parameters": [
+            {
+              "feature_id": "end_step",
+              "path": "parameters.center"
+            },
+            {
+              "feature_id": "end_step",
+              "path": "parameters.length"
+            },
+            {
+              "feature_id": "end_step",
+              "path": "parameters.width"
+            }
+          ],
+          "first_seen_round": 1
+        },
+        {
+          "issue_id": "right.hole_through_not_visible",
+          "view": "right",
+          "item": "安装孔贯穿关系在 right 视图不可见",
+          "evidence": "参考图显示四角孔为通孔，当前 right 视图为实心矩形，无法确认孔道贯穿，需在后续视图中核验。",
+          "severity": "medium",
+          "category": "geometry",
+          "feature_ids": [
+            "hole_1",
+            "hole_2",
+            "hole_3",
+            "hole_4"
+          ],
+          "affected_parameters": [
+            {
+              "feature_id": "hole_1",
+              "path": "parameters.through"
+            }
+          ],
+          "first_seen_round": 1
+        },
+        {
+          "issue_id": "top.body_depth_ratio",
+          "view": "top",
+          "item": "本体深度过大，与参考图比例不符",
+          "evidence": "参考图正面视图中本体深度约为面板高度的 0.5~0.7 倍（≈10~14 mm），当前计划 width=22 mm，俯视图宽深比≈1.8，明显偏大。",
+          "severity": "high",
+          "category": "geometry",
+          "feature_ids": [
+            "body"
+          ],
+          "affected_parameters": [
+            {
+              "feature_id": "body",
+              "path": "parameters.width"
+            }
+          ],
+          "first_seen_round": 1
+        },
+        {
+          "issue_id": "top.end_step_position",
+          "view": "top",
+          "item": "端部缺口位置与参考图不符",
+          "evidence": "当前俯视图缺口出现在底部中央，而参考图显示缺口位于面板右侧端部；计划中 end_step 的 center X=35 与俯视图实际显示位置不一致。",
+          "severity": "medium",
+          "category": "geometry",
+          "feature_ids": [
+            "end_step"
+          ],
+          "affected_parameters": [
+            {
+              "feature_id": "end_step",
+              "path": "parameters.center"
+            }
+          ],
+          "first_seen_round": 1
+        },
+        {
+          "issue_id": "front.outline",
+          "view": "front",
+          "item": "面板外轮廓与振膜凸起",
+          "evidence": "原始参考图（clipboard-753b21b1397446c58933d2c4fd444dcc.png）正视面板为横长矩形，宽/高≈2.0，中央有显著凸起的椭圆振膜（外椭圆长轴约占面板宽0.5，内圈与中心凸台层层叠起）。当前单视图仅显示一个纯矩形面板，宽/高≈2.0 与参考一致，但完全没有中央振膜凸起轮廓，说明 diaphragm_outer/inner/center 未在正视投影中体现。",
+          "severity": "high",
+          "category": "geometry",
+          "feature_ids": [
+            "panel",
+            "diaphragm_outer",
+            "diaphragm_inner",
+            "diaphragm_center"
+          ],
+          "affected_parameters": [
+            {
+              "feature_id": "diaphragm_outer",
+              "path": "parameters.center"
+            },
+            {
+              "feature_id": "diaphragm_outer",
+              "path": "parameters.radius"
+            },
+            {
+              "feature_id": "diaphragm_inner",
+              "path": "parameters.center"
+            },
+            {
+              "feature_id": "diaphragm_center",
+              "path": "parameters.center"
+            }
+          ],
+          "first_seen_round": 1
+        },
+        {
+          "issue_id": "front.features",
+          "view": "front",
+          "item": "四角安装孔数量与位置",
+          "evidence": "原始参考图四角各有一个圆孔，孔径约为面板宽度的0.06~0.08，距边缘约3~4 mm。当前单视图四角各有一个圆孔，数量、四角对称布置与相对孔径等级与参考一致；但参考图中孔位于面板四角且振膜凸起占据中央，当前视图因缺少振膜凸起，孔与中央特征的相对关系无法核对。",
+          "severity": "medium",
+          "category": "geometry",
+          "feature_ids": [
+            "hole_1",
+            "hole_2",
+            "hole_3",
+            "hole_4"
+          ],
+          "affected_parameters": [
+            {
+              "feature_id": "hole_1",
+              "path": "parameters.point"
+            },
+            {
+              "feature_id": "hole_2",
+              "path": "parameters.point"
+            },
+            {
+              "feature_id": "hole_3",
+              "path": "parameters.point"
+            },
+            {
+              "feature_id": "hole_4",
+              "path": "parameters.point"
+            }
+          ],
+          "first_seen_round": 1
+        },
+        {
+          "issue_id": "right.depth_setback",
+          "view": "right",
+          "item": "右侧视图深度方向退台与端部缺口方向",
+          "evidence": "当前 right 视图（YZ）显示一个近似 22×19.5 的矩形主体，仅在图像右侧（+Y 方向）出现阶梯状凸起，即退台/缺口出现在深度方向端部；而原始参考图（图2、图3）显示端部缺口位于本体长度方向（X 端）的上下两侧，深度方向（Y）为平整端面，无阶梯。CADPlan 中 end_step 切除中心为 [35,0,9.75]、尺寸 8×22×6.5，沿 X 端切除，right 视图本应显示为完整矩形，不应出现右侧阶梯。当前视图与计划参数不一致，说明端部缺口被错误地投影/建模在 Y 方向。",
+          "severity": "high",
+          "category": "geometry",
+          "feature_ids": [
+            "end_step",
+            "body"
+          ],
+          "affected_parameters": [
+            {
+              "feature_id": "end_step",
+              "path": "parameters.center"
+            },
+            {
+              "feature_id": "end_step",
+              "path": "parameters.length"
+            },
+            {
+              "feature_id": "end_step",
+              "path": "parameters.width"
+            }
+          ],
+          "first_seen_round": 1
+        },
+        {
+          "issue_id": "right.through_connectivity",
+          "view": "right",
+          "item": "安装孔沿 Y 向贯穿与振膜凸台遮挡关系",
+          "evidence": "原始参考图（图1、本轮图）显示四角安装孔为沿面板法向（Y）的通孔，从正面贯穿面板与本体；当前 right 视图为实心矩形，未见孔道贯穿的开口或遮挡变化，无法确认孔是否真正贯穿至背面。CADPlan 中 hole_1~hole_4 均设 through=true、axis=Y，但 right 视图未体现贯穿特征。",
+          "severity": "medium",
+          "category": "geometry",
+          "feature_ids": [
+            "hole_1",
+            "hole_2",
+            "hole_3",
+            "hole_4"
+          ],
+          "affected_parameters": [
+            {
+              "feature_id": "hole_1",
+              "path": "parameters.through"
+            },
+            {
+              "feature_id": "hole_2",
+              "path": "parameters.through"
+            },
+            {
+              "feature_id": "hole_3",
+              "path": "parameters.through"
+            },
+            {
+              "feature_id": "hole_4",
+              "path": "parameters.through"
+            }
+          ],
+          "first_seen_round": 1
+        },
+        {
+          "issue_id": "top.top_boundaries",
+          "view": "top",
+          "item": "XY 宽深比例与分段前后边界",
+          "evidence": "原始参考图（clipboard-753b21b1397446c58933d2c4fd444dcc.png）为正面视图，可见面板宽/高≈2.0，本体在面板后方，深度方向仅能看到很窄的侧壁；当前 top 视图显示一个近似 39×22 的矩形（宽深比≈1.8），即本体深度几乎与面板宽度相当，与参考图中本体深度明显小于面板宽度的比例不符。参考图中本体深度约为面板高度的 0.5~0.7 倍（≈10~14 mm），而计划取 width=22 mm。",
+          "severity": "high",
+          "category": "geometry",
+          "feature_ids": [
+            "body"
+          ],
+          "affected_parameters": [
+            {
+              "feature_id": "body",
+              "path": "parameters.width"
+            }
+          ],
+          "first_seen_round": 1
+        },
+        {
+          "issue_id": "top.top_boundaries",
+          "view": "top",
+          "item": "端部缺口在俯视图中的位置与形状",
+          "evidence": "当前 top 视图底部中央出现一个向下凸出的梯形台阶，位于 X 方向中间偏右，而计划中 end_step 切除位于 +X 端（center X=35），俯视图中应表现为 +X 端（右侧）的缺口，而非底部中央的凸起。参考图正面视图中端部缺口位于面板右侧边缘附近，与当前俯视图所示位置不一致。",
+          "severity": "high",
+          "category": "geometry",
+          "feature_ids": [
+            "end_step"
+          ],
+          "affected_parameters": [
+            {
+              "feature_id": "end_step",
+              "path": "parameters.center"
+            }
+          ],
+          "first_seen_round": 1
+        },
+        {
+          "issue_id": "front.outline",
+          "view": "front",
+          "item": "面板外轮廓与振膜凸起",
+          "evidence": "原始参考图（clipboard-753b21b1397446c58933d2c4fd444dcc.png）正视面板为横长矩形，宽/高≈2.0，中央有显著凸起的椭圆振膜（外椭圆长轴约占面板宽0.5，内圈与中心凸台层层叠起）。当前单视图仅显示一个纯矩形面板，宽/高≈2.0 与参考一致，但完全没有中央振膜凸起轮廓，说明 diaphragm_outer/inner/center 未在正视投影中体现。",
+          "severity": "medium",
+          "category": "geometry",
+          "feature_ids": [
+            "panel",
+            "diaphragm_outer",
+            "diaphragm_inner",
+            "diaphragm_center"
+          ],
+          "affected_parameters": [
+            {
+              "feature_id": "diaphragm_outer",
+              "path": "parameters.center"
+            },
+            {
+              "feature_id": "diaphragm_outer",
+              "path": "parameters.radius"
+            },
+            {
+              "feature_id": "diaphragm_inner",
+              "path": "parameters.center"
+            },
+            {
+              "feature_id": "diaphragm_center",
+              "path": "parameters.center"
+            }
+          ],
+          "first_seen_round": 1
+        },
+        {
+          "issue_id": "front.features",
+          "view": "front",
+          "item": "四角安装孔数量与位置",
+          "evidence": "原始参考图四角各有一个圆孔，孔径约为面板宽度的0.06~0.08，距边缘约3~4 mm。当前单视图四角各有一个圆孔，数量、四角对称布置与相对孔径等级与参考一致；但参考图中孔位于面板四角且振膜凸起占据中央，当前视图因缺少振膜凸起，孔与中央特征的相对关系无法核对。",
+          "severity": "low",
+          "category": "geometry",
+          "feature_ids": [
+            "hole_1",
+            "hole_2",
+            "hole_3",
+            "hole_4"
+          ],
+          "affected_parameters": [
+            {
+              "feature_id": "hole_1",
+              "path": "parameters.point"
+            },
+            {
+              "feature_id": "hole_2",
+              "path": "parameters.point"
+            },
+            {
+              "feature_id": "hole_3",
+              "path": "parameters.point"
+            },
+            {
+              "feature_id": "hole_4",
+              "path": "parameters.point"
+            }
+          ],
+          "first_seen_round": 1
+        },
+        {
+          "issue_id": "right.depth_setback",
+          "view": "right",
+          "item": "右侧视图深度方向退台与端部缺口方向",
+          "evidence": "当前 right 视图（YZ）显示一个近似 22×19.5 的矩形主体，仅在图像右侧（+Y 方向）出现阶梯状凸起，即退台/缺口出现在深度方向端部；而原始参考图（图2、图3）显示端部缺口位于本体长度方向（X 端）的上下两侧，深度方向（Y）为平整端面，无阶梯。CADPlan 中 end_step 切除中心为 [35,0,9.75]、尺寸 8×22×6.5，沿 X 端切除，right 视图本应显示为完整矩形，不应出现右侧阶梯。当前视图与计划参数不一致，说明端部缺口被错误地投影/建模在 Y 方向。",
+          "severity": "medium",
+          "category": "geometry",
+          "feature_ids": [
+            "end_step",
+            "body"
+          ],
+          "affected_parameters": [
+            {
+              "feature_id": "end_step",
+              "path": "parameters.center"
+            },
+            {
+              "feature_id": "end_step",
+              "path": "parameters.length"
+            },
+            {
+              "feature_id": "end_step",
+              "path": "parameters.width"
+            }
+          ],
+          "first_seen_round": 1
+        },
+        {
+          "issue_id": "right.through_connectivity",
+          "view": "right",
+          "item": "安装孔沿 Y 向贯穿与振膜凸台遮挡关系",
+          "evidence": "原始参考图（图1、本轮图）显示四角安装孔为沿面板法向（Y）的通孔，从正面贯穿面板与本体；当前 right 视图为实心矩形，未见孔道贯穿的开口或遮挡变化，无法确认孔是否真正贯穿至背面。CADPlan 中 hole_1~hole_4 均设 through=true、axis=Y，但 right 视图未体现贯穿特征。",
+          "severity": "low",
+          "category": "geometry",
+          "feature_ids": [
+            "hole_1",
+            "hole_2",
+            "hole_3",
+            "hole_4"
+          ],
+          "affected_parameters": [
+            {
+              "feature_id": "hole_1",
+              "path": "parameters.through"
+            },
+            {
+              "feature_id": "hole_2",
+              "path": "parameters.through"
+            },
+            {
+              "feature_id": "hole_3",
+              "path": "parameters.through"
+            },
+            {
+              "feature_id": "hole_4",
+              "path": "parameters.through"
+            }
+          ],
+          "first_seen_round": 1
+        },
+        {
+          "issue_id": "top.top_boundaries",
+          "view": "top",
+          "item": "XY 宽深比例与分段前后边界",
+          "evidence": "原始参考图（clipboard-753b21b1397446c58933d2c4fd444dcc.png）为正面视图，可见面板宽/高≈2.0，本体在面板后方，深度方向仅能看到很窄的侧壁；当前 top 视图显示一个近似 39×22 的矩形（宽深比≈1.8），即本体深度几乎与面板宽度相当，与参考图中本体深度明显小于面板宽度的比例不符。参考图中本体深度约为面板高度的 0.5~0.7 倍（≈10~14 mm），而计划取 width=22 mm。",
+          "severity": "medium",
+          "category": "geometry",
+          "feature_ids": [
+            "body"
+          ],
+          "affected_parameters": [
+            {
+              "feature_id": "body",
+              "path": "parameters.width"
+            }
+          ],
+          "first_seen_round": 1
+        },
+        {
+          "issue_id": "top.top_boundaries",
+          "view": "top",
+          "item": "端部缺口在俯视图中的位置与形状",
+          "evidence": "当前 top 视图底部中央出现一个向下凸出的梯形台阶，位于 X 方向中间偏右，而计划中 end_step 切除位于 +X 端（center X=35），俯视图中应表现为 +X 端（右侧）的缺口，而非底部中央的凸起。参考图正面视图中端部缺口位于面板右侧边缘附近，与当前俯视图所示位置不一致。",
+          "severity": "medium",
+          "category": "geometry",
+          "feature_ids": [
+            "end_step"
+          ],
+          "affected_parameters": [
+            {
+              "feature_id": "end_step",
+              "path": "parameters.center"
+            }
+          ],
+          "first_seen_round": 1
+        }
+      ],
+      "findings_before": [],
+      "resolved_finding_ids": [],
+      "open_findings_after": [
+        {
+          "issue_id": "front.diaphragm_missing",
+          "view": "front",
+          "item": "正视图中缺少中央椭圆振膜凸起",
+          "evidence": "参考图正视可见明显的椭圆振膜外圈、内圈和中心凸台，占据面板中央约一半宽度；当前单视图面板中央为空白平面，无任何凸起轮廓，说明振膜特征未在正视方向正确生成或未凸出面板前表面。",
+          "severity": "high",
+          "category": "geometry",
+          "feature_ids": [
+            "diaphragm_outer",
+            "diaphragm_inner",
+            "diaphragm_center"
+          ],
+          "affected_parameters": [
+            {
+              "feature_id": "diaphragm_outer",
+              "path": "parameters.center"
+            },
+            {
+              "feature_id": "diaphragm_outer",
+              "path": "parameters.radius"
+            },
+            {
+              "feature_id": "diaphragm_outer",
+              "path": "parameters.height"
+            },
+            {
+              "feature_id": "diaphragm_inner",
+              "path": "parameters.center"
+            },
+            {
+              "feature_id": "diaphragm_center",
+              "path": "parameters.center"
+            }
+          ],
+          "first_seen_round": 1
+        },
+        {
+          "issue_id": "right.end_step_direction",
+          "view": "right",
+          "item": "端部缺口方向错误：应位于 X 端而非 Y 端",
+          "evidence": "原始参考图图2、图3显示本体长度方向端部有上下凸台形成的缺口，深度方向为平整端面；当前 right 视图却在 +Y 方向出现阶梯凸起，与参考图不符。",
+          "severity": "high",
+          "category": "geometry",
+          "feature_ids": [
+            "end_step",
+            "body"
+          ],
+          "affected_parameters": [
+            {
+              "feature_id": "end_step",
+              "path": "parameters.center"
+            },
+            {
+              "feature_id": "end_step",
+              "path": "parameters.length"
+            },
+            {
+              "feature_id": "end_step",
+              "path": "parameters.width"
+            }
+          ],
+          "first_seen_round": 1
+        },
+        {
+          "issue_id": "right.hole_through_not_visible",
+          "view": "right",
+          "item": "安装孔贯穿关系在 right 视图不可见",
+          "evidence": "参考图显示四角孔为通孔，当前 right 视图为实心矩形，无法确认孔道贯穿，需在后续视图中核验。",
+          "severity": "medium",
+          "category": "geometry",
+          "feature_ids": [
+            "hole_1",
+            "hole_2",
+            "hole_3",
+            "hole_4"
+          ],
+          "affected_parameters": [
+            {
+              "feature_id": "hole_1",
+              "path": "parameters.through"
+            }
+          ],
+          "first_seen_round": 1
+        },
+        {
+          "issue_id": "top.body_depth_ratio",
+          "view": "top",
+          "item": "本体深度过大，与参考图比例不符",
+          "evidence": "参考图正面视图中本体深度约为面板高度的 0.5~0.7 倍（≈10~14 mm），当前计划 width=22 mm，俯视图宽深比≈1.8，明显偏大。",
+          "severity": "high",
+          "category": "geometry",
+          "feature_ids": [
+            "body"
+          ],
+          "affected_parameters": [
+            {
+              "feature_id": "body",
+              "path": "parameters.width"
+            }
+          ],
+          "first_seen_round": 1
+        },
+        {
+          "issue_id": "top.end_step_position",
+          "view": "top",
+          "item": "端部缺口位置与参考图不符",
+          "evidence": "当前俯视图缺口出现在底部中央，而参考图显示缺口位于面板右侧端部；计划中 end_step 的 center X=35 与俯视图实际显示位置不一致。",
+          "severity": "medium",
+          "category": "geometry",
+          "feature_ids": [
+            "end_step"
+          ],
+          "affected_parameters": [
+            {
+              "feature_id": "end_step",
+              "path": "parameters.center"
+            }
+          ],
+          "first_seen_round": 1
+        },
+        {
+          "issue_id": "front.outline",
+          "view": "front",
+          "item": "面板外轮廓与振膜凸起",
+          "evidence": "原始参考图（clipboard-753b21b1397446c58933d2c4fd444dcc.png）正视面板为横长矩形，宽/高≈2.0，中央有显著凸起的椭圆振膜（外椭圆长轴约占面板宽0.5，内圈与中心凸台层层叠起）。当前单视图仅显示一个纯矩形面板，宽/高≈2.0 与参考一致，但完全没有中央振膜凸起轮廓，说明 diaphragm_outer/inner/center 未在正视投影中体现。",
+          "severity": "medium",
+          "category": "geometry",
+          "feature_ids": [
+            "panel",
+            "diaphragm_outer",
+            "diaphragm_inner",
+            "diaphragm_center"
+          ],
+          "affected_parameters": [
+            {
+              "feature_id": "diaphragm_outer",
+              "path": "parameters.center"
+            },
+            {
+              "feature_id": "diaphragm_outer",
+              "path": "parameters.radius"
+            },
+            {
+              "feature_id": "diaphragm_inner",
+              "path": "parameters.center"
+            },
+            {
+              "feature_id": "diaphragm_center",
+              "path": "parameters.center"
+            }
+          ],
+          "first_seen_round": 1
+        },
+        {
+          "issue_id": "front.features",
+          "view": "front",
+          "item": "四角安装孔数量与位置",
+          "evidence": "原始参考图四角各有一个圆孔，孔径约为面板宽度的0.06~0.08，距边缘约3~4 mm。当前单视图四角各有一个圆孔，数量、四角对称布置与相对孔径等级与参考一致；但参考图中孔位于面板四角且振膜凸起占据中央，当前视图因缺少振膜凸起，孔与中央特征的相对关系无法核对。",
+          "severity": "low",
+          "category": "geometry",
+          "feature_ids": [
+            "hole_1",
+            "hole_2",
+            "hole_3",
+            "hole_4"
+          ],
+          "affected_parameters": [
+            {
+              "feature_id": "hole_1",
+              "path": "parameters.point"
+            },
+            {
+              "feature_id": "hole_2",
+              "path": "parameters.point"
+            },
+            {
+              "feature_id": "hole_3",
+              "path": "parameters.point"
+            },
+            {
+              "feature_id": "hole_4",
+              "path": "parameters.point"
+            }
+          ],
+          "first_seen_round": 1
+        },
+        {
+          "issue_id": "right.depth_setback",
+          "view": "right",
+          "item": "右侧视图深度方向退台与端部缺口方向",
+          "evidence": "当前 right 视图（YZ）显示一个近似 22×19.5 的矩形主体，仅在图像右侧（+Y 方向）出现阶梯状凸起，即退台/缺口出现在深度方向端部；而原始参考图（图2、图3）显示端部缺口位于本体长度方向（X 端）的上下两侧，深度方向（Y）为平整端面，无阶梯。CADPlan 中 end_step 切除中心为 [35,0,9.75]、尺寸 8×22×6.5，沿 X 端切除，right 视图本应显示为完整矩形，不应出现右侧阶梯。当前视图与计划参数不一致，说明端部缺口被错误地投影/建模在 Y 方向。",
+          "severity": "medium",
+          "category": "geometry",
+          "feature_ids": [
+            "end_step",
+            "body"
+          ],
+          "affected_parameters": [
+            {
+              "feature_id": "end_step",
+              "path": "parameters.center"
+            },
+            {
+              "feature_id": "end_step",
+              "path": "parameters.length"
+            },
+            {
+              "feature_id": "end_step",
+              "path": "parameters.width"
+            }
+          ],
+          "first_seen_round": 1
+        },
+        {
+          "issue_id": "right.through_connectivity",
+          "view": "right",
+          "item": "安装孔沿 Y 向贯穿与振膜凸台遮挡关系",
+          "evidence": "原始参考图（图1、本轮图）显示四角安装孔为沿面板法向（Y）的通孔，从正面贯穿面板与本体；当前 right 视图为实心矩形，未见孔道贯穿的开口或遮挡变化，无法确认孔是否真正贯穿至背面。CADPlan 中 hole_1~hole_4 均设 through=true、axis=Y，但 right 视图未体现贯穿特征。",
+          "severity": "low",
+          "category": "geometry",
+          "feature_ids": [
+            "hole_1",
+            "hole_2",
+            "hole_3",
+            "hole_4"
+          ],
+          "affected_parameters": [
+            {
+              "feature_id": "hole_1",
+              "path": "parameters.through"
+            },
+            {
+              "feature_id": "hole_2",
+              "path": "parameters.through"
+            },
+            {
+              "feature_id": "hole_3",
+              "path": "parameters.through"
+            },
+            {
+              "feature_id": "hole_4",
+              "path": "parameters.through"
+            }
+          ],
+          "first_seen_round": 1
+        },
+        {
+          "issue_id": "top.top_boundaries",
+          "view": "top",
+          "item": "端部缺口在俯视图中的位置与形状",
+          "evidence": "当前 top 视图底部中央出现一个向下凸出的梯形台阶，位于 X 方向中间偏右，而计划中 end_step 切除位于 +X 端（center X=35），俯视图中应表现为 +X 端（右侧）的缺口，而非底部中央的凸起。参考图正面视图中端部缺口位于面板右侧边缘附近，与当前俯视图所示位置不一致。",
+          "severity": "medium",
+          "category": "geometry",
+          "feature_ids": [
+            "end_step"
+          ],
+          "affected_parameters": [
+            {
+              "feature_id": "end_step",
+              "path": "parameters.center"
+            }
+          ],
+          "first_seen_round": 1
+        }
+      ],
+      "action": "needs_user_input_multiview"
+    }
+  ],
+  "questions": [
+    "参考图正视可见明显的椭圆振膜外圈、内圈和中心凸台，占据面板中央约一半宽度；当前单视图面板中央为空白平面，无任何凸起轮廓，说明振膜特征未在正视方向正确生成或未凸出面板前表面。",
+    "原始参考图图2、图3显示本体长度方向端部有上下凸台形成的缺口，深度方向为平整端面；当前 right 视图却在 +Y 方向出现阶梯凸起，与参考图不符。",
+    "参考图显示四角孔为通孔，当前 right 视图为实心矩形，无法确认孔道贯穿，需在后续视图中核验。",
+    "参考图正面视图中本体深度约为面板高度的 0.5~0.7 倍（≈10~14 mm），当前计划 width=22 mm，俯视图宽深比≈1.8，明显偏大。",
+    "当前俯视图缺口出现在底部中央，而参考图显示缺口位于面板右侧端部；计划中 end_step 的 center X=35 与俯视图实际显示位置不一致。",
+    "原始参考图（clipboard-753b21b1397446c58933d2c4fd444dcc.png）正视面板为横长矩形，宽/高≈2.0，中央有显著凸起的椭圆振膜（外椭圆长轴约占面板宽0.5，内圈与中心凸台层层叠起）。当前单视图仅显示一个纯矩形面板，宽/高≈2.0 与参考一致，但完全没有中央振膜凸起轮廓，说明 diaphragm_outer/inner/center 未在正视投影中体现。",
+    "原始参考图四角各有一个圆孔，孔径约为面板宽度的0.06~0.08，距边缘约3~4 mm。当前单视图四角各有一个圆孔，数量、四角对称布置与相对孔径等级与参考一致；但参考图中孔位于面板四角且振膜凸起占据中央，当前视图因缺少振膜凸起，孔与中央特征的相对关系无法核对。",
+    "当前 right 视图（YZ）显示一个近似 22×19.5 的矩形主体，仅在图像右侧（+Y 方向）出现阶梯状凸起，即退台/缺口出现在深度方向端部；而原始参考图（图2、图3）显示端部缺口位于本体长度方向（X 端）的上下两侧，深度方向（Y）为平整端面，无阶梯。CADPlan 中 end_step 切除中心为 [35,0,9.75]、尺寸 8×22×6.5，沿 X 端切除，right 视图本应显示为完整矩形，不应出现右侧阶梯。当前视图与计划参数不一致，说明端部缺口被错误地投影/建模在 Y 方向。",
+    "原始参考图（图1、本轮图）显示四角安装孔为沿面板法向（Y）的通孔，从正面贯穿面板与本体；当前 right 视图为实心矩形，未见孔道贯穿的开口或遮挡变化，无法确认孔是否真正贯穿至背面。CADPlan 中 hole_1~hole_4 均设 through=true、axis=Y，但 right 视图未体现贯穿特征。",
+    "原始参考图（clipboard-753b21b1397446c58933d2c4fd444dcc.png）为正面视图，可见面板宽/高≈2.0，本体在面板后方，深度方向仅能看到很窄的侧壁；当前 top 视图显示一个近似 39×22 的矩形（宽深比≈1.8），即本体深度几乎与面板宽度相当，与参考图中本体深度明显小于面板宽度的比例不符。参考图中本体深度约为面板高度的 0.5~0.7 倍（≈10~14 mm），而计划取 width=22 mm。",
+    "当前 top 视图底部中央出现一个向下凸出的梯形台阶，位于 X 方向中间偏右，而计划中 end_step 切除位于 +X 端（center X=35），俯视图中应表现为 +X 端（右侧）的缺口，而非底部中央的凸起。参考图正面视图中端部缺口位于面板右侧边缘附近，与当前俯视图所示位置不一致。"
+  ],
+  "reply": "多视图复核需要你确认：\n- 参考图正视可见明显的椭圆振膜外圈、内圈和中心凸台，占据面板中央约一半宽度；当前单视图面板中央为空白平面，无任何凸起轮廓，说明振膜特征未在正视方向正确生成或未凸出面板前表面。\n- 原始参考图图2、图3显示本体长度方向端部有上下凸台形成的缺口，深度方向为平整端面；当前 right 视图却在 +Y 方向出现阶梯凸起，与参考图不符。\n- 参考图显示四角孔为通孔，当前 right 视图为实心矩形，无法确认孔道贯穿，需在后续视图中核验。\n- 参考图正面视图中本体深度约为面板高度的 0.5~0.7 倍（≈10~14 mm），当前计划 width=22 mm，俯视图宽深比≈1.8，明显偏大。\n- 当前俯视图缺口出现在底部中央，而参考图显示缺口位于面板右侧端部；计划中 end_step 的 center X=35 与俯视图实际显示位置不一致。\n- 原始参考图（clipboard-753b21b1397446c58933d2c4fd444dcc.png）正视面板为横长矩形，宽/高≈2.0，中央有显著凸起的椭圆振膜（外椭圆长轴约占面板宽0.5，内圈与中心凸台层层叠起）。当前单视图仅显示一个纯矩形面板，宽/高≈2.0 与参考一致，但完全没有中央振膜凸起轮廓，说明 diaphragm_outer/inner/center 未在正视投影中体现。\n- 原始参考图四角各有一个圆孔，孔径约为面板宽度的0.06~0.08，距边缘约3~4 mm。当前单视图四角各有一个圆孔，数量、四角对称布置与相对孔径等级与参考一致；但参考图中孔位于面板四角且振膜凸起占据中央，当前视图因缺少振膜凸起，孔与中央特征的相对关系无法核对。\n- 当前 right 视图（YZ）显示一个近似 22×19.5 的矩形主体，仅在图像右侧（+Y 方向）出现阶梯状凸起，即退台/缺口出现在深度方向端部；而原始参考图（图2、图3）显示端部缺口位于本体长度方向（X 端）的上下两侧，深度方向（Y）为平整端面，无阶梯。CADPlan 中 end_step 切除中心为 [35,0,9.75]、尺寸 8×22×6.5，沿 X 端切除，right 视图本应显示为完整矩形，不应出现右侧阶梯。当前视图与计划参数不一致，说明端部缺口被错误地投影/建模在 Y 方向。",
+  "tool_trace": [],
+  "error": null
+}

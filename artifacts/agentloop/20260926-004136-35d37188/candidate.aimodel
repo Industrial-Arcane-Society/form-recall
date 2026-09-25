@@ -1,0 +1,32 @@
+{
+  "format": "ai-modeler",
+  "version": 1,
+  "name": "crankshaft_4cyl",
+  "source_prompt": "曲轴 主轴颈50 连杆颈42 行程86 拐数4",
+  "features": [
+    {
+      "kind": "crankshaft",
+      "params": {
+        "length": 480.0,
+        "main_d": 50.0,
+        "pin_d": 42.0,
+        "segments": 48,
+        "stroke": 86.0,
+        "throws": 4
+      },
+      "op": "add",
+      "name": "四拐曲轴",
+      "note": "",
+      "enabled": true,
+      "provenance": {
+        "length": "image_estimate",
+        "main_d": "user",
+        "pin_d": "user",
+        "segments": "derived",
+        "stroke": "user",
+        "throws": "user"
+      }
+    }
+  ],
+  "exported_at": "2026-09-26 00:41:53"
+}

@@ -10,6 +10,11 @@ from __future__ import annotations
 import os
 from typing import Any, Dict, Iterable, List, Optional, Tuple
 
+# A three-region scanline is only evidence when the very same segmentation
+# repeats over a real vertical span of the part. Below this share of the image
+# height the rows come from an axonometric top face or a background grid.
+MIN_SCANLINE_SPAN_RATIO = 0.25
+
 
 def _color_distance(left: Tuple[int, int, int], right: Tuple[int, int, int]) -> int:
     return sum(abs(a - b) for a, b in zip(left, right))
@@ -100,10 +105,36 @@ def analyze_reference_images(image_paths: Iterable[os.PathLike | str]) -> Dict[s
             y_max = max(row["y_px"] for row in consistent)
             bbox_width = x_max - x_min + 1
             bbox_height = y_max - y_min + 1
+            span_ratio = bbox_height / float(image.height)
+            if span_ratio < MIN_SCANLINE_SPAN_RATIO:
+                # A flat orthographic view keeps the same three regions for most
+                # of the part's height. A handful of rows at one y is an
+                # axonometric top face, a grid line, or a highlight -- not a
+                # measurement. Publish the refusal instead of the ratios: a
+                # caveat in `note` was ignored and produced a 14.5/71/14.5 mm
+                # part from an isometric screenshot.
+                result["three_region_scanline_candidate"] = None
+                result["foreground_bbox_candidate"] = None
+                result["scanline_rejected"] = {
+                    "consistent_scanline_count": len(consistent),
+                    "span_px": bbox_height,
+                    "image_height_px": image.height,
+                    "span_ratio": round(span_ratio, 4),
+                    "min_span_ratio": MIN_SCANLINE_SPAN_RATIO,
+                    "reason": ("扫描线只在 %d/%d px 高度上一致（%.1f%% < %.0f%%），"
+                               "不足以判定为平色正视图；本图不得作为比例尺寸证据。"
+                               % (bbox_height, image.height, span_ratio * 100,
+                                  MIN_SCANLINE_SPAN_RATIO * 100)),
+                    "instruction": ("不要把该图的像素比例写进 sources.evidence。"
+                                    "如需尺寸，按整体轮廓做目视比例估算，或向用户确认。"),
+                }
+                results.append(result)
+                continue
             result["three_region_scanline_candidate"] = {
                 **best,
                 "consistent_scanline_count": len(consistent),
                 "confidence": confidence,
+                "usable_for_dimensions": True,
                 "note": "Pixel evidence only; confirm this image is a front orthographic view before using the ratios.",
             }
             result["foreground_bbox_candidate"] = {
@@ -119,3 +150,180 @@ def analyze_reference_images(image_paths: Iterable[os.PathLike | str]) -> Dict[s
             result["foreground_bbox_candidate"] = None
         results.append(result)
     return {"available": True, "images": results}
+
+
+def _pixel_values(image):
+    """Pixel access that survives Pillow's getdata deprecation."""
+    return list(image.get_flattened_data()
+                if hasattr(image, "get_flattened_data") else image.getdata())
+
+
+def _mask_values(image):
+    return _pixel_values(image)
+
+
+def _foreground_values(image):
+    """Boolean foreground samples for one flat-background render.
+
+    Returns ``(values, bbox, count)`` or ``(None, None, 0)`` when the foreground
+    cannot be separated from the background.
+    """
+    width, height = image.size
+    pixels = _pixel_values(image)
+    values = []
+    inconsistent_border_rows = 0
+    for y in range(height):
+        left, right = pixels[y * width], pixels[(y + 1) * width - 1]
+        if _color_distance(left, right) > 24:
+            inconsistent_border_rows += 1
+        background = tuple((a + b) // 2 for a, b in zip(left, right))
+        values.extend(_color_distance(pixel, background) > 60
+                      for pixel in pixels[y * width:(y + 1) * width])
+    if inconsistent_border_rows > height * 0.1:
+        return None, None, 0
+    count = sum(values)
+    if count < width * height * 0.01:
+        return None, None, 0
+    xs = [index % width for index, present in enumerate(values) if present]
+    ys = [index // width for index, present in enumerate(values) if present]
+    return values, [min(xs), min(ys), max(xs), max(ys)], count
+
+
+def _tolerant_foreground(image):
+    """Foreground for screenshots whose background is not a flat band.
+
+    The strict separator assumes a uniform background run on both edges, which a
+    perspective grid never provides. Here the modal border colour is the
+    background and a 3x3 erosion removes the thin grid lines that survive the
+    per-pixel threshold.
+    """
+    from collections import Counter
+
+    width, height = image.size
+    pixels = _pixel_values(image)
+    step = max(1, width // 64)
+    border = []
+    for x in range(0, width, step):
+        border.append(pixels[x])
+        border.append(pixels[(height - 1) * width + x])
+    for y in range(0, height, step):
+        border.append(pixels[y * width])
+        border.append(pixels[y * width + width - 1])
+    background = Counter(border).most_common(1)[0][0]
+    raw = [_color_distance(pixel, background) > 60 for pixel in pixels]
+    eroded = [False] * len(raw)
+    for y in range(1, height - 1):
+        row = y * width
+        for x in range(1, width - 1):
+            index = row + x
+            if (raw[index] and raw[index - 1] and raw[index + 1]
+                    and raw[index - width] and raw[index + width]
+                    and raw[index - width - 1] and raw[index - width + 1]
+                    and raw[index + width - 1] and raw[index + width + 1]):
+                eroded[index] = True
+    count = sum(eroded)
+    if count < width * height * 0.005:
+        return None, None, 0
+    xs = [index % width for index, present in enumerate(eroded) if present]
+    ys = [index // width for index, present in enumerate(eroded) if present]
+    return eroded, [min(xs), min(ys), max(xs), max(ys)], count
+
+
+def _cropped_advisory(reference, model, reason: str) -> Dict[str, Any]:
+    """Weak, clearly-advisory comparison for canvases that cannot be overlaid."""
+    try:
+        from PIL import Image
+    except ImportError:
+        return {"state": "not_applicable", "reason": reason}
+
+    def cropped(image):
+        values, bbox, _count = _foreground_values(image)
+        if values is None:
+            values, bbox, _count = _tolerant_foreground(image)
+        if values is None:
+            return None, None
+        mask = Image.new("L", image.size)
+        mask.putdata([255 if present else 0 for present in values])
+        return mask.crop((bbox[0], bbox[1], bbox[2] + 1, bbox[3] + 1)), bbox
+
+    reference_mask, reference_bbox = cropped(reference)
+    model_mask, model_bbox = cropped(model)
+    if reference_mask is None or model_mask is None:
+        return {"state": "not_applicable", "reason": reason,
+                "fallback": "foreground not separable",
+                "instruction": ("本轮没有任何可用的独立像素对照；"
+                                "结束前必须在复核里逐项写出参考图与模型各自的可见证据，"
+                                "不得只写结论。")}
+    grid = (128, 128)
+    left = _mask_values(reference_mask.resize(grid, Image.NEAREST))
+    right = _mask_values(model_mask.resize(grid, Image.NEAREST))
+    intersection = sum(1 for a, b in zip(left, right) if a and b)
+    union = sum(1 for a, b in zip(left, right) if a or b)
+    reference_aspect = reference_mask.size[0] / float(reference_mask.size[1])
+    model_aspect = model_mask.size[0] / float(model_mask.size[1])
+    return {
+        "state": "advisory",
+        "method": "cropped foreground aspect + normalised overlap",
+        "reason": reason,
+        "reference_bbox_px": reference_bbox,
+        "model_bbox_px": model_bbox,
+        "reference_aspect": round(reference_aspect, 4),
+        "model_aspect": round(model_aspect, 4),
+        "aspect_delta": round(abs(reference_aspect - model_aspect) / reference_aspect, 4)
+        if reference_aspect else None,
+        "iou": round(intersection / union, 4) if union else 0.0,
+        "scope": ("advisory only: the crop and scale differ, so this can neither "
+                  "accept nor reject a model. Report it as an observation, never as "
+                  "evidence that the geometry matches."),
+    }
+
+
+def compare_same_renderer_silhouette(reference_path, model_path, threshold=0.95):
+    """Compare aligned flat-render silhouettes only when canvas style matches.
+
+    A camera change, screenshot crop, or different background makes a pixel
+    overlay score misleading, so those inputs never produce a pass/fail. They do
+    still produce an advisory crop comparison: returning a bare
+    ``not_applicable`` left the whole acceptance decision to the model's own
+    reading of the image.
+    """
+    try:
+        from PIL import Image
+    except ImportError:
+        return {"state": "not_applicable", "reason": "Pillow unavailable"}
+    try:
+        with Image.open(reference_path) as source, Image.open(model_path) as output:
+            reference = source.convert("RGB")
+            model = output.convert("RGB")
+    except Exception as exc:
+        return {"state": "not_applicable", "reason": str(exc)}
+
+    strict_reason = None
+    if reference.size != model.size or min(reference.size) < 64:
+        strict_reason = "canvas sizes differ"
+    else:
+        width, height = reference.size
+        corners = ((0, 0), (width - 1, 0), (0, height - 1), (width - 1, height - 1))
+        if any(_color_distance(reference.getpixel(xy), model.getpixel(xy)) > 12
+               for xy in corners):
+            strict_reason = "render backgrounds differ"
+    if strict_reason:
+        return _cropped_advisory(reference, model, strict_reason)
+
+    width, height = reference.size
+    reference_mask, reference_bbox, reference_count = _foreground_values(reference)
+    model_mask, model_bbox, model_count = _foreground_values(model)
+    if reference_mask is None or model_mask is None:
+        return _cropped_advisory(reference, model, "foreground not separable")
+    intersection = sum(a and b for a, b in zip(reference_mask, model_mask))
+    union = reference_count + model_count - intersection
+    iou = intersection / union if union else 0.0
+    return {
+        "state": "measured", "method": "same-canvas foreground mask overlap",
+        "iou": round(iou, 4), "threshold": threshold,
+        "passed": iou >= threshold,
+        "reference_bbox_px": reference_bbox, "model_bbox_px": model_bbox,
+        "reference_foreground_px": reference_count,
+        "model_foreground_px": model_count,
+        "scope": "applies only to aligned renders with matching canvas and background",
+    }

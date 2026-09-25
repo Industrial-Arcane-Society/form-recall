@@ -1,3 +1,11 @@
+"""Desktop AgentLoop tests that are independent of the retired stage machine.
+
+Nine tests that drove the old turn-router JSON protocol and stage-scoped tool
+sets were archived here: `docs/architecture/AgentLoop.md` records that the fixed
+recognition/construction/multiview staging was replaced by one persistent tool
+loop, so those tests asserted a product that no longer exists. The dynamic
+loop's own acceptance suite is `tests/test_agent_runtime_incremental.py`.
+"""
 import json
 import io
 import queue
@@ -134,13 +142,22 @@ class AgentLoopTests(unittest.TestCase):
             self.assertAlmostEqual(expected, actual)
         self.assertEqual("high", result["images"][0]["foreground_bbox_candidate"]["confidence"])
 
-    def test_deepseek_flash_disables_default_reasoning_and_keeps_finish_reason(self):
-        response = io.BytesIO(json.dumps({
-            "choices": [{
-                "message": {"role": "assistant", "content": "{}"},
-                "finish_reason": "stop",
-            }],
-        }).encode("utf-8"))
+    def test_deepseek_flash_uses_responses_high_default_and_keeps_finish_reason(self):
+        events = [
+            {"type": "response.created", "response": {"id": "resp-test"}},
+            {"type": "response.completed", "response": {
+                "id": "resp-test", "status": "completed",
+                "output": [{"type": "message", "content": [
+                    {"type": "output_text", "text": "{}"}]}],
+                "usage": {"input_tokens": 3, "output_tokens": 1,
+                          "total_tokens": 4,
+                          "output_tokens_details": {"reasoning_tokens": 0}},
+            }},
+        ]
+        stream = "".join(
+            "event: %s\ndata: %s\n\n" % (event["type"], json.dumps(event))
+            for event in events)
+        response = io.BytesIO(stream.encode("utf-8"))
         with mock.patch.object(llm.urllib.request, "urlopen", return_value=response) as opener:
             result = llm.chat_completion(
                 [{"role": "user", "content": "Return JSON."}],
@@ -149,8 +166,10 @@ class AgentLoopTests(unittest.TestCase):
                 tools=agentloop.TOOLS)
         request = opener.call_args.args[0]
         payload = json.loads(request.data.decode("utf-8"))
-        self.assertEqual({"type": "disabled"}, payload["thinking"])
+        self.assertEqual("https://api.deepseek.com/responses", request.full_url)
+        self.assertEqual("high", payload["reasoning"]["effort"])
         self.assertEqual("stop", result["_finish_reason"])
+        self.assertEqual("high", result["_request_reasoning_effort"])
 
     def test_empty_provider_response_reports_finish_reason(self):
         state = {"deadline": time.monotonic() + 10}
@@ -215,103 +234,7 @@ class AgentLoopTests(unittest.TestCase):
                              result["preview_image_views"])
             self.assertTrue(path.is_file())
 
-    def test_full_staged_loop_views_input_and_preview_without_catia(self):
-        plan = _box_plan()
-        tool_call = {
-            "id": "validate-call",
-            "type": "function",
-            "function": {
-                "name": "cad_validate_plan",
-                "arguments": json.dumps({"plan": plan}),
-            },
-        }
-        replies = [
-            _route_reply(),
-            _provider_reply(json.dumps({"recognized": "one rectangular solid"})),
-            _provider_reply(tool_calls=[tool_call]),
-            _provider_reply(json.dumps({
-                "decision": "accept", "issues": [], "plan": None,
-                "checks": _required_geometry_checks(),
-                "questions": [], "confidence": 0.95,
-            })),
-            _provider_reply(json.dumps({
-                "decision": "accept", "similarity_score": 0.94,
-                "checks": _required_geometry_checks([{
-                    "item": "overall shape", "category": "geometry",
-                    "status": "match", "evidence": "single rectangular prism"}]),
-                "remaining_differences": [], "plan": None,
-                "questions": [], "confidence": 0.95,
-            })),
-        ]
-        captured = []
-
-        def fake_chat(messages, cfg, **kwargs):
-            captured.append((messages, kwargs))
-            return replies.pop(0)
-
-        with tempfile.TemporaryDirectory() as temp:
-            old_image = Path(temp) / "old.png"
-            new_image = Path(temp) / "new.png"
-            old_image.write_bytes(b"\x89PNG\r\n\x1a\nold")
-            new_image.write_bytes(b"\x89PNG\r\n\x1a\nnew")
-            with mock.patch.object(agentloop.llm, "chat_completion", side_effect=fake_chat), \
-                    mock.patch.object(agentloop.cadplan, "build_plan",
-                                      side_effect=AssertionError("CATIA build must not run")) as build:
-                result = agentloop.run_agent_loop(
-                    "按图建立模型", image_paths=[str(new_image)],
-                    conversation_history=[{
-                        "role": "user", "content": "上一轮参考图", "image_paths": [str(old_image)],
-                    }],
-                    cfg={"llm": {"base_url": "https://example.invalid/v1", "model": "vision-test",
-                                 "api_key": "test"},
-                         "agentloop": {"total_timeout_sec": 60}},
-                    output_dir=Path(temp) / "sessions")
-                self.assertTrue(Path(result["preview"]["preview_image"]).is_file())
-                record = json.loads(Path(result["run_record"]).read_text(encoding="utf-8"))
-                self.assertEqual("accepted", record["state"])
-                self.assertEqual(1, len(record["tool_trace"]))
-                self.assertTrue(record["preview"]["preview_image"].startswith("preview-"))
-
-        self.assertEqual("accepted", result["state"])
-        self.assertEqual(1, result["tool_calls"])
-        self.assertEqual(1, result["review_rounds"])
-        self.assertFalse(build.called)
-        self.assertEqual(5, len(captured))
-
-        # The first request includes both the prior turn's image and this turn's image.
-        initial_user_messages = [row for row in captured[0][0] if row.get("role") == "user"]
-        image_parts = [part for row in initial_user_messages
-                       for part in (row.get("content") if isinstance(row.get("content"), list) else [])
-                       if part.get("type") == "image_url"]
-        self.assertEqual(2, len(image_parts))
-
-        # Tools are stage scoped: construction validates once, and the visual
-        # review may request one extra view when the automatic three-view is unclear.
-        names = lambda call: [row["function"]["name"] for row in call[1].get("tools", [])]
-        self.assertFalse(captured[0][1].get("tools"))
-        self.assertEqual(["web_search"], names(captured[1]))
-        self.assertEqual(["cad_validate_plan"], names(captured[2]))
-        self.assertEqual(["cad_get_multiview"], names(captured[3]))
-        self.assertFalse(captured[4][1].get("tools"))
-        construction_system = captured[2][0][0]["content"]
-        self.assertIn("<cadplan-json-schema>", construction_system)
-        self.assertIn('"schema_version":{"const":"1.0"}', construction_system)
-        self.assertIn('"x-feature-support-matrix"', construction_system)
-        self.assertIn("中段前表面必须小于两侧段前表面的 Y", construction_system)
-        self.assertIn("不要仅因数值是估算值就要求用户确认", construction_system)
-
-        # The app generates the three-view and gives that image to visual review.
-        review_messages = captured[3][0]
-        preview_user = [row for row in review_messages if row.get("role") == "user"
-                        and isinstance(row.get("content"), list)]
-        self.assertTrue(any(any(part.get("type") == "image_url" for part in row["content"])
-                            for row in preview_user))
-        self.assertIn("对话回合路由器", captured[0][0][0]["content"])
-        self.assertIn("# 阶段一", captured[1][0][0]["content"])
-        self.assertIn("# 阶段三", captured[3][0][0]["content"])
-        self.assertIn("# 阶段四", captured[4][0][0]["content"])
-
-    def test_conversation_route_answers_without_starting_model_stages(self):
+    def test_conversation_route_answers_without_starting_modeling(self):
         route = {
             "action": "conversation", "reply": "当前模型还是原来的长方体。",
             "questions": [], "need_recognition": False,
@@ -333,10 +256,14 @@ class AgentLoopTests(unittest.TestCase):
                     output_dir=Path(temp) / "sessions")
 
         self.assertEqual("conversation", result["state"])
+        # The retired turn router answered with JSON; the reply the user reads
+        # must still be the human sentence inside it, never the braces.
         self.assertEqual("当前模型还是原来的长方体。", result["reply"])
         self.assertEqual(0, result["tool_calls"])
         self.assertEqual(1, len(captured))
-        self.assertFalse(captured[0][1].get("tools"))
+        # The dynamic loop always offers the full tool set: whether this turn is
+        # a plain answer is the model's call, not the program's stage machine.
+        self.assertTrue(captured[0][1].get("tools"))
 
     def test_aged_context_is_summarized_and_recent_turns_remain_available(self):
         route = {
@@ -354,7 +281,8 @@ class AgentLoopTests(unittest.TestCase):
 
         def fake_chat(messages, _cfg, **kwargs):
             captured.append((messages, kwargs))
-            if "对话记忆压缩器" in messages[0]["content"]:
+            # Only the conversation summarizer sends this batch of aged turns.
+            if "即将移出近期窗口的对话" in json.dumps(messages, ensure_ascii=False):
                 return _provider_reply(json.dumps({
                     "summary": "长期约束：中段前表面必须后退。"}, ensure_ascii=False))
             return _provider_reply(json.dumps(route, ensure_ascii=False))
@@ -363,8 +291,11 @@ class AgentLoopTests(unittest.TestCase):
             with mock.patch.object(agentloop.llm, "chat_completion", side_effect=fake_chat):
                 result = agentloop.run_agent_loop(
                     "你还记得中段要求吗？", conversation_history=history,
+                    # The aged-context window is 128 turns by default; shrink it
+                    # so 40 rows actually overflow into one summary batch.
                     cfg={"llm": {"base_url": "https://example.invalid/v1",
-                                 "model": "vision-test", "api_key": "test"}},
+                                 "model": "vision-test", "api_key": "test"},
+                         "agentloop": {"context_turns": 16}},
                     output_dir=Path(temp) / "sessions")
 
         self.assertEqual("conversation", result["state"])
@@ -399,8 +330,11 @@ class AgentLoopTests(unittest.TestCase):
                 result = agentloop.run_agent_loop(
                     "继续刚才的讨论", conversation_history=[{
                         "role": "user", "content": content}],
+                    # The default char budget is 1,000,000; use the configured
+                    # minimum so one long message has to be trimmed.
                     cfg={"llm": {"base_url": "https://example.invalid/v1",
-                                 "model": "vision-test", "api_key": "test"}},
+                                 "model": "vision-test", "api_key": "test"},
+                         "agentloop": {"context_chars": 48000}},
                     output_dir=Path(temp) / "sessions")
 
         self.assertEqual("conversation", result["state"])
@@ -408,57 +342,6 @@ class AgentLoopTests(unittest.TestCase):
         self.assertIn("BEGIN_REQUIREMENT", routed_context)
         self.assertIn("FINAL_CORRECTION", routed_context)
         self.assertIn("中间内容因上下文预算省略", routed_context)
-
-    def test_manual_document_edit_is_authoritative_and_published_as_live_preview(self):
-        original_plan = _box_plan()
-        edited_plan = json.loads(json.dumps(original_plan))
-        edited_plan["features"][0]["parameters"]["length"] = 25
-        validate_call = {
-            "id": "validate-edited-plan", "type": "function",
-            "function": {"name": "cad_validate_plan",
-                         "arguments": json.dumps({"plan": edited_plan})},
-        }
-        replies = [
-            _route_reply(action="edit", need_recognition=False,
-                         review_mode="none", review_rounds=0),
-            _provider_reply(tool_calls=[validate_call]),
-            _provider_reply(json.dumps(edited_plan)),
-        ]
-        captured = []
-        published = []
-
-        def fake_chat(messages, _cfg, **kwargs):
-            captured.append((messages, kwargs))
-            return replies.pop(0)
-
-        local_document = agentloop.cadplan.plan_to_document(original_plan)
-        local_document.features[0].params["length"] = 25
-        snapshot = {"name": local_document.name,
-                    "features": [feature.to_dict() for feature in local_document.features]}
-        with tempfile.TemporaryDirectory() as temp:
-            with mock.patch.object(agentloop.llm, "chat_completion", side_effect=fake_chat):
-                result = agentloop.run_agent_loop(
-                    "把当前模型再加长一点", current_plan=original_plan,
-                    current_document=snapshot,
-                    cfg={"llm": {"base_url": "https://example.invalid/v1",
-                                 "model": "vision-test", "api_key": "test"}},
-                    on_preview=lambda plan, preview, stage:
-                        published.append((plan, preview, stage)),
-                    output_dir=Path(temp) / "sessions")
-
-        self.assertEqual("previewed", result["state"])
-        self.assertEqual(25, result["plan"]["features"][0]["parameters"]["length"])
-        self.assertEqual(2, len(captured))
-        construction_messages = captured[1][0]
-        self.assertTrue(any(
-            "当前实际模型的特征树快照" in str(row.get("content"))
-            for row in construction_messages))
-        self.assertTrue(any(
-            "可能与当前特征树不同步" in str(row.get("content"))
-            for row in construction_messages))
-        self.assertEqual(1, len(published))
-        self.assertEqual("preview", published[0][2])
-        self.assertEqual("previewed", published[0][1]["state"])
 
     def test_live_preview_is_rendered_in_the_right_agent_panel(self):
         photo = mock.Mock()
@@ -505,6 +388,12 @@ class AgentLoopTests(unittest.TestCase):
         panel._active_request = {"id": 17}
         panel._show_agent_live_preview = mock.Mock()
         panel.status = mock.Mock()
+        # Members App._poll_agent touches on the way to the preview branch.
+        panel._finish_agent_reasoning_block = mock.Mock()
+        panel._set_agent_thinking_panel = mock.Mock()
+        panel._refresh_agent_wait_clock = mock.Mock()
+        panel._agent_wait_started = None
+        panel._agent_stream_detail = ''
         panel._cancel = None
         panel._t0 = time.time()
         panel._budget_s = 600
@@ -517,7 +406,7 @@ class AgentLoopTests(unittest.TestCase):
         panel.status.assert_called_once_with("建模过程预览已更新", ui_app.TH.WARN)
         panel.after.assert_called_once_with(120, panel._poll_agent)
 
-    def test_unrepresentable_tree_stops_before_construction(self):
+    def test_unrepresentable_tree_stops_before_any_model_call(self):
         route = {
             "action": "edit", "reply": "", "questions": [],
             "need_recognition": False, "review_mode": "none",
@@ -543,289 +432,10 @@ class AgentLoopTests(unittest.TestCase):
 
         self.assertEqual("needs_user_input", result["state"])
         self.assertIn("hex_bolt", result["reply"])
-        self.assertEqual(1, len(captured))
+        # The snapshot cannot become a CADPlan at all, so the turn is refused
+        # before any model request is paid for.
+        self.assertEqual(0, len(captured))
         self.assertEqual(0, result["tool_calls"])
-
-    def test_high_severity_multiview_issue_cannot_be_accepted(self):
-        plan = _box_plan()
-        validate_call = {
-            "id": "validate-plan",
-            "type": "function",
-            "function": {
-                "name": "cad_validate_plan",
-                "arguments": json.dumps({"plan": plan}),
-            },
-        }
-        replies = [
-            _route_reply(),
-            _provider_reply(json.dumps({"recognized": "a rectangular plate"})),
-            _provider_reply(tool_calls=[validate_call]),
-            _provider_reply(json.dumps({
-                "decision": "accept",
-                "issues": [{"view": "front", "item": "孔排缺失",
-                            "evidence": "只看见两排孔", "severity": "high"}],
-                "checks": _required_geometry_checks(),
-                "plan": None, "questions": [], "confidence": 0.3,
-            })),
-        ]
-
-        with tempfile.TemporaryDirectory() as temp:
-            with mock.patch.object(agentloop.llm, "chat_completion",
-                                   side_effect=lambda *_args, **_kwargs: replies.pop(0)):
-                result = agentloop.run_agent_loop(
-                    "reproduce the reference", cfg={"llm": {
-                        "base_url": "https://example.invalid/v1",
-                        "model": "vision-test", "api_key": "test"}},
-                    output_dir=Path(temp) / "sessions")
-            self.assertTrue(Path(result["preview"]["preview_image"]).is_file())
-
-        self.assertEqual("needs_user_input", result["state"])
-        self.assertTrue(any("高严重度" in question or "置信度" in question
-                            for question in result["questions"]))
-        self.assertNotIn("similarity", result)
-
-    def test_missing_source_metadata_is_repaired_without_changing_geometry(self):
-        initial_plan = _box_plan()
-        del initial_plan["features"][0]["sources"]["height"]
-        corrected_plan = json.loads(json.dumps(initial_plan))
-        corrected_plan["features"][0]["sources"]["height"] = {
-            "type": "image_estimate", "evidence": "front view overall height"}
-        replies = [
-            _route_reply(),
-            _provider_reply(json.dumps({"recognized": "a rectangular solid"})),
-            _provider_reply(json.dumps(initial_plan)),
-            _provider_reply(json.dumps(corrected_plan)),
-            _provider_reply(json.dumps({
-                "decision": "accept", "issues": [], "plan": None,
-                "checks": _required_geometry_checks(),
-                "questions": [], "confidence": 0.9,
-            })),
-            _provider_reply(json.dumps({
-                "decision": "accept", "similarity_score": 0.9,
-                "checks": _required_geometry_checks([{
-                    "item": "shape", "category": "geometry",
-                    "status": "match", "evidence": "rectangular prism"}]),
-                "remaining_differences": [], "plan": None,
-                "questions": [], "confidence": 0.9,
-            })),
-        ]
-
-        with tempfile.TemporaryDirectory() as temp:
-            with mock.patch.object(agentloop.llm, "chat_completion",
-                                   side_effect=lambda *_args, **_kwargs: replies.pop(0)):
-                result = agentloop.run_agent_loop(
-                    "build a measured rectangular solid", cfg={"llm": {
-                        "base_url": "https://example.invalid/v1",
-                        "model": "vision-test", "api_key": "test"}},
-                    output_dir=Path(temp) / "sessions")
-
-        self.assertEqual("accepted", result["state"])
-        self.assertEqual([], replies)
-        self.assertEqual("image_estimate",
-                         result["plan"]["features"][0]["sources"]["height"]["type"])
-
-    def test_similarity_mismatch_cannot_be_accepted(self):
-        plan = _box_plan()
-        validate_call = {
-            "id": "validate-plan",
-            "type": "function",
-            "function": {
-                "name": "cad_validate_plan",
-                "arguments": json.dumps({"plan": plan}),
-            },
-        }
-        replies = [
-            _route_reply(),
-            _provider_reply(json.dumps({"recognized": "a rectangular plate"})),
-            _provider_reply(tool_calls=[validate_call]),
-            _provider_reply(json.dumps({
-                "decision": "accept", "issues": [], "plan": None,
-                "checks": _required_geometry_checks(),
-                "questions": [], "confidence": 0.9,
-            })),
-            _provider_reply(json.dumps({
-                "decision": "accept", "similarity_score": 0.94,
-                "checks": _required_geometry_checks([{
-                    "item": "hole rows", "category": "geometry", "status": "mismatch",
-                    "evidence": "the reference has three rows"}]),
-                "remaining_differences": [], "plan": None,
-                "questions": [], "confidence": 0.9,
-            })),
-        ]
-
-        with tempfile.TemporaryDirectory() as temp:
-            with mock.patch.object(agentloop.llm, "chat_completion",
-                                   side_effect=lambda *_args, **_kwargs: replies.pop(0)):
-                result = agentloop.run_agent_loop(
-                    "reproduce the reference", cfg={"llm": {
-                        "base_url": "https://example.invalid/v1",
-                        "model": "vision-test", "api_key": "test"}},
-                    output_dir=Path(temp) / "sessions")
-
-        self.assertEqual("needs_user_input", result["state"])
-        self.assertEqual("mismatch", result["similarity"]["checks"][0]["status"])
-        self.assertTrue(any("three rows" in question for question in result["questions"]))
-
-    def test_segment_ratio_conflict_triggers_one_repair_and_full_repreview(self):
-        initial_plan = _segmented_plan([40, 36, 40])
-        corrected_plan = _segmented_plan([46, 23, 46])
-        validate_call = {
-            "id": "validate-plan",
-            "type": "function",
-            "function": {
-                "name": "cad_validate_plan",
-                "arguments": json.dumps({"plan": initial_plan}),
-            },
-        }
-        accept_multiview = json.dumps({
-            "decision": "accept", "issues": [], "plan": None,
-            "checks": _required_geometry_checks(),
-            "questions": [], "confidence": 0.9,
-        })
-        accept_similarity = json.dumps({
-            "decision": "accept", "similarity_score": 0.9,
-            "checks": _required_geometry_checks([{
-                "item": "segments", "category": "geometry", "status": "match",
-                "evidence": "three segments"}]),
-            "remaining_differences": [], "plan": None,
-            "questions": [], "confidence": 0.9,
-        })
-        replies = [
-            _route_reply(),
-            _provider_reply(json.dumps({"recognized": "three segments",
-                                        "proportion_observations": {
-                                            "front_segment_width_ratios": [0.4, 0.2, 0.4]}})),
-            _provider_reply(tool_calls=[validate_call]),
-            _provider_reply(accept_multiview),
-            _provider_reply(accept_similarity),
-            _provider_reply(json.dumps({
-                "decision": "revise", "similarity_score": 0.9,
-                "checks": [{"item": "segments", "status": "mismatch",
-                            "evidence": "middle is too wide"}],
-                "remaining_differences": [], "plan": corrected_plan,
-                "questions": [], "confidence": 0.9,
-            })),
-            _provider_reply(accept_multiview),
-            _provider_reply(accept_similarity),
-        ]
-
-        with tempfile.TemporaryDirectory() as temp:
-            with mock.patch.object(agentloop.llm, "chat_completion",
-                                   side_effect=lambda *_args, **_kwargs: replies.pop(0)):
-                result = agentloop.run_agent_loop(
-                    "reproduce three visible sections", cfg={"llm": {
-                        "base_url": "https://example.invalid/v1",
-                        "model": "vision-test", "api_key": "test"}},
-                    output_dir=Path(temp) / "sessions")
-
-        self.assertEqual("accepted", result["state"])
-        self.assertEqual(2, result["review_rounds"])
-        self.assertEqual("ratio_repaired_repreview", result["review_history"][0]["action"])
-        self.assertEqual("deterministic_ratio_gate", result["automatic_repairs"][0]["source"])
-        self.assertEqual("applied", result["automatic_repairs"][0]["result"])
-        self.assertAlmostEqual(0.2,
-                               result["plan"]["features"][1]["parameters"]["length"] /
-                               sum(feature["parameters"]["length"]
-                                   for feature in result["plan"]["features"]))
-
-    def test_front_outline_ratio_conflict_triggers_revision_and_repreview(self):
-        initial_plan = _box_plan()
-        corrected_plan = json.loads(json.dumps(initial_plan))
-        corrected_plan["features"][0]["parameters"]["length"] = 9.5
-        validate_call = {
-            "id": "validate-plan",
-            "type": "function",
-            "function": {
-                "name": "cad_validate_plan",
-                "arguments": json.dumps({"plan": initial_plan}),
-            },
-        }
-        accept_multiview = json.dumps({
-            "decision": "accept", "issues": [], "plan": None,
-            "checks": _required_geometry_checks(),
-            "questions": [], "confidence": 0.9,
-        })
-        accept_similarity = json.dumps({
-            "decision": "accept", "similarity_score": 0.9,
-            "checks": _required_geometry_checks([{
-                "item": "outline ratio", "category": "geometry", "status": "match",
-                "evidence": "overall silhouette"}]),
-            "remaining_differences": [], "plan": None,
-            "questions": [], "confidence": 0.9,
-        })
-        replies = [
-            _route_reply(),
-            _provider_reply(json.dumps({
-                "recognized": "a rectangular solid",
-                "proportion_observations": {"front_width_height": 0.95},
-            })),
-            _provider_reply(tool_calls=[validate_call]),
-            _provider_reply(accept_multiview),
-            _provider_reply(accept_similarity),
-            _provider_reply(json.dumps({
-                "decision": "revise", "similarity_score": 0.9,
-                "checks": [{"item": "outline ratio", "status": "mismatch",
-                            "evidence": "plan is too wide"}],
-                "remaining_differences": [], "plan": corrected_plan,
-                "questions": [], "confidence": 0.9,
-            })),
-            _provider_reply(accept_multiview),
-            _provider_reply(accept_similarity),
-        ]
-
-        with tempfile.TemporaryDirectory() as temp:
-            with mock.patch.object(agentloop.llm, "chat_completion",
-                                   side_effect=lambda *_args, **_kwargs: replies.pop(0)):
-                result = agentloop.run_agent_loop(
-                    "make a rectangular solid with a 0.95 front width-height ratio", cfg={"llm": {
-                        "base_url": "https://example.invalid/v1",
-                        "model": "vision-test", "api_key": "test"}},
-                    output_dir=Path(temp) / "sessions")
-
-        self.assertEqual("accepted", result["state"])
-        self.assertEqual(2, result["review_rounds"])
-        self.assertAlmostEqual(0.95,
-                               result["preview"]["dimensions"]["size"][0] /
-                               result["preview"]["dimensions"]["size"][2])
-        self.assertEqual([], replies)
-
-    def test_construction_stops_after_one_failed_plan_correction(self):
-        invalid_plan = _box_plan()
-        invalid_plan["unexpected"] = "wrong field"
-        validate_call = {
-            "id": "invalid-plan",
-            "type": "function",
-            "function": {
-                "name": "cad_validate_plan",
-                "arguments": json.dumps({"plan": invalid_plan}),
-            },
-        }
-        replies = [
-            _route_reply(),
-            _provider_reply(json.dumps({"recognized": "a box"})),
-            _provider_reply(tool_calls=[validate_call]),
-            _provider_reply(tool_calls=[validate_call]),
-        ]
-        captured = []
-
-        def fake_chat(messages, cfg, **kwargs):
-            captured.append((messages, kwargs))
-            return replies.pop(0)
-
-        with tempfile.TemporaryDirectory() as temp:
-            with mock.patch.object(agentloop.llm, "chat_completion", side_effect=fake_chat):
-                with self.assertRaisesRegex(
-                        agentloop.AgentLoopError, "一次结构修正后仍未通过") as caught:
-                    agentloop.run_agent_loop(
-                        "build a test box",
-                        cfg={"llm": {"base_url": "https://example.invalid/v1",
-                                     "model": "vision-test", "api_key": "test"}},
-                        output_dir=Path(temp) / "sessions")
-            record = json.loads(Path(caught.exception.run_record).read_text(encoding="utf-8"))
-
-        self.assertEqual(4, len(captured))
-        self.assertEqual(2, len(record["tool_trace"]))
-        self.assertEqual("failed", record["state"])
 
     def test_failed_run_record_redacts_api_key(self):
         secret = "super-secret-test-key"
@@ -858,50 +468,6 @@ class AgentLoopTests(unittest.TestCase):
         self.assertEqual(rows, result["results"])
         self.assertEqual(1, state["web_search_calls"])
         search.assert_called_once_with("bearing standard", timeout=5, use_cache=True)
-
-    def test_tool_preview_does_not_consume_three_review_rounds(self):
-        plan = _box_plan()
-        preview_call = {
-            "id": "extended-preview",
-            "type": "function",
-            "function": {
-                "name": "cad_get_multiview",
-                "arguments": json.dumps({"plan": plan, "view_set": "extended"}),
-            },
-        }
-        replies = [
-            _route_reply(review_rounds=1),
-            _provider_reply(json.dumps({"recognized": "a rectangular solid"})),
-            _provider_reply(json.dumps(plan)),
-            _provider_reply(tool_calls=[preview_call]),
-            _provider_reply(json.dumps({
-                "decision": "accept", "issues": [], "plan": None,
-                "checks": _required_geometry_checks(),
-                "questions": [], "confidence": 0.9,
-            })),
-            _provider_reply(json.dumps({
-                "decision": "accept", "similarity_score": 0.9,
-                "checks": _required_geometry_checks(),
-                "remaining_differences": [], "plan": None,
-                "questions": [], "confidence": 0.9,
-            })),
-        ]
-
-        def fake_chat(_messages, _cfg, **_kwargs):
-            return replies.pop(0)
-
-        with tempfile.TemporaryDirectory() as temp:
-            with mock.patch.object(agentloop.llm, "chat_completion", side_effect=fake_chat):
-                result = agentloop.run_agent_loop(
-                    "build a rectangular solid", cfg={
-                        "llm": {"base_url": "https://example.invalid/v1",
-                                "model": "vision-test", "api_key": "test"}},
-                    output_dir=Path(temp) / "sessions")
-
-        self.assertEqual("accepted", result["state"], result)
-        self.assertEqual(1, result["review_rounds"])
-        self.assertEqual(2, result["preview_calls"])
-
 
 if __name__ == "__main__":
     unittest.main()

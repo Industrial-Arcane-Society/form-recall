@@ -1472,7 +1472,9 @@ def crankshaft_size(main_d: float, pin_d: float, stroke: float, throws: int,
     dp = float(pin_d)
     S = float(stroke)
     n = max(1, int(throws))
-    R = max(d / 2.0, S / 2.0 + dp / 2.0)
+    # Keep the eccentric pin strictly inside the web. Exact tangency creates
+    # zero-width end-face triangles at the pin/web junction.
+    R = max(d / 2.0, S / 2.0 + dp / 2.0 + 1e-4)
     if total_len:
         return float(total_len), R
     spacing = max(S * 1.8, d * 2.2)
@@ -1570,40 +1572,94 @@ def make_socket_head_bolt(shank_d: float, length: float, head_d: float,
 def make_crankshaft(main_d: float, pin_d: float, stroke: float, throws: int,
                     center: Vec3 = (0, 0, 0), tag: int = 0,
                     segments: int = 32, total_len: float = None) -> List[Polygon]:
-    """曲轴: 主轴颈 + 曲柄臂 + 偏心的连杆颈, 全部沿 X 轴布置。
+    """沿 X 轴构造连续曲轴外壳，不保留零件相交处的内部端面。
 
-    每拐的连杆颈相对轴线偏移半个行程, 相邻两拐反向 (直列四缸的常见布置)。
-    描述里给了「总长」时按它排布(total_len)。
+    每拐由两片曲柄臂和中间的偏心连杆颈连接。主轴颈只在相邻曲柄臂
+    之间及两端出现；它不再贯穿偏心连杆颈。各连接截面使用带孔端面，
+    因而导出网格与实时视口都不会出现重叠实体的内部面。
     """
     d = float(main_d)
     dp = float(pin_d)
     S = float(stroke)
     n = max(1, int(throws))
+    seg = max(8, int(segments))
     main_r = d / 2.0
     pin_r = dp / 2.0
-    # 曲柄臂半径必须把连杆颈整个包住, 否则包围盒算不准 —— 和 crankshaft_size 同源
     L, R_web = crankshaft_size(d, dp, S, n, total_len)
     spacing = L / float(n)
-    web_w = max(2.0, d * 0.28)
-    pin_len = max(2.0, spacing * 0.42)
+    web_w = min(max(2.0, d * 0.28), spacing * 0.25)
+    pin_len = spacing * 0.42
     cx, cy, cz = center
     polys: List[Polygon] = []
-    # 主轴颈: 一根通长的轴 (网格组合, 不做布尔)
-    polys += make_cylinder(main_r, L, (cx - L / 2.0, cy, cz), tag, segments,
-                           'X', symmetric=False)
+
+    def point(x, y, z, r, angle):
+        return (x, y + r * math.cos(angle), z + r * math.sin(angle))
+
+    def cylinder_side(x0, x1, y, z, radius):
+        if x1 - x0 <= 1e-9 or radius <= 0:
+            return
+        mid = ((x0 + x1) / 2.0, y, z)
+        for j in range(seg):
+            a0 = 2.0 * math.pi * j / seg
+            a1 = 2.0 * math.pi * ((j + 1) % seg) / seg
+            quad = [point(x0, y, z, radius, a0),
+                    point(x0, y, z, radius, a1),
+                    point(x1, y, z, radius, a1),
+                    point(x1, y, z, radius, a0)]
+            poly = make_polygon(quad, tag, mid)
+            if poly:
+                polys.append(poly)
+
+    def end_face(x, outer_r, inner_r, inner_y, normal_sign):
+        if inner_r <= 0:
+            vertices = [point(x, cy, cz, outer_r, 2.0 * math.pi * j / seg)
+                        for j in range(seg)]
+            poly = make_polygon(vertices, tag)
+            if poly:
+                if poly.plane.normal[0] * normal_sign < 0:
+                    poly.flip()
+                polys.append(poly)
+            return
+        if outer_r <= inner_r + 1e-9 and abs(inner_y - cy) <= 1e-9:
+            return
+        for j in range(seg):
+            a0 = 2.0 * math.pi * j / seg
+            a1 = 2.0 * math.pi * ((j + 1) % seg) / seg
+            quad = [point(x, cy, cz, outer_r, a0),
+                    point(x, cy, cz, outer_r, a1),
+                    point(x, inner_y, cz, inner_r, a1),
+                    point(x, inner_y, cz, inner_r, a0)]
+            poly = make_polygon(quad, tag)
+            if poly:
+                if poly.plane.normal[0] * normal_sign < 0:
+                    poly.flip()
+                polys.append(poly)
+
+    left_end = cx - L / 2.0
+    right_end = cx + L / 2.0
+    cursor = left_end
+    end_face(left_end, main_r, 0.0, cy, -1)
     for i in range(n):
         x0 = cx - L / 2.0 + spacing * (i + 0.5)
         dy = (S / 2.0) if (i % 2 == 0) else (-S / 2.0)
-        # 连杆颈
-        polys += make_cylinder(pin_r, pin_len + web_w,
-                               (x0 - (pin_len + web_w) / 2.0, cy + dy, cz),
-                               tag, segments, 'X', symmetric=False)
-        # 两侧曲柄臂
-        for sgn in (-1, 1):
-            xw = x0 + sgn * (pin_len / 2.0 + web_w / 2.0)
-            polys += make_cylinder(R_web, web_w,
-                                   (xw - web_w / 2.0, cy, cz), tag, segments,
-                                   'X', symmetric=False)
+        pin_left = x0 - pin_len / 2.0
+        pin_right = x0 + pin_len / 2.0
+        web_left = pin_left - web_w
+        web_right = pin_right + web_w
+
+        cylinder_side(cursor, web_left, cy, cz, main_r)
+        cylinder_side(web_left, pin_left, cy, cz, R_web)
+        end_face(web_left, R_web, main_r, cy, -1)
+        end_face(pin_left, R_web, pin_r, cy + dy, 1)
+
+        cylinder_side(pin_left, pin_right, cy + dy, cz, pin_r)
+
+        cylinder_side(pin_right, web_right, cy, cz, R_web)
+        end_face(pin_right, R_web, pin_r, cy + dy, -1)
+        end_face(web_right, R_web, main_r, cy, 1)
+        cursor = web_right
+    cylinder_side(cursor, right_end, cy, cz, main_r)
+    end_face(right_end, main_r, 0.0, cy, 1)
     return polys
 
 

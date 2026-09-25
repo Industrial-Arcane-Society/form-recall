@@ -302,18 +302,54 @@ def _compound_entries(f, k, p, bb, warnings):
                                profile=cam_prof, name=nm, note=note))
         warnings.append('凸轮轴「%s」的凸轮相位为等分布置, 相位角请在 CATIA 里核对' % note)
 
-    elif k == 'crankshaft':                             # 曲轴: 主轴颈 + 连杆颈 + 曲柄臂
-        circ('circle_pad', float(p.get('main_d', 50.0)) / 2.0, name=nm)
+    elif k == 'crankshaft':                             # 曲轴: 轴线沿 X，曲拐沿轴向排列
+        # 网格内核的曲轴沿 X 轴；默认 circle_pad 沿 Z 轴，会让主轴与曲拐错位。
+        # Plane X 对应 CATIA 的 YZ 草图平面，偏移和凸台长度都沿全局 X 轴。
+        center = tuple(p.get('center', (0.0, 0.0, 0.0)))
+        center_y, center_z = float(center[1]), float(center[2])
+        main_d = float(p.get('main_d', 50.0))
+        pin_d = float(p.get('pin_d', 42.0))
+        stroke = float(p.get('stroke', 86.0))
         throws = max(1, int(p.get('throws', 4)))
-        pin_r = float(p.get('pin_d', 42.0)) / 2.0
-        off = float(p.get('stroke', 86.0)) / 2.0
+        shaft_len = max(0.1, x1 - x0)
+        spacing = shaft_len / throws
+        web_w = min(max(2.0, main_d * 0.28), spacing * 0.25)
+        pin_len = spacing * 0.42
+        web_r = max(main_d / 2.0, stroke / 2.0 + pin_d / 2.0 + 1e-4)
+        # 相邻圆盘之间必须留**远大于 CATIA 几何容差(0.001mm)**的搭接。
+        # 旧值 1e-3 恰好等于容差: 真机 V5-6R2023 上第 12~17 个凸台开始
+        # "方法 Update 失败", 之后每个操作都连锁失败(2026-09-26 实测日志
+        #  ai_modeler_push_*.log: ok=11 fail=14)。改 0.5mm 实测 25/25 成功。
+        join_overlap = min(0.5, web_w * 0.25, pin_len * 0.25)
+
+        def axial_pad(start, end, radius, y):
+            if end - start <= 1e-9:
+                return
+            made.append(_entry(kind='circle_pad', plane='X', cx=y,
+                               cy=center_z, z=start, r=radius, h=end - start,
+                               name=nm, note=note))
+
+        cursor = x0
         for i in range(throws):
-            zc = z0 + h * (i + 1) / (throws + 1)
-            ang = i * (2.0 * math.pi / max(throws, 2))
-            circ('circle_pad', pin_r, height=h / (throws + 1.5), z=zc,
-                 dx=off * math.cos(ang), dy=off * math.sin(ang), name=nm)
-        warnings.append('曲轴「%s」按 主轴颈 + %d 组连杆颈 近似（曲柄臂形状已简化）'
-                        % (note, throws))
+            x_mid = x0 + spacing * (i + 0.5)
+            pin_left = x_mid - pin_len / 2.0
+            pin_right = x_mid + pin_len / 2.0
+            web_left = pin_left - web_w
+            web_right = pin_right + web_w
+            pin_y = center_y + (stroke / 2.0 if i % 2 == 0 else -stroke / 2.0)
+            # 网格中每个曲拐有两片圆盘曲柄臂。保留其轴向位置和中心，
+            # 使 CATIA 近似模型与预览对齐并保持连通。
+            main_start = cursor - (join_overlap if i else 0.0)
+            axial_pad(main_start, web_left + join_overlap,
+                      main_d / 2.0, center_y)
+            axial_pad(web_left, pin_left, web_r, center_y)
+            axial_pad(pin_left - join_overlap, pin_right + join_overlap,
+                      pin_d / 2.0, pin_y)
+            axial_pad(pin_right, web_right, web_r, center_y)
+            cursor = web_right
+        axial_pad(cursor - join_overlap, x1, main_d / 2.0, center_y)
+        warnings.append('曲轴「%s」按 X 轴主轴颈、%d 组交替偏置连杆颈和圆盘曲柄臂近似；'
+                        '曲柄臂外形已简化' % (note, throws))
 
     elif k == 'impeller':                               # 叶轮: 轮毂 + 轮盘（叶片省略）
         circ('circle_pad', float(p.get('hub_d', 30.0)) / 2.0, name=nm)
