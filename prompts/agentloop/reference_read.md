@@ -1,76 +1,13 @@
-# 图片建模的简短结构清单
+# 首轮图像证据清单
 
-读图只为开始建模服务。将主体外形、各可见表面和重复特征逐图记录为 `reference_reading`，并放进 `cad_inspect_references` 调用。不要先输出长篇推理或等待用户给尺寸。
+目的只是支持第一版主体。按图逐张快速记录可见证据，重点看视角、整体主轮廓、可见表面，以及凹槽/台阶究竟是后退实面还是背景开口；不要写长篇分析，也不要等待用户补尺寸。
 
-`reference_reading` 是后续建模和复核使用的结构化证据；不要在普通正文重复输出 JSON 或展开教程式读图说明。读图要覆盖完整可见区域，并用像素边界、归一化位置和无量纲比例表达证据。看不清的关系放入 `uncertainties`，不要编造比值；尺寸未知时仍可选方便编辑的名义尺度并保留图像比例。
+在 `cad_inspect_references` 的 `reference_reading` 中填写 `feature_groups`、`visible_regions`、`dimensionless_constraints` 和 `uncertainties`：
 
-```json
-{
-  "feature_groups": [
-    {
-      "id": "main-body",
-      "kind": "主体外形",
-      "quantity": 1,
-      "region": "整体外轮廓",
-      "arrangement": "单一主体",
-      "evidence": "图中可见的连续外轮廓"
-    },
-    {
-      "id": "surface-feature-set-a",
-      "kind": "可见特征类别",
-      "quantity": 2,
-      "region": "图像中可见的表面",
-      "arrangement": "按实际可见次序描述",
-      "evidence": "按各特征可辨认的边界记录",
-      "relative_size_order": ["large", "small"],
-      "size_order_axis": "horizontal_left_to_right",
-      "size_order_confidence": "medium"
-    }
-  ],
-  "dimensionless_constraints": [
-    {
-      "image": "reference-1.png",
-      "view": "unknown",
-      "target": "待测可见范围",
-      "baseline": "同图可比范围",
-      "axis": "unknown",
-      "ratio": 1.2,
-      "confidence": "medium",
-      "evidence": "示例比例值；实际值必须重新按当前图像估算"
-    }
-  ],
-  "visible_regions": [
-    {
-      "image": "reference-1.png",
-      "id": "surface-a",
-      "region": "图像中可见表面",
-      "surface_state": "solid_face",
-      "image_bbox_norm": [0.1, 0.1, 0.9, 0.9],
-      "evidence": "闭合边缘围成连续实面",
-      "features": [
-        {
-          "kind": "可见特征类别",
-          "quantity": 2,
-          "arrangement": "按实际观察到的排列描述",
-          "evidence": "示例边界证据；按当前图像重写",
-          "normalized_centers": [[0.3, 0.4], [0.7, 0.6]],
-          "relative_size_order": ["large", "small"],
-          "size_order_axis": "horizontal_left_to_right",
-          "size_order_confidence": "medium"
-        }
-      ]
-    }
-  ],
-  "uncertainties": ["无法从当前视角确认的隐藏连接关系"]
-}
-```
+- `feature_groups` 统计整个工件的唯一物理特征。孔组的 `quantity` 是估计的唯一物理孔位数，不是各视图或各面的孔口总数；只在图像支持对应关系时，才用 `physical_feature_group_id` 跨面关联。
+- `visible_regions` 按每张图中的不同可见平面分别记录，包含凹槽内可见的后退实面，并把确实可见背景穿过的区域另列为开口。填写每面可见的特征数量、边界证据和图像范围；孔口数量按该面的可见实例计，同一贯穿孔可在不同面形成多个孔口。
+- 只数看得见的边界，不按颜色计数，不推断遮挡面上的孔。记录看得清的归一化中心和相对大小；跨视图合并物理特征必须有证据。阴影、暗色和遮挡不能证明缺料；有边界的内侧平面是后退实面，背景连续可见穿过才是开口。
+- `dimensionless_constraints` 只记录同一张图、同一投影中端点与基准都清楚的比例；没有可靠比例就填 `[]`。此处不推算毫米尺寸、孔深、墙厚或隐藏深度。尺寸未知时，将可见整体比例用于首个主体的 `image_estimate`。
+- 无法判断的视角、孔轴、贯通关系或隐藏连接放进 `uncertainties`，不得用常见结构或大致对齐补猜。看不清时保留 unknown。
 
-- 上面的 JSON 仅演示字段关系；不得照搬示例中的特征数量、类别、视图、坐标、比例或大小顺序。每次都应从本轮一张或多张图像独立读取；没有可见比例证据时令 `dimensionless_constraints` 为空。
-- 每组只写可见证据。`quantity` 是可见且不同的特征数，不是渲染出来的彩色区域数。重复特征看得清时，按原图排列顺序给出归一化中心和相对尺寸序列；不确定时用 `unknown` 并写置信度。
-- `dimensionless_constraints` 记录目标相对于同图可见基准的像素比例，例如局部尺寸或间距相对于主体范围；该比例不代表毫米，也可能大于 1。只录有可见依据的关系，不同视角不要混为一条测量。
-- 按不同可见表面或区域分别列组。不要仅凭颜色、相似外观或大致对齐，把不同区域的开口合并成一条隐藏的孔轴；无法确认的关系放进 `uncertainties`，先建立最符合可见轮廓的候选。
-- 判别实面与空隙：只有能看到背景连续穿过的证据，才把区域识别为开口/通槽；若两段之间能看到有边界的内侧平面，它是后退的实体表面，不是空洞。阴影、颜色和遮挡本身都不能证明材料缺失；证据不足时把两种解释记入 `uncertainties`，优先保留图中可见的平面和连接。
-- 分别记录每个可见平面或区域中的特征实例；不要因为某个表面较暗、被遮挡或后退就漏掉可见开口。数量按可见边界计，不推断被遮挡的背面特征。
-- 按图像中的可见次序记录每组实例的位置和相对大小；不要把不同区域的特征合并成同一组，也不要推断图外隐藏拓扑。贯穿状态以可见像素证据和后续匹配视图复核为准。
-- 没有标注尺寸时，直接从图内宽高、厚度线索、局部特征范围和间距估比例，选择方便编辑的名义尺度；所有推算毫米数标记为 `image_estimate` 并说明比例依据。
-- 调用 `cad_inspect_references` 后，再用 `cad_create_model` 建立候选；之后每次只添加或修改一个特征。程序会逐步展示预览，并在候选建立后及累计修改后安排原图复核；按本次图像实际视角选择可比视图，不套固定相机序列。
+完成这一次证据清单后立即调用 `cad_create_model`：以图像比例估一个合理尺度，提交单个加料主体特征；不要为缺少绝对尺寸提问，也不要在首个特征里同时建孔或槽。主体建立后再逐次添加或修改一个几何特征，并按实际可比视角进行后续复核。

@@ -1,0 +1,3866 @@
+{
+  "record_version": 1,
+  "started_at": "2026-09-26T18:13:18+08:00",
+  "finished_at": "2026-09-26T18:26:53+08:00",
+  "state": "needs_user_input",
+  "input": {
+    "prompt": "请依据参考图复刻该零件。没有标注尺寸，请按图像比例估算宽、高、厚，并把这些数值标为图像估算。生成第一版后，根据原图和模型同方向视图做多模态复核，发现可定位差异就修改相关特征，再用新版本视图核对。",
+    "reference_images": [
+      "image-1.png"
+    ]
+  },
+  "routing": {
+    "action": "clarify",
+    "review_mode": "dynamic",
+    "reason": "Agent 根据本轮证据请求用户判断。",
+    "review_rounds": 1
+  },
+  "conversation_memory": {
+    "summarized_through": 0,
+    "summary_chars": 0
+  },
+  "limits": {
+    "tool_calls": 256,
+    "web_search_calls": 32,
+    "tool_preview_calls": 256,
+    "multiview_tool_calls_per_round": 8,
+    "review_rounds": 256,
+    "context_turns": 128,
+    "context_chars": 1000000,
+    "context_summary_chars": 32000
+  },
+  "selected_reference_images": [
+    "image-1.png"
+  ],
+  "active_reference_images": [
+    "image-1.png"
+  ],
+  "active_request": null,
+  "model_calls": [
+    {
+      "phase": "agent_loop",
+      "model": "moonshotai/Kimi-K2.7-Code",
+      "max_output_tokens": 65536,
+      "image_parts_in_request": 1,
+      "response_received": true,
+      "reference_image_names": [
+        "image-1.png"
+      ],
+      "generated_view": null,
+      "response_chars": 0,
+      "finish_reason": "tool_calls",
+      "api_protocol": "chat_completions_stream",
+      "response_id": "01a0dd347d3e5c319bbcb018d3a8074a",
+      "thinking": {
+        "type": "enabled"
+      },
+      "reasoning_effort": null,
+      "tool_choice": {
+        "type": "function",
+        "function": {
+          "name": "cad_inspect_references"
+        }
+      },
+      "tool_call_names": [
+        "cad_inspect_references"
+      ],
+      "tool_argument_lengths": [
+        3516
+      ],
+      "duration_seconds": 293.02,
+      "stream_event_count": 339,
+      "first_event_seconds": 0.0,
+      "last_event_seconds": 291.0,
+      "reasoning_chars": 24265,
+      "answer_chars": 0,
+      "tool_argument_chars": 3516,
+      "request_timeout_seconds": 600,
+      "usage": {
+        "prompt_tokens": 5491,
+        "completion_tokens": 7664,
+        "total_tokens": 13155,
+        "reasoning_tokens": 6166
+      },
+      "error": null
+    },
+    {
+      "phase": "agent_loop",
+      "model": "moonshotai/Kimi-K2.7-Code",
+      "max_output_tokens": 65536,
+      "image_parts_in_request": 1,
+      "response_received": true,
+      "reference_image_names": [
+        "image-1.png"
+      ],
+      "generated_view": null,
+      "response_chars": 0,
+      "finish_reason": "tool_calls",
+      "api_protocol": "chat_completions_stream",
+      "response_id": "01a0dd38f60b989eeaaa85546aa59f1f",
+      "thinking": {
+        "type": "enabled"
+      },
+      "reasoning_effort": null,
+      "tool_choice": {
+        "type": "function",
+        "function": {
+          "name": "cad_inspect_references"
+        }
+      },
+      "tool_call_names": [
+        "cad_inspect_references"
+      ],
+      "tool_argument_lengths": [
+        3545
+      ],
+      "duration_seconds": 59.39,
+      "stream_event_count": 68,
+      "first_event_seconds": 0.0,
+      "last_event_seconds": 57.1,
+      "reasoning_chars": 858,
+      "answer_chars": 0,
+      "tool_argument_chars": 3545,
+      "request_timeout_seconds": 600,
+      "usage": {
+        "prompt_tokens": 13263,
+        "completion_tokens": 1719,
+        "total_tokens": 14982,
+        "reasoning_tokens": 213
+      },
+      "error": null
+    },
+    {
+      "phase": "agent_loop",
+      "model": "moonshotai/Kimi-K2.7-Code",
+      "max_output_tokens": 65536,
+      "image_parts_in_request": 0,
+      "response_received": true,
+      "reference_image_names": [
+        "image-1.png"
+      ],
+      "generated_view": null,
+      "response_chars": 0,
+      "finish_reason": "tool_calls",
+      "api_protocol": "chat_completions_stream",
+      "response_id": "01a0dd39dd9bc7e5114fc98b62f38018",
+      "thinking": {
+        "type": "enabled"
+      },
+      "reasoning_effort": null,
+      "tool_choice": {
+        "type": "function",
+        "function": {
+          "name": "cad_create_model"
+        }
+      },
+      "tool_call_names": [
+        "cad_create_model"
+      ],
+      "tool_argument_lengths": [
+        565
+      ],
+      "duration_seconds": 70.39,
+      "stream_event_count": 80,
+      "first_event_seconds": 0.0,
+      "last_event_seconds": 68.6,
+      "reasoning_chars": 5987,
+      "answer_chars": 0,
+      "tool_argument_chars": 565,
+      "request_timeout_seconds": 600,
+      "usage": {
+        "prompt_tokens": 15844,
+        "completion_tokens": 1689,
+        "total_tokens": 17533,
+        "reasoning_tokens": 1436
+      },
+      "error": null
+    },
+    {
+      "phase": "agent_loop",
+      "model": "moonshotai/Kimi-K2.7-Code",
+      "max_output_tokens": 65536,
+      "image_parts_in_request": 0,
+      "response_received": true,
+      "reference_image_names": [
+        "image-1.png"
+      ],
+      "generated_view": null,
+      "response_chars": 0,
+      "finish_reason": "tool_calls",
+      "api_protocol": "chat_completions_stream",
+      "response_id": "01a0dd3af1442d5dc0a03fc23027442e",
+      "thinking": {
+        "type": "enabled"
+      },
+      "reasoning_effort": null,
+      "tool_choice": {
+        "type": "function",
+        "function": {
+          "name": "cad_review_model"
+        }
+      },
+      "tool_call_names": [
+        "cad_review_model"
+      ],
+      "tool_argument_lengths": [
+        45
+      ],
+      "duration_seconds": 161.39,
+      "stream_event_count": 193,
+      "first_event_seconds": 0.0,
+      "last_event_seconds": 159.4,
+      "reasoning_chars": 16227,
+      "answer_chars": 0,
+      "tool_argument_chars": 45,
+      "request_timeout_seconds": 600,
+      "usage": {
+        "prompt_tokens": 17677,
+        "completion_tokens": 3678,
+        "total_tokens": 21355,
+        "reasoning_tokens": 3652
+      },
+      "error": null
+    },
+    {
+      "phase": "blind_reference_inventory",
+      "model": "moonshotai/Kimi-K2.7-Code",
+      "max_output_tokens": 4096,
+      "image_parts_in_request": 1,
+      "response_received": true,
+      "reference_image_names": [
+        "image-1.png"
+      ],
+      "generated_view": null,
+      "response_chars": 0,
+      "finish_reason": "tool_calls",
+      "api_protocol": "chat_completions_stream",
+      "response_id": "01a0dd3d686037efaa5fe0738b32c32e",
+      "thinking": {
+        "type": "enabled"
+      },
+      "reasoning_effort": null,
+      "tool_choice": "required",
+      "tool_call_names": [
+        "submit_reference_inventory"
+      ],
+      "tool_argument_lengths": [
+        2895
+      ],
+      "duration_seconds": 51.3,
+      "stream_event_count": 60,
+      "first_event_seconds": 0.0,
+      "last_event_seconds": 50.0,
+      "reasoning_chars": 2729,
+      "answer_chars": 0,
+      "tool_argument_chars": 2895,
+      "request_timeout_seconds": 600,
+      "usage": {
+        "prompt_tokens": 2770,
+        "completion_tokens": 1344,
+        "total_tokens": 4114,
+        "reasoning_tokens": 638
+      },
+      "error": null
+    },
+    {
+      "phase": "multiview_check",
+      "model": "moonshotai/Kimi-K2.7-Code",
+      "max_output_tokens": 4096,
+      "image_parts_in_request": 2,
+      "response_received": true,
+      "reference_image_names": [
+        "image-1.png"
+      ],
+      "generated_view": "iso",
+      "response_chars": 0,
+      "finish_reason": "tool_calls",
+      "api_protocol": "chat_completions_stream",
+      "response_id": "01a0dd3e31de0bff2fa4c2c6dd5d99d6",
+      "thinking": {
+        "type": "enabled"
+      },
+      "reasoning_effort": null,
+      "tool_choice": "required",
+      "tool_call_names": [
+        "submit_multiview_review"
+      ],
+      "tool_argument_lengths": [
+        5881
+      ],
+      "duration_seconds": 76.27,
+      "stream_event_count": 91,
+      "first_event_seconds": 0.0,
+      "last_event_seconds": 74.0,
+      "reasoning_chars": 3641,
+      "answer_chars": 0,
+      "tool_argument_chars": 5881,
+      "request_timeout_seconds": 600,
+      "usage": {
+        "prompt_tokens": 3625,
+        "completion_tokens": 2279,
+        "total_tokens": 5904,
+        "reasoning_tokens": 788
+      },
+      "error": null
+    },
+    {
+      "phase": "agent_loop",
+      "model": "moonshotai/Kimi-K2.7-Code",
+      "max_output_tokens": 65536,
+      "image_parts_in_request": 0,
+      "response_received": true,
+      "reference_image_names": [
+        "image-1.png"
+      ],
+      "generated_view": null,
+      "response_chars": 0,
+      "finish_reason": "tool_calls",
+      "api_protocol": "chat_completions_stream",
+      "response_id": "01a0dd3f5df564bc27ffdba7e9fac150",
+      "thinking": {
+        "type": "enabled"
+      },
+      "reasoning_effort": null,
+      "tool_choice": "required",
+      "tool_call_names": [
+        "ask_user"
+      ],
+      "tool_argument_lengths": [
+        213
+      ],
+      "duration_seconds": 101.97,
+      "stream_event_count": 114,
+      "first_event_seconds": 0.0,
+      "last_event_seconds": 98.3,
+      "reasoning_chars": 10092,
+      "answer_chars": 0,
+      "tool_argument_chars": 213,
+      "request_timeout_seconds": 600,
+      "usage": {
+        "prompt_tokens": 26065,
+        "completion_tokens": 2600,
+        "total_tokens": 28665,
+        "reasoning_tokens": 2469
+      },
+      "error": null
+    }
+  ],
+  "temporary_review_images": [
+    {
+      "filename": "single-review-r01-multiview_check-iso.png",
+      "deleted": true,
+      "error": null
+    }
+  ],
+  "recognition": null,
+  "raster_analysis": {
+    "available": true,
+    "images": [
+      {
+        "image_index": 1,
+        "filename": "image-1.png",
+        "size_px": [
+          494,
+          544
+        ],
+        "three_region_scanline_candidate": null,
+        "foreground_bbox_candidate": null,
+        "scanline_rejected": {
+          "consistent_scanline_count": 15,
+          "span_px": 19,
+          "image_height_px": 544,
+          "span_ratio": 0.0349,
+          "min_span_ratio": 0.25,
+          "reason": "扫描线只在 19/544 px 高度上一致（3.5% < 25%），不足以判定为平色正视图；本图不得作为比例尺寸证据。",
+          "instruction": "不要把该图的像素比例写进 sources.evidence。如需尺寸，按整体轮廓做目视比例估算，或向用户确认。"
+        }
+      }
+    ]
+  },
+  "counts": {
+    "tool_calls": 7,
+    "web_search_calls": 0,
+    "blocked_web_search_calls": 0,
+    "preview_calls": 2,
+    "review_rounds": 1,
+    "repair_cycles": 0,
+    "llm_requests": 7,
+    "image_parts_in_request": 5,
+    "llm_usage": {
+      "prompt_tokens": 84735.0,
+      "completion_tokens": 20973.0,
+      "total_tokens": 105708.0,
+      "reasoning_tokens": 15362.0
+    }
+  },
+  "loop_state": {
+    "agent_turn": 5,
+    "no_progress_finals": 0,
+    "context_compactions": 0,
+    "truncated_responses": 0,
+    "stagnation_warnings": 0,
+    "stagnant_tool_calls": 1,
+    "candidate_attempted": true,
+    "finish_gate": null,
+    "geometry_review_completed": true,
+    "geometry_review_debt": 0
+  },
+  "construction_repairs": [],
+  "automatic_repairs": [],
+  "open_multiview_findings": [
+    {
+      "issue_id": "iso-missing-u-slot",
+      "phase": "multiview",
+      "view": "iso",
+      "item": "Central through-slot not modeled",
+      "evidence": "Reference shows a U-shaped body with a slot cut from the front face toward the back; model is a solid box.",
+      "severity": "high",
+      "category": "body_shape",
+      "feature_ids": [
+        "main-body"
+      ],
+      "affected_parameters": [
+        {
+          "feature_id": "main-body",
+          "path": "parameters.width"
+        },
+        {
+          "feature_id": "main-body",
+          "path": "parameters.operation"
+        }
+      ],
+      "baseline_path_values": {
+        "main-body.parameters.width": {
+          "present": true,
+          "value": 40
+        },
+        "main-body.parameters.operation": {
+          "present": false,
+          "value": null
+        }
+      },
+      "baseline_feature_values": {
+        "main-body": "{\"kind\":\"box\",\"operation\":\"add\",\"parameters\":{\"center\":[0,0,0],\"height\":70,\"length\":80,\"width\":40}}"
+      },
+      "first_seen_round": 1
+    },
+    {
+      "issue_id": "iso-missing-all-holes",
+      "phase": "multiview",
+      "view": "iso",
+      "item": "All nine circular holes missing",
+      "evidence": "Reference has three vertical holes on left front wall, three on right front wall, and three on inner back wall; model has none.",
+      "severity": "high",
+      "category": "hole_pattern",
+      "feature_ids": [
+        "main-body"
+      ],
+      "affected_parameters": [
+        {
+          "feature_id": "main-body",
+          "path": "parameters.operation"
+        }
+      ],
+      "baseline_path_values": {
+        "main-body.parameters.operation": {
+          "present": false,
+          "value": null
+        }
+      },
+      "baseline_feature_values": {
+        "main-body": "{\"kind\":\"box\",\"operation\":\"add\",\"parameters\":{\"center\":[0,0,0],\"height\":70,\"length\":80,\"width\":40}}"
+      },
+      "first_seen_round": 1
+    },
+    {
+      "issue_id": "iso-wrong-depth-recess",
+      "phase": "multiview",
+      "view": "iso",
+      "item": "No recessed inner back wall",
+      "evidence": "Reference shows an inner vertical wall set back inside the slot; model front face is flat and solid.",
+      "severity": "high",
+      "category": "depth_relationships",
+      "feature_ids": [
+        "main-body"
+      ],
+      "affected_parameters": [
+        {
+          "feature_id": "main-body",
+          "path": "parameters.width"
+        },
+        {
+          "feature_id": "main-body",
+          "path": "parameters.operation"
+        }
+      ],
+      "baseline_path_values": {
+        "main-body.parameters.width": {
+          "present": true,
+          "value": 40
+        },
+        "main-body.parameters.operation": {
+          "present": false,
+          "value": null
+        }
+      },
+      "baseline_feature_values": {
+        "main-body": "{\"kind\":\"box\",\"operation\":\"add\",\"parameters\":{\"center\":[0,0,0],\"height\":70,\"length\":80,\"width\":40}}"
+      },
+      "first_seen_round": 1
+    },
+    {
+      "issue_id": "iso-feature-layout",
+      "phase": "multiview",
+      "view": "iso",
+      "item": "Nine circular holes on three vertical faces",
+      "evidence": "Reference has 9 visible holes; model has 0.",
+      "severity": "medium",
+      "category": "hole_pattern",
+      "feature_ids": [
+        "main-body"
+      ],
+      "affected_parameters": [
+        {
+          "feature_id": "main-body",
+          "path": "parameters.operation"
+        }
+      ],
+      "baseline_path_values": {
+        "main-body.parameters.operation": {
+          "present": false,
+          "value": null
+        }
+      },
+      "baseline_feature_values": {
+        "main-body": "{\"kind\":\"box\",\"operation\":\"add\",\"parameters\":{\"center\":[0,0,0],\"height\":70,\"length\":80,\"width\":40}}"
+      },
+      "first_seen_round": 1
+    },
+    {
+      "issue_id": "iso-group-blind-01-04-01",
+      "phase": "multiview",
+      "view": "iso",
+      "item": "Left front wall vertical hole trio",
+      "evidence": "Left wall hole group missing entirely.",
+      "severity": "medium",
+      "category": "hole_group",
+      "feature_ids": [
+        "main-body"
+      ],
+      "affected_parameters": [
+        {
+          "feature_id": "main-body",
+          "path": "parameters.operation"
+        }
+      ],
+      "baseline_path_values": {
+        "main-body.parameters.operation": {
+          "present": false,
+          "value": null
+        }
+      },
+      "baseline_feature_values": {
+        "main-body": "{\"kind\":\"box\",\"operation\":\"add\",\"parameters\":{\"center\":[0,0,0],\"height\":70,\"length\":80,\"width\":40}}"
+      },
+      "first_seen_round": 1
+    },
+    {
+      "issue_id": "iso-group-blind-01-05-01",
+      "phase": "multiview",
+      "view": "iso",
+      "item": "Right front wall vertical hole trio",
+      "evidence": "Right wall hole group missing entirely.",
+      "severity": "medium",
+      "category": "hole_group",
+      "feature_ids": [
+        "main-body"
+      ],
+      "affected_parameters": [
+        {
+          "feature_id": "main-body",
+          "path": "parameters.operation"
+        }
+      ],
+      "baseline_path_values": {
+        "main-body.parameters.operation": {
+          "present": false,
+          "value": null
+        }
+      },
+      "baseline_feature_values": {
+        "main-body": "{\"kind\":\"box\",\"operation\":\"add\",\"parameters\":{\"center\":[0,0,0],\"height\":70,\"length\":80,\"width\":40}}"
+      },
+      "first_seen_round": 1
+    }
+  ],
+  "plan": {
+    "schema_version": "1.0",
+    "name": "U型块-第一版",
+    "source_prompt": "请依据参考图复刻该零件。没有标注尺寸，请按图像比例估算宽、高、厚，并把这些数值标为图像估算。生成第一版后，根据原图和模型同方向视图做多模态复核，发现可定位差异就修改相关特征，再用新版本视图核对。",
+    "units": {
+      "length": "mm",
+      "angle": "deg"
+    },
+    "coordinate_system": {
+      "type": "global_cartesian",
+      "handedness": "right",
+      "axes": [
+        "X",
+        "Y",
+        "Z"
+      ],
+      "origin": [
+        0,
+        0,
+        0
+      ]
+    },
+    "features": [
+      {
+        "id": "main-body",
+        "kind": "box",
+        "operation": "add",
+        "parameters": {
+          "length": 80,
+          "width": 40,
+          "height": 70,
+          "center": [
+            0,
+            0,
+            0
+          ]
+        },
+        "sources": {
+          "length": {
+            "type": "image_estimate",
+            "evidence": "按等轴测图目视比例：总长度方向外轮廓作为基准，取便于编辑的名义尺度80mm"
+          },
+          "width": {
+            "type": "image_estimate",
+            "evidence": "按等轴测图目视比例：总深度约为总长度的0.5倍，取40mm"
+          },
+          "height": {
+            "type": "image_estimate",
+            "evidence": "按等轴测图目视比例：总高度与总长度接近，取70mm"
+          },
+          "center": {
+            "type": "image_estimate",
+            "evidence": "将主体几何中心置于原点，便于后续对称布置槽腔与孔位"
+          }
+        },
+        "name": "主体长方体",
+        "note": "整体外形：长80×宽40×高70，中心在原点"
+      }
+    ],
+    "pending_questions": []
+  },
+  "validation": {
+    "valid": true,
+    "state": "valid",
+    "errors": [],
+    "confirmations": [],
+    "support": [
+      {
+        "feature_id": "main-body",
+        "kind": "box",
+        "status": "exact",
+        "reason": "矩形草图加凸台；当前 CATIA 映射仅支持 Z 轴拉伸。"
+      }
+    ],
+    "warnings": [],
+    "schema_version": "1.0"
+  },
+  "preview": {
+    "state": "previewed",
+    "validation": {
+      "valid": true,
+      "state": "valid",
+      "errors": [],
+      "confirmations": [],
+      "support": [
+        {
+          "feature_id": "main-body",
+          "kind": "box",
+          "status": "exact",
+          "reason": "矩形草图加凸台；当前 CATIA 映射仅支持 Z 轴拉伸。"
+        }
+      ],
+      "warnings": [],
+      "schema_version": "1.0"
+    },
+    "catia_executed": false,
+    "dimensions": {
+      "unit": "mm",
+      "bbox": [
+        -40.0,
+        -20.0,
+        -35.0,
+        40.0,
+        20.0,
+        35.0
+      ],
+      "size": [
+        80.0,
+        40.0,
+        70.0
+      ],
+      "volume_mm3": 223999.99999999997,
+      "surface_area_mm2": 23200.0,
+      "triangles": 12,
+      "feature_count": 1
+    },
+    "catia_operations": [
+      {
+        "index": 1,
+        "kind": "rect_pad",
+        "plane": "XY",
+        "center": [
+          0.0,
+          0.0,
+          -35.0
+        ],
+        "profile": [],
+        "dimensions": {
+          "l": 80.0,
+          "w": 40.0,
+          "r": 0.0,
+          "h": 70.0,
+          "depth": 0.0
+        },
+        "name": "主体长方体",
+        "note": "长方体 80 × 40 × 70 mm"
+      }
+    ],
+    "warnings": [],
+    "feature_manifest": {
+      "main-body": {
+        "kind": "box",
+        "operation": "add",
+        "name": "主体长方体",
+        "parameters": {
+          "length": 80,
+          "width": 40,
+          "height": 70,
+          "center": [
+            0,
+            0,
+            0
+          ]
+        },
+        "sources": {
+          "length": {
+            "type": "image_estimate",
+            "evidence": "按等轴测图目视比例：总长度方向外轮廓作为基准，取便于编辑的名义尺度80mm"
+          },
+          "width": {
+            "type": "image_estimate",
+            "evidence": "按等轴测图目视比例：总深度约为总长度的0.5倍，取40mm"
+          },
+          "height": {
+            "type": "image_estimate",
+            "evidence": "按等轴测图目视比例：总高度与总长度接近，取70mm"
+          },
+          "center": {
+            "type": "image_estimate",
+            "evidence": "将主体几何中心置于原点，便于后续对称布置槽腔与孔位"
+          }
+        },
+        "relations": []
+      }
+    },
+    "build_log": [
+      "[基准] 长方体 80 × 40 × 70 mm → 8 面"
+    ],
+    "local_geometry_checks": {
+      "state": "passed",
+      "source": "AI Modeler local mesh kernel",
+      "face_count": 8,
+      "bbox_size_mm": [
+        80.0,
+        40.0,
+        70.0
+      ],
+      "bbox_ratios_from_mesh": {
+        "front_width_height": 1.1428571428571428,
+        "depth_height": 0.5714285714285714,
+        "top_width_depth": 2.0
+      },
+      "feature_count_from_plan": 1,
+      "feature_ids_from_plan": [
+        "main-body"
+      ],
+      "nonfinite_face_count": 0,
+      "degenerate_face_count": 0,
+      "hole_features_from_plan": [],
+      "through_hole_mesh_checks": [],
+      "hole_visibility": "requires_multimodal_view_review",
+      "through_hole_result": "not_measured"
+    },
+    "orthographic_layout": {
+      "unit": "mm",
+      "axes": {
+        "length": "X",
+        "width": "Y",
+        "height": "Z"
+      },
+      "uniform_scale_across_views": true,
+      "scale_pixels_per_mm": 2.665,
+      "tile_size_pixels": [
+        330,
+        260
+      ],
+      "view_extents": {
+        "front": {
+          "horizontal_axis": "X",
+          "horizontal": 80.0,
+          "vertical_axis": "Z",
+          "vertical": 70.0
+        },
+        "right": {
+          "horizontal_axis": "Y",
+          "horizontal": 40.0,
+          "vertical_axis": "Z",
+          "vertical": 70.0
+        },
+        "top": {
+          "horizontal_axis": "X",
+          "horizontal": 80.0,
+          "vertical_axis": "Y",
+          "vertical": 40.0
+        }
+      },
+      "dimension_ratios": {
+        "length_to_height": 1.1428571428571428,
+        "width_to_height": 0.5714285714285714,
+        "length_to_width": 2.0
+      }
+    },
+    "preview_image": "candidate-preview.png",
+    "preview_image_views": [
+      "iso"
+    ],
+    "preview_image_view_set": "iso",
+    "preview_image_grid_columns": 1,
+    "preview_image_source": "AI Modeler local mesh kernel; not CATIA B-Rep",
+    "preview_image_layout": {
+      "unit": "mm",
+      "axes": {
+        "length": "X",
+        "width": "Y",
+        "height": "Z"
+      },
+      "uniform_scale_across_views": true,
+      "scale_pixels_per_mm": 2.665,
+      "tile_size_pixels": [
+        330,
+        260
+      ],
+      "view_extents": {
+        "front": {
+          "horizontal_axis": "X",
+          "horizontal": 80.0,
+          "vertical_axis": "Z",
+          "vertical": 70.0
+        },
+        "right": {
+          "horizontal_axis": "Y",
+          "horizontal": 40.0,
+          "vertical_axis": "Z",
+          "vertical": 70.0
+        },
+        "top": {
+          "horizontal_axis": "X",
+          "horizontal": 80.0,
+          "vertical_axis": "Y",
+          "vertical": 40.0
+        }
+      },
+      "dimension_ratios": {
+        "length_to_height": 1.1428571428571428,
+        "width_to_height": 0.5714285714285714,
+        "length_to_width": 2.0
+      }
+    }
+  },
+  "output_paths": {
+    "aimodel": "C:\\Users\\lycohana\\.codex\\worktrees\\agentloop-refactor\\AI-_-\\artifacts\\agentloop\\20260926-kimi-refactor-v2\\20260926-181318-2cc59ce4\\candidate.aimodel",
+    "stl": "C:\\Users\\lycohana\\.codex\\worktrees\\agentloop-refactor\\AI-_-\\artifacts\\agentloop\\20260926-kimi-refactor-v2\\20260926-181318-2cc59ce4\\candidate.stl",
+    "preview": "C:\\Users\\lycohana\\.codex\\worktrees\\agentloop-refactor\\AI-_-\\artifacts\\agentloop\\20260926-kimi-refactor-v2\\20260926-181318-2cc59ce4\\candidate-preview.png"
+  },
+  "output_warning": null,
+  "dimension_assumptions": [
+    {
+      "feature_id": "main-body",
+      "parameter": "length",
+      "value": 80,
+      "evidence": "按等轴测图目视比例：总长度方向外轮廓作为基准，取便于编辑的名义尺度80mm",
+      "note": null
+    },
+    {
+      "feature_id": "main-body",
+      "parameter": "width",
+      "value": 40,
+      "evidence": "按等轴测图目视比例：总深度约为总长度的0.5倍，取40mm",
+      "note": null
+    },
+    {
+      "feature_id": "main-body",
+      "parameter": "height",
+      "value": 70,
+      "evidence": "按等轴测图目视比例：总高度与总长度接近，取70mm",
+      "note": null
+    },
+    {
+      "feature_id": "main-body",
+      "parameter": "center",
+      "value": [
+        0,
+        0,
+        0
+      ],
+      "evidence": "将主体几何中心置于原点，便于后续对称布置槽腔与孔位",
+      "note": null
+    }
+  ],
+  "local_geometry_checks": {
+    "state": "passed",
+    "source": "AI Modeler local mesh kernel",
+    "face_count": 8,
+    "bbox_size_mm": [
+      80.0,
+      40.0,
+      70.0
+    ],
+    "bbox_ratios_from_mesh": {
+      "front_width_height": 1.1428571428571428,
+      "depth_height": 0.5714285714285714,
+      "top_width_depth": 2.0
+    },
+    "feature_count_from_plan": 1,
+    "feature_ids_from_plan": [
+      "main-body"
+    ],
+    "nonfinite_face_count": 0,
+    "degenerate_face_count": 0,
+    "hole_features_from_plan": [],
+    "through_hole_mesh_checks": [],
+    "hole_visibility": "requires_multimodal_view_review",
+    "through_hole_result": "not_measured"
+  },
+  "multiview_review": {
+    "decision": "ask_user",
+    "checks": [
+      {
+        "id": "iso-overall-shape",
+        "view": "iso",
+        "area": "overall_shape",
+        "feature_group_id": "",
+        "category": "body_shape",
+        "status": "mismatch",
+        "item": "U-shaped body with central slot",
+        "reference_evidence": "Reference shows a U-shaped block with a central slot open from front to back, forming two outer walls and one inner back wall.",
+        "model_evidence": "Current model is a solid rectangular block with no slot or recessed inner wall.",
+        "evidence": "Reference has open U-profile; model is a filled box.",
+        "unknown_reason": "",
+        "feature_ids": [
+          "main-body"
+        ],
+        "affected_parameters": [
+          {
+            "feature_id": "main-body",
+            "path": "parameters.width"
+          },
+          {
+            "feature_id": "main-body",
+            "path": "operation"
+          }
+        ]
+      },
+      {
+        "id": "iso-feature-layout",
+        "view": "iso",
+        "area": "feature_layout",
+        "feature_group_id": "",
+        "category": "hole_pattern",
+        "status": "mismatch",
+        "item": "Nine circular holes on three vertical faces",
+        "reference_evidence": "Reference shows three columns of three circular holes each: left outer wall, right outer wall, and inner back wall of slot.",
+        "model_evidence": "Model has no holes; all faces are plain.",
+        "evidence": "Reference has 9 visible holes; model has 0.",
+        "unknown_reason": "",
+        "feature_ids": [
+          "main-body"
+        ],
+        "affected_parameters": [
+          {
+            "feature_id": "main-body",
+            "path": "operation"
+          }
+        ]
+      },
+      {
+        "id": "iso-depth-relationships",
+        "view": "iso",
+        "area": "depth_relationships",
+        "feature_group_id": "",
+        "category": "slot_depth",
+        "status": "mismatch",
+        "item": "Central slot creates recessed inner back wall",
+        "reference_evidence": "Reference shows the middle section of the front face cut away, with an inner vertical wall set back along the depth direction.",
+        "model_evidence": "Model front face is flat and continuous; no recessed wall or slot.",
+        "evidence": "Reference has depth-wise recess; model is solid.",
+        "unknown_reason": "",
+        "feature_ids": [
+          "main-body"
+        ],
+        "affected_parameters": [
+          {
+            "feature_id": "main-body",
+            "path": "parameters.width"
+          },
+          {
+            "feature_id": "main-body",
+            "path": "operation"
+          }
+        ]
+      },
+      {
+        "id": "iso-group-blind-01-04-01",
+        "view": "iso",
+        "area": "feature_group",
+        "feature_group_id": "blind-01-04-01",
+        "category": "hole_group",
+        "status": "mismatch",
+        "item": "Left front wall vertical hole trio",
+        "reference_evidence": "Reference shows three circular holes aligned vertically on the left front wall: large top, small middle, large bottom.",
+        "model_evidence": "Model left front wall has no holes.",
+        "evidence": "Left wall hole group missing entirely.",
+        "unknown_reason": "",
+        "feature_ids": [
+          "main-body"
+        ],
+        "affected_parameters": [
+          {
+            "feature_id": "main-body",
+            "path": "operation"
+          }
+        ]
+      },
+      {
+        "id": "iso-group-blind-01-05-01",
+        "view": "iso",
+        "area": "feature_group",
+        "feature_group_id": "blind-01-05-01",
+        "category": "hole_group",
+        "status": "mismatch",
+        "item": "Right front wall vertical hole trio",
+        "reference_evidence": "Reference shows three circular holes aligned vertically on the right front wall: large top, small middle, large bottom.",
+        "model_evidence": "Model right front wall has no holes.",
+        "evidence": "Right wall hole group missing entirely.",
+        "unknown_reason": "",
+        "feature_ids": [
+          "main-body"
+        ],
+        "affected_parameters": [
+          {
+            "feature_id": "main-body",
+            "path": "operation"
+          }
+        ]
+      },
+      {
+        "id": "iso-group-blind-01-06-01",
+        "view": "iso",
+        "area": "feature_group",
+        "feature_group_id": "blind-01-06-01",
+        "category": "hole_group",
+        "status": "mismatch",
+        "item": "Inner back wall vertical hole trio",
+        "reference_evidence": "Reference shows three circular holes aligned vertically on the recessed inner back wall of the slot: medium top, small middle, medium bottom",
+        "model_evidence": "Model has no slot and therefore no inner back wall or holes.",
+        "evidence": "Inner back wall hole group missing because slot is absent.",
+        "unknown_reason": "",
+        "feature_ids": [
+          "main-body"
+        ],
+        "affected_parameters": [
+          {
+            "feature_id": "main-body",
+            "path": "parameters.width"
+          },
+          {
+            "feature_id": "main-body",
+            "path": "operation"
+          }
+        ]
+      }
+    ],
+    "issues": [
+      {
+        "issue_id": "iso-missing-u-slot",
+        "view": "iso",
+        "category": "body_shape",
+        "severity": "high",
+        "item": "Central through-slot not modeled",
+        "evidence": "Reference shows a U-shaped body with a slot cut from the front face toward the back; model is a solid box.",
+        "feature_ids": [
+          "main-body"
+        ],
+        "affected_parameters": [
+          {
+            "feature_id": "main-body",
+            "path": "parameters.width"
+          },
+          {
+            "feature_id": "main-body",
+            "path": "operation"
+          }
+        ]
+      },
+      {
+        "issue_id": "iso-missing-all-holes",
+        "view": "iso",
+        "category": "hole_pattern",
+        "severity": "high",
+        "item": "All nine circular holes missing",
+        "evidence": "Reference has three vertical holes on left front wall, three on right front wall, and three on inner back wall; model has none.",
+        "feature_ids": [
+          "main-body"
+        ],
+        "affected_parameters": [
+          {
+            "feature_id": "main-body",
+            "path": "operation"
+          }
+        ]
+      },
+      {
+        "issue_id": "iso-wrong-depth-recess",
+        "view": "iso",
+        "category": "depth_relationships",
+        "severity": "high",
+        "item": "No recessed inner back wall",
+        "evidence": "Reference shows an inner vertical wall set back inside the slot; model front face is flat and solid.",
+        "feature_ids": [
+          "main-body"
+        ],
+        "affected_parameters": [
+          {
+            "feature_id": "main-body",
+            "path": "parameters.width"
+          },
+          {
+            "feature_id": "main-body",
+            "path": "operation"
+          }
+        ]
+      }
+    ],
+    "resolved_findings": [],
+    "questions": [
+      "Are the nine colored circular holes through-holes or blind holes? The iso reference shows colored hole interiors, suggesting they may pass through the walls.",
+      "What are the relative widths of the two outer walls versus the central slot? The reference suggests roughly equal widths but an estimate is needed.",
+      "Does the central slot extend fully through the part depth (open at the back) or stop at an inner back wall (closed slot)?"
+    ],
+    "review_gaps": [],
+    "confidence": 0.1,
+    "single_view_reports": [
+      {
+        "view": "iso",
+        "checks": [
+          {
+            "id": "iso-overall-shape",
+            "view": "iso",
+            "area": "overall_shape",
+            "feature_group_id": "",
+            "category": "body_shape",
+            "status": "mismatch",
+            "item": "U-shaped body with central slot",
+            "reference_evidence": "Reference shows a U-shaped block with a central slot open from front to back, forming two outer walls and one inner back wall.",
+            "model_evidence": "Current model is a solid rectangular block with no slot or recessed inner wall.",
+            "evidence": "Reference has open U-profile; model is a filled box.",
+            "unknown_reason": "",
+            "feature_ids": [
+              "main-body"
+            ],
+            "affected_parameters": [
+              {
+                "feature_id": "main-body",
+                "path": "parameters.width"
+              },
+              {
+                "feature_id": "main-body",
+                "path": "operation"
+              }
+            ]
+          },
+          {
+            "id": "iso-feature-layout",
+            "view": "iso",
+            "area": "feature_layout",
+            "feature_group_id": "",
+            "category": "hole_pattern",
+            "status": "mismatch",
+            "item": "Nine circular holes on three vertical faces",
+            "reference_evidence": "Reference shows three columns of three circular holes each: left outer wall, right outer wall, and inner back wall of slot.",
+            "model_evidence": "Model has no holes; all faces are plain.",
+            "evidence": "Reference has 9 visible holes; model has 0.",
+            "unknown_reason": "",
+            "feature_ids": [
+              "main-body"
+            ],
+            "affected_parameters": [
+              {
+                "feature_id": "main-body",
+                "path": "operation"
+              }
+            ]
+          },
+          {
+            "id": "iso-depth-relationships",
+            "view": "iso",
+            "area": "depth_relationships",
+            "feature_group_id": "",
+            "category": "slot_depth",
+            "status": "mismatch",
+            "item": "Central slot creates recessed inner back wall",
+            "reference_evidence": "Reference shows the middle section of the front face cut away, with an inner vertical wall set back along the depth direction.",
+            "model_evidence": "Model front face is flat and continuous; no recessed wall or slot.",
+            "evidence": "Reference has depth-wise recess; model is solid.",
+            "unknown_reason": "",
+            "feature_ids": [
+              "main-body"
+            ],
+            "affected_parameters": [
+              {
+                "feature_id": "main-body",
+                "path": "parameters.width"
+              },
+              {
+                "feature_id": "main-body",
+                "path": "operation"
+              }
+            ]
+          },
+          {
+            "id": "iso-group-blind-01-04-01",
+            "view": "iso",
+            "area": "feature_group",
+            "feature_group_id": "blind-01-04-01",
+            "category": "hole_group",
+            "status": "mismatch",
+            "item": "Left front wall vertical hole trio",
+            "reference_evidence": "Reference shows three circular holes aligned vertically on the left front wall: large top, small middle, large bottom.",
+            "model_evidence": "Model left front wall has no holes.",
+            "evidence": "Left wall hole group missing entirely.",
+            "unknown_reason": "",
+            "feature_ids": [
+              "main-body"
+            ],
+            "affected_parameters": [
+              {
+                "feature_id": "main-body",
+                "path": "operation"
+              }
+            ]
+          },
+          {
+            "id": "iso-group-blind-01-05-01",
+            "view": "iso",
+            "area": "feature_group",
+            "feature_group_id": "blind-01-05-01",
+            "category": "hole_group",
+            "status": "mismatch",
+            "item": "Right front wall vertical hole trio",
+            "reference_evidence": "Reference shows three circular holes aligned vertically on the right front wall: large top, small middle, large bottom.",
+            "model_evidence": "Model right front wall has no holes.",
+            "evidence": "Right wall hole group missing entirely.",
+            "unknown_reason": "",
+            "feature_ids": [
+              "main-body"
+            ],
+            "affected_parameters": [
+              {
+                "feature_id": "main-body",
+                "path": "operation"
+              }
+            ]
+          },
+          {
+            "id": "iso-group-blind-01-06-01",
+            "view": "iso",
+            "area": "feature_group",
+            "feature_group_id": "blind-01-06-01",
+            "category": "hole_group",
+            "status": "mismatch",
+            "item": "Inner back wall vertical hole trio",
+            "reference_evidence": "Reference shows three circular holes aligned vertically on the recessed inner back wall of the slot: medium top, small middle, medium bottom",
+            "model_evidence": "Model has no slot and therefore no inner back wall or holes.",
+            "evidence": "Inner back wall hole group missing because slot is absent.",
+            "unknown_reason": "",
+            "feature_ids": [
+              "main-body"
+            ],
+            "affected_parameters": [
+              {
+                "feature_id": "main-body",
+                "path": "parameters.width"
+              },
+              {
+                "feature_id": "main-body",
+                "path": "operation"
+              }
+            ]
+          }
+        ],
+        "issues": [
+          {
+            "issue_id": "iso-missing-u-slot",
+            "view": "iso",
+            "category": "body_shape",
+            "severity": "high",
+            "item": "Central through-slot not modeled",
+            "evidence": "Reference shows a U-shaped body with a slot cut from the front face toward the back; model is a solid box.",
+            "feature_ids": [
+              "main-body"
+            ],
+            "affected_parameters": [
+              {
+                "feature_id": "main-body",
+                "path": "parameters.width"
+              },
+              {
+                "feature_id": "main-body",
+                "path": "operation"
+              }
+            ]
+          },
+          {
+            "issue_id": "iso-missing-all-holes",
+            "view": "iso",
+            "category": "hole_pattern",
+            "severity": "high",
+            "item": "All nine circular holes missing",
+            "evidence": "Reference has three vertical holes on left front wall, three on right front wall, and three on inner back wall; model has none.",
+            "feature_ids": [
+              "main-body"
+            ],
+            "affected_parameters": [
+              {
+                "feature_id": "main-body",
+                "path": "operation"
+              }
+            ]
+          },
+          {
+            "issue_id": "iso-wrong-depth-recess",
+            "view": "iso",
+            "category": "depth_relationships",
+            "severity": "high",
+            "item": "No recessed inner back wall",
+            "evidence": "Reference shows an inner vertical wall set back inside the slot; model front face is flat and solid.",
+            "feature_ids": [
+              "main-body"
+            ],
+            "affected_parameters": [
+              {
+                "feature_id": "main-body",
+                "path": "parameters.width"
+              },
+              {
+                "feature_id": "main-body",
+                "path": "operation"
+              }
+            ]
+          }
+        ],
+        "reference_images": [
+          {
+            "image": "image-1.png",
+            "source_view": "iso",
+            "comparable": true,
+            "visible_evidence": "U-shaped body with central through-slot; three vertical holes on left front wall, three on right front wall, three on re"
+          }
+        ],
+        "confidence": 0.1
+      }
+    ],
+    "requested_views": [
+      "iso"
+    ],
+    "reviewed_views": [
+      "iso"
+    ],
+    "skipped_views": [],
+    "local_image_comparisons": [
+      {
+        "image": "image-1.png",
+        "view": "iso",
+        "state": "advisory",
+        "method": "cropped foreground aspect + normalised overlap",
+        "reason": "canvas sizes differ",
+        "reference_bbox_px": [
+          75,
+          49,
+          416,
+          495
+        ],
+        "model_bbox_px": [
+          168,
+          47,
+          491,
+          472
+        ],
+        "reference_aspect": 0.7651,
+        "model_aspect": 0.7606,
+        "aspect_delta": 0.0059,
+        "iou": 0.8489,
+        "scope": "advisory only: the crop and scale differ, so this can neither accept nor reject a model. Report it as an observation, never as evidence that the geometry matches."
+      }
+    ],
+    "feature_group_checks": [
+      {
+        "feature_group_id": "blind-01-04-01",
+        "image": "image-1.png",
+        "checks": [
+          {
+            "id": "iso-group-blind-01-04-01",
+            "view": "iso",
+            "area": "feature_group",
+            "feature_group_id": "blind-01-04-01",
+            "category": "hole_group",
+            "status": "mismatch",
+            "item": "Left front wall vertical hole trio",
+            "reference_evidence": "Reference shows three circular holes aligned vertically on the left front wall: large top, small middle, large bottom.",
+            "model_evidence": "Model left front wall has no holes.",
+            "evidence": "Left wall hole group missing entirely.",
+            "unknown_reason": "",
+            "feature_ids": [
+              "main-body"
+            ],
+            "affected_parameters": [
+              {
+                "feature_id": "main-body",
+                "path": "operation"
+              }
+            ]
+          }
+        ],
+        "status": "mismatch",
+        "cross_view_verified_by": []
+      },
+      {
+        "feature_group_id": "blind-01-05-01",
+        "image": "image-1.png",
+        "checks": [
+          {
+            "id": "iso-group-blind-01-05-01",
+            "view": "iso",
+            "area": "feature_group",
+            "feature_group_id": "blind-01-05-01",
+            "category": "hole_group",
+            "status": "mismatch",
+            "item": "Right front wall vertical hole trio",
+            "reference_evidence": "Reference shows three circular holes aligned vertically on the right front wall: large top, small middle, large bottom.",
+            "model_evidence": "Model right front wall has no holes.",
+            "evidence": "Right wall hole group missing entirely.",
+            "unknown_reason": "",
+            "feature_ids": [
+              "main-body"
+            ],
+            "affected_parameters": [
+              {
+                "feature_id": "main-body",
+                "path": "operation"
+              }
+            ]
+          }
+        ],
+        "status": "mismatch",
+        "cross_view_verified_by": []
+      },
+      {
+        "feature_group_id": "blind-01-06-01",
+        "image": "image-1.png",
+        "checks": [
+          {
+            "id": "iso-group-blind-01-06-01",
+            "view": "iso",
+            "area": "feature_group",
+            "feature_group_id": "blind-01-06-01",
+            "category": "hole_group",
+            "status": "mismatch",
+            "item": "Inner back wall vertical hole trio",
+            "reference_evidence": "Reference shows three circular holes aligned vertically on the recessed inner back wall of the slot: medium top, small middle, medium bottom",
+            "model_evidence": "Model has no slot and therefore no inner back wall or holes.",
+            "evidence": "Inner back wall hole group missing because slot is absent.",
+            "unknown_reason": "",
+            "feature_ids": [
+              "main-body"
+            ],
+            "affected_parameters": [
+              {
+                "feature_id": "main-body",
+                "path": "parameters.width"
+              },
+              {
+                "feature_id": "main-body",
+                "path": "operation"
+              }
+            ]
+          }
+        ],
+        "status": "mismatch",
+        "cross_view_verified_by": []
+      }
+    ],
+    "view_incompatible_findings": [],
+    "reference_inventory": {
+      "source": "independent_source_only_multimodal_read",
+      "images": [
+        {
+          "image": "image-1.png",
+          "source_view": "iso",
+          "coverage": "partial",
+          "hole_layout_coverage": "partial",
+          "visible_regions": [
+            {
+              "id": "top_face",
+              "region": "top horizontal face",
+              "surface_state": "solid_face",
+              "evidence": "visible as light gray rectangular top surface between front and back edges",
+              "features": []
+            },
+            {
+              "id": "right_outer_face",
+              "region": "right outer vertical face",
+              "surface_state": "solid_face",
+              "evidence": "visible gray vertical face on right side with no holes",
+              "features": []
+            },
+            {
+              "id": "left_outer_face",
+              "region": "left outer vertical face",
+              "surface_state": "solid_face",
+              "evidence": "partially visible left vertical outer face with no holes",
+              "features": []
+            },
+            {
+              "id": "front_left_wall",
+              "region": "front left vertical wall face",
+              "surface_state": "solid_face",
+              "evidence": "left portion of U-shape front face with three vertical holes",
+              "features": [
+                {
+                  "kind": "circular_hole",
+                  "quantity": 3,
+                  "arrangement": "vertical top to bottom",
+                  "evidence": "three colored circular holes aligned vertically on left front wall",
+                  "relative_size_order": [
+                    "large",
+                    "small",
+                    "large"
+                  ],
+                  "size_order_axis": "vertical_top_to_bottom",
+                  "size_order_confidence": "high"
+                }
+              ]
+            },
+            {
+              "id": "front_right_wall",
+              "region": "front right vertical wall face",
+              "surface_state": "solid_face",
+              "evidence": "right portion of U-shape front face with three vertical holes",
+              "features": [
+                {
+                  "kind": "circular_hole",
+                  "quantity": 3,
+                  "arrangement": "vertical top to bottom",
+                  "evidence": "three colored circular holes aligned vertically on right front wall",
+                  "relative_size_order": [
+                    "large",
+                    "small",
+                    "large"
+                  ],
+                  "size_order_axis": "vertical_top_to_bottom",
+                  "size_order_confidence": "high"
+                }
+              ]
+            },
+            {
+              "id": "back_inner_wall",
+              "region": "back inner vertical wall face inside slot",
+              "surface_state": "recessed_solid_face",
+              "evidence": "rear wall visible through front slot with three vertical holes",
+              "features": [
+                {
+                  "kind": "circular_hole",
+                  "quantity": 3,
+                  "arrangement": "vertical top to bottom",
+                  "evidence": "three colored circular holes aligned vertically on back wall inside slot",
+                  "relative_size_order": [
+                    "medium",
+                    "small",
+                    "medium"
+                  ],
+                  "size_order_axis": "vertical_top_to_bottom",
+                  "size_order_confidence": "high"
+                }
+              ]
+            },
+            {
+              "id": "slot_opening",
+              "region": "front central slot opening",
+              "surface_state": "background_opening",
+              "evidence": "rectangular slot cut from front creating opening between left and right walls",
+              "features": []
+            }
+          ],
+          "uncertainties": [
+            "whether front wall holes are through-holes or blind holes",
+            "whether back wall holes are through-holes or blind holes",
+            "exact slot depth relative to total part depth",
+            "whether bottom face is open or closed solid"
+          ]
+        }
+      ],
+      "cross_view_notes": [
+        "single isometric view only; no orthogonal projections available",
+        "left and right front walls appear symmetric with same hole pattern",
+        "back inner wall holes use different colors suggesting different diameter from front wall holes"
+      ]
+    },
+    "blind_reference_hole_targets": [],
+    "plan": null
+  },
+  "similarity_review": null,
+  "review_history": [
+    {
+      "review_type": "geometry",
+      "geometry_fingerprint": "{\"coordinate_system\":{\"axes\":[\"X\",\"Y\",\"Z\"],\"handedness\":\"right\",\"origin\":[0,0,0],\"type\":\"global_cartesian\"},\"features\":[{\"geometry\":\"{\\\"kind\\\":\\\"box\\\",\\\"operation\\\":\\\"add\\\",\\\"parameters\\\":{\\\"center\\\":[0,0,0],\\\"height\\\":70,\\\"length\\\":80,\\\"width\\\":40}}\",\"id\":\"main-body\"}],\"units\":{\"angle\":\"deg\",\"length\":\"mm\"}}",
+      "invocation": 1,
+      "views": [
+        "iso"
+      ],
+      "requested_views": [
+        "iso"
+      ],
+      "skipped_views": [],
+      "result": {
+        "decision": "ask_user",
+        "checks": [
+          {
+            "id": "iso-overall-shape",
+            "view": "iso",
+            "area": "overall_shape",
+            "feature_group_id": "",
+            "category": "body_shape",
+            "status": "mismatch",
+            "item": "U-shaped body with central slot",
+            "reference_evidence": "Reference shows a U-shaped block with a central slot open from front to back, forming two outer walls and one inner back wall.",
+            "model_evidence": "Current model is a solid rectangular block with no slot or recessed inner wall.",
+            "evidence": "Reference has open U-profile; model is a filled box.",
+            "unknown_reason": "",
+            "feature_ids": [
+              "main-body"
+            ],
+            "affected_parameters": [
+              {
+                "feature_id": "main-body",
+                "path": "parameters.width"
+              },
+              {
+                "feature_id": "main-body",
+                "path": "operation"
+              }
+            ]
+          },
+          {
+            "id": "iso-feature-layout",
+            "view": "iso",
+            "area": "feature_layout",
+            "feature_group_id": "",
+            "category": "hole_pattern",
+            "status": "mismatch",
+            "item": "Nine circular holes on three vertical faces",
+            "reference_evidence": "Reference shows three columns of three circular holes each: left outer wall, right outer wall, and inner back wall of slot.",
+            "model_evidence": "Model has no holes; all faces are plain.",
+            "evidence": "Reference has 9 visible holes; model has 0.",
+            "unknown_reason": "",
+            "feature_ids": [
+              "main-body"
+            ],
+            "affected_parameters": [
+              {
+                "feature_id": "main-body",
+                "path": "operation"
+              }
+            ]
+          },
+          {
+            "id": "iso-depth-relationships",
+            "view": "iso",
+            "area": "depth_relationships",
+            "feature_group_id": "",
+            "category": "slot_depth",
+            "status": "mismatch",
+            "item": "Central slot creates recessed inner back wall",
+            "reference_evidence": "Reference shows the middle section of the front face cut away, with an inner vertical wall set back along the depth direction.",
+            "model_evidence": "Model front face is flat and continuous; no recessed wall or slot.",
+            "evidence": "Reference has depth-wise recess; model is solid.",
+            "unknown_reason": "",
+            "feature_ids": [
+              "main-body"
+            ],
+            "affected_parameters": [
+              {
+                "feature_id": "main-body",
+                "path": "parameters.width"
+              },
+              {
+                "feature_id": "main-body",
+                "path": "operation"
+              }
+            ]
+          },
+          {
+            "id": "iso-group-blind-01-04-01",
+            "view": "iso",
+            "area": "feature_group",
+            "feature_group_id": "blind-01-04-01",
+            "category": "hole_group",
+            "status": "mismatch",
+            "item": "Left front wall vertical hole trio",
+            "reference_evidence": "Reference shows three circular holes aligned vertically on the left front wall: large top, small middle, large bottom.",
+            "model_evidence": "Model left front wall has no holes.",
+            "evidence": "Left wall hole group missing entirely.",
+            "unknown_reason": "",
+            "feature_ids": [
+              "main-body"
+            ],
+            "affected_parameters": [
+              {
+                "feature_id": "main-body",
+                "path": "operation"
+              }
+            ]
+          },
+          {
+            "id": "iso-group-blind-01-05-01",
+            "view": "iso",
+            "area": "feature_group",
+            "feature_group_id": "blind-01-05-01",
+            "category": "hole_group",
+            "status": "mismatch",
+            "item": "Right front wall vertical hole trio",
+            "reference_evidence": "Reference shows three circular holes aligned vertically on the right front wall: large top, small middle, large bottom.",
+            "model_evidence": "Model right front wall has no holes.",
+            "evidence": "Right wall hole group missing entirely.",
+            "unknown_reason": "",
+            "feature_ids": [
+              "main-body"
+            ],
+            "affected_parameters": [
+              {
+                "feature_id": "main-body",
+                "path": "operation"
+              }
+            ]
+          },
+          {
+            "id": "iso-group-blind-01-06-01",
+            "view": "iso",
+            "area": "feature_group",
+            "feature_group_id": "blind-01-06-01",
+            "category": "hole_group",
+            "status": "mismatch",
+            "item": "Inner back wall vertical hole trio",
+            "reference_evidence": "Reference shows three circular holes aligned vertically on the recessed inner back wall of the slot: medium top, small middle, medium bottom",
+            "model_evidence": "Model has no slot and therefore no inner back wall or holes.",
+            "evidence": "Inner back wall hole group missing because slot is absent.",
+            "unknown_reason": "",
+            "feature_ids": [
+              "main-body"
+            ],
+            "affected_parameters": [
+              {
+                "feature_id": "main-body",
+                "path": "parameters.width"
+              },
+              {
+                "feature_id": "main-body",
+                "path": "operation"
+              }
+            ]
+          }
+        ],
+        "issues": [
+          {
+            "issue_id": "iso-missing-u-slot",
+            "view": "iso",
+            "category": "body_shape",
+            "severity": "high",
+            "item": "Central through-slot not modeled",
+            "evidence": "Reference shows a U-shaped body with a slot cut from the front face toward the back; model is a solid box.",
+            "feature_ids": [
+              "main-body"
+            ],
+            "affected_parameters": [
+              {
+                "feature_id": "main-body",
+                "path": "parameters.width"
+              },
+              {
+                "feature_id": "main-body",
+                "path": "operation"
+              }
+            ]
+          },
+          {
+            "issue_id": "iso-missing-all-holes",
+            "view": "iso",
+            "category": "hole_pattern",
+            "severity": "high",
+            "item": "All nine circular holes missing",
+            "evidence": "Reference has three vertical holes on left front wall, three on right front wall, and three on inner back wall; model has none.",
+            "feature_ids": [
+              "main-body"
+            ],
+            "affected_parameters": [
+              {
+                "feature_id": "main-body",
+                "path": "operation"
+              }
+            ]
+          },
+          {
+            "issue_id": "iso-wrong-depth-recess",
+            "view": "iso",
+            "category": "depth_relationships",
+            "severity": "high",
+            "item": "No recessed inner back wall",
+            "evidence": "Reference shows an inner vertical wall set back inside the slot; model front face is flat and solid.",
+            "feature_ids": [
+              "main-body"
+            ],
+            "affected_parameters": [
+              {
+                "feature_id": "main-body",
+                "path": "parameters.width"
+              },
+              {
+                "feature_id": "main-body",
+                "path": "operation"
+              }
+            ]
+          }
+        ],
+        "resolved_findings": [],
+        "questions": [
+          "Are the nine colored circular holes through-holes or blind holes? The iso reference shows colored hole interiors, suggesting they may pass through the walls.",
+          "What are the relative widths of the two outer walls versus the central slot? The reference suggests roughly equal widths but an estimate is needed.",
+          "Does the central slot extend fully through the part depth (open at the back) or stop at an inner back wall (closed slot)?"
+        ],
+        "review_gaps": [],
+        "confidence": 0.1,
+        "single_view_reports": [
+          {
+            "view": "iso",
+            "checks": [
+              {
+                "id": "iso-overall-shape",
+                "view": "iso",
+                "area": "overall_shape",
+                "feature_group_id": "",
+                "category": "body_shape",
+                "status": "mismatch",
+                "item": "U-shaped body with central slot",
+                "reference_evidence": "Reference shows a U-shaped block with a central slot open from front to back, forming two outer walls and one inner back wall.",
+                "model_evidence": "Current model is a solid rectangular block with no slot or recessed inner wall.",
+                "evidence": "Reference has open U-profile; model is a filled box.",
+                "unknown_reason": "",
+                "feature_ids": [
+                  "main-body"
+                ],
+                "affected_parameters": [
+                  {
+                    "feature_id": "main-body",
+                    "path": "parameters.width"
+                  },
+                  {
+                    "feature_id": "main-body",
+                    "path": "operation"
+                  }
+                ]
+              },
+              {
+                "id": "iso-feature-layout",
+                "view": "iso",
+                "area": "feature_layout",
+                "feature_group_id": "",
+                "category": "hole_pattern",
+                "status": "mismatch",
+                "item": "Nine circular holes on three vertical faces",
+                "reference_evidence": "Reference shows three columns of three circular holes each: left outer wall, right outer wall, and inner back wall of slot.",
+                "model_evidence": "Model has no holes; all faces are plain.",
+                "evidence": "Reference has 9 visible holes; model has 0.",
+                "unknown_reason": "",
+                "feature_ids": [
+                  "main-body"
+                ],
+                "affected_parameters": [
+                  {
+                    "feature_id": "main-body",
+                    "path": "operation"
+                  }
+                ]
+              },
+              {
+                "id": "iso-depth-relationships",
+                "view": "iso",
+                "area": "depth_relationships",
+                "feature_group_id": "",
+                "category": "slot_depth",
+                "status": "mismatch",
+                "item": "Central slot creates recessed inner back wall",
+                "reference_evidence": "Reference shows the middle section of the front face cut away, with an inner vertical wall set back along the depth direction.",
+                "model_evidence": "Model front face is flat and continuous; no recessed wall or slot.",
+                "evidence": "Reference has depth-wise recess; model is solid.",
+                "unknown_reason": "",
+                "feature_ids": [
+                  "main-body"
+                ],
+                "affected_parameters": [
+                  {
+                    "feature_id": "main-body",
+                    "path": "parameters.width"
+                  },
+                  {
+                    "feature_id": "main-body",
+                    "path": "operation"
+                  }
+                ]
+              },
+              {
+                "id": "iso-group-blind-01-04-01",
+                "view": "iso",
+                "area": "feature_group",
+                "feature_group_id": "blind-01-04-01",
+                "category": "hole_group",
+                "status": "mismatch",
+                "item": "Left front wall vertical hole trio",
+                "reference_evidence": "Reference shows three circular holes aligned vertically on the left front wall: large top, small middle, large bottom.",
+                "model_evidence": "Model left front wall has no holes.",
+                "evidence": "Left wall hole group missing entirely.",
+                "unknown_reason": "",
+                "feature_ids": [
+                  "main-body"
+                ],
+                "affected_parameters": [
+                  {
+                    "feature_id": "main-body",
+                    "path": "operation"
+                  }
+                ]
+              },
+              {
+                "id": "iso-group-blind-01-05-01",
+                "view": "iso",
+                "area": "feature_group",
+                "feature_group_id": "blind-01-05-01",
+                "category": "hole_group",
+                "status": "mismatch",
+                "item": "Right front wall vertical hole trio",
+                "reference_evidence": "Reference shows three circular holes aligned vertically on the right front wall: large top, small middle, large bottom.",
+                "model_evidence": "Model right front wall has no holes.",
+                "evidence": "Right wall hole group missing entirely.",
+                "unknown_reason": "",
+                "feature_ids": [
+                  "main-body"
+                ],
+                "affected_parameters": [
+                  {
+                    "feature_id": "main-body",
+                    "path": "operation"
+                  }
+                ]
+              },
+              {
+                "id": "iso-group-blind-01-06-01",
+                "view": "iso",
+                "area": "feature_group",
+                "feature_group_id": "blind-01-06-01",
+                "category": "hole_group",
+                "status": "mismatch",
+                "item": "Inner back wall vertical hole trio",
+                "reference_evidence": "Reference shows three circular holes aligned vertically on the recessed inner back wall of the slot: medium top, small middle, medium bottom",
+                "model_evidence": "Model has no slot and therefore no inner back wall or holes.",
+                "evidence": "Inner back wall hole group missing because slot is absent.",
+                "unknown_reason": "",
+                "feature_ids": [
+                  "main-body"
+                ],
+                "affected_parameters": [
+                  {
+                    "feature_id": "main-body",
+                    "path": "parameters.width"
+                  },
+                  {
+                    "feature_id": "main-body",
+                    "path": "operation"
+                  }
+                ]
+              }
+            ],
+            "issues": [
+              {
+                "issue_id": "iso-missing-u-slot",
+                "view": "iso",
+                "category": "body_shape",
+                "severity": "high",
+                "item": "Central through-slot not modeled",
+                "evidence": "Reference shows a U-shaped body with a slot cut from the front face toward the back; model is a solid box.",
+                "feature_ids": [
+                  "main-body"
+                ],
+                "affected_parameters": [
+                  {
+                    "feature_id": "main-body",
+                    "path": "parameters.width"
+                  },
+                  {
+                    "feature_id": "main-body",
+                    "path": "operation"
+                  }
+                ]
+              },
+              {
+                "issue_id": "iso-missing-all-holes",
+                "view": "iso",
+                "category": "hole_pattern",
+                "severity": "high",
+                "item": "All nine circular holes missing",
+                "evidence": "Reference has three vertical holes on left front wall, three on right front wall, and three on inner back wall; model has none.",
+                "feature_ids": [
+                  "main-body"
+                ],
+                "affected_parameters": [
+                  {
+                    "feature_id": "main-body",
+                    "path": "operation"
+                  }
+                ]
+              },
+              {
+                "issue_id": "iso-wrong-depth-recess",
+                "view": "iso",
+                "category": "depth_relationships",
+                "severity": "high",
+                "item": "No recessed inner back wall",
+                "evidence": "Reference shows an inner vertical wall set back inside the slot; model front face is flat and solid.",
+                "feature_ids": [
+                  "main-body"
+                ],
+                "affected_parameters": [
+                  {
+                    "feature_id": "main-body",
+                    "path": "parameters.width"
+                  },
+                  {
+                    "feature_id": "main-body",
+                    "path": "operation"
+                  }
+                ]
+              }
+            ],
+            "reference_images": [
+              {
+                "image": "image-1.png",
+                "source_view": "iso",
+                "comparable": true,
+                "visible_evidence": "U-shaped body with central through-slot; three vertical holes on left front wall, three on right front wall, three on re"
+              }
+            ],
+            "confidence": 0.1
+          }
+        ],
+        "requested_views": [
+          "iso"
+        ],
+        "reviewed_views": [
+          "iso"
+        ],
+        "skipped_views": [],
+        "local_image_comparisons": [
+          {
+            "image": "image-1.png",
+            "view": "iso",
+            "state": "advisory",
+            "method": "cropped foreground aspect + normalised overlap",
+            "reason": "canvas sizes differ",
+            "reference_bbox_px": [
+              75,
+              49,
+              416,
+              495
+            ],
+            "model_bbox_px": [
+              168,
+              47,
+              491,
+              472
+            ],
+            "reference_aspect": 0.7651,
+            "model_aspect": 0.7606,
+            "aspect_delta": 0.0059,
+            "iou": 0.8489,
+            "scope": "advisory only: the crop and scale differ, so this can neither accept nor reject a model. Report it as an observation, never as evidence that the geometry matches."
+          }
+        ],
+        "feature_group_checks": [
+          {
+            "feature_group_id": "blind-01-04-01",
+            "image": "image-1.png",
+            "checks": [
+              {
+                "id": "iso-group-blind-01-04-01",
+                "view": "iso",
+                "area": "feature_group",
+                "feature_group_id": "blind-01-04-01",
+                "category": "hole_group",
+                "status": "mismatch",
+                "item": "Left front wall vertical hole trio",
+                "reference_evidence": "Reference shows three circular holes aligned vertically on the left front wall: large top, small middle, large bottom.",
+                "model_evidence": "Model left front wall has no holes.",
+                "evidence": "Left wall hole group missing entirely.",
+                "unknown_reason": "",
+                "feature_ids": [
+                  "main-body"
+                ],
+                "affected_parameters": [
+                  {
+                    "feature_id": "main-body",
+                    "path": "operation"
+                  }
+                ]
+              }
+            ],
+            "status": "mismatch",
+            "cross_view_verified_by": []
+          },
+          {
+            "feature_group_id": "blind-01-05-01",
+            "image": "image-1.png",
+            "checks": [
+              {
+                "id": "iso-group-blind-01-05-01",
+                "view": "iso",
+                "area": "feature_group",
+                "feature_group_id": "blind-01-05-01",
+                "category": "hole_group",
+                "status": "mismatch",
+                "item": "Right front wall vertical hole trio",
+                "reference_evidence": "Reference shows three circular holes aligned vertically on the right front wall: large top, small middle, large bottom.",
+                "model_evidence": "Model right front wall has no holes.",
+                "evidence": "Right wall hole group missing entirely.",
+                "unknown_reason": "",
+                "feature_ids": [
+                  "main-body"
+                ],
+                "affected_parameters": [
+                  {
+                    "feature_id": "main-body",
+                    "path": "operation"
+                  }
+                ]
+              }
+            ],
+            "status": "mismatch",
+            "cross_view_verified_by": []
+          },
+          {
+            "feature_group_id": "blind-01-06-01",
+            "image": "image-1.png",
+            "checks": [
+              {
+                "id": "iso-group-blind-01-06-01",
+                "view": "iso",
+                "area": "feature_group",
+                "feature_group_id": "blind-01-06-01",
+                "category": "hole_group",
+                "status": "mismatch",
+                "item": "Inner back wall vertical hole trio",
+                "reference_evidence": "Reference shows three circular holes aligned vertically on the recessed inner back wall of the slot: medium top, small middle, medium bottom",
+                "model_evidence": "Model has no slot and therefore no inner back wall or holes.",
+                "evidence": "Inner back wall hole group missing because slot is absent.",
+                "unknown_reason": "",
+                "feature_ids": [
+                  "main-body"
+                ],
+                "affected_parameters": [
+                  {
+                    "feature_id": "main-body",
+                    "path": "parameters.width"
+                  },
+                  {
+                    "feature_id": "main-body",
+                    "path": "operation"
+                  }
+                ]
+              }
+            ],
+            "status": "mismatch",
+            "cross_view_verified_by": []
+          }
+        ],
+        "view_incompatible_findings": [],
+        "reference_inventory": {
+          "source": "independent_source_only_multimodal_read",
+          "images": [
+            {
+              "image": "image-1.png",
+              "source_view": "iso",
+              "coverage": "partial",
+              "hole_layout_coverage": "partial",
+              "visible_regions": [
+                {
+                  "id": "top_face",
+                  "region": "top horizontal face",
+                  "surface_state": "solid_face",
+                  "evidence": "visible as light gray rectangular top surface between front and back edges",
+                  "features": []
+                },
+                {
+                  "id": "right_outer_face",
+                  "region": "right outer vertical face",
+                  "surface_state": "solid_face",
+                  "evidence": "visible gray vertical face on right side with no holes",
+                  "features": []
+                },
+                {
+                  "id": "left_outer_face",
+                  "region": "left outer vertical face",
+                  "surface_state": "solid_face",
+                  "evidence": "partially visible left vertical outer face with no holes",
+                  "features": []
+                },
+                {
+                  "id": "front_left_wall",
+                  "region": "front left vertical wall face",
+                  "surface_state": "solid_face",
+                  "evidence": "left portion of U-shape front face with three vertical holes",
+                  "features": [
+                    {
+                      "kind": "circular_hole",
+                      "quantity": 3,
+                      "arrangement": "vertical top to bottom",
+                      "evidence": "three colored circular holes aligned vertically on left front wall",
+                      "relative_size_order": [
+                        "large",
+                        "small",
+                        "large"
+                      ],
+                      "size_order_axis": "vertical_top_to_bottom",
+                      "size_order_confidence": "high"
+                    }
+                  ]
+                },
+                {
+                  "id": "front_right_wall",
+                  "region": "front right vertical wall face",
+                  "surface_state": "solid_face",
+                  "evidence": "right portion of U-shape front face with three vertical holes",
+                  "features": [
+                    {
+                      "kind": "circular_hole",
+                      "quantity": 3,
+                      "arrangement": "vertical top to bottom",
+                      "evidence": "three colored circular holes aligned vertically on right front wall",
+                      "relative_size_order": [
+                        "large",
+                        "small",
+                        "large"
+                      ],
+                      "size_order_axis": "vertical_top_to_bottom",
+                      "size_order_confidence": "high"
+                    }
+                  ]
+                },
+                {
+                  "id": "back_inner_wall",
+                  "region": "back inner vertical wall face inside slot",
+                  "surface_state": "recessed_solid_face",
+                  "evidence": "rear wall visible through front slot with three vertical holes",
+                  "features": [
+                    {
+                      "kind": "circular_hole",
+                      "quantity": 3,
+                      "arrangement": "vertical top to bottom",
+                      "evidence": "three colored circular holes aligned vertically on back wall inside slot",
+                      "relative_size_order": [
+                        "medium",
+                        "small",
+                        "medium"
+                      ],
+                      "size_order_axis": "vertical_top_to_bottom",
+                      "size_order_confidence": "high"
+                    }
+                  ]
+                },
+                {
+                  "id": "slot_opening",
+                  "region": "front central slot opening",
+                  "surface_state": "background_opening",
+                  "evidence": "rectangular slot cut from front creating opening between left and right walls",
+                  "features": []
+                }
+              ],
+              "uncertainties": [
+                "whether front wall holes are through-holes or blind holes",
+                "whether back wall holes are through-holes or blind holes",
+                "exact slot depth relative to total part depth",
+                "whether bottom face is open or closed solid"
+              ]
+            }
+          ],
+          "cross_view_notes": [
+            "single isometric view only; no orthogonal projections available",
+            "left and right front walls appear symmetric with same hole pattern",
+            "back inner wall holes use different colors suggesting different diameter from front wall holes"
+          ]
+        },
+        "blind_reference_hole_targets": [],
+        "plan": null
+      }
+    }
+  ],
+  "questions": [
+    "当前模型仅创建了主体长方体（80×40×70 mm），但参考图显示该零件是一个带前部槽腔的U型块，并且有三列共9个孔（左壁3个、右壁3个、槽腔后壁3个）。由于当前环境中缺少 `cad_add_feature` / `cad_update_feature` 等增量编辑工具，我无法继续添加槽腔切除和孔特征来修正模型。请确认是否可以在工具集中补充这些建模工具，或者告知我应如何继续完成该零件的复刻。"
+  ],
+  "reply": "当前模型仅创建了主体长方体（80×40×70 mm），但参考图显示该零件是一个带前部槽腔的U型块，并且有三列共9个孔（左壁3个、右壁3个、槽腔后壁3个）。由于当前环境中缺少 `cad_add_feature` / `cad_update_feature` 等增量编辑工具，我无法继续添加槽腔切除和孔特征来修正模型。请确认是否可以在工具集中补充这些建模工具，或者告知我应如何继续完成该零件的复刻。\n\n本地模型外形尺寸：80.00 × 40.00 × 70.00 mm。图像估算参数：4 项。仍有 6 项视觉差异未解决。当前候选预览和原图复核已对应几何版本 {\"coordinate。\n\n未确定项：\n- 槽腔是否贯通底部无法从当前视角确认；顶面完整说明未贯通顶部\n- 孔洞是通孔还是盲孔（仅穿透前壁至槽腔）无法完全确认，按常见结构暂按从前立面钻入槽腔的盲孔处理\n- 孔洞在左右壁上的竖直对齐关系受等轴测透视影响，存在视觉偏差\n- main-body.length = 80 mm 为图像估算（按等轴测图目视比例：总长度方向外轮廓作为基准，取便于编辑的名义尺度80mm）\n- main-body.width = 40 mm 为图像估算（按等轴测图目视比例：总深度约为总长度的0.5倍，取40mm）\n- main-body.height = 70 mm 为图像估算（按等轴测图目视比例：总高度与总长度接近，取70mm）\n- 另有 12 项，详见复核记录。",
+  "tool_trace": [
+    {
+      "phase": "agent_loop",
+      "tool": "cad_inspect_references",
+      "arguments": {
+        "reference_reading": {
+          "feature_groups": [
+            {
+              "id": "main-body",
+              "kind": "主体外形",
+              "quantity": 1,
+              "region": "整体外轮廓",
+              "arrangement": "单一长方体主体",
+              "evidence": "图中可见连续的矩形块外轮廓，顶面完整连续，右侧立面可见"
+            },
+            {
+              "id": "front-pocket",
+              "kind": "前部槽腔",
+              "quantity": 1,
+              "region": "主体前部中央",
+              "arrangement": "从前面向后切入的矩形槽，将前部分为左右两壁",
+              "evidence": "前部中央可见两侧内壁（偏红棕色），形成U形/C形截面"
+            },
+            {
+              "id": "wall-holes",
+              "kind": "通孔/盲孔",
+              "quantity": 6,
+              "region": "左右两壁前立面",
+              "arrangement": "每壁3孔，沿竖直方向排列；左壁与右壁孔位在竖直方向上大致对齐",
+              "evidence": "左壁可见3个孔洞（上、中、下），右壁可见3个孔洞（上、中、下），孔洞呈圆形/椭圆显示",
+              "relative_size_order": [
+                "same",
+                "same",
+                "same"
+              ],
+              "size_order_axis": "vertical_top_to_bottom",
+              "size_order_confidence": "medium"
+            }
+          ],
+          "visible_regions": [
+            {
+              "image": "image-1.png",
+              "id": "left-wall-front",
+              "region": "左壁前立面",
+              "surface_state": "solid_face",
+              "image_bbox_norm": [
+                0.22,
+                0.18,
+                0.42,
+                0.78
+              ],
+              "evidence": "闭合边缘围成连续实面，面上有3个圆形开口",
+              "features": [
+                {
+                  "kind": "孔洞",
+                  "quantity": 3,
+                  "arrangement": "沿竖直方向等距排列",
+                  "evidence": "左壁前立面上可见3个孔洞边界",
+                  "normalized_centers": [
+                    [
+                      0.32,
+                      0.28
+                    ],
+                    [
+                      0.32,
+                      0.48
+                    ],
+                    [
+                      0.32,
+                      0.68
+                    ]
+                  ],
+                  "relative_size_order": [
+                    "same",
+                    "same",
+                    "same"
+                  ],
+                  "size_order_axis": "vertical_top_to_bottom",
+                  "size_order_confidence": "medium"
+                }
+              ]
+            },
+            {
+              "image": "image-1.png",
+              "id": "right-wall-front",
+              "region": "右壁前立面",
+              "surface_state": "solid_face",
+              "image_bbox_norm": [
+                0.55,
+                0.25,
+                0.75,
+                0.85
+              ],
+              "evidence": "闭合边缘围成连续实面，面上有3个圆形开口",
+              "features": [
+                {
+                  "kind": "孔洞",
+                  "quantity": 3,
+                  "arrangement": "沿竖直方向等距排列",
+                  "evidence": "右壁前立面上可见3个孔洞边界",
+                  "normalized_centers": [
+                    [
+                      0.65,
+                      0.35
+                    ],
+                    [
+                      0.65,
+                      0.55
+                    ],
+                    [
+                      0.65,
+                      0.75
+                    ]
+                  ],
+                  "relative_size_order": [
+                    "same",
+                    "same",
+                    "same"
+                  ],
+                  "size_order_axis": "vertical_top_to_bottom",
+                  "size_order_confidence": "medium"
+                }
+              ]
+            },
+            {
+              "image": "image-1.png",
+              "id": "left-wall-inner",
+              "region": "左壁内侧立面（槽腔左侧壁）",
+              "surface_state": "recessed_solid_face",
+              "image_bbox_norm": [
+                0.42,
+                0.25,
+                0.48,
+                0.72
+              ],
+              "evidence": "从前方槽腔可见的左壁内侧面，呈后退实面，颜色偏深",
+              "features": []
+            },
+            {
+              "image": "image-1.png",
+              "id": "right-wall-inner",
+              "region": "右壁内侧立面（槽腔右侧壁）",
+              "surface_state": "recessed_solid_face",
+              "image_bbox_norm": [
+                0.48,
+                0.28,
+                0.55,
+                0.75
+              ],
+              "evidence": "从前方槽腔可见的右壁内侧面，呈后退实面，颜色偏深",
+              "features": []
+            },
+            {
+              "image": "image-1.png",
+              "id": "top-surface",
+              "region": "顶面",
+              "surface_state": "solid_face",
+              "image_bbox_norm": [
+                0.25,
+                0.12,
+                0.72,
+                0.28
+              ],
+              "evidence": "顶部完整连续表面，连接左右两臂，说明槽腔未贯通顶部",
+              "features": []
+            },
+            {
+              "image": "image-1.png",
+              "id": "right-side-surface",
+              "region": "右侧外立面",
+              "surface_state": "solid_face",
+              "image_bbox_norm": [
+                0.72,
+                0.25,
+                0.85,
+                0.82
+              ],
+              "evidence": "右侧外立面可见，呈连续实面",
+              "features": []
+            }
+          ],
+          "dimensionless_constraints": [
+            {
+              "image": "image-1.png",
+              "view": "iso",
+              "target": "槽腔开口宽度",
+              "baseline": "主体总长度方向外轮廓",
+              "axis": "horizontal",
+              "ratio": 0.4,
+              "confidence": "medium",
+              "evidence": "目视估算：前部槽口宽度约占主体总长度的四成"
+            },
+            {
+              "image": "image-1.png",
+              "view": "iso",
+              "target": "单壁厚度（长度方向）",
+              "baseline": "主体总长度方向外轮廓",
+              "axis": "horizontal",
+              "ratio": 0.3,
+              "confidence": "medium",
+              "evidence": "目视估算：左/右壁在长度方向厚度约占主体总长度的三成"
+            },
+            {
+              "image": "image-1.png",
+              "view": "iso",
+              "target": "孔洞直径",
+              "baseline": "单壁厚度（长度方向）",
+              "axis": "overall",
+              "ratio": 0.6,
+              "confidence": "medium",
+              "evidence": "目视估算：孔洞直径约占壁厚的六成"
+            },
+            {
+              "image": "image-1.png",
+              "view": "iso",
+              "target": "主体总高度",
+              "baseline": "主体总长度",
+              "axis": "vertical",
+              "ratio": 1.0,
+              "confidence": "medium",
+              "evidence": "目视估算：总高度与总长度接近"
+            },
+            {
+              "image": "image-1.png",
+              "view": "iso",
+              "target": "主体总深度",
+              "baseline": "主体总长度",
+              "axis": "depth",
+              "ratio": 0.5,
+              "confidence": "medium",
+              "evidence": "目视估算：总深度约为总长度的一半"
+            }
+          ],
+          "uncertainties": [
+            "槽腔是否贯通底部无法从当前视角确认；顶面完整说明未贯通顶部",
+            "孔洞是通孔还是盲孔（仅穿透前壁至槽腔）无法完全确认，按常见结构暂按从前立面钻入槽腔的盲孔处理",
+            "孔洞在左右壁上的竖直对齐关系受等轴测透视影响，存在视觉偏差"
+          ]
+        }
+      },
+      "result": {
+        "state": "invalid_reference_reading",
+        "reference_reading_blockers": [
+          "feature_groups[2].relative_size_order 必须按可见排列为每个特征给一个相对大小标签。"
+        ],
+        "instruction": "请重新查看原始像素，只修正读图清单后再次调用 cad_inspect_references；逐个可见平面填写 0-1 图像区域框，并逐面统计孔槽。暂时不要生成 CAD 特征。"
+      },
+      "result_summary": "invalid_reference_reading"
+    },
+    {
+      "phase": "agent_loop",
+      "tool": "cad_inspect_references",
+      "arguments": {
+        "reference_reading": {
+          "feature_groups": [
+            {
+              "id": "main-body",
+              "kind": "主体外形",
+              "quantity": 1,
+              "region": "整体外轮廓",
+              "arrangement": "单一长方体主体",
+              "evidence": "图中可见连续的矩形块外轮廓，顶面完整连续，右侧立面可见"
+            },
+            {
+              "id": "front-pocket",
+              "kind": "前部槽腔",
+              "quantity": 1,
+              "region": "主体前部中央",
+              "arrangement": "从前面向后切入的矩形槽，将前部分为左右两壁",
+              "evidence": "前部中央可见两侧内壁（偏红棕色），形成U形/C形截面"
+            },
+            {
+              "id": "wall-holes",
+              "kind": "通孔/盲孔",
+              "quantity": 6,
+              "region": "左右两壁前立面",
+              "arrangement": "左壁3孔自上而下排列，右壁3孔自上而下排列，左右壁孔位竖直方向大致对齐",
+              "evidence": "左壁可见3个孔洞（上、中、下），右壁可见3个孔洞（上、中、下），孔洞呈圆形/椭圆显示",
+              "relative_size_order": [
+                "same",
+                "same",
+                "same",
+                "same",
+                "same",
+                "same"
+              ],
+              "size_order_axis": "vertical_top_to_bottom",
+              "size_order_confidence": "medium"
+            }
+          ],
+          "visible_regions": [
+            {
+              "image": "image-1.png",
+              "id": "left-wall-front",
+              "region": "左壁前立面",
+              "surface_state": "solid_face",
+              "image_bbox_norm": [
+                0.22,
+                0.18,
+                0.42,
+                0.78
+              ],
+              "evidence": "闭合边缘围成连续实面，面上有3个圆形开口",
+              "features": [
+                {
+                  "kind": "孔洞",
+                  "quantity": 3,
+                  "arrangement": "沿竖直方向等距排列",
+                  "evidence": "左壁前立面上可见3个孔洞边界",
+                  "normalized_centers": [
+                    [
+                      0.32,
+                      0.28
+                    ],
+                    [
+                      0.32,
+                      0.48
+                    ],
+                    [
+                      0.32,
+                      0.68
+                    ]
+                  ],
+                  "relative_size_order": [
+                    "same",
+                    "same",
+                    "same"
+                  ],
+                  "size_order_axis": "vertical_top_to_bottom",
+                  "size_order_confidence": "medium"
+                }
+              ]
+            },
+            {
+              "image": "image-1.png",
+              "id": "right-wall-front",
+              "region": "右壁前立面",
+              "surface_state": "solid_face",
+              "image_bbox_norm": [
+                0.55,
+                0.25,
+                0.75,
+                0.85
+              ],
+              "evidence": "闭合边缘围成连续实面，面上有3个圆形开口",
+              "features": [
+                {
+                  "kind": "孔洞",
+                  "quantity": 3,
+                  "arrangement": "沿竖直方向等距排列",
+                  "evidence": "右壁前立面上可见3个孔洞边界",
+                  "normalized_centers": [
+                    [
+                      0.65,
+                      0.35
+                    ],
+                    [
+                      0.65,
+                      0.55
+                    ],
+                    [
+                      0.65,
+                      0.75
+                    ]
+                  ],
+                  "relative_size_order": [
+                    "same",
+                    "same",
+                    "same"
+                  ],
+                  "size_order_axis": "vertical_top_to_bottom",
+                  "size_order_confidence": "medium"
+                }
+              ]
+            },
+            {
+              "image": "image-1.png",
+              "id": "left-wall-inner",
+              "region": "左壁内侧立面（槽腔左侧壁）",
+              "surface_state": "recessed_solid_face",
+              "image_bbox_norm": [
+                0.42,
+                0.25,
+                0.48,
+                0.72
+              ],
+              "evidence": "从前方槽腔可见的左壁内侧面，呈后退实面，颜色偏深",
+              "features": []
+            },
+            {
+              "image": "image-1.png",
+              "id": "right-wall-inner",
+              "region": "右壁内侧立面（槽腔右侧壁）",
+              "surface_state": "recessed_solid_face",
+              "image_bbox_norm": [
+                0.48,
+                0.28,
+                0.55,
+                0.75
+              ],
+              "evidence": "从前方槽腔可见的右壁内侧面，呈后退实面，颜色偏深",
+              "features": []
+            },
+            {
+              "image": "image-1.png",
+              "id": "top-surface",
+              "region": "顶面",
+              "surface_state": "solid_face",
+              "image_bbox_norm": [
+                0.25,
+                0.12,
+                0.72,
+                0.28
+              ],
+              "evidence": "顶部完整连续表面，连接左右两臂，说明槽腔未贯通顶部",
+              "features": []
+            },
+            {
+              "image": "image-1.png",
+              "id": "right-side-surface",
+              "region": "右侧外立面",
+              "surface_state": "solid_face",
+              "image_bbox_norm": [
+                0.72,
+                0.25,
+                0.85,
+                0.82
+              ],
+              "evidence": "右侧外立面可见，呈连续实面",
+              "features": []
+            }
+          ],
+          "dimensionless_constraints": [
+            {
+              "image": "image-1.png",
+              "view": "iso",
+              "target": "槽腔开口宽度",
+              "baseline": "主体总长度方向外轮廓",
+              "axis": "horizontal",
+              "ratio": 0.4,
+              "confidence": "medium",
+              "evidence": "目视估算：前部槽口宽度约占主体总长度的四成"
+            },
+            {
+              "image": "image-1.png",
+              "view": "iso",
+              "target": "单壁厚度（长度方向）",
+              "baseline": "主体总长度方向外轮廓",
+              "axis": "horizontal",
+              "ratio": 0.3,
+              "confidence": "medium",
+              "evidence": "目视估算：左/右壁在长度方向厚度约占主体总长度的三成"
+            },
+            {
+              "image": "image-1.png",
+              "view": "iso",
+              "target": "孔洞直径",
+              "baseline": "单壁厚度（长度方向）",
+              "axis": "overall",
+              "ratio": 0.6,
+              "confidence": "medium",
+              "evidence": "目视估算：孔洞直径约占壁厚的六成"
+            },
+            {
+              "image": "image-1.png",
+              "view": "iso",
+              "target": "主体总高度",
+              "baseline": "主体总长度",
+              "axis": "vertical",
+              "ratio": 1.0,
+              "confidence": "medium",
+              "evidence": "目视估算：总高度与总长度接近"
+            },
+            {
+              "image": "image-1.png",
+              "view": "iso",
+              "target": "主体总深度",
+              "baseline": "主体总长度",
+              "axis": "depth",
+              "ratio": 0.5,
+              "confidence": "medium",
+              "evidence": "目视估算：总深度约为总长度的一半"
+            }
+          ],
+          "uncertainties": [
+            "槽腔是否贯通底部无法从当前视角确认；顶面完整说明未贯通顶部",
+            "孔洞是通孔还是盲孔（仅穿透前壁至槽腔）无法完全确认，按常见结构暂按从前立面钻入槽腔的盲孔处理",
+            "孔洞在左右壁上的竖直对齐关系受等轴测透视影响，存在视觉偏差"
+          ]
+        }
+      },
+      "result": {
+        "state": "reference_reading_ready",
+        "visible_region_count": 6,
+        "visible_hole_count": 6,
+        "reference_reading": {
+          "feature_groups": [
+            {
+              "id": "main-body",
+              "kind": "主体外形",
+              "quantity": 1,
+              "region": "整体外轮廓",
+              "arrangement": "单一长方体主体",
+              "evidence": "图中可见连续的矩形块外轮廓，顶面完整连续，右侧立面可见"
+            },
+            {
+              "id": "front-pocket",
+              "kind": "前部槽腔",
+              "quantity": 1,
+              "region": "主体前部中央",
+              "arrangement": "从前面向后切入的矩形槽，将前部分为左右两壁",
+              "evidence": "前部中央可见两侧内壁（偏红棕色），形成U形/C形截面"
+            },
+            {
+              "id": "wall-holes",
+              "kind": "通孔/盲孔",
+              "quantity": 6,
+              "region": "左右两壁前立面",
+              "arrangement": "左壁3孔自上而下排列，右壁3孔自上而下排列，左右壁孔位竖直方向大致对齐",
+              "evidence": "左壁可见3个孔洞（上、中、下），右壁可见3个孔洞（上、中、下），孔洞呈圆形/椭圆显示",
+              "relative_size_order": [
+                "same",
+                "same",
+                "same",
+                "same",
+                "same",
+                "same"
+              ],
+              "size_order_axis": "vertical_top_to_bottom",
+              "size_order_confidence": "medium"
+            }
+          ],
+          "visible_regions": [
+            {
+              "image": "image-1.png",
+              "id": "left-wall-front",
+              "region": "左壁前立面",
+              "surface_state": "solid_face",
+              "image_bbox_norm": [
+                0.22,
+                0.18,
+                0.42,
+                0.78
+              ],
+              "evidence": "闭合边缘围成连续实面，面上有3个圆形开口",
+              "features": [
+                {
+                  "kind": "孔洞",
+                  "quantity": 3,
+                  "arrangement": "沿竖直方向等距排列",
+                  "evidence": "左壁前立面上可见3个孔洞边界",
+                  "normalized_centers": [
+                    [
+                      0.32,
+                      0.28
+                    ],
+                    [
+                      0.32,
+                      0.48
+                    ],
+                    [
+                      0.32,
+                      0.68
+                    ]
+                  ],
+                  "relative_size_order": [
+                    "same",
+                    "same",
+                    "same"
+                  ],
+                  "size_order_axis": "vertical_top_to_bottom",
+                  "size_order_confidence": "medium"
+                }
+              ]
+            },
+            {
+              "image": "image-1.png",
+              "id": "right-wall-front",
+              "region": "右壁前立面",
+              "surface_state": "solid_face",
+              "image_bbox_norm": [
+                0.55,
+                0.25,
+                0.75,
+                0.85
+              ],
+              "evidence": "闭合边缘围成连续实面，面上有3个圆形开口",
+              "features": [
+                {
+                  "kind": "孔洞",
+                  "quantity": 3,
+                  "arrangement": "沿竖直方向等距排列",
+                  "evidence": "右壁前立面上可见3个孔洞边界",
+                  "normalized_centers": [
+                    [
+                      0.65,
+                      0.35
+                    ],
+                    [
+                      0.65,
+                      0.55
+                    ],
+                    [
+                      0.65,
+                      0.75
+                    ]
+                  ],
+                  "relative_size_order": [
+                    "same",
+                    "same",
+                    "same"
+                  ],
+                  "size_order_axis": "vertical_top_to_bottom",
+                  "size_order_confidence": "medium"
+                }
+              ]
+            },
+            {
+              "image": "image-1.png",
+              "id": "left-wall-inner",
+              "region": "左壁内侧立面（槽腔左侧壁）",
+              "surface_state": "recessed_solid_face",
+              "image_bbox_norm": [
+                0.42,
+                0.25,
+                0.48,
+                0.72
+              ],
+              "evidence": "从前方槽腔可见的左壁内侧面，呈后退实面，颜色偏深",
+              "features": []
+            },
+            {
+              "image": "image-1.png",
+              "id": "right-wall-inner",
+              "region": "右壁内侧立面（槽腔右侧壁）",
+              "surface_state": "recessed_solid_face",
+              "image_bbox_norm": [
+                0.48,
+                0.28,
+                0.55,
+                0.75
+              ],
+              "evidence": "从前方槽腔可见的右壁内侧面，呈后退实面，颜色偏深",
+              "features": []
+            },
+            {
+              "image": "image-1.png",
+              "id": "top-surface",
+              "region": "顶面",
+              "surface_state": "solid_face",
+              "image_bbox_norm": [
+                0.25,
+                0.12,
+                0.72,
+                0.28
+              ],
+              "evidence": "顶部完整连续表面，连接左右两臂，说明槽腔未贯通顶部",
+              "features": []
+            },
+            {
+              "image": "image-1.png",
+              "id": "right-side-surface",
+              "region": "右侧外立面",
+              "surface_state": "solid_face",
+              "image_bbox_norm": [
+                0.72,
+                0.25,
+                0.85,
+                0.82
+              ],
+              "evidence": "右侧外立面可见，呈连续实面",
+              "features": []
+            }
+          ],
+          "dimensionless_constraints": [
+            {
+              "image": "image-1.png",
+              "view": "iso",
+              "target": "槽腔开口宽度",
+              "baseline": "主体总长度方向外轮廓",
+              "axis": "horizontal",
+              "ratio": 0.4,
+              "confidence": "medium",
+              "evidence": "目视估算：前部槽口宽度约占主体总长度的四成"
+            },
+            {
+              "image": "image-1.png",
+              "view": "iso",
+              "target": "单壁厚度（长度方向）",
+              "baseline": "主体总长度方向外轮廓",
+              "axis": "horizontal",
+              "ratio": 0.3,
+              "confidence": "medium",
+              "evidence": "目视估算：左/右壁在长度方向厚度约占主体总长度的三成"
+            },
+            {
+              "image": "image-1.png",
+              "view": "iso",
+              "target": "孔洞直径",
+              "baseline": "单壁厚度（长度方向）",
+              "axis": "overall",
+              "ratio": 0.6,
+              "confidence": "medium",
+              "evidence": "目视估算：孔洞直径约占壁厚的六成"
+            },
+            {
+              "image": "image-1.png",
+              "view": "iso",
+              "target": "主体总高度",
+              "baseline": "主体总长度",
+              "axis": "vertical",
+              "ratio": 1.0,
+              "confidence": "medium",
+              "evidence": "目视估算：总高度与总长度接近"
+            },
+            {
+              "image": "image-1.png",
+              "view": "iso",
+              "target": "主体总深度",
+              "baseline": "主体总长度",
+              "axis": "depth",
+              "ratio": 0.5,
+              "confidence": "medium",
+              "evidence": "目视估算：总深度约为总长度的一半"
+            }
+          ],
+          "uncertainties": [
+            "槽腔是否贯通底部无法从当前视角确认；顶面完整说明未贯通顶部",
+            "孔洞是通孔还是盲孔（仅穿透前壁至槽腔）无法完全确认，按常见结构暂按从前立面钻入槽腔的盲孔处理",
+            "孔洞在左右壁上的竖直对齐关系受等轴测透视影响，存在视觉偏差"
+          ]
+        },
+        "next_step_hint": "读图已通过逐区域和孔数一致性校验。现在按每个可见实体面分别规划特征，先建主体，之后逐个添加特征并观察预览；不要把未知拓扑直接当成空槽。"
+      },
+      "result_summary": "reference_reading_ready"
+    },
+    {
+      "phase": "agent_loop",
+      "tool": "cad_create_model",
+      "arguments": {
+        "name": "U型块-第一版",
+        "first_feature": {
+          "id": "main-body",
+          "kind": "box",
+          "operation": "add",
+          "parameters": {
+            "length": 80,
+            "width": 40,
+            "height": 70,
+            "center": [
+              0,
+              0,
+              0
+            ]
+          },
+          "sources": {
+            "length": {
+              "type": "image_estimate",
+              "evidence": "按等轴测图目视比例：总长度方向外轮廓作为基准，取便于编辑的名义尺度80mm"
+            },
+            "width": {
+              "type": "image_estimate",
+              "evidence": "按等轴测图目视比例：总深度约为总长度的0.5倍，取40mm"
+            },
+            "height": {
+              "type": "image_estimate",
+              "evidence": "按等轴测图目视比例：总高度与总长度接近，取70mm"
+            },
+            "center": {
+              "type": "image_estimate",
+              "evidence": "将主体几何中心置于原点，便于后续对称布置槽腔与孔位"
+            }
+          },
+          "name": "主体长方体",
+          "note": "整体外形：长80×宽40×高70，中心在原点"
+        }
+      },
+      "result": {
+        "state": "valid",
+        "revision": 1,
+        "geometry_fingerprint": "{\"coordinate_system\":{\"axes\":[\"X\",\"Y\",\"Z\"],\"handedness\":\"right\",\"origin\":[0,0,0],\"type\":\"global_cartesian\"},\"features\":[{\"geometry\":\"{\\\"kind\\\":\\\"box\\\",\\\"operation\\\":\\\"add\\\",\\\"parameters\\\":{\\\"center\\\":[0,0,0],\\\"height\\\":70,\\\"length\\\":80,\\\"width\\\":40}}\",\"id\":\"main-body\"}],\"units\":{\"angle\":\"deg\",\"length\":\"mm\"}}",
+        "feature_count": 1,
+        "validation": {
+          "valid": true,
+          "state": "valid",
+          "errors": [],
+          "confirmations": [],
+          "support": [
+            {
+              "feature_id": "main-body",
+              "kind": "box",
+              "status": "exact",
+              "reason": "矩形草图加凸台；当前 CATIA 映射仅支持 Z 轴拉伸。"
+            }
+          ],
+          "warnings": [],
+          "schema_version": "1.0"
+        },
+        "preview": {
+          "state": "previewed",
+          "geometry_fingerprint": "{\"coordinate_system\":{\"axes\":[\"X\",\"Y\",\"Z\"],\"handedness\":\"right\",\"origin\":[0,0,0],\"type\":\"global_cartesian\"},\"features\":[{\"geometry\":\"{\\\"kind\\\":\\\"box\\\",\\\"operation\\\":\\\"add\\\",\\\"parameters\\\":{\\\"center\\\":[0,0,0],\\\"height\\\":70,\\\"length\\\":80,\\\"width\\\":40}}\",\"id\":\"main-body\"}],\"units\":{\"angle\":\"deg\",\"length\":\"mm\"}}",
+          "preview_image": "candidate-preview.png",
+          "view_set": "iso",
+          "views": [
+            "iso"
+          ],
+          "dimensions": {
+            "unit": "mm",
+            "bbox": [
+              -40.0,
+              -20.0,
+              -35.0,
+              40.0,
+              20.0,
+              35.0
+            ],
+            "size": [
+              80.0,
+              40.0,
+              70.0
+            ],
+            "volume_mm3": 223999.99999999997,
+            "surface_area_mm2": 23200.0,
+            "triangles": 12,
+            "feature_count": 1
+          },
+          "local_geometry_checks": {
+            "state": "passed",
+            "source": "AI Modeler local mesh kernel",
+            "face_count": 8,
+            "bbox_size_mm": [
+              80.0,
+              40.0,
+              70.0
+            ],
+            "bbox_ratios_from_mesh": {
+              "front_width_height": 1.1428571428571428,
+              "depth_height": 0.5714285714285714,
+              "top_width_depth": 2.0
+            },
+            "feature_count_from_plan": 1,
+            "feature_ids_from_plan": [
+              "main-body"
+            ],
+            "nonfinite_face_count": 0,
+            "degenerate_face_count": 0,
+            "hole_features_from_plan": [],
+            "through_hole_mesh_checks": [],
+            "hole_visibility": "requires_multimodal_view_review",
+            "through_hole_result": "not_measured"
+          },
+          "warnings": [],
+          "catia_executed": false,
+          "next_step_hint": "当前预览已展示，作为逐特征建模进度。若还有几何特征未完成，只追加下一个特征并刷新预览；全部特征完成后再做最终多视图复核。"
+        },
+        "reference_feature_coverage": {
+          "required_feature_groups": [
+            {
+              "id": "main-body",
+              "kind": "主体外形",
+              "quantity": 1,
+              "region": "整体外轮廓",
+              "arrangement": "单一长方体主体"
+            },
+            {
+              "id": "front-pocket",
+              "kind": "前部槽腔",
+              "quantity": 1,
+              "region": "主体前部中央",
+              "arrangement": "从前面向后切入的矩形槽，将前部分为左右两壁"
+            },
+            {
+              "id": "wall-holes",
+              "kind": "通孔/盲孔",
+              "quantity": 6,
+              "region": "左右两壁前立面",
+              "arrangement": "左壁3孔自上而下排列，右壁3孔自上而下排列，左右壁孔位竖直方向大致对齐"
+            }
+          ],
+          "hole_positions": {
+            "target": 6,
+            "modeled": 0,
+            "missing": 6,
+            "excess": 0
+          }
+        }
+      },
+      "result_summary": "valid"
+    },
+    {
+      "phase": "blind_reference_inventory",
+      "tool": "submit_reference_inventory",
+      "arguments": {
+        "images": [
+          {
+            "image": "image-1.png",
+            "source_view": "iso",
+            "coverage": "partial",
+            "hole_layout_coverage": "partial",
+            "visible_regions": [
+              {
+                "id": "top_face",
+                "region": "top horizontal face",
+                "surface_state": "solid_face",
+                "evidence": "visible as light gray rectangular top surface between front and back edges",
+                "features": []
+              },
+              {
+                "id": "right_outer_face",
+                "region": "right outer vertical face",
+                "surface_state": "solid_face",
+                "evidence": "visible gray vertical face on right side with no holes",
+                "features": []
+              },
+              {
+                "id": "left_outer_face",
+                "region": "left outer vertical face",
+                "surface_state": "solid_face",
+                "evidence": "partially visible left vertical outer face with no holes",
+                "features": []
+              },
+              {
+                "id": "front_left_wall",
+                "region": "front left vertical wall face",
+                "surface_state": "solid_face",
+                "evidence": "left portion of U-shape front face with three vertical holes",
+                "features": [
+                  {
+                    "kind": "circular_hole",
+                    "quantity": 3,
+                    "arrangement": "vertical top to bottom",
+                    "evidence": "three colored circular holes aligned vertically on left front wall",
+                    "relative_size_order": [
+                      "large",
+                      "small",
+                      "large"
+                    ],
+                    "size_order_axis": "vertical_top_to_bottom",
+                    "size_order_confidence": "high"
+                  }
+                ]
+              },
+              {
+                "id": "front_right_wall",
+                "region": "front right vertical wall face",
+                "surface_state": "solid_face",
+                "evidence": "right portion of U-shape front face with three vertical holes",
+                "features": [
+                  {
+                    "kind": "circular_hole",
+                    "quantity": 3,
+                    "arrangement": "vertical top to bottom",
+                    "evidence": "three colored circular holes aligned vertically on right front wall",
+                    "relative_size_order": [
+                      "large",
+                      "small",
+                      "large"
+                    ],
+                    "size_order_axis": "vertical_top_to_bottom",
+                    "size_order_confidence": "high"
+                  }
+                ]
+              },
+              {
+                "id": "back_inner_wall",
+                "region": "back inner vertical wall face inside slot",
+                "surface_state": "recessed_solid_face",
+                "evidence": "rear wall visible through front slot with three vertical holes",
+                "features": [
+                  {
+                    "kind": "circular_hole",
+                    "quantity": 3,
+                    "arrangement": "vertical top to bottom",
+                    "evidence": "three colored circular holes aligned vertically on back wall inside slot",
+                    "relative_size_order": [
+                      "medium",
+                      "small",
+                      "medium"
+                    ],
+                    "size_order_axis": "vertical_top_to_bottom",
+                    "size_order_confidence": "high"
+                  }
+                ]
+              },
+              {
+                "id": "slot_opening",
+                "region": "front central slot opening",
+                "surface_state": "background_opening",
+                "evidence": "rectangular slot cut from front creating opening between left and right walls",
+                "features": []
+              }
+            ],
+            "uncertainties": [
+              "whether front wall holes are through-holes or blind holes",
+              "whether back wall holes are through-holes or blind holes",
+              "exact slot depth relative to total part depth",
+              "whether bottom face is open or closed solid"
+            ]
+          }
+        ],
+        "cross_view_notes": [
+          "single isometric view only; no orthogonal projections available",
+          "left and right front walls appear symmetric with same hole pattern",
+          "back inner wall holes use different colors suggesting different diameter from front wall holes"
+        ]
+      },
+      "result": {
+        "state": "accepted"
+      }
+    },
+    {
+      "phase": "multiview_check",
+      "tool": "submit_multiview_review",
+      "arguments": {
+        "reference_images": [
+          {
+            "image": "image-1.png",
+            "source_view": "iso",
+            "comparable": true,
+            "visible_evidence": "U-shaped body with central through-slot; three vertical holes on left front wall, three on right front wall, three on re"
+          }
+        ],
+        "checks": [
+          {
+            "id": "iso-overall-shape",
+            "view": "iso",
+            "area": "overall_shape",
+            "feature_group_id": "",
+            "category": "body_shape",
+            "status": "mismatch",
+            "item": "U-shaped body with central slot",
+            "reference_evidence": "Reference shows a U-shaped block with a central slot open from front to back, forming two outer walls and one inner back wall.",
+            "model_evidence": "Current model is a solid rectangular block with no slot or recessed inner wall.",
+            "evidence": "Reference has open U-profile; model is a filled box.",
+            "unknown_reason": "",
+            "feature_ids": [
+              "main-body"
+            ],
+            "affected_parameters": [
+              {
+                "feature_id": "main-body",
+                "path": "parameters.width"
+              },
+              {
+                "feature_id": "main-body",
+                "path": "operation"
+              }
+            ]
+          },
+          {
+            "id": "iso-feature-layout",
+            "view": "iso",
+            "area": "feature_layout",
+            "feature_group_id": "",
+            "category": "hole_pattern",
+            "status": "mismatch",
+            "item": "Nine circular holes on three vertical faces",
+            "reference_evidence": "Reference shows three columns of three circular holes each: left outer wall, right outer wall, and inner back wall of slot.",
+            "model_evidence": "Model has no holes; all faces are plain.",
+            "evidence": "Reference has 9 visible holes; model has 0.",
+            "unknown_reason": "",
+            "feature_ids": [
+              "main-body"
+            ],
+            "affected_parameters": [
+              {
+                "feature_id": "main-body",
+                "path": "operation"
+              }
+            ]
+          },
+          {
+            "id": "iso-depth-relationships",
+            "view": "iso",
+            "area": "depth_relationships",
+            "feature_group_id": "",
+            "category": "slot_depth",
+            "status": "mismatch",
+            "item": "Central slot creates recessed inner back wall",
+            "reference_evidence": "Reference shows the middle section of the front face cut away, with an inner vertical wall set back along the depth direction.",
+            "model_evidence": "Model front face is flat and continuous; no recessed wall or slot.",
+            "evidence": "Reference has depth-wise recess; model is solid.",
+            "unknown_reason": "",
+            "feature_ids": [
+              "main-body"
+            ],
+            "affected_parameters": [
+              {
+                "feature_id": "main-body",
+                "path": "parameters.width"
+              },
+              {
+                "feature_id": "main-body",
+                "path": "operation"
+              }
+            ]
+          },
+          {
+            "id": "iso-group-blind-01-04-01",
+            "view": "iso",
+            "area": "feature_group",
+            "feature_group_id": "blind-01-04-01",
+            "category": "hole_group",
+            "status": "mismatch",
+            "item": "Left front wall vertical hole trio",
+            "reference_evidence": "Reference shows three circular holes aligned vertically on the left front wall: large top, small middle, large bottom.",
+            "model_evidence": "Model left front wall has no holes.",
+            "evidence": "Left wall hole group missing entirely.",
+            "unknown_reason": "",
+            "feature_ids": [
+              "main-body"
+            ],
+            "affected_parameters": [
+              {
+                "feature_id": "main-body",
+                "path": "operation"
+              }
+            ]
+          },
+          {
+            "id": "iso-group-blind-01-05-01",
+            "view": "iso",
+            "area": "feature_group",
+            "feature_group_id": "blind-01-05-01",
+            "category": "hole_group",
+            "status": "mismatch",
+            "item": "Right front wall vertical hole trio",
+            "reference_evidence": "Reference shows three circular holes aligned vertically on the right front wall: large top, small middle, large bottom.",
+            "model_evidence": "Model right front wall has no holes.",
+            "evidence": "Right wall hole group missing entirely.",
+            "unknown_reason": "",
+            "feature_ids": [
+              "main-body"
+            ],
+            "affected_parameters": [
+              {
+                "feature_id": "main-body",
+                "path": "operation"
+              }
+            ]
+          },
+          {
+            "id": "iso-group-blind-01-06-01",
+            "view": "iso",
+            "area": "feature_group",
+            "feature_group_id": "blind-01-06-01",
+            "category": "hole_group",
+            "status": "mismatch",
+            "item": "Inner back wall vertical hole trio",
+            "reference_evidence": "Reference shows three circular holes aligned vertically on the recessed inner back wall of the slot: medium top, small middle, medium bottom",
+            "model_evidence": "Model has no slot and therefore no inner back wall or holes.",
+            "evidence": "Inner back wall hole group missing because slot is absent.",
+            "unknown_reason": "",
+            "feature_ids": [
+              "main-body"
+            ],
+            "affected_parameters": [
+              {
+                "feature_id": "main-body",
+                "path": "parameters.width"
+              },
+              {
+                "feature_id": "main-body",
+                "path": "operation"
+              }
+            ]
+          }
+        ],
+        "issues": [
+          {
+            "issue_id": "iso-missing-u-slot",
+            "view": "iso",
+            "category": "body_shape",
+            "severity": "high",
+            "item": "Central through-slot not modeled",
+            "evidence": "Reference shows a U-shaped body with a slot cut from the front face toward the back; model is a solid box.",
+            "feature_ids": [
+              "main-body"
+            ],
+            "affected_parameters": [
+              {
+                "feature_id": "main-body",
+                "path": "parameters.width"
+              },
+              {
+                "feature_id": "main-body",
+                "path": "operation"
+              }
+            ]
+          },
+          {
+            "issue_id": "iso-missing-all-holes",
+            "view": "iso",
+            "category": "hole_pattern",
+            "severity": "high",
+            "item": "All nine circular holes missing",
+            "evidence": "Reference has three vertical holes on left front wall, three on right front wall, and three on inner back wall; model has none.",
+            "feature_ids": [
+              "main-body"
+            ],
+            "affected_parameters": [
+              {
+                "feature_id": "main-body",
+                "path": "operation"
+              }
+            ]
+          },
+          {
+            "issue_id": "iso-wrong-depth-recess",
+            "view": "iso",
+            "category": "depth_relationships",
+            "severity": "high",
+            "item": "No recessed inner back wall",
+            "evidence": "Reference shows an inner vertical wall set back inside the slot; model front face is flat and solid.",
+            "feature_ids": [
+              "main-body"
+            ],
+            "affected_parameters": [
+              {
+                "feature_id": "main-body",
+                "path": "parameters.width"
+              },
+              {
+                "feature_id": "main-body",
+                "path": "operation"
+              }
+            ]
+          }
+        ],
+        "resolved_findings": [],
+        "questions": [
+          "Are the nine colored circular holes through-holes or blind holes? The iso reference shows colored hole interiors, suggesting they may pass through the walls.",
+          "What are the relative widths of the two outer walls versus the central slot? The reference suggests roughly equal widths but an estimate is needed.",
+          "Does the central slot extend fully through the part depth (open at the back) or stop at an inner back wall (closed slot)?"
+        ],
+        "confidence": 0.1
+      },
+      "result": {
+        "state": "accepted"
+      }
+    },
+    {
+      "phase": "agent_loop",
+      "tool": "cad_review_model",
+      "arguments": {
+        "review_type": "geometry",
+        "views": [
+          "iso"
+        ]
+      },
+      "result": {
+        "state": "ask_user",
+        "review_type": "geometry",
+        "geometry_fingerprint": "{\"coordinate_system\":{\"axes\":[\"X\",\"Y\",\"Z\"],\"handedness\":\"right\",\"origin\":[0,0,0],\"type\":\"global_cartesian\"},\"features\":[{\"geometry\":\"{\\\"kind\\\":\\\"box\\\",\\\"operation\\\":\\\"add\\\",\\\"parameters\\\":{\\\"center\\\":[0,0,0],\\\"height\\\":70,\\\"length\\\":80,\\\"width\\\":40}}\",\"id\":\"main-body\"}],\"units\":{\"angle\":\"deg\",\"length\":\"mm\"}}",
+        "reviewed_views": [
+          "iso"
+        ],
+        "requested_views": [
+          "iso"
+        ],
+        "skipped_views": [],
+        "reviewed_view_status": {
+          "iso": "needs_review"
+        },
+        "local_image_comparisons": [
+          {
+            "image": "image-1.png",
+            "view": "iso",
+            "state": "advisory",
+            "method": "cropped foreground aspect + normalised overlap",
+            "reason": "canvas sizes differ",
+            "reference_bbox_px": [
+              75,
+              49,
+              416,
+              495
+            ],
+            "model_bbox_px": [
+              168,
+              47,
+              491,
+              472
+            ],
+            "reference_aspect": 0.7651,
+            "model_aspect": 0.7606,
+            "aspect_delta": 0.0059,
+            "iou": 0.8489,
+            "scope": "advisory only: the crop and scale differ, so this can neither accept nor reject a model. Report it as an observation, never as evidence that the geometry matches."
+          }
+        ],
+        "checks": [
+          {
+            "id": "iso-overall-shape",
+            "view": "iso",
+            "area": "overall_shape",
+            "feature_group_id": "",
+            "category": "body_shape",
+            "status": "mismatch",
+            "item": "U-shaped body with central slot",
+            "reference_evidence": "Reference shows a U-shaped block with a central slot open from front to back, forming two outer walls and one inner back wall.",
+            "model_evidence": "Current model is a solid rectangular block with no slot or recessed inner wall.",
+            "evidence": "Reference has open U-profile; model is a filled box.",
+            "unknown_reason": "",
+            "feature_ids": [
+              "main-body"
+            ],
+            "affected_parameters": [
+              {
+                "feature_id": "main-body",
+                "path": "parameters.width"
+              },
+              {
+                "feature_id": "main-body",
+                "path": "operation"
+              }
+            ]
+          },
+          {
+            "id": "iso-feature-layout",
+            "view": "iso",
+            "area": "feature_layout",
+            "feature_group_id": "",
+            "category": "hole_pattern",
+            "status": "mismatch",
+            "item": "Nine circular holes on three vertical faces",
+            "reference_evidence": "Reference shows three columns of three circular holes each: left outer wall, right outer wall, and inner back wall of slot.",
+            "model_evidence": "Model has no holes; all faces are plain.",
+            "evidence": "Reference has 9 visible holes; model has 0.",
+            "unknown_reason": "",
+            "feature_ids": [
+              "main-body"
+            ],
+            "affected_parameters": [
+              {
+                "feature_id": "main-body",
+                "path": "operation"
+              }
+            ]
+          },
+          {
+            "id": "iso-depth-relationships",
+            "view": "iso",
+            "area": "depth_relationships",
+            "feature_group_id": "",
+            "category": "slot_depth",
+            "status": "mismatch",
+            "item": "Central slot creates recessed inner back wall",
+            "reference_evidence": "Reference shows the middle section of the front face cut away, with an inner vertical wall set back along the depth direction.",
+            "model_evidence": "Model front face is flat and continuous; no recessed wall or slot.",
+            "evidence": "Reference has depth-wise recess; model is solid.",
+            "unknown_reason": "",
+            "feature_ids": [
+              "main-body"
+            ],
+            "affected_parameters": [
+              {
+                "feature_id": "main-body",
+                "path": "parameters.width"
+              },
+              {
+                "feature_id": "main-body",
+                "path": "operation"
+              }
+            ]
+          },
+          {
+            "id": "iso-group-blind-01-04-01",
+            "view": "iso",
+            "area": "feature_group",
+            "feature_group_id": "blind-01-04-01",
+            "category": "hole_group",
+            "status": "mismatch",
+            "item": "Left front wall vertical hole trio",
+            "reference_evidence": "Reference shows three circular holes aligned vertically on the left front wall: large top, small middle, large bottom.",
+            "model_evidence": "Model left front wall has no holes.",
+            "evidence": "Left wall hole group missing entirely.",
+            "unknown_reason": "",
+            "feature_ids": [
+              "main-body"
+            ],
+            "affected_parameters": [
+              {
+                "feature_id": "main-body",
+                "path": "operation"
+              }
+            ]
+          },
+          {
+            "id": "iso-group-blind-01-05-01",
+            "view": "iso",
+            "area": "feature_group",
+            "feature_group_id": "blind-01-05-01",
+            "category": "hole_group",
+            "status": "mismatch",
+            "item": "Right front wall vertical hole trio",
+            "reference_evidence": "Reference shows three circular holes aligned vertically on the right front wall: large top, small middle, large bottom.",
+            "model_evidence": "Model right front wall has no holes.",
+            "evidence": "Right wall hole group missing entirely.",
+            "unknown_reason": "",
+            "feature_ids": [
+              "main-body"
+            ],
+            "affected_parameters": [
+              {
+                "feature_id": "main-body",
+                "path": "operation"
+              }
+            ]
+          },
+          {
+            "id": "iso-group-blind-01-06-01",
+            "view": "iso",
+            "area": "feature_group",
+            "feature_group_id": "blind-01-06-01",
+            "category": "hole_group",
+            "status": "mismatch",
+            "item": "Inner back wall vertical hole trio",
+            "reference_evidence": "Reference shows three circular holes aligned vertically on the recessed inner back wall of the slot: medium top, small middle, medium bottom",
+            "model_evidence": "Model has no slot and therefore no inner back wall or holes.",
+            "evidence": "Inner back wall hole group missing because slot is absent.",
+            "unknown_reason": "",
+            "feature_ids": [
+              "main-body"
+            ],
+            "affected_parameters": [
+              {
+                "feature_id": "main-body",
+                "path": "parameters.width"
+              },
+              {
+                "feature_id": "main-body",
+                "path": "operation"
+              }
+            ]
+          }
+        ],
+        "issues": [
+          {
+            "issue_id": "iso-missing-u-slot",
+            "view": "iso",
+            "category": "body_shape",
+            "severity": "high",
+            "item": "Central through-slot not modeled",
+            "evidence": "Reference shows a U-shaped body with a slot cut from the front face toward the back; model is a solid box.",
+            "feature_ids": [
+              "main-body"
+            ],
+            "affected_parameters": [
+              {
+                "feature_id": "main-body",
+                "path": "parameters.width"
+              },
+              {
+                "feature_id": "main-body",
+                "path": "operation"
+              }
+            ]
+          },
+          {
+            "issue_id": "iso-missing-all-holes",
+            "view": "iso",
+            "category": "hole_pattern",
+            "severity": "high",
+            "item": "All nine circular holes missing",
+            "evidence": "Reference has three vertical holes on left front wall, three on right front wall, and three on inner back wall; model has none.",
+            "feature_ids": [
+              "main-body"
+            ],
+            "affected_parameters": [
+              {
+                "feature_id": "main-body",
+                "path": "operation"
+              }
+            ]
+          },
+          {
+            "issue_id": "iso-wrong-depth-recess",
+            "view": "iso",
+            "category": "depth_relationships",
+            "severity": "high",
+            "item": "No recessed inner back wall",
+            "evidence": "Reference shows an inner vertical wall set back inside the slot; model front face is flat and solid.",
+            "feature_ids": [
+              "main-body"
+            ],
+            "affected_parameters": [
+              {
+                "feature_id": "main-body",
+                "path": "parameters.width"
+              },
+              {
+                "feature_id": "main-body",
+                "path": "operation"
+              }
+            ]
+          }
+        ],
+        "questions": [
+          "Are the nine colored circular holes through-holes or blind holes? The iso reference shows colored hole interiors, suggesting they may pass through the walls.",
+          "What are the relative widths of the two outer walls versus the central slot? The reference suggests roughly equal widths but an estimate is needed.",
+          "Does the central slot extend fully through the part depth (open at the back) or stop at an inner back wall (closed slot)?"
+        ],
+        "review_gaps": [],
+        "confidence": 0.1,
+        "similarity_score": null,
+        "similarity_score_semantics": null,
+        "next_step_hint": "检查状态或证据不完整时可选择其它视图再次复核；不能把低置信度当作通过。"
+      },
+      "result_summary": "ask_user"
+    },
+    {
+      "phase": "agent_loop",
+      "tool": "ask_user",
+      "arguments": {
+        "question": "当前模型仅创建了主体长方体（80×40×70 mm），但参考图显示该零件是一个带前部槽腔的U型块，并且有三列共9个孔（左壁3个、右壁3个、槽腔后壁3个）。由于当前环境中缺少 `cad_add_feature` / `cad_update_feature` 等增量编辑工具，我无法继续添加槽腔切除和孔特征来修正模型。请确认是否可以在工具集中补充这些建模工具，或者告知我应如何继续完成该零件的复刻。"
+      },
+      "result": {
+        "state": "needs_user_input",
+        "question": "当前模型仅创建了主体长方体（80×40×70 mm），但参考图显示该零件是一个带前部槽腔的U型块，并且有三列共9个孔（左壁3个、右壁3个、槽腔后壁3个）。由于当前环境中缺少 `cad_add_feature` / `cad_update_feature` 等增量编辑工具，我无法继续添加槽腔切除和孔特征来修正模型。请确认是否可以在工具集中补充这些建模工具，或者告知我应如何继续完成该零件的复刻。",
+        "candidate_available": true
+      },
+      "result_summary": "needs_user_input"
+    }
+  ],
+  "error": null
+}

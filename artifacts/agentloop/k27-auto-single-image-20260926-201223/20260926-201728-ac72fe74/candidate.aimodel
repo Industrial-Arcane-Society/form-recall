@@ -1,0 +1,309 @@
+{
+  "format": "ai-modeler",
+  "version": 1,
+  "name": "U-shaped bracket",
+  "source_prompt": "复刻",
+  "features": [
+    {
+      "kind": "box",
+      "params": {
+        "length": 40.0,
+        "width": 20.0,
+        "height": 60.0,
+        "center": [
+          0.0,
+          0.0,
+          30.0
+        ],
+        "base": false
+      },
+      "op": "add",
+      "name": "Base rectangular block",
+      "note": "Solid rectangular precursor for U-shaped bracket; central slot and holes to be added subsequently",
+      "enabled": true,
+      "provenance": {
+        "length": "image_estimate",
+        "width": "image_estimate",
+        "height": "image_estimate",
+        "center": "derived"
+      }
+    },
+    {
+      "kind": "box",
+      "params": {
+        "length": 16.0,
+        "width": 15.1,
+        "height": 60.0,
+        "center": [
+          0.0,
+          2.55,
+          30.0
+        ],
+        "base": false
+      },
+      "op": "cut",
+      "name": "Front U-slot",
+      "note": "Cuts the front channel to create left wall, right wall, and recessed back wall",
+      "enabled": true,
+      "provenance": {
+        "length": "image_estimate",
+        "width": "image_estimate",
+        "height": "image_estimate",
+        "center": "derived"
+      }
+    },
+    {
+      "kind": "hole",
+      "params": {
+        "diameter": 6.0,
+        "through": true,
+        "pos": "point",
+        "point": [
+          -14.0,
+          10.0,
+          50.0
+        ],
+        "axis": "Y",
+        "x": -14.0,
+        "y": 50.0
+      },
+      "op": "cut",
+      "name": "Left front top hole",
+      "note": "Large top hole on left front wall",
+      "enabled": true,
+      "provenance": {
+        "diameter": "image_estimate",
+        "through": "image_estimate",
+        "point": "image_estimate",
+        "axis": "derived",
+        "x": "image_estimate",
+        "y": "image_estimate"
+      }
+    },
+    {
+      "kind": "hole",
+      "params": {
+        "diameter": 3.5,
+        "through": true,
+        "pos": "point",
+        "point": [
+          -14.0,
+          10.0,
+          30.0
+        ],
+        "axis": "Y",
+        "x": -14.0,
+        "y": 30.0
+      },
+      "op": "cut",
+      "name": "Left front middle hole",
+      "note": "Small middle hole on left front wall",
+      "enabled": true,
+      "provenance": {
+        "diameter": "image_estimate",
+        "through": "image_estimate",
+        "point": "image_estimate",
+        "axis": "derived",
+        "x": "image_estimate",
+        "y": "image_estimate"
+      }
+    },
+    {
+      "kind": "hole",
+      "params": {
+        "diameter": 6.0,
+        "through": true,
+        "pos": "point",
+        "point": [
+          -14.0,
+          10.0,
+          10.0
+        ],
+        "axis": "Y",
+        "x": -14.0,
+        "y": 10.0
+      },
+      "op": "cut",
+      "name": "Left front bottom hole",
+      "note": "Large bottom hole on left front wall",
+      "enabled": true,
+      "provenance": {
+        "diameter": "image_estimate",
+        "through": "image_estimate",
+        "point": "image_estimate",
+        "axis": "derived",
+        "x": "image_estimate",
+        "y": "image_estimate"
+      }
+    },
+    {
+      "kind": "hole",
+      "params": {
+        "diameter": 6.0,
+        "through": true,
+        "pos": "point",
+        "point": [
+          14.0,
+          10.0,
+          50.0
+        ],
+        "axis": "Y",
+        "x": 14.0,
+        "y": 50.0
+      },
+      "op": "cut",
+      "name": "Right front top hole",
+      "note": "Large top hole on right front wall",
+      "enabled": true,
+      "provenance": {
+        "diameter": "image_estimate",
+        "through": "image_estimate",
+        "point": "image_estimate",
+        "axis": "derived",
+        "x": "image_estimate",
+        "y": "image_estimate"
+      }
+    },
+    {
+      "kind": "hole",
+      "params": {
+        "diameter": 3.5,
+        "through": true,
+        "pos": "point",
+        "point": [
+          14.0,
+          10.0,
+          30.0
+        ],
+        "axis": "Y",
+        "x": 14.0,
+        "y": 30.0
+      },
+      "op": "cut",
+      "name": "Right front middle hole",
+      "note": "Small middle hole on right front wall",
+      "enabled": true,
+      "provenance": {
+        "diameter": "image_estimate",
+        "through": "image_estimate",
+        "point": "image_estimate",
+        "axis": "derived",
+        "x": "image_estimate",
+        "y": "image_estimate"
+      }
+    },
+    {
+      "kind": "hole",
+      "params": {
+        "diameter": 6.0,
+        "through": true,
+        "pos": "point",
+        "point": [
+          14.0,
+          10.0,
+          10.0
+        ],
+        "axis": "Y",
+        "x": 14.0,
+        "y": 10.0
+      },
+      "op": "cut",
+      "name": "Right front bottom hole",
+      "note": "Large bottom hole on right front wall",
+      "enabled": true,
+      "provenance": {
+        "diameter": "image_estimate",
+        "through": "image_estimate",
+        "point": "image_estimate",
+        "axis": "derived",
+        "x": "image_estimate",
+        "y": "image_estimate"
+      }
+    },
+    {
+      "kind": "hole",
+      "params": {
+        "diameter": 6.0,
+        "through": true,
+        "pos": "point",
+        "point": [
+          0.0,
+          -5.05,
+          50.0
+        ],
+        "axis": "Y",
+        "x": 0.0,
+        "y": 50.0
+      },
+      "op": "cut",
+      "name": "Back wall top hole",
+      "note": "Large top hole on recessed back wall",
+      "enabled": true,
+      "provenance": {
+        "diameter": "image_estimate",
+        "through": "image_estimate",
+        "point": "image_estimate",
+        "axis": "derived",
+        "x": "image_estimate",
+        "y": "image_estimate"
+      }
+    },
+    {
+      "kind": "hole",
+      "params": {
+        "diameter": 3.5,
+        "through": true,
+        "pos": "point",
+        "point": [
+          0.0,
+          -5.05,
+          30.0
+        ],
+        "axis": "Y",
+        "x": 0.0,
+        "y": 30.0
+      },
+      "op": "cut",
+      "name": "Back wall middle hole",
+      "note": "Small middle hole on recessed back wall",
+      "enabled": true,
+      "provenance": {
+        "diameter": "image_estimate",
+        "through": "image_estimate",
+        "point": "image_estimate",
+        "axis": "derived",
+        "x": "image_estimate",
+        "y": "image_estimate"
+      }
+    },
+    {
+      "kind": "hole",
+      "params": {
+        "diameter": 6.0,
+        "through": true,
+        "pos": "point",
+        "point": [
+          0.0,
+          -5.05,
+          10.0
+        ],
+        "axis": "Y",
+        "x": 0.0,
+        "y": 10.0
+      },
+      "op": "cut",
+      "name": "Back wall bottom hole",
+      "note": "Large bottom hole on recessed back wall",
+      "enabled": true,
+      "provenance": {
+        "diameter": "image_estimate",
+        "through": "image_estimate",
+        "point": "image_estimate",
+        "axis": "derived",
+        "x": "image_estimate",
+        "y": "image_estimate"
+      }
+    }
+  ],
+  "exported_at": "2026-09-26 20:38:25"
+}

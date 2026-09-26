@@ -1,0 +1,33 @@
+{
+  "format": "ai-modeler",
+  "version": 1,
+  "name": "U型块-第一版",
+  "source_prompt": "请依据参考图复刻该零件。没有标注尺寸，请按图像比例估算宽、高、厚，并把这些数值标为图像估算。生成第一版后，根据原图和模型同方向视图做多模态复核，发现可定位差异就修改相关特征，再用新版本视图核对。",
+  "features": [
+    {
+      "kind": "box",
+      "params": {
+        "length": 80.0,
+        "width": 40.0,
+        "height": 70.0,
+        "center": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "base": false
+      },
+      "op": "add",
+      "name": "主体长方体",
+      "note": "整体外形：长80×宽40×高70，中心在原点",
+      "enabled": true,
+      "provenance": {
+        "length": "image_estimate",
+        "width": "image_estimate",
+        "height": "image_estimate",
+        "center": "image_estimate"
+      }
+    }
+  ],
+  "exported_at": "2026-09-26 18:26:53"
+}

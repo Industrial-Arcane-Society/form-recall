@@ -547,6 +547,15 @@ class IncrementalAgentTests(unittest.TestCase):
 
     def test_reference_inspection_requires_per_face_image_evidence(self):
         reading = _reading()
+        reading["feature_groups"] = [
+            {"id": "physical-through-hole-set", "kind": "hole", "quantity": 6,
+             "region": "whole part; unique physical hole positions",
+             "arrangement": "unique positions counted once across visible faces",
+             "evidence": "physical hole estimate deduplicates openings visible on multiple faces"},
+            {"id": "main-body", "kind": "body", "quantity": 1,
+             "region": "whole part", "arrangement": "single connected body",
+             "evidence": "one connected outer body"},
+        ]
         reading["visible_regions"] = [
             {"image": "reference.png", "id": "left", "region": "left face",
              "surface_state": "solid_face", "image_bbox_norm": [0.1, 0.1, 0.35, 0.9],
@@ -566,21 +575,17 @@ class IncrementalAgentTests(unittest.TestCase):
         ]
         state = {"has_reference_images": True,
                  "active_reference_images": ["reference.png"]}
-        reading["feature_groups"][2]["quantity"] = 4
-        invalid, _ = agent_runtime._execute_tool(
-            "cad_inspect_references", {"reference_reading": reading}, state, [])
-        self.assertEqual("invalid_reference_reading", invalid["state"])
-        self.assertTrue(any("孔" in message and "不一致" in message
-                            for message in invalid["reference_reading_blockers"]))
-        self.assertNotIn("reference_reading", state)
-
-        reading["feature_groups"][2]["quantity"] = 3
         valid, _ = agent_runtime._execute_tool(
             "cad_inspect_references", {"reference_reading": reading}, state, [])
         self.assertEqual("reference_reading_ready", valid["state"])
-        self.assertEqual(9, valid["visible_hole_count"])
+        self.assertEqual(9, valid["visible_hole_aperture_count"])
+        self.assertEqual(6, agent_runtime._reference_hole_quantity(
+            state["reference_reading"]))
         self.assertEqual("cad_inspect_references", state["reference_reading_source"])
         self.assertEqual(3, len(state["reference_reading"]["visible_regions"]))
+        self.assertEqual([3, 3, 3], [
+            region["features"][0]["quantity"]
+            for region in state["reference_reading"]["visible_regions"]])
 
     def test_model_tools_publish_structured_feature_and_relation_schema(self):
         tools = {row["function"]["name"]: row["function"]["parameters"]

@@ -14,7 +14,6 @@ import traceback
 import tkinter as tk
 import tkinter.font as tkfont
 from tkinter import filedialog, messagebox, ttk
-from urllib.parse import urlparse
 
 from ai_modeler import __version__
 from ai_modeler.core import exporters, kernel as K
@@ -541,6 +540,8 @@ class App(tk.Tk):
             font=TH.F['small'], anchor='w', justify='left', wraplength=270)
         self.lbl_token.pack(fill='x', padx=12, pady=(8, 0))
         self._agent_thinking_expanded = False
+        self._agent_thinking_session_active = False
+        self._agent_thinking_user_override = None
         self._agent_thinking_title = '模型思考（待机）'
         self.agent_thinking_header = tk.Frame(self.tab_agent, bg=TH.PANEL)
         self.agent_thinking_header.pack(fill='x', padx=10, pady=(8, 2))
@@ -1053,6 +1054,9 @@ class App(tk.Tk):
         """Show live thinking activity while a model request is in flight."""
         if title is not None:
             self._agent_thinking_title = str(title)
+        if (getattr(self, '_agent_thinking_session_active', False)
+                and getattr(self, '_agent_thinking_user_override', None) is not None):
+            expanded = self._agent_thinking_user_override
         self._agent_thinking_expanded = bool(expanded)
         if self._agent_thinking_expanded:
             if self.agent_thinking_body.winfo_manager() != 'pack':
@@ -1066,9 +1070,10 @@ class App(tk.Tk):
             text=arrow + self._agent_thinking_title)
 
     def _toggle_agent_thinking_panel(self):
-        self._set_agent_thinking_panel(
-            not self._agent_thinking_expanded,
-            self._agent_thinking_title)
+        expanded = not self._agent_thinking_expanded
+        if getattr(self, '_agent_thinking_session_active', False):
+            self._agent_thinking_user_override = expanded
+        self._set_agent_thinking_panel(expanded, self._agent_thinking_title)
 
     def _clear_agent_live_preview(self):
         self._last_agent_preview_path = None
@@ -1143,6 +1148,8 @@ class App(tk.Tk):
         self._agent_reasoning_request_count = 0
         self._agent_reasoning_request_detail = ''
         self._agent_reasoning_block_open = False
+        self._agent_thinking_session_active = True
+        self._agent_thinking_user_override = None
         agent_cfg = self.cfg.get('agentloop', {}) if isinstance(self.cfg.get('agentloop'), dict) else {}
         try:
             self._budget_s = max(60.0, min(1800.0,
@@ -1373,12 +1380,15 @@ class App(tk.Tk):
                             continue
                         effort = call.get('reasoning_effort')
                         thinking = call.get('thinking')
+                        budget = call.get('thinking_budget')
                         if effort:
                             label = str(effort)
                         elif isinstance(thinking, dict) and thinking.get('type'):
                             label = 'thinking:%s' % thinking['type']
                         else:
                             label = '服务商默认'
+                        if budget is not None:
+                            label += '（预算 %s）' % budget
                         if label not in request_efforts:
                             request_efforts.append(label)
                     request_effort_text = '、'.join(request_efforts) or '未记录'
@@ -1463,6 +1473,8 @@ class App(tk.Tk):
                     self._append_agent_event(message)
                     self.status('AgentLoop 未完成', TH.ERR)
                 self._active_request = None
+                self._agent_thinking_session_active = False
+                self._agent_thinking_user_override = None
                 if not self._busy:
                     self._resume_pending_request()
                 return
@@ -1477,6 +1489,8 @@ class App(tk.Tk):
             self._q = queue.Queue()
             self._active_request = None
             self._unlock_ui()
+            self._agent_thinking_session_active = False
+            self._agent_thinking_user_override = None
             self._append_chat('assistant', '已取消当前 AgentLoop。')
             self.status('AgentLoop 已取消', TH.WARN)
             self._resume_pending_request()
@@ -1491,6 +1505,8 @@ class App(tk.Tk):
             self._q = queue.Queue()
             self._active_request = None
             self._unlock_ui()
+            self._agent_thinking_session_active = False
+            self._agent_thinking_user_override = None
             message = 'AgentLoop 超过总时限，已停止等待；没有回退到规则猜测。'
             self._append_chat('assistant', message)
             self._agent_context.append({'role': 'assistant', 'content': message})
@@ -2456,19 +2472,16 @@ class App(tk.Tk):
         v_url = tk.StringVar(value=llm.get('base_url', ''))
         v_model = tk.StringVar(value=llm.get('model', ''))
         v_key = tk.StringVar(value=llm.get('api_key', ''))
-        model_host = ''
-        try:
-            model_host = (urlparse(llm.get('base_url', '')).hostname or '').lower()
-        except Exception:
-            pass
-        default_effort = ('high' if model_host == 'api.deepseek.com'
-                          and str(llm.get('model') or '').lower()
-                          in {'deepseek-flash', 'deepseek-v4-pro'} else 'none')
-        reasoning_default = str(llm.get('reasoning_effort', default_effort)
-                                or default_effort).lower()
-        if reasoning_default == 'auto':
-            reasoning_default = default_effort
-        v_reasoning = tk.StringVar(value=reasoning_default)
+        reasoning_default = str(llm.get('reasoning_effort', 'auto') or 'auto').lower()
+        reasoning_labels = {
+            'auto': '自动（按阶段控制）',
+            'none': 'none',
+            'low': 'low',
+            'high': 'high',
+            'max': 'max',
+        }
+        v_reasoning = tk.StringVar(
+            value=reasoning_labels.get(reasoning_default, reasoning_labels['auto']))
         frm = ttk.Frame(win, padding=14)
         frm.pack(fill='both', expand=True)
         ttk.Checkbutton(frm, text='启用多模态 AgentLoop',
@@ -2480,16 +2493,15 @@ class App(tk.Tk):
             ent.grid(row=i, column=1, sticky='ew', pady=4)
         ttk.Label(frm, text='思考强度').grid(row=4, column=0, sticky='w', pady=4)
         ttk.Combobox(frm, textvariable=v_reasoning,
-                     values=('none', 'low', 'high', 'max'),
-                     state='readonly', width=14).grid(
+                     values=tuple(reasoning_labels.values()),
+                     state='readonly', width=22).grid(
                          row=4, column=1, sticky='w', pady=4)
         frm.columnconfigure(1, weight=1)
-        ttk.Label(frm, text='启用后，Agent 会先理解本轮对话，再自行选择回答、修改模型或执行完整建模复核。\n'
-                            '服务端模型必须同时支持图像输入和工具调用；不支持时会明确报错，不回退到猜测。\n'
-                            '思考强度（DeepSeek 官方接口）：默认 high；none=关闭思考；low/high/max 对应官方 effort。\n'
-                            '思考强度（SiliconFlow，如 Kimi-K2.7-Code）：low/high=开启思考；max=开启并给最大思考预算 32768；\n'
-                            'none=不发送开关，按服务端默认（Kimi 等推理模型默认会思考）；思考过程将流式实时显示。\n'
-                            '其他 OpenAI 兼容服务请按其参数支持情况选择；none 不发送推理参数。\n'
+        ttk.Label(frm, text='启用后，Agent 会先理解本轮对话，再自行选择回答、修改模型或执行建模复核。\n'
+                            '服务端模型必须支持图像输入和工具调用；不支持时会明确报错，不回退到猜测。\n'
+                            '自动（推荐）：普通建模 low、读图与多模态复核 high；DeepSeek 使用官方 effort。\n'
+                            'SiliconFlow Kimi 自动模式限制思考预算：普通步骤 1024、读图/复核 2048；手动档 high=2048、max=4096。\n'
+                            'none=关闭思考；low/high/max=手动选择强度，但 Kimi 仍应用对应长度上限。思考增量实时显示在右侧。\n'
                             '关闭时仅使用内置文本规则；图片输入需要启用兼容的多模态模型。',
                   font=('Microsoft YaHei UI', 8), foreground='#7f8c9b',
                   justify='left').grid(row=5, column=0, columnspan=2, sticky='w', pady=8)
@@ -2499,7 +2511,9 @@ class App(tk.Tk):
             llm_cfg.update({'enabled': bool(v_en.get()), 'base_url': v_url.get().strip(),
                             'model': v_model.get().strip(), 'api_key': v_key.get().strip()})
             llm_cfg.pop('thinking', None)
-            llm_cfg['reasoning_effort'] = v_reasoning.get()
+            label_to_effort = {value: key for key, value in reasoning_labels.items()}
+            llm_cfg['reasoning_effort'] = label_to_effort.get(
+                v_reasoning.get(), 'auto')
             self.cfg['llm'] = llm_cfg
             cfgmod.save(self.cfg)
             self.btn_model.configure(text=self._model_button_text())

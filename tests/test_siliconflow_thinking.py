@@ -24,11 +24,12 @@ class SiliconFlowThinkingTests(unittest.TestCase):
             {"enable_thinking": False}, self._params("none", budget=2048)
         )
 
-    def test_low_medium_high_enable_without_reasoning_effort_or_budget(self):
-        for effort in ("low", "medium", "high"):
+    def test_kimi_effort_uses_short_default_thinking_budgets(self):
+        for effort, budget in (("low", 1024), ("medium", 1024), ("high", 2048)):
             with self.subTest(effort=effort):
                 self.assertEqual(
-                    {"enable_thinking": True}, self._params(effort)
+                    {"enable_thinking": True, "thinking_budget": budget},
+                    self._params(effort),
                 )
 
     def test_explicit_kimi_budget_is_forwarded_and_overrides_max_default(self):
@@ -41,7 +42,7 @@ class SiliconFlowThinkingTests(unittest.TestCase):
             self._params("max", budget=4096),
         )
         self.assertEqual(
-            {"enable_thinking": True, "thinking_budget": 32768},
+            {"enable_thinking": True, "thinking_budget": 4096},
             self._params("max"),
         )
 

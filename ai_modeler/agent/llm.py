@@ -202,6 +202,31 @@ def _is_siliconflow_host(base_url):
 _SF_BUDGET_MAX_WORDS = {'max', 'xhigh', 'ultra'}
 _SF_THINKING_BUDGET_MIN = 128
 _SF_THINKING_BUDGET_MAX = 32768
+_AGENT_AUTO_THINKING_BUDGET = {'low': 1024, 'high': 2048}
+_SF_KIMI_EFFORT_THINKING_BUDGET = {
+    'low': 1024,
+    'medium': 1024,
+    'high': 2048,
+    'max': 4096,
+    'xhigh': 4096,
+    'ultra': 4096,
+}
+
+
+def agent_reasoning_config(cfg, effort):
+    """Apply the automatic AgentLoop effort and Kimi's phase budget."""
+    request_cfg = dict(cfg or {})
+    if str(request_cfg.get('reasoning_effort') or '').strip().lower() != 'auto':
+        return request_cfg
+
+    selected_effort = 'high' if str(effort or '').strip().lower() == 'high' else 'low'
+    request_cfg['reasoning_effort'] = selected_effort
+    model = str(request_cfg.get('model') or '').strip().lower()
+    if (_is_siliconflow_host(request_cfg.get('base_url'))
+            and model.startswith('moonshotai/kimi-')
+            and request_cfg.get('thinking_budget') is None):
+        request_cfg['thinking_budget'] = _AGENT_AUTO_THINKING_BUDGET[selected_effort]
+    return request_cfg
 
 
 def _siliconflow_kimi_thinking_budget(cfg):
@@ -232,6 +257,12 @@ def _siliconflow_kimi_thinking_budget(cfg):
                min(_SF_THINKING_BUDGET_MAX, budget))
 
 
+def _siliconflow_kimi_default_thinking_budget(effort):
+    """Keep every enabled Kimi effort below a practical default ceiling."""
+    normalized = str(effort or '').strip().lower()
+    return _SF_KIMI_EFFORT_THINKING_BUDGET.get(normalized, 4096)
+
+
 def _siliconflow_thinking_params(cfg):
     r"""Translate the app's thinking config into SiliconFlow's native fields.
 
@@ -240,16 +271,17 @@ def _siliconflow_thinking_params(cfg):
     与 ``reasoning_effort`` 字符串会被它静默忽略（后者只对 DeepSeek-V4/GLM
     系列生效）。文档: https://docs.siliconflow.cn/docs/api/chat-completions-post
 
-    可选 ``thinking_budget`` JSON 字段只用于 moonshotai/Kimi-*；值会
-    约束到 SiliconFlow API 接受的 128..32768 范围。显式值覆盖 max 档默认预算。
+    Kimi 在自动模式下普通建模步骤限制为 1024 tokens，读图/复核限制为
+    2048 tokens；手动档 low/medium=1024、high=2048、max=4096。可选
+    ``thinking_budget`` 显式值覆盖默认值，并约束到 API 接受的 128..32768 范围。
 
     档位映射:
       · thinking 键（布尔/字典，程序化配置存在时优先）:
           False / {'type':'disabled'} → enable_thinking=False（真正关闭）
-          True  / {'type':'enabled'}  → enable_thinking=True（max 档加预算）
+          True  / {'type':'enabled'}  → enable_thinking=True（Kimi 按强度加预算）
       · 否则按 reasoning_effort：
-          max / xhigh / ultra → enable_thinking=True + thinking_budget=32768
-          low / medium / high → enable_thinking=True
+          max / xhigh / ultra → enable_thinking=True + Kimi 默认预算 4096
+          low / medium / high → enable_thinking=True + Kimi 默认预算 1024/2048
           none / disabled     → enable_thinking=False
           auto / 空           → 不发送开关，保持服务端默认
     """
@@ -258,6 +290,9 @@ def _siliconflow_thinking_params(cfg):
     effort = str(cfg.get('reasoning_effort') or '').strip().lower()
 
     budget = _siliconflow_kimi_thinking_budget(cfg)
+    is_kimi = str(cfg.get('model') or '').strip().lower().startswith('moonshotai/kimi-')
+    kimi_budget = (budget if budget is not None else
+                   _siliconflow_kimi_default_thinking_budget(effort)) if is_kimi else None
 
     def disabled_params():
         return {'enable_thinking': False}
@@ -266,10 +301,8 @@ def _siliconflow_thinking_params(cfg):
         if not thinking:
             return disabled_params()
         params = {'enable_thinking': True}
-        if budget is not None:
-            params['thinking_budget'] = budget
-        elif effort in _SF_BUDGET_MAX_WORDS:
-            params['thinking_budget'] = _SF_THINKING_BUDGET_MAX
+        if kimi_budget is not None:
+            params['thinking_budget'] = kimi_budget
         return params
     if isinstance(thinking, dict):
         kind = str(thinking.get('type') or '').strip().lower()
@@ -277,20 +310,26 @@ def _siliconflow_thinking_params(cfg):
             return disabled_params()
         if kind in {'enabled', 'on', 'true'}:
             params = {'enable_thinking': True}
-            if budget is not None:
-                params['thinking_budget'] = budget
-            elif effort in _SF_BUDGET_MAX_WORDS:
-                params['thinking_budget'] = _SF_THINKING_BUDGET_MAX
+            if kimi_budget is not None:
+                params['thinking_budget'] = kimi_budget
             return params
     if effort in {'none', 'disabled', 'off'}:
         return disabled_params()
     if effort in _SF_BUDGET_MAX_WORDS:
-        return {'enable_thinking': True,
-                'thinking_budget': budget or _SF_THINKING_BUDGET_MAX}
+        params = {'enable_thinking': True}
+        if kimi_budget is not None:
+            params['thinking_budget'] = kimi_budget
+        elif budget is not None:
+            params['thinking_budget'] = budget
+        else:
+            # Preserve the previous SiliconFlow max-mode default for other
+            # providers; the smaller per-effort ceilings above are Kimi-only.
+            params['thinking_budget'] = _SF_THINKING_BUDGET_MAX
+        return params
     if effort in {'low', 'medium', 'high'}:
         params = {'enable_thinking': True}
-        if budget is not None:
-            params['thinking_budget'] = budget
+        if kimi_budget is not None:
+            params['thinking_budget'] = kimi_budget
         return params
     if budget is not None:
         return {'thinking_budget': budget}
@@ -429,6 +468,10 @@ class ModelRequestCancelled(RuntimeError):
     """
 
 
+class ModelRequestTimedOut(TimeoutError):
+    """模型流式响应超过整次请求的绝对 deadline。"""
+
+
 def _cancel_requested(cancel_event):
     return cancel_event is not None and cancel_event.is_set()
 
@@ -478,7 +521,8 @@ def emit_stream_progress(event, callback, detail=''):
             callback('模型思考链增量：' + reasoning_delta)
 
 
-def _read_responses_stream(response, progress=None, cancel_event=None):
+def _read_responses_stream(response, progress=None, cancel_event=None,
+                           deadline=None):
     event_name = ''
     data_lines = []
     final_response = None
@@ -490,6 +534,12 @@ def _read_responses_stream(response, progress=None, cancel_event=None):
     tool_argument_chars = 0
     last_progress = 0.0
     started = time.monotonic()
+
+    def check_deadline():
+        if deadline is not None and time.monotonic() >= deadline:
+            raise ModelRequestTimedOut(
+                'DeepSeek Responses 流式响应达到总时限（已接收 reasoning %s 字符 / '
+                'output %s 字符）。' % (reasoning_chars, output_chars))
 
     def emit(kind, force=False):
         nonlocal last_progress, pending_reasoning_delta
@@ -516,6 +566,7 @@ def _read_responses_stream(response, progress=None, cancel_event=None):
         nonlocal event_name, data_lines, final_response, final_event
         nonlocal reasoning_chars, pending_reasoning_delta
         nonlocal output_chars, visible_output, tool_argument_chars
+        check_deadline()
         if not data_lines:
             event_name = ''
             return
@@ -553,6 +604,7 @@ def _read_responses_stream(response, progress=None, cancel_event=None):
                 '用户已请求停止：已中断 DeepSeek Responses 流（中断前已接收 '
                 'reasoning %s 字符 / output %s 字符）。'
                 % (reasoning_chars, output_chars))
+        check_deadline()
         line = raw_line.decode('utf-8', errors='replace').rstrip('\r\n')
         if not line:
             consume_event()
@@ -563,6 +615,7 @@ def _read_responses_stream(response, progress=None, cancel_event=None):
         elif line.startswith('data:'):
             data_lines.append(line[5:].lstrip())
     consume_event()
+    check_deadline()
     if final_response is None:
         raise RuntimeError('DeepSeek Responses SSE 提前结束，未收到 response.completed/incomplete/failed。')
     if final_event == 'response.failed':
@@ -644,7 +697,7 @@ def _responses_to_chat_message(response, final_event, payload):
 
 def _deepseek_responses_completion(messages, cfg, tools, timeout, max_tokens,
                                    temperature, progress=None, cancel_event=None,
-                                   tool_choice=None):
+                                   tool_choice=None, deadline=None):
     _check_cancelled(cancel_event)
     model = cfg.get('model') or 'deepseek-flash'
     base = (cfg.get('base_url') or '').rstrip('/')
@@ -685,7 +738,10 @@ def _deepseek_responses_completion(messages, cfg, tools, timeout, max_tokens,
     try:
         with urllib.request.urlopen(request, timeout=timeout) as response:
             result, final_event = _read_responses_stream(
-                response, progress=progress, cancel_event=cancel_event)
+                response, progress=progress, cancel_event=cancel_event,
+                deadline=deadline)
+    except ModelRequestTimedOut:
+        raise
     except urllib.error.HTTPError as exc:
         try:
             reason = exc.read().decode('utf-8', errors='replace')[:2000]
@@ -697,7 +753,8 @@ def _deepseek_responses_completion(messages, cfg, tools, timeout, max_tokens,
     return _responses_to_chat_message(result, final_event, payload)
 
 
-def _read_chat_completions_stream(response, progress=None, cancel_event=None):
+def _read_chat_completions_stream(response, progress=None, cancel_event=None,
+                                  deadline=None):
     r"""Consume an OpenAI-compatible chat/completions SSE stream.
 
     Streaming is what makes thinking chains visible for reasoning models on
@@ -725,6 +782,13 @@ def _read_chat_completions_stream(response, progress=None, cancel_event=None):
     data_lines = []
     body_lines = []
 
+    def check_deadline():
+        if deadline is not None and time.monotonic() >= deadline:
+            raise ModelRequestTimedOut(
+                '模型流式响应达到总时限（已接收 reasoning %s 字符 / output %s 字符 / '
+                '工具参数 %s 字符）。'
+                % (reasoning_chars, output_chars, tool_argument_chars))
+
     def emit(force=False):
         nonlocal last_progress, pending_reasoning_delta
         now = time.monotonic()
@@ -750,6 +814,7 @@ def _read_chat_completions_stream(response, progress=None, cancel_event=None):
         nonlocal finish_reason, usage, response_id, chunk_count
         nonlocal reasoning_chars, output_chars, tool_argument_chars
         nonlocal pending_reasoning_delta, visible_output
+        check_deadline()
         if not data_lines:
             return
         raw = '\n'.join(data_lines).strip()
@@ -823,6 +888,7 @@ def _read_chat_completions_stream(response, progress=None, cancel_event=None):
                 '用户已请求停止：已中断模型流（中断前已接收 reasoning %s 字符 / '
                 'output %s 字符 / 工具参数 %s 字符）。'
                 % (reasoning_chars, output_chars, tool_argument_chars))
+        check_deadline()
         line = raw_line.decode('utf-8', errors='replace').rstrip('\r\n')
         body_lines.append(line)
         if not line:
@@ -833,6 +899,7 @@ def _read_chat_completions_stream(response, progress=None, cancel_event=None):
             data_lines.append(line[5:].lstrip())
     consume_chunk()
     emit(force=True)
+    check_deadline()
     if chunk_count == 0 and body_lines:
         # 个别兼容实现会忽略 stream=true 直接回完整 JSON；保持该路径可用。
         try:
@@ -855,6 +922,7 @@ def _read_chat_completions_stream(response, progress=None, cancel_event=None):
                         'name': str(function.get('name') or ''),
                         'arguments': str(function.get('arguments') or ''),
                     })
+                check_deadline()
                 return {
                     'content': str(message.get('content') or ''),
                     'reasoning': str(message.get('reasoning_content') or ''),
@@ -869,6 +937,7 @@ def _read_chat_completions_stream(response, progress=None, cancel_event=None):
         raise RuntimeError('兼容接口流式响应为空：未收到任何 chat.completion.chunk。')
     if finish_reason is None and not content_parts and not tool_order:
         raise RuntimeError('兼容接口流式响应提前结束，未收到任何增量内容。')
+    check_deadline()
     return {
         'content': ''.join(content_parts),
         'reasoning': ''.join(reasoning_parts),
@@ -908,6 +977,7 @@ def _chat_stream_to_message(stream, payload):
                          else 'disabled'}
     message['_request_thinking'] = thinking_sent
     message['_request_reasoning_effort'] = payload.get('reasoning_effort')
+    message['_request_thinking_budget'] = payload.get('thinking_budget')
     message['_api_protocol'] = 'chat_completions_stream'
     message['_response_id'] = stream.get('response_id')
     usage = stream.get('usage') or {}
@@ -929,7 +999,7 @@ def _chat_stream_to_message(stream, payload):
 
 def chat_completion(messages, cfg: dict, tools=None, timeout=180,
                     max_tokens=4096, temperature=0.1, progress=None,
-                    cancel_event=None, tool_choice=None):
+                    cancel_event=None, tool_choice=None, deadline=None):
     """Call a configured model and normalize its reply for the local AgentLoop.
 
     Official DeepSeek endpoints use the Responses API with SSE streaming;
@@ -950,11 +1020,22 @@ def chat_completion(messages, cfg: dict, tools=None, timeout=180,
     if not ok:
         raise RuntimeError(detail)
 
+    # Callers with a shared AgentLoop budget pass its absolute deadline. Other
+    # callers retain their existing timeout budget, now enforced across the
+    # whole SSE stream as well as by urllib's per-read socket timeout.
+    if deadline is None and timeout is not None:
+        try:
+            deadline = time.monotonic() + max(0.0, float(timeout))
+        except (TypeError, ValueError):
+            deadline = None
+    if deadline is not None and time.monotonic() >= deadline:
+        raise ModelRequestTimedOut('模型请求达到总时限，未开始读取响应。')
+
     if _is_deepseek_responses(base, model):
         return _deepseek_responses_completion(
             messages, cfg, tools, timeout, max_tokens, temperature,
             progress=progress, cancel_event=cancel_event,
-            tool_choice=tool_choice)
+            tool_choice=tool_choice, deadline=deadline)
 
     payload = {
         'model': model,
@@ -997,7 +1078,10 @@ def chat_completion(messages, cfg: dict, tools=None, timeout=180,
     try:
         with urllib.request.urlopen(request, timeout=timeout) as response:
             stream = _read_chat_completions_stream(
-                response, progress=progress, cancel_event=cancel_event)
+                response, progress=progress, cancel_event=cancel_event,
+                deadline=deadline)
+    except ModelRequestTimedOut:
+        raise
     except urllib.error.HTTPError as exc:
         try:
             reason = exc.read().decode('utf-8', errors='replace')[:1000]

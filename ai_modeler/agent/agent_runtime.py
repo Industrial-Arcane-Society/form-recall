@@ -30,10 +30,6 @@ MAX_OUTPUT_TOKENS = 65536
 DEFAULT_CONTEXT_CHARS = 1000000
 COMPACT_AFTER_TOOL_GROUPS = 8
 RETAINED_TOOL_GROUPS = 4
-# A geometry review is owed after the first preview and again after a sizeable
-# batch of edits. The finish gate still demands a review of the exact final
-# geometry fingerprint, regardless of this progress checkpoint interval.
-REVIEW_AFTER_GEOMETRY_MUTATIONS = 6
 
 _VIEWS = ("front", "right", "top", "iso", "back", "left", "bottom")
 _VIEW_SETS = ("three", "extended", "iso", *_VIEWS)
@@ -215,21 +211,14 @@ _REFERENCE_READING_TOOL_SCHEMA = {
                 "properties": {
                     "id": {"type": "string", "minLength": 1},
                     "kind": {"type": "string", "minLength": 1},
-                    "quantity": {"type": "integer", "minimum": 1},
+                    "quantity": {
+                        "type": "integer", "minimum": 1,
+                        "description": ("跨整个工件估计的唯一物理特征数；孔组按唯一物理孔计，"
+                                        "不等于各可见面孔口数之和。"),
+                    },
                     "region": {"type": "string", "minLength": 1},
                     "arrangement": {"type": "string", "minLength": 1},
                     "evidence": {"type": "string", "minLength": 1},
-                    "relative_size_order": {
-                        "type": "array", "maxItems": 24,
-                        "items": {"type": "string", "enum": [
-                            "large", "medium", "small", "same", "unknown"]},
-                    },
-                    "size_order_axis": {"type": "string", "enum": [
-                        "horizontal_left_to_right", "horizontal_right_to_left",
-                        "vertical_top_to_bottom", "vertical_bottom_to_top",
-                        "unknown", "not_applicable"]},
-                    "size_order_confidence": {"type": "string", "enum": [
-                        "high", "medium", "low", "unknown"]},
                 },
                 "required": ["id", "kind", "quantity", "region",
                              "arrangement", "evidence"],
@@ -260,7 +249,16 @@ _REFERENCE_READING_TOOL_SCHEMA = {
                             "additionalProperties": False,
                             "properties": {
                                 "kind": {"type": "string", "minLength": 1},
-                                "quantity": {"type": "integer", "minimum": 1},
+                                "quantity": {
+                                    "type": "integer", "minimum": 1,
+                                    "description": ("仅计本可见面上的孔口/特征实例；一个通孔可在入口面和出口面"
+                                                    "各出现一次，因此跨面合计可高于唯一物理孔数。"),
+                                },
+                                "physical_feature_group_id": {
+                                    "type": "string", "minLength": 1,
+                                    "description": ("可选：仅在有图像证据支持对应关系时，填写 feature_groups 中"
+                                                    "已有全局物理特征组的 id；不能确认时省略并记录不确定性。"),
+                                },
                                 "arrangement": {"type": "string", "minLength": 1},
                                 "evidence": {"type": "string", "minLength": 1},
                                 "normalized_centers": {
@@ -293,9 +291,9 @@ _REFERENCE_READING_TOOL_SCHEMA = {
         },
         "dimensionless_constraints": {
             "type": "array", "maxItems": 24,
-            "description": ("Use image-space ratios rather than millimeters: record measurable target/baseline "
-                            "relations such as a feature extent or spacing relative to a visible object extent. "
-                            "Leave ambiguous relations out and explain them in uncertainties."),
+            "description": ("Return an empty array when no ratio has clearly visible endpoints in the same image "
+                            "projection. Otherwise record only directly measurable target/baseline relations; "
+                            "do not infer hidden depth or estimate dimensions here."),
             "items": {
                 "type": "object", "additionalProperties": False,
                 "properties": {
@@ -333,7 +331,7 @@ AGENT_TOOLS = [
     ),
     _tool(
         "cad_inspect_references",
-        "独立读取本轮原始参考图，不生成或修改 CAD。必须逐图列出可见区域边界、实面/后退实面/背景开口状态、特征数量和像素证据；重复特征尽可能记录归一化位置及相对尺寸次序，并把可辨认的局部尺寸/间距与同图基准写成无量纲比例。不要把不同平面合并，也不要凭颜色重复计数。互斥区域状态会被程序拒绝。",
+        "独立读取本轮原始参考图，不生成或修改 CAD。必须逐图列出可见区域边界、实面/后退实面/背景开口状态、特征数量和像素证据。feature_groups[].quantity 表示跨工件估计的唯一物理特征数（孔组按唯一物理孔计）；visible_regions[].features[].quantity 表示该可见面上的孔口/特征实例数，一个通孔可在入口和出口面各出现一次，跨面孔口合计可高于物理孔数。有证据支持时，可用逐面特征的 physical_feature_group_id 指向已有全局组；无法确认时省略并记录不确定性。重复特征尽可能记录归一化位置及相对尺寸次序，并把可辨认的局部尺寸/间距与同图基准写成无量纲比例。不要把不同平面合并、不要凭颜色重复计数，也不要猜测不可见的孔深。互斥区域状态会被程序拒绝。",
         {"reference_reading": _REFERENCE_READING_TOOL_SCHEMA}, ["reference_reading"],
     ),
     _tool(
@@ -412,6 +410,8 @@ AGENT_TOOLS = [
 
 
 MAX_IDENTICAL_FINISHES = 3
+# Initial explicit false plus one same-version confirmation.
+NONCOMPARABLE_REFERENCE_REVIEW_CONFIRMATIONS = 2
 
 
 def _reference_reading_blockers(reading, plan=None, final=False) -> list:
@@ -444,26 +444,6 @@ def _reference_reading_blockers(reading, plan=None, final=False) -> list:
             blockers.append("feature_groups[%d].region 不能为空。" % (index - 1))
         if not evidence:
             blockers.append("feature_groups[%d].evidence 不能为空。" % (index - 1))
-        order = group.get("relative_size_order")
-        if order is not None:
-            if (not isinstance(order, list) or not isinstance(quantity, int)
-                    or len(order) != quantity
-                    or any(value not in {"large", "medium", "small", "same", "unknown"}
-                           for value in order)):
-                blockers.append(
-                    "feature_groups[%d].relative_size_order 必须按可见排列为每个特征给一个相对大小标签。"
-                    % (index - 1))
-            elif (len(order) > 1
-                  and any(value not in {"unknown", "same"} for value in order)
-                  and str(group.get("size_order_axis") or "unknown")
-                  in {"unknown", "not_applicable"}):
-                blockers.append(
-                    "feature_groups[%d] 给出了顺序大小，但没有可核对的排列轴。"
-                    % (index - 1))
-            if not str(group.get("size_order_confidence") or "").strip():
-                blockers.append(
-                    "feature_groups[%d] 给出了顺序大小，但没有记录判断置信度。"
-                    % (index - 1))
     constraints = reading.get("dimensionless_constraints")
     if not isinstance(constraints, list):
         blockers.append("reference_reading.dimensionless_constraints 必须是数组；无法量化时可为空。")
@@ -500,9 +480,18 @@ def _reference_region_blockers(reading, active_images=None) -> list:
         return ["reference_reading.visible_regions 必须逐个列出原图中的可见平面和开口。"]
     known_images = {os.path.basename(str(name)) for name in active_images or []}
     seen = set()
-    holes_by_image = {}
+    images_with_regions = set()
     bounded_regions = []
     blockers = []
+    feature_groups = reading.get("feature_groups")
+    feature_group_rows = feature_groups if isinstance(feature_groups, list) else []
+    feature_group_ids = {
+        group["id"].strip()
+        for group in feature_group_rows
+        if isinstance(group, dict)
+        and isinstance(group.get("id"), str)
+        and group["id"].strip()
+    }
     valid_surface_states = {"solid_face", "recessed_solid_face",
                             "background_opening", "unknown"}
     for constraint_index, constraint in enumerate(
@@ -526,6 +515,7 @@ def _reference_region_blockers(reading, active_images=None) -> list:
         surface_state = str(region.get("surface_state") or "").strip().lower()
         if not image or (known_images and image not in known_images):
             blockers.append(label + ".image 必须指向本轮参考图文件名。")
+        images_with_regions.add(image)
         key = (image, region_id)
         if not region_id or key in seen:
             blockers.append(label + ".id 必须非空且在同一张图内唯一。")
@@ -551,7 +541,6 @@ def _reference_region_blockers(reading, active_images=None) -> list:
         if not isinstance(features, list):
             blockers.append(label + ".features 必须是数组，可用空数组表示没有可见特征。")
             continue
-        region_holes = 0
         for feature_index, feature in enumerate(features):
             feature_label = "%s.features[%d]" % (label, feature_index)
             if not isinstance(feature, dict):
@@ -564,8 +553,12 @@ def _reference_region_blockers(reading, active_images=None) -> list:
             if not isinstance(quantity, int) or isinstance(quantity, bool) or quantity < 1:
                 blockers.append(feature_label + ".quantity 必须是正整数。")
                 continue
-            if "hole" in kind or "孔" in kind:
-                region_holes += quantity
+            if "physical_feature_group_id" in feature:
+                group_id = feature.get("physical_feature_group_id")
+                if (not isinstance(group_id, str) or not group_id.strip()
+                        or group_id.strip() not in feature_group_ids):
+                    blockers.append(
+                        feature_label + ".physical_feature_group_id 必须引用现有的 feature_groups[].id。")
             if ("hole" in kind or "孔" in kind) and surface_state == "background_opening":
                 blockers.append(feature_label + " 把孔列在背景开口上；请分开记录后退实体孔面和空隙。")
             if not str(feature.get("arrangement") or "").strip():
@@ -601,8 +594,6 @@ def _reference_region_blockers(reading, active_images=None) -> list:
                 if not str(feature.get("size_order_confidence") or "").strip():
                     blockers.append(
                         feature_label + " 给出了相对大小顺序，但没有记录判断置信度。")
-        holes_by_image[image] = holes_by_image.get(image, 0) + region_holes
-
     # A recessed solid face and a background opening are mutually exclusive
     # descriptions when they cover the same projected image area. Partial
     # overlap is normal in perspective views, so only near-identical boxes are
@@ -633,25 +624,9 @@ def _reference_region_blockers(reading, active_images=None) -> list:
                     "或将无法判定的区域标为 unknown 后再建模。"
                     % (image_a, region_a, state_a, region_b, state_b))
 
-    missing_images = known_images - set(holes_by_image.keys())
+    missing_images = known_images - images_with_regions
     for image in sorted(missing_images):
         blockers.append("参考图 %s 没有任何对应的 visible_regions。" % image)
-
-    if len(known_images) == 1 and holes_by_image:
-        groups = reading.get("feature_groups") or []
-        grouped_holes = sum(
-            int(row.get("quantity", 0)) for row in groups
-            if isinstance(row, dict)
-            and ("hole" in str(row.get("kind") or "").lower()
-                 or "孔" in str(row.get("kind") or ""))
-            and isinstance(row.get("quantity"), int)
-            and not isinstance(row.get("quantity"), bool))
-        region_holes = next(iter(holes_by_image.values()))
-        if grouped_holes and grouped_holes != region_holes:
-            blockers.append(
-                "feature_groups 与逐面 visible_regions 的孔数量不一致：前者 %d 个，后者 %d 个；"
-                "请回看同一张原图并统一数量，不要用其中一份猜测覆盖另一份。"
-                % (grouped_holes, region_holes))
     return list(dict.fromkeys(blockers))
 
 
@@ -675,7 +650,7 @@ def _inspect_references(args: dict, state: dict) -> dict:
         state["reference_reading_revision"] = state.get(
             "reference_reading_revision", 0) + 1
     state["reference_reading_source"] = "cad_inspect_references"
-    hole_total = sum(
+    visible_hole_aperture_total = sum(
         int(feature.get("quantity", 0))
         for region in reading.get("visible_regions", [])
         if isinstance(region, dict)
@@ -686,11 +661,12 @@ def _inspect_references(args: dict, state: dict) -> dict:
     return {
         "state": "reference_reading_ready",
         "visible_region_count": len(reading.get("visible_regions", [])),
-        "visible_hole_count": hole_total,
+        "visible_hole_aperture_count": visible_hole_aperture_total,
         "reference_reading": reading,
         "next_step_hint": (
-            "读图已通过逐区域和孔数一致性校验。现在按每个可见实体面分别规划特征，"
-            "先建主体，之后逐个添加特征并观察预览；不要把未知拓扑直接当成空槽。"),
+            "读图已通过逐区域校验。现在按全局唯一物理特征摘要规划 CAD，并分别核对每个可见面的孔口；"
+            "同一通孔可在不同面各有一个孔口，不要把跨面孔口总数当作物理孔数。先建主体，之后逐个添加特征并观察预览；"
+            "不要把未知拓扑直接当成空槽。"),
     }
 
 
@@ -887,6 +863,9 @@ def _state_progress_key(state: dict):
         tuple((str(row.get("issue_id")), str(row.get("evidence")))
               for row in pending if isinstance(row, dict)),
         review_key(state.get("latest_geometry_review")),
+        tuple((row.get("image"), row.get("view"), row.get("evidence"),
+               row.get("consecutive_explicit_false_reviews"))
+              for row in _reference_image_gap_records(state)),
         review_key(state.get("latest_similarity_review")),
         (finish_gate.get("state"), tuple(finish_gate.get("blockers") or [])),
         state.get("web_search_calls", 0),
@@ -912,6 +891,7 @@ def _runtime_snapshot(state: dict) -> str:
             "geometry_fingerprint": state.get("preview_geometry_fingerprint"),
         },
         "reviewed_view_status": state.get("reviewed_view_status", {}),
+        "reference_image_evidence_gaps": _reference_image_gap_records(state),
         "latest_reviews": latest_reviews[-6:],
         "geometry_review_completed": state.get("geometry_review_completed", False),
         "geometry_review_debt": state.get("geometry_review_debt", 0),
@@ -1011,7 +991,8 @@ def _is_tool_choice_unsupported(error: Exception) -> bool:
         "doesn't support", "does not support", "不支持", "无效"))
 
 
-def _call_model(messages, state, tools, output_tokens, tool_choice=None):
+def _call_model(messages, state, tools, output_tokens, tool_choice=None,
+                reasoning_task="modeling"):
     deadline = state["deadline"]
     compact_retry_used = False
     transient_attempt = 0
@@ -1023,9 +1004,11 @@ def _call_model(messages, state, tools, output_tokens, tool_choice=None):
         model = str((state.get("model_cfg") or {}).get("model") or "默认模型")
         model_cfg = dict(state.get("model_cfg") or {})
         if str(model_cfg.get("reasoning_effort") or "").lower() == "auto":
-            model_cfg["reasoning_effort"] = (
-                "high" if state.get("has_reference_images")
-                and not state.get("current_plan") else "low")
+            model_cfg = llm.agent_reasoning_config(
+                model_cfg,
+                "high" if reasoning_task in {
+                    "reference_inventory", "geometry_review"}
+                else "low")
         effort = model_cfg.get("reasoning_effort")
         thinking = model_cfg.get("thinking")
         if not effort and isinstance(thinking, dict):
@@ -1040,16 +1023,20 @@ def _call_model(messages, state, tools, output_tokens, tool_choice=None):
         detail = "%s · %s" % (request_phase, model)
         if effort:
             detail += " · 推理强度 %s" % effort
+        if model_cfg.get("thinking_budget") is not None:
+            detail += " · 思考预算 %s" % model_cfg["thinking_budget"]
         cad._emit(state.get("progress"), "模型等待中：" + detail)
         try:
             request_timeout = cad._remaining_timeout(deadline)
             cad._begin_model_call(
                 state, request_phase, messages, output_tokens,
-                timeout=request_timeout, tool_choice=tool_choice)
+                timeout=request_timeout, tool_choice=tool_choice,
+                function_tool_names=cad._function_tool_names(tools))
             reply = llm.chat_completion(
                 messages, model_cfg, tools=tools, tool_choice=tool_choice,
                 timeout=request_timeout, max_tokens=output_tokens,
                 cancel_event=state.get("cancel_event"),
+                deadline=deadline,
                 progress=cad._stream_progress_callback(state, detail))
         except llm.ModelRequestCancelled:
             raise                     # 用户主动停止：绝不重试/降级
@@ -1210,6 +1197,7 @@ def _set_plan(args: dict, state: dict) -> dict:
         # confirms each one was repaired against changed geometry.
         state["latest_geometry_review"] = None
         state["latest_similarity_review"] = None
+        state["reference_image_evidence_gaps"] = {}
         state["latest_preview"] = None
         state["preview_geometry_fingerprint"] = None
 
@@ -1688,6 +1676,137 @@ def _view_status(report: dict) -> str:
     return "passed" if clean else "needs_review"
 
 
+def _reference_image_key(value) -> str:
+    return str(value or "").replace("\\", "/").rsplit("/", 1)[-1].casefold()
+
+
+def _explicit_noncomparable_image_evidence(image_row: dict, view: str):
+    """Accept only reviewer evidence for the same source/model view pair."""
+    if not isinstance(image_row, dict) or image_row.get("comparable") is not False:
+        return None
+    source_view = str(image_row.get("source_view") or "unknown").strip().lower()
+    view = str(view or "").strip().lower()
+    if not view or source_view != view:
+        return None
+    evidence = str(image_row.get("visible_evidence") or "").strip()
+    if not evidence:
+        return None
+    # These strings are synthesized when the review omitted a comparison or
+    # the normalized source/reviewer views conflicted; they are not a reviewer
+    # statement that the image itself cannot be compared.
+    if (evidence == "本轮没有返回此原图的可比性检查。"
+            or ("但本轮复核识别为 " in evidence
+                and "视角证据冲突，程序拒绝采用本条比较。" in evidence)
+            or (evidence.startswith("原图为 ")
+                and "本轮模型视图为 " in evidence
+                and "程序不接受跨视角比较。" in evidence)):
+        return None
+    return evidence
+
+
+def _reference_image_gap_records(state: dict, terminal_only=False) -> list:
+    """Return current-fingerprint non-comparable image gaps, never as passes."""
+    active = {_reference_image_key(name)
+              for name in state.get("active_reference_images") or []
+              if _reference_image_key(name)}
+    fingerprint = str(state.get("plan_geometry_fingerprint") or "")
+    if not active or not fingerprint:
+        return []
+    records = state.get("reference_image_evidence_gaps") or {}
+    if not isinstance(records, dict):
+        return []
+    result = []
+    for key, record in records.items():
+        if not isinstance(record, dict) or key not in active:
+            continue
+        if str(record.get("geometry_fingerprint") or "") != fingerprint:
+            continue
+        evidence = str(record.get("evidence") or "").strip()
+        try:
+            confirmations = int(record.get("consecutive_explicit_false_reviews", 0))
+        except (TypeError, ValueError):
+            confirmations = 0
+        terminal = confirmations >= NONCOMPARABLE_REFERENCE_REVIEW_CONFIRMATIONS
+        if not evidence or confirmations < 1 or (terminal_only and not terminal):
+            continue
+        result.append({
+            "image": str(record.get("image") or key),
+            "view": str(record.get("view") or "unknown"),
+            "evidence": evidence,
+            "consecutive_explicit_false_reviews": confirmations,
+            "terminal": terminal,
+        })
+    return sorted(result, key=lambda row: row["image"].casefold())
+
+
+def _restore_current_geometry_review(state: dict) -> bool:
+    """Restore exact-fingerprint review evidence cleared at a text-turn start."""
+    fingerprint = str(state.get("plan_geometry_fingerprint") or "")
+    if not fingerprint:
+        return False
+    records = [
+        row for row in state.get("review_history", [])
+        if isinstance(row, dict)
+        and row.get("review_type") == "geometry"
+        and str(row.get("geometry_fingerprint") or "") == fingerprint
+        and isinstance(row.get("result"), dict)
+    ]
+    if not records:
+        return False
+
+    statuses = {}
+    reviewed_images = {}
+    saw_report = False
+    active = {_reference_image_key(name)
+              for name in state.get("active_reference_images") or []
+              if _reference_image_key(name)}
+    for record in records:
+        for report in (record.get("result") or {}).get("single_view_reports") or []:
+            if not isinstance(report, dict):
+                continue
+            saw_report = True
+            view = str(report.get("view") or "")
+            if view:
+                statuses[view] = _view_status(report)
+            for image_row in report.get("reference_images") or []:
+                if (not isinstance(image_row, dict)
+                        or image_row.get("comparable") is not True
+                        or not str(image_row.get("visible_evidence") or "").strip()):
+                    continue
+                image = str(image_row.get("image") or "").strip()
+                image_key = _reference_image_key(image)
+                if image and (not active or image_key in active):
+                    reviewed_images[image_key] = image
+    if not saw_report:
+        return False
+
+    state["latest_geometry_review"] = records[-1]
+    state["reviewed_view_status"] = statuses
+    state["reference_images_reviewed"] = sorted(reviewed_images.values())
+    covered = set(reviewed_images)
+    terminal_gaps = {
+        _reference_image_key(row.get("image"))
+        for row in _reference_image_gap_records(state, terminal_only=True)
+    }
+    state["geometry_review_completed"] = not active or active.issubset(covered)
+    # Incomplete source coverage remains due unless each gap has independently
+    # met the explicit non-comparability handoff threshold.
+    # This counter tracks edits since a review, not an automatic review quota.
+    # Incomplete image coverage is tracked separately and checked at finish.
+    state["geometry_review_debt"] = 0
+    return bool(not active or active.issubset(covered | terminal_gaps))
+
+
+def _reference_image_gap_blockers(state: dict, terminal_only=True) -> list:
+    blockers = []
+    for record in _reference_image_gap_records(state, terminal_only=terminal_only):
+        blockers.append(
+            "参考图 %s 在当前几何版本的复核中明确不可与 %s 视图比较（%s）；"
+            "此图仍是未解决的证据缺口，不代表视觉通过。请补充可比视角或向用户说明当前候选与缺口。"
+            % (record["image"], record["view"], record["evidence"]))
+    return blockers
+
+
 def _feature_box_bounds(feature: dict):
     """Return axis-aligned XYZ bounds for a centered box feature, if available."""
     parameters = feature.get("parameters") or {}
@@ -1837,28 +1956,86 @@ def _review_model(args: dict, state: dict, source_messages: list) -> dict:
     if review_type == "geometry":
         state["latest_geometry_review"] = record
         statuses = state.setdefault("reviewed_view_status", {})
+        image_outcomes = {}
+        active_image_keys = {
+            _reference_image_key(name)
+            for name in state.get("active_reference_images", [])
+            if _reference_image_key(name)
+        }
         for report in review.get("single_view_reports", []):
             view = report.get("view")
             statuses[view] = _view_status(report)
             reviewed = set(state.get("reference_images_reviewed") or [])
             for image_row in report.get("reference_images") or []:
-                if (isinstance(image_row, dict) and image_row.get("comparable") is True
-                        and str(image_row.get("visible_evidence") or "").strip()):
-                    reviewed.add(str(image_row.get("image") or ""))
+                if not isinstance(image_row, dict):
+                    continue
+                image_name = str(image_row.get("image") or "").strip()
+                image_key = _reference_image_key(image_name)
+                if not image_key or (active_image_keys and image_key not in active_image_keys):
+                    continue
+                visible_evidence = str(image_row.get("visible_evidence") or "").strip()
+                if image_row.get("comparable") is True and visible_evidence:
+                    reviewed.add(image_name)
+                    image_outcomes[image_key] = (
+                        "comparable", image_name, str(view or "unknown"),
+                        visible_evidence)
+                    continue
+                false_evidence = _explicit_noncomparable_image_evidence(
+                    image_row, str(view or ""))
+                if false_evidence:
+                    previous = image_outcomes.get(image_key)
+                    if not previous or previous[0] != "comparable":
+                        image_outcomes[image_key] = (
+                            "noncomparable", image_name, str(view or "unknown"),
+                            false_evidence)
+                elif image_key not in image_outcomes:
+                    image_outcomes[image_key] = (
+                        "unresolved", image_name, str(view or "unknown"), "")
             state["reference_images_reviewed"] = sorted(reviewed)
+        gap_states = state.setdefault("reference_image_evidence_gaps", {})
+        if not isinstance(gap_states, dict):
+            gap_states = {}
+            state["reference_image_evidence_gaps"] = gap_states
+        geometry_fingerprint = str(state.get("plan_geometry_fingerprint") or "")
+        for image_key, (outcome, image_name, view, evidence) in image_outcomes.items():
+            if outcome == "comparable":
+                gap_states.pop(image_key, None)
+                continue
+            if outcome == "unresolved":
+                gap_states.pop(image_key, None)
+                continue
+            previous = gap_states.get(image_key)
+            if (not isinstance(previous, dict)
+                    or str(previous.get("geometry_fingerprint") or "")
+                    != geometry_fingerprint):
+                confirmations = 1
+            else:
+                try:
+                    confirmations = int(previous.get(
+                        "consecutive_explicit_false_reviews", 0))
+                except (TypeError, ValueError):
+                    confirmations = 0
+                confirmations = max(1, confirmations + 1)
+            gap_states[image_key] = {
+                "image": image_name,
+                "view": view,
+                "evidence": evidence,
+                "geometry_fingerprint": geometry_fingerprint,
+                "consecutive_explicit_false_reviews": confirmations,
+                "last_review_invocation": review_index,
+            }
         active_images = {
-            os.path.basename(str(name))
+            _reference_image_key(name)
             for name in state.get("active_reference_images", []) if name
         }
         covered_images = {
-            os.path.basename(str(name))
+            _reference_image_key(name)
             for name in state.get("reference_images_reviewed", []) if name
         }
         reference_coverage_complete = (
             not active_images or active_images.issubset(covered_images))
         state["geometry_review_completed"] = reference_coverage_complete
-        state["geometry_review_debt"] = (
-            0 if reference_coverage_complete else REVIEW_AFTER_GEOMETRY_MUTATIONS)
+        state["geometry_review_debt"] = 0
         pending, resolved_ids, _current = cad._update_multiview_findings(
             state.get("open_multiview_findings", []), review, plan, review_index)
         state["open_multiview_findings"] = pending
@@ -1866,6 +2043,22 @@ def _review_model(args: dict, state: dict, source_messages: list) -> dict:
             state.setdefault("resolved_multiview_finding_ids", []).extend(resolved_ids)
     else:
         state["latest_similarity_review"] = record
+    image_gaps = _reference_image_gap_records(state)
+    terminal_image_gaps = [
+        row for row in image_gaps if row.get("terminal")]
+    actionable_findings = state.get("open_multiview_findings") or []
+    if (review_type == "geometry" and terminal_image_gaps
+            and not actionable_findings):
+        next_step_hint = (
+            "当前候选已保留；以下原图在同一几何版本的连续复核中均有具体证据表明无法与所选模型视图比较：%s。"
+            "这些图片仍是未解决的证据缺口，不是视觉通过。不要重复同一视角复核；"
+            "可调用 ask_user 将当前候选和缺口交给用户，或先请求可比视角。"
+            % "；".join("%s：%s" % (row["image"], row["evidence"])
+                         for row in terminal_image_gaps))
+    elif review.get("decision") == "revise":
+        next_step_hint = "有可定位的几何问题时，提交仅修改相关参数的新 CADPlan，再重新预览和复核。"
+    else:
+        next_step_hint = "检查状态或证据不完整时可选择其它视图再次复核；不能把低置信度当作通过。"
     return {
         "state": review.get("decision"),
         "review_type": review_type,
@@ -1874,6 +2067,9 @@ def _review_model(args: dict, state: dict, source_messages: list) -> dict:
         "requested_views": requested_views,
         "skipped_views": list(review.get("skipped_views") or []),
         "reviewed_view_status": dict(state.get("reviewed_view_status", {})),
+        "reference_image_evidence_gaps": image_gaps,
+        "forced_geometry_review_due": (
+            _reference_review_due(state) if review_type == "geometry" else False),
         "local_image_comparisons": review.get("local_image_comparisons", []),
         "checks": review.get("checks", []),
         "issues": review.get("issues", []),
@@ -1882,22 +2078,18 @@ def _review_model(args: dict, state: dict, source_messages: list) -> dict:
         "confidence": review.get("confidence"),
         "similarity_score": review.get("similarity_score"),
         "similarity_score_semantics": review.get("similarity_score_semantics"),
-        "next_step_hint": (
-            "有可定位的几何问题时，提交仅修改相关参数的新 CADPlan，再重新预览和复核。"
-            if review.get("decision") == "revise" else
-            "检查状态或证据不完整时可选择其它视图再次复核；不能把低置信度当作通过。"
-        ),
+        "next_step_hint": next_step_hint,
     }
 
 
-def _reference_review_due(state: dict) -> bool:
-    """Check whether visible-image evidence has accrued review debt.
+def _reference_review_due(state: dict, final=False) -> bool:
+    """Only enforce full source-image coverage at a terminal handoff.
 
-    The first valid candidate always gets one early source-image check. Later
-    checks are scheduled after a meaningful batch of edits; finalization has a
-    separate exact-fingerprint gate, so a last-minute edit is still reviewed.
+    Mid-build review is model-directed; the program does not interrupt feature
+    construction after an arbitrary number of edits. Finish and ask-user gates
+    can still require a current preview and account for every source image.
     """
-    if not state.get("has_reference_images"):
+    if not final or not state.get("has_reference_images"):
         return False
     plan = state.get("current_plan")
     preview = state.get("latest_preview")
@@ -1910,9 +2102,19 @@ def _reference_review_due(state: dict) -> bool:
     checks = preview.get("local_geometry_checks") or {}
     if checks.get("state") == "failed":
         return False
-    if not state.get("geometry_review_completed"):
-        return True
-    return int(state.get("geometry_review_debt", 0) or 0) >= REVIEW_AFTER_GEOMETRY_MUTATIONS
+    active_images = {
+        _reference_image_key(name)
+        for name in state.get("active_reference_images", []) if name
+    }
+    covered_images = {
+        _reference_image_key(name)
+        for name in state.get("reference_images_reviewed", []) if name
+    }
+    terminal_gaps = {
+        _reference_image_key(row.get("image"))
+        for row in _reference_image_gap_records(state, terminal_only=True)
+    }
+    return bool(active_images - covered_images - terminal_gaps)
 
 
 def _geometry_review_only_tools(tools: list) -> list:
@@ -2141,10 +2343,13 @@ def _finish_gate(state: dict) -> dict:
                     "validation": validation,
                     "review": geometry_review}
         if geometry_review.get("decision") != "accept":
+            review_blockers = list(
+                geometry_review.get("review_gaps")
+                or geometry_review.get("questions")
+                or ["最近一次单视图审查仍有偏差或无法判定的证据。"])
+            review_blockers.extend(_reference_image_gap_blockers(state))
             return {"ready": False, "state": "needs_visual_review",
-                    "blockers": (geometry_review.get("review_gaps") or
-                                 geometry_review.get("questions") or
-                                 ["最近一次单视图审查仍有偏差或无法判定的证据。"]),
+                    "blockers": list(dict.fromkeys(review_blockers)),
                     "validation": validation}
         evidence_blockers = cad._review_evidence_blockers(
             geometry_review, "当前几何版本的多模态审查",
@@ -2152,12 +2357,31 @@ def _finish_gate(state: dict) -> dict:
         if evidence_blockers:
             return {"ready": False, "state": "needs_visual_review",
                     "blockers": evidence_blockers, "validation": validation}
-        missing_images = sorted(set(state.get("active_reference_images") or [])
-                                - set(state.get("reference_images_reviewed") or []))
+        reviewed_image_keys = {
+            _reference_image_key(name)
+            for name in state.get("reference_images_reviewed") or [] if name
+        }
+        missing_images = sorted(
+            name for name in set(state.get("active_reference_images") or [])
+            if _reference_image_key(name) not in reviewed_image_keys)
         if missing_images:
+            terminal_gaps = {
+                _reference_image_key(row.get("image")): row
+                for row in _reference_image_gap_records(state, terminal_only=True)
+            }
+            missing_blockers = []
+            for name in missing_images:
+                gap = terminal_gaps.get(_reference_image_key(name))
+                if gap:
+                    missing_blockers.append(
+                        "参考图 %s 在当前几何版本的复核中明确不可与 %s 视图比较（%s）；"
+                        "此图仍是未解决的证据缺口，不代表视觉通过。请补充可比视角或向用户说明当前候选与缺口。"
+                        % (gap["image"], gap["view"], gap["evidence"]))
+                else:
+                    missing_blockers.append(
+                        "参考图 %s 尚未与可比的模型单视图完成核对。" % name)
             return {"ready": False, "state": "needs_visual_review",
-                    "blockers": ["参考图 %s 尚未与可比的模型单视图完成核对。" % name
-                                 for name in missing_images],
+                    "blockers": missing_blockers,
                     "validation": validation}
         pending = state.get("open_multiview_findings") or []
         if pending:
@@ -2274,6 +2498,10 @@ def _result_uncertainties(state: dict, assumptions: list, questions=None) -> lis
             row.get("value"), row.get("evidence") or row.get("note") or "比例估值"))
     record = state.get("latest_geometry_review") or {}
     review = record.get("result") or {}
+    for gap in _reference_image_gap_records(state, terminal_only=True):
+        values.append(
+            "原图证据缺口（未视为视觉通过）：%s 当前无法与 %s 视图比较（%s）" %
+            (gap["image"], gap["view"], gap["evidence"]))
     for item in review.get("review_gaps") or []:
         values.append("视觉复核证据不足：" + str(item))
     for item in review.get("questions") or []:
@@ -2321,12 +2549,37 @@ def _result_from_state(status: dict, state: dict, reply: str,
     review_fingerprint = geometry_review.get("geometry_fingerprint")
     review_result = geometry_review.get("result") or {}
     validation = state.get("plan_validation") or {}
+    local_checks = preview.get("local_geometry_checks") or {}
     geometry_checked = bool(
         isinstance(plan, dict) and validation.get("state") == "valid"
         and isinstance(preview, dict) and preview
         and current_fingerprint and preview_fingerprint == current_fingerprint
+        and local_checks.get("state") != "failed"
         and (not state.get("has_reference_images")
              or review_fingerprint == current_fingerprint))
+    active_image_keys = {
+        _reference_image_key(name)
+        for name in state.get("active_reference_images") or [] if name
+    }
+    reviewed_image_keys = {
+        _reference_image_key(name)
+        for name in state.get("reference_images_reviewed") or [] if name
+    }
+    review_accepted = bool(
+        geometry_checked and review_result.get("decision") == "accept"
+        and not state.get("open_multiview_findings")
+        and not _reference_image_gap_records(state)
+        and active_image_keys.issubset(reviewed_image_keys)
+        and (not active_image_keys or any(
+            status == "passed" for status in
+            (state.get("reviewed_view_status") or {}).values()))
+        and not any(status == "needs_review" for status in
+                    (state.get("reviewed_view_status") or {}).values()))
+    candidate_requires_verification = bool(
+        isinstance(plan, dict)
+        and (not preview or preview_fingerprint != current_fingerprint
+             or local_checks.get("state") == "failed"
+             or state.get("has_reference_images") and not review_accepted))
     uncertainties = _result_uncertainties(state, assumptions, questions)
     if isinstance(plan, dict) and preview:
         size = (preview.get("dimensions") or {}).get("size")
@@ -2350,6 +2603,10 @@ def _result_from_state(status: dict, state: dict, reply: str,
                 summary += "\n- 另有 %d 项，详见复核记录。" % (
                     len(uncertainties) - len(shown))
         reply = str(reply or "").rstrip() + summary
+    elif isinstance(plan, dict):
+        reply = (str(reply or "").rstrip() +
+                 "\n\nCADPlan 候选已保留且仍可用；本轮没有可展示的渲染预览，"
+                 "因此不能将候选描述为已完成几何或原图核验。")
     warnings = list(preview.get("warnings") or [])
     compatibility_warning = state.get("tool_choice_compatibility_warning")
     if compatibility_warning and compatibility_warning not in warnings:
@@ -2358,6 +2615,9 @@ def _result_from_state(status: dict, state: dict, reply: str,
     return {
         "state": status.get("state", "previewed"),
         "plan": plan,
+        "candidate_available": isinstance(plan, dict),
+        "candidate_preview_available": bool(preview),
+        "candidate_requires_verification": candidate_requires_verification,
         "validation": status.get("validation") or state.get("plan_validation"),
         "preview": preview,
         "warnings": warnings,
@@ -2369,8 +2629,7 @@ def _result_from_state(status: dict, state: dict, reply: str,
             "review_geometry_fingerprint": review_fingerprint,
             "review_decision": review_result.get("decision"),
             "review_accepted": bool(
-                current_fingerprint and review_fingerprint == current_fingerprint
-                and review_result.get("decision") == "accept"),
+                review_accepted),
             "final_geometry_checked": geometry_checked,
         },
         "local_geometry_checks": preview.get("local_geometry_checks"),
@@ -2450,24 +2709,171 @@ def _execute_tool(name: str, args: dict, state: dict, source_messages: list):
         question = str(args.get("question") or "").strip()
         if not question:
             return {"state": "invalid", "error": "问题不能为空。"}, False
-        # An attached image normally gets a first candidate before questions.
-        # If the plan exists, try to show it; if not, give the model a chance to
-        # estimate a coherent candidate instead of asking for dimensions.
-        if state.get("modeling_expected") and not state.get("latest_preview"):
-            if isinstance(state.get("current_plan"), dict):
-                preview = _preview_plan({}, state)
-                if preview.get("state") != "previewed":
-                    return {"state": "blocked", "error": preview.get("error"),
-                            "instruction": "先报告候选生成失败原因，再问用户。"}, False
-            elif not state.get("candidate_attempted"):
+        # Keep a real candidate preview available even when a text-only
+        # follow-up starts with the persisted CADPlan but an empty turn-local
+        # preview cache.
+        candidate_plan = state.get("current_plan")
+        preview = state.get("latest_preview")
+        current_fp = str(state.get("plan_geometry_fingerprint") or "")
+        preview_is_current = (
+            isinstance(preview, dict) and preview.get("state") == "previewed"
+            and current_fp
+            and state.get("preview_geometry_fingerprint") == current_fp)
+        preview_error = None
+        if isinstance(candidate_plan, dict) and not preview_is_current:
+            preview = _preview_plan({}, state)
+            if preview.get("state") != "previewed":
+                preview_error = str(preview.get("error") or "当前候选预览失败。")
+                if state.get("modeling_expected"):
+                    return {"state": "blocked", "error": preview_error,
+                            "candidate_available": True,
+                            "candidate_preview_available": False,
+                            "instruction": "先报告候选预览失败原因，再问用户。"}, False
+        elif not isinstance(candidate_plan, dict) and state.get("modeling_expected"):
+            if not state.get("candidate_attempted"):
                 return {"state": "blocked", "instruction": (
                     "用户提供了参考图。先按比例估算并提交 image_estimate CADPlan，生成首轮候选；"
                     "除非主要拓扑确实无法从图像判断，否则暂不提问。")}, False
+
+        # A mutation may auto-preview inside this same tool batch. The turn's
+        # forced-review tool list is selected only before the batch, so close
+        # that gap here before allowing ask_user to terminate the run.
+        if (state.get("has_reference_images")
+                and isinstance(candidate_plan, dict)
+                and not preview_error
+                and ((state.get("latest_preview") or {}).get(
+                    "local_geometry_checks") or {}).get("state") != "failed"):
+            exact_review = state.get("latest_geometry_review") or {}
+            if str(exact_review.get("geometry_fingerprint") or "") != current_fp:
+                _restore_current_geometry_review(state)
+                exact_review = state.get("latest_geometry_review") or {}
+            if str(exact_review.get("geometry_fingerprint") or "") != current_fp:
+                _review_current_geometry_before_finish(state, source_messages)
+                exact_review = state.get("latest_geometry_review") or {}
+            if str(exact_review.get("geometry_fingerprint") or "") != current_fp:
+                return {
+                    "state": "repair_required",
+                    "candidate_available": True,
+                    "candidate_preview_available": bool(state.get("latest_preview")),
+                    "candidate_requires_verification": True,
+                    "instruction": (
+                        "当前 CADPlan 候选已保留，但本轮尚未完成同一几何版本的原图复核。"
+                        "请先调用 cad_review_model；复核不能完成时，明确把候选标为待核验。"),
+                }, False
+            if _reference_review_due(state):
+                return {
+                    "state": "repair_required",
+                    "candidate_available": True,
+                    "candidate_preview_available": bool(state.get("latest_preview")),
+                    "candidate_requires_verification": True,
+                    "reference_image_evidence_gaps": _reference_image_gap_records(state),
+                    "instruction": (
+                        "当前原图覆盖仍有非终态证据缺口；请按复核检查点补齐比较。"
+                        "未复核候选不得以 ask_user 结束。"),
+                }, False
+        actionable_findings = cad._public_findings(
+            state.get("open_multiview_findings", []))
+        if actionable_findings:
+            repair_findings = []
+            for finding in actionable_findings:
+                affected_parameters = [
+                    {"feature_id": str(row.get("feature_id") or ""),
+                     "path": str(row.get("path") or "")}
+                    for row in finding.get("affected_parameters") or []
+                    if isinstance(row, dict) and row.get("feature_id") and row.get("path")
+                ]
+                repair_findings.append({
+                    "finding_id": str(finding.get("issue_id") or ""),
+                    "item": str(finding.get("item") or ""),
+                    "evidence": str(finding.get("evidence") or ""),
+                    "feature_ids": [str(value) for value in
+                                    finding.get("feature_ids") or []],
+                    "affected_parameters": affected_parameters,
+                })
+
+            geometry_version = str(
+                state.get("plan_geometry_fingerprint")
+                or state.get("plan_revision") or "unknown")
+            recovery = state.get("ask_user_recovery")
+            if (isinstance(recovery, dict)
+                    and recovery.get("geometry_version") == geometry_version):
+                finding_labels = []
+                for finding in repair_findings:
+                    parameters = [
+                        "%s.%s" % (row["feature_id"], row["path"])
+                        for row in finding["affected_parameters"]]
+                    finding_labels.append(
+                        "%s %s%s" % (
+                            finding["finding_id"], finding["item"],
+                            ("（" + "、".join(parameters) + "）") if parameters else ""))
+                stop_question = (
+                    "同一几何版本在已明确 cad_add_feature 和 cad_update_feature 可用后，"
+                    "再次调用 ask_user；已停止重复询问并保留当前候选。"
+                    "仍未解决的 finding：" + "；".join(finding_labels) +
+                    "。请指出确实无法从当前证据判定的具体内容，或在后续继续修复。")
+                state["pending_questions"] = [stop_question]
+                state["routing"] = {
+                    "action": "clarify", "review_mode": "dynamic",
+                    "reason": "同一几何版本重复 ask_user，已停止自动重试。",
+                }
+                return {
+                    "state": "needs_user_input",
+                    "question": stop_question,
+                    "candidate_available": bool(state.get("current_plan")),
+                    "candidate_preview_available": bool(state.get("latest_preview")),
+                    "available_edit_tools": ["cad_add_feature", "cad_update_feature"],
+                    "unresolved_findings": repair_findings,
+                }, True
+
+            state["ask_user_recovery"] = {
+                "geometry_version": geometry_version,
+            }
+            return {
+                "state": "repair_required",
+                "available_edit_tools": ["cad_add_feature", "cad_update_feature"],
+                "unresolved_findings": repair_findings,
+                "instruction": (
+                    "本请求工具列表包含 cad_add_feature 和 cad_update_feature。"
+                    "多模态复核已定位仍可行动的 mismatch；请结合 finding IDs、特征和参数路径继续修复。"
+                    "你自行判断需修改已有特征还是补加缺失特征并选择参数；"
+                    "不要按固定建模顺序重建模型。必要时先读取当前特征树或参数规范，"
+                    "完成修改后再预览并复核。"),
+            }, False
+
+        state.pop("ask_user_recovery", None)
+        terminal_image_gaps = _reference_image_gap_records(
+            state, terminal_only=True)
+        if terminal_image_gaps:
+            gap_lines = [
+                "%s：%s 视图不可比证据：%s" %
+                (row["image"], row["view"], row["evidence"])
+                for row in terminal_image_gaps
+            ]
+            question = (
+                question.rstrip() +
+                "\n\n当前候选已保留，但以下原图仍是未解决的证据缺口，不能视为视觉通过：\n- " +
+                "\n- ".join(gap_lines))
+        if preview_error:
+            question = (
+                question.rstrip() +
+                "\n\nCADPlan 候选仍可用，但本轮未能生成候选预览，且该候选尚未完成最新几何核验：" +
+                preview_error)
         state["pending_questions"] = [question]
         state["routing"] = {"action": "clarify", "review_mode": "dynamic",
                             "reason": "Agent 根据本轮证据请求用户判断。"}
         return {"state": "needs_user_input", "question": question,
-                "candidate_available": bool(state.get("latest_preview"))}, True
+                "candidate_available": bool(state.get("current_plan")),
+                "candidate_preview_available": bool(state.get("latest_preview")),
+                "candidate_requires_verification": bool(
+                    isinstance(state.get("current_plan"), dict)
+                    and (not state.get("latest_preview")
+                         or state.get("preview_geometry_fingerprint")
+                         != state.get("plan_geometry_fingerprint")
+                         or state.get("has_reference_images")
+                         and str((state.get("latest_geometry_review") or {}).get(
+                             "geometry_fingerprint") or "")
+                         != str(state.get("plan_geometry_fingerprint") or ""))),
+                "reference_image_evidence_gaps": terminal_image_gaps}, True
     if name == "cad_finish":
         result = _finish_gate(state)
         checkpoint_review = None
@@ -2699,6 +3105,19 @@ def run_dynamic_loop(prompt: str, image_paths: list, model_cfg: dict,
     state["plan_geometry_fingerprint"] = (
         cad._geometry_plan_fingerprint(current_plan)
         if isinstance(current_plan, dict) else None)
+    active_image_keys = {
+        _reference_image_key(name)
+        for name in state.get("active_reference_images", []) if name
+    }
+    prior_image_gaps = state.get("reference_image_evidence_gaps")
+    state["reference_image_evidence_gaps"] = {
+        key: row for key, row in (prior_image_gaps.items()
+                                  if isinstance(prior_image_gaps, dict) else [])
+        if isinstance(row, dict)
+        and _reference_image_key(key) in active_image_keys
+        and str(row.get("geometry_fingerprint") or "")
+        == str(state.get("plan_geometry_fingerprint") or "")
+    }
     state["reviewed_view_status"] = {}
     state["reference_images_reviewed"] = []
     state["latest_preview"] = None
@@ -2799,6 +3218,9 @@ def run_dynamic_loop(prompt: str, image_paths: list, model_cfg: dict,
             and not state.get("tool_choice_required_unsupported"))
         reply = _call_model(
             messages, state, call_tools, output_tokens,
+            reasoning_task=(
+                "reference_inventory" if require_reference_inspection else
+                "geometry_review" if require_geometry_review else "modeling"),
             tool_choice=(
                 {"type": "function", "function": {"name": "cad_inspect_references"}}
                 if require_reference_inspection else

@@ -43,6 +43,7 @@ REVIEW_VIEW_AREAS = {
     "left": ("depth_setback", "through_connectivity"),
     "bottom": ("outline", "features"),
 }
+REVIEW_SPECIAL_AREAS = {"feature_group", "blind_hole_count", "silhouette_ratio"}
 MAX_TOOL_CALLS = 256
 MAX_WEB_SEARCH_CALLS = 32
 MAX_TOOL_PREVIEW_CALLS = 256
@@ -225,9 +226,10 @@ REVIEW_SUBMISSION_TOOL = {
                     "items": {"type": "object", "additionalProperties": False,
                               "properties": {
                                   "issue_id": {"type": "string", "maxLength": 100},
-                                  "view": {"type": "string", "enum": [
-                                      "front", "right", "top", "iso", "back", "left", "bottom"]},
-                                  "category": {"type": "string", "maxLength": 32},
+                                   "view": {"type": "string", "enum": [
+                                       "front", "right", "top", "iso", "back", "left", "bottom"]},
+                                   "area": {"type": "string", "maxLength": 48},
+                                   "category": {"type": "string", "maxLength": 32},
                                   "severity": {"type": "string", "enum": ["high", "medium", "low"]},
                                   "item": {"type": "string", "maxLength": 80},
                                   "evidence": {"type": "string", "maxLength": 180},
@@ -365,8 +367,23 @@ def _image_parts_in_messages(messages):
     return count
 
 
+def _function_tool_names(tools):
+    """Return only the function names exposed in a provider request."""
+    names = []
+    for tool in tools or []:
+        if not isinstance(tool, dict):
+            continue
+        function = tool.get("function")
+        if not isinstance(function, dict):
+            continue
+        name = function.get("name")
+        if isinstance(name, str) and name.strip():
+            names.append(name.strip()[:120])
+    return names
+
+
 def _begin_model_call(state, phase, messages, max_tokens, timeout=None,
-                      tool_choice=None):
+                      tool_choice=None, function_tool_names=None):
     """Persist which provider operation is active before entering the stream."""
     model_cfg = state.get("model_cfg") or {}
     state["active_request"] = {
@@ -380,6 +397,10 @@ def _begin_model_call(state, phase, messages, max_tokens, timeout=None,
         "timeout_seconds": timeout,
         "max_output_tokens": int(max_tokens),
         "image_parts_in_request": _image_parts_in_messages(messages),
+        "function_tool_names": [
+            str(name)[:120] for name in (function_tool_names or [])
+            if isinstance(name, str) and name.strip()
+        ],
         "tool_choice": tool_choice,
         "stream_progress": {
             "event_count": 0,
@@ -498,6 +519,7 @@ def _record_model_call(state, phase, messages, max_tokens, reply=None, error=Non
         "model": model_name,
         "max_output_tokens": int(max_tokens),
         "image_parts_in_request": _image_parts_in_messages(messages),
+        "function_tool_names": list(active.get("function_tool_names") or []),
         "response_received": isinstance(reply, dict),
         "reference_image_names": list(state.get("selected_reference_images", [])),
         "generated_view": state.get("active_review_view"),
@@ -507,6 +529,7 @@ def _record_model_call(state, phase, messages, max_tokens, reply=None, error=Non
         "response_id": reply.get("_response_id") if isinstance(reply, dict) else None,
         "thinking": reply.get("_request_thinking") if isinstance(reply, dict) else None,
         "reasoning_effort": reply.get("_request_reasoning_effort") if isinstance(reply, dict) else None,
+        "thinking_budget": reply.get("_request_thinking_budget") if isinstance(reply, dict) else None,
         "tool_choice": active.get("tool_choice"),
         "tool_call_names": tool_call_names,
         "tool_argument_lengths": tool_argument_lengths,
@@ -540,6 +563,7 @@ def _completion(messages, cfg, timeout, max_tokens, state, phase):
         reply = llm.chat_completion(
             messages, cfg, timeout=timeout, max_tokens=max_tokens,
             cancel_event=(state or {}).get("cancel_event"),
+            deadline=(state or {}).get("deadline"),
             progress=_stream_progress_callback(state, detail))
     except Exception as exc:
         _record_model_call(state, phase, messages, max_tokens, error=exc)
@@ -557,10 +581,24 @@ def _extract_object(text: str, label: str) -> Dict[str, Any]:
     return value
 
 
+def _json_phase_model_cfg(cfg, phase):
+    """Route automatic reasoning effort by whether a JSON phase sees images."""
+    request_cfg = dict(cfg or {})
+    if str(request_cfg.get("reasoning_effort") or "").lower() == "auto":
+        request_cfg = llm.agent_reasoning_config(
+            request_cfg,
+            "high" if phase in {
+                "blind_reference_inventory", "multiview_check",
+                "similarity_review"}
+            else "low")
+    return request_cfg
+
+
 def _run_json_object(transcript, cfg, phase, label, state, cancel_event=None,
                      max_tokens=16384, retry_max_tokens=None):
     """Run a JSON-only phase once, then recover once from malformed output."""
-    raw = _run_tools(transcript, cfg, phase, state, cancel_event,
+    request_cfg = _json_phase_model_cfg(cfg, phase)
+    raw = _run_tools(transcript, request_cfg, phase, state, cancel_event,
                      max_tokens=max_tokens)
     try:
         return _extract_object(raw, label)
@@ -587,7 +625,7 @@ def _run_json_object(transcript, cfg, phase, label, state, cancel_event=None,
                 retry_budget = min(retry_budget, max(512, int(retry_max_tokens)))
             except (TypeError, ValueError):
                 pass
-        raw = _run_tools(transcript, cfg, phase, state, cancel_event,
+        raw = _run_tools(transcript, request_cfg, phase, state, cancel_event,
                          max_tokens=retry_budget)
         try:
             return _extract_object(raw, label)
@@ -781,6 +819,12 @@ def _run_tools(transcript: List[Dict[str, Any]], cfg: dict,
             view = state.get("active_review_view")
             detail = phase + (" · %s 视图" % view if view else "")
             model = str((cfg or {}).get("model") or "默认模型")
+            effort = str((cfg or {}).get("reasoning_effort") or "").strip()
+            budget = (cfg or {}).get("thinking_budget")
+            if effort:
+                detail += " · 推理强度 %s" % effort
+            if budget is not None:
+                detail += " · 思考预算 %s" % budget
             _emit(state.get("progress"), "模型等待中：%s · %s" % (detail, model))
             timeout = _remaining_timeout(state["deadline"])
             required_tool_choice = (
@@ -788,12 +832,14 @@ def _run_tools(transcript: List[Dict[str, Any]], cfg: dict,
                 "auto" if phase_tools else None)
             _begin_model_call(
                 state, phase, messages, output_budget, timeout=timeout,
-                tool_choice=required_tool_choice)
+                tool_choice=required_tool_choice,
+                function_tool_names=_function_tool_names(phase_tools))
             reply = llm.chat_completion(
                 messages, cfg, tools=phase_tools,
                 timeout=timeout,
                 max_tokens=output_budget,
                 cancel_event=cancel_event,
+                deadline=state.get("deadline"),
                 progress=_stream_progress_callback(state, detail),
                 tool_choice=required_tool_choice)
         except Exception as exc:
@@ -1157,6 +1203,29 @@ def _inventory_group_equivalence_key(group):
     return kind, quantity, region
 
 
+def _is_hole_kind(kind):
+    """Normalize common model-authored labels for holes and bores."""
+    normalized = unicodedata.normalize("NFKC", str(kind or "")).casefold()
+    return "hole" in normalized or "孔" in normalized or "bore" in normalized
+
+
+def _is_hole_cut_feature(feature):
+    """Recognize explicit holes and cylindrical subtractive cutters in CADPlan."""
+    if not isinstance(feature, dict) or str(feature.get("operation") or "").lower() != "cut":
+        return False
+    kind = str(feature.get("kind") or "")
+    if _is_hole_kind(kind):
+        return True
+    if kind.casefold() not in {"cylinder", "cylindrical_cut"}:
+        return False
+    params = feature.get("parameters") or {}
+    has_size = any(params.get(key) is not None for key in ("diameter", "radius"))
+    has_axis = params.get("axis") is not None
+    has_location = any(params.get(key) is not None
+                       for key in ("point", "center", "origin"))
+    return has_size and has_axis and has_location
+
+
 def _independent_hole_targets(inventory):
     targets = []
     for image in (inventory or {}).get("images") or []:
@@ -1165,14 +1234,27 @@ def _independent_hole_targets(inventory):
                 or image.get("source_view") not in {
                     "front", "right", "top", "back", "left", "bottom"}):
             continue
-        count = sum(
-            int(feature.get("quantity", 0) or 0)
+        hole_features = [
+            feature
             for region in image.get("visible_regions") or []
             for feature in region.get("features") or []
-            if str(feature.get("kind") or "").lower() in {"hole", "孔"})
+            if _is_hole_kind(feature.get("kind"))]
+        count = 0
+        count_known = True
+        for feature in hole_features:
+            try:
+                quantity = int(feature.get("quantity"))
+            except (TypeError, ValueError):
+                count_known = False
+                break
+            if quantity < 1:
+                count_known = False
+                break
+            count += quantity
         targets.append({"image": image.get("image"),
                         "source_view": image.get("source_view"),
-                        "quantity": count})
+                        "quantity": count if count_known else None,
+                        "count_state": "known" if count_known else "unknown"})
     return targets
 
 
@@ -1274,7 +1356,7 @@ def _planned_hole_count(plan):
     features = [row for row in (plan or {}).get("features", [])
                 if isinstance(row, dict)]
     for feature in features:
-        if feature.get("kind") != "hole" or feature.get("operation") != "cut":
+        if not _is_hole_cut_feature(feature):
             continue
         params = feature.get("parameters") or {}
         position = params.get("pos", "center")
@@ -1291,8 +1373,29 @@ def _planned_hole_count(plan):
         source = next((row.get("feature_id") for row in feature.get("relations") or []
                        if isinstance(row, dict) and row.get("type") == "pattern_source"), None)
         if source in holes:
-            holes[source] *= max(1, int((feature.get("parameters") or {}).get("count", 1)))
+            try:
+                quantity = int((feature.get("parameters") or {}).get("count", 1))
+            except (TypeError, ValueError):
+                return None
+            holes[source] *= max(1, quantity)
     return sum(holes.values())
+
+
+def _contradicts_hole_count_match(check, issue):
+    if not isinstance(check, dict) or not isinstance(issue, dict):
+        return False
+    if str(check.get("area") or "").lower() != "blind_hole_count":
+        return False
+    check_view = str(check.get("view") or "").lower()
+    issue_view = str(issue.get("view") or "").lower()
+    if check_view and issue_view and check_view != issue_view:
+        return False
+    text = " ".join(str(issue.get(key) or "") for key in (
+        "area", "item", "evidence", "reference_evidence", "model_evidence"))
+    normalized = text.casefold()
+    missing_terms = ("missing", "absent", "not present", "not visible",
+                     "缺少", "缺失", "未建", "未打", "没有")
+    return _is_hole_kind(text) and any(term in normalized for term in missing_terms)
 
 
 def _summarize_review_findings(findings):
@@ -1361,7 +1464,7 @@ def _split_view_review(plan, final_preview, source_messages, cfg, state,
         requested_views, reference_inventory)
     review_cfg = dict(cfg or {})
     if str(review_cfg.get("reasoning_effort") or "").lower() == "auto":
-        review_cfg["reasoning_effort"] = "high"
+        review_cfg = llm.agent_reasoning_config(review_cfg, "high")
     for index, view in enumerate(review_views, 1):
         areas = REVIEW_VIEW_AREAS.get(view, ())
         _check_cancel(cancel_event, state["deadline"])
@@ -1578,6 +1681,7 @@ def _split_view_review(plan, final_preview, source_messages, cfg, state,
                                           "evidence": evidence})
             else:
                 local_issue = {"issue_id": issue_id, "view": view,
+                               "area": "silhouette_ratio",
                                "category": "geometry", "severity": "high",
                                "item": "轮廓比例不符", "evidence": evidence,
                                "feature_ids": local_check["feature_ids"],
@@ -1590,40 +1694,52 @@ def _split_view_review(plan, final_preview, source_messages, cfg, state,
         planned_holes = _planned_hole_count(plan)
         plan_hole_features = [feature for feature in plan.get("features", [])
                               if isinstance(feature, dict) and (
-                                  (feature.get("kind") == "hole"
-                                   and feature.get("operation") == "cut")
+                                  _is_hole_cut_feature(feature)
                                   or (feature.get("kind") == "pattern"
                                       and feature.get("operation") == "cut"))]
         plan_hole_ids = [str(feature.get("id")) for feature in plan_hole_features]
         hole_parameter_refs = [
-            {"feature_id": str(feature.get("id")), "path": "parameters.pos"}
-            for feature in plan_hole_features if feature.get("kind") == "hole"]
+            {"feature_id": str(feature.get("id")), "path": "parameters." + parameter}
+            for feature in plan_hole_features
+            if _is_hole_cut_feature(feature)
+            for parameter in ("pos", "point", "center", "diameter", "radius", "axis")
+            if parameter in (feature.get("parameters") or {})]
         for target in blind_hole_targets:
             if (target.get("source_view") != view
                     or target.get("image") not in comparable_names):
                 continue
-            target_count = int(target.get("quantity", 0))
-            status = "match" if planned_holes == target_count else "mismatch"
+            raw_target_count = target.get("quantity")
+            target_count = (int(raw_target_count)
+                            if isinstance(raw_target_count, int)
+                            and not isinstance(raw_target_count, bool) else None)
+            status = ("unknown" if target_count is None or planned_holes is None else
+                      "match" if planned_holes == target_count else "mismatch")
             check_id = "%s.blind_hole_count.%s" % (view, target.get("image"))
+            reference_count_text = (str(target_count) if target_count is not None
+                                    else "unknown")
+            model_count_text = (str(planned_holes) if planned_holes is not None
+                                else "unknown")
             evidence = (
-                "仅原图盲读在 %s 视图统计 %d 个可见孔位；当前 CADPlan 特征树包含 %d 个可识别物理孔位。"
-                % (view, target_count, planned_holes))
+                "原图盲读在 %s 视图统计 %s 个可见孔位；当前 CADPlan 特征树包含 %s 个可识别物理孔位。"
+                % (view, reference_count_text, model_count_text))
             local_check = {
                 "id": check_id, "view": view, "area": "blind_hole_count",
                 "category": "geometry", "status": status,
                 "item": "原图可见孔位数量",
-                "reference_evidence": "%s：%d 个可见孔位（独立盲读，完整布局）。" % (
-                    target.get("image"), target_count),
-                "model_evidence": "本地 CADPlan 中可识别物理孔位 %d 个。" % planned_holes,
+                "reference_evidence": "%s：%s 个可见孔位（独立盲读，完整布局）。" % (
+                    target.get("image"), reference_count_text),
+                "model_evidence": "本地 CADPlan 中可识别物理孔位 %s 个。" % model_count_text,
                 "evidence": evidence,
                 "feature_ids": plan_hole_ids,
-                "affected_parameters": hole_parameter_refs if status == "mismatch" else [],
+                "affected_parameters": hole_parameter_refs
+                if status == "mismatch" else [],
             }
             normalized_checks.append(local_check)
             combined_checks.append(local_check)
             if status == "mismatch":
                 local_issue = {
                     "issue_id": check_id, "view": view,
+                    "area": "blind_hole_count",
                     "category": "geometry", "severity": "high",
                     "item": "原图可见孔位数量不符", "evidence": evidence,
                     "feature_ids": plan_hole_ids,
@@ -1631,6 +1747,10 @@ def _split_view_review(plan, final_preview, source_messages, cfg, state,
                 }
                 normalized_issues.append(local_issue)
                 combined_issues.append(local_issue)
+            elif status == "unknown":
+                review_gaps.append(
+                    "%s 视图的完整孔布局无法从盲读或 CADPlan 特征中可靠计数；"
+                    "不能以 0=0 判定匹配。" % view)
             else:
                 combined_resolved.append({"issue_id": check_id,
                                           "check_id": check_id,
@@ -1677,6 +1797,7 @@ def _split_view_review(plan, final_preview, source_messages, cfg, state,
             "issue_id": check.get("id") or "%s.%s" % (
                 check.get("view"), check.get("area")),
             "view": check.get("view"),
+            "area": check.get("area"),
             "category": check.get("category") or "geometry",
             "severity": "high" if check.get("status") == "mismatch" else "medium",
             "item": check.get("item") or "%s %s mismatch" % (
@@ -1988,6 +2109,53 @@ def _feature_path_value(feature, path):
     return {"present": True, "value": current}
 
 
+def _finding_geometry_scope_ids(feature_ids, paths):
+    """Return explicit feature anchors for a finding's geometry comparison."""
+    result = {str(value) for value in (feature_ids or []) if value is not None}
+    for row in paths or []:
+        if isinstance(row, dict) and row.get("feature_id") is not None:
+            result.add(str(row["feature_id"]))
+    return sorted(value for value in result if value)
+
+
+def _related_feature_geometry_values(plan, anchor_feature_ids):
+    """Capture the relation-connected feature scope around finding anchors.
+
+    CADPlan relations point from a feature to an earlier dependency. Treating
+    those links as undirected lets the scope include both dependencies and
+    features added later against an affected body/feature, while excluding
+    disconnected edits elsewhere in the plan.
+    """
+    features = _plan_feature_map(plan)
+    graph = {feature_id: set() for feature_id in features}
+    for feature_id, feature in features.items():
+        for relation in feature.get("relations") or []:
+            if not isinstance(relation, dict):
+                continue
+            related_id = relation.get("feature_id")
+            if related_id is None:
+                continue
+            related_id = str(related_id)
+            if related_id not in features:
+                continue
+            graph[feature_id].add(related_id)
+            graph[related_id].add(feature_id)
+
+    pending = [str(value) for value in anchor_feature_ids or []
+               if str(value) in features]
+    scoped_ids = set(pending)
+    while pending:
+        feature_id = pending.pop()
+        for related_id in graph.get(feature_id, ()):
+            if related_id not in scoped_ids:
+                scoped_ids.add(related_id)
+                pending.append(related_id)
+    return {
+        feature_id: _feature_geometry_signature(features[feature_id])
+        for feature_id in sorted(scoped_ids)
+    }
+
+
 def _finding_snapshot(issue, plan, phase, index, round_index):
     feature_ids = [str(value) for value in issue.get("feature_ids", [])
                    if value is not None] if isinstance(issue.get("feature_ids"), list) else []
@@ -2018,10 +2186,12 @@ def _finding_snapshot(issue, plan, phase, index, round_index):
         feature_id: _feature_geometry_signature(features[feature_id])
         for feature_id in feature_ids if feature_id in features
     }
+    geometry_scope_feature_ids = _finding_geometry_scope_ids(feature_ids, paths)
     return {
         "issue_id": _finding_id(issue, phase, index),
         "phase": phase,
         "view": str(issue.get("view") or "多视图"),
+        "area": str(issue.get("area") or "").strip().lower(),
         "item": str(issue.get("item") or issue.get("evidence") or "几何偏差"),
         "evidence": str(issue.get("evidence") or ""),
         "severity": str(issue.get("severity") or "medium").lower(),
@@ -2030,23 +2200,54 @@ def _finding_snapshot(issue, plan, phase, index, round_index):
         "affected_parameters": paths,
         "baseline_path_values": path_values,
         "baseline_feature_values": feature_values,
+        "geometry_scope_feature_ids": geometry_scope_feature_ids,
+        "baseline_related_feature_values": _related_feature_geometry_values(
+            plan, geometry_scope_feature_ids),
         "first_seen_round": round_index,
     }
 
 
 def _finding_geometry_changed(finding, plan):
+    """Check progress on valid paths, then on only this finding's local scope."""
     features = _plan_feature_map(plan)
     paths = finding.get("baseline_path_values") or {}
+    path_changed = False
     if paths:
         for key, baseline in paths.items():
             feature_id, path = key.split(".", 1)
             feature = features.get(feature_id)
             current = (_feature_path_value(feature, path) if feature else
                        {"present": False, "value": None})
-            if json.dumps(_canonical_geometry_value(current), ensure_ascii=False, sort_keys=True) != \
-                    json.dumps(_canonical_geometry_value(baseline), ensure_ascii=False, sort_keys=True):
-                return True
+            # A missing/invalid field is not a usable repair signal. Let the
+            # feature-signature fallback below decide whether its geometry or
+            # related feature set actually changed.
+            if (isinstance(baseline, dict) and baseline.get("present") is True
+                    and current.get("present") is True
+                    and json.dumps(_canonical_geometry_value(current), ensure_ascii=False,
+                                   sort_keys=True) !=
+                    json.dumps(_canonical_geometry_value(baseline), ensure_ascii=False,
+                               sort_keys=True)):
+                path_changed = True
+                break
+    if path_changed:
+        return True
+
+    # A reported parameter path may be absent from the feature schema (for
+    # example, `parameters.operation`) or may remain unchanged when the repair
+    # is to add/remove a related feature. In those cases compare the complete
+    # local geometry scope instead of treating the unchanged path as proof that
+    # no repair happened.
+    related_baselines = finding.get("baseline_related_feature_values")
+    scope_ids = finding.get("geometry_scope_feature_ids")
+    if isinstance(related_baselines, dict) and related_baselines:
+        current_related = _related_feature_geometry_values(plan, scope_ids)
+        if set(current_related) != set(related_baselines):
+            return True
+        if any(current_related[key] != related_baselines[key]
+               for key in related_baselines):
+            return True
         return False
+
     baselines = finding.get("baseline_feature_values") or {}
     if baselines:
         return any(feature_id not in features or
@@ -2067,6 +2268,76 @@ def _finding_resolution_matches_check(resolution, review, finding):
             or not str(check.get("evidence") or "").strip()
             or not _is_geometry_review_item(check)):
         return False
+
+    finding_view = str(finding.get("view") or "").strip().lower()
+    check_view = str(check.get("view") or "").strip().lower()
+    if (not finding_view or finding_view not in REVIEW_VIEW_AREAS
+            or check_view != finding_view):
+        # A view that cannot establish the original finding is not a closure
+        # witness, even when it mentions the same feature or parameter.
+        return False
+
+    check_area = str(check.get("area") or "").strip().lower()
+    valid_areas = set(REVIEW_VIEW_AREAS.get(check_view, ()))
+    valid_areas.update(REVIEW_SPECIAL_AREAS)
+    if not check_area or check_area not in valid_areas:
+        return False
+    finding_area = str(finding.get("area") or "").strip().lower()
+    if finding_area:
+        if check_area != finding_area:
+            return False
+    else:
+        # Older/model-authored issues may omit area. Infer only when the issue
+        # language and parameter paths point to a view area that can judge it.
+        text = " ".join(str(finding.get(key) or "") for key in
+                        ("item", "evidence", "category")).lower()
+        paths = [str(row.get("path") or "").lower()
+                 for row in finding.get("affected_parameters") or []
+                 if isinstance(row, dict)]
+        text += " " + " ".join(paths)
+        through_terms = ("through", "connectivity", "贯穿", "穿透", "连通")
+        setback_terms = ("depth", "setback", "recess", "flush", "back wall",
+                         "深度", "后退", "凹槽", "齐平", "后壁")
+        feature_terms = ("diameter", "count", "quantity", "position", "size order",
+                         "孔径", "数量", "位置", "排列", "相对大小")
+        outline_terms = ("outline", "length", "width", "height", "proportion",
+                         "轮廓", "长度", "宽度", "高度", "比例", "外形")
+        area_domains = []
+        if any(term in text for term in through_terms):
+            if check_view == "iso":
+                area_domains.append({"depth_relationships"})
+            elif check_view in {"right", "left"}:
+                area_domains.append({"through_connectivity"})
+        if any(term in text for term in setback_terms):
+            if check_view == "iso":
+                area_domains.append({"depth_relationships"})
+            elif check_view in {"right", "left"}:
+                area_domains.append({"depth_setback"})
+        if any(term in text for term in feature_terms):
+            if check_view in {"front", "back", "bottom"}:
+                area_domains.append({"features", "feature_group", "blind_hole_count"})
+            elif check_view in {"right", "left"}:
+                area_domains.append({"through_connectivity", "feature_group", "blind_hole_count"})
+            elif check_view == "top":
+                area_domains.append({"top_boundaries", "feature_group", "blind_hole_count"})
+            elif check_view == "iso":
+                area_domains.append({"feature_layout", "feature_group", "blind_hole_count"})
+        if any(term in text for term in outline_terms):
+            if check_view in {"front", "back", "bottom"}:
+                area_domains.append({"outline", "silhouette_ratio"})
+            elif check_view in {"right", "left"}:
+                area_domains.append({"depth_setback"})
+            elif check_view == "top":
+                area_domains.append({"top_boundaries"})
+            elif check_view == "iso":
+                area_domains.append({"overall_shape"})
+        # If the old finding omitted its area and spans different visual
+        # questions, no single check can safely stand in for the whole finding.
+        if len(area_domains) != 1:
+            return False
+        expected_areas = area_domains[0]
+        if check_area not in expected_areas:
+            return False
 
     def parameter_refs(rows):
         refs = set()
@@ -2214,7 +2485,7 @@ def _update_multiview_findings(previous, review, plan, round_index):
         carried["last_seen_round"] = round_index
         if resolution:
             carried["resolution_rejected"] = (
-                "结案证据未同时满足：参数有变化，且当前视图存在关联几何 match 检查；仍按未解决处理。")
+                "结案证据未同时满足：相关几何有变化，且当前视图存在关联几何 match 检查；仍按未解决处理。")
         pending.append(carried)
 
     for issue_id, finding in current_by_id.items():
@@ -2631,7 +2902,7 @@ def _summarize_conversation_history(rows, previous_summary, cfg, deadline,
         else:
             response = llm.chat_completion(
                 messages, cfg, timeout=_remaining_timeout(deadline), max_tokens=4096,
-                cancel_event=cancel_event)
+                cancel_event=cancel_event, deadline=deadline)
         value = llm._extract_json(_message_text(response))
         summary = str(value.get("summary") or "").strip() if isinstance(value, dict) else ""
         if not summary:
