@@ -286,6 +286,41 @@ class CADPlanSDKTests(unittest.TestCase):
         self.assertIn("relations 必须是数组", messages)
         self.assertIn("feature_id", messages)
 
+    def test_pattern_operation_must_match_source_and_cut_holes_as_a_cut(self):
+        base_parameters = {"length": 100, "width": 80, "height": 60,
+                           "center": [0, 0, 30]}
+        hole_parameters = {"diameter": 8, "through": True, "pos": "point",
+                           "point": [0, 0, 0], "axis": "Z"}
+        pattern_parameters = {"mode": "linear", "count": 3,
+                              "step": [0, 0, 15]}
+        plan = _plan("box")
+        plan["features"] = [
+            {"id": "base", "kind": "box", "operation": "add",
+             "parameters": base_parameters,
+             "sources": _source_map(base_parameters)},
+            {"id": "hole", "kind": "hole", "operation": "cut",
+             "parameters": hole_parameters,
+             "sources": _source_map(hole_parameters)},
+            {"id": "hole-pattern", "kind": "pattern", "operation": "add",
+             "parameters": pattern_parameters,
+             "sources": _source_map(pattern_parameters),
+             "relations": [{"type": "pattern_source", "feature_id": "hole"}]},
+        ]
+
+        result = validate_plan(plan)
+        self.assertEqual("invalid", result["state"])
+        operation_error = next(row for row in result["errors"]
+                               if row["code"] == "pattern_operation_mismatch")
+        self.assertIn("圆柱刀具加成实体", operation_error["message"])
+
+        plan["features"][2]["operation"] = "cut"
+        result = validate_plan(plan)
+        self.assertEqual("valid", result["state"], result)
+        preview = preview_plan(plan)
+        self.assertEqual("previewed", preview["state"], preview)
+        self.assertEqual([100.0, 80.0, 60.0], preview["dimensions"]["size"])
+        self.assertLess(preview["dimensions"]["volume_mm3"], 100 * 80 * 60)
+
     def test_existing_model_provenance_requires_an_explanatory_note(self):
         import jsonschema
 

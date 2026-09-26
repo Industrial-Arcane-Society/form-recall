@@ -589,6 +589,10 @@ class IncrementalAgentTests(unittest.TestCase):
         self.assertEqual(["depends_on", "pattern_source"],
                          relation["properties"]["type"]["enum"])
         self.assertFalse(relation["additionalProperties"])
+        self.assertIn("operation 必须与 pattern_source 源特征相同",
+                      add_feature["properties"]["parameters"]["description"])
+        self.assertIn("圆柱刀具加成实体",
+                      add_feature["properties"]["parameters"]["description"])
         self.assertNotIn("reference_reading", tools["cad_create_model"]["properties"])
         reading_schema = tools["cad_inspect_references"]["properties"][
             "reference_reading"]
@@ -1749,11 +1753,24 @@ class IncrementalAgentTests(unittest.TestCase):
         rejected it. The model retried six times, then deleted and rebuilt the
         feature.
         """
-        plan = plan_state.create("Part", _feature())
+        base = _feature()
+        base["parameters"] = {"length": 100, "width": 50, "height": 20,
+                              "center": [0, 0, 10]}
+        base["sources"] = {key: {"type": "user", "evidence": "test fixture"}
+                           for key in base["parameters"]}
+        plan = plan_state.create("Part", base)
+        hole_parameters = {"diameter": 8, "through": True, "pos": "point",
+                           "point": [0, -25, 5], "axis": "Y"}
+        plan = plan_state.add(plan, {
+            "id": "hole", "kind": "hole", "operation": "cut",
+            "parameters": hole_parameters,
+            "sources": {key: {"type": "user", "evidence": "test fixture"}
+                        for key in hole_parameters},
+        })
         plan = plan_state.add(plan, {
             "id": "pat", "kind": "pattern", "operation": "cut",
             "parameters": {"mode": "linear", "count": 3, "step": [0, 0, 5], "axis": "Z"},
-            "relations": [{"feature_id": "base", "type": "depends_on"}],
+            "relations": [{"feature_id": "hole", "type": "depends_on"}],
             "sources": {key: {"type": "derived", "evidence": "e"}
                         for key in ("mode", "count", "step", "axis")}})
         state = {"current_plan": plan, "plan_revision": 1, "tool_calls": 0,
@@ -1762,7 +1779,7 @@ class IncrementalAgentTests(unittest.TestCase):
                      agent_runtime.cad._geometry_plan_fingerprint(plan)}
         result = agent_runtime._apply_incremental("cad_update_feature", {
             "feature_id": "pat",
-            "fields": {"relations": [{"feature_id": "base",
+            "fields": {"relations": [{"feature_id": "hole",
                                       "type": "pattern_source"}]}}, state)
         self.assertNotEqual("unchanged", result["state"])
         stored = next(f for f in state["current_plan"]["features"] if f["id"] == "pat")

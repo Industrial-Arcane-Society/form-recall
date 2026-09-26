@@ -164,7 +164,8 @@ _FEATURE_TOOL_SCHEMA = {
                             "hole 必须写 pos='point' 并把三维坐标放在 point；不能把坐标数组放进 pos。"
                             "pocket 只支持 Z 轴；要沿正面法向 Y 切凹槽时使用 box 且 operation='cut'。"
                             "hole 常用 diameter/through/pos/point/axis；"
-                            "pattern 常用 mode/count/step；长度和坐标用 mm。"),
+                            "pattern 常用 mode/count/step，operation 必须与 pattern_source 源特征相同；"
+                            "复制 cut 孔特征时 pattern 也必须 cut，否则会把圆柱刀具加成实体。长度和坐标用 mm。"),
             "properties": {
                 "length": {"type": "number"}, "width": {"type": "number"},
                 "height": {"type": "number"}, "depth": {"type": "number"},
@@ -633,6 +634,7 @@ def _agent_system(has_reference_images: bool = False) -> str:
             "diameter 必须大于它要削掉的部位，否则什么都不切。\n"
             "- pocket：沿 Z 向下切，depth 是深度，只能切 Z 向。\n"
             "- pattern：relations 必须用 pattern_source 指向**紧邻的前一个**特征；"
+            "operation 必须与源特征一致（源孔 cut → 阵列 cut；不能用 add，否则圆柱刀具会被加成实体）；"
             "step 是三维数组如 [0,0,1]。\n"
             "- 每次提交后工具返回 feature_effect.volume_delta_mm3 —— **用它判断这一步切掉/增加了多少**，"
             "不要靠尺寸推算；返回 warning 时先按 warning 处理，不要重复提交同一个特征。\n%s" %

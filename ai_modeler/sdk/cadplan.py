@@ -99,7 +99,8 @@ FEATURE_SPECS = {
                     ("length", "width", "depth", "x", "y", "axis", "corner", "corner_mode")),
     "pattern": _spec(("mode", "count"), "exact",
                      "转换为显式复制的 CATIA 操作；relations 示例："
-                     "[{\"type\":\"pattern_source\",\"feature_id\":\"紧邻前一特征的 id\"}]。",
+                     "[{\"type\":\"pattern_source\",\"feature_id\":\"紧邻前一特征的 id\"}]。"
+                     "operation 必须与源特征相同：阵列切孔用 cut，阵列加料用 add。",
                      ("mode", "count", "step", "axis", "angle", "full", "center")),
     "helix": _spec(("radius", "wire_r", "height", "turns"), "unsupported",
                    "弹簧/螺旋不能由当前草图、凸台和凹槽通道表达。",
@@ -616,6 +617,19 @@ def validate_plan(plan: Any) -> Dict[str, Any]:
                   or pattern_sources[0] != features[index - 1].get("id")):
                 errors.append({"code": "pattern_source_order", "path": path + ".relations",
                                "message": "当前 Document 阵列只复制紧邻的前一特征；请调整顺序或 source 关系。"})
+            elif str(feature.get("operation") or "").lower() != str(
+                    features[index - 1].get("operation") or "").lower():
+                source = features[index - 1]
+                source_operation = str(source.get("operation") or "").lower()
+                if source_operation in {"add", "cut"}:
+                    errors.append({
+                        "code": "pattern_operation_mismatch",
+                        "path": path + ".operation",
+                        "message": ("阵列 operation 必须与 pattern_source 源特征「%s」一致："
+                                    "源操作是 %s，阵列也必须用 %s。切孔阵列必须为 cut；"
+                                    "若写 add，程序会把孔的圆柱刀具加成实体。"
+                                    % (source.get("id"), source_operation, source_operation)),
+                    })
 
         status = _feature_status(feature)
         reason = _feature_reason(feature, status)
