@@ -46,18 +46,16 @@
 ## 二、快速上手（3 分钟）
 
 ```powershell
-# 1) 只看插件（核心不需要任何第三方库）
-python -m ai_modeler                 # 打开界面
-python -m ai_modeler --selftest      # 自检（应 35/35）
+# 1) 打开界面；纯规则建模核心不要求第三方依赖
+python -m ai_modeler
 
-# 2) 可选：装上 OpenCASCADE（多孔/复杂件更快更准）
-powershell -ExecutionPolicy Bypass -File scripts\01_安装依赖.ps1
+# 2) 安装多模态 Agent SDK 和可选加速依赖
+powershell -ExecutionPolicy Bypass -File scripts/01_安装依赖.ps1
 
-# 3) 跑一遍判据，看现在的水平
-python tools\bench_detail_fidelity.py    # 几何相似度（对实测 STEP）
-python tools\bench_real_geometry.py      # 真实几何命中
-python tools\check_catia_export_real.py  # CATIA 通道
+# 3) 配置「工具 → AI 大模型设置」后，使用持续 Agent 对话与参考图建模
 ```
+
+使用本地规则解析和网格内核不需要 Agent SDK；需要图片识别、LLM 工具调用和联网搜索时，运行步骤 2 安装 `deepseek-harness-sdk==0.1.5rc1`。
 
 **试几条提示词**（都已在库、可复现）：
 
@@ -134,12 +132,9 @@ CADPlan 并重建。预览图来自本地网格内核，不能替代 CATIA B-Rep
 
 ### 桌面 AgentLoop
 
-运行 `python -m ai_modeler` 打开对话界面。输入框支持 **Ctrl+V 直接粘贴剪贴板图片**，
-也可以选择多张参考图；文字仍使用原有粘贴行为。启用 AgentLoop 的服务端模型必须同时
-支持图像输入与工具调用。Agent 按识别、CADPlan 生成、多视图检查、相似审查四阶段工作，
-最终在本地渲染器显示网格，不会自动同步到 CATIA。工具栏可保存扩展多视图，文件菜单可选三视图或扩展视图。
-详细说明见 [docs/architecture/AgentLoop.md](docs/architecture/AgentLoop.md)。
+运行 `python -m ai_modeler` 打开对话界面。输入框支持 **Ctrl+V 直接粘贴剪贴板图片**，也可以选择多张参考图。Agent 由 DeepSeek Harness Python SDK 驱动，按需要调用 CADPlan MCP 工具、网页搜索和多模态视觉复核；安装 SDK 请运行 `scripts/01_安装依赖.ps1`。MCP 工具不开放 shell。模型预览实时显示在右侧；本地候选不会自动同步到 CATIA。
 
+详细说明见 [docs/architecture/AgentLoop.md](docs/architecture/AgentLoop.md)。
 ## 五、协作方式
 
 * 分支：`main` 保持可发布；功能走 `feat/xxx`，修复走 `fix/xxx`；

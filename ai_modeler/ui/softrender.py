@@ -19,7 +19,6 @@ from ai_modeler.core import kernel as K
 
 BG_TOP = (0x22, 0x2b, 0x37)
 BG_BOT = (0x0d, 0x11, 0x17)
-EDGE_COL = (22, 27, 34)
 
 
 def write_png(path: str, w: int, h: int, rgb: bytes) -> None:
@@ -89,9 +88,10 @@ class Renderer:
                light=(0.42, -0.52, 0.74), base=(0.60, 0.67, 0.78),
                edges: bool = False, margin: float = 0.09,
                spin_deg: float = 0.0,
-               scale_override=None) -> bool:
+               scale_override=None, depth_cues: bool = False) -> bool:
         self._fill_bg()
         self.zb = array('f', [-1e30]) * (self.w * self.h)
+        self.nb = array('f', [0.0]) * (self.w * self.h * 3) if edges else None
         tris = K.polygons_to_triangles(polys)
         if not tris:
             return False
@@ -110,10 +110,17 @@ class Renderer:
         span = max(mxx - mnx, mxy - mny, 1e-6)
         scale = (scale_override if scale_override is not None else
                  (1.0 - 2.0 * margin) * min(self.w, self.h) / span)
+        depth_span = max(max(vz) - min(vz), 1e-6)
         cx = (mnx + mxx) / 2.0
         cy = (mny + mxy) / 2.0
         ox, oy = self.w / 2.0, self.h / 2.0
 
+        if depth_cues:
+            # A fixed world-space light can leave a front orthographic view
+            # nearly uniform. Keep the key light in front of the camera and high
+            # above the part so recessed planes remain readable.
+            light = tuple(-0.32 * right[i] + 0.48 * fwd[i] + 0.82 * up[i]
+                          for i in range(3))
         ln = math.sqrt(sum(x * x for x in light)) or 1.0
         light = tuple(x / ln for x in light)
 
@@ -126,9 +133,13 @@ class Renderer:
             if nl < 1e-12:
                 continue
             n = (n[0] / nl, n[1] / nl, n[2] / nl)
-            lam = abs(n[0] * light[0] + n[1] * light[1] + n[2] * light[2])
-            shade = 0.26 + 0.74 * lam
-            spec = max(0.0, n[0] * light[0] + n[1] * light[1] + n[2] * light[2]) ** 28 * 0.40
+            facing = n[0] * fwd[0] + n[1] * fwd[1] + n[2] * fwd[2]
+            if depth_cues and facing < 0.0:
+                n = (-n[0], -n[1], -n[2])
+            diffuse = n[0] * light[0] + n[1] * light[1] + n[2] * light[2]
+            lam = max(0.0, diffuse) if depth_cues else abs(diffuse)
+            shade = (0.33 + 0.67 * lam) if depth_cues else (0.26 + 0.74 * lam)
+            spec = max(0.0, diffuse) ** (24 if depth_cues else 28) * (0.035 if depth_cues else 0.40)
             col = (min(255, int(255 * (base[0] * shade + spec))),
                    min(255, int(255 * (base[1] * shade + spec))),
                    min(255, int(255 * (base[2] * shade + spec))))
@@ -138,16 +149,68 @@ class Renderer:
                       ((vx[i1] - cx) * scale + ox,
                        oy - (vy[i1] - cy) * scale, vz[i1]),
                       ((vx[i2] - cx) * scale + ox,
-                       oy - (vy[i2] - cy) * scale, vz[i2]), col)
+                       oy - (vy[i2] - cy) * scale, vz[i2]), col, n)
+
+        if depth_cues:
+            self._apply_depth_cues(depth_span)
 
         if edges:
-            def screen_of(k):
-                return ((k[0] - cx) * scale + ox, oy - (k[1] - cy) * scale, 0.0)
-            self._draw_feature_edges(tris, screen_of)
+            self._draw_surface_edges(depth_span)
         return True
 
+    def _apply_depth_cues(self, depth_span: float) -> None:
+        """Add restrained distance falloff and contact darkening to the mesh.
+
+        The renderer has no shadow map or ambient-occlusion buffer. A small
+        screen-space depth comparison makes a recessed coplanar-looking region
+        darker near its lip, which helps in orthographic review images.
+        """
+        w, h, fb, zb = self.w, self.h, self.fb, self.zb
+        clear = -1e29
+        visible = [z for z in zb if z > clear]
+        if not visible:
+            return
+        closest = max(visible)
+        depth_span = max(depth_span, 1e-6)
+        offsets = []
+        for radius in (1, 2, 4):
+            offsets.extend(((radius, 0), (-radius, 0), (0, radius), (0, -radius),
+                            (radius, radius), (radius, -radius),
+                            (-radius, radius), (-radius, -radius)))
+        threshold = depth_span * 0.018
+
+        for y in range(h):
+            row = y * w
+            for x in range(w):
+                idx = row + x
+                depth = zb[idx]
+                if depth <= clear:
+                    continue
+                relative_depth = max(0.0, min(1.0, (closest - depth) / depth_span))
+                distance_shade = 1.0 - 0.48 * (relative_depth ** 0.62)
+                occlusion = 0.0
+                for dx, dy in offsets:
+                    nx, ny = x + dx, y + dy
+                    if nx < 0 or nx >= w or ny < 0 or ny >= h:
+                        continue
+                    neighbor = zb[ny * w + nx]
+                    if neighbor <= clear:
+                        continue
+                    delta = neighbor - depth
+                    if delta <= threshold:
+                        continue
+                    distance = max(abs(dx), abs(dy))
+                    amount = ((delta - threshold) / depth_span) * 1.30
+                    amount *= max(0.20, 1.0 - distance / 6.0)
+                    occlusion = max(occlusion, min(0.27, amount))
+                factor = distance_shade * (1.0 - occlusion)
+                offset = idx * 3
+                fb[offset] = int(fb[offset] * factor)
+                fb[offset + 1] = int(fb[offset + 1] * factor)
+                fb[offset + 2] = int(fb[offset + 2] * factor)
+
     # ------------------------------------------------------------------
-    def _tri(self, a, b, c, col):
+    def _tri(self, a, b, c, col, normal=None):
         W, H, fb, zb = self.w, self.h, self.fb, self.zb
         x0, y0, z0 = a
         x1, y1, z1 = b
@@ -185,80 +248,55 @@ class Renderer:
                 fb[o] = r
                 fb[o + 1] = g
                 fb[o + 2] = bl
+                if self.nb is not None and normal is not None:
+                    no = idx * 3
+                    self.nb[no] = normal[0]
+                    self.nb[no + 1] = normal[1]
+                    self.nb[no + 2] = normal[2]
 
     # ------------------------------------------------------------------
-    def _draw_feature_edges(self, tris, to_screen):
-        """只画折角明显的边。
+    def _draw_surface_edges(self, depth_span: float) -> None:
+        """Find visible creases and depth steps from the rasterized surfaces.
 
-        顶点按量化坐标建 位置->屏幕坐标 的索引, 一次算好直接查表;
-        否则每条边都要回扫全部三角形找端点, 大网格直接退化成 O(n^2)。
+        Per-pixel normals avoid exposing hidden BSP/T-junction mesh seams as
+        floating lines. Depth jumps catch parallel faces at different heights,
+        which is the important cue for recessed planes in straight-on views.
         """
-        key_of = {}
-        scr = {}
-        edge_faces = {}
-        face_n = []
-
-        def vkey(v):
-            k = (round(v[0], 4), round(v[1], 4), round(v[2], 4))
-            i = key_of.get(k)
-            if i is None:
-                i = key_of[k] = len(key_of)
-                scr[i] = to_screen(k)
-            return i
-
-        for (a, b, c, _t) in tris:
-            n = K.v_cross(K.v_sub(b, a), K.v_sub(c, a))
-            nl = K.v_len(n)
-            face_n.append(None if nl < 1e-12 else (n[0] / nl, n[1] / nl, n[2] / nl))
-        for i, (a, b, c, _t) in enumerate(tris):
-            ka, kb, kc = vkey(a), vkey(b), vkey(c)
-            for (kp, kq) in ((ka, kb), (kb, kc), (kc, ka)):
-                if kp == kq:
+        w, h, zb, nb, fb = self.w, self.h, self.zb, self.nb, self.fb
+        clear = -1e29
+        cos_crease = math.cos(math.radians(32.0))
+        depth_jump = max(0.05, depth_span * 0.018)
+        for y in range(h):
+            row = y * w
+            for x in range(w):
+                idx = row + x
+                depth = zb[idx]
+                if depth <= clear:
                     continue
-                e = (kp, kq) if kp < kq else (kq, kp)
-                edge_faces.setdefault(e, []).append(i)
-
-        cos_lim = math.cos(math.radians(20.0))
-        for e, fs in edge_faces.items():
-            # Boolean meshes can contain an edge shared by several coplanar
-            # triangles. It is an internal tessellation seam, not a visible CAD
-            # feature edge; drawing it creates distracting radial spokes.
-            if len(fs) > 2:
-                continue
-            if len(fs) == 2:
-                n1, n2 = face_n[fs[0]], face_n[fs[1]]
-                if n1 and n2:
-                    d = abs(n1[0] * n2[0] + n1[1] * n2[1] + n1[2] * n2[2])
-                    if d >= cos_lim:
-                        continue
-            p1, p2 = scr.get(e[0]), scr.get(e[1])
-            if p1 is None or p2 is None:
-                continue
-            self._line(p1, p2, EDGE_COL)
-
-    def _line(self, p1, p2, col, thick: int = 1):
-        x1, y1 = p1[0], p1[1]
-        x2, y2 = p2[0], p2[1]
-        n = int(max(abs(x2 - x1), abs(y2 - y1))) + 1
-        if n <= 0 or n > 8000:
-            return
-        dx = (x2 - x1) / n
-        dy = (y2 - y1) / n
-        for i in range(n + 1):
-            self._px(int(x1 + dx * i), int(y1 + dy * i), col, thick)
-
-    def _px(self, x, y, col, t=1):
-        W, H, fb = self.w, self.h, self.fb
-        for dy in range(t):
-            py = y + dy
-            if py < 0 or py >= H:
-                continue
-            base = py * W
-            for dx in range(t):
-                px = x + dx
-                if 0 <= px < W:
-                    o = (base + px) * 3
-                    fb[o], fb[o + 1], fb[o + 2] = col
+                no = idx * 3
+                nx, ny, nz = nb[no], nb[no + 1], nb[no + 2]
+                edge = False
+                for dx, dy in ((1, 0), (-1, 0), (0, 1), (0, -1)):
+                    px, py = x + dx, y + dy
+                    if px < 0 or px >= w or py < 0 or py >= h:
+                        edge = True
+                        break
+                    other_idx = py * w + px
+                    other_depth = zb[other_idx]
+                    if other_depth <= clear:
+                        edge = True
+                        break
+                    other_offset = other_idx * 3
+                    dot = (nx * nb[other_offset] + ny * nb[other_offset + 1] +
+                           nz * nb[other_offset + 2])
+                    if dot < cos_crease or (depth < other_depth - depth_jump):
+                        edge = True
+                        break
+                if edge:
+                    offset = idx * 3
+                    fb[offset] = int(fb[offset] * 0.48)
+                    fb[offset + 1] = int(fb[offset + 1] * 0.48)
+                    fb[offset + 2] = int(fb[offset + 2] * 0.48)
 
     def save(self, path: str) -> None:
         write_png(path, self.w, self.h, bytes(self.fb))
@@ -297,10 +335,11 @@ def save_three_view(polys, path: str, tile=(330, 260)) -> bool:
     shared_scale = (1.0 - 2.0 * 0.09) * min(tw, th) / max_projected_span
     for idx, view in enumerate(THREE):
         renderer = Renderer(tw, th)
-        # This preview is used by vision models for silhouette inspection. The
-        # legacy edge pass can expose hidden/non-manifold mesh seams, so keep this
-        # orthographic image solid-shaded and let the z-buffer show only surfaces.
-        renderer.render(polys, view=view, edges=False, scale_override=shared_scale)
+        # Review views need to distinguish a setback from a coplanar face. The
+        # z-aware edge pass excludes hidden seams; depth cues add soft contact
+        # darkening without changing the model geometry.
+        renderer.render(polys, view=view, edges=True, depth_cues=True,
+                        scale_override=shared_scale)
         gx = idx * tw
         for y in range(th):
             src = y * tw * 3
@@ -317,7 +356,7 @@ def save_four_view(polys, path: str, tile=(330, 260)) -> bool:
     canvas = bytearray(W * H * 3)
     for idx, v in enumerate(FOUR):
         r = Renderer(tw, th)
-        r.render(polys, view=v, edges=False)
+        r.render(polys, view=v, edges=True, depth_cues=True)
         gx, gy = (idx % 2) * tw, (idx // 2) * th
         for y in range(th):
             s = y * tw * 3
@@ -365,7 +404,8 @@ def save_multiview(polys, path: str, views=None, tile=(330, 260), columns=3) -> 
 
     for index, name in enumerate(views):
         renderer = Renderer(tw, th)
-        renderer.render(polys, view=name, edges=False, scale_override=scale)
+        renderer.render(polys, view=name, edges=True, depth_cues=True,
+                        scale_override=scale)
         gx, gy = (index % columns) * tw, (index // columns) * th
         for y in range(th):
             src = y * tw * 3

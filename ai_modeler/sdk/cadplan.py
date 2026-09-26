@@ -848,11 +848,17 @@ def _local_geometry_checks(body, size, feature_manifest, length_factor=1.0):
                 "ring_supported": supported,
                 "method": "axis ray against local triangle mesh",
             })
+    hole_measurement_complete = len(hole_mesh_checks) == len(inventory)
+    geometry_state = (
+        "failed" if (not body or invalid_bbox or nonfinite_vertices
+                     or degenerate_faces
+                     or any(row["status"] != "verified_open"
+                            for row in hole_mesh_checks))
+        else "needs_review" if not hole_measurement_complete
+        else "passed"
+    )
     return {
-        "state": "failed" if (not body or invalid_bbox or nonfinite_vertices
-                              or degenerate_faces
-                              or any(row["status"] != "verified_open"
-                                     for row in hole_mesh_checks)) else "passed",
+        "state": geometry_state,
         "source": "AI Modeler local mesh kernel",
         "face_count": len(body), "bbox_size_mm": size_values,
         "bbox_ratios_from_mesh": ({
@@ -866,8 +872,12 @@ def _local_geometry_checks(body, size, feature_manifest, length_factor=1.0):
         "degenerate_face_count": degenerate_faces,
         "hole_features_from_plan": inventory,
         "through_hole_mesh_checks": hole_mesh_checks,
+        "hole_measurement_complete": hole_measurement_complete,
         "hole_visibility": "requires_multimodal_view_review",
-        "through_hole_result": "measured_for_point_holes_only" if point_holes else "not_measured",
+        "through_hole_result": (
+            "measured_for_all_declared_holes" if hole_measurement_complete and inventory
+            else "no_holes_declared" if not inventory
+            else "not_measured_for_all_declared_holes"),
     }
 
 
@@ -983,6 +993,10 @@ def preview_plan(plan: Any, image_path: Optional[str] = None,
     result["preview_image_view_set"] = view_set
     result["preview_image_grid_columns"] = 1 if view_set in single_views else 3
     result["preview_image_source"] = "AI Modeler local mesh kernel; not CATIA B-Rep"
+    result["preview_render_style"] = "view-adaptive depth-cued matte shading with visible feature edges"
+    result["preview_render_note"] = (
+        "诊断渲染：凹入或远离相机的表面会略暗，清晰线条表示可见的几何折边；"
+        "亮暗不是零件材质颜色，需结合其它视图判断。")
     result["preview_image_layout"] = result.get("orthographic_layout")
     return result
 

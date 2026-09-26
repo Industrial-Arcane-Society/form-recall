@@ -1,4 +1,4 @@
-﻿# 01 安装依赖（可选；核心功能不需要任何第三方库）
+# 01 安装依赖（可选；核心功能不需要任何第三方库）
 # 用法：powershell -ExecutionPolicy Bypass -File scripts\01_安装依赖.ps1
 $ErrorActionPreference = "Stop"
 $root = Split-Path -Parent $PSScriptRoot
@@ -11,6 +11,10 @@ python -c "import importlib.util as u; print('numpy:', bool(u.find_spec('numpy')
 
 Write-Host "`n== 基础依赖（numpy/scipy/Pillow/opencv/matplotlib/python-docx）==" -ForegroundColor Cyan
 python -m pip install --no-input numpy scipy pillow opencv-python matplotlib python-docx
+
+Write-Host "`n== DeepSeek Harness Agent SDK（多模态工具循环）==" -ForegroundColor Cyan
+python -m pip install --no-input --pre "deepseek-harness-sdk==0.1.5rc1"
+python -c 'import deepseek_harness; print("DeepSeek Harness SDK 可用:", deepseek_harness.__file__)'
 
 Write-Host "`n== OpenCASCADE（可选，多孔/复杂件更快更准）==" -ForegroundColor Cyan
 if (Test-Path "tools\fetch_ocp_wheel.py") {

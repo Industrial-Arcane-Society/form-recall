@@ -713,6 +713,8 @@ def _dispatch_tool(name, args, state):
             "state": result.get("state"),
             "preview_image": result.get("preview_image"),
             "preview_image_source": result.get("preview_image_source"),
+            "preview_render_style": result.get("preview_render_style"),
+            "preview_render_note": result.get("preview_render_note"),
             "preview_image_views": result.get("preview_image_views"),
             "preview_image_view_set": result.get("preview_image_view_set"),
             "dimensions": result.get("dimensions"),

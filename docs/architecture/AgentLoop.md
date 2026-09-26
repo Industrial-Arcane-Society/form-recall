@@ -1,48 +1,48 @@
-# 桌面多模态 AgentLoop
+# 桌面建模 Agent：DeepSeek Harness SDK 接入
 
-## 启动与输入
+## 运行方式
 
-在项目根目录运行：
+界面通过 `deepseek-harness-sdk` 的 Python SDK 启动本地 DSH runtime。当前安装脚本固定安装 PyPI 可用版 `0.1.5rc1`；不依赖单独安装 `dsh` 命令，也不读写全局 `~/.dsh` 配置。运行时选用完整 `sdk` profile，以使用它的 Provider、MCP 和会话能力。该 wheel 未打包 profile 引用的 `dsh-attachment-local`，因此项目 overlay 用 `ai_modeler/agent/dsh_attachment_store.mjs` 提供等价的应用内图片附件服务，写入当前聊天独立的 DSH home。项目通过单次启动 overlay 屏蔽不需要的 DSH 工具，不改写用户全局 profile。
+
+安装 Agent 运行时：
 
 ```powershell
-python -m ai_modeler
+powershell -ExecutionPolicy Bypass -File scripts/01_安装依赖.ps1
 ```
 
-在左侧建模对话中输入需求，或粘贴/选择参考图片。按 `Ctrl+V` 可粘贴剪贴板图片；也可点“＋”选择 PNG、JPG、WebP 或 GIF。每轮最多附加 8 张图，发送后会在聊天记录中保留缩略图。
+在“工具 → AI 大模型设置”填写接口地址、模型名和 API Key。运行时按该配置更新完整 profile 已有的 `llm-pi-ai` Provider route，默认声明文字和图片输入；根据 DeepSeek Responses、通用 OpenAI-compatible、SiliconFlow Kimi 等端点设置适配协议与思考预算。路由上下文窗口按 1,048,576 配置，思考强度沿用界面选择。网关是否真正支持图像、工具及相应思考参数仍由服务端能力决定；服务端拒绝时显示错误，不回退到旧文本建模流程。
 
-图片可与文字一起发送。只发图片时，系统默认先根据图像比例建立并显示一版候选；没有绝对尺寸标注不构成阻塞，推算的数值应在 CADPlan 中标成 `image_estimate`。如果用户明确是在问“图里是什么/写了什么”等图片问答，则只回答问题，不启动建模。
+## 会话与数据
 
-## 大模型配置
+每个聊天对应一个 DSH session，跨用户消息持续保存上下文；由 DSH 负责选择是否调用工具、调用顺序和循环次数。Agent 的系统提示词位于 `prompts/dsh_agent/system.md`，实时流事件由 `ai_modeler/agent/dsh_stream_bridge.mjs` 转发到桌面思考面板。SDK runtime 与会话文件位于 `%LOCALAPPDATA%/AI Modeler/dsh/sessions/<session-id>/dsh-home`，不修改已有的全局 DSH 安装。
 
-在“工具 → AI 大模型设置”填写 OpenAI Chat Completions 兼容的接口地址、模型名称和 API Key，并启用多模态 AgentLoop。模型需同时支持图像输入和函数/工具调用。接口不支持视觉或 tools 时，程序报告接口错误，不静默回退到旧文本解析器。
+新建聊天或关闭应用时，程序停止当前 SDK runtime 并清除该聊天的 DSH 会话存储，其中包括旧对话里的参考图，避免长期堆积。已保存的模型、网格和报告保留在同一个聊天目录的 `output` 子目录；每个会话的工作预览固定覆盖 `current-preview.png`，不会为每次视图检查另存一份临时图。
 
-## 持续 AgentLoop
+## Agent 工具
 
-每轮只有一个持续的 LLM 工具循环。收到每个工具结果后，模型会重新查看用户目标、当前特征树、预览、单视图检查证据和未解决问题，再选择下一步。工具调用每次只传一个特征的变化；程序负责合成完整 CADPlan、校验和版本管理。程序不会把识图、构造与固定三视图复核强行排成每轮必走的阶段。
+DSH 通过本地 stdio MCP server `ai_modeler/agent/dsh_mcp_server.py` 调用 CADPlan 和网页搜索能力：
 
-可用工具：
+- `cad_create_model`、`cad_add_feature`、`cad_update_feature`、`cad_remove_feature`：按增量维护 CADPlan；数值参数须附来源。
+- `cad_get_state`、`cad_get_feature_spec`、`cad_validate_model`：读取特征树、按需查特征参数并验证计划。
+- `cad_preview_model`：生成当前 CADPlan 的单视图或多视图；PNG 作为 MCP 图片结果回到多模态模型，并同步更新右侧预览。
+- `cad_record_visual_review`、`cad_finish_model`：复核记录绑定模型 revision、视图和 preview generation；同一几何版本的多视图记录会累积，改变几何后整体失效。确认无未解决差异时保存为完成候选；确有图像歧义时可逐项确认并保存为待确认候选，报告会保留这些差异。
+- `web_search`、`web_open_result`：联网设置开启时按模型判断使用。普通按图复刻不强制联网。
 
-- `cad_create_model`、`cad_add_feature`、`cad_update_feature`、`cad_remove_feature`：增量建立或修改一个特征；校验成功后自动刷新右侧本地预览，失败时保留旧模型。
-- `cad_get_state`：读取当前权威特征树、尺寸、版本和未解决差异。
-- `cad_get_feature_spec`：按需读取一个特征类型的参数与映射说明；常驻提示只包含简明特征索引，不在每次请求里重发完整 JSON Schema。
-- `cad_validate_plan`：单独检查计划，不改变当前候选。
-- `cad_preview_plan`：按需查看当前模型的指定视图。模型会实际收到图像输入；上下文仅保留最近一张生成视图，预览同时更新右侧面板。
-- `cad_review_model`：对模型与用户原图做多模态逐图比较。每个模型视图单独发起一条请求，附带原始用户参考图和一张生成的对应单视图，减少把不同视角混在一起导致的误判；本轮单视图复核图会在请求结束后删除。
-- `ask_user`：只用于图像无法判定、且不同答案会改变主要结构的真实阻塞问题。带图建模时，若能建立合理候选，程序要求先展示候选。
-- `cad_finish`：请求本轮结束；程序校验计划、预览、图像检查和仍未解决的问题。门禁未通过时模型必须继续工作或说明阻塞项。
-- `web_search`、`web_open_result`：联网设置启用时由模型按需检索并核实外部标准、材料或事实；网页不能替代用户图片或明确尺寸。
+启动 overlay 关闭 DSH 自带的 Bash、PowerShell、文件系统、Skills、子 Agent、任务编排和通用 Web 工具；只向模型开放本项目的 CAD MCP 工具，联网搜索也经由受应用联网开关控制的 CAD MCP 工具。原图在进入 DSH 前会用 Pillow 规范化为 PNG/JPEG，限制在 16 MP 和 4 MiB 内；小于预算的 PNG/JPEG 保持原字节。附件服务用内容哈希存储和校验图片，并将它们保存在该聊天 DSH home 中。Agent 不生成或执行任意 Python、Shell、VBScript、CATScript 或宏。会话日志上传、遥测和本地 Agent 指令注入一并关闭。CADPlan 增量状态由本地服务维护；每次几何修改都会使旧版本的预览与复核失效，需用新版本证据核对。外部网页结果只作为不可信事实来源，不能覆盖用户提供的约束。
 
-图像建模首轮先按原图比例确定名义尺度，逐项标明 `image_estimate`，建立主实体并立即预览。模型按参考图实际视角选择要复核的单视图；每张原图都必须与至少一张可比的当前模型视图核对。复核分别记录原图与模型所见，`match` 缺少任一侧证据便视为未知。若参考图与本地模型视图的画布和背景一致，还会计算前景轮廓重合度；低于阈值时，模型自称 `match` 也会被要求返修。外部截图不满足同画布条件时不会套用这个像素指标。`unknown`、`partial`、`mismatch` 和未解决问题均不能通过；自评分不参与结束门禁。修改几何后，旧问题仍在，必须用新版几何的关联证据关闭。
+## 交付边界
 
-请求精确复现或基础几何复核后仍有明显疑问时，模型可再做独立相似审查。相似分数不能覆盖任何几何偏差。没有参考图时，已校验并预览的结果可作为候选交付，但不会声称完成视觉验收。
+本流程保存可编辑的 `.aimodel`、STL、本地预览和几何报告。预览使用 AI Modeler 本地网格内核；本流程不自动启动 CATIA、不生成 CATPart，也不把模型视觉复核描述成 CATIA B-Rep 验证。CATIA 导出继续使用现有 SDK / MCP 手动通道。
 
-## 上下文、恢复与安全边界
+```text
+%LOCALAPPDATA%/AI Modeler/dsh/sessions/<session-id>/
+  cad-state.json
+  current-preview.png
+  output/
+    candidate.aimodel
+    candidate.stl
+    preview.png
+    geometry-report.json
+```
 
-- 对话窗口默认保留最近最多 128 轮（约 256 条 user/assistant 消息），字符预算默认 1,000,000；较早的对话会按批次摘要。持续工具循环超出上下文时会保留原始当前请求和 CADPlan/预览/复核状态摘要，并压缩较早的工具往返。图像以多模态块发送，不按文本字符数计算。
-- 总时限默认 30 分钟；工具调用有 256 次全局熔断上限，属于防止失控的保护，不是常规建模步骤数。预览上限与全局熔断一致。计划提交、复核和返修次数由模型按需要决定，没有固定返修轮数。
-- 遇到限流、服务端暂时错误和网络瞬断会退避重试；上下文超限会先压缩对话再重试；模型输出被截断时会扩大输出预算。取消请求会停止等待和重试。
-- 时间上限到达时，若已有有效模型和本地预览，返回可编辑的部分候选、复核证据与未解决项，并保存工程和网格；只有模型显式调用 `cad_finish` 且门禁通过才标记主动完成。
-- 所有建模操作只能通过结构化 CADPlan。Agent 不生成或执行 Python、VBScript、CATScript、shell、宏或其它任意代码。
-- 本 AgentLoop 使用 AI Modeler 的本地网格内核预览，不调用 CATIA、不保存 CATPart，也不代表 CATIA B-Rep 核验。CATIA 插件/桥接是单独的执行通道。
-
-运行记录、候选 `.aimodel`、STL 和预览保存在 `artifacts/agentloop/` 的本轮目录。`run.json` 记录 CADPlan、校验、尺寸假设、本地网格检查、工具调用、逐图复核及安全限额，不保存 API Key。复核单视图临时图在每次检查后清理；当前候选预览文件会覆盖写入，不会每轮堆一份。
+若本轮没有通过完成门禁，右侧仍可查看最后一个有效候选，报告中保留当前验证、复核和未解决项；不会伪称视觉复核已通过。

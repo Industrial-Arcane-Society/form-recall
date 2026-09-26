@@ -11,6 +11,7 @@ import sys
 import threading
 import time
 import traceback
+import uuid
 import tkinter as tk
 import tkinter.font as tkfont
 from tkinter import filedialog, messagebox, ttk
@@ -166,6 +167,7 @@ class App(tk.Tk):
         self._pending_images = []
         self.reference_images = []
         self._agent_context = []
+        self._dsh_session_id = 'ai-modeler-' + uuid.uuid4().hex
         self._agent_context_summary = ''
         self._agent_summary_through = 0
         self._agent_total_tokens = 0
@@ -187,6 +189,10 @@ class App(tk.Tk):
         self._build_menu()
         self._build_toolbar()
         self._build_layout()
+        self._append_chat(
+            'assistant',
+            '可以连续讨论当前模型、提出修改，或开始新建。图片和文字会一起发送；'
+            '建模阶段、工具活动和预览会直接出现在本对话中。模型只在本地视口展示，不会自动同步 CATIA。')
         self._build_status()
         self.protocol('WM_DELETE_WINDOW', self.on_close)
 
@@ -355,7 +361,7 @@ class App(tk.Tk):
         panes.pack(fill='both', expand=True, padx=10, pady=10)
 
         # ============================ 左: 对话 + 特征树 ============================
-        left_card, left = TH.card(panes, width=int(430 * self.ui_scale))
+        left_card, left = TH.card(panes, width=int(485 * self.ui_scale))
         panes.add(left_card, weight=0)
 
         head = TH.section(left, '建模对话')
@@ -369,30 +375,47 @@ class App(tk.Tk):
 
         history_wrap = tk.Frame(left, bg=TH.PANEL)
         history_wrap.pack(fill='both', expand=True, padx=12, pady=(0, 7))
-        self.chat_history = tk.Text(
-            history_wrap, height=10, width=34, wrap='word', state='disabled',
-            font=TH.F['small'], relief='flat', bd=0, highlightthickness=0,
-            bg=TH.PANEL, fg=TH.TEXT, padx=6, pady=8, spacing1=3, spacing3=8)
-        self.chat_history.pack(side='left', fill='both', expand=True)
-        chat_scroll = ttk.Scrollbar(history_wrap, command=self.chat_history.yview)
+        self.chat_canvas = tk.Canvas(
+            history_wrap, bg=TH.PANEL, bd=0, highlightthickness=0,
+            yscrollincrement=24)
+        self.chat_canvas.pack(side='left', fill='both', expand=True)
+        chat_scroll = ttk.Scrollbar(history_wrap, command=self.chat_canvas.yview)
         chat_scroll.pack(side='right', fill='y', padx=(5, 0))
-        self.chat_history.configure(yscrollcommand=chat_scroll.set)
-        self.chat_history.tag_configure('user', foreground=TH.ACCENT_DK,
-                                        font=TH.F['body_b'])
-        self.chat_history.tag_configure('assistant', foreground=TH.TEXT,
-                                        font=TH.F['small'])
-        self.chat_history.tag_configure('system', foreground=TH.TEXT_MUTE,
-                                        font=TH.F['tiny'])
-        self.chat_history.insert(
-            'end', 'AI Modeler AgentLoop\n'
-            '可以连续讨论当前模型、提出修改，或开始新建。Agent 会按本轮需要选择识别、建模和复核深度；'
-            '预览会在右侧 Agent 页实时更新。模型只在本地渲染器展示，不自动同步 CATIA。\n',
-            'system')
+        self.chat_canvas.configure(yscrollcommand=chat_scroll.set)
+        self.chat_messages = tk.Frame(self.chat_canvas, bg=TH.PANEL)
+        self._chat_window = self.chat_canvas.create_window(
+            (0, 0), window=self.chat_messages, anchor='nw')
+        self.chat_history = self.chat_messages  # legacy name retained for UI reset code
+        self._chat_cards = []
+        self.chat_messages.bind('<Configure>', self._sync_chat_scrollregion)
+        self.chat_canvas.bind('<Configure>', self._resize_chat_messages)
+        self.chat_canvas.bind('<MouseWheel>', self._scroll_chat)
+        self.chat_messages.bind('<MouseWheel>', self._scroll_chat)
 
         self.composer = tk.Frame(
             left, bg=TH.PANEL, bd=0, highlightthickness=1,
             highlightbackground=TH.BORDER, highlightcolor=TH.ACCENT)
         self.composer.pack(fill='x', padx=12, pady=(0, 10))
+
+        self.chat_activity = tk.Frame(
+            left, bg=TH.PANEL_ALT, highlightthickness=1,
+            highlightbackground=TH.BORDER)
+        self.chat_activity_spinner = ttk.Progressbar(
+            self.chat_activity, mode='indeterminate', length=56)
+        self.chat_activity_spinner.pack(side='left', padx=(10, 8), pady=8)
+        activity_text = tk.Frame(self.chat_activity, bg=TH.PANEL_ALT)
+        activity_text.pack(side='left', fill='x', expand=True, padx=(0, 10), pady=5)
+        self.chat_activity_title = tk.Label(
+            activity_text, text='', bg=TH.PANEL_ALT, fg=TH.TEXT,
+            font=TH.F['body_b'], anchor='w')
+        self.chat_activity_title.pack(fill='x')
+        self.chat_activity_detail = tk.Label(
+            activity_text, text='', bg=TH.PANEL_ALT, fg=TH.TEXT_MUTE,
+            font=TH.F['tiny'], anchor='w', justify='left', wraplength=350)
+        self.chat_activity_detail.pack(fill='x')
+        self._chat_activity_after_id = None
+        self._chat_activity_visible = False
+        self._chat_activity_running = False
 
         self.attachment_preview_frame = tk.Frame(self.composer, bg=TH.PANEL)
         self.attach_canvas = tk.Canvas(
@@ -428,6 +451,8 @@ class App(tk.Tk):
         self.txt.bind('<<Paste>>', self._paste_clipboard_image)
         self.after_idle(self._resize_prompt)
 
+        self.chat_activity.pack_forget()
+
         composer_footer = tk.Frame(self.composer, bg=TH.PANEL)
         composer_footer.pack(fill='x', padx=8, pady=(1, 8))
         ttk.Button(composer_footer, text='＋', width=3, style='Ghost.TButton',
@@ -458,7 +483,9 @@ class App(tk.Tk):
 
         TH.section(left, '特征树', '双击启用 / 停用')
         tvbox = tk.Frame(left, bg=TH.PANEL)
-        tvbox.pack(fill='both', expand=True, padx=12)
+        tvbox.pack(fill='both', expand=False, padx=12)
+        tvbox.configure(height=int(190 * self.ui_scale))
+        tvbox.pack_propagate(False)
         self.tree = ttk.Treeview(tvbox, columns=('no', 'op', 'desc'), show='headings',
                                  selectmode='browse')
         self.tree.heading('no', text='#')
@@ -532,7 +559,8 @@ class App(tk.Tk):
         self.txt_log.pack(fill='both', expand=True)
 
         self.tab_agent = tk.Frame(self.nb, bg=TH.PANEL)
-        self.nb.add(self.tab_agent, text='Agent')
+        # Agent progress now lives in the conversation pane; keep this legacy
+        # backing frame out of the right inspector's notebook.
         self.lbl_token = tk.Label(
             self.tab_agent, text='Token 估算：—', bg=TH.PANEL, fg=TH.TEXT_MUTE,
             font=TH.F['small'], anchor='w', justify='left', wraplength=270)
@@ -672,28 +700,125 @@ class App(tk.Tk):
     # 生成流程
     # ==================================================================
     def _append_chat(self, role, text, images=None):
-        if not hasattr(self, 'chat_history'):
+        if not hasattr(self, 'chat_messages'):
             return
         labels = {'user': '你', 'assistant': 'AI Modeler Agent', 'system': 'AgentLoop'}
         tag = role if role in {'user', 'assistant', 'system'} else 'system'
         body = str(text or '').strip()
-        self.chat_history.configure(state='normal')
-        self.chat_history.insert('end', labels.get(role, 'AgentLoop') + '\n', tag)
-        has_preview = False
-        for path in images or []:
-            photo = self._load_thumbnail(path, (96, 96))
+        user_message = tag == 'user'
+        system_message = tag == 'system'
+        row = tk.Frame(self.chat_messages, bg=TH.PANEL)
+        row.pack(fill='x', padx=10, pady=(4, 7))
+        bubble_bg = (TH.ACCENT_SOFT if user_message else
+                     TH.PANEL_ALT if system_message else TH.PANEL)
+        bubble = tk.Frame(
+            row, bg=bubble_bg, highlightthickness=1,
+            highlightbackground=TH.BORDER if user_message or system_message else TH.PANEL)
+        bubble.pack(side='right' if user_message else 'left',
+                    anchor='e' if user_message else 'w',
+                    padx=(44, 2) if user_message else (2, 44))
+        for scroll_target in (row, bubble):
+            scroll_target.bind('<MouseWheel>', self._scroll_chat)
+        max_width = max(220, int(max(300, self.chat_canvas.winfo_width() - 72)
+                                 * (0.76 if user_message else 0.96)))
+        header = tk.Frame(bubble, bg=bubble_bg)
+        header.pack(fill='x', padx=11, pady=(7, 2))
+        role_label = tk.Label(
+            header, text=labels.get(tag, 'AgentLoop'), bg=bubble_bg,
+            fg=TH.ACCENT_DK if user_message else TH.TEXT_DIM,
+            font=TH.F['small'] if system_message else TH.F['body_b'], anchor='w')
+        role_label.pack(side='left')
+        for scroll_target in (header, role_label):
+            scroll_target.bind('<MouseWheel>', self._scroll_chat)
+        tk.Label(header, text=time.strftime('%H:%M'), bg=bubble_bg,
+                 fg=TH.TEXT_MUTE, font=TH.F['tiny']).pack(side='right')
+
+        image_paths = list(images or [])
+        image_limit = (200, 150) if len(image_paths) <= 1 else (128, 104)
+        for path in image_paths:
+            photo = self._load_thumbnail(path, image_limit)
             if photo is None:
-                self.chat_history.insert(
-                    'end', '[图片无法预览：%s] ' % os.path.basename(path), tag)
+                tk.Label(bubble, text='图片无法预览：%s' % os.path.basename(path),
+                         bg=bubble_bg, fg=TH.TEXT_MUTE, font=TH.F['small'],
+                         anchor='w', justify='left').pack(
+                             fill='x', padx=11, pady=(2, 5))
                 continue
-            self.chat_history.image_create('end', image=photo, padx=3, pady=3)
             self._chat_photo_refs.append(photo)
-            has_preview = True
-        if has_preview:
-            self.chat_history.insert('end', '\n', tag)
-        self.chat_history.insert('end', (body or '（空消息）') + '\n\n', tag)
-        self.chat_history.see('end')
-        self.chat_history.configure(state='disabled')
+            image_label = tk.Label(bubble, image=photo, bg=bubble_bg,
+                                   bd=0, highlightthickness=0)
+            image_label.pack(anchor='w' if not user_message else 'e',
+                             padx=11, pady=(2, 5))
+            image_label.bind('<MouseWheel>', self._scroll_chat)
+        message_label = tk.Label(
+            bubble, text=body or '（空消息）', bg=bubble_bg, fg=TH.TEXT,
+            font=TH.F['small'] if system_message else TH.F['body'],
+            justify='left', anchor='w', wraplength=max_width)
+        message_label.pack(fill='x', padx=11, pady=(2, 9))
+        message_label.bind('<MouseWheel>', self._scroll_chat)
+        self._chat_cards.append((message_label, 0.76 if user_message else 0.96))
+        self.chat_canvas.update_idletasks()
+        self.chat_canvas.configure(scrollregion=self.chat_canvas.bbox('all'))
+        self.chat_canvas.yview_moveto(1.0)
+
+    def _sync_chat_scrollregion(self, _event=None):
+        if hasattr(self, 'chat_canvas'):
+            self.chat_canvas.configure(scrollregion=self.chat_canvas.bbox('all'))
+
+    def _resize_chat_messages(self, event):
+        if not hasattr(self, '_chat_window'):
+            return
+        self.chat_canvas.itemconfigure(self._chat_window, width=max(1, event.width))
+        self.after_idle(self._resize_chat_card_text)
+
+    def _resize_chat_card_text(self):
+        if not hasattr(self, 'chat_canvas'):
+            return
+        usable = max(280, self.chat_canvas.winfo_width() - 72)
+        for label, ratio in list(getattr(self, '_chat_cards', [])):
+            try:
+                label.configure(wraplength=max(200, int(usable * ratio)))
+            except tk.TclError:
+                pass
+
+    def _scroll_chat(self, event):
+        if getattr(event, 'delta', 0):
+            self.chat_canvas.yview_scroll(-1 if event.delta > 0 else 1, 'units')
+            return 'break'
+
+    def _set_chat_activity(self, title, detail='', active=True, hide_after_ms=5500):
+        """Show current DSH/build activity beside the composer, where it stays visible."""
+        if not hasattr(self, 'chat_activity'):
+            return
+        if self._chat_activity_after_id:
+            try:
+                self.after_cancel(self._chat_activity_after_id)
+            except Exception:
+                pass
+            self._chat_activity_after_id = None
+        self.chat_activity_title.configure(text=str(title or ''))
+        self.chat_activity_detail.configure(text=str(detail or ''))
+        if not self._chat_activity_visible:
+            self.chat_activity.pack(fill='x', padx=12, pady=(0, 8), before=self.composer)
+            self._chat_activity_visible = True
+        if active and not self._chat_activity_running:
+            self.chat_activity_spinner.start(12)
+            self._chat_activity_running = True
+        elif not active and self._chat_activity_running:
+            self.chat_activity_spinner.stop()
+            self._chat_activity_running = False
+        if not active:
+            if hide_after_ms:
+                self._chat_activity_after_id = self.after(
+                    hide_after_ms, self._hide_chat_activity)
+
+    def _hide_chat_activity(self):
+        self._chat_activity_after_id = None
+        if getattr(self, '_chat_activity_visible', False):
+            if self._chat_activity_running:
+                self.chat_activity_spinner.stop()
+                self._chat_activity_running = False
+            self.chat_activity.pack_forget()
+            self._chat_activity_visible = False
 
     def _load_thumbnail(self, path, size):
         """Load a correctly sized Tk image for both chat history and attachments."""
@@ -889,6 +1014,12 @@ class App(tk.Tk):
             messagebox.showinfo('AgentLoop 正在运行',
                                 '请先点输入框旁的停止按钮结束当前任务，再新建对话。')
             return
+        try:
+            from ai_modeler.agent import dsh_agent
+            dsh_agent.close_session(getattr(self, '_dsh_session_id', None))
+        except Exception:
+            pass
+        self._dsh_session_id = 'ai-modeler-' + uuid.uuid4().hex
         self._agent_context = []
         self._agent_context_summary = ''
         self._agent_summary_through = 0
@@ -901,15 +1032,14 @@ class App(tk.Tk):
         self.txt_agent_events.delete('1.0', 'end')
         self.txt_agent_events.configure(state='disabled')
         self._update_reference_label()
-        self.chat_history.configure(state='normal')
-        self.chat_history.delete('1.0', 'end')
+        for child in self.chat_messages.winfo_children():
+            child.destroy()
+        self._chat_cards = []
         self._chat_photo_refs = []
-        self.chat_history.insert(
-            'end', 'AI Modeler AgentLoop\n'
-            '可以连续讨论当前模型、提出修改，或开始新建。Agent 会按本轮需要选择识别、建模和复核深度；'
-            '预览会在右侧 Agent 页实时更新。模型只在本地渲染器展示，不自动同步 CATIA。\n',
-            'system')
-        self.chat_history.configure(state='disabled')
+        self._hide_chat_activity()
+        self._append_chat(
+            'assistant',
+            '新对话已开始。可以描述零件、粘贴一张或多张参考图，也可以继续逐步修改模型。')
         self._set_prompt_text('')
         self.clear_features()
 
@@ -1022,26 +1152,30 @@ class App(tk.Tk):
         self.txt_agent_events.see('end')
         self.txt_agent_events.configure(state='disabled')
 
-    def _append_agent_reasoning(self, delta):
-        """Append a streamed model reasoning delta to the live panel."""
-        if not delta or not hasattr(self, 'txt_agent_events'):
+    def _append_agent_reasoning(self, status_text):
+        """Surface receipt of DSH reasoning events without dumping raw chain text."""
+        if not status_text:
             return
-        if not getattr(self, '_agent_reasoning_block_open', False):
-            request_number = max(1, int(getattr(
-                self, '_agent_reasoning_request_count', 1)))
-            detail = str(getattr(self, '_agent_reasoning_request_detail', '') or '').strip()
-            heading = '模型思考链 · 第 %d 次请求' % request_number
-            if detail:
-                heading += ' · ' + detail
-            self.txt_agent_events.configure(state='normal')
-            if self.txt_agent_events.index('end-1c') != '1.0':
-                self.txt_agent_events.insert('end', '\n')
-            self.txt_agent_events.insert('end', heading + '\n')
-            self._agent_reasoning_block_open = True
-        self.txt_agent_events.configure(state='normal')
-        self.txt_agent_events.insert('end', str(delta))
-        self.txt_agent_events.see('end')
-        self.txt_agent_events.configure(state='disabled')
+        self._agent_reasoning_stream_seen = True
+        status_text = str(status_text).strip()
+        if status_text.startswith('已接收增量'):
+            self._agent_stream_detail = '已收到模型思考流增量'
+            if '累计约' in status_text:
+                raw_count = status_text.split('累计约', 1)[1].split('字符', 1)[0]
+                digits = ''.join(ch for ch in raw_count if ch.isdigit())
+                if digits:
+                    self._agent_reasoning_chars = int(digits)
+                    self._agent_stream_detail = '已收到模型思考流增量 · 累计约 %s 字符' % format(
+                        self._agent_reasoning_chars, ',')
+        else:
+            # Backward-compatible DSH events may carry the raw delta in this
+            # field; intentionally discard it and display only stream activity.
+            self._agent_stream_detail = '已收到模型思考流增量（内容不展开）'
+        if getattr(self, '_agent_wait_started', None) is not None:
+            self._refresh_agent_wait_clock()
+        else:
+            self._set_chat_activity(
+                '已收到模型思考流', self._agent_stream_detail, active=True)
 
     def _finish_agent_reasoning_block(self):
         if not getattr(self, '_agent_reasoning_block_open', False):
@@ -1100,42 +1234,28 @@ class App(tk.Tk):
         return '{:,}'.format(int(n or 0))
 
     def _show_agent_live_preview(self, payload):
-        """Display a worker-produced PNG in the right Agent tab on Tk's UI thread."""
+        """Append a worker-produced preview to the conversation as soon as it is ready."""
         payload = payload if isinstance(payload, dict) else {}
         preview = payload.get('preview') if isinstance(payload.get('preview'), dict) else {}
         path = preview.get('preview_image')
         stage = str(payload.get('stage') or 'preview')
-        try:
-            if path and os.path.isfile(path):
-                self._last_agent_preview_path = path
-                photo = tk.PhotoImage(file=path)
-                available = max(180, self.tab_agent.winfo_width() - 32)
-                factor = max(1, (photo.width() + available - 1) // available)
-                if factor > 1:
-                    photo = photo.subsample(factor, factor)
-                self._agent_live_photo = photo
-                self.lbl_agent_preview.configure(image=photo, text='')
-            else:
-                self.lbl_agent_preview.configure(
-                    image='', text='预览图暂时无法显示。\n' + str(path or ''))
-                self._agent_live_photo = None
-        except Exception as exc:
-            self.lbl_agent_preview.configure(
-                image='', text='预览图暂时无法显示：%s' % exc)
-            self._agent_live_photo = None
+        if path and os.path.isfile(path):
+            self._last_agent_preview_path = path
         dims = preview.get('dimensions') if isinstance(preview.get('dimensions'), dict) else {}
         size = dims.get('size') or []
         size_text = ' × '.join('%.2f' % float(value) for value in size) + ' mm' if size else '尺寸待计算'
         views = '、'.join(preview.get('preview_image_views') or [])
-        self.lbl_agent_stage.configure(text='实时预览 · %s' % stage)
-        self.lbl_agent_detail.configure(
-            text='状态：%s\n外形：%s\n视图：%s\n%s' % (
-                preview.get('state', 'unknown'), size_text, views or '—',
-                preview.get('preview_image_source') or '本地网格预览'))
+        message = '实时模型预览 · %s\n外形尺寸：%s\n视图：%s' % (
+            stage, size_text, views or '—')
+        if path and os.path.isfile(path):
+            self._append_chat('assistant', message, [path])
+        else:
+            self._append_chat('assistant', message + '\n预览图暂时无法显示：' + str(path or ''))
+        self._set_chat_activity('模型预览已更新', message, active=True)
         self._append_agent_event('预览已更新：%s；%s' % (stage, size_text))
 
     def _agent_generate(self, text, images):
-        from ai_modeler.agent import agentloop
+        from ai_modeler.agent import dsh_agent
         self._busy = True
         self._t0 = time.time()
         self._agent_wait_started = None
@@ -1146,7 +1266,19 @@ class App(tk.Tk):
         self._agent_reasoning_request_count = 0
         self._agent_reasoning_request_detail = ''
         self._agent_reasoning_block_open = False
+        self._agent_reasoning_stream_seen = False
+        self._agent_reasoning_chars = 0
         agent_cfg = self.cfg.get('agentloop', {}) if isinstance(self.cfg.get('agentloop'), dict) else {}
+        llm_cfg = self.cfg.get('llm', {}) if isinstance(self.cfg.get('llm'), dict) else {}
+        try:
+            from ai_modeler.agent import providers
+            active_profile = providers.active_profile(llm_cfg) or {}
+        except Exception:
+            active_profile = {}
+        effort = str(active_profile.get('reasoning_effort')
+                     or llm_cfg.get('reasoning_effort') or 'none').strip().lower()
+        self._agent_effort_display = effort
+        self._agent_reasoning_enabled = effort not in {'', 'none', 'off', 'disabled'}
         try:
             self._budget_s = max(60.0, min(1800.0,
                                            float(agent_cfg.get('total_timeout_sec', 1800))))
@@ -1161,13 +1293,16 @@ class App(tk.Tk):
         self._set_send_mode('stop')
         self.progress.configure(value=0)
         self.status('正在准备建模请求…')
+        self._set_chat_activity(
+            '正在准备建模请求',
+            '整理对话上下文和 %d 张参考图；启动后会持续显示等待时间与工具活动。' % len(images),
+            active=True)
         self.lbl_agent_stage.configure(text='准备本轮上下文…')
         self.lbl_agent_detail.configure(text='正在整理对话与参考图片；模型请求开始后会显示等待时间。')
         self._set_agent_thinking_panel(False, '正在准备模型请求')
         self.txt_agent_events.configure(state='normal')
         self.txt_agent_events.delete('1.0', 'end')
         self.txt_agent_events.configure(state='disabled')
-        self.nb.select(self.tab_agent)
         self._q = q = queue.Queue()
         request = {'text': text, 'images': list(images), 'id': time.monotonic_ns()}
         self._active_request = request
@@ -1206,11 +1341,9 @@ class App(tk.Tk):
 
         def work():
             try:
-                result = agentloop.run_agent_loop(
+                result = dsh_agent.run_dsh_agent(
                     text, image_paths=images, cfg=cfg_snapshot,
-                    conversation_history=context,
-                    conversation_summary=context_summary,
-                    summary_through=summary_through,
+                    session_id=self._dsh_session_id,
                     progress=lambda message: q.put(('agent_progress', message, None)),
                     cancel_event=cancel, current_plan=current_plan,
                     current_document=current_document,
@@ -1246,19 +1379,25 @@ class App(tk.Tk):
         self._agent_wait_rendered_stream = stream_detail
         minutes, seconds = divmod(elapsed, 60)
         clock = '%02d:%02d' % (minutes, seconds)
-        if '推理' in stream_detail or '思考' in stream_detail:
+        if getattr(self, '_agent_reasoning_stream_seen', False):
             stage = '模型正在思考'
         elif '生成答复' in stream_detail:
             stage = '模型正在生成答复'
         elif '工具调用' in stream_detail:
             stage = '模型正在准备工具调用'
+        elif getattr(self, '_agent_reasoning_enabled', False):
+            stage = '等待模型思考流'
         else:
             stage = '模型响应等待中'
         self.lbl_agent_stage.configure(text=stage + ' · ' + clock)
         detail_lines = [self._agent_wait_detail or '正在等待模型处理本轮输入']
+        detail_lines.append('推理强度：%s' % getattr(self, '_agent_effort_display', '未记录'))
+        if not getattr(self, '_agent_reasoning_enabled', False):
+            detail_lines.append('当前推理关闭，服务通常不会返回思考流；模型响应、工具活动和预览仍会持续显示。')
         if stream_detail:
             detail_lines.append(stream_detail)
         detail_lines.append('已等待 %s；点输入框旁的停止按钮可当场中断本次模型请求。' % clock)
+        self._set_chat_activity(stage + ' · ' + clock, '\n'.join(detail_lines), active=True)
         self.lbl_agent_detail.configure(
             text='\n'.join(detail_lines))
         self._set_agent_thinking_panel(
@@ -1291,6 +1430,10 @@ class App(tk.Tk):
                         self._append_agent_reasoning(
                             value[len('模型思考链增量：'):])
                         continue
+                    if value.startswith('模型思考流：'):
+                        self._append_agent_reasoning(
+                            value[len('模型思考流：'):].strip())
+                        continue
                     if value.startswith('模型流式状态：'):
                         self._agent_stream_detail = value[len('模型流式状态：'):].strip()
                         self._refresh_agent_wait_clock()
@@ -1300,12 +1443,16 @@ class App(tk.Tk):
                         self.lbl_agent_detail.configure(text=summary[:1200])
                         self._set_agent_thinking_panel(False, '模型判断摘要（已收起）')
                         self._append_agent_event('模型判断摘要：' + summary)
+                        self._append_chat('system', '阶段摘要：' + summary[:700])
+                        self._set_chat_activity('模型阶段摘要', summary[:700], active=True)
                         continue
                     if value.startswith('Agent 决策摘要：'):
                         summary = value[len('Agent 决策摘要：'):].strip()
                         self.lbl_agent_detail.configure(text=summary[:1200])
                         self._set_agent_thinking_panel(False, '下一步：' + summary[:56])
                         self._append_agent_event('下一步：' + summary)
+                        self._append_chat('system', '下一步：' + summary[:700])
+                        self._set_chat_activity('Agent 正在继续', summary[:700], active=True)
                         continue
                     if value.startswith('模型响应已返回：'):
                         self._finish_agent_reasoning_block()
@@ -1319,6 +1466,9 @@ class App(tk.Tk):
                                  value[len('模型响应已返回：'):].strip())
                         self._set_agent_thinking_panel(False, '思考已完成（已收起）')
                         self._append_agent_event(value)
+                        self._set_chat_activity(
+                            '模型已返回 · 正在处理结果',
+                            value[len('模型响应已返回：'):].strip(), active=True)
                         continue
                     self._agent_wait_started = None
                     self._agent_stream_detail = ''
@@ -1326,6 +1476,9 @@ class App(tk.Tk):
                     self._append_chat('system', value)
                     self.lbl_agent_stage.configure(text=str(value))
                     self._append_agent_event(value)
+                    self._set_chat_activity(
+                        '正在执行建模步骤' if ('工具' in value or '特征' in value) else 'AgentLoop 正在运行',
+                        value, active=True)
                     self.status(value)
                     continue
                 if kind == 'agent_preview':
@@ -1342,6 +1495,7 @@ class App(tk.Tk):
                 self._finish_agent_reasoning_block()
                 self._agent_stream_detail = ''
                 self._set_agent_thinking_panel(False, '正在整理本轮结果')
+                self._set_chat_activity('本轮即将完成', '正在整理模型与运行结果…', active=True)
                 self._unlock_ui()
                 request = self._active_request or {'text': '', 'images': []}
                 text = request['text']
@@ -1451,10 +1605,24 @@ class App(tk.Tk):
                                 in {'valid', 'needs_confirmation'}):
                             self._pending_agent_plan = pending_plan
                         candidate_shown = self._show_agent_candidate(text, result)
-                        if candidate_shown:
+                        if (candidate_shown and
+                                result.get('state') == 'candidate_with_open_findings'):
+                            self.status('待确认候选已保存；视觉复核仍有未解决项', TH.WARN)
+                        elif candidate_shown:
                             self.status('AgentLoop 尚未接受；当前仅显示候选模型', TH.WARN)
                         else:
                             self.status('AgentLoop 已停止：需要补充信息或仍有待处理偏差', TH.WARN)
+                    elapsed = max(0, int(time.time() - getattr(self, '_t0', time.time())))
+                    minutes, seconds = divmod(elapsed, 60)
+                    self._set_chat_activity(
+                        '本轮已完成 · %02d:%02d' % (minutes, seconds),
+                        '状态：%s · 推理强度：%s · 思考流：%s' % (
+                            result.get('state', 'unknown'),
+                            getattr(self, '_agent_effort_display', '未记录'),
+                            ('已接收约 %s 字符' % format(self._agent_reasoning_chars, ',')
+                             if self._agent_reasoning_stream_seen else
+                             '未返回（推理关闭或服务未提供）')),
+                        active=False)
                 elif kind == 'agent_err':
                     if self._cancel is not None and self._cancel.is_set():
                         # 模型流被「停止」当场中断：按取消收尾，不按失败告警。
@@ -1467,6 +1635,7 @@ class App(tk.Tk):
                         self._active_request = None
                         self._unlock_ui()
                         self._append_chat('assistant', '已停止当前 AgentLoop（模型请求已当场中断）。')
+                        self._set_chat_activity('本轮已停止', '已中断模型请求。', active=False)
                         self.status('AgentLoop 已停止', TH.WARN)
                         self._resume_pending_request()
                         return
@@ -1479,6 +1648,7 @@ class App(tk.Tk):
                     self.lbl_agent_detail.configure(text=str(value)[:1200])
                     self._set_agent_thinking_panel(False, '本轮失败（思考已收起）')
                     self._append_agent_event(message)
+                    self._set_chat_activity('AgentLoop 执行失败', str(value)[:500], active=False)
                     self.status('AgentLoop 未完成', TH.ERR)
                 self._active_request = None
                 if not self._busy:
@@ -1496,6 +1666,7 @@ class App(tk.Tk):
             self._active_request = None
             self._unlock_ui()
             self._append_chat('assistant', '已取消当前 AgentLoop。')
+            self._set_chat_activity('本轮已取消', '当前请求已停止。', active=False)
             self.status('AgentLoop 已取消', TH.WARN)
             self._resume_pending_request()
             return
@@ -1512,6 +1683,7 @@ class App(tk.Tk):
             message = 'AgentLoop 超过总时限，已停止等待；没有回退到规则猜测。'
             self._append_chat('assistant', message)
             self._agent_context.append({'role': 'assistant', 'content': message})
+            self._set_chat_activity('AgentLoop 已超时', message, active=False)
             self.status('AgentLoop 超时', TH.ERR)
             self._resume_pending_request()
             return
@@ -2853,6 +3025,13 @@ class App(tk.Tk):
             pass
         if self._busy:
             self.cancel_build()
+        try:
+            from ai_modeler.agent import dsh_agent
+            session_id = getattr(self, '_dsh_session_id', None)
+            threading.Thread(target=dsh_agent.close_session,
+                             args=(session_id,), daemon=False).start()
+        except Exception:
+            pass
         self.destroy()
 
 

@@ -668,7 +668,7 @@ def _responses_to_chat_message(response, final_event, payload):
 
 def _deepseek_responses_completion(messages, cfg, tools, timeout, max_tokens,
                                    temperature, progress=None, cancel_event=None,
-                                   tool_choice=None):
+                                   tool_choice=None, stream=True):
     _check_cancelled(cancel_event)
     model = cfg.get('model') or 'deepseek-flash'
     base = (cfg.get('base_url') or '').rstrip('/')
@@ -691,7 +691,7 @@ def _deepseek_responses_completion(messages, cfg, tools, timeout, max_tokens,
         'reasoning': {'effort': effort},
         'max_output_tokens': int(max_tokens),
         'temperature': temperature,
-        'stream': True,
+        'stream': bool(stream),
     }
     converted_tools = _responses_tools(tools)
     if converted_tools:
@@ -702,15 +702,31 @@ def _deepseek_responses_completion(messages, cfg, tools, timeout, max_tokens,
         data=json.dumps(payload, ensure_ascii=False).encode('utf-8'),
         headers={
             'Content-Type': 'application/json',
-            'Accept': 'text/event-stream',
+            'Accept': 'text/event-stream' if stream else 'application/json',
             'Authorization': 'Bearer ' + (cfg.get('api_key') or 'sk-local'),
         },
         method='POST')
     try:
-        with urllib.request.urlopen(
-                request, timeout=_stream_request_timeout(timeout)) as response:
-            result, final_event = _read_responses_stream(
-                response, progress=progress, cancel_event=cancel_event)
+        request_timeout = (_stream_request_timeout(timeout) if stream
+                           else max(0.1, float(timeout)))
+        with urllib.request.urlopen(request, timeout=request_timeout) as response:
+            if stream:
+                result, final_event = _read_responses_stream(
+                    response, progress=progress, cancel_event=cancel_event)
+            else:
+                try:
+                    result = json.loads(response.read().decode('utf-8'))
+                except (UnicodeDecodeError, json.JSONDecodeError) as exc:
+                    raise RuntimeError('DeepSeek Responses API 返回了无效 JSON。') from exc
+                if not isinstance(result, dict):
+                    raise RuntimeError('DeepSeek Responses API 返回对象格式无效。')
+                if result.get('error') or result.get('status') == 'failed':
+                    error = result.get('error') or result.get('status_details') or result
+                    message = error.get('message') if isinstance(error, dict) else str(error)
+                    raise RuntimeError('DeepSeek Responses API 生成失败: %s' % message)
+                final_event = ('response.incomplete'
+                               if result.get('status') == 'incomplete'
+                               else 'response.completed')
     except urllib.error.HTTPError as exc:
         try:
             reason = exc.read().decode('utf-8', errors='replace')[:2000]
@@ -718,12 +734,16 @@ def _deepseek_responses_completion(messages, cfg, tools, timeout, max_tokens,
             reason = str(exc)
         raise RuntimeError('DeepSeek Responses API HTTP %s: %s' % (exc.code, reason)) from exc
     except (urllib.error.URLError, TimeoutError, OSError) as exc:
-        if _is_stream_timeout(exc):
+        if stream and _is_stream_timeout(exc):
             raise RuntimeError(
                 'DeepSeek Responses API 连续 %d 秒没有新流数据，已停止等待；'
                 '请检查上游服务是否仍在输出，再重试。'
                 % MODEL_STREAM_IDLE_TIMEOUT_SECONDS) from exc
-        raise RuntimeError('DeepSeek Responses API 流式连接失败: %s' % exc) from exc
+        if not stream and isinstance(exc, TimeoutError):
+            raise RuntimeError('DeepSeek Responses API 非流式请求超过 %s 秒。' %
+                               request_timeout) from exc
+        raise RuntimeError('DeepSeek Responses API %s连接失败: %s' %
+                           ('流式' if stream else '非流式', exc)) from exc
     return _responses_to_chat_message(result, final_event, payload)
 
 
@@ -945,7 +965,8 @@ def _chat_stream_to_message(stream, payload):
                          else 'disabled'}
     message['_request_thinking'] = thinking_sent
     message['_request_reasoning_effort'] = payload.get('reasoning_effort')
-    message['_api_protocol'] = 'chat_completions_stream'
+    message['_api_protocol'] = ('chat_completions_stream'
+                                if payload.get('stream') else 'chat_completions')
     message['_response_id'] = stream.get('response_id')
     usage = stream.get('usage') or {}
     if isinstance(usage, dict):
@@ -964,9 +985,59 @@ def _chat_stream_to_message(stream, payload):
     return message
 
 
+def _chat_json_to_message(response, payload):
+    """Normalize one non-streaming Chat Completions response."""
+    if not isinstance(response, dict):
+        raise RuntimeError('大模型非流式响应格式无效。')
+    if response.get('error'):
+        error = response.get('error')
+        detail = error.get('message') if isinstance(error, dict) else str(error)
+        raise RuntimeError('大模型非流式响应失败: %s' % detail)
+    choices = response.get('choices') or []
+    if not choices or not isinstance(choices[0], dict):
+        raise RuntimeError('大模型非流式响应缺少 choices[0]。')
+    choice = choices[0]
+    source = choice.get('message') or {}
+    if not isinstance(source, dict):
+        raise RuntimeError('大模型非流式响应缺少 assistant message。')
+    content = source.get('content') or ''
+    if isinstance(content, list):
+        content = ''.join(
+            str(part.get('text') or part.get('refusal') or '')
+            for part in content if isinstance(part, dict)
+            and part.get('type') in {'text', 'output_text', 'refusal'})
+    if not isinstance(content, str):
+        content = str(content)
+    tool_calls = []
+    for call in source.get('tool_calls') or []:
+        if not isinstance(call, dict):
+            continue
+        function = call.get('function') or {}
+        if not isinstance(function, dict):
+            function = {}
+        arguments = function.get('arguments') or '{}'
+        if not isinstance(arguments, str):
+            arguments = json.dumps(arguments, ensure_ascii=False)
+        tool_calls.append({
+            'id': str(call.get('id') or ''),
+            'type': call.get('type') or 'function',
+            'name': str(function.get('name') or ''),
+            'arguments': arguments,
+        })
+    return _chat_stream_to_message({
+        'content': content,
+        'reasoning': source.get('reasoning_content') or source.get('reasoning') or '',
+        'finish_reason': choice.get('finish_reason') or 'stop',
+        'usage': response.get('usage') or {},
+        'response_id': response.get('id'),
+        'tool_calls': tool_calls,
+    }, payload)
+
+
 def chat_completion(messages, cfg: dict, tools=None, timeout=180,
                     max_tokens=4096, temperature=0.1, progress=None,
-                    cancel_event=None, tool_choice=None):
+                    cancel_event=None, tool_choice=None, stream=True,
+                    response_format=None):
     """Call a configured model and normalize its reply for the local AgentLoop.
 
     Official DeepSeek endpoints use the Responses API with SSE streaming;
@@ -991,7 +1062,7 @@ def chat_completion(messages, cfg: dict, tools=None, timeout=180,
         return _deepseek_responses_completion(
             messages, cfg, tools, timeout, max_tokens, temperature,
             progress=progress, cancel_event=cancel_event,
-            tool_choice=tool_choice)
+            tool_choice=tool_choice, stream=stream)
 
     payload = {
         'model': model,
@@ -1000,8 +1071,10 @@ def chat_completion(messages, cfg: dict, tools=None, timeout=180,
         'messages': messages,
         # 流式接收：思考链(reasoning) 由服务端以 delta.reasoning_content 分片
         # 下发，非流式请求拿不到实时增量（SiliconFlow 等推理模型）。
-        'stream': True,
+        'stream': bool(stream),
     }
+    if isinstance(response_format, dict):
+        payload['response_format'] = response_format
     # Compatibility path for non-DeepSeek Responses providers. Official
     # DeepSeek requests have already been routed through the Responses API.
     if _is_siliconflow_host(base):
@@ -1029,13 +1102,22 @@ def chat_completion(messages, cfg: dict, tools=None, timeout=180,
     request = urllib.request.Request(
         base + '/chat/completions', data=json.dumps(payload).encode('utf-8'),
         headers={'Content-Type': 'application/json',
-                 'Accept': 'text/event-stream',
+                 'Accept': ('text/event-stream' if payload['stream']
+                            else 'application/json'),
                  'Authorization': 'Bearer ' + key})
     try:
-        with urllib.request.urlopen(
-                request, timeout=_stream_request_timeout(timeout)) as response:
-            stream = _read_chat_completions_stream(
-                response, progress=progress, cancel_event=cancel_event)
+        request_timeout = (_stream_request_timeout(timeout) if stream
+                           else max(0.1, float(timeout)))
+        with urllib.request.urlopen(request, timeout=request_timeout) as response:
+            if payload['stream']:
+                stream = _read_chat_completions_stream(
+                    response, progress=progress, cancel_event=cancel_event)
+            else:
+                try:
+                    result = json.loads(response.read().decode('utf-8'))
+                except (UnicodeDecodeError, json.JSONDecodeError) as exc:
+                    raise RuntimeError('大模型非流式响应不是有效 JSON。') from exc
+                return _chat_json_to_message(result, payload)
     except urllib.error.HTTPError as exc:
         try:
             reason = exc.read().decode('utf-8', errors='replace')[:1000]
@@ -1054,19 +1136,22 @@ def chat_completion(messages, cfg: dict, tools=None, timeout=180,
             raise RuntimeError(
                 '当前模型/接口不接受图像输入；请确认该模型支持 OpenAI 兼容的 image_url。'
                 '服务返回: %s' % reason) from exc
-        if 'stream' in reason_lower:
+        if payload['stream'] and 'stream' in reason_lower:
             # 某些非标准实现可能不支持流式；这里明确报出而不是静默降级。
             raise RuntimeError(
                 '当前接口不支持流式响应(stream=true)，无法接收思考链增量。'
                 '请更换支持 OpenAI 兼容流式的模型服务。服务返回: %s' % reason) from exc
         raise RuntimeError('大模型接口 HTTP %s: %s' % (exc.code, reason)) from exc
     except (urllib.error.URLError, TimeoutError, OSError) as exc:
-        if _is_stream_timeout(exc):
+        if payload['stream'] and _is_stream_timeout(exc):
             raise RuntimeError(
                 '大模型流式响应连续 %d 秒没有新数据，已停止等待；'
                 '请检查上游服务是否仍在输出，再重试。'
                 % MODEL_STREAM_IDLE_TIMEOUT_SECONDS) from exc
-        raise RuntimeError('大模型接口连接失败: %s' % exc) from exc
+        if not payload['stream'] and isinstance(exc, TimeoutError):
+            raise RuntimeError('大模型非流式请求超过 %s 秒。' % request_timeout) from exc
+        raise RuntimeError('大模型接口%s连接失败: %s' %
+                           ('流式' if payload['stream'] else '非流式', exc)) from exc
 
     return _chat_stream_to_message(stream, payload)
 
