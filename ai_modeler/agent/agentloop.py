@@ -172,13 +172,13 @@ REVIEW_SUBMISSION_TOOL = {
         "name": "submit_multiview_review",
         "description": (
             "提交当前单视图对原始同方向参考图的复核结果。只提交可见证据和可定位差异，"
-            "不要输出长篇说明。"
+            "reference_images 必须逐项覆盖本视图要求核对的原图（最多 8 张），不要输出长篇说明。"
         ),
         "parameters": {
             "type": "object", "additionalProperties": False,
             "properties": {
                 "reference_images": {
-                    "type": "array", "maxItems": 4,
+                    "type": "array", "maxItems": 8,
                     "items": {"type": "object", "additionalProperties": False,
                               "properties": {
                                   "image": {"type": "string", "maxLength": 160},
@@ -1295,6 +1295,37 @@ def _planned_hole_count(plan):
     return sum(holes.values())
 
 
+def _summarize_review_findings(findings):
+    """Keep visual recheck targets while omitting internal geometry baselines."""
+    summaries = []
+    for finding in findings or []:
+        if not isinstance(finding, dict):
+            continue
+        summary = {
+            "issue_id": str(finding.get("issue_id") or "")[:100],
+            "item": str(finding.get("item") or "")[:80],
+            "evidence": str(finding.get("evidence") or "")[:180],
+            "severity": str(finding.get("severity") or "medium")[:16],
+            "feature_ids": [
+                str(value) for value in finding.get("feature_ids") or []
+                if value is not None
+            ][:8],
+            "affected_parameters": [],
+        }
+        for row in finding.get("affected_parameters") or []:
+            if not isinstance(row, dict):
+                continue
+            feature_id = str(row.get("feature_id") or "")[:80]
+            path = str(row.get("path") or "")[:100]
+            if feature_id and path:
+                summary["affected_parameters"].append({
+                    "feature_id": feature_id, "path": path})
+            if len(summary["affected_parameters"]) >= 8:
+                break
+        summaries.append(summary)
+    return summaries
+
+
 def _split_view_review(plan, final_preview, source_messages, cfg, state,
                        cancel_event, phase, round_index, prompt,
                        previous_open_findings=None, views=None):
@@ -1363,7 +1394,6 @@ def _split_view_review(plan, final_preview, source_messages, cfg, state,
                 "round": round_index,
                 "view_to_inspect": view,
                 "required_areas": list(areas),
-                "original_request": prompt,
                 "view_specific_limits": (
                     ["front orthographic projection cannot establish Y-depth, setback, or through-depth;"]
                     if view == "front" else []),
@@ -1379,22 +1409,15 @@ def _split_view_review(plan, final_preview, source_messages, cfg, state,
                     "source": "AI Modeler local mesh kernel; not CATIA B-Rep",
                     "dimensions_px": [660, 520],
                 },
-                "previous_open_findings_to_recheck": per_view_findings,
-                "reference_images_to_account_for": view_image_names,
-                "independent_reference_inventory": {
-                    "source": "independent_source_only_multimodal_read",
-                    "images": [{
-                        "image": image.get("image"),
-                        "source_view": image.get("source_view"),
-                        "coverage": image.get("coverage"),
-                        "hole_layout_coverage": image.get("hole_layout_coverage"),
-                    } for image in view_images],
-                },
+                "previous_open_findings_to_recheck": _summarize_review_findings(
+                    per_view_findings),
+                "reference_images_to_account_for": [{
+                    "image": image.get("image"),
+                    "source_view": image.get("source_view"),
+                    "coverage": image.get("coverage"),
+                    "hole_layout_coverage": image.get("hole_layout_coverage"),
+                } for image in view_images],
                 "independent_visible_feature_groups": view_groups,
-                "feature_group_check_instruction": (
-                    "Independent groups are brief hints from a source-only read, not ground truth. "
-                    "Recheck their quantity and surface against pixels. Return one feature_group check "
-                    "for each visible group; never merge regions by color."),
             }
             messages = _source_messages_for_view(
                 source_messages, reference_inventory, view_image_names,
@@ -2678,7 +2701,11 @@ def _write_run_record(session_dir, prompt, image_paths, state,
             "web_search_calls": state.get("web_search_calls", result.get("web_search_calls", 0)),
             "blocked_web_search_calls": state.get("blocked_web_search_calls", 0),
             "preview_calls": state.get("preview_calls", result.get("preview_calls", 0)),
-            "review_rounds": result.get("review_rounds", 0),
+            # Checkpoint writes happen while the loop is still running, before
+            # a final result exists. Reading the live counter here keeps an
+            # interrupted run's telemetry from incorrectly staying at zero.
+            "review_rounds": state.get(
+                "review_invocations", result.get("review_rounds", 0)),
             "repair_cycles": state.get("repair_cycles", 0),
             "llm_requests": len(state.get("model_calls", [])),
             "image_parts_in_request": sum(
@@ -2702,6 +2729,8 @@ def _write_run_record(session_dir, prompt, image_paths, state,
             "stagnant_tool_calls": state.get("stagnant_tool_calls", 0),
             "candidate_attempted": state.get("candidate_attempted", False),
             "finish_gate": state.get("finish_gate"),
+            "geometry_review_completed": state.get("geometry_review_completed", False),
+            "geometry_review_debt": state.get("geometry_review_debt", 0),
         },
         "construction_repairs": state.get("construction_repairs", []),
         "automatic_repairs": state.get("automatic_repairs", []),
@@ -2730,6 +2759,27 @@ def _write_run_record(session_dir, prompt, image_paths, state,
     return path
 
 
+def _ensure_unique_reference_basenames(paths):
+    """Reject distinct reference files that collide in basename-keyed review maps."""
+    by_name = {}
+    duplicate_names = set()
+    for value in paths or []:
+        path = os.path.normcase(os.path.realpath(
+            os.path.abspath(os.fspath(value))))
+        name = os.path.basename(path)
+        key = os.path.normcase(name)
+        previous = by_name.get(key)
+        if previous is not None and previous != path:
+            duplicate_names.add(name)
+        else:
+            by_name[key] = path
+    if duplicate_names:
+        names = ", ".join(sorted(duplicate_names, key=str.casefold))
+        raise AgentLoopError(
+            "参考图存在同名文件，无法可靠区分：%s。请给同名参考图重命名后重试。"
+            % names)
+
+
 def _run_agent_loop_impl(prompt: str, image_paths=None, cfg=None,
                          conversation_history=None,
                          conversation_summary=None, summary_through=0,
@@ -2745,6 +2795,7 @@ def _run_agent_loop_impl(prompt: str, image_paths=None, cfg=None,
     """
     prompt = str(prompt or "").strip()
     image_paths = [os.path.abspath(os.fspath(path)) for path in (image_paths or [])]
+    _ensure_unique_reference_basenames(image_paths)
     if not prompt and not image_paths:
         raise AgentLoopError("请先输入需求文字或附上参考图。")
     if len(image_paths) > MAX_REFERENCE_IMAGES:
@@ -2886,13 +2937,14 @@ def _run_agent_loop_impl(prompt: str, image_paths=None, cfg=None,
             if remaining_context_images <= 0:
                 break
 
+    active_paths = image_paths if image_paths else list(selected_history_images)
+    _ensure_unique_reference_basenames(active_paths)
     state["selected_reference_images"] = list(dict.fromkeys(
         [os.path.basename(path) for path in image_paths] +
         [os.path.basename(path) for path in selected_history_images]))
     state["active_reference_images"] = (
         [os.path.basename(path) for path in image_paths]
         if image_paths else [os.path.basename(path) for path in selected_history_images])
-    active_paths = image_paths if image_paths else list(selected_history_images)
     state["reference_image_paths"] = {
         os.path.basename(path): path for path in active_paths}
 
@@ -3069,6 +3121,7 @@ def run_agent_loop(prompt: str, image_paths=None, cfg=None,
     result.setdefault("tool_calls", state.get("tool_calls", 0))
     result.setdefault("web_search_calls", state.get("web_search_calls", 0))
     result.setdefault("preview_calls", state.get("preview_calls", 0))
+    result.setdefault("review_rounds", state.get("review_invocations", 0))
     result.setdefault("repair_cycles", state.get("repair_cycles", 0))
     result.setdefault("automatic_repairs", list(state.get("automatic_repairs", [])))
     result.setdefault("open_multiview_findings", _public_findings(
