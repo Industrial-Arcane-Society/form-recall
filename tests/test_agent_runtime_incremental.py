@@ -250,9 +250,8 @@ class IncrementalAgentTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as directory:
             image = Path(directory) / "reference.png"
             image.write_bytes(_PIXEL)
-            with mock.patch.object(agent_runtime, "MAX_CONSECUTIVE_NO_PROGRESS", 1), \
-                    mock.patch.object(agent_runtime.llm, "chat_completion",
-                                      side_effect=completion):
+            with mock.patch.object(agent_runtime.llm, "chat_completion",
+                                   side_effect=completion):
                 result = agentloop.run_agent_loop(
                     "沿用现有模型调整比例", image_paths=[str(image)],
                     current_plan=plan_state.create("Part", _feature()),
@@ -260,9 +259,54 @@ class IncrementalAgentTests(unittest.TestCase):
                          "online": {"enabled": False}}, output_dir=directory)
 
         self.assertEqual("needs_user_input", result["state"])
+        self.assertEqual(2, len(requests))
+        self.assertIn("连续两次没有调用 CAD 工具", result["reply"])
+        self.assertIsNotNone(result["plan"])
         self.assertEqual("required", requests[0]["tool_choice"])
+        self.assertEqual("required", requests[1]["tool_choice"])
         self.assertIn("cad_create_model", requests[0]["tools"])
         self.assertGreater(len(requests[0]["tools"]), 1)
+
+    def test_no_tool_response_guard_resets_after_a_tool_call(self):
+        replies = [
+            {"content": "我会继续处理。", "tool_calls": []},
+            {"content": "读取当前特征树。", "tool_calls": [
+                _call("cad_get_state", {}, 1)]},
+            {"content": "我会继续修改。", "tool_calls": []},
+            {"content": "仍无法继续。", "tool_calls": []},
+        ]
+        requests = []
+
+        def completion(messages, _cfg, **kwargs):
+            requests.append({
+                "tool_choice": kwargs.get("tool_choice") or "auto",
+                "nudge_count": sum(
+                    1 for row in messages if row.get("role") == "user"
+                    and isinstance(row.get("content"), str)
+                    and "上一条回复没有调用 CAD 工具" in row["content"]),
+            })
+            return replies.pop(0)
+
+        with tempfile.TemporaryDirectory() as directory:
+            image = Path(directory) / "reference.png"
+            image.write_bytes(_PIXEL)
+            with mock.patch.object(agent_runtime.llm, "chat_completion",
+                                   side_effect=completion):
+                result = agentloop.run_agent_loop(
+                    "沿用现有模型调整比例", image_paths=[str(image)],
+                    current_plan=plan_state.create("Part", _feature()),
+                    cfg={"llm": {"model": "mock", "base_url": "http://mock"},
+                         "online": {"enabled": False}}, output_dir=directory)
+
+        self.assertEqual(4, len(requests))
+        self.assertEqual(["required"] * 4,
+                         [request["tool_choice"] for request in requests])
+        self.assertEqual([0, 1, 1, 2],
+                         [request["nudge_count"] for request in requests])
+        self.assertEqual("needs_user_input", result["state"])
+        self.assertIsNotNone(result["plan"])
+        self.assertIn("连续两次没有调用 CAD 工具", result["reply"])
+        self.assertTrue(result["questions"])
 
     def test_multiview_review_must_cover_both_reference_images(self):
         steps = [

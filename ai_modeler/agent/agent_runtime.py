@@ -23,6 +23,7 @@ from ai_modeler.agent import plan_state
 
 MAX_AGENT_TURNS = 512
 MAX_CONSECUTIVE_NO_PROGRESS = 8
+MAX_CONSECUTIVE_NO_TOOL_RESPONSES = 2
 MAX_STAGNATION_WARNINGS = 3
 MAX_TRANSIENT_RETRIES = 6
 MAX_OUTPUT_TOKENS = 65536
@@ -1963,7 +1964,9 @@ def run_dynamic_loop(prompt: str, image_paths: list, model_cfg: dict,
         prompt, image_paths, current_plan)
     output_tokens = MAX_OUTPUT_TOKENS
     no_progress_finals = 0
+    consecutive_no_tool_responses = 0
     state["no_progress_finals"] = 0
+    state["consecutive_no_tool_responses"] = 0
     state["truncated_responses"] = 0
 
     for turn_index in range(1, MAX_AGENT_TURNS + 1):
@@ -1975,10 +1978,12 @@ def run_dynamic_loop(prompt: str, image_paths: list, model_cfg: dict,
         call_tools = (_initial_creation_tools(
             tools, bool(state.get("has_reference_images")))
             if require_create_model else tools)
-        require_action_tool = bool(
+        action_tool_expected = bool(
             state.get("modeling_expected")
             and (isinstance(state.get("current_plan"), dict)
-                 or state.get("agent_started"))
+                 or state.get("agent_started")))
+        require_action_tool = bool(
+            action_tool_expected
             and not state.get("tool_choice_required_unsupported"))
         reply = _call_model(
             messages, state, call_tools, output_tokens,
@@ -2007,6 +2012,36 @@ def run_dynamic_loop(prompt: str, image_paths: list, model_cfg: dict,
                 continue
             if not content:
                 raise cad.AgentLoopError("模型返回空响应；AgentLoop 未能继续。")
+            if action_tool_expected:
+                consecutive_no_tool_responses += 1
+                state["consecutive_no_tool_responses"] = (
+                    consecutive_no_tool_responses)
+                assistant_message = {"role": "assistant", "content": content}
+                if reply.get("reasoning_content") is not None:
+                    assistant_message["reasoning_content"] = reply["reasoning_content"]
+                messages.append(assistant_message)
+                gate = _finish_gate(state)
+                blockers = gate.get("blockers") or [
+                    "当前建模步骤尚未由 CAD 工具完成。"]
+                if consecutive_no_tool_responses >= MAX_CONSECUTIVE_NO_TOOL_RESPONSES:
+                    status = {
+                        "state": "previewed" if state.get("latest_preview")
+                        else "needs_user_input",
+                        "validation": state.get("plan_validation"),
+                    }
+                    final_text = (
+                        "模型连续两次没有调用 CAD 工具，已停止重试并保留当前候选。\n"
+                        "未完成项：\n- " +
+                        "\n- ".join(str(item) for item in blockers[:8]))
+                    return _result_from_state(
+                        status, state, final_text, blockers)
+                messages.append({"role": "user", "content": (
+                    "上一条回复没有调用 CAD 工具。请现在调用一个最合适的工具"
+                    "推进当前步骤；只给必要参数，不要重复总结。")})
+                cad._emit(
+                    state.get("progress"),
+                    "模型本轮没有调用工具；已要求它用一个 CAD 工具继续。")
+                continue
             if not state.get("agent_started"):
                 if state.get("modeling_expected"):
                     no_progress_finals += 1
@@ -2092,6 +2127,8 @@ def run_dynamic_loop(prompt: str, image_paths: list, model_cfg: dict,
                 args = json.loads(raw_args) if isinstance(raw_args, str) else raw_args
                 if not isinstance(args, dict):
                     raise ValueError("arguments 必须是 JSON 对象")
+                consecutive_no_tool_responses = 0
+                state["consecutive_no_tool_responses"] = 0
                 cad._emit(
                     state.get("progress"),
                     "Agent 决策摘要：" + _tool_progress_summary(name, args))
