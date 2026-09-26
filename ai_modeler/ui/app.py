@@ -203,51 +203,41 @@ class App(tk.Tk):
         TH.apply(self, getattr(self, 'ui_scale', 1.0))
 
     def _build_header(self):
-        k = self.ui_scale
-        hh = int(56 * k)
-        head = tk.Frame(self, bg=TH.PANEL, height=hh)
+        hh = int(52 * self.ui_scale)
+        head = tk.Canvas(self, height=hh, highlightthickness=0, bd=0)
+        self._header_h = hh
         head.pack(side='top', fill='x')
-        head.pack_propagate(False)
         self._header = head
-
-        brand = tk.Frame(head, bg=TH.PANEL)
-        brand.pack(side='left', padx=(int(18 * k), int(16 * k)))
-        logo = tk.Canvas(brand, width=int(30 * k), height=int(30 * k),
-                         bg=TH.PANEL, highlightthickness=0)
-        logo.pack(side='left', padx=(0, int(9 * k)))
-        cx, cy, sx, sy = 15 * k, 12 * k, 10 * k, 6 * k
-        top = [cx, cy - sy]
-        right = [cx + sx, cy]
-        center = [cx, cy + sy]
-        left = [cx - sx, cy]
-        logo.create_polygon(top + right + center + left,
-                            fill=TH.ACCENT_HI, outline='')
-        logo.create_polygon(left + center + [cx, cy + sy * 2.0] +
-                            [cx - sx, cy + sy], fill=TH.ACCENT, outline='')
-        logo.create_polygon(right + center + [cx, cy + sy * 2.0] +
-                            [cx + sx, cy + sy], fill=TH.ACCENT_DK, outline='')
-        title = tk.Frame(brand, bg=TH.PANEL)
-        title.pack(side='left')
-        tk.Label(title, text='AI 自动建模助手', bg=TH.PANEL, fg=TH.TEXT,
-                 font=TH.F['brand']).pack(anchor='w')
-        tk.Label(title, text='CAD 工作区', bg=TH.PANEL, fg=TH.TEXT_MUTE,
-                 font=TH.F['tiny']).pack(anchor='w', pady=(1, 0))
-        tk.Label(brand, text='v' + __version__, bg=TH.PANEL_ALT,
-                 fg=TH.TEXT_MUTE, font=TH.F['tiny'], padx=7, pady=3).pack(
-                     side='left', padx=(10, 0), pady=(0, 1))
-
-        self._header_actions = tk.Frame(head, bg=TH.PANEL)
-        self._header_actions.pack(side='left', fill='y', padx=(int(6 * k), 0))
-        tk.Label(head, text='本地三维建模', bg=TH.PANEL, fg=TH.TEXT_MUTE,
-                 font=TH.F['small']).pack(side='right', padx=(8, int(20 * k)))
+        head.bind('<Configure>', lambda e: self._paint_header())
 
     def _paint_header(self):
-        # Kept as a no-op for compatibility with older callbacks.
-        return
+        c = self._header
+        c.delete('all')
+        w = max(c.winfo_width(), 260)
+        h = getattr(self, '_header_h', 52)
+        k = self.ui_scale
+        TH.gradient(c, 0, 0, w, h, TH.HEAD_A, TH.HEAD_B, horizontal=True)
+        cx, cy, s, t = 30.0 * k, h / 2.0, 11.0 * k, 6.0 * k
+        top = [cx, cy - t * 1.5]
+        rgt = [cx + s, cy - t * 0.5]
+        mid = [cx, cy + t * 0.5]
+        lft = [cx - s, cy - t * 0.5]
+        dn = t * 1.7
+        c.create_polygon(top + rgt + mid + lft, fill='#a8cdf5', outline='')
+        c.create_polygon(lft + mid + [mid[0], mid[1] + dn] + [lft[0], lft[1] + dn],
+                         fill='#4a86cc', outline='')
+        c.create_polygon(rgt + mid + [mid[0], mid[1] + dn] + [rgt[0], rgt[1] + dn],
+                         fill='#2d629f', outline='')
+        c.create_text(54 * k, h / 2.0 - 2, text='AI 自动建模助手', anchor='w',
+                      fill='#ffffff', font=TH.F['brand'])
+        c.create_text(int(206 * k), h / 2.0 + 1, text='v' + __version__, anchor='w',
+                      fill='#b9d3f2', font=TH.F['tiny'])
+        c.create_text(w - 20 * k, h / 2.0 + 1, text='用一句中文, 直接生成三维模型',
+                      anchor='e', fill='#cfe0f7', font=TH.F['body'])
 
     def _build_menu(self):
-        menu_items = []
-        fm = tk.Menu(self, tearoff=0)
+        m = tk.Menu(self)
+        fm = tk.Menu(m, tearoff=0)
         fm.add_command(label='新建零件', accelerator='Ctrl+N', command=self.new_doc)
         fm.add_command(label='打开工程…', accelerator='Ctrl+O', command=self.open_project)
         fm.add_command(label='保存工程…', accelerator='Ctrl+S', command=self.save_project)
@@ -263,16 +253,16 @@ class App(tk.Tk):
         fm.add_command(label='保存扩展多视图 (PNG)…', command=lambda: self.snapshot_multiview('extended'))
         fm.add_separator()
         fm.add_command(label='退出', command=self.on_close)
-        menu_items.append(('文件', fm))
+        m.add_cascade(label='文件', menu=fm)
 
-        em = tk.Menu(self, tearoff=0)
+        em = tk.Menu(m, tearoff=0)
         em.add_command(label='删除选中特征', command=self.delete_feature)
         em.add_command(label='特征上移', command=lambda: self.move_feature(-1))
         em.add_command(label='特征下移', command=lambda: self.move_feature(1))
         em.add_command(label='清空全部特征', command=self.clear_features)
-        menu_items.append(('编辑', em))
+        m.add_cascade(label='编辑', menu=em)
 
-        vm = tk.Menu(self, tearoff=0)
+        vm = tk.Menu(m, tearoff=0)
         for label, key in (('等轴测视图', 'iso'), ('前视图', 'front'), ('后视图', 'back'),
                            ('左视图', 'left'), ('右视图', 'right'), ('俯视图', 'top'),
                            ('仰视图', 'bottom')):
@@ -291,9 +281,9 @@ class App(tk.Tk):
         self.var_dark = tk.BooleanVar(value=TH.is_dark())
         vm.add_checkbutton(label='深色模式 (重启界面生效)', variable=self.var_dark,
                            command=self.switch_theme)
-        menu_items.append(('视图', vm))
+        m.add_cascade(label='视图', menu=vm)
 
-        tm = tk.Menu(self, tearoff=0)
+        tm = tk.Menu(m, tearoff=0)
         tm.add_command(label='MCP 服务配置…', command=self.show_mcp_config)
         tm.add_command(label='推送到 CATIA V5…', command=self.push_catia)
         tm.add_command(label='一键连接 CATIA（写配置 / 装插件）…', command=self.connect_catia)
@@ -305,38 +295,15 @@ class App(tk.Tk):
         tm.add_command(label='AI 大模型设置…', command=self.show_llm_config)
         tm.add_separator()
         tm.add_command(label='运行内置自检', command=self.run_selfcheck)
-        menu_items.append(('工具', tm))
+        m.add_cascade(label='工具', menu=tm)
 
-        hm = tk.Menu(self, tearoff=0)
+        hm = tk.Menu(m, tearoff=0)
         hm.add_command(label='打开使用说明 (使用说明.md)', command=self.open_manual)
         hm.add_command(label='打开 CATIA 连接操作说明', command=self.open_catia_manual)
         hm.add_command(label='界面用法速查', command=self.show_help)
         hm.add_command(label='关于', command=self.show_about)
-        menu_items.append(('帮助', hm))
-        # Keep application commands inside the window rather than using the
-        # platform-specific Tk menu strip.
-        try:
-            self.configure(menu='')
-        except tk.TclError:
-            pass
-        for label, menu in menu_items:
-            try:
-                menu.configure(bg=TH.PANEL, fg=TH.TEXT,
-                               activebackground=TH.ACCENT_SOFT,
-                               activeforeground=TH.TEXT,
-                               disabledforeground=TH.DISABLED,
-                               relief='flat', bd=0, borderwidth=0,
-                               font=TH.F['body'])
-            except tk.TclError:
-                pass
-            button = tk.Menubutton(
-                self._header_actions, text=label + '  ▾', menu=menu,
-                bg=TH.PANEL, fg=TH.TEXT_DIM,
-                activebackground=TH.BTN_HI, activeforeground=TH.TEXT,
-                relief='flat', bd=0, padx=int(10 * self.ui_scale),
-                pady=int(5 * self.ui_scale), font=TH.F['small'],
-                cursor='hand2', direction='below')
-            button.pack(side='left', padx=1, pady=(0, 1))
+        m.add_cascade(label='帮助', menu=hm)
+        self.config(menu=m)
 
         self.bind_all('<Control-n>', lambda e: self.new_doc())
         self.bind_all('<Control-o>', lambda e: self.open_project())
@@ -346,81 +313,68 @@ class App(tk.Tk):
         self.bind_all('<Key-f>', lambda e: self.viewer.fit_view())
 
     def _build_toolbar(self):
-        bar = ttk.Frame(self, style='Bar.TFrame',
-                        padding=(int(14 * self.ui_scale), int(6 * self.ui_scale)))
+        bar = ttk.Frame(self, style='Bar.TFrame', padding=(10, 9))
         bar.pack(side='top', fill='x')
         tk.Frame(self, bg=TH.BORDER, height=1).pack(side='top', fill='x')
 
-        ttk.Button(bar, text='生成模型', style='Accent.TButton',
-                   command=self.generate).pack(side='left', padx=(0, 5))
+        ttk.Button(bar, text='➤  Agent 对话', style='Accent.TButton',
+                   command=self.generate).pack(side='left')
         tk.Label(bar, text='Ctrl+Enter', bg=TH.PANEL, fg=TH.TEXT_MUTE,
-                 font=TH.F['tiny']).pack(side='left', padx=(1, 8))
+                 font=TH.F['tiny']).pack(side='left', padx=(8, 0))
 
         self._tool_sep(bar)
-        tk.Label(bar, text='视图', bg=TH.PANEL, fg=TH.TEXT_MUTE,
-                 font=TH.F['tiny']).pack(side='left', padx=(0, 6))
-        for label, key in (('等轴测', 'iso'), ('前视', 'front'), ('右视', 'right'), ('俯视', 'top')):
-            ttk.Button(bar, text=label, style='Toolbar.TButton',
+        tk.Label(bar, text='视角', bg=TH.PANEL, fg=TH.TEXT_MUTE,
+                 font=TH.F['small']).pack(side='left', padx=(0, 7))
+        for label, key in (('等轴测', 'iso'), ('前', 'front'), ('右', 'right'), ('俯', 'top')):
+            ttk.Button(bar, text=label, style='Ghost.TButton', width=6,
                        command=lambda k=key: self.viewer.set_view(k)).pack(side='left', padx=1)
-        ttk.Button(bar, text='适应', style='Toolbar.TButton',
+        ttk.Button(bar, text='适应窗口', style='Ghost.TButton',
                    command=lambda: self.viewer.fit_view()).pack(side='left', padx=1)
-        ttk.Checkbutton(bar, text='边线', variable=self.var_edges,
-                        command=self._sync_view).pack(side='left', padx=(5, 1))
+        ttk.Checkbutton(bar, text='辅助线', variable=self.var_edges,
+                        command=self._sync_view).pack(side='left', padx=(9, 2))
         ttk.Checkbutton(bar, text='网格', variable=self.var_grid,
-                        command=self._sync_view).pack(side='left', padx=(1, 2))
+                        command=self._sync_view).pack(side='left', padx=(2, 1))
 
         self._tool_sep(bar)
-        ttk.Button(bar, text='多视图', style='Toolbar.TButton',
+        ttk.Button(bar, text='▦ 多视图 PNG', style='Ghost.TButton',
                    command=self.snapshot_multiview).pack(side='left', padx=1)
-        ttk.Button(bar, text='截图', style='Toolbar.TButton',
+        ttk.Button(bar, text='📷 模型截图', style='Ghost.TButton',
                    command=self.snapshot).pack(side='left', padx=1)
-        ttk.Button(bar, text='导出 STL', style='Toolbar.TButton',
+        ttk.Button(bar, text='导出 STL', style='Ghost.TButton',
                    command=lambda: self.export('stl')).pack(side='left', padx=1)
-        ttk.Button(bar, text='保存', style='Toolbar.TButton',
+        ttk.Button(bar, text='保存工程', style='Ghost.TButton',
                    command=self.save_project).pack(side='left', padx=1)
-        ttk.Button(bar, text='CATIA', style='Toolbar.TButton',
+        ttk.Button(bar, text='推送 CATIA', style='Ghost.TButton',
                    command=self.push_catia).pack(side='left', padx=1)
 
-        self.lbl_busy = tk.Label(bar, text='', bg=TH.PANEL, fg=TH.ACCENT,
-                                 font=TH.F['small'])
+        self.lbl_busy = tk.Label(bar, text='', bg=TH.PANEL, fg=TH.ACCENT, font=TH.F['body_b'])
         self.lbl_busy.pack(side='right', padx=(10, 0))
-        self.btn_stop = ttk.Button(bar, text='停止', style='Toolbar.TButton',
+        self.btn_stop = ttk.Button(bar, text='■  停止', style='Ghost.TButton',
                                    command=self.cancel_build, state='disabled')
         self.btn_stop.pack(side='right')
 
     def _tool_sep(self, parent):
-        tk.Frame(parent, bg=TH.BORDER, width=1, height=20).pack(
-            side='left', padx=int(9 * self.ui_scale))
+        tk.Frame(parent, bg=TH.BORDER, width=1, height=22).pack(side='left', padx=11)
 
     def _build_layout(self):
         panes = ttk.PanedWindow(self, orient='horizontal')
-        panes.pack(fill='both', expand=True,
-                   padx=int(12 * self.ui_scale), pady=int(10 * self.ui_scale))
+        panes.pack(fill='both', expand=True, padx=10, pady=10)
 
         # ============================ 左: 对话 + 特征树 ============================
-        left_card, left = TH.card(panes, width=int(438 * self.ui_scale))
+        left_card, left = TH.card(panes, width=int(485 * self.ui_scale))
         panes.add(left_card, weight=0)
 
-        head = tk.Frame(left, bg=TH.PANEL)
-        head.pack(fill='x', padx=int(16 * self.ui_scale),
-                  pady=(int(14 * self.ui_scale), int(9 * self.ui_scale)))
-        heading = tk.Frame(head, bg=TH.PANEL)
-        heading.pack(side='left')
-        tk.Label(heading, text='建模对话', bg=TH.PANEL, fg=TH.TEXT,
-                 font=TH.F['h1']).pack(anchor='w')
-        tk.Label(heading, text='参考图与文字描述', bg=TH.PANEL,
-                 fg=TH.TEXT_MUTE, font=TH.F['tiny']).pack(anchor='w', pady=(1, 0))
+        head = TH.section(left, '建模对话')
         ttk.Button(head, text='新对话', style='Ghost.TButton',
-                   command=self.new_chat).pack(side='right', padx=(7, 0))
+                   command=self.new_chat).pack(side='right', padx=(8, 0))
         self.cmb_sample = ttk.Combobox(head, values=[s[0] for s in SAMPLES],
-                                       state='readonly', width=10)
+                                       state='readonly', width=9)
         self.cmb_sample.set('示例…')
         self.cmb_sample.pack(side='right', padx=(5, 0))
         self.cmb_sample.bind('<<ComboboxSelected>>', self._on_sample)
 
         history_wrap = tk.Frame(left, bg=TH.PANEL)
-        history_wrap.pack(fill='both', expand=True,
-                          padx=int(10 * self.ui_scale), pady=(0, int(6 * self.ui_scale)))
+        history_wrap.pack(fill='both', expand=True, padx=12, pady=(0, 7))
         self.chat_canvas = tk.Canvas(
             history_wrap, bg=TH.PANEL, bd=0, highlightthickness=0,
             yscrollincrement=24)
@@ -465,7 +419,7 @@ class App(tk.Tk):
 
         self.attachment_preview_frame = tk.Frame(self.composer, bg=TH.PANEL)
         self.attach_canvas = tk.Canvas(
-            self.attachment_preview_frame, height=int(92 * self.ui_scale), bg=TH.PANEL,
+            self.attachment_preview_frame, height=116, bg=TH.PANEL,
             highlightthickness=0, bd=0, xscrollincrement=24)
         self.attach_canvas.pack(fill='x', padx=9, pady=(8, 0))
         self.attach_scrollbar = ttk.Scrollbar(
@@ -483,7 +437,7 @@ class App(tk.Tk):
         self.txt = tk.Text(
             self.composer, height=2, width=34, wrap='word', font=TH.F['input'],
             relief='flat', bd=0, highlightthickness=0, bg=TH.PANEL, fg=TH.TEXT,
-            insertbackground=TH.ACCENT, padx=14, pady=11,
+            insertbackground=TH.ACCENT, padx=13, pady=10,
             selectbackground=TH.ACCENT_SOFT, selectforeground=TH.ACCENT_DK, undo=True)
         self.txt.pack(fill='x', padx=4, pady=(6, 4))
         self._input_placeholder = '描述要建的零件，或直接粘贴参考图片…'
@@ -500,16 +454,15 @@ class App(tk.Tk):
         self.chat_activity.pack_forget()
 
         composer_footer = tk.Frame(self.composer, bg=TH.PANEL)
-        composer_footer.pack(fill='x', padx=9, pady=(1, 9))
-        ttk.Button(composer_footer, text='＋ 图片', style='Ghost.TButton',
+        composer_footer.pack(fill='x', padx=8, pady=(1, 8))
+        ttk.Button(composer_footer, text='＋', width=3, style='Ghost.TButton',
                    command=self.attach_reference_images).pack(side='left')
         self.lbl_attachments = tk.Label(
             composer_footer, text='', bg=TH.PANEL, fg=TH.TEXT_MUTE,
             font=TH.F['tiny'], anchor='w')
         self.lbl_attachments.pack(side='left', padx=(2, 8))
-        tk.Label(composer_footer, text='完整对话', bg=TH.PANEL_ALT,
-                 fg=TH.TEXT_DIM, font=TH.F['tiny'], padx=8, pady=4).pack(
-                     side='left', padx=(7, 0))
+        tk.Label(composer_footer, text='◉ 完整对话', bg=TH.PANEL,
+                 fg=TH.TEXT_DIM, font=TH.F['small']).pack(side='left')
         # 发送/停止双态按钮：空闲=粉色发送 ↑；AgentLoop 运行中=红色停止 ■。
         # 点击行为随状态切换（见 _on_send_button）；回车键仍走 generate()。
         self.btn_send = tk.Canvas(
@@ -526,22 +479,12 @@ class App(tk.Tk):
             command=self.show_llm_config)
         self.btn_model.pack(side='right')
 
-        TH.hairline(left, bg=TH.PANEL, pad=int(14 * self.ui_scale))
+        TH.hairline(left)
 
-        feature_head = tk.Frame(left, bg=TH.PANEL)
-        feature_head.pack(fill='x', padx=int(16 * self.ui_scale),
-                          pady=(int(3 * self.ui_scale), int(7 * self.ui_scale)))
-        tk.Label(feature_head, text='特征树', bg=TH.PANEL, fg=TH.TEXT,
-                 font=TH.F['h2']).pack(side='left')
-        tk.Label(feature_head, text='双击启用 / 停用', bg=TH.PANEL,
-                 fg=TH.TEXT_MUTE, font=TH.F['tiny']).pack(side='left', padx=(8, 0))
-        self.lbl_feature_count = tk.Label(
-            feature_head, text='0 项', bg=TH.PANEL_ALT, fg=TH.TEXT_MUTE,
-            font=TH.F['tiny'], padx=8, pady=3)
-        self.lbl_feature_count.pack(side='right')
+        TH.section(left, '特征树', '双击启用 / 停用')
         tvbox = tk.Frame(left, bg=TH.PANEL)
-        tvbox.pack(fill='both', expand=False, padx=int(12 * self.ui_scale))
-        tvbox.configure(height=int(128 * self.ui_scale))
+        tvbox.pack(fill='both', expand=False, padx=12)
+        tvbox.configure(height=int(190 * self.ui_scale))
         tvbox.pack_propagate(False)
         self.tree = ttk.Treeview(tvbox, columns=('no', 'op', 'desc'), show='headings',
                                  selectmode='browse')
@@ -566,14 +509,13 @@ class App(tk.Tk):
         self.tree.bind('<Double-1>', self._on_tree_toggle)
 
         frow = tk.Frame(left, bg=TH.PANEL)
-        frow.pack(fill='x', padx=int(12 * self.ui_scale),
-                  pady=(int(6 * self.ui_scale), int(12 * self.ui_scale)))
+        frow.pack(fill='x', padx=12, pady=(7, 12))
         for text, cmd in (('↑ 上移', lambda: self.move_feature(-1)),
                           ('↓ 下移', lambda: self.move_feature(1)),
                           ('删除', self.delete_feature),
                           ('重命名', self.rename_feature)):
-            ttk.Button(frow, text=text, style='Toolbar.TButton',
-                       command=cmd).pack(side='left', padx=(0, 4))
+            ttk.Button(frow, text=text, style='Ghost.TButton',
+                       command=cmd).pack(side='left', padx=(0, 5))
 
         # ============================== 中: 三维视口 ==============================
         mid_card, mid = TH.card(panes)
@@ -586,14 +528,10 @@ class App(tk.Tk):
                  bg=TH.PANEL, fg=TH.TEXT_MUTE, font=TH.F['small']).pack(pady=5)
 
         # ============================== 右: 属性面板 ==============================
-        right_card, right = TH.card(panes, width=int(296 * self.ui_scale))
+        right_card, right = TH.card(panes, width=int(310 * self.ui_scale))
         panes.add(right_card, weight=0)
-        self.inspector_nav = tk.Frame(right, bg=TH.PANEL)
-        self.inspector_nav.pack(fill='x', padx=int(7 * self.ui_scale),
-                                pady=(int(7 * self.ui_scale), 0))
-        self.nb = ttk.Notebook(right, style='Clean.TNotebook')
-        self.nb.pack(fill='both', expand=True,
-                     padx=int(6 * self.ui_scale), pady=(0, int(6 * self.ui_scale)))
+        self.nb = ttk.Notebook(right)
+        self.nb.pack(fill='both', expand=True, padx=2, pady=2)
 
         self.tab_param = tk.Frame(self.nb, bg=TH.PANEL)
         self.nb.add(self.tab_param, text='参数')
@@ -664,7 +602,7 @@ class App(tk.Tk):
 
         # ---------------- 零件库浏览器 ----------------
         self.tab_parts = tk.Frame(self.nb, bg=TH.PANEL)
-        self.nb.add(self.tab_parts, text='零件')
+        self.nb.add(self.tab_parts, text='零件库')
         tk.Label(self.tab_parts, text='从机械设计手册学到的零件。展开分类 → 双击「★」填入示例描述。',
                  bg=TH.PANEL, fg=TH.TEXT_MUTE, font=TH.F['small'],
                  wraplength=270, justify='left').pack(anchor='w', padx=12, pady=(10, 4))
@@ -690,7 +628,7 @@ class App(tk.Tk):
         self.refresh_parts()
 
         self.tab_help = tk.Frame(self.nb, bg=TH.PANEL)
-        self.nb.add(self.tab_help, text='说明')
+        self.nb.add(self.tab_help, text='用法')
         self.txt_help = tk.Text(self.tab_help, height=10, width=26, wrap='word',
                                 font=TH.F['body'], relief='flat', bd=0,
                                 bg=TH.PANEL, fg=TH.TEXT, padx=12, pady=10)
@@ -698,59 +636,28 @@ class App(tk.Tk):
         self.txt_help.insert('1.0', HELP_TEXT)
         self.txt_help.configure(state='disabled')
 
-        self._inspector_tab_buttons = []
-        for label, tab in (('参数', self.tab_param), ('统计', self.tab_stat),
-                           ('日志', self.tab_log), ('零件', self.tab_parts),
-                           ('说明', self.tab_help)):
-            button = tk.Button(
-                self.inspector_nav, text=label,
-                command=lambda target=tab: self._select_inspector_tab(target),
-                relief='flat', bd=0, padx=int(5 * self.ui_scale),
-                pady=int(7 * self.ui_scale), cursor='hand2',
-                font=TH.F['small'], activebackground=TH.ACCENT_SOFT,
-                activeforeground=TH.ACCENT_DK)
-            button.pack(side='left', fill='x', expand=True, padx=1)
-            self._inspector_tab_buttons.append((button, tab))
-        self.nb.bind('<<NotebookTabChanged>>', self._sync_inspector_tabs)
-        self._sync_inspector_tabs()
-
     def _build_status(self):
         tk.Frame(self, bg=TH.BORDER, height=1).pack(side='bottom', fill='x')
-        bar = tk.Frame(self, bg=TH.PANEL_ALT, height=int(34 * self.ui_scale))
+        bar = tk.Frame(self, bg=TH.PANEL, height=32)
         bar.pack(side='bottom', fill='x')
         bar.pack_propagate(False)
-        self._dot = tk.Canvas(bar, width=10, height=10, bg=TH.PANEL_ALT,
+        self._dot = tk.Canvas(bar, width=10, height=10, bg=TH.PANEL,
                               highlightthickness=0)
         self._dot.pack(side='left', padx=(12, 7))
         self._dot_id = self._dot.create_oval(1, 1, 9, 9, fill=TH.OK, outline='')
-        self.lbl_status = tk.Label(bar, text='就绪', bg=TH.PANEL_ALT,
-                                   fg=TH.TEXT_DIM, font=TH.F['small'])
+        self.lbl_status = tk.Label(bar, text='就绪', bg=TH.PANEL, fg=TH.TEXT_DIM,
+                                   font=TH.F['body'])
         self.lbl_status.pack(side='left')
         self.progress = ttk.Progressbar(bar, length=int(168 * self.ui_scale),
                                         mode='determinate')
         self.progress.pack(side='right', padx=12)
-        self.lbl_driver = tk.Label(bar, text='几何内核: 内置 BSP-CSG',
-                                   bg=TH.PANEL_ALT, fg=TH.TEXT_MUTE,
-                                   font=TH.F['tiny'])
+        self.lbl_driver = tk.Label(bar, text='几何内核: 内置 BSP-CSG', bg=TH.PANEL,
+                                   fg=TH.TEXT_MUTE, font=TH.F['small'])
         self.lbl_driver.pack(side='right', padx=6)
 
     # ==================================================================
     # 视图同步
     # ==================================================================
-    def _select_inspector_tab(self, tab):
-        self.nb.select(tab)
-        self._sync_inspector_tabs()
-
-    def _sync_inspector_tabs(self, _event=None):
-        if not hasattr(self, '_inspector_tab_buttons'):
-            return
-        selected = self.nb.select()
-        for button, tab in self._inspector_tab_buttons:
-            active = selected == str(tab)
-            button.configure(
-                bg=TH.ACCENT_SOFT if active else TH.PANEL,
-                fg=TH.ACCENT_DK if active else TH.TEXT_MUTE)
-
     def switch_theme(self):
         """切换浅色/深色。配色在建控件时就固化了, 所以存盘后重启界面进程。"""
         want = 'dark' if self.var_dark.get() else 'light'
@@ -795,36 +702,31 @@ class App(tk.Tk):
     def _append_chat(self, role, text, images=None):
         if not hasattr(self, 'chat_messages'):
             return
-        labels = {'user': '你', 'assistant': 'AI Modeler', 'system': 'AgentLoop'}
+        labels = {'user': '你', 'assistant': 'AI Modeler Agent', 'system': 'AgentLoop'}
         tag = role if role in {'user', 'assistant', 'system'} else 'system'
         body = str(text or '').strip()
         user_message = tag == 'user'
         system_message = tag == 'system'
         row = tk.Frame(self.chat_messages, bg=TH.PANEL)
-        row.pack(fill='x', padx=int(12 * self.ui_scale),
-                 pady=(int(7 * self.ui_scale), int(9 * self.ui_scale)))
-        bubble_bg = (TH.USER_BG if user_message else
-                     TH.TOOL_BG if system_message else TH.PANEL)
-        bubble = tk.Frame(row, bg=bubble_bg, bd=0,
-                          highlightthickness=1 if user_message else 0,
-                          highlightbackground=TH.BORDER)
+        row.pack(fill='x', padx=10, pady=(4, 7))
+        bubble_bg = (TH.ACCENT_SOFT if user_message else
+                     TH.PANEL_ALT if system_message else TH.PANEL)
+        bubble = tk.Frame(
+            row, bg=bubble_bg, highlightthickness=1,
+            highlightbackground=TH.BORDER if user_message or system_message else TH.PANEL)
         bubble.pack(side='right' if user_message else 'left',
                     anchor='e' if user_message else 'w',
-                    padx=(int(50 * self.ui_scale), 0) if user_message else
-                    (0, int(18 * self.ui_scale)))
+                    padx=(44, 2) if user_message else (2, 44))
         for scroll_target in (row, bubble):
             scroll_target.bind('<MouseWheel>', self._scroll_chat)
-        available = max(260, self.chat_canvas.winfo_width() - int(68 * self.ui_scale))
-        ratio = 0.84 if user_message else 0.98
-        max_width = max(210, int(available * ratio))
+        max_width = max(220, int(max(300, self.chat_canvas.winfo_width() - 72)
+                                 * (0.76 if user_message else 0.96)))
         header = tk.Frame(bubble, bg=bubble_bg)
-        header.pack(fill='x', padx=int(11 * self.ui_scale),
-                    pady=(int(8 * self.ui_scale), int(3 * self.ui_scale)))
+        header.pack(fill='x', padx=11, pady=(7, 2))
         role_label = tk.Label(
             header, text=labels.get(tag, 'AgentLoop'), bg=bubble_bg,
-            fg=TH.ACCENT_DK if user_message else
-            TH.TEXT_MUTE if system_message else TH.TEXT_DIM,
-            font=TH.F['tiny'] if system_message else TH.F['small'], anchor='w')
+            fg=TH.ACCENT_DK if user_message else TH.TEXT_DIM,
+            font=TH.F['small'] if system_message else TH.F['body_b'], anchor='w')
         role_label.pack(side='left')
         for scroll_target in (header, role_label):
             scroll_target.bind('<MouseWheel>', self._scroll_chat)
@@ -839,22 +741,21 @@ class App(tk.Tk):
                 tk.Label(bubble, text='图片无法预览：%s' % os.path.basename(path),
                          bg=bubble_bg, fg=TH.TEXT_MUTE, font=TH.F['small'],
                          anchor='w', justify='left').pack(
-                             fill='x', padx=int(11 * self.ui_scale), pady=(2, 5))
+                             fill='x', padx=11, pady=(2, 5))
                 continue
             self._chat_photo_refs.append(photo)
             image_label = tk.Label(bubble, image=photo, bg=bubble_bg,
                                    bd=0, highlightthickness=0)
             image_label.pack(anchor='w' if not user_message else 'e',
-                             padx=int(11 * self.ui_scale), pady=(2, 5))
+                             padx=11, pady=(2, 5))
             image_label.bind('<MouseWheel>', self._scroll_chat)
         message_label = tk.Label(
             bubble, text=body or '（空消息）', bg=bubble_bg, fg=TH.TEXT,
             font=TH.F['small'] if system_message else TH.F['body'],
             justify='left', anchor='w', wraplength=max_width)
-        message_label.pack(fill='x', padx=int(11 * self.ui_scale),
-                           pady=(2, int(9 * self.ui_scale)))
+        message_label.pack(fill='x', padx=11, pady=(2, 9))
         message_label.bind('<MouseWheel>', self._scroll_chat)
-        self._chat_cards.append((message_label, ratio))
+        self._chat_cards.append((message_label, 0.76 if user_message else 0.96))
         self.chat_canvas.update_idletasks()
         self.chat_canvas.configure(scrollregion=self.chat_canvas.bbox('all'))
         self.chat_canvas.yview_moveto(1.0)
@@ -872,11 +773,10 @@ class App(tk.Tk):
     def _resize_chat_card_text(self):
         if not hasattr(self, 'chat_canvas'):
             return
-        usable = max(260, self.chat_canvas.winfo_width() - int(68 * self.ui_scale))
+        usable = max(280, self.chat_canvas.winfo_width() - 72)
         for label, ratio in list(getattr(self, '_chat_cards', [])):
             try:
-                label.configure(wraplength=max(int(190 * self.ui_scale),
-                                               int(usable * ratio)))
+                label.configure(wraplength=max(200, int(usable * ratio)))
             except tk.TclError:
                 pass
 
@@ -1003,16 +903,14 @@ class App(tk.Tk):
             self.attachment_preview_frame.pack(fill='x', before=self.txt)
         for path in self.reference_images:
             tile = tk.Frame(
-                self.attach_inner, width=int(98 * self.ui_scale),
-                height=int(80 * self.ui_scale), bg=TH.PANEL_ALT,
+                self.attach_inner, width=112, height=108, bg=TH.PANEL_ALT,
                 highlightthickness=1, highlightbackground=TH.BORDER)
             tile.pack(side='left', padx=(0, 8), pady=2)
             tile.pack_propagate(False)
             image_label = tk.Label(
                 tile, text='图片', bg=TH.PANEL_ALT,
                 fg=TH.TEXT_MUTE, font=TH.F['tiny'])
-            photo = self._load_thumbnail(path, (int(78 * self.ui_scale),
-                                                 int(60 * self.ui_scale)))
+            photo = self._load_thumbnail(path, (88, 88))
             if photo is not None:
                 image_label.configure(image=photo, text='')
                 self._attachment_photo_refs.append(photo)
@@ -1062,7 +960,7 @@ class App(tk.Tk):
             text = '本地规则'
         if len(text) > 24:
             text = text[:23] + '…'
-        return '模型  %s  ▾' % text
+        return '⚡ %s ▾' % text
 
     def _resize_prompt(self, _event=None):
         """Keep the composer compact, expanding only when the user adds lines."""
@@ -1923,7 +1821,7 @@ class App(tk.Tk):
             canvas.create_rectangle(11, 11, 23, 23, fill='#ffffff', outline='')
         else:
             self._send_circle = canvas.create_oval(
-                1, 1, 33, 33, fill=TH.SEND, outline='')
+                1, 1, 33, 33, fill='#e85b9f', outline='')
             canvas.create_text(
                 17, 16, text='↑', fill='#ffffff', font=(TH.UI, 15, 'bold'))
         self._send_mode = mode
@@ -1952,7 +1850,7 @@ class App(tk.Tk):
             hover = '#ff6f68' if TH.is_dark() else '#b91c1c'
             fill = hover if entering else TH.ERR
         else:
-            fill = TH.SEND_HI if entering else TH.SEND
+            fill = '#d94d91' if entering else '#e85b9f'
         self.btn_send.itemconfigure(circle, fill=fill)
 
     def cancel_build(self):
@@ -2121,8 +2019,6 @@ class App(tk.Tk):
     # ==================================================================
     def refresh_tree(self):
         self.tree.delete(*self.tree.get_children())
-        if hasattr(self, 'lbl_feature_count'):
-            self.lbl_feature_count.configure(text='%d 项' % len(self.doc.features))
         if not self.doc.features:
             self.tree.insert('', 'end', iid='__empty__',
                              values=('', '', '尚无特征 —— 发送建模需求后生成'),

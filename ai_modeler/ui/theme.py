@@ -14,42 +14,36 @@ from tkinter import ttk
 # 调色板
 # --------------------------------------------------------------------------
 LIGHT = {
-    # DSH Web-inspired neutral surfaces: clear hierarchy, quiet borders, one
-    # restrained brand color, and a darker dedicated modeling viewport.
-    'BG': '#f4f6fa', 'PANEL': '#ffffff', 'PANEL_ALT': '#f8f9fc',
-    'BORDER': '#e4e7ee', 'FIELD': '#ffffff', 'STRIPE': '#fafbfc',
-    'TEXT': '#252a35', 'TEXT_DIM': '#616a78', 'TEXT_MUTE': '#929aa7',
-    'ACCENT': '#5968e8', 'ACCENT_HI': '#6c7af2', 'ACCENT_DK': '#4654cf',
-    'ACCENT_SOFT': '#eef0ff', 'ON_ACCENT': '#ffffff',
-    'USER_BG': '#fff0f5', 'TOOL_BG': '#f7f8fa',
-    'SEND': '#e85b9f', 'SEND_HI': '#d94d91',
-    'OK': '#24966a', 'CUT': '#c97746', 'WARN': '#bd7a17', 'ERR': '#cf4b55',
-    'DISABLED': '#bbc1cb',
-    'BTN': '#f5f6f9', 'BTN_HI': '#eceef4', 'BTN_DN': '#e2e5ec',
-    'BTN_OFF': '#f5f6f8', 'BTN_OFF_FG': '#b7bdc7',
-    'HEAD_HI': '#f0f2f7', 'SEL_BG': '#eef0ff', 'SEL_FG': '#4654cf',
-    'TROUGH': '#eceef3', 'SCROLL': '#e8ebf1', 'SCROLL_HI': '#d9dee8',
-    'HEAD_A': '#ffffff', 'HEAD_B': '#ffffff',
-    'HEAD_TXT': '#252a35', 'HEAD_SUB': '#616a78', 'HEAD_VER': '#929aa7',
-    'VIEW_TOP': '#242e3a', 'VIEW_BOT': '#171e27', 'GRID': '#35414f',
+    'BG': '#eef1f6', 'PANEL': '#ffffff', 'PANEL_ALT': '#f6f8fc',
+    'BORDER': '#dbe2ec', 'FIELD': '#ffffff', 'STRIPE': '#fafbfe',
+    'TEXT': '#1f2937', 'TEXT_DIM': '#5b6675', 'TEXT_MUTE': '#98a2b3',
+    'ACCENT': '#2f6fbf', 'ACCENT_HI': '#3b85dd', 'ACCENT_DK': '#255a9b',
+    'ACCENT_SOFT': '#e3eefc', 'ON_ACCENT': '#ffffff',
+    'OK': '#16a34a', 'CUT': '#e07b39', 'WARN': '#d97706', 'ERR': '#dc2626',
+    'DISABLED': '#b6bfcc',
+    'BTN': '#f1f4f9', 'BTN_HI': '#e8eef8', 'BTN_DN': '#dfe6f0',
+    'BTN_OFF': '#f0f2f5', 'BTN_OFF_FG': '#b6bfcc',
+    'HEAD_HI': '#e9eef7', 'SEL_BG': '#e3eefc', 'SEL_FG': '#255a9b',
+    'TROUGH': '#e7ecf4', 'SCROLL': '#e6ebf3', 'SCROLL_HI': '#d3dbe7',
+    'HEAD_A': '#3b82d6', 'HEAD_B': '#24568f',
+    'HEAD_TXT': '#ffffff', 'HEAD_SUB': '#cfe0f7', 'HEAD_VER': '#b9d3f2',
+    'VIEW_TOP': '#2c3745', 'VIEW_BOT': '#161c24', 'GRID': '#39434f',
 }
 DARK = {
-    'BG': '#151922', 'PANEL': '#1c212b', 'PANEL_ALT': '#232a35',
-    'BORDER': '#303847', 'FIELD': '#181d26', 'STRIPE': '#202631',
-    'TEXT': '#e8ebf1', 'TEXT_DIM': '#b0b8c5', 'TEXT_MUTE': '#858f9e',
-    'ACCENT': '#8792ff', 'ACCENT_HI': '#9ba4ff', 'ACCENT_DK': '#6e79e5',
-    'ACCENT_SOFT': '#2a2f4a', 'ON_ACCENT': '#ffffff',
-    'USER_BG': '#3b2935', 'TOOL_BG': '#232a34',
-    'SEND': '#e85b9f', 'SEND_HI': '#f276b0',
-    'OK': '#55bf91', 'CUT': '#e49a70', 'WARN': '#e5b25b', 'ERR': '#f0757c',
-    'DISABLED': '#667080',
-    'BTN': '#272e3a', 'BTN_HI': '#313949', 'BTN_DN': '#202631',
-    'BTN_OFF': '#202631', 'BTN_OFF_FG': '#667080',
-    'HEAD_HI': '#2d3441', 'SEL_BG': '#2a2f4a', 'SEL_FG': '#b5bcff',
-    'TROUGH': '#2b3240', 'SCROLL': '#303847', 'SCROLL_HI': '#414b5d',
-    'HEAD_A': '#1c212b', 'HEAD_B': '#1c212b',
-    'HEAD_TXT': '#e8ebf1', 'HEAD_SUB': '#b0b8c5', 'HEAD_VER': '#858f9e',
-    'VIEW_TOP': '#202935', 'VIEW_BOT': '#131820', 'GRID': '#313d4b',
+    'BG': '#0f1319', 'PANEL': '#171c24', 'PANEL_ALT': '#1e242e',
+    'BORDER': '#2b3340', 'FIELD': '#11161d', 'STRIPE': '#1b212a',
+    'TEXT': '#e6ebf2', 'TEXT_DIM': '#a9b4c4', 'TEXT_MUTE': '#6f7b8c',
+    'ACCENT': '#4c8fe0', 'ACCENT_HI': '#63a2ee', 'ACCENT_DK': '#3a76bf',
+    'ACCENT_SOFT': '#1b2b40', 'ON_ACCENT': '#ffffff',
+    'OK': '#3fbf6a', 'CUT': '#f0954f', 'WARN': '#e0a52c', 'ERR': '#f0564f',
+    'DISABLED': '#525d6c',
+    'BTN': '#212936', 'BTN_HI': '#2a3444', 'BTN_DN': '#1a212b',
+    'BTN_OFF': '#1b212a', 'BTN_OFF_FG': '#525d6c',
+    'HEAD_HI': '#28323f', 'SEL_BG': '#1b2b40', 'SEL_FG': '#8dbbf2',
+    'TROUGH': '#1e242e', 'SCROLL': '#232b37', 'SCROLL_HI': '#313c4c',
+    'HEAD_A': '#1e4f86', 'HEAD_B': '#0f2136',
+    'HEAD_TXT': '#ffffff', 'HEAD_SUB': '#9fc4ec', 'HEAD_VER': '#7ba6d6',
+    'VIEW_TOP': '#222b37', 'VIEW_BOT': '#0c1015', 'GRID': '#333d4a',
 }
 AXIS_X, AXIS_Y, AXIS_Z = '#e0574f', '#66c05f', '#4f8fe0'
 
@@ -77,16 +71,16 @@ UI = 'Microsoft YaHei UI'
 MONO = 'Consolas'
 
 F = {
-    'h1': (UI, 14, 'bold'),
-    'h2': (UI, 11, 'bold'),
-    'body': (UI, 10),
-    'body_b': (UI, 10, 'bold'),
-    'small': (UI, 9),
-    'tiny': (UI, 8),
+    'h1': (UI, 11, 'bold'),
+    'h2': (UI, 10, 'bold'),
+    'body': (UI, 9),
+    'body_b': (UI, 9, 'bold'),
+    'small': (UI, 8),
+    'tiny': (UI, 7),
     'mono': (MONO, 9),
     'mono_s': (MONO, 8),
-    'input': (UI, 11),
-    'brand': (UI, 14, 'bold'),
+    'input': (UI, 10),
+    'brand': (UI, 13, 'bold'),
     'num': (MONO, 9),
 }
 
@@ -139,10 +133,6 @@ def round_rect(canvas, x0, y0, x1, y1, r, **kw):
 
 def apply(root, scale=1.0):
     k = max(1.0, float(scale))
-    try:
-        root.configure(background=BG)
-    except tk.TclError:
-        pass
     st = ttk.Style(root)
     for name in ('clam', 'alt', 'default'):
         try:
@@ -155,7 +145,6 @@ def apply(root, scale=1.0):
     st.configure('TFrame', background=BG)
     st.configure('Bar.TFrame', background=PANEL)
     st.configure('Card.TFrame', background=PANEL)
-    st.configure('Surface.TFrame', background=PANEL_ALT)
     st.configure('TLabel', background=BG, foreground=TEXT)
     st.configure('Card.TLabel', background=PANEL, foreground=TEXT)
     st.configure('Dim.TLabel', background=PANEL, foreground=TEXT_DIM, font=F['small'])
@@ -163,7 +152,7 @@ def apply(root, scale=1.0):
     st.configure('Head.TLabel', background=PANEL, foreground=TEXT, font=F['h2'])
 
     # --- 按钮 ---
-    st.configure('TButton', font=F['body'], padding=(int(11 * k), int(7 * k)),
+    st.configure('TButton', font=F['body'], padding=(int(12 * k), int(6 * k)),
                  borderwidth=0, background=BTN, foreground=TEXT, relief='flat',
                  anchor='center')
     st.map('TButton',
@@ -171,7 +160,7 @@ def apply(root, scale=1.0):
            foreground=[('disabled', BTN_OFF_FG)])
 
     st.configure('Accent.TButton', background=ACCENT, foreground=ON_ACCENT,
-                 font=F['body_b'], padding=(int(15 * k), int(8 * k)))
+                 font=F['body_b'], padding=(int(16 * k), int(7 * k)))
     st.map('Accent.TButton',
            background=[('pressed', ACCENT_DK), ('active', ACCENT_HI),
                        ('disabled', mix(ACCENT, PANEL, 0.55))],
@@ -183,26 +172,14 @@ def apply(root, scale=1.0):
            background=[('active', ACCENT_SOFT), ('pressed', mix(ACCENT_SOFT, ACCENT, 0.18))],
            foreground=[('active', ACCENT), ('disabled', DISABLED)])
 
-    st.configure('Toolbar.TButton', background=PANEL, foreground=TEXT_DIM,
-                 padding=(int(8 * k), int(6 * k)), font=F['small'], borderwidth=0)
-    st.map('Toolbar.TButton',
-           background=[('pressed', BTN_DN), ('active', BTN_HI), ('disabled', PANEL)],
-           foreground=[('active', TEXT), ('disabled', DISABLED)])
-
-    st.configure('TCheckbutton', background=PANEL, foreground=TEXT_DIM,
-                 font=F['small'], padding=(int(3 * k), int(3 * k)))
-    st.map('TCheckbutton',
-           background=[('active', PANEL)],
-           foreground=[('active', TEXT), ('disabled', DISABLED)])
-
     # --- 输入 ---
     st.configure('TEntry', fieldbackground=FIELD, background=FIELD,
                  bordercolor=BORDER, lightcolor=BORDER, darkcolor=BORDER,
-                 insertcolor=ACCENT, foreground=TEXT, padding=int(7 * k))
+                 insertcolor=ACCENT, foreground=TEXT, padding=int(5 * k))
     st.map('TEntry', bordercolor=[('focus', ACCENT)],
            lightcolor=[('focus', ACCENT)], darkcolor=[('focus', ACCENT)])
     st.configure('TCombobox', fieldbackground=FIELD, background=FIELD,
-                 bordercolor=BORDER, arrowcolor=TEXT_DIM, padding=int(6 * k),
+                 bordercolor=BORDER, arrowcolor=TEXT_DIM, padding=int(4 * k),
                  foreground=TEXT, lightcolor=BORDER, darkcolor=BORDER)
     st.map('TCombobox',
            fieldbackground=[('readonly', FIELD), ('focus', FIELD)],
@@ -219,39 +196,31 @@ def apply(root, scale=1.0):
 
     # --- 树 ---
     st.configure('Treeview', background=PANEL, fieldbackground=PANEL, foreground=TEXT,
-                 rowheight=int(30 * k), borderwidth=0, font=F['small'])
+                 rowheight=int(27 * k), borderwidth=0, font=F['body'])
     st.configure('Treeview.Heading', background=PANEL_ALT, foreground=TEXT_DIM,
-                 font=F['tiny'], relief='flat', padding=(int(9 * k), int(8 * k)),
+                 font=F['small'], relief='flat', padding=(int(8 * k), int(6 * k)),
                  borderwidth=0)
     st.map('Treeview.Heading', background=[('active', HEAD_HI)],
            foreground=[('active', ACCENT)])
     st.map('Treeview', background=[('selected', SEL_BG)], foreground=[('selected', SEL_FG)])
 
     # --- 选项卡 ---
-    st.configure('TNotebook', background=PANEL, borderwidth=0, tabmargins=(6, 5, 6, 0))
+    st.configure('TNotebook', background=PANEL, borderwidth=0, tabmargins=(8, 6, 8, 0))
     st.configure('TNotebook.Tab', background=PANEL_ALT, foreground=TEXT_DIM,
-                 padding=(int(10 * k), int(7 * k)), font=F['small'], borderwidth=0)
+                 padding=(int(16 * k), int(8 * k)), font=F['body'], borderwidth=0)
     st.map('TNotebook.Tab',
            background=[('selected', PANEL), ('active', HEAD_HI)],
            foreground=[('selected', ACCENT), ('active', TEXT)])
-    try:
-        # The inspector uses its own compact flat navigation row.
-        st.layout('Clean.TNotebook', [('Notebook.client', {'sticky': 'nswe'})])
-        st.layout('Clean.TNotebook.Tab', [])
-        st.configure('Clean.TNotebook', background=PANEL, borderwidth=0,
-                     tabmargins=0)
-    except tk.TclError:
-        pass
 
     # --- 其它 ---
     st.configure('TProgressbar', background=ACCENT, troughcolor=TROUGH,
-                 bordercolor=TROUGH, lightcolor=ACCENT, darkcolor=ACCENT, thickness=int(5 * k))
+                 bordercolor=TROUGH, lightcolor=ACCENT, darkcolor=ACCENT, thickness=6)
     st.configure('TSeparator', background=BORDER)
     for orient in ('Vertical', 'Horizontal'):
         st.configure(orient + '.TScrollbar', background=SCROLL, troughcolor=BG,
                      bordercolor=BG, arrowcolor=TEXT_MUTE, gripcount=0, borderwidth=0)
         st.map(orient + '.TScrollbar', background=[('active', SCROLL_HI)])
-    st.configure('TPanedwindow', background=BG, sashrelief='flat', sashwidth=int(7 * k))
+    st.configure('TPanedwindow', background=BG, sashrelief='flat', sashwidth=int(6 * k))
 
     # --- 菜单 ---
     try:

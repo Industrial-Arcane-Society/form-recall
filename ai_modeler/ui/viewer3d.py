@@ -88,9 +88,7 @@ class Viewer3D(tk.Canvas):
     LIGHT = _norm((0.45, -0.55, 0.72))
     FILL = _norm((-0.55, 0.45, 0.35))
 
-    def __init__(self, master, background=None, **kw):
-        if background is None:
-            background = TH.VIEW_BOT
+    def __init__(self, master, background=TH.VIEW_BOT, **kw):
         tk.Canvas.__init__(self, master, background=background,
                            highlightthickness=0, **kw)
         self.cam = Camera()
@@ -259,7 +257,7 @@ class Viewer3D(tk.Canvas):
                          text='还没有模型\n\n在左侧写一句中文, 例如\n'
                               '「画一个 100×60×20 的长方体, 中心打直径 10 的通孔」\n'
                               '然后点「生成模型」',
-                         fill='#a5b1c1', font=(TH.UI, 11), justify='center')
+                         fill='#67748a', font=(TH.UI, 11), justify='center')
             self._draw_overlay()
             return
         eye, fwd, right, up = self.cam.basis()
