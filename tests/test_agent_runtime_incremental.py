@@ -536,6 +536,15 @@ class IncrementalAgentTests(unittest.TestCase):
         self.assertEqual(["reference_reading"],
                          inspect_tool["function"]["parameters"]["required"])
 
+    def test_model_feature_tools_require_parameter_source_metadata(self):
+        feature_schema = agent_runtime._FEATURE_TOOL_SCHEMA
+
+        self.assertIn("sources", feature_schema["required"])
+        self.assertIn("每个数值参数", feature_schema["properties"]["sources"]["description"])
+        add_tool = next(row for row in agent_runtime.AGENT_TOOLS
+                        if row["function"]["name"] == "cad_add_feature")
+        self.assertIn("pattern 的 count 和 step", add_tool["function"]["description"])
+
     def test_reference_inspection_requires_per_face_image_evidence(self):
         reading = _reading()
         reading["visible_regions"] = [
@@ -579,7 +588,7 @@ class IncrementalAgentTests(unittest.TestCase):
         create_feature = tools["cad_create_model"]["properties"]["first_feature"]
         add_feature = tools["cad_add_feature"]["properties"]["feature"]
         self.assertEqual(create_feature, add_feature)
-        self.assertEqual(["id", "kind", "operation", "parameters"],
+        self.assertEqual(["id", "kind", "operation", "parameters", "sources"],
                          add_feature["required"])
         self.assertEqual(["center", "point", "pcd", "corners"],
                          add_feature["properties"]["parameters"]["properties"]["pos"]["enum"])

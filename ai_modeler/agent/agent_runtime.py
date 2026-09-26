@@ -183,6 +183,9 @@ _FEATURE_TOOL_SCHEMA = {
         },
         "sources": {
             "type": "object",
+            "description": ("每个数值参数都必须在此给出同名来源项；"
+                            "尤其 pattern 的 count 和 step 必须标记为 image_estimate、"
+                            "derived、user 或 existing_model。"),
             "additionalProperties": _SOURCE_TOOL_SCHEMA,
         },
         "relations": {
@@ -192,7 +195,7 @@ _FEATURE_TOOL_SCHEMA = {
         "name": {"type": "string"},
         "note": {"type": "string"},
     },
-    "required": ["id", "kind", "operation", "parameters"],
+    "required": ["id", "kind", "operation", "parameters", "sources"],
 }
 
 _REFERENCE_READING_TOOL_SCHEMA = {
@@ -287,7 +290,8 @@ AGENT_TOOLS = [
     ),
     _tool(
         "cad_add_feature",
-        "只追加一个可编辑特征。程序合成并校验整份 CADPlan，成功后立即更新右侧预览。"
+        "只追加一个可编辑特征。sources 必须逐项标记所有数值参数的来源；pattern 的 count 和 step 也要提供来源。"
+        "程序合成并校验整份 CADPlan，成功后立即更新右侧预览。"
         "坐标约定：X 为 length，Y 为 width，Z 向上；front 从 +Y 侧观察，right 从 +X 侧观察。"
         "孔的 axis 必须垂直于要打孔的可见面；front 面孔沿 Y，right 面孔沿 X。",
         {"feature": _FEATURE_TOOL_SCHEMA}, ["feature"],
