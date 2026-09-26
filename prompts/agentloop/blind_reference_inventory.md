@@ -1,40 +1,11 @@
 # 原图独立盲读
 
-这是一个独立的图像观察请求。你只会收到用户原始文字、原始参考图和文件名；你不会收到 CADPlan、建模器的 `reference_reading`、模型预览或前序 Agent 的识别结论。请仅依据原始像素记录可见结构，避免猜测图外或被遮挡的几何。
+这是独立读图请求，只依据用户原始文字和本消息中的参考图；不使用 CADPlan、建模器的读图结论或模型预览。
 
-对每张参考图单独报告视角、画面覆盖范围和各个可见区域。把每个可见实体平面作为独立区域记录；尤其区分前向实体面、后退但连续的实体平面、背景确实连续穿过的开口和无法判断区域。逐个区域统计可见的孔、槽、凸台等特征及其数量。孔的数量按不同孔口计，不按颜色块或渲染面计；不同视图可能重复展示同一物理孔，不能跨图相加。
+按图片逐张记录视角与画面覆盖。每个可见实体面单独一条区域；区分普通实体面、后退实体面、背景贯通开口和无法判断。统计该面可见的孔、槽、凸台等，同一平面的相似孔合并成一组并记录数量/排列。不同视图可能看到同一孔，绝不跨图相加。标注图像中确实无法判定的歧义；没有歧义就留空。
 
-若一张完整工件的正交视图明确展示了全部相关可见孔布局，`hole_layout_coverage` 写 `complete`，并在各区域中统计；只看到局部时写 `partial`；无法确定时写 `unknown`。`complete` 只表示该图中所有相关可见表面都在画面内，不代表隐藏面或背面也可见，也不要跨视图相加同一特征。颜色、阴影和遮挡不能单独证明材料缺失。保留不确定项，不要用虚构的精确尺寸填空。
+重复孔组还必须逐个按 `arrangement` 所写顺序记录 `relative_size_order`：`large`、`medium`、`small`、`same` 或 `unknown`。例如清楚可见的上、中、下孔为大—小—大，就返回 `["large","small","large"]`，`size_order_axis="vertical_top_to_bottom"`，并用 `size_order_confidence="high"`。`same` 表示这一整组孔等大，必须对每个实例重复填写；不要用它表示“与前一个大小相近”。图中颜色可以帮助区分已计数孔的尺寸，但不同颜色不代表额外孔；不要把颜色当作直径单位。只有边缘清楚可比较时才给出 high/medium；被遮挡、透视或分辨率影响无法可靠排序时逐项填 `unknown` 并降低置信度。这个相对顺序是像素可见事实，不要求估计毫米直径。
 
-严格只返回一个 JSON 对象，不要 Markdown：
+只写像素可核对的证据，不估计毫米尺寸，不写推理过程或重复描述。每张图最多 8 个区域；每个 evidence、arrangement 和 uncertainty 不超过 120 个字符。完整正视图只有在能看到全部相关孔位时才标 `hole_layout_coverage=complete`。
 
-```json
-{
-  "images": [
-    {
-      "image": "必须与 reference_image_names 中的名称一致",
-      "source_view": "front|right|top|iso|back|left|bottom|unknown",
-      "coverage": "whole_object|partial|unknown",
-      "hole_layout_coverage": "complete|partial|unknown",
-      "visible_regions": [
-        {
-          "id": "region-1",
-          "region": "可见表面的方位或位置",
-          "surface_state": "solid_face|recessed_solid_face|background_opening|unknown",
-          "evidence": "支持此判断的原图像素证据",
-          "features": [
-            {
-              "kind": "hole|slot|boss|rib|other",
-              "quantity": 3,
-              "arrangement": "可见排列",
-              "evidence": "数量与特征类型的像素证据"
-            }
-          ]
-        }
-      ],
-      "uncertainties": ["当前图像无法区分的解释"]
-    }
-  ],
-  "cross_view_notes": ["不同视图的互补信息；不要把同一特征重复计数"]
-}
-```
+观察完成后必须调用 `submit_reference_inventory` 提交结果。不要在文本通道手写 JSON 或附加解释；工具 Schema 限制数量与字段长度。

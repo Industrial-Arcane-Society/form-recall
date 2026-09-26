@@ -14,6 +14,8 @@ import os
 import re
 import time
 import uuid
+import copy
+import unicodedata
 from datetime import datetime
 from pathlib import Path
 from typing import Any, Callable, Dict, Iterable, List, Mapping, Optional
@@ -98,12 +100,167 @@ TOOLS = [
         },
     },
 ]
+REFERENCE_INVENTORY_TOOL = {
+    "type": "function",
+    "function": {
+        "name": "submit_reference_inventory",
+        "description": "提交仅依据原始参考图得到的精简可见面与特征清单。",
+        "parameters": {
+            "type": "object", "additionalProperties": False,
+            "properties": {
+                "images": {
+                    "type": "array", "maxItems": 8,
+                    "items": {"type": "object", "additionalProperties": False,
+                              "properties": {
+                                  "image": {"type": "string", "maxLength": 160},
+                                  "source_view": {"type": "string", "enum": [
+                                      "front", "right", "top", "iso", "back", "left", "bottom", "unknown"]},
+                                  "coverage": {"type": "string", "enum": [
+                                      "whole_object", "partial", "unknown"]},
+                                  "hole_layout_coverage": {"type": "string", "enum": [
+                                      "complete", "partial", "unknown"]},
+                                  "visible_regions": {
+                                      "type": "array", "maxItems": 8,
+                                      "items": {"type": "object", "additionalProperties": False,
+                                                "properties": {
+                                                    "id": {"type": "string", "maxLength": 64},
+                                                    "region": {"type": "string", "maxLength": 100},
+                                                    "surface_state": {"type": "string", "enum": [
+                                                        "solid_face", "recessed_solid_face",
+                                                        "background_opening", "unknown"]},
+                                                    "evidence": {"type": "string", "maxLength": 120},
+                                                    "features": {
+                                                        "type": "array", "maxItems": 12,
+                                                        "items": {"type": "object", "additionalProperties": False,
+                                                                  "properties": {
+                                                                      "kind": {"type": "string", "maxLength": 32},
+                                                                      "quantity": {"type": "integer", "minimum": 0},
+                                                                      "arrangement": {"type": "string", "maxLength": 100},
+                                                                      "evidence": {"type": "string", "maxLength": 120},
+                                                                      "relative_size_order": {
+                                                                          "type": "array", "maxItems": 12,
+                                                                          "items": {"type": "string", "enum": [
+                                                                              "large", "medium", "small", "same", "unknown"]},
+                                                                      },
+                                                                      "size_order_axis": {"type": "string", "enum": [
+                                                                          "vertical_top_to_bottom", "vertical_bottom_to_top",
+                                                                          "horizontal_left_to_right", "horizontal_right_to_left",
+                                                                          "unknown", "not_applicable"]},
+                                                                      "size_order_confidence": {"type": "string", "enum": [
+                                                                          "high", "medium", "low", "unknown"]},
+                                                                  }, "required": ["kind", "quantity", "arrangement", "evidence",
+                                                                                 "relative_size_order", "size_order_axis",
+                                                                                 "size_order_confidence"]},
+                                                    },
+                                                }, "required": ["id", "region", "surface_state", "evidence", "features"]},
+                                  },
+                                  "uncertainties": {"type": "array", "maxItems": 6,
+                                                    "items": {"type": "string", "maxLength": 120}},
+                              }, "required": ["image", "source_view", "coverage",
+                                             "hole_layout_coverage", "visible_regions", "uncertainties"]},
+                },
+                "cross_view_notes": {"type": "array", "maxItems": 8,
+                                     "items": {"type": "string", "maxLength": 120}},
+            },
+            "required": ["images", "cross_view_notes"],
+        },
+    },
+}
+REVIEW_SUBMISSION_TOOL = {
+    "type": "function",
+    "function": {
+        "name": "submit_multiview_review",
+        "description": (
+            "提交当前单视图对原始同方向参考图的复核结果。只提交可见证据和可定位差异，"
+            "不要输出长篇说明。"
+        ),
+        "parameters": {
+            "type": "object", "additionalProperties": False,
+            "properties": {
+                "reference_images": {
+                    "type": "array", "maxItems": 4,
+                    "items": {"type": "object", "additionalProperties": False,
+                              "properties": {
+                                  "image": {"type": "string", "maxLength": 160},
+                                  "source_view": {"type": "string", "enum": [
+                                      "front", "right", "top", "iso", "back", "left", "bottom", "unknown"]},
+                                  "comparable": {"type": "boolean"},
+                                  "visible_evidence": {"type": "string", "maxLength": 120},
+                              }, "required": ["image", "source_view", "comparable", "visible_evidence"]},
+                },
+                "checks": {
+                    "type": "array", "maxItems": 16,
+                    "items": {"type": "object", "additionalProperties": False,
+                              "properties": {
+                                  "id": {"type": "string", "maxLength": 100},
+                                  "view": {"type": "string", "enum": [
+                                      "front", "right", "top", "iso", "back", "left", "bottom"]},
+                                  "area": {"type": "string", "maxLength": 48},
+                                  "feature_group_id": {"type": "string", "maxLength": 64},
+                                  "category": {"type": "string", "maxLength": 32},
+                                  "status": {"type": "string", "enum": [
+                                      "match", "mismatch", "partial", "unknown"]},
+                                  "item": {"type": "string", "maxLength": 80},
+                                  "reference_evidence": {"type": "string", "maxLength": 140},
+                                  "model_evidence": {"type": "string", "maxLength": 140},
+                                  "evidence": {"type": "string", "maxLength": 180},
+                                  "unknown_reason": {"type": "string", "maxLength": 120},
+                                  "feature_ids": {"type": "array", "maxItems": 8,
+                                                   "items": {"type": "string", "maxLength": 80}},
+                                  "affected_parameters": {
+                                      "type": "array", "maxItems": 8,
+                                      "items": {"type": "object", "additionalProperties": False,
+                                                "properties": {
+                                                    "feature_id": {"type": "string", "maxLength": 80},
+                                                    "path": {"type": "string", "maxLength": 100},
+                                                }, "required": ["feature_id", "path"]},
+                                  },
+                              }, "required": ["id", "view", "area", "feature_group_id", "category",
+                                             "status", "item", "reference_evidence", "model_evidence",
+                                             "evidence", "unknown_reason", "feature_ids",
+                                             "affected_parameters"]},
+                },
+                "issues": {
+                    "type": "array", "maxItems": 12,
+                    "items": {"type": "object", "additionalProperties": False,
+                              "properties": {
+                                  "issue_id": {"type": "string", "maxLength": 100},
+                                  "view": {"type": "string", "enum": [
+                                      "front", "right", "top", "iso", "back", "left", "bottom"]},
+                                  "category": {"type": "string", "maxLength": 32},
+                                  "severity": {"type": "string", "enum": ["high", "medium", "low"]},
+                                  "item": {"type": "string", "maxLength": 80},
+                                  "evidence": {"type": "string", "maxLength": 180},
+                                  "feature_ids": {"type": "array", "maxItems": 8,
+                                                   "items": {"type": "string", "maxLength": 80}},
+                                  "affected_parameters": {
+                                      "type": "array", "maxItems": 8,
+                                      "items": {"type": "object", "additionalProperties": False,
+                                                "properties": {
+                                                    "feature_id": {"type": "string", "maxLength": 80},
+                                                    "path": {"type": "string", "maxLength": 100},
+                                                }, "required": ["feature_id", "path"]},
+                                  },
+                              }, "required": ["issue_id", "view", "category", "severity", "item",
+                                             "evidence", "feature_ids", "affected_parameters"]},
+                },
+                "resolved_findings": {"type": "array", "maxItems": 12,
+                                       "items": {"type": "object"}},
+                "questions": {"type": "array", "maxItems": 3,
+                              "items": {"type": "string", "maxLength": 160}},
+                "confidence": {"type": "number", "minimum": 0, "maximum": 1},
+            },
+            "required": ["reference_images", "checks", "issues", "resolved_findings",
+                         "questions", "confidence"],
+        },
+    },
+}
 TOOLS_BY_PHASE = {
     "recognition": [TOOLS[0]],
     "construction": [TOOLS[1]],
     "repair": [TOOLS[1]],
-    "blind_reference_inventory": [],
-    "multiview_check": [],
+    "blind_reference_inventory": [REFERENCE_INVENTORY_TOOL],
+    "multiview_check": [REVIEW_SUBMISSION_TOOL],
     "similarity_review": [],
 }
 
@@ -401,7 +558,7 @@ def _extract_object(text: str, label: str) -> Dict[str, Any]:
 
 
 def _run_json_object(transcript, cfg, phase, label, state, cancel_event=None,
-                     max_tokens=16384):
+                     max_tokens=16384, retry_max_tokens=None):
     """Run a JSON-only phase once, then recover once from malformed output."""
     raw = _run_tools(transcript, cfg, phase, state, cancel_event,
                      max_tokens=max_tokens)
@@ -425,6 +582,11 @@ def _run_json_object(transcript, cfg, phase, label, state, cancel_event=None,
         retry_budget = (min(131072, max(32768, int(max_tokens) * 2))
                         if finish_reason == "length"
                         else max(16384, int(max_tokens)))
+        if retry_max_tokens is not None:
+            try:
+                retry_budget = min(retry_budget, max(512, int(retry_max_tokens)))
+            except (TypeError, ValueError):
+                pass
         raw = _run_tools(transcript, cfg, phase, state, cancel_event,
                          max_tokens=retry_budget)
         try:
@@ -581,10 +743,26 @@ def _run_tools(transcript: List[Dict[str, Any]], cfg: dict,
     messages = [{"role": "system", "content": _system(phase)}]
     messages.extend(transcript)
     phase_tools = TOOLS_BY_PHASE.get(phase, TOOLS)
+    if phase == "multiview_check" and phase_tools:
+        phase_tools = copy.deepcopy(phase_tools)
+        properties = phase_tools[0]["function"]["parameters"]["properties"]
+        check_properties = properties["checks"]["items"]["properties"]
+        current_view = state.get("active_review_view")
+        if current_view:
+            check_properties["view"]["enum"] = [str(current_view)]
+        review_areas = state.get("active_review_areas")
+        if review_areas:
+            check_properties["area"]["enum"] = list(dict.fromkeys(
+                [str(area) for area in review_areas] + ["feature_group"]))
+        group_ids = state.get("active_review_group_ids")
+        if group_ids is not None:
+            check_properties["feature_group_id"]["enum"] = [""] + [
+                str(group_id) for group_id in group_ids]
     phase_limits = {
         "recognition": MAX_WEB_SEARCH_CALLS,
         "construction": MAX_CONSTRUCTION_VALIDATION_CALLS,
         "repair": MAX_REPAIR_VALIDATION_CALLS,
+        "blind_reference_inventory": 1,
         "multiview_check": MAX_REVIEW_PREVIEW_CALLS_PER_ROUND,
         "similarity_review": 0,
     }
@@ -605,15 +783,19 @@ def _run_tools(transcript: List[Dict[str, Any]], cfg: dict,
             model = str((cfg or {}).get("model") or "默认模型")
             _emit(state.get("progress"), "模型等待中：%s · %s" % (detail, model))
             timeout = _remaining_timeout(state["deadline"])
+            required_tool_choice = (
+                "required" if phase in {"blind_reference_inventory", "multiview_check"} else
+                "auto" if phase_tools else None)
             _begin_model_call(
                 state, phase, messages, output_budget, timeout=timeout,
-                tool_choice="auto" if phase_tools else None)
+                tool_choice=required_tool_choice)
             reply = llm.chat_completion(
                 messages, cfg, tools=phase_tools,
                 timeout=timeout,
                 max_tokens=output_budget,
                 cancel_event=cancel_event,
-                progress=_stream_progress_callback(state, detail))
+                progress=_stream_progress_callback(state, detail),
+                tool_choice=required_tool_choice)
         except Exception as exc:
             _record_model_call(state, phase, messages, output_budget, error=exc)
             raise
@@ -655,6 +837,17 @@ def _run_tools(transcript: List[Dict[str, Any]], cfg: dict,
                 args = json.loads(raw_args) if isinstance(raw_args, str) else raw_args
                 if not isinstance(args, dict):
                     raise ValueError("arguments 必须是 JSON 对象")
+                submission_tool = {
+                    "blind_reference_inventory": "submit_reference_inventory",
+                    "multiview_check": "submit_multiview_review",
+                }.get(phase)
+                if submission_tool and name == submission_tool:
+                    state["tool_trace"].append({
+                        "phase": phase, "tool": name, "arguments": args,
+                        "result": {"state": "accepted"},
+                    })
+                    _checkpoint_run_record(state)
+                    return _json_text(args)
                 if validated_plan is not None:
                     result, image_path = {
                         "error": "本阶段已有通过校验的 CADPlan；请停止调用工具。"
@@ -746,7 +939,7 @@ def _independent_reference_inventory(source_messages, expected_images, prompt,
     _emit(state.get("progress"), "正在仅凭原始图片独立整理可见面与特征数量…")
     obj = _run_json_object(messages, cfg, "blind_reference_inventory",
                            "参考图独立盲读", state, cancel_event,
-                           max_tokens=8192)
+                           max_tokens=4096, retry_max_tokens=4096)
     rows = obj.get("images") if isinstance(obj.get("images"), list) else []
     normalized = []
     gaps = []
@@ -792,10 +985,48 @@ def _independent_reference_inventory(source_messages, expected_images, prompt,
                         kind = str(feature.get("kind") or "other").strip().lower()
                         if not kind:
                             kind = "other"
+                        size_order_values = feature.get("relative_size_order")
+                        if isinstance(size_order_values, list):
+                            relative_size_order = [
+                                str(value).strip().lower() for value in size_order_values
+                                if str(value).strip().lower() in {
+                                    "large", "medium", "small", "same", "unknown"}]
+                        else:
+                            relative_size_order = []
+                        size_order_axis = str(feature.get("size_order_axis") or "unknown").lower()
+                        if size_order_axis not in {
+                                "vertical_top_to_bottom", "vertical_bottom_to_top",
+                                "horizontal_left_to_right", "horizontal_right_to_left",
+                                "unknown", "not_applicable"}:
+                            size_order_axis = "unknown"
+                        size_order_confidence = str(
+                            feature.get("size_order_confidence") or "unknown").lower()
+                        if size_order_confidence not in {"high", "medium", "low", "unknown"}:
+                            size_order_confidence = "unknown"
+                        if len(relative_size_order) != quantity:
+                            relative_size_order = []
+                            size_order_axis = "unknown"
+                            size_order_confidence = "unknown"
+                        size_pattern_varies = any(
+                            value in {"large", "medium", "small"}
+                            for value in relative_size_order)
+                        if ("hole" in kind or "孔" in kind) and quantity > 1 and (
+                                len(relative_size_order) != quantity
+                                or size_order_confidence not in {"high", "medium"}
+                                or "unknown" in relative_size_order
+                                or (size_pattern_varies and size_order_axis in {
+                                    "unknown", "not_applicable"})):
+                            gaps.append(
+                                "原图 %s 的可见重复孔组 %s 尚未给出可核对的相对孔径顺序；"
+                                "不能把未比较孔径的自由文本 match 当成验收。"
+                                % (image_name, region.get("region") or "未命名区域"))
                         features.append({
                             "kind": kind, "quantity": quantity,
                             "arrangement": str(feature.get("arrangement") or ""),
                             "evidence": str(feature.get("evidence") or "").strip(),
+                            "relative_size_order": relative_size_order,
+                            "size_order_axis": size_order_axis,
+                            "size_order_confidence": size_order_confidence,
                         })
                 regions.append({
                     "id": str(region.get("id") or "region-%d" % region_index),
@@ -848,8 +1079,82 @@ def _independent_inventory_groups(inventory):
                     "surface_state": region.get("surface_state"),
                     "arrangement": feature.get("arrangement"),
                     "evidence": feature.get("evidence"),
+                    "relative_size_order": feature.get("relative_size_order") or [],
+                    "size_order_axis": feature.get("size_order_axis") or "unknown",
+                    "size_order_confidence": feature.get("size_order_confidence") or "unknown",
                 })
     return groups
+
+
+def _review_plan_summary(plan):
+    """Keep visual review geometry context useful without replaying provenance."""
+    features = []
+    for feature in (plan or {}).get("features") or []:
+        if not isinstance(feature, dict):
+            continue
+        row = {
+            "id": feature.get("id"),
+            "kind": feature.get("kind"),
+            "operation": feature.get("operation"),
+            "parameters": feature.get("parameters") or {},
+        }
+        if feature.get("relations"):
+            row["relations"] = feature["relations"]
+        features.append(row)
+    return {
+        "schema_version": (plan or {}).get("schema_version"),
+        "units": (plan or {}).get("units"),
+        "coordinate_system": (plan or {}).get("coordinate_system"),
+        "features": features,
+    }
+
+
+def _review_geometry_summary(checks):
+    checks = checks if isinstance(checks, dict) else {}
+    holes = checks.get("through_hole_mesh_checks") or []
+    return {
+        "state": checks.get("state"),
+        "bbox_size_mm": checks.get("bbox_size_mm"),
+        "bbox_ratios_from_mesh": checks.get("bbox_ratios_from_mesh"),
+        "feature_count_from_plan": checks.get("feature_count_from_plan"),
+        "hole_feature_count": len(checks.get("hole_features_from_plan") or []),
+        "through_hole_check_count": len(holes),
+        "verified_open_hole_count": sum(
+            1 for row in holes if isinstance(row, dict)
+            and row.get("status") == "verified_open"),
+    }
+
+
+_FRONT_UNOBSERVABLE_DEPTH_TERMS = (
+    "depth", "setback", "recess", "recessed", "flush", "back wall",
+    "y-coordinate", "same y", "退台", "后退", "凹槽", "凹进", "凹入",
+    "槽内", "后壁", "深度", "同一y", "同一平面", "共面",
+)
+
+
+def _front_depth_claim(row):
+    if not isinstance(row, dict):
+        return False
+    text = " ".join(str(row.get(key) or "") for key in (
+        "item", "reference_evidence", "model_evidence", "evidence", "unknown_reason"))
+    normalized = text.lower().replace(" ", "")
+    return any(term.lower().replace(" ", "") in normalized
+               for term in _FRONT_UNOBSERVABLE_DEPTH_TERMS)
+
+
+def _inventory_group_equivalence_key(group):
+    if not isinstance(group, dict):
+        return None
+    try:
+        quantity = int(group.get("quantity"))
+    except (TypeError, ValueError):
+        return None
+    region = unicodedata.normalize("NFKC", str(group.get("region") or "")).casefold()
+    region = re.sub(r"[\W_]+", "", region, flags=re.UNICODE)
+    kind = str(group.get("kind") or "").strip().lower()
+    if not region or not kind or quantity <= 0:
+        return None
+    return kind, quantity, region
 
 
 def _independent_hole_targets(inventory):
@@ -869,6 +1174,99 @@ def _independent_hole_targets(inventory):
                         "source_view": image.get("source_view"),
                         "quantity": count})
     return targets
+
+
+def _review_views_for_inventory(requested_views, inventory):
+    """Prefer model views that correspond to an actual source-image view.
+
+    Reviewing an orthographic model view against an isometric-only reference
+    invites unsupported findings. If the agent asks for a non-matching view,
+    select the available source view(s) instead and report the substitution.
+    """
+    requested = list(dict.fromkeys(requested_views or ["iso"]))
+    source_views = list(dict.fromkeys(
+        str(image.get("source_view") or "unknown").lower()
+        for image in (inventory or {}).get("images") or []
+        if isinstance(image, dict)
+        and str(image.get("source_view") or "unknown").lower()
+        in {"front", "right", "top", "iso", "back", "left", "bottom"}))
+    if not source_views:
+        return requested, []
+    matching = [view for view in requested if view in source_views]
+    selected = matching or source_views
+    skipped = [view for view in requested if view not in selected]
+    return selected, skipped
+
+
+def _review_reference_evidence(raw_rows, inventory, image_names, view):
+    """Do not let a vision response override the source-only view inventory."""
+    raw_by_name = {
+        os.path.basename(str(row.get("image") or "")): row
+        for row in (raw_rows or []) if isinstance(row, dict)
+        and str(row.get("image") or "").strip()}
+    source_by_name = {
+        os.path.basename(str(row.get("image") or "")): row
+        for row in (inventory or {}).get("images", []) if isinstance(row, dict)
+        and str(row.get("image") or "").strip()}
+    normalized = []
+    conflicts = []
+    for image_name in image_names:
+        source = source_by_name.get(os.path.basename(str(image_name))) or {}
+        observed = raw_by_name.get(os.path.basename(str(image_name))) or {}
+        source_view = str(source.get("source_view") or "unknown").lower()
+        reported_view = str(observed.get("source_view") or "unknown").lower()
+        if source_view == "unknown":
+            source_view = reported_view
+        view_conflict = bool(
+            source_view in _INVENTORY_VIEWS - {"unknown"}
+            and reported_view in _INVENTORY_VIEWS - {"unknown"}
+            and source_view != reported_view)
+        if view_conflict:
+            conflicts.append(str(image_name))
+        same_view = source_view == view
+        comparable = bool(observed.get("comparable") is True
+                          and same_view and not view_conflict)
+        evidence = str(observed.get("visible_evidence") or "").strip()
+        if view_conflict:
+            evidence = ("原图盲读识别为 %s，但本轮复核识别为 %s；"
+                        "视角证据冲突，程序拒绝采用本条比较。"
+                        % (source_view, reported_view))
+        elif not same_view:
+            evidence = ("原图为 %s 视角，本轮模型视图为 %s；"
+                        "程序不接受跨视角比较。" % (source_view, view))
+        elif not observed:
+            evidence = "本轮没有返回此原图的可比性检查。"
+        normalized.append({
+            "image": str(image_name),
+            "source_view": source_view if source_view in _INVENTORY_VIEWS else "unknown",
+            "comparable": comparable,
+            "visible_evidence": evidence,
+        })
+    return normalized, conflicts
+
+
+def _source_messages_for_view(source_messages, inventory, image_names,
+                              reference_image_paths, view, prompt):
+    """Build a fresh review request with only the source images for this view."""
+    source_rows = {
+        os.path.basename(str(row.get("image") or "")): row
+        for row in (inventory or {}).get("images", []) if isinstance(row, dict)
+        and str(row.get("image") or "").strip()}
+    content = [{"type": "text", "text": str(prompt or "") or "按参考图核对模型。"}]
+    added = 0
+    for name in image_names:
+        row = source_rows.get(os.path.basename(str(name))) or {}
+        source_view = str(row.get("source_view") or "unknown").lower()
+        if source_view not in {view, "unknown"}:
+            continue
+        path = (reference_image_paths or {}).get(str(name))
+        if path and os.path.isfile(str(path)):
+            content.append(llm.image_content_part(str(path)))
+            added += 1
+    if added:
+        return [{"role": "user", "content": content}]
+    # Compatibility path for callers that cannot provide local image paths.
+    return [dict(message) for message in (source_messages or [])]
 
 
 def _planned_hole_count(plan):
@@ -911,7 +1309,8 @@ def _split_view_review(plan, final_preview, source_messages, cfg, state,
     confidences = []
     scores = []
     previous_open_findings = previous_open_findings or []
-    review_views = list(views or ("iso",))
+    requested_views = list(dict.fromkeys(views or ("iso",)))
+    review_views = list(requested_views)
     expected_images = list(state.get("active_reference_images") or [])
     inventory_gaps = []
     try:
@@ -927,6 +1326,8 @@ def _split_view_review(plan, final_preview, source_messages, cfg, state,
     review_gaps.extend(inventory_gaps)
     if reference_inventory:
         state["independent_reference_inventory"] = reference_inventory
+    review_views, skipped_views = _review_views_for_inventory(
+        requested_views, reference_inventory)
     review_cfg = dict(cfg or {})
     if str(review_cfg.get("reasoning_effort") or "").lower() == "auto":
         review_cfg["reasoning_effort"] = "high"
@@ -947,32 +1348,57 @@ def _split_view_review(plan, final_preview, source_messages, cfg, state,
                     view, preview.get("preview_image_error") or preview.get("error") or preview.get("state")))
             per_view_findings = [finding for finding in previous_open_findings
                                  if str(finding.get("view") or "").lower() in {view, "多视图"}]
+            view_images = [
+                image for image in (reference_inventory or {}).get("images", [])
+                if isinstance(image, dict)
+                and (str(image.get("source_view") or "unknown").lower()
+                     in {view, "unknown"})]
+            view_image_names = [str(image.get("image") or "")
+                                for image in view_images
+                                if str(image.get("image") or "")]
+            view_groups = [group for group in independent_groups
+                           if str(group.get("source_view") or "unknown").lower()
+                           in {view, "unknown"}]
             payload = {
                 "round": round_index,
                 "view_to_inspect": view,
                 "required_areas": list(areas),
                 "original_request": prompt,
-                "final_plan": plan,
-                "dimensions": final_preview.get("dimensions"),
-                "local_geometry_checks": final_preview.get("local_geometry_checks"),
+                "view_specific_limits": (
+                    ["front orthographic projection cannot establish Y-depth, setback, or through-depth;"]
+                    if view == "front" else []),
+                "final_plan": _review_plan_summary(plan),
+                "dimensions": {
+                    "size_mm": (final_preview.get("dimensions") or {}).get("size"),
+                    "bbox_mm": (final_preview.get("dimensions") or {}).get("bbox"),
+                },
+                "local_geometry_checks": _review_geometry_summary(
+                    final_preview.get("local_geometry_checks")),
                 "single_view_image": {
                     "view": view,
                     "source": "AI Modeler local mesh kernel; not CATIA B-Rep",
                     "dimensions_px": [660, 520],
                 },
                 "previous_open_findings_to_recheck": per_view_findings,
-                "reference_images_to_account_for": expected_images,
-                "independent_reference_inventory": reference_inventory,
-                "independent_visible_feature_groups": independent_groups,
+                "reference_images_to_account_for": view_image_names,
+                "independent_reference_inventory": {
+                    "source": "independent_source_only_multimodal_read",
+                    "images": [{
+                        "image": image.get("image"),
+                        "source_view": image.get("source_view"),
+                        "coverage": image.get("coverage"),
+                        "hole_layout_coverage": image.get("hole_layout_coverage"),
+                    } for image in view_images],
+                },
+                "independent_visible_feature_groups": view_groups,
                 "feature_group_check_instruction": (
-                    "The independent_reference_inventory came from a separate request that saw only source "
-                    "images; it may still be wrong. Recheck every visible feature against the original pixels. "
-                    "For each independent_visible_feature_groups entry visible in a comparable image, return "
-                    "one checks item with feature_group_id, area='feature_group', status, reference_evidence, "
-                    "model_evidence and evidence. Correct the inventory when pixels disagree; do not treat "
-                    "its quantity as ground truth or merge regions because of color."),
+                    "Independent groups are brief hints from a source-only read, not ground truth. "
+                    "Recheck their quantity and surface against pixels. Return one feature_group check "
+                    "for each visible group; never merge regions by color."),
             }
-            messages = [dict(message) for message in (source_messages or [])]
+            messages = _source_messages_for_view(
+                source_messages, reference_inventory, view_image_names,
+                state.get("reference_image_paths") or {}, view, prompt)
             messages.append({
                 "role": "user",
                 "content": [
@@ -981,9 +1407,21 @@ def _split_view_review(plan, final_preview, source_messages, cfg, state,
                 ],
             })
             state["active_review_view"] = view
+            state["active_review_areas"] = list(areas)
+            state["active_review_group_ids"] = [
+                str(group.get("id")) for group in view_groups
+                if group.get("id")]
             obj = _run_json_object(messages, review_cfg, phase, "逐视图复核",
-                                   state, cancel_event, max_tokens=32768)
-            for image_row in obj.get("reference_images", []):
+                                   state, cancel_event, max_tokens=4096,
+                                   retry_max_tokens=4096)
+            raw_image_evidence = obj.get("reference_images", [])
+            image_evidence, view_conflicts = _review_reference_evidence(
+                raw_image_evidence, reference_inventory, view_image_names, view)
+            if view_conflicts:
+                review_gaps.extend(
+                    "%s 视图对 %s 的视角判断与原图盲读冲突，已丢弃该图比较结论。"
+                    % (view, name) for name in view_conflicts)
+            for image_row in image_evidence:
                 if not isinstance(image_row, dict) or image_row.get("comparable") is not True:
                     continue
                 image_name = str(image_row.get("image") or "")
@@ -996,6 +1434,8 @@ def _split_view_review(plan, final_preview, source_messages, cfg, state,
                                          **comparison})
         finally:
             state["active_review_view"] = None
+            state["active_review_areas"] = []
+            state["active_review_group_ids"] = []
             cleanup_error = None
             try:
                 image_path.unlink()
@@ -1015,15 +1455,30 @@ def _split_view_review(plan, final_preview, source_messages, cfg, state,
         checks = obj.get("checks") if isinstance(obj.get("checks"), list) else []
         issues = obj.get("issues") if isinstance(obj.get("issues"), list) else []
         resolved = obj.get("resolved_findings") if isinstance(obj.get("resolved_findings"), list) else []
+        if view_image_names and not any(row.get("comparable") is True
+                                        for row in image_evidence):
+            # Findings without a confirmed same-view source cannot drive edits.
+            checks, issues, resolved = [], [], []
+            review_gaps.append("%s 视图没有获得同视角原图比较证据；该轮视觉差异不用于返修。"
+                               % view)
         normalized_checks = []
         for check in checks:
             if not isinstance(check, dict):
                 continue
             check = dict(check)
             check["view"] = view
+            if view == "front" and _front_depth_claim(check):
+                state.setdefault("view_incompatible_findings", []).append({
+                    "view": view, "kind": "unobservable_depth_claim",
+                    "item": str(check.get("item") or "")[:120],
+                    "reason": "正视投影没有 Y 向深度信息；该项由等轴/侧视复核。",
+                })
+                continue
             group_id = str(check.get("feature_group_id") or "").strip()
             if group_id and group_id not in blind_group_by_id:
-                review_gaps.append("%s 视图返回了未知的独立盲读特征组 %s。" % (view, group_id))
+                if str(check.get("area") or "").lower() == "feature_group":
+                    review_gaps.append("%s 视图返回了未知的独立盲读特征组 %s。" % (view, group_id))
+                check["feature_group_id"] = ""
             if not check.get("id") and check.get("area"):
                 check["id"] = "%s.%s" % (view, check["area"])
             if (str(check.get("status") or "").lower() == "match"
@@ -1040,15 +1495,33 @@ def _split_view_review(plan, final_preview, source_messages, cfg, state,
                 continue
             issue = dict(issue)
             issue["view"] = view
+            if view == "front" and _front_depth_claim(issue):
+                state.setdefault("view_incompatible_findings", []).append({
+                    "view": view, "kind": "unobservable_depth_issue",
+                    "item": str(issue.get("item") or "")[:120],
+                    "reason": "正视投影没有 Y 向深度信息；该项由等轴/侧视复核。",
+                })
+                continue
             normalized_issues.append(issue)
             combined_issues.append(issue)
         combined_resolved.extend(row for row in resolved if isinstance(row, dict))
         view_questions = obj.get("questions") if isinstance(obj.get("questions"), list) else []
-        questions.extend(str(question) for question in view_questions if str(question).strip())
-        image_evidence = [item for item in obj.get("reference_images", [])
-                          if isinstance(item, dict)]
+        for question in view_questions:
+            text = str(question).strip()
+            if not text:
+                continue
+            if view == "front" and any(
+                    term.replace(" ", "") in text.lower().replace(" ", "")
+                    for term in _FRONT_UNOBSERVABLE_DEPTH_TERMS):
+                state.setdefault("view_incompatible_findings", []).append({
+                    "view": view, "kind": "unobservable_depth_question",
+                    "item": text[:120],
+                    "reason": "正视投影不能回答 Y 向深度问题。",
+                })
+                continue
+            questions.append(text)
         mapped_names = {str(item.get("image") or "") for item in image_evidence}
-        for image_name in expected_images:
+        for image_name in view_image_names:
             if image_name not in mapped_names:
                 review_gaps.append("%s 视图未说明参考图 %s 是否可比。" %
                                    (view, image_name))
@@ -1194,20 +1667,44 @@ def _split_view_review(plan, final_preview, source_messages, cfg, state,
         for report in reports
         for image_row in report.get("reference_images") or []
         if isinstance(image_row, dict) and image_row.get("comparable") is True}
+    passed_group_sources = {}
+    for group in independent_groups:
+        group_id = str(group.get("id"))
+        if str(group.get("image") or "") not in comparable_inventory_images:
+            continue
+        matching = [check for check in combined_checks
+                    if str(check.get("feature_group_id") or "") == group_id]
+        if any(str(check.get("status") or "").lower() == "match"
+               for check in matching):
+            key = _inventory_group_equivalence_key(group)
+            if key:
+                passed_group_sources.setdefault(key, []).append(group_id)
     feature_group_checks = []
     for group in independent_groups:
         group_id = str(group.get("id"))
         matching = [check for check in combined_checks
                     if str(check.get("feature_group_id") or "") == group_id]
         comparable = str(group.get("image") or "") in comparable_inventory_images
-        feature_group_checks.append({"feature_group_id": group_id,
-                                     "image": group.get("image"),
-                                     "checks": matching,
-                                     "status": ("not_comparable" if not comparable else
-                                                "passed" if any(
-                                         str(check.get("status") or "").lower() == "match"
-                                         for check in matching) else "needs_review")})
-        if comparable and not matching:
+        statuses = {str(check.get("status") or "").lower() for check in matching}
+        status = ("not_comparable" if not comparable else
+                  "passed" if "match" in statuses else
+                  "mismatch" if statuses & {"mismatch", "partial"} else
+                  "needs_review")
+        cross_verified_by = []
+        if comparable and status == "needs_review":
+            key = _inventory_group_equivalence_key(group)
+            cross_verified_by = [other_id for other_id in passed_group_sources.get(key, [])
+                                 if other_id != group_id]
+            if cross_verified_by:
+                status = "passed"
+        feature_group_checks.append({
+            "feature_group_id": group_id,
+            "image": group.get("image"),
+            "checks": matching,
+            "status": status,
+            "cross_view_verified_by": cross_verified_by,
+        })
+        if comparable and status == "needs_review":
             review_gaps.append("独立盲读特征组 %s（%s）尚未在任何可比单视图中核对。" % (
                 group_id, group.get("region") or group.get("kind") or ""))
     confidence = min(confidences) if confidences else 0.0
@@ -1228,8 +1725,12 @@ def _split_view_review(plan, final_preview, source_messages, cfg, state,
         "review_gaps": list(dict.fromkeys(review_gaps)),
         "confidence": confidence,
         "single_view_reports": reports,
+        "requested_views": requested_views,
+        "reviewed_views": review_views,
+        "skipped_views": skipped_views,
         "local_image_comparisons": local_image_comparisons,
         "feature_group_checks": feature_group_checks,
+        "view_incompatible_findings": state.get("view_incompatible_findings", []),
         "reference_inventory": reference_inventory,
         "blind_reference_hole_targets": blind_hole_targets,
         "plan": None,

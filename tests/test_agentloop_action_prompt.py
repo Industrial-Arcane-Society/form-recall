@@ -18,17 +18,18 @@ class AgentLoopActionPromptTests(unittest.TestCase):
         self.assertIn("每轮用一句简短行动进展后立即调用一个最小必要工具", self.runtime)
         self.assertIn("具体几何、CADPlan、尺寸来源与校验依据一律放在工具参数里", self.runtime)
         self.assertIn("普通问答以及用户明确要求说明、比较或补充信息时，正常用正文回答", self.runtime)
+        self.assertIn("颜色边界不能单独证明零件分离", self.runtime)
 
     def test_runtime_prompt_diagnoses_tool_errors_before_one_targeted_fix(self):
         self.assertIn("先依据该次返回的错误信息诊断", self.runtime)
         self.assertIn("只做一次有错误证据支撑的定向修正", self.runtime)
         self.assertIn("不要原样重试、盲目换参、长篇猜测内核行为或输出教程式排障", self.runtime)
 
-    def test_reference_read_goes_into_create_tool_instead_of_long_prose(self):
-        self.assertIn("`reference_reading` 是给建模工具使用的结构化证据", self.reference_read)
-        self.assertIn("由 `cad_create_model` 的工具参数承载", self.reference_read)
-        self.assertIn("首轮正文只保留一句简短行动进展", self.reference_read)
-        self.assertIn("并在同一轮调用 `cad_create_model` 创建主体", self.reference_read)
+    def test_reference_read_is_a_separate_step_before_model_creation(self):
+        self.assertIn("调用 `cad_inspect_references`", self.reference_read)
+        self.assertIn("下一步再调用 `cad_create_model` 创建主体", self.reference_read)
+        self.assertIn("优先把它理解为主体上的凹槽/退台", self.reference_read)
+        self.assertIn("单一等轴图则说明透视估值的不确定性", self.reference_read)
 
     def test_visual_prompts_distinguish_recessed_surfaces_from_open_voids(self):
         self.assertIn("有边界的内侧平面", self.reference_read)
@@ -40,11 +41,15 @@ class AgentLoopActionPromptTests(unittest.TestCase):
 
     def test_visual_review_uses_source_only_blind_inventory(self):
         self.assertIn("不含 CADPlan、模型预览和首轮 `reference_reading`", self.runtime)
-        self.assertIn("只会收到用户原始文字、原始参考图", self.blind_inventory)
-        self.assertIn("不同视图可能重复展示同一物理孔", self.blind_inventory)
+        self.assertIn("\u4e0d\u4f7f\u7528 CADPlan", self.blind_inventory)
+        self.assertIn("\u6a21\u578b\u9884\u89c8", self.blind_inventory)
+        self.assertIn("submit_reference_inventory", self.blind_inventory)
+        self.assertIn("hole_layout_coverage=complete", self.blind_inventory)
+        self.assertIn("relative_size_order", self.blind_inventory)
+        self.assertIn('["large","small","large"]', self.blind_inventory)
         multi = (ROOT / "prompts" / "agentloop" / "multiview_check.md").read_text(encoding="utf-8")
-        self.assertIn("建模器首轮给出的 `reference_reading` 不会提供给你", multi)
-        self.assertIn("若其面类别或数量错了", multi)
+        self.assertIn("independent_visible_feature_groups", multi)
+        self.assertIn("submit_multiview_review", multi)
 
 
 if __name__ == "__main__":

@@ -11,6 +11,7 @@ from unittest import mock
 
 from ai_modeler.agent import agentloop, agent_runtime, image_analysis, plan_state
 from ai_modeler.sdk import cadplan
+from ai_modeler.ui import softrender
 
 
 _PIXEL = base64.b64decode(
@@ -63,6 +64,28 @@ def _body_reading():
          "evidence": "one continuous outer body"}])
 
 
+def _reading_with_regions(image="reference.png"):
+    reading = _reading()
+    reading["visible_regions"] = [
+        {"image": image, "id": "left", "region": "left face",
+         "surface_state": "solid_face", "image_bbox_norm": [0.1, 0.1, 0.35, 0.9],
+         "evidence": "bounded front face", "features": [{
+             "kind": "hole", "quantity": 3, "arrangement": "large-small-large",
+             "evidence": "three distinct openings"}]},
+        {"image": image, "id": "center", "region": "recessed center face",
+         "surface_state": "recessed_solid_face", "image_bbox_norm": [0.33, 0.2, 0.5, 0.9],
+         "evidence": "bounded rear plane with visible holes", "features": [{
+             "kind": "hole", "quantity": 3, "arrangement": "large-small-large",
+             "evidence": "three openings on the rear plane"}]},
+        {"image": image, "id": "right", "region": "right face",
+         "surface_state": "solid_face", "image_bbox_norm": [0.45, 0.1, 0.9, 0.95],
+         "evidence": "bounded front face and continuous outer side", "features": [{
+             "kind": "hole", "quantity": 3, "arrangement": "large-small-large",
+             "evidence": "three distinct openings"}]},
+    ]
+    return reading
+
+
 def _blind_inventory(image="reference.png", source_view="iso", regions=None,
                      hole_layout_coverage="unknown"):
     return {"images": [{
@@ -80,6 +103,341 @@ def _blind_inventory(image="reference.png", source_view="iso", regions=None,
 
 
 class IncrementalAgentTests(unittest.TestCase):
+    def test_visual_review_context_omits_provenance_and_summarizes_mesh_checks(self):
+        plan = {
+            "schema_version": "1.0", "units": {"length": "mm"},
+            "coordinate_system": {"axes": ["X", "Y", "Z"]},
+            "features": [{
+                "id": "base", "kind": "box", "operation": "add",
+                "parameters": {"length": 100, "width": 36, "height": 105},
+                "sources": {"length": {"type": "image_estimate",
+                                         "evidence": "long provenance text"}},
+            }],
+        }
+        summary = agentloop._review_plan_summary(plan)
+        self.assertEqual("1.0", summary["schema_version"])
+        self.assertEqual(plan["features"][0]["parameters"],
+                         summary["features"][0]["parameters"])
+        self.assertNotIn("sources", summary["features"][0])
+
+        geometry = agentloop._review_geometry_summary({
+            "state": "passed", "bbox_size_mm": [100, 36, 105],
+            "bbox_ratios_from_mesh": {"front_width_height": 0.952},
+            "feature_count_from_plan": 10,
+            "hole_features_from_plan": [{"feature_id": "h1"}],
+            "through_hole_mesh_checks": [
+                {"status": "verified_open"}, {"status": "blocked"}],
+        })
+        self.assertEqual(1, geometry["verified_open_hole_count"])
+        self.assertEqual(2, geometry["through_hole_check_count"])
+        self.assertEqual([100, 36, 105], geometry["bbox_size_mm"])
+
+    def test_json_recovery_can_cap_retry_without_changing_other_phases(self):
+        token_budgets = []
+        state = {"model_calls": []}
+
+        def malformed_then_valid(_transcript, _cfg, _phase, call_state,
+                                 _cancel_event, max_tokens=None):
+            token_budgets.append(max_tokens)
+            call_state["model_calls"].append({
+                "finish_reason": "length", "response_chars": 4000,
+            })
+            return "not complete json" if len(token_budgets) == 1 else '{"ok":true}'
+
+        with mock.patch.object(agentloop, "_run_tools", side_effect=malformed_then_valid):
+            result = agentloop._run_json_object(
+                [], {}, "multiview_check", "逐视图复核", state,
+                max_tokens=4096, retry_max_tokens=4096)
+        self.assertEqual({"ok": True}, result)
+        self.assertEqual([4096, 4096], token_budgets)
+
+    def test_multiview_review_is_submitted_as_a_required_bounded_tool(self):
+        review = {
+            "reference_images": [], "checks": [], "issues": [],
+            "resolved_findings": [], "questions": [], "confidence": 0.5,
+        }
+        reply = {
+            "content": None,
+            "tool_calls": [{
+                "id": "review-call", "type": "function",
+                "function": {"name": "submit_multiview_review",
+                             "arguments": json.dumps(review)},
+            }],
+            "_finish_reason": "tool_calls",
+        }
+        state = {
+            "deadline": time.monotonic() + 30,
+            "tool_calls": 0, "tool_trace": [], "model_calls": [],
+            "model_cfg": {"model": "test-model"},
+            "active_review_view": "iso",
+            "active_review_areas": ["overall_shape", "depth_relationships"],
+            "active_review_group_ids": ["blind-01-01-01"],
+        }
+        with mock.patch.object(agentloop.llm, "chat_completion", return_value=reply) as call:
+            raw = agentloop._run_tools([], {}, "multiview_check", state)
+        self.assertEqual(review, json.loads(raw))
+        self.assertEqual("required", call.call_args.kwargs["tool_choice"])
+        self.assertEqual("submit_multiview_review",
+                         call.call_args.kwargs["tools"][0]["function"]["name"])
+        properties = call.call_args.kwargs["tools"][0]["function"]["parameters"]["properties"]
+        check_properties = properties["checks"]["items"]["properties"]
+        self.assertEqual(["iso"], check_properties["view"]["enum"])
+        self.assertEqual(["overall_shape", "depth_relationships", "feature_group"],
+                         check_properties["area"]["enum"])
+        self.assertEqual(["", "blind-01-01-01"],
+                         check_properties["feature_group_id"]["enum"])
+        self.assertEqual("submit_multiview_review", state["tool_trace"][0]["tool"])
+
+    def test_reference_inventory_uses_a_required_structured_submission(self):
+        inventory = {"images": [], "cross_view_notes": []}
+        reply = {
+            "content": None,
+            "tool_calls": [{
+                "id": "inventory-call", "type": "function",
+                "function": {"name": "submit_reference_inventory",
+                             "arguments": json.dumps(inventory)},
+            }],
+            "_finish_reason": "tool_calls",
+        }
+        state = {
+            "deadline": time.monotonic() + 30,
+            "tool_calls": 0, "tool_trace": [], "model_calls": [],
+            "model_cfg": {"model": "test-model"},
+        }
+        with mock.patch.object(agentloop.llm, "chat_completion", return_value=reply) as call:
+            raw = agentloop._run_tools([], {}, "blind_reference_inventory", state)
+        self.assertEqual(inventory, json.loads(raw))
+        self.assertEqual("required", call.call_args.kwargs["tool_choice"])
+        self.assertEqual("submit_reference_inventory",
+                         call.call_args.kwargs["tools"][0]["function"]["name"])
+        feature_schema = agentloop.REFERENCE_INVENTORY_TOOL["function"]["parameters"][
+            "properties"]["images"]["items"]["properties"]["visible_regions"][
+            "items"]["properties"]["features"]["items"]
+        self.assertIn("relative_size_order", feature_schema["required"])
+        self.assertIn("size_order_confidence", feature_schema["required"])
+
+    def test_blind_inventory_requires_size_evidence_for_repeated_holes(self):
+        feature = {"kind": "hole", "quantity": 3,
+                   "arrangement": "top middle bottom",
+                   "evidence": "three circular openings",
+                   "relative_size_order": ["large", "small", "large"],
+                   "size_order_axis": "vertical_top_to_bottom",
+                   "size_order_confidence": "high"}
+        response = {"images": [{
+            "image": "ref.png", "source_view": "iso", "coverage": "whole_object",
+            "hole_layout_coverage": "partial",
+            "visible_regions": [{"id": "face", "region": "front face",
+                                 "surface_state": "solid_face",
+                                 "evidence": "bounded front face",
+                                 "features": [feature]}],
+            "uncertainties": [],
+        }], "cross_view_notes": []}
+        state = {"deadline": time.monotonic() + 30}
+        with mock.patch.object(agentloop, "_run_json_object", return_value=response):
+            normalized, gaps = agentloop._independent_reference_inventory(
+                [], ["ref.png"], "复刻", {}, state, None)
+        self.assertEqual([], gaps)
+        normalized_feature = normalized["images"][0]["visible_regions"][0]["features"][0]
+        self.assertEqual(["large", "small", "large"],
+                         normalized_feature["relative_size_order"])
+
+        uncertain = json.loads(json.dumps(response))
+        del uncertain["images"][0]["visible_regions"][0]["features"][0][
+            "relative_size_order"]
+        state = {"deadline": time.monotonic() + 30}
+        with mock.patch.object(agentloop, "_run_json_object", return_value=uncertain):
+            _normalized, gaps = agentloop._independent_reference_inventory(
+                [], ["ref.png"], "复刻", {}, state, None)
+        self.assertTrue(any("相对孔径顺序" in row for row in gaps), gaps)
+
+    def test_front_review_camera_and_hole_axis_share_positive_y_face(self):
+        _right, _up, front_fwd = softrender.view_matrix(
+            *softrender.VIEWS["front"])
+        _right, _up, back_fwd = softrender.view_matrix(
+            *softrender.VIEWS["back"])
+        self.assertGreater(front_fwd[1], 0)
+        self.assertLess(back_fwd[1], 0)
+        system = agent_runtime._agent_system(has_reference_images=True)
+        self.assertIn("front 面孔的 axis 应为 Y", system)
+        self.assertIn("right 面孔的 axis 应为 X", system)
+
+    def test_front_projection_cannot_support_depth_findings(self):
+        self.assertTrue(agentloop._front_depth_claim({
+            "item": "中间区域退台深度与参考图不符",
+        }))
+        self.assertTrue(agentloop._front_depth_claim({
+            "evidence": "The model back wall is set back from the front face.",
+        }))
+        self.assertFalse(agentloop._front_depth_claim({
+            "item": "9 holes in the same size order",
+        }))
+
+    def test_iso_review_resolves_front_unobservable_recess_group(self):
+        plan = plan_state.create("Part", _feature("user"))
+        image_names = ["front.png", "iso.png"]
+        inventory = {
+            "images": [], "cross_view_notes": [],
+        }
+        for image_index, view in enumerate(("front", "iso"), 1):
+            regions = []
+            for region_index, region_name in enumerate(
+                    ("左侧壁前表面", "右侧壁前表面", "槽内后壁表面"), 1):
+                regions.append({
+                    "id": f"region-{region_index}", "region": region_name,
+                    "surface_state": "recessed_solid_face" if region_index == 3 else "solid_face",
+                    "evidence": "bounded face",
+                    "features": [{"kind": "hole", "quantity": 3,
+                                  "arrangement": "vertical",
+                                  "evidence": "three holes"}],
+                })
+            inventory["images"].append({
+                "image": image_names[image_index - 1], "source_view": view,
+                "coverage": "whole_object", "hole_layout_coverage": "partial",
+                "visible_regions": regions, "uncertainties": [],
+            })
+
+        def group_check(group_id, view, name):
+            return {
+                "id": f"{view}.{name}", "view": view, "area": "feature_group",
+                "feature_group_id": group_id, "category": "geometry",
+                "status": "match", "item": name,
+                "reference_evidence": "three visible holes",
+                "model_evidence": "three visible holes",
+                "evidence": "count and arrangement match",
+                "unknown_reason": "", "feature_ids": [], "affected_parameters": [],
+            }
+
+        front_report = {
+            "reference_images": [{"image": "front.png", "source_view": "front",
+                                  "comparable": True, "visible_evidence": "front view"}],
+            "checks": [
+                {"id": "front.outline", "view": "front", "area": "outline",
+                 "category": "geometry", "status": "match", "item": "front outline",
+                 "reference_evidence": "same 2D silhouette", "model_evidence": "same 2D silhouette"},
+                {"id": "front.features", "view": "front", "area": "features",
+                 "category": "geometry", "status": "match", "item": "hole layout",
+                 "reference_evidence": "three columns", "model_evidence": "three columns"},
+                group_check("blind-01-01-01", "front", "left holes"),
+                group_check("blind-01-02-01", "front", "right holes"),
+                {"id": "front.bad-depth", "view": "front", "area": "features",
+                 "category": "geometry", "status": "mismatch", "item": "recess depth",
+                 "reference_evidence": "unknown from front", "model_evidence": "set back",
+                 "evidence": "front projection claims a depth mismatch",
+                 "feature_ids": ["recess"], "affected_parameters": []},
+            ],
+            "issues": [{"issue_id": "front.bad-depth", "view": "front",
+                        "category": "geometry", "severity": "high",
+                        "item": "recess depth mismatch", "evidence": "unobservable from front",
+                        "feature_ids": ["recess"], "affected_parameters": []}],
+            "resolved_findings": [], "questions": [], "confidence": 0.9,
+        }
+        iso_report = {
+            "reference_images": [{"image": "iso.png", "source_view": "iso",
+                                  "comparable": True, "visible_evidence": "iso view"}],
+            "checks": [
+                {"id": "iso.overall", "view": "iso", "area": "overall_shape",
+                 "category": "geometry", "status": "match", "item": "outer shell",
+                 "reference_evidence": "continuous body", "model_evidence": "continuous body"},
+                {"id": "iso.layout", "view": "iso", "area": "feature_layout",
+                 "category": "geometry", "status": "match", "item": "hole rows",
+                 "reference_evidence": "three rows", "model_evidence": "three rows"},
+                {"id": "iso.depth", "view": "iso", "area": "depth_relationships",
+                 "category": "geometry", "status": "match", "item": "recess",
+                 "reference_evidence": "center wall set back", "model_evidence": "center wall set back"},
+                group_check("blind-02-01-01", "iso", "left holes"),
+                group_check("blind-02-02-01", "iso", "right holes"),
+                group_check("blind-02-03-01", "iso", "recess wall holes"),
+            ],
+            "issues": [], "resolved_findings": [], "questions": [], "confidence": 0.9,
+        }
+        with tempfile.TemporaryDirectory() as directory:
+            source_images = {}
+            for name, view in zip(image_names, ("front", "iso")):
+                path = Path(directory) / name
+                cadplan.preview_plan(plan, str(path), view_set=view)
+                source_images[name] = str(path)
+            preview = cadplan.preview_plan(
+                plan, str(Path(directory) / "preview.png"), view_set="iso")
+            state = {
+                "deadline": time.monotonic() + 30, "session_dir": Path(directory),
+                "preview_calls": 0, "active_reference_images": image_names,
+                "reference_image_paths": source_images,
+                "independent_reference_inventory": inventory,
+                "temporary_review_images": [],
+            }
+            with mock.patch.object(agentloop, "_run_json_object",
+                                   side_effect=[front_report, iso_report]):
+                result = agentloop._split_view_review(
+                    plan, preview, [], {}, state, None, "multiview_check", 1,
+                    "复刻", views=["front", "iso"])
+        self.assertEqual("accept", result["decision"])
+        self.assertFalse(result["issues"])
+        self.assertTrue(any(item["kind"] == "unobservable_depth_issue"
+                            for item in result["view_incompatible_findings"]))
+        center_group = next(item for item in result["feature_group_checks"]
+                            if item["feature_group_id"] == "blind-01-03-01")
+        self.assertEqual("passed", center_group["status"])
+        self.assertEqual(["blind-02-03-01"], center_group["cross_view_verified_by"])
+
+    def test_review_view_selection_follows_source_camera(self):
+        selected, skipped = agentloop._review_views_for_inventory(
+            ["front", "iso"], _blind_inventory(source_view="iso"))
+        self.assertEqual(["iso"], selected)
+        self.assertEqual(["front"], skipped)
+
+        selected, skipped = agentloop._review_views_for_inventory(
+            ["front"], _blind_inventory(source_view="iso"))
+        self.assertEqual(["iso"], selected)
+        self.assertEqual(["front"], skipped)
+
+    def test_visual_review_rejects_cross_view_findings(self):
+        plan = plan_state.create("Part", _feature("image_estimate"))
+        inventory = _blind_inventory("reference.png", "iso")
+        with tempfile.TemporaryDirectory() as directory:
+            reference = Path(directory) / "reference.png"
+            cadplan.preview_plan(plan, str(reference), view_set="iso")
+            preview = cadplan.preview_plan(
+                plan, str(Path(directory) / "candidate.png"), view_set="iso")
+            review = {
+                "reference_images": [{
+                    "image": "reference.png", "source_view": "front",
+                    "comparable": True, "visible_evidence": "模型错误声称它是正视图",
+                }],
+                "checks": [{"id": "iso.overall_shape", "area": "overall_shape",
+                            "status": "mismatch", "item": "错误的跨视角判断",
+                            "reference_evidence": "unsupported",
+                            "model_evidence": "unsupported"}],
+                "issues": [{"issue_id": "iso.false-finding", "item": "false finding"}],
+                "resolved_findings": [], "questions": [],
+            }
+            state = {
+                "deadline": time.monotonic() + 30,
+                "session_dir": Path(directory), "preview_calls": 0,
+                "active_reference_images": ["reference.png"],
+                "reference_image_paths": {"reference.png": str(reference)},
+            }
+            calls = []
+
+            def multimodal(*args, **_kwargs):
+                calls.append(args)
+                return inventory if args[3] == "参考图独立盲读" else review
+
+            with mock.patch.object(agentloop, "_run_json_object", side_effect=multimodal):
+                result = agentloop._split_view_review(
+                    plan, preview, [], {}, state, None, "multiview_check", 1,
+                    "复刻", views=["front", "iso"])
+
+        self.assertEqual(["iso"], result["reviewed_views"])
+        self.assertEqual(["front"], result["skipped_views"])
+        self.assertEqual("inspect", result["decision"])
+        self.assertFalse(result["single_view_reports"][0]["reference_images"][0]["comparable"])
+        self.assertEqual([], result["issues"])
+        self.assertTrue(any("视角判断" in gap for gap in result["review_gaps"]))
+        self.assertEqual(2, len(calls))
+        review_payload = calls[1][0][-1]["content"][0]["text"]
+        self.assertIn('"view_to_inspect":"iso"', review_payload)
+        self.assertNotIn('"view_to_inspect":"front"', review_payload)
+
     def test_main_loop_drops_source_pixels_after_read_but_keeps_review_copy(self):
         image_part = {"type": "image_url", "image_url": {"url": "data:image/png;base64,abc"}}
         transcript_message = {"role": "user", "content": [
@@ -169,8 +527,51 @@ class IncrementalAgentTests(unittest.TestCase):
             agent_runtime.AGENT_TOOLS, has_reference_images=True)[0]
         self.assertNotIn("reference_reading",
                          text_tool["function"]["parameters"]["required"])
-        self.assertIn("reference_reading",
-                      image_tool["function"]["parameters"]["required"])
+        self.assertNotIn("reference_reading",
+                         image_tool["function"]["parameters"]["required"])
+        inspect_tool = agent_runtime._initial_reference_inspection_tool(
+            agent_runtime.AGENT_TOOLS)[0]
+        self.assertEqual("cad_inspect_references",
+                         inspect_tool["function"]["name"])
+        self.assertEqual(["reference_reading"],
+                         inspect_tool["function"]["parameters"]["required"])
+
+    def test_reference_inspection_requires_per_face_image_evidence(self):
+        reading = _reading()
+        reading["visible_regions"] = [
+            {"image": "reference.png", "id": "left", "region": "left face",
+             "surface_state": "solid_face", "image_bbox_norm": [0.1, 0.1, 0.35, 0.9],
+             "evidence": "bounded front face", "features": [{
+                 "kind": "hole", "quantity": 3, "arrangement": "large-small-large",
+                 "evidence": "three distinct openings"}]},
+            {"image": "reference.png", "id": "center", "region": "recessed center face",
+             "surface_state": "recessed_solid_face", "image_bbox_norm": [0.33, 0.2, 0.5, 0.9],
+             "evidence": "bounded rear plane with visible holes", "features": [{
+                 "kind": "hole", "quantity": 3, "arrangement": "large-small-large",
+                 "evidence": "three openings on the rear plane"}]},
+            {"image": "reference.png", "id": "right", "region": "right face",
+             "surface_state": "solid_face", "image_bbox_norm": [0.45, 0.3, 0.8, 0.98],
+             "evidence": "bounded front face", "features": [{
+                 "kind": "hole", "quantity": 3, "arrangement": "large-small-large",
+                 "evidence": "three distinct openings"}]},
+        ]
+        state = {"has_reference_images": True,
+                 "active_reference_images": ["reference.png"]}
+        reading["feature_groups"][2]["quantity"] = 4
+        invalid, _ = agent_runtime._execute_tool(
+            "cad_inspect_references", {"reference_reading": reading}, state, [])
+        self.assertEqual("invalid_reference_reading", invalid["state"])
+        self.assertTrue(any("孔" in message and "不一致" in message
+                            for message in invalid["reference_reading_blockers"]))
+        self.assertNotIn("reference_reading", state)
+
+        reading["feature_groups"][2]["quantity"] = 3
+        valid, _ = agent_runtime._execute_tool(
+            "cad_inspect_references", {"reference_reading": reading}, state, [])
+        self.assertEqual("reference_reading_ready", valid["state"])
+        self.assertEqual(9, valid["visible_hole_count"])
+        self.assertEqual("cad_inspect_references", state["reference_reading_source"])
+        self.assertEqual(3, len(state["reference_reading"]["visible_regions"]))
 
     def test_model_tools_publish_structured_feature_and_relation_schema(self):
         tools = {row["function"]["name"]: row["function"]["parameters"]
@@ -180,13 +581,20 @@ class IncrementalAgentTests(unittest.TestCase):
         self.assertEqual(create_feature, add_feature)
         self.assertEqual(["id", "kind", "operation", "parameters"],
                          add_feature["required"])
+        self.assertEqual(["center", "point", "pcd", "corners"],
+                         add_feature["properties"]["parameters"]["properties"]["pos"]["enum"])
+        self.assertEqual("array", add_feature["properties"]["parameters"]["properties"]["point"]["type"])
         relation = add_feature["properties"]["relations"]["items"]
         self.assertEqual(["type", "feature_id"], relation["required"])
         self.assertEqual(["depends_on", "pattern_source"],
                          relation["properties"]["type"]["enum"])
         self.assertFalse(relation["additionalProperties"])
-        reading_group = tools["cad_create_model"]["properties"][
-            "reference_reading"]["properties"]["feature_groups"]["items"]
+        self.assertNotIn("reference_reading", tools["cad_create_model"]["properties"])
+        reading_schema = tools["cad_inspect_references"]["properties"][
+            "reference_reading"]
+        self.assertIn("visible_regions", reading_schema["properties"])
+        reading_group = reading_schema["properties"][
+            "feature_groups"]["items"]
         self.assertEqual(["id", "kind", "quantity", "region", "arrangement",
                           "evidence"], reading_group["required"])
 
@@ -326,8 +734,18 @@ class IncrementalAgentTests(unittest.TestCase):
 
     def test_multiview_review_must_cover_both_reference_images(self):
         steps = [
-            ("cad_create_model", {"name": "Part", "first_feature": _feature("image_estimate"),
-                                  "reference_reading": _body_reading()}),
+            ("cad_inspect_references", {"reference_reading": {
+                "feature_groups": [{"id": "main-body", "kind": "body", "quantity": 1,
+                                    "region": "whole part", "arrangement": "single body",
+                                    "evidence": "one continuous outer body"}],
+                "visible_regions": [
+                    {"image": name + ".png", "id": "body", "region": "whole part",
+                     "surface_state": "solid_face", "image_bbox_norm": [0, 0, 1, 1],
+                     "evidence": "one continuous body", "features": []}
+                    for name in ("iso", "front")],
+                "uncertainties": [],
+            }}),
+            ("cad_create_model", {"name": "Part", "first_feature": _feature("image_estimate")}),
             ("cad_review_model", {"review_type": "geometry", "views": ["iso"]}),
             ("cad_finish", {}),
             ("cad_review_model", {"review_type": "geometry", "views": ["front"]}),
@@ -400,11 +818,14 @@ class IncrementalAgentTests(unittest.TestCase):
                         if row["tool"] == "cad_finish"]
             self.assertEqual(["needs_visual_review", "reviewed"], finishes)
         self.assertEqual({"type": "function", "function": {
-            "name": "cad_create_model"}}, requests[0]["tool_choice"])
-        self.assertEqual(["cad_create_model"], requests[0]["tools"])
-        self.assertIn("reference_reading", requests[0]["required"])
-        self.assertEqual("required", requests[1]["tool_choice"])
-        self.assertGreater(len(requests[1]["tools"]), 1)
+            "name": "cad_inspect_references"}}, requests[0]["tool_choice"])
+        self.assertEqual(["cad_inspect_references"], requests[0]["tools"])
+        self.assertEqual(["reference_reading"], requests[0]["required"])
+        self.assertEqual({"type": "function", "function": {
+            "name": "cad_create_model"}}, requests[1]["tool_choice"])
+        self.assertEqual(["cad_create_model"], requests[1]["tools"])
+        self.assertEqual("required", requests[2]["tool_choice"])
+        self.assertGreater(len(requests[2]["tools"]), 1)
 
     def test_named_tool_choice_rejection_falls_back_to_auto_once(self):
         state = {"deadline": time.monotonic() + 10, "model_cfg": {
@@ -772,6 +1193,105 @@ class IncrementalAgentTests(unittest.TestCase):
         self.assertTrue(gate["ready"], gate.get("blockers"))
         self.assertNotEqual("needs_visual_review", gate.get("state"))
 
+    def test_finish_gate_rejects_equal_holes_against_clear_large_small_large_reference(self):
+        """A free-text visual accept cannot override a measurable source pattern."""
+        body = {"id": "base", "kind": "box", "operation": "add",
+                "parameters": {"length": 120, "width": 80, "height": 100,
+                               "center": [0, 0, 50]},
+                "sources": {key: {"type": "image_estimate", "evidence": "visual ratio"}
+                            for key in ("length", "width", "height", "center")}}
+        plan = plan_state.create("Part", body)
+        grouped_ids = {}
+        for group_name, x in (("left", -40), ("center", 0), ("right", 40)):
+            ids = []
+            for row_name, z in (("top", 80), ("mid", 50), ("bottom", 20)):
+                feature_id = "%s-%s" % (group_name, row_name)
+                ids.append(feature_id)
+                hole = {"id": feature_id, "kind": "hole", "operation": "cut",
+                        "parameters": {"diameter": 12, "through": True, "pos": "point",
+                                       "point": [x, -40, z], "axis": "Y"},
+                        "sources": {key: {"type": "image_estimate",
+                                           "evidence": "visible hole proportion"}
+                                    for key in ("diameter", "point", "axis")}}
+                plan = plan_state.add(plan, hole)
+            grouped_ids[group_name] = ids
+
+        inventory_regions = []
+        group_checks = []
+        for index, group_name in enumerate(("left", "center", "right"), 1):
+            inventory_regions.append({
+                "id": group_name, "region": group_name + " panel",
+                "surface_state": "recessed_solid_face" if group_name == "center" else "solid_face",
+                "evidence": "three circular holes with visibly different diameters",
+                "features": [{"kind": "hole", "quantity": 3,
+                              "arrangement": "vertical top to bottom",
+                              "evidence": "top and bottom are larger than middle",
+                              "relative_size_order": ["large", "small", "large"],
+                              "size_order_axis": "vertical_top_to_bottom",
+                              "size_order_confidence": "high"}],
+            })
+            group_id = "blind-01-%02d-01" % index
+            group_checks.append({
+                "id": "iso.feature_group." + group_id,
+                "view": "iso", "area": "feature_group",
+                "feature_group_id": group_id, "category": "geometry",
+                "status": "match", "item": "three holes",
+                "reference_evidence": "large-small-large",
+                "model_evidence": "three visible holes",
+                "evidence": "same count", "unknown_reason": "",
+                "feature_ids": grouped_ids[group_name],
+                "affected_parameters": [],
+            })
+        inventory = {"source": "independent_source_only_multimodal_read", "images": [{
+            "image": "ref.png", "source_view": "iso", "coverage": "whole_object",
+            "hole_layout_coverage": "partial", "visible_regions": inventory_regions,
+            "uncertainties": [],
+        }], "cross_view_notes": []}
+
+        geometry_checks = [
+            {"id": "iso." + area, "view": "iso", "area": area,
+             "category": "geometry", "status": "match", "item": area,
+             "evidence": "paired image evidence", "reference_evidence": "visible",
+             "model_evidence": "visible"}
+            for area in agentloop.REVIEW_VIEW_AREAS["iso"]
+        ] + group_checks
+        review = {"decision": "accept", "checks": geometry_checks, "issues": [],
+                  "resolved_findings": [], "questions": [], "review_gaps": [],
+                  "reference_inventory": inventory}
+        fingerprint = agent_runtime.cad._geometry_plan_fingerprint(plan)
+        preview = cadplan.preview_plan(plan)
+        self.assertEqual("passed", preview["local_geometry_checks"]["state"])
+        state = {
+            "current_plan": plan,
+            "plan_geometry_fingerprint": fingerprint,
+            "preview_geometry_fingerprint": fingerprint,
+            "latest_preview": preview,
+            "has_reference_images": True,
+            "reference_reading": _body_reading(),
+            "independent_reference_inventory": inventory,
+            "reviewed_view_status": {"iso": "passed"},
+            "active_reference_images": ["ref.png"],
+            "reference_images_reviewed": ["ref.png"],
+            "latest_geometry_review": {"geometry_fingerprint": fingerprint,
+                                       "views": ["iso"], "result": review},
+        }
+
+        gate = agent_runtime._finish_gate(state)
+        self.assertFalse(gate["ready"], gate)
+        self.assertEqual("relative_feature_size_mismatch", gate["state"])
+        self.assertTrue(any("large—small—large" in row and "12 mm" in row
+                            for row in gate["blockers"]), gate["blockers"])
+
+        corrected = plan
+        for group_name in ("left", "center", "right"):
+            feature_id = group_name + "-mid"
+            corrected = plan_state.update(
+                corrected, feature_id, parameter_updates={"diameter": 8},
+                source_updates={"diameter": {"type": "image_estimate",
+                                              "evidence": "middle hole visibly smaller"}})
+        self.assertEqual([], agent_runtime._reference_size_order_blockers(
+            state, corrected, review))
+
     def test_iso_only_review_is_not_forced_to_add_orthographic_views(self):
         """A single isometric reference cannot be checked against front/right.
 
@@ -849,6 +1369,7 @@ class IncrementalAgentTests(unittest.TestCase):
 
     def test_reference_reading_is_required_before_geometry(self):
         state = {"has_reference_images": True, "tool_calls": 0, "plan_revision": 0,
+                 "active_reference_images": ["reference.png"],
                  "session_dir": Path(tempfile.mkdtemp())}
         refused = agent_runtime._apply_incremental(
             "cad_create_model", {"name": "Part", "first_feature": _feature()}, state)
@@ -857,10 +1378,12 @@ class IncrementalAgentTests(unittest.TestCase):
                             for row in refused["reference_reading_blockers"]))
         self.assertIsNone(state.get("current_plan"))
 
+        reading = _reading_with_regions()
+        inspected, _ = agent_runtime._execute_tool(
+            "cad_inspect_references", {"reference_reading": reading}, state, [])
+        self.assertEqual("reference_reading_ready", inspected["state"])
         accepted = agent_runtime._apply_incremental(
-            "cad_create_model",
-            {"name": "Part", "first_feature": _feature(),
-             "reference_reading": self._reading()}, state)
+            "cad_create_model", {"name": "Part", "first_feature": _feature()}, state)
         self.assertNotEqual("invalid", accepted["state"])
         self.assertEqual(9, agent_runtime._reference_hole_quantity(
             state["reference_reading"]))
@@ -1129,6 +1652,53 @@ class IncrementalAgentTests(unittest.TestCase):
         self.assertEqual("local_geometry_failed", gate["state"])
         self.assertTrue(any("半圆缺口" in row and "hole_edge" in row
                             for row in gate["blockers"]), gate["blockers"])
+
+    def test_full_depth_recess_cut_is_attributed_to_cut_feature(self):
+        """A through-cut that erases a recessed hole face must name the cut, not blame the hole."""
+        def box(fid, operation, length, width, height, center):
+            return {"id": fid, "kind": "box", "operation": operation,
+                    "parameters": {"length": length, "width": width, "height": height,
+                                   "center": center},
+                    "sources": {key: {"type": "image_estimate",
+                                       "evidence": "estimated from image proportions"}
+                                for key in
+                                ("length", "width", "height", "center")}}
+
+        body = plan_state.create(
+            "Part", box("base", "add", 80, 30, 60, [0, 0, 30]))
+        plan = plan_state.add(
+            body, box("front-slot", "cut", 18, 32, 44, [0, 0, 22]))
+        plan = plan_state.add(plan, {
+            "id": "center-hole", "kind": "hole", "operation": "cut",
+            "parameters": {"diameter": 6, "through": True, "pos": "point",
+                           "point": [0, 15, 42], "axis": "Y"},
+            "sources": {key: {"type": "image_estimate",
+                               "evidence": "estimated from image proportions"}
+                        for key in ("diameter", "point", "axis")}})
+        checks = cadplan.preview_plan(plan)["local_geometry_checks"]
+        self.assertEqual("failed", checks["state"])
+        fingerprint = agent_runtime.cad._geometry_plan_fingerprint(plan)
+        state = {
+            "current_plan": plan,
+            "plan_geometry_fingerprint": fingerprint,
+            "preview_geometry_fingerprint": fingerprint,
+            "latest_preview": {"local_geometry_checks": checks},
+        }
+
+        gate = agent_runtime._finish_gate(state)
+        self.assertEqual("local_geometry_failed", gate["state"])
+        self.assertTrue(any("front-slot" in row and "width=32 mm" in row
+                            and "主体厚度 30 mm" in row for row in gate["blockers"]),
+                        gate["blockers"])
+        self.assertTrue(any("不是孔中心靠边" in row for row in gate["blockers"]))
+
+        with mock.patch.object(agent_runtime.cad, "_split_view_review") as review:
+            result = agent_runtime._review_model(
+                {"review_type": "geometry", "views": ["iso"]}, state, [])
+        review.assert_not_called()
+        self.assertEqual("local_geometry_failed", result["state"])
+        self.assertTrue(result["review_skipped"])
+        self.assertTrue(any("front-slot" in row for row in result["blockers"]))
 
     def test_coincident_cut_face_is_reported_not_measured(self):
         """Exact face coincidence corrupts this kernel's boolean.

@@ -103,8 +103,11 @@ def _required_tool_only(tools: list, name: str, required_fields=()) -> list:
 
 
 def _initial_creation_tools(tools: list, has_reference_images: bool) -> list:
-    required_fields = ("reference_reading",) if has_reference_images else ()
-    return _required_tool_only(tools, "cad_create_model", required_fields)
+    return _required_tool_only(tools, "cad_create_model")
+
+
+def _initial_reference_inspection_tool(tools: list) -> list:
+    return _required_tool_only(tools, "cad_inspect_references", ("reference_reading",))
 
 
 def _tool(name: str, description: str, properties: dict, required=None):
@@ -154,8 +157,27 @@ _FEATURE_TOOL_SCHEMA = {
         "operation": {"type": "string", "enum": ["add", "cut"]},
         "parameters": {
             "type": "object",
-            "description": ("CADPlan 参数对象。hole 常用 diameter/through/pos/point/axis；"
+            "description": ("CADPlan 参数对象。全局 X/Y/Z 分别对应长/宽/高方向，Z 向上；"
+                            "hole 的 axis 是孔轴方向，point 是全局 XYZ 上的孔轴点。"
+                            "模型 front 视图从 +Y 看向原点，front 面法向为 +Y；"
+                            "right 视图从 +X 看向原点。正面孔通常用 axis=Y，侧面孔用 axis=X。"
+                            "hole 必须写 pos='point' 并把三维坐标放在 point；不能把坐标数组放进 pos。"
+                            "pocket 只支持 Z 轴；要沿正面法向 Y 切凹槽时使用 box 且 operation='cut'。"
+                            "hole 常用 diameter/through/pos/point/axis；"
                             "pattern 常用 mode/count/step；长度和坐标用 mm。"),
+            "properties": {
+                "length": {"type": "number"}, "width": {"type": "number"},
+                "height": {"type": "number"}, "depth": {"type": "number"},
+                "diameter": {"type": "number"}, "radius": {"type": "number"},
+                "x": {"type": "number"}, "y": {"type": "number"},
+                "z": {"type": "number"}, "through": {"type": "boolean"},
+                "pos": {"type": "string", "enum": ["center", "point", "pcd", "corners"]},
+                "axis": {"type": "string", "enum": ["X", "Y", "Z", "x", "y", "z"]},
+                "point": {"type": "array", "minItems": 3, "maxItems": 3,
+                          "items": {"type": "number"}},
+                "center": {"type": "array", "minItems": 3, "maxItems": 3,
+                           "items": {"type": "number"}},
+            },
             "additionalProperties": True,
         },
         "sources": {
@@ -194,9 +216,46 @@ _REFERENCE_READING_TOOL_SCHEMA = {
                              "arrangement", "evidence"],
             },
         },
+        "visible_regions": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+                "type": "object",
+                "additionalProperties": False,
+                "properties": {
+                    "image": {"type": "string", "minLength": 1},
+                    "id": {"type": "string", "minLength": 1},
+                    "region": {"type": "string", "minLength": 1},
+                    "surface_state": {"type": "string", "enum": [
+                        "solid_face", "recessed_solid_face",
+                        "background_opening", "unknown"]},
+                    "image_bbox_norm": {
+                        "type": "array", "minItems": 4, "maxItems": 4,
+                        "items": {"type": "number", "minimum": 0, "maximum": 1},
+                    },
+                    "evidence": {"type": "string", "minLength": 1},
+                    "features": {
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "additionalProperties": False,
+                            "properties": {
+                                "kind": {"type": "string", "minLength": 1},
+                                "quantity": {"type": "integer", "minimum": 1},
+                                "arrangement": {"type": "string", "minLength": 1},
+                                "evidence": {"type": "string", "minLength": 1},
+                            },
+                            "required": ["kind", "quantity", "arrangement", "evidence"],
+                        },
+                    },
+                },
+                "required": ["image", "id", "region", "surface_state",
+                             "image_bbox_norm", "evidence", "features"],
+            },
+        },
         "uncertainties": {"type": "array", "items": {"type": "string"}},
     },
-    "required": ["feature_groups"],
+    "required": ["feature_groups", "visible_regions"],
 }
 
 
@@ -213,16 +272,23 @@ AGENT_TOOLS = [
         {"result_id": {"type": "string"}}, ["result_id"],
     ),
     _tool(
+        "cad_inspect_references",
+        "独立读取本轮原始参考图，不生成或修改 CAD。必须逐图列出每个可见平面/开口的图像区域框、实面/后退实面/背景开口状态、该区域各类特征数量和像素证据；不同平面不得合并，同一圆孔不得按颜色重复计数。程序校验区域清单后供后续建模使用。",
+        {"reference_reading": _REFERENCE_READING_TOOL_SCHEMA}, ["reference_reading"],
+    ),
+    _tool(
         "cad_create_model",
         "建立本地可编辑模型，包含第一个主实体特征。程序统一使用 mm/deg、校验并立即预览；parameters 放纯数值，sources 在特征对象中单独放来源。"
-        "有参考图时在本次调用附上简短 reference_reading.feature_groups：按可见区域列出主体和重复特征的 kind、quantity、region、arrangement、evidence。不要推断图外的连接关系；颜色不能证明多个面上的开口属于同一特征。将关键不确定性留给后续单视图复核。",
-        {"name": {"type": "string"}, "first_feature": _FEATURE_TOOL_SCHEMA,
-         "reference_reading": _REFERENCE_READING_TOOL_SCHEMA},
+        "本轮有图时必须先成功调用 cad_inspect_references；按逐面清单和图像比例建模。若外轮廓显示连续顶面/侧壁，应优先建立完整主体，再用切除表达前面凹槽；只有背景确实贯通时才拆成分离薄板。不得把后退实面当成空槽，也不能漏掉后退面上的孔。"
+        "坐标约定：X 为 length，Y 为 width，Z 向上；front 相机从 +Y 侧观察，right 相机从 +X 侧观察。",
+        {"name": {"type": "string"}, "first_feature": _FEATURE_TOOL_SCHEMA},
         ["name", "first_feature"],
     ),
     _tool(
         "cad_add_feature",
-        "只追加一个可编辑特征。程序合成并校验整份 CADPlan，成功后立即更新右侧预览。",
+        "只追加一个可编辑特征。程序合成并校验整份 CADPlan，成功后立即更新右侧预览。"
+        "坐标约定：X 为 length，Y 为 width，Z 向上；front 从 +Y 侧观察，right 从 +X 侧观察。"
+        "孔的 axis 必须垂直于要打孔的可见面；front 面孔沿 Y，right 面孔沿 X。",
         {"feature": _FEATURE_TOOL_SCHEMA}, ["feature"],
     ),
     _tool(
@@ -261,7 +327,9 @@ AGENT_TOOLS = [
     ),
     _tool(
         "cad_review_model",
-        "对当前候选做真实多模态图像复核：每个请求单独包含用户原图和一张生成的模型单视图。geometry 检查形状/特征证据；similarity 检查参考图整体对应关系。复核图会在单次检查后清理。",
+        "对当前候选做真实多模态图像复核：每个请求单独包含同视角的用户原图和一张生成的模型单视图。"
+        "只选择与原图视角匹配的视图；若视角不匹配，程序会跳过并改用匹配视图，避免用等轴测原图和正交视图硬比。"
+        "geometry 检查形状/特征证据；similarity 检查参考图整体对应关系。复核图会在单次检查后清理。",
         {
             "review_type": {"type": "string", "enum": ["geometry", "similarity"]},
             "views": {"type": "array", "items": {"type": "string", "enum": list(_VIEWS)},
@@ -324,6 +392,135 @@ def _reference_reading_blockers(reading, plan=None, final=False) -> list:
                                 "继续补齐或修正孔组后再复核。"
                                 % (actual, target_holes))
     return blockers
+
+
+def _reference_region_blockers(reading, active_images=None) -> list:
+    """Validate a pixel-localized per-plane inventory before any CAD feature is built."""
+    if not isinstance(reading, dict):
+        return ["缺少参考图可见区域清单。"]
+    regions = reading.get("visible_regions")
+    if not isinstance(regions, list) or not regions:
+        return ["reference_reading.visible_regions 必须逐个列出原图中的可见平面和开口。"]
+    known_images = {os.path.basename(str(name)) for name in active_images or []}
+    seen = set()
+    holes_by_image = {}
+    blockers = []
+    valid_surface_states = {"solid_face", "recessed_solid_face",
+                            "background_opening", "unknown"}
+    for index, region in enumerate(regions):
+        label = "visible_regions[%d]" % index
+        if not isinstance(region, dict):
+            blockers.append(label + " 必须是对象。")
+            continue
+        image = os.path.basename(str(region.get("image") or "").strip())
+        region_id = str(region.get("id") or "").strip()
+        surface_state = str(region.get("surface_state") or "").strip().lower()
+        if not image or (known_images and image not in known_images):
+            blockers.append(label + ".image 必须指向本轮参考图文件名。")
+        key = (image, region_id)
+        if not region_id or key in seen:
+            blockers.append(label + ".id 必须非空且在同一张图内唯一。")
+        seen.add(key)
+        if surface_state not in valid_surface_states:
+            blockers.append(label + ".surface_state 必须区分实面、后退实面、背景开口或未知。")
+        evidence = str(region.get("evidence") or "").strip()
+        if not evidence:
+            blockers.append(label + ".evidence 必须指出支持该区域判断的像素边界。")
+        bounds = region.get("image_bbox_norm")
+        valid_bounds = (
+            isinstance(bounds, (list, tuple)) and len(bounds) == 4
+            and all(isinstance(value, (int, float)) and not isinstance(value, bool)
+                    and 0 <= float(value) <= 1 for value in bounds)
+            and float(bounds[0]) < float(bounds[2])
+            and float(bounds[1]) < float(bounds[3]))
+        if not valid_bounds:
+            blockers.append(label + ".image_bbox_norm 必须是 [left,top,right,bottom] 的 0-1 区域框。")
+        features = region.get("features")
+        if not isinstance(features, list):
+            blockers.append(label + ".features 必须是数组，可用空数组表示没有可见特征。")
+            continue
+        region_holes = 0
+        for feature_index, feature in enumerate(features):
+            feature_label = "%s.features[%d]" % (label, feature_index)
+            if not isinstance(feature, dict):
+                blockers.append(feature_label + " 必须是对象。")
+                continue
+            kind = str(feature.get("kind") or "").strip().lower()
+            quantity = feature.get("quantity")
+            if not kind:
+                blockers.append(feature_label + ".kind 不能为空。")
+            if not isinstance(quantity, int) or isinstance(quantity, bool) or quantity < 1:
+                blockers.append(feature_label + ".quantity 必须是正整数。")
+                continue
+            if "hole" in kind or "孔" in kind:
+                region_holes += quantity
+            if ("hole" in kind or "孔" in kind) and surface_state == "background_opening":
+                blockers.append(feature_label + " 把孔列在背景开口上；请分开记录后退实体孔面和空隙。")
+            if not str(feature.get("arrangement") or "").strip():
+                blockers.append(feature_label + ".arrangement 必须说明可见排列。")
+            if not str(feature.get("evidence") or "").strip():
+                blockers.append(feature_label + ".evidence 必须指出数量/类别的像素证据。")
+        holes_by_image[image] = holes_by_image.get(image, 0) + region_holes
+
+    missing_images = known_images - set(holes_by_image.keys())
+    for image in sorted(missing_images):
+        blockers.append("参考图 %s 没有任何对应的 visible_regions。" % image)
+
+    if len(known_images) == 1 and holes_by_image:
+        groups = reading.get("feature_groups") or []
+        grouped_holes = sum(
+            int(row.get("quantity", 0)) for row in groups
+            if isinstance(row, dict)
+            and ("hole" in str(row.get("kind") or "").lower()
+                 or "孔" in str(row.get("kind") or ""))
+            and isinstance(row.get("quantity"), int)
+            and not isinstance(row.get("quantity"), bool))
+        region_holes = next(iter(holes_by_image.values()))
+        if grouped_holes and grouped_holes != region_holes:
+            blockers.append(
+                "feature_groups 与逐面 visible_regions 的孔数量不一致：前者 %d 个，后者 %d 个；"
+                "请回看同一张原图并统一数量，不要用其中一份猜测覆盖另一份。"
+                % (grouped_holes, region_holes))
+    return list(dict.fromkeys(blockers))
+
+
+def _inspect_references(args: dict, state: dict) -> dict:
+    if not state.get("has_reference_images"):
+        return {"state": "invalid", "error": "当前请求没有可读取的参考图。"}
+    reading = args.get("reference_reading")
+    blockers = _reference_reading_blockers(reading)
+    blockers.extend(_reference_region_blockers(
+        reading, state.get("active_reference_images") or []))
+    if blockers:
+        return {
+            "state": "invalid_reference_reading",
+            "reference_reading_blockers": list(dict.fromkeys(blockers)),
+            "instruction": (
+                "请重新查看原始像素，只修正读图清单后再次调用 cad_inspect_references；"
+                "逐个可见平面填写 0-1 图像区域框，并逐面统计孔槽。暂时不要生成 CAD 特征。"),
+        }
+    if reading != state.get("reference_reading"):
+        state["reference_reading"] = reading
+        state["reference_reading_revision"] = state.get(
+            "reference_reading_revision", 0) + 1
+    state["reference_reading_source"] = "cad_inspect_references"
+    hole_total = sum(
+        int(feature.get("quantity", 0))
+        for region in reading.get("visible_regions", [])
+        if isinstance(region, dict)
+        for feature in region.get("features", [])
+        if isinstance(feature, dict)
+        and ("hole" in str(feature.get("kind") or "").lower()
+             or "孔" in str(feature.get("kind") or "")))
+    return {
+        "state": "reference_reading_ready",
+        "visible_region_count": len(reading.get("visible_regions", [])),
+        "visible_hole_count": hole_total,
+        "reference_reading": reading,
+        "next_step_hint": (
+            "读图已通过逐区域和孔数一致性校验。现在按每个可见实体面分别规划特征，"
+            "先建主体，之后逐个添加特征并观察预览；不要把未知拓扑直接当成空槽。"),
+    }
 
 
 def _reference_hole_quantity(reading) -> Optional[int]:
@@ -410,7 +607,10 @@ def _agent_system(has_reference_images: bool = False) -> str:
             "可选 relations/name/note。数值参数 sources 的 type 为 user、"
             "image_estimate、derived 或 existing_model；来源对象只允许 type、evidence、note，"
             "不要放 value、confidence 或其它字段；image_estimate 必须带具体 evidence。"
-            "坐标为右手全局 XYZ，长度默认 mm，角度默认 deg。"
+            "坐标为右手全局 XYZ：X=box.length，Y=box.width，Z=box.height 且向上；长度默认 mm，角度默认 deg。"
+            "本地预览相机约定：front 从 +Y 朝原点看，right 从 +X 朝原点看，iso 从 +X/+Y/+Z 侧看。"
+            "因此 front 面孔的 axis 应为 Y，right 面孔的 axis 应为 X。axis 是孔轴方向，"
+            "point 是全局 XYZ 坐标，必须落在所选表面或孔轴线上；不要把孔沿着面内方向钻。"
             "例如 box：{\"id\":\"base\",\"kind\":\"box\",\"operation\":\"add\","
             "\"parameters\":{\"length\":40,\"width\":20,\"height\":10},"
             "\"sources\":{\"length\":{\"type\":\"user\"},\"width\":{\"type\":\"user\"},"
@@ -419,6 +619,8 @@ def _agent_system(has_reference_images: bool = False) -> str:
             "这些基础参数无需查询 cad_get_feature_spec，只有不熟悉的条件参数或映射时才查询。"
             "box 的 center 是三维位置；corner 是非负倒角标量，不能当位置向量。"
             "完整合法性由每次增量工具中的 SDK 校验，不要重传整个计划。"
+            "hole 必须明确写 pos='point'、point=[x,y,z]；将坐标写入 pos 是类型错误。"
+            "凹槽若沿 Y 轴从正面切入，不要用仅支持 Z 向的 pocket，应使用 box cut。"
             "不确定条件必需参数或 CATIA 支持状态时调用 cad_get_feature_spec。\n%s\n\n"
             "## 几何语义速查（猜错会得到错误的体积，从而误判自己这一步的对错）\n"
             "- box：center 是**几何中心**，长宽高以它为中心向两侧各一半。\n"
@@ -426,7 +628,8 @@ def _agent_system(has_reference_images: bool = False) -> str:
             "base=false 时以 center 为中心，上下各一半。\n"
             "- prism：profile 是 XY 平面上的闭合多边形，**center 的 z 是拉伸的底面**，"
             "向上拉伸 height —— 不是居中。要切 3mm 深的槽且顶面在 z=36，就取 center z=33。\n"
-            "- hole（pos=point）：point 是孔轴线上的定位点，through=true 时沿 axis 贯穿整个零件；"
+             "- hole（pos=point）：point 是孔轴线上的全局定位点，axis 必须是目标面的法向；"
+             "front 面法向为 Y、right 面法向为 X。through=true 时沿 axis 贯穿整个零件；"
             "diameter 必须大于它要削掉的部位，否则什么都不切。\n"
             "- pocket：沿 Z 向下切，depth 是深度，只能切 Z 向。\n"
             "- pattern：relations 必须用 pattern_source 指向**紧邻的前一个**特征；"
@@ -860,6 +1063,8 @@ def _set_plan(args: dict, state: dict) -> dict:
 def _tool_progress_summary(name: str, args: dict) -> str:
     """Build a short, auditable action summary from the selected tool call."""
     args = args if isinstance(args, dict) else {}
+    if name == "cad_inspect_references":
+        return "独立读取参考图的可见平面、区域位置和特征数量。"
     if name == "cad_create_model":
         return "建立模型 %s 与首个主实体。" % str(args.get("name") or "候选")[:100]
     if name == "cad_add_feature":
@@ -994,34 +1199,19 @@ def _max_parameter_delta(before, after) -> float:
 def _apply_incremental(name: str, args: dict, state: dict) -> dict:
     """Validate the entire candidate before committing one feature change."""
     current = state.get("current_plan")
+    notes = []
     # Snapshot before _set_plan runs: a geometry change clears latest_preview.
     previous_preview = state.get("latest_preview") or {}
-    # Accept the manifest from either the create call or a JSON reading already
-    # written by the model. It is checked once before the first body, avoiding a
-    # build on an untracked visual guess while not requiring a separate tool turn.
-    notes = []
-    candidate_readings = [args.get("reference_reading")]
-    if name == "cad_create_model" and state.get("has_reference_images"):
-        candidate_readings.append(state.get("reference_reading"))
-    for candidate_reading in candidate_readings:
-        if not isinstance(candidate_reading, dict):
-            continue
-        blockers = _reference_reading_blockers(candidate_reading)
-        if blockers:
-            notes.extend(blockers)
-            continue
-        if candidate_reading != state.get("reference_reading"):
-            state["reference_reading"] = candidate_reading
-            state["reference_reading_revision"] = state.get(
-                "reference_reading_revision", 1) + 1
     if name == "cad_create_model" and state.get("has_reference_images"):
         blockers = _reference_reading_blockers(state.get("reference_reading"))
+        blockers.extend(_reference_region_blockers(
+            state.get("reference_reading"), state.get("active_reference_images") or []))
+        if state.get("reference_reading_source") != "cad_inspect_references":
+            blockers.append("必须先通过 cad_inspect_references 完成独立读图，再创建首个几何特征。")
         if blockers:
             return {"state": "needs_reference_reading",
-                    "reference_reading_blockers": blockers,
-                    "instruction": "先把一次读图清单放进 cad_create_model.reference_reading；"
-                                   "按可见区域列 feature_groups，说明每组数量与证据。"
-                    }
+                    "reference_reading_blockers": list(dict.fromkeys(blockers)),
+                    "instruction": "暂不创建几何。先调用 cad_inspect_references，逐图记录视角、连续外壳、后退实体面/背景开口、可见特征数量和比例证据。"}
     try:
         if name == "cad_create_model":
             if isinstance(current, dict):
@@ -1324,6 +1514,106 @@ def _view_status(report: dict) -> str:
     return "passed" if clean else "needs_review"
 
 
+def _feature_box_bounds(feature: dict):
+    """Return axis-aligned XYZ bounds for a centered box feature, if available."""
+    parameters = feature.get("parameters") or {}
+    center = parameters.get("center")
+    dimensions = (parameters.get("length"), parameters.get("width"),
+                  parameters.get("height"))
+    if (not isinstance(center, (list, tuple)) or len(center) != 3
+            or any(not isinstance(value, (int, float)) or isinstance(value, bool)
+                   for value in center)
+            or any(not isinstance(value, (int, float)) or isinstance(value, bool)
+                   or float(value) <= 0 for value in dimensions)):
+        return None
+    return tuple((float(center[index]) - float(dimensions[index]) / 2.0,
+                  float(center[index]) + float(dimensions[index]) / 2.0)
+                 for index in range(3))
+
+
+def _full_depth_cut_causes(plan: dict, geometry_checks: dict, hole_checks: list) -> list:
+    """Find box cuts that erase the full-depth material needed by failed holes."""
+    features = [row for row in (plan or {}).get("features") or []
+                if isinstance(row, dict)]
+    positions = {str(feature.get("id")): index
+                 for index, feature in enumerate(features)}
+    hole_specs = {str(row.get("feature_id")): row
+                  for row in geometry_checks.get("hole_features_from_plan") or []
+                  if isinstance(row, dict)}
+    axis_indices = {"X": 0, "Y": 1, "Z": 2}
+    causes = {}
+    for check in hole_checks:
+        hole_id = str(check.get("feature_id") or "")
+        hole = hole_specs.get(hole_id)
+        if not hole or hole_id not in positions:
+            continue
+        parameters = hole.get("parameters") or {}
+        axis_index = axis_indices.get(str(parameters.get("axis") or "Z").upper())
+        point = parameters.get("point")
+        if (axis_index is None or not isinstance(point, (list, tuple)) or len(point) != 3
+                or any(not isinstance(value, (int, float)) or isinstance(value, bool)
+                       for value in point)):
+            continue
+        point = tuple(float(value) for value in point)
+        radius = float(parameters.get("diameter") or 0) / 2.0
+        for cut in features[:positions[hole_id]]:
+            if cut.get("kind") != "box" or cut.get("operation") != "cut":
+                continue
+            bounds = _feature_box_bounds(cut)
+            if not bounds:
+                continue
+            cut_position = positions.get(str(cut.get("id")))
+            prior_additions = [
+                candidate_bounds
+                for feature in features[:cut_position]
+                if feature.get("operation") == "add" and feature.get("kind") == "box"
+                for candidate_bounds in [_feature_box_bounds(feature)]
+                if candidate_bounds
+            ]
+            if not prior_additions:
+                continue
+            body_bounds = tuple((min(row[axis][0] for row in prior_additions),
+                                 max(row[axis][1] for row in prior_additions))
+                                for axis in range(3))
+            tolerance = 1e-6
+            # This cut removes the complete body span along the hole's own axis,
+            # and its cross-section covers the failed hole location.
+            spans_body = (
+                bounds[axis_index][0] <= body_bounds[axis_index][0] + tolerance
+                and bounds[axis_index][1] >= body_bounds[axis_index][1] - tolerance)
+            covers_hole = all(
+                bounds[axis][0] - radius <= point[axis] <= bounds[axis][1] + radius
+                for axis in range(3) if axis != axis_index)
+            if not (spans_body and covers_hole):
+                continue
+            cut_id = str(cut.get("id") or "(unnamed cut)")
+            axis_name = "XYZ"[axis_index]
+            dimension_name = ("length", "width", "height")[axis_index]
+            body_depth = body_bounds[axis_index][1] - body_bounds[axis_index][0]
+            cut_depth = bounds[axis_index][1] - bounds[axis_index][0]
+            side = ("+" if point[axis_index] >=
+                    (body_bounds[axis_index][0] + body_bounds[axis_index][1]) / 2.0
+                    else "-")
+            key = (cut_id, axis_index, side)
+            causes.setdefault(key, {
+                "holes": [], "axis_name": axis_name, "dimension_name": dimension_name,
+                "cut_depth": cut_depth, "body_depth": body_depth,
+            })["holes"].append(hole_id)
+    diagnoses = []
+    for (cut_id, axis_index, side), cause in causes.items():
+        axis_name = cause["axis_name"]
+        dimension_name = cause["dimension_name"]
+        diagnoses.append(
+            "贯穿孔 %s 的孔轴位置被切除特征 %s 覆盖：该 box cut 沿 %s 轴贯穿整个主体 "
+            "（%s=%.3g mm，主体厚度 %.3g mm），并切掉孔周围承托材料；这不是孔中心靠边。"
+            "请把 %s 改为从 %s%s 外表面切入的盲凹槽，缩短该轴切除深度并把中心移到外表面内侧，"
+            "保留连续后壁；将这些孔留在凹槽底面，再重新预览。"
+            % ("、".join(dict.fromkeys(cause["holes"])), cut_id, axis_name,
+               dimension_name, cause["cut_depth"], cause["body_depth"],
+               cut_id, axis_name, side))
+    return diagnoses
+
+
 def _review_model(args: dict, state: dict, source_messages: list) -> dict:
     plan = state.get("current_plan")
     preview = state.get("latest_preview")
@@ -1332,12 +1622,23 @@ def _review_model(args: dict, state: dict, source_messages: list) -> dict:
     if (not isinstance(preview, dict)
             or state.get("preview_geometry_fingerprint") != state.get("plan_geometry_fingerprint")):
         return {"state": "blocked", "error": "当前计划尚无对应预览；请先调用 cad_preview_plan。"}
+    geometry_checks = preview.get("local_geometry_checks") or {}
+    if geometry_checks.get("state") == "failed":
+        gate = _finish_gate(state)
+        return {
+            "state": gate.get("state") or "local_geometry_failed",
+            "review_skipped": True,
+            "geometry_fingerprint": state.get("plan_geometry_fingerprint"),
+            "local_geometry_checks": geometry_checks,
+            "blockers": gate.get("blockers") or ["本地几何检查未通过，暂不提交视觉复核。"],
+            "next_step_hint": "按本地几何检查定位致错特征并修复，生成新的预览；失败几何不能由视觉复核放行。",
+        }
     review_type = str(args.get("review_type") or "geometry")
     phase = "multiview_check" if review_type == "geometry" else "similarity_review"
     if review_type not in {"geometry", "similarity"}:
         return {"state": "invalid", "error": "review_type 必须为 geometry 或 similarity。"}
-    views = list(dict.fromkeys(args.get("views") or ["iso"]))
-    if not views or any(view not in _VIEWS for view in views):
+    requested_views = list(dict.fromkeys(args.get("views") or ["iso"]))
+    if not requested_views or any(view not in _VIEWS for view in requested_views):
         return {"state": "invalid", "error": "views 中包含不支持的视图。"}
     review_index = state.get("review_invocations", 0) + 1
     state["review_invocations"] = review_index
@@ -1346,13 +1647,16 @@ def _review_model(args: dict, state: dict, source_messages: list) -> dict:
         state.get("cancel_event"), phase, review_index,
         state.get("user_prompt", ""),
         previous_open_findings=state.get("open_multiview_findings", []),
-        views=views,
+        views=requested_views,
     )
+    reviewed_views = list(review.get("reviewed_views") or requested_views)
     record = {
         "review_type": review_type,
         "geometry_fingerprint": state["plan_geometry_fingerprint"],
         "invocation": review_index,
-        "views": views,
+        "views": reviewed_views,
+        "requested_views": requested_views,
+        "skipped_views": list(review.get("skipped_views") or []),
         "result": review,
     }
     state.setdefault("review_history", []).append(record)
@@ -1379,7 +1683,9 @@ def _review_model(args: dict, state: dict, source_messages: list) -> dict:
         "state": review.get("decision"),
         "review_type": review_type,
         "geometry_fingerprint": state["plan_geometry_fingerprint"],
-        "reviewed_views": views,
+        "reviewed_views": reviewed_views,
+        "requested_views": requested_views,
+        "skipped_views": list(review.get("skipped_views") or []),
         "reviewed_view_status": dict(state.get("reviewed_view_status", {})),
         "local_image_comparisons": review.get("local_image_comparisons", []),
         "checks": review.get("checks", []),
@@ -1395,6 +1701,113 @@ def _review_model(args: dict, state: dict, source_messages: list) -> dict:
             "检查状态或证据不完整时可选择其它视图再次复核；不能把低置信度当作通过。"
         ),
     }
+
+
+def _reference_size_order_blockers(state: dict, plan: dict, review: dict) -> list:
+    """Compare a clear source-image hole-size pattern with its planned features."""
+    inventory = state.get("independent_reference_inventory") or review.get("reference_inventory")
+    groups = cad._independent_inventory_groups(inventory)
+    plan_features = {
+        str(feature.get("id")): feature
+        for feature in plan.get("features", [])
+        if isinstance(feature, dict) and feature.get("id")
+    }
+    checks = [row for row in review.get("checks", []) if isinstance(row, dict)]
+    blockers = []
+    axis_indexes = {
+        "vertical_top_to_bottom": (2, -1),
+        "vertical_bottom_to_top": (2, 1),
+        "horizontal_left_to_right": (0, 1),
+        "horizontal_right_to_left": (0, -1),
+    }
+
+    for group in groups:
+        expected = group.get("relative_size_order") or []
+        confidence = str(group.get("size_order_confidence") or "unknown").lower()
+        axis = str(group.get("size_order_axis") or "unknown").lower()
+        kind = str(group.get("kind") or "").lower()
+        same_size_only = bool(expected) and all(value == "same" for value in expected)
+        if (confidence not in {"high", "medium"}
+                or len(expected) != int(group.get("quantity", 0) or 0)
+                or not any(value in {"large", "medium", "small", "same"}
+                           for value in expected)
+                or (axis not in axis_indexes and not same_size_only)
+                or ("hole" not in kind and "孔" not in kind)):
+            continue
+
+        group_id = str(group.get("id") or "")
+        check = next((row for row in checks
+                      if str(row.get("feature_group_id") or "") == group_id), None)
+        feature_ids = (check or {}).get("feature_ids") or []
+        if isinstance(feature_ids, str):
+            feature_ids = feature_ids.split()
+        feature_ids = [str(value) for value in feature_ids]
+        holes = [plan_features[value] for value in feature_ids
+                 if value in plan_features
+                 and str(plan_features[value].get("kind") or "").lower() == "hole"]
+        if len(holes) != len(expected):
+            blockers.append(
+                "原图特征组 %s 清楚显示相对孔径顺序 %s，但当前复核没有映射到同数量的 CADPlan 孔特征；"
+                "不能按孔数或几何自检结果直接验收。" % (
+                    group_id, "—".join(expected)))
+            continue
+
+        coordinate_index, direction = axis_indexes.get(axis, (2, -1))
+        try:
+            ordered = sorted(
+                holes,
+                key=lambda feature: direction * float(
+                    (feature.get("parameters") or {}).get("point")[coordinate_index]),
+            )
+            diameters = [float((feature.get("parameters") or {}).get("diameter"))
+                         for feature in ordered]
+        except (TypeError, ValueError, IndexError, KeyError):
+            blockers.append(
+                "原图特征组 %s 有清楚的相对孔径顺序，但 CADPlan 缺少可排序的孔坐标或直径参数。"
+                % group_id)
+            continue
+
+        sorted_indices = sorted(range(len(diameters)), key=lambda index: diameters[index],
+                                reverse=True)
+        clusters = []
+        cluster_for_index = {}
+        for index in sorted_indices:
+            diameter = diameters[index]
+            if (not clusters or abs(diameter - clusters[-1][0])
+                    / max(diameter, clusters[-1][0]) > 0.12):
+                clusters.append([diameter])
+            else:
+                clusters[-1].append(diameter)
+            cluster_for_index[index] = len(clusters) - 1
+        cluster_labels = []
+        for index in range(len(clusters)):
+            if len(clusters) == 1:
+                cluster_labels.append("same")
+            elif index == 0:
+                cluster_labels.append("large")
+            elif index == len(clusters) - 1:
+                cluster_labels.append("small")
+            else:
+                cluster_labels.append("medium")
+        actual = [cluster_labels[cluster_for_index[index]]
+                  for index in range(len(diameters))]
+
+        mismatches = [
+            index for index, target in enumerate(expected)
+            if target not in {"unknown", "same"} and actual[index] != target
+        ]
+        if "same" in expected and not all(value == "same" for value in actual):
+            mismatches.extend(index for index, target in enumerate(expected)
+                              if target == "same")
+        if mismatches:
+            ids = [str(feature.get("id")) for feature in ordered]
+            blockers.append(
+                "原图特征组 %s 的孔径顺序是 %s，CADPlan 按图像排列轴得到 %s（直径 %s mm）；"
+                "请只修正这组孔的 parameters.diameter 后再预览复核。受影响特征：%s。" % (
+                    group_id, "—".join(expected), "—".join(actual),
+                    "、".join("%g" % value for value in diameters),
+                    "、".join(ids)))
+    return list(dict.fromkeys(blockers))
 
 
 def _finish_gate(state: dict) -> dict:
@@ -1421,15 +1834,24 @@ def _finish_gate(state: dict) -> dict:
                 "validation": validation}
     geometry_checks = (state.get("latest_preview") or {}).get("local_geometry_checks") or {}
     if geometry_checks.get("state") == "failed":
-        clipped = [row.get("feature_id") for row in
-                   (geometry_checks.get("through_hole_mesh_checks") or [])
-                   if isinstance(row, dict) and row.get("status") == "opening_clipped"]
-        blockers = ["本地网格存在空实体、非有限顶点、退化面、无效包围盒，或声明的贯穿孔未能沿孔轴核验。"]
-        if clipped:
-            blockers.insert(0, "这些孔的孔口被零件边缘切断（孔没有完整落在材料里，"
-                               "在视图上就是半圆缺口）：%s。把孔移到壁的中间，"
-                               "或减小孔径/加大壁宽；不要靠改视角或翻转整个零件来回避。"
-                               % "、".join(str(name) for name in clipped))
+        hole_checks = [row for row in geometry_checks.get("through_hole_mesh_checks") or []
+                       if isinstance(row, dict) and row.get("status") != "verified_open"]
+        diagnoses = _full_depth_cut_causes(plan, geometry_checks, hole_checks)
+        blockers = list(diagnoses)
+        clipped = [row.get("feature_id") for row in hole_checks
+                   if row.get("status") == "opening_clipped"]
+        if not diagnoses and clipped:
+            blockers.append("这些孔的孔口被零件边缘切断（孔没有完整落在材料里，"
+                            "在视图上就是半圆缺口）：%s。应修正产生边缘相交的孔或承载壁尺寸；"
+                            "不要只改视角来回避。" % "、".join(str(name) for name in clipped))
+        elif not diagnoses and hole_checks:
+            failed = ["%s (%s)" % (row.get("feature_id"), row.get("status"))
+                      for row in hole_checks]
+            blockers.append("以下贯穿孔没有获得完整材料支撑，不能完成局部几何检查：%s。"
+                            "检查孔之前的切除特征是否移除了孔所在面或孔轴上的材料。"
+                            % "、".join(failed))
+        if not blockers:
+            blockers.append("本地网格存在空实体、非有限顶点、退化面或无效包围盒。")
         return {"ready": False, "state": "local_geometry_failed",
                 "blockers": blockers, "validation": validation,
                 "local_geometry_checks": geometry_checks}
@@ -1471,6 +1893,13 @@ def _finish_gate(state: dict) -> dict:
                     "blockers": ["尚无可核验的单视图结果：没有任何视图与参考图可比。"],
                     "validation": validation}
         geometry_review = geometry_record.get("result") or {}
+        size_order_blockers = _reference_size_order_blockers(
+            state, plan, geometry_review)
+        if size_order_blockers:
+            return {"ready": False, "state": "relative_feature_size_mismatch",
+                    "blockers": size_order_blockers,
+                    "validation": validation,
+                    "review": geometry_review}
         if geometry_review.get("decision") != "accept":
             return {"ready": False, "state": "needs_visual_review",
                     "blockers": (geometry_review.get("review_gaps") or
@@ -1623,6 +2052,8 @@ def _result_from_state(status: dict, state: dict, reply: str,
 
 def _execute_tool(name: str, args: dict, state: dict, source_messages: list):
     state["agent_started"] = True
+    if name == "cad_inspect_references":
+        return _inspect_references(args, state), False
     if name in {"cad_create_model", "cad_add_feature", "cad_update_feature",
                 "cad_remove_feature"}:
         return _apply_incremental(name, args, state), False
@@ -1977,10 +2408,21 @@ def run_dynamic_loop(prompt: str, image_paths: list, model_cfg: dict,
         state["agent_turn"] = turn_index
         state["request_phase"] = "主循环第 %d 轮" % turn_index
         cad._emit(state.get("progress"), "准备 AgentLoop 第 %d 轮：整理当前证据…" % turn_index)
-        require_create_model = initial_model_bootstrap and turn_index == 1
-        call_tools = (_initial_creation_tools(
-            tools, bool(state.get("has_reference_images")))
-            if require_create_model else tools)
+        require_reference_inspection = bool(
+            initial_model_bootstrap
+            and state.get("has_reference_images")
+            and not state.get("reference_reading"))
+        require_create_model = bool(
+            initial_model_bootstrap
+            and not state.get("candidate_attempted")
+            and not require_reference_inspection)
+        if require_reference_inspection:
+            call_tools = _initial_reference_inspection_tool(tools)
+        elif require_create_model:
+            call_tools = _initial_creation_tools(
+                tools, bool(state.get("has_reference_images")))
+        else:
+            call_tools = tools
         action_tool_expected = bool(
             state.get("modeling_expected")
             and (isinstance(state.get("current_plan"), dict)
@@ -1991,13 +2433,20 @@ def run_dynamic_loop(prompt: str, image_paths: list, model_cfg: dict,
         reply = _call_model(
             messages, state, call_tools, output_tokens,
             tool_choice=(
+                {"type": "function", "function": {"name": "cad_inspect_references"}}
+                if require_reference_inspection else
                 {"type": "function", "function": {"name": "cad_create_model"}}
                 if require_create_model else
                 "required" if require_action_tool else None))
-        if not state.get("reference_reading"):
+        if not state.get("reference_reading") and not require_reference_inspection:
             _capture_reference_reading(state, cad._message_text(reply))
         _compact_main_reference_images(messages, state)
         calls = reply.get("tool_calls") or []
+        if require_reference_inspection and not any(
+                str(((call.get("function") or {}).get("name") or ""))
+                == "cad_inspect_references" for call in calls):
+            raise cad.AgentLoopError(
+                "带图建模首先需要独立读图，但当前模型没有调用 cad_inspect_references。")
         if require_create_model and not any(
                 str(((call.get("function") or {}).get("name") or ""))
                 == "cad_create_model" for call in calls):
@@ -2153,6 +2602,8 @@ def run_dynamic_loop(prompt: str, image_paths: list, model_cfg: dict,
             messages.append({"role": "tool", "tool_call_id": call_id,
                              "name": name, "content": json.dumps(
                                  result, ensure_ascii=False, separators=(",", ":"))})
+            if name == "cad_inspect_references" and result.get("state") == "reference_reading_ready":
+                _compact_main_reference_images(messages, state)
             cad._emit(state.get("progress"), "工具完成：%s（%s）" % (name or "unknown", summary))
             deadlock = state.pop("finish_deadlock", None)
             if deadlock:
