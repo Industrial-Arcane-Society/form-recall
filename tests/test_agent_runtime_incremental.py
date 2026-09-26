@@ -63,6 +63,22 @@ def _body_reading():
          "evidence": "one continuous outer body"}])
 
 
+def _blind_inventory(image="reference.png", source_view="iso", regions=None,
+                     hole_layout_coverage="unknown"):
+    return {"images": [{
+        "image": image, "source_view": source_view,
+        "coverage": "whole_object",
+        "hole_layout_coverage": hole_layout_coverage,
+        "visible_regions": regions or [{
+            "id": "whole-body", "region": "whole part",
+            "surface_state": "solid_face", "evidence": "continuous body",
+            "features": [{"kind": "other", "quantity": 1,
+                          "arrangement": "single", "evidence": "one body"}],
+        }],
+        "uncertainties": [],
+    }], "cross_view_notes": []}
+
+
 class IncrementalAgentTests(unittest.TestCase):
     def test_main_loop_drops_source_pixels_after_read_but_keeps_review_copy(self):
         image_part = {"type": "image_url", "image_url": {"url": "data:image/png;base64,abc"}}
@@ -332,7 +348,19 @@ class IncrementalAgentTests(unittest.TestCase):
             return {"content": name, "tool_calls": [_call(name, arguments, len(steps))]}
 
         def review(*args, **_kwargs):
+            if args[3] == "参考图独立盲读":
+                return {"images": [
+                    {"image": name + ".png", "source_view": name,
+                     "coverage": "whole_object", "hole_layout_coverage": "unknown",
+                     "visible_regions": [{
+                         "id": "body", "region": "whole part",
+                         "surface_state": "solid_face", "evidence": "one body",
+                         "features": [{"kind": "other", "quantity": 1,
+                                       "arrangement": "single", "evidence": "body"}],
+                     }], "uncertainties": []}
+                    for name in ("iso", "front")], "cross_view_notes": []}
             view = args[4]["active_review_view"]
+            group_id = "blind-01-01-01" if view == "iso" else "blind-02-01-01"
             return {
                 "reference_images": [
                     {"image": name + ".png", "source_view": name,
@@ -345,8 +373,8 @@ class IncrementalAgentTests(unittest.TestCase):
                      "reference_evidence": "reference outline",
                      "model_evidence": "model outline", "evidence": "same outline"}
                     for area in agentloop.REVIEW_VIEW_AREAS[view]] + [
-                    {"id": view + ".feature_group.main-body",
-                     "feature_group_id": "main-body", "view": view,
+                    {"id": view + ".feature_group." + group_id,
+                     "feature_group_id": group_id, "view": view,
                      "area": "feature_group", "category": "geometry",
                      "status": "match", "item": "outer body",
                      "reference_evidence": "one body",
@@ -563,7 +591,8 @@ class IncrementalAgentTests(unittest.TestCase):
                 "active_reference_images": ["reference.png"],
                 "reference_image_paths": {"reference.png": str(reference_image)},
             }
-            with mock.patch.object(agentloop, "_run_json_object", return_value=review):
+            with mock.patch.object(agentloop, "_run_json_object", side_effect=[
+                    _blind_inventory("reference.png", "iso"), review]):
                 result = agentloop._split_view_review(
                     candidate_plan, candidate_preview, [], {}, state, None,
                     "multiview_check", 1, "照图建模", views=["iso"])
@@ -573,12 +602,16 @@ class IncrementalAgentTests(unittest.TestCase):
                                 for row in result["checks"]))
             self.assertTrue(state["temporary_review_images"][0]["deleted"])
 
-    def test_visual_review_must_check_every_declared_feature_group(self):
-        plan = plan_state.create("Part", _feature("image_estimate"))
-        group = {"id": "body-outline", "kind": "body", "quantity": 1,
-                 "region": "whole part",
-                 "arrangement": "single connected body",
-                 "evidence": "one outer silhouette"}
+    def test_visual_review_checks_blind_inventory_not_builder_groups(self):
+        plan = plan_state.create("Part", _feature("user"))
+        independent = _blind_inventory(regions=[{
+            "id": "front-face", "region": "front face",
+            "surface_state": "solid_face", "evidence": "one bounded face",
+            "features": [{"kind": "other", "quantity": 1,
+                          "arrangement": "single connected body",
+                          "evidence": "one outer silhouette"}],
+        }])
+        group_id = "blind-01-01-01"
         with tempfile.TemporaryDirectory() as directory:
             reference = Path(directory) / "reference.png"
             model_image = Path(directory) / "candidate.png"
@@ -601,17 +634,34 @@ class IncrementalAgentTests(unittest.TestCase):
                 "deadline": time.monotonic() + 30, "session_dir": Path(directory),
                 "preview_calls": 0, "active_reference_images": ["reference.png"],
                 "reference_image_paths": {"reference.png": str(reference)},
-                "reference_reading": {"feature_groups": [group]},
+                "reference_reading": {"feature_groups": [{
+                    "id": "builder-wrong-group", "kind": "hole", "quantity": 7,
+                    "region": "misread face", "arrangement": "incorrect",
+                    "evidence": "builder hypothesis, not source truth"}]},
             }
-            with mock.patch.object(agentloop, "_run_json_object", return_value=response):
+            calls = []
+
+            def multimodal(*args, **_kwargs):
+                calls.append(args)
+                return independent if args[3] == "参考图独立盲读" else response
+
+            with mock.patch.object(agentloop, "_run_json_object", side_effect=multimodal):
                 missing = agentloop._split_view_review(
                     plan, preview, [], {}, state, None, "multiview_check", 1,
                     "复刻", views=["iso"])
             self.assertEqual("inspect", missing["decision"])
-            self.assertTrue(any("body-outline" in gap for gap in missing["review_gaps"]))
+            self.assertTrue(any(group_id in gap for gap in missing["review_gaps"]))
+            self.assertEqual("参考图独立盲读", calls[0][3])
+            blind_request = json.dumps(calls[0][0], ensure_ascii=False)
+            self.assertNotIn("builder-wrong-group", blind_request)
+            self.assertNotIn("final_plan", blind_request)
+            self.assertNotIn("candidate.png", blind_request)
+            comparison_payload = calls[1][0][-1]["content"][0]["text"]
+            self.assertIn("independent_reference_inventory", comparison_payload)
+            self.assertNotIn("builder-wrong-group", comparison_payload)
 
             response["checks"].append({
-                "id": "iso.feature_group.body-outline", "feature_group_id": "body-outline",
+                "id": "iso.feature_group." + group_id, "feature_group_id": group_id,
                 "area": "feature_group", "category": "geometry", "status": "match",
                 "item": "outer body", "reference_evidence": "single body",
                 "model_evidence": "single body", "evidence": "same silhouette"})
@@ -883,8 +933,8 @@ class IncrementalAgentTests(unittest.TestCase):
         self.assertFalse(agent_runtime._capture_reference_reading(state, cad_plan))
         self.assertNotIn("reference_reading", state)
 
-    def test_declared_hole_count_blocks_finish_until_model_covers_it(self):
-        """A candidate missing visible holes cannot pass its visual finish gate."""
+    def test_builder_hole_count_is_not_a_visual_finish_truth(self):
+        """The first pass may misread holes; visual finish waits for blind review."""
         plan = plan_state.create("Part", _feature())
         fingerprint = agent_runtime.cad._geometry_plan_fingerprint(plan)
         state = {
@@ -899,8 +949,79 @@ class IncrementalAgentTests(unittest.TestCase):
             state["reference_reading"], plan, final=True)
         self.assertTrue(any("当前模型有 0" in row for row in blockers), blockers)
         gate = agent_runtime._finish_gate(state)
-        self.assertEqual("needs_feature_coverage", gate["state"])
-        self.assertTrue(any("特征组要求 9 个" in str(row) for row in gate["blockers"]))
+        self.assertEqual("needs_visual_review", gate["state"])
+        self.assertFalse(any("特征组要求 9 个" in str(row)
+                             for row in gate["blockers"]))
+
+    def test_blind_inventory_hole_count_overrides_builder_hypothesis(self):
+        plan = plan_state.create("Part", _feature("user"))
+        plan = plan_state.add(plan, {
+            "id": "one-hole", "kind": "hole", "operation": "cut",
+            "parameters": {"diameter": 8, "through": True, "pos": "point",
+                           "point": [0, 0, 0], "axis": "Y"},
+            "sources": {key: {"type": "user"}
+                        for key in ("diameter", "point", "axis")},
+        })
+        regions = [{
+            "id": "face-%d" % index, "region": "visible face %d" % index,
+            "surface_state": "solid_face", "evidence": "bounded solid surface",
+            "features": [{"kind": "hole", "quantity": 3,
+                          "arrangement": "vertical row",
+                          "evidence": "three distinct circular openings"}],
+        } for index in range(1, 4)]
+        inventory = _blind_inventory(
+            "reference.png", "front", regions, hole_layout_coverage="complete")
+        with tempfile.TemporaryDirectory() as directory:
+            reference = Path(directory) / "reference.png"
+            model_image = Path(directory) / "candidate.png"
+            cadplan.preview_plan(plan, str(reference), view_set="front")
+            preview = cadplan.preview_plan(plan, str(model_image), view_set="front")
+            preview["preview_image"] = str(model_image)
+            review = {
+                "reference_images": [{"image": "reference.png", "source_view": "front",
+                                      "comparable": True, "visible_evidence": "three faces"}],
+                "checks": [
+                    {"id": "front." + area, "area": area, "category": "geometry",
+                     "status": "match", "item": area,
+                     "reference_evidence": "three visible faces",
+                     "model_evidence": "three visible faces", "evidence": "paired view"}
+                    for area in agentloop.REVIEW_VIEW_AREAS["front"]] + [
+                    {"id": "front.feature_group.blind-01-%02d-01" % index,
+                     "feature_group_id": "blind-01-%02d-01" % index,
+                     "area": "feature_group", "category": "geometry", "status": "match",
+                     "item": "visible hole row", "reference_evidence": "three holes",
+                     "model_evidence": "same row", "evidence": "paired row"}
+                    for index in range(1, 4)],
+                "issues": [], "resolved_findings": [], "questions": [],
+            }
+            state = {
+                "deadline": time.monotonic() + 30, "session_dir": Path(directory),
+                "preview_calls": 0, "active_reference_images": ["reference.png"],
+                "reference_image_paths": {"reference.png": str(reference)},
+                "reference_reading": {"feature_groups": [{
+                    "id": "builder-saw-one-hole", "kind": "hole", "quantity": 1,
+                    "region": "builder hypothesis", "arrangement": "single",
+                    "evidence": "wrong initial estimate"}]},
+            }
+            calls = []
+
+            def multimodal(*args, **_kwargs):
+                calls.append(args)
+                return inventory if args[3] == "参考图独立盲读" else review
+
+            with mock.patch.object(agentloop, "_run_json_object", side_effect=multimodal):
+                result = agentloop._split_view_review(
+                    plan, preview, [], {}, state, None, "multiview_check", 1,
+                    "复刻", views=["front"])
+
+        self.assertEqual("revise", result["decision"])
+        count_check = next(row for row in result["checks"]
+                           if row["area"] == "blind_hole_count")
+        self.assertEqual("mismatch", count_check["status"])
+        self.assertIn("9 个可见孔位", count_check["reference_evidence"])
+        self.assertIn("1 个", count_check["model_evidence"])
+        comparison_payload = calls[1][0][-1]["content"][0]["text"]
+        self.assertNotIn("builder-saw-one-hole", comparison_payload)
 
 
     def test_a_view_the_reference_cannot_speak_to_does_not_block(self):

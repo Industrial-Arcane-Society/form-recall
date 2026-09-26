@@ -12,6 +12,7 @@ class AgentLoopActionPromptTests(unittest.TestCase):
         prompt_dir = ROOT / "prompts" / "agentloop"
         cls.runtime = (prompt_dir / "runtime.md").read_text(encoding="utf-8")
         cls.reference_read = (prompt_dir / "reference_read.md").read_text(encoding="utf-8")
+        cls.blind_inventory = (prompt_dir / "blind_reference_inventory.md").read_text(encoding="utf-8")
 
     def test_runtime_prompt_prefers_one_short_action_and_tool_arguments(self):
         self.assertIn("每轮用一句简短行动进展后立即调用一个最小必要工具", self.runtime)
@@ -36,6 +37,14 @@ class AgentLoopActionPromptTests(unittest.TestCase):
         similarity = (ROOT / "prompts" / "agentloop" / "similarity_review.md").read_text(encoding="utf-8")
         self.assertIn("实体内侧平面还是背景穿过的空隙", similarity)
         self.assertIn("后退平面上的特征", similarity)
+
+    def test_visual_review_uses_source_only_blind_inventory(self):
+        self.assertIn("不含 CADPlan、模型预览和首轮 `reference_reading`", self.runtime)
+        self.assertIn("只会收到用户原始文字、原始参考图", self.blind_inventory)
+        self.assertIn("不同视图可能重复展示同一物理孔", self.blind_inventory)
+        multi = (ROOT / "prompts" / "agentloop" / "multiview_check.md").read_text(encoding="utf-8")
+        self.assertIn("建模器首轮给出的 `reference_reading` 不会提供给你", multi)
+        self.assertIn("若其面类别或数量错了", multi)
 
 
 if __name__ == "__main__":

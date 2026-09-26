@@ -102,6 +102,7 @@ TOOLS_BY_PHASE = {
     "recognition": [TOOLS[0]],
     "construction": [TOOLS[1]],
     "repair": [TOOLS[1]],
+    "blind_reference_inventory": [],
     "multiview_check": [],
     "similarity_review": [],
 }
@@ -716,6 +717,186 @@ def _run_tools(transcript: List[Dict[str, Any]], cfg: dict,
             messages.append({"role": "user", "content": parts})
 
 
+_INVENTORY_SURFACE_STATES = {
+    "solid_face", "recessed_solid_face", "background_opening", "unknown"}
+_INVENTORY_VIEWS = {"front", "right", "top", "iso", "back", "left", "bottom", "unknown"}
+
+
+def _independent_reference_inventory(source_messages, expected_images, prompt,
+                                     cfg, state, cancel_event):
+    """Read source images alone so builder hypotheses cannot anchor review."""
+    cached = state.get("independent_reference_inventory")
+    if isinstance(cached, dict) and cached.get("images"):
+        return cached, []
+    if not expected_images:
+        return None, []
+
+    messages = [dict(message) for message in (source_messages or [])]
+    instruction = {
+        "reference_image_names": list(expected_images),
+        "original_request": str(prompt or ""),
+        "task": "仅依据本消息中的原始图片和文字独立记录可见结构。",
+    }
+    messages.append({
+        "role": "user",
+        "content": _prompt("blind_reference_inventory") +
+                   "\n\n" + _json_text(instruction),
+    })
+    _check_cancel(cancel_event, state["deadline"])
+    _emit(state.get("progress"), "正在仅凭原始图片独立整理可见面与特征数量…")
+    obj = _run_json_object(messages, cfg, "blind_reference_inventory",
+                           "参考图独立盲读", state, cancel_event,
+                           max_tokens=8192)
+    rows = obj.get("images") if isinstance(obj.get("images"), list) else []
+    normalized = []
+    gaps = []
+    for index, image_name in enumerate(expected_images):
+        row = next((item for item in rows if isinstance(item, dict)
+                    and os.path.basename(str(item.get("image") or "")) == image_name), None)
+        if row is None and len(expected_images) == len(rows) and index < len(rows):
+            candidate = rows[index]
+            row = candidate if isinstance(candidate, dict) else None
+        if row is None:
+            gaps.append("原图 %s 缺少独立盲读结果。" % image_name)
+            continue
+        source_view = str(row.get("source_view") or "unknown").lower()
+        if source_view not in _INVENTORY_VIEWS:
+            source_view = "unknown"
+        coverage = str(row.get("coverage") or "unknown").lower()
+        if coverage not in {"whole_object", "partial", "unknown"}:
+            coverage = "unknown"
+        hole_coverage = str(row.get("hole_layout_coverage") or "unknown").lower()
+        if hole_coverage not in {"complete", "partial", "unknown"}:
+            hole_coverage = "unknown"
+        regions = []
+        raw_regions = row.get("visible_regions")
+        if isinstance(raw_regions, list):
+            for region_index, region in enumerate(raw_regions, 1):
+                if not isinstance(region, dict):
+                    continue
+                surface_state = str(region.get("surface_state") or "unknown").lower()
+                if surface_state not in _INVENTORY_SURFACE_STATES:
+                    surface_state = "unknown"
+                features = []
+                raw_features = region.get("features")
+                if isinstance(raw_features, list):
+                    for feature in raw_features:
+                        if not isinstance(feature, dict):
+                            continue
+                        try:
+                            quantity = int(feature.get("quantity"))
+                        except (TypeError, ValueError):
+                            continue
+                        if quantity < 0 or isinstance(feature.get("quantity"), bool):
+                            continue
+                        kind = str(feature.get("kind") or "other").strip().lower()
+                        if not kind:
+                            kind = "other"
+                        features.append({
+                            "kind": kind, "quantity": quantity,
+                            "arrangement": str(feature.get("arrangement") or ""),
+                            "evidence": str(feature.get("evidence") or "").strip(),
+                        })
+                regions.append({
+                    "id": str(region.get("id") or "region-%d" % region_index),
+                    "region": str(region.get("region") or "未命名可见区域"),
+                    "surface_state": surface_state,
+                    "evidence": str(region.get("evidence") or "").strip(),
+                    "features": features,
+                })
+        if not regions:
+            gaps.append("原图 %s 的独立盲读没有列出可见区域。" % image_name)
+        normalized.append({
+            "image": image_name,
+            "source_view": source_view,
+            "coverage": coverage,
+            "hole_layout_coverage": hole_coverage,
+            "visible_regions": regions,
+            "uncertainties": [str(item) for item in row.get("uncertainties", [])
+                              if str(item).strip()]
+            if isinstance(row.get("uncertainties"), list) else [],
+        })
+    inventory = {
+        "source": "independent_source_only_multimodal_read",
+        "images": normalized,
+        "cross_view_notes": [str(item) for item in obj.get("cross_view_notes", [])
+                             if str(item).strip()]
+        if isinstance(obj.get("cross_view_notes"), list) else [],
+    }
+    if not normalized:
+        gaps.append("独立盲读没有返回可用的原图结果。")
+    if not gaps:
+        state["independent_reference_inventory"] = inventory
+    return inventory, gaps
+
+
+def _independent_inventory_groups(inventory):
+    groups = []
+    for image_index, image in enumerate((inventory or {}).get("images") or [], 1):
+        for region_index, region in enumerate(image.get("visible_regions") or [], 1):
+            for feature_index, feature in enumerate(region.get("features") or [], 1):
+                if int(feature.get("quantity", 0) or 0) <= 0:
+                    continue
+                groups.append({
+                    "id": "blind-%02d-%02d-%02d" % (
+                        image_index, region_index, feature_index),
+                    "image": image.get("image"),
+                    "source_view": image.get("source_view"),
+                    "kind": feature.get("kind"),
+                    "quantity": feature.get("quantity"),
+                    "region": region.get("region"),
+                    "surface_state": region.get("surface_state"),
+                    "arrangement": feature.get("arrangement"),
+                    "evidence": feature.get("evidence"),
+                })
+    return groups
+
+
+def _independent_hole_targets(inventory):
+    targets = []
+    for image in (inventory or {}).get("images") or []:
+        if (image.get("hole_layout_coverage") != "complete"
+                or image.get("coverage") != "whole_object"
+                or image.get("source_view") not in {
+                    "front", "right", "top", "back", "left", "bottom"}):
+            continue
+        count = sum(
+            int(feature.get("quantity", 0) or 0)
+            for region in image.get("visible_regions") or []
+            for feature in region.get("features") or []
+            if str(feature.get("kind") or "").lower() in {"hole", "孔"})
+        targets.append({"image": image.get("image"),
+                        "source_view": image.get("source_view"),
+                        "quantity": count})
+    return targets
+
+
+def _planned_hole_count(plan):
+    holes = {}
+    features = [row for row in (plan or {}).get("features", [])
+                if isinstance(row, dict)]
+    for feature in features:
+        if feature.get("kind") != "hole" or feature.get("operation") != "cut":
+            continue
+        params = feature.get("parameters") or {}
+        position = params.get("pos", "center")
+        if position == "pcd":
+            quantity = max(1, int(params.get("count", 1)))
+        elif position == "corners":
+            quantity = 4
+        else:
+            quantity = 1
+        holes[str(feature.get("id"))] = quantity
+    for feature in features:
+        if feature.get("kind") != "pattern" or feature.get("operation") != "cut":
+            continue
+        source = next((row.get("feature_id") for row in feature.get("relations") or []
+                       if isinstance(row, dict) and row.get("type") == "pattern_source"), None)
+        if source in holes:
+            holes[source] *= max(1, int((feature.get("parameters") or {}).get("count", 1)))
+    return sum(holes.values())
+
+
 def _split_view_review(plan, final_preview, source_messages, cfg, state,
                        cancel_event, phase, round_index, prompt,
                        previous_open_findings=None, views=None):
@@ -732,10 +913,20 @@ def _split_view_review(plan, final_preview, source_messages, cfg, state,
     previous_open_findings = previous_open_findings or []
     review_views = list(views or ("iso",))
     expected_images = list(state.get("active_reference_images") or [])
-    reference_reading = state.get("reference_reading") or {}
-    expected_feature_groups = [row for row in
-                               reference_reading.get("feature_groups", [])
-                               if isinstance(row, dict) and str(row.get("id") or "").strip()]
+    inventory_gaps = []
+    try:
+        reference_inventory, inventory_gaps = _independent_reference_inventory(
+            source_messages, expected_images, prompt, cfg, state, cancel_event)
+    except AgentLoopError:
+        _check_cancel(cancel_event, state["deadline"])
+        reference_inventory = None
+        inventory_gaps = ["本轮未能完成原图独立盲读；不能把建模器的首轮读图当作复核依据。"]
+    independent_groups = _independent_inventory_groups(reference_inventory)
+    blind_group_by_id = {str(row["id"]): row for row in independent_groups}
+    blind_hole_targets = _independent_hole_targets(reference_inventory)
+    review_gaps.extend(inventory_gaps)
+    if reference_inventory:
+        state["independent_reference_inventory"] = reference_inventory
     review_cfg = dict(cfg or {})
     if str(review_cfg.get("reasoning_effort") or "").lower() == "auto":
         review_cfg["reasoning_effort"] = "high"
@@ -771,12 +962,15 @@ def _split_view_review(plan, final_preview, source_messages, cfg, state,
                 },
                 "previous_open_findings_to_recheck": per_view_findings,
                 "reference_images_to_account_for": expected_images,
-                "required_reference_feature_groups": expected_feature_groups,
+                "independent_reference_inventory": reference_inventory,
+                "independent_visible_feature_groups": independent_groups,
                 "feature_group_check_instruction": (
-                    "Inspect every required feature group that is visible in the supplied reference/model pair. "
-                    "Return one checks item per visible group with feature_group_id, area='feature_group', "
-                    "status, reference_evidence and model_evidence. Do not merge groups because of color. "
-                    "If a group is not visible in this pair, omit it; another selected view must check it."),
+                    "The independent_reference_inventory came from a separate request that saw only source "
+                    "images; it may still be wrong. Recheck every visible feature against the original pixels. "
+                    "For each independent_visible_feature_groups entry visible in a comparable image, return "
+                    "one checks item with feature_group_id, area='feature_group', status, reference_evidence, "
+                    "model_evidence and evidence. Correct the inventory when pixels disagree; do not treat "
+                    "its quantity as ground truth or merge regions because of color."),
             }
             messages = [dict(message) for message in (source_messages or [])]
             messages.append({
@@ -828,9 +1022,8 @@ def _split_view_review(plan, final_preview, source_messages, cfg, state,
             check = dict(check)
             check["view"] = view
             group_id = str(check.get("feature_group_id") or "").strip()
-            if group_id and group_id not in {str(row.get("id"))
-                                             for row in expected_feature_groups}:
-                review_gaps.append("%s 视图返回了未知的参考特征组 %s。" % (view, group_id))
+            if group_id and group_id not in blind_group_by_id:
+                review_gaps.append("%s 视图返回了未知的独立盲读特征组 %s。" % (view, group_id))
             if not check.get("id") and check.get("area"):
                 check["id"] = "%s.%s" % (view, check["area"])
             if (str(check.get("status") or "").lower() == "match"
@@ -895,6 +1088,57 @@ def _split_view_review(plan, final_preview, source_messages, cfg, state,
                                "affected_parameters": []}
                 normalized_issues.append(local_issue)
                 combined_issues.append(local_issue)
+        comparable_names = {
+            str(item.get("image") or "") for item in obj.get("reference_images", [])
+            if isinstance(item, dict) and item.get("comparable") is True}
+        planned_holes = _planned_hole_count(plan)
+        plan_hole_features = [feature for feature in plan.get("features", [])
+                              if isinstance(feature, dict) and (
+                                  (feature.get("kind") == "hole"
+                                   and feature.get("operation") == "cut")
+                                  or (feature.get("kind") == "pattern"
+                                      and feature.get("operation") == "cut"))]
+        plan_hole_ids = [str(feature.get("id")) for feature in plan_hole_features]
+        hole_parameter_refs = [
+            {"feature_id": str(feature.get("id")), "path": "parameters.pos"}
+            for feature in plan_hole_features if feature.get("kind") == "hole"]
+        for target in blind_hole_targets:
+            if (target.get("source_view") != view
+                    or target.get("image") not in comparable_names):
+                continue
+            target_count = int(target.get("quantity", 0))
+            status = "match" if planned_holes == target_count else "mismatch"
+            check_id = "%s.blind_hole_count.%s" % (view, target.get("image"))
+            evidence = (
+                "仅原图盲读在 %s 视图统计 %d 个可见孔位；当前 CADPlan 特征树包含 %d 个可识别物理孔位。"
+                % (view, target_count, planned_holes))
+            local_check = {
+                "id": check_id, "view": view, "area": "blind_hole_count",
+                "category": "geometry", "status": status,
+                "item": "原图可见孔位数量",
+                "reference_evidence": "%s：%d 个可见孔位（独立盲读，完整布局）。" % (
+                    target.get("image"), target_count),
+                "model_evidence": "本地 CADPlan 中可识别物理孔位 %d 个。" % planned_holes,
+                "evidence": evidence,
+                "feature_ids": plan_hole_ids,
+                "affected_parameters": hole_parameter_refs if status == "mismatch" else [],
+            }
+            normalized_checks.append(local_check)
+            combined_checks.append(local_check)
+            if status == "mismatch":
+                local_issue = {
+                    "issue_id": check_id, "view": view,
+                    "category": "geometry", "severity": "high",
+                    "item": "原图可见孔位数量不符", "evidence": evidence,
+                    "feature_ids": plan_hole_ids,
+                    "affected_parameters": hole_parameter_refs,
+                }
+                normalized_issues.append(local_issue)
+                combined_issues.append(local_issue)
+            else:
+                combined_resolved.append({"issue_id": check_id,
+                                          "check_id": check_id,
+                                          "evidence": evidence})
         try:
             confidence = max(0.0, min(1.0, float(obj.get("confidence", 0.0))))
         except (TypeError, ValueError):
@@ -945,18 +1189,26 @@ def _split_view_review(plan, final_preview, source_messages, cfg, state,
             "feature_ids": check.get("feature_ids") or [],
             "affected_parameters": check.get("affected_parameters") or [],
         })
+    comparable_inventory_images = {
+        str(image_row.get("image") or "")
+        for report in reports
+        for image_row in report.get("reference_images") or []
+        if isinstance(image_row, dict) and image_row.get("comparable") is True}
     feature_group_checks = []
-    for group in expected_feature_groups:
+    for group in independent_groups:
         group_id = str(group.get("id"))
         matching = [check for check in combined_checks
                     if str(check.get("feature_group_id") or "") == group_id]
+        comparable = str(group.get("image") or "") in comparable_inventory_images
         feature_group_checks.append({"feature_group_id": group_id,
+                                     "image": group.get("image"),
                                      "checks": matching,
-                                     "status": ("passed" if any(
+                                     "status": ("not_comparable" if not comparable else
+                                                "passed" if any(
                                          str(check.get("status") or "").lower() == "match"
                                          for check in matching) else "needs_review")})
-        if not matching:
-            review_gaps.append("参考特征组 %s（%s）尚未在任何可比单视图中核对。" % (
+        if comparable and not matching:
+            review_gaps.append("独立盲读特征组 %s（%s）尚未在任何可比单视图中核对。" % (
                 group_id, group.get("region") or group.get("kind") or ""))
     confidence = min(confidences) if confidences else 0.0
     has_geometry_issue = bool(combined_issues) or any(
@@ -978,6 +1230,8 @@ def _split_view_review(plan, final_preview, source_messages, cfg, state,
         "single_view_reports": reports,
         "local_image_comparisons": local_image_comparisons,
         "feature_group_checks": feature_group_checks,
+        "reference_inventory": reference_inventory,
+        "blind_reference_hole_targets": blind_hole_targets,
         "plan": None,
     }
     if phase == "similarity_review":

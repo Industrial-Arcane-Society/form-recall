@@ -1441,7 +1441,10 @@ def _finish_gate(state: dict) -> dict:
             return {"ready": False, "state": "needs_reference_reading",
                     "blockers": ["当前图片任务缺少 reference_reading.feature_groups；请建立可见结构清单后继续。"],
                     "validation": validation}
-        reading_blockers = _reference_reading_blockers(reading, plan, final=True)
+        # The builder's first-pass visual reading is a hypothesis, not a source
+        # of truth. Exact visible-hole coverage is checked against the separate
+        # source-only inventory created during multimodal review.
+        reading_blockers = _reference_reading_blockers(reading, plan, final=False)
         if reading_blockers:
             coverage_mismatch = any("当前模型有" in row for row in reading_blockers)
             return {"ready": False,
