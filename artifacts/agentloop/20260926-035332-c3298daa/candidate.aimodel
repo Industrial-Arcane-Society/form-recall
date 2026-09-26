@@ -1,0 +1,255 @@
+{
+  "format": "ai-modeler",
+  "version": 1,
+  "name": "U形槽块",
+  "source_prompt": "复刻",
+  "features": [
+    {
+      "kind": "box",
+      "params": {
+        "length": 60.0,
+        "width": 40.0,
+        "height": 12.0,
+        "center": [
+          0.0,
+          0.0,
+          6.0
+        ],
+        "base": false
+      },
+      "op": "add",
+      "name": "底板",
+      "note": "",
+      "enabled": true,
+      "provenance": {
+        "length": "image_estimate",
+        "width": "image_estimate",
+        "height": "image_estimate",
+        "center": "derived"
+      }
+    },
+    {
+      "kind": "box",
+      "params": {
+        "center": [
+          -22.0,
+          0.0,
+          36.0
+        ],
+        "height": 48.0,
+        "length": 16.0,
+        "width": 40.0,
+        "base": false
+      },
+      "op": "add",
+      "name": "左壁",
+      "note": "",
+      "enabled": true,
+      "provenance": {
+        "center": "derived",
+        "height": "image_estimate",
+        "length": "image_estimate",
+        "width": "derived"
+      }
+    },
+    {
+      "kind": "box",
+      "params": {
+        "center": [
+          22.0,
+          0.0,
+          36.0
+        ],
+        "height": 48.0,
+        "length": 16.0,
+        "width": 40.0,
+        "base": false
+      },
+      "op": "add",
+      "name": "右壁",
+      "note": "",
+      "enabled": true,
+      "provenance": {
+        "center": "derived",
+        "height": "derived",
+        "length": "derived",
+        "width": "derived"
+      }
+    },
+    {
+      "kind": "hole",
+      "params": {
+        "axis": "X",
+        "diameter": 10.0,
+        "point": [
+          -22.0,
+          0.0,
+          48.0
+        ],
+        "pos": "point",
+        "through": true,
+        "x": 0.0,
+        "y": 48.0
+      },
+      "op": "cut",
+      "name": "左壁孔1",
+      "note": "",
+      "enabled": true,
+      "provenance": {
+        "axis": "derived",
+        "diameter": "image_estimate",
+        "point": "derived",
+        "pos": "derived",
+        "through": "derived",
+        "x": "derived",
+        "y": "derived"
+      }
+    },
+    {
+      "kind": "hole",
+      "params": {
+        "axis": "X",
+        "diameter": 10.0,
+        "point": [
+          -22.0,
+          0.0,
+          36.0
+        ],
+        "pos": "point",
+        "through": true,
+        "x": 0.0,
+        "y": 36.0
+      },
+      "op": "cut",
+      "name": "左壁孔2",
+      "note": "",
+      "enabled": true,
+      "provenance": {
+        "axis": "derived",
+        "diameter": "derived",
+        "point": "derived",
+        "pos": "derived",
+        "through": "derived",
+        "x": "derived",
+        "y": "derived"
+      }
+    },
+    {
+      "kind": "hole",
+      "params": {
+        "axis": "X",
+        "diameter": 10.0,
+        "point": [
+          -22.0,
+          0.0,
+          24.0
+        ],
+        "pos": "point",
+        "through": true,
+        "x": 0.0,
+        "y": 24.0
+      },
+      "op": "cut",
+      "name": "左壁孔3",
+      "note": "",
+      "enabled": true,
+      "provenance": {
+        "axis": "derived",
+        "diameter": "derived",
+        "point": "derived",
+        "pos": "derived",
+        "through": "derived",
+        "x": "derived",
+        "y": "derived"
+      }
+    },
+    {
+      "kind": "hole",
+      "params": {
+        "axis": "X",
+        "diameter": 10.0,
+        "point": [
+          22.0,
+          0.0,
+          48.0
+        ],
+        "pos": "point",
+        "through": true,
+        "x": 0.0,
+        "y": 48.0
+      },
+      "op": "cut",
+      "name": "右壁孔1",
+      "note": "",
+      "enabled": true,
+      "provenance": {
+        "axis": "derived",
+        "diameter": "derived",
+        "point": "derived",
+        "pos": "derived",
+        "through": "derived",
+        "x": "derived",
+        "y": "derived"
+      }
+    },
+    {
+      "kind": "hole",
+      "params": {
+        "axis": "X",
+        "diameter": 10.0,
+        "point": [
+          22.0,
+          0.0,
+          36.0
+        ],
+        "pos": "point",
+        "through": true,
+        "x": 0.0,
+        "y": 36.0
+      },
+      "op": "cut",
+      "name": "右壁孔2",
+      "note": "",
+      "enabled": true,
+      "provenance": {
+        "axis": "derived",
+        "diameter": "derived",
+        "point": "derived",
+        "pos": "derived",
+        "through": "derived",
+        "x": "derived",
+        "y": "derived"
+      }
+    },
+    {
+      "kind": "hole",
+      "params": {
+        "axis": "X",
+        "diameter": 10.0,
+        "point": [
+          22.0,
+          0.0,
+          24.0
+        ],
+        "pos": "point",
+        "through": true,
+        "x": 0.0,
+        "y": 24.0
+      },
+      "op": "cut",
+      "name": "右壁孔3",
+      "note": "",
+      "enabled": true,
+      "provenance": {
+        "axis": "derived",
+        "diameter": "derived",
+        "point": "derived",
+        "pos": "derived",
+        "through": "derived",
+        "x": "derived",
+        "y": "derived"
+      }
+    }
+  ],
+  "exported_at": "2026-09-26 03:54:02"
+}

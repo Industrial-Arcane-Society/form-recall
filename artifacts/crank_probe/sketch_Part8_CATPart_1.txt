@@ -1,0 +1,6 @@
+sketch=²ÝÍ¼.1
+openedition err=0 
+elements err=0 
+elements = 2
+  element 1 not a circle: Object doesn't support this property or method
+  element 2 not a circle: Object doesn't support this property or method

@@ -1,0 +1,309 @@
+{
+  "format": "ai-modeler",
+  "version": 1,
+  "name": "U型支架",
+  "source_prompt": "复刻",
+  "features": [
+    {
+      "kind": "box",
+      "params": {
+        "length": 120.0,
+        "width": 80.0,
+        "height": 100.0,
+        "center": [
+          0.0,
+          0.0,
+          50.0
+        ],
+        "base": false
+      },
+      "op": "add",
+      "name": "主体长方体",
+      "note": "先建立完整主体，后续用凹槽和孔表达细节",
+      "enabled": true,
+      "provenance": {
+        "length": "image_estimate",
+        "width": "image_estimate",
+        "height": "image_estimate",
+        "center": "derived"
+      }
+    },
+    {
+      "kind": "box",
+      "params": {
+        "length": 60.0,
+        "width": 50.1,
+        "height": 80.0,
+        "center": [
+          0.0,
+          15.05,
+          50.0
+        ],
+        "base": false
+      },
+      "op": "cut",
+      "name": "前向凹槽",
+      "note": "从正面切入形成U形截面，保留中间后壁",
+      "enabled": true,
+      "provenance": {
+        "length": "image_estimate",
+        "width": "image_estimate",
+        "height": "image_estimate",
+        "center": "derived"
+      }
+    },
+    {
+      "kind": "hole",
+      "params": {
+        "diameter": 12.0,
+        "through": true,
+        "pos": "point",
+        "point": [
+          -45.0,
+          -40.0,
+          30.0
+        ],
+        "axis": "Y",
+        "x": -45.0,
+        "y": 30.0
+      },
+      "op": "cut",
+      "name": "左侧立壁下孔",
+      "note": "",
+      "enabled": true,
+      "provenance": {
+        "diameter": "image_estimate",
+        "through": "derived",
+        "point": "image_estimate",
+        "axis": "derived",
+        "x": "image_estimate",
+        "y": "image_estimate"
+      }
+    },
+    {
+      "kind": "hole",
+      "params": {
+        "diameter": 12.0,
+        "through": true,
+        "pos": "point",
+        "point": [
+          45.0,
+          -40.0,
+          30.0
+        ],
+        "axis": "Y",
+        "x": 45.0,
+        "y": 30.0
+      },
+      "op": "cut",
+      "name": "右侧立壁下孔",
+      "note": "",
+      "enabled": true,
+      "provenance": {
+        "diameter": "image_estimate",
+        "through": "derived",
+        "point": "image_estimate",
+        "axis": "derived",
+        "x": "image_estimate",
+        "y": "image_estimate"
+      }
+    },
+    {
+      "kind": "hole",
+      "params": {
+        "diameter": 12.0,
+        "through": true,
+        "pos": "point",
+        "point": [
+          0.0,
+          40.0,
+          30.0
+        ],
+        "axis": "Y",
+        "x": 0.0,
+        "y": 30.0
+      },
+      "op": "cut",
+      "name": "孔",
+      "note": "",
+      "enabled": true,
+      "provenance": {
+        "diameter": "image_estimate",
+        "through": "derived",
+        "point": "image_estimate",
+        "axis": "derived",
+        "x": "image_estimate",
+        "y": "image_estimate"
+      }
+    },
+    {
+      "kind": "hole",
+      "params": {
+        "diameter": 12.0,
+        "through": true,
+        "pos": "point",
+        "point": [
+          -45.0,
+          -40.0,
+          50.0
+        ],
+        "axis": "Y",
+        "x": -45.0,
+        "y": 50.0
+      },
+      "op": "cut",
+      "name": "左侧立壁中孔",
+      "note": "",
+      "enabled": true,
+      "provenance": {
+        "diameter": "image_estimate",
+        "through": "derived",
+        "point": "image_estimate",
+        "axis": "derived",
+        "x": "image_estimate",
+        "y": "image_estimate"
+      }
+    },
+    {
+      "kind": "hole",
+      "params": {
+        "diameter": 12.0,
+        "through": true,
+        "pos": "point",
+        "point": [
+          -45.0,
+          -40.0,
+          70.0
+        ],
+        "axis": "Y",
+        "x": -45.0,
+        "y": 70.0
+      },
+      "op": "cut",
+      "name": "左侧立壁上孔",
+      "note": "",
+      "enabled": true,
+      "provenance": {
+        "diameter": "image_estimate",
+        "through": "derived",
+        "point": "image_estimate",
+        "axis": "derived",
+        "x": "image_estimate",
+        "y": "image_estimate"
+      }
+    },
+    {
+      "kind": "hole",
+      "params": {
+        "diameter": 12.0,
+        "through": true,
+        "pos": "point",
+        "point": [
+          45.0,
+          -40.0,
+          50.0
+        ],
+        "axis": "Y",
+        "x": 45.0,
+        "y": 50.0
+      },
+      "op": "cut",
+      "name": "右侧立壁中孔",
+      "note": "",
+      "enabled": true,
+      "provenance": {
+        "diameter": "image_estimate",
+        "through": "derived",
+        "point": "image_estimate",
+        "axis": "derived",
+        "x": "image_estimate",
+        "y": "image_estimate"
+      }
+    },
+    {
+      "kind": "hole",
+      "params": {
+        "diameter": 12.0,
+        "through": true,
+        "pos": "point",
+        "point": [
+          45.0,
+          -40.0,
+          70.0
+        ],
+        "axis": "Y",
+        "x": 45.0,
+        "y": 70.0
+      },
+      "op": "cut",
+      "name": "右侧立壁上孔",
+      "note": "",
+      "enabled": true,
+      "provenance": {
+        "diameter": "image_estimate",
+        "through": "derived",
+        "point": "image_estimate",
+        "axis": "derived",
+        "x": "image_estimate",
+        "y": "image_estimate"
+      }
+    },
+    {
+      "kind": "hole",
+      "params": {
+        "diameter": 12.0,
+        "through": true,
+        "pos": "point",
+        "point": [
+          0.0,
+          40.0,
+          50.0
+        ],
+        "axis": "Y",
+        "x": 0.0,
+        "y": 50.0
+      },
+      "op": "cut",
+      "name": "中间后壁中孔",
+      "note": "",
+      "enabled": true,
+      "provenance": {
+        "diameter": "image_estimate",
+        "through": "derived",
+        "point": "image_estimate",
+        "axis": "derived",
+        "x": "image_estimate",
+        "y": "image_estimate"
+      }
+    },
+    {
+      "kind": "hole",
+      "params": {
+        "diameter": 12.0,
+        "through": true,
+        "pos": "point",
+        "point": [
+          0.0,
+          40.0,
+          70.0
+        ],
+        "axis": "Y",
+        "x": 0.0,
+        "y": 70.0
+      },
+      "op": "cut",
+      "name": "中间后壁上孔",
+      "note": "",
+      "enabled": true,
+      "provenance": {
+        "diameter": "image_estimate",
+        "through": "derived",
+        "point": "image_estimate",
+        "axis": "derived",
+        "x": "image_estimate",
+        "y": "image_estimate"
+      }
+    }
+  ],
+  "exported_at": "2026-09-26 15:39:26"
+}

@@ -203,6 +203,32 @@ class AgentLoopTests(unittest.TestCase):
         self.assertFalse(payloads[0]["enable_thinking"])
         self.assertEqual("auto", payloads[1]["tool_choice"])
 
+    def test_chat_completion_stream_stops_reading_after_done_marker(self):
+        chunk = {"id": "chat-test", "choices": [
+            {"delta": {"content": "{}"}, "finish_reason": "stop"}]}
+
+        class GuardedStream:
+            def __init__(self):
+                self.read_after_done = False
+
+            def __iter__(self):
+                yield ("data: %s\n" % json.dumps(chunk)).encode("utf-8")
+                yield b"\n"
+                yield b"data: [DONE]\n"
+                self.read_after_done = True
+                raise AssertionError("stream reader continued after [DONE]")
+
+        stream = GuardedStream()
+        result = llm._read_chat_completions_stream(stream)
+        self.assertEqual("{}", result["content"])
+        self.assertEqual("stop", result["finish_reason"])
+        self.assertFalse(stream.read_after_done)
+
+    def test_stream_timeout_caps_idle_wait_not_output_tokens(self):
+        self.assertEqual(60, llm._stream_request_timeout(600))
+        self.assertEqual(12.5, llm._stream_request_timeout(12.5))
+        self.assertEqual(60, llm._stream_request_timeout(None))
+
     def test_empty_provider_response_reports_finish_reason(self):
         state = {"deadline": time.monotonic() + 10}
         with mock.patch.object(llm, "chat_completion",

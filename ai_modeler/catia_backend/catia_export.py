@@ -315,12 +315,20 @@ def _compound_entries(f, k, p, bb, warnings):
         spacing = shaft_len / throws
         web_w = min(max(2.0, main_d * 0.28), spacing * 0.25)
         pin_len = spacing * 0.42
-        web_r = max(main_d / 2.0, stroke / 2.0 + pin_d / 2.0 + 1e-4)
-        # 相邻圆盘之间必须留**远大于 CATIA 几何容差(0.001mm)**的搭接。
+        # 相邻凸台之间必须留**远大于 CATIA 几何容差(0.001mm)**的搭接。
         # 旧值 1e-3 恰好等于容差: 真机 V5-6R2023 上第 12~17 个凸台开始
         # "方法 Update 失败", 之后每个操作都连锁失败(2026-09-26 实测日志
         #  ai_modeler_push_*.log: ok=11 fail=14)。改 0.5mm 实测 25/25 成功。
         join_overlap = min(0.5, web_w * 0.25, pin_len * 0.25)
+        # 曲柄臂: 主轴圆 + 偏心连杆颈圆的**外公切凸包(哑铃形)**, 与网格内核同一份轮廓
+        # (kernel.crank_cheek_geometry)。旧版用与主轴同心的整圆盘, 连杆颈被完全包在
+        # 臂里, CATIA 里只能看到"一根轴 + 一堆垫圈", 看不出曲拐。
+        # 偏心方向 ± 两套轮廓都要算: 奇偶拐的连杆颈在相反一侧(臂必须跟着翻过来)。
+        cheek_profs = {}
+        for sgn in (1.0, -1.0):
+            g = K.crank_cheek_geometry(main_d / 2.0, pin_d / 2.0, sgn * stroke / 2.0, 24)
+            cheek_profs[sgn] = ([(round(u, 4), round(v, 4)) for (u, v) in g['outline']]
+                                if g is not None else None)
 
         def axial_pad(start, end, radius, y):
             if end - start <= 1e-9:
@@ -329,6 +337,17 @@ def _compound_entries(f, k, p, bb, warnings):
                                cy=center_z, z=start, r=radius, h=end - start,
                                name=nm, note=note))
 
+        def cheek_pad(start, end, dy):
+            if end - start <= 1e-9:
+                return
+            prof = cheek_profs[1.0 if dy > 0 else -1.0]
+            if prof:
+                made.append(_entry(kind='poly_pad', plane='X', cx=center_y,
+                                   cy=center_z, z=start, h=end - start,
+                                   profile=prof, name=nm, note=note))
+            else:                                   # 退化情形: 退回整圆盘
+                axial_pad(start, end, max(main_d, pin_d) / 2.0, center_y + dy)
+
         cursor = x0
         for i in range(throws):
             x_mid = x0 + spacing * (i + 0.5)
@@ -336,20 +355,20 @@ def _compound_entries(f, k, p, bb, warnings):
             pin_right = x_mid + pin_len / 2.0
             web_left = pin_left - web_w
             web_right = pin_right + web_w
-            pin_y = center_y + (stroke / 2.0 if i % 2 == 0 else -stroke / 2.0)
-            # 网格中每个曲拐有两片圆盘曲柄臂。保留其轴向位置和中心，
-            # 使 CATIA 近似模型与预览对齐并保持连通。
+            dy = (stroke / 2.0) if i % 2 == 0 else (-stroke / 2.0)
+            # 每拐两片曲柄臂: 臂在偏心方向伸出到连杆颈外缘, 垂直方向与主轴颈齐平。
             main_start = cursor - (join_overlap if i else 0.0)
             axial_pad(main_start, web_left + join_overlap,
                       main_d / 2.0, center_y)
-            axial_pad(web_left, pin_left, web_r, center_y)
+            cheek_pad(web_left, pin_left, dy)
             axial_pad(pin_left - join_overlap, pin_right + join_overlap,
-                      pin_d / 2.0, pin_y)
-            axial_pad(pin_right, web_right, web_r, center_y)
+                      pin_d / 2.0, center_y + dy)
+            cheek_pad(pin_right, web_right, dy)
             cursor = web_right
         axial_pad(cursor - join_overlap, x1, main_d / 2.0, center_y)
-        warnings.append('曲轴「%s」按 X 轴主轴颈、%d 组交替偏置连杆颈和圆盘曲柄臂近似；'
-                        '曲柄臂外形已简化' % (note, throws))
+        warnings.append('曲轴「%s」按 X 轴主轴颈、%d 组交替偏置连杆颈和哑铃形曲柄臂'
+                        '(主轴圆 + 连杆颈圆外公切凸包)建模；曲柄臂外形已简化'
+                        % (note, throws))
 
     elif k == 'impeller':                               # 叶轮: 轮毂 + 轮盘（叶片省略）
         circ('circle_pad', float(p.get('hub_d', 30.0)) / 2.0, name=nm)

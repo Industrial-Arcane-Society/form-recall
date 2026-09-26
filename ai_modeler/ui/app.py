@@ -14,7 +14,6 @@ import traceback
 import tkinter as tk
 import tkinter.font as tkfont
 from tkinter import filedialog, messagebox, ttk
-from urllib.parse import urlparse
 
 from ai_modeler import __version__
 from ai_modeler.core import exporters, kernel as K
@@ -439,19 +438,17 @@ class App(tk.Tk):
         self.lbl_attachments.pack(side='left', padx=(2, 8))
         tk.Label(composer_footer, text='◉ 完整对话', bg=TH.PANEL,
                  fg=TH.TEXT_DIM, font=TH.F['small']).pack(side='left')
+        # 发送/停止双态按钮：空闲=粉色发送 ↑；AgentLoop 运行中=红色停止 ■。
+        # 点击行为随状态切换（见 _on_send_button）；回车键仍走 generate()。
         self.btn_send = tk.Canvas(
             composer_footer, width=34, height=34, bg=TH.PANEL,
             highlightthickness=0, bd=0, cursor='hand2')
         self.btn_send.pack(side='right', padx=(5, 0))
-        self._send_circle = self.btn_send.create_oval(
-            1, 1, 33, 33, fill='#e85b9f', outline='')
-        self.btn_send.create_text(
-            17, 16, text='↑', fill='#ffffff', font=(TH.UI, 15, 'bold'))
-        self.btn_send.bind('<Button-1>', lambda _event: self.generate())
-        self.btn_send.bind('<Enter>', lambda _event: self.btn_send.itemconfigure(
-            self._send_circle, fill='#d94d91'))
-        self.btn_send.bind('<Leave>', lambda _event: self.btn_send.itemconfigure(
-            self._send_circle, fill='#e85b9f'))
+        self._send_mode = None
+        self._draw_send_button('send')
+        self.btn_send.bind('<Button-1>', self._on_send_button)
+        self.btn_send.bind('<Enter>', lambda _event: self._send_hover(True))
+        self.btn_send.bind('<Leave>', lambda _event: self._send_hover(False))
         self.btn_model = ttk.Button(
             composer_footer, text=self._model_button_text(), style='Ghost.TButton',
             command=self.show_llm_config)
@@ -828,12 +825,17 @@ class App(tk.Tk):
     def _model_button_text(self):
         llmcfg = self.cfg.get('llm', {}) if isinstance(self.cfg.get('llm'), dict) else {}
         if llmcfg.get('enabled'):
-            model = (llmcfg.get('model') or '模型未填写').strip()
+            from ai_modeler.agent import providers
+            profile = providers.active_profile(llmcfg) or {}
+            model = (profile.get('model') or llmcfg.get('model') or '').strip()
+            name = (profile.get('name') or '').strip()
+            short = model.rsplit('/', 1)[-1] if model else '模型未填写'
+            text = ('%s·%s' % (name, short)) if name else (model or '模型未填写')
         else:
-            model = '本地规则'
-        if len(model) > 18:
-            model = model[:17] + '…'
-        return '⚡ %s ▾' % model
+            text = '本地规则'
+        if len(text) > 24:
+            text = text[:23] + '…'
+        return '⚡ %s ▾' % text
 
     def _resize_prompt(self, _event=None):
         """Keep the composer compact, expanding only when the user adds lines."""
@@ -884,7 +886,8 @@ class App(tk.Tk):
 
     def new_chat(self):
         if self._busy:
-            messagebox.showinfo('AgentLoop 正在运行', '请先停止当前任务，再新建对话。')
+            messagebox.showinfo('AgentLoop 正在运行',
+                                '请先点输入框旁的停止按钮结束当前任务，再新建对话。')
             return
         self._agent_context = []
         self._agent_context_summary = ''
@@ -1155,6 +1158,7 @@ class App(tk.Tk):
             self.btn_stop.configure(state='normal')
         except Exception:
             pass
+        self._set_send_mode('stop')
         self.progress.configure(value=0)
         self.status('正在准备建模请求…')
         self.lbl_agent_stage.configure(text='准备本轮上下文…')
@@ -1254,7 +1258,7 @@ class App(tk.Tk):
         detail_lines = [self._agent_wait_detail or '正在等待模型处理本轮输入']
         if stream_detail:
             detail_lines.append(stream_detail)
-        detail_lines.append('已等待 %s；模型返回后会继续执行建模与复核。' % clock)
+        detail_lines.append('已等待 %s；点输入框旁的停止按钮可当场中断本次模型请求。' % clock)
         self.lbl_agent_detail.configure(
             text='\n'.join(detail_lines))
         self._set_agent_thinking_panel(
@@ -1452,6 +1456,20 @@ class App(tk.Tk):
                         else:
                             self.status('AgentLoop 已停止：需要补充信息或仍有待处理偏差', TH.WARN)
                 elif kind == 'agent_err':
+                    if self._cancel is not None and self._cancel.is_set():
+                        # 模型流被「停止」当场中断：按取消收尾，不按失败告警。
+                        self._agent_wait_started = None
+                        self._agent_stream_detail = ''
+                        self._finish_agent_reasoning_block()
+                        self._set_agent_thinking_panel(False, '本轮已停止')
+                        if hasattr(self, '_q'):
+                            self._q = queue.Queue()      # 丢弃同行线程后续消息
+                        self._active_request = None
+                        self._unlock_ui()
+                        self._append_chat('assistant', '已停止当前 AgentLoop（模型请求已当场中断）。')
+                        self.status('AgentLoop 已停止', TH.WARN)
+                        self._resume_pending_request()
+                        return
                     message = 'AgentLoop 失败：' + str(value)
                     self._append_chat('assistant', message)
                     self._agent_context.append({'role': 'assistant', 'content': message})
@@ -1598,6 +1616,7 @@ class App(tk.Tk):
             self.btn_stop.configure(state='normal')
         except Exception:
             pass
+        self._set_send_mode('stop')
         self.progress.configure(value=0)
         self.status('正在构建几何…')
         self._q = q = queue.Queue()
@@ -1618,14 +1637,72 @@ class App(tk.Tk):
         threading.Thread(target=worker, daemon=True).start()
         self.after(40, self._poll)
 
+    # ---- 发送/停止双态按钮 -------------------------------------------------
+
+    def _draw_send_button(self, mode):
+        """按模式重画输入框旁的圆形按钮：send=发送 ↑，stop=停止 ■。"""
+        canvas = self.btn_send
+        canvas.delete('all')
+        if mode == 'stop':
+            self._send_circle = canvas.create_oval(
+                1, 1, 33, 33, fill=TH.ERR, outline='')
+            canvas.create_rectangle(11, 11, 23, 23, fill='#ffffff', outline='')
+        else:
+            self._send_circle = canvas.create_oval(
+                1, 1, 33, 33, fill='#e85b9f', outline='')
+            canvas.create_text(
+                17, 16, text='↑', fill='#ffffff', font=(TH.UI, 15, 'bold'))
+        self._send_mode = mode
+
+    def _set_send_mode(self, mode):
+        """忙碌时把发送按钮切成停止按钮，空闲时还原；幂等可安全重入。"""
+        try:
+            if getattr(self, '_send_mode', None) != mode:
+                self._draw_send_button(mode)
+        except Exception:
+            pass
+
+    def _on_send_button(self, _event=None):
+        # 运行中点击 = 停止当前 AgentLoop；空闲点击 = 发送。
+        # 回车键不经过这里：运行中回车仍旧把消息排队到本轮之后。
+        if getattr(self, '_send_mode', '') == 'stop' and self._busy:
+            self.cancel_build()
+        else:
+            self.generate()
+
+    def _send_hover(self, entering):
+        circle = getattr(self, '_send_circle', None)
+        if circle is None:
+            return
+        if getattr(self, '_send_mode', '') == 'stop':
+            hover = '#ff6f68' if TH.is_dark() else '#b91c1c'
+            fill = hover if entering else TH.ERR
+        else:
+            fill = '#d94d91' if entering else '#e85b9f'
+        self.btn_send.itemconfigure(circle, fill=fill)
+
     def cancel_build(self):
-        """用户在计算过程中点「停止」。"""
+        """用户在计算过程中点「停止」。
+
+        几何构建阶段：由 doc.build 的 deadline/cancel 检查中止（BuildAborted）。
+        AgentLoop 阶段：置位事件后，飞行中的模型流式请求会在下一个分片处
+        被当场断开（llm.ModelRequestCancelled），不再等整条响应跑完烧 token；
+        本页 UI 由 _poll_agent 的取消分支收尾。
+        """
         if not self._busy:
             return
         if self._cancel is not None:
             self._cancel.set()
         self.status('正在停止…')
         self.lbl_busy.configure(text='正在停止…')
+        self._agent_wait_started = None
+        if getattr(self, '_agent_stream_detail', None) is not None:
+            self._agent_stream_detail = ''
+        try:
+            self._finish_agent_reasoning_block()
+            self._set_agent_thinking_panel(False, '正在停止…')
+        except Exception:
+            pass
 
     def _unlock_ui(self):
         self._busy = False
@@ -1634,6 +1711,7 @@ class App(tk.Tk):
             self.btn_stop.configure(state='disabled')
         except Exception:
             pass
+        self._set_send_mode('send')
 
     def _resume_pending_request(self):
         """Resume one queued turn with both its prompt and its image attachments."""
@@ -2446,68 +2524,212 @@ class App(tk.Tk):
         self.online_lookup(text)
 
     def show_llm_config(self):
+        from ai_modeler.agent import providers
+
         win = tk.Toplevel(self)
-        win.title('多模态 AgentLoop 设置')
-        win.geometry('600x390')
-        llm = self.cfg.setdefault('llm', {'enabled': False, 'base_url':
-                                          'https://api.openai.com/v1', 'model': 'gpt-4o-mini',
-                                          'api_key': ''})
-        v_en = tk.BooleanVar(value=bool(llm.get('enabled')))
-        v_url = tk.StringVar(value=llm.get('base_url', ''))
-        v_model = tk.StringVar(value=llm.get('model', ''))
-        v_key = tk.StringVar(value=llm.get('api_key', ''))
-        model_host = ''
+        win.title('多模态 AgentLoop 设置 · 多供应商')
+        win.geometry('680x560')
+        base_cfg = self.cfg.get('llm') if isinstance(
+            self.cfg.get('llm'), dict) else None
+        llm = providers.ensure_providers(base_cfg or {
+            'enabled': False, 'base_url': 'https://api.openai.com/v1',
+            'model': 'gpt-4o-mini', 'api_key': ''})
+        profiles = llm['providers']                 # 列表内元素就地编辑
+        model_lists = {}                            # 档案id → 已拉取的模型列表
         try:
-            model_host = (urlparse(llm.get('base_url', '')).hostname or '').lower()
-        except Exception:
-            pass
-        default_effort = ('high' if model_host == 'api.deepseek.com'
-                          and str(llm.get('model') or '').lower()
-                          in {'deepseek-flash', 'deepseek-v4-pro'} else 'none')
-        reasoning_default = str(llm.get('reasoning_effort', default_effort)
-                                or default_effort).lower()
-        if reasoning_default == 'auto':
-            reasoning_default = default_effort
-        v_reasoning = tk.StringVar(value=reasoning_default)
+            start_idx = [p['id'] for p in profiles].index(llm['active_provider_id'])
+        except ValueError:
+            start_idx = 0
+
+        v_en = tk.BooleanVar(value=bool(llm.get('enabled')))
+        v_name = tk.StringVar()
+        v_url = tk.StringVar()
+        v_model = tk.StringVar()
+        v_key = tk.StringVar()
+        v_reasoning = tk.StringVar()
+        prov_var = tk.StringVar()
+
         frm = ttk.Frame(win, padding=14)
         frm.pack(fill='both', expand=True)
-        ttk.Checkbutton(frm, text='启用多模态 AgentLoop',
-                        variable=v_en).grid(row=0, column=0, columnspan=2, sticky='w', pady=4)
-        for i, (label, var) in enumerate((('接口地址', v_url), ('模型名称', v_model),
-                                          ('API Key', v_key)), start=1):
-            ttk.Label(frm, text=label).grid(row=i, column=0, sticky='w', pady=4)
-            ent = ttk.Entry(frm, textvariable=var, width=48, show='*' if label == 'API Key' else '')
-            ent.grid(row=i, column=1, sticky='ew', pady=4)
-        ttk.Label(frm, text='思考强度').grid(row=4, column=0, sticky='w', pady=4)
-        ttk.Combobox(frm, textvariable=v_reasoning,
-                     values=('none', 'low', 'high', 'max'),
-                     state='readonly', width=14).grid(
-                         row=4, column=1, sticky='w', pady=4)
         frm.columnconfigure(1, weight=1)
-        ttk.Label(frm, text='启用后，Agent 会先理解本轮对话，再自行选择回答、修改模型或执行完整建模复核。\n'
-                            '服务端模型必须同时支持图像输入和工具调用；不支持时会明确报错，不回退到猜测。\n'
-                            '思考强度（DeepSeek 官方接口）：默认 high；none=关闭思考；low/high/max 对应官方 effort。\n'
-                            '思考强度（SiliconFlow，如 Kimi-K2.7-Code）：low/high=开启思考；max=开启并给最大思考预算 32768；\n'
-                            'none=不发送开关，按服务端默认（Kimi 等推理模型默认会思考）；思考过程将流式实时显示。\n'
-                            '其他 OpenAI 兼容服务请按其参数支持情况选择；none 不发送推理参数。\n'
-                            '关闭时仅使用内置文本规则；图片输入需要启用兼容的多模态模型。',
-                  font=('Microsoft YaHei UI', 8), foreground='#7f8c9b',
-                  justify='left').grid(row=5, column=0, columnspan=2, sticky='w', pady=8)
+        ttk.Checkbutton(frm, text='启用多模态 AgentLoop',
+                        variable=v_en).grid(row=0, column=0, columnspan=3, sticky='w', pady=4)
+
+        ttk.Label(frm, text='供应商').grid(row=1, column=0, sticky='w', pady=4)
+        prov_combo = ttk.Combobox(frm, textvariable=prov_var, state='readonly', width=34)
+        prov_combo.grid(row=1, column=1, sticky='w', pady=4)
+        btn_col = ttk.Frame(frm)
+        btn_col.grid(row=1, column=2, sticky='e', pady=4)
+        ttk.Button(btn_col, text='新建…', width=8,
+                   command=lambda: open_new()).pack(side='left', padx=2)
+        ttk.Button(btn_col, text='删除', width=8,
+                   command=lambda: delete_current()).pack(side='left', padx=2)
+
+        # row2 显示名称 / row3 接口地址（跨两列）
+        for row, label, var in ((2, '显示名称', v_name), (3, '接口地址', v_url)):
+            ttk.Label(frm, text=label).grid(row=row, column=0, sticky='w', pady=4)
+            ttk.Entry(frm, textvariable=var, width=50).grid(
+                row=row, column=1, columnspan=2, sticky='ew', pady=4)
+
+        # row4 模型名称（可编辑下拉 + 拉取服务端列表）
+        ttk.Label(frm, text='模型名称').grid(row=4, column=0, sticky='w', pady=4)
+        model_combo = ttk.Combobox(frm, textvariable=v_model, width=48)
+        model_combo.grid(row=4, column=1, sticky='ew', pady=4)
+        ttk.Button(frm, text='获取模型列表', width=12,
+                   command=lambda: do_fetch()).grid(row=4, column=2, sticky='e', pady=4)
+
+        # row5 API Key（掩码 + 显示切换）
+        ttk.Label(frm, text='API Key').grid(row=5, column=0, sticky='w', pady=4)
+        key_entry = ttk.Entry(frm, textvariable=v_key, width=48, show='*')
+        key_entry.grid(row=5, column=1, sticky='ew', pady=4)
+
+        def toggle_key():
+            key_entry.configure(show='' if str(key_entry.cget('show')) == '*' else '*')
+        ttk.Button(frm, text='显示', width=6, command=toggle_key).grid(
+            row=5, column=2, sticky='e', pady=4)
+
+        # row6 思考强度
+        ttk.Label(frm, text='思考强度').grid(row=6, column=0, sticky='w', pady=4)
+        ttk.Combobox(frm, textvariable=v_reasoning, values=providers.EFFORTS,
+                     state='readonly', width=14).grid(row=6, column=1, sticky='w', pady=4)
+
+        ttk.Label(frm, justify='left', font=('Microsoft YaHei UI', 8), foreground='#7f8c9b',
+                  text=('· 下拉切换供应商档案；改完按「保存」才写入 config.json 并生效（保存的是当前选中档案）。\n'
+                        '· 「新建…」按模板创建（SiliconFlow / DeepSeek 官方 / OpenAI / 本地 llama.cpp / 自定义）；\n'
+                        '  「获取模型列表」实时调用该服务的 /models 接口填充模型下拉（需先填接口地址和密钥）。\n'
+                        '· 思考强度（DeepSeek 官方）：默认 high；none=关闭思考；low/high/max 对应官方 effort。\n'
+                        '  思考强度（SiliconFlow，如 Kimi-K2.7-Code）：low/high=开启思考；max=开启+最大思考预算 32768；\n'
+                        '  none=不发送开关，按服务端默认（Kimi 等推理模型默认会思考）；思考过程将流式实时显示。\n'
+                        '· 每份档案独立保存密钥与思考强度；其他 OpenAI 兼容服务请按其参数支持情况选择。')
+                  ).grid(row=7, column=0, columnspan=3, sticky='w', pady=(8, 4))
+
+        state = {'idx': start_idx, 'labels': []}
+
+        def stash():
+            """把界面上的值写回当前档案（切换/保存/删除/拉取前调用）。"""
+            p = profiles[state['idx']]
+            p['name'] = v_name.get().strip()
+            p['base_url'] = v_url.get().strip()
+            p['model'] = v_model.get().strip()
+            p['api_key'] = v_key.get().strip()
+            effort = (v_reasoning.get() or 'none').strip().lower()
+            p['reasoning_effort'] = effort if effort in providers.EFFORTS else 'none'
+
+        def load(idx):
+            state['idx'] = idx
+            p = profiles[idx]
+            v_name.set(p.get('name', ''))
+            v_url.set(p.get('base_url', ''))
+            v_model.set(p.get('model', ''))
+            v_key.set(p.get('api_key', ''))
+            effort = str(p.get('reasoning_effort') or 'none').strip().lower()
+            v_reasoning.set(effort if effort in providers.EFFORTS else 'none')
+            model_lists.setdefault(p['id'], [])
+            model_combo['values'] = model_lists[p['id']]
+            prov_var.set(state['labels'][idx] if state['labels']
+                          else providers.profile_label(p))
+
+        def refresh(select=None):
+            labels, index = [], {}
+            for i, p in enumerate(profiles):
+                label = providers.profile_label(p)
+                origin, n = label, 2
+                while label in index:
+                    label = '%s (%d)' % (origin, n)
+                    n += 1
+                index[label] = i
+                labels.append(label)
+            state['labels'] = labels
+            prov_combo['values'] = labels
+            if select is None:
+                select = state['idx']
+            select = max(0, min(select, len(profiles) - 1))
+            prov_var.set(labels[select])
+            load(select)
+
+        def on_pick(*_args):
+            label = prov_var.get()
+            idx = state['labels'].index(label) if label in state['labels'] else state['idx']
+            if idx == state['idx']:
+                return
+            stash()
+            load(idx)
+
+        prov_combo.bind('<<ComboboxSelected>>', on_pick)
+
+        def delete_current():
+            if len(profiles) <= 1:
+                messagebox.showinfo('提示', '至少保留一个供应商档案。', parent=win)
+                return
+            stash()
+            removed = profiles.pop(state['idx'])
+            model_lists.pop(removed.get('id'), None)
+            refresh(select=0)
+            self.status('已删除供应商档案「%s」' % (removed.get('name') or '未命名'))
+
+        def do_fetch():
+            stash()
+            p = profiles[state['idx']]
+            win.configure(cursor='watch')
+            win.update_idletasks()
+            try:
+                ok, payload = providers.fetch_models(p['base_url'], p['api_key'])
+            finally:
+                win.configure(cursor='')
+            if not ok:
+                messagebox.showwarning('获取模型列表失败', payload, parent=win)
+                return
+            model_lists[p['id']] = payload
+            model_combo['values'] = payload
+            self.status('已获取 %d 个模型（%s）'
+                        % (len(payload), p['name'] or providers.host_label(p['base_url'])))
+
+        def open_new():
+            chooser = tk.Toplevel(win)
+            chooser.title('新建供应商 — 选择模板')
+            chooser.transient(win)
+            chooser.resizable(False, False)
+            chooser.grab_set()
+            body = ttk.Frame(chooser, padding=12)
+            body.pack(fill='both', expand=True)
+            ttk.Label(body, text='按模板创建一份新档案，创建后可自由修改：').pack(anchor='w', pady=(0, 6))
+
+            def pick(key, chooser_ref):
+                profile = providers.template_profile(key)
+                profile['name'] = providers.unique_name(profiles, profile['name'])
+                profiles.append(profile)
+                chooser_ref.destroy()
+                refresh(select=len(profiles) - 1)
+                self.status('已新建供应商「%s」；填好密钥后按保存' % profile['name'])
+
+            for key, label in providers.template_labels():
+                ttk.Button(body, text=label, width=46,
+                           command=lambda k=key, c=chooser: pick(k, c)
+                           ).pack(fill='x', pady=2)
+            ttk.Button(body, text='取消', width=46,
+                       command=chooser.destroy).pack(fill='x', pady=(8, 0))
 
         def save():
-            llm_cfg = dict(llm)
-            llm_cfg.update({'enabled': bool(v_en.get()), 'base_url': v_url.get().strip(),
-                            'model': v_model.get().strip(), 'api_key': v_key.get().strip()})
-            llm_cfg.pop('thinking', None)
-            llm_cfg['reasoning_effort'] = v_reasoning.get()
+            stash()
+            for p in profiles:
+                p['name'] = (p['name'] or providers.host_label(p['base_url'])
+                             or '未命名').strip()
+            llm_cfg = providers.ensure_providers(dict(base_cfg or {}))
+            llm_cfg['enabled'] = bool(v_en.get())
+            llm_cfg['providers'] = [dict(p) for p in profiles]
+            llm_cfg['active_provider_id'] = profiles[state['idx']]['id']
+            llm_cfg = providers.mirror_active(llm_cfg)
             self.cfg['llm'] = llm_cfg
             cfgmod.save(self.cfg)
             self.btn_model.configure(text=self._model_button_text())
-            self.status('大模型设置已保存')
+            self.status('大模型设置已保存 · 当前供应商：%s'
+                        % providers.profile_label(profiles[state['idx']]))
             win.destroy()
 
+        refresh(select=start_idx)
         ttk.Button(frm, text='保存', style='Accent.TButton', command=save).grid(
-            row=6, column=1, sticky='e', pady=6)
+            row=8, column=2, sticky='e', pady=6)
+
 
     def run_selfcheck(self):
         lines = []

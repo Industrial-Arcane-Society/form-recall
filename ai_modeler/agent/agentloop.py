@@ -1086,6 +1086,22 @@ def _independent_inventory_groups(inventory):
     return groups
 
 
+def _cached_reference_inventory(state, expected_images):
+    """Reuse a complete image-only inventory across repairs of the same source set."""
+    if state.get("independent_reference_inventory_complete") is not True:
+        return None
+    inventory = state.get("independent_reference_inventory")
+    rows = inventory.get("images") if isinstance(inventory, dict) else None
+    cached_names = {
+        os.path.basename(str(row.get("image") or ""))
+        for row in rows or [] if isinstance(row, dict)
+    }
+    expected_names = {os.path.basename(str(name)) for name in expected_images or []}
+    if expected_names and expected_names.issubset(cached_names):
+        return inventory
+    return None
+
+
 def _review_plan_summary(plan):
     """Keep visual review geometry context useful without replaying provenance."""
     features = []
@@ -1314,8 +1330,10 @@ def _split_view_review(plan, final_preview, source_messages, cfg, state,
     expected_images = list(state.get("active_reference_images") or [])
     inventory_gaps = []
     try:
-        reference_inventory, inventory_gaps = _independent_reference_inventory(
-            source_messages, expected_images, prompt, cfg, state, cancel_event)
+        reference_inventory = _cached_reference_inventory(state, expected_images)
+        if reference_inventory is None:
+            reference_inventory, inventory_gaps = _independent_reference_inventory(
+                source_messages, expected_images, prompt, cfg, state, cancel_event)
     except AgentLoopError:
         _check_cancel(cancel_event, state["deadline"])
         reference_inventory = None
@@ -1326,6 +1344,7 @@ def _split_view_review(plan, final_preview, source_messages, cfg, state,
     review_gaps.extend(inventory_gaps)
     if reference_inventory:
         state["independent_reference_inventory"] = reference_inventory
+        state["independent_reference_inventory_complete"] = not inventory_gaps
     review_views, skipped_views = _review_views_for_inventory(
         requested_views, reference_inventory)
     review_cfg = dict(cfg or {})
@@ -1359,6 +1378,14 @@ def _split_view_review(plan, final_preview, source_messages, cfg, state,
             view_groups = [group for group in independent_groups
                            if str(group.get("source_view") or "unknown").lower()
                            in {view, "unknown"}]
+            source_reading = state.get("reference_reading") or {}
+            dimensionless_observations = [
+                row for row in source_reading.get("dimensionless_constraints", [])
+                if isinstance(row, dict)
+                and str(row.get("view") or "unknown").lower() in {view, "unknown"}
+                and (not view_image_names
+                     or str(row.get("image") or "") in view_image_names)
+            ]
             payload = {
                 "round": round_index,
                 "view_to_inspect": view,
@@ -1391,6 +1418,11 @@ def _split_view_review(plan, final_preview, source_messages, cfg, state,
                     } for image in view_images],
                 },
                 "independent_visible_feature_groups": view_groups,
+                "dimensionless_source_observations": dimensionless_observations,
+                "dimensionless_observation_instruction": (
+                    "Treat these as approximate ratios measured from reference pixels, not millimeter "
+                    "dimensions. Compare visible model proportions and feature positions against them "
+                    "in this matching view; identify concrete mismatches and affected geometry."),
                 "feature_group_check_instruction": (
                     "Independent groups are brief hints from a source-only read, not ground truth. "
                     "Recheck their quantity and surface against pixels. Return one feature_group check "

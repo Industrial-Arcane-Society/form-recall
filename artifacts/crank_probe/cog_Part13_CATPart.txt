@@ -1,0 +1,7 @@
+part=Part13  body=零件几何体  shapes=25
+getworkbench err=438 Object doesn't support this property or method
+  fallback doc workbench err=0 
+getmeasurable err=0 
+volume(m^3)=1.8802849601913E-03 err=0
+volume(mm^3)=1880284.9601913
+cog(mm) = -7.71845246786731E-09, -4.74067275951413E-12, -9.59092610864729E-10

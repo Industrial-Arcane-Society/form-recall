@@ -1,0 +1,51 @@
+{
+  "format": "ai-modeler",
+  "version": 1,
+  "name": "truncated_cone",
+  "source_prompt": "圆台 底径 80 顶径 30 高 60",
+  "features": [
+    {
+      "kind": "revolve",
+      "params": {
+        "profile": [
+          [
+            0.0,
+            0.0
+          ],
+          [
+            40.0,
+            0.0
+          ],
+          [
+            15.0,
+            60.0
+          ],
+          [
+            0.0,
+            60.0
+          ]
+        ],
+        "angle": 360.0,
+        "axis": "Z",
+        "center": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "segments": 64
+      },
+      "op": "add",
+      "name": "圆台主体",
+      "note": "",
+      "enabled": true,
+      "provenance": {
+        "profile": "user",
+        "angle": "user",
+        "axis": "derived",
+        "center": "derived",
+        "segments": "derived"
+      }
+    }
+  ],
+  "exported_at": "2026-09-26 04:00:25"
+}

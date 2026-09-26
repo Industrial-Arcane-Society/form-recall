@@ -520,9 +520,9 @@ MEDIUM_PARTS = {
 
 def _crank_bbox(p):
     # 描述里显式写了总长/全长就照它走(用 'L' 作为"总长"的参数名, 见零件表)
-    L, R = K.crankshaft_size(p['d'], p['dp'], p['S'], int(p.get('n', 4)),
-                             p.get('L'))
-    return (L, 2.0 * R, 2.0 * R)
+    L, r_off, r_perp = K.crankshaft_size(p['d'], p['dp'], p['S'], int(p.get('n', 4)),
+                                         p.get('L'))
+    return (L, 2.0 * r_off, 2.0 * r_perp)
 
 
 def _conrod_bbox(p):

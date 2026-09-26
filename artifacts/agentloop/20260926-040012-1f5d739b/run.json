@@ -1,0 +1,2414 @@
+{
+  "record_version": 1,
+  "started_at": "2026-09-26T04:00:12+08:00",
+  "finished_at": "2026-09-26T04:00:25+08:00",
+  "state": "reviewed",
+  "input": {
+    "prompt": "圆台 底径 80 顶径 30 高 60",
+    "reference_images": []
+  },
+  "routing": {
+    "action": "create",
+    "review_mode": "agent_selected",
+    "review_rounds": 1,
+    "reason": "本轮由统一 AgentLoop 按需调用工具；图片建模默认先生成可见候选。"
+  },
+  "conversation_memory": {
+    "summarized_through": 0,
+    "summary_chars": 0
+  },
+  "limits": {
+    "tool_calls": 256,
+    "web_search_calls": 32,
+    "tool_preview_calls": 256,
+    "multiview_tool_calls_per_round": 8,
+    "review_rounds": 256,
+    "context_turns": 128,
+    "context_chars": 1000000,
+    "context_summary_chars": 32000
+  },
+  "selected_reference_images": [],
+  "active_reference_images": [],
+  "model_calls": [
+    {
+      "phase": "agent_loop",
+      "model": "deepseek-flash",
+      "max_output_tokens": 65536,
+      "image_parts_in_request": 0,
+      "response_received": true,
+      "reference_image_names": [],
+      "generated_view": null,
+      "response_chars": 60,
+      "finish_reason": "tool_calls",
+      "api_protocol": "responses",
+      "response_id": "47f713b8-f7a3-42ef-ad13-7afcaadaaf4b",
+      "thinking": {
+        "type": "disabled"
+      },
+      "reasoning_effort": "none",
+      "usage": {
+        "prompt_tokens": 3603,
+        "completion_tokens": 57,
+        "total_tokens": 3660,
+        "reasoning_tokens": 0
+      },
+      "error": null
+    },
+    {
+      "phase": "agent_loop",
+      "model": "deepseek-flash",
+      "max_output_tokens": 65536,
+      "image_parts_in_request": 0,
+      "response_received": true,
+      "reference_image_names": [],
+      "generated_view": null,
+      "response_chars": 0,
+      "finish_reason": "tool_calls",
+      "api_protocol": "responses",
+      "response_id": "eb6d5ad7-46d1-423d-b412-0ca9c6423596",
+      "thinking": {
+        "type": "disabled"
+      },
+      "reasoning_effort": "none",
+      "usage": {
+        "prompt_tokens": 4223,
+        "completion_tokens": 261,
+        "total_tokens": 4484,
+        "reasoning_tokens": 0
+      },
+      "error": null
+    },
+    {
+      "phase": "agent_loop",
+      "model": "deepseek-flash",
+      "max_output_tokens": 65536,
+      "image_parts_in_request": 0,
+      "response_received": true,
+      "reference_image_names": [],
+      "generated_view": null,
+      "response_chars": 0,
+      "finish_reason": "tool_calls",
+      "api_protocol": "responses",
+      "response_id": "2d1ec5bc-be75-41f8-a8f8-ebe4dce921eb",
+      "thinking": {
+        "type": "disabled"
+      },
+      "reasoning_effort": "none",
+      "usage": {
+        "prompt_tokens": 5434,
+        "completion_tokens": 61,
+        "total_tokens": 5495,
+        "reasoning_tokens": 0
+      },
+      "error": null
+    },
+    {
+      "phase": "multiview_check",
+      "model": "deepseek-flash",
+      "max_output_tokens": 32768,
+      "image_parts_in_request": 1,
+      "response_received": true,
+      "reference_image_names": [],
+      "generated_view": "front",
+      "response_chars": 868,
+      "finish_reason": "stop",
+      "api_protocol": "responses",
+      "response_id": "c6724369-cff3-4718-aa33-c89336175bfc",
+      "thinking": {
+        "type": "disabled"
+      },
+      "reasoning_effort": "none",
+      "usage": {
+        "prompt_tokens": 2201,
+        "completion_tokens": 352,
+        "total_tokens": 2553,
+        "reasoning_tokens": 0
+      },
+      "error": null
+    },
+    {
+      "phase": "multiview_check",
+      "model": "deepseek-flash",
+      "max_output_tokens": 32768,
+      "image_parts_in_request": 1,
+      "response_received": true,
+      "reference_image_names": [],
+      "generated_view": "iso",
+      "response_chars": 1081,
+      "finish_reason": "stop",
+      "api_protocol": "responses",
+      "response_id": "22ae2b33-86cb-48a2-9430-8ad9e37c4b2a",
+      "thinking": {
+        "type": "disabled"
+      },
+      "reasoning_effort": "none",
+      "usage": {
+        "prompt_tokens": 2207,
+        "completion_tokens": 401,
+        "total_tokens": 2608,
+        "reasoning_tokens": 0
+      },
+      "error": null
+    },
+    {
+      "phase": "agent_loop",
+      "model": "deepseek-flash",
+      "max_output_tokens": 65536,
+      "image_parts_in_request": 0,
+      "response_received": true,
+      "reference_image_names": [],
+      "generated_view": null,
+      "response_chars": 0,
+      "finish_reason": "tool_calls",
+      "api_protocol": "responses",
+      "response_id": "9d8ac7ce-2533-4a1a-8236-e5fef0e30ab0",
+      "thinking": {
+        "type": "disabled"
+      },
+      "reasoning_effort": "none",
+      "usage": {
+        "prompt_tokens": 6488,
+        "completion_tokens": 123,
+        "total_tokens": 6611,
+        "reasoning_tokens": 0
+      },
+      "error": null
+    }
+  ],
+  "temporary_review_images": [
+    {
+      "filename": "single-review-r01-multiview_check-front.png",
+      "deleted": true,
+      "error": null
+    },
+    {
+      "filename": "single-review-r01-multiview_check-iso.png",
+      "deleted": true,
+      "error": null
+    }
+  ],
+  "recognition": null,
+  "raster_analysis": {
+    "available": true,
+    "images": []
+  },
+  "counts": {
+    "tool_calls": 4,
+    "web_search_calls": 0,
+    "blocked_web_search_calls": 0,
+    "preview_calls": 3,
+    "review_rounds": 1,
+    "repair_cycles": 0,
+    "llm_requests": 6,
+    "image_parts_in_request": 2,
+    "llm_usage": {
+      "prompt_tokens": 24156.0,
+      "completion_tokens": 1255.0,
+      "total_tokens": 25411.0,
+      "reasoning_tokens": 0.0
+    }
+  },
+  "loop_state": {
+    "context_compactions": 0,
+    "truncated_responses": 0,
+    "stagnation_warnings": 0,
+    "stagnant_tool_calls": 0,
+    "candidate_attempted": true,
+    "finish_gate": {
+      "ready": true,
+      "state": "reviewed",
+      "validation": {
+        "valid": true,
+        "state": "valid",
+        "errors": [],
+        "confirmations": [],
+        "support": [
+          {
+            "feature_id": "cone_body",
+            "kind": "revolve",
+            "status": "approximate",
+            "reason": "当前用多层圆盘近似回转体。"
+          }
+        ],
+        "warnings": [
+          {
+            "code": "CATIA_APPROXIMATION",
+            "feature_id": "cone_body",
+            "kind": "revolve",
+            "message": "当前用多层圆盘近似回转体。"
+          }
+        ],
+        "schema_version": "1.0"
+      },
+      "review": {
+        "decision": "accept",
+        "checks": [
+          {
+            "id": "front.outline",
+            "view": "front",
+            "area": "outline",
+            "category": "geometry",
+            "status": "match",
+            "item": "正视外轮廓为等腰梯形，底宽:高:顶宽 = 80:60:30",
+            "reference_evidence": "无参考图；用户文字要求底径80、顶径30、高60的圆台",
+            "model_evidence": "当前front视图显示等腰梯形，底边明显宽于顶边，底边约为顶边宽度的2.6~2.7倍，高宽比约60:80",
+            "evidence": "文字要求底径80/顶径30/高60，即正视投影底宽80、顶宽30、高60，比例1.333:1:0.5；模型视图底边:高:顶边比例与之一致，轮廓为直线斜边无台阶",
+            "unknown_reason": "",
+            "feature_ids": [
+              "cone_body"
+            ],
+            "affected_parameters": []
+          },
+          {
+            "id": "front.features",
+            "view": "front",
+            "area": "features",
+            "category": "geometry",
+            "status": "match",
+            "item": "单一回转体，无附加凸台、孔、槽",
+            "reference_evidence": "用户仅要求圆台，无其他特征",
+            "model_evidence": "front视图仅见一个连续梯形轮廓，无孔、无凸台、无切槽，表面为回转网格条纹",
+            "evidence": "模型特征数与文字要求一致，仅cone_body一个revolve加料特征，无切除特征",
+            "unknown_reason": "",
+            "feature_ids": [
+              "cone_body"
+            ],
+            "affected_parameters": []
+          },
+          {
+            "id": "iso.overall_shape",
+            "view": "iso",
+            "area": "overall_shape",
+            "category": "geometry",
+            "status": "match",
+            "item": "圆台整体形状与比例",
+            "reference_evidence": "无参考图，仅依据用户文字：底径80、顶径30、高60 的圆台",
+            "model_evidence": "iso 视图显示单个回转圆台，底面为较大椭圆、顶面为较小椭圆，侧面为直线母线，无其他特征",
+            "evidence": "模型底面直径与顶面直径之比约 80:30≈2.67，高度与底面直径之比 60:80=0.75，与用户文字一致；轮廓为直线锥面，符合圆台定义",
+            "feature_ids": [
+              "cone_body"
+            ],
+            "affected_parameters": []
+          },
+          {
+            "id": "iso.feature_layout",
+            "view": "iso",
+            "area": "feature_layout",
+            "category": "geometry",
+            "status": "match",
+            "item": "特征数量与布局",
+            "reference_evidence": "用户仅要求一个圆台回转体，无孔、槽、凸台等附加特征",
+            "model_evidence": "iso 视图仅见一个回转体，无孔、槽、台阶或附加凸台",
+            "evidence": "模型特征数与用户需求一致，均为单一圆台",
+            "feature_ids": [
+              "cone_body"
+            ],
+            "affected_parameters": []
+          },
+          {
+            "id": "iso.depth_relationships",
+            "view": "iso",
+            "area": "depth_relationships",
+            "category": "geometry",
+            "status": "match",
+            "item": "前后错层与贯穿关系",
+            "reference_evidence": "用户未要求任何前后错层或贯穿特征",
+            "model_evidence": "iso 视图为单一对称回转体，无错层、无贯穿孔",
+            "evidence": "无错层/贯穿需求，模型亦无此类特征，一致",
+            "feature_ids": [
+              "cone_body"
+            ],
+            "affected_parameters": []
+          }
+        ],
+        "issues": [],
+        "resolved_findings": [],
+        "questions": [],
+        "review_gaps": [],
+        "confidence": 0.9,
+        "single_view_reports": [
+          {
+            "view": "front",
+            "checks": [
+              {
+                "id": "front.outline",
+                "view": "front",
+                "area": "outline",
+                "category": "geometry",
+                "status": "match",
+                "item": "正视外轮廓为等腰梯形，底宽:高:顶宽 = 80:60:30",
+                "reference_evidence": "无参考图；用户文字要求底径80、顶径30、高60的圆台",
+                "model_evidence": "当前front视图显示等腰梯形，底边明显宽于顶边，底边约为顶边宽度的2.6~2.7倍，高宽比约60:80",
+                "evidence": "文字要求底径80/顶径30/高60，即正视投影底宽80、顶宽30、高60，比例1.333:1:0.5；模型视图底边:高:顶边比例与之一致，轮廓为直线斜边无台阶",
+                "unknown_reason": "",
+                "feature_ids": [
+                  "cone_body"
+                ],
+                "affected_parameters": []
+              },
+              {
+                "id": "front.features",
+                "view": "front",
+                "area": "features",
+                "category": "geometry",
+                "status": "match",
+                "item": "单一回转体，无附加凸台、孔、槽",
+                "reference_evidence": "用户仅要求圆台，无其他特征",
+                "model_evidence": "front视图仅见一个连续梯形轮廓，无孔、无凸台、无切槽，表面为回转网格条纹",
+                "evidence": "模型特征数与文字要求一致，仅cone_body一个revolve加料特征，无切除特征",
+                "unknown_reason": "",
+                "feature_ids": [
+                  "cone_body"
+                ],
+                "affected_parameters": []
+              }
+            ],
+            "issues": [],
+            "reference_images": [],
+            "confidence": 0.9
+          },
+          {
+            "view": "iso",
+            "checks": [
+              {
+                "id": "iso.overall_shape",
+                "view": "iso",
+                "area": "overall_shape",
+                "category": "geometry",
+                "status": "match",
+                "item": "圆台整体形状与比例",
+                "reference_evidence": "无参考图，仅依据用户文字：底径80、顶径30、高60 的圆台",
+                "model_evidence": "iso 视图显示单个回转圆台，底面为较大椭圆、顶面为较小椭圆，侧面为直线母线，无其他特征",
+                "evidence": "模型底面直径与顶面直径之比约 80:30≈2.67，高度与底面直径之比 60:80=0.75，与用户文字一致；轮廓为直线锥面，符合圆台定义",
+                "feature_ids": [
+                  "cone_body"
+                ],
+                "affected_parameters": []
+              },
+              {
+                "id": "iso.feature_layout",
+                "view": "iso",
+                "area": "feature_layout",
+                "category": "geometry",
+                "status": "match",
+                "item": "特征数量与布局",
+                "reference_evidence": "用户仅要求一个圆台回转体，无孔、槽、凸台等附加特征",
+                "model_evidence": "iso 视图仅见一个回转体，无孔、槽、台阶或附加凸台",
+                "evidence": "模型特征数与用户需求一致，均为单一圆台",
+                "feature_ids": [
+                  "cone_body"
+                ],
+                "affected_parameters": []
+              },
+              {
+                "id": "iso.depth_relationships",
+                "view": "iso",
+                "area": "depth_relationships",
+                "category": "geometry",
+                "status": "match",
+                "item": "前后错层与贯穿关系",
+                "reference_evidence": "用户未要求任何前后错层或贯穿特征",
+                "model_evidence": "iso 视图为单一对称回转体，无错层、无贯穿孔",
+                "evidence": "无错层/贯穿需求，模型亦无此类特征，一致",
+                "feature_ids": [
+                  "cone_body"
+                ],
+                "affected_parameters": []
+              }
+            ],
+            "issues": [],
+            "reference_images": [],
+            "confidence": 0.9
+          }
+        ],
+        "local_image_comparisons": [],
+        "plan": null
+      }
+    }
+  },
+  "construction_repairs": [],
+  "automatic_repairs": [],
+  "open_multiview_findings": [],
+  "plan": {
+    "schema_version": "1.0",
+    "name": "truncated_cone",
+    "source_prompt": "圆台 底径 80 顶径 30 高 60",
+    "units": {
+      "length": "mm",
+      "angle": "deg"
+    },
+    "coordinate_system": {
+      "type": "global_cartesian",
+      "handedness": "right",
+      "axes": [
+        "X",
+        "Y",
+        "Z"
+      ],
+      "origin": [
+        0,
+        0,
+        0
+      ]
+    },
+    "features": [
+      {
+        "id": "cone_body",
+        "kind": "revolve",
+        "operation": "add",
+        "name": "圆台主体",
+        "parameters": {
+          "profile": [
+            [
+              0,
+              0
+            ],
+            [
+              40,
+              0
+            ],
+            [
+              15,
+              60
+            ],
+            [
+              0,
+              60
+            ]
+          ],
+          "angle": 360,
+          "axis": "Z",
+          "center": [
+            0,
+            0,
+            0
+          ],
+          "segments": 64
+        },
+        "sources": {
+          "profile": {
+            "type": "user",
+            "evidence": "底径80→半径40，顶径30→半径15，高60"
+          },
+          "angle": {
+            "type": "user",
+            "evidence": "整周回转体"
+          },
+          "axis": {
+            "type": "derived",
+            "evidence": "圆台轴线取Z向"
+          },
+          "center": {
+            "type": "derived",
+            "evidence": "底面中心置于原点"
+          },
+          "segments": {
+            "type": "derived",
+            "evidence": "回转近似精度"
+          }
+        }
+      }
+    ],
+    "pending_questions": []
+  },
+  "validation": {
+    "valid": true,
+    "state": "valid",
+    "errors": [],
+    "confirmations": [],
+    "support": [
+      {
+        "feature_id": "cone_body",
+        "kind": "revolve",
+        "status": "approximate",
+        "reason": "当前用多层圆盘近似回转体。"
+      }
+    ],
+    "warnings": [
+      {
+        "code": "CATIA_APPROXIMATION",
+        "feature_id": "cone_body",
+        "kind": "revolve",
+        "message": "当前用多层圆盘近似回转体。"
+      }
+    ],
+    "schema_version": "1.0"
+  },
+  "preview": {
+    "state": "previewed",
+    "validation": {
+      "valid": true,
+      "state": "valid",
+      "errors": [],
+      "confirmations": [],
+      "support": [
+        {
+          "feature_id": "cone_body",
+          "kind": "revolve",
+          "status": "approximate",
+          "reason": "当前用多层圆盘近似回转体。"
+        }
+      ],
+      "warnings": [
+        {
+          "code": "CATIA_APPROXIMATION",
+          "feature_id": "cone_body",
+          "kind": "revolve",
+          "message": "当前用多层圆盘近似回转体。"
+        }
+      ],
+      "schema_version": "1.0"
+    },
+    "catia_executed": false,
+    "dimensions": {
+      "unit": "mm",
+      "bbox": [
+        -40.0,
+        -40.0,
+        0.0,
+        40.0,
+        40.0,
+        60.0
+      ],
+      "size": [
+        80.0,
+        80.0,
+        60.0
+      ],
+      "volume_mm3": 138008.1335840213,
+      "surface_area_mm2": 16243.16204917511,
+      "triangles": 192,
+      "feature_count": 1
+    },
+    "catia_operations": [
+      {
+        "index": 1,
+        "kind": "circle_pad",
+        "plane": "XY",
+        "center": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "profile": [],
+        "dimensions": {
+          "l": 0.0,
+          "w": 0.0,
+          "r": 39.479166666666664,
+          "h": 2.5,
+          "depth": 0.0
+        },
+        "name": "圆台主体",
+        "note": "回转体 360° (4 点轮廓)"
+      },
+      {
+        "index": 2,
+        "kind": "circle_pad",
+        "plane": "XY",
+        "center": [
+          0.0,
+          0.0,
+          2.5
+        ],
+        "profile": [],
+        "dimensions": {
+          "l": 0.0,
+          "w": 0.0,
+          "r": 38.4375,
+          "h": 2.5,
+          "depth": 0.0
+        },
+        "name": "圆台主体",
+        "note": "回转体 360° (4 点轮廓)"
+      },
+      {
+        "index": 3,
+        "kind": "circle_pad",
+        "plane": "XY",
+        "center": [
+          0.0,
+          0.0,
+          5.0
+        ],
+        "profile": [],
+        "dimensions": {
+          "l": 0.0,
+          "w": 0.0,
+          "r": 37.395833333333336,
+          "h": 2.5,
+          "depth": 0.0
+        },
+        "name": "圆台主体",
+        "note": "回转体 360° (4 点轮廓)"
+      },
+      {
+        "index": 4,
+        "kind": "circle_pad",
+        "plane": "XY",
+        "center": [
+          0.0,
+          0.0,
+          7.5
+        ],
+        "profile": [],
+        "dimensions": {
+          "l": 0.0,
+          "w": 0.0,
+          "r": 36.354166666666664,
+          "h": 2.5,
+          "depth": 0.0
+        },
+        "name": "圆台主体",
+        "note": "回转体 360° (4 点轮廓)"
+      },
+      {
+        "index": 5,
+        "kind": "circle_pad",
+        "plane": "XY",
+        "center": [
+          0.0,
+          0.0,
+          10.0
+        ],
+        "profile": [],
+        "dimensions": {
+          "l": 0.0,
+          "w": 0.0,
+          "r": 35.3125,
+          "h": 2.5,
+          "depth": 0.0
+        },
+        "name": "圆台主体",
+        "note": "回转体 360° (4 点轮廓)"
+      },
+      {
+        "index": 6,
+        "kind": "circle_pad",
+        "plane": "XY",
+        "center": [
+          0.0,
+          0.0,
+          12.5
+        ],
+        "profile": [],
+        "dimensions": {
+          "l": 0.0,
+          "w": 0.0,
+          "r": 34.270833333333336,
+          "h": 2.5,
+          "depth": 0.0
+        },
+        "name": "圆台主体",
+        "note": "回转体 360° (4 点轮廓)"
+      },
+      {
+        "index": 7,
+        "kind": "circle_pad",
+        "plane": "XY",
+        "center": [
+          0.0,
+          0.0,
+          15.0
+        ],
+        "profile": [],
+        "dimensions": {
+          "l": 0.0,
+          "w": 0.0,
+          "r": 33.229166666666664,
+          "h": 2.5,
+          "depth": 0.0
+        },
+        "name": "圆台主体",
+        "note": "回转体 360° (4 点轮廓)"
+      },
+      {
+        "index": 8,
+        "kind": "circle_pad",
+        "plane": "XY",
+        "center": [
+          0.0,
+          0.0,
+          17.5
+        ],
+        "profile": [],
+        "dimensions": {
+          "l": 0.0,
+          "w": 0.0,
+          "r": 32.1875,
+          "h": 2.5,
+          "depth": 0.0
+        },
+        "name": "圆台主体",
+        "note": "回转体 360° (4 点轮廓)"
+      },
+      {
+        "index": 9,
+        "kind": "circle_pad",
+        "plane": "XY",
+        "center": [
+          0.0,
+          0.0,
+          20.0
+        ],
+        "profile": [],
+        "dimensions": {
+          "l": 0.0,
+          "w": 0.0,
+          "r": 31.145833333333332,
+          "h": 2.5,
+          "depth": 0.0
+        },
+        "name": "圆台主体",
+        "note": "回转体 360° (4 点轮廓)"
+      },
+      {
+        "index": 10,
+        "kind": "circle_pad",
+        "plane": "XY",
+        "center": [
+          0.0,
+          0.0,
+          22.5
+        ],
+        "profile": [],
+        "dimensions": {
+          "l": 0.0,
+          "w": 0.0,
+          "r": 30.104166666666668,
+          "h": 2.5,
+          "depth": 0.0
+        },
+        "name": "圆台主体",
+        "note": "回转体 360° (4 点轮廓)"
+      },
+      {
+        "index": 11,
+        "kind": "circle_pad",
+        "plane": "XY",
+        "center": [
+          0.0,
+          0.0,
+          25.0
+        ],
+        "profile": [],
+        "dimensions": {
+          "l": 0.0,
+          "w": 0.0,
+          "r": 29.0625,
+          "h": 2.5,
+          "depth": 0.0
+        },
+        "name": "圆台主体",
+        "note": "回转体 360° (4 点轮廓)"
+      },
+      {
+        "index": 12,
+        "kind": "circle_pad",
+        "plane": "XY",
+        "center": [
+          0.0,
+          0.0,
+          27.5
+        ],
+        "profile": [],
+        "dimensions": {
+          "l": 0.0,
+          "w": 0.0,
+          "r": 28.020833333333332,
+          "h": 2.5,
+          "depth": 0.0
+        },
+        "name": "圆台主体",
+        "note": "回转体 360° (4 点轮廓)"
+      },
+      {
+        "index": 13,
+        "kind": "circle_pad",
+        "plane": "XY",
+        "center": [
+          0.0,
+          0.0,
+          30.0
+        ],
+        "profile": [],
+        "dimensions": {
+          "l": 0.0,
+          "w": 0.0,
+          "r": 26.979166666666664,
+          "h": 2.5,
+          "depth": 0.0
+        },
+        "name": "圆台主体",
+        "note": "回转体 360° (4 点轮廓)"
+      },
+      {
+        "index": 14,
+        "kind": "circle_pad",
+        "plane": "XY",
+        "center": [
+          0.0,
+          0.0,
+          32.5
+        ],
+        "profile": [],
+        "dimensions": {
+          "l": 0.0,
+          "w": 0.0,
+          "r": 25.9375,
+          "h": 2.5,
+          "depth": 0.0
+        },
+        "name": "圆台主体",
+        "note": "回转体 360° (4 点轮廓)"
+      },
+      {
+        "index": 15,
+        "kind": "circle_pad",
+        "plane": "XY",
+        "center": [
+          0.0,
+          0.0,
+          35.0
+        ],
+        "profile": [],
+        "dimensions": {
+          "l": 0.0,
+          "w": 0.0,
+          "r": 24.895833333333336,
+          "h": 2.5,
+          "depth": 0.0
+        },
+        "name": "圆台主体",
+        "note": "回转体 360° (4 点轮廓)"
+      },
+      {
+        "index": 16,
+        "kind": "circle_pad",
+        "plane": "XY",
+        "center": [
+          0.0,
+          0.0,
+          37.5
+        ],
+        "profile": [],
+        "dimensions": {
+          "l": 0.0,
+          "w": 0.0,
+          "r": 23.854166666666664,
+          "h": 2.5,
+          "depth": 0.0
+        },
+        "name": "圆台主体",
+        "note": "回转体 360° (4 点轮廓)"
+      },
+      {
+        "index": 17,
+        "kind": "circle_pad",
+        "plane": "XY",
+        "center": [
+          0.0,
+          0.0,
+          40.0
+        ],
+        "profile": [],
+        "dimensions": {
+          "l": 0.0,
+          "w": 0.0,
+          "r": 22.8125,
+          "h": 2.5,
+          "depth": 0.0
+        },
+        "name": "圆台主体",
+        "note": "回转体 360° (4 点轮廓)"
+      },
+      {
+        "index": 18,
+        "kind": "circle_pad",
+        "plane": "XY",
+        "center": [
+          0.0,
+          0.0,
+          42.5
+        ],
+        "profile": [],
+        "dimensions": {
+          "l": 0.0,
+          "w": 0.0,
+          "r": 21.770833333333336,
+          "h": 2.5,
+          "depth": 0.0
+        },
+        "name": "圆台主体",
+        "note": "回转体 360° (4 点轮廓)"
+      },
+      {
+        "index": 19,
+        "kind": "circle_pad",
+        "plane": "XY",
+        "center": [
+          0.0,
+          0.0,
+          45.0
+        ],
+        "profile": [],
+        "dimensions": {
+          "l": 0.0,
+          "w": 0.0,
+          "r": 20.729166666666664,
+          "h": 2.5,
+          "depth": 0.0
+        },
+        "name": "圆台主体",
+        "note": "回转体 360° (4 点轮廓)"
+      },
+      {
+        "index": 20,
+        "kind": "circle_pad",
+        "plane": "XY",
+        "center": [
+          0.0,
+          0.0,
+          47.5
+        ],
+        "profile": [],
+        "dimensions": {
+          "l": 0.0,
+          "w": 0.0,
+          "r": 19.6875,
+          "h": 2.5,
+          "depth": 0.0
+        },
+        "name": "圆台主体",
+        "note": "回转体 360° (4 点轮廓)"
+      },
+      {
+        "index": 21,
+        "kind": "circle_pad",
+        "plane": "XY",
+        "center": [
+          0.0,
+          0.0,
+          50.0
+        ],
+        "profile": [],
+        "dimensions": {
+          "l": 0.0,
+          "w": 0.0,
+          "r": 18.645833333333336,
+          "h": 2.5,
+          "depth": 0.0
+        },
+        "name": "圆台主体",
+        "note": "回转体 360° (4 点轮廓)"
+      },
+      {
+        "index": 22,
+        "kind": "circle_pad",
+        "plane": "XY",
+        "center": [
+          0.0,
+          0.0,
+          52.5
+        ],
+        "profile": [],
+        "dimensions": {
+          "l": 0.0,
+          "w": 0.0,
+          "r": 17.604166666666664,
+          "h": 2.5,
+          "depth": 0.0
+        },
+        "name": "圆台主体",
+        "note": "回转体 360° (4 点轮廓)"
+      },
+      {
+        "index": 23,
+        "kind": "circle_pad",
+        "plane": "XY",
+        "center": [
+          0.0,
+          0.0,
+          55.0
+        ],
+        "profile": [],
+        "dimensions": {
+          "l": 0.0,
+          "w": 0.0,
+          "r": 16.5625,
+          "h": 2.5,
+          "depth": 0.0
+        },
+        "name": "圆台主体",
+        "note": "回转体 360° (4 点轮廓)"
+      },
+      {
+        "index": 24,
+        "kind": "circle_pad",
+        "plane": "XY",
+        "center": [
+          0.0,
+          0.0,
+          57.5
+        ],
+        "profile": [],
+        "dimensions": {
+          "l": 0.0,
+          "w": 0.0,
+          "r": 15.520833333333336,
+          "h": 2.5,
+          "depth": 0.0
+        },
+        "name": "圆台主体",
+        "note": "回转体 360° (4 点轮廓)"
+      }
+    ],
+    "warnings": [
+      {
+        "code": "CATIA_APPROXIMATION",
+        "feature_id": "cone_body",
+        "kind": "revolve",
+        "message": "当前用多层圆盘近似回转体。"
+      },
+      {
+        "code": "CATIA_TRANSLATOR_NOTE",
+        "feature_id": null,
+        "kind": null,
+        "message": "回转体「回转体 360° (4 点轮廓)」用 24 层圆盘近似(旋转体 API 在这套 CATIA 里不可用)。",
+        "index": 0
+      }
+    ],
+    "feature_manifest": {
+      "cone_body": {
+        "kind": "revolve",
+        "operation": "add",
+        "name": "圆台主体",
+        "parameters": {
+          "profile": [
+            [
+              0,
+              0
+            ],
+            [
+              40,
+              0
+            ],
+            [
+              15,
+              60
+            ],
+            [
+              0,
+              60
+            ]
+          ],
+          "angle": 360,
+          "axis": "Z",
+          "center": [
+            0,
+            0,
+            0
+          ],
+          "segments": 64
+        },
+        "sources": {
+          "profile": {
+            "type": "user",
+            "evidence": "底径80→半径40，顶径30→半径15，高60"
+          },
+          "angle": {
+            "type": "user",
+            "evidence": "整周回转体"
+          },
+          "axis": {
+            "type": "derived",
+            "evidence": "圆台轴线取Z向"
+          },
+          "center": {
+            "type": "derived",
+            "evidence": "底面中心置于原点"
+          },
+          "segments": {
+            "type": "derived",
+            "evidence": "回转近似精度"
+          }
+        },
+        "relations": []
+      }
+    },
+    "build_log": [
+      "[基准] 回转体 360° (4 点轮廓) → 128 面"
+    ],
+    "local_geometry_checks": {
+      "state": "passed",
+      "source": "AI Modeler local mesh kernel",
+      "face_count": 128,
+      "bbox_size_mm": [
+        80.0,
+        80.0,
+        60.0
+      ],
+      "bbox_ratios_from_mesh": {
+        "front_width_height": 1.3333333333333333,
+        "depth_height": 1.3333333333333333,
+        "top_width_depth": 1.0
+      },
+      "feature_count_from_plan": 1,
+      "feature_ids_from_plan": [
+        "cone_body"
+      ],
+      "nonfinite_face_count": 0,
+      "degenerate_face_count": 0,
+      "hole_features_from_plan": [],
+      "through_hole_mesh_checks": [],
+      "hole_visibility": "requires_multimodal_view_review",
+      "through_hole_result": "not_measured"
+    },
+    "orthographic_layout": {
+      "unit": "mm",
+      "axes": {
+        "length": "X",
+        "width": "Y",
+        "height": "Z"
+      },
+      "uniform_scale_across_views": true,
+      "scale_pixels_per_mm": 2.665,
+      "tile_size_pixels": [
+        330,
+        260
+      ],
+      "view_extents": {
+        "front": {
+          "horizontal_axis": "X",
+          "horizontal": 80.0,
+          "vertical_axis": "Z",
+          "vertical": 60.0
+        },
+        "right": {
+          "horizontal_axis": "Y",
+          "horizontal": 80.0,
+          "vertical_axis": "Z",
+          "vertical": 60.0
+        },
+        "top": {
+          "horizontal_axis": "X",
+          "horizontal": 80.0,
+          "vertical_axis": "Y",
+          "vertical": 80.0
+        }
+      },
+      "dimension_ratios": {
+        "length_to_height": 1.3333333333333333,
+        "width_to_height": 1.3333333333333333,
+        "length_to_width": 1.0
+      }
+    },
+    "preview_image": "candidate-preview.png",
+    "preview_image_views": [
+      "iso"
+    ],
+    "preview_image_view_set": "iso",
+    "preview_image_grid_columns": 1,
+    "preview_image_source": "AI Modeler local mesh kernel; not CATIA B-Rep",
+    "preview_image_layout": {
+      "unit": "mm",
+      "axes": {
+        "length": "X",
+        "width": "Y",
+        "height": "Z"
+      },
+      "uniform_scale_across_views": true,
+      "scale_pixels_per_mm": 2.665,
+      "tile_size_pixels": [
+        330,
+        260
+      ],
+      "view_extents": {
+        "front": {
+          "horizontal_axis": "X",
+          "horizontal": 80.0,
+          "vertical_axis": "Z",
+          "vertical": 60.0
+        },
+        "right": {
+          "horizontal_axis": "Y",
+          "horizontal": 80.0,
+          "vertical_axis": "Z",
+          "vertical": 60.0
+        },
+        "top": {
+          "horizontal_axis": "X",
+          "horizontal": 80.0,
+          "vertical_axis": "Y",
+          "vertical": 80.0
+        }
+      },
+      "dimension_ratios": {
+        "length_to_height": 1.3333333333333333,
+        "width_to_height": 1.3333333333333333,
+        "length_to_width": 1.0
+      }
+    }
+  },
+  "output_paths": {
+    "aimodel": "C:\\Users\\lycohana\\Desktop\\code\\AI-_-\\artifacts\\agentloop\\20260926-040012-1f5d739b\\candidate.aimodel",
+    "stl": "C:\\Users\\lycohana\\Desktop\\code\\AI-_-\\artifacts\\agentloop\\20260926-040012-1f5d739b\\candidate.stl",
+    "preview": "C:\\Users\\lycohana\\Desktop\\code\\AI-_-\\artifacts\\agentloop\\20260926-040012-1f5d739b\\candidate-preview.png"
+  },
+  "output_warning": null,
+  "dimension_assumptions": [],
+  "local_geometry_checks": {
+    "state": "passed",
+    "source": "AI Modeler local mesh kernel",
+    "face_count": 128,
+    "bbox_size_mm": [
+      80.0,
+      80.0,
+      60.0
+    ],
+    "bbox_ratios_from_mesh": {
+      "front_width_height": 1.3333333333333333,
+      "depth_height": 1.3333333333333333,
+      "top_width_depth": 1.0
+    },
+    "feature_count_from_plan": 1,
+    "feature_ids_from_plan": [
+      "cone_body"
+    ],
+    "nonfinite_face_count": 0,
+    "degenerate_face_count": 0,
+    "hole_features_from_plan": [],
+    "through_hole_mesh_checks": [],
+    "hole_visibility": "requires_multimodal_view_review",
+    "through_hole_result": "not_measured"
+  },
+  "multiview_review": {
+    "decision": "accept",
+    "checks": [
+      {
+        "id": "front.outline",
+        "view": "front",
+        "area": "outline",
+        "category": "geometry",
+        "status": "match",
+        "item": "正视外轮廓为等腰梯形，底宽:高:顶宽 = 80:60:30",
+        "reference_evidence": "无参考图；用户文字要求底径80、顶径30、高60的圆台",
+        "model_evidence": "当前front视图显示等腰梯形，底边明显宽于顶边，底边约为顶边宽度的2.6~2.7倍，高宽比约60:80",
+        "evidence": "文字要求底径80/顶径30/高60，即正视投影底宽80、顶宽30、高60，比例1.333:1:0.5；模型视图底边:高:顶边比例与之一致，轮廓为直线斜边无台阶",
+        "unknown_reason": "",
+        "feature_ids": [
+          "cone_body"
+        ],
+        "affected_parameters": []
+      },
+      {
+        "id": "front.features",
+        "view": "front",
+        "area": "features",
+        "category": "geometry",
+        "status": "match",
+        "item": "单一回转体，无附加凸台、孔、槽",
+        "reference_evidence": "用户仅要求圆台，无其他特征",
+        "model_evidence": "front视图仅见一个连续梯形轮廓，无孔、无凸台、无切槽，表面为回转网格条纹",
+        "evidence": "模型特征数与文字要求一致，仅cone_body一个revolve加料特征，无切除特征",
+        "unknown_reason": "",
+        "feature_ids": [
+          "cone_body"
+        ],
+        "affected_parameters": []
+      },
+      {
+        "id": "iso.overall_shape",
+        "view": "iso",
+        "area": "overall_shape",
+        "category": "geometry",
+        "status": "match",
+        "item": "圆台整体形状与比例",
+        "reference_evidence": "无参考图，仅依据用户文字：底径80、顶径30、高60 的圆台",
+        "model_evidence": "iso 视图显示单个回转圆台，底面为较大椭圆、顶面为较小椭圆，侧面为直线母线，无其他特征",
+        "evidence": "模型底面直径与顶面直径之比约 80:30≈2.67，高度与底面直径之比 60:80=0.75，与用户文字一致；轮廓为直线锥面，符合圆台定义",
+        "feature_ids": [
+          "cone_body"
+        ],
+        "affected_parameters": []
+      },
+      {
+        "id": "iso.feature_layout",
+        "view": "iso",
+        "area": "feature_layout",
+        "category": "geometry",
+        "status": "match",
+        "item": "特征数量与布局",
+        "reference_evidence": "用户仅要求一个圆台回转体，无孔、槽、凸台等附加特征",
+        "model_evidence": "iso 视图仅见一个回转体，无孔、槽、台阶或附加凸台",
+        "evidence": "模型特征数与用户需求一致，均为单一圆台",
+        "feature_ids": [
+          "cone_body"
+        ],
+        "affected_parameters": []
+      },
+      {
+        "id": "iso.depth_relationships",
+        "view": "iso",
+        "area": "depth_relationships",
+        "category": "geometry",
+        "status": "match",
+        "item": "前后错层与贯穿关系",
+        "reference_evidence": "用户未要求任何前后错层或贯穿特征",
+        "model_evidence": "iso 视图为单一对称回转体，无错层、无贯穿孔",
+        "evidence": "无错层/贯穿需求，模型亦无此类特征，一致",
+        "feature_ids": [
+          "cone_body"
+        ],
+        "affected_parameters": []
+      }
+    ],
+    "issues": [],
+    "resolved_findings": [],
+    "questions": [],
+    "review_gaps": [],
+    "confidence": 0.9,
+    "single_view_reports": [
+      {
+        "view": "front",
+        "checks": [
+          {
+            "id": "front.outline",
+            "view": "front",
+            "area": "outline",
+            "category": "geometry",
+            "status": "match",
+            "item": "正视外轮廓为等腰梯形，底宽:高:顶宽 = 80:60:30",
+            "reference_evidence": "无参考图；用户文字要求底径80、顶径30、高60的圆台",
+            "model_evidence": "当前front视图显示等腰梯形，底边明显宽于顶边，底边约为顶边宽度的2.6~2.7倍，高宽比约60:80",
+            "evidence": "文字要求底径80/顶径30/高60，即正视投影底宽80、顶宽30、高60，比例1.333:1:0.5；模型视图底边:高:顶边比例与之一致，轮廓为直线斜边无台阶",
+            "unknown_reason": "",
+            "feature_ids": [
+              "cone_body"
+            ],
+            "affected_parameters": []
+          },
+          {
+            "id": "front.features",
+            "view": "front",
+            "area": "features",
+            "category": "geometry",
+            "status": "match",
+            "item": "单一回转体，无附加凸台、孔、槽",
+            "reference_evidence": "用户仅要求圆台，无其他特征",
+            "model_evidence": "front视图仅见一个连续梯形轮廓，无孔、无凸台、无切槽，表面为回转网格条纹",
+            "evidence": "模型特征数与文字要求一致，仅cone_body一个revolve加料特征，无切除特征",
+            "unknown_reason": "",
+            "feature_ids": [
+              "cone_body"
+            ],
+            "affected_parameters": []
+          }
+        ],
+        "issues": [],
+        "reference_images": [],
+        "confidence": 0.9
+      },
+      {
+        "view": "iso",
+        "checks": [
+          {
+            "id": "iso.overall_shape",
+            "view": "iso",
+            "area": "overall_shape",
+            "category": "geometry",
+            "status": "match",
+            "item": "圆台整体形状与比例",
+            "reference_evidence": "无参考图，仅依据用户文字：底径80、顶径30、高60 的圆台",
+            "model_evidence": "iso 视图显示单个回转圆台，底面为较大椭圆、顶面为较小椭圆，侧面为直线母线，无其他特征",
+            "evidence": "模型底面直径与顶面直径之比约 80:30≈2.67，高度与底面直径之比 60:80=0.75，与用户文字一致；轮廓为直线锥面，符合圆台定义",
+            "feature_ids": [
+              "cone_body"
+            ],
+            "affected_parameters": []
+          },
+          {
+            "id": "iso.feature_layout",
+            "view": "iso",
+            "area": "feature_layout",
+            "category": "geometry",
+            "status": "match",
+            "item": "特征数量与布局",
+            "reference_evidence": "用户仅要求一个圆台回转体，无孔、槽、凸台等附加特征",
+            "model_evidence": "iso 视图仅见一个回转体，无孔、槽、台阶或附加凸台",
+            "evidence": "模型特征数与用户需求一致，均为单一圆台",
+            "feature_ids": [
+              "cone_body"
+            ],
+            "affected_parameters": []
+          },
+          {
+            "id": "iso.depth_relationships",
+            "view": "iso",
+            "area": "depth_relationships",
+            "category": "geometry",
+            "status": "match",
+            "item": "前后错层与贯穿关系",
+            "reference_evidence": "用户未要求任何前后错层或贯穿特征",
+            "model_evidence": "iso 视图为单一对称回转体，无错层、无贯穿孔",
+            "evidence": "无错层/贯穿需求，模型亦无此类特征，一致",
+            "feature_ids": [
+              "cone_body"
+            ],
+            "affected_parameters": []
+          }
+        ],
+        "issues": [],
+        "reference_images": [],
+        "confidence": 0.9
+      }
+    ],
+    "local_image_comparisons": [],
+    "plan": null
+  },
+  "similarity_review": null,
+  "review_history": [
+    {
+      "review_type": "geometry",
+      "geometry_fingerprint": "{\"coordinate_system\":{\"axes\":[\"X\",\"Y\",\"Z\"],\"handedness\":\"right\",\"origin\":[0,0,0],\"type\":\"global_cartesian\"},\"features\":[{\"geometry\":\"{\\\"kind\\\":\\\"revolve\\\",\\\"operation\\\":\\\"add\\\",\\\"parameters\\\":{\\\"angle\\\":360,\\\"axis\\\":\\\"Z\\\",\\\"center\\\":[0,0,0],\\\"profile\\\":[[0,0],[40,0],[15,60],[0,60]],\\\"segments\\\":64}}\",\"id\":\"cone_body\"}],\"units\":{\"angle\":\"deg\",\"length\":\"mm\"}}",
+      "invocation": 1,
+      "views": [
+        "front",
+        "iso"
+      ],
+      "result": {
+        "decision": "accept",
+        "checks": [
+          {
+            "id": "front.outline",
+            "view": "front",
+            "area": "outline",
+            "category": "geometry",
+            "status": "match",
+            "item": "正视外轮廓为等腰梯形，底宽:高:顶宽 = 80:60:30",
+            "reference_evidence": "无参考图；用户文字要求底径80、顶径30、高60的圆台",
+            "model_evidence": "当前front视图显示等腰梯形，底边明显宽于顶边，底边约为顶边宽度的2.6~2.7倍，高宽比约60:80",
+            "evidence": "文字要求底径80/顶径30/高60，即正视投影底宽80、顶宽30、高60，比例1.333:1:0.5；模型视图底边:高:顶边比例与之一致，轮廓为直线斜边无台阶",
+            "unknown_reason": "",
+            "feature_ids": [
+              "cone_body"
+            ],
+            "affected_parameters": []
+          },
+          {
+            "id": "front.features",
+            "view": "front",
+            "area": "features",
+            "category": "geometry",
+            "status": "match",
+            "item": "单一回转体，无附加凸台、孔、槽",
+            "reference_evidence": "用户仅要求圆台，无其他特征",
+            "model_evidence": "front视图仅见一个连续梯形轮廓，无孔、无凸台、无切槽，表面为回转网格条纹",
+            "evidence": "模型特征数与文字要求一致，仅cone_body一个revolve加料特征，无切除特征",
+            "unknown_reason": "",
+            "feature_ids": [
+              "cone_body"
+            ],
+            "affected_parameters": []
+          },
+          {
+            "id": "iso.overall_shape",
+            "view": "iso",
+            "area": "overall_shape",
+            "category": "geometry",
+            "status": "match",
+            "item": "圆台整体形状与比例",
+            "reference_evidence": "无参考图，仅依据用户文字：底径80、顶径30、高60 的圆台",
+            "model_evidence": "iso 视图显示单个回转圆台，底面为较大椭圆、顶面为较小椭圆，侧面为直线母线，无其他特征",
+            "evidence": "模型底面直径与顶面直径之比约 80:30≈2.67，高度与底面直径之比 60:80=0.75，与用户文字一致；轮廓为直线锥面，符合圆台定义",
+            "feature_ids": [
+              "cone_body"
+            ],
+            "affected_parameters": []
+          },
+          {
+            "id": "iso.feature_layout",
+            "view": "iso",
+            "area": "feature_layout",
+            "category": "geometry",
+            "status": "match",
+            "item": "特征数量与布局",
+            "reference_evidence": "用户仅要求一个圆台回转体，无孔、槽、凸台等附加特征",
+            "model_evidence": "iso 视图仅见一个回转体，无孔、槽、台阶或附加凸台",
+            "evidence": "模型特征数与用户需求一致，均为单一圆台",
+            "feature_ids": [
+              "cone_body"
+            ],
+            "affected_parameters": []
+          },
+          {
+            "id": "iso.depth_relationships",
+            "view": "iso",
+            "area": "depth_relationships",
+            "category": "geometry",
+            "status": "match",
+            "item": "前后错层与贯穿关系",
+            "reference_evidence": "用户未要求任何前后错层或贯穿特征",
+            "model_evidence": "iso 视图为单一对称回转体，无错层、无贯穿孔",
+            "evidence": "无错层/贯穿需求，模型亦无此类特征，一致",
+            "feature_ids": [
+              "cone_body"
+            ],
+            "affected_parameters": []
+          }
+        ],
+        "issues": [],
+        "resolved_findings": [],
+        "questions": [],
+        "review_gaps": [],
+        "confidence": 0.9,
+        "single_view_reports": [
+          {
+            "view": "front",
+            "checks": [
+              {
+                "id": "front.outline",
+                "view": "front",
+                "area": "outline",
+                "category": "geometry",
+                "status": "match",
+                "item": "正视外轮廓为等腰梯形，底宽:高:顶宽 = 80:60:30",
+                "reference_evidence": "无参考图；用户文字要求底径80、顶径30、高60的圆台",
+                "model_evidence": "当前front视图显示等腰梯形，底边明显宽于顶边，底边约为顶边宽度的2.6~2.7倍，高宽比约60:80",
+                "evidence": "文字要求底径80/顶径30/高60，即正视投影底宽80、顶宽30、高60，比例1.333:1:0.5；模型视图底边:高:顶边比例与之一致，轮廓为直线斜边无台阶",
+                "unknown_reason": "",
+                "feature_ids": [
+                  "cone_body"
+                ],
+                "affected_parameters": []
+              },
+              {
+                "id": "front.features",
+                "view": "front",
+                "area": "features",
+                "category": "geometry",
+                "status": "match",
+                "item": "单一回转体，无附加凸台、孔、槽",
+                "reference_evidence": "用户仅要求圆台，无其他特征",
+                "model_evidence": "front视图仅见一个连续梯形轮廓，无孔、无凸台、无切槽，表面为回转网格条纹",
+                "evidence": "模型特征数与文字要求一致，仅cone_body一个revolve加料特征，无切除特征",
+                "unknown_reason": "",
+                "feature_ids": [
+                  "cone_body"
+                ],
+                "affected_parameters": []
+              }
+            ],
+            "issues": [],
+            "reference_images": [],
+            "confidence": 0.9
+          },
+          {
+            "view": "iso",
+            "checks": [
+              {
+                "id": "iso.overall_shape",
+                "view": "iso",
+                "area": "overall_shape",
+                "category": "geometry",
+                "status": "match",
+                "item": "圆台整体形状与比例",
+                "reference_evidence": "无参考图，仅依据用户文字：底径80、顶径30、高60 的圆台",
+                "model_evidence": "iso 视图显示单个回转圆台，底面为较大椭圆、顶面为较小椭圆，侧面为直线母线，无其他特征",
+                "evidence": "模型底面直径与顶面直径之比约 80:30≈2.67，高度与底面直径之比 60:80=0.75，与用户文字一致；轮廓为直线锥面，符合圆台定义",
+                "feature_ids": [
+                  "cone_body"
+                ],
+                "affected_parameters": []
+              },
+              {
+                "id": "iso.feature_layout",
+                "view": "iso",
+                "area": "feature_layout",
+                "category": "geometry",
+                "status": "match",
+                "item": "特征数量与布局",
+                "reference_evidence": "用户仅要求一个圆台回转体，无孔、槽、凸台等附加特征",
+                "model_evidence": "iso 视图仅见一个回转体，无孔、槽、台阶或附加凸台",
+                "evidence": "模型特征数与用户需求一致，均为单一圆台",
+                "feature_ids": [
+                  "cone_body"
+                ],
+                "affected_parameters": []
+              },
+              {
+                "id": "iso.depth_relationships",
+                "view": "iso",
+                "area": "depth_relationships",
+                "category": "geometry",
+                "status": "match",
+                "item": "前后错层与贯穿关系",
+                "reference_evidence": "用户未要求任何前后错层或贯穿特征",
+                "model_evidence": "iso 视图为单一对称回转体，无错层、无贯穿孔",
+                "evidence": "无错层/贯穿需求，模型亦无此类特征，一致",
+                "feature_ids": [
+                  "cone_body"
+                ],
+                "affected_parameters": []
+              }
+            ],
+            "issues": [],
+            "reference_images": [],
+            "confidence": 0.9
+          }
+        ],
+        "local_image_comparisons": [],
+        "plan": null
+      }
+    }
+  ],
+  "questions": [],
+  "reply": "已按文字尺寸建立圆台：底径 80（半径 40）、顶径 30（半径 15）、高 60，轴线沿 Z，底面中心在原点。单一回转体特征 cone_body，校验通过，正视轮廓为底宽 80、顶宽 30、高 60 的等腰梯形，无附加孔槽。无参考图，故仅做文字尺寸对照。\n\n本地模型外形尺寸：80.00 × 80.00 × 60.00 mm。图像估算参数：0 项。",
+  "tool_trace": [
+    {
+      "phase": "agent_loop",
+      "tool": "cad_get_feature_spec",
+      "arguments": {
+        "kind": "revolve"
+      },
+      "result": {
+        "state": "ok",
+        "kind": "revolve",
+        "spec": {
+          "required": [
+            "profile",
+            "angle"
+          ],
+          "params": [
+            "profile",
+            "angle",
+            "center",
+            "axis",
+            "segments"
+          ],
+          "status": "approximate",
+          "reason": "当前用多层圆盘近似回转体。"
+        },
+        "feature_schema": {
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": "string",
+              "minLength": 1
+            },
+            "kind": {
+              "const": "revolve",
+              "x-catia-support-status": "approximate",
+              "x-catia-support-note": "当前用多层圆盘近似回转体。"
+            },
+            "operation": {
+              "type": "string",
+              "enum": [
+                "add",
+                "cut"
+              ]
+            },
+            "name": {
+              "type": "string"
+            },
+            "note": {
+              "type": "string"
+            },
+            "parameters": {
+              "type": "object",
+              "properties": {
+                "profile": {
+                  "type": "array",
+                  "minItems": 3,
+                  "items": {
+                    "type": "array",
+                    "prefixItems": [
+                      {
+                        "type": "number"
+                      },
+                      {
+                        "type": "number"
+                      }
+                    ],
+                    "minItems": 2,
+                    "maxItems": 2,
+                    "items": false
+                  }
+                },
+                "angle": {
+                  "type": "number"
+                },
+                "center": {
+                  "type": "array",
+                  "prefixItems": [
+                    {
+                      "type": "number"
+                    },
+                    {
+                      "type": "number"
+                    },
+                    {
+                      "type": "number"
+                    }
+                  ],
+                  "minItems": 3,
+                  "maxItems": 3,
+                  "items": false
+                },
+                "axis": {
+                  "type": "string",
+                  "enum": [
+                    "X",
+                    "Y",
+                    "Z"
+                  ]
+                },
+                "segments": {
+                  "type": "integer",
+                  "minimum": 3
+                }
+              },
+              "additionalProperties": false,
+              "required": [
+                "profile",
+                "angle"
+              ]
+            },
+            "sources": {
+              "type": "object",
+              "propertyNames": {
+                "enum": [
+                  "profile",
+                  "angle",
+                  "center",
+                  "axis",
+                  "segments"
+                ]
+              },
+              "additionalProperties": {
+                "$ref": "#/$defs/source"
+              }
+            },
+            "relations": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/relation"
+              }
+            }
+          },
+          "required": [
+            "id",
+            "kind",
+            "operation",
+            "parameters",
+            "sources"
+          ],
+          "additionalProperties": false,
+          "allOf": [
+            {
+              "if": {
+                "required": [
+                  "parameters"
+                ],
+                "properties": {
+                  "parameters": {
+                    "required": [
+                      "angle"
+                    ]
+                  }
+                }
+              },
+              "then": {
+                "required": [
+                  "sources"
+                ],
+                "properties": {
+                  "sources": {
+                    "required": [
+                      "angle"
+                    ]
+                  }
+                }
+              }
+            },
+            {
+              "if": {
+                "required": [
+                  "parameters"
+                ],
+                "properties": {
+                  "parameters": {
+                    "required": [
+                      "center"
+                    ]
+                  }
+                }
+              },
+              "then": {
+                "required": [
+                  "sources"
+                ],
+                "properties": {
+                  "sources": {
+                    "required": [
+                      "center"
+                    ]
+                  }
+                }
+              }
+            },
+            {
+              "if": {
+                "required": [
+                  "parameters"
+                ],
+                "properties": {
+                  "parameters": {
+                    "required": [
+                      "profile"
+                    ]
+                  }
+                }
+              },
+              "then": {
+                "required": [
+                  "sources"
+                ],
+                "properties": {
+                  "sources": {
+                    "required": [
+                      "profile"
+                    ]
+                  }
+                }
+              }
+            },
+            {
+              "if": {
+                "required": [
+                  "parameters"
+                ],
+                "properties": {
+                  "parameters": {
+                    "required": [
+                      "segments"
+                    ]
+                  }
+                }
+              },
+              "then": {
+                "required": [
+                  "sources"
+                ],
+                "properties": {
+                  "sources": {
+                    "required": [
+                      "segments"
+                    ]
+                  }
+                }
+              }
+            }
+          ]
+        },
+        "note": "提交时由 CADPlan SDK 检查条件必需参数和来源。"
+      },
+      "result_summary": "ok"
+    },
+    {
+      "phase": "agent_loop",
+      "tool": "cad_create_model",
+      "arguments": {
+        "name": "truncated_cone",
+        "first_feature": {
+          "id": "cone_body",
+          "kind": "revolve",
+          "operation": "add",
+          "name": "圆台主体",
+          "parameters": {
+            "profile": [
+              [
+                0,
+                0
+              ],
+              [
+                40,
+                0
+              ],
+              [
+                15,
+                60
+              ],
+              [
+                0,
+                60
+              ]
+            ],
+            "angle": 360,
+            "axis": "Z",
+            "center": [
+              0,
+              0,
+              0
+            ],
+            "segments": 64
+          },
+          "sources": {
+            "profile": {
+              "type": "user",
+              "evidence": "底径80→半径40，顶径30→半径15，高60"
+            },
+            "angle": {
+              "type": "user",
+              "evidence": "整周回转体"
+            },
+            "axis": {
+              "type": "derived",
+              "evidence": "圆台轴线取Z向"
+            },
+            "center": {
+              "type": "derived",
+              "evidence": "底面中心置于原点"
+            },
+            "segments": {
+              "type": "derived",
+              "evidence": "回转近似精度"
+            }
+          }
+        }
+      },
+      "result": {
+        "state": "valid",
+        "revision": 1,
+        "geometry_fingerprint": "{\"coordinate_system\":{\"axes\":[\"X\",\"Y\",\"Z\"],\"handedness\":\"right\",\"origin\":[0,0,0],\"type\":\"global_cartesian\"},\"features\":[{\"geometry\":\"{\\\"kind\\\":\\\"revolve\\\",\\\"operation\\\":\\\"add\\\",\\\"parameters\\\":{\\\"angle\\\":360,\\\"axis\\\":\\\"Z\\\",\\\"center\\\":[0,0,0],\\\"profile\\\":[[0,0],[40,0],[15,60],[0,60]],\\\"segments\\\":64}}\",\"id\":\"cone_body\"}],\"units\":{\"angle\":\"deg\",\"length\":\"mm\"}}",
+        "feature_count": 1,
+        "validation": {
+          "valid": true,
+          "state": "valid",
+          "errors": [],
+          "confirmations": [],
+          "support": [
+            {
+              "feature_id": "cone_body",
+              "kind": "revolve",
+              "status": "approximate",
+              "reason": "当前用多层圆盘近似回转体。"
+            }
+          ],
+          "warnings": [
+            {
+              "code": "CATIA_APPROXIMATION",
+              "feature_id": "cone_body",
+              "kind": "revolve",
+              "message": "当前用多层圆盘近似回转体。"
+            }
+          ],
+          "schema_version": "1.0"
+        },
+        "preview": {
+          "state": "previewed",
+          "geometry_fingerprint": "{\"coordinate_system\":{\"axes\":[\"X\",\"Y\",\"Z\"],\"handedness\":\"right\",\"origin\":[0,0,0],\"type\":\"global_cartesian\"},\"features\":[{\"geometry\":\"{\\\"kind\\\":\\\"revolve\\\",\\\"operation\\\":\\\"add\\\",\\\"parameters\\\":{\\\"angle\\\":360,\\\"axis\\\":\\\"Z\\\",\\\"center\\\":[0,0,0],\\\"profile\\\":[[0,0],[40,0],[15,60],[0,60]],\\\"segments\\\":64}}\",\"id\":\"cone_body\"}],\"units\":{\"angle\":\"deg\",\"length\":\"mm\"}}",
+          "preview_image": "candidate-preview.png",
+          "view_set": "iso",
+          "views": [
+            "iso"
+          ],
+          "dimensions": {
+            "unit": "mm",
+            "bbox": [
+              -40.0,
+              -40.0,
+              0.0,
+              40.0,
+              40.0,
+              60.0
+            ],
+            "size": [
+              80.0,
+              80.0,
+              60.0
+            ],
+            "volume_mm3": 138008.1335840213,
+            "surface_area_mm2": 16243.16204917511,
+            "triangles": 192,
+            "feature_count": 1
+          },
+          "local_geometry_checks": {
+            "state": "passed",
+            "source": "AI Modeler local mesh kernel",
+            "face_count": 128,
+            "bbox_size_mm": [
+              80.0,
+              80.0,
+              60.0
+            ],
+            "bbox_ratios_from_mesh": {
+              "front_width_height": 1.3333333333333333,
+              "depth_height": 1.3333333333333333,
+              "top_width_depth": 1.0
+            },
+            "feature_count_from_plan": 1,
+            "feature_ids_from_plan": [
+              "cone_body"
+            ],
+            "nonfinite_face_count": 0,
+            "degenerate_face_count": 0,
+            "hole_features_from_plan": [],
+            "through_hole_mesh_checks": [],
+            "hole_visibility": "requires_multimodal_view_review",
+            "through_hole_result": "not_measured"
+          },
+          "warnings": [
+            {
+              "code": "CATIA_APPROXIMATION",
+              "feature_id": "cone_body",
+              "kind": "revolve",
+              "message": "当前用多层圆盘近似回转体。"
+            },
+            {
+              "code": "CATIA_TRANSLATOR_NOTE",
+              "feature_id": null,
+              "kind": null,
+              "message": "回转体「回转体 360° (4 点轮廓)」用 24 层圆盘近似(旋转体 API 在这套 CATIA 里不可用)。",
+              "index": 0
+            }
+          ],
+          "catia_executed": false,
+          "next_step_hint": "当前预览已展示，作为逐特征建模进度。若还有几何特征未完成，只追加下一个特征并刷新预览；全部特征完成后再做最终多视图复核。"
+        }
+      },
+      "result_summary": "valid"
+    },
+    {
+      "phase": "agent_loop",
+      "tool": "cad_review_model",
+      "arguments": {
+        "review_type": "geometry",
+        "views": [
+          "front",
+          "iso"
+        ]
+      },
+      "result": {
+        "state": "accept",
+        "review_type": "geometry",
+        "geometry_fingerprint": "{\"coordinate_system\":{\"axes\":[\"X\",\"Y\",\"Z\"],\"handedness\":\"right\",\"origin\":[0,0,0],\"type\":\"global_cartesian\"},\"features\":[{\"geometry\":\"{\\\"kind\\\":\\\"revolve\\\",\\\"operation\\\":\\\"add\\\",\\\"parameters\\\":{\\\"angle\\\":360,\\\"axis\\\":\\\"Z\\\",\\\"center\\\":[0,0,0],\\\"profile\\\":[[0,0],[40,0],[15,60],[0,60]],\\\"segments\\\":64}}\",\"id\":\"cone_body\"}],\"units\":{\"angle\":\"deg\",\"length\":\"mm\"}}",
+        "reviewed_views": [
+          "front",
+          "iso"
+        ],
+        "reviewed_view_status": {
+          "front": "not_comparable",
+          "iso": "not_comparable"
+        },
+        "local_image_comparisons": [],
+        "checks": [
+          {
+            "id": "front.outline",
+            "view": "front",
+            "area": "outline",
+            "category": "geometry",
+            "status": "match",
+            "item": "正视外轮廓为等腰梯形，底宽:高:顶宽 = 80:60:30",
+            "reference_evidence": "无参考图；用户文字要求底径80、顶径30、高60的圆台",
+            "model_evidence": "当前front视图显示等腰梯形，底边明显宽于顶边，底边约为顶边宽度的2.6~2.7倍，高宽比约60:80",
+            "evidence": "文字要求底径80/顶径30/高60，即正视投影底宽80、顶宽30、高60，比例1.333:1:0.5；模型视图底边:高:顶边比例与之一致，轮廓为直线斜边无台阶",
+            "unknown_reason": "",
+            "feature_ids": [
+              "cone_body"
+            ],
+            "affected_parameters": []
+          },
+          {
+            "id": "front.features",
+            "view": "front",
+            "area": "features",
+            "category": "geometry",
+            "status": "match",
+            "item": "单一回转体，无附加凸台、孔、槽",
+            "reference_evidence": "用户仅要求圆台，无其他特征",
+            "model_evidence": "front视图仅见一个连续梯形轮廓，无孔、无凸台、无切槽，表面为回转网格条纹",
+            "evidence": "模型特征数与文字要求一致，仅cone_body一个revolve加料特征，无切除特征",
+            "unknown_reason": "",
+            "feature_ids": [
+              "cone_body"
+            ],
+            "affected_parameters": []
+          },
+          {
+            "id": "iso.overall_shape",
+            "view": "iso",
+            "area": "overall_shape",
+            "category": "geometry",
+            "status": "match",
+            "item": "圆台整体形状与比例",
+            "reference_evidence": "无参考图，仅依据用户文字：底径80、顶径30、高60 的圆台",
+            "model_evidence": "iso 视图显示单个回转圆台，底面为较大椭圆、顶面为较小椭圆，侧面为直线母线，无其他特征",
+            "evidence": "模型底面直径与顶面直径之比约 80:30≈2.67，高度与底面直径之比 60:80=0.75，与用户文字一致；轮廓为直线锥面，符合圆台定义",
+            "feature_ids": [
+              "cone_body"
+            ],
+            "affected_parameters": []
+          },
+          {
+            "id": "iso.feature_layout",
+            "view": "iso",
+            "area": "feature_layout",
+            "category": "geometry",
+            "status": "match",
+            "item": "特征数量与布局",
+            "reference_evidence": "用户仅要求一个圆台回转体，无孔、槽、凸台等附加特征",
+            "model_evidence": "iso 视图仅见一个回转体，无孔、槽、台阶或附加凸台",
+            "evidence": "模型特征数与用户需求一致，均为单一圆台",
+            "feature_ids": [
+              "cone_body"
+            ],
+            "affected_parameters": []
+          },
+          {
+            "id": "iso.depth_relationships",
+            "view": "iso",
+            "area": "depth_relationships",
+            "category": "geometry",
+            "status": "match",
+            "item": "前后错层与贯穿关系",
+            "reference_evidence": "用户未要求任何前后错层或贯穿特征",
+            "model_evidence": "iso 视图为单一对称回转体，无错层、无贯穿孔",
+            "evidence": "无错层/贯穿需求，模型亦无此类特征，一致",
+            "feature_ids": [
+              "cone_body"
+            ],
+            "affected_parameters": []
+          }
+        ],
+        "issues": [],
+        "questions": [],
+        "review_gaps": [],
+        "confidence": 0.9,
+        "similarity_score": null,
+        "similarity_score_semantics": null,
+        "next_step_hint": "检查状态或证据不完整时可选择其它视图再次复核；不能把低置信度当作通过。"
+      },
+      "result_summary": "accept"
+    },
+    {
+      "phase": "agent_loop",
+      "tool": "cad_finish",
+      "arguments": {
+        "summary": "已按文字尺寸建立圆台：底径 80（半径 40）、顶径 30（半径 15）、高 60，轴线沿 Z，底面中心在原点。单一回转体特征 cone_body，校验通过，正视轮廓为底宽 80、顶宽 30、高 60 的等腰梯形，无附加孔槽。无参考图，故仅做文字尺寸对照。"
+      },
+      "result": {
+        "ready": true,
+        "state": "reviewed",
+        "validation": {
+          "valid": true,
+          "state": "valid",
+          "errors": [],
+          "confirmations": [],
+          "support": [
+            {
+              "feature_id": "cone_body",
+              "kind": "revolve",
+              "status": "approximate",
+              "reason": "当前用多层圆盘近似回转体。"
+            }
+          ],
+          "warnings": [
+            {
+              "code": "CATIA_APPROXIMATION",
+              "feature_id": "cone_body",
+              "kind": "revolve",
+              "message": "当前用多层圆盘近似回转体。"
+            }
+          ],
+          "schema_version": "1.0"
+        },
+        "review": {
+          "decision": "accept",
+          "checks": [
+            {
+              "id": "front.outline",
+              "view": "front",
+              "area": "outline",
+              "category": "geometry",
+              "status": "match",
+              "item": "正视外轮廓为等腰梯形，底宽:高:顶宽 = 80:60:30",
+              "reference_evidence": "无参考图；用户文字要求底径80、顶径30、高60的圆台",
+              "model_evidence": "当前front视图显示等腰梯形，底边明显宽于顶边，底边约为顶边宽度的2.6~2.7倍，高宽比约60:80",
+              "evidence": "文字要求底径80/顶径30/高60，即正视投影底宽80、顶宽30、高60，比例1.333:1:0.5；模型视图底边:高:顶边比例与之一致，轮廓为直线斜边无台阶",
+              "unknown_reason": "",
+              "feature_ids": [
+                "cone_body"
+              ],
+              "affected_parameters": []
+            },
+            {
+              "id": "front.features",
+              "view": "front",
+              "area": "features",
+              "category": "geometry",
+              "status": "match",
+              "item": "单一回转体，无附加凸台、孔、槽",
+              "reference_evidence": "用户仅要求圆台，无其他特征",
+              "model_evidence": "front视图仅见一个连续梯形轮廓，无孔、无凸台、无切槽，表面为回转网格条纹",
+              "evidence": "模型特征数与文字要求一致，仅cone_body一个revolve加料特征，无切除特征",
+              "unknown_reason": "",
+              "feature_ids": [
+                "cone_body"
+              ],
+              "affected_parameters": []
+            },
+            {
+              "id": "iso.overall_shape",
+              "view": "iso",
+              "area": "overall_shape",
+              "category": "geometry",
+              "status": "match",
+              "item": "圆台整体形状与比例",
+              "reference_evidence": "无参考图，仅依据用户文字：底径80、顶径30、高60 的圆台",
+              "model_evidence": "iso 视图显示单个回转圆台，底面为较大椭圆、顶面为较小椭圆，侧面为直线母线，无其他特征",
+              "evidence": "模型底面直径与顶面直径之比约 80:30≈2.67，高度与底面直径之比 60:80=0.75，与用户文字一致；轮廓为直线锥面，符合圆台定义",
+              "feature_ids": [
+                "cone_body"
+              ],
+              "affected_parameters": []
+            },
+            {
+              "id": "iso.feature_layout",
+              "view": "iso",
+              "area": "feature_layout",
+              "category": "geometry",
+              "status": "match",
+              "item": "特征数量与布局",
+              "reference_evidence": "用户仅要求一个圆台回转体，无孔、槽、凸台等附加特征",
+              "model_evidence": "iso 视图仅见一个回转体，无孔、槽、台阶或附加凸台",
+              "evidence": "模型特征数与用户需求一致，均为单一圆台",
+              "feature_ids": [
+                "cone_body"
+              ],
+              "affected_parameters": []
+            },
+            {
+              "id": "iso.depth_relationships",
+              "view": "iso",
+              "area": "depth_relationships",
+              "category": "geometry",
+              "status": "match",
+              "item": "前后错层与贯穿关系",
+              "reference_evidence": "用户未要求任何前后错层或贯穿特征",
+              "model_evidence": "iso 视图为单一对称回转体，无错层、无贯穿孔",
+              "evidence": "无错层/贯穿需求，模型亦无此类特征，一致",
+              "feature_ids": [
+                "cone_body"
+              ],
+              "affected_parameters": []
+            }
+          ],
+          "issues": [],
+          "resolved_findings": [],
+          "questions": [],
+          "review_gaps": [],
+          "confidence": 0.9,
+          "single_view_reports": [
+            {
+              "view": "front",
+              "checks": [
+                {
+                  "id": "front.outline",
+                  "view": "front",
+                  "area": "outline",
+                  "category": "geometry",
+                  "status": "match",
+                  "item": "正视外轮廓为等腰梯形，底宽:高:顶宽 = 80:60:30",
+                  "reference_evidence": "无参考图；用户文字要求底径80、顶径30、高60的圆台",
+                  "model_evidence": "当前front视图显示等腰梯形，底边明显宽于顶边，底边约为顶边宽度的2.6~2.7倍，高宽比约60:80",
+                  "evidence": "文字要求底径80/顶径30/高60，即正视投影底宽80、顶宽30、高60，比例1.333:1:0.5；模型视图底边:高:顶边比例与之一致，轮廓为直线斜边无台阶",
+                  "unknown_reason": "",
+                  "feature_ids": [
+                    "cone_body"
+                  ],
+                  "affected_parameters": []
+                },
+                {
+                  "id": "front.features",
+                  "view": "front",
+                  "area": "features",
+                  "category": "geometry",
+                  "status": "match",
+                  "item": "单一回转体，无附加凸台、孔、槽",
+                  "reference_evidence": "用户仅要求圆台，无其他特征",
+                  "model_evidence": "front视图仅见一个连续梯形轮廓，无孔、无凸台、无切槽，表面为回转网格条纹",
+                  "evidence": "模型特征数与文字要求一致，仅cone_body一个revolve加料特征，无切除特征",
+                  "unknown_reason": "",
+                  "feature_ids": [
+                    "cone_body"
+                  ],
+                  "affected_parameters": []
+                }
+              ],
+              "issues": [],
+              "reference_images": [],
+              "confidence": 0.9
+            },
+            {
+              "view": "iso",
+              "checks": [
+                {
+                  "id": "iso.overall_shape",
+                  "view": "iso",
+                  "area": "overall_shape",
+                  "category": "geometry",
+                  "status": "match",
+                  "item": "圆台整体形状与比例",
+                  "reference_evidence": "无参考图，仅依据用户文字：底径80、顶径30、高60 的圆台",
+                  "model_evidence": "iso 视图显示单个回转圆台，底面为较大椭圆、顶面为较小椭圆，侧面为直线母线，无其他特征",
+                  "evidence": "模型底面直径与顶面直径之比约 80:30≈2.67，高度与底面直径之比 60:80=0.75，与用户文字一致；轮廓为直线锥面，符合圆台定义",
+                  "feature_ids": [
+                    "cone_body"
+                  ],
+                  "affected_parameters": []
+                },
+                {
+                  "id": "iso.feature_layout",
+                  "view": "iso",
+                  "area": "feature_layout",
+                  "category": "geometry",
+                  "status": "match",
+                  "item": "特征数量与布局",
+                  "reference_evidence": "用户仅要求一个圆台回转体，无孔、槽、凸台等附加特征",
+                  "model_evidence": "iso 视图仅见一个回转体，无孔、槽、台阶或附加凸台",
+                  "evidence": "模型特征数与用户需求一致，均为单一圆台",
+                  "feature_ids": [
+                    "cone_body"
+                  ],
+                  "affected_parameters": []
+                },
+                {
+                  "id": "iso.depth_relationships",
+                  "view": "iso",
+                  "area": "depth_relationships",
+                  "category": "geometry",
+                  "status": "match",
+                  "item": "前后错层与贯穿关系",
+                  "reference_evidence": "用户未要求任何前后错层或贯穿特征",
+                  "model_evidence": "iso 视图为单一对称回转体，无错层、无贯穿孔",
+                  "evidence": "无错层/贯穿需求，模型亦无此类特征，一致",
+                  "feature_ids": [
+                    "cone_body"
+                  ],
+                  "affected_parameters": []
+                }
+              ],
+              "issues": [],
+              "reference_images": [],
+              "confidence": 0.9
+            }
+          ],
+          "local_image_comparisons": [],
+          "plan": null
+        }
+      },
+      "result_summary": "reviewed"
+    }
+  ],
+  "error": null
+}

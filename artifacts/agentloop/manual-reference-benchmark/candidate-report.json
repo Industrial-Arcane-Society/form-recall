@@ -1,0 +1,1327 @@
+{
+  "reference_image": "C:\\Users\\lycohana\\.codex\\attachments\\0e0f3409-8877-4d84-a9d4-32a5bce2b544\\image-1.png",
+  "reference_image_exists": true,
+  "agentloop_used": false,
+  "model_provider_used": false,
+  "catia_invoked": false,
+  "cadplan_validation": {
+    "valid": true,
+    "state": "valid",
+    "errors": [],
+    "confirmations": [],
+    "support": [
+      {
+        "feature_id": "outer-envelope",
+        "kind": "box",
+        "status": "exact",
+        "reason": "矩形草图加凸台；当前 CATIA 映射仅支持 Z 轴拉伸。"
+      },
+      {
+        "feature_id": "center-front-recess",
+        "kind": "box",
+        "status": "exact",
+        "reason": "矩形草图加凸台；当前 CATIA 映射仅支持 Z 轴拉伸。"
+      },
+      {
+        "feature_id": "left-upper-large-hole",
+        "kind": "hole",
+        "status": "exact",
+        "reason": "圆形凹槽；through=true 时按当前零件包围盒生成贯穿深度。"
+      },
+      {
+        "feature_id": "left-middle-small-hole",
+        "kind": "hole",
+        "status": "exact",
+        "reason": "圆形凹槽；through=true 时按当前零件包围盒生成贯穿深度。"
+      },
+      {
+        "feature_id": "left-lower-large-hole",
+        "kind": "hole",
+        "status": "exact",
+        "reason": "圆形凹槽；through=true 时按当前零件包围盒生成贯穿深度。"
+      },
+      {
+        "feature_id": "center-upper-large-hole",
+        "kind": "hole",
+        "status": "exact",
+        "reason": "圆形凹槽；through=true 时按当前零件包围盒生成贯穿深度。"
+      },
+      {
+        "feature_id": "center-middle-small-hole",
+        "kind": "hole",
+        "status": "exact",
+        "reason": "圆形凹槽；through=true 时按当前零件包围盒生成贯穿深度。"
+      },
+      {
+        "feature_id": "center-lower-large-hole",
+        "kind": "hole",
+        "status": "exact",
+        "reason": "圆形凹槽；through=true 时按当前零件包围盒生成贯穿深度。"
+      },
+      {
+        "feature_id": "right-upper-large-hole",
+        "kind": "hole",
+        "status": "exact",
+        "reason": "圆形凹槽；through=true 时按当前零件包围盒生成贯穿深度。"
+      },
+      {
+        "feature_id": "right-middle-small-hole",
+        "kind": "hole",
+        "status": "exact",
+        "reason": "圆形凹槽；through=true 时按当前零件包围盒生成贯穿深度。"
+      },
+      {
+        "feature_id": "right-lower-large-hole",
+        "kind": "hole",
+        "status": "exact",
+        "reason": "圆形凹槽；through=true 时按当前零件包围盒生成贯穿深度。"
+      }
+    ],
+    "warnings": [],
+    "schema_version": "1.0"
+  },
+  "preview": {
+    "state": "previewed",
+    "validation": {
+      "valid": true,
+      "state": "valid",
+      "errors": [],
+      "confirmations": [],
+      "support": [
+        {
+          "feature_id": "outer-envelope",
+          "kind": "box",
+          "status": "exact",
+          "reason": "矩形草图加凸台；当前 CATIA 映射仅支持 Z 轴拉伸。"
+        },
+        {
+          "feature_id": "center-front-recess",
+          "kind": "box",
+          "status": "exact",
+          "reason": "矩形草图加凸台；当前 CATIA 映射仅支持 Z 轴拉伸。"
+        },
+        {
+          "feature_id": "left-upper-large-hole",
+          "kind": "hole",
+          "status": "exact",
+          "reason": "圆形凹槽；through=true 时按当前零件包围盒生成贯穿深度。"
+        },
+        {
+          "feature_id": "left-middle-small-hole",
+          "kind": "hole",
+          "status": "exact",
+          "reason": "圆形凹槽；through=true 时按当前零件包围盒生成贯穿深度。"
+        },
+        {
+          "feature_id": "left-lower-large-hole",
+          "kind": "hole",
+          "status": "exact",
+          "reason": "圆形凹槽；through=true 时按当前零件包围盒生成贯穿深度。"
+        },
+        {
+          "feature_id": "center-upper-large-hole",
+          "kind": "hole",
+          "status": "exact",
+          "reason": "圆形凹槽；through=true 时按当前零件包围盒生成贯穿深度。"
+        },
+        {
+          "feature_id": "center-middle-small-hole",
+          "kind": "hole",
+          "status": "exact",
+          "reason": "圆形凹槽；through=true 时按当前零件包围盒生成贯穿深度。"
+        },
+        {
+          "feature_id": "center-lower-large-hole",
+          "kind": "hole",
+          "status": "exact",
+          "reason": "圆形凹槽；through=true 时按当前零件包围盒生成贯穿深度。"
+        },
+        {
+          "feature_id": "right-upper-large-hole",
+          "kind": "hole",
+          "status": "exact",
+          "reason": "圆形凹槽；through=true 时按当前零件包围盒生成贯穿深度。"
+        },
+        {
+          "feature_id": "right-middle-small-hole",
+          "kind": "hole",
+          "status": "exact",
+          "reason": "圆形凹槽；through=true 时按当前零件包围盒生成贯穿深度。"
+        },
+        {
+          "feature_id": "right-lower-large-hole",
+          "kind": "hole",
+          "status": "exact",
+          "reason": "圆形凹槽；through=true 时按当前零件包围盒生成贯穿深度。"
+        }
+      ],
+      "warnings": [],
+      "schema_version": "1.0"
+    },
+    "catia_executed": false,
+    "dimensions": {
+      "unit": "mm",
+      "bbox": [
+        -165.0,
+        -67.0,
+        0.0,
+        165.0,
+        67.0,
+        340.0
+      ],
+      "size": [
+        330.0,
+        134.0,
+        340.0
+      ],
+      "volume_mm3": 12888311.484128075,
+      "surface_area_mm2": 541694.9691586823,
+      "triangles": 2150,
+      "feature_count": 11
+    },
+    "catia_operations": [
+      {
+        "index": 1,
+        "kind": "rect_pad",
+        "plane": "XY",
+        "center": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "profile": [],
+        "dimensions": {
+          "l": 330.0,
+          "w": 134.0,
+          "r": 0.0,
+          "h": 340.0,
+          "depth": 0.0
+        },
+        "name": "Continuous outer body",
+        "note": "长方体 330 × 134 × 340 mm"
+      },
+      {
+        "index": 2,
+        "kind": "rect_cut",
+        "plane": "XY",
+        "center": [
+          0.0,
+          58.0,
+          341.0
+        ],
+        "profile": [],
+        "dimensions": {
+          "l": 70.0,
+          "w": 22.0,
+          "r": 0.0,
+          "h": 342.0,
+          "depth": 342.0
+        },
+        "name": "Full-height central front recess",
+        "note": "长方体 70 × 22 × 342 mm"
+      },
+      {
+        "index": 3,
+        "kind": "circle_cut",
+        "plane": "Y",
+        "center": [
+          275.0,
+          -100.0,
+          69.0
+        ],
+        "profile": [],
+        "dimensions": {
+          "l": 0.0,
+          "w": 0.0,
+          "r": 24.0,
+          "h": 0.0,
+          "depth": 138.0
+        },
+        "name": "left upper large through hole",
+        "note": "⌀48 通孔 @(-100, 275)"
+      },
+      {
+        "index": 4,
+        "kind": "circle_cut",
+        "plane": "Y",
+        "center": [
+          170.0,
+          -100.0,
+          69.0
+        ],
+        "profile": [],
+        "dimensions": {
+          "l": 0.0,
+          "w": 0.0,
+          "r": 16.0,
+          "h": 0.0,
+          "depth": 138.0
+        },
+        "name": "left middle small through hole",
+        "note": "⌀32 通孔 @(-100, 170)"
+      },
+      {
+        "index": 5,
+        "kind": "circle_cut",
+        "plane": "Y",
+        "center": [
+          65.0,
+          -100.0,
+          69.0
+        ],
+        "profile": [],
+        "dimensions": {
+          "l": 0.0,
+          "w": 0.0,
+          "r": 24.0,
+          "h": 0.0,
+          "depth": 138.0
+        },
+        "name": "left lower large through hole",
+        "note": "⌀48 通孔 @(-100, 65)"
+      },
+      {
+        "index": 6,
+        "kind": "circle_cut",
+        "plane": "Y",
+        "center": [
+          275.0,
+          0.0,
+          69.0
+        ],
+        "profile": [],
+        "dimensions": {
+          "l": 0.0,
+          "w": 0.0,
+          "r": 24.0,
+          "h": 0.0,
+          "depth": 138.0
+        },
+        "name": "center upper large through hole",
+        "note": "⌀48 通孔 @(0, 275)"
+      },
+      {
+        "index": 7,
+        "kind": "circle_cut",
+        "plane": "Y",
+        "center": [
+          170.0,
+          0.0,
+          69.0
+        ],
+        "profile": [],
+        "dimensions": {
+          "l": 0.0,
+          "w": 0.0,
+          "r": 16.0,
+          "h": 0.0,
+          "depth": 138.0
+        },
+        "name": "center middle small through hole",
+        "note": "⌀32 通孔 @(0, 170)"
+      },
+      {
+        "index": 8,
+        "kind": "circle_cut",
+        "plane": "Y",
+        "center": [
+          65.0,
+          0.0,
+          69.0
+        ],
+        "profile": [],
+        "dimensions": {
+          "l": 0.0,
+          "w": 0.0,
+          "r": 24.0,
+          "h": 0.0,
+          "depth": 138.0
+        },
+        "name": "center lower large through hole",
+        "note": "⌀48 通孔 @(0, 65)"
+      },
+      {
+        "index": 9,
+        "kind": "circle_cut",
+        "plane": "Y",
+        "center": [
+          275.0,
+          100.0,
+          69.0
+        ],
+        "profile": [],
+        "dimensions": {
+          "l": 0.0,
+          "w": 0.0,
+          "r": 24.0,
+          "h": 0.0,
+          "depth": 138.0
+        },
+        "name": "right upper large through hole",
+        "note": "⌀48 通孔 @(100, 275)"
+      },
+      {
+        "index": 10,
+        "kind": "circle_cut",
+        "plane": "Y",
+        "center": [
+          170.0,
+          100.0,
+          69.0
+        ],
+        "profile": [],
+        "dimensions": {
+          "l": 0.0,
+          "w": 0.0,
+          "r": 16.0,
+          "h": 0.0,
+          "depth": 138.0
+        },
+        "name": "right middle small through hole",
+        "note": "⌀32 通孔 @(100, 170)"
+      },
+      {
+        "index": 11,
+        "kind": "circle_cut",
+        "plane": "Y",
+        "center": [
+          65.0,
+          100.0,
+          69.0
+        ],
+        "profile": [],
+        "dimensions": {
+          "l": 0.0,
+          "w": 0.0,
+          "r": 24.0,
+          "h": 0.0,
+          "depth": 138.0
+        },
+        "name": "right lower large through hole",
+        "note": "⌀48 通孔 @(100, 65)"
+      }
+    ],
+    "warnings": [],
+    "feature_manifest": {
+      "outer-envelope": {
+        "kind": "box",
+        "operation": "add",
+        "name": "Continuous outer body",
+        "parameters": {
+          "length": 330.0,
+          "width": 134.0,
+          "height": 340.0,
+          "center": [
+            0.0,
+            0.0,
+            170.0
+          ]
+        },
+        "sources": {
+          "length": {
+            "type": "image_estimate",
+            "evidence": "Top-plane long projected edge ≈258 px and visible vertical edge ≈267 px; with H=340 mm, W≈329 mm, rounded to 330 mm.",
+            "note": "按参考图像比例估算的名义值，不是工程图或制造标注。"
+          },
+          "width": {
+            "type": "image_estimate",
+            "evidence": "Top-plane short projected edge ≈105 px versus long edge ≈258 px; with the same approximate foreshortening, D≈340×105/267≈134 mm. Perspective makes this low-confidence.",
+            "note": "按参考图像比例估算的名义值，不是工程图或制造标注。"
+          },
+          "height": {
+            "type": "image_estimate",
+            "evidence": "Nominal scale chosen for convenience because no physical dimension is annotated.",
+            "note": "按参考图像比例估算的名义值，不是工程图或制造标注。"
+          },
+          "center": {
+            "type": "derived",
+            "evidence": "Center X/Y at the origin; bottom face is Z=0."
+          }
+        },
+        "relations": []
+      },
+      "center-front-recess": {
+        "kind": "box",
+        "operation": "cut",
+        "name": "Full-height central front recess",
+        "parameters": {
+          "length": 70.0,
+          "width": 22.0,
+          "height": 342.0,
+          "center": [
+            0.0,
+            58.0,
+            170.0
+          ]
+        },
+        "sources": {
+          "length": {
+            "type": "image_estimate",
+            "evidence": "The middle strip is estimated at about 21% of total width; assume approximate left-right symmetry for the side sections, yielding 130/70/130 mm.",
+            "note": "按参考图像比例估算的名义值，不是工程图或制造标注。"
+          },
+          "width": {
+            "type": "image_estimate",
+            "evidence": "The visible isometric setback is estimated as 20 mm; 1 mm extra is only Boolean overshoot.",
+            "note": "按参考图像比例估算的名义值，不是工程图或制造标注。"
+          },
+          "height": {
+            "type": "image_estimate",
+            "evidence": "The recess spans the full body height; 1 mm extra at each end is only Boolean overshoot.",
+            "note": "按参考图像比例估算的名义值，不是工程图或制造标注。"
+          },
+          "center": {
+            "type": "derived",
+            "evidence": "Outer front face Y=61 mm; the cut extends from Y=41 to 62 mm, leaving the recessed face at Y=41 mm."
+          }
+        },
+        "relations": []
+      },
+      "left-upper-large-hole": {
+        "kind": "hole",
+        "operation": "cut",
+        "name": "left upper large through hole",
+        "parameters": {
+          "diameter": 48.0,
+          "through": true,
+          "pos": "point",
+          "point": [
+            -100.0,
+            67.0,
+            275.0
+          ],
+          "axis": "Y"
+        },
+        "sources": {
+          "diameter": {
+            "type": "image_estimate",
+            "evidence": "The top/bottom bores are visibly larger than the middle bore; their nominal ratio is set to 48:32=1.5.",
+            "note": "按参考图像比例估算的名义值，不是工程图或制造标注。"
+          },
+          "point": {
+            "type": "image_estimate",
+            "evidence": "Column centers are approximately at 20%, 50%, 80% of front width; row centers at 19%, 50%, 81% of height. Y records the corresponding front/recessed face.",
+            "note": "按参考图像比例估算的名义值，不是工程图或制造标注。"
+          }
+        },
+        "relations": []
+      },
+      "left-middle-small-hole": {
+        "kind": "hole",
+        "operation": "cut",
+        "name": "left middle small through hole",
+        "parameters": {
+          "diameter": 32.0,
+          "through": true,
+          "pos": "point",
+          "point": [
+            -100.0,
+            67.0,
+            170.0
+          ],
+          "axis": "Y"
+        },
+        "sources": {
+          "diameter": {
+            "type": "image_estimate",
+            "evidence": "The top/bottom bores are visibly larger than the middle bore; their nominal ratio is set to 48:32=1.5.",
+            "note": "按参考图像比例估算的名义值，不是工程图或制造标注。"
+          },
+          "point": {
+            "type": "image_estimate",
+            "evidence": "Column centers are approximately at 20%, 50%, 80% of front width; row centers at 19%, 50%, 81% of height. Y records the corresponding front/recessed face.",
+            "note": "按参考图像比例估算的名义值，不是工程图或制造标注。"
+          }
+        },
+        "relations": []
+      },
+      "left-lower-large-hole": {
+        "kind": "hole",
+        "operation": "cut",
+        "name": "left lower large through hole",
+        "parameters": {
+          "diameter": 48.0,
+          "through": true,
+          "pos": "point",
+          "point": [
+            -100.0,
+            67.0,
+            65.0
+          ],
+          "axis": "Y"
+        },
+        "sources": {
+          "diameter": {
+            "type": "image_estimate",
+            "evidence": "The top/bottom bores are visibly larger than the middle bore; their nominal ratio is set to 48:32=1.5.",
+            "note": "按参考图像比例估算的名义值，不是工程图或制造标注。"
+          },
+          "point": {
+            "type": "image_estimate",
+            "evidence": "Column centers are approximately at 20%, 50%, 80% of front width; row centers at 19%, 50%, 81% of height. Y records the corresponding front/recessed face.",
+            "note": "按参考图像比例估算的名义值，不是工程图或制造标注。"
+          }
+        },
+        "relations": []
+      },
+      "center-upper-large-hole": {
+        "kind": "hole",
+        "operation": "cut",
+        "name": "center upper large through hole",
+        "parameters": {
+          "diameter": 48.0,
+          "through": true,
+          "pos": "point",
+          "point": [
+            0.0,
+            47.0,
+            275.0
+          ],
+          "axis": "Y"
+        },
+        "sources": {
+          "diameter": {
+            "type": "image_estimate",
+            "evidence": "The top/bottom bores are visibly larger than the middle bore; their nominal ratio is set to 48:32=1.5.",
+            "note": "按参考图像比例估算的名义值，不是工程图或制造标注。"
+          },
+          "point": {
+            "type": "image_estimate",
+            "evidence": "Column centers are approximately at 20%, 50%, 80% of front width; row centers at 19%, 50%, 81% of height. Y records the corresponding front/recessed face.",
+            "note": "按参考图像比例估算的名义值，不是工程图或制造标注。"
+          }
+        },
+        "relations": []
+      },
+      "center-middle-small-hole": {
+        "kind": "hole",
+        "operation": "cut",
+        "name": "center middle small through hole",
+        "parameters": {
+          "diameter": 32.0,
+          "through": true,
+          "pos": "point",
+          "point": [
+            0.0,
+            47.0,
+            170.0
+          ],
+          "axis": "Y"
+        },
+        "sources": {
+          "diameter": {
+            "type": "image_estimate",
+            "evidence": "The top/bottom bores are visibly larger than the middle bore; their nominal ratio is set to 48:32=1.5.",
+            "note": "按参考图像比例估算的名义值，不是工程图或制造标注。"
+          },
+          "point": {
+            "type": "image_estimate",
+            "evidence": "Column centers are approximately at 20%, 50%, 80% of front width; row centers at 19%, 50%, 81% of height. Y records the corresponding front/recessed face.",
+            "note": "按参考图像比例估算的名义值，不是工程图或制造标注。"
+          }
+        },
+        "relations": []
+      },
+      "center-lower-large-hole": {
+        "kind": "hole",
+        "operation": "cut",
+        "name": "center lower large through hole",
+        "parameters": {
+          "diameter": 48.0,
+          "through": true,
+          "pos": "point",
+          "point": [
+            0.0,
+            47.0,
+            65.0
+          ],
+          "axis": "Y"
+        },
+        "sources": {
+          "diameter": {
+            "type": "image_estimate",
+            "evidence": "The top/bottom bores are visibly larger than the middle bore; their nominal ratio is set to 48:32=1.5.",
+            "note": "按参考图像比例估算的名义值，不是工程图或制造标注。"
+          },
+          "point": {
+            "type": "image_estimate",
+            "evidence": "Column centers are approximately at 20%, 50%, 80% of front width; row centers at 19%, 50%, 81% of height. Y records the corresponding front/recessed face.",
+            "note": "按参考图像比例估算的名义值，不是工程图或制造标注。"
+          }
+        },
+        "relations": []
+      },
+      "right-upper-large-hole": {
+        "kind": "hole",
+        "operation": "cut",
+        "name": "right upper large through hole",
+        "parameters": {
+          "diameter": 48.0,
+          "through": true,
+          "pos": "point",
+          "point": [
+            100.0,
+            67.0,
+            275.0
+          ],
+          "axis": "Y"
+        },
+        "sources": {
+          "diameter": {
+            "type": "image_estimate",
+            "evidence": "The top/bottom bores are visibly larger than the middle bore; their nominal ratio is set to 48:32=1.5.",
+            "note": "按参考图像比例估算的名义值，不是工程图或制造标注。"
+          },
+          "point": {
+            "type": "image_estimate",
+            "evidence": "Column centers are approximately at 20%, 50%, 80% of front width; row centers at 19%, 50%, 81% of height. Y records the corresponding front/recessed face.",
+            "note": "按参考图像比例估算的名义值，不是工程图或制造标注。"
+          }
+        },
+        "relations": []
+      },
+      "right-middle-small-hole": {
+        "kind": "hole",
+        "operation": "cut",
+        "name": "right middle small through hole",
+        "parameters": {
+          "diameter": 32.0,
+          "through": true,
+          "pos": "point",
+          "point": [
+            100.0,
+            67.0,
+            170.0
+          ],
+          "axis": "Y"
+        },
+        "sources": {
+          "diameter": {
+            "type": "image_estimate",
+            "evidence": "The top/bottom bores are visibly larger than the middle bore; their nominal ratio is set to 48:32=1.5.",
+            "note": "按参考图像比例估算的名义值，不是工程图或制造标注。"
+          },
+          "point": {
+            "type": "image_estimate",
+            "evidence": "Column centers are approximately at 20%, 50%, 80% of front width; row centers at 19%, 50%, 81% of height. Y records the corresponding front/recessed face.",
+            "note": "按参考图像比例估算的名义值，不是工程图或制造标注。"
+          }
+        },
+        "relations": []
+      },
+      "right-lower-large-hole": {
+        "kind": "hole",
+        "operation": "cut",
+        "name": "right lower large through hole",
+        "parameters": {
+          "diameter": 48.0,
+          "through": true,
+          "pos": "point",
+          "point": [
+            100.0,
+            67.0,
+            65.0
+          ],
+          "axis": "Y"
+        },
+        "sources": {
+          "diameter": {
+            "type": "image_estimate",
+            "evidence": "The top/bottom bores are visibly larger than the middle bore; their nominal ratio is set to 48:32=1.5.",
+            "note": "按参考图像比例估算的名义值，不是工程图或制造标注。"
+          },
+          "point": {
+            "type": "image_estimate",
+            "evidence": "Column centers are approximately at 20%, 50%, 80% of front width; row centers at 19%, 50%, 81% of height. Y records the corresponding front/recessed face.",
+            "note": "按参考图像比例估算的名义值，不是工程图或制造标注。"
+          }
+        },
+        "relations": []
+      }
+    },
+    "build_log": [
+      "[基准] 长方体 330 × 134 × 340 mm → 8 面",
+      "[切除] 长方体 70 × 22 × 342 mm → 18 面",
+      "[切除] ⌀48 通孔 @(-100, 275) → 112 面",
+      "[切除] ⌀32 通孔 @(-100, 170) → 257 面",
+      "[切除] ⌀48 通孔 @(-100, 65) → 432 面",
+      "[切除] ⌀48 通孔 @(0, 275) → 556 面",
+      "[切除] ⌀32 通孔 @(0, 170) → 667 面",
+      "[切除] ⌀48 通孔 @(0, 65) → 797 面",
+      "[切除] ⌀48 通孔 @(100, 275) → 933 面",
+      "[切除] ⌀32 通孔 @(100, 170) → 1085 面",
+      "[切除] ⌀48 通孔 @(100, 65) → 1257 面"
+    ],
+    "local_geometry_checks": {
+      "state": "passed",
+      "source": "AI Modeler local mesh kernel",
+      "face_count": 1257,
+      "bbox_size_mm": [
+        330.0,
+        134.0,
+        340.0
+      ],
+      "bbox_ratios_from_mesh": {
+        "front_width_height": 0.9705882352941176,
+        "depth_height": 0.3941176470588235,
+        "top_width_depth": 2.462686567164179
+      },
+      "feature_count_from_plan": 11,
+      "feature_ids_from_plan": [
+        "outer-envelope",
+        "center-front-recess",
+        "left-upper-large-hole",
+        "left-middle-small-hole",
+        "left-lower-large-hole",
+        "center-upper-large-hole",
+        "center-middle-small-hole",
+        "center-lower-large-hole",
+        "right-upper-large-hole",
+        "right-middle-small-hole",
+        "right-lower-large-hole"
+      ],
+      "nonfinite_face_count": 0,
+      "degenerate_face_count": 0,
+      "hole_features_from_plan": [
+        {
+          "feature_id": "left-upper-large-hole",
+          "kind": "hole",
+          "operation": "cut",
+          "parameters": {
+            "diameter": 48.0,
+            "through": true,
+            "pos": "point",
+            "point": [
+              -100.0,
+              67.0,
+              275.0
+            ],
+            "axis": "Y"
+          }
+        },
+        {
+          "feature_id": "left-middle-small-hole",
+          "kind": "hole",
+          "operation": "cut",
+          "parameters": {
+            "diameter": 32.0,
+            "through": true,
+            "pos": "point",
+            "point": [
+              -100.0,
+              67.0,
+              170.0
+            ],
+            "axis": "Y"
+          }
+        },
+        {
+          "feature_id": "left-lower-large-hole",
+          "kind": "hole",
+          "operation": "cut",
+          "parameters": {
+            "diameter": 48.0,
+            "through": true,
+            "pos": "point",
+            "point": [
+              -100.0,
+              67.0,
+              65.0
+            ],
+            "axis": "Y"
+          }
+        },
+        {
+          "feature_id": "center-upper-large-hole",
+          "kind": "hole",
+          "operation": "cut",
+          "parameters": {
+            "diameter": 48.0,
+            "through": true,
+            "pos": "point",
+            "point": [
+              0.0,
+              47.0,
+              275.0
+            ],
+            "axis": "Y"
+          }
+        },
+        {
+          "feature_id": "center-middle-small-hole",
+          "kind": "hole",
+          "operation": "cut",
+          "parameters": {
+            "diameter": 32.0,
+            "through": true,
+            "pos": "point",
+            "point": [
+              0.0,
+              47.0,
+              170.0
+            ],
+            "axis": "Y"
+          }
+        },
+        {
+          "feature_id": "center-lower-large-hole",
+          "kind": "hole",
+          "operation": "cut",
+          "parameters": {
+            "diameter": 48.0,
+            "through": true,
+            "pos": "point",
+            "point": [
+              0.0,
+              47.0,
+              65.0
+            ],
+            "axis": "Y"
+          }
+        },
+        {
+          "feature_id": "right-upper-large-hole",
+          "kind": "hole",
+          "operation": "cut",
+          "parameters": {
+            "diameter": 48.0,
+            "through": true,
+            "pos": "point",
+            "point": [
+              100.0,
+              67.0,
+              275.0
+            ],
+            "axis": "Y"
+          }
+        },
+        {
+          "feature_id": "right-middle-small-hole",
+          "kind": "hole",
+          "operation": "cut",
+          "parameters": {
+            "diameter": 32.0,
+            "through": true,
+            "pos": "point",
+            "point": [
+              100.0,
+              67.0,
+              170.0
+            ],
+            "axis": "Y"
+          }
+        },
+        {
+          "feature_id": "right-lower-large-hole",
+          "kind": "hole",
+          "operation": "cut",
+          "parameters": {
+            "diameter": 48.0,
+            "through": true,
+            "pos": "point",
+            "point": [
+              100.0,
+              67.0,
+              65.0
+            ],
+            "axis": "Y"
+          }
+        }
+      ],
+      "through_hole_mesh_checks": [
+        {
+          "feature_id": "left-upper-large-hole",
+          "axis": "Y",
+          "center_mm": [
+            -100.0,
+            67.0,
+            275.0
+          ],
+          "status": "verified_open",
+          "axis_surface_crossings": 0,
+          "surrounding_surface_crossings": [
+            2,
+            2,
+            2,
+            2
+          ],
+          "ring_supported": [
+            true,
+            true,
+            true,
+            true
+          ],
+          "method": "axis ray against local triangle mesh"
+        },
+        {
+          "feature_id": "left-middle-small-hole",
+          "axis": "Y",
+          "center_mm": [
+            -100.0,
+            67.0,
+            170.0
+          ],
+          "status": "verified_open",
+          "axis_surface_crossings": 0,
+          "surrounding_surface_crossings": [
+            2,
+            2,
+            2,
+            2
+          ],
+          "ring_supported": [
+            true,
+            true,
+            true,
+            true
+          ],
+          "method": "axis ray against local triangle mesh"
+        },
+        {
+          "feature_id": "left-lower-large-hole",
+          "axis": "Y",
+          "center_mm": [
+            -100.0,
+            67.0,
+            65.0
+          ],
+          "status": "verified_open",
+          "axis_surface_crossings": 0,
+          "surrounding_surface_crossings": [
+            2,
+            2,
+            2,
+            2
+          ],
+          "ring_supported": [
+            true,
+            true,
+            true,
+            true
+          ],
+          "method": "axis ray against local triangle mesh"
+        },
+        {
+          "feature_id": "center-upper-large-hole",
+          "axis": "Y",
+          "center_mm": [
+            0.0,
+            47.0,
+            275.0
+          ],
+          "status": "verified_open",
+          "axis_surface_crossings": 0,
+          "surrounding_surface_crossings": [
+            2,
+            2,
+            2,
+            2
+          ],
+          "ring_supported": [
+            true,
+            true,
+            true,
+            true
+          ],
+          "method": "axis ray against local triangle mesh"
+        },
+        {
+          "feature_id": "center-middle-small-hole",
+          "axis": "Y",
+          "center_mm": [
+            0.0,
+            47.0,
+            170.0
+          ],
+          "status": "verified_open",
+          "axis_surface_crossings": 0,
+          "surrounding_surface_crossings": [
+            2,
+            2,
+            2,
+            2
+          ],
+          "ring_supported": [
+            true,
+            true,
+            true,
+            true
+          ],
+          "method": "axis ray against local triangle mesh"
+        },
+        {
+          "feature_id": "center-lower-large-hole",
+          "axis": "Y",
+          "center_mm": [
+            0.0,
+            47.0,
+            65.0
+          ],
+          "status": "verified_open",
+          "axis_surface_crossings": 0,
+          "surrounding_surface_crossings": [
+            2,
+            2,
+            2,
+            2
+          ],
+          "ring_supported": [
+            true,
+            true,
+            true,
+            true
+          ],
+          "method": "axis ray against local triangle mesh"
+        },
+        {
+          "feature_id": "right-upper-large-hole",
+          "axis": "Y",
+          "center_mm": [
+            100.0,
+            67.0,
+            275.0
+          ],
+          "status": "verified_open",
+          "axis_surface_crossings": 0,
+          "surrounding_surface_crossings": [
+            2,
+            2,
+            2,
+            2
+          ],
+          "ring_supported": [
+            true,
+            true,
+            true,
+            true
+          ],
+          "method": "axis ray against local triangle mesh"
+        },
+        {
+          "feature_id": "right-middle-small-hole",
+          "axis": "Y",
+          "center_mm": [
+            100.0,
+            67.0,
+            170.0
+          ],
+          "status": "verified_open",
+          "axis_surface_crossings": 0,
+          "surrounding_surface_crossings": [
+            2,
+            2,
+            2,
+            2
+          ],
+          "ring_supported": [
+            true,
+            true,
+            true,
+            true
+          ],
+          "method": "axis ray against local triangle mesh"
+        },
+        {
+          "feature_id": "right-lower-large-hole",
+          "axis": "Y",
+          "center_mm": [
+            100.0,
+            67.0,
+            65.0
+          ],
+          "status": "verified_open",
+          "axis_surface_crossings": 0,
+          "surrounding_surface_crossings": [
+            2,
+            2,
+            2,
+            2
+          ],
+          "ring_supported": [
+            true,
+            true,
+            true,
+            true
+          ],
+          "method": "axis ray against local triangle mesh"
+        }
+      ],
+      "hole_visibility": "requires_multimodal_view_review",
+      "through_hole_result": "measured_for_point_holes_only"
+    },
+    "orthographic_layout": {
+      "unit": "mm",
+      "axes": {
+        "length": "X",
+        "width": "Y",
+        "height": "Z"
+      },
+      "uniform_scale_across_views": true,
+      "scale_pixels_per_mm": 0.6270588235294118,
+      "tile_size_pixels": [
+        330,
+        260
+      ],
+      "view_extents": {
+        "front": {
+          "horizontal_axis": "X",
+          "horizontal": 330.0,
+          "vertical_axis": "Z",
+          "vertical": 340.0
+        },
+        "right": {
+          "horizontal_axis": "Y",
+          "horizontal": 134.0,
+          "vertical_axis": "Z",
+          "vertical": 340.0
+        },
+        "top": {
+          "horizontal_axis": "X",
+          "horizontal": 330.0,
+          "vertical_axis": "Y",
+          "vertical": 134.0
+        }
+      },
+      "dimension_ratios": {
+        "length_to_height": 0.9705882352941176,
+        "width_to_height": 0.3941176470588235,
+        "length_to_width": 2.462686567164179
+      }
+    }
+  },
+  "views_preview": {
+    "state": "previewed",
+    "path": "C:\\Users\\lycohana\\Desktop\\code\\AI-_-\\artifacts\\agentloop\\manual-reference-benchmark\\candidate-views.png",
+    "view_set": "extended"
+  },
+  "front_preview": {
+    "state": "previewed",
+    "path": "C:\\Users\\lycohana\\Desktop\\code\\AI-_-\\artifacts\\agentloop\\manual-reference-benchmark\\candidate-front.png"
+  },
+  "iso_preview": {
+    "state": "previewed",
+    "path": "C:\\Users\\lycohana\\Desktop\\code\\AI-_-\\artifacts\\agentloop\\manual-reference-benchmark\\candidate-iso.png"
+  },
+  "dimension_estimates_mm": {
+    "overall": {
+      "width_X": 330.0,
+      "depth_Y": 134.0,
+      "height_Z": 340.0
+    },
+    "segments_X": {
+      "left": 130.0,
+      "middle": 70.0,
+      "right": 130.0
+    },
+    "middle_front_setback": 20.0,
+    "hole_centers_X": [
+      -100.0,
+      0.0,
+      100.0
+    ],
+    "hole_centers_Z_from_bottom": [
+      275.0,
+      170.0,
+      65.0
+    ],
+    "hole_diameters_by_row_top_to_bottom": [
+      48.0,
+      32.0,
+      48.0
+    ],
+    "status": "all values are image-derived nominal estimates; no manufacturing dimensions were visible"
+  },
+  "feature_tree": [
+    {
+      "index": 1,
+      "id": "outer-envelope",
+      "operation": "add",
+      "kind": "box",
+      "name": "Continuous outer body"
+    },
+    {
+      "index": 2,
+      "id": "center-front-recess",
+      "operation": "cut",
+      "kind": "box",
+      "name": "Full-height central front recess"
+    },
+    {
+      "index": 3,
+      "id": "left-upper-large-hole",
+      "operation": "cut",
+      "kind": "hole",
+      "name": "left upper large through hole"
+    },
+    {
+      "index": 4,
+      "id": "left-middle-small-hole",
+      "operation": "cut",
+      "kind": "hole",
+      "name": "left middle small through hole"
+    },
+    {
+      "index": 5,
+      "id": "left-lower-large-hole",
+      "operation": "cut",
+      "kind": "hole",
+      "name": "left lower large through hole"
+    },
+    {
+      "index": 6,
+      "id": "center-upper-large-hole",
+      "operation": "cut",
+      "kind": "hole",
+      "name": "center upper large through hole"
+    },
+    {
+      "index": 7,
+      "id": "center-middle-small-hole",
+      "operation": "cut",
+      "kind": "hole",
+      "name": "center middle small through hole"
+    },
+    {
+      "index": 8,
+      "id": "center-lower-large-hole",
+      "operation": "cut",
+      "kind": "hole",
+      "name": "center lower large through hole"
+    },
+    {
+      "index": 9,
+      "id": "right-upper-large-hole",
+      "operation": "cut",
+      "kind": "hole",
+      "name": "right upper large through hole"
+    },
+    {
+      "index": 10,
+      "id": "right-middle-small-hole",
+      "operation": "cut",
+      "kind": "hole",
+      "name": "right middle small through hole"
+    },
+    {
+      "index": 11,
+      "id": "right-lower-large-hole",
+      "operation": "cut",
+      "kind": "hole",
+      "name": "right lower large through hole"
+    }
+  ],
+  "known_interface_limits": [
+    "The local hole primitive can place point holes on a global X/Z location for axis Y, but through=true always cuts across the current entire model bounding box; it cannot express a one-face start/stop extent for each panel.",
+    "The box primitive plus subtractive box can represent the recessed center as a real solid back face; it cannot directly tag a face as a semantic panel or encode the three-panel interpretation beyond the feature tree and notes.",
+    "The local preview and STL are kernel mesh results. They are not CATIA B-Rep evidence; CATIA was not run for this benchmark."
+  ],
+  "manual_visual_qa": "Inspected candidate-iso.png, candidate-front.png, and candidate-views.png against the supplied reference. The mesh shows a single continuous body with a full-height central front recess, three columns and three rows, and large-small-large diameters; orthographic front confirms the 3x3 layout, while the ISO and top views show the recessed center instead of a through-opening. The gross X/Z proportions, segment ratios, and hole ratios match the image-derived estimates. It is not a perfect rendered match: the local preview uses one uniform gray material, so it cannot reproduce the reference's colored panels and colored bore interiors; the ISO camera also differs from the source screenshot. This is a visual inspection of the local mesh preview, not CATIA B-Rep verification.",
+  "outputs": {
+    "candidate.cadplan.json": "C:\\Users\\lycohana\\Desktop\\code\\AI-_-\\artifacts\\agentloop\\manual-reference-benchmark\\candidate.cadplan.json",
+    "candidate.aimodel": "C:\\Users\\lycohana\\Desktop\\code\\AI-_-\\artifacts\\agentloop\\manual-reference-benchmark\\candidate.aimodel",
+    "candidate.stl": "C:\\Users\\lycohana\\Desktop\\code\\AI-_-\\artifacts\\agentloop\\manual-reference-benchmark\\candidate.stl",
+    "candidate-views.png": "C:\\Users\\lycohana\\Desktop\\code\\AI-_-\\artifacts\\agentloop\\manual-reference-benchmark\\candidate-views.png",
+    "candidate-front.png": "C:\\Users\\lycohana\\Desktop\\code\\AI-_-\\artifacts\\agentloop\\manual-reference-benchmark\\candidate-front.png",
+    "candidate-iso.png": "C:\\Users\\lycohana\\Desktop\\code\\AI-_-\\artifacts\\agentloop\\manual-reference-benchmark\\candidate-iso.png"
+  }
+}

@@ -10,6 +10,8 @@ from __future__ import annotations
 import json
 import os
 import ipaddress
+import copy
+import math
 import random
 import re
 import time
@@ -215,9 +217,23 @@ _REFERENCE_READING_TOOL_SCHEMA = {
                     "region": {"type": "string", "minLength": 1},
                     "arrangement": {"type": "string", "minLength": 1},
                     "evidence": {"type": "string", "minLength": 1},
+                    "relative_size_order": {
+                        "type": "array", "maxItems": 32,
+                        "description": ("对孔或重复特征按 arrangement 的顺序逐项标记相对大小；"
+                                        "不确定时每项写 unknown。非重复组用空数组。"),
+                        "items": {"type": "string", "enum": [
+                            "large", "medium", "small", "same", "unknown"]},
+                    },
+                    "size_order_axis": {"type": "string", "enum": [
+                        "vertical_top_to_bottom", "vertical_bottom_to_top",
+                        "horizontal_left_to_right", "horizontal_right_to_left",
+                        "unknown", "not_applicable"]},
+                    "size_order_confidence": {"type": "string", "enum": [
+                        "high", "medium", "low", "unknown"]},
                 },
                 "required": ["id", "kind", "quantity", "region",
-                             "arrangement", "evidence"],
+                             "arrangement", "evidence", "relative_size_order",
+                             "size_order_axis", "size_order_confidence"],
             },
         },
         "visible_regions": {
@@ -257,9 +273,42 @@ _REFERENCE_READING_TOOL_SCHEMA = {
                              "image_bbox_norm", "evidence", "features"],
             },
         },
+        "dimensionless_constraints": {
+            "type": "array", "maxItems": 32,
+            "description": ("从可见图像中记录有证据的比例关系，不含绝对毫米尺寸。"
+                            "relation 支持 bbox_ratio、ordered_partition、normalized_position、"
+                            "relative_size、setback_ratio、spacing_ratio、other。"
+                            "relative_size 可对两个 subjects 给一个比值（第一项/第二项），"
+                            "或为多个 subjects 逐项提供最大值为 1 的归一化值；"
+                            "setback_ratio/spacing_ratio 只填一个比例值，subjects 可写关系两端，"
+                            "也可用一个名称描述该比例，evidence 中说明分子与分母。"),
+            "items": {
+                "type": "object", "additionalProperties": False,
+                "properties": {
+                    "id": {"type": "string", "minLength": 1},
+                    "relation": {"type": "string", "enum": [
+                        "bbox_ratio", "ordered_partition", "normalized_position",
+                        "relative_size", "setback_ratio", "spacing_ratio", "other"]},
+                    "image": {"type": "string", "minLength": 1},
+                    "view": {"type": "string", "enum": [
+                        "front", "right", "top", "iso", "back", "left", "bottom", "unknown"]},
+                    "subjects": {"type": "array", "minItems": 1,
+                                 "items": {"type": "string", "minLength": 1}},
+                    "axes": {"type": "array", "minItems": 1,
+                             "items": {"type": "string", "minLength": 1}},
+                    "values": {"type": "array", "minItems": 1,
+                               "items": {"type": "number"}},
+                    "confidence": {"type": "string", "enum": [
+                        "high", "medium", "low", "unknown"]},
+                    "evidence": {"type": "string", "minLength": 1},
+                },
+                "required": ["id", "relation", "image", "view", "subjects",
+                             "axes", "values", "confidence", "evidence"],
+            },
+        },
         "uncertainties": {"type": "array", "items": {"type": "string"}},
     },
-    "required": ["feature_groups", "visible_regions"],
+    "required": ["feature_groups", "visible_regions", "dimensionless_constraints"],
 }
 
 
@@ -356,9 +405,11 @@ AGENT_TOOLS = [
 
 
 MAX_IDENTICAL_FINISHES = 3
+REVIEW_AFTER_GEOMETRY_MUTATIONS = 6
 
 
-def _reference_reading_blockers(reading, plan=None, final=False) -> list:
+def _reference_reading_blockers(reading, plan=None, final=False,
+                                active_images=None) -> list:
     """Validate a concise, shape-independent inventory of visible feature groups."""
     if not isinstance(reading, dict):
         return ["缺少 reference_reading：先列可见特征组、数量和区域证据。"]
@@ -388,6 +439,119 @@ def _reference_reading_blockers(reading, plan=None, final=False) -> list:
             blockers.append("feature_groups[%d].region 不能为空。" % (index - 1))
         if not evidence:
             blockers.append("feature_groups[%d].evidence 不能为空。" % (index - 1))
+        hole_group = "hole" in kind or "孔" in kind
+        size_order = group.get("relative_size_order")
+        if not isinstance(size_order, list):
+            blockers.append("feature_groups[%d].relative_size_order 必须是数组。" % (index - 1))
+            size_order = []
+        if hole_group and isinstance(quantity, int) and not isinstance(quantity, bool):
+            if len(size_order) != quantity:
+                blockers.append(
+                    "孔组 %s 必须按 arrangement 顺序为 %d 个孔逐个给出 relative_size_order；"
+                    "看不清的项填 unknown。" % (group_id or index, quantity))
+        if any(value not in {"large", "medium", "small", "same", "unknown"}
+               for value in size_order):
+            blockers.append("feature_groups[%d].relative_size_order 含有未知枚举值。"
+                            % (index - 1))
+        size_axis = str(group.get("size_order_axis") or "")
+        valid_size_axes = {
+            "vertical_top_to_bottom", "vertical_bottom_to_top",
+            "horizontal_left_to_right", "horizontal_right_to_left",
+            "unknown", "not_applicable",
+        }
+        if size_axis not in valid_size_axes:
+            blockers.append("feature_groups[%d].size_order_axis 无效。" % (index - 1))
+        size_confidence = str(group.get("size_order_confidence") or "")
+        if size_confidence not in {"high", "medium", "low", "unknown"}:
+            blockers.append("feature_groups[%d].size_order_confidence 无效。" % (index - 1))
+        has_ordered_sizes = any(value in {"large", "medium", "small"}
+                                for value in size_order)
+        if (hole_group and has_ordered_sizes
+                and size_confidence in {"high", "medium"}
+                and size_axis in {"unknown", "not_applicable"}):
+            blockers.append("孔组 %s 给出了有方向的相对大小，但没有给出排列方向。"
+                            % (group_id or index))
+
+    constraints = reading.get("dimensionless_constraints")
+    if not isinstance(constraints, list):
+        blockers.append("reference_reading.dimensionless_constraints 必须是数组；"
+                        "没有可靠比例时返回空数组。")
+        constraints = []
+    constraint_ids = set()
+    allowed_relations = {
+        "bbox_ratio", "ordered_partition", "normalized_position",
+        "relative_size", "setback_ratio", "spacing_ratio", "other",
+    }
+    allowed_views = set(_VIEWS) | {"unknown"}
+    known_images = {os.path.basename(str(name)) for name in active_images or []}
+    for index, constraint in enumerate(constraints):
+        label = "dimensionless_constraints[%d]" % index
+        if not isinstance(constraint, dict):
+            blockers.append(label + " 必须是对象。")
+            continue
+        constraint_id = str(constraint.get("id") or "").strip()
+        if not constraint_id or constraint_id in constraint_ids:
+            blockers.append(label + ".id 必须非空且唯一。")
+        constraint_ids.add(constraint_id)
+        relation = str(constraint.get("relation") or "").strip().lower()
+        if relation not in allowed_relations:
+            blockers.append(label + ".relation 无效。")
+        image = os.path.basename(str(constraint.get("image") or "").strip())
+        if not image or (known_images and image not in known_images):
+            blockers.append(label + ".image 必须指向本轮参考图文件名。")
+        view = str(constraint.get("view") or "").strip().lower()
+        if view not in allowed_views:
+            blockers.append(label + ".view 必须是已知视图或 unknown。")
+        subjects = constraint.get("subjects")
+        axes = constraint.get("axes")
+        values = constraint.get("values")
+        if (not isinstance(subjects, list) or not subjects
+                or any(not str(value).strip() for value in subjects)):
+            blockers.append(label + ".subjects 必须列出参与该比例关系的对象。")
+            subjects = []
+        if (not isinstance(axes, list) or not axes
+                or any(not str(value).strip() for value in axes)):
+            blockers.append(label + ".axes 必须指出比例对应的几何方向。")
+            axes = []
+        if (not isinstance(values, list) or not values
+                or any(not isinstance(value, (int, float)) or isinstance(value, bool)
+                       or not math.isfinite(float(value)) for value in values)):
+            blockers.append(label + ".values 必须是有限数值数组。")
+            values = []
+        else:
+            values = [float(value) for value in values]
+        confidence = str(constraint.get("confidence") or "").strip().lower()
+        if confidence not in {"high", "medium", "low", "unknown"}:
+            blockers.append(label + ".confidence 无效。")
+        if not str(constraint.get("evidence") or "").strip():
+            blockers.append(label + ".evidence 不能为空。")
+
+        if relation == "bbox_ratio":
+            if len(subjects) != 1 or len(axes) != 2 or len(values) != 1 or values[0] <= 0:
+                blockers.append(label + " bbox_ratio 需要一个对象、两个轴和一个正比例值。")
+        elif relation == "ordered_partition":
+            if (len(axes) != 1 or len(subjects) < 2
+                    or len(values) != len(subjects)
+                    or any(value <= 0 for value in values)
+                    or abs(sum(values) - 1.0) > 0.08):
+                blockers.append(label + " ordered_partition 的对象和值必须一一对应，"
+                                "所有正比例之和须在 1.0 的 0.08 范围内。")
+        elif relation == "normalized_position":
+            if (len(axes) != 2 or len(values) != len(subjects) * 2
+                    or any(value < 0 or value > 1 for value in values)):
+                blockers.append(label + " normalized_position 需要每个对象的两项 0-1 坐标。")
+        elif relation == "relative_size":
+            normalized_group = (
+                len(values) == len(subjects)
+                and all(0 < value <= 1 for value in values)
+                and bool(values) and max(values) >= 0.97)
+            pair_ratio = len(subjects) == 2 and len(values) == 1 and values[0] > 0
+            if len(axes) != 1 or not (normalized_group or pair_ratio):
+                blockers.append(
+                    label + " relative_size 需要两个对象间的正比值，或逐对象给出最大值为 1 的归一化值。")
+        elif relation in {"setback_ratio", "spacing_ratio"}:
+            if len(subjects) < 1 or not axes or len(values) != 1 or values[0] <= 0:
+                blockers.append(label + " 需要一个或多个比例对象、方向和一个正比例值。")
     if final and isinstance(plan, dict):
         target_holes = _reference_hole_quantity(reading)
         if target_holes is not None:
@@ -527,7 +691,8 @@ def _inspect_references(args: dict, state: dict) -> dict:
     if not state.get("has_reference_images"):
         return {"state": "invalid", "error": "当前请求没有可读取的参考图。"}
     reading = args.get("reference_reading")
-    blockers = _reference_reading_blockers(reading)
+    blockers = _reference_reading_blockers(
+        reading, active_images=state.get("active_reference_images") or [])
     blockers.extend(_reference_region_blockers(
         reading, state.get("active_reference_images") or []))
     if blockers:
@@ -1067,6 +1232,9 @@ def _set_plan(args: dict, state: dict) -> dict:
     after_fp = cad._geometry_plan_fingerprint(plan)
     geometry_changed = bool(before_fp and before_fp != after_fp)
     if geometry_changed:
+        if state.get("geometry_review_completed"):
+            state["geometry_mutations_since_review"] = (
+                state.get("geometry_mutations_since_review", 0) + 1)
         prior = state.get("reviewed_view_status", {})
         if prior:
             state["repair_cycles"] = state.get("repair_cycles", 0) + 1
@@ -1243,7 +1411,9 @@ def _apply_incremental(name: str, args: dict, state: dict) -> dict:
     # Snapshot before _set_plan runs: a geometry change clears latest_preview.
     previous_preview = state.get("latest_preview") or {}
     if name == "cad_create_model" and state.get("has_reference_images"):
-        blockers = _reference_reading_blockers(state.get("reference_reading"))
+        blockers = _reference_reading_blockers(
+            state.get("reference_reading"),
+            active_images=state.get("active_reference_images") or [])
         blockers.extend(_reference_region_blockers(
             state.get("reference_reading"), state.get("active_reference_images") or []))
         if state.get("reference_reading_source") != "cad_inspect_references":
@@ -1701,6 +1871,8 @@ def _review_model(args: dict, state: dict, source_messages: list) -> dict:
     }
     state.setdefault("review_history", []).append(record)
     if review_type == "geometry":
+        state["geometry_review_completed"] = True
+        state["geometry_mutations_since_review"] = 0
         state["latest_geometry_review"] = record
         statuses = state.setdefault("reviewed_view_status", {})
         for report in review.get("single_view_reports", []):
@@ -1906,7 +2078,9 @@ def _finish_gate(state: dict) -> dict:
         # The builder's first-pass visual reading is a hypothesis, not a source
         # of truth. Exact visible-hole coverage is checked against the separate
         # source-only inventory created during multimodal review.
-        reading_blockers = _reference_reading_blockers(reading, plan, final=False)
+        reading_blockers = _reference_reading_blockers(
+            reading, plan, final=False,
+            active_images=state.get("active_reference_images") or [])
         if reading_blockers:
             coverage_mismatch = any("当前模型有" in row for row in reading_blockers)
             return {"ready": False,
@@ -2364,6 +2538,41 @@ def _build_tools(state: dict) -> list:
     return tools
 
 
+def _reference_review_due(state: dict) -> bool:
+    """Schedule evidence reviews without prescribing a fixed sequence of views."""
+    if not state.get("has_reference_images"):
+        return False
+    preview = state.get("latest_preview")
+    fingerprint = state.get("plan_geometry_fingerprint")
+    if (not isinstance(preview, dict) or not fingerprint
+            or state.get("preview_geometry_fingerprint") != fingerprint):
+        return False
+    checks = preview.get("local_geometry_checks") or {}
+    if checks.get("state") != "passed":
+        return False
+    if not state.get("geometry_review_completed"):
+        return True
+    return (state.get("geometry_mutations_since_review", 0)
+            >= REVIEW_AFTER_GEOMETRY_MUTATIONS)
+
+
+def _geometry_review_only_tools(tools: list) -> list:
+    """Constrain the next model decision to one geometry review when due."""
+    selected = []
+    for tool in tools:
+        function = tool.get("function") or {}
+        if function.get("name") != "cad_review_model":
+            continue
+        restricted = copy.deepcopy(tool)
+        parameters = restricted["function"].get("parameters") or {}
+        properties = parameters.get("properties") or {}
+        review_type = properties.get("review_type")
+        if isinstance(review_type, dict):
+            review_type["enum"] = ["geometry"]
+        selected.append(restricted)
+    return selected
+
+
 def run_dynamic_loop(prompt: str, image_paths: list, model_cfg: dict,
                      transcript: list, source_messages: list,
                      state: dict, current_plan=None,
@@ -2390,6 +2599,8 @@ def run_dynamic_loop(prompt: str, image_paths: list, model_cfg: dict,
     state["latest_geometry_review"] = None
     state["latest_similarity_review"] = None
     state["review_invocations"] = 0
+    state["geometry_review_completed"] = False
+    state["geometry_mutations_since_review"] = 0
     state["plan_submissions"] = 0
     state["plan_revision"] = 1 if isinstance(current_plan, dict) else 0
     state["web_results"] = {}
@@ -2456,11 +2667,20 @@ def run_dynamic_loop(prompt: str, image_paths: list, model_cfg: dict,
             initial_model_bootstrap
             and not state.get("candidate_attempted")
             and not require_reference_inspection)
+        require_visual_review = bool(
+            not require_reference_inspection
+            and not require_create_model
+            and _reference_review_due(state))
         if require_reference_inspection:
             call_tools = _initial_reference_inspection_tool(tools)
         elif require_create_model:
             call_tools = _initial_creation_tools(
                 tools, bool(state.get("has_reference_images")))
+        elif require_visual_review:
+            call_tools = _geometry_review_only_tools(tools)
+            cad._emit(
+                state.get("progress"),
+                "候选几何已更新到检查点；现在先用原图复核当前版本，再继续修改。")
         else:
             call_tools = tools
         action_tool_expected = bool(
@@ -2477,6 +2697,8 @@ def run_dynamic_loop(prompt: str, image_paths: list, model_cfg: dict,
                 if require_reference_inspection else
                 {"type": "function", "function": {"name": "cad_create_model"}}
                 if require_create_model else
+                {"type": "function", "function": {"name": "cad_review_model"}}
+                if require_visual_review else
                 "required" if require_action_tool else None))
         if not state.get("reference_reading") and not require_reference_inspection:
             _capture_reference_reading(state, cad._message_text(reply))
@@ -2493,6 +2715,11 @@ def run_dynamic_loop(prompt: str, image_paths: list, model_cfg: dict,
             raise cad.AgentLoopError(
                 "新建模请求已指定 cad_create_model，"
                 "但当前模型仍未返回该工具调用；请确认该模型支持 function calling 后重试。")
+        if require_visual_review and not any(
+                str(((call.get("function") or {}).get("name") or ""))
+                == "cad_review_model" for call in calls):
+            raise cad.AgentLoopError(
+                "The review checkpoint requires cad_review_model, but the model did not call it.")
         if not calls:
             content = cad._message_text(reply).strip()
             if reply.get("_finish_reason") == "length":

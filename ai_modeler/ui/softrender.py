@@ -56,10 +56,13 @@ def view_matrix(az_deg: float, el_deg: float):
 
 VIEWS = {
     'iso':   (35.0, 28.0),
-    'front': (-90.0, 0.0),
+    # The isometric camera sees the +X, +Y and +Z sides. Keep the named front
+    # view on +Y so a front-facing feature remains visible in both ISO and front
+    # review images; back is the opposite side.
+    'front': (90.0, 0.0),
     'right': (0.0, 0.0),
     'top':   (-90.0, 90.0),
-    'back':  (90.0, 0.0),
+    'back':  (-90.0, 0.0),
     'left':  (180.0, 0.0),
     'bottom': (-90.0, -90.0),
 }

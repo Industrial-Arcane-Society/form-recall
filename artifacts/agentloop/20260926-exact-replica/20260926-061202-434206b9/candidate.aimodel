@@ -1,0 +1,84 @@
+{
+  "format": "ai-modeler",
+  "version": 1,
+  "name": "U型块-三面孔",
+  "source_prompt": "复刻",
+  "features": [
+    {
+      "kind": "box",
+      "params": {
+        "length": 60.0,
+        "width": 30.0,
+        "height": 40.0,
+        "center": [
+          0.0,
+          0.0,
+          20.0
+        ],
+        "base": false
+      },
+      "op": "add",
+      "name": "长方体",
+      "note": "",
+      "enabled": true,
+      "provenance": {
+        "length": "image_estimate",
+        "width": "image_estimate",
+        "height": "image_estimate",
+        "center": "image_estimate"
+      }
+    },
+    {
+      "kind": "pocket",
+      "params": {
+        "length": 20.0,
+        "width": 30.0,
+        "depth": 30.0,
+        "x": -10.0,
+        "y": -15.0,
+        "corner": 0.0
+      },
+      "op": "cut",
+      "name": "凹槽",
+      "note": "",
+      "enabled": true,
+      "provenance": {
+        "length": "image_estimate",
+        "width": "image_estimate",
+        "depth": "image_estimate",
+        "x": "image_estimate",
+        "y": "image_estimate",
+        "corner": "image_estimate"
+      }
+    },
+    {
+      "kind": "hole",
+      "params": {
+        "diameter": 6.0,
+        "through": true,
+        "pos": "point",
+        "point": [
+          -30.0,
+          0.0,
+          10.0
+        ],
+        "axis": "x",
+        "x": 0.0,
+        "y": 10.0
+      },
+      "op": "cut",
+      "name": "孔",
+      "note": "",
+      "enabled": true,
+      "provenance": {
+        "diameter": "image_estimate",
+        "through": "image_estimate",
+        "point": "image_estimate",
+        "axis": "image_estimate",
+        "x": "image_estimate",
+        "y": "image_estimate"
+      }
+    }
+  ],
+  "exported_at": "2026-09-26 06:15:03"
+}

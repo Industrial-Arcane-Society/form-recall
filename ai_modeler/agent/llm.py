@@ -28,6 +28,23 @@ LLAMA_DIR = os.path.join(AI_DIR, 'llamacpp')
 LLAMA_EXE = os.path.join(LLAMA_DIR, 'llama-server.exe')
 GGUF_DIR = os.path.join(AI_DIR, 'gguf')
 LOCAL_PORT = 8090
+MODEL_STREAM_IDLE_TIMEOUT_SECONDS = 60
+
+
+def _stream_request_timeout(timeout):
+    """Bound a single no-data wait without limiting streamed output size."""
+    try:
+        requested = float(timeout)
+    except (TypeError, ValueError):
+        requested = MODEL_STREAM_IDLE_TIMEOUT_SECONDS
+    return max(0.1, min(requested, MODEL_STREAM_IDLE_TIMEOUT_SECONDS))
+
+
+def _is_stream_timeout(error):
+    reason = getattr(error, 'reason', None)
+    return (isinstance(error, TimeoutError)
+            or isinstance(reason, TimeoutError)
+            or 'timed out' in str(error).lower())
 
 SYSTEM_PROMPT = '''你是一个 CAD 特征解析器。把用户的中文建模需求转换成 JSON 特征数组。
 
@@ -561,7 +578,14 @@ def _read_responses_stream(response, progress=None, cancel_event=None):
         elif line.startswith('event:'):
             event_name = line[6:].strip()
         elif line.startswith('data:'):
-            data_lines.append(line[5:].lstrip())
+            payload = line[5:].lstrip()
+            if payload == '[DONE]':
+                # Some OpenAI-compatible gateways keep the SSE socket open
+                # briefly after their terminal marker. Stop reading here so a
+                # completed model response cannot appear to hang until timeout.
+                consume_event()
+                break
+            data_lines.append(payload)
     consume_event()
     if final_response is None:
         raise RuntimeError('DeepSeek Responses SSE 提前结束，未收到 response.completed/incomplete/failed。')
@@ -683,7 +707,8 @@ def _deepseek_responses_completion(messages, cfg, tools, timeout, max_tokens,
         },
         method='POST')
     try:
-        with urllib.request.urlopen(request, timeout=timeout) as response:
+        with urllib.request.urlopen(
+                request, timeout=_stream_request_timeout(timeout)) as response:
             result, final_event = _read_responses_stream(
                 response, progress=progress, cancel_event=cancel_event)
     except urllib.error.HTTPError as exc:
@@ -693,6 +718,11 @@ def _deepseek_responses_completion(messages, cfg, tools, timeout, max_tokens,
             reason = str(exc)
         raise RuntimeError('DeepSeek Responses API HTTP %s: %s' % (exc.code, reason)) from exc
     except (urllib.error.URLError, TimeoutError, OSError) as exc:
+        if _is_stream_timeout(exc):
+            raise RuntimeError(
+                'DeepSeek Responses API 连续 %d 秒没有新流数据，已停止等待；'
+                '请检查上游服务是否仍在输出，再重试。'
+                % MODEL_STREAM_IDLE_TIMEOUT_SECONDS) from exc
         raise RuntimeError('DeepSeek Responses API 流式连接失败: %s' % exc) from exc
     return _responses_to_chat_message(result, final_event, payload)
 
@@ -830,7 +860,14 @@ def _read_chat_completions_stream(response, progress=None, cancel_event=None):
         elif line.startswith(':'):
             continue
         elif line.startswith('data:'):
-            data_lines.append(line[5:].lstrip())
+            payload = line[5:].lstrip()
+            if payload == '[DONE]':
+                # Some OpenAI-compatible gateways keep the SSE socket open
+                # briefly after their terminal marker. Stop reading here so a
+                # completed model response cannot appear to hang until timeout.
+                consume_chunk()
+                break
+            data_lines.append(payload)
     consume_chunk()
     emit(force=True)
     if chunk_count == 0 and body_lines:
@@ -995,7 +1032,8 @@ def chat_completion(messages, cfg: dict, tools=None, timeout=180,
                  'Accept': 'text/event-stream',
                  'Authorization': 'Bearer ' + key})
     try:
-        with urllib.request.urlopen(request, timeout=timeout) as response:
+        with urllib.request.urlopen(
+                request, timeout=_stream_request_timeout(timeout)) as response:
             stream = _read_chat_completions_stream(
                 response, progress=progress, cancel_event=cancel_event)
     except urllib.error.HTTPError as exc:
@@ -1023,6 +1061,11 @@ def chat_completion(messages, cfg: dict, tools=None, timeout=180,
                 '请更换支持 OpenAI 兼容流式的模型服务。服务返回: %s' % reason) from exc
         raise RuntimeError('大模型接口 HTTP %s: %s' % (exc.code, reason)) from exc
     except (urllib.error.URLError, TimeoutError, OSError) as exc:
+        if _is_stream_timeout(exc):
+            raise RuntimeError(
+                '大模型流式响应连续 %d 秒没有新数据，已停止等待；'
+                '请检查上游服务是否仍在输出，再重试。'
+                % MODEL_STREAM_IDLE_TIMEOUT_SECONDS) from exc
         raise RuntimeError('大模型接口连接失败: %s' % exc) from exc
 
     return _chat_stream_to_message(stream, payload)

@@ -1,0 +1,405 @@
+{
+  "schema_version": "1.0",
+  "name": "Three staggered perforated plates",
+  "source_prompt": "Candidate reconstruction from the single uploaded isometric reference: three parallel upright plates, the center plate set back from the two outer plates, and three vertical holes on each plate in large-small-large order. Image proportions only; dimensions are nominal estimates.",
+  "units": {
+    "length": "mm",
+    "angle": "deg"
+  },
+  "coordinate_system": {
+    "type": "global_cartesian",
+    "handedness": "right",
+    "axes": [
+      "X",
+      "Y",
+      "Z"
+    ],
+    "origin": [
+      0,
+      0,
+      0
+    ]
+  },
+  "features": [
+    {
+      "id": "outer-plate-left",
+      "kind": "box",
+      "operation": "add",
+      "name": "Left outer plate",
+      "parameters": {
+        "length": 40,
+        "width": 8,
+        "height": 100,
+        "center": [
+          20,
+          0,
+          50
+        ]
+      },
+      "sources": {
+        "length": {
+          "type": "image_estimate",
+          "evidence": "Single isometric image: plate face-width/height ratio; nominal plate height normalized to 100 mm."
+        },
+        "width": {
+          "type": "image_estimate",
+          "evidence": "Single isometric image: visible plate side-wall thickness relative to face width."
+        },
+        "height": {
+          "type": "image_estimate",
+          "evidence": "Single isometric image: reference-height normalization, not a drawing dimension."
+        },
+        "center": {
+          "type": "derived",
+          "note": "Left plate occupies X=0..40, Y=-4..4, Z=0..100 in the chosen global frame."
+        }
+      }
+    },
+    {
+      "id": "outer-plate-right",
+      "kind": "box",
+      "operation": "add",
+      "name": "Right outer plate",
+      "parameters": {
+        "length": 40,
+        "width": 8,
+        "height": 100,
+        "center": [
+          120,
+          0,
+          50
+        ]
+      },
+      "sources": {
+        "length": {
+          "type": "image_estimate",
+          "evidence": "Single isometric image: outer plate face-width/height ratio, using the same scale as the left plate."
+        },
+        "width": {
+          "type": "image_estimate",
+          "evidence": "Single isometric image: same nominal side-wall thickness as the left plate."
+        },
+        "height": {
+          "type": "image_estimate",
+          "evidence": "Single isometric image: same full-height extent as the left plate."
+        },
+        "center": {
+          "type": "derived",
+          "note": "Right plate is shifted along X with a 10 mm physical gap to the recessed center plate; Y and Z match the left plate."
+        }
+      }
+    },
+    {
+      "id": "center-plate-backset",
+      "kind": "box",
+      "operation": "add",
+      "name": "Recessed center plate",
+      "parameters": {
+        "length": 40,
+        "width": 8,
+        "height": 100,
+        "center": [
+          70,
+          -13,
+          50
+        ]
+      },
+      "sources": {
+        "length": {
+          "type": "image_estimate",
+          "evidence": "Single isometric image: assumed same face width as the two outer plates."
+        },
+        "width": {
+          "type": "image_estimate",
+          "evidence": "Single isometric image: assumed same plate thickness as the outer plates."
+        },
+        "height": {
+          "type": "image_estimate",
+          "evidence": "Single isometric image: assumed same bottom and top level as the outer plates."
+        },
+        "center": {
+          "type": "derived",
+          "note": "X=70 mm is midway between outer centers X=20 and X=120; Y=-13 mm places this plate behind both outer plates because the local iso renderer sees +Y; the 10 mm X gaps keep through-hole cutters local to each plate."
+        }
+      }
+    },
+    {
+      "id": "top-bridge",
+      "kind": "box",
+      "operation": "add",
+      "name": "Inferred top bridge",
+      "note": "Image shows a continuous upper mass; represented as a simple bridging block to connect the three plates.",
+      "parameters": {
+        "length": 148,
+        "width": 49,
+        "height": 10,
+        "center": [
+          70,
+          -18,
+          100
+        ]
+      },
+      "sources": {
+        "length": {
+          "type": "image_estimate",
+          "evidence": "Single isometric image: long-to-short top-face edge ratio after accounting for the local isometric renderer projection."
+        },
+        "width": {
+          "type": "image_estimate",
+          "evidence": "Single isometric image: short top-face edge relative to the long edge, fitted to the same projection."
+        },
+        "height": {
+          "type": "image_estimate",
+          "evidence": "Single isometric image: estimated thickness of the upper connecting mass."
+        },
+        "center": {
+          "type": "derived",
+          "note": "Placed behind the front faces at center Y=-18 with width 49 (bounds Y=-42.5..6.5), and overlaps the upper ends of all three plates."
+        }
+      }
+    },
+    {
+      "id": "left-hole-top",
+      "kind": "hole",
+      "operation": "cut",
+      "name": "Left large upper through-hole",
+      "parameters": {
+        "diameter": 15,
+        "through": true,
+        "pos": "point",
+        "point": [
+          20,
+          0,
+          78
+        ],
+        "axis": "Y"
+      },
+      "sources": {
+        "diameter": {
+          "type": "image_estimate",
+          "evidence": "Single isometric image: turquoise opening width is about 0.36 of the plate face width."
+        },
+        "point": {
+          "type": "derived",
+          "note": "Hole lies on the left plate centerline X=20, center plane Y=0, at the upper row Z=78."
+        }
+      }
+    },
+    {
+      "id": "left-hole-middle",
+      "kind": "hole",
+      "operation": "cut",
+      "name": "Left small middle through-hole",
+      "parameters": {
+        "diameter": 9,
+        "through": true,
+        "pos": "point",
+        "point": [
+          20,
+          0,
+          50
+        ],
+        "axis": "Y"
+      },
+      "sources": {
+        "diameter": {
+          "type": "image_estimate",
+          "evidence": "Single isometric image: blue middle opening is visibly smaller, about 0.22 of the plate face width."
+        },
+        "point": {
+          "type": "derived",
+          "note": "Hole lies on the left plate centerline X=20, center plane Y=0, at the middle row Z=50."
+        }
+      }
+    },
+    {
+      "id": "left-hole-bottom",
+      "kind": "hole",
+      "operation": "cut",
+      "name": "Left large lower through-hole",
+      "parameters": {
+        "diameter": 15,
+        "through": true,
+        "pos": "point",
+        "point": [
+          20,
+          0,
+          22
+        ],
+        "axis": "Y"
+      },
+      "sources": {
+        "diameter": {
+          "type": "image_estimate",
+          "evidence": "Single isometric image: lower turquoise opening matches the upper large opening."
+        },
+        "point": {
+          "type": "derived",
+          "note": "Hole lies on the left plate centerline X=20, center plane Y=0, at the lower row Z=22."
+        }
+      }
+    },
+    {
+      "id": "center-hole-top",
+      "kind": "hole",
+      "operation": "cut",
+      "name": "Center large upper through-hole",
+      "parameters": {
+        "diameter": 15,
+        "through": true,
+        "pos": "point",
+        "point": [
+          70,
+          -13,
+          78
+        ],
+        "axis": "Y"
+      },
+      "sources": {
+        "diameter": {
+          "type": "image_estimate",
+          "evidence": "Single isometric image: upper center opening follows the large-small-large pattern."
+        },
+        "point": {
+          "type": "derived",
+          "note": "Hole lies on the center plate centerline X=70, center plane Y=-13, at the top row Z=78."
+        }
+      }
+    },
+    {
+      "id": "center-hole-middle",
+      "kind": "hole",
+      "operation": "cut",
+      "name": "Center small middle through-hole",
+      "parameters": {
+        "diameter": 9,
+        "through": true,
+        "pos": "point",
+        "point": [
+          70,
+          -13,
+          50
+        ],
+        "axis": "Y"
+      },
+      "sources": {
+        "diameter": {
+          "type": "image_estimate",
+          "evidence": "Single isometric image: center blue opening follows the smaller middle diameter."
+        },
+        "point": {
+          "type": "derived",
+          "note": "Hole lies on the center plate centerline X=70, center plane Y=-13, at the middle row Z=50."
+        }
+      }
+    },
+    {
+      "id": "center-hole-bottom",
+      "kind": "hole",
+      "operation": "cut",
+      "name": "Center large lower through-hole",
+      "parameters": {
+        "diameter": 15,
+        "through": true,
+        "pos": "point",
+        "point": [
+          70,
+          -13,
+          22
+        ],
+        "axis": "Y"
+      },
+      "sources": {
+        "diameter": {
+          "type": "image_estimate",
+          "evidence": "Single isometric image: lower center opening follows the upper large diameter."
+        },
+        "point": {
+          "type": "derived",
+          "note": "Hole lies on the center plate centerline X=70, center plane Y=-13, at the bottom row Z=22."
+        }
+      }
+    },
+    {
+      "id": "right-hole-top",
+      "kind": "hole",
+      "operation": "cut",
+      "name": "Right large upper through-hole",
+      "parameters": {
+        "diameter": 15,
+        "through": true,
+        "pos": "point",
+        "point": [
+          120,
+          0,
+          78
+        ],
+        "axis": "Y"
+      },
+      "sources": {
+        "diameter": {
+          "type": "image_estimate",
+          "evidence": "Single isometric image: upper right opening follows the large-small-large pattern."
+        },
+        "point": {
+          "type": "derived",
+          "note": "Hole lies on the right plate centerline X=120, center plane Y=0, at the upper row Z=78."
+        }
+      }
+    },
+    {
+      "id": "right-hole-middle",
+      "kind": "hole",
+      "operation": "cut",
+      "name": "Right small middle through-hole",
+      "parameters": {
+        "diameter": 9,
+        "through": true,
+        "pos": "point",
+        "point": [
+          120,
+          0,
+          50
+        ],
+        "axis": "Y"
+      },
+      "sources": {
+        "diameter": {
+          "type": "image_estimate",
+          "evidence": "Single isometric image: right blue opening is smaller than the two turquoise openings."
+        },
+        "point": {
+          "type": "derived",
+          "note": "Hole lies on the right plate centerline X=120, center plane Y=0, at the middle row Z=50."
+        }
+      }
+    },
+    {
+      "id": "right-hole-bottom",
+      "kind": "hole",
+      "operation": "cut",
+      "name": "Right large lower through-hole",
+      "parameters": {
+        "diameter": 15,
+        "through": true,
+        "pos": "point",
+        "point": [
+          120,
+          0,
+          22
+        ],
+        "axis": "Y"
+      },
+      "sources": {
+        "diameter": {
+          "type": "image_estimate",
+          "evidence": "Single isometric image: lower right opening follows the upper large diameter."
+        },
+        "point": {
+          "type": "derived",
+          "note": "Hole lies on the right plate centerline X=120, center plane Y=0, at the lower row Z=22."
+        }
+      }
+    }
+  ]
+}

@@ -38,20 +38,32 @@ def _reading(**overrides):
             {"id": "left-face-holes", "kind": "hole", "quantity": 3,
              "region": "left face",
              "arrangement": "three vertical positions",
-             "evidence": "three distinct openings on the left face"},
+             "evidence": "three distinct openings on the left face",
+             "relative_size_order": ["unknown", "unknown", "unknown"],
+             "size_order_axis": "vertical_top_to_bottom",
+             "size_order_confidence": "unknown"},
             {"id": "center-face-holes", "kind": "hole", "quantity": 3,
              "region": "recessed center face",
              "arrangement": "three vertical positions",
-             "evidence": "three distinct openings on the recessed center face"},
+             "evidence": "three distinct openings on the recessed center face",
+             "relative_size_order": ["unknown", "unknown", "unknown"],
+             "size_order_axis": "vertical_top_to_bottom",
+             "size_order_confidence": "unknown"},
             {"id": "right-face-holes", "kind": "hole", "quantity": 3,
              "region": "right face",
              "arrangement": "three vertical positions",
-             "evidence": "three distinct openings on the right face"},
+             "evidence": "three distinct openings on the right face",
+             "relative_size_order": ["unknown", "unknown", "unknown"],
+             "size_order_axis": "vertical_top_to_bottom",
+             "size_order_confidence": "unknown"},
             {"id": "main-body", "kind": "body", "quantity": 1,
              "region": "whole part",
              "arrangement": "single connected body",
-             "evidence": "one connected outer body"},
+             "evidence": "one connected outer body",
+             "relative_size_order": [], "size_order_axis": "not_applicable",
+             "size_order_confidence": "unknown"},
         ],
+        "dimensionless_constraints": [],
     }
     reading.update(overrides)
     return reading
@@ -61,7 +73,9 @@ def _body_reading():
     return _reading(feature_groups=[
         {"id": "main-body", "kind": "body", "quantity": 1,
          "region": "whole part", "arrangement": "single body",
-         "evidence": "one continuous outer body"}])
+         "evidence": "one continuous outer body",
+         "relative_size_order": [], "size_order_axis": "not_applicable",
+         "size_order_confidence": "unknown"}])
 
 
 def _reading_with_regions(image="reference.png"):
@@ -609,7 +623,9 @@ class IncrementalAgentTests(unittest.TestCase):
         reading_group = reading_schema["properties"][
             "feature_groups"]["items"]
         self.assertEqual(["id", "kind", "quantity", "region", "arrangement",
-                          "evidence"], reading_group["required"])
+                          "evidence", "relative_size_order", "size_order_axis",
+                          "size_order_confidence"], reading_group["required"])
+        self.assertIn("dimensionless_constraints", reading_schema["required"])
 
     def test_text_build_saves_editable_project_and_mesh(self):
         replies = [
@@ -750,12 +766,15 @@ class IncrementalAgentTests(unittest.TestCase):
             ("cad_inspect_references", {"reference_reading": {
                 "feature_groups": [{"id": "main-body", "kind": "body", "quantity": 1,
                                     "region": "whole part", "arrangement": "single body",
-                                    "evidence": "one continuous outer body"}],
+                                    "evidence": "one continuous outer body",
+                                    "relative_size_order": [], "size_order_axis": "not_applicable",
+                                    "size_order_confidence": "unknown"}],
                 "visible_regions": [
                     {"image": name + ".png", "id": "body", "region": "whole part",
                      "surface_state": "solid_face", "image_bbox_norm": [0, 0, 1, 1],
                      "evidence": "one continuous body", "features": []}
                     for name in ("iso", "front")],
+                "dimensionless_constraints": [],
                 "uncertainties": [],
             }}),
             ("cad_create_model", {"name": "Part", "first_feature": _feature("image_estimate")}),
@@ -837,8 +856,9 @@ class IncrementalAgentTests(unittest.TestCase):
         self.assertEqual({"type": "function", "function": {
             "name": "cad_create_model"}}, requests[1]["tool_choice"])
         self.assertEqual(["cad_create_model"], requests[1]["tools"])
-        self.assertEqual("required", requests[2]["tool_choice"])
-        self.assertGreater(len(requests[2]["tools"]), 1)
+        self.assertEqual({"type": "function", "function": {
+            "name": "cad_review_model"}}, requests[2]["tool_choice"])
+        self.assertEqual(["cad_review_model"], requests[2]["tools"])
 
     def test_named_tool_choice_rejection_falls_back_to_auto_once(self):
         state = {"deadline": time.monotonic() + 10, "model_cfg": {
@@ -1071,7 +1091,13 @@ class IncrementalAgentTests(unittest.TestCase):
                 "reference_reading": {"feature_groups": [{
                     "id": "builder-wrong-group", "kind": "hole", "quantity": 7,
                     "region": "misread face", "arrangement": "incorrect",
-                    "evidence": "builder hypothesis, not source truth"}]},
+                    "evidence": "builder hypothesis, not source truth"}],
+                    "dimensionless_constraints": [{
+                        "id": "front-width-height", "relation": "bbox_ratio",
+                        "image": "reference.png", "view": "iso",
+                        "subjects": ["whole-object"], "axes": ["width", "height"],
+                        "values": [0.95], "confidence": "medium",
+                        "evidence": "visible outer proportions"}]},
             }
             calls = []
 
@@ -1092,6 +1118,8 @@ class IncrementalAgentTests(unittest.TestCase):
             self.assertNotIn("candidate.png", blind_request)
             comparison_payload = calls[1][0][-1]["content"][0]["text"]
             self.assertIn("independent_reference_inventory", comparison_payload)
+            self.assertIn("dimensionless_source_observations", comparison_payload)
+            self.assertIn("front-width-height", comparison_payload)
             self.assertNotIn("builder-wrong-group", comparison_payload)
 
             response["checks"].append({
@@ -1450,7 +1478,7 @@ class IncrementalAgentTests(unittest.TestCase):
         """Reading does not require slot-specific opening counts or axis claims."""
         reading = self._reading()
         self.assertEqual([], agent_runtime._reference_reading_blockers(reading))
-        self.assertEqual({"feature_groups"}, set(reading))
+        self.assertEqual({"feature_groups", "dimensionless_constraints"}, set(reading))
         partial = self._reading()
         del partial["feature_groups"]
         self.assertTrue(any("feature_groups" in row
@@ -1460,6 +1488,105 @@ class IncrementalAgentTests(unittest.TestCase):
         self.assertEqual([], agent_runtime._reference_reading_blockers(uncertain))
         self.assertEqual(9, agent_runtime._reference_hole_quantity(uncertain))
         self.assertIsNone(agent_runtime._reference_hole_quantity(_body_reading()))
+
+    def test_dimensionless_reference_constraints_are_structured_and_image_bound(self):
+        reading = _body_reading()
+        reading["dimensionless_constraints"] = [{
+            "id": "overall-width-height",
+            "relation": "bbox_ratio",
+            "image": "reference.png",
+            "view": "front",
+            "subjects": ["whole-object"],
+            "axes": ["width", "height"],
+            "values": [0.95],
+            "confidence": "medium",
+            "evidence": "visible outer width is slightly less than its height",
+        }, {
+            "id": "front-segments",
+            "relation": "ordered_partition",
+            "image": "reference.png",
+            "view": "front",
+            "subjects": ["left", "center", "right"],
+            "axes": ["width"],
+            "values": [0.39, 0.22, 0.39],
+            "confidence": "medium",
+            "evidence": "three adjacent front regions span the full width",
+        }, {
+            "id": "slot-width-to-body-width",
+            "relation": "relative_size",
+            "image": "reference.png",
+            "view": "front",
+            "subjects": ["slot-width", "body-width"],
+            "axes": ["width"],
+            "values": [0.25],
+            "confidence": "medium",
+            "evidence": "slot width is approximately one quarter of the body width",
+        }, {
+            "id": "hole-pitch-to-height",
+            "relation": "spacing_ratio",
+            "image": "reference.png",
+            "view": "front",
+            "subjects": ["hole-pitch/usable-height"],
+            "axes": ["height"],
+            "values": [0.25],
+            "confidence": "medium",
+            "evidence": "hole pitch is approximately one quarter of usable face height",
+        }]
+        self.assertEqual([], agent_runtime._reference_reading_blockers(
+            reading, active_images=["C:/sample/reference.png"]))
+
+        reading["dimensionless_constraints"][1]["values"] = [0.5, 0.4, 0.2]
+        blockers = agent_runtime._reference_reading_blockers(
+            reading, active_images=["C:/sample/reference.png"])
+        self.assertTrue(any("ordered_partition" in row for row in blockers), blockers)
+
+        reading["dimensionless_constraints"][1]["values"] = [0.39, 0.22, 0.39]
+        blockers = agent_runtime._reference_reading_blockers(
+            reading, active_images=["C:/sample/another.png"])
+        self.assertTrue(any(".image" in row for row in blockers), blockers)
+
+    def test_review_checkpoint_is_required_after_initial_preview_and_six_edits(self):
+        state = {
+            "has_reference_images": True,
+            "plan_geometry_fingerprint": "geometry-v1",
+            "preview_geometry_fingerprint": "geometry-v1",
+            "latest_preview": {"local_geometry_checks": {"state": "passed"}},
+        }
+        self.assertTrue(agent_runtime._reference_review_due(state))
+
+        state["geometry_review_completed"] = True
+        state["geometry_mutations_since_review"] = 5
+        self.assertFalse(agent_runtime._reference_review_due(state))
+        state["geometry_mutations_since_review"] = 6
+        self.assertTrue(agent_runtime._reference_review_due(state))
+
+        tools = agent_runtime._geometry_review_only_tools(agent_runtime.AGENT_TOOLS)
+        self.assertEqual(["cad_review_model"], [
+            row["function"]["name"] for row in tools])
+        self.assertEqual(["geometry"],
+                         tools[0]["function"]["parameters"]["properties"]
+                         ["review_type"]["enum"])
+        self.assertEqual(["geometry", "similarity"],
+                         next(row for row in agent_runtime.AGENT_TOOLS
+                              if row["function"]["name"] == "cad_review_model")
+                         ["function"]["parameters"]["properties"]["review_type"]["enum"])
+
+    def test_complete_reference_inventory_is_reused_for_later_repairs(self):
+        state = {
+            "independent_reference_inventory_complete": True,
+            "independent_reference_inventory": {
+                "images": [{"image": "reference.png", "source_view": "iso"}],
+                "cross_view_notes": [],
+            },
+        }
+        self.assertIs(
+            state["independent_reference_inventory"],
+            agentloop._cached_reference_inventory(
+                state, ["C:/sample/reference.png"]))
+        self.assertIsNone(agentloop._cached_reference_inventory(
+            state, ["reference.png", "front.png"]))
+        state["independent_reference_inventory_complete"] = False
+        self.assertIsNone(agentloop._cached_reference_inventory(state, ["reference.png"]))
 
     def test_hole_coverage_counts_single_holes_and_repeated_layouts(self):
         plan = {"features": [
@@ -1501,7 +1628,9 @@ class IncrementalAgentTests(unittest.TestCase):
         message = ('读图清单：\n```json\n'
                    '{"feature_groups": [{"id":"body","kind":"body","quantity":1, '
                    '"region":"whole part","arrangement":"single body", '
-                   '"evidence":"one continuous body"}], '
+                   '"evidence":"one continuous body", "relative_size_order":[], '
+                   '"size_order_axis":"not_applicable", "size_order_confidence":"unknown"}], '
+                   '"dimensionless_constraints":[], '
                    '"uncertainties":["顶部圆形是凸起而非孔口"]}\n```\n开始建模。')
         self.assertTrue(agent_runtime._capture_reference_reading(state, message))
         self.assertEqual(1, len(state["reference_reading"]["feature_groups"]))

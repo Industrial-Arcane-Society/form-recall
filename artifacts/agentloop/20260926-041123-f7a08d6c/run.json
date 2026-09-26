@@ -1,0 +1,1900 @@
+{
+  "record_version": 1,
+  "started_at": "2026-09-26T04:11:23+08:00",
+  "finished_at": "2026-09-26T04:15:57+08:00",
+  "state": "failed",
+  "input": {
+    "prompt": "复刻这个",
+    "reference_images": [
+      "clipboard-1888f976e708433792a649f49a0327b0.png"
+    ]
+  },
+  "routing": {
+    "action": "create",
+    "review_mode": "agent_selected",
+    "review_rounds": 0,
+    "reason": "本轮由统一 AgentLoop 按需调用工具；图片建模默认先生成可见候选。"
+  },
+  "conversation_memory": {
+    "summarized_through": 0,
+    "summary_chars": 0
+  },
+  "limits": {
+    "tool_calls": 256,
+    "web_search_calls": 32,
+    "tool_preview_calls": 256,
+    "multiview_tool_calls_per_round": 8,
+    "review_rounds": 256,
+    "context_turns": 128,
+    "context_chars": 1000000,
+    "context_summary_chars": 32000
+  },
+  "selected_reference_images": [
+    "clipboard-1888f976e708433792a649f49a0327b0.png"
+  ],
+  "active_reference_images": [
+    "clipboard-1888f976e708433792a649f49a0327b0.png"
+  ],
+  "model_calls": [
+    {
+      "phase": "agent_loop",
+      "model": "moonshotai/Kimi-K2.7-Code",
+      "max_output_tokens": 65536,
+      "image_parts_in_request": 1,
+      "response_received": true,
+      "reference_image_names": [
+        "clipboard-1888f976e708433792a649f49a0327b0.png"
+      ],
+      "generated_view": null,
+      "response_chars": 0,
+      "finish_reason": "tool_calls",
+      "api_protocol": "chat_completions_stream",
+      "response_id": "01a0da31b00816eebda8f80f87a5f1b0",
+      "thinking": null,
+      "reasoning_effort": null,
+      "usage": {
+        "prompt_tokens": 4683,
+        "completion_tokens": 4398,
+        "total_tokens": 9081,
+        "reasoning_tokens": 4362
+      },
+      "error": null
+    },
+    {
+      "phase": "agent_loop",
+      "model": "moonshotai/Kimi-K2.7-Code",
+      "max_output_tokens": 65536,
+      "image_parts_in_request": 1,
+      "response_received": true,
+      "reference_image_names": [
+        "clipboard-1888f976e708433792a649f49a0327b0.png"
+      ],
+      "generated_view": null,
+      "response_chars": 0,
+      "finish_reason": "tool_calls",
+      "api_protocol": "chat_completions_stream",
+      "response_id": "01a0da33c0debcbd4595be4898a079f2",
+      "thinking": null,
+      "reasoning_effort": null,
+      "usage": {
+        "prompt_tokens": 10582,
+        "completion_tokens": 587,
+        "total_tokens": 11169,
+        "reasoning_tokens": 149
+      },
+      "error": null
+    },
+    {
+      "phase": "agent_loop",
+      "model": "moonshotai/Kimi-K2.7-Code",
+      "max_output_tokens": 65536,
+      "image_parts_in_request": 1,
+      "response_received": true,
+      "reference_image_names": [
+        "clipboard-1888f976e708433792a649f49a0327b0.png"
+      ],
+      "generated_view": null,
+      "response_chars": 0,
+      "finish_reason": "tool_calls",
+      "api_protocol": "chat_completions_stream",
+      "response_id": "01a0da34088c789a989faad5ec2ef90d",
+      "thinking": null,
+      "reasoning_effort": null,
+      "usage": {
+        "prompt_tokens": 11826,
+        "completion_tokens": 510,
+        "total_tokens": 12336,
+        "reasoning_tokens": 286
+      },
+      "error": null
+    },
+    {
+      "phase": "agent_loop",
+      "model": "moonshotai/Kimi-K2.7-Code",
+      "max_output_tokens": 65536,
+      "image_parts_in_request": 1,
+      "response_received": true,
+      "reference_image_names": [
+        "clipboard-1888f976e708433792a649f49a0327b0.png"
+      ],
+      "generated_view": null,
+      "response_chars": 0,
+      "finish_reason": "tool_calls",
+      "api_protocol": "chat_completions_stream",
+      "response_id": "01a0da3446fd50d98f1c1a8065d7a00b",
+      "thinking": null,
+      "reasoning_effort": null,
+      "usage": {
+        "prompt_tokens": 13266,
+        "completion_tokens": 667,
+        "total_tokens": 13933,
+        "reasoning_tokens": 527
+      },
+      "error": null
+    },
+    {
+      "phase": "agent_loop",
+      "model": "moonshotai/Kimi-K2.7-Code",
+      "max_output_tokens": 65536,
+      "image_parts_in_request": 1,
+      "response_received": true,
+      "reference_image_names": [
+        "clipboard-1888f976e708433792a649f49a0327b0.png"
+      ],
+      "generated_view": null,
+      "response_chars": 0,
+      "finish_reason": "tool_calls",
+      "api_protocol": "chat_completions_stream",
+      "response_id": "01a0da3498adaecd5ae7059fb6997a5e",
+      "thinking": null,
+      "reasoning_effort": null,
+      "usage": {
+        "prompt_tokens": 14126,
+        "completion_tokens": 1949,
+        "total_tokens": 16075,
+        "reasoning_tokens": 1791
+      },
+      "error": null
+    }
+  ],
+  "temporary_review_images": [],
+  "recognition": null,
+  "raster_analysis": {
+    "available": true,
+    "images": [
+      {
+        "image_index": 1,
+        "filename": "clipboard-1888f976e708433792a649f49a0327b0.png",
+        "size_px": [
+          494,
+          544
+        ],
+        "three_region_scanline_candidate": null,
+        "foreground_bbox_candidate": null,
+        "scanline_rejected": {
+          "consistent_scanline_count": 15,
+          "span_px": 19,
+          "image_height_px": 544,
+          "span_ratio": 0.0349,
+          "min_span_ratio": 0.25,
+          "reason": "扫描线只在 19/544 px 高度上一致（3.5% < 25%），不足以判定为平色正视图；本图不得作为比例尺寸证据。",
+          "instruction": "不要把该图的像素比例写进 sources.evidence。如需尺寸，按整体轮廓做目视比例估算，或向用户确认。"
+        }
+      }
+    ]
+  },
+  "counts": {
+    "tool_calls": 6,
+    "web_search_calls": 0,
+    "blocked_web_search_calls": 0,
+    "preview_calls": 3,
+    "review_rounds": 0,
+    "repair_cycles": 0,
+    "llm_requests": 5,
+    "image_parts_in_request": 5,
+    "llm_usage": {
+      "prompt_tokens": 54483.0,
+      "completion_tokens": 8111.0,
+      "total_tokens": 62594.0,
+      "reasoning_tokens": 7115.0
+    }
+  },
+  "loop_state": {
+    "context_compactions": 0,
+    "truncated_responses": 0,
+    "stagnation_warnings": 0,
+    "stagnant_tool_calls": 0,
+    "candidate_attempted": true,
+    "finish_gate": null
+  },
+  "construction_repairs": [],
+  "automatic_repairs": [],
+  "open_multiview_findings": [],
+  "plan": {
+    "schema_version": "1.0",
+    "name": "U-bracket",
+    "source_prompt": "复刻这个",
+    "units": {
+      "length": "mm",
+      "angle": "deg"
+    },
+    "coordinate_system": {
+      "type": "global_cartesian",
+      "handedness": "right",
+      "axes": [
+        "X",
+        "Y",
+        "Z"
+      ],
+      "origin": [
+        0,
+        0,
+        0
+      ]
+    },
+    "features": [
+      {
+        "id": "base",
+        "kind": "box",
+        "operation": "add",
+        "parameters": {
+          "length": 40,
+          "width": 25,
+          "height": 60,
+          "center": [
+            0,
+            0,
+            30
+          ],
+          "axis": "Z"
+        },
+        "sources": {
+          "length": {
+            "type": "image_estimate",
+            "evidence": "overall width in isometric view, left-right span of the two walls plus slot"
+          },
+          "width": {
+            "type": "image_estimate",
+            "evidence": "front-to-back depth of the block"
+          },
+          "height": {
+            "type": "image_estimate",
+            "evidence": "vertical span of the block, taller than wide"
+          },
+          "center": {
+            "type": "image_estimate",
+            "evidence": "block centered on origin, bottom on z=0"
+          },
+          "axis": {
+            "type": "image_estimate",
+            "evidence": "vertical extrusion along Z"
+          }
+        }
+      },
+      {
+        "id": "slot",
+        "kind": "box",
+        "operation": "cut",
+        "parameters": {
+          "length": 12,
+          "width": 20.05,
+          "height": 50,
+          "center": [
+            0,
+            2.525,
+            35
+          ],
+          "axis": "Z"
+        },
+        "sources": {
+          "length": {
+            "type": "image_estimate",
+            "evidence": "slot width between the two walls, narrower than each wall"
+          },
+          "width": {
+            "type": "image_estimate",
+            "evidence": "slot cut from front face toward back; cut box front extended 0.05mm past the solid front face (y=12.5) to avoid boolean coincidence, back wall about 5mm"
+          },
+          "height": {
+            "type": "image_estimate",
+            "evidence": "slot cut from top down, leaving bottom material"
+          },
+          "center": {
+            "type": "image_estimate",
+            "evidence": "slot centered in X; cut box spans y=12.55 to y=-7.525; vertical center at z=35 (slot from z=10 to z=60)"
+          },
+          "axis": {
+            "type": "image_estimate",
+            "evidence": "slot extruded vertically along Z"
+          }
+        }
+      }
+    ],
+    "pending_questions": []
+  },
+  "validation": null,
+  "preview": {
+    "state": "previewed",
+    "validation": {
+      "valid": true,
+      "state": "valid",
+      "errors": [],
+      "confirmations": [],
+      "support": [
+        {
+          "feature_id": "base",
+          "kind": "box",
+          "status": "exact",
+          "reason": "矩形草图加凸台；当前 CATIA 映射仅支持 Z 轴拉伸。"
+        },
+        {
+          "feature_id": "slot",
+          "kind": "box",
+          "status": "exact",
+          "reason": "矩形草图加凸台；当前 CATIA 映射仅支持 Z 轴拉伸。"
+        }
+      ],
+      "warnings": [],
+      "schema_version": "1.0"
+    },
+    "catia_executed": false,
+    "dimensions": {
+      "unit": "mm",
+      "bbox": [
+        -20.0,
+        -12.5,
+        0.0,
+        20.0,
+        12.5,
+        60.0
+      ],
+      "size": [
+        40.0,
+        25.0,
+        60.0
+      ],
+      "volume_mm3": 48000.0,
+      "surface_area_mm2": 11800.0,
+      "triangles": 33,
+      "feature_count": 2
+    },
+    "catia_operations": [
+      {
+        "index": 1,
+        "kind": "rect_pad",
+        "plane": "XY",
+        "center": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "profile": [],
+        "dimensions": {
+          "l": 40.0,
+          "w": 25.0,
+          "r": 0.0,
+          "h": 60.0,
+          "depth": 0.0
+        },
+        "name": "长方体",
+        "note": "长方体 40 × 25 × 60 mm"
+      },
+      {
+        "index": 2,
+        "kind": "rect_cut",
+        "plane": "XY",
+        "center": [
+          0.0,
+          2.525,
+          60.0
+        ],
+        "profile": [],
+        "dimensions": {
+          "l": 12.0,
+          "w": 20.05,
+          "r": 0.0,
+          "h": 50.0,
+          "depth": 50.0
+        },
+        "name": "长方体",
+        "note": "长方体 12 × 20.05 × 50 mm"
+      }
+    ],
+    "warnings": [],
+    "feature_manifest": {
+      "base": {
+        "kind": "box",
+        "operation": "add",
+        "name": "长方体",
+        "parameters": {
+          "length": 40,
+          "width": 25,
+          "height": 60,
+          "center": [
+            0,
+            0,
+            30
+          ],
+          "axis": "Z"
+        },
+        "sources": {
+          "length": {
+            "type": "image_estimate",
+            "evidence": "overall width in isometric view, left-right span of the two walls plus slot"
+          },
+          "width": {
+            "type": "image_estimate",
+            "evidence": "front-to-back depth of the block"
+          },
+          "height": {
+            "type": "image_estimate",
+            "evidence": "vertical span of the block, taller than wide"
+          },
+          "center": {
+            "type": "image_estimate",
+            "evidence": "block centered on origin, bottom on z=0"
+          },
+          "axis": {
+            "type": "image_estimate",
+            "evidence": "vertical extrusion along Z"
+          }
+        },
+        "relations": []
+      },
+      "slot": {
+        "kind": "box",
+        "operation": "cut",
+        "name": "长方体",
+        "parameters": {
+          "length": 12,
+          "width": 20.05,
+          "height": 50,
+          "center": [
+            0,
+            2.525,
+            35
+          ],
+          "axis": "Z"
+        },
+        "sources": {
+          "length": {
+            "type": "image_estimate",
+            "evidence": "slot width between the two walls, narrower than each wall"
+          },
+          "width": {
+            "type": "image_estimate",
+            "evidence": "slot cut from front face toward back; cut box front extended 0.05mm past the solid front face (y=12.5) to avoid boolean coincidence, back wall about 5mm"
+          },
+          "height": {
+            "type": "image_estimate",
+            "evidence": "slot cut from top down, leaving bottom material"
+          },
+          "center": {
+            "type": "image_estimate",
+            "evidence": "slot centered in X; cut box spans y=12.55 to y=-7.525; vertical center at z=35 (slot from z=10 to z=60)"
+          },
+          "axis": {
+            "type": "image_estimate",
+            "evidence": "slot extruded vertically along Z"
+          }
+        },
+        "relations": []
+      }
+    },
+    "build_log": [
+      "[基准] 长方体 40 × 25 × 60 mm → 8 面",
+      "[切除] 长方体 12 × 20.05 × 50 mm → 19 面"
+    ],
+    "local_geometry_checks": {
+      "state": "passed",
+      "source": "AI Modeler local mesh kernel",
+      "face_count": 19,
+      "bbox_size_mm": [
+        40.0,
+        25.0,
+        60.0
+      ],
+      "bbox_ratios_from_mesh": {
+        "front_width_height": 0.6666666666666666,
+        "depth_height": 0.4166666666666667,
+        "top_width_depth": 1.6
+      },
+      "feature_count_from_plan": 2,
+      "feature_ids_from_plan": [
+        "base",
+        "slot"
+      ],
+      "nonfinite_face_count": 0,
+      "degenerate_face_count": 0,
+      "hole_features_from_plan": [],
+      "through_hole_mesh_checks": [],
+      "hole_visibility": "requires_multimodal_view_review",
+      "through_hole_result": "not_measured"
+    },
+    "orthographic_layout": {
+      "unit": "mm",
+      "axes": {
+        "length": "X",
+        "width": "Y",
+        "height": "Z"
+      },
+      "uniform_scale_across_views": true,
+      "scale_pixels_per_mm": 3.5533333333333337,
+      "tile_size_pixels": [
+        330,
+        260
+      ],
+      "view_extents": {
+        "front": {
+          "horizontal_axis": "X",
+          "horizontal": 40.0,
+          "vertical_axis": "Z",
+          "vertical": 60.0
+        },
+        "right": {
+          "horizontal_axis": "Y",
+          "horizontal": 25.0,
+          "vertical_axis": "Z",
+          "vertical": 60.0
+        },
+        "top": {
+          "horizontal_axis": "X",
+          "horizontal": 40.0,
+          "vertical_axis": "Y",
+          "vertical": 25.0
+        }
+      },
+      "dimension_ratios": {
+        "length_to_height": 0.6666666666666666,
+        "width_to_height": 0.4166666666666667,
+        "length_to_width": 1.6
+      }
+    },
+    "preview_image": "candidate-preview.png",
+    "preview_image_views": [
+      "iso"
+    ],
+    "preview_image_view_set": "iso",
+    "preview_image_grid_columns": 1,
+    "preview_image_source": "AI Modeler local mesh kernel; not CATIA B-Rep",
+    "preview_image_layout": {
+      "unit": "mm",
+      "axes": {
+        "length": "X",
+        "width": "Y",
+        "height": "Z"
+      },
+      "uniform_scale_across_views": true,
+      "scale_pixels_per_mm": 3.5533333333333337,
+      "tile_size_pixels": [
+        330,
+        260
+      ],
+      "view_extents": {
+        "front": {
+          "horizontal_axis": "X",
+          "horizontal": 40.0,
+          "vertical_axis": "Z",
+          "vertical": 60.0
+        },
+        "right": {
+          "horizontal_axis": "Y",
+          "horizontal": 25.0,
+          "vertical_axis": "Z",
+          "vertical": 60.0
+        },
+        "top": {
+          "horizontal_axis": "X",
+          "horizontal": 40.0,
+          "vertical_axis": "Y",
+          "vertical": 25.0
+        }
+      },
+      "dimension_ratios": {
+        "length_to_height": 0.6666666666666666,
+        "width_to_height": 0.4166666666666667,
+        "length_to_width": 1.6
+      }
+    }
+  },
+  "output_paths": {
+    "aimodel": "C:\\Users\\lycohana\\Desktop\\code\\AI-_-\\artifacts\\agentloop\\20260926-041123-f7a08d6c\\candidate.aimodel",
+    "stl": "C:\\Users\\lycohana\\Desktop\\code\\AI-_-\\artifacts\\agentloop\\20260926-041123-f7a08d6c\\candidate.stl",
+    "preview": "C:\\Users\\lycohana\\Desktop\\code\\AI-_-\\artifacts\\agentloop\\20260926-041123-f7a08d6c\\candidate-preview.png"
+  },
+  "output_warning": null,
+  "dimension_assumptions": [],
+  "local_geometry_checks": null,
+  "multiview_review": null,
+  "similarity_review": null,
+  "review_history": [],
+  "questions": null,
+  "reply": null,
+  "tool_trace": [
+    {
+      "phase": "agent_loop",
+      "tool": "cad_get_feature_spec",
+      "arguments": {
+        "kind": "box"
+      },
+      "result": {
+        "state": "ok",
+        "kind": "box",
+        "spec": {
+          "required": [
+            "length",
+            "width",
+            "height"
+          ],
+          "params": [
+            "length",
+            "width",
+            "height",
+            "center",
+            "axis",
+            "base",
+            "corner",
+            "corner_mode"
+          ],
+          "status": "exact",
+          "reason": "矩形草图加凸台；当前 CATIA 映射仅支持 Z 轴拉伸。"
+        },
+        "feature_schema": {
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": "string",
+              "minLength": 1
+            },
+            "kind": {
+              "const": "box",
+              "x-catia-support-status": "exact",
+              "x-catia-support-note": "矩形草图加凸台；当前 CATIA 映射仅支持 Z 轴拉伸。"
+            },
+            "operation": {
+              "type": "string",
+              "enum": [
+                "add",
+                "cut"
+              ]
+            },
+            "name": {
+              "type": "string"
+            },
+            "note": {
+              "type": "string"
+            },
+            "parameters": {
+              "type": "object",
+              "properties": {
+                "length": {
+                  "type": "number",
+                  "exclusiveMinimum": 0
+                },
+                "width": {
+                  "type": "number",
+                  "exclusiveMinimum": 0
+                },
+                "height": {
+                  "type": "number",
+                  "exclusiveMinimum": 0
+                },
+                "center": {
+                  "type": "array",
+                  "prefixItems": [
+                    {
+                      "type": "number"
+                    },
+                    {
+                      "type": "number"
+                    },
+                    {
+                      "type": "number"
+                    }
+                  ],
+                  "minItems": 3,
+                  "maxItems": 3,
+                  "items": false
+                },
+                "axis": {
+                  "type": "string",
+                  "enum": [
+                    "X",
+                    "Y",
+                    "Z"
+                  ]
+                },
+                "base": {
+                  "type": "boolean"
+                },
+                "corner": {
+                  "type": "number",
+                  "minimum": 0
+                },
+                "corner_mode": {
+                  "type": "string",
+                  "enum": [
+                    "chamfer",
+                    "fillet"
+                  ]
+                }
+              },
+              "additionalProperties": false,
+              "required": [
+                "length",
+                "width",
+                "height"
+              ]
+            },
+            "sources": {
+              "type": "object",
+              "propertyNames": {
+                "enum": [
+                  "length",
+                  "width",
+                  "height",
+                  "center",
+                  "axis",
+                  "base",
+                  "corner",
+                  "corner_mode"
+                ]
+              },
+              "additionalProperties": {
+                "$ref": "#/$defs/source"
+              }
+            },
+            "relations": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/relation"
+              }
+            }
+          },
+          "required": [
+            "id",
+            "kind",
+            "operation",
+            "parameters",
+            "sources"
+          ],
+          "additionalProperties": false,
+          "allOf": [
+            {
+              "if": {
+                "required": [
+                  "parameters"
+                ],
+                "properties": {
+                  "parameters": {
+                    "required": [
+                      "base"
+                    ]
+                  }
+                }
+              },
+              "then": {
+                "required": [
+                  "sources"
+                ],
+                "properties": {
+                  "sources": {
+                    "required": [
+                      "base"
+                    ]
+                  }
+                }
+              }
+            },
+            {
+              "if": {
+                "required": [
+                  "parameters"
+                ],
+                "properties": {
+                  "parameters": {
+                    "required": [
+                      "center"
+                    ]
+                  }
+                }
+              },
+              "then": {
+                "required": [
+                  "sources"
+                ],
+                "properties": {
+                  "sources": {
+                    "required": [
+                      "center"
+                    ]
+                  }
+                }
+              }
+            },
+            {
+              "if": {
+                "required": [
+                  "parameters"
+                ],
+                "properties": {
+                  "parameters": {
+                    "required": [
+                      "corner"
+                    ]
+                  }
+                }
+              },
+              "then": {
+                "required": [
+                  "sources"
+                ],
+                "properties": {
+                  "sources": {
+                    "required": [
+                      "corner"
+                    ]
+                  }
+                }
+              }
+            },
+            {
+              "if": {
+                "required": [
+                  "parameters"
+                ],
+                "properties": {
+                  "parameters": {
+                    "required": [
+                      "height"
+                    ]
+                  }
+                }
+              },
+              "then": {
+                "required": [
+                  "sources"
+                ],
+                "properties": {
+                  "sources": {
+                    "required": [
+                      "height"
+                    ]
+                  }
+                }
+              }
+            },
+            {
+              "if": {
+                "required": [
+                  "parameters"
+                ],
+                "properties": {
+                  "parameters": {
+                    "required": [
+                      "length"
+                    ]
+                  }
+                }
+              },
+              "then": {
+                "required": [
+                  "sources"
+                ],
+                "properties": {
+                  "sources": {
+                    "required": [
+                      "length"
+                    ]
+                  }
+                }
+              }
+            },
+            {
+              "if": {
+                "required": [
+                  "parameters"
+                ],
+                "properties": {
+                  "parameters": {
+                    "required": [
+                      "width"
+                    ]
+                  }
+                }
+              },
+              "then": {
+                "required": [
+                  "sources"
+                ],
+                "properties": {
+                  "sources": {
+                    "required": [
+                      "width"
+                    ]
+                  }
+                }
+              }
+            }
+          ]
+        },
+        "note": "提交时由 CADPlan SDK 检查条件必需参数和来源。"
+      },
+      "result_summary": "ok"
+    },
+    {
+      "phase": "agent_loop",
+      "tool": "cad_get_feature_spec",
+      "arguments": {
+        "kind": "hole"
+      },
+      "result": {
+        "state": "ok",
+        "kind": "hole",
+        "spec": {
+          "required": [
+            "diameter",
+            "through",
+            "pos"
+          ],
+          "params": [
+            "diameter",
+            "through",
+            "pos",
+            "point",
+            "x",
+            "y",
+            "count",
+            "pcd",
+            "phase",
+            "depth",
+            "margin",
+            "axis",
+            "segments"
+          ],
+          "status": "exact",
+          "reason": "圆形凹槽；through=true 时按当前零件包围盒生成贯穿深度。"
+        },
+        "feature_schema": {
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": "string",
+              "minLength": 1
+            },
+            "kind": {
+              "const": "hole",
+              "x-catia-support-status": "exact",
+              "x-catia-support-note": "圆形凹槽；through=true 时按当前零件包围盒生成贯穿深度。"
+            },
+            "operation": {
+              "type": "string",
+              "enum": [
+                "add",
+                "cut"
+              ]
+            },
+            "name": {
+              "type": "string"
+            },
+            "note": {
+              "type": "string"
+            },
+            "parameters": {
+              "type": "object",
+              "properties": {
+                "diameter": {
+                  "type": "number",
+                  "exclusiveMinimum": 0
+                },
+                "through": {
+                  "type": "boolean"
+                },
+                "pos": {
+                  "type": "string",
+                  "enum": [
+                    "center",
+                    "corners",
+                    "pcd",
+                    "point"
+                  ]
+                },
+                "point": {
+                  "type": "array",
+                  "prefixItems": [
+                    {
+                      "type": "number"
+                    },
+                    {
+                      "type": "number"
+                    },
+                    {
+                      "type": "number"
+                    }
+                  ],
+                  "minItems": 3,
+                  "maxItems": 3,
+                  "items": false
+                },
+                "x": {
+                  "type": "number"
+                },
+                "y": {
+                  "type": "number"
+                },
+                "count": {
+                  "type": "integer",
+                  "minimum": 1
+                },
+                "pcd": {
+                  "type": "number",
+                  "exclusiveMinimum": 0
+                },
+                "phase": {
+                  "type": "number"
+                },
+                "depth": {
+                  "type": "number",
+                  "exclusiveMinimum": 0
+                },
+                "margin": {
+                  "type": "number",
+                  "exclusiveMinimum": 0
+                },
+                "axis": {
+                  "type": "string",
+                  "enum": [
+                    "X",
+                    "Y",
+                    "Z"
+                  ]
+                },
+                "segments": {
+                  "type": "integer",
+                  "minimum": 3
+                }
+              },
+              "additionalProperties": false,
+              "required": [
+                "diameter",
+                "through",
+                "pos"
+              ]
+            },
+            "sources": {
+              "type": "object",
+              "propertyNames": {
+                "enum": [
+                  "diameter",
+                  "through",
+                  "pos",
+                  "point",
+                  "x",
+                  "y",
+                  "count",
+                  "pcd",
+                  "phase",
+                  "depth",
+                  "margin",
+                  "axis",
+                  "segments"
+                ]
+              },
+              "additionalProperties": {
+                "$ref": "#/$defs/source"
+              }
+            },
+            "relations": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/relation"
+              }
+            }
+          },
+          "required": [
+            "id",
+            "kind",
+            "operation",
+            "parameters",
+            "sources"
+          ],
+          "additionalProperties": false,
+          "allOf": [
+            {
+              "if": {
+                "properties": {
+                  "parameters": {
+                    "properties": {
+                      "pos": {
+                        "const": "point"
+                      }
+                    },
+                    "required": [
+                      "pos"
+                    ]
+                  }
+                }
+              },
+              "then": {
+                "properties": {
+                  "parameters": {
+                    "required": [
+                      "point"
+                    ]
+                  }
+                }
+              }
+            },
+            {
+              "if": {
+                "properties": {
+                  "parameters": {
+                    "properties": {
+                      "pos": {
+                        "const": "pcd"
+                      }
+                    },
+                    "required": [
+                      "pos"
+                    ]
+                  }
+                }
+              },
+              "then": {
+                "properties": {
+                  "parameters": {
+                    "required": [
+                      "pcd",
+                      "count"
+                    ]
+                  }
+                }
+              }
+            },
+            {
+              "if": {
+                "properties": {
+                  "parameters": {
+                    "properties": {
+                      "through": {
+                        "const": false
+                      }
+                    },
+                    "required": [
+                      "through"
+                    ]
+                  }
+                }
+              },
+              "then": {
+                "properties": {
+                  "parameters": {
+                    "required": [
+                      "depth"
+                    ]
+                  }
+                }
+              }
+            },
+            {
+              "if": {
+                "required": [
+                  "parameters"
+                ],
+                "properties": {
+                  "parameters": {
+                    "required": [
+                      "count"
+                    ]
+                  }
+                }
+              },
+              "then": {
+                "required": [
+                  "sources"
+                ],
+                "properties": {
+                  "sources": {
+                    "required": [
+                      "count"
+                    ]
+                  }
+                }
+              }
+            },
+            {
+              "if": {
+                "required": [
+                  "parameters"
+                ],
+                "properties": {
+                  "parameters": {
+                    "required": [
+                      "depth"
+                    ]
+                  }
+                }
+              },
+              "then": {
+                "required": [
+                  "sources"
+                ],
+                "properties": {
+                  "sources": {
+                    "required": [
+                      "depth"
+                    ]
+                  }
+                }
+              }
+            },
+            {
+              "if": {
+                "required": [
+                  "parameters"
+                ],
+                "properties": {
+                  "parameters": {
+                    "required": [
+                      "diameter"
+                    ]
+                  }
+                }
+              },
+              "then": {
+                "required": [
+                  "sources"
+                ],
+                "properties": {
+                  "sources": {
+                    "required": [
+                      "diameter"
+                    ]
+                  }
+                }
+              }
+            },
+            {
+              "if": {
+                "required": [
+                  "parameters"
+                ],
+                "properties": {
+                  "parameters": {
+                    "required": [
+                      "margin"
+                    ]
+                  }
+                }
+              },
+              "then": {
+                "required": [
+                  "sources"
+                ],
+                "properties": {
+                  "sources": {
+                    "required": [
+                      "margin"
+                    ]
+                  }
+                }
+              }
+            },
+            {
+              "if": {
+                "required": [
+                  "parameters"
+                ],
+                "properties": {
+                  "parameters": {
+                    "required": [
+                      "pcd"
+                    ]
+                  }
+                }
+              },
+              "then": {
+                "required": [
+                  "sources"
+                ],
+                "properties": {
+                  "sources": {
+                    "required": [
+                      "pcd"
+                    ]
+                  }
+                }
+              }
+            },
+            {
+              "if": {
+                "required": [
+                  "parameters"
+                ],
+                "properties": {
+                  "parameters": {
+                    "required": [
+                      "phase"
+                    ]
+                  }
+                }
+              },
+              "then": {
+                "required": [
+                  "sources"
+                ],
+                "properties": {
+                  "sources": {
+                    "required": [
+                      "phase"
+                    ]
+                  }
+                }
+              }
+            },
+            {
+              "if": {
+                "required": [
+                  "parameters"
+                ],
+                "properties": {
+                  "parameters": {
+                    "required": [
+                      "point"
+                    ]
+                  }
+                }
+              },
+              "then": {
+                "required": [
+                  "sources"
+                ],
+                "properties": {
+                  "sources": {
+                    "required": [
+                      "point"
+                    ]
+                  }
+                }
+              }
+            },
+            {
+              "if": {
+                "required": [
+                  "parameters"
+                ],
+                "properties": {
+                  "parameters": {
+                    "required": [
+                      "segments"
+                    ]
+                  }
+                }
+              },
+              "then": {
+                "required": [
+                  "sources"
+                ],
+                "properties": {
+                  "sources": {
+                    "required": [
+                      "segments"
+                    ]
+                  }
+                }
+              }
+            },
+            {
+              "if": {
+                "required": [
+                  "parameters"
+                ],
+                "properties": {
+                  "parameters": {
+                    "required": [
+                      "x"
+                    ]
+                  }
+                }
+              },
+              "then": {
+                "required": [
+                  "sources"
+                ],
+                "properties": {
+                  "sources": {
+                    "required": [
+                      "x"
+                    ]
+                  }
+                }
+              }
+            },
+            {
+              "if": {
+                "required": [
+                  "parameters"
+                ],
+                "properties": {
+                  "parameters": {
+                    "required": [
+                      "y"
+                    ]
+                  }
+                }
+              },
+              "then": {
+                "required": [
+                  "sources"
+                ],
+                "properties": {
+                  "sources": {
+                    "required": [
+                      "y"
+                    ]
+                  }
+                }
+              }
+            }
+          ]
+        },
+        "note": "提交时由 CADPlan SDK 检查条件必需参数和来源。"
+      },
+      "result_summary": "ok"
+    },
+    {
+      "phase": "agent_loop",
+      "tool": "cad_create_model",
+      "arguments": {
+        "name": "U-bracket",
+        "first_feature": {
+          "id": "base",
+          "kind": "box",
+          "operation": "add",
+          "parameters": {
+            "length": 40,
+            "width": 25,
+            "height": 60,
+            "center": [
+              0,
+              0,
+              30
+            ],
+            "axis": "Z"
+          },
+          "sources": {
+            "length": {
+              "type": "image_estimate",
+              "evidence": "overall width in isometric view, left-right span of the two walls plus slot"
+            },
+            "width": {
+              "type": "image_estimate",
+              "evidence": "front-to-back depth of the block"
+            },
+            "height": {
+              "type": "image_estimate",
+              "evidence": "vertical span of the block, taller than wide"
+            },
+            "center": {
+              "type": "image_estimate",
+              "evidence": "block centered on origin, bottom on z=0"
+            },
+            "axis": {
+              "type": "image_estimate",
+              "evidence": "vertical extrusion along Z"
+            }
+          }
+        },
+        "reference_reading": {
+          "visible_openings": 12,
+          "hole_count": 6,
+          "walls": 2,
+          "hole_vs_walls": "through_thickness",
+          "evidence": "left outer face shows 3 cyan openings, right outer face shows 3 cyan openings; inner faces facing the slot show 3 magenta openings each, which are the opposite ends of the same 6 holes. Hole axis is horizontal (left-right), parallel to the direction the two walls are separated by the slot.",
+          "color_usage": "colors only distinguish faces and feature openings",
+          "coordinate_system": "isometric view: Z up, X left-right, Y front-back",
+          "faces": {
+            "top": "light gray solid rectangle",
+            "left_outer": "light gray with 3 vertical cyan openings",
+            "right_outer": "light gray with 3 vertical cyan openings",
+            "left_inner": "pinkish facing slot with 3 vertical magenta openings",
+            "right_inner": "pinkish facing slot with 3 vertical magenta openings",
+            "right_side": "gray"
+          },
+          "wall_separation_axis": "X"
+        }
+      },
+      "result": {
+        "state": "valid",
+        "revision": 1,
+        "geometry_fingerprint": "{\"coordinate_system\":{\"axes\":[\"X\",\"Y\",\"Z\"],\"handedness\":\"right\",\"origin\":[0,0,0],\"type\":\"global_cartesian\"},\"features\":[{\"geometry\":\"{\\\"kind\\\":\\\"box\\\",\\\"operation\\\":\\\"add\\\",\\\"parameters\\\":{\\\"axis\\\":\\\"Z\\\",\\\"center\\\":[0,0,30],\\\"height\\\":60,\\\"length\\\":40,\\\"width\\\":25}}\",\"id\":\"base\"}],\"units\":{\"angle\":\"deg\",\"length\":\"mm\"}}",
+        "feature_count": 1,
+        "validation": {
+          "valid": true,
+          "state": "valid",
+          "errors": [],
+          "confirmations": [],
+          "support": [
+            {
+              "feature_id": "base",
+              "kind": "box",
+              "status": "exact",
+              "reason": "矩形草图加凸台；当前 CATIA 映射仅支持 Z 轴拉伸。"
+            }
+          ],
+          "warnings": [],
+          "schema_version": "1.0"
+        },
+        "preview": {
+          "state": "previewed",
+          "geometry_fingerprint": "{\"coordinate_system\":{\"axes\":[\"X\",\"Y\",\"Z\"],\"handedness\":\"right\",\"origin\":[0,0,0],\"type\":\"global_cartesian\"},\"features\":[{\"geometry\":\"{\\\"kind\\\":\\\"box\\\",\\\"operation\\\":\\\"add\\\",\\\"parameters\\\":{\\\"axis\\\":\\\"Z\\\",\\\"center\\\":[0,0,30],\\\"height\\\":60,\\\"length\\\":40,\\\"width\\\":25}}\",\"id\":\"base\"}],\"units\":{\"angle\":\"deg\",\"length\":\"mm\"}}",
+          "preview_image": "candidate-preview.png",
+          "view_set": "iso",
+          "views": [
+            "iso"
+          ],
+          "dimensions": {
+            "unit": "mm",
+            "bbox": [
+              -20.0,
+              -12.5,
+              0.0,
+              20.0,
+              12.5,
+              60.0
+            ],
+            "size": [
+              40.0,
+              25.0,
+              60.0
+            ],
+            "volume_mm3": 60000.0,
+            "surface_area_mm2": 9800.0,
+            "triangles": 12,
+            "feature_count": 1
+          },
+          "local_geometry_checks": {
+            "state": "passed",
+            "source": "AI Modeler local mesh kernel",
+            "face_count": 8,
+            "bbox_size_mm": [
+              40.0,
+              25.0,
+              60.0
+            ],
+            "bbox_ratios_from_mesh": {
+              "front_width_height": 0.6666666666666666,
+              "depth_height": 0.4166666666666667,
+              "top_width_depth": 1.6
+            },
+            "feature_count_from_plan": 1,
+            "feature_ids_from_plan": [
+              "base"
+            ],
+            "nonfinite_face_count": 0,
+            "degenerate_face_count": 0,
+            "hole_features_from_plan": [],
+            "through_hole_mesh_checks": [],
+            "hole_visibility": "requires_multimodal_view_review",
+            "through_hole_result": "not_measured"
+          },
+          "warnings": [],
+          "catia_executed": false,
+          "next_step_hint": "当前预览已展示，作为逐特征建模进度。若还有几何特征未完成，只追加下一个特征并刷新预览；全部特征完成后再做最终多视图复核。"
+        }
+      },
+      "result_summary": "valid"
+    },
+    {
+      "phase": "agent_loop",
+      "tool": "cad_add_feature",
+      "arguments": {
+        "feature": {
+          "id": "slot",
+          "kind": "box",
+          "operation": "cut",
+          "parameters": {
+            "length": 12,
+            "width": 20,
+            "height": 50,
+            "center": [
+              0,
+              2.5,
+              35
+            ],
+            "axis": "Z"
+          },
+          "sources": {
+            "length": {
+              "type": "image_estimate",
+              "evidence": "slot width between the two walls, narrower than each wall"
+            },
+            "width": {
+              "type": "image_estimate",
+              "evidence": "slot cut from front face toward back, leaving a back wall"
+            },
+            "height": {
+              "type": "image_estimate",
+              "evidence": "slot cut from top down, leaving bottom material"
+            },
+            "center": {
+              "type": "image_estimate",
+              "evidence": "slot centered in X, cut from front face y=12.5 back 20mm, and from z=60 down 50mm"
+            },
+            "axis": {
+              "type": "image_estimate",
+              "evidence": "slot extruded vertically along Z"
+            }
+          }
+        }
+      },
+      "result": {
+        "state": "valid",
+        "revision": 2,
+        "geometry_fingerprint": "{\"coordinate_system\":{\"axes\":[\"X\",\"Y\",\"Z\"],\"handedness\":\"right\",\"origin\":[0,0,0],\"type\":\"global_cartesian\"},\"features\":[{\"geometry\":\"{\\\"kind\\\":\\\"box\\\",\\\"operation\\\":\\\"add\\\",\\\"parameters\\\":{\\\"axis\\\":\\\"Z\\\",\\\"center\\\":[0,0,30],\\\"height\\\":60,\\\"length\\\":40,\\\"width\\\":25}}\",\"id\":\"base\"},{\"geometry\":\"{\\\"kind\\\":\\\"box\\\",\\\"operation\\\":\\\"cut\\\",\\\"parameters\\\":{\\\"axis\\\":\\\"Z\\\",\\\"center\\\":[0,2.5,35],\\\"height\\\":50,\\\"length\\\":12,\\\"width\\\":20}}\",\"id\":\"slot\"}],\"units\":{\"angle\":\"deg\",\"length\":\"mm\"}}",
+        "feature_count": 2,
+        "validation": {
+          "valid": true,
+          "state": "valid",
+          "errors": [],
+          "confirmations": [],
+          "support": [
+            {
+              "feature_id": "base",
+              "kind": "box",
+              "status": "exact",
+              "reason": "矩形草图加凸台；当前 CATIA 映射仅支持 Z 轴拉伸。"
+            },
+            {
+              "feature_id": "slot",
+              "kind": "box",
+              "status": "exact",
+              "reason": "矩形草图加凸台；当前 CATIA 映射仅支持 Z 轴拉伸。"
+            }
+          ],
+          "warnings": [],
+          "schema_version": "1.0"
+        },
+        "preview": {
+          "state": "previewed",
+          "geometry_fingerprint": "{\"coordinate_system\":{\"axes\":[\"X\",\"Y\",\"Z\"],\"handedness\":\"right\",\"origin\":[0,0,0],\"type\":\"global_cartesian\"},\"features\":[{\"geometry\":\"{\\\"kind\\\":\\\"box\\\",\\\"operation\\\":\\\"add\\\",\\\"parameters\\\":{\\\"axis\\\":\\\"Z\\\",\\\"center\\\":[0,0,30],\\\"height\\\":60,\\\"length\\\":40,\\\"width\\\":25}}\",\"id\":\"base\"},{\"geometry\":\"{\\\"kind\\\":\\\"box\\\",\\\"operation\\\":\\\"cut\\\",\\\"parameters\\\":{\\\"axis\\\":\\\"Z\\\",\\\"center\\\":[0,2.5,35],\\\"height\\\":50,\\\"length\\\":12,\\\"width\\\":20}}\",\"id\":\"slot\"}],\"units\":{\"angle\":\"deg\",\"length\":\"mm\"}}",
+          "preview_image": "candidate-preview.png",
+          "view_set": "iso",
+          "views": [
+            "iso"
+          ],
+          "dimensions": {
+            "unit": "mm",
+            "bbox": [
+              -20.0,
+              -12.5,
+              0.0,
+              20.0,
+              12.5,
+              60.0
+            ],
+            "size": [
+              40.0,
+              25.0,
+              60.0
+            ],
+            "volume_mm3": 48000.0,
+            "surface_area_mm2": 11800.0,
+            "triangles": 32,
+            "feature_count": 2
+          },
+          "local_geometry_checks": {
+            "state": "passed",
+            "source": "AI Modeler local mesh kernel",
+            "face_count": 19,
+            "bbox_size_mm": [
+              40.0,
+              25.0,
+              60.0
+            ],
+            "bbox_ratios_from_mesh": {
+              "front_width_height": 0.6666666666666666,
+              "depth_height": 0.4166666666666667,
+              "top_width_depth": 1.6
+            },
+            "feature_count_from_plan": 2,
+            "feature_ids_from_plan": [
+              "base",
+              "slot"
+            ],
+            "nonfinite_face_count": 0,
+            "degenerate_face_count": 0,
+            "hole_features_from_plan": [],
+            "through_hole_mesh_checks": [],
+            "hole_visibility": "requires_multimodal_view_review",
+            "through_hole_result": "not_measured"
+          },
+          "warnings": [],
+          "catia_executed": false,
+          "next_step_hint": "当前预览已展示，作为逐特征建模进度。若还有几何特征未完成，只追加下一个特征并刷新预览；全部特征完成后再做最终多视图复核。"
+        },
+        "feature_effect": {
+          "volume_before_mm3": 60000.0,
+          "volume_after_mm3": 48000.0,
+          "volume_delta_mm3": -12000.0,
+          "warning": "本次切除在 Y 轴上有面与实体表面完全重合（12.5）。实测这种完全共面的布尔运算会给出错误的体积（本应移除 0 却移除数百 mm³），因此不要用当前体积判断这一步的对错。请让切除体越过该面 0.001 mm 以上。"
+        }
+      },
+      "result_summary": "valid"
+    },
+    {
+      "phase": "agent_loop",
+      "tool": "cad_update_feature",
+      "arguments": {
+        "feature_id": "slot",
+        "parameter_updates": {
+          "width": 20.001,
+          "center": [
+            0,
+            2.5005,
+            35
+          ]
+        },
+        "source_updates": {
+          "width": {
+            "type": "image_estimate",
+            "evidence": "slot cut from front face toward back, extended 0.001mm past front face to avoid boolean coincidence"
+          },
+          "center": {
+            "type": "image_estimate",
+            "evidence": "slot centered in X; front of cut box at y=12.501 (0.001mm past solid front face), back at y=-7.5; vertical center unchanged"
+          }
+        }
+      },
+      "result": {
+        "state": "unchanged",
+        "validation": {
+          "valid": true,
+          "state": "valid",
+          "errors": [],
+          "confirmations": [],
+          "support": [
+            {
+              "feature_id": "base",
+              "kind": "box",
+              "status": "exact",
+              "reason": "矩形草图加凸台；当前 CATIA 映射仅支持 Z 轴拉伸。"
+            },
+            {
+              "feature_id": "slot",
+              "kind": "box",
+              "status": "exact",
+              "reason": "矩形草图加凸台；当前 CATIA 映射仅支持 Z 轴拉伸。"
+            }
+          ],
+          "warnings": [],
+          "schema_version": "1.0"
+        },
+        "cosmetic": true,
+        "max_parameter_delta": 0.0010000000000012221,
+        "cosmetic_updates": 1,
+        "error": "参数最大变化只有 0.001（≤ 0.01），几何实质上没有改变；微扰不算进展。请直接修正真正的比例/位置，或改用 source_updates 修正来源说明。"
+      },
+      "result_summary": "unchanged"
+    },
+    {
+      "phase": "agent_loop",
+      "tool": "cad_update_feature",
+      "arguments": {
+        "feature_id": "slot",
+        "parameter_updates": {
+          "width": 20.05,
+          "center": [
+            0,
+            2.525,
+            35
+          ]
+        },
+        "source_updates": {
+          "width": {
+            "type": "image_estimate",
+            "evidence": "slot cut from front face toward back; cut box front extended 0.05mm past the solid front face (y=12.5) to avoid boolean coincidence, back wall about 5mm"
+          },
+          "center": {
+            "type": "image_estimate",
+            "evidence": "slot centered in X; cut box spans y=12.55 to y=-7.525; vertical center at z=35 (slot from z=10 to z=60)"
+          }
+        }
+      },
+      "result": {
+        "state": "valid",
+        "revision": 3,
+        "geometry_fingerprint": "{\"coordinate_system\":{\"axes\":[\"X\",\"Y\",\"Z\"],\"handedness\":\"right\",\"origin\":[0,0,0],\"type\":\"global_cartesian\"},\"features\":[{\"geometry\":\"{\\\"kind\\\":\\\"box\\\",\\\"operation\\\":\\\"add\\\",\\\"parameters\\\":{\\\"axis\\\":\\\"Z\\\",\\\"center\\\":[0,0,30],\\\"height\\\":60,\\\"length\\\":40,\\\"width\\\":25}}\",\"id\":\"base\"},{\"geometry\":\"{\\\"kind\\\":\\\"box\\\",\\\"operation\\\":\\\"cut\\\",\\\"parameters\\\":{\\\"axis\\\":\\\"Z\\\",\\\"center\\\":[0,2.525,35],\\\"height\\\":50,\\\"length\\\":12,\\\"width\\\":20.05}}\",\"id\":\"slot\"}],\"units\":{\"angle\":\"deg\",\"length\":\"mm\"}}",
+        "feature_count": 2,
+        "validation": {
+          "valid": true,
+          "state": "valid",
+          "errors": [],
+          "confirmations": [],
+          "support": [
+            {
+              "feature_id": "base",
+              "kind": "box",
+              "status": "exact",
+              "reason": "矩形草图加凸台；当前 CATIA 映射仅支持 Z 轴拉伸。"
+            },
+            {
+              "feature_id": "slot",
+              "kind": "box",
+              "status": "exact",
+              "reason": "矩形草图加凸台；当前 CATIA 映射仅支持 Z 轴拉伸。"
+            }
+          ],
+          "warnings": [],
+          "schema_version": "1.0"
+        },
+        "preview": {
+          "state": "previewed",
+          "geometry_fingerprint": "{\"coordinate_system\":{\"axes\":[\"X\",\"Y\",\"Z\"],\"handedness\":\"right\",\"origin\":[0,0,0],\"type\":\"global_cartesian\"},\"features\":[{\"geometry\":\"{\\\"kind\\\":\\\"box\\\",\\\"operation\\\":\\\"add\\\",\\\"parameters\\\":{\\\"axis\\\":\\\"Z\\\",\\\"center\\\":[0,0,30],\\\"height\\\":60,\\\"length\\\":40,\\\"width\\\":25}}\",\"id\":\"base\"},{\"geometry\":\"{\\\"kind\\\":\\\"box\\\",\\\"operation\\\":\\\"cut\\\",\\\"parameters\\\":{\\\"axis\\\":\\\"Z\\\",\\\"center\\\":[0,2.525,35],\\\"height\\\":50,\\\"length\\\":12,\\\"width\\\":20.05}}\",\"id\":\"slot\"}],\"units\":{\"angle\":\"deg\",\"length\":\"mm\"}}",
+          "preview_image": "candidate-preview.png",
+          "view_set": "iso",
+          "views": [
+            "iso"
+          ],
+          "dimensions": {
+            "unit": "mm",
+            "bbox": [
+              -20.0,
+              -12.5,
+              0.0,
+              20.0,
+              12.5,
+              60.0
+            ],
+            "size": [
+              40.0,
+              25.0,
+              60.0
+            ],
+            "volume_mm3": 48000.0,
+            "surface_area_mm2": 11800.0,
+            "triangles": 33,
+            "feature_count": 2
+          },
+          "local_geometry_checks": {
+            "state": "passed",
+            "source": "AI Modeler local mesh kernel",
+            "face_count": 19,
+            "bbox_size_mm": [
+              40.0,
+              25.0,
+              60.0
+            ],
+            "bbox_ratios_from_mesh": {
+              "front_width_height": 0.6666666666666666,
+              "depth_height": 0.4166666666666667,
+              "top_width_depth": 1.6
+            },
+            "feature_count_from_plan": 2,
+            "feature_ids_from_plan": [
+              "base",
+              "slot"
+            ],
+            "nonfinite_face_count": 0,
+            "degenerate_face_count": 0,
+            "hole_features_from_plan": [],
+            "through_hole_mesh_checks": [],
+            "hole_visibility": "requires_multimodal_view_review",
+            "through_hole_result": "not_measured"
+          },
+          "warnings": [],
+          "catia_executed": false,
+          "next_step_hint": "当前预览已展示，作为逐特征建模进度。若还有几何特征未完成，只追加下一个特征并刷新预览；全部特征完成后再做最终多视图复核。"
+        },
+        "feature_effect": {
+          "volume_before_mm3": 48000.0,
+          "volume_after_mm3": 48000.0,
+          "volume_delta_mm3": 0.0,
+          "warning": "本次「cad_update_feature」没有改变材料（体积变化 <0.01 mm³）：特征没有与实体相交，或切除尺寸等于/小于被切部位。请检查位置与尺寸，不要重复提交同一个特征。"
+        }
+      },
+      "result_summary": "valid"
+    }
+  ],
+  "error": "用户已请求停止：已中断模型流（中断前已接收 reasoning 2002 字符 / output 0 字符 / 工具参数 0 字符）。"
+}

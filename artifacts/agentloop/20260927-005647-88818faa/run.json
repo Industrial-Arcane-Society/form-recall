@@ -1,0 +1,5988 @@
+{
+  "record_version": 1,
+  "started_at": "2026-09-27T00:56:47+08:00",
+  "finished_at": "2026-09-27T00:59:41+08:00",
+  "state": "running",
+  "input": {
+    "prompt": "复刻一下",
+    "reference_images": [
+      "clipboard-49d43c7347e84c888f111c8bc7eea0ee.png"
+    ]
+  },
+  "routing": {
+    "action": "create",
+    "review_mode": "agent_selected",
+    "review_rounds": 0,
+    "reason": "本轮由统一 AgentLoop 按需调用工具；图片建模默认先生成可见候选。"
+  },
+  "conversation_memory": {
+    "summarized_through": 0,
+    "summary_chars": 0
+  },
+  "limits": {
+    "tool_calls": 256,
+    "web_search_calls": 32,
+    "tool_preview_calls": 256,
+    "multiview_tool_calls_per_round": 8,
+    "review_rounds": 256,
+    "context_turns": 128,
+    "context_chars": 1000000,
+    "context_summary_chars": 32000
+  },
+  "selected_reference_images": [
+    "clipboard-49d43c7347e84c888f111c8bc7eea0ee.png"
+  ],
+  "active_reference_images": [
+    "clipboard-49d43c7347e84c888f111c8bc7eea0ee.png"
+  ],
+  "active_request": {
+    "index": 16,
+    "status": "waiting",
+    "phase": "multiview_check",
+    "model": "moonshotai/Kimi-K2.7-Code",
+    "api_protocol": "chat_completions",
+    "requested_at": "2026-09-27T00:59:41+08:00",
+    "timeout_seconds": 600,
+    "max_output_tokens": 4096,
+    "image_parts_in_request": 2,
+    "tool_choice": "required",
+    "stream_progress": {
+      "event_count": 0,
+      "reasoning_chars": 0,
+      "answer_chars": 0,
+      "tool_argument_chars": 0
+    }
+  },
+  "model_calls": [
+    {
+      "phase": "agent_loop",
+      "model": "moonshotai/Kimi-K2.7-Code",
+      "max_output_tokens": 65536,
+      "image_parts_in_request": 1,
+      "response_received": true,
+      "reference_image_names": [
+        "clipboard-49d43c7347e84c888f111c8bc7eea0ee.png"
+      ],
+      "generated_view": null,
+      "response_chars": 0,
+      "finish_reason": "tool_calls",
+      "api_protocol": "chat_completions_stream",
+      "response_id": "01a0dea5e3b2f5db7602f30a25373456",
+      "thinking": {
+        "type": "disabled"
+      },
+      "reasoning_effort": null,
+      "tool_choice": {
+        "type": "function",
+        "function": {
+          "name": "cad_inspect_references"
+        }
+      },
+      "tool_call_names": [
+        "cad_inspect_references"
+      ],
+      "tool_argument_lengths": [
+        4296
+      ],
+      "duration_seconds": 44.03,
+      "stream_event_count": 51,
+      "first_event_seconds": 0.0,
+      "last_event_seconds": 42.6,
+      "reasoning_chars": 0,
+      "answer_chars": 0,
+      "tool_argument_chars": 4296,
+      "request_timeout_seconds": 600,
+      "usage": {
+        "prompt_tokens": 6193,
+        "completion_tokens": 1668,
+        "total_tokens": 7861,
+        "reasoning_tokens": 0
+      },
+      "error": null
+    },
+    {
+      "phase": "agent_loop",
+      "model": "moonshotai/Kimi-K2.7-Code",
+      "max_output_tokens": 65536,
+      "image_parts_in_request": 0,
+      "response_received": true,
+      "reference_image_names": [
+        "clipboard-49d43c7347e84c888f111c8bc7eea0ee.png"
+      ],
+      "generated_view": null,
+      "response_chars": 0,
+      "finish_reason": "tool_calls",
+      "api_protocol": "chat_completions_stream",
+      "response_id": "01a0dea68fb815fad5c011bb67503561",
+      "thinking": {
+        "type": "disabled"
+      },
+      "reasoning_effort": null,
+      "tool_choice": {
+        "type": "function",
+        "function": {
+          "name": "cad_create_model"
+        }
+      },
+      "tool_call_names": [
+        "cad_create_model"
+      ],
+      "tool_argument_lengths": [
+        499
+      ],
+      "duration_seconds": 7.84,
+      "stream_event_count": 9,
+      "first_event_seconds": 0.0,
+      "last_event_seconds": 6.6,
+      "reasoning_chars": 0,
+      "answer_chars": 0,
+      "tool_argument_chars": 499,
+      "request_timeout_seconds": 600,
+      "usage": {
+        "prompt_tokens": 8874,
+        "completion_tokens": 202,
+        "total_tokens": 9076,
+        "reasoning_tokens": 0
+      },
+      "error": null
+    },
+    {
+      "phase": "agent_loop",
+      "model": "moonshotai/Kimi-K2.7-Code",
+      "max_output_tokens": 65536,
+      "image_parts_in_request": 0,
+      "response_received": true,
+      "reference_image_names": [
+        "clipboard-49d43c7347e84c888f111c8bc7eea0ee.png"
+      ],
+      "generated_view": null,
+      "response_chars": 0,
+      "finish_reason": "tool_calls",
+      "api_protocol": "chat_completions_stream",
+      "response_id": "01a0dea6ae3d29fb8335c5de5dd29941",
+      "thinking": {
+        "type": "disabled"
+      },
+      "reasoning_effort": null,
+      "tool_choice": {
+        "type": "function",
+        "function": {
+          "name": "cad_review_model"
+        }
+      },
+      "tool_call_names": [
+        "cad_review_model"
+      ],
+      "tool_argument_lengths": [
+        45
+      ],
+      "duration_seconds": 2.03,
+      "stream_event_count": 3,
+      "first_event_seconds": 0.0,
+      "last_event_seconds": 0.9,
+      "reasoning_chars": 0,
+      "answer_chars": 0,
+      "tool_argument_chars": 45,
+      "request_timeout_seconds": 600,
+      "usage": {
+        "prompt_tokens": 9227,
+        "completion_tokens": 26,
+        "total_tokens": 9253,
+        "reasoning_tokens": 0
+      },
+      "error": null
+    },
+    {
+      "phase": "blind_reference_inventory",
+      "model": "moonshotai/Kimi-K2.7-Code",
+      "max_output_tokens": 4096,
+      "image_parts_in_request": 1,
+      "response_received": true,
+      "reference_image_names": [
+        "clipboard-49d43c7347e84c888f111c8bc7eea0ee.png"
+      ],
+      "generated_view": null,
+      "response_chars": 0,
+      "finish_reason": "tool_calls",
+      "api_protocol": "chat_completions_stream",
+      "response_id": "01a0dea6b6a74ab308a1649294a208b6",
+      "thinking": {
+        "type": "disabled"
+      },
+      "reasoning_effort": null,
+      "tool_choice": "required",
+      "tool_call_names": [
+        "submit_reference_inventory"
+      ],
+      "tool_argument_lengths": [
+        1726
+      ],
+      "duration_seconds": 23.22,
+      "stream_event_count": 28,
+      "first_event_seconds": 0.0,
+      "last_event_seconds": 22.1,
+      "reasoning_chars": 0,
+      "answer_chars": 0,
+      "tool_argument_chars": 1726,
+      "request_timeout_seconds": 600,
+      "usage": {
+        "prompt_tokens": 2703,
+        "completion_tokens": 658,
+        "total_tokens": 3361,
+        "reasoning_tokens": 0
+      },
+      "error": null
+    },
+    {
+      "phase": "multiview_check",
+      "model": "moonshotai/Kimi-K2.7-Code",
+      "max_output_tokens": 4096,
+      "image_parts_in_request": 2,
+      "response_received": true,
+      "reference_image_names": [
+        "clipboard-49d43c7347e84c888f111c8bc7eea0ee.png"
+      ],
+      "generated_view": "iso",
+      "response_chars": 0,
+      "finish_reason": "tool_calls",
+      "api_protocol": "chat_completions_stream",
+      "response_id": "01a0dea71191881cd1172d1cabf43abe",
+      "thinking": {
+        "type": "disabled"
+      },
+      "reasoning_effort": null,
+      "tool_choice": "required",
+      "tool_call_names": [
+        "submit_multiview_review"
+      ],
+      "tool_argument_lengths": [
+        3373
+      ],
+      "duration_seconds": 40.66,
+      "stream_event_count": 49,
+      "first_event_seconds": 0.0,
+      "last_event_seconds": 38.8,
+      "reasoning_chars": 0,
+      "answer_chars": 0,
+      "tool_argument_chars": 3373,
+      "request_timeout_seconds": 600,
+      "usage": {
+        "prompt_tokens": 4137,
+        "completion_tokens": 1208,
+        "total_tokens": 5345,
+        "reasoning_tokens": 0
+      },
+      "error": null
+    },
+    {
+      "phase": "agent_loop",
+      "model": "moonshotai/Kimi-K2.7-Code",
+      "max_output_tokens": 65536,
+      "image_parts_in_request": 0,
+      "response_received": true,
+      "reference_image_names": [
+        "clipboard-49d43c7347e84c888f111c8bc7eea0ee.png"
+      ],
+      "generated_view": null,
+      "response_chars": 0,
+      "finish_reason": "tool_calls",
+      "api_protocol": "chat_completions_stream",
+      "response_id": "01a0dea7b33a75298e031eceed7801b2",
+      "thinking": {
+        "type": "disabled"
+      },
+      "reasoning_effort": null,
+      "tool_choice": "required",
+      "tool_call_names": [
+        "cad_add_feature"
+      ],
+      "tool_argument_lengths": [
+        488
+      ],
+      "duration_seconds": 8.31,
+      "stream_event_count": 10,
+      "first_event_seconds": 0.0,
+      "last_event_seconds": 6.6,
+      "reasoning_chars": 0,
+      "answer_chars": 0,
+      "tool_argument_chars": 488,
+      "request_timeout_seconds": 600,
+      "usage": {
+        "prompt_tokens": 13762,
+        "completion_tokens": 210,
+        "total_tokens": 13972,
+        "reasoning_tokens": 0
+      },
+      "error": null
+    },
+    {
+      "phase": "agent_loop",
+      "model": "moonshotai/Kimi-K2.7-Code",
+      "max_output_tokens": 65536,
+      "image_parts_in_request": 0,
+      "response_received": true,
+      "reference_image_names": [
+        "clipboard-49d43c7347e84c888f111c8bc7eea0ee.png"
+      ],
+      "generated_view": null,
+      "response_chars": 0,
+      "finish_reason": "tool_calls",
+      "api_protocol": "chat_completions_stream",
+      "response_id": "01a0dea7d5190d870a58df617c0c79c0",
+      "thinking": {
+        "type": "disabled"
+      },
+      "reasoning_effort": null,
+      "tool_choice": "required",
+      "tool_call_names": [
+        "cad_update_feature"
+      ],
+      "tool_argument_lengths": [
+        173
+      ],
+      "duration_seconds": 4.25,
+      "stream_event_count": 4,
+      "first_event_seconds": 0.0,
+      "last_event_seconds": 2.3,
+      "reasoning_chars": 0,
+      "answer_chars": 0,
+      "tool_argument_chars": 173,
+      "request_timeout_seconds": 600,
+      "usage": {
+        "prompt_tokens": 15058,
+        "completion_tokens": 72,
+        "total_tokens": 15130,
+        "reasoning_tokens": 0
+      },
+      "error": null
+    },
+    {
+      "phase": "agent_loop",
+      "model": "moonshotai/Kimi-K2.7-Code",
+      "max_output_tokens": 65536,
+      "image_parts_in_request": 0,
+      "response_received": true,
+      "reference_image_names": [
+        "clipboard-49d43c7347e84c888f111c8bc7eea0ee.png"
+      ],
+      "generated_view": null,
+      "response_chars": 0,
+      "finish_reason": "tool_calls",
+      "api_protocol": "chat_completions_stream",
+      "response_id": "01a0dea7e50924fd174f7a6e01c81beb",
+      "thinking": {
+        "type": "disabled"
+      },
+      "reasoning_effort": null,
+      "tool_choice": "required",
+      "tool_call_names": [
+        "cad_update_feature"
+      ],
+      "tool_argument_lengths": [
+        262
+      ],
+      "duration_seconds": 5.0,
+      "stream_event_count": 6,
+      "first_event_seconds": 0.0,
+      "last_event_seconds": 4.0,
+      "reasoning_chars": 0,
+      "answer_chars": 0,
+      "tool_argument_chars": 262,
+      "request_timeout_seconds": 600,
+      "usage": {
+        "prompt_tokens": 15326,
+        "completion_tokens": 116,
+        "total_tokens": 15442,
+        "reasoning_tokens": 0
+      },
+      "error": null
+    },
+    {
+      "phase": "agent_loop",
+      "model": "moonshotai/Kimi-K2.7-Code",
+      "max_output_tokens": 65536,
+      "image_parts_in_request": 0,
+      "response_received": true,
+      "reference_image_names": [
+        "clipboard-49d43c7347e84c888f111c8bc7eea0ee.png"
+      ],
+      "generated_view": null,
+      "response_chars": 0,
+      "finish_reason": "tool_calls",
+      "api_protocol": "chat_completions_stream",
+      "response_id": "01a0dea7f96e69606a504c3228d0a515",
+      "thinking": {
+        "type": "disabled"
+      },
+      "reasoning_effort": null,
+      "tool_choice": "required",
+      "tool_call_names": [
+        "cad_get_state"
+      ],
+      "tool_argument_lengths": [
+        26
+      ],
+      "duration_seconds": 1.81,
+      "stream_event_count": 2,
+      "first_event_seconds": 0.0,
+      "last_event_seconds": 0.7,
+      "reasoning_chars": 0,
+      "answer_chars": 0,
+      "tool_argument_chars": 26,
+      "request_timeout_seconds": 600,
+      "usage": {
+        "prompt_tokens": 16512,
+        "completion_tokens": 18,
+        "total_tokens": 16530,
+        "reasoning_tokens": 0
+      },
+      "error": null
+    },
+    {
+      "phase": "agent_loop",
+      "model": "moonshotai/Kimi-K2.7-Code",
+      "max_output_tokens": 65536,
+      "image_parts_in_request": 0,
+      "response_received": true,
+      "reference_image_names": [
+        "clipboard-49d43c7347e84c888f111c8bc7eea0ee.png"
+      ],
+      "generated_view": null,
+      "response_chars": 0,
+      "finish_reason": "tool_calls",
+      "api_protocol": "chat_completions_stream",
+      "response_id": "01a0dea8008af793739118c0501c87ce",
+      "thinking": {
+        "type": "disabled"
+      },
+      "reasoning_effort": null,
+      "tool_choice": "required",
+      "tool_call_names": [
+        "cad_preview_plan"
+      ],
+      "tool_argument_lengths": [
+        21
+      ],
+      "duration_seconds": 2.02,
+      "stream_event_count": 2,
+      "first_event_seconds": 0.0,
+      "last_event_seconds": 0.7,
+      "reasoning_chars": 0,
+      "answer_chars": 0,
+      "tool_argument_chars": 21,
+      "request_timeout_seconds": 600,
+      "usage": {
+        "prompt_tokens": 19106,
+        "completion_tokens": 19,
+        "total_tokens": 19125,
+        "reasoning_tokens": 0
+      },
+      "error": null
+    },
+    {
+      "phase": "agent_loop",
+      "model": "moonshotai/Kimi-K2.7-Code",
+      "max_output_tokens": 65536,
+      "image_parts_in_request": 1,
+      "response_received": true,
+      "reference_image_names": [
+        "clipboard-49d43c7347e84c888f111c8bc7eea0ee.png"
+      ],
+      "generated_view": null,
+      "response_chars": 0,
+      "finish_reason": "tool_calls",
+      "api_protocol": "chat_completions_stream",
+      "response_id": "01a0dea8093020fc95949726e5f04642",
+      "thinking": {
+        "type": "disabled"
+      },
+      "reasoning_effort": null,
+      "tool_choice": "required",
+      "tool_call_names": [
+        "cad_add_feature"
+      ],
+      "tool_argument_lengths": [
+        482
+      ],
+      "duration_seconds": 7.7,
+      "stream_event_count": 9,
+      "first_event_seconds": 0.0,
+      "last_event_seconds": 6.0,
+      "reasoning_chars": 0,
+      "answer_chars": 0,
+      "tool_argument_chars": 482,
+      "request_timeout_seconds": 600,
+      "usage": {
+        "prompt_tokens": 15836,
+        "completion_tokens": 203,
+        "total_tokens": 16039,
+        "reasoning_tokens": 0
+      },
+      "error": null
+    },
+    {
+      "phase": "agent_loop",
+      "model": "moonshotai/Kimi-K2.7-Code",
+      "max_output_tokens": 65536,
+      "image_parts_in_request": 0,
+      "response_received": true,
+      "reference_image_names": [
+        "clipboard-49d43c7347e84c888f111c8bc7eea0ee.png"
+      ],
+      "generated_view": null,
+      "response_chars": 0,
+      "finish_reason": "tool_calls",
+      "api_protocol": "chat_completions_stream",
+      "response_id": "01a0dea828a6c2aaca4ea78d240c8429",
+      "thinking": {
+        "type": "disabled"
+      },
+      "reasoning_effort": null,
+      "tool_choice": "required",
+      "tool_call_names": [
+        "cad_add_feature"
+      ],
+      "tool_argument_lengths": [
+        478
+      ],
+      "duration_seconds": 7.3,
+      "stream_event_count": 9,
+      "first_event_seconds": 0.0,
+      "last_event_seconds": 6.0,
+      "reasoning_chars": 0,
+      "answer_chars": 0,
+      "tool_argument_chars": 478,
+      "request_timeout_seconds": 600,
+      "usage": {
+        "prompt_tokens": 16906,
+        "completion_tokens": 202,
+        "total_tokens": 17108,
+        "reasoning_tokens": 0
+      },
+      "error": null
+    },
+    {
+      "phase": "agent_loop",
+      "model": "moonshotai/Kimi-K2.7-Code",
+      "max_output_tokens": 65536,
+      "image_parts_in_request": 0,
+      "response_received": true,
+      "reference_image_names": [
+        "clipboard-49d43c7347e84c888f111c8bc7eea0ee.png"
+      ],
+      "generated_view": null,
+      "response_chars": 0,
+      "finish_reason": "tool_calls",
+      "api_protocol": "chat_completions_stream",
+      "response_id": "01a0dea8455f57436fd19d4c3f3512d7",
+      "thinking": {
+        "type": "disabled"
+      },
+      "reasoning_effort": null,
+      "tool_choice": "required",
+      "tool_call_names": [
+        "cad_add_feature"
+      ],
+      "tool_argument_lengths": [
+        471
+      ],
+      "duration_seconds": 6.8,
+      "stream_event_count": 8,
+      "first_event_seconds": 0.0,
+      "last_event_seconds": 5.6,
+      "reasoning_chars": 0,
+      "answer_chars": 0,
+      "tool_argument_chars": 471,
+      "request_timeout_seconds": 600,
+      "usage": {
+        "prompt_tokens": 18729,
+        "completion_tokens": 195,
+        "total_tokens": 18924,
+        "reasoning_tokens": 0
+      },
+      "error": null
+    },
+    {
+      "phase": "agent_loop",
+      "model": "moonshotai/Kimi-K2.7-Code",
+      "max_output_tokens": 65536,
+      "image_parts_in_request": 0,
+      "response_received": true,
+      "reference_image_names": [
+        "clipboard-49d43c7347e84c888f111c8bc7eea0ee.png"
+      ],
+      "generated_view": null,
+      "response_chars": 0,
+      "finish_reason": "tool_calls",
+      "api_protocol": "chat_completions_stream",
+      "response_id": "01a0dea861465257a411db7afce66574",
+      "thinking": {
+        "type": "disabled"
+      },
+      "reasoning_effort": null,
+      "tool_choice": "required",
+      "tool_call_names": [
+        "cad_add_feature"
+      ],
+      "tool_argument_lengths": [
+        470
+      ],
+      "duration_seconds": 6.92,
+      "stream_event_count": 8,
+      "first_event_seconds": 0.0,
+      "last_event_seconds": 5.6,
+      "reasoning_chars": 0,
+      "answer_chars": 0,
+      "tool_argument_chars": 470,
+      "request_timeout_seconds": 600,
+      "usage": {
+        "prompt_tokens": 20840,
+        "completion_tokens": 197,
+        "total_tokens": 21037,
+        "reasoning_tokens": 0
+      },
+      "error": null
+    },
+    {
+      "phase": "agent_loop",
+      "model": "moonshotai/Kimi-K2.7-Code",
+      "max_output_tokens": 65536,
+      "image_parts_in_request": 0,
+      "response_received": true,
+      "reference_image_names": [
+        "clipboard-49d43c7347e84c888f111c8bc7eea0ee.png"
+      ],
+      "generated_view": null,
+      "response_chars": 0,
+      "finish_reason": "tool_calls",
+      "api_protocol": "chat_completions_stream",
+      "response_id": "01a0dea87db15f156c655cc180e1cbc9",
+      "thinking": {
+        "type": "disabled"
+      },
+      "reasoning_effort": null,
+      "tool_choice": {
+        "type": "function",
+        "function": {
+          "name": "cad_review_model"
+        }
+      },
+      "tool_call_names": [
+        "cad_review_model"
+      ],
+      "tool_argument_lengths": [
+        54
+      ],
+      "duration_seconds": 2.86,
+      "stream_event_count": 3,
+      "first_event_seconds": 0.0,
+      "last_event_seconds": 1.0,
+      "reasoning_chars": 0,
+      "answer_chars": 0,
+      "tool_argument_chars": 54,
+      "request_timeout_seconds": 600,
+      "usage": {
+        "prompt_tokens": 20071,
+        "completion_tokens": 29,
+        "total_tokens": 20100,
+        "reasoning_tokens": 0
+      },
+      "error": null
+    }
+  ],
+  "temporary_review_images": [
+    {
+      "filename": "single-review-r01-multiview_check-iso.png",
+      "deleted": true,
+      "error": null
+    }
+  ],
+  "recognition": null,
+  "raster_analysis": {
+    "available": true,
+    "images": [
+      {
+        "image_index": 1,
+        "filename": "clipboard-49d43c7347e84c888f111c8bc7eea0ee.png",
+        "size_px": [
+          494,
+          544
+        ],
+        "three_region_scanline_candidate": null,
+        "foreground_bbox_candidate": null,
+        "scanline_rejected": {
+          "consistent_scanline_count": 15,
+          "span_px": 19,
+          "image_height_px": 544,
+          "span_ratio": 0.0349,
+          "min_span_ratio": 0.25,
+          "reason": "扫描线只在 19/544 px 高度上一致（3.5% < 25%），不足以判定为平色正视图；本图不得作为比例尺寸证据。",
+          "instruction": "不要把该图的像素比例写进 sources.evidence。如需尺寸，按整体轮廓做目视比例估算，或向用户确认。"
+        }
+      }
+    ]
+  },
+  "counts": {
+    "tool_calls": 15,
+    "web_search_calls": 0,
+    "blocked_web_search_calls": 0,
+    "preview_calls": 10,
+    "review_rounds": 0,
+    "repair_cycles": 1,
+    "llm_requests": 15,
+    "image_parts_in_request": 5,
+    "llm_usage": {
+      "prompt_tokens": 203280.0,
+      "completion_tokens": 5023.0,
+      "total_tokens": 208303.0,
+      "reasoning_tokens": 0.0
+    }
+  },
+  "loop_state": {
+    "agent_turn": 13,
+    "no_progress_finals": 0,
+    "context_compactions": 1,
+    "truncated_responses": 0,
+    "stagnation_warnings": 0,
+    "stagnant_tool_calls": 0,
+    "candidate_attempted": true,
+    "finish_gate": null
+  },
+  "construction_repairs": [],
+  "automatic_repairs": [],
+  "open_multiview_findings": [
+    {
+      "issue_id": "missing-slot",
+      "phase": "multiview",
+      "view": "iso",
+      "item": "中央贯穿凹槽缺失",
+      "evidence": "参考图为U形截面，模型为实心长方体，缺少从正面切入的凹槽。",
+      "severity": "high",
+      "category": "geometry",
+      "feature_ids": [
+        "base-block"
+      ],
+      "affected_parameters": [
+        {
+          "feature_id": "base-block",
+          "path": "parameters.width"
+        }
+      ],
+      "baseline_path_values": {
+        "base-block.parameters.width": {
+          "present": true,
+          "value": 50
+        }
+      },
+      "baseline_feature_values": {
+        "base-block": "{\"kind\":\"box\",\"operation\":\"add\",\"parameters\":{\"center\":[0,0,35],\"height\":70,\"length\":60,\"width\":50}}"
+      },
+      "first_seen_round": 1
+    },
+    {
+      "issue_id": "missing-all-holes",
+      "phase": "multiview",
+      "view": "iso",
+      "item": "全部九孔缺失",
+      "evidence": "参考图左右立板及凹槽后壁各有三孔，模型表面无孔。",
+      "severity": "high",
+      "category": "geometry",
+      "feature_ids": [
+        "base-block"
+      ],
+      "affected_parameters": [
+        {
+          "feature_id": "base-block",
+          "path": "parameters.operation"
+        }
+      ],
+      "baseline_path_values": {
+        "base-block.parameters.operation": {
+          "present": false,
+          "value": null
+        }
+      },
+      "baseline_feature_values": {
+        "base-block": "{\"kind\":\"box\",\"operation\":\"add\",\"parameters\":{\"center\":[0,0,35],\"height\":70,\"length\":60,\"width\":50}}"
+      },
+      "first_seen_round": 1
+    },
+    {
+      "issue_id": "iso-overall-shape",
+      "phase": "multiview",
+      "view": "iso",
+      "item": "整体外形",
+      "evidence": "模型缺少中央凹槽，整体轮廓与U形不符。",
+      "severity": "high",
+      "category": "shape",
+      "feature_ids": [
+        "base-block"
+      ],
+      "affected_parameters": [
+        {
+          "feature_id": "base-block",
+          "path": "parameters.length"
+        }
+      ],
+      "baseline_path_values": {
+        "base-block.parameters.length": {
+          "present": true,
+          "value": 60
+        }
+      },
+      "baseline_feature_values": {
+        "base-block": "{\"kind\":\"box\",\"operation\":\"add\",\"parameters\":{\"center\":[0,0,35],\"height\":70,\"length\":60,\"width\":50}}"
+      },
+      "first_seen_round": 1
+    },
+    {
+      "issue_id": "iso-feature-layout",
+      "phase": "multiview",
+      "view": "iso",
+      "item": "孔布局",
+      "evidence": "模型完全缺失参考图中的九孔布局。",
+      "severity": "medium",
+      "category": "holes",
+      "feature_ids": [
+        "base-block"
+      ],
+      "affected_parameters": [
+        {
+          "feature_id": "base-block",
+          "path": "parameters.operation"
+        }
+      ],
+      "baseline_path_values": {
+        "base-block.parameters.operation": {
+          "present": false,
+          "value": null
+        }
+      },
+      "baseline_feature_values": {
+        "base-block": "{\"kind\":\"box\",\"operation\":\"add\",\"parameters\":{\"center\":[0,0,35],\"height\":70,\"length\":60,\"width\":50}}"
+      },
+      "first_seen_round": 1
+    },
+    {
+      "issue_id": "iso-group-left-holes",
+      "phase": "multiview",
+      "view": "iso",
+      "item": "左侧立板三孔",
+      "evidence": "左侧立板三孔完全缺失。",
+      "severity": "medium",
+      "category": "through_hole",
+      "feature_ids": [
+        "base-block"
+      ],
+      "affected_parameters": [
+        {
+          "feature_id": "base-block",
+          "path": "parameters.operation"
+        }
+      ],
+      "baseline_path_values": {
+        "base-block.parameters.operation": {
+          "present": false,
+          "value": null
+        }
+      },
+      "baseline_feature_values": {
+        "base-block": "{\"kind\":\"box\",\"operation\":\"add\",\"parameters\":{\"center\":[0,0,35],\"height\":70,\"length\":60,\"width\":50}}"
+      },
+      "first_seen_round": 1
+    },
+    {
+      "issue_id": "iso-group-right-holes",
+      "phase": "multiview",
+      "view": "iso",
+      "item": "右侧立板三孔",
+      "evidence": "右侧立板三孔完全缺失。",
+      "severity": "medium",
+      "category": "through_hole",
+      "feature_ids": [
+        "base-block"
+      ],
+      "affected_parameters": [
+        {
+          "feature_id": "base-block",
+          "path": "parameters.operation"
+        }
+      ],
+      "baseline_path_values": {
+        "base-block.parameters.operation": {
+          "present": false,
+          "value": null
+        }
+      },
+      "baseline_feature_values": {
+        "base-block": "{\"kind\":\"box\",\"operation\":\"add\",\"parameters\":{\"center\":[0,0,35],\"height\":70,\"length\":60,\"width\":50}}"
+      },
+      "first_seen_round": 1
+    },
+    {
+      "issue_id": "iso-group-back-holes",
+      "phase": "multiview",
+      "view": "iso",
+      "item": "凹槽后壁三孔",
+      "evidence": "凹槽后壁三孔完全缺失。",
+      "severity": "medium",
+      "category": "through_hole",
+      "feature_ids": [
+        "base-block"
+      ],
+      "affected_parameters": [
+        {
+          "feature_id": "base-block",
+          "path": "parameters.operation"
+        }
+      ],
+      "baseline_path_values": {
+        "base-block.parameters.operation": {
+          "present": false,
+          "value": null
+        }
+      },
+      "baseline_feature_values": {
+        "base-block": "{\"kind\":\"box\",\"operation\":\"add\",\"parameters\":{\"center\":[0,0,35],\"height\":70,\"length\":60,\"width\":50}}"
+      },
+      "first_seen_round": 1
+    }
+  ],
+  "plan": {
+    "schema_version": "1.0",
+    "name": "U-shape-bracket",
+    "source_prompt": "复刻一下",
+    "units": {
+      "length": "mm",
+      "angle": "deg"
+    },
+    "coordinate_system": {
+      "type": "global_cartesian",
+      "handedness": "right",
+      "axes": [
+        "X",
+        "Y",
+        "Z"
+      ],
+      "origin": [
+        0,
+        0,
+        0
+      ]
+    },
+    "features": [
+      {
+        "id": "base-block",
+        "kind": "box",
+        "operation": "add",
+        "parameters": {
+          "length": 60,
+          "width": 50,
+          "height": 70,
+          "center": [
+            0,
+            0,
+            35
+          ]
+        },
+        "sources": {
+          "length": {
+            "type": "image_estimate",
+            "evidence": "等轴视角下整体外轮廓宽度约为高度的0.85倍，取高度70mm则宽度约60mm"
+          },
+          "width": {
+            "type": "image_estimate",
+            "evidence": "等轴视角下深度方向约占高度的70%，取50mm"
+          },
+          "height": {
+            "type": "image_estimate",
+            "evidence": "整体高度作为最大尺寸取70mm"
+          },
+          "center": {
+            "type": "derived",
+            "evidence": "box以中心定位，高度70mm则中心z=35"
+          }
+        }
+      },
+      {
+        "id": "front-slot",
+        "kind": "box",
+        "operation": "cut",
+        "parameters": {
+          "length": 18,
+          "width": 55,
+          "height": 60,
+          "center": [
+            0,
+            2.5,
+            40
+          ]
+        },
+        "sources": {
+          "length": {
+            "type": "image_estimate",
+            "evidence": "中央槽宽度约占整体宽度的30%，整体宽度60mm，槽宽约18mm"
+          },
+          "width": {
+            "type": "image_estimate",
+            "evidence": "槽应前后贯穿整个深度并越过前后表面，取55mm"
+          },
+          "height": {
+            "type": "image_estimate",
+            "evidence": "槽从顶部附近到底部附近，约占主体高度70mm的85%，取60mm"
+          },
+          "center": {
+            "type": "derived",
+            "evidence": "槽前后贯穿并越过表面，中心y=2.5使切除范围从-25到+30"
+          }
+        }
+      },
+      {
+        "id": "left-hole-top",
+        "kind": "hole",
+        "operation": "cut",
+        "parameters": {
+          "diameter": 8,
+          "through": true,
+          "pos": "point",
+          "point": [
+            -21,
+            -25,
+            55
+          ],
+          "axis": "Y"
+        },
+        "sources": {
+          "diameter": {
+            "type": "image_estimate",
+            "evidence": "左侧壁顶部大孔，按大孔直径约为主体高度70mm的11%估算，取8mm"
+          },
+          "through": {
+            "type": "image_estimate",
+            "evidence": "孔贯穿左侧壁前后方向"
+          },
+          "point": {
+            "type": "derived",
+            "evidence": "左侧壁外表面位于y=-25，x方向位于左侧壁中心x=-21，顶部孔z=55"
+          },
+          "axis": {
+            "type": "derived",
+            "evidence": "左侧壁外表面法向为Y方向"
+          }
+        }
+      },
+      {
+        "id": "left-hole-middle",
+        "kind": "hole",
+        "operation": "cut",
+        "parameters": {
+          "diameter": 5,
+          "through": true,
+          "pos": "point",
+          "point": [
+            -21,
+            -25,
+            35
+          ],
+          "axis": "Y"
+        },
+        "sources": {
+          "diameter": {
+            "type": "image_estimate",
+            "evidence": "左侧壁中间小孔，按大孔8mm的1/1.6估算，取5mm"
+          },
+          "through": {
+            "type": "image_estimate",
+            "evidence": "孔贯穿左侧壁前后方向"
+          },
+          "point": {
+            "type": "derived",
+            "evidence": "左侧壁外表面位于y=-25，x方向位于左侧壁中心x=-21，中间孔z=35"
+          },
+          "axis": {
+            "type": "derived",
+            "evidence": "左侧壁外表面法向为Y方向"
+          }
+        }
+      },
+      {
+        "id": "left-hole-bottom",
+        "kind": "hole",
+        "operation": "cut",
+        "parameters": {
+          "diameter": 8,
+          "through": true,
+          "pos": "point",
+          "point": [
+            -21,
+            -25,
+            15
+          ],
+          "axis": "Y"
+        },
+        "sources": {
+          "diameter": {
+            "type": "image_estimate",
+            "evidence": "左侧壁底部大孔，与顶部大孔相同，取8mm"
+          },
+          "through": {
+            "type": "image_estimate",
+            "evidence": "孔贯穿左侧壁前后方向"
+          },
+          "point": {
+            "type": "derived",
+            "evidence": "左侧壁外表面位于y=-25，x方向位于左侧壁中心x=-21，底部孔z=15"
+          },
+          "axis": {
+            "type": "derived",
+            "evidence": "左侧壁外表面法向为Y方向"
+          }
+        }
+      },
+      {
+        "id": "right-hole-top",
+        "kind": "hole",
+        "operation": "cut",
+        "parameters": {
+          "diameter": 8,
+          "through": true,
+          "pos": "point",
+          "point": [
+            21,
+            -25,
+            55
+          ],
+          "axis": "Y"
+        },
+        "sources": {
+          "diameter": {
+            "type": "image_estimate",
+            "evidence": "右侧壁顶部大孔，与左侧壁顶部大孔相同，取8mm"
+          },
+          "through": {
+            "type": "image_estimate",
+            "evidence": "孔贯穿右侧壁前后方向"
+          },
+          "point": {
+            "type": "derived",
+            "evidence": "右侧壁外表面位于y=-25，x方向位于右侧壁中心x=21，顶部孔z=55"
+          },
+          "axis": {
+            "type": "derived",
+            "evidence": "右侧壁外表面法向为Y方向"
+          }
+        }
+      }
+    ],
+    "pending_questions": []
+  },
+  "validation": {
+    "valid": true,
+    "state": "valid",
+    "errors": [],
+    "confirmations": [],
+    "support": [
+      {
+        "feature_id": "base-block",
+        "kind": "box",
+        "status": "exact",
+        "reason": "矩形草图加凸台；当前 CATIA 映射仅支持 Z 轴拉伸。"
+      },
+      {
+        "feature_id": "front-slot",
+        "kind": "box",
+        "status": "exact",
+        "reason": "矩形草图加凸台；当前 CATIA 映射仅支持 Z 轴拉伸。"
+      },
+      {
+        "feature_id": "left-hole-top",
+        "kind": "hole",
+        "status": "exact",
+        "reason": "圆形凹槽；through=true 时按当前零件包围盒生成贯穿深度。"
+      },
+      {
+        "feature_id": "left-hole-middle",
+        "kind": "hole",
+        "status": "exact",
+        "reason": "圆形凹槽；through=true 时按当前零件包围盒生成贯穿深度。"
+      },
+      {
+        "feature_id": "left-hole-bottom",
+        "kind": "hole",
+        "status": "exact",
+        "reason": "圆形凹槽；through=true 时按当前零件包围盒生成贯穿深度。"
+      },
+      {
+        "feature_id": "right-hole-top",
+        "kind": "hole",
+        "status": "exact",
+        "reason": "圆形凹槽；through=true 时按当前零件包围盒生成贯穿深度。"
+      }
+    ],
+    "warnings": [],
+    "schema_version": "1.0"
+  },
+  "preview": {
+    "state": "previewed",
+    "validation": {
+      "valid": true,
+      "state": "valid",
+      "errors": [],
+      "confirmations": [],
+      "support": [
+        {
+          "feature_id": "base-block",
+          "kind": "box",
+          "status": "exact",
+          "reason": "矩形草图加凸台；当前 CATIA 映射仅支持 Z 轴拉伸。"
+        },
+        {
+          "feature_id": "front-slot",
+          "kind": "box",
+          "status": "exact",
+          "reason": "矩形草图加凸台；当前 CATIA 映射仅支持 Z 轴拉伸。"
+        },
+        {
+          "feature_id": "left-hole-top",
+          "kind": "hole",
+          "status": "exact",
+          "reason": "圆形凹槽；through=true 时按当前零件包围盒生成贯穿深度。"
+        },
+        {
+          "feature_id": "left-hole-middle",
+          "kind": "hole",
+          "status": "exact",
+          "reason": "圆形凹槽；through=true 时按当前零件包围盒生成贯穿深度。"
+        },
+        {
+          "feature_id": "left-hole-bottom",
+          "kind": "hole",
+          "status": "exact",
+          "reason": "圆形凹槽；through=true 时按当前零件包围盒生成贯穿深度。"
+        },
+        {
+          "feature_id": "right-hole-top",
+          "kind": "hole",
+          "status": "exact",
+          "reason": "圆形凹槽；through=true 时按当前零件包围盒生成贯穿深度。"
+        }
+      ],
+      "warnings": [],
+      "schema_version": "1.0"
+    },
+    "catia_executed": false,
+    "dimensions": {
+      "unit": "mm",
+      "bbox": [
+        -30.0,
+        -25.0,
+        0.0,
+        30.0,
+        25.0,
+        70.0
+      ],
+      "size": [
+        60.0,
+        50.0,
+        70.0
+      ],
+      "volume_mm3": 147575.44008191326,
+      "surface_area_mm2": 29445.329092534448,
+      "triangles": 639,
+      "feature_count": 6
+    },
+    "catia_operations": [
+      {
+        "index": 1,
+        "kind": "rect_pad",
+        "plane": "XY",
+        "center": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "profile": [],
+        "dimensions": {
+          "l": 60.0,
+          "w": 50.0,
+          "r": 0.0,
+          "h": 70.0,
+          "depth": 0.0
+        },
+        "name": "长方体",
+        "note": "长方体 60 × 50 × 70 mm"
+      },
+      {
+        "index": 2,
+        "kind": "rect_cut",
+        "plane": "XY",
+        "center": [
+          0.0,
+          2.5,
+          70.0
+        ],
+        "profile": [],
+        "dimensions": {
+          "l": 18.0,
+          "w": 55.0,
+          "r": 0.0,
+          "h": 60.0,
+          "depth": 60.0
+        },
+        "name": "长方体",
+        "note": "长方体 18 × 55 × 60 mm"
+      },
+      {
+        "index": 3,
+        "kind": "circle_cut",
+        "plane": "Y",
+        "center": [
+          55.0,
+          -21.0,
+          27.0
+        ],
+        "profile": [],
+        "dimensions": {
+          "l": 0.0,
+          "w": 0.0,
+          "r": 4.0,
+          "h": 0.0,
+          "depth": 54.0
+        },
+        "name": "孔",
+        "note": "⌀8 通孔 @(-21, 55)"
+      },
+      {
+        "index": 4,
+        "kind": "circle_cut",
+        "plane": "Y",
+        "center": [
+          35.0,
+          -21.0,
+          27.0
+        ],
+        "profile": [],
+        "dimensions": {
+          "l": 0.0,
+          "w": 0.0,
+          "r": 2.5,
+          "h": 0.0,
+          "depth": 54.0
+        },
+        "name": "孔",
+        "note": "⌀5 通孔 @(-21, 35)"
+      },
+      {
+        "index": 5,
+        "kind": "circle_cut",
+        "plane": "Y",
+        "center": [
+          15.0,
+          -21.0,
+          27.0
+        ],
+        "profile": [],
+        "dimensions": {
+          "l": 0.0,
+          "w": 0.0,
+          "r": 4.0,
+          "h": 0.0,
+          "depth": 54.0
+        },
+        "name": "孔",
+        "note": "⌀8 通孔 @(-21, 15)"
+      },
+      {
+        "index": 6,
+        "kind": "circle_cut",
+        "plane": "Y",
+        "center": [
+          55.0,
+          21.0,
+          27.0
+        ],
+        "profile": [],
+        "dimensions": {
+          "l": 0.0,
+          "w": 0.0,
+          "r": 4.0,
+          "h": 0.0,
+          "depth": 54.0
+        },
+        "name": "孔",
+        "note": "⌀8 通孔 @(21, 55)"
+      }
+    ],
+    "warnings": [],
+    "feature_manifest": {
+      "base-block": {
+        "kind": "box",
+        "operation": "add",
+        "name": "长方体",
+        "parameters": {
+          "length": 60,
+          "width": 50,
+          "height": 70,
+          "center": [
+            0,
+            0,
+            35
+          ]
+        },
+        "sources": {
+          "length": {
+            "type": "image_estimate",
+            "evidence": "等轴视角下整体外轮廓宽度约为高度的0.85倍，取高度70mm则宽度约60mm"
+          },
+          "width": {
+            "type": "image_estimate",
+            "evidence": "等轴视角下深度方向约占高度的70%，取50mm"
+          },
+          "height": {
+            "type": "image_estimate",
+            "evidence": "整体高度作为最大尺寸取70mm"
+          },
+          "center": {
+            "type": "derived",
+            "evidence": "box以中心定位，高度70mm则中心z=35"
+          }
+        },
+        "relations": []
+      },
+      "front-slot": {
+        "kind": "box",
+        "operation": "cut",
+        "name": "长方体",
+        "parameters": {
+          "length": 18,
+          "width": 55,
+          "height": 60,
+          "center": [
+            0,
+            2.5,
+            40
+          ]
+        },
+        "sources": {
+          "length": {
+            "type": "image_estimate",
+            "evidence": "中央槽宽度约占整体宽度的30%，整体宽度60mm，槽宽约18mm"
+          },
+          "width": {
+            "type": "image_estimate",
+            "evidence": "槽应前后贯穿整个深度并越过前后表面，取55mm"
+          },
+          "height": {
+            "type": "image_estimate",
+            "evidence": "槽从顶部附近到底部附近，约占主体高度70mm的85%，取60mm"
+          },
+          "center": {
+            "type": "derived",
+            "evidence": "槽前后贯穿并越过表面，中心y=2.5使切除范围从-25到+30"
+          }
+        },
+        "relations": []
+      },
+      "left-hole-top": {
+        "kind": "hole",
+        "operation": "cut",
+        "name": "孔",
+        "parameters": {
+          "diameter": 8,
+          "through": true,
+          "pos": "point",
+          "point": [
+            -21,
+            -25,
+            55
+          ],
+          "axis": "Y"
+        },
+        "sources": {
+          "diameter": {
+            "type": "image_estimate",
+            "evidence": "左侧壁顶部大孔，按大孔直径约为主体高度70mm的11%估算，取8mm"
+          },
+          "through": {
+            "type": "image_estimate",
+            "evidence": "孔贯穿左侧壁前后方向"
+          },
+          "point": {
+            "type": "derived",
+            "evidence": "左侧壁外表面位于y=-25，x方向位于左侧壁中心x=-21，顶部孔z=55"
+          },
+          "axis": {
+            "type": "derived",
+            "evidence": "左侧壁外表面法向为Y方向"
+          }
+        },
+        "relations": []
+      },
+      "left-hole-middle": {
+        "kind": "hole",
+        "operation": "cut",
+        "name": "孔",
+        "parameters": {
+          "diameter": 5,
+          "through": true,
+          "pos": "point",
+          "point": [
+            -21,
+            -25,
+            35
+          ],
+          "axis": "Y"
+        },
+        "sources": {
+          "diameter": {
+            "type": "image_estimate",
+            "evidence": "左侧壁中间小孔，按大孔8mm的1/1.6估算，取5mm"
+          },
+          "through": {
+            "type": "image_estimate",
+            "evidence": "孔贯穿左侧壁前后方向"
+          },
+          "point": {
+            "type": "derived",
+            "evidence": "左侧壁外表面位于y=-25，x方向位于左侧壁中心x=-21，中间孔z=35"
+          },
+          "axis": {
+            "type": "derived",
+            "evidence": "左侧壁外表面法向为Y方向"
+          }
+        },
+        "relations": []
+      },
+      "left-hole-bottom": {
+        "kind": "hole",
+        "operation": "cut",
+        "name": "孔",
+        "parameters": {
+          "diameter": 8,
+          "through": true,
+          "pos": "point",
+          "point": [
+            -21,
+            -25,
+            15
+          ],
+          "axis": "Y"
+        },
+        "sources": {
+          "diameter": {
+            "type": "image_estimate",
+            "evidence": "左侧壁底部大孔，与顶部大孔相同，取8mm"
+          },
+          "through": {
+            "type": "image_estimate",
+            "evidence": "孔贯穿左侧壁前后方向"
+          },
+          "point": {
+            "type": "derived",
+            "evidence": "左侧壁外表面位于y=-25，x方向位于左侧壁中心x=-21，底部孔z=15"
+          },
+          "axis": {
+            "type": "derived",
+            "evidence": "左侧壁外表面法向为Y方向"
+          }
+        },
+        "relations": []
+      },
+      "right-hole-top": {
+        "kind": "hole",
+        "operation": "cut",
+        "name": "孔",
+        "parameters": {
+          "diameter": 8,
+          "through": true,
+          "pos": "point",
+          "point": [
+            21,
+            -25,
+            55
+          ],
+          "axis": "Y"
+        },
+        "sources": {
+          "diameter": {
+            "type": "image_estimate",
+            "evidence": "右侧壁顶部大孔，与左侧壁顶部大孔相同，取8mm"
+          },
+          "through": {
+            "type": "image_estimate",
+            "evidence": "孔贯穿右侧壁前后方向"
+          },
+          "point": {
+            "type": "derived",
+            "evidence": "右侧壁外表面位于y=-25，x方向位于右侧壁中心x=21，顶部孔z=55"
+          },
+          "axis": {
+            "type": "derived",
+            "evidence": "右侧壁外表面法向为Y方向"
+          }
+        },
+        "relations": []
+      }
+    },
+    "build_log": [
+      "[基准] 长方体 60 × 50 × 70 mm → 8 面",
+      "[切除] 长方体 18 × 55 × 60 mm → 18 面",
+      "[切除] ⌀8 通孔 @(-21, 55) → 88 面",
+      "[切除] ⌀5 通孔 @(-21, 35) → 196 面",
+      "[切除] ⌀8 通孔 @(-21, 15) → 332 面",
+      "[切除] ⌀8 通孔 @(21, 55) → 402 面"
+    ],
+    "local_geometry_checks": {
+      "state": "passed",
+      "source": "AI Modeler local mesh kernel",
+      "face_count": 402,
+      "bbox_size_mm": [
+        60.0,
+        50.0,
+        70.0
+      ],
+      "bbox_ratios_from_mesh": {
+        "front_width_height": 0.8571428571428571,
+        "depth_height": 0.7142857142857143,
+        "top_width_depth": 1.2
+      },
+      "feature_count_from_plan": 6,
+      "feature_ids_from_plan": [
+        "base-block",
+        "front-slot",
+        "left-hole-top",
+        "left-hole-middle",
+        "left-hole-bottom",
+        "right-hole-top"
+      ],
+      "nonfinite_face_count": 0,
+      "degenerate_face_count": 0,
+      "hole_features_from_plan": [
+        {
+          "feature_id": "left-hole-top",
+          "kind": "hole",
+          "operation": "cut",
+          "parameters": {
+            "diameter": 8,
+            "through": true,
+            "pos": "point",
+            "point": [
+              -21,
+              -25,
+              55
+            ],
+            "axis": "Y"
+          }
+        },
+        {
+          "feature_id": "left-hole-middle",
+          "kind": "hole",
+          "operation": "cut",
+          "parameters": {
+            "diameter": 5,
+            "through": true,
+            "pos": "point",
+            "point": [
+              -21,
+              -25,
+              35
+            ],
+            "axis": "Y"
+          }
+        },
+        {
+          "feature_id": "left-hole-bottom",
+          "kind": "hole",
+          "operation": "cut",
+          "parameters": {
+            "diameter": 8,
+            "through": true,
+            "pos": "point",
+            "point": [
+              -21,
+              -25,
+              15
+            ],
+            "axis": "Y"
+          }
+        },
+        {
+          "feature_id": "right-hole-top",
+          "kind": "hole",
+          "operation": "cut",
+          "parameters": {
+            "diameter": 8,
+            "through": true,
+            "pos": "point",
+            "point": [
+              21,
+              -25,
+              55
+            ],
+            "axis": "Y"
+          }
+        }
+      ],
+      "through_hole_mesh_checks": [
+        {
+          "feature_id": "left-hole-top",
+          "axis": "Y",
+          "center_mm": [
+            -21.0,
+            -25.0,
+            55.0
+          ],
+          "status": "verified_open",
+          "axis_surface_crossings": 0,
+          "surrounding_surface_crossings": [
+            2,
+            2,
+            2,
+            2
+          ],
+          "ring_supported": [
+            true,
+            true,
+            true,
+            true
+          ],
+          "method": "axis ray against local triangle mesh"
+        },
+        {
+          "feature_id": "left-hole-middle",
+          "axis": "Y",
+          "center_mm": [
+            -21.0,
+            -25.0,
+            35.0
+          ],
+          "status": "verified_open",
+          "axis_surface_crossings": 0,
+          "surrounding_surface_crossings": [
+            2,
+            2,
+            2,
+            2
+          ],
+          "ring_supported": [
+            true,
+            true,
+            true,
+            true
+          ],
+          "method": "axis ray against local triangle mesh"
+        },
+        {
+          "feature_id": "left-hole-bottom",
+          "axis": "Y",
+          "center_mm": [
+            -21.0,
+            -25.0,
+            15.0
+          ],
+          "status": "verified_open",
+          "axis_surface_crossings": 0,
+          "surrounding_surface_crossings": [
+            2,
+            2,
+            2,
+            2
+          ],
+          "ring_supported": [
+            true,
+            true,
+            true,
+            true
+          ],
+          "method": "axis ray against local triangle mesh"
+        },
+        {
+          "feature_id": "right-hole-top",
+          "axis": "Y",
+          "center_mm": [
+            21.0,
+            -25.0,
+            55.0
+          ],
+          "status": "verified_open",
+          "axis_surface_crossings": 0,
+          "surrounding_surface_crossings": [
+            2,
+            2,
+            2,
+            2
+          ],
+          "ring_supported": [
+            true,
+            true,
+            true,
+            true
+          ],
+          "method": "axis ray against local triangle mesh"
+        }
+      ],
+      "hole_visibility": "requires_multimodal_view_review",
+      "through_hole_result": "measured_for_point_holes_only"
+    },
+    "orthographic_layout": {
+      "unit": "mm",
+      "axes": {
+        "length": "X",
+        "width": "Y",
+        "height": "Z"
+      },
+      "uniform_scale_across_views": true,
+      "scale_pixels_per_mm": 3.045714285714286,
+      "tile_size_pixels": [
+        330,
+        260
+      ],
+      "view_extents": {
+        "front": {
+          "horizontal_axis": "X",
+          "horizontal": 60.0,
+          "vertical_axis": "Z",
+          "vertical": 70.0
+        },
+        "right": {
+          "horizontal_axis": "Y",
+          "horizontal": 50.0,
+          "vertical_axis": "Z",
+          "vertical": 70.0
+        },
+        "top": {
+          "horizontal_axis": "X",
+          "horizontal": 60.0,
+          "vertical_axis": "Y",
+          "vertical": 50.0
+        }
+      },
+      "dimension_ratios": {
+        "length_to_height": 0.8571428571428571,
+        "width_to_height": 0.7142857142857143,
+        "length_to_width": 1.2
+      }
+    },
+    "preview_image": "candidate-preview.png",
+    "preview_image_views": [
+      "iso"
+    ],
+    "preview_image_view_set": "iso",
+    "preview_image_grid_columns": 1,
+    "preview_image_source": "AI Modeler local mesh kernel; not CATIA B-Rep",
+    "preview_image_layout": {
+      "unit": "mm",
+      "axes": {
+        "length": "X",
+        "width": "Y",
+        "height": "Z"
+      },
+      "uniform_scale_across_views": true,
+      "scale_pixels_per_mm": 3.045714285714286,
+      "tile_size_pixels": [
+        330,
+        260
+      ],
+      "view_extents": {
+        "front": {
+          "horizontal_axis": "X",
+          "horizontal": 60.0,
+          "vertical_axis": "Z",
+          "vertical": 70.0
+        },
+        "right": {
+          "horizontal_axis": "Y",
+          "horizontal": 50.0,
+          "vertical_axis": "Z",
+          "vertical": 70.0
+        },
+        "top": {
+          "horizontal_axis": "X",
+          "horizontal": 60.0,
+          "vertical_axis": "Y",
+          "vertical": 50.0
+        }
+      },
+      "dimension_ratios": {
+        "length_to_height": 0.8571428571428571,
+        "width_to_height": 0.7142857142857143,
+        "length_to_width": 1.2
+      }
+    }
+  },
+  "output_paths": {},
+  "output_warning": null,
+  "dimension_assumptions": [],
+  "local_geometry_checks": null,
+  "multiview_review": null,
+  "similarity_review": null,
+  "review_history": [
+    {
+      "review_type": "geometry",
+      "geometry_fingerprint": "{\"coordinate_system\":{\"axes\":[\"X\",\"Y\",\"Z\"],\"handedness\":\"right\",\"origin\":[0,0,0],\"type\":\"global_cartesian\"},\"features\":[{\"geometry\":\"{\\\"kind\\\":\\\"box\\\",\\\"operation\\\":\\\"add\\\",\\\"parameters\\\":{\\\"center\\\":[0,0,35],\\\"height\\\":70,\\\"length\\\":60,\\\"width\\\":50}}\",\"id\":\"base-block\"}],\"units\":{\"angle\":\"deg\",\"length\":\"mm\"}}",
+      "invocation": 1,
+      "views": [
+        "iso"
+      ],
+      "requested_views": [
+        "iso"
+      ],
+      "skipped_views": [],
+      "result": {
+        "decision": "ask_user",
+        "checks": [
+          {
+            "id": "iso-overall-shape",
+            "view": "iso",
+            "area": "overall_shape",
+            "feature_group_id": "",
+            "category": "shape",
+            "status": "mismatch",
+            "item": "整体外形",
+            "reference_evidence": "参考图为U形块，中间有前后贯穿的凹槽，分为左右立板和中间后壁。",
+            "model_evidence": "当前模型为实心长方体，无凹槽、无立板分隔。",
+            "evidence": "模型缺少中央凹槽，整体轮廓与U形不符。",
+            "unknown_reason": "",
+            "feature_ids": [
+              "base-block"
+            ],
+            "affected_parameters": [
+              {
+                "feature_id": "base-block",
+                "path": "parameters.length"
+              }
+            ]
+          },
+          {
+            "id": "iso-feature-layout",
+            "view": "iso",
+            "area": "feature_layout",
+            "feature_group_id": "",
+            "category": "holes",
+            "status": "mismatch",
+            "item": "孔布局",
+            "reference_evidence": "左右立板正面及凹槽后壁各有上中下三圆孔，共九孔。",
+            "model_evidence": "模型表面无任何孔特征。",
+            "evidence": "模型完全缺失参考图中的九孔布局。",
+            "unknown_reason": "",
+            "feature_ids": [
+              "base-block"
+            ],
+            "affected_parameters": [
+              {
+                "feature_id": "base-block",
+                "path": "operation"
+              }
+            ]
+          },
+          {
+            "id": "iso-depth-relationships",
+            "view": "iso",
+            "area": "depth_relationships",
+            "feature_group_id": "",
+            "category": "recess",
+            "status": "mismatch",
+            "item": "凹槽深度关系",
+            "reference_evidence": "中间凹槽从正面贯穿至背面，后壁位于比两侧立板正面更靠后的Y向位置。",
+            "model_evidence": "模型为实心块，不存在前后错层或凹槽后壁。",
+            "evidence": "模型无凹槽退台，前后表面齐平。",
+            "unknown_reason": "",
+            "feature_ids": [
+              "base-block"
+            ],
+            "affected_parameters": [
+              {
+                "feature_id": "base-block",
+                "path": "parameters.width"
+              }
+            ]
+          },
+          {
+            "id": "iso-group-left-holes",
+            "view": "iso",
+            "area": "feature_group",
+            "feature_group_id": "blind-01-01-01",
+            "category": "through_hole",
+            "status": "mismatch",
+            "item": "左侧立板三孔",
+            "reference_evidence": "左立板正面可见上中下三圆孔，大小顺序为大-小-大。",
+            "model_evidence": "模型左侧表面为实心平面，无孔。",
+            "evidence": "左侧立板三孔完全缺失。",
+            "unknown_reason": "",
+            "feature_ids": [
+              "base-block"
+            ],
+            "affected_parameters": [
+              {
+                "feature_id": "base-block",
+                "path": "operation"
+              }
+            ]
+          },
+          {
+            "id": "iso-group-right-holes",
+            "view": "iso",
+            "area": "feature_group",
+            "feature_group_id": "blind-01-02-01",
+            "category": "through_hole",
+            "status": "mismatch",
+            "item": "右侧立板三孔",
+            "reference_evidence": "右立板正面可见上中下三圆孔，大小顺序为大-小-大。",
+            "model_evidence": "模型右侧表面为实心平面，无孔。",
+            "evidence": "右侧立板三孔完全缺失。",
+            "unknown_reason": "",
+            "feature_ids": [
+              "base-block"
+            ],
+            "affected_parameters": [
+              {
+                "feature_id": "base-block",
+                "path": "operation"
+              }
+            ]
+          },
+          {
+            "id": "iso-group-back-holes",
+            "view": "iso",
+            "area": "feature_group",
+            "feature_group_id": "blind-01-03-01",
+            "category": "through_hole",
+            "status": "mismatch",
+            "item": "凹槽后壁三孔",
+            "reference_evidence": "凹槽后壁可见上中下三圆孔，大小顺序为大-小-大。",
+            "model_evidence": "模型无凹槽，因此不存在后壁及后壁孔。",
+            "evidence": "凹槽后壁三孔完全缺失。",
+            "unknown_reason": "",
+            "feature_ids": [
+              "base-block"
+            ],
+            "affected_parameters": [
+              {
+                "feature_id": "base-block",
+                "path": "operation"
+              }
+            ]
+          }
+        ],
+        "issues": [
+          {
+            "issue_id": "missing-slot",
+            "view": "iso",
+            "category": "geometry",
+            "severity": "high",
+            "item": "中央贯穿凹槽缺失",
+            "evidence": "参考图为U形截面，模型为实心长方体，缺少从正面切入的凹槽。",
+            "feature_ids": [
+              "base-block"
+            ],
+            "affected_parameters": [
+              {
+                "feature_id": "base-block",
+                "path": "parameters.width"
+              }
+            ]
+          },
+          {
+            "issue_id": "missing-all-holes",
+            "view": "iso",
+            "category": "geometry",
+            "severity": "high",
+            "item": "全部九孔缺失",
+            "evidence": "参考图左右立板及凹槽后壁各有三孔，模型表面无孔。",
+            "feature_ids": [
+              "base-block"
+            ],
+            "affected_parameters": [
+              {
+                "feature_id": "base-block",
+                "path": "operation"
+              }
+            ]
+          },
+          {
+            "issue_id": "iso-overall-shape",
+            "view": "iso",
+            "category": "shape",
+            "severity": "high",
+            "item": "整体外形",
+            "evidence": "模型缺少中央凹槽，整体轮廓与U形不符。",
+            "feature_ids": [
+              "base-block"
+            ],
+            "affected_parameters": [
+              {
+                "feature_id": "base-block",
+                "path": "parameters.length"
+              }
+            ]
+          }
+        ],
+        "resolved_findings": [],
+        "questions": [
+          "凹槽应从前表面贯穿到后表面还是仅部分深度？中间后壁厚度是否与两侧立板相同？"
+        ],
+        "review_gaps": [],
+        "confidence": 0.95,
+        "single_view_reports": [
+          {
+            "view": "iso",
+            "checks": [
+              {
+                "id": "iso-overall-shape",
+                "view": "iso",
+                "area": "overall_shape",
+                "feature_group_id": "",
+                "category": "shape",
+                "status": "mismatch",
+                "item": "整体外形",
+                "reference_evidence": "参考图为U形块，中间有前后贯穿的凹槽，分为左右立板和中间后壁。",
+                "model_evidence": "当前模型为实心长方体，无凹槽、无立板分隔。",
+                "evidence": "模型缺少中央凹槽，整体轮廓与U形不符。",
+                "unknown_reason": "",
+                "feature_ids": [
+                  "base-block"
+                ],
+                "affected_parameters": [
+                  {
+                    "feature_id": "base-block",
+                    "path": "parameters.length"
+                  }
+                ]
+              },
+              {
+                "id": "iso-feature-layout",
+                "view": "iso",
+                "area": "feature_layout",
+                "feature_group_id": "",
+                "category": "holes",
+                "status": "mismatch",
+                "item": "孔布局",
+                "reference_evidence": "左右立板正面及凹槽后壁各有上中下三圆孔，共九孔。",
+                "model_evidence": "模型表面无任何孔特征。",
+                "evidence": "模型完全缺失参考图中的九孔布局。",
+                "unknown_reason": "",
+                "feature_ids": [
+                  "base-block"
+                ],
+                "affected_parameters": [
+                  {
+                    "feature_id": "base-block",
+                    "path": "operation"
+                  }
+                ]
+              },
+              {
+                "id": "iso-depth-relationships",
+                "view": "iso",
+                "area": "depth_relationships",
+                "feature_group_id": "",
+                "category": "recess",
+                "status": "mismatch",
+                "item": "凹槽深度关系",
+                "reference_evidence": "中间凹槽从正面贯穿至背面，后壁位于比两侧立板正面更靠后的Y向位置。",
+                "model_evidence": "模型为实心块，不存在前后错层或凹槽后壁。",
+                "evidence": "模型无凹槽退台，前后表面齐平。",
+                "unknown_reason": "",
+                "feature_ids": [
+                  "base-block"
+                ],
+                "affected_parameters": [
+                  {
+                    "feature_id": "base-block",
+                    "path": "parameters.width"
+                  }
+                ]
+              },
+              {
+                "id": "iso-group-left-holes",
+                "view": "iso",
+                "area": "feature_group",
+                "feature_group_id": "blind-01-01-01",
+                "category": "through_hole",
+                "status": "mismatch",
+                "item": "左侧立板三孔",
+                "reference_evidence": "左立板正面可见上中下三圆孔，大小顺序为大-小-大。",
+                "model_evidence": "模型左侧表面为实心平面，无孔。",
+                "evidence": "左侧立板三孔完全缺失。",
+                "unknown_reason": "",
+                "feature_ids": [
+                  "base-block"
+                ],
+                "affected_parameters": [
+                  {
+                    "feature_id": "base-block",
+                    "path": "operation"
+                  }
+                ]
+              },
+              {
+                "id": "iso-group-right-holes",
+                "view": "iso",
+                "area": "feature_group",
+                "feature_group_id": "blind-01-02-01",
+                "category": "through_hole",
+                "status": "mismatch",
+                "item": "右侧立板三孔",
+                "reference_evidence": "右立板正面可见上中下三圆孔，大小顺序为大-小-大。",
+                "model_evidence": "模型右侧表面为实心平面，无孔。",
+                "evidence": "右侧立板三孔完全缺失。",
+                "unknown_reason": "",
+                "feature_ids": [
+                  "base-block"
+                ],
+                "affected_parameters": [
+                  {
+                    "feature_id": "base-block",
+                    "path": "operation"
+                  }
+                ]
+              },
+              {
+                "id": "iso-group-back-holes",
+                "view": "iso",
+                "area": "feature_group",
+                "feature_group_id": "blind-01-03-01",
+                "category": "through_hole",
+                "status": "mismatch",
+                "item": "凹槽后壁三孔",
+                "reference_evidence": "凹槽后壁可见上中下三圆孔，大小顺序为大-小-大。",
+                "model_evidence": "模型无凹槽，因此不存在后壁及后壁孔。",
+                "evidence": "凹槽后壁三孔完全缺失。",
+                "unknown_reason": "",
+                "feature_ids": [
+                  "base-block"
+                ],
+                "affected_parameters": [
+                  {
+                    "feature_id": "base-block",
+                    "path": "operation"
+                  }
+                ]
+              }
+            ],
+            "issues": [
+              {
+                "issue_id": "missing-slot",
+                "view": "iso",
+                "category": "geometry",
+                "severity": "high",
+                "item": "中央贯穿凹槽缺失",
+                "evidence": "参考图为U形截面，模型为实心长方体，缺少从正面切入的凹槽。",
+                "feature_ids": [
+                  "base-block"
+                ],
+                "affected_parameters": [
+                  {
+                    "feature_id": "base-block",
+                    "path": "parameters.width"
+                  }
+                ]
+              },
+              {
+                "issue_id": "missing-all-holes",
+                "view": "iso",
+                "category": "geometry",
+                "severity": "high",
+                "item": "全部九孔缺失",
+                "evidence": "参考图左右立板及凹槽后壁各有三孔，模型表面无孔。",
+                "feature_ids": [
+                  "base-block"
+                ],
+                "affected_parameters": [
+                  {
+                    "feature_id": "base-block",
+                    "path": "operation"
+                  }
+                ]
+              }
+            ],
+            "reference_images": [
+              {
+                "image": "clipboard-49d43c7347e84c888f111c8bc7eea0ee.png",
+                "source_view": "iso",
+                "comparable": true,
+                "visible_evidence": "U形块：两侧立板各三孔，中间凹槽后壁三孔，大-小-大排列；整体宽高比约0.85，槽宽约30%。"
+              }
+            ],
+            "confidence": 0.95
+          }
+        ],
+        "requested_views": [
+          "iso"
+        ],
+        "reviewed_views": [
+          "iso"
+        ],
+        "skipped_views": [],
+        "local_image_comparisons": [
+          {
+            "image": "clipboard-49d43c7347e84c888f111c8bc7eea0ee.png",
+            "view": "iso",
+            "state": "advisory",
+            "method": "cropped foreground aspect + normalised overlap",
+            "reason": "canvas sizes differ",
+            "reference_bbox_px": [
+              75,
+              49,
+              416,
+              495
+            ],
+            "model_bbox_px": [
+              167,
+              47,
+              492,
+              472
+            ],
+            "reference_aspect": 0.7651,
+            "model_aspect": 0.7653,
+            "aspect_delta": 0.0002,
+            "iou": 0.7941,
+            "scope": "advisory only: the crop and scale differ, so this can neither accept nor reject a model. Report it as an observation, never as evidence that the geometry matches."
+          }
+        ],
+        "feature_group_checks": [
+          {
+            "feature_group_id": "blind-01-01-01",
+            "image": "clipboard-49d43c7347e84c888f111c8bc7eea0ee.png",
+            "checks": [
+              {
+                "id": "iso-group-left-holes",
+                "view": "iso",
+                "area": "feature_group",
+                "feature_group_id": "blind-01-01-01",
+                "category": "through_hole",
+                "status": "mismatch",
+                "item": "左侧立板三孔",
+                "reference_evidence": "左立板正面可见上中下三圆孔，大小顺序为大-小-大。",
+                "model_evidence": "模型左侧表面为实心平面，无孔。",
+                "evidence": "左侧立板三孔完全缺失。",
+                "unknown_reason": "",
+                "feature_ids": [
+                  "base-block"
+                ],
+                "affected_parameters": [
+                  {
+                    "feature_id": "base-block",
+                    "path": "operation"
+                  }
+                ]
+              }
+            ],
+            "status": "mismatch",
+            "cross_view_verified_by": []
+          },
+          {
+            "feature_group_id": "blind-01-02-01",
+            "image": "clipboard-49d43c7347e84c888f111c8bc7eea0ee.png",
+            "checks": [
+              {
+                "id": "iso-group-right-holes",
+                "view": "iso",
+                "area": "feature_group",
+                "feature_group_id": "blind-01-02-01",
+                "category": "through_hole",
+                "status": "mismatch",
+                "item": "右侧立板三孔",
+                "reference_evidence": "右立板正面可见上中下三圆孔，大小顺序为大-小-大。",
+                "model_evidence": "模型右侧表面为实心平面，无孔。",
+                "evidence": "右侧立板三孔完全缺失。",
+                "unknown_reason": "",
+                "feature_ids": [
+                  "base-block"
+                ],
+                "affected_parameters": [
+                  {
+                    "feature_id": "base-block",
+                    "path": "operation"
+                  }
+                ]
+              }
+            ],
+            "status": "mismatch",
+            "cross_view_verified_by": []
+          },
+          {
+            "feature_group_id": "blind-01-03-01",
+            "image": "clipboard-49d43c7347e84c888f111c8bc7eea0ee.png",
+            "checks": [
+              {
+                "id": "iso-group-back-holes",
+                "view": "iso",
+                "area": "feature_group",
+                "feature_group_id": "blind-01-03-01",
+                "category": "through_hole",
+                "status": "mismatch",
+                "item": "凹槽后壁三孔",
+                "reference_evidence": "凹槽后壁可见上中下三圆孔，大小顺序为大-小-大。",
+                "model_evidence": "模型无凹槽，因此不存在后壁及后壁孔。",
+                "evidence": "凹槽后壁三孔完全缺失。",
+                "unknown_reason": "",
+                "feature_ids": [
+                  "base-block"
+                ],
+                "affected_parameters": [
+                  {
+                    "feature_id": "base-block",
+                    "path": "operation"
+                  }
+                ]
+              }
+            ],
+            "status": "mismatch",
+            "cross_view_verified_by": []
+          }
+        ],
+        "view_incompatible_findings": [],
+        "reference_inventory": {
+          "source": "independent_source_only_multimodal_read",
+          "images": [
+            {
+              "image": "clipboard-49d43c7347e84c888f111c8bc7eea0ee.png",
+              "source_view": "iso",
+              "coverage": "whole_object",
+              "hole_layout_coverage": "partial",
+              "visible_regions": [
+                {
+                  "id": "left_leg_front",
+                  "region": "左侧立板正面",
+                  "surface_state": "solid_face",
+                  "evidence": "浅灰面，三孔竖排，孔内青/蓝/青色",
+                  "features": [
+                    {
+                      "kind": "through_hole",
+                      "quantity": 3,
+                      "arrangement": "vertical_top_to_bottom",
+                      "evidence": "左立板正面可见上中下三圆孔",
+                      "relative_size_order": [
+                        "large",
+                        "small",
+                        "large"
+                      ],
+                      "size_order_axis": "vertical_top_to_bottom",
+                      "size_order_confidence": "high"
+                    }
+                  ]
+                },
+                {
+                  "id": "right_leg_front",
+                  "region": "右侧立板正面",
+                  "surface_state": "solid_face",
+                  "evidence": "浅灰面，三孔竖排，孔内青/蓝/青色",
+                  "features": [
+                    {
+                      "kind": "through_hole",
+                      "quantity": 3,
+                      "arrangement": "vertical_top_to_bottom",
+                      "evidence": "右立板正面可见上中下三圆孔",
+                      "relative_size_order": [
+                        "large",
+                        "small",
+                        "large"
+                      ],
+                      "size_order_axis": "vertical_top_to_bottom",
+                      "size_order_confidence": "high"
+                    }
+                  ]
+                },
+                {
+                  "id": "middle_recess_back",
+                  "region": "中间凹槽后壁",
+                  "surface_state": "recessed_solid_face",
+                  "evidence": "红棕后退面，三孔竖排，孔内紫/蓝/紫色",
+                  "features": [
+                    {
+                      "kind": "through_hole",
+                      "quantity": 3,
+                      "arrangement": "vertical_top_to_bottom",
+                      "evidence": "凹槽后壁可见上中下三圆孔",
+                      "relative_size_order": [
+                        "large",
+                        "small",
+                        "large"
+                      ],
+                      "size_order_axis": "vertical_top_to_bottom",
+                      "size_order_confidence": "high"
+                    }
+                  ]
+                },
+                {
+                  "id": "top_face",
+                  "region": "顶面",
+                  "surface_state": "solid_face",
+                  "evidence": "浅灰水平顶面，无孔",
+                  "features": []
+                },
+                {
+                  "id": "right_side_face",
+                  "region": "右侧面",
+                  "surface_state": "solid_face",
+                  "evidence": "深灰右侧面，无孔",
+                  "features": []
+                }
+              ],
+              "uncertainties": [
+                "凹槽深度与两侧立板厚度比例仅能从透视估算",
+                "背面结构不可见，假设为对称U形或封闭背板",
+                "孔的实际直径与贯通方向无法从单等角视图判定"
+              ]
+            }
+          ],
+          "cross_view_notes": [
+            "单张等角视图，左右立板与凹槽后壁孔位均为上中下三孔，颜色仅用于区分尺寸组",
+            "左右立板正面三孔大小顺序一致：大-小-大",
+            "凹槽后壁三孔大小顺序亦为大-小-大，与左右立板对应高度孔颜色不同"
+          ]
+        },
+        "blind_reference_hole_targets": [],
+        "plan": null
+      }
+    }
+  ],
+  "questions": [],
+  "reply": null,
+  "tool_trace": [
+    {
+      "phase": "agent_loop",
+      "tool": "cad_inspect_references",
+      "arguments": {
+        "reference_reading": {
+          "feature_groups": [
+            {
+              "id": "main-body",
+              "kind": "body",
+              "quantity": 1,
+              "region": "整体外轮廓",
+              "arrangement": "单一U形主体，正面中央有通槽",
+              "evidence": "图中可见连续外轮廓，顶部和两侧为连续实体，中央沿高度方向有贯通空隙，形成U形截面",
+              "relative_size_order": [],
+              "size_order_axis": "not_applicable",
+              "size_order_confidence": "unknown"
+            },
+            {
+              "id": "slot",
+              "kind": "slot",
+              "quantity": 1,
+              "region": "主体正面中央",
+              "arrangement": "沿高度方向贯通槽",
+              "evidence": "中央空隙从顶部到底部贯通，两侧壁保留，底部连接",
+              "relative_size_order": [],
+              "size_order_axis": "not_applicable",
+              "size_order_confidence": "unknown"
+            },
+            {
+              "id": "left-holes",
+              "kind": "hole",
+              "quantity": 3,
+              "region": "左侧壁外表面",
+              "arrangement": "沿高度方向等距排列",
+              "evidence": "左侧壁可见三个圆形孔口，颜色分别为青、蓝、青",
+              "relative_size_order": [
+                "large",
+                "small",
+                "large"
+              ],
+              "size_order_axis": "vertical_top_to_bottom",
+              "size_order_confidence": "high"
+            },
+            {
+              "id": "right-holes",
+              "kind": "hole",
+              "quantity": 3,
+              "region": "右侧壁外表面",
+              "arrangement": "沿高度方向等距排列",
+              "evidence": "右侧壁可见三个圆形孔口，颜色分别为青、蓝、青",
+              "relative_size_order": [
+                "large",
+                "small",
+                "large"
+              ],
+              "size_order_axis": "vertical_top_to_bottom",
+              "size_order_confidence": "high"
+            },
+            {
+              "id": "center-holes",
+              "kind": "hole",
+              "quantity": 3,
+              "region": "中央槽内壁（后退实体面）",
+              "arrangement": "沿高度方向等距排列",
+              "evidence": "中央槽内可见三个圆形孔口，颜色分别为紫、蓝、紫",
+              "relative_size_order": [
+                "large",
+                "small",
+                "large"
+              ],
+              "size_order_axis": "vertical_top_to_bottom",
+              "size_order_confidence": "high"
+            }
+          ],
+          "visible_regions": [
+            {
+              "image": "clipboard-49d43c7347e84c888f111c8bc7eea0ee.png",
+              "id": "left-face",
+              "region": "左侧壁外表面",
+              "surface_state": "solid_face",
+              "image_bbox_norm": [
+                0.15,
+                0.15,
+                0.35,
+                0.9
+              ],
+              "evidence": "闭合边界围住一块连续着色的平面，可见三个圆形孔口",
+              "features": [
+                {
+                  "kind": "hole",
+                  "quantity": 3,
+                  "arrangement": "沿高度方向等距排列",
+                  "evidence": "区域框内可逐个看到三个独立圆形孔口"
+                }
+              ]
+            },
+            {
+              "image": "clipboard-49d43c7347e84c888f111c8bc7eea0ee.png",
+              "id": "right-face",
+              "region": "右侧壁外表面",
+              "surface_state": "solid_face",
+              "image_bbox_norm": [
+                0.55,
+                0.15,
+                0.75,
+                0.95
+              ],
+              "evidence": "闭合边界围住一块连续着色的平面，可见三个圆形孔口",
+              "features": [
+                {
+                  "kind": "hole",
+                  "quantity": 3,
+                  "arrangement": "沿高度方向等距排列",
+                  "evidence": "区域框内可逐个看到三个独立圆形孔口"
+                }
+              ]
+            },
+            {
+              "image": "clipboard-49d43c7347e84c888f111c8bc7eea0ee.png",
+              "id": "center-recessed-face",
+              "region": "中央槽内壁后退实体面",
+              "surface_state": "recessed_solid_face",
+              "image_bbox_norm": [
+                0.35,
+                0.25,
+                0.55,
+                0.85
+              ],
+              "evidence": "中央空隙底部可见一块连续着色的内侧平面，颜色与两侧壁不同，可见三个圆形孔口",
+              "features": [
+                {
+                  "kind": "hole",
+                  "quantity": 3,
+                  "arrangement": "沿高度方向等距排列",
+                  "evidence": "区域框内可逐个看到三个独立圆形孔口"
+                }
+              ]
+            },
+            {
+              "image": "clipboard-49d43c7347e84c888f111c8bc7eea0ee.png",
+              "id": "top-face",
+              "region": "顶部连续实体面",
+              "surface_state": "solid_face",
+              "image_bbox_norm": [
+                0.15,
+                0.05,
+                0.85,
+                0.25
+              ],
+              "evidence": "顶部可见连续着色平面，中央槽从顶部开口",
+              "features": []
+            },
+            {
+              "image": "clipboard-49d43c7347e84c888f111c8bc7eea0ee.png",
+              "id": "bottom-face",
+              "region": "底部连接实体面",
+              "surface_state": "solid_face",
+              "image_bbox_norm": [
+                0.35,
+                0.85,
+                0.55,
+                0.95
+              ],
+              "evidence": "底部可见连接两侧壁的实体材料",
+              "features": []
+            }
+          ],
+          "dimensionless_constraints": [
+            {
+              "id": "overall-proportions",
+              "relation": "bbox_ratio",
+              "image": "clipboard-49d43c7347e84c888f111c8bc7eea0ee.png",
+              "view": "iso",
+              "subjects": [
+                "whole-object"
+              ],
+              "axes": [
+                "width",
+                "height"
+              ],
+              "values": [
+                0.85
+              ],
+              "confidence": "medium",
+              "evidence": "等轴视角下整体外轮廓宽度约为高度的0.85倍"
+            },
+            {
+              "id": "slot-width-ratio",
+              "relation": "relative_size",
+              "image": "clipboard-49d43c7347e84c888f111c8bc7eea0ee.png",
+              "view": "iso",
+              "subjects": [
+                "slot-width",
+                "overall-width"
+              ],
+              "axes": [
+                "width"
+              ],
+              "values": [
+                0.3
+              ],
+              "confidence": "medium",
+              "evidence": "中央槽宽度约占整体宽度的30%"
+            },
+            {
+              "id": "wall-thickness-ratio",
+              "relation": "relative_size",
+              "image": "clipboard-49d43c7347e84c888f111c8bc7eea0ee.png",
+              "view": "iso",
+              "subjects": [
+                "left-wall-thickness",
+                "overall-width"
+              ],
+              "axes": [
+                "width"
+              ],
+              "values": [
+                0.22
+              ],
+              "confidence": "medium",
+              "evidence": "左侧壁厚度约占整体宽度的22%"
+            },
+            {
+              "id": "hole-spacing",
+              "relation": "spacing_ratio",
+              "image": "clipboard-49d43c7347e84c888f111c8bc7eea0ee.png",
+              "view": "iso",
+              "subjects": [
+                "hole-pitch",
+                "hole-diameter-large"
+              ],
+              "axes": [
+                "height"
+              ],
+              "values": [
+                2.0
+              ],
+              "confidence": "medium",
+              "evidence": "相邻孔中心距约为大孔直径的2倍"
+            },
+            {
+              "id": "hole-size-order",
+              "relation": "relative_size",
+              "image": "clipboard-49d43c7347e84c888f111c8bc7eea0ee.png",
+              "view": "iso",
+              "subjects": [
+                "large-hole",
+                "small-hole"
+              ],
+              "axes": [
+                "diameter"
+              ],
+              "values": [
+                1.6
+              ],
+              "confidence": "medium",
+              "evidence": "大孔直径约为小孔直径的1.6倍"
+            }
+          ],
+          "uncertainties": [
+            "等轴透视导致深度尺寸不确定，槽是否完全贯通前后方向需后续视图验证",
+            "孔是否贯穿整个壁厚无法从单视角确认"
+          ]
+        }
+      },
+      "result": {
+        "state": "reference_reading_ready",
+        "visible_region_count": 5,
+        "visible_hole_count": 9,
+        "reference_reading": {
+          "feature_groups": [
+            {
+              "id": "main-body",
+              "kind": "body",
+              "quantity": 1,
+              "region": "整体外轮廓",
+              "arrangement": "单一U形主体，正面中央有通槽",
+              "evidence": "图中可见连续外轮廓，顶部和两侧为连续实体，中央沿高度方向有贯通空隙，形成U形截面",
+              "relative_size_order": [],
+              "size_order_axis": "not_applicable",
+              "size_order_confidence": "unknown"
+            },
+            {
+              "id": "slot",
+              "kind": "slot",
+              "quantity": 1,
+              "region": "主体正面中央",
+              "arrangement": "沿高度方向贯通槽",
+              "evidence": "中央空隙从顶部到底部贯通，两侧壁保留，底部连接",
+              "relative_size_order": [],
+              "size_order_axis": "not_applicable",
+              "size_order_confidence": "unknown"
+            },
+            {
+              "id": "left-holes",
+              "kind": "hole",
+              "quantity": 3,
+              "region": "左侧壁外表面",
+              "arrangement": "沿高度方向等距排列",
+              "evidence": "左侧壁可见三个圆形孔口，颜色分别为青、蓝、青",
+              "relative_size_order": [
+                "large",
+                "small",
+                "large"
+              ],
+              "size_order_axis": "vertical_top_to_bottom",
+              "size_order_confidence": "high"
+            },
+            {
+              "id": "right-holes",
+              "kind": "hole",
+              "quantity": 3,
+              "region": "右侧壁外表面",
+              "arrangement": "沿高度方向等距排列",
+              "evidence": "右侧壁可见三个圆形孔口，颜色分别为青、蓝、青",
+              "relative_size_order": [
+                "large",
+                "small",
+                "large"
+              ],
+              "size_order_axis": "vertical_top_to_bottom",
+              "size_order_confidence": "high"
+            },
+            {
+              "id": "center-holes",
+              "kind": "hole",
+              "quantity": 3,
+              "region": "中央槽内壁（后退实体面）",
+              "arrangement": "沿高度方向等距排列",
+              "evidence": "中央槽内可见三个圆形孔口，颜色分别为紫、蓝、紫",
+              "relative_size_order": [
+                "large",
+                "small",
+                "large"
+              ],
+              "size_order_axis": "vertical_top_to_bottom",
+              "size_order_confidence": "high"
+            }
+          ],
+          "visible_regions": [
+            {
+              "image": "clipboard-49d43c7347e84c888f111c8bc7eea0ee.png",
+              "id": "left-face",
+              "region": "左侧壁外表面",
+              "surface_state": "solid_face",
+              "image_bbox_norm": [
+                0.15,
+                0.15,
+                0.35,
+                0.9
+              ],
+              "evidence": "闭合边界围住一块连续着色的平面，可见三个圆形孔口",
+              "features": [
+                {
+                  "kind": "hole",
+                  "quantity": 3,
+                  "arrangement": "沿高度方向等距排列",
+                  "evidence": "区域框内可逐个看到三个独立圆形孔口"
+                }
+              ]
+            },
+            {
+              "image": "clipboard-49d43c7347e84c888f111c8bc7eea0ee.png",
+              "id": "right-face",
+              "region": "右侧壁外表面",
+              "surface_state": "solid_face",
+              "image_bbox_norm": [
+                0.55,
+                0.15,
+                0.75,
+                0.95
+              ],
+              "evidence": "闭合边界围住一块连续着色的平面，可见三个圆形孔口",
+              "features": [
+                {
+                  "kind": "hole",
+                  "quantity": 3,
+                  "arrangement": "沿高度方向等距排列",
+                  "evidence": "区域框内可逐个看到三个独立圆形孔口"
+                }
+              ]
+            },
+            {
+              "image": "clipboard-49d43c7347e84c888f111c8bc7eea0ee.png",
+              "id": "center-recessed-face",
+              "region": "中央槽内壁后退实体面",
+              "surface_state": "recessed_solid_face",
+              "image_bbox_norm": [
+                0.35,
+                0.25,
+                0.55,
+                0.85
+              ],
+              "evidence": "中央空隙底部可见一块连续着色的内侧平面，颜色与两侧壁不同，可见三个圆形孔口",
+              "features": [
+                {
+                  "kind": "hole",
+                  "quantity": 3,
+                  "arrangement": "沿高度方向等距排列",
+                  "evidence": "区域框内可逐个看到三个独立圆形孔口"
+                }
+              ]
+            },
+            {
+              "image": "clipboard-49d43c7347e84c888f111c8bc7eea0ee.png",
+              "id": "top-face",
+              "region": "顶部连续实体面",
+              "surface_state": "solid_face",
+              "image_bbox_norm": [
+                0.15,
+                0.05,
+                0.85,
+                0.25
+              ],
+              "evidence": "顶部可见连续着色平面，中央槽从顶部开口",
+              "features": []
+            },
+            {
+              "image": "clipboard-49d43c7347e84c888f111c8bc7eea0ee.png",
+              "id": "bottom-face",
+              "region": "底部连接实体面",
+              "surface_state": "solid_face",
+              "image_bbox_norm": [
+                0.35,
+                0.85,
+                0.55,
+                0.95
+              ],
+              "evidence": "底部可见连接两侧壁的实体材料",
+              "features": []
+            }
+          ],
+          "dimensionless_constraints": [
+            {
+              "id": "overall-proportions",
+              "relation": "bbox_ratio",
+              "image": "clipboard-49d43c7347e84c888f111c8bc7eea0ee.png",
+              "view": "iso",
+              "subjects": [
+                "whole-object"
+              ],
+              "axes": [
+                "width",
+                "height"
+              ],
+              "values": [
+                0.85
+              ],
+              "confidence": "medium",
+              "evidence": "等轴视角下整体外轮廓宽度约为高度的0.85倍"
+            },
+            {
+              "id": "slot-width-ratio",
+              "relation": "relative_size",
+              "image": "clipboard-49d43c7347e84c888f111c8bc7eea0ee.png",
+              "view": "iso",
+              "subjects": [
+                "slot-width",
+                "overall-width"
+              ],
+              "axes": [
+                "width"
+              ],
+              "values": [
+                0.3
+              ],
+              "confidence": "medium",
+              "evidence": "中央槽宽度约占整体宽度的30%"
+            },
+            {
+              "id": "wall-thickness-ratio",
+              "relation": "relative_size",
+              "image": "clipboard-49d43c7347e84c888f111c8bc7eea0ee.png",
+              "view": "iso",
+              "subjects": [
+                "left-wall-thickness",
+                "overall-width"
+              ],
+              "axes": [
+                "width"
+              ],
+              "values": [
+                0.22
+              ],
+              "confidence": "medium",
+              "evidence": "左侧壁厚度约占整体宽度的22%"
+            },
+            {
+              "id": "hole-spacing",
+              "relation": "spacing_ratio",
+              "image": "clipboard-49d43c7347e84c888f111c8bc7eea0ee.png",
+              "view": "iso",
+              "subjects": [
+                "hole-pitch",
+                "hole-diameter-large"
+              ],
+              "axes": [
+                "height"
+              ],
+              "values": [
+                2.0
+              ],
+              "confidence": "medium",
+              "evidence": "相邻孔中心距约为大孔直径的2倍"
+            },
+            {
+              "id": "hole-size-order",
+              "relation": "relative_size",
+              "image": "clipboard-49d43c7347e84c888f111c8bc7eea0ee.png",
+              "view": "iso",
+              "subjects": [
+                "large-hole",
+                "small-hole"
+              ],
+              "axes": [
+                "diameter"
+              ],
+              "values": [
+                1.6
+              ],
+              "confidence": "medium",
+              "evidence": "大孔直径约为小孔直径的1.6倍"
+            }
+          ],
+          "uncertainties": [
+            "等轴透视导致深度尺寸不确定，槽是否完全贯通前后方向需后续视图验证",
+            "孔是否贯穿整个壁厚无法从单视角确认"
+          ]
+        },
+        "next_step_hint": "读图已通过逐区域和孔数一致性校验。现在按每个可见实体面分别规划特征，先建主体，之后逐个添加特征并观察预览；不要把未知拓扑直接当成空槽。"
+      },
+      "result_summary": "reference_reading_ready"
+    },
+    {
+      "phase": "agent_loop",
+      "tool": "cad_create_model",
+      "arguments": {
+        "name": "U-shape-bracket",
+        "first_feature": {
+          "id": "base-block",
+          "kind": "box",
+          "operation": "add",
+          "parameters": {
+            "length": 60,
+            "width": 50,
+            "height": 70,
+            "center": [
+              0,
+              0,
+              35
+            ]
+          },
+          "sources": {
+            "length": {
+              "type": "image_estimate",
+              "evidence": "等轴视角下整体外轮廓宽度约为高度的0.85倍，取高度70mm则宽度约60mm"
+            },
+            "width": {
+              "type": "image_estimate",
+              "evidence": "等轴视角下深度方向约占高度的70%，取50mm"
+            },
+            "height": {
+              "type": "image_estimate",
+              "evidence": "整体高度作为最大尺寸取70mm"
+            },
+            "center": {
+              "type": "derived",
+              "evidence": "box以中心定位，高度70mm则中心z=35"
+            }
+          }
+        }
+      },
+      "result": {
+        "state": "valid",
+        "revision": 1,
+        "geometry_fingerprint": "{\"coordinate_system\":{\"axes\":[\"X\",\"Y\",\"Z\"],\"handedness\":\"right\",\"origin\":[0,0,0],\"type\":\"global_cartesian\"},\"features\":[{\"geometry\":\"{\\\"kind\\\":\\\"box\\\",\\\"operation\\\":\\\"add\\\",\\\"parameters\\\":{\\\"center\\\":[0,0,35],\\\"height\\\":70,\\\"length\\\":60,\\\"width\\\":50}}\",\"id\":\"base-block\"}],\"units\":{\"angle\":\"deg\",\"length\":\"mm\"}}",
+        "feature_count": 1,
+        "validation": {
+          "valid": true,
+          "state": "valid",
+          "errors": [],
+          "confirmations": [],
+          "support": [
+            {
+              "feature_id": "base-block",
+              "kind": "box",
+              "status": "exact",
+              "reason": "矩形草图加凸台；当前 CATIA 映射仅支持 Z 轴拉伸。"
+            }
+          ],
+          "warnings": [],
+          "schema_version": "1.0"
+        },
+        "preview": {
+          "state": "previewed",
+          "geometry_fingerprint": "{\"coordinate_system\":{\"axes\":[\"X\",\"Y\",\"Z\"],\"handedness\":\"right\",\"origin\":[0,0,0],\"type\":\"global_cartesian\"},\"features\":[{\"geometry\":\"{\\\"kind\\\":\\\"box\\\",\\\"operation\\\":\\\"add\\\",\\\"parameters\\\":{\\\"center\\\":[0,0,35],\\\"height\\\":70,\\\"length\\\":60,\\\"width\\\":50}}\",\"id\":\"base-block\"}],\"units\":{\"angle\":\"deg\",\"length\":\"mm\"}}",
+          "preview_image": "candidate-preview.png",
+          "view_set": "iso",
+          "views": [
+            "iso"
+          ],
+          "dimensions": {
+            "unit": "mm",
+            "bbox": [
+              -30.0,
+              -25.0,
+              0.0,
+              30.0,
+              25.0,
+              70.0
+            ],
+            "size": [
+              60.0,
+              50.0,
+              70.0
+            ],
+            "volume_mm3": 210000.0,
+            "surface_area_mm2": 21400.0,
+            "triangles": 12,
+            "feature_count": 1
+          },
+          "local_geometry_checks": {
+            "state": "passed",
+            "source": "AI Modeler local mesh kernel",
+            "face_count": 8,
+            "bbox_size_mm": [
+              60.0,
+              50.0,
+              70.0
+            ],
+            "bbox_ratios_from_mesh": {
+              "front_width_height": 0.8571428571428571,
+              "depth_height": 0.7142857142857143,
+              "top_width_depth": 1.2
+            },
+            "feature_count_from_plan": 1,
+            "feature_ids_from_plan": [
+              "base-block"
+            ],
+            "nonfinite_face_count": 0,
+            "degenerate_face_count": 0,
+            "hole_features_from_plan": [],
+            "through_hole_mesh_checks": [],
+            "hole_visibility": "requires_multimodal_view_review",
+            "through_hole_result": "not_measured"
+          },
+          "warnings": [],
+          "catia_executed": false,
+          "next_step_hint": "当前预览已展示，作为逐特征建模进度。若还有几何特征未完成，只追加下一个特征并刷新预览；全部特征完成后再做最终多视图复核。"
+        },
+        "reference_feature_coverage": {
+          "required_feature_groups": [
+            {
+              "id": "main-body",
+              "kind": "body",
+              "quantity": 1,
+              "region": "整体外轮廓",
+              "arrangement": "单一U形主体，正面中央有通槽"
+            },
+            {
+              "id": "slot",
+              "kind": "slot",
+              "quantity": 1,
+              "region": "主体正面中央",
+              "arrangement": "沿高度方向贯通槽"
+            },
+            {
+              "id": "left-holes",
+              "kind": "hole",
+              "quantity": 3,
+              "region": "左侧壁外表面",
+              "arrangement": "沿高度方向等距排列"
+            },
+            {
+              "id": "right-holes",
+              "kind": "hole",
+              "quantity": 3,
+              "region": "右侧壁外表面",
+              "arrangement": "沿高度方向等距排列"
+            },
+            {
+              "id": "center-holes",
+              "kind": "hole",
+              "quantity": 3,
+              "region": "中央槽内壁（后退实体面）",
+              "arrangement": "沿高度方向等距排列"
+            }
+          ],
+          "hole_positions": {
+            "target": 9,
+            "modeled": 0,
+            "missing": 9,
+            "excess": 0
+          }
+        }
+      },
+      "result_summary": "valid"
+    },
+    {
+      "phase": "blind_reference_inventory",
+      "tool": "submit_reference_inventory",
+      "arguments": {
+        "images": [
+          {
+            "image": "clipboard-49d43c7347e84c888f111c8bc7eea0ee.png",
+            "source_view": "iso",
+            "coverage": "whole_object",
+            "hole_layout_coverage": "partial",
+            "visible_regions": [
+              {
+                "id": "left_leg_front",
+                "region": "左侧立板正面",
+                "surface_state": "solid_face",
+                "evidence": "浅灰面，三孔竖排，孔内青/蓝/青色",
+                "features": [
+                  {
+                    "kind": "through_hole",
+                    "quantity": 3,
+                    "arrangement": "vertical_top_to_bottom",
+                    "evidence": "左立板正面可见上中下三圆孔",
+                    "relative_size_order": [
+                      "large",
+                      "small",
+                      "large"
+                    ],
+                    "size_order_axis": "vertical_top_to_bottom",
+                    "size_order_confidence": "high"
+                  }
+                ]
+              },
+              {
+                "id": "right_leg_front",
+                "region": "右侧立板正面",
+                "surface_state": "solid_face",
+                "evidence": "浅灰面，三孔竖排，孔内青/蓝/青色",
+                "features": [
+                  {
+                    "kind": "through_hole",
+                    "quantity": 3,
+                    "arrangement": "vertical_top_to_bottom",
+                    "evidence": "右立板正面可见上中下三圆孔",
+                    "relative_size_order": [
+                      "large",
+                      "small",
+                      "large"
+                    ],
+                    "size_order_axis": "vertical_top_to_bottom",
+                    "size_order_confidence": "high"
+                  }
+                ]
+              },
+              {
+                "id": "middle_recess_back",
+                "region": "中间凹槽后壁",
+                "surface_state": "recessed_solid_face",
+                "evidence": "红棕后退面，三孔竖排，孔内紫/蓝/紫色",
+                "features": [
+                  {
+                    "kind": "through_hole",
+                    "quantity": 3,
+                    "arrangement": "vertical_top_to_bottom",
+                    "evidence": "凹槽后壁可见上中下三圆孔",
+                    "relative_size_order": [
+                      "large",
+                      "small",
+                      "large"
+                    ],
+                    "size_order_axis": "vertical_top_to_bottom",
+                    "size_order_confidence": "high"
+                  }
+                ]
+              },
+              {
+                "id": "top_face",
+                "region": "顶面",
+                "surface_state": "solid_face",
+                "evidence": "浅灰水平顶面，无孔",
+                "features": []
+              },
+              {
+                "id": "right_side_face",
+                "region": "右侧面",
+                "surface_state": "solid_face",
+                "evidence": "深灰右侧面，无孔",
+                "features": []
+              }
+            ],
+            "uncertainties": [
+              "凹槽深度与两侧立板厚度比例仅能从透视估算",
+              "背面结构不可见，假设为对称U形或封闭背板",
+              "孔的实际直径与贯通方向无法从单等角视图判定"
+            ]
+          }
+        ],
+        "cross_view_notes": [
+          "单张等角视图，左右立板与凹槽后壁孔位均为上中下三孔，颜色仅用于区分尺寸组",
+          "左右立板正面三孔大小顺序一致：大-小-大",
+          "凹槽后壁三孔大小顺序亦为大-小-大，与左右立板对应高度孔颜色不同"
+        ]
+      },
+      "result": {
+        "state": "accepted"
+      }
+    },
+    {
+      "phase": "multiview_check",
+      "tool": "submit_multiview_review",
+      "arguments": {
+        "reference_images": [
+          {
+            "image": "clipboard-49d43c7347e84c888f111c8bc7eea0ee.png",
+            "source_view": "iso",
+            "comparable": true,
+            "visible_evidence": "U形块：两侧立板各三孔，中间凹槽后壁三孔，大-小-大排列；整体宽高比约0.85，槽宽约30%。"
+          }
+        ],
+        "checks": [
+          {
+            "id": "iso-overall-shape",
+            "view": "iso",
+            "area": "overall_shape",
+            "feature_group_id": "",
+            "category": "shape",
+            "status": "mismatch",
+            "item": "整体外形",
+            "reference_evidence": "参考图为U形块，中间有前后贯穿的凹槽，分为左右立板和中间后壁。",
+            "model_evidence": "当前模型为实心长方体，无凹槽、无立板分隔。",
+            "evidence": "模型缺少中央凹槽，整体轮廓与U形不符。",
+            "unknown_reason": "",
+            "feature_ids": [
+              "base-block"
+            ],
+            "affected_parameters": [
+              {
+                "feature_id": "base-block",
+                "path": "parameters.length"
+              }
+            ]
+          },
+          {
+            "id": "iso-feature-layout",
+            "view": "iso",
+            "area": "feature_layout",
+            "feature_group_id": "",
+            "category": "holes",
+            "status": "mismatch",
+            "item": "孔布局",
+            "reference_evidence": "左右立板正面及凹槽后壁各有上中下三圆孔，共九孔。",
+            "model_evidence": "模型表面无任何孔特征。",
+            "evidence": "模型完全缺失参考图中的九孔布局。",
+            "unknown_reason": "",
+            "feature_ids": [
+              "base-block"
+            ],
+            "affected_parameters": [
+              {
+                "feature_id": "base-block",
+                "path": "operation"
+              }
+            ]
+          },
+          {
+            "id": "iso-depth-relationships",
+            "view": "iso",
+            "area": "depth_relationships",
+            "feature_group_id": "",
+            "category": "recess",
+            "status": "mismatch",
+            "item": "凹槽深度关系",
+            "reference_evidence": "中间凹槽从正面贯穿至背面，后壁位于比两侧立板正面更靠后的Y向位置。",
+            "model_evidence": "模型为实心块，不存在前后错层或凹槽后壁。",
+            "evidence": "模型无凹槽退台，前后表面齐平。",
+            "unknown_reason": "",
+            "feature_ids": [
+              "base-block"
+            ],
+            "affected_parameters": [
+              {
+                "feature_id": "base-block",
+                "path": "parameters.width"
+              }
+            ]
+          },
+          {
+            "id": "iso-group-left-holes",
+            "view": "iso",
+            "area": "feature_group",
+            "feature_group_id": "blind-01-01-01",
+            "category": "through_hole",
+            "status": "mismatch",
+            "item": "左侧立板三孔",
+            "reference_evidence": "左立板正面可见上中下三圆孔，大小顺序为大-小-大。",
+            "model_evidence": "模型左侧表面为实心平面，无孔。",
+            "evidence": "左侧立板三孔完全缺失。",
+            "unknown_reason": "",
+            "feature_ids": [
+              "base-block"
+            ],
+            "affected_parameters": [
+              {
+                "feature_id": "base-block",
+                "path": "operation"
+              }
+            ]
+          },
+          {
+            "id": "iso-group-right-holes",
+            "view": "iso",
+            "area": "feature_group",
+            "feature_group_id": "blind-01-02-01",
+            "category": "through_hole",
+            "status": "mismatch",
+            "item": "右侧立板三孔",
+            "reference_evidence": "右立板正面可见上中下三圆孔，大小顺序为大-小-大。",
+            "model_evidence": "模型右侧表面为实心平面，无孔。",
+            "evidence": "右侧立板三孔完全缺失。",
+            "unknown_reason": "",
+            "feature_ids": [
+              "base-block"
+            ],
+            "affected_parameters": [
+              {
+                "feature_id": "base-block",
+                "path": "operation"
+              }
+            ]
+          },
+          {
+            "id": "iso-group-back-holes",
+            "view": "iso",
+            "area": "feature_group",
+            "feature_group_id": "blind-01-03-01",
+            "category": "through_hole",
+            "status": "mismatch",
+            "item": "凹槽后壁三孔",
+            "reference_evidence": "凹槽后壁可见上中下三圆孔，大小顺序为大-小-大。",
+            "model_evidence": "模型无凹槽，因此不存在后壁及后壁孔。",
+            "evidence": "凹槽后壁三孔完全缺失。",
+            "unknown_reason": "",
+            "feature_ids": [
+              "base-block"
+            ],
+            "affected_parameters": [
+              {
+                "feature_id": "base-block",
+                "path": "operation"
+              }
+            ]
+          }
+        ],
+        "issues": [
+          {
+            "issue_id": "missing-slot",
+            "view": "iso",
+            "category": "geometry",
+            "severity": "high",
+            "item": "中央贯穿凹槽缺失",
+            "evidence": "参考图为U形截面，模型为实心长方体，缺少从正面切入的凹槽。",
+            "feature_ids": [
+              "base-block"
+            ],
+            "affected_parameters": [
+              {
+                "feature_id": "base-block",
+                "path": "parameters.width"
+              }
+            ]
+          },
+          {
+            "issue_id": "missing-all-holes",
+            "view": "iso",
+            "category": "geometry",
+            "severity": "high",
+            "item": "全部九孔缺失",
+            "evidence": "参考图左右立板及凹槽后壁各有三孔，模型表面无孔。",
+            "feature_ids": [
+              "base-block"
+            ],
+            "affected_parameters": [
+              {
+                "feature_id": "base-block",
+                "path": "operation"
+              }
+            ]
+          }
+        ],
+        "resolved_findings": [],
+        "questions": [
+          "凹槽应从前表面贯穿到后表面还是仅部分深度？中间后壁厚度是否与两侧立板相同？"
+        ],
+        "confidence": 0.95
+      },
+      "result": {
+        "state": "accepted"
+      }
+    },
+    {
+      "phase": "agent_loop",
+      "tool": "cad_review_model",
+      "arguments": {
+        "review_type": "geometry",
+        "views": [
+          "iso"
+        ]
+      },
+      "result": {
+        "state": "ask_user",
+        "review_type": "geometry",
+        "geometry_fingerprint": "{\"coordinate_system\":{\"axes\":[\"X\",\"Y\",\"Z\"],\"handedness\":\"right\",\"origin\":[0,0,0],\"type\":\"global_cartesian\"},\"features\":[{\"geometry\":\"{\\\"kind\\\":\\\"box\\\",\\\"operation\\\":\\\"add\\\",\\\"parameters\\\":{\\\"center\\\":[0,0,35],\\\"height\\\":70,\\\"length\\\":60,\\\"width\\\":50}}\",\"id\":\"base-block\"}],\"units\":{\"angle\":\"deg\",\"length\":\"mm\"}}",
+        "reviewed_views": [
+          "iso"
+        ],
+        "requested_views": [
+          "iso"
+        ],
+        "skipped_views": [],
+        "reviewed_view_status": {
+          "iso": "needs_review"
+        },
+        "local_image_comparisons": [
+          {
+            "image": "clipboard-49d43c7347e84c888f111c8bc7eea0ee.png",
+            "view": "iso",
+            "state": "advisory",
+            "method": "cropped foreground aspect + normalised overlap",
+            "reason": "canvas sizes differ",
+            "reference_bbox_px": [
+              75,
+              49,
+              416,
+              495
+            ],
+            "model_bbox_px": [
+              167,
+              47,
+              492,
+              472
+            ],
+            "reference_aspect": 0.7651,
+            "model_aspect": 0.7653,
+            "aspect_delta": 0.0002,
+            "iou": 0.7941,
+            "scope": "advisory only: the crop and scale differ, so this can neither accept nor reject a model. Report it as an observation, never as evidence that the geometry matches."
+          }
+        ],
+        "checks": [
+          {
+            "id": "iso-overall-shape",
+            "view": "iso",
+            "area": "overall_shape",
+            "feature_group_id": "",
+            "category": "shape",
+            "status": "mismatch",
+            "item": "整体外形",
+            "reference_evidence": "参考图为U形块，中间有前后贯穿的凹槽，分为左右立板和中间后壁。",
+            "model_evidence": "当前模型为实心长方体，无凹槽、无立板分隔。",
+            "evidence": "模型缺少中央凹槽，整体轮廓与U形不符。",
+            "unknown_reason": "",
+            "feature_ids": [
+              "base-block"
+            ],
+            "affected_parameters": [
+              {
+                "feature_id": "base-block",
+                "path": "parameters.length"
+              }
+            ]
+          },
+          {
+            "id": "iso-feature-layout",
+            "view": "iso",
+            "area": "feature_layout",
+            "feature_group_id": "",
+            "category": "holes",
+            "status": "mismatch",
+            "item": "孔布局",
+            "reference_evidence": "左右立板正面及凹槽后壁各有上中下三圆孔，共九孔。",
+            "model_evidence": "模型表面无任何孔特征。",
+            "evidence": "模型完全缺失参考图中的九孔布局。",
+            "unknown_reason": "",
+            "feature_ids": [
+              "base-block"
+            ],
+            "affected_parameters": [
+              {
+                "feature_id": "base-block",
+                "path": "operation"
+              }
+            ]
+          },
+          {
+            "id": "iso-depth-relationships",
+            "view": "iso",
+            "area": "depth_relationships",
+            "feature_group_id": "",
+            "category": "recess",
+            "status": "mismatch",
+            "item": "凹槽深度关系",
+            "reference_evidence": "中间凹槽从正面贯穿至背面，后壁位于比两侧立板正面更靠后的Y向位置。",
+            "model_evidence": "模型为实心块，不存在前后错层或凹槽后壁。",
+            "evidence": "模型无凹槽退台，前后表面齐平。",
+            "unknown_reason": "",
+            "feature_ids": [
+              "base-block"
+            ],
+            "affected_parameters": [
+              {
+                "feature_id": "base-block",
+                "path": "parameters.width"
+              }
+            ]
+          },
+          {
+            "id": "iso-group-left-holes",
+            "view": "iso",
+            "area": "feature_group",
+            "feature_group_id": "blind-01-01-01",
+            "category": "through_hole",
+            "status": "mismatch",
+            "item": "左侧立板三孔",
+            "reference_evidence": "左立板正面可见上中下三圆孔，大小顺序为大-小-大。",
+            "model_evidence": "模型左侧表面为实心平面，无孔。",
+            "evidence": "左侧立板三孔完全缺失。",
+            "unknown_reason": "",
+            "feature_ids": [
+              "base-block"
+            ],
+            "affected_parameters": [
+              {
+                "feature_id": "base-block",
+                "path": "operation"
+              }
+            ]
+          },
+          {
+            "id": "iso-group-right-holes",
+            "view": "iso",
+            "area": "feature_group",
+            "feature_group_id": "blind-01-02-01",
+            "category": "through_hole",
+            "status": "mismatch",
+            "item": "右侧立板三孔",
+            "reference_evidence": "右立板正面可见上中下三圆孔，大小顺序为大-小-大。",
+            "model_evidence": "模型右侧表面为实心平面，无孔。",
+            "evidence": "右侧立板三孔完全缺失。",
+            "unknown_reason": "",
+            "feature_ids": [
+              "base-block"
+            ],
+            "affected_parameters": [
+              {
+                "feature_id": "base-block",
+                "path": "operation"
+              }
+            ]
+          },
+          {
+            "id": "iso-group-back-holes",
+            "view": "iso",
+            "area": "feature_group",
+            "feature_group_id": "blind-01-03-01",
+            "category": "through_hole",
+            "status": "mismatch",
+            "item": "凹槽后壁三孔",
+            "reference_evidence": "凹槽后壁可见上中下三圆孔，大小顺序为大-小-大。",
+            "model_evidence": "模型无凹槽，因此不存在后壁及后壁孔。",
+            "evidence": "凹槽后壁三孔完全缺失。",
+            "unknown_reason": "",
+            "feature_ids": [
+              "base-block"
+            ],
+            "affected_parameters": [
+              {
+                "feature_id": "base-block",
+                "path": "operation"
+              }
+            ]
+          }
+        ],
+        "issues": [
+          {
+            "issue_id": "missing-slot",
+            "view": "iso",
+            "category": "geometry",
+            "severity": "high",
+            "item": "中央贯穿凹槽缺失",
+            "evidence": "参考图为U形截面，模型为实心长方体，缺少从正面切入的凹槽。",
+            "feature_ids": [
+              "base-block"
+            ],
+            "affected_parameters": [
+              {
+                "feature_id": "base-block",
+                "path": "parameters.width"
+              }
+            ]
+          },
+          {
+            "issue_id": "missing-all-holes",
+            "view": "iso",
+            "category": "geometry",
+            "severity": "high",
+            "item": "全部九孔缺失",
+            "evidence": "参考图左右立板及凹槽后壁各有三孔，模型表面无孔。",
+            "feature_ids": [
+              "base-block"
+            ],
+            "affected_parameters": [
+              {
+                "feature_id": "base-block",
+                "path": "operation"
+              }
+            ]
+          },
+          {
+            "issue_id": "iso-overall-shape",
+            "view": "iso",
+            "category": "shape",
+            "severity": "high",
+            "item": "整体外形",
+            "evidence": "模型缺少中央凹槽，整体轮廓与U形不符。",
+            "feature_ids": [
+              "base-block"
+            ],
+            "affected_parameters": [
+              {
+                "feature_id": "base-block",
+                "path": "parameters.length"
+              }
+            ]
+          }
+        ],
+        "questions": [
+          "凹槽应从前表面贯穿到后表面还是仅部分深度？中间后壁厚度是否与两侧立板相同？"
+        ],
+        "review_gaps": [],
+        "confidence": 0.95,
+        "similarity_score": null,
+        "similarity_score_semantics": null,
+        "next_step_hint": "检查状态或证据不完整时可选择其它视图再次复核；不能把低置信度当作通过。"
+      },
+      "result_summary": "ask_user"
+    },
+    {
+      "phase": "agent_loop",
+      "tool": "cad_add_feature",
+      "arguments": {
+        "feature": {
+          "id": "front-slot",
+          "kind": "box",
+          "operation": "cut",
+          "parameters": {
+            "length": 18,
+            "width": 50,
+            "height": 60,
+            "center": [
+              0,
+              0,
+              40
+            ]
+          },
+          "sources": {
+            "length": {
+              "type": "image_estimate",
+              "evidence": "中央槽宽度约占整体宽度的30%，整体宽度60mm，槽宽约18mm"
+            },
+            "width": {
+              "type": "image_estimate",
+              "evidence": "槽应前后贯穿整个深度，取与主体宽度相同50mm"
+            },
+            "height": {
+              "type": "image_estimate",
+              "evidence": "槽从顶部附近到底部附近，约占主体高度70mm的85%，取60mm"
+            },
+            "center": {
+              "type": "derived",
+              "evidence": "槽位于中央，x=0；前后贯穿y=0；槽底约在z=10，中心z=40"
+            }
+          }
+        }
+      },
+      "result": {
+        "state": "valid",
+        "revision": 2,
+        "geometry_fingerprint": "{\"coordinate_system\":{\"axes\":[\"X\",\"Y\",\"Z\"],\"handedness\":\"right\",\"origin\":[0,0,0],\"type\":\"global_cartesian\"},\"features\":[{\"geometry\":\"{\\\"kind\\\":\\\"box\\\",\\\"operation\\\":\\\"add\\\",\\\"parameters\\\":{\\\"center\\\":[0,0,35],\\\"height\\\":70,\\\"length\\\":60,\\\"width\\\":50}}\",\"id\":\"base-block\"},{\"geometry\":\"{\\\"kind\\\":\\\"box\\\",\\\"operation\\\":\\\"cut\\\",\\\"parameters\\\":{\\\"center\\\":[0,0,40],\\\"height\\\":60,\\\"length\\\":18,\\\"width\\\":50}}\",\"id\":\"front-slot\"}],\"units\":{\"angle\":\"deg\",\"length\":\"mm\"}}",
+        "feature_count": 2,
+        "validation": {
+          "valid": true,
+          "state": "valid",
+          "errors": [],
+          "confirmations": [],
+          "support": [
+            {
+              "feature_id": "base-block",
+              "kind": "box",
+              "status": "exact",
+              "reason": "矩形草图加凸台；当前 CATIA 映射仅支持 Z 轴拉伸。"
+            },
+            {
+              "feature_id": "front-slot",
+              "kind": "box",
+              "status": "exact",
+              "reason": "矩形草图加凸台；当前 CATIA 映射仅支持 Z 轴拉伸。"
+            }
+          ],
+          "warnings": [],
+          "schema_version": "1.0"
+        },
+        "preview": {
+          "state": "previewed",
+          "geometry_fingerprint": "{\"coordinate_system\":{\"axes\":[\"X\",\"Y\",\"Z\"],\"handedness\":\"right\",\"origin\":[0,0,0],\"type\":\"global_cartesian\"},\"features\":[{\"geometry\":\"{\\\"kind\\\":\\\"box\\\",\\\"operation\\\":\\\"add\\\",\\\"parameters\\\":{\\\"center\\\":[0,0,35],\\\"height\\\":70,\\\"length\\\":60,\\\"width\\\":50}}\",\"id\":\"base-block\"},{\"geometry\":\"{\\\"kind\\\":\\\"box\\\",\\\"operation\\\":\\\"cut\\\",\\\"parameters\\\":{\\\"center\\\":[0,0,40],\\\"height\\\":60,\\\"length\\\":18,\\\"width\\\":50}}\",\"id\":\"front-slot\"}],\"units\":{\"angle\":\"deg\",\"length\":\"mm\"}}",
+          "preview_image": "candidate-preview.png",
+          "view_set": "iso",
+          "views": [
+            "iso"
+          ],
+          "dimensions": {
+            "unit": "mm",
+            "bbox": [
+              -30.0,
+              -25.0,
+              0.0,
+              30.0,
+              25.0,
+              70.0
+            ],
+            "size": [
+              60.0,
+              50.0,
+              70.0
+            ],
+            "volume_mm3": 156000.0,
+            "surface_area_mm2": 25240.0,
+            "triangles": 30,
+            "feature_count": 2
+          },
+          "local_geometry_checks": {
+            "state": "passed",
+            "source": "AI Modeler local mesh kernel",
+            "face_count": 18,
+            "bbox_size_mm": [
+              60.0,
+              50.0,
+              70.0
+            ],
+            "bbox_ratios_from_mesh": {
+              "front_width_height": 0.8571428571428571,
+              "depth_height": 0.7142857142857143,
+              "top_width_depth": 1.2
+            },
+            "feature_count_from_plan": 2,
+            "feature_ids_from_plan": [
+              "base-block",
+              "front-slot"
+            ],
+            "nonfinite_face_count": 0,
+            "degenerate_face_count": 0,
+            "hole_features_from_plan": [],
+            "through_hole_mesh_checks": [],
+            "hole_visibility": "requires_multimodal_view_review",
+            "through_hole_result": "not_measured"
+          },
+          "warnings": [],
+          "catia_executed": false,
+          "next_step_hint": "当前预览已展示，作为逐特征建模进度。若还有几何特征未完成，只追加下一个特征并刷新预览；全部特征完成后再做最终多视图复核。"
+        },
+        "feature_effect": {
+          "volume_before_mm3": 210000.0,
+          "volume_after_mm3": 156000.0,
+          "volume_delta_mm3": -54000.0,
+          "warning": "本次切除在 Y 轴上有面与实体表面完全重合（-25）。实测这种完全共面的布尔运算会给出错误的体积（本应移除 0 却移除数百 mm³），因此不要用当前体积判断这一步的对错。请让切除体越过该面 0.001 mm 以上。"
+        },
+        "reference_feature_coverage": {
+          "required_feature_groups": [
+            {
+              "id": "main-body",
+              "kind": "body",
+              "quantity": 1,
+              "region": "整体外轮廓",
+              "arrangement": "单一U形主体，正面中央有通槽"
+            },
+            {
+              "id": "slot",
+              "kind": "slot",
+              "quantity": 1,
+              "region": "主体正面中央",
+              "arrangement": "沿高度方向贯通槽"
+            },
+            {
+              "id": "left-holes",
+              "kind": "hole",
+              "quantity": 3,
+              "region": "左侧壁外表面",
+              "arrangement": "沿高度方向等距排列"
+            },
+            {
+              "id": "right-holes",
+              "kind": "hole",
+              "quantity": 3,
+              "region": "右侧壁外表面",
+              "arrangement": "沿高度方向等距排列"
+            },
+            {
+              "id": "center-holes",
+              "kind": "hole",
+              "quantity": 3,
+              "region": "中央槽内壁（后退实体面）",
+              "arrangement": "沿高度方向等距排列"
+            }
+          ],
+          "hole_positions": {
+            "target": 9,
+            "modeled": 0,
+            "missing": 9,
+            "excess": 0
+          }
+        }
+      },
+      "result_summary": "valid"
+    },
+    {
+      "phase": "agent_loop",
+      "tool": "cad_update_feature",
+      "arguments": {
+        "feature_id": "front-slot",
+        "parameter_updates": {
+          "width": 50.002
+        },
+        "source_updates": {
+          "width": {
+            "type": "image_estimate",
+            "evidence": "槽应前后贯穿整个深度，取略大于主体宽度50mm以避免共面布尔问题"
+          }
+        }
+      },
+      "result": {
+        "state": "unchanged",
+        "validation": {
+          "valid": true,
+          "state": "valid",
+          "errors": [],
+          "confirmations": [],
+          "support": [
+            {
+              "feature_id": "base-block",
+              "kind": "box",
+              "status": "exact",
+              "reason": "矩形草图加凸台；当前 CATIA 映射仅支持 Z 轴拉伸。"
+            },
+            {
+              "feature_id": "front-slot",
+              "kind": "box",
+              "status": "exact",
+              "reason": "矩形草图加凸台；当前 CATIA 映射仅支持 Z 轴拉伸。"
+            }
+          ],
+          "warnings": [],
+          "schema_version": "1.0"
+        },
+        "cosmetic": true,
+        "max_parameter_delta": 0.0020000000000024443,
+        "cosmetic_updates": 1,
+        "error": "参数最大变化只有 0.002（≤ 0.01），几何实质上没有改变；微扰不算进展。请直接修正真正的比例/位置，或改用 source_updates 修正来源说明。"
+      },
+      "result_summary": "unchanged"
+    },
+    {
+      "phase": "agent_loop",
+      "tool": "cad_update_feature",
+      "arguments": {
+        "feature_id": "front-slot",
+        "parameter_updates": {
+          "width": 55,
+          "center": [
+            0,
+            2.5,
+            40
+          ]
+        },
+        "source_updates": {
+          "width": {
+            "type": "image_estimate",
+            "evidence": "槽应前后贯穿整个深度并越过前后表面，取55mm"
+          },
+          "center": {
+            "type": "derived",
+            "evidence": "槽前后贯穿并越过表面，中心y=2.5使切除范围从-25到+30"
+          }
+        }
+      },
+      "result": {
+        "state": "valid",
+        "revision": 3,
+        "geometry_fingerprint": "{\"coordinate_system\":{\"axes\":[\"X\",\"Y\",\"Z\"],\"handedness\":\"right\",\"origin\":[0,0,0],\"type\":\"global_cartesian\"},\"features\":[{\"geometry\":\"{\\\"kind\\\":\\\"box\\\",\\\"operation\\\":\\\"add\\\",\\\"parameters\\\":{\\\"center\\\":[0,0,35],\\\"height\\\":70,\\\"length\\\":60,\\\"width\\\":50}}\",\"id\":\"base-block\"},{\"geometry\":\"{\\\"kind\\\":\\\"box\\\",\\\"operation\\\":\\\"cut\\\",\\\"parameters\\\":{\\\"center\\\":[0,2.5,40],\\\"height\\\":60,\\\"length\\\":18,\\\"width\\\":55}}\",\"id\":\"front-slot\"}],\"units\":{\"angle\":\"deg\",\"length\":\"mm\"}}",
+        "feature_count": 2,
+        "validation": {
+          "valid": true,
+          "state": "valid",
+          "errors": [],
+          "confirmations": [],
+          "support": [
+            {
+              "feature_id": "base-block",
+              "kind": "box",
+              "status": "exact",
+              "reason": "矩形草图加凸台；当前 CATIA 映射仅支持 Z 轴拉伸。"
+            },
+            {
+              "feature_id": "front-slot",
+              "kind": "box",
+              "status": "exact",
+              "reason": "矩形草图加凸台；当前 CATIA 映射仅支持 Z 轴拉伸。"
+            }
+          ],
+          "warnings": [],
+          "schema_version": "1.0"
+        },
+        "preview": {
+          "state": "previewed",
+          "geometry_fingerprint": "{\"coordinate_system\":{\"axes\":[\"X\",\"Y\",\"Z\"],\"handedness\":\"right\",\"origin\":[0,0,0],\"type\":\"global_cartesian\"},\"features\":[{\"geometry\":\"{\\\"kind\\\":\\\"box\\\",\\\"operation\\\":\\\"add\\\",\\\"parameters\\\":{\\\"center\\\":[0,0,35],\\\"height\\\":70,\\\"length\\\":60,\\\"width\\\":50}}\",\"id\":\"base-block\"},{\"geometry\":\"{\\\"kind\\\":\\\"box\\\",\\\"operation\\\":\\\"cut\\\",\\\"parameters\\\":{\\\"center\\\":[0,2.5,40],\\\"height\\\":60,\\\"length\\\":18,\\\"width\\\":55}}\",\"id\":\"front-slot\"}],\"units\":{\"angle\":\"deg\",\"length\":\"mm\"}}",
+          "preview_image": "candidate-preview.png",
+          "view_set": "iso",
+          "views": [
+            "iso"
+          ],
+          "dimensions": {
+            "unit": "mm",
+            "bbox": [
+              -30.0,
+              -25.0,
+              0.0,
+              30.0,
+              25.0,
+              70.0
+            ],
+            "size": [
+              60.0,
+              50.0,
+              70.0
+            ],
+            "volume_mm3": 156000.0,
+            "surface_area_mm2": 25240.0,
+            "triangles": 31,
+            "feature_count": 2
+          },
+          "local_geometry_checks": {
+            "state": "passed",
+            "source": "AI Modeler local mesh kernel",
+            "face_count": 18,
+            "bbox_size_mm": [
+              60.0,
+              50.0,
+              70.0
+            ],
+            "bbox_ratios_from_mesh": {
+              "front_width_height": 0.8571428571428571,
+              "depth_height": 0.7142857142857143,
+              "top_width_depth": 1.2
+            },
+            "feature_count_from_plan": 2,
+            "feature_ids_from_plan": [
+              "base-block",
+              "front-slot"
+            ],
+            "nonfinite_face_count": 0,
+            "degenerate_face_count": 0,
+            "hole_features_from_plan": [],
+            "through_hole_mesh_checks": [],
+            "hole_visibility": "requires_multimodal_view_review",
+            "through_hole_result": "not_measured"
+          },
+          "warnings": [],
+          "catia_executed": false,
+          "next_step_hint": "当前预览已展示，作为逐特征建模进度。若还有几何特征未完成，只追加下一个特征并刷新预览；全部特征完成后再做最终多视图复核。"
+        },
+        "feature_effect": {
+          "volume_before_mm3": 156000.0,
+          "volume_after_mm3": 156000.0,
+          "volume_delta_mm3": 0.0,
+          "warning": "本次「cad_update_feature」没有改变材料（体积变化 <0.01 mm³）：特征没有与实体相交，或切除尺寸等于/小于被切部位。请检查位置与尺寸，不要重复提交同一个特征。"
+        },
+        "reference_feature_coverage": {
+          "required_feature_groups": [
+            {
+              "id": "main-body",
+              "kind": "body",
+              "quantity": 1,
+              "region": "整体外轮廓",
+              "arrangement": "单一U形主体，正面中央有通槽"
+            },
+            {
+              "id": "slot",
+              "kind": "slot",
+              "quantity": 1,
+              "region": "主体正面中央",
+              "arrangement": "沿高度方向贯通槽"
+            },
+            {
+              "id": "left-holes",
+              "kind": "hole",
+              "quantity": 3,
+              "region": "左侧壁外表面",
+              "arrangement": "沿高度方向等距排列"
+            },
+            {
+              "id": "right-holes",
+              "kind": "hole",
+              "quantity": 3,
+              "region": "右侧壁外表面",
+              "arrangement": "沿高度方向等距排列"
+            },
+            {
+              "id": "center-holes",
+              "kind": "hole",
+              "quantity": 3,
+              "region": "中央槽内壁（后退实体面）",
+              "arrangement": "沿高度方向等距排列"
+            }
+          ],
+          "hole_positions": {
+            "target": 9,
+            "modeled": 0,
+            "missing": 9,
+            "excess": 0
+          }
+        }
+      },
+      "result_summary": "valid"
+    },
+    {
+      "phase": "agent_loop",
+      "tool": "cad_get_state",
+      "arguments": {
+        "include_features": true
+      },
+      "result": {
+        "state": "model",
+        "revision": 3,
+        "name": "U-shape-bracket",
+        "units": {
+          "length": "mm",
+          "angle": "deg"
+        },
+        "feature_count": 2,
+        "validation": {
+          "valid": true,
+          "state": "valid",
+          "errors": [],
+          "confirmations": [],
+          "support": [
+            {
+              "feature_id": "base-block",
+              "kind": "box",
+              "status": "exact",
+              "reason": "矩形草图加凸台；当前 CATIA 映射仅支持 Z 轴拉伸。"
+            },
+            {
+              "feature_id": "front-slot",
+              "kind": "box",
+              "status": "exact",
+              "reason": "矩形草图加凸台；当前 CATIA 映射仅支持 Z 轴拉伸。"
+            }
+          ],
+          "warnings": [],
+          "schema_version": "1.0"
+        },
+        "dimensions": {
+          "unit": "mm",
+          "bbox": [
+            -30.0,
+            -25.0,
+            0.0,
+            30.0,
+            25.0,
+            70.0
+          ],
+          "size": [
+            60.0,
+            50.0,
+            70.0
+          ],
+          "volume_mm3": 156000.0,
+          "surface_area_mm2": 25240.0,
+          "triangles": 31,
+          "feature_count": 2
+        },
+        "unresolved_findings": [
+          {
+            "issue_id": "missing-slot",
+            "view": "iso",
+            "item": "中央贯穿凹槽缺失",
+            "evidence": "参考图为U形截面，模型为实心长方体，缺少从正面切入的凹槽。",
+            "severity": "high",
+            "category": "geometry",
+            "feature_ids": [
+              "base-block"
+            ],
+            "affected_parameters": [
+              {
+                "feature_id": "base-block",
+                "path": "parameters.width"
+              }
+            ],
+            "first_seen_round": 1
+          },
+          {
+            "issue_id": "missing-all-holes",
+            "view": "iso",
+            "item": "全部九孔缺失",
+            "evidence": "参考图左右立板及凹槽后壁各有三孔，模型表面无孔。",
+            "severity": "high",
+            "category": "geometry",
+            "feature_ids": [
+              "base-block"
+            ],
+            "affected_parameters": [
+              {
+                "feature_id": "base-block",
+                "path": "parameters.operation"
+              }
+            ],
+            "first_seen_round": 1
+          },
+          {
+            "issue_id": "iso-overall-shape",
+            "view": "iso",
+            "item": "整体外形",
+            "evidence": "模型缺少中央凹槽，整体轮廓与U形不符。",
+            "severity": "high",
+            "category": "shape",
+            "feature_ids": [
+              "base-block"
+            ],
+            "affected_parameters": [
+              {
+                "feature_id": "base-block",
+                "path": "parameters.length"
+              }
+            ],
+            "first_seen_round": 1
+          },
+          {
+            "issue_id": "iso-feature-layout",
+            "view": "iso",
+            "item": "孔布局",
+            "evidence": "模型完全缺失参考图中的九孔布局。",
+            "severity": "medium",
+            "category": "holes",
+            "feature_ids": [
+              "base-block"
+            ],
+            "affected_parameters": [
+              {
+                "feature_id": "base-block",
+                "path": "parameters.operation"
+              }
+            ],
+            "first_seen_round": 1
+          },
+          {
+            "issue_id": "iso-group-left-holes",
+            "view": "iso",
+            "item": "左侧立板三孔",
+            "evidence": "左侧立板三孔完全缺失。",
+            "severity": "medium",
+            "category": "through_hole",
+            "feature_ids": [
+              "base-block"
+            ],
+            "affected_parameters": [
+              {
+                "feature_id": "base-block",
+                "path": "parameters.operation"
+              }
+            ],
+            "first_seen_round": 1
+          },
+          {
+            "issue_id": "iso-group-right-holes",
+            "view": "iso",
+            "item": "右侧立板三孔",
+            "evidence": "右侧立板三孔完全缺失。",
+            "severity": "medium",
+            "category": "through_hole",
+            "feature_ids": [
+              "base-block"
+            ],
+            "affected_parameters": [
+              {
+                "feature_id": "base-block",
+                "path": "parameters.operation"
+              }
+            ],
+            "first_seen_round": 1
+          },
+          {
+            "issue_id": "iso-group-back-holes",
+            "view": "iso",
+            "item": "凹槽后壁三孔",
+            "evidence": "凹槽后壁三孔完全缺失。",
+            "severity": "medium",
+            "category": "through_hole",
+            "feature_ids": [
+              "base-block"
+            ],
+            "affected_parameters": [
+              {
+                "feature_id": "base-block",
+                "path": "parameters.operation"
+              }
+            ],
+            "first_seen_round": 1
+          }
+        ],
+        "features": [
+          {
+            "id": "base-block",
+            "kind": "box",
+            "operation": "add",
+            "parameters": {
+              "length": 60,
+              "width": 50,
+              "height": 70,
+              "center": [
+                0,
+                0,
+                35
+              ]
+            },
+            "sources": {
+              "length": {
+                "type": "image_estimate",
+                "evidence": "等轴视角下整体外轮廓宽度约为高度的0.85倍，取高度70mm则宽度约60mm"
+              },
+              "width": {
+                "type": "image_estimate",
+                "evidence": "等轴视角下深度方向约占高度的70%，取50mm"
+              },
+              "height": {
+                "type": "image_estimate",
+                "evidence": "整体高度作为最大尺寸取70mm"
+              },
+              "center": {
+                "type": "derived",
+                "evidence": "box以中心定位，高度70mm则中心z=35"
+              }
+            }
+          },
+          {
+            "id": "front-slot",
+            "kind": "box",
+            "operation": "cut",
+            "parameters": {
+              "length": 18,
+              "width": 55,
+              "height": 60,
+              "center": [
+                0,
+                2.5,
+                40
+              ]
+            },
+            "sources": {
+              "length": {
+                "type": "image_estimate",
+                "evidence": "中央槽宽度约占整体宽度的30%，整体宽度60mm，槽宽约18mm"
+              },
+              "width": {
+                "type": "image_estimate",
+                "evidence": "槽应前后贯穿整个深度并越过前后表面，取55mm"
+              },
+              "height": {
+                "type": "image_estimate",
+                "evidence": "槽从顶部附近到底部附近，约占主体高度70mm的85%，取60mm"
+              },
+              "center": {
+                "type": "derived",
+                "evidence": "槽前后贯穿并越过表面，中心y=2.5使切除范围从-25到+30"
+              }
+            }
+          }
+        ],
+        "reference_reading": {
+          "feature_groups": [
+            {
+              "id": "main-body",
+              "kind": "body",
+              "quantity": 1,
+              "region": "整体外轮廓",
+              "arrangement": "单一U形主体，正面中央有通槽",
+              "evidence": "图中可见连续外轮廓，顶部和两侧为连续实体，中央沿高度方向有贯通空隙，形成U形截面",
+              "relative_size_order": [],
+              "size_order_axis": "not_applicable",
+              "size_order_confidence": "unknown"
+            },
+            {
+              "id": "slot",
+              "kind": "slot",
+              "quantity": 1,
+              "region": "主体正面中央",
+              "arrangement": "沿高度方向贯通槽",
+              "evidence": "中央空隙从顶部到底部贯通，两侧壁保留，底部连接",
+              "relative_size_order": [],
+              "size_order_axis": "not_applicable",
+              "size_order_confidence": "unknown"
+            },
+            {
+              "id": "left-holes",
+              "kind": "hole",
+              "quantity": 3,
+              "region": "左侧壁外表面",
+              "arrangement": "沿高度方向等距排列",
+              "evidence": "左侧壁可见三个圆形孔口，颜色分别为青、蓝、青",
+              "relative_size_order": [
+                "large",
+                "small",
+                "large"
+              ],
+              "size_order_axis": "vertical_top_to_bottom",
+              "size_order_confidence": "high"
+            },
+            {
+              "id": "right-holes",
+              "kind": "hole",
+              "quantity": 3,
+              "region": "右侧壁外表面",
+              "arrangement": "沿高度方向等距排列",
+              "evidence": "右侧壁可见三个圆形孔口，颜色分别为青、蓝、青",
+              "relative_size_order": [
+                "large",
+                "small",
+                "large"
+              ],
+              "size_order_axis": "vertical_top_to_bottom",
+              "size_order_confidence": "high"
+            },
+            {
+              "id": "center-holes",
+              "kind": "hole",
+              "quantity": 3,
+              "region": "中央槽内壁（后退实体面）",
+              "arrangement": "沿高度方向等距排列",
+              "evidence": "中央槽内可见三个圆形孔口，颜色分别为紫、蓝、紫",
+              "relative_size_order": [
+                "large",
+                "small",
+                "large"
+              ],
+              "size_order_axis": "vertical_top_to_bottom",
+              "size_order_confidence": "high"
+            }
+          ],
+          "visible_regions": [
+            {
+              "image": "clipboard-49d43c7347e84c888f111c8bc7eea0ee.png",
+              "id": "left-face",
+              "region": "左侧壁外表面",
+              "surface_state": "solid_face",
+              "image_bbox_norm": [
+                0.15,
+                0.15,
+                0.35,
+                0.9
+              ],
+              "evidence": "闭合边界围住一块连续着色的平面，可见三个圆形孔口",
+              "features": [
+                {
+                  "kind": "hole",
+                  "quantity": 3,
+                  "arrangement": "沿高度方向等距排列",
+                  "evidence": "区域框内可逐个看到三个独立圆形孔口"
+                }
+              ]
+            },
+            {
+              "image": "clipboard-49d43c7347e84c888f111c8bc7eea0ee.png",
+              "id": "right-face",
+              "region": "右侧壁外表面",
+              "surface_state": "solid_face",
+              "image_bbox_norm": [
+                0.55,
+                0.15,
+                0.75,
+                0.95
+              ],
+              "evidence": "闭合边界围住一块连续着色的平面，可见三个圆形孔口",
+              "features": [
+                {
+                  "kind": "hole",
+                  "quantity": 3,
+                  "arrangement": "沿高度方向等距排列",
+                  "evidence": "区域框内可逐个看到三个独立圆形孔口"
+                }
+              ]
+            },
+            {
+              "image": "clipboard-49d43c7347e84c888f111c8bc7eea0ee.png",
+              "id": "center-recessed-face",
+              "region": "中央槽内壁后退实体面",
+              "surface_state": "recessed_solid_face",
+              "image_bbox_norm": [
+                0.35,
+                0.25,
+                0.55,
+                0.85
+              ],
+              "evidence": "中央空隙底部可见一块连续着色的内侧平面，颜色与两侧壁不同，可见三个圆形孔口",
+              "features": [
+                {
+                  "kind": "hole",
+                  "quantity": 3,
+                  "arrangement": "沿高度方向等距排列",
+                  "evidence": "区域框内可逐个看到三个独立圆形孔口"
+                }
+              ]
+            },
+            {
+              "image": "clipboard-49d43c7347e84c888f111c8bc7eea0ee.png",
+              "id": "top-face",
+              "region": "顶部连续实体面",
+              "surface_state": "solid_face",
+              "image_bbox_norm": [
+                0.15,
+                0.05,
+                0.85,
+                0.25
+              ],
+              "evidence": "顶部可见连续着色平面，中央槽从顶部开口",
+              "features": []
+            },
+            {
+              "image": "clipboard-49d43c7347e84c888f111c8bc7eea0ee.png",
+              "id": "bottom-face",
+              "region": "底部连接实体面",
+              "surface_state": "solid_face",
+              "image_bbox_norm": [
+                0.35,
+                0.85,
+                0.55,
+                0.95
+              ],
+              "evidence": "底部可见连接两侧壁的实体材料",
+              "features": []
+            }
+          ],
+          "dimensionless_constraints": [
+            {
+              "id": "overall-proportions",
+              "relation": "bbox_ratio",
+              "image": "clipboard-49d43c7347e84c888f111c8bc7eea0ee.png",
+              "view": "iso",
+              "subjects": [
+                "whole-object"
+              ],
+              "axes": [
+                "width",
+                "height"
+              ],
+              "values": [
+                0.85
+              ],
+              "confidence": "medium",
+              "evidence": "等轴视角下整体外轮廓宽度约为高度的0.85倍"
+            },
+            {
+              "id": "slot-width-ratio",
+              "relation": "relative_size",
+              "image": "clipboard-49d43c7347e84c888f111c8bc7eea0ee.png",
+              "view": "iso",
+              "subjects": [
+                "slot-width",
+                "overall-width"
+              ],
+              "axes": [
+                "width"
+              ],
+              "values": [
+                0.3
+              ],
+              "confidence": "medium",
+              "evidence": "中央槽宽度约占整体宽度的30%"
+            },
+            {
+              "id": "wall-thickness-ratio",
+              "relation": "relative_size",
+              "image": "clipboard-49d43c7347e84c888f111c8bc7eea0ee.png",
+              "view": "iso",
+              "subjects": [
+                "left-wall-thickness",
+                "overall-width"
+              ],
+              "axes": [
+                "width"
+              ],
+              "values": [
+                0.22
+              ],
+              "confidence": "medium",
+              "evidence": "左侧壁厚度约占整体宽度的22%"
+            },
+            {
+              "id": "hole-spacing",
+              "relation": "spacing_ratio",
+              "image": "clipboard-49d43c7347e84c888f111c8bc7eea0ee.png",
+              "view": "iso",
+              "subjects": [
+                "hole-pitch",
+                "hole-diameter-large"
+              ],
+              "axes": [
+                "height"
+              ],
+              "values": [
+                2.0
+              ],
+              "confidence": "medium",
+              "evidence": "相邻孔中心距约为大孔直径的2倍"
+            },
+            {
+              "id": "hole-size-order",
+              "relation": "relative_size",
+              "image": "clipboard-49d43c7347e84c888f111c8bc7eea0ee.png",
+              "view": "iso",
+              "subjects": [
+                "large-hole",
+                "small-hole"
+              ],
+              "axes": [
+                "diameter"
+              ],
+              "values": [
+                1.6
+              ],
+              "confidence": "medium",
+              "evidence": "大孔直径约为小孔直径的1.6倍"
+            }
+          ],
+          "uncertainties": [
+            "等轴透视导致深度尺寸不确定，槽是否完全贯通前后方向需后续视图验证",
+            "孔是否贯穿整个壁厚无法从单视角确认"
+          ]
+        },
+        "reference_feature_coverage": {
+          "required_feature_groups": [
+            {
+              "id": "main-body",
+              "kind": "body",
+              "quantity": 1,
+              "region": "整体外轮廓",
+              "arrangement": "单一U形主体，正面中央有通槽"
+            },
+            {
+              "id": "slot",
+              "kind": "slot",
+              "quantity": 1,
+              "region": "主体正面中央",
+              "arrangement": "沿高度方向贯通槽"
+            },
+            {
+              "id": "left-holes",
+              "kind": "hole",
+              "quantity": 3,
+              "region": "左侧壁外表面",
+              "arrangement": "沿高度方向等距排列"
+            },
+            {
+              "id": "right-holes",
+              "kind": "hole",
+              "quantity": 3,
+              "region": "右侧壁外表面",
+              "arrangement": "沿高度方向等距排列"
+            },
+            {
+              "id": "center-holes",
+              "kind": "hole",
+              "quantity": 3,
+              "region": "中央槽内壁（后退实体面）",
+              "arrangement": "沿高度方向等距排列"
+            }
+          ],
+          "hole_positions": {
+            "target": 9,
+            "modeled": 0,
+            "missing": 9,
+            "excess": 0
+          }
+        }
+      },
+      "result_summary": "model"
+    },
+    {
+      "phase": "agent_loop",
+      "tool": "cad_preview_plan",
+      "arguments": {
+        "view_set": "front"
+      },
+      "result": {
+        "state": "previewed",
+        "geometry_fingerprint": "{\"coordinate_system\":{\"axes\":[\"X\",\"Y\",\"Z\"],\"handedness\":\"right\",\"origin\":[0,0,0],\"type\":\"global_cartesian\"},\"features\":[{\"geometry\":\"{\\\"kind\\\":\\\"box\\\",\\\"operation\\\":\\\"add\\\",\\\"parameters\\\":{\\\"center\\\":[0,0,35],\\\"height\\\":70,\\\"length\\\":60,\\\"width\\\":50}}\",\"id\":\"base-block\"},{\"geometry\":\"{\\\"kind\\\":\\\"box\\\",\\\"operation\\\":\\\"cut\\\",\\\"parameters\\\":{\\\"center\\\":[0,2.5,40],\\\"height\\\":60,\\\"length\\\":18,\\\"width\\\":55}}\",\"id\":\"front-slot\"}],\"units\":{\"angle\":\"deg\",\"length\":\"mm\"}}",
+        "preview_image": "candidate-preview.png",
+        "view_set": "front",
+        "views": [
+          "front"
+        ],
+        "dimensions": {
+          "unit": "mm",
+          "bbox": [
+            -30.0,
+            -25.0,
+            0.0,
+            30.0,
+            25.0,
+            70.0
+          ],
+          "size": [
+            60.0,
+            50.0,
+            70.0
+          ],
+          "volume_mm3": 156000.0,
+          "surface_area_mm2": 25240.0,
+          "triangles": 31,
+          "feature_count": 2
+        },
+        "local_geometry_checks": {
+          "state": "passed",
+          "source": "AI Modeler local mesh kernel",
+          "face_count": 18,
+          "bbox_size_mm": [
+            60.0,
+            50.0,
+            70.0
+          ],
+          "bbox_ratios_from_mesh": {
+            "front_width_height": 0.8571428571428571,
+            "depth_height": 0.7142857142857143,
+            "top_width_depth": 1.2
+          },
+          "feature_count_from_plan": 2,
+          "feature_ids_from_plan": [
+            "base-block",
+            "front-slot"
+          ],
+          "nonfinite_face_count": 0,
+          "degenerate_face_count": 0,
+          "hole_features_from_plan": [],
+          "through_hole_mesh_checks": [],
+          "hole_visibility": "requires_multimodal_view_review",
+          "through_hole_result": "not_measured"
+        },
+        "warnings": [],
+        "catia_executed": false,
+        "next_step_hint": "当前预览已展示，作为逐特征建模进度。若还有几何特征未完成，只追加下一个特征并刷新预览；全部特征完成后再做最终多视图复核。"
+      },
+      "result_summary": "previewed"
+    },
+    {
+      "phase": "agent_loop",
+      "tool": "cad_add_feature",
+      "arguments": {
+        "feature": {
+          "id": "left-hole-top",
+          "kind": "hole",
+          "operation": "cut",
+          "parameters": {
+            "diameter": 8,
+            "through": true,
+            "pos": "point",
+            "point": [
+              -21,
+              -25,
+              55
+            ],
+            "axis": "Y"
+          },
+          "sources": {
+            "diameter": {
+              "type": "image_estimate",
+              "evidence": "左侧壁顶部大孔，按大孔直径约为主体高度70mm的11%估算，取8mm"
+            },
+            "through": {
+              "type": "image_estimate",
+              "evidence": "孔贯穿左侧壁前后方向"
+            },
+            "point": {
+              "type": "derived",
+              "evidence": "左侧壁外表面位于y=-25，x方向位于左侧壁中心x=-21，顶部孔z=55"
+            },
+            "axis": {
+              "type": "derived",
+              "evidence": "左侧壁外表面法向为Y方向"
+            }
+          }
+        }
+      },
+      "result": {
+        "state": "valid",
+        "revision": 4,
+        "geometry_fingerprint": "{\"coordinate_system\":{\"axes\":[\"X\",\"Y\",\"Z\"],\"handedness\":\"right\",\"origin\":[0,0,0],\"type\":\"global_cartesian\"},\"features\":[{\"geometry\":\"{\\\"kind\\\":\\\"box\\\",\\\"operation\\\":\\\"add\\\",\\\"parameters\\\":{\\\"center\\\":[0,0,35],\\\"height\\\":70,\\\"length\\\":60,\\\"width\\\":50}}\",\"id\":\"base-block\"},{\"geometry\":\"{\\\"kind\\\":\\\"box\\\",\\\"operation\\\":\\\"cut\\\",\\\"parameters\\\":{\\\"center\\\":[0,2.5,40],\\\"height\\\":60,\\\"length\\\":18,\\\"width\\\":55}}\",\"id\":\"front-slot\"},{\"geometry\":\"{\\\"kind\\\":\\\"hole\\\",\\\"operation\\\":\\\"cut\\\",\\\"parameters\\\":{\\\"axis\\\":\\\"Y\\\",\\\"diameter\\\":8,\\\"point\\\":[-21,-25,55],\\\"pos\\\":\\\"point\\\",\\\"through\\\":true}}\",\"id\":\"left-hole-top\"}],\"units\":{\"angle\":\"deg\",\"length\":\"mm\"}}",
+        "feature_count": 3,
+        "validation": {
+          "valid": true,
+          "state": "valid",
+          "errors": [],
+          "confirmations": [],
+          "support": [
+            {
+              "feature_id": "base-block",
+              "kind": "box",
+              "status": "exact",
+              "reason": "矩形草图加凸台；当前 CATIA 映射仅支持 Z 轴拉伸。"
+            },
+            {
+              "feature_id": "front-slot",
+              "kind": "box",
+              "status": "exact",
+              "reason": "矩形草图加凸台；当前 CATIA 映射仅支持 Z 轴拉伸。"
+            },
+            {
+              "feature_id": "left-hole-top",
+              "kind": "hole",
+              "status": "exact",
+              "reason": "圆形凹槽；through=true 时按当前零件包围盒生成贯穿深度。"
+            }
+          ],
+          "warnings": [],
+          "schema_version": "1.0"
+        },
+        "preview": {
+          "state": "previewed",
+          "geometry_fingerprint": "{\"coordinate_system\":{\"axes\":[\"X\",\"Y\",\"Z\"],\"handedness\":\"right\",\"origin\":[0,0,0],\"type\":\"global_cartesian\"},\"features\":[{\"geometry\":\"{\\\"kind\\\":\\\"box\\\",\\\"operation\\\":\\\"add\\\",\\\"parameters\\\":{\\\"center\\\":[0,0,35],\\\"height\\\":70,\\\"length\\\":60,\\\"width\\\":50}}\",\"id\":\"base-block\"},{\"geometry\":\"{\\\"kind\\\":\\\"box\\\",\\\"operation\\\":\\\"cut\\\",\\\"parameters\\\":{\\\"center\\\":[0,2.5,40],\\\"height\\\":60,\\\"length\\\":18,\\\"width\\\":55}}\",\"id\":\"front-slot\"},{\"geometry\":\"{\\\"kind\\\":\\\"hole\\\",\\\"operation\\\":\\\"cut\\\",\\\"parameters\\\":{\\\"axis\\\":\\\"Y\\\",\\\"diameter\\\":8,\\\"point\\\":[-21,-25,55],\\\"pos\\\":\\\"point\\\",\\\"through\\\":true}}\",\"id\":\"left-hole-top\"}],\"units\":{\"angle\":\"deg\",\"length\":\"mm\"}}",
+          "preview_image": "candidate-preview.png",
+          "view_set": "iso",
+          "views": [
+            "iso"
+          ],
+          "dimensions": {
+            "unit": "mm",
+            "bbox": [
+              -30.0,
+              -25.0,
+              0.0,
+              30.0,
+              25.0,
+              70.0
+            ],
+            "size": [
+              60.0,
+              50.0,
+              70.0
+            ],
+            "volume_mm3": 153515.33716701582,
+            "surface_area_mm2": 26393.664931993197,
+            "triangles": 131,
+            "feature_count": 3
+          },
+          "local_geometry_checks": {
+            "state": "passed",
+            "source": "AI Modeler local mesh kernel",
+            "face_count": 88,
+            "bbox_size_mm": [
+              60.0,
+              50.0,
+              70.0
+            ],
+            "bbox_ratios_from_mesh": {
+              "front_width_height": 0.8571428571428571,
+              "depth_height": 0.7142857142857143,
+              "top_width_depth": 1.2
+            },
+            "feature_count_from_plan": 3,
+            "feature_ids_from_plan": [
+              "base-block",
+              "front-slot",
+              "left-hole-top"
+            ],
+            "nonfinite_face_count": 0,
+            "degenerate_face_count": 0,
+            "hole_features_from_plan": [
+              {
+                "feature_id": "left-hole-top",
+                "kind": "hole",
+                "operation": "cut",
+                "parameters": {
+                  "diameter": 8,
+                  "through": true,
+                  "pos": "point",
+                  "point": [
+                    -21,
+                    -25,
+                    55
+                  ],
+                  "axis": "Y"
+                }
+              }
+            ],
+            "through_hole_mesh_checks": [
+              {
+                "feature_id": "left-hole-top",
+                "axis": "Y",
+                "center_mm": [
+                  -21.0,
+                  -25.0,
+                  55.0
+                ],
+                "status": "verified_open",
+                "axis_surface_crossings": 0,
+                "surrounding_surface_crossings": [
+                  2,
+                  2,
+                  2,
+                  2
+                ],
+                "ring_supported": [
+                  true,
+                  true,
+                  true,
+                  true
+                ],
+                "method": "axis ray against local triangle mesh"
+              }
+            ],
+            "hole_visibility": "requires_multimodal_view_review",
+            "through_hole_result": "measured_for_point_holes_only"
+          },
+          "warnings": [],
+          "catia_executed": false,
+          "next_step_hint": "当前预览已展示，作为逐特征建模进度。若还有几何特征未完成，只追加下一个特征并刷新预览；全部特征完成后再做最终多视图复核。"
+        },
+        "feature_effect": {
+          "volume_before_mm3": 156000.0,
+          "volume_after_mm3": 153515.337,
+          "volume_delta_mm3": -2484.663
+        },
+        "reference_feature_coverage": {
+          "required_feature_groups": [
+            {
+              "id": "main-body",
+              "kind": "body",
+              "quantity": 1,
+              "region": "整体外轮廓",
+              "arrangement": "单一U形主体，正面中央有通槽"
+            },
+            {
+              "id": "slot",
+              "kind": "slot",
+              "quantity": 1,
+              "region": "主体正面中央",
+              "arrangement": "沿高度方向贯通槽"
+            },
+            {
+              "id": "left-holes",
+              "kind": "hole",
+              "quantity": 3,
+              "region": "左侧壁外表面",
+              "arrangement": "沿高度方向等距排列"
+            },
+            {
+              "id": "right-holes",
+              "kind": "hole",
+              "quantity": 3,
+              "region": "右侧壁外表面",
+              "arrangement": "沿高度方向等距排列"
+            },
+            {
+              "id": "center-holes",
+              "kind": "hole",
+              "quantity": 3,
+              "region": "中央槽内壁（后退实体面）",
+              "arrangement": "沿高度方向等距排列"
+            }
+          ],
+          "hole_positions": {
+            "target": 9,
+            "modeled": 1,
+            "missing": 8,
+            "excess": 0
+          }
+        }
+      },
+      "result_summary": "valid"
+    },
+    {
+      "phase": "agent_loop",
+      "tool": "cad_add_feature",
+      "arguments": {
+        "feature": {
+          "id": "left-hole-middle",
+          "kind": "hole",
+          "operation": "cut",
+          "parameters": {
+            "diameter": 5,
+            "through": true,
+            "pos": "point",
+            "point": [
+              -21,
+              -25,
+              35
+            ],
+            "axis": "Y"
+          },
+          "sources": {
+            "diameter": {
+              "type": "image_estimate",
+              "evidence": "左侧壁中间小孔，按大孔8mm的1/1.6估算，取5mm"
+            },
+            "through": {
+              "type": "image_estimate",
+              "evidence": "孔贯穿左侧壁前后方向"
+            },
+            "point": {
+              "type": "derived",
+              "evidence": "左侧壁外表面位于y=-25，x方向位于左侧壁中心x=-21，中间孔z=35"
+            },
+            "axis": {
+              "type": "derived",
+              "evidence": "左侧壁外表面法向为Y方向"
+            }
+          }
+        }
+      },
+      "result": {
+        "state": "valid",
+        "revision": 5,
+        "geometry_fingerprint": "{\"coordinate_system\":{\"axes\":[\"X\",\"Y\",\"Z\"],\"handedness\":\"right\",\"origin\":[0,0,0],\"type\":\"global_cartesian\"},\"features\":[{\"geometry\":\"{\\\"kind\\\":\\\"box\\\",\\\"operation\\\":\\\"add\\\",\\\"parameters\\\":{\\\"center\\\":[0,0,35],\\\"height\\\":70,\\\"length\\\":60,\\\"width\\\":50}}\",\"id\":\"base-block\"},{\"geometry\":\"{\\\"kind\\\":\\\"box\\\",\\\"operation\\\":\\\"cut\\\",\\\"parameters\\\":{\\\"center\\\":[0,2.5,40],\\\"height\\\":60,\\\"length\\\":18,\\\"width\\\":55}}\",\"id\":\"front-slot\"},{\"geometry\":\"{\\\"kind\\\":\\\"hole\\\",\\\"operation\\\":\\\"cut\\\",\\\"parameters\\\":{\\\"axis\\\":\\\"Y\\\",\\\"diameter\\\":8,\\\"point\\\":[-21,-25,55],\\\"pos\\\":\\\"point\\\",\\\"through\\\":true}}\",\"id\":\"left-hole-top\"},{\"geometry\":\"{\\\"kind\\\":\\\"hole\\\",\\\"operation\\\":\\\"cut\\\",\\\"parameters\\\":{\\\"axis\\\":\\\"Y\\\",\\\"diameter\\\":5,\\\"point\\\":[-21,-25,35],\\\"pos\\\":\\\"point\\\",\\\"through\\\":true}}\",\"id\":\"left-hole-middle\"}],\"units\":{\"angle\":\"deg\",\"length\":\"mm\"}}",
+        "feature_count": 4,
+        "validation": {
+          "valid": true,
+          "state": "valid",
+          "errors": [],
+          "confirmations": [],
+          "support": [
+            {
+              "feature_id": "base-block",
+              "kind": "box",
+              "status": "exact",
+              "reason": "矩形草图加凸台；当前 CATIA 映射仅支持 Z 轴拉伸。"
+            },
+            {
+              "feature_id": "front-slot",
+              "kind": "box",
+              "status": "exact",
+              "reason": "矩形草图加凸台；当前 CATIA 映射仅支持 Z 轴拉伸。"
+            },
+            {
+              "feature_id": "left-hole-top",
+              "kind": "hole",
+              "status": "exact",
+              "reason": "圆形凹槽；through=true 时按当前零件包围盒生成贯穿深度。"
+            },
+            {
+              "feature_id": "left-hole-middle",
+              "kind": "hole",
+              "status": "exact",
+              "reason": "圆形凹槽；through=true 时按当前零件包围盒生成贯穿深度。"
+            }
+          ],
+          "warnings": [],
+          "schema_version": "1.0"
+        },
+        "preview": {
+          "state": "previewed",
+          "geometry_fingerprint": "{\"coordinate_system\":{\"axes\":[\"X\",\"Y\",\"Z\"],\"handedness\":\"right\",\"origin\":[0,0,0],\"type\":\"global_cartesian\"},\"features\":[{\"geometry\":\"{\\\"kind\\\":\\\"box\\\",\\\"operation\\\":\\\"add\\\",\\\"parameters\\\":{\\\"center\\\":[0,0,35],\\\"height\\\":70,\\\"length\\\":60,\\\"width\\\":50}}\",\"id\":\"base-block\"},{\"geometry\":\"{\\\"kind\\\":\\\"box\\\",\\\"operation\\\":\\\"cut\\\",\\\"parameters\\\":{\\\"center\\\":[0,2.5,40],\\\"height\\\":60,\\\"length\\\":18,\\\"width\\\":55}}\",\"id\":\"front-slot\"},{\"geometry\":\"{\\\"kind\\\":\\\"hole\\\",\\\"operation\\\":\\\"cut\\\",\\\"parameters\\\":{\\\"axis\\\":\\\"Y\\\",\\\"diameter\\\":8,\\\"point\\\":[-21,-25,55],\\\"pos\\\":\\\"point\\\",\\\"through\\\":true}}\",\"id\":\"left-hole-top\"},{\"geometry\":\"{\\\"kind\\\":\\\"hole\\\",\\\"operation\\\":\\\"cut\\\",\\\"parameters\\\":{\\\"axis\\\":\\\"Y\\\",\\\"diameter\\\":5,\\\"point\\\":[-21,-25,35],\\\"pos\\\":\\\"point\\\",\\\"through\\\":true}}\",\"id\":\"left-hole-middle\"}],\"units\":{\"angle\":\"deg\",\"length\":\"mm\"}}",
+          "preview_image": "candidate-preview.png",
+          "view_set": "iso",
+          "views": [
+            "iso"
+          ],
+          "dimensions": {
+            "unit": "mm",
+            "bbox": [
+              -30.0,
+              -25.0,
+              0.0,
+              30.0,
+              25.0,
+              70.0
+            ],
+            "size": [
+              60.0,
+              50.0,
+              70.0
+            ],
+            "volume_mm3": 152544.7657478815,
+            "surface_area_mm2": 27137.99922854809,
+            "triangles": 307,
+            "feature_count": 4
+          },
+          "local_geometry_checks": {
+            "state": "passed",
+            "source": "AI Modeler local mesh kernel",
+            "face_count": 196,
+            "bbox_size_mm": [
+              60.0,
+              50.0,
+              70.0
+            ],
+            "bbox_ratios_from_mesh": {
+              "front_width_height": 0.8571428571428571,
+              "depth_height": 0.7142857142857143,
+              "top_width_depth": 1.2
+            },
+            "feature_count_from_plan": 4,
+            "feature_ids_from_plan": [
+              "base-block",
+              "front-slot",
+              "left-hole-top",
+              "left-hole-middle"
+            ],
+            "nonfinite_face_count": 0,
+            "degenerate_face_count": 0,
+            "hole_features_from_plan": [
+              {
+                "feature_id": "left-hole-top",
+                "kind": "hole",
+                "operation": "cut",
+                "parameters": {
+                  "diameter": 8,
+                  "through": true,
+                  "pos": "point",
+                  "point": [
+                    -21,
+                    -25,
+                    55
+                  ],
+                  "axis": "Y"
+                }
+              },
+              {
+                "feature_id": "left-hole-middle",
+                "kind": "hole",
+                "operation": "cut",
+                "parameters": {
+                  "diameter": 5,
+                  "through": true,
+                  "pos": "point",
+                  "point": [
+                    -21,
+                    -25,
+                    35
+                  ],
+                  "axis": "Y"
+                }
+              }
+            ],
+            "through_hole_mesh_checks": [
+              {
+                "feature_id": "left-hole-top",
+                "axis": "Y",
+                "center_mm": [
+                  -21.0,
+                  -25.0,
+                  55.0
+                ],
+                "status": "verified_open",
+                "axis_surface_crossings": 0,
+                "surrounding_surface_crossings": [
+                  2,
+                  2,
+                  2,
+                  2
+                ],
+                "ring_supported": [
+                  true,
+                  true,
+                  true,
+                  true
+                ],
+                "method": "axis ray against local triangle mesh"
+              },
+              {
+                "feature_id": "left-hole-middle",
+                "axis": "Y",
+                "center_mm": [
+                  -21.0,
+                  -25.0,
+                  35.0
+                ],
+                "status": "verified_open",
+                "axis_surface_crossings": 0,
+                "surrounding_surface_crossings": [
+                  2,
+                  2,
+                  2,
+                  2
+                ],
+                "ring_supported": [
+                  true,
+                  true,
+                  true,
+                  true
+                ],
+                "method": "axis ray against local triangle mesh"
+              }
+            ],
+            "hole_visibility": "requires_multimodal_view_review",
+            "through_hole_result": "measured_for_point_holes_only"
+          },
+          "warnings": [],
+          "catia_executed": false,
+          "next_step_hint": "当前预览已展示，作为逐特征建模进度。若还有几何特征未完成，只追加下一个特征并刷新预览；全部特征完成后再做最终多视图复核。"
+        },
+        "feature_effect": {
+          "volume_before_mm3": 153515.337,
+          "volume_after_mm3": 152544.766,
+          "volume_delta_mm3": -970.571
+        },
+        "reference_feature_coverage": {
+          "required_feature_groups": [
+            {
+              "id": "main-body",
+              "kind": "body",
+              "quantity": 1,
+              "region": "整体外轮廓",
+              "arrangement": "单一U形主体，正面中央有通槽"
+            },
+            {
+              "id": "slot",
+              "kind": "slot",
+              "quantity": 1,
+              "region": "主体正面中央",
+              "arrangement": "沿高度方向贯通槽"
+            },
+            {
+              "id": "left-holes",
+              "kind": "hole",
+              "quantity": 3,
+              "region": "左侧壁外表面",
+              "arrangement": "沿高度方向等距排列"
+            },
+            {
+              "id": "right-holes",
+              "kind": "hole",
+              "quantity": 3,
+              "region": "右侧壁外表面",
+              "arrangement": "沿高度方向等距排列"
+            },
+            {
+              "id": "center-holes",
+              "kind": "hole",
+              "quantity": 3,
+              "region": "中央槽内壁（后退实体面）",
+              "arrangement": "沿高度方向等距排列"
+            }
+          ],
+          "hole_positions": {
+            "target": 9,
+            "modeled": 2,
+            "missing": 7,
+            "excess": 0
+          }
+        }
+      },
+      "result_summary": "valid"
+    },
+    {
+      "phase": "agent_loop",
+      "tool": "cad_add_feature",
+      "arguments": {
+        "feature": {
+          "id": "left-hole-bottom",
+          "kind": "hole",
+          "operation": "cut",
+          "parameters": {
+            "diameter": 8,
+            "through": true,
+            "pos": "point",
+            "point": [
+              -21,
+              -25,
+              15
+            ],
+            "axis": "Y"
+          },
+          "sources": {
+            "diameter": {
+              "type": "image_estimate",
+              "evidence": "左侧壁底部大孔，与顶部大孔相同，取8mm"
+            },
+            "through": {
+              "type": "image_estimate",
+              "evidence": "孔贯穿左侧壁前后方向"
+            },
+            "point": {
+              "type": "derived",
+              "evidence": "左侧壁外表面位于y=-25，x方向位于左侧壁中心x=-21，底部孔z=15"
+            },
+            "axis": {
+              "type": "derived",
+              "evidence": "左侧壁外表面法向为Y方向"
+            }
+          }
+        }
+      },
+      "result": {
+        "state": "valid",
+        "revision": 6,
+        "geometry_fingerprint": "{\"coordinate_system\":{\"axes\":[\"X\",\"Y\",\"Z\"],\"handedness\":\"right\",\"origin\":[0,0,0],\"type\":\"global_cartesian\"},\"features\":[{\"geometry\":\"{\\\"kind\\\":\\\"box\\\",\\\"operation\\\":\\\"add\\\",\\\"parameters\\\":{\\\"center\\\":[0,0,35],\\\"height\\\":70,\\\"length\\\":60,\\\"width\\\":50}}\",\"id\":\"base-block\"},{\"geometry\":\"{\\\"kind\\\":\\\"box\\\",\\\"operation\\\":\\\"cut\\\",\\\"parameters\\\":{\\\"center\\\":[0,2.5,40],\\\"height\\\":60,\\\"length\\\":18,\\\"width\\\":55}}\",\"id\":\"front-slot\"},{\"geometry\":\"{\\\"kind\\\":\\\"hole\\\",\\\"operation\\\":\\\"cut\\\",\\\"parameters\\\":{\\\"axis\\\":\\\"Y\\\",\\\"diameter\\\":8,\\\"point\\\":[-21,-25,55],\\\"pos\\\":\\\"point\\\",\\\"through\\\":true}}\",\"id\":\"left-hole-top\"},{\"geometry\":\"{\\\"kind\\\":\\\"hole\\\",\\\"operation\\\":\\\"cut\\\",\\\"parameters\\\":{\\\"axis\\\":\\\"Y\\\",\\\"diameter\\\":5,\\\"point\\\":[-21,-25,35],\\\"pos\\\":\\\"point\\\",\\\"through\\\":true}}\",\"id\":\"left-hole-middle\"},{\"geometry\":\"{\\\"kind\\\":\\\"hole\\\",\\\"operation\\\":\\\"cut\\\",\\\"parameters\\\":{\\\"axis\\\":\\\"Y\\\",\\\"diameter\\\":8,\\\"point\\\":[-21,-25,15],\\\"pos\\\":\\\"point\\\",\\\"through\\\":true}}\",\"id\":\"left-hole-bottom\"}],\"units\":{\"angle\":\"deg\",\"length\":\"mm\"}}",
+        "feature_count": 5,
+        "validation": {
+          "valid": true,
+          "state": "valid",
+          "errors": [],
+          "confirmations": [],
+          "support": [
+            {
+              "feature_id": "base-block",
+              "kind": "box",
+              "status": "exact",
+              "reason": "矩形草图加凸台；当前 CATIA 映射仅支持 Z 轴拉伸。"
+            },
+            {
+              "feature_id": "front-slot",
+              "kind": "box",
+              "status": "exact",
+              "reason": "矩形草图加凸台；当前 CATIA 映射仅支持 Z 轴拉伸。"
+            },
+            {
+              "feature_id": "left-hole-top",
+              "kind": "hole",
+              "status": "exact",
+              "reason": "圆形凹槽；through=true 时按当前零件包围盒生成贯穿深度。"
+            },
+            {
+              "feature_id": "left-hole-middle",
+              "kind": "hole",
+              "status": "exact",
+              "reason": "圆形凹槽；through=true 时按当前零件包围盒生成贯穿深度。"
+            },
+            {
+              "feature_id": "left-hole-bottom",
+              "kind": "hole",
+              "status": "exact",
+              "reason": "圆形凹槽；through=true 时按当前零件包围盒生成贯穿深度。"
+            }
+          ],
+          "warnings": [],
+          "schema_version": "1.0"
+        },
+        "preview": {
+          "state": "previewed",
+          "geometry_fingerprint": "{\"coordinate_system\":{\"axes\":[\"X\",\"Y\",\"Z\"],\"handedness\":\"right\",\"origin\":[0,0,0],\"type\":\"global_cartesian\"},\"features\":[{\"geometry\":\"{\\\"kind\\\":\\\"box\\\",\\\"operation\\\":\\\"add\\\",\\\"parameters\\\":{\\\"center\\\":[0,0,35],\\\"height\\\":70,\\\"length\\\":60,\\\"width\\\":50}}\",\"id\":\"base-block\"},{\"geometry\":\"{\\\"kind\\\":\\\"box\\\",\\\"operation\\\":\\\"cut\\\",\\\"parameters\\\":{\\\"center\\\":[0,2.5,40],\\\"height\\\":60,\\\"length\\\":18,\\\"width\\\":55}}\",\"id\":\"front-slot\"},{\"geometry\":\"{\\\"kind\\\":\\\"hole\\\",\\\"operation\\\":\\\"cut\\\",\\\"parameters\\\":{\\\"axis\\\":\\\"Y\\\",\\\"diameter\\\":8,\\\"point\\\":[-21,-25,55],\\\"pos\\\":\\\"point\\\",\\\"through\\\":true}}\",\"id\":\"left-hole-top\"},{\"geometry\":\"{\\\"kind\\\":\\\"hole\\\",\\\"operation\\\":\\\"cut\\\",\\\"parameters\\\":{\\\"axis\\\":\\\"Y\\\",\\\"diameter\\\":5,\\\"point\\\":[-21,-25,35],\\\"pos\\\":\\\"point\\\",\\\"through\\\":true}}\",\"id\":\"left-hole-middle\"},{\"geometry\":\"{\\\"kind\\\":\\\"hole\\\",\\\"operation\\\":\\\"cut\\\",\\\"parameters\\\":{\\\"axis\\\":\\\"Y\\\",\\\"diameter\\\":8,\\\"point\\\":[-21,-25,15],\\\"pos\\\":\\\"point\\\",\\\"through\\\":true}}\",\"id\":\"left-hole-bottom\"}],\"units\":{\"angle\":\"deg\",\"length\":\"mm\"}}",
+          "preview_image": "candidate-preview.png",
+          "view_set": "iso",
+          "views": [
+            "iso"
+          ],
+          "dimensions": {
+            "unit": "mm",
+            "bbox": [
+              -30.0,
+              -25.0,
+              0.0,
+              30.0,
+              25.0,
+              70.0
+            ],
+            "size": [
+              60.0,
+              50.0,
+              70.0
+            ],
+            "volume_mm3": 150060.10291489743,
+            "surface_area_mm2": 28291.664160541262,
+            "triangles": 539,
+            "feature_count": 5
+          },
+          "local_geometry_checks": {
+            "state": "passed",
+            "source": "AI Modeler local mesh kernel",
+            "face_count": 332,
+            "bbox_size_mm": [
+              60.0,
+              50.0,
+              70.0
+            ],
+            "bbox_ratios_from_mesh": {
+              "front_width_height": 0.8571428571428571,
+              "depth_height": 0.7142857142857143,
+              "top_width_depth": 1.2
+            },
+            "feature_count_from_plan": 5,
+            "feature_ids_from_plan": [
+              "base-block",
+              "front-slot",
+              "left-hole-top",
+              "left-hole-middle",
+              "left-hole-bottom"
+            ],
+            "nonfinite_face_count": 0,
+            "degenerate_face_count": 0,
+            "hole_features_from_plan": [
+              {
+                "feature_id": "left-hole-top",
+                "kind": "hole",
+                "operation": "cut",
+                "parameters": {
+                  "diameter": 8,
+                  "through": true,
+                  "pos": "point",
+                  "point": [
+                    -21,
+                    -25,
+                    55
+                  ],
+                  "axis": "Y"
+                }
+              },
+              {
+                "feature_id": "left-hole-middle",
+                "kind": "hole",
+                "operation": "cut",
+                "parameters": {
+                  "diameter": 5,
+                  "through": true,
+                  "pos": "point",
+                  "point": [
+                    -21,
+                    -25,
+                    35
+                  ],
+                  "axis": "Y"
+                }
+              },
+              {
+                "feature_id": "left-hole-bottom",
+                "kind": "hole",
+                "operation": "cut",
+                "parameters": {
+                  "diameter": 8,
+                  "through": true,
+                  "pos": "point",
+                  "point": [
+                    -21,
+                    -25,
+                    15
+                  ],
+                  "axis": "Y"
+                }
+              }
+            ],
+            "through_hole_mesh_checks": [
+              {
+                "feature_id": "left-hole-top",
+                "axis": "Y",
+                "center_mm": [
+                  -21.0,
+                  -25.0,
+                  55.0
+                ],
+                "status": "verified_open",
+                "axis_surface_crossings": 0,
+                "surrounding_surface_crossings": [
+                  2,
+                  2,
+                  2,
+                  2
+                ],
+                "ring_supported": [
+                  true,
+                  true,
+                  true,
+                  true
+                ],
+                "method": "axis ray against local triangle mesh"
+              },
+              {
+                "feature_id": "left-hole-middle",
+                "axis": "Y",
+                "center_mm": [
+                  -21.0,
+                  -25.0,
+                  35.0
+                ],
+                "status": "verified_open",
+                "axis_surface_crossings": 0,
+                "surrounding_surface_crossings": [
+                  2,
+                  2,
+                  2,
+                  2
+                ],
+                "ring_supported": [
+                  true,
+                  true,
+                  true,
+                  true
+                ],
+                "method": "axis ray against local triangle mesh"
+              },
+              {
+                "feature_id": "left-hole-bottom",
+                "axis": "Y",
+                "center_mm": [
+                  -21.0,
+                  -25.0,
+                  15.0
+                ],
+                "status": "verified_open",
+                "axis_surface_crossings": 0,
+                "surrounding_surface_crossings": [
+                  2,
+                  2,
+                  2,
+                  2
+                ],
+                "ring_supported": [
+                  true,
+                  true,
+                  true,
+                  true
+                ],
+                "method": "axis ray against local triangle mesh"
+              }
+            ],
+            "hole_visibility": "requires_multimodal_view_review",
+            "through_hole_result": "measured_for_point_holes_only"
+          },
+          "warnings": [],
+          "catia_executed": false,
+          "next_step_hint": "当前预览已展示，作为逐特征建模进度。若还有几何特征未完成，只追加下一个特征并刷新预览；全部特征完成后再做最终多视图复核。"
+        },
+        "feature_effect": {
+          "volume_before_mm3": 152544.766,
+          "volume_after_mm3": 150060.103,
+          "volume_delta_mm3": -2484.663
+        },
+        "reference_feature_coverage": {
+          "required_feature_groups": [
+            {
+              "id": "main-body",
+              "kind": "body",
+              "quantity": 1,
+              "region": "整体外轮廓",
+              "arrangement": "单一U形主体，正面中央有通槽"
+            },
+            {
+              "id": "slot",
+              "kind": "slot",
+              "quantity": 1,
+              "region": "主体正面中央",
+              "arrangement": "沿高度方向贯通槽"
+            },
+            {
+              "id": "left-holes",
+              "kind": "hole",
+              "quantity": 3,
+              "region": "左侧壁外表面",
+              "arrangement": "沿高度方向等距排列"
+            },
+            {
+              "id": "right-holes",
+              "kind": "hole",
+              "quantity": 3,
+              "region": "右侧壁外表面",
+              "arrangement": "沿高度方向等距排列"
+            },
+            {
+              "id": "center-holes",
+              "kind": "hole",
+              "quantity": 3,
+              "region": "中央槽内壁（后退实体面）",
+              "arrangement": "沿高度方向等距排列"
+            }
+          ],
+          "hole_positions": {
+            "target": 9,
+            "modeled": 3,
+            "missing": 6,
+            "excess": 0
+          }
+        }
+      },
+      "result_summary": "valid"
+    },
+    {
+      "phase": "agent_loop",
+      "tool": "cad_add_feature",
+      "arguments": {
+        "feature": {
+          "id": "right-hole-top",
+          "kind": "hole",
+          "operation": "cut",
+          "parameters": {
+            "diameter": 8,
+            "through": true,
+            "pos": "point",
+            "point": [
+              21,
+              -25,
+              55
+            ],
+            "axis": "Y"
+          },
+          "sources": {
+            "diameter": {
+              "type": "image_estimate",
+              "evidence": "右侧壁顶部大孔，与左侧壁顶部大孔相同，取8mm"
+            },
+            "through": {
+              "type": "image_estimate",
+              "evidence": "孔贯穿右侧壁前后方向"
+            },
+            "point": {
+              "type": "derived",
+              "evidence": "右侧壁外表面位于y=-25，x方向位于右侧壁中心x=21，顶部孔z=55"
+            },
+            "axis": {
+              "type": "derived",
+              "evidence": "右侧壁外表面法向为Y方向"
+            }
+          }
+        }
+      },
+      "result": {
+        "state": "valid",
+        "revision": 7,
+        "geometry_fingerprint": "{\"coordinate_system\":{\"axes\":[\"X\",\"Y\",\"Z\"],\"handedness\":\"right\",\"origin\":[0,0,0],\"type\":\"global_cartesian\"},\"features\":[{\"geometry\":\"{\\\"kind\\\":\\\"box\\\",\\\"operation\\\":\\\"add\\\",\\\"parameters\\\":{\\\"center\\\":[0,0,35],\\\"height\\\":70,\\\"length\\\":60,\\\"width\\\":50}}\",\"id\":\"base-block\"},{\"geometry\":\"{\\\"kind\\\":\\\"box\\\",\\\"operation\\\":\\\"cut\\\",\\\"parameters\\\":{\\\"center\\\":[0,2.5,40],\\\"height\\\":60,\\\"length\\\":18,\\\"width\\\":55}}\",\"id\":\"front-slot\"},{\"geometry\":\"{\\\"kind\\\":\\\"hole\\\",\\\"operation\\\":\\\"cut\\\",\\\"parameters\\\":{\\\"axis\\\":\\\"Y\\\",\\\"diameter\\\":8,\\\"point\\\":[-21,-25,55],\\\"pos\\\":\\\"point\\\",\\\"through\\\":true}}\",\"id\":\"left-hole-top\"},{\"geometry\":\"{\\\"kind\\\":\\\"hole\\\",\\\"operation\\\":\\\"cut\\\",\\\"parameters\\\":{\\\"axis\\\":\\\"Y\\\",\\\"diameter\\\":5,\\\"point\\\":[-21,-25,35],\\\"pos\\\":\\\"point\\\",\\\"through\\\":true}}\",\"id\":\"left-hole-middle\"},{\"geometry\":\"{\\\"kind\\\":\\\"hole\\\",\\\"operation\\\":\\\"cut\\\",\\\"parameters\\\":{\\\"axis\\\":\\\"Y\\\",\\\"diameter\\\":8,\\\"point\\\":[-21,-25,15],\\\"pos\\\":\\\"point\\\",\\\"through\\\":true}}\",\"id\":\"left-hole-bottom\"},{\"geometry\":\"{\\\"kind\\\":\\\"hole\\\",\\\"operation\\\":\\\"cut\\\",\\\"parameters\\\":{\\\"axis\\\":\\\"Y\\\",\\\"diameter\\\":8,\\\"point\\\":[21,-25,55],\\\"pos\\\":\\\"point\\\",\\\"through\\\":true}}\",\"id\":\"right-hole-top\"}],\"units\":{\"angle\":\"deg\",\"length\":\"mm\"}}",
+        "feature_count": 6,
+        "validation": {
+          "valid": true,
+          "state": "valid",
+          "errors": [],
+          "confirmations": [],
+          "support": [
+            {
+              "feature_id": "base-block",
+              "kind": "box",
+              "status": "exact",
+              "reason": "矩形草图加凸台；当前 CATIA 映射仅支持 Z 轴拉伸。"
+            },
+            {
+              "feature_id": "front-slot",
+              "kind": "box",
+              "status": "exact",
+              "reason": "矩形草图加凸台；当前 CATIA 映射仅支持 Z 轴拉伸。"
+            },
+            {
+              "feature_id": "left-hole-top",
+              "kind": "hole",
+              "status": "exact",
+              "reason": "圆形凹槽；through=true 时按当前零件包围盒生成贯穿深度。"
+            },
+            {
+              "feature_id": "left-hole-middle",
+              "kind": "hole",
+              "status": "exact",
+              "reason": "圆形凹槽；through=true 时按当前零件包围盒生成贯穿深度。"
+            },
+            {
+              "feature_id": "left-hole-bottom",
+              "kind": "hole",
+              "status": "exact",
+              "reason": "圆形凹槽；through=true 时按当前零件包围盒生成贯穿深度。"
+            },
+            {
+              "feature_id": "right-hole-top",
+              "kind": "hole",
+              "status": "exact",
+              "reason": "圆形凹槽；through=true 时按当前零件包围盒生成贯穿深度。"
+            }
+          ],
+          "warnings": [],
+          "schema_version": "1.0"
+        },
+        "preview": {
+          "state": "previewed",
+          "geometry_fingerprint": "{\"coordinate_system\":{\"axes\":[\"X\",\"Y\",\"Z\"],\"handedness\":\"right\",\"origin\":[0,0,0],\"type\":\"global_cartesian\"},\"features\":[{\"geometry\":\"{\\\"kind\\\":\\\"box\\\",\\\"operation\\\":\\\"add\\\",\\\"parameters\\\":{\\\"center\\\":[0,0,35],\\\"height\\\":70,\\\"length\\\":60,\\\"width\\\":50}}\",\"id\":\"base-block\"},{\"geometry\":\"{\\\"kind\\\":\\\"box\\\",\\\"operation\\\":\\\"cut\\\",\\\"parameters\\\":{\\\"center\\\":[0,2.5,40],\\\"height\\\":60,\\\"length\\\":18,\\\"width\\\":55}}\",\"id\":\"front-slot\"},{\"geometry\":\"{\\\"kind\\\":\\\"hole\\\",\\\"operation\\\":\\\"cut\\\",\\\"parameters\\\":{\\\"axis\\\":\\\"Y\\\",\\\"diameter\\\":8,\\\"point\\\":[-21,-25,55],\\\"pos\\\":\\\"point\\\",\\\"through\\\":true}}\",\"id\":\"left-hole-top\"},{\"geometry\":\"{\\\"kind\\\":\\\"hole\\\",\\\"operation\\\":\\\"cut\\\",\\\"parameters\\\":{\\\"axis\\\":\\\"Y\\\",\\\"diameter\\\":5,\\\"point\\\":[-21,-25,35],\\\"pos\\\":\\\"point\\\",\\\"through\\\":true}}\",\"id\":\"left-hole-middle\"},{\"geometry\":\"{\\\"kind\\\":\\\"hole\\\",\\\"operation\\\":\\\"cut\\\",\\\"parameters\\\":{\\\"axis\\\":\\\"Y\\\",\\\"diameter\\\":8,\\\"point\\\":[-21,-25,15],\\\"pos\\\":\\\"point\\\",\\\"through\\\":true}}\",\"id\":\"left-hole-bottom\"},{\"geometry\":\"{\\\"kind\\\":\\\"hole\\\",\\\"operation\\\":\\\"cut\\\",\\\"parameters\\\":{\\\"axis\\\":\\\"Y\\\",\\\"diameter\\\":8,\\\"point\\\":[21,-25,55],\\\"pos\\\":\\\"point\\\",\\\"through\\\":true}}\",\"id\":\"right-hole-top\"}],\"units\":{\"angle\":\"deg\",\"length\":\"mm\"}}",
+          "preview_image": "candidate-preview.png",
+          "view_set": "iso",
+          "views": [
+            "iso"
+          ],
+          "dimensions": {
+            "unit": "mm",
+            "bbox": [
+              -30.0,
+              -25.0,
+              0.0,
+              30.0,
+              25.0,
+              70.0
+            ],
+            "size": [
+              60.0,
+              50.0,
+              70.0
+            ],
+            "volume_mm3": 147575.44008191326,
+            "surface_area_mm2": 29445.329092534448,
+            "triangles": 639,
+            "feature_count": 6
+          },
+          "local_geometry_checks": {
+            "state": "passed",
+            "source": "AI Modeler local mesh kernel",
+            "face_count": 402,
+            "bbox_size_mm": [
+              60.0,
+              50.0,
+              70.0
+            ],
+            "bbox_ratios_from_mesh": {
+              "front_width_height": 0.8571428571428571,
+              "depth_height": 0.7142857142857143,
+              "top_width_depth": 1.2
+            },
+            "feature_count_from_plan": 6,
+            "feature_ids_from_plan": [
+              "base-block",
+              "front-slot",
+              "left-hole-top",
+              "left-hole-middle",
+              "left-hole-bottom",
+              "right-hole-top"
+            ],
+            "nonfinite_face_count": 0,
+            "degenerate_face_count": 0,
+            "hole_features_from_plan": [
+              {
+                "feature_id": "left-hole-top",
+                "kind": "hole",
+                "operation": "cut",
+                "parameters": {
+                  "diameter": 8,
+                  "through": true,
+                  "pos": "point",
+                  "point": [
+                    -21,
+                    -25,
+                    55
+                  ],
+                  "axis": "Y"
+                }
+              },
+              {
+                "feature_id": "left-hole-middle",
+                "kind": "hole",
+                "operation": "cut",
+                "parameters": {
+                  "diameter": 5,
+                  "through": true,
+                  "pos": "point",
+                  "point": [
+                    -21,
+                    -25,
+                    35
+                  ],
+                  "axis": "Y"
+                }
+              },
+              {
+                "feature_id": "left-hole-bottom",
+                "kind": "hole",
+                "operation": "cut",
+                "parameters": {
+                  "diameter": 8,
+                  "through": true,
+                  "pos": "point",
+                  "point": [
+                    -21,
+                    -25,
+                    15
+                  ],
+                  "axis": "Y"
+                }
+              },
+              {
+                "feature_id": "right-hole-top",
+                "kind": "hole",
+                "operation": "cut",
+                "parameters": {
+                  "diameter": 8,
+                  "through": true,
+                  "pos": "point",
+                  "point": [
+                    21,
+                    -25,
+                    55
+                  ],
+                  "axis": "Y"
+                }
+              }
+            ],
+            "through_hole_mesh_checks": [
+              {
+                "feature_id": "left-hole-top",
+                "axis": "Y",
+                "center_mm": [
+                  -21.0,
+                  -25.0,
+                  55.0
+                ],
+                "status": "verified_open",
+                "axis_surface_crossings": 0,
+                "surrounding_surface_crossings": [
+                  2,
+                  2,
+                  2,
+                  2
+                ],
+                "ring_supported": [
+                  true,
+                  true,
+                  true,
+                  true
+                ],
+                "method": "axis ray against local triangle mesh"
+              },
+              {
+                "feature_id": "left-hole-middle",
+                "axis": "Y",
+                "center_mm": [
+                  -21.0,
+                  -25.0,
+                  35.0
+                ],
+                "status": "verified_open",
+                "axis_surface_crossings": 0,
+                "surrounding_surface_crossings": [
+                  2,
+                  2,
+                  2,
+                  2
+                ],
+                "ring_supported": [
+                  true,
+                  true,
+                  true,
+                  true
+                ],
+                "method": "axis ray against local triangle mesh"
+              },
+              {
+                "feature_id": "left-hole-bottom",
+                "axis": "Y",
+                "center_mm": [
+                  -21.0,
+                  -25.0,
+                  15.0
+                ],
+                "status": "verified_open",
+                "axis_surface_crossings": 0,
+                "surrounding_surface_crossings": [
+                  2,
+                  2,
+                  2,
+                  2
+                ],
+                "ring_supported": [
+                  true,
+                  true,
+                  true,
+                  true
+                ],
+                "method": "axis ray against local triangle mesh"
+              },
+              {
+                "feature_id": "right-hole-top",
+                "axis": "Y",
+                "center_mm": [
+                  21.0,
+                  -25.0,
+                  55.0
+                ],
+                "status": "verified_open",
+                "axis_surface_crossings": 0,
+                "surrounding_surface_crossings": [
+                  2,
+                  2,
+                  2,
+                  2
+                ],
+                "ring_supported": [
+                  true,
+                  true,
+                  true,
+                  true
+                ],
+                "method": "axis ray against local triangle mesh"
+              }
+            ],
+            "hole_visibility": "requires_multimodal_view_review",
+            "through_hole_result": "measured_for_point_holes_only"
+          },
+          "warnings": [],
+          "catia_executed": false,
+          "next_step_hint": "当前预览已展示，作为逐特征建模进度。若还有几何特征未完成，只追加下一个特征并刷新预览；全部特征完成后再做最终多视图复核。"
+        },
+        "feature_effect": {
+          "volume_before_mm3": 150060.103,
+          "volume_after_mm3": 147575.44,
+          "volume_delta_mm3": -2484.663
+        },
+        "reference_feature_coverage": {
+          "required_feature_groups": [
+            {
+              "id": "main-body",
+              "kind": "body",
+              "quantity": 1,
+              "region": "整体外轮廓",
+              "arrangement": "单一U形主体，正面中央有通槽"
+            },
+            {
+              "id": "slot",
+              "kind": "slot",
+              "quantity": 1,
+              "region": "主体正面中央",
+              "arrangement": "沿高度方向贯通槽"
+            },
+            {
+              "id": "left-holes",
+              "kind": "hole",
+              "quantity": 3,
+              "region": "左侧壁外表面",
+              "arrangement": "沿高度方向等距排列"
+            },
+            {
+              "id": "right-holes",
+              "kind": "hole",
+              "quantity": 3,
+              "region": "右侧壁外表面",
+              "arrangement": "沿高度方向等距排列"
+            },
+            {
+              "id": "center-holes",
+              "kind": "hole",
+              "quantity": 3,
+              "region": "中央槽内壁（后退实体面）",
+              "arrangement": "沿高度方向等距排列"
+            }
+          ],
+          "hole_positions": {
+            "target": 9,
+            "modeled": 4,
+            "missing": 5,
+            "excess": 0
+          }
+        }
+      },
+      "result_summary": "valid"
+    }
+  ],
+  "error": null
+}

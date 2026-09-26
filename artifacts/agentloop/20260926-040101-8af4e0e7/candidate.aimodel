@@ -1,0 +1,51 @@
+{
+  "format": "ai-modeler",
+  "version": 1,
+  "name": "sleeve_80x50x100",
+  "source_prompt": "套筒 外径 80 内径 50 长 100",
+  "features": [
+    {
+      "kind": "cylinder",
+      "params": {
+        "radius": 40.0,
+        "height": 100.0,
+        "center": [
+          0.0,
+          0.0,
+          50.0
+        ],
+        "axis": "Z"
+      },
+      "op": "add",
+      "name": "外圆柱",
+      "note": "",
+      "enabled": true,
+      "provenance": {
+        "radius": "user",
+        "height": "user",
+        "center": "derived",
+        "axis": "user"
+      }
+    },
+    {
+      "kind": "hole",
+      "params": {
+        "axis": "Z",
+        "diameter": 50.0,
+        "pos": "center",
+        "through": true
+      },
+      "op": "cut",
+      "name": "中心通孔",
+      "note": "",
+      "enabled": true,
+      "provenance": {
+        "axis": "user",
+        "diameter": "user",
+        "pos": "derived",
+        "through": "user"
+      }
+    }
+  ],
+  "exported_at": "2026-09-26 04:01:18"
+}

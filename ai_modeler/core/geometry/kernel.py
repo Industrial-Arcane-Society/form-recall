@@ -1463,7 +1463,8 @@ def make_bevel_gear(teeth: int, module: float, face_width: float,
 
 def crankshaft_size(main_d: float, pin_d: float, stroke: float, throws: int,
                     total_len: float = None):
-    """曲轴总体尺寸 (轴向长度, 曲柄臂半径)。建造器和外形算法共用同一份公式。
+    """曲轴总体尺寸 (轴向长度, 偏心方向半径, 垂直方向半径)。
+    建造器和外形算法共用同一份公式。
 
     ⚠️ 描述里显式给了「总长」时必须照它走: 早先只按 主轴颈/行程/拐数 估算,
     实测「曲轴 … 四拐 总长320」被算成 619mm(基准 B30 就是这么失分的)。
@@ -1472,13 +1473,17 @@ def crankshaft_size(main_d: float, pin_d: float, stroke: float, throws: int,
     dp = float(pin_d)
     S = float(stroke)
     n = max(1, int(throws))
-    # Keep the eccentric pin strictly inside the web. Exact tangency creates
-    # zero-width end-face triangles at the pin/web junction.
-    R = max(d / 2.0, S / 2.0 + dp / 2.0 + 1e-4)
+    # 曲柄臂是"主轴圆 + 偏心连杆颈圆的外公切凸包"(哑铃形, 见 make_crankshaft):
+    #   · 偏心方向外缘 = 行程/2 + 连杆颈半径 —— 连杆颈外缘正好与臂相切;
+    #   · 垂直方向外缘 = 主轴颈半径        —— 臂与主轴颈齐平(锻造曲轴的过渡)。
+    # 所以外形**不是各向同性的**: 旧版把臂做成 r=行程/2+连杆颈/2 的整圆盘,
+    # 才会得到 128×128, 那样连杆颈被完全包在臂里, 看着像"轴+垫圈"。
+    r_off = S / 2.0 + dp / 2.0            # 偏心方向
+    r_perp = max(d / 2.0, dp / 2.0)       # 垂直于偏心方向
     if total_len:
-        return float(total_len), R
+        return float(total_len), r_off, r_perp
     spacing = max(S * 1.8, d * 2.2)
-    return spacing * n, R
+    return spacing * n, r_off, r_perp
 
 
 def conrod_size(length: float, big_d: float, small_d: float):
@@ -1569,14 +1574,136 @@ def make_socket_head_bolt(shank_d: float, length: float, head_d: float,
     return list(head) + list(shank)
 
 
+# --------------------------------------------------------------------------
+# 曲轴曲柄臂: "主轴圆 + 偏心连杆颈圆的外公切凸包"(哑铃形)
+#   网格建模与 CATIA 导出共用这一份轮廓, 免得两边长得不一样。
+# --------------------------------------------------------------------------
+
+
+def crank_cheek_tangents(main_r: float, pin_r: float, dy: float):
+    """主轴圆(中心 (0,0)) 与偏心连杆颈圆(中心 (dy,0)) 的两条外公切线的切点。
+
+    外公切线: 直线 {n·x = c} 同时以 r1/r2 切两圆(两圆同侧) =>
+    c = r1 + n·C1 = r2 + n·C2 => n·(C2-C1) = r1 - r2, 于是 n_u = (main_r-pin_r)/dy,
+    切点 T = C1 + main_r·n, S = C2 + pin_r·n。
+    返回 ((T_上, S_上), (T_下, S_下)); 两圆同心/内含时返回 None。
+    """
+    dyr = float(dy)
+    if abs(dyr) < 1e-9:
+        return None
+    nu = (float(main_r) - float(pin_r)) / dyr
+    if abs(nu) >= 1.0:
+        return None
+    nv = math.sqrt(max(0.0, 1.0 - nu * nu))
+    return [((main_r * nu, main_r * sgn * nv),
+             (dyr + pin_r * nu, pin_r * sgn * nv)) for sgn in (1.0, -1.0)]
+
+
+def _ang(cu, cv, p):
+    return math.atan2(p[1] - cv, p[0] - cu)
+
+
+def _arc_through(cu, cv, radius, a_from, a_to, a_mid, segments):
+    """从 a_from 转到 a_to 的圆弧采样, 且保证经过 a_mid(转向由它们决定)。"""
+    two = 2.0 * math.pi
+    sweep = (a_to - a_from) % two
+    if (a_mid - a_from) % two > sweep:
+        sweep -= two
+    cnt = max(2, int(round(float(segments) * abs(sweep) / two)))
+    return [(cu + radius * math.cos(a_from + sweep * i / cnt),
+             cv + radius * math.sin(a_from + sweep * i / cnt)) for i in range(cnt + 1)]
+
+
+def crank_cheek_geometry(main_r: float, pin_r: float, dy: float, segments: int = 24):
+    """哑铃形曲柄臂的二维要素(平面: u=偏心方向, v=垂直方向), 建模与导出共用。
+
+      outline   外轮廓闭合点列(凸包): 主轴外弧 + 外公切线 + 连杆颈外弧 + 外公切线
+      main_far  主轴圆外弧点列 T+ -> T-(走"背向连杆颈"一侧)  = 臂的外壁
+      main_near 主轴圆内弧点列 T+ -> T-(走"朝向连杆颈"一侧)  = 端面的内边界
+      pin_far   连杆颈圆外弧点列 S- -> S+(走"背向主轴"一侧)  = 臂的外壁
+      pin_near  连杆颈圆内弧点列 S+ -> S-(走"朝向主轴"一侧)  = 端面的内边界
+    两圆同心/内含时返回 None(调用方退回整圆盘)。
+    """
+    tg = crank_cheek_tangents(main_r, pin_r, dy)
+    if tg is None:
+        return None
+    (tp, sp), (tm, sm) = tg
+    to_pin = 0.0 if dy > 0 else math.pi          # 主轴 -> 连杆颈 的方向角
+    away_pin = to_pin + math.pi
+    main_far = _arc_through(0.0, 0.0, main_r, _ang(0.0, 0.0, tp), _ang(0.0, 0.0, tm),
+                            away_pin, segments)
+    main_near = _arc_through(0.0, 0.0, main_r, _ang(0.0, 0.0, tp), _ang(0.0, 0.0, tm),
+                             to_pin, segments)
+    pin_far = _arc_through(dy, 0.0, pin_r, _ang(dy, 0.0, sm), _ang(dy, 0.0, sp),
+                           to_pin, segments)
+    pin_near = _arc_through(dy, 0.0, pin_r, _ang(dy, 0.0, sp), _ang(dy, 0.0, sm),
+                            away_pin, segments)
+    return {'outline': list(main_far) + [sm] + list(pin_far[1:]),
+            'main_far': main_far, 'main_near': main_near,
+            'pin_far': pin_far, 'pin_near': pin_near,
+            'T_up': tp, 'T_dn': tm, 'S_up': sp, 'S_dn': sm}
+
+
+def _ear_clip_2d(loop):
+    """耳切法把简单多边形(点列, 首尾不重复)三角化成三角形点列。
+
+    曲柄臂的两个端面都是**非凸**的月牙形, 网格与导出用的扇形三角化
+    (polygons_to_triangles 从 pts[0] 扇形铺)会把它们切错, 所以这里先自己切好。
+    """
+    pts = list(loop)
+    n = len(pts)
+    if n < 3:
+        return []
+    area = 0.0
+    for i in range(n):
+        u0, v0 = pts[i]
+        u1, v1 = pts[(i + 1) % n]
+        area += u0 * v1 - u1 * v0
+    if area < 0.0:
+        pts.reverse()
+    idx = list(range(len(pts)))
+    tris = []
+
+    def cross(o, a, b):
+        return (a[0] - o[0]) * (b[1] - o[1]) - (a[1] - o[1]) * (b[0] - o[0])
+
+    def inside(p, a, b, c):
+        d1 = cross(a, b, p)
+        d2 = cross(b, c, p)
+        d3 = cross(c, a, p)
+        return (d1 > 1e-12 and d2 > 1e-12 and d3 > 1e-12)
+
+    guard = 0
+    while len(idx) > 3 and guard < 4 * len(idx):
+        guard += 1
+        for k in range(len(idx)):
+            i0, i1, i2 = idx[k - 1], idx[k], idx[(k + 1) % len(idx)]
+            a, b, c = pts[i0], pts[i1], pts[i2]
+            if cross(a, b, c) <= 1e-12:                 # 凹点/退化
+                continue
+            if any(inside(pts[j], a, b, c) for j in idx if j not in (i0, i1, i2)):
+                continue
+            tris.append([a, b, c])
+            idx.pop(k)
+            break
+        else:
+            break
+    if len(idx) >= 3:
+        for k in range(1, len(idx) - 1):
+            tris.append([pts[idx[0]], pts[idx[k]], pts[idx[k + 1]]])
+    return tris
+
+
 def make_crankshaft(main_d: float, pin_d: float, stroke: float, throws: int,
                     center: Vec3 = (0, 0, 0), tag: int = 0,
                     segments: int = 32, total_len: float = None) -> List[Polygon]:
     """沿 X 轴构造连续曲轴外壳，不保留零件相交处的内部端面。
 
-    每拐由两片曲柄臂和中间的偏心连杆颈连接。主轴颈只在相邻曲柄臂
-    之间及两端出现；它不再贯穿偏心连杆颈。各连接截面使用带孔端面，
-    因而导出网格与实时视口都不会出现重叠实体的内部面。
+    每拐 = 两片**哑铃形曲柄臂**(主轴圆与偏心连杆颈圆的外公切凸包) + 中间的偏心
+    连杆颈。臂在偏心方向伸到连杆颈外缘(与连杆颈相切)、垂直方向与主轴颈齐平,
+    所以连杆颈是**露在臂外**的 —— 侧视/斜视都能直接看出曲拐。
+    (旧版把臂做成与主轴同心的整圆盘 r=行程/2+连杆颈/2, 连杆颈被完全包在里面,
+     任何角度都只能看到"一根轴 + 一堆垫圈"。)
     """
     d = float(main_d)
     dp = float(pin_d)
@@ -1585,7 +1712,7 @@ def make_crankshaft(main_d: float, pin_d: float, stroke: float, throws: int,
     seg = max(8, int(segments))
     main_r = d / 2.0
     pin_r = dp / 2.0
-    L, R_web = crankshaft_size(d, dp, S, n, total_len)
+    L, _r_off, _r_perp = crankshaft_size(d, dp, S, n, total_len)
     spacing = L / float(n)
     web_w = min(max(2.0, d * 0.28), spacing * 0.25)
     pin_len = spacing * 0.42
@@ -1595,50 +1722,73 @@ def make_crankshaft(main_d: float, pin_d: float, stroke: float, throws: int,
     def point(x, y, z, r, angle):
         return (x, y + r * math.cos(angle), z + r * math.sin(angle))
 
-    def cylinder_side(x0, x1, y, z, radius):
+    def cylinder_side(x0, x1, y, z, radius, arc=None):
+        """圆柱侧面; arc 给点列(相对 (y,z) 的绝对平面坐标)时只画那条弧。"""
         if x1 - x0 <= 1e-9 or radius <= 0:
             return
+        if arc is None:
+            pts = [(y + radius * math.cos(2.0 * math.pi * j / seg),
+                    z + radius * math.sin(2.0 * math.pi * j / seg)) for j in range(seg + 1)]
+        else:
+            pts = arc
         mid = ((x0 + x1) / 2.0, y, z)
-        for j in range(seg):
-            a0 = 2.0 * math.pi * j / seg
-            a1 = 2.0 * math.pi * ((j + 1) % seg) / seg
-            quad = [point(x0, y, z, radius, a0),
-                    point(x0, y, z, radius, a1),
-                    point(x1, y, z, radius, a1),
-                    point(x1, y, z, radius, a0)]
-            poly = make_polygon(quad, tag, mid)
+        for j in range(len(pts) - 1):
+            (u0, v0), (u1, v1) = pts[j], pts[j + 1]
+            poly = make_polygon([(x0, u0, v0), (x0, u1, v1),
+                                 (x1, u1, v1), (x1, u0, v0)], tag, mid)
             if poly:
                 polys.append(poly)
 
-    def end_face(x, outer_r, inner_r, inner_y, normal_sign):
-        if inner_r <= 0:
-            vertices = [point(x, cy, cz, outer_r, 2.0 * math.pi * j / seg)
-                        for j in range(seg)]
-            poly = make_polygon(vertices, tag)
+    def disc_face(x, radius, normal_sign):
+        poly = make_polygon([point(x, cy, cz, radius, 2.0 * math.pi * j / seg)
+                             for j in range(seg)], tag)
+        if poly:
+            if poly.plane.normal[0] * normal_sign < 0:
+                poly.flip()
+            polys.append(poly)
+
+    def loop_face(x, loop, x_in):
+        """x 处的月牙端面(非凸), 用耳切法三角化后逐个铺面。"""
+        for tri in _ear_clip_2d(loop):
+            poly = make_polygon([(x, cy + p[0], cz + p[1]) for p in tri], tag,
+                                (x_in, cy, cz))
             if poly:
-                if poly.plane.normal[0] * normal_sign < 0:
-                    poly.flip()
                 polys.append(poly)
+
+    def cheek(xa, xb, dy, main_at_left):
+        """[xa, xb] 之间的一片哑铃形曲柄臂。
+
+        main_at_left=True: xa 侧接主轴颈(该端面 = 凸包 - 主轴圆), xb 侧接连杆颈。
+        """
+        g = crank_cheek_geometry(main_r, pin_r, dy, seg)
+        if g is None:                                   # 退化: 退回整圆盘
+            cylinder_side(xa, xb, cy, cz, max(main_r, pin_r))
             return
-        if outer_r <= inner_r + 1e-9 and abs(inner_y - cy) <= 1e-9:
-            return
-        for j in range(seg):
-            a0 = 2.0 * math.pi * j / seg
-            a1 = 2.0 * math.pi * ((j + 1) % seg) / seg
-            quad = [point(x, cy, cz, outer_r, a0),
-                    point(x, cy, cz, outer_r, a1),
-                    point(x, inner_y, cz, inner_r, a1),
-                    point(x, inner_y, cz, inner_r, a0)]
-            poly = make_polygon(quad, tag)
+        tp, tm, sp, sm = g['T_up'], g['T_dn'], g['S_up'], g['S_dn']
+        main_far, main_near = g['main_far'], g['main_near']
+        pin_far, pin_near = g['pin_far'], g['pin_near']
+        # 外壁: 主轴圆外弧 + 连杆颈圆外弧 + 两条外公切线
+        cylinder_side(xa, xb, cy, cz, main_r, main_far)
+        cylinder_side(xa, xb, cy + dy, cz, pin_r, pin_far)
+        mid = (xa, cy + dy / 2.0, cz)
+        for (p, q) in ((tp, sp), (tm, sm)):
+            poly = make_polygon([(xa, cy + p[0], cz + p[1]), (xa, cy + q[0], cz + q[1]),
+                                 (xb, cy + q[0], cz + q[1]), (xb, cy + p[0], cz + p[1])],
+                                tag, mid)
             if poly:
-                if poly.plane.normal[0] * normal_sign < 0:
-                    poly.flip()
                 polys.append(poly)
+        # 端面: 凸包 - 被接走的那一侧的圆(月牙); 扇形顶点取另一个圆心, 区域对它星形。
+        loop_main = [sp] + list(reversed(pin_far))[1:] + [tm] + \
+            list(reversed(main_near))[1:]
+        loop_pin = [tm] + list(reversed(main_far))[1:] + [sp] + list(pin_near)[1:]
+        ends = ((xa, main_at_left, xa + 1.0), (xb, not main_at_left, xb - 1.0))
+        for (x, removed_is_main, x_in) in ends:
+            loop_face(x, loop_main if removed_is_main else loop_pin, x_in)
 
     left_end = cx - L / 2.0
     right_end = cx + L / 2.0
     cursor = left_end
-    end_face(left_end, main_r, 0.0, cy, -1)
+    disc_face(left_end, main_r, -1)
     for i in range(n):
         x0 = cx - L / 2.0 + spacing * (i + 0.5)
         dy = (S / 2.0) if (i % 2 == 0) else (-S / 2.0)
@@ -1647,19 +1797,13 @@ def make_crankshaft(main_d: float, pin_d: float, stroke: float, throws: int,
         web_left = pin_left - web_w
         web_right = pin_right + web_w
 
-        cylinder_side(cursor, web_left, cy, cz, main_r)
-        cylinder_side(web_left, pin_left, cy, cz, R_web)
-        end_face(web_left, R_web, main_r, cy, -1)
-        end_face(pin_left, R_web, pin_r, cy + dy, 1)
-
-        cylinder_side(pin_left, pin_right, cy + dy, cz, pin_r)
-
-        cylinder_side(pin_right, web_right, cy, cz, R_web)
-        end_face(pin_right, R_web, pin_r, cy + dy, -1)
-        end_face(web_right, R_web, main_r, cy, 1)
+        cylinder_side(cursor, web_left, cy, cz, main_r)          # 主轴颈
+        cheek(web_left, pin_left, dy, True)                      # 左曲柄臂
+        cylinder_side(pin_left, pin_right, cy + dy, cz, pin_r)   # 偏心连杆颈
+        cheek(pin_right, web_right, dy, False)                   # 右曲柄臂
         cursor = web_right
     cylinder_side(cursor, right_end, cy, cz, main_r)
-    end_face(right_end, main_r, 0.0, cy, 1)
+    disc_face(right_end, main_r, 1)
     return polys
 
 

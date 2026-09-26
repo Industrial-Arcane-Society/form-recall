@@ -1,0 +1,371 @@
+{
+  "schema_version": "1.0",
+  "name": "Three-segment recessed block with 9 holes",
+  "source_prompt": "复刻 (manual benchmark from the supplied image only)",
+  "units": {
+    "length": "mm",
+    "angle": "deg"
+  },
+  "coordinate_system": {
+    "type": "global_cartesian",
+    "handedness": "right",
+    "axes": [
+      "X",
+      "Y",
+      "Z"
+    ],
+    "origin": [
+      0,
+      0,
+      0
+    ]
+  },
+  "features": [
+    {
+      "id": "outer-envelope",
+      "kind": "box",
+      "operation": "add",
+      "name": "Continuous outer body",
+      "note": "One full-height, full-depth body; image-derived nominal envelope.",
+      "parameters": {
+        "length": 330.0,
+        "width": 134.0,
+        "height": 340.0,
+        "center": [
+          0.0,
+          0.0,
+          170.0
+        ]
+      },
+      "sources": {
+        "length": {
+          "type": "image_estimate",
+          "evidence": "Top-plane long projected edge ≈258 px and visible vertical edge ≈267 px; with H=340 mm, W≈329 mm, rounded to 330 mm.",
+          "note": "按参考图像比例估算的名义值，不是工程图或制造标注。"
+        },
+        "width": {
+          "type": "image_estimate",
+          "evidence": "Top-plane short projected edge ≈105 px versus long edge ≈258 px; with the same approximate foreshortening, D≈340×105/267≈134 mm. Perspective makes this low-confidence.",
+          "note": "按参考图像比例估算的名义值，不是工程图或制造标注。"
+        },
+        "height": {
+          "type": "image_estimate",
+          "evidence": "Nominal scale chosen for convenience because no physical dimension is annotated.",
+          "note": "按参考图像比例估算的名义值，不是工程图或制造标注。"
+        },
+        "center": {
+          "type": "derived",
+          "evidence": "Center X/Y at the origin; bottom face is Z=0."
+        }
+      }
+    },
+    {
+      "id": "center-front-recess",
+      "kind": "box",
+      "operation": "cut",
+      "name": "Full-height central front recess",
+      "note": "Subtract only the front 20 mm in the central 68 mm strip. The remaining rear wall is a solid recessed face, not a through-opening.",
+      "parameters": {
+        "length": 70.0,
+        "width": 22.0,
+        "height": 342.0,
+        "center": [
+          0.0,
+          58.0,
+          170.0
+        ]
+      },
+      "sources": {
+        "length": {
+          "type": "image_estimate",
+          "evidence": "The middle strip is estimated at about 21% of total width; assume approximate left-right symmetry for the side sections, yielding 130/70/130 mm.",
+          "note": "按参考图像比例估算的名义值，不是工程图或制造标注。"
+        },
+        "width": {
+          "type": "image_estimate",
+          "evidence": "The visible isometric setback is estimated as 20 mm; 1 mm extra is only Boolean overshoot.",
+          "note": "按参考图像比例估算的名义值，不是工程图或制造标注。"
+        },
+        "height": {
+          "type": "image_estimate",
+          "evidence": "The recess spans the full body height; 1 mm extra at each end is only Boolean overshoot.",
+          "note": "按参考图像比例估算的名义值，不是工程图或制造标注。"
+        },
+        "center": {
+          "type": "derived",
+          "evidence": "Outer front face Y=61 mm; the cut extends from Y=41 to 62 mm, leaving the recessed face at Y=41 mm."
+        }
+      }
+    },
+    {
+      "id": "left-upper-large-hole",
+      "kind": "hole",
+      "operation": "cut",
+      "name": "left upper large through hole",
+      "note": "Single explicitly placed bore; hole position and diameter estimated from the front-view pixel ratios.",
+      "parameters": {
+        "diameter": 48.0,
+        "through": true,
+        "pos": "point",
+        "point": [
+          -100.0,
+          67.0,
+          275.0
+        ],
+        "axis": "Y"
+      },
+      "sources": {
+        "diameter": {
+          "type": "image_estimate",
+          "evidence": "The top/bottom bores are visibly larger than the middle bore; their nominal ratio is set to 48:32=1.5.",
+          "note": "按参考图像比例估算的名义值，不是工程图或制造标注。"
+        },
+        "point": {
+          "type": "image_estimate",
+          "evidence": "Column centers are approximately at 20%, 50%, 80% of front width; row centers at 19%, 50%, 81% of height. Y records the corresponding front/recessed face.",
+          "note": "按参考图像比例估算的名义值，不是工程图或制造标注。"
+        }
+      }
+    },
+    {
+      "id": "left-middle-small-hole",
+      "kind": "hole",
+      "operation": "cut",
+      "name": "left middle small through hole",
+      "note": "Single explicitly placed bore; hole position and diameter estimated from the front-view pixel ratios.",
+      "parameters": {
+        "diameter": 32.0,
+        "through": true,
+        "pos": "point",
+        "point": [
+          -100.0,
+          67.0,
+          170.0
+        ],
+        "axis": "Y"
+      },
+      "sources": {
+        "diameter": {
+          "type": "image_estimate",
+          "evidence": "The top/bottom bores are visibly larger than the middle bore; their nominal ratio is set to 48:32=1.5.",
+          "note": "按参考图像比例估算的名义值，不是工程图或制造标注。"
+        },
+        "point": {
+          "type": "image_estimate",
+          "evidence": "Column centers are approximately at 20%, 50%, 80% of front width; row centers at 19%, 50%, 81% of height. Y records the corresponding front/recessed face.",
+          "note": "按参考图像比例估算的名义值，不是工程图或制造标注。"
+        }
+      }
+    },
+    {
+      "id": "left-lower-large-hole",
+      "kind": "hole",
+      "operation": "cut",
+      "name": "left lower large through hole",
+      "note": "Single explicitly placed bore; hole position and diameter estimated from the front-view pixel ratios.",
+      "parameters": {
+        "diameter": 48.0,
+        "through": true,
+        "pos": "point",
+        "point": [
+          -100.0,
+          67.0,
+          65.0
+        ],
+        "axis": "Y"
+      },
+      "sources": {
+        "diameter": {
+          "type": "image_estimate",
+          "evidence": "The top/bottom bores are visibly larger than the middle bore; their nominal ratio is set to 48:32=1.5.",
+          "note": "按参考图像比例估算的名义值，不是工程图或制造标注。"
+        },
+        "point": {
+          "type": "image_estimate",
+          "evidence": "Column centers are approximately at 20%, 50%, 80% of front width; row centers at 19%, 50%, 81% of height. Y records the corresponding front/recessed face.",
+          "note": "按参考图像比例估算的名义值，不是工程图或制造标注。"
+        }
+      }
+    },
+    {
+      "id": "center-upper-large-hole",
+      "kind": "hole",
+      "operation": "cut",
+      "name": "center upper large through hole",
+      "note": "Single explicitly placed bore; hole position and diameter estimated from the front-view pixel ratios.",
+      "parameters": {
+        "diameter": 48.0,
+        "through": true,
+        "pos": "point",
+        "point": [
+          0.0,
+          47.0,
+          275.0
+        ],
+        "axis": "Y"
+      },
+      "sources": {
+        "diameter": {
+          "type": "image_estimate",
+          "evidence": "The top/bottom bores are visibly larger than the middle bore; their nominal ratio is set to 48:32=1.5.",
+          "note": "按参考图像比例估算的名义值，不是工程图或制造标注。"
+        },
+        "point": {
+          "type": "image_estimate",
+          "evidence": "Column centers are approximately at 20%, 50%, 80% of front width; row centers at 19%, 50%, 81% of height. Y records the corresponding front/recessed face.",
+          "note": "按参考图像比例估算的名义值，不是工程图或制造标注。"
+        }
+      }
+    },
+    {
+      "id": "center-middle-small-hole",
+      "kind": "hole",
+      "operation": "cut",
+      "name": "center middle small through hole",
+      "note": "Single explicitly placed bore; hole position and diameter estimated from the front-view pixel ratios.",
+      "parameters": {
+        "diameter": 32.0,
+        "through": true,
+        "pos": "point",
+        "point": [
+          0.0,
+          47.0,
+          170.0
+        ],
+        "axis": "Y"
+      },
+      "sources": {
+        "diameter": {
+          "type": "image_estimate",
+          "evidence": "The top/bottom bores are visibly larger than the middle bore; their nominal ratio is set to 48:32=1.5.",
+          "note": "按参考图像比例估算的名义值，不是工程图或制造标注。"
+        },
+        "point": {
+          "type": "image_estimate",
+          "evidence": "Column centers are approximately at 20%, 50%, 80% of front width; row centers at 19%, 50%, 81% of height. Y records the corresponding front/recessed face.",
+          "note": "按参考图像比例估算的名义值，不是工程图或制造标注。"
+        }
+      }
+    },
+    {
+      "id": "center-lower-large-hole",
+      "kind": "hole",
+      "operation": "cut",
+      "name": "center lower large through hole",
+      "note": "Single explicitly placed bore; hole position and diameter estimated from the front-view pixel ratios.",
+      "parameters": {
+        "diameter": 48.0,
+        "through": true,
+        "pos": "point",
+        "point": [
+          0.0,
+          47.0,
+          65.0
+        ],
+        "axis": "Y"
+      },
+      "sources": {
+        "diameter": {
+          "type": "image_estimate",
+          "evidence": "The top/bottom bores are visibly larger than the middle bore; their nominal ratio is set to 48:32=1.5.",
+          "note": "按参考图像比例估算的名义值，不是工程图或制造标注。"
+        },
+        "point": {
+          "type": "image_estimate",
+          "evidence": "Column centers are approximately at 20%, 50%, 80% of front width; row centers at 19%, 50%, 81% of height. Y records the corresponding front/recessed face.",
+          "note": "按参考图像比例估算的名义值，不是工程图或制造标注。"
+        }
+      }
+    },
+    {
+      "id": "right-upper-large-hole",
+      "kind": "hole",
+      "operation": "cut",
+      "name": "right upper large through hole",
+      "note": "Single explicitly placed bore; hole position and diameter estimated from the front-view pixel ratios.",
+      "parameters": {
+        "diameter": 48.0,
+        "through": true,
+        "pos": "point",
+        "point": [
+          100.0,
+          67.0,
+          275.0
+        ],
+        "axis": "Y"
+      },
+      "sources": {
+        "diameter": {
+          "type": "image_estimate",
+          "evidence": "The top/bottom bores are visibly larger than the middle bore; their nominal ratio is set to 48:32=1.5.",
+          "note": "按参考图像比例估算的名义值，不是工程图或制造标注。"
+        },
+        "point": {
+          "type": "image_estimate",
+          "evidence": "Column centers are approximately at 20%, 50%, 80% of front width; row centers at 19%, 50%, 81% of height. Y records the corresponding front/recessed face.",
+          "note": "按参考图像比例估算的名义值，不是工程图或制造标注。"
+        }
+      }
+    },
+    {
+      "id": "right-middle-small-hole",
+      "kind": "hole",
+      "operation": "cut",
+      "name": "right middle small through hole",
+      "note": "Single explicitly placed bore; hole position and diameter estimated from the front-view pixel ratios.",
+      "parameters": {
+        "diameter": 32.0,
+        "through": true,
+        "pos": "point",
+        "point": [
+          100.0,
+          67.0,
+          170.0
+        ],
+        "axis": "Y"
+      },
+      "sources": {
+        "diameter": {
+          "type": "image_estimate",
+          "evidence": "The top/bottom bores are visibly larger than the middle bore; their nominal ratio is set to 48:32=1.5.",
+          "note": "按参考图像比例估算的名义值，不是工程图或制造标注。"
+        },
+        "point": {
+          "type": "image_estimate",
+          "evidence": "Column centers are approximately at 20%, 50%, 80% of front width; row centers at 19%, 50%, 81% of height. Y records the corresponding front/recessed face.",
+          "note": "按参考图像比例估算的名义值，不是工程图或制造标注。"
+        }
+      }
+    },
+    {
+      "id": "right-lower-large-hole",
+      "kind": "hole",
+      "operation": "cut",
+      "name": "right lower large through hole",
+      "note": "Single explicitly placed bore; hole position and diameter estimated from the front-view pixel ratios.",
+      "parameters": {
+        "diameter": 48.0,
+        "through": true,
+        "pos": "point",
+        "point": [
+          100.0,
+          67.0,
+          65.0
+        ],
+        "axis": "Y"
+      },
+      "sources": {
+        "diameter": {
+          "type": "image_estimate",
+          "evidence": "The top/bottom bores are visibly larger than the middle bore; their nominal ratio is set to 48:32=1.5.",
+          "note": "按参考图像比例估算的名义值，不是工程图或制造标注。"
+        },
+        "point": {
+          "type": "image_estimate",
+          "evidence": "Column centers are approximately at 20%, 50%, 80% of front width; row centers at 19%, 50%, 81% of height. Y records the corresponding front/recessed face.",
+          "note": "按参考图像比例估算的名义值，不是工程图或制造标注。"
+        }
+      }
+    }
+  ]
+}

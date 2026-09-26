@@ -1,0 +1,1261 @@
+{
+  "state": "previewed",
+  "validation": {
+    "valid": true,
+    "state": "valid",
+    "errors": [],
+    "confirmations": [],
+    "support": [
+      {
+        "feature_id": "outer-plate-left",
+        "kind": "box",
+        "status": "exact",
+        "reason": "矩形草图加凸台；当前 CATIA 映射仅支持 Z 轴拉伸。"
+      },
+      {
+        "feature_id": "outer-plate-right",
+        "kind": "box",
+        "status": "exact",
+        "reason": "矩形草图加凸台；当前 CATIA 映射仅支持 Z 轴拉伸。"
+      },
+      {
+        "feature_id": "center-plate-backset",
+        "kind": "box",
+        "status": "exact",
+        "reason": "矩形草图加凸台；当前 CATIA 映射仅支持 Z 轴拉伸。"
+      },
+      {
+        "feature_id": "top-bridge",
+        "kind": "box",
+        "status": "exact",
+        "reason": "矩形草图加凸台；当前 CATIA 映射仅支持 Z 轴拉伸。"
+      },
+      {
+        "feature_id": "left-hole-top",
+        "kind": "hole",
+        "status": "exact",
+        "reason": "圆形凹槽；through=true 时按当前零件包围盒生成贯穿深度。"
+      },
+      {
+        "feature_id": "left-hole-middle",
+        "kind": "hole",
+        "status": "exact",
+        "reason": "圆形凹槽；through=true 时按当前零件包围盒生成贯穿深度。"
+      },
+      {
+        "feature_id": "left-hole-bottom",
+        "kind": "hole",
+        "status": "exact",
+        "reason": "圆形凹槽；through=true 时按当前零件包围盒生成贯穿深度。"
+      },
+      {
+        "feature_id": "center-hole-top",
+        "kind": "hole",
+        "status": "exact",
+        "reason": "圆形凹槽；through=true 时按当前零件包围盒生成贯穿深度。"
+      },
+      {
+        "feature_id": "center-hole-middle",
+        "kind": "hole",
+        "status": "exact",
+        "reason": "圆形凹槽；through=true 时按当前零件包围盒生成贯穿深度。"
+      },
+      {
+        "feature_id": "center-hole-bottom",
+        "kind": "hole",
+        "status": "exact",
+        "reason": "圆形凹槽；through=true 时按当前零件包围盒生成贯穿深度。"
+      },
+      {
+        "feature_id": "right-hole-top",
+        "kind": "hole",
+        "status": "exact",
+        "reason": "圆形凹槽；through=true 时按当前零件包围盒生成贯穿深度。"
+      },
+      {
+        "feature_id": "right-hole-middle",
+        "kind": "hole",
+        "status": "exact",
+        "reason": "圆形凹槽；through=true 时按当前零件包围盒生成贯穿深度。"
+      },
+      {
+        "feature_id": "right-hole-bottom",
+        "kind": "hole",
+        "status": "exact",
+        "reason": "圆形凹槽；through=true 时按当前零件包围盒生成贯穿深度。"
+      }
+    ],
+    "warnings": [],
+    "schema_version": "1.0"
+  },
+  "catia_executed": false,
+  "dimensions": {
+    "unit": "mm",
+    "bbox": [
+      -4.0,
+      -42.5,
+      0.0,
+      144.0,
+      6.5,
+      105.0
+    ],
+    "size": [
+      148.0,
+      49.0,
+      105.0
+    ],
+    "volume_mm3": 153824.8302676406,
+    "surface_area_mm2": 46262.34794894138,
+    "triangles": 1804,
+    "feature_count": 13
+  },
+  "catia_operations": [
+    {
+      "index": 1,
+      "kind": "rect_pad",
+      "plane": "XY",
+      "center": [
+        20.0,
+        0.0,
+        0.0
+      ],
+      "profile": [],
+      "dimensions": {
+        "l": 40.0,
+        "w": 8.0,
+        "r": 0.0,
+        "h": 100.0,
+        "depth": 0.0
+      },
+      "name": "Left outer plate",
+      "note": "长方体 40 × 8 × 100 mm"
+    },
+    {
+      "index": 2,
+      "kind": "rect_pad",
+      "plane": "XY",
+      "center": [
+        120.0,
+        0.0,
+        0.0
+      ],
+      "profile": [],
+      "dimensions": {
+        "l": 40.0,
+        "w": 8.0,
+        "r": 0.0,
+        "h": 100.0,
+        "depth": 0.0
+      },
+      "name": "Right outer plate",
+      "note": "长方体 40 × 8 × 100 mm"
+    },
+    {
+      "index": 3,
+      "kind": "rect_pad",
+      "plane": "XY",
+      "center": [
+        70.0,
+        -13.0,
+        0.0
+      ],
+      "profile": [],
+      "dimensions": {
+        "l": 40.0,
+        "w": 8.0,
+        "r": 0.0,
+        "h": 100.0,
+        "depth": 0.0
+      },
+      "name": "Recessed center plate",
+      "note": "长方体 40 × 8 × 100 mm"
+    },
+    {
+      "index": 4,
+      "kind": "rect_pad",
+      "plane": "XY",
+      "center": [
+        70.0,
+        -18.0,
+        95.0
+      ],
+      "profile": [],
+      "dimensions": {
+        "l": 148.0,
+        "w": 49.0,
+        "r": 0.0,
+        "h": 10.0,
+        "depth": 0.0
+      },
+      "name": "Inferred top bridge",
+      "note": "长方体 148 × 49 × 10 mm"
+    },
+    {
+      "index": 5,
+      "kind": "circle_cut",
+      "plane": "Y",
+      "center": [
+        78.0,
+        20.0,
+        8.5
+      ],
+      "profile": [],
+      "dimensions": {
+        "l": 0.0,
+        "w": 0.0,
+        "r": 7.5,
+        "h": 0.0,
+        "depth": 53.0
+      },
+      "name": "Left large upper through-hole",
+      "note": "⌀15 通孔 @(20, 78)"
+    },
+    {
+      "index": 6,
+      "kind": "circle_cut",
+      "plane": "Y",
+      "center": [
+        50.0,
+        20.0,
+        8.5
+      ],
+      "profile": [],
+      "dimensions": {
+        "l": 0.0,
+        "w": 0.0,
+        "r": 4.5,
+        "h": 0.0,
+        "depth": 53.0
+      },
+      "name": "Left small middle through-hole",
+      "note": "⌀9 通孔 @(20, 50)"
+    },
+    {
+      "index": 7,
+      "kind": "circle_cut",
+      "plane": "Y",
+      "center": [
+        22.0,
+        20.0,
+        8.5
+      ],
+      "profile": [],
+      "dimensions": {
+        "l": 0.0,
+        "w": 0.0,
+        "r": 7.5,
+        "h": 0.0,
+        "depth": 53.0
+      },
+      "name": "Left large lower through-hole",
+      "note": "⌀15 通孔 @(20, 22)"
+    },
+    {
+      "index": 8,
+      "kind": "circle_cut",
+      "plane": "Y",
+      "center": [
+        78.0,
+        70.0,
+        8.5
+      ],
+      "profile": [],
+      "dimensions": {
+        "l": 0.0,
+        "w": 0.0,
+        "r": 7.5,
+        "h": 0.0,
+        "depth": 53.0
+      },
+      "name": "Center large upper through-hole",
+      "note": "⌀15 通孔 @(70, 78)"
+    },
+    {
+      "index": 9,
+      "kind": "circle_cut",
+      "plane": "Y",
+      "center": [
+        50.0,
+        70.0,
+        8.5
+      ],
+      "profile": [],
+      "dimensions": {
+        "l": 0.0,
+        "w": 0.0,
+        "r": 4.5,
+        "h": 0.0,
+        "depth": 53.0
+      },
+      "name": "Center small middle through-hole",
+      "note": "⌀9 通孔 @(70, 50)"
+    },
+    {
+      "index": 10,
+      "kind": "circle_cut",
+      "plane": "Y",
+      "center": [
+        22.0,
+        70.0,
+        8.5
+      ],
+      "profile": [],
+      "dimensions": {
+        "l": 0.0,
+        "w": 0.0,
+        "r": 7.5,
+        "h": 0.0,
+        "depth": 53.0
+      },
+      "name": "Center large lower through-hole",
+      "note": "⌀15 通孔 @(70, 22)"
+    },
+    {
+      "index": 11,
+      "kind": "circle_cut",
+      "plane": "Y",
+      "center": [
+        78.0,
+        120.0,
+        8.5
+      ],
+      "profile": [],
+      "dimensions": {
+        "l": 0.0,
+        "w": 0.0,
+        "r": 7.5,
+        "h": 0.0,
+        "depth": 53.0
+      },
+      "name": "Right large upper through-hole",
+      "note": "⌀15 通孔 @(120, 78)"
+    },
+    {
+      "index": 12,
+      "kind": "circle_cut",
+      "plane": "Y",
+      "center": [
+        50.0,
+        120.0,
+        8.5
+      ],
+      "profile": [],
+      "dimensions": {
+        "l": 0.0,
+        "w": 0.0,
+        "r": 4.5,
+        "h": 0.0,
+        "depth": 53.0
+      },
+      "name": "Right small middle through-hole",
+      "note": "⌀9 通孔 @(120, 50)"
+    },
+    {
+      "index": 13,
+      "kind": "circle_cut",
+      "plane": "Y",
+      "center": [
+        22.0,
+        120.0,
+        8.5
+      ],
+      "profile": [],
+      "dimensions": {
+        "l": 0.0,
+        "w": 0.0,
+        "r": 7.5,
+        "h": 0.0,
+        "depth": 53.0
+      },
+      "name": "Right large lower through-hole",
+      "note": "⌀15 通孔 @(120, 22)"
+    }
+  ],
+  "warnings": [],
+  "feature_manifest": {
+    "outer-plate-left": {
+      "kind": "box",
+      "operation": "add",
+      "name": "Left outer plate",
+      "parameters": {
+        "length": 40,
+        "width": 8,
+        "height": 100,
+        "center": [
+          20,
+          0,
+          50
+        ]
+      },
+      "sources": {
+        "length": {
+          "type": "image_estimate",
+          "evidence": "Single isometric image: plate face-width/height ratio; nominal plate height normalized to 100 mm."
+        },
+        "width": {
+          "type": "image_estimate",
+          "evidence": "Single isometric image: visible plate side-wall thickness relative to face width."
+        },
+        "height": {
+          "type": "image_estimate",
+          "evidence": "Single isometric image: reference-height normalization, not a drawing dimension."
+        },
+        "center": {
+          "type": "derived",
+          "note": "Left plate occupies X=0..40, Y=-4..4, Z=0..100 in the chosen global frame."
+        }
+      },
+      "relations": []
+    },
+    "outer-plate-right": {
+      "kind": "box",
+      "operation": "add",
+      "name": "Right outer plate",
+      "parameters": {
+        "length": 40,
+        "width": 8,
+        "height": 100,
+        "center": [
+          120,
+          0,
+          50
+        ]
+      },
+      "sources": {
+        "length": {
+          "type": "image_estimate",
+          "evidence": "Single isometric image: outer plate face-width/height ratio, using the same scale as the left plate."
+        },
+        "width": {
+          "type": "image_estimate",
+          "evidence": "Single isometric image: same nominal side-wall thickness as the left plate."
+        },
+        "height": {
+          "type": "image_estimate",
+          "evidence": "Single isometric image: same full-height extent as the left plate."
+        },
+        "center": {
+          "type": "derived",
+          "note": "Right plate is shifted along X with a 10 mm physical gap to the recessed center plate; Y and Z match the left plate."
+        }
+      },
+      "relations": []
+    },
+    "center-plate-backset": {
+      "kind": "box",
+      "operation": "add",
+      "name": "Recessed center plate",
+      "parameters": {
+        "length": 40,
+        "width": 8,
+        "height": 100,
+        "center": [
+          70,
+          -13,
+          50
+        ]
+      },
+      "sources": {
+        "length": {
+          "type": "image_estimate",
+          "evidence": "Single isometric image: assumed same face width as the two outer plates."
+        },
+        "width": {
+          "type": "image_estimate",
+          "evidence": "Single isometric image: assumed same plate thickness as the outer plates."
+        },
+        "height": {
+          "type": "image_estimate",
+          "evidence": "Single isometric image: assumed same bottom and top level as the outer plates."
+        },
+        "center": {
+          "type": "derived",
+          "note": "X=70 mm is midway between outer centers X=20 and X=120; Y=-13 mm places this plate behind both outer plates because the local iso renderer sees +Y; the 10 mm X gaps keep through-hole cutters local to each plate."
+        }
+      },
+      "relations": []
+    },
+    "top-bridge": {
+      "kind": "box",
+      "operation": "add",
+      "name": "Inferred top bridge",
+      "parameters": {
+        "length": 148,
+        "width": 49,
+        "height": 10,
+        "center": [
+          70,
+          -18,
+          100
+        ]
+      },
+      "sources": {
+        "length": {
+          "type": "image_estimate",
+          "evidence": "Single isometric image: long-to-short top-face edge ratio after accounting for the local isometric renderer projection."
+        },
+        "width": {
+          "type": "image_estimate",
+          "evidence": "Single isometric image: short top-face edge relative to the long edge, fitted to the same projection."
+        },
+        "height": {
+          "type": "image_estimate",
+          "evidence": "Single isometric image: estimated thickness of the upper connecting mass."
+        },
+        "center": {
+          "type": "derived",
+          "note": "Placed behind the front faces at center Y=-18 with width 49 (bounds Y=-42.5..6.5), and overlaps the upper ends of all three plates."
+        }
+      },
+      "relations": []
+    },
+    "left-hole-top": {
+      "kind": "hole",
+      "operation": "cut",
+      "name": "Left large upper through-hole",
+      "parameters": {
+        "diameter": 15,
+        "through": true,
+        "pos": "point",
+        "point": [
+          20,
+          0,
+          78
+        ],
+        "axis": "Y"
+      },
+      "sources": {
+        "diameter": {
+          "type": "image_estimate",
+          "evidence": "Single isometric image: turquoise opening width is about 0.36 of the plate face width."
+        },
+        "point": {
+          "type": "derived",
+          "note": "Hole lies on the left plate centerline X=20, center plane Y=0, at the upper row Z=78."
+        }
+      },
+      "relations": []
+    },
+    "left-hole-middle": {
+      "kind": "hole",
+      "operation": "cut",
+      "name": "Left small middle through-hole",
+      "parameters": {
+        "diameter": 9,
+        "through": true,
+        "pos": "point",
+        "point": [
+          20,
+          0,
+          50
+        ],
+        "axis": "Y"
+      },
+      "sources": {
+        "diameter": {
+          "type": "image_estimate",
+          "evidence": "Single isometric image: blue middle opening is visibly smaller, about 0.22 of the plate face width."
+        },
+        "point": {
+          "type": "derived",
+          "note": "Hole lies on the left plate centerline X=20, center plane Y=0, at the middle row Z=50."
+        }
+      },
+      "relations": []
+    },
+    "left-hole-bottom": {
+      "kind": "hole",
+      "operation": "cut",
+      "name": "Left large lower through-hole",
+      "parameters": {
+        "diameter": 15,
+        "through": true,
+        "pos": "point",
+        "point": [
+          20,
+          0,
+          22
+        ],
+        "axis": "Y"
+      },
+      "sources": {
+        "diameter": {
+          "type": "image_estimate",
+          "evidence": "Single isometric image: lower turquoise opening matches the upper large opening."
+        },
+        "point": {
+          "type": "derived",
+          "note": "Hole lies on the left plate centerline X=20, center plane Y=0, at the lower row Z=22."
+        }
+      },
+      "relations": []
+    },
+    "center-hole-top": {
+      "kind": "hole",
+      "operation": "cut",
+      "name": "Center large upper through-hole",
+      "parameters": {
+        "diameter": 15,
+        "through": true,
+        "pos": "point",
+        "point": [
+          70,
+          -13,
+          78
+        ],
+        "axis": "Y"
+      },
+      "sources": {
+        "diameter": {
+          "type": "image_estimate",
+          "evidence": "Single isometric image: upper center opening follows the large-small-large pattern."
+        },
+        "point": {
+          "type": "derived",
+          "note": "Hole lies on the center plate centerline X=70, center plane Y=-13, at the top row Z=78."
+        }
+      },
+      "relations": []
+    },
+    "center-hole-middle": {
+      "kind": "hole",
+      "operation": "cut",
+      "name": "Center small middle through-hole",
+      "parameters": {
+        "diameter": 9,
+        "through": true,
+        "pos": "point",
+        "point": [
+          70,
+          -13,
+          50
+        ],
+        "axis": "Y"
+      },
+      "sources": {
+        "diameter": {
+          "type": "image_estimate",
+          "evidence": "Single isometric image: center blue opening follows the smaller middle diameter."
+        },
+        "point": {
+          "type": "derived",
+          "note": "Hole lies on the center plate centerline X=70, center plane Y=-13, at the middle row Z=50."
+        }
+      },
+      "relations": []
+    },
+    "center-hole-bottom": {
+      "kind": "hole",
+      "operation": "cut",
+      "name": "Center large lower through-hole",
+      "parameters": {
+        "diameter": 15,
+        "through": true,
+        "pos": "point",
+        "point": [
+          70,
+          -13,
+          22
+        ],
+        "axis": "Y"
+      },
+      "sources": {
+        "diameter": {
+          "type": "image_estimate",
+          "evidence": "Single isometric image: lower center opening follows the upper large diameter."
+        },
+        "point": {
+          "type": "derived",
+          "note": "Hole lies on the center plate centerline X=70, center plane Y=-13, at the bottom row Z=22."
+        }
+      },
+      "relations": []
+    },
+    "right-hole-top": {
+      "kind": "hole",
+      "operation": "cut",
+      "name": "Right large upper through-hole",
+      "parameters": {
+        "diameter": 15,
+        "through": true,
+        "pos": "point",
+        "point": [
+          120,
+          0,
+          78
+        ],
+        "axis": "Y"
+      },
+      "sources": {
+        "diameter": {
+          "type": "image_estimate",
+          "evidence": "Single isometric image: upper right opening follows the large-small-large pattern."
+        },
+        "point": {
+          "type": "derived",
+          "note": "Hole lies on the right plate centerline X=120, center plane Y=0, at the upper row Z=78."
+        }
+      },
+      "relations": []
+    },
+    "right-hole-middle": {
+      "kind": "hole",
+      "operation": "cut",
+      "name": "Right small middle through-hole",
+      "parameters": {
+        "diameter": 9,
+        "through": true,
+        "pos": "point",
+        "point": [
+          120,
+          0,
+          50
+        ],
+        "axis": "Y"
+      },
+      "sources": {
+        "diameter": {
+          "type": "image_estimate",
+          "evidence": "Single isometric image: right blue opening is smaller than the two turquoise openings."
+        },
+        "point": {
+          "type": "derived",
+          "note": "Hole lies on the right plate centerline X=120, center plane Y=0, at the middle row Z=50."
+        }
+      },
+      "relations": []
+    },
+    "right-hole-bottom": {
+      "kind": "hole",
+      "operation": "cut",
+      "name": "Right large lower through-hole",
+      "parameters": {
+        "diameter": 15,
+        "through": true,
+        "pos": "point",
+        "point": [
+          120,
+          0,
+          22
+        ],
+        "axis": "Y"
+      },
+      "sources": {
+        "diameter": {
+          "type": "image_estimate",
+          "evidence": "Single isometric image: lower right opening follows the upper large diameter."
+        },
+        "point": {
+          "type": "derived",
+          "note": "Hole lies on the right plate centerline X=120, center plane Y=0, at the lower row Z=22."
+        }
+      },
+      "relations": []
+    }
+  },
+  "build_log": [
+    "[基准] 长方体 40 × 8 × 100 mm → 8 面",
+    "[并排] 长方体 40 × 8 × 100 mm —— 与零件不相交, 直接合并 → 16 面",
+    "[并排] 长方体 40 × 8 × 100 mm —— 与零件不相交, 直接合并 → 24 面",
+    "[合并] 长方体 148 × 49 × 10 mm → 61 面",
+    "[切除] ⌀15 通孔 @(20, 78) → 131 面",
+    "[切除] ⌀9 通孔 @(20, 50) → 257 面",
+    "[切除] ⌀15 通孔 @(20, 22) → 403 面",
+    "[切除] ⌀15 通孔 @(70, 78) → 473 面",
+    "[切除] ⌀9 通孔 @(70, 50) → 599 面",
+    "[切除] ⌀15 通孔 @(70, 22) → 745 面",
+    "[切除] ⌀15 通孔 @(120, 78) → 815 面",
+    "[切除] ⌀9 通孔 @(120, 50) → 941 面",
+    "[切除] ⌀15 通孔 @(120, 22) → 1087 面"
+  ],
+  "local_geometry_checks": {
+    "state": "passed",
+    "source": "AI Modeler local mesh kernel",
+    "face_count": 1087,
+    "bbox_size_mm": [
+      148.0,
+      49.0,
+      105.0
+    ],
+    "bbox_ratios_from_mesh": {
+      "front_width_height": 1.4095238095238096,
+      "depth_height": 0.4666666666666667,
+      "top_width_depth": 3.020408163265306
+    },
+    "feature_count_from_plan": 13,
+    "feature_ids_from_plan": [
+      "outer-plate-left",
+      "outer-plate-right",
+      "center-plate-backset",
+      "top-bridge",
+      "left-hole-top",
+      "left-hole-middle",
+      "left-hole-bottom",
+      "center-hole-top",
+      "center-hole-middle",
+      "center-hole-bottom",
+      "right-hole-top",
+      "right-hole-middle",
+      "right-hole-bottom"
+    ],
+    "nonfinite_face_count": 0,
+    "degenerate_face_count": 0,
+    "hole_features_from_plan": [
+      {
+        "feature_id": "left-hole-top",
+        "kind": "hole",
+        "operation": "cut",
+        "parameters": {
+          "diameter": 15,
+          "through": true,
+          "pos": "point",
+          "point": [
+            20,
+            0,
+            78
+          ],
+          "axis": "Y"
+        }
+      },
+      {
+        "feature_id": "left-hole-middle",
+        "kind": "hole",
+        "operation": "cut",
+        "parameters": {
+          "diameter": 9,
+          "through": true,
+          "pos": "point",
+          "point": [
+            20,
+            0,
+            50
+          ],
+          "axis": "Y"
+        }
+      },
+      {
+        "feature_id": "left-hole-bottom",
+        "kind": "hole",
+        "operation": "cut",
+        "parameters": {
+          "diameter": 15,
+          "through": true,
+          "pos": "point",
+          "point": [
+            20,
+            0,
+            22
+          ],
+          "axis": "Y"
+        }
+      },
+      {
+        "feature_id": "center-hole-top",
+        "kind": "hole",
+        "operation": "cut",
+        "parameters": {
+          "diameter": 15,
+          "through": true,
+          "pos": "point",
+          "point": [
+            70,
+            -13,
+            78
+          ],
+          "axis": "Y"
+        }
+      },
+      {
+        "feature_id": "center-hole-middle",
+        "kind": "hole",
+        "operation": "cut",
+        "parameters": {
+          "diameter": 9,
+          "through": true,
+          "pos": "point",
+          "point": [
+            70,
+            -13,
+            50
+          ],
+          "axis": "Y"
+        }
+      },
+      {
+        "feature_id": "center-hole-bottom",
+        "kind": "hole",
+        "operation": "cut",
+        "parameters": {
+          "diameter": 15,
+          "through": true,
+          "pos": "point",
+          "point": [
+            70,
+            -13,
+            22
+          ],
+          "axis": "Y"
+        }
+      },
+      {
+        "feature_id": "right-hole-top",
+        "kind": "hole",
+        "operation": "cut",
+        "parameters": {
+          "diameter": 15,
+          "through": true,
+          "pos": "point",
+          "point": [
+            120,
+            0,
+            78
+          ],
+          "axis": "Y"
+        }
+      },
+      {
+        "feature_id": "right-hole-middle",
+        "kind": "hole",
+        "operation": "cut",
+        "parameters": {
+          "diameter": 9,
+          "through": true,
+          "pos": "point",
+          "point": [
+            120,
+            0,
+            50
+          ],
+          "axis": "Y"
+        }
+      },
+      {
+        "feature_id": "right-hole-bottom",
+        "kind": "hole",
+        "operation": "cut",
+        "parameters": {
+          "diameter": 15,
+          "through": true,
+          "pos": "point",
+          "point": [
+            120,
+            0,
+            22
+          ],
+          "axis": "Y"
+        }
+      }
+    ],
+    "through_hole_mesh_checks": [
+      {
+        "feature_id": "left-hole-top",
+        "axis": "Y",
+        "center_mm": [
+          20.0,
+          0.0,
+          78.0
+        ],
+        "status": "verified_open",
+        "axis_surface_crossings": 0,
+        "surrounding_surface_crossings": [
+          2,
+          2,
+          2,
+          2
+        ],
+        "ring_supported": [
+          true,
+          true,
+          true,
+          true
+        ],
+        "method": "axis ray against local triangle mesh"
+      },
+      {
+        "feature_id": "left-hole-middle",
+        "axis": "Y",
+        "center_mm": [
+          20.0,
+          0.0,
+          50.0
+        ],
+        "status": "verified_open",
+        "axis_surface_crossings": 0,
+        "surrounding_surface_crossings": [
+          2,
+          2,
+          2,
+          2
+        ],
+        "ring_supported": [
+          true,
+          true,
+          true,
+          true
+        ],
+        "method": "axis ray against local triangle mesh"
+      },
+      {
+        "feature_id": "left-hole-bottom",
+        "axis": "Y",
+        "center_mm": [
+          20.0,
+          0.0,
+          22.0
+        ],
+        "status": "verified_open",
+        "axis_surface_crossings": 0,
+        "surrounding_surface_crossings": [
+          2,
+          2,
+          2,
+          2
+        ],
+        "ring_supported": [
+          true,
+          true,
+          true,
+          true
+        ],
+        "method": "axis ray against local triangle mesh"
+      },
+      {
+        "feature_id": "center-hole-top",
+        "axis": "Y",
+        "center_mm": [
+          70.0,
+          -13.0,
+          78.0
+        ],
+        "status": "verified_open",
+        "axis_surface_crossings": 0,
+        "surrounding_surface_crossings": [
+          2,
+          2,
+          2,
+          2
+        ],
+        "ring_supported": [
+          true,
+          true,
+          true,
+          true
+        ],
+        "method": "axis ray against local triangle mesh"
+      },
+      {
+        "feature_id": "center-hole-middle",
+        "axis": "Y",
+        "center_mm": [
+          70.0,
+          -13.0,
+          50.0
+        ],
+        "status": "verified_open",
+        "axis_surface_crossings": 0,
+        "surrounding_surface_crossings": [
+          2,
+          2,
+          2,
+          2
+        ],
+        "ring_supported": [
+          true,
+          true,
+          true,
+          true
+        ],
+        "method": "axis ray against local triangle mesh"
+      },
+      {
+        "feature_id": "center-hole-bottom",
+        "axis": "Y",
+        "center_mm": [
+          70.0,
+          -13.0,
+          22.0
+        ],
+        "status": "verified_open",
+        "axis_surface_crossings": 0,
+        "surrounding_surface_crossings": [
+          2,
+          2,
+          2,
+          2
+        ],
+        "ring_supported": [
+          true,
+          true,
+          true,
+          true
+        ],
+        "method": "axis ray against local triangle mesh"
+      },
+      {
+        "feature_id": "right-hole-top",
+        "axis": "Y",
+        "center_mm": [
+          120.0,
+          0.0,
+          78.0
+        ],
+        "status": "verified_open",
+        "axis_surface_crossings": 0,
+        "surrounding_surface_crossings": [
+          2,
+          2,
+          2,
+          2
+        ],
+        "ring_supported": [
+          true,
+          true,
+          true,
+          true
+        ],
+        "method": "axis ray against local triangle mesh"
+      },
+      {
+        "feature_id": "right-hole-middle",
+        "axis": "Y",
+        "center_mm": [
+          120.0,
+          0.0,
+          50.0
+        ],
+        "status": "verified_open",
+        "axis_surface_crossings": 0,
+        "surrounding_surface_crossings": [
+          2,
+          2,
+          2,
+          2
+        ],
+        "ring_supported": [
+          true,
+          true,
+          true,
+          true
+        ],
+        "method": "axis ray against local triangle mesh"
+      },
+      {
+        "feature_id": "right-hole-bottom",
+        "axis": "Y",
+        "center_mm": [
+          120.0,
+          0.0,
+          22.0
+        ],
+        "status": "verified_open",
+        "axis_surface_crossings": 0,
+        "surrounding_surface_crossings": [
+          2,
+          2,
+          2,
+          2
+        ],
+        "ring_supported": [
+          true,
+          true,
+          true,
+          true
+        ],
+        "method": "axis ray against local triangle mesh"
+      }
+    ],
+    "hole_visibility": "requires_multimodal_view_review",
+    "through_hole_result": "measured_for_point_holes_only"
+  },
+  "orthographic_layout": {
+    "unit": "mm",
+    "axes": {
+      "length": "X",
+      "width": "Y",
+      "height": "Z"
+    },
+    "uniform_scale_across_views": true,
+    "scale_pixels_per_mm": 1.4405405405405407,
+    "tile_size_pixels": [
+      330,
+      260
+    ],
+    "view_extents": {
+      "front": {
+        "horizontal_axis": "X",
+        "horizontal": 148.0,
+        "vertical_axis": "Z",
+        "vertical": 105.0
+      },
+      "right": {
+        "horizontal_axis": "Y",
+        "horizontal": 49.0,
+        "vertical_axis": "Z",
+        "vertical": 105.0
+      },
+      "top": {
+        "horizontal_axis": "X",
+        "horizontal": 148.0,
+        "vertical_axis": "Y",
+        "vertical": 49.0
+      }
+    },
+    "dimension_ratios": {
+      "length_to_height": 1.4095238095238096,
+      "width_to_height": 0.4666666666666667,
+      "length_to_width": 3.020408163265306
+    }
+  },
+  "preview_image": "C:\\Users\\lycohana\\Desktop\\code\\AI-_-\\artifacts\\agentloop\\subagent-method-plate-backset\\candidate-preview.png",
+  "preview_image_views": [
+    "iso",
+    "front",
+    "right",
+    "top",
+    "back",
+    "left",
+    "bottom"
+  ],
+  "preview_image_view_set": "extended",
+  "preview_image_grid_columns": 3,
+  "preview_image_source": "AI Modeler local mesh kernel; not CATIA B-Rep",
+  "preview_image_layout": {
+    "unit": "mm",
+    "axes": {
+      "length": "X",
+      "width": "Y",
+      "height": "Z"
+    },
+    "uniform_scale_across_views": true,
+    "scale_pixels_per_mm": 1.4405405405405407,
+    "tile_size_pixels": [
+      330,
+      260
+    ],
+    "view_extents": {
+      "front": {
+        "horizontal_axis": "X",
+        "horizontal": 148.0,
+        "vertical_axis": "Z",
+        "vertical": 105.0
+      },
+      "right": {
+        "horizontal_axis": "Y",
+        "horizontal": 49.0,
+        "vertical_axis": "Z",
+        "vertical": 105.0
+      },
+      "top": {
+        "horizontal_axis": "X",
+        "horizontal": 148.0,
+        "vertical_axis": "Y",
+        "vertical": 49.0
+      }
+    },
+    "dimension_ratios": {
+      "length_to_height": 1.4095238095238096,
+      "width_to_height": 0.4666666666666667,
+      "length_to_width": 3.020408163265306
+    }
+  }
+}

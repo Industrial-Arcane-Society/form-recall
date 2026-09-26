@@ -5322,7 +5322,7 @@
               "kind": {
                 "const": "crankshaft",
                 "x-catia-support-status": "approximate",
-                "x-catia-support-note": "CATIA 以圆柱主轴颈和连杆颈近似，曲柄臂形状被简化。"
+                "x-catia-support-note": "CATIA 按 X 轴布置主轴颈、交替偏置连杆颈和哑铃形曲柄臂（主轴圆 + 连杆颈圆外公切凸包），曲柄臂外形被简化。"
               },
               "operation": {
                 "type": "string",
@@ -7936,7 +7936,7 @@
     },
     "crankshaft": {
       "status": "approximate",
-      "reason": "CATIA 以圆柱主轴颈和连杆颈近似，曲柄臂形状被简化。",
+      "reason": "CATIA 按 X 轴布置主轴颈、交替偏置连杆颈和哑铃形曲柄臂（主轴圆 + 连杆颈圆外公切凸包），曲柄臂外形被简化。",
       "required_parameters": [
         "length",
         "main_d",
