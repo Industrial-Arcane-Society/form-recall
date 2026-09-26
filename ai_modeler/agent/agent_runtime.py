@@ -274,7 +274,7 @@ AGENT_TOOLS = [
     ),
     _tool(
         "cad_inspect_references",
-        "独立读取本轮原始参考图，不生成或修改 CAD。必须逐图列出每个可见平面/开口的图像区域框、实面/后退实面/背景开口状态、该区域各类特征数量和像素证据；不同平面不得合并，同一圆孔不得按颜色重复计数。程序校验区域清单后供后续建模使用。",
+        "独立读取本轮原始参考图，不生成或修改 CAD。必须逐图列出每个可见平面/开口的图像区域框、实面/后退实面/背景开口状态、该区域各类特征数量和像素证据；不同平面不得合并，同一圆孔不得按颜色重复计数。若同一图像区域被标成互斥表面状态，程序会拒绝清单并要求重新识别。",
         {"reference_reading": _REFERENCE_READING_TOOL_SCHEMA}, ["reference_reading"],
     ),
     _tool(
@@ -405,6 +405,7 @@ def _reference_region_blockers(reading, active_images=None) -> list:
     known_images = {os.path.basename(str(name)) for name in active_images or []}
     seen = set()
     holes_by_image = {}
+    bounded_regions = []
     blockers = []
     valid_surface_states = {"solid_face", "recessed_solid_face",
                             "background_opening", "unknown"}
@@ -436,6 +437,9 @@ def _reference_region_blockers(reading, active_images=None) -> list:
             and float(bounds[1]) < float(bounds[3]))
         if not valid_bounds:
             blockers.append(label + ".image_bbox_norm 必须是 [left,top,right,bottom] 的 0-1 区域框。")
+        else:
+            bounded_regions.append((image, region_id, surface_state,
+                                    tuple(float(value) for value in bounds)))
         features = region.get("features")
         if not isinstance(features, list):
             blockers.append(label + ".features 必须是数组，可用空数组表示没有可见特征。")
@@ -462,6 +466,36 @@ def _reference_region_blockers(reading, active_images=None) -> list:
             if not str(feature.get("evidence") or "").strip():
                 blockers.append(feature_label + ".evidence 必须指出数量/类别的像素证据。")
         holes_by_image[image] = holes_by_image.get(image, 0) + region_holes
+
+    # A recessed solid face and a background opening are mutually exclusive
+    # descriptions when they cover the same projected image area. Partial
+    # overlap is normal in perspective views, so only near-identical boxes are
+    # rejected; the reader must split their visible pixel regions or mark the
+    # ambiguous area unknown.
+    solid_states = {"solid_face", "recessed_solid_face"}
+    for index, first in enumerate(bounded_regions):
+        image_a, region_a, state_a, bounds_a = first
+        for image_b, region_b, state_b, bounds_b in bounded_regions[index + 1:]:
+            if image_a != image_b or region_a == region_b:
+                continue
+            if not ((state_a in solid_states and state_b == "background_opening")
+                    or (state_b in solid_states and state_a == "background_opening")):
+                continue
+            left = max(bounds_a[0], bounds_b[0])
+            top = max(bounds_a[1], bounds_b[1])
+            right = min(bounds_a[2], bounds_b[2])
+            bottom = min(bounds_a[3], bounds_b[3])
+            intersection = max(0.0, right - left) * max(0.0, bottom - top)
+            area_a = (bounds_a[2] - bounds_a[0]) * (bounds_a[3] - bounds_a[1])
+            area_b = (bounds_b[2] - bounds_b[0]) * (bounds_b[3] - bounds_b[1])
+            union = area_a + area_b - intersection
+            iou = intersection / union if union > 0 else 0.0
+            if iou >= 0.90:
+                blockers.append(
+                    "参考图 %s 的区域 %s（%s）与 %s（%s）区域框几乎重合，"
+                    "但一个标为实体面、另一个标为背景开口；请按可见边界拆分两块区域，"
+                    "或将无法判定的区域标为 unknown 后再建模。"
+                    % (image_a, region_a, state_a, region_b, state_b))
 
     missing_images = known_images - set(holes_by_image.keys())
     for image in sorted(missing_images):

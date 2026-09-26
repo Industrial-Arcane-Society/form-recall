@@ -1392,6 +1392,51 @@ class IncrementalAgentTests(unittest.TestCase):
         self.assertEqual(9, agent_runtime._reference_hole_quantity(
             state["reference_reading"]))
 
+    def test_reference_regions_reject_conflicting_surface_states_on_same_pixels(self):
+        reading = _reading_with_regions()
+        center = next(row for row in reading["visible_regions"]
+                      if row["id"] == "center")
+        reading["visible_regions"].append({
+            "image": center["image"],
+            "id": "center-opening",
+            "region": "central opening",
+            "surface_state": "background_opening",
+            "image_bbox_norm": list(center["image_bbox_norm"]),
+            "evidence": "same central pixels described as an opening",
+            "features": [],
+        })
+
+        state = {"has_reference_images": True,
+                 "active_reference_images": ["reference.png"]}
+        result = agent_runtime._inspect_references(
+            {"reference_reading": reading}, state)
+
+        self.assertEqual("invalid_reference_reading", result["state"])
+        self.assertTrue(any(
+            "区域框几乎重合" in blocker
+            for blocker in result["reference_reading_blockers"]))
+        self.assertNotIn("reference_reading", state)
+
+    def test_reference_regions_allow_partial_projection_overlap(self):
+        reading = _reading_with_regions()
+        center = next(row for row in reading["visible_regions"]
+                      if row["id"] == "center")
+        reading["visible_regions"].append({
+            "image": center["image"],
+            "id": "center-mouth",
+            "region": "visible front lip around recessed face",
+            "surface_state": "background_opening",
+            "image_bbox_norm": [0.32, 0.18, 0.52, 0.92],
+            "evidence": "the lip is visible around the smaller recessed floor",
+            "features": [],
+        })
+
+        blockers = agent_runtime._reference_region_blockers(
+            reading, ["reference.png"])
+
+        self.assertFalse(any("区域框几乎重合" in blocker for blocker in blockers),
+                         blockers)
+
     def test_reference_inventory_is_generic_and_preserves_uncertainty(self):
         """Reading does not require slot-specific opening counts or axis claims."""
         reading = self._reading()
