@@ -1,0 +1,18 @@
+{
+  "session_id": "ai-modeler-replica-0857e758-r13",
+  "state": "interrupted_nonconvergent",
+  "finished": false,
+  "final_revision": 7,
+  "feature_count": 3,
+  "bbox_mm": [22.5, 22.5, 73.0],
+  "local_geometry_validation": "passed",
+  "catia_executed": false,
+  "same_revision_review_scores": {
+    "1": {"iso": 72.0, "front": 82.0, "top": 55.0, "bottom": 55.0},
+    "3": {"iso": 72.0, "front": 82.0, "top": 72.0, "bottom": 55.0},
+    "4": {"iso": 55.0, "front": 79.9},
+    "6": {"iso": 72.0, "front": 79.9, "top": 55.0, "bottom": 55.0},
+    "7": {"top": 55.0}
+  },
+  "stagnation_evidence": "Revisions 3, 5, and 7 returned to the same flange profile; revisions 4 and 6 alternated to other offsets without passing the four-view review gate."
+}
