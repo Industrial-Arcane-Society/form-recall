@@ -10,6 +10,7 @@ import base64
 import hashlib
 import json
 import io
+import math
 import os
 import queue
 import re
@@ -335,6 +336,58 @@ def _read_image(path_value: str) -> dict[str, str]:
             "mimeType": mime}
 
 
+def _build_reference_contact_sheet(image_paths, session_dir: Path) -> Path:
+    """Bundle multiple reference views into one clearly labeled DSH image.
+
+    Some vision-model routes behave inconsistently when a DSH message contains
+    multiple image blocks. A contact sheet makes every supplied view visible in
+    the same image while the CAD MCP server retains the original paths for
+    independent, per-view multimodal reviews.
+    """
+    from PIL import Image, ImageDraw, ImageFont
+
+    count = len(image_paths)
+    columns = 2
+    rows = int(math.ceil(count / columns))
+    max_cell_pixels = max(384, min(1800, int(math.sqrt(12_000_000 / (columns * rows)))))
+    gap = 16
+    label_height = 40
+    images = []
+    for path_value in image_paths:
+        block = _read_image(str(path_value))
+        data = base64.b64decode(block["data"])
+        with Image.open(io.BytesIO(data)) as opened:
+            image = opened.convert("RGB")
+            image.thumbnail((max_cell_pixels, max_cell_pixels), Image.Resampling.LANCZOS)
+            images.append(image.copy())
+
+    cell_width = max(image.width for image in images)
+    cell_height = max(image.height for image in images)
+    sheet_width = columns * cell_width + (columns + 1) * gap
+    sheet_height = rows * (cell_height + label_height) + (rows + 1) * gap
+    sheet = Image.new("RGB", (sheet_width, sheet_height), (239, 242, 247))
+    draw = ImageDraw.Draw(sheet)
+    font = ImageFont.load_default()
+    for index, image in enumerate(images):
+        row, column = divmod(index, columns)
+        left = gap + column * (cell_width + gap)
+        top = gap + row * (cell_height + label_height + gap)
+        draw.rounded_rectangle(
+            (left, top, left + cell_width, top + label_height + cell_height),
+            radius=8, fill=(255, 255, 255), outline=(185, 194, 208), width=2,
+        )
+        draw.text((left + 12, top + 13), f"REFERENCE {index + 1}",
+                  fill=(25, 42, 65), font=font)
+        image_left = left + (cell_width - image.width) // 2
+        image_top = top + label_height + (cell_height - image.height) // 2
+        sheet.paste(image, (image_left, image_top))
+
+    session_dir.mkdir(parents=True, exist_ok=True)
+    output = session_dir / "reference-contact-sheet.png"
+    sheet.save(output, format="PNG", optimize=True)
+    return output
+
+
 def _seed_state(session_dir: Path, prompt: str, current_plan, current_document) -> None:
     state_path = session_dir / "cad-state.json"
     if state_path.exists():
@@ -603,11 +656,32 @@ def run_dsh_agent(prompt: str, image_paths=None, cfg=None, session_id=None,
     _write_json(state_path, state)
 
     harness = _runtime_for(session_id, llm_cfg, session_dir, image_paths)
+    contact_sheet_path = None
+    if len(image_paths) > 1:
+        contact_sheet_path = _build_reference_contact_sheet(image_paths, session_dir)
+        input_image_paths = [str(contact_sheet_path)]
+    else:
+        input_image_paths = image_paths
+
     blocks = [{"type": "text", "text": str(prompt or "请根据参考图建立模型。")}]
-    for index, image_path in enumerate(image_paths, 1):
-        blocks.append({"type": "text", "text": "参考图 %d：%s" %
-                       (index, Path(image_path).name)})
-        blocks.append(_read_image(image_path))
+    if contact_sheet_path:
+        labels = ", ".join(
+            "REFERENCE %d=%s" % (index, Path(path).name)
+            for index, path in enumerate(image_paths, 1)
+        )
+        blocks.append({
+            "type": "text",
+            "text": (
+                "多张用户原图已排成一张标号参考视图拼版；每格保留原图比例且未裁切。"
+                "请逐格观察，并把每格当作独立视角；面板对应关系：%s。"
+            ) % labels,
+        })
+        blocks.append(_read_image(str(contact_sheet_path)))
+    else:
+        for index, image_path in enumerate(image_paths, 1):
+            blocks.append({"type": "text", "text": "参考图 %d：%s" %
+                           (index, Path(image_path).name)})
+            blocks.append(_read_image(image_path))
 
     if progress:
         progress("正在启动 DSH SDK 多模态 Agent 会话。")
@@ -737,6 +811,7 @@ def run_dsh_agent(prompt: str, image_paths=None, cfg=None, session_id=None,
     preview_calls = sum(1 for item in turn_actions if item.get("tool") == "cad_preview_model")
     review_rounds = sum(1 for item in turn_actions if item.get("tool") == "cad_record_visual_review")
     output_paths = final_state.get("output_paths") or {}
+    input_image_parts = len(input_image_paths)
     validation = cadplan.validate_plan(plan) if isinstance(plan, dict) else None
     events = getattr(result, "events", []) if result is not None else []
     model_call_count = sum(1 for event in events
@@ -765,9 +840,13 @@ def run_dsh_agent(prompt: str, image_paths=None, cfg=None, session_id=None,
             "reasoning_effort": _effort(llm_cfg),
             "provider": "ai-modeler",
             "model": llm_cfg.get("model"),
-            "image_parts_in_request": len(image_paths),
+            "image_parts_in_request": input_image_parts,
+            "reference_image_count": len(image_paths),
+            "image_input_mode": "contact_sheet" if contact_sheet_path else "individual",
         } for _ in range(model_call_count)] if model_call_count else [],
-        "image_parts_in_request": len(image_paths),
+        "image_parts_in_request": input_image_parts,
+        "reference_image_count": len(image_paths),
+        "image_input_mode": "contact_sheet" if contact_sheet_path else "individual",
         "llm_usage": {},
         "routing": {"action": "dsh_agent", "review_mode":
                     "multimodal" if image_paths else "local_geometry"},

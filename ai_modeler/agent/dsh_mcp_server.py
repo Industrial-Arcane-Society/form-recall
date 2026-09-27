@@ -287,6 +287,7 @@ def _load() -> dict[str, Any]:
             "visual_review": None, "visual_reviews": {},
             "reference_similarity_review": None,
             "reference_similarity_reviews": {},
+            "reference_similarity_history": [],
             "reference_similarity_attempts": [],
             "reference_similarity_error": None,
             "unresolved_findings": [], "has_references": _HAS_REFERENCES,
@@ -303,6 +304,7 @@ def _load() -> dict[str, Any]:
             value.setdefault("visual_reviews", {})
             value.setdefault("reference_similarity_review", None)
             value.setdefault("reference_similarity_reviews", {})
+            value.setdefault("reference_similarity_history", [])
             value.setdefault("reference_similarity_attempts", [])
             value.setdefault("reference_similarity_error", None)
             return value
@@ -428,6 +430,13 @@ def _summary(state: dict[str, Any]) -> dict[str, Any]:
         (state.get("reference_similarity_reviews") or {}).items()
         if isinstance(review, dict) and review.get("revision") == state.get("revision")
     }
+    result["recent_reference_similarity_history"] = [
+        {key: review.get(key) for key in (
+            "revision", "preview_generation", "view", "score",
+            "passes_threshold", "summary", "evidence", "unobservable")}
+        for review in (state.get("reference_similarity_history") or [])[-6:]
+        if isinstance(review, dict)
+    ]
     result["reference_similarity_error"] = state.get("reference_similarity_error")
     return result
 
@@ -546,9 +555,12 @@ def _reference_similarity_review(state: dict[str, Any], view: str,
         "text": (
             "先逐张判断原始参考图各自的视角，再查看最后一张当前 CAD 模型渲染图。"
             "参考图可能是同一零件的不同视角，不要把不同视角的孔重复相加；"
+            "先从这些图像本身识别零件类型、主要结构和各视角，再按可见证据比较外形比例、"
+            "轮廓、表面台阶/凹凸、孔或其它特征的位置与数量。不要预设某类零件、凹槽、"
+            "孔阵列、圆头、尖头或其它特征必须存在；只有原图或用户明确描述支持时才评价该特征。"
             "只将视角可比较的轮廓用于比例判断，不能匹配的投影属性标为不可观测。"
-            "按可见证据比较外形比例、正面中间退台的位置和方向、孔数量/列行/孔径、"
-            "凹入面的孔是否仍位于同一平行正面。不要猜测被遮挡结构或真实贯穿；"
+            "孔数只统计参考图能确认的唯一孔；看不清或图中没有可见孔时 reference_hole_count 为 null。"
+            "不要猜测被遮挡结构或真实贯穿；"
             "只评价图中能支持的结论。若一个特征被当前视角遮挡，标为 unknown/unobservable，"
             "不得断言几何中缺失；应换成能看到该面的单视图复核。模型图与参考图投影不同时，"
             "不要因相机角度不同单独惩罚几何，只比较该视图可见的结构证据。"
@@ -556,9 +568,11 @@ def _reference_similarity_review(state: dict[str, Any], view: str,
             "唯一孔数；不能确认时为 null), count_confidence(0-1), evidence(数组，"
             "每项含 item/reference/model/status/mismatch_severity/suggested_change),"
             "unobservable(数组)。分数按主要轮廓比例、退台拓扑和可见孔布局综合评估；"
-            "存在核心拓扑/孔布局差异时不得给 80 分以上。本轮评审视角为 %s："
-            "front 重点看正面宽高比例、3×3孔位与孔径；iso 重点看整体厚度、"
-            "中央有限深度退台及其与主体前后的关系。只返回 JSON，不要输出思考过程。"
+            "存在有图像证据支持的核心拓扑差异时不得给 80 分以上。评分只基于当前这组"
+            "参考图片与当前预览，不得把其它任务的零件特征或示例要求带入本轮。"
+            "本轮评审视角为 %s：比较该视角实际可见的外形、比例与特征；"
+            "iso 适合判断整体三维关系，正交视图适合判断投影轮廓与可见细节。"
+            "只返回 JSON，不要输出思考过程。"
         ) % view,
     }]
     for index, image_path in enumerate(_REFERENCE_IMAGES, 1):
@@ -661,6 +675,9 @@ def _reference_similarity_review(state: dict[str, Any], view: str,
     }
     state["reference_similarity_review"] = result
     state.setdefault("reference_similarity_reviews", {})[view] = result
+    history = state.setdefault("reference_similarity_history", [])
+    history.append(result)
+    state["reference_similarity_history"] = history[-64:]
     state["reference_similarity_error"] = None
     _record(state, "cad_review_reference_similarity",
             view=view, preview_generation=preview_generation,
@@ -791,6 +808,7 @@ def _export_candidate(state: dict[str, Any], summary: str) -> dict[str, str]:
         "visual_review": state.get("visual_review"),
         "visual_reviews": state.get("visual_reviews") or {},
         "reference_similarity_reviews": state.get("reference_similarity_reviews") or {},
+        "reference_similarity_history": state.get("reference_similarity_history") or [],
         "reference_similarity_threshold": 80,
         "local_geometry_checks": (state.get("last_preview") or {}).get(
             "local_geometry_checks"),
