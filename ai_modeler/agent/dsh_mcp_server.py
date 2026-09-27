@@ -221,13 +221,17 @@ TOOLS = [
     {
         "name": "cad_review_reference_similarity",
         "description": (
-            "用一个不共享本轮建模对话上下文的多模态审查请求，将原始参考图与当前预览实际发给视觉模型，"
-            "返回0-100几何相似度、逐项证据和差异。不能自行编造或代填分数；低于80必须返修并重新预览复核。"
+            "用一个不共享本轮建模对话上下文的多模态审查请求，只将指定的一张原始参考图与同视角的当前预览发给视觉模型，"
+            "返回0-100几何相似度、逐项证据和差异。必须用 reference_image_index 选择拼版中匹配的原图面板；"
+            "不能自行编造或代填分数；低于80必须返修并重新预览复核。"
         ),
         "inputSchema": {"type": "object", "properties": {
             "view": {"type": "string", "enum": ["iso", "front", "right", "top", "back", "left", "bottom", "three", "extended"]},
             "preview_generation": {"type": "integer", "minimum": 1},
-        }, "required": ["view", "preview_generation"], "additionalProperties": False},
+            "reference_image_index": {"type": "integer", "minimum": 1,
+                                       "description": "拼版中与 view 对应的原始参考图编号，从 1 开始。"},
+        }, "required": ["view", "preview_generation", "reference_image_index"],
+           "additionalProperties": False},
     },
     {
         "name": "cad_record_visual_review",
@@ -255,7 +259,7 @@ TOOLS = [
     },
     {
         "name": "cad_finish_model",
-        "description": "保存当前 CADPlan、STL、预览和几何报告。要求当前版本本地几何核验通过；带参考图时还必须对最新预览执行独立多模态复核且分数至少 80/100，声明的孔须全部测得贯穿。未达门槛必须先返修，不得自我确认完成。",
+        "description": "保存当前 CADPlan、STL、预览和几何报告。要求当前版本本地几何核验通过；带多张参考图时每张原图都须在当前版本单独与匹配视角预览复核且至少 80/100，并满足必需视图检查；声明的孔须全部测得贯穿。未达门槛必须先返修，不得自我确认完成。",
         "inputSchema": {"type": "object", "properties": {
             "summary": {"type": "string"},
             "unresolved_acknowledgement": {"type": "array", "items": {"type": "string"}},
@@ -416,6 +420,11 @@ def _summary(state: dict[str, Any]) -> dict[str, Any]:
         for row in state.get("previews", [])
         if isinstance(row, dict) and row.get("revision") == state.get("revision")
     ]
+    result["reference_images"] = [
+        {"index": index, "name": Path(str(image_path)).name}
+        for index, image_path in enumerate(_REFERENCE_IMAGES, 1)
+        if Path(str(image_path)).is_file()
+    ]
     result["reviewed_views"] = sorted(
         view for view, review in (state.get("visual_reviews") or {}).items()
         if isinstance(review, dict) and review.get("revision") == state.get("revision")
@@ -432,7 +441,8 @@ def _summary(state: dict[str, Any]) -> dict[str, Any]:
     }
     result["recent_reference_similarity_history"] = [
         {key: review.get(key) for key in (
-            "revision", "preview_generation", "view", "score",
+            "revision", "preview_generation", "view", "reference_image_index",
+            "reference_image_name", "score",
             "passes_threshold", "summary", "evidence", "unobservable")}
         for review in (state.get("reference_similarity_history") or [])[-6:]
         if isinstance(review, dict)
@@ -520,7 +530,8 @@ def _required_reference_views(plan: dict[str, Any]) -> list[str]:
 
 
 def _reference_similarity_review(state: dict[str, Any], view: str,
-                                 preview_generation: int) -> dict[str, Any]:
+                                 preview_generation: int,
+                                 reference_image_index: int) -> dict[str, Any]:
     """Run a fresh multimodal comparison against the current preview.
 
     This intentionally receives only the reference images and the selected
@@ -529,6 +540,14 @@ def _reference_similarity_review(state: dict[str, Any], view: str,
     """
     if not _HAS_REFERENCES or not _REFERENCE_IMAGES:
         raise ValueError("本轮没有可读取的原始参考图，无法执行多模态相似度复核。")
+    if isinstance(reference_image_index, bool) or not isinstance(reference_image_index, int):
+        raise ValueError("reference_image_index 必须是从 1 开始的整数。")
+    if reference_image_index < 1 or reference_image_index > len(_REFERENCE_IMAGES):
+        raise ValueError("reference_image_index=%s 超出本轮 %d 张原始参考图范围。" %
+                         (reference_image_index, len(_REFERENCE_IMAGES)))
+    selected_reference = Path(_REFERENCE_IMAGES[reference_image_index - 1])
+    if not selected_reference.is_file():
+        raise ValueError("所选原始参考图不存在，无法复核：%s" % selected_reference.name)
     current_revision = state.get("revision")
     if (not state.get("last_preview") or
             state.get("preview_revision") != current_revision):
@@ -553,34 +572,33 @@ def _reference_similarity_review(state: dict[str, Any], view: str,
     parts = [{
         "type": "text",
         "text": (
-            "先逐张判断原始参考图各自的视角，再查看最后一张当前 CAD 模型渲染图。"
-            "参考图可能是同一零件的不同视角，不要把不同视角的孔重复相加；"
-            "先从这些图像本身识别零件类型、主要结构和各视角，再按可见证据比较外形比例、"
+            "本请求只包含一张原始参考视图和一张当前 CAD 模型渲染图。所选原图编号为 %d（%s），"
+            "模型预览视角为 %s。只比较这两张图中当前投影确实可见的证据；"
+            "不要推断其它视角、不要把不同视角的结构补入本图，也不要据此判断被遮挡面。"
+            "按可见证据比较外形比例、"
             "轮廓、表面台阶/凹凸、孔或其它特征的位置与数量。不要预设某类零件、凹槽、"
             "孔阵列、圆头、尖头或其它特征必须存在；只有原图或用户明确描述支持时才评价该特征。"
-            "只将视角可比较的轮廓用于比例判断，不能匹配的投影属性标为不可观测。"
-            "孔数只统计参考图能确认的唯一孔；看不清或图中没有可见孔时 reference_hole_count 为 null。"
+            "只将当前视角可比较的轮廓用于比例判断。孔数只统计这张原图能确认的孔；"
+            "看不清或图中没有可见孔时 reference_hole_count 为 null。"
             "不要猜测被遮挡结构或真实贯穿；"
             "只评价图中能支持的结论。若一个特征被当前视角遮挡，标为 unknown/unobservable，"
-            "不得断言几何中缺失；应换成能看到该面的单视图复核。模型图与参考图投影不同时，"
-            "不要因相机角度不同单独惩罚几何，只比较该视图可见的结构证据。"
+            "不得断言几何中缺失；模型图与参考图投影不同时，只比较本视图可见的结构证据。"
             "返回 JSON 对象：score(0-100), summary, reference_hole_count(可确认的"
             "唯一孔数；不能确认时为 null), count_confidence(0-1), evidence(数组，"
             "每项含 item/reference/model/status/mismatch_severity/suggested_change),"
             "unobservable(数组)。分数按主要轮廓比例、退台拓扑和可见孔布局综合评估；"
             "存在有图像证据支持的核心拓扑差异时不得给 80 分以上。评分只基于当前这组"
             "参考图片与当前预览，不得把其它任务的零件特征或示例要求带入本轮。"
-            "本轮评审视角为 %s：比较该视角实际可见的外形、比例与特征；"
-            "iso 适合判断整体三维关系，正交视图适合判断投影轮廓与可见细节。"
+            "本轮评审视角为 %s：比较该视角实际可见的外形、比例与特征。"
             "只返回 JSON，不要输出思考过程。"
-        ) % view,
+        ) % (reference_image_index, selected_reference.name, view, view),
     }]
-    for index, image_path in enumerate(_REFERENCE_IMAGES, 1):
-        path = Path(image_path)
-        if not path.is_file():
-            raise ValueError("参考图 %d 不存在，无法复核。" % index)
-        parts.append({"type": "text", "text": "原始参考图 %d。" % index})
-        parts.append(llm.image_content_part(str(path)))
+    parts.append({
+        "type": "text",
+        "text": "唯一的原始参考图：%d / %d。" %
+                (reference_image_index, len(_REFERENCE_IMAGES)),
+    })
+    parts.append(llm.image_content_part(str(selected_reference)))
     parts.append({"type": "text", "text": "当前模型预览，视角：%s。" % view})
     parts.append(llm.image_content_part(str(preview_path)))
     messages = [
@@ -659,6 +677,9 @@ def _reference_similarity_review(state: dict[str, Any], view: str,
         "revision": current_revision,
         "preview_generation": preview_generation,
         "view": view,
+        "reference_image_index": reference_image_index,
+        "reference_image_name": selected_reference.name,
+        "reference_images_in_request": 1,
         "score": round(score, 1),
         "threshold": 80,
         "passes_threshold": score >= 80,
@@ -670,7 +691,7 @@ def _reference_similarity_review(state: dict[str, Any], view: str,
                           for value in unobservable[:30]
                           if str(value).strip()],
         "review_model": str(_REVIEW_LLM_CFG.get("model") or ""),
-        "method": "fresh multimodal request with reference images and current preview",
+        "method": "fresh multimodal request with one selected reference view and current preview",
         "recorded_at": time.time(),
     }
     state["reference_similarity_review"] = result
@@ -1123,6 +1144,9 @@ def _handle_tool(name: str, args: dict[str, Any]) -> dict[str, Any]:
         except (TypeError, ValueError) as exc:
             raise ValueError("preview_generation 必须是当前预览的整数版本号。") from exc
         view = str(args.get("view") or "").strip().lower()
+        reference_image_index = args.get("reference_image_index")
+        if isinstance(reference_image_index, bool) or not isinstance(reference_image_index, int):
+            raise ValueError("必须提供 reference_image_index，选择与当前视角匹配的原始图。")
         revision = state.get("revision")
         attempts = state.setdefault("reference_similarity_attempts", [])
         attempt_count = sum(
@@ -1134,12 +1158,14 @@ def _handle_tool(name: str, args: dict[str, Any]) -> dict[str, Any]:
                 ("当前几何版本的 %s 视图多模态复核已失败三次，已停止该视图的自动重试以免空转。"
                  "请检查图像 API 并在新一轮请求中重试。") % view)
         attempt = {"revision": revision, "preview_generation": generation,
-                   "view": view, "started_at": time.time(), "failed": False}
+                   "view": view, "reference_image_index": reference_image_index,
+                   "started_at": time.time(), "failed": False}
         attempts.append(attempt)
         state["reference_similarity_attempts"] = attempts[-40:]
         _save(state)
         try:
-            result = _reference_similarity_review(state, view, generation)
+            result = _reference_similarity_review(
+                state, view, generation, reference_image_index)
         except Exception as exc:
             error = str(exc).replace(str(_REVIEW_LLM_CFG.get("api_key") or ""),
                                      "[redacted]")[:1200]
@@ -1260,11 +1286,43 @@ def _handle_tool(name: str, args: dict[str, Any]) -> dict[str, Any]:
             if missing:
                 raise ValueError("带参考图的模型必须分别复核当前几何版本的视图：%s。每个视图保留独立预览后再审。" %
                                  ", ".join(missing))
+            current_reviews_by_pair = {}
+            for row in state.get("reference_similarity_history") or []:
+                if (not isinstance(row, dict)
+                        or row.get("revision") != state.get("revision")):
+                    continue
+                image_index = row.get("reference_image_index")
+                review_view = str(row.get("view") or "")
+                if (isinstance(image_index, bool)
+                        or not isinstance(image_index, int)
+                        or not 1 <= image_index <= len(_REFERENCE_IMAGES)):
+                    continue
+                current_reviews_by_pair[(review_view, image_index)] = row
+            reviewed_images = {image_index for _, image_index in current_reviews_by_pair}
+            missing_images = [index for index in range(1, len(_REFERENCE_IMAGES) + 1)
+                              if index not in reviewed_images]
+            if missing_images:
+                raise ValueError(
+                    "当前几何版本尚未逐张复核全部 %d 张参考图；缺少原图编号：%s。"
+                    "每次只将一个匹配的原图编号与同视角模型预览一起复核。" %
+                    (len(_REFERENCE_IMAGES), ", ".join(map(str, missing_images))))
+            orthographic_views = {"front", "right", "back", "left", "top", "bottom"}
+            if (len(_REFERENCE_IMAGES) > 1 and not any(
+                    view in orthographic_views
+                    for view, _ in current_reviews_by_pair)):
+                raise ValueError(
+                    "多图复刻至少需要一个当前几何版本的正交单视图复核。")
             below_threshold = [
                 "%s=%.1f" % (view, float(view_reviews[view].get("score", 0)))
                 for view in required_views
                 if float(view_reviews[view].get("score", 0)) < 80
             ]
+            below_threshold.extend(
+                "原图%d/%s=%.1f" %
+                (image_index, view, float(review.get("score", 0)))
+                for (view, image_index), review in current_reviews_by_pair.items()
+                if float(review.get("score", 0)) < 80
+            )
             if below_threshold:
                 raise ValueError("当前必需视图的多模态相似度未全部达到 80：%s。按各视图 evidence 返修后重新预览和复核。" %
                                  ", ".join(below_threshold))
