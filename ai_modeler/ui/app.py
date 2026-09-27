@@ -157,6 +157,10 @@ class App(tk.Tk):
         except Exception:
             pass
         self.cfg = cfgmod.load()
+        self._modeling_mode = str(self.cfg.get('modeling_mode') or 'agent').strip().lower()
+        if self._modeling_mode not in {'quick', 'agent'}:
+            self._modeling_mode = 'agent'
+        self._mode_switch_buttons = []
         self.doc = DM.Document('Part1')
         self.current_path = None
         self._q = None
@@ -189,10 +193,7 @@ class App(tk.Tk):
         self._build_menu()
         self._build_toolbar()
         self._build_layout()
-        self._append_chat(
-            'assistant',
-            '可以连续讨论当前模型、提出修改，或开始新建。图片和文字会一起发送；'
-            '建模阶段、工具活动和预览会直接出现在本对话中。模型只在本地视口展示，不会自动同步 CATIA。')
+        self._append_chat('assistant', self._mode_welcome_message())
         self._build_status()
         self.protocol('WM_DELETE_WINDOW', self.on_close)
 
@@ -373,6 +374,26 @@ class App(tk.Tk):
         self.cmb_sample.pack(side='right', padx=(5, 0))
         self.cmb_sample.bind('<<ComboboxSelected>>', self._on_sample)
 
+        # The two modeling routes are explicit UI modes. The model viewport and
+        # feature tree stay shared; only the conversation page's execution route
+        # changes.
+        self.mode_switch = tk.Frame(left, bg=TH.BORDER, bd=0)
+        self.mode_switch.pack(fill='x', padx=12, pady=(0, 8))
+        mode_inner = tk.Frame(self.mode_switch, bg=TH.PANEL_ALT, bd=0)
+        mode_inner.pack(fill='x', padx=1, pady=1)
+        self.btn_quick_mode = ttk.Button(
+            mode_inner, text='⚡ 快速模式', command=lambda: self._switch_modeling_mode('quick'))
+        self.btn_quick_mode.pack(side='left', fill='x', expand=True, padx=(1, 2), pady=1)
+        self.btn_agent_mode = ttk.Button(
+            mode_inner, text='✦ Agent 创造模式', command=lambda: self._switch_modeling_mode('agent'))
+        self.btn_agent_mode.pack(side='left', fill='x', expand=True, padx=(2, 1), pady=1)
+        self._mode_switch_buttons = [self.btn_quick_mode, self.btn_agent_mode]
+        self.lbl_mode_description = tk.Label(
+            left, text='', bg=TH.PANEL, fg=TH.TEXT_MUTE,
+            font=TH.F['small'], anchor='w')
+        self.lbl_mode_description.pack(fill='x', padx=13, pady=(0, 6))
+        self._refresh_modeling_mode_switch()
+
         history_wrap = tk.Frame(left, bg=TH.PANEL)
         history_wrap.pack(fill='both', expand=True, padx=12, pady=(0, 7))
         self.chat_canvas = tk.Canvas(
@@ -440,7 +461,7 @@ class App(tk.Tk):
             insertbackground=TH.ACCENT, padx=13, pady=10,
             selectbackground=TH.ACCENT_SOFT, selectforeground=TH.ACCENT_DK, undo=True)
         self.txt.pack(fill='x', padx=4, pady=(6, 4))
-        self._input_placeholder = '描述要建的零件，或直接粘贴参考图片…'
+        self._input_placeholder = self._mode_input_placeholder()
         self._input_placeholder_active = False
         self._restore_prompt_placeholder()
         self.txt.bind('<FocusIn>', self._clear_prompt_placeholder)
@@ -478,6 +499,7 @@ class App(tk.Tk):
             composer_footer, text=self._model_button_text(), style='Ghost.TButton',
             command=self.show_llm_config)
         self.btn_model.pack(side='right')
+        self._refresh_modeling_mode_switch()
 
         TH.hairline(left)
 
@@ -948,6 +970,8 @@ class App(tk.Tk):
         self._update_reference_label()
 
     def _model_button_text(self):
+        if getattr(self, '_modeling_mode', 'agent') == 'quick':
+            return '⚡ 本地规则 ▾'
         llmcfg = self.cfg.get('llm', {}) if isinstance(self.cfg.get('llm'), dict) else {}
         if llmcfg.get('enabled'):
             from ai_modeler.agent import providers
@@ -1039,7 +1063,7 @@ class App(tk.Tk):
         self._hide_chat_activity()
         self._append_chat(
             'assistant',
-            '新对话已开始。可以描述零件、粘贴一张或多张参考图，也可以继续逐步修改模型。')
+            self._mode_welcome_message(new_chat=True))
         self._set_prompt_text('')
         self.clear_features()
 
@@ -1055,6 +1079,67 @@ class App(tk.Tk):
             if label == name:
                 self.load_sample(prompt)
                 break
+
+    def _refresh_modeling_mode_switch(self):
+        selected = getattr(self, '_modeling_mode', 'agent')
+        if hasattr(self, 'btn_quick_mode'):
+            self.btn_quick_mode.configure(
+                style='Accent.TButton' if selected == 'quick' else 'Ghost.TButton')
+        if hasattr(self, 'btn_agent_mode'):
+            self.btn_agent_mode.configure(
+                style='Accent.TButton' if selected == 'agent' else 'Ghost.TButton')
+        if hasattr(self, 'lbl_mode_description'):
+            self.lbl_mode_description.configure(text=(
+                '内置规则 · 本地快速建模 · 文字输入'
+                if selected == 'quick' else
+                'DSH 多模态 Agent · 支持参考图、工具调用与连续修改'))
+        if hasattr(self, 'txt'):
+            self._input_placeholder = self._mode_input_placeholder()
+            if getattr(self, '_input_placeholder_active', False):
+                self.txt.delete('1.0', 'end')
+                self.txt.insert('1.0', self._input_placeholder)
+                self.txt.configure(fg=TH.TEXT_MUTE)
+        if hasattr(self, 'btn_model'):
+            self.btn_model.configure(text=self._model_button_text())
+
+    def _mode_input_placeholder(self):
+        if getattr(self, '_modeling_mode', 'agent') == 'quick':
+            return '快速模式：输入文字描述；参考图请切换到 Agent 创造模式…'
+        return '描述要建的零件，或直接粘贴参考图片…'
+
+    def _mode_welcome_message(self, new_chat=False):
+        prefix = '新对话已开始。' if new_chat else ''
+        if getattr(self, '_modeling_mode', 'agent') == 'quick':
+            return (prefix + '快速模式使用原有内置规则解析并本地建模，不调用 LLM。'
+                    '请输入文字描述；图片建模请切换到 Agent 创造模式。')
+        return (prefix + 'Agent 创造模式由 DSH 处理文字和参考图，支持连续修改、'
+                '工具调用与模型预览。')
+
+    def _set_modeling_mode_controls_enabled(self, enabled):
+        state = 'normal' if enabled else 'disabled'
+        for button in getattr(self, '_mode_switch_buttons', []):
+            try:
+                button.configure(state=state)
+            except Exception:
+                pass
+
+    def _switch_modeling_mode(self, mode):
+        mode = str(mode or '').strip().lower()
+        if mode not in {'quick', 'agent'} or self._busy:
+            return
+        if self._modeling_mode == mode:
+            return
+        self._modeling_mode = mode
+        self.cfg['modeling_mode'] = mode
+        self._refresh_modeling_mode_switch()
+        try:
+            cfgmod.save(self.cfg)
+        except Exception as exc:
+            self.log('保存建模模式失败: %s' % exc)
+        if mode == 'quick':
+            self.status('已切换到快速模式：使用原有内置规则，不调用 LLM。')
+        else:
+            self.status('已切换到 Agent 创造模式：由 DSH Agent 处理文字和参考图。')
 
     def load_sample(self, prompt: str):
         self._set_prompt_text(prompt)
@@ -1080,11 +1165,48 @@ class App(tk.Tk):
             self.status('输入文字或添加参考图片后发送', TH.WARN)
             return
         llmcfg = self.cfg.get('llm', {}) if isinstance(self.cfg.get('llm'), dict) else {}
+        mode = getattr(self, '_modeling_mode', 'agent')
+        if mode == 'quick' and images:
+            self._append_chat(
+                'assistant',
+                '快速模式只处理文字，参考图片仍保留在输入区；切换到「Agent 创造模式」后再发送。')
+            self.status('快速模式不支持图片输入', TH.WARN)
+            return
+        profile = {}
+        try:
+            from ai_modeler.agent import providers
+            profile = providers.active_profile(llmcfg) or {}
+        except Exception:
+            pass
+        effective_llm = profile or llmcfg
+        llm_ready = bool(
+            llmcfg.get('enabled') and
+            all(str(effective_llm.get(key) or '').strip()
+                for key in ('base_url', 'model', 'api_key')))
+        if mode == 'agent' and not llm_ready:
+            if llmcfg.get('enabled'):
+                reason = '大模型已启用，但当前供应商的接口地址、模型名称或 API Key 不完整。'
+            else:
+                reason = 'Agent 创造模式需要启用并配置支持 tools 的大模型。'
+            self._append_chat(
+                'assistant',
+                reason + ' 输入内容仍保留；请检查「工具 → AI 大模型设置」，或切换到「快速模式」。')
+            self.status('Agent 创造模式尚未配置 LLM', TH.ERR)
+            return
         self._append_chat('user', text or '请根据参考图建立模型。', images)
         self._set_prompt_text('')
         self.clear_reference_images()
 
-        if llmcfg.get('enabled') and llmcfg.get('api_key'):
+        if mode == 'quick':
+            self._last_plan = None
+            self._pending_agent_plan = None
+            self._append_chat(
+                'assistant',
+                '快速模式：使用原有内置规则解析并本地建模，不调用大模型。')
+            self._finish_generate(text, None)
+            return
+
+        if mode == 'agent':
             self._agent_context.append({
                 'role': 'user',
                 'content': (text or '请根据参考图建立模型。') +
@@ -1094,40 +1216,6 @@ class App(tk.Tk):
             })
             self._agent_generate(text, images)
             return
-
-        if llmcfg.get('enabled'):
-            reason = '大模型已启用，但接口地址、模型名称或 API Key 不完整。'
-            self._append_chat('assistant', reason + ' 请检查「工具 → AI 大模型设置」。')
-            self.status('大模型配置不完整', TH.ERR)
-            return
-
-        if images:
-            reason = '多图理解和视觉复核需要配置支持图像输入与 tools 的大模型。'
-            self._append_chat('assistant', reason + ' 请先在「工具 → AI 大模型设置」中配置。')
-            self.status('需要配置多模态大模型', TH.ERR)
-            return
-
-        self._last_plan = None
-        self._pending_agent_plan = None
-        quick = NLP.parse(text)
-        if quick.ok:
-            self._agent_context.append({'role': 'user', 'content': text})
-            self._agent_context.append({
-                'role': 'assistant',
-                'content': '当前未启用大模型，使用内置规则完成本地快速建模；未运行视觉复核。',
-            })
-            self._append_chat('assistant',
-                              '当前未启用大模型，使用内置规则完成本地快速建模；未运行视觉复核。')
-            self._finish_generate(text, None)
-            return
-        self._agent_context.append({'role': 'user', 'content': text})
-        self._agent_context.append({
-            'role': 'assistant',
-            'content': '内置规则未能识别。配置支持 tools 的大模型后，可运行分阶段 AgentLoop。',
-        })
-        self._append_chat('assistant',
-                          '内置规则未能识别。请配置支持 tools 的大模型后运行完整 AgentLoop。')
-        self._finish_generate(text, None)
 
     # --------------------------------------------------------------
     def _budget(self):
@@ -1257,6 +1345,7 @@ class App(tk.Tk):
     def _agent_generate(self, text, images):
         from ai_modeler.agent import dsh_agent
         self._busy = True
+        self._set_modeling_mode_controls_enabled(False)
         self._t0 = time.time()
         self._agent_wait_started = None
         self._agent_wait_detail = ''
@@ -1780,6 +1869,7 @@ class App(tk.Tk):
         if self._busy:
             return
         self._busy = True
+        self._set_modeling_mode_controls_enabled(False)
         self._t0 = time.time()
         self._budget_s = self._budget()
         self._cancel = threading.Event()
@@ -1878,6 +1968,7 @@ class App(tk.Tk):
 
     def _unlock_ui(self):
         self._busy = False
+        self._set_modeling_mode_controls_enabled(True)
         self.lbl_busy.configure(text='')
         try:
             self.btn_stop.configure(state='disabled')

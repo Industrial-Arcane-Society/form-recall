@@ -1,0 +1,138 @@
+{
+  "schema_version": "1.0",
+  "name": "bullet-grip-pin",
+  "source_prompt": "bullet-shaped pin with cylindrical shank, circular flange, upper cylinder and ogive head",
+  "units": {
+    "length": "mm",
+    "angle": "deg"
+  },
+  "coordinate_system": {
+    "type": "global_cartesian",
+    "handedness": "right",
+    "axes": [
+      "X",
+      "Y",
+      "Z"
+    ],
+    "origin": [
+      0,
+      0,
+      0
+    ]
+  },
+  "features": [
+    {
+      "id": "main_revolve_body",
+      "kind": "revolve",
+      "operation": "add",
+      "name": "main body revolution",
+      "note": "complete axi-symmetric body: shank, flange, upper cylinder, ogive head with flat tip",
+      "parameters": {
+        "axis": "Z",
+        "center": [
+          0,
+          0,
+          0
+        ],
+        "profile": [
+          [
+            0,
+            0
+          ],
+          [
+            5.175,
+            0
+          ],
+          [
+            5.175,
+            27.74
+          ],
+          [
+            11.25,
+            27.74
+          ],
+          [
+            11.25,
+            32.85
+          ],
+          [
+            6.075,
+            32.85
+          ],
+          [
+            6.075,
+            48.18
+          ],
+          [
+            6.075,
+            48.6
+          ],
+          [
+            5.5,
+            49.25
+          ],
+          [
+            5.5,
+            50
+          ],
+          [
+            5.3,
+            52.5
+          ],
+          [
+            4.6,
+            56
+          ],
+          [
+            3.8,
+            59
+          ],
+          [
+            3,
+            61.75
+          ],
+          [
+            2.2,
+            64.25
+          ],
+          [
+            1.5,
+            66.75
+          ],
+          [
+            1,
+            69.5
+          ],
+          [
+            0.9,
+            71.75
+          ],
+          [
+            0.9,
+            72.27
+          ],
+          [
+            0,
+            72.27
+          ]
+        ],
+        "angle": 360
+      },
+      "sources": {
+        "center": {
+          "type": "user",
+          "evidence": "global Z-axis origin chosen for axi-symmetric part"
+        },
+        "profile": {
+          "type": "image_estimate",
+          "evidence": "正视图弹头根部有明显横向分阶，顶部为约 1.8 mm 直径的短平端；保持柄/法兰/上圆柱比例，仅优化弹头段：根部先收径形成清晰肩，圆弧过渡到 Z=72.27 mm 处 r≈0.9 mm 水平闭合。"
+        },
+        "angle": {
+          "type": "derived",
+          "evidence": "四张视图均绕同一主轴对称回转：REFERENCE 2 正投影无侧向偏心，REFERENCE 3/4 端视图显示同心圆轮廓，REFERENCE 1 等轴测显示连续回转曲面，确认主体为 360° 全回转体。"
+        }
+      }
+    }
+  ],
+  "pending_questions": []
+}

@@ -1,0 +1,47 @@
+{
+  "state": "previewed",
+  "tool_calls": 16,
+  "model_call_count": 12,
+  "output_paths": {},
+  "validation": {
+    "valid": true,
+    "state": "valid",
+    "errors": [],
+    "confirmations": [],
+    "support": [
+      {
+        "feature_id": "main_body",
+        "kind": "revolve",
+        "status": "approximate",
+        "reason": "本地预览按闭合[半径,轴向坐标]轮廓绕轴生成；CATIA 映射用多层圆盘近似。完整同轴主体优先作为第一个 revolve 特征创建；在已有实体后添加 revolve，当前几何核的布尔合并可能丢失先前几何。"
+      },
+      {
+        "feature_id": "hex_flange",
+        "kind": "prism",
+        "status": "exact",
+        "reason": "闭合多边形草图加凸台；当前仅支持 Z 轴。"
+      },
+      {
+        "feature_id": "bottom_hex_socket",
+        "kind": "prism",
+        "status": "exact",
+        "reason": "闭合多边形草图加凸台；当前仅支持 Z 轴。"
+      },
+      {
+        "feature_id": "bottom_counterbore",
+        "kind": "prism",
+        "status": "exact",
+        "reason": "闭合多边形草图加凸台；当前仅支持 Z 轴。"
+      }
+    ],
+    "warnings": [
+      {
+        "code": "CATIA_APPROXIMATION",
+        "feature_id": "main_body",
+        "kind": "revolve",
+        "message": "本地预览按闭合[半径,轴向坐标]轮廓绕轴生成；CATIA 映射用多层圆盘近似。完整同轴主体优先作为第一个 revolve 特征创建；在已有实体后添加 revolve，当前几何核的布尔合并可能丢失先前几何。"
+      }
+    ],
+    "schema_version": "1.0"
+  }
+}

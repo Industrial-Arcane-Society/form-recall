@@ -23,6 +23,8 @@ from typing import Any
 from ai_modeler.paths import PROJECT_ROOT
 from ai_modeler.sdk import cadplan
 from ai_modeler.agent import llm, plan_state, online
+from ai_modeler.parts.library import retrieval as knowledge_retrieval
+from ai_modeler.parts.library import recipes as modeling_recipes
 
 
 _STATE_DIR = Path(os.environ.get("AI_MODELER_STATE_DIR") or
@@ -42,7 +44,8 @@ _REVIEW_LLM_CFG = {
     "base_url": os.environ.get("AI_MODELER_REVIEW_BASE_URL", ""),
     "model": os.environ.get("AI_MODELER_REVIEW_MODEL", ""),
     "api_key": os.environ.get("AIMODELER_LLM_API_KEY", "sk-local"),
-    "reasoning_effort": "none",
+    "reasoning_effort": "low",
+    "thinking_budget": 2048,
 }
 _SEARCH_RESULTS: dict[str, str] = {}
 _MAX_WEB_PAGE_BYTES = 2 * 1024 * 1024
@@ -113,8 +116,46 @@ TOOLS = [
         "inputSchema": {"type": "object", "properties": {}, "additionalProperties": False},
     },
     {
+        "name": "cad_search_knowledge",
+        "description": (
+            "在本地工件知识库搜索精确型号或相似描述。精确命中会返回类别、型号、实测包围盒和可用的真实几何摘要；"
+            "相似结果仅作上下文参考，不可直接复制尺寸。库外型号应明确返回未命中。"
+            "可选返回带标签的真实照片/模型渲染样例图板供视觉比较。"
+        ),
+        "inputSchema": {"type": "object", "properties": {
+            "query": {"type": "string", "description": "工件描述或型号；纯图片查询可传空字符串。"},
+            "limit": {"type": "integer", "minimum": 1, "maximum": 10},
+            "include_visual_examples": {"type": "boolean"},
+        }, "additionalProperties": False},
+    },
+    {
+        "name": "cad_search_recipes",
+        "description": "搜索本地常用建模配方库，返回螺纹、孔、沉孔和标准件的推荐特征顺序、适用条件与当前能力边界。",
+        "inputSchema": {"type": "object", "properties": {
+            "query": {"type": "string", "description": "操作或零件名，例如外螺纹、盲孔、内六角螺钉。"},
+            "limit": {"type": "integer", "minimum": 1, "maximum": 20},
+        }, "required": ["query"], "additionalProperties": False},
+    },
+    {
+        "name": "cad_apply_recipe",
+        "description": (
+            "一次调用展开并校验本地确定性建模配方，避免让模型逐项手拼标准件。"
+            "目前可直接生成标准表覆盖的 ISO 4762/GB/T 70.1 内六角圆柱头螺钉；"
+            "例如 recipe_id=fastener.socket_head_cap_screw,size=M5x8。生成后应立即预览。"
+            "本地网格会按标准螺距生成可见的近似螺旋牙型；当前 CATIA 导出通道仍输出光杆，"
+            "必须在结果中区分本地网格与 CATPart 的螺纹状态。"
+        ),
+        "inputSchema": {"type": "object", "properties": {
+            "recipe_id": {"type": "string", "enum": ["fastener.socket_head_cap_screw"]},
+            "size": {"type": "string", "description": "标准型号，例如 M5x8 或 M10×30。"},
+            "name": {"type": "string"},
+            "source_prompt": {"type": "string"},
+            "replace": {"type": "boolean"},
+        }, "required": ["recipe_id", "size"], "additionalProperties": False},
+    },
+    {
         "name": "cad_create_model",
-        "description": "创建或整体替换一个新 CADPlan。已有模型时必须显式设置 replace=true。坐标固定为 X=左右、Y=前后厚度、Z=上下；box.length/width/height 分别对应 X/Y/Z。",
+        "description": "创建或整体替换一个新 CADPlan。首次创建后先预览并对照原图，再做其它几何修改。已有模型时必须显式设置 replace=true；带参考图且现计划有效时，整体替换前必须预览当前 revision 并完成匹配原图的多模态复核。若现计划 invalid/needs_confirmation，先修复计划使其可预览。坐标固定为 X=左右、Y=前后厚度、Z=上下；box.length/width/height 分别对应 X/Y/Z。",
         "inputSchema": {"type": "object", "properties": {
             "name": {"type": "string"},
             "first_feature": _FEATURE_INPUT_SCHEMA,
@@ -125,7 +166,7 @@ TOOLS = [
     },
     {
         "name": "cad_add_feature",
-        "description": "向当前特征树增量添加一个 CADPlan 特征；数值参数必须有来源。坐标固定为 X=左右、Y=前后厚度、Z=上下。",
+        "description": "向当前特征树增量添加一个 CADPlan 特征；数值参数必须有来源。带参考图且当前计划有效时，当前 revision 必须先预览并完成至少一次匹配原图的多模态复核；几何变更会使旧复核失效。invalid/needs_confirmation 计划可先修复。坐标固定为 X=左右、Y=前后厚度、Z=上下。",
         "inputSchema": {"type": "object", "properties": {
             "feature": _FEATURE_INPUT_SCHEMA,
         }, "required": ["feature"], "additionalProperties": False},
@@ -135,6 +176,8 @@ TOOLS = [
         "description": (
             "在当前实体指定的平面正面切出矩形凹入。width/height 沿该面的两个面内坐标轴，"
             "depth 沿 face_normal_axis；工具自动从对应外表面向实体内部放置切除体。"
+            "带参考图且当前计划有效时，修改前必须先预览当前 revision 并完成匹配原图的多模态复核；"
+            "invalid/needs_confirmation 计划可先修复。"
             "CADPlan 轴：X 左右、Y 前后、Z 上下。"
         ),
         "inputSchema": {"type": "object", "properties": {
@@ -160,6 +203,8 @@ TOOLS = [
             "一次在同一平行正面添加一组点位孔。所有孔共用 face_normal_axis 轴向并设为贯穿；"
             "可用 face_setback 表示孔所在的局部面比外侧面后退了多少。Y 正面的 face_center 坐标为 [X,Z]。"
             "优先用它表达同一平面或平行退台面上的多孔，避免逐孔混用轴向。"
+            "带参考图且当前计划有效时，修改前必须先预览当前 revision 并完成匹配原图的多模态复核；"
+            "invalid/needs_confirmation 计划可先修复。"
         ),
         "inputSchema": {"type": "object", "properties": {
             "face_normal_axis": {"type": "string", "enum": ["X", "Y", "Z"]},
@@ -181,7 +226,7 @@ TOOLS = [
     },
     {
         "name": "cad_update_feature",
-        "description": "增量修改指定特征。修改数值参数时同时传入对应 source_updates。",
+        "description": "增量修改指定特征。修改数值参数时同时传入对应 source_updates。带参考图且当前计划有效时，当前 revision 必须先预览并完成至少一次匹配原图的多模态复核；几何变更会使旧复核失效。invalid/needs_confirmation 计划可先修复。",
         "inputSchema": {"type": "object", "properties": {
             "feature_id": {"type": "string"},
             "parameter_updates": {"type": "object"},
@@ -192,7 +237,7 @@ TOOLS = [
     },
     {
         "name": "cad_remove_feature",
-        "description": "从当前 CADPlan 删除一个特征。",
+        "description": "从当前 CADPlan 删除一个特征。带参考图且当前计划有效时，当前 revision 必须先预览并完成至少一次匹配原图的多模态复核；invalid/needs_confirmation 计划可先修复。",
         "inputSchema": {"type": "object", "properties": {
             "feature_id": {"type": "string"},
         }, "required": ["feature_id"], "additionalProperties": False},
@@ -294,6 +339,8 @@ def _load() -> dict[str, Any]:
             "reference_similarity_history": [],
             "reference_similarity_attempts": [],
             "reference_similarity_error": None,
+            "knowledge_search": None,
+            "knowledge_visual_examples": [],
             "unresolved_findings": [], "has_references": _HAS_REFERENCES,
             "actions": [], "output_paths": {}, "finished": False,
             "finish_state": None, "source_prompt": "",
@@ -311,6 +358,8 @@ def _load() -> dict[str, Any]:
             value.setdefault("reference_similarity_history", [])
             value.setdefault("reference_similarity_attempts", [])
             value.setdefault("reference_similarity_error", None)
+            value.setdefault("knowledge_search", None)
+            value.setdefault("knowledge_visual_examples", [])
             return value
     except Exception as exc:
         raise RuntimeError("CAD 会话状态文件损坏；原文件已保留：%s" % _STATE_PATH) from exc
@@ -404,7 +453,8 @@ def _dimension_source(source_type: str, evidence: str, detail: str) -> dict[str,
 def _summary(state: dict[str, Any]) -> dict[str, Any]:
     plan = state.get("plan")
     if not isinstance(plan, dict):
-        return {"state": "empty", "revision": state.get("revision", 0)}
+        return {"state": "empty", "revision": state.get("revision", 0),
+                "knowledge_search": state.get("knowledge_search")}
     validation = cadplan.validate_plan(plan)
     preview = state.get("last_preview") or {}
     dimensions = (preview.get("dimensions")
@@ -448,6 +498,7 @@ def _summary(state: dict[str, Any]) -> dict[str, Any]:
         if isinstance(review, dict)
     ]
     result["reference_similarity_error"] = state.get("reference_similarity_error")
+    result["knowledge_search"] = state.get("knowledge_search")
     return result
 
 
@@ -496,6 +547,59 @@ def _invalidate_geometry(state: dict[str, Any]) -> None:
     state["output_paths"] = {}
     state["finished"] = False
     state["finish_state"] = None
+
+
+def _require_current_reference_review(state: dict[str, Any], action: str) -> None:
+    """Require visual evidence before another geometry mutation in image tasks.
+
+    Prompt instructions alone did not stop DSH from repeatedly perturbing a
+    feature without comparing the resulting revision to its reference. Keep
+    the state machine enforceable at the CAD tool boundary: preview the exact
+    current revision, then review that preview against one matching source view
+    before editing again.
+    """
+    if not state.get("has_references"):
+        return
+    plan = state.get("plan")
+    if not isinstance(plan, dict):
+        return
+    validation = cadplan.validate_plan(plan)
+    if validation.get("state") != "valid":
+        # A preview cannot exist until required fields and parameter sources
+        # are valid. Let the Agent repair the plan/schema first; the visual
+        # evidence gate starts as soon as the candidate is previewable.
+        return
+    revision = int(state.get("revision") or 0)
+    if (not state.get("last_preview")
+            or state.get("preview_revision") != revision):
+        raise ValueError(
+            "几何修改已被工作流门禁拦截：当前 revision %s 尚无有效预览。"
+            "先调用 cad_preview_model 生成当前版本预览，再用匹配的原图调用 "
+            "cad_review_reference_similarity；完成对照后才能%s。" %
+            (revision, action))
+
+    previews = {
+        row.get("preview_generation"): row
+        for row in state.get("previews") or []
+        if isinstance(row, dict) and row.get("revision") == revision
+    }
+    reviewed = any(
+        isinstance(row, dict)
+        and row.get("revision") == revision
+        and row.get("preview_generation") in previews
+        and str(previews[row.get("preview_generation")].get("view") or "")
+        == str(row.get("view") or "")
+        and isinstance(row.get("reference_image_index"), int)
+        and not isinstance(row.get("reference_image_index"), bool)
+        and row.get("reference_image_index") >= 1
+        for row in state.get("reference_similarity_history") or []
+    )
+    if not reviewed:
+        raise ValueError(
+            "几何修改已被工作流门禁拦截：revision %s 已有预览，但还没有将该版本的"
+            "模型单视图与对应原图做多模态对照。请先调用 "
+            "cad_review_reference_similarity；依据返回的具体 evidence 再决定是否%s。" %
+            (revision, action))
 
 
 def _review_findings(reviews: dict[str, Any]) -> list[str]:
@@ -635,6 +739,10 @@ def _reference_similarity_review(state: dict[str, Any], view: str,
             "分型面或棱边；没有清晰几何轮廓支持时不得据此建议增删特征。"
             "只将当前视角可比较的轮廓用于比例判断。孔数只统计这张原图能确认的孔；"
             "看不清或图中没有可见孔时 reference_hole_count 为 null。"
+            "比较比例时先将零件前景裁到其外轮廓包围框，使用无量纲比例（例如头长/总高、法兰宽/总高、"
+            "杆径/法兰宽、中心特征径/外径），不要比较两张图的像素绝对大小或画布留白；在 evidence 中写出"
+            "最关键的测量比例及大致图像像素依据。闭合黑色边界在多个同轴端视图重复出现时，需认真评估为实体台阶/孔的可能；"
+            "黄色填色或延伸到零件外的十字线可视为叠加层，但不能据此抹掉其内侧独立的闭合轮廓。"
             "不要猜测被遮挡结构或真实贯穿；"
             "只评价图中能支持的结论。若一个特征被当前视角遮挡，标为 unknown/unobservable，"
             "不得断言几何中缺失；模型图与参考图投影不同时，只比较本视图可见的结构证据。"
@@ -644,6 +752,10 @@ def _reference_similarity_review(state: dict[str, Any], view: str,
             "unobservable(数组)。分数按主要轮廓比例、退台拓扑和可见孔布局综合评估；"
             "status 只能是 match、approximate_match、mismatch、partial_mismatch 或 unobservable；"
             "mismatch_severity 只能是 none、minor、moderate、major 或 critical，禁止返回数字。"
+            "score 使用一致的标尺：90-100 表示可见主体拓扑一致且主要归一化比例误差约在 5%% 内；"
+            "80-89 表示主体拓扑和轮廓比例吻合、只剩轻微局部差异；60-79 表示有明确的大特征缺失/多出或"
+            "主要比例误差约 10%%-25%%；低于 60 表示主体布局或多个主要特征不符。不可观测、颜色差异和不确定的线条"
+            "不能单独把评分压到 80 以下。不要固定复用模板分数；不同形状误差或已改善的几何必须按可见变化重新评分。"
             "同一差异不能同时作为已确认 mismatch 和 unobservable；若证据不足，选 unobservable。"
             "存在有图像证据支持的核心拓扑差异时不得给 80 分以上。评分只基于当前这组"
             "参考图片与当前预览，不得把其它任务的零件特征或示例要求带入本轮。"
@@ -905,6 +1017,8 @@ def _export_candidate(state: dict[str, Any], summary: str) -> dict[str, str]:
         "visual_reviews": state.get("visual_reviews") or {},
         "reference_similarity_reviews": state.get("reference_similarity_reviews") or {},
         "reference_similarity_history": state.get("reference_similarity_history") or [],
+        "knowledge_search": state.get("knowledge_search"),
+        "knowledge_visual_examples": state.get("knowledge_visual_examples") or [],
         "reference_similarity_threshold": 80,
         "local_geometry_checks": (state.get("last_preview") or {}).get(
             "local_geometry_checks"),
@@ -925,6 +1039,74 @@ def _export_candidate(state: dict[str, Any], summary: str) -> dict[str, str]:
 
 def _handle_tool(name: str, args: dict[str, Any]) -> dict[str, Any]:
     state = _load()
+    if name == "cad_search_recipes":
+        rows = modeling_recipes.list_recipes(
+            str(args.get("query") or ""), limit=args.get("limit", 8))
+        result = {"query": str(args.get("query") or ""), "recipes": rows}
+        _record(state, name, recipe_ids=[row.get("id") for row in rows])
+        _save(state)
+        return _tool_result(result, "本地建模配方检索完成。")
+    if name == "cad_apply_recipe":
+        if state.get("plan") and not args.get("replace"):
+            raise ValueError("当前已有模型；若要用配方整体替换，请显式设置 replace=true。")
+        candidate = modeling_recipes.build_recipe_plan(
+            str(args.get("recipe_id") or ""), str(args.get("size") or ""),
+            name=str(args.get("name") or ""),
+            source_prompt=str(args.get("source_prompt") or ""))
+        validation = cadplan.validate_plan(candidate)
+        if validation.get("state") != "valid":
+            issues = validation.get("errors") or validation.get("confirmations") or []
+            detail = "; ".join(str(row.get("message") or row.get("question") or row)
+                               for row in issues[:5])
+            raise ValueError("配方生成的 CADPlan 未通过校验：%s" % (detail or validation.get("state")))
+        if state.get("plan"):
+            _require_current_reference_review(state, "用配方整体替换模型")
+        state["plan"] = candidate
+        _invalidate_geometry(state)
+        _record(state, name, recipe_id=args.get("recipe_id"), model=args.get("size"),
+                feature_id=candidate["features"][0]["id"])
+        _save(state)
+        result = _validation_result(candidate, state)
+        result["recipe"] = {
+            "id": args.get("recipe_id"), "model": args.get("size"),
+            "thread_representation": "helical_mesh_approximation",
+            "thread_pitch_mm": candidate["features"][0]["parameters"]["thread_pitch"],
+            "thread_note": "本地预览/STL 网格含近似右旋螺旋牙型；CATIA 导出器当前输出光杆。",
+        }
+        return _tool_result(result, "标准件配方已一次展开并通过 CADPlan 校验；请预览当前模型。")
+    if name == "cad_search_knowledge":
+        query = str(args.get("query") or "").strip()
+        limit = args.get("limit", 5)
+        result = knowledge_retrieval.search_knowledge(
+            query, limit=limit, image_paths=_REFERENCE_IMAGES)
+        image_path = None
+        if args.get("include_visual_examples"):
+            examples = knowledge_retrieval.visual_examples_for_result(result)
+            if examples:
+                image_path = _STATE_DIR / "knowledge-visual-examples.png"
+                selected = knowledge_retrieval.build_visual_examples_contact_sheet(
+                    image_path, examples)
+                state["knowledge_visual_examples"] = [
+                    {"model": row.get("model"), "category": row.get("category")}
+                    for row in selected]
+                result["visual_examples"] = [
+                    {key: row.get(key) for key in (
+                        "model", "category", "envelope_dimensions_mm", "trust", "source")}
+                    for row in selected]
+                result["visual_example_note"] = (
+                    "这些只是项目附带的配对样例，不是目标零件的自动视觉命中。")
+        state["knowledge_search"] = result
+        _record(state, name, status=result.get("status"),
+                models=[row.get("model") for row in result.get("matches") or []])
+        _save(state)
+        try:
+            return _tool_result(result, "本地工件知识检索完成。", image_path=image_path)
+        finally:
+            if image_path:
+                try:
+                    image_path.unlink(missing_ok=True)
+                except OSError:
+                    pass
     if name == "cad_get_state":
         result = _summary(state)
         _record(state, name)
@@ -944,6 +1126,8 @@ def _handle_tool(name: str, args: dict[str, Any]) -> dict[str, Any]:
             _save(state)
             return _tool_result(_validation_result(state["plan"], state),
                                 "相同 CADPlan 已存在，未重复替换；请用 cad_add_feature 继续添加特征。")
+        if state.get("plan"):
+            _require_current_reference_review(state, "整体替换模型")
         state["plan"] = candidate
         _invalidate_geometry(state)
         _record(state, name, feature_id=(args["first_feature"] or {}).get("id"))
@@ -952,6 +1136,7 @@ def _handle_tool(name: str, args: dict[str, Any]) -> dict[str, Any]:
                             "CADPlan 已创建，revision %s。" % state["revision"])
     if name == "cad_add_feature":
         plan = _require_plan(state)
+        _require_current_reference_review(state, "添加特征")
         feature = args.get("feature")
         if not isinstance(feature, dict):
             raise ValueError("feature 必须是对象。")
@@ -964,6 +1149,7 @@ def _handle_tool(name: str, args: dict[str, Any]) -> dict[str, Any]:
                             (feature.get("id"), state["revision"]))
     if name == "cad_add_face_recess":
         plan = _require_plan(state)
+        _require_current_reference_review(state, "添加面凹槽")
         low, high = _primary_box_bounds(plan)
         axis, u_axis, v_axis = _face_axes(str(args.get("face_normal_axis") or ""))
         side_name = str(args.get("face_side") or "").strip().lower()
@@ -1030,6 +1216,7 @@ def _handle_tool(name: str, args: dict[str, Any]) -> dict[str, Any]:
                             (axis, side_name, dimensions, state["revision"]))
     if name == "cad_add_hole_array":
         plan = _require_plan(state)
+        _require_current_reference_review(state, "添加孔特征")
         low, high = _primary_box_bounds(plan)
         axis, u_axis, v_axis = _face_axes(str(args.get("face_normal_axis") or ""))
         side_name = str(args.get("face_side") or "").strip().lower()
@@ -1112,6 +1299,7 @@ def _handle_tool(name: str, args: dict[str, Any]) -> dict[str, Any]:
             _save(state)
             return _tool_result(_validation_result(candidate, state),
                                 "仅更新来源或说明，几何未变；当前预览和几何版本仍有效。")
+        _require_current_reference_review(state, "修改特征")
         state["plan"] = candidate
         _invalidate_geometry(state)
         _record(state, name, feature_id=args.get("feature_id"))
@@ -1119,6 +1307,7 @@ def _handle_tool(name: str, args: dict[str, Any]) -> dict[str, Any]:
         return _tool_result(_validation_result(state["plan"], state),
                             "特征已修改，revision %s。" % state["revision"])
     if name == "cad_remove_feature":
+        _require_current_reference_review(state, "删除特征")
         state["plan"] = plan_state.remove(_require_plan(state),
                                           str(args.get("feature_id") or ""))
         _invalidate_geometry(state)
@@ -1512,6 +1701,16 @@ def _handle_message(message: dict[str, Any]) -> None:
             result = _handle_tool(name, arguments)
             _send({"jsonrpc": "2.0", "id": request_id, "result": result})
         except Exception as exc:
+            # Persist concise tool failures so a stalled image-modeling turn
+            # can be diagnosed from its CAD state without guessing what the
+            # model saw. Never save tool arguments or reference-image data.
+            try:
+                failed_state = _load()
+                _record(failed_state, name or "unknown", failed=True,
+                        error=str(exc)[:1200])
+                _save(failed_state)
+            except Exception:
+                pass
             _send({"jsonrpc": "2.0", "id": request_id, "result": {
                 "content": [{"type": "text", "text": str(exc)}], "isError": True,
             }})

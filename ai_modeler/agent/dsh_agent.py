@@ -25,6 +25,7 @@ from typing import Any, Callable
 from ai_modeler.paths import PROJECT_ROOT
 from ai_modeler.sdk import cadplan
 from ai_modeler.agent import plan_state
+from ai_modeler.parts.library import retrieval as knowledge_retrieval
 
 
 _RUNTIME_LOCK = threading.RLock()
@@ -405,6 +406,8 @@ def _seed_state(session_dir: Path, prompt: str, current_plan, current_document) 
         "visual_review": None,
         "visual_reviews": {},
         "unresolved_findings": [],
+        "knowledge_search": None,
+        "knowledge_visual_examples": [],
         "has_references": False,
         "actions": [],
         "output_paths": {},
@@ -653,10 +656,48 @@ def run_dsh_agent(prompt: str, image_paths=None, cfg=None, session_id=None,
         state["finished"] = False
         state["finish_state"] = None
     state["has_references"] = bool(image_paths or state.get("has_references"))
+    if progress:
+        progress("正在查询本地工件知识库。")
+    try:
+        knowledge_result = knowledge_retrieval.search_knowledge(
+            prompt, image_paths=image_paths)
+    except Exception as exc:
+        # A local index problem must not prevent free-form or image modeling.
+        knowledge_result = {
+            "status": "provider_error", "query": str(prompt or ""),
+            "matches": [], "negative_examples": [],
+            "message": "本地知识检索暂时不可用；继续根据用户输入建模。",
+            "provider_warnings": [str(exc)[:240]],
+        }
+    if progress:
+        status = knowledge_result.get("status")
+        hits = knowledge_result.get("matches") or []
+        executable_recipes = [row for row in knowledge_result.get("modeling_recipes") or []
+                              if row.get("status") == "executable" and row.get("builder")]
+        if executable_recipes:
+            recipe = executable_recipes[0]
+            labels = ", ".join(str(row.get("model") or row.get("category") or "")
+                                for row in hits[:2])
+            progress("本地知识库命中可执行配方：%s%s；Agent 将直接调用配方建模。" % (
+                recipe.get("name") or recipe.get("id"),
+                ("（型号：%s）" % labels) if labels else ""))
+        elif status in {"exact_match", "exact_prompt"}:
+            labels = ", ".join(str(row.get("model") or row.get("category") or "")
+                                for row in hits[:3])
+            progress("本地知识库精确命中：%s。" % (labels or status))
+        elif status == "similar_matches":
+            progress("本地知识库找到 %d 个相似描述，仅作参考。" % len(hits))
+        elif status == "image_only":
+            progress("图片没有文字索引；将附加本地配对样例图供多模态比较。")
+        else:
+            progress("本地知识库未找到可靠文字命中，继续按当前输入建模。")
+    state["knowledge_search"] = knowledge_result
+    state["knowledge_visual_examples"] = []
     _write_json(state_path, state)
 
     harness = _runtime_for(session_id, llm_cfg, session_dir, image_paths)
     contact_sheet_path = None
+    knowledge_sheet_path = None
     if len(image_paths) > 1:
         contact_sheet_path = _build_reference_contact_sheet(image_paths, session_dir)
         input_image_paths = [str(contact_sheet_path)]
@@ -664,6 +705,8 @@ def run_dsh_agent(prompt: str, image_paths=None, cfg=None, session_id=None,
         input_image_paths = image_paths
 
     blocks = [{"type": "text", "text": str(prompt or "请根据参考图建立模型。")}]
+    blocks.append({"type": "text",
+                   "text": knowledge_retrieval.format_knowledge_context(knowledge_result)})
     if contact_sheet_path:
         labels = ", ".join(
             "REFERENCE %d=%s" % (index, Path(path).name)
@@ -682,6 +725,34 @@ def run_dsh_agent(prompt: str, image_paths=None, cfg=None, session_id=None,
             blocks.append({"type": "text", "text": "参考图 %d：%s" %
                            (index, Path(image_path).name)})
             blocks.append(_read_image(image_path))
+
+    if image_paths:
+        try:
+            examples = knowledge_retrieval.visual_examples_for_result(knowledge_result)
+            if examples:
+                knowledge_sheet_path = session_dir / "knowledge-visual-examples.png"
+                selected = knowledge_retrieval.build_visual_examples_contact_sheet(
+                    knowledge_sheet_path, examples)
+                state["knowledge_visual_examples"] = [
+                    {"model": row.get("model"), "category": row.get("category")}
+                    for row in selected]
+                _write_json(state_path, state)
+                labels = ", ".join(str(row.get("model") or "") for row in selected)
+                blocks.append({
+                    "type": "text",
+                    "text": (
+                        "接下来这张图是本地知识库中已有零件的真实照片/程序渲染配对样例，"
+                        "不是用户目标图，也不是已排序的视觉命中。请与用户原图比较后，"
+                        "只把明确相似的类别或形态作为参考，不直接照搬型号、尺寸或结构。"
+                        "样例型号：%s。\n%s") % (
+                            labels,
+                            knowledge_retrieval.format_visual_examples_context(selected)),
+                })
+                blocks.append(_read_image(str(knowledge_sheet_path)))
+        except Exception as exc:
+            state["knowledge_search"].setdefault("provider_warnings", []).append(
+                "视觉样例图无法生成：%s" % str(exc)[:200])
+            _write_json(state_path, state)
 
     if progress:
         progress("正在启动 DSH SDK 多模态 Agent 会话。")
@@ -739,6 +810,11 @@ def run_dsh_agent(prompt: str, image_paths=None, cfg=None, session_id=None,
             stream_path.unlink(missing_ok=True)
         except OSError:
             pass
+        if knowledge_sheet_path:
+            try:
+                knowledge_sheet_path.unlink(missing_ok=True)
+            except OSError:
+                pass
     if cancel_event is not None and cancel_event.is_set():
         close_session(session_id, delete_data=False)
 
@@ -811,7 +887,8 @@ def run_dsh_agent(prompt: str, image_paths=None, cfg=None, session_id=None,
     preview_calls = sum(1 for item in turn_actions if item.get("tool") == "cad_preview_model")
     review_rounds = sum(1 for item in turn_actions if item.get("tool") == "cad_record_visual_review")
     output_paths = final_state.get("output_paths") or {}
-    input_image_parts = len(input_image_paths)
+    knowledge_image_parts = 1 if state.get("knowledge_visual_examples") else 0
+    input_image_parts = len(input_image_paths) + knowledge_image_parts
     validation = cadplan.validate_plan(plan) if isinstance(plan, dict) else None
     events = getattr(result, "events", []) if result is not None else []
     model_call_count = sum(1 for event in events
@@ -842,10 +919,14 @@ def run_dsh_agent(prompt: str, image_paths=None, cfg=None, session_id=None,
             "model": llm_cfg.get("model"),
             "image_parts_in_request": input_image_parts,
             "reference_image_count": len(image_paths),
+            "knowledge_image_parts": knowledge_image_parts,
             "image_input_mode": "contact_sheet" if contact_sheet_path else "individual",
         } for _ in range(model_call_count)] if model_call_count else [],
         "image_parts_in_request": input_image_parts,
         "reference_image_count": len(image_paths),
+        "knowledge_search": final_state.get("knowledge_search"),
+        "knowledge_visual_examples": final_state.get("knowledge_visual_examples") or [],
+        "knowledge_image_parts": knowledge_image_parts,
         "image_input_mode": "contact_sheet" if contact_sheet_path else "individual",
         "llm_usage": {},
         "routing": {"action": "dsh_agent", "review_mode":

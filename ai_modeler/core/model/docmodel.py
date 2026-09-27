@@ -89,6 +89,7 @@ class BuildAborted(Exception):
 KIND_LABELS = {
     'box': '长方体',
     'cylinder': '圆柱/圆台',
+    'socket_head_bolt': '内六角圆柱头螺钉',
     'sphere': '球体',
     'prism': '轮廓拉伸',
     'revolve': '回转体',
@@ -180,6 +181,11 @@ class Feature(object):
                 s = '圆柱 ⌀%s × %s mm' % (f1(r1 * 2), f1(p.get('height', 0)))
         elif k == 'sphere':
             s = '球体 R%s mm' % f1(p.get('radius', 0))
+        elif k == 'socket_head_bolt':
+            s = ('内六角螺钉 M%s × %s mm (p=%s, 头径%s, 头高%s)' % (
+                f1(p.get('shank_d', 0)), f1(p.get('length', 0)),
+                f1(p.get('thread_pitch', 0)),
+                f1(p.get('head_d', 0)), f1(p.get('head_h', 0))))
         elif k == 'extrude_holes':
             s = ('等截面拉伸 %s×%s×%s + %d 个直孔（直写网格，不做布尔）'
                  % (f1(p.get('sec_a', 0)), f1(p.get('sec_b', 0)),
@@ -419,13 +425,14 @@ class Feature(object):
                                       int(p.get('segments', 12)))]
 
         if k == 'hex_bolt':
-            # 六角头螺栓: 头(六棱柱) + 杆(圆柱), 网格拼接, 不做布尔
+            # 六角头螺栓: 头(六棱柱) + 杆；标准螺距可生成近似外螺旋牙型。
             return [K.make_hex_bolt(float(p.get('shank_d', 12.0)),
                                     float(p.get('length', 80.0)),
                                     float(p.get('across_flats', 18.0)),
                                     float(p.get('head_h', 7.5)),
                                     tuple(p.get('center', (0, 0, 0))), tag,
-                                    int(p.get('segments', 48)))]
+                                    int(p.get('segments', 48)),
+                                    thread_pitch=float(p.get('thread_pitch', 0.0)))]
 
         if k == 'socket_head_bolt':
             # 内六角圆柱头螺钉: 圆柱头 + 杆 + 头端内六角孔（ISO 4762）
@@ -436,7 +443,8 @@ class Feature(object):
                                             float(p.get('hex_s', 8.0)),
                                             float(p.get('hex_t', 5.0)),
                                             tuple(p.get('center', (0, 0, 0))), tag,
-                                            int(p.get('segments', 48)))]
+                                            int(p.get('segments', 48)),
+                                            thread_pitch=float(p.get('thread_pitch', 0.0)))]
 
         if k == 'crankshaft':
             return [K.make_crankshaft(float(p.get('main_d', 50.0)),

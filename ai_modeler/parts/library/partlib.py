@@ -101,21 +101,30 @@ def _coupling(p):
 
 
 def _bolt(p):
-    """六角头螺栓: 六棱柱头 + 光杆。
+    """六角头螺栓: 六棱柱头 + 带螺纹杆部。
 
     参数口径(与用户确认过):
       · 描述给了「对边 s / 头高 k」就**用描述值**;
       · 没给才按 GB/T 5782 比例推定 s≈1.5d、k≈0.7d, 并在提示里写明来源(不静默);
-      · 螺纹不做真实牙型 —— 真实牙型在 CSG 内核里会指数级增加面片, 工程上通常用
-        "光杆 + 装饰螺纹/注释"表示; CATIA 侧同样只建光杆(可自行加装饰螺纹)。
+      · 已知公制规格从标准表取粗牙螺距；本地网格生成近似可见螺旋牙型。
+        未知规格必须由调用方给 thread_pitch/pitch，不能无提示退化成光杆。
     """
     d = float(p['d'])
     L = float(p['L'])
     s = float(p.get('s') or round(1.5 * d, 1))
     k = float(p.get('k') or round(0.7 * d, 1))
+    try:
+        from ai_modeler.parts import std_bolt as SB
+        standard = SB.spec_of(d)
+    except Exception:
+        standard = None
+    thread_pitch = float(p.get('thread_pitch') or p.get('pitch')
+                          or (standard or {}).get('p') or 0.0)
+    if thread_pitch <= 0:
+        raise ValueError('六角螺栓缺少可确认的螺距；请给标准 M 规格或显式提供 thread_pitch。')
     return [Feature('hex_bolt', {'shank_d': d, 'length': L, 'across_flats': s,
                                  'head_h': k, 'center': (0, 0, 0),
-                                 'segments': 48})]
+                                 'segments': 48, 'thread_pitch': thread_pitch})]
 
 
 def _nut(p):
@@ -198,7 +207,7 @@ PARTS: Dict[str, dict] = {
         # 外形: 对边 s × 对边 s × (杆长 + 头高)。对边没给就按 GB/T 5782 的 s≈1.5d
         bbox=lambda p: (p.get('s') or 1.5 * p['d'], p.get('s') or 1.5 * p['d'],
                         p['L'] + (p.get('k') or 0.7 * p['d'])),
-        note='六棱柱头 + 光杆(螺纹按装饰表示)'),
+        note='六棱柱头 + 近似外螺旋牙型'),
     '螺母': dict(
         aliases=['螺母', '螺帽'],
         params={'D': ['螺纹规格', '公称直径', '直径', 'M'], 's': ['对边宽度', '对边', 's'], 'm': ['厚度', '厚', 'm']},
@@ -840,6 +849,10 @@ def _socket_bolt(p):
     k = p.get('bolt_head_k') or (spec or {}).get('head_h')
     s = p.get('bolt_hex_s') or (spec or {}).get('hex_s')
     t = p.get('bolt_hex_t') or (spec or {}).get('hex_t')
+    thread_pitch = float(p.get('thread_pitch') or p.get('pitch')
+                         or (spec or {}).get('p') or 0.0)
+    if thread_pitch <= 0:
+        raise ValueError('内六角螺钉缺少可确认的螺距；请给标准 M 规格或显式提供 thread_pitch。')
     if not all((dk, k, s, t)):
         # 标准表查不到且用户没给全 -> 按比例推定（上层能从 note 看出这是推定）
         dk = dk or round(1.6 * d, 1)
@@ -848,7 +861,8 @@ def _socket_bolt(p):
         t = t or round(0.5 * d, 1)
     return [Feature('socket_head_bolt', {
         'shank_d': d, 'length': L, 'head_d': float(dk), 'head_h': float(k),
-        'hex_s': float(s), 'hex_t': float(t), 'segments': 48,
+        'hex_s': float(s), 'hex_t': float(t), 'thread_pitch': thread_pitch,
+        'segments': 48,
         'center': (0, 0, 0)},
         ADD,
         name='内六角圆柱头螺钉 %s×%g'

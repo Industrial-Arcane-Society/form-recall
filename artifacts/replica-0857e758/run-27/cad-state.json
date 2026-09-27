@@ -1,0 +1,1029 @@
+{
+  "plan": {
+    "schema_version": "1.0",
+    "name": "bullet-grip-pin",
+    "source_prompt": "bullet-shaped pin with cylindrical shank, circular flange, upper cylinder and ogive head",
+    "units": {
+      "length": "mm",
+      "angle": "deg"
+    },
+    "coordinate_system": {
+      "type": "global_cartesian",
+      "handedness": "right",
+      "axes": [
+        "X",
+        "Y",
+        "Z"
+      ],
+      "origin": [
+        0,
+        0,
+        0
+      ]
+    },
+    "features": [
+      {
+        "id": "main_revolve_body",
+        "kind": "revolve",
+        "operation": "add",
+        "name": "main body revolution",
+        "note": "complete axi-symmetric body: shank, flange, upper cylinder, ogive head with flat tip",
+        "parameters": {
+          "axis": "Z",
+          "center": [
+            0,
+            0,
+            0
+          ],
+          "profile": [
+            [
+              0,
+              0
+            ],
+            [
+              5.175,
+              0
+            ],
+            [
+              5.175,
+              27.74
+            ],
+            [
+              11.25,
+              27.74
+            ],
+            [
+              11.25,
+              32.85
+            ],
+            [
+              6.075,
+              32.85
+            ],
+            [
+              6.075,
+              48.18
+            ],
+            [
+              5.95,
+              49
+            ],
+            [
+              5.8,
+              51
+            ],
+            [
+              5.6,
+              54
+            ],
+            [
+              5.3,
+              57.5
+            ],
+            [
+              4.8,
+              61
+            ],
+            [
+              4.1,
+              64.25
+            ],
+            [
+              3.2,
+              67
+            ],
+            [
+              2.2,
+              69.25
+            ],
+            [
+              1.5,
+              70.75
+            ],
+            [
+              0.9,
+              71.75
+            ],
+            [
+              0.3,
+              72.27
+            ],
+            [
+              0,
+              72.27
+            ]
+          ],
+          "angle": 360
+        },
+        "sources": {
+          "center": {
+            "type": "user",
+            "evidence": "global Z-axis origin chosen for axi-symmetric part"
+          },
+          "profile": {
+            "type": "image_estimate",
+            "evidence": "等轴/正视复核显示顶端应更圆钝；保持饱满弹头和总高不变，将最顶端平台半径从 0.6 mm 缩至约 0.3 mm，使末端更接近连续的圆弧顶点。"
+          },
+          "angle": {
+            "type": "derived",
+            "evidence": "四张视图均绕同一主轴对称回转：REFERENCE 2 正投影无侧向偏心，REFERENCE 3/4 端视图显示同心圆轮廓，REFERENCE 1 等轴测显示连续回转曲面，确认主体为 360° 全回转体。"
+          }
+        }
+      }
+    ],
+    "pending_questions": []
+  },
+  "revision": 1,
+  "last_preview": {
+    "state": "previewed",
+    "validation": {
+      "valid": true,
+      "state": "valid",
+      "errors": [],
+      "confirmations": [],
+      "support": [
+        {
+          "feature_id": "main_revolve_body",
+          "kind": "revolve",
+          "status": "approximate",
+          "reason": "本地预览按闭合[半径,轴向坐标]轮廓绕轴生成；CATIA 映射用多层圆盘近似。完整同轴主体优先作为第一个 revolve 特征创建；在已有实体后添加 revolve，当前几何核的布尔合并可能丢失先前几何。"
+        }
+      ],
+      "warnings": [
+        {
+          "code": "CATIA_APPROXIMATION",
+          "feature_id": "main_revolve_body",
+          "kind": "revolve",
+          "message": "本地预览按闭合[半径,轴向坐标]轮廓绕轴生成；CATIA 映射用多层圆盘近似。完整同轴主体优先作为第一个 revolve 特征创建；在已有实体后添加 revolve，当前几何核的布尔合并可能丢失先前几何。"
+        }
+      ],
+      "schema_version": "1.0"
+    },
+    "catia_executed": false,
+    "dimensions": {
+      "unit": "mm",
+      "bbox": [
+        -11.25,
+        -11.25,
+        0.0,
+        11.25,
+        11.25,
+        72.27
+      ],
+      "size": [
+        22.5,
+        22.5,
+        72.27
+      ],
+      "volume_mm3": 1585.5911782858973,
+      "surface_area_mm2": 3201.722538879903,
+      "triangles": 1632,
+      "feature_count": 1
+    },
+    "catia_operations": [
+      {
+        "index": 1,
+        "kind": "circle_pad",
+        "plane": "XY",
+        "center": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "profile": [],
+        "dimensions": {
+          "l": 0.0,
+          "w": 0.0,
+          "r": 5.175,
+          "h": 3.01125,
+          "depth": 0.0
+        },
+        "name": "main body revolution",
+        "note": "回转体 360° (19 点轮廓)"
+      },
+      {
+        "index": 2,
+        "kind": "circle_pad",
+        "plane": "XY",
+        "center": [
+          0.0,
+          0.0,
+          3.01125
+        ],
+        "profile": [],
+        "dimensions": {
+          "l": 0.0,
+          "w": 0.0,
+          "r": 5.175,
+          "h": 3.01125,
+          "depth": 0.0
+        },
+        "name": "main body revolution",
+        "note": "回转体 360° (19 点轮廓)"
+      },
+      {
+        "index": 3,
+        "kind": "circle_pad",
+        "plane": "XY",
+        "center": [
+          0.0,
+          0.0,
+          6.0225
+        ],
+        "profile": [],
+        "dimensions": {
+          "l": 0.0,
+          "w": 0.0,
+          "r": 5.175,
+          "h": 3.0112499999999995,
+          "depth": 0.0
+        },
+        "name": "main body revolution",
+        "note": "回转体 360° (19 点轮廓)"
+      },
+      {
+        "index": 4,
+        "kind": "circle_pad",
+        "plane": "XY",
+        "center": [
+          0.0,
+          0.0,
+          9.03375
+        ],
+        "profile": [],
+        "dimensions": {
+          "l": 0.0,
+          "w": 0.0,
+          "r": 5.175,
+          "h": 3.0112500000000004,
+          "depth": 0.0
+        },
+        "name": "main body revolution",
+        "note": "回转体 360° (19 点轮廓)"
+      },
+      {
+        "index": 5,
+        "kind": "circle_pad",
+        "plane": "XY",
+        "center": [
+          0.0,
+          0.0,
+          12.045
+        ],
+        "profile": [],
+        "dimensions": {
+          "l": 0.0,
+          "w": 0.0,
+          "r": 5.175,
+          "h": 3.0112499999999986,
+          "depth": 0.0
+        },
+        "name": "main body revolution",
+        "note": "回转体 360° (19 点轮廓)"
+      },
+      {
+        "index": 6,
+        "kind": "circle_pad",
+        "plane": "XY",
+        "center": [
+          0.0,
+          0.0,
+          15.056249999999999
+        ],
+        "profile": [],
+        "dimensions": {
+          "l": 0.0,
+          "w": 0.0,
+          "r": 5.175,
+          "h": 3.0112500000000004,
+          "depth": 0.0
+        },
+        "name": "main body revolution",
+        "note": "回转体 360° (19 点轮廓)"
+      },
+      {
+        "index": 7,
+        "kind": "circle_pad",
+        "plane": "XY",
+        "center": [
+          0.0,
+          0.0,
+          18.0675
+        ],
+        "profile": [],
+        "dimensions": {
+          "l": 0.0,
+          "w": 0.0,
+          "r": 5.175,
+          "h": 3.0112500000000004,
+          "depth": 0.0
+        },
+        "name": "main body revolution",
+        "note": "回转体 360° (19 点轮廓)"
+      },
+      {
+        "index": 8,
+        "kind": "circle_pad",
+        "plane": "XY",
+        "center": [
+          0.0,
+          0.0,
+          21.07875
+        ],
+        "profile": [],
+        "dimensions": {
+          "l": 0.0,
+          "w": 0.0,
+          "r": 5.175,
+          "h": 3.0112500000000004,
+          "depth": 0.0
+        },
+        "name": "main body revolution",
+        "note": "回转体 360° (19 点轮廓)"
+      },
+      {
+        "index": 9,
+        "kind": "circle_pad",
+        "plane": "XY",
+        "center": [
+          0.0,
+          0.0,
+          24.09
+        ],
+        "profile": [],
+        "dimensions": {
+          "l": 0.0,
+          "w": 0.0,
+          "r": 5.175,
+          "h": 3.011249999999997,
+          "depth": 0.0
+        },
+        "name": "main body revolution",
+        "note": "回转体 360° (19 点轮廓)"
+      },
+      {
+        "index": 10,
+        "kind": "circle_pad",
+        "plane": "XY",
+        "center": [
+          0.0,
+          0.0,
+          27.101249999999997
+        ],
+        "profile": [],
+        "dimensions": {
+          "l": 0.0,
+          "w": 0.0,
+          "r": 11.25,
+          "h": 3.0112500000000004,
+          "depth": 0.0
+        },
+        "name": "main body revolution",
+        "note": "回转体 360° (19 点轮廓)"
+      },
+      {
+        "index": 11,
+        "kind": "circle_pad",
+        "plane": "XY",
+        "center": [
+          0.0,
+          0.0,
+          30.112499999999997
+        ],
+        "profile": [],
+        "dimensions": {
+          "l": 0.0,
+          "w": 0.0,
+          "r": 11.25,
+          "h": 3.011249999999997,
+          "depth": 0.0
+        },
+        "name": "main body revolution",
+        "note": "回转体 360° (19 点轮廓)"
+      },
+      {
+        "index": 12,
+        "kind": "circle_pad",
+        "plane": "XY",
+        "center": [
+          0.0,
+          0.0,
+          33.123749999999994
+        ],
+        "profile": [],
+        "dimensions": {
+          "l": 0.0,
+          "w": 0.0,
+          "r": 6.075,
+          "h": 3.011250000000004,
+          "depth": 0.0
+        },
+        "name": "main body revolution",
+        "note": "回转体 360° (19 点轮廓)"
+      },
+      {
+        "index": 13,
+        "kind": "circle_pad",
+        "plane": "XY",
+        "center": [
+          0.0,
+          0.0,
+          36.135
+        ],
+        "profile": [],
+        "dimensions": {
+          "l": 0.0,
+          "w": 0.0,
+          "r": 6.075,
+          "h": 3.011250000000004,
+          "depth": 0.0
+        },
+        "name": "main body revolution",
+        "note": "回转体 360° (19 点轮廓)"
+      },
+      {
+        "index": 14,
+        "kind": "circle_pad",
+        "plane": "XY",
+        "center": [
+          0.0,
+          0.0,
+          39.14625
+        ],
+        "profile": [],
+        "dimensions": {
+          "l": 0.0,
+          "w": 0.0,
+          "r": 6.075,
+          "h": 3.011249999999997,
+          "depth": 0.0
+        },
+        "name": "main body revolution",
+        "note": "回转体 360° (19 点轮廓)"
+      },
+      {
+        "index": 15,
+        "kind": "circle_pad",
+        "plane": "XY",
+        "center": [
+          0.0,
+          0.0,
+          42.1575
+        ],
+        "profile": [],
+        "dimensions": {
+          "l": 0.0,
+          "w": 0.0,
+          "r": 6.075,
+          "h": 3.011249999999997,
+          "depth": 0.0
+        },
+        "name": "main body revolution",
+        "note": "回转体 360° (19 点轮廓)"
+      },
+      {
+        "index": 16,
+        "kind": "circle_pad",
+        "plane": "XY",
+        "center": [
+          0.0,
+          0.0,
+          45.168749999999996
+        ],
+        "profile": [],
+        "dimensions": {
+          "l": 0.0,
+          "w": 0.0,
+          "r": 6.075,
+          "h": 3.011250000000004,
+          "depth": 0.0
+        },
+        "name": "main body revolution",
+        "note": "回转体 360° (19 点轮廓)"
+      },
+      {
+        "index": 17,
+        "kind": "circle_pad",
+        "plane": "XY",
+        "center": [
+          0.0,
+          0.0,
+          48.18
+        ],
+        "profile": [],
+        "dimensions": {
+          "l": 0.0,
+          "w": 0.0,
+          "r": 5.898578125,
+          "h": 3.011249999999997,
+          "depth": 0.0
+        },
+        "name": "main body revolution",
+        "note": "回转体 360° (19 点轮廓)"
+      },
+      {
+        "index": 18,
+        "kind": "circle_pad",
+        "plane": "XY",
+        "center": [
+          0.0,
+          0.0,
+          51.19125
+        ],
+        "profile": [],
+        "dimensions": {
+          "l": 0.0,
+          "w": 0.0,
+          "r": 5.686875000000001,
+          "h": 3.011249999999997,
+          "depth": 0.0
+        },
+        "name": "main body revolution",
+        "note": "回转体 360° (19 点轮廓)"
+      },
+      {
+        "index": 19,
+        "kind": "circle_pad",
+        "plane": "XY",
+        "center": [
+          0.0,
+          0.0,
+          54.20249999999999
+        ],
+        "profile": [],
+        "dimensions": {
+          "l": 0.0,
+          "w": 0.0,
+          "r": 5.453589285714286,
+          "h": 3.011250000000004,
+          "depth": 0.0
+        },
+        "name": "main body revolution",
+        "note": "回转体 360° (19 点轮廓)"
+      },
+      {
+        "index": 20,
+        "kind": "circle_pad",
+        "plane": "XY",
+        "center": [
+          0.0,
+          0.0,
+          57.21375
+        ],
+        "profile": [],
+        "dimensions": {
+          "l": 0.0,
+          "w": 0.0,
+          "r": 5.1258035714285715,
+          "h": 3.011249999999997,
+          "depth": 0.0
+        },
+        "name": "main body revolution",
+        "note": "回转体 360° (19 点轮廓)"
+      },
+      {
+        "index": 21,
+        "kind": "circle_pad",
+        "plane": "XY",
+        "center": [
+          0.0,
+          0.0,
+          60.224999999999994
+        ],
+        "profile": [],
+        "dimensions": {
+          "l": 0.0,
+          "w": 0.0,
+          "r": 4.642634615384617,
+          "h": 3.011249999999997,
+          "depth": 0.0
+        },
+        "name": "main body revolution",
+        "note": "回转体 360° (19 点轮廓)"
+      },
+      {
+        "index": 22,
+        "kind": "circle_pad",
+        "plane": "XY",
+        "center": [
+          0.0,
+          0.0,
+          63.23624999999999
+        ],
+        "profile": [],
+        "dimensions": {
+          "l": 0.0,
+          "w": 0.0,
+          "r": 3.939022727272729,
+          "h": 3.011249999999997,
+          "depth": 0.0
+        },
+        "name": "main body revolution",
+        "note": "回转体 360° (19 点轮廓)"
+      },
+      {
+        "index": 23,
+        "kind": "circle_pad",
+        "plane": "XY",
+        "center": [
+          0.0,
+          0.0,
+          66.24749999999999
+        ],
+        "profile": [],
+        "dimensions": {
+          "l": 0.0,
+          "w": 0.0,
+          "r": 2.8652777777777856,
+          "h": 3.011250000000004,
+          "depth": 0.0
+        },
+        "name": "main body revolution",
+        "note": "回转体 360° (19 点轮廓)"
+      },
+      {
+        "index": 24,
+        "kind": "circle_pad",
+        "plane": "XY",
+        "center": [
+          0.0,
+          0.0,
+          69.25874999999999
+        ],
+        "profile": [],
+        "dimensions": {
+          "l": 0.0,
+          "w": 0.0,
+          "r": 1.4913749999999992,
+          "h": 3.011250000000004,
+          "depth": 0.0
+        },
+        "name": "main body revolution",
+        "note": "回转体 360° (19 点轮廓)"
+      }
+    ],
+    "warnings": [
+      {
+        "code": "CATIA_APPROXIMATION",
+        "feature_id": "main_revolve_body",
+        "kind": "revolve",
+        "message": "本地预览按闭合[半径,轴向坐标]轮廓绕轴生成；CATIA 映射用多层圆盘近似。完整同轴主体优先作为第一个 revolve 特征创建；在已有实体后添加 revolve，当前几何核的布尔合并可能丢失先前几何。"
+      },
+      {
+        "code": "CATIA_TRANSLATOR_NOTE",
+        "feature_id": null,
+        "kind": null,
+        "message": "回转体「回转体 360° (19 点轮廓)」用 24 层圆盘近似(旋转体 API 在这套 CATIA 里不可用)。",
+        "index": 0
+      }
+    ],
+    "feature_manifest": {
+      "main_revolve_body": {
+        "kind": "revolve",
+        "operation": "add",
+        "name": "main body revolution",
+        "parameters": {
+          "axis": "Z",
+          "center": [
+            0,
+            0,
+            0
+          ],
+          "profile": [
+            [
+              0,
+              0
+            ],
+            [
+              5.175,
+              0
+            ],
+            [
+              5.175,
+              27.74
+            ],
+            [
+              11.25,
+              27.74
+            ],
+            [
+              11.25,
+              32.85
+            ],
+            [
+              6.075,
+              32.85
+            ],
+            [
+              6.075,
+              48.18
+            ],
+            [
+              5.95,
+              49
+            ],
+            [
+              5.8,
+              51
+            ],
+            [
+              5.6,
+              54
+            ],
+            [
+              5.3,
+              57.5
+            ],
+            [
+              4.8,
+              61
+            ],
+            [
+              4.1,
+              64.25
+            ],
+            [
+              3.2,
+              67
+            ],
+            [
+              2.2,
+              69.25
+            ],
+            [
+              1.5,
+              70.75
+            ],
+            [
+              0.9,
+              71.75
+            ],
+            [
+              0.3,
+              72.27
+            ],
+            [
+              0,
+              72.27
+            ]
+          ],
+          "angle": 360
+        },
+        "sources": {
+          "center": {
+            "type": "user",
+            "evidence": "global Z-axis origin chosen for axi-symmetric part"
+          },
+          "profile": {
+            "type": "image_estimate",
+            "evidence": "等轴/正视复核显示顶端应更圆钝；保持饱满弹头和总高不变，将最顶端平台半径从 0.6 mm 缩至约 0.3 mm，使末端更接近连续的圆弧顶点。"
+          },
+          "angle": {
+            "type": "derived",
+            "evidence": "四张视图均绕同一主轴对称回转：REFERENCE 2 正投影无侧向偏心，REFERENCE 3/4 端视图显示同心圆轮廓，REFERENCE 1 等轴测显示连续回转曲面，确认主体为 360° 全回转体。"
+          }
+        },
+        "relations": []
+      }
+    },
+    "build_log": [
+      "[基准] 回转体 360° (19 点轮廓) → 864 面"
+    ],
+    "local_geometry_checks": {
+      "state": "passed",
+      "source": "AI Modeler local mesh kernel",
+      "face_count": 864,
+      "bbox_size_mm": [
+        22.5,
+        22.5,
+        72.27
+      ],
+      "bbox_ratios_from_mesh": {
+        "front_width_height": 0.31133250311332505,
+        "depth_height": 0.31133250311332505,
+        "top_width_depth": 1.0
+      },
+      "feature_count_from_plan": 1,
+      "feature_ids_from_plan": [
+        "main_revolve_body"
+      ],
+      "nonfinite_face_count": 0,
+      "degenerate_face_count": 0,
+      "hole_features_from_plan": [],
+      "through_hole_mesh_checks": [],
+      "hole_measurement_complete": true,
+      "hole_visibility": "requires_multimodal_view_review",
+      "through_hole_result": "no_holes_declared"
+    },
+    "orthographic_layout": {
+      "unit": "mm",
+      "axes": {
+        "length": "X",
+        "width": "Y",
+        "height": "Z"
+      },
+      "uniform_scale_across_views": true,
+      "scale_pixels_per_mm": 2.9500484295004847,
+      "tile_size_pixels": [
+        330,
+        260
+      ],
+      "view_extents": {
+        "front": {
+          "horizontal_axis": "X",
+          "horizontal": 22.5,
+          "vertical_axis": "Z",
+          "vertical": 72.27
+        },
+        "right": {
+          "horizontal_axis": "Y",
+          "horizontal": 22.5,
+          "vertical_axis": "Z",
+          "vertical": 72.27
+        },
+        "top": {
+          "horizontal_axis": "X",
+          "horizontal": 22.5,
+          "vertical_axis": "Y",
+          "vertical": 22.5
+        }
+      },
+      "dimension_ratios": {
+        "length_to_height": 0.31133250311332505,
+        "width_to_height": 0.31133250311332505,
+        "length_to_width": 1.0
+      }
+    },
+    "preview_image": "C:\\Users\\lycohana\\AppData\\Local\\AI Modeler\\dsh\\sessions\\ai-modeler-replica-0857e758-r27-evidence-reset\\previews\\r1-g2-front.png",
+    "preview_image_views": [
+      "front"
+    ],
+    "preview_image_view_set": "front",
+    "preview_image_grid_columns": 1,
+    "preview_image_source": "AI Modeler local mesh kernel; not CATIA B-Rep",
+    "preview_render_style": "view-adaptive depth-cued matte shading with visible feature edges",
+    "preview_render_note": "诊断渲染：凹入或远离相机的表面会略暗，清晰线条表示可见的几何折边；亮暗不是零件材质颜色，需结合其它视图判断。",
+    "preview_image_layout": {
+      "unit": "mm",
+      "axes": {
+        "length": "X",
+        "width": "Y",
+        "height": "Z"
+      },
+      "uniform_scale_across_views": true,
+      "scale_pixels_per_mm": 2.9500484295004847,
+      "tile_size_pixels": [
+        330,
+        260
+      ],
+      "view_extents": {
+        "front": {
+          "horizontal_axis": "X",
+          "horizontal": 22.5,
+          "vertical_axis": "Z",
+          "vertical": 72.27
+        },
+        "right": {
+          "horizontal_axis": "Y",
+          "horizontal": 22.5,
+          "vertical_axis": "Z",
+          "vertical": 72.27
+        },
+        "top": {
+          "horizontal_axis": "X",
+          "horizontal": 22.5,
+          "vertical_axis": "Y",
+          "vertical": 22.5
+        }
+      },
+      "dimension_ratios": {
+        "length_to_height": 0.31133250311332505,
+        "width_to_height": 0.31133250311332505,
+        "length_to_width": 1.0
+      }
+    },
+    "preview_generation": 2
+  },
+  "preview_revision": 1,
+  "preview_generation": 2,
+  "previews": [
+    {
+      "revision": 1,
+      "preview_generation": 1,
+      "view": "iso",
+      "dimensions": {
+        "unit": "mm",
+        "bbox": [
+          -11.25,
+          -11.25,
+          0.0,
+          11.25,
+          11.25,
+          72.27
+        ],
+        "size": [
+          22.5,
+          22.5,
+          72.27
+        ],
+        "volume_mm3": 1585.5911782858973,
+        "surface_area_mm2": 3201.722538879903,
+        "triangles": 1632,
+        "feature_count": 1
+      },
+      "preview_image": "C:\\Users\\lycohana\\AppData\\Local\\AI Modeler\\dsh\\sessions\\ai-modeler-replica-0857e758-r27-evidence-reset\\previews\\r1-g1-iso.png",
+      "preview_image_path": "C:\\Users\\lycohana\\AppData\\Local\\AI Modeler\\dsh\\sessions\\ai-modeler-replica-0857e758-r27-evidence-reset\\previews\\r1-g1-iso.png"
+    },
+    {
+      "revision": 1,
+      "preview_generation": 2,
+      "view": "front",
+      "dimensions": {
+        "unit": "mm",
+        "bbox": [
+          -11.25,
+          -11.25,
+          0.0,
+          11.25,
+          11.25,
+          72.27
+        ],
+        "size": [
+          22.5,
+          22.5,
+          72.27
+        ],
+        "volume_mm3": 1585.5911782858973,
+        "surface_area_mm2": 3201.722538879903,
+        "triangles": 1632,
+        "feature_count": 1
+      },
+      "preview_image": "C:\\Users\\lycohana\\AppData\\Local\\AI Modeler\\dsh\\sessions\\ai-modeler-replica-0857e758-r27-evidence-reset\\previews\\r1-g2-front.png",
+      "preview_image_path": "C:\\Users\\lycohana\\AppData\\Local\\AI Modeler\\dsh\\sessions\\ai-modeler-replica-0857e758-r27-evidence-reset\\previews\\r1-g2-front.png"
+    }
+  ],
+  "visual_review": null,
+  "visual_reviews": {},
+  "unresolved_findings": [],
+  "has_references": true,
+  "actions": [
+    {
+      "kind": "tool",
+      "tool": "cad_get_state",
+      "revision": 0,
+      "at": 1790506340.2690387
+    },
+    {
+      "kind": "tool",
+      "tool": "cad_validate_model",
+      "revision": 0,
+      "at": 1790506340.2800307
+    },
+    {
+      "kind": "tool",
+      "tool": "cad_preview_model",
+      "revision": 0,
+      "at": 1790506381.5667584,
+      "failed": true,
+      "error": "预览失败：invalid"
+    },
+    {
+      "kind": "tool",
+      "tool": "cad_preview_model",
+      "revision": 0,
+      "at": 1790506381.5758157,
+      "failed": true,
+      "error": "预览失败：invalid"
+    },
+    {
+      "kind": "tool",
+      "tool": "cad_remove_feature",
+      "revision": 1,
+      "at": 1790506419.7718644,
+      "feature_id": "flange_chamfers"
+    },
+    {
+      "kind": "tool",
+      "tool": "cad_preview_model",
+      "revision": 1,
+      "at": 1790506426.2693534,
+      "view": "iso"
+    },
+    {
+      "kind": "tool",
+      "tool": "cad_preview_model",
+      "revision": 1,
+      "at": 1790506426.534934,
+      "view": "front"
+    }
+  ],
+  "output_paths": {},
+  "finished": false,
+  "finish_state": null,
+  "source_prompt": "继续 AI Modeler Agent 在上一轮通过 CAD MCP 工具建立的同一工件模型；当前特征树由 Agent 创建。所有几何更改必须继续由你通过 CAD MCP 工具完成，不能在会话外手工改 JSON、生成脚本或整体清空重建。\n\n重要纠偏：前一轮任务提示把“圆法兰、无孔”当成了既定事实，这是助手的猜测，不是用户给出的约束。四张图是本轮唯一的用户证据；尺寸和结构推断都标记为 image_estimate/derived。请不要继承“圆法兰”“无孔”结论，也不要把任何先前助手推测称作用户要求。多模态复核的建议同样是待核实线索：既不能照抄，也不能因为先前假设就一概登记为误判。\n\n四图对应：REFERENCE 1 等轴测，REFERENCE 2 正视，REFERENCE 3 从头端看，REFERENCE 4 从柄端看。正视图总高约372 px、法兰最大宽约114 px，H/D≈3.26；采用法兰最大宽约22.5 mm时总高约73 mm。柄长约0.39H、柄径约0.46D、法兰厚约0.07H、上圆柱段约0.20H、头部约0.33H。这些是图像估值；已接近此比例的主体尺寸不要因模糊的“偏长/偏窄”评论改动，先用同视图像素比和模型参数计算验证。\n\nR26 最新 CADPlan revision 8 含 Agent 新增的 `flange_chamfers` prism-cut 特征，且尚未预览。先校验并预览整棵当前特征树。该特征目前的 profile 是 `[[0,0],[12.5,0],[11.25,0.5],[0,0.5]]`、axis Z；核实它在真实预览中是否产生了目标的环形倒角/退台，以及是否改变/破坏法兰。若它只是一个矩形棱柱切块或造成错误，按 CAD 工具返回的 schema 和当前视图证据修复或删除；不要只根据 feature note 认定成功。轴对称轮廓的圆周倒角/台阶优先进入 revolve 的 `[radius,Z]` profile；多边形法兰需用闭合真实多边形 prism，不能用单块 `prism cut` 冒充环形切槽。\n\n重新读取原图判断外廓：REFERENCE 1 等轴图和 REFERENCE 2 正视图里，法兰侧面/内部线可能是圆柱接缝，也可能是多边形平面边界；请用真实直边连续性和不同视图共同确认，不预设圆形或六边形。REFERENCE 3/4 中心附近有闭合深色边界、同心轮廓及径向边线；背景网格、横纵十字线和黄色选中颜色是叠加层候选，但其内侧闭合的黑色/灰色边界可能是中心孔、沉孔、六角窝或台阶。核对两个端视图的轮廓是否同轴、是否在多个视图重复，并用局部边缘连续性判断；证据仍不足则记为 unknown，而不是直接声明“无孔”或直接挖通孔。\n\nR26 的 top profile 最后半径降到 0.3 mm。REFERENCE 2 顶端平端宽约9–12 px，对应直径约1.8–2.4 mm、半径约0.9–1.2 mm（image_estimate）；较小端面半径会更尖，较大半径会更钝。结合真实正视预览判断后用 `cad_update_feature` 修正，并检查 profile 末点的几何方向；不要反向改变参数却声称轮廓变钝。\n\n先根据原图可确认的差异定向修正；当前 review score 重复不代表当前几何没有变化，也不能单独当作修改理由。对每条建议先比较 reference 与 model 的归一化包围盒比例、特征尺寸比和边界位置，再决定接受、拒绝或设为不可观测。不得把本轮提示里的估算冒充用户尺寸。几何每次变化后都生成当前 revision 预览；最终在同一 revision 将 iso/front/top/bottom 分别与匹配的四张原图多模态复核，按证据修到相符后完成并导出可编辑工程、网格及核验报告。",
+  "reference_similarity_attempts": [],
+  "reference_similarity_error": null,
+  "reference_similarity_review": null,
+  "reference_similarity_reviews": {},
+  "reference_similarity_history": []
+}

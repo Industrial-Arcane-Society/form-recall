@@ -1,0 +1,250 @@
+{
+  "schema_version": "1.0",
+  "name": "bullet-grip-pin",
+  "source_prompt": "bullet-shaped pin with cylindrical shank, circular flange, upper cylinder and ogive head",
+  "units": {
+    "length": "mm",
+    "angle": "deg"
+  },
+  "coordinate_system": {
+    "type": "global_cartesian",
+    "handedness": "right",
+    "axes": [
+      "X",
+      "Y",
+      "Z"
+    ],
+    "origin": [
+      0,
+      0,
+      0
+    ]
+  },
+  "features": [
+    {
+      "id": "main_revolve_body",
+      "kind": "revolve",
+      "operation": "add",
+      "name": "main body revolution",
+      "note": "complete axi-symmetric body: shank, flange, upper cylinder, ogive head with flat tip",
+      "parameters": {
+        "axis": "Z",
+        "center": [
+          0,
+          0,
+          0
+        ],
+        "profile": [
+          [
+            0,
+            0
+          ],
+          [
+            5.175,
+            0
+          ],
+          [
+            5.175,
+            27.74
+          ],
+          [
+            5.175,
+            28.5
+          ],
+          [
+            6.075,
+            28.5
+          ],
+          [
+            6.075,
+            48.18
+          ],
+          [
+            5.95,
+            49
+          ],
+          [
+            5.8,
+            51
+          ],
+          [
+            5.6,
+            54
+          ],
+          [
+            5.3,
+            57.5
+          ],
+          [
+            4.8,
+            61
+          ],
+          [
+            4.1,
+            64.25
+          ],
+          [
+            3.2,
+            67
+          ],
+          [
+            2.2,
+            69.25
+          ],
+          [
+            1.5,
+            70.75
+          ],
+          [
+            1,
+            71.75
+          ],
+          [
+            1,
+            72.27
+          ],
+          [
+            0,
+            72.27
+          ]
+        ],
+        "angle": 360
+      },
+      "sources": {
+        "center": {
+          "type": "user",
+          "evidence": "global Z-axis origin chosen for axi-symmetric part"
+        },
+        "profile": {
+          "type": "image_estimate",
+          "evidence": "端视图法兰外轮廓呈多边形而非正圆，中心有内六角特征；将法兰芯轴缩至上圆柱半径6.075 mm，后续用单独六棱柱法兰覆盖；顶端钝头半径约1.0 mm。"
+        },
+        "angle": {
+          "type": "derived",
+          "evidence": "四张视图均绕同一主轴对称回转：REFERENCE 2 正投影无侧向偏心，REFERENCE 3/4 端视图显示同心圆轮廓，REFERENCE 1 等轴测显示连续回转曲面，确认主体为 360° 全回转体。"
+        }
+      }
+    },
+    {
+      "id": "hex_flange",
+      "kind": "prism",
+      "operation": "add",
+      "name": "hexagonal flange",
+      "note": "six-sided flange covering the circular hub between shank and upper cylinder",
+      "parameters": {
+        "center": [
+          0,
+          0,
+          27.74
+        ],
+        "axis": "Z",
+        "height": 5.11,
+        "profile": [
+          [
+            11.25,
+            0
+          ],
+          [
+            5.625,
+            9.7428
+          ],
+          [
+            -5.625,
+            9.7428
+          ],
+          [
+            -11.25,
+            0
+          ],
+          [
+            -5.625,
+            -9.7428
+          ],
+          [
+            5.625,
+            -9.7428
+          ],
+          [
+            11.25,
+            0
+          ]
+        ]
+      },
+      "sources": {
+        "center": {
+          "type": "derived",
+          "evidence": "flange base Z equals shank top at 27.74 mm from existing revolve profile"
+        },
+        "height": {
+          "type": "derived",
+          "evidence": "flange thickness 0.07H = 5.11 mm, from prompt image-estimate ratio"
+        },
+        "profile": {
+          "type": "image_estimate",
+          "evidence": "end views show polygonal outer flange outline; hexagon circumradius taken at previous max flange radius 11.25 mm"
+        }
+      }
+    },
+    {
+      "id": "hex_socket_shank",
+      "kind": "prism",
+      "operation": "cut",
+      "name": "hex socket at shank end",
+      "note": "shallow hexagonal recess at the shank end, visible as yellow hex highlight in REFERENCE 4",
+      "parameters": {
+        "center": [
+          0,
+          0,
+          0
+        ],
+        "axis": "Z",
+        "height": 1.5,
+        "profile": [
+          [
+            2,
+            0
+          ],
+          [
+            1,
+            1.732
+          ],
+          [
+            -1,
+            1.732
+          ],
+          [
+            -2,
+            0
+          ],
+          [
+            -1,
+            -1.732
+          ],
+          [
+            1,
+            -1.732
+          ],
+          [
+            2,
+            0
+          ]
+        ]
+      },
+      "sources": {
+        "center": {
+          "type": "derived",
+          "evidence": "shank end face center at global origin from revolve profile"
+        },
+        "height": {
+          "type": "image_estimate",
+          "evidence": "REFERENCE 4 yellow hex area is shallow surface feature, depth estimated 1.5 mm"
+        },
+        "profile": {
+          "type": "image_estimate",
+          "evidence": "REFERENCE 4 center yellow hexagonal highlight suggests ~3.5 mm across-flats socket; circumradius = 2.0 mm (across-flats 3.46 mm)"
+        }
+      }
+    }
+  ],
+  "pending_questions": []
+}

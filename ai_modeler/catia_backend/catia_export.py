@@ -217,6 +217,39 @@ def _compound_entries(f, k, p, bb, warnings):
             circ('circle_cut', bore / 2.0, name=nm)
         warnings.append('锥齿轮「%s」按外径等比近似为直齿圆柱（锥面/齿向需在 CATIA 里调整）' % note)
 
+    elif k == 'socket_head_bolt':                       # ISO 4762 内六角圆柱头螺钉
+        d = float(p.get('shank_d', 5.0))
+        length = float(p.get('length', 8.0))
+        head_d = float(p.get('head_d', 8.5))
+        head_h = float(p.get('head_h', 5.0))
+        hex_s = float(p.get('hex_s', 4.0))
+        hex_t = float(p.get('hex_t', 2.5))
+        center = tuple(p.get('center', (0.0, 0.0, 0.0)))
+        z0 = float(center[2])
+        join_overlap = min(0.5, head_h * 0.25, length * 0.25)
+        # The shared local mesh feature places its socket on the z-min head
+        # face. The CATIA Pocket channel cuts toward -Z, so export the same
+        # rotationally symmetric part flipped: shank first, head above it,
+        # with the socket sketch on the exposed z-max face.
+        made.append(_entry(kind='circle_pad', cx=float(center[0]), cy=float(center[1]),
+                           z=z0, r=d / 2.0, h=length + join_overlap,
+                           name=nm, note='CATIA 导出通道暂为光杆；本地预览网格有螺旋牙型'))
+        head_start = z0 + length - join_overlap
+        head_top = head_start + head_h
+        made.append(_entry(kind='circle_pad', cx=float(center[0]), cy=float(center[1]),
+                           z=head_start, r=head_d / 2.0, h=head_h,
+                           name=nm, note='ISO 4762 圆柱头'))
+        radius = hex_s / math.sqrt(3.0)
+        socket_profile = [[round(radius * math.cos(math.radians(30.0 + 60.0 * i)), 4),
+                           round(radius * math.sin(math.radians(30.0 + 60.0 * i)), 4)]
+                          for i in range(6)]
+        made.append(_entry(kind='poly_cut', cx=float(center[0]), cy=float(center[1]),
+                           z=head_top + 1.0, depth=hex_t + 1.0,
+                           profile=socket_profile, name=nm,
+                           note='内六角对边 %g mm、深 %g mm' % (hex_s, hex_t)))
+        warnings.append('螺钉「%s」：CATIA 导出文件的杆部为光杆（当前导出器不创建原生/装饰螺纹）；'
+                        '本地预览与 STL 网格含近似螺旋牙型。' % note)
+
     elif k == 'spoked_wheel':                           # 辐条轮: 轮缘 + 轮毂（辐条省略）
         circ('circle_pad', r_out, name=nm)
         circ('circle_cut', max(r_out - float(p.get('rim_w', 6.0)), 0.5),
@@ -413,7 +446,7 @@ def _compound_entries(f, k, p, bb, warnings):
 
 
 # 这些 kind 由 _compound_entries 处理 (零件库复合件)
-COMPOUND_KINDS = ('rotor', 'helical_gear', 'bevel_gear', 'spoked_wheel', 'vbelt_pulley',
+COMPOUND_KINDS = ('rotor', 'helical_gear', 'bevel_gear', 'socket_head_bolt', 'spoked_wheel', 'vbelt_pulley',
                   'timing_pulley',
                   'piston', 'camshaft', 'crankshaft', 'impeller', 'conrod',
                   'scroll_disc', 'cross_joint', 'worm')

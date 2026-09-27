@@ -1,0 +1,83 @@
+{
+  "schema_version": "1.0",
+  "description": "AI Modeler 常用建模配方。配方记录意图、特征顺序、可执行性和限制；模型尺寸仍来自用户输入或明确的标准表。",
+  "recipes": [
+    {
+      "id": "fastener.socket_head_cap_screw",
+      "name": "内六角圆柱头螺钉",
+      "aliases": ["内六角螺钉", "内六角螺丝", "内六角圆柱头螺钉", "杯头螺丝", "socket head cap screw", "socket-head screw"],
+      "intent": "按 M规格×长度 识别 ISO 4762 / GB/T 70.1 内六角圆柱头螺钉。",
+      "strategy": ["从标准表读取螺距、头径、头高、内六角对边和内六角深度", "生成圆柱头、带近似螺旋外牙的杆部和端面内六角", "在结果中分别说明本地网格与 CATIA 导出的螺纹状态"],
+      "parameters": ["size，例如 M5x8"],
+      "builder": "cad_apply_recipe",
+      "status": "executable",
+      "limitations": ["本地网格生成可见的近似 ISO 公制螺旋牙型；当前杆部全长带牙，牙端倒角、退刀槽和部分牙长未建模。", "CATIA 导出器当前只生成光杆，不生成原生或装饰螺纹。", "只接受标准库中有尺寸表的公称规格。"]
+    },
+    {
+      "id": "thread.external_cosmetic",
+      "name": "外螺纹（简化/装饰表示）",
+      "aliases": ["外螺纹", "螺纹", "螺杆", "丝杆", "螺钉牙", "thread", "external thread"],
+      "intent": "仅用于用户明确接受轻量/装饰表示，或目标格式不支持螺旋牙型时。",
+      "strategy": ["仅在用户明确接受装饰表示时按公称大径建光杆", "螺距和有效长度作为线程规格元数据保留", "CATIA 当前导出器也不会自动添加装饰螺纹；不要将此表示用于要求可见实体螺纹的本地预览或 STL"],
+      "parameters": ["公称直径", "螺距", "螺纹长度", "旋向（可选）"],
+      "builder": null,
+      "status": "guidance",
+      "limitations": ["当前 CATIA 导出器尚无装饰螺纹创建操作；规格信息只保留在特征说明中。"]
+    },
+    {
+      "id": "thread.external_helical",
+      "name": "外螺纹（真实螺旋牙型）",
+      "aliases": ["真实螺纹", "螺旋牙型", "螺旋螺纹", "helical thread", "modeled thread"],
+      "intent": "用于明确要求可见/可打印真实牙型的情况；已知标准内六角圆柱头螺钉优先使用直接建模配方。",
+      "strategy": ["读取公称直径、螺距、有效长度和牙型标准", "标准螺钉配方在杆部网格上生成近似 ISO 螺旋牙型", "通用独立螺纹特征和 CATIA 原生螺纹仍未实现"],
+      "parameters": ["公称直径", "螺距", "有效长度", "牙型标准", "旋向"],
+      "builder": null,
+      "status": "guidance",
+      "limitations": ["内六角圆柱头螺钉配方仅对标准表覆盖的公制螺钉生成近似螺旋网格；其它螺纹没有独立通用建模器。", "CATIA 导出器暂时导出光杆；不要宣称 CATPart 中存在螺纹。"]
+    },
+    {
+      "id": "thread.internal_cosmetic",
+      "name": "内螺纹（简化/装饰表示）",
+      "aliases": ["内螺纹", "攻丝", "螺纹孔", "丝孔", "tapped hole", "internal thread"],
+      "intent": "用于普通装配表达和轻量模型。",
+      "strategy": ["先按标准底孔直径建立盲孔或通孔", "保留螺纹规格、螺距和有效深度", "不在网格上切出螺旋牙型；CATIA 中添加装饰内螺纹"],
+      "parameters": ["螺纹规格", "底孔直径（标准表值）", "孔深/贯穿", "螺距"],
+      "builder": null,
+      "status": "guidance",
+      "limitations": ["没有底孔标准值时必须明确查询或要求用户确认，不以公称直径冒充底孔直径。", "当前 CADPlan 没有独立的装饰内螺纹特征。"]
+    },
+    {
+      "id": "hole.through",
+      "name": "贯穿孔",
+      "aliases": ["通孔", "贯穿孔", "打穿", "through hole"],
+      "intent": "在当前实体上建立贯穿孔。",
+      "strategy": ["先确定孔轴和全局坐标孔心", "使用 hole 特征，through=true", "复核模型网格上孔轴是否真正贯穿"],
+      "parameters": ["直径", "孔心", "孔轴"],
+      "builder": null,
+      "status": "guidance",
+      "limitations": []
+    },
+    {
+      "id": "hole.blind",
+      "name": "盲孔",
+      "aliases": ["盲孔", "不贯穿孔", "沉孔深度", "blind hole"],
+      "intent": "在当前实体上建立指定深度的盲孔。",
+      "strategy": ["先确定孔轴和孔心", "使用 hole 特征，through=false 并给出 depth", "确认深度不会切穿实体"],
+      "parameters": ["直径", "深度", "孔心", "孔轴"],
+      "builder": null,
+      "status": "guidance",
+      "limitations": []
+    },
+    {
+      "id": "hole.counterbore",
+      "name": "沉头/沉孔组合",
+      "aliases": ["沉孔", "沉头孔", "圆柱沉孔", "counterbore", "countersink"],
+      "intent": "按头部配合形式确定同轴的主孔与扩孔。",
+      "strategy": ["先建立主通孔或盲孔", "再在同轴位置建立较大直径且较浅的圆柱沉孔；锥形沉头需另用锥面切除特征", "分别记录主孔和沉孔尺寸来源"],
+      "parameters": ["主孔直径", "沉孔直径", "沉孔深度", "孔心", "孔轴"],
+      "builder": null,
+      "status": "guidance",
+      "limitations": ["沉孔与锥形沉头不是同一结构；没有头部标准或标注时不要混用。"]
+    }
+  ]
+}

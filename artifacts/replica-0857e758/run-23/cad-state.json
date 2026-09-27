@@ -1,0 +1,161 @@
+{
+  "plan": {
+    "schema_version": "1.0",
+    "name": "bullet-grip-pin",
+    "source_prompt": "bullet-shaped pin with cylindrical shank, circular flange, upper cylinder and ogive head",
+    "units": {
+      "length": "mm",
+      "angle": "deg"
+    },
+    "coordinate_system": {
+      "type": "global_cartesian",
+      "handedness": "right",
+      "axes": [
+        "X",
+        "Y",
+        "Z"
+      ],
+      "origin": [
+        0,
+        0,
+        0
+      ]
+    },
+    "features": [
+      {
+        "id": "main_revolve_body",
+        "kind": "revolve",
+        "operation": "add",
+        "name": "main body revolution",
+        "note": "complete axi-symmetric body: shank, flange, upper cylinder, ogive head with flat tip",
+        "parameters": {
+          "axis": "Z",
+          "center": [
+            0,
+            0,
+            0
+          ],
+          "profile": [
+            [
+              0,
+              0
+            ],
+            [
+              5.175,
+              0
+            ],
+            [
+              5.175,
+              27.74
+            ],
+            [
+              11.25,
+              27.74
+            ],
+            [
+              11.25,
+              32.85
+            ],
+            [
+              6.075,
+              32.85
+            ],
+            [
+              6.075,
+              48.18
+            ],
+            [
+              0.6,
+              72.27
+            ],
+            [
+              0,
+              72.27
+            ]
+          ]
+        },
+        "sources": {
+          "center": {
+            "type": "user",
+            "evidence": "global Z-axis origin chosen for axi-symmetric part"
+          },
+          "profile": {
+            "type": "image_estimate",
+            "evidence": "profile derived from REFERENCE 2 front view fractions: total height 73 mm / flange diameter 22.5 mm; shank length ~0.38H, radius ~0.23D_flange; flange thickness ~0.07H, radius 0.5D_flange; upper cylinder length ~0.21H, radius ~0.27D_flange; head length ~0.33H; tip radius ~0.6 mm"
+          }
+        }
+      }
+    ],
+    "pending_questions": []
+  },
+  "revision": 1,
+  "last_preview": null,
+  "preview_revision": null,
+  "preview_generation": 0,
+  "previews": [],
+  "visual_review": null,
+  "visual_reviews": {},
+  "unresolved_findings": [],
+  "has_references": true,
+  "actions": [
+    {
+      "kind": "tool",
+      "tool": "cad_create_model",
+      "revision": 1,
+      "at": 1790503225.0020645,
+      "feature_id": "main_revolve_body"
+    },
+    {
+      "kind": "tool",
+      "tool": "cad_get_state",
+      "revision": 1,
+      "at": 1790503246.782634
+    },
+    {
+      "kind": "tool",
+      "tool": "cad_update_feature",
+      "revision": 1,
+      "at": 1790503304.611125,
+      "feature_id": "main_revolve_body",
+      "metadata_only": true
+    },
+    {
+      "kind": "tool",
+      "tool": "cad_update_feature",
+      "revision": 1,
+      "at": 1790503309.2230313,
+      "feature_id": "main_revolve_body",
+      "metadata_only": true
+    },
+    {
+      "kind": "tool",
+      "tool": "cad_get_feature_spec",
+      "revision": 1,
+      "at": 1790503328.4933736,
+      "feature_kind": "revolve"
+    },
+    {
+      "kind": "tool",
+      "tool": "cad_get_state",
+      "revision": 1,
+      "at": 1790503340.8783743
+    },
+    {
+      "kind": "tool",
+      "tool": "cad_update_feature",
+      "revision": 1,
+      "at": 1790503359.7533395,
+      "feature_id": "main_revolve_body",
+      "metadata_only": true
+    }
+  ],
+  "output_paths": {},
+  "finished": false,
+  "finish_state": null,
+  "source_prompt": "仅依据本次提供的四张同一零件参考图，从空白状态新建可编辑三维模型。不要读取、恢复或沿用以前任何一轮的 CADPlan、尺寸假设或模型。四图顺序：1 等轴测，2 正视，3 沿主轴看弹头端，4 沿主轴看柄端。\n\n这是无标注尺寸的比例复刻任务。我按正视原图估读的证据仅供你核对和采用/修正，不是绝对尺寸：总高约 374 px，最大法兰宽约 114 px，所以高/法兰直径约 3.28；可选总高约 73 mm、法兰直径约 22.5 mm。柄部轴向长度约占总高 0.38、直径约为法兰直径 0.46；法兰厚约占总高 0.07；法兰以上直圆柱段长度约占总高 0.21、直径约为法兰直径 0.54；弹头曲面段约占总高 0.33。所有换算值均为 image_estimate，重点是保持这些相对比例。\n\n请回看四张原图验证这些判断再建模：法兰外缘在等轴图和正视投影没有可靠的六角直边/角点证据，按圆形法兰建，不要因为像素边线或渲染分面改成六角棱柱。头部是平滑、连续收敛的弹头/圆弧轮廓，尖端有小圆钝平面，不是直线圆锥尖顶。正视图可辨柄、法兰、法兰上方直圆柱、曲面头部四段的轴向比例。顶/底视图中心的十字、彩色圆点/高亮与背景网格是视口标记，不当成实体孔或槽；只有清晰闭合且由其它视角支持的轮廓才建端面孔槽。\n\n先在首个 CAD 工具调用前简要列出你采用的视角映射、比例和不确定项；随后用 CAD 工具从零创建主体。主体完成后立即生成 iso 和 front 预览，核对外包比例，再按图像证据添加细节。按需要逐张对照当前模型视图与对应原图；发现误差时只修改有证据支持的受影响参数，不要为追分反复摇摆。最后校验模型；只有本地工程和网格确实保存成功时才调用完成工具。不要只返回文字或 CADPlan，不要编造校验、输出路径或完成状态。",
+  "reference_similarity_attempts": [],
+  "reference_similarity_error": null,
+  "reference_similarity_review": null,
+  "reference_similarity_reviews": {},
+  "reference_similarity_history": []
+}

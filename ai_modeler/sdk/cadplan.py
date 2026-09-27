@@ -76,6 +76,13 @@ FEATURE_SPECS = {
                       "base=false 时 center 表示几何中点。等半径时为圆草图加凸台；"
                       "圆锥台会近似，非 Z 轴圆锥台暂不支持。",
                       ("radius", "radius2", "height", "center", "axis", "base", "segments")),
+    "socket_head_bolt": _spec(
+        ("shank_d", "thread_pitch", "length", "head_d", "head_h", "hex_s", "hex_t"), "approximate",
+        "本地网格按 thread_pitch 生成可见的近似 ISO 公制螺旋牙型；整段杆部带牙，"
+        "未建牙端倒角/退刀槽。当前 CATIA 导出器仍以光杆凸台和六角凹槽表达，"
+        "不会创建原生或装饰螺纹。",
+        ("shank_d", "thread_pitch", "length", "head_d", "head_h", "hex_s", "hex_t",
+         "center", "segments")),
     "sphere": _spec(("radius",), "approximate",
                     "CATIA 导出器以多层圆盘近似球体。",
                     ("radius", "center", "segments", "rings")),
@@ -180,6 +187,7 @@ _LENGTH_KEYS = {
     "hub_r", "pitch_d", "bore_d", "thread_r", "height2", "pin_d", "stroke",
     "main_d", "journal_d", "base_d", "lift", "hub_d", "tip_d", "big_d",
     "small_d", "big_bore", "small_bore", "shank_w", "thick", "span",
+    "shank_d", "thread_pitch", "head_d", "head_h", "hex_s", "hex_t",
     "root_chord", "tip_chord", "sweep", "groove_depth", "outer_d", "wall_t", "thickness",
     "module", "spoke_w", "blade_t", "x", "y", "z",
 }

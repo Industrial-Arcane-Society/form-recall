@@ -855,7 +855,17 @@ def make_revolve(profile: Sequence[Tuple[float, float]], angle: float = 360.0,
             r0, z0 = profile[k]
             r1, z1 = profile[(k + 1) % m]
             quad = [P(r0, z0, a0), P(r1, z1, a0), P(r1, z1, a1), P(r0, z0, a1)]
-            pts = [quad[0], quad[1], quad[2]] if (abs(r0) < 1e-9 or abs(r1) < 1e-9) else quad
+            if abs(r0) < 1e-9:
+                # The first point lies on the axis, so quad[0] and quad[3]
+                # coincide. Keep the triangle that spans the off-axis edge.
+                pts = [quad[0], quad[1], quad[2]]
+            elif abs(r1) < 1e-9:
+                # The second point lies on the axis, so quad[1] and quad[2]
+                # coincide. Using [0, 1, 2] would be degenerate and drop this
+                # entire profile segment (for example, a revolved pointed tip).
+                pts = [quad[0], quad[1], quad[3]]
+            else:
+                pts = quad
             pg = make_polygon(pts, tag, center3)
             if pg:
                 polys.append(pg)
@@ -1500,8 +1510,9 @@ def conrod_size(length: float, big_d: float, small_d: float):
 
 def make_hex_bolt(shank_d: float, length: float, across_flats: float,
                   head_h: float, center: Vec3 = (0, 0, 0), tag: int = 0,
-                  segments: int = 48) -> List[Polygon]:
-    """六角头螺栓: 六棱柱头 + 光杆圆柱, 沿 Z 轴(头在下, 杆往上)。
+                  segments: int = 48, thread_pitch: float = 0.0,
+                  thread_hand: str = 'right') -> List[Polygon]:
+    """六角头螺栓: 六棱柱头 + 螺杆，沿 Z 轴(头在下, 杆往上)。
 
     几何定义(不能含糊):
       · 「对边 s」= 六边形两**平行面**之间的距离 —— 这是扳手口径, 也是图纸标注值;
@@ -1510,7 +1521,7 @@ def make_hex_bolt(shank_d: float, length: float, across_flats: float,
       · 头部高度 k, 杆长 L → 总高 L + k; 杆与头同轴。
     实现方式: 头(六棱柱)与杆(圆柱)的网格**直接拼接** —— 两个凸体拼接不需要布尔,
     省掉 CSG 那一步(实测对一个螺栓能省一个数量级的三角化)。
-    螺纹不做真实牙型(CATIA 侧用装饰螺纹/注释表达), 这是与用户确认过的口径。
+    thread_pitch 大于零时，本地网格会生成近似 ISO 公制外螺旋牙型；零值只为兼容旧调用。
     """
     d = max(0.5, float(shank_d))
     L = max(1.0, float(length))
@@ -1528,15 +1539,21 @@ def make_hex_bolt(shank_d: float, length: float, across_flats: float,
     polys += extrude_profile(head_prof, k, (cx, cy, cz), 'Z', tag)
 
     # --- 杆: 圆柱, 从头面往上长 ---
-    polys += make_cylinder(d / 2.0, L, (cx, cy, cz + k), tag,
-                           max(8, int(segments)))
+    if float(thread_pitch or 0.0) > 0:
+        polys += make_threaded_cylinder(d, float(thread_pitch), L,
+                                        (cx, cy, cz + k), tag,
+                                        max(8, int(segments)), thread_hand)
+    else:
+        polys += make_cylinder(d / 2.0, L, (cx, cy, cz + k), tag,
+                               max(8, int(segments)))
     return polys
 
 
 def make_socket_head_bolt(shank_d: float, length: float, head_d: float,
                           head_h: float, hex_s: float, hex_t: float,
                           center: Vec3 = (0, 0, 0), tag: int = 0,
-                          segments: int = 48) -> List[Polygon]:
+                          segments: int = 48, thread_pitch: float = 0.0,
+                          thread_hand: str = 'right') -> List[Polygon]:
     """内六角圆柱头螺钉（ISO 4762 / GB/T 70.1—2008）。
 
     与 `make_hex_bolt` 的区别（这是"内六角"三个字的全部含义）：
@@ -1547,7 +1564,8 @@ def make_socket_head_bolt(shank_d: float, length: float, head_d: float,
       · 头在 Z=0..k，杆从 Z=k 往上长 L（与 make_hex_bolt 同向，便于拼接装配）；
       · 「对边 s」是六边形两平行面的距离，外接圆半径 R = s/√3；
       · 内六角孔的**对角朝向**与头部圆无关，这里让一条对边平行 X 轴（常见摆法）；
-      · 螺纹不做真实牙型（与项目既有口径一致，CATIA 侧用装饰螺纹表达）。
+      · 提供 thread_pitch 时，本地网格以 ISO 公制基本牙型生成真实右/左旋外螺纹；
+        不提供螺距时仍生成光杆，保持旧调用兼容。
     """
     d = max(0.5, float(shank_d))
     L = max(1.0, float(length))
@@ -1569,9 +1587,96 @@ def make_socket_head_bolt(shank_d: float, length: float, head_d: float,
         head = csg_subtract(head, socket)
     except Exception:
         pass                                # 布尔失败时退化成无内六角的圆柱头（不静默丢头部）
-    shank = make_cylinder(d / 2.0, L, (cx, cy, cz + k), tag,
-                          max(8, int(segments)))
+    pitch = float(thread_pitch or 0.0)
+    if pitch > 0:
+        shank = make_threaded_cylinder(d, pitch, L, (cx, cy, cz + k), tag,
+                                       max(8, int(segments)), thread_hand)
+    else:
+        shank = make_cylinder(d / 2.0, L, (cx, cy, cz + k), tag,
+                              max(8, int(segments)))
     return list(head) + list(shank)
+
+
+def make_threaded_cylinder(major_d: float, pitch: float, length: float,
+                           center: Vec3 = (0, 0, 0), tag: int = 0,
+                           circumferential_segments: int = 48,
+                           hand: str = 'right') -> List[Polygon]:
+    """Create a closed, faceted metric external-thread mesh without CSG.
+
+    The surface radius follows the truncated ISO metric 60-degree profile as
+    the phase advances helically. Building the outside as one sampled surface
+    avoids a costly Boolean union for every thread turn.
+    """
+    major_d = float(major_d)
+    pitch = float(pitch)
+    length = float(length)
+    if major_d <= 0 or pitch <= 0 or length <= 0:
+        raise ValueError('公制螺纹的大径、螺距和长度必须大于 0。')
+    major_r = major_d / 2.0
+    # ISO basic external-thread radial depth: 5H/8 = 0.61343 P.
+    depth = min(0.61343 * pitch, major_r * 0.45)
+    minor_r = major_r - depth
+    turns = length / pitch
+    nt = max(32, min(48, int(circumferential_segments)))
+    # Twelve axial samples per pitch keep the helix readable. Bound the mesh
+    # size for long fasteners so thread geometry does not dominate the scene.
+    nz = max(12, min(int(math.ceil(turns * 12.0)), 80000 // (2 * nt)))
+    handedness = -1.0 if str(hand or 'right').lower() in {'left', 'lh', '左'} else 1.0
+    cx, cy, cz = (float(value) for value in center)
+
+    crest_half = 1.0 / 16.0
+    root_half = 0.36
+
+    def radius_at(theta: float, z: float) -> float:
+        phase = z / pitch - handedness * theta / (2.0 * math.pi)
+        q = (phase + 0.5) % 1.0 - 0.5
+        aq = abs(q)
+        if aq <= crest_half:
+            rise = 1.0
+        elif aq >= root_half:
+            rise = 0.0
+        else:
+            rise = (root_half - aq) / (root_half - crest_half)
+        return minor_r + depth * rise
+
+    rings: list[list[Vec3]] = []
+    for iz in range(nz + 1):
+        z = length * iz / nz
+        ring = []
+        for it in range(nt):
+            theta = 2.0 * math.pi * it / nt
+            radius = radius_at(theta, z)
+            ring.append((cx + radius * math.cos(theta),
+                         cy + radius * math.sin(theta), cz + z))
+        rings.append(ring)
+
+    polys: List[Polygon] = []
+    for iz in range(nz):
+        lower, upper = rings[iz], rings[iz + 1]
+        for it in range(nt):
+            nxt = (it + 1) % nt
+            a, b = lower[it], lower[nxt]
+            c, d = upper[nxt], upper[it]
+            p1 = _tri_poly(a, b, c, tag)
+            p2 = _tri_poly(a, c, d, tag)
+            if p1:
+                polys.append(p1)
+            if p2:
+                polys.append(p2)
+
+    # Close each end with a fan; the helical outside remains one watertight
+    # solid and its overall envelope stays at the nominal major diameter.
+    bottom_center = (cx, cy, cz)
+    top_center = (cx, cy, cz + length)
+    for it in range(nt):
+        nxt = (it + 1) % nt
+        bottom = _tri_poly(bottom_center, rings[0][nxt], rings[0][it], tag)
+        top = _tri_poly(top_center, rings[-1][it], rings[-1][nxt], tag)
+        if bottom:
+            polys.append(bottom)
+        if top:
+            polys.append(top)
+    return polys
 
 
 # --------------------------------------------------------------------------
