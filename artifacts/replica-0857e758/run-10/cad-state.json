@@ -1,0 +1,2688 @@
+{
+  "plan": {
+    "schema_version": "1.0",
+    "name": "MissileNoseBolt_r09",
+    "source_prompt": "这是一个全新的独立复刻，从空 CADPlan 建模；不要读取或沿用 run-05 至 run-08 的候选。4 张图是同一工件的不同视角：1 等轴测、2 正视、3 俯视、4 仰视。先用正视图估计 X/Z 总体比例、俯视图估计 X/Y 比例，再结合等轴图识别前后层级；尺寸统一按图像估算并标 image_estimate。先识别并建立清晰稳定的主体、杆部、法兰/环肩、上部圆柱段和弹头轮廓；不要把所有形状变化含混地塞进反复变化的单一轮廓。若回转主体必须用一个完整 revolve，调用前一次性估好完整轮廓；之后优先用独立增量特征表达非回转结构，避免改杆部时破坏头部比例。不把屏幕中心标记、选择高亮或渲染接缝当成孔/槽；孔槽必须有清晰边界并获得合适视图支持。不要加图像未支持的装饰。每次几何更新只针对一个明确差异；更新后立即生成对应视图，并用匹配 reference_image_index 复核原图，再决定下一次修改。参考索引：iso=1、front=2、top=3、bottom=4。每次复核只比较一张原图和一个新版单视图。不用网页搜索，不执行任意代码，不推送 CATIA。4 张原图在同一最终 revision 都达到 80/100 且几何校验通过才算达标；否则保留候选和具体未解决差异。",
+    "units": {
+      "length": "mm",
+      "angle": "deg"
+    },
+    "coordinate_system": {
+      "type": "global_cartesian",
+      "handedness": "right",
+      "axes": [
+        "X",
+        "Y",
+        "Z"
+      ],
+      "origin": [
+        0,
+        0,
+        0
+      ]
+    },
+    "features": [
+      {
+        "id": "base_revolve",
+        "kind": "revolve",
+        "operation": "add",
+        "name": "MainRevolveBody",
+        "parameters": {
+          "axis": "Z",
+          "angle": 360,
+          "center": [
+            0,
+            0,
+            0
+          ],
+          "profile": [
+            [
+              0,
+              0
+            ],
+            [
+              5,
+              0
+            ],
+            [
+              5,
+              28
+            ],
+            [
+              8,
+              28
+            ],
+            [
+              8,
+              50
+            ],
+            [
+              7,
+              50
+            ],
+            [
+              7,
+              52
+            ],
+            [
+              6.5,
+              56
+            ],
+            [
+              5.3,
+              61
+            ],
+            [
+              4,
+              66
+            ],
+            [
+              2.5,
+              70
+            ],
+            [
+              1.2,
+              72.5
+            ],
+            [
+              0.3,
+              74
+            ],
+            [
+              0,
+              75
+            ],
+            [
+              0,
+              0
+            ]
+          ]
+        },
+        "sources": {
+          "profile": {
+            "type": "image_estimate",
+            "evidence": "Iso review wants taller upper cylinder and rounder nose. Extended upper cylinder to Z=28-50, nose starts at Z=50-52 with step to R7, then rounded ogive. Shank R5 length 28; hex flange R11.5 thickness 5 Z=28-33. Pixel-estimated."
+          },
+          "angle": {
+            "type": "derived",
+            "evidence": "Axisymmetric body requires full 360° revolution."
+          },
+          "center": {
+            "type": "derived",
+            "evidence": "Revolve axis placed at global origin as the symmetric body datum."
+          },
+          "axis": {
+            "type": "derived",
+            "evidence": "Body axis is vertical (Z) in CADPlan convention."
+          }
+        }
+      },
+      {
+        "id": "hex_flange",
+        "kind": "prism",
+        "operation": "add",
+        "name": "HexagonalFlange",
+        "parameters": {
+          "profile": [
+            [
+              11.5,
+              0
+            ],
+            [
+              5.75,
+              9.96
+            ],
+            [
+              -5.75,
+              9.96
+            ],
+            [
+              -11.5,
+              0
+            ],
+            [
+              -5.75,
+              -9.96
+            ],
+            [
+              5.75,
+              -9.96
+            ],
+            [
+              11.5,
+              0
+            ]
+          ],
+          "height": 5,
+          "center": [
+            0,
+            0,
+            28
+          ],
+          "axis": "Z"
+        },
+        "sources": {
+          "profile": {
+            "type": "image_estimate",
+            "evidence": "REFERENCE 3 (top) outer boundary clearly shows six planar sides; modeled as regular hexagon circumscribed about R11.5 (corner radius 11.5, across-flats ~19.9 mm)."
+          },
+          "height": {
+            "type": "derived",
+            "evidence": "Front-view flange thickness ~5 mm."
+          },
+          "center": {
+            "type": "derived",
+            "evidence": "Flange base at Z=28, centered on axis."
+          },
+          "axis": {
+            "type": "derived",
+            "evidence": "Body vertical axis is Z."
+          }
+        }
+      }
+    ],
+    "pending_questions": []
+  },
+  "revision": 19,
+  "last_preview": null,
+  "preview_revision": null,
+  "preview_generation": 25,
+  "previews": [],
+  "visual_review": null,
+  "visual_reviews": {},
+  "unresolved_findings": [],
+  "has_references": true,
+  "actions": [
+    {
+      "kind": "tool",
+      "tool": "cad_get_state",
+      "revision": 0,
+      "at": 1790490173.8436513
+    },
+    {
+      "kind": "tool",
+      "tool": "cad_update_feature",
+      "revision": 1,
+      "at": 1790490198.7831533,
+      "feature_id": "base_revolve"
+    },
+    {
+      "kind": "tool",
+      "tool": "cad_preview_model",
+      "revision": 1,
+      "at": 1790490202.0235107,
+      "view": "front"
+    },
+    {
+      "kind": "tool",
+      "tool": "cad_review_reference_similarity",
+      "revision": 1,
+      "at": 1790490230.4386516,
+      "view": "front",
+      "preview_generation": 1,
+      "score": 72.0,
+      "passes_threshold": false
+    },
+    {
+      "kind": "tool",
+      "tool": "cad_update_feature",
+      "revision": 2,
+      "at": 1790490256.9292061,
+      "feature_id": "base_revolve"
+    },
+    {
+      "kind": "tool",
+      "tool": "cad_preview_model",
+      "revision": 2,
+      "at": 1790490259.7488155,
+      "view": "front"
+    },
+    {
+      "kind": "tool",
+      "tool": "cad_review_reference_similarity",
+      "revision": 2,
+      "at": 1790490281.200208,
+      "view": "front",
+      "preview_generation": 2,
+      "score": 72.0,
+      "passes_threshold": false
+    },
+    {
+      "kind": "tool",
+      "tool": "cad_update_feature",
+      "revision": 3,
+      "at": 1790490305.44276,
+      "feature_id": "base_revolve"
+    },
+    {
+      "kind": "tool",
+      "tool": "cad_preview_model",
+      "revision": 3,
+      "at": 1790490307.7989483,
+      "view": "front"
+    },
+    {
+      "kind": "tool",
+      "tool": "cad_review_reference_similarity",
+      "revision": 3,
+      "at": 1790490332.8532908,
+      "view": "front",
+      "preview_generation": 3,
+      "score": 82.0,
+      "passes_threshold": true
+    },
+    {
+      "kind": "tool",
+      "tool": "cad_preview_model",
+      "revision": 3,
+      "at": 1790490342.0319726,
+      "view": "iso"
+    },
+    {
+      "kind": "tool",
+      "tool": "cad_review_reference_similarity",
+      "revision": 3,
+      "at": 1790490363.4928887,
+      "view": "iso",
+      "preview_generation": 4,
+      "score": 72.0,
+      "passes_threshold": false
+    },
+    {
+      "kind": "tool",
+      "tool": "cad_update_feature",
+      "revision": 4,
+      "at": 1790490394.3085384,
+      "feature_id": "base_revolve"
+    },
+    {
+      "kind": "tool",
+      "tool": "cad_preview_model",
+      "revision": 4,
+      "at": 1790490399.6235979,
+      "view": "iso"
+    },
+    {
+      "kind": "tool",
+      "tool": "cad_review_reference_similarity",
+      "revision": 4,
+      "at": 1790490422.8650153,
+      "view": "iso",
+      "preview_generation": 5,
+      "score": 72.0,
+      "passes_threshold": false
+    },
+    {
+      "kind": "tool",
+      "tool": "cad_update_feature",
+      "revision": 5,
+      "at": 1790490453.8778265,
+      "feature_id": "base_revolve"
+    },
+    {
+      "kind": "tool",
+      "tool": "cad_preview_model",
+      "revision": 5,
+      "at": 1790490456.9962828,
+      "view": "front"
+    },
+    {
+      "kind": "tool",
+      "tool": "cad_review_reference_similarity",
+      "revision": 5,
+      "at": 1790490482.4069707,
+      "view": "front",
+      "preview_generation": 6,
+      "score": 72.0,
+      "passes_threshold": false
+    },
+    {
+      "kind": "tool",
+      "tool": "cad_update_feature",
+      "revision": 6,
+      "at": 1790490503.771057,
+      "feature_id": "base_revolve"
+    },
+    {
+      "kind": "tool",
+      "tool": "cad_preview_model",
+      "revision": 6,
+      "at": 1790490506.3966117,
+      "view": "front"
+    },
+    {
+      "kind": "tool",
+      "tool": "cad_review_reference_similarity",
+      "revision": 6,
+      "at": 1790490527.21925,
+      "view": "front",
+      "preview_generation": 7,
+      "score": 72.0,
+      "passes_threshold": false
+    },
+    {
+      "kind": "tool",
+      "tool": "cad_update_feature",
+      "revision": 7,
+      "at": 1790490554.5103345,
+      "feature_id": "base_revolve"
+    },
+    {
+      "kind": "tool",
+      "tool": "cad_preview_model",
+      "revision": 7,
+      "at": 1790490557.1756012,
+      "view": "front"
+    },
+    {
+      "kind": "tool",
+      "tool": "cad_review_reference_similarity",
+      "revision": 7,
+      "at": 1790490579.2721813,
+      "view": "front",
+      "preview_generation": 8,
+      "score": 82.0,
+      "passes_threshold": true
+    },
+    {
+      "kind": "tool",
+      "tool": "cad_preview_model",
+      "revision": 7,
+      "at": 1790490583.652522,
+      "view": "iso"
+    },
+    {
+      "kind": "tool",
+      "tool": "cad_review_reference_similarity",
+      "revision": 7,
+      "at": 1790490611.5542166,
+      "view": "iso",
+      "preview_generation": 9,
+      "score": 72.0,
+      "passes_threshold": false
+    },
+    {
+      "kind": "tool",
+      "tool": "cad_update_feature",
+      "revision": 8,
+      "at": 1790490636.6318011,
+      "feature_id": "base_revolve"
+    },
+    {
+      "kind": "tool",
+      "tool": "cad_preview_model",
+      "revision": 8,
+      "at": 1790490639.942717,
+      "view": "iso"
+    },
+    {
+      "kind": "tool",
+      "tool": "cad_review_reference_similarity",
+      "revision": 8,
+      "at": 1790490661.1030402,
+      "view": "iso",
+      "preview_generation": 10,
+      "score": 82.0,
+      "passes_threshold": true
+    },
+    {
+      "kind": "tool",
+      "tool": "cad_preview_model",
+      "revision": 8,
+      "at": 1790490666.39014,
+      "view": "top"
+    },
+    {
+      "kind": "tool",
+      "tool": "cad_review_reference_similarity",
+      "revision": 8,
+      "at": 1790490682.288203,
+      "view": "top",
+      "preview_generation": 11,
+      "score": 55.0,
+      "passes_threshold": false
+    },
+    {
+      "kind": "tool",
+      "tool": "cad_preview_model",
+      "revision": 8,
+      "at": 1790490703.5086591,
+      "view": "bottom"
+    },
+    {
+      "kind": "tool",
+      "tool": "cad_review_reference_similarity",
+      "revision": 8,
+      "at": 1790490736.476125,
+      "view": "bottom",
+      "preview_generation": 12,
+      "score": 82.0,
+      "passes_threshold": true
+    },
+    {
+      "kind": "tool",
+      "tool": "cad_get_state",
+      "revision": 8,
+      "at": 1790490755.1322043
+    },
+    {
+      "kind": "tool",
+      "tool": "cad_record_visual_review",
+      "revision": 8,
+      "at": 1790490787.3972824,
+      "view": "top",
+      "preview_generation": 11,
+      "issue_count": 2,
+      "unresolved_count": 3
+    },
+    {
+      "kind": "tool",
+      "tool": "cad_preview_model",
+      "revision": 8,
+      "at": 1790490824.9047387,
+      "view": "front"
+    },
+    {
+      "kind": "tool",
+      "tool": "cad_review_reference_similarity",
+      "revision": 8,
+      "at": 1790490846.2026334,
+      "view": "front",
+      "preview_generation": 13,
+      "score": 82.0,
+      "passes_threshold": true
+    },
+    {
+      "kind": "tool",
+      "tool": "cad_review_reference_similarity",
+      "revision": 8,
+      "at": 1790490879.8467662,
+      "view": "top",
+      "preview_generation": 11,
+      "score": 55.0,
+      "passes_threshold": false
+    },
+    {
+      "kind": "tool",
+      "tool": "cad_get_feature_spec",
+      "revision": 8,
+      "at": 1790490900.0145707,
+      "feature_kind": "prism"
+    },
+    {
+      "kind": "tool",
+      "tool": "cad_get_feature_spec",
+      "revision": 8,
+      "at": 1790490919.7593076,
+      "feature_kind": "hole"
+    },
+    {
+      "kind": "tool",
+      "tool": "cad_record_visual_review",
+      "revision": 8,
+      "at": 1790490945.259263,
+      "view": "front",
+      "preview_generation": 13,
+      "issue_count": 1,
+      "unresolved_count": 4
+    },
+    {
+      "kind": "tool",
+      "tool": "cad_add_feature",
+      "revision": 9,
+      "at": 1790491003.381589,
+      "feature_id": "top_hex_socket"
+    },
+    {
+      "kind": "tool",
+      "tool": "cad_preview_model",
+      "revision": 9,
+      "at": 1790491013.8889174,
+      "view": "top"
+    },
+    {
+      "kind": "tool",
+      "tool": "cad_review_reference_similarity",
+      "revision": 9,
+      "at": 1790491033.4955945,
+      "view": "top",
+      "preview_generation": 14,
+      "score": 55.0,
+      "passes_threshold": false
+    },
+    {
+      "kind": "tool",
+      "tool": "cad_remove_feature",
+      "revision": 10,
+      "at": 1790491054.055014,
+      "feature_id": "top_hex_socket"
+    },
+    {
+      "kind": "tool",
+      "tool": "cad_get_state",
+      "revision": 10,
+      "at": 1790491074.20902
+    },
+    {
+      "kind": "tool",
+      "tool": "cad_add_feature",
+      "revision": 11,
+      "at": 1790491105.1742492,
+      "feature_id": "oct_flange"
+    },
+    {
+      "kind": "tool",
+      "tool": "cad_preview_model",
+      "revision": 11,
+      "at": 1790491109.741896,
+      "view": "top"
+    },
+    {
+      "kind": "tool",
+      "tool": "cad_review_reference_similarity",
+      "revision": 11,
+      "at": 1790491133.685114,
+      "view": "top",
+      "preview_generation": 15,
+      "score": 72.0,
+      "passes_threshold": false
+    },
+    {
+      "kind": "tool",
+      "tool": "cad_preview_model",
+      "revision": 11,
+      "at": 1790491153.9200609,
+      "view": "front"
+    },
+    {
+      "kind": "tool",
+      "tool": "cad_review_reference_similarity",
+      "revision": 11,
+      "at": 1790491175.2132287,
+      "view": "front",
+      "preview_generation": 16,
+      "score": 72.0,
+      "passes_threshold": false
+    },
+    {
+      "kind": "tool",
+      "tool": "cad_remove_feature",
+      "revision": 12,
+      "at": 1790491183.1397204,
+      "feature_id": "oct_flange"
+    },
+    {
+      "kind": "tool",
+      "tool": "cad_preview_model",
+      "revision": 12,
+      "at": 1790491189.791533,
+      "view": "front"
+    },
+    {
+      "kind": "tool",
+      "tool": "cad_review_reference_similarity",
+      "revision": 12,
+      "at": 1790491214.838644,
+      "view": "front",
+      "preview_generation": 17,
+      "score": 72.0,
+      "passes_threshold": false
+    },
+    {
+      "kind": "tool",
+      "tool": "cad_update_feature",
+      "revision": 13,
+      "at": 1790491239.7872233,
+      "feature_id": "base_revolve"
+    },
+    {
+      "kind": "tool",
+      "tool": "cad_preview_model",
+      "revision": 13,
+      "at": 1790491243.4395387,
+      "view": "front"
+    },
+    {
+      "kind": "tool",
+      "tool": "cad_review_reference_similarity",
+      "revision": 13,
+      "at": 1790491265.4650059,
+      "view": "front",
+      "preview_generation": 18,
+      "score": 72.0,
+      "passes_threshold": false
+    },
+    {
+      "kind": "tool",
+      "tool": "cad_update_feature",
+      "revision": 14,
+      "at": 1790491292.983111,
+      "feature_id": "base_revolve"
+    },
+    {
+      "kind": "tool",
+      "tool": "cad_preview_model",
+      "revision": 14,
+      "at": 1790491296.6447296,
+      "view": "front"
+    },
+    {
+      "kind": "tool",
+      "tool": "cad_review_reference_similarity",
+      "revision": 14,
+      "at": 1790491317.3321595,
+      "view": "front",
+      "preview_generation": 19,
+      "score": 82.0,
+      "passes_threshold": true
+    },
+    {
+      "kind": "tool",
+      "tool": "cad_preview_model",
+      "revision": 14,
+      "at": 1790491322.2213697,
+      "view": "iso"
+    },
+    {
+      "kind": "tool",
+      "tool": "cad_review_reference_similarity",
+      "revision": 14,
+      "at": 1790491345.6690128,
+      "view": "iso",
+      "preview_generation": 20,
+      "score": 72.0,
+      "passes_threshold": false
+    },
+    {
+      "kind": "tool",
+      "tool": "cad_update_feature",
+      "revision": 15,
+      "at": 1790491374.3929949,
+      "feature_id": "base_revolve"
+    },
+    {
+      "kind": "tool",
+      "tool": "cad_preview_model",
+      "revision": 15,
+      "at": 1790491378.5032525,
+      "view": "iso"
+    },
+    {
+      "kind": "tool",
+      "tool": "cad_review_reference_similarity",
+      "revision": 15,
+      "at": 1790491406.353783,
+      "view": "iso",
+      "preview_generation": 21,
+      "score": 82.0,
+      "passes_threshold": true
+    },
+    {
+      "kind": "tool",
+      "tool": "cad_preview_model",
+      "revision": 15,
+      "at": 1790491412.0054066,
+      "view": "front"
+    },
+    {
+      "kind": "tool",
+      "tool": "cad_review_reference_similarity",
+      "revision": 15,
+      "at": 1790491433.2384348,
+      "view": "front",
+      "preview_generation": 22,
+      "score": 72.0,
+      "passes_threshold": false
+    },
+    {
+      "kind": "tool",
+      "tool": "cad_update_feature",
+      "revision": 16,
+      "at": 1790491464.3832088,
+      "feature_id": "base_revolve"
+    },
+    {
+      "kind": "tool",
+      "tool": "cad_add_feature",
+      "revision": 17,
+      "at": 1790491485.1194186,
+      "feature_id": "hex_flange"
+    },
+    {
+      "kind": "tool",
+      "tool": "cad_preview_model",
+      "revision": 17,
+      "at": 1790491489.488484,
+      "view": "front"
+    },
+    {
+      "kind": "tool",
+      "tool": "cad_review_reference_similarity",
+      "revision": 17,
+      "at": 1790491515.7560744,
+      "view": "front",
+      "preview_generation": 23,
+      "score": 82.0,
+      "passes_threshold": true
+    },
+    {
+      "kind": "tool",
+      "tool": "cad_preview_model",
+      "revision": 17,
+      "at": 1790491520.4918234,
+      "view": "iso"
+    },
+    {
+      "kind": "tool",
+      "tool": "cad_review_reference_similarity",
+      "revision": 17,
+      "at": 1790491542.5521078,
+      "view": "iso",
+      "preview_generation": 24,
+      "score": 72.0,
+      "passes_threshold": false
+    },
+    {
+      "kind": "tool",
+      "tool": "cad_update_feature",
+      "revision": 18,
+      "at": 1790491571.512377,
+      "feature_id": "base_revolve"
+    },
+    {
+      "kind": "tool",
+      "tool": "cad_preview_model",
+      "revision": 18,
+      "at": 1790491576.3304825,
+      "view": "iso"
+    },
+    {
+      "kind": "tool",
+      "tool": "cad_review_reference_similarity",
+      "revision": 18,
+      "at": 1790491603.4732697,
+      "view": "iso",
+      "preview_generation": 25,
+      "score": 72.0,
+      "passes_threshold": false
+    },
+    {
+      "kind": "tool",
+      "tool": "cad_update_feature",
+      "revision": 19,
+      "at": 1790491622.3520617,
+      "feature_id": "base_revolve"
+    }
+  ],
+  "output_paths": {},
+  "finished": false,
+  "finish_state": null,
+  "source_prompt": "继续 run-09 revision 3 的 CADPlan，不要重建主体。4 张原图对应 iso=1、front=2、top=3、bottom=4。我对原始 image-2 正视轮廓量得总宽/总高约 115/372=0.31；当前预览为 28x28x75 mm，宽高比 0.373，明显过宽。按 image_estimate 将最大直径收至约 23 mm，整体高度保持约 75 mm。按正视像素比例，底杆直径约 10 mm、长度约 28 mm；法兰厚约 5 mm、直径约 23 mm；上段圆柱直径约 15-16 mm，向顶端平滑收成带小圆角的弹头轮廓。这些是比例估算，不是标注尺寸。原图优先于单次复核文字：image-1/2/3 显示法兰外缘为圆盘/圆环，不要只因为复核文字说‘六角’就添加六角螺母；只有原图明确显示六个平面才建六角特征。中心小记号/接缝也不能直接当孔槽。先读取当前状态，然后只更新影响上述外形的已知 revolve 轮廓；不要查询 box、pattern、prism 等无关特征规格。更新后立即预览 front 并用 reference_image_index=2 复核；只根据新版证据决定下一步。若正视通过，再逐张复核 iso=1、top=3、bottom=4；一次只比较一张原图和对应单视图。每个数值来源标 image_estimate。每次只调用一个相关 CAD 工具，不输出长篇说明，不网页搜索、不生成代码、不推送 CATIA。四张原图在同一最终 revision 均达 80/100 且本地几何校验通过才算达标。",
+  "reference_similarity_attempts": [
+    {
+      "revision": 1,
+      "preview_generation": 1,
+      "view": "front",
+      "reference_image_index": 2,
+      "started_at": 1790490205.933079,
+      "failed": false
+    },
+    {
+      "revision": 2,
+      "preview_generation": 2,
+      "view": "front",
+      "reference_image_index": 2,
+      "started_at": 1790490263.166793,
+      "failed": false
+    },
+    {
+      "revision": 3,
+      "preview_generation": 3,
+      "view": "front",
+      "reference_image_index": 2,
+      "started_at": 1790490310.7534428,
+      "failed": false
+    },
+    {
+      "revision": 3,
+      "preview_generation": 4,
+      "view": "iso",
+      "reference_image_index": 1,
+      "started_at": 1790490345.1510293,
+      "failed": false
+    },
+    {
+      "revision": 4,
+      "preview_generation": 5,
+      "view": "iso",
+      "reference_image_index": 1,
+      "started_at": 1790490403.4619431,
+      "failed": false
+    },
+    {
+      "revision": 5,
+      "preview_generation": 6,
+      "view": "front",
+      "reference_image_index": 2,
+      "started_at": 1790490460.6131654,
+      "failed": false
+    },
+    {
+      "revision": 6,
+      "preview_generation": 7,
+      "view": "front",
+      "reference_image_index": 2,
+      "started_at": 1790490509.7530496,
+      "failed": false
+    },
+    {
+      "revision": 7,
+      "preview_generation": 8,
+      "view": "front",
+      "reference_image_index": 2,
+      "started_at": 1790490560.5681708,
+      "failed": false
+    },
+    {
+      "revision": 7,
+      "preview_generation": 9,
+      "view": "iso",
+      "reference_image_index": 1,
+      "started_at": 1790490587.5798662,
+      "failed": false
+    },
+    {
+      "revision": 8,
+      "preview_generation": 10,
+      "view": "iso",
+      "reference_image_index": 1,
+      "started_at": 1790490643.1851938,
+      "failed": false
+    },
+    {
+      "revision": 8,
+      "preview_generation": 11,
+      "view": "top",
+      "reference_image_index": 3,
+      "started_at": 1790490669.798456,
+      "failed": false
+    },
+    {
+      "revision": 8,
+      "preview_generation": 12,
+      "view": "bottom",
+      "reference_image_index": 4,
+      "started_at": 1790490723.1765597,
+      "failed": false
+    },
+    {
+      "revision": 8,
+      "preview_generation": 13,
+      "view": "front",
+      "reference_image_index": 2,
+      "started_at": 1790490828.721748,
+      "failed": false
+    },
+    {
+      "revision": 8,
+      "preview_generation": 11,
+      "view": "top",
+      "reference_image_index": 3,
+      "started_at": 1790490865.5842025,
+      "failed": false
+    },
+    {
+      "revision": 9,
+      "preview_generation": 14,
+      "view": "top",
+      "reference_image_index": 3,
+      "started_at": 1790491018.8647966,
+      "failed": false
+    },
+    {
+      "revision": 11,
+      "preview_generation": 15,
+      "view": "top",
+      "reference_image_index": 3,
+      "started_at": 1790491113.6765265,
+      "failed": false
+    },
+    {
+      "revision": 11,
+      "preview_generation": 16,
+      "view": "front",
+      "reference_image_index": 2,
+      "started_at": 1790491158.3007212,
+      "failed": false
+    },
+    {
+      "revision": 12,
+      "preview_generation": 17,
+      "view": "front",
+      "reference_image_index": 2,
+      "started_at": 1790491196.2480922,
+      "failed": false
+    },
+    {
+      "revision": 13,
+      "preview_generation": 18,
+      "view": "front",
+      "reference_image_index": 2,
+      "started_at": 1790491247.3312528,
+      "failed": false
+    },
+    {
+      "revision": 14,
+      "preview_generation": 19,
+      "view": "front",
+      "reference_image_index": 2,
+      "started_at": 1790491301.0635343,
+      "failed": false
+    },
+    {
+      "revision": 14,
+      "preview_generation": 20,
+      "view": "iso",
+      "reference_image_index": 1,
+      "started_at": 1790491326.6104615,
+      "failed": false
+    },
+    {
+      "revision": 15,
+      "preview_generation": 21,
+      "view": "iso",
+      "reference_image_index": 1,
+      "started_at": 1790491383.0790527,
+      "failed": false
+    },
+    {
+      "revision": 15,
+      "preview_generation": 22,
+      "view": "front",
+      "reference_image_index": 2,
+      "started_at": 1790491417.008033,
+      "failed": false
+    },
+    {
+      "revision": 17,
+      "preview_generation": 23,
+      "view": "front",
+      "reference_image_index": 2,
+      "started_at": 1790491494.458859,
+      "failed": false
+    },
+    {
+      "revision": 17,
+      "preview_generation": 24,
+      "view": "iso",
+      "reference_image_index": 1,
+      "started_at": 1790491525.180575,
+      "failed": false
+    },
+    {
+      "revision": 18,
+      "preview_generation": 25,
+      "view": "iso",
+      "reference_image_index": 1,
+      "started_at": 1790491581.330328,
+      "failed": false
+    }
+  ],
+  "reference_similarity_error": null,
+  "reference_similarity_review": null,
+  "reference_similarity_reviews": {},
+  "reference_similarity_history": [
+    {
+      "revision": 1,
+      "preview_generation": 1,
+      "view": "front",
+      "reference_image_index": 2,
+      "reference_image_name": "image-2.png",
+      "reference_images_in_request": 1,
+      "score": 72.0,
+      "threshold": 80,
+      "passes_threshold": false,
+      "summary": "当前 front 视图显示一个上下对称的回转体：顶部为尖头/圆头，中部圆柱，带一个环状凸台，下部为圆柱。参考图同样为顶部尖头、中部圆柱、环状凸台、下部圆柱，整体拓扑一致。主要差异：参考图顶部尖端与圆柱之间可见一条明显的水平分阶/台阶线，模型图中该过渡较平滑，仅能看到轻微 shading 变化，分阶证据不如参考图明确；参考图中部凸台上下边缘有倒角/斜切特征（上下表面边缘呈斜面），模型图凸台边缘为直角，无倒角；参考图下部圆柱为蓝色，模型图为灰色，但颜色非几何差异。整体比例（顶部锥体高度、中部圆柱高度、凸台位置与厚度、下部圆柱高度）大致接近，但凸台倒角和顶部台阶的可见证据存在可观察差异。",
+      "reference_hole_count": null,
+      "count_confidence": 0.0,
+      "evidence": [
+        {
+          "item": "整体外形与拓扑",
+          "reference": "顶部尖头-中部圆柱-环状凸台-下部圆柱的回转体",
+          "model": "顶部尖头-中部圆柱-环状凸台-下部圆柱的回转体",
+          "status": "match",
+          "mismatch_severity": "none",
+          "suggested_change": "无需修改整体布局"
+        },
+        {
+          "item": "顶部尖端过渡",
+          "reference": "尖端与下方圆柱之间有一条清晰的水平分阶/台阶线",
+          "model": "过渡较平滑，分阶线不明显或缺失",
+          "status": "mismatch",
+          "mismatch_severity": "minor",
+          "suggested_change": "在顶部尖端与圆柱之间增加明显的水平分阶或台阶"
+        },
+        {
+          "item": "中部环状凸台边缘",
+          "reference": "凸台上下边缘有倒角/斜切，呈六边形/多边形轮廓暗示",
+          "model": "凸台为直角矩形截面，无倒角",
+          "status": "mismatch",
+          "mismatch_severity": "minor",
+          "suggested_change": "为凸台上下边缘添加倒角或斜切"
+        },
+        {
+          "item": "下部圆柱颜色",
+          "reference": "下部圆柱为蓝色",
+          "model": "整体为灰色",
+          "status": "mismatch",
+          "mismatch_severity": "none",
+          "suggested_change": "如需要可调整材质颜色，但不影响几何评分"
+        },
+        {
+          "item": "孔特征",
+          "reference": "front 视图未显示任何可见孔",
+          "model": "front 视图未显示任何可见孔",
+          "status": "unobservable",
+          "mismatch_severity": "none",
+          "suggested_change": "无需修改"
+        }
+      ],
+      "unobservable": [
+        "零件内部结构或贯穿孔",
+        "被遮挡的背面/侧面特征",
+        "真实倒角尺寸与角度",
+        "顶部尖端是否为完整圆头或尖头"
+      ],
+      "review_model": "moonshotai/Kimi-K2.7-Code",
+      "method": "fresh multimodal request with one selected reference view and current preview",
+      "recorded_at": 1790490230.4386516
+    },
+    {
+      "revision": 2,
+      "preview_generation": 2,
+      "view": "front",
+      "reference_image_index": 2,
+      "reference_image_name": "image-2.png",
+      "reference_images_in_request": 1,
+      "score": 72.0,
+      "threshold": 80,
+      "passes_threshold": false,
+      "summary": "当前 front 视图显示一个带尖头、圆柱段、法兰和下方圆柱柄的零件，整体层级与原图一致。主要差异在于：1) 顶部尖头曲率/长度比例不同，模型更钝更短；2) 模型缺少原图中尖头与圆柱段之间可见的横向台阶/退台，以及圆柱段上部的明显横向分线；3) 法兰上方原图可见的倒角/六角形边缘特征在模型中表现为简单圆环，轮廓不符；4) 下方柄部比例近似但模型略短。孔数在本视角无法确认，设为 null。",
+      "reference_hole_count": null,
+      "count_confidence": 0.0,
+      "evidence": [
+        {
+          "item": "整体层级结构",
+          "reference": "尖头-圆柱段-带倒角/六角的法兰-圆柱柄",
+          "model": "尖头-圆柱段-圆环法兰-圆柱柄",
+          "status": "partial_match",
+          "mismatch_severity": "medium",
+          "suggested_change": "检查法兰上轮廓是否为倒角或六角形而非简单圆环"
+        },
+        {
+          "item": "顶部尖头形状与比例",
+          "reference": "较长、较尖锐的弹头形尖头",
+          "model": "较短、较钝的圆头",
+          "status": "mismatch",
+          "mismatch_severity": "medium",
+          "suggested_change": "调整尖头高度和曲率以匹配参考图"
+        },
+        {
+          "item": "圆柱段上部横向分线/台阶",
+          "reference": "存在明显的横向分线或退台",
+          "model": "光滑圆柱，无明显分线",
+          "status": "mismatch",
+          "mismatch_severity": "medium",
+          "suggested_change": "在圆柱段上部添加参考图中可见的横向台阶"
+        },
+        {
+          "item": "法兰轮廓",
+          "reference": "法兰边缘有倒角或近似六角形折边",
+          "model": "法兰为简单矩形/圆环截面",
+          "status": "mismatch",
+          "mismatch_severity": "medium",
+          "suggested_change": "修改法兰边缘为参考图可见的倒角或折边形状"
+        },
+        {
+          "item": "下方圆柱柄比例",
+          "reference": "较长圆柱柄",
+          "model": "圆柱柄略短但大致相似",
+          "status": "partial_match",
+          "mismatch_severity": "low",
+          "suggested_change": "适当调整柄部长度"
+        }
+      ],
+      "unobservable": [
+        "零件背面或侧面的孔、槽、内部结构",
+        "法兰下方及柄部内部是否中空或带孔",
+        "顶部尖头是否被截断或有内部孔洞",
+        "材料、颜色、表面纹理"
+      ],
+      "review_model": "moonshotai/Kimi-K2.7-Code",
+      "method": "fresh multimodal request with one selected reference view and current preview",
+      "recorded_at": 1790490281.200208
+    },
+    {
+      "revision": 3,
+      "preview_generation": 3,
+      "view": "front",
+      "reference_image_index": 2,
+      "reference_image_name": "image-2.png",
+      "reference_images_in_request": 1,
+      "score": 82.0,
+      "threshold": 80,
+      "passes_threshold": true,
+      "summary": "当前 front 视图下，模型与参考图的整体布局（尖头-圆柱-法兰-下圆柱）一致，主要轮廓比例接近。差异在于：参考图顶部为圆钝头/半球形过渡，模型为更尖锐的圆锥尖头；参考图法兰上下边缘有倒角/斜切台阶，模型法兰为直角矩形截面；参考图下段为蓝色圆柱且底部有轻微倒角/圆角，模型下段为灰色圆柱、底部直角。无可见孔。",
+      "reference_hole_count": null,
+      "count_confidence": 0.0,
+      "evidence": [
+        {
+          "item": "整体外形布局",
+          "reference": "尖头-上圆柱-法兰-下圆柱，自上而下堆叠",
+          "model": "尖头-上圆柱-法兰-下圆柱，自上而下堆叠",
+          "status": "match",
+          "mismatch_severity": "none",
+          "suggested_change": "保持当前布局"
+        },
+        {
+          "item": "顶部尖端形状",
+          "reference": "圆钝/类半球形过渡的弹头状头部",
+          "model": "较尖锐的圆锥尖头",
+          "status": "mismatch",
+          "mismatch_severity": "moderate",
+          "suggested_change": "将顶部改为更圆钝的弹头形/半球过渡，降低尖锐度"
+        },
+        {
+          "item": "法兰截面形状",
+          "reference": "法兰上下边缘有倒角/斜切，呈六边形或带倒角的矩形截面",
+          "model": "法兰为直角矩形截面，无倒角",
+          "status": "mismatch",
+          "mismatch_severity": "moderate",
+          "suggested_change": "在法兰上下边缘添加倒角或斜切"
+        },
+        {
+          "item": "下圆柱颜色/材质",
+          "reference": "下圆柱为蓝色",
+          "model": "整体为灰色",
+          "status": "mismatch",
+          "mismatch_severity": "minor",
+          "suggested_change": "如需要匹配外观，将下圆柱设为蓝色"
+        },
+        {
+          "item": "下圆柱底部",
+          "reference": "底部有轻微倒角/圆角",
+          "model": "底部直角",
+          "status": "mismatch",
+          "mismatch_severity": "minor",
+          "suggested_change": "为下圆柱底部添加倒角或圆角"
+        },
+        {
+          "item": "可见孔",
+          "reference": "无可见孔",
+          "model": "无可见孔",
+          "status": "match",
+          "mismatch_severity": "none",
+          "suggested_change": "无需修改"
+        }
+      ],
+      "unobservable": [
+        "被遮挡的背面/侧面结构",
+        "内部贯穿孔或空腔",
+        "法兰背面或下圆柱背面的细节",
+        "真实尺寸与精确比例"
+      ],
+      "review_model": "moonshotai/Kimi-K2.7-Code",
+      "method": "fresh multimodal request with one selected reference view and current preview",
+      "recorded_at": 1790490332.8532908
+    },
+    {
+      "revision": 3,
+      "preview_generation": 4,
+      "view": "iso",
+      "reference_image_index": 1,
+      "reference_image_name": "image-1.png",
+      "reference_images_in_request": 1,
+      "score": 72.0,
+      "threshold": 80,
+      "passes_threshold": false,
+      "summary": "当前 iso 视角下，模型与原图均为同轴回转体：底部圆柱、中部圆盘凸台、上部锥形/圆头体。主要差异在于顶部轮廓：原图顶部为带明显分瓣/接缝的圆头（类似半球或钝圆头，顶部有小平面/分模线），模型顶部为光滑尖锐圆锥；中部圆盘与上部体之间的台阶过渡比例也有差异，模型上部锥体更长、圆盘上方圆柱段较短，原图圆盘上方圆柱段相对更长且顶部圆头更钝。无可见孔。",
+      "reference_hole_count": null,
+      "count_confidence": 0.0,
+      "evidence": [
+        {
+          "item": "整体外形与布局",
+          "reference": "底部圆柱 + 中部圆盘凸台 + 上部圆柱段 + 顶部钝圆头",
+          "model": "底部圆柱 + 中部圆盘凸台 + 上部较短圆柱段 + 顶部尖锐圆锥",
+          "status": "mismatch",
+          "mismatch_severity": "medium",
+          "suggested_change": "将顶部改为钝圆头/半球形并保留可见分瓣/接缝特征；调整圆盘上方圆柱段长度使其更长"
+        },
+        {
+          "item": "顶部轮廓",
+          "reference": "钝圆头，顶部有竖直分瓣线/小平面",
+          "model": "光滑尖锐圆锥",
+          "status": "mismatch",
+          "mismatch_severity": "high",
+          "suggested_change": "顶部改为圆头而非尖头，并添加分瓣/接缝细节"
+        },
+        {
+          "item": "中部圆盘凸台",
+          "reference": "圆盘位于底部圆柱与上部体之间，外径明显大于上下柱体",
+          "model": "圆盘位置与外径大致相似",
+          "status": "match",
+          "mismatch_severity": "none",
+          "suggested_change": ""
+        },
+        {
+          "item": "可见孔",
+          "reference": "无可见孔",
+          "model": "无可见孔",
+          "status": "match",
+          "mismatch_severity": "none",
+          "suggested_change": ""
+        }
+      ],
+      "unobservable": [
+        "底部圆柱下端面细节",
+        "圆盘背面/底面结构",
+        "顶部圆头内部或被遮挡面",
+        "是否存在轴向通孔或内部空腔"
+      ],
+      "review_model": "moonshotai/Kimi-K2.7-Code",
+      "method": "fresh multimodal request with one selected reference view and current preview",
+      "recorded_at": 1790490363.4928887
+    },
+    {
+      "revision": 4,
+      "preview_generation": 5,
+      "view": "iso",
+      "reference_image_index": 1,
+      "reference_image_name": "image-1.png",
+      "reference_images_in_request": 1,
+      "score": 72.0,
+      "threshold": 80,
+      "passes_threshold": false,
+      "summary": "当前 iso 视角下，模型整体为圆柱-法兰-圆柱-锥头结构，与原图一致。主要差异：1) 原图顶部为带明显平面/棱线的截锥/钝圆头（可见顶部小平面及两条竖向分模线），模型为光滑尖锥，头部拓扑不同；2) 原图头部下方圆柱段较短，模型该段较长，比例不同；3) 原图法兰上表面可见彩色虚线/点状标记（可能是孔或选区），但无法确认为真实孔，模型法兰无可见孔。核心头部轮廓差异明显，限制分数不超过80。",
+      "reference_hole_count": null,
+      "count_confidence": 0.0,
+      "evidence": [
+        {
+          "item": "整体结构（底部圆柱+法兰+上部圆柱+头部）",
+          "reference": "四层回转结构，底部蓝色圆柱、法兰、上部圆柱、头部",
+          "model": "四层回转结构，底部圆柱、法兰、上部圆柱、锥头",
+          "status": "match",
+          "mismatch_severity": "none",
+          "suggested_change": "无需修改整体布局"
+        },
+        {
+          "item": "头部形状",
+          "reference": "顶部为带小平面的截锥/钝圆头，可见两条竖向分模线/棱边",
+          "model": "光滑尖锥，无顶部平面及分模线",
+          "status": "mismatch",
+          "mismatch_severity": "major",
+          "suggested_change": "将头部改为带顶部小平面的截锥或钝圆头，并保留竖向分模线"
+        },
+        {
+          "item": "上部圆柱段长度",
+          "reference": "头部下方圆柱段较短，头部与法兰间距小",
+          "model": "头部下方圆柱段较长，头部与法兰间距大",
+          "status": "mismatch",
+          "mismatch_severity": "moderate",
+          "suggested_change": "缩短头部下方圆柱段高度，使头部更靠近法兰"
+        },
+        {
+          "item": "法兰上表面标记/孔",
+          "reference": "法兰上表面有彩色虚线/点状标记，无法确认为真实孔",
+          "model": "法兰上表面光滑无标记",
+          "status": "unobservable",
+          "mismatch_severity": "unknown",
+          "suggested_change": "若原图标记代表真实孔，需在法兰上表面添加对应孔；当前证据不足，仅作提示"
+        },
+        {
+          "item": "底部圆柱颜色/材质",
+          "reference": "底部圆柱为蓝色，其余为银灰",
+          "model": "整体为单一深灰材质",
+          "status": "match",
+          "mismatch_severity": "none",
+          "suggested_change": "颜色不影响几何评分，可忽略"
+        }
+      ],
+      "unobservable": [
+        "法兰下表面及底部圆柱底面结构",
+        "头部内部及被遮挡的底面形状",
+        "法兰上表面彩色虚线是否代表真实孔（无法从当前视角确认）",
+        "零件径向孔或内部空腔"
+      ],
+      "review_model": "moonshotai/Kimi-K2.7-Code",
+      "method": "fresh multimodal request with one selected reference view and current preview",
+      "recorded_at": 1790490422.8650153
+    },
+    {
+      "revision": 5,
+      "preview_generation": 6,
+      "view": "front",
+      "reference_image_index": 2,
+      "reference_image_name": "image-2.png",
+      "reference_images_in_request": 1,
+      "score": 72.0,
+      "threshold": 80,
+      "passes_threshold": false,
+      "summary": "当前 front 视图显示模型与原图整体均为‘尖头-圆柱-法兰-下圆柱’的垂直堆叠结构，主要轮廓方向一致。但存在可见拓扑差异：原图尖头下方为一段较短的圆柱/退台，而模型在尖头与主圆柱之间多出一道明显的水平台阶/退台，且尖头高度比例偏短、法兰下方圆柱相对较长。法兰外形在模型中为圆法兰，原图因渲染风格呈六边形/倒角边缘，但 front 投影轮廓仍可视为近似。无可见孔，孔数无法确认。",
+      "reference_hole_count": null,
+      "count_confidence": 0.0,
+      "evidence": [
+        {
+          "item": "整体垂直堆叠结构",
+          "reference": "尖头-圆柱-法兰-下圆柱",
+          "model": "尖头-台阶-圆柱-法兰-下圆柱",
+          "status": "partial_match",
+          "mismatch_severity": "medium",
+          "suggested_change": "检查尖头下方是否应只有一段圆柱，移除额外水平台阶"
+        },
+        {
+          "item": "尖头高度比例",
+          "reference": "尖头占整体高度比例较大，约 1/3",
+          "model": "尖头较短，约 1/5",
+          "status": "mismatch",
+          "mismatch_severity": "medium",
+          "suggested_change": "增加尖头高度，使其与原图比例一致"
+        },
+        {
+          "item": "法兰上方圆柱/退台",
+          "reference": "尖头下方直接接一段较短圆柱",
+          "model": "存在额外一圈较窄退台后再接主圆柱",
+          "status": "mismatch",
+          "mismatch_severity": "medium",
+          "suggested_change": "消除尖头与主圆柱之间的额外退台"
+        },
+        {
+          "item": "法兰外形",
+          "reference": "front 投影为带倒角/六边形边缘的法兰",
+          "model": "圆法兰，front 投影为矩形",
+          "status": "partial_match",
+          "mismatch_severity": "low",
+          "suggested_change": "如原图法兰为六边形/倒角，调整法兰截面"
+        },
+        {
+          "item": "下圆柱比例",
+          "reference": "下圆柱长度适中",
+          "model": "下圆柱相对较长",
+          "status": "partial_match",
+          "mismatch_severity": "low",
+          "suggested_change": "调整下圆柱长度以匹配原图比例"
+        }
+      ],
+      "unobservable": [
+        "内部孔/贯穿结构",
+        "法兰背面或侧面细节",
+        "被遮挡的底面特征",
+        "真实截面形状（圆/六边形）"
+      ],
+      "review_model": "moonshotai/Kimi-K2.7-Code",
+      "method": "fresh multimodal request with one selected reference view and current preview",
+      "recorded_at": 1790490482.4069707
+    },
+    {
+      "revision": 6,
+      "preview_generation": 7,
+      "view": "front",
+      "reference_image_index": 2,
+      "reference_image_name": "image-2.png",
+      "reference_images_in_request": 1,
+      "score": 72.0,
+      "threshold": 80,
+      "passes_threshold": false,
+      "summary": "当前 front 视图显示模型与原图在整体三段式结构（尖端-中段柱体-底部柱体+中间法兰）上相似，但存在可见的核心差异：原图尖端为圆头/钝头弧形，模型为尖头圆锥；原图法兰上下有倒角/台阶退台，模型法兰为简单矩形无倒角；原图中段柱体与尖端交界处有一圈明显台阶/退台，模型该处过渡较平缓；原图底部柱体比例略短，模型底部柱体相对较长。无可见孔。",
+      "reference_hole_count": null,
+      "count_confidence": 1.0,
+      "evidence": [
+        {
+          "item": "尖端轮廓",
+          "reference": "圆头/弧形钝头，顶部圆弧过渡",
+          "model": "尖头圆锥，顶部尖锐",
+          "status": "mismatch",
+          "mismatch_severity": "major",
+          "suggested_change": "将尖端改为圆头/弧形钝头，顶部圆弧过渡"
+        },
+        {
+          "item": "中段柱体与尖端交界",
+          "reference": "存在明显台阶/退台，尖端底部直径小于中段柱体",
+          "model": "过渡较平缓，无明显台阶",
+          "status": "mismatch",
+          "mismatch_severity": "moderate",
+          "suggested_change": "在尖端底部增加明显台阶/退台"
+        },
+        {
+          "item": "中间法兰",
+          "reference": "上下边缘有倒角/台阶退台，呈六边形或带倒角的多边形轮廓",
+          "model": "简单矩形法兰，无倒角",
+          "status": "mismatch",
+          "mismatch_severity": "moderate",
+          "suggested_change": "为法兰上下边缘添加倒角或台阶退台"
+        },
+        {
+          "item": "底部柱体比例",
+          "reference": "底部柱体相对较短",
+          "model": "底部柱体相对较长",
+          "status": "mismatch",
+          "mismatch_severity": "minor",
+          "suggested_change": "适当缩短底部柱体长度以匹配原图比例"
+        },
+        {
+          "item": "整体三段式结构",
+          "reference": "尖端-中段柱体-法兰-底部柱体",
+          "model": "尖端-中段柱体-法兰-底部柱体",
+          "status": "match",
+          "mismatch_severity": "none",
+          "suggested_change": ""
+        }
+      ],
+      "unobservable": [
+        "内部孔/贯穿孔",
+        "背面结构",
+        "侧面凹槽或特征",
+        "真实尺寸数值"
+      ],
+      "review_model": "moonshotai/Kimi-K2.7-Code",
+      "method": "fresh multimodal request with one selected reference view and current preview",
+      "recorded_at": 1790490527.21925
+    },
+    {
+      "revision": 7,
+      "preview_generation": 8,
+      "view": "front",
+      "reference_image_index": 2,
+      "reference_image_name": "image-2.png",
+      "reference_images_in_request": 1,
+      "score": 82.0,
+      "threshold": 80,
+      "passes_threshold": true,
+      "summary": "当前 front 视图下，模型整体为尖头-圆柱-法兰-圆柱的堆叠结构，与参考图一致。主要轮廓比例接近：尖头长度、圆柱段、法兰突出程度、底部圆柱长度均相似。参考图顶部为圆头/钝尖，模型为更锐利的尖头，存在可见轮廓差异；参考图法兰上方圆柱段与法兰交界处有近似六边形/倒角边缘的显示，模型为光滑圆柱过渡，但可能是渲染边线差异。参考图底部圆柱为蓝色，模型为同色材质，不影响几何评分。当前视角未见可见通孔或孔特征。",
+      "reference_hole_count": null,
+      "count_confidence": 0.0,
+      "evidence": [
+        {
+          "item": "整体外形与堆叠拓扑",
+          "reference": "尖头-圆柱-法兰-圆柱四段堆叠",
+          "model": "尖头-圆柱-法兰-圆柱四段堆叠",
+          "status": "match",
+          "mismatch_severity": "none",
+          "suggested_change": "无需修改"
+        },
+        {
+          "item": "顶部尖端形状",
+          "reference": "较圆润的钝尖/圆头",
+          "model": "较锐利的尖头",
+          "status": "mismatch",
+          "mismatch_severity": "minor",
+          "suggested_change": "将顶部尖端改为更圆润的钝头"
+        },
+        {
+          "item": "法兰上方圆柱与法兰过渡",
+          "reference": "可见明显边线，近似倒角或六边形轮廓",
+          "model": "光滑圆柱与法兰过渡",
+          "status": "uncertain",
+          "mismatch_severity": "minor",
+          "suggested_change": "确认是否需要保留倒角/边线特征"
+        },
+        {
+          "item": "底部圆柱长度与直径比例",
+          "reference": "细长圆柱，长度约为法兰上方圆柱的1.5-2倍",
+          "model": "细长圆柱，比例接近",
+          "status": "match",
+          "mismatch_severity": "none",
+          "suggested_change": "无需修改"
+        },
+        {
+          "item": "法兰外径与突出程度",
+          "reference": "法兰外径明显大于上下圆柱",
+          "model": "法兰外径明显大于上下圆柱",
+          "status": "match",
+          "mismatch_severity": "none",
+          "suggested_change": "无需修改"
+        }
+      ],
+      "unobservable": [
+        "内部孔洞或贯穿结构",
+        "背面/侧面特征",
+        "法兰上下表面细节",
+        "材质与颜色"
+      ],
+      "review_model": "moonshotai/Kimi-K2.7-Code",
+      "method": "fresh multimodal request with one selected reference view and current preview",
+      "recorded_at": 1790490579.2721813
+    },
+    {
+      "revision": 7,
+      "preview_generation": 9,
+      "view": "iso",
+      "reference_image_index": 1,
+      "reference_image_name": "image-1.png",
+      "reference_images_in_request": 1,
+      "score": 72.0,
+      "threshold": 80,
+      "passes_threshold": false,
+      "summary": "当前 iso 视角下，模型与原图在整体层级（尖端-圆柱-法兰-底座圆柱）上相似，但存在可见的核心拓扑差异：原图尖端为带顶部小平面/圆头的钝圆头（类似子弹头/半球形），模型为尖锐圆锥；原图法兰上表面可见明显的内凹环形台阶/倒角，模型法兰上表面为平整无内凹；原图底座圆柱为蓝色且可见多边形棱边（暗示非圆柱或多边形柱），模型底座为光滑圆柱。孔数在本视角无法确认，设为 null。",
+      "reference_hole_count": null,
+      "count_confidence": 0.0,
+      "evidence": [
+        {
+          "item": "尖端形状",
+          "reference": "钝圆头/子弹头形，顶部有小平面或圆头，侧面曲率较缓",
+          "model": "尖锐圆锥，顶部为尖点",
+          "status": "mismatch",
+          "mismatch_severity": "major",
+          "suggested_change": "将尖端由圆锥改为带顶平面/圆头的钝圆头或子弹头形"
+        },
+        {
+          "item": "法兰上表面台阶",
+          "reference": "法兰上表面可见内凹环形台阶/倒角，形成明显退台",
+          "model": "法兰上表面平整，无内凹环形台阶",
+          "status": "mismatch",
+          "mismatch_severity": "major",
+          "suggested_change": "在法兰上表面添加内凹环形台阶或倒角退台"
+        },
+        {
+          "item": "底座圆柱形状",
+          "reference": "底座为蓝色，可见多边形棱边，暗示多边形柱或非圆柱",
+          "model": "底座为光滑圆柱",
+          "status": "mismatch",
+          "mismatch_severity": "minor",
+          "suggested_change": "检查底座截面是否应为多边形柱或带棱边的柱体"
+        },
+        {
+          "item": "整体层级比例",
+          "reference": "尖端-圆柱-法兰-底座四层结构，比例大致协调",
+          "model": "四层结构存在，比例大致协调",
+          "status": "match",
+          "mismatch_severity": "none",
+          "suggested_change": "保持整体层级比例"
+        },
+        {
+          "item": "法兰外轮廓",
+          "reference": "法兰为外伸圆盘，外径明显大于中间圆柱",
+          "model": "法兰为外伸圆盘，外径明显大于中间圆柱",
+          "status": "match",
+          "mismatch_severity": "none",
+          "suggested_change": "保持法兰外轮廓"
+        }
+      ],
+      "unobservable": [
+        "底座底面形状与孔",
+        "尖端内部/被遮挡面",
+        "法兰下表面细节",
+        "中间圆柱内部结构",
+        "整体轴向贯穿孔"
+      ],
+      "review_model": "moonshotai/Kimi-K2.7-Code",
+      "method": "fresh multimodal request with one selected reference view and current preview",
+      "recorded_at": 1790490611.5542166
+    },
+    {
+      "revision": 8,
+      "preview_generation": 10,
+      "view": "iso",
+      "reference_image_index": 1,
+      "reference_image_name": "image-1.png",
+      "reference_images_in_request": 1,
+      "score": 82.0,
+      "threshold": 80,
+      "passes_threshold": true,
+      "summary": "当前 iso 视角下，模型与原图在整体层级结构（尖端-圆柱-法兰-底座圆柱）上基本一致，主要轮廓比例接近。差异在于：原图尖端为带小平面/棱线的圆头（近似半球形或钝圆头），模型为更尖锐的圆锥头；原图法兰上表面可见一圈橙色虚线/点划线及内部紫色/绿色虚线，暗示存在退台或孔阵列特征，模型法兰上表面为平整圆环，未见对应特征；底座颜色不同（原图蓝色，模型灰色）但颜色非几何评分依据。核心拓扑差异为尖端形状及法兰上表面退台/标记特征缺失，因此不高于 80 分需下调。",
+      "reference_hole_count": null,
+      "count_confidence": 0.0,
+      "evidence": [
+        {
+          "item": "整体层级结构",
+          "reference": "尖端-圆柱-法兰-底座圆柱四级结构",
+          "model": "尖端-圆柱-法兰-底座圆柱四级结构",
+          "status": "match",
+          "mismatch_severity": "none",
+          "suggested_change": "无需修改"
+        },
+        {
+          "item": "尖端形状",
+          "reference": "钝圆/半球形头部，带顶部小平面和纵向分模线",
+          "model": "尖锐圆锥头",
+          "status": "mismatch",
+          "mismatch_severity": "major",
+          "suggested_change": "将尖端改为钝圆头或带小平面的圆头，降低锥度"
+        },
+        {
+          "item": "法兰上表面退台/标记",
+          "reference": "法兰上表面有一圈橙色虚线及内部紫色/绿色虚线，暗示退台或孔阵列",
+          "model": "法兰上表面为平整圆环，无退台或孔标记",
+          "status": "mismatch",
+          "mismatch_severity": "major",
+          "suggested_change": "在法兰上表面添加对应退台或孔阵列特征"
+        },
+        {
+          "item": "中段圆柱高度比例",
+          "reference": "中段圆柱高度适中",
+          "model": "中段圆柱高度略长",
+          "status": "mismatch",
+          "mismatch_severity": "minor",
+          "suggested_change": "适当缩短中段圆柱高度以匹配原图比例"
+        },
+        {
+          "item": "底座圆柱",
+          "reference": "蓝色底座圆柱",
+          "model": "灰色底座圆柱",
+          "status": "match",
+          "mismatch_severity": "none",
+          "suggested_change": "颜色非几何依据，可忽略"
+        }
+      ],
+      "unobservable": [
+        "法兰下表面及底面细节",
+        "内部是否中空或贯穿",
+        "被遮挡的背面结构",
+        "孔是否真实贯穿"
+      ],
+      "review_model": "moonshotai/Kimi-K2.7-Code",
+      "method": "fresh multimodal request with one selected reference view and current preview",
+      "recorded_at": 1790490661.1030402
+    },
+    {
+      "revision": 8,
+      "preview_generation": 11,
+      "view": "top",
+      "reference_image_index": 3,
+      "reference_image_name": "image-3.png",
+      "reference_images_in_request": 1,
+      "score": 55.0,
+      "threshold": 80,
+      "passes_threshold": false,
+      "summary": "从 top 视角看，两者都是同心圆盘类外形，但参考图显示的是一个近似正多边形/低多边形外轮廓的圆盘，中央有一个带六边形孔的凸台，并有一条从中心延伸到边缘的明显分割线/台阶线。当前模型则是光滑圆形外轮廓，中心为一个小圆孔，没有可见的六边形孔，也没有从中心辐射到边缘的分割线。核心轮廓（外轮廓形状、中心孔形状、表面分割特征）存在明显差异，因此不能给 80 分以上。",
+      "reference_hole_count": 1,
+      "count_confidence": 0.7,
+      "evidence": [
+        {
+          "item": "外轮廓形状",
+          "reference": "外轮廓呈近似正多边形/低多边形的圆盘（带明显折线边）",
+          "model": "外轮廓为光滑圆形",
+          "status": "mismatch",
+          "mismatch_severity": "high",
+          "suggested_change": "将外轮廓改为参考图中可见的多边形/折线轮廓"
+        },
+        {
+          "item": "中心孔/凸台",
+          "reference": "中心有一个六边形孔，位于一个圆形凸台上",
+          "model": "中心只有一个小圆孔，无六边形特征",
+          "status": "mismatch",
+          "mismatch_severity": "high",
+          "suggested_change": "在中心创建带六边形孔的凸台"
+        },
+        {
+          "item": "表面分割线",
+          "reference": "从中心到边缘有一条明显的直线分割线/台阶线",
+          "model": "表面光滑，无此类分割线",
+          "status": "mismatch",
+          "mismatch_severity": "medium",
+          "suggested_change": "添加从中心辐射到边缘的可见分割线或台阶"
+        },
+        {
+          "item": "同心圆环台阶",
+          "reference": "可见至少两级同心圆台阶",
+          "model": "可见多级同心圆台阶，层级数量大致相近",
+          "status": "match",
+          "mismatch_severity": "none",
+          "suggested_change": "保持同心圆台阶结构"
+        }
+      ],
+      "unobservable": [
+        "底面结构",
+        "侧面厚度",
+        "孔是否贯穿",
+        "被遮挡的内部细节"
+      ],
+      "review_model": "moonshotai/Kimi-K2.7-Code",
+      "method": "fresh multimodal request with one selected reference view and current preview",
+      "recorded_at": 1790490682.288203
+    },
+    {
+      "revision": 8,
+      "preview_generation": 12,
+      "view": "bottom",
+      "reference_image_index": 4,
+      "reference_image_name": "image-4.png",
+      "reference_images_in_request": 1,
+      "score": 82.0,
+      "threshold": 80,
+      "passes_threshold": true,
+      "summary": "从 bottom 视角看，模型与参考图的整体外形均为带倒角/圆角多边形的同心圆盘结构，外轮廓、两级台阶退台拓扑以及中心凹陷/孔洞布局基本一致。参考图中心可见黄色六边形/圆形孔洞特征，模型图中心为圆形凹陷，孔洞具体形状在当前渲染中不可确认。参考图外轮廓呈轻微多边形倒角特征，模型图外轮廓接近圆形，存在轻微差异。无可见独立孔阵列。",
+      "reference_hole_count": null,
+      "count_confidence": 0.3,
+      "evidence": [
+        {
+          "item": "外轮廓",
+          "reference": "带轻微倒角/多边形特征的圆形外轮廓",
+          "model": "接近正圆形的外轮廓，倒角/多边形感较弱",
+          "status": "minor_mismatch",
+          "mismatch_severity": "low",
+          "suggested_change": "检查外轮廓是否为多边形倒角或纯圆，按参考调整倒角特征"
+        },
+        {
+          "item": "退台拓扑",
+          "reference": "两级同心台阶，中心有凹陷/孔",
+          "model": "两级同心圆台阶，中心有圆形凹陷",
+          "status": "match",
+          "mismatch_severity": "none",
+          "suggested_change": ""
+        },
+        {
+          "item": "中心孔/凹陷",
+          "reference": "中心黄色六边形/圆形孔洞",
+          "model": "中心圆形凹陷，孔洞形状不可确认",
+          "status": "unconfirmed",
+          "mismatch_severity": "low",
+          "suggested_change": "确认中心孔形状是否与参考一致"
+        },
+        {
+          "item": "表面孔阵列",
+          "reference": "无可见独立孔",
+          "model": "无可见独立孔",
+          "status": "match",
+          "mismatch_severity": "none",
+          "suggested_change": ""
+        }
+      ],
+      "unobservable": [
+        "中心孔的真实贯穿情况与具体截面形状",
+        "零件厚度与内部结构",
+        "顶面及其它视角特征"
+      ],
+      "review_model": "moonshotai/Kimi-K2.7-Code",
+      "method": "fresh multimodal request with one selected reference view and current preview",
+      "recorded_at": 1790490736.476125
+    },
+    {
+      "revision": 8,
+      "preview_generation": 13,
+      "view": "front",
+      "reference_image_index": 2,
+      "reference_image_name": "image-2.png",
+      "reference_images_in_request": 1,
+      "score": 82.0,
+      "threshold": 80,
+      "passes_threshold": true,
+      "summary": "当前 front 视图下，模型与参考图的整体拓扑（尖头-圆柱-法兰-圆柱杆）一致，主要轮廓比例接近。差异在于：参考图顶部为圆头/钝圆弹头形，模型为更尖锐的圆锥尖头；参考图法兰上方圆柱段与弹头之间有一道明显的水平台阶/分界面，模型此处过渡较平滑、台阶不明显；参考图法兰外轮廓呈六边形/带倒角特征，模型法兰为圆形。无可见孔。",
+      "reference_hole_count": null,
+      "count_confidence": 0.0,
+      "evidence": [
+        {
+          "item": "整体外形拓扑",
+          "reference": "尖头-圆柱-法兰-圆柱杆，自上而下堆叠",
+          "model": "尖头-圆柱-法兰-圆柱杆，自上而下堆叠",
+          "status": "match",
+          "mismatch_severity": "none",
+          "suggested_change": "无需修改"
+        },
+        {
+          "item": "顶部弹头形状",
+          "reference": "圆钝/椭圆弹头形，曲率较大，尖端较圆",
+          "model": "尖锐圆锥形，尖端明显更尖",
+          "status": "mismatch",
+          "mismatch_severity": "moderate",
+          "suggested_change": "将顶部改为更圆钝的弹头/椭圆头，降低尖端锐度"
+        },
+        {
+          "item": "法兰上方圆柱与弹头过渡",
+          "reference": "存在清晰水平台阶/分界面，圆柱段高度明显",
+          "model": "过渡较平滑，台阶不明显，圆柱段视觉较短",
+          "status": "mismatch",
+          "mismatch_severity": "moderate",
+          "suggested_change": "增加弹头与下方圆柱之间的水平分界台阶，使圆柱段更明显"
+        },
+        {
+          "item": "法兰外轮廓",
+          "reference": "六边形或带倒角的非圆轮廓",
+          "model": "圆形法兰",
+          "status": "mismatch",
+          "mismatch_severity": "minor",
+          "suggested_change": "将法兰外轮廓改为六边形或带倒角的多边形（若参考图确实为六边形）"
+        },
+        {
+          "item": "下部圆柱杆",
+          "reference": "等径圆柱，长度适中",
+          "model": "等径圆柱，长度与比例接近",
+          "status": "match",
+          "mismatch_severity": "none",
+          "suggested_change": "无需修改"
+        }
+      ],
+      "unobservable": [
+        "内部孔/贯穿孔",
+        "法兰背面/底面结构",
+        "圆柱段与法兰的精确连接倒角",
+        "材料/颜色"
+      ],
+      "review_model": "moonshotai/Kimi-K2.7-Code",
+      "method": "fresh multimodal request with one selected reference view and current preview",
+      "recorded_at": 1790490846.2026334
+    },
+    {
+      "revision": 8,
+      "preview_generation": 11,
+      "view": "top",
+      "reference_image_index": 3,
+      "reference_image_name": "image-3.png",
+      "reference_images_in_request": 1,
+      "score": 55.0,
+      "threshold": 80,
+      "passes_threshold": false,
+      "summary": "从 top 视角看，参考图显示一个近似正多边形（或低分辨率圆）外轮廓的盘状零件，中心有一个带六边形孔的凸台，并有一条从中心延伸至边缘的明显分割线/台阶线。当前模型为光滑同心圆结构，外轮廓为圆形而非多边形，中心孔为圆形小孔而非六边形，且缺少参考图中可见的径向分割线。核心轮廓与特征拓扑存在明显差异。",
+      "reference_hole_count": 1,
+      "count_confidence": 0.9,
+      "evidence": [
+        {
+          "item": "外轮廓形状",
+          "reference": "近似正多边形/低分辨率圆，边缘有轻微平直段",
+          "model": "光滑圆形",
+          "status": "mismatch",
+          "mismatch_severity": "major",
+          "suggested_change": "将外轮廓改为参考图中的多边形/低分辨率圆形状"
+        },
+        {
+          "item": "中心孔形状",
+          "reference": "可见六边形孔",
+          "model": "圆形小孔",
+          "status": "mismatch",
+          "mismatch_severity": "major",
+          "suggested_change": "将中心孔改为六边形"
+        },
+        {
+          "item": "径向分割线/台阶线",
+          "reference": "从中心孔延伸至外缘的明显直线分割线",
+          "model": "无此特征，表面为光滑同心圆",
+          "status": "mismatch",
+          "mismatch_severity": "major",
+          "suggested_change": "添加参考图中可见的径向分割线或台阶"
+        },
+        {
+          "item": "同心圆台阶布局",
+          "reference": "中心凸台区域与外圈有台阶过渡",
+          "model": "存在多层同心圆台阶",
+          "status": "partial_match",
+          "mismatch_severity": "minor",
+          "suggested_change": "调整台阶比例以更接近参考图"
+        }
+      ],
+      "unobservable": [
+        "零件厚度",
+        "底面结构",
+        "侧面细节",
+        "中心孔是否贯穿"
+      ],
+      "review_model": "moonshotai/Kimi-K2.7-Code",
+      "method": "fresh multimodal request with one selected reference view and current preview",
+      "recorded_at": 1790490879.8467662
+    },
+    {
+      "revision": 9,
+      "preview_generation": 14,
+      "view": "top",
+      "reference_image_index": 3,
+      "reference_image_name": "image-3.png",
+      "reference_images_in_request": 1,
+      "score": 55.0,
+      "threshold": 80,
+      "passes_threshold": false,
+      "summary": "当前 top 视图显示模型为完整同心圆结构，中心为圆孔/凹陷；而参考图显示外轮廓为带切边的近似八边形/多边形，中心为六边形孔并有一条对角分割线。核心外形轮廓（多边形外缘 vs 圆形）和中心孔形状（六边形 vs 圆形）存在明显可见差异，退台/台阶布局也不一致。",
+      "reference_hole_count": 1,
+      "count_confidence": 0.9,
+      "evidence": [
+        {
+          "item": "外轮廓形状",
+          "reference": "带切边的多边形/近似八边形外缘",
+          "model": "完整圆形外缘",
+          "status": "mismatch",
+          "mismatch_severity": "high",
+          "suggested_change": "将外轮廓改为参考图可见的多边形切边形状"
+        },
+        {
+          "item": "中心孔/凹陷形状",
+          "reference": "中心六边形孔，带一条对角分割线",
+          "model": "中心圆形孔/凹陷，无对角线",
+          "status": "mismatch",
+          "mismatch_severity": "high",
+          "suggested_change": "将中心特征改为六边形并添加可见对角分割线"
+        },
+        {
+          "item": "表面台阶/退台布局",
+          "reference": "多边形外圈与内圆之间的台阶较简单",
+          "model": "多层同心圆退台",
+          "status": "mismatch",
+          "mismatch_severity": "medium",
+          "suggested_change": "调整退台结构以匹配参考图可见的台阶布局"
+        },
+        {
+          "item": "整体比例",
+          "reference": "外轮廓非圆，横向/纵向尺寸因切边而接近",
+          "model": "正圆，各向等径",
+          "status": "mismatch",
+          "mismatch_severity": "medium",
+          "suggested_change": "按参考图多边形外形调整长宽比例"
+        }
+      ],
+      "unobservable": [
+        "底面结构",
+        "侧面高度/厚度",
+        "被遮挡的内部贯穿情况",
+        "背面或侧视图特征"
+      ],
+      "review_model": "moonshotai/Kimi-K2.7-Code",
+      "method": "fresh multimodal request with one selected reference view and current preview",
+      "recorded_at": 1790491033.4955945
+    },
+    {
+      "revision": 11,
+      "preview_generation": 15,
+      "view": "top",
+      "reference_image_index": 3,
+      "reference_image_name": "image-3.png",
+      "reference_images_in_request": 1,
+      "score": 72.0,
+      "threshold": 80,
+      "passes_threshold": false,
+      "summary": "从 top 视角看，两者均为大致圆形、带中心孔的零件，外轮廓都有多边形/台阶感。参考图显示的是一个较浅的圆盘，中心为六边形孔，外圈为浅色环，内圈为带一条径向分割线（可能是刻线或台阶交界）的圆面。模型图则是一个更深的同心圆台阶结构，中心为小圆孔，外圈有两层明显的退台，且中心区域呈锥面/放射状渐变。核心差异在于：参考图中心是六边形孔且仅有一条径向线，模型图中心是圆孔且没有该径向线；参考图整体较扁平、台阶感弱，模型图退台更深、层数更多。这些可见拓扑差异使分数不能高于80。",
+      "reference_hole_count": 1,
+      "count_confidence": 0.9,
+      "evidence": [
+        {
+          "item": "整体外形轮廓",
+          "reference": "圆形，外圈略带多边形/切边感，整体扁平",
+          "model": "圆形，外圈有明显多边形/切边，整体更厚/更深",
+          "status": "partial_match",
+          "mismatch_severity": "minor",
+          "suggested_change": "检查外轮廓切边数量及整体厚度/高度比例"
+        },
+        {
+          "item": "中心孔形状",
+          "reference": "可见中心为六边形孔",
+          "model": "中心为圆形小孔",
+          "status": "mismatch",
+          "mismatch_severity": "major",
+          "suggested_change": "将中心孔改为六边形，并调整尺寸以匹配参考图"
+        },
+        {
+          "item": "表面台阶/退台",
+          "reference": "整体较平，外圈浅色环与内圈圆面之间台阶感较弱，仅一条径向分割线",
+          "model": "存在两层明显的同心圆退台，中心区域呈锥面/放射状",
+          "status": "mismatch",
+          "mismatch_severity": "major",
+          "suggested_change": "减少退台层数，降低台阶深度，使顶面更平"
+        },
+        {
+          "item": "径向分割线",
+          "reference": "内圈圆面上有一条明显的径向直线（刻线或台阶交界）",
+          "model": "无此径向线，中心为光滑锥面/放射渐变",
+          "status": "mismatch",
+          "mismatch_severity": "moderate",
+          "suggested_change": "添加参考图中可见的径向分割线"
+        },
+        {
+          "item": "孔数量",
+          "reference": "仅中心一个可见孔",
+          "model": "仅中心一个可见孔",
+          "status": "match",
+          "mismatch_severity": "none",
+          "suggested_change": "无需修改"
+        }
+      ],
+      "unobservable": [
+        "零件真实厚度/高度",
+        "底面或侧面结构",
+        "孔是否贯穿",
+        "外圈切边的具体数量与角度",
+        "内圈径向线的真实深度或功能意义"
+      ],
+      "review_model": "moonshotai/Kimi-K2.7-Code",
+      "method": "fresh multimodal request with one selected reference view and current preview",
+      "recorded_at": 1790491133.685114
+    },
+    {
+      "revision": 11,
+      "preview_generation": 16,
+      "view": "front",
+      "reference_image_index": 2,
+      "reference_image_name": "image-2.png",
+      "reference_images_in_request": 1,
+      "score": 72.0,
+      "threshold": 80,
+      "passes_threshold": false,
+      "summary": "当前 front 视图显示一个尖头圆柱体，顶部为锥形，中部有圆柱段，下方带一个横向突出的法兰/六边形结构，底部为圆柱柄。参考图与模型图在整体层级（尖头-圆柱-法兰-圆柱柄）上相似，但存在可见拓扑差异：参考图法兰为清晰六边形并带倒角/台阶，模型图法兰为矩形块且正面有多个横向槽孔；参考图顶部锥体与圆柱段之间有明显水平分缝线，模型图过渡较平滑；参考图底部柄为蓝色圆柱且可见底面轮廓，模型图柄为灰色圆柱且底面不可见。核心差异在于法兰形状（六边形 vs 矩形带槽）和顶部过渡细节，导致分数低于 80。",
+      "reference_hole_count": null,
+      "count_confidence": 0.0,
+      "evidence": [
+        {
+          "item": "整体层级布局",
+          "reference": "尖头锥 + 圆柱段 + 六边形法兰 + 圆柱柄",
+          "model": "尖头锥 + 圆柱段 + 矩形法兰 + 圆柱柄",
+          "status": "partial_match",
+          "mismatch_severity": "low",
+          "suggested_change": "保持整体层级，但修正法兰截面形状"
+        },
+        {
+          "item": "顶部锥体与圆柱段过渡",
+          "reference": "明显水平分缝线，锥体底部与圆柱段有清晰台阶",
+          "model": "过渡较平滑，分缝线不明显",
+          "status": "mismatch",
+          "mismatch_severity": "medium",
+          "suggested_change": "增加锥体与圆柱段之间的明显水平分缝线/台阶"
+        },
+        {
+          "item": "中部法兰形状",
+          "reference": "六边形法兰，边缘有倒角/台阶",
+          "model": "矩形块法兰，正面有多个横向槽孔",
+          "status": "mismatch",
+          "mismatch_severity": "high",
+          "suggested_change": "将法兰改为六边形并去除正面横向槽孔，添加倒角台阶"
+        },
+        {
+          "item": "底部圆柱柄",
+          "reference": "蓝色圆柱柄，底面可见",
+          "model": "灰色圆柱柄，底面不可见",
+          "status": "partial_match",
+          "mismatch_severity": "low",
+          "suggested_change": "确认柄部为圆柱，颜色不影响几何评分"
+        }
+      ],
+      "unobservable": [
+        "法兰背面及侧面完整形状",
+        "柄部内部结构或真实贯穿",
+        "顶部锥体内部是否实心",
+        "模型图法兰上的槽孔是否为通孔或仅表面纹理"
+      ],
+      "review_model": "moonshotai/Kimi-K2.7-Code",
+      "method": "fresh multimodal request with one selected reference view and current preview",
+      "recorded_at": 1790491175.2132287
+    },
+    {
+      "revision": 12,
+      "preview_generation": 17,
+      "view": "front",
+      "reference_image_index": 2,
+      "reference_image_name": "image-2.png",
+      "reference_images_in_request": 1,
+      "score": 72.0,
+      "threshold": 80,
+      "passes_threshold": false,
+      "summary": "当前 front 视图显示一个尖头-圆柱-法兰-圆柱的轴对称零件，整体层级与原图一致。主要差异在于：1) 顶部尖头曲率/长度比例不同，模型更细长尖锐，原图更圆钝且长度相对较短；2) 尖头与下方圆柱之间的过渡台阶在模型中可见为明显退台，原图中该交界较平缓或台阶位置/宽度不同；3) 法兰外形比例接近，但模型法兰上下边缘有倒角/台阶感，原图法兰较平直；4) 底部圆柱颜色不同（原图蓝色，模型灰色），但颜色非几何评分重点。无可见孔。核心拓扑层级一致，但顶部轮廓比例与过渡台阶存在可见差异，故不高于80。",
+      "reference_hole_count": null,
+      "count_confidence": 1.0,
+      "evidence": [
+        {
+          "item": "整体层级结构",
+          "reference": "尖头 + 圆柱 + 法兰 + 圆柱",
+          "model": "尖头 + 圆柱 + 法兰 + 圆柱",
+          "status": "match",
+          "mismatch_severity": "none",
+          "suggested_change": "保持当前层级"
+        },
+        {
+          "item": "顶部尖头轮廓比例",
+          "reference": "较圆钝、长度相对较短、曲率较大",
+          "model": "较细长尖锐、长度相对较长、曲率较小",
+          "status": "mismatch",
+          "mismatch_severity": "moderate",
+          "suggested_change": "调整顶部尖头高度与曲率，使其更圆钝、更短"
+        },
+        {
+          "item": "尖头-圆柱过渡台阶",
+          "reference": "交界较平缓或台阶不明显",
+          "model": "存在明显退台/台阶",
+          "status": "mismatch",
+          "mismatch_severity": "moderate",
+          "suggested_change": "检查并减小尖头与圆柱之间的退台宽度或使其过渡更平滑"
+        },
+        {
+          "item": "法兰外形",
+          "reference": "六边形/多边形法兰，边缘较平直",
+          "model": "圆形法兰，边缘有倒角/台阶感",
+          "status": "mismatch",
+          "mismatch_severity": "minor",
+          "suggested_change": "确认法兰截面形状，若原图为多边形法兰需调整"
+        },
+        {
+          "item": "底部圆柱",
+          "reference": "蓝色圆柱，直径与法兰内径相近",
+          "model": "灰色圆柱，直径与法兰内径相近",
+          "status": "match",
+          "mismatch_severity": "none",
+          "suggested_change": "颜色可忽略，直径比例保持"
+        }
+      ],
+      "unobservable": [
+        "内部孔/通孔",
+        "背面/侧面结构",
+        "真实贯穿情况",
+        "法兰是否为完整六边形（仅 front 视图边缘可见）"
+      ],
+      "review_model": "moonshotai/Kimi-K2.7-Code",
+      "method": "fresh multimodal request with one selected reference view and current preview",
+      "recorded_at": 1790491214.838644
+    },
+    {
+      "revision": 13,
+      "preview_generation": 18,
+      "view": "front",
+      "reference_image_index": 2,
+      "reference_image_name": "image-2.png",
+      "reference_images_in_request": 1,
+      "score": 72.0,
+      "threshold": 80,
+      "passes_threshold": false,
+      "summary": "当前 front 视图显示一个尖头圆柱形零件，整体结构与参考图相似：顶部尖头、中部圆柱、带凸缘/台阶、底部圆柱柄。主要差异在于参考图顶部为圆头/半球形过渡，而模型图为更尖锐的圆锥尖头；参考图中段圆柱与顶部圆头之间有明显水平分线，模型图过渡较平滑；参考图凸缘为六边形/带倒角特征，模型图凸缘为圆形且上下边缘有倒角台阶。未见可见孔。",
+      "reference_hole_count": null,
+      "count_confidence": 0.0,
+      "evidence": [
+        {
+          "item": "整体外形与布局",
+          "reference": "顶部圆头、中部圆柱、凸缘、底部圆柱柄，呈轴对称布局",
+          "model": "顶部尖头、中部圆柱、圆形凸缘、底部圆柱柄，呈轴对称布局",
+          "status": "partial_match",
+          "mismatch_severity": "medium",
+          "suggested_change": "将顶部尖头改为更圆润的半球/圆头，并明确中段圆柱与顶部的水平分线"
+        },
+        {
+          "item": "顶部轮廓",
+          "reference": "圆头/半球形，曲率较大",
+          "model": "尖锐圆锥形，曲率小",
+          "status": "mismatch",
+          "mismatch_severity": "high",
+          "suggested_change": "顶部改为圆头或较大半径的圆弧过渡"
+        },
+        {
+          "item": "中段圆柱",
+          "reference": "圆柱段高度适中，与顶部圆头有清晰水平分线",
+          "model": "圆柱段高度相近，但与顶部过渡较平滑",
+          "status": "partial_match",
+          "mismatch_severity": "low",
+          "suggested_change": "明确中段圆柱与顶部的水平分线"
+        },
+        {
+          "item": "凸缘/法兰",
+          "reference": "六边形或带平面的凸缘，外轮廓有明显平面",
+          "model": "圆形凸缘，外轮廓为圆弧，上下有倒角台阶",
+          "status": "mismatch",
+          "mismatch_severity": "medium",
+          "suggested_change": "将凸缘外轮廓改为参考图所示的六边形或带平面形状"
+        },
+        {
+          "item": "底部圆柱柄",
+          "reference": "蓝色圆柱柄，直径小于凸缘，长度适中",
+          "model": "灰色圆柱柄，直径小于凸缘，长度相近",
+          "status": "match",
+          "mismatch_severity": "none",
+          "suggested_change": "无需修改"
+        }
+      ],
+      "unobservable": [
+        "内部孔结构",
+        "凸缘背面/底面细节",
+        "底部柄端面细节",
+        "零件材质与颜色"
+      ],
+      "review_model": "moonshotai/Kimi-K2.7-Code",
+      "method": "fresh multimodal request with one selected reference view and current preview",
+      "recorded_at": 1790491265.4650059
+    },
+    {
+      "revision": 14,
+      "preview_generation": 19,
+      "view": "front",
+      "reference_image_index": 2,
+      "reference_image_name": "image-2.png",
+      "reference_images_in_request": 1,
+      "score": 82.0,
+      "threshold": 80,
+      "passes_threshold": true,
+      "summary": "当前 front 视图下，模型与参考图的整体堆叠结构（尖头→圆柱段→法兰/六角台→下圆柱）基本一致，主要轮廓比例接近。参考图顶部为圆头/钝尖，模型为更锐的尖头；参考图中段圆柱与法兰之间可见明显的六角形退台/倒角特征，模型中该位置为简单圆柱+圆法兰，缺少六角退台；参考图下段为蓝色圆柱且底部有轻微倒角/圆头，模型下段为等径圆柱。无可见孔。",
+      "reference_hole_count": null,
+      "count_confidence": 0.0,
+      "evidence": [
+        {
+          "item": "整体堆叠结构",
+          "reference": "尖头-圆柱-六角法兰-圆柱",
+          "model": "尖头-圆柱-圆法兰-圆柱",
+          "status": "partial_match",
+          "mismatch_severity": "low",
+          "suggested_change": "保持整体分段，但修正中段过渡细节"
+        },
+        {
+          "item": "顶部尖端形状",
+          "reference": "较钝的圆头/抛物线头",
+          "model": "较尖锐的圆锥头",
+          "status": "mismatch",
+          "mismatch_severity": "medium",
+          "suggested_change": "将顶部改为更圆润的钝尖"
+        },
+        {
+          "item": "中段退台/法兰形状",
+          "reference": "六角形退台/法兰，棱角明显",
+          "model": "圆形法兰，无六角特征",
+          "status": "mismatch",
+          "mismatch_severity": "high",
+          "suggested_change": "在中段圆柱下方添加六角形退台或六角螺母结构"
+        },
+        {
+          "item": "下段圆柱底部",
+          "reference": "圆柱底端有轻微倒角/圆头",
+          "model": "平底圆柱",
+          "status": "mismatch",
+          "mismatch_severity": "low",
+          "suggested_change": "下段底部添加倒角或圆头"
+        },
+        {
+          "item": "表面孔特征",
+          "reference": "无可见孔",
+          "model": "无可见孔",
+          "status": "match",
+          "mismatch_severity": "none",
+          "suggested_change": "无需修改"
+        }
+      ],
+      "unobservable": [
+        "内部贯穿孔/盲孔",
+        "背面或侧面的隐藏结构",
+        "真实截面尺寸与深度",
+        "六角退台的厚度与对边距精确值"
+      ],
+      "review_model": "moonshotai/Kimi-K2.7-Code",
+      "method": "fresh multimodal request with one selected reference view and current preview",
+      "recorded_at": 1790491317.3321595
+    },
+    {
+      "revision": 14,
+      "preview_generation": 20,
+      "view": "iso",
+      "reference_image_index": 1,
+      "reference_image_name": "image-1.png",
+      "reference_images_in_request": 1,
+      "score": 72.0,
+      "threshold": 80,
+      "passes_threshold": false,
+      "summary": "当前 iso 视角下，模型与原图均为底部圆柱、中部圆盘法兰、上部圆柱+锥形尖端的回转体结构，整体拓扑相似。但存在可见比例差异：原图顶部锥体与圆柱段比例更修长，模型锥体更短更钝；原图中部法兰上表面似乎有一圈台阶/倒角特征（橙色/绿色虚线暗示的轮廓），模型法兰上表面为简单平面无此台阶；原图底部圆柱为蓝色且直径明显小于法兰，模型底部圆柱直径与法兰比例接近但颜色不同。无可见孔。",
+      "reference_hole_count": null,
+      "count_confidence": 0.0,
+      "evidence": [
+        {
+          "item": "整体回转体轮廓",
+          "reference": "底圆柱+法兰+上圆柱+锥尖",
+          "model": "底圆柱+法兰+上圆柱+锥尖",
+          "status": "match",
+          "mismatch_severity": "none",
+          "suggested_change": "保持整体拓扑"
+        },
+        {
+          "item": "顶部锥体比例",
+          "reference": "锥体较长、较尖，占上部高度比例大",
+          "model": "锥体较短、较钝，占上部高度比例小",
+          "status": "mismatch",
+          "mismatch_severity": "moderate",
+          "suggested_change": "增大锥体高度、减小尖端圆角，使锥体更修长"
+        },
+        {
+          "item": "法兰上表面台阶/倒角",
+          "reference": "法兰上表面可见一圈内凹台阶/倒角轮廓（虚线/颜色分界）",
+          "model": "法兰上表面为平整圆环，无内凹台阶",
+          "status": "mismatch",
+          "mismatch_severity": "moderate",
+          "suggested_change": "在法兰上表面添加与上圆柱根部相接的台阶或倒角特征"
+        },
+        {
+          "item": "底部圆柱直径比例",
+          "reference": "底圆柱直径明显小于法兰外径",
+          "model": "底圆柱直径相对较大，与法兰比例接近",
+          "status": "mismatch",
+          "mismatch_severity": "minor",
+          "suggested_change": "适当减小底部圆柱直径"
+        },
+        {
+          "item": "可见孔",
+          "reference": "无可见孔",
+          "model": "无可见孔",
+          "status": "match",
+          "mismatch_severity": "none",
+          "suggested_change": "无需修改"
+        }
+      ],
+      "unobservable": [
+        "内部结构或贯穿孔",
+        "法兰背面/底面特征",
+        "被遮挡的侧面细节",
+        "真实尺寸数值"
+      ],
+      "review_model": "moonshotai/Kimi-K2.7-Code",
+      "method": "fresh multimodal request with one selected reference view and current preview",
+      "recorded_at": 1790491345.6690128
+    },
+    {
+      "revision": 15,
+      "preview_generation": 21,
+      "view": "iso",
+      "reference_image_index": 1,
+      "reference_image_name": "image-1.png",
+      "reference_images_in_request": 1,
+      "score": 82.0,
+      "threshold": 80,
+      "passes_threshold": true,
+      "summary": "当前 iso 视角下，模型整体为圆柱柄+法兰盘+圆柱颈+锥形尖端的堆叠结构，与原图一致。主要差异：原图尖端为带小平面/圆头过渡的钝圆头（顶部可见小平面及两条棱线），模型为更尖锐的圆锥尖头；原图颈部与锥头之间有一圈明显的外凸台阶/倒角环，模型此处为内凹或平滑过渡的窄环，轮廓不符；原图法兰盘上表面可见虚线/点划线，暗示有孔或内部特征，但当前视角无法确认真实孔数，模型图法兰盘表面无可见孔。整体比例（柄长、法兰厚度、颈高、锥高）大致接近，但顶部轮廓和颈部台阶拓扑存在可见差异。",
+      "reference_hole_count": null,
+      "count_confidence": 0.0,
+      "evidence": [
+        {
+          "item": "整体堆叠结构",
+          "reference": "圆柱柄 + 法兰盘 + 圆柱颈 + 锥形头",
+          "model": "圆柱柄 + 法兰盘 + 圆柱颈 + 锥形头",
+          "status": "match",
+          "mismatch_severity": "none",
+          "suggested_change": "无需修改"
+        },
+        {
+          "item": "尖端形状",
+          "reference": "钝圆头，顶部可见小平面/圆头过渡及两条棱线",
+          "model": "尖锐圆锥尖头",
+          "status": "mismatch",
+          "mismatch_severity": "moderate",
+          "suggested_change": "将尖端改为带顶部小平面的钝圆头，并保留可见棱线"
+        },
+        {
+          "item": "颈部-头部过渡台阶",
+          "reference": "颈部与锥头之间有一圈外凸的明显台阶/倒角环",
+          "model": "过渡处为内凹或平滑窄环，无明显外凸台阶",
+          "status": "mismatch",
+          "mismatch_severity": "moderate",
+          "suggested_change": "在颈部与锥头之间添加外凸台阶或倒角环"
+        },
+        {
+          "item": "法兰盘表面特征",
+          "reference": "上表面有虚线/点划线，可能表示孔或内部轮廓，但无法确认唯一孔数",
+          "model": "法兰盘表面无可见孔或内部轮廓线",
+          "status": "unobservable_partial",
+          "mismatch_severity": "low",
+          "suggested_change": "若原图意图为孔阵列，需在法兰盘添加对应孔；当前证据不足，仅作提示"
+        },
+        {
+          "item": "整体比例",
+          "reference": "柄、法兰、颈、锥各部分高度与直径比例大致协调",
+          "model": "各部分比例大致接近，但锥头显得略长、颈部略短",
+          "status": "approximate_match",
+          "mismatch_severity": "low",
+          "suggested_change": "微调颈部高度与锥头高度比例，使其更接近参考图"
+        }
+      ],
+      "unobservable": [
+        "法兰盘下表面及底面结构",
+        "圆柱柄内部及底面",
+        "颈部与锥头连接处被遮挡的内侧细节",
+        "是否存在贯穿孔或真实孔阵列"
+      ],
+      "review_model": "moonshotai/Kimi-K2.7-Code",
+      "method": "fresh multimodal request with one selected reference view and current preview",
+      "recorded_at": 1790491406.353783
+    },
+    {
+      "revision": 15,
+      "preview_generation": 22,
+      "view": "front",
+      "reference_image_index": 2,
+      "reference_image_name": "image-2.png",
+      "reference_images_in_request": 1,
+      "score": 72.0,
+      "threshold": 80,
+      "passes_threshold": false,
+      "summary": "当前 front 视图下，模型与参考图的整体布局（尖头-圆柱-法兰-圆柱）一致，但存在可见的核心拓扑差异：参考图顶部为圆头/钝圆弹头形，而模型顶部为明显尖锥；参考图法兰为六边形螺母状，模型法兰为简单圆盘；参考图圆柱段有可见分阶/台阶，模型过渡较平滑。这些差异在投影中可见，因此分数不超过 80。",
+      "reference_hole_count": null,
+      "count_confidence": 0.0,
+      "evidence": [
+        {
+          "item": "顶部轮廓形状",
+          "reference": "圆头/钝圆弹头形，顶部圆弧过渡",
+          "model": "尖锐锥形尖头",
+          "status": "mismatch",
+          "mismatch_severity": "major",
+          "suggested_change": "将顶部改为圆头或钝圆弹头形，而非尖锥"
+        },
+        {
+          "item": "中部法兰轮廓",
+          "reference": "六边形螺母状法兰，边棱可见",
+          "model": "圆形圆盘法兰，无六边形边棱",
+          "status": "mismatch",
+          "mismatch_severity": "major",
+          "suggested_change": "将法兰改为六边形螺母轮廓"
+        },
+        {
+          "item": "上部圆柱段分阶",
+          "reference": "弹头下方圆柱段可见横向分阶/台阶线",
+          "model": "弹头与圆柱之间过渡较平滑，分阶不明显",
+          "status": "mismatch",
+          "mismatch_severity": "minor",
+          "suggested_change": "增加或明确上部圆柱段的横向分阶/台阶"
+        },
+        {
+          "item": "整体轴向布局",
+          "reference": "尖头-圆柱-法兰-圆柱的上下顺序",
+          "model": "尖头-圆柱-法兰-圆柱的上下顺序",
+          "status": "match",
+          "mismatch_severity": "none",
+          "suggested_change": "保持整体布局"
+        },
+        {
+          "item": "底部圆柱",
+          "reference": "底部为等径圆柱",
+          "model": "底部为等径圆柱",
+          "status": "match",
+          "mismatch_severity": "none",
+          "suggested_change": "保持底部圆柱形态"
+        }
+      ],
+      "unobservable": [
+        "法兰厚度与背面结构",
+        "底部圆柱长度及末端细节",
+        "内部孔/螺纹/中空结构",
+        "径向孔或侧面特征"
+      ],
+      "review_model": "moonshotai/Kimi-K2.7-Code",
+      "method": "fresh multimodal request with one selected reference view and current preview",
+      "recorded_at": 1790491433.2384348
+    },
+    {
+      "revision": 17,
+      "preview_generation": 23,
+      "view": "front",
+      "reference_image_index": 2,
+      "reference_image_name": "image-2.png",
+      "reference_images_in_request": 1,
+      "score": 82.0,
+      "threshold": 80,
+      "passes_threshold": true,
+      "summary": "当前 front 视图下，模型与参考图的整体结构（尖头锥体、中部圆柱、六角法兰、底部圆柱）一致，主要轮廓比例接近。差异在于：参考图锥体与圆柱交界处有一条明显的横向台阶/分模线，模型此处过渡较平滑，台阶不明显；参考图底部圆柱为蓝色且可见底端倒角/圆角，模型底部圆柱为灰色且底端处理较平。未见参考图中有可见孔，孔数无法确认。",
+      "reference_hole_count": null,
+      "count_confidence": 0.0,
+      "evidence": [
+        {
+          "item": "整体外形与布局",
+          "reference": "尖头锥体 + 中部圆柱 + 六角法兰 + 底部圆柱，自上而下排列",
+          "model": "相同布局，自上而下排列一致",
+          "status": "match",
+          "mismatch_severity": "none",
+          "suggested_change": "无需修改"
+        },
+        {
+          "item": "锥体与中部圆柱过渡",
+          "reference": "存在明显横向台阶/分模线，锥体底部直径略小于中部圆柱顶面",
+          "model": "过渡较平滑，台阶不明显，锥体底部与圆柱顶面近似对齐",
+          "status": "mismatch",
+          "mismatch_severity": "minor",
+          "suggested_change": "在锥体与中部圆柱之间增加明显的横向台阶或分模线"
+        },
+        {
+          "item": "六角法兰",
+          "reference": "位于中部圆柱与底部圆柱之间，六边形轮廓清晰",
+          "model": "六边形法兰位置与形状一致",
+          "status": "match",
+          "mismatch_severity": "none",
+          "suggested_change": "无需修改"
+        },
+        {
+          "item": "底部圆柱",
+          "reference": "蓝色，底端可见倒角/圆角",
+          "model": "灰色，底端较平，倒角不明显",
+          "status": "mismatch",
+          "mismatch_severity": "minor",
+          "suggested_change": "底部圆柱增加底端倒角或圆角；颜色不影响几何评分"
+        },
+        {
+          "item": "可见孔",
+          "reference": "front 视角未见任何孔",
+          "model": "front 视角未见任何孔",
+          "status": "unobservable",
+          "mismatch_severity": "none",
+          "suggested_change": "无需修改"
+        }
+      ],
+      "unobservable": [
+        "被遮挡的背面/侧面结构",
+        "内部孔或贯穿孔",
+        "真实倒角或圆角的完整尺寸",
+        "材料颜色（仅作可见性参考，不纳入几何评分）"
+      ],
+      "review_model": "moonshotai/Kimi-K2.7-Code",
+      "method": "fresh multimodal request with one selected reference view and current preview",
+      "recorded_at": 1790491515.7560744
+    },
+    {
+      "revision": 17,
+      "preview_generation": 24,
+      "view": "iso",
+      "reference_image_index": 1,
+      "reference_image_name": "image-1.png",
+      "reference_images_in_request": 1,
+      "score": 72.0,
+      "threshold": 80,
+      "passes_threshold": false,
+      "summary": "当前 iso 视角下，模型与原图在整体层级（尖端-锥头-圆柱过渡段-法兰-柱身）上相似，但存在可见的核心拓扑差异：原图法兰为连续圆环且上表面有一圈虚线/点划线暗示的环形槽或退台；模型法兰被做成六角螺母形，轮廓明显不同。尖端原图更接近圆头/钝圆，模型更尖锐。参考图无可见通孔，孔数无法确认。",
+      "reference_hole_count": null,
+      "count_confidence": 0.0,
+      "evidence": [
+        {
+          "item": "整体层级布局",
+          "reference": "尖端-锥形头-圆柱过渡-圆环法兰-蓝色柱身",
+          "model": "尖端-锥形头-圆柱过渡-六角法兰-圆柱柱身",
+          "status": "partial_match",
+          "mismatch_severity": "low",
+          "suggested_change": "保持整体层级，但需修正法兰形状"
+        },
+        {
+          "item": "法兰外形",
+          "reference": "连续圆环，上表面有环形退台/虚线圆",
+          "model": "六角螺母形六边形法兰",
+          "status": "mismatch",
+          "mismatch_severity": "high",
+          "suggested_change": "将六角法兰改为圆环法兰，并添加顶部环形退台"
+        },
+        {
+          "item": "尖端形状",
+          "reference": "较圆润的弹头形顶端",
+          "model": "更尖锐的锥尖",
+          "status": "mismatch",
+          "mismatch_severity": "medium",
+          "suggested_change": "将尖端改为更圆润的弹头形"
+        },
+        {
+          "item": "柱身颜色/材质",
+          "reference": "蓝色柱身",
+          "model": "深色统一材质",
+          "status": "unobservable_for_geometry",
+          "mismatch_severity": "low",
+          "suggested_change": "颜色不影响几何评分，可忽略"
+        },
+        {
+          "item": "法兰上表面环形特征",
+          "reference": "可见虚线/点划线圆环，暗示退台或槽",
+          "model": "无此环形退台",
+          "status": "mismatch",
+          "mismatch_severity": "medium",
+          "suggested_change": "在法兰上表面添加对应环形退台或槽"
+        }
+      ],
+      "unobservable": [
+        "法兰背面及底部结构",
+        "柱身内部是否中空",
+        "尖端内部结构",
+        "被遮挡的侧面细节",
+        "真实贯穿孔情况"
+      ],
+      "review_model": "moonshotai/Kimi-K2.7-Code",
+      "method": "fresh multimodal request with one selected reference view and current preview",
+      "recorded_at": 1790491542.5521078
+    },
+    {
+      "revision": 18,
+      "preview_generation": 25,
+      "view": "iso",
+      "reference_image_index": 1,
+      "reference_image_name": "image-1.png",
+      "reference_images_in_request": 1,
+      "score": 72.0,
+      "threshold": 80,
+      "passes_threshold": false,
+      "summary": "当前模型在整体层级（尖头-圆柱-法兰-圆柱杆）上与参考图相似，但存在可见的核心差异：参考图顶部为带小平面/圆头的钝头或圆头，模型为尖锐尖头；参考图中间法兰为圆盘形，模型为六角螺母形；参考图圆柱段比例更修长，模型更短粗；参考图可见顶部有一条分型/棱线，模型为光滑锥面。这些差异使分数低于80。",
+      "reference_hole_count": null,
+      "count_confidence": 0.0,
+      "evidence": [
+        {
+          "item": "顶部端头形状",
+          "reference": "顶部为较钝的圆头/小圆顶，并可见一条纵向棱线或分型线",
+          "model": "顶部为尖锐的圆锥尖头，表面光滑无圆头过渡",
+          "status": "mismatch",
+          "mismatch_severity": "major",
+          "suggested_change": "将顶部改为带圆头或小平面过渡的钝头，并保留可见纵向棱线"
+        },
+        {
+          "item": "中间法兰轮廓",
+          "reference": "圆形圆盘法兰，外缘为圆柱面",
+          "model": "六角螺母形法兰，外缘为六个平面",
+          "status": "mismatch",
+          "mismatch_severity": "major",
+          "suggested_change": "将法兰改为圆形圆盘而非六角形"
+        },
+        {
+          "item": "上部圆柱/弹头比例",
+          "reference": "上部弹头+圆柱段整体较修长，圆柱段高度相对较大",
+          "model": "上部弹头+圆柱段较矮胖，圆柱段高度较小",
+          "status": "mismatch",
+          "mismatch_severity": "moderate",
+          "suggested_change": "增加上部圆柱段高度，使整体更修长"
+        },
+        {
+          "item": "底部圆柱杆",
+          "reference": "底部为蓝色圆柱杆，直径明显小于法兰",
+          "model": "底部为深色圆柱杆，直径明显小于法兰",
+          "status": "match",
+          "mismatch_severity": "none",
+          "suggested_change": "保持"
+        },
+        {
+          "item": "表面台阶/分界面",
+          "reference": "弹头与圆柱、圆柱与法兰之间均有清晰环形台阶",
+          "model": "弹头与圆柱、圆柱与法兰之间均有清晰环形台阶",
+          "status": "match",
+          "mismatch_severity": "none",
+          "suggested_change": "保持"
+        }
+      ],
+      "unobservable": [
+        "法兰底面与杆部连接细节",
+        "内部孔洞或贯穿结构",
+        "顶部圆头内部曲面细节",
+        "被遮挡的背面/底面特征"
+      ],
+      "review_model": "moonshotai/Kimi-K2.7-Code",
+      "method": "fresh multimodal request with one selected reference view and current preview",
+      "recorded_at": 1790491603.4732697
+    }
+  ]
+}
