@@ -668,6 +668,14 @@ def _reference_similarity_review(state: dict[str, Any], view: str,
             not row["item"] or not row["reference"] or not row["model"]
             for row in normalized_evidence):
         raise ValueError("多模态复核的每项 evidence 必须说明比较对象、原图证据和模型证据。")
+    actionable_statuses = {"mismatch", "partial", "partial_match", "partial_mismatch"}
+    actionable_severities = {"medium", "moderate", "high", "major", "critical"}
+    geometry_mismatches = [
+        row for row in normalized_evidence
+        if row["status"].lower() in actionable_statuses
+        and row["mismatch_severity"].lower() in actionable_severities
+    ]
+    effective_score = min(score, 79.9) if geometry_mismatches else score
     unobservable = parsed.get("unobservable") or []
     if isinstance(unobservable, str):
         unobservable = [unobservable]
@@ -680,9 +688,11 @@ def _reference_similarity_review(state: dict[str, Any], view: str,
         "reference_image_index": reference_image_index,
         "reference_image_name": selected_reference.name,
         "reference_images_in_request": 1,
-        "score": round(score, 1),
+        "score": round(effective_score, 1),
+        "raw_model_score": round(score, 1),
+        "score_capped_by_evidence": bool(geometry_mismatches and score >= 80),
         "threshold": 80,
-        "passes_threshold": score >= 80,
+        "passes_threshold": effective_score >= 80,
         "summary": str(parsed.get("summary") or "").strip()[:2000],
         "reference_hole_count": hole_count,
         "count_confidence": confidence,
@@ -1332,10 +1342,11 @@ def _handle_tool(name: str, args: dict[str, Any]) -> dict[str, Any]:
                 for row in view_reviews[view].get("evidence", [])
                 if isinstance(row, dict)
                 and str(row.get("status") or "").lower() in {"mismatch", "partial"}
-                and str(row.get("mismatch_severity") or "").lower() == "high"
+                and str(row.get("mismatch_severity") or "").lower()
+                in {"high", "major", "critical"}
             ]
             if critical_mismatches:
-                raise ValueError("多模态复核仍有高严重度核心差异，先按 evidence 返修：%s" %
+                raise ValueError("多模态复核仍有高/重大严重度核心差异，先按 evidence 返修：%s" %
                                  json.dumps(critical_mismatches, ensure_ascii=False))
             hole_review = view_reviews.get("front") or similarity or {}
             expected_holes = hole_review.get("reference_hole_count")
