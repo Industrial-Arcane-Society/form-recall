@@ -122,7 +122,11 @@ def _provider_patch(llm_cfg: dict[str, Any], session_dir: Path,
             selected_budget = max(128, min(32768, int(budget))) if budget is not None else None
         except (TypeError, ValueError):
             selected_budget = None
-        budgets = selected_budget or 4096
+        # Keep Kimi reasoning bounded when the user selected an effort level
+        # but did not set an explicit token budget. DSH repeats this budget
+        # on each model call; an unbounded high-effort call can dominate a
+        # small, tool-driven CAD task.
+        budgets = selected_budget or 2048
         provider_fields.extend([
             "        thinkingBudgets:",
             "          minimal: %d" % max(128, min(32768, budgets // 4)),

@@ -55,7 +55,12 @@ _COORDINATE_CONTRACT = (
     "CADPlan/global preview: X=left-right (box.length), Y=front-back thickness "
     "(box.width), Z=vertical (box.height); box center is global XYZ. The front "
     "orthographic view looks from +Y with screen horizontal X and vertical Z. "
-    "A hole point is global XYZ and its axis is the bore direction."
+    "For cylinder/cone, base defaults to true: center is the axial base-center "
+    "point and height extends in the positive axis direction; set base=false "
+    "only when center is the geometric midpoint. For prism, center is the "
+    "profile's base-plane origin and height extends in the positive axis "
+    "direction. Sphere center is its geometric center. A hole point is global "
+    "XYZ and its axis is the bore direction."
 )
 
 _FEATURE_INPUT_SCHEMA = {
@@ -77,7 +82,12 @@ _FEATURE_INPUT_SCHEMA = {
             "description": (
                 "Geometry parameters. box: length=X, width=Y, height=Z, "
                 "center=[X,Y,Z]. hole pos=point: point=[X,Y,Z], axis is "
-                "the bore direction, through=true for a through-hole."
+                "the bore direction, through=true for a through-hole. "
+                "cylinder/cone: base defaults true, center is the base-center "
+                "point and height extends along +axis; use base=false when "
+                "center means the geometric midpoint. prism: center is the "
+                "profile base-plane origin; height extends along +axis. "
+                "sphere: center is the geometric center."
             ),
             "additionalProperties": True,
         },
@@ -1011,6 +1021,18 @@ def _handle_tool(name: str, args: dict[str, Any]) -> dict[str, Any]:
             "catia_mapping": spec["status"],
             "catia_note": spec["reason"],
             "coordinate_contract": _COORDINATE_CONTRACT,
+            "parameter_semantics": {
+                "cylinder": {
+                    "center": "base-center point when base=true (default); geometric midpoint when base=false",
+                    "height": "extends along positive axis when base=true; straddles center when base=false",
+                    "base_default": True,
+                },
+                "prism": {
+                    "center": "origin of the profile's base plane",
+                    "height": "extends along positive axis",
+                },
+                "sphere": {"center": "geometric center"},
+            }.get(kind, {}),
         }
         _record(state, name, feature_kind=kind)
         _save(state)

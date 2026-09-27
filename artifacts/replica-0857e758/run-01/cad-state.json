@@ -1,0 +1,2132 @@
+{
+  "plan": {
+    "schema_version": "1.0",
+    "name": "probe_bullet_pin",
+    "source_prompt": "请根据四张同一工件的参考图建立可编辑模型。请自行判断各图视角，依据图像比例估算未标注尺寸并标记 image_estimate；直接建模、预览、对照原图复核并按差异继续修正，直到达到复刻要求，不要先向我提问。",
+    "units": {
+      "length": "mm",
+      "angle": "deg"
+    },
+    "coordinate_system": {
+      "type": "global_cartesian",
+      "handedness": "right",
+      "axes": [
+        "X",
+        "Y",
+        "Z"
+      ],
+      "origin": [
+        0,
+        0,
+        0
+      ]
+    },
+    "features": [
+      {
+        "id": "shank_cylinder",
+        "kind": "cylinder",
+        "operation": "add",
+        "name": "圆柱杆部",
+        "note": "主体下部蓝色圆柱柄",
+        "parameters": {
+          "radius": 5,
+          "height": 20,
+          "center": [
+            0,
+            0,
+            10
+          ],
+          "axis": "Z"
+        },
+        "sources": {
+          "radius": {
+            "type": "image_estimate",
+            "evidence": "正视图杆部直径约占总高度的1/5"
+          },
+          "height": {
+            "type": "image_estimate",
+            "evidence": "正视图杆部高度约占整体2/5"
+          },
+          "center": {
+            "type": "derived",
+            "evidence": "杆部居中，底面位于Z=0"
+          },
+          "axis": {
+            "type": "user"
+          }
+        }
+      },
+      {
+        "id": "flange_prism",
+        "kind": "prism",
+        "operation": "add",
+        "name": "法兰棱柱",
+        "note": "八边形法兰，紧贴在杆部顶端",
+        "parameters": {
+          "profile": [
+            [
+              9.24,
+              3.83
+            ],
+            [
+              3.83,
+              9.24
+            ],
+            [
+              -3.83,
+              9.24
+            ],
+            [
+              -9.24,
+              3.83
+            ],
+            [
+              -9.24,
+              -3.83
+            ],
+            [
+              -3.83,
+              -9.24
+            ],
+            [
+              3.83,
+              -9.24
+            ],
+            [
+              9.24,
+              -3.83
+            ]
+          ],
+          "height": 5,
+          "center": [
+            0,
+            0,
+            22.5
+          ],
+          "axis": "Z"
+        },
+        "sources": {
+          "profile": {
+            "type": "image_estimate",
+            "evidence": "顶/底视图外轮廓为八边形，对边宽度约18 mm，约为杆部直径的1.8倍"
+          },
+          "height": {
+            "type": "image_estimate",
+            "evidence": "正视图法兰厚度约5 mm"
+          },
+          "center": {
+            "type": "derived",
+            "evidence": "法兰底面与杆部顶面在Z=20相接，厚度5，中心Z=22.5"
+          },
+          "axis": {
+            "type": "user"
+          }
+        }
+      },
+      {
+        "id": "bullet_cone",
+        "kind": "cylinder",
+        "operation": "add",
+        "name": "弹头锥体",
+        "note": "从颈部环槽上方渐缩至尖端平台",
+        "parameters": {
+          "radius": 5,
+          "radius2": 1.5,
+          "height": 26,
+          "center": [
+            0,
+            0,
+            37
+          ],
+          "axis": "Z"
+        },
+        "sources": {
+          "radius": {
+            "type": "derived",
+            "evidence": "锥体底面与杆部半径5 mm相接"
+          },
+          "radius2": {
+            "type": "image_estimate",
+            "evidence": "弹头尖端平台直径约为杆部直径的30%"
+          },
+          "height": {
+            "type": "image_estimate",
+            "evidence": "弹头高度约26 mm，底端插入法兰顶部0.5 mm保证布尔合并"
+          },
+          "center": {
+            "type": "derived",
+            "evidence": "锥体底面Z=24、顶面Z=50，中心Z=37"
+          },
+          "axis": {
+            "type": "user"
+          }
+        }
+      },
+      {
+        "id": "tip_sphere",
+        "kind": "sphere",
+        "operation": "add",
+        "name": "球头尖端",
+        "note": "半径1.5 mm球头封闭锥体顶端平台",
+        "parameters": {
+          "radius": 1.5,
+          "center": [
+            0,
+            0,
+            50
+          ]
+        },
+        "sources": {
+          "radius": {
+            "type": "derived",
+            "evidence": "球头半径等于锥体顶端半径1.5 mm"
+          },
+          "center": {
+            "type": "derived",
+            "evidence": "球心与锥体顶面中心重合于Z=50"
+          }
+        }
+      },
+      {
+        "id": "center_hole",
+        "kind": "cylinder",
+        "operation": "cut",
+        "name": "中心盲孔",
+        "note": "从底面向内加工的盲孔，未进入弹头",
+        "parameters": {
+          "radius": 2.5,
+          "height": 20,
+          "center": [
+            0,
+            0,
+            10
+          ],
+          "axis": "Z"
+        },
+        "sources": {
+          "radius": {
+            "type": "image_estimate",
+            "evidence": "底视图中心黄色孔径约为杆部直径的1/2"
+          },
+          "height": {
+            "type": "derived",
+            "evidence": "孔深与杆部高度相同20 mm，底端在Z=20（法兰底）"
+          },
+          "center": {
+            "type": "derived",
+            "evidence": "盲孔沿中心轴从底面向上"
+          },
+          "axis": {
+            "type": "user"
+          }
+        }
+      }
+    ],
+    "pending_questions": []
+  },
+  "revision": 33,
+  "last_preview": {
+    "state": "previewed",
+    "validation": {
+      "valid": true,
+      "state": "valid",
+      "errors": [],
+      "confirmations": [],
+      "support": [
+        {
+          "feature_id": "shank_cylinder",
+          "kind": "cylinder",
+          "status": "exact",
+          "reason": "等半径时为圆草图加凸台；圆锥台会近似，非 Z 轴圆锥台暂不支持。"
+        },
+        {
+          "feature_id": "flange_prism",
+          "kind": "prism",
+          "status": "exact",
+          "reason": "闭合多边形草图加凸台；当前仅支持 Z 轴。"
+        },
+        {
+          "feature_id": "bullet_cone",
+          "kind": "cylinder",
+          "status": "approximate",
+          "reason": "圆锥台以多层圆盘近似。"
+        },
+        {
+          "feature_id": "tip_sphere",
+          "kind": "sphere",
+          "status": "approximate",
+          "reason": "CATIA 导出器以多层圆盘近似球体。"
+        },
+        {
+          "feature_id": "center_hole",
+          "kind": "cylinder",
+          "status": "exact",
+          "reason": "等半径时为圆草图加凸台；圆锥台会近似，非 Z 轴圆锥台暂不支持。"
+        }
+      ],
+      "warnings": [
+        {
+          "code": "CATIA_APPROXIMATION",
+          "feature_id": "bullet_cone",
+          "kind": "cylinder",
+          "message": "圆锥台以多层圆盘近似。"
+        },
+        {
+          "code": "CATIA_APPROXIMATION",
+          "feature_id": "tip_sphere",
+          "kind": "sphere",
+          "message": "CATIA 导出器以多层圆盘近似球体。"
+        }
+      ],
+      "schema_version": "1.0"
+    },
+    "catia_executed": false,
+    "dimensions": {
+      "unit": "mm",
+      "bbox": [
+        -9.24,
+        -9.24,
+        10.0,
+        9.24,
+        9.24,
+        63.0
+      ],
+      "size": [
+        18.48,
+        18.48,
+        53.0
+      ],
+      "volume_mm3": 3141.4711627731144,
+      "surface_area_mm2": 4310.460747194616,
+      "triangles": 12889,
+      "feature_count": 5
+    },
+    "catia_operations": [
+      {
+        "index": 1,
+        "kind": "circle_pad",
+        "plane": "Z",
+        "center": [
+          0.0,
+          0.0,
+          10.0
+        ],
+        "profile": [],
+        "dimensions": {
+          "l": 0.0,
+          "w": 0.0,
+          "r": 5.0,
+          "h": 20.0,
+          "depth": 0.0
+        },
+        "name": "圆柱杆部",
+        "note": "圆柱 ⌀10 × 20 mm"
+      },
+      {
+        "index": 2,
+        "kind": "poly_pad",
+        "plane": "XY",
+        "center": [
+          0.0,
+          0.0,
+          22.5
+        ],
+        "profile": [
+          [
+            9.24,
+            3.83
+          ],
+          [
+            3.83,
+            9.24
+          ],
+          [
+            -3.83,
+            9.24
+          ],
+          [
+            -9.24,
+            3.83
+          ],
+          [
+            -9.24,
+            -3.83
+          ],
+          [
+            -3.83,
+            -9.24
+          ],
+          [
+            3.83,
+            -9.24
+          ],
+          [
+            9.24,
+            -3.83
+          ]
+        ],
+        "dimensions": {
+          "l": 0.0,
+          "w": 0.0,
+          "r": 0.0,
+          "h": 5.0,
+          "depth": 0.0
+        },
+        "name": "法兰棱柱",
+        "note": "轮廓拉伸 5 mm (8 点轮廓)"
+      },
+      {
+        "index": 3,
+        "kind": "circle_pad",
+        "plane": "XY",
+        "center": [
+          0.0,
+          0.0,
+          37.0
+        ],
+        "profile": [],
+        "dimensions": {
+          "l": 0.0,
+          "w": 0.0,
+          "r": 4.902777777777778,
+          "h": 1.4444444444444444,
+          "depth": 0.0
+        },
+        "name": "弹头锥体",
+        "note": "圆台 R5→R1.5 × 26 mm"
+      },
+      {
+        "index": 4,
+        "kind": "circle_pad",
+        "plane": "XY",
+        "center": [
+          0.0,
+          0.0,
+          38.44444444444444
+        ],
+        "profile": [],
+        "dimensions": {
+          "l": 0.0,
+          "w": 0.0,
+          "r": 4.708333333333333,
+          "h": 1.4444444444444444,
+          "depth": 0.0
+        },
+        "name": "弹头锥体",
+        "note": "圆台 R5→R1.5 × 26 mm"
+      },
+      {
+        "index": 5,
+        "kind": "circle_pad",
+        "plane": "XY",
+        "center": [
+          0.0,
+          0.0,
+          39.888888888888886
+        ],
+        "profile": [],
+        "dimensions": {
+          "l": 0.0,
+          "w": 0.0,
+          "r": 4.513888888888889,
+          "h": 1.4444444444444442,
+          "depth": 0.0
+        },
+        "name": "弹头锥体",
+        "note": "圆台 R5→R1.5 × 26 mm"
+      },
+      {
+        "index": 6,
+        "kind": "circle_pad",
+        "plane": "XY",
+        "center": [
+          0.0,
+          0.0,
+          41.333333333333336
+        ],
+        "profile": [],
+        "dimensions": {
+          "l": 0.0,
+          "w": 0.0,
+          "r": 4.319444444444445,
+          "h": 1.4444444444444446,
+          "depth": 0.0
+        },
+        "name": "弹头锥体",
+        "note": "圆台 R5→R1.5 × 26 mm"
+      },
+      {
+        "index": 7,
+        "kind": "circle_pad",
+        "plane": "XY",
+        "center": [
+          0.0,
+          0.0,
+          42.77777777777778
+        ],
+        "profile": [],
+        "dimensions": {
+          "l": 0.0,
+          "w": 0.0,
+          "r": 4.125,
+          "h": 1.4444444444444446,
+          "depth": 0.0
+        },
+        "name": "弹头锥体",
+        "note": "圆台 R5→R1.5 × 26 mm"
+      },
+      {
+        "index": 8,
+        "kind": "circle_pad",
+        "plane": "XY",
+        "center": [
+          0.0,
+          0.0,
+          44.22222222222222
+        ],
+        "profile": [],
+        "dimensions": {
+          "l": 0.0,
+          "w": 0.0,
+          "r": 3.9305555555555554,
+          "h": 1.4444444444444438,
+          "depth": 0.0
+        },
+        "name": "弹头锥体",
+        "note": "圆台 R5→R1.5 × 26 mm"
+      },
+      {
+        "index": 9,
+        "kind": "circle_pad",
+        "plane": "XY",
+        "center": [
+          0.0,
+          0.0,
+          45.666666666666664
+        ],
+        "profile": [],
+        "dimensions": {
+          "l": 0.0,
+          "w": 0.0,
+          "r": 3.736111111111111,
+          "h": 1.4444444444444446,
+          "depth": 0.0
+        },
+        "name": "弹头锥体",
+        "note": "圆台 R5→R1.5 × 26 mm"
+      },
+      {
+        "index": 10,
+        "kind": "circle_pad",
+        "plane": "XY",
+        "center": [
+          0.0,
+          0.0,
+          47.111111111111114
+        ],
+        "profile": [],
+        "dimensions": {
+          "l": 0.0,
+          "w": 0.0,
+          "r": 3.541666666666667,
+          "h": 1.4444444444444446,
+          "depth": 0.0
+        },
+        "name": "弹头锥体",
+        "note": "圆台 R5→R1.5 × 26 mm"
+      },
+      {
+        "index": 11,
+        "kind": "circle_pad",
+        "plane": "XY",
+        "center": [
+          0.0,
+          0.0,
+          48.55555555555556
+        ],
+        "profile": [],
+        "dimensions": {
+          "l": 0.0,
+          "w": 0.0,
+          "r": 3.3472222222222223,
+          "h": 1.4444444444444446,
+          "depth": 0.0
+        },
+        "name": "弹头锥体",
+        "note": "圆台 R5→R1.5 × 26 mm"
+      },
+      {
+        "index": 12,
+        "kind": "circle_pad",
+        "plane": "XY",
+        "center": [
+          0.0,
+          0.0,
+          50.0
+        ],
+        "profile": [],
+        "dimensions": {
+          "l": 0.0,
+          "w": 0.0,
+          "r": 3.1527777777777777,
+          "h": 1.4444444444444446,
+          "depth": 0.0
+        },
+        "name": "弹头锥体",
+        "note": "圆台 R5→R1.5 × 26 mm"
+      },
+      {
+        "index": 13,
+        "kind": "circle_pad",
+        "plane": "XY",
+        "center": [
+          0.0,
+          0.0,
+          51.44444444444444
+        ],
+        "profile": [],
+        "dimensions": {
+          "l": 0.0,
+          "w": 0.0,
+          "r": 2.958333333333333,
+          "h": 1.4444444444444446,
+          "depth": 0.0
+        },
+        "name": "弹头锥体",
+        "note": "圆台 R5→R1.5 × 26 mm"
+      },
+      {
+        "index": 14,
+        "kind": "circle_pad",
+        "plane": "XY",
+        "center": [
+          0.0,
+          0.0,
+          52.888888888888886
+        ],
+        "profile": [],
+        "dimensions": {
+          "l": 0.0,
+          "w": 0.0,
+          "r": 2.7638888888888893,
+          "h": 1.4444444444444429,
+          "depth": 0.0
+        },
+        "name": "弹头锥体",
+        "note": "圆台 R5→R1.5 × 26 mm"
+      },
+      {
+        "index": 15,
+        "kind": "circle_pad",
+        "plane": "XY",
+        "center": [
+          0.0,
+          0.0,
+          54.33333333333333
+        ],
+        "profile": [],
+        "dimensions": {
+          "l": 0.0,
+          "w": 0.0,
+          "r": 2.569444444444444,
+          "h": 1.4444444444444464,
+          "depth": 0.0
+        },
+        "name": "弹头锥体",
+        "note": "圆台 R5→R1.5 × 26 mm"
+      },
+      {
+        "index": 16,
+        "kind": "circle_pad",
+        "plane": "XY",
+        "center": [
+          0.0,
+          0.0,
+          55.77777777777778
+        ],
+        "profile": [],
+        "dimensions": {
+          "l": 0.0,
+          "w": 0.0,
+          "r": 2.375,
+          "h": 1.4444444444444429,
+          "depth": 0.0
+        },
+        "name": "弹头锥体",
+        "note": "圆台 R5→R1.5 × 26 mm"
+      },
+      {
+        "index": 17,
+        "kind": "circle_pad",
+        "plane": "XY",
+        "center": [
+          0.0,
+          0.0,
+          57.22222222222222
+        ],
+        "profile": [],
+        "dimensions": {
+          "l": 0.0,
+          "w": 0.0,
+          "r": 2.180555555555556,
+          "h": 1.4444444444444464,
+          "depth": 0.0
+        },
+        "name": "弹头锥体",
+        "note": "圆台 R5→R1.5 × 26 mm"
+      },
+      {
+        "index": 18,
+        "kind": "circle_pad",
+        "plane": "XY",
+        "center": [
+          0.0,
+          0.0,
+          58.66666666666667
+        ],
+        "profile": [],
+        "dimensions": {
+          "l": 0.0,
+          "w": 0.0,
+          "r": 1.9861111111111107,
+          "h": 1.4444444444444429,
+          "depth": 0.0
+        },
+        "name": "弹头锥体",
+        "note": "圆台 R5→R1.5 × 26 mm"
+      },
+      {
+        "index": 19,
+        "kind": "circle_pad",
+        "plane": "XY",
+        "center": [
+          0.0,
+          0.0,
+          60.111111111111114
+        ],
+        "profile": [],
+        "dimensions": {
+          "l": 0.0,
+          "w": 0.0,
+          "r": 1.7916666666666665,
+          "h": 1.4444444444444464,
+          "depth": 0.0
+        },
+        "name": "弹头锥体",
+        "note": "圆台 R5→R1.5 × 26 mm"
+      },
+      {
+        "index": 20,
+        "kind": "circle_pad",
+        "plane": "XY",
+        "center": [
+          0.0,
+          0.0,
+          61.55555555555556
+        ],
+        "profile": [],
+        "dimensions": {
+          "l": 0.0,
+          "w": 0.0,
+          "r": 1.5972222222222223,
+          "h": 1.4444444444444429,
+          "depth": 0.0
+        },
+        "name": "弹头锥体",
+        "note": "圆台 R5→R1.5 × 26 mm"
+      },
+      {
+        "index": 21,
+        "kind": "circle_pad",
+        "plane": "XY",
+        "center": [
+          0.0,
+          0.0,
+          48.5
+        ],
+        "profile": [],
+        "dimensions": {
+          "l": 0.0,
+          "w": 0.0,
+          "r": 0.41807340619307864,
+          "h": 0.125,
+          "depth": 0.0
+        },
+        "name": "球头尖端",
+        "note": "球体 R1.5 mm"
+      },
+      {
+        "index": 22,
+        "kind": "circle_pad",
+        "plane": "XY",
+        "center": [
+          0.0,
+          0.0,
+          48.625
+        ],
+        "profile": [],
+        "dimensions": {
+          "l": 0.0,
+          "w": 0.0,
+          "r": 0.7201609756097562,
+          "h": 0.125,
+          "depth": 0.0
+        },
+        "name": "球头尖端",
+        "note": "球体 R1.5 mm"
+      },
+      {
+        "index": 23,
+        "kind": "circle_pad",
+        "plane": "XY",
+        "center": [
+          0.0,
+          0.0,
+          48.75
+        ],
+        "profile": [],
+        "dimensions": {
+          "l": 0.0,
+          "w": 0.0,
+          "r": 0.9121581151832461,
+          "h": 0.125,
+          "depth": 0.0
+        },
+        "name": "球头尖端",
+        "note": "球体 R1.5 mm"
+      },
+      {
+        "index": 24,
+        "kind": "circle_pad",
+        "plane": "XY",
+        "center": [
+          0.0,
+          0.0,
+          48.875
+        ],
+        "profile": [],
+        "dimensions": {
+          "l": 0.0,
+          "w": 0.0,
+          "r": 1.0585913612565445,
+          "h": 0.125,
+          "depth": 0.0
+        },
+        "name": "球头尖端",
+        "note": "球体 R1.5 mm"
+      },
+      {
+        "index": 25,
+        "kind": "circle_pad",
+        "plane": "XY",
+        "center": [
+          0.0,
+          0.0,
+          49.0
+        ],
+        "profile": [],
+        "dimensions": {
+          "l": 0.0,
+          "w": 0.0,
+          "r": 1.165867374301676,
+          "h": 0.125,
+          "depth": 0.0
+        },
+        "name": "球头尖端",
+        "note": "球体 R1.5 mm"
+      },
+      {
+        "index": 26,
+        "kind": "circle_pad",
+        "plane": "XY",
+        "center": [
+          0.0,
+          0.0,
+          49.125
+        ],
+        "profile": [],
+        "dimensions": {
+          "l": 0.0,
+          "w": 0.0,
+          "r": 1.25590956651719,
+          "h": 0.125,
+          "depth": 0.0
+        },
+        "name": "球头尖端",
+        "note": "球体 R1.5 mm"
+      },
+      {
+        "index": 27,
+        "kind": "circle_pad",
+        "plane": "XY",
+        "center": [
+          0.0,
+          0.0,
+          49.25
+        ],
+        "profile": [],
+        "dimensions": {
+          "l": 0.0,
+          "w": 0.0,
+          "r": 1.33251644245142,
+          "h": 0.125,
+          "depth": 0.0
+        },
+        "name": "球头尖端",
+        "note": "球体 R1.5 mm"
+      },
+      {
+        "index": 28,
+        "kind": "circle_pad",
+        "plane": "XY",
+        "center": [
+          0.0,
+          0.0,
+          49.375
+        ],
+        "profile": [],
+        "dimensions": {
+          "l": 0.0,
+          "w": 0.0,
+          "r": 1.3855889655172415,
+          "h": 0.125,
+          "depth": 0.0
+        },
+        "name": "球头尖端",
+        "note": "球体 R1.5 mm"
+      },
+      {
+        "index": 29,
+        "kind": "circle_pad",
+        "plane": "XY",
+        "center": [
+          0.0,
+          0.0,
+          49.5
+        ],
+        "profile": [],
+        "dimensions": {
+          "l": 0.0,
+          "w": 0.0,
+          "r": 1.4328386363636365,
+          "h": 0.125,
+          "depth": 0.0
+        },
+        "name": "球头尖端",
+        "note": "球体 R1.5 mm"
+      },
+      {
+        "index": 30,
+        "kind": "circle_pad",
+        "plane": "XY",
+        "center": [
+          0.0,
+          0.0,
+          49.625
+        ],
+        "profile": [],
+        "dimensions": {
+          "l": 0.0,
+          "w": 0.0,
+          "r": 1.4628320804195805,
+          "h": 0.125,
+          "depth": 0.0
+        },
+        "name": "球头尖端",
+        "note": "球体 R1.5 mm"
+      },
+      {
+        "index": 31,
+        "kind": "circle_pad",
+        "plane": "XY",
+        "center": [
+          0.0,
+          0.0,
+          49.75
+        ],
+        "profile": [],
+        "dimensions": {
+          "l": 0.0,
+          "w": 0.0,
+          "r": 1.485220494247976,
+          "h": 0.125,
+          "depth": 0.0
+        },
+        "name": "球头尖端",
+        "note": "球体 R1.5 mm"
+      },
+      {
+        "index": 32,
+        "kind": "circle_pad",
+        "plane": "XY",
+        "center": [
+          0.0,
+          0.0,
+          49.875
+        ],
+        "profile": [],
+        "dimensions": {
+          "l": 0.0,
+          "w": 0.0,
+          "r": 1.4950734980826588,
+          "h": 0.125,
+          "depth": 0.0
+        },
+        "name": "球头尖端",
+        "note": "球体 R1.5 mm"
+      },
+      {
+        "index": 33,
+        "kind": "circle_pad",
+        "plane": "XY",
+        "center": [
+          0.0,
+          0.0,
+          50.0
+        ],
+        "profile": [],
+        "dimensions": {
+          "l": 0.0,
+          "w": 0.0,
+          "r": 1.4950734980826588,
+          "h": 0.125,
+          "depth": 0.0
+        },
+        "name": "球头尖端",
+        "note": "球体 R1.5 mm"
+      },
+      {
+        "index": 34,
+        "kind": "circle_pad",
+        "plane": "XY",
+        "center": [
+          0.0,
+          0.0,
+          50.125
+        ],
+        "profile": [],
+        "dimensions": {
+          "l": 0.0,
+          "w": 0.0,
+          "r": 1.485220494247976,
+          "h": 0.125,
+          "depth": 0.0
+        },
+        "name": "球头尖端",
+        "note": "球体 R1.5 mm"
+      },
+      {
+        "index": 35,
+        "kind": "circle_pad",
+        "plane": "XY",
+        "center": [
+          0.0,
+          0.0,
+          50.25
+        ],
+        "profile": [],
+        "dimensions": {
+          "l": 0.0,
+          "w": 0.0,
+          "r": 1.4628320804195805,
+          "h": 0.125,
+          "depth": 0.0
+        },
+        "name": "球头尖端",
+        "note": "球体 R1.5 mm"
+      },
+      {
+        "index": 36,
+        "kind": "circle_pad",
+        "plane": "XY",
+        "center": [
+          0.0,
+          0.0,
+          50.375
+        ],
+        "profile": [],
+        "dimensions": {
+          "l": 0.0,
+          "w": 0.0,
+          "r": 1.4328386363636365,
+          "h": 0.125,
+          "depth": 0.0
+        },
+        "name": "球头尖端",
+        "note": "球体 R1.5 mm"
+      },
+      {
+        "index": 37,
+        "kind": "circle_pad",
+        "plane": "XY",
+        "center": [
+          0.0,
+          0.0,
+          50.5
+        ],
+        "profile": [],
+        "dimensions": {
+          "l": 0.0,
+          "w": 0.0,
+          "r": 1.3855889655172415,
+          "h": 0.125,
+          "depth": 0.0
+        },
+        "name": "球头尖端",
+        "note": "球体 R1.5 mm"
+      },
+      {
+        "index": 38,
+        "kind": "circle_pad",
+        "plane": "XY",
+        "center": [
+          0.0,
+          0.0,
+          50.625
+        ],
+        "profile": [],
+        "dimensions": {
+          "l": 0.0,
+          "w": 0.0,
+          "r": 1.33251644245142,
+          "h": 0.125,
+          "depth": 0.0
+        },
+        "name": "球头尖端",
+        "note": "球体 R1.5 mm"
+      },
+      {
+        "index": 39,
+        "kind": "circle_pad",
+        "plane": "XY",
+        "center": [
+          0.0,
+          0.0,
+          50.75
+        ],
+        "profile": [],
+        "dimensions": {
+          "l": 0.0,
+          "w": 0.0,
+          "r": 1.25590956651719,
+          "h": 0.125,
+          "depth": 0.0
+        },
+        "name": "球头尖端",
+        "note": "球体 R1.5 mm"
+      },
+      {
+        "index": 40,
+        "kind": "circle_pad",
+        "plane": "XY",
+        "center": [
+          0.0,
+          0.0,
+          50.875
+        ],
+        "profile": [],
+        "dimensions": {
+          "l": 0.0,
+          "w": 0.0,
+          "r": 1.165867374301676,
+          "h": 0.125,
+          "depth": 0.0
+        },
+        "name": "球头尖端",
+        "note": "球体 R1.5 mm"
+      },
+      {
+        "index": 41,
+        "kind": "circle_pad",
+        "plane": "XY",
+        "center": [
+          0.0,
+          0.0,
+          51.0
+        ],
+        "profile": [],
+        "dimensions": {
+          "l": 0.0,
+          "w": 0.0,
+          "r": 1.0585913612565445,
+          "h": 0.125,
+          "depth": 0.0
+        },
+        "name": "球头尖端",
+        "note": "球体 R1.5 mm"
+      },
+      {
+        "index": 42,
+        "kind": "circle_pad",
+        "plane": "XY",
+        "center": [
+          0.0,
+          0.0,
+          51.125
+        ],
+        "profile": [],
+        "dimensions": {
+          "l": 0.0,
+          "w": 0.0,
+          "r": 0.9121581151832461,
+          "h": 0.125,
+          "depth": 0.0
+        },
+        "name": "球头尖端",
+        "note": "球体 R1.5 mm"
+      },
+      {
+        "index": 43,
+        "kind": "circle_pad",
+        "plane": "XY",
+        "center": [
+          0.0,
+          0.0,
+          51.25
+        ],
+        "profile": [],
+        "dimensions": {
+          "l": 0.0,
+          "w": 0.0,
+          "r": 0.7201609756097562,
+          "h": 0.125,
+          "depth": 0.0
+        },
+        "name": "球头尖端",
+        "note": "球体 R1.5 mm"
+      },
+      {
+        "index": 44,
+        "kind": "circle_pad",
+        "plane": "XY",
+        "center": [
+          0.0,
+          0.0,
+          51.375
+        ],
+        "profile": [],
+        "dimensions": {
+          "l": 0.0,
+          "w": 0.0,
+          "r": 0.41807340619307864,
+          "h": 0.125,
+          "depth": 0.0
+        },
+        "name": "球头尖端",
+        "note": "球体 R1.5 mm"
+      },
+      {
+        "index": 45,
+        "kind": "circle_cut",
+        "plane": "Z",
+        "center": [
+          0.0,
+          0.0,
+          30.0
+        ],
+        "profile": [],
+        "dimensions": {
+          "l": 0.0,
+          "w": 0.0,
+          "r": 2.5,
+          "h": 20.0,
+          "depth": 20.0
+        },
+        "name": "中心盲孔",
+        "note": "圆柱 ⌀5 × 20 mm"
+      }
+    ],
+    "warnings": [
+      {
+        "code": "CATIA_APPROXIMATION",
+        "feature_id": "bullet_cone",
+        "kind": "cylinder",
+        "message": "圆锥台以多层圆盘近似。"
+      },
+      {
+        "code": "CATIA_APPROXIMATION",
+        "feature_id": "tip_sphere",
+        "kind": "sphere",
+        "message": "CATIA 导出器以多层圆盘近似球体。"
+      },
+      {
+        "code": "CATIA_TRANSLATOR_NOTE",
+        "feature_id": null,
+        "kind": null,
+        "message": "圆台「圆台 R5→R1.5 × 26 mm」用 18 层圆盘近似(旋转体 API 在这套 CATIA 里不可用)。",
+        "index": 0
+      },
+      {
+        "code": "CATIA_TRANSLATOR_NOTE",
+        "feature_id": null,
+        "kind": null,
+        "message": "球体「球体 R1.5 mm」用 24 层圆盘近似(旋转体 API 在这套 CATIA 里不可用)。",
+        "index": 1
+      }
+    ],
+    "feature_manifest": {
+      "shank_cylinder": {
+        "kind": "cylinder",
+        "operation": "add",
+        "name": "圆柱杆部",
+        "parameters": {
+          "radius": 5,
+          "height": 20,
+          "center": [
+            0,
+            0,
+            10
+          ],
+          "axis": "Z"
+        },
+        "sources": {
+          "radius": {
+            "type": "image_estimate",
+            "evidence": "正视图杆部直径约占总高度的1/5"
+          },
+          "height": {
+            "type": "image_estimate",
+            "evidence": "正视图杆部高度约占整体2/5"
+          },
+          "center": {
+            "type": "derived",
+            "evidence": "杆部居中，底面位于Z=0"
+          },
+          "axis": {
+            "type": "user"
+          }
+        },
+        "relations": []
+      },
+      "flange_prism": {
+        "kind": "prism",
+        "operation": "add",
+        "name": "法兰棱柱",
+        "parameters": {
+          "profile": [
+            [
+              9.24,
+              3.83
+            ],
+            [
+              3.83,
+              9.24
+            ],
+            [
+              -3.83,
+              9.24
+            ],
+            [
+              -9.24,
+              3.83
+            ],
+            [
+              -9.24,
+              -3.83
+            ],
+            [
+              -3.83,
+              -9.24
+            ],
+            [
+              3.83,
+              -9.24
+            ],
+            [
+              9.24,
+              -3.83
+            ]
+          ],
+          "height": 5,
+          "center": [
+            0,
+            0,
+            22.5
+          ],
+          "axis": "Z"
+        },
+        "sources": {
+          "profile": {
+            "type": "image_estimate",
+            "evidence": "顶/底视图外轮廓为八边形，对边宽度约18 mm，约为杆部直径的1.8倍"
+          },
+          "height": {
+            "type": "image_estimate",
+            "evidence": "正视图法兰厚度约5 mm"
+          },
+          "center": {
+            "type": "derived",
+            "evidence": "法兰底面与杆部顶面在Z=20相接，厚度5，中心Z=22.5"
+          },
+          "axis": {
+            "type": "user"
+          }
+        },
+        "relations": []
+      },
+      "bullet_cone": {
+        "kind": "cylinder",
+        "operation": "add",
+        "name": "弹头锥体",
+        "parameters": {
+          "radius": 5,
+          "radius2": 1.5,
+          "height": 26,
+          "center": [
+            0,
+            0,
+            37
+          ],
+          "axis": "Z"
+        },
+        "sources": {
+          "radius": {
+            "type": "derived",
+            "evidence": "锥体底面与杆部半径5 mm相接"
+          },
+          "radius2": {
+            "type": "image_estimate",
+            "evidence": "弹头尖端平台直径约为杆部直径的30%"
+          },
+          "height": {
+            "type": "image_estimate",
+            "evidence": "弹头高度约26 mm，底端插入法兰顶部0.5 mm保证布尔合并"
+          },
+          "center": {
+            "type": "derived",
+            "evidence": "锥体底面Z=24、顶面Z=50，中心Z=37"
+          },
+          "axis": {
+            "type": "user"
+          }
+        },
+        "relations": []
+      },
+      "tip_sphere": {
+        "kind": "sphere",
+        "operation": "add",
+        "name": "球头尖端",
+        "parameters": {
+          "radius": 1.5,
+          "center": [
+            0,
+            0,
+            50
+          ]
+        },
+        "sources": {
+          "radius": {
+            "type": "derived",
+            "evidence": "球头半径等于锥体顶端半径1.5 mm"
+          },
+          "center": {
+            "type": "derived",
+            "evidence": "球心与锥体顶面中心重合于Z=50"
+          }
+        },
+        "relations": []
+      },
+      "center_hole": {
+        "kind": "cylinder",
+        "operation": "cut",
+        "name": "中心盲孔",
+        "parameters": {
+          "radius": 2.5,
+          "height": 20,
+          "center": [
+            0,
+            0,
+            10
+          ],
+          "axis": "Z"
+        },
+        "sources": {
+          "radius": {
+            "type": "image_estimate",
+            "evidence": "底视图中心黄色孔径约为杆部直径的1/2"
+          },
+          "height": {
+            "type": "derived",
+            "evidence": "孔深与杆部高度相同20 mm，底端在Z=20（法兰底）"
+          },
+          "center": {
+            "type": "derived",
+            "evidence": "盲孔沿中心轴从底面向上"
+          },
+          "axis": {
+            "type": "user"
+          }
+        },
+        "relations": []
+      }
+    },
+    "build_log": [
+      "[基准] 圆柱 ⌀10 × 20 mm → 50 面",
+      "[合并] 轮廓拉伸 5 mm (8 点轮廓) → 336 面",
+      "[并排] 圆台 R5→R1.5 × 26 mm —— 与零件不相交, 直接合并 → 434 面",
+      "[合并] 球体 R1.5 mm → 6235 面",
+      "[切除] 圆柱 ⌀5 × 20 mm → 6619 面"
+    ],
+    "local_geometry_checks": {
+      "state": "passed",
+      "source": "AI Modeler local mesh kernel",
+      "face_count": 6619,
+      "bbox_size_mm": [
+        18.48,
+        18.48,
+        53.0
+      ],
+      "bbox_ratios_from_mesh": {
+        "front_width_height": 0.34867924528301886,
+        "depth_height": 0.34867924528301886,
+        "top_width_depth": 1.0
+      },
+      "feature_count_from_plan": 5,
+      "feature_ids_from_plan": [
+        "shank_cylinder",
+        "flange_prism",
+        "bullet_cone",
+        "tip_sphere",
+        "center_hole"
+      ],
+      "nonfinite_face_count": 0,
+      "degenerate_face_count": 0,
+      "hole_features_from_plan": [],
+      "through_hole_mesh_checks": [],
+      "hole_measurement_complete": true,
+      "hole_visibility": "requires_multimodal_view_review",
+      "through_hole_result": "no_holes_declared"
+    },
+    "orthographic_layout": {
+      "unit": "mm",
+      "axes": {
+        "length": "X",
+        "width": "Y",
+        "height": "Z"
+      },
+      "uniform_scale_across_views": true,
+      "scale_pixels_per_mm": 4.022641509433963,
+      "tile_size_pixels": [
+        330,
+        260
+      ],
+      "view_extents": {
+        "front": {
+          "horizontal_axis": "X",
+          "horizontal": 18.48,
+          "vertical_axis": "Z",
+          "vertical": 53.0
+        },
+        "right": {
+          "horizontal_axis": "Y",
+          "horizontal": 18.48,
+          "vertical_axis": "Z",
+          "vertical": 53.0
+        },
+        "top": {
+          "horizontal_axis": "X",
+          "horizontal": 18.48,
+          "vertical_axis": "Y",
+          "vertical": 18.48
+        }
+      },
+      "dimension_ratios": {
+        "length_to_height": 0.34867924528301886,
+        "width_to_height": 0.34867924528301886,
+        "length_to_width": 1.0
+      }
+    },
+    "preview_image": "C:\\Users\\lycohana\\AppData\\Local\\AI Modeler\\dsh\\sessions\\ai-modeler-replica-0857e758-r01\\previews\\r33-g15-top.png",
+    "preview_image_views": [
+      "top"
+    ],
+    "preview_image_view_set": "top",
+    "preview_image_grid_columns": 1,
+    "preview_image_source": "AI Modeler local mesh kernel; not CATIA B-Rep",
+    "preview_render_style": "view-adaptive depth-cued matte shading with visible feature edges",
+    "preview_render_note": "诊断渲染：凹入或远离相机的表面会略暗，清晰线条表示可见的几何折边；亮暗不是零件材质颜色，需结合其它视图判断。",
+    "preview_image_layout": {
+      "unit": "mm",
+      "axes": {
+        "length": "X",
+        "width": "Y",
+        "height": "Z"
+      },
+      "uniform_scale_across_views": true,
+      "scale_pixels_per_mm": 4.022641509433963,
+      "tile_size_pixels": [
+        330,
+        260
+      ],
+      "view_extents": {
+        "front": {
+          "horizontal_axis": "X",
+          "horizontal": 18.48,
+          "vertical_axis": "Z",
+          "vertical": 53.0
+        },
+        "right": {
+          "horizontal_axis": "Y",
+          "horizontal": 18.48,
+          "vertical_axis": "Z",
+          "vertical": 53.0
+        },
+        "top": {
+          "horizontal_axis": "X",
+          "horizontal": 18.48,
+          "vertical_axis": "Y",
+          "vertical": 18.48
+        }
+      },
+      "dimension_ratios": {
+        "length_to_height": 0.34867924528301886,
+        "width_to_height": 0.34867924528301886,
+        "length_to_width": 1.0
+      }
+    },
+    "preview_generation": 15
+  },
+  "preview_revision": 33,
+  "preview_generation": 15,
+  "previews": [
+    {
+      "revision": 33,
+      "preview_generation": 13,
+      "view": "iso",
+      "dimensions": {
+        "unit": "mm",
+        "bbox": [
+          -9.24,
+          -9.24,
+          10.0,
+          9.24,
+          9.24,
+          63.0
+        ],
+        "size": [
+          18.48,
+          18.48,
+          53.0
+        ],
+        "volume_mm3": 3141.4711627731144,
+        "surface_area_mm2": 4310.460747194616,
+        "triangles": 12889,
+        "feature_count": 5
+      },
+      "preview_image": "C:\\Users\\lycohana\\AppData\\Local\\AI Modeler\\dsh\\sessions\\ai-modeler-replica-0857e758-r01\\previews\\r33-g13-iso.png",
+      "preview_image_path": "C:\\Users\\lycohana\\AppData\\Local\\AI Modeler\\dsh\\sessions\\ai-modeler-replica-0857e758-r01\\previews\\r33-g13-iso.png"
+    },
+    {
+      "revision": 33,
+      "preview_generation": 14,
+      "view": "front",
+      "dimensions": {
+        "unit": "mm",
+        "bbox": [
+          -9.24,
+          -9.24,
+          10.0,
+          9.24,
+          9.24,
+          63.0
+        ],
+        "size": [
+          18.48,
+          18.48,
+          53.0
+        ],
+        "volume_mm3": 3141.4711627731144,
+        "surface_area_mm2": 4310.460747194616,
+        "triangles": 12889,
+        "feature_count": 5
+      },
+      "preview_image": "C:\\Users\\lycohana\\AppData\\Local\\AI Modeler\\dsh\\sessions\\ai-modeler-replica-0857e758-r01\\previews\\r33-g14-front.png",
+      "preview_image_path": "C:\\Users\\lycohana\\AppData\\Local\\AI Modeler\\dsh\\sessions\\ai-modeler-replica-0857e758-r01\\previews\\r33-g14-front.png"
+    },
+    {
+      "revision": 33,
+      "preview_generation": 15,
+      "view": "top",
+      "dimensions": {
+        "unit": "mm",
+        "bbox": [
+          -9.24,
+          -9.24,
+          10.0,
+          9.24,
+          9.24,
+          63.0
+        ],
+        "size": [
+          18.48,
+          18.48,
+          53.0
+        ],
+        "volume_mm3": 3141.4711627731144,
+        "surface_area_mm2": 4310.460747194616,
+        "triangles": 12889,
+        "feature_count": 5
+      },
+      "preview_image": "C:\\Users\\lycohana\\AppData\\Local\\AI Modeler\\dsh\\sessions\\ai-modeler-replica-0857e758-r01\\previews\\r33-g15-top.png",
+      "preview_image_path": "C:\\Users\\lycohana\\AppData\\Local\\AI Modeler\\dsh\\sessions\\ai-modeler-replica-0857e758-r01\\previews\\r33-g15-top.png"
+    }
+  ],
+  "visual_review": null,
+  "visual_reviews": {},
+  "unresolved_findings": [],
+  "has_references": true,
+  "actions": [
+    {
+      "kind": "tool",
+      "tool": "cad_get_feature_spec",
+      "revision": 0,
+      "at": 1790476277.2023835,
+      "feature_kind": "prism"
+    },
+    {
+      "kind": "tool",
+      "tool": "cad_get_feature_spec",
+      "revision": 0,
+      "at": 1790476277.2116416,
+      "feature_kind": "revolve"
+    },
+    {
+      "kind": "tool",
+      "tool": "cad_get_feature_spec",
+      "revision": 0,
+      "at": 1790476277.2211597,
+      "feature_kind": "sphere"
+    },
+    {
+      "kind": "tool",
+      "tool": "cad_get_feature_spec",
+      "revision": 0,
+      "at": 1790476277.2278118,
+      "feature_kind": "cylinder"
+    },
+    {
+      "kind": "tool",
+      "tool": "cad_get_feature_spec",
+      "revision": 0,
+      "at": 1790476277.2373316,
+      "feature_kind": "hole"
+    },
+    {
+      "kind": "web_search",
+      "tool": "web_search",
+      "revision": 0,
+      "at": 1790476405.0923502,
+      "query": "bullet shaped probe flange hexagonal blue shank CAD model CATIA yellow hole"
+    },
+    {
+      "kind": "tool",
+      "tool": "cad_create_model",
+      "revision": 1,
+      "at": 1790476540.7870688,
+      "feature_id": "body_revolve"
+    },
+    {
+      "kind": "tool",
+      "tool": "cad_update_feature",
+      "revision": 1,
+      "at": 1790476558.847121,
+      "feature_id": "body_revolve",
+      "metadata_only": true
+    },
+    {
+      "kind": "tool",
+      "tool": "cad_create_model",
+      "revision": 2,
+      "at": 1790476569.2883003,
+      "feature_id": "body_revolve"
+    },
+    {
+      "kind": "tool",
+      "tool": "cad_add_feature",
+      "revision": 3,
+      "at": 1790476587.7179825,
+      "feature_id": "flange_prism"
+    },
+    {
+      "kind": "tool",
+      "tool": "cad_add_feature",
+      "revision": 4,
+      "at": 1790476596.8021138,
+      "feature_id": "center_hole"
+    },
+    {
+      "kind": "tool",
+      "tool": "cad_preview_model",
+      "revision": 4,
+      "at": 1790476600.0780525,
+      "view": "iso"
+    },
+    {
+      "kind": "tool",
+      "tool": "cad_preview_model",
+      "revision": 4,
+      "at": 1790476614.2613213,
+      "view": "front"
+    },
+    {
+      "kind": "tool",
+      "tool": "cad_preview_model",
+      "revision": 4,
+      "at": 1790476625.7000043,
+      "view": "top"
+    },
+    {
+      "kind": "tool",
+      "tool": "cad_preview_model",
+      "revision": 4,
+      "at": 1790476639.0112383,
+      "view": "bottom"
+    },
+    {
+      "kind": "tool",
+      "tool": "cad_update_feature",
+      "revision": 5,
+      "at": 1790476779.5621896,
+      "feature_id": "body_revolve"
+    },
+    {
+      "kind": "tool",
+      "tool": "cad_update_feature",
+      "revision": 6,
+      "at": 1790476793.393191,
+      "feature_id": "flange_prism"
+    },
+    {
+      "kind": "tool",
+      "tool": "cad_preview_model",
+      "revision": 6,
+      "at": 1790476796.9098814,
+      "view": "iso"
+    },
+    {
+      "kind": "tool",
+      "tool": "cad_review_reference_similarity",
+      "revision": 6,
+      "at": 1790476828.079226,
+      "view": "iso",
+      "preview_generation": 5,
+      "score": 45.0,
+      "passes_threshold": false
+    },
+    {
+      "kind": "tool",
+      "tool": "cad_update_feature",
+      "revision": 7,
+      "at": 1790476950.6742034,
+      "feature_id": "body_revolve"
+    },
+    {
+      "kind": "tool",
+      "tool": "cad_preview_model",
+      "revision": 7,
+      "at": 1790476954.0515604,
+      "view": "iso"
+    },
+    {
+      "kind": "tool",
+      "tool": "cad_get_state",
+      "revision": 7,
+      "at": 1790477091.761673
+    },
+    {
+      "kind": "tool",
+      "tool": "cad_create_model",
+      "revision": 8,
+      "at": 1790477239.360591,
+      "feature_id": "shank_cylinder"
+    },
+    {
+      "kind": "tool",
+      "tool": "cad_create_model",
+      "revision": 9,
+      "at": 1790477297.4796917,
+      "feature_id": "bullet_body"
+    },
+    {
+      "kind": "tool",
+      "tool": "cad_add_feature",
+      "revision": 10,
+      "at": 1790477303.6320872,
+      "feature_id": "tip_sphere"
+    },
+    {
+      "kind": "tool",
+      "tool": "cad_add_feature",
+      "revision": 11,
+      "at": 1790477313.6769428,
+      "feature_id": "flange_prism"
+    },
+    {
+      "kind": "tool",
+      "tool": "cad_add_feature",
+      "revision": 12,
+      "at": 1790477321.0981286,
+      "feature_id": "center_hole"
+    },
+    {
+      "kind": "tool",
+      "tool": "cad_preview_model",
+      "revision": 12,
+      "at": 1790477325.833259,
+      "view": "iso"
+    },
+    {
+      "kind": "tool",
+      "tool": "cad_update_feature",
+      "revision": 13,
+      "at": 1790477376.8480434,
+      "feature_id": "bullet_body"
+    },
+    {
+      "kind": "tool",
+      "tool": "cad_update_feature",
+      "revision": 14,
+      "at": 1790477382.913315,
+      "feature_id": "tip_sphere"
+    },
+    {
+      "kind": "tool",
+      "tool": "cad_preview_model",
+      "revision": 14,
+      "at": 1790477388.9550202,
+      "view": "iso"
+    },
+    {
+      "kind": "tool",
+      "tool": "cad_create_model",
+      "revision": 15,
+      "at": 1790477431.708239,
+      "feature_id": "shank_cylinder"
+    },
+    {
+      "kind": "tool",
+      "tool": "cad_add_feature",
+      "revision": 16,
+      "at": 1790477441.2203972,
+      "feature_id": "bullet_cone"
+    },
+    {
+      "kind": "tool",
+      "tool": "cad_add_feature",
+      "revision": 17,
+      "at": 1790477447.13404,
+      "feature_id": "tip_sphere"
+    },
+    {
+      "kind": "tool",
+      "tool": "cad_add_feature",
+      "revision": 18,
+      "at": 1790477456.8999624,
+      "feature_id": "flange_prism"
+    },
+    {
+      "kind": "tool",
+      "tool": "cad_add_feature",
+      "revision": 19,
+      "at": 1790477464.1822772,
+      "feature_id": "center_hole"
+    },
+    {
+      "kind": "tool",
+      "tool": "cad_preview_model",
+      "revision": 19,
+      "at": 1790477469.9156864,
+      "view": "iso"
+    },
+    {
+      "kind": "tool",
+      "tool": "cad_review_reference_similarity",
+      "revision": 19,
+      "at": 1790477509.1708434,
+      "view": "iso",
+      "preview_generation": 9,
+      "score": 55.0,
+      "passes_threshold": false
+    },
+    {
+      "kind": "tool",
+      "tool": "cad_create_model",
+      "revision": 20,
+      "at": 1790477558.292154,
+      "feature_id": "shank_cylinder"
+    },
+    {
+      "kind": "tool",
+      "tool": "cad_add_feature",
+      "revision": 21,
+      "at": 1790477566.051482,
+      "feature_id": "bullet_cylinder"
+    },
+    {
+      "kind": "tool",
+      "tool": "cad_add_feature",
+      "revision": 22,
+      "at": 1790477572.2365258,
+      "feature_id": "tip_sphere"
+    },
+    {
+      "kind": "tool",
+      "tool": "cad_add_feature",
+      "revision": 23,
+      "at": 1790477582.0152977,
+      "feature_id": "flange_prism"
+    },
+    {
+      "kind": "tool",
+      "tool": "cad_add_feature",
+      "revision": 24,
+      "at": 1790477589.184953,
+      "feature_id": "center_hole"
+    },
+    {
+      "kind": "tool",
+      "tool": "cad_preview_model",
+      "revision": 24,
+      "at": 1790477592.9231107,
+      "view": "iso"
+    },
+    {
+      "kind": "tool",
+      "tool": "cad_review_reference_similarity",
+      "revision": 24,
+      "at": 1790477625.0464597,
+      "view": "iso",
+      "preview_generation": 10,
+      "score": 25.0,
+      "passes_threshold": false
+    },
+    {
+      "kind": "tool",
+      "tool": "cad_create_model",
+      "revision": 25,
+      "at": 1790477752.8765824,
+      "feature_id": "shank_cylinder"
+    },
+    {
+      "kind": "tool",
+      "tool": "cad_add_feature",
+      "revision": 26,
+      "at": 1790477765.1327305,
+      "feature_id": "flange_prism"
+    },
+    {
+      "kind": "tool",
+      "tool": "cad_add_feature",
+      "revision": 27,
+      "at": 1790477774.1276317,
+      "feature_id": "neck_groove"
+    },
+    {
+      "kind": "tool",
+      "tool": "cad_add_feature",
+      "revision": 28,
+      "at": 1790477784.802482,
+      "feature_id": "bullet_cone"
+    },
+    {
+      "kind": "tool",
+      "tool": "cad_add_feature",
+      "revision": 29,
+      "at": 1790477791.4046595,
+      "feature_id": "tip_sphere"
+    },
+    {
+      "kind": "tool",
+      "tool": "cad_add_feature",
+      "revision": 30,
+      "at": 1790477801.3431811,
+      "feature_id": "center_hole"
+    },
+    {
+      "kind": "tool",
+      "tool": "cad_preview_model",
+      "revision": 30,
+      "at": 1790477806.119295,
+      "view": "iso"
+    },
+    {
+      "kind": "tool",
+      "tool": "cad_update_feature",
+      "revision": 31,
+      "at": 1790477880.89238,
+      "feature_id": "bullet_cone"
+    },
+    {
+      "kind": "tool",
+      "tool": "cad_update_feature",
+      "revision": 32,
+      "at": 1790477885.832265,
+      "feature_id": "tip_sphere"
+    },
+    {
+      "kind": "tool",
+      "tool": "cad_preview_model",
+      "revision": 32,
+      "at": 1790477890.3511882,
+      "view": "iso"
+    },
+    {
+      "kind": "tool",
+      "tool": "cad_remove_feature",
+      "revision": 33,
+      "at": 1790477947.2800398,
+      "feature_id": "neck_groove"
+    },
+    {
+      "kind": "tool",
+      "tool": "cad_preview_model",
+      "revision": 33,
+      "at": 1790477953.331785,
+      "view": "iso"
+    },
+    {
+      "kind": "tool",
+      "tool": "cad_preview_model",
+      "revision": 33,
+      "at": 1790478041.5835822,
+      "view": "front"
+    },
+    {
+      "kind": "tool",
+      "tool": "cad_preview_model",
+      "revision": 33,
+      "at": 1790478118.8458962,
+      "view": "top"
+    }
+  ],
+  "output_paths": {},
+  "finished": false,
+  "finish_state": null,
+  "source_prompt": "请根据四张同一工件的参考图建立可编辑模型。请自行判断各图视角，依据图像比例估算未标注尺寸并标记 image_estimate；直接建模、预览、对照原图复核并按差异继续修正，直到达到复刻要求，不要先向我提问。",
+  "reference_similarity_attempts": [
+    {
+      "revision": 6,
+      "preview_generation": 5,
+      "view": "iso",
+      "started_at": 1790476803.927847,
+      "failed": false
+    },
+    {
+      "revision": 19,
+      "preview_generation": 9,
+      "view": "iso",
+      "started_at": 1790477490.6124768,
+      "failed": false
+    },
+    {
+      "revision": 24,
+      "preview_generation": 10,
+      "view": "iso",
+      "started_at": 1790477604.9368908,
+      "failed": false
+    }
+  ],
+  "reference_similarity_error": null,
+  "reference_similarity_review": null,
+  "reference_similarity_reviews": {}
+}

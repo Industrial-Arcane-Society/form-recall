@@ -72,7 +72,9 @@ FEATURE_SPECS = {
                  "矩形草图加凸台；当前 CATIA 映射仅支持 Z 轴拉伸。",
                  ("length", "width", "height", "center", "axis", "base", "corner", "corner_mode")),
     "cylinder": _spec(("radius", "height"), "exact",
-                      "等半径时为圆草图加凸台；圆锥台会近似，非 Z 轴圆锥台暂不支持。",
+                      "center 默认表示轴向底面中心(base=true)，height 沿 axis 正向拉伸；"
+                      "base=false 时 center 表示几何中点。等半径时为圆草图加凸台；"
+                      "圆锥台会近似，非 Z 轴圆锥台暂不支持。",
                       ("radius", "radius2", "height", "center", "axis", "base", "segments")),
     "sphere": _spec(("radius",), "approximate",
                     "CATIA 导出器以多层圆盘近似球体。",
