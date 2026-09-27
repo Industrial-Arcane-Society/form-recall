@@ -832,6 +832,8 @@ def _agent_system(has_reference_images: bool = False) -> str:
             "base=false 时 center 才是几何中点，height 沿 axis 两侧各一半。\n"
             "- prism：profile 是 XY 平面上的闭合多边形，**center 的 z 是拉伸的底面**，"
             "向上拉伸 height —— 不是居中。要切 3mm 深的槽且顶面在 z=36，就取 center z=33。\n"
+            "- revolve：axis=Z 时 profile 是闭合的 [半径,Z] 轮廓；对杆、法兰和锥头等同轴主体，"
+            "优先把完整轮廓作为首个特征。当前本地几何核在已有实体后再加 revolve 时可能丢失先前几何。\n"
              "- hole（pos=point）：point 是孔轴线上的全局定位点，axis 必须是目标面的法向；"
              "front 面法向为 Y、right 面法向为 X。through=true 时沿 axis 贯穿整个零件；"
             "diameter 必须大于它要削掉的部位，否则什么都不切。\n"

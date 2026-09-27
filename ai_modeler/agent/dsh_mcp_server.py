@@ -59,7 +59,8 @@ _COORDINATE_CONTRACT = (
     "point and height extends in the positive axis direction; set base=false "
     "only when center is the geometric midpoint. For prism, center is the "
     "profile's base-plane origin and height extends in the positive axis "
-    "direction. Sphere center is its geometric center. A hole point is global "
+    "direction. For revolve about Z, profile points are [radius, axial-Z] and "
+    "center is the global axis origin. Sphere center is its geometric center. A hole point is global "
     "XYZ and its axis is the bore direction."
 )
 
@@ -87,6 +88,9 @@ _FEATURE_INPUT_SCHEMA = {
                 "point and height extends along +axis; use base=false when "
                 "center means the geometric midpoint. prism: center is the "
                 "profile base-plane origin; height extends along +axis. "
+                "revolve about Z: profile is a closed list of [radius, axial-Z] "
+                "points; center is the global axis origin. For a turned main "
+                "body, create the complete profile as the first feature. "
                 "sphere: center is the geometric center."
             ),
             "additionalProperties": True,
@@ -1032,6 +1036,11 @@ def _handle_tool(name: str, args: dict[str, Any]) -> dict[str, Any]:
                     "height": "extends along positive axis",
                 },
                 "sphere": {"center": "geometric center"},
+                "revolve": {
+                    "profile": "closed [radius, axial-Z] points when axis=Z",
+                    "center": "global origin on the revolve axis",
+                    "order": "use as the first feature for a complete turned body; late add unions can lose prior geometry",
+                },
             }.get(kind, {}),
         }
         _record(state, name, feature_kind=kind)

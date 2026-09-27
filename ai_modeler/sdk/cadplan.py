@@ -83,7 +83,9 @@ FEATURE_SPECS = {
                    "闭合多边形草图加凸台；当前仅支持 Z 轴。",
                    ("profile", "height", "center", "axis")),
     "revolve": _spec(("profile", "angle"), "approximate",
-                     "当前用多层圆盘近似回转体。",
+                     "本地预览按闭合[半径,轴向坐标]轮廓绕轴生成；CATIA 映射用多层圆盘近似。"
+                     "完整同轴主体优先作为第一个 revolve 特征创建；在已有实体后添加 revolve，"
+                     "当前几何核的布尔合并可能丢失先前几何。",
                      ("profile", "angle", "center", "axis", "segments")),
     "gear": _spec(("teeth", "module", "height"), "exact",
                   "齿廓转换为多边形草图并拉伸；当前仅支持 Z 轴。",
