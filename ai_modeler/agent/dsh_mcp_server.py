@@ -529,6 +529,56 @@ def _required_reference_views(plan: dict[str, Any]) -> list[str]:
     return sorted(required)
 
 
+def _normalize_review_status(value: Any) -> str:
+    status = str(value or "").strip().lower().replace(" ", "_")
+    if status in {"", "unknown", "unobservable", "not_evaluated"}:
+        return status or "unknown"
+    if "unobservable" in status:
+        return "unobservable"
+    if status in {"partial", "partial_match", "partial_mismatch"}:
+        return "partial_mismatch"
+    if "mismatch" in status or status in {"partial", "different", "not_match"}:
+        return "mismatch"
+    if status in {"match_with_minor_difference", "approximate_match"}:
+        return "approximate_match"
+    if status == "match":
+        return "match"
+    return status
+
+
+def _normalize_review_severity(value: Any) -> str:
+    """Normalize common textual and numeric multimodal-review severity forms."""
+    severity = str(value or "").strip().lower().replace(" ", "_")
+    aliases = {
+        "none": "none", "negligible": "none", "0": "none", "0.0": "none",
+        "low": "minor", "minor": "minor", "1": "minor", "1.0": "minor",
+        "medium": "moderate", "moderate": "moderate", "2": "moderate",
+        "2.0": "moderate", "high": "major", "major": "major", "3": "major",
+        "3.0": "major", "critical": "critical", "severe": "critical",
+        "4": "critical", "4.0": "critical", "5": "critical", "5.0": "critical",
+    }
+    if severity in aliases:
+        return aliases[severity]
+    try:
+        numeric = float(severity)
+    except (TypeError, ValueError):
+        return "moderate" if not severity else severity
+    if not math.isfinite(numeric) or numeric <= 0:
+        return "none"
+    if numeric <= 0.25:
+        return "minor"
+    if numeric <= 0.5:
+        return "moderate"
+    if numeric <= 0.75:
+        return "major"
+    return "critical"
+
+
+def _is_actionable_review_status(value: Any) -> bool:
+    status = _normalize_review_status(value)
+    return status in {"mismatch", "partial_mismatch"}
+
+
 def _reference_similarity_review(state: dict[str, Any], view: str,
                                  preview_generation: int,
                                  reference_image_index: int) -> dict[str, Any]:
@@ -578,6 +628,11 @@ def _reference_similarity_review(state: dict[str, Any], view: str,
             "按可见证据比较外形比例、"
             "轮廓、表面台阶/凹凸、孔或其它特征的位置与数量。不要预设某类零件、凹槽、"
             "孔阵列、圆头、尖头或其它特征必须存在；只有原图或用户明确描述支持时才评价该特征。"
+            "必须保留投影歧义：正视/侧视中圆盘、圆柱和多边形凸缘可能投影成相似矩形；"
+            "若当前视角分不清圆形还是多边形，不得把其中一种写成已确认的参考结构或核心差异，"
+            "应标为 unobservable。只有当前图片确实显示连续圆弧或多条直边时才能判定外轮廓类型。"
+            "网格三角线、视图网格、隐藏线、颜色、光影或分面渲染本身不证明真实孔、槽、"
+            "分型面或棱边；没有清晰几何轮廓支持时不得据此建议增删特征。"
             "只将当前视角可比较的轮廓用于比例判断。孔数只统计这张原图能确认的孔；"
             "看不清或图中没有可见孔时 reference_hole_count 为 null。"
             "不要猜测被遮挡结构或真实贯穿；"
@@ -587,6 +642,9 @@ def _reference_similarity_review(state: dict[str, Any], view: str,
             "唯一孔数；不能确认时为 null), count_confidence(0-1), evidence(数组，"
             "每项含 item/reference/model/status/mismatch_severity/suggested_change),"
             "unobservable(数组)。分数按主要轮廓比例、退台拓扑和可见孔布局综合评估；"
+            "status 只能是 match、approximate_match、mismatch、partial_mismatch 或 unobservable；"
+            "mismatch_severity 只能是 none、minor、moderate、major 或 critical，禁止返回数字。"
+            "同一差异不能同时作为已确认 mismatch 和 unobservable；若证据不足，选 unobservable。"
             "存在有图像证据支持的核心拓扑差异时不得给 80 分以上。评分只基于当前这组"
             "参考图片与当前预览，不得把其它任务的零件特征或示例要求带入本轮。"
             "本轮评审视角为 %s：比较该视角实际可见的外形、比例与特征。"
@@ -659,20 +717,27 @@ def _reference_similarity_review(state: dict[str, Any], view: str,
     for item in evidence[:40]:
         if not isinstance(item, dict):
             continue
-        normalized_evidence.append({
+        row = {
             key: str(item.get(key) or "").strip()[:1200]
-            for key in ("item", "reference", "model", "status",
-                        "mismatch_severity", "suggested_change")
-        })
+            for key in ("item", "reference", "model", "suggested_change")
+        }
+        raw_status = str(item.get("status") or "").strip()[:1200]
+        raw_severity = str(item.get("mismatch_severity") or "").strip()[:1200]
+        row["status"] = _normalize_review_status(raw_status)
+        row["mismatch_severity"] = _normalize_review_severity(raw_severity)
+        if raw_status and row["status"] != raw_status.lower().replace(" ", "_"):
+            row["reported_status"] = raw_status
+        if raw_severity and row["mismatch_severity"] != raw_severity.lower():
+            row["reported_severity"] = raw_severity
+        normalized_evidence.append(row)
     if not normalized_evidence or any(
             not row["item"] or not row["reference"] or not row["model"]
             for row in normalized_evidence):
         raise ValueError("多模态复核的每项 evidence 必须说明比较对象、原图证据和模型证据。")
-    actionable_statuses = {"mismatch", "partial", "partial_match", "partial_mismatch"}
     actionable_severities = {"medium", "moderate", "high", "major", "critical"}
     geometry_mismatches = [
         row for row in normalized_evidence
-        if row["status"].lower() in actionable_statuses
+        if _is_actionable_review_status(row["status"])
         and row["mismatch_severity"].lower() in actionable_severities
     ]
     effective_score = min(score, 79.9) if geometry_mismatches else score
@@ -1341,9 +1406,9 @@ def _handle_tool(name: str, args: dict[str, Any]) -> dict[str, Any]:
                 for view in required_views
                 for row in view_reviews[view].get("evidence", [])
                 if isinstance(row, dict)
-                and str(row.get("status") or "").lower() in {"mismatch", "partial"}
+                and _is_actionable_review_status(row.get("status"))
                 and str(row.get("mismatch_severity") or "").lower()
-                in {"high", "major", "critical"}
+                in {"major", "critical"}
             ]
             if critical_mismatches:
                 raise ValueError("多模态复核仍有高/重大严重度核心差异，先按 evidence 返修：%s" %
