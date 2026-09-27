@@ -1,0 +1,273 @@
+{
+  "plan": {
+    "schema_version": "1.0",
+    "name": "bullet_nose_pin",
+    "source_prompt": "Replicate part from four-view reference: bullet-nose tip, hexagonal flange, and cylindrical shank",
+    "units": {
+      "length": "mm",
+      "angle": "deg"
+    },
+    "coordinate_system": {
+      "type": "global_cartesian",
+      "handedness": "right",
+      "axes": [
+        "X",
+        "Y",
+        "Z"
+      ],
+      "origin": [
+        0,
+        0,
+        0
+      ]
+    },
+    "features": [
+      {
+        "id": "body_revolve",
+        "kind": "revolve",
+        "operation": "add",
+        "name": "Main revolved body",
+        "parameters": {
+          "axis": "Z",
+          "profile": [
+            [
+              0,
+              0
+            ],
+            [
+              3,
+              0
+            ],
+            [
+              3,
+              9
+            ],
+            [
+              4.33,
+              9
+            ],
+            [
+              4.33,
+              14
+            ],
+            [
+              5.5,
+              14
+            ],
+            [
+              5.5,
+              18
+            ],
+            [
+              4.8,
+              20
+            ],
+            [
+              3.6,
+              23
+            ],
+            [
+              1.8,
+              25.5
+            ],
+            [
+              0.3,
+              27
+            ],
+            [
+              0,
+              27
+            ],
+            [
+              0,
+              0
+            ]
+          ],
+          "center": [
+            0,
+            0,
+            0
+          ],
+          "angle": 360
+        },
+        "sources": {
+          "profile": {
+            "type": "image_estimate",
+            "evidence": "REF2 front view proportions: shank height ~9 mm (radius ~3), hex height ~5 mm across-flats ~8.66 (corner radius 5), bullet base radius ~5.5, bullet ogive length ~13 mm to pointed tip. Body radius inside hex set to across-flats/2 = 4.33 so hex facets visible. Dimensions scaled from front-view height/width ratios with a nominal shank diameter of 6 mm."
+          },
+          "center": {
+            "type": "user",
+            "evidence": "Revolve origin at global center Z axis."
+          },
+          "angle": {
+            "type": "user",
+            "evidence": "Full 360 degree revolve for axisymmetric body"
+          }
+        }
+      },
+      {
+        "id": "hex_flange",
+        "kind": "prism",
+        "operation": "add",
+        "name": "Hexagonal flange",
+        "parameters": {
+          "profile": [
+            [
+              5,
+              0
+            ],
+            [
+              2.5,
+              4.330127
+            ],
+            [
+              -2.5,
+              4.330127
+            ],
+            [
+              -5,
+              0
+            ],
+            [
+              -2.5,
+              -4.330127
+            ],
+            [
+              2.5,
+              -4.330127
+            ],
+            [
+              5,
+              0
+            ]
+          ],
+          "height": 5,
+          "center": [
+            0,
+            0,
+            9
+          ],
+          "axis": "Z"
+        },
+        "sources": {
+          "profile": {
+            "type": "image_estimate",
+            "evidence": "REF2 front view: hex sides slope at ~60°, across-flats width ~1.45x shank diameter (corner radius ~5 mm for shank radius 3 mm)."
+          },
+          "height": {
+            "type": "image_estimate",
+            "evidence": "REF2 front view: hex vertical height ≈ 5 mm (~0.55x shank height)."
+          },
+          "center": {
+            "type": "derived",
+            "evidence": "Hex sits directly on top of the shank at Z=9."
+          }
+        }
+      }
+    ],
+    "pending_questions": []
+  },
+  "revision": 4,
+  "last_preview": null,
+  "preview_revision": null,
+  "preview_generation": 2,
+  "previews": [],
+  "visual_review": null,
+  "visual_reviews": {},
+  "unresolved_findings": [],
+  "has_references": true,
+  "actions": [
+    {
+      "kind": "tool",
+      "tool": "cad_create_model",
+      "revision": 1,
+      "at": 1790482518.9096706,
+      "feature_id": "body_revolve"
+    },
+    {
+      "kind": "tool",
+      "tool": "cad_update_feature",
+      "revision": 2,
+      "at": 1790482522.6101,
+      "feature_id": "body_revolve"
+    },
+    {
+      "kind": "web_search",
+      "tool": "web_search",
+      "revision": 2,
+      "at": 1790482572.2761753,
+      "query": "bullet nose pin hexagonal flange cylindrical shank CAD model front top bottom view"
+    },
+    {
+      "kind": "web_search",
+      "tool": "web_search",
+      "revision": 2,
+      "at": 1790482576.0916648,
+      "query": "bullet nose dowel pin hexagonal collar shank CAD"
+    },
+    {
+      "kind": "web_search",
+      "tool": "web_search",
+      "revision": 2,
+      "at": 1790482648.4034145,
+      "query": "bullet nose alignment pin hexagonal head blue shank CAD model"
+    },
+    {
+      "kind": "tool",
+      "tool": "cad_get_feature_spec",
+      "revision": 2,
+      "at": 1790482718.1354427,
+      "feature_kind": "prism"
+    },
+    {
+      "kind": "tool",
+      "tool": "cad_preview_model",
+      "revision": 2,
+      "at": 1790482733.7934825,
+      "view": "iso"
+    },
+    {
+      "kind": "tool",
+      "tool": "cad_preview_model",
+      "revision": 2,
+      "at": 1790482807.8091934,
+      "view": "front"
+    },
+    {
+      "kind": "tool",
+      "tool": "cad_get_state",
+      "revision": 2,
+      "at": 1790482882.26265
+    },
+    {
+      "kind": "tool",
+      "tool": "cad_get_feature_spec",
+      "revision": 2,
+      "at": 1790482959.3525505,
+      "feature_kind": "hole"
+    },
+    {
+      "kind": "tool",
+      "tool": "cad_update_feature",
+      "revision": 3,
+      "at": 1790483013.5542471,
+      "feature_id": "body_revolve"
+    },
+    {
+      "kind": "tool",
+      "tool": "cad_add_feature",
+      "revision": 4,
+      "at": 1790483027.0560384,
+      "feature_id": "hex_flange"
+    }
+  ],
+  "output_paths": {},
+  "finished": false,
+  "finish_state": null,
+  "source_prompt": "请只根据这四张原始视图复刻同一工件。先辨识各视角与工件朝向；没有标注尺寸时，从最合适的正交视图估计外轮廓宽高比及各段比例，选择合理名义毫米尺寸并把估值标记为 image_estimate。不要添加参考图和用户文字没有支持的结构或细节。若主体确实绕同一轴回转，优先用一个完整闭合的回转轮廓建立主体，再按图像证据增量添加非回转细节。生成预览后，按视角将原图与当前模型单视图多模态比较；只按复核中有图像依据的差异返修，每次几何修改后重新预览并复核受影响的视图。不要用推测代替看图，不要为达到分数捏造特征。只有当前几何合理且当前 revision 的独立视图复核达到 80/100 才完成；无法判断的细节保持未知。",
+  "reference_similarity_attempts": [],
+  "reference_similarity_error": null,
+  "reference_similarity_review": null,
+  "reference_similarity_reviews": {},
+  "reference_similarity_history": []
+}
