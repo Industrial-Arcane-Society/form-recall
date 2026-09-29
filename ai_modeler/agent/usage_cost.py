@@ -13,8 +13,8 @@ r"""Token 用量聚合与费用估算（Agent 创造模式）。
     DSH 运行时**不给自定义路由算钱**（应用用的是自定义 provider `ai-modeler`，
     没有声明 pricing），所以费用只能**本地估算**：
       * 单价表放在 `config.json` 的 `pricing` 里，可随时改；
-      * 默认值取自 OpenRouter 公开模型接口（`/api/v1/models`）公开的参考价，
-        USD / 百万 tokens，**不等于你的服务商实际账单**；
+      * 默认值取自 OpenRouter 公开模型接口（`/api/v1/models`）公开的参考价（原为 USD），
+        已按 1 USD = 7.2 CNY 折算成**人民币 / 百万 tokens**，**不等于你的服务商实际账单**；
       * 界面上所有金额都带"≈"与"估算"字样，并显示所用单价，避免被当成账单。
     如果某个模型没有配单价，就只显示 token，不显示金额（不猜）。
 """
@@ -22,21 +22,21 @@ from __future__ import annotations
 
 from typing import Any
 
-#: 默认单价：{"input": 新增输入, "cache_read": 缓存命中读取, "output": 生成}，单位 USD / 百万 tokens。
-#: 参考价抓取时间 2026-09（OpenRouter /api/v1/models）。请以服务商官网为准。
+#: 默认单价：{"input": 新增输入, "cache_read": 缓存命中读取, "output": 生成}，单位 **CNY / 百万 tokens**。
+#: 原始参考价抓取自 OpenRouter /api/v1/models（2026-09，USD），已按 1:7.2 折算。请以服务商官网为准。
 DEFAULT_PRICING: dict[str, Any] = {
-    "currency": "USD",
-    "usd_to_cny": 7.2,
-    "_来源": "OpenRouter 公开模型接口参考价（USD/百万 tokens，2026-09 抓取）；请以你的服务商官网为准。",
+    "currency": "CNY",
+    "usd_to_cny": 7.2,   # 仅当你把单价填成美元时才用得上
+    "_来源": "OpenRouter 公开模型接口参考价（2026-09 抓取，原为 USD/百万 tokens，已按 1 USD = 7.2 CNY 折算成人民币）；请以你的服务商官网为准。",
     "models": {
-        "deepseek-flash": {"input": 0.02, "cache_read": 0.02, "output": 0.60},
-        "deepseek-v4-flash": {"input": 0.14, "cache_read": 0.028, "output": 0.28},
-        "deepseek-v4-flash-vision-exp": {"input": 0.216, "cache_read": 0.00686, "output": 0.647},
-        "deepseek-v4-pro": {"input": 0.955, "cache_read": 0.079605, "output": 1.911},
-        "deepseek-v4-flash-latest": {"input": 0.012, "cache_read": 0.01, "output": 0.5},
-        "deepseek-flash-latest": {"input": 0.02, "cache_read": 0.02, "output": 0.60},
-        "moonshotai/kimi-k2.7-code": {"input": 0.656, "cache_read": 0.18, "output": 3.30},
-        "kimi-k2.7-code": {"input": 0.656, "cache_read": 0.18, "output": 3.30},
+        "deepseek-flash": {"input": 0.144, "cache_read": 0.144, "output": 4.32},
+        "deepseek-v4-flash": {"input": 1.008, "cache_read": 0.2016, "output": 2.016},
+        "deepseek-v4-flash-vision-exp": {"input": 1.5552, "cache_read": 0.049392, "output": 4.6584},
+        "deepseek-v4-pro": {"input": 6.876, "cache_read": 0.573156, "output": 13.7592},
+        "deepseek-v4-flash-latest": {"input": 0.0864, "cache_read": 0.072, "output": 3.6},
+        "deepseek-flash-latest": {"input": 0.144, "cache_read": 0.144, "output": 4.32},
+        "moonshotai/kimi-k2.7-code": {"input": 4.7232, "cache_read": 1.296, "output": 23.76},
+        "kimi-k2.7-code": {"input": 4.7232, "cache_read": 1.296, "output": 23.76},
     },
 }
 
@@ -112,7 +112,7 @@ def estimate(usage: dict[str, Any], model: str, pricing: dict[str, Any] | None) 
         "model": model,
         "matched": matched,
         "currency": currency,
-        "unit": "USD/百万 tokens" if currency.upper() == "USD" else "每百万 tokens",
+        "unit": "USD/百万 tokens" if currency.upper() == "USD" else "人民币/百万 tokens",
         "input": (price or {}).get("input"),
         "cache_read": (price or {}).get("cache_read"),
         "output": (price or {}).get("output"),
@@ -143,6 +143,15 @@ def fmt_tokens(n) -> str:
         return "0"
 
 
+def fmt_cny(amount) -> str:
+    """人民币金额：普通金额 4 位小数；小于 1 分时给 6 位，避免显示成 ¥0.0000。"""
+    try:
+        a = float(amount)
+    except (TypeError, ValueError):
+        return "—"
+    return ("¥%.6f" % a).rstrip("0").rstrip(".") if abs(a) < 0.01 else "¥%.4f" % a
+
+
 def fmt_money(amount, cny=None, currency: str = "USD") -> str:
     """把金额格式化成便于阅读的字符串。金额都很小，所以小数位给足。"""
     if amount is None:
@@ -155,11 +164,11 @@ def fmt_money(amount, cny=None, currency: str = "USD") -> str:
         s = ("$%.6f" % a).rstrip("0").rstrip(".")
         if cny is not None:
             try:
-                s += "（≈ ¥%.4f）" % float(cny)
+                s += "（≈ %s）" % fmt_cny(cny)
             except (TypeError, ValueError):
                 pass
         return s
-    return "¥%.4f" % a
+    return fmt_cny(a)
 
 
 def format_chat_lines(usage: dict[str, Any], cost: dict[str, Any],
@@ -172,10 +181,11 @@ def format_chat_lines(usage: dict[str, Any], cost: dict[str, Any],
                 int(usage.get("calls") or 0)))
     if cost.get("priced"):
         line2 = "估算费用 ≈ %s" % fmt_money(cost.get("amount"), cost.get("cny"),
-                                           str(basis.get("currency") or "USD"))
-        unit = ("单价（%s，%s）：输入 %s / 缓存 %s / 输出 %s 每百万 tokens"
+                                           str(basis.get("currency") or "CNY"))
+        cur = str(basis.get("currency") or "CNY").upper()
+        unit = ("单价（%s，%s/百万 tokens）：输入 %s / 缓存 %s / 输出 %s"
                 % (basis.get("matched") or basis.get("model") or "当前模型",
-                   basis.get("currency") or "USD", basis.get("input"),
+                   "人民币" if cur == "CNY" else cur, basis.get("input"),
                    basis.get("cache_read"), basis.get("output")))
         line2 += "｜" + unit + "｜参考价，可在 config.json 的 pricing 里改"
     else:
@@ -184,5 +194,5 @@ def format_chat_lines(usage: dict[str, Any], cost: dict[str, Any],
     if isinstance(total_cost, dict) and total_cost:
         tot = total_cost.get("amount")
         line2 += "｜本聊天累计 ≈ %s" % fmt_money(tot, total_cost.get("cny"),
-                                             str(basis.get("currency") or "USD"))
+                                             str(basis.get("currency") or "CNY"))
     return line1 + "\n" + line2

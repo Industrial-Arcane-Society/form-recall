@@ -5,29 +5,29 @@
   },
   "model_library": "",
   "pricing": {
-    "_说明": "本地费用估算用的单价：USD / 百万 tokens。默认值取自 OpenRouter 公开模型接口的参考价（2026-09 抓取），**不等于你的服务商账单**，请按官网修改；某个模型没配单价时，界面只显示 token、不显示金额。",
-    "currency": "USD",
+    "_说明": "本地费用估算用的单价：**人民币 / 百万 tokens**。默认值来自 OpenRouter 公开模型接口的参考价（原为 USD，已按 1 USD = 7.2 CNY 折算），**不等于你的服务商账单**，请按官网修改；某个模型没配单价时，界面只显示 token、不显示金额。",
+    "currency": "CNY",
     "usd_to_cny": 7.2,
     "models": {
       "deepseek-flash": {
-        "input": 0.02,
-        "cache_read": 0.02,
-        "output": 0.6
+        "input": 0.144,
+        "cache_read": 0.144,
+        "output": 4.32
       },
       "deepseek-v4-flash": {
-        "input": 0.14,
-        "cache_read": 0.028,
-        "output": 0.28
+        "input": 1.008,
+        "cache_read": 0.2016,
+        "output": 2.016
       },
       "deepseek-v4-pro": {
-        "input": 0.955,
-        "cache_read": 0.079605,
-        "output": 1.911
+        "input": 6.876,
+        "cache_read": 0.573156,
+        "output": 13.7592
       },
       "moonshotai/Kimi-K2.7-Code": {
-        "input": 0.656,
-        "cache_read": 0.18,
-        "output": 3.3
+        "input": 4.7232,
+        "cache_read": 1.296,
+        "output": 23.76
       }
     }
   }
