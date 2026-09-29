@@ -585,6 +585,10 @@ def _runtime_for(session_id: str, llm_cfg: dict[str, Any], session_dir: Path,
         stream_path = _stream_path(session_dir)
         stream_path.write_text("", encoding="utf-8")
         patch = _provider_patch(llm_cfg, session_dir, image_paths)
+        # 新建运行时之前，先清掉 DSH 侧可能残留的同名会话记录：
+        # 否则新运行时会在自己的存档里"看见"同名会话并拒绝创建（already exists）。
+        # 首次创建时这里是空操作；只有"重建运行时"这条路径才会真的删到东西。
+        _clear_dsh_session_record(session_dir, session_id)
         runtime_home = session_dir / "dsh-home"
         env = {
             "AIMODELER_LLM_API_KEY": str(llm_cfg.get("api_key") or "sk-local"),
@@ -788,8 +792,27 @@ def run_dsh_agent(prompt: str, image_paths=None, cfg=None, session_id=None,
     cancel_thread = threading.Thread(target=cancellation_watch, daemon=True)
     cancel_thread.start()
     try:
-        result = harness.run(blocks, session_id=session_id,
-                             on_notification=on_notification)
+        try:
+            result = harness.run(blocks, session_id=session_id,
+                                 on_notification=on_notification)
+        except Exception as exc:
+            # 自愈：会话记录冲突（already exists）时，清记录 + 换新运行时重试一次。
+            # CAD 状态在 cad-state.json 里，重试不会丢模型；丢的只是 DSH 侧的对话存档。
+            if "already exists" not in str(exc):
+                raise
+            if progress:
+                progress("检测到 DSH 会话记录冲突，正在重建会话上下文后重试……")
+            with _RUNTIME_LOCK:
+                stale = _RUNTIMES.pop(session_id, None)
+            if stale:
+                _close_runtime_entry(stale)
+            removed = _clear_dsh_session_record(session_dir, session_id)
+            _seed_state(session_dir, prompt, current_plan, current_document)
+            harness = _runtime_for(session_id, llm_cfg, session_dir, image_paths)
+            if progress:
+                progress("已清理 %d 条冲突记录，正在重试本轮任务。" % removed)
+            result = harness.run(blocks, session_id=session_id,
+                                 on_notification=on_notification)
     except Exception as exc:
         if cancel_event is not None and cancel_event.is_set():
             result = None
@@ -942,6 +965,41 @@ def run_dsh_agent(prompt: str, image_paths=None, cfg=None, session_id=None,
         "local_geometry_checks": (preview.get("local_geometry_checks")
                                   if isinstance(preview, dict) else None),
     }
+
+
+def _clear_dsh_session_record(session_dir: Path, session_id: str) -> int:
+    """删掉 DSH 存档里属于该会话的记录，返回删除条数。
+
+    为什么需要（已复现的故障）：DeepSeek Harness 的会话记录写在
+        <会话目录>/dsh-home/storages/session_projcache/sessions/<会话id>.json
+        <会话目录>/dsh-home/sessions/<项目slug>/<会话id>/session.v3.jsonl.zstd
+    当应用因为"配置指纹变化"（换模型 / 改思考强度 / 增删参考图 / 联网开关）而**重建运行时**时，
+    新运行时在同一个 dsh-home 里看到已存在的同名会话，会直接报
+        session "<会话id>" already exists
+    导致整轮失败；而且坏掉的运行时会留在缓存里，之后每一轮都失败（已实测第 3 轮仍失败）。
+
+    这里只清这一个会话的记录，**不动** profiles/attachments，也**不碰**
+    cad-state.json / output / previews —— CAD 特征状态与产物必须保留，
+    模型下一轮仍能从 cad-state.json 拿到当前模型继续改。
+    """
+    home = session_dir / "dsh-home"
+    safe = re.sub(r"[^A-Za-z0-9_-]", "-", session_id)
+    removed = 0
+    cache = home / "storages" / "session_projcache" / "sessions" / (safe + ".json")
+    if cache.exists():
+        try:
+            cache.unlink()
+            removed += 1
+        except OSError:
+            pass
+    sessions_root = home / "sessions"
+    if sessions_root.is_dir():
+        for slug in sessions_root.iterdir():
+            d = slug / safe
+            if d.is_dir():
+                shutil.rmtree(d, ignore_errors=True)
+                removed += 1
+    return removed
 
 
 def _close_runtime_entry(entry: dict[str, Any]) -> None:
