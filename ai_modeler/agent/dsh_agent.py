@@ -25,6 +25,7 @@ from typing import Any, Callable
 from ai_modeler.paths import PROJECT_ROOT
 from ai_modeler.sdk import cadplan
 from ai_modeler.agent import plan_state
+from ai_modeler.agent import usage_cost
 from ai_modeler.parts.library import retrieval as knowledge_retrieval
 
 
@@ -917,6 +918,24 @@ def run_dsh_agent(prompt: str, image_paths=None, cfg=None, session_id=None,
     model_call_count = sum(1 for event in events
                            if isinstance(event, dict) and
                            event.get("type") == "assistant/message")
+    # Token 用量（实测）＋ 费用估算（本地单价，口径见 usage_cost 模块文档）。
+    # 一次任务会有多次模型调用（规划→建特征→预览→复核→返修），这里按调用累加。
+    llm_usage = usage_cost.aggregate(events)
+    llm_cost = usage_cost.estimate(llm_usage, str(llm_cfg.get("model") or ""),
+                                   cfg.get("pricing"))
+    if llm_usage.get("calls"):
+        try:
+            with (session_dir / "usage.jsonl").open("a", encoding="utf-8") as fh:
+                fh.write(json.dumps({
+                    "ts": time.strftime("%Y-%m-%d %H:%M:%S"),
+                    "session_id": session_id,
+                    "model": llm_cfg.get("model"),
+                    "provider": llm_cfg.get("base_url"),
+                    "usage": llm_usage,
+                    "cost": llm_cost,
+                }, ensure_ascii=False) + "\n")
+        except OSError:
+            pass
     return {
         "state": state_name,
         "plan": plan,
@@ -951,7 +970,8 @@ def run_dsh_agent(prompt: str, image_paths=None, cfg=None, session_id=None,
         "knowledge_visual_examples": final_state.get("knowledge_visual_examples") or [],
         "knowledge_image_parts": knowledge_image_parts,
         "image_input_mode": "contact_sheet" if contact_sheet_path else "individual",
-        "llm_usage": {},
+        "llm_usage": llm_usage,
+        "llm_cost": llm_cost,
         "routing": {"action": "dsh_agent", "review_mode":
                     "multimodal" if image_paths else "local_geometry"},
         "run_record": str(session_dir / "cad-state.json"),

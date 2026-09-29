@@ -175,6 +175,7 @@ class App(tk.Tk):
         self._agent_context_summary = ''
         self._agent_summary_through = 0
         self._agent_total_tokens = 0
+        self._agent_total_cost = 0.0
         self._last_plan = None
         self._pending_agent_plan = None
         self._active_request = None
@@ -1048,6 +1049,7 @@ class App(tk.Tk):
         self._agent_context_summary = ''
         self._agent_summary_through = 0
         self._agent_total_tokens = 0
+        self._agent_total_cost = 0.0
         self._last_plan = None
         self._pending_agent_plan = None
         self.reference_images = []
@@ -1320,6 +1322,38 @@ class App(tk.Tk):
     @staticmethod
     def _fmt_tokens(n):
         return '{:,}'.format(int(n or 0))
+
+    def _total_cost_cny(self, cost):
+        """把累计美元金额换算成人民币（汇率取单价表里的 usd_to_cny）。"""
+        try:
+            basis = cost.get('basis') if isinstance(cost, dict) else None
+            rate = float((basis or {}).get('usd_to_cny') or 7.2)
+        except (TypeError, ValueError, AttributeError):
+            rate = 7.2
+        return round(float(getattr(self, '_agent_total_cost', 0.0)) * rate, 4)
+
+    def _usage_label(self, run_tokens, cost, total_cost):
+        """状态栏文字：本轮/累计的 token 与估算费用。金额一律带"≈"与来源提示。"""
+        from ai_modeler.agent import usage_cost as _usage_cost
+
+        def money(item):
+            if not isinstance(item, dict) or not item.get('priced'):
+                return None
+            basis = item.get('basis') or {}
+            return _usage_cost.fmt_money(item.get('amount'), item.get('cny'),
+                                         str(basis.get('currency') or 'USD'))
+
+        txt = '用量：本轮 %s tokens' % self._fmt_tokens(run_tokens)
+        cur = money(cost)
+        if cur:
+            txt += ' ≈ ' + cur
+        txt += ' · 累计 %s tokens' % self._fmt_tokens(self._agent_total_tokens)
+        tot = money(total_cost)
+        if tot:
+            txt += ' ≈ ' + tot
+        if cur is None and run_tokens:
+            txt += '（未配单价：填 config.json 的 pricing 即显示金额）'
+        return txt
 
     def _show_agent_live_preview(self, payload):
         """Append a worker-produced preview to the conversation as soon as it is ready."""
@@ -1594,15 +1628,28 @@ class App(tk.Tk):
                         'conversation_summary', self._agent_context_summary)
                     self._agent_summary_through = result.get(
                         'summary_through', self._agent_summary_through)
-                    run_tokens = int(float(
-                        (result.get('llm_usage') or {}).get('total_tokens') or 0) or 0)
+                    usage = result.get('llm_usage') or {}
+                    cost = result.get('llm_cost') or {}
+                    run_tokens = int(float(usage.get('total_tokens') or 0) or 0)
                     if run_tokens:
                         self._agent_total_tokens += run_tokens
-                    self.lbl_token.configure(text='Token 估算：本轮 %s · 累计 %s' % (
-                        self._fmt_tokens(run_tokens),
-                        self._fmt_tokens(self._agent_total_tokens)))
+                    run_cost = cost.get('amount') if cost.get('priced') else None
+                    if run_cost:
+                        self._agent_total_cost = round(
+                            float(getattr(self, '_agent_total_cost', 0.0)) + float(run_cost), 6)
+                    total_cost = None
+                    if getattr(self, '_agent_total_cost', 0):
+                        total_cost = {'priced': True, 'amount': self._agent_total_cost,
+                                      'cny': self._total_cost_cny(cost), 'basis': cost.get('basis')}
+                    self.lbl_token.configure(
+                        text=self._usage_label(run_tokens, cost, total_cost))
                     reply = result.get('reply', 'AgentLoop 已结束。')
                     self._append_chat('assistant', reply)
+                    if run_tokens:
+                        # 用量小结放在回答之后：先看结果，再看这一轮花了多少
+                        from ai_modeler.agent import usage_cost as _usage_cost
+                        self._append_chat('system', _usage_cost.format_chat_lines(
+                            usage, cost, total_cost))
                     assistant_context = {'role': 'assistant', 'content': reply}
                     preview_path = (result.get('preview') or {}).get('preview_image')
                     if preview_path and os.path.isfile(preview_path):
