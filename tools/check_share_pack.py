@@ -106,6 +106,8 @@ def excluded(rel):
 
 
 def main():
+    import console_io
+    console_io.setup()
     src = rel_files(ROOT)
     pak = rel_files(PACK) if os.path.isdir(PACK) else set()
     if not pak:

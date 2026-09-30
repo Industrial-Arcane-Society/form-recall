@@ -131,14 +131,26 @@ def find_git():
     return which("git")
 
 
-def run(git, args, cwd, token=None, owner=DEF_OWNER, quiet=False):
+def run(git, args, cwd, token=None, owner=DEF_OWNER, quiet=False, timeout=90):
+    """跑一次 git。
+
+    timeout 是必须的（血的教训）：以前这里没有超时，`git fetch` 在"网络慢/被防火墙挡"
+    的环境下会一直挂着，而菜单的第一行输出要等它返回才打印 ——
+    用户双击后看到的就是**纯黑窗口、什么都没有**，完全无法判断是死是活。
+    现在超时返回 (124, "", "timeout")，调用方照常继续（用本地状态在线下工作）。
+    """
     env = dict(os.environ)
     env["GIT_TERMINAL_PROMPT"] = "0"
     if token:
         env["GH_TOKEN"] = token          # 只在这里出现，不进命令行
         args = ["-c", "credential.helper=",
                 "-c", "credential.helper=!f() { echo username=%s; echo password=$GH_TOKEN; }; f" % owner] + args
-    p = subprocess.run([git] + args, cwd=cwd, env=env, capture_output=True)
+    try:
+        p = subprocess.run([git] + args, cwd=cwd, env=env, capture_output=True, timeout=timeout)
+    except subprocess.TimeoutExpired:
+        if not quiet:
+            print("   [git] 超时（%ds）：%s —— 网络可能不通，先用本地状态继续" % (timeout, " ".join(args[:2])))
+        return 124, "", "timeout after %ds" % timeout
     out, err = p.stdout.decode("utf-8", "replace"), p.stderr.decode("utf-8", "replace")
     if not quiet and err.strip():
         print("   [git] " + err.strip()[:400])
@@ -151,12 +163,20 @@ def head_sha(git, cwd, ref="HEAD"):
 
 
 def main():
+    import console_io
+    console_io.setup()
     ap = argparse.ArgumentParser()
     ap.add_argument("mode", choices=["status", "push", "verify"])
     ap.add_argument("--owner", default=DEF_OWNER)
     ap.add_argument("--repo", default=DEF_REPO)
     ap.add_argument("--pack", default=DEF_PACK)
     ap.add_argument("--message", default=None)
+    ap.add_argument("--rewrite", action="store_true",
+                    help="重写远端历史：不接远端已有提交，用当前 HEAD 覆盖 main"
+                         "（本地已经 reset 过、想丢掉某些提交时用）")
+    ap.add_argument("--force", action="store_true",
+                    help="历史被本地改写时用（走 --force-with-lease，比 --force 安全："
+                         "队友推了新东西就拒绝，不会覆盖他的提交）")
     a = ap.parse_args()
     pack = os.path.abspath(a.pack)
     git = find_git()
@@ -188,9 +208,12 @@ def main():
             return 0
 
         # ---- push ----
-        if remote_ok:
+        if remote_ok and not a.rewrite:
             run(git, ["reset", "--soft", "origin/main"], pack, quiet=True)
             print("  已接上远端历史（保留原有提交）")
+        elif a.rewrite:
+            print("  --rewrite：**不**接远端历史，用当前 HEAD 直接覆盖远端 main"
+                  "（必须配 --force-with-lease；队友推了新东西会被拒绝）")
         run(git, ["add", "-A"], pack, quiet=True)
         rc, out, _ = run(git, ["diff", "--cached", "--name-only"], pack, quiet=True)
         n = len([l for l in out.splitlines() if l.strip()])
@@ -205,8 +228,10 @@ def main():
             if p.returncode != 0:
                 print("  提交失败：" + p.stderr.decode("utf-8", "replace")[:300])
                 return 3
-        rc, out, err = run(git, ["push", "origin", "main"], pack, token=tok)
-        print("  push 退出码 %d" % rc)
+        rc, out, err = run(git, ["push"] + (["--force-with-lease"] if a.force else []) + ["origin", "main"],
+                           pack, token=tok)
+        print("  push 退出码 %d%s" % (rc, "（--force-with-lease：历史被本地改写时用，"
+                                   "若队友已推新提交会被拒绝，不会覆盖他的东西）" if a.force else ""))
         print("  " + (err.strip().splitlines()[-1] if err.strip() else out.strip()))
         return 0 if rc == 0 else 4
 
