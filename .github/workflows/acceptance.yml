@@ -14,6 +14,9 @@ jobs:
   acceptance:
     name: 自检 + 核心判据
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: src/legacy
     steps:
       - uses: actions/checkout@v4
 
@@ -24,10 +27,13 @@ jobs:
       - name: 装基础依赖
         run: |
           python -m pip install --upgrade pip
-          pip install numpy scipy pillow opencv-python-headless
+          pip install numpy scipy pillow opencv-python-headless pytest
 
-      - name: 自检（必须 35/35）
+      - name: 自检
         run: python -m ai_modeler --selftest
+
+      - name: 目录与运行路径回归
+        run: python -m pytest tests/test_paths.py -q
 
       - name: 提示词解析回归（不需要大数据的部分）
         run: python tools/bench_basic_parts.py || true
@@ -44,6 +50,7 @@ jobs:
         with:
           name: reports
           path: |
-            reports/*.md
-            kb/detail_fidelity.json
+            temp/agent-logs/**/*.md
+            src/legacy/reports/*.md
+            src/legacy/kb/detail_fidelity.json
           if-no-files-found: ignore

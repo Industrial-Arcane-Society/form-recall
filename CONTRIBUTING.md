@@ -1,67 +1,30 @@
-# 协作约定（CONTRIBUTING）
+# 贡献与验证
 
-## 一、跑起来
+本仓库正分阶段迁移。当前桌面入口在 `src/apps/desktop/`，过渡期 Python 入口在 `src/legacy/`。每个独立 feature 应有独立的变更说明、针对性验收和单独提交；不要把多个未验收 feature 混进一个提交。
 
-```powershell
-python -m ai_modeler --selftest            # 自检（必须 35/35）
-python -m ai_modeler                       # 打开界面
-```
-
-核心**不依赖任何第三方库**；可选装 OpenCASCADE：
+## 本地命令
 
 ```powershell
-powershell -ExecutionPolicy Bypass -File scripts\01_安装依赖.ps1
+# 现有 Python 后端
+Set-Location src/legacy
+python -m ai_modeler --selftest
+python -m pytest tests
+
+# Vue + Tauri 桌面端
+Set-Location ../apps/desktop
+npm ci
+npm run build
+cargo test --manifest-path src-tauri/Cargo.toml
 ```
 
-## 二、改之前先跑一遍判据（记下基线）
+构建 Windows 安装包会准备嵌入式 Python 与依赖资源，可能联网下载资源。开发 UI 与离线前端类型检查使用 `npm run build`；安装包流程见 [`docs/05-operations/01-build-and-run.md`](docs/05-operations/01-build-and-run.md)。
 
-```powershell
-powershell -ExecutionPolicy Bypass -File scripts\04_验收基准.ps1
-```
+## 研究与变更证据
 
-它会依次跑：几何相似度 → 真实几何 → CATIA 通道 → CATIA 孔位 → 自检，
-把结果写进 `reports\` 与 `kb\*.json`。
+- 代码事实、模型能力、几何结果和真实 CATIA 结果分别记录，不用静态检查代替运行验证。
+- 图像估值要记录来源、像素测量和比例假设；不将估值写成用户标注尺寸。
+- 几何有效性和参考图相似度分别验收；未测量的项目标为“待验证”。
+- 新实验记录说明输入、环境、步骤、结果文件、失败情况与局限。Agent 日志写到 `temp/agent-logs/`，不要散落到源码包中。
+- 历史文档和模型留在 `temp/`；只有复核过的现行结论进入 `docs/`。
 
-## 三、改完必须过的四关（**绿变红即回滚**）
-
-| 关卡 | 命令 | 底线 |
-|---|---|---|
-| 自检 | `python -m ai_modeler --selftest` | 35/35 |
-| 几何相似度 | `python tools\bench_detail_fidelity.py` | 不低于改动前（现 99.8%） |
-| 真实几何 | `python tools\bench_real_geometry.py` | 不低于改动前（现 591/593） |
-| CATIA 通道 | `python tools\check_catia_export_real.py` | 必须 523/523 |
-
-涉及图像口径的改动，再加跑：
-
-```powershell
-python tools\render_ai_masks.py --all
-python tools\compare_ai_vs_photos.py --all --montage 20
-```
-
-## 四、代码约定
-
-* 注释写**为什么**，尤其是"踩过的坑"（本项目大量注释都是实测教训，请保留风格）；
-* 新增零件族：在 `ai_modeler/parts/realparts.py` 的 `families` 定义里加一条，并在 `BUILDERS` 登记；
-* 新增判据/检查：放 `tools\`，并在 `README.md` 的判据表里登记；
-* 不要把大数据提交进仓库（见 `README.md` 第三节）。
-
-## 五、提交与分支
-
-```
-main           保持可发布
-feat/xxx       新功能
-fix/xxx        修复
-```
-
-提交信息格式：
-
-```
-feat(族名): 一句话说清改了什么
-  判据：几何 99.8→99.9，图像 84.5→86.1，自检 35/35
-```
-
-## 六、提 PR 时请贴
-
-* 判据前后对比（上面四关的数字）；
-* 如果是**退化**：说明为什么必须这样改、影响多少件；
-* 涉及几何的改动，贴 1~2 张 `reports\跑图对比\` 里的并排图。
+当前迁移顺序与验收记录见 [`docs/06-roadmap/01-migration-todo.md`](docs/06-roadmap/01-migration-todo.md)。

@@ -1,12 +1,4 @@
-# ============================================================
-#  .gitignore —— 注意：规则写宽了会**静默吃掉源码**
-#  实测事故：`catia_*.py` 把 `ai_modeler/catia_export.py` 一起忽略了，
-#  仓库里那个文件根本不存在，安装脚本一跑就
-#  "ModuleNotFoundError: No module named 'ai_modeler.catia_export'"。
-#  ⚠ 改完这份文件后，务必执行：  python tools\check_share_pack.py
-# ============================================================
-
-# ---- Python ----
+# Python caches and local environments
 __pycache__/
 *.py[cod]
 *.egg-info/
@@ -15,41 +7,38 @@ venv/
 .pytest_cache/
 .mypy_cache/
 
-# ---- 编辑器 / 系统 ----
+# Editor and OS files
 .vscode/
 .idea/
 Thumbs.db
 desktop.ini
 
-# ---- 临时产物 ----
-/artifacts/selftest/
-/.cache/
+# Generated local data. The checked-in history under temp/evidence-archive and
+# temp/legacy-documents remains versioned; only live output folders are ignored.
+.cache/
+/temp/agent-logs/
+/temp/outputs/
+/temp/build-cache/
+/temp/local-settings/
+/temp/local-cache/
+/temp/cache/
 *.tmp
 *.log
 *.bak
-# ⚠ 只忽略**仓库根目录**下自动生成的 CATIA 脚本（前缀 / = 只匹配根目录）。
-#   千万不要写成 `catia_*.py` —— 那会连源码 ai_modeler/catia_export.py 一起忽略。
+
+# Generated CATIA scripts at the repository root only.
 /catia_*.py
 /catia_*.vbs
 
-# ---- 本机配置 / 缓存（每台机器不同，不要提交）----
+# Machine-local config and credentials
 config.json
 
-# ---- 大数据（可重建，不进版本库；详见 README 第三节）----
-#  OpenCASCADE 离线轮子（约 513 MB）：python tools\fetch_ocp_wheel.py
-/_wheels/
-#  实测 B-Rep 网格（约 120 MB）：先让 CATIA 导出 STEP，再
-#  python tools\build_real_brep.py --src <STEP目录>
-/kb/real_brep/
-/kb/real_brep_coarse/
-#  真实照片 / 渲染图 / 对比图（需要 CATIA 拍一部分，其余可脚本重建）
-/零件真实图片/
-/零件真实图片_带背景/
-/零件AI建模图片/
-/零件比对图/
-#  原始零件目录（客户资料，绝不上传）
-/零件参数/
-
-# ---- 注意 ----
-#  examples/ 是**要**提交的样例，不要在这里写任何排除它的规则
-#  （git 的 `!` 不能把文件从"已排除的目录"里救回来，所以只排除上面这些大目录）
+# Rebuildable/private CAD datasets in the transitional Python workspace
+/src/legacy/_wheels/
+/src/legacy/kb/real_brep/
+/src/legacy/kb/real_brep_coarse/
+/src/legacy/零件真实图片/
+/src/legacy/零件真实图片_带背景/
+/src/legacy/零件AI建模图片/
+/src/legacy/零件比对图/
+/src/legacy/零件参数/
