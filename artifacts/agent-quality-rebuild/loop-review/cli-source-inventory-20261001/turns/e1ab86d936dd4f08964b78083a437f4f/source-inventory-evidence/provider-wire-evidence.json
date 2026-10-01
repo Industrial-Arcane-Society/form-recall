@@ -1,0 +1,60 @@
+[
+  {
+    "kind": "provider_wire_request",
+    "at": 1790833634.7646358,
+    "turn_id": "e1ab86d936dd4f08964b78083a437f4f",
+    "request_id": "63140:1790833634764636000",
+    "wire_observed": true,
+    "provider_host": "api.siliconflow.cn",
+    "protocol_path": "/v1/chat/completions",
+    "model": "moonshotai/Kimi-K2.7-Code",
+    "request_fields": {
+      "reasoning_effort": null,
+      "enable_thinking": true,
+      "thinking_budget": null,
+      "output_token_fields": {
+        "max_tokens": 1800
+      },
+      "response_format": null,
+      "stream": false,
+      "task_kind": "vision_review",
+      "review_complexity": "source_inventory",
+      "resolved_reasoning_effort": "low",
+      "resolved_thinking_budget": null
+    },
+    "image_count": 1,
+    "images": [
+      {
+        "transport_sha256": "53ed87fadf8cca869da921627e6a13c845424c6906b3de517d5cca972db94553",
+        "byte_length": 72309
+      }
+    ],
+    "capture_layer": "python_urllib"
+  },
+  {
+    "kind": "provider_wire_response_headers",
+    "at": 1790833681.1663415,
+    "turn_id": "e1ab86d936dd4f08964b78083a437f4f",
+    "request_id": "63140:1790833634764636000",
+    "status_code": 200,
+    "headers_elapsed_ms": 46401.2,
+    "capture_layer": "python_urllib"
+  },
+  {
+    "kind": "provider_wire_response_complete",
+    "at": 1790833681.167477,
+    "turn_id": "e1ab86d936dd4f08964b78083a437f4f",
+    "request_id": "63140:1790833634764636000",
+    "total_response_ms": 46402.8,
+    "usage": {
+      "input_tokens": 608,
+      "output_tokens": 1759,
+      "total_tokens": 2367,
+      "cache_token_details": {
+        "prompt_tokens_details.cached_tokens": 0
+      }
+    },
+    "usage_source": "provider_response_body",
+    "capture_layer": "python_urllib"
+  }
+]

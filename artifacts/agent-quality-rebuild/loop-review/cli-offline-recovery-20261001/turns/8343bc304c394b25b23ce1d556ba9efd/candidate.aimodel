@@ -1,0 +1,35 @@
+{
+  "format": "ai-modeler",
+  "version": 1,
+  "name": "MountingPlate_80x50x8",
+  "source_prompt": "请建一个 80×50×8 mm 的安装板，暂时只依据这些明确尺寸创建实体。我还需要两个沿长边中心线、间距 30 mm 的 M6 螺栓通孔；请先自主查 ISO 273 确认 M6 普通间隙孔直径。若联网搜索被关闭或失败，不要猜孔径，也不要以占位几何冒充孔；保存当前可编辑板件候选，把两孔作为待解决项明确报告。",
+  "features": [
+    {
+      "kind": "box",
+      "params": {
+        "length": 80.0,
+        "width": 50.0,
+        "height": 8.0,
+        "center": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "base": false
+      },
+      "op": "add",
+      "name": "Base Plate",
+      "note": "",
+      "feature_id": "base_plate",
+      "relations": [],
+      "enabled": true,
+      "provenance": {
+        "length": "user",
+        "width": "user",
+        "height": "user",
+        "center": "derived"
+      }
+    }
+  ],
+  "exported_at": "2026-10-01 13:07:41"
+}

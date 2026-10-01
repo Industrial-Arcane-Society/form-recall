@@ -1,0 +1,15 @@
+{
+  "$schema": "../gen/schemas/desktop-schema.json",
+  "identifier": "default",
+  "description": "Desktop workspace permissions",
+  "windows": [
+    "main"
+  ],
+  "permissions": [
+    "core:default",
+    "dialog:allow-confirm",
+    "dialog:allow-open",
+    "dialog:allow-save",
+    "dialog:allow-message"
+  ]
+}

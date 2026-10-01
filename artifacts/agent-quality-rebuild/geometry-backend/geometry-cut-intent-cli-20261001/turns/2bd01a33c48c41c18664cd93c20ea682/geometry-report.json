@@ -1,0 +1,2208 @@
+{
+  "source": "DeepSeek Harness SDK Agent",
+  "revision": 9,
+  "name": "底板与凸台",
+  "units": {
+    "length": "mm",
+    "angle": "deg"
+  },
+  "validation": {
+    "valid": true,
+    "state": "valid",
+    "errors": [],
+    "confirmations": [],
+    "support": [
+      {
+        "feature_id": "base_plate",
+        "kind": "box",
+        "status": "exact",
+        "reason": "矩形草图加凸台；当前 CATIA 映射仅支持 Z 轴拉伸。"
+      },
+      {
+        "feature_id": "hole_through_cyl",
+        "kind": "cylinder",
+        "status": "exact",
+        "reason": "center 默认表示轴向底面中心(base=true)，height 沿 axis 正向拉伸；base=false 时 center 表示几何中点。等半径时为圆草图加凸台；圆锥台会近似，非 Z 轴圆锥台暂不支持。"
+      },
+      {
+        "feature_id": "revolve_boss",
+        "kind": "revolve",
+        "status": "approximate",
+        "reason": "本地 OCCT BREP 按闭合[半径,轴向坐标]轮廓精确回转，并将新增回转体与已有实体做布尔合并；CATIA 导出器仍用多层圆盘近似，非 CATIA 原生回转特征。"
+      },
+      {
+        "feature_id": "hole_blind_cyl",
+        "kind": "cylinder",
+        "status": "exact",
+        "reason": "center 默认表示轴向底面中心(base=true)，height 沿 axis 正向拉伸；base=false 时 center 表示几何中点。等半径时为圆草图加凸台；圆锥台会近似，非 Z 轴圆锥台暂不支持。"
+      }
+    ],
+    "geometry_support": [
+      {
+        "feature_id": "base_plate",
+        "kind": "box",
+        "status": "exact",
+        "reason": "OCCT 棱柱；带圆角/倒角时沿用离散轮廓近似",
+        "backend": "occt_brep"
+      },
+      {
+        "feature_id": "hole_through_cyl",
+        "kind": "cylinder",
+        "status": "exact",
+        "reason": "解析圆柱或圆锥面",
+        "backend": "occt_brep"
+      },
+      {
+        "feature_id": "revolve_boss",
+        "kind": "revolve",
+        "status": "exact",
+        "reason": "简单闭合半径-轴向轮廓的 OCCT 解析回转",
+        "backend": "occt_brep"
+      },
+      {
+        "feature_id": "hole_blind_cyl",
+        "kind": "cylinder",
+        "status": "exact",
+        "reason": "解析圆柱或圆锥面",
+        "backend": "occt_brep"
+      }
+    ],
+    "warnings": [
+      {
+        "code": "CATIA_APPROXIMATION",
+        "feature_id": "revolve_boss",
+        "kind": "revolve",
+        "message": "本地 OCCT BREP 按闭合[半径,轴向坐标]轮廓精确回转，并将新增回转体与已有实体做布尔合并；CATIA 导出器仍用多层圆盘近似，非 CATIA 原生回转特征。"
+      }
+    ],
+    "schema_version": "1.0"
+  },
+  "requested_plan": null,
+  "exported_partial_plan": null,
+  "unapplied_feature_ids": [],
+  "partial_preview": null,
+  "preview": {
+    "state": "previewed",
+    "validation": {
+      "valid": true,
+      "state": "valid",
+      "errors": [],
+      "confirmations": [],
+      "support": [
+        {
+          "feature_id": "base_plate",
+          "kind": "box",
+          "status": "exact",
+          "reason": "矩形草图加凸台；当前 CATIA 映射仅支持 Z 轴拉伸。"
+        },
+        {
+          "feature_id": "hole_through_cyl",
+          "kind": "cylinder",
+          "status": "exact",
+          "reason": "center 默认表示轴向底面中心(base=true)，height 沿 axis 正向拉伸；base=false 时 center 表示几何中点。等半径时为圆草图加凸台；圆锥台会近似，非 Z 轴圆锥台暂不支持。"
+        },
+        {
+          "feature_id": "revolve_boss",
+          "kind": "revolve",
+          "status": "approximate",
+          "reason": "本地 OCCT BREP 按闭合[半径,轴向坐标]轮廓精确回转，并将新增回转体与已有实体做布尔合并；CATIA 导出器仍用多层圆盘近似，非 CATIA 原生回转特征。"
+        },
+        {
+          "feature_id": "hole_blind_cyl",
+          "kind": "cylinder",
+          "status": "exact",
+          "reason": "center 默认表示轴向底面中心(base=true)，height 沿 axis 正向拉伸；base=false 时 center 表示几何中点。等半径时为圆草图加凸台；圆锥台会近似，非 Z 轴圆锥台暂不支持。"
+        }
+      ],
+      "geometry_support": [
+        {
+          "feature_id": "base_plate",
+          "kind": "box",
+          "status": "exact",
+          "reason": "OCCT 棱柱；带圆角/倒角时沿用离散轮廓近似",
+          "backend": "occt_brep"
+        },
+        {
+          "feature_id": "hole_through_cyl",
+          "kind": "cylinder",
+          "status": "exact",
+          "reason": "解析圆柱或圆锥面",
+          "backend": "occt_brep"
+        },
+        {
+          "feature_id": "revolve_boss",
+          "kind": "revolve",
+          "status": "exact",
+          "reason": "简单闭合半径-轴向轮廓的 OCCT 解析回转",
+          "backend": "occt_brep"
+        },
+        {
+          "feature_id": "hole_blind_cyl",
+          "kind": "cylinder",
+          "status": "exact",
+          "reason": "解析圆柱或圆锥面",
+          "backend": "occt_brep"
+        }
+      ],
+      "warnings": [
+        {
+          "code": "CATIA_APPROXIMATION",
+          "feature_id": "revolve_boss",
+          "kind": "revolve",
+          "message": "本地 OCCT BREP 按闭合[半径,轴向坐标]轮廓精确回转，并将新增回转体与已有实体做布尔合并；CATIA 导出器仍用多层圆盘近似，非 CATIA 原生回转特征。"
+        }
+      ],
+      "schema_version": "1.0"
+    },
+    "geometry_backend": "occt_brep",
+    "native_brep": {
+      "backend": "occt_brep",
+      "kernel": "可用：OCCT 7.9.3.1 / cadquery-ocp-novtk 7.9.3.1.1",
+      "geometry_state": "needs_review",
+      "state": "needs_review",
+      "brep_valid": true,
+      "shape_type": "TopAbs_COMPOUND",
+      "solid_count": 1,
+      "connected_component_count": 1,
+      "shell_count": 1,
+      "closed_shell_count": 1,
+      "closed": true,
+      "edge_count": 42,
+      "face_count": 11,
+      "free_edge_count": 0,
+      "volume_mm3": 119032.38946269432,
+      "bbox_mm": [
+        -50.0,
+        -30.0,
+        0.0,
+        50.0,
+        30.0,
+        28.0
+      ],
+      "self_intersection": {
+        "status": "checked_no_intersection",
+        "face_count": 11,
+        "check_result_count": 0,
+        "check_statuses": [],
+        "method": "BOPAlgo_ArgumentAnalyzer(SelfInterMode=True, UseOBB=True)"
+      },
+      "validity_method": "BRepCheck_Analyzer",
+      "geometry_scope": "native_OCCT_BREP_only_visual_comparison_not_performed",
+      "unverified_cut_intents": [
+        {
+          "feature_id": "hole_blind_cyl",
+          "classification": "unverified_cylindrical_cut",
+          "status": "unverified",
+          "axis": "Z",
+          "centerline_mm": [
+            25.0,
+            0.0,
+            14.0
+          ],
+          "diameter_mm": 8.0,
+          "tool_bbox_mm": [
+            21.0,
+            -4.0,
+            14.0,
+            29.0,
+            4.0,
+            20.0
+          ],
+          "reason": "圆柱刀具未贯穿目标轴向包围盒；盲深或局部开口需进一步定向测量。"
+        }
+      ],
+      "hole_feature_count": 0,
+      "measured_hole_source_feature_count": 1,
+      "unverified_cut_intent_count": 1,
+      "planned_hole_instance_count": 1,
+      "active_hole_instance_count": 1,
+      "superseded_hole_instance_count": 0,
+      "active_through_hole_count": 1,
+      "through_hole_count": 1,
+      "all_declared_holes_verified": true,
+      "visual_validation": "not_performed",
+      "catia_executed": false,
+      "build_transaction": "每个特征验证成功后才提交；失败保留上一有效实体"
+    },
+    "catia_executed": false,
+    "dimensions": {
+      "unit": "mm",
+      "bbox": [
+        -50.0,
+        -30.0,
+        0.0,
+        50.0,
+        30.0,
+        28.0
+      ],
+      "size": [
+        100.0,
+        60.0,
+        28.0
+      ],
+      "volume_mm3": 119032.38946269432,
+      "surface_area_mm2": 19323.6282401554,
+      "triangles": 328,
+      "feature_count": 4
+    },
+    "catia_operations": [
+      {
+        "index": 1,
+        "kind": "rect_pad",
+        "plane": "XY",
+        "center": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "profile": [],
+        "dimensions": {
+          "l": 100.0,
+          "w": 60.0,
+          "r": 0.0,
+          "h": 20.0,
+          "depth": 0.0
+        },
+        "name": "底板",
+        "note": "长方体 100 × 60 × 20 mm"
+      },
+      {
+        "index": 2,
+        "kind": "circle_cut",
+        "plane": "Z",
+        "center": [
+          0.0,
+          0.0,
+          20.0
+        ],
+        "profile": [],
+        "dimensions": {
+          "l": 0.0,
+          "w": 0.0,
+          "r": 5.0,
+          "h": 20.0,
+          "depth": 20.0
+        },
+        "name": "竖直贯穿圆孔（圆柱切削）",
+        "note": "圆柱 ⌀10 × 20 mm"
+      },
+      {
+        "index": 3,
+        "kind": "circle_pad",
+        "plane": "XY",
+        "center": [
+          0.0,
+          0.0,
+          20.0
+        ],
+        "profile": [],
+        "dimensions": {
+          "l": 0.0,
+          "w": 0.0,
+          "r": 6.0,
+          "h": 0.33333333333333215,
+          "depth": 0.0
+        },
+        "name": "轴对称旋转凸台",
+        "note": "回转体 360° (4 点轮廓)"
+      },
+      {
+        "index": 4,
+        "kind": "circle_pad",
+        "plane": "XY",
+        "center": [
+          0.0,
+          0.0,
+          20.333333333333332
+        ],
+        "profile": [],
+        "dimensions": {
+          "l": 0.0,
+          "w": 0.0,
+          "r": 6.0,
+          "h": 0.3333333333333357,
+          "depth": 0.0
+        },
+        "name": "轴对称旋转凸台",
+        "note": "回转体 360° (4 点轮廓)"
+      },
+      {
+        "index": 5,
+        "kind": "circle_pad",
+        "plane": "XY",
+        "center": [
+          0.0,
+          0.0,
+          20.666666666666668
+        ],
+        "profile": [],
+        "dimensions": {
+          "l": 0.0,
+          "w": 0.0,
+          "r": 6.0,
+          "h": 0.33333333333333215,
+          "depth": 0.0
+        },
+        "name": "轴对称旋转凸台",
+        "note": "回转体 360° (4 点轮廓)"
+      },
+      {
+        "index": 6,
+        "kind": "circle_pad",
+        "plane": "XY",
+        "center": [
+          0.0,
+          0.0,
+          21.0
+        ],
+        "profile": [],
+        "dimensions": {
+          "l": 0.0,
+          "w": 0.0,
+          "r": 6.0,
+          "h": 0.33333333333333215,
+          "depth": 0.0
+        },
+        "name": "轴对称旋转凸台",
+        "note": "回转体 360° (4 点轮廓)"
+      },
+      {
+        "index": 7,
+        "kind": "circle_pad",
+        "plane": "XY",
+        "center": [
+          0.0,
+          0.0,
+          21.333333333333332
+        ],
+        "profile": [],
+        "dimensions": {
+          "l": 0.0,
+          "w": 0.0,
+          "r": 6.0,
+          "h": 0.3333333333333357,
+          "depth": 0.0
+        },
+        "name": "轴对称旋转凸台",
+        "note": "回转体 360° (4 点轮廓)"
+      },
+      {
+        "index": 8,
+        "kind": "circle_pad",
+        "plane": "XY",
+        "center": [
+          0.0,
+          0.0,
+          21.666666666666668
+        ],
+        "profile": [],
+        "dimensions": {
+          "l": 0.0,
+          "w": 0.0,
+          "r": 6.0,
+          "h": 0.33333333333333215,
+          "depth": 0.0
+        },
+        "name": "轴对称旋转凸台",
+        "note": "回转体 360° (4 点轮廓)"
+      },
+      {
+        "index": 9,
+        "kind": "circle_pad",
+        "plane": "XY",
+        "center": [
+          0.0,
+          0.0,
+          22.0
+        ],
+        "profile": [],
+        "dimensions": {
+          "l": 0.0,
+          "w": 0.0,
+          "r": 6.0,
+          "h": 0.33333333333333215,
+          "depth": 0.0
+        },
+        "name": "轴对称旋转凸台",
+        "note": "回转体 360° (4 点轮廓)"
+      },
+      {
+        "index": 10,
+        "kind": "circle_pad",
+        "plane": "XY",
+        "center": [
+          0.0,
+          0.0,
+          22.333333333333332
+        ],
+        "profile": [],
+        "dimensions": {
+          "l": 0.0,
+          "w": 0.0,
+          "r": 6.0,
+          "h": 0.3333333333333357,
+          "depth": 0.0
+        },
+        "name": "轴对称旋转凸台",
+        "note": "回转体 360° (4 点轮廓)"
+      },
+      {
+        "index": 11,
+        "kind": "circle_pad",
+        "plane": "XY",
+        "center": [
+          0.0,
+          0.0,
+          22.666666666666668
+        ],
+        "profile": [],
+        "dimensions": {
+          "l": 0.0,
+          "w": 0.0,
+          "r": 6.0,
+          "h": 0.33333333333333215,
+          "depth": 0.0
+        },
+        "name": "轴对称旋转凸台",
+        "note": "回转体 360° (4 点轮廓)"
+      },
+      {
+        "index": 12,
+        "kind": "circle_pad",
+        "plane": "XY",
+        "center": [
+          0.0,
+          0.0,
+          23.0
+        ],
+        "profile": [],
+        "dimensions": {
+          "l": 0.0,
+          "w": 0.0,
+          "r": 6.0,
+          "h": 0.33333333333333215,
+          "depth": 0.0
+        },
+        "name": "轴对称旋转凸台",
+        "note": "回转体 360° (4 点轮廓)"
+      },
+      {
+        "index": 13,
+        "kind": "circle_pad",
+        "plane": "XY",
+        "center": [
+          0.0,
+          0.0,
+          23.333333333333332
+        ],
+        "profile": [],
+        "dimensions": {
+          "l": 0.0,
+          "w": 0.0,
+          "r": 6.0,
+          "h": 0.3333333333333357,
+          "depth": 0.0
+        },
+        "name": "轴对称旋转凸台",
+        "note": "回转体 360° (4 点轮廓)"
+      },
+      {
+        "index": 14,
+        "kind": "circle_pad",
+        "plane": "XY",
+        "center": [
+          0.0,
+          0.0,
+          23.666666666666668
+        ],
+        "profile": [],
+        "dimensions": {
+          "l": 0.0,
+          "w": 0.0,
+          "r": 6.0,
+          "h": 0.33333333333333215,
+          "depth": 0.0
+        },
+        "name": "轴对称旋转凸台",
+        "note": "回转体 360° (4 点轮廓)"
+      },
+      {
+        "index": 15,
+        "kind": "circle_pad",
+        "plane": "XY",
+        "center": [
+          0.0,
+          0.0,
+          24.0
+        ],
+        "profile": [],
+        "dimensions": {
+          "l": 0.0,
+          "w": 0.0,
+          "r": 6.0,
+          "h": 0.33333333333333215,
+          "depth": 0.0
+        },
+        "name": "轴对称旋转凸台",
+        "note": "回转体 360° (4 点轮廓)"
+      },
+      {
+        "index": 16,
+        "kind": "circle_pad",
+        "plane": "XY",
+        "center": [
+          0.0,
+          0.0,
+          24.333333333333332
+        ],
+        "profile": [],
+        "dimensions": {
+          "l": 0.0,
+          "w": 0.0,
+          "r": 6.0,
+          "h": 0.3333333333333357,
+          "depth": 0.0
+        },
+        "name": "轴对称旋转凸台",
+        "note": "回转体 360° (4 点轮廓)"
+      },
+      {
+        "index": 17,
+        "kind": "circle_pad",
+        "plane": "XY",
+        "center": [
+          0.0,
+          0.0,
+          24.666666666666668
+        ],
+        "profile": [],
+        "dimensions": {
+          "l": 0.0,
+          "w": 0.0,
+          "r": 6.0,
+          "h": 0.33333333333333215,
+          "depth": 0.0
+        },
+        "name": "轴对称旋转凸台",
+        "note": "回转体 360° (4 点轮廓)"
+      },
+      {
+        "index": 18,
+        "kind": "circle_pad",
+        "plane": "XY",
+        "center": [
+          0.0,
+          0.0,
+          25.0
+        ],
+        "profile": [],
+        "dimensions": {
+          "l": 0.0,
+          "w": 0.0,
+          "r": 6.0,
+          "h": 0.33333333333333215,
+          "depth": 0.0
+        },
+        "name": "轴对称旋转凸台",
+        "note": "回转体 360° (4 点轮廓)"
+      },
+      {
+        "index": 19,
+        "kind": "circle_pad",
+        "plane": "XY",
+        "center": [
+          0.0,
+          0.0,
+          25.333333333333332
+        ],
+        "profile": [],
+        "dimensions": {
+          "l": 0.0,
+          "w": 0.0,
+          "r": 6.0,
+          "h": 0.3333333333333357,
+          "depth": 0.0
+        },
+        "name": "轴对称旋转凸台",
+        "note": "回转体 360° (4 点轮廓)"
+      },
+      {
+        "index": 20,
+        "kind": "circle_pad",
+        "plane": "XY",
+        "center": [
+          0.0,
+          0.0,
+          25.666666666666668
+        ],
+        "profile": [],
+        "dimensions": {
+          "l": 0.0,
+          "w": 0.0,
+          "r": 6.0,
+          "h": 0.33333333333333215,
+          "depth": 0.0
+        },
+        "name": "轴对称旋转凸台",
+        "note": "回转体 360° (4 点轮廓)"
+      },
+      {
+        "index": 21,
+        "kind": "circle_pad",
+        "plane": "XY",
+        "center": [
+          0.0,
+          0.0,
+          26.0
+        ],
+        "profile": [],
+        "dimensions": {
+          "l": 0.0,
+          "w": 0.0,
+          "r": 6.0,
+          "h": 0.33333333333333215,
+          "depth": 0.0
+        },
+        "name": "轴对称旋转凸台",
+        "note": "回转体 360° (4 点轮廓)"
+      },
+      {
+        "index": 22,
+        "kind": "circle_pad",
+        "plane": "XY",
+        "center": [
+          0.0,
+          0.0,
+          26.333333333333332
+        ],
+        "profile": [],
+        "dimensions": {
+          "l": 0.0,
+          "w": 0.0,
+          "r": 6.0,
+          "h": 0.3333333333333357,
+          "depth": 0.0
+        },
+        "name": "轴对称旋转凸台",
+        "note": "回转体 360° (4 点轮廓)"
+      },
+      {
+        "index": 23,
+        "kind": "circle_pad",
+        "plane": "XY",
+        "center": [
+          0.0,
+          0.0,
+          26.666666666666668
+        ],
+        "profile": [],
+        "dimensions": {
+          "l": 0.0,
+          "w": 0.0,
+          "r": 6.0,
+          "h": 0.33333333333333215,
+          "depth": 0.0
+        },
+        "name": "轴对称旋转凸台",
+        "note": "回转体 360° (4 点轮廓)"
+      },
+      {
+        "index": 24,
+        "kind": "circle_pad",
+        "plane": "XY",
+        "center": [
+          0.0,
+          0.0,
+          27.0
+        ],
+        "profile": [],
+        "dimensions": {
+          "l": 0.0,
+          "w": 0.0,
+          "r": 6.0,
+          "h": 0.33333333333333215,
+          "depth": 0.0
+        },
+        "name": "轴对称旋转凸台",
+        "note": "回转体 360° (4 点轮廓)"
+      },
+      {
+        "index": 25,
+        "kind": "circle_pad",
+        "plane": "XY",
+        "center": [
+          0.0,
+          0.0,
+          27.333333333333332
+        ],
+        "profile": [],
+        "dimensions": {
+          "l": 0.0,
+          "w": 0.0,
+          "r": 6.0,
+          "h": 0.3333333333333357,
+          "depth": 0.0
+        },
+        "name": "轴对称旋转凸台",
+        "note": "回转体 360° (4 点轮廓)"
+      },
+      {
+        "index": 26,
+        "kind": "circle_pad",
+        "plane": "XY",
+        "center": [
+          0.0,
+          0.0,
+          27.666666666666668
+        ],
+        "profile": [],
+        "dimensions": {
+          "l": 0.0,
+          "w": 0.0,
+          "r": 6.0,
+          "h": 0.33333333333333215,
+          "depth": 0.0
+        },
+        "name": "轴对称旋转凸台",
+        "note": "回转体 360° (4 点轮廓)"
+      },
+      {
+        "index": 27,
+        "kind": "circle_cut",
+        "plane": "Z",
+        "center": [
+          25.0,
+          0.0,
+          20.0
+        ],
+        "profile": [],
+        "dimensions": {
+          "l": 0.0,
+          "w": 0.0,
+          "r": 4.0,
+          "h": 6.0,
+          "depth": 6.0
+        },
+        "name": "盲孔（圆柱切削）",
+        "note": "圆柱 ⌀8 × 6 mm"
+      }
+    ],
+    "warnings": [
+      {
+        "code": "CATIA_APPROXIMATION",
+        "feature_id": "revolve_boss",
+        "kind": "revolve",
+        "message": "本地 OCCT BREP 按闭合[半径,轴向坐标]轮廓精确回转，并将新增回转体与已有实体做布尔合并；CATIA 导出器仍用多层圆盘近似，非 CATIA 原生回转特征。"
+      },
+      {
+        "code": "CATIA_TRANSLATOR_NOTE",
+        "feature_id": null,
+        "kind": null,
+        "message": "回转体「回转体 360° (4 点轮廓)」用 24 层圆盘近似(旋转体 API 在这套 CATIA 里不可用)。",
+        "index": 0
+      }
+    ],
+    "feature_manifest": {
+      "base_plate": {
+        "kind": "box",
+        "operation": "add",
+        "name": "底板",
+        "parameters": {
+          "length": 100,
+          "width": 60,
+          "height": 20,
+          "center": [
+            0,
+            0,
+            10
+          ]
+        },
+        "sources": {
+          "length": {
+            "type": "user",
+            "evidence": "用户给定底板长100"
+          },
+          "width": {
+            "type": "user",
+            "evidence": "用户给定底板宽60"
+          },
+          "height": {
+            "type": "user",
+            "evidence": "用户给定底板厚20"
+          },
+          "center": {
+            "type": "derived",
+            "evidence": "底面z=0且中心在原点，厚度20，故box中心z=10"
+          }
+        },
+        "relations": []
+      },
+      "hole_through_cyl": {
+        "kind": "cylinder",
+        "operation": "cut",
+        "name": "竖直贯穿圆孔（圆柱切削）",
+        "parameters": {
+          "radius": 5,
+          "height": 20,
+          "center": [
+            0,
+            0,
+            0
+          ],
+          "axis": "Z"
+        },
+        "sources": {
+          "radius": {
+            "type": "user",
+            "evidence": "用户给定直径10，半径=5"
+          },
+          "height": {
+            "type": "derived",
+            "evidence": "贯穿底板全厚，厚度20"
+          },
+          "center": {
+            "type": "derived",
+            "evidence": "孔中心xy(0,0)，底面z=0"
+          },
+          "axis": {
+            "type": "derived",
+            "evidence": "竖直孔沿Z轴"
+          }
+        },
+        "relations": []
+      },
+      "revolve_boss": {
+        "kind": "revolve",
+        "operation": "add",
+        "name": "轴对称旋转凸台",
+        "parameters": {
+          "profile": [
+            [
+              0,
+              20
+            ],
+            [
+              6,
+              20
+            ],
+            [
+              6,
+              28
+            ],
+            [
+              0,
+              28
+            ]
+          ],
+          "angle": 360,
+          "center": [
+            -25,
+            0,
+            0
+          ],
+          "axis": "Z"
+        },
+        "sources": {
+          "profile": {
+            "type": "derived",
+            "evidence": "外径12对应半径6，高8对应z=20~28，矩形截面从轴线r=0到外径r=6"
+          },
+          "angle": {
+            "type": "user",
+            "evidence": "用户给定绕Z轴360度旋转"
+          },
+          "center": {
+            "type": "derived",
+            "evidence": "用户给定凸台中心(-25,0)，旋转轴沿Z过该点"
+          },
+          "axis": {
+            "type": "derived",
+            "evidence": "绕Z轴旋转"
+          }
+        },
+        "relations": []
+      },
+      "hole_blind_cyl": {
+        "kind": "cylinder",
+        "operation": "cut",
+        "name": "盲孔（圆柱切削）",
+        "parameters": {
+          "radius": 4,
+          "height": 6,
+          "center": [
+            25,
+            0,
+            14
+          ],
+          "axis": "Z",
+          "base": true
+        },
+        "sources": {
+          "radius": {
+            "type": "user",
+            "evidence": "用户给定直径8，半径=4"
+          },
+          "height": {
+            "type": "user",
+            "evidence": "用户给定盲孔深度6"
+          },
+          "center": {
+            "type": "derived",
+            "evidence": "盲孔底面z=20-6=14，base=true时圆柱从底面向上延伸至顶面20"
+          },
+          "axis": {
+            "type": "derived",
+            "evidence": "竖直沿Z轴（base=false使圆柱从z=14到20）"
+          },
+          "base": {
+            "type": "derived",
+            "evidence": "以盲孔底面为基面，高度6延伸至顶面"
+          }
+        },
+        "relations": []
+      }
+    },
+    "build_log": [
+      "[基准] 长方体 100 × 60 × 20 mm → 8 面",
+      "[切除] 圆柱 ⌀10 × 20 mm → 182 面",
+      "[合并] 回转体 360° (4 点轮廓) → 478 面",
+      "[切除] 圆柱 ⌀8 × 6 mm → 588 面"
+    ],
+    "local_geometry_checks": {
+      "backend": "occt_brep",
+      "kernel": "可用：OCCT 7.9.3.1 / cadquery-ocp-novtk 7.9.3.1.1",
+      "geometry_state": "needs_review",
+      "state": "needs_review",
+      "brep_valid": true,
+      "shape_type": "TopAbs_COMPOUND",
+      "solid_count": 1,
+      "connected_component_count": 1,
+      "shell_count": 1,
+      "closed_shell_count": 1,
+      "closed": true,
+      "edge_count": 42,
+      "face_count": 11,
+      "free_edge_count": 0,
+      "volume_mm3": 119032.38946269432,
+      "bbox_mm": [
+        -50.0,
+        -30.0,
+        0.0,
+        50.0,
+        30.0,
+        28.0
+      ],
+      "self_intersection": {
+        "status": "checked_no_intersection",
+        "face_count": 11,
+        "check_result_count": 0,
+        "check_statuses": [],
+        "method": "BOPAlgo_ArgumentAnalyzer(SelfInterMode=True, UseOBB=True)"
+      },
+      "validity_method": "BRepCheck_Analyzer",
+      "geometry_scope": "native_OCCT_BREP_only_visual_comparison_not_performed",
+      "feature_results": [
+        {
+          "feature_id": "base_plate",
+          "kind": "box",
+          "operation": "add",
+          "geometry_support": "exact",
+          "builder": "analytic_prism",
+          "state": "applied",
+          "source_feature_id": null,
+          "source_resolution": null,
+          "solid_count": 1,
+          "brep_valid": true,
+          "before_volume_mm3": 0.0,
+          "after_volume_mm3": 120000.0,
+          "volume_delta_mm3": 120000.0,
+          "cylindrical_cut_intents": [],
+          "depth_measurement": null,
+          "facet_count": null
+        },
+        {
+          "feature_id": "hole_through_cyl",
+          "kind": "cylinder",
+          "operation": "cut",
+          "geometry_support": "exact",
+          "builder": "analytic_cylinder_or_cone",
+          "state": "applied",
+          "source_feature_id": null,
+          "source_resolution": null,
+          "solid_count": 1,
+          "brep_valid": true,
+          "before_volume_mm3": 120000.0,
+          "after_volume_mm3": 118429.20367320509,
+          "volume_delta_mm3": -1570.796326794909,
+          "cylindrical_cut_intents": [
+            {
+              "feature_id": "hole_through_cyl",
+              "instance_index": 1,
+              "axis": "Z",
+              "centerline_mm": [
+                0.0,
+                0.0,
+                10.0
+              ],
+              "diameter_mm": 10.0,
+              "depth_mm": null,
+              "through": true,
+              "planned_status": "pending",
+              "source_geometry": "OCCT cylindrical cutter topology",
+              "classification": "verified_intent_candidate",
+              "tool_bbox_mm": [
+                -5.0,
+                -5.0,
+                0.0,
+                5.0,
+                5.0,
+                20.0
+              ]
+            }
+          ],
+          "depth_measurement": null,
+          "facet_count": null
+        },
+        {
+          "feature_id": "revolve_boss",
+          "kind": "revolve",
+          "operation": "add",
+          "geometry_support": "exact",
+          "builder": "analytic_occt_revolve",
+          "state": "applied",
+          "source_feature_id": null,
+          "source_resolution": null,
+          "solid_count": 1,
+          "brep_valid": true,
+          "before_volume_mm3": 118429.20367320509,
+          "after_volume_mm3": 119333.98235743896,
+          "volume_delta_mm3": 904.7786842338683,
+          "cylindrical_cut_intents": [],
+          "depth_measurement": null,
+          "facet_count": null
+        },
+        {
+          "feature_id": "hole_blind_cyl",
+          "kind": "cylinder",
+          "operation": "cut",
+          "geometry_support": "exact",
+          "builder": "analytic_cylinder_or_cone",
+          "state": "applied",
+          "source_feature_id": null,
+          "source_resolution": null,
+          "solid_count": 1,
+          "brep_valid": true,
+          "before_volume_mm3": 119333.98235743896,
+          "after_volume_mm3": 119032.38946269432,
+          "volume_delta_mm3": -301.5928947446373,
+          "cylindrical_cut_intents": [
+            {
+              "feature_id": "hole_blind_cyl",
+              "classification": "unverified_cylindrical_cut",
+              "status": "unverified",
+              "axis": "Z",
+              "centerline_mm": [
+                25.0,
+                0.0,
+                14.0
+              ],
+              "diameter_mm": 8.0,
+              "tool_bbox_mm": [
+                21.0,
+                -4.0,
+                14.0,
+                29.0,
+                4.0,
+                20.0
+              ],
+              "reason": "圆柱刀具未贯穿目标轴向包围盒；盲深或局部开口需进一步定向测量。"
+            }
+          ],
+          "depth_measurement": null,
+          "facet_count": null
+        }
+      ],
+      "hole_instances": [
+        {
+          "feature_id": "hole_through_cyl",
+          "instance_index": 1,
+          "axis": "Z",
+          "centerline_mm": [
+            0.0,
+            0.0,
+            10.0
+          ],
+          "diameter_mm": 10.0,
+          "depth_mm": null,
+          "through": true,
+          "planned_status": "pending",
+          "source_geometry": "OCCT cylindrical cutter topology",
+          "classification": "verified_intent_candidate",
+          "tool_bbox_mm": [
+            -5.0,
+            -5.0,
+            0.0,
+            5.0,
+            5.0,
+            20.0
+          ],
+          "status": "verified_open",
+          "reason": "全包围盒轴跨度无实体区间；同轴解析圆柱面实测直径匹配，且孔壁截面有完整环形材料。",
+          "axis_surface_crossings": 0,
+          "centerline_material_segments": [],
+          "ring_supported": [
+            true
+          ],
+          "measured_diameter_mm": 10.0,
+          "diameter_candidates_mm": [
+            10.0
+          ],
+          "measured_depth_mm": null,
+          "matching_cylindrical_faces": [
+            {
+              "radius_mm": 5.0,
+              "diameter_mm": 10.0,
+              "axis_line_distance_mm": 0.0,
+              "axis_parallel_dot": 1.0,
+              "axis_interval_mm": [
+                0.0,
+                20.0
+              ],
+              "surface_type": "analytic_cylinder"
+            }
+          ],
+          "centerline_proof": {
+            "method": "IntCurvesFace_ShapeIntersector exact line/trimmed-face events + BRepClass3d interval classification",
+            "intersection_count": 0,
+            "segments": [
+              {
+                "axis_interval_mm": [
+                  -0.001,
+                  28.001
+                ],
+                "midpoint_mm": 14.0,
+                "inside_solid": false
+              }
+            ],
+            "material_segments": []
+          },
+          "wall_support": {
+            "supported": true,
+            "ring_supported": [
+              true
+            ],
+            "sampled_axis_stations_mm": [
+              10.0
+            ],
+            "supported_axis_stations_mm": [
+              10.0
+            ],
+            "sample_count_per_section": 24,
+            "method": "BRepClass3d 24-point ring at 1.25 x measured radius, on measured cylinder-wall spans"
+          },
+          "method": "OCCT trimmed-face line intersections + BRepClass3d interval/ring classification + analytic cylindrical-face radius/axis measurement"
+        }
+      ],
+      "unverified_cut_intents": [
+        {
+          "feature_id": "hole_blind_cyl",
+          "classification": "unverified_cylindrical_cut",
+          "status": "unverified",
+          "axis": "Z",
+          "centerline_mm": [
+            25.0,
+            0.0,
+            14.0
+          ],
+          "diameter_mm": 8.0,
+          "tool_bbox_mm": [
+            21.0,
+            -4.0,
+            14.0,
+            29.0,
+            4.0,
+            20.0
+          ],
+          "reason": "圆柱刀具未贯穿目标轴向包围盒；盲深或局部开口需进一步定向测量。"
+        }
+      ],
+      "hole_feature_count": 0,
+      "measured_hole_source_feature_count": 1,
+      "unverified_cut_intent_count": 1,
+      "planned_hole_instance_count": 1,
+      "active_hole_instance_count": 1,
+      "superseded_hole_instance_count": 0,
+      "active_through_hole_count": 1,
+      "through_hole_count": 1,
+      "all_declared_holes_verified": true,
+      "visual_validation": "not_performed",
+      "catia_executed": false,
+      "build_transaction": "每个特征验证成功后才提交；失败保留上一有效实体",
+      "source": "OpenCASCADE native BREP; preview mesh is display-only",
+      "bbox_size_mm": [
+        100.0,
+        60.0,
+        28.0
+      ],
+      "bbox_ratios_from_brep": {
+        "front_width_height": 3.5714285714285716,
+        "depth_height": 2.142857142857143,
+        "top_width_depth": 1.6666666666666667
+      },
+      "bbox_ratios_from_mesh": {
+        "front_width_height": 3.5714285714285716,
+        "depth_height": 2.142857142857143,
+        "top_width_depth": 1.6666666666666667
+      },
+      "feature_count_from_plan": 4,
+      "feature_ids_from_plan": [
+        "base_plate",
+        "hole_through_cyl",
+        "revolve_boss",
+        "hole_blind_cyl"
+      ],
+      "hole_features_from_plan": [
+        {
+          "feature_id": "hole_through_cyl",
+          "kind": "cylinder",
+          "operation": "cut",
+          "parameters": {
+            "radius": 5,
+            "height": 20,
+            "center": [
+              0,
+              0,
+              0
+            ],
+            "axis": "Z"
+          },
+          "hole_intent_source": "inferred_from_cylindrical_cut_geometry"
+        },
+        {
+          "feature_id": "hole_blind_cyl",
+          "kind": "cylinder",
+          "operation": "cut",
+          "parameters": {
+            "radius": 4,
+            "height": 6,
+            "center": [
+              25,
+              0,
+              14
+            ],
+            "axis": "Z",
+            "base": true
+          },
+          "hole_intent_source": "inferred_from_cylindrical_cut_geometry"
+        }
+      ],
+      "hole_feature_count_from_plan": 2,
+      "expected_hole_instance_count": 1,
+      "hole_instance_count": 1,
+      "through_hole_checks": [
+        {
+          "feature_id": "hole_through_cyl",
+          "instance_index": 1,
+          "axis": "Z",
+          "centerline_mm": [
+            0.0,
+            0.0,
+            10.0
+          ],
+          "diameter_mm": 10.0,
+          "depth_mm": null,
+          "through": true,
+          "planned_status": "pending",
+          "source_geometry": "OCCT cylindrical cutter topology",
+          "classification": "verified_intent_candidate",
+          "tool_bbox_mm": [
+            -5.0,
+            -5.0,
+            0.0,
+            5.0,
+            5.0,
+            20.0
+          ],
+          "status": "verified_open",
+          "reason": "全包围盒轴跨度无实体区间；同轴解析圆柱面实测直径匹配，且孔壁截面有完整环形材料。",
+          "axis_surface_crossings": 0,
+          "centerline_material_segments": [],
+          "ring_supported": [
+            true
+          ],
+          "measured_diameter_mm": 10.0,
+          "diameter_candidates_mm": [
+            10.0
+          ],
+          "measured_depth_mm": null,
+          "matching_cylindrical_faces": [
+            {
+              "radius_mm": 5.0,
+              "diameter_mm": 10.0,
+              "axis_line_distance_mm": 0.0,
+              "axis_parallel_dot": 1.0,
+              "axis_interval_mm": [
+                0.0,
+                20.0
+              ],
+              "surface_type": "analytic_cylinder"
+            }
+          ],
+          "centerline_proof": {
+            "method": "IntCurvesFace_ShapeIntersector exact line/trimmed-face events + BRepClass3d interval classification",
+            "intersection_count": 0,
+            "segments": [
+              {
+                "axis_interval_mm": [
+                  -0.001,
+                  28.001
+                ],
+                "midpoint_mm": 14.0,
+                "inside_solid": false
+              }
+            ],
+            "material_segments": []
+          },
+          "wall_support": {
+            "supported": true,
+            "ring_supported": [
+              true
+            ],
+            "sampled_axis_stations_mm": [
+              10.0
+            ],
+            "supported_axis_stations_mm": [
+              10.0
+            ],
+            "sample_count_per_section": 24,
+            "method": "BRepClass3d 24-point ring at 1.25 x measured radius, on measured cylinder-wall spans"
+          },
+          "method": "OCCT trimmed-face line intersections + BRepClass3d interval/ring classification + analytic cylindrical-face radius/axis measurement"
+        }
+      ],
+      "through_hole_mesh_checks": [
+        {
+          "feature_id": "hole_through_cyl",
+          "instance_index": 1,
+          "axis": "Z",
+          "centerline_mm": [
+            0.0,
+            0.0,
+            10.0
+          ],
+          "diameter_mm": 10.0,
+          "depth_mm": null,
+          "through": true,
+          "planned_status": "pending",
+          "source_geometry": "OCCT cylindrical cutter topology",
+          "classification": "verified_intent_candidate",
+          "tool_bbox_mm": [
+            -5.0,
+            -5.0,
+            0.0,
+            5.0,
+            5.0,
+            20.0
+          ],
+          "status": "verified_open",
+          "reason": "全包围盒轴跨度无实体区间；同轴解析圆柱面实测直径匹配，且孔壁截面有完整环形材料。",
+          "axis_surface_crossings": 0,
+          "centerline_material_segments": [],
+          "ring_supported": [
+            true
+          ],
+          "measured_diameter_mm": 10.0,
+          "diameter_candidates_mm": [
+            10.0
+          ],
+          "measured_depth_mm": null,
+          "matching_cylindrical_faces": [
+            {
+              "radius_mm": 5.0,
+              "diameter_mm": 10.0,
+              "axis_line_distance_mm": 0.0,
+              "axis_parallel_dot": 1.0,
+              "axis_interval_mm": [
+                0.0,
+                20.0
+              ],
+              "surface_type": "analytic_cylinder"
+            }
+          ],
+          "centerline_proof": {
+            "method": "IntCurvesFace_ShapeIntersector exact line/trimmed-face events + BRepClass3d interval classification",
+            "intersection_count": 0,
+            "segments": [
+              {
+                "axis_interval_mm": [
+                  -0.001,
+                  28.001
+                ],
+                "midpoint_mm": 14.0,
+                "inside_solid": false
+              }
+            ],
+            "material_segments": []
+          },
+          "wall_support": {
+            "supported": true,
+            "ring_supported": [
+              true
+            ],
+            "sampled_axis_stations_mm": [
+              10.0
+            ],
+            "supported_axis_stations_mm": [
+              10.0
+            ],
+            "sample_count_per_section": 24,
+            "method": "BRepClass3d 24-point ring at 1.25 x measured radius, on measured cylinder-wall spans"
+          },
+          "method": "OCCT trimmed-face line intersections + BRepClass3d interval/ring classification + analytic cylindrical-face radius/axis measurement"
+        }
+      ],
+      "hole_measurement_complete": false,
+      "hole_measurement_state": "incomplete_or_unverified",
+      "through_hole_count_expected": 1,
+      "through_hole_count_verified": 1,
+      "through_hole_result": "measured_by_native_brep",
+      "image_estimate_parameters": [],
+      "catia_geometry_verification": "not_performed"
+    },
+    "orthographic_layout": {
+      "unit": "mm",
+      "axes": {
+        "length": "X",
+        "width": "Y",
+        "height": "Z"
+      },
+      "uniform_scale_across_views": true,
+      "scale_pixels_per_mm": 2.132,
+      "tile_size_pixels": [
+        330,
+        260
+      ],
+      "view_extents": {
+        "front": {
+          "horizontal_axis": "X",
+          "horizontal": 100.0,
+          "vertical_axis": "Z",
+          "vertical": 28.0
+        },
+        "right": {
+          "horizontal_axis": "Y",
+          "horizontal": 60.0,
+          "vertical_axis": "Z",
+          "vertical": 28.0
+        },
+        "top": {
+          "horizontal_axis": "X",
+          "horizontal": 100.0,
+          "vertical_axis": "Y",
+          "vertical": 60.0
+        }
+      },
+      "dimension_ratios": {
+        "length_to_height": 3.5714285714285716,
+        "width_to_height": 2.142857142857143,
+        "length_to_width": 1.6666666666666667
+      }
+    },
+    "preview_image": "C:\\Users\\lycohana\\AppData\\Local\\AI Modeler\\dsh\\sessions\\geometry-cut-intent-20261001\\previews\\r9-g5-iso.png",
+    "preview_image_views": [
+      "iso"
+    ],
+    "preview_image_view_set": "iso",
+    "preview_image_grid_columns": 1,
+    "preview_image_source": "OCCT BREP tessellated for display; not a CATIA screenshot",
+    "preview_render_style": "view-adaptive depth-cued matte shading with visible feature edges",
+    "preview_render_note": "诊断渲染：凹入或远离相机的表面会略暗，清晰线条表示可见的几何折边；亮暗不是零件材质颜色，需结合其它视图判断。",
+    "preview_image_layout": {
+      "unit": "mm",
+      "axes": {
+        "length": "X",
+        "width": "Y",
+        "height": "Z"
+      },
+      "uniform_scale_across_views": true,
+      "scale_pixels_per_mm": 2.132,
+      "tile_size_pixels": [
+        330,
+        260
+      ],
+      "view_extents": {
+        "front": {
+          "horizontal_axis": "X",
+          "horizontal": 100.0,
+          "vertical_axis": "Z",
+          "vertical": 28.0
+        },
+        "right": {
+          "horizontal_axis": "Y",
+          "horizontal": 60.0,
+          "vertical_axis": "Z",
+          "vertical": 28.0
+        },
+        "top": {
+          "horizontal_axis": "X",
+          "horizontal": 100.0,
+          "vertical_axis": "Y",
+          "vertical": 60.0
+        }
+      },
+      "dimension_ratios": {
+        "length_to_height": 3.5714285714285716,
+        "width_to_height": 2.142857142857143,
+        "length_to_width": 1.6666666666666667
+      }
+    },
+    "preview_generation": 5
+  },
+  "visual_review": null,
+  "main_agent_self_reports": {},
+  "visual_reviews": {},
+  "required_external_facts": {},
+  "reference_similarity_reviews": {},
+  "reference_similarity_history": [],
+  "visual_evidence_summary": {
+    "revision": 9,
+    "references": {},
+    "latest_review_pairs": 0,
+    "comparable_review_pairs": 0,
+    "noncomparable_review_pairs": 0,
+    "all_references_covered": false
+  },
+  "knowledge_search": {
+    "status": "no_match",
+    "query": "请用毫米创建一个可编辑的参数化候选模型：底板长100、宽60、厚20，底面z=0且平面中心在原点。顶面有一个直径10的竖直贯穿圆孔，孔中心(0,0)；再有一个直径8、从顶面向下深6的盲孔，中心(25,0)。这两个孔请明确通过圆柱切削工具执行subtract，不要改用hole特征。最后在中心(-25,0)的顶面添加一个轴对称旋转凸台：矩形截面绕Z轴360度旋转，外径12、高8，底面与顶面相接。尺寸必须保持，生成后检查孔径、盲孔深度、包围盒与实体有效性；若某项无法核实请如实标记候选未验收。",
+    "matches": [],
+    "negative_examples": [],
+    "image_query_supported": false,
+    "visual_fallback_available": false,
+    "score_meaning": "relevance 是词面相关度排序分数，不是准确率或置信概率。",
+    "message": "当前文字描述没有达到相似检索阈值；这不代表库外不存在对应工件。",
+    "modeling_recipes": [
+      {
+        "id": "hole.blind",
+        "name": "盲孔",
+        "aliases": [
+          "盲孔",
+          "不贯穿孔",
+          "沉孔深度",
+          "blind hole"
+        ],
+        "intent": "在当前实体上建立指定深度的盲孔。",
+        "strategy": [
+          "先确定孔轴和孔心",
+          "使用 hole 特征，through=false 并给出 depth",
+          "确认深度不会切穿实体"
+        ],
+        "parameters": [
+          "直径",
+          "深度",
+          "孔心",
+          "孔轴"
+        ],
+        "builder": null,
+        "status": "guidance",
+        "limitations": []
+      }
+    ]
+  },
+  "knowledge_visual_examples": [],
+  "construction_milestone": {
+    "milestone": "主体、圆柱切削孔与旋转凸台已完成，进入几何检查",
+    "completed_feature_ids": [
+      "base_plate",
+      "hole_through_cyl",
+      "hole_blind_cyl",
+      "revolve_boss"
+    ],
+    "expected_feature_ids": [],
+    "notes": "底板100x60x20，顶面竖直贯穿孔直径10，盲孔直径8深6，左侧旋转凸台外径12高8",
+    "revision": 5,
+    "updated_at": 1790848298.4161713
+  },
+  "last_valid_candidate": {
+    "revision": null,
+    "geometry_signature": null,
+    "rank": null,
+    "dimensions": null
+  },
+  "best_evidence_candidate": {
+    "revision": null,
+    "geometry_signature": null,
+    "rank": null,
+    "dimensions": null
+  },
+  "local_geometry_checks": {
+    "backend": "occt_brep",
+    "kernel": "可用：OCCT 7.9.3.1 / cadquery-ocp-novtk 7.9.3.1.1",
+    "geometry_state": "needs_review",
+    "state": "needs_review",
+    "brep_valid": true,
+    "shape_type": "TopAbs_COMPOUND",
+    "solid_count": 1,
+    "connected_component_count": 1,
+    "shell_count": 1,
+    "closed_shell_count": 1,
+    "closed": true,
+    "edge_count": 42,
+    "face_count": 11,
+    "free_edge_count": 0,
+    "volume_mm3": 119032.38946269432,
+    "bbox_mm": [
+      -50.0,
+      -30.0,
+      0.0,
+      50.0,
+      30.0,
+      28.0
+    ],
+    "self_intersection": {
+      "status": "checked_no_intersection",
+      "face_count": 11,
+      "check_result_count": 0,
+      "check_statuses": [],
+      "method": "BOPAlgo_ArgumentAnalyzer(SelfInterMode=True, UseOBB=True)"
+    },
+    "validity_method": "BRepCheck_Analyzer",
+    "geometry_scope": "native_OCCT_BREP_only_visual_comparison_not_performed",
+    "feature_results": [
+      {
+        "feature_id": "base_plate",
+        "kind": "box",
+        "operation": "add",
+        "geometry_support": "exact",
+        "builder": "analytic_prism",
+        "state": "applied",
+        "source_feature_id": null,
+        "source_resolution": null,
+        "solid_count": 1,
+        "brep_valid": true,
+        "before_volume_mm3": 0.0,
+        "after_volume_mm3": 120000.0,
+        "volume_delta_mm3": 120000.0,
+        "cylindrical_cut_intents": [],
+        "depth_measurement": null,
+        "facet_count": null
+      },
+      {
+        "feature_id": "hole_through_cyl",
+        "kind": "cylinder",
+        "operation": "cut",
+        "geometry_support": "exact",
+        "builder": "analytic_cylinder_or_cone",
+        "state": "applied",
+        "source_feature_id": null,
+        "source_resolution": null,
+        "solid_count": 1,
+        "brep_valid": true,
+        "before_volume_mm3": 120000.0,
+        "after_volume_mm3": 118429.20367320509,
+        "volume_delta_mm3": -1570.796326794909,
+        "cylindrical_cut_intents": [
+          {
+            "feature_id": "hole_through_cyl",
+            "instance_index": 1,
+            "axis": "Z",
+            "centerline_mm": [
+              0.0,
+              0.0,
+              10.0
+            ],
+            "diameter_mm": 10.0,
+            "depth_mm": null,
+            "through": true,
+            "planned_status": "pending",
+            "source_geometry": "OCCT cylindrical cutter topology",
+            "classification": "verified_intent_candidate",
+            "tool_bbox_mm": [
+              -5.0,
+              -5.0,
+              0.0,
+              5.0,
+              5.0,
+              20.0
+            ]
+          }
+        ],
+        "depth_measurement": null,
+        "facet_count": null
+      },
+      {
+        "feature_id": "revolve_boss",
+        "kind": "revolve",
+        "operation": "add",
+        "geometry_support": "exact",
+        "builder": "analytic_occt_revolve",
+        "state": "applied",
+        "source_feature_id": null,
+        "source_resolution": null,
+        "solid_count": 1,
+        "brep_valid": true,
+        "before_volume_mm3": 118429.20367320509,
+        "after_volume_mm3": 119333.98235743896,
+        "volume_delta_mm3": 904.7786842338683,
+        "cylindrical_cut_intents": [],
+        "depth_measurement": null,
+        "facet_count": null
+      },
+      {
+        "feature_id": "hole_blind_cyl",
+        "kind": "cylinder",
+        "operation": "cut",
+        "geometry_support": "exact",
+        "builder": "analytic_cylinder_or_cone",
+        "state": "applied",
+        "source_feature_id": null,
+        "source_resolution": null,
+        "solid_count": 1,
+        "brep_valid": true,
+        "before_volume_mm3": 119333.98235743896,
+        "after_volume_mm3": 119032.38946269432,
+        "volume_delta_mm3": -301.5928947446373,
+        "cylindrical_cut_intents": [
+          {
+            "feature_id": "hole_blind_cyl",
+            "classification": "unverified_cylindrical_cut",
+            "status": "unverified",
+            "axis": "Z",
+            "centerline_mm": [
+              25.0,
+              0.0,
+              14.0
+            ],
+            "diameter_mm": 8.0,
+            "tool_bbox_mm": [
+              21.0,
+              -4.0,
+              14.0,
+              29.0,
+              4.0,
+              20.0
+            ],
+            "reason": "圆柱刀具未贯穿目标轴向包围盒；盲深或局部开口需进一步定向测量。"
+          }
+        ],
+        "depth_measurement": null,
+        "facet_count": null
+      }
+    ],
+    "hole_instances": [
+      {
+        "feature_id": "hole_through_cyl",
+        "instance_index": 1,
+        "axis": "Z",
+        "centerline_mm": [
+          0.0,
+          0.0,
+          10.0
+        ],
+        "diameter_mm": 10.0,
+        "depth_mm": null,
+        "through": true,
+        "planned_status": "pending",
+        "source_geometry": "OCCT cylindrical cutter topology",
+        "classification": "verified_intent_candidate",
+        "tool_bbox_mm": [
+          -5.0,
+          -5.0,
+          0.0,
+          5.0,
+          5.0,
+          20.0
+        ],
+        "status": "verified_open",
+        "reason": "全包围盒轴跨度无实体区间；同轴解析圆柱面实测直径匹配，且孔壁截面有完整环形材料。",
+        "axis_surface_crossings": 0,
+        "centerline_material_segments": [],
+        "ring_supported": [
+          true
+        ],
+        "measured_diameter_mm": 10.0,
+        "diameter_candidates_mm": [
+          10.0
+        ],
+        "measured_depth_mm": null,
+        "matching_cylindrical_faces": [
+          {
+            "radius_mm": 5.0,
+            "diameter_mm": 10.0,
+            "axis_line_distance_mm": 0.0,
+            "axis_parallel_dot": 1.0,
+            "axis_interval_mm": [
+              0.0,
+              20.0
+            ],
+            "surface_type": "analytic_cylinder"
+          }
+        ],
+        "centerline_proof": {
+          "method": "IntCurvesFace_ShapeIntersector exact line/trimmed-face events + BRepClass3d interval classification",
+          "intersection_count": 0,
+          "segments": [
+            {
+              "axis_interval_mm": [
+                -0.001,
+                28.001
+              ],
+              "midpoint_mm": 14.0,
+              "inside_solid": false
+            }
+          ],
+          "material_segments": []
+        },
+        "wall_support": {
+          "supported": true,
+          "ring_supported": [
+            true
+          ],
+          "sampled_axis_stations_mm": [
+            10.0
+          ],
+          "supported_axis_stations_mm": [
+            10.0
+          ],
+          "sample_count_per_section": 24,
+          "method": "BRepClass3d 24-point ring at 1.25 x measured radius, on measured cylinder-wall spans"
+        },
+        "method": "OCCT trimmed-face line intersections + BRepClass3d interval/ring classification + analytic cylindrical-face radius/axis measurement"
+      }
+    ],
+    "unverified_cut_intents": [
+      {
+        "feature_id": "hole_blind_cyl",
+        "classification": "unverified_cylindrical_cut",
+        "status": "unverified",
+        "axis": "Z",
+        "centerline_mm": [
+          25.0,
+          0.0,
+          14.0
+        ],
+        "diameter_mm": 8.0,
+        "tool_bbox_mm": [
+          21.0,
+          -4.0,
+          14.0,
+          29.0,
+          4.0,
+          20.0
+        ],
+        "reason": "圆柱刀具未贯穿目标轴向包围盒；盲深或局部开口需进一步定向测量。"
+      }
+    ],
+    "hole_feature_count": 0,
+    "measured_hole_source_feature_count": 1,
+    "unverified_cut_intent_count": 1,
+    "planned_hole_instance_count": 1,
+    "active_hole_instance_count": 1,
+    "superseded_hole_instance_count": 0,
+    "active_through_hole_count": 1,
+    "through_hole_count": 1,
+    "all_declared_holes_verified": true,
+    "visual_validation": "not_performed",
+    "catia_executed": false,
+    "build_transaction": "每个特征验证成功后才提交；失败保留上一有效实体",
+    "source": "OpenCASCADE native BREP; preview mesh is display-only",
+    "bbox_size_mm": [
+      100.0,
+      60.0,
+      28.0
+    ],
+    "bbox_ratios_from_brep": {
+      "front_width_height": 3.5714285714285716,
+      "depth_height": 2.142857142857143,
+      "top_width_depth": 1.6666666666666667
+    },
+    "bbox_ratios_from_mesh": {
+      "front_width_height": 3.5714285714285716,
+      "depth_height": 2.142857142857143,
+      "top_width_depth": 1.6666666666666667
+    },
+    "feature_count_from_plan": 4,
+    "feature_ids_from_plan": [
+      "base_plate",
+      "hole_through_cyl",
+      "revolve_boss",
+      "hole_blind_cyl"
+    ],
+    "hole_features_from_plan": [
+      {
+        "feature_id": "hole_through_cyl",
+        "kind": "cylinder",
+        "operation": "cut",
+        "parameters": {
+          "radius": 5,
+          "height": 20,
+          "center": [
+            0,
+            0,
+            0
+          ],
+          "axis": "Z"
+        },
+        "hole_intent_source": "inferred_from_cylindrical_cut_geometry"
+      },
+      {
+        "feature_id": "hole_blind_cyl",
+        "kind": "cylinder",
+        "operation": "cut",
+        "parameters": {
+          "radius": 4,
+          "height": 6,
+          "center": [
+            25,
+            0,
+            14
+          ],
+          "axis": "Z",
+          "base": true
+        },
+        "hole_intent_source": "inferred_from_cylindrical_cut_geometry"
+      }
+    ],
+    "hole_feature_count_from_plan": 2,
+    "expected_hole_instance_count": 1,
+    "hole_instance_count": 1,
+    "through_hole_checks": [
+      {
+        "feature_id": "hole_through_cyl",
+        "instance_index": 1,
+        "axis": "Z",
+        "centerline_mm": [
+          0.0,
+          0.0,
+          10.0
+        ],
+        "diameter_mm": 10.0,
+        "depth_mm": null,
+        "through": true,
+        "planned_status": "pending",
+        "source_geometry": "OCCT cylindrical cutter topology",
+        "classification": "verified_intent_candidate",
+        "tool_bbox_mm": [
+          -5.0,
+          -5.0,
+          0.0,
+          5.0,
+          5.0,
+          20.0
+        ],
+        "status": "verified_open",
+        "reason": "全包围盒轴跨度无实体区间；同轴解析圆柱面实测直径匹配，且孔壁截面有完整环形材料。",
+        "axis_surface_crossings": 0,
+        "centerline_material_segments": [],
+        "ring_supported": [
+          true
+        ],
+        "measured_diameter_mm": 10.0,
+        "diameter_candidates_mm": [
+          10.0
+        ],
+        "measured_depth_mm": null,
+        "matching_cylindrical_faces": [
+          {
+            "radius_mm": 5.0,
+            "diameter_mm": 10.0,
+            "axis_line_distance_mm": 0.0,
+            "axis_parallel_dot": 1.0,
+            "axis_interval_mm": [
+              0.0,
+              20.0
+            ],
+            "surface_type": "analytic_cylinder"
+          }
+        ],
+        "centerline_proof": {
+          "method": "IntCurvesFace_ShapeIntersector exact line/trimmed-face events + BRepClass3d interval classification",
+          "intersection_count": 0,
+          "segments": [
+            {
+              "axis_interval_mm": [
+                -0.001,
+                28.001
+              ],
+              "midpoint_mm": 14.0,
+              "inside_solid": false
+            }
+          ],
+          "material_segments": []
+        },
+        "wall_support": {
+          "supported": true,
+          "ring_supported": [
+            true
+          ],
+          "sampled_axis_stations_mm": [
+            10.0
+          ],
+          "supported_axis_stations_mm": [
+            10.0
+          ],
+          "sample_count_per_section": 24,
+          "method": "BRepClass3d 24-point ring at 1.25 x measured radius, on measured cylinder-wall spans"
+        },
+        "method": "OCCT trimmed-face line intersections + BRepClass3d interval/ring classification + analytic cylindrical-face radius/axis measurement"
+      }
+    ],
+    "through_hole_mesh_checks": [
+      {
+        "feature_id": "hole_through_cyl",
+        "instance_index": 1,
+        "axis": "Z",
+        "centerline_mm": [
+          0.0,
+          0.0,
+          10.0
+        ],
+        "diameter_mm": 10.0,
+        "depth_mm": null,
+        "through": true,
+        "planned_status": "pending",
+        "source_geometry": "OCCT cylindrical cutter topology",
+        "classification": "verified_intent_candidate",
+        "tool_bbox_mm": [
+          -5.0,
+          -5.0,
+          0.0,
+          5.0,
+          5.0,
+          20.0
+        ],
+        "status": "verified_open",
+        "reason": "全包围盒轴跨度无实体区间；同轴解析圆柱面实测直径匹配，且孔壁截面有完整环形材料。",
+        "axis_surface_crossings": 0,
+        "centerline_material_segments": [],
+        "ring_supported": [
+          true
+        ],
+        "measured_diameter_mm": 10.0,
+        "diameter_candidates_mm": [
+          10.0
+        ],
+        "measured_depth_mm": null,
+        "matching_cylindrical_faces": [
+          {
+            "radius_mm": 5.0,
+            "diameter_mm": 10.0,
+            "axis_line_distance_mm": 0.0,
+            "axis_parallel_dot": 1.0,
+            "axis_interval_mm": [
+              0.0,
+              20.0
+            ],
+            "surface_type": "analytic_cylinder"
+          }
+        ],
+        "centerline_proof": {
+          "method": "IntCurvesFace_ShapeIntersector exact line/trimmed-face events + BRepClass3d interval classification",
+          "intersection_count": 0,
+          "segments": [
+            {
+              "axis_interval_mm": [
+                -0.001,
+                28.001
+              ],
+              "midpoint_mm": 14.0,
+              "inside_solid": false
+            }
+          ],
+          "material_segments": []
+        },
+        "wall_support": {
+          "supported": true,
+          "ring_supported": [
+            true
+          ],
+          "sampled_axis_stations_mm": [
+            10.0
+          ],
+          "supported_axis_stations_mm": [
+            10.0
+          ],
+          "sample_count_per_section": 24,
+          "method": "BRepClass3d 24-point ring at 1.25 x measured radius, on measured cylinder-wall spans"
+        },
+        "method": "OCCT trimmed-face line intersections + BRepClass3d interval/ring classification + analytic cylindrical-face radius/axis measurement"
+      }
+    ],
+    "hole_measurement_complete": false,
+    "hole_measurement_state": "incomplete_or_unverified",
+    "through_hole_count_expected": 1,
+    "through_hole_count_verified": 1,
+    "through_hole_result": "measured_by_native_brep",
+    "image_estimate_parameters": [],
+    "catia_geometry_verification": "not_performed"
+  },
+  "view_previews": {
+    "iso": "C:\\Users\\lycohana\\AppData\\Local\\AI Modeler\\dsh\\sessions\\geometry-cut-intent-20261001\\output\\views\\iso.png"
+  },
+  "unresolved_findings": [],
+  "finish_state": "candidate_geometry_unverified",
+  "finish_summary": {
+    "finish_state": "candidate_geometry_unverified",
+    "accepted": false,
+    "local_geometry_state": "needs_review",
+    "hole_measurement": {
+      "complete": false,
+      "declared_feature_ids": [],
+      "measured_feature_ids": [
+        "hole_through_cyl"
+      ],
+      "instance_count": 1,
+      "active_instance_count": 1,
+      "superseded_instance_count": 0,
+      "active_through_hole_count": 1,
+      "instance_statuses": [
+        "verified_open"
+      ],
+      "measurement_complete_flag": true,
+      "unverified_cut_intents": [
+        {
+          "feature_id": "hole_blind_cyl",
+          "classification": "unverified_cylindrical_cut",
+          "status": "unverified",
+          "axis": "Z",
+          "centerline_mm": [
+            25.0,
+            0.0,
+            14.0
+          ],
+          "diameter_mm": 8.0,
+          "tool_bbox_mm": [
+            21.0,
+            -4.0,
+            14.0,
+            29.0,
+            4.0,
+            20.0
+          ],
+          "reason": "圆柱刀具未贯穿目标轴向包围盒；盲深或局部开口需进一步定向测量。"
+        }
+      ]
+    },
+    "independent_review_pair_count": 0,
+    "visual_evidence": {
+      "revision": 9,
+      "references": {},
+      "latest_review_pairs": 0,
+      "comparable_review_pairs": 0,
+      "noncomparable_review_pairs": 0,
+      "all_references_covered": false
+    },
+    "required_external_facts": {
+      "required_count": 0,
+      "verified_count": 0,
+      "failed_count": 0,
+      "unknown_count": 0,
+      "facts": {}
+    },
+    "open_finding_count": 0,
+    "construction_complete": true,
+    "catia_invoked": false
+  },
+  "summary": "已按用户尺寸生成可编辑参数化候选模型：底板100×60×20 mm（中心在原点、底面z=0）；顶面用圆柱切削（subtract）生成直径10竖直贯穿孔与直径8、深6盲孔；在(-25,0)顶面用矩形截面r=0~6、z=20~28绕Z轴360°旋转添加凸台。本地OCCT BREP实体有效、无自交、封闭；包围盒100×60×28 mm；贯穿孔直径10已核验。盲孔因使用圆柱切削而非hole特征，本地孔深自动测量被标记为'unverified_cylindrical_cut'、hole_measurement_complete=false，未能自动验收；故整体模型保存为candidate_not_verified。CATIA未执行。",
+  "catia_executed": false
+}

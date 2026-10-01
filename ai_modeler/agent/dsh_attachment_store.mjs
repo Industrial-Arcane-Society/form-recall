@@ -1,9 +1,9 @@
-// Project-owned durable image store for the bundled DSH SDK runtime.
-// The Python runtime wheel does not include dsh-attachment-local, so this
-// lightweight provider implements the attachment service seam used by SDK
-// prompts, MCP image results, and the pi-ai adapter. Images are pre-normalized
-// by Python before admission; this provider rejects requests beyond the route
-// image budget instead of silently sending oversized image payloads.
+// Project-owned durable image store for one DSH session. This attachment
+// service keeps tool-result images in the session's isolated DSH_HOME and
+// implements the runtime attachment API consumed by the native DSH plugins.
+// Images are pre-normalized by Python before admission; this pass-through
+// provider rejects requests beyond the route's image target instead of
+// silently sending oversized image payloads.
 import { createHash, randomUUID } from 'node:crypto'
 import { link, mkdir, readFile, unlink, writeFile } from 'node:fs/promises'
 import { dirname, join, resolve } from 'node:path'
@@ -195,17 +195,26 @@ export function apply(ctx) {
     imageHostPath(ref) {
       return objectPath(root, ref)
     },
-    async readImageRequest(ref, policy, signal) {
+    async readImageRequest(ref, target, signal) {
       signal?.throwIfAborted()
       const stored = await this.readImage(ref, signal)
-      if (!Number.isSafeInteger(policy?.maxPixels) || policy.maxPixels < 1
-          || !Number.isSafeInteger(policy?.maxBytes) || policy.maxBytes < 1) {
+      const hasTargetDimensions = Number.isSafeInteger(target?.width) && target.width > 0
+        && Number.isSafeInteger(target?.height) && target.height > 0
+      const hasLegacyPixelBudget = Number.isSafeInteger(target?.maxPixels) && target.maxPixels > 0
+      if ((!hasTargetDimensions && !hasLegacyPixelBudget)
+          || !Number.isSafeInteger(target?.maxBytes) || target.maxBytes < 1) {
         throw new Error('模型图片请求预算无效。')
       }
-      if (ref.width * ref.height > policy.maxPixels || stored.data.byteLength > policy.maxBytes) {
+      const dimensionsExceedTarget = hasTargetDimensions
+        ? (ref.width > target.width || ref.height > target.height)
+        : (ref.width * ref.height > target.maxPixels)
+      if (dimensionsExceedTarget || stored.data.byteLength > target.maxBytes) {
         throw new Error('图片超过模型请求预算；请压缩或缩小参考图后重试。')
       }
-      const variantId = `sha256:${digest(`${ref.attachmentId}\0${policy.maxPixels}\0${policy.maxBytes}\0ai-modeler-pass-through-v1`)}`
+      const targetKey = hasTargetDimensions
+        ? `${target.width}x${target.height}`
+        : `${target.maxPixels}px`
+      const variantId = `sha256:${digest(`${ref.attachmentId}\0${targetKey}\0${target.maxBytes}\0ai-modeler-pass-through-v1`)}`
       return {
         variantId,
         attachment: ref,

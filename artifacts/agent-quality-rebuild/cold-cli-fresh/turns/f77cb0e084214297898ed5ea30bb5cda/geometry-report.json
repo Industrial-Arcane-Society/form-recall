@@ -1,0 +1,1632 @@
+{
+  "source": "DeepSeek Harness SDK Agent",
+  "revision": 72,
+  "name": "nine-hole-recess-block",
+  "units": {
+    "length": "mm",
+    "angle": "deg"
+  },
+  "validation": {
+    "valid": true,
+    "state": "valid",
+    "errors": [],
+    "confirmations": [],
+    "support": [
+      {
+        "feature_id": "base-block",
+        "kind": "box",
+        "status": "exact",
+        "reason": "矩形草图加凸台；当前 CATIA 映射仅支持 Z 轴拉伸。"
+      },
+      {
+        "feature_id": "front-pocket",
+        "kind": "box",
+        "status": "exact",
+        "reason": "矩形草图加凸台；当前 CATIA 映射仅支持 Z 轴拉伸。"
+      },
+      {
+        "feature_id": "side-top-hole",
+        "kind": "cylinder",
+        "status": "exact",
+        "reason": "center 默认表示轴向底面中心(base=true)，height 沿 axis 正向拉伸；base=false 时 center 表示几何中点。等半径时为圆草图加凸台；圆锥台会近似，非 Z 轴圆锥台暂不支持。"
+      },
+      {
+        "feature_id": "side-mid-hole",
+        "kind": "cylinder",
+        "status": "exact",
+        "reason": "center 默认表示轴向底面中心(base=true)，height 沿 axis 正向拉伸；base=false 时 center 表示几何中点。等半径时为圆草图加凸台；圆锥台会近似，非 Z 轴圆锥台暂不支持。"
+      },
+      {
+        "feature_id": "side-bot-hole",
+        "kind": "cylinder",
+        "status": "exact",
+        "reason": "center 默认表示轴向底面中心(base=true)，height 沿 axis 正向拉伸；base=false 时 center 表示几何中点。等半径时为圆草图加凸台；圆锥台会近似，非 Z 轴圆锥台暂不支持。"
+      },
+      {
+        "feature_id": "pocket-mid-hole",
+        "kind": "cylinder",
+        "status": "exact",
+        "reason": "center 默认表示轴向底面中心(base=true)，height 沿 axis 正向拉伸；base=false 时 center 表示几何中点。等半径时为圆草图加凸台；圆锥台会近似，非 Z 轴圆锥台暂不支持。"
+      },
+      {
+        "feature_id": "pocket-bot-hole",
+        "kind": "cylinder",
+        "status": "exact",
+        "reason": "center 默认表示轴向底面中心(base=true)，height 沿 axis 正向拉伸；base=false 时 center 表示几何中点。等半径时为圆草图加凸台；圆锥台会近似，非 Z 轴圆锥台暂不支持。"
+      },
+      {
+        "feature_id": "pocket-top-cut",
+        "kind": "cylinder",
+        "status": "exact",
+        "reason": "center 默认表示轴向底面中心(base=true)，height 沿 axis 正向拉伸；base=false 时 center 表示几何中点。等半径时为圆草图加凸台；圆锥台会近似，非 Z 轴圆锥台暂不支持。"
+      }
+    ],
+    "geometry_support": [
+      {
+        "feature_id": "base-block",
+        "kind": "box",
+        "status": "exact",
+        "reason": "OCCT 棱柱；带圆角/倒角时沿用离散轮廓近似",
+        "backend": "occt_brep"
+      },
+      {
+        "feature_id": "front-pocket",
+        "kind": "box",
+        "status": "exact",
+        "reason": "OCCT 棱柱；带圆角/倒角时沿用离散轮廓近似",
+        "backend": "occt_brep"
+      },
+      {
+        "feature_id": "side-top-hole",
+        "kind": "cylinder",
+        "status": "exact",
+        "reason": "解析圆柱或圆锥面",
+        "backend": "occt_brep"
+      },
+      {
+        "feature_id": "side-mid-hole",
+        "kind": "cylinder",
+        "status": "exact",
+        "reason": "解析圆柱或圆锥面",
+        "backend": "occt_brep"
+      },
+      {
+        "feature_id": "side-bot-hole",
+        "kind": "cylinder",
+        "status": "exact",
+        "reason": "解析圆柱或圆锥面",
+        "backend": "occt_brep"
+      },
+      {
+        "feature_id": "pocket-mid-hole",
+        "kind": "cylinder",
+        "status": "exact",
+        "reason": "解析圆柱或圆锥面",
+        "backend": "occt_brep"
+      },
+      {
+        "feature_id": "pocket-bot-hole",
+        "kind": "cylinder",
+        "status": "exact",
+        "reason": "解析圆柱或圆锥面",
+        "backend": "occt_brep"
+      },
+      {
+        "feature_id": "pocket-top-cut",
+        "kind": "cylinder",
+        "status": "exact",
+        "reason": "解析圆柱或圆锥面",
+        "backend": "occt_brep"
+      }
+    ],
+    "warnings": [],
+    "schema_version": "1.0"
+  },
+  "requested_plan": null,
+  "exported_partial_plan": null,
+  "unapplied_feature_ids": [],
+  "partial_preview": null,
+  "preview": {
+    "state": "previewed",
+    "validation": {
+      "valid": true,
+      "state": "valid",
+      "errors": [],
+      "confirmations": [],
+      "support": [
+        {
+          "feature_id": "base-block",
+          "kind": "box",
+          "status": "exact",
+          "reason": "矩形草图加凸台；当前 CATIA 映射仅支持 Z 轴拉伸。"
+        },
+        {
+          "feature_id": "front-pocket",
+          "kind": "box",
+          "status": "exact",
+          "reason": "矩形草图加凸台；当前 CATIA 映射仅支持 Z 轴拉伸。"
+        },
+        {
+          "feature_id": "side-top-hole",
+          "kind": "cylinder",
+          "status": "exact",
+          "reason": "center 默认表示轴向底面中心(base=true)，height 沿 axis 正向拉伸；base=false 时 center 表示几何中点。等半径时为圆草图加凸台；圆锥台会近似，非 Z 轴圆锥台暂不支持。"
+        },
+        {
+          "feature_id": "side-mid-hole",
+          "kind": "cylinder",
+          "status": "exact",
+          "reason": "center 默认表示轴向底面中心(base=true)，height 沿 axis 正向拉伸；base=false 时 center 表示几何中点。等半径时为圆草图加凸台；圆锥台会近似，非 Z 轴圆锥台暂不支持。"
+        },
+        {
+          "feature_id": "side-bot-hole",
+          "kind": "cylinder",
+          "status": "exact",
+          "reason": "center 默认表示轴向底面中心(base=true)，height 沿 axis 正向拉伸；base=false 时 center 表示几何中点。等半径时为圆草图加凸台；圆锥台会近似，非 Z 轴圆锥台暂不支持。"
+        },
+        {
+          "feature_id": "pocket-mid-hole",
+          "kind": "cylinder",
+          "status": "exact",
+          "reason": "center 默认表示轴向底面中心(base=true)，height 沿 axis 正向拉伸；base=false 时 center 表示几何中点。等半径时为圆草图加凸台；圆锥台会近似，非 Z 轴圆锥台暂不支持。"
+        },
+        {
+          "feature_id": "pocket-bot-hole",
+          "kind": "cylinder",
+          "status": "exact",
+          "reason": "center 默认表示轴向底面中心(base=true)，height 沿 axis 正向拉伸；base=false 时 center 表示几何中点。等半径时为圆草图加凸台；圆锥台会近似，非 Z 轴圆锥台暂不支持。"
+        },
+        {
+          "feature_id": "pocket-top-cut",
+          "kind": "cylinder",
+          "status": "exact",
+          "reason": "center 默认表示轴向底面中心(base=true)，height 沿 axis 正向拉伸；base=false 时 center 表示几何中点。等半径时为圆草图加凸台；圆锥台会近似，非 Z 轴圆锥台暂不支持。"
+        }
+      ],
+      "geometry_support": [
+        {
+          "feature_id": "base-block",
+          "kind": "box",
+          "status": "exact",
+          "reason": "OCCT 棱柱；带圆角/倒角时沿用离散轮廓近似",
+          "backend": "occt_brep"
+        },
+        {
+          "feature_id": "front-pocket",
+          "kind": "box",
+          "status": "exact",
+          "reason": "OCCT 棱柱；带圆角/倒角时沿用离散轮廓近似",
+          "backend": "occt_brep"
+        },
+        {
+          "feature_id": "side-top-hole",
+          "kind": "cylinder",
+          "status": "exact",
+          "reason": "解析圆柱或圆锥面",
+          "backend": "occt_brep"
+        },
+        {
+          "feature_id": "side-mid-hole",
+          "kind": "cylinder",
+          "status": "exact",
+          "reason": "解析圆柱或圆锥面",
+          "backend": "occt_brep"
+        },
+        {
+          "feature_id": "side-bot-hole",
+          "kind": "cylinder",
+          "status": "exact",
+          "reason": "解析圆柱或圆锥面",
+          "backend": "occt_brep"
+        },
+        {
+          "feature_id": "pocket-mid-hole",
+          "kind": "cylinder",
+          "status": "exact",
+          "reason": "解析圆柱或圆锥面",
+          "backend": "occt_brep"
+        },
+        {
+          "feature_id": "pocket-bot-hole",
+          "kind": "cylinder",
+          "status": "exact",
+          "reason": "解析圆柱或圆锥面",
+          "backend": "occt_brep"
+        },
+        {
+          "feature_id": "pocket-top-cut",
+          "kind": "cylinder",
+          "status": "exact",
+          "reason": "解析圆柱或圆锥面",
+          "backend": "occt_brep"
+        }
+      ],
+      "warnings": [],
+      "schema_version": "1.0"
+    },
+    "geometry_backend": "occt_brep",
+    "native_brep": {
+      "backend": "occt_brep",
+      "kernel": "可用：OCCT 7.9.3.1 / cadquery-ocp-novtk 7.9.3.1.1",
+      "geometry_state": "passed",
+      "state": "passed",
+      "brep_valid": true,
+      "shape_type": "TopAbs_COMPOUND",
+      "solid_count": 1,
+      "connected_component_count": 1,
+      "shell_count": 1,
+      "closed_shell_count": 1,
+      "closed": true,
+      "edge_count": 102,
+      "face_count": 19,
+      "free_edge_count": 0,
+      "volume_mm3": 52705.39864570712,
+      "bbox_mm": [
+        -20.0,
+        0.0,
+        0.0,
+        20.0,
+        30.0,
+        60.0
+      ],
+      "self_intersection": {
+        "status": "checked_no_intersection",
+        "face_count": 19,
+        "check_result_count": 0,
+        "check_statuses": [],
+        "method": "BOPAlgo_ArgumentAnalyzer(SelfInterMode=True, UseOBB=True)"
+      },
+      "validity_method": "BRepCheck_Analyzer",
+      "geometry_scope": "native_OCCT_BREP_only_visual_comparison_not_performed",
+      "hole_feature_count": 0,
+      "planned_hole_instance_count": 0,
+      "active_hole_instance_count": 0,
+      "superseded_hole_instance_count": 0,
+      "active_through_hole_count": 0,
+      "through_hole_count": 0,
+      "all_declared_holes_verified": true,
+      "visual_validation": "not_performed",
+      "catia_executed": false,
+      "build_transaction": "每个特征验证成功后才提交；失败保留上一有效实体"
+    },
+    "catia_executed": false,
+    "dimensions": {
+      "unit": "mm",
+      "bbox": [
+        -20.0,
+        0.0,
+        0.0,
+        20.0,
+        30.0,
+        60.0
+      ],
+      "size": [
+        40.0,
+        30.0,
+        60.0
+      ],
+      "volume_mm3": 52705.39864570712,
+      "surface_area_mm2": 14573.539665617982,
+      "triangles": 1000,
+      "feature_count": 8
+    },
+    "catia_operations": [
+      {
+        "index": 1,
+        "kind": "rect_pad",
+        "plane": "XY",
+        "center": [
+          0.0,
+          15.0,
+          0.0
+        ],
+        "profile": [],
+        "dimensions": {
+          "l": 40.0,
+          "w": 30.0,
+          "r": 0.0,
+          "h": 60.0,
+          "depth": 0.0
+        },
+        "name": "Base Block",
+        "note": "长方体 40 × 30 × 60 mm"
+      },
+      {
+        "index": 2,
+        "kind": "rect_cut",
+        "plane": "XY",
+        "center": [
+          0.0,
+          20.000500000000002,
+          60.0
+        ],
+        "profile": [],
+        "dimensions": {
+          "l": 12.0,
+          "w": 20.001,
+          "r": 0.0,
+          "h": 60.0,
+          "depth": 60.0
+        },
+        "name": "Front Pocket",
+        "note": "长方体 12 × 20 × 60 mm"
+      },
+      {
+        "index": 3,
+        "kind": "circle_cut",
+        "plane": "X",
+        "center": [
+          15.0,
+          52.0,
+          20.000999999999998
+        ],
+        "profile": [],
+        "dimensions": {
+          "l": 0.0,
+          "w": 0.0,
+          "r": 4.0,
+          "h": 40.001,
+          "depth": 40.001
+        },
+        "name": "Side Top Hole",
+        "note": "圆柱 ⌀8 × 40 mm"
+      },
+      {
+        "index": 4,
+        "kind": "circle_cut",
+        "plane": "X",
+        "center": [
+          15.0,
+          30.0,
+          20.000999999999998
+        ],
+        "profile": [],
+        "dimensions": {
+          "l": 0.0,
+          "w": 0.0,
+          "r": 3.0,
+          "h": 40.001,
+          "depth": 40.001
+        },
+        "name": "Side Middle Hole",
+        "note": "圆柱 ⌀6 × 40 mm"
+      },
+      {
+        "index": 5,
+        "kind": "circle_cut",
+        "plane": "X",
+        "center": [
+          15.0,
+          8.0,
+          20.000999999999998
+        ],
+        "profile": [],
+        "dimensions": {
+          "l": 0.0,
+          "w": 0.0,
+          "r": 4.0,
+          "h": 40.001,
+          "depth": 40.001
+        },
+        "name": "Side Bottom Hole",
+        "note": "圆柱 ⌀8 × 40 mm"
+      },
+      {
+        "index": 6,
+        "kind": "circle_cut",
+        "plane": "Y",
+        "center": [
+          30.0,
+          0.0,
+          10.001
+        ],
+        "profile": [],
+        "dimensions": {
+          "l": 0.0,
+          "w": 0.0,
+          "r": 3.0,
+          "h": 10.001,
+          "depth": 10.001
+        },
+        "name": "Pocket Middle Hole",
+        "note": "圆柱 ⌀6 × 10 mm"
+      },
+      {
+        "index": 7,
+        "kind": "circle_cut",
+        "plane": "Y",
+        "center": [
+          8.0,
+          0.0,
+          10.001
+        ],
+        "profile": [],
+        "dimensions": {
+          "l": 0.0,
+          "w": 0.0,
+          "r": 4.0,
+          "h": 10.001,
+          "depth": 10.001
+        },
+        "name": "Pocket Bottom Hole",
+        "note": "圆柱 ⌀8 × 10 mm"
+      },
+      {
+        "index": 8,
+        "kind": "circle_cut",
+        "plane": "Y",
+        "center": [
+          52.0,
+          0.0,
+          10.001
+        ],
+        "profile": [],
+        "dimensions": {
+          "l": 0.0,
+          "w": 0.0,
+          "r": 4.0,
+          "h": 10.001,
+          "depth": 10.001
+        },
+        "name": "Pocket Top Cut",
+        "note": "圆柱 ⌀8 × 10 mm"
+      }
+    ],
+    "warnings": [],
+    "feature_manifest": {
+      "base-block": {
+        "kind": "box",
+        "operation": "add",
+        "name": "Base Block",
+        "parameters": {
+          "length": 40,
+          "width": 30,
+          "height": 60,
+          "center": [
+            0,
+            15,
+            30
+          ]
+        },
+        "sources": {
+          "length": {
+            "type": "image_estimate",
+            "evidence": "iso grid proportion: block spans about 4 grid units; assumed 10 mm unit",
+            "note": "overall X width ~40 mm"
+          },
+          "width": {
+            "type": "image_estimate",
+            "evidence": "depth spans about 3 grid units",
+            "note": "overall Y depth ~30 mm"
+          },
+          "height": {
+            "type": "image_estimate",
+            "evidence": "height spans about 6 grid units",
+            "note": "overall Z height ~60 mm"
+          },
+          "center": {
+            "type": "derived",
+            "evidence": "box centered on origin XZ plane, Y offset = half depth",
+            "note": "center from L/2, W/2, H/2 placement"
+          }
+        },
+        "relations": []
+      },
+      "front-pocket": {
+        "kind": "box",
+        "operation": "cut",
+        "name": "Front Pocket",
+        "parameters": {
+          "length": 12.0,
+          "width": 20.001,
+          "height": 60.0,
+          "center": [
+            0.0,
+            20.000500000000002,
+            30.0
+          ]
+        },
+        "sources": {
+          "length": {
+            "type": "image_estimate",
+            "evidence": "recess width visually about 1/3 of block width; full height; reaches roughly 2/3 of depth leaving back wall 图像/用户依据：凹槽比例估计。"
+          },
+          "width": {
+            "type": "image_estimate",
+            "evidence": "recess width visually about 1/3 of block width; full height; reaches roughly 2/3 of depth leaving back wall 图像/用户依据：凹槽比例估计。"
+          },
+          "height": {
+            "type": "image_estimate",
+            "evidence": "recess width visually about 1/3 of block width; full height; reaches roughly 2/3 of depth leaving back wall 图像/用户依据：凹槽比例估计。"
+          },
+          "center": {
+            "type": "derived",
+            "evidence": "由主 box 表面坐标与凹入深度计算切除体中心。"
+          }
+        },
+        "relations": []
+      },
+      "side-top-hole": {
+        "kind": "cylinder",
+        "operation": "cut",
+        "name": "Side Top Hole",
+        "parameters": {
+          "radius": 4,
+          "height": 40.001,
+          "axis": "X",
+          "center": [
+            -20,
+            15,
+            52
+          ],
+          "base": true
+        },
+        "sources": {
+          "radius": {
+            "type": "derived",
+            "evidence": "diameter 8 mm / 2",
+            "note": "radius 4 mm"
+          },
+          "height": {
+            "type": "derived",
+            "evidence": "total width plus margin",
+            "note": "40.001 mm"
+          },
+          "axis": {
+            "type": "derived",
+            "evidence": "horizontal bore along X",
+            "note": "axis X"
+          },
+          "center": {
+            "type": "derived",
+            "evidence": "base-center on left outer face top row",
+            "note": "X=-20, Y=15, Z=52"
+          }
+        },
+        "relations": []
+      },
+      "side-mid-hole": {
+        "kind": "cylinder",
+        "operation": "cut",
+        "name": "Side Middle Hole",
+        "parameters": {
+          "radius": 3,
+          "height": 40.001,
+          "axis": "X",
+          "center": [
+            -20,
+            15,
+            30
+          ],
+          "base": true
+        },
+        "sources": {
+          "radius": {
+            "type": "derived",
+            "evidence": "diameter 6 mm / 2",
+            "note": "radius 3 mm"
+          },
+          "height": {
+            "type": "derived",
+            "evidence": "total width plus margin",
+            "note": "40.001 mm"
+          },
+          "axis": {
+            "type": "derived",
+            "evidence": "horizontal bore along X",
+            "note": "axis X"
+          },
+          "center": {
+            "type": "derived",
+            "evidence": "base-center on left outer face middle row",
+            "note": "X=-20, Y=15, Z=30"
+          }
+        },
+        "relations": []
+      },
+      "side-bot-hole": {
+        "kind": "cylinder",
+        "operation": "cut",
+        "name": "Side Bottom Hole",
+        "parameters": {
+          "radius": 4,
+          "height": 40.001,
+          "axis": "X",
+          "center": [
+            -20,
+            15,
+            8
+          ],
+          "base": true
+        },
+        "sources": {
+          "radius": {
+            "type": "derived",
+            "evidence": "diameter 8 mm / 2",
+            "note": "radius 4 mm"
+          },
+          "height": {
+            "type": "derived",
+            "evidence": "total width plus margin",
+            "note": "40.001 mm"
+          },
+          "axis": {
+            "type": "derived",
+            "evidence": "horizontal bore along X",
+            "note": "axis X"
+          },
+          "center": {
+            "type": "derived",
+            "evidence": "base-center on left outer face bottom row",
+            "note": "X=-20, Y=15, Z=8"
+          }
+        },
+        "relations": []
+      },
+      "pocket-mid-hole": {
+        "kind": "cylinder",
+        "operation": "cut",
+        "name": "Pocket Middle Hole",
+        "parameters": {
+          "radius": 3,
+          "height": 10.001,
+          "axis": "Y",
+          "center": [
+            0,
+            0,
+            30
+          ],
+          "base": true
+        },
+        "sources": {
+          "radius": {
+            "type": "derived",
+            "evidence": "diameter 6 mm / 2",
+            "note": "radius 3 mm"
+          },
+          "height": {
+            "type": "derived",
+            "evidence": "back wall thickness plus margin",
+            "note": "10.001 mm"
+          },
+          "axis": {
+            "type": "derived",
+            "evidence": "bore from back face toward pocket bottom along Y",
+            "note": "axis Y"
+          },
+          "center": {
+            "type": "derived",
+            "evidence": "base-center on back face middle row",
+            "note": "X=0, Y=0, Z=30"
+          }
+        },
+        "relations": []
+      },
+      "pocket-bot-hole": {
+        "kind": "cylinder",
+        "operation": "cut",
+        "name": "Pocket Bottom Hole",
+        "parameters": {
+          "radius": 4,
+          "height": 10.001,
+          "axis": "Y",
+          "center": [
+            0,
+            0,
+            8
+          ],
+          "base": true
+        },
+        "sources": {
+          "radius": {
+            "type": "derived",
+            "evidence": "diameter 8 mm / 2",
+            "note": "radius 4 mm"
+          },
+          "height": {
+            "type": "derived",
+            "evidence": "back wall thickness plus margin",
+            "note": "10.001 mm"
+          },
+          "axis": {
+            "type": "derived",
+            "evidence": "bore from back face toward pocket bottom along Y",
+            "note": "axis Y"
+          },
+          "center": {
+            "type": "derived",
+            "evidence": "base-center on back face bottom row",
+            "note": "X=0, Y=0, Z=8"
+          }
+        },
+        "relations": []
+      },
+      "pocket-top-cut": {
+        "kind": "cylinder",
+        "operation": "cut",
+        "name": "Pocket Top Cut",
+        "parameters": {
+          "radius": 4,
+          "height": 10.001,
+          "axis": "Y",
+          "center": [
+            0,
+            0,
+            52
+          ],
+          "base": true
+        },
+        "sources": {
+          "radius": {
+            "type": "derived",
+            "evidence": "diameter 8 mm / 2",
+            "note": "radius 4 mm"
+          },
+          "height": {
+            "type": "derived",
+            "evidence": "back wall thickness plus margin",
+            "note": "10.001 mm"
+          },
+          "axis": {
+            "type": "derived",
+            "evidence": "bore from back face toward pocket bottom along Y",
+            "note": "axis Y"
+          },
+          "center": {
+            "type": "derived",
+            "evidence": "base-center on back face top row",
+            "note": "X=0, Y=0, Z=52"
+          }
+        },
+        "relations": []
+      }
+    },
+    "build_log": [
+      "[基准] 长方体 40 × 30 × 60 mm → 8 面",
+      "[切除] 长方体 12 × 20 × 60 mm → 20 面",
+      "[切除] 圆柱 ⌀8 × 40 mm → 304 面",
+      "[切除] 圆柱 ⌀6 × 40 mm → 792 面",
+      "[切除] 圆柱 ⌀8 × 40 mm → 1486 面",
+      "[切除] 圆柱 ⌀6 × 10 mm → 1628 面",
+      "[切除] 圆柱 ⌀8 × 10 mm → 1933 面",
+      "[切除] 圆柱 ⌀8 × 10 mm → 2075 面"
+    ],
+    "local_geometry_checks": {
+      "backend": "occt_brep",
+      "kernel": "可用：OCCT 7.9.3.1 / cadquery-ocp-novtk 7.9.3.1.1",
+      "geometry_state": "passed",
+      "state": "passed",
+      "brep_valid": true,
+      "shape_type": "TopAbs_COMPOUND",
+      "solid_count": 1,
+      "connected_component_count": 1,
+      "shell_count": 1,
+      "closed_shell_count": 1,
+      "closed": true,
+      "edge_count": 102,
+      "face_count": 19,
+      "free_edge_count": 0,
+      "volume_mm3": 52705.39864570712,
+      "bbox_mm": [
+        -20.0,
+        0.0,
+        0.0,
+        20.0,
+        30.0,
+        60.0
+      ],
+      "self_intersection": {
+        "status": "checked_no_intersection",
+        "face_count": 19,
+        "check_result_count": 0,
+        "check_statuses": [],
+        "method": "BOPAlgo_ArgumentAnalyzer(SelfInterMode=True, UseOBB=True)"
+      },
+      "validity_method": "BRepCheck_Analyzer",
+      "geometry_scope": "native_OCCT_BREP_only_visual_comparison_not_performed",
+      "feature_results": [
+        {
+          "feature_id": "base-block",
+          "kind": "box",
+          "operation": "add",
+          "geometry_support": "exact",
+          "builder": "analytic_prism",
+          "state": "applied",
+          "source_feature_id": null,
+          "source_resolution": null,
+          "solid_count": 1,
+          "brep_valid": true,
+          "before_volume_mm3": 0.0,
+          "after_volume_mm3": 72000.0,
+          "volume_delta_mm3": 72000.0,
+          "depth_measurement": null,
+          "facet_count": null
+        },
+        {
+          "feature_id": "front-pocket",
+          "kind": "box",
+          "operation": "cut",
+          "geometry_support": "exact",
+          "builder": "analytic_prism",
+          "state": "applied",
+          "source_feature_id": null,
+          "source_resolution": null,
+          "solid_count": 1,
+          "brep_valid": true,
+          "before_volume_mm3": 72000.0,
+          "after_volume_mm3": 57600.0,
+          "volume_delta_mm3": -14400.0,
+          "depth_measurement": null,
+          "facet_count": null
+        },
+        {
+          "feature_id": "side-top-hole",
+          "kind": "cylinder",
+          "operation": "cut",
+          "geometry_support": "exact",
+          "builder": "analytic_cylinder_or_cone",
+          "state": "applied",
+          "source_feature_id": null,
+          "source_resolution": null,
+          "solid_count": 1,
+          "brep_valid": true,
+          "before_volume_mm3": 57600.0,
+          "after_volume_mm3": 56192.566491191785,
+          "volume_delta_mm3": -1407.4335088082153,
+          "depth_measurement": null,
+          "facet_count": null
+        },
+        {
+          "feature_id": "side-mid-hole",
+          "kind": "cylinder",
+          "operation": "cut",
+          "geometry_support": "exact",
+          "builder": "analytic_cylinder_or_cone",
+          "state": "applied",
+          "source_feature_id": null,
+          "source_resolution": null,
+          "solid_count": 1,
+          "brep_valid": true,
+          "before_volume_mm3": 56192.566491191785,
+          "after_volume_mm3": 55400.88514248714,
+          "volume_delta_mm3": -791.6813487046456,
+          "depth_measurement": null,
+          "facet_count": null
+        },
+        {
+          "feature_id": "side-bot-hole",
+          "kind": "cylinder",
+          "operation": "cut",
+          "geometry_support": "exact",
+          "builder": "analytic_cylinder_or_cone",
+          "state": "applied",
+          "source_feature_id": null,
+          "source_resolution": null,
+          "solid_count": 1,
+          "brep_valid": true,
+          "before_volume_mm3": 55400.88514248714,
+          "after_volume_mm3": 53993.45163367892,
+          "volume_delta_mm3": -1407.4335088082225,
+          "depth_measurement": null,
+          "facet_count": null
+        },
+        {
+          "feature_id": "pocket-mid-hole",
+          "kind": "cylinder",
+          "operation": "cut",
+          "geometry_support": "exact",
+          "builder": "analytic_cylinder_or_cone",
+          "state": "applied",
+          "source_feature_id": null,
+          "source_resolution": null,
+          "solid_count": 1,
+          "brep_valid": true,
+          "before_volume_mm3": 53993.45163367892,
+          "after_volume_mm3": 53710.70829485584,
+          "volume_delta_mm3": -282.7433388230784,
+          "depth_measurement": null,
+          "facet_count": null
+        },
+        {
+          "feature_id": "pocket-bot-hole",
+          "kind": "cylinder",
+          "operation": "cut",
+          "geometry_support": "exact",
+          "builder": "analytic_cylinder_or_cone",
+          "state": "applied",
+          "source_feature_id": null,
+          "source_resolution": null,
+          "solid_count": 1,
+          "brep_valid": true,
+          "before_volume_mm3": 53710.70829485584,
+          "after_volume_mm3": 53208.053470281484,
+          "volume_delta_mm3": -502.6548245743543,
+          "depth_measurement": null,
+          "facet_count": null
+        },
+        {
+          "feature_id": "pocket-top-cut",
+          "kind": "cylinder",
+          "operation": "cut",
+          "geometry_support": "exact",
+          "builder": "analytic_cylinder_or_cone",
+          "state": "applied",
+          "source_feature_id": null,
+          "source_resolution": null,
+          "solid_count": 1,
+          "brep_valid": true,
+          "before_volume_mm3": 53208.053470281484,
+          "after_volume_mm3": 52705.39864570712,
+          "volume_delta_mm3": -502.65482457436156,
+          "depth_measurement": null,
+          "facet_count": null
+        }
+      ],
+      "hole_instances": [],
+      "hole_feature_count": 0,
+      "planned_hole_instance_count": 0,
+      "active_hole_instance_count": 0,
+      "superseded_hole_instance_count": 0,
+      "active_through_hole_count": 0,
+      "through_hole_count": 0,
+      "all_declared_holes_verified": true,
+      "visual_validation": "not_performed",
+      "catia_executed": false,
+      "build_transaction": "每个特征验证成功后才提交；失败保留上一有效实体",
+      "source": "OpenCASCADE native BREP; preview mesh is display-only",
+      "bbox_size_mm": [
+        40.0,
+        30.0,
+        60.0
+      ],
+      "bbox_ratios_from_brep": {
+        "front_width_height": 0.6666666666666666,
+        "depth_height": 0.5,
+        "top_width_depth": 1.3333333333333333
+      },
+      "bbox_ratios_from_mesh": {
+        "front_width_height": 0.6666666666666666,
+        "depth_height": 0.5,
+        "top_width_depth": 1.3333333333333333
+      },
+      "feature_count_from_plan": 8,
+      "feature_ids_from_plan": [
+        "base-block",
+        "front-pocket",
+        "side-top-hole",
+        "side-mid-hole",
+        "side-bot-hole",
+        "pocket-mid-hole",
+        "pocket-bot-hole",
+        "pocket-top-cut"
+      ],
+      "hole_features_from_plan": [],
+      "hole_feature_count_from_plan": 0,
+      "expected_hole_instance_count": 0,
+      "hole_instance_count": 0,
+      "through_hole_checks": [],
+      "through_hole_mesh_checks": [],
+      "hole_measurement_complete": true,
+      "through_hole_count_expected": 0,
+      "through_hole_count_verified": 0,
+      "through_hole_result": "no_holes_declared",
+      "image_estimate_parameters": [
+        {
+          "feature_id": "base-block",
+          "parameter": "length",
+          "value": 40,
+          "evidence": "iso grid proportion: block spans about 4 grid units; assumed 10 mm unit",
+          "visual_measurement": "not_performed_by_geometry_backend"
+        },
+        {
+          "feature_id": "base-block",
+          "parameter": "width",
+          "value": 30,
+          "evidence": "depth spans about 3 grid units",
+          "visual_measurement": "not_performed_by_geometry_backend"
+        },
+        {
+          "feature_id": "base-block",
+          "parameter": "height",
+          "value": 60,
+          "evidence": "height spans about 6 grid units",
+          "visual_measurement": "not_performed_by_geometry_backend"
+        },
+        {
+          "feature_id": "front-pocket",
+          "parameter": "length",
+          "value": 12.0,
+          "evidence": "recess width visually about 1/3 of block width; full height; reaches roughly 2/3 of depth leaving back wall 图像/用户依据：凹槽比例估计。",
+          "visual_measurement": "not_performed_by_geometry_backend"
+        },
+        {
+          "feature_id": "front-pocket",
+          "parameter": "width",
+          "value": 20.001,
+          "evidence": "recess width visually about 1/3 of block width; full height; reaches roughly 2/3 of depth leaving back wall 图像/用户依据：凹槽比例估计。",
+          "visual_measurement": "not_performed_by_geometry_backend"
+        },
+        {
+          "feature_id": "front-pocket",
+          "parameter": "height",
+          "value": 60.0,
+          "evidence": "recess width visually about 1/3 of block width; full height; reaches roughly 2/3 of depth leaving back wall 图像/用户依据：凹槽比例估计。",
+          "visual_measurement": "not_performed_by_geometry_backend"
+        }
+      ],
+      "catia_geometry_verification": "not_performed"
+    },
+    "orthographic_layout": {
+      "unit": "mm",
+      "axes": {
+        "length": "X",
+        "width": "Y",
+        "height": "Z"
+      },
+      "uniform_scale_across_views": true,
+      "scale_pixels_per_mm": 3.5533333333333337,
+      "tile_size_pixels": [
+        330,
+        260
+      ],
+      "view_extents": {
+        "front": {
+          "horizontal_axis": "X",
+          "horizontal": 40.0,
+          "vertical_axis": "Z",
+          "vertical": 60.0
+        },
+        "right": {
+          "horizontal_axis": "Y",
+          "horizontal": 30.0,
+          "vertical_axis": "Z",
+          "vertical": 60.0
+        },
+        "top": {
+          "horizontal_axis": "X",
+          "horizontal": 40.0,
+          "vertical_axis": "Y",
+          "vertical": 30.0
+        }
+      },
+      "dimension_ratios": {
+        "length_to_height": 0.6666666666666666,
+        "width_to_height": 0.5,
+        "length_to_width": 1.3333333333333333
+      }
+    },
+    "preview_image": "C:\\Users\\lycohana\\AppData\\Local\\AI Modeler\\dsh\\sessions\\cold-fresh-20261001-d78fc15f\\previews\\r72-g11-left.png",
+    "preview_image_views": [
+      "left"
+    ],
+    "preview_image_view_set": "left",
+    "preview_image_grid_columns": 1,
+    "preview_image_source": "OCCT BREP tessellated for display; not a CATIA screenshot",
+    "preview_render_style": "view-adaptive depth-cued matte shading with visible feature edges",
+    "preview_render_note": "诊断渲染：凹入或远离相机的表面会略暗，清晰线条表示可见的几何折边；亮暗不是零件材质颜色，需结合其它视图判断。",
+    "preview_image_layout": {
+      "unit": "mm",
+      "axes": {
+        "length": "X",
+        "width": "Y",
+        "height": "Z"
+      },
+      "uniform_scale_across_views": true,
+      "scale_pixels_per_mm": 3.5533333333333337,
+      "tile_size_pixels": [
+        330,
+        260
+      ],
+      "view_extents": {
+        "front": {
+          "horizontal_axis": "X",
+          "horizontal": 40.0,
+          "vertical_axis": "Z",
+          "vertical": 60.0
+        },
+        "right": {
+          "horizontal_axis": "Y",
+          "horizontal": 30.0,
+          "vertical_axis": "Z",
+          "vertical": 60.0
+        },
+        "top": {
+          "horizontal_axis": "X",
+          "horizontal": 40.0,
+          "vertical_axis": "Y",
+          "vertical": 30.0
+        }
+      },
+      "dimension_ratios": {
+        "length_to_height": 0.6666666666666666,
+        "width_to_height": 0.5,
+        "length_to_width": 1.3333333333333333
+      }
+    },
+    "preview_generation": 11
+  },
+  "visual_review": {
+    "revision": 72,
+    "view": "left",
+    "preview_generation": 11,
+    "visible_evidence": "Left orthographic preview from revision 72: the left outer face is fully visible and shows three vertically aligned holes (top and bottom larger, middle smaller).",
+    "issues": [
+      {
+        "status": "match",
+        "severity": "low",
+        "item": "left-side vertical hole column sizes and count",
+        "reference_evidence": "reference iso shows three holes on the left outer face with top and bottom larger than the middle",
+        "model_evidence": "left view confirms side-top-hole, side-mid-hole, side-bot-hole produce diameters 8, 6, 8 mm on the left face",
+        "affected_feature_ids": [
+          "side-top-hole",
+          "side-mid-hole",
+          "side-bot-hole"
+        ],
+        "suggested_change": ""
+      }
+    ],
+    "unresolved": [
+      "absolute dimensions are image estimates; no annotated scale",
+      "back/pocket-bottom holes are hidden from the left view"
+    ],
+    "recorded_at": 1790835802.552388
+  },
+  "visual_reviews": {
+    "iso": {
+      "revision": 72,
+      "view": "iso",
+      "preview_generation": 9,
+      "visible_evidence": "Iso preview of the completed model from revision 72: U-shaped rectangular block with a full-height front pocket; the near (right) face shows three vertically aligned holes (top and bottom larger, middle smaller); the recessed back wall shows circular openings of the three pocket-bottom holes. The left side and back face are occluded in this view.",
+      "issues": [
+        {
+          "status": "match",
+          "severity": "low",
+          "item": "overall U-block silhouette with front pocket",
+          "reference_evidence": "reference iso shows a rectangular block with a central front recess running full height, forming two side walls",
+          "model_evidence": "model has a 40x30x60 mm block with a 12x60x20 mm front pocket creating the same U-like silhouette",
+          "affected_feature_ids": [
+            "base-block",
+            "front-pocket"
+          ],
+          "suggested_change": "none"
+        },
+        {
+          "status": "match",
+          "severity": "low",
+          "item": "right-side vertical hole column sizes and count",
+          "reference_evidence": "right outer face shows three holes: top and bottom appear larger/cyan, middle smaller/dark blue",
+          "model_evidence": "side-top-hole, side-mid-hole, side-bot-hole create three bores with diameters 8, 6, 8 mm visible on the right face",
+          "affected_feature_ids": [
+            "side-top-hole",
+            "side-mid-hole",
+            "side-bot-hole"
+          ],
+          "suggested_change": "none"
+        },
+        {
+          "status": "partial",
+          "severity": "medium",
+          "item": "left-side vertical hole column",
+          "reference_evidence": "reference iso also shows three holes on the left outer face",
+          "model_evidence": "same side cylinders exit on the left face, but this face is occluded in the iso preview so it cannot be directly verified",
+          "affected_feature_ids": [
+            "side-top-hole",
+            "side-mid-hole",
+            "side-bot-hole"
+          ],
+          "suggested_change": ""
+        },
+        {
+          "status": "partial",
+          "severity": "medium",
+          "item": "pocket-bottom (back-wall) vertical hole column",
+          "reference_evidence": "center column of three holes is visible on the copper-colored back wall of the recess",
+          "model_evidence": "pocket-top-cut, pocket-mid-hole, pocket-bot-hole create three bores through the back wall; openings are present but the iso view is too shadowed to verify size contrast",
+          "affected_feature_ids": [
+            "pocket-top-cut",
+            "pocket-mid-hole",
+            "pocket-bot-hole"
+          ],
+          "suggested_change": ""
+        }
+      ],
+      "unresolved": [
+        "absolute dimensions are image estimates only; no annotated scale",
+        "left face and back face not directly visible in single iso preview",
+        "hole positions were estimated from the iso grid proportion"
+      ],
+      "recorded_at": 1790835781.7015214
+    },
+    "left": {
+      "revision": 72,
+      "view": "left",
+      "preview_generation": 11,
+      "visible_evidence": "Left orthographic preview from revision 72: the left outer face is fully visible and shows three vertically aligned holes (top and bottom larger, middle smaller).",
+      "issues": [
+        {
+          "status": "match",
+          "severity": "low",
+          "item": "left-side vertical hole column sizes and count",
+          "reference_evidence": "reference iso shows three holes on the left outer face with top and bottom larger than the middle",
+          "model_evidence": "left view confirms side-top-hole, side-mid-hole, side-bot-hole produce diameters 8, 6, 8 mm on the left face",
+          "affected_feature_ids": [
+            "side-top-hole",
+            "side-mid-hole",
+            "side-bot-hole"
+          ],
+          "suggested_change": ""
+        }
+      ],
+      "unresolved": [
+        "absolute dimensions are image estimates; no annotated scale",
+        "back/pocket-bottom holes are hidden from the left view"
+      ],
+      "recorded_at": 1790835802.552388
+    }
+  },
+  "reference_similarity_reviews": {},
+  "reference_similarity_history": [],
+  "visual_evidence_summary": {
+    "revision": 72,
+    "references": {
+      "sha256:53ed87fadf8cca869da921627e6a13c845424c6906b3de517d5cca972db94553": {
+        "reference_id": "sha256:53ed87fadf8cca869da921627e6a13c845424c6906b3de517d5cca972db94553",
+        "filename": "user-nine-hole-recess-iso.png",
+        "comparable_pairs": 0,
+        "noncomparable_pairs": 0,
+        "supported_evidence_ids": [],
+        "estimated_evidence_ids": [],
+        "mismatch_evidence_ids": [],
+        "unobservable_evidence_ids": [],
+        "coverage_status": "unverified",
+        "covered": false
+      }
+    },
+    "latest_review_pairs": 0,
+    "comparable_review_pairs": 0,
+    "noncomparable_review_pairs": 0,
+    "all_references_covered": false
+  },
+  "knowledge_search": {
+    "status": "no_match",
+    "query": "按参考图复刻，尺寸未标注请自行估量。",
+    "matches": [],
+    "negative_examples": [],
+    "image_query_supported": false,
+    "visual_fallback_available": false,
+    "score_meaning": "relevance 是词面相关度排序分数，不是准确率或置信概率。",
+    "message": "当前文字描述没有达到相似检索阈值；这不代表库外不存在对应工件。",
+    "modeling_recipes": []
+  },
+  "knowledge_visual_examples": [],
+  "construction_milestone": {
+    "milestone": "main geometry and nine holes complete",
+    "completed_feature_ids": [
+      "base-block",
+      "front-pocket",
+      "side-top-hole",
+      "side-mid-hole",
+      "side-bot-hole",
+      "pocket-mid-hole",
+      "pocket-bot-hole",
+      "pocket-top-cut"
+    ],
+    "expected_feature_ids": [],
+    "notes": "All intended features modeled; pocket top hole uses ID pocket-top-cut due to prior failure guard.",
+    "revision": 72,
+    "updated_at": 1790835588.950531
+  },
+  "last_valid_candidate": {
+    "revision": 72,
+    "geometry_signature": "d9489edcf27fe6568e9070cf14f383788962a36d690ee92fb6de2196395ee3a4",
+    "rank": [
+      -0.0,
+      -0.0,
+      -0.0,
+      0.0,
+      1.0,
+      1.0,
+      1.0,
+      1.0
+    ],
+    "dimensions": {
+      "unit": "mm",
+      "bbox": [
+        -20.0,
+        0.0,
+        0.0,
+        20.0,
+        30.0,
+        60.0
+      ],
+      "size": [
+        40.0,
+        30.0,
+        60.0
+      ],
+      "volume_mm3": 52705.39864570712,
+      "surface_area_mm2": 14573.539665617982,
+      "triangles": 1000,
+      "feature_count": 8
+    }
+  },
+  "best_evidence_candidate": {
+    "revision": null,
+    "geometry_signature": null,
+    "rank": null,
+    "dimensions": null
+  },
+  "local_geometry_checks": {
+    "backend": "occt_brep",
+    "kernel": "可用：OCCT 7.9.3.1 / cadquery-ocp-novtk 7.9.3.1.1",
+    "geometry_state": "passed",
+    "state": "passed",
+    "brep_valid": true,
+    "shape_type": "TopAbs_COMPOUND",
+    "solid_count": 1,
+    "connected_component_count": 1,
+    "shell_count": 1,
+    "closed_shell_count": 1,
+    "closed": true,
+    "edge_count": 102,
+    "face_count": 19,
+    "free_edge_count": 0,
+    "volume_mm3": 52705.39864570712,
+    "bbox_mm": [
+      -20.0,
+      0.0,
+      0.0,
+      20.0,
+      30.0,
+      60.0
+    ],
+    "self_intersection": {
+      "status": "checked_no_intersection",
+      "face_count": 19,
+      "check_result_count": 0,
+      "check_statuses": [],
+      "method": "BOPAlgo_ArgumentAnalyzer(SelfInterMode=True, UseOBB=True)"
+    },
+    "validity_method": "BRepCheck_Analyzer",
+    "geometry_scope": "native_OCCT_BREP_only_visual_comparison_not_performed",
+    "feature_results": [
+      {
+        "feature_id": "base-block",
+        "kind": "box",
+        "operation": "add",
+        "geometry_support": "exact",
+        "builder": "analytic_prism",
+        "state": "applied",
+        "source_feature_id": null,
+        "source_resolution": null,
+        "solid_count": 1,
+        "brep_valid": true,
+        "before_volume_mm3": 0.0,
+        "after_volume_mm3": 72000.0,
+        "volume_delta_mm3": 72000.0,
+        "depth_measurement": null,
+        "facet_count": null
+      },
+      {
+        "feature_id": "front-pocket",
+        "kind": "box",
+        "operation": "cut",
+        "geometry_support": "exact",
+        "builder": "analytic_prism",
+        "state": "applied",
+        "source_feature_id": null,
+        "source_resolution": null,
+        "solid_count": 1,
+        "brep_valid": true,
+        "before_volume_mm3": 72000.0,
+        "after_volume_mm3": 57600.0,
+        "volume_delta_mm3": -14400.0,
+        "depth_measurement": null,
+        "facet_count": null
+      },
+      {
+        "feature_id": "side-top-hole",
+        "kind": "cylinder",
+        "operation": "cut",
+        "geometry_support": "exact",
+        "builder": "analytic_cylinder_or_cone",
+        "state": "applied",
+        "source_feature_id": null,
+        "source_resolution": null,
+        "solid_count": 1,
+        "brep_valid": true,
+        "before_volume_mm3": 57600.0,
+        "after_volume_mm3": 56192.566491191785,
+        "volume_delta_mm3": -1407.4335088082153,
+        "depth_measurement": null,
+        "facet_count": null
+      },
+      {
+        "feature_id": "side-mid-hole",
+        "kind": "cylinder",
+        "operation": "cut",
+        "geometry_support": "exact",
+        "builder": "analytic_cylinder_or_cone",
+        "state": "applied",
+        "source_feature_id": null,
+        "source_resolution": null,
+        "solid_count": 1,
+        "brep_valid": true,
+        "before_volume_mm3": 56192.566491191785,
+        "after_volume_mm3": 55400.88514248714,
+        "volume_delta_mm3": -791.6813487046456,
+        "depth_measurement": null,
+        "facet_count": null
+      },
+      {
+        "feature_id": "side-bot-hole",
+        "kind": "cylinder",
+        "operation": "cut",
+        "geometry_support": "exact",
+        "builder": "analytic_cylinder_or_cone",
+        "state": "applied",
+        "source_feature_id": null,
+        "source_resolution": null,
+        "solid_count": 1,
+        "brep_valid": true,
+        "before_volume_mm3": 55400.88514248714,
+        "after_volume_mm3": 53993.45163367892,
+        "volume_delta_mm3": -1407.4335088082225,
+        "depth_measurement": null,
+        "facet_count": null
+      },
+      {
+        "feature_id": "pocket-mid-hole",
+        "kind": "cylinder",
+        "operation": "cut",
+        "geometry_support": "exact",
+        "builder": "analytic_cylinder_or_cone",
+        "state": "applied",
+        "source_feature_id": null,
+        "source_resolution": null,
+        "solid_count": 1,
+        "brep_valid": true,
+        "before_volume_mm3": 53993.45163367892,
+        "after_volume_mm3": 53710.70829485584,
+        "volume_delta_mm3": -282.7433388230784,
+        "depth_measurement": null,
+        "facet_count": null
+      },
+      {
+        "feature_id": "pocket-bot-hole",
+        "kind": "cylinder",
+        "operation": "cut",
+        "geometry_support": "exact",
+        "builder": "analytic_cylinder_or_cone",
+        "state": "applied",
+        "source_feature_id": null,
+        "source_resolution": null,
+        "solid_count": 1,
+        "brep_valid": true,
+        "before_volume_mm3": 53710.70829485584,
+        "after_volume_mm3": 53208.053470281484,
+        "volume_delta_mm3": -502.6548245743543,
+        "depth_measurement": null,
+        "facet_count": null
+      },
+      {
+        "feature_id": "pocket-top-cut",
+        "kind": "cylinder",
+        "operation": "cut",
+        "geometry_support": "exact",
+        "builder": "analytic_cylinder_or_cone",
+        "state": "applied",
+        "source_feature_id": null,
+        "source_resolution": null,
+        "solid_count": 1,
+        "brep_valid": true,
+        "before_volume_mm3": 53208.053470281484,
+        "after_volume_mm3": 52705.39864570712,
+        "volume_delta_mm3": -502.65482457436156,
+        "depth_measurement": null,
+        "facet_count": null
+      }
+    ],
+    "hole_instances": [],
+    "hole_feature_count": 0,
+    "planned_hole_instance_count": 0,
+    "active_hole_instance_count": 0,
+    "superseded_hole_instance_count": 0,
+    "active_through_hole_count": 0,
+    "through_hole_count": 0,
+    "all_declared_holes_verified": true,
+    "visual_validation": "not_performed",
+    "catia_executed": false,
+    "build_transaction": "每个特征验证成功后才提交；失败保留上一有效实体",
+    "source": "OpenCASCADE native BREP; preview mesh is display-only",
+    "bbox_size_mm": [
+      40.0,
+      30.0,
+      60.0
+    ],
+    "bbox_ratios_from_brep": {
+      "front_width_height": 0.6666666666666666,
+      "depth_height": 0.5,
+      "top_width_depth": 1.3333333333333333
+    },
+    "bbox_ratios_from_mesh": {
+      "front_width_height": 0.6666666666666666,
+      "depth_height": 0.5,
+      "top_width_depth": 1.3333333333333333
+    },
+    "feature_count_from_plan": 8,
+    "feature_ids_from_plan": [
+      "base-block",
+      "front-pocket",
+      "side-top-hole",
+      "side-mid-hole",
+      "side-bot-hole",
+      "pocket-mid-hole",
+      "pocket-bot-hole",
+      "pocket-top-cut"
+    ],
+    "hole_features_from_plan": [],
+    "hole_feature_count_from_plan": 0,
+    "expected_hole_instance_count": 0,
+    "hole_instance_count": 0,
+    "through_hole_checks": [],
+    "through_hole_mesh_checks": [],
+    "hole_measurement_complete": true,
+    "through_hole_count_expected": 0,
+    "through_hole_count_verified": 0,
+    "through_hole_result": "no_holes_declared",
+    "image_estimate_parameters": [
+      {
+        "feature_id": "base-block",
+        "parameter": "length",
+        "value": 40,
+        "evidence": "iso grid proportion: block spans about 4 grid units; assumed 10 mm unit",
+        "visual_measurement": "not_performed_by_geometry_backend"
+      },
+      {
+        "feature_id": "base-block",
+        "parameter": "width",
+        "value": 30,
+        "evidence": "depth spans about 3 grid units",
+        "visual_measurement": "not_performed_by_geometry_backend"
+      },
+      {
+        "feature_id": "base-block",
+        "parameter": "height",
+        "value": 60,
+        "evidence": "height spans about 6 grid units",
+        "visual_measurement": "not_performed_by_geometry_backend"
+      },
+      {
+        "feature_id": "front-pocket",
+        "parameter": "length",
+        "value": 12.0,
+        "evidence": "recess width visually about 1/3 of block width; full height; reaches roughly 2/3 of depth leaving back wall 图像/用户依据：凹槽比例估计。",
+        "visual_measurement": "not_performed_by_geometry_backend"
+      },
+      {
+        "feature_id": "front-pocket",
+        "parameter": "width",
+        "value": 20.001,
+        "evidence": "recess width visually about 1/3 of block width; full height; reaches roughly 2/3 of depth leaving back wall 图像/用户依据：凹槽比例估计。",
+        "visual_measurement": "not_performed_by_geometry_backend"
+      },
+      {
+        "feature_id": "front-pocket",
+        "parameter": "height",
+        "value": 60.0,
+        "evidence": "recess width visually about 1/3 of block width; full height; reaches roughly 2/3 of depth leaving back wall 图像/用户依据：凹槽比例估计。",
+        "visual_measurement": "not_performed_by_geometry_backend"
+      }
+    ],
+    "catia_geometry_verification": "not_performed"
+  },
+  "view_previews": {
+    "iso": "C:\\Users\\lycohana\\AppData\\Local\\AI Modeler\\dsh\\sessions\\cold-fresh-20261001-d78fc15f\\output\\views\\iso.png",
+    "front": "C:\\Users\\lycohana\\AppData\\Local\\AI Modeler\\dsh\\sessions\\cold-fresh-20261001-d78fc15f\\output\\views\\front.png"
+  },
+  "unresolved_findings": [],
+  "finish_state": "candidate_not_verified",
+  "summary": "U-shaped rectangular block with a full-height front pocket and nine holes: three horizontal side holes (top/bottom ⌀8 mm, middle ⌀6 mm) passing through both side walls across the pocket, and three vertical back-wall holes (top/bottom ⌀8 mm, middle ⌀6 mm) opening on the pocket bottom. Overall dimensions estimated as 40 mm (X) × 30 mm (Y) × 60 mm (Z); pocket width 12 mm, depth 20 mm. The top pocket hole is implemented as feature pocket-top-cut because the original id triggered a repeated-geometry failure guard. Geometric checks passed; visual review matches the iso reference except for the left and pocket-bottom faces, which were verified separately with a left-view preview. CATIA was not executed.",
+  "catia_executed": false
+}

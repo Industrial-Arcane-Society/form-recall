@@ -1,0 +1,19 @@
+{
+  "schema_version": 1,
+  "session_id": "coldimg20261001mid2",
+  "turns": [
+    {
+      "turn_id": "327db86d02094e299596a6608458c3e3",
+      "session_id": "coldimg20261001mid2",
+      "raw_user_prompt": "请按参考图复刻这个工件；图中没有标注的尺寸请按图像比例估算，标明估算来源，生成本地模型",
+      "reference_ids": [
+        "sha256:53ed87fadf8cca869da921627e6a13c845424c6906b3de517d5cca972db94553"
+      ],
+      "created_at": "2026-10-01T13:04:38.091Z",
+      "at_epoch_ms": 1790859878091,
+      "intent": "model_target",
+      "affects_model_target": true,
+      "intent_source": "cli_rules"
+    }
+  ]
+}

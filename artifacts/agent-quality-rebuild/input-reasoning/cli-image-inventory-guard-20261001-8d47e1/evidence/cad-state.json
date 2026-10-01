@@ -1,0 +1,745 @@
+{
+  "plan": {
+    "schema_version": "1.0",
+    "name": "nine-hole-recess-part",
+    "source_prompt": "U-shaped rectangular block with a central vertical slot and nine evenly spaced circular holes (three on each of the two front walls and three on the inner back wall), estimated from iso reference image.",
+    "units": {
+      "length": "mm",
+      "angle": "deg"
+    },
+    "coordinate_system": {
+      "type": "global_cartesian",
+      "handedness": "right",
+      "axes": [
+        "X",
+        "Y",
+        "Z"
+      ],
+      "origin": [
+        0,
+        0,
+        0
+      ]
+    },
+    "features": [
+      {
+        "id": "base_block",
+        "kind": "box",
+        "operation": "add",
+        "name": "outer rectangular block",
+        "parameters": {
+          "length": 120,
+          "width": 60,
+          "height": 80,
+          "center": [
+            0,
+            0,
+            40
+          ]
+        },
+        "sources": {
+          "length": {
+            "type": "image_estimate",
+            "evidence": "overall width approximately 2.0–2.5 times pocket width; chosen nominal 120 mm"
+          },
+          "width": {
+            "type": "image_estimate",
+            "evidence": "front walls and pocket depth roughly comparable to pocket width; chosen nominal 60 mm"
+          },
+          "height": {
+            "type": "image_estimate",
+            "evidence": "overall height slightly larger than overall width in image; chosen nominal 80 mm"
+          }
+        }
+      }
+    ],
+    "pending_questions": []
+  },
+  "revision": 1,
+  "last_preview": null,
+  "preview_revision": null,
+  "preview_generation": 0,
+  "previews": [],
+  "visual_review": null,
+  "visual_reviews": {},
+  "unresolved_findings": [],
+  "knowledge_search": {
+    "status": "no_match",
+    "query": "请根据参考图生成可编辑模型；图片没有尺寸标注，按图内比例估算并标明尺寸来源。",
+    "matches": [],
+    "negative_examples": [],
+    "image_query_supported": false,
+    "visual_fallback_available": false,
+    "score_meaning": "relevance 是词面相关度排序分数，不是准确率或置信概率。",
+    "message": "当前文字描述没有达到相似检索阈值；这不代表库外不存在对应工件。",
+    "modeling_recipes": []
+  },
+  "knowledge_visual_examples": [],
+  "has_references": true,
+  "actions": [
+    {
+      "kind": "tool",
+      "tool": "cad_get_state",
+      "revision": 0,
+      "at": 1790869851.3962536
+    },
+    {
+      "kind": "tool",
+      "tool": "cad_inspect_references",
+      "revision": 0,
+      "at": 1790869927.739968,
+      "reference_id": "sha256:53ed87fadf8cca869da921627e6a13c845424c6906b3de517d5cca972db94553",
+      "source_sha256": "53ed87fadf8cca869da921627e6a13c845424c6906b3de517d5cca972db94553",
+      "roi_norm": null,
+      "observation_valid": true,
+      "verification_status": "model_observation_unverified"
+    },
+    {
+      "kind": "tool",
+      "tool": "cad_create_model",
+      "revision": 1,
+      "at": 1790870017.9731824,
+      "feature_id": "base_block",
+      "explicit_replacement": false,
+      "preserved_source_keys": [],
+      "user_source_provenance": [],
+      "archived_finding_count": 0
+    },
+    {
+      "kind": "tool",
+      "tool": "cad_create_model",
+      "revision": 1,
+      "at": 1790870039.641063,
+      "failed": true,
+      "cancelled": false,
+      "error": "cad_create_model不能替代现有模型的局部编辑；当前可信用户turn未明确要求新工件或从头重建。"
+    },
+    {
+      "kind": "tool",
+      "tool": "cad_update_feature",
+      "revision": 1,
+      "at": 1790870047.6041422,
+      "failed": true,
+      "cancelled": false,
+      "error": "不能更新特征字段：sources"
+    },
+    {
+      "kind": "tool",
+      "tool": "cad_validate_model",
+      "revision": 1,
+      "at": 1790870047.6143186
+    },
+    {
+      "kind": "tool",
+      "tool": "cad_update_feature",
+      "revision": 1,
+      "at": 1790870054.8748865,
+      "feature_id": "base_block",
+      "no_op": true,
+      "unchanged_geometry_signature": "ba873477e19a9ea9e50fd2c46a1f52ef4d308f1ae39158a231d6bdcd435325fe",
+      "consecutive_no_progress": 1
+    },
+    {
+      "kind": "tool",
+      "tool": "cad_remove_feature",
+      "revision": 1,
+      "at": 1790870061.6699603,
+      "failed": true,
+      "cancelled": false,
+      "error": "不能删除唯一的 operation=add 基础实体 base_block；这会留下没有实体主体的 CADPlan。请保留主体并修改/移除切削特征；若用户明确要求整体重建，可通过 cad_create_model(replace=true) 按该明确请求重建。"
+    },
+    {
+      "kind": "tool",
+      "tool": "cad_update_feature",
+      "revision": 1,
+      "at": 1790870092.9055188,
+      "feature_id": "base_block",
+      "no_op": true,
+      "unchanged_geometry_signature": "ba873477e19a9ea9e50fd2c46a1f52ef4d308f1ae39158a231d6bdcd435325fe",
+      "consecutive_no_progress": 2
+    },
+    {
+      "kind": "tool",
+      "tool": "cad_update_feature",
+      "revision": 1,
+      "at": 1790870141.560565,
+      "feature_id": "base_block",
+      "no_op": true,
+      "unchanged_geometry_signature": "ba873477e19a9ea9e50fd2c46a1f52ef4d308f1ae39158a231d6bdcd435325fe",
+      "consecutive_no_progress": 3
+    },
+    {
+      "kind": "tool",
+      "tool": "cad_update_feature",
+      "revision": 1,
+      "at": 1790870161.157423,
+      "failed": true,
+      "cancelled": false,
+      "error": "不能更新特征字段：sources"
+    },
+    {
+      "kind": "tool",
+      "tool": "cad_update_feature",
+      "revision": 1,
+      "at": 1790870164.2625294,
+      "feature_id": "base_block",
+      "metadata_only": true,
+      "preserved_source_keys": [],
+      "provenance_changes": [],
+      "user_source_provenance": []
+    },
+    {
+      "kind": "tool",
+      "tool": "cad_update_feature",
+      "revision": 1,
+      "at": 1790870171.3840797,
+      "feature_id": "base_block",
+      "no_op": true,
+      "unchanged_geometry_signature": "ba873477e19a9ea9e50fd2c46a1f52ef4d308f1ae39158a231d6bdcd435325fe",
+      "consecutive_no_progress": 4
+    }
+  ],
+  "output_paths": {},
+  "finished": false,
+  "finish_state": null,
+  "source_prompt": "请根据参考图生成可编辑模型；图片没有尺寸标注，按图内比例估算并标明尺寸来源。",
+  "reference_similarity_attempts": [],
+  "reference_similarity_error": null,
+  "reference_images": [
+    {
+      "id": "sha256:53ed87fadf8cca869da921627e6a13c845424c6906b3de517d5cca972db94553",
+      "sha256": "53ed87fadf8cca869da921627e6a13c845424c6906b3de517d5cca972db94553",
+      "filename": "user-nine-hole-recess-iso.png",
+      "width": 494,
+      "height": 544,
+      "media_type": "image/png"
+    }
+  ],
+  "reference_similarity_review": null,
+  "reference_similarity_reviews": {},
+  "reference_similarity_history": [],
+  "finish_summary": null,
+  "finding_ledger": {},
+  "geometry_signatures": [
+    {
+      "signature": "ba873477e19a9ea9e50fd2c46a1f52ef4d308f1ae39158a231d6bdcd435325fe",
+      "revision": 1
+    }
+  ],
+  "geometry_mutations": [
+    {
+      "tool": "cad_create_model",
+      "feature_ids": [
+        "base_block"
+      ],
+      "finding_ids": [],
+      "before_signature": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+      "after_signature": "ba873477e19a9ea9e50fd2c46a1f52ef4d308f1ae39158a231d6bdcd435325fe",
+      "parameter_changes": {},
+      "reversed_directions": [],
+      "revision": 1,
+      "at": 1790870017.9731824
+    }
+  ],
+  "last_valid_candidate": null,
+  "best_evidence_candidate": null,
+  "best_candidate": null,
+  "construction_milestone": null,
+  "reference_rechecks": [],
+  "no_progress_by_signature": {
+    "ba873477e19a9ea9e50fd2c46a1f52ef4d308f1ae39158a231d6bdcd435325fe": 4
+  },
+  "geometry_failure_history": [],
+  "last_preview_failure": null,
+  "geometry_issues": {},
+  "partial_preview": null,
+  "partial_candidate": null,
+  "partial_preview_history": [],
+  "reference_inventory": {
+    "sha256:53ed87fadf8cca869da921627e6a13c845424c6906b3de517d5cca972db94553": {
+      "reference_id": "sha256:53ed87fadf8cca869da921627e6a13c845424c6906b3de517d5cca972db94553",
+      "source_sha256": "53ed87fadf8cca869da921627e6a13c845424c6906b3de517d5cca972db94553",
+      "reference_index": 1,
+      "roi_norm": null,
+      "roi_cache_key": "13a3eed97b0e24fe58891c14d1e9e603fdfb386e42bd694e999e4947ddd009bf",
+      "crop_sha256": "53ed87fadf8cca869da921627e6a13c845424c6906b3de517d5cca972db94553",
+      "summary": "A U-shaped rectangular block with two parallel front walls separated by a central vertical slot. Three circular through-like holes are visible on each of the two front-facing vertical walls, and three matching circular holes are visible on the inner back wall of the slot. The slot itself is an open rectangular recess visible from the front and top. No holes are visible on the right side, top, or bottom surfaces.",
+      "visible_evidence": [
+        {
+          "evidence_id": "sha256:53ed87fadf8cca869da921627e6a13c845424c6906b3de517d5cca972db94553:roi-13a3eed97b:ev001",
+          "source_evidence_id": "ev001",
+          "group_id": "front_left_wall",
+          "description": "Three vertically aligned circular holes on the left front vertical wall: top cyan, middle dark blue, bottom cyan, evenly spaced in a single column.",
+          "image_region": [
+            0.15,
+            0.25,
+            0.35,
+            0.75
+          ],
+          "visible_count": 3,
+          "relative_size_group": "same",
+          "surface_plane_relation": "parallel",
+          "visible_form": "hole",
+          "confidence": null,
+          "confidence_basis": "Clear circular shapes with distinct colors and regular vertical spacing on a single planar face."
+        },
+        {
+          "evidence_id": "sha256:53ed87fadf8cca869da921627e6a13c845424c6906b3de517d5cca972db94553:roi-13a3eed97b:ev002",
+          "source_evidence_id": "ev002",
+          "group_id": "front_right_wall",
+          "description": "Three vertically aligned circular holes on the right front vertical wall: top cyan, middle dark blue, bottom cyan, evenly spaced in a single column.",
+          "image_region": [
+            0.45,
+            0.35,
+            0.65,
+            0.85
+          ],
+          "visible_count": 3,
+          "relative_size_group": "same",
+          "surface_plane_relation": "parallel",
+          "visible_form": "hole",
+          "confidence": null,
+          "confidence_basis": "Clear circular shapes with distinct colors and regular vertical spacing, mirror arrangement of the left front wall."
+        },
+        {
+          "evidence_id": "sha256:53ed87fadf8cca869da921627e6a13c845424c6906b3de517d5cca972db94553:roi-13a3eed97b:ev003",
+          "source_evidence_id": "ev003",
+          "group_id": "inner_back_wall",
+          "description": "Three vertically aligned circular holes on the salmon-colored inner back wall visible through the central slot: top magenta, middle dark blue, bottom magenta.",
+          "image_region": [
+            0.35,
+            0.25,
+            0.45,
+            0.75
+          ],
+          "visible_count": 3,
+          "relative_size_group": "same",
+          "surface_plane_relation": "parallel",
+          "visible_form": "hole",
+          "confidence": null,
+          "confidence_basis": "Circular colored features are clearly visible on the planar back wall of the slot, arranged in one vertical column."
+        },
+        {
+          "evidence_id": "sha256:53ed87fadf8cca869da921627e6a13c845424c6906b3de517d5cca972db94553:roi-13a3eed97b:ev004",
+          "source_evidence_id": "ev004",
+          "group_id": "central_slot",
+          "description": "A single rectangular vertical slot or recess between the two front walls, open toward the viewer and at the top, exposing the inner back wall.",
+          "image_region": [
+            0.3,
+            0.2,
+            0.5,
+            0.8
+          ],
+          "visible_count": 1,
+          "relative_size_group": "larger",
+          "surface_plane_relation": "distinct",
+          "visible_form": "open_slot",
+          "confidence": null,
+          "confidence_basis": "Clear rectangular boundary separating the two front walls and revealing the inner colored wall; visible from front and top."
+        }
+      ],
+      "uncertain": [
+        {
+          "evidence_id": "uc001",
+          "description": "Whether the circular features are through-holes or blind holes cannot be determined from this single view.",
+          "reason": "Only the front/inner openings are visible; the opposite exits or depths are occluded."
+        },
+        {
+          "evidence_id": "uc002",
+          "description": "Possible additional holes on the rear exterior face, the right side face, the left side face, or the bottom face are not visible.",
+          "reason": "Those surfaces are either facing away from the camera, outside the field of view, or occluded by the object itself."
+        },
+        {
+          "evidence_id": "uc003",
+          "description": "The full depth of the central slot and whether it penetrates completely through the block is not directly observable.",
+          "reason": "Only the front opening and the visible inner back wall are shown; hidden rear geometry is not exposed."
+        }
+      ],
+      "inferred": [],
+      "observation_valid": true,
+      "observation_status": "observed",
+      "automatic_attempt_count": 1,
+      "retry_exhausted": false,
+      "verification_status": "model_observation_unverified",
+      "error_type": null,
+      "error": null,
+      "response_diagnostics": [
+        {
+          "status": "observed",
+          "finish_reason": "stop",
+          "protocol": "chat_completions",
+          "model": "moonshotai/Kimi-K2.7-Code",
+          "response_chars": 3853,
+          "response_sha256": "08502b454957352f026143d0c40bf9eb988ae19a7cd6734eeed85650fa1d7691",
+          "usage": {
+            "prompt_tokens": 746,
+            "completion_tokens": 1931,
+            "total_tokens": 2677,
+            "reasoning_tokens": 1024
+          },
+          "json_shape": {
+            "type": "object",
+            "fields": {
+              "summary": "string",
+              "visible_evidence": {
+                "type": "array",
+                "length": 4,
+                "item": {
+                  "type": "object",
+                  "fields": {},
+                  "other_key_count": 10
+                }
+              },
+              "uncertain": {
+                "type": "array",
+                "length": 3,
+                "item": {
+                  "type": "object",
+                  "fields": {},
+                  "other_key_count": 3
+                }
+              },
+              "inferred": {
+                "type": "array",
+                "length": 0,
+                "item": null
+              }
+            },
+            "other_key_count": 0
+          },
+          "json_top_level_keys": [
+            "summary",
+            "visible_evidence",
+            "uncertain",
+            "inferred"
+          ],
+          "json_top_level_other_key_count": 0,
+          "observation_container_path": [],
+          "attempt": 1,
+          "crop_sha256": "53ed87fadf8cca869da921627e6a13c845424c6906b3de517d5cca972db94553"
+        }
+      ],
+      "request_profile": {
+        "task_kind": "vision_review",
+        "review_complexity": "source_inventory",
+        "provider_family": "siliconflow",
+        "protocol": "chat_completions",
+        "model": "moonshotai/Kimi-K2.7-Code",
+        "reasoning_effort": "low",
+        "configured_reasoning_effort": "low",
+        "thinking_budget": 1024,
+        "thinking_budget_source": "task_profile_soft_default",
+        "thinking_budget_hard_limit_known": false,
+        "payload_reasoning": {
+          "enable_thinking": true,
+          "thinking_budget": 1024
+        },
+        "reasoning_supported": true,
+        "reasoning_control": "toggle_and_budget",
+        "vision_supported": true,
+        "supported_efforts": [
+          "none",
+          "low"
+        ],
+        "context_window": 256000,
+        "max_output_tokens": null,
+        "context_capacity_source": "official SiliconFlow model center states 256K for moonshotai/Kimi-K2.7-Code",
+        "capability_source": "official SiliconFlow VLM API example for moonshotai/Kimi-K2.7-Code"
+      },
+      "review_configuration": {
+        "configured_reasoning_effort": "low",
+        "configured_thinking_budget": null,
+        "resolved_profile": {
+          "task_kind": "vision_review",
+          "review_complexity": "source_inventory",
+          "provider_family": "siliconflow",
+          "protocol": "chat_completions",
+          "model": "moonshotai/Kimi-K2.7-Code",
+          "reasoning_effort": "low",
+          "configured_reasoning_effort": "low",
+          "thinking_budget": 1024,
+          "thinking_budget_source": "task_profile_soft_default",
+          "thinking_budget_hard_limit_known": false,
+          "payload_reasoning": {
+            "enable_thinking": true,
+            "thinking_budget": 1024
+          },
+          "reasoning_supported": true,
+          "reasoning_control": "toggle_and_budget",
+          "vision_supported": true,
+          "supported_efforts": [
+            "none",
+            "low"
+          ],
+          "context_window": 256000,
+          "max_output_tokens": null,
+          "context_capacity_source": "official SiliconFlow model center states 256K for moonshotai/Kimi-K2.7-Code",
+          "capability_source": "official SiliconFlow VLM API example for moonshotai/Kimi-K2.7-Code"
+        }
+      },
+      "usage": {
+        "prompt_tokens": 746,
+        "completion_tokens": 1931,
+        "total_tokens": 2677,
+        "reasoning_tokens": 1024
+      },
+      "model": "moonshotai/Kimi-K2.7-Code",
+      "duration_seconds": 76.328,
+      "recorded_at": 1790869927.739968
+    }
+  },
+  "reference_inventory_roi": {},
+  "reference_inventory_history": [
+    {
+      "reference_id": "sha256:53ed87fadf8cca869da921627e6a13c845424c6906b3de517d5cca972db94553",
+      "source_sha256": "53ed87fadf8cca869da921627e6a13c845424c6906b3de517d5cca972db94553",
+      "reference_index": 1,
+      "roi_norm": null,
+      "roi_cache_key": "13a3eed97b0e24fe58891c14d1e9e603fdfb386e42bd694e999e4947ddd009bf",
+      "crop_sha256": "53ed87fadf8cca869da921627e6a13c845424c6906b3de517d5cca972db94553",
+      "summary": "A U-shaped rectangular block with two parallel front walls separated by a central vertical slot. Three circular through-like holes are visible on each of the two front-facing vertical walls, and three matching circular holes are visible on the inner back wall of the slot. The slot itself is an open rectangular recess visible from the front and top. No holes are visible on the right side, top, or bottom surfaces.",
+      "visible_evidence": [
+        {
+          "evidence_id": "sha256:53ed87fadf8cca869da921627e6a13c845424c6906b3de517d5cca972db94553:roi-13a3eed97b:ev001",
+          "source_evidence_id": "ev001",
+          "group_id": "front_left_wall",
+          "description": "Three vertically aligned circular holes on the left front vertical wall: top cyan, middle dark blue, bottom cyan, evenly spaced in a single column.",
+          "image_region": [
+            0.15,
+            0.25,
+            0.35,
+            0.75
+          ],
+          "visible_count": 3,
+          "relative_size_group": "same",
+          "surface_plane_relation": "parallel",
+          "visible_form": "hole",
+          "confidence": null,
+          "confidence_basis": "Clear circular shapes with distinct colors and regular vertical spacing on a single planar face."
+        },
+        {
+          "evidence_id": "sha256:53ed87fadf8cca869da921627e6a13c845424c6906b3de517d5cca972db94553:roi-13a3eed97b:ev002",
+          "source_evidence_id": "ev002",
+          "group_id": "front_right_wall",
+          "description": "Three vertically aligned circular holes on the right front vertical wall: top cyan, middle dark blue, bottom cyan, evenly spaced in a single column.",
+          "image_region": [
+            0.45,
+            0.35,
+            0.65,
+            0.85
+          ],
+          "visible_count": 3,
+          "relative_size_group": "same",
+          "surface_plane_relation": "parallel",
+          "visible_form": "hole",
+          "confidence": null,
+          "confidence_basis": "Clear circular shapes with distinct colors and regular vertical spacing, mirror arrangement of the left front wall."
+        },
+        {
+          "evidence_id": "sha256:53ed87fadf8cca869da921627e6a13c845424c6906b3de517d5cca972db94553:roi-13a3eed97b:ev003",
+          "source_evidence_id": "ev003",
+          "group_id": "inner_back_wall",
+          "description": "Three vertically aligned circular holes on the salmon-colored inner back wall visible through the central slot: top magenta, middle dark blue, bottom magenta.",
+          "image_region": [
+            0.35,
+            0.25,
+            0.45,
+            0.75
+          ],
+          "visible_count": 3,
+          "relative_size_group": "same",
+          "surface_plane_relation": "parallel",
+          "visible_form": "hole",
+          "confidence": null,
+          "confidence_basis": "Circular colored features are clearly visible on the planar back wall of the slot, arranged in one vertical column."
+        },
+        {
+          "evidence_id": "sha256:53ed87fadf8cca869da921627e6a13c845424c6906b3de517d5cca972db94553:roi-13a3eed97b:ev004",
+          "source_evidence_id": "ev004",
+          "group_id": "central_slot",
+          "description": "A single rectangular vertical slot or recess between the two front walls, open toward the viewer and at the top, exposing the inner back wall.",
+          "image_region": [
+            0.3,
+            0.2,
+            0.5,
+            0.8
+          ],
+          "visible_count": 1,
+          "relative_size_group": "larger",
+          "surface_plane_relation": "distinct",
+          "visible_form": "open_slot",
+          "confidence": null,
+          "confidence_basis": "Clear rectangular boundary separating the two front walls and revealing the inner colored wall; visible from front and top."
+        }
+      ],
+      "uncertain": [
+        {
+          "evidence_id": "uc001",
+          "description": "Whether the circular features are through-holes or blind holes cannot be determined from this single view.",
+          "reason": "Only the front/inner openings are visible; the opposite exits or depths are occluded."
+        },
+        {
+          "evidence_id": "uc002",
+          "description": "Possible additional holes on the rear exterior face, the right side face, the left side face, or the bottom face are not visible.",
+          "reason": "Those surfaces are either facing away from the camera, outside the field of view, or occluded by the object itself."
+        },
+        {
+          "evidence_id": "uc003",
+          "description": "The full depth of the central slot and whether it penetrates completely through the block is not directly observable.",
+          "reason": "Only the front opening and the visible inner back wall are shown; hidden rear geometry is not exposed."
+        }
+      ],
+      "inferred": [],
+      "observation_valid": true,
+      "observation_status": "observed",
+      "automatic_attempt_count": 1,
+      "retry_exhausted": false,
+      "verification_status": "model_observation_unverified",
+      "error_type": null,
+      "error": null,
+      "response_diagnostics": [
+        {
+          "status": "observed",
+          "finish_reason": "stop",
+          "protocol": "chat_completions",
+          "model": "moonshotai/Kimi-K2.7-Code",
+          "response_chars": 3853,
+          "response_sha256": "08502b454957352f026143d0c40bf9eb988ae19a7cd6734eeed85650fa1d7691",
+          "usage": {
+            "prompt_tokens": 746,
+            "completion_tokens": 1931,
+            "total_tokens": 2677,
+            "reasoning_tokens": 1024
+          },
+          "json_shape": {
+            "type": "object",
+            "fields": {
+              "summary": "string",
+              "visible_evidence": {
+                "type": "array",
+                "length": 4,
+                "item": {
+                  "type": "object",
+                  "fields": {},
+                  "other_key_count": 10
+                }
+              },
+              "uncertain": {
+                "type": "array",
+                "length": 3,
+                "item": {
+                  "type": "object",
+                  "fields": {},
+                  "other_key_count": 3
+                }
+              },
+              "inferred": {
+                "type": "array",
+                "length": 0,
+                "item": null
+              }
+            },
+            "other_key_count": 0
+          },
+          "json_top_level_keys": [
+            "summary",
+            "visible_evidence",
+            "uncertain",
+            "inferred"
+          ],
+          "json_top_level_other_key_count": 0,
+          "observation_container_path": [],
+          "attempt": 1,
+          "crop_sha256": "53ed87fadf8cca869da921627e6a13c845424c6906b3de517d5cca972db94553"
+        }
+      ],
+      "request_profile": {
+        "task_kind": "vision_review",
+        "review_complexity": "source_inventory",
+        "provider_family": "siliconflow",
+        "protocol": "chat_completions",
+        "model": "moonshotai/Kimi-K2.7-Code",
+        "reasoning_effort": "low",
+        "configured_reasoning_effort": "low",
+        "thinking_budget": 1024,
+        "thinking_budget_source": "task_profile_soft_default",
+        "thinking_budget_hard_limit_known": false,
+        "payload_reasoning": {
+          "enable_thinking": true,
+          "thinking_budget": 1024
+        },
+        "reasoning_supported": true,
+        "reasoning_control": "toggle_and_budget",
+        "vision_supported": true,
+        "supported_efforts": [
+          "none",
+          "low"
+        ],
+        "context_window": 256000,
+        "max_output_tokens": null,
+        "context_capacity_source": "official SiliconFlow model center states 256K for moonshotai/Kimi-K2.7-Code",
+        "capability_source": "official SiliconFlow VLM API example for moonshotai/Kimi-K2.7-Code"
+      },
+      "review_configuration": {
+        "configured_reasoning_effort": "low",
+        "configured_thinking_budget": null,
+        "resolved_profile": {
+          "task_kind": "vision_review",
+          "review_complexity": "source_inventory",
+          "provider_family": "siliconflow",
+          "protocol": "chat_completions",
+          "model": "moonshotai/Kimi-K2.7-Code",
+          "reasoning_effort": "low",
+          "configured_reasoning_effort": "low",
+          "thinking_budget": 1024,
+          "thinking_budget_source": "task_profile_soft_default",
+          "thinking_budget_hard_limit_known": false,
+          "payload_reasoning": {
+            "enable_thinking": true,
+            "thinking_budget": 1024
+          },
+          "reasoning_supported": true,
+          "reasoning_control": "toggle_and_budget",
+          "vision_supported": true,
+          "supported_efforts": [
+            "none",
+            "low"
+          ],
+          "context_window": 256000,
+          "max_output_tokens": null,
+          "context_capacity_source": "official SiliconFlow model center states 256K for moonshotai/Kimi-K2.7-Code",
+          "capability_source": "official SiliconFlow VLM API example for moonshotai/Kimi-K2.7-Code"
+        }
+      },
+      "usage": {
+        "prompt_tokens": 746,
+        "completion_tokens": 1931,
+        "total_tokens": 2677,
+        "reasoning_tokens": 1024
+      },
+      "model": "moonshotai/Kimi-K2.7-Code",
+      "duration_seconds": 76.328,
+      "recorded_at": 1790869927.739968
+    }
+  ],
+  "web_search_history": [],
+  "required_external_facts": {},
+  "replaced_plans": [],
+  "reference_manifest_error": null,
+  "user_turns": [
+    {
+      "turn_id": "4b35e98620994779b3f47d949428719d",
+      "session_id": "inputguard-20261001-8d47e1",
+      "raw_user_prompt": "请根据参考图生成可编辑模型；图片没有尺寸标注，按图内比例估算并标明尺寸来源。",
+      "reference_ids": [
+        "sha256:53ed87fadf8cca869da921627e6a13c845424c6906b3de517d5cca972db94553"
+      ],
+      "intent": "model_target",
+      "intent_source": "cli_rules",
+      "affects_model_target": true,
+      "created_at": "2026-10-01T15:50:38.995Z",
+      "at_epoch_ms": 1790869838995
+    }
+  ],
+  "user_target_context_error": null
+}

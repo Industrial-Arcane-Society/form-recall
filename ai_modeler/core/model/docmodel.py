@@ -123,12 +123,17 @@ class Feature(object):
     """单个建模特征。"""
 
     def __init__(self, kind: str, params: Dict = None, op: str = ADD,
-                 name: str = '', note: str = ''):
+                 name: str = '', note: str = '', feature_id: str = None,
+                 relations: List[Dict] = None):
         self.kind = kind
         self.params: Dict = dict(params or {})
         self.op = op
         self.name = name or KIND_LABELS.get(kind, kind)
         self.note = note
+        # CADPlan identity/relations survive conversion into the executable
+        # Document so repeated features can resolve their declared source.
+        self.feature_id = str(feature_id) if feature_id else None
+        self.relations = copy.deepcopy(relations or [])
         self.enabled = True
         #: U1：每个数值参数的**出处**（参数名 -> 'explicit'/'standard'/'derived'/
         #: 'default'/'asked'）。空 dict 表示"这个特征的数字不是来自参数表"
@@ -148,13 +153,16 @@ class Feature(object):
     def to_dict(self) -> Dict:
         return {'kind': self.kind, 'params': copy.deepcopy(self.params),
                 'op': self.op, 'name': self.name, 'note': self.note,
+                'feature_id': self.feature_id,
+                'relations': copy.deepcopy(self.relations),
                 'enabled': self.enabled,
                 'provenance': dict(self.provenance)}
 
     @staticmethod
     def from_dict(d: Dict) -> 'Feature':
         f = Feature(d.get('kind', 'box'), d.get('params', {}),
-                    d.get('op', ADD), d.get('name', ''), d.get('note', ''))
+                    d.get('op', ADD), d.get('name', ''), d.get('note', ''),
+                    d.get('feature_id'), d.get('relations'))
         f.enabled = bool(d.get('enabled', True))
         f.provenance = dict(d.get('provenance') or {})
         return f
@@ -598,7 +606,10 @@ class Feature(object):
                 length = (hi - lo) + 20.0
                 start = lo - 10.0
             else:
-                depth = min(float(p.get('depth', 5.0)), max(1e-3, hi - lo))
+                depth = float(p.get('depth', 5.0))
+                depth_tolerance = max(1e-6, (hi - lo) * 1e-8)
+                if depth <= 0 or depth >= (hi - lo) - depth_tolerance:
+                    raise ValueError('盲孔深度必须大于零且小于实体轴向厚度；不能静默改为通孔。')
                 length = depth + 1.0
                 start = hi - depth
             center = _place(a, b, axis, start)
@@ -618,11 +629,22 @@ class Feature(object):
             lo, hi, c1, c2 = -50.0, 50.0, 0.0, 0.0
         c1 = float(p.get('x', c1))
         c2 = float(p.get('y', c2))
-        depth = min(depth, max(1e-3, hi - lo))
+        depth_tolerance = max(1e-6, (hi - lo) * 1e-8)
+        if depth <= 0 or depth >= (hi - lo) - depth_tolerance:
+            raise ValueError('盲槽深度必须大于零且小于实体轴向厚度；贯穿切除请使用通孔特征。')
+        side = str(p.get('side', 'positive')).lower()
+        if side not in {'positive', 'negative'}:
+            raise ValueError('pocket.side 必须为 positive 或 negative。')
         prof = K.profile_rect(float(p.get('length', 20)), float(p.get('width', 20)),
                               float(p.get('corner', 0) or 0), p.get('corner_mode', 'fillet'))
-        center = _place(c1, c2, axis, hi)
-        return [K.extrude_profile(prof, depth + 1.0, center, axis, tag, False, -(depth + 1.0) + 0.5)]
+        epsilon = max(1e-5, min(1e-3, depth * 1e-6))
+        if side == 'positive':
+            center, z0 = _place(c1, c2, axis, hi), -depth
+        else:
+            center, z0 = _place(c1, c2, axis, lo), -epsilon
+        # Keep the requested floor exact; extend the cutter only beyond the
+        # exterior face to satisfy the Boolean tolerance.
+        return [K.extrude_profile(prof, depth + epsilon, center, axis, tag, False, z0)]
 
     # ---- 阵列 ----
     def _build_pattern(self, ctx: Dict):
@@ -715,6 +737,9 @@ class Document(object):
         self.name = name
         self.features: List[Feature] = []
         self._cache: Optional[List[K.Polygon]] = None
+        self._brep_cache = None
+        self._brep_cache_config = None
+        self._brep_report: Optional[Dict] = None
         self.last_log: List[str] = []
         self.version = 1
         self.source_prompt = ''
@@ -724,6 +749,9 @@ class Document(object):
     def clear(self):
         self.features = []
         self._cache = None
+        self._brep_cache = None
+        self._brep_cache_config = None
+        self._brep_report = None
         self.last_log = []
 
     @property
@@ -732,28 +760,58 @@ class Document(object):
 
     def add(self, feature: Feature) -> Feature:
         self.features.append(feature)
-        self._cache = None
+        self.invalidate()
         return feature
 
     def remove(self, index: int):
         if 0 <= index < len(self.features):
             self.features.pop(index)
-            self._cache = None
+            self.invalidate()
 
     def move(self, index: int, delta: int):
         j = index + delta
         if 0 <= index < len(self.features) and 0 <= j < len(self.features):
             self.features[index], self.features[j] = self.features[j], self.features[index]
-            self._cache = None
+            self.invalidate()
 
     def update_params(self, index: int, params: Dict):
         if 0 <= index < len(self.features):
             self.features[index].params.update(params)
-            self._cache = None
+            self.invalidate()
 
     # ---- 构建 ----
     def invalidate(self):
         self._cache = None
+        self._brep_cache = None
+        self._brep_cache_config = None
+        self._brep_report = None
+
+    def build_brep(self, tolerance: float = 1e-5,
+                   max_mesh_faces: int = 120000,
+                   self_intersection_face_limit: Optional[int] = None):
+        """Build the authoritative local solid with OpenCASCADE.
+
+        CADPlan previews use this path and deliberately do not fall back to the
+        legacy BSP mesh kernel.  Callers that need compatibility mesh-only
+        behavior must use :meth:`build` explicitly.
+        """
+        from ai_modeler.core.geometry import occ_kernel
+        face_limit = (occ_kernel.SELF_INTERSECTION_FACE_LIMIT
+                      if self_intersection_face_limit is None
+                      else int(self_intersection_face_limit))
+        cache_config = (float(tolerance), int(max_mesh_faces), face_limit)
+        if self._brep_cache is None or self._brep_cache_config != cache_config:
+            shape, report = occ_kernel.build_document(
+                self, tolerance=tolerance, max_mesh_faces=max_mesh_faces,
+                self_intersection_face_limit=face_limit)
+            self._brep_cache = shape
+            self._brep_cache_config = cache_config
+            self._brep_report = report
+        return self._brep_cache
+
+    @property
+    def brep_report(self) -> Optional[Dict]:
+        return copy.deepcopy(self._brep_report)
 
     def _check(self, t0, deadline, cancel, body, label):
         """时间 / 规模 / 取消 三重检查, 避免界面看起来"卡死"。"""
@@ -832,7 +890,8 @@ class Document(object):
                 c = p2.get('center', (0.0, 0.0, 0.0))
                 p2['center'] = (float(c[0]), float(c[1]), float(c[2]) + top)
                 p2['base'] = True
-                f = Feature(f.kind, p2, f.op, f.name, f.note)
+                f = Feature(f.kind, p2, f.op, f.name, f.note,
+                            f.feature_id, f.relations)
             if f.kind == 'pattern':
                 for j in range(i - 1, -1, -1):
                     if j in solids_by_index:

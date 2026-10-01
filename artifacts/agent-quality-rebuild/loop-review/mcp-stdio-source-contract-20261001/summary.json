@@ -1,0 +1,13 @@
+{
+  "state_dir": "C:\\Users\\lycohana\\Desktop\\code\\AI-_-\\artifacts\\agent-quality-rebuild\\loop-review\\mcp-stdio-source-contract-20261001\\state",
+  "transcript": "C:\\Users\\lycohana\\Desktop\\code\\AI-_-\\artifacts\\agent-quality-rebuild\\loop-review\\mcp-stdio-source-contract-20261001\\stdio-transcript.jsonl",
+  "rpc_initialize": "passed",
+  "tools_list": "passed",
+  "create_with_transient_turn_ids": "passed",
+  "cross_parameter_value_rejected": true,
+  "valid_update": "passed",
+  "turn_id_persisted_in_CADPlan": false,
+  "cadplan_validation": "valid",
+  "process_exit_code": 0,
+  "stderr": ""
+}

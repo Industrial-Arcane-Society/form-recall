@@ -1,0 +1,15 @@
+{
+  "schema_version": 1,
+  "session_id": "cold-acceptance-mid-20261001-7f3c91d2",
+  "images": [
+    {
+      "id": "sha256:53ed87fadf8cca869da921627e6a13c845424c6906b3de517d5cca972db94553",
+      "sha256": "53ed87fadf8cca869da921627e6a13c845424c6906b3de517d5cca972db94553",
+      "filename": "codex-clipboard-c8107ca1-5b7e-4378-9db4-efd0bbe9b9a2.png",
+      "width": 494,
+      "height": 544,
+      "media_type": "image/png",
+      "path": "C:\\Users\\lycohana\\AppData\\Local\\Packages\\OpenAI.Codex_2p2nqsd0c76g0\\LocalCache\\Local\\AI Modeler\\dsh\\sessions\\cold-acceptance-mid-20261001-7f3c91d2\\reference-assets\\53ed87fadf8cca869da921627e6a13c845424c6906b3de517d5cca972db94553.png"
+    }
+  ]
+}

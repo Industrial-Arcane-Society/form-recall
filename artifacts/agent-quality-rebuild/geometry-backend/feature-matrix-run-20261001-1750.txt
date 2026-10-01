@@ -1,0 +1,56 @@
+starting box
+done box passed
+starting cylinder
+done cylinder passed
+starting socket_head_bolt
+done socket_head_bolt needs_review
+starting sphere
+done sphere passed
+starting prism
+done prism passed
+starting revolve
+done revolve passed
+starting gear
+done gear passed
+starting loft
+done loft passed
+starting hole
+done hole passed
+starting pocket
+done pocket passed
+starting pattern
+done pattern passed
+starting helix
+done helix passed
+starting spoked_wheel
+done spoked_wheel passed
+starting vbelt_pulley
+done vbelt_pulley passed
+starting timing_pulley
+done timing_pulley passed
+starting worm
+done worm passed
+starting helical_gear
+done helical_gear passed
+starting bevel_gear
+done bevel_gear needs_review
+starting crankshaft
+done crankshaft passed
+starting camshaft
+done camshaft passed
+starting impeller
+done impeller passed
+starting piston
+done piston passed
+starting conrod
+done conrod passed
+starting cross_joint
+done cross_joint passed
+starting scroll_disc
+done scroll_disc passed
+starting rotor
+done rotor passed
+starting shell
+done shell needs_review
+wrote C:\Users\lycohana\Desktop\code\AI-_-\artifacts\agent-quality-rebuild\geometry-backend\feature-execution-matrix-20261001-174256.json
+{"total_feature_rows": 27, "brep_passed": ["box", "cylinder", "sphere", "prism", "revolve", "gear", "loft", "hole", "pocket", "pattern", "helix", "spoked_wheel", "vbelt_pulley", "timing_pulley", "worm", "helical_gear", "crankshaft", "camshaft", "impeller", "piston", "conrod", "cross_joint", "scroll_disc", "rotor"], "needs_review": ["socket_head_bolt", "bevel_gear", "shell"], "build_failed": [], "validation_blocked": [], "timeout_or_unknown": [], "brep_invalid": [], "self_intersection_detected": [], "self_intersection_analysis_failed": [], "self_intersection_not_checked": ["socket_head_bolt", "bevel_gear"], "self_intersection_missing_or_unmeasured": [], "self_intersection_checked_clear": ["box", "cylinder", "sphere", "prism", "revolve", "gear", "loft", "hole", "pocket", "pattern", "helix", "spoked_wheel", "vbelt_pulley", "timing_pulley", "worm", "helical_gear", "crankshaft", "camshaft", "impeller", "piston", "conrod", "cross_joint", "scroll_disc", "rotor", "shell"], "local_approximate": ["socket_head_bolt", "gear", "loft", "helix", "vbelt_pulley", "timing_pulley", "worm", "helical_gear", "bevel_gear", "crankshaft", "camshaft", "impeller", "piston", "conrod", "cross_joint", "scroll_disc", "rotor"], "local_unavailable": ["shell"]}

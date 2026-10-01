@@ -1,0 +1,4540 @@
+{
+  "plan": {
+    "schema_version": "1.0",
+    "name": "九孔凹块",
+    "source_prompt": "请按参考图复刻这个工件；图中没有标注的尺寸请按图像比例估算，标明估算来源，生成本地模型",
+    "units": {
+      "length": "mm",
+      "angle": "deg"
+    },
+    "coordinate_system": {
+      "type": "global_cartesian",
+      "handedness": "right",
+      "axes": [
+        "X",
+        "Y",
+        "Z"
+      ],
+      "origin": [
+        0,
+        0,
+        0
+      ]
+    },
+    "features": [
+      {
+        "id": "base_box",
+        "kind": "box",
+        "operation": "add",
+        "name": "基体长方体",
+        "parameters": {
+          "length": 100,
+          "width": 50,
+          "height": 80,
+          "center": [
+            0,
+            0,
+            40
+          ]
+        },
+        "sources": {
+          "length": {
+            "type": "image_estimate",
+            "evidence": "整体宽度约100mm（X方向）"
+          },
+          "width": {
+            "type": "image_estimate",
+            "evidence": "整体厚度约50mm（Y方向）"
+          },
+          "height": {
+            "type": "image_estimate",
+            "evidence": "整体高度约80mm（Z方向）"
+          },
+          "center": {
+            "type": "derived",
+            "evidence": "以底面Z=0、几何中心在(0,0,40)"
+          }
+        },
+        "relations": []
+      },
+      {
+        "id": "front_slot",
+        "kind": "box",
+        "operation": "cut",
+        "name": "正面凹槽",
+        "parameters": {
+          "length": 30.0,
+          "width": 35.001,
+          "height": 65.0,
+          "center": [
+            0.0,
+            7.500499999999999,
+            32.5
+          ]
+        },
+        "sources": {
+          "length": {
+            "type": "image_estimate",
+            "evidence": "槽宽约30mm、深约35mm、高约65mm，顶壁厚约15mm，均按图像比例估算 图像/用户依据：凹槽尺寸。 凹槽面内宽度映射到此坐标轴。"
+          },
+          "width": {
+            "type": "derived",
+            "evidence": "由用户凹槽深度及布尔切除余量计算此坐标轴尺寸。"
+          },
+          "height": {
+            "type": "image_estimate",
+            "evidence": "槽宽约30mm、深约35mm、高约65mm，顶壁厚约15mm，均按图像比例估算 图像/用户依据：凹槽尺寸。 凹槽面内高度映射到此坐标轴。"
+          },
+          "center": {
+            "type": "derived",
+            "evidence": "由主 box 表面坐标与凹入深度计算切除体中心。"
+          }
+        },
+        "note": "通过统一 CADPlan 坐标语义创建的面内退台。"
+      },
+      {
+        "id": "horz_hole_1",
+        "kind": "hole",
+        "operation": "cut",
+        "name": "horz_hole_1",
+        "parameters": {
+          "diameter": 12.0,
+          "through": true,
+          "pos": "point",
+          "point": [
+            -50.0,
+            7.5,
+            20.0
+          ],
+          "axis": "X"
+        },
+        "sources": {
+          "diameter": {
+            "type": "image_estimate",
+            "evidence": "3个水平通孔沿X方向贯穿左右壁，Z向约20/40/60均匀分布，Y向位于侧壁中间；按图像比例估算孔径12mm 图像/用户依据：孔位和孔径估计。"
+          },
+          "point": {
+            "type": "derived",
+            "evidence": "由输入面内坐标、退台量和面法线转换为全局坐标。"
+          }
+        },
+        "note": "面法线固定为 0 的贯穿孔阵列成员。"
+      },
+      {
+        "id": "horz_hole_2",
+        "kind": "hole",
+        "operation": "cut",
+        "name": "horz_hole_2",
+        "parameters": {
+          "diameter": 12.0,
+          "through": true,
+          "pos": "point",
+          "point": [
+            -50.0,
+            7.5,
+            40.0
+          ],
+          "axis": "X"
+        },
+        "sources": {
+          "diameter": {
+            "type": "image_estimate",
+            "evidence": "3个水平通孔沿X方向贯穿左右壁，Z向约20/40/60均匀分布，Y向位于侧壁中间；按图像比例估算孔径12mm 图像/用户依据：孔位和孔径估计。"
+          },
+          "point": {
+            "type": "derived",
+            "evidence": "由输入面内坐标、退台量和面法线转换为全局坐标。"
+          }
+        },
+        "note": "面法线固定为 0 的贯穿孔阵列成员。"
+      },
+      {
+        "id": "horz_hole_3",
+        "kind": "hole",
+        "operation": "cut",
+        "name": "horz_hole_3",
+        "parameters": {
+          "diameter": 12.0,
+          "through": true,
+          "pos": "point",
+          "point": [
+            -50.0,
+            7.5,
+            60.0
+          ],
+          "axis": "X"
+        },
+        "sources": {
+          "diameter": {
+            "type": "image_estimate",
+            "evidence": "3个水平通孔沿X方向贯穿左右壁，Z向约20/40/60均匀分布，Y向位于侧壁中间；按图像比例估算孔径12mm 图像/用户依据：孔位和孔径估计。"
+          },
+          "point": {
+            "type": "derived",
+            "evidence": "由输入面内坐标、退台量和面法线转换为全局坐标。"
+          }
+        },
+        "note": "面法线固定为 0 的贯穿孔阵列成员。"
+      },
+      {
+        "id": "back_blind_1",
+        "kind": "hole",
+        "operation": "cut",
+        "name": "back_blind_1",
+        "parameters": {
+          "diameter": 12.0,
+          "through": false,
+          "pos": "point",
+          "point": [
+            0,
+            -24.5,
+            20
+          ],
+          "axis": "Y",
+          "depth": 15.5
+        },
+        "sources": {
+          "diameter": {
+            "type": "image_estimate",
+            "evidence": "后壁另外2个盲孔，从背面外表面Y=-25沿+Y钻透后壁，出口在槽内后壁，深度15mm，Z向约20/40mm 图像/用户依据：孔位和孔径估计。"
+          },
+          "point": {
+            "type": "derived",
+            "evidence": "从Y=-24.5开始确保刀体在实体内部"
+          },
+          "through": {
+            "type": "image_estimate",
+            "evidence": "后壁孔为盲孔，仅钻透后壁15mm"
+          },
+          "depth": {
+            "type": "derived",
+            "evidence": "后壁厚度15mm，留0.5mm余量确保贯通"
+          }
+        },
+        "note": "后壁盲孔Z=20"
+      }
+    ],
+    "pending_questions": []
+  },
+  "revision": 32,
+  "last_preview": null,
+  "preview_revision": null,
+  "preview_generation": 5,
+  "previews": [],
+  "visual_review": null,
+  "visual_reviews": {},
+  "unresolved_findings": [],
+  "knowledge_search": {
+    "status": "no_match",
+    "query": "请按参考图复刻这个工件；图中没有标注的尺寸请按图像比例估算，标明估算来源，生成本地模型",
+    "matches": [],
+    "negative_examples": [],
+    "image_query_supported": false,
+    "visual_fallback_available": false,
+    "score_meaning": "relevance 是词面相关度排序分数，不是准确率或置信概率。",
+    "message": "当前文字描述没有达到相似检索阈值；这不代表库外不存在对应工件。",
+    "modeling_recipes": []
+  },
+  "knowledge_visual_examples": [],
+  "has_references": true,
+  "actions": [
+    {
+      "kind": "tool",
+      "tool": "cad_get_state",
+      "revision": 0,
+      "at": 1790857380.0549335
+    },
+    {
+      "kind": "tool",
+      "tool": "cad_inspect_references",
+      "revision": 0,
+      "at": 1790857479.7322948,
+      "reference_id": "sha256:53ed87fadf8cca869da921627e6a13c845424c6906b3de517d5cca972db94553",
+      "source_sha256": "53ed87fadf8cca869da921627e6a13c845424c6906b3de517d5cca972db94553",
+      "roi_norm": null,
+      "verification_status": "model_observation_unverified"
+    },
+    {
+      "kind": "tool",
+      "tool": "cad_get_feature_spec",
+      "revision": 0,
+      "at": 1790857556.9474971,
+      "feature_kind": "box"
+    },
+    {
+      "kind": "tool",
+      "tool": "cad_create_model",
+      "revision": 1,
+      "at": 1790857630.7295508,
+      "feature_id": "base_box",
+      "explicit_replacement": false,
+      "preserved_source_keys": [],
+      "user_source_provenance": [],
+      "archived_finding_count": 0
+    },
+    {
+      "kind": "tool",
+      "tool": "cad_add_face_recess",
+      "revision": 2,
+      "at": 1790857636.654512,
+      "feature_id": "front_slot",
+      "face_normal_axis": 1,
+      "face_side": "positive",
+      "dimensions_xyz": [
+        30.0,
+        35.001,
+        65.0
+      ],
+      "source_type": "image_estimate",
+      "user_source_provenance": [],
+      "user_depth_provenance": null
+    },
+    {
+      "kind": "tool",
+      "tool": "cad_add_hole_array",
+      "revision": 3,
+      "at": 1790857688.0287879,
+      "feature_ids": [
+        "left_hole_1",
+        "left_hole_2",
+        "left_hole_3"
+      ],
+      "axis": "X",
+      "face_side": "negative",
+      "count": 3,
+      "source_type": "image_estimate",
+      "user_source_provenance": []
+    },
+    {
+      "kind": "tool",
+      "tool": "cad_add_hole_array",
+      "revision": 4,
+      "at": 1790857688.051359,
+      "feature_ids": [
+        "right_hole_1",
+        "right_hole_2",
+        "right_hole_3"
+      ],
+      "axis": "X",
+      "face_side": "positive",
+      "count": 3,
+      "source_type": "image_estimate",
+      "user_source_provenance": []
+    },
+    {
+      "kind": "tool",
+      "tool": "cad_add_hole_array",
+      "revision": 5,
+      "at": 1790857688.073692,
+      "feature_ids": [
+        "back_hole_1",
+        "back_hole_2",
+        "back_hole_3"
+      ],
+      "axis": "Y",
+      "face_side": "negative",
+      "count": 3,
+      "source_type": "image_estimate",
+      "user_source_provenance": []
+    },
+    {
+      "kind": "tool",
+      "tool": "cad_preview_model",
+      "revision": 5,
+      "at": 1790857692.56892,
+      "view": "iso",
+      "preview_state": "preview_failed",
+      "partial_preview": "candidate_partial_not_accepted",
+      "failed_feature_id": "right_hole_1",
+      "failure_code": "duplicate_through_axis",
+      "applied_feature_ids": [],
+      "not_applied_feature_ids": []
+    },
+    {
+      "kind": "tool",
+      "tool": "cad_get_feature_spec",
+      "revision": 5,
+      "at": 1790857740.063029,
+      "feature_kind": "hole"
+    },
+    {
+      "kind": "tool",
+      "tool": "cad_remove_feature",
+      "revision": 6,
+      "at": 1790857754.9745383,
+      "feature_id": "left_hole_1",
+      "finding_ids": []
+    },
+    {
+      "kind": "tool",
+      "tool": "cad_remove_feature",
+      "revision": 7,
+      "at": 1790857754.9865742,
+      "feature_id": "left_hole_2",
+      "finding_ids": []
+    },
+    {
+      "kind": "tool",
+      "tool": "cad_remove_feature",
+      "revision": 8,
+      "at": 1790857755.0000715,
+      "feature_id": "left_hole_3",
+      "finding_ids": []
+    },
+    {
+      "kind": "tool",
+      "tool": "cad_remove_feature",
+      "revision": 9,
+      "at": 1790857755.0112617,
+      "feature_id": "right_hole_1",
+      "finding_ids": []
+    },
+    {
+      "kind": "tool",
+      "tool": "cad_remove_feature",
+      "revision": 10,
+      "at": 1790857755.0232341,
+      "feature_id": "right_hole_2",
+      "finding_ids": []
+    },
+    {
+      "kind": "tool",
+      "tool": "cad_remove_feature",
+      "revision": 11,
+      "at": 1790857755.0340726,
+      "feature_id": "right_hole_3",
+      "finding_ids": []
+    },
+    {
+      "kind": "tool",
+      "tool": "cad_remove_feature",
+      "revision": 12,
+      "at": 1790857755.0461073,
+      "feature_id": "back_hole_1",
+      "finding_ids": []
+    },
+    {
+      "kind": "tool",
+      "tool": "cad_remove_feature",
+      "revision": 13,
+      "at": 1790857755.0571742,
+      "feature_id": "back_hole_2",
+      "finding_ids": []
+    },
+    {
+      "kind": "tool",
+      "tool": "cad_remove_feature",
+      "revision": 13,
+      "at": 1790857755.0686977,
+      "failed": true,
+      "cancelled": false,
+      "error": "本次几何会回到历史 CADPlan 状态（geometry hash=e12a0f4c3038）。为避免返修来回摆动，请先用 cad_get_reference_image 核对原图，或关联本 feature 的活动 finding_id；若当前版确实退化，调用 cad_restore_best_candidate 恢复最佳有效候选。"
+    },
+    {
+      "kind": "tool",
+      "tool": "cad_get_state",
+      "revision": 13,
+      "at": 1790857762.3667314
+    },
+    {
+      "kind": "tool",
+      "tool": "cad_add_hole_array",
+      "revision": 14,
+      "at": 1790857792.1861875,
+      "feature_ids": [
+        "horz_hole_1",
+        "horz_hole_2",
+        "horz_hole_3"
+      ],
+      "axis": "X",
+      "face_side": "negative",
+      "count": 3,
+      "source_type": "image_estimate",
+      "user_source_provenance": []
+    },
+    {
+      "kind": "tool",
+      "tool": "cad_update_feature",
+      "revision": 15,
+      "at": 1790857814.2098238,
+      "feature_id": "back_hole_3",
+      "finding_ids": [],
+      "preserved_source_keys": [],
+      "provenance_changes": [],
+      "user_source_provenance": []
+    },
+    {
+      "kind": "tool",
+      "tool": "cad_update_feature",
+      "revision": 16,
+      "at": 1790857821.3966413,
+      "feature_id": "back_hole_3",
+      "finding_ids": [],
+      "preserved_source_keys": [
+        "through",
+        "depth",
+        "point"
+      ],
+      "provenance_changes": [],
+      "user_source_provenance": []
+    },
+    {
+      "kind": "tool",
+      "tool": "cad_update_feature",
+      "revision": 17,
+      "at": 1790857836.9234252,
+      "feature_id": "back_hole_3",
+      "finding_ids": [],
+      "preserved_source_keys": [
+        "through",
+        "depth"
+      ],
+      "provenance_changes": [],
+      "user_source_provenance": []
+    },
+    {
+      "kind": "tool",
+      "tool": "cad_add_hole_array",
+      "revision": 18,
+      "at": 1790857844.0161512,
+      "feature_ids": [
+        "back_blind_1",
+        "back_blind_2"
+      ],
+      "axis": "Y",
+      "face_side": "negative",
+      "count": 2,
+      "source_type": "image_estimate",
+      "user_source_provenance": []
+    },
+    {
+      "kind": "tool",
+      "tool": "cad_update_feature",
+      "revision": 19,
+      "at": 1790857852.4148512,
+      "feature_id": "back_blind_1",
+      "finding_ids": [],
+      "preserved_source_keys": [],
+      "provenance_changes": [],
+      "user_source_provenance": []
+    },
+    {
+      "kind": "tool",
+      "tool": "cad_update_feature",
+      "revision": 20,
+      "at": 1790857852.437978,
+      "feature_id": "back_blind_2",
+      "finding_ids": [],
+      "preserved_source_keys": [],
+      "provenance_changes": [],
+      "user_source_provenance": []
+    },
+    {
+      "kind": "tool",
+      "tool": "cad_preview_model",
+      "revision": 20,
+      "at": 1790857857.0091097,
+      "view": "iso",
+      "preview_state": "preview_failed",
+      "partial_preview": "candidate_partial_not_accepted",
+      "failed_feature_id": "back_blind_1",
+      "failure_code": "cut_no_material_change",
+      "applied_feature_ids": [],
+      "not_applied_feature_ids": []
+    },
+    {
+      "kind": "tool",
+      "tool": "cad_update_feature",
+      "revision": 21,
+      "at": 1790857946.8605669,
+      "feature_id": "back_blind_1",
+      "finding_ids": [],
+      "preserved_source_keys": [],
+      "provenance_changes": [],
+      "user_source_provenance": []
+    },
+    {
+      "kind": "tool",
+      "tool": "cad_update_feature",
+      "revision": 22,
+      "at": 1790857960.4062846,
+      "feature_id": "back_blind_1",
+      "finding_ids": [],
+      "preserved_source_keys": [
+        "depth"
+      ],
+      "provenance_changes": [],
+      "user_source_provenance": []
+    },
+    {
+      "kind": "tool",
+      "tool": "cad_update_feature",
+      "revision": 23,
+      "at": 1790857960.4337406,
+      "feature_id": "back_blind_2",
+      "finding_ids": [],
+      "preserved_source_keys": [],
+      "provenance_changes": [],
+      "user_source_provenance": []
+    },
+    {
+      "kind": "tool",
+      "tool": "cad_update_feature",
+      "revision": 24,
+      "at": 1790857970.248286,
+      "feature_id": "back_blind_1",
+      "finding_ids": [],
+      "preserved_source_keys": [],
+      "provenance_changes": [],
+      "user_source_provenance": []
+    },
+    {
+      "kind": "tool",
+      "tool": "cad_update_feature",
+      "revision": 24,
+      "at": 1790857974.5078247,
+      "feature_id": "back_blind_2",
+      "metadata_only": true,
+      "preserved_source_keys": [],
+      "provenance_changes": [],
+      "user_source_provenance": []
+    },
+    {
+      "kind": "tool",
+      "tool": "cad_preview_model",
+      "revision": 24,
+      "at": 1790857980.0855038,
+      "view": "iso",
+      "preview_state": "preview_failed",
+      "partial_preview": "candidate_partial_not_accepted",
+      "failed_feature_id": "back_blind_1",
+      "failure_code": "cut_no_material_change",
+      "applied_feature_ids": [],
+      "not_applied_feature_ids": []
+    },
+    {
+      "kind": "tool",
+      "tool": "cad_remove_feature",
+      "revision": 24,
+      "at": 1790858050.5123055,
+      "failed": true,
+      "cancelled": false,
+      "error": "同一特征已连续两次导致相同几何失败（cut_no_material_change）。请先复看原图/ROI或独立检查可见失败部分，再按证据修改；沿同一孔轴移动起点或反转方向不会改变贯穿直线。关联特征：back_blind_1。"
+    },
+    {
+      "kind": "tool",
+      "tool": "cad_remove_feature",
+      "revision": 25,
+      "at": 1790858050.5353742,
+      "feature_id": "back_blind_2",
+      "finding_ids": []
+    },
+    {
+      "kind": "tool",
+      "tool": "cad_add_feature",
+      "revision": 26,
+      "at": 1790858070.4240065,
+      "feature_id": "back_cyl_20",
+      "user_source_provenance": []
+    },
+    {
+      "kind": "tool",
+      "tool": "cad_add_feature",
+      "revision": 27,
+      "at": 1790858087.831024,
+      "feature_id": "back_cyl_40",
+      "user_source_provenance": []
+    },
+    {
+      "kind": "tool",
+      "tool": "cad_add_feature",
+      "revision": 28,
+      "at": 1790858087.85525,
+      "feature_id": "back_cyl_60",
+      "user_source_provenance": []
+    },
+    {
+      "kind": "tool",
+      "tool": "cad_preview_model",
+      "revision": 28,
+      "at": 1790858096.6286123,
+      "view": "iso",
+      "preview_state": "preview_failed",
+      "partial_preview": "candidate_partial_not_accepted",
+      "failed_feature_id": "back_blind_1",
+      "failure_code": "cut_no_material_change",
+      "applied_feature_ids": [],
+      "not_applied_feature_ids": []
+    },
+    {
+      "kind": "tool",
+      "tool": "cad_create_model",
+      "revision": 28,
+      "at": 1790858123.3771427,
+      "failed": true,
+      "cancelled": false,
+      "error": "cad_create_model不能替代现有模型的局部编辑；当前可信用户turn未明确要求新工件或从头重建。"
+    },
+    {
+      "kind": "tool",
+      "tool": "cad_update_feature",
+      "revision": 28,
+      "at": 1790858151.55301,
+      "failed": true,
+      "cancelled": false,
+      "error": "同一特征已连续两次导致相同几何失败（cut_no_material_change）。请先复看原图/ROI或独立检查可见失败部分，再按证据修改；沿同一孔轴移动起点或反转方向不会改变贯穿直线。关联特征：back_blind_1。"
+    },
+    {
+      "kind": "tool",
+      "tool": "cad_remove_feature",
+      "revision": 28,
+      "at": 1790858156.0910363,
+      "failed": true,
+      "cancelled": false,
+      "error": "同一特征已连续两次导致相同几何失败（cut_no_material_change）。请先复看原图/ROI或独立检查可见失败部分，再按证据修改；沿同一孔轴移动起点或反转方向不会改变贯穿直线。关联特征：back_blind_1。"
+    },
+    {
+      "kind": "tool",
+      "tool": "cad_get_reference_image",
+      "revision": 28,
+      "at": 1790858169.9868257,
+      "reference_image_index": 1,
+      "reference_id": "sha256:53ed87fadf8cca869da921627e6a13c845424c6906b3de517d5cca972db94553",
+      "evidence_id": null,
+      "roi_norm": null
+    },
+    {
+      "kind": "tool",
+      "tool": "cad_update_feature",
+      "revision": 28,
+      "at": 1790858233.7880456,
+      "failed": true,
+      "cancelled": false,
+      "error": "同一特征已连续两次导致相同几何失败（cut_no_material_change）。请先复看原图/ROI或独立检查可见失败部分，再按证据修改；沿同一孔轴移动起点或反转方向不会改变贯穿直线。关联特征：back_blind_1。"
+    },
+    {
+      "kind": "tool",
+      "tool": "cad_remove_feature",
+      "revision": 29,
+      "at": 1790858240.7137563,
+      "feature_id": "back_hole_3",
+      "finding_ids": []
+    },
+    {
+      "kind": "tool",
+      "tool": "cad_preview_model",
+      "revision": 29,
+      "at": 1790858245.784902,
+      "view": "iso",
+      "preview_state": "preview_failed",
+      "partial_preview": "candidate_partial_not_accepted",
+      "failed_feature_id": "back_blind_1",
+      "failure_code": "cut_no_material_change",
+      "applied_feature_ids": [],
+      "not_applied_feature_ids": []
+    },
+    {
+      "kind": "tool",
+      "tool": "cad_remove_feature",
+      "revision": 30,
+      "at": 1790858278.7994368,
+      "feature_id": "back_cyl_20",
+      "finding_ids": []
+    },
+    {
+      "kind": "tool",
+      "tool": "cad_remove_feature",
+      "revision": 31,
+      "at": 1790858278.8149717,
+      "feature_id": "back_cyl_40",
+      "finding_ids": []
+    },
+    {
+      "kind": "tool",
+      "tool": "cad_remove_feature",
+      "revision": 32,
+      "at": 1790858278.8301806,
+      "feature_id": "back_cyl_60",
+      "finding_ids": []
+    },
+    {
+      "kind": "tool",
+      "tool": "cad_update_feature",
+      "revision": 32,
+      "at": 1790858297.7992957,
+      "failed": true,
+      "cancelled": false,
+      "error": "同一特征已连续两次导致相同几何失败（cut_no_material_change）。请先复看原图/ROI或独立检查可见失败部分，再按证据修改；沿同一孔轴移动起点或反转方向不会改变贯穿直线。关联特征：back_blind_1。"
+    },
+    {
+      "kind": "tool",
+      "tool": "cad_update_feature",
+      "revision": 32,
+      "at": 1790858323.497725,
+      "failed": true,
+      "cancelled": false,
+      "error": "同一特征已连续两次导致相同几何失败（cut_no_material_change）。请先复看原图/ROI或独立检查可见失败部分，再按证据修改；沿同一孔轴移动起点或反转方向不会改变贯穿直线。关联特征：back_blind_1。"
+    },
+    {
+      "kind": "tool",
+      "tool": "cad_validate_model",
+      "revision": 32,
+      "at": 1790858360.5906684
+    }
+  ],
+  "output_paths": {},
+  "finished": false,
+  "finish_state": null,
+  "source_prompt": "请按参考图复刻这个工件；图中没有标注的尺寸请按图像比例估算，标明估算来源，生成本地模型",
+  "reference_similarity_attempts": [],
+  "reference_similarity_error": null,
+  "reference_images": [
+    {
+      "id": "sha256:53ed87fadf8cca869da921627e6a13c845424c6906b3de517d5cca972db94553",
+      "sha256": "53ed87fadf8cca869da921627e6a13c845424c6906b3de517d5cca972db94553",
+      "filename": "user-nine-hole-recess-iso.png",
+      "width": 494,
+      "height": 544,
+      "media_type": "image/png"
+    }
+  ],
+  "reference_similarity_review": null,
+  "reference_similarity_reviews": {},
+  "reference_similarity_history": [],
+  "finish_summary": null,
+  "finding_ledger": {},
+  "geometry_signatures": [
+    {
+      "signature": "040084051b719ef9ff51775e04d1e36335f514cc3869f39c1bd1d549d68f8ce3",
+      "revision": 1
+    },
+    {
+      "signature": "e12a0f4c3038067c94c4447c737270e6260a36413afba4e0cb7764882aaf962d",
+      "revision": 2
+    },
+    {
+      "signature": "b3060f069a933d723c5581113e03fa5976687d2ce20dcd2f7f457f40fd20c9ac",
+      "revision": 3
+    },
+    {
+      "signature": "f4cbac9d2dd157fcce754d5e9f565db4cce9e16f9c920c1f5794c173211d6147",
+      "revision": 4
+    },
+    {
+      "signature": "775e30b05060b45407abfae307be8535d870947e7c04d43b9109693aa8319b56",
+      "revision": 5
+    },
+    {
+      "signature": "803912a07f20f32ca57767a86913ee181deb3266736bff4fb47b934c379d284b",
+      "revision": 6
+    },
+    {
+      "signature": "f5af70a9099c0d7465a12cb81bf83e171aab475e5e9f497b4efe2950b959fa8d",
+      "revision": 7
+    },
+    {
+      "signature": "1908482a0513bfdc9c58825fcfa87790407955a9c0b5a38420b834dfeaa67ddc",
+      "revision": 8
+    },
+    {
+      "signature": "37b4414825a8f9b959039707bddf450e9e6f9676d01ed85439201ab4652e18bb",
+      "revision": 9
+    },
+    {
+      "signature": "d9a57fa9a9aac2103a934ea6a4c36397ec366162ca39a083b4ab49a0d557adcf",
+      "revision": 10
+    },
+    {
+      "signature": "0b2950424f5977596e171776eb2311a6cd7a5d3bfb8ec1fd3a445ed37dbb6e2b",
+      "revision": 11
+    },
+    {
+      "signature": "7e245e02f6ce8ffe7464b996f68aefa3b5a2be5a0f99424d18cd0ae268e62e98",
+      "revision": 12
+    },
+    {
+      "signature": "1c76b77a2aa835d52b4ce2c9c5cf75566bf16e40214e59295068da36a247b14b",
+      "revision": 13
+    },
+    {
+      "signature": "1d9dd1094e84998a3ed6368e3cf3af9a0cb2c2afc1c74da72a3963910e6a9562",
+      "revision": 14
+    },
+    {
+      "signature": "f27254c7252f7225b26168f564e3a1e42997bc17561e2264315b26e06f42f465",
+      "revision": 15
+    },
+    {
+      "signature": "07e300b181a16ade20ae289ee1bf24087bd371324f1db8731a32a21f294e1b42",
+      "revision": 16
+    },
+    {
+      "signature": "000d443fbedea8605ab31f14126d7f73c4e2afcc1898e961dfa69a40aaf6a7c6",
+      "revision": 17
+    },
+    {
+      "signature": "f0edb5d1d73babc3a7c663a035dc496f8ce69ecfe7772eeb56a07d3cdcf87818",
+      "revision": 18
+    },
+    {
+      "signature": "298aa78fe05aa33f3f1f28df113a3c47f01f46b7fa64ebbab6aed855e2361dc9",
+      "revision": 19
+    },
+    {
+      "signature": "3134c35eab8529b68527dd4f084ec8c507cdf134af0f73984fe8304fbb62f877",
+      "revision": 20
+    },
+    {
+      "signature": "14a15620d725f56484293542bcd6febf05557c98993927d4af382ef8dc76b9c3",
+      "revision": 21
+    },
+    {
+      "signature": "84222f9453e86ab1d6c7f16c12a1a7d060ec1af830c0bf18f9f1a5b265567c2b",
+      "revision": 22
+    },
+    {
+      "signature": "5b238114a36e90d080d468c0bff74dc5ca17fed7f2fef95080141eca25197750",
+      "revision": 23
+    },
+    {
+      "signature": "927f4bcb47cfff9148ef0d53b2d600a13cab86d05654df6505e0e7784653d93f",
+      "revision": 24
+    },
+    {
+      "signature": "2f0410889cadd162841020cd1478c4444b495c54dedc94dce6cad8e7a724bb3e",
+      "revision": 25
+    },
+    {
+      "signature": "53a10b87622b85ebc127f2fddebaa0a325241f7bc4598c6098e8d686273ace96",
+      "revision": 26
+    },
+    {
+      "signature": "d07f2557132aa995b181a23dcc6fe6d8bab2f37caeabb31824794a3a83c9302b",
+      "revision": 27
+    },
+    {
+      "signature": "f4643872e73141c759f6d0434f630ce3e212e96adc1dcfa5866d24cceb08f636",
+      "revision": 28
+    },
+    {
+      "signature": "77b56cf8a6118defb1ca98f4928767d31812d2dfe8a8cc3f4b4a1665aac58ce6",
+      "revision": 29
+    },
+    {
+      "signature": "d67dac5e4fb84385b16bc0d2f83178422dbd59e4675858818322e5c7a02f9635",
+      "revision": 30
+    },
+    {
+      "signature": "76caf53717b7961fcf018c0934470d08e63167607c7113b0647b2c61fd4de1e6",
+      "revision": 31
+    },
+    {
+      "signature": "c50bc067af70b89a34e3165dabac7b74d7a963b80b0e7b23329478a74302802e",
+      "revision": 32
+    }
+  ],
+  "geometry_mutations": [
+    {
+      "tool": "cad_create_model",
+      "feature_ids": [
+        "base_box"
+      ],
+      "finding_ids": [],
+      "before_signature": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+      "after_signature": "040084051b719ef9ff51775e04d1e36335f514cc3869f39c1bd1d549d68f8ce3",
+      "parameter_changes": {},
+      "reversed_directions": [],
+      "revision": 1,
+      "at": 1790857630.7295508
+    },
+    {
+      "tool": "cad_add_face_recess",
+      "feature_ids": [
+        "front_slot"
+      ],
+      "finding_ids": [],
+      "before_signature": "040084051b719ef9ff51775e04d1e36335f514cc3869f39c1bd1d549d68f8ce3",
+      "after_signature": "e12a0f4c3038067c94c4447c737270e6260a36413afba4e0cb7764882aaf962d",
+      "parameter_changes": {},
+      "reversed_directions": [],
+      "revision": 2,
+      "at": 1790857636.654512
+    },
+    {
+      "tool": "cad_add_hole_array",
+      "feature_ids": [
+        "left_hole_1",
+        "left_hole_2",
+        "left_hole_3"
+      ],
+      "finding_ids": [],
+      "before_signature": "e12a0f4c3038067c94c4447c737270e6260a36413afba4e0cb7764882aaf962d",
+      "after_signature": "b3060f069a933d723c5581113e03fa5976687d2ce20dcd2f7f457f40fd20c9ac",
+      "parameter_changes": {},
+      "reversed_directions": [],
+      "revision": 3,
+      "at": 1790857688.0287879
+    },
+    {
+      "tool": "cad_add_hole_array",
+      "feature_ids": [
+        "right_hole_1",
+        "right_hole_2",
+        "right_hole_3"
+      ],
+      "finding_ids": [],
+      "before_signature": "b3060f069a933d723c5581113e03fa5976687d2ce20dcd2f7f457f40fd20c9ac",
+      "after_signature": "f4cbac9d2dd157fcce754d5e9f565db4cce9e16f9c920c1f5794c173211d6147",
+      "parameter_changes": {},
+      "reversed_directions": [],
+      "revision": 4,
+      "at": 1790857688.051359
+    },
+    {
+      "tool": "cad_add_hole_array",
+      "feature_ids": [
+        "back_hole_1",
+        "back_hole_2",
+        "back_hole_3"
+      ],
+      "finding_ids": [],
+      "before_signature": "f4cbac9d2dd157fcce754d5e9f565db4cce9e16f9c920c1f5794c173211d6147",
+      "after_signature": "775e30b05060b45407abfae307be8535d870947e7c04d43b9109693aa8319b56",
+      "parameter_changes": {},
+      "reversed_directions": [],
+      "revision": 5,
+      "at": 1790857688.073692
+    },
+    {
+      "tool": "cad_remove_feature",
+      "feature_ids": [
+        "left_hole_1"
+      ],
+      "finding_ids": [],
+      "before_signature": "775e30b05060b45407abfae307be8535d870947e7c04d43b9109693aa8319b56",
+      "after_signature": "803912a07f20f32ca57767a86913ee181deb3266736bff4fb47b934c379d284b",
+      "parameter_changes": {},
+      "reversed_directions": [],
+      "revision": 6,
+      "at": 1790857754.9745383
+    },
+    {
+      "tool": "cad_remove_feature",
+      "feature_ids": [
+        "left_hole_2"
+      ],
+      "finding_ids": [],
+      "before_signature": "803912a07f20f32ca57767a86913ee181deb3266736bff4fb47b934c379d284b",
+      "after_signature": "f5af70a9099c0d7465a12cb81bf83e171aab475e5e9f497b4efe2950b959fa8d",
+      "parameter_changes": {},
+      "reversed_directions": [],
+      "revision": 7,
+      "at": 1790857754.9865742
+    },
+    {
+      "tool": "cad_remove_feature",
+      "feature_ids": [
+        "left_hole_3"
+      ],
+      "finding_ids": [],
+      "before_signature": "f5af70a9099c0d7465a12cb81bf83e171aab475e5e9f497b4efe2950b959fa8d",
+      "after_signature": "1908482a0513bfdc9c58825fcfa87790407955a9c0b5a38420b834dfeaa67ddc",
+      "parameter_changes": {},
+      "reversed_directions": [],
+      "revision": 8,
+      "at": 1790857755.0000715
+    },
+    {
+      "tool": "cad_remove_feature",
+      "feature_ids": [
+        "right_hole_1"
+      ],
+      "finding_ids": [],
+      "before_signature": "1908482a0513bfdc9c58825fcfa87790407955a9c0b5a38420b834dfeaa67ddc",
+      "after_signature": "37b4414825a8f9b959039707bddf450e9e6f9676d01ed85439201ab4652e18bb",
+      "parameter_changes": {},
+      "reversed_directions": [],
+      "revision": 9,
+      "at": 1790857755.0112617
+    },
+    {
+      "tool": "cad_remove_feature",
+      "feature_ids": [
+        "right_hole_2"
+      ],
+      "finding_ids": [],
+      "before_signature": "37b4414825a8f9b959039707bddf450e9e6f9676d01ed85439201ab4652e18bb",
+      "after_signature": "d9a57fa9a9aac2103a934ea6a4c36397ec366162ca39a083b4ab49a0d557adcf",
+      "parameter_changes": {},
+      "reversed_directions": [],
+      "revision": 10,
+      "at": 1790857755.0232341
+    },
+    {
+      "tool": "cad_remove_feature",
+      "feature_ids": [
+        "right_hole_3"
+      ],
+      "finding_ids": [],
+      "before_signature": "d9a57fa9a9aac2103a934ea6a4c36397ec366162ca39a083b4ab49a0d557adcf",
+      "after_signature": "0b2950424f5977596e171776eb2311a6cd7a5d3bfb8ec1fd3a445ed37dbb6e2b",
+      "parameter_changes": {},
+      "reversed_directions": [],
+      "revision": 11,
+      "at": 1790857755.0340726
+    },
+    {
+      "tool": "cad_remove_feature",
+      "feature_ids": [
+        "back_hole_1"
+      ],
+      "finding_ids": [],
+      "before_signature": "0b2950424f5977596e171776eb2311a6cd7a5d3bfb8ec1fd3a445ed37dbb6e2b",
+      "after_signature": "7e245e02f6ce8ffe7464b996f68aefa3b5a2be5a0f99424d18cd0ae268e62e98",
+      "parameter_changes": {},
+      "reversed_directions": [],
+      "revision": 12,
+      "at": 1790857755.0461073
+    },
+    {
+      "tool": "cad_remove_feature",
+      "feature_ids": [
+        "back_hole_2"
+      ],
+      "finding_ids": [],
+      "before_signature": "7e245e02f6ce8ffe7464b996f68aefa3b5a2be5a0f99424d18cd0ae268e62e98",
+      "after_signature": "1c76b77a2aa835d52b4ce2c9c5cf75566bf16e40214e59295068da36a247b14b",
+      "parameter_changes": {},
+      "reversed_directions": [],
+      "revision": 13,
+      "at": 1790857755.0571742
+    },
+    {
+      "tool": "cad_add_hole_array",
+      "feature_ids": [
+        "horz_hole_1",
+        "horz_hole_2",
+        "horz_hole_3"
+      ],
+      "finding_ids": [],
+      "before_signature": "1c76b77a2aa835d52b4ce2c9c5cf75566bf16e40214e59295068da36a247b14b",
+      "after_signature": "1d9dd1094e84998a3ed6368e3cf3af9a0cb2c2afc1c74da72a3963910e6a9562",
+      "parameter_changes": {},
+      "reversed_directions": [],
+      "revision": 14,
+      "at": 1790857792.1861875
+    },
+    {
+      "tool": "cad_update_feature",
+      "feature_ids": [
+        "back_hole_3"
+      ],
+      "finding_ids": [],
+      "before_signature": "1d9dd1094e84998a3ed6368e3cf3af9a0cb2c2afc1c74da72a3963910e6a9562",
+      "after_signature": "f27254c7252f7225b26168f564e3a1e42997bc17561e2264315b26e06f42f465",
+      "parameter_changes": {
+        "through": {
+          "before": true,
+          "after": false,
+          "direction": "changed"
+        },
+        "point": {
+          "before": [
+            0.0,
+            -25.0,
+            60.0
+          ],
+          "after": [
+            0,
+            -10,
+            60
+          ],
+          "direction": "changed"
+        },
+        "depth": {
+          "before": null,
+          "after": 15,
+          "direction": "changed"
+        },
+        "axis": {
+          "before": "Y",
+          "after": [
+            0,
+            -1,
+            0
+          ],
+          "direction": "changed"
+        }
+      },
+      "reversed_directions": [],
+      "revision": 15,
+      "at": 1790857814.2098238
+    },
+    {
+      "tool": "cad_update_feature",
+      "feature_ids": [
+        "back_hole_3"
+      ],
+      "finding_ids": [],
+      "before_signature": "f27254c7252f7225b26168f564e3a1e42997bc17561e2264315b26e06f42f465",
+      "after_signature": "07e300b181a16ade20ae289ee1bf24087bd371324f1db8731a32a21f294e1b42",
+      "parameter_changes": {
+        "axis": {
+          "before": [
+            0,
+            -1,
+            0
+          ],
+          "after": "-Y",
+          "direction": "changed"
+        }
+      },
+      "reversed_directions": [],
+      "revision": 16,
+      "at": 1790857821.3966413
+    },
+    {
+      "tool": "cad_update_feature",
+      "feature_ids": [
+        "back_hole_3"
+      ],
+      "finding_ids": [],
+      "before_signature": "07e300b181a16ade20ae289ee1bf24087bd371324f1db8731a32a21f294e1b42",
+      "after_signature": "000d443fbedea8605ab31f14126d7f73c4e2afcc1898e961dfa69a40aaf6a7c6",
+      "parameter_changes": {
+        "point": {
+          "before": [
+            0,
+            -10,
+            60
+          ],
+          "after": [
+            0,
+            -25,
+            60
+          ],
+          "direction": "changed"
+        },
+        "axis": {
+          "before": "-Y",
+          "after": "Y",
+          "direction": "changed"
+        }
+      },
+      "reversed_directions": [],
+      "revision": 17,
+      "at": 1790857836.9234252
+    },
+    {
+      "tool": "cad_add_hole_array",
+      "feature_ids": [
+        "back_blind_1",
+        "back_blind_2"
+      ],
+      "finding_ids": [],
+      "before_signature": "000d443fbedea8605ab31f14126d7f73c4e2afcc1898e961dfa69a40aaf6a7c6",
+      "after_signature": "f0edb5d1d73babc3a7c663a035dc496f8ce69ecfe7772eeb56a07d3cdcf87818",
+      "parameter_changes": {},
+      "reversed_directions": [],
+      "revision": 18,
+      "at": 1790857844.0161512
+    },
+    {
+      "tool": "cad_update_feature",
+      "feature_ids": [
+        "back_blind_1"
+      ],
+      "finding_ids": [],
+      "before_signature": "f0edb5d1d73babc3a7c663a035dc496f8ce69ecfe7772eeb56a07d3cdcf87818",
+      "after_signature": "298aa78fe05aa33f3f1f28df113a3c47f01f46b7fa64ebbab6aed855e2361dc9",
+      "parameter_changes": {
+        "through": {
+          "before": true,
+          "after": false,
+          "direction": "changed"
+        },
+        "depth": {
+          "before": null,
+          "after": 15,
+          "direction": "changed"
+        }
+      },
+      "reversed_directions": [],
+      "revision": 19,
+      "at": 1790857852.4148512
+    },
+    {
+      "tool": "cad_update_feature",
+      "feature_ids": [
+        "back_blind_2"
+      ],
+      "finding_ids": [],
+      "before_signature": "298aa78fe05aa33f3f1f28df113a3c47f01f46b7fa64ebbab6aed855e2361dc9",
+      "after_signature": "3134c35eab8529b68527dd4f084ec8c507cdf134af0f73984fe8304fbb62f877",
+      "parameter_changes": {
+        "through": {
+          "before": true,
+          "after": false,
+          "direction": "changed"
+        },
+        "depth": {
+          "before": null,
+          "after": 15,
+          "direction": "changed"
+        }
+      },
+      "reversed_directions": [],
+      "revision": 20,
+      "at": 1790857852.437978
+    },
+    {
+      "tool": "cad_update_feature",
+      "feature_ids": [
+        "back_blind_1"
+      ],
+      "finding_ids": [],
+      "before_signature": "3134c35eab8529b68527dd4f084ec8c507cdf134af0f73984fe8304fbb62f877",
+      "after_signature": "14a15620d725f56484293542bcd6febf05557c98993927d4af382ef8dc76b9c3",
+      "parameter_changes": {
+        "face_setback": {
+          "before": null,
+          "after": 0.1,
+          "direction": "changed"
+        },
+        "depth": {
+          "before": 15,
+          "after": 15.5,
+          "direction": "increased"
+        }
+      },
+      "reversed_directions": [],
+      "revision": 21,
+      "at": 1790857946.8605669
+    },
+    {
+      "tool": "cad_update_feature",
+      "feature_ids": [
+        "back_blind_1"
+      ],
+      "finding_ids": [],
+      "before_signature": "14a15620d725f56484293542bcd6febf05557c98993927d4af382ef8dc76b9c3",
+      "after_signature": "84222f9453e86ab1d6c7f16c12a1a7d060ec1af830c0bf18f9f1a5b265567c2b",
+      "parameter_changes": {
+        "point": {
+          "before": [
+            0.0,
+            -25.0,
+            20.0
+          ],
+          "after": [
+            0,
+            -24.5,
+            20
+          ],
+          "direction": "changed"
+        }
+      },
+      "reversed_directions": [],
+      "revision": 22,
+      "at": 1790857960.4062846
+    },
+    {
+      "tool": "cad_update_feature",
+      "feature_ids": [
+        "back_blind_2"
+      ],
+      "finding_ids": [],
+      "before_signature": "84222f9453e86ab1d6c7f16c12a1a7d060ec1af830c0bf18f9f1a5b265567c2b",
+      "after_signature": "5b238114a36e90d080d468c0bff74dc5ca17fed7f2fef95080141eca25197750",
+      "parameter_changes": {
+        "point": {
+          "before": [
+            0.0,
+            -25.0,
+            40.0
+          ],
+          "after": [
+            0,
+            -24.5,
+            40
+          ],
+          "direction": "changed"
+        },
+        "depth": {
+          "before": 15,
+          "after": 15.5,
+          "direction": "increased"
+        }
+      },
+      "reversed_directions": [],
+      "revision": 23,
+      "at": 1790857960.4337406
+    },
+    {
+      "tool": "cad_update_feature",
+      "feature_ids": [
+        "back_blind_1"
+      ],
+      "finding_ids": [],
+      "before_signature": "5b238114a36e90d080d468c0bff74dc5ca17fed7f2fef95080141eca25197750",
+      "after_signature": "927f4bcb47cfff9148ef0d53b2d600a13cab86d05654df6505e0e7784653d93f",
+      "parameter_changes": {
+        "face_setback": {
+          "before": 0.1,
+          "after": null,
+          "direction": "changed"
+        }
+      },
+      "reversed_directions": [],
+      "revision": 24,
+      "at": 1790857970.248286
+    },
+    {
+      "tool": "cad_remove_feature",
+      "feature_ids": [
+        "back_blind_2"
+      ],
+      "finding_ids": [],
+      "before_signature": "927f4bcb47cfff9148ef0d53b2d600a13cab86d05654df6505e0e7784653d93f",
+      "after_signature": "2f0410889cadd162841020cd1478c4444b495c54dedc94dce6cad8e7a724bb3e",
+      "parameter_changes": {},
+      "reversed_directions": [],
+      "revision": 25,
+      "at": 1790858050.5353742
+    },
+    {
+      "tool": "cad_add_feature",
+      "feature_ids": [
+        "back_cyl_20"
+      ],
+      "finding_ids": [],
+      "before_signature": "2f0410889cadd162841020cd1478c4444b495c54dedc94dce6cad8e7a724bb3e",
+      "after_signature": "53a10b87622b85ebc127f2fddebaa0a325241f7bc4598c6098e8d686273ace96",
+      "parameter_changes": {},
+      "reversed_directions": [],
+      "revision": 26,
+      "at": 1790858070.4240065
+    },
+    {
+      "tool": "cad_add_feature",
+      "feature_ids": [
+        "back_cyl_40"
+      ],
+      "finding_ids": [],
+      "before_signature": "53a10b87622b85ebc127f2fddebaa0a325241f7bc4598c6098e8d686273ace96",
+      "after_signature": "d07f2557132aa995b181a23dcc6fe6d8bab2f37caeabb31824794a3a83c9302b",
+      "parameter_changes": {},
+      "reversed_directions": [],
+      "revision": 27,
+      "at": 1790858087.831024
+    },
+    {
+      "tool": "cad_add_feature",
+      "feature_ids": [
+        "back_cyl_60"
+      ],
+      "finding_ids": [],
+      "before_signature": "d07f2557132aa995b181a23dcc6fe6d8bab2f37caeabb31824794a3a83c9302b",
+      "after_signature": "f4643872e73141c759f6d0434f630ce3e212e96adc1dcfa5866d24cceb08f636",
+      "parameter_changes": {},
+      "reversed_directions": [],
+      "revision": 28,
+      "at": 1790858087.85525
+    },
+    {
+      "tool": "cad_remove_feature",
+      "feature_ids": [
+        "back_hole_3"
+      ],
+      "finding_ids": [],
+      "before_signature": "f4643872e73141c759f6d0434f630ce3e212e96adc1dcfa5866d24cceb08f636",
+      "after_signature": "77b56cf8a6118defb1ca98f4928767d31812d2dfe8a8cc3f4b4a1665aac58ce6",
+      "parameter_changes": {},
+      "reversed_directions": [],
+      "revision": 29,
+      "at": 1790858240.7137563
+    },
+    {
+      "tool": "cad_remove_feature",
+      "feature_ids": [
+        "back_cyl_20"
+      ],
+      "finding_ids": [],
+      "before_signature": "77b56cf8a6118defb1ca98f4928767d31812d2dfe8a8cc3f4b4a1665aac58ce6",
+      "after_signature": "d67dac5e4fb84385b16bc0d2f83178422dbd59e4675858818322e5c7a02f9635",
+      "parameter_changes": {},
+      "reversed_directions": [],
+      "revision": 30,
+      "at": 1790858278.7994368
+    },
+    {
+      "tool": "cad_remove_feature",
+      "feature_ids": [
+        "back_cyl_40"
+      ],
+      "finding_ids": [],
+      "before_signature": "d67dac5e4fb84385b16bc0d2f83178422dbd59e4675858818322e5c7a02f9635",
+      "after_signature": "76caf53717b7961fcf018c0934470d08e63167607c7113b0647b2c61fd4de1e6",
+      "parameter_changes": {},
+      "reversed_directions": [],
+      "revision": 31,
+      "at": 1790858278.8149717
+    },
+    {
+      "tool": "cad_remove_feature",
+      "feature_ids": [
+        "back_cyl_60"
+      ],
+      "finding_ids": [],
+      "before_signature": "76caf53717b7961fcf018c0934470d08e63167607c7113b0647b2c61fd4de1e6",
+      "after_signature": "c50bc067af70b89a34e3165dabac7b74d7a963b80b0e7b23329478a74302802e",
+      "parameter_changes": {},
+      "reversed_directions": [],
+      "revision": 32,
+      "at": 1790858278.8301806
+    }
+  ],
+  "last_valid_candidate": null,
+  "best_evidence_candidate": null,
+  "best_candidate": null,
+  "construction_milestone": null,
+  "reference_rechecks": [
+    {
+      "reference_image_index": 1,
+      "reference_id": "sha256:53ed87fadf8cca869da921627e6a13c845424c6906b3de517d5cca972db94553",
+      "evidence_id": "",
+      "roi_norm": null,
+      "at": 1790858169.9868257
+    }
+  ],
+  "no_progress_by_signature": {},
+  "geometry_failure_history": [
+    {
+      "failure_id": "geometry:duplicate_through_axis:right_hole_1",
+      "revision": 5,
+      "preview_generation": 1,
+      "view": "iso",
+      "failed_feature_id": "right_hole_1",
+      "failure_code": "duplicate_through_axis",
+      "related_feature_ids": [
+        "left_hole_1",
+        "right_hole_1"
+      ],
+      "repeat_count": 1,
+      "geometry_signature": "775e30b05060b45407abfae307be8535d870947e7c04d43b9109693aa8319b56",
+      "reported_error": "特征 right_hole_1 (hole) 建模失败：贯穿孔轴线已被不小于当前孔径的贯穿孔占据；新切除不会去除材料。关联特征：left_hole_1, right_hole_1。",
+      "recorded_at": 1790857692.5668647
+    },
+    {
+      "failure_id": "geometry:cut_no_material_change:back_blind_1",
+      "revision": 20,
+      "preview_generation": 2,
+      "view": "iso",
+      "failed_feature_id": "back_blind_1",
+      "failure_code": "cut_no_material_change",
+      "related_feature_ids": [],
+      "repeat_count": 1,
+      "geometry_signature": "3134c35eab8529b68527dd4f084ec8c507cdf134af0f73984fe8304fbb62f877",
+      "reported_error": "特征 back_blind_1 (hole) 建模失败：切除没有改变材料（刀具体未与实体相交或已位于空腔中）。",
+      "recorded_at": 1790857857.0081098
+    },
+    {
+      "failure_id": "geometry:cut_no_material_change:back_blind_1",
+      "revision": 24,
+      "preview_generation": 3,
+      "view": "iso",
+      "failed_feature_id": "back_blind_1",
+      "failure_code": "cut_no_material_change",
+      "related_feature_ids": [],
+      "repeat_count": 2,
+      "geometry_signature": "927f4bcb47cfff9148ef0d53b2d600a13cab86d05654df6505e0e7784653d93f",
+      "reported_error": "特征 back_blind_1 (hole) 建模失败：切除没有改变材料（刀具体未与实体相交或已位于空腔中）。",
+      "recorded_at": 1790857980.0844607
+    },
+    {
+      "failure_id": "geometry:cut_no_material_change:back_blind_1",
+      "revision": 28,
+      "preview_generation": 4,
+      "view": "iso",
+      "failed_feature_id": "back_blind_1",
+      "failure_code": "cut_no_material_change",
+      "related_feature_ids": [],
+      "repeat_count": 3,
+      "geometry_signature": "f4643872e73141c759f6d0434f630ce3e212e96adc1dcfa5866d24cceb08f636",
+      "reported_error": "特征 back_blind_1 (hole) 建模失败：切除没有改变材料（刀具体未与实体相交或已位于空腔中）。",
+      "recorded_at": 1790858096.6280947
+    },
+    {
+      "failure_id": "geometry:cut_no_material_change:back_blind_1",
+      "revision": 29,
+      "preview_generation": 5,
+      "view": "iso",
+      "failed_feature_id": "back_blind_1",
+      "failure_code": "cut_no_material_change",
+      "related_feature_ids": [],
+      "repeat_count": 4,
+      "geometry_signature": "77b56cf8a6118defb1ca98f4928767d31812d2dfe8a8cc3f4b4a1665aac58ce6",
+      "reported_error": "特征 back_blind_1 (hole) 建模失败：切除没有改变材料（刀具体未与实体相交或已位于空腔中）。",
+      "recorded_at": 1790858245.7839022
+    }
+  ],
+  "last_preview_failure": {
+    "failure_id": "geometry:cut_no_material_change:back_blind_1",
+    "revision": 29,
+    "preview_generation": 5,
+    "view": "iso",
+    "failed_feature_id": "back_blind_1",
+    "failure_code": "cut_no_material_change",
+    "related_feature_ids": [],
+    "repeat_count": 4,
+    "geometry_signature": "77b56cf8a6118defb1ca98f4928767d31812d2dfe8a8cc3f4b4a1665aac58ce6",
+    "reported_error": "特征 back_blind_1 (hole) 建模失败：切除没有改变材料（刀具体未与实体相交或已位于空腔中）。",
+    "recorded_at": 1790858245.7839022
+  },
+  "partial_preview": null,
+  "partial_preview_history": [
+    {
+      "state": "candidate_partial_not_accepted",
+      "partial_state": "candidate_partial_not_accepted",
+      "revision": 5,
+      "preview_generation": 1,
+      "view": "iso",
+      "preview_image": "C:\\Users\\lycohana\\AppData\\Local\\AI Modeler\\dsh\\sessions\\cold-nine-hole-20261001-202252-b8032d41\\previews\\r5-g1-iso.png",
+      "partial_geometry_checks": {
+        "brep_valid": true,
+        "shape_type": "TopAbs_COMPOUND",
+        "solid_count": 1,
+        "connected_component_count": 1,
+        "shell_count": 1,
+        "closed_shell_count": 1,
+        "closed": true,
+        "edge_count": 90,
+        "face_count": 16,
+        "free_edge_count": 0,
+        "volume_mm3": 307864.5128704807,
+        "bbox_mm": [
+          -50.0,
+          -25.0,
+          0.0,
+          50.0,
+          25.0,
+          80.0
+        ],
+        "self_intersection": {
+          "status": "checked_no_intersection",
+          "face_count": 16,
+          "face_limit": 15000,
+          "check_result_count": 0,
+          "check_statuses": [],
+          "method": "BOPAlgo_ArgumentAnalyzer(SelfInterMode=True, UseOBB=True)"
+        },
+        "validity_method": "BRepCheck_Analyzer",
+        "geometry_scope": "native_OCCT_BREP_only_visual_comparison_not_performed",
+        "state": "needs_review",
+        "geometry_state": "needs_review",
+        "partial": true,
+        "accepted": false,
+        "applied_feature_results": [
+          {
+            "feature_id": "base_box",
+            "kind": "box",
+            "operation": "add",
+            "geometry_support": "exact",
+            "builder": "analytic_prism",
+            "state": "applied",
+            "source_feature_id": null,
+            "source_resolution": null,
+            "solid_count": 1,
+            "brep_valid": true,
+            "before_volume_mm3": 0.0,
+            "after_volume_mm3": 399999.9999999999,
+            "volume_delta_mm3": 399999.9999999999,
+            "cylindrical_cut_intents": [],
+            "depth_measurement": null,
+            "facet_count": null
+          },
+          {
+            "feature_id": "front_slot",
+            "kind": "box",
+            "operation": "cut",
+            "geometry_support": "exact",
+            "builder": "analytic_prism",
+            "state": "applied",
+            "source_feature_id": null,
+            "source_resolution": null,
+            "solid_count": 1,
+            "brep_valid": true,
+            "before_volume_mm3": 399999.9999999999,
+            "after_volume_mm3": 331750.0,
+            "volume_delta_mm3": -68249.99999999988,
+            "cylindrical_cut_intents": [],
+            "depth_measurement": null,
+            "facet_count": null
+          },
+          {
+            "feature_id": "left_hole_1",
+            "kind": "hole",
+            "operation": "cut",
+            "geometry_support": "exact",
+            "builder": "analytic_cylindrical_bores",
+            "state": "applied",
+            "source_feature_id": null,
+            "source_resolution": null,
+            "solid_count": 1,
+            "brep_valid": true,
+            "before_volume_mm3": 331750.0,
+            "after_volume_mm3": 323833.1865129537,
+            "volume_delta_mm3": -7916.813487046282,
+            "cylindrical_cut_intents": [],
+            "depth_measurement": null,
+            "facet_count": null
+          },
+          {
+            "feature_id": "left_hole_2",
+            "kind": "hole",
+            "operation": "cut",
+            "geometry_support": "exact",
+            "builder": "analytic_cylindrical_bores",
+            "state": "applied",
+            "source_feature_id": null,
+            "source_resolution": null,
+            "solid_count": 1,
+            "brep_valid": true,
+            "before_volume_mm3": 323833.1865129537,
+            "after_volume_mm3": 315916.37302590744,
+            "volume_delta_mm3": -7916.813487046282,
+            "cylindrical_cut_intents": [],
+            "depth_measurement": null,
+            "facet_count": null
+          },
+          {
+            "feature_id": "left_hole_3",
+            "kind": "hole",
+            "operation": "cut",
+            "geometry_support": "exact",
+            "builder": "analytic_cylindrical_bores",
+            "state": "applied",
+            "source_feature_id": null,
+            "source_resolution": null,
+            "solid_count": 1,
+            "brep_valid": true,
+            "before_volume_mm3": 315916.37302590744,
+            "after_volume_mm3": 307864.5128704807,
+            "volume_delta_mm3": -8051.8601554267225,
+            "cylindrical_cut_intents": [],
+            "depth_measurement": null,
+            "facet_count": null
+          }
+        ],
+        "failed_feature_effect": {
+          "feature_id": "right_hole_1",
+          "operation": "cut",
+          "state": "unmeasured",
+          "kind": "hole",
+          "before_volume_mm3": 307864.5128704807,
+          "after_volume_mm3": null,
+          "volume_delta_mm3": null,
+          "warning": null,
+          "reason": "贯穿孔轴线已被不小于当前孔径的贯穿孔占据；新切除不会去除材料。关联特征：left_hole_1, right_hole_1。",
+          "failure_code": "duplicate_through_axis",
+          "related_feature_ids": [
+            "left_hole_1",
+            "right_hole_1"
+          ]
+        }
+      },
+      "failed_feature_id": "right_hole_1",
+      "failure_code": "duplicate_through_axis",
+      "related_feature_ids": [
+        "left_hole_1",
+        "right_hole_1"
+      ],
+      "requested_plan": {
+        "schema_version": "1.0",
+        "name": "九孔凹块",
+        "source_prompt": "请按参考图复刻这个工件；图中没有标注的尺寸请按图像比例估算，标明估算来源，生成本地模型",
+        "units": {
+          "length": "mm",
+          "angle": "deg"
+        },
+        "coordinate_system": {
+          "type": "global_cartesian",
+          "handedness": "right",
+          "axes": [
+            "X",
+            "Y",
+            "Z"
+          ],
+          "origin": [
+            0,
+            0,
+            0
+          ]
+        },
+        "features": [
+          {
+            "id": "base_box",
+            "kind": "box",
+            "operation": "add",
+            "name": "基体长方体",
+            "parameters": {
+              "length": 100,
+              "width": 50,
+              "height": 80,
+              "center": [
+                0,
+                0,
+                40
+              ]
+            },
+            "sources": {
+              "length": {
+                "type": "image_estimate",
+                "evidence": "整体宽度约100mm（X方向）"
+              },
+              "width": {
+                "type": "image_estimate",
+                "evidence": "整体厚度约50mm（Y方向）"
+              },
+              "height": {
+                "type": "image_estimate",
+                "evidence": "整体高度约80mm（Z方向）"
+              },
+              "center": {
+                "type": "derived",
+                "evidence": "以底面Z=0、几何中心在(0,0,40)"
+              }
+            },
+            "relations": []
+          },
+          {
+            "id": "front_slot",
+            "kind": "box",
+            "operation": "cut",
+            "name": "正面凹槽",
+            "parameters": {
+              "length": 30.0,
+              "width": 35.001,
+              "height": 65.0,
+              "center": [
+                0.0,
+                7.500499999999999,
+                32.5
+              ]
+            },
+            "sources": {
+              "length": {
+                "type": "image_estimate",
+                "evidence": "槽宽约30mm、深约35mm、高约65mm，顶壁厚约15mm，均按图像比例估算 图像/用户依据：凹槽尺寸。 凹槽面内宽度映射到此坐标轴。"
+              },
+              "width": {
+                "type": "derived",
+                "evidence": "由用户凹槽深度及布尔切除余量计算此坐标轴尺寸。"
+              },
+              "height": {
+                "type": "image_estimate",
+                "evidence": "槽宽约30mm、深约35mm、高约65mm，顶壁厚约15mm，均按图像比例估算 图像/用户依据：凹槽尺寸。 凹槽面内高度映射到此坐标轴。"
+              },
+              "center": {
+                "type": "derived",
+                "evidence": "由主 box 表面坐标与凹入深度计算切除体中心。"
+              }
+            },
+            "note": "通过统一 CADPlan 坐标语义创建的面内退台。"
+          },
+          {
+            "id": "left_hole_1",
+            "kind": "hole",
+            "operation": "cut",
+            "name": "left_hole_1",
+            "parameters": {
+              "diameter": 12.0,
+              "through": true,
+              "pos": "point",
+              "point": [
+                -50.0,
+                7.5,
+                20.0
+              ],
+              "axis": "X"
+            },
+            "sources": {
+              "diameter": {
+                "type": "image_estimate",
+                "evidence": "左壁3个竖直排列通孔，孔径与壁厚比例估算约12mm，Z向约20/40/60均匀分布 图像/用户依据：孔位和孔径估计。"
+              },
+              "point": {
+                "type": "derived",
+                "evidence": "由输入面内坐标、退台量和面法线转换为全局坐标。"
+              }
+            },
+            "note": "面法线固定为 0 的贯穿孔阵列成员。"
+          },
+          {
+            "id": "left_hole_2",
+            "kind": "hole",
+            "operation": "cut",
+            "name": "left_hole_2",
+            "parameters": {
+              "diameter": 12.0,
+              "through": true,
+              "pos": "point",
+              "point": [
+                -50.0,
+                7.5,
+                40.0
+              ],
+              "axis": "X"
+            },
+            "sources": {
+              "diameter": {
+                "type": "image_estimate",
+                "evidence": "左壁3个竖直排列通孔，孔径与壁厚比例估算约12mm，Z向约20/40/60均匀分布 图像/用户依据：孔位和孔径估计。"
+              },
+              "point": {
+                "type": "derived",
+                "evidence": "由输入面内坐标、退台量和面法线转换为全局坐标。"
+              }
+            },
+            "note": "面法线固定为 0 的贯穿孔阵列成员。"
+          },
+          {
+            "id": "left_hole_3",
+            "kind": "hole",
+            "operation": "cut",
+            "name": "left_hole_3",
+            "parameters": {
+              "diameter": 12.0,
+              "through": true,
+              "pos": "point",
+              "point": [
+                -50.0,
+                7.5,
+                60.0
+              ],
+              "axis": "X"
+            },
+            "sources": {
+              "diameter": {
+                "type": "image_estimate",
+                "evidence": "左壁3个竖直排列通孔，孔径与壁厚比例估算约12mm，Z向约20/40/60均匀分布 图像/用户依据：孔位和孔径估计。"
+              },
+              "point": {
+                "type": "derived",
+                "evidence": "由输入面内坐标、退台量和面法线转换为全局坐标。"
+              }
+            },
+            "note": "面法线固定为 0 的贯穿孔阵列成员。"
+          },
+          {
+            "id": "right_hole_1",
+            "kind": "hole",
+            "operation": "cut",
+            "name": "right_hole_1",
+            "parameters": {
+              "diameter": 12.0,
+              "through": true,
+              "pos": "point",
+              "point": [
+                50.0,
+                7.5,
+                20.0
+              ],
+              "axis": "X"
+            },
+            "sources": {
+              "diameter": {
+                "type": "image_estimate",
+                "evidence": "右壁3个竖直排列通孔，与左壁对称，孔径与壁厚比例估算约12mm，Z向约20/40/60均匀分布 图像/用户依据：孔位和孔径估计。"
+              },
+              "point": {
+                "type": "derived",
+                "evidence": "由输入面内坐标、退台量和面法线转换为全局坐标。"
+              }
+            },
+            "note": "面法线固定为 0 的贯穿孔阵列成员。"
+          },
+          {
+            "id": "right_hole_2",
+            "kind": "hole",
+            "operation": "cut",
+            "name": "right_hole_2",
+            "parameters": {
+              "diameter": 12.0,
+              "through": true,
+              "pos": "point",
+              "point": [
+                50.0,
+                7.5,
+                40.0
+              ],
+              "axis": "X"
+            },
+            "sources": {
+              "diameter": {
+                "type": "image_estimate",
+                "evidence": "右壁3个竖直排列通孔，与左壁对称，孔径与壁厚比例估算约12mm，Z向约20/40/60均匀分布 图像/用户依据：孔位和孔径估计。"
+              },
+              "point": {
+                "type": "derived",
+                "evidence": "由输入面内坐标、退台量和面法线转换为全局坐标。"
+              }
+            },
+            "note": "面法线固定为 0 的贯穿孔阵列成员。"
+          },
+          {
+            "id": "right_hole_3",
+            "kind": "hole",
+            "operation": "cut",
+            "name": "right_hole_3",
+            "parameters": {
+              "diameter": 12.0,
+              "through": true,
+              "pos": "point",
+              "point": [
+                50.0,
+                7.5,
+                60.0
+              ],
+              "axis": "X"
+            },
+            "sources": {
+              "diameter": {
+                "type": "image_estimate",
+                "evidence": "右壁3个竖直排列通孔，与左壁对称，孔径与壁厚比例估算约12mm，Z向约20/40/60均匀分布 图像/用户依据：孔位和孔径估计。"
+              },
+              "point": {
+                "type": "derived",
+                "evidence": "由输入面内坐标、退台量和面法线转换为全局坐标。"
+              }
+            },
+            "note": "面法线固定为 0 的贯穿孔阵列成员。"
+          },
+          {
+            "id": "back_hole_1",
+            "kind": "hole",
+            "operation": "cut",
+            "name": "back_hole_1",
+            "parameters": {
+              "diameter": 12.0,
+              "through": true,
+              "pos": "point",
+              "point": [
+                0.0,
+                -25.0,
+                20.0
+              ],
+              "axis": "Y"
+            },
+            "sources": {
+              "diameter": {
+                "type": "image_estimate",
+                "evidence": "后壁3个横向通孔，孔径与壁厚比例估算约12mm，Z向约20/40/60均匀分布，X向位于槽中心 图像/用户依据：孔位和孔径估计。"
+              },
+              "point": {
+                "type": "derived",
+                "evidence": "由输入面内坐标、退台量和面法线转换为全局坐标。"
+              }
+            },
+            "note": "面法线固定为 1 的贯穿孔阵列成员。"
+          },
+          {
+            "id": "back_hole_2",
+            "kind": "hole",
+            "operation": "cut",
+            "name": "back_hole_2",
+            "parameters": {
+              "diameter": 12.0,
+              "through": true,
+              "pos": "point",
+              "point": [
+                0.0,
+                -25.0,
+                40.0
+              ],
+              "axis": "Y"
+            },
+            "sources": {
+              "diameter": {
+                "type": "image_estimate",
+                "evidence": "后壁3个横向通孔，孔径与壁厚比例估算约12mm，Z向约20/40/60均匀分布，X向位于槽中心 图像/用户依据：孔位和孔径估计。"
+              },
+              "point": {
+                "type": "derived",
+                "evidence": "由输入面内坐标、退台量和面法线转换为全局坐标。"
+              }
+            },
+            "note": "面法线固定为 1 的贯穿孔阵列成员。"
+          },
+          {
+            "id": "back_hole_3",
+            "kind": "hole",
+            "operation": "cut",
+            "name": "back_hole_3",
+            "parameters": {
+              "diameter": 12.0,
+              "through": true,
+              "pos": "point",
+              "point": [
+                0.0,
+                -25.0,
+                60.0
+              ],
+              "axis": "Y"
+            },
+            "sources": {
+              "diameter": {
+                "type": "image_estimate",
+                "evidence": "后壁3个横向通孔，孔径与壁厚比例估算约12mm，Z向约20/40/60均匀分布，X向位于槽中心 图像/用户依据：孔位和孔径估计。"
+              },
+              "point": {
+                "type": "derived",
+                "evidence": "由输入面内坐标、退台量和面法线转换为全局坐标。"
+              }
+            },
+            "note": "面法线固定为 1 的贯穿孔阵列成员。"
+          }
+        ],
+        "pending_questions": []
+      },
+      "applied_feature_ids": [],
+      "not_applied_feature_ids": [],
+      "failure_episode": {
+        "failure_id": "geometry:duplicate_through_axis:right_hole_1",
+        "revision": 5,
+        "preview_generation": 1,
+        "view": "iso",
+        "failed_feature_id": "right_hole_1",
+        "failure_code": "duplicate_through_axis",
+        "related_feature_ids": [
+          "left_hole_1",
+          "right_hole_1"
+        ],
+        "repeat_count": 1,
+        "geometry_signature": "775e30b05060b45407abfae307be8535d870947e7c04d43b9109693aa8319b56",
+        "reported_error": "特征 right_hole_1 (hole) 建模失败：贯穿孔轴线已被不小于当前孔径的贯穿孔占据；新切除不会去除材料。关联特征：left_hole_1, right_hole_1。",
+        "recorded_at": 1790857692.5668647
+      },
+      "recorded_at": 1790857692.5679202
+    },
+    {
+      "state": "candidate_partial_not_accepted",
+      "partial_state": "candidate_partial_not_accepted",
+      "revision": 20,
+      "preview_generation": 2,
+      "view": "iso",
+      "preview_image": "C:\\Users\\lycohana\\AppData\\Local\\AI Modeler\\dsh\\sessions\\cold-nine-hole-20261001-202252-b8032d41\\previews\\r20-g2-iso.png",
+      "partial_geometry_checks": {
+        "brep_valid": true,
+        "shape_type": "TopAbs_COMPOUND",
+        "solid_count": 1,
+        "connected_component_count": 1,
+        "shell_count": 1,
+        "closed_shell_count": 1,
+        "closed": true,
+        "edge_count": 114,
+        "face_count": 20,
+        "free_edge_count": 0,
+        "volume_mm3": 307798.194618375,
+        "bbox_mm": [
+          -50.0,
+          -25.0,
+          0.0,
+          50.0,
+          25.0,
+          80.0
+        ],
+        "self_intersection": {
+          "status": "checked_no_intersection",
+          "face_count": 20,
+          "face_limit": 15000,
+          "check_result_count": 0,
+          "check_statuses": [],
+          "method": "BOPAlgo_ArgumentAnalyzer(SelfInterMode=True, UseOBB=True)"
+        },
+        "validity_method": "BRepCheck_Analyzer",
+        "geometry_scope": "native_OCCT_BREP_only_visual_comparison_not_performed",
+        "state": "needs_review",
+        "geometry_state": "needs_review",
+        "partial": true,
+        "accepted": false,
+        "applied_feature_results": [
+          {
+            "feature_id": "base_box",
+            "kind": "box",
+            "operation": "add",
+            "geometry_support": "exact",
+            "builder": "analytic_prism",
+            "state": "applied",
+            "source_feature_id": null,
+            "source_resolution": null,
+            "solid_count": 1,
+            "brep_valid": true,
+            "before_volume_mm3": 0.0,
+            "after_volume_mm3": 399999.9999999999,
+            "volume_delta_mm3": 399999.9999999999,
+            "cylindrical_cut_intents": [],
+            "depth_measurement": null,
+            "facet_count": null
+          },
+          {
+            "feature_id": "front_slot",
+            "kind": "box",
+            "operation": "cut",
+            "geometry_support": "exact",
+            "builder": "analytic_prism",
+            "state": "applied",
+            "source_feature_id": null,
+            "source_resolution": null,
+            "solid_count": 1,
+            "brep_valid": true,
+            "before_volume_mm3": 399999.9999999999,
+            "after_volume_mm3": 331750.0,
+            "volume_delta_mm3": -68249.99999999988,
+            "cylindrical_cut_intents": [],
+            "depth_measurement": null,
+            "facet_count": null
+          },
+          {
+            "feature_id": "back_hole_3",
+            "kind": "hole",
+            "operation": "cut",
+            "geometry_support": "exact",
+            "builder": "analytic_cylindrical_bores",
+            "state": "applied",
+            "source_feature_id": null,
+            "source_resolution": null,
+            "solid_count": 1,
+            "brep_valid": true,
+            "before_volume_mm3": 331750.0,
+            "after_volume_mm3": 331682.4766658098,
+            "volume_delta_mm3": -67.52333419019124,
+            "cylindrical_cut_intents": [],
+            "depth_measurement": null,
+            "facet_count": null
+          },
+          {
+            "feature_id": "horz_hole_1",
+            "kind": "hole",
+            "operation": "cut",
+            "geometry_support": "exact",
+            "builder": "analytic_cylindrical_bores",
+            "state": "applied",
+            "source_feature_id": null,
+            "source_resolution": null,
+            "solid_count": 1,
+            "brep_valid": true,
+            "before_volume_mm3": 331682.4766658098,
+            "after_volume_mm3": 323765.6631787635,
+            "volume_delta_mm3": -7916.813487046282,
+            "cylindrical_cut_intents": [],
+            "depth_measurement": null,
+            "facet_count": null
+          },
+          {
+            "feature_id": "horz_hole_2",
+            "kind": "hole",
+            "operation": "cut",
+            "geometry_support": "exact",
+            "builder": "analytic_cylindrical_bores",
+            "state": "applied",
+            "source_feature_id": null,
+            "source_resolution": null,
+            "solid_count": 1,
+            "brep_valid": true,
+            "before_volume_mm3": 323765.6631787635,
+            "after_volume_mm3": 315848.8496917173,
+            "volume_delta_mm3": -7916.813487046224,
+            "cylindrical_cut_intents": [],
+            "depth_measurement": null,
+            "facet_count": null
+          },
+          {
+            "feature_id": "horz_hole_3",
+            "kind": "hole",
+            "operation": "cut",
+            "geometry_support": "exact",
+            "builder": "analytic_cylindrical_bores",
+            "state": "applied",
+            "source_feature_id": null,
+            "source_resolution": null,
+            "solid_count": 1,
+            "brep_valid": true,
+            "before_volume_mm3": 315848.8496917173,
+            "after_volume_mm3": 307798.194618375,
+            "volume_delta_mm3": -8050.655073342321,
+            "cylindrical_cut_intents": [],
+            "depth_measurement": null,
+            "facet_count": null
+          }
+        ],
+        "failed_feature_effect": {
+          "feature_id": "back_blind_1",
+          "operation": "cut",
+          "state": "no_op",
+          "kind": "hole",
+          "before_volume_mm3": 307798.194618375,
+          "after_volume_mm3": 307798.194618375,
+          "volume_delta_mm3": 0.0,
+          "warning": "切除没有改变材料（刀具体未与实体相交或已位于空腔中）。",
+          "reason": "切除没有改变材料（刀具体未与实体相交或已位于空腔中）。",
+          "failure_code": "cut_no_material_change",
+          "related_feature_ids": []
+        }
+      },
+      "failed_feature_id": "back_blind_1",
+      "failure_code": "cut_no_material_change",
+      "related_feature_ids": [],
+      "requested_plan": {
+        "schema_version": "1.0",
+        "name": "九孔凹块",
+        "source_prompt": "请按参考图复刻这个工件；图中没有标注的尺寸请按图像比例估算，标明估算来源，生成本地模型",
+        "units": {
+          "length": "mm",
+          "angle": "deg"
+        },
+        "coordinate_system": {
+          "type": "global_cartesian",
+          "handedness": "right",
+          "axes": [
+            "X",
+            "Y",
+            "Z"
+          ],
+          "origin": [
+            0,
+            0,
+            0
+          ]
+        },
+        "features": [
+          {
+            "id": "base_box",
+            "kind": "box",
+            "operation": "add",
+            "name": "基体长方体",
+            "parameters": {
+              "length": 100,
+              "width": 50,
+              "height": 80,
+              "center": [
+                0,
+                0,
+                40
+              ]
+            },
+            "sources": {
+              "length": {
+                "type": "image_estimate",
+                "evidence": "整体宽度约100mm（X方向）"
+              },
+              "width": {
+                "type": "image_estimate",
+                "evidence": "整体厚度约50mm（Y方向）"
+              },
+              "height": {
+                "type": "image_estimate",
+                "evidence": "整体高度约80mm（Z方向）"
+              },
+              "center": {
+                "type": "derived",
+                "evidence": "以底面Z=0、几何中心在(0,0,40)"
+              }
+            },
+            "relations": []
+          },
+          {
+            "id": "front_slot",
+            "kind": "box",
+            "operation": "cut",
+            "name": "正面凹槽",
+            "parameters": {
+              "length": 30.0,
+              "width": 35.001,
+              "height": 65.0,
+              "center": [
+                0.0,
+                7.500499999999999,
+                32.5
+              ]
+            },
+            "sources": {
+              "length": {
+                "type": "image_estimate",
+                "evidence": "槽宽约30mm、深约35mm、高约65mm，顶壁厚约15mm，均按图像比例估算 图像/用户依据：凹槽尺寸。 凹槽面内宽度映射到此坐标轴。"
+              },
+              "width": {
+                "type": "derived",
+                "evidence": "由用户凹槽深度及布尔切除余量计算此坐标轴尺寸。"
+              },
+              "height": {
+                "type": "image_estimate",
+                "evidence": "槽宽约30mm、深约35mm、高约65mm，顶壁厚约15mm，均按图像比例估算 图像/用户依据：凹槽尺寸。 凹槽面内高度映射到此坐标轴。"
+              },
+              "center": {
+                "type": "derived",
+                "evidence": "由主 box 表面坐标与凹入深度计算切除体中心。"
+              }
+            },
+            "note": "通过统一 CADPlan 坐标语义创建的面内退台。"
+          },
+          {
+            "id": "back_hole_3",
+            "kind": "hole",
+            "operation": "cut",
+            "name": "back_hole_3",
+            "parameters": {
+              "diameter": 12.0,
+              "through": false,
+              "pos": "point",
+              "point": [
+                0,
+                -25,
+                60
+              ],
+              "axis": "Y",
+              "depth": 15
+            },
+            "sources": {
+              "diameter": {
+                "type": "image_estimate",
+                "evidence": "后壁3个横向通孔，孔径与壁厚比例估算约12mm，Z向约20/40/60均匀分布，X向位于槽中心 图像/用户依据：孔位和孔径估计。"
+              },
+              "point": {
+                "type": "derived",
+                "evidence": "后壁外表面中心X=0，Y=-25，Z=60"
+              },
+              "through": {
+                "type": "image_estimate",
+                "evidence": "后壁孔仅贯穿后壁厚度，从槽底面向后钻透，不是前后通孔"
+              },
+              "depth": {
+                "type": "derived",
+                "evidence": "后壁厚度=总厚50-槽深35=15mm"
+              },
+              "axis": {
+                "type": "derived",
+                "evidence": "从Y=-25外表面沿+Y钻入后壁"
+              }
+            },
+            "note": "面法线固定为 1 的贯穿孔阵列成员。"
+          },
+          {
+            "id": "horz_hole_1",
+            "kind": "hole",
+            "operation": "cut",
+            "name": "horz_hole_1",
+            "parameters": {
+              "diameter": 12.0,
+              "through": true,
+              "pos": "point",
+              "point": [
+                -50.0,
+                7.5,
+                20.0
+              ],
+              "axis": "X"
+            },
+            "sources": {
+              "diameter": {
+                "type": "image_estimate",
+                "evidence": "3个水平通孔沿X方向贯穿左右壁，Z向约20/40/60均匀分布，Y向位于侧壁中间；按图像比例估算孔径12mm 图像/用户依据：孔位和孔径估计。"
+              },
+              "point": {
+                "type": "derived",
+                "evidence": "由输入面内坐标、退台量和面法线转换为全局坐标。"
+              }
+            },
+            "note": "面法线固定为 0 的贯穿孔阵列成员。"
+          },
+          {
+            "id": "horz_hole_2",
+            "kind": "hole",
+            "operation": "cut",
+            "name": "horz_hole_2",
+            "parameters": {
+              "diameter": 12.0,
+              "through": true,
+              "pos": "point",
+              "point": [
+                -50.0,
+                7.5,
+                40.0
+              ],
+              "axis": "X"
+            },
+            "sources": {
+              "diameter": {
+                "type": "image_estimate",
+                "evidence": "3个水平通孔沿X方向贯穿左右壁，Z向约20/40/60均匀分布，Y向位于侧壁中间；按图像比例估算孔径12mm 图像/用户依据：孔位和孔径估计。"
+              },
+              "point": {
+                "type": "derived",
+                "evidence": "由输入面内坐标、退台量和面法线转换为全局坐标。"
+              }
+            },
+            "note": "面法线固定为 0 的贯穿孔阵列成员。"
+          },
+          {
+            "id": "horz_hole_3",
+            "kind": "hole",
+            "operation": "cut",
+            "name": "horz_hole_3",
+            "parameters": {
+              "diameter": 12.0,
+              "through": true,
+              "pos": "point",
+              "point": [
+                -50.0,
+                7.5,
+                60.0
+              ],
+              "axis": "X"
+            },
+            "sources": {
+              "diameter": {
+                "type": "image_estimate",
+                "evidence": "3个水平通孔沿X方向贯穿左右壁，Z向约20/40/60均匀分布，Y向位于侧壁中间；按图像比例估算孔径12mm 图像/用户依据：孔位和孔径估计。"
+              },
+              "point": {
+                "type": "derived",
+                "evidence": "由输入面内坐标、退台量和面法线转换为全局坐标。"
+              }
+            },
+            "note": "面法线固定为 0 的贯穿孔阵列成员。"
+          },
+          {
+            "id": "back_blind_1",
+            "kind": "hole",
+            "operation": "cut",
+            "name": "back_blind_1",
+            "parameters": {
+              "diameter": 12.0,
+              "through": false,
+              "pos": "point",
+              "point": [
+                0.0,
+                -25.0,
+                20.0
+              ],
+              "axis": "Y",
+              "depth": 15
+            },
+            "sources": {
+              "diameter": {
+                "type": "image_estimate",
+                "evidence": "后壁另外2个盲孔，从背面外表面Y=-25沿+Y钻透后壁，出口在槽内后壁，深度15mm，Z向约20/40mm 图像/用户依据：孔位和孔径估计。"
+              },
+              "point": {
+                "type": "derived",
+                "evidence": "由输入面内坐标、退台量和面法线转换为全局坐标。"
+              },
+              "through": {
+                "type": "image_estimate",
+                "evidence": "后壁孔为盲孔，仅钻透后壁15mm"
+              },
+              "depth": {
+                "type": "derived",
+                "evidence": "后壁厚度=50-35=15mm"
+              }
+            },
+            "note": "面法线固定为 1 的贯穿孔阵列成员。"
+          },
+          {
+            "id": "back_blind_2",
+            "kind": "hole",
+            "operation": "cut",
+            "name": "back_blind_2",
+            "parameters": {
+              "diameter": 12.0,
+              "through": false,
+              "pos": "point",
+              "point": [
+                0.0,
+                -25.0,
+                40.0
+              ],
+              "axis": "Y",
+              "depth": 15
+            },
+            "sources": {
+              "diameter": {
+                "type": "image_estimate",
+                "evidence": "后壁另外2个盲孔，从背面外表面Y=-25沿+Y钻透后壁，出口在槽内后壁，深度15mm，Z向约20/40mm 图像/用户依据：孔位和孔径估计。"
+              },
+              "point": {
+                "type": "derived",
+                "evidence": "由输入面内坐标、退台量和面法线转换为全局坐标。"
+              },
+              "through": {
+                "type": "image_estimate",
+                "evidence": "后壁孔为盲孔，仅钻透后壁15mm"
+              },
+              "depth": {
+                "type": "derived",
+                "evidence": "后壁厚度=50-35=15mm"
+              }
+            },
+            "note": "面法线固定为 1 的贯穿孔阵列成员。"
+          }
+        ],
+        "pending_questions": []
+      },
+      "applied_feature_ids": [],
+      "not_applied_feature_ids": [],
+      "failure_episode": {
+        "failure_id": "geometry:cut_no_material_change:back_blind_1",
+        "revision": 20,
+        "preview_generation": 2,
+        "view": "iso",
+        "failed_feature_id": "back_blind_1",
+        "failure_code": "cut_no_material_change",
+        "related_feature_ids": [],
+        "repeat_count": 1,
+        "geometry_signature": "3134c35eab8529b68527dd4f084ec8c507cdf134af0f73984fe8304fbb62f877",
+        "reported_error": "特征 back_blind_1 (hole) 建模失败：切除没有改变材料（刀具体未与实体相交或已位于空腔中）。",
+        "recorded_at": 1790857857.0081098
+      },
+      "recorded_at": 1790857857.0091097
+    },
+    {
+      "state": "candidate_partial_not_accepted",
+      "partial_state": "candidate_partial_not_accepted",
+      "revision": 24,
+      "preview_generation": 3,
+      "view": "iso",
+      "preview_image": "C:\\Users\\lycohana\\AppData\\Local\\AI Modeler\\dsh\\sessions\\cold-nine-hole-20261001-202252-b8032d41\\previews\\r24-g3-iso.png",
+      "partial_geometry_checks": {
+        "brep_valid": true,
+        "shape_type": "TopAbs_COMPOUND",
+        "solid_count": 1,
+        "connected_component_count": 1,
+        "shell_count": 1,
+        "closed_shell_count": 1,
+        "closed": true,
+        "edge_count": 114,
+        "face_count": 20,
+        "free_edge_count": 0,
+        "volume_mm3": 307798.194618375,
+        "bbox_mm": [
+          -50.0,
+          -25.0,
+          0.0,
+          50.0,
+          25.0,
+          80.0
+        ],
+        "self_intersection": {
+          "status": "checked_no_intersection",
+          "face_count": 20,
+          "face_limit": 15000,
+          "check_result_count": 0,
+          "check_statuses": [],
+          "method": "BOPAlgo_ArgumentAnalyzer(SelfInterMode=True, UseOBB=True)"
+        },
+        "validity_method": "BRepCheck_Analyzer",
+        "geometry_scope": "native_OCCT_BREP_only_visual_comparison_not_performed",
+        "state": "needs_review",
+        "geometry_state": "needs_review",
+        "partial": true,
+        "accepted": false,
+        "applied_feature_results": [
+          {
+            "feature_id": "base_box",
+            "kind": "box",
+            "operation": "add",
+            "geometry_support": "exact",
+            "builder": "analytic_prism",
+            "state": "applied",
+            "source_feature_id": null,
+            "source_resolution": null,
+            "solid_count": 1,
+            "brep_valid": true,
+            "before_volume_mm3": 0.0,
+            "after_volume_mm3": 399999.9999999999,
+            "volume_delta_mm3": 399999.9999999999,
+            "cylindrical_cut_intents": [],
+            "depth_measurement": null,
+            "facet_count": null
+          },
+          {
+            "feature_id": "front_slot",
+            "kind": "box",
+            "operation": "cut",
+            "geometry_support": "exact",
+            "builder": "analytic_prism",
+            "state": "applied",
+            "source_feature_id": null,
+            "source_resolution": null,
+            "solid_count": 1,
+            "brep_valid": true,
+            "before_volume_mm3": 399999.9999999999,
+            "after_volume_mm3": 331750.0,
+            "volume_delta_mm3": -68249.99999999988,
+            "cylindrical_cut_intents": [],
+            "depth_measurement": null,
+            "facet_count": null
+          },
+          {
+            "feature_id": "back_hole_3",
+            "kind": "hole",
+            "operation": "cut",
+            "geometry_support": "exact",
+            "builder": "analytic_cylindrical_bores",
+            "state": "applied",
+            "source_feature_id": null,
+            "source_resolution": null,
+            "solid_count": 1,
+            "brep_valid": true,
+            "before_volume_mm3": 331750.0,
+            "after_volume_mm3": 331682.4766658098,
+            "volume_delta_mm3": -67.52333419019124,
+            "cylindrical_cut_intents": [],
+            "depth_measurement": null,
+            "facet_count": null
+          },
+          {
+            "feature_id": "horz_hole_1",
+            "kind": "hole",
+            "operation": "cut",
+            "geometry_support": "exact",
+            "builder": "analytic_cylindrical_bores",
+            "state": "applied",
+            "source_feature_id": null,
+            "source_resolution": null,
+            "solid_count": 1,
+            "brep_valid": true,
+            "before_volume_mm3": 331682.4766658098,
+            "after_volume_mm3": 323765.6631787635,
+            "volume_delta_mm3": -7916.813487046282,
+            "cylindrical_cut_intents": [],
+            "depth_measurement": null,
+            "facet_count": null
+          },
+          {
+            "feature_id": "horz_hole_2",
+            "kind": "hole",
+            "operation": "cut",
+            "geometry_support": "exact",
+            "builder": "analytic_cylindrical_bores",
+            "state": "applied",
+            "source_feature_id": null,
+            "source_resolution": null,
+            "solid_count": 1,
+            "brep_valid": true,
+            "before_volume_mm3": 323765.6631787635,
+            "after_volume_mm3": 315848.8496917173,
+            "volume_delta_mm3": -7916.813487046224,
+            "cylindrical_cut_intents": [],
+            "depth_measurement": null,
+            "facet_count": null
+          },
+          {
+            "feature_id": "horz_hole_3",
+            "kind": "hole",
+            "operation": "cut",
+            "geometry_support": "exact",
+            "builder": "analytic_cylindrical_bores",
+            "state": "applied",
+            "source_feature_id": null,
+            "source_resolution": null,
+            "solid_count": 1,
+            "brep_valid": true,
+            "before_volume_mm3": 315848.8496917173,
+            "after_volume_mm3": 307798.194618375,
+            "volume_delta_mm3": -8050.655073342321,
+            "cylindrical_cut_intents": [],
+            "depth_measurement": null,
+            "facet_count": null
+          }
+        ],
+        "failed_feature_effect": {
+          "feature_id": "back_blind_1",
+          "operation": "cut",
+          "state": "no_op",
+          "kind": "hole",
+          "before_volume_mm3": 307798.194618375,
+          "after_volume_mm3": 307798.194618375,
+          "volume_delta_mm3": 0.0,
+          "warning": "切除没有改变材料（刀具体未与实体相交或已位于空腔中）。",
+          "reason": "切除没有改变材料（刀具体未与实体相交或已位于空腔中）。",
+          "failure_code": "cut_no_material_change",
+          "related_feature_ids": []
+        }
+      },
+      "failed_feature_id": "back_blind_1",
+      "failure_code": "cut_no_material_change",
+      "related_feature_ids": [],
+      "requested_plan": {
+        "schema_version": "1.0",
+        "name": "九孔凹块",
+        "source_prompt": "请按参考图复刻这个工件；图中没有标注的尺寸请按图像比例估算，标明估算来源，生成本地模型",
+        "units": {
+          "length": "mm",
+          "angle": "deg"
+        },
+        "coordinate_system": {
+          "type": "global_cartesian",
+          "handedness": "right",
+          "axes": [
+            "X",
+            "Y",
+            "Z"
+          ],
+          "origin": [
+            0,
+            0,
+            0
+          ]
+        },
+        "features": [
+          {
+            "id": "base_box",
+            "kind": "box",
+            "operation": "add",
+            "name": "基体长方体",
+            "parameters": {
+              "length": 100,
+              "width": 50,
+              "height": 80,
+              "center": [
+                0,
+                0,
+                40
+              ]
+            },
+            "sources": {
+              "length": {
+                "type": "image_estimate",
+                "evidence": "整体宽度约100mm（X方向）"
+              },
+              "width": {
+                "type": "image_estimate",
+                "evidence": "整体厚度约50mm（Y方向）"
+              },
+              "height": {
+                "type": "image_estimate",
+                "evidence": "整体高度约80mm（Z方向）"
+              },
+              "center": {
+                "type": "derived",
+                "evidence": "以底面Z=0、几何中心在(0,0,40)"
+              }
+            },
+            "relations": []
+          },
+          {
+            "id": "front_slot",
+            "kind": "box",
+            "operation": "cut",
+            "name": "正面凹槽",
+            "parameters": {
+              "length": 30.0,
+              "width": 35.001,
+              "height": 65.0,
+              "center": [
+                0.0,
+                7.500499999999999,
+                32.5
+              ]
+            },
+            "sources": {
+              "length": {
+                "type": "image_estimate",
+                "evidence": "槽宽约30mm、深约35mm、高约65mm，顶壁厚约15mm，均按图像比例估算 图像/用户依据：凹槽尺寸。 凹槽面内宽度映射到此坐标轴。"
+              },
+              "width": {
+                "type": "derived",
+                "evidence": "由用户凹槽深度及布尔切除余量计算此坐标轴尺寸。"
+              },
+              "height": {
+                "type": "image_estimate",
+                "evidence": "槽宽约30mm、深约35mm、高约65mm，顶壁厚约15mm，均按图像比例估算 图像/用户依据：凹槽尺寸。 凹槽面内高度映射到此坐标轴。"
+              },
+              "center": {
+                "type": "derived",
+                "evidence": "由主 box 表面坐标与凹入深度计算切除体中心。"
+              }
+            },
+            "note": "通过统一 CADPlan 坐标语义创建的面内退台。"
+          },
+          {
+            "id": "back_hole_3",
+            "kind": "hole",
+            "operation": "cut",
+            "name": "back_hole_3",
+            "parameters": {
+              "diameter": 12.0,
+              "through": false,
+              "pos": "point",
+              "point": [
+                0,
+                -25,
+                60
+              ],
+              "axis": "Y",
+              "depth": 15
+            },
+            "sources": {
+              "diameter": {
+                "type": "image_estimate",
+                "evidence": "后壁3个横向通孔，孔径与壁厚比例估算约12mm，Z向约20/40/60均匀分布，X向位于槽中心 图像/用户依据：孔位和孔径估计。"
+              },
+              "point": {
+                "type": "derived",
+                "evidence": "后壁外表面中心X=0，Y=-25，Z=60"
+              },
+              "through": {
+                "type": "image_estimate",
+                "evidence": "后壁孔仅贯穿后壁厚度，从槽底面向后钻透，不是前后通孔"
+              },
+              "depth": {
+                "type": "derived",
+                "evidence": "后壁厚度=总厚50-槽深35=15mm"
+              },
+              "axis": {
+                "type": "derived",
+                "evidence": "从Y=-25外表面沿+Y钻入后壁"
+              }
+            },
+            "note": "面法线固定为 1 的贯穿孔阵列成员。"
+          },
+          {
+            "id": "horz_hole_1",
+            "kind": "hole",
+            "operation": "cut",
+            "name": "horz_hole_1",
+            "parameters": {
+              "diameter": 12.0,
+              "through": true,
+              "pos": "point",
+              "point": [
+                -50.0,
+                7.5,
+                20.0
+              ],
+              "axis": "X"
+            },
+            "sources": {
+              "diameter": {
+                "type": "image_estimate",
+                "evidence": "3个水平通孔沿X方向贯穿左右壁，Z向约20/40/60均匀分布，Y向位于侧壁中间；按图像比例估算孔径12mm 图像/用户依据：孔位和孔径估计。"
+              },
+              "point": {
+                "type": "derived",
+                "evidence": "由输入面内坐标、退台量和面法线转换为全局坐标。"
+              }
+            },
+            "note": "面法线固定为 0 的贯穿孔阵列成员。"
+          },
+          {
+            "id": "horz_hole_2",
+            "kind": "hole",
+            "operation": "cut",
+            "name": "horz_hole_2",
+            "parameters": {
+              "diameter": 12.0,
+              "through": true,
+              "pos": "point",
+              "point": [
+                -50.0,
+                7.5,
+                40.0
+              ],
+              "axis": "X"
+            },
+            "sources": {
+              "diameter": {
+                "type": "image_estimate",
+                "evidence": "3个水平通孔沿X方向贯穿左右壁，Z向约20/40/60均匀分布，Y向位于侧壁中间；按图像比例估算孔径12mm 图像/用户依据：孔位和孔径估计。"
+              },
+              "point": {
+                "type": "derived",
+                "evidence": "由输入面内坐标、退台量和面法线转换为全局坐标。"
+              }
+            },
+            "note": "面法线固定为 0 的贯穿孔阵列成员。"
+          },
+          {
+            "id": "horz_hole_3",
+            "kind": "hole",
+            "operation": "cut",
+            "name": "horz_hole_3",
+            "parameters": {
+              "diameter": 12.0,
+              "through": true,
+              "pos": "point",
+              "point": [
+                -50.0,
+                7.5,
+                60.0
+              ],
+              "axis": "X"
+            },
+            "sources": {
+              "diameter": {
+                "type": "image_estimate",
+                "evidence": "3个水平通孔沿X方向贯穿左右壁，Z向约20/40/60均匀分布，Y向位于侧壁中间；按图像比例估算孔径12mm 图像/用户依据：孔位和孔径估计。"
+              },
+              "point": {
+                "type": "derived",
+                "evidence": "由输入面内坐标、退台量和面法线转换为全局坐标。"
+              }
+            },
+            "note": "面法线固定为 0 的贯穿孔阵列成员。"
+          },
+          {
+            "id": "back_blind_1",
+            "kind": "hole",
+            "operation": "cut",
+            "name": "back_blind_1",
+            "parameters": {
+              "diameter": 12.0,
+              "through": false,
+              "pos": "point",
+              "point": [
+                0,
+                -24.5,
+                20
+              ],
+              "axis": "Y",
+              "depth": 15.5
+            },
+            "sources": {
+              "diameter": {
+                "type": "image_estimate",
+                "evidence": "后壁另外2个盲孔，从背面外表面Y=-25沿+Y钻透后壁，出口在槽内后壁，深度15mm，Z向约20/40mm 图像/用户依据：孔位和孔径估计。"
+              },
+              "point": {
+                "type": "derived",
+                "evidence": "从Y=-24.5开始确保刀体在实体内部"
+              },
+              "through": {
+                "type": "image_estimate",
+                "evidence": "后壁孔为盲孔，仅钻透后壁15mm"
+              },
+              "depth": {
+                "type": "derived",
+                "evidence": "后壁厚度15mm，留0.5mm余量确保贯通"
+              }
+            },
+            "note": "后壁盲孔Z=20"
+          },
+          {
+            "id": "back_blind_2",
+            "kind": "hole",
+            "operation": "cut",
+            "name": "back_blind_2",
+            "parameters": {
+              "diameter": 12.0,
+              "through": false,
+              "pos": "point",
+              "point": [
+                0,
+                -24.5,
+                40
+              ],
+              "axis": "Y",
+              "depth": 15.5
+            },
+            "sources": {
+              "diameter": {
+                "type": "image_estimate",
+                "evidence": "后壁另外2个盲孔，从背面外表面Y=-25沿+Y钻透后壁，出口在槽内后壁，深度15mm，Z向约20/40mm 图像/用户依据：孔位和孔径估计。"
+              },
+              "point": {
+                "type": "derived",
+                "evidence": "从Y=-24.5开始确保刀体在实体内部"
+              },
+              "through": {
+                "type": "image_estimate",
+                "evidence": "后壁孔为盲孔，仅钻透后壁15mm"
+              },
+              "depth": {
+                "type": "derived",
+                "evidence": "后壁厚度15mm + 0.5mm确保钻透"
+              }
+            },
+            "note": "后壁盲孔Z=40"
+          }
+        ],
+        "pending_questions": []
+      },
+      "applied_feature_ids": [],
+      "not_applied_feature_ids": [],
+      "failure_episode": {
+        "failure_id": "geometry:cut_no_material_change:back_blind_1",
+        "revision": 24,
+        "preview_generation": 3,
+        "view": "iso",
+        "failed_feature_id": "back_blind_1",
+        "failure_code": "cut_no_material_change",
+        "related_feature_ids": [],
+        "repeat_count": 2,
+        "geometry_signature": "927f4bcb47cfff9148ef0d53b2d600a13cab86d05654df6505e0e7784653d93f",
+        "reported_error": "特征 back_blind_1 (hole) 建模失败：切除没有改变材料（刀具体未与实体相交或已位于空腔中）。",
+        "recorded_at": 1790857980.0844607
+      },
+      "recorded_at": 1790857980.0855038
+    },
+    {
+      "state": "candidate_partial_not_accepted",
+      "partial_state": "candidate_partial_not_accepted",
+      "revision": 28,
+      "preview_generation": 4,
+      "view": "iso",
+      "preview_image": "C:\\Users\\lycohana\\AppData\\Local\\AI Modeler\\dsh\\sessions\\cold-nine-hole-20261001-202252-b8032d41\\previews\\r28-g4-iso.png",
+      "partial_geometry_checks": {
+        "brep_valid": true,
+        "shape_type": "TopAbs_COMPOUND",
+        "solid_count": 1,
+        "connected_component_count": 1,
+        "shell_count": 1,
+        "closed_shell_count": 1,
+        "closed": true,
+        "edge_count": 114,
+        "face_count": 20,
+        "free_edge_count": 0,
+        "volume_mm3": 307798.194618375,
+        "bbox_mm": [
+          -50.0,
+          -25.0,
+          0.0,
+          50.0,
+          25.0,
+          80.0
+        ],
+        "self_intersection": {
+          "status": "checked_no_intersection",
+          "face_count": 20,
+          "face_limit": 15000,
+          "check_result_count": 0,
+          "check_statuses": [],
+          "method": "BOPAlgo_ArgumentAnalyzer(SelfInterMode=True, UseOBB=True)"
+        },
+        "validity_method": "BRepCheck_Analyzer",
+        "geometry_scope": "native_OCCT_BREP_only_visual_comparison_not_performed",
+        "state": "needs_review",
+        "geometry_state": "needs_review",
+        "partial": true,
+        "accepted": false,
+        "applied_feature_results": [
+          {
+            "feature_id": "base_box",
+            "kind": "box",
+            "operation": "add",
+            "geometry_support": "exact",
+            "builder": "analytic_prism",
+            "state": "applied",
+            "source_feature_id": null,
+            "source_resolution": null,
+            "solid_count": 1,
+            "brep_valid": true,
+            "before_volume_mm3": 0.0,
+            "after_volume_mm3": 399999.9999999999,
+            "volume_delta_mm3": 399999.9999999999,
+            "cylindrical_cut_intents": [],
+            "depth_measurement": null,
+            "facet_count": null
+          },
+          {
+            "feature_id": "front_slot",
+            "kind": "box",
+            "operation": "cut",
+            "geometry_support": "exact",
+            "builder": "analytic_prism",
+            "state": "applied",
+            "source_feature_id": null,
+            "source_resolution": null,
+            "solid_count": 1,
+            "brep_valid": true,
+            "before_volume_mm3": 399999.9999999999,
+            "after_volume_mm3": 331750.0,
+            "volume_delta_mm3": -68249.99999999988,
+            "cylindrical_cut_intents": [],
+            "depth_measurement": null,
+            "facet_count": null
+          },
+          {
+            "feature_id": "back_hole_3",
+            "kind": "hole",
+            "operation": "cut",
+            "geometry_support": "exact",
+            "builder": "analytic_cylindrical_bores",
+            "state": "applied",
+            "source_feature_id": null,
+            "source_resolution": null,
+            "solid_count": 1,
+            "brep_valid": true,
+            "before_volume_mm3": 331750.0,
+            "after_volume_mm3": 331682.4766658098,
+            "volume_delta_mm3": -67.52333419019124,
+            "cylindrical_cut_intents": [],
+            "depth_measurement": null,
+            "facet_count": null
+          },
+          {
+            "feature_id": "horz_hole_1",
+            "kind": "hole",
+            "operation": "cut",
+            "geometry_support": "exact",
+            "builder": "analytic_cylindrical_bores",
+            "state": "applied",
+            "source_feature_id": null,
+            "source_resolution": null,
+            "solid_count": 1,
+            "brep_valid": true,
+            "before_volume_mm3": 331682.4766658098,
+            "after_volume_mm3": 323765.6631787635,
+            "volume_delta_mm3": -7916.813487046282,
+            "cylindrical_cut_intents": [],
+            "depth_measurement": null,
+            "facet_count": null
+          },
+          {
+            "feature_id": "horz_hole_2",
+            "kind": "hole",
+            "operation": "cut",
+            "geometry_support": "exact",
+            "builder": "analytic_cylindrical_bores",
+            "state": "applied",
+            "source_feature_id": null,
+            "source_resolution": null,
+            "solid_count": 1,
+            "brep_valid": true,
+            "before_volume_mm3": 323765.6631787635,
+            "after_volume_mm3": 315848.8496917173,
+            "volume_delta_mm3": -7916.813487046224,
+            "cylindrical_cut_intents": [],
+            "depth_measurement": null,
+            "facet_count": null
+          },
+          {
+            "feature_id": "horz_hole_3",
+            "kind": "hole",
+            "operation": "cut",
+            "geometry_support": "exact",
+            "builder": "analytic_cylindrical_bores",
+            "state": "applied",
+            "source_feature_id": null,
+            "source_resolution": null,
+            "solid_count": 1,
+            "brep_valid": true,
+            "before_volume_mm3": 315848.8496917173,
+            "after_volume_mm3": 307798.194618375,
+            "volume_delta_mm3": -8050.655073342321,
+            "cylindrical_cut_intents": [],
+            "depth_measurement": null,
+            "facet_count": null
+          }
+        ],
+        "failed_feature_effect": {
+          "feature_id": "back_blind_1",
+          "operation": "cut",
+          "state": "no_op",
+          "kind": "hole",
+          "before_volume_mm3": 307798.194618375,
+          "after_volume_mm3": 307798.194618375,
+          "volume_delta_mm3": 0.0,
+          "warning": "切除没有改变材料（刀具体未与实体相交或已位于空腔中）。",
+          "reason": "切除没有改变材料（刀具体未与实体相交或已位于空腔中）。",
+          "failure_code": "cut_no_material_change",
+          "related_feature_ids": []
+        }
+      },
+      "failed_feature_id": "back_blind_1",
+      "failure_code": "cut_no_material_change",
+      "related_feature_ids": [],
+      "requested_plan": {
+        "schema_version": "1.0",
+        "name": "九孔凹块",
+        "source_prompt": "请按参考图复刻这个工件；图中没有标注的尺寸请按图像比例估算，标明估算来源，生成本地模型",
+        "units": {
+          "length": "mm",
+          "angle": "deg"
+        },
+        "coordinate_system": {
+          "type": "global_cartesian",
+          "handedness": "right",
+          "axes": [
+            "X",
+            "Y",
+            "Z"
+          ],
+          "origin": [
+            0,
+            0,
+            0
+          ]
+        },
+        "features": [
+          {
+            "id": "base_box",
+            "kind": "box",
+            "operation": "add",
+            "name": "基体长方体",
+            "parameters": {
+              "length": 100,
+              "width": 50,
+              "height": 80,
+              "center": [
+                0,
+                0,
+                40
+              ]
+            },
+            "sources": {
+              "length": {
+                "type": "image_estimate",
+                "evidence": "整体宽度约100mm（X方向）"
+              },
+              "width": {
+                "type": "image_estimate",
+                "evidence": "整体厚度约50mm（Y方向）"
+              },
+              "height": {
+                "type": "image_estimate",
+                "evidence": "整体高度约80mm（Z方向）"
+              },
+              "center": {
+                "type": "derived",
+                "evidence": "以底面Z=0、几何中心在(0,0,40)"
+              }
+            },
+            "relations": []
+          },
+          {
+            "id": "front_slot",
+            "kind": "box",
+            "operation": "cut",
+            "name": "正面凹槽",
+            "parameters": {
+              "length": 30.0,
+              "width": 35.001,
+              "height": 65.0,
+              "center": [
+                0.0,
+                7.500499999999999,
+                32.5
+              ]
+            },
+            "sources": {
+              "length": {
+                "type": "image_estimate",
+                "evidence": "槽宽约30mm、深约35mm、高约65mm，顶壁厚约15mm，均按图像比例估算 图像/用户依据：凹槽尺寸。 凹槽面内宽度映射到此坐标轴。"
+              },
+              "width": {
+                "type": "derived",
+                "evidence": "由用户凹槽深度及布尔切除余量计算此坐标轴尺寸。"
+              },
+              "height": {
+                "type": "image_estimate",
+                "evidence": "槽宽约30mm、深约35mm、高约65mm，顶壁厚约15mm，均按图像比例估算 图像/用户依据：凹槽尺寸。 凹槽面内高度映射到此坐标轴。"
+              },
+              "center": {
+                "type": "derived",
+                "evidence": "由主 box 表面坐标与凹入深度计算切除体中心。"
+              }
+            },
+            "note": "通过统一 CADPlan 坐标语义创建的面内退台。"
+          },
+          {
+            "id": "back_hole_3",
+            "kind": "hole",
+            "operation": "cut",
+            "name": "back_hole_3",
+            "parameters": {
+              "diameter": 12.0,
+              "through": false,
+              "pos": "point",
+              "point": [
+                0,
+                -25,
+                60
+              ],
+              "axis": "Y",
+              "depth": 15
+            },
+            "sources": {
+              "diameter": {
+                "type": "image_estimate",
+                "evidence": "后壁3个横向通孔，孔径与壁厚比例估算约12mm，Z向约20/40/60均匀分布，X向位于槽中心 图像/用户依据：孔位和孔径估计。"
+              },
+              "point": {
+                "type": "derived",
+                "evidence": "后壁外表面中心X=0，Y=-25，Z=60"
+              },
+              "through": {
+                "type": "image_estimate",
+                "evidence": "后壁孔仅贯穿后壁厚度，从槽底面向后钻透，不是前后通孔"
+              },
+              "depth": {
+                "type": "derived",
+                "evidence": "后壁厚度=总厚50-槽深35=15mm"
+              },
+              "axis": {
+                "type": "derived",
+                "evidence": "从Y=-25外表面沿+Y钻入后壁"
+              }
+            },
+            "note": "面法线固定为 1 的贯穿孔阵列成员。"
+          },
+          {
+            "id": "horz_hole_1",
+            "kind": "hole",
+            "operation": "cut",
+            "name": "horz_hole_1",
+            "parameters": {
+              "diameter": 12.0,
+              "through": true,
+              "pos": "point",
+              "point": [
+                -50.0,
+                7.5,
+                20.0
+              ],
+              "axis": "X"
+            },
+            "sources": {
+              "diameter": {
+                "type": "image_estimate",
+                "evidence": "3个水平通孔沿X方向贯穿左右壁，Z向约20/40/60均匀分布，Y向位于侧壁中间；按图像比例估算孔径12mm 图像/用户依据：孔位和孔径估计。"
+              },
+              "point": {
+                "type": "derived",
+                "evidence": "由输入面内坐标、退台量和面法线转换为全局坐标。"
+              }
+            },
+            "note": "面法线固定为 0 的贯穿孔阵列成员。"
+          },
+          {
+            "id": "horz_hole_2",
+            "kind": "hole",
+            "operation": "cut",
+            "name": "horz_hole_2",
+            "parameters": {
+              "diameter": 12.0,
+              "through": true,
+              "pos": "point",
+              "point": [
+                -50.0,
+                7.5,
+                40.0
+              ],
+              "axis": "X"
+            },
+            "sources": {
+              "diameter": {
+                "type": "image_estimate",
+                "evidence": "3个水平通孔沿X方向贯穿左右壁，Z向约20/40/60均匀分布，Y向位于侧壁中间；按图像比例估算孔径12mm 图像/用户依据：孔位和孔径估计。"
+              },
+              "point": {
+                "type": "derived",
+                "evidence": "由输入面内坐标、退台量和面法线转换为全局坐标。"
+              }
+            },
+            "note": "面法线固定为 0 的贯穿孔阵列成员。"
+          },
+          {
+            "id": "horz_hole_3",
+            "kind": "hole",
+            "operation": "cut",
+            "name": "horz_hole_3",
+            "parameters": {
+              "diameter": 12.0,
+              "through": true,
+              "pos": "point",
+              "point": [
+                -50.0,
+                7.5,
+                60.0
+              ],
+              "axis": "X"
+            },
+            "sources": {
+              "diameter": {
+                "type": "image_estimate",
+                "evidence": "3个水平通孔沿X方向贯穿左右壁，Z向约20/40/60均匀分布，Y向位于侧壁中间；按图像比例估算孔径12mm 图像/用户依据：孔位和孔径估计。"
+              },
+              "point": {
+                "type": "derived",
+                "evidence": "由输入面内坐标、退台量和面法线转换为全局坐标。"
+              }
+            },
+            "note": "面法线固定为 0 的贯穿孔阵列成员。"
+          },
+          {
+            "id": "back_blind_1",
+            "kind": "hole",
+            "operation": "cut",
+            "name": "back_blind_1",
+            "parameters": {
+              "diameter": 12.0,
+              "through": false,
+              "pos": "point",
+              "point": [
+                0,
+                -24.5,
+                20
+              ],
+              "axis": "Y",
+              "depth": 15.5
+            },
+            "sources": {
+              "diameter": {
+                "type": "image_estimate",
+                "evidence": "后壁另外2个盲孔，从背面外表面Y=-25沿+Y钻透后壁，出口在槽内后壁，深度15mm，Z向约20/40mm 图像/用户依据：孔位和孔径估计。"
+              },
+              "point": {
+                "type": "derived",
+                "evidence": "从Y=-24.5开始确保刀体在实体内部"
+              },
+              "through": {
+                "type": "image_estimate",
+                "evidence": "后壁孔为盲孔，仅钻透后壁15mm"
+              },
+              "depth": {
+                "type": "derived",
+                "evidence": "后壁厚度15mm，留0.5mm余量确保贯通"
+              }
+            },
+            "note": "后壁盲孔Z=20"
+          },
+          {
+            "id": "back_cyl_20",
+            "kind": "cylinder",
+            "operation": "cut",
+            "name": "后壁盲孔Z20",
+            "parameters": {
+              "center": [
+                0,
+                -17.5,
+                20
+              ],
+              "radius": 6,
+              "height": 15,
+              "axis": "Y"
+            },
+            "sources": {
+              "center": {
+                "type": "derived",
+                "evidence": "后壁中心Y=-17.5（(-25+-10)/2），X=0，Z=20"
+              },
+              "radius": {
+                "type": "derived",
+                "evidence": "孔径12mm的一半"
+              },
+              "height": {
+                "type": "derived",
+                "evidence": "后壁厚度15mm"
+              },
+              "axis": {
+                "type": "derived",
+                "evidence": "沿Y方向贯穿后壁"
+              }
+            }
+          },
+          {
+            "id": "back_cyl_40",
+            "kind": "cylinder",
+            "operation": "cut",
+            "name": "后壁盲孔Z40",
+            "parameters": {
+              "center": [
+                0,
+                -17.5,
+                40
+              ],
+              "radius": 6,
+              "height": 15,
+              "axis": "Y"
+            },
+            "sources": {
+              "center": {
+                "type": "derived",
+                "evidence": "后壁中心Y=-17.5，X=0，Z=40"
+              },
+              "radius": {
+                "type": "derived",
+                "evidence": "孔径12mm的一半"
+              },
+              "height": {
+                "type": "derived",
+                "evidence": "后壁厚度15mm"
+              },
+              "axis": {
+                "type": "derived",
+                "evidence": "沿Y方向贯穿后壁"
+              }
+            }
+          },
+          {
+            "id": "back_cyl_60",
+            "kind": "cylinder",
+            "operation": "cut",
+            "name": "后壁盲孔Z60",
+            "parameters": {
+              "center": [
+                0,
+                -17.5,
+                60
+              ],
+              "radius": 6,
+              "height": 15,
+              "axis": "Y"
+            },
+            "sources": {
+              "center": {
+                "type": "derived",
+                "evidence": "后壁中心Y=-17.5，X=0，Z=60"
+              },
+              "radius": {
+                "type": "derived",
+                "evidence": "孔径12mm的一半"
+              },
+              "height": {
+                "type": "derived",
+                "evidence": "后壁厚度15mm"
+              },
+              "axis": {
+                "type": "derived",
+                "evidence": "沿Y方向贯穿后壁"
+              }
+            }
+          }
+        ],
+        "pending_questions": []
+      },
+      "applied_feature_ids": [],
+      "not_applied_feature_ids": [],
+      "failure_episode": {
+        "failure_id": "geometry:cut_no_material_change:back_blind_1",
+        "revision": 28,
+        "preview_generation": 4,
+        "view": "iso",
+        "failed_feature_id": "back_blind_1",
+        "failure_code": "cut_no_material_change",
+        "related_feature_ids": [],
+        "repeat_count": 3,
+        "geometry_signature": "f4643872e73141c759f6d0434f630ce3e212e96adc1dcfa5866d24cceb08f636",
+        "reported_error": "特征 back_blind_1 (hole) 建模失败：切除没有改变材料（刀具体未与实体相交或已位于空腔中）。",
+        "recorded_at": 1790858096.6280947
+      },
+      "recorded_at": 1790858096.6286123
+    },
+    {
+      "state": "candidate_partial_not_accepted",
+      "partial_state": "candidate_partial_not_accepted",
+      "revision": 29,
+      "preview_generation": 5,
+      "view": "iso",
+      "preview_image": "C:\\Users\\lycohana\\AppData\\Local\\AI Modeler\\dsh\\sessions\\cold-nine-hole-20261001-202252-b8032d41\\previews\\r29-g5-iso.png",
+      "partial_geometry_checks": {
+        "brep_valid": true,
+        "shape_type": "TopAbs_COMPOUND",
+        "solid_count": 1,
+        "connected_component_count": 1,
+        "shell_count": 1,
+        "closed_shell_count": 1,
+        "closed": true,
+        "edge_count": 90,
+        "face_count": 16,
+        "free_edge_count": 0,
+        "volume_mm3": 307864.5128704807,
+        "bbox_mm": [
+          -50.0,
+          -25.0,
+          0.0,
+          50.0,
+          25.0,
+          80.0
+        ],
+        "self_intersection": {
+          "status": "checked_no_intersection",
+          "face_count": 16,
+          "face_limit": 15000,
+          "check_result_count": 0,
+          "check_statuses": [],
+          "method": "BOPAlgo_ArgumentAnalyzer(SelfInterMode=True, UseOBB=True)"
+        },
+        "validity_method": "BRepCheck_Analyzer",
+        "geometry_scope": "native_OCCT_BREP_only_visual_comparison_not_performed",
+        "state": "needs_review",
+        "geometry_state": "needs_review",
+        "partial": true,
+        "accepted": false,
+        "applied_feature_results": [
+          {
+            "feature_id": "base_box",
+            "kind": "box",
+            "operation": "add",
+            "geometry_support": "exact",
+            "builder": "analytic_prism",
+            "state": "applied",
+            "source_feature_id": null,
+            "source_resolution": null,
+            "solid_count": 1,
+            "brep_valid": true,
+            "before_volume_mm3": 0.0,
+            "after_volume_mm3": 399999.9999999999,
+            "volume_delta_mm3": 399999.9999999999,
+            "cylindrical_cut_intents": [],
+            "depth_measurement": null,
+            "facet_count": null
+          },
+          {
+            "feature_id": "front_slot",
+            "kind": "box",
+            "operation": "cut",
+            "geometry_support": "exact",
+            "builder": "analytic_prism",
+            "state": "applied",
+            "source_feature_id": null,
+            "source_resolution": null,
+            "solid_count": 1,
+            "brep_valid": true,
+            "before_volume_mm3": 399999.9999999999,
+            "after_volume_mm3": 331750.0,
+            "volume_delta_mm3": -68249.99999999988,
+            "cylindrical_cut_intents": [],
+            "depth_measurement": null,
+            "facet_count": null
+          },
+          {
+            "feature_id": "horz_hole_1",
+            "kind": "hole",
+            "operation": "cut",
+            "geometry_support": "exact",
+            "builder": "analytic_cylindrical_bores",
+            "state": "applied",
+            "source_feature_id": null,
+            "source_resolution": null,
+            "solid_count": 1,
+            "brep_valid": true,
+            "before_volume_mm3": 331750.0,
+            "after_volume_mm3": 323833.1865129537,
+            "volume_delta_mm3": -7916.813487046282,
+            "cylindrical_cut_intents": [],
+            "depth_measurement": null,
+            "facet_count": null
+          },
+          {
+            "feature_id": "horz_hole_2",
+            "kind": "hole",
+            "operation": "cut",
+            "geometry_support": "exact",
+            "builder": "analytic_cylindrical_bores",
+            "state": "applied",
+            "source_feature_id": null,
+            "source_resolution": null,
+            "solid_count": 1,
+            "brep_valid": true,
+            "before_volume_mm3": 323833.1865129537,
+            "after_volume_mm3": 315916.37302590744,
+            "volume_delta_mm3": -7916.813487046282,
+            "cylindrical_cut_intents": [],
+            "depth_measurement": null,
+            "facet_count": null
+          },
+          {
+            "feature_id": "horz_hole_3",
+            "kind": "hole",
+            "operation": "cut",
+            "geometry_support": "exact",
+            "builder": "analytic_cylindrical_bores",
+            "state": "applied",
+            "source_feature_id": null,
+            "source_resolution": null,
+            "solid_count": 1,
+            "brep_valid": true,
+            "before_volume_mm3": 315916.37302590744,
+            "after_volume_mm3": 307864.5128704807,
+            "volume_delta_mm3": -8051.8601554267225,
+            "cylindrical_cut_intents": [],
+            "depth_measurement": null,
+            "facet_count": null
+          }
+        ],
+        "failed_feature_effect": {
+          "feature_id": "back_blind_1",
+          "operation": "cut",
+          "state": "no_op",
+          "kind": "hole",
+          "before_volume_mm3": 307864.5128704807,
+          "after_volume_mm3": 307864.5128704807,
+          "volume_delta_mm3": 0.0,
+          "warning": "切除没有改变材料（刀具体未与实体相交或已位于空腔中）。",
+          "reason": "切除没有改变材料（刀具体未与实体相交或已位于空腔中）。",
+          "failure_code": "cut_no_material_change",
+          "related_feature_ids": []
+        }
+      },
+      "failed_feature_id": "back_blind_1",
+      "failure_code": "cut_no_material_change",
+      "related_feature_ids": [],
+      "requested_plan": {
+        "schema_version": "1.0",
+        "name": "九孔凹块",
+        "source_prompt": "请按参考图复刻这个工件；图中没有标注的尺寸请按图像比例估算，标明估算来源，生成本地模型",
+        "units": {
+          "length": "mm",
+          "angle": "deg"
+        },
+        "coordinate_system": {
+          "type": "global_cartesian",
+          "handedness": "right",
+          "axes": [
+            "X",
+            "Y",
+            "Z"
+          ],
+          "origin": [
+            0,
+            0,
+            0
+          ]
+        },
+        "features": [
+          {
+            "id": "base_box",
+            "kind": "box",
+            "operation": "add",
+            "name": "基体长方体",
+            "parameters": {
+              "length": 100,
+              "width": 50,
+              "height": 80,
+              "center": [
+                0,
+                0,
+                40
+              ]
+            },
+            "sources": {
+              "length": {
+                "type": "image_estimate",
+                "evidence": "整体宽度约100mm（X方向）"
+              },
+              "width": {
+                "type": "image_estimate",
+                "evidence": "整体厚度约50mm（Y方向）"
+              },
+              "height": {
+                "type": "image_estimate",
+                "evidence": "整体高度约80mm（Z方向）"
+              },
+              "center": {
+                "type": "derived",
+                "evidence": "以底面Z=0、几何中心在(0,0,40)"
+              }
+            },
+            "relations": []
+          },
+          {
+            "id": "front_slot",
+            "kind": "box",
+            "operation": "cut",
+            "name": "正面凹槽",
+            "parameters": {
+              "length": 30.0,
+              "width": 35.001,
+              "height": 65.0,
+              "center": [
+                0.0,
+                7.500499999999999,
+                32.5
+              ]
+            },
+            "sources": {
+              "length": {
+                "type": "image_estimate",
+                "evidence": "槽宽约30mm、深约35mm、高约65mm，顶壁厚约15mm，均按图像比例估算 图像/用户依据：凹槽尺寸。 凹槽面内宽度映射到此坐标轴。"
+              },
+              "width": {
+                "type": "derived",
+                "evidence": "由用户凹槽深度及布尔切除余量计算此坐标轴尺寸。"
+              },
+              "height": {
+                "type": "image_estimate",
+                "evidence": "槽宽约30mm、深约35mm、高约65mm，顶壁厚约15mm，均按图像比例估算 图像/用户依据：凹槽尺寸。 凹槽面内高度映射到此坐标轴。"
+              },
+              "center": {
+                "type": "derived",
+                "evidence": "由主 box 表面坐标与凹入深度计算切除体中心。"
+              }
+            },
+            "note": "通过统一 CADPlan 坐标语义创建的面内退台。"
+          },
+          {
+            "id": "horz_hole_1",
+            "kind": "hole",
+            "operation": "cut",
+            "name": "horz_hole_1",
+            "parameters": {
+              "diameter": 12.0,
+              "through": true,
+              "pos": "point",
+              "point": [
+                -50.0,
+                7.5,
+                20.0
+              ],
+              "axis": "X"
+            },
+            "sources": {
+              "diameter": {
+                "type": "image_estimate",
+                "evidence": "3个水平通孔沿X方向贯穿左右壁，Z向约20/40/60均匀分布，Y向位于侧壁中间；按图像比例估算孔径12mm 图像/用户依据：孔位和孔径估计。"
+              },
+              "point": {
+                "type": "derived",
+                "evidence": "由输入面内坐标、退台量和面法线转换为全局坐标。"
+              }
+            },
+            "note": "面法线固定为 0 的贯穿孔阵列成员。"
+          },
+          {
+            "id": "horz_hole_2",
+            "kind": "hole",
+            "operation": "cut",
+            "name": "horz_hole_2",
+            "parameters": {
+              "diameter": 12.0,
+              "through": true,
+              "pos": "point",
+              "point": [
+                -50.0,
+                7.5,
+                40.0
+              ],
+              "axis": "X"
+            },
+            "sources": {
+              "diameter": {
+                "type": "image_estimate",
+                "evidence": "3个水平通孔沿X方向贯穿左右壁，Z向约20/40/60均匀分布，Y向位于侧壁中间；按图像比例估算孔径12mm 图像/用户依据：孔位和孔径估计。"
+              },
+              "point": {
+                "type": "derived",
+                "evidence": "由输入面内坐标、退台量和面法线转换为全局坐标。"
+              }
+            },
+            "note": "面法线固定为 0 的贯穿孔阵列成员。"
+          },
+          {
+            "id": "horz_hole_3",
+            "kind": "hole",
+            "operation": "cut",
+            "name": "horz_hole_3",
+            "parameters": {
+              "diameter": 12.0,
+              "through": true,
+              "pos": "point",
+              "point": [
+                -50.0,
+                7.5,
+                60.0
+              ],
+              "axis": "X"
+            },
+            "sources": {
+              "diameter": {
+                "type": "image_estimate",
+                "evidence": "3个水平通孔沿X方向贯穿左右壁，Z向约20/40/60均匀分布，Y向位于侧壁中间；按图像比例估算孔径12mm 图像/用户依据：孔位和孔径估计。"
+              },
+              "point": {
+                "type": "derived",
+                "evidence": "由输入面内坐标、退台量和面法线转换为全局坐标。"
+              }
+            },
+            "note": "面法线固定为 0 的贯穿孔阵列成员。"
+          },
+          {
+            "id": "back_blind_1",
+            "kind": "hole",
+            "operation": "cut",
+            "name": "back_blind_1",
+            "parameters": {
+              "diameter": 12.0,
+              "through": false,
+              "pos": "point",
+              "point": [
+                0,
+                -24.5,
+                20
+              ],
+              "axis": "Y",
+              "depth": 15.5
+            },
+            "sources": {
+              "diameter": {
+                "type": "image_estimate",
+                "evidence": "后壁另外2个盲孔，从背面外表面Y=-25沿+Y钻透后壁，出口在槽内后壁，深度15mm，Z向约20/40mm 图像/用户依据：孔位和孔径估计。"
+              },
+              "point": {
+                "type": "derived",
+                "evidence": "从Y=-24.5开始确保刀体在实体内部"
+              },
+              "through": {
+                "type": "image_estimate",
+                "evidence": "后壁孔为盲孔，仅钻透后壁15mm"
+              },
+              "depth": {
+                "type": "derived",
+                "evidence": "后壁厚度15mm，留0.5mm余量确保贯通"
+              }
+            },
+            "note": "后壁盲孔Z=20"
+          },
+          {
+            "id": "back_cyl_20",
+            "kind": "cylinder",
+            "operation": "cut",
+            "name": "后壁盲孔Z20",
+            "parameters": {
+              "center": [
+                0,
+                -17.5,
+                20
+              ],
+              "radius": 6,
+              "height": 15,
+              "axis": "Y"
+            },
+            "sources": {
+              "center": {
+                "type": "derived",
+                "evidence": "后壁中心Y=-17.5（(-25+-10)/2），X=0，Z=20"
+              },
+              "radius": {
+                "type": "derived",
+                "evidence": "孔径12mm的一半"
+              },
+              "height": {
+                "type": "derived",
+                "evidence": "后壁厚度15mm"
+              },
+              "axis": {
+                "type": "derived",
+                "evidence": "沿Y方向贯穿后壁"
+              }
+            }
+          },
+          {
+            "id": "back_cyl_40",
+            "kind": "cylinder",
+            "operation": "cut",
+            "name": "后壁盲孔Z40",
+            "parameters": {
+              "center": [
+                0,
+                -17.5,
+                40
+              ],
+              "radius": 6,
+              "height": 15,
+              "axis": "Y"
+            },
+            "sources": {
+              "center": {
+                "type": "derived",
+                "evidence": "后壁中心Y=-17.5，X=0，Z=40"
+              },
+              "radius": {
+                "type": "derived",
+                "evidence": "孔径12mm的一半"
+              },
+              "height": {
+                "type": "derived",
+                "evidence": "后壁厚度15mm"
+              },
+              "axis": {
+                "type": "derived",
+                "evidence": "沿Y方向贯穿后壁"
+              }
+            }
+          },
+          {
+            "id": "back_cyl_60",
+            "kind": "cylinder",
+            "operation": "cut",
+            "name": "后壁盲孔Z60",
+            "parameters": {
+              "center": [
+                0,
+                -17.5,
+                60
+              ],
+              "radius": 6,
+              "height": 15,
+              "axis": "Y"
+            },
+            "sources": {
+              "center": {
+                "type": "derived",
+                "evidence": "后壁中心Y=-17.5，X=0，Z=60"
+              },
+              "radius": {
+                "type": "derived",
+                "evidence": "孔径12mm的一半"
+              },
+              "height": {
+                "type": "derived",
+                "evidence": "后壁厚度15mm"
+              },
+              "axis": {
+                "type": "derived",
+                "evidence": "沿Y方向贯穿后壁"
+              }
+            }
+          }
+        ],
+        "pending_questions": []
+      },
+      "applied_feature_ids": [],
+      "not_applied_feature_ids": [],
+      "failure_episode": {
+        "failure_id": "geometry:cut_no_material_change:back_blind_1",
+        "revision": 29,
+        "preview_generation": 5,
+        "view": "iso",
+        "failed_feature_id": "back_blind_1",
+        "failure_code": "cut_no_material_change",
+        "related_feature_ids": [],
+        "repeat_count": 4,
+        "geometry_signature": "77b56cf8a6118defb1ca98f4928767d31812d2dfe8a8cc3f4b4a1665aac58ce6",
+        "reported_error": "特征 back_blind_1 (hole) 建模失败：切除没有改变材料（刀具体未与实体相交或已位于空腔中）。",
+        "recorded_at": 1790858245.7839022
+      },
+      "recorded_at": 1790858245.784902
+    }
+  ],
+  "reference_inventory": {
+    "sha256:53ed87fadf8cca869da921627e6a13c845424c6906b3de517d5cca972db94553": {
+      "reference_id": "sha256:53ed87fadf8cca869da921627e6a13c845424c6906b3de517d5cca972db94553",
+      "source_sha256": "53ed87fadf8cca869da921627e6a13c845424c6906b3de517d5cca972db94553",
+      "reference_index": 1,
+      "roi_norm": null,
+      "summary": "U-shaped gray block with a central open channel and three vertical columns of circular openings: three on the left outer face, three on the right outer face, and three on the inner magenta back wall. Top and side faces are visible; bottom/rear are occluded or outside the view.",
+      "visible_evidence": [
+        {
+          "evidence_id": "E1",
+          "group_id": "main_body",
+          "description": "U-shaped solid block: two vertical side walls joined by a horizontal top wall, with a front-facing open channel between the side walls.",
+          "image_region": [
+            0.147,
+            0.102,
+            0.706,
+            0.858
+          ],
+          "visible_count": 1,
+          "relative_size_group": "unknown",
+          "surface_plane_relation": "parallel",
+          "visible_form": "recess",
+          "confidence": "high",
+          "confidence_basis": "Clear polygonal outline and shading distinguish top, outer side, and inner channel faces."
+        },
+        {
+          "evidence_id": "E2",
+          "group_id": "outer_left_holes",
+          "description": "Three circular openings on the front face of the left vertical wall, arranged vertically: top cyan, middle dark blue, bottom cyan.",
+          "image_region": [
+            0.147,
+            0.176,
+            0.235,
+            0.706
+          ],
+          "visible_count": 3,
+          "relative_size_group": "same",
+          "surface_plane_relation": "parallel",
+          "visible_form": "hole",
+          "confidence": "high",
+          "confidence_basis": "Three complete circular rims visible on the same planar face; equal apparent diameters."
+        },
+        {
+          "evidence_id": "E3",
+          "group_id": "outer_right_holes",
+          "description": "Three circular openings on the front face of the right vertical wall, arranged vertically: top cyan, middle dark blue, bottom cyan.",
+          "image_region": [
+            0.424,
+            0.282,
+            0.235,
+            0.706
+          ],
+          "visible_count": 3,
+          "relative_size_group": "same",
+          "surface_plane_relation": "parallel",
+          "visible_form": "hole",
+          "confidence": "high",
+          "confidence_basis": "Three complete circular rims visible on the same planar face; equal apparent diameters and aligned with left column holes."
+        },
+        {
+          "evidence_id": "E4",
+          "group_id": "inner_back_holes",
+          "description": "Three circular openings on the inner magenta back wall of the channel, arranged vertically: top purple, middle dark blue, bottom purple.",
+          "image_region": [
+            0.314,
+            0.245,
+            0.118,
+            0.659
+          ],
+          "visible_count": 3,
+          "relative_size_group": "same",
+          "surface_plane_relation": "parallel",
+          "visible_form": "hole",
+          "confidence": "high",
+          "confidence_basis": "Three complete circular rims visible on the inner back planar face; equal apparent diameters."
+        },
+        {
+          "evidence_id": "E5",
+          "group_id": "central_channel",
+          "description": "Front-facing rectangular open slot/channel between the two side walls, bounded by the inner side walls, the underside of the top wall, and the visible magenta back wall.",
+          "image_region": [
+            0.304,
+            0.219,
+            0.147,
+            0.694
+          ],
+          "visible_count": 1,
+          "relative_size_group": "unknown",
+          "surface_plane_relation": "perpendicular",
+          "visible_form": "open_slot",
+          "confidence": "high",
+          "confidence_basis": "Clear rectangular opening with visible back wall perpendicular to side walls and top wall."
+        }
+      ],
+      "uncertain": [
+        {
+          "evidence_id": "U1",
+          "group_id": "hidden_holes",
+          "description": "Whether the nine visible circular openings are through-holes or blind holes, and whether any additional holes exist on occluded rear/bottom faces.",
+          "image_region": [
+            0.147,
+            0.102,
+            0.706,
+            0.858
+          ],
+          "visible_count": null,
+          "relative_size_group": "unknown",
+          "surface_plane_relation": "unknown",
+          "visible_form": "unknown",
+          "confidence": "low",
+          "confidence_basis": "Only the front/inner openings are visible; depth and rear-side geometry are occluded."
+        },
+        {
+          "evidence_id": "U2",
+          "group_id": "channel_bottom",
+          "description": "Whether the central channel is open all the way to the bottom or closed by a bottom web.",
+          "image_region": [
+            0.304,
+            0.78,
+            0.147,
+            0.133
+          ],
+          "visible_count": null,
+          "relative_size_group": "unknown",
+          "surface_plane_relation": "unknown",
+          "visible_form": "unknown",
+          "confidence": "low",
+          "confidence_basis": "Lower region of the channel meets the ground plane with shading ambiguity; no clear boundary visible."
+        }
+      ],
+      "inferred": [],
+      "verification_status": "model_observation_unverified",
+      "request_profile": {
+        "task_kind": "vision_review",
+        "review_complexity": "source_inventory",
+        "provider_family": "siliconflow",
+        "protocol": "chat_completions",
+        "model": "moonshotai/Kimi-K2.7-Code",
+        "reasoning_effort": "low",
+        "configured_reasoning_effort": "low",
+        "thinking_budget": 1024,
+        "thinking_budget_source": "task_profile_soft_default",
+        "thinking_budget_hard_limit_known": false,
+        "payload_reasoning": {
+          "enable_thinking": true,
+          "thinking_budget": 1024
+        },
+        "reasoning_supported": true,
+        "reasoning_control": "toggle_and_budget",
+        "vision_supported": true,
+        "supported_efforts": [
+          "none",
+          "low"
+        ],
+        "context_window": 256000,
+        "max_output_tokens": null,
+        "context_capacity_source": "official SiliconFlow model center states 256K for moonshotai/Kimi-K2.7-Code",
+        "capability_source": "official SiliconFlow VLM API example for moonshotai/Kimi-K2.7-Code"
+      },
+      "review_configuration": {
+        "configured_reasoning_effort": "low",
+        "configured_thinking_budget": null,
+        "resolved_profile": {
+          "task_kind": "vision_review",
+          "review_complexity": "source_inventory",
+          "provider_family": "siliconflow",
+          "protocol": "chat_completions",
+          "model": "moonshotai/Kimi-K2.7-Code",
+          "reasoning_effort": "low",
+          "configured_reasoning_effort": "low",
+          "thinking_budget": 1024,
+          "thinking_budget_source": "task_profile_soft_default",
+          "thinking_budget_hard_limit_known": false,
+          "payload_reasoning": {
+            "enable_thinking": true,
+            "thinking_budget": 1024
+          },
+          "reasoning_supported": true,
+          "reasoning_control": "toggle_and_budget",
+          "vision_supported": true,
+          "supported_efforts": [
+            "none",
+            "low"
+          ],
+          "context_window": 256000,
+          "max_output_tokens": null,
+          "context_capacity_source": "official SiliconFlow model center states 256K for moonshotai/Kimi-K2.7-Code",
+          "capability_source": "official SiliconFlow VLM API example for moonshotai/Kimi-K2.7-Code"
+        }
+      },
+      "usage": {
+        "prompt_tokens": 717,
+        "completion_tokens": 2180,
+        "total_tokens": 2897,
+        "reasoning_tokens": 1024,
+        "cache_token_details": {
+          "prompt_tokens_details.cached_tokens": 0
+        }
+      },
+      "model": "moonshotai/Kimi-K2.7-Code",
+      "duration_seconds": 90.948,
+      "recorded_at": 1790857479.7322948
+    }
+  },
+  "reference_inventory_history": [
+    {
+      "reference_id": "sha256:53ed87fadf8cca869da921627e6a13c845424c6906b3de517d5cca972db94553",
+      "source_sha256": "53ed87fadf8cca869da921627e6a13c845424c6906b3de517d5cca972db94553",
+      "reference_index": 1,
+      "roi_norm": null,
+      "summary": "U-shaped gray block with a central open channel and three vertical columns of circular openings: three on the left outer face, three on the right outer face, and three on the inner magenta back wall. Top and side faces are visible; bottom/rear are occluded or outside the view.",
+      "visible_evidence": [
+        {
+          "evidence_id": "E1",
+          "group_id": "main_body",
+          "description": "U-shaped solid block: two vertical side walls joined by a horizontal top wall, with a front-facing open channel between the side walls.",
+          "image_region": [
+            0.147,
+            0.102,
+            0.706,
+            0.858
+          ],
+          "visible_count": 1,
+          "relative_size_group": "unknown",
+          "surface_plane_relation": "parallel",
+          "visible_form": "recess",
+          "confidence": "high",
+          "confidence_basis": "Clear polygonal outline and shading distinguish top, outer side, and inner channel faces."
+        },
+        {
+          "evidence_id": "E2",
+          "group_id": "outer_left_holes",
+          "description": "Three circular openings on the front face of the left vertical wall, arranged vertically: top cyan, middle dark blue, bottom cyan.",
+          "image_region": [
+            0.147,
+            0.176,
+            0.235,
+            0.706
+          ],
+          "visible_count": 3,
+          "relative_size_group": "same",
+          "surface_plane_relation": "parallel",
+          "visible_form": "hole",
+          "confidence": "high",
+          "confidence_basis": "Three complete circular rims visible on the same planar face; equal apparent diameters."
+        },
+        {
+          "evidence_id": "E3",
+          "group_id": "outer_right_holes",
+          "description": "Three circular openings on the front face of the right vertical wall, arranged vertically: top cyan, middle dark blue, bottom cyan.",
+          "image_region": [
+            0.424,
+            0.282,
+            0.235,
+            0.706
+          ],
+          "visible_count": 3,
+          "relative_size_group": "same",
+          "surface_plane_relation": "parallel",
+          "visible_form": "hole",
+          "confidence": "high",
+          "confidence_basis": "Three complete circular rims visible on the same planar face; equal apparent diameters and aligned with left column holes."
+        },
+        {
+          "evidence_id": "E4",
+          "group_id": "inner_back_holes",
+          "description": "Three circular openings on the inner magenta back wall of the channel, arranged vertically: top purple, middle dark blue, bottom purple.",
+          "image_region": [
+            0.314,
+            0.245,
+            0.118,
+            0.659
+          ],
+          "visible_count": 3,
+          "relative_size_group": "same",
+          "surface_plane_relation": "parallel",
+          "visible_form": "hole",
+          "confidence": "high",
+          "confidence_basis": "Three complete circular rims visible on the inner back planar face; equal apparent diameters."
+        },
+        {
+          "evidence_id": "E5",
+          "group_id": "central_channel",
+          "description": "Front-facing rectangular open slot/channel between the two side walls, bounded by the inner side walls, the underside of the top wall, and the visible magenta back wall.",
+          "image_region": [
+            0.304,
+            0.219,
+            0.147,
+            0.694
+          ],
+          "visible_count": 1,
+          "relative_size_group": "unknown",
+          "surface_plane_relation": "perpendicular",
+          "visible_form": "open_slot",
+          "confidence": "high",
+          "confidence_basis": "Clear rectangular opening with visible back wall perpendicular to side walls and top wall."
+        }
+      ],
+      "uncertain": [
+        {
+          "evidence_id": "U1",
+          "group_id": "hidden_holes",
+          "description": "Whether the nine visible circular openings are through-holes or blind holes, and whether any additional holes exist on occluded rear/bottom faces.",
+          "image_region": [
+            0.147,
+            0.102,
+            0.706,
+            0.858
+          ],
+          "visible_count": null,
+          "relative_size_group": "unknown",
+          "surface_plane_relation": "unknown",
+          "visible_form": "unknown",
+          "confidence": "low",
+          "confidence_basis": "Only the front/inner openings are visible; depth and rear-side geometry are occluded."
+        },
+        {
+          "evidence_id": "U2",
+          "group_id": "channel_bottom",
+          "description": "Whether the central channel is open all the way to the bottom or closed by a bottom web.",
+          "image_region": [
+            0.304,
+            0.78,
+            0.147,
+            0.133
+          ],
+          "visible_count": null,
+          "relative_size_group": "unknown",
+          "surface_plane_relation": "unknown",
+          "visible_form": "unknown",
+          "confidence": "low",
+          "confidence_basis": "Lower region of the channel meets the ground plane with shading ambiguity; no clear boundary visible."
+        }
+      ],
+      "inferred": [],
+      "verification_status": "model_observation_unverified",
+      "request_profile": {
+        "task_kind": "vision_review",
+        "review_complexity": "source_inventory",
+        "provider_family": "siliconflow",
+        "protocol": "chat_completions",
+        "model": "moonshotai/Kimi-K2.7-Code",
+        "reasoning_effort": "low",
+        "configured_reasoning_effort": "low",
+        "thinking_budget": 1024,
+        "thinking_budget_source": "task_profile_soft_default",
+        "thinking_budget_hard_limit_known": false,
+        "payload_reasoning": {
+          "enable_thinking": true,
+          "thinking_budget": 1024
+        },
+        "reasoning_supported": true,
+        "reasoning_control": "toggle_and_budget",
+        "vision_supported": true,
+        "supported_efforts": [
+          "none",
+          "low"
+        ],
+        "context_window": 256000,
+        "max_output_tokens": null,
+        "context_capacity_source": "official SiliconFlow model center states 256K for moonshotai/Kimi-K2.7-Code",
+        "capability_source": "official SiliconFlow VLM API example for moonshotai/Kimi-K2.7-Code"
+      },
+      "review_configuration": {
+        "configured_reasoning_effort": "low",
+        "configured_thinking_budget": null,
+        "resolved_profile": {
+          "task_kind": "vision_review",
+          "review_complexity": "source_inventory",
+          "provider_family": "siliconflow",
+          "protocol": "chat_completions",
+          "model": "moonshotai/Kimi-K2.7-Code",
+          "reasoning_effort": "low",
+          "configured_reasoning_effort": "low",
+          "thinking_budget": 1024,
+          "thinking_budget_source": "task_profile_soft_default",
+          "thinking_budget_hard_limit_known": false,
+          "payload_reasoning": {
+            "enable_thinking": true,
+            "thinking_budget": 1024
+          },
+          "reasoning_supported": true,
+          "reasoning_control": "toggle_and_budget",
+          "vision_supported": true,
+          "supported_efforts": [
+            "none",
+            "low"
+          ],
+          "context_window": 256000,
+          "max_output_tokens": null,
+          "context_capacity_source": "official SiliconFlow model center states 256K for moonshotai/Kimi-K2.7-Code",
+          "capability_source": "official SiliconFlow VLM API example for moonshotai/Kimi-K2.7-Code"
+        }
+      },
+      "usage": {
+        "prompt_tokens": 717,
+        "completion_tokens": 2180,
+        "total_tokens": 2897,
+        "reasoning_tokens": 1024,
+        "cache_token_details": {
+          "prompt_tokens_details.cached_tokens": 0
+        }
+      },
+      "model": "moonshotai/Kimi-K2.7-Code",
+      "duration_seconds": 90.948,
+      "recorded_at": 1790857479.7322948
+    }
+  ],
+  "web_search_history": [],
+  "required_external_facts": {},
+  "replaced_plans": [],
+  "reference_manifest_error": null,
+  "user_turns": [
+    {
+      "turn_id": "eaed097bd19a4fde82555317706ef323",
+      "session_id": "cold-nine-hole-20261001-202252-b8032d41",
+      "raw_user_prompt": "请按参考图复刻这个工件；图中没有标注的尺寸请按图像比例估算，标明估算来源，生成本地模型",
+      "reference_ids": [
+        "sha256:53ed87fadf8cca869da921627e6a13c845424c6906b3de517d5cca972db94553"
+      ],
+      "intent": "model_target",
+      "intent_source": "cli_rules",
+      "affects_model_target": true,
+      "created_at": "2026-10-01T12:22:52.399Z",
+      "at_epoch_ms": 1790857372399
+    }
+  ],
+  "user_target_context_error": null
+}

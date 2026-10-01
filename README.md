@@ -44,19 +44,25 @@
 ## 一、快速开始
 
 1. 双击桌面上的 **「AI 自动建模助手」** 快捷方式（或双击文件夹里的
-   `启动 AI自动建模助手.vbs`）。
-2. 在左上角输入框里用中文描述零件，例如：
+   `启动 AI自动建模助手.vbs`）。构建过 Tauri 桌面程序后，入口会启动新的三栏工作区。
+2. 在左侧对话区用中文描述零件，例如：
 
    ```
    画一个 120×80×15 的长方体, 四角圆角 R8, 中心打一个直径 20 的通孔
    ```
 
-3. 点 **「⚡ 生成模型」**（或按 `Ctrl+Enter`），中间立刻出现三维预览。
-4. 在特征树里选中任意特征，右侧 **「参数」** 页可改尺寸并即时重建；
-   在 **「文件」** 菜单导出 STL / OBJ / 建模报告 / CATIA 脚本。
+3. 按 `Enter` 发送（`Shift+Enter` 换行），中间三维视口显示模型；Agent 模式还支持粘贴或选择参考图片。
+4. 在右侧特征树选中项目后编辑参数并重建；顶部工具栏和「更多」菜单提供工程保存、STL / OBJ / 报告 / CATIA 脚本导出、模型截图、设置和集成工具。
 
-> 环境要求：Windows + Python 3.9 以上（自带 tkinter 即可）。
-> **不需要**安装任何第三方 Python 包，**不需要**联网，**不需要** CATIA。
+> **Windows 安装版包含 CPython 3.13、`ai_modeler/` Python 源码和完整运行源码**，不要求目标电脑预装 Python，也不依赖开发仓库目录。首次打开时可选官方 PyPI、清华或阿里云镜像，将运行依赖安装到当前 Windows 用户的数据目录；安装目录保持只读，初始安装包不携带体积较大的科学计算和 CAD 依赖。`python -m ai_modeler` 是开发仓库入口，会把当前解释器交给 Tauri；开发环境可用 `--legacy-ui` 回到 Tk 界面。
+
+从源码构建 Windows 安装包，需要 Node.js、Rust 工具链，以及构建机上的 Python + pip。首次构建会下载经过 SHA-256 校验的官方 CPython 运行时和 pip 引导 wheel，并把源代码放进安装资源；Python 运行依赖在用户首次启动时按所选镜像安装。MSI 和 NSIS 安装包生成在 `ui-web/src-tauri/target/release/bundle/`：
+
+```powershell
+cd ui-web
+npm install
+npm run tauri:build
+```
 
 需要使用 Agent 创造模式时，再安装 Agent SDK 并配置模型：
 

@@ -40,10 +40,10 @@ TEMPLATES = [
      'model': 'moonshotai/Kimi-K2.7-Code', 'api_key': '',
      'reasoning_effort': 'none'},
     {'key': 'deepseek', 'label': 'DeepSeek 官方 API',
-     'note': 'deepseek-flash；走官方 Responses API，思考链流式显示',
+     'note': 'deepseek-flash；按建模/视觉阶段选择推理强度',
      'base_url': 'https://api.deepseek.com/v1',
      'model': 'deepseek-flash', 'api_key': '',
-     'reasoning_effort': 'high'},
+     'reasoning_effort': 'low'},
     {'key': 'openai', 'label': 'OpenAI',
      'note': 'gpt-4o-mini；需自备 api.openai.com 密钥',
      'base_url': 'https://api.openai.com/v1',
@@ -163,6 +163,9 @@ def ensure_providers(llm_cfg: dict) -> dict:
         # legacy flat llm configs into a provider profile.
         if 'thinking_budget' in cfg:
             profile['thinking_budget'] = cfg['thinking_budget']
+        for key in ('dsh_context_window', 'dsh_output_cap'):
+            if key in cfg:
+                profile[key] = cfg[key]
         profiles = [profile]
     active_id = str(cfg.get('active_provider_id') or '').strip()
     if active_id not in {p['id'] for p in profiles}:
@@ -203,6 +206,11 @@ def mirror_active(llm_cfg: dict) -> dict:
         else:
             # Avoid leaking one provider's budget into another active profile.
             cfg.pop('thinking_budget', None)
+        for key in ('dsh_context_window', 'dsh_output_cap'):
+            if key in active:
+                cfg[key] = active[key]
+            else:
+                cfg.pop(key, None)
     cfg.pop('thinking', None)        # 避免旧布尔开关覆盖每供应商的档位
     cfg['providers'] = profiles or cfg.get('providers') or []
     if active:

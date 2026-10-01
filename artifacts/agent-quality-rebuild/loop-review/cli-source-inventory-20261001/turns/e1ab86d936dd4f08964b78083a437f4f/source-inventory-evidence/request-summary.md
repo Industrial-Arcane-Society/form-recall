@@ -1,0 +1,10 @@
+# Source inventory live request evidence
+
+- CLI: `python -m ai_modeler agent --image artifacts/agent-quality-rebuild/loop-review/source-inventory-input.png --text "... source-only observation; do not model" --session-id aq-source-inventory-20261001 --output-dir artifacts/agent-quality-rebuild/loop-review/cli-source-inventory-20261001`
+- CLI result: exit 0, `conversation_completed`, no CAD plan/output; result: `../result.json` in this turn directory.
+- DSH MCP session: `aq-source-inventory-20261001-dsh-71d7d1b46718`; state and telemetry are copied alongside this note.
+- Image: source and actual transport SHA-256 both `53ed87fadf8cca869da921627e6a13c845424c6906b3de517d5cca972db94553`; image_count=1, 72,309 bytes.
+- Direct provider wire: SiliconFlow Chat Completions, model `moonshotai/Kimi-K2.7-Code`, HTTP 200, 46.4 seconds. Request profile `vision_review/source_inventory`, resolved effort low, `max_tokens=1800`, `thinking_budget=null`, `enable_thinking=true`, `stream=false`.
+- Provider usage for the direct source-inventory request: prompt 608, completion 1,759, total 2,367, reported reasoning 912. No finish_reason was included in the captured HTTP response telemetry. The MCP handler successfully parsed the reply as JSON and persisted its fields; that confirms syntactic completeness at the handler, not that the provider did not stop on the output limit.
+- Inventory state is explicitly `model_observation_unverified`, bound to this image SHA, and includes three separate visible hole groups, nine visible openings, slot/wall regions and uncertainty about through/blind depth. It does not identify relative hole sizes or wall-plane relationships; current revised prompt requests these generic fields, but this run used the previous prompt.
+- The independent inventory call cost 2,367 provider tokens. DSH caller requests are recorded separately in the root-level observability stream; do not add those unrelated request totals to this direct-tool request unless separately attributed.

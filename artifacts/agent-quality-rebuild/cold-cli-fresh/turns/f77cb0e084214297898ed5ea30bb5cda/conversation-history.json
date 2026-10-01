@@ -1,0 +1,13 @@
+{
+  "schema_version": 1,
+  "turns": [
+    {
+      "turn_id": "f77cb0e084214297898ed5ea30bb5cda",
+      "user_prompt": "按参考图复刻，尺寸未标注请自行估量。",
+      "assistant_reply": "已完成复刻建模，当前结果保存为 **candidate_not_verified**（候选但尚未完全验收）。\n\n## 模型概况\n- **主体**：40 mm（宽）× 30 mm（厚）× 60 mm（高）的矩形块  \n- **前槽**：宽 12 mm、深 20 mm、贯穿全高的正面凹槽，形成 U 形截面  \n- **九个孔**：  \n  - 两侧壁各有 3 个通孔（上/下 Φ8 mm，中间 Φ6 mm），由三根水平圆柱切除体贯通左右壁  \n  - 槽底后壁有 3 个通孔（上/下 Φ8 mm，中间 Φ6 mm），朝 Y 向贯通后壁  \n\n> 所有尺寸均为基于图中网格比例的 image_estimate（默认每格约 10 mm）；用户未提供标注尺寸，因此比例为估算。\n\n## 当前状态\n- **本地几何检查**：通过（OCCT BRep，brep_valid，closed，无自交）  \n- **已生成预览**：iso、left 等视角，模型与参考图的 U 形块、外壁三孔、孔径大小关系一致  \n- **未解决项 / 未核验项**：  \n  - 绝对尺寸无标注，均为估算  \n  - 单张 iso 参考图无法直接观察左侧面与槽底孔，已通过 left 视图补充分核左侧面；槽底孔几何已生成但视角可见度有限  \n  - 未运行 CATIA，未创建/验证 CATPart  \n  - 顶部槽底孔因早期 `pocket-top-hole` 触发重复失败守卫，实际特征 ID 使用 `pocket-top-cut`\n\n## 输出文件\n- CADPlan（可编辑）：`...\\output\\candidate.aimodel`\n- STL：`...\\output\\candidate.stl`\n- 预览图：`...\\output\\preview.png`\n- ISO 视图：`...\\output\\views\\iso.png`\n- 正视图：`...\\output\\views\\front.png`\n- 几何报告：`...\\output\\geometry-report.json`\n\n如需调整尺寸或补充其他视角的审查，可直接告诉我。",
+      "assistant_source": "dsh_final_reply",
+      "result_state": "candidate_not_verified",
+      "created_at": "2026-10-01T14:24:21+08:00"
+    }
+  ]
+}

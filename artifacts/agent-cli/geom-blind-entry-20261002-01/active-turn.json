@@ -1,0 +1,25 @@
+{
+  "turn_id": "8c64c3b593454c3497471c833a4c689e",
+  "started_at_epoch_ms": 1790871971532,
+  "session_id": "geom-blind-entry-20261002-01",
+  "dsh_session_id": "geom-blind-entry-20261002-01-dsh-d38fe6580c03",
+  "provider": "siliconflow",
+  "model": "moonshotai/Kimi-K2.7-Code",
+  "reasoning_effort": "low",
+  "runtime_capacity_policy": {
+    "context_window": {
+      "value": 256000,
+      "source": "verified_provider_capability",
+      "provider_capability_known": true
+    },
+    "output_cap": {
+      "value": 32768,
+      "source": "dsh_operational_fallback",
+      "provider_maximum_known": false
+    }
+  },
+  "reference_images": [],
+  "user_turns_manifest": "C:\\Users\\lycohana\\AppData\\Local\\AI Modeler\\dsh\\sessions\\geom-blind-entry-20261002-01\\user-turns.json",
+  "completed_at_epoch_ms": 1790872173913,
+  "first_tool_observed": true
+}

@@ -1,0 +1,147 @@
+[
+  {
+    "kind": "tool",
+    "tool": "cad_inspect_references",
+    "revision": 0,
+    "at": 1790877835.664882,
+    "reference_id": "sha256:53ed87fadf8cca869da921627e6a13c845424c6906b3de517d5cca972db94553",
+    "source_sha256": "53ed87fadf8cca869da921627e6a13c845424c6906b3de517d5cca972db94553",
+    "roi_norm": null,
+    "observation_valid": true,
+    "verification_status": "model_observation_unverified"
+  },
+  {
+    "kind": "tool",
+    "tool": "cad_get_state",
+    "revision": 0,
+    "at": 1790877836.2537766
+  },
+  {
+    "kind": "tool",
+    "tool": "cad_create_model",
+    "revision": 1,
+    "at": 1790877867.0720687,
+    "feature_id": "base_block",
+    "explicit_replacement": false,
+    "preserved_source_keys": [],
+    "user_source_provenance": [],
+    "archived_finding_count": 0
+  },
+  {
+    "kind": "tool",
+    "tool": "cad_update_feature",
+    "revision": 1,
+    "at": 1790877873.2382982,
+    "feature_id": "base_block",
+    "no_op": true,
+    "unchanged_geometry_signature": "9a6fcc47600ab0eb47eda6e4e869bbcc33f989baa13a87df3e2bf53f56de1656",
+    "consecutive_no_progress": 1
+  },
+  {
+    "kind": "tool",
+    "tool": "cad_update_feature",
+    "revision": 1,
+    "at": 1790877887.7596016,
+    "feature_id": "base_block",
+    "no_op": true,
+    "unchanged_geometry_signature": "9a6fcc47600ab0eb47eda6e4e869bbcc33f989baa13a87df3e2bf53f56de1656",
+    "consecutive_no_progress": 2
+  },
+  {
+    "kind": "tool",
+    "tool": "cad_get_feature_spec",
+    "revision": 1,
+    "at": 1790877893.4128175,
+    "feature_kind": "box"
+  },
+  {
+    "kind": "tool",
+    "tool": "cad_update_feature",
+    "revision": 1,
+    "at": 1790877903.3408632,
+    "feature_id": "base_block",
+    "no_op": true,
+    "unchanged_geometry_signature": "9a6fcc47600ab0eb47eda6e4e869bbcc33f989baa13a87df3e2bf53f56de1656",
+    "consecutive_no_progress": 3
+  },
+  {
+    "kind": "tool",
+    "tool": "cad_update_feature",
+    "revision": 1,
+    "at": 1790877910.5852525,
+    "feature_id": "base_block",
+    "no_op": true,
+    "unchanged_geometry_signature": "9a6fcc47600ab0eb47eda6e4e869bbcc33f989baa13a87df3e2bf53f56de1656",
+    "consecutive_no_progress": 4
+  },
+  {
+    "kind": "tool",
+    "tool": "cad_update_feature",
+    "revision": 1,
+    "at": 1790877919.7293737,
+    "feature_id": "base_block",
+    "no_op": true,
+    "unchanged_geometry_signature": "9a6fcc47600ab0eb47eda6e4e869bbcc33f989baa13a87df3e2bf53f56de1656",
+    "consecutive_no_progress": 5
+  },
+  {
+    "kind": "tool",
+    "tool": "cad_update_feature",
+    "revision": 1,
+    "at": 1790877930.1706753,
+    "feature_id": "base_block",
+    "no_op": true,
+    "unchanged_geometry_signature": "9a6fcc47600ab0eb47eda6e4e869bbcc33f989baa13a87df3e2bf53f56de1656",
+    "consecutive_no_progress": 6
+  },
+  {
+    "kind": "tool",
+    "tool": "cad_update_feature",
+    "revision": 1,
+    "at": 1790877942.6661346,
+    "feature_id": "base_block",
+    "no_op": true,
+    "unchanged_geometry_signature": "9a6fcc47600ab0eb47eda6e4e869bbcc33f989baa13a87df3e2bf53f56de1656",
+    "consecutive_no_progress": 7
+  },
+  {
+    "kind": "tool",
+    "tool": "cad_update_feature",
+    "revision": 1,
+    "at": 1790877953.4729168,
+    "feature_id": "base_block",
+    "no_op": true,
+    "unchanged_geometry_signature": "9a6fcc47600ab0eb47eda6e4e869bbcc33f989baa13a87df3e2bf53f56de1656",
+    "consecutive_no_progress": 8
+  },
+  {
+    "kind": "tool",
+    "tool": "cad_update_feature",
+    "revision": 1,
+    "at": 1790877964.3779893,
+    "feature_id": "base_block",
+    "no_op": true,
+    "unchanged_geometry_signature": "9a6fcc47600ab0eb47eda6e4e869bbcc33f989baa13a87df3e2bf53f56de1656",
+    "consecutive_no_progress": 9
+  },
+  {
+    "kind": "tool",
+    "tool": "cad_update_feature",
+    "revision": 1,
+    "at": 1790877980.68735,
+    "feature_id": "base_block",
+    "no_op": true,
+    "unchanged_geometry_signature": "9a6fcc47600ab0eb47eda6e4e869bbcc33f989baa13a87df3e2bf53f56de1656",
+    "consecutive_no_progress": 10
+  },
+  {
+    "kind": "tool",
+    "tool": "cad_update_feature",
+    "revision": 1,
+    "at": 1790877991.599978,
+    "feature_id": "base_block",
+    "no_op": true,
+    "unchanged_geometry_signature": "9a6fcc47600ab0eb47eda6e4e869bbcc33f989baa13a87df3e2bf53f56de1656",
+    "consecutive_no_progress": 11
+  }
+]

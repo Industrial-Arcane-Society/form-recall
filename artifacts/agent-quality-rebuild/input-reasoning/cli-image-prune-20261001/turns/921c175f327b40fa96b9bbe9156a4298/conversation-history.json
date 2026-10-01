@@ -1,0 +1,13 @@
+{
+  "schema_version": 1,
+  "turns": [
+    {
+      "turn_id": "921c175f327b40fa96b9bbe9156a4298",
+      "user_prompt": "根据附图建立一个简化的 U 形实体主体，未标注尺寸按图估算。本轮只做主体和凹槽，不增加孔或装饰；保存候选后结束。\r\n",
+      "assistant_reply": "已保存候选，程序状态为 candidate_not_verified，尚未验收。 本地几何状态：passed；独立原图-模型复核pair：1；参考证据覆盖：未覆盖或未知；外部事实来源：0/0项已核实；未解决finding：0；CATIA未运行。",
+      "assistant_source": "dsh_final_reply",
+      "result_state": "candidate_not_verified",
+      "created_at": "2026-10-01T18:41:28+08:00"
+    }
+  ]
+}

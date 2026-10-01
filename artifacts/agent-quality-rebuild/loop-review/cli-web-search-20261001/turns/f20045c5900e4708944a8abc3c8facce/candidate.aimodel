@@ -1,0 +1,44 @@
+{
+  "format": "ai-modeler",
+  "version": 1,
+  "name": "ISO 4762 M6x20 内六角圆柱头螺钉",
+  "source_prompt": "标准件配方：内六角圆柱头螺钉 M6×20",
+  "features": [
+    {
+      "kind": "socket_head_bolt",
+      "params": {
+        "shank_d": 6.0,
+        "thread_pitch": 1.0,
+        "length": 20.0,
+        "head_d": 10.0,
+        "head_h": 6.0,
+        "hex_s": 5.0,
+        "hex_t": 3.0,
+        "center": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "segments": 48
+      },
+      "op": "add",
+      "name": "内六角圆柱头螺钉 M6×20",
+      "note": "ISO 4762 / GB/T 70.1—2008 内六角圆柱头螺钉；公制右旋螺纹 M6，螺距 1 mm；本地网格已生成可见的近似螺旋牙型。CATIA 导出器当前仍输出光杆。",
+      "feature_id": "socket-head-cap-screw",
+      "relations": [],
+      "enabled": true,
+      "provenance": {
+        "shank_d": "user",
+        "thread_pitch": "derived",
+        "length": "user",
+        "head_d": "derived",
+        "head_h": "derived",
+        "hex_s": "derived",
+        "hex_t": "derived",
+        "center": "derived",
+        "segments": "derived"
+      }
+    }
+  ],
+  "exported_at": "2026-10-01 13:04:52"
+}

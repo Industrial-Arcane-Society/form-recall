@@ -1,0 +1,8 @@
+<WixLocalization Culture="zh-CN" xmlns="http://schemas.microsoft.com/wix/2006/localization">
+  <String Id="TauriLanguage">2052</String>
+  <String Id="TauriCodepage">936</String>
+  <String Id="LaunchApp">启动 AI Modeler</String>
+  <String Id="DowngradeErrorMessage">已经安装了 AI Modeler 的较新版本。</String>
+  <String Id="PathEnvVarFeature">将 AI Modeler 的安装目录添加到 PATH 环境变量，以便从任意位置运行程序。</String>
+  <String Id="InstallAppFeature">安装 AI Modeler。</String>
+</WixLocalization>

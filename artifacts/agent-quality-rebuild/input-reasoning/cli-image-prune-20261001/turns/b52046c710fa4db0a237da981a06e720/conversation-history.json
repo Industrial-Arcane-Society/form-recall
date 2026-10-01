@@ -1,0 +1,29 @@
+{
+  "schema_version": 1,
+  "turns": [
+    {
+      "turn_id": "921c175f327b40fa96b9bbe9156a4298",
+      "user_prompt": "根据附图建立一个简化的 U 形实体主体，未标注尺寸按图估算。本轮只做主体和凹槽，不增加孔或装饰；保存候选后结束。\r\n",
+      "assistant_reply": "已保存候选，程序状态为 candidate_not_verified，尚未验收。 本地几何状态：passed；独立原图-模型复核pair：1；参考证据覆盖：未覆盖或未知；外部事实来源：0/0项已核实；未解决finding：0；CATIA未运行。",
+      "assistant_source": "dsh_final_reply",
+      "result_state": "candidate_not_verified",
+      "created_at": "2026-10-01T18:41:28+08:00"
+    },
+    {
+      "turn_id": "d1fae560acbc4fa58ac7a217455c1ea9",
+      "user_prompt": "不要从头重建或替换现有工件。只将主体总高度增加 5 mm，其它尺寸和特征保持不变。记录修改参数的来源，完成后生成一次新预览并保存。\r\n",
+      "assistant_reply": "已保存候选，程序状态为 candidate_not_verified，尚未验收。 本地几何状态：passed；独立原图-模型复核pair：0；参考证据覆盖：未覆盖或未知；外部事实来源：0/0项已核实；未解决finding：0；CATIA未运行。",
+      "assistant_source": "dsh_final_reply",
+      "result_state": "candidate_not_verified",
+      "created_at": "2026-10-01T18:56:36+08:00"
+    },
+    {
+      "turn_id": "b52046c710fa4db0a237da981a06e720",
+      "user_prompt": "不要重建或替换现有模型。只对现有主体的 height 参数连续做两次小修改：先增加 1 mm，生成一次新预览并检查；随后在同一特征的 height 上再增加 1 mm，生成第二次新预览，并根据最新预览完成本轮。两次只改 height，其他参数、凹槽特征及原有来源记录保持不变。\r\n",
+      "assistant_reply": "已保存候选，程序状态为 candidate_not_verified，尚未验收。 本地几何状态：passed；独立原图-模型复核pair：0；参考证据覆盖：未覆盖或未知；外部事实来源：0/0项已核实；未解决finding：0；CATIA未运行。",
+      "assistant_source": "dsh_final_reply",
+      "result_state": "candidate_not_verified",
+      "created_at": "2026-10-01T19:02:44+08:00"
+    }
+  ]
+}

@@ -12,7 +12,7 @@ COM 方式需要 pywin32:  pip install pywin32
 并优先采用 config.json 的 catia 段里登记的那一套。
 """
 from __future__ import annotations
-from ai_modeler.paths import PROJECT_ROOT
+from ai_modeler.paths import PROJECT_ROOT, config_path
 
 import json
 import os
@@ -26,7 +26,7 @@ import time
 CATIA_PROGID = 'CATIA.Application'
 
 ROOT_DIR = str(PROJECT_ROOT)
-CONFIG_PATH = os.path.join(ROOT_DIR, 'config.json')
+CONFIG_PATH = str(config_path())
 
 CNEXT_REL = os.path.join('win_b64', 'code', 'bin', 'CNEXT.exe')
 

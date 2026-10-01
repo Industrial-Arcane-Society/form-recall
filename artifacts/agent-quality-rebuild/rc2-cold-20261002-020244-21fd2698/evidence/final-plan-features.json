@@ -1,0 +1,17 @@
+{
+  "id": "base_block",
+  "kind": "box",
+  "operation": "add",
+  "name": "主体长方体",
+  "parameters": {
+    "length": 120,
+    "width": 60,
+    "height": 160,
+    "center": [
+      0,
+      30,
+      80
+    ]
+  },
+  "sources": {}
+}

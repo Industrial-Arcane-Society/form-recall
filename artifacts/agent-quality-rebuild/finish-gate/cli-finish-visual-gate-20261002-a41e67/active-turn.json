@@ -1,0 +1,31 @@
+{
+  "turn_id": "8b63b6714f1e4fa5b12ec98aea55dce1",
+  "started_at_epoch_ms": 1790873310703,
+  "session_id": "finishgate-20261002-a41e67",
+  "dsh_session_id": "finishgate-20261002-a41e67-dsh-24f8db7de6b7",
+  "provider": "siliconflow",
+  "model": "moonshotai/Kimi-K2.7-Code",
+  "reasoning_effort": "low",
+  "runtime_capacity_policy": {
+    "context_window": {
+      "value": 256000,
+      "source": "verified_provider_capability",
+      "provider_capability_known": true
+    },
+    "output_cap": {
+      "value": 32768,
+      "source": "dsh_operational_fallback",
+      "provider_maximum_known": false
+    }
+  },
+  "reference_images": [
+    {
+      "id": "sha256:53ed87fadf8cca869da921627e6a13c845424c6906b3de517d5cca972db94553",
+      "sha256": "53ed87fadf8cca869da921627e6a13c845424c6906b3de517d5cca972db94553",
+      "filename": "user-nine-hole-recess-iso.png",
+      "width": 494,
+      "height": 544
+    }
+  ],
+  "user_turns_manifest": "C:\\Users\\lycohana\\AppData\\Local\\AI Modeler\\dsh\\sessions\\finishgate-20261002-a41e67\\user-turns.json"
+}

@@ -1,0 +1,1490 @@
+.F..F...                                                                 [100%]
+================================== FAILURES ===================================
+_ DSHReviewWorkflowTests.test_finish_without_current_visual_evidence_saves_unverified_candidate _
+
+self = <test_dsh_review_workflow.DSHReviewWorkflowTests testMethod=test_finish_without_current_visual_evidence_saves_unverified_candidate>
+
+    def test_finish_without_current_visual_evidence_saves_unverified_candidate(self):
+        self._write_state()
+        with mock.patch.object(server, "_export_candidate", return_value={"aimodel": "candidate.aimodel"}):
+>           result = server._handle_tool("cad_finish_model", {"summary": "test candidate"})
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests\test_dsh_review_workflow.py:130: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+name = 'cad_finish_model', args = {'summary': 'test candidate'}
+
+    def _handle_tool(name: str, args: dict[str, Any]) -> dict[str, Any]:
+        _reload_reference_manifest()
+        state = _load()
+        state["has_references"] = bool(_REFERENCE_IMAGE_RECORDS)
+        if name == "cad_search_recipes":
+            rows = modeling_recipes.list_recipes(
+                str(args.get("query") or ""), limit=args.get("limit", 8))
+            result = {"query": str(args.get("query") or ""), "recipes": rows}
+            _record(state, name, recipe_ids=[row.get("id") for row in rows])
+            _save(state)
+            return _tool_result(result, "本地建模配方检索完成。")
+        if name == "cad_apply_recipe":
+            if state.get("plan") and not args.get("replace"):
+                raise ValueError("当前已有模型；若要用配方整体替换，请显式设置 replace=true。")
+            candidate = modeling_recipes.build_recipe_plan(
+                str(args.get("recipe_id") or ""), str(args.get("size") or ""),
+                name=str(args.get("name") or ""),
+                source_prompt=str(args.get("source_prompt") or ""))
+            validation = cadplan.validate_plan(candidate)
+            if validation.get("state") != "valid":
+                issues = validation.get("errors") or validation.get("confirmations") or []
+                detail = "; ".join(str(row.get("message") or row.get("question") or row)
+                                   for row in issues[:5])
+                raise ValueError("配方生成的 CADPlan 未通过校验：%s" % (detail or validation.get("state")))
+            if state.get("plan") and args.get("replace"):
+                state["finding_ledger"] = {}
+                state["geometry_signatures"] = []
+                state["geometry_mutations"] = []
+                state["last_valid_candidate"] = None
+                state["best_evidence_candidate"] = None
+                state["best_candidate"] = None
+                state["construction_milestone"] = None
+            state["plan"] = candidate
+            _invalidate_geometry(state)
+            _record(state, name, recipe_id=args.get("recipe_id"), model=args.get("size"),
+                    feature_id=candidate["features"][0]["id"])
+            _save(state)
+            result = _validation_result(candidate, state)
+            result["recipe"] = {
+                "id": args.get("recipe_id"), "model": args.get("size"),
+                "thread_representation": "helical_mesh_approximation",
+                "thread_pitch_mm": candidate["features"][0]["parameters"]["thread_pitch"],
+                "thread_note": "本地预览/STL 网格含近似右旋螺旋牙型；CATIA 导出器当前输出光杆。",
+            }
+            return _tool_result(result, "标准件配方已一次展开并通过 CADPlan 校验；请预览当前模型。")
+        if name == "cad_search_knowledge":
+            query = str(args.get("query") or "").strip()
+            limit = args.get("limit", 5)
+            result = knowledge_retrieval.search_knowledge(
+                query, limit=limit, image_paths=_REFERENCE_IMAGES)
+            image_path = None
+            if args.get("include_visual_examples"):
+                examples = knowledge_retrieval.visual_examples_for_result(result)
+                if examples:
+                    image_path = _STATE_DIR / "knowledge-visual-examples.png"
+                    selected = knowledge_retrieval.build_visual_examples_contact_sheet(
+                        image_path, examples)
+                    state["knowledge_visual_examples"] = [
+                        {"model": row.get("model"), "category": row.get("category")}
+                        for row in selected]
+                    result["visual_examples"] = [
+                        {key: row.get(key) for key in (
+                            "model", "category", "envelope_dimensions_mm", "trust", "source")}
+                        for row in selected]
+                    result["visual_example_note"] = (
+                        "这些只是项目附带的配对样例，不是目标零件的自动视觉命中。")
+            state["knowledge_search"] = result
+            _record(state, name, status=result.get("status"),
+                    models=[row.get("model") for row in result.get("matches") or []])
+            _save(state)
+            try:
+                return _tool_result(result, "本地工件知识检索完成。", image_path=image_path)
+            finally:
+                if image_path:
+                    try:
+                        image_path.unlink(missing_ok=True)
+                    except OSError:
+                        pass
+        if name == "cad_get_state":
+            result = _summary(state)
+            _record(state, name)
+            _save(state)
+            return _tool_result(result, "已读取当前 CADPlan 状态。")
+        if name == "cad_get_reference_image":
+            image_index, record = _reference_record(
+                args.get("reference_image_index"), args.get("reference_id"))
+            source = Path(str(record.get("path") or ""))
+            if not source.is_file():
+                raise ValueError("会话原始图像文件不存在，不能返回虚构或缓存的图片。")
+            roi = args.get("roi_norm")
+            returned_path = source
+            crop_path = None
+            crop_px = None
+            if roi is not None:
+                if not isinstance(roi, list) or len(roi) != 4:
+                    raise ValueError("roi_norm 必须是 [x,y,width,height] 四个归一化数值。")
+                try:
+                    x, y, width, height = (float(value) for value in roi)
+                except (TypeError, ValueError) as exc:
+                    raise ValueError("roi_norm 必须全为有限数值。") from exc
+                if (not all(math.isfinite(value) for value in (x, y, width, height))
+                        or x < 0 or y < 0 or width <= 0 or height <= 0
+                        or x + width > 1 or y + height > 1):
+                    raise ValueError("roi_norm 必须落在 [0,1] 图像边界内且宽高大于零。")
+                try:
+                    from PIL import Image, ImageOps
+                    with Image.open(source) as opened:
+                        image = ImageOps.exif_transpose(opened).convert("RGB")
+                        image_width, image_height = image.size
+                        left = max(0, int(math.floor(x * image_width)))
+                        top = max(0, int(math.floor(y * image_height)))
+                        right = min(image_width, int(math.ceil((x + width) * image_width)))
+                        bottom = min(image_height, int(math.ceil((y + height) * image_height)))
+                        if right - left < 2 or bottom - top < 2:
+                            raise ValueError("roi_norm 对应区域小于 2 像素，无法复核。")
+                        crop = image.crop((left, top, right, bottom))
+                        crop_path = _STATE_DIR / "reference-crop-current.png"
+                        crop.save(crop_path, format="PNG")
+                        returned_path = crop_path
+                        crop_px = [left, top, right - left, bottom - top]
+                except ImportError as exc:
+                    raise ValueError("当前运行环境缺少图像裁切依赖，无法生成局部原图。") from exc
+            evidence_id = str(args.get("evidence_id") or "").strip()
+            state.setdefault("reference_rechecks", []).append({
+                "reference_image_index": image_index,
+                "reference_id": record.get("id"),
+                "evidence_id": evidence_id,
+                "roi_norm": roi,
+                "at": time.time(),
+            })
+            state["reference_rechecks"] = state["reference_rechecks"][-96:]
+            _record(state, name, reference_image_index=image_index,
+                    reference_id=record.get("id"), evidence_id=evidence_id or None,
+                    roi_norm=roi)
+            _save(state)
+            result = {
+                "reference_image_index": image_index,
+                "reference_id": record.get("id"),
+                "sha256": record.get("sha256"),
+                "filename": record.get("filename") or source.name,
+                "original_dimensions": [record.get("width"), record.get("height")],
+                "roi_norm": roi,
+                "crop_px": crop_px,
+                "image_attached": True,
+            }
+            _register_transport_image_source(returned_path, record, roi)
+            try:
+                return _tool_result(result,
+                                    "已重新读取会话原图；请先依据图像确认参考事实，再决定是否修改模型。",
+                                    returned_path,
+                                    image_mime_type=("image/png" if crop_path else
+                                                     str(record.get("media_type") or
+                                                         mimetypes.guess_type(str(source))[0] or
+                                                         "image/png")))
+            finally:
+                if crop_path:
+                    crop_path.unlink(missing_ok=True)
+        if name == "cad_set_construction_milestone":
+            plan = _require_plan(state)
+            milestone = str(args.get("milestone") or "").strip()
+            if not milestone:
+                raise ValueError("施工里程碑 milestone 不能为空。")
+            completed = args.get("completed_feature_ids") or []
+            if not isinstance(completed, list):
+                raise ValueError("completed_feature_ids 必须是数组。")
+            known_ids = {str(row.get("id")) for row in plan.get("features") or []
+                         if isinstance(row, dict)}
+            unknown = sorted(set(str(value) for value in completed) - known_ids)
+            if unknown:
+                raise ValueError("里程碑包含当前特征树不存在的 feature_id：%s。" %
+                                 ", ".join(unknown))
+            state["construction_milestone"] = {
+                "milestone": milestone,
+                "completed_feature_ids": list(dict.fromkeys(map(str, completed))),
+                "expected_feature_ids": list(dict.fromkeys(
+                    str(value) for value in args.get("expected_feature_ids") or [])),
+                "notes": str(args.get("notes") or "").strip(),
+                "revision": state.get("revision"),
+                "updated_at": time.time(),
+            }
+            _record(state, name, milestone=milestone,
+                    completed_feature_ids=state["construction_milestone"]["completed_feature_ids"])
+            _save(state)
+            return _tool_result({"construction_milestone": state["construction_milestone"]},
+                                "已更新当前施工检查范围；未列入的目标特征不会作为本阶段缺失项。")
+        if name == "cad_restore_best_candidate":
+            best = state.get("best_evidence_candidate") or state.get("last_valid_candidate") or state.get("best_candidate")
+            if not isinstance(best, dict) or not isinstance(best.get("plan"), dict):
+                raise ValueError("当前还没有通过本地几何检查并保存的最佳候选。")
+            current = _require_plan(state)
+            candidate = best["plan"]
+            if _signature_key(current) == _signature_key(candidate):
+                _record(state, name, no_op=True, candidate_kind=(
+                    "best_evidence" if state.get("best_evidence_candidate") is best else "last_valid"),
+                    reason=str(args.get("reason") or "").strip())
+                _save(state)
+                return _tool_result(_summary(state), "当前几何已经是最佳候选，无需恢复。")
+            before = current
+            state["plan"] = json.loads(json.dumps(candidate, ensure_ascii=False))
+            _invalidate_geometry(state)
+            _record_geometry_transition(state, before, state["plan"],
+                                        [str(row.get("id")) for row in candidate.get("features", [])
+                                         if isinstance(row, dict)],
+                                        name)
+            _record(state, name, restored_revision=best.get("revision"),
+                    candidate_kind=("best_evidence" if state.get("best_evidence_candidate") is best
+                                    else "last_valid"),
+                    reason=str(args.get("reason") or "").strip())
+            _save(state)
+            return _tool_result({
+                "revision": state["revision"], "restored_from_revision": best.get("revision"),
+                "candidate_kind": ("best_evidence" if state.get("best_evidence_candidate") is best
+                                   else "last_valid"),
+                "best_candidate": {key: best.get(key) for key in
+                                   ("geometry_signature", "dimensions", "rank")},
+                "validation": cadplan.validate_plan(state["plan"]),
+            }, "已恢复最佳有效 CADPlan；请为新 revision 重新生成预览。")
+        if name == "cad_create_model":
+            if state.get("plan") and not args.get("replace"):
+                raise ValueError("当前已有模型；若用户要求从头重建，请显式设置 replace=true。")
+            candidate = plan_state.create(
+                str(args["name"]), args["first_feature"],
+                str(args.get("source_prompt") or state.get("source_prompt") or ""),
+                units=args.get("units"),
+            )
+            if state.get("plan") == candidate:
+                _record(state, name, feature_id=(args["first_feature"] or {}).get("id"),
+                        no_op=True)
+                _save(state)
+                return _tool_result(_validation_result(state["plan"], state),
+                                    "相同 CADPlan 已存在，未重复替换；请用 cad_add_feature 继续添加特征。")
+            before = state.get("plan")
+            if state.get("plan") and args.get("replace"):
+                state["finding_ledger"] = {}
+                state["geometry_signatures"] = []
+                state["geometry_mutations"] = []
+                state["last_valid_candidate"] = None
+                state["best_evidence_candidate"] = None
+                state["best_candidate"] = None
+                state["construction_milestone"] = None
+            state["plan"] = candidate
+            _invalidate_geometry(state)
+            _record_geometry_transition(state, before, candidate,
+                                        [str((args.get("first_feature") or {}).get("id") or "")],
+                                        name)
+            _record(state, name, feature_id=(args["first_feature"] or {}).get("id"))
+            _save(state)
+            return _tool_result(_validation_result(state["plan"], state),
+                                "CADPlan 已创建，revision %s。" % state["revision"])
+        if name == "cad_add_feature":
+            plan = _require_plan(state)
+            feature = args.get("feature")
+            if not isinstance(feature, dict):
+                raise ValueError("feature 必须是对象。")
+            candidate = plan_state.add(plan, feature)
+            feature_id = str(feature.get("id") or "")
+            _guard_geometry_transition(
+                state, plan, candidate, [feature_id], args.get("finding_ids"))
+            state["plan"] = candidate
+            _invalidate_geometry(state)
+            _record_geometry_transition(state, plan, candidate, [feature_id], name,
+                                        args.get("finding_ids"))
+            _record(state, name, feature_id=feature_id)
+            _save(state)
+            return _tool_result(_validation_result(state["plan"], state),
+                                "已添加特征 %s，revision %s。" %
+                                (feature.get("id"), state["revision"]))
+        if name == "cad_add_face_recess":
+            plan = _require_plan(state)
+            low, high = _primary_box_bounds(plan)
+            axis, u_axis, v_axis = _face_axes(str(args.get("face_normal_axis") or ""))
+            side_name = str(args.get("face_side") or "").strip().lower()
+            if side_name not in {"positive", "negative"}:
+                raise ValueError("face_side 必须是 positive 或 negative。")
+            sign = 1.0 if side_name == "positive" else -1.0
+            face_center = args.get("face_center")
+            if not isinstance(face_center, list) or len(face_center) != 2:
+                raise ValueError("face_center 必须按面内坐标轴顺序包含两个坐标。")
+            try:
+                width, height, depth = (float(args[key]) for key in
+                                        ("width", "height", "depth"))
+                uv = [float(value) for value in face_center]
+            except (TypeError, ValueError, KeyError) as exc:
+                raise ValueError("凹槽坐标和尺寸必须是有效数字。") from exc
+            if (not all(math.isfinite(value) for value in [width, height, depth, *uv])
+                    or min(width, height, depth) <= 0):
+                raise ValueError("凹槽宽、高、深度必须是正的有限数。")
+            face_span_u, face_span_v = high[u_axis] - low[u_axis], high[v_axis] - low[v_axis]
+            normal_span = high[axis] - low[axis]
+            if width > face_span_u or height > face_span_v or depth >= normal_span:
+                raise ValueError("凹槽尺寸超出主实体对应的表面范围或贯穿厚度。")
+            radius_clearance = 1e-3
+            if (uv[0] - width / 2 < low[u_axis] - 1e-6 or
+                    uv[0] + width / 2 > high[u_axis] + 1e-6 or
+                    uv[1] - height / 2 < low[v_axis] - 1e-6 or
+                    uv[1] + height / 2 > high[v_axis] + 1e-6):
+                raise ValueError("凹槽面内范围必须落在主实体表面内。")
+            surface = high[axis] if sign > 0 else low[axis]
+            # Extend the cutter by a tiny amount beyond the opening face to avoid
+            # leaving a coplanar skin in the polygon kernel.
+            cutter_depth = depth + radius_clearance
+            center = [0.0, 0.0, 0.0]
+            dimensions = [0.0, 0.0, 0.0]
+            center[u_axis], center[v_axis] = uv
+            dimensions[u_axis], dimensions[v_axis] = width, height
+            dimensions[axis] = cutter_depth
+            center[axis] = surface - sign * (depth - radius_clearance) / 2.0
+            evidence = str(args.get("evidence") or "").strip()
+            source_type = str(args.get("source_type") or "image_estimate")
+            shared = _dimension_source(source_type, evidence, "图像/用户依据：凹槽比例估计。")
+            center_source = {"type": "derived",
+                             "evidence": "由主 box 表面坐标与凹入深度计算切除体中心。"}
+            feature = {
+                "id": str(args.get("feature_id") or "").strip(),
+                "kind": "box", "operation": "cut",
+                "name": str(args.get("name") or "Face recess"),
+                "parameters": {"length": dimensions[0], "width": dimensions[1],
+                               "height": dimensions[2], "center": center},
+                "sources": {"length": shared, "width": shared, "height": shared,
+                            "center": center_source},
+                "note": "通过统一 CADPlan 坐标语义创建的面内退台。",
+            }
+            if not feature["id"]:
+                raise ValueError("feature_id 不能为空。")
+            candidate = plan_state.add(plan, feature)
+            _guard_geometry_transition(state, plan, candidate,
+                                       [feature["id"]], args.get("finding_ids"))
+            state["plan"] = candidate
+            _invalidate_geometry(state)
+            _record_geometry_transition(state, plan, candidate,
+                                        [feature["id"]], name, args.get("finding_ids"))
+            _record(state, name, feature_id=feature["id"], face_normal_axis=axis,
+                    face_side=side_name, dimensions_xyz=dimensions)
+            _save(state)
+            return _tool_result(_validation_result(candidate, state),
+                                "已按面法线 %s/%s 创建退台；box 尺寸映射到 XYZ=%s，revision %s。" %
+                                (axis, side_name, dimensions, state["revision"]))
+        if name == "cad_add_hole_array":
+            plan = _require_plan(state)
+            low, high = _primary_box_bounds(plan)
+            axis, u_axis, v_axis = _face_axes(str(args.get("face_normal_axis") or ""))
+            side_name = str(args.get("face_side") or "").strip().lower()
+            if side_name not in {"positive", "negative"}:
+                raise ValueError("face_side 必须是 positive 或 negative。")
+            sign = 1.0 if side_name == "positive" else -1.0
+            holes = args.get("holes")
+            if not isinstance(holes, list) or not holes:
+                raise ValueError("holes 必须是非空数组。")
+            surface = high[axis] if sign > 0 else low[axis]
+            evidence = str(args.get("evidence") or "").strip()
+            source_type = str(args.get("source_type") or "image_estimate")
+            shared = _dimension_source(source_type, evidence, "图像/用户依据：孔位和孔径估计。")
+            candidate = plan
+            ids = []
+            for row in holes:
+                if not isinstance(row, dict):
+                    raise ValueError("holes 中的每一项都必须是对象。")
+                feature_id = str(row.get("id") or "").strip()
+                center_uv = row.get("face_center")
+                try:
+                    center_uv = [float(value) for value in center_uv]
+                    diameter = float(row.get("diameter"))
+                    setback = float(row.get("face_setback") or 0.0)
+                except (TypeError, ValueError) as exc:
+                    raise ValueError("每个孔必须有数值 face_center、diameter 和可选 face_setback。") from exc
+                if not feature_id or feature_id in ids:
+                    raise ValueError("每个孔都必须有互不重复的 id。")
+                if (len(center_uv) != 2 or
+                        not all(math.isfinite(value) for value in [*center_uv, diameter, setback]) or
+                        diameter <= 0 or setback < 0 or setback >= high[axis] - low[axis]):
+                    raise ValueError("孔位/孔径/退台量必须是有效的有限数值。")
+                point = [0.0, 0.0, 0.0]
+                point[u_axis], point[v_axis] = center_uv
+                point[axis] = surface - sign * setback
+                radius = diameter / 2.0
+                if (point[u_axis] - radius < low[u_axis] - 1e-6 or
+                        point[u_axis] + radius > high[u_axis] + 1e-6 or
+                        point[v_axis] - radius < low[v_axis] - 1e-6 or
+                        point[v_axis] + radius > high[v_axis] + 1e-6):
+                    raise ValueError("孔边缘必须落在主实体面内：%s。" % feature_id)
+                feature = {
+                    "id": feature_id, "kind": "hole", "operation": "cut",
+                    "name": str(row.get("name") or feature_id),
+                    "parameters": {"diameter": diameter, "through": True,
+                                   "pos": "point", "point": point, "axis": axis},
+                    "sources": {"diameter": shared, "point": shared},
+                    "note": "面法线固定为 %s 的贯穿孔阵列成员。" % axis,
+                }
+                candidate = plan_state.add(candidate, feature)
+                ids.append(feature_id)
+            _guard_geometry_transition(state, plan, candidate, ids,
+                                       args.get("finding_ids"))
+            state["plan"] = candidate
+            _invalidate_geometry(state)
+            _record_geometry_transition(state, plan, candidate, ids, name,
+                                        args.get("finding_ids"))
+            _record(state, name, feature_ids=ids, axis=axis, face_side=side_name,
+                    count=len(ids))
+            _save(state)
+            return _tool_result({"revision": state["revision"], "feature_ids": ids,
+                                 "axis": axis, "through": True,
+                                 "validation": cadplan.validate_plan(candidate)},
+                                "已原子添加 %d 个同法线贯穿孔，轴向统一为 %s，revision %s。" %
+                                (len(ids), axis, state["revision"]))
+        if name == "cad_update_feature":
+            plan = _require_plan(state)
+            feature_id = str(args.get("feature_id") or "")
+            _guard_reference_conflicts(state, feature_id)
+            candidate = plan_state.update(
+                plan, str(args.get("feature_id") or ""),
+                parameter_updates=args.get("parameter_updates"),
+                source_updates=args.get("source_updates"),
+                remove_parameters=args.get("remove_parameters"),
+                fields=args.get("fields"),
+            )
+            if candidate == plan:
+                no_progress = state.setdefault("no_progress_by_signature", {})
+                signature = _signature_key(plan)
+                no_progress[signature] = int(no_progress.get(signature, 0)) + 1
+                _record(state, name, feature_id=feature_id, no_op=True,
+                        unchanged_geometry_signature=signature,
+                        consecutive_no_progress=no_progress[signature])
+                _save(state)
+                return _tool_result(_summary(state),
+                                    "这次更新没有改变特征。已记录相同 geometry hash 的无进展调用；不要重放相同参数，请核对 finding 和原图，必要时恢复最佳候选。")
+            if _geometry_signature(candidate) == _geometry_signature(plan):
+                state["plan"] = candidate
+                _record(state, name, feature_id=args.get("feature_id"),
+                        metadata_only=True)
+                _save(state)
+                return _tool_result(_validation_result(candidate, state),
+                                    "仅更新来源或说明，几何未变；当前预览和几何版本仍有效。")
+            _guard_geometry_transition(
+                state, plan, candidate, [feature_id], args.get("finding_ids"))
+            state["plan"] = candidate
+            _invalidate_geometry(state)
+            _record_geometry_transition(
+                state, plan, candidate, [feature_id], name, args.get("finding_ids"),
+                _parameter_change_summary(plan, candidate, feature_id))
+            _record(state, name, feature_id=feature_id,
+                    finding_ids=args.get("finding_ids") or [])
+            _save(state)
+            return _tool_result(_validation_result(state["plan"], state),
+                                "特征已修改，revision %s。" % state["revision"])
+        if name == "cad_remove_feature":
+            plan = _require_plan(state)
+            feature_id = str(args.get("feature_id") or "")
+            _guard_reference_conflicts(state, feature_id)
+            candidate = plan_state.remove(plan, feature_id)
+            _guard_geometry_transition(
+                state, plan, candidate, [feature_id], args.get("finding_ids"))
+            state["plan"] = candidate
+            _invalidate_geometry(state)
+            _record_geometry_transition(
+                state, plan, candidate, [feature_id], name, args.get("finding_ids"))
+            _record(state, name, feature_id=feature_id,
+                    finding_ids=args.get("finding_ids") or [])
+            _save(state)
+            return _tool_result(_validation_result(state["plan"], state),
+                                "特征已删除，revision %s。" % state["revision"])
+        if name == "cad_get_feature_spec":
+            kind = str(args.get("kind") or "")
+            spec = cadplan.FEATURE_SPECS.get(kind)
+            if spec is None:
+                raise ValueError("未知特征类型。可用类型：" + ", ".join(FEATURE_KINDS))
+            result = {
+                "kind": kind,
+                "required_parameters": list(spec["required"]),
+                "optional_parameters": [key for key in spec["params"]
+                                        if key not in spec["required"]],
+                "catia_mapping": spec["status"],
+                "catia_note": spec["reason"],
+                "coordinate_contract": _COORDINATE_CONTRACT,
+                "parameter_semantics": {
+                    "cylinder": {
+                        "center": "base-center point when base=true (default); geometric midpoint when base=false",
+                        "height": "extends along positive axis when base=true; straddles center when base=false",
+                        "base_default": True,
+                    },
+                    "prism": {
+                        "center": "origin of the profile's base plane",
+                        "height": "extends along positive axis",
+                    },
+                    "sphere": {"center": "geometric center"},
+                    "revolve": {
+                        "profile": "closed [radius, axial-Z] points when axis=Z",
+                        "center": "global origin on the revolve axis",
+                        "order": "use as the first feature for a complete turned body; late add unions can lose prior geometry",
+                    },
+                }.get(kind, {}),
+            }
+            _record(state, name, feature_kind=kind)
+            _save(state)
+            return _tool_result(result)
+        if name == "cad_validate_model":
+            plan = _require_plan(state)
+            result = _validation_result(plan, state)
+            _record(state, name)
+            _save(state)
+            return _tool_result(result, "校验已完成；未启动 CATIA。")
+        if name == "cad_preview_model":
+            plan = _require_plan(state)
+            view = str(args.get("view") or "iso")
+            if view not in {"iso", "front", "right", "top", "back", "left", "bottom"}:
+                raise ValueError("view 必须是 iso、front、right、top、back、left 或 bottom。")
+            generation = int(state.get("preview_generation") or 0) + 1
+            revision = int(state.get("revision") or 0)
+            preview_dir = _STATE_DIR / "previews"
+            preview_path = preview_dir / ("r%d-g%d-%s.png" % (revision, generation, view))
+            result = cadplan.preview_plan(plan, image_path=str(preview_path),
+                                          view_set=view)
+            if result.get("state") != "previewed":
+                raise ValueError("预览失败：" + str(result.get("error") or
+                                                  result.get("preview_image_error") or
+                                                  result.get("state")))
+            state["preview_generation"] = generation
+            result["preview_generation"] = state["preview_generation"]
+            shutil.copyfile(preview_path, _PREVIEW_PATH)
+            state["last_preview"] = result
+            state["preview_revision"] = state.get("revision")
+            _capture_best_candidate(state)
+            state["finished"] = False
+            state["finish_state"] = None
+            state.setdefault("previews", []).append({
+                "revision": state.get("revision"),
+                "preview_generation": state["preview_generation"],
+                "view": view,
+                "dimensions": result.get("dimensions"),
+                "preview_image": result.get("preview_image"),
+                "preview_image_path": str(preview_path),
+            })
+            expired = state["previews"][:-32]
+            if expired:
+                _delete_tracked_preview_files(expired)
+            # Stable generation paths keep each view addressable for a later
+            # multimodal review, while current-preview.png remains the UI thumbnail.
+            state["previews"] = state["previews"][-32:]
+            _record(state, name, view=view,
+                    local_geometry_state=(result.get("local_geometry_checks") or {}).get("state"),
+                    best_candidate_revision=(state.get("best_candidate") or {}).get("revision"))
+            _save(state)
+            return _tool_result({
+                "revision": state.get("revision"),
+                "preview": {key: result.get(key) for key in (
+                    "state", "dimensions", "preview_image", "preview_image_views",
+                    "preview_image_view_set", "preview_image_source",
+                    "preview_render_style", "preview_render_note",
+                    "local_geometry_checks", "warnings")},
+            }, "当前版本预览已生成，方向 %s；请目视对照原始参考图。" % view,
+                preview_path)
+        if name == "cad_review_reference_similarity":
+            try:
+                generation = int(args.get("preview_generation"))
+            except (TypeError, ValueError) as exc:
+                raise ValueError("preview_generation 必须是当前预览的整数版本号。") from exc
+            view = str(args.get("view") or "").strip().lower()
+            reference_image_index = args.get("reference_image_index")
+            reference_id = args.get("reference_id")
+            reference_image_index, reference_record = _reference_record(
+                reference_image_index, reference_id)
+            reference_id = str(reference_record.get("id") or "")
+            review_scope = str(args.get("review_scope") or "")
+            revision = state.get("revision")
+            attempts = state.setdefault("reference_similarity_attempts", [])
+            attempt = {"revision": revision, "preview_generation": generation,
+                       "view": view, "reference_image_index": reference_image_index,
+                       "reference_id": reference_id, "review_scope": review_scope,
+                       "started_at": time.time(), "failed": False}
+            attempts.append(attempt)
+            state["reference_similarity_attempts"] = attempts[-96:]
+            _save(state)
+            try:
+                result = _reference_similarity_review(
+                    state, view, generation, reference_image_index,
+                    reference_id=reference_id, review_scope=review_scope)
+            except Exception as exc:
+                error = str(exc).replace(str(_REVIEW_LLM_CFG.get("api_key") or ""),
+                                         "[redacted]")[:1200]
+                state["reference_similarity_error"] = {
+                    "revision": revision, "preview_generation": generation,
+                    "view": view, "reference_id": reference_id,
+                    "error": error, "recorded_at": time.time(),
+                }
+                attempt["failed"] = True
+                _record(state, name, view=view, preview_generation=generation,
+                        reference_id=reference_id, failed=True, error=error)
+                _save(state)
+                raise
+            _save(state)
+            conflict_count = sum(1 for row in result.get("evidence") or []
+                                 if row.get("reference_conflict"))
+            mismatch_count = sum(1 for row in result.get("evidence") or []
+                                 if _is_actionable_review_status(row.get("status")))
+            return _tool_result(result,
+                                "独立视觉复核已记录；辅助评分=%s/100，明确差异=%d，需核对原图的冲突=%d。"
+                                "评分不决定是否返修或能否保存候选。" %
+                                (result["score"], mismatch_count, conflict_count))
+        if name == "cad_record_visual_review":
+            if not state.get("last_preview") or state.get("preview_revision") != state.get("revision"):
+                raise ValueError("必须先为当前 CADPlan revision 生成预览，再记录视觉复核。")
+            view = str(args.get("view") or "").strip().lower()
+            generation = args.get("preview_generation")
+            preview = next((row for row in state.get("previews", [])
+                            if isinstance(row, dict) and
+                            row.get("preview_generation") == generation and
+                            row.get("revision") == state.get("revision")), None)
+            if not preview:
+                raise ValueError("preview_generation 不属于当前模型 revision。请用 cad_preview_model 生成当前版本的预览。")
+            if preview.get("view") != view:
+                raise ValueError("复核视图与该 preview_generation 实际生成的视图不一致。")
+            visible_evidence = str(args.get("visible_evidence") or "").strip()
+            if not visible_evidence:
+                raise ValueError("visible_evidence 必须记录可在当前参考图和模型视图中看到的事实。")
+            issues = args.get("issues")
+            unresolved = args.get("unresolved")
+            if not isinstance(issues, list) or not isinstance(unresolved, list):
+                raise ValueError("issues 和 unresolved 必须是数组。")
+            normalized_issues = []
+            allowed_status = {"match", "mismatch", "partial", "unknown"}
+            allowed_severity = {"high", "medium", "low"}
+            for issue in issues:
+                if not isinstance(issue, dict):
+                    raise ValueError("每个视觉差异必须是对象。")
+                status = str(issue.get("status") or "").strip().lower()
+                severity = str(issue.get("severity") or "medium").strip().lower()
+                item = str(issue.get("item") or "").strip()
+                reference_evidence = str(issue.get("reference_evidence") or "").strip()
+                model_evidence = str(issue.get("model_evidence") or "").strip()
+                if status not in allowed_status or severity not in allowed_severity:
+                    raise ValueError("视觉差异的 status 或 severity 值无效。")
+                if not item or not reference_evidence or not model_evidence:
+                    raise ValueError("每个 issue 都必须填写 item、reference_evidence 和 model_evidence。")
+                normalized_issues.append({
+                    "status": status, "severity": severity, "item": item,
+                    "reference_evidence": reference_evidence,
+                    "model_evidence": model_evidence,
+                    "affected_feature_ids": [str(v) for v in issue.get("affected_feature_ids", [])],
+                    "suggested_change": str(issue.get("suggested_change") or "").strip(),
+                })
+            explicit_unresolved = [str(item).strip() for item in unresolved
+                                   if str(item).strip()]
+            record = {
+                "revision": state.get("revision"),
+                "view": view,
+                "preview_generation": generation,
+                "visible_evidence": visible_evidence,
+                "issues": normalized_issues,
+                "unresolved": explicit_unresolved,
+                "recorded_at": time.time(),
+            }
+            reviews = state.setdefault("visual_reviews", {})
+            reviews[view] = record
+            state["visual_review"] = record
+            state["unresolved_findings"] = _review_findings(reviews)
+            state["finished"] = False
+            state["finish_state"] = None
+            _record(state, name, view=view, preview_generation=generation,
+                    issue_count=len(normalized_issues),
+                    unresolved_count=len(state["unresolved_findings"]))
+            _save(state)
+            return _tool_result({
+                "revision": state.get("revision"),
+                "view": view,
+                "preview_generation": generation,
+                "reviewed_views": sorted(reviews),
+                "issue_count": len(normalized_issues),
+                "unresolved": state["unresolved_findings"],
+            }, "已保存本版视觉复核；有明确差异时应先修改再复核。")
+        if name == "cad_finish_model":
+            plan = _require_plan(state)
+            validation = cadplan.validate_plan(plan)
+            if validation.get("state") != "valid":
+                raise ValueError("模型仍需修正或补充参数：" + json.dumps(
+                    validation.get("errors") or validation.get("confirmations") or [],
+                    ensure_ascii=False))
+            if (not state.get("last_preview") or
+                    state.get("preview_revision") != state.get("revision")):
+                raise ValueError("当前 CADPlan revision 尚未生成预览。")
+            geometry = (state.get("last_preview") or {}).get("local_geometry_checks")
+            geometry = geometry if isinstance(geometry, dict) else {}
+            geometry_passed = geometry.get("state") == "passed"
+            hole_summary = _hole_measurement_summary(plan, geometry)
+            declared_holes_verified = hole_summary["complete"]
+            _refresh_unresolved_findings(state)
+            findings = state.get("unresolved_findings") or []
+            visual = _visual_evidence_summary(state)
+            current_reviews = _latest_reference_reviews(state)
+            milestone = state.get("construction_milestone") or {}
+            expected_features = set(str(value) for value in milestone.get("expected_feature_ids") or [])
+            completed_features = set(str(value) for value in milestone.get("completed_feature_ids") or [])
+            construction_complete = not expected_features or expected_features.issubset(completed_features)
+            reference_coverage = (not state.get("has_references")
+                                  or visual["all_references_covered"])
+            geometry_complete = geometry_passed and declared_holes_verified
+            accepted = (geometry_complete and reference_coverage and construction_complete
+                        and not findings)
+            acknowledgement = args.get("unresolved_acknowledgement") or []
+            if not isinstance(acknowledgement, list):
+                raise ValueError("unresolved_acknowledgement 必须是明确确认的字符串数组。")
+            acknowledgement = [str(item).strip() for item in acknowledgement if str(item).strip()]
+            if accepted:
+                finish_state = "accepted"
+            elif not geometry_passed:
+                finish_state = "candidate_geometry_unverified"
+            elif not declared_holes_verified:
+                finish_state = "candidate_holes_unverified"
+            elif not construction_complete:
+                finish_state = "candidate_construction_incomplete"
+            else:
+                finish_state = ("candidate_with_open_findings" if findings
+                                else "candidate_not_verified")
+            state["finish_state"] = finish_state
+            paths = _export_candidate(state, str(args.get("summary") or ""))
+            state["output_paths"] = paths
+            state["finished"] = True
+>           _record(state, name, state=finish_state,
+                    geometry_passed=geometry_passed,
+                    declared_holes_verified=declared_holes_verified,
+                    visual_review_count=len(current_reviews),
+                    reference_coverage=visual,
+                    open_finding_count=len(state.get("unresolved_findings") or []),
+                    acknowledgement_count=len(acknowledgement))
+E           TypeError: _record() got multiple values for argument 'state'
+
+ai_modeler\agent\dsh_mcp_server.py:2573: TypeError
+_ DSHReviewWorkflowTests.test_low_score_with_grounded_matching_evidence_does_not_block_finish _
+
+self = <test_dsh_review_workflow.DSHReviewWorkflowTests testMethod=test_low_score_with_grounded_matching_evidence_does_not_block_finish>
+
+    def test_low_score_with_grounded_matching_evidence_does_not_block_finish(self):
+        self._write_state(reviews=[self._review(score=8)])
+        summary = server._visual_evidence_summary(server._load())
+        self.assertTrue(summary["all_references_covered"])
+        with mock.patch.object(server, "_export_candidate", return_value={"aimodel": "candidate.aimodel"}):
+>           result = server._handle_tool("cad_finish_model", {"summary": "verified geometry"})
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests\test_dsh_review_workflow.py:140: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+name = 'cad_finish_model', args = {'summary': 'verified geometry'}
+
+    def _handle_tool(name: str, args: dict[str, Any]) -> dict[str, Any]:
+        _reload_reference_manifest()
+        state = _load()
+        state["has_references"] = bool(_REFERENCE_IMAGE_RECORDS)
+        if name == "cad_search_recipes":
+            rows = modeling_recipes.list_recipes(
+                str(args.get("query") or ""), limit=args.get("limit", 8))
+            result = {"query": str(args.get("query") or ""), "recipes": rows}
+            _record(state, name, recipe_ids=[row.get("id") for row in rows])
+            _save(state)
+            return _tool_result(result, "本地建模配方检索完成。")
+        if name == "cad_apply_recipe":
+            if state.get("plan") and not args.get("replace"):
+                raise ValueError("当前已有模型；若要用配方整体替换，请显式设置 replace=true。")
+            candidate = modeling_recipes.build_recipe_plan(
+                str(args.get("recipe_id") or ""), str(args.get("size") or ""),
+                name=str(args.get("name") or ""),
+                source_prompt=str(args.get("source_prompt") or ""))
+            validation = cadplan.validate_plan(candidate)
+            if validation.get("state") != "valid":
+                issues = validation.get("errors") or validation.get("confirmations") or []
+                detail = "; ".join(str(row.get("message") or row.get("question") or row)
+                                   for row in issues[:5])
+                raise ValueError("配方生成的 CADPlan 未通过校验：%s" % (detail or validation.get("state")))
+            if state.get("plan") and args.get("replace"):
+                state["finding_ledger"] = {}
+                state["geometry_signatures"] = []
+                state["geometry_mutations"] = []
+                state["last_valid_candidate"] = None
+                state["best_evidence_candidate"] = None
+                state["best_candidate"] = None
+                state["construction_milestone"] = None
+            state["plan"] = candidate
+            _invalidate_geometry(state)
+            _record(state, name, recipe_id=args.get("recipe_id"), model=args.get("size"),
+                    feature_id=candidate["features"][0]["id"])
+            _save(state)
+            result = _validation_result(candidate, state)
+            result["recipe"] = {
+                "id": args.get("recipe_id"), "model": args.get("size"),
+                "thread_representation": "helical_mesh_approximation",
+                "thread_pitch_mm": candidate["features"][0]["parameters"]["thread_pitch"],
+                "thread_note": "本地预览/STL 网格含近似右旋螺旋牙型；CATIA 导出器当前输出光杆。",
+            }
+            return _tool_result(result, "标准件配方已一次展开并通过 CADPlan 校验；请预览当前模型。")
+        if name == "cad_search_knowledge":
+            query = str(args.get("query") or "").strip()
+            limit = args.get("limit", 5)
+            result = knowledge_retrieval.search_knowledge(
+                query, limit=limit, image_paths=_REFERENCE_IMAGES)
+            image_path = None
+            if args.get("include_visual_examples"):
+                examples = knowledge_retrieval.visual_examples_for_result(result)
+                if examples:
+                    image_path = _STATE_DIR / "knowledge-visual-examples.png"
+                    selected = knowledge_retrieval.build_visual_examples_contact_sheet(
+                        image_path, examples)
+                    state["knowledge_visual_examples"] = [
+                        {"model": row.get("model"), "category": row.get("category")}
+                        for row in selected]
+                    result["visual_examples"] = [
+                        {key: row.get(key) for key in (
+                            "model", "category", "envelope_dimensions_mm", "trust", "source")}
+                        for row in selected]
+                    result["visual_example_note"] = (
+                        "这些只是项目附带的配对样例，不是目标零件的自动视觉命中。")
+            state["knowledge_search"] = result
+            _record(state, name, status=result.get("status"),
+                    models=[row.get("model") for row in result.get("matches") or []])
+            _save(state)
+            try:
+                return _tool_result(result, "本地工件知识检索完成。", image_path=image_path)
+            finally:
+                if image_path:
+                    try:
+                        image_path.unlink(missing_ok=True)
+                    except OSError:
+                        pass
+        if name == "cad_get_state":
+            result = _summary(state)
+            _record(state, name)
+            _save(state)
+            return _tool_result(result, "已读取当前 CADPlan 状态。")
+        if name == "cad_get_reference_image":
+            image_index, record = _reference_record(
+                args.get("reference_image_index"), args.get("reference_id"))
+            source = Path(str(record.get("path") or ""))
+            if not source.is_file():
+                raise ValueError("会话原始图像文件不存在，不能返回虚构或缓存的图片。")
+            roi = args.get("roi_norm")
+            returned_path = source
+            crop_path = None
+            crop_px = None
+            if roi is not None:
+                if not isinstance(roi, list) or len(roi) != 4:
+                    raise ValueError("roi_norm 必须是 [x,y,width,height] 四个归一化数值。")
+                try:
+                    x, y, width, height = (float(value) for value in roi)
+                except (TypeError, ValueError) as exc:
+                    raise ValueError("roi_norm 必须全为有限数值。") from exc
+                if (not all(math.isfinite(value) for value in (x, y, width, height))
+                        or x < 0 or y < 0 or width <= 0 or height <= 0
+                        or x + width > 1 or y + height > 1):
+                    raise ValueError("roi_norm 必须落在 [0,1] 图像边界内且宽高大于零。")
+                try:
+                    from PIL import Image, ImageOps
+                    with Image.open(source) as opened:
+                        image = ImageOps.exif_transpose(opened).convert("RGB")
+                        image_width, image_height = image.size
+                        left = max(0, int(math.floor(x * image_width)))
+                        top = max(0, int(math.floor(y * image_height)))
+                        right = min(image_width, int(math.ceil((x + width) * image_width)))
+                        bottom = min(image_height, int(math.ceil((y + height) * image_height)))
+                        if right - left < 2 or bottom - top < 2:
+                            raise ValueError("roi_norm 对应区域小于 2 像素，无法复核。")
+                        crop = image.crop((left, top, right, bottom))
+                        crop_path = _STATE_DIR / "reference-crop-current.png"
+                        crop.save(crop_path, format="PNG")
+                        returned_path = crop_path
+                        crop_px = [left, top, right - left, bottom - top]
+                except ImportError as exc:
+                    raise ValueError("当前运行环境缺少图像裁切依赖，无法生成局部原图。") from exc
+            evidence_id = str(args.get("evidence_id") or "").strip()
+            state.setdefault("reference_rechecks", []).append({
+                "reference_image_index": image_index,
+                "reference_id": record.get("id"),
+                "evidence_id": evidence_id,
+                "roi_norm": roi,
+                "at": time.time(),
+            })
+            state["reference_rechecks"] = state["reference_rechecks"][-96:]
+            _record(state, name, reference_image_index=image_index,
+                    reference_id=record.get("id"), evidence_id=evidence_id or None,
+                    roi_norm=roi)
+            _save(state)
+            result = {
+                "reference_image_index": image_index,
+                "reference_id": record.get("id"),
+                "sha256": record.get("sha256"),
+                "filename": record.get("filename") or source.name,
+                "original_dimensions": [record.get("width"), record.get("height")],
+                "roi_norm": roi,
+                "crop_px": crop_px,
+                "image_attached": True,
+            }
+            _register_transport_image_source(returned_path, record, roi)
+            try:
+                return _tool_result(result,
+                                    "已重新读取会话原图；请先依据图像确认参考事实，再决定是否修改模型。",
+                                    returned_path,
+                                    image_mime_type=("image/png" if crop_path else
+                                                     str(record.get("media_type") or
+                                                         mimetypes.guess_type(str(source))[0] or
+                                                         "image/png")))
+            finally:
+                if crop_path:
+                    crop_path.unlink(missing_ok=True)
+        if name == "cad_set_construction_milestone":
+            plan = _require_plan(state)
+            milestone = str(args.get("milestone") or "").strip()
+            if not milestone:
+                raise ValueError("施工里程碑 milestone 不能为空。")
+            completed = args.get("completed_feature_ids") or []
+            if not isinstance(completed, list):
+                raise ValueError("completed_feature_ids 必须是数组。")
+            known_ids = {str(row.get("id")) for row in plan.get("features") or []
+                         if isinstance(row, dict)}
+            unknown = sorted(set(str(value) for value in completed) - known_ids)
+            if unknown:
+                raise ValueError("里程碑包含当前特征树不存在的 feature_id：%s。" %
+                                 ", ".join(unknown))
+            state["construction_milestone"] = {
+                "milestone": milestone,
+                "completed_feature_ids": list(dict.fromkeys(map(str, completed))),
+                "expected_feature_ids": list(dict.fromkeys(
+                    str(value) for value in args.get("expected_feature_ids") or [])),
+                "notes": str(args.get("notes") or "").strip(),
+                "revision": state.get("revision"),
+                "updated_at": time.time(),
+            }
+            _record(state, name, milestone=milestone,
+                    completed_feature_ids=state["construction_milestone"]["completed_feature_ids"])
+            _save(state)
+            return _tool_result({"construction_milestone": state["construction_milestone"]},
+                                "已更新当前施工检查范围；未列入的目标特征不会作为本阶段缺失项。")
+        if name == "cad_restore_best_candidate":
+            best = state.get("best_evidence_candidate") or state.get("last_valid_candidate") or state.get("best_candidate")
+            if not isinstance(best, dict) or not isinstance(best.get("plan"), dict):
+                raise ValueError("当前还没有通过本地几何检查并保存的最佳候选。")
+            current = _require_plan(state)
+            candidate = best["plan"]
+            if _signature_key(current) == _signature_key(candidate):
+                _record(state, name, no_op=True, candidate_kind=(
+                    "best_evidence" if state.get("best_evidence_candidate") is best else "last_valid"),
+                    reason=str(args.get("reason") or "").strip())
+                _save(state)
+                return _tool_result(_summary(state), "当前几何已经是最佳候选，无需恢复。")
+            before = current
+            state["plan"] = json.loads(json.dumps(candidate, ensure_ascii=False))
+            _invalidate_geometry(state)
+            _record_geometry_transition(state, before, state["plan"],
+                                        [str(row.get("id")) for row in candidate.get("features", [])
+                                         if isinstance(row, dict)],
+                                        name)
+            _record(state, name, restored_revision=best.get("revision"),
+                    candidate_kind=("best_evidence" if state.get("best_evidence_candidate") is best
+                                    else "last_valid"),
+                    reason=str(args.get("reason") or "").strip())
+            _save(state)
+            return _tool_result({
+                "revision": state["revision"], "restored_from_revision": best.get("revision"),
+                "candidate_kind": ("best_evidence" if state.get("best_evidence_candidate") is best
+                                   else "last_valid"),
+                "best_candidate": {key: best.get(key) for key in
+                                   ("geometry_signature", "dimensions", "rank")},
+                "validation": cadplan.validate_plan(state["plan"]),
+            }, "已恢复最佳有效 CADPlan；请为新 revision 重新生成预览。")
+        if name == "cad_create_model":
+            if state.get("plan") and not args.get("replace"):
+                raise ValueError("当前已有模型；若用户要求从头重建，请显式设置 replace=true。")
+            candidate = plan_state.create(
+                str(args["name"]), args["first_feature"],
+                str(args.get("source_prompt") or state.get("source_prompt") or ""),
+                units=args.get("units"),
+            )
+            if state.get("plan") == candidate:
+                _record(state, name, feature_id=(args["first_feature"] or {}).get("id"),
+                        no_op=True)
+                _save(state)
+                return _tool_result(_validation_result(state["plan"], state),
+                                    "相同 CADPlan 已存在，未重复替换；请用 cad_add_feature 继续添加特征。")
+            before = state.get("plan")
+            if state.get("plan") and args.get("replace"):
+                state["finding_ledger"] = {}
+                state["geometry_signatures"] = []
+                state["geometry_mutations"] = []
+                state["last_valid_candidate"] = None
+                state["best_evidence_candidate"] = None
+                state["best_candidate"] = None
+                state["construction_milestone"] = None
+            state["plan"] = candidate
+            _invalidate_geometry(state)
+            _record_geometry_transition(state, before, candidate,
+                                        [str((args.get("first_feature") or {}).get("id") or "")],
+                                        name)
+            _record(state, name, feature_id=(args["first_feature"] or {}).get("id"))
+            _save(state)
+            return _tool_result(_validation_result(state["plan"], state),
+                                "CADPlan 已创建，revision %s。" % state["revision"])
+        if name == "cad_add_feature":
+            plan = _require_plan(state)
+            feature = args.get("feature")
+            if not isinstance(feature, dict):
+                raise ValueError("feature 必须是对象。")
+            candidate = plan_state.add(plan, feature)
+            feature_id = str(feature.get("id") or "")
+            _guard_geometry_transition(
+                state, plan, candidate, [feature_id], args.get("finding_ids"))
+            state["plan"] = candidate
+            _invalidate_geometry(state)
+            _record_geometry_transition(state, plan, candidate, [feature_id], name,
+                                        args.get("finding_ids"))
+            _record(state, name, feature_id=feature_id)
+            _save(state)
+            return _tool_result(_validation_result(state["plan"], state),
+                                "已添加特征 %s，revision %s。" %
+                                (feature.get("id"), state["revision"]))
+        if name == "cad_add_face_recess":
+            plan = _require_plan(state)
+            low, high = _primary_box_bounds(plan)
+            axis, u_axis, v_axis = _face_axes(str(args.get("face_normal_axis") or ""))
+            side_name = str(args.get("face_side") or "").strip().lower()
+            if side_name not in {"positive", "negative"}:
+                raise ValueError("face_side 必须是 positive 或 negative。")
+            sign = 1.0 if side_name == "positive" else -1.0
+            face_center = args.get("face_center")
+            if not isinstance(face_center, list) or len(face_center) != 2:
+                raise ValueError("face_center 必须按面内坐标轴顺序包含两个坐标。")
+            try:
+                width, height, depth = (float(args[key]) for key in
+                                        ("width", "height", "depth"))
+                uv = [float(value) for value in face_center]
+            except (TypeError, ValueError, KeyError) as exc:
+                raise ValueError("凹槽坐标和尺寸必须是有效数字。") from exc
+            if (not all(math.isfinite(value) for value in [width, height, depth, *uv])
+                    or min(width, height, depth) <= 0):
+                raise ValueError("凹槽宽、高、深度必须是正的有限数。")
+            face_span_u, face_span_v = high[u_axis] - low[u_axis], high[v_axis] - low[v_axis]
+            normal_span = high[axis] - low[axis]
+            if width > face_span_u or height > face_span_v or depth >= normal_span:
+                raise ValueError("凹槽尺寸超出主实体对应的表面范围或贯穿厚度。")
+            radius_clearance = 1e-3
+            if (uv[0] - width / 2 < low[u_axis] - 1e-6 or
+                    uv[0] + width / 2 > high[u_axis] + 1e-6 or
+                    uv[1] - height / 2 < low[v_axis] - 1e-6 or
+                    uv[1] + height / 2 > high[v_axis] + 1e-6):
+                raise ValueError("凹槽面内范围必须落在主实体表面内。")
+            surface = high[axis] if sign > 0 else low[axis]
+            # Extend the cutter by a tiny amount beyond the opening face to avoid
+            # leaving a coplanar skin in the polygon kernel.
+            cutter_depth = depth + radius_clearance
+            center = [0.0, 0.0, 0.0]
+            dimensions = [0.0, 0.0, 0.0]
+            center[u_axis], center[v_axis] = uv
+            dimensions[u_axis], dimensions[v_axis] = width, height
+            dimensions[axis] = cutter_depth
+            center[axis] = surface - sign * (depth - radius_clearance) / 2.0
+            evidence = str(args.get("evidence") or "").strip()
+            source_type = str(args.get("source_type") or "image_estimate")
+            shared = _dimension_source(source_type, evidence, "图像/用户依据：凹槽比例估计。")
+            center_source = {"type": "derived",
+                             "evidence": "由主 box 表面坐标与凹入深度计算切除体中心。"}
+            feature = {
+                "id": str(args.get("feature_id") or "").strip(),
+                "kind": "box", "operation": "cut",
+                "name": str(args.get("name") or "Face recess"),
+                "parameters": {"length": dimensions[0], "width": dimensions[1],
+                               "height": dimensions[2], "center": center},
+                "sources": {"length": shared, "width": shared, "height": shared,
+                            "center": center_source},
+                "note": "通过统一 CADPlan 坐标语义创建的面内退台。",
+            }
+            if not feature["id"]:
+                raise ValueError("feature_id 不能为空。")
+            candidate = plan_state.add(plan, feature)
+            _guard_geometry_transition(state, plan, candidate,
+                                       [feature["id"]], args.get("finding_ids"))
+            state["plan"] = candidate
+            _invalidate_geometry(state)
+            _record_geometry_transition(state, plan, candidate,
+                                        [feature["id"]], name, args.get("finding_ids"))
+            _record(state, name, feature_id=feature["id"], face_normal_axis=axis,
+                    face_side=side_name, dimensions_xyz=dimensions)
+            _save(state)
+            return _tool_result(_validation_result(candidate, state),
+                                "已按面法线 %s/%s 创建退台；box 尺寸映射到 XYZ=%s，revision %s。" %
+                                (axis, side_name, dimensions, state["revision"]))
+        if name == "cad_add_hole_array":
+            plan = _require_plan(state)
+            low, high = _primary_box_bounds(plan)
+            axis, u_axis, v_axis = _face_axes(str(args.get("face_normal_axis") or ""))
+            side_name = str(args.get("face_side") or "").strip().lower()
+            if side_name not in {"positive", "negative"}:
+                raise ValueError("face_side 必须是 positive 或 negative。")
+            sign = 1.0 if side_name == "positive" else -1.0
+            holes = args.get("holes")
+            if not isinstance(holes, list) or not holes:
+                raise ValueError("holes 必须是非空数组。")
+            surface = high[axis] if sign > 0 else low[axis]
+            evidence = str(args.get("evidence") or "").strip()
+            source_type = str(args.get("source_type") or "image_estimate")
+            shared = _dimension_source(source_type, evidence, "图像/用户依据：孔位和孔径估计。")
+            candidate = plan
+            ids = []
+            for row in holes:
+                if not isinstance(row, dict):
+                    raise ValueError("holes 中的每一项都必须是对象。")
+                feature_id = str(row.get("id") or "").strip()
+                center_uv = row.get("face_center")
+                try:
+                    center_uv = [float(value) for value in center_uv]
+                    diameter = float(row.get("diameter"))
+                    setback = float(row.get("face_setback") or 0.0)
+                except (TypeError, ValueError) as exc:
+                    raise ValueError("每个孔必须有数值 face_center、diameter 和可选 face_setback。") from exc
+                if not feature_id or feature_id in ids:
+                    raise ValueError("每个孔都必须有互不重复的 id。")
+                if (len(center_uv) != 2 or
+                        not all(math.isfinite(value) for value in [*center_uv, diameter, setback]) or
+                        diameter <= 0 or setback < 0 or setback >= high[axis] - low[axis]):
+                    raise ValueError("孔位/孔径/退台量必须是有效的有限数值。")
+                point = [0.0, 0.0, 0.0]
+                point[u_axis], point[v_axis] = center_uv
+                point[axis] = surface - sign * setback
+                radius = diameter / 2.0
+                if (point[u_axis] - radius < low[u_axis] - 1e-6 or
+                        point[u_axis] + radius > high[u_axis] + 1e-6 or
+                        point[v_axis] - radius < low[v_axis] - 1e-6 or
+                        point[v_axis] + radius > high[v_axis] + 1e-6):
+                    raise ValueError("孔边缘必须落在主实体面内：%s。" % feature_id)
+                feature = {
+                    "id": feature_id, "kind": "hole", "operation": "cut",
+                    "name": str(row.get("name") or feature_id),
+                    "parameters": {"diameter": diameter, "through": True,
+                                   "pos": "point", "point": point, "axis": axis},
+                    "sources": {"diameter": shared, "point": shared},
+                    "note": "面法线固定为 %s 的贯穿孔阵列成员。" % axis,
+                }
+                candidate = plan_state.add(candidate, feature)
+                ids.append(feature_id)
+            _guard_geometry_transition(state, plan, candidate, ids,
+                                       args.get("finding_ids"))
+            state["plan"] = candidate
+            _invalidate_geometry(state)
+            _record_geometry_transition(state, plan, candidate, ids, name,
+                                        args.get("finding_ids"))
+            _record(state, name, feature_ids=ids, axis=axis, face_side=side_name,
+                    count=len(ids))
+            _save(state)
+            return _tool_result({"revision": state["revision"], "feature_ids": ids,
+                                 "axis": axis, "through": True,
+                                 "validation": cadplan.validate_plan(candidate)},
+                                "已原子添加 %d 个同法线贯穿孔，轴向统一为 %s，revision %s。" %
+                                (len(ids), axis, state["revision"]))
+        if name == "cad_update_feature":
+            plan = _require_plan(state)
+            feature_id = str(args.get("feature_id") or "")
+            _guard_reference_conflicts(state, feature_id)
+            candidate = plan_state.update(
+                plan, str(args.get("feature_id") or ""),
+                parameter_updates=args.get("parameter_updates"),
+                source_updates=args.get("source_updates"),
+                remove_parameters=args.get("remove_parameters"),
+                fields=args.get("fields"),
+            )
+            if candidate == plan:
+                no_progress = state.setdefault("no_progress_by_signature", {})
+                signature = _signature_key(plan)
+                no_progress[signature] = int(no_progress.get(signature, 0)) + 1
+                _record(state, name, feature_id=feature_id, no_op=True,
+                        unchanged_geometry_signature=signature,
+                        consecutive_no_progress=no_progress[signature])
+                _save(state)
+                return _tool_result(_summary(state),
+                                    "这次更新没有改变特征。已记录相同 geometry hash 的无进展调用；不要重放相同参数，请核对 finding 和原图，必要时恢复最佳候选。")
+            if _geometry_signature(candidate) == _geometry_signature(plan):
+                state["plan"] = candidate
+                _record(state, name, feature_id=args.get("feature_id"),
+                        metadata_only=True)
+                _save(state)
+                return _tool_result(_validation_result(candidate, state),
+                                    "仅更新来源或说明，几何未变；当前预览和几何版本仍有效。")
+            _guard_geometry_transition(
+                state, plan, candidate, [feature_id], args.get("finding_ids"))
+            state["plan"] = candidate
+            _invalidate_geometry(state)
+            _record_geometry_transition(
+                state, plan, candidate, [feature_id], name, args.get("finding_ids"),
+                _parameter_change_summary(plan, candidate, feature_id))
+            _record(state, name, feature_id=feature_id,
+                    finding_ids=args.get("finding_ids") or [])
+            _save(state)
+            return _tool_result(_validation_result(state["plan"], state),
+                                "特征已修改，revision %s。" % state["revision"])
+        if name == "cad_remove_feature":
+            plan = _require_plan(state)
+            feature_id = str(args.get("feature_id") or "")
+            _guard_reference_conflicts(state, feature_id)
+            candidate = plan_state.remove(plan, feature_id)
+            _guard_geometry_transition(
+                state, plan, candidate, [feature_id], args.get("finding_ids"))
+            state["plan"] = candidate
+            _invalidate_geometry(state)
+            _record_geometry_transition(
+                state, plan, candidate, [feature_id], name, args.get("finding_ids"))
+            _record(state, name, feature_id=feature_id,
+                    finding_ids=args.get("finding_ids") or [])
+            _save(state)
+            return _tool_result(_validation_result(state["plan"], state),
+                                "特征已删除，revision %s。" % state["revision"])
+        if name == "cad_get_feature_spec":
+            kind = str(args.get("kind") or "")
+            spec = cadplan.FEATURE_SPECS.get(kind)
+            if spec is None:
+                raise ValueError("未知特征类型。可用类型：" + ", ".join(FEATURE_KINDS))
+            result = {
+                "kind": kind,
+                "required_parameters": list(spec["required"]),
+                "optional_parameters": [key for key in spec["params"]
+                                        if key not in spec["required"]],
+                "catia_mapping": spec["status"],
+                "catia_note": spec["reason"],
+                "coordinate_contract": _COORDINATE_CONTRACT,
+                "parameter_semantics": {
+                    "cylinder": {
+                        "center": "base-center point when base=true (default); geometric midpoint when base=false",
+                        "height": "extends along positive axis when base=true; straddles center when base=false",
+                        "base_default": True,
+                    },
+                    "prism": {
+                        "center": "origin of the profile's base plane",
+                        "height": "extends along positive axis",
+                    },
+                    "sphere": {"center": "geometric center"},
+                    "revolve": {
+                        "profile": "closed [radius, axial-Z] points when axis=Z",
+                        "center": "global origin on the revolve axis",
+                        "order": "use as the first feature for a complete turned body; late add unions can lose prior geometry",
+                    },
+                }.get(kind, {}),
+            }
+            _record(state, name, feature_kind=kind)
+            _save(state)
+            return _tool_result(result)
+        if name == "cad_validate_model":
+            plan = _require_plan(state)
+            result = _validation_result(plan, state)
+            _record(state, name)
+            _save(state)
+            return _tool_result(result, "校验已完成；未启动 CATIA。")
+        if name == "cad_preview_model":
+            plan = _require_plan(state)
+            view = str(args.get("view") or "iso")
+            if view not in {"iso", "front", "right", "top", "back", "left", "bottom"}:
+                raise ValueError("view 必须是 iso、front、right、top、back、left 或 bottom。")
+            generation = int(state.get("preview_generation") or 0) + 1
+            revision = int(state.get("revision") or 0)
+            preview_dir = _STATE_DIR / "previews"
+            preview_path = preview_dir / ("r%d-g%d-%s.png" % (revision, generation, view))
+            result = cadplan.preview_plan(plan, image_path=str(preview_path),
+                                          view_set=view)
+            if result.get("state") != "previewed":
+                raise ValueError("预览失败：" + str(result.get("error") or
+                                                  result.get("preview_image_error") or
+                                                  result.get("state")))
+            state["preview_generation"] = generation
+            result["preview_generation"] = state["preview_generation"]
+            shutil.copyfile(preview_path, _PREVIEW_PATH)
+            state["last_preview"] = result
+            state["preview_revision"] = state.get("revision")
+            _capture_best_candidate(state)
+            state["finished"] = False
+            state["finish_state"] = None
+            state.setdefault("previews", []).append({
+                "revision": state.get("revision"),
+                "preview_generation": state["preview_generation"],
+                "view": view,
+                "dimensions": result.get("dimensions"),
+                "preview_image": result.get("preview_image"),
+                "preview_image_path": str(preview_path),
+            })
+            expired = state["previews"][:-32]
+            if expired:
+                _delete_tracked_preview_files(expired)
+            # Stable generation paths keep each view addressable for a later
+            # multimodal review, while current-preview.png remains the UI thumbnail.
+            state["previews"] = state["previews"][-32:]
+            _record(state, name, view=view,
+                    local_geometry_state=(result.get("local_geometry_checks") or {}).get("state"),
+                    best_candidate_revision=(state.get("best_candidate") or {}).get("revision"))
+            _save(state)
+            return _tool_result({
+                "revision": state.get("revision"),
+                "preview": {key: result.get(key) for key in (
+                    "state", "dimensions", "preview_image", "preview_image_views",
+                    "preview_image_view_set", "preview_image_source",
+                    "preview_render_style", "preview_render_note",
+                    "local_geometry_checks", "warnings")},
+            }, "当前版本预览已生成，方向 %s；请目视对照原始参考图。" % view,
+                preview_path)
+        if name == "cad_review_reference_similarity":
+            try:
+                generation = int(args.get("preview_generation"))
+            except (TypeError, ValueError) as exc:
+                raise ValueError("preview_generation 必须是当前预览的整数版本号。") from exc
+            view = str(args.get("view") or "").strip().lower()
+            reference_image_index = args.get("reference_image_index")
+            reference_id = args.get("reference_id")
+            reference_image_index, reference_record = _reference_record(
+                reference_image_index, reference_id)
+            reference_id = str(reference_record.get("id") or "")
+            review_scope = str(args.get("review_scope") or "")
+            revision = state.get("revision")
+            attempts = state.setdefault("reference_similarity_attempts", [])
+            attempt = {"revision": revision, "preview_generation": generation,
+                       "view": view, "reference_image_index": reference_image_index,
+                       "reference_id": reference_id, "review_scope": review_scope,
+                       "started_at": time.time(), "failed": False}
+            attempts.append(attempt)
+            state["reference_similarity_attempts"] = attempts[-96:]
+            _save(state)
+            try:
+                result = _reference_similarity_review(
+                    state, view, generation, reference_image_index,
+                    reference_id=reference_id, review_scope=review_scope)
+            except Exception as exc:
+                error = str(exc).replace(str(_REVIEW_LLM_CFG.get("api_key") or ""),
+                                         "[redacted]")[:1200]
+                state["reference_similarity_error"] = {
+                    "revision": revision, "preview_generation": generation,
+                    "view": view, "reference_id": reference_id,
+                    "error": error, "recorded_at": time.time(),
+                }
+                attempt["failed"] = True
+                _record(state, name, view=view, preview_generation=generation,
+                        reference_id=reference_id, failed=True, error=error)
+                _save(state)
+                raise
+            _save(state)
+            conflict_count = sum(1 for row in result.get("evidence") or []
+                                 if row.get("reference_conflict"))
+            mismatch_count = sum(1 for row in result.get("evidence") or []
+                                 if _is_actionable_review_status(row.get("status")))
+            return _tool_result(result,
+                                "独立视觉复核已记录；辅助评分=%s/100，明确差异=%d，需核对原图的冲突=%d。"
+                                "评分不决定是否返修或能否保存候选。" %
+                                (result["score"], mismatch_count, conflict_count))
+        if name == "cad_record_visual_review":
+            if not state.get("last_preview") or state.get("preview_revision") != state.get("revision"):
+                raise ValueError("必须先为当前 CADPlan revision 生成预览，再记录视觉复核。")
+            view = str(args.get("view") or "").strip().lower()
+            generation = args.get("preview_generation")
+            preview = next((row for row in state.get("previews", [])
+                            if isinstance(row, dict) and
+                            row.get("preview_generation") == generation and
+                            row.get("revision") == state.get("revision")), None)
+            if not preview:
+                raise ValueError("preview_generation 不属于当前模型 revision。请用 cad_preview_model 生成当前版本的预览。")
+            if preview.get("view") != view:
+                raise ValueError("复核视图与该 preview_generation 实际生成的视图不一致。")
+            visible_evidence = str(args.get("visible_evidence") or "").strip()
+            if not visible_evidence:
+                raise ValueError("visible_evidence 必须记录可在当前参考图和模型视图中看到的事实。")
+            issues = args.get("issues")
+            unresolved = args.get("unresolved")
+            if not isinstance(issues, list) or not isinstance(unresolved, list):
+                raise ValueError("issues 和 unresolved 必须是数组。")
+            normalized_issues = []
+            allowed_status = {"match", "mismatch", "partial", "unknown"}
+            allowed_severity = {"high", "medium", "low"}
+            for issue in issues:
+                if not isinstance(issue, dict):
+                    raise ValueError("每个视觉差异必须是对象。")
+                status = str(issue.get("status") or "").strip().lower()
+                severity = str(issue.get("severity") or "medium").strip().lower()
+                item = str(issue.get("item") or "").strip()
+                reference_evidence = str(issue.get("reference_evidence") or "").strip()
+                model_evidence = str(issue.get("model_evidence") or "").strip()
+                if status not in allowed_status or severity not in allowed_severity:
+                    raise ValueError("视觉差异的 status 或 severity 值无效。")
+                if not item or not reference_evidence or not model_evidence:
+                    raise ValueError("每个 issue 都必须填写 item、reference_evidence 和 model_evidence。")
+                normalized_issues.append({
+                    "status": status, "severity": severity, "item": item,
+                    "reference_evidence": reference_evidence,
+                    "model_evidence": model_evidence,
+                    "affected_feature_ids": [str(v) for v in issue.get("affected_feature_ids", [])],
+                    "suggested_change": str(issue.get("suggested_change") or "").strip(),
+                })
+            explicit_unresolved = [str(item).strip() for item in unresolved
+                                   if str(item).strip()]
+            record = {
+                "revision": state.get("revision"),
+                "view": view,
+                "preview_generation": generation,
+                "visible_evidence": visible_evidence,
+                "issues": normalized_issues,
+                "unresolved": explicit_unresolved,
+                "recorded_at": time.time(),
+            }
+            reviews = state.setdefault("visual_reviews", {})
+            reviews[view] = record
+            state["visual_review"] = record
+            state["unresolved_findings"] = _review_findings(reviews)
+            state["finished"] = False
+            state["finish_state"] = None
+            _record(state, name, view=view, preview_generation=generation,
+                    issue_count=len(normalized_issues),
+                    unresolved_count=len(state["unresolved_findings"]))
+            _save(state)
+            return _tool_result({
+                "revision": state.get("revision"),
+                "view": view,
+                "preview_generation": generation,
+                "reviewed_views": sorted(reviews),
+                "issue_count": len(normalized_issues),
+                "unresolved": state["unresolved_findings"],
+            }, "已保存本版视觉复核；有明确差异时应先修改再复核。")
+        if name == "cad_finish_model":
+            plan = _require_plan(state)
+            validation = cadplan.validate_plan(plan)
+            if validation.get("state") != "valid":
+                raise ValueError("模型仍需修正或补充参数：" + json.dumps(
+                    validation.get("errors") or validation.get("confirmations") or [],
+                    ensure_ascii=False))
+            if (not state.get("last_preview") or
+                    state.get("preview_revision") != state.get("revision")):
+                raise ValueError("当前 CADPlan revision 尚未生成预览。")
+            geometry = (state.get("last_preview") or {}).get("local_geometry_checks")
+            geometry = geometry if isinstance(geometry, dict) else {}
+            geometry_passed = geometry.get("state") == "passed"
+            hole_summary = _hole_measurement_summary(plan, geometry)
+            declared_holes_verified = hole_summary["complete"]
+            _refresh_unresolved_findings(state)
+            findings = state.get("unresolved_findings") or []
+            visual = _visual_evidence_summary(state)
+            current_reviews = _latest_reference_reviews(state)
+            milestone = state.get("construction_milestone") or {}
+            expected_features = set(str(value) for value in milestone.get("expected_feature_ids") or [])
+            completed_features = set(str(value) for value in milestone.get("completed_feature_ids") or [])
+            construction_complete = not expected_features or expected_features.issubset(completed_features)
+            reference_coverage = (not state.get("has_references")
+                                  or visual["all_references_covered"])
+            geometry_complete = geometry_passed and declared_holes_verified
+            accepted = (geometry_complete and reference_coverage and construction_complete
+                        and not findings)
+            acknowledgement = args.get("unresolved_acknowledgement") or []
+            if not isinstance(acknowledgement, list):
+                raise ValueError("unresolved_acknowledgement 必须是明确确认的字符串数组。")
+            acknowledgement = [str(item).strip() for item in acknowledgement if str(item).strip()]
+            if accepted:
+                finish_state = "accepted"
+            elif not geometry_passed:
+                finish_state = "candidate_geometry_unverified"
+            elif not declared_holes_verified:
+                finish_state = "candidate_holes_unverified"
+            elif not construction_complete:
+                finish_state = "candidate_construction_incomplete"
+            else:
+                finish_state = ("candidate_with_open_findings" if findings
+                                else "candidate_not_verified")
+            state["finish_state"] = finish_state
+            paths = _export_candidate(state, str(args.get("summary") or ""))
+            state["output_paths"] = paths
+            state["finished"] = True
+>           _record(state, name, state=finish_state,
+                    geometry_passed=geometry_passed,
+                    declared_holes_verified=declared_holes_verified,
+                    visual_review_count=len(current_reviews),
+                    reference_coverage=visual,
+                    open_finding_count=len(state.get("unresolved_findings") or []),
+                    acknowledgement_count=len(acknowledgement))
+E           TypeError: _record() got multiple values for argument 'state'
+
+ai_modeler\agent\dsh_mcp_server.py:2573: TypeError
+=========================== short test summary info ===========================
+FAILED tests/test_dsh_review_workflow.py::DSHReviewWorkflowTests::test_finish_without_current_visual_evidence_saves_unverified_candidate
+FAILED tests/test_dsh_review_workflow.py::DSHReviewWorkflowTests::test_low_score_with_grounded_matching_evidence_does_not_block_finish
+2 failed, 6 passed in 2.61s
+
+EXIT_CODE=1

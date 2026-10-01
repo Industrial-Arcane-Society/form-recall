@@ -1,0 +1,17 @@
+{
+  "schema_version": 1,
+  "session_id": "aq-text-provenance-20261001",
+  "turns": [
+    {
+      "turn_id": "cb8484949318480ca70b15088d8411c6",
+      "session_id": "aq-text-provenance-20261001",
+      "raw_user_prompt": "创建一个100×60×20毫米长方体，中心位于[0,0,0]。",
+      "reference_ids": [],
+      "created_at": "2026-10-01T09:30:39.144Z",
+      "at_epoch_ms": 1790847039144,
+      "intent": "geometry_edit",
+      "affects_model_target": true,
+      "intent_source": "cli_rules"
+    }
+  ]
+}

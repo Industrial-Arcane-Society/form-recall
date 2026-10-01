@@ -1,0 +1,1 @@
+No preview PNG was present in the session preview directory at shutdown. Last logged attempted preview path: C:\Users\lycohana\AppData\Local\AI Modeler\dsh\sessions\cold-nine-hole-20261001-202252-b8032d41\previews\r29-g5-iso.png.

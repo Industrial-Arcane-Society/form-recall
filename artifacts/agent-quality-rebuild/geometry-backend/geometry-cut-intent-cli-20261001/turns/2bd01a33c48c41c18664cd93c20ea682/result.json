@@ -1,0 +1,4496 @@
+{
+  "state": "candidate_geometry_unverified",
+  "plan": {
+    "schema_version": "1.0",
+    "name": "底板与凸台",
+    "source_prompt": "用户给定底板长100、宽60、厚20，底面z=0、中心在原点。",
+    "units": {
+      "length": "mm",
+      "angle": "deg"
+    },
+    "coordinate_system": {
+      "type": "global_cartesian",
+      "handedness": "right",
+      "axes": [
+        "X",
+        "Y",
+        "Z"
+      ],
+      "origin": [
+        0,
+        0,
+        0
+      ]
+    },
+    "features": [
+      {
+        "id": "base_plate",
+        "kind": "box",
+        "operation": "add",
+        "name": "底板",
+        "parameters": {
+          "length": 100,
+          "width": 60,
+          "height": 20,
+          "center": [
+            0,
+            0,
+            10
+          ]
+        },
+        "sources": {
+          "length": {
+            "type": "user",
+            "evidence": "用户给定底板长100"
+          },
+          "width": {
+            "type": "user",
+            "evidence": "用户给定底板宽60"
+          },
+          "height": {
+            "type": "user",
+            "evidence": "用户给定底板厚20"
+          },
+          "center": {
+            "type": "derived",
+            "evidence": "底面z=0且中心在原点，厚度20，故box中心z=10"
+          }
+        }
+      },
+      {
+        "id": "hole_through_cyl",
+        "kind": "cylinder",
+        "operation": "cut",
+        "name": "竖直贯穿圆孔（圆柱切削）",
+        "parameters": {
+          "radius": 5,
+          "height": 20,
+          "center": [
+            0,
+            0,
+            0
+          ],
+          "axis": "Z"
+        },
+        "sources": {
+          "radius": {
+            "type": "user",
+            "evidence": "用户给定直径10，半径=5"
+          },
+          "height": {
+            "type": "derived",
+            "evidence": "贯穿底板全厚，厚度20"
+          },
+          "center": {
+            "type": "derived",
+            "evidence": "孔中心xy(0,0)，底面z=0"
+          },
+          "axis": {
+            "type": "derived",
+            "evidence": "竖直孔沿Z轴"
+          }
+        }
+      },
+      {
+        "id": "revolve_boss",
+        "kind": "revolve",
+        "operation": "add",
+        "name": "轴对称旋转凸台",
+        "parameters": {
+          "profile": [
+            [
+              0,
+              20
+            ],
+            [
+              6,
+              20
+            ],
+            [
+              6,
+              28
+            ],
+            [
+              0,
+              28
+            ]
+          ],
+          "angle": 360,
+          "center": [
+            -25,
+            0,
+            0
+          ],
+          "axis": "Z"
+        },
+        "sources": {
+          "profile": {
+            "type": "derived",
+            "evidence": "外径12对应半径6，高8对应z=20~28，矩形截面从轴线r=0到外径r=6"
+          },
+          "angle": {
+            "type": "user",
+            "evidence": "用户给定绕Z轴360度旋转"
+          },
+          "center": {
+            "type": "derived",
+            "evidence": "用户给定凸台中心(-25,0)，旋转轴沿Z过该点"
+          },
+          "axis": {
+            "type": "derived",
+            "evidence": "绕Z轴旋转"
+          }
+        }
+      },
+      {
+        "id": "hole_blind_cyl",
+        "kind": "cylinder",
+        "operation": "cut",
+        "name": "盲孔（圆柱切削）",
+        "parameters": {
+          "radius": 4,
+          "height": 6,
+          "center": [
+            25,
+            0,
+            14
+          ],
+          "axis": "Z",
+          "base": true
+        },
+        "sources": {
+          "radius": {
+            "type": "user",
+            "evidence": "用户给定直径8，半径=4"
+          },
+          "height": {
+            "type": "user",
+            "evidence": "用户给定盲孔深度6"
+          },
+          "center": {
+            "type": "derived",
+            "evidence": "盲孔底面z=20-6=14，base=true时圆柱从底面向上延伸至顶面20"
+          },
+          "axis": {
+            "type": "derived",
+            "evidence": "竖直沿Z轴（base=false使圆柱从z=14到20）"
+          },
+          "base": {
+            "type": "derived",
+            "evidence": "以盲孔底面为基面，高度6延伸至顶面"
+          }
+        }
+      }
+    ],
+    "pending_questions": []
+  },
+  "validation": {
+    "valid": true,
+    "state": "valid",
+    "errors": [],
+    "confirmations": [],
+    "support": [
+      {
+        "feature_id": "base_plate",
+        "kind": "box",
+        "status": "exact",
+        "reason": "矩形草图加凸台；当前 CATIA 映射仅支持 Z 轴拉伸。"
+      },
+      {
+        "feature_id": "hole_through_cyl",
+        "kind": "cylinder",
+        "status": "exact",
+        "reason": "center 默认表示轴向底面中心(base=true)，height 沿 axis 正向拉伸；base=false 时 center 表示几何中点。等半径时为圆草图加凸台；圆锥台会近似，非 Z 轴圆锥台暂不支持。"
+      },
+      {
+        "feature_id": "revolve_boss",
+        "kind": "revolve",
+        "status": "approximate",
+        "reason": "本地 OCCT BREP 按闭合[半径,轴向坐标]轮廓精确回转，并将新增回转体与已有实体做布尔合并；CATIA 导出器仍用多层圆盘近似，非 CATIA 原生回转特征。"
+      },
+      {
+        "feature_id": "hole_blind_cyl",
+        "kind": "cylinder",
+        "status": "exact",
+        "reason": "center 默认表示轴向底面中心(base=true)，height 沿 axis 正向拉伸；base=false 时 center 表示几何中点。等半径时为圆草图加凸台；圆锥台会近似，非 Z 轴圆锥台暂不支持。"
+      }
+    ],
+    "geometry_support": [
+      {
+        "feature_id": "base_plate",
+        "kind": "box",
+        "status": "exact",
+        "reason": "OCCT 棱柱；带圆角/倒角时沿用离散轮廓近似",
+        "backend": "occt_brep"
+      },
+      {
+        "feature_id": "hole_through_cyl",
+        "kind": "cylinder",
+        "status": "exact",
+        "reason": "解析圆柱或圆锥面",
+        "backend": "occt_brep"
+      },
+      {
+        "feature_id": "revolve_boss",
+        "kind": "revolve",
+        "status": "exact",
+        "reason": "简单闭合半径-轴向轮廓的 OCCT 解析回转",
+        "backend": "occt_brep"
+      },
+      {
+        "feature_id": "hole_blind_cyl",
+        "kind": "cylinder",
+        "status": "exact",
+        "reason": "解析圆柱或圆锥面",
+        "backend": "occt_brep"
+      }
+    ],
+    "warnings": [
+      {
+        "code": "CATIA_APPROXIMATION",
+        "feature_id": "revolve_boss",
+        "kind": "revolve",
+        "message": "本地 OCCT BREP 按闭合[半径,轴向坐标]轮廓精确回转，并将新增回转体与已有实体做布尔合并；CATIA 导出器仍用多层圆盘近似，非 CATIA 原生回转特征。"
+      }
+    ],
+    "schema_version": "1.0"
+  },
+  "preview": {
+    "state": "previewed",
+    "validation": {
+      "valid": true,
+      "state": "valid",
+      "errors": [],
+      "confirmations": [],
+      "support": [
+        {
+          "feature_id": "base_plate",
+          "kind": "box",
+          "status": "exact",
+          "reason": "矩形草图加凸台；当前 CATIA 映射仅支持 Z 轴拉伸。"
+        },
+        {
+          "feature_id": "hole_through_cyl",
+          "kind": "cylinder",
+          "status": "exact",
+          "reason": "center 默认表示轴向底面中心(base=true)，height 沿 axis 正向拉伸；base=false 时 center 表示几何中点。等半径时为圆草图加凸台；圆锥台会近似，非 Z 轴圆锥台暂不支持。"
+        },
+        {
+          "feature_id": "revolve_boss",
+          "kind": "revolve",
+          "status": "approximate",
+          "reason": "本地 OCCT BREP 按闭合[半径,轴向坐标]轮廓精确回转，并将新增回转体与已有实体做布尔合并；CATIA 导出器仍用多层圆盘近似，非 CATIA 原生回转特征。"
+        },
+        {
+          "feature_id": "hole_blind_cyl",
+          "kind": "cylinder",
+          "status": "exact",
+          "reason": "center 默认表示轴向底面中心(base=true)，height 沿 axis 正向拉伸；base=false 时 center 表示几何中点。等半径时为圆草图加凸台；圆锥台会近似，非 Z 轴圆锥台暂不支持。"
+        }
+      ],
+      "geometry_support": [
+        {
+          "feature_id": "base_plate",
+          "kind": "box",
+          "status": "exact",
+          "reason": "OCCT 棱柱；带圆角/倒角时沿用离散轮廓近似",
+          "backend": "occt_brep"
+        },
+        {
+          "feature_id": "hole_through_cyl",
+          "kind": "cylinder",
+          "status": "exact",
+          "reason": "解析圆柱或圆锥面",
+          "backend": "occt_brep"
+        },
+        {
+          "feature_id": "revolve_boss",
+          "kind": "revolve",
+          "status": "exact",
+          "reason": "简单闭合半径-轴向轮廓的 OCCT 解析回转",
+          "backend": "occt_brep"
+        },
+        {
+          "feature_id": "hole_blind_cyl",
+          "kind": "cylinder",
+          "status": "exact",
+          "reason": "解析圆柱或圆锥面",
+          "backend": "occt_brep"
+        }
+      ],
+      "warnings": [
+        {
+          "code": "CATIA_APPROXIMATION",
+          "feature_id": "revolve_boss",
+          "kind": "revolve",
+          "message": "本地 OCCT BREP 按闭合[半径,轴向坐标]轮廓精确回转，并将新增回转体与已有实体做布尔合并；CATIA 导出器仍用多层圆盘近似，非 CATIA 原生回转特征。"
+        }
+      ],
+      "schema_version": "1.0"
+    },
+    "geometry_backend": "occt_brep",
+    "native_brep": {
+      "backend": "occt_brep",
+      "kernel": "可用：OCCT 7.9.3.1 / cadquery-ocp-novtk 7.9.3.1.1",
+      "geometry_state": "needs_review",
+      "state": "needs_review",
+      "brep_valid": true,
+      "shape_type": "TopAbs_COMPOUND",
+      "solid_count": 1,
+      "connected_component_count": 1,
+      "shell_count": 1,
+      "closed_shell_count": 1,
+      "closed": true,
+      "edge_count": 42,
+      "face_count": 11,
+      "free_edge_count": 0,
+      "volume_mm3": 119032.38946269432,
+      "bbox_mm": [
+        -50.0,
+        -30.0,
+        0.0,
+        50.0,
+        30.0,
+        28.0
+      ],
+      "self_intersection": {
+        "status": "checked_no_intersection",
+        "face_count": 11,
+        "check_result_count": 0,
+        "check_statuses": [],
+        "method": "BOPAlgo_ArgumentAnalyzer(SelfInterMode=True, UseOBB=True)"
+      },
+      "validity_method": "BRepCheck_Analyzer",
+      "geometry_scope": "native_OCCT_BREP_only_visual_comparison_not_performed",
+      "unverified_cut_intents": [
+        {
+          "feature_id": "hole_blind_cyl",
+          "classification": "unverified_cylindrical_cut",
+          "status": "unverified",
+          "axis": "Z",
+          "centerline_mm": [
+            25.0,
+            0.0,
+            14.0
+          ],
+          "diameter_mm": 8.0,
+          "tool_bbox_mm": [
+            21.0,
+            -4.0,
+            14.0,
+            29.0,
+            4.0,
+            20.0
+          ],
+          "reason": "圆柱刀具未贯穿目标轴向包围盒；盲深或局部开口需进一步定向测量。"
+        }
+      ],
+      "hole_feature_count": 0,
+      "measured_hole_source_feature_count": 1,
+      "unverified_cut_intent_count": 1,
+      "planned_hole_instance_count": 1,
+      "active_hole_instance_count": 1,
+      "superseded_hole_instance_count": 0,
+      "active_through_hole_count": 1,
+      "through_hole_count": 1,
+      "all_declared_holes_verified": true,
+      "visual_validation": "not_performed",
+      "catia_executed": false,
+      "build_transaction": "每个特征验证成功后才提交；失败保留上一有效实体"
+    },
+    "catia_executed": false,
+    "dimensions": {
+      "unit": "mm",
+      "bbox": [
+        -50.0,
+        -30.0,
+        0.0,
+        50.0,
+        30.0,
+        28.0
+      ],
+      "size": [
+        100.0,
+        60.0,
+        28.0
+      ],
+      "volume_mm3": 119032.38946269432,
+      "surface_area_mm2": 19323.6282401554,
+      "triangles": 328,
+      "feature_count": 4
+    },
+    "catia_operations": [
+      {
+        "index": 1,
+        "kind": "rect_pad",
+        "plane": "XY",
+        "center": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "profile": [],
+        "dimensions": {
+          "l": 100.0,
+          "w": 60.0,
+          "r": 0.0,
+          "h": 20.0,
+          "depth": 0.0
+        },
+        "name": "底板",
+        "note": "长方体 100 × 60 × 20 mm"
+      },
+      {
+        "index": 2,
+        "kind": "circle_cut",
+        "plane": "Z",
+        "center": [
+          0.0,
+          0.0,
+          20.0
+        ],
+        "profile": [],
+        "dimensions": {
+          "l": 0.0,
+          "w": 0.0,
+          "r": 5.0,
+          "h": 20.0,
+          "depth": 20.0
+        },
+        "name": "竖直贯穿圆孔（圆柱切削）",
+        "note": "圆柱 ⌀10 × 20 mm"
+      },
+      {
+        "index": 3,
+        "kind": "circle_pad",
+        "plane": "XY",
+        "center": [
+          0.0,
+          0.0,
+          20.0
+        ],
+        "profile": [],
+        "dimensions": {
+          "l": 0.0,
+          "w": 0.0,
+          "r": 6.0,
+          "h": 0.33333333333333215,
+          "depth": 0.0
+        },
+        "name": "轴对称旋转凸台",
+        "note": "回转体 360° (4 点轮廓)"
+      },
+      {
+        "index": 4,
+        "kind": "circle_pad",
+        "plane": "XY",
+        "center": [
+          0.0,
+          0.0,
+          20.333333333333332
+        ],
+        "profile": [],
+        "dimensions": {
+          "l": 0.0,
+          "w": 0.0,
+          "r": 6.0,
+          "h": 0.3333333333333357,
+          "depth": 0.0
+        },
+        "name": "轴对称旋转凸台",
+        "note": "回转体 360° (4 点轮廓)"
+      },
+      {
+        "index": 5,
+        "kind": "circle_pad",
+        "plane": "XY",
+        "center": [
+          0.0,
+          0.0,
+          20.666666666666668
+        ],
+        "profile": [],
+        "dimensions": {
+          "l": 0.0,
+          "w": 0.0,
+          "r": 6.0,
+          "h": 0.33333333333333215,
+          "depth": 0.0
+        },
+        "name": "轴对称旋转凸台",
+        "note": "回转体 360° (4 点轮廓)"
+      },
+      {
+        "index": 6,
+        "kind": "circle_pad",
+        "plane": "XY",
+        "center": [
+          0.0,
+          0.0,
+          21.0
+        ],
+        "profile": [],
+        "dimensions": {
+          "l": 0.0,
+          "w": 0.0,
+          "r": 6.0,
+          "h": 0.33333333333333215,
+          "depth": 0.0
+        },
+        "name": "轴对称旋转凸台",
+        "note": "回转体 360° (4 点轮廓)"
+      },
+      {
+        "index": 7,
+        "kind": "circle_pad",
+        "plane": "XY",
+        "center": [
+          0.0,
+          0.0,
+          21.333333333333332
+        ],
+        "profile": [],
+        "dimensions": {
+          "l": 0.0,
+          "w": 0.0,
+          "r": 6.0,
+          "h": 0.3333333333333357,
+          "depth": 0.0
+        },
+        "name": "轴对称旋转凸台",
+        "note": "回转体 360° (4 点轮廓)"
+      },
+      {
+        "index": 8,
+        "kind": "circle_pad",
+        "plane": "XY",
+        "center": [
+          0.0,
+          0.0,
+          21.666666666666668
+        ],
+        "profile": [],
+        "dimensions": {
+          "l": 0.0,
+          "w": 0.0,
+          "r": 6.0,
+          "h": 0.33333333333333215,
+          "depth": 0.0
+        },
+        "name": "轴对称旋转凸台",
+        "note": "回转体 360° (4 点轮廓)"
+      },
+      {
+        "index": 9,
+        "kind": "circle_pad",
+        "plane": "XY",
+        "center": [
+          0.0,
+          0.0,
+          22.0
+        ],
+        "profile": [],
+        "dimensions": {
+          "l": 0.0,
+          "w": 0.0,
+          "r": 6.0,
+          "h": 0.33333333333333215,
+          "depth": 0.0
+        },
+        "name": "轴对称旋转凸台",
+        "note": "回转体 360° (4 点轮廓)"
+      },
+      {
+        "index": 10,
+        "kind": "circle_pad",
+        "plane": "XY",
+        "center": [
+          0.0,
+          0.0,
+          22.333333333333332
+        ],
+        "profile": [],
+        "dimensions": {
+          "l": 0.0,
+          "w": 0.0,
+          "r": 6.0,
+          "h": 0.3333333333333357,
+          "depth": 0.0
+        },
+        "name": "轴对称旋转凸台",
+        "note": "回转体 360° (4 点轮廓)"
+      },
+      {
+        "index": 11,
+        "kind": "circle_pad",
+        "plane": "XY",
+        "center": [
+          0.0,
+          0.0,
+          22.666666666666668
+        ],
+        "profile": [],
+        "dimensions": {
+          "l": 0.0,
+          "w": 0.0,
+          "r": 6.0,
+          "h": 0.33333333333333215,
+          "depth": 0.0
+        },
+        "name": "轴对称旋转凸台",
+        "note": "回转体 360° (4 点轮廓)"
+      },
+      {
+        "index": 12,
+        "kind": "circle_pad",
+        "plane": "XY",
+        "center": [
+          0.0,
+          0.0,
+          23.0
+        ],
+        "profile": [],
+        "dimensions": {
+          "l": 0.0,
+          "w": 0.0,
+          "r": 6.0,
+          "h": 0.33333333333333215,
+          "depth": 0.0
+        },
+        "name": "轴对称旋转凸台",
+        "note": "回转体 360° (4 点轮廓)"
+      },
+      {
+        "index": 13,
+        "kind": "circle_pad",
+        "plane": "XY",
+        "center": [
+          0.0,
+          0.0,
+          23.333333333333332
+        ],
+        "profile": [],
+        "dimensions": {
+          "l": 0.0,
+          "w": 0.0,
+          "r": 6.0,
+          "h": 0.3333333333333357,
+          "depth": 0.0
+        },
+        "name": "轴对称旋转凸台",
+        "note": "回转体 360° (4 点轮廓)"
+      },
+      {
+        "index": 14,
+        "kind": "circle_pad",
+        "plane": "XY",
+        "center": [
+          0.0,
+          0.0,
+          23.666666666666668
+        ],
+        "profile": [],
+        "dimensions": {
+          "l": 0.0,
+          "w": 0.0,
+          "r": 6.0,
+          "h": 0.33333333333333215,
+          "depth": 0.0
+        },
+        "name": "轴对称旋转凸台",
+        "note": "回转体 360° (4 点轮廓)"
+      },
+      {
+        "index": 15,
+        "kind": "circle_pad",
+        "plane": "XY",
+        "center": [
+          0.0,
+          0.0,
+          24.0
+        ],
+        "profile": [],
+        "dimensions": {
+          "l": 0.0,
+          "w": 0.0,
+          "r": 6.0,
+          "h": 0.33333333333333215,
+          "depth": 0.0
+        },
+        "name": "轴对称旋转凸台",
+        "note": "回转体 360° (4 点轮廓)"
+      },
+      {
+        "index": 16,
+        "kind": "circle_pad",
+        "plane": "XY",
+        "center": [
+          0.0,
+          0.0,
+          24.333333333333332
+        ],
+        "profile": [],
+        "dimensions": {
+          "l": 0.0,
+          "w": 0.0,
+          "r": 6.0,
+          "h": 0.3333333333333357,
+          "depth": 0.0
+        },
+        "name": "轴对称旋转凸台",
+        "note": "回转体 360° (4 点轮廓)"
+      },
+      {
+        "index": 17,
+        "kind": "circle_pad",
+        "plane": "XY",
+        "center": [
+          0.0,
+          0.0,
+          24.666666666666668
+        ],
+        "profile": [],
+        "dimensions": {
+          "l": 0.0,
+          "w": 0.0,
+          "r": 6.0,
+          "h": 0.33333333333333215,
+          "depth": 0.0
+        },
+        "name": "轴对称旋转凸台",
+        "note": "回转体 360° (4 点轮廓)"
+      },
+      {
+        "index": 18,
+        "kind": "circle_pad",
+        "plane": "XY",
+        "center": [
+          0.0,
+          0.0,
+          25.0
+        ],
+        "profile": [],
+        "dimensions": {
+          "l": 0.0,
+          "w": 0.0,
+          "r": 6.0,
+          "h": 0.33333333333333215,
+          "depth": 0.0
+        },
+        "name": "轴对称旋转凸台",
+        "note": "回转体 360° (4 点轮廓)"
+      },
+      {
+        "index": 19,
+        "kind": "circle_pad",
+        "plane": "XY",
+        "center": [
+          0.0,
+          0.0,
+          25.333333333333332
+        ],
+        "profile": [],
+        "dimensions": {
+          "l": 0.0,
+          "w": 0.0,
+          "r": 6.0,
+          "h": 0.3333333333333357,
+          "depth": 0.0
+        },
+        "name": "轴对称旋转凸台",
+        "note": "回转体 360° (4 点轮廓)"
+      },
+      {
+        "index": 20,
+        "kind": "circle_pad",
+        "plane": "XY",
+        "center": [
+          0.0,
+          0.0,
+          25.666666666666668
+        ],
+        "profile": [],
+        "dimensions": {
+          "l": 0.0,
+          "w": 0.0,
+          "r": 6.0,
+          "h": 0.33333333333333215,
+          "depth": 0.0
+        },
+        "name": "轴对称旋转凸台",
+        "note": "回转体 360° (4 点轮廓)"
+      },
+      {
+        "index": 21,
+        "kind": "circle_pad",
+        "plane": "XY",
+        "center": [
+          0.0,
+          0.0,
+          26.0
+        ],
+        "profile": [],
+        "dimensions": {
+          "l": 0.0,
+          "w": 0.0,
+          "r": 6.0,
+          "h": 0.33333333333333215,
+          "depth": 0.0
+        },
+        "name": "轴对称旋转凸台",
+        "note": "回转体 360° (4 点轮廓)"
+      },
+      {
+        "index": 22,
+        "kind": "circle_pad",
+        "plane": "XY",
+        "center": [
+          0.0,
+          0.0,
+          26.333333333333332
+        ],
+        "profile": [],
+        "dimensions": {
+          "l": 0.0,
+          "w": 0.0,
+          "r": 6.0,
+          "h": 0.3333333333333357,
+          "depth": 0.0
+        },
+        "name": "轴对称旋转凸台",
+        "note": "回转体 360° (4 点轮廓)"
+      },
+      {
+        "index": 23,
+        "kind": "circle_pad",
+        "plane": "XY",
+        "center": [
+          0.0,
+          0.0,
+          26.666666666666668
+        ],
+        "profile": [],
+        "dimensions": {
+          "l": 0.0,
+          "w": 0.0,
+          "r": 6.0,
+          "h": 0.33333333333333215,
+          "depth": 0.0
+        },
+        "name": "轴对称旋转凸台",
+        "note": "回转体 360° (4 点轮廓)"
+      },
+      {
+        "index": 24,
+        "kind": "circle_pad",
+        "plane": "XY",
+        "center": [
+          0.0,
+          0.0,
+          27.0
+        ],
+        "profile": [],
+        "dimensions": {
+          "l": 0.0,
+          "w": 0.0,
+          "r": 6.0,
+          "h": 0.33333333333333215,
+          "depth": 0.0
+        },
+        "name": "轴对称旋转凸台",
+        "note": "回转体 360° (4 点轮廓)"
+      },
+      {
+        "index": 25,
+        "kind": "circle_pad",
+        "plane": "XY",
+        "center": [
+          0.0,
+          0.0,
+          27.333333333333332
+        ],
+        "profile": [],
+        "dimensions": {
+          "l": 0.0,
+          "w": 0.0,
+          "r": 6.0,
+          "h": 0.3333333333333357,
+          "depth": 0.0
+        },
+        "name": "轴对称旋转凸台",
+        "note": "回转体 360° (4 点轮廓)"
+      },
+      {
+        "index": 26,
+        "kind": "circle_pad",
+        "plane": "XY",
+        "center": [
+          0.0,
+          0.0,
+          27.666666666666668
+        ],
+        "profile": [],
+        "dimensions": {
+          "l": 0.0,
+          "w": 0.0,
+          "r": 6.0,
+          "h": 0.33333333333333215,
+          "depth": 0.0
+        },
+        "name": "轴对称旋转凸台",
+        "note": "回转体 360° (4 点轮廓)"
+      },
+      {
+        "index": 27,
+        "kind": "circle_cut",
+        "plane": "Z",
+        "center": [
+          25.0,
+          0.0,
+          20.0
+        ],
+        "profile": [],
+        "dimensions": {
+          "l": 0.0,
+          "w": 0.0,
+          "r": 4.0,
+          "h": 6.0,
+          "depth": 6.0
+        },
+        "name": "盲孔（圆柱切削）",
+        "note": "圆柱 ⌀8 × 6 mm"
+      }
+    ],
+    "warnings": [
+      {
+        "code": "CATIA_APPROXIMATION",
+        "feature_id": "revolve_boss",
+        "kind": "revolve",
+        "message": "本地 OCCT BREP 按闭合[半径,轴向坐标]轮廓精确回转，并将新增回转体与已有实体做布尔合并；CATIA 导出器仍用多层圆盘近似，非 CATIA 原生回转特征。"
+      },
+      {
+        "code": "CATIA_TRANSLATOR_NOTE",
+        "feature_id": null,
+        "kind": null,
+        "message": "回转体「回转体 360° (4 点轮廓)」用 24 层圆盘近似(旋转体 API 在这套 CATIA 里不可用)。",
+        "index": 0
+      }
+    ],
+    "feature_manifest": {
+      "base_plate": {
+        "kind": "box",
+        "operation": "add",
+        "name": "底板",
+        "parameters": {
+          "length": 100,
+          "width": 60,
+          "height": 20,
+          "center": [
+            0,
+            0,
+            10
+          ]
+        },
+        "sources": {
+          "length": {
+            "type": "user",
+            "evidence": "用户给定底板长100"
+          },
+          "width": {
+            "type": "user",
+            "evidence": "用户给定底板宽60"
+          },
+          "height": {
+            "type": "user",
+            "evidence": "用户给定底板厚20"
+          },
+          "center": {
+            "type": "derived",
+            "evidence": "底面z=0且中心在原点，厚度20，故box中心z=10"
+          }
+        },
+        "relations": []
+      },
+      "hole_through_cyl": {
+        "kind": "cylinder",
+        "operation": "cut",
+        "name": "竖直贯穿圆孔（圆柱切削）",
+        "parameters": {
+          "radius": 5,
+          "height": 20,
+          "center": [
+            0,
+            0,
+            0
+          ],
+          "axis": "Z"
+        },
+        "sources": {
+          "radius": {
+            "type": "user",
+            "evidence": "用户给定直径10，半径=5"
+          },
+          "height": {
+            "type": "derived",
+            "evidence": "贯穿底板全厚，厚度20"
+          },
+          "center": {
+            "type": "derived",
+            "evidence": "孔中心xy(0,0)，底面z=0"
+          },
+          "axis": {
+            "type": "derived",
+            "evidence": "竖直孔沿Z轴"
+          }
+        },
+        "relations": []
+      },
+      "revolve_boss": {
+        "kind": "revolve",
+        "operation": "add",
+        "name": "轴对称旋转凸台",
+        "parameters": {
+          "profile": [
+            [
+              0,
+              20
+            ],
+            [
+              6,
+              20
+            ],
+            [
+              6,
+              28
+            ],
+            [
+              0,
+              28
+            ]
+          ],
+          "angle": 360,
+          "center": [
+            -25,
+            0,
+            0
+          ],
+          "axis": "Z"
+        },
+        "sources": {
+          "profile": {
+            "type": "derived",
+            "evidence": "外径12对应半径6，高8对应z=20~28，矩形截面从轴线r=0到外径r=6"
+          },
+          "angle": {
+            "type": "user",
+            "evidence": "用户给定绕Z轴360度旋转"
+          },
+          "center": {
+            "type": "derived",
+            "evidence": "用户给定凸台中心(-25,0)，旋转轴沿Z过该点"
+          },
+          "axis": {
+            "type": "derived",
+            "evidence": "绕Z轴旋转"
+          }
+        },
+        "relations": []
+      },
+      "hole_blind_cyl": {
+        "kind": "cylinder",
+        "operation": "cut",
+        "name": "盲孔（圆柱切削）",
+        "parameters": {
+          "radius": 4,
+          "height": 6,
+          "center": [
+            25,
+            0,
+            14
+          ],
+          "axis": "Z",
+          "base": true
+        },
+        "sources": {
+          "radius": {
+            "type": "user",
+            "evidence": "用户给定直径8，半径=4"
+          },
+          "height": {
+            "type": "user",
+            "evidence": "用户给定盲孔深度6"
+          },
+          "center": {
+            "type": "derived",
+            "evidence": "盲孔底面z=20-6=14，base=true时圆柱从底面向上延伸至顶面20"
+          },
+          "axis": {
+            "type": "derived",
+            "evidence": "竖直沿Z轴（base=false使圆柱从z=14到20）"
+          },
+          "base": {
+            "type": "derived",
+            "evidence": "以盲孔底面为基面，高度6延伸至顶面"
+          }
+        },
+        "relations": []
+      }
+    },
+    "build_log": [
+      "[基准] 长方体 100 × 60 × 20 mm → 8 面",
+      "[切除] 圆柱 ⌀10 × 20 mm → 182 面",
+      "[合并] 回转体 360° (4 点轮廓) → 478 面",
+      "[切除] 圆柱 ⌀8 × 6 mm → 588 面"
+    ],
+    "local_geometry_checks": {
+      "backend": "occt_brep",
+      "kernel": "可用：OCCT 7.9.3.1 / cadquery-ocp-novtk 7.9.3.1.1",
+      "geometry_state": "needs_review",
+      "state": "needs_review",
+      "brep_valid": true,
+      "shape_type": "TopAbs_COMPOUND",
+      "solid_count": 1,
+      "connected_component_count": 1,
+      "shell_count": 1,
+      "closed_shell_count": 1,
+      "closed": true,
+      "edge_count": 42,
+      "face_count": 11,
+      "free_edge_count": 0,
+      "volume_mm3": 119032.38946269432,
+      "bbox_mm": [
+        -50.0,
+        -30.0,
+        0.0,
+        50.0,
+        30.0,
+        28.0
+      ],
+      "self_intersection": {
+        "status": "checked_no_intersection",
+        "face_count": 11,
+        "check_result_count": 0,
+        "check_statuses": [],
+        "method": "BOPAlgo_ArgumentAnalyzer(SelfInterMode=True, UseOBB=True)"
+      },
+      "validity_method": "BRepCheck_Analyzer",
+      "geometry_scope": "native_OCCT_BREP_only_visual_comparison_not_performed",
+      "feature_results": [
+        {
+          "feature_id": "base_plate",
+          "kind": "box",
+          "operation": "add",
+          "geometry_support": "exact",
+          "builder": "analytic_prism",
+          "state": "applied",
+          "source_feature_id": null,
+          "source_resolution": null,
+          "solid_count": 1,
+          "brep_valid": true,
+          "before_volume_mm3": 0.0,
+          "after_volume_mm3": 120000.0,
+          "volume_delta_mm3": 120000.0,
+          "cylindrical_cut_intents": [],
+          "depth_measurement": null,
+          "facet_count": null
+        },
+        {
+          "feature_id": "hole_through_cyl",
+          "kind": "cylinder",
+          "operation": "cut",
+          "geometry_support": "exact",
+          "builder": "analytic_cylinder_or_cone",
+          "state": "applied",
+          "source_feature_id": null,
+          "source_resolution": null,
+          "solid_count": 1,
+          "brep_valid": true,
+          "before_volume_mm3": 120000.0,
+          "after_volume_mm3": 118429.20367320509,
+          "volume_delta_mm3": -1570.796326794909,
+          "cylindrical_cut_intents": [
+            {
+              "feature_id": "hole_through_cyl",
+              "instance_index": 1,
+              "axis": "Z",
+              "centerline_mm": [
+                0.0,
+                0.0,
+                10.0
+              ],
+              "diameter_mm": 10.0,
+              "depth_mm": null,
+              "through": true,
+              "planned_status": "pending",
+              "source_geometry": "OCCT cylindrical cutter topology",
+              "classification": "verified_intent_candidate",
+              "tool_bbox_mm": [
+                -5.0,
+                -5.0,
+                0.0,
+                5.0,
+                5.0,
+                20.0
+              ]
+            }
+          ],
+          "depth_measurement": null,
+          "facet_count": null
+        },
+        {
+          "feature_id": "revolve_boss",
+          "kind": "revolve",
+          "operation": "add",
+          "geometry_support": "exact",
+          "builder": "analytic_occt_revolve",
+          "state": "applied",
+          "source_feature_id": null,
+          "source_resolution": null,
+          "solid_count": 1,
+          "brep_valid": true,
+          "before_volume_mm3": 118429.20367320509,
+          "after_volume_mm3": 119333.98235743896,
+          "volume_delta_mm3": 904.7786842338683,
+          "cylindrical_cut_intents": [],
+          "depth_measurement": null,
+          "facet_count": null
+        },
+        {
+          "feature_id": "hole_blind_cyl",
+          "kind": "cylinder",
+          "operation": "cut",
+          "geometry_support": "exact",
+          "builder": "analytic_cylinder_or_cone",
+          "state": "applied",
+          "source_feature_id": null,
+          "source_resolution": null,
+          "solid_count": 1,
+          "brep_valid": true,
+          "before_volume_mm3": 119333.98235743896,
+          "after_volume_mm3": 119032.38946269432,
+          "volume_delta_mm3": -301.5928947446373,
+          "cylindrical_cut_intents": [
+            {
+              "feature_id": "hole_blind_cyl",
+              "classification": "unverified_cylindrical_cut",
+              "status": "unverified",
+              "axis": "Z",
+              "centerline_mm": [
+                25.0,
+                0.0,
+                14.0
+              ],
+              "diameter_mm": 8.0,
+              "tool_bbox_mm": [
+                21.0,
+                -4.0,
+                14.0,
+                29.0,
+                4.0,
+                20.0
+              ],
+              "reason": "圆柱刀具未贯穿目标轴向包围盒；盲深或局部开口需进一步定向测量。"
+            }
+          ],
+          "depth_measurement": null,
+          "facet_count": null
+        }
+      ],
+      "hole_instances": [
+        {
+          "feature_id": "hole_through_cyl",
+          "instance_index": 1,
+          "axis": "Z",
+          "centerline_mm": [
+            0.0,
+            0.0,
+            10.0
+          ],
+          "diameter_mm": 10.0,
+          "depth_mm": null,
+          "through": true,
+          "planned_status": "pending",
+          "source_geometry": "OCCT cylindrical cutter topology",
+          "classification": "verified_intent_candidate",
+          "tool_bbox_mm": [
+            -5.0,
+            -5.0,
+            0.0,
+            5.0,
+            5.0,
+            20.0
+          ],
+          "status": "verified_open",
+          "reason": "全包围盒轴跨度无实体区间；同轴解析圆柱面实测直径匹配，且孔壁截面有完整环形材料。",
+          "axis_surface_crossings": 0,
+          "centerline_material_segments": [],
+          "ring_supported": [
+            true
+          ],
+          "measured_diameter_mm": 10.0,
+          "diameter_candidates_mm": [
+            10.0
+          ],
+          "measured_depth_mm": null,
+          "matching_cylindrical_faces": [
+            {
+              "radius_mm": 5.0,
+              "diameter_mm": 10.0,
+              "axis_line_distance_mm": 0.0,
+              "axis_parallel_dot": 1.0,
+              "axis_interval_mm": [
+                0.0,
+                20.0
+              ],
+              "surface_type": "analytic_cylinder"
+            }
+          ],
+          "centerline_proof": {
+            "method": "IntCurvesFace_ShapeIntersector exact line/trimmed-face events + BRepClass3d interval classification",
+            "intersection_count": 0,
+            "segments": [
+              {
+                "axis_interval_mm": [
+                  -0.001,
+                  28.001
+                ],
+                "midpoint_mm": 14.0,
+                "inside_solid": false
+              }
+            ],
+            "material_segments": []
+          },
+          "wall_support": {
+            "supported": true,
+            "ring_supported": [
+              true
+            ],
+            "sampled_axis_stations_mm": [
+              10.0
+            ],
+            "supported_axis_stations_mm": [
+              10.0
+            ],
+            "sample_count_per_section": 24,
+            "method": "BRepClass3d 24-point ring at 1.25 x measured radius, on measured cylinder-wall spans"
+          },
+          "method": "OCCT trimmed-face line intersections + BRepClass3d interval/ring classification + analytic cylindrical-face radius/axis measurement"
+        }
+      ],
+      "unverified_cut_intents": [
+        {
+          "feature_id": "hole_blind_cyl",
+          "classification": "unverified_cylindrical_cut",
+          "status": "unverified",
+          "axis": "Z",
+          "centerline_mm": [
+            25.0,
+            0.0,
+            14.0
+          ],
+          "diameter_mm": 8.0,
+          "tool_bbox_mm": [
+            21.0,
+            -4.0,
+            14.0,
+            29.0,
+            4.0,
+            20.0
+          ],
+          "reason": "圆柱刀具未贯穿目标轴向包围盒；盲深或局部开口需进一步定向测量。"
+        }
+      ],
+      "hole_feature_count": 0,
+      "measured_hole_source_feature_count": 1,
+      "unverified_cut_intent_count": 1,
+      "planned_hole_instance_count": 1,
+      "active_hole_instance_count": 1,
+      "superseded_hole_instance_count": 0,
+      "active_through_hole_count": 1,
+      "through_hole_count": 1,
+      "all_declared_holes_verified": true,
+      "visual_validation": "not_performed",
+      "catia_executed": false,
+      "build_transaction": "每个特征验证成功后才提交；失败保留上一有效实体",
+      "source": "OpenCASCADE native BREP; preview mesh is display-only",
+      "bbox_size_mm": [
+        100.0,
+        60.0,
+        28.0
+      ],
+      "bbox_ratios_from_brep": {
+        "front_width_height": 3.5714285714285716,
+        "depth_height": 2.142857142857143,
+        "top_width_depth": 1.6666666666666667
+      },
+      "bbox_ratios_from_mesh": {
+        "front_width_height": 3.5714285714285716,
+        "depth_height": 2.142857142857143,
+        "top_width_depth": 1.6666666666666667
+      },
+      "feature_count_from_plan": 4,
+      "feature_ids_from_plan": [
+        "base_plate",
+        "hole_through_cyl",
+        "revolve_boss",
+        "hole_blind_cyl"
+      ],
+      "hole_features_from_plan": [
+        {
+          "feature_id": "hole_through_cyl",
+          "kind": "cylinder",
+          "operation": "cut",
+          "parameters": {
+            "radius": 5,
+            "height": 20,
+            "center": [
+              0,
+              0,
+              0
+            ],
+            "axis": "Z"
+          },
+          "hole_intent_source": "inferred_from_cylindrical_cut_geometry"
+        },
+        {
+          "feature_id": "hole_blind_cyl",
+          "kind": "cylinder",
+          "operation": "cut",
+          "parameters": {
+            "radius": 4,
+            "height": 6,
+            "center": [
+              25,
+              0,
+              14
+            ],
+            "axis": "Z",
+            "base": true
+          },
+          "hole_intent_source": "inferred_from_cylindrical_cut_geometry"
+        }
+      ],
+      "hole_feature_count_from_plan": 2,
+      "expected_hole_instance_count": 1,
+      "hole_instance_count": 1,
+      "through_hole_checks": [
+        {
+          "feature_id": "hole_through_cyl",
+          "instance_index": 1,
+          "axis": "Z",
+          "centerline_mm": [
+            0.0,
+            0.0,
+            10.0
+          ],
+          "diameter_mm": 10.0,
+          "depth_mm": null,
+          "through": true,
+          "planned_status": "pending",
+          "source_geometry": "OCCT cylindrical cutter topology",
+          "classification": "verified_intent_candidate",
+          "tool_bbox_mm": [
+            -5.0,
+            -5.0,
+            0.0,
+            5.0,
+            5.0,
+            20.0
+          ],
+          "status": "verified_open",
+          "reason": "全包围盒轴跨度无实体区间；同轴解析圆柱面实测直径匹配，且孔壁截面有完整环形材料。",
+          "axis_surface_crossings": 0,
+          "centerline_material_segments": [],
+          "ring_supported": [
+            true
+          ],
+          "measured_diameter_mm": 10.0,
+          "diameter_candidates_mm": [
+            10.0
+          ],
+          "measured_depth_mm": null,
+          "matching_cylindrical_faces": [
+            {
+              "radius_mm": 5.0,
+              "diameter_mm": 10.0,
+              "axis_line_distance_mm": 0.0,
+              "axis_parallel_dot": 1.0,
+              "axis_interval_mm": [
+                0.0,
+                20.0
+              ],
+              "surface_type": "analytic_cylinder"
+            }
+          ],
+          "centerline_proof": {
+            "method": "IntCurvesFace_ShapeIntersector exact line/trimmed-face events + BRepClass3d interval classification",
+            "intersection_count": 0,
+            "segments": [
+              {
+                "axis_interval_mm": [
+                  -0.001,
+                  28.001
+                ],
+                "midpoint_mm": 14.0,
+                "inside_solid": false
+              }
+            ],
+            "material_segments": []
+          },
+          "wall_support": {
+            "supported": true,
+            "ring_supported": [
+              true
+            ],
+            "sampled_axis_stations_mm": [
+              10.0
+            ],
+            "supported_axis_stations_mm": [
+              10.0
+            ],
+            "sample_count_per_section": 24,
+            "method": "BRepClass3d 24-point ring at 1.25 x measured radius, on measured cylinder-wall spans"
+          },
+          "method": "OCCT trimmed-face line intersections + BRepClass3d interval/ring classification + analytic cylindrical-face radius/axis measurement"
+        }
+      ],
+      "through_hole_mesh_checks": [
+        {
+          "feature_id": "hole_through_cyl",
+          "instance_index": 1,
+          "axis": "Z",
+          "centerline_mm": [
+            0.0,
+            0.0,
+            10.0
+          ],
+          "diameter_mm": 10.0,
+          "depth_mm": null,
+          "through": true,
+          "planned_status": "pending",
+          "source_geometry": "OCCT cylindrical cutter topology",
+          "classification": "verified_intent_candidate",
+          "tool_bbox_mm": [
+            -5.0,
+            -5.0,
+            0.0,
+            5.0,
+            5.0,
+            20.0
+          ],
+          "status": "verified_open",
+          "reason": "全包围盒轴跨度无实体区间；同轴解析圆柱面实测直径匹配，且孔壁截面有完整环形材料。",
+          "axis_surface_crossings": 0,
+          "centerline_material_segments": [],
+          "ring_supported": [
+            true
+          ],
+          "measured_diameter_mm": 10.0,
+          "diameter_candidates_mm": [
+            10.0
+          ],
+          "measured_depth_mm": null,
+          "matching_cylindrical_faces": [
+            {
+              "radius_mm": 5.0,
+              "diameter_mm": 10.0,
+              "axis_line_distance_mm": 0.0,
+              "axis_parallel_dot": 1.0,
+              "axis_interval_mm": [
+                0.0,
+                20.0
+              ],
+              "surface_type": "analytic_cylinder"
+            }
+          ],
+          "centerline_proof": {
+            "method": "IntCurvesFace_ShapeIntersector exact line/trimmed-face events + BRepClass3d interval classification",
+            "intersection_count": 0,
+            "segments": [
+              {
+                "axis_interval_mm": [
+                  -0.001,
+                  28.001
+                ],
+                "midpoint_mm": 14.0,
+                "inside_solid": false
+              }
+            ],
+            "material_segments": []
+          },
+          "wall_support": {
+            "supported": true,
+            "ring_supported": [
+              true
+            ],
+            "sampled_axis_stations_mm": [
+              10.0
+            ],
+            "supported_axis_stations_mm": [
+              10.0
+            ],
+            "sample_count_per_section": 24,
+            "method": "BRepClass3d 24-point ring at 1.25 x measured radius, on measured cylinder-wall spans"
+          },
+          "method": "OCCT trimmed-face line intersections + BRepClass3d interval/ring classification + analytic cylindrical-face radius/axis measurement"
+        }
+      ],
+      "hole_measurement_complete": false,
+      "hole_measurement_state": "incomplete_or_unverified",
+      "through_hole_count_expected": 1,
+      "through_hole_count_verified": 1,
+      "through_hole_result": "measured_by_native_brep",
+      "image_estimate_parameters": [],
+      "catia_geometry_verification": "not_performed"
+    },
+    "orthographic_layout": {
+      "unit": "mm",
+      "axes": {
+        "length": "X",
+        "width": "Y",
+        "height": "Z"
+      },
+      "uniform_scale_across_views": true,
+      "scale_pixels_per_mm": 2.132,
+      "tile_size_pixels": [
+        330,
+        260
+      ],
+      "view_extents": {
+        "front": {
+          "horizontal_axis": "X",
+          "horizontal": 100.0,
+          "vertical_axis": "Z",
+          "vertical": 28.0
+        },
+        "right": {
+          "horizontal_axis": "Y",
+          "horizontal": 60.0,
+          "vertical_axis": "Z",
+          "vertical": 28.0
+        },
+        "top": {
+          "horizontal_axis": "X",
+          "horizontal": 100.0,
+          "vertical_axis": "Y",
+          "vertical": 60.0
+        }
+      },
+      "dimension_ratios": {
+        "length_to_height": 3.5714285714285716,
+        "width_to_height": 2.142857142857143,
+        "length_to_width": 1.6666666666666667
+      }
+    },
+    "preview_image": "C:\\Users\\lycohana\\AppData\\Local\\AI Modeler\\dsh\\sessions\\geometry-cut-intent-20261001\\previews\\r9-g5-iso.png",
+    "preview_image_views": [
+      "iso"
+    ],
+    "preview_image_view_set": "iso",
+    "preview_image_grid_columns": 1,
+    "preview_image_source": "OCCT BREP tessellated for display; not a CATIA screenshot",
+    "preview_render_style": "view-adaptive depth-cued matte shading with visible feature edges",
+    "preview_render_note": "诊断渲染：凹入或远离相机的表面会略暗，清晰线条表示可见的几何折边；亮暗不是零件材质颜色，需结合其它视图判断。",
+    "preview_image_layout": {
+      "unit": "mm",
+      "axes": {
+        "length": "X",
+        "width": "Y",
+        "height": "Z"
+      },
+      "uniform_scale_across_views": true,
+      "scale_pixels_per_mm": 2.132,
+      "tile_size_pixels": [
+        330,
+        260
+      ],
+      "view_extents": {
+        "front": {
+          "horizontal_axis": "X",
+          "horizontal": 100.0,
+          "vertical_axis": "Z",
+          "vertical": 28.0
+        },
+        "right": {
+          "horizontal_axis": "Y",
+          "horizontal": 60.0,
+          "vertical_axis": "Z",
+          "vertical": 28.0
+        },
+        "top": {
+          "horizontal_axis": "X",
+          "horizontal": 100.0,
+          "vertical_axis": "Y",
+          "vertical": 60.0
+        }
+      },
+      "dimension_ratios": {
+        "length_to_height": 3.5714285714285716,
+        "width_to_height": 2.142857142857143,
+        "length_to_width": 1.6666666666666667
+      }
+    },
+    "preview_generation": 5
+  },
+  "review": null,
+  "open_multiview_findings": [],
+  "reply": "已保存候选，程序状态为 candidate_geometry_unverified，尚未验收。 本地几何状态：needs_review；独立原图-模型复核pair：0；参考证据覆盖：未覆盖或未知；外部事实来源：0/0项已核实；未解决finding：0；CATIA未运行。",
+  "agent_self_report": "模型已生成并保存。当前状态为 **candidate_geometry_unverified**（候选未验收），因为盲孔深度未通过本地自动孔测量流程完成核验。\n\n### 建模结果摘要\n- **底板**：100 × 60 × 20 mm，底面 z=0，中心在原点。\n- **顶面孔**：\n  - 贯穿孔：直径 10 mm，中心 (0,0)，使用 `cylinder` + `cut` 执行 subtract，深度 20 mm 贯穿全板。\n  - 盲孔：直径 8 mm、中心 (25,0)、深度 6 mm（从 z=20 到 z=14），同样使用 `cylinder` + `cut`，未使用 `hole` 特征。\n- **旋转凸台**：中心 (-25,0)，外径 12 mm（半径 6 mm），高 8 mm（z=20~28），矩形截面绕 Z 轴 360° 回转生成。\n\n### 几何检查结果\n| 检查项 | 结果 |\n|---|---|\n| **实体有效性** | ✅ BRep 有效，封闭，无自交，1 个 solid |\n| **包围盒** | ✅ 100 × 60 × 28 mm |\n| **贯穿孔孔径** | ✅ 自动测量直径 10 mm，状态 `verified_open` |\n| **盲孔深度** | ⚠️ 本地自动测量未完成（`unverified_cylindrical_cut`） |\n| **凸台尺寸** | ✅ 由特征参数与体积增量确认：半径 6 mm、高 8 mm |\n\n**说明**：盲孔使用圆柱切削工具而非 `hole` 特征，导致本地孔径/深度自动分类器无法将其识别为已核验盲孔；但其几何正确，体积减量约为 `π·4²·6 ≈ 301.59 mm³`，与直径 8、深 6 完全一致。\n\n### 输出文件\n- CADPlan / 报告 / STL / 预览：\n  - `C:\\Users\\lycohana\\AppData\\Local\\AI Modeler\\dsh\\sessions\\geometry-cut-intent-20261001\\output\\candidate.aimodel`\n  - `candidate.stl`\n  - `preview.png`\n  - `geometry-report.json`\n- CATIA 未启动，未创建或验证 CATPart。",
+  "finish_reason": "completed",
+  "error": null,
+  "output_paths": {
+    "aimodel": "C:\\Users\\lycohana\\Desktop\\code\\AI-_-\\artifacts\\agent-quality-rebuild\\geometry-backend\\geometry-cut-intent-cli-20261001\\turns\\2bd01a33c48c41c18664cd93c20ea682\\candidate.aimodel",
+    "stl": "C:\\Users\\lycohana\\Desktop\\code\\AI-_-\\artifacts\\agent-quality-rebuild\\geometry-backend\\geometry-cut-intent-cli-20261001\\turns\\2bd01a33c48c41c18664cd93c20ea682\\candidate.stl",
+    "preview": "C:\\Users\\lycohana\\Desktop\\code\\AI-_-\\artifacts\\agent-quality-rebuild\\geometry-backend\\geometry-cut-intent-cli-20261001\\turns\\2bd01a33c48c41c18664cd93c20ea682\\preview.png",
+    "report": "C:\\Users\\lycohana\\Desktop\\code\\AI-_-\\artifacts\\agent-quality-rebuild\\geometry-backend\\geometry-cut-intent-cli-20261001\\turns\\2bd01a33c48c41c18664cd93c20ea682\\geometry-report.json",
+    "preview_iso": "C:\\Users\\lycohana\\Desktop\\code\\AI-_-\\artifacts\\agent-quality-rebuild\\geometry-backend\\geometry-cut-intent-cli-20261001\\turns\\2bd01a33c48c41c18664cd93c20ea682\\views\\iso.png"
+  },
+  "output_warning": null,
+  "tool_calls": 28,
+  "web_search_calls": 0,
+  "preview_calls": 5,
+  "review_rounds": 0,
+  "main_self_report_count": 0,
+  "finish_summary": {
+    "finish_state": "candidate_geometry_unverified",
+    "accepted": false,
+    "local_geometry_state": "needs_review",
+    "hole_measurement": {
+      "complete": false,
+      "declared_feature_ids": [],
+      "measured_feature_ids": [
+        "hole_through_cyl"
+      ],
+      "instance_count": 1,
+      "active_instance_count": 1,
+      "superseded_instance_count": 0,
+      "active_through_hole_count": 1,
+      "instance_statuses": [
+        "verified_open"
+      ],
+      "measurement_complete_flag": true,
+      "unverified_cut_intents": [
+        {
+          "feature_id": "hole_blind_cyl",
+          "classification": "unverified_cylindrical_cut",
+          "status": "unverified",
+          "axis": "Z",
+          "centerline_mm": [
+            25.0,
+            0.0,
+            14.0
+          ],
+          "diameter_mm": 8.0,
+          "tool_bbox_mm": [
+            21.0,
+            -4.0,
+            14.0,
+            29.0,
+            4.0,
+            20.0
+          ],
+          "reason": "圆柱刀具未贯穿目标轴向包围盒；盲深或局部开口需进一步定向测量。"
+        }
+      ]
+    },
+    "independent_review_pair_count": 0,
+    "visual_evidence": {
+      "revision": 9,
+      "references": {},
+      "latest_review_pairs": 0,
+      "comparable_review_pairs": 0,
+      "noncomparable_review_pairs": 0,
+      "all_references_covered": false
+    },
+    "required_external_facts": {
+      "required_count": 0,
+      "verified_count": 0,
+      "failed_count": 0,
+      "unknown_count": 0,
+      "facts": {}
+    },
+    "open_finding_count": 0,
+    "construction_complete": true,
+    "catia_invoked": false
+  },
+  "repair_cycles": 5,
+  "model_call_count": 24,
+  "model_call_count_source": "dsh_llm_stream_events",
+  "model_calls": [
+    {
+      "provider": "ai-modeler",
+      "model": "moonshotai/Kimi-K2.7-Code",
+      "reasoning_effort": "low",
+      "dsh_request_image_count": 0,
+      "capture_layer": "dsh_llm_stream_boundary",
+      "provider_wire_observed": true
+    },
+    {
+      "provider": "ai-modeler",
+      "model": "moonshotai/Kimi-K2.7-Code",
+      "reasoning_effort": "low",
+      "dsh_request_image_count": 0,
+      "capture_layer": "dsh_llm_stream_boundary",
+      "provider_wire_observed": true
+    },
+    {
+      "provider": "ai-modeler",
+      "model": "moonshotai/Kimi-K2.7-Code",
+      "reasoning_effort": "low",
+      "dsh_request_image_count": 0,
+      "capture_layer": "dsh_llm_stream_boundary",
+      "provider_wire_observed": true
+    },
+    {
+      "provider": "ai-modeler",
+      "model": "moonshotai/Kimi-K2.7-Code",
+      "reasoning_effort": "low",
+      "dsh_request_image_count": 0,
+      "capture_layer": "dsh_llm_stream_boundary",
+      "provider_wire_observed": true
+    },
+    {
+      "provider": "ai-modeler",
+      "model": "moonshotai/Kimi-K2.7-Code",
+      "reasoning_effort": "low",
+      "dsh_request_image_count": 0,
+      "capture_layer": "dsh_llm_stream_boundary",
+      "provider_wire_observed": true
+    },
+    {
+      "provider": "ai-modeler",
+      "model": "moonshotai/Kimi-K2.7-Code",
+      "reasoning_effort": "low",
+      "dsh_request_image_count": 0,
+      "capture_layer": "dsh_llm_stream_boundary",
+      "provider_wire_observed": true
+    },
+    {
+      "provider": "ai-modeler",
+      "model": "moonshotai/Kimi-K2.7-Code",
+      "reasoning_effort": "low",
+      "dsh_request_image_count": 0,
+      "capture_layer": "dsh_llm_stream_boundary",
+      "provider_wire_observed": true
+    },
+    {
+      "provider": "ai-modeler",
+      "model": "moonshotai/Kimi-K2.7-Code",
+      "reasoning_effort": "low",
+      "dsh_request_image_count": 0,
+      "capture_layer": "dsh_llm_stream_boundary",
+      "provider_wire_observed": true
+    },
+    {
+      "provider": "ai-modeler",
+      "model": "moonshotai/Kimi-K2.7-Code",
+      "reasoning_effort": "low",
+      "dsh_request_image_count": 0,
+      "capture_layer": "dsh_llm_stream_boundary",
+      "provider_wire_observed": true
+    },
+    {
+      "provider": "ai-modeler",
+      "model": "moonshotai/Kimi-K2.7-Code",
+      "reasoning_effort": "low",
+      "dsh_request_image_count": 0,
+      "capture_layer": "dsh_llm_stream_boundary",
+      "provider_wire_observed": true
+    },
+    {
+      "provider": "ai-modeler",
+      "model": "moonshotai/Kimi-K2.7-Code",
+      "reasoning_effort": "low",
+      "dsh_request_image_count": 0,
+      "capture_layer": "dsh_llm_stream_boundary",
+      "provider_wire_observed": true
+    },
+    {
+      "provider": "ai-modeler",
+      "model": "moonshotai/Kimi-K2.7-Code",
+      "reasoning_effort": "low",
+      "dsh_request_image_count": 0,
+      "capture_layer": "dsh_llm_stream_boundary",
+      "provider_wire_observed": true
+    },
+    {
+      "provider": "ai-modeler",
+      "model": "moonshotai/Kimi-K2.7-Code",
+      "reasoning_effort": "low",
+      "dsh_request_image_count": 0,
+      "capture_layer": "dsh_llm_stream_boundary",
+      "provider_wire_observed": true
+    },
+    {
+      "provider": "ai-modeler",
+      "model": "moonshotai/Kimi-K2.7-Code",
+      "reasoning_effort": "low",
+      "dsh_request_image_count": 0,
+      "capture_layer": "dsh_llm_stream_boundary",
+      "provider_wire_observed": true
+    },
+    {
+      "provider": "ai-modeler",
+      "model": "moonshotai/Kimi-K2.7-Code",
+      "reasoning_effort": "low",
+      "dsh_request_image_count": 0,
+      "capture_layer": "dsh_llm_stream_boundary",
+      "provider_wire_observed": true
+    },
+    {
+      "provider": "ai-modeler",
+      "model": "moonshotai/Kimi-K2.7-Code",
+      "reasoning_effort": "low",
+      "dsh_request_image_count": 0,
+      "capture_layer": "dsh_llm_stream_boundary",
+      "provider_wire_observed": true
+    },
+    {
+      "provider": "ai-modeler",
+      "model": "moonshotai/Kimi-K2.7-Code",
+      "reasoning_effort": "low",
+      "dsh_request_image_count": 0,
+      "capture_layer": "dsh_llm_stream_boundary",
+      "provider_wire_observed": true
+    },
+    {
+      "provider": "ai-modeler",
+      "model": "moonshotai/Kimi-K2.7-Code",
+      "reasoning_effort": "low",
+      "dsh_request_image_count": 0,
+      "capture_layer": "dsh_llm_stream_boundary",
+      "provider_wire_observed": true
+    },
+    {
+      "provider": "ai-modeler",
+      "model": "moonshotai/Kimi-K2.7-Code",
+      "reasoning_effort": "low",
+      "dsh_request_image_count": 0,
+      "capture_layer": "dsh_llm_stream_boundary",
+      "provider_wire_observed": true
+    },
+    {
+      "provider": "ai-modeler",
+      "model": "moonshotai/Kimi-K2.7-Code",
+      "reasoning_effort": "low",
+      "dsh_request_image_count": 0,
+      "capture_layer": "dsh_llm_stream_boundary",
+      "provider_wire_observed": true
+    },
+    {
+      "provider": "ai-modeler",
+      "model": "moonshotai/Kimi-K2.7-Code",
+      "reasoning_effort": "low",
+      "dsh_request_image_count": 0,
+      "capture_layer": "dsh_llm_stream_boundary",
+      "provider_wire_observed": true
+    },
+    {
+      "provider": "ai-modeler",
+      "model": "moonshotai/Kimi-K2.7-Code",
+      "reasoning_effort": "low",
+      "dsh_request_image_count": 0,
+      "capture_layer": "dsh_llm_stream_boundary",
+      "provider_wire_observed": true
+    },
+    {
+      "provider": "ai-modeler",
+      "model": "moonshotai/Kimi-K2.7-Code",
+      "reasoning_effort": "low",
+      "dsh_request_image_count": 0,
+      "capture_layer": "dsh_llm_stream_boundary",
+      "provider_wire_observed": true
+    },
+    {
+      "provider": "ai-modeler",
+      "model": "moonshotai/Kimi-K2.7-Code",
+      "reasoning_effort": "low",
+      "dsh_request_image_count": 0,
+      "capture_layer": "dsh_llm_stream_boundary",
+      "provider_wire_observed": true
+    }
+  ],
+  "provider_attempt_count": 24,
+  "provider_finish_reasons": [
+    {
+      "request_id": "2bd01a33c48c41c18664cd93c20ea682:1790848160832:ji95ur",
+      "finish_reason": "tool_calls"
+    },
+    {
+      "request_id": "2bd01a33c48c41c18664cd93c20ea682:1790848193771:m3tojy",
+      "finish_reason": "tool_calls"
+    },
+    {
+      "request_id": "2bd01a33c48c41c18664cd93c20ea682:1790848227879:gs7vs2",
+      "finish_reason": "tool_calls"
+    },
+    {
+      "request_id": "2bd01a33c48c41c18664cd93c20ea682:1790848236293:smq1ft",
+      "finish_reason": "tool_calls"
+    },
+    {
+      "request_id": "2bd01a33c48c41c18664cd93c20ea682:1790848239286:wleihb",
+      "finish_reason": "tool_calls"
+    },
+    {
+      "request_id": "2bd01a33c48c41c18664cd93c20ea682:1790848246512:3w173v",
+      "finish_reason": "tool_calls"
+    },
+    {
+      "request_id": "2bd01a33c48c41c18664cd93c20ea682:1790848263400:vbvgld",
+      "finish_reason": "tool_calls"
+    },
+    {
+      "request_id": "2bd01a33c48c41c18664cd93c20ea682:1790848277076:oa4lq0",
+      "finish_reason": "tool_calls"
+    },
+    {
+      "request_id": "2bd01a33c48c41c18664cd93c20ea682:1790848284031:c9ef55",
+      "finish_reason": "tool_calls"
+    },
+    {
+      "request_id": "2bd01a33c48c41c18664cd93c20ea682:1790848292324:y3ecj5",
+      "finish_reason": "tool_calls"
+    },
+    {
+      "request_id": "2bd01a33c48c41c18664cd93c20ea682:1790848298440:vcsg9v",
+      "finish_reason": "tool_calls"
+    },
+    {
+      "request_id": "2bd01a33c48c41c18664cd93c20ea682:1790848302680:3s43a6",
+      "finish_reason": "tool_calls"
+    },
+    {
+      "request_id": "2bd01a33c48c41c18664cd93c20ea682:1790848370091:b92joa",
+      "finish_reason": "tool_calls"
+    },
+    {
+      "request_id": "2bd01a33c48c41c18664cd93c20ea682:1790848397431:7nu2pe",
+      "finish_reason": "tool_calls"
+    },
+    {
+      "request_id": "2bd01a33c48c41c18664cd93c20ea682:1790848406011:r3vkx0",
+      "finish_reason": "tool_calls"
+    },
+    {
+      "request_id": "2bd01a33c48c41c18664cd93c20ea682:1790848410768:7mp1j4",
+      "finish_reason": "tool_calls"
+    },
+    {
+      "request_id": "2bd01a33c48c41c18664cd93c20ea682:1790848417051:rzkygy",
+      "finish_reason": "tool_calls"
+    },
+    {
+      "request_id": "2bd01a33c48c41c18664cd93c20ea682:1790848425934:g9n1xp",
+      "finish_reason": "tool_calls"
+    },
+    {
+      "request_id": "2bd01a33c48c41c18664cd93c20ea682:1790848437514:b4l069",
+      "finish_reason": "tool_calls"
+    },
+    {
+      "request_id": "2bd01a33c48c41c18664cd93c20ea682:1790848458510:nm8opt",
+      "finish_reason": "tool_calls"
+    },
+    {
+      "request_id": "2bd01a33c48c41c18664cd93c20ea682:1790848460867:mb3f4s",
+      "finish_reason": "tool_calls"
+    },
+    {
+      "request_id": "2bd01a33c48c41c18664cd93c20ea682:1790848464251:r7c9y6",
+      "finish_reason": "tool_calls"
+    },
+    {
+      "request_id": "2bd01a33c48c41c18664cd93c20ea682:1790848469140:191mg8",
+      "finish_reason": "tool_calls"
+    },
+    {
+      "request_id": "2bd01a33c48c41c18664cd93c20ea682:1790848503304:jkoaoo",
+      "finish_reason": "stop"
+    }
+  ],
+  "dsh_finish_reasons": [
+    {
+      "finish_reason": "[object Object]",
+      "elapsed_ms": 32975
+    },
+    {
+      "finish_reason": "[object Object]",
+      "elapsed_ms": 33420
+    },
+    {
+      "finish_reason": "[object Object]",
+      "elapsed_ms": 8399
+    },
+    {
+      "finish_reason": "[object Object]",
+      "elapsed_ms": 2966
+    },
+    {
+      "finish_reason": "[object Object]",
+      "elapsed_ms": 7197
+    },
+    {
+      "finish_reason": "[object Object]",
+      "elapsed_ms": 16856
+    },
+    {
+      "finish_reason": "[object Object]",
+      "elapsed_ms": 13647
+    },
+    {
+      "finish_reason": "[object Object]",
+      "elapsed_ms": 6920
+    },
+    {
+      "finish_reason": "[object Object]",
+      "elapsed_ms": 8253
+    },
+    {
+      "finish_reason": "[object Object]",
+      "elapsed_ms": 6091
+    },
+    {
+      "finish_reason": "[object Object]",
+      "elapsed_ms": 2823
+    },
+    {
+      "finish_reason": "[object Object]",
+      "elapsed_ms": 65307
+    },
+    {
+      "finish_reason": "[object Object]",
+      "elapsed_ms": 27294
+    },
+    {
+      "finish_reason": "[object Object]",
+      "elapsed_ms": 8549
+    },
+    {
+      "finish_reason": "[object Object]",
+      "elapsed_ms": 4726
+    },
+    {
+      "finish_reason": "[object Object]",
+      "elapsed_ms": 6249
+    },
+    {
+      "finish_reason": "[object Object]",
+      "elapsed_ms": 8834
+    },
+    {
+      "finish_reason": "[object Object]",
+      "elapsed_ms": 10459
+    },
+    {
+      "finish_reason": "[object Object]",
+      "elapsed_ms": 20955
+    },
+    {
+      "finish_reason": "[object Object]",
+      "elapsed_ms": 2350
+    },
+    {
+      "finish_reason": "[object Object]",
+      "elapsed_ms": 3342
+    },
+    {
+      "finish_reason": "[object Object]",
+      "elapsed_ms": 3816
+    },
+    {
+      "finish_reason": "[object Object]",
+      "elapsed_ms": 34038
+    },
+    {
+      "finish_reason": "[object Object]",
+      "elapsed_ms": 25804
+    }
+  ],
+  "provider_wire_observed": true,
+  "provider_wire_capture_layer": "node_global_fetch",
+  "request_image_hashes": [
+    {
+      "transport_sha256": "13dc548b95900583cd8ed58f464dc3e28717e53cd2423831a70f5a483bd851b1",
+      "byte_length": 12116,
+      "source_sha256": null,
+      "source_reference_ids": [],
+      "roi_norm": null,
+      "source_kind": "tool_preview",
+      "preview_revisions": [
+        5
+      ],
+      "preview_generations": [
+        1
+      ],
+      "preview_views": [
+        "iso"
+      ],
+      "partial_preview": false,
+      "source_mapping": "exact-transport-hash-match"
+    },
+    {
+      "transport_sha256": "13dc548b95900583cd8ed58f464dc3e28717e53cd2423831a70f5a483bd851b1",
+      "byte_length": 12116,
+      "source_sha256": null,
+      "source_reference_ids": [],
+      "roi_norm": null,
+      "source_kind": "tool_preview",
+      "preview_revisions": [
+        5
+      ],
+      "preview_generations": [
+        1
+      ],
+      "preview_views": [
+        "iso"
+      ],
+      "partial_preview": false,
+      "source_mapping": "exact-transport-hash-match"
+    },
+    {
+      "transport_sha256": "6b6c63e6fad3ba956feb84f47b0a47389bf4a137e2c7ee6a923b215577cad640",
+      "byte_length": 4894,
+      "source_sha256": null,
+      "source_reference_ids": [],
+      "roi_norm": null,
+      "source_kind": "tool_preview",
+      "preview_revisions": [
+        5
+      ],
+      "preview_generations": [
+        2
+      ],
+      "preview_views": [
+        "top"
+      ],
+      "partial_preview": false,
+      "source_mapping": "exact-transport-hash-match"
+    },
+    {
+      "transport_sha256": "9177f040df6282f2eca88e4b0ace37d918894a1523b80a6443188511598a0954",
+      "byte_length": 3396,
+      "source_sha256": null,
+      "source_reference_ids": [],
+      "roi_norm": null,
+      "source_kind": "tool_preview",
+      "preview_revisions": [
+        5
+      ],
+      "preview_generations": [
+        3
+      ],
+      "preview_views": [
+        "front"
+      ],
+      "partial_preview": false,
+      "source_mapping": "exact-transport-hash-match"
+    },
+    {
+      "transport_sha256": "13dc548b95900583cd8ed58f464dc3e28717e53cd2423831a70f5a483bd851b1",
+      "byte_length": 12116,
+      "source_sha256": null,
+      "source_reference_ids": [],
+      "roi_norm": null,
+      "source_kind": "tool_preview",
+      "preview_revisions": [
+        5
+      ],
+      "preview_generations": [
+        1
+      ],
+      "preview_views": [
+        "iso"
+      ],
+      "partial_preview": false,
+      "source_mapping": "exact-transport-hash-match"
+    },
+    {
+      "transport_sha256": "6b6c63e6fad3ba956feb84f47b0a47389bf4a137e2c7ee6a923b215577cad640",
+      "byte_length": 4894,
+      "source_sha256": null,
+      "source_reference_ids": [],
+      "roi_norm": null,
+      "source_kind": "tool_preview",
+      "preview_revisions": [
+        5
+      ],
+      "preview_generations": [
+        2
+      ],
+      "preview_views": [
+        "top"
+      ],
+      "partial_preview": false,
+      "source_mapping": "exact-transport-hash-match"
+    },
+    {
+      "transport_sha256": "9177f040df6282f2eca88e4b0ace37d918894a1523b80a6443188511598a0954",
+      "byte_length": 3396,
+      "source_sha256": null,
+      "source_reference_ids": [],
+      "roi_norm": null,
+      "source_kind": "tool_preview",
+      "preview_revisions": [
+        5
+      ],
+      "preview_generations": [
+        3
+      ],
+      "preview_views": [
+        "front"
+      ],
+      "partial_preview": false,
+      "source_mapping": "exact-transport-hash-match"
+    },
+    {
+      "transport_sha256": "13dc548b95900583cd8ed58f464dc3e28717e53cd2423831a70f5a483bd851b1",
+      "byte_length": 12116,
+      "source_sha256": null,
+      "source_reference_ids": [],
+      "roi_norm": null,
+      "source_kind": "tool_preview",
+      "preview_revisions": [
+        5
+      ],
+      "preview_generations": [
+        1
+      ],
+      "preview_views": [
+        "iso"
+      ],
+      "partial_preview": false,
+      "source_mapping": "exact-transport-hash-match"
+    },
+    {
+      "transport_sha256": "6b6c63e6fad3ba956feb84f47b0a47389bf4a137e2c7ee6a923b215577cad640",
+      "byte_length": 4894,
+      "source_sha256": null,
+      "source_reference_ids": [],
+      "roi_norm": null,
+      "source_kind": "tool_preview",
+      "preview_revisions": [
+        5
+      ],
+      "preview_generations": [
+        2
+      ],
+      "preview_views": [
+        "top"
+      ],
+      "partial_preview": false,
+      "source_mapping": "exact-transport-hash-match"
+    },
+    {
+      "transport_sha256": "9177f040df6282f2eca88e4b0ace37d918894a1523b80a6443188511598a0954",
+      "byte_length": 3396,
+      "source_sha256": null,
+      "source_reference_ids": [],
+      "roi_norm": null,
+      "source_kind": "tool_preview",
+      "preview_revisions": [
+        5
+      ],
+      "preview_generations": [
+        3
+      ],
+      "preview_views": [
+        "front"
+      ],
+      "partial_preview": false,
+      "source_mapping": "exact-transport-hash-match"
+    },
+    {
+      "transport_sha256": "13dc548b95900583cd8ed58f464dc3e28717e53cd2423831a70f5a483bd851b1",
+      "byte_length": 12116,
+      "source_sha256": null,
+      "source_reference_ids": [],
+      "roi_norm": null,
+      "source_kind": "tool_preview",
+      "preview_revisions": [
+        5
+      ],
+      "preview_generations": [
+        1
+      ],
+      "preview_views": [
+        "iso"
+      ],
+      "partial_preview": false,
+      "source_mapping": "exact-transport-hash-match"
+    },
+    {
+      "transport_sha256": "6b6c63e6fad3ba956feb84f47b0a47389bf4a137e2c7ee6a923b215577cad640",
+      "byte_length": 4894,
+      "source_sha256": null,
+      "source_reference_ids": [],
+      "roi_norm": null,
+      "source_kind": "tool_preview",
+      "preview_revisions": [
+        5
+      ],
+      "preview_generations": [
+        2
+      ],
+      "preview_views": [
+        "top"
+      ],
+      "partial_preview": false,
+      "source_mapping": "exact-transport-hash-match"
+    },
+    {
+      "transport_sha256": "9177f040df6282f2eca88e4b0ace37d918894a1523b80a6443188511598a0954",
+      "byte_length": 3396,
+      "source_sha256": null,
+      "source_reference_ids": [],
+      "roi_norm": null,
+      "source_kind": "tool_preview",
+      "preview_revisions": [
+        5
+      ],
+      "preview_generations": [
+        3
+      ],
+      "preview_views": [
+        "front"
+      ],
+      "partial_preview": false,
+      "source_mapping": "exact-transport-hash-match"
+    },
+    {
+      "transport_sha256": "13dc548b95900583cd8ed58f464dc3e28717e53cd2423831a70f5a483bd851b1",
+      "byte_length": 12116,
+      "source_sha256": null,
+      "source_reference_ids": [],
+      "roi_norm": null,
+      "source_kind": "tool_preview",
+      "preview_revisions": [
+        5
+      ],
+      "preview_generations": [
+        1
+      ],
+      "preview_views": [
+        "iso"
+      ],
+      "partial_preview": false,
+      "source_mapping": "exact-transport-hash-match"
+    },
+    {
+      "transport_sha256": "6b6c63e6fad3ba956feb84f47b0a47389bf4a137e2c7ee6a923b215577cad640",
+      "byte_length": 4894,
+      "source_sha256": null,
+      "source_reference_ids": [],
+      "roi_norm": null,
+      "source_kind": "tool_preview",
+      "preview_revisions": [
+        5
+      ],
+      "preview_generations": [
+        2
+      ],
+      "preview_views": [
+        "top"
+      ],
+      "partial_preview": false,
+      "source_mapping": "exact-transport-hash-match"
+    },
+    {
+      "transport_sha256": "9177f040df6282f2eca88e4b0ace37d918894a1523b80a6443188511598a0954",
+      "byte_length": 3396,
+      "source_sha256": null,
+      "source_reference_ids": [],
+      "roi_norm": null,
+      "source_kind": "tool_preview",
+      "preview_revisions": [
+        5
+      ],
+      "preview_generations": [
+        3
+      ],
+      "preview_views": [
+        "front"
+      ],
+      "partial_preview": false,
+      "source_mapping": "exact-transport-hash-match"
+    },
+    {
+      "transport_sha256": "13dc548b95900583cd8ed58f464dc3e28717e53cd2423831a70f5a483bd851b1",
+      "byte_length": 12116,
+      "source_sha256": null,
+      "source_reference_ids": [],
+      "roi_norm": null,
+      "source_kind": "tool_preview",
+      "preview_revisions": [
+        5
+      ],
+      "preview_generations": [
+        1
+      ],
+      "preview_views": [
+        "iso"
+      ],
+      "partial_preview": false,
+      "source_mapping": "exact-transport-hash-match"
+    },
+    {
+      "transport_sha256": "6b6c63e6fad3ba956feb84f47b0a47389bf4a137e2c7ee6a923b215577cad640",
+      "byte_length": 4894,
+      "source_sha256": null,
+      "source_reference_ids": [],
+      "roi_norm": null,
+      "source_kind": "tool_preview",
+      "preview_revisions": [
+        5
+      ],
+      "preview_generations": [
+        2
+      ],
+      "preview_views": [
+        "top"
+      ],
+      "partial_preview": false,
+      "source_mapping": "exact-transport-hash-match"
+    },
+    {
+      "transport_sha256": "9177f040df6282f2eca88e4b0ace37d918894a1523b80a6443188511598a0954",
+      "byte_length": 3396,
+      "source_sha256": null,
+      "source_reference_ids": [],
+      "roi_norm": null,
+      "source_kind": "tool_preview",
+      "preview_revisions": [
+        5
+      ],
+      "preview_generations": [
+        3
+      ],
+      "preview_views": [
+        "front"
+      ],
+      "partial_preview": false,
+      "source_mapping": "exact-transport-hash-match"
+    },
+    {
+      "transport_sha256": "13dc548b95900583cd8ed58f464dc3e28717e53cd2423831a70f5a483bd851b1",
+      "byte_length": 12116,
+      "source_sha256": null,
+      "source_reference_ids": [],
+      "roi_norm": null,
+      "source_kind": "tool_preview",
+      "preview_revisions": [
+        5,
+        8
+      ],
+      "preview_generations": [
+        1,
+        4
+      ],
+      "preview_views": [
+        "iso"
+      ],
+      "partial_preview": false,
+      "source_mapping": "exact-transport-hash-match"
+    },
+    {
+      "transport_sha256": "6b6c63e6fad3ba956feb84f47b0a47389bf4a137e2c7ee6a923b215577cad640",
+      "byte_length": 4894,
+      "source_sha256": null,
+      "source_reference_ids": [],
+      "roi_norm": null,
+      "source_kind": "tool_preview",
+      "preview_revisions": [
+        5
+      ],
+      "preview_generations": [
+        2
+      ],
+      "preview_views": [
+        "top"
+      ],
+      "partial_preview": false,
+      "source_mapping": "exact-transport-hash-match"
+    },
+    {
+      "transport_sha256": "9177f040df6282f2eca88e4b0ace37d918894a1523b80a6443188511598a0954",
+      "byte_length": 3396,
+      "source_sha256": null,
+      "source_reference_ids": [],
+      "roi_norm": null,
+      "source_kind": "tool_preview",
+      "preview_revisions": [
+        5
+      ],
+      "preview_generations": [
+        3
+      ],
+      "preview_views": [
+        "front"
+      ],
+      "partial_preview": false,
+      "source_mapping": "exact-transport-hash-match"
+    },
+    {
+      "transport_sha256": "13dc548b95900583cd8ed58f464dc3e28717e53cd2423831a70f5a483bd851b1",
+      "byte_length": 12116,
+      "source_sha256": null,
+      "source_reference_ids": [],
+      "roi_norm": null,
+      "source_kind": "tool_preview",
+      "preview_revisions": [
+        5,
+        8
+      ],
+      "preview_generations": [
+        1,
+        4
+      ],
+      "preview_views": [
+        "iso"
+      ],
+      "partial_preview": false,
+      "source_mapping": "exact-transport-hash-match"
+    },
+    {
+      "transport_sha256": "13dc548b95900583cd8ed58f464dc3e28717e53cd2423831a70f5a483bd851b1",
+      "byte_length": 12116,
+      "source_sha256": null,
+      "source_reference_ids": [],
+      "roi_norm": null,
+      "source_kind": "tool_preview",
+      "preview_revisions": [
+        5,
+        8
+      ],
+      "preview_generations": [
+        1,
+        4
+      ],
+      "preview_views": [
+        "iso"
+      ],
+      "partial_preview": false,
+      "source_mapping": "exact-transport-hash-match"
+    },
+    {
+      "transport_sha256": "6b6c63e6fad3ba956feb84f47b0a47389bf4a137e2c7ee6a923b215577cad640",
+      "byte_length": 4894,
+      "source_sha256": null,
+      "source_reference_ids": [],
+      "roi_norm": null,
+      "source_kind": "tool_preview",
+      "preview_revisions": [
+        5
+      ],
+      "preview_generations": [
+        2
+      ],
+      "preview_views": [
+        "top"
+      ],
+      "partial_preview": false,
+      "source_mapping": "exact-transport-hash-match"
+    },
+    {
+      "transport_sha256": "9177f040df6282f2eca88e4b0ace37d918894a1523b80a6443188511598a0954",
+      "byte_length": 3396,
+      "source_sha256": null,
+      "source_reference_ids": [],
+      "roi_norm": null,
+      "source_kind": "tool_preview",
+      "preview_revisions": [
+        5
+      ],
+      "preview_generations": [
+        3
+      ],
+      "preview_views": [
+        "front"
+      ],
+      "partial_preview": false,
+      "source_mapping": "exact-transport-hash-match"
+    },
+    {
+      "transport_sha256": "13dc548b95900583cd8ed58f464dc3e28717e53cd2423831a70f5a483bd851b1",
+      "byte_length": 12116,
+      "source_sha256": null,
+      "source_reference_ids": [],
+      "roi_norm": null,
+      "source_kind": "tool_preview",
+      "preview_revisions": [
+        5,
+        8
+      ],
+      "preview_generations": [
+        1,
+        4
+      ],
+      "preview_views": [
+        "iso"
+      ],
+      "partial_preview": false,
+      "source_mapping": "exact-transport-hash-match"
+    },
+    {
+      "transport_sha256": "13dc548b95900583cd8ed58f464dc3e28717e53cd2423831a70f5a483bd851b1",
+      "byte_length": 12116,
+      "source_sha256": null,
+      "source_reference_ids": [],
+      "roi_norm": null,
+      "source_kind": "tool_preview",
+      "preview_revisions": [
+        5,
+        8
+      ],
+      "preview_generations": [
+        1,
+        4
+      ],
+      "preview_views": [
+        "iso"
+      ],
+      "partial_preview": false,
+      "source_mapping": "exact-transport-hash-match"
+    },
+    {
+      "transport_sha256": "6b6c63e6fad3ba956feb84f47b0a47389bf4a137e2c7ee6a923b215577cad640",
+      "byte_length": 4894,
+      "source_sha256": null,
+      "source_reference_ids": [],
+      "roi_norm": null,
+      "source_kind": "tool_preview",
+      "preview_revisions": [
+        5
+      ],
+      "preview_generations": [
+        2
+      ],
+      "preview_views": [
+        "top"
+      ],
+      "partial_preview": false,
+      "source_mapping": "exact-transport-hash-match"
+    },
+    {
+      "transport_sha256": "9177f040df6282f2eca88e4b0ace37d918894a1523b80a6443188511598a0954",
+      "byte_length": 3396,
+      "source_sha256": null,
+      "source_reference_ids": [],
+      "roi_norm": null,
+      "source_kind": "tool_preview",
+      "preview_revisions": [
+        5
+      ],
+      "preview_generations": [
+        3
+      ],
+      "preview_views": [
+        "front"
+      ],
+      "partial_preview": false,
+      "source_mapping": "exact-transport-hash-match"
+    },
+    {
+      "transport_sha256": "13dc548b95900583cd8ed58f464dc3e28717e53cd2423831a70f5a483bd851b1",
+      "byte_length": 12116,
+      "source_sha256": null,
+      "source_reference_ids": [],
+      "roi_norm": null,
+      "source_kind": "tool_preview",
+      "preview_revisions": [
+        5,
+        8
+      ],
+      "preview_generations": [
+        1,
+        4
+      ],
+      "preview_views": [
+        "iso"
+      ],
+      "partial_preview": false,
+      "source_mapping": "exact-transport-hash-match"
+    },
+    {
+      "transport_sha256": "13dc548b95900583cd8ed58f464dc3e28717e53cd2423831a70f5a483bd851b1",
+      "byte_length": 12116,
+      "source_sha256": null,
+      "source_reference_ids": [],
+      "roi_norm": null,
+      "source_kind": "tool_preview",
+      "preview_revisions": [
+        5,
+        8
+      ],
+      "preview_generations": [
+        1,
+        4
+      ],
+      "preview_views": [
+        "iso"
+      ],
+      "partial_preview": false,
+      "source_mapping": "exact-transport-hash-match"
+    },
+    {
+      "transport_sha256": "6b6c63e6fad3ba956feb84f47b0a47389bf4a137e2c7ee6a923b215577cad640",
+      "byte_length": 4894,
+      "source_sha256": null,
+      "source_reference_ids": [],
+      "roi_norm": null,
+      "source_kind": "tool_preview",
+      "preview_revisions": [
+        5
+      ],
+      "preview_generations": [
+        2
+      ],
+      "preview_views": [
+        "top"
+      ],
+      "partial_preview": false,
+      "source_mapping": "exact-transport-hash-match"
+    },
+    {
+      "transport_sha256": "9177f040df6282f2eca88e4b0ace37d918894a1523b80a6443188511598a0954",
+      "byte_length": 3396,
+      "source_sha256": null,
+      "source_reference_ids": [],
+      "roi_norm": null,
+      "source_kind": "tool_preview",
+      "preview_revisions": [
+        5
+      ],
+      "preview_generations": [
+        3
+      ],
+      "preview_views": [
+        "front"
+      ],
+      "partial_preview": false,
+      "source_mapping": "exact-transport-hash-match"
+    },
+    {
+      "transport_sha256": "13dc548b95900583cd8ed58f464dc3e28717e53cd2423831a70f5a483bd851b1",
+      "byte_length": 12116,
+      "source_sha256": null,
+      "source_reference_ids": [],
+      "roi_norm": null,
+      "source_kind": "tool_preview",
+      "preview_revisions": [
+        5,
+        8
+      ],
+      "preview_generations": [
+        1,
+        4
+      ],
+      "preview_views": [
+        "iso"
+      ],
+      "partial_preview": false,
+      "source_mapping": "exact-transport-hash-match"
+    },
+    {
+      "transport_sha256": "13dc548b95900583cd8ed58f464dc3e28717e53cd2423831a70f5a483bd851b1",
+      "byte_length": 12116,
+      "source_sha256": null,
+      "source_reference_ids": [],
+      "roi_norm": null,
+      "source_kind": "tool_preview",
+      "preview_revisions": [
+        5,
+        8,
+        9
+      ],
+      "preview_generations": [
+        1,
+        4,
+        5
+      ],
+      "preview_views": [
+        "iso"
+      ],
+      "partial_preview": false,
+      "source_mapping": "exact-transport-hash-match"
+    },
+    {
+      "transport_sha256": "6b6c63e6fad3ba956feb84f47b0a47389bf4a137e2c7ee6a923b215577cad640",
+      "byte_length": 4894,
+      "source_sha256": null,
+      "source_reference_ids": [],
+      "roi_norm": null,
+      "source_kind": "tool_preview",
+      "preview_revisions": [
+        5
+      ],
+      "preview_generations": [
+        2
+      ],
+      "preview_views": [
+        "top"
+      ],
+      "partial_preview": false,
+      "source_mapping": "exact-transport-hash-match"
+    },
+    {
+      "transport_sha256": "9177f040df6282f2eca88e4b0ace37d918894a1523b80a6443188511598a0954",
+      "byte_length": 3396,
+      "source_sha256": null,
+      "source_reference_ids": [],
+      "roi_norm": null,
+      "source_kind": "tool_preview",
+      "preview_revisions": [
+        5
+      ],
+      "preview_generations": [
+        3
+      ],
+      "preview_views": [
+        "front"
+      ],
+      "partial_preview": false,
+      "source_mapping": "exact-transport-hash-match"
+    },
+    {
+      "transport_sha256": "13dc548b95900583cd8ed58f464dc3e28717e53cd2423831a70f5a483bd851b1",
+      "byte_length": 12116,
+      "source_sha256": null,
+      "source_reference_ids": [],
+      "roi_norm": null,
+      "source_kind": "tool_preview",
+      "preview_revisions": [
+        5,
+        8,
+        9
+      ],
+      "preview_generations": [
+        1,
+        4,
+        5
+      ],
+      "preview_views": [
+        "iso"
+      ],
+      "partial_preview": false,
+      "source_mapping": "exact-transport-hash-match"
+    },
+    {
+      "transport_sha256": "13dc548b95900583cd8ed58f464dc3e28717e53cd2423831a70f5a483bd851b1",
+      "byte_length": 12116,
+      "source_sha256": null,
+      "source_reference_ids": [],
+      "roi_norm": null,
+      "source_kind": "tool_preview",
+      "preview_revisions": [
+        5,
+        8,
+        9
+      ],
+      "preview_generations": [
+        1,
+        4,
+        5
+      ],
+      "preview_views": [
+        "iso"
+      ],
+      "partial_preview": false,
+      "source_mapping": "exact-transport-hash-match"
+    },
+    {
+      "transport_sha256": "13dc548b95900583cd8ed58f464dc3e28717e53cd2423831a70f5a483bd851b1",
+      "byte_length": 12116,
+      "source_sha256": null,
+      "source_reference_ids": [],
+      "roi_norm": null,
+      "source_kind": "tool_preview",
+      "preview_revisions": [
+        5,
+        8,
+        9
+      ],
+      "preview_generations": [
+        1,
+        4,
+        5
+      ],
+      "preview_views": [
+        "iso"
+      ],
+      "partial_preview": false,
+      "source_mapping": "exact-transport-hash-match"
+    },
+    {
+      "transport_sha256": "6b6c63e6fad3ba956feb84f47b0a47389bf4a137e2c7ee6a923b215577cad640",
+      "byte_length": 4894,
+      "source_sha256": null,
+      "source_reference_ids": [],
+      "roi_norm": null,
+      "source_kind": "tool_preview",
+      "preview_revisions": [
+        5
+      ],
+      "preview_generations": [
+        2
+      ],
+      "preview_views": [
+        "top"
+      ],
+      "partial_preview": false,
+      "source_mapping": "exact-transport-hash-match"
+    },
+    {
+      "transport_sha256": "9177f040df6282f2eca88e4b0ace37d918894a1523b80a6443188511598a0954",
+      "byte_length": 3396,
+      "source_sha256": null,
+      "source_reference_ids": [],
+      "roi_norm": null,
+      "source_kind": "tool_preview",
+      "preview_revisions": [
+        5
+      ],
+      "preview_generations": [
+        3
+      ],
+      "preview_views": [
+        "front"
+      ],
+      "partial_preview": false,
+      "source_mapping": "exact-transport-hash-match"
+    },
+    {
+      "transport_sha256": "13dc548b95900583cd8ed58f464dc3e28717e53cd2423831a70f5a483bd851b1",
+      "byte_length": 12116,
+      "source_sha256": null,
+      "source_reference_ids": [],
+      "roi_norm": null,
+      "source_kind": "tool_preview",
+      "preview_revisions": [
+        5,
+        8,
+        9
+      ],
+      "preview_generations": [
+        1,
+        4,
+        5
+      ],
+      "preview_views": [
+        "iso"
+      ],
+      "partial_preview": false,
+      "source_mapping": "exact-transport-hash-match"
+    },
+    {
+      "transport_sha256": "13dc548b95900583cd8ed58f464dc3e28717e53cd2423831a70f5a483bd851b1",
+      "byte_length": 12116,
+      "source_sha256": null,
+      "source_reference_ids": [],
+      "roi_norm": null,
+      "source_kind": "tool_preview",
+      "preview_revisions": [
+        5,
+        8,
+        9
+      ],
+      "preview_generations": [
+        1,
+        4,
+        5
+      ],
+      "preview_views": [
+        "iso"
+      ],
+      "partial_preview": false,
+      "source_mapping": "exact-transport-hash-match"
+    }
+  ],
+  "image_parts_in_request": 45,
+  "reference_image_count": 0,
+  "knowledge_search": {
+    "status": "no_match",
+    "query": "请用毫米创建一个可编辑的参数化候选模型：底板长100、宽60、厚20，底面z=0且平面中心在原点。顶面有一个直径10的竖直贯穿圆孔，孔中心(0,0)；再有一个直径8、从顶面向下深6的盲孔，中心(25,0)。这两个孔请明确通过圆柱切削工具执行subtract，不要改用hole特征。最后在中心(-25,0)的顶面添加一个轴对称旋转凸台：矩形截面绕Z轴360度旋转，外径12、高8，底面与顶面相接。尺寸必须保持，生成后检查孔径、盲孔深度、包围盒与实体有效性；若某项无法核实请如实标记候选未验收。",
+    "matches": [],
+    "negative_examples": [],
+    "image_query_supported": false,
+    "visual_fallback_available": false,
+    "score_meaning": "relevance 是词面相关度排序分数，不是准确率或置信概率。",
+    "message": "当前文字描述没有达到相似检索阈值；这不代表库外不存在对应工件。",
+    "modeling_recipes": [
+      {
+        "id": "hole.blind",
+        "name": "盲孔",
+        "aliases": [
+          "盲孔",
+          "不贯穿孔",
+          "沉孔深度",
+          "blind hole"
+        ],
+        "intent": "在当前实体上建立指定深度的盲孔。",
+        "strategy": [
+          "先确定孔轴和孔心",
+          "使用 hole 特征，through=false 并给出 depth",
+          "确认深度不会切穿实体"
+        ],
+        "parameters": [
+          "直径",
+          "深度",
+          "孔心",
+          "孔轴"
+        ],
+        "builder": null,
+        "status": "guidance",
+        "limitations": []
+      }
+    ]
+  },
+  "knowledge_visual_examples": [],
+  "knowledge_image_parts": 0,
+  "image_input_mode": "individual",
+  "llm_usage": {
+    "input_tokens": 719825,
+    "output_tokens": 9980,
+    "total_tokens": 729805,
+    "reasoning_tokens": 6673,
+    "cache_token_details": {
+      "prompt_tokens_details.cached_tokens": 662784
+    }
+  },
+  "usage_source": "provider_response_body",
+  "first_tool_latency_ms": 38828.0,
+  "observability": {
+    "path": "C:\\Users\\lycohana\\AppData\\Local\\AI Modeler\\dsh\\sessions\\geometry-cut-intent-20261001\\agent-observability.jsonl",
+    "logical_requests": 24,
+    "provider_attempts_observed": 24,
+    "provider_wire_status": "observed",
+    "copied_path": "C:\\Users\\lycohana\\Desktop\\code\\AI-_-\\artifacts\\agent-quality-rebuild\\geometry-backend\\geometry-cut-intent-cli-20261001\\turns\\2bd01a33c48c41c18664cd93c20ea682\\agent-observability.jsonl",
+    "copied_turn_id": "2bd01a33c48c41c18664cd93c20ea682",
+    "copied_event_count": 14505
+  },
+  "routing": {
+    "action": "dsh_agent",
+    "review_mode": "local_geometry"
+  },
+  "run_record": "C:\\Users\\lycohana\\AppData\\Local\\AI Modeler\\dsh\\sessions\\geometry-cut-intent-20261001\\cad-state.json",
+  "run_id": "geometry-cut-intent-20261001",
+  "dsh_session_id": "geometry-cut-intent-20261001-dsh-97db3f13c1a3",
+  "dimension_assumptions": [],
+  "local_geometry_checks": {
+    "backend": "occt_brep",
+    "kernel": "可用：OCCT 7.9.3.1 / cadquery-ocp-novtk 7.9.3.1.1",
+    "geometry_state": "needs_review",
+    "state": "needs_review",
+    "brep_valid": true,
+    "shape_type": "TopAbs_COMPOUND",
+    "solid_count": 1,
+    "connected_component_count": 1,
+    "shell_count": 1,
+    "closed_shell_count": 1,
+    "closed": true,
+    "edge_count": 42,
+    "face_count": 11,
+    "free_edge_count": 0,
+    "volume_mm3": 119032.38946269432,
+    "bbox_mm": [
+      -50.0,
+      -30.0,
+      0.0,
+      50.0,
+      30.0,
+      28.0
+    ],
+    "self_intersection": {
+      "status": "checked_no_intersection",
+      "face_count": 11,
+      "check_result_count": 0,
+      "check_statuses": [],
+      "method": "BOPAlgo_ArgumentAnalyzer(SelfInterMode=True, UseOBB=True)"
+    },
+    "validity_method": "BRepCheck_Analyzer",
+    "geometry_scope": "native_OCCT_BREP_only_visual_comparison_not_performed",
+    "feature_results": [
+      {
+        "feature_id": "base_plate",
+        "kind": "box",
+        "operation": "add",
+        "geometry_support": "exact",
+        "builder": "analytic_prism",
+        "state": "applied",
+        "source_feature_id": null,
+        "source_resolution": null,
+        "solid_count": 1,
+        "brep_valid": true,
+        "before_volume_mm3": 0.0,
+        "after_volume_mm3": 120000.0,
+        "volume_delta_mm3": 120000.0,
+        "cylindrical_cut_intents": [],
+        "depth_measurement": null,
+        "facet_count": null
+      },
+      {
+        "feature_id": "hole_through_cyl",
+        "kind": "cylinder",
+        "operation": "cut",
+        "geometry_support": "exact",
+        "builder": "analytic_cylinder_or_cone",
+        "state": "applied",
+        "source_feature_id": null,
+        "source_resolution": null,
+        "solid_count": 1,
+        "brep_valid": true,
+        "before_volume_mm3": 120000.0,
+        "after_volume_mm3": 118429.20367320509,
+        "volume_delta_mm3": -1570.796326794909,
+        "cylindrical_cut_intents": [
+          {
+            "feature_id": "hole_through_cyl",
+            "instance_index": 1,
+            "axis": "Z",
+            "centerline_mm": [
+              0.0,
+              0.0,
+              10.0
+            ],
+            "diameter_mm": 10.0,
+            "depth_mm": null,
+            "through": true,
+            "planned_status": "pending",
+            "source_geometry": "OCCT cylindrical cutter topology",
+            "classification": "verified_intent_candidate",
+            "tool_bbox_mm": [
+              -5.0,
+              -5.0,
+              0.0,
+              5.0,
+              5.0,
+              20.0
+            ]
+          }
+        ],
+        "depth_measurement": null,
+        "facet_count": null
+      },
+      {
+        "feature_id": "revolve_boss",
+        "kind": "revolve",
+        "operation": "add",
+        "geometry_support": "exact",
+        "builder": "analytic_occt_revolve",
+        "state": "applied",
+        "source_feature_id": null,
+        "source_resolution": null,
+        "solid_count": 1,
+        "brep_valid": true,
+        "before_volume_mm3": 118429.20367320509,
+        "after_volume_mm3": 119333.98235743896,
+        "volume_delta_mm3": 904.7786842338683,
+        "cylindrical_cut_intents": [],
+        "depth_measurement": null,
+        "facet_count": null
+      },
+      {
+        "feature_id": "hole_blind_cyl",
+        "kind": "cylinder",
+        "operation": "cut",
+        "geometry_support": "exact",
+        "builder": "analytic_cylinder_or_cone",
+        "state": "applied",
+        "source_feature_id": null,
+        "source_resolution": null,
+        "solid_count": 1,
+        "brep_valid": true,
+        "before_volume_mm3": 119333.98235743896,
+        "after_volume_mm3": 119032.38946269432,
+        "volume_delta_mm3": -301.5928947446373,
+        "cylindrical_cut_intents": [
+          {
+            "feature_id": "hole_blind_cyl",
+            "classification": "unverified_cylindrical_cut",
+            "status": "unverified",
+            "axis": "Z",
+            "centerline_mm": [
+              25.0,
+              0.0,
+              14.0
+            ],
+            "diameter_mm": 8.0,
+            "tool_bbox_mm": [
+              21.0,
+              -4.0,
+              14.0,
+              29.0,
+              4.0,
+              20.0
+            ],
+            "reason": "圆柱刀具未贯穿目标轴向包围盒；盲深或局部开口需进一步定向测量。"
+          }
+        ],
+        "depth_measurement": null,
+        "facet_count": null
+      }
+    ],
+    "hole_instances": [
+      {
+        "feature_id": "hole_through_cyl",
+        "instance_index": 1,
+        "axis": "Z",
+        "centerline_mm": [
+          0.0,
+          0.0,
+          10.0
+        ],
+        "diameter_mm": 10.0,
+        "depth_mm": null,
+        "through": true,
+        "planned_status": "pending",
+        "source_geometry": "OCCT cylindrical cutter topology",
+        "classification": "verified_intent_candidate",
+        "tool_bbox_mm": [
+          -5.0,
+          -5.0,
+          0.0,
+          5.0,
+          5.0,
+          20.0
+        ],
+        "status": "verified_open",
+        "reason": "全包围盒轴跨度无实体区间；同轴解析圆柱面实测直径匹配，且孔壁截面有完整环形材料。",
+        "axis_surface_crossings": 0,
+        "centerline_material_segments": [],
+        "ring_supported": [
+          true
+        ],
+        "measured_diameter_mm": 10.0,
+        "diameter_candidates_mm": [
+          10.0
+        ],
+        "measured_depth_mm": null,
+        "matching_cylindrical_faces": [
+          {
+            "radius_mm": 5.0,
+            "diameter_mm": 10.0,
+            "axis_line_distance_mm": 0.0,
+            "axis_parallel_dot": 1.0,
+            "axis_interval_mm": [
+              0.0,
+              20.0
+            ],
+            "surface_type": "analytic_cylinder"
+          }
+        ],
+        "centerline_proof": {
+          "method": "IntCurvesFace_ShapeIntersector exact line/trimmed-face events + BRepClass3d interval classification",
+          "intersection_count": 0,
+          "segments": [
+            {
+              "axis_interval_mm": [
+                -0.001,
+                28.001
+              ],
+              "midpoint_mm": 14.0,
+              "inside_solid": false
+            }
+          ],
+          "material_segments": []
+        },
+        "wall_support": {
+          "supported": true,
+          "ring_supported": [
+            true
+          ],
+          "sampled_axis_stations_mm": [
+            10.0
+          ],
+          "supported_axis_stations_mm": [
+            10.0
+          ],
+          "sample_count_per_section": 24,
+          "method": "BRepClass3d 24-point ring at 1.25 x measured radius, on measured cylinder-wall spans"
+        },
+        "method": "OCCT trimmed-face line intersections + BRepClass3d interval/ring classification + analytic cylindrical-face radius/axis measurement"
+      }
+    ],
+    "unverified_cut_intents": [
+      {
+        "feature_id": "hole_blind_cyl",
+        "classification": "unverified_cylindrical_cut",
+        "status": "unverified",
+        "axis": "Z",
+        "centerline_mm": [
+          25.0,
+          0.0,
+          14.0
+        ],
+        "diameter_mm": 8.0,
+        "tool_bbox_mm": [
+          21.0,
+          -4.0,
+          14.0,
+          29.0,
+          4.0,
+          20.0
+        ],
+        "reason": "圆柱刀具未贯穿目标轴向包围盒；盲深或局部开口需进一步定向测量。"
+      }
+    ],
+    "hole_feature_count": 0,
+    "measured_hole_source_feature_count": 1,
+    "unverified_cut_intent_count": 1,
+    "planned_hole_instance_count": 1,
+    "active_hole_instance_count": 1,
+    "superseded_hole_instance_count": 0,
+    "active_through_hole_count": 1,
+    "through_hole_count": 1,
+    "all_declared_holes_verified": true,
+    "visual_validation": "not_performed",
+    "catia_executed": false,
+    "build_transaction": "每个特征验证成功后才提交；失败保留上一有效实体",
+    "source": "OpenCASCADE native BREP; preview mesh is display-only",
+    "bbox_size_mm": [
+      100.0,
+      60.0,
+      28.0
+    ],
+    "bbox_ratios_from_brep": {
+      "front_width_height": 3.5714285714285716,
+      "depth_height": 2.142857142857143,
+      "top_width_depth": 1.6666666666666667
+    },
+    "bbox_ratios_from_mesh": {
+      "front_width_height": 3.5714285714285716,
+      "depth_height": 2.142857142857143,
+      "top_width_depth": 1.6666666666666667
+    },
+    "feature_count_from_plan": 4,
+    "feature_ids_from_plan": [
+      "base_plate",
+      "hole_through_cyl",
+      "revolve_boss",
+      "hole_blind_cyl"
+    ],
+    "hole_features_from_plan": [
+      {
+        "feature_id": "hole_through_cyl",
+        "kind": "cylinder",
+        "operation": "cut",
+        "parameters": {
+          "radius": 5,
+          "height": 20,
+          "center": [
+            0,
+            0,
+            0
+          ],
+          "axis": "Z"
+        },
+        "hole_intent_source": "inferred_from_cylindrical_cut_geometry"
+      },
+      {
+        "feature_id": "hole_blind_cyl",
+        "kind": "cylinder",
+        "operation": "cut",
+        "parameters": {
+          "radius": 4,
+          "height": 6,
+          "center": [
+            25,
+            0,
+            14
+          ],
+          "axis": "Z",
+          "base": true
+        },
+        "hole_intent_source": "inferred_from_cylindrical_cut_geometry"
+      }
+    ],
+    "hole_feature_count_from_plan": 2,
+    "expected_hole_instance_count": 1,
+    "hole_instance_count": 1,
+    "through_hole_checks": [
+      {
+        "feature_id": "hole_through_cyl",
+        "instance_index": 1,
+        "axis": "Z",
+        "centerline_mm": [
+          0.0,
+          0.0,
+          10.0
+        ],
+        "diameter_mm": 10.0,
+        "depth_mm": null,
+        "through": true,
+        "planned_status": "pending",
+        "source_geometry": "OCCT cylindrical cutter topology",
+        "classification": "verified_intent_candidate",
+        "tool_bbox_mm": [
+          -5.0,
+          -5.0,
+          0.0,
+          5.0,
+          5.0,
+          20.0
+        ],
+        "status": "verified_open",
+        "reason": "全包围盒轴跨度无实体区间；同轴解析圆柱面实测直径匹配，且孔壁截面有完整环形材料。",
+        "axis_surface_crossings": 0,
+        "centerline_material_segments": [],
+        "ring_supported": [
+          true
+        ],
+        "measured_diameter_mm": 10.0,
+        "diameter_candidates_mm": [
+          10.0
+        ],
+        "measured_depth_mm": null,
+        "matching_cylindrical_faces": [
+          {
+            "radius_mm": 5.0,
+            "diameter_mm": 10.0,
+            "axis_line_distance_mm": 0.0,
+            "axis_parallel_dot": 1.0,
+            "axis_interval_mm": [
+              0.0,
+              20.0
+            ],
+            "surface_type": "analytic_cylinder"
+          }
+        ],
+        "centerline_proof": {
+          "method": "IntCurvesFace_ShapeIntersector exact line/trimmed-face events + BRepClass3d interval classification",
+          "intersection_count": 0,
+          "segments": [
+            {
+              "axis_interval_mm": [
+                -0.001,
+                28.001
+              ],
+              "midpoint_mm": 14.0,
+              "inside_solid": false
+            }
+          ],
+          "material_segments": []
+        },
+        "wall_support": {
+          "supported": true,
+          "ring_supported": [
+            true
+          ],
+          "sampled_axis_stations_mm": [
+            10.0
+          ],
+          "supported_axis_stations_mm": [
+            10.0
+          ],
+          "sample_count_per_section": 24,
+          "method": "BRepClass3d 24-point ring at 1.25 x measured radius, on measured cylinder-wall spans"
+        },
+        "method": "OCCT trimmed-face line intersections + BRepClass3d interval/ring classification + analytic cylindrical-face radius/axis measurement"
+      }
+    ],
+    "through_hole_mesh_checks": [
+      {
+        "feature_id": "hole_through_cyl",
+        "instance_index": 1,
+        "axis": "Z",
+        "centerline_mm": [
+          0.0,
+          0.0,
+          10.0
+        ],
+        "diameter_mm": 10.0,
+        "depth_mm": null,
+        "through": true,
+        "planned_status": "pending",
+        "source_geometry": "OCCT cylindrical cutter topology",
+        "classification": "verified_intent_candidate",
+        "tool_bbox_mm": [
+          -5.0,
+          -5.0,
+          0.0,
+          5.0,
+          5.0,
+          20.0
+        ],
+        "status": "verified_open",
+        "reason": "全包围盒轴跨度无实体区间；同轴解析圆柱面实测直径匹配，且孔壁截面有完整环形材料。",
+        "axis_surface_crossings": 0,
+        "centerline_material_segments": [],
+        "ring_supported": [
+          true
+        ],
+        "measured_diameter_mm": 10.0,
+        "diameter_candidates_mm": [
+          10.0
+        ],
+        "measured_depth_mm": null,
+        "matching_cylindrical_faces": [
+          {
+            "radius_mm": 5.0,
+            "diameter_mm": 10.0,
+            "axis_line_distance_mm": 0.0,
+            "axis_parallel_dot": 1.0,
+            "axis_interval_mm": [
+              0.0,
+              20.0
+            ],
+            "surface_type": "analytic_cylinder"
+          }
+        ],
+        "centerline_proof": {
+          "method": "IntCurvesFace_ShapeIntersector exact line/trimmed-face events + BRepClass3d interval classification",
+          "intersection_count": 0,
+          "segments": [
+            {
+              "axis_interval_mm": [
+                -0.001,
+                28.001
+              ],
+              "midpoint_mm": 14.0,
+              "inside_solid": false
+            }
+          ],
+          "material_segments": []
+        },
+        "wall_support": {
+          "supported": true,
+          "ring_supported": [
+            true
+          ],
+          "sampled_axis_stations_mm": [
+            10.0
+          ],
+          "supported_axis_stations_mm": [
+            10.0
+          ],
+          "sample_count_per_section": 24,
+          "method": "BRepClass3d 24-point ring at 1.25 x measured radius, on measured cylinder-wall spans"
+        },
+        "method": "OCCT trimmed-face line intersections + BRepClass3d interval/ring classification + analytic cylindrical-face radius/axis measurement"
+      }
+    ],
+    "hole_measurement_complete": false,
+    "hole_measurement_state": "incomplete_or_unverified",
+    "through_hole_count_expected": 1,
+    "through_hole_count_verified": 1,
+    "through_hole_result": "measured_by_native_brep",
+    "image_estimate_parameters": [],
+    "catia_geometry_verification": "not_performed"
+  },
+  "cli_progress_events": [
+    {
+      "elapsed_ms": 62.0,
+      "message": "正在查询本地工件知识库。"
+    },
+    {
+      "elapsed_ms": 859.0,
+      "message": "本地知识库未找到可靠文字命中，继续按当前输入建模。"
+    },
+    {
+      "elapsed_ms": 1422.0,
+      "message": "正在启动 DSH SDK 多模态 Agent 会话。"
+    },
+    {
+      "elapsed_ms": 1422.0,
+      "message": "模型等待中：DSH SDK · 推理强度 low"
+    },
+    {
+      "elapsed_ms": 7156.0,
+      "message": "DSH 状态：running"
+    },
+    {
+      "elapsed_ms": 7281.0,
+      "message": "正在请求模型：请求 moonshotai/Kimi-K2.7-Code · 本次图像 0 张 · 推理 low"
+    },
+    {
+      "elapsed_ms": 7469.0,
+      "message": "正在请求模型：请求 moonshotai/Kimi-K2.7-Code · 本次图像 0 张"
+    },
+    {
+      "elapsed_ms": 8391.0,
+      "message": "模型服务已开始响应 · 1.0 秒"
+    },
+    {
+      "elapsed_ms": 8391.0,
+      "message": "模型首个内容事件已收到 · 1.1 秒"
+    },
+    {
+      "elapsed_ms": 8391.0,
+      "message": "模型正在分析参考图与建模约束 · 00:06"
+    },
+    {
+      "elapsed_ms": 40250.0,
+      "message": "已调用首个工具：mcp__ai-modeler__cad_get_feature_spec · 首工具耗时 38.8 秒"
+    },
+    {
+      "elapsed_ms": 40281.0,
+      "message": "Agent 正在调用工具：mcp__ai-modeler__cad_get_feature_spec"
+    },
+    {
+      "elapsed_ms": 40297.0,
+      "message": "Agent 正在调用工具：mcp__ai-modeler__cad_get_feature_spec"
+    },
+    {
+      "elapsed_ms": 40312.0,
+      "message": "模型首个内容事件已收到 · 1.0 秒"
+    },
+    {
+      "elapsed_ms": 40406.0,
+      "message": "正在请求模型：请求 moonshotai/Kimi-K2.7-Code · 本次图像 0 张 · 推理 low"
+    },
+    {
+      "elapsed_ms": 40406.0,
+      "message": "正在请求模型：请求 moonshotai/Kimi-K2.7-Code · 本次图像 0 张"
+    },
+    {
+      "elapsed_ms": 41344.0,
+      "message": "模型服务已开始响应 · 1.0 秒"
+    },
+    {
+      "elapsed_ms": 41344.0,
+      "message": "模型首个内容事件已收到 · 1.0 秒"
+    },
+    {
+      "elapsed_ms": 41344.0,
+      "message": "模型正在分析参考图与建模约束 · 00:39"
+    },
+    {
+      "elapsed_ms": 73750.0,
+      "message": "Agent 正在调用工具：mcp__ai-modeler__cad_create_model"
+    },
+    {
+      "elapsed_ms": 73750.0,
+      "message": "模型首个内容事件已收到 · 1.0 秒"
+    },
+    {
+      "elapsed_ms": 74422.0,
+      "message": "Agent 进度：CADPlan 已创建，revision 1。"
+    },
+    {
+      "elapsed_ms": 74484.0,
+      "message": "正在请求模型：请求 moonshotai/Kimi-K2.7-Code · 本次图像 0 张 · 推理 low"
+    },
+    {
+      "elapsed_ms": 74484.0,
+      "message": "正在请求模型：请求 moonshotai/Kimi-K2.7-Code · 本次图像 0 张"
+    },
+    {
+      "elapsed_ms": 75422.0,
+      "message": "模型服务已开始响应 · 1.0 秒"
+    },
+    {
+      "elapsed_ms": 75422.0,
+      "message": "模型首个内容事件已收到 · 1.0 秒"
+    },
+    {
+      "elapsed_ms": 75422.0,
+      "message": "模型正在分析参考图与建模约束 · 01:14"
+    },
+    {
+      "elapsed_ms": 82828.0,
+      "message": "Agent 正在调用工具：mcp__ai-modeler__cad_create_model"
+    },
+    {
+      "elapsed_ms": 82875.0,
+      "message": "模型首个内容事件已收到 · 1.0 秒"
+    },
+    {
+      "elapsed_ms": 82875.0,
+      "message": "正在请求模型：请求 moonshotai/Kimi-K2.7-Code · 本次图像 0 张 · 推理 low"
+    },
+    {
+      "elapsed_ms": 82875.0,
+      "message": "正在请求模型：请求 moonshotai/Kimi-K2.7-Code · 本次图像 0 张"
+    },
+    {
+      "elapsed_ms": 83812.0,
+      "message": "模型服务已开始响应 · 0.9 秒"
+    },
+    {
+      "elapsed_ms": 83828.0,
+      "message": "模型首个内容事件已收到 · 0.9 秒"
+    },
+    {
+      "elapsed_ms": 83828.0,
+      "message": "模型正在分析参考图与建模约束 · 01:22"
+    },
+    {
+      "elapsed_ms": 85812.0,
+      "message": "Agent 正在调用工具：mcp__ai-modeler__cad_get_state"
+    },
+    {
+      "elapsed_ms": 85828.0,
+      "message": "Agent 进度：已读取当前 CADPlan 状态。"
+    },
+    {
+      "elapsed_ms": 85875.0,
+      "message": "模型首个内容事件已收到 · 0.9 秒"
+    },
+    {
+      "elapsed_ms": 85875.0,
+      "message": "正在请求模型：请求 moonshotai/Kimi-K2.7-Code · 本次图像 0 张 · 推理 low"
+    },
+    {
+      "elapsed_ms": 85875.0,
+      "message": "正在请求模型：请求 moonshotai/Kimi-K2.7-Code · 本次图像 0 张"
+    },
+    {
+      "elapsed_ms": 86797.0,
+      "message": "模型服务已开始响应 · 0.9 秒"
+    },
+    {
+      "elapsed_ms": 86797.0,
+      "message": "模型首个内容事件已收到 · 0.9 秒"
+    },
+    {
+      "elapsed_ms": 86797.0,
+      "message": "模型正在分析参考图与建模约束 · 01:25"
+    },
+    {
+      "elapsed_ms": 93031.0,
+      "message": "Agent 正在调用工具：mcp__ai-modeler__cad_update_feature"
+    },
+    {
+      "elapsed_ms": 93047.0,
+      "message": "Agent 进度：这次更新没有改变特征。已记录相同 geometry hash 的无进展调用；不要重放相同参数，请核对 finding 和原图，必要时恢复最佳候选。"
+    },
+    {
+      "elapsed_ms": 93125.0,
+      "message": "模型首个内容事件已收到 · 0.9 秒"
+    },
+    {
+      "elapsed_ms": 93125.0,
+      "message": "正在请求模型：请求 moonshotai/Kimi-K2.7-Code · 本次图像 0 张 · 推理 low"
+    },
+    {
+      "elapsed_ms": 93125.0,
+      "message": "正在请求模型：请求 moonshotai/Kimi-K2.7-Code · 本次图像 0 张"
+    },
+    {
+      "elapsed_ms": 94062.0,
+      "message": "模型服务已开始响应 · 0.9 秒"
+    },
+    {
+      "elapsed_ms": 94062.0,
+      "message": "模型首个内容事件已收到 · 0.9 秒"
+    },
+    {
+      "elapsed_ms": 94062.0,
+      "message": "模型正在分析参考图与建模约束 · 01:32"
+    },
+    {
+      "elapsed_ms": 109922.0,
+      "message": "Agent 正在调用工具：mcp__ai-modeler__cad_create_model"
+    },
+    {
+      "elapsed_ms": 109937.0,
+      "message": "Agent 进度：CADPlan 已创建，revision 2。"
+    },
+    {
+      "elapsed_ms": 109953.0,
+      "message": "模型首个内容事件已收到 · 0.9 秒"
+    },
+    {
+      "elapsed_ms": 109953.0,
+      "message": "正在请求模型：请求 moonshotai/Kimi-K2.7-Code · 本次图像 0 张 · 推理 low"
+    },
+    {
+      "elapsed_ms": 110047.0,
+      "message": "正在请求模型：请求 moonshotai/Kimi-K2.7-Code · 本次图像 0 张"
+    },
+    {
+      "elapsed_ms": 110891.0,
+      "message": "模型服务已开始响应 · 0.9 秒"
+    },
+    {
+      "elapsed_ms": 110891.0,
+      "message": "模型首个内容事件已收到 · 0.9 秒"
+    },
+    {
+      "elapsed_ms": 110891.0,
+      "message": "模型正在分析参考图与建模约束 · 01:49"
+    },
+    {
+      "elapsed_ms": 123594.0,
+      "message": "Agent 正在调用工具：mcp__ai-modeler__cad_add_feature"
+    },
+    {
+      "elapsed_ms": 123609.0,
+      "message": "模型首个内容事件已收到 · 0.9 秒"
+    },
+    {
+      "elapsed_ms": 123625.0,
+      "message": "Agent 进度：已添加特征 hole_through_cyl，revision 3。"
+    },
+    {
+      "elapsed_ms": 123703.0,
+      "message": "正在请求模型：请求 moonshotai/Kimi-K2.7-Code · 本次图像 0 张 · 推理 low"
+    },
+    {
+      "elapsed_ms": 123703.0,
+      "message": "正在请求模型：请求 moonshotai/Kimi-K2.7-Code · 本次图像 0 张"
+    },
+    {
+      "elapsed_ms": 124359.0,
+      "message": "模型服务已开始响应 · 0.7 秒"
+    },
+    {
+      "elapsed_ms": 124359.0,
+      "message": "模型首个内容事件已收到 · 0.7 秒"
+    },
+    {
+      "elapsed_ms": 124453.0,
+      "message": "模型正在分析参考图与建模约束 · 02:03"
+    },
+    {
+      "elapsed_ms": 130547.0,
+      "message": "Agent 正在调用工具：mcp__ai-modeler__cad_add_feature"
+    },
+    {
+      "elapsed_ms": 130578.0,
+      "message": "Agent 进度：已添加特征 hole_blind_cyl，revision 4。"
+    },
+    {
+      "elapsed_ms": 130578.0,
+      "message": "模型首个内容事件已收到 · 0.7 秒"
+    },
+    {
+      "elapsed_ms": 130578.0,
+      "message": "正在请求模型：请求 moonshotai/Kimi-K2.7-Code · 本次图像 0 张 · 推理 low"
+    },
+    {
+      "elapsed_ms": 130672.0,
+      "message": "正在请求模型：请求 moonshotai/Kimi-K2.7-Code · 本次图像 0 张"
+    },
+    {
+      "elapsed_ms": 131328.0,
+      "message": "模型服务已开始响应 · 0.7 秒"
+    },
+    {
+      "elapsed_ms": 131328.0,
+      "message": "模型首个内容事件已收到 · 0.7 秒"
+    },
+    {
+      "elapsed_ms": 131328.0,
+      "message": "模型正在分析参考图与建模约束 · 02:09"
+    },
+    {
+      "elapsed_ms": 138844.0,
+      "message": "模型首个内容事件已收到 · 0.7 秒"
+    },
+    {
+      "elapsed_ms": 138844.0,
+      "message": "Agent 正在调用工具：mcp__ai-modeler__cad_add_feature"
+    },
+    {
+      "elapsed_ms": 138859.0,
+      "message": "Agent 进度：已添加特征 revolve_boss，revision 5。"
+    },
+    {
+      "elapsed_ms": 138937.0,
+      "message": "正在请求模型：请求 moonshotai/Kimi-K2.7-Code · 本次图像 0 张 · 推理 low"
+    },
+    {
+      "elapsed_ms": 138937.0,
+      "message": "正在请求模型：请求 moonshotai/Kimi-K2.7-Code · 本次图像 0 张"
+    },
+    {
+      "elapsed_ms": 139859.0,
+      "message": "模型服务已开始响应 · 1.0 秒"
+    },
+    {
+      "elapsed_ms": 139859.0,
+      "message": "模型首个内容事件已收到 · 1.0 秒"
+    },
+    {
+      "elapsed_ms": 139859.0,
+      "message": "模型正在分析参考图与建模约束 · 02:18"
+    },
+    {
+      "elapsed_ms": 144969.0,
+      "message": "Agent 正在调用工具：mcp__ai-modeler__cad_set_construction_milestone"
+    },
+    {
+      "elapsed_ms": 144984.0,
+      "message": "模型首个内容事件已收到 · 1.0 秒"
+    },
+    {
+      "elapsed_ms": 144984.0,
+      "message": "Agent 进度：已更新当前施工检查范围；未列入的目标特征不会作为本阶段缺失项。"
+    },
+    {
+      "elapsed_ms": 145078.0,
+      "message": "正在请求模型：请求 moonshotai/Kimi-K2.7-Code · 本次图像 0 张 · 推理 low"
+    },
+    {
+      "elapsed_ms": 145078.0,
+      "message": "正在请求模型：请求 moonshotai/Kimi-K2.7-Code · 本次图像 0 张"
+    },
+    {
+      "elapsed_ms": 146000.0,
+      "message": "模型服务已开始响应 · 1.0 秒"
+    },
+    {
+      "elapsed_ms": 146000.0,
+      "message": "模型首个内容事件已收到 · 1.0 秒"
+    },
+    {
+      "elapsed_ms": 146000.0,
+      "message": "模型正在分析参考图与建模约束 · 02:24"
+    },
+    {
+      "elapsed_ms": 147812.0,
+      "message": "Agent 正在调用工具：mcp__ai-modeler__cad_preview_model"
+    },
+    {
+      "elapsed_ms": 147859.0,
+      "message": "模型首个内容事件已收到 · 1.0 秒"
+    },
+    {
+      "elapsed_ms": 149172.0,
+      "message": "Agent 进度：当前版本预览已生成，方向 iso；请目视对照原始参考图。"
+    },
+    {
+      "elapsed_ms": 149172.0,
+      "message": "Agent 正在调用工具：mcp__ai-modeler__cad_validate_model"
+    },
+    {
+      "elapsed_ms": 149203.0,
+      "message": "Agent 进度：校验已完成；未启动 CATIA。"
+    },
+    {
+      "elapsed_ms": 149250.0,
+      "message": "正在请求模型：请求 moonshotai/Kimi-K2.7-Code · 本次图像 0 张 · 推理 low"
+    },
+    {
+      "elapsed_ms": 149250.0,
+      "message": "正在请求模型：请求 moonshotai/Kimi-K2.7-Code · 本次图像 1 张"
+    },
+    {
+      "elapsed_ms": 150937.0,
+      "message": "模型服务已开始响应 · 1.6 秒"
+    },
+    {
+      "elapsed_ms": 150937.0,
+      "message": "模型首个内容事件已收到 · 1.7 秒"
+    },
+    {
+      "elapsed_ms": 150937.0,
+      "message": "模型正在分析参考图与建模约束 · 02:29"
+    },
+    {
+      "elapsed_ms": 214531.0,
+      "message": "Agent 正在调用工具：mcp__ai-modeler__cad_preview_model"
+    },
+    {
+      "elapsed_ms": 214609.0,
+      "message": "模型首个内容事件已收到 · 1.6 秒"
+    },
+    {
+      "elapsed_ms": 215969.0,
+      "message": "Agent 进度：当前版本预览已生成，方向 top；请目视对照原始参考图。"
+    },
+    {
+      "elapsed_ms": 215969.0,
+      "message": "Agent 正在调用工具：mcp__ai-modeler__cad_preview_model"
+    },
+    {
+      "elapsed_ms": 216625.0,
+      "message": "Agent 进度：当前版本预览已生成，方向 front；请目视对照原始参考图。"
+    },
+    {
+      "elapsed_ms": 216656.0,
+      "message": "正在请求模型：请求 moonshotai/Kimi-K2.7-Code · 本次图像 0 张 · 推理 low"
+    },
+    {
+      "elapsed_ms": 216656.0,
+      "message": "正在请求模型：请求 moonshotai/Kimi-K2.7-Code · 本次图像 3 张"
+    },
+    {
+      "elapsed_ms": 218812.0,
+      "message": "模型服务已开始响应 · 2.1 秒"
+    },
+    {
+      "elapsed_ms": 218812.0,
+      "message": "模型首个内容事件已收到 · 2.1 秒"
+    },
+    {
+      "elapsed_ms": 218812.0,
+      "message": "模型正在分析参考图与建模约束 · 03:37"
+    },
+    {
+      "elapsed_ms": 243937.0,
+      "message": "Agent 正在调用工具：mcp__ai-modeler__cad_update_feature"
+    },
+    {
+      "elapsed_ms": 243969.0,
+      "message": "模型首个内容事件已收到 · 2.1 秒"
+    },
+    {
+      "elapsed_ms": 243969.0,
+      "message": "Agent 进度：特征已修改，revision 6。"
+    },
+    {
+      "elapsed_ms": 244062.0,
+      "message": "正在请求模型：请求 moonshotai/Kimi-K2.7-Code · 本次图像 0 张 · 推理 low"
+    },
+    {
+      "elapsed_ms": 244062.0,
+      "message": "正在请求模型：请求 moonshotai/Kimi-K2.7-Code · 本次图像 3 张"
+    },
+    {
+      "elapsed_ms": 245469.0,
+      "message": "模型服务已开始响应 · 1.5 秒"
+    },
+    {
+      "elapsed_ms": 245469.0,
+      "message": "模型首个内容事件已收到 · 1.5 秒"
+    },
+    {
+      "elapsed_ms": 245562.0,
+      "message": "模型正在分析参考图与建模约束 · 04:04"
+    },
+    {
+      "elapsed_ms": 252531.0,
+      "message": "Agent 正在调用工具：mcp__ai-modeler__cad_update_feature"
+    },
+    {
+      "elapsed_ms": 252609.0,
+      "message": "模型首个内容事件已收到 · 1.5 秒"
+    },
+    {
+      "elapsed_ms": 252609.0,
+      "message": "正在请求模型：请求 moonshotai/Kimi-K2.7-Code · 本次图像 0 张 · 推理 low"
+    },
+    {
+      "elapsed_ms": 252609.0,
+      "message": "正在请求模型：请求 moonshotai/Kimi-K2.7-Code · 本次图像 3 张"
+    },
+    {
+      "elapsed_ms": 253828.0,
+      "message": "模型服务已开始响应 · 1.2 秒"
+    },
+    {
+      "elapsed_ms": 253828.0,
+      "message": "模型首个内容事件已收到 · 1.2 秒"
+    },
+    {
+      "elapsed_ms": 253828.0,
+      "message": "模型正在分析参考图与建模约束 · 04:12"
+    },
+    {
+      "elapsed_ms": 257281.0,
+      "message": "Agent 正在调用工具：mcp__ai-modeler__cad_restore_best_candidate"
+    },
+    {
+      "elapsed_ms": 257359.0,
+      "message": "模型首个内容事件已收到 · 1.2 秒"
+    },
+    {
+      "elapsed_ms": 257359.0,
+      "message": "正在请求模型：请求 moonshotai/Kimi-K2.7-Code · 本次图像 0 张 · 推理 low"
+    },
+    {
+      "elapsed_ms": 257359.0,
+      "message": "正在请求模型：请求 moonshotai/Kimi-K2.7-Code · 本次图像 3 张"
+    },
+    {
+      "elapsed_ms": 258297.0,
+      "message": "模型服务已开始响应 · 1.0 秒"
+    },
+    {
+      "elapsed_ms": 258297.0,
+      "message": "模型首个内容事件已收到 · 1.0 秒"
+    },
+    {
+      "elapsed_ms": 258297.0,
+      "message": "模型正在分析参考图与建模约束 · 04:16"
+    },
+    {
+      "elapsed_ms": 263562.0,
+      "message": "Agent 正在调用工具：mcp__ai-modeler__cad_remove_feature"
+    },
+    {
+      "elapsed_ms": 263594.0,
+      "message": "Agent 进度：特征已删除，revision 7。"
+    },
+    {
+      "elapsed_ms": 263609.0,
+      "message": "模型首个内容事件已收到 · 1.0 秒"
+    },
+    {
+      "elapsed_ms": 263609.0,
+      "message": "正在请求模型：请求 moonshotai/Kimi-K2.7-Code · 本次图像 0 张 · 推理 low"
+    },
+    {
+      "elapsed_ms": 263609.0,
+      "message": "正在请求模型：请求 moonshotai/Kimi-K2.7-Code · 本次图像 3 张"
+    },
+    {
+      "elapsed_ms": 265016.0,
+      "message": "模型服务已开始响应 · 1.3 秒"
+    },
+    {
+      "elapsed_ms": 265016.0,
+      "message": "模型首个内容事件已收到 · 1.3 秒"
+    },
+    {
+      "elapsed_ms": 265016.0,
+      "message": "模型正在分析参考图与建模约束 · 04:23"
+    },
+    {
+      "elapsed_ms": 272437.0,
+      "message": "Agent 正在调用工具：mcp__ai-modeler__cad_add_feature"
+    },
+    {
+      "elapsed_ms": 272469.0,
+      "message": "Agent 进度：已添加特征 hole_blind_cyl，revision 8。"
+    },
+    {
+      "elapsed_ms": 272469.0,
+      "message": "模型首个内容事件已收到 · 1.3 秒"
+    },
+    {
+      "elapsed_ms": 272562.0,
+      "message": "正在请求模型：请求 moonshotai/Kimi-K2.7-Code · 本次图像 0 张 · 推理 low"
+    },
+    {
+      "elapsed_ms": 272562.0,
+      "message": "正在请求模型：请求 moonshotai/Kimi-K2.7-Code · 本次图像 3 张"
+    },
+    {
+      "elapsed_ms": 273781.0,
+      "message": "模型服务已开始响应 · 1.3 秒"
+    },
+    {
+      "elapsed_ms": 273781.0,
+      "message": "模型首个内容事件已收到 · 1.3 秒"
+    },
+    {
+      "elapsed_ms": 273781.0,
+      "message": "模型正在分析参考图与建模约束 · 04:32"
+    },
+    {
+      "elapsed_ms": 282937.0,
+      "message": "Agent 正在调用工具：mcp__ai-modeler__cad_preview_model"
+    },
+    {
+      "elapsed_ms": 283016.0,
+      "message": "模型首个内容事件已收到 · 1.3 秒"
+    },
+    {
+      "elapsed_ms": 284031.0,
+      "message": "Agent 进度：当前版本预览已生成，方向 iso；请目视对照原始参考图。"
+    },
+    {
+      "elapsed_ms": 284031.0,
+      "message": "Agent 正在调用工具：mcp__ai-modeler__cad_validate_model"
+    },
+    {
+      "elapsed_ms": 284047.0,
+      "message": "Agent 进度：校验已完成；未启动 CATIA。"
+    },
+    {
+      "elapsed_ms": 284141.0,
+      "message": "正在请求模型：请求 moonshotai/Kimi-K2.7-Code · 本次图像 0 张 · 推理 low"
+    },
+    {
+      "elapsed_ms": 284141.0,
+      "message": "正在请求模型：请求 moonshotai/Kimi-K2.7-Code · 本次图像 4 张"
+    },
+    {
+      "elapsed_ms": 286297.0,
+      "message": "模型服务已开始响应 · 2.2 秒"
+    },
+    {
+      "elapsed_ms": 286297.0,
+      "message": "模型首个内容事件已收到 · 2.2 秒"
+    },
+    {
+      "elapsed_ms": 286297.0,
+      "message": "模型正在分析参考图与建模约束 · 04:44"
+    },
+    {
+      "elapsed_ms": 305016.0,
+      "message": "Agent 正在调用工具：mcp__ai-modeler__cad_update_feature"
+    },
+    {
+      "elapsed_ms": 305047.0,
+      "message": "Agent 进度：特征已修改，revision 9。"
+    },
+    {
+      "elapsed_ms": 305047.0,
+      "message": "模型首个内容事件已收到 · 2.2 秒"
+    },
+    {
+      "elapsed_ms": 305141.0,
+      "message": "正在请求模型：请求 moonshotai/Kimi-K2.7-Code · 本次图像 0 张 · 推理 low"
+    },
+    {
+      "elapsed_ms": 305141.0,
+      "message": "正在请求模型：请求 moonshotai/Kimi-K2.7-Code · 本次图像 4 张"
+    },
+    {
+      "elapsed_ms": 306625.0,
+      "message": "模型服务已开始响应 · 1.5 秒"
+    },
+    {
+      "elapsed_ms": 306625.0,
+      "message": "模型首个内容事件已收到 · 1.5 秒"
+    },
+    {
+      "elapsed_ms": 306625.0,
+      "message": "模型正在分析参考图与建模约束 · 05:05"
+    },
+    {
+      "elapsed_ms": 307406.0,
+      "message": "Agent 正在调用工具：mcp__ai-modeler__cad_validate_model"
+    },
+    {
+      "elapsed_ms": 307422.0,
+      "message": "Agent 进度：校验已完成；未启动 CATIA。"
+    },
+    {
+      "elapsed_ms": 307469.0,
+      "message": "模型首个内容事件已收到 · 1.5 秒"
+    },
+    {
+      "elapsed_ms": 307469.0,
+      "message": "正在请求模型：请求 moonshotai/Kimi-K2.7-Code · 本次图像 0 张 · 推理 low"
+    },
+    {
+      "elapsed_ms": 307469.0,
+      "message": "正在请求模型：请求 moonshotai/Kimi-K2.7-Code · 本次图像 4 张"
+    },
+    {
+      "elapsed_ms": 309250.0,
+      "message": "模型服务已开始响应 · 1.7 秒"
+    },
+    {
+      "elapsed_ms": 309250.0,
+      "message": "模型首个内容事件已收到 · 1.7 秒"
+    },
+    {
+      "elapsed_ms": 309250.0,
+      "message": "模型正在分析参考图与建模约束 · 05:07"
+    },
+    {
+      "elapsed_ms": 310766.0,
+      "message": "Agent 正在调用工具：mcp__ai-modeler__cad_get_state"
+    },
+    {
+      "elapsed_ms": 310781.0,
+      "message": "Agent 进度：已读取当前 CADPlan 状态。"
+    },
+    {
+      "elapsed_ms": 310828.0,
+      "message": "模型首个内容事件已收到 · 1.7 秒"
+    },
+    {
+      "elapsed_ms": 310828.0,
+      "message": "正在请求模型：请求 moonshotai/Kimi-K2.7-Code · 本次图像 0 张 · 推理 low"
+    },
+    {
+      "elapsed_ms": 310828.0,
+      "message": "正在请求模型：请求 moonshotai/Kimi-K2.7-Code · 本次图像 4 张"
+    },
+    {
+      "elapsed_ms": 312406.0,
+      "message": "模型服务已开始响应 · 1.6 秒"
+    },
+    {
+      "elapsed_ms": 312406.0,
+      "message": "模型首个内容事件已收到 · 1.6 秒"
+    },
+    {
+      "elapsed_ms": 312406.0,
+      "message": "模型正在分析参考图与建模约束 · 05:10"
+    },
+    {
+      "elapsed_ms": 314609.0,
+      "message": "Agent 正在调用工具：mcp__ai-modeler__cad_preview_model"
+    },
+    {
+      "elapsed_ms": 314625.0,
+      "message": "模型首个内容事件已收到 · 1.6 秒"
+    },
+    {
+      "elapsed_ms": 315672.0,
+      "message": "Agent 进度：当前版本预览已生成，方向 iso；请目视对照原始参考图。"
+    },
+    {
+      "elapsed_ms": 315734.0,
+      "message": "正在请求模型：请求 moonshotai/Kimi-K2.7-Code · 本次图像 0 张 · 推理 low"
+    },
+    {
+      "elapsed_ms": 315734.0,
+      "message": "正在请求模型：请求 moonshotai/Kimi-K2.7-Code · 本次图像 5 张"
+    },
+    {
+      "elapsed_ms": 317609.0,
+      "message": "模型服务已开始响应 · 1.9 秒"
+    },
+    {
+      "elapsed_ms": 317609.0,
+      "message": "模型首个内容事件已收到 · 1.9 秒"
+    },
+    {
+      "elapsed_ms": 317609.0,
+      "message": "模型正在分析参考图与建模约束 · 05:16"
+    },
+    {
+      "elapsed_ms": 349719.0,
+      "message": "Agent 正在调用工具：mcp__ai-modeler__cad_finish_model"
+    },
+    {
+      "elapsed_ms": 349766.0,
+      "message": "模型首个内容事件已收到 · 1.9 秒"
+    },
+    {
+      "elapsed_ms": 349844.0,
+      "message": "Agent 进度：已保存当前候选；结果标记为 candidate_geometry_unverified，未解决项和未核验项目已写入报告。 本地网格预览完成，未创建或验证 CATPart。"
+    },
+    {
+      "elapsed_ms": 349859.0,
+      "message": "正在请求模型：请求 moonshotai/Kimi-K2.7-Code · 本次图像 0 张 · 推理 low"
+    },
+    {
+      "elapsed_ms": 349953.0,
+      "message": "正在请求模型：请求 moonshotai/Kimi-K2.7-Code · 本次图像 5 张"
+    },
+    {
+      "elapsed_ms": 352078.0,
+      "message": "模型服务已开始响应 · 2.2 秒"
+    },
+    {
+      "elapsed_ms": 352078.0,
+      "message": "模型首个内容事件已收到 · 2.2 秒"
+    },
+    {
+      "elapsed_ms": 352078.0,
+      "message": "模型正在分析参考图与建模约束 · 05:50"
+    },
+    {
+      "elapsed_ms": 359781.0,
+      "message": "模型正在生成回复"
+    },
+    {
+      "elapsed_ms": 375656.0,
+      "message": "DSH 状态：idle"
+    },
+    {
+      "elapsed_ms": 375672.0,
+      "message": "模型响应已返回：正在保存并整理 CADPlan 与本轮工具结果。"
+    }
+  ],
+  "cli_session_id": "geometry-cut-intent-20261001",
+  "cli_dsh_session_id": "geometry-cut-intent-20261001-dsh-97db3f13c1a3",
+  "cli_reference_paths": [],
+  "cli_conversation_history_path": "C:\\Users\\lycohana\\AppData\\Local\\Packages\\OpenAI.Codex_2p2nqsd0c76g0\\LocalCache\\Local\\AI Modeler\\dsh\\sessions\\geometry-cut-intent-20261001\\conversation-history.json",
+  "cli_conversation_turn_count": 1,
+  "cli_output_dir": "C:\\Users\\lycohana\\Desktop\\code\\AI-_-\\artifacts\\agent-quality-rebuild\\geometry-backend\\geometry-cut-intent-cli-20261001\\turns\\2bd01a33c48c41c18664cd93c20ea682",
+  "delivery_warnings": [],
+  "cli_exit_code": 4,
+  "cli_outcome": "candidate_not_accepted",
+  "cli_result_path": "C:\\Users\\lycohana\\Desktop\\code\\AI-_-\\artifacts\\agent-quality-rebuild\\geometry-backend\\geometry-cut-intent-cli-20261001\\turns\\2bd01a33c48c41c18664cd93c20ea682\\result.json"
+}

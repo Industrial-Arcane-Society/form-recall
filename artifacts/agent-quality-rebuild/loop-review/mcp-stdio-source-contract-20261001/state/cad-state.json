@@ -1,0 +1,247 @@
+{
+  "plan": {
+    "schema_version": "1.0",
+    "name": "stdio-source-contract",
+    "source_prompt": "",
+    "units": {
+      "length": "mm",
+      "angle": "deg"
+    },
+    "coordinate_system": {
+      "type": "global_cartesian",
+      "handedness": "right",
+      "axes": [
+        "X",
+        "Y",
+        "Z"
+      ],
+      "origin": [
+        0,
+        0,
+        0
+      ]
+    },
+    "features": [
+      {
+        "id": "base",
+        "kind": "box",
+        "operation": "add",
+        "parameters": {
+          "length": 55,
+          "width": 30,
+          "height": 50,
+          "center": [
+            0,
+            0,
+            0
+          ]
+        },
+        "sources": {
+          "length": {
+            "type": "user",
+            "evidence": "长度改为55毫米"
+          },
+          "width": {
+            "type": "user",
+            "evidence": "宽度30毫米"
+          },
+          "height": {
+            "type": "user",
+            "evidence": "高度50毫米"
+          },
+          "center": {
+            "type": "derived",
+            "evidence": "主体中心按原点定义"
+          }
+        }
+      }
+    ],
+    "pending_questions": []
+  },
+  "revision": 2,
+  "last_preview": null,
+  "preview_revision": null,
+  "preview_generation": 0,
+  "previews": [],
+  "visual_review": null,
+  "visual_reviews": {},
+  "reference_similarity_review": null,
+  "reference_similarity_reviews": {},
+  "reference_similarity_history": [],
+  "reference_similarity_attempts": [],
+  "reference_similarity_error": null,
+  "finish_summary": null,
+  "finding_ledger": {},
+  "geometry_signatures": [
+    {
+      "signature": "7ef40fe9953c5b6a68e906d74f18f02ecc1e680a4d38a62b490131aea79c2e55",
+      "revision": 1
+    },
+    {
+      "signature": "28474effd72fdbb95b94c24e26bd5e5c147f1161b63ecfa3f8eb8ce1332f8f15",
+      "revision": 2
+    }
+  ],
+  "geometry_mutations": [
+    {
+      "tool": "cad_create_model",
+      "feature_ids": [
+        "base"
+      ],
+      "finding_ids": [],
+      "before_signature": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+      "after_signature": "7ef40fe9953c5b6a68e906d74f18f02ecc1e680a4d38a62b490131aea79c2e55",
+      "parameter_changes": {},
+      "reversed_directions": [],
+      "revision": 1,
+      "at": 1790850284.01724
+    },
+    {
+      "tool": "cad_update_feature",
+      "feature_ids": [
+        "base"
+      ],
+      "finding_ids": [],
+      "before_signature": "7ef40fe9953c5b6a68e906d74f18f02ecc1e680a4d38a62b490131aea79c2e55",
+      "after_signature": "28474effd72fdbb95b94c24e26bd5e5c147f1161b63ecfa3f8eb8ce1332f8f15",
+      "parameter_changes": {
+        "length": {
+          "before": 40,
+          "after": 55,
+          "direction": "increased"
+        }
+      },
+      "reversed_directions": [],
+      "revision": 2,
+      "at": 1790850285.246596
+    }
+  ],
+  "last_valid_candidate": null,
+  "best_evidence_candidate": null,
+  "best_candidate": null,
+  "construction_milestone": null,
+  "reference_rechecks": [],
+  "no_progress_by_signature": {},
+  "geometry_failure_history": [],
+  "last_preview_failure": null,
+  "partial_preview": null,
+  "partial_preview_history": [],
+  "reference_inventory": {},
+  "reference_inventory_history": [],
+  "web_search_history": [],
+  "required_external_facts": {},
+  "replaced_plans": [],
+  "knowledge_search": null,
+  "knowledge_visual_examples": [],
+  "unresolved_findings": [],
+  "has_references": false,
+  "actions": [
+    {
+      "kind": "tool",
+      "tool": "cad_create_model",
+      "revision": 1,
+      "at": 1790850284.01724,
+      "feature_id": "base",
+      "explicit_replacement": false,
+      "preserved_source_keys": [],
+      "user_source_provenance": [
+        {
+          "feature_id": "base",
+          "parameter": "length",
+          "turn_id": "turn-create",
+          "user_parameter": "length",
+          "value": 40,
+          "source": {
+            "type": "user",
+            "evidence": "长度40毫米"
+          }
+        },
+        {
+          "feature_id": "base",
+          "parameter": "width",
+          "turn_id": "turn-create",
+          "user_parameter": "width",
+          "value": 30,
+          "source": {
+            "type": "user",
+            "evidence": "宽度30毫米"
+          }
+        },
+        {
+          "feature_id": "base",
+          "parameter": "height",
+          "turn_id": "turn-create",
+          "user_parameter": "height",
+          "value": 50,
+          "source": {
+            "type": "user",
+            "evidence": "高度50毫米"
+          }
+        }
+      ],
+      "archived_finding_count": 0
+    },
+    {
+      "kind": "tool",
+      "tool": "cad_update_feature",
+      "revision": 1,
+      "at": 1790850285.2373812,
+      "failed": true,
+      "cancelled": false,
+      "error": "参数 length 的 user 来源声明未能与可信用户turn中的相同数值匹配；请传真实非空 turn_id 和证据，或将来源标为 image_estimate/derived 并说明实际依据。"
+    },
+    {
+      "kind": "tool",
+      "tool": "cad_update_feature",
+      "revision": 2,
+      "at": 1790850285.246596,
+      "feature_id": "base",
+      "finding_ids": [],
+      "preserved_source_keys": [],
+      "provenance_changes": [],
+      "user_source_provenance": [
+        {
+          "feature_id": "base",
+          "parameter": "length",
+          "turn_id": "turn-edit",
+          "user_parameter": "length",
+          "value": 55,
+          "source": {
+            "type": "user",
+            "evidence": "长度改为55毫米"
+          }
+        }
+      ]
+    }
+  ],
+  "output_paths": {},
+  "finished": false,
+  "finish_state": null,
+  "source_prompt": "",
+  "reference_manifest_error": null,
+  "user_turns": [
+    {
+      "turn_id": "turn-create",
+      "session_id": "mcp-stdio-source-contract",
+      "raw_user_prompt": "创建长度40毫米、宽度30毫米、高度50毫米的主体",
+      "reference_ids": [],
+      "intent": null,
+      "intent_source": "unclassified",
+      "affects_model_target": null,
+      "created_at": null,
+      "at_epoch_ms": null
+    },
+    {
+      "turn_id": "turn-edit",
+      "session_id": "mcp-stdio-source-contract",
+      "raw_user_prompt": "把主体长度改为55毫米，宽度改为50毫米",
+      "reference_ids": [],
+      "intent": null,
+      "intent_source": "unclassified",
+      "affects_model_target": null,
+      "created_at": null,
+      "at_epoch_ms": null
+    }
+  ],
+  "user_target_context_error": null
+}

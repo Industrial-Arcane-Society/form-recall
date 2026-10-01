@@ -1,0 +1,28 @@
+{
+  "schema_version": 1,
+  "session_id": "aq-text-provenance-20261001",
+  "turns": [
+    {
+      "turn_id": "cb8484949318480ca70b15088d8411c6",
+      "session_id": "aq-text-provenance-20261001",
+      "raw_user_prompt": "创建一个100×60×20毫米长方体，中心位于[0,0,0]。",
+      "reference_ids": [],
+      "created_at": "2026-10-01T09:30:39.144Z",
+      "at_epoch_ms": 1790847039144,
+      "intent": "geometry_edit",
+      "affects_model_target": true,
+      "intent_source": "cli_rules"
+    },
+    {
+      "turn_id": "2e6618338078497d995944f65c81e012",
+      "session_id": "aq-text-provenance-20261001",
+      "raw_user_prompt": "只把主体长度从100毫米改为110毫米；宽度保持60毫米，高度保持20毫米，中心保持在[0,0,0]。",
+      "reference_ids": [],
+      "created_at": "2026-10-01T09:32:04.083Z",
+      "at_epoch_ms": 1790847124083,
+      "intent": "geometry_edit",
+      "affects_model_target": true,
+      "intent_source": "cli_rules"
+    }
+  ]
+}

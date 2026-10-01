@@ -1,0 +1,13 @@
+{
+  "schema_version": 1,
+  "turns": [
+    {
+      "turn_id": "327db86d02094e299596a6608458c3e3",
+      "user_prompt": "请按参考图复刻这个工件；图中没有标注的尺寸请按图像比例估算，标明估算来源，生成本地模型",
+      "assistant_reply": "已保存候选，程序状态为 candidate_not_verified，尚未验收。 本地几何状态：passed；独立原图-模型复核pair：0；参考证据覆盖：未覆盖或未知；外部事实来源：0/0项已核实；未解决finding：0；CATIA未运行。",
+      "assistant_source": "dsh_final_reply",
+      "result_state": "candidate_not_verified",
+      "created_at": "2026-10-01T21:14:14+08:00"
+    }
+  ]
+}

@@ -1,0 +1,165 @@
+{
+  "plan": null,
+  "revision": 0,
+  "last_preview": null,
+  "preview_revision": null,
+  "preview_generation": 0,
+  "previews": [],
+  "visual_review": null,
+  "visual_reviews": {},
+  "unresolved_findings": [],
+  "knowledge_search": {
+    "status": "no_match",
+    "query": "创建一个中心位于原点、尺寸为40×30×20 mm的长方体。在 y=-15 mm 端面上、入口中心 (x=0,z=0)，沿 +Y 方向加工一个直径8 mm、深度6 mm的盲孔；孔只从该端面开口，不能贯穿到相对端面。请按此要求直接建模并完成本地几何验证。",
+    "matches": [],
+    "negative_examples": [],
+    "image_query_supported": false,
+    "visual_fallback_available": false,
+    "score_meaning": "relevance 是词面相关度排序分数，不是准确率或置信概率。",
+    "message": "当前文字描述没有达到相似检索阈值；这不代表库外不存在对应工件。",
+    "modeling_recipes": [
+      {
+        "id": "hole.blind",
+        "name": "盲孔",
+        "aliases": [
+          "盲孔",
+          "不贯穿孔",
+          "沉孔深度",
+          "blind hole"
+        ],
+        "intent": "在当前实体上建立指定深度的盲孔。",
+        "strategy": [
+          "先确定孔轴和孔心",
+          "使用 hole 特征，through=false 并给出 depth",
+          "确认深度不会切穿实体"
+        ],
+        "parameters": [
+          "直径",
+          "深度",
+          "孔心",
+          "孔轴"
+        ],
+        "builder": null,
+        "status": "guidance",
+        "limitations": []
+      }
+    ]
+  },
+  "knowledge_visual_examples": [],
+  "has_references": false,
+  "actions": [
+    {
+      "kind": "tool",
+      "tool": "cad_get_state",
+      "revision": 0,
+      "at": 1790871982.8121853
+    },
+    {
+      "kind": "tool",
+      "tool": "cad_create_model",
+      "revision": 0,
+      "at": 1790872000.450388,
+      "failed": true,
+      "cancelled": false,
+      "error": "用户来源校验失败：参数 block_body.length=40，缺少可核实的当前 turn_id、原文引句或同参数数值证据。下一步先调用 cad_get_state，读取 authoritative_user_turns 中 affects_model_target=true 的当前用户原话及其 turn_id；将同一参数、同一数值标为 type=user，并把原文连续片段逐字放入 evidence。若权威turn缺失或无法支持该数值，停止几何写入并报告上下文缺失。不要把明确用户数值改标为 derived/image_estimate、删除主体或反复 create_model 绕过校验。"
+    },
+    {
+      "kind": "tool",
+      "tool": "cad_get_state",
+      "revision": 0,
+      "at": 1790872016.9588485
+    },
+    {
+      "kind": "tool",
+      "tool": "cad_create_model",
+      "revision": 0,
+      "at": 1790872016.9676764,
+      "failed": true,
+      "cancelled": false,
+      "error": "用户来源校验失败：参数 block_body.length=40，缺少可核实的当前 turn_id、原文引句或同参数数值证据。下一步先调用 cad_get_state，读取 authoritative_user_turns 中 affects_model_target=true 的当前用户原话及其 turn_id；将同一参数、同一数值标为 type=user，并把原文连续片段逐字放入 evidence。若权威turn缺失或无法支持该数值，停止几何写入并报告上下文缺失。不要把明确用户数值改标为 derived/image_estimate、删除主体或反复 create_model 绕过校验。"
+    },
+    {
+      "kind": "tool",
+      "tool": "cad_create_model",
+      "revision": 0,
+      "at": 1790872041.1947486,
+      "failed": true,
+      "cancelled": false,
+      "error": "用户来源校验失败：参数 block_body.length=40，缺少可核实的当前 turn_id、原文引句或同参数数值证据。下一步先调用 cad_get_state，读取 authoritative_user_turns 中 affects_model_target=true 的当前用户原话及其 turn_id；将同一参数、同一数值标为 type=user，并把原文连续片段逐字放入 evidence。若权威turn缺失或无法支持该数值，停止几何写入并报告上下文缺失。不要把明确用户数值改标为 derived/image_estimate、删除主体或反复 create_model 绕过校验。"
+    },
+    {
+      "kind": "tool",
+      "tool": "cad_create_model",
+      "revision": 0,
+      "at": 1790872077.57406,
+      "failed": true,
+      "cancelled": false,
+      "error": "用户来源校验失败：参数 block_body.length=40，缺少可核实的当前 turn_id、原文引句或同参数数值证据。下一步先调用 cad_get_state，读取 authoritative_user_turns 中 affects_model_target=true 的当前用户原话及其 turn_id；将同一参数、同一数值标为 type=user，并把原文连续片段逐字放入 evidence。若权威turn缺失或无法支持该数值，停止几何写入并报告上下文缺失。不要把明确用户数值改标为 derived/image_estimate、删除主体或反复 create_model 绕过校验。"
+    },
+    {
+      "kind": "tool",
+      "tool": "cad_create_model",
+      "revision": 0,
+      "at": 1790872124.5780327,
+      "failed": true,
+      "cancelled": false,
+      "error": "用户来源校验失败：参数 block_body.length=40，缺少可核实的当前 turn_id、原文引句或同参数数值证据。下一步先调用 cad_get_state，读取 authoritative_user_turns 中 affects_model_target=true 的当前用户原话及其 turn_id；将同一参数、同一数值标为 type=user，并把原文连续片段逐字放入 evidence。若权威turn缺失或无法支持该数值，停止几何写入并报告上下文缺失。不要把明确用户数值改标为 derived/image_estimate、删除主体或反复 create_model 绕过校验。"
+    },
+    {
+      "kind": "tool",
+      "tool": "cad_create_model",
+      "revision": 0,
+      "at": 1790872147.6685238,
+      "failed": true,
+      "cancelled": false,
+      "error": "用户来源校验失败：参数 block_body.length=40，缺少可核实的当前 turn_id、原文引句或同参数数值证据。下一步先调用 cad_get_state，读取 authoritative_user_turns 中 affects_model_target=true 的当前用户原话及其 turn_id；将同一参数、同一数值标为 type=user，并把原文连续片段逐字放入 evidence。若权威turn缺失或无法支持该数值，停止几何写入并报告上下文缺失。不要把明确用户数值改标为 derived/image_estimate、删除主体或反复 create_model 绕过校验。"
+    }
+  ],
+  "output_paths": {},
+  "finished": false,
+  "finish_state": null,
+  "source_prompt": "创建一个中心位于原点、尺寸为40×30×20 mm的长方体。在 y=-15 mm 端面上、入口中心 (x=0,z=0)，沿 +Y 方向加工一个直径8 mm、深度6 mm的盲孔；孔只从该端面开口，不能贯穿到相对端面。请按此要求直接建模并完成本地几何验证。",
+  "reference_similarity_attempts": [],
+  "reference_similarity_error": null,
+  "reference_images": [],
+  "reference_similarity_review": null,
+  "reference_similarity_reviews": {},
+  "reference_similarity_history": [],
+  "finish_summary": null,
+  "finding_ledger": {},
+  "geometry_signatures": [],
+  "geometry_mutations": [],
+  "last_valid_candidate": null,
+  "best_evidence_candidate": null,
+  "best_candidate": null,
+  "construction_milestone": null,
+  "reference_rechecks": [],
+  "no_progress_by_signature": {},
+  "geometry_failure_history": [],
+  "last_preview_failure": null,
+  "geometry_issues": {},
+  "partial_preview": null,
+  "partial_candidate": null,
+  "partial_preview_history": [],
+  "reference_inventory": {},
+  "reference_inventory_roi": {},
+  "reference_inventory_history": [],
+  "web_search_history": [],
+  "required_external_facts": {},
+  "replaced_plans": [],
+  "reference_manifest_error": null,
+  "user_turns": [
+    {
+      "turn_id": "8c64c3b593454c3497471c833a4c689e",
+      "session_id": "geom-blind-entry-20261002-01",
+      "raw_user_prompt": "创建一个中心位于原点、尺寸为40×30×20 mm的长方体。在 y=-15 mm 端面上、入口中心 (x=0,z=0)，沿 +Y 方向加工一个直径8 mm、深度6 mm的盲孔；孔只从该端面开口，不能贯穿到相对端面。请按此要求直接建模并完成本地几何验证。",
+      "reference_ids": [],
+      "intent": "geometry_edit",
+      "intent_source": "cli_rules",
+      "affects_model_target": true,
+      "created_at": "2026-10-01T16:26:11.044Z",
+      "at_epoch_ms": 1790871971044
+    }
+  ],
+  "user_target_context_error": null
+}

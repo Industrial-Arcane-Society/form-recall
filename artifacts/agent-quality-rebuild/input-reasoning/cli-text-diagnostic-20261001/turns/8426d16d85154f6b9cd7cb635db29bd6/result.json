@@ -1,0 +1,37 @@
+{
+  "state": "error",
+  "error": "session \"aq-text-diagnostic-20261001\" already exists",
+  "session_id": "aq-text-diagnostic-20261001",
+  "reference_image_count": 0,
+  "cli_progress_events": [
+    {
+      "elapsed_ms": 31.0,
+      "message": "正在查询本地工件知识库。"
+    },
+    {
+      "elapsed_ms": 156.0,
+      "message": "本地知识库未找到可靠文字命中，继续按当前输入建模。"
+    },
+    {
+      "elapsed_ms": 422.0,
+      "message": "正在启动 DSH SDK 多模态 Agent 会话。"
+    },
+    {
+      "elapsed_ms": 422.0,
+      "message": "模型等待中：DSH SDK · 推理强度 low"
+    }
+  ],
+  "output_paths": {
+    "aimodel": "C:\\Users\\lycohana\\Desktop\\code\\AI-_-\\artifacts\\agent-quality-rebuild\\input-reasoning\\cli-text-diagnostic-20261001\\turns\\8426d16d85154f6b9cd7cb635db29bd6\\candidate.aimodel",
+    "stl": "C:\\Users\\lycohana\\Desktop\\code\\AI-_-\\artifacts\\agent-quality-rebuild\\input-reasoning\\cli-text-diagnostic-20261001\\turns\\8426d16d85154f6b9cd7cb635db29bd6\\candidate.stl",
+    "preview": "C:\\Users\\lycohana\\Desktop\\code\\AI-_-\\artifacts\\agent-quality-rebuild\\input-reasoning\\cli-text-diagnostic-20261001\\turns\\8426d16d85154f6b9cd7cb635db29bd6\\preview.png",
+    "report": "C:\\Users\\lycohana\\Desktop\\code\\AI-_-\\artifacts\\agent-quality-rebuild\\input-reasoning\\cli-text-diagnostic-20261001\\turns\\8426d16d85154f6b9cd7cb635db29bd6\\geometry-report.json",
+    "preview_iso": "C:\\Users\\lycohana\\Desktop\\code\\AI-_-\\artifacts\\agent-quality-rebuild\\input-reasoning\\cli-text-diagnostic-20261001\\turns\\8426d16d85154f6b9cd7cb635db29bd6\\views\\iso.png"
+  },
+  "run_record": "C:\\Users\\lycohana\\AppData\\Local\\AI Modeler\\dsh\\sessions\\aq-text-diagnostic-20261001\\cad-state.json",
+  "observability": {
+    "path": "C:\\Users\\lycohana\\AppData\\Local\\AI Modeler\\dsh\\sessions\\aq-text-diagnostic-20261001\\agent-observability.jsonl"
+  },
+  "cli_output_dir": "C:\\Users\\lycohana\\Desktop\\code\\AI-_-\\artifacts\\agent-quality-rebuild\\input-reasoning\\cli-text-diagnostic-20261001\\turns\\8426d16d85154f6b9cd7cb635db29bd6",
+  "cli_exit_code": 3
+}

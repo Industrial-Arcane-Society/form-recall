@@ -1,0 +1,17 @@
+{
+  "schema_version": 1,
+  "session_id": "aq-web-open-20261001",
+  "turns": [
+    {
+      "turn_id": "d7eee525babf481d9a0c7d8007f915fa",
+      "session_id": "aq-web-open-20261001",
+      "raw_user_prompt": "请创建一块 80×50×8 mm 的铝合金安装板。请自主联网查询 AA6061-T6 的密度，并必须调用 web_search 搜索来源、调用 web_open_result 打开至少一个真实结果页；只把打开的页面证据用于质量信息，若搜索/读取失败则明确保存候选并说明失败诊断，不得假称查阅成功。",
+      "reference_ids": [],
+      "created_at": "2026-10-01T05:49:07.718Z",
+      "at_epoch_ms": 1790833747718,
+      "intent": "query",
+      "affects_model_target": false,
+      "intent_source": "cli_rules"
+    }
+  ]
+}

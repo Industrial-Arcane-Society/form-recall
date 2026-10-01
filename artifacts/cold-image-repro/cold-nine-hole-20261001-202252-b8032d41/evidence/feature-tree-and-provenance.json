@@ -1,0 +1,187 @@
+[
+  {
+    "id": "base_box",
+    "kind": "box",
+    "operation": "add",
+    "name": "基体长方体",
+    "parameters": {
+      "length": 100,
+      "width": 50,
+      "height": 80,
+      "center": [
+        0,
+        0,
+        40
+      ]
+    },
+    "sources": {
+      "length": {
+        "type": "image_estimate",
+        "evidence": "整体宽度约100mm（X方向）"
+      },
+      "width": {
+        "type": "image_estimate",
+        "evidence": "整体厚度约50mm（Y方向）"
+      },
+      "height": {
+        "type": "image_estimate",
+        "evidence": "整体高度约80mm（Z方向）"
+      },
+      "center": {
+        "type": "derived",
+        "evidence": "以底面Z=0、几何中心在(0,0,40)"
+      }
+    }
+  },
+  {
+    "id": "front_slot",
+    "kind": "box",
+    "operation": "cut",
+    "name": "正面凹槽",
+    "parameters": {
+      "length": 30.0,
+      "width": 35.001,
+      "height": 65.0,
+      "center": [
+        0.0,
+        7.500499999999999,
+        32.5
+      ]
+    },
+    "sources": {
+      "length": {
+        "type": "image_estimate",
+        "evidence": "槽宽约30mm、深约35mm、高约65mm，顶壁厚约15mm，均按图像比例估算 图像/用户依据：凹槽尺寸。 凹槽面内宽度映射到此坐标轴。"
+      },
+      "width": {
+        "type": "derived",
+        "evidence": "由用户凹槽深度及布尔切除余量计算此坐标轴尺寸。"
+      },
+      "height": {
+        "type": "image_estimate",
+        "evidence": "槽宽约30mm、深约35mm、高约65mm，顶壁厚约15mm，均按图像比例估算 图像/用户依据：凹槽尺寸。 凹槽面内高度映射到此坐标轴。"
+      },
+      "center": {
+        "type": "derived",
+        "evidence": "由主 box 表面坐标与凹入深度计算切除体中心。"
+      }
+    }
+  },
+  {
+    "id": "horz_hole_1",
+    "kind": "hole",
+    "operation": "cut",
+    "name": "horz_hole_1",
+    "parameters": {
+      "diameter": 12.0,
+      "through": true,
+      "pos": "point",
+      "point": [
+        -50.0,
+        7.5,
+        20.0
+      ],
+      "axis": "X"
+    },
+    "sources": {
+      "diameter": {
+        "type": "image_estimate",
+        "evidence": "3个水平通孔沿X方向贯穿左右壁，Z向约20/40/60均匀分布，Y向位于侧壁中间；按图像比例估算孔径12mm 图像/用户依据：孔位和孔径估计。"
+      },
+      "point": {
+        "type": "derived",
+        "evidence": "由输入面内坐标、退台量和面法线转换为全局坐标。"
+      }
+    }
+  },
+  {
+    "id": "horz_hole_2",
+    "kind": "hole",
+    "operation": "cut",
+    "name": "horz_hole_2",
+    "parameters": {
+      "diameter": 12.0,
+      "through": true,
+      "pos": "point",
+      "point": [
+        -50.0,
+        7.5,
+        40.0
+      ],
+      "axis": "X"
+    },
+    "sources": {
+      "diameter": {
+        "type": "image_estimate",
+        "evidence": "3个水平通孔沿X方向贯穿左右壁，Z向约20/40/60均匀分布，Y向位于侧壁中间；按图像比例估算孔径12mm 图像/用户依据：孔位和孔径估计。"
+      },
+      "point": {
+        "type": "derived",
+        "evidence": "由输入面内坐标、退台量和面法线转换为全局坐标。"
+      }
+    }
+  },
+  {
+    "id": "horz_hole_3",
+    "kind": "hole",
+    "operation": "cut",
+    "name": "horz_hole_3",
+    "parameters": {
+      "diameter": 12.0,
+      "through": true,
+      "pos": "point",
+      "point": [
+        -50.0,
+        7.5,
+        60.0
+      ],
+      "axis": "X"
+    },
+    "sources": {
+      "diameter": {
+        "type": "image_estimate",
+        "evidence": "3个水平通孔沿X方向贯穿左右壁，Z向约20/40/60均匀分布，Y向位于侧壁中间；按图像比例估算孔径12mm 图像/用户依据：孔位和孔径估计。"
+      },
+      "point": {
+        "type": "derived",
+        "evidence": "由输入面内坐标、退台量和面法线转换为全局坐标。"
+      }
+    }
+  },
+  {
+    "id": "back_blind_1",
+    "kind": "hole",
+    "operation": "cut",
+    "name": "back_blind_1",
+    "parameters": {
+      "diameter": 12.0,
+      "through": false,
+      "pos": "point",
+      "point": [
+        0,
+        -24.5,
+        20
+      ],
+      "axis": "Y",
+      "depth": 15.5
+    },
+    "sources": {
+      "diameter": {
+        "type": "image_estimate",
+        "evidence": "后壁另外2个盲孔，从背面外表面Y=-25沿+Y钻透后壁，出口在槽内后壁，深度15mm，Z向约20/40mm 图像/用户依据：孔位和孔径估计。"
+      },
+      "point": {
+        "type": "derived",
+        "evidence": "从Y=-24.5开始确保刀体在实体内部"
+      },
+      "through": {
+        "type": "image_estimate",
+        "evidence": "后壁孔为盲孔，仅钻透后壁15mm"
+      },
+      "depth": {
+        "type": "derived",
+        "evidence": "后壁厚度15mm，留0.5mm余量确保贯通"
+      }
+    }
+  }
+]

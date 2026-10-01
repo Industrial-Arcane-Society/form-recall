@@ -1,0 +1,12 @@
+SESSION=rc2-cold-20261002-015634-6d08f70e
+START=2026-10-02T01:56:34.130+08:00
+OUTPUT_DIR=C:\Users\lycohana\Desktop\code\AI-_-\artifacts\agent-quality-rebuild\rc2-cold-20261002-015634-6d08f70e
+PROMPT=请根据参考图建立模型
+COMMAND=python -u -m ai_modeler agent --text "请根据参考图建立模型" --image "artifacts/agent-quality-rebuild/references/user-nine-hole-recess-iso.png" --session-id "rc2-cold-20261002-015634-6d08f70e" --output-dir "C:\Users\lycohana\Desktop\code\AI-_-\artifacts\agent-quality-rebuild\rc2-cold-20261002-015634-6d08f70e"
+IMAGE_SHA256=53ED87FADF8CCA869DA921627E6A13C845424C6906B3DE517D5CCA972DB94553
+DSH_VERSION=0.2.0-rc.2
+SDK_VERSION=0.1.5rc1
+MODEL=moonshotai/Kimi-K2.7-Code
+REASONING_EFFORT=low
+END=2026-10-02T01:56:41.851+08:00
+EXIT_CODE=3

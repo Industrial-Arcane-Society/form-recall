@@ -1,0 +1,30 @@
+{
+  "turn_id": "a64ffbb963234faaa59a2e0ec920fcab",
+  "started_at_epoch_ms": 1790831081374,
+  "session_id": "cold-acceptance-mid-20261001-7f3c91d2",
+  "provider": "siliconflow",
+  "model": "moonshotai/Kimi-K2.7-Code",
+  "reasoning_effort": "low",
+  "runtime_capacity_policy": {
+    "context_window": {
+      "value": 256000,
+      "source": "verified_provider_capability",
+      "provider_capability_known": true
+    },
+    "output_cap": {
+      "value": 32768,
+      "source": "dsh_operational_fallback",
+      "provider_maximum_known": false
+    }
+  },
+  "reference_images": [
+    {
+      "id": "sha256:53ed87fadf8cca869da921627e6a13c845424c6906b3de517d5cca972db94553",
+      "sha256": "53ed87fadf8cca869da921627e6a13c845424c6906b3de517d5cca972db94553",
+      "filename": "codex-clipboard-c8107ca1-5b7e-4378-9db4-efd0bbe9b9a2.png",
+      "width": 494,
+      "height": 544
+    }
+  ],
+  "user_turns_manifest": "C:\\Users\\lycohana\\AppData\\Local\\AI Modeler\\dsh\\sessions\\cold-acceptance-mid-20261001-7f3c91d2\\user-turns.json"
+}

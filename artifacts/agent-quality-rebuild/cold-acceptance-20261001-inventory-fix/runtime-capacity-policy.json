@@ -1,0 +1,12 @@
+{
+  "context_window": {
+    "value": 256000,
+    "source": "verified_provider_capability",
+    "provider_capability_known": true
+  },
+  "output_cap": {
+    "value": 32768,
+    "source": "dsh_operational_fallback",
+    "provider_maximum_known": false
+  }
+}

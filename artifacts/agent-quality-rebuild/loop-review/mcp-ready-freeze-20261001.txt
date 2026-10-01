@@ -1,0 +1,5 @@
+MCP smoke: initialize, tools/list (24 tools), cad_get_state: OK
+Targeted regression: tests.test_dsh_review_workflow + tests.test_dsh_agent_cli; 41 tests, OK, log=artifacts/agent-quality-rebuild/loop-review/runtime-mcp-timeout-selfreview-external-20261001.txt
+Generated MCP config has toolCallTimeoutMs: 210000; AI_MODELER_REVIEW_REASONING_EFFORT, AI_MODELER_REVIEW_THINKING_BUDGET and AI_MODELER_TRANSPORT_IMAGE_MAP variables are asserted by runtime config test.
+81202FE34B94FB73DE3764B5A6F31F3DC1B98C29277808BB61BF3FDD218E3DD9  C:\Users\lycohana\Desktop\code\AI-_-\ai_modeler\agent\dsh_mcp_server.py
+E9B46CEE6BFDC045BBD87C177D8C3CF4AA7C5BC2148438F16FC9042653AFF8D6  C:\Users\lycohana\Desktop\code\AI-_-\ai_modeler\agent\dsh_agent.py

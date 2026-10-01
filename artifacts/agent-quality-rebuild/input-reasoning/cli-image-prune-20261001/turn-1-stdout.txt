@@ -1,0 +1,2451 @@
+{
+  "state": "candidate_not_verified",
+  "plan": {
+    "schema_version": "1.0",
+    "name": "u-block-with-recess",
+    "source_prompt": "Simplified U-shaped solid: rectangular block with a centered front-facing rectangular recess/slot; no holes or decorations in this round.",
+    "units": {
+      "length": "mm",
+      "angle": "deg"
+    },
+    "coordinate_system": {
+      "type": "global_cartesian",
+      "handedness": "right",
+      "axes": [
+        "X",
+        "Y",
+        "Z"
+      ],
+      "origin": [
+        0,
+        0,
+        0
+      ]
+    },
+    "features": [
+      {
+        "id": "main-body",
+        "kind": "box",
+        "operation": "add",
+        "name": "Base rectangular block",
+        "parameters": {
+          "length": 90,
+          "width": 36,
+          "height": 80,
+          "center": [
+            0,
+            0,
+            40
+          ]
+        },
+        "sources": {
+          "length": {
+            "type": "image_estimate",
+            "evidence": "Overall left-right span in iso view about 2.5x front-back thickness",
+            "note": "Estimated overall X span"
+          },
+          "width": {
+            "type": "image_estimate",
+            "evidence": "Front-back depth in iso view",
+            "note": "Estimated overall Y thickness"
+          },
+          "height": {
+            "type": "image_estimate",
+            "evidence": "Overall vertical span in iso view",
+            "note": "Estimated overall Z height"
+          },
+          "center": {
+            "type": "derived",
+            "note": "Box centered in X/Y, base at grid plane Z=0"
+          }
+        }
+      },
+      {
+        "id": "front-recess",
+        "kind": "box",
+        "operation": "cut",
+        "name": "Front rectangular recess/slot",
+        "parameters": {
+          "length": 36.0,
+          "width": 24.001,
+          "height": 72.0,
+          "center": [
+            0.0,
+            6.000500000000001,
+            36.0
+          ]
+        },
+        "sources": {
+          "length": {
+            "type": "image_estimate",
+            "evidence": "Front-facing rectangular slot visible in iso view between the two outer walls, exposing the recessed back wall with a horizontal top step; proportions estimated relative to outer walls 图像/用户依据：凹槽尺寸。 凹槽面内宽度映射到此坐标轴。"
+          },
+          "width": {
+            "type": "derived",
+            "evidence": "由用户凹槽深度及布尔切除余量计算此坐标轴尺寸。"
+          },
+          "height": {
+            "type": "image_estimate",
+            "evidence": "Front-facing rectangular slot visible in iso view between the two outer walls, exposing the recessed back wall with a horizontal top step; proportions estimated relative to outer walls 图像/用户依据：凹槽尺寸。 凹槽面内高度映射到此坐标轴。"
+          },
+          "center": {
+            "type": "derived",
+            "evidence": "由主 box 表面坐标与凹入深度计算切除体中心。"
+          }
+        },
+        "note": "通过统一 CADPlan 坐标语义创建的面内退台。"
+      }
+    ],
+    "pending_questions": []
+  },
+  "validation": {
+    "valid": true,
+    "state": "valid",
+    "errors": [],
+    "confirmations": [],
+    "support": [
+      {
+        "feature_id": "main-body",
+        "kind": "box",
+        "status": "exact",
+        "reason": "矩形草图加凸台；当前 CATIA 映射仅支持 Z 轴拉伸。"
+      },
+      {
+        "feature_id": "front-recess",
+        "kind": "box",
+        "status": "exact",
+        "reason": "矩形草图加凸台；当前 CATIA 映射仅支持 Z 轴拉伸。"
+      }
+    ],
+    "geometry_support": [
+      {
+        "feature_id": "main-body",
+        "kind": "box",
+        "status": "exact",
+        "reason": "OCCT 棱柱；带圆角/倒角时沿用离散轮廓近似",
+        "backend": "occt_brep"
+      },
+      {
+        "feature_id": "front-recess",
+        "kind": "box",
+        "status": "exact",
+        "reason": "OCCT 棱柱；带圆角/倒角时沿用离散轮廓近似",
+        "backend": "occt_brep"
+      }
+    ],
+    "warnings": [],
+    "schema_version": "1.0"
+  },
+  "preview": {
+    "state": "previewed",
+    "validation": {
+      "valid": true,
+      "state": "valid",
+      "errors": [],
+      "confirmations": [],
+      "support": [
+        {
+          "feature_id": "main-body",
+          "kind": "box",
+          "status": "exact",
+          "reason": "矩形草图加凸台；当前 CATIA 映射仅支持 Z 轴拉伸。"
+        },
+        {
+          "feature_id": "front-recess",
+          "kind": "box",
+          "status": "exact",
+          "reason": "矩形草图加凸台；当前 CATIA 映射仅支持 Z 轴拉伸。"
+        }
+      ],
+      "geometry_support": [
+        {
+          "feature_id": "main-body",
+          "kind": "box",
+          "status": "exact",
+          "reason": "OCCT 棱柱；带圆角/倒角时沿用离散轮廓近似",
+          "backend": "occt_brep"
+        },
+        {
+          "feature_id": "front-recess",
+          "kind": "box",
+          "status": "exact",
+          "reason": "OCCT 棱柱；带圆角/倒角时沿用离散轮廓近似",
+          "backend": "occt_brep"
+        }
+      ],
+      "warnings": [],
+      "schema_version": "1.0"
+    },
+    "geometry_backend": "occt_brep",
+    "native_brep": {
+      "backend": "occt_brep",
+      "kernel": "可用：OCCT 7.9.3.1 / cadquery-ocp-novtk 7.9.3.1.1",
+      "self_intersection_face_limit": 15000,
+      "geometry_state": "passed",
+      "state": "passed",
+      "brep_valid": true,
+      "shape_type": "TopAbs_COMPOUND",
+      "solid_count": 1,
+      "connected_component_count": 1,
+      "shell_count": 1,
+      "closed_shell_count": 1,
+      "closed": true,
+      "edge_count": 48,
+      "face_count": 10,
+      "free_edge_count": 0,
+      "volume_mm3": 196992.0,
+      "bbox_mm": [
+        -45.0,
+        -18.0,
+        0.0,
+        45.0,
+        18.0,
+        80.0
+      ],
+      "self_intersection": {
+        "status": "checked_no_intersection",
+        "face_count": 10,
+        "face_limit": 15000,
+        "check_result_count": 0,
+        "check_statuses": [],
+        "method": "BOPAlgo_ArgumentAnalyzer(SelfInterMode=True, UseOBB=True)"
+      },
+      "validity_method": "BRepCheck_Analyzer",
+      "geometry_scope": "native_OCCT_BREP_only_visual_comparison_not_performed",
+      "unverified_cut_intents": [],
+      "hole_feature_count": 0,
+      "measured_hole_source_feature_count": 0,
+      "unverified_cut_intent_count": 0,
+      "planned_hole_instance_count": 0,
+      "active_hole_instance_count": 0,
+      "superseded_hole_instance_count": 0,
+      "active_through_hole_count": 0,
+      "through_hole_count": 0,
+      "all_declared_holes_verified": true,
+      "visual_validation": "not_performed",
+      "catia_executed": false,
+      "build_transaction": "每个特征验证成功后才提交；失败保留上一有效实体"
+    },
+    "catia_executed": false,
+    "dimensions": {
+      "unit": "mm",
+      "bbox": [
+        -45.0,
+        -18.0,
+        0.0,
+        45.0,
+        18.0,
+        80.0
+      ],
+      "size": [
+        90.0,
+        36.0,
+        80.0
+      ],
+      "volume_mm3": 196992.0,
+      "surface_area_mm2": 30096.0,
+      "triangles": 28,
+      "feature_count": 2
+    },
+    "catia_operations": [
+      {
+        "index": 1,
+        "kind": "rect_pad",
+        "plane": "XY",
+        "center": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "profile": [],
+        "dimensions": {
+          "l": 90.0,
+          "w": 36.0,
+          "r": 0.0,
+          "h": 80.0,
+          "depth": 0.0
+        },
+        "name": "Base rectangular block",
+        "note": "长方体 90 × 36 × 80 mm"
+      },
+      {
+        "index": 2,
+        "kind": "rect_cut",
+        "plane": "XY",
+        "center": [
+          0.0,
+          6.000500000000001,
+          72.0
+        ],
+        "profile": [],
+        "dimensions": {
+          "l": 36.0,
+          "w": 24.001,
+          "r": 0.0,
+          "h": 72.0,
+          "depth": 72.0
+        },
+        "name": "Front rectangular recess/slot",
+        "note": "长方体 36 × 24 × 72 mm"
+      }
+    ],
+    "warnings": [],
+    "feature_manifest": {
+      "main-body": {
+        "kind": "box",
+        "operation": "add",
+        "name": "Base rectangular block",
+        "parameters": {
+          "length": 90,
+          "width": 36,
+          "height": 80,
+          "center": [
+            0,
+            0,
+            40
+          ]
+        },
+        "sources": {
+          "length": {
+            "type": "image_estimate",
+            "evidence": "Overall left-right span in iso view about 2.5x front-back thickness",
+            "note": "Estimated overall X span"
+          },
+          "width": {
+            "type": "image_estimate",
+            "evidence": "Front-back depth in iso view",
+            "note": "Estimated overall Y thickness"
+          },
+          "height": {
+            "type": "image_estimate",
+            "evidence": "Overall vertical span in iso view",
+            "note": "Estimated overall Z height"
+          },
+          "center": {
+            "type": "derived",
+            "note": "Box centered in X/Y, base at grid plane Z=0"
+          }
+        },
+        "relations": []
+      },
+      "front-recess": {
+        "kind": "box",
+        "operation": "cut",
+        "name": "Front rectangular recess/slot",
+        "parameters": {
+          "length": 36.0,
+          "width": 24.001,
+          "height": 72.0,
+          "center": [
+            0.0,
+            6.000500000000001,
+            36.0
+          ]
+        },
+        "sources": {
+          "length": {
+            "type": "image_estimate",
+            "evidence": "Front-facing rectangular slot visible in iso view between the two outer walls, exposing the recessed back wall with a horizontal top step; proportions estimated relative to outer walls 图像/用户依据：凹槽尺寸。 凹槽面内宽度映射到此坐标轴。"
+          },
+          "width": {
+            "type": "derived",
+            "evidence": "由用户凹槽深度及布尔切除余量计算此坐标轴尺寸。"
+          },
+          "height": {
+            "type": "image_estimate",
+            "evidence": "Front-facing rectangular slot visible in iso view between the two outer walls, exposing the recessed back wall with a horizontal top step; proportions estimated relative to outer walls 图像/用户依据：凹槽尺寸。 凹槽面内高度映射到此坐标轴。"
+          },
+          "center": {
+            "type": "derived",
+            "evidence": "由主 box 表面坐标与凹入深度计算切除体中心。"
+          }
+        },
+        "relations": []
+      }
+    },
+    "build_log": [
+      "[基准] 长方体 90 × 36 × 80 mm → 8 面",
+      "[切除] 长方体 36 × 24 × 72 mm → 18 面"
+    ],
+    "local_geometry_checks": {
+      "backend": "occt_brep",
+      "kernel": "可用：OCCT 7.9.3.1 / cadquery-ocp-novtk 7.9.3.1.1",
+      "self_intersection_face_limit": 15000,
+      "geometry_state": "passed",
+      "state": "passed",
+      "brep_valid": true,
+      "shape_type": "TopAbs_COMPOUND",
+      "solid_count": 1,
+      "connected_component_count": 1,
+      "shell_count": 1,
+      "closed_shell_count": 1,
+      "closed": true,
+      "edge_count": 48,
+      "face_count": 10,
+      "free_edge_count": 0,
+      "volume_mm3": 196992.0,
+      "bbox_mm": [
+        -45.0,
+        -18.0,
+        0.0,
+        45.0,
+        18.0,
+        80.0
+      ],
+      "self_intersection": {
+        "status": "checked_no_intersection",
+        "face_count": 10,
+        "face_limit": 15000,
+        "check_result_count": 0,
+        "check_statuses": [],
+        "method": "BOPAlgo_ArgumentAnalyzer(SelfInterMode=True, UseOBB=True)"
+      },
+      "validity_method": "BRepCheck_Analyzer",
+      "geometry_scope": "native_OCCT_BREP_only_visual_comparison_not_performed",
+      "feature_results": [
+        {
+          "feature_id": "main-body",
+          "kind": "box",
+          "operation": "add",
+          "geometry_support": "exact",
+          "builder": "analytic_prism",
+          "state": "applied",
+          "source_feature_id": null,
+          "source_resolution": null,
+          "solid_count": 1,
+          "brep_valid": true,
+          "before_volume_mm3": 0.0,
+          "after_volume_mm3": 259200.0,
+          "volume_delta_mm3": 259200.0,
+          "cylindrical_cut_intents": [],
+          "depth_measurement": null,
+          "facet_count": null
+        },
+        {
+          "feature_id": "front-recess",
+          "kind": "box",
+          "operation": "cut",
+          "geometry_support": "exact",
+          "builder": "analytic_prism",
+          "state": "applied",
+          "source_feature_id": null,
+          "source_resolution": null,
+          "solid_count": 1,
+          "brep_valid": true,
+          "before_volume_mm3": 259200.0,
+          "after_volume_mm3": 196992.0,
+          "volume_delta_mm3": -62208.0,
+          "cylindrical_cut_intents": [],
+          "depth_measurement": null,
+          "facet_count": null
+        }
+      ],
+      "hole_instances": [],
+      "unverified_cut_intents": [],
+      "hole_feature_count": 0,
+      "measured_hole_source_feature_count": 0,
+      "unverified_cut_intent_count": 0,
+      "planned_hole_instance_count": 0,
+      "active_hole_instance_count": 0,
+      "superseded_hole_instance_count": 0,
+      "active_through_hole_count": 0,
+      "through_hole_count": 0,
+      "all_declared_holes_verified": true,
+      "visual_validation": "not_performed",
+      "catia_executed": false,
+      "build_transaction": "每个特征验证成功后才提交；失败保留上一有效实体",
+      "source": "OpenCASCADE native BREP; preview mesh is display-only",
+      "bbox_size_mm": [
+        90.0,
+        36.0,
+        80.0
+      ],
+      "bbox_ratios_from_brep": {
+        "front_width_height": 1.125,
+        "depth_height": 0.45,
+        "top_width_depth": 2.5
+      },
+      "bbox_ratios_from_mesh": {
+        "front_width_height": 1.125,
+        "depth_height": 0.45,
+        "top_width_depth": 2.5
+      },
+      "feature_count_from_plan": 2,
+      "feature_ids_from_plan": [
+        "main-body",
+        "front-recess"
+      ],
+      "hole_features_from_plan": [],
+      "hole_feature_count_from_plan": 0,
+      "expected_hole_instance_count": 0,
+      "hole_instance_count": 0,
+      "through_hole_checks": [],
+      "through_hole_mesh_checks": [],
+      "hole_measurement_complete": true,
+      "hole_measurement_state": "not_applicable_no_holes_or_cylindrical_cuts",
+      "through_hole_count_expected": 0,
+      "through_hole_count_verified": 0,
+      "through_hole_result": "no_holes_declared",
+      "image_estimate_parameters": [
+        {
+          "feature_id": "main-body",
+          "parameter": "length",
+          "value": 90,
+          "evidence": "Overall left-right span in iso view about 2.5x front-back thickness",
+          "visual_measurement": "not_performed_by_geometry_backend"
+        },
+        {
+          "feature_id": "main-body",
+          "parameter": "width",
+          "value": 36,
+          "evidence": "Front-back depth in iso view",
+          "visual_measurement": "not_performed_by_geometry_backend"
+        },
+        {
+          "feature_id": "main-body",
+          "parameter": "height",
+          "value": 80,
+          "evidence": "Overall vertical span in iso view",
+          "visual_measurement": "not_performed_by_geometry_backend"
+        },
+        {
+          "feature_id": "front-recess",
+          "parameter": "length",
+          "value": 36.0,
+          "evidence": "Front-facing rectangular slot visible in iso view between the two outer walls, exposing the recessed back wall with a horizontal top step; proportions estimated relative to outer walls 图像/用户依据：凹槽尺寸。 凹槽面内宽度映射到此坐标轴。",
+          "visual_measurement": "not_performed_by_geometry_backend"
+        },
+        {
+          "feature_id": "front-recess",
+          "parameter": "height",
+          "value": 72.0,
+          "evidence": "Front-facing rectangular slot visible in iso view between the two outer walls, exposing the recessed back wall with a horizontal top step; proportions estimated relative to outer walls 图像/用户依据：凹槽尺寸。 凹槽面内高度映射到此坐标轴。",
+          "visual_measurement": "not_performed_by_geometry_backend"
+        }
+      ],
+      "catia_geometry_verification": "not_performed"
+    },
+    "orthographic_layout": {
+      "unit": "mm",
+      "axes": {
+        "length": "X",
+        "width": "Y",
+        "height": "Z"
+      },
+      "uniform_scale_across_views": true,
+      "scale_pixels_per_mm": 2.3688888888888893,
+      "tile_size_pixels": [
+        330,
+        260
+      ],
+      "view_extents": {
+        "front": {
+          "horizontal_axis": "X",
+          "horizontal": 90.0,
+          "vertical_axis": "Z",
+          "vertical": 80.0
+        },
+        "right": {
+          "horizontal_axis": "Y",
+          "horizontal": 36.0,
+          "vertical_axis": "Z",
+          "vertical": 80.0
+        },
+        "top": {
+          "horizontal_axis": "X",
+          "horizontal": 90.0,
+          "vertical_axis": "Y",
+          "vertical": 36.0
+        }
+      },
+      "dimension_ratios": {
+        "length_to_height": 1.125,
+        "width_to_height": 0.45,
+        "length_to_width": 2.5
+      }
+    },
+    "preview_image": "C:\\Users\\lycohana\\AppData\\Local\\AI Modeler\\dsh\\sessions\\input-image-prune-20261001\\previews\\r4-g1-iso.png",
+    "preview_image_views": [
+      "iso"
+    ],
+    "preview_image_view_set": "iso",
+    "preview_image_grid_columns": 1,
+    "preview_image_source": "OCCT BREP tessellated for display; not a CATIA screenshot",
+    "preview_render_style": "view-adaptive depth-cued matte shading with visible feature edges",
+    "preview_render_note": "诊断渲染：凹入或远离相机的表面会略暗，清晰线条表示可见的几何折边；亮暗不是零件材质颜色，需结合其它视图判断。",
+    "preview_image_layout": {
+      "unit": "mm",
+      "axes": {
+        "length": "X",
+        "width": "Y",
+        "height": "Z"
+      },
+      "uniform_scale_across_views": true,
+      "scale_pixels_per_mm": 2.3688888888888893,
+      "tile_size_pixels": [
+        330,
+        260
+      ],
+      "view_extents": {
+        "front": {
+          "horizontal_axis": "X",
+          "horizontal": 90.0,
+          "vertical_axis": "Z",
+          "vertical": 80.0
+        },
+        "right": {
+          "horizontal_axis": "Y",
+          "horizontal": 36.0,
+          "vertical_axis": "Z",
+          "vertical": 80.0
+        },
+        "top": {
+          "horizontal_axis": "X",
+          "horizontal": 90.0,
+          "vertical_axis": "Y",
+          "vertical": 36.0
+        }
+      },
+      "dimension_ratios": {
+        "length_to_height": 1.125,
+        "width_to_height": 0.45,
+        "length_to_width": 2.5
+      }
+    },
+    "preview_generation": 1
+  },
+  "review": null,
+  "open_multiview_findings": [],
+  "reply": "已保存候选，程序状态为 candidate_not_verified，尚未验收。 本地几何状态：passed；独立原图-模型复核pair：1；参考证据覆盖：未覆盖或未知；外部事实来源：0/0项已核实；未解决finding：0；CATIA未运行。",
+  "agent_self_report": "已完成本轮建模，U 形主体与正面凹槽已保存为候选。\n\n**模型结果**\n- 特征：`main-body`（基础长方体 90 × 36 × 80 mm）+ `front-recess`（正面矩形凹槽，约 36 宽 × 72 高 × 24 深 mm）。\n- 未添加九个圆孔及任何装饰特征，符合“本轮只做主体和凹槽”的要求。\n- 本地几何检查通过，闭合实体无自相交。\n\n**保存文件**\n- AIMODEL / STL / 预览 / 几何报告均位于会话输出目录：\n  - `C:\\Users\\lycohana\\AppData\\Local\\AI Modeler\\dsh\\sessions\\input-image-prune-20261001\\output\\`\n- 具体文件：`candidate.aimodel`、`candidate.stl`、`preview.png`、`geometry-report.json`、`views\\iso.png`。\n\n**状态说明**\n- 保存状态：`candidate_not_verified`。\n- 原因：所有绝对尺寸均为按图估算（参考图无标注）；比例与轮廓在 iso 视角下与参考图近似匹配。\n- CATPart 未创建、未验证。",
+  "finish_reason": "completed",
+  "error": null,
+  "output_paths": {
+    "aimodel": "C:\\Users\\lycohana\\Desktop\\code\\AI-_-\\artifacts\\agent-quality-rebuild\\input-reasoning\\cli-image-prune-20261001\\turns\\921c175f327b40fa96b9bbe9156a4298\\candidate.aimodel",
+    "stl": "C:\\Users\\lycohana\\Desktop\\code\\AI-_-\\artifacts\\agent-quality-rebuild\\input-reasoning\\cli-image-prune-20261001\\turns\\921c175f327b40fa96b9bbe9156a4298\\candidate.stl",
+    "preview": "C:\\Users\\lycohana\\Desktop\\code\\AI-_-\\artifacts\\agent-quality-rebuild\\input-reasoning\\cli-image-prune-20261001\\turns\\921c175f327b40fa96b9bbe9156a4298\\preview.png",
+    "report": "C:\\Users\\lycohana\\Desktop\\code\\AI-_-\\artifacts\\agent-quality-rebuild\\input-reasoning\\cli-image-prune-20261001\\turns\\921c175f327b40fa96b9bbe9156a4298\\geometry-report.json",
+    "preview_iso": "C:\\Users\\lycohana\\Desktop\\code\\AI-_-\\artifacts\\agent-quality-rebuild\\input-reasoning\\cli-image-prune-20261001\\turns\\921c175f327b40fa96b9bbe9156a4298\\views\\iso.png"
+  },
+  "output_warning": null,
+  "tool_calls": 20,
+  "web_search_calls": 0,
+  "preview_calls": 1,
+  "review_rounds": 1,
+  "main_self_report_count": 0,
+  "finish_summary": {
+    "finish_state": "candidate_not_verified",
+    "accepted": false,
+    "local_geometry_state": "passed",
+    "hole_measurement": {
+      "complete": true,
+      "declared_feature_ids": [],
+      "measured_feature_ids": [],
+      "instance_count": 0,
+      "active_instance_count": 0,
+      "superseded_instance_count": 0,
+      "active_through_hole_count": 0,
+      "instance_statuses": [],
+      "measurement_complete_flag": true,
+      "unverified_cut_intents": []
+    },
+    "independent_review_pair_count": 1,
+    "visual_evidence": {
+      "revision": 4,
+      "references": {
+        "sha256:53ed87fadf8cca869da921627e6a13c845424c6906b3de517d5cca972db94553": {
+          "reference_id": "sha256:53ed87fadf8cca869da921627e6a13c845424c6906b3de517d5cca972db94553",
+          "filename": "user-nine-hole-recess-iso.png",
+          "comparable_pairs": 0,
+          "noncomparable_pairs": 1,
+          "supported_evidence_ids": [],
+          "estimated_evidence_ids": [],
+          "mismatch_evidence_ids": [],
+          "unobservable_evidence_ids": [],
+          "coverage_status": "unverified",
+          "covered": false
+        }
+      },
+      "latest_review_pairs": 1,
+      "comparable_review_pairs": 0,
+      "noncomparable_review_pairs": 1,
+      "all_references_covered": false
+    },
+    "required_external_facts": {
+      "required_count": 0,
+      "verified_count": 0,
+      "failed_count": 0,
+      "unknown_count": 0,
+      "facts": {}
+    },
+    "open_finding_count": 0,
+    "construction_complete": true,
+    "catia_invoked": false
+  },
+  "repair_cycles": 3,
+  "model_call_count": 21,
+  "model_call_count_source": "dsh_llm_stream_events",
+  "model_calls": [
+    {
+      "provider": "ai-modeler",
+      "model": "moonshotai/Kimi-K2.7-Code",
+      "reasoning_effort": "low",
+      "dsh_request_image_count": 1,
+      "capture_layer": "dsh_llm_stream_boundary",
+      "provider_wire_observed": true
+    },
+    {
+      "provider": "ai-modeler",
+      "model": "moonshotai/Kimi-K2.7-Code",
+      "reasoning_effort": "low",
+      "dsh_request_image_count": 1,
+      "capture_layer": "dsh_llm_stream_boundary",
+      "provider_wire_observed": true
+    },
+    {
+      "provider": "ai-modeler",
+      "model": "moonshotai/Kimi-K2.7-Code",
+      "reasoning_effort": "low",
+      "dsh_request_image_count": 1,
+      "capture_layer": "dsh_llm_stream_boundary",
+      "provider_wire_observed": true
+    },
+    {
+      "provider": "ai-modeler",
+      "model": "moonshotai/Kimi-K2.7-Code",
+      "reasoning_effort": "low",
+      "dsh_request_image_count": 1,
+      "capture_layer": "dsh_llm_stream_boundary",
+      "provider_wire_observed": true
+    },
+    {
+      "provider": "ai-modeler",
+      "model": "moonshotai/Kimi-K2.7-Code",
+      "reasoning_effort": "low",
+      "dsh_request_image_count": 1,
+      "capture_layer": "dsh_llm_stream_boundary",
+      "provider_wire_observed": true
+    },
+    {
+      "provider": "ai-modeler",
+      "model": "moonshotai/Kimi-K2.7-Code",
+      "reasoning_effort": "low",
+      "dsh_request_image_count": 1,
+      "capture_layer": "dsh_llm_stream_boundary",
+      "provider_wire_observed": true
+    },
+    {
+      "provider": "ai-modeler",
+      "model": "moonshotai/Kimi-K2.7-Code",
+      "reasoning_effort": "low",
+      "dsh_request_image_count": 1,
+      "capture_layer": "dsh_llm_stream_boundary",
+      "provider_wire_observed": true
+    },
+    {
+      "provider": "ai-modeler",
+      "model": "moonshotai/Kimi-K2.7-Code",
+      "reasoning_effort": "low",
+      "dsh_request_image_count": 1,
+      "capture_layer": "dsh_llm_stream_boundary",
+      "provider_wire_observed": true
+    },
+    {
+      "provider": "ai-modeler",
+      "model": "moonshotai/Kimi-K2.7-Code",
+      "reasoning_effort": "low",
+      "dsh_request_image_count": 1,
+      "capture_layer": "dsh_llm_stream_boundary",
+      "provider_wire_observed": true
+    },
+    {
+      "provider": "ai-modeler",
+      "model": "moonshotai/Kimi-K2.7-Code",
+      "reasoning_effort": "low",
+      "dsh_request_image_count": 1,
+      "capture_layer": "dsh_llm_stream_boundary",
+      "provider_wire_observed": true
+    },
+    {
+      "provider": "ai-modeler",
+      "model": "moonshotai/Kimi-K2.7-Code",
+      "reasoning_effort": "low",
+      "dsh_request_image_count": 1,
+      "capture_layer": "dsh_llm_stream_boundary",
+      "provider_wire_observed": true
+    },
+    {
+      "provider": "ai-modeler",
+      "model": "moonshotai/Kimi-K2.7-Code",
+      "reasoning_effort": "low",
+      "dsh_request_image_count": 1,
+      "capture_layer": "dsh_llm_stream_boundary",
+      "provider_wire_observed": true
+    },
+    {
+      "provider": "ai-modeler",
+      "model": "moonshotai/Kimi-K2.7-Code",
+      "reasoning_effort": "low",
+      "dsh_request_image_count": 1,
+      "capture_layer": "dsh_llm_stream_boundary",
+      "provider_wire_observed": true
+    },
+    {
+      "provider": "ai-modeler",
+      "model": "moonshotai/Kimi-K2.7-Code",
+      "reasoning_effort": "low",
+      "dsh_request_image_count": 1,
+      "capture_layer": "dsh_llm_stream_boundary",
+      "provider_wire_observed": true
+    },
+    {
+      "provider": "ai-modeler",
+      "model": "moonshotai/Kimi-K2.7-Code",
+      "reasoning_effort": "low",
+      "dsh_request_image_count": 1,
+      "capture_layer": "dsh_llm_stream_boundary",
+      "provider_wire_observed": true
+    },
+    {
+      "provider": "ai-modeler",
+      "model": "moonshotai/Kimi-K2.7-Code",
+      "reasoning_effort": "low",
+      "dsh_request_image_count": 1,
+      "capture_layer": "dsh_llm_stream_boundary",
+      "provider_wire_observed": true
+    },
+    {
+      "provider": "ai-modeler",
+      "model": "moonshotai/Kimi-K2.7-Code",
+      "reasoning_effort": "low",
+      "dsh_request_image_count": 1,
+      "capture_layer": "dsh_llm_stream_boundary",
+      "provider_wire_observed": true
+    },
+    {
+      "provider": "ai-modeler",
+      "model": "moonshotai/Kimi-K2.7-Code",
+      "reasoning_effort": "low",
+      "dsh_request_image_count": 2,
+      "capture_layer": "dsh_llm_stream_boundary",
+      "provider_wire_observed": true
+    },
+    {
+      "provider": "ai-modeler",
+      "model": "moonshotai/Kimi-K2.7-Code",
+      "reasoning_effort": "low",
+      "dsh_request_image_count": 2,
+      "capture_layer": "dsh_llm_stream_boundary",
+      "provider_wire_observed": true
+    },
+    {
+      "provider": "ai-modeler",
+      "model": "moonshotai/Kimi-K2.7-Code",
+      "reasoning_effort": "low",
+      "dsh_request_image_count": 2,
+      "capture_layer": "dsh_llm_stream_boundary",
+      "provider_wire_observed": true
+    },
+    {
+      "provider": "ai-modeler",
+      "model": "moonshotai/Kimi-K2.7-Code",
+      "reasoning_effort": "low",
+      "dsh_request_image_count": 2,
+      "capture_layer": "dsh_llm_stream_boundary",
+      "provider_wire_observed": true
+    }
+  ],
+  "provider_attempt_count": 23,
+  "provider_finish_reasons": [
+    {
+      "request_id": "921c175f327b40fa96b9bbe9156a4298:1790850607158:7xacw5",
+      "finish_reason": "tool_calls"
+    },
+    {
+      "request_id": "921c175f327b40fa96b9bbe9156a4298:1790850625085:wh7ob9",
+      "finish_reason": "tool_calls"
+    },
+    {
+      "request_id": "69044:1790850628560700900",
+      "finish_reason": "stop"
+    },
+    {
+      "request_id": "921c175f327b40fa96b9bbe9156a4298:1790850707586:idvx7v",
+      "finish_reason": "tool_calls"
+    },
+    {
+      "request_id": "921c175f327b40fa96b9bbe9156a4298:1790850796488:53ytc1",
+      "finish_reason": "tool_calls"
+    },
+    {
+      "request_id": "921c175f327b40fa96b9bbe9156a4298:1790850811329:i5h3un",
+      "finish_reason": "tool_calls"
+    },
+    {
+      "request_id": "921c175f327b40fa96b9bbe9156a4298:1790850813727:ori3vq",
+      "finish_reason": "tool_calls"
+    },
+    {
+      "request_id": "921c175f327b40fa96b9bbe9156a4298:1790850888310:a1031l",
+      "finish_reason": "tool_calls"
+    },
+    {
+      "request_id": "921c175f327b40fa96b9bbe9156a4298:1790850913097:kv9zqd",
+      "finish_reason": "tool_calls"
+    },
+    {
+      "request_id": "921c175f327b40fa96b9bbe9156a4298:1790850921427:ffrvta",
+      "finish_reason": "tool_calls"
+    },
+    {
+      "request_id": "921c175f327b40fa96b9bbe9156a4298:1790850929692:tr5uwc",
+      "finish_reason": "tool_calls"
+    },
+    {
+      "request_id": "921c175f327b40fa96b9bbe9156a4298:1790850940565:dxd9v1",
+      "finish_reason": "tool_calls"
+    },
+    {
+      "request_id": "921c175f327b40fa96b9bbe9156a4298:1790850960092:g3jlpi",
+      "finish_reason": "tool_calls"
+    },
+    {
+      "request_id": "921c175f327b40fa96b9bbe9156a4298:1790850973876:3ded2j",
+      "finish_reason": "tool_calls"
+    },
+    {
+      "request_id": "921c175f327b40fa96b9bbe9156a4298:1790850987885:14ntor",
+      "finish_reason": "tool_calls"
+    },
+    {
+      "request_id": "921c175f327b40fa96b9bbe9156a4298:1790851012442:jzheni",
+      "finish_reason": "tool_calls"
+    },
+    {
+      "request_id": "921c175f327b40fa96b9bbe9156a4298:1790851046135:wwqnve",
+      "finish_reason": "tool_calls"
+    },
+    {
+      "request_id": "921c175f327b40fa96b9bbe9156a4298:1790851060373:8hstgl",
+      "finish_reason": "tool_calls"
+    },
+    {
+      "request_id": "921c175f327b40fa96b9bbe9156a4298:1790851064396:471hjm",
+      "finish_reason": "tool_calls"
+    },
+    {
+      "request_id": "69044:1790851079744538000",
+      "finish_reason": "stop"
+    },
+    {
+      "request_id": "921c175f327b40fa96b9bbe9156a4298:1790851220285:rci677",
+      "finish_reason": "tool_calls"
+    },
+    {
+      "request_id": "921c175f327b40fa96b9bbe9156a4298:1790851256340:hcqgbq",
+      "finish_reason": "tool_calls"
+    },
+    {
+      "request_id": "921c175f327b40fa96b9bbe9156a4298:1790851270818:05vs34",
+      "finish_reason": "stop"
+    }
+  ],
+  "dsh_finish_reasons": [
+    {
+      "finish_reason": "[object Object]",
+      "elapsed_ms": 17944
+    },
+    {
+      "finish_reason": "[object Object]",
+      "elapsed_ms": 3256
+    },
+    {
+      "finish_reason": "[object Object]",
+      "elapsed_ms": 87668
+    },
+    {
+      "finish_reason": "[object Object]",
+      "elapsed_ms": 14776
+    },
+    {
+      "finish_reason": "[object Object]",
+      "elapsed_ms": 2369
+    },
+    {
+      "finish_reason": "[object Object]",
+      "elapsed_ms": 74532
+    },
+    {
+      "finish_reason": "[object Object]",
+      "elapsed_ms": 24746
+    },
+    {
+      "finish_reason": "[object Object]",
+      "elapsed_ms": 8294
+    },
+    {
+      "finish_reason": "[object Object]",
+      "elapsed_ms": 8219
+    },
+    {
+      "finish_reason": "[object Object]",
+      "elapsed_ms": 10835
+    },
+    {
+      "finish_reason": "[object Object]",
+      "elapsed_ms": 19493
+    },
+    {
+      "finish_reason": "[object Object]",
+      "elapsed_ms": 13744
+    },
+    {
+      "finish_reason": "[object Object]",
+      "elapsed_ms": 13945
+    },
+    {
+      "finish_reason": "[object Object]",
+      "elapsed_ms": 24504
+    },
+    {
+      "finish_reason": "[object Object]",
+      "elapsed_ms": 33674
+    },
+    {
+      "finish_reason": "[object Object]",
+      "elapsed_ms": 14180
+    },
+    {
+      "finish_reason": "[object Object]",
+      "elapsed_ms": 2807
+    },
+    {
+      "finish_reason": "[object Object]",
+      "elapsed_ms": 15322
+    },
+    {
+      "finish_reason": "[object Object]",
+      "elapsed_ms": 36045
+    },
+    {
+      "finish_reason": "[object Object]",
+      "elapsed_ms": 14413
+    },
+    {
+      "finish_reason": "[object Object]",
+      "elapsed_ms": 16238
+    }
+  ],
+  "provider_wire_observed": true,
+  "provider_wire_capture_layer": "node_global_fetch",
+  "request_image_hashes": [
+    {
+      "transport_sha256": "53ed87fadf8cca869da921627e6a13c845424c6906b3de517d5cca972db94553",
+      "byte_length": 72309,
+      "source_sha256": "53ed87fadf8cca869da921627e6a13c845424c6906b3de517d5cca972db94553",
+      "source_reference_ids": [
+        "sha256:53ed87fadf8cca869da921627e6a13c845424c6906b3de517d5cca972db94553"
+      ],
+      "roi_norm": null,
+      "source_kind": "user_reference",
+      "preview_revisions": [],
+      "preview_generations": [],
+      "preview_views": [],
+      "preview_geometry_signatures": [],
+      "partial_preview": false,
+      "source_mapping": "exact-transport-hash-match"
+    },
+    {
+      "transport_sha256": "53ed87fadf8cca869da921627e6a13c845424c6906b3de517d5cca972db94553",
+      "byte_length": 72309,
+      "source_sha256": "53ed87fadf8cca869da921627e6a13c845424c6906b3de517d5cca972db94553",
+      "source_reference_ids": [
+        "sha256:53ed87fadf8cca869da921627e6a13c845424c6906b3de517d5cca972db94553"
+      ],
+      "roi_norm": null,
+      "source_kind": "user_reference",
+      "preview_revisions": [],
+      "preview_generations": [],
+      "preview_views": [],
+      "preview_geometry_signatures": [],
+      "partial_preview": false,
+      "source_mapping": "exact-transport-hash-match"
+    },
+    {
+      "transport_sha256": "53ed87fadf8cca869da921627e6a13c845424c6906b3de517d5cca972db94553",
+      "byte_length": 72309,
+      "source_sha256": "53ed87fadf8cca869da921627e6a13c845424c6906b3de517d5cca972db94553",
+      "source_reference_ids": [
+        "sha256:53ed87fadf8cca869da921627e6a13c845424c6906b3de517d5cca972db94553"
+      ],
+      "source_kind": "user_reference",
+      "roi_norm": null,
+      "preview_revisions": [],
+      "preview_generations": [],
+      "preview_views": [],
+      "preview_geometry_signatures": [],
+      "partial_preview": false,
+      "source_mapping": "exact-transport-hash-match"
+    },
+    {
+      "transport_sha256": "53ed87fadf8cca869da921627e6a13c845424c6906b3de517d5cca972db94553",
+      "byte_length": 72309,
+      "source_sha256": "53ed87fadf8cca869da921627e6a13c845424c6906b3de517d5cca972db94553",
+      "source_reference_ids": [
+        "sha256:53ed87fadf8cca869da921627e6a13c845424c6906b3de517d5cca972db94553"
+      ],
+      "roi_norm": null,
+      "source_kind": "user_reference",
+      "preview_revisions": [],
+      "preview_generations": [],
+      "preview_views": [],
+      "preview_geometry_signatures": [],
+      "partial_preview": false,
+      "source_mapping": "exact-transport-hash-match"
+    },
+    {
+      "transport_sha256": "53ed87fadf8cca869da921627e6a13c845424c6906b3de517d5cca972db94553",
+      "byte_length": 72309,
+      "source_sha256": "53ed87fadf8cca869da921627e6a13c845424c6906b3de517d5cca972db94553",
+      "source_reference_ids": [
+        "sha256:53ed87fadf8cca869da921627e6a13c845424c6906b3de517d5cca972db94553"
+      ],
+      "roi_norm": null,
+      "source_kind": "user_reference",
+      "preview_revisions": [],
+      "preview_generations": [],
+      "preview_views": [],
+      "preview_geometry_signatures": [],
+      "partial_preview": false,
+      "source_mapping": "exact-transport-hash-match"
+    },
+    {
+      "transport_sha256": "53ed87fadf8cca869da921627e6a13c845424c6906b3de517d5cca972db94553",
+      "byte_length": 72309,
+      "source_sha256": "53ed87fadf8cca869da921627e6a13c845424c6906b3de517d5cca972db94553",
+      "source_reference_ids": [
+        "sha256:53ed87fadf8cca869da921627e6a13c845424c6906b3de517d5cca972db94553"
+      ],
+      "roi_norm": null,
+      "source_kind": "user_reference",
+      "preview_revisions": [],
+      "preview_generations": [],
+      "preview_views": [],
+      "preview_geometry_signatures": [],
+      "partial_preview": false,
+      "source_mapping": "exact-transport-hash-match"
+    },
+    {
+      "transport_sha256": "53ed87fadf8cca869da921627e6a13c845424c6906b3de517d5cca972db94553",
+      "byte_length": 72309,
+      "source_sha256": "53ed87fadf8cca869da921627e6a13c845424c6906b3de517d5cca972db94553",
+      "source_reference_ids": [
+        "sha256:53ed87fadf8cca869da921627e6a13c845424c6906b3de517d5cca972db94553"
+      ],
+      "roi_norm": null,
+      "source_kind": "user_reference",
+      "preview_revisions": [],
+      "preview_generations": [],
+      "preview_views": [],
+      "preview_geometry_signatures": [],
+      "partial_preview": false,
+      "source_mapping": "exact-transport-hash-match"
+    },
+    {
+      "transport_sha256": "53ed87fadf8cca869da921627e6a13c845424c6906b3de517d5cca972db94553",
+      "byte_length": 72309,
+      "source_sha256": "53ed87fadf8cca869da921627e6a13c845424c6906b3de517d5cca972db94553",
+      "source_reference_ids": [
+        "sha256:53ed87fadf8cca869da921627e6a13c845424c6906b3de517d5cca972db94553"
+      ],
+      "roi_norm": null,
+      "source_kind": "user_reference",
+      "preview_revisions": [],
+      "preview_generations": [],
+      "preview_views": [],
+      "preview_geometry_signatures": [],
+      "partial_preview": false,
+      "source_mapping": "exact-transport-hash-match"
+    },
+    {
+      "transport_sha256": "53ed87fadf8cca869da921627e6a13c845424c6906b3de517d5cca972db94553",
+      "byte_length": 72309,
+      "source_sha256": "53ed87fadf8cca869da921627e6a13c845424c6906b3de517d5cca972db94553",
+      "source_reference_ids": [
+        "sha256:53ed87fadf8cca869da921627e6a13c845424c6906b3de517d5cca972db94553"
+      ],
+      "roi_norm": null,
+      "source_kind": "user_reference",
+      "preview_revisions": [],
+      "preview_generations": [],
+      "preview_views": [],
+      "preview_geometry_signatures": [],
+      "partial_preview": false,
+      "source_mapping": "exact-transport-hash-match"
+    },
+    {
+      "transport_sha256": "53ed87fadf8cca869da921627e6a13c845424c6906b3de517d5cca972db94553",
+      "byte_length": 72309,
+      "source_sha256": "53ed87fadf8cca869da921627e6a13c845424c6906b3de517d5cca972db94553",
+      "source_reference_ids": [
+        "sha256:53ed87fadf8cca869da921627e6a13c845424c6906b3de517d5cca972db94553"
+      ],
+      "roi_norm": null,
+      "source_kind": "user_reference",
+      "preview_revisions": [],
+      "preview_generations": [],
+      "preview_views": [],
+      "preview_geometry_signatures": [],
+      "partial_preview": false,
+      "source_mapping": "exact-transport-hash-match"
+    },
+    {
+      "transport_sha256": "53ed87fadf8cca869da921627e6a13c845424c6906b3de517d5cca972db94553",
+      "byte_length": 72309,
+      "source_sha256": "53ed87fadf8cca869da921627e6a13c845424c6906b3de517d5cca972db94553",
+      "source_reference_ids": [
+        "sha256:53ed87fadf8cca869da921627e6a13c845424c6906b3de517d5cca972db94553"
+      ],
+      "roi_norm": null,
+      "source_kind": "user_reference",
+      "preview_revisions": [],
+      "preview_generations": [],
+      "preview_views": [],
+      "preview_geometry_signatures": [],
+      "partial_preview": false,
+      "source_mapping": "exact-transport-hash-match"
+    },
+    {
+      "transport_sha256": "53ed87fadf8cca869da921627e6a13c845424c6906b3de517d5cca972db94553",
+      "byte_length": 72309,
+      "source_sha256": "53ed87fadf8cca869da921627e6a13c845424c6906b3de517d5cca972db94553",
+      "source_reference_ids": [
+        "sha256:53ed87fadf8cca869da921627e6a13c845424c6906b3de517d5cca972db94553"
+      ],
+      "roi_norm": null,
+      "source_kind": "user_reference",
+      "preview_revisions": [],
+      "preview_generations": [],
+      "preview_views": [],
+      "preview_geometry_signatures": [],
+      "partial_preview": false,
+      "source_mapping": "exact-transport-hash-match"
+    },
+    {
+      "transport_sha256": "53ed87fadf8cca869da921627e6a13c845424c6906b3de517d5cca972db94553",
+      "byte_length": 72309,
+      "source_sha256": "53ed87fadf8cca869da921627e6a13c845424c6906b3de517d5cca972db94553",
+      "source_reference_ids": [
+        "sha256:53ed87fadf8cca869da921627e6a13c845424c6906b3de517d5cca972db94553"
+      ],
+      "roi_norm": null,
+      "source_kind": "user_reference",
+      "preview_revisions": [],
+      "preview_generations": [],
+      "preview_views": [],
+      "preview_geometry_signatures": [],
+      "partial_preview": false,
+      "source_mapping": "exact-transport-hash-match"
+    },
+    {
+      "transport_sha256": "53ed87fadf8cca869da921627e6a13c845424c6906b3de517d5cca972db94553",
+      "byte_length": 72309,
+      "source_sha256": "53ed87fadf8cca869da921627e6a13c845424c6906b3de517d5cca972db94553",
+      "source_reference_ids": [
+        "sha256:53ed87fadf8cca869da921627e6a13c845424c6906b3de517d5cca972db94553"
+      ],
+      "roi_norm": null,
+      "source_kind": "user_reference",
+      "preview_revisions": [],
+      "preview_generations": [],
+      "preview_views": [],
+      "preview_geometry_signatures": [],
+      "partial_preview": false,
+      "source_mapping": "exact-transport-hash-match"
+    },
+    {
+      "transport_sha256": "53ed87fadf8cca869da921627e6a13c845424c6906b3de517d5cca972db94553",
+      "byte_length": 72309,
+      "source_sha256": "53ed87fadf8cca869da921627e6a13c845424c6906b3de517d5cca972db94553",
+      "source_reference_ids": [
+        "sha256:53ed87fadf8cca869da921627e6a13c845424c6906b3de517d5cca972db94553"
+      ],
+      "roi_norm": null,
+      "source_kind": "user_reference",
+      "preview_revisions": [],
+      "preview_generations": [],
+      "preview_views": [],
+      "preview_geometry_signatures": [],
+      "partial_preview": false,
+      "source_mapping": "exact-transport-hash-match"
+    },
+    {
+      "transport_sha256": "53ed87fadf8cca869da921627e6a13c845424c6906b3de517d5cca972db94553",
+      "byte_length": 72309,
+      "source_sha256": "53ed87fadf8cca869da921627e6a13c845424c6906b3de517d5cca972db94553",
+      "source_reference_ids": [
+        "sha256:53ed87fadf8cca869da921627e6a13c845424c6906b3de517d5cca972db94553"
+      ],
+      "roi_norm": null,
+      "source_kind": "user_reference",
+      "preview_revisions": [],
+      "preview_generations": [],
+      "preview_views": [],
+      "preview_geometry_signatures": [],
+      "partial_preview": false,
+      "source_mapping": "exact-transport-hash-match"
+    },
+    {
+      "transport_sha256": "53ed87fadf8cca869da921627e6a13c845424c6906b3de517d5cca972db94553",
+      "byte_length": 72309,
+      "source_sha256": "53ed87fadf8cca869da921627e6a13c845424c6906b3de517d5cca972db94553",
+      "source_reference_ids": [
+        "sha256:53ed87fadf8cca869da921627e6a13c845424c6906b3de517d5cca972db94553"
+      ],
+      "roi_norm": null,
+      "source_kind": "user_reference",
+      "preview_revisions": [],
+      "preview_generations": [],
+      "preview_views": [],
+      "preview_geometry_signatures": [],
+      "partial_preview": false,
+      "source_mapping": "exact-transport-hash-match"
+    },
+    {
+      "transport_sha256": "53ed87fadf8cca869da921627e6a13c845424c6906b3de517d5cca972db94553",
+      "byte_length": 72309,
+      "source_sha256": "53ed87fadf8cca869da921627e6a13c845424c6906b3de517d5cca972db94553",
+      "source_reference_ids": [
+        "sha256:53ed87fadf8cca869da921627e6a13c845424c6906b3de517d5cca972db94553"
+      ],
+      "roi_norm": null,
+      "source_kind": "user_reference",
+      "preview_revisions": [],
+      "preview_generations": [],
+      "preview_views": [],
+      "preview_geometry_signatures": [],
+      "partial_preview": false,
+      "source_mapping": "exact-transport-hash-match"
+    },
+    {
+      "transport_sha256": "53ed87fadf8cca869da921627e6a13c845424c6906b3de517d5cca972db94553",
+      "byte_length": 72309,
+      "source_sha256": "53ed87fadf8cca869da921627e6a13c845424c6906b3de517d5cca972db94553",
+      "source_reference_ids": [
+        "sha256:53ed87fadf8cca869da921627e6a13c845424c6906b3de517d5cca972db94553"
+      ],
+      "roi_norm": null,
+      "source_kind": "user_reference",
+      "preview_revisions": [],
+      "preview_generations": [],
+      "preview_views": [],
+      "preview_geometry_signatures": [],
+      "partial_preview": false,
+      "source_mapping": "exact-transport-hash-match"
+    },
+    {
+      "transport_sha256": "e129c0df5afe80da7bf6ffdaf701eefdefbeff3db11c933579fd9a0741edae74",
+      "byte_length": 14914,
+      "source_sha256": null,
+      "source_reference_ids": [],
+      "roi_norm": null,
+      "source_kind": "tool_preview",
+      "preview_revisions": [
+        4
+      ],
+      "preview_generations": [
+        1
+      ],
+      "preview_views": [
+        "iso"
+      ],
+      "preview_geometry_signatures": [
+        "f4f38b336c0c5c223f68e2bdc31d4206c1226247178bb88b789b24d642b504be"
+      ],
+      "partial_preview": false,
+      "source_mapping": "exact-transport-hash-match"
+    },
+    {
+      "transport_sha256": "53ed87fadf8cca869da921627e6a13c845424c6906b3de517d5cca972db94553",
+      "byte_length": 72309,
+      "source_sha256": "53ed87fadf8cca869da921627e6a13c845424c6906b3de517d5cca972db94553",
+      "source_reference_ids": [
+        "sha256:53ed87fadf8cca869da921627e6a13c845424c6906b3de517d5cca972db94553"
+      ],
+      "source_kind": "user_reference",
+      "roi_norm": null,
+      "preview_revisions": [],
+      "preview_generations": [],
+      "preview_views": [],
+      "preview_geometry_signatures": [],
+      "partial_preview": false,
+      "source_mapping": "exact-transport-hash-match"
+    },
+    {
+      "transport_sha256": "e129c0df5afe80da7bf6ffdaf701eefdefbeff3db11c933579fd9a0741edae74",
+      "byte_length": 14914,
+      "source_sha256": null,
+      "source_reference_ids": [],
+      "source_kind": "tool_preview",
+      "roi_norm": null,
+      "preview_revisions": [
+        4
+      ],
+      "preview_generations": [
+        1
+      ],
+      "preview_views": [
+        "iso"
+      ],
+      "preview_geometry_signatures": [
+        "f4f38b336c0c5c223f68e2bdc31d4206c1226247178bb88b789b24d642b504be"
+      ],
+      "partial_preview": false,
+      "source_mapping": "exact-transport-hash-match"
+    },
+    {
+      "transport_sha256": "53ed87fadf8cca869da921627e6a13c845424c6906b3de517d5cca972db94553",
+      "byte_length": 72309,
+      "source_sha256": "53ed87fadf8cca869da921627e6a13c845424c6906b3de517d5cca972db94553",
+      "source_reference_ids": [
+        "sha256:53ed87fadf8cca869da921627e6a13c845424c6906b3de517d5cca972db94553"
+      ],
+      "roi_norm": null,
+      "source_kind": "user_reference",
+      "preview_revisions": [],
+      "preview_generations": [],
+      "preview_views": [],
+      "preview_geometry_signatures": [],
+      "partial_preview": false,
+      "source_mapping": "exact-transport-hash-match"
+    },
+    {
+      "transport_sha256": "e129c0df5afe80da7bf6ffdaf701eefdefbeff3db11c933579fd9a0741edae74",
+      "byte_length": 14914,
+      "source_sha256": null,
+      "source_reference_ids": [],
+      "roi_norm": null,
+      "source_kind": "tool_preview",
+      "preview_revisions": [
+        4
+      ],
+      "preview_generations": [
+        1
+      ],
+      "preview_views": [
+        "iso"
+      ],
+      "preview_geometry_signatures": [
+        "f4f38b336c0c5c223f68e2bdc31d4206c1226247178bb88b789b24d642b504be"
+      ],
+      "partial_preview": false,
+      "source_mapping": "exact-transport-hash-match"
+    },
+    {
+      "transport_sha256": "53ed87fadf8cca869da921627e6a13c845424c6906b3de517d5cca972db94553",
+      "byte_length": 72309,
+      "source_sha256": "53ed87fadf8cca869da921627e6a13c845424c6906b3de517d5cca972db94553",
+      "source_reference_ids": [
+        "sha256:53ed87fadf8cca869da921627e6a13c845424c6906b3de517d5cca972db94553"
+      ],
+      "roi_norm": null,
+      "source_kind": "user_reference",
+      "preview_revisions": [],
+      "preview_generations": [],
+      "preview_views": [],
+      "preview_geometry_signatures": [],
+      "partial_preview": false,
+      "source_mapping": "exact-transport-hash-match"
+    },
+    {
+      "transport_sha256": "e129c0df5afe80da7bf6ffdaf701eefdefbeff3db11c933579fd9a0741edae74",
+      "byte_length": 14914,
+      "source_sha256": null,
+      "source_reference_ids": [],
+      "roi_norm": null,
+      "source_kind": "tool_preview",
+      "preview_revisions": [
+        4
+      ],
+      "preview_generations": [
+        1
+      ],
+      "preview_views": [
+        "iso"
+      ],
+      "preview_geometry_signatures": [
+        "f4f38b336c0c5c223f68e2bdc31d4206c1226247178bb88b789b24d642b504be"
+      ],
+      "partial_preview": false,
+      "source_mapping": "exact-transport-hash-match"
+    },
+    {
+      "transport_sha256": "53ed87fadf8cca869da921627e6a13c845424c6906b3de517d5cca972db94553",
+      "byte_length": 72309,
+      "source_sha256": "53ed87fadf8cca869da921627e6a13c845424c6906b3de517d5cca972db94553",
+      "source_reference_ids": [
+        "sha256:53ed87fadf8cca869da921627e6a13c845424c6906b3de517d5cca972db94553"
+      ],
+      "roi_norm": null,
+      "source_kind": "user_reference",
+      "preview_revisions": [],
+      "preview_generations": [],
+      "preview_views": [],
+      "preview_geometry_signatures": [],
+      "partial_preview": false,
+      "source_mapping": "exact-transport-hash-match"
+    },
+    {
+      "transport_sha256": "e129c0df5afe80da7bf6ffdaf701eefdefbeff3db11c933579fd9a0741edae74",
+      "byte_length": 14914,
+      "source_sha256": null,
+      "source_reference_ids": [],
+      "roi_norm": null,
+      "source_kind": "tool_preview",
+      "preview_revisions": [
+        4
+      ],
+      "preview_generations": [
+        1
+      ],
+      "preview_views": [
+        "iso"
+      ],
+      "preview_geometry_signatures": [
+        "f4f38b336c0c5c223f68e2bdc31d4206c1226247178bb88b789b24d642b504be"
+      ],
+      "partial_preview": false,
+      "source_mapping": "exact-transport-hash-match"
+    }
+  ],
+  "image_parts_in_request": 28,
+  "reference_image_count": 1,
+  "knowledge_search": {
+    "status": "no_match",
+    "query": "根据附图建立一个简化的 U 形实体主体，未标注尺寸按图估算。本轮只做主体和凹槽，不增加孔或装饰；保存候选后结束。",
+    "matches": [],
+    "negative_examples": [],
+    "image_query_supported": false,
+    "visual_fallback_available": false,
+    "score_meaning": "relevance 是词面相关度排序分数，不是准确率或置信概率。",
+    "message": "当前文字描述没有达到相似检索阈值；这不代表库外不存在对应工件。",
+    "modeling_recipes": []
+  },
+  "knowledge_visual_examples": [],
+  "knowledge_image_parts": 0,
+  "image_input_mode": "individual",
+  "llm_usage": {
+    "input_tokens": 486428,
+    "output_tokens": 18603,
+    "total_tokens": 505031,
+    "reasoning_tokens": 12533,
+    "cache_token_details": {
+      "prompt_tokens_details.cached_tokens": 444160
+    }
+  },
+  "usage_source": "provider_response_body",
+  "first_tool_latency_ms": 23891.0,
+  "observability": {
+    "path": "C:\\Users\\lycohana\\AppData\\Local\\AI Modeler\\dsh\\sessions\\input-image-prune-20261001\\agent-observability.jsonl",
+    "logical_requests": 21,
+    "provider_attempts_observed": 23,
+    "provider_wire_status": "observed",
+    "copied_path": "C:\\Users\\lycohana\\Desktop\\code\\AI-_-\\artifacts\\agent-quality-rebuild\\input-reasoning\\cli-image-prune-20261001\\turns\\921c175f327b40fa96b9bbe9156a4298\\agent-observability.jsonl",
+    "copied_turn_id": "921c175f327b40fa96b9bbe9156a4298",
+    "copied_event_count": 19558
+  },
+  "routing": {
+    "action": "dsh_agent",
+    "review_mode": "multimodal"
+  },
+  "run_record": "C:\\Users\\lycohana\\AppData\\Local\\AI Modeler\\dsh\\sessions\\input-image-prune-20261001\\cad-state.json",
+  "run_id": "input-image-prune-20261001",
+  "dsh_session_id": "input-image-prune-20261001-dsh-3889e9078cee",
+  "dimension_assumptions": [
+    {
+      "feature_id": "main-body",
+      "parameter": "length",
+      "type": "image_estimate",
+      "evidence": "Overall left-right span in iso view about 2.5x front-back thickness",
+      "note": "Estimated overall X span"
+    },
+    {
+      "feature_id": "main-body",
+      "parameter": "width",
+      "type": "image_estimate",
+      "evidence": "Front-back depth in iso view",
+      "note": "Estimated overall Y thickness"
+    },
+    {
+      "feature_id": "main-body",
+      "parameter": "height",
+      "type": "image_estimate",
+      "evidence": "Overall vertical span in iso view",
+      "note": "Estimated overall Z height"
+    },
+    {
+      "feature_id": "front-recess",
+      "parameter": "length",
+      "type": "image_estimate",
+      "evidence": "Front-facing rectangular slot visible in iso view between the two outer walls, exposing the recessed back wall with a horizontal top step; proportions estimated relative to outer walls 图像/用户依据：凹槽尺寸。 凹槽面内宽度映射到此坐标轴。"
+    },
+    {
+      "feature_id": "front-recess",
+      "parameter": "height",
+      "type": "image_estimate",
+      "evidence": "Front-facing rectangular slot visible in iso view between the two outer walls, exposing the recessed back wall with a horizontal top step; proportions estimated relative to outer walls 图像/用户依据：凹槽尺寸。 凹槽面内高度映射到此坐标轴。"
+    }
+  ],
+  "local_geometry_checks": {
+    "backend": "occt_brep",
+    "kernel": "可用：OCCT 7.9.3.1 / cadquery-ocp-novtk 7.9.3.1.1",
+    "self_intersection_face_limit": 15000,
+    "geometry_state": "passed",
+    "state": "passed",
+    "brep_valid": true,
+    "shape_type": "TopAbs_COMPOUND",
+    "solid_count": 1,
+    "connected_component_count": 1,
+    "shell_count": 1,
+    "closed_shell_count": 1,
+    "closed": true,
+    "edge_count": 48,
+    "face_count": 10,
+    "free_edge_count": 0,
+    "volume_mm3": 196992.0,
+    "bbox_mm": [
+      -45.0,
+      -18.0,
+      0.0,
+      45.0,
+      18.0,
+      80.0
+    ],
+    "self_intersection": {
+      "status": "checked_no_intersection",
+      "face_count": 10,
+      "face_limit": 15000,
+      "check_result_count": 0,
+      "check_statuses": [],
+      "method": "BOPAlgo_ArgumentAnalyzer(SelfInterMode=True, UseOBB=True)"
+    },
+    "validity_method": "BRepCheck_Analyzer",
+    "geometry_scope": "native_OCCT_BREP_only_visual_comparison_not_performed",
+    "feature_results": [
+      {
+        "feature_id": "main-body",
+        "kind": "box",
+        "operation": "add",
+        "geometry_support": "exact",
+        "builder": "analytic_prism",
+        "state": "applied",
+        "source_feature_id": null,
+        "source_resolution": null,
+        "solid_count": 1,
+        "brep_valid": true,
+        "before_volume_mm3": 0.0,
+        "after_volume_mm3": 259200.0,
+        "volume_delta_mm3": 259200.0,
+        "cylindrical_cut_intents": [],
+        "depth_measurement": null,
+        "facet_count": null
+      },
+      {
+        "feature_id": "front-recess",
+        "kind": "box",
+        "operation": "cut",
+        "geometry_support": "exact",
+        "builder": "analytic_prism",
+        "state": "applied",
+        "source_feature_id": null,
+        "source_resolution": null,
+        "solid_count": 1,
+        "brep_valid": true,
+        "before_volume_mm3": 259200.0,
+        "after_volume_mm3": 196992.0,
+        "volume_delta_mm3": -62208.0,
+        "cylindrical_cut_intents": [],
+        "depth_measurement": null,
+        "facet_count": null
+      }
+    ],
+    "hole_instances": [],
+    "unverified_cut_intents": [],
+    "hole_feature_count": 0,
+    "measured_hole_source_feature_count": 0,
+    "unverified_cut_intent_count": 0,
+    "planned_hole_instance_count": 0,
+    "active_hole_instance_count": 0,
+    "superseded_hole_instance_count": 0,
+    "active_through_hole_count": 0,
+    "through_hole_count": 0,
+    "all_declared_holes_verified": true,
+    "visual_validation": "not_performed",
+    "catia_executed": false,
+    "build_transaction": "每个特征验证成功后才提交；失败保留上一有效实体",
+    "source": "OpenCASCADE native BREP; preview mesh is display-only",
+    "bbox_size_mm": [
+      90.0,
+      36.0,
+      80.0
+    ],
+    "bbox_ratios_from_brep": {
+      "front_width_height": 1.125,
+      "depth_height": 0.45,
+      "top_width_depth": 2.5
+    },
+    "bbox_ratios_from_mesh": {
+      "front_width_height": 1.125,
+      "depth_height": 0.45,
+      "top_width_depth": 2.5
+    },
+    "feature_count_from_plan": 2,
+    "feature_ids_from_plan": [
+      "main-body",
+      "front-recess"
+    ],
+    "hole_features_from_plan": [],
+    "hole_feature_count_from_plan": 0,
+    "expected_hole_instance_count": 0,
+    "hole_instance_count": 0,
+    "through_hole_checks": [],
+    "through_hole_mesh_checks": [],
+    "hole_measurement_complete": true,
+    "hole_measurement_state": "not_applicable_no_holes_or_cylindrical_cuts",
+    "through_hole_count_expected": 0,
+    "through_hole_count_verified": 0,
+    "through_hole_result": "no_holes_declared",
+    "image_estimate_parameters": [
+      {
+        "feature_id": "main-body",
+        "parameter": "length",
+        "value": 90,
+        "evidence": "Overall left-right span in iso view about 2.5x front-back thickness",
+        "visual_measurement": "not_performed_by_geometry_backend"
+      },
+      {
+        "feature_id": "main-body",
+        "parameter": "width",
+        "value": 36,
+        "evidence": "Front-back depth in iso view",
+        "visual_measurement": "not_performed_by_geometry_backend"
+      },
+      {
+        "feature_id": "main-body",
+        "parameter": "height",
+        "value": 80,
+        "evidence": "Overall vertical span in iso view",
+        "visual_measurement": "not_performed_by_geometry_backend"
+      },
+      {
+        "feature_id": "front-recess",
+        "parameter": "length",
+        "value": 36.0,
+        "evidence": "Front-facing rectangular slot visible in iso view between the two outer walls, exposing the recessed back wall with a horizontal top step; proportions estimated relative to outer walls 图像/用户依据：凹槽尺寸。 凹槽面内宽度映射到此坐标轴。",
+        "visual_measurement": "not_performed_by_geometry_backend"
+      },
+      {
+        "feature_id": "front-recess",
+        "parameter": "height",
+        "value": 72.0,
+        "evidence": "Front-facing rectangular slot visible in iso view between the two outer walls, exposing the recessed back wall with a horizontal top step; proportions estimated relative to outer walls 图像/用户依据：凹槽尺寸。 凹槽面内高度映射到此坐标轴。",
+        "visual_measurement": "not_performed_by_geometry_backend"
+      }
+    ],
+    "catia_geometry_verification": "not_performed"
+  },
+  "cli_progress_events": [
+    {
+      "elapsed_ms": 140.0,
+      "message": "正在查询本地工件知识库。"
+    },
+    {
+      "elapsed_ms": 406.0,
+      "message": "本地知识库未找到可靠文字命中，继续按当前输入建模。"
+    },
+    {
+      "elapsed_ms": 1015.0,
+      "message": "正在启动 DSH SDK 多模态 Agent 会话。"
+    },
+    {
+      "elapsed_ms": 1015.0,
+      "message": "模型等待中：DSH SDK · 推理强度 low"
+    },
+    {
+      "elapsed_ms": 6921.0,
+      "message": "DSH 状态：running"
+    },
+    {
+      "elapsed_ms": 6984.0,
+      "message": "正在请求模型：请求 moonshotai/Kimi-K2.7-Code · 本次图像 1 张 · 推理 low"
+    },
+    {
+      "elapsed_ms": 7156.0,
+      "message": "正在请求模型：请求 moonshotai/Kimi-K2.7-Code · 本次图像 1 张"
+    },
+    {
+      "elapsed_ms": 8656.0,
+      "message": "模型服务已开始响应 · 1.5 秒"
+    },
+    {
+      "elapsed_ms": 8656.0,
+      "message": "模型首个内容事件已收到 · 1.6 秒"
+    },
+    {
+      "elapsed_ms": 8656.0,
+      "message": "模型正在分析参考图与建模约束 · 00:07"
+    },
+    {
+      "elapsed_ms": 24906.0,
+      "message": "模型首个内容事件已收到 · 1.5 秒"
+    },
+    {
+      "elapsed_ms": 24906.0,
+      "message": "已调用首个工具：mcp__ai-modeler__cad_get_state · 首工具耗时 23.9 秒"
+    },
+    {
+      "elapsed_ms": 24953.0,
+      "message": "Agent 进度：已读取当前 CADPlan 状态。"
+    },
+    {
+      "elapsed_ms": 25000.0,
+      "message": "正在请求模型：请求 moonshotai/Kimi-K2.7-Code · 本次图像 1 张 · 推理 low"
+    },
+    {
+      "elapsed_ms": 25093.0,
+      "message": "正在请求模型：请求 moonshotai/Kimi-K2.7-Code · 本次图像 1 张"
+    },
+    {
+      "elapsed_ms": 26125.0,
+      "message": "模型服务已开始响应 · 1.1 秒"
+    },
+    {
+      "elapsed_ms": 26125.0,
+      "message": "模型首个内容事件已收到 · 1.1 秒"
+    },
+    {
+      "elapsed_ms": 26125.0,
+      "message": "模型正在分析参考图与建模约束 · 00:25"
+    },
+    {
+      "elapsed_ms": 28250.0,
+      "message": "Agent 正在调用工具：mcp__ai-modeler__cad_inspect_references"
+    },
+    {
+      "elapsed_ms": 28250.0,
+      "message": "模型首个内容事件已收到 · 1.1 秒"
+    },
+    {
+      "elapsed_ms": 28531.0,
+      "message": "正在请求模型：请求 moonshotai/Kimi-K2.7-Code · 本次图像 1 张"
+    },
+    {
+      "elapsed_ms": 107484.0,
+      "message": "Agent 进度：已独立读取原图；该观察未核验且可通过ROI复看纠正。"
+    },
+    {
+      "elapsed_ms": 107531.0,
+      "message": "模型服务已开始响应 · 79.0 秒"
+    },
+    {
+      "elapsed_ms": 107531.0,
+      "message": "正在请求模型：请求 moonshotai/Kimi-K2.7-Code · 本次图像 1 张 · 推理 low"
+    },
+    {
+      "elapsed_ms": 107531.0,
+      "message": "正在请求模型：请求 moonshotai/Kimi-K2.7-Code · 本次图像 1 张"
+    },
+    {
+      "elapsed_ms": 108828.0,
+      "message": "模型服务已开始响应 · 1.3 秒"
+    },
+    {
+      "elapsed_ms": 108828.0,
+      "message": "模型首个内容事件已收到 · 1.3 秒"
+    },
+    {
+      "elapsed_ms": 108828.0,
+      "message": "模型正在分析参考图与建模约束 · 01:47"
+    },
+    {
+      "elapsed_ms": 195156.0,
+      "message": "模型首个内容事件已收到 · 1.3 秒"
+    },
+    {
+      "elapsed_ms": 195171.0,
+      "message": "Agent 正在调用工具：mcp__ai-modeler__cad_create_model"
+    },
+    {
+      "elapsed_ms": 196390.0,
+      "message": "Agent 进度：CADPlan 已创建，revision 1。"
+    },
+    {
+      "elapsed_ms": 196453.0,
+      "message": "正在请求模型：请求 moonshotai/Kimi-K2.7-Code · 本次图像 1 张 · 推理 low"
+    },
+    {
+      "elapsed_ms": 196453.0,
+      "message": "正在请求模型：请求 moonshotai/Kimi-K2.7-Code · 本次图像 1 张"
+    },
+    {
+      "elapsed_ms": 197765.0,
+      "message": "模型服务已开始响应 · 1.3 秒"
+    },
+    {
+      "elapsed_ms": 197765.0,
+      "message": "模型首个内容事件已收到 · 1.3 秒"
+    },
+    {
+      "elapsed_ms": 197765.0,
+      "message": "模型正在分析参考图与建模约束 · 03:16"
+    },
+    {
+      "elapsed_ms": 211171.0,
+      "message": "Agent 正在调用工具：mcp__ai-modeler__cad_create_model"
+    },
+    {
+      "elapsed_ms": 211187.0,
+      "message": "模型首个内容事件已收到 · 1.3 秒"
+    },
+    {
+      "elapsed_ms": 211281.0,
+      "message": "正在请求模型：请求 moonshotai/Kimi-K2.7-Code · 本次图像 1 张 · 推理 low"
+    },
+    {
+      "elapsed_ms": 211281.0,
+      "message": "正在请求模型：请求 moonshotai/Kimi-K2.7-Code · 本次图像 1 张"
+    },
+    {
+      "elapsed_ms": 212593.0,
+      "message": "模型服务已开始响应 · 1.3 秒"
+    },
+    {
+      "elapsed_ms": 212593.0,
+      "message": "模型首个内容事件已收到 · 1.3 秒"
+    },
+    {
+      "elapsed_ms": 212593.0,
+      "message": "模型正在分析参考图与建模约束 · 03:31"
+    },
+    {
+      "elapsed_ms": 213609.0,
+      "message": "Agent 正在调用工具：mcp__ai-modeler__cad_get_state"
+    },
+    {
+      "elapsed_ms": 213609.0,
+      "message": "模型首个内容事件已收到 · 1.3 秒"
+    },
+    {
+      "elapsed_ms": 213625.0,
+      "message": "Agent 进度：已读取当前 CADPlan 状态。"
+    },
+    {
+      "elapsed_ms": 213703.0,
+      "message": "正在请求模型：请求 moonshotai/Kimi-K2.7-Code · 本次图像 1 张 · 推理 low"
+    },
+    {
+      "elapsed_ms": 213703.0,
+      "message": "正在请求模型：请求 moonshotai/Kimi-K2.7-Code · 本次图像 1 张"
+    },
+    {
+      "elapsed_ms": 214828.0,
+      "message": "模型服务已开始响应 · 1.2 秒"
+    },
+    {
+      "elapsed_ms": 214828.0,
+      "message": "模型首个内容事件已收到 · 1.2 秒"
+    },
+    {
+      "elapsed_ms": 214828.0,
+      "message": "模型正在分析参考图与建模约束 · 03:33"
+    },
+    {
+      "elapsed_ms": 288171.0,
+      "message": "Agent 正在调用工具：mcp__ai-modeler__cad_update_feature"
+    },
+    {
+      "elapsed_ms": 288203.0,
+      "message": "Agent 进度：这次更新没有改变特征。已记录相同 geometry hash 的无进展调用；不要重放相同参数，请核对 finding 和原图，必要时恢复最佳候选。"
+    },
+    {
+      "elapsed_ms": 288218.0,
+      "message": "模型首个内容事件已收到 · 1.2 秒"
+    },
+    {
+      "elapsed_ms": 288312.0,
+      "message": "正在请求模型：请求 moonshotai/Kimi-K2.7-Code · 本次图像 1 张 · 推理 low"
+    },
+    {
+      "elapsed_ms": 288312.0,
+      "message": "正在请求模型：请求 moonshotai/Kimi-K2.7-Code · 本次图像 1 张"
+    },
+    {
+      "elapsed_ms": 290093.0,
+      "message": "模型服务已开始响应 · 1.8 秒"
+    },
+    {
+      "elapsed_ms": 290093.0,
+      "message": "模型首个内容事件已收到 · 1.8 秒"
+    },
+    {
+      "elapsed_ms": 290093.0,
+      "message": "模型正在分析参考图与建模约束 · 04:49"
+    },
+    {
+      "elapsed_ms": 312968.0,
+      "message": "Agent 正在调用工具：mcp__ai-modeler__cad_update_feature"
+    },
+    {
+      "elapsed_ms": 312984.0,
+      "message": "模型首个内容事件已收到 · 1.8 秒"
+    },
+    {
+      "elapsed_ms": 313078.0,
+      "message": "正在请求模型：请求 moonshotai/Kimi-K2.7-Code · 本次图像 1 张 · 推理 low"
+    },
+    {
+      "elapsed_ms": 313078.0,
+      "message": "正在请求模型：请求 moonshotai/Kimi-K2.7-Code · 本次图像 1 张"
+    },
+    {
+      "elapsed_ms": 314375.0,
+      "message": "模型服务已开始响应 · 1.3 秒"
+    },
+    {
+      "elapsed_ms": 314375.0,
+      "message": "模型首个内容事件已收到 · 1.3 秒"
+    },
+    {
+      "elapsed_ms": 314375.0,
+      "message": "模型正在分析参考图与建模约束 · 05:13"
+    },
+    {
+      "elapsed_ms": 321296.0,
+      "message": "Agent 正在调用工具：mcp__ai-modeler__cad_remove_feature"
+    },
+    {
+      "elapsed_ms": 321328.0,
+      "message": "Agent 进度：特征已删除，revision 2。"
+    },
+    {
+      "elapsed_ms": 321390.0,
+      "message": "模型首个内容事件已收到 · 1.3 秒"
+    },
+    {
+      "elapsed_ms": 321390.0,
+      "message": "正在请求模型：请求 moonshotai/Kimi-K2.7-Code · 本次图像 1 张 · 推理 low"
+    },
+    {
+      "elapsed_ms": 321390.0,
+      "message": "正在请求模型：请求 moonshotai/Kimi-K2.7-Code · 本次图像 1 张"
+    },
+    {
+      "elapsed_ms": 322593.0,
+      "message": "模型服务已开始响应 · 1.2 秒"
+    },
+    {
+      "elapsed_ms": 322593.0,
+      "message": "模型首个内容事件已收到 · 1.2 秒"
+    },
+    {
+      "elapsed_ms": 322593.0,
+      "message": "模型正在分析参考图与建模约束 · 05:21"
+    },
+    {
+      "elapsed_ms": 329562.0,
+      "message": "Agent 正在调用工具：mcp__ai-modeler__cad_create_model"
+    },
+    {
+      "elapsed_ms": 329625.0,
+      "message": "模型首个内容事件已收到 · 1.2 秒"
+    },
+    {
+      "elapsed_ms": 329625.0,
+      "message": "正在请求模型：请求 moonshotai/Kimi-K2.7-Code · 本次图像 1 张 · 推理 low"
+    },
+    {
+      "elapsed_ms": 329625.0,
+      "message": "正在请求模型：请求 moonshotai/Kimi-K2.7-Code · 本次图像 1 张"
+    },
+    {
+      "elapsed_ms": 330843.0,
+      "message": "模型服务已开始响应 · 1.2 秒"
+    },
+    {
+      "elapsed_ms": 330843.0,
+      "message": "模型首个内容事件已收到 · 1.2 秒"
+    },
+    {
+      "elapsed_ms": 330843.0,
+      "message": "模型正在分析参考图与建模约束 · 05:29"
+    },
+    {
+      "elapsed_ms": 340437.0,
+      "message": "Agent 正在调用工具：mcp__ai-modeler__cad_create_model"
+    },
+    {
+      "elapsed_ms": 340500.0,
+      "message": "模型首个内容事件已收到 · 1.2 秒"
+    },
+    {
+      "elapsed_ms": 340500.0,
+      "message": "正在请求模型：请求 moonshotai/Kimi-K2.7-Code · 本次图像 1 张 · 推理 low"
+    },
+    {
+      "elapsed_ms": 340500.0,
+      "message": "正在请求模型：请求 moonshotai/Kimi-K2.7-Code · 本次图像 1 张"
+    },
+    {
+      "elapsed_ms": 341703.0,
+      "message": "模型服务已开始响应 · 1.2 秒"
+    },
+    {
+      "elapsed_ms": 341703.0,
+      "message": "模型首个内容事件已收到 · 1.2 秒"
+    },
+    {
+      "elapsed_ms": 341703.0,
+      "message": "模型正在分析参考图与建模约束 · 05:40"
+    },
+    {
+      "elapsed_ms": 359968.0,
+      "message": "Agent 正在调用工具：mcp__ai-modeler__cad_get_state"
+    },
+    {
+      "elapsed_ms": 359984.0,
+      "message": "模型首个内容事件已收到 · 1.2 秒"
+    },
+    {
+      "elapsed_ms": 360000.0,
+      "message": "Agent 进度：已读取当前 CADPlan 状态。"
+    },
+    {
+      "elapsed_ms": 360078.0,
+      "message": "正在请求模型：请求 moonshotai/Kimi-K2.7-Code · 本次图像 1 张 · 推理 low"
+    },
+    {
+      "elapsed_ms": 360078.0,
+      "message": "正在请求模型：请求 moonshotai/Kimi-K2.7-Code · 本次图像 1 张"
+    },
+    {
+      "elapsed_ms": 361562.0,
+      "message": "模型服务已开始响应 · 1.5 秒"
+    },
+    {
+      "elapsed_ms": 361562.0,
+      "message": "模型首个内容事件已收到 · 1.5 秒"
+    },
+    {
+      "elapsed_ms": 361562.0,
+      "message": "模型正在分析参考图与建模约束 · 06:00"
+    },
+    {
+      "elapsed_ms": 373750.0,
+      "message": "Agent 正在调用工具：mcp__ai-modeler__cad_create_model"
+    },
+    {
+      "elapsed_ms": 373796.0,
+      "message": "模型首个内容事件已收到 · 1.5 秒"
+    },
+    {
+      "elapsed_ms": 373796.0,
+      "message": "正在请求模型：请求 moonshotai/Kimi-K2.7-Code · 本次图像 1 张 · 推理 low"
+    },
+    {
+      "elapsed_ms": 373796.0,
+      "message": "正在请求模型：请求 moonshotai/Kimi-K2.7-Code · 本次图像 1 张"
+    },
+    {
+      "elapsed_ms": 375093.0,
+      "message": "模型服务已开始响应 · 1.3 秒"
+    },
+    {
+      "elapsed_ms": 375093.0,
+      "message": "模型首个内容事件已收到 · 1.3 秒"
+    },
+    {
+      "elapsed_ms": 375093.0,
+      "message": "模型正在分析参考图与建模约束 · 06:14"
+    },
+    {
+      "elapsed_ms": 387734.0,
+      "message": "Agent 正在调用工具：mcp__ai-modeler__cad_add_feature"
+    },
+    {
+      "elapsed_ms": 387781.0,
+      "message": "模型首个内容事件已收到 · 1.3 秒"
+    },
+    {
+      "elapsed_ms": 387875.0,
+      "message": "正在请求模型：请求 moonshotai/Kimi-K2.7-Code · 本次图像 1 张 · 推理 low"
+    },
+    {
+      "elapsed_ms": 387875.0,
+      "message": "正在请求模型：请求 moonshotai/Kimi-K2.7-Code · 本次图像 1 张"
+    },
+    {
+      "elapsed_ms": 389265.0,
+      "message": "模型服务已开始响应 · 1.4 秒"
+    },
+    {
+      "elapsed_ms": 389265.0,
+      "message": "模型首个内容事件已收到 · 1.5 秒"
+    },
+    {
+      "elapsed_ms": 389265.0,
+      "message": "模型正在分析参考图与建模约束 · 06:28"
+    },
+    {
+      "elapsed_ms": 412296.0,
+      "message": "Agent 正在调用工具：mcp__ai-modeler__cad_restore_best_candidate"
+    },
+    {
+      "elapsed_ms": 412296.0,
+      "message": "模型首个内容事件已收到 · 1.4 秒"
+    },
+    {
+      "elapsed_ms": 412390.0,
+      "message": "正在请求模型：请求 moonshotai/Kimi-K2.7-Code · 本次图像 1 张 · 推理 low"
+    },
+    {
+      "elapsed_ms": 412390.0,
+      "message": "正在请求模型：请求 moonshotai/Kimi-K2.7-Code · 本次图像 1 张"
+    },
+    {
+      "elapsed_ms": 413500.0,
+      "message": "模型服务已开始响应 · 1.1 秒"
+    },
+    {
+      "elapsed_ms": 413500.0,
+      "message": "模型首个内容事件已收到 · 1.2 秒"
+    },
+    {
+      "elapsed_ms": 413500.0,
+      "message": "模型正在分析参考图与建模约束 · 06:52"
+    },
+    {
+      "elapsed_ms": 446015.0,
+      "message": "Agent 正在调用工具：mcp__ai-modeler__cad_add_feature"
+    },
+    {
+      "elapsed_ms": 446031.0,
+      "message": "Agent 进度：已添加特征 main-body，revision 3。"
+    },
+    {
+      "elapsed_ms": 446078.0,
+      "message": "模型首个内容事件已收到 · 1.1 秒"
+    },
+    {
+      "elapsed_ms": 446078.0,
+      "message": "正在请求模型：请求 moonshotai/Kimi-K2.7-Code · 本次图像 1 张 · 推理 low"
+    },
+    {
+      "elapsed_ms": 446078.0,
+      "message": "正在请求模型：请求 moonshotai/Kimi-K2.7-Code · 本次图像 1 张"
+    },
+    {
+      "elapsed_ms": 447375.0,
+      "message": "模型服务已开始响应 · 1.3 秒"
+    },
+    {
+      "elapsed_ms": 447375.0,
+      "message": "模型首个内容事件已收到 · 1.3 秒"
+    },
+    {
+      "elapsed_ms": 447375.0,
+      "message": "模型正在分析参考图与建模约束 · 07:26"
+    },
+    {
+      "elapsed_ms": 460234.0,
+      "message": "Agent 正在调用工具：mcp__ai-modeler__cad_add_face_recess"
+    },
+    {
+      "elapsed_ms": 460265.0,
+      "message": "Agent 进度：已按面法线 1/positive 创建退台；box 尺寸映射到 XYZ=[36.0, 24.001, 72.0]，revision 4。"
+    },
+    {
+      "elapsed_ms": 460296.0,
+      "message": "模型首个内容事件已收到 · 1.3 秒"
+    },
+    {
+      "elapsed_ms": 460296.0,
+      "message": "正在请求模型：请求 moonshotai/Kimi-K2.7-Code · 本次图像 1 张 · 推理 low"
+    },
+    {
+      "elapsed_ms": 460390.0,
+      "message": "正在请求模型：请求 moonshotai/Kimi-K2.7-Code · 本次图像 1 张"
+    },
+    {
+      "elapsed_ms": 461593.0,
+      "message": "模型服务已开始响应 · 1.3 秒"
+    },
+    {
+      "elapsed_ms": 461593.0,
+      "message": "模型首个内容事件已收到 · 1.3 秒"
+    },
+    {
+      "elapsed_ms": 461593.0,
+      "message": "模型正在分析参考图与建模约束 · 07:40"
+    },
+    {
+      "elapsed_ms": 463078.0,
+      "message": "模型首个内容事件已收到 · 1.3 秒"
+    },
+    {
+      "elapsed_ms": 463093.0,
+      "message": "Agent 正在调用工具：mcp__ai-modeler__cad_preview_model"
+    },
+    {
+      "elapsed_ms": 464296.0,
+      "message": "Agent 进度：当前版本预览已生成，方向 iso；请目视对照原始参考图。"
+    },
+    {
+      "elapsed_ms": 464375.0,
+      "message": "正在请求模型：请求 moonshotai/Kimi-K2.7-Code · 本次图像 2 张 · 推理 low"
+    },
+    {
+      "elapsed_ms": 464375.0,
+      "message": "正在请求模型：请求 moonshotai/Kimi-K2.7-Code · 本次图像 2 张"
+    },
+    {
+      "elapsed_ms": 465859.0,
+      "message": "模型服务已开始响应 · 1.5 秒"
+    },
+    {
+      "elapsed_ms": 465859.0,
+      "message": "模型首个内容事件已收到 · 1.5 秒"
+    },
+    {
+      "elapsed_ms": 465875.0,
+      "message": "模型正在分析参考图与建模约束 · 07:44"
+    },
+    {
+      "elapsed_ms": 479625.0,
+      "message": "Agent 正在调用工具：mcp__ai-modeler__cad_review_reference_similarity"
+    },
+    {
+      "elapsed_ms": 479687.0,
+      "message": "模型首个内容事件已收到 · 1.5 秒"
+    },
+    {
+      "elapsed_ms": 479687.0,
+      "message": "正在请求模型：请求 moonshotai/Kimi-K2.7-Code · 本次图像 2 张"
+    },
+    {
+      "elapsed_ms": 620125.0,
+      "message": "模型服务已开始响应 · 140.4 秒"
+    },
+    {
+      "elapsed_ms": 620140.0,
+      "message": "Agent 进度：独立视觉复核已记录；辅助评分=82.0/100，明确差异=0，需核对原图的冲突=0。评分不决定是否返修或能否保存候选。"
+    },
+    {
+      "elapsed_ms": 620218.0,
+      "message": "正在请求模型：请求 moonshotai/Kimi-K2.7-Code · 本次图像 2 张 · 推理 low"
+    },
+    {
+      "elapsed_ms": 620218.0,
+      "message": "正在请求模型：请求 moonshotai/Kimi-K2.7-Code · 本次图像 2 张"
+    },
+    {
+      "elapsed_ms": 621984.0,
+      "message": "模型服务已开始响应 · 1.7 秒"
+    },
+    {
+      "elapsed_ms": 621984.0,
+      "message": "模型首个内容事件已收到 · 1.8 秒"
+    },
+    {
+      "elapsed_ms": 621984.0,
+      "message": "模型正在分析参考图与建模约束 · 10:20"
+    },
+    {
+      "elapsed_ms": 656218.0,
+      "message": "Agent 正在调用工具：mcp__ai-modeler__cad_set_construction_milestone"
+    },
+    {
+      "elapsed_ms": 656234.0,
+      "message": "Agent 进度：已更新当前施工检查范围；未列入的目标特征不会作为本阶段缺失项。"
+    },
+    {
+      "elapsed_ms": 656265.0,
+      "message": "模型首个内容事件已收到 · 1.7 秒"
+    },
+    {
+      "elapsed_ms": 656265.0,
+      "message": "正在请求模型：请求 moonshotai/Kimi-K2.7-Code · 本次图像 2 张 · 推理 low"
+    },
+    {
+      "elapsed_ms": 656359.0,
+      "message": "正在请求模型：请求 moonshotai/Kimi-K2.7-Code · 本次图像 2 张"
+    },
+    {
+      "elapsed_ms": 658015.0,
+      "message": "模型服务已开始响应 · 1.7 秒"
+    },
+    {
+      "elapsed_ms": 658015.0,
+      "message": "模型首个内容事件已收到 · 1.8 秒"
+    },
+    {
+      "elapsed_ms": 658015.0,
+      "message": "模型正在分析参考图与建模约束 · 10:56"
+    },
+    {
+      "elapsed_ms": 670671.0,
+      "message": "Agent 正在调用工具：mcp__ai-modeler__cad_finish_model"
+    },
+    {
+      "elapsed_ms": 670718.0,
+      "message": "Agent 进度：已保存当前候选；结果标记为 candidate_not_verified，未解决项和未核验项目已写入报告。 本地网格预览完成，未创建或验证 CATPart。"
+    },
+    {
+      "elapsed_ms": 670734.0,
+      "message": "模型首个内容事件已收到 · 1.7 秒"
+    },
+    {
+      "elapsed_ms": 670734.0,
+      "message": "正在请求模型：请求 moonshotai/Kimi-K2.7-Code · 本次图像 2 张 · 推理 low"
+    },
+    {
+      "elapsed_ms": 670828.0,
+      "message": "正在请求模型：请求 moonshotai/Kimi-K2.7-Code · 本次图像 2 张"
+    },
+    {
+      "elapsed_ms": 672500.0,
+      "message": "模型服务已开始响应 · 1.7 秒"
+    },
+    {
+      "elapsed_ms": 672500.0,
+      "message": "模型首个内容事件已收到 · 1.7 秒"
+    },
+    {
+      "elapsed_ms": 672500.0,
+      "message": "模型正在分析参考图与建模约束 · 11:11"
+    },
+    {
+      "elapsed_ms": 677718.0,
+      "message": "模型正在生成回复"
+    },
+    {
+      "elapsed_ms": 686968.0,
+      "message": "DSH 状态：idle"
+    },
+    {
+      "elapsed_ms": 686968.0,
+      "message": "模型响应已返回：正在保存并整理 CADPlan 与本轮工具结果。"
+    }
+  ],
+  "cli_session_id": "input-image-prune-20261001",
+  "cli_dsh_session_id": "input-image-prune-20261001-dsh-3889e9078cee",
+  "cli_reference_paths": [
+    "C:\\Users\\lycohana\\Desktop\\code\\AI-_-\\artifacts\\agent-quality-rebuild\\references\\user-nine-hole-recess-iso.png"
+  ],
+  "cli_conversation_history_path": "C:\\Users\\lycohana\\AppData\\Local\\Packages\\OpenAI.Codex_2p2nqsd0c76g0\\LocalCache\\Local\\AI Modeler\\dsh\\sessions\\input-image-prune-20261001\\conversation-history.json",
+  "cli_conversation_turn_count": 1,
+  "cli_output_dir": "C:\\Users\\lycohana\\Desktop\\code\\AI-_-\\artifacts\\agent-quality-rebuild\\input-reasoning\\cli-image-prune-20261001\\turns\\921c175f327b40fa96b9bbe9156a4298",
+  "delivery_warnings": [],
+  "cli_exit_code": 4,
+  "cli_outcome": "candidate_not_accepted",
+  "cli_result_path": "C:\\Users\\lycohana\\Desktop\\code\\AI-_-\\artifacts\\agent-quality-rebuild\\input-reasoning\\cli-image-prune-20261001\\turns\\921c175f327b40fa96b9bbe9156a4298\\result.json"
+}

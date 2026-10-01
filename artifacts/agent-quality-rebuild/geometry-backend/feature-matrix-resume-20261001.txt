@@ -1,0 +1,6 @@
+starting rotor
+done rotor build_failed
+starting shell
+done shell needs_review
+wrote C:\Users\lycohana\Desktop\code\AI-_-\artifacts\agent-quality-rebuild\geometry-backend\feature-execution-matrix-20261001-134224.json
+{"total_feature_rows": 27, "brep_passed": ["box", "cylinder", "socket_head_bolt", "sphere", "prism", "revolve", "gear", "loft", "hole", "pocket", "pattern", "helix", "spoked_wheel", "vbelt_pulley", "timing_pulley", "worm", "helical_gear", "bevel_gear", "camshaft", "conrod", "cross_joint"], "needs_review": ["shell"], "build_failed": ["crankshaft", "impeller", "piston", "rotor"], "validation_blocked": [], "timeout_or_unknown": ["scroll_disc"], "brep_invalid": [], "self_intersection_unknown": ["box", "cylinder", "socket_head_bolt", "sphere", "prism", "revolve", "gear", "loft", "hole", "pocket", "pattern", "helix", "spoked_wheel", "vbelt_pulley", "timing_pulley", "worm", "helical_gear", "bevel_gear", "crankshaft", "camshaft", "impeller", "piston", "conrod", "cross_joint", "scroll_disc", "rotor"], "local_approximate": ["socket_head_bolt", "gear", "loft", "helix", "vbelt_pulley", "timing_pulley", "worm", "helical_gear", "bevel_gear", "crankshaft", "camshaft", "impeller", "piston", "conrod", "cross_joint", "scroll_disc", "rotor"], "local_unavailable": ["shell"]}

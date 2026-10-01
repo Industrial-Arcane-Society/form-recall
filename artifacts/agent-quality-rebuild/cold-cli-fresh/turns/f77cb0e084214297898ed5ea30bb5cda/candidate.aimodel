@@ -1,0 +1,217 @@
+{
+  "format": "ai-modeler",
+  "version": 1,
+  "name": "nine-hole-recess-block",
+  "source_prompt": "按参考图复刻，尺寸未标注请自行估量。",
+  "features": [
+    {
+      "kind": "box",
+      "params": {
+        "length": 40.0,
+        "width": 30.0,
+        "height": 60.0,
+        "center": [
+          0.0,
+          15.0,
+          30.0
+        ],
+        "base": false
+      },
+      "op": "add",
+      "name": "Base Block",
+      "note": "",
+      "feature_id": "base-block",
+      "relations": [],
+      "enabled": true,
+      "provenance": {
+        "length": "image_estimate",
+        "width": "image_estimate",
+        "height": "image_estimate",
+        "center": "derived"
+      }
+    },
+    {
+      "kind": "box",
+      "params": {
+        "length": 12.0,
+        "width": 20.001,
+        "height": 60.0,
+        "center": [
+          0.0,
+          20.000500000000002,
+          30.0
+        ],
+        "base": false
+      },
+      "op": "cut",
+      "name": "Front Pocket",
+      "note": "通过统一 CADPlan 坐标语义创建的面内退台。",
+      "feature_id": "front-pocket",
+      "relations": [],
+      "enabled": true,
+      "provenance": {
+        "length": "image_estimate",
+        "width": "image_estimate",
+        "height": "image_estimate",
+        "center": "derived"
+      }
+    },
+    {
+      "kind": "cylinder",
+      "params": {
+        "radius": 4.0,
+        "height": 40.001,
+        "axis": "X",
+        "center": [
+          -20.0,
+          15.0,
+          52.0
+        ],
+        "base": true
+      },
+      "op": "cut",
+      "name": "Side Top Hole",
+      "note": "",
+      "feature_id": "side-top-hole",
+      "relations": [],
+      "enabled": true,
+      "provenance": {
+        "radius": "derived",
+        "height": "derived",
+        "axis": "derived",
+        "center": "derived"
+      }
+    },
+    {
+      "kind": "cylinder",
+      "params": {
+        "radius": 3.0,
+        "height": 40.001,
+        "axis": "X",
+        "center": [
+          -20.0,
+          15.0,
+          30.0
+        ],
+        "base": true
+      },
+      "op": "cut",
+      "name": "Side Middle Hole",
+      "note": "",
+      "feature_id": "side-mid-hole",
+      "relations": [],
+      "enabled": true,
+      "provenance": {
+        "radius": "derived",
+        "height": "derived",
+        "axis": "derived",
+        "center": "derived"
+      }
+    },
+    {
+      "kind": "cylinder",
+      "params": {
+        "radius": 4.0,
+        "height": 40.001,
+        "axis": "X",
+        "center": [
+          -20.0,
+          15.0,
+          8.0
+        ],
+        "base": true
+      },
+      "op": "cut",
+      "name": "Side Bottom Hole",
+      "note": "",
+      "feature_id": "side-bot-hole",
+      "relations": [],
+      "enabled": true,
+      "provenance": {
+        "radius": "derived",
+        "height": "derived",
+        "axis": "derived",
+        "center": "derived"
+      }
+    },
+    {
+      "kind": "cylinder",
+      "params": {
+        "radius": 3.0,
+        "height": 10.001,
+        "axis": "Y",
+        "center": [
+          0.0,
+          0.0,
+          30.0
+        ],
+        "base": true
+      },
+      "op": "cut",
+      "name": "Pocket Middle Hole",
+      "note": "",
+      "feature_id": "pocket-mid-hole",
+      "relations": [],
+      "enabled": true,
+      "provenance": {
+        "radius": "derived",
+        "height": "derived",
+        "axis": "derived",
+        "center": "derived"
+      }
+    },
+    {
+      "kind": "cylinder",
+      "params": {
+        "radius": 4.0,
+        "height": 10.001,
+        "axis": "Y",
+        "center": [
+          0.0,
+          0.0,
+          8.0
+        ],
+        "base": true
+      },
+      "op": "cut",
+      "name": "Pocket Bottom Hole",
+      "note": "",
+      "feature_id": "pocket-bot-hole",
+      "relations": [],
+      "enabled": true,
+      "provenance": {
+        "radius": "derived",
+        "height": "derived",
+        "axis": "derived",
+        "center": "derived"
+      }
+    },
+    {
+      "kind": "cylinder",
+      "params": {
+        "radius": 4.0,
+        "height": 10.001,
+        "axis": "Y",
+        "center": [
+          0.0,
+          0.0,
+          52.0
+        ],
+        "base": true
+      },
+      "op": "cut",
+      "name": "Pocket Top Cut",
+      "note": "",
+      "feature_id": "pocket-top-cut",
+      "relations": [],
+      "enabled": true,
+      "provenance": {
+        "radius": "derived",
+        "height": "derived",
+        "axis": "derived",
+        "center": "derived"
+      }
+    }
+  ],
+  "exported_at": "2026-10-01 14:23:55"
+}

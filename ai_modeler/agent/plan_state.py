@@ -3,6 +3,8 @@
 from __future__ import annotations
 
 from copy import deepcopy
+import hashlib
+import json
 
 from ai_modeler.sdk import cadplan
 
@@ -11,6 +13,22 @@ COORDINATE_SYSTEM = {
     "type": "global_cartesian", "handedness": "right",
     "axes": ["X", "Y", "Z"], "origin": [0, 0, 0],
 }
+
+
+def geometry_fingerprint(plan):
+    """Hash ordered CAD geometry semantics, excluding provenance and presentation metadata."""
+    if not isinstance(plan, dict):
+        features = []
+    else:
+        features = [
+            {key: feature.get(key) for key in
+             ("id", "kind", "operation", "parameters", "relations")}
+            for feature in (plan.get("features") or [])
+            if isinstance(feature, dict)
+        ]
+    encoded = json.dumps(features, ensure_ascii=False, sort_keys=True,
+                         separators=(",", ":"), allow_nan=False)
+    return hashlib.sha256(encoded.encode("utf-8")).hexdigest()
 
 
 def _has_number(value):

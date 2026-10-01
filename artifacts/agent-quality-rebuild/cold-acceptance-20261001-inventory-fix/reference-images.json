@@ -1,0 +1,15 @@
+{
+  "schema_version": 1,
+  "session_id": "coldimg20261001inventoryfix",
+  "images": [
+    {
+      "id": "sha256:53ed87fadf8cca869da921627e6a13c845424c6906b3de517d5cca972db94553",
+      "sha256": "53ed87fadf8cca869da921627e6a13c845424c6906b3de517d5cca972db94553",
+      "filename": "user-nine-hole-recess-iso.png",
+      "width": 494,
+      "height": 544,
+      "media_type": "image/png",
+      "path": "C:\\Users\\lycohana\\AppData\\Local\\Packages\\OpenAI.Codex_2p2nqsd0c76g0\\LocalCache\\Local\\AI Modeler\\dsh\\sessions\\coldimg20261001inventoryfix\\reference-assets\\53ed87fadf8cca869da921627e6a13c845424c6906b3de517d5cca972db94553.png"
+    }
+  ]
+}

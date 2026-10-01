@@ -1,0 +1,129 @@
+{
+  "created_at_utc": "2026-10-01T04:16:53.721316+00:00",
+  "scope": "P0/P1/P2 input and reasoning implementation smoke; not final UI/model acceptance",
+  "configured_route_sanitized": {
+    "provider_host": "api.siliconflow.cn",
+    "model": "moonshotai/Kimi-K2.7-Code",
+    "configured_reasoning_effort": "low",
+    "api_key_logged": false
+  },
+  "reference_manifest_smoke": {
+    "status": "passed",
+    "input_sha256": "53ed87fadf8cca869da921627e6a13c845424c6906b3de517d5cca972db94553",
+    "cached_sha256": "53ed87fadf8cca869da921627e6a13c845424c6906b3de517d5cca972db94553",
+    "same_after_text_only_followup": true,
+    "asset_bytes_identical": true,
+    "retained_reference_count": 1
+  },
+  "request_profile_smoke": {
+    "status": "passed",
+    "construction": {
+      "task_kind": "construction",
+      "review_complexity": null,
+      "provider_family": "siliconflow",
+      "protocol": "chat_completions",
+      "model": "moonshotai/Kimi-K2.7-Code",
+      "reasoning_effort": "none",
+      "configured_reasoning_effort": null,
+      "thinking_budget": null,
+      "payload_reasoning": {
+        "enable_thinking": false
+      },
+      "reasoning_supported": true,
+      "reasoning_control": "toggle_and_budget",
+      "vision_supported": true,
+      "supported_efforts": [
+        "none",
+        "low"
+      ],
+      "context_window": 256000,
+      "max_output_tokens": null,
+      "context_capacity_source": "official SiliconFlow model center states 256K for moonshotai/Kimi-K2.7-Code",
+      "capability_source": "official SiliconFlow VLM API example for moonshotai/Kimi-K2.7-Code"
+    },
+    "ordinary_vision_review": {
+      "task_kind": "vision_review",
+      "review_complexity": null,
+      "provider_family": "siliconflow",
+      "protocol": "chat_completions",
+      "model": "moonshotai/Kimi-K2.7-Code",
+      "reasoning_effort": "low",
+      "configured_reasoning_effort": null,
+      "thinking_budget": null,
+      "payload_reasoning": {
+        "enable_thinking": true
+      },
+      "reasoning_supported": true,
+      "reasoning_control": "toggle_and_budget",
+      "vision_supported": true,
+      "supported_efforts": [
+        "none",
+        "low"
+      ],
+      "context_window": 256000,
+      "max_output_tokens": null,
+      "context_capacity_source": "official SiliconFlow model center states 256K for moonshotai/Kimi-K2.7-Code",
+      "capability_source": "official SiliconFlow VLM API example for moonshotai/Kimi-K2.7-Code"
+    },
+    "conflicted_vision_review": {
+      "task_kind": "vision_review",
+      "review_complexity": "evidence_conflict",
+      "provider_family": "siliconflow",
+      "protocol": "chat_completions",
+      "model": "moonshotai/Kimi-K2.7-Code",
+      "reasoning_effort": "high",
+      "configured_reasoning_effort": null,
+      "thinking_budget": null,
+      "payload_reasoning": {
+        "enable_thinking": true
+      },
+      "reasoning_supported": true,
+      "reasoning_control": "toggle_and_budget",
+      "vision_supported": true,
+      "supported_efforts": [
+        "none",
+        "low"
+      ],
+      "context_window": 256000,
+      "max_output_tokens": null,
+      "context_capacity_source": "official SiliconFlow model center states 256K for moonshotai/Kimi-K2.7-Code",
+      "capability_source": "official SiliconFlow VLM API example for moonshotai/Kimi-K2.7-Code"
+    }
+  },
+  "route_capability_evidence": {
+    "status": "provider_route_metadata_only",
+    "models_endpoint_exact_id_returned": "moonshotai/Kimi-K2.7-Code",
+    "models_endpoint_exposed_context_or_output_limits": false,
+    "verified_context_window_tokens": 256000,
+    "context_source_url": "https://www.siliconflow.cn/models",
+    "model_is_documented_vision_and_tool_call_capable": true,
+    "output_capacity": {
+      "value": 32768,
+      "source": "dsh_operational_fallback",
+      "provider_maximum_known": false
+    },
+    "reporting_rule": "Do not present the operational output cap as the provider model maximum."
+  },
+  "dsh_sdk_start_smoke": {
+    "initial_diagnostic_failure": "A synthetic isolated profile with reasoning_effort=none failed because the generated DSH model profile declared only off and no enabled thinking level. The first surfaced error was a compat validation message; removing compat diagnostically revealed the actual missing reasoning level.",
+    "repair": "Declare SiliconFlow Kimi low as the binary thinking-enabled capability; do not claim high/max are distinct request parameters. Omit DSH effort for none because the Qwen adapter treats the literal string off as truthy.",
+    "post_fix_effort_none": {
+      "status": "passed",
+      "effective_dsh_effort": null,
+      "provider_request_sent": false
+    },
+    "post_fix_effort_low": {
+      "status": "passed",
+      "effective_dsh_effort": "low",
+      "provider_request_sent": false
+    },
+    "dsh_home": "temporary isolated DSH_HOME",
+    "credential": "mock only; no key logged"
+  },
+  "official_sources": [
+    "https://www.siliconflow.cn/models",
+    "https://docs.siliconflow.cn/docs/api/chat-completions-post",
+    "https://docs.siliconflow.cn/docs/userguide/capabilities/reasoning"
+  ],
+  "next_required_acceptance": "Launch actual UI and use the configured provider/key for a natural-language 100x60x20 mm box, verify tool and provider wire telemetry, then release UI lock before original-image DSH Agent acceptance."
+}

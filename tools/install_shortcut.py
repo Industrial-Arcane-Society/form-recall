@@ -15,7 +15,7 @@ import sys
 import tempfile
 
 BASE = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-ICON = os.path.join(BASE, 'assets', 'app.ico')
+ICON = os.path.join(BASE, 'ui-web', 'src-tauri', 'icons', 'icon.ico')
 LNK_NAME = 'AI 自动建模助手.lnk'
 
 
@@ -60,7 +60,7 @@ $lnk = $ws.CreateShortcut($lnkPath)
 $lnk.TargetPath = $target
 $lnk.Arguments = '-m ai_modeler'
 $lnk.WorkingDirectory = $base
-$lnk.Description = 'AI 自动建模助手 —— 用中文描述即可生成三维模型'
+$lnk.Description = 'AI Modeler desktop workspace with the Python modeling backend'
 if (Test-Path -LiteralPath $icon) {{ $lnk.IconLocation = $icon }}
 $lnk.WindowStyle = 1
 $lnk.Save()

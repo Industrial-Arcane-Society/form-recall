@@ -1,0 +1,129 @@
+{
+  "format": "ai-modeler",
+  "version": 1,
+  "name": "底板带孔与旋转凸台",
+  "source_prompt": "创建底板：长100、宽60、厚20，中心在原点上方10 mm处",
+  "features": [
+    {
+      "kind": "box",
+      "params": {
+        "length": 100.0,
+        "width": 60.0,
+        "height": 20.0,
+        "center": [
+          0.0,
+          0.0,
+          10.0
+        ],
+        "base": false
+      },
+      "op": "add",
+      "name": "底板",
+      "note": "",
+      "feature_id": "base-plate",
+      "relations": [],
+      "enabled": true,
+      "provenance": {
+        "length": "user",
+        "width": "user",
+        "height": "user",
+        "center": "derived"
+      }
+    },
+    {
+      "kind": "cylinder",
+      "params": {
+        "radius": 5.0,
+        "height": 20.0,
+        "center": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "axis": "Z",
+        "base": true
+      },
+      "op": "cut",
+      "name": "竖直贯穿圆孔切削",
+      "note": "",
+      "feature_id": "through-hole-cut",
+      "relations": [],
+      "enabled": true,
+      "provenance": {
+        "radius": "derived",
+        "height": "derived",
+        "center": "derived",
+        "axis": "user"
+      }
+    },
+    {
+      "kind": "cylinder",
+      "params": {
+        "radius": 4.0,
+        "height": 6.0,
+        "center": [
+          25.0,
+          0.0,
+          14.0
+        ],
+        "axis": "Z",
+        "base": true
+      },
+      "op": "cut",
+      "name": "顶面盲孔切削",
+      "note": "",
+      "feature_id": "blind-hole-cut",
+      "relations": [],
+      "enabled": true,
+      "provenance": {
+        "radius": "derived",
+        "height": "user",
+        "center": "derived",
+        "axis": "derived"
+      }
+    },
+    {
+      "kind": "revolve",
+      "params": {
+        "profile": [
+          [
+            0.0,
+            20.0
+          ],
+          [
+            6.0,
+            20.0
+          ],
+          [
+            6.0,
+            28.0
+          ],
+          [
+            0.0,
+            28.0
+          ]
+        ],
+        "angle": 360.0,
+        "center": [
+          -25.0,
+          0.0,
+          0.0
+        ],
+        "axis": "Z"
+      },
+      "op": "add",
+      "name": "轴对称旋转凸台",
+      "note": "",
+      "feature_id": "revolve-boss",
+      "relations": [],
+      "enabled": true,
+      "provenance": {
+        "profile": "derived",
+        "angle": "user",
+        "center": "user",
+        "axis": "user"
+      }
+    }
+  ],
+  "exported_at": "2026-10-01 20:15:58"
+}

@@ -1,0 +1,25 @@
+{
+  "turn_id": "30600df009a64390bf166fb3173fadfd",
+  "started_at_epoch_ms": 1790833743261,
+  "session_id": "aq-text-diagnostic-20261001",
+  "dsh_session_id": "aq-text-diagnostic-20261001-dsh-8ee20591d345",
+  "provider": "siliconflow",
+  "model": "moonshotai/Kimi-K2.7-Code",
+  "reasoning_effort": "low",
+  "runtime_capacity_policy": {
+    "context_window": {
+      "value": 256000,
+      "source": "verified_provider_capability",
+      "provider_capability_known": true
+    },
+    "output_cap": {
+      "value": 32768,
+      "source": "dsh_operational_fallback",
+      "provider_maximum_known": false
+    }
+  },
+  "reference_images": [],
+  "user_turns_manifest": "C:\\Users\\lycohana\\AppData\\Local\\AI Modeler\\dsh\\sessions\\aq-text-diagnostic-20261001\\user-turns.json",
+  "completed_at_epoch_ms": 1790833766010,
+  "first_tool_observed": true
+}

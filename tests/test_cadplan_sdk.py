@@ -1,4 +1,6 @@
+import copy
 import json
+import math
 import subprocess
 import sys
 import tempfile
@@ -33,7 +35,7 @@ CASE_PARAMETERS = {
     "pattern": {"mode": "linear", "count": 2, "step": [20, 0, 0]},
     "helix": {"radius": 10, "wire_r": 1, "height": 20, "turns": 4},
     "spoked_wheel": {"outer_r": 30, "rim_w": 4, "hub_r": 8, "height": 8, "spokes": 6, "spoke_w": 3},
-    "vbelt_pulley": {"pitch_d": 80, "grooves": 3, "height": 20, "groove_type": "A"},
+    "vbelt_pulley": {"pitch_d": 80, "grooves": 3, "height": 51, "groove_type": "A"},
     "timing_pulley": {"pitch_d": 50, "teeth": 20, "height": 12, "tooth_type": "XL"},
     "worm": {"radius": 10, "height": 40, "thread_r": 8, "wire_r": 2, "turns": 3},
     "helical_gear": {"teeth": 24, "module": 2, "height": 12},
@@ -48,6 +50,9 @@ CASE_PARAMETERS = {
     "scroll_disc": {"outer_d": 60, "height": 8, "wall_t": 2, "turns": 2.5},
     "rotor": {"radius": 30, "n": 3, "height": 12, "bore_d": 8},
     "shell": {"thickness": 2},
+    "socket_head_bolt": {"shank_d": 8, "thread_pitch": 1.25,
+                         "length": 24, "head_d": 13, "head_h": 8,
+                         "hex_s": 6, "hex_t": 4, "segments": 12},
 }
 
 
@@ -124,6 +129,108 @@ def _plan(kind, parameters=None):
 
 
 class CADPlanSDKTests(unittest.TestCase):
+    def test_explicit_blind_entry_schema_and_legacy_high_side_plan(self):
+        parameters = {
+            "diameter": 6, "through": False, "depth": 6, "axis": "Y",
+            "pos": "point", "point": [0, 25, 0],
+            "entry_point": [0, 25, 0], "direction": "negative",
+        }
+        plan = _plan("hole", parameters)
+        base = {"length": 40, "width": 50, "height": 40,
+                "center": [0, 0, 0], "base": False}
+        plan["features"][0]["parameters"] = base
+        plan["features"][0]["sources"] = _source_map(base)
+        plan["features"][1]["operation"] = "cut"
+        validation = validate_plan(plan)
+        self.assertEqual("valid", validation["state"], validation)
+        import jsonschema
+        self.assertEqual([], list(jsonschema.Draft202012Validator(
+            schema_document()).iter_errors(plan)))
+
+        hole_schema = next(item for item in schema_document()["properties"]["features"]
+                           ["items"]["oneOf"]
+                           if item["properties"]["kind"]["const"] == "hole")
+        parameter_props = hole_schema["properties"]["parameters"]["properties"]
+        self.assertIn("entry_point", parameter_props)
+        self.assertEqual(["negative", "positive"], parameter_props["direction"]["enum"])
+
+        explicit_result = preview_plan(plan)
+        self.assertEqual("previewed", explicit_result["state"], explicit_result)
+        self.assertEqual("passed", explicit_result["local_geometry_checks"]["geometry_state"])
+        explicit_hole = explicit_result["local_geometry_checks"]["hole_instances"][0]
+        self.assertEqual("verified_blind", explicit_hole["status"])
+        self.assertAlmostEqual(6.0, explicit_hole["measured_depth_mm"], places=5)
+        self.assertAlmostEqual(-math.pi * 3.0 ** 2 * 6.0,
+                               explicit_result["local_geometry_checks"]["feature_results"][-1]
+                               ["volume_delta_mm3"], delta=1e-3)
+
+        legacy_plan = copy.deepcopy(plan)
+        legacy_parameters = dict(legacy_plan["features"][1]["parameters"])
+        legacy_parameters.pop("entry_point")
+        legacy_parameters.pop("direction")
+        legacy_plan["features"][1]["parameters"] = legacy_parameters
+        legacy_plan["features"][1]["sources"] = _source_map(legacy_parameters)
+        legacy_validation = validate_plan(legacy_plan)
+        self.assertEqual("valid", legacy_validation["state"], legacy_validation)
+        legacy_result = preview_plan(legacy_plan)
+        self.assertEqual("previewed", legacy_result["state"], legacy_result)
+        legacy_hole = legacy_result["local_geometry_checks"]["hole_instances"][0]
+        self.assertEqual("verified_blind", legacy_hole["status"])
+        self.assertAlmostEqual(6.0, legacy_hole["measured_depth_mm"], places=5)
+
+    def test_explicit_blind_entry_requires_pair_and_matches_legacy_hole_axis(self):
+        base_parameters = {"diameter": 6, "through": False, "depth": 6,
+                           "axis": "Y", "pos": "point",
+                           "point": [0, -24.5, 0],
+                           "entry_point": [1, 10, 0], "direction": "positive"}
+        mismatched = validate_plan(_plan("hole", base_parameters))
+        self.assertEqual("invalid", mismatched["state"], mismatched)
+        self.assertIn("hole_entry_point_mismatch",
+                      {row["code"] for row in mismatched["errors"]})
+
+        unpaired_parameters = dict(base_parameters)
+        unpaired_parameters.pop("direction")
+        unpaired = validate_plan(_plan("hole", unpaired_parameters))
+        self.assertEqual("invalid", unpaired["state"], unpaired)
+        self.assertIn("incomplete_hole_entry",
+                      {row["code"] for row in unpaired["errors"]})
+        import jsonschema
+        schema_errors = list(jsonschema.Draft202012Validator(schema_document()).iter_errors(
+            _plan("hole", unpaired_parameters)))
+        self.assertTrue(schema_errors)
+
+    def test_vbelt_pulley_rejects_sourced_width_that_cannot_fit_standard_grooves(self):
+        result = validate_plan(_plan("vbelt_pulley", {
+            "pitch_d": 80, "grooves": 3, "height": 20, "groove_type": "A"}))
+        self.assertEqual("invalid", result["state"], result)
+        self.assertTrue(any(row.get("code") == "vbelt_width_below_profile_minimum"
+                            and row.get("path") == "$.features[1].parameters.height"
+                            for row in result["errors"]), result)
+
+    def test_preview_renders_last_valid_partial_without_marking_it_accepted(self):
+        plan = _plan("hole", {"diameter": 8, "through": True,
+                               "pos": "point", "point": [0, 0, 0], "axis": "X"})
+        duplicate = {"id": "right-hole", "kind": "hole", "operation": "cut",
+                     "parameters": {"diameter": 8, "through": True,
+                                    "pos": "point", "point": [5, 0, 0], "axis": "X"},
+                     "sources": _source_map({"diameter": 8, "point": [5, 0, 0]})}
+        plan["features"].append(duplicate)
+        with tempfile.TemporaryDirectory() as directory:
+            result = preview_plan(plan, str(Path(directory) / "partial.png"))
+            self.assertTrue(Path(result["partial_image"]).is_file())
+        self.assertEqual("preview_failed", result["state"], result)
+        self.assertTrue(result["partial_preview"], result)
+        self.assertEqual("candidate_partial_not_accepted", result["partial_state"])
+        self.assertEqual("duplicate_through_axis", result["failure_code"])
+        self.assertEqual(["right-hole", "target"], result["related_feature_ids"])
+        self.assertEqual("needs_review", result["partial_geometry_checks"]["state"])
+        self.assertFalse(result["partial_geometry_checks"]["accepted"])
+        self.assertEqual(2, result["last_valid_dimensions"]["feature_count"])
+        self.assertEqual(["base", "target"],
+                         result["last_valid_dimensions"]["applied_feature_ids"])
+        self.assertEqual("right-hole",
+                         result["last_valid_dimensions"]["failed_feature_id"])
+
     def test_schema_and_validation_cover_all_public_document_kinds(self):
         schema = schema_document()
         variants = schema["properties"]["features"]["items"]["oneOf"]
@@ -201,7 +308,7 @@ class CADPlanSDKTests(unittest.TestCase):
             self.assertEqual("previewed", result["state"], result)
             self.assertEqual(str(image), result["preview_image"])
             self.assertEqual(["front", "right", "top"], result["preview_image_views"])
-            self.assertEqual("AI Modeler local mesh kernel; not CATIA B-Rep",
+            self.assertEqual("OCCT BREP tessellated for display; not a CATIA screenshot",
                              result["preview_image_source"])
             layout = result["preview_image_layout"]
             self.assertTrue(layout["uniform_scale_across_views"])
@@ -291,8 +398,10 @@ class CADPlanSDKTests(unittest.TestCase):
                            "center": [0, 0, 30]}
         hole_parameters = {"diameter": 8, "through": True, "pos": "point",
                            "point": [0, 0, 0], "axis": "Z"}
+        # A through-hole array must move across the part face. Moving a hole
+        # along its own axis only overlaps the source bore and adds no geometry.
         pattern_parameters = {"mode": "linear", "count": 3,
-                              "step": [0, 0, 15]}
+                              "step": [15, 0, 0]}
         plan = _plan("box")
         plan["features"] = [
             {"id": "base", "kind": "box", "operation": "add",
@@ -339,12 +448,57 @@ class CADPlanSDKTests(unittest.TestCase):
 
     def test_strict_mode_blocks_before_catia(self):
         plan = _plan("sphere")
-        with mock.patch("ai_modeler.catia.push_to_catia") as push:
+        with mock.patch("ai_modeler.catia_backend.catia.push_to_catia") as push, \
+             mock.patch("ai_modeler.sdk.cadplan._preview_internal") as preview:
             result = build_plan(plan, strict=True)
         push.assert_not_called()
+        preview.assert_not_called()
         self.assertEqual("strict_blocked", result["state"])
         self.assertFalse(result["catia_executed"])
-        self.assertEqual("approximate", result["blocked_features"][-1]["status"])
+
+    def test_build_plan_blocks_native_self_intersection_before_export(self):
+        plan = _plan("box")
+        preview = {"state": "previewed", "dimensions": {"size": [1, 1, 1]},
+                   "validation": {"support": []}, "warnings": [],
+                   "local_geometry_checks": {
+                       "state": "failed", "geometry_state": "failed",
+                       "self_intersection": {"status": "self_intersection"}}}
+        with mock.patch("ai_modeler.sdk.cadplan._preview_internal",
+                        return_value=(preview, None, {}, {}, [])):
+            result = build_plan(plan)
+        self.assertEqual("geometry_failed", result["state"], result)
+        self.assertFalse(result["catia_invoked"])
+        self.assertFalse(result["catia_executed"])
+        self.assertFalse(result["catia_saved"])
+        self.assertEqual({}, result["output_paths"])
+        self.assertEqual("self_intersection",
+                         result["local_geometry_checks"]["self_intersection"]["status"])
+
+    def test_build_plan_saves_unverified_cylindrical_cut_as_candidate_only(self):
+        plan = _plan("cylinder", {"radius": 3, "height": 10,
+                                   "center": [0, 0, 30], "axis": "Z",
+                                   "base": False})
+        plan["features"][-1]["operation"] = "cut"
+        with tempfile.TemporaryDirectory() as temp:
+            catpart = Path(temp) / "candidate.CATPart"
+            with mock.patch("ai_modeler.catia_backend.catia.push_to_catia") as push:
+                result = build_plan(plan, catpart_path=str(catpart))
+            push.assert_not_called()
+            self.assertEqual("candidate_unverified", result["state"], result)
+            self.assertTrue(result["candidate_saved"])
+            self.assertEqual("not_accepted", result["acceptance"])
+            self.assertEqual("needs_review", result["geometry_state"])
+            self.assertFalse(result["catia_invoked"])
+            self.assertFalse(result["catia_saved"])
+            self.assertNotIn("catpart", result["output_paths"])
+            self.assertFalse(catpart.exists())
+            self.assertTrue(all(Path(path).is_file()
+                                for path in result["output_paths"].values()))
+            report = json.loads(Path(result["output_paths"]["report"]).read_text(encoding="utf-8"))
+            self.assertEqual("incomplete_or_unverified",
+                             report["local_geometry_checks"]["hole_measurement_state"])
+            self.assertEqual("unverified", report["local_geometry_checks"]
+                             ["unverified_cut_intents"][0]["status"])
 
     def test_auto_mode_exports_files_and_reports_skipped_features(self):
         plan = _plan("shell")
@@ -356,7 +510,7 @@ class CADPlanSDKTests(unittest.TestCase):
                 self.assertIn("shell", kwargs["post_build_notice"])
                 return True, "saved", "push.vbs"
 
-            with mock.patch("ai_modeler.catia.push_to_catia", side_effect=fake_push):
+            with mock.patch("ai_modeler.catia_backend.catia.push_to_catia", side_effect=fake_push):
                 result = build_plan(plan, catpart_path=str(catpart))
 
             self.assertEqual("partial", result["state"])

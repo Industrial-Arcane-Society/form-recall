@@ -1,0 +1,5 @@
+6A05D7B9A7FCF7E043DCC30CC60E9343071C8468DCDCE55106400D377E84D4E3  C:\Users\lycohana\Desktop\code\AI-_-\artifacts\agent-cli\geom-blind-entry-20261002-01\active-turn.json
+C19372515DBABCDA618F5110695CFC41EA61DAC7ADDF2AC454AC0D18023A0DFF  C:\Users\lycohana\Desktop\code\AI-_-\artifacts\agent-cli\geom-blind-entry-20261002-01\agent-observability.jsonl
+EA5B8E5A27800CC25AE2BAB78C009AD532C0C174CB44D8026989A0682910E100  C:\Users\lycohana\Desktop\code\AI-_-\artifacts\agent-cli\geom-blind-entry-20261002-01\cad-state.json
+42499E0DB6AE03FD8624FA3220BF1B88104A4223A29C199E04C75F35C38D9567  C:\Users\lycohana\Desktop\code\AI-_-\artifacts\agent-cli\geom-blind-entry-20261002-01\report.md
+09E0AC1ED1FE9281CABAD12C241FAE1A04AAFA87D309E978BF4C6F7C38201D31  C:\Users\lycohana\Desktop\code\AI-_-\artifacts\agent-cli\geom-blind-entry-20261002-01\user-turns.json

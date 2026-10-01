@@ -1,0 +1,16 @@
+[
+  {
+    "ProcessId": 61244,
+    "ParentProcessId": 58948,
+    "Name": "cmd.exe",
+    "CreationDate": "2026-10-02T02:02:46.49025+08:00",
+    "CommandLine": "C:\\WINDOWS\\system32\\cmd.exe /c \"\"C:\\Users\\lycohana\\AppData\\Local\\Packages\\OpenAI.Codex_2p2nqsd0c76g0\\LocalCache\\Local\\AI Modeler\\dsh-cli\\node_modules\\.bin\\dsh.cmd\" --profile sdk --patch \"C:\\Users\\lycohana\\AppData\\Local\\Packages\\OpenAI.Codex_2p2nqsd0c76g0\\LocalCache\\Local\\AI Modeler\\dsh\\sessions\\rc2-cold-20261002-020244-21fd2698\\runtime.patch.yml\"\""
+  },
+  {
+    "ProcessId": 63064,
+    "ParentProcessId": 61244,
+    "Name": "node.exe",
+    "CreationDate": "2026-10-02T02:02:46.620103+08:00",
+    "CommandLine": "\"node\"   \"C:\\Users\\lycohana\\AppData\\Local\\Packages\\OpenAI.Codex_2p2nqsd0c76g0\\LocalCache\\Local\\AI Modeler\\dsh-cli\\node_modules\\.bin\\\\..\\@deepseek-ai\\dsh\\lib\\bin.js\" --profile sdk --patch \"C:\\Users\\lycohana\\AppData\\Local\\Packages\\OpenAI.Codex_2p2nqsd0c76g0\\LocalCache\\Local\\AI Modeler\\dsh\\sessions\\rc2-cold-20261002-020244-21fd2698\\runtime.patch.yml\""
+  }
+]

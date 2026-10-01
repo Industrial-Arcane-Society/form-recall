@@ -1,0 +1,13 @@
+{
+  "schema_version": 1,
+  "turns": [
+    {
+      "turn_id": "25c0b7065ab74c1391568e09056e05df",
+      "user_prompt": "请根据参考图生成可编辑模型；图片没有尺寸标注，按图内比例估算并标明尺寸来源。",
+      "assistant_reply": "已通过程序验收并保存模型。",
+      "assistant_source": "dsh_final_reply",
+      "result_state": "accepted",
+      "created_at": "2026-10-02T00:21:10+08:00"
+    }
+  ]
+}
