@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """内置自检: python -m ai_modeler --selftest"""
 from __future__ import annotations
-from ai_modeler.paths import PROJECT_ROOT
+from ai_modeler.paths import PROJECT_ROOT, data_path
 
 import os
 import sys
@@ -17,6 +17,10 @@ def run_selftest(verbose: bool = True) -> int:
     ok = [0, 0]
 
     def check(name, cond, extra=''):
+        if cond is None:
+            if verbose:
+                print('[SKIP] %-34s %s' % (name, extra))
+            return
         ok[1] += 1
         if cond:
             ok[0] += 1
@@ -39,6 +43,17 @@ def run_selftest(verbose: bool = True) -> int:
     uni = K.csg_union(box, K.make_box(40, 40, 40, (60, 0, 20)))
     check('内核: 布尔并集', len(uni) > 6, '%d 面' % len(uni))
     check('内核: 性能', (time.time() - t0) < 5.0, '%.2fs' % (time.time() - t0))
+    try:
+        from ai_modeler.core.geometry import occ_kernel
+        if occ_kernel.available():
+            occ_box = occ_kernel.make_box(10, 8, 6)
+            check('内核: OpenCASCADE 可用', not occ_box.IsNull(), occ_kernel.status())
+        elif os.environ.get('AIMODELER_PACKAGED_DESKTOP') == '1':
+            check('内核: 内置 OpenCASCADE', False, occ_kernel.status())
+        else:
+            check('内核: OpenCASCADE 可选', None, occ_kernel.status())
+    except Exception as e:
+        check('内核: OpenCASCADE 可用', False, str(e))
 
     # 2. 自然语言
     cases = [
@@ -94,7 +109,7 @@ def run_selftest(verbose: bool = True) -> int:
     doc = NLP.parse('画一个 60×40×20 的长方体, 中心打一个直径 10 的通孔').doc
     body = doc.build()
     root = str(PROJECT_ROOT)
-    tmp = os.path.join(root, 'artifacts', 'selftest', time.strftime('%Y%m%d-%H%M%S'))
+    tmp = str(data_path('artifacts', 'selftest', time.strftime('%Y%m%d-%H%M%S')))
     os.makedirs(tmp, exist_ok=True)
     p1 = exporters.export_stl(body, os.path.join(tmp, 't.stl'), 't')
     p2 = exporters.export_obj(body, os.path.join(tmp, 't.obj'), 't')
@@ -196,16 +211,20 @@ def run_selftest(verbose: bool = True) -> int:
             check('CATIA: 宏编译通过', cp.returncode == 0,
                   ((cp.stdout or '') + (cp.stderr or '')).strip()[:80])
         else:
-            check('CATIA: 宏编译通过', False, '未安装插件')
+            check('CATIA: 宏编译通过', None, '尚未连接 CATIA；连接后会生成插件宏')
     except Exception as e:
         check('CATIA: 导出模块', False, str(e))
 
     # 9. 界面模块
     try:
-        import tkinter  # noqa: F401
-        from ai_modeler.ui import app as _app  # noqa: F401
-        from ai_modeler.ui import viewer3d as _v  # noqa: F401
-        check('界面: 模块可加载', True)
+        if os.environ.get('AIMODELER_PACKAGED_DESKTOP') == '1':
+            from ai_modeler.ui import bridge as _bridge  # noqa: F401
+            check('界面: 桌面后端可加载', True)
+        else:
+            import tkinter  # noqa: F401
+            from ai_modeler.ui import app as _app  # noqa: F401
+            from ai_modeler.ui import viewer3d as _v  # noqa: F401
+            check('界面: 模块可加载', True)
     except Exception as e:
         check('界面: 模块可加载', False, str(e))
 

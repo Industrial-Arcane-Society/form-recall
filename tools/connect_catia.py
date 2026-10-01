@@ -28,11 +28,12 @@ for p in (BASE, TOOLS):
     if p not in sys.path:
         sys.path.insert(0, p)
 
-CONFIG_PATH = os.path.join(BASE, 'config.json')
-
 from ai_modeler import catia  # noqa: E402
 from ai_modeler import catialib  # noqa: E402
+from ai_modeler.paths import config_path  # noqa: E402
 import install_catia_plugin as ip  # noqa: E402
+
+CONFIG_PATH = str(config_path())
 
 
 def pick_target(installs, argv):
@@ -74,6 +75,7 @@ def load_cfg():
 
 
 def save_cfg(cfg):
+    os.makedirs(os.path.dirname(CONFIG_PATH), exist_ok=True)
     with open(CONFIG_PATH, 'w', encoding='utf-8') as f:
         json.dump(cfg, f, ensure_ascii=False, indent=2)
     return CONFIG_PATH
@@ -103,7 +105,7 @@ def write_config(info, installs):
     cfg['model_library'] = {
         'enabled': True,
         'catalog_dirs': [os.path.join(info['win_dir'], 'startup', 'components')],
-        'index': os.path.join('kb', 'catia_catalogs.json'),
+        'index': catialib.INDEX_PATH,
         'include_part_files': bool((cfg.get('model_library') or {}).get('include_part_files', False)),
     }
     return save_cfg(cfg), cfg
@@ -154,11 +156,15 @@ def main():
     print('  [4/6] 生成并投放 CATIA 宏插件 ...')
     python_exe = ip.find_python()
     macro = ip.build_macro(python_exe)
-    targets = [
-        ('程序插件目录', os.path.join(BASE, 'catia_plugin', ip.MACRO_NAME)),
-        ('用户宏目录', os.path.join(os.path.expanduser('~'), 'Documents', 'CATIA_Macros',
-                                    ip.MACRO_NAME)),
-    ]
+    user_macro = os.path.join(os.path.expanduser('~'), 'Documents', 'CATIA_Macros',
+                              ip.MACRO_NAME)
+    if os.environ.get('AIMODELER_PACKAGED_DESKTOP') == '1':
+        targets = [('用户宏目录', user_macro)]
+        registration_dir = os.path.dirname(user_macro)
+    else:
+        targets = [('程序插件目录', os.path.join(BASE, 'catia_plugin', ip.MACRO_NAME)),
+                   ('用户宏目录', user_macro)]
+        registration_dir = os.path.join(BASE, 'catia_plugin')
     for label, p in targets:
         try:
             size = ip.write_macro(p, macro)
@@ -193,7 +199,7 @@ def main():
     print('  接通完成。剩下一步要在 CATIA 里点一次 (只需做一次):')
     print('    1. 启动 %s' % info['label'])
     print('    2. 菜单  工具(Tools) -> 宏(Macro) -> 宏...(Macros...)')
-    print('    3. 「查找范围」切到:  %s' % os.path.join(BASE, 'catia_plugin'))
+    print('    3. 「查找范围」切到:  %s' % registration_dir)
     print('       文件类型选 CATScript, 选中 AI自动建模助手.CATScript, 点「运行」')
     print('    4. 以后想更方便: 工具 -> 选项 -> 常规 -> 宏 -> 宏库 -> 添加, 把上面这个目录加进去')
     print('')

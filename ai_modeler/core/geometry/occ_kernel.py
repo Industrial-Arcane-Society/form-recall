@@ -46,9 +46,12 @@ try:                                            # pragma: no cover
     from OCP.TopoDS import TopoDS, TopoDS_Compound
     from OCP.BRep import BRep_Builder
     from OCP.gp import gp_Ax2, gp_Pnt, gp_Dir, gp_Vec
-    # cadquery-ocp 里这张表的类型名是 OCP.collections.List_TopoDS_Shape
-    # （不是 pythonocc 文档里的 TopTools_ListOfShape —— 后者在这个构建里根本没有）
-    from OCP.collections import List_TopoDS_Shape
+    # OCP wheel builds have exposed this generated collection under both
+    # ``collections`` and ``TopTools`` across supported releases.
+    try:
+        from OCP.collections import List_TopoDS_Shape
+    except ImportError:
+        from OCP.TopTools import TopTools_ListOfShape as List_TopoDS_Shape
     from OCP.STEPControl import STEPControl_Writer, STEPControl_AsIs
     from OCP.Interface import Interface_Static
     from OCP.BRepTools import BRepTools

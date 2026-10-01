@@ -16,7 +16,7 @@ r"""CATIA 插件后端服务 —— 为 CATScript 宏提供中文界面、解析
 模型不会自动保存, 请在 CATIA 里手动保存。窗口关闭后, 宏会把本次会话汇总弹出来。
 """
 from __future__ import annotations
-from ai_modeler.paths import PROJECT_ROOT
+from ai_modeler.paths import PROJECT_ROOT, config_path
 
 import os
 import sys
@@ -39,8 +39,7 @@ FONT_UI = 'Microsoft YaHei UI'
 
 
 def _cfg_path():
-    root = str(PROJECT_ROOT)
-    return os.path.join(root, 'config.json')
+    return str(config_path())
 
 
 def _load_last_prompt():

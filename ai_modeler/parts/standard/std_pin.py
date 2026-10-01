@@ -26,7 +26,7 @@ r"""
 用法：python tools\std_pin.py  (无参 = 生成 kb/pin_std.json 并自检)
 """
 from __future__ import annotations
-from ai_modeler.paths import PROJECT_ROOT
+from ai_modeler.paths import PROJECT_ROOT, data_path
 
 import io
 import json
@@ -174,14 +174,15 @@ def main():
     for code in ("P097-A20", "KMS-M01-P157-A30", "P999-A20"):
         s = spec(code)
         print("  %-16s -> %s" % (code, summary(s)))
-    os.makedirs(KB, exist_ok=True)
-    with io.open(os.path.join(KB, "pin_real_std.json"), "w", encoding="utf-8") as f:
+    output = data_path("kb", "pin_real_std.json")
+    output.parent.mkdir(parents=True, exist_ok=True)
+    with io.open(str(output), "w", encoding="utf-8") as f:
         json.dump({"standard": "KMS-M01（实测）", "source": "CATIA 导出的 STEP 实测",
                    "count": len(PINS), "pins": PINS,
                    "p_decode": "P码/10 = 定位段直径",
                    "a_decode": "A15=基准, A20=+5.00, A30=+15.00（实测增量）"},
                   f, ensure_ascii=False, indent=1)
-    print("\n已写入 kb/pin_real_std.json")
+    print("\n已写入 %s" % output)
     return 0 if not bad else 1
 
 

@@ -169,11 +169,14 @@ def main():
 
     macro = build_macro(python_exe)
 
-    targets = []
-    primary = os.path.join(PLUGIN_DIR, MACRO_NAME)
-    targets.append(('程序插件目录', primary))
     docs = os.path.join(os.path.expanduser('~'), 'Documents', 'CATIA_Macros')
-    targets.append(('用户文档目录', os.path.join(docs, MACRO_NAME)))
+    if os.environ.get('AIMODELER_PACKAGED_DESKTOP') == '1':
+        targets = [('用户宏目录', os.path.join(docs, MACRO_NAME))]
+        registration_dir = docs
+    else:
+        targets = [('程序插件目录', os.path.join(PLUGIN_DIR, MACRO_NAME)),
+                   ('用户文档目录', os.path.join(docs, MACRO_NAME))]
+        registration_dir = PLUGIN_DIR
 
     saved = []
     for label, path in targets:
@@ -208,7 +211,7 @@ def main():
     print('    1. 打开 CATIA V5')
     print('    2. 菜单 工具(Tools) -> 宏(Macro) -> 宏...(Macros...)')
     print('    3. 「查找范围」切到下面这个目录:')
-    print('         %s' % PLUGIN_DIR)
+    print('         %s' % registration_dir)
     print('    4. 文件类型选 CATScript, 选中 AI自动建模助手.CATScript, 点「运行」')
     print('')
     print('  想让它出现在宏列表里更方便, 可以把这个目录加进宏库:')

@@ -13,7 +13,7 @@
 让它直接产出特征 JSON —— 那条路质量高得多 (RAG)。
 """
 from __future__ import annotations
-from ai_modeler.paths import PROJECT_ROOT
+from ai_modeler.paths import data_path
 
 import html
 import json
@@ -27,7 +27,7 @@ import urllib.request
 UA = ('Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 '
       '(KHTML, like Gecko) Chrome/124.0 Safari/537.36')
 
-CACHE_PATH = os.path.join(str(PROJECT_ROOT), '.cache', 'online.json')
+CACHE_PATH = str(data_path('.cache', 'online.json'))
 
 
 def _load_cache():
