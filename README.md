@@ -17,19 +17,27 @@
 
 | 文件 / 目录 | 是什么 |
 |---|---|
-| `使用说明.md` | 完整使用手册（语法、界面、导出、CATIA、MCP、常见问题） |
-| `建模测试清单.md` | 43 条基础功能自测（全通过） |
-| `复杂零件建模测试清单.md` | 33 条中等难度自测（全通过） |
-| `高难度建模测试清单.md` | **39 条高难度 / 极高难度自测（全通过）** |
-| `零件截图/` | **46 个零件的四视图截图**（程序真实建模后渲染）+ `总览.png` + `索引.md` |
-| `reports/命中率迭代报告.html` | 三轮迭代命中率曲线与分类明细 |
-| `kb/pulley_std.json` / `pulley_std.md` | **带轮标准尺寸数据**（GB/T 10412、GB/T 10413，带来源 URL） |
-| `reports/带轮提示词学习报告.md` | **带轮提示词多轮学习报告**（逐轮准确率 + 逐题明细） |
-| `reports/eval_baseline.json` | 全零件命中率评测明细（161 条用例 / 32 类） |
-
-重新生成这些：`python tools\make_testlist.py` · `make_complex_testlist.py` ·
-`make_hard_testlist.py` · `make_shots.py` · `iterate.py` · `make_report.py`
-标准数据与学习报告：`python tools\extract_pulley_std.py` · `python tools\learn_pulley_prompts.py`
+| `ai_modeler/` | **插件源码**：按 `agent/`、`sdk/`、`core/`、`parts/`、`catia_backend/`、`ui/`、`runtime/` 分层；包结构说明见 `ai_modeler/README.md` |
+| `tools/` | **开发与数据工具**：几何/图像判据、渲染、比对、STEP 特征提取、建库和打包；分类索引见 `tools/README.md`。现有脚本路径作为兼容入口保留 |
+| `catia_plugin/` | CATIA 侧宏（`AI自动建模助手.CATScript`）与安装脚本 |
+| `datasets/训练提示词/` | 1828 条提示词（训练/测试集、负例、说明），可直接拿去做提示词↔模型训练 |
+| `docs/architecture/` | AgentLoop、CADPlan SDK、CATIA MCP 和接口设计 |
+| `docs/guides/` | CATIA 操作、安装和日常使用说明 |
+| `docs/collaboration/` | Git 分支、协作包、上传与协作流程 |
+| `docs/planning/` | 需求梳理、升级方案和项目流程资料 |
+| `docs/历史报告/` | 原项目顶层散落的历史 Word/Markdown 报告（带轮复盘、阶段报告、升级对比、细节复现度报告等），按时间留痕 |
+| `artifacts/` | 本地生成的模型、预览、AgentLoop 运行记录、自检输出和模型截图；不作为源码目录 |
+| `.cache/` | 本机搜索缓存等可重建数据；已加入 Git 忽略 |
+| `reports/` | 各类报告（Markdown + Word），含判据报告与故障复盘 |
+| `reports/跑图对比/` | **最近几轮的跑图对比**：AI 建模图 vs 真实照片，并排拼图（121 张） |
+| `examples/` | 样例数据：每族 1 组真实照片（含背景帧）+ 1 个 AI 渲染样本（含掩码） |
+| `kb/` | 知识库：**运行时依赖的标准表/词表/实测特征**（螺栓、轴承、带轮、链轮、销、纠错词表、12 MB 实测特征库）。`kb/README_数据说明.md` 写清了每个文件谁在用、哪些不带、怎么重建 |
+| `scripts/` | 一键脚本：装依赖 / 跑全流程 / 重建大数据 / 跑验收基准 / **打包协作包** / **初始化 Git 仓库** |
+| `启动脚本/` | 双击即用的 Windows 脚本：启动程序、连接 CATIA、安装插件、装桌面快捷方式及 STEP 导出宏 |
+| `.gitignore` / `.gitattributes` | 数据策略（哪些大文件不进库）与换行策略（`.ps1/.bat/.vbs` 固定 CRLF、源码固定 LF）。**改完这两个文件要跑 `tools\check_share_pack.py` 复核** |
+| `README.md` | 本文件 |
+| `CONTRIBUTING.md` | 协作约定：怎么改、怎么验、怎么提 |
+| `LICENSE` | MIT |
 
 ---
 
@@ -49,6 +57,15 @@
 
 > 环境要求：Windows + Python 3.9 以上（自带 tkinter 即可）。
 > **不需要**安装任何第三方 Python 包，**不需要**联网，**不需要** CATIA。
+
+需要使用 Agent 创造模式时，再安装 Agent SDK 并配置模型：
+
+```powershell
+powershell -ExecutionPolicy Bypass -File scripts/01_安装依赖.ps1
+```
+
+配置「工具 → AI 大模型设置」后，可在 Agent 对话中使用参考图建模。纯规则快速模式不需要 Agent SDK；需要图片识别、LLM 工具调用和联网搜索时，安装 `deepseek-harness-sdk==0.1.5rc1`。
+
 
 ---
 
@@ -357,6 +374,16 @@ OpenAI 兼容接口（地址 / 模型名 / API Key）。启用后，程序会优
 
 ---
 
+## 面向 LLM 的结构化建模接口
+
+多模态模型可按 `prompts/CADPlan-LLM.md` 与 `schemas/cadplan-v1.schema.json` 生成 CADPlan，再调用 Python SDK 与 CLI；缺少必需参数或数值来源时，接口会返回待确认项。字段、CATIA 特征支持状态、严格模式和输出文件见 `docs/architecture/CADPlan-SDK.md`。
+
+常用命令：`python -m ai_modeler --cadplan validate .\plan.json`、`python -m ai_modeler --cadplan preview .\plan.json`、`python -m ai_modeler --cadplan build .\plan.json --catpart .\out\part.CATPart`。
+
+### 桌面 AgentLoop
+
+运行 `python -m ai_modeler` 打开对话界面。输入框支持 Ctrl+V 粘贴图片，也可以选择多张参考图。Agent 按需调用 CADPlan 工具、网页搜索和视觉复核；模型预览在本地生成，本地候选不会自动同步到 CATIA。详细说明见 `docs/architecture/AgentLoop.md`。
+
 ## 十五、CATIA V5 MCP 服务器（对齐开源项目 catia-v5-mcp-server）
 
 插件现在**本身就是一个 MCP 服务器**，工具名与语义对齐开源项目
@@ -385,7 +412,7 @@ catia_nl_build    → 确认无误后一句中文直接建到 CATIA
 catia_geometry_check → 让 CATIA 导出 STL 量几何，确认孔真的切出来了
 ```
 
-详细说明（接入步骤、协议实现范围、工具清单、已知限制）见 **`CATIA_MCP说明.md`**。
+详细说明（接入步骤、协议实现范围、工具清单、已知限制）见 **`docs/architecture/CATIA_MCP说明.md`**。
 
 
 ---

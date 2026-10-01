@@ -1,0 +1,161 @@
+{
+  "format": "ai-modeler",
+  "version": 1,
+  "name": "M6内六角圆柱头螺钉",
+  "source_prompt": "帮我做个M6的内六角螺丝带螺纹",
+  "features": [
+    {
+      "kind": "cylinder",
+      "params": {
+        "radius": 2.46,
+        "height": 30.0,
+        "center": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "axis": "Z",
+        "base": true,
+        "segments": 48
+      },
+      "op": "add",
+      "name": "螺纹杆身",
+      "note": "M6 杆身，螺纹用杆身圆柱近似",
+      "enabled": true,
+      "provenance": {
+        "radius": "derived",
+        "height": "user",
+        "center": "derived",
+        "axis": "derived",
+        "base": "derived",
+        "segments": "derived"
+      }
+    },
+    {
+      "kind": "cylinder",
+      "params": {
+        "axis": "Z",
+        "base": true,
+        "center": [
+          0.0,
+          0.0,
+          30.0
+        ],
+        "height": 6.0,
+        "radius": 5.0,
+        "segments": 48
+      },
+      "op": "add",
+      "name": "内六角圆柱头",
+      "note": "M6 内六角圆柱头，dk=10, k=6",
+      "enabled": true,
+      "provenance": {
+        "axis": "derived",
+        "base": "derived",
+        "center": "derived",
+        "height": "derived",
+        "radius": "derived",
+        "segments": "derived"
+      }
+    },
+    {
+      "kind": "prism",
+      "params": {
+        "axis": "Z",
+        "center": [
+          0.0,
+          0.0,
+          36.0
+        ],
+        "height": 3.0,
+        "profile": [
+          [
+            2.8868,
+            1.6667
+          ],
+          [
+            0.0,
+            3.3333
+          ],
+          [
+            -2.8868,
+            1.6667
+          ],
+          [
+            -2.8868,
+            -1.6667
+          ],
+          [
+            0.0,
+            -3.3333
+          ],
+          [
+            2.8868,
+            -1.6667
+          ]
+        ]
+      },
+      "op": "cut",
+      "name": "内六角凹槽",
+      "note": "对边 5mm 正六边形，深 3mm，从头顶面 z=36 向下切",
+      "enabled": true,
+      "provenance": {
+        "axis": "derived",
+        "center": "derived",
+        "height": "derived",
+        "profile": "derived"
+      }
+    },
+    {
+      "kind": "cylinder",
+      "params": {
+        "axis": "Z",
+        "base": true,
+        "center": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "height": 0.5,
+        "radius": 3.0,
+        "segments": 48
+      },
+      "op": "add",
+      "name": "螺纹牙脊",
+      "note": "公称半径3.0的薄环，沿Z每1mm阵列形成可见螺纹牙型",
+      "enabled": true,
+      "provenance": {
+        "axis": "derived",
+        "base": "derived",
+        "center": "derived",
+        "height": "derived",
+        "radius": "derived",
+        "segments": "derived"
+      }
+    },
+    {
+      "kind": "pattern",
+      "params": {
+        "axis": "Z",
+        "count": 30,
+        "mode": "linear",
+        "step": [
+          0.0,
+          0.0,
+          1.0
+        ]
+      },
+      "op": "add",
+      "name": "螺纹牙脊阵列",
+      "note": "沿Z每1mm阵列牙脊，形成M6粗牙螺纹近似牙型",
+      "enabled": true,
+      "provenance": {
+        "axis": "derived",
+        "count": "derived",
+        "mode": "derived",
+        "step": "derived"
+      }
+    }
+  ],
+  "exported_at": "2026-09-26 03:58:36"
+}

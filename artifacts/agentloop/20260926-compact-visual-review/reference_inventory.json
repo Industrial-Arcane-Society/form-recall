@@ -1,0 +1,134 @@
+{
+  "inventory": {
+    "source": "independent_source_only_multimodal_read",
+    "images": [
+      {
+        "image": "codex-clipboard-ed8d31d7-08e3-4099-9716-508c99c6dbf6.png",
+        "source_view": "iso",
+        "coverage": "whole_object",
+        "hole_layout_coverage": "partial",
+        "visible_regions": [
+          {
+            "id": "region-1",
+            "region": "左侧壁前表面",
+            "surface_state": "solid_face",
+            "evidence": "浅灰绿色平面，位于槽口左侧，面向观察者",
+            "features": [
+              {
+                "kind": "hole",
+                "quantity": 3,
+                "arrangement": "沿高度方向等距排列",
+                "evidence": "三个圆形孔口，上下孔呈青色，中间孔呈深蓝色"
+              }
+            ]
+          },
+          {
+            "id": "region-2",
+            "region": "右侧壁前表面",
+            "surface_state": "solid_face",
+            "evidence": "浅灰绿色平面，位于槽口右侧，面向观察者",
+            "features": [
+              {
+                "kind": "hole",
+                "quantity": 3,
+                "arrangement": "沿高度方向等距排列",
+                "evidence": "三个圆形孔口，上下孔呈青色，中间孔呈深蓝色"
+              }
+            ]
+          },
+          {
+            "id": "region-3",
+            "region": "槽内后壁表面",
+            "surface_state": "recessed_solid_face",
+            "evidence": "红褐色平面，位于两侧壁后方，形成槽底",
+            "features": [
+              {
+                "kind": "hole",
+                "quantity": 3,
+                "arrangement": "沿高度方向等距排列",
+                "evidence": "三个圆形孔口，上下孔呈紫红色，中间孔呈深蓝色"
+              }
+            ]
+          },
+          {
+            "id": "region-4",
+            "region": "顶面",
+            "surface_state": "solid_face",
+            "evidence": "浅灰绿色顶平面，无孔口可见",
+            "features": []
+          },
+          {
+            "id": "region-5",
+            "region": "右侧面",
+            "surface_state": "solid_face",
+            "evidence": "浅灰绿色侧平面，无孔口可见",
+            "features": []
+          }
+        ],
+        "uncertainties": [
+          "孔为通孔或盲孔无法判定",
+          "底部孔内水平线是否为螺纹不确定"
+        ]
+      },
+      {
+        "image": "codex-clipboard-4c747551-0ffd-4789-9cd7-4187fd67c729.png",
+        "source_view": "front",
+        "coverage": "whole_object",
+        "hole_layout_coverage": "complete",
+        "visible_regions": [
+          {
+            "id": "region-1",
+            "region": "左侧壁前表面",
+            "surface_state": "solid_face",
+            "evidence": "浅灰绿色平面，位于槽口左侧，占据画面左部",
+            "features": [
+              {
+                "kind": "hole",
+                "quantity": 3,
+                "arrangement": "沿高度方向等距排列",
+                "evidence": "三个圆形孔口，上下孔带青色阴影，中间孔呈深蓝色"
+              }
+            ]
+          },
+          {
+            "id": "region-2",
+            "region": "右侧壁前表面",
+            "surface_state": "solid_face",
+            "evidence": "浅灰绿色平面，位于槽口右侧，占据画面右部",
+            "features": [
+              {
+                "kind": "hole",
+                "quantity": 3,
+                "arrangement": "沿高度方向等距排列",
+                "evidence": "三个圆形孔口，上下孔带青色阴影，中间孔呈深蓝色"
+              }
+            ]
+          },
+          {
+            "id": "region-3",
+            "region": "槽内后壁表面",
+            "surface_state": "recessed_solid_face",
+            "evidence": "红褐色平面，位于两侧壁之间靠后位置",
+            "features": [
+              {
+                "kind": "hole",
+                "quantity": 3,
+                "arrangement": "沿高度方向等距排列",
+                "evidence": "三个圆形孔口，上下孔带紫红色边缘，中间孔呈浅蓝色"
+              }
+            ]
+          }
+        ],
+        "uncertainties": [
+          "孔为通孔或盲孔无法判定",
+          "底部孔内水平线是否为螺纹不确定"
+        ]
+      }
+    ],
+    "cross_view_notes": [
+      "两图显示同一U形槽工件，三壁孔位高度一致",
+      "同一物理孔在两图中分别计数，不跨图相加"
+    ]
+  },
+  "gaps": []
+}

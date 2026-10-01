@@ -1,0 +1,95 @@
+{
+  "format": "ai-modeler",
+  "version": 1,
+  "name": "遥控器",
+  "source_prompt": "做一个长方形的遥控器，薄一点，圆角，里面搞3个圆按钮，稍微凸起",
+  "features": [
+    {
+      "kind": "box",
+      "params": {
+        "length": 120.0,
+        "width": 45.0,
+        "height": 8.0,
+        "corner": 5.0,
+        "corner_mode": "fillet"
+      },
+      "op": "add",
+      "name": "长方体",
+      "note": "",
+      "enabled": true,
+      "provenance": {
+        "length": "image_estimate",
+        "width": "image_estimate",
+        "height": "image_estimate",
+        "corner": "image_estimate"
+      }
+    },
+    {
+      "kind": "cylinder",
+      "params": {
+        "radius": 5.0,
+        "height": 2.0,
+        "center": [
+          -35.0,
+          0.0,
+          9.0
+        ],
+        "axis": "Z"
+      },
+      "op": "add",
+      "name": "圆柱/圆台",
+      "note": "",
+      "enabled": true,
+      "provenance": {
+        "radius": "image_estimate",
+        "height": "image_estimate",
+        "center": "derived"
+      }
+    },
+    {
+      "kind": "cylinder",
+      "params": {
+        "radius": 5.0,
+        "height": 2.0,
+        "center": [
+          0.0,
+          0.0,
+          9.0
+        ],
+        "axis": "Z"
+      },
+      "op": "add",
+      "name": "圆柱/圆台",
+      "note": "",
+      "enabled": true,
+      "provenance": {
+        "radius": "image_estimate",
+        "height": "image_estimate",
+        "center": "derived"
+      }
+    },
+    {
+      "kind": "cylinder",
+      "params": {
+        "radius": 5.0,
+        "height": 2.0,
+        "center": [
+          35.0,
+          0.0,
+          9.0
+        ],
+        "axis": "Z"
+      },
+      "op": "add",
+      "name": "圆柱/圆台",
+      "note": "",
+      "enabled": true,
+      "provenance": {
+        "radius": "image_estimate",
+        "height": "image_estimate",
+        "center": "derived"
+      }
+    }
+  ],
+  "exported_at": "2026-09-26 04:03:14"
+}

@@ -54,7 +54,7 @@ def main():
     print("STEP 源：%s（%d 个文件）" % (src, n))
     if not a.skip_brep:
         if not src:
-            print("没找到 STEP —— 先在 CATIA 里跑『导出真实几何_双击运行.vbs』")
+            print("没找到 STEP —— 先在 CATIA 里跑『启动脚本/导出真实几何_双击运行.vbs』")
             return 1
         run([sys.executable, r"tools\build_real_brep.py", "--src", src, "--tol", "0.3"])
     # 库统计

@@ -1,0 +1,10 @@
+{
+  "state": "conversation",
+  "finished": false,
+  "revision": 0,
+  "feature_count": 1,
+  "tool_calls": 8,
+  "model_call_count": 8,
+  "output_paths": {},
+  "run_record": "C:\\Users\\lycohana\\AppData\\Local\\AI Modeler\\dsh\\sessions\\ai-modeler-replica-0857e758-r24-preview-diagnostics\\cad-state.json"
+}

@@ -1,0 +1,68 @@
+{
+  "run_id": "ai-modeler-replica-0857e758-r01",
+  "status": "interrupted_not_accepted",
+  "model": "moonshotai/Kimi-K2.7-Code",
+  "reasoning_effort": "high",
+  "explicit_thinking_budget": null,
+  "cumulative_reasoning_characters": 174173,
+  "reference_images": [
+    "../references/image-1.png",
+    "../references/image-2.png",
+    "../references/image-3.png",
+    "../references/image-4.png"
+  ],
+  "revision": 33,
+  "feature_count": 5,
+  "finished": false,
+  "finish_state": null,
+  "final_preview_view": "top",
+  "final_dimensions": {
+    "unit": "mm",
+    "bbox": [
+      -9.24,
+      -9.24,
+      10.0,
+      9.24,
+      9.24,
+      63.0
+    ],
+    "size": [
+      18.48,
+      18.48,
+      53.0
+    ],
+    "volume_mm3": 3141.4711627731144,
+    "surface_area_mm2": 4310.460747194616,
+    "triangles": 12889,
+    "feature_count": 5
+  },
+  "review_scores": [
+    {
+      "revision": 6,
+      "view": "iso",
+      "score": 45.0,
+      "passed": false
+    },
+    {
+      "revision": 19,
+      "view": "iso",
+      "score": 55.0,
+      "passed": false
+    },
+    {
+      "revision": 24,
+      "view": "iso",
+      "score": 25.0,
+      "passed": false
+    }
+  ],
+  "output_paths": {},
+  "finding": "Cylinder/cone center semantics were omitted from the DSH contract and contradicted by the legacy runtime prompt: base=true treats center as the axial base point and extends height along +axis; prism center is its profile base-plane origin.",
+  "unresolved": [
+    "No review reached 80/100.",
+    "The head and shaft were disconnected in front/iso previews.",
+    "The flange was modeled as an oversized octagon.",
+    "A center blind hole was inferred from a likely view marker.",
+    "Review was performed only in iso; no final candidate was accepted."
+  ]
+}

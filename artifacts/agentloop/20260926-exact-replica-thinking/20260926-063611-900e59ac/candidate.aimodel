@@ -1,0 +1,161 @@
+{
+  "format": "ai-modeler",
+  "version": 1,
+  "name": "U型叉块",
+  "source_prompt": "复刻",
+  "features": [
+    {
+      "kind": "box",
+      "params": {
+        "length": 40.0,
+        "width": 25.0,
+        "height": 60.0,
+        "center": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "base": false
+      },
+      "op": "add",
+      "name": "基体长方块",
+      "note": "",
+      "enabled": true,
+      "provenance": {
+        "length": "image_estimate",
+        "width": "image_estimate",
+        "height": "image_estimate",
+        "center": "derived"
+      }
+    },
+    {
+      "kind": "box",
+      "params": {
+        "length": 12.0,
+        "width": 15.0,
+        "height": 48.0,
+        "center": [
+          0.0,
+          5.0,
+          0.0
+        ],
+        "base": false
+      },
+      "op": "cut",
+      "name": "中央槽",
+      "note": "从前面向后切入的矩形槽，形成左右两臂",
+      "enabled": true,
+      "provenance": {
+        "length": "image_estimate",
+        "width": "image_estimate",
+        "height": "image_estimate",
+        "center": "derived"
+      }
+    },
+    {
+      "kind": "hole",
+      "params": {
+        "diameter": 8.0,
+        "through": false,
+        "depth": 16.0,
+        "pos": "point",
+        "point": [
+          -13.0,
+          0.0,
+          18.0
+        ],
+        "axis": "x",
+        "x": 0.0,
+        "y": 18.0
+      },
+      "op": "cut",
+      "name": "左臂上孔",
+      "note": "",
+      "enabled": true,
+      "provenance": {
+        "diameter": "image_estimate",
+        "through": "derived",
+        "depth": "derived",
+        "point": "image_estimate",
+        "axis": "derived",
+        "x": "image_estimate",
+        "y": "image_estimate"
+      }
+    },
+    {
+      "kind": "pattern",
+      "params": {
+        "mode": "linear",
+        "count": 3,
+        "step": [
+          0.0,
+          0.0,
+          -18.0
+        ],
+        "axis": "z"
+      },
+      "op": "add",
+      "name": "左臂三孔阵列",
+      "note": "沿Z向等距复制左臂上孔，形成上中下三孔",
+      "enabled": true,
+      "provenance": {
+        "count": "image_estimate",
+        "step": "image_estimate",
+        "axis": "derived"
+      }
+    },
+    {
+      "kind": "hole",
+      "params": {
+        "diameter": 8.0,
+        "through": false,
+        "depth": 16.0,
+        "pos": "point",
+        "point": [
+          13.0,
+          0.0,
+          22.5
+        ],
+        "axis": "X",
+        "x": 0.0,
+        "y": 22.5
+      },
+      "op": "cut",
+      "name": "右臂上孔",
+      "note": "",
+      "enabled": true,
+      "provenance": {
+        "diameter": "image_estimate",
+        "through": "derived",
+        "depth": "derived",
+        "point": "image_estimate",
+        "axis": "derived",
+        "x": "image_estimate",
+        "y": "image_estimate"
+      }
+    },
+    {
+      "kind": "pattern",
+      "params": {
+        "mode": "linear",
+        "count": 4,
+        "step": [
+          0.0,
+          0.0,
+          -15.0
+        ],
+        "axis": "z"
+      },
+      "op": "add",
+      "name": "右臂四孔阵列",
+      "note": "沿Z向等距复制右臂上孔，形成四孔",
+      "enabled": true,
+      "provenance": {
+        "count": "image_estimate",
+        "step": "image_estimate",
+        "axis": "derived"
+      }
+    }
+  ],
+  "exported_at": "2026-09-26 07:08:25"
+}

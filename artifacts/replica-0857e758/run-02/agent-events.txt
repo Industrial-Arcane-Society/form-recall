@@ -1,0 +1,91 @@
+11:11:45 启动修正语义后的 DSH 复刻运行；Kimi 未显式配置时使用 2048 thinking budget。
+11:11:45 正在启动 DSH SDK 多模态 Agent 会话。
+11:11:45 模型等待中：DSH SDK · 推理强度 high
+11:11:48 DSH 状态：running
+11:11:50 思考流累计字符约 3
+11:12:29 思考流累计字符约 5,017
+11:12:54 Agent 工具调用：mcp__ai-modeler__cad_get_feature_spec
+11:13:10 思考流累计字符约 10,037
+11:13:32 Agent 工具调用：mcp__ai-modeler__cad_get_feature_spec
+11:13:32 Agent 工具调用：mcp__ai-modeler__cad_get_feature_spec
+11:13:54 思考流累计字符约 15,007
+11:14:34 思考流累计字符约 20,023
+11:14:41 Agent 工具调用：mcp__ai-modeler__cad_create_model
+11:14:41 Agent 决策摘要：CADPlan 已创建，revision 1。
+11:14:44 Agent 工具调用：mcp__ai-modeler__cad_update_feature
+11:14:44 Agent 决策摘要：仅更新来源或说明，几何未变；当前预览和几何版本仍有效。
+11:14:50 Agent 工具调用：mcp__ai-modeler__cad_update_feature
+11:14:50 Agent 决策摘要：仅更新来源或说明，几何未变；当前预览和几何版本仍有效。
+11:15:30 Agent 工具调用：mcp__ai-modeler__cad_add_feature
+11:15:30 Agent 决策摘要：已添加特征 hex_flange，revision 2。
+11:15:37 Agent 工具调用：mcp__ai-modeler__cad_add_feature
+11:15:37 Agent 决策摘要：已添加特征 head_cyl，revision 3。
+11:15:44 Agent 工具调用：mcp__ai-modeler__cad_add_feature
+11:15:44 Agent 决策摘要：已添加特征 nose_cone，revision 4。
+11:15:52 Agent 工具调用：mcp__ai-modeler__cad_update_feature
+11:15:52 Agent 决策摘要：特征已修改，revision 5。
+11:15:53 思考流累计字符约 25,003
+11:16:00 Agent 工具调用：mcp__ai-modeler__cad_preview_model
+11:16:01 Agent 决策摘要：当前版本预览已生成，方向 iso；请目视对照原始参考图。
+11:16:09 Agent 工具调用：mcp__ai-modeler__cad_review_reference_similarity
+11:16:26 Agent 决策摘要：新上下文多模态复核完成：45.0/100；低于 80 分，需按证据返修。
+11:16:44 Agent 工具调用：mcp__ai-modeler__cad_get_feature_spec
+11:16:55 思考流累计字符约 30,012
+11:17:17 Agent 工具调用：mcp__ai-modeler__cad_add_feature
+11:17:17 Agent 决策摘要：已添加特征 bullet_head，revision 6。
+11:17:23 Agent 工具调用：mcp__ai-modeler__cad_remove_feature
+11:17:23 Agent 决策摘要：特征已删除，revision 7。
+11:17:29 Agent 工具调用：mcp__ai-modeler__cad_remove_feature
+11:17:30 Agent 决策摘要：特征已删除，revision 8。
+11:17:32 Agent 工具调用：mcp__ai-modeler__cad_remove_feature
+11:17:32 Agent 决策摘要：特征已删除，revision 9。
+11:17:46 Agent 工具调用：mcp__ai-modeler__cad_add_feature
+11:17:46 Agent 决策摘要：已添加特征 bullet_head，revision 10。
+11:17:48 Agent 工具调用：mcp__ai-modeler__cad_preview_model
+11:17:49 Agent 决策摘要：当前版本预览已生成，方向 iso；请目视对照原始参考图。
+11:18:01 思考流累计字符约 35,022
+11:18:54 思考流累计字符约 40,004
+11:19:16 Agent 工具调用：mcp__ai-modeler__cad_update_feature
+11:19:16 Agent 决策摘要：特征已修改，revision 11。
+11:19:18 Agent 工具调用：mcp__ai-modeler__cad_preview_model
+11:19:19 Agent 决策摘要：当前版本预览已生成，方向 iso；请目视对照原始参考图。
+11:19:49 思考流累计字符约 45,002
+11:20:24 Agent 工具调用：mcp__ai-modeler__cad_update_feature
+11:20:24 Agent 决策摘要：特征已修改，revision 12。
+11:20:26 Agent 工具调用：mcp__ai-modeler__cad_preview_model
+11:20:27 Agent 决策摘要：当前版本预览已生成，方向 iso；请目视对照原始参考图。
+11:20:44 思考流累计字符约 50,040
+11:20:49 Agent 工具调用：mcp__ai-modeler__cad_review_reference_similarity
+11:21:04 Agent 决策摘要：新上下文多模态复核完成：35.0/100；低于 80 分，需按证据返修。
+11:21:43 思考流累计字符约 55,017
+11:21:45 Agent 工具调用：mcp__ai-modeler__cad_remove_feature
+11:21:45 Agent 决策摘要：特征已删除，revision 13。
+11:22:34 Agent 工具调用：mcp__ai-modeler__cad_update_feature
+11:22:34 Agent 决策摘要：特征已修改，revision 14。
+11:22:43 Agent 工具调用：mcp__ai-modeler__cad_add_feature
+11:22:44 Agent 决策摘要：已添加特征 bullet_head，revision 15。
+11:22:46 Agent 工具调用：mcp__ai-modeler__cad_preview_model
+11:22:47 Agent 决策摘要：当前版本预览已生成，方向 iso；请目视对照原始参考图。
+11:22:52 思考流累计字符约 60,001
+11:23:32 思考流累计字符约 65,021
+11:24:01 Agent 工具调用：mcp__ai-modeler__cad_update_feature
+11:24:01 Agent 决策摘要：特征已修改，revision 16。
+11:24:24 思考流累计字符约 70,009
+11:24:29 Agent 工具调用：mcp__ai-modeler__cad_update_feature
+11:24:29 Agent 决策摘要：特征已修改，revision 17。
+11:24:31 Agent 工具调用：mcp__ai-modeler__cad_preview_model
+11:24:32 Agent 决策摘要：当前版本预览已生成，方向 iso；请目视对照原始参考图。
+11:24:59 Agent 工具调用：mcp__ai-modeler__cad_get_state
+11:24:59 Agent 决策摘要：已读取当前 CADPlan 状态。
+11:25:17 思考流累计字符约 75,000
+11:25:20 Agent 工具调用：mcp__ai-modeler__cad_preview_model
+11:25:21 Agent 决策摘要：当前版本预览已生成，方向 front；请目视对照原始参考图。
+11:25:48 Agent 工具调用：mcp__ai-modeler__cad_update_feature
+11:25:48 Agent 决策摘要：特征已修改，revision 18。
+11:25:51 Agent 工具调用：mcp__ai-modeler__cad_preview_model
+11:25:52 Agent 决策摘要：当前版本预览已生成，方向 front；请目视对照原始参考图。
+11:26:01 Agent 工具调用：mcp__ai-modeler__cad_get_state
+11:26:01 Agent 决策摘要：已读取当前 CADPlan 状态。
+11:26:16 思考流累计字符约 80,010
+11:26:27 Agent 工具调用：mcp__ai-modeler__cad_validate_model
+11:26:27 Agent 决策摘要：校验已完成；未启动 CATIA。

@@ -1,0 +1,210 @@
+{
+  "inventory": {
+    "source": "independent_source_only_multimodal_read",
+    "images": [
+      {
+        "image": "image-1.png",
+        "source_view": "iso",
+        "coverage": "whole_object",
+        "hole_layout_coverage": "partial",
+        "visible_regions": [
+          {
+            "id": "left_leg_front",
+            "region": "左侧立板正面",
+            "surface_state": "solid_face",
+            "evidence": "浅灰表面，面向左前，可见三个孔",
+            "features": [
+              {
+                "kind": "通孔",
+                "quantity": 3,
+                "arrangement": "沿高度方向等距单列",
+                "evidence": "三个椭圆/圆孔上下排列，颜色青/蓝/青"
+              }
+            ]
+          },
+          {
+            "id": "right_leg_front",
+            "region": "右侧立板正面",
+            "surface_state": "solid_face",
+            "evidence": "浅灰表面，面向右前，可见三个孔",
+            "features": [
+              {
+                "kind": "通孔",
+                "quantity": 3,
+                "arrangement": "沿高度方向等距单列",
+                "evidence": "三个椭圆/圆孔上下排列，颜色青/蓝/青"
+              }
+            ]
+          },
+          {
+            "id": "center_web",
+            "region": "中间连接腹板正面",
+            "surface_state": "recessed_solid_face",
+            "evidence": "红褐色表面，位于两腿之间，Y向明显后退",
+            "features": [
+              {
+                "kind": "通孔",
+                "quantity": 3,
+                "arrangement": "沿高度方向等距单列",
+                "evidence": "三个椭圆/圆孔上下排列，颜色紫/蓝/紫"
+              }
+            ]
+          },
+          {
+            "id": "top_face",
+            "region": "顶面",
+            "surface_state": "solid_face",
+            "evidence": "浅灰水平顶面，连接左右立板与中间腹板",
+            "features": []
+          },
+          {
+            "id": "right_side_face",
+            "region": "右侧立板外侧面",
+            "surface_state": "solid_face",
+            "evidence": "深灰竖直侧面，位于右侧立板右方",
+            "features": []
+          }
+        ],
+        "uncertainties": [
+          "无法判断孔是否为通孔或盲孔，仅见孔口",
+          "无法判断背面是否有对称结构或开口",
+          "无法判断中间腹板是否与顶面齐平或后退至底面"
+        ]
+      }
+    ],
+    "cross_view_notes": [
+      "单张等轴测图显示U形截面，两腿在前，中间腹板后退",
+      "左右立板正面各3孔，中间腹板3孔，共9个可见孔口",
+      "孔口呈椭圆因透视，实际应为圆孔"
+    ]
+  },
+  "gaps": [],
+  "calls": [
+    {
+      "phase": "blind_reference_inventory",
+      "model": "moonshotai/Kimi-K2.7-Code",
+      "max_output_tokens": 4096,
+      "image_parts_in_request": 1,
+      "response_received": true,
+      "reference_image_names": [],
+      "generated_view": null,
+      "response_chars": 0,
+      "finish_reason": "tool_calls",
+      "api_protocol": "chat_completions_stream",
+      "response_id": "01a0dc916aec9965887ce3239f15c959",
+      "thinking": {
+        "type": "disabled"
+      },
+      "reasoning_effort": null,
+      "tool_choice": "required",
+      "tool_call_names": [
+        "submit_reference_inventory"
+      ],
+      "tool_argument_lengths": [
+        1230
+      ],
+      "duration_seconds": 21.72,
+      "stream_event_count": 26,
+      "first_event_seconds": 0.0,
+      "last_event_seconds": 20.7,
+      "reasoning_chars": 0,
+      "answer_chars": 0,
+      "tool_argument_chars": 1230,
+      "request_timeout_seconds": 240,
+      "usage": {
+        "prompt_tokens": 2013,
+        "completion_tokens": 534,
+        "total_tokens": 2547,
+        "reasoning_tokens": 0
+      },
+      "error": null
+    }
+  ],
+  "tool_trace": [
+    {
+      "phase": "blind_reference_inventory",
+      "tool": "submit_reference_inventory",
+      "arguments": {
+        "images": [
+          {
+            "image": "image-1.png",
+            "source_view": "iso",
+            "coverage": "whole_object",
+            "hole_layout_coverage": "partial",
+            "visible_regions": [
+              {
+                "id": "left_leg_front",
+                "region": "左侧立板正面",
+                "surface_state": "solid_face",
+                "evidence": "浅灰表面，面向左前，可见三个孔",
+                "features": [
+                  {
+                    "kind": "通孔",
+                    "quantity": 3,
+                    "arrangement": "沿高度方向等距单列",
+                    "evidence": "三个椭圆/圆孔上下排列，颜色青/蓝/青"
+                  }
+                ]
+              },
+              {
+                "id": "right_leg_front",
+                "region": "右侧立板正面",
+                "surface_state": "solid_face",
+                "evidence": "浅灰表面，面向右前，可见三个孔",
+                "features": [
+                  {
+                    "kind": "通孔",
+                    "quantity": 3,
+                    "arrangement": "沿高度方向等距单列",
+                    "evidence": "三个椭圆/圆孔上下排列，颜色青/蓝/青"
+                  }
+                ]
+              },
+              {
+                "id": "center_web",
+                "region": "中间连接腹板正面",
+                "surface_state": "recessed_solid_face",
+                "evidence": "红褐色表面，位于两腿之间，Y向明显后退",
+                "features": [
+                  {
+                    "kind": "通孔",
+                    "quantity": 3,
+                    "arrangement": "沿高度方向等距单列",
+                    "evidence": "三个椭圆/圆孔上下排列，颜色紫/蓝/紫"
+                  }
+                ]
+              },
+              {
+                "id": "top_face",
+                "region": "顶面",
+                "surface_state": "solid_face",
+                "evidence": "浅灰水平顶面，连接左右立板与中间腹板",
+                "features": []
+              },
+              {
+                "id": "right_side_face",
+                "region": "右侧立板外侧面",
+                "surface_state": "solid_face",
+                "evidence": "深灰竖直侧面，位于右侧立板右方",
+                "features": []
+              }
+            ],
+            "uncertainties": [
+              "无法判断孔是否为通孔或盲孔，仅见孔口",
+              "无法判断背面是否有对称结构或开口",
+              "无法判断中间腹板是否与顶面齐平或后退至底面"
+            ]
+          }
+        ],
+        "cross_view_notes": [
+          "单张等轴测图显示U形截面，两腿在前，中间腹板后退",
+          "左右立板正面各3孔，中间腹板3孔，共9个可见孔口",
+          "孔口呈椭圆因透视，实际应为圆孔"
+        ]
+      },
+      "result": {
+        "state": "accepted"
+      }
+    }
+  ]
+}

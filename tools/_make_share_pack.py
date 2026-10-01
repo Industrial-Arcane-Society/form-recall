@@ -29,7 +29,7 @@ DIRS = [
 ]
 #: 单个/少量文件复制（顶层文档、脚本）
 FILES = [
-    ("操作说明_CATIA连接版.md", "docs/操作说明_CATIA连接版.md"),
+    ("操作说明_CATIA连接版.md", "docs/guides/操作说明_CATIA连接版.md"),
     ("README.md", "README_upstream.md"),
 ]
 #: 报告目录：md/docx 全要（体量小）

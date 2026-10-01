@@ -1,16 +1,9 @@
 # -*- coding: utf-8 -*-
-"""AI 自动建模助手 —— 自然语言驱动的参数化三维建模工具。
+"""AI 自动建模助手。
 
-模块:
-    kernel     几何内核 (BSP-CSG 布尔运算与基础特征)
-    docmodel   特征树文档模型
-    nlparser   自然语言解析引擎
-    exporters  STL / OBJ / JSON / CATIA 脚本导出
-    viewer3d   tkinter 三维预览渲染器
-    app        桌面图形界面
-    mcp_server MCP 协议服务端 (供 AI 客户端调用)
-    catia      CATIA V5 COM 驱动
-    llm        可选的大模型解析适配层
+Implementation modules live in focused subpackages (``agent``, ``catia_backend``,
+``catia_mcp``, ``cli``, ``core``, ``parts``, ``runtime``, ``sdk`` and ``ui``).
+Historical top-level imports remain available through lazy compatibility aliases.
 """
 from __future__ import annotations
 
@@ -25,4 +18,24 @@ for _stream in (_sys.stdout, _sys.stderr):
 
 __version__ = '1.2.0'
 __all__ = ['kernel', 'docmodel', 'nlparser', 'exporters', 'viewer3d', 'app',
-           'mcp_server', 'catia', 'llm', 'config', 'selftest']
+           'mcp_server', 'catia', 'llm', 'config', 'selftest', 'cadplan',
+           'agentloop']
+
+
+# Keep the historical ``from ai_modeler import <module>`` surface while
+# implementations live in focused subpackages.
+from ._aliases import MODULE_ALIASES as _MODULE_ALIASES
+from ._aliases import import_legacy_module as _import_legacy_module
+from ._aliases import install_legacy_module_finder as _install_legacy_module_finder
+
+_install_legacy_module_finder()
+
+def __getattr__(name):
+    if name in _MODULE_ALIASES:
+        module = _import_legacy_module(name)
+        globals()[name] = module
+        return module
+    raise AttributeError(f"module 'ai_modeler' has no attribute {name!r}")
+
+def __dir__():
+    return sorted(set(globals()) | set(_MODULE_ALIASES))

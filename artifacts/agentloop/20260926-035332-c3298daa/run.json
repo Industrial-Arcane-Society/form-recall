@@ -1,0 +1,4657 @@
+{
+  "record_version": 1,
+  "started_at": "2026-09-26T03:53:32+08:00",
+  "finished_at": "2026-09-26T03:54:02+08:00",
+  "state": "failed",
+  "input": {
+    "prompt": "复刻",
+    "reference_images": [
+      "clipboard-449d8969b7cb47b993efa61da2358585.png"
+    ]
+  },
+  "routing": {
+    "action": "create",
+    "review_mode": "agent_selected",
+    "review_rounds": 0,
+    "reason": "本轮由统一 AgentLoop 按需调用工具；图片建模默认先生成可见候选。"
+  },
+  "conversation_memory": {
+    "summarized_through": 0,
+    "summary_chars": 0
+  },
+  "limits": {
+    "tool_calls": 256,
+    "web_search_calls": 32,
+    "tool_preview_calls": 256,
+    "multiview_tool_calls_per_round": 8,
+    "review_rounds": 256,
+    "context_turns": 128,
+    "context_chars": 1000000,
+    "context_summary_chars": 32000
+  },
+  "selected_reference_images": [
+    "clipboard-449d8969b7cb47b993efa61da2358585.png"
+  ],
+  "active_reference_images": [
+    "clipboard-449d8969b7cb47b993efa61da2358585.png"
+  ],
+  "model_calls": [
+    {
+      "phase": "agent_loop",
+      "model": "deepseek-flash",
+      "max_output_tokens": 65536,
+      "image_parts_in_request": 1,
+      "response_received": true,
+      "reference_image_names": [
+        "clipboard-449d8969b7cb47b993efa61da2358585.png"
+      ],
+      "generated_view": null,
+      "response_chars": 503,
+      "finish_reason": "tool_calls",
+      "api_protocol": "responses",
+      "response_id": "78b8a81b-f848-4d92-abff-14f239225587",
+      "thinking": {
+        "type": "disabled"
+      },
+      "reasoning_effort": "none",
+      "usage": {
+        "prompt_tokens": 5047,
+        "completion_tokens": 672,
+        "total_tokens": 5719,
+        "reasoning_tokens": 0
+      },
+      "error": null
+    },
+    {
+      "phase": "agent_loop",
+      "model": "deepseek-flash",
+      "max_output_tokens": 65536,
+      "image_parts_in_request": 1,
+      "response_received": true,
+      "reference_image_names": [
+        "clipboard-449d8969b7cb47b993efa61da2358585.png"
+      ],
+      "generated_view": null,
+      "response_chars": 36,
+      "finish_reason": "tool_calls",
+      "api_protocol": "responses",
+      "response_id": "b8947d69-502a-46c1-ba78-9bf015779312",
+      "thinking": {
+        "type": "disabled"
+      },
+      "reasoning_effort": "none",
+      "usage": {
+        "prompt_tokens": 6469,
+        "completion_tokens": 215,
+        "total_tokens": 6684,
+        "reasoning_tokens": 0
+      },
+      "error": null
+    },
+    {
+      "phase": "agent_loop",
+      "model": "deepseek-flash",
+      "max_output_tokens": 65536,
+      "image_parts_in_request": 1,
+      "response_received": true,
+      "reference_image_names": [
+        "clipboard-449d8969b7cb47b993efa61da2358585.png"
+      ],
+      "generated_view": null,
+      "response_chars": 0,
+      "finish_reason": "tool_calls",
+      "api_protocol": "responses",
+      "response_id": "25bb7e04-0369-4526-89d3-ce9454af347b",
+      "thinking": {
+        "type": "disabled"
+      },
+      "reasoning_effort": "none",
+      "usage": {
+        "prompt_tokens": 7621,
+        "completion_tokens": 197,
+        "total_tokens": 7818,
+        "reasoning_tokens": 0
+      },
+      "error": null
+    },
+    {
+      "phase": "agent_loop",
+      "model": "deepseek-flash",
+      "max_output_tokens": 65536,
+      "image_parts_in_request": 1,
+      "response_received": true,
+      "reference_image_names": [
+        "clipboard-449d8969b7cb47b993efa61da2358585.png"
+      ],
+      "generated_view": null,
+      "response_chars": 76,
+      "finish_reason": "tool_calls",
+      "api_protocol": "responses",
+      "response_id": "06a79ce7-cf3c-4616-b897-01723146e5b3",
+      "thinking": {
+        "type": "disabled"
+      },
+      "reasoning_effort": "none",
+      "usage": {
+        "prompt_tokens": 8942,
+        "completion_tokens": 314,
+        "total_tokens": 9256,
+        "reasoning_tokens": 0
+      },
+      "error": null
+    },
+    {
+      "phase": "agent_loop",
+      "model": "deepseek-flash",
+      "max_output_tokens": 65536,
+      "image_parts_in_request": 1,
+      "response_received": true,
+      "reference_image_names": [
+        "clipboard-449d8969b7cb47b993efa61da2358585.png"
+      ],
+      "generated_view": null,
+      "response_chars": 0,
+      "finish_reason": "tool_calls",
+      "api_protocol": "responses",
+      "response_id": "bdedb578-05ed-42b9-a08c-ed23150ae709",
+      "thinking": {
+        "type": "disabled"
+      },
+      "reasoning_effort": "none",
+      "usage": {
+        "prompt_tokens": 9520,
+        "completion_tokens": 41,
+        "total_tokens": 9561,
+        "reasoning_tokens": 0
+      },
+      "error": null
+    },
+    {
+      "phase": "agent_loop",
+      "model": "deepseek-flash",
+      "max_output_tokens": 65536,
+      "image_parts_in_request": 1,
+      "response_received": true,
+      "reference_image_names": [
+        "clipboard-449d8969b7cb47b993efa61da2358585.png"
+      ],
+      "generated_view": null,
+      "response_chars": 57,
+      "finish_reason": "tool_calls",
+      "api_protocol": "responses",
+      "response_id": "906f964b-ad08-4821-8555-20db24bfaee4",
+      "thinking": {
+        "type": "disabled"
+      },
+      "reasoning_effort": "none",
+      "usage": {
+        "prompt_tokens": 10603,
+        "completion_tokens": 250,
+        "total_tokens": 10853,
+        "reasoning_tokens": 0
+      },
+      "error": null
+    },
+    {
+      "phase": "agent_loop",
+      "model": "deepseek-flash",
+      "max_output_tokens": 65536,
+      "image_parts_in_request": 1,
+      "response_received": true,
+      "reference_image_names": [
+        "clipboard-449d8969b7cb47b993efa61da2358585.png"
+      ],
+      "generated_view": null,
+      "response_chars": 55,
+      "finish_reason": "tool_calls",
+      "api_protocol": "responses",
+      "response_id": "7671d207-ad65-442a-9048-b0c361f51189",
+      "thinking": {
+        "type": "disabled"
+      },
+      "reasoning_effort": "none",
+      "usage": {
+        "prompt_tokens": 12327,
+        "completion_tokens": 236,
+        "total_tokens": 12563,
+        "reasoning_tokens": 0
+      },
+      "error": null
+    },
+    {
+      "phase": "agent_loop",
+      "model": "deepseek-flash",
+      "max_output_tokens": 65536,
+      "image_parts_in_request": 1,
+      "response_received": true,
+      "reference_image_names": [
+        "clipboard-449d8969b7cb47b993efa61da2358585.png"
+      ],
+      "generated_view": null,
+      "response_chars": 0,
+      "finish_reason": "tool_calls",
+      "api_protocol": "responses",
+      "response_id": "986bac05-318e-4b9e-88c9-c98f458da3aa",
+      "thinking": {
+        "type": "disabled"
+      },
+      "reasoning_effort": "none",
+      "usage": {
+        "prompt_tokens": 14380,
+        "completion_tokens": 224,
+        "total_tokens": 14604,
+        "reasoning_tokens": 0
+      },
+      "error": null
+    },
+    {
+      "phase": "agent_loop",
+      "model": "deepseek-flash",
+      "max_output_tokens": 65536,
+      "image_parts_in_request": 1,
+      "response_received": true,
+      "reference_image_names": [
+        "clipboard-449d8969b7cb47b993efa61da2358585.png"
+      ],
+      "generated_view": null,
+      "response_chars": 34,
+      "finish_reason": "tool_calls",
+      "api_protocol": "responses",
+      "response_id": "6a13b68a-90db-4290-9c75-566bc4c249b1",
+      "thinking": {
+        "type": "disabled"
+      },
+      "reasoning_effort": "none",
+      "usage": {
+        "prompt_tokens": 16765,
+        "completion_tokens": 239,
+        "total_tokens": 17004,
+        "reasoning_tokens": 0
+      },
+      "error": null
+    },
+    {
+      "phase": "agent_loop",
+      "model": "deepseek-flash",
+      "max_output_tokens": 65536,
+      "image_parts_in_request": 1,
+      "response_received": true,
+      "reference_image_names": [
+        "clipboard-449d8969b7cb47b993efa61da2358585.png"
+      ],
+      "generated_view": null,
+      "response_chars": 0,
+      "finish_reason": "tool_calls",
+      "api_protocol": "responses",
+      "response_id": "7c6c720d-63d3-470c-9d79-a7bf97d40142",
+      "thinking": {
+        "type": "disabled"
+      },
+      "reasoning_effort": "none",
+      "usage": {
+        "prompt_tokens": 16455,
+        "completion_tokens": 230,
+        "total_tokens": 16685,
+        "reasoning_tokens": 0
+      },
+      "error": null
+    },
+    {
+      "phase": "agent_loop",
+      "model": "deepseek-flash",
+      "max_output_tokens": 65536,
+      "image_parts_in_request": 1,
+      "response_received": true,
+      "reference_image_names": [
+        "clipboard-449d8969b7cb47b993efa61da2358585.png"
+      ],
+      "generated_view": null,
+      "response_chars": 0,
+      "finish_reason": "tool_calls",
+      "api_protocol": "responses",
+      "response_id": "893fa18e-c736-49b1-9fbd-adccf8a57d5b",
+      "thinking": {
+        "type": "disabled"
+      },
+      "reasoning_effort": "none",
+      "usage": {
+        "prompt_tokens": 19594,
+        "completion_tokens": 230,
+        "total_tokens": 19824,
+        "reasoning_tokens": 0
+      },
+      "error": null
+    },
+    {
+      "phase": "agent_loop",
+      "model": "deepseek-flash",
+      "max_output_tokens": 65536,
+      "image_parts_in_request": 1,
+      "response_received": true,
+      "reference_image_names": [
+        "clipboard-449d8969b7cb47b993efa61da2358585.png"
+      ],
+      "generated_view": null,
+      "response_chars": 77,
+      "finish_reason": "tool_calls",
+      "api_protocol": "responses",
+      "response_id": "33b1eb70-0709-4c80-a7f9-43fd28e06352",
+      "thinking": {
+        "type": "disabled"
+      },
+      "reasoning_effort": "none",
+      "usage": {
+        "prompt_tokens": 23074,
+        "completion_tokens": 79,
+        "total_tokens": 23153,
+        "reasoning_tokens": 0
+      },
+      "error": null
+    },
+    {
+      "phase": "multiview_check",
+      "model": "deepseek-flash",
+      "max_output_tokens": 32768,
+      "image_parts_in_request": 2,
+      "response_received": true,
+      "reference_image_names": [
+        "clipboard-449d8969b7cb47b993efa61da2358585.png"
+      ],
+      "generated_view": "iso",
+      "response_chars": 2469,
+      "finish_reason": "stop",
+      "api_protocol": "responses",
+      "response_id": "8175512b-f168-4669-86f9-dbf71809e087",
+      "thinking": {
+        "type": "disabled"
+      },
+      "reasoning_effort": "none",
+      "usage": {
+        "prompt_tokens": 4549,
+        "completion_tokens": 974,
+        "total_tokens": 5523,
+        "reasoning_tokens": 0
+      },
+      "error": null
+    },
+    {
+      "phase": "multiview_check",
+      "model": "deepseek-flash",
+      "max_output_tokens": 32768,
+      "image_parts_in_request": 2,
+      "response_received": false,
+      "reference_image_names": [
+        "clipboard-449d8969b7cb47b993efa61da2358585.png"
+      ],
+      "generated_view": "front",
+      "response_chars": 0,
+      "finish_reason": null,
+      "api_protocol": "responses",
+      "response_id": null,
+      "thinking": null,
+      "reasoning_effort": null,
+      "usage": null,
+      "error": "用户已请求停止：已中断 DeepSeek Responses 流（中断前已接收 reasoning 0 字符 / output 258 字符）。"
+    }
+  ],
+  "temporary_review_images": [
+    {
+      "filename": "single-review-r01-multiview_check-iso.png",
+      "deleted": true,
+      "error": null
+    },
+    {
+      "filename": "single-review-r01-multiview_check-front.png",
+      "deleted": true,
+      "error": null
+    }
+  ],
+  "recognition": null,
+  "raster_analysis": {
+    "available": true,
+    "images": [
+      {
+        "image_index": 1,
+        "filename": "clipboard-449d8969b7cb47b993efa61da2358585.png",
+        "size_px": [
+          494,
+          544
+        ],
+        "three_region_scanline_candidate": null,
+        "foreground_bbox_candidate": null,
+        "scanline_rejected": {
+          "consistent_scanline_count": 15,
+          "span_px": 19,
+          "image_height_px": 544,
+          "span_ratio": 0.0349,
+          "min_span_ratio": 0.25,
+          "reason": "扫描线只在 19/544 px 高度上一致（3.5% < 25%），不足以判定为平色正视图；本图不得作为比例尺寸证据。",
+          "instruction": "不要把该图的像素比例写进 sources.evidence。如需尺寸，按整体轮廓做目视比例估算，或向用户确认。"
+        }
+      }
+    ]
+  },
+  "counts": {
+    "tool_calls": 12,
+    "web_search_calls": 0,
+    "blocked_web_search_calls": 0,
+    "preview_calls": 11,
+    "review_rounds": 0,
+    "repair_cycles": 0,
+    "llm_requests": 14,
+    "image_parts_in_request": 16,
+    "llm_usage": {
+      "prompt_tokens": 155346.0,
+      "completion_tokens": 3901.0,
+      "total_tokens": 159247.0,
+      "reasoning_tokens": 0.0
+    }
+  },
+  "loop_state": {
+    "context_compactions": 1,
+    "truncated_responses": 0,
+    "stagnation_warnings": 0,
+    "stagnant_tool_calls": 1,
+    "candidate_attempted": true,
+    "finish_gate": null
+  },
+  "construction_repairs": [],
+  "automatic_repairs": [],
+  "open_multiview_findings": [],
+  "plan": {
+    "schema_version": "1.0",
+    "name": "U形槽块",
+    "source_prompt": "复刻",
+    "units": {
+      "length": "mm",
+      "angle": "deg"
+    },
+    "coordinate_system": {
+      "type": "global_cartesian",
+      "handedness": "right",
+      "axes": [
+        "X",
+        "Y",
+        "Z"
+      ],
+      "origin": [
+        0,
+        0,
+        0
+      ]
+    },
+    "features": [
+      {
+        "id": "base",
+        "kind": "box",
+        "operation": "add",
+        "name": "底板",
+        "parameters": {
+          "length": 60,
+          "width": 40,
+          "height": 12,
+          "center": [
+            0,
+            0,
+            6
+          ]
+        },
+        "sources": {
+          "length": {
+            "type": "image_estimate",
+            "evidence": "图中块体总宽约为总高的 1.2 倍，取名义宽 60mm"
+          },
+          "width": {
+            "type": "image_estimate",
+            "evidence": "块体深度约为宽度的 2/3，取名义深 40mm"
+          },
+          "height": {
+            "type": "image_estimate",
+            "evidence": "底板厚度约为总高的 1/6，取 12mm"
+          },
+          "center": {
+            "type": "derived",
+            "evidence": "底板置于 Z=0 平面上方"
+          }
+        }
+      },
+      {
+        "id": "wall_left",
+        "kind": "box",
+        "name": "左壁",
+        "operation": "add",
+        "parameters": {
+          "center": [
+            -22,
+            0,
+            36
+          ],
+          "height": 48,
+          "length": 16,
+          "width": 40
+        },
+        "sources": {
+          "center": {
+            "type": "derived",
+            "evidence": "左壁位于底板左端上方"
+          },
+          "height": {
+            "type": "image_estimate",
+            "evidence": "竖壁高度约为总高的 4/5，取 48mm"
+          },
+          "length": {
+            "type": "image_estimate",
+            "evidence": "壁厚约为总宽的 1/4，取 16mm"
+          },
+          "width": {
+            "type": "derived",
+            "evidence": "与底板同深 40mm"
+          }
+        }
+      },
+      {
+        "id": "wall_right",
+        "kind": "box",
+        "name": "右壁",
+        "operation": "add",
+        "parameters": {
+          "center": [
+            22,
+            0,
+            36
+          ],
+          "height": 48,
+          "length": 16,
+          "width": 40
+        },
+        "sources": {
+          "center": {
+            "type": "derived",
+            "evidence": "右壁与左壁对称，位于底板右端上方"
+          },
+          "height": {
+            "type": "derived",
+            "evidence": "与左壁同高 48mm"
+          },
+          "length": {
+            "type": "derived",
+            "evidence": "与左壁同厚 16mm"
+          },
+          "width": {
+            "type": "derived",
+            "evidence": "与底板同深 40mm"
+          }
+        }
+      },
+      {
+        "id": "hole_l1",
+        "kind": "hole",
+        "name": "左壁孔1",
+        "operation": "cut",
+        "parameters": {
+          "axis": "X",
+          "diameter": 10,
+          "point": [
+            -22,
+            0,
+            48
+          ],
+          "pos": "point",
+          "through": true
+        },
+        "sources": {
+          "axis": {
+            "evidence": "孔轴穿过壁厚，与两壁分开方向（X）平行",
+            "type": "derived"
+          },
+          "diameter": {
+            "evidence": "孔径约为壁高的 1/5，取 10mm",
+            "type": "image_estimate"
+          },
+          "point": {
+            "evidence": "左壁上部孔位",
+            "type": "derived"
+          },
+          "pos": {
+            "evidence": "指定点定位",
+            "type": "derived"
+          },
+          "through": {
+            "evidence": "孔贯通壁厚，槽内侧可见出口",
+            "type": "derived"
+          }
+        }
+      },
+      {
+        "id": "hole_l2",
+        "kind": "hole",
+        "name": "左壁孔2",
+        "operation": "cut",
+        "parameters": {
+          "axis": "X",
+          "diameter": 10,
+          "point": [
+            -22,
+            0,
+            36
+          ],
+          "pos": "point",
+          "through": true
+        },
+        "sources": {
+          "axis": {
+            "evidence": "孔轴穿过壁厚，与两壁分开方向（X）平行",
+            "type": "derived"
+          },
+          "diameter": {
+            "evidence": "与左壁其余孔同径 10mm",
+            "type": "derived"
+          },
+          "point": {
+            "evidence": "左壁中部孔位",
+            "type": "derived"
+          },
+          "pos": {
+            "evidence": "指定点定位",
+            "type": "derived"
+          },
+          "through": {
+            "evidence": "孔贯通壁厚",
+            "type": "derived"
+          }
+        }
+      },
+      {
+        "id": "hole_l3",
+        "kind": "hole",
+        "name": "左壁孔3",
+        "operation": "cut",
+        "parameters": {
+          "axis": "X",
+          "diameter": 10,
+          "point": [
+            -22,
+            0,
+            24
+          ],
+          "pos": "point",
+          "through": true
+        },
+        "sources": {
+          "axis": {
+            "evidence": "孔轴穿过壁厚，与两壁分开方向（X）平行",
+            "type": "derived"
+          },
+          "diameter": {
+            "evidence": "与左壁其余孔同径 10mm",
+            "type": "derived"
+          },
+          "point": {
+            "evidence": "左壁下部孔位",
+            "type": "derived"
+          },
+          "pos": {
+            "evidence": "指定点定位",
+            "type": "derived"
+          },
+          "through": {
+            "evidence": "孔贯通壁厚",
+            "type": "derived"
+          }
+        }
+      },
+      {
+        "id": "hole_r1",
+        "kind": "hole",
+        "name": "右壁孔1",
+        "operation": "cut",
+        "parameters": {
+          "axis": "X",
+          "diameter": 10,
+          "point": [
+            22,
+            0,
+            48
+          ],
+          "pos": "point",
+          "through": true
+        },
+        "sources": {
+          "axis": {
+            "evidence": "孔轴穿过壁厚，与两壁分开方向（X）平行",
+            "type": "derived"
+          },
+          "diameter": {
+            "evidence": "与左壁孔同径 10mm",
+            "type": "derived"
+          },
+          "point": {
+            "evidence": "右壁上部孔位，与左壁孔同高",
+            "type": "derived"
+          },
+          "pos": {
+            "evidence": "指定点定位",
+            "type": "derived"
+          },
+          "through": {
+            "evidence": "孔贯通壁厚",
+            "type": "derived"
+          }
+        }
+      },
+      {
+        "id": "hole_r2",
+        "kind": "hole",
+        "name": "右壁孔2",
+        "operation": "cut",
+        "parameters": {
+          "axis": "X",
+          "diameter": 10,
+          "point": [
+            22,
+            0,
+            36
+          ],
+          "pos": "point",
+          "through": true
+        },
+        "sources": {
+          "axis": {
+            "evidence": "孔轴穿过壁厚，与两壁分开方向（X）平行",
+            "type": "derived"
+          },
+          "diameter": {
+            "evidence": "与左壁孔同径 10mm",
+            "type": "derived"
+          },
+          "point": {
+            "evidence": "右壁中部孔位，与左壁孔同高",
+            "type": "derived"
+          },
+          "pos": {
+            "evidence": "指定点定位",
+            "type": "derived"
+          },
+          "through": {
+            "evidence": "孔贯通壁厚",
+            "type": "derived"
+          }
+        }
+      },
+      {
+        "id": "hole_r3",
+        "kind": "hole",
+        "name": "右壁孔3",
+        "operation": "cut",
+        "parameters": {
+          "axis": "X",
+          "diameter": 10,
+          "point": [
+            22,
+            0,
+            24
+          ],
+          "pos": "point",
+          "through": true
+        },
+        "sources": {
+          "axis": {
+            "evidence": "孔轴穿过壁厚，与两壁分开方向（X）平行",
+            "type": "derived"
+          },
+          "diameter": {
+            "evidence": "与左壁孔同径 10mm",
+            "type": "derived"
+          },
+          "point": {
+            "evidence": "右壁下部孔位，与左壁孔同高",
+            "type": "derived"
+          },
+          "pos": {
+            "evidence": "指定点定位",
+            "type": "derived"
+          },
+          "through": {
+            "evidence": "孔贯通壁厚",
+            "type": "derived"
+          }
+        }
+      }
+    ],
+    "pending_questions": []
+  },
+  "validation": null,
+  "preview": {
+    "state": "previewed",
+    "validation": {
+      "valid": true,
+      "state": "valid",
+      "errors": [],
+      "confirmations": [],
+      "support": [
+        {
+          "feature_id": "base",
+          "kind": "box",
+          "status": "exact",
+          "reason": "矩形草图加凸台；当前 CATIA 映射仅支持 Z 轴拉伸。"
+        },
+        {
+          "feature_id": "wall_left",
+          "kind": "box",
+          "status": "exact",
+          "reason": "矩形草图加凸台；当前 CATIA 映射仅支持 Z 轴拉伸。"
+        },
+        {
+          "feature_id": "wall_right",
+          "kind": "box",
+          "status": "exact",
+          "reason": "矩形草图加凸台；当前 CATIA 映射仅支持 Z 轴拉伸。"
+        },
+        {
+          "feature_id": "hole_l1",
+          "kind": "hole",
+          "status": "exact",
+          "reason": "圆形凹槽；through=true 时按当前零件包围盒生成贯穿深度。"
+        },
+        {
+          "feature_id": "hole_l2",
+          "kind": "hole",
+          "status": "exact",
+          "reason": "圆形凹槽；through=true 时按当前零件包围盒生成贯穿深度。"
+        },
+        {
+          "feature_id": "hole_l3",
+          "kind": "hole",
+          "status": "exact",
+          "reason": "圆形凹槽；through=true 时按当前零件包围盒生成贯穿深度。"
+        },
+        {
+          "feature_id": "hole_r1",
+          "kind": "hole",
+          "status": "exact",
+          "reason": "圆形凹槽；through=true 时按当前零件包围盒生成贯穿深度。"
+        },
+        {
+          "feature_id": "hole_r2",
+          "kind": "hole",
+          "status": "exact",
+          "reason": "圆形凹槽；through=true 时按当前零件包围盒生成贯穿深度。"
+        },
+        {
+          "feature_id": "hole_r3",
+          "kind": "hole",
+          "status": "exact",
+          "reason": "圆形凹槽；through=true 时按当前零件包围盒生成贯穿深度。"
+        }
+      ],
+      "warnings": [],
+      "schema_version": "1.0"
+    },
+    "catia_executed": false,
+    "dimensions": {
+      "unit": "mm",
+      "bbox": [
+        -30.0,
+        -20.0,
+        0.0,
+        30.0,
+        20.0,
+        60.0
+      ],
+      "size": [
+        60.0,
+        40.0,
+        60.0
+      ],
+      "volume_mm3": 87755.33716701622,
+      "surface_area_mm2": 17020.251437630912,
+      "triangles": 1212,
+      "feature_count": 9
+    },
+    "catia_operations": [
+      {
+        "index": 1,
+        "kind": "rect_pad",
+        "plane": "XY",
+        "center": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "profile": [],
+        "dimensions": {
+          "l": 60.0,
+          "w": 40.0,
+          "r": 0.0,
+          "h": 12.0,
+          "depth": 0.0
+        },
+        "name": "底板",
+        "note": "长方体 60 × 40 × 12 mm"
+      },
+      {
+        "index": 2,
+        "kind": "rect_pad",
+        "plane": "XY",
+        "center": [
+          -22.0,
+          0.0,
+          12.0
+        ],
+        "profile": [],
+        "dimensions": {
+          "l": 16.0,
+          "w": 40.0,
+          "r": 0.0,
+          "h": 48.0,
+          "depth": 0.0
+        },
+        "name": "左壁",
+        "note": "长方体 16 × 40 × 48 mm"
+      },
+      {
+        "index": 3,
+        "kind": "rect_pad",
+        "plane": "XY",
+        "center": [
+          22.0,
+          0.0,
+          12.0
+        ],
+        "profile": [],
+        "dimensions": {
+          "l": 16.0,
+          "w": 40.0,
+          "r": 0.0,
+          "h": 48.0,
+          "depth": 0.0
+        },
+        "name": "右壁",
+        "note": "长方体 16 × 40 × 48 mm"
+      },
+      {
+        "index": 4,
+        "kind": "circle_cut",
+        "plane": "X",
+        "center": [
+          0.0,
+          48.0,
+          32.0
+        ],
+        "profile": [],
+        "dimensions": {
+          "l": 0.0,
+          "w": 0.0,
+          "r": 5.0,
+          "h": 0.0,
+          "depth": 64.0
+        },
+        "name": "左壁孔1",
+        "note": "⌀10 通孔 @(0, 48)"
+      },
+      {
+        "index": 5,
+        "kind": "circle_cut",
+        "plane": "X",
+        "center": [
+          0.0,
+          36.0,
+          32.0
+        ],
+        "profile": [],
+        "dimensions": {
+          "l": 0.0,
+          "w": 0.0,
+          "r": 5.0,
+          "h": 0.0,
+          "depth": 64.0
+        },
+        "name": "左壁孔2",
+        "note": "⌀10 通孔 @(0, 36)"
+      },
+      {
+        "index": 6,
+        "kind": "circle_cut",
+        "plane": "X",
+        "center": [
+          0.0,
+          24.0,
+          32.0
+        ],
+        "profile": [],
+        "dimensions": {
+          "l": 0.0,
+          "w": 0.0,
+          "r": 5.0,
+          "h": 0.0,
+          "depth": 64.0
+        },
+        "name": "左壁孔3",
+        "note": "⌀10 通孔 @(0, 24)"
+      }
+    ],
+    "warnings": [
+      {
+        "code": "CATIA_TRANSLATOR_NOTE",
+        "feature_id": null,
+        "kind": null,
+        "message": "已合并 3 个重复切除(同一位置同一尺寸被描述了两遍, 例如零件库件自带中心孔 + 描述里又写了「中心孔直径x」)。",
+        "index": 0
+      }
+    ],
+    "feature_manifest": {
+      "base": {
+        "kind": "box",
+        "operation": "add",
+        "name": "底板",
+        "parameters": {
+          "length": 60,
+          "width": 40,
+          "height": 12,
+          "center": [
+            0,
+            0,
+            6
+          ]
+        },
+        "sources": {
+          "length": {
+            "type": "image_estimate",
+            "evidence": "图中块体总宽约为总高的 1.2 倍，取名义宽 60mm"
+          },
+          "width": {
+            "type": "image_estimate",
+            "evidence": "块体深度约为宽度的 2/3，取名义深 40mm"
+          },
+          "height": {
+            "type": "image_estimate",
+            "evidence": "底板厚度约为总高的 1/6，取 12mm"
+          },
+          "center": {
+            "type": "derived",
+            "evidence": "底板置于 Z=0 平面上方"
+          }
+        },
+        "relations": []
+      },
+      "wall_left": {
+        "kind": "box",
+        "operation": "add",
+        "name": "左壁",
+        "parameters": {
+          "center": [
+            -22,
+            0,
+            36
+          ],
+          "height": 48,
+          "length": 16,
+          "width": 40
+        },
+        "sources": {
+          "center": {
+            "type": "derived",
+            "evidence": "左壁位于底板左端上方"
+          },
+          "height": {
+            "type": "image_estimate",
+            "evidence": "竖壁高度约为总高的 4/5，取 48mm"
+          },
+          "length": {
+            "type": "image_estimate",
+            "evidence": "壁厚约为总宽的 1/4，取 16mm"
+          },
+          "width": {
+            "type": "derived",
+            "evidence": "与底板同深 40mm"
+          }
+        },
+        "relations": []
+      },
+      "wall_right": {
+        "kind": "box",
+        "operation": "add",
+        "name": "右壁",
+        "parameters": {
+          "center": [
+            22,
+            0,
+            36
+          ],
+          "height": 48,
+          "length": 16,
+          "width": 40
+        },
+        "sources": {
+          "center": {
+            "type": "derived",
+            "evidence": "右壁与左壁对称，位于底板右端上方"
+          },
+          "height": {
+            "type": "derived",
+            "evidence": "与左壁同高 48mm"
+          },
+          "length": {
+            "type": "derived",
+            "evidence": "与左壁同厚 16mm"
+          },
+          "width": {
+            "type": "derived",
+            "evidence": "与底板同深 40mm"
+          }
+        },
+        "relations": []
+      },
+      "hole_l1": {
+        "kind": "hole",
+        "operation": "cut",
+        "name": "左壁孔1",
+        "parameters": {
+          "axis": "X",
+          "diameter": 10,
+          "point": [
+            -22,
+            0,
+            48
+          ],
+          "pos": "point",
+          "through": true
+        },
+        "sources": {
+          "axis": {
+            "evidence": "孔轴穿过壁厚，与两壁分开方向（X）平行",
+            "type": "derived"
+          },
+          "diameter": {
+            "evidence": "孔径约为壁高的 1/5，取 10mm",
+            "type": "image_estimate"
+          },
+          "point": {
+            "evidence": "左壁上部孔位",
+            "type": "derived"
+          },
+          "pos": {
+            "evidence": "指定点定位",
+            "type": "derived"
+          },
+          "through": {
+            "evidence": "孔贯通壁厚，槽内侧可见出口",
+            "type": "derived"
+          }
+        },
+        "relations": []
+      },
+      "hole_l2": {
+        "kind": "hole",
+        "operation": "cut",
+        "name": "左壁孔2",
+        "parameters": {
+          "axis": "X",
+          "diameter": 10,
+          "point": [
+            -22,
+            0,
+            36
+          ],
+          "pos": "point",
+          "through": true
+        },
+        "sources": {
+          "axis": {
+            "evidence": "孔轴穿过壁厚，与两壁分开方向（X）平行",
+            "type": "derived"
+          },
+          "diameter": {
+            "evidence": "与左壁其余孔同径 10mm",
+            "type": "derived"
+          },
+          "point": {
+            "evidence": "左壁中部孔位",
+            "type": "derived"
+          },
+          "pos": {
+            "evidence": "指定点定位",
+            "type": "derived"
+          },
+          "through": {
+            "evidence": "孔贯通壁厚",
+            "type": "derived"
+          }
+        },
+        "relations": []
+      },
+      "hole_l3": {
+        "kind": "hole",
+        "operation": "cut",
+        "name": "左壁孔3",
+        "parameters": {
+          "axis": "X",
+          "diameter": 10,
+          "point": [
+            -22,
+            0,
+            24
+          ],
+          "pos": "point",
+          "through": true
+        },
+        "sources": {
+          "axis": {
+            "evidence": "孔轴穿过壁厚，与两壁分开方向（X）平行",
+            "type": "derived"
+          },
+          "diameter": {
+            "evidence": "与左壁其余孔同径 10mm",
+            "type": "derived"
+          },
+          "point": {
+            "evidence": "左壁下部孔位",
+            "type": "derived"
+          },
+          "pos": {
+            "evidence": "指定点定位",
+            "type": "derived"
+          },
+          "through": {
+            "evidence": "孔贯通壁厚",
+            "type": "derived"
+          }
+        },
+        "relations": []
+      },
+      "hole_r1": {
+        "kind": "hole",
+        "operation": "cut",
+        "name": "右壁孔1",
+        "parameters": {
+          "axis": "X",
+          "diameter": 10,
+          "point": [
+            22,
+            0,
+            48
+          ],
+          "pos": "point",
+          "through": true
+        },
+        "sources": {
+          "axis": {
+            "evidence": "孔轴穿过壁厚，与两壁分开方向（X）平行",
+            "type": "derived"
+          },
+          "diameter": {
+            "evidence": "与左壁孔同径 10mm",
+            "type": "derived"
+          },
+          "point": {
+            "evidence": "右壁上部孔位，与左壁孔同高",
+            "type": "derived"
+          },
+          "pos": {
+            "evidence": "指定点定位",
+            "type": "derived"
+          },
+          "through": {
+            "evidence": "孔贯通壁厚",
+            "type": "derived"
+          }
+        },
+        "relations": []
+      },
+      "hole_r2": {
+        "kind": "hole",
+        "operation": "cut",
+        "name": "右壁孔2",
+        "parameters": {
+          "axis": "X",
+          "diameter": 10,
+          "point": [
+            22,
+            0,
+            36
+          ],
+          "pos": "point",
+          "through": true
+        },
+        "sources": {
+          "axis": {
+            "evidence": "孔轴穿过壁厚，与两壁分开方向（X）平行",
+            "type": "derived"
+          },
+          "diameter": {
+            "evidence": "与左壁孔同径 10mm",
+            "type": "derived"
+          },
+          "point": {
+            "evidence": "右壁中部孔位，与左壁孔同高",
+            "type": "derived"
+          },
+          "pos": {
+            "evidence": "指定点定位",
+            "type": "derived"
+          },
+          "through": {
+            "evidence": "孔贯通壁厚",
+            "type": "derived"
+          }
+        },
+        "relations": []
+      },
+      "hole_r3": {
+        "kind": "hole",
+        "operation": "cut",
+        "name": "右壁孔3",
+        "parameters": {
+          "axis": "X",
+          "diameter": 10,
+          "point": [
+            22,
+            0,
+            24
+          ],
+          "pos": "point",
+          "through": true
+        },
+        "sources": {
+          "axis": {
+            "evidence": "孔轴穿过壁厚，与两壁分开方向（X）平行",
+            "type": "derived"
+          },
+          "diameter": {
+            "evidence": "与左壁孔同径 10mm",
+            "type": "derived"
+          },
+          "point": {
+            "evidence": "右壁下部孔位，与左壁孔同高",
+            "type": "derived"
+          },
+          "pos": {
+            "evidence": "指定点定位",
+            "type": "derived"
+          },
+          "through": {
+            "evidence": "孔贯通壁厚",
+            "type": "derived"
+          }
+        },
+        "relations": []
+      }
+    },
+    "build_log": [
+      "[基准] 长方体 60 × 40 × 12 mm → 8 面",
+      "[合并] 长方体 16 × 40 × 48 mm → 17 面",
+      "[合并] 长方体 16 × 40 × 48 mm → 25 面",
+      "[切除] ⌀10 通孔 @(0, 48) → 165 面",
+      "[切除] ⌀10 通孔 @(0, 36) → 561 面",
+      "[切除] ⌀10 通孔 @(0, 24) → 903 面",
+      "[切除] ⌀10 通孔 @(0, 48) → 855 面",
+      "[切除] ⌀10 通孔 @(0, 36) → 791 面",
+      "[切除] ⌀10 通孔 @(0, 24) → 729 面"
+    ],
+    "local_geometry_checks": {
+      "state": "passed",
+      "source": "AI Modeler local mesh kernel",
+      "face_count": 729,
+      "bbox_size_mm": [
+        60.0,
+        40.0,
+        60.0
+      ],
+      "bbox_ratios_from_mesh": {
+        "front_width_height": 1.0,
+        "depth_height": 0.6666666666666666,
+        "top_width_depth": 1.5
+      },
+      "feature_count_from_plan": 9,
+      "feature_ids_from_plan": [
+        "base",
+        "wall_left",
+        "wall_right",
+        "hole_l1",
+        "hole_l2",
+        "hole_l3",
+        "hole_r1",
+        "hole_r2",
+        "hole_r3"
+      ],
+      "nonfinite_face_count": 0,
+      "degenerate_face_count": 0,
+      "hole_features_from_plan": [
+        {
+          "feature_id": "hole_l1",
+          "kind": "hole",
+          "operation": "cut",
+          "parameters": {
+            "axis": "X",
+            "diameter": 10,
+            "point": [
+              -22,
+              0,
+              48
+            ],
+            "pos": "point",
+            "through": true
+          }
+        },
+        {
+          "feature_id": "hole_l2",
+          "kind": "hole",
+          "operation": "cut",
+          "parameters": {
+            "axis": "X",
+            "diameter": 10,
+            "point": [
+              -22,
+              0,
+              36
+            ],
+            "pos": "point",
+            "through": true
+          }
+        },
+        {
+          "feature_id": "hole_l3",
+          "kind": "hole",
+          "operation": "cut",
+          "parameters": {
+            "axis": "X",
+            "diameter": 10,
+            "point": [
+              -22,
+              0,
+              24
+            ],
+            "pos": "point",
+            "through": true
+          }
+        },
+        {
+          "feature_id": "hole_r1",
+          "kind": "hole",
+          "operation": "cut",
+          "parameters": {
+            "axis": "X",
+            "diameter": 10,
+            "point": [
+              22,
+              0,
+              48
+            ],
+            "pos": "point",
+            "through": true
+          }
+        },
+        {
+          "feature_id": "hole_r2",
+          "kind": "hole",
+          "operation": "cut",
+          "parameters": {
+            "axis": "X",
+            "diameter": 10,
+            "point": [
+              22,
+              0,
+              36
+            ],
+            "pos": "point",
+            "through": true
+          }
+        },
+        {
+          "feature_id": "hole_r3",
+          "kind": "hole",
+          "operation": "cut",
+          "parameters": {
+            "axis": "X",
+            "diameter": 10,
+            "point": [
+              22,
+              0,
+              24
+            ],
+            "pos": "point",
+            "through": true
+          }
+        }
+      ],
+      "through_hole_mesh_checks": [
+        {
+          "feature_id": "hole_l1",
+          "axis": "X",
+          "center_mm": [
+            -22.0,
+            0.0,
+            48.0
+          ],
+          "status": "verified_open",
+          "axis_surface_crossings": 0,
+          "surrounding_surface_crossings": [
+            4,
+            4,
+            4,
+            4
+          ],
+          "ring_supported": [
+            true,
+            true,
+            true,
+            true
+          ],
+          "method": "axis ray against local triangle mesh"
+        },
+        {
+          "feature_id": "hole_l2",
+          "axis": "X",
+          "center_mm": [
+            -22.0,
+            0.0,
+            36.0
+          ],
+          "status": "verified_open",
+          "axis_surface_crossings": 0,
+          "surrounding_surface_crossings": [
+            4,
+            4,
+            4,
+            4
+          ],
+          "ring_supported": [
+            true,
+            true,
+            true,
+            true
+          ],
+          "method": "axis ray against local triangle mesh"
+        },
+        {
+          "feature_id": "hole_l3",
+          "axis": "X",
+          "center_mm": [
+            -22.0,
+            0.0,
+            24.0
+          ],
+          "status": "verified_open",
+          "axis_surface_crossings": 0,
+          "surrounding_surface_crossings": [
+            4,
+            4,
+            4,
+            4
+          ],
+          "ring_supported": [
+            true,
+            true,
+            true,
+            true
+          ],
+          "method": "axis ray against local triangle mesh"
+        },
+        {
+          "feature_id": "hole_r1",
+          "axis": "X",
+          "center_mm": [
+            22.0,
+            0.0,
+            48.0
+          ],
+          "status": "verified_open",
+          "axis_surface_crossings": 0,
+          "surrounding_surface_crossings": [
+            4,
+            4,
+            4,
+            4
+          ],
+          "ring_supported": [
+            true,
+            true,
+            true,
+            true
+          ],
+          "method": "axis ray against local triangle mesh"
+        },
+        {
+          "feature_id": "hole_r2",
+          "axis": "X",
+          "center_mm": [
+            22.0,
+            0.0,
+            36.0
+          ],
+          "status": "verified_open",
+          "axis_surface_crossings": 0,
+          "surrounding_surface_crossings": [
+            4,
+            4,
+            4,
+            4
+          ],
+          "ring_supported": [
+            true,
+            true,
+            true,
+            true
+          ],
+          "method": "axis ray against local triangle mesh"
+        },
+        {
+          "feature_id": "hole_r3",
+          "axis": "X",
+          "center_mm": [
+            22.0,
+            0.0,
+            24.0
+          ],
+          "status": "verified_open",
+          "axis_surface_crossings": 0,
+          "surrounding_surface_crossings": [
+            4,
+            4,
+            4,
+            4
+          ],
+          "ring_supported": [
+            true,
+            true,
+            true,
+            true
+          ],
+          "method": "axis ray against local triangle mesh"
+        }
+      ],
+      "hole_visibility": "requires_multimodal_view_review",
+      "through_hole_result": "measured_for_point_holes_only"
+    },
+    "orthographic_layout": {
+      "unit": "mm",
+      "axes": {
+        "length": "X",
+        "width": "Y",
+        "height": "Z"
+      },
+      "uniform_scale_across_views": true,
+      "scale_pixels_per_mm": 3.5533333333333337,
+      "tile_size_pixels": [
+        330,
+        260
+      ],
+      "view_extents": {
+        "front": {
+          "horizontal_axis": "X",
+          "horizontal": 60.0,
+          "vertical_axis": "Z",
+          "vertical": 60.0
+        },
+        "right": {
+          "horizontal_axis": "Y",
+          "horizontal": 40.0,
+          "vertical_axis": "Z",
+          "vertical": 60.0
+        },
+        "top": {
+          "horizontal_axis": "X",
+          "horizontal": 60.0,
+          "vertical_axis": "Y",
+          "vertical": 40.0
+        }
+      },
+      "dimension_ratios": {
+        "length_to_height": 1.0,
+        "width_to_height": 0.6666666666666666,
+        "length_to_width": 1.5
+      }
+    },
+    "preview_image": "candidate-preview.png",
+    "preview_image_views": [
+      "iso"
+    ],
+    "preview_image_view_set": "iso",
+    "preview_image_grid_columns": 1,
+    "preview_image_source": "AI Modeler local mesh kernel; not CATIA B-Rep",
+    "preview_image_layout": {
+      "unit": "mm",
+      "axes": {
+        "length": "X",
+        "width": "Y",
+        "height": "Z"
+      },
+      "uniform_scale_across_views": true,
+      "scale_pixels_per_mm": 3.5533333333333337,
+      "tile_size_pixels": [
+        330,
+        260
+      ],
+      "view_extents": {
+        "front": {
+          "horizontal_axis": "X",
+          "horizontal": 60.0,
+          "vertical_axis": "Z",
+          "vertical": 60.0
+        },
+        "right": {
+          "horizontal_axis": "Y",
+          "horizontal": 40.0,
+          "vertical_axis": "Z",
+          "vertical": 60.0
+        },
+        "top": {
+          "horizontal_axis": "X",
+          "horizontal": 60.0,
+          "vertical_axis": "Y",
+          "vertical": 40.0
+        }
+      },
+      "dimension_ratios": {
+        "length_to_height": 1.0,
+        "width_to_height": 0.6666666666666666,
+        "length_to_width": 1.5
+      }
+    }
+  },
+  "output_paths": {
+    "aimodel": "C:\\Users\\lycohana\\Desktop\\code\\AI-_-\\artifacts\\agentloop\\20260926-035332-c3298daa\\candidate.aimodel",
+    "stl": "C:\\Users\\lycohana\\Desktop\\code\\AI-_-\\artifacts\\agentloop\\20260926-035332-c3298daa\\candidate.stl",
+    "preview": "C:\\Users\\lycohana\\Desktop\\code\\AI-_-\\artifacts\\agentloop\\20260926-035332-c3298daa\\candidate-preview.png"
+  },
+  "output_warning": null,
+  "dimension_assumptions": [],
+  "local_geometry_checks": null,
+  "multiview_review": null,
+  "similarity_review": null,
+  "review_history": [],
+  "questions": null,
+  "reply": null,
+  "tool_trace": [
+    {
+      "phase": "agent_loop",
+      "tool": "cad_create_model",
+      "arguments": {
+        "name": "U形槽块",
+        "first_feature": {
+          "id": "base",
+          "kind": "box",
+          "operation": "add",
+          "name": "底板",
+          "parameters": {
+            "length": 60,
+            "width": 40,
+            "height": 12,
+            "center": [
+              0,
+              0,
+              6
+            ]
+          },
+          "sources": {
+            "length": {
+              "type": "image_estimate",
+              "evidence": "图中块体总宽约为总高的 1.2 倍，取名义宽 60mm"
+            },
+            "width": {
+              "type": "image_estimate",
+              "evidence": "块体深度约为宽度的 2/3，取名义深 40mm"
+            },
+            "height": {
+              "type": "image_estimate",
+              "evidence": "底板厚度约为总高的 1/6，取 12mm"
+            },
+            "center": {
+              "type": "derived",
+              "evidence": "底板置于 Z=0 平面上方"
+            }
+          }
+        },
+        "reference_reading": {
+          "visible_openings": 9,
+          "hole_count": 6,
+          "walls": 2,
+          "hole_vs_walls": "through_thickness",
+          "evidence": "左壁外侧面 3 个孔口与槽内侧 3 个孔口是同一组孔的两端，右壁同理，归并后 6 个通孔；孔口椭圆短轴沿两壁分开的方向，孔开在壁朝槽和朝外的大面上",
+          "color_usage": "颜色仅用于区分面与特征"
+        }
+      },
+      "result": {
+        "state": "valid",
+        "revision": 1,
+        "geometry_fingerprint": "{\"coordinate_system\":{\"axes\":[\"X\",\"Y\",\"Z\"],\"handedness\":\"right\",\"origin\":[0,0,0],\"type\":\"global_cartesian\"},\"features\":[{\"geometry\":\"{\\\"kind\\\":\\\"box\\\",\\\"operation\\\":\\\"add\\\",\\\"parameters\\\":{\\\"center\\\":[0,0,6],\\\"height\\\":12,\\\"length\\\":60,\\\"width\\\":40}}\",\"id\":\"base\"}],\"units\":{\"angle\":\"deg\",\"length\":\"mm\"}}",
+        "feature_count": 1,
+        "validation": {
+          "valid": true,
+          "state": "valid",
+          "errors": [],
+          "confirmations": [],
+          "support": [
+            {
+              "feature_id": "base",
+              "kind": "box",
+              "status": "exact",
+              "reason": "矩形草图加凸台；当前 CATIA 映射仅支持 Z 轴拉伸。"
+            }
+          ],
+          "warnings": [],
+          "schema_version": "1.0"
+        },
+        "preview": {
+          "state": "previewed",
+          "geometry_fingerprint": "{\"coordinate_system\":{\"axes\":[\"X\",\"Y\",\"Z\"],\"handedness\":\"right\",\"origin\":[0,0,0],\"type\":\"global_cartesian\"},\"features\":[{\"geometry\":\"{\\\"kind\\\":\\\"box\\\",\\\"operation\\\":\\\"add\\\",\\\"parameters\\\":{\\\"center\\\":[0,0,6],\\\"height\\\":12,\\\"length\\\":60,\\\"width\\\":40}}\",\"id\":\"base\"}],\"units\":{\"angle\":\"deg\",\"length\":\"mm\"}}",
+          "preview_image": "candidate-preview.png",
+          "view_set": "iso",
+          "views": [
+            "iso"
+          ],
+          "dimensions": {
+            "unit": "mm",
+            "bbox": [
+              -30.0,
+              -20.0,
+              0.0,
+              30.0,
+              20.0,
+              12.0
+            ],
+            "size": [
+              60.0,
+              40.0,
+              12.0
+            ],
+            "volume_mm3": 28800.0,
+            "surface_area_mm2": 7200.0,
+            "triangles": 12,
+            "feature_count": 1
+          },
+          "local_geometry_checks": {
+            "state": "passed",
+            "source": "AI Modeler local mesh kernel",
+            "face_count": 8,
+            "bbox_size_mm": [
+              60.0,
+              40.0,
+              12.0
+            ],
+            "bbox_ratios_from_mesh": {
+              "front_width_height": 5.0,
+              "depth_height": 3.3333333333333335,
+              "top_width_depth": 1.5
+            },
+            "feature_count_from_plan": 1,
+            "feature_ids_from_plan": [
+              "base"
+            ],
+            "nonfinite_face_count": 0,
+            "degenerate_face_count": 0,
+            "hole_features_from_plan": [],
+            "through_hole_mesh_checks": [],
+            "hole_visibility": "requires_multimodal_view_review",
+            "through_hole_result": "not_measured"
+          },
+          "warnings": [],
+          "catia_executed": false,
+          "next_step_hint": "当前预览已展示，作为逐特征建模进度。若还有几何特征未完成，只追加下一个特征并刷新预览；全部特征完成后再做最终多视图复核。"
+        }
+      },
+      "result_summary": "valid"
+    },
+    {
+      "phase": "agent_loop",
+      "tool": "cad_add_feature",
+      "arguments": {
+        "feature": {
+          "id": "wall_left",
+          "kind": "box",
+          "name": "左壁",
+          "operation": "add",
+          "parameters": {
+            "center": [
+              -22,
+              0,
+              36
+            ],
+            "height": 48,
+            "length": 16,
+            "width": 40
+          },
+          "sources": {
+            "center": {
+              "type": "derived",
+              "evidence": "左壁位于底板左端上方"
+            },
+            "height": {
+              "type": "image_estimate",
+              "evidence": "竖壁高度约为总高的 4/5，取 48mm"
+            },
+            "length": {
+              "type": "image_estimate",
+              "evidence": "壁厚约为总宽的 1/4，取 16mm"
+            },
+            "width": {
+              "type": "derived",
+              "evidence": "与底板同深 40mm"
+            }
+          }
+        }
+      },
+      "result": {
+        "state": "valid",
+        "revision": 2,
+        "geometry_fingerprint": "{\"coordinate_system\":{\"axes\":[\"X\",\"Y\",\"Z\"],\"handedness\":\"right\",\"origin\":[0,0,0],\"type\":\"global_cartesian\"},\"features\":[{\"geometry\":\"{\\\"kind\\\":\\\"box\\\",\\\"operation\\\":\\\"add\\\",\\\"parameters\\\":{\\\"center\\\":[0,0,6],\\\"height\\\":12,\\\"length\\\":60,\\\"width\\\":40}}\",\"id\":\"base\"},{\"geometry\":\"{\\\"kind\\\":\\\"box\\\",\\\"operation\\\":\\\"add\\\",\\\"parameters\\\":{\\\"center\\\":[-22,0,36],\\\"height\\\":48,\\\"length\\\":16,\\\"width\\\":40}}\",\"id\":\"wall_left\"}],\"units\":{\"angle\":\"deg\",\"length\":\"mm\"}}",
+        "feature_count": 2,
+        "validation": {
+          "valid": true,
+          "state": "valid",
+          "errors": [],
+          "confirmations": [],
+          "support": [
+            {
+              "feature_id": "base",
+              "kind": "box",
+              "status": "exact",
+              "reason": "矩形草图加凸台；当前 CATIA 映射仅支持 Z 轴拉伸。"
+            },
+            {
+              "feature_id": "wall_left",
+              "kind": "box",
+              "status": "exact",
+              "reason": "矩形草图加凸台；当前 CATIA 映射仅支持 Z 轴拉伸。"
+            }
+          ],
+          "warnings": [],
+          "schema_version": "1.0"
+        },
+        "preview": {
+          "state": "previewed",
+          "geometry_fingerprint": "{\"coordinate_system\":{\"axes\":[\"X\",\"Y\",\"Z\"],\"handedness\":\"right\",\"origin\":[0,0,0],\"type\":\"global_cartesian\"},\"features\":[{\"geometry\":\"{\\\"kind\\\":\\\"box\\\",\\\"operation\\\":\\\"add\\\",\\\"parameters\\\":{\\\"center\\\":[0,0,6],\\\"height\\\":12,\\\"length\\\":60,\\\"width\\\":40}}\",\"id\":\"base\"},{\"geometry\":\"{\\\"kind\\\":\\\"box\\\",\\\"operation\\\":\\\"add\\\",\\\"parameters\\\":{\\\"center\\\":[-22,0,36],\\\"height\\\":48,\\\"length\\\":16,\\\"width\\\":40}}\",\"id\":\"wall_left\"}],\"units\":{\"angle\":\"deg\",\"length\":\"mm\"}}",
+          "preview_image": "candidate-preview.png",
+          "view_set": "iso",
+          "views": [
+            "iso"
+          ],
+          "dimensions": {
+            "unit": "mm",
+            "bbox": [
+              -30.0,
+              -20.0,
+              0.0,
+              30.0,
+              20.0,
+              60.0
+            ],
+            "size": [
+              60.0,
+              40.0,
+              60.0
+            ],
+            "volume_mm3": 59520.0,
+            "surface_area_mm2": 12576.0,
+            "triangles": 29,
+            "feature_count": 2
+          },
+          "local_geometry_checks": {
+            "state": "passed",
+            "source": "AI Modeler local mesh kernel",
+            "face_count": 17,
+            "bbox_size_mm": [
+              60.0,
+              40.0,
+              60.0
+            ],
+            "bbox_ratios_from_mesh": {
+              "front_width_height": 1.0,
+              "depth_height": 0.6666666666666666,
+              "top_width_depth": 1.5
+            },
+            "feature_count_from_plan": 2,
+            "feature_ids_from_plan": [
+              "base",
+              "wall_left"
+            ],
+            "nonfinite_face_count": 0,
+            "degenerate_face_count": 0,
+            "hole_features_from_plan": [],
+            "through_hole_mesh_checks": [],
+            "hole_visibility": "requires_multimodal_view_review",
+            "through_hole_result": "not_measured"
+          },
+          "warnings": [],
+          "catia_executed": false,
+          "next_step_hint": "当前预览已展示，作为逐特征建模进度。若还有几何特征未完成，只追加下一个特征并刷新预览；全部特征完成后再做最终多视图复核。"
+        }
+      },
+      "result_summary": "valid"
+    },
+    {
+      "phase": "agent_loop",
+      "tool": "cad_add_feature",
+      "arguments": {
+        "feature": {
+          "id": "wall_right",
+          "kind": "box",
+          "name": "右壁",
+          "operation": "add",
+          "parameters": {
+            "center": [
+              22,
+              0,
+              36
+            ],
+            "height": 48,
+            "length": 16,
+            "width": 40
+          },
+          "sources": {
+            "center": {
+              "type": "derived",
+              "evidence": "右壁与左壁对称，位于底板右端上方"
+            },
+            "height": {
+              "type": "derived",
+              "evidence": "与左壁同高 48mm"
+            },
+            "length": {
+              "type": "derived",
+              "evidence": "与左壁同厚 16mm"
+            },
+            "width": {
+              "type": "derived",
+              "evidence": "与底板同深 40mm"
+            }
+          }
+        }
+      },
+      "result": {
+        "state": "valid",
+        "revision": 3,
+        "geometry_fingerprint": "{\"coordinate_system\":{\"axes\":[\"X\",\"Y\",\"Z\"],\"handedness\":\"right\",\"origin\":[0,0,0],\"type\":\"global_cartesian\"},\"features\":[{\"geometry\":\"{\\\"kind\\\":\\\"box\\\",\\\"operation\\\":\\\"add\\\",\\\"parameters\\\":{\\\"center\\\":[0,0,6],\\\"height\\\":12,\\\"length\\\":60,\\\"width\\\":40}}\",\"id\":\"base\"},{\"geometry\":\"{\\\"kind\\\":\\\"box\\\",\\\"operation\\\":\\\"add\\\",\\\"parameters\\\":{\\\"center\\\":[-22,0,36],\\\"height\\\":48,\\\"length\\\":16,\\\"width\\\":40}}\",\"id\":\"wall_left\"},{\"geometry\":\"{\\\"kind\\\":\\\"box\\\",\\\"operation\\\":\\\"add\\\",\\\"parameters\\\":{\\\"center\\\":[22,0,36],\\\"height\\\":48,\\\"length\\\":16,\\\"width\\\":40}}\",\"id\":\"wall_right\"}],\"units\":{\"angle\":\"deg\",\"length\":\"mm\"}}",
+        "feature_count": 3,
+        "validation": {
+          "valid": true,
+          "state": "valid",
+          "errors": [],
+          "confirmations": [],
+          "support": [
+            {
+              "feature_id": "base",
+              "kind": "box",
+              "status": "exact",
+              "reason": "矩形草图加凸台；当前 CATIA 映射仅支持 Z 轴拉伸。"
+            },
+            {
+              "feature_id": "wall_left",
+              "kind": "box",
+              "status": "exact",
+              "reason": "矩形草图加凸台；当前 CATIA 映射仅支持 Z 轴拉伸。"
+            },
+            {
+              "feature_id": "wall_right",
+              "kind": "box",
+              "status": "exact",
+              "reason": "矩形草图加凸台；当前 CATIA 映射仅支持 Z 轴拉伸。"
+            }
+          ],
+          "warnings": [],
+          "schema_version": "1.0"
+        },
+        "preview": {
+          "state": "previewed",
+          "geometry_fingerprint": "{\"coordinate_system\":{\"axes\":[\"X\",\"Y\",\"Z\"],\"handedness\":\"right\",\"origin\":[0,0,0],\"type\":\"global_cartesian\"},\"features\":[{\"geometry\":\"{\\\"kind\\\":\\\"box\\\",\\\"operation\\\":\\\"add\\\",\\\"parameters\\\":{\\\"center\\\":[0,0,6],\\\"height\\\":12,\\\"length\\\":60,\\\"width\\\":40}}\",\"id\":\"base\"},{\"geometry\":\"{\\\"kind\\\":\\\"box\\\",\\\"operation\\\":\\\"add\\\",\\\"parameters\\\":{\\\"center\\\":[-22,0,36],\\\"height\\\":48,\\\"length\\\":16,\\\"width\\\":40}}\",\"id\":\"wall_left\"},{\"geometry\":\"{\\\"kind\\\":\\\"box\\\",\\\"operation\\\":\\\"add\\\",\\\"parameters\\\":{\\\"center\\\":[22,0,36],\\\"height\\\":48,\\\"length\\\":16,\\\"width\\\":40}}\",\"id\":\"wall_right\"}],\"units\":{\"angle\":\"deg\",\"length\":\"mm\"}}",
+          "preview_image": "candidate-preview.png",
+          "view_set": "iso",
+          "views": [
+            "iso"
+          ],
+          "dimensions": {
+            "unit": "mm",
+            "bbox": [
+              -30.0,
+              -20.0,
+              0.0,
+              30.0,
+              20.0,
+              60.0
+            ],
+            "size": [
+              60.0,
+              40.0,
+              60.0
+            ],
+            "volume_mm3": 90240.0,
+            "surface_area_mm2": 17952.0,
+            "triangles": 44,
+            "feature_count": 3
+          },
+          "local_geometry_checks": {
+            "state": "passed",
+            "source": "AI Modeler local mesh kernel",
+            "face_count": 25,
+            "bbox_size_mm": [
+              60.0,
+              40.0,
+              60.0
+            ],
+            "bbox_ratios_from_mesh": {
+              "front_width_height": 1.0,
+              "depth_height": 0.6666666666666666,
+              "top_width_depth": 1.5
+            },
+            "feature_count_from_plan": 3,
+            "feature_ids_from_plan": [
+              "base",
+              "wall_left",
+              "wall_right"
+            ],
+            "nonfinite_face_count": 0,
+            "degenerate_face_count": 0,
+            "hole_features_from_plan": [],
+            "through_hole_mesh_checks": [],
+            "hole_visibility": "requires_multimodal_view_review",
+            "through_hole_result": "not_measured"
+          },
+          "warnings": [],
+          "catia_executed": false,
+          "next_step_hint": "当前预览已展示，作为逐特征建模进度。若还有几何特征未完成，只追加下一个特征并刷新预览；全部特征完成后再做最终多视图复核。"
+        }
+      },
+      "result_summary": "valid"
+    },
+    {
+      "phase": "agent_loop",
+      "tool": "cad_add_feature",
+      "arguments": {
+        "feature": {
+          "id": "holes_left",
+          "kind": "hole",
+          "name": "左壁三孔",
+          "operation": "cut",
+          "parameters": {
+            "axis": "x",
+            "count": 3,
+            "diameter": 10,
+            "pos": [
+              -22,
+              0,
+              36
+            ],
+            "through": true,
+            "y": 0,
+            "z": 36
+          },
+          "sources": {
+            "axis": {
+              "type": "derived",
+              "evidence": "孔轴穿过壁厚，与两壁分开方向（X）平行"
+            },
+            "count": {
+              "type": "image_estimate",
+              "evidence": "左壁外侧面可见 3 个孔口"
+            },
+            "diameter": {
+              "type": "image_estimate",
+              "evidence": "孔径约为壁高的 1/5，取 10mm"
+            },
+            "pos": {
+              "type": "derived",
+              "evidence": "左壁中心"
+            },
+            "through": {
+              "type": "derived",
+              "evidence": "孔贯通壁厚，槽内侧可见出口"
+            },
+            "y": {
+              "type": "derived",
+              "evidence": "孔位于壁深中部"
+            },
+            "z": {
+              "type": "derived",
+              "evidence": "三孔沿高度均布于壁中部"
+            }
+          }
+        }
+      },
+      "result": {
+        "state": "invalid",
+        "validation": {
+          "valid": false,
+          "state": "invalid",
+          "errors": [
+            {
+              "code": "unknown_parameter",
+              "path": "$.features[3].parameters.z",
+              "message": "该特征不支持此参数；未知参数不会传给 Document。"
+            },
+            {
+              "code": "invalid_parameter_type",
+              "path": "$.features[3].parameters.pos",
+              "message": "此参数必须为字符串。"
+            }
+          ],
+          "confirmations": [],
+          "support": [
+            {
+              "feature_id": "base",
+              "kind": "box",
+              "status": "exact",
+              "reason": "矩形草图加凸台；当前 CATIA 映射仅支持 Z 轴拉伸。"
+            },
+            {
+              "feature_id": "wall_left",
+              "kind": "box",
+              "status": "exact",
+              "reason": "矩形草图加凸台；当前 CATIA 映射仅支持 Z 轴拉伸。"
+            },
+            {
+              "feature_id": "wall_right",
+              "kind": "box",
+              "status": "exact",
+              "reason": "矩形草图加凸台；当前 CATIA 映射仅支持 Z 轴拉伸。"
+            },
+            {
+              "feature_id": "holes_left",
+              "kind": "hole",
+              "status": "exact",
+              "reason": "圆形凹槽；through=true 时按当前零件包围盒生成贯穿深度。"
+            }
+          ],
+          "warnings": [],
+          "schema_version": "1.0"
+        },
+        "error": "本次特征修改未提交；原模型保持不变。"
+      },
+      "result_summary": "invalid"
+    },
+    {
+      "phase": "agent_loop",
+      "tool": "cad_get_feature_spec",
+      "arguments": {
+        "kind": "hole"
+      },
+      "result": {
+        "state": "ok",
+        "kind": "hole",
+        "spec": {
+          "required": [
+            "diameter",
+            "through",
+            "pos"
+          ],
+          "params": [
+            "diameter",
+            "through",
+            "pos",
+            "point",
+            "x",
+            "y",
+            "count",
+            "pcd",
+            "phase",
+            "depth",
+            "margin",
+            "axis",
+            "segments"
+          ],
+          "status": "exact",
+          "reason": "圆形凹槽；through=true 时按当前零件包围盒生成贯穿深度。"
+        },
+        "feature_schema": {
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": "string",
+              "minLength": 1
+            },
+            "kind": {
+              "const": "hole",
+              "x-catia-support-status": "exact",
+              "x-catia-support-note": "圆形凹槽；through=true 时按当前零件包围盒生成贯穿深度。"
+            },
+            "operation": {
+              "type": "string",
+              "enum": [
+                "add",
+                "cut"
+              ]
+            },
+            "name": {
+              "type": "string"
+            },
+            "note": {
+              "type": "string"
+            },
+            "parameters": {
+              "type": "object",
+              "properties": {
+                "diameter": {
+                  "type": "number",
+                  "exclusiveMinimum": 0
+                },
+                "through": {
+                  "type": "boolean"
+                },
+                "pos": {
+                  "type": "string",
+                  "enum": [
+                    "center",
+                    "corners",
+                    "pcd",
+                    "point"
+                  ]
+                },
+                "point": {
+                  "type": "array",
+                  "prefixItems": [
+                    {
+                      "type": "number"
+                    },
+                    {
+                      "type": "number"
+                    },
+                    {
+                      "type": "number"
+                    }
+                  ],
+                  "minItems": 3,
+                  "maxItems": 3,
+                  "items": false
+                },
+                "x": {
+                  "type": "number"
+                },
+                "y": {
+                  "type": "number"
+                },
+                "count": {
+                  "type": "integer",
+                  "minimum": 1
+                },
+                "pcd": {
+                  "type": "number",
+                  "exclusiveMinimum": 0
+                },
+                "phase": {
+                  "type": "number"
+                },
+                "depth": {
+                  "type": "number",
+                  "exclusiveMinimum": 0
+                },
+                "margin": {
+                  "type": "number",
+                  "exclusiveMinimum": 0
+                },
+                "axis": {
+                  "type": "string",
+                  "enum": [
+                    "X",
+                    "Y",
+                    "Z"
+                  ]
+                },
+                "segments": {
+                  "type": "integer",
+                  "minimum": 3
+                }
+              },
+              "additionalProperties": false,
+              "required": [
+                "diameter",
+                "through",
+                "pos"
+              ]
+            },
+            "sources": {
+              "type": "object",
+              "propertyNames": {
+                "enum": [
+                  "diameter",
+                  "through",
+                  "pos",
+                  "point",
+                  "x",
+                  "y",
+                  "count",
+                  "pcd",
+                  "phase",
+                  "depth",
+                  "margin",
+                  "axis",
+                  "segments"
+                ]
+              },
+              "additionalProperties": {
+                "$ref": "#/$defs/source"
+              }
+            },
+            "relations": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/relation"
+              }
+            }
+          },
+          "required": [
+            "id",
+            "kind",
+            "operation",
+            "parameters",
+            "sources"
+          ],
+          "additionalProperties": false,
+          "allOf": [
+            {
+              "if": {
+                "properties": {
+                  "parameters": {
+                    "properties": {
+                      "pos": {
+                        "const": "point"
+                      }
+                    },
+                    "required": [
+                      "pos"
+                    ]
+                  }
+                }
+              },
+              "then": {
+                "properties": {
+                  "parameters": {
+                    "required": [
+                      "point"
+                    ]
+                  }
+                }
+              }
+            },
+            {
+              "if": {
+                "properties": {
+                  "parameters": {
+                    "properties": {
+                      "pos": {
+                        "const": "pcd"
+                      }
+                    },
+                    "required": [
+                      "pos"
+                    ]
+                  }
+                }
+              },
+              "then": {
+                "properties": {
+                  "parameters": {
+                    "required": [
+                      "pcd",
+                      "count"
+                    ]
+                  }
+                }
+              }
+            },
+            {
+              "if": {
+                "properties": {
+                  "parameters": {
+                    "properties": {
+                      "through": {
+                        "const": false
+                      }
+                    },
+                    "required": [
+                      "through"
+                    ]
+                  }
+                }
+              },
+              "then": {
+                "properties": {
+                  "parameters": {
+                    "required": [
+                      "depth"
+                    ]
+                  }
+                }
+              }
+            },
+            {
+              "if": {
+                "required": [
+                  "parameters"
+                ],
+                "properties": {
+                  "parameters": {
+                    "required": [
+                      "count"
+                    ]
+                  }
+                }
+              },
+              "then": {
+                "required": [
+                  "sources"
+                ],
+                "properties": {
+                  "sources": {
+                    "required": [
+                      "count"
+                    ]
+                  }
+                }
+              }
+            },
+            {
+              "if": {
+                "required": [
+                  "parameters"
+                ],
+                "properties": {
+                  "parameters": {
+                    "required": [
+                      "depth"
+                    ]
+                  }
+                }
+              },
+              "then": {
+                "required": [
+                  "sources"
+                ],
+                "properties": {
+                  "sources": {
+                    "required": [
+                      "depth"
+                    ]
+                  }
+                }
+              }
+            },
+            {
+              "if": {
+                "required": [
+                  "parameters"
+                ],
+                "properties": {
+                  "parameters": {
+                    "required": [
+                      "diameter"
+                    ]
+                  }
+                }
+              },
+              "then": {
+                "required": [
+                  "sources"
+                ],
+                "properties": {
+                  "sources": {
+                    "required": [
+                      "diameter"
+                    ]
+                  }
+                }
+              }
+            },
+            {
+              "if": {
+                "required": [
+                  "parameters"
+                ],
+                "properties": {
+                  "parameters": {
+                    "required": [
+                      "margin"
+                    ]
+                  }
+                }
+              },
+              "then": {
+                "required": [
+                  "sources"
+                ],
+                "properties": {
+                  "sources": {
+                    "required": [
+                      "margin"
+                    ]
+                  }
+                }
+              }
+            },
+            {
+              "if": {
+                "required": [
+                  "parameters"
+                ],
+                "properties": {
+                  "parameters": {
+                    "required": [
+                      "pcd"
+                    ]
+                  }
+                }
+              },
+              "then": {
+                "required": [
+                  "sources"
+                ],
+                "properties": {
+                  "sources": {
+                    "required": [
+                      "pcd"
+                    ]
+                  }
+                }
+              }
+            },
+            {
+              "if": {
+                "required": [
+                  "parameters"
+                ],
+                "properties": {
+                  "parameters": {
+                    "required": [
+                      "phase"
+                    ]
+                  }
+                }
+              },
+              "then": {
+                "required": [
+                  "sources"
+                ],
+                "properties": {
+                  "sources": {
+                    "required": [
+                      "phase"
+                    ]
+                  }
+                }
+              }
+            },
+            {
+              "if": {
+                "required": [
+                  "parameters"
+                ],
+                "properties": {
+                  "parameters": {
+                    "required": [
+                      "point"
+                    ]
+                  }
+                }
+              },
+              "then": {
+                "required": [
+                  "sources"
+                ],
+                "properties": {
+                  "sources": {
+                    "required": [
+                      "point"
+                    ]
+                  }
+                }
+              }
+            },
+            {
+              "if": {
+                "required": [
+                  "parameters"
+                ],
+                "properties": {
+                  "parameters": {
+                    "required": [
+                      "segments"
+                    ]
+                  }
+                }
+              },
+              "then": {
+                "required": [
+                  "sources"
+                ],
+                "properties": {
+                  "sources": {
+                    "required": [
+                      "segments"
+                    ]
+                  }
+                }
+              }
+            },
+            {
+              "if": {
+                "required": [
+                  "parameters"
+                ],
+                "properties": {
+                  "parameters": {
+                    "required": [
+                      "x"
+                    ]
+                  }
+                }
+              },
+              "then": {
+                "required": [
+                  "sources"
+                ],
+                "properties": {
+                  "sources": {
+                    "required": [
+                      "x"
+                    ]
+                  }
+                }
+              }
+            },
+            {
+              "if": {
+                "required": [
+                  "parameters"
+                ],
+                "properties": {
+                  "parameters": {
+                    "required": [
+                      "y"
+                    ]
+                  }
+                }
+              },
+              "then": {
+                "required": [
+                  "sources"
+                ],
+                "properties": {
+                  "sources": {
+                    "required": [
+                      "y"
+                    ]
+                  }
+                }
+              }
+            }
+          ]
+        },
+        "note": "提交时由 CADPlan SDK 检查条件必需参数和来源。"
+      },
+      "result_summary": "ok"
+    },
+    {
+      "phase": "agent_loop",
+      "tool": "cad_add_feature",
+      "arguments": {
+        "feature": {
+          "id": "hole_l1",
+          "kind": "hole",
+          "name": "左壁孔1",
+          "operation": "cut",
+          "parameters": {
+            "axis": "X",
+            "diameter": 10,
+            "point": [
+              -22,
+              0,
+              48
+            ],
+            "pos": "point",
+            "through": true
+          },
+          "sources": {
+            "axis": {
+              "evidence": "孔轴穿过壁厚，与两壁分开方向（X）平行",
+              "type": "derived"
+            },
+            "diameter": {
+              "evidence": "孔径约为壁高的 1/5，取 10mm",
+              "type": "image_estimate"
+            },
+            "point": {
+              "evidence": "左壁上部孔位",
+              "type": "derived"
+            },
+            "pos": {
+              "evidence": "指定点定位",
+              "type": "derived"
+            },
+            "through": {
+              "evidence": "孔贯通壁厚，槽内侧可见出口",
+              "type": "derived"
+            }
+          }
+        }
+      },
+      "result": {
+        "state": "valid",
+        "revision": 4,
+        "geometry_fingerprint": "{\"coordinate_system\":{\"axes\":[\"X\",\"Y\",\"Z\"],\"handedness\":\"right\",\"origin\":[0,0,0],\"type\":\"global_cartesian\"},\"features\":[{\"geometry\":\"{\\\"kind\\\":\\\"box\\\",\\\"operation\\\":\\\"add\\\",\\\"parameters\\\":{\\\"center\\\":[0,0,6],\\\"height\\\":12,\\\"length\\\":60,\\\"width\\\":40}}\",\"id\":\"base\"},{\"geometry\":\"{\\\"kind\\\":\\\"box\\\",\\\"operation\\\":\\\"add\\\",\\\"parameters\\\":{\\\"center\\\":[-22,0,36],\\\"height\\\":48,\\\"length\\\":16,\\\"width\\\":40}}\",\"id\":\"wall_left\"},{\"geometry\":\"{\\\"kind\\\":\\\"box\\\",\\\"operation\\\":\\\"add\\\",\\\"parameters\\\":{\\\"center\\\":[22,0,36],\\\"height\\\":48,\\\"length\\\":16,\\\"width\\\":40}}\",\"id\":\"wall_right\"},{\"geometry\":\"{\\\"kind\\\":\\\"hole\\\",\\\"operation\\\":\\\"cut\\\",\\\"parameters\\\":{\\\"axis\\\":\\\"X\\\",\\\"diameter\\\":10,\\\"point\\\":[-22,0,48],\\\"pos\\\":\\\"point\\\",\\\"through\\\":true}}\",\"id\":\"hole_l1\"}],\"units\":{\"angle\":\"deg\",\"length\":\"mm\"}}",
+        "feature_count": 4,
+        "validation": {
+          "valid": true,
+          "state": "valid",
+          "errors": [],
+          "confirmations": [],
+          "support": [
+            {
+              "feature_id": "base",
+              "kind": "box",
+              "status": "exact",
+              "reason": "矩形草图加凸台；当前 CATIA 映射仅支持 Z 轴拉伸。"
+            },
+            {
+              "feature_id": "wall_left",
+              "kind": "box",
+              "status": "exact",
+              "reason": "矩形草图加凸台；当前 CATIA 映射仅支持 Z 轴拉伸。"
+            },
+            {
+              "feature_id": "wall_right",
+              "kind": "box",
+              "status": "exact",
+              "reason": "矩形草图加凸台；当前 CATIA 映射仅支持 Z 轴拉伸。"
+            },
+            {
+              "feature_id": "hole_l1",
+              "kind": "hole",
+              "status": "exact",
+              "reason": "圆形凹槽；through=true 时按当前零件包围盒生成贯穿深度。"
+            }
+          ],
+          "warnings": [],
+          "schema_version": "1.0"
+        },
+        "preview": {
+          "state": "previewed",
+          "geometry_fingerprint": "{\"coordinate_system\":{\"axes\":[\"X\",\"Y\",\"Z\"],\"handedness\":\"right\",\"origin\":[0,0,0],\"type\":\"global_cartesian\"},\"features\":[{\"geometry\":\"{\\\"kind\\\":\\\"box\\\",\\\"operation\\\":\\\"add\\\",\\\"parameters\\\":{\\\"center\\\":[0,0,6],\\\"height\\\":12,\\\"length\\\":60,\\\"width\\\":40}}\",\"id\":\"base\"},{\"geometry\":\"{\\\"kind\\\":\\\"box\\\",\\\"operation\\\":\\\"add\\\",\\\"parameters\\\":{\\\"center\\\":[-22,0,36],\\\"height\\\":48,\\\"length\\\":16,\\\"width\\\":40}}\",\"id\":\"wall_left\"},{\"geometry\":\"{\\\"kind\\\":\\\"box\\\",\\\"operation\\\":\\\"add\\\",\\\"parameters\\\":{\\\"center\\\":[22,0,36],\\\"height\\\":48,\\\"length\\\":16,\\\"width\\\":40}}\",\"id\":\"wall_right\"},{\"geometry\":\"{\\\"kind\\\":\\\"hole\\\",\\\"operation\\\":\\\"cut\\\",\\\"parameters\\\":{\\\"axis\\\":\\\"X\\\",\\\"diameter\\\":10,\\\"point\\\":[-22,0,48],\\\"pos\\\":\\\"point\\\",\\\"through\\\":true}}\",\"id\":\"hole_l1\"}],\"units\":{\"angle\":\"deg\",\"length\":\"mm\"}}",
+          "preview_image": "candidate-preview.png",
+          "view_set": "iso",
+          "views": [
+            "iso"
+          ],
+          "dimensions": {
+            "unit": "mm",
+            "bbox": [
+              -30.0,
+              -20.0,
+              0.0,
+              30.0,
+              20.0,
+              60.0
+            ],
+            "size": [
+              60.0,
+              40.0,
+              60.0
+            ],
+            "volume_mm3": 87755.33716701592,
+            "surface_area_mm2": 18643.8583021269,
+            "triangles": 244,
+            "feature_count": 4
+          },
+          "local_geometry_checks": {
+            "state": "passed",
+            "source": "AI Modeler local mesh kernel",
+            "face_count": 165,
+            "bbox_size_mm": [
+              60.0,
+              40.0,
+              60.0
+            ],
+            "bbox_ratios_from_mesh": {
+              "front_width_height": 1.0,
+              "depth_height": 0.6666666666666666,
+              "top_width_depth": 1.5
+            },
+            "feature_count_from_plan": 4,
+            "feature_ids_from_plan": [
+              "base",
+              "wall_left",
+              "wall_right",
+              "hole_l1"
+            ],
+            "nonfinite_face_count": 0,
+            "degenerate_face_count": 0,
+            "hole_features_from_plan": [
+              {
+                "feature_id": "hole_l1",
+                "kind": "hole",
+                "operation": "cut",
+                "parameters": {
+                  "axis": "X",
+                  "diameter": 10,
+                  "point": [
+                    -22,
+                    0,
+                    48
+                  ],
+                  "pos": "point",
+                  "through": true
+                }
+              }
+            ],
+            "through_hole_mesh_checks": [
+              {
+                "feature_id": "hole_l1",
+                "axis": "X",
+                "center_mm": [
+                  -22.0,
+                  0.0,
+                  48.0
+                ],
+                "status": "verified_open",
+                "axis_surface_crossings": 0,
+                "surrounding_surface_crossings": [
+                  4,
+                  4,
+                  4,
+                  4
+                ],
+                "ring_supported": [
+                  true,
+                  true,
+                  true,
+                  true
+                ],
+                "method": "axis ray against local triangle mesh"
+              }
+            ],
+            "hole_visibility": "requires_multimodal_view_review",
+            "through_hole_result": "measured_for_point_holes_only"
+          },
+          "warnings": [],
+          "catia_executed": false,
+          "next_step_hint": "当前预览已展示，作为逐特征建模进度。若还有几何特征未完成，只追加下一个特征并刷新预览；全部特征完成后再做最终多视图复核。"
+        }
+      },
+      "result_summary": "valid"
+    },
+    {
+      "phase": "agent_loop",
+      "tool": "cad_add_feature",
+      "arguments": {
+        "feature": {
+          "id": "hole_l2",
+          "kind": "hole",
+          "name": "左壁孔2",
+          "operation": "cut",
+          "parameters": {
+            "axis": "X",
+            "diameter": 10,
+            "point": [
+              -22,
+              0,
+              36
+            ],
+            "pos": "point",
+            "through": true
+          },
+          "sources": {
+            "axis": {
+              "evidence": "孔轴穿过壁厚，与两壁分开方向（X）平行",
+              "type": "derived"
+            },
+            "diameter": {
+              "evidence": "与左壁其余孔同径 10mm",
+              "type": "derived"
+            },
+            "point": {
+              "evidence": "左壁中部孔位",
+              "type": "derived"
+            },
+            "pos": {
+              "evidence": "指定点定位",
+              "type": "derived"
+            },
+            "through": {
+              "evidence": "孔贯通壁厚",
+              "type": "derived"
+            }
+          }
+        }
+      },
+      "result": {
+        "state": "valid",
+        "revision": 5,
+        "geometry_fingerprint": "{\"coordinate_system\":{\"axes\":[\"X\",\"Y\",\"Z\"],\"handedness\":\"right\",\"origin\":[0,0,0],\"type\":\"global_cartesian\"},\"features\":[{\"geometry\":\"{\\\"kind\\\":\\\"box\\\",\\\"operation\\\":\\\"add\\\",\\\"parameters\\\":{\\\"center\\\":[0,0,6],\\\"height\\\":12,\\\"length\\\":60,\\\"width\\\":40}}\",\"id\":\"base\"},{\"geometry\":\"{\\\"kind\\\":\\\"box\\\",\\\"operation\\\":\\\"add\\\",\\\"parameters\\\":{\\\"center\\\":[-22,0,36],\\\"height\\\":48,\\\"length\\\":16,\\\"width\\\":40}}\",\"id\":\"wall_left\"},{\"geometry\":\"{\\\"kind\\\":\\\"box\\\",\\\"operation\\\":\\\"add\\\",\\\"parameters\\\":{\\\"center\\\":[22,0,36],\\\"height\\\":48,\\\"length\\\":16,\\\"width\\\":40}}\",\"id\":\"wall_right\"},{\"geometry\":\"{\\\"kind\\\":\\\"hole\\\",\\\"operation\\\":\\\"cut\\\",\\\"parameters\\\":{\\\"axis\\\":\\\"X\\\",\\\"diameter\\\":10,\\\"point\\\":[-22,0,48],\\\"pos\\\":\\\"point\\\",\\\"through\\\":true}}\",\"id\":\"hole_l1\"},{\"geometry\":\"{\\\"kind\\\":\\\"hole\\\",\\\"operation\\\":\\\"cut\\\",\\\"parameters\\\":{\\\"axis\\\":\\\"X\\\",\\\"diameter\\\":10,\\\"point\\\":[-22,0,36],\\\"pos\\\":\\\"point\\\",\\\"through\\\":true}}\",\"id\":\"hole_l2\"}],\"units\":{\"angle\":\"deg\",\"length\":\"mm\"}}",
+        "feature_count": 5,
+        "validation": {
+          "valid": true,
+          "state": "valid",
+          "errors": [],
+          "confirmations": [],
+          "support": [
+            {
+              "feature_id": "base",
+              "kind": "box",
+              "status": "exact",
+              "reason": "矩形草图加凸台；当前 CATIA 映射仅支持 Z 轴拉伸。"
+            },
+            {
+              "feature_id": "wall_left",
+              "kind": "box",
+              "status": "exact",
+              "reason": "矩形草图加凸台；当前 CATIA 映射仅支持 Z 轴拉伸。"
+            },
+            {
+              "feature_id": "wall_right",
+              "kind": "box",
+              "status": "exact",
+              "reason": "矩形草图加凸台；当前 CATIA 映射仅支持 Z 轴拉伸。"
+            },
+            {
+              "feature_id": "hole_l1",
+              "kind": "hole",
+              "status": "exact",
+              "reason": "圆形凹槽；through=true 时按当前零件包围盒生成贯穿深度。"
+            },
+            {
+              "feature_id": "hole_l2",
+              "kind": "hole",
+              "status": "exact",
+              "reason": "圆形凹槽；through=true 时按当前零件包围盒生成贯穿深度。"
+            }
+          ],
+          "warnings": [],
+          "schema_version": "1.0"
+        },
+        "preview": {
+          "state": "previewed",
+          "geometry_fingerprint": "{\"coordinate_system\":{\"axes\":[\"X\",\"Y\",\"Z\"],\"handedness\":\"right\",\"origin\":[0,0,0],\"type\":\"global_cartesian\"},\"features\":[{\"geometry\":\"{\\\"kind\\\":\\\"box\\\",\\\"operation\\\":\\\"add\\\",\\\"parameters\\\":{\\\"center\\\":[0,0,6],\\\"height\\\":12,\\\"length\\\":60,\\\"width\\\":40}}\",\"id\":\"base\"},{\"geometry\":\"{\\\"kind\\\":\\\"box\\\",\\\"operation\\\":\\\"add\\\",\\\"parameters\\\":{\\\"center\\\":[-22,0,36],\\\"height\\\":48,\\\"length\\\":16,\\\"width\\\":40}}\",\"id\":\"wall_left\"},{\"geometry\":\"{\\\"kind\\\":\\\"box\\\",\\\"operation\\\":\\\"add\\\",\\\"parameters\\\":{\\\"center\\\":[22,0,36],\\\"height\\\":48,\\\"length\\\":16,\\\"width\\\":40}}\",\"id\":\"wall_right\"},{\"geometry\":\"{\\\"kind\\\":\\\"hole\\\",\\\"operation\\\":\\\"cut\\\",\\\"parameters\\\":{\\\"axis\\\":\\\"X\\\",\\\"diameter\\\":10,\\\"point\\\":[-22,0,48],\\\"pos\\\":\\\"point\\\",\\\"through\\\":true}}\",\"id\":\"hole_l1\"},{\"geometry\":\"{\\\"kind\\\":\\\"hole\\\",\\\"operation\\\":\\\"cut\\\",\\\"parameters\\\":{\\\"axis\\\":\\\"X\\\",\\\"diameter\\\":10,\\\"point\\\":[-22,0,36],\\\"pos\\\":\\\"point\\\",\\\"through\\\":true}}\",\"id\":\"hole_l2\"}],\"units\":{\"angle\":\"deg\",\"length\":\"mm\"}}",
+          "preview_image": "candidate-preview.png",
+          "view_set": "iso",
+          "views": [
+            "iso"
+          ],
+          "dimensions": {
+            "unit": "mm",
+            "bbox": [
+              -30.0,
+              -20.0,
+              0.0,
+              30.0,
+              20.0,
+              60.0
+            ],
+            "size": [
+              60.0,
+              40.0,
+              60.0
+            ],
+            "volume_mm3": 85270.67433403211,
+            "surface_area_mm2": 19335.716604253827,
+            "triangles": 956,
+            "feature_count": 5
+          },
+          "local_geometry_checks": {
+            "state": "passed",
+            "source": "AI Modeler local mesh kernel",
+            "face_count": 561,
+            "bbox_size_mm": [
+              60.0,
+              40.0,
+              60.0
+            ],
+            "bbox_ratios_from_mesh": {
+              "front_width_height": 1.0,
+              "depth_height": 0.6666666666666666,
+              "top_width_depth": 1.5
+            },
+            "feature_count_from_plan": 5,
+            "feature_ids_from_plan": [
+              "base",
+              "wall_left",
+              "wall_right",
+              "hole_l1",
+              "hole_l2"
+            ],
+            "nonfinite_face_count": 0,
+            "degenerate_face_count": 0,
+            "hole_features_from_plan": [
+              {
+                "feature_id": "hole_l1",
+                "kind": "hole",
+                "operation": "cut",
+                "parameters": {
+                  "axis": "X",
+                  "diameter": 10,
+                  "point": [
+                    -22,
+                    0,
+                    48
+                  ],
+                  "pos": "point",
+                  "through": true
+                }
+              },
+              {
+                "feature_id": "hole_l2",
+                "kind": "hole",
+                "operation": "cut",
+                "parameters": {
+                  "axis": "X",
+                  "diameter": 10,
+                  "point": [
+                    -22,
+                    0,
+                    36
+                  ],
+                  "pos": "point",
+                  "through": true
+                }
+              }
+            ],
+            "through_hole_mesh_checks": [
+              {
+                "feature_id": "hole_l1",
+                "axis": "X",
+                "center_mm": [
+                  -22.0,
+                  0.0,
+                  48.0
+                ],
+                "status": "verified_open",
+                "axis_surface_crossings": 0,
+                "surrounding_surface_crossings": [
+                  4,
+                  4,
+                  4,
+                  4
+                ],
+                "ring_supported": [
+                  true,
+                  true,
+                  true,
+                  true
+                ],
+                "method": "axis ray against local triangle mesh"
+              },
+              {
+                "feature_id": "hole_l2",
+                "axis": "X",
+                "center_mm": [
+                  -22.0,
+                  0.0,
+                  36.0
+                ],
+                "status": "verified_open",
+                "axis_surface_crossings": 0,
+                "surrounding_surface_crossings": [
+                  4,
+                  4,
+                  4,
+                  4
+                ],
+                "ring_supported": [
+                  true,
+                  true,
+                  true,
+                  true
+                ],
+                "method": "axis ray against local triangle mesh"
+              }
+            ],
+            "hole_visibility": "requires_multimodal_view_review",
+            "through_hole_result": "measured_for_point_holes_only"
+          },
+          "warnings": [],
+          "catia_executed": false,
+          "next_step_hint": "当前预览已展示，作为逐特征建模进度。若还有几何特征未完成，只追加下一个特征并刷新预览；全部特征完成后再做最终多视图复核。"
+        }
+      },
+      "result_summary": "valid"
+    },
+    {
+      "phase": "agent_loop",
+      "tool": "cad_add_feature",
+      "arguments": {
+        "feature": {
+          "id": "hole_l3",
+          "kind": "hole",
+          "name": "左壁孔3",
+          "operation": "cut",
+          "parameters": {
+            "axis": "X",
+            "diameter": 10,
+            "point": [
+              -22,
+              0,
+              24
+            ],
+            "pos": "point",
+            "through": true
+          },
+          "sources": {
+            "axis": {
+              "evidence": "孔轴穿过壁厚，与两壁分开方向（X）平行",
+              "type": "derived"
+            },
+            "diameter": {
+              "evidence": "与左壁其余孔同径 10mm",
+              "type": "derived"
+            },
+            "point": {
+              "evidence": "左壁下部孔位",
+              "type": "derived"
+            },
+            "pos": {
+              "evidence": "指定点定位",
+              "type": "derived"
+            },
+            "through": {
+              "evidence": "孔贯通壁厚",
+              "type": "derived"
+            }
+          }
+        }
+      },
+      "result": {
+        "state": "valid",
+        "revision": 6,
+        "geometry_fingerprint": "{\"coordinate_system\":{\"axes\":[\"X\",\"Y\",\"Z\"],\"handedness\":\"right\",\"origin\":[0,0,0],\"type\":\"global_cartesian\"},\"features\":[{\"geometry\":\"{\\\"kind\\\":\\\"box\\\",\\\"operation\\\":\\\"add\\\",\\\"parameters\\\":{\\\"center\\\":[0,0,6],\\\"height\\\":12,\\\"length\\\":60,\\\"width\\\":40}}\",\"id\":\"base\"},{\"geometry\":\"{\\\"kind\\\":\\\"box\\\",\\\"operation\\\":\\\"add\\\",\\\"parameters\\\":{\\\"center\\\":[-22,0,36],\\\"height\\\":48,\\\"length\\\":16,\\\"width\\\":40}}\",\"id\":\"wall_left\"},{\"geometry\":\"{\\\"kind\\\":\\\"box\\\",\\\"operation\\\":\\\"add\\\",\\\"parameters\\\":{\\\"center\\\":[22,0,36],\\\"height\\\":48,\\\"length\\\":16,\\\"width\\\":40}}\",\"id\":\"wall_right\"},{\"geometry\":\"{\\\"kind\\\":\\\"hole\\\",\\\"operation\\\":\\\"cut\\\",\\\"parameters\\\":{\\\"axis\\\":\\\"X\\\",\\\"diameter\\\":10,\\\"point\\\":[-22,0,48],\\\"pos\\\":\\\"point\\\",\\\"through\\\":true}}\",\"id\":\"hole_l1\"},{\"geometry\":\"{\\\"kind\\\":\\\"hole\\\",\\\"operation\\\":\\\"cut\\\",\\\"parameters\\\":{\\\"axis\\\":\\\"X\\\",\\\"diameter\\\":10,\\\"point\\\":[-22,0,36],\\\"pos\\\":\\\"point\\\",\\\"through\\\":true}}\",\"id\":\"hole_l2\"},{\"geometry\":\"{\\\"kind\\\":\\\"hole\\\",\\\"operation\\\":\\\"cut\\\",\\\"parameters\\\":{\\\"axis\\\":\\\"X\\\",\\\"diameter\\\":10,\\\"point\\\":[-22,0,24],\\\"pos\\\":\\\"point\\\",\\\"through\\\":true}}\",\"id\":\"hole_l3\"}],\"units\":{\"angle\":\"deg\",\"length\":\"mm\"}}",
+        "feature_count": 6,
+        "validation": {
+          "valid": true,
+          "state": "valid",
+          "errors": [],
+          "confirmations": [],
+          "support": [
+            {
+              "feature_id": "base",
+              "kind": "box",
+              "status": "exact",
+              "reason": "矩形草图加凸台；当前 CATIA 映射仅支持 Z 轴拉伸。"
+            },
+            {
+              "feature_id": "wall_left",
+              "kind": "box",
+              "status": "exact",
+              "reason": "矩形草图加凸台；当前 CATIA 映射仅支持 Z 轴拉伸。"
+            },
+            {
+              "feature_id": "wall_right",
+              "kind": "box",
+              "status": "exact",
+              "reason": "矩形草图加凸台；当前 CATIA 映射仅支持 Z 轴拉伸。"
+            },
+            {
+              "feature_id": "hole_l1",
+              "kind": "hole",
+              "status": "exact",
+              "reason": "圆形凹槽；through=true 时按当前零件包围盒生成贯穿深度。"
+            },
+            {
+              "feature_id": "hole_l2",
+              "kind": "hole",
+              "status": "exact",
+              "reason": "圆形凹槽；through=true 时按当前零件包围盒生成贯穿深度。"
+            },
+            {
+              "feature_id": "hole_l3",
+              "kind": "hole",
+              "status": "exact",
+              "reason": "圆形凹槽；through=true 时按当前零件包围盒生成贯穿深度。"
+            }
+          ],
+          "warnings": [],
+          "schema_version": "1.0"
+        },
+        "preview": {
+          "state": "previewed",
+          "geometry_fingerprint": "{\"coordinate_system\":{\"axes\":[\"X\",\"Y\",\"Z\"],\"handedness\":\"right\",\"origin\":[0,0,0],\"type\":\"global_cartesian\"},\"features\":[{\"geometry\":\"{\\\"kind\\\":\\\"box\\\",\\\"operation\\\":\\\"add\\\",\\\"parameters\\\":{\\\"center\\\":[0,0,6],\\\"height\\\":12,\\\"length\\\":60,\\\"width\\\":40}}\",\"id\":\"base\"},{\"geometry\":\"{\\\"kind\\\":\\\"box\\\",\\\"operation\\\":\\\"add\\\",\\\"parameters\\\":{\\\"center\\\":[-22,0,36],\\\"height\\\":48,\\\"length\\\":16,\\\"width\\\":40}}\",\"id\":\"wall_left\"},{\"geometry\":\"{\\\"kind\\\":\\\"box\\\",\\\"operation\\\":\\\"add\\\",\\\"parameters\\\":{\\\"center\\\":[22,0,36],\\\"height\\\":48,\\\"length\\\":16,\\\"width\\\":40}}\",\"id\":\"wall_right\"},{\"geometry\":\"{\\\"kind\\\":\\\"hole\\\",\\\"operation\\\":\\\"cut\\\",\\\"parameters\\\":{\\\"axis\\\":\\\"X\\\",\\\"diameter\\\":10,\\\"point\\\":[-22,0,48],\\\"pos\\\":\\\"point\\\",\\\"through\\\":true}}\",\"id\":\"hole_l1\"},{\"geometry\":\"{\\\"kind\\\":\\\"hole\\\",\\\"operation\\\":\\\"cut\\\",\\\"parameters\\\":{\\\"axis\\\":\\\"X\\\",\\\"diameter\\\":10,\\\"point\\\":[-22,0,36],\\\"pos\\\":\\\"point\\\",\\\"through\\\":true}}\",\"id\":\"hole_l2\"},{\"geometry\":\"{\\\"kind\\\":\\\"hole\\\",\\\"operation\\\":\\\"cut\\\",\\\"parameters\\\":{\\\"axis\\\":\\\"X\\\",\\\"diameter\\\":10,\\\"point\\\":[-22,0,24],\\\"pos\\\":\\\"point\\\",\\\"through\\\":true}}\",\"id\":\"hole_l3\"}],\"units\":{\"angle\":\"deg\",\"length\":\"mm\"}}",
+          "preview_image": "candidate-preview.png",
+          "view_set": "iso",
+          "views": [
+            "iso"
+          ],
+          "dimensions": {
+            "unit": "mm",
+            "bbox": [
+              -30.0,
+              -20.0,
+              0.0,
+              30.0,
+              20.0,
+              60.0
+            ],
+            "size": [
+              60.0,
+              40.0,
+              60.0
+            ],
+            "volume_mm3": 82786.0115010478,
+            "surface_area_mm2": 20027.574906380745,
+            "triangles": 1560,
+            "feature_count": 6
+          },
+          "local_geometry_checks": {
+            "state": "passed",
+            "source": "AI Modeler local mesh kernel",
+            "face_count": 903,
+            "bbox_size_mm": [
+              60.0,
+              40.0,
+              60.0
+            ],
+            "bbox_ratios_from_mesh": {
+              "front_width_height": 1.0,
+              "depth_height": 0.6666666666666666,
+              "top_width_depth": 1.5
+            },
+            "feature_count_from_plan": 6,
+            "feature_ids_from_plan": [
+              "base",
+              "wall_left",
+              "wall_right",
+              "hole_l1",
+              "hole_l2",
+              "hole_l3"
+            ],
+            "nonfinite_face_count": 0,
+            "degenerate_face_count": 0,
+            "hole_features_from_plan": [
+              {
+                "feature_id": "hole_l1",
+                "kind": "hole",
+                "operation": "cut",
+                "parameters": {
+                  "axis": "X",
+                  "diameter": 10,
+                  "point": [
+                    -22,
+                    0,
+                    48
+                  ],
+                  "pos": "point",
+                  "through": true
+                }
+              },
+              {
+                "feature_id": "hole_l2",
+                "kind": "hole",
+                "operation": "cut",
+                "parameters": {
+                  "axis": "X",
+                  "diameter": 10,
+                  "point": [
+                    -22,
+                    0,
+                    36
+                  ],
+                  "pos": "point",
+                  "through": true
+                }
+              },
+              {
+                "feature_id": "hole_l3",
+                "kind": "hole",
+                "operation": "cut",
+                "parameters": {
+                  "axis": "X",
+                  "diameter": 10,
+                  "point": [
+                    -22,
+                    0,
+                    24
+                  ],
+                  "pos": "point",
+                  "through": true
+                }
+              }
+            ],
+            "through_hole_mesh_checks": [
+              {
+                "feature_id": "hole_l1",
+                "axis": "X",
+                "center_mm": [
+                  -22.0,
+                  0.0,
+                  48.0
+                ],
+                "status": "verified_open",
+                "axis_surface_crossings": 0,
+                "surrounding_surface_crossings": [
+                  4,
+                  4,
+                  4,
+                  4
+                ],
+                "ring_supported": [
+                  true,
+                  true,
+                  true,
+                  true
+                ],
+                "method": "axis ray against local triangle mesh"
+              },
+              {
+                "feature_id": "hole_l2",
+                "axis": "X",
+                "center_mm": [
+                  -22.0,
+                  0.0,
+                  36.0
+                ],
+                "status": "verified_open",
+                "axis_surface_crossings": 0,
+                "surrounding_surface_crossings": [
+                  4,
+                  4,
+                  4,
+                  4
+                ],
+                "ring_supported": [
+                  true,
+                  true,
+                  true,
+                  true
+                ],
+                "method": "axis ray against local triangle mesh"
+              },
+              {
+                "feature_id": "hole_l3",
+                "axis": "X",
+                "center_mm": [
+                  -22.0,
+                  0.0,
+                  24.0
+                ],
+                "status": "verified_open",
+                "axis_surface_crossings": 0,
+                "surrounding_surface_crossings": [
+                  4,
+                  4,
+                  4,
+                  4
+                ],
+                "ring_supported": [
+                  true,
+                  true,
+                  true,
+                  true
+                ],
+                "method": "axis ray against local triangle mesh"
+              }
+            ],
+            "hole_visibility": "requires_multimodal_view_review",
+            "through_hole_result": "measured_for_point_holes_only"
+          },
+          "warnings": [],
+          "catia_executed": false,
+          "next_step_hint": "当前预览已展示，作为逐特征建模进度。若还有几何特征未完成，只追加下一个特征并刷新预览；全部特征完成后再做最终多视图复核。"
+        }
+      },
+      "result_summary": "valid"
+    },
+    {
+      "phase": "agent_loop",
+      "tool": "cad_add_feature",
+      "arguments": {
+        "feature": {
+          "id": "hole_r1",
+          "kind": "hole",
+          "name": "右壁孔1",
+          "operation": "cut",
+          "parameters": {
+            "axis": "X",
+            "diameter": 10,
+            "point": [
+              22,
+              0,
+              48
+            ],
+            "pos": "point",
+            "through": true
+          },
+          "sources": {
+            "axis": {
+              "evidence": "孔轴穿过壁厚，与两壁分开方向（X）平行",
+              "type": "derived"
+            },
+            "diameter": {
+              "evidence": "与左壁孔同径 10mm",
+              "type": "derived"
+            },
+            "point": {
+              "evidence": "右壁上部孔位，与左壁孔同高",
+              "type": "derived"
+            },
+            "pos": {
+              "evidence": "指定点定位",
+              "type": "derived"
+            },
+            "through": {
+              "evidence": "孔贯通壁厚",
+              "type": "derived"
+            }
+          }
+        }
+      },
+      "result": {
+        "state": "valid",
+        "revision": 7,
+        "geometry_fingerprint": "{\"coordinate_system\":{\"axes\":[\"X\",\"Y\",\"Z\"],\"handedness\":\"right\",\"origin\":[0,0,0],\"type\":\"global_cartesian\"},\"features\":[{\"geometry\":\"{\\\"kind\\\":\\\"box\\\",\\\"operation\\\":\\\"add\\\",\\\"parameters\\\":{\\\"center\\\":[0,0,6],\\\"height\\\":12,\\\"length\\\":60,\\\"width\\\":40}}\",\"id\":\"base\"},{\"geometry\":\"{\\\"kind\\\":\\\"box\\\",\\\"operation\\\":\\\"add\\\",\\\"parameters\\\":{\\\"center\\\":[-22,0,36],\\\"height\\\":48,\\\"length\\\":16,\\\"width\\\":40}}\",\"id\":\"wall_left\"},{\"geometry\":\"{\\\"kind\\\":\\\"box\\\",\\\"operation\\\":\\\"add\\\",\\\"parameters\\\":{\\\"center\\\":[22,0,36],\\\"height\\\":48,\\\"length\\\":16,\\\"width\\\":40}}\",\"id\":\"wall_right\"},{\"geometry\":\"{\\\"kind\\\":\\\"hole\\\",\\\"operation\\\":\\\"cut\\\",\\\"parameters\\\":{\\\"axis\\\":\\\"X\\\",\\\"diameter\\\":10,\\\"point\\\":[-22,0,48],\\\"pos\\\":\\\"point\\\",\\\"through\\\":true}}\",\"id\":\"hole_l1\"},{\"geometry\":\"{\\\"kind\\\":\\\"hole\\\",\\\"operation\\\":\\\"cut\\\",\\\"parameters\\\":{\\\"axis\\\":\\\"X\\\",\\\"diameter\\\":10,\\\"point\\\":[-22,0,36],\\\"pos\\\":\\\"point\\\",\\\"through\\\":true}}\",\"id\":\"hole_l2\"},{\"geometry\":\"{\\\"kind\\\":\\\"hole\\\",\\\"operation\\\":\\\"cut\\\",\\\"parameters\\\":{\\\"axis\\\":\\\"X\\\",\\\"diameter\\\":10,\\\"point\\\":[-22,0,24],\\\"pos\\\":\\\"point\\\",\\\"through\\\":true}}\",\"id\":\"hole_l3\"},{\"geometry\":\"{\\\"kind\\\":\\\"hole\\\",\\\"operation\\\":\\\"cut\\\",\\\"parameters\\\":{\\\"axis\\\":\\\"X\\\",\\\"diameter\\\":10,\\\"point\\\":[22,0,48],\\\"pos\\\":\\\"point\\\",\\\"through\\\":true}}\",\"id\":\"hole_r1\"}],\"units\":{\"angle\":\"deg\",\"length\":\"mm\"}}",
+        "feature_count": 7,
+        "validation": {
+          "valid": true,
+          "state": "valid",
+          "errors": [],
+          "confirmations": [],
+          "support": [
+            {
+              "feature_id": "base",
+              "kind": "box",
+              "status": "exact",
+              "reason": "矩形草图加凸台；当前 CATIA 映射仅支持 Z 轴拉伸。"
+            },
+            {
+              "feature_id": "wall_left",
+              "kind": "box",
+              "status": "exact",
+              "reason": "矩形草图加凸台；当前 CATIA 映射仅支持 Z 轴拉伸。"
+            },
+            {
+              "feature_id": "wall_right",
+              "kind": "box",
+              "status": "exact",
+              "reason": "矩形草图加凸台；当前 CATIA 映射仅支持 Z 轴拉伸。"
+            },
+            {
+              "feature_id": "hole_l1",
+              "kind": "hole",
+              "status": "exact",
+              "reason": "圆形凹槽；through=true 时按当前零件包围盒生成贯穿深度。"
+            },
+            {
+              "feature_id": "hole_l2",
+              "kind": "hole",
+              "status": "exact",
+              "reason": "圆形凹槽；through=true 时按当前零件包围盒生成贯穿深度。"
+            },
+            {
+              "feature_id": "hole_l3",
+              "kind": "hole",
+              "status": "exact",
+              "reason": "圆形凹槽；through=true 时按当前零件包围盒生成贯穿深度。"
+            },
+            {
+              "feature_id": "hole_r1",
+              "kind": "hole",
+              "status": "exact",
+              "reason": "圆形凹槽；through=true 时按当前零件包围盒生成贯穿深度。"
+            }
+          ],
+          "warnings": [],
+          "schema_version": "1.0"
+        },
+        "preview": {
+          "state": "previewed",
+          "geometry_fingerprint": "{\"coordinate_system\":{\"axes\":[\"X\",\"Y\",\"Z\"],\"handedness\":\"right\",\"origin\":[0,0,0],\"type\":\"global_cartesian\"},\"features\":[{\"geometry\":\"{\\\"kind\\\":\\\"box\\\",\\\"operation\\\":\\\"add\\\",\\\"parameters\\\":{\\\"center\\\":[0,0,6],\\\"height\\\":12,\\\"length\\\":60,\\\"width\\\":40}}\",\"id\":\"base\"},{\"geometry\":\"{\\\"kind\\\":\\\"box\\\",\\\"operation\\\":\\\"add\\\",\\\"parameters\\\":{\\\"center\\\":[-22,0,36],\\\"height\\\":48,\\\"length\\\":16,\\\"width\\\":40}}\",\"id\":\"wall_left\"},{\"geometry\":\"{\\\"kind\\\":\\\"box\\\",\\\"operation\\\":\\\"add\\\",\\\"parameters\\\":{\\\"center\\\":[22,0,36],\\\"height\\\":48,\\\"length\\\":16,\\\"width\\\":40}}\",\"id\":\"wall_right\"},{\"geometry\":\"{\\\"kind\\\":\\\"hole\\\",\\\"operation\\\":\\\"cut\\\",\\\"parameters\\\":{\\\"axis\\\":\\\"X\\\",\\\"diameter\\\":10,\\\"point\\\":[-22,0,48],\\\"pos\\\":\\\"point\\\",\\\"through\\\":true}}\",\"id\":\"hole_l1\"},{\"geometry\":\"{\\\"kind\\\":\\\"hole\\\",\\\"operation\\\":\\\"cut\\\",\\\"parameters\\\":{\\\"axis\\\":\\\"X\\\",\\\"diameter\\\":10,\\\"point\\\":[-22,0,36],\\\"pos\\\":\\\"point\\\",\\\"through\\\":true}}\",\"id\":\"hole_l2\"},{\"geometry\":\"{\\\"kind\\\":\\\"hole\\\",\\\"operation\\\":\\\"cut\\\",\\\"parameters\\\":{\\\"axis\\\":\\\"X\\\",\\\"diameter\\\":10,\\\"point\\\":[-22,0,24],\\\"pos\\\":\\\"point\\\",\\\"through\\\":true}}\",\"id\":\"hole_l3\"},{\"geometry\":\"{\\\"kind\\\":\\\"hole\\\",\\\"operation\\\":\\\"cut\\\",\\\"parameters\\\":{\\\"axis\\\":\\\"X\\\",\\\"diameter\\\":10,\\\"point\\\":[22,0,48],\\\"pos\\\":\\\"point\\\",\\\"through\\\":true}}\",\"id\":\"hole_r1\"}],\"units\":{\"angle\":\"deg\",\"length\":\"mm\"}}",
+          "preview_image": "candidate-preview.png",
+          "view_set": "iso",
+          "views": [
+            "iso"
+          ],
+          "dimensions": {
+            "unit": "mm",
+            "bbox": [
+              -30.0,
+              -20.0,
+              0.0,
+              30.0,
+              20.0,
+              60.0
+            ],
+            "size": [
+              60.0,
+              40.0,
+              60.0
+            ],
+            "volume_mm3": 84442.45338970383,
+            "surface_area_mm2": 19025.133750130815,
+            "triangles": 1464,
+            "feature_count": 7
+          },
+          "local_geometry_checks": {
+            "state": "passed",
+            "source": "AI Modeler local mesh kernel",
+            "face_count": 855,
+            "bbox_size_mm": [
+              60.0,
+              40.0,
+              60.0
+            ],
+            "bbox_ratios_from_mesh": {
+              "front_width_height": 1.0,
+              "depth_height": 0.6666666666666666,
+              "top_width_depth": 1.5
+            },
+            "feature_count_from_plan": 7,
+            "feature_ids_from_plan": [
+              "base",
+              "wall_left",
+              "wall_right",
+              "hole_l1",
+              "hole_l2",
+              "hole_l3",
+              "hole_r1"
+            ],
+            "nonfinite_face_count": 0,
+            "degenerate_face_count": 0,
+            "hole_features_from_plan": [
+              {
+                "feature_id": "hole_l1",
+                "kind": "hole",
+                "operation": "cut",
+                "parameters": {
+                  "axis": "X",
+                  "diameter": 10,
+                  "point": [
+                    -22,
+                    0,
+                    48
+                  ],
+                  "pos": "point",
+                  "through": true
+                }
+              },
+              {
+                "feature_id": "hole_l2",
+                "kind": "hole",
+                "operation": "cut",
+                "parameters": {
+                  "axis": "X",
+                  "diameter": 10,
+                  "point": [
+                    -22,
+                    0,
+                    36
+                  ],
+                  "pos": "point",
+                  "through": true
+                }
+              },
+              {
+                "feature_id": "hole_l3",
+                "kind": "hole",
+                "operation": "cut",
+                "parameters": {
+                  "axis": "X",
+                  "diameter": 10,
+                  "point": [
+                    -22,
+                    0,
+                    24
+                  ],
+                  "pos": "point",
+                  "through": true
+                }
+              },
+              {
+                "feature_id": "hole_r1",
+                "kind": "hole",
+                "operation": "cut",
+                "parameters": {
+                  "axis": "X",
+                  "diameter": 10,
+                  "point": [
+                    22,
+                    0,
+                    48
+                  ],
+                  "pos": "point",
+                  "through": true
+                }
+              }
+            ],
+            "through_hole_mesh_checks": [
+              {
+                "feature_id": "hole_l1",
+                "axis": "X",
+                "center_mm": [
+                  -22.0,
+                  0.0,
+                  48.0
+                ],
+                "status": "verified_open",
+                "axis_surface_crossings": 0,
+                "surrounding_surface_crossings": [
+                  4,
+                  4,
+                  4,
+                  4
+                ],
+                "ring_supported": [
+                  true,
+                  true,
+                  true,
+                  true
+                ],
+                "method": "axis ray against local triangle mesh"
+              },
+              {
+                "feature_id": "hole_l2",
+                "axis": "X",
+                "center_mm": [
+                  -22.0,
+                  0.0,
+                  36.0
+                ],
+                "status": "verified_open",
+                "axis_surface_crossings": 0,
+                "surrounding_surface_crossings": [
+                  4,
+                  4,
+                  4,
+                  4
+                ],
+                "ring_supported": [
+                  true,
+                  true,
+                  true,
+                  true
+                ],
+                "method": "axis ray against local triangle mesh"
+              },
+              {
+                "feature_id": "hole_l3",
+                "axis": "X",
+                "center_mm": [
+                  -22.0,
+                  0.0,
+                  24.0
+                ],
+                "status": "verified_open",
+                "axis_surface_crossings": 0,
+                "surrounding_surface_crossings": [
+                  4,
+                  4,
+                  4,
+                  4
+                ],
+                "ring_supported": [
+                  true,
+                  true,
+                  true,
+                  true
+                ],
+                "method": "axis ray against local triangle mesh"
+              },
+              {
+                "feature_id": "hole_r1",
+                "axis": "X",
+                "center_mm": [
+                  22.0,
+                  0.0,
+                  48.0
+                ],
+                "status": "verified_open",
+                "axis_surface_crossings": 0,
+                "surrounding_surface_crossings": [
+                  4,
+                  4,
+                  4,
+                  4
+                ],
+                "ring_supported": [
+                  true,
+                  true,
+                  true,
+                  true
+                ],
+                "method": "axis ray against local triangle mesh"
+              }
+            ],
+            "hole_visibility": "requires_multimodal_view_review",
+            "through_hole_result": "measured_for_point_holes_only"
+          },
+          "warnings": [
+            {
+              "code": "CATIA_TRANSLATOR_NOTE",
+              "feature_id": null,
+              "kind": null,
+              "message": "已合并 1 个重复切除(同一位置同一尺寸被描述了两遍, 例如零件库件自带中心孔 + 描述里又写了「中心孔直径x」)。",
+              "index": 0
+            }
+          ],
+          "catia_executed": false,
+          "next_step_hint": "当前预览已展示，作为逐特征建模进度。若还有几何特征未完成，只追加下一个特征并刷新预览；全部特征完成后再做最终多视图复核。"
+        }
+      },
+      "result_summary": "valid"
+    },
+    {
+      "phase": "agent_loop",
+      "tool": "cad_add_feature",
+      "arguments": {
+        "feature": {
+          "id": "hole_r2",
+          "kind": "hole",
+          "name": "右壁孔2",
+          "operation": "cut",
+          "parameters": {
+            "axis": "X",
+            "diameter": 10,
+            "point": [
+              22,
+              0,
+              36
+            ],
+            "pos": "point",
+            "through": true
+          },
+          "sources": {
+            "axis": {
+              "evidence": "孔轴穿过壁厚，与两壁分开方向（X）平行",
+              "type": "derived"
+            },
+            "diameter": {
+              "evidence": "与左壁孔同径 10mm",
+              "type": "derived"
+            },
+            "point": {
+              "evidence": "右壁中部孔位，与左壁孔同高",
+              "type": "derived"
+            },
+            "pos": {
+              "evidence": "指定点定位",
+              "type": "derived"
+            },
+            "through": {
+              "evidence": "孔贯通壁厚",
+              "type": "derived"
+            }
+          }
+        }
+      },
+      "result": {
+        "state": "valid",
+        "revision": 8,
+        "geometry_fingerprint": "{\"coordinate_system\":{\"axes\":[\"X\",\"Y\",\"Z\"],\"handedness\":\"right\",\"origin\":[0,0,0],\"type\":\"global_cartesian\"},\"features\":[{\"geometry\":\"{\\\"kind\\\":\\\"box\\\",\\\"operation\\\":\\\"add\\\",\\\"parameters\\\":{\\\"center\\\":[0,0,6],\\\"height\\\":12,\\\"length\\\":60,\\\"width\\\":40}}\",\"id\":\"base\"},{\"geometry\":\"{\\\"kind\\\":\\\"box\\\",\\\"operation\\\":\\\"add\\\",\\\"parameters\\\":{\\\"center\\\":[-22,0,36],\\\"height\\\":48,\\\"length\\\":16,\\\"width\\\":40}}\",\"id\":\"wall_left\"},{\"geometry\":\"{\\\"kind\\\":\\\"box\\\",\\\"operation\\\":\\\"add\\\",\\\"parameters\\\":{\\\"center\\\":[22,0,36],\\\"height\\\":48,\\\"length\\\":16,\\\"width\\\":40}}\",\"id\":\"wall_right\"},{\"geometry\":\"{\\\"kind\\\":\\\"hole\\\",\\\"operation\\\":\\\"cut\\\",\\\"parameters\\\":{\\\"axis\\\":\\\"X\\\",\\\"diameter\\\":10,\\\"point\\\":[-22,0,48],\\\"pos\\\":\\\"point\\\",\\\"through\\\":true}}\",\"id\":\"hole_l1\"},{\"geometry\":\"{\\\"kind\\\":\\\"hole\\\",\\\"operation\\\":\\\"cut\\\",\\\"parameters\\\":{\\\"axis\\\":\\\"X\\\",\\\"diameter\\\":10,\\\"point\\\":[-22,0,36],\\\"pos\\\":\\\"point\\\",\\\"through\\\":true}}\",\"id\":\"hole_l2\"},{\"geometry\":\"{\\\"kind\\\":\\\"hole\\\",\\\"operation\\\":\\\"cut\\\",\\\"parameters\\\":{\\\"axis\\\":\\\"X\\\",\\\"diameter\\\":10,\\\"point\\\":[-22,0,24],\\\"pos\\\":\\\"point\\\",\\\"through\\\":true}}\",\"id\":\"hole_l3\"},{\"geometry\":\"{\\\"kind\\\":\\\"hole\\\",\\\"operation\\\":\\\"cut\\\",\\\"parameters\\\":{\\\"axis\\\":\\\"X\\\",\\\"diameter\\\":10,\\\"point\\\":[22,0,48],\\\"pos\\\":\\\"point\\\",\\\"through\\\":true}}\",\"id\":\"hole_r1\"},{\"geometry\":\"{\\\"kind\\\":\\\"hole\\\",\\\"operation\\\":\\\"cut\\\",\\\"parameters\\\":{\\\"axis\\\":\\\"X\\\",\\\"diameter\\\":10,\\\"point\\\":[22,0,36],\\\"pos\\\":\\\"point\\\",\\\"through\\\":true}}\",\"id\":\"hole_r2\"}],\"units\":{\"angle\":\"deg\",\"length\":\"mm\"}}",
+        "feature_count": 8,
+        "validation": {
+          "valid": true,
+          "state": "valid",
+          "errors": [],
+          "confirmations": [],
+          "support": [
+            {
+              "feature_id": "base",
+              "kind": "box",
+              "status": "exact",
+              "reason": "矩形草图加凸台；当前 CATIA 映射仅支持 Z 轴拉伸。"
+            },
+            {
+              "feature_id": "wall_left",
+              "kind": "box",
+              "status": "exact",
+              "reason": "矩形草图加凸台；当前 CATIA 映射仅支持 Z 轴拉伸。"
+            },
+            {
+              "feature_id": "wall_right",
+              "kind": "box",
+              "status": "exact",
+              "reason": "矩形草图加凸台；当前 CATIA 映射仅支持 Z 轴拉伸。"
+            },
+            {
+              "feature_id": "hole_l1",
+              "kind": "hole",
+              "status": "exact",
+              "reason": "圆形凹槽；through=true 时按当前零件包围盒生成贯穿深度。"
+            },
+            {
+              "feature_id": "hole_l2",
+              "kind": "hole",
+              "status": "exact",
+              "reason": "圆形凹槽；through=true 时按当前零件包围盒生成贯穿深度。"
+            },
+            {
+              "feature_id": "hole_l3",
+              "kind": "hole",
+              "status": "exact",
+              "reason": "圆形凹槽；through=true 时按当前零件包围盒生成贯穿深度。"
+            },
+            {
+              "feature_id": "hole_r1",
+              "kind": "hole",
+              "status": "exact",
+              "reason": "圆形凹槽；through=true 时按当前零件包围盒生成贯穿深度。"
+            },
+            {
+              "feature_id": "hole_r2",
+              "kind": "hole",
+              "status": "exact",
+              "reason": "圆形凹槽；through=true 时按当前零件包围盒生成贯穿深度。"
+            }
+          ],
+          "warnings": [],
+          "schema_version": "1.0"
+        },
+        "preview": {
+          "state": "previewed",
+          "geometry_fingerprint": "{\"coordinate_system\":{\"axes\":[\"X\",\"Y\",\"Z\"],\"handedness\":\"right\",\"origin\":[0,0,0],\"type\":\"global_cartesian\"},\"features\":[{\"geometry\":\"{\\\"kind\\\":\\\"box\\\",\\\"operation\\\":\\\"add\\\",\\\"parameters\\\":{\\\"center\\\":[0,0,6],\\\"height\\\":12,\\\"length\\\":60,\\\"width\\\":40}}\",\"id\":\"base\"},{\"geometry\":\"{\\\"kind\\\":\\\"box\\\",\\\"operation\\\":\\\"add\\\",\\\"parameters\\\":{\\\"center\\\":[-22,0,36],\\\"height\\\":48,\\\"length\\\":16,\\\"width\\\":40}}\",\"id\":\"wall_left\"},{\"geometry\":\"{\\\"kind\\\":\\\"box\\\",\\\"operation\\\":\\\"add\\\",\\\"parameters\\\":{\\\"center\\\":[22,0,36],\\\"height\\\":48,\\\"length\\\":16,\\\"width\\\":40}}\",\"id\":\"wall_right\"},{\"geometry\":\"{\\\"kind\\\":\\\"hole\\\",\\\"operation\\\":\\\"cut\\\",\\\"parameters\\\":{\\\"axis\\\":\\\"X\\\",\\\"diameter\\\":10,\\\"point\\\":[-22,0,48],\\\"pos\\\":\\\"point\\\",\\\"through\\\":true}}\",\"id\":\"hole_l1\"},{\"geometry\":\"{\\\"kind\\\":\\\"hole\\\",\\\"operation\\\":\\\"cut\\\",\\\"parameters\\\":{\\\"axis\\\":\\\"X\\\",\\\"diameter\\\":10,\\\"point\\\":[-22,0,36],\\\"pos\\\":\\\"point\\\",\\\"through\\\":true}}\",\"id\":\"hole_l2\"},{\"geometry\":\"{\\\"kind\\\":\\\"hole\\\",\\\"operation\\\":\\\"cut\\\",\\\"parameters\\\":{\\\"axis\\\":\\\"X\\\",\\\"diameter\\\":10,\\\"point\\\":[-22,0,24],\\\"pos\\\":\\\"point\\\",\\\"through\\\":true}}\",\"id\":\"hole_l3\"},{\"geometry\":\"{\\\"kind\\\":\\\"hole\\\",\\\"operation\\\":\\\"cut\\\",\\\"parameters\\\":{\\\"axis\\\":\\\"X\\\",\\\"diameter\\\":10,\\\"point\\\":[22,0,48],\\\"pos\\\":\\\"point\\\",\\\"through\\\":true}}\",\"id\":\"hole_r1\"},{\"geometry\":\"{\\\"kind\\\":\\\"hole\\\",\\\"operation\\\":\\\"cut\\\",\\\"parameters\\\":{\\\"axis\\\":\\\"X\\\",\\\"diameter\\\":10,\\\"point\\\":[22,0,36],\\\"pos\\\":\\\"point\\\",\\\"through\\\":true}}\",\"id\":\"hole_r2\"}],\"units\":{\"angle\":\"deg\",\"length\":\"mm\"}}",
+          "preview_image": "candidate-preview.png",
+          "view_set": "iso",
+          "views": [
+            "iso"
+          ],
+          "dimensions": {
+            "unit": "mm",
+            "bbox": [
+              -30.0,
+              -20.0,
+              0.0,
+              30.0,
+              20.0,
+              60.0
+            ],
+            "size": [
+              60.0,
+              40.0,
+              60.0
+            ],
+            "volume_mm3": 86098.89527835987,
+            "surface_area_mm2": 18022.692593880856,
+            "triangles": 1336,
+            "feature_count": 8
+          },
+          "local_geometry_checks": {
+            "state": "passed",
+            "source": "AI Modeler local mesh kernel",
+            "face_count": 791,
+            "bbox_size_mm": [
+              60.0,
+              40.0,
+              60.0
+            ],
+            "bbox_ratios_from_mesh": {
+              "front_width_height": 1.0,
+              "depth_height": 0.6666666666666666,
+              "top_width_depth": 1.5
+            },
+            "feature_count_from_plan": 8,
+            "feature_ids_from_plan": [
+              "base",
+              "wall_left",
+              "wall_right",
+              "hole_l1",
+              "hole_l2",
+              "hole_l3",
+              "hole_r1",
+              "hole_r2"
+            ],
+            "nonfinite_face_count": 0,
+            "degenerate_face_count": 0,
+            "hole_features_from_plan": [
+              {
+                "feature_id": "hole_l1",
+                "kind": "hole",
+                "operation": "cut",
+                "parameters": {
+                  "axis": "X",
+                  "diameter": 10,
+                  "point": [
+                    -22,
+                    0,
+                    48
+                  ],
+                  "pos": "point",
+                  "through": true
+                }
+              },
+              {
+                "feature_id": "hole_l2",
+                "kind": "hole",
+                "operation": "cut",
+                "parameters": {
+                  "axis": "X",
+                  "diameter": 10,
+                  "point": [
+                    -22,
+                    0,
+                    36
+                  ],
+                  "pos": "point",
+                  "through": true
+                }
+              },
+              {
+                "feature_id": "hole_l3",
+                "kind": "hole",
+                "operation": "cut",
+                "parameters": {
+                  "axis": "X",
+                  "diameter": 10,
+                  "point": [
+                    -22,
+                    0,
+                    24
+                  ],
+                  "pos": "point",
+                  "through": true
+                }
+              },
+              {
+                "feature_id": "hole_r1",
+                "kind": "hole",
+                "operation": "cut",
+                "parameters": {
+                  "axis": "X",
+                  "diameter": 10,
+                  "point": [
+                    22,
+                    0,
+                    48
+                  ],
+                  "pos": "point",
+                  "through": true
+                }
+              },
+              {
+                "feature_id": "hole_r2",
+                "kind": "hole",
+                "operation": "cut",
+                "parameters": {
+                  "axis": "X",
+                  "diameter": 10,
+                  "point": [
+                    22,
+                    0,
+                    36
+                  ],
+                  "pos": "point",
+                  "through": true
+                }
+              }
+            ],
+            "through_hole_mesh_checks": [
+              {
+                "feature_id": "hole_l1",
+                "axis": "X",
+                "center_mm": [
+                  -22.0,
+                  0.0,
+                  48.0
+                ],
+                "status": "verified_open",
+                "axis_surface_crossings": 0,
+                "surrounding_surface_crossings": [
+                  4,
+                  4,
+                  4,
+                  4
+                ],
+                "ring_supported": [
+                  true,
+                  true,
+                  true,
+                  true
+                ],
+                "method": "axis ray against local triangle mesh"
+              },
+              {
+                "feature_id": "hole_l2",
+                "axis": "X",
+                "center_mm": [
+                  -22.0,
+                  0.0,
+                  36.0
+                ],
+                "status": "verified_open",
+                "axis_surface_crossings": 0,
+                "surrounding_surface_crossings": [
+                  4,
+                  4,
+                  4,
+                  4
+                ],
+                "ring_supported": [
+                  true,
+                  true,
+                  true,
+                  true
+                ],
+                "method": "axis ray against local triangle mesh"
+              },
+              {
+                "feature_id": "hole_l3",
+                "axis": "X",
+                "center_mm": [
+                  -22.0,
+                  0.0,
+                  24.0
+                ],
+                "status": "verified_open",
+                "axis_surface_crossings": 0,
+                "surrounding_surface_crossings": [
+                  4,
+                  4,
+                  4,
+                  4
+                ],
+                "ring_supported": [
+                  true,
+                  true,
+                  true,
+                  true
+                ],
+                "method": "axis ray against local triangle mesh"
+              },
+              {
+                "feature_id": "hole_r1",
+                "axis": "X",
+                "center_mm": [
+                  22.0,
+                  0.0,
+                  48.0
+                ],
+                "status": "verified_open",
+                "axis_surface_crossings": 0,
+                "surrounding_surface_crossings": [
+                  4,
+                  4,
+                  4,
+                  4
+                ],
+                "ring_supported": [
+                  true,
+                  true,
+                  true,
+                  true
+                ],
+                "method": "axis ray against local triangle mesh"
+              },
+              {
+                "feature_id": "hole_r2",
+                "axis": "X",
+                "center_mm": [
+                  22.0,
+                  0.0,
+                  36.0
+                ],
+                "status": "verified_open",
+                "axis_surface_crossings": 0,
+                "surrounding_surface_crossings": [
+                  4,
+                  4,
+                  4,
+                  4
+                ],
+                "ring_supported": [
+                  true,
+                  true,
+                  true,
+                  true
+                ],
+                "method": "axis ray against local triangle mesh"
+              }
+            ],
+            "hole_visibility": "requires_multimodal_view_review",
+            "through_hole_result": "measured_for_point_holes_only"
+          },
+          "warnings": [
+            {
+              "code": "CATIA_TRANSLATOR_NOTE",
+              "feature_id": null,
+              "kind": null,
+              "message": "已合并 2 个重复切除(同一位置同一尺寸被描述了两遍, 例如零件库件自带中心孔 + 描述里又写了「中心孔直径x」)。",
+              "index": 0
+            }
+          ],
+          "catia_executed": false,
+          "next_step_hint": "当前预览已展示，作为逐特征建模进度。若还有几何特征未完成，只追加下一个特征并刷新预览；全部特征完成后再做最终多视图复核。"
+        }
+      },
+      "result_summary": "valid"
+    },
+    {
+      "phase": "agent_loop",
+      "tool": "cad_add_feature",
+      "arguments": {
+        "feature": {
+          "id": "hole_r3",
+          "kind": "hole",
+          "name": "右壁孔3",
+          "operation": "cut",
+          "parameters": {
+            "axis": "X",
+            "diameter": 10,
+            "point": [
+              22,
+              0,
+              24
+            ],
+            "pos": "point",
+            "through": true
+          },
+          "sources": {
+            "axis": {
+              "evidence": "孔轴穿过壁厚，与两壁分开方向（X）平行",
+              "type": "derived"
+            },
+            "diameter": {
+              "evidence": "与左壁孔同径 10mm",
+              "type": "derived"
+            },
+            "point": {
+              "evidence": "右壁下部孔位，与左壁孔同高",
+              "type": "derived"
+            },
+            "pos": {
+              "evidence": "指定点定位",
+              "type": "derived"
+            },
+            "through": {
+              "evidence": "孔贯通壁厚",
+              "type": "derived"
+            }
+          }
+        }
+      },
+      "result": {
+        "state": "valid",
+        "revision": 9,
+        "geometry_fingerprint": "{\"coordinate_system\":{\"axes\":[\"X\",\"Y\",\"Z\"],\"handedness\":\"right\",\"origin\":[0,0,0],\"type\":\"global_cartesian\"},\"features\":[{\"geometry\":\"{\\\"kind\\\":\\\"box\\\",\\\"operation\\\":\\\"add\\\",\\\"parameters\\\":{\\\"center\\\":[0,0,6],\\\"height\\\":12,\\\"length\\\":60,\\\"width\\\":40}}\",\"id\":\"base\"},{\"geometry\":\"{\\\"kind\\\":\\\"box\\\",\\\"operation\\\":\\\"add\\\",\\\"parameters\\\":{\\\"center\\\":[-22,0,36],\\\"height\\\":48,\\\"length\\\":16,\\\"width\\\":40}}\",\"id\":\"wall_left\"},{\"geometry\":\"{\\\"kind\\\":\\\"box\\\",\\\"operation\\\":\\\"add\\\",\\\"parameters\\\":{\\\"center\\\":[22,0,36],\\\"height\\\":48,\\\"length\\\":16,\\\"width\\\":40}}\",\"id\":\"wall_right\"},{\"geometry\":\"{\\\"kind\\\":\\\"hole\\\",\\\"operation\\\":\\\"cut\\\",\\\"parameters\\\":{\\\"axis\\\":\\\"X\\\",\\\"diameter\\\":10,\\\"point\\\":[-22,0,48],\\\"pos\\\":\\\"point\\\",\\\"through\\\":true}}\",\"id\":\"hole_l1\"},{\"geometry\":\"{\\\"kind\\\":\\\"hole\\\",\\\"operation\\\":\\\"cut\\\",\\\"parameters\\\":{\\\"axis\\\":\\\"X\\\",\\\"diameter\\\":10,\\\"point\\\":[-22,0,36],\\\"pos\\\":\\\"point\\\",\\\"through\\\":true}}\",\"id\":\"hole_l2\"},{\"geometry\":\"{\\\"kind\\\":\\\"hole\\\",\\\"operation\\\":\\\"cut\\\",\\\"parameters\\\":{\\\"axis\\\":\\\"X\\\",\\\"diameter\\\":10,\\\"point\\\":[-22,0,24],\\\"pos\\\":\\\"point\\\",\\\"through\\\":true}}\",\"id\":\"hole_l3\"},{\"geometry\":\"{\\\"kind\\\":\\\"hole\\\",\\\"operation\\\":\\\"cut\\\",\\\"parameters\\\":{\\\"axis\\\":\\\"X\\\",\\\"diameter\\\":10,\\\"point\\\":[22,0,48],\\\"pos\\\":\\\"point\\\",\\\"through\\\":true}}\",\"id\":\"hole_r1\"},{\"geometry\":\"{\\\"kind\\\":\\\"hole\\\",\\\"operation\\\":\\\"cut\\\",\\\"parameters\\\":{\\\"axis\\\":\\\"X\\\",\\\"diameter\\\":10,\\\"point\\\":[22,0,36],\\\"pos\\\":\\\"point\\\",\\\"through\\\":true}}\",\"id\":\"hole_r2\"},{\"geometry\":\"{\\\"kind\\\":\\\"hole\\\",\\\"operation\\\":\\\"cut\\\",\\\"parameters\\\":{\\\"axis\\\":\\\"X\\\",\\\"diameter\\\":10,\\\"point\\\":[22,0,24],\\\"pos\\\":\\\"point\\\",\\\"through\\\":true}}\",\"id\":\"hole_r3\"}],\"units\":{\"angle\":\"deg\",\"length\":\"mm\"}}",
+        "feature_count": 9,
+        "validation": {
+          "valid": true,
+          "state": "valid",
+          "errors": [],
+          "confirmations": [],
+          "support": [
+            {
+              "feature_id": "base",
+              "kind": "box",
+              "status": "exact",
+              "reason": "矩形草图加凸台；当前 CATIA 映射仅支持 Z 轴拉伸。"
+            },
+            {
+              "feature_id": "wall_left",
+              "kind": "box",
+              "status": "exact",
+              "reason": "矩形草图加凸台；当前 CATIA 映射仅支持 Z 轴拉伸。"
+            },
+            {
+              "feature_id": "wall_right",
+              "kind": "box",
+              "status": "exact",
+              "reason": "矩形草图加凸台；当前 CATIA 映射仅支持 Z 轴拉伸。"
+            },
+            {
+              "feature_id": "hole_l1",
+              "kind": "hole",
+              "status": "exact",
+              "reason": "圆形凹槽；through=true 时按当前零件包围盒生成贯穿深度。"
+            },
+            {
+              "feature_id": "hole_l2",
+              "kind": "hole",
+              "status": "exact",
+              "reason": "圆形凹槽；through=true 时按当前零件包围盒生成贯穿深度。"
+            },
+            {
+              "feature_id": "hole_l3",
+              "kind": "hole",
+              "status": "exact",
+              "reason": "圆形凹槽；through=true 时按当前零件包围盒生成贯穿深度。"
+            },
+            {
+              "feature_id": "hole_r1",
+              "kind": "hole",
+              "status": "exact",
+              "reason": "圆形凹槽；through=true 时按当前零件包围盒生成贯穿深度。"
+            },
+            {
+              "feature_id": "hole_r2",
+              "kind": "hole",
+              "status": "exact",
+              "reason": "圆形凹槽；through=true 时按当前零件包围盒生成贯穿深度。"
+            },
+            {
+              "feature_id": "hole_r3",
+              "kind": "hole",
+              "status": "exact",
+              "reason": "圆形凹槽；through=true 时按当前零件包围盒生成贯穿深度。"
+            }
+          ],
+          "warnings": [],
+          "schema_version": "1.0"
+        },
+        "preview": {
+          "state": "previewed",
+          "geometry_fingerprint": "{\"coordinate_system\":{\"axes\":[\"X\",\"Y\",\"Z\"],\"handedness\":\"right\",\"origin\":[0,0,0],\"type\":\"global_cartesian\"},\"features\":[{\"geometry\":\"{\\\"kind\\\":\\\"box\\\",\\\"operation\\\":\\\"add\\\",\\\"parameters\\\":{\\\"center\\\":[0,0,6],\\\"height\\\":12,\\\"length\\\":60,\\\"width\\\":40}}\",\"id\":\"base\"},{\"geometry\":\"{\\\"kind\\\":\\\"box\\\",\\\"operation\\\":\\\"add\\\",\\\"parameters\\\":{\\\"center\\\":[-22,0,36],\\\"height\\\":48,\\\"length\\\":16,\\\"width\\\":40}}\",\"id\":\"wall_left\"},{\"geometry\":\"{\\\"kind\\\":\\\"box\\\",\\\"operation\\\":\\\"add\\\",\\\"parameters\\\":{\\\"center\\\":[22,0,36],\\\"height\\\":48,\\\"length\\\":16,\\\"width\\\":40}}\",\"id\":\"wall_right\"},{\"geometry\":\"{\\\"kind\\\":\\\"hole\\\",\\\"operation\\\":\\\"cut\\\",\\\"parameters\\\":{\\\"axis\\\":\\\"X\\\",\\\"diameter\\\":10,\\\"point\\\":[-22,0,48],\\\"pos\\\":\\\"point\\\",\\\"through\\\":true}}\",\"id\":\"hole_l1\"},{\"geometry\":\"{\\\"kind\\\":\\\"hole\\\",\\\"operation\\\":\\\"cut\\\",\\\"parameters\\\":{\\\"axis\\\":\\\"X\\\",\\\"diameter\\\":10,\\\"point\\\":[-22,0,36],\\\"pos\\\":\\\"point\\\",\\\"through\\\":true}}\",\"id\":\"hole_l2\"},{\"geometry\":\"{\\\"kind\\\":\\\"hole\\\",\\\"operation\\\":\\\"cut\\\",\\\"parameters\\\":{\\\"axis\\\":\\\"X\\\",\\\"diameter\\\":10,\\\"point\\\":[-22,0,24],\\\"pos\\\":\\\"point\\\",\\\"through\\\":true}}\",\"id\":\"hole_l3\"},{\"geometry\":\"{\\\"kind\\\":\\\"hole\\\",\\\"operation\\\":\\\"cut\\\",\\\"parameters\\\":{\\\"axis\\\":\\\"X\\\",\\\"diameter\\\":10,\\\"point\\\":[22,0,48],\\\"pos\\\":\\\"point\\\",\\\"through\\\":true}}\",\"id\":\"hole_r1\"},{\"geometry\":\"{\\\"kind\\\":\\\"hole\\\",\\\"operation\\\":\\\"cut\\\",\\\"parameters\\\":{\\\"axis\\\":\\\"X\\\",\\\"diameter\\\":10,\\\"point\\\":[22,0,36],\\\"pos\\\":\\\"point\\\",\\\"through\\\":true}}\",\"id\":\"hole_r2\"},{\"geometry\":\"{\\\"kind\\\":\\\"hole\\\",\\\"operation\\\":\\\"cut\\\",\\\"parameters\\\":{\\\"axis\\\":\\\"X\\\",\\\"diameter\\\":10,\\\"point\\\":[22,0,24],\\\"pos\\\":\\\"point\\\",\\\"through\\\":true}}\",\"id\":\"hole_r3\"}],\"units\":{\"angle\":\"deg\",\"length\":\"mm\"}}",
+          "preview_image": "candidate-preview.png",
+          "view_set": "iso",
+          "views": [
+            "iso"
+          ],
+          "dimensions": {
+            "unit": "mm",
+            "bbox": [
+              -30.0,
+              -20.0,
+              0.0,
+              30.0,
+              20.0,
+              60.0
+            ],
+            "size": [
+              60.0,
+              40.0,
+              60.0
+            ],
+            "volume_mm3": 87755.33716701622,
+            "surface_area_mm2": 17020.251437630912,
+            "triangles": 1212,
+            "feature_count": 9
+          },
+          "local_geometry_checks": {
+            "state": "passed",
+            "source": "AI Modeler local mesh kernel",
+            "face_count": 729,
+            "bbox_size_mm": [
+              60.0,
+              40.0,
+              60.0
+            ],
+            "bbox_ratios_from_mesh": {
+              "front_width_height": 1.0,
+              "depth_height": 0.6666666666666666,
+              "top_width_depth": 1.5
+            },
+            "feature_count_from_plan": 9,
+            "feature_ids_from_plan": [
+              "base",
+              "wall_left",
+              "wall_right",
+              "hole_l1",
+              "hole_l2",
+              "hole_l3",
+              "hole_r1",
+              "hole_r2",
+              "hole_r3"
+            ],
+            "nonfinite_face_count": 0,
+            "degenerate_face_count": 0,
+            "hole_features_from_plan": [
+              {
+                "feature_id": "hole_l1",
+                "kind": "hole",
+                "operation": "cut",
+                "parameters": {
+                  "axis": "X",
+                  "diameter": 10,
+                  "point": [
+                    -22,
+                    0,
+                    48
+                  ],
+                  "pos": "point",
+                  "through": true
+                }
+              },
+              {
+                "feature_id": "hole_l2",
+                "kind": "hole",
+                "operation": "cut",
+                "parameters": {
+                  "axis": "X",
+                  "diameter": 10,
+                  "point": [
+                    -22,
+                    0,
+                    36
+                  ],
+                  "pos": "point",
+                  "through": true
+                }
+              },
+              {
+                "feature_id": "hole_l3",
+                "kind": "hole",
+                "operation": "cut",
+                "parameters": {
+                  "axis": "X",
+                  "diameter": 10,
+                  "point": [
+                    -22,
+                    0,
+                    24
+                  ],
+                  "pos": "point",
+                  "through": true
+                }
+              },
+              {
+                "feature_id": "hole_r1",
+                "kind": "hole",
+                "operation": "cut",
+                "parameters": {
+                  "axis": "X",
+                  "diameter": 10,
+                  "point": [
+                    22,
+                    0,
+                    48
+                  ],
+                  "pos": "point",
+                  "through": true
+                }
+              },
+              {
+                "feature_id": "hole_r2",
+                "kind": "hole",
+                "operation": "cut",
+                "parameters": {
+                  "axis": "X",
+                  "diameter": 10,
+                  "point": [
+                    22,
+                    0,
+                    36
+                  ],
+                  "pos": "point",
+                  "through": true
+                }
+              },
+              {
+                "feature_id": "hole_r3",
+                "kind": "hole",
+                "operation": "cut",
+                "parameters": {
+                  "axis": "X",
+                  "diameter": 10,
+                  "point": [
+                    22,
+                    0,
+                    24
+                  ],
+                  "pos": "point",
+                  "through": true
+                }
+              }
+            ],
+            "through_hole_mesh_checks": [
+              {
+                "feature_id": "hole_l1",
+                "axis": "X",
+                "center_mm": [
+                  -22.0,
+                  0.0,
+                  48.0
+                ],
+                "status": "verified_open",
+                "axis_surface_crossings": 0,
+                "surrounding_surface_crossings": [
+                  4,
+                  4,
+                  4,
+                  4
+                ],
+                "ring_supported": [
+                  true,
+                  true,
+                  true,
+                  true
+                ],
+                "method": "axis ray against local triangle mesh"
+              },
+              {
+                "feature_id": "hole_l2",
+                "axis": "X",
+                "center_mm": [
+                  -22.0,
+                  0.0,
+                  36.0
+                ],
+                "status": "verified_open",
+                "axis_surface_crossings": 0,
+                "surrounding_surface_crossings": [
+                  4,
+                  4,
+                  4,
+                  4
+                ],
+                "ring_supported": [
+                  true,
+                  true,
+                  true,
+                  true
+                ],
+                "method": "axis ray against local triangle mesh"
+              },
+              {
+                "feature_id": "hole_l3",
+                "axis": "X",
+                "center_mm": [
+                  -22.0,
+                  0.0,
+                  24.0
+                ],
+                "status": "verified_open",
+                "axis_surface_crossings": 0,
+                "surrounding_surface_crossings": [
+                  4,
+                  4,
+                  4,
+                  4
+                ],
+                "ring_supported": [
+                  true,
+                  true,
+                  true,
+                  true
+                ],
+                "method": "axis ray against local triangle mesh"
+              },
+              {
+                "feature_id": "hole_r1",
+                "axis": "X",
+                "center_mm": [
+                  22.0,
+                  0.0,
+                  48.0
+                ],
+                "status": "verified_open",
+                "axis_surface_crossings": 0,
+                "surrounding_surface_crossings": [
+                  4,
+                  4,
+                  4,
+                  4
+                ],
+                "ring_supported": [
+                  true,
+                  true,
+                  true,
+                  true
+                ],
+                "method": "axis ray against local triangle mesh"
+              },
+              {
+                "feature_id": "hole_r2",
+                "axis": "X",
+                "center_mm": [
+                  22.0,
+                  0.0,
+                  36.0
+                ],
+                "status": "verified_open",
+                "axis_surface_crossings": 0,
+                "surrounding_surface_crossings": [
+                  4,
+                  4,
+                  4,
+                  4
+                ],
+                "ring_supported": [
+                  true,
+                  true,
+                  true,
+                  true
+                ],
+                "method": "axis ray against local triangle mesh"
+              },
+              {
+                "feature_id": "hole_r3",
+                "axis": "X",
+                "center_mm": [
+                  22.0,
+                  0.0,
+                  24.0
+                ],
+                "status": "verified_open",
+                "axis_surface_crossings": 0,
+                "surrounding_surface_crossings": [
+                  4,
+                  4,
+                  4,
+                  4
+                ],
+                "ring_supported": [
+                  true,
+                  true,
+                  true,
+                  true
+                ],
+                "method": "axis ray against local triangle mesh"
+              }
+            ],
+            "hole_visibility": "requires_multimodal_view_review",
+            "through_hole_result": "measured_for_point_holes_only"
+          },
+          "warnings": [
+            {
+              "code": "CATIA_TRANSLATOR_NOTE",
+              "feature_id": null,
+              "kind": null,
+              "message": "已合并 3 个重复切除(同一位置同一尺寸被描述了两遍, 例如零件库件自带中心孔 + 描述里又写了「中心孔直径x」)。",
+              "index": 0
+            }
+          ],
+          "catia_executed": false,
+          "next_step_hint": "当前预览已展示，作为逐特征建模进度。若还有几何特征未完成，只追加下一个特征并刷新预览；全部特征完成后再做最终多视图复核。"
+        }
+      },
+      "result_summary": "valid"
+    },
+    {
+      "phase": "agent_loop",
+      "tool": "cad_review_model",
+      "arguments": {
+        "review_type": "geometry",
+        "views": [
+          "iso",
+          "front",
+          "top"
+        ]
+      },
+      "result": {
+        "state": "tool_error",
+        "error": "cad_review_model: 用户已请求停止：已中断 DeepSeek Responses 流（中断前已接收 reasoning 0 字符 / output 258 字符）。"
+      },
+      "result_summary": "tool_error"
+    }
+  ],
+  "error": "已取消本次 AgentLoop。"
+}

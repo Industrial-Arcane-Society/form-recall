@@ -1,0 +1,1316 @@
+{
+  "plan": {
+    "schema_version": "1.0",
+    "name": "bullet_pin",
+    "source_prompt": "请根据四张参考图复刻同一工件。请自行判断各图视角，以图像比例估算未标注尺寸并将推算值标记为 image_estimate。直接建模，不要先向用户提问。每次只实施一个必要的特征操作，先建立主体，再增量添加其余特征。图像中心的坐标点或十字只有在多个视图能确认是真孔时才建孔。每个圆柱都显式设置 base，并按工具语义校核相邻特征的实际轴向起止位置，避免悬空或错位。模型成形后，至少生成 iso 与 front 两个单视图，分别将原图与当前视图做独立多模态复核；复核低于 80 时读取具体差异，只修改受影响特征并复核新版本，不要无证据地重建整棵特征树。达到 80 分并且局部几何检查通过后才可完成；若不能达到，保留候选并说明具体差异。",
+    "units": {
+      "length": "mm",
+      "angle": "deg"
+    },
+    "coordinate_system": {
+      "type": "global_cartesian",
+      "handedness": "right",
+      "axes": [
+        "X",
+        "Y",
+        "Z"
+      ],
+      "origin": [
+        0,
+        0,
+        0
+      ]
+    },
+    "features": [
+      {
+        "id": "shank_cyl",
+        "kind": "cylinder",
+        "operation": "add",
+        "name": "Shank Cylinder",
+        "parameters": {
+          "center": [
+            0,
+            0,
+            0
+          ],
+          "radius": 7,
+          "height": 25,
+          "axis": "Z",
+          "base": true
+        },
+        "sources": {
+          "radius": {
+            "type": "image_estimate",
+            "evidence": "front view shank width ~28% of head width, head visually ~22mm dia so shank ~14mm"
+          },
+          "height": {
+            "type": "image_estimate",
+            "evidence": "temporarily extend shank to overlap flange for debugging geometry union"
+          },
+          "center": {
+            "type": "user",
+            "evidence": "shank placed with base center at global origin for vertical symmetry"
+          }
+        }
+      },
+      {
+        "id": "hex_flange",
+        "kind": "cylinder",
+        "operation": "add",
+        "name": "Hexagonal Flange",
+        "parameters": {
+          "center": [
+            0,
+            0,
+            20
+          ],
+          "radius": 12,
+          "height": 4,
+          "axis": "Z",
+          "base": true,
+          "segments": 6
+        },
+        "sources": {
+          "center": {
+            "type": "derived",
+            "evidence": "flange base at top of shank (Z=20)"
+          },
+          "radius": {
+            "type": "image_estimate",
+            "evidence": "re-interpretation: top/bottom views show hexagonal flange is the widest feature, with circumradius ~12mm; head and shank fit inside"
+          },
+          "height": {
+            "type": "image_estimate",
+            "evidence": "front view flange is thin but clearly wider than head/shank, ~4mm"
+          },
+          "segments": {
+            "type": "user",
+            "evidence": "top/bottom views show six-sided polygon => hexagonal flange"
+          }
+        }
+      },
+      {
+        "id": "bullet_head",
+        "kind": "revolve",
+        "operation": "add",
+        "name": "Bullet Head Revolve",
+        "parameters": {
+          "center": [
+            0,
+            0,
+            0
+          ],
+          "axis": "Z",
+          "angle": 360,
+          "profile": [
+            [
+              10,
+              24
+            ],
+            [
+              9.27,
+              30
+            ],
+            [
+              6.93,
+              36
+            ],
+            [
+              2.35,
+              42
+            ],
+            [
+              0,
+              44
+            ]
+          ]
+        },
+        "sources": {
+          "center": {
+            "type": "user",
+            "evidence": "revolve axis at global Z-axis for vertical rotational symmetry"
+          },
+          "axis": {
+            "type": "user",
+            "evidence": "model is vertical around Z-axis"
+          },
+          "angle": {
+            "type": "user",
+            "evidence": "full 360-degree revolve for axisymmetric head"
+          },
+          "profile": {
+            "type": "image_estimate",
+            "evidence": "re-interpretation: head is narrower than hex flange but wider than shank; tangent ogive nose with base radius ~10mm and length ~20mm sits on top of flange (Z=24)"
+          }
+        }
+      }
+    ],
+    "pending_questions": []
+  },
+  "revision": 18,
+  "last_preview": {
+    "state": "previewed",
+    "validation": {
+      "valid": true,
+      "state": "valid",
+      "errors": [],
+      "confirmations": [],
+      "support": [
+        {
+          "feature_id": "shank_cyl",
+          "kind": "cylinder",
+          "status": "exact",
+          "reason": "center 默认表示轴向底面中心(base=true)，height 沿 axis 正向拉伸；base=false 时 center 表示几何中点。等半径时为圆草图加凸台；圆锥台会近似，非 Z 轴圆锥台暂不支持。"
+        },
+        {
+          "feature_id": "hex_flange",
+          "kind": "cylinder",
+          "status": "exact",
+          "reason": "center 默认表示轴向底面中心(base=true)，height 沿 axis 正向拉伸；base=false 时 center 表示几何中点。等半径时为圆草图加凸台；圆锥台会近似，非 Z 轴圆锥台暂不支持。"
+        },
+        {
+          "feature_id": "bullet_head",
+          "kind": "revolve",
+          "status": "approximate",
+          "reason": "当前用多层圆盘近似回转体。"
+        }
+      ],
+      "warnings": [
+        {
+          "code": "CATIA_APPROXIMATION",
+          "feature_id": "bullet_head",
+          "kind": "revolve",
+          "message": "当前用多层圆盘近似回转体。"
+        }
+      ],
+      "schema_version": "1.0"
+    },
+    "catia_executed": false,
+    "dimensions": {
+      "unit": "mm",
+      "bbox": [
+        -12.0,
+        -12.0,
+        20.0,
+        12.0,
+        12.0,
+        44.0
+      ],
+      "size": [
+        24.0,
+        24.0,
+        24.0
+      ],
+      "volume_mm3": 11703.129941040723,
+      "surface_area_mm2": 2065.2152705293815,
+      "triangles": 3918,
+      "feature_count": 3
+    },
+    "catia_operations": [
+      {
+        "index": 1,
+        "kind": "circle_pad",
+        "plane": "Z",
+        "center": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "profile": [],
+        "dimensions": {
+          "l": 0.0,
+          "w": 0.0,
+          "r": 7.0,
+          "h": 25.0,
+          "depth": 0.0
+        },
+        "name": "Shank Cylinder",
+        "note": "圆柱 ⌀14 × 25 mm"
+      },
+      {
+        "index": 2,
+        "kind": "circle_pad",
+        "plane": "Z",
+        "center": [
+          0.0,
+          0.0,
+          20.0
+        ],
+        "profile": [],
+        "dimensions": {
+          "l": 0.0,
+          "w": 0.0,
+          "r": 12.0,
+          "h": 4.0,
+          "depth": 0.0
+        },
+        "name": "Hexagonal Flange",
+        "note": "圆柱 ⌀24 × 4 mm"
+      },
+      {
+        "index": 3,
+        "kind": "circle_pad",
+        "plane": "XY",
+        "center": [
+          0.0,
+          0.0,
+          24.0
+        ],
+        "profile": [],
+        "dimensions": {
+          "l": 0.0,
+          "w": 0.0,
+          "r": 9.949305555555556,
+          "h": 0.8333333333333321,
+          "depth": 0.0
+        },
+        "name": "Bullet Head Revolve",
+        "note": "回转体 360° (5 点轮廓)"
+      },
+      {
+        "index": 4,
+        "kind": "circle_pad",
+        "plane": "XY",
+        "center": [
+          0.0,
+          0.0,
+          24.833333333333332
+        ],
+        "profile": [],
+        "dimensions": {
+          "l": 0.0,
+          "w": 0.0,
+          "r": 9.847916666666666,
+          "h": 0.8333333333333357,
+          "depth": 0.0
+        },
+        "name": "Bullet Head Revolve",
+        "note": "回转体 360° (5 点轮廓)"
+      },
+      {
+        "index": 5,
+        "kind": "circle_pad",
+        "plane": "XY",
+        "center": [
+          0.0,
+          0.0,
+          25.666666666666668
+        ],
+        "profile": [],
+        "dimensions": {
+          "l": 0.0,
+          "w": 0.0,
+          "r": 9.746527777777777,
+          "h": 0.8333333333333321,
+          "depth": 0.0
+        },
+        "name": "Bullet Head Revolve",
+        "note": "回转体 360° (5 点轮廓)"
+      },
+      {
+        "index": 6,
+        "kind": "circle_pad",
+        "plane": "XY",
+        "center": [
+          0.0,
+          0.0,
+          26.5
+        ],
+        "profile": [],
+        "dimensions": {
+          "l": 0.0,
+          "w": 0.0,
+          "r": 9.645138888888889,
+          "h": 0.8333333333333321,
+          "depth": 0.0
+        },
+        "name": "Bullet Head Revolve",
+        "note": "回转体 360° (5 点轮廓)"
+      },
+      {
+        "index": 7,
+        "kind": "circle_pad",
+        "plane": "XY",
+        "center": [
+          0.0,
+          0.0,
+          27.333333333333332
+        ],
+        "profile": [],
+        "dimensions": {
+          "l": 0.0,
+          "w": 0.0,
+          "r": 9.54375,
+          "h": 0.8333333333333357,
+          "depth": 0.0
+        },
+        "name": "Bullet Head Revolve",
+        "note": "回转体 360° (5 点轮廓)"
+      },
+      {
+        "index": 8,
+        "kind": "circle_pad",
+        "plane": "XY",
+        "center": [
+          0.0,
+          0.0,
+          28.166666666666668
+        ],
+        "profile": [],
+        "dimensions": {
+          "l": 0.0,
+          "w": 0.0,
+          "r": 9.442361111111111,
+          "h": 0.8333333333333321,
+          "depth": 0.0
+        },
+        "name": "Bullet Head Revolve",
+        "note": "回转体 360° (5 点轮廓)"
+      },
+      {
+        "index": 9,
+        "kind": "circle_pad",
+        "plane": "XY",
+        "center": [
+          0.0,
+          0.0,
+          29.0
+        ],
+        "profile": [],
+        "dimensions": {
+          "l": 0.0,
+          "w": 0.0,
+          "r": 9.340972222222222,
+          "h": 0.8333333333333321,
+          "depth": 0.0
+        },
+        "name": "Bullet Head Revolve",
+        "note": "回转体 360° (5 点轮廓)"
+      },
+      {
+        "index": 10,
+        "kind": "circle_pad",
+        "plane": "XY",
+        "center": [
+          0.0,
+          0.0,
+          29.833333333333332
+        ],
+        "profile": [],
+        "dimensions": {
+          "l": 0.0,
+          "w": 0.0,
+          "r": 9.1725,
+          "h": 0.8333333333333357,
+          "depth": 0.0
+        },
+        "name": "Bullet Head Revolve",
+        "note": "回转体 360° (5 点轮廓)"
+      },
+      {
+        "index": 11,
+        "kind": "circle_pad",
+        "plane": "XY",
+        "center": [
+          0.0,
+          0.0,
+          30.666666666666668
+        ],
+        "profile": [],
+        "dimensions": {
+          "l": 0.0,
+          "w": 0.0,
+          "r": 8.847499999999998,
+          "h": 0.8333333333333321,
+          "depth": 0.0
+        },
+        "name": "Bullet Head Revolve",
+        "note": "回转体 360° (5 点轮廓)"
+      },
+      {
+        "index": 12,
+        "kind": "circle_pad",
+        "plane": "XY",
+        "center": [
+          0.0,
+          0.0,
+          31.5
+        ],
+        "profile": [],
+        "dimensions": {
+          "l": 0.0,
+          "w": 0.0,
+          "r": 8.522499999999999,
+          "h": 0.8333333333333357,
+          "depth": 0.0
+        },
+        "name": "Bullet Head Revolve",
+        "note": "回转体 360° (5 点轮廓)"
+      },
+      {
+        "index": 13,
+        "kind": "circle_pad",
+        "plane": "XY",
+        "center": [
+          0.0,
+          0.0,
+          32.333333333333336
+        ],
+        "profile": [],
+        "dimensions": {
+          "l": 0.0,
+          "w": 0.0,
+          "r": 8.1975,
+          "h": 0.8333333333333286,
+          "depth": 0.0
+        },
+        "name": "Bullet Head Revolve",
+        "note": "回转体 360° (5 点轮廓)"
+      },
+      {
+        "index": 14,
+        "kind": "circle_pad",
+        "plane": "XY",
+        "center": [
+          0.0,
+          0.0,
+          33.166666666666664
+        ],
+        "profile": [],
+        "dimensions": {
+          "l": 0.0,
+          "w": 0.0,
+          "r": 7.872500000000001,
+          "h": 0.8333333333333357,
+          "depth": 0.0
+        },
+        "name": "Bullet Head Revolve",
+        "note": "回转体 360° (5 点轮廓)"
+      },
+      {
+        "index": 15,
+        "kind": "circle_pad",
+        "plane": "XY",
+        "center": [
+          0.0,
+          0.0,
+          34.0
+        ],
+        "profile": [],
+        "dimensions": {
+          "l": 0.0,
+          "w": 0.0,
+          "r": 7.547499999999998,
+          "h": 0.8333333333333357,
+          "depth": 0.0
+        },
+        "name": "Bullet Head Revolve",
+        "note": "回转体 360° (5 点轮廓)"
+      },
+      {
+        "index": 16,
+        "kind": "circle_pad",
+        "plane": "XY",
+        "center": [
+          0.0,
+          0.0,
+          34.833333333333336
+        ],
+        "profile": [],
+        "dimensions": {
+          "l": 0.0,
+          "w": 0.0,
+          "r": 7.2225,
+          "h": 0.8333333333333286,
+          "depth": 0.0
+        },
+        "name": "Bullet Head Revolve",
+        "note": "回转体 360° (5 点轮廓)"
+      },
+      {
+        "index": 17,
+        "kind": "circle_pad",
+        "plane": "XY",
+        "center": [
+          0.0,
+          0.0,
+          35.666666666666664
+        ],
+        "profile": [],
+        "dimensions": {
+          "l": 0.0,
+          "w": 0.0,
+          "r": 6.866388888888892,
+          "h": 0.8333333333333357,
+          "depth": 0.0
+        },
+        "name": "Bullet Head Revolve",
+        "note": "回转体 360° (5 点轮廓)"
+      },
+      {
+        "index": 18,
+        "kind": "circle_pad",
+        "plane": "XY",
+        "center": [
+          0.0,
+          0.0,
+          36.5
+        ],
+        "profile": [],
+        "dimensions": {
+          "l": 0.0,
+          "w": 0.0,
+          "r": 6.230277777777774,
+          "h": 0.8333333333333357,
+          "depth": 0.0
+        },
+        "name": "Bullet Head Revolve",
+        "note": "回转体 360° (5 点轮廓)"
+      },
+      {
+        "index": 19,
+        "kind": "circle_pad",
+        "plane": "XY",
+        "center": [
+          0.0,
+          0.0,
+          37.333333333333336
+        ],
+        "profile": [],
+        "dimensions": {
+          "l": 0.0,
+          "w": 0.0,
+          "r": 5.594166666666666,
+          "h": 0.8333333333333286,
+          "depth": 0.0
+        },
+        "name": "Bullet Head Revolve",
+        "note": "回转体 360° (5 点轮廓)"
+      },
+      {
+        "index": 20,
+        "kind": "circle_pad",
+        "plane": "XY",
+        "center": [
+          0.0,
+          0.0,
+          38.166666666666664
+        ],
+        "profile": [],
+        "dimensions": {
+          "l": 0.0,
+          "w": 0.0,
+          "r": 4.958055555555559,
+          "h": 0.8333333333333357,
+          "depth": 0.0
+        },
+        "name": "Bullet Head Revolve",
+        "note": "回转体 360° (5 点轮廓)"
+      },
+      {
+        "index": 21,
+        "kind": "circle_pad",
+        "plane": "XY",
+        "center": [
+          0.0,
+          0.0,
+          39.0
+        ],
+        "profile": [],
+        "dimensions": {
+          "l": 0.0,
+          "w": 0.0,
+          "r": 4.321944444444441,
+          "h": 0.8333333333333357,
+          "depth": 0.0
+        },
+        "name": "Bullet Head Revolve",
+        "note": "回转体 360° (5 点轮廓)"
+      },
+      {
+        "index": 22,
+        "kind": "circle_pad",
+        "plane": "XY",
+        "center": [
+          0.0,
+          0.0,
+          39.833333333333336
+        ],
+        "profile": [],
+        "dimensions": {
+          "l": 0.0,
+          "w": 0.0,
+          "r": 3.6858333333333326,
+          "h": 0.8333333333333357,
+          "depth": 0.0
+        },
+        "name": "Bullet Head Revolve",
+        "note": "回转体 360° (5 点轮廓)"
+      },
+      {
+        "index": 23,
+        "kind": "circle_pad",
+        "plane": "XY",
+        "center": [
+          0.0,
+          0.0,
+          40.66666666666667
+        ],
+        "profile": [],
+        "dimensions": {
+          "l": 0.0,
+          "w": 0.0,
+          "r": 3.04972222222222,
+          "h": 0.8333333333333286,
+          "depth": 0.0
+        },
+        "name": "Bullet Head Revolve",
+        "note": "回转体 360° (5 点轮廓)"
+      },
+      {
+        "index": 24,
+        "kind": "circle_pad",
+        "plane": "XY",
+        "center": [
+          0.0,
+          0.0,
+          41.5
+        ],
+        "profile": [],
+        "dimensions": {
+          "l": 0.0,
+          "w": 0.0,
+          "r": 2.4136111111111127,
+          "h": 0.8333333333333286,
+          "depth": 0.0
+        },
+        "name": "Bullet Head Revolve",
+        "note": "回转体 360° (5 点轮廓)"
+      },
+      {
+        "index": 25,
+        "kind": "circle_pad",
+        "plane": "XY",
+        "center": [
+          0.0,
+          0.0,
+          42.33333333333333
+        ],
+        "profile": [],
+        "dimensions": {
+          "l": 0.0,
+          "w": 0.0,
+          "r": 1.46875,
+          "h": 0.8333333333333428,
+          "depth": 0.0
+        },
+        "name": "Bullet Head Revolve",
+        "note": "回转体 360° (5 点轮廓)"
+      },
+      {
+        "index": 26,
+        "kind": "circle_pad",
+        "plane": "XY",
+        "center": [
+          0.0,
+          0.0,
+          43.16666666666667
+        ],
+        "profile": [],
+        "dimensions": {
+          "l": 0.0,
+          "w": 0.0,
+          "r": 0.4895833333333306,
+          "h": 0.8333333333333286,
+          "depth": 0.0
+        },
+        "name": "Bullet Head Revolve",
+        "note": "回转体 360° (5 点轮廓)"
+      }
+    ],
+    "warnings": [
+      {
+        "code": "CATIA_APPROXIMATION",
+        "feature_id": "bullet_head",
+        "kind": "revolve",
+        "message": "当前用多层圆盘近似回转体。"
+      },
+      {
+        "code": "CATIA_TRANSLATOR_NOTE",
+        "feature_id": null,
+        "kind": null,
+        "message": "回转体「回转体 360° (5 点轮廓)」用 24 层圆盘近似(旋转体 API 在这套 CATIA 里不可用)。",
+        "index": 0
+      }
+    ],
+    "feature_manifest": {
+      "shank_cyl": {
+        "kind": "cylinder",
+        "operation": "add",
+        "name": "Shank Cylinder",
+        "parameters": {
+          "center": [
+            0,
+            0,
+            0
+          ],
+          "radius": 7,
+          "height": 25,
+          "axis": "Z",
+          "base": true
+        },
+        "sources": {
+          "radius": {
+            "type": "image_estimate",
+            "evidence": "front view shank width ~28% of head width, head visually ~22mm dia so shank ~14mm"
+          },
+          "height": {
+            "type": "image_estimate",
+            "evidence": "temporarily extend shank to overlap flange for debugging geometry union"
+          },
+          "center": {
+            "type": "user",
+            "evidence": "shank placed with base center at global origin for vertical symmetry"
+          }
+        },
+        "relations": []
+      },
+      "hex_flange": {
+        "kind": "cylinder",
+        "operation": "add",
+        "name": "Hexagonal Flange",
+        "parameters": {
+          "center": [
+            0,
+            0,
+            20
+          ],
+          "radius": 12,
+          "height": 4,
+          "axis": "Z",
+          "base": true,
+          "segments": 6
+        },
+        "sources": {
+          "center": {
+            "type": "derived",
+            "evidence": "flange base at top of shank (Z=20)"
+          },
+          "radius": {
+            "type": "image_estimate",
+            "evidence": "re-interpretation: top/bottom views show hexagonal flange is the widest feature, with circumradius ~12mm; head and shank fit inside"
+          },
+          "height": {
+            "type": "image_estimate",
+            "evidence": "front view flange is thin but clearly wider than head/shank, ~4mm"
+          },
+          "segments": {
+            "type": "user",
+            "evidence": "top/bottom views show six-sided polygon => hexagonal flange"
+          }
+        },
+        "relations": []
+      },
+      "bullet_head": {
+        "kind": "revolve",
+        "operation": "add",
+        "name": "Bullet Head Revolve",
+        "parameters": {
+          "center": [
+            0,
+            0,
+            0
+          ],
+          "axis": "Z",
+          "angle": 360,
+          "profile": [
+            [
+              10,
+              24
+            ],
+            [
+              9.27,
+              30
+            ],
+            [
+              6.93,
+              36
+            ],
+            [
+              2.35,
+              42
+            ],
+            [
+              0,
+              44
+            ]
+          ]
+        },
+        "sources": {
+          "center": {
+            "type": "user",
+            "evidence": "revolve axis at global Z-axis for vertical rotational symmetry"
+          },
+          "axis": {
+            "type": "user",
+            "evidence": "model is vertical around Z-axis"
+          },
+          "angle": {
+            "type": "user",
+            "evidence": "full 360-degree revolve for axisymmetric head"
+          },
+          "profile": {
+            "type": "image_estimate",
+            "evidence": "re-interpretation: head is narrower than hex flange but wider than shank; tangent ogive nose with base radius ~10mm and length ~20mm sits on top of flange (Z=24)"
+          }
+        },
+        "relations": []
+      }
+    },
+    "build_log": [
+      "[基准] 圆柱 ⌀14 × 25 mm → 50 面",
+      "[合并] 圆柱 ⌀24 × 4 mm → 237 面",
+      "[合并] 回转体 360° (5 点轮廓) → 2143 面"
+    ],
+    "local_geometry_checks": {
+      "state": "passed",
+      "source": "AI Modeler local mesh kernel",
+      "face_count": 2143,
+      "bbox_size_mm": [
+        24.0,
+        24.0,
+        24.0
+      ],
+      "bbox_ratios_from_mesh": {
+        "front_width_height": 1.0,
+        "depth_height": 1.0,
+        "top_width_depth": 1.0
+      },
+      "feature_count_from_plan": 3,
+      "feature_ids_from_plan": [
+        "shank_cyl",
+        "hex_flange",
+        "bullet_head"
+      ],
+      "nonfinite_face_count": 0,
+      "degenerate_face_count": 0,
+      "hole_features_from_plan": [],
+      "through_hole_mesh_checks": [],
+      "hole_measurement_complete": true,
+      "hole_visibility": "requires_multimodal_view_review",
+      "through_hole_result": "no_holes_declared"
+    },
+    "orthographic_layout": {
+      "unit": "mm",
+      "axes": {
+        "length": "X",
+        "width": "Y",
+        "height": "Z"
+      },
+      "uniform_scale_across_views": true,
+      "scale_pixels_per_mm": 8.883333333333335,
+      "tile_size_pixels": [
+        330,
+        260
+      ],
+      "view_extents": {
+        "front": {
+          "horizontal_axis": "X",
+          "horizontal": 24.0,
+          "vertical_axis": "Z",
+          "vertical": 24.0
+        },
+        "right": {
+          "horizontal_axis": "Y",
+          "horizontal": 24.0,
+          "vertical_axis": "Z",
+          "vertical": 24.0
+        },
+        "top": {
+          "horizontal_axis": "X",
+          "horizontal": 24.0,
+          "vertical_axis": "Y",
+          "vertical": 24.0
+        }
+      },
+      "dimension_ratios": {
+        "length_to_height": 1.0,
+        "width_to_height": 1.0,
+        "length_to_width": 1.0
+      }
+    },
+    "preview_image": "C:\\Users\\lycohana\\AppData\\Local\\AI Modeler\\dsh\\sessions\\ai-modeler-replica-0857e758-r02\\previews\\r18-g8-front.png",
+    "preview_image_views": [
+      "front"
+    ],
+    "preview_image_view_set": "front",
+    "preview_image_grid_columns": 1,
+    "preview_image_source": "AI Modeler local mesh kernel; not CATIA B-Rep",
+    "preview_render_style": "view-adaptive depth-cued matte shading with visible feature edges",
+    "preview_render_note": "诊断渲染：凹入或远离相机的表面会略暗，清晰线条表示可见的几何折边；亮暗不是零件材质颜色，需结合其它视图判断。",
+    "preview_image_layout": {
+      "unit": "mm",
+      "axes": {
+        "length": "X",
+        "width": "Y",
+        "height": "Z"
+      },
+      "uniform_scale_across_views": true,
+      "scale_pixels_per_mm": 8.883333333333335,
+      "tile_size_pixels": [
+        330,
+        260
+      ],
+      "view_extents": {
+        "front": {
+          "horizontal_axis": "X",
+          "horizontal": 24.0,
+          "vertical_axis": "Z",
+          "vertical": 24.0
+        },
+        "right": {
+          "horizontal_axis": "Y",
+          "horizontal": 24.0,
+          "vertical_axis": "Z",
+          "vertical": 24.0
+        },
+        "top": {
+          "horizontal_axis": "X",
+          "horizontal": 24.0,
+          "vertical_axis": "Y",
+          "vertical": 24.0
+        }
+      },
+      "dimension_ratios": {
+        "length_to_height": 1.0,
+        "width_to_height": 1.0,
+        "length_to_width": 1.0
+      }
+    },
+    "preview_generation": 8
+  },
+  "preview_revision": 18,
+  "preview_generation": 8,
+  "previews": [
+    {
+      "revision": 18,
+      "preview_generation": 8,
+      "view": "front",
+      "dimensions": {
+        "unit": "mm",
+        "bbox": [
+          -12.0,
+          -12.0,
+          20.0,
+          12.0,
+          12.0,
+          44.0
+        ],
+        "size": [
+          24.0,
+          24.0,
+          24.0
+        ],
+        "volume_mm3": 11703.129941040723,
+        "surface_area_mm2": 2065.2152705293815,
+        "triangles": 3918,
+        "feature_count": 3
+      },
+      "preview_image": "C:\\Users\\lycohana\\AppData\\Local\\AI Modeler\\dsh\\sessions\\ai-modeler-replica-0857e758-r02\\previews\\r18-g8-front.png",
+      "preview_image_path": "C:\\Users\\lycohana\\AppData\\Local\\AI Modeler\\dsh\\sessions\\ai-modeler-replica-0857e758-r02\\previews\\r18-g8-front.png"
+    }
+  ],
+  "visual_review": null,
+  "visual_reviews": {},
+  "unresolved_findings": [],
+  "has_references": true,
+  "actions": [
+    {
+      "kind": "tool",
+      "tool": "cad_get_feature_spec",
+      "revision": 0,
+      "at": 1790478774.2889042,
+      "feature_kind": "prism"
+    },
+    {
+      "kind": "tool",
+      "tool": "cad_get_feature_spec",
+      "revision": 0,
+      "at": 1790478812.8829608,
+      "feature_kind": "cylinder"
+    },
+    {
+      "kind": "tool",
+      "tool": "cad_get_feature_spec",
+      "revision": 0,
+      "at": 1790478812.891041,
+      "feature_kind": "sphere"
+    },
+    {
+      "kind": "tool",
+      "tool": "cad_create_model",
+      "revision": 1,
+      "at": 1790478881.271617,
+      "feature_id": "shank_cyl"
+    },
+    {
+      "kind": "tool",
+      "tool": "cad_update_feature",
+      "revision": 1,
+      "at": 1790478884.8455338,
+      "feature_id": "shank_cyl",
+      "metadata_only": true
+    },
+    {
+      "kind": "tool",
+      "tool": "cad_update_feature",
+      "revision": 1,
+      "at": 1790478890.5622663,
+      "feature_id": "shank_cyl",
+      "metadata_only": true
+    },
+    {
+      "kind": "tool",
+      "tool": "cad_add_feature",
+      "revision": 2,
+      "at": 1790478930.6937678,
+      "feature_id": "hex_flange"
+    },
+    {
+      "kind": "tool",
+      "tool": "cad_add_feature",
+      "revision": 3,
+      "at": 1790478937.274952,
+      "feature_id": "head_cyl"
+    },
+    {
+      "kind": "tool",
+      "tool": "cad_add_feature",
+      "revision": 4,
+      "at": 1790478944.8985283,
+      "feature_id": "nose_cone"
+    },
+    {
+      "kind": "tool",
+      "tool": "cad_update_feature",
+      "revision": 5,
+      "at": 1790478952.1769278,
+      "feature_id": "nose_cone"
+    },
+    {
+      "kind": "tool",
+      "tool": "cad_preview_model",
+      "revision": 5,
+      "at": 1790478961.1969976,
+      "view": "iso"
+    },
+    {
+      "kind": "tool",
+      "tool": "cad_review_reference_similarity",
+      "revision": 5,
+      "at": 1790478986.435458,
+      "view": "iso",
+      "preview_generation": 1,
+      "score": 45.0,
+      "passes_threshold": false
+    },
+    {
+      "kind": "tool",
+      "tool": "cad_get_feature_spec",
+      "revision": 5,
+      "at": 1790479004.8800256,
+      "feature_kind": "revolve"
+    },
+    {
+      "kind": "tool",
+      "tool": "cad_add_feature",
+      "revision": 6,
+      "at": 1790479037.5938647,
+      "feature_id": "bullet_head"
+    },
+    {
+      "kind": "tool",
+      "tool": "cad_remove_feature",
+      "revision": 7,
+      "at": 1790479043.576708,
+      "feature_id": "bullet_head"
+    },
+    {
+      "kind": "tool",
+      "tool": "cad_remove_feature",
+      "revision": 8,
+      "at": 1790479049.9962933,
+      "feature_id": "nose_cone"
+    },
+    {
+      "kind": "tool",
+      "tool": "cad_remove_feature",
+      "revision": 9,
+      "at": 1790479052.40669,
+      "feature_id": "head_cyl"
+    },
+    {
+      "kind": "tool",
+      "tool": "cad_add_feature",
+      "revision": 10,
+      "at": 1790479066.158107,
+      "feature_id": "bullet_head"
+    },
+    {
+      "kind": "tool",
+      "tool": "cad_preview_model",
+      "revision": 10,
+      "at": 1790479069.663455,
+      "view": "iso"
+    },
+    {
+      "kind": "tool",
+      "tool": "cad_update_feature",
+      "revision": 11,
+      "at": 1790479156.694632,
+      "feature_id": "bullet_head"
+    },
+    {
+      "kind": "tool",
+      "tool": "cad_preview_model",
+      "revision": 11,
+      "at": 1790479159.6715136,
+      "view": "iso"
+    },
+    {
+      "kind": "tool",
+      "tool": "cad_update_feature",
+      "revision": 12,
+      "at": 1790479224.1969228,
+      "feature_id": "bullet_head"
+    },
+    {
+      "kind": "tool",
+      "tool": "cad_preview_model",
+      "revision": 12,
+      "at": 1790479227.437838,
+      "view": "iso"
+    },
+    {
+      "kind": "tool",
+      "tool": "cad_review_reference_similarity",
+      "revision": 12,
+      "at": 1790479264.4819586,
+      "view": "iso",
+      "preview_generation": 4,
+      "score": 35.0,
+      "passes_threshold": false
+    },
+    {
+      "kind": "tool",
+      "tool": "cad_remove_feature",
+      "revision": 13,
+      "at": 1790479305.3027804,
+      "feature_id": "bullet_head"
+    },
+    {
+      "kind": "tool",
+      "tool": "cad_update_feature",
+      "revision": 14,
+      "at": 1790479354.817452,
+      "feature_id": "hex_flange"
+    },
+    {
+      "kind": "tool",
+      "tool": "cad_add_feature",
+      "revision": 15,
+      "at": 1790479364.0047133,
+      "feature_id": "bullet_head"
+    },
+    {
+      "kind": "tool",
+      "tool": "cad_preview_model",
+      "revision": 15,
+      "at": 1790479367.564039,
+      "view": "iso"
+    },
+    {
+      "kind": "tool",
+      "tool": "cad_update_feature",
+      "revision": 16,
+      "at": 1790479441.7677546,
+      "feature_id": "hex_flange"
+    },
+    {
+      "kind": "tool",
+      "tool": "cad_update_feature",
+      "revision": 17,
+      "at": 1790479469.2441554,
+      "feature_id": "bullet_head"
+    },
+    {
+      "kind": "tool",
+      "tool": "cad_preview_model",
+      "revision": 17,
+      "at": 1790479472.5767765,
+      "view": "iso"
+    },
+    {
+      "kind": "tool",
+      "tool": "cad_get_state",
+      "revision": 17,
+      "at": 1790479499.4444551
+    },
+    {
+      "kind": "tool",
+      "tool": "cad_preview_model",
+      "revision": 17,
+      "at": 1790479521.4957855,
+      "view": "front"
+    },
+    {
+      "kind": "tool",
+      "tool": "cad_update_feature",
+      "revision": 18,
+      "at": 1790479548.3468359,
+      "feature_id": "shank_cyl"
+    },
+    {
+      "kind": "tool",
+      "tool": "cad_preview_model",
+      "revision": 18,
+      "at": 1790479552.5032282,
+      "view": "front"
+    },
+    {
+      "kind": "tool",
+      "tool": "cad_get_state",
+      "revision": 18,
+      "at": 1790479561.6107788
+    },
+    {
+      "kind": "tool",
+      "tool": "cad_validate_model",
+      "revision": 18,
+      "at": 1790479587.5798645
+    }
+  ],
+  "output_paths": {},
+  "finished": false,
+  "finish_state": null,
+  "source_prompt": "请根据四张参考图复刻同一工件。请自行判断各图视角，以图像比例估算未标注尺寸并将推算值标记为 image_estimate。直接建模，不要先向用户提问。每次只实施一个必要的特征操作，先建立主体，再增量添加其余特征。图像中心的坐标点或十字只有在多个视图能确认是真孔时才建孔。每个圆柱都显式设置 base，并按工具语义校核相邻特征的实际轴向起止位置，避免悬空或错位。模型成形后，至少生成 iso 与 front 两个单视图，分别将原图与当前视图做独立多模态复核；复核低于 80 时读取具体差异，只修改受影响特征并复核新版本，不要无证据地重建整棵特征树。达到 80 分并且局部几何检查通过后才可完成；若不能达到，保留候选并说明具体差异。",
+  "reference_similarity_attempts": [
+    {
+      "revision": 5,
+      "preview_generation": 1,
+      "view": "iso",
+      "started_at": 1790478969.9495122,
+      "failed": false
+    },
+    {
+      "revision": 12,
+      "preview_generation": 4,
+      "view": "iso",
+      "started_at": 1790479249.1406825,
+      "failed": false
+    }
+  ],
+  "reference_similarity_error": null,
+  "reference_similarity_review": null,
+  "reference_similarity_reviews": {}
+}

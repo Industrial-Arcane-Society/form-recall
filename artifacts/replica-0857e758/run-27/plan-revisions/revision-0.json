@@ -1,0 +1,184 @@
+{
+  "schema_version": "1.0",
+  "name": "bullet-grip-pin",
+  "source_prompt": "bullet-shaped pin with cylindrical shank, circular flange, upper cylinder and ogive head",
+  "units": {
+    "length": "mm",
+    "angle": "deg"
+  },
+  "coordinate_system": {
+    "type": "global_cartesian",
+    "handedness": "right",
+    "axes": [
+      "X",
+      "Y",
+      "Z"
+    ],
+    "origin": [
+      0,
+      0,
+      0
+    ]
+  },
+  "features": [
+    {
+      "id": "main_revolve_body",
+      "kind": "revolve",
+      "operation": "add",
+      "name": "main body revolution",
+      "note": "complete axi-symmetric body: shank, flange, upper cylinder, ogive head with flat tip",
+      "parameters": {
+        "axis": "Z",
+        "center": [
+          0,
+          0,
+          0
+        ],
+        "profile": [
+          [
+            0,
+            0
+          ],
+          [
+            5.175,
+            0
+          ],
+          [
+            5.175,
+            27.74
+          ],
+          [
+            11.25,
+            27.74
+          ],
+          [
+            11.25,
+            32.85
+          ],
+          [
+            6.075,
+            32.85
+          ],
+          [
+            6.075,
+            48.18
+          ],
+          [
+            5.95,
+            49
+          ],
+          [
+            5.8,
+            51
+          ],
+          [
+            5.6,
+            54
+          ],
+          [
+            5.3,
+            57.5
+          ],
+          [
+            4.8,
+            61
+          ],
+          [
+            4.1,
+            64.25
+          ],
+          [
+            3.2,
+            67
+          ],
+          [
+            2.2,
+            69.25
+          ],
+          [
+            1.5,
+            70.75
+          ],
+          [
+            0.9,
+            71.75
+          ],
+          [
+            0.3,
+            72.27
+          ],
+          [
+            0,
+            72.27
+          ]
+        ],
+        "angle": 360
+      },
+      "sources": {
+        "center": {
+          "type": "user",
+          "evidence": "global Z-axis origin chosen for axi-symmetric part"
+        },
+        "profile": {
+          "type": "image_estimate",
+          "evidence": "等轴/正视复核显示顶端应更圆钝；保持饱满弹头和总高不变，将最顶端平台半径从 0.6 mm 缩至约 0.3 mm，使末端更接近连续的圆弧顶点。"
+        },
+        "angle": {
+          "type": "derived",
+          "evidence": "四张视图均绕同一主轴对称回转：REFERENCE 2 正投影无侧向偏心，REFERENCE 3/4 端视图显示同心圆轮廓，REFERENCE 1 等轴测显示连续回转曲面，确认主体为 360° 全回转体。"
+        }
+      }
+    },
+    {
+      "id": "flange_chamfers",
+      "kind": "prism",
+      "operation": "cut",
+      "name": "flange upper chamfer ring",
+      "note": "shallow 45° chamfer at top and bottom edges of the flange to match visible stepped edges",
+      "parameters": {
+        "center": [
+          0,
+          0,
+          32.85
+        ],
+        "axis": "Z",
+        "height": 0.5,
+        "radius": 12.5,
+        "sides": 8,
+        "profile": [
+          [
+            0,
+            0
+          ],
+          [
+            12.5,
+            0
+          ],
+          [
+            11.25,
+            0.5
+          ],
+          [
+            0,
+            0.5
+          ]
+        ]
+      },
+      "sources": {
+        "center": {
+          "type": "existing_model",
+          "evidence": "upper edge of flange at Z=32.85, axis Z"
+        },
+        "height": {
+          "type": "image_estimate",
+          "evidence": "visible small step at flange edges in front view, estimated ~0.5 mm"
+        },
+        "profile": {
+          "type": "image_estimate",
+          "evidence": "chamfer removes outer corner from r=12.5 to r=11.25 over 0.5 mm height"
+        }
+      }
+    }
+  ],
+  "pending_questions": []
+}

@@ -1,0 +1,29 @@
+{
+  "plan": null,
+  "revision": 0,
+  "last_preview": null,
+  "preview_revision": null,
+  "preview_generation": 0,
+  "previews": [],
+  "visual_review": null,
+  "visual_reviews": {},
+  "unresolved_findings": [],
+  "has_references": true,
+  "actions": [
+    {
+      "kind": "tool",
+      "tool": "cad_get_state",
+      "revision": 0,
+      "at": 1790481757.1422987
+    }
+  ],
+  "output_paths": {},
+  "finished": false,
+  "finish_state": null,
+  "source_prompt": "请只根据这四张原始视图复刻同一工件。先辨识各视角与工件朝向；没有标注尺寸时，从最合适的正交视图估计外轮廓宽高比及各段比例，选择合理名义毫米尺寸并把估值标记为 image_estimate。不要添加参考图和用户文字没有支持的结构或细节。若主体确实绕同一轴回转，优先用一个完整闭合的回转轮廓建立主体，再按图像证据增量添加非回转细节。生成预览后，按视角将原图与当前模型单视图多模态比较；只按复核中有图像依据的差异返修，每次几何修改后重新预览并复核受影响的视图。不要用推测代替看图，不要为达到分数捏造特征。只有当前几何合理且当前 revision 的独立视图复核达到 80/100 才完成；无法判断的细节保持未知。",
+  "reference_similarity_attempts": [],
+  "reference_similarity_error": null,
+  "reference_similarity_review": null,
+  "reference_similarity_reviews": {},
+  "reference_similarity_history": []
+}

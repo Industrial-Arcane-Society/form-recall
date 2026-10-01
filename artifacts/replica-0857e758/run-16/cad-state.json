@@ -1,0 +1,2618 @@
+{
+  "plan": {
+    "schema_version": "1.0",
+    "name": "pin_bullet_part",
+    "source_prompt": "参考四视图拼版创建同轴销/弹头零件",
+    "units": {
+      "length": "mm",
+      "angle": "deg"
+    },
+    "coordinate_system": {
+      "type": "global_cartesian",
+      "handedness": "right",
+      "axes": [
+        "X",
+        "Y",
+        "Z"
+      ],
+      "origin": [
+        0,
+        0,
+        0
+      ]
+    },
+    "features": [
+      {
+        "id": "main_body",
+        "kind": "revolve",
+        "operation": "add",
+        "name": "回转主体",
+        "note": "连续回转轮廓包含底部细杆、圆法兰、上圆柱、圆钝弹头，Z向总高约74 mm。弹头用多段折线逼近圆弧线。",
+        "parameters": {
+          "axis": "Z",
+          "center": [
+            0,
+            0,
+            0
+          ],
+          "profile": [
+            [
+              0,
+              0
+            ],
+            [
+              5,
+              0
+            ],
+            [
+              5,
+              28
+            ],
+            [
+              7.75,
+              28
+            ],
+            [
+              7.75,
+              34
+            ],
+            [
+              7.75,
+              49
+            ],
+            [
+              7.55,
+              51.5
+            ],
+            [
+              7.05,
+              55.5
+            ],
+            [
+              6.2,
+              60
+            ],
+            [
+              5,
+              65
+            ],
+            [
+              3.3,
+              69.5
+            ],
+            [
+              2,
+              72.5
+            ],
+            [
+              1.5,
+              73
+            ],
+            [
+              0,
+              73
+            ]
+          ],
+          "angle": 360
+        },
+        "sources": {
+          "axis": {
+            "type": "user",
+            "evidence": "工件竖直同轴，选Z轴为回转轴"
+          },
+          "profile": {
+            "type": "image_estimate",
+            "evidence": "run16 rev1: 原正视总高 374 px 对应 73 mm，顶端小平面约 15 px 宽占法兰宽 13%，对应半径约 1.5 mm。调整最后两点从 [1.4,72.5]/[0.6,73] 改为 [2.0,72.5]/[1.5,73]，保证相邻半径单调收敛到顶平面半径 1.5 mm；其余轮廓不变。"
+          },
+          "angle": {
+            "type": "user",
+            "evidence": "绕Z轴整周回转 360°"
+          },
+          "center": {
+            "type": "user",
+            "evidence": "回转轴位于全局坐标原点，与工件竖直同轴对齐"
+          }
+        }
+      },
+      {
+        "id": "hex_flange",
+        "kind": "prism",
+        "operation": "add",
+        "name": "八边形法兰",
+        "note": "截角多边形（近似八边形）薄凸缘，与底杆、上圆柱同轴。X/Y 跨距约 22.5 mm，厚度约 5.8 mm，顺时针从 +X 偏 +Y 方向起始，顶面与底面近似圆但可见平边。",
+        "parameters": {
+          "profile": [
+            [
+              11.25,
+              4.84
+            ],
+            [
+              4.84,
+              11.25
+            ],
+            [
+              -4.84,
+              11.25
+            ],
+            [
+              -11.25,
+              4.84
+            ],
+            [
+              -11.25,
+              -4.84
+            ],
+            [
+              -4.84,
+              -11.25
+            ],
+            [
+              4.84,
+              -11.25
+            ],
+            [
+              11.25,
+              -4.84
+            ]
+          ],
+          "height": 5.8,
+          "center": [
+            0,
+            0,
+            28
+          ],
+          "axis": "Z"
+        },
+        "sources": {
+          "profile": {
+            "type": "image_estimate",
+            "evidence": "正视图 front: 法兰总宽约 114 px，中央平面约 49 px，两侧斜面各约 33 px。中央平面/总宽约 0.43，中央面/单侧投影宽约 1.5，支持带正向平面和两侧斜面的近规则八边形。外接 X/Y 半宽 11.25 mm 固定，截角参数 b=4.84 mm 由此比例估算。顶/底视低分辨率下可见多段平边。非标注尺寸。"
+          },
+          "height": {
+            "type": "image_estimate",
+            "evidence": "法兰高度约 5.8 mm。"
+          },
+          "center": {
+            "type": "derived",
+            "evidence": "法兰底面中心 [0,0,28]，与底杆顶面 Z 坐标一致。"
+          },
+          "axis": {
+            "type": "user",
+            "evidence": "竖直同轴结构，沿 Z 轴拉伸"
+          }
+        }
+      },
+      {
+        "id": "bottom_hex_socket",
+        "kind": "prism",
+        "operation": "cut",
+        "name": "底部盲六角槽",
+        "note": "参考图 4 底视中心可见六边形边界及多层同心轮廓，优先判为浅盲六角槽。外接半径约 2.5 mm，深度约 2 mm，顶点从 +X 方向起始。",
+        "parameters": {
+          "profile": [
+            [
+              2.5,
+              0
+            ],
+            [
+              1.25,
+              2.1651
+            ],
+            [
+              -1.25,
+              2.1651
+            ],
+            [
+              -2.5,
+              0
+            ],
+            [
+              -1.25,
+              -2.1651
+            ],
+            [
+              1.25,
+              -2.1651
+            ]
+          ],
+          "height": 2,
+          "center": [
+            0,
+            0,
+            0
+          ],
+          "axis": "Z"
+        },
+        "sources": {
+          "profile": {
+            "type": "image_estimate",
+            "evidence": "底视图 4 中心六边形边界相对杆端 Ø10 偏小，估算外接半径约 2.5 mm（跨角约 5 mm），顶点从 +X 方向开始。"
+          },
+          "height": {
+            "type": "image_estimate",
+            "evidence": "底视图仅显示清晰边界与周围同心轮廓，槽底深度无法从二维投影确认；取浅盲槽约 2 mm，标记为估算。"
+          },
+          "center": {
+            "type": "derived",
+            "evidence": "底杆端面中心位于 [0,0,0]，盲槽开口在该平面中心。"
+          },
+          "axis": {
+            "type": "user",
+            "evidence": "盲槽沿杆轴向（+Z）切入底杆端面。"
+          }
+        }
+      },
+      {
+        "id": "bottom_counterbore",
+        "kind": "prism",
+        "operation": "cut",
+        "name": "底部圆形浅沉孔",
+        "note": "底视图柄端最外层同心边界与中心六角槽之间的环形浅沉孔，用16边形圆逼近切除，半径约3.0 mm，深度约0.6 mm，位于底杆端面中心。",
+        "parameters": {
+          "profile": [
+            [
+              3,
+              0
+            ],
+            [
+              2.7716,
+              1.1481
+            ],
+            [
+              2.1213,
+              2.1213
+            ],
+            [
+              1.1481,
+              2.7716
+            ],
+            [
+              0,
+              3
+            ],
+            [
+              -1.1481,
+              2.7716
+            ],
+            [
+              -2.1213,
+              2.1213
+            ],
+            [
+              -2.7716,
+              1.1481
+            ],
+            [
+              -3,
+              0
+            ],
+            [
+              -2.7716,
+              -1.1481
+            ],
+            [
+              -2.1213,
+              -2.1213
+            ],
+            [
+              -1.1481,
+              -2.7716
+            ],
+            [
+              0,
+              -3
+            ],
+            [
+              1.1481,
+              -2.7716
+            ],
+            [
+              2.1213,
+              -2.1213
+            ],
+            [
+              2.7716,
+              -1.1481
+            ]
+          ],
+          "height": 0.6,
+          "center": [
+            0,
+            0,
+            0
+          ],
+          "axis": "Z"
+        },
+        "sources": {
+          "profile": {
+            "type": "image_estimate",
+            "evidence": "底视图 4 中心可见多层同心边界，六角槽外侧有环形浅台；估算外圆半径约 3.0 mm，用16边形逼近圆以兼容 prism profile。"
+          },
+          "height": {
+            "type": "image_estimate",
+            "evidence": "底视图仅显示轮廓，无法从二维投影确认深度；取浅沉孔深度约 0.6 mm。"
+          },
+          "center": {
+            "type": "derived",
+            "evidence": "沉孔位于底杆端面中心 [0,0,0]，沿 +Z 轴向切除。"
+          },
+          "axis": {
+            "type": "user",
+            "evidence": "竖直同轴结构，沿 Z 轴拉伸切除"
+          }
+        }
+      }
+    ],
+    "pending_questions": []
+  },
+  "revision": 2,
+  "last_preview": {
+    "state": "previewed",
+    "validation": {
+      "valid": true,
+      "state": "valid",
+      "errors": [],
+      "confirmations": [],
+      "support": [
+        {
+          "feature_id": "main_body",
+          "kind": "revolve",
+          "status": "approximate",
+          "reason": "本地预览按闭合[半径,轴向坐标]轮廓绕轴生成；CATIA 映射用多层圆盘近似。完整同轴主体优先作为第一个 revolve 特征创建；在已有实体后添加 revolve，当前几何核的布尔合并可能丢失先前几何。"
+        },
+        {
+          "feature_id": "hex_flange",
+          "kind": "prism",
+          "status": "exact",
+          "reason": "闭合多边形草图加凸台；当前仅支持 Z 轴。"
+        },
+        {
+          "feature_id": "bottom_hex_socket",
+          "kind": "prism",
+          "status": "exact",
+          "reason": "闭合多边形草图加凸台；当前仅支持 Z 轴。"
+        },
+        {
+          "feature_id": "bottom_counterbore",
+          "kind": "prism",
+          "status": "exact",
+          "reason": "闭合多边形草图加凸台；当前仅支持 Z 轴。"
+        }
+      ],
+      "warnings": [
+        {
+          "code": "CATIA_APPROXIMATION",
+          "feature_id": "main_body",
+          "kind": "revolve",
+          "message": "本地预览按闭合[半径,轴向坐标]轮廓绕轴生成；CATIA 映射用多层圆盘近似。完整同轴主体优先作为第一个 revolve 特征创建；在已有实体后添加 revolve，当前几何核的布尔合并可能丢失先前几何。"
+        }
+      ],
+      "schema_version": "1.0"
+    },
+    "catia_executed": false,
+    "dimensions": {
+      "unit": "mm",
+      "bbox": [
+        -11.25,
+        -11.25,
+        0.0,
+        11.25,
+        11.25,
+        73.0
+      ],
+      "size": [
+        22.5,
+        22.5,
+        73.0
+      ],
+      "volume_mm3": 9858.956452442257,
+      "surface_area_mm2": 3609.6951789314185,
+      "triangles": 3560,
+      "feature_count": 4
+    },
+    "catia_operations": [
+      {
+        "index": 1,
+        "kind": "circle_pad",
+        "plane": "XY",
+        "center": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "profile": [],
+        "dimensions": {
+          "l": 0.0,
+          "w": 0.0,
+          "r": 5.0,
+          "h": 3.0416666666666665,
+          "depth": 0.0
+        },
+        "name": "回转主体",
+        "note": "回转体 360° (14 点轮廓)"
+      },
+      {
+        "index": 2,
+        "kind": "circle_pad",
+        "plane": "XY",
+        "center": [
+          0.0,
+          0.0,
+          3.0416666666666665
+        ],
+        "profile": [],
+        "dimensions": {
+          "l": 0.0,
+          "w": 0.0,
+          "r": 5.0,
+          "h": 3.0416666666666665,
+          "depth": 0.0
+        },
+        "name": "回转主体",
+        "note": "回转体 360° (14 点轮廓)"
+      },
+      {
+        "index": 3,
+        "kind": "circle_pad",
+        "plane": "XY",
+        "center": [
+          0.0,
+          0.0,
+          6.083333333333333
+        ],
+        "profile": [],
+        "dimensions": {
+          "l": 0.0,
+          "w": 0.0,
+          "r": 5.0,
+          "h": 3.041666666666667,
+          "depth": 0.0
+        },
+        "name": "回转主体",
+        "note": "回转体 360° (14 点轮廓)"
+      },
+      {
+        "index": 4,
+        "kind": "circle_pad",
+        "plane": "XY",
+        "center": [
+          0.0,
+          0.0,
+          9.125
+        ],
+        "profile": [],
+        "dimensions": {
+          "l": 0.0,
+          "w": 0.0,
+          "r": 5.0,
+          "h": 3.041666666666666,
+          "depth": 0.0
+        },
+        "name": "回转主体",
+        "note": "回转体 360° (14 点轮廓)"
+      },
+      {
+        "index": 5,
+        "kind": "circle_pad",
+        "plane": "XY",
+        "center": [
+          0.0,
+          0.0,
+          12.166666666666666
+        ],
+        "profile": [],
+        "dimensions": {
+          "l": 0.0,
+          "w": 0.0,
+          "r": 5.0,
+          "h": 3.041666666666668,
+          "depth": 0.0
+        },
+        "name": "回转主体",
+        "note": "回转体 360° (14 点轮廓)"
+      },
+      {
+        "index": 6,
+        "kind": "circle_pad",
+        "plane": "XY",
+        "center": [
+          0.0,
+          0.0,
+          15.208333333333334
+        ],
+        "profile": [],
+        "dimensions": {
+          "l": 0.0,
+          "w": 0.0,
+          "r": 5.0,
+          "h": 3.041666666666666,
+          "depth": 0.0
+        },
+        "name": "回转主体",
+        "note": "回转体 360° (14 点轮廓)"
+      },
+      {
+        "index": 7,
+        "kind": "circle_pad",
+        "plane": "XY",
+        "center": [
+          0.0,
+          0.0,
+          18.25
+        ],
+        "profile": [],
+        "dimensions": {
+          "l": 0.0,
+          "w": 0.0,
+          "r": 5.0,
+          "h": 3.041666666666668,
+          "depth": 0.0
+        },
+        "name": "回转主体",
+        "note": "回转体 360° (14 点轮廓)"
+      },
+      {
+        "index": 8,
+        "kind": "circle_pad",
+        "plane": "XY",
+        "center": [
+          0.0,
+          0.0,
+          21.291666666666668
+        ],
+        "profile": [],
+        "dimensions": {
+          "l": 0.0,
+          "w": 0.0,
+          "r": 5.0,
+          "h": 3.0416666666666643,
+          "depth": 0.0
+        },
+        "name": "回转主体",
+        "note": "回转体 360° (14 点轮廓)"
+      },
+      {
+        "index": 9,
+        "kind": "circle_pad",
+        "plane": "XY",
+        "center": [
+          0.0,
+          0.0,
+          24.333333333333332
+        ],
+        "profile": [],
+        "dimensions": {
+          "l": 0.0,
+          "w": 0.0,
+          "r": 5.0,
+          "h": 3.041666666666668,
+          "depth": 0.0
+        },
+        "name": "回转主体",
+        "note": "回转体 360° (14 点轮廓)"
+      },
+      {
+        "index": 10,
+        "kind": "circle_pad",
+        "plane": "XY",
+        "center": [
+          0.0,
+          0.0,
+          27.375
+        ],
+        "profile": [],
+        "dimensions": {
+          "l": 0.0,
+          "w": 0.0,
+          "r": 7.75,
+          "h": 3.041666666666668,
+          "depth": 0.0
+        },
+        "name": "回转主体",
+        "note": "回转体 360° (14 点轮廓)"
+      },
+      {
+        "index": 11,
+        "kind": "circle_pad",
+        "plane": "XY",
+        "center": [
+          0.0,
+          0.0,
+          30.416666666666668
+        ],
+        "profile": [],
+        "dimensions": {
+          "l": 0.0,
+          "w": 0.0,
+          "r": 7.75,
+          "h": 3.041666666666668,
+          "depth": 0.0
+        },
+        "name": "回转主体",
+        "note": "回转体 360° (14 点轮廓)"
+      },
+      {
+        "index": 12,
+        "kind": "circle_pad",
+        "plane": "XY",
+        "center": [
+          0.0,
+          0.0,
+          33.458333333333336
+        ],
+        "profile": [],
+        "dimensions": {
+          "l": 0.0,
+          "w": 0.0,
+          "r": 7.75,
+          "h": 3.0416666666666643,
+          "depth": 0.0
+        },
+        "name": "回转主体",
+        "note": "回转体 360° (14 点轮廓)"
+      },
+      {
+        "index": 13,
+        "kind": "circle_pad",
+        "plane": "XY",
+        "center": [
+          0.0,
+          0.0,
+          36.5
+        ],
+        "profile": [],
+        "dimensions": {
+          "l": 0.0,
+          "w": 0.0,
+          "r": 7.75,
+          "h": 3.0416666666666643,
+          "depth": 0.0
+        },
+        "name": "回转主体",
+        "note": "回转体 360° (14 点轮廓)"
+      },
+      {
+        "index": 14,
+        "kind": "circle_pad",
+        "plane": "XY",
+        "center": [
+          0.0,
+          0.0,
+          39.541666666666664
+        ],
+        "profile": [],
+        "dimensions": {
+          "l": 0.0,
+          "w": 0.0,
+          "r": 7.75,
+          "h": 3.0416666666666714,
+          "depth": 0.0
+        },
+        "name": "回转主体",
+        "note": "回转体 360° (14 点轮廓)"
+      },
+      {
+        "index": 15,
+        "kind": "circle_pad",
+        "plane": "XY",
+        "center": [
+          0.0,
+          0.0,
+          42.583333333333336
+        ],
+        "profile": [],
+        "dimensions": {
+          "l": 0.0,
+          "w": 0.0,
+          "r": 7.75,
+          "h": 3.0416666666666643,
+          "depth": 0.0
+        },
+        "name": "回转主体",
+        "note": "回转体 360° (14 点轮廓)"
+      },
+      {
+        "index": 16,
+        "kind": "circle_pad",
+        "plane": "XY",
+        "center": [
+          0.0,
+          0.0,
+          45.625
+        ],
+        "profile": [],
+        "dimensions": {
+          "l": 0.0,
+          "w": 0.0,
+          "r": 7.75,
+          "h": 3.0416666666666643,
+          "depth": 0.0
+        },
+        "name": "回转主体",
+        "note": "回转体 360° (14 点轮廓)"
+      },
+      {
+        "index": 17,
+        "kind": "circle_pad",
+        "plane": "XY",
+        "center": [
+          0.0,
+          0.0,
+          48.666666666666664
+        ],
+        "profile": [],
+        "dimensions": {
+          "l": 0.0,
+          "w": 0.0,
+          "r": 7.655,
+          "h": 3.0416666666666714,
+          "depth": 0.0
+        },
+        "name": "回转主体",
+        "note": "回转体 360° (14 点轮廓)"
+      },
+      {
+        "index": 18,
+        "kind": "circle_pad",
+        "plane": "XY",
+        "center": [
+          0.0,
+          0.0,
+          51.708333333333336
+        ],
+        "profile": [],
+        "dimensions": {
+          "l": 0.0,
+          "w": 0.0,
+          "r": 7.333854166666666,
+          "h": 3.0416666666666643,
+          "depth": 0.0
+        },
+        "name": "回转主体",
+        "note": "回转体 360° (14 点轮廓)"
+      },
+      {
+        "index": 19,
+        "kind": "circle_pad",
+        "plane": "XY",
+        "center": [
+          0.0,
+          0.0,
+          54.75
+        ],
+        "profile": [],
+        "dimensions": {
+          "l": 0.0,
+          "w": 0.0,
+          "r": 6.904398148148149,
+          "h": 3.0416666666666643,
+          "depth": 0.0
+        },
+        "name": "回转主体",
+        "note": "回转体 360° (14 点轮廓)"
+      },
+      {
+        "index": 20,
+        "kind": "circle_pad",
+        "plane": "XY",
+        "center": [
+          0.0,
+          0.0,
+          57.791666666666664
+        ],
+        "profile": [],
+        "dimensions": {
+          "l": 0.0,
+          "w": 0.0,
+          "r": 6.329861111111112,
+          "h": 3.0416666666666714,
+          "depth": 0.0
+        },
+        "name": "回转主体",
+        "note": "回转体 360° (14 点轮廓)"
+      },
+      {
+        "index": 21,
+        "kind": "circle_pad",
+        "plane": "XY",
+        "center": [
+          0.0,
+          0.0,
+          60.833333333333336
+        ],
+        "profile": [],
+        "dimensions": {
+          "l": 0.0,
+          "w": 0.0,
+          "r": 5.634999999999999,
+          "h": 3.0416666666666643,
+          "depth": 0.0
+        },
+        "name": "回转主体",
+        "note": "回转体 360° (14 点轮廓)"
+      },
+      {
+        "index": 22,
+        "kind": "circle_pad",
+        "plane": "XY",
+        "center": [
+          0.0,
+          0.0,
+          63.875
+        ],
+        "profile": [],
+        "dimensions": {
+          "l": 0.0,
+          "w": 0.0,
+          "r": 4.850462962962959,
+          "h": 3.0416666666666714,
+          "depth": 0.0
+        },
+        "name": "回转主体",
+        "note": "回转体 360° (14 点轮廓)"
+      },
+      {
+        "index": 23,
+        "kind": "circle_pad",
+        "plane": "XY",
+        "center": [
+          0.0,
+          0.0,
+          66.91666666666667
+        ],
+        "profile": [],
+        "dimensions": {
+          "l": 0.0,
+          "w": 0.0,
+          "r": 3.701388888888889,
+          "h": 3.041666666666657,
+          "depth": 0.0
+        },
+        "name": "回转主体",
+        "note": "回转体 360° (14 点轮廓)"
+      },
+      {
+        "index": 24,
+        "kind": "circle_pad",
+        "plane": "XY",
+        "center": [
+          0.0,
+          0.0,
+          69.95833333333333
+        ],
+        "profile": [],
+        "dimensions": {
+          "l": 0.0,
+          "w": 0.0,
+          "r": 2.442361111111115,
+          "h": 3.0416666666666714,
+          "depth": 0.0
+        },
+        "name": "回转主体",
+        "note": "回转体 360° (14 点轮廓)"
+      },
+      {
+        "index": 25,
+        "kind": "poly_pad",
+        "plane": "XY",
+        "center": [
+          0.0,
+          0.0,
+          28.0
+        ],
+        "profile": [
+          [
+            11.25,
+            4.84
+          ],
+          [
+            4.84,
+            11.25
+          ],
+          [
+            -4.84,
+            11.25
+          ],
+          [
+            -11.25,
+            4.84
+          ],
+          [
+            -11.25,
+            -4.84
+          ],
+          [
+            -4.84,
+            -11.25
+          ],
+          [
+            4.84,
+            -11.25
+          ],
+          [
+            11.25,
+            -4.84
+          ]
+        ],
+        "dimensions": {
+          "l": 0.0,
+          "w": 0.0,
+          "r": 0.0,
+          "h": 5.8,
+          "depth": 0.0
+        },
+        "name": "八边形法兰",
+        "note": "轮廓拉伸 5.8 mm (8 点轮廓)"
+      },
+      {
+        "index": 26,
+        "kind": "poly_cut",
+        "plane": "XY",
+        "center": [
+          0.0,
+          0.0,
+          2.0
+        ],
+        "profile": [
+          [
+            2.5,
+            0.0
+          ],
+          [
+            1.25,
+            2.1651
+          ],
+          [
+            -1.25,
+            2.1651
+          ],
+          [
+            -2.5,
+            0.0
+          ],
+          [
+            -1.25,
+            -2.1651
+          ],
+          [
+            1.25,
+            -2.1651
+          ]
+        ],
+        "dimensions": {
+          "l": 0.0,
+          "w": 0.0,
+          "r": 0.0,
+          "h": 2.0,
+          "depth": 2.0
+        },
+        "name": "底部盲六角槽",
+        "note": "轮廓拉伸 2 mm (6 点轮廓)"
+      },
+      {
+        "index": 27,
+        "kind": "poly_cut",
+        "plane": "XY",
+        "center": [
+          0.0,
+          0.0,
+          0.6
+        ],
+        "profile": [
+          [
+            3.0,
+            0.0
+          ],
+          [
+            2.7716,
+            1.1481
+          ],
+          [
+            2.1213,
+            2.1213
+          ],
+          [
+            1.1481,
+            2.7716
+          ],
+          [
+            0.0,
+            3.0
+          ],
+          [
+            -1.1481,
+            2.7716
+          ],
+          [
+            -2.1213,
+            2.1213
+          ],
+          [
+            -2.7716,
+            1.1481
+          ],
+          [
+            -3.0,
+            0.0
+          ],
+          [
+            -2.7716,
+            -1.1481
+          ],
+          [
+            -2.1213,
+            -2.1213
+          ],
+          [
+            -1.1481,
+            -2.7716
+          ],
+          [
+            0.0,
+            -3.0
+          ],
+          [
+            1.1481,
+            -2.7716
+          ],
+          [
+            2.1213,
+            -2.1213
+          ],
+          [
+            2.7716,
+            -1.1481
+          ]
+        ],
+        "dimensions": {
+          "l": 0.0,
+          "w": 0.0,
+          "r": 0.0,
+          "h": 0.6,
+          "depth": 0.6
+        },
+        "name": "底部圆形浅沉孔",
+        "note": "轮廓拉伸 0.6 mm (16 点轮廓)"
+      }
+    ],
+    "warnings": [
+      {
+        "code": "CATIA_APPROXIMATION",
+        "feature_id": "main_body",
+        "kind": "revolve",
+        "message": "本地预览按闭合[半径,轴向坐标]轮廓绕轴生成；CATIA 映射用多层圆盘近似。完整同轴主体优先作为第一个 revolve 特征创建；在已有实体后添加 revolve，当前几何核的布尔合并可能丢失先前几何。"
+      },
+      {
+        "code": "CATIA_TRANSLATOR_NOTE",
+        "feature_id": null,
+        "kind": null,
+        "message": "回转体「回转体 360° (14 点轮廓)」用 24 层圆盘近似(旋转体 API 在这套 CATIA 里不可用)。",
+        "index": 0
+      }
+    ],
+    "feature_manifest": {
+      "main_body": {
+        "kind": "revolve",
+        "operation": "add",
+        "name": "回转主体",
+        "parameters": {
+          "axis": "Z",
+          "center": [
+            0,
+            0,
+            0
+          ],
+          "profile": [
+            [
+              0,
+              0
+            ],
+            [
+              5,
+              0
+            ],
+            [
+              5,
+              28
+            ],
+            [
+              7.75,
+              28
+            ],
+            [
+              7.75,
+              34
+            ],
+            [
+              7.75,
+              49
+            ],
+            [
+              7.55,
+              51.5
+            ],
+            [
+              7.05,
+              55.5
+            ],
+            [
+              6.2,
+              60
+            ],
+            [
+              5,
+              65
+            ],
+            [
+              3.3,
+              69.5
+            ],
+            [
+              2,
+              72.5
+            ],
+            [
+              1.5,
+              73
+            ],
+            [
+              0,
+              73
+            ]
+          ],
+          "angle": 360
+        },
+        "sources": {
+          "axis": {
+            "type": "user",
+            "evidence": "工件竖直同轴，选Z轴为回转轴"
+          },
+          "profile": {
+            "type": "image_estimate",
+            "evidence": "run16 rev1: 原正视总高 374 px 对应 73 mm，顶端小平面约 15 px 宽占法兰宽 13%，对应半径约 1.5 mm。调整最后两点从 [1.4,72.5]/[0.6,73] 改为 [2.0,72.5]/[1.5,73]，保证相邻半径单调收敛到顶平面半径 1.5 mm；其余轮廓不变。"
+          },
+          "angle": {
+            "type": "user",
+            "evidence": "绕Z轴整周回转 360°"
+          },
+          "center": {
+            "type": "user",
+            "evidence": "回转轴位于全局坐标原点，与工件竖直同轴对齐"
+          }
+        },
+        "relations": []
+      },
+      "hex_flange": {
+        "kind": "prism",
+        "operation": "add",
+        "name": "八边形法兰",
+        "parameters": {
+          "profile": [
+            [
+              11.25,
+              4.84
+            ],
+            [
+              4.84,
+              11.25
+            ],
+            [
+              -4.84,
+              11.25
+            ],
+            [
+              -11.25,
+              4.84
+            ],
+            [
+              -11.25,
+              -4.84
+            ],
+            [
+              -4.84,
+              -11.25
+            ],
+            [
+              4.84,
+              -11.25
+            ],
+            [
+              11.25,
+              -4.84
+            ]
+          ],
+          "height": 5.8,
+          "center": [
+            0,
+            0,
+            28
+          ],
+          "axis": "Z"
+        },
+        "sources": {
+          "profile": {
+            "type": "image_estimate",
+            "evidence": "正视图 front: 法兰总宽约 114 px，中央平面约 49 px，两侧斜面各约 33 px。中央平面/总宽约 0.43，中央面/单侧投影宽约 1.5，支持带正向平面和两侧斜面的近规则八边形。外接 X/Y 半宽 11.25 mm 固定，截角参数 b=4.84 mm 由此比例估算。顶/底视低分辨率下可见多段平边。非标注尺寸。"
+          },
+          "height": {
+            "type": "image_estimate",
+            "evidence": "法兰高度约 5.8 mm。"
+          },
+          "center": {
+            "type": "derived",
+            "evidence": "法兰底面中心 [0,0,28]，与底杆顶面 Z 坐标一致。"
+          },
+          "axis": {
+            "type": "user",
+            "evidence": "竖直同轴结构，沿 Z 轴拉伸"
+          }
+        },
+        "relations": []
+      },
+      "bottom_hex_socket": {
+        "kind": "prism",
+        "operation": "cut",
+        "name": "底部盲六角槽",
+        "parameters": {
+          "profile": [
+            [
+              2.5,
+              0
+            ],
+            [
+              1.25,
+              2.1651
+            ],
+            [
+              -1.25,
+              2.1651
+            ],
+            [
+              -2.5,
+              0
+            ],
+            [
+              -1.25,
+              -2.1651
+            ],
+            [
+              1.25,
+              -2.1651
+            ]
+          ],
+          "height": 2,
+          "center": [
+            0,
+            0,
+            0
+          ],
+          "axis": "Z"
+        },
+        "sources": {
+          "profile": {
+            "type": "image_estimate",
+            "evidence": "底视图 4 中心六边形边界相对杆端 Ø10 偏小，估算外接半径约 2.5 mm（跨角约 5 mm），顶点从 +X 方向开始。"
+          },
+          "height": {
+            "type": "image_estimate",
+            "evidence": "底视图仅显示清晰边界与周围同心轮廓，槽底深度无法从二维投影确认；取浅盲槽约 2 mm，标记为估算。"
+          },
+          "center": {
+            "type": "derived",
+            "evidence": "底杆端面中心位于 [0,0,0]，盲槽开口在该平面中心。"
+          },
+          "axis": {
+            "type": "user",
+            "evidence": "盲槽沿杆轴向（+Z）切入底杆端面。"
+          }
+        },
+        "relations": []
+      },
+      "bottom_counterbore": {
+        "kind": "prism",
+        "operation": "cut",
+        "name": "底部圆形浅沉孔",
+        "parameters": {
+          "profile": [
+            [
+              3,
+              0
+            ],
+            [
+              2.7716,
+              1.1481
+            ],
+            [
+              2.1213,
+              2.1213
+            ],
+            [
+              1.1481,
+              2.7716
+            ],
+            [
+              0,
+              3
+            ],
+            [
+              -1.1481,
+              2.7716
+            ],
+            [
+              -2.1213,
+              2.1213
+            ],
+            [
+              -2.7716,
+              1.1481
+            ],
+            [
+              -3,
+              0
+            ],
+            [
+              -2.7716,
+              -1.1481
+            ],
+            [
+              -2.1213,
+              -2.1213
+            ],
+            [
+              -1.1481,
+              -2.7716
+            ],
+            [
+              0,
+              -3
+            ],
+            [
+              1.1481,
+              -2.7716
+            ],
+            [
+              2.1213,
+              -2.1213
+            ],
+            [
+              2.7716,
+              -1.1481
+            ]
+          ],
+          "height": 0.6,
+          "center": [
+            0,
+            0,
+            0
+          ],
+          "axis": "Z"
+        },
+        "sources": {
+          "profile": {
+            "type": "image_estimate",
+            "evidence": "底视图 4 中心可见多层同心边界，六角槽外侧有环形浅台；估算外圆半径约 3.0 mm，用16边形逼近圆以兼容 prism profile。"
+          },
+          "height": {
+            "type": "image_estimate",
+            "evidence": "底视图仅显示轮廓，无法从二维投影确认深度；取浅沉孔深度约 0.6 mm。"
+          },
+          "center": {
+            "type": "derived",
+            "evidence": "沉孔位于底杆端面中心 [0,0,0]，沿 +Z 轴向切除。"
+          },
+          "axis": {
+            "type": "user",
+            "evidence": "竖直同轴结构，沿 Z 轴拉伸切除"
+          }
+        },
+        "relations": []
+      }
+    },
+    "build_log": [
+      "[基准] 回转体 360° (14 点轮廓) → 576 面",
+      "[合并] 轮廓拉伸 5.8 mm (8 点轮廓) → 1716 面",
+      "[切除] 轮廓拉伸 2 mm (6 点轮廓) → 1757 面",
+      "[切除] 轮廓拉伸 0.6 mm (16 点轮廓) → 1902 面"
+    ],
+    "local_geometry_checks": {
+      "state": "passed",
+      "source": "AI Modeler local mesh kernel",
+      "face_count": 1902,
+      "bbox_size_mm": [
+        22.5,
+        22.5,
+        73.0
+      ],
+      "bbox_ratios_from_mesh": {
+        "front_width_height": 0.3082191780821918,
+        "depth_height": 0.3082191780821918,
+        "top_width_depth": 1.0
+      },
+      "feature_count_from_plan": 4,
+      "feature_ids_from_plan": [
+        "main_body",
+        "hex_flange",
+        "bottom_hex_socket",
+        "bottom_counterbore"
+      ],
+      "nonfinite_face_count": 0,
+      "degenerate_face_count": 0,
+      "hole_features_from_plan": [],
+      "through_hole_mesh_checks": [],
+      "hole_measurement_complete": true,
+      "hole_visibility": "requires_multimodal_view_review",
+      "through_hole_result": "no_holes_declared"
+    },
+    "orthographic_layout": {
+      "unit": "mm",
+      "axes": {
+        "length": "X",
+        "width": "Y",
+        "height": "Z"
+      },
+      "uniform_scale_across_views": true,
+      "scale_pixels_per_mm": 2.9205479452054797,
+      "tile_size_pixels": [
+        330,
+        260
+      ],
+      "view_extents": {
+        "front": {
+          "horizontal_axis": "X",
+          "horizontal": 22.5,
+          "vertical_axis": "Z",
+          "vertical": 73.0
+        },
+        "right": {
+          "horizontal_axis": "Y",
+          "horizontal": 22.5,
+          "vertical_axis": "Z",
+          "vertical": 73.0
+        },
+        "top": {
+          "horizontal_axis": "X",
+          "horizontal": 22.5,
+          "vertical_axis": "Y",
+          "vertical": 22.5
+        }
+      },
+      "dimension_ratios": {
+        "length_to_height": 0.3082191780821918,
+        "width_to_height": 0.3082191780821918,
+        "length_to_width": 1.0
+      }
+    },
+    "preview_image": "C:\\Users\\lycohana\\AppData\\Local\\AI Modeler\\dsh\\sessions\\ai-modeler-replica-0857e758-r16\\previews\\r2-g4-bottom.png",
+    "preview_image_views": [
+      "bottom"
+    ],
+    "preview_image_view_set": "bottom",
+    "preview_image_grid_columns": 1,
+    "preview_image_source": "AI Modeler local mesh kernel; not CATIA B-Rep",
+    "preview_render_style": "view-adaptive depth-cued matte shading with visible feature edges",
+    "preview_render_note": "诊断渲染：凹入或远离相机的表面会略暗，清晰线条表示可见的几何折边；亮暗不是零件材质颜色，需结合其它视图判断。",
+    "preview_image_layout": {
+      "unit": "mm",
+      "axes": {
+        "length": "X",
+        "width": "Y",
+        "height": "Z"
+      },
+      "uniform_scale_across_views": true,
+      "scale_pixels_per_mm": 2.9205479452054797,
+      "tile_size_pixels": [
+        330,
+        260
+      ],
+      "view_extents": {
+        "front": {
+          "horizontal_axis": "X",
+          "horizontal": 22.5,
+          "vertical_axis": "Z",
+          "vertical": 73.0
+        },
+        "right": {
+          "horizontal_axis": "Y",
+          "horizontal": 22.5,
+          "vertical_axis": "Z",
+          "vertical": 73.0
+        },
+        "top": {
+          "horizontal_axis": "X",
+          "horizontal": 22.5,
+          "vertical_axis": "Y",
+          "vertical": 22.5
+        }
+      },
+      "dimension_ratios": {
+        "length_to_height": 0.3082191780821918,
+        "width_to_height": 0.3082191780821918,
+        "length_to_width": 1.0
+      }
+    },
+    "preview_generation": 4
+  },
+  "preview_revision": 2,
+  "preview_generation": 4,
+  "previews": [
+    {
+      "revision": 2,
+      "preview_generation": 1,
+      "view": "iso",
+      "dimensions": {
+        "unit": "mm",
+        "bbox": [
+          -11.25,
+          -11.25,
+          0.0,
+          11.25,
+          11.25,
+          73.0
+        ],
+        "size": [
+          22.5,
+          22.5,
+          73.0
+        ],
+        "volume_mm3": 9858.956452442257,
+        "surface_area_mm2": 3609.6951789314185,
+        "triangles": 3560,
+        "feature_count": 4
+      },
+      "preview_image": "C:\\Users\\lycohana\\AppData\\Local\\AI Modeler\\dsh\\sessions\\ai-modeler-replica-0857e758-r16\\previews\\r2-g1-iso.png",
+      "preview_image_path": "C:\\Users\\lycohana\\AppData\\Local\\AI Modeler\\dsh\\sessions\\ai-modeler-replica-0857e758-r16\\previews\\r2-g1-iso.png"
+    },
+    {
+      "revision": 2,
+      "preview_generation": 2,
+      "view": "front",
+      "dimensions": {
+        "unit": "mm",
+        "bbox": [
+          -11.25,
+          -11.25,
+          0.0,
+          11.25,
+          11.25,
+          73.0
+        ],
+        "size": [
+          22.5,
+          22.5,
+          73.0
+        ],
+        "volume_mm3": 9858.956452442257,
+        "surface_area_mm2": 3609.6951789314185,
+        "triangles": 3560,
+        "feature_count": 4
+      },
+      "preview_image": "C:\\Users\\lycohana\\AppData\\Local\\AI Modeler\\dsh\\sessions\\ai-modeler-replica-0857e758-r16\\previews\\r2-g2-front.png",
+      "preview_image_path": "C:\\Users\\lycohana\\AppData\\Local\\AI Modeler\\dsh\\sessions\\ai-modeler-replica-0857e758-r16\\previews\\r2-g2-front.png"
+    },
+    {
+      "revision": 2,
+      "preview_generation": 3,
+      "view": "top",
+      "dimensions": {
+        "unit": "mm",
+        "bbox": [
+          -11.25,
+          -11.25,
+          0.0,
+          11.25,
+          11.25,
+          73.0
+        ],
+        "size": [
+          22.5,
+          22.5,
+          73.0
+        ],
+        "volume_mm3": 9858.956452442257,
+        "surface_area_mm2": 3609.6951789314185,
+        "triangles": 3560,
+        "feature_count": 4
+      },
+      "preview_image": "C:\\Users\\lycohana\\AppData\\Local\\AI Modeler\\dsh\\sessions\\ai-modeler-replica-0857e758-r16\\previews\\r2-g3-top.png",
+      "preview_image_path": "C:\\Users\\lycohana\\AppData\\Local\\AI Modeler\\dsh\\sessions\\ai-modeler-replica-0857e758-r16\\previews\\r2-g3-top.png"
+    },
+    {
+      "revision": 2,
+      "preview_generation": 4,
+      "view": "bottom",
+      "dimensions": {
+        "unit": "mm",
+        "bbox": [
+          -11.25,
+          -11.25,
+          0.0,
+          11.25,
+          11.25,
+          73.0
+        ],
+        "size": [
+          22.5,
+          22.5,
+          73.0
+        ],
+        "volume_mm3": 9858.956452442257,
+        "surface_area_mm2": 3609.6951789314185,
+        "triangles": 3560,
+        "feature_count": 4
+      },
+      "preview_image": "C:\\Users\\lycohana\\AppData\\Local\\AI Modeler\\dsh\\sessions\\ai-modeler-replica-0857e758-r16\\previews\\r2-g4-bottom.png",
+      "preview_image_path": "C:\\Users\\lycohana\\AppData\\Local\\AI Modeler\\dsh\\sessions\\ai-modeler-replica-0857e758-r16\\previews\\r2-g4-bottom.png"
+    }
+  ],
+  "visual_review": {
+    "revision": 2,
+    "view": "bottom",
+    "preview_generation": 4,
+    "visible_evidence": "Revision 2 bottom 预览：八边形法兰外框、柄端同心圆浅沉孔（r≈3 mm，深 0.6 mm）、中心六角盲槽。与 REF 4 底视图结构一致（外层多边形、中间环形台阶、中心六边形/黄色特征）。",
+    "issues": [
+      {
+        "status": "partial",
+        "severity": "medium",
+        "item": "外轮廓多边形/圆形印象",
+        "reference_evidence": "REF 4 外轮廓在低分辨率下略带圆弧感",
+        "model_evidence": "模型法兰为八边形投影，边缘平直",
+        "affected_feature_ids": [
+          "hex_flange"
+        ],
+        "suggested_change": "按用户要求维持八边形"
+      },
+      {
+        "status": "match",
+        "severity": "medium",
+        "item": "同心圆浅沉孔/环形台阶",
+        "reference_evidence": "REF 4 中心孔外有多层同心圆台阶",
+        "model_evidence": "新增 bottom_counterbore，外圆半径 3.0 mm，深 0.6 mm，形成环形浅台",
+        "affected_feature_ids": [
+          "bottom_counterbore"
+        ],
+        "suggested_change": ""
+      },
+      {
+        "status": "match",
+        "severity": "medium",
+        "item": "中心六角盲槽/凹坑",
+        "reference_evidence": "REF 4 中心为黄色六边形/圆形凹坑",
+        "model_evidence": "保留 bottom_hex_socket，外接半径 2.5 mm，深 2 mm",
+        "affected_feature_ids": [
+          "bottom_hex_socket"
+        ],
+        "suggested_change": ""
+      }
+    ],
+    "unresolved": [
+      "bottom 视图外轮廓八边形与参考图低分辨率圆弧视觉印象存在差异，按用户要求保留八边形"
+    ],
+    "recorded_at": 1790499157.0962634
+  },
+  "visual_reviews": {
+    "iso": {
+      "revision": 2,
+      "view": "iso",
+      "preview_generation": 1,
+      "visible_evidence": "Revision 2 iso 预览：八边形法兰、顶部弹头及其小平面、圆柱柄、底部环形浅沉孔+六角槽可见。原始参考图 iso（REF 1）中法兰投影呈圆弧、顶部呈光滑圆弧，但用户明确指令保留 8 边形法兰且顶平面半径 1.5 mm。因此法兰外轮廓差异为按用户要求的已知设计差异，不修改。",
+      "issues": [
+        {
+          "status": "mismatch",
+          "severity": "medium",
+          "item": "法兰外轮廓在 iso 中显示为圆弧 vs 模型八边形",
+          "reference_evidence": "REF 1 iso 中法兰外缘投影为连续圆弧，无明显棱角",
+          "model_evidence": "模型法兰为正八边形棱柱，棱角清晰",
+          "affected_feature_ids": [
+            "hex_flange"
+          ],
+          "suggested_change": "按用户要求维持 8 边形，不改为圆盘/截角形"
+        },
+        {
+          "status": "partial",
+          "severity": "medium",
+          "item": "顶部弹头小平面 vs 参考光滑圆弧",
+          "reference_evidence": "REF 1 顶部为光滑圆弧尖头",
+          "model_evidence": "模型顶部为半径 1.5 mm 的小平面，Z=73",
+          "affected_feature_ids": [
+            "main_body"
+          ],
+          "suggested_change": "按用户指定保留 r=1.5 mm 顶平面"
+        },
+        {
+          "status": "match",
+          "severity": "medium",
+          "item": "三段式布局与比例",
+          "reference_evidence": "上弹头-中法兰-下柄比例相近",
+          "model_evidence": "总高 73 mm，法兰约在中部，柄径 10 mm，上圆柱 Ø15.5 mm",
+          "affected_feature_ids": [
+            "main_body"
+          ],
+          "suggested_change": ""
+        }
+      ],
+      "unresolved": [
+        "iso 法兰轮廓投影在用户要求的八边形与参考图视觉圆弧之间存在差异",
+        "顶部弹头小平面为按用户要求保留，与参考光滑尖头顶局部差异"
+      ],
+      "recorded_at": 1790499075.5669854
+    },
+    "front": {
+      "revision": 2,
+      "view": "front",
+      "preview_generation": 2,
+      "visible_evidence": "Revision 2 front 预览：三段式轮廓、八边形法兰投影、顶部弹头小平面。与 REF 2 正视图整体比例匹配；参考顶部有一条纵向棱边/分型线，模型光滑，但不作为修改依据；法兰投影与正视图中央平面+两侧斜面一致。",
+      "issues": [
+        {
+          "status": "match",
+          "severity": "medium",
+          "item": "三段式轮廓与比例",
+          "reference_evidence": "REF 2 正视顶部弹头、中部法兰、下部柄三段式，总高约 374 px，法兰宽约 114 px",
+          "model_evidence": "模型总高 73 mm，法兰宽 22.5 mm，比例对应",
+          "affected_feature_ids": [
+            "main_body",
+            "hex_flange"
+          ],
+          "suggested_change": ""
+        },
+        {
+          "status": "match",
+          "severity": "medium",
+          "item": "法兰正视投影（中央平面+两侧斜面）",
+          "reference_evidence": "REF 2 法兰中央面约 49 px、两侧斜面各约 33 px",
+          "model_evidence": "八边形法兰正视投影与中央面/斜面比例吻合",
+          "affected_feature_ids": [
+            "hex_flange"
+          ],
+          "suggested_change": ""
+        },
+        {
+          "status": "partial",
+          "severity": "medium",
+          "item": "顶部纵向棱边/分型线",
+          "reference_evidence": "REF 2 顶部可见一条纵向棱边",
+          "model_evidence": "模型顶部 revolve 为光滑回转曲面",
+          "affected_feature_ids": [
+            "main_body"
+          ],
+          "suggested_change": "参考图棱边可能为渲染接缝，不作为增删特征依据，保持回转轮廓"
+        }
+      ],
+      "unresolved": [
+        "front 顶部纵向棱边可能是渲染/拍摄伪影，未纳入模型"
+      ],
+      "recorded_at": 1790499091.657099
+    },
+    "top": {
+      "revision": 2,
+      "view": "top",
+      "preview_generation": 3,
+      "visible_evidence": "Revision 2 top 预览：八边形法兰外框、鼻锥顶面小圆（r=1.5 mm）、鼻锥表面可见回转层状径向分瓣。原始 REF 3 顶视图外缘呈近似圆弧，但用户要求保留八边形；中心“孔”实为顶部小平面投影而非通孔。",
+      "issues": [
+        {
+          "status": "mismatch",
+          "severity": "medium",
+          "item": "外轮廓呈圆弧 vs 模型八边形",
+          "reference_evidence": "REF 3 顶视图外缘接近圆弧",
+          "model_evidence": "模型法兰为八边形顶面投影",
+          "affected_feature_ids": [
+            "hex_flange"
+          ],
+          "suggested_change": "按用户要求保持八边形，不改为圆形"
+        },
+        {
+          "status": "partial",
+          "severity": "medium",
+          "item": "鼻锥顶部小平面",
+          "reference_evidence": "REF 3 中心有圆形/六边形小特征",
+          "model_evidence": "模型中心为半径 1.5 mm 的顶平面圆",
+          "affected_feature_ids": [
+            "main_body"
+          ],
+          "suggested_change": ""
+        },
+        {
+          "status": "match",
+          "severity": "medium",
+          "item": "鼻锥表面径向分瓣/分割线",
+          "reference_evidence": "REF 3 内部可见径向分割线",
+          "model_evidence": "模型回转体以分段圆盘逼近，顶视呈现径向分瓣",
+          "affected_feature_ids": [
+            "main_body"
+          ],
+          "suggested_change": ""
+        }
+      ],
+      "unresolved": [
+        "top 视图法兰八边形与参考图圆弧视觉差异为用户指定保留项"
+      ],
+      "recorded_at": 1790499128.6046705
+    },
+    "bottom": {
+      "revision": 2,
+      "view": "bottom",
+      "preview_generation": 4,
+      "visible_evidence": "Revision 2 bottom 预览：八边形法兰外框、柄端同心圆浅沉孔（r≈3 mm，深 0.6 mm）、中心六角盲槽。与 REF 4 底视图结构一致（外层多边形、中间环形台阶、中心六边形/黄色特征）。",
+      "issues": [
+        {
+          "status": "partial",
+          "severity": "medium",
+          "item": "外轮廓多边形/圆形印象",
+          "reference_evidence": "REF 4 外轮廓在低分辨率下略带圆弧感",
+          "model_evidence": "模型法兰为八边形投影，边缘平直",
+          "affected_feature_ids": [
+            "hex_flange"
+          ],
+          "suggested_change": "按用户要求维持八边形"
+        },
+        {
+          "status": "match",
+          "severity": "medium",
+          "item": "同心圆浅沉孔/环形台阶",
+          "reference_evidence": "REF 4 中心孔外有多层同心圆台阶",
+          "model_evidence": "新增 bottom_counterbore，外圆半径 3.0 mm，深 0.6 mm，形成环形浅台",
+          "affected_feature_ids": [
+            "bottom_counterbore"
+          ],
+          "suggested_change": ""
+        },
+        {
+          "status": "match",
+          "severity": "medium",
+          "item": "中心六角盲槽/凹坑",
+          "reference_evidence": "REF 4 中心为黄色六边形/圆形凹坑",
+          "model_evidence": "保留 bottom_hex_socket，外接半径 2.5 mm，深 2 mm",
+          "affected_feature_ids": [
+            "bottom_hex_socket"
+          ],
+          "suggested_change": ""
+        }
+      ],
+      "unresolved": [
+        "bottom 视图外轮廓八边形与参考图低分辨率圆弧视觉印象存在差异，按用户要求保留八边形"
+      ],
+      "recorded_at": 1790499157.0962634
+    }
+  },
+  "unresolved_findings": [
+    "iso 法兰轮廓投影在用户要求的八边形与参考图视觉圆弧之间存在差异",
+    "顶部弹头小平面为按用户要求保留，与参考光滑尖头顶局部差异",
+    "iso / 法兰外轮廓在 iso 中显示为圆弧 vs 模型八边形 (mismatch): 按用户要求维持 8 边形，不改为圆盘/截角形",
+    "iso / 顶部弹头小平面 vs 参考光滑圆弧 (partial): 按用户指定保留 r=1.5 mm 顶平面",
+    "front 顶部纵向棱边可能是渲染/拍摄伪影，未纳入模型",
+    "front / 顶部纵向棱边/分型线 (partial): 参考图棱边可能为渲染接缝，不作为增删特征依据，保持回转轮廓",
+    "top 视图法兰八边形与参考图圆弧视觉差异为用户指定保留项",
+    "top / 外轮廓呈圆弧 vs 模型八边形 (mismatch): 按用户要求保持八边形，不改为圆形",
+    "top / 鼻锥顶部小平面 (partial): 尚未确认如何修正",
+    "bottom 视图外轮廓八边形与参考图低分辨率圆弧视觉印象存在差异，按用户要求保留八边形",
+    "bottom / 外轮廓多边形/圆形印象 (partial): 按用户要求维持八边形"
+  ],
+  "has_references": true,
+  "actions": [
+    {
+      "kind": "tool",
+      "tool": "cad_get_state",
+      "revision": 0,
+      "at": 1790498869.1368868
+    },
+    {
+      "kind": "tool",
+      "tool": "cad_update_feature",
+      "revision": 1,
+      "at": 1790498895.5364,
+      "feature_id": "main_body"
+    },
+    {
+      "kind": "tool",
+      "tool": "cad_add_feature",
+      "revision": 2,
+      "at": 1790498929.0084424,
+      "feature_id": "bottom_counterbore"
+    },
+    {
+      "kind": "tool",
+      "tool": "cad_preview_model",
+      "revision": 2,
+      "at": 1790498941.1525931,
+      "view": "iso"
+    },
+    {
+      "kind": "tool",
+      "tool": "cad_preview_model",
+      "revision": 2,
+      "at": 1790498941.900307,
+      "view": "front"
+    },
+    {
+      "kind": "tool",
+      "tool": "cad_preview_model",
+      "revision": 2,
+      "at": 1790498943.4302042,
+      "view": "top"
+    },
+    {
+      "kind": "tool",
+      "tool": "cad_preview_model",
+      "revision": 2,
+      "at": 1790498945.3157923,
+      "view": "bottom"
+    },
+    {
+      "kind": "tool",
+      "tool": "cad_review_reference_similarity",
+      "revision": 2,
+      "at": 1790498975.9041252,
+      "view": "iso",
+      "preview_generation": 1,
+      "score": 55.0,
+      "passes_threshold": false
+    },
+    {
+      "kind": "tool",
+      "tool": "cad_review_reference_similarity",
+      "revision": 2,
+      "at": 1790498999.1227062,
+      "view": "front",
+      "preview_generation": 2,
+      "score": 82.0,
+      "passes_threshold": true
+    },
+    {
+      "kind": "tool",
+      "tool": "cad_review_reference_similarity",
+      "revision": 2,
+      "at": 1790499017.5258498,
+      "view": "top",
+      "preview_generation": 3,
+      "score": 55.0,
+      "passes_threshold": false
+    },
+    {
+      "kind": "tool",
+      "tool": "cad_review_reference_similarity",
+      "revision": 2,
+      "at": 1790499036.3736687,
+      "view": "bottom",
+      "preview_generation": 4,
+      "score": 55.0,
+      "passes_threshold": false
+    },
+    {
+      "kind": "tool",
+      "tool": "cad_record_visual_review",
+      "revision": 2,
+      "at": 1790499075.5669854,
+      "view": "iso",
+      "preview_generation": 1,
+      "issue_count": 3,
+      "unresolved_count": 4
+    },
+    {
+      "kind": "tool",
+      "tool": "cad_record_visual_review",
+      "revision": 2,
+      "at": 1790499091.657099,
+      "view": "front",
+      "preview_generation": 2,
+      "issue_count": 3,
+      "unresolved_count": 6
+    },
+    {
+      "kind": "tool",
+      "tool": "cad_record_visual_review",
+      "revision": 2,
+      "at": 1790499128.6046705,
+      "view": "top",
+      "preview_generation": 3,
+      "issue_count": 3,
+      "unresolved_count": 9
+    },
+    {
+      "kind": "tool",
+      "tool": "cad_record_visual_review",
+      "revision": 2,
+      "at": 1790499157.0962634,
+      "view": "bottom",
+      "preview_generation": 4,
+      "issue_count": 3,
+      "unresolved_count": 11
+    },
+    {
+      "kind": "tool",
+      "tool": "cad_validate_model",
+      "revision": 2,
+      "at": 1790499159.0138779
+    }
+  ],
+  "output_paths": {},
+  "finished": false,
+  "finish_state": null,
+  "source_prompt": "继续 run14 revision 1 的 CADPlan，不要清空重建。四图顺序：1 等轴测，2 正视，3 顶视，4 底视。\n\n用原图像素比例作几何依据：\n- 正视总高约374 px，法兰外宽约114 px，估算总高73 mm、法兰宽22.5 mm。\n- 法兰正视中央平面约49 px，两侧可见斜面各约33 px。这与八边形棱柱的三个可见面相符。保留 run14 中8顶点八边形，不做圆化，也不加截角；正视中央面和侧面比例优先。\n- 上端小平面在正视约15 px宽，占法兰宽约13%；run14 当前 r=0.6 mm 的顶端平面明显偏小。只将 main_body profile 最终端部调整为半径约1.5 mm、Z=73 mm 的平端，并确保相邻轮廓单调收敛；保留中段圆柱与其它鼻部轮廓尺寸。\n- 底视图在柄端显示至少两层同心边界和中心多边形/圆形端面。run14 只有单个六角盲槽。保留六角槽，在其外侧加一个圆形浅沉孔：切除轮廓近似圆，半径约3.0 mm，深度约0.6 mm，中心 [0,0,0]，沿 +Z；全部标记 image_estimate。用适合当前 prism profile 的圆形多边形逼近，并命名 bottom_counterbore。\n\n只做以上两个局部几何变化：更新 main_body 顶端 profile；新增 bottom_counterbore。保留主杆、上圆柱、法兰、已有底部六角槽及所有其余尺寸。不可为了提高某张图的评分而把八边形改成圆盘/16边截角形；不可重复提交相同参数或在八边形与圆形之间来回震荡。\n\n几何更新后在同一 revision 分别生成 iso/front/top/bottom 四张单视图，每张都与对应原图独立多模态复核。检查模型真正看得见的轮廓、比例与端面环阶；颜色、背景网格和光影差异不作为增删特征的依据。再做本地几何校验，保存可编辑 AIMODEL、STL 和报告。若某项低分与清晰跨视图证据冲突，保留具体差异和证据，不要伪称通过；不要无限返修。",
+  "reference_similarity_attempts": [
+    {
+      "revision": 2,
+      "preview_generation": 1,
+      "view": "iso",
+      "reference_image_index": 1,
+      "started_at": 1790498955.4083083,
+      "failed": false
+    },
+    {
+      "revision": 2,
+      "preview_generation": 2,
+      "view": "front",
+      "reference_image_index": 2,
+      "started_at": 1790498975.923998,
+      "failed": false
+    },
+    {
+      "revision": 2,
+      "preview_generation": 3,
+      "view": "top",
+      "reference_image_index": 3,
+      "started_at": 1790498999.1377153,
+      "failed": false
+    },
+    {
+      "revision": 2,
+      "preview_generation": 4,
+      "view": "bottom",
+      "reference_image_index": 4,
+      "started_at": 1790499017.5423698,
+      "failed": false
+    }
+  ],
+  "reference_similarity_error": null,
+  "reference_similarity_review": {
+    "revision": 2,
+    "preview_generation": 4,
+    "view": "bottom",
+    "reference_image_index": 4,
+    "reference_image_name": "image-4.png",
+    "reference_images_in_request": 1,
+    "score": 55.0,
+    "raw_model_score": 55.0,
+    "score_capped_by_evidence": false,
+    "threshold": 80,
+    "passes_threshold": false,
+    "summary": "参考图 bottom 视角显示外轮廓为近似圆形（带轻微多边形/锯齿感），中心为黄色圆形孔，周围有同心圆台阶。当前模型图显示外轮廓为清晰正八边形，中心为六边形凹陷，无可见通孔。核心差异：外轮廓类型（圆 vs 八边形）、中心特征（圆孔 vs 六边形凹坑）、同心圆台阶结构缺失。",
+    "reference_hole_count": 1,
+    "count_confidence": 0.9,
+    "evidence": [
+      {
+        "item": "外轮廓形状",
+        "reference": "近似圆形（或高阶多边形近似圆）",
+        "model": "清晰正八边形",
+        "suggested_change": "将外轮廓改为圆形或更高阶近似圆的多边形",
+        "status": "mismatch",
+        "mismatch_severity": "major"
+      },
+      {
+        "item": "中心特征",
+        "reference": "黄色圆形通孔",
+        "model": "六边形凹陷，无可见通孔",
+        "suggested_change": "将中心六边形凹陷改为圆形通孔",
+        "status": "mismatch",
+        "mismatch_severity": "major"
+      },
+      {
+        "item": "同心圆台阶",
+        "reference": "中心孔外有多层同心圆台阶",
+        "model": "仅一个圆形凸台/凹陷边界，无多层台阶",
+        "suggested_change": "添加中心孔周围的同心圆台阶结构",
+        "status": "mismatch",
+        "mismatch_severity": "moderate"
+      },
+      {
+        "item": "整体比例/布局",
+        "reference": "中心特征位于正中，外轮廓对称",
+        "model": "中心特征位于正中，外轮廓对称",
+        "suggested_change": "保持中心对称布局",
+        "status": "approximate_match",
+        "mismatch_severity": "none"
+      }
+    ],
+    "unobservable": [
+      "{'item': '外轮廓真实边数', 'reference': '可能是圆形或高阶多边形', 'model': '正八边形', 'reason': '参考图分辨率低，外轮廓圆与多边形存在投影歧义，但当前模型明确为八边形，与参考图的圆形视觉印象差异显著'}",
+      "{'item': '孔是否贯穿', 'reference': '中心黄色区域疑似通孔', 'model': '六边形凹陷深度未知', 'reason': '当前视角无法确认参考孔是否贯穿，也无法确认模型凹陷是否贯穿'}"
+    ],
+    "review_model": "moonshotai/Kimi-K2.7-Code",
+    "method": "fresh multimodal request with one selected reference view and current preview",
+    "recorded_at": 1790499036.3736687
+  },
+  "reference_similarity_reviews": {
+    "iso": {
+      "revision": 2,
+      "preview_generation": 1,
+      "view": "iso",
+      "reference_image_index": 1,
+      "reference_image_name": "image-1.png",
+      "reference_images_in_request": 1,
+      "score": 55.0,
+      "raw_model_score": 55.0,
+      "score_capped_by_evidence": false,
+      "threshold": 80,
+      "passes_threshold": false,
+      "summary": "当前 iso 视角下，模型与原图在整体布局（顶部尖头体、中部凸缘、底部圆柱柄）上相似，但存在核心结构差异：原图中部凸缘投影为连续圆弧，显示为圆盘/圆柱形凸缘；模型中部为明显六边形凸缘，直边与棱角清晰。顶部尖头轮廓比例接近，但模型尖端更锐利且顶部有小平面/孔状特征，原图顶部为光滑圆弧。底部圆柱柄比例大致接近。由于凸缘外轮廓类型不同，属于核心拓扑差异，分数不超过80。",
+      "reference_hole_count": null,
+      "count_confidence": 0.0,
+      "evidence": [
+        {
+          "item": "顶部尖头体",
+          "reference": "光滑圆弧过渡的尖头，顶部为连续曲面",
+          "model": "尖头体，但顶部出现小平面/凹陷特征，尖端更锐利",
+          "suggested_change": "检查顶部是否应为光滑圆弧，去除顶部小平/凹陷",
+          "status": "partial_mismatch",
+          "mismatch_severity": "minor"
+        },
+        {
+          "item": "中部凸缘外轮廓",
+          "reference": "投影为连续圆弧，显示圆盘/圆柱形凸缘",
+          "model": "清晰六边形凸缘，直边与棱角可见",
+          "suggested_change": "将中部凸缘由六边形改为圆形凸缘",
+          "status": "mismatch",
+          "mismatch_severity": "major"
+        },
+        {
+          "item": "中部凸缘上下台阶",
+          "reference": "凸缘上下有退台/台阶，顶部边缘似有倒角/圆角",
+          "model": "六边形凸缘上下表面较平，退台不明显",
+          "suggested_change": "调整凸缘上下退台与圆角以匹配参考",
+          "status": "partial_mismatch",
+          "mismatch_severity": "moderate"
+        },
+        {
+          "item": "底部圆柱柄",
+          "reference": "圆柱形柄，直径小于凸缘",
+          "model": "圆柱形柄，直径小于凸缘",
+          "suggested_change": "无需修改",
+          "status": "match",
+          "mismatch_severity": "none"
+        },
+        {
+          "item": "整体比例（高/宽）",
+          "reference": "顶部尖头占高度约一半，凸缘位于中部",
+          "model": "顶部尖头占高度约一半，凸缘位于中部，比例近似",
+          "suggested_change": "保持当前比例",
+          "status": "approximate_match",
+          "mismatch_severity": "none"
+        }
+      ],
+      "unobservable": [
+        "{'item': '凸缘真实截面形状', 'reason': '原图仅单张 iso 视图，凸缘投影为圆弧可能是圆柱也可能是多边形；但模型显示为六边形，与参考投影不一致'}",
+        "{'item': '孔/内部结构', 'reason': '两张图中均未显示清晰可确认的孔或内部结构'}"
+      ],
+      "review_model": "moonshotai/Kimi-K2.7-Code",
+      "method": "fresh multimodal request with one selected reference view and current preview",
+      "recorded_at": 1790498975.9041252
+    },
+    "front": {
+      "revision": 2,
+      "preview_generation": 2,
+      "view": "front",
+      "reference_image_index": 2,
+      "reference_image_name": "image-2.png",
+      "reference_images_in_request": 1,
+      "score": 82.0,
+      "raw_model_score": 82.0,
+      "score_capped_by_evidence": false,
+      "threshold": 80,
+      "passes_threshold": true,
+      "summary": "当前 front 视图与参考图在整体布局上高度一致：顶部为尖头/圆头主体，中部有一圈凸缘/六角结构，下部为圆柱柄。主体轮廓比例、凸缘位置和整体三段式结构均匹配。主要差异在于参考图顶部尖端可见一条明显的纵向分型/棱边（或渲染接缝），而当前模型渲染图中顶部为光滑圆锥/圆头，无此棱边；此外参考图凸缘两侧有斜切/倒角台阶，当前模型凸缘为较规整的六角形投影，边缘较直。孔在当前视角均不可确认。",
+      "reference_hole_count": null,
+      "count_confidence": 0.0,
+      "evidence": [
+        {
+          "item": "整体三段式轮廓（尖头主体-凸缘-圆柱柄）",
+          "reference": "顶部尖头、中部凸缘、下部圆柱柄，比例约为 5:1:4",
+          "model": "顶部尖头、中部凸缘、下部圆柱柄，比例相近",
+          "suggested_change": "无需修改",
+          "status": "match",
+          "mismatch_severity": "none"
+        },
+        {
+          "item": "顶部尖端轮廓",
+          "reference": "尖头但带一条明显纵向棱边/分型线",
+          "model": "光滑圆锥/圆头，无可见纵向棱边",
+          "suggested_change": "检查顶部是否为带棱边的尖头或存在分型线",
+          "status": "mismatch",
+          "mismatch_severity": "minor"
+        },
+        {
+          "item": "中部凸缘外形",
+          "reference": "凸缘两侧有斜切/倒角，边缘非完全直立",
+          "model": "凸缘投影为较规整的六角形，边缘直立",
+          "suggested_change": "核对凸缘倒角或侧面斜切",
+          "status": "partial_mismatch",
+          "mismatch_severity": "minor"
+        },
+        {
+          "item": "下部圆柱柄",
+          "reference": "圆柱柄，直径小于凸缘，底部可见",
+          "model": "圆柱柄，直径小于凸缘，底部可见",
+          "suggested_change": "无需修改",
+          "status": "match",
+          "mismatch_severity": "none"
+        },
+        {
+          "item": "表面孔/凹槽",
+          "reference": "当前视角无可见孔或凹槽",
+          "model": "当前视角无可见孔或凹槽",
+          "suggested_change": "无需修改",
+          "status": "unobservable",
+          "mismatch_severity": "none"
+        }
+      ],
+      "unobservable": [
+        "顶部尖端真实形状（圆头/尖头/多面体）因投影可能产生歧义，但参考图可见纵向棱边而模型图光滑",
+        "凸缘真实截面是圆形、六角形还是多边形在正视图中无法完全确认",
+        "孔、内腔、贯穿孔或背面特征在当前 front 视角不可见",
+        "下部圆柱柄内部结构及是否与主体一体不可见"
+      ],
+      "review_model": "moonshotai/Kimi-K2.7-Code",
+      "method": "fresh multimodal request with one selected reference view and current preview",
+      "recorded_at": 1790498999.122188
+    },
+    "top": {
+      "revision": 2,
+      "preview_generation": 3,
+      "view": "top",
+      "reference_image_index": 3,
+      "reference_image_name": "image-3.png",
+      "reference_images_in_request": 1,
+      "score": 55.0,
+      "raw_model_score": 55.0,
+      "score_capped_by_evidence": false,
+      "threshold": 80,
+      "passes_threshold": false,
+      "summary": "参考图显示一个带中心孔的圆形盘状结构，外轮廓在网格背景中呈现为连续圆弧，内部有径向分割线和中心六边形/圆孔。当前模型顶视图显示一个八边形外框包围一个圆形盘，中心有圆孔。核心差异在于参考图外轮廓为圆形，而模型为八边形；同时参考图内部可见径向分割线，模型中未见。",
+      "reference_hole_count": 1,
+      "count_confidence": 0.9,
+      "evidence": [
+        {
+          "item": "外轮廓形状",
+          "reference": "圆形外轮廓（连续圆弧）",
+          "model": "八边形外轮廓（多条直边）",
+          "suggested_change": "将外轮廓从八边形改为圆形，或确认是否为投影/建模错误",
+          "status": "mismatch",
+          "mismatch_severity": "major"
+        },
+        {
+          "item": "中心孔",
+          "reference": "中心有一个孔（六边形或圆形投影）",
+          "model": "中心有一个圆孔",
+          "suggested_change": "保持中心孔",
+          "status": "match",
+          "mismatch_severity": "none"
+        },
+        {
+          "item": "内部径向分割线",
+          "reference": "可见一条或多条径向分割线",
+          "model": "无明显径向分割线",
+          "suggested_change": "添加或确认内部径向分割线",
+          "status": "mismatch",
+          "mismatch_severity": "moderate"
+        },
+        {
+          "item": "外圈台阶/凸缘",
+          "reference": "外圈有一圈较浅的环形台阶/凸缘",
+          "model": "外圈为八边形平面，无明显环形台阶",
+          "suggested_change": "确认外圈应为圆形台阶而非八边形平面",
+          "status": "mismatch",
+          "mismatch_severity": "moderate"
+        }
+      ],
+      "unobservable": [
+        "{'item': '中心孔真实截面形状', 'reference': '可能是六边形孔或圆孔', 'model': '圆孔', 'status': 'unobservable', 'reason': '顶视图投影无法区分六边形与圆形中心孔'}",
+        "{'item': '厚度与侧面结构', 'reference': '未知', 'model': '未知', 'status': 'unobservable', 'reason': '顶视图无法观察厚度、侧壁或底面结构'}"
+      ],
+      "review_model": "moonshotai/Kimi-K2.7-Code",
+      "method": "fresh multimodal request with one selected reference view and current preview",
+      "recorded_at": 1790499017.5258498
+    },
+    "bottom": {
+      "revision": 2,
+      "preview_generation": 4,
+      "view": "bottom",
+      "reference_image_index": 4,
+      "reference_image_name": "image-4.png",
+      "reference_images_in_request": 1,
+      "score": 55.0,
+      "raw_model_score": 55.0,
+      "score_capped_by_evidence": false,
+      "threshold": 80,
+      "passes_threshold": false,
+      "summary": "参考图 bottom 视角显示外轮廓为近似圆形（带轻微多边形/锯齿感），中心为黄色圆形孔，周围有同心圆台阶。当前模型图显示外轮廓为清晰正八边形，中心为六边形凹陷，无可见通孔。核心差异：外轮廓类型（圆 vs 八边形）、中心特征（圆孔 vs 六边形凹坑）、同心圆台阶结构缺失。",
+      "reference_hole_count": 1,
+      "count_confidence": 0.9,
+      "evidence": [
+        {
+          "item": "外轮廓形状",
+          "reference": "近似圆形（或高阶多边形近似圆）",
+          "model": "清晰正八边形",
+          "suggested_change": "将外轮廓改为圆形或更高阶近似圆的多边形",
+          "status": "mismatch",
+          "mismatch_severity": "major"
+        },
+        {
+          "item": "中心特征",
+          "reference": "黄色圆形通孔",
+          "model": "六边形凹陷，无可见通孔",
+          "suggested_change": "将中心六边形凹陷改为圆形通孔",
+          "status": "mismatch",
+          "mismatch_severity": "major"
+        },
+        {
+          "item": "同心圆台阶",
+          "reference": "中心孔外有多层同心圆台阶",
+          "model": "仅一个圆形凸台/凹陷边界，无多层台阶",
+          "suggested_change": "添加中心孔周围的同心圆台阶结构",
+          "status": "mismatch",
+          "mismatch_severity": "moderate"
+        },
+        {
+          "item": "整体比例/布局",
+          "reference": "中心特征位于正中，外轮廓对称",
+          "model": "中心特征位于正中，外轮廓对称",
+          "suggested_change": "保持中心对称布局",
+          "status": "approximate_match",
+          "mismatch_severity": "none"
+        }
+      ],
+      "unobservable": [
+        "{'item': '外轮廓真实边数', 'reference': '可能是圆形或高阶多边形', 'model': '正八边形', 'reason': '参考图分辨率低，外轮廓圆与多边形存在投影歧义，但当前模型明确为八边形，与参考图的圆形视觉印象差异显著'}",
+        "{'item': '孔是否贯穿', 'reference': '中心黄色区域疑似通孔', 'model': '六边形凹陷深度未知', 'reason': '当前视角无法确认参考孔是否贯穿，也无法确认模型凹陷是否贯穿'}"
+      ],
+      "review_model": "moonshotai/Kimi-K2.7-Code",
+      "method": "fresh multimodal request with one selected reference view and current preview",
+      "recorded_at": 1790499036.3736687
+    }
+  },
+  "reference_similarity_history": [
+    {
+      "revision": 2,
+      "preview_generation": 1,
+      "view": "iso",
+      "reference_image_index": 1,
+      "reference_image_name": "image-1.png",
+      "reference_images_in_request": 1,
+      "score": 55.0,
+      "raw_model_score": 55.0,
+      "score_capped_by_evidence": false,
+      "threshold": 80,
+      "passes_threshold": false,
+      "summary": "当前 iso 视角下，模型与原图在整体布局（顶部尖头体、中部凸缘、底部圆柱柄）上相似，但存在核心结构差异：原图中部凸缘投影为连续圆弧，显示为圆盘/圆柱形凸缘；模型中部为明显六边形凸缘，直边与棱角清晰。顶部尖头轮廓比例接近，但模型尖端更锐利且顶部有小平面/孔状特征，原图顶部为光滑圆弧。底部圆柱柄比例大致接近。由于凸缘外轮廓类型不同，属于核心拓扑差异，分数不超过80。",
+      "reference_hole_count": null,
+      "count_confidence": 0.0,
+      "evidence": [
+        {
+          "item": "顶部尖头体",
+          "reference": "光滑圆弧过渡的尖头，顶部为连续曲面",
+          "model": "尖头体，但顶部出现小平面/凹陷特征，尖端更锐利",
+          "suggested_change": "检查顶部是否应为光滑圆弧，去除顶部小平/凹陷",
+          "status": "partial_mismatch",
+          "mismatch_severity": "minor"
+        },
+        {
+          "item": "中部凸缘外轮廓",
+          "reference": "投影为连续圆弧，显示圆盘/圆柱形凸缘",
+          "model": "清晰六边形凸缘，直边与棱角可见",
+          "suggested_change": "将中部凸缘由六边形改为圆形凸缘",
+          "status": "mismatch",
+          "mismatch_severity": "major"
+        },
+        {
+          "item": "中部凸缘上下台阶",
+          "reference": "凸缘上下有退台/台阶，顶部边缘似有倒角/圆角",
+          "model": "六边形凸缘上下表面较平，退台不明显",
+          "suggested_change": "调整凸缘上下退台与圆角以匹配参考",
+          "status": "partial_mismatch",
+          "mismatch_severity": "moderate"
+        },
+        {
+          "item": "底部圆柱柄",
+          "reference": "圆柱形柄，直径小于凸缘",
+          "model": "圆柱形柄，直径小于凸缘",
+          "suggested_change": "无需修改",
+          "status": "match",
+          "mismatch_severity": "none"
+        },
+        {
+          "item": "整体比例（高/宽）",
+          "reference": "顶部尖头占高度约一半，凸缘位于中部",
+          "model": "顶部尖头占高度约一半，凸缘位于中部，比例近似",
+          "suggested_change": "保持当前比例",
+          "status": "approximate_match",
+          "mismatch_severity": "none"
+        }
+      ],
+      "unobservable": [
+        "{'item': '凸缘真实截面形状', 'reason': '原图仅单张 iso 视图，凸缘投影为圆弧可能是圆柱也可能是多边形；但模型显示为六边形，与参考投影不一致'}",
+        "{'item': '孔/内部结构', 'reason': '两张图中均未显示清晰可确认的孔或内部结构'}"
+      ],
+      "review_model": "moonshotai/Kimi-K2.7-Code",
+      "method": "fresh multimodal request with one selected reference view and current preview",
+      "recorded_at": 1790498975.9041252
+    },
+    {
+      "revision": 2,
+      "preview_generation": 2,
+      "view": "front",
+      "reference_image_index": 2,
+      "reference_image_name": "image-2.png",
+      "reference_images_in_request": 1,
+      "score": 82.0,
+      "raw_model_score": 82.0,
+      "score_capped_by_evidence": false,
+      "threshold": 80,
+      "passes_threshold": true,
+      "summary": "当前 front 视图与参考图在整体布局上高度一致：顶部为尖头/圆头主体，中部有一圈凸缘/六角结构，下部为圆柱柄。主体轮廓比例、凸缘位置和整体三段式结构均匹配。主要差异在于参考图顶部尖端可见一条明显的纵向分型/棱边（或渲染接缝），而当前模型渲染图中顶部为光滑圆锥/圆头，无此棱边；此外参考图凸缘两侧有斜切/倒角台阶，当前模型凸缘为较规整的六角形投影，边缘较直。孔在当前视角均不可确认。",
+      "reference_hole_count": null,
+      "count_confidence": 0.0,
+      "evidence": [
+        {
+          "item": "整体三段式轮廓（尖头主体-凸缘-圆柱柄）",
+          "reference": "顶部尖头、中部凸缘、下部圆柱柄，比例约为 5:1:4",
+          "model": "顶部尖头、中部凸缘、下部圆柱柄，比例相近",
+          "suggested_change": "无需修改",
+          "status": "match",
+          "mismatch_severity": "none"
+        },
+        {
+          "item": "顶部尖端轮廓",
+          "reference": "尖头但带一条明显纵向棱边/分型线",
+          "model": "光滑圆锥/圆头，无可见纵向棱边",
+          "suggested_change": "检查顶部是否为带棱边的尖头或存在分型线",
+          "status": "mismatch",
+          "mismatch_severity": "minor"
+        },
+        {
+          "item": "中部凸缘外形",
+          "reference": "凸缘两侧有斜切/倒角，边缘非完全直立",
+          "model": "凸缘投影为较规整的六角形，边缘直立",
+          "suggested_change": "核对凸缘倒角或侧面斜切",
+          "status": "partial_mismatch",
+          "mismatch_severity": "minor"
+        },
+        {
+          "item": "下部圆柱柄",
+          "reference": "圆柱柄，直径小于凸缘，底部可见",
+          "model": "圆柱柄，直径小于凸缘，底部可见",
+          "suggested_change": "无需修改",
+          "status": "match",
+          "mismatch_severity": "none"
+        },
+        {
+          "item": "表面孔/凹槽",
+          "reference": "当前视角无可见孔或凹槽",
+          "model": "当前视角无可见孔或凹槽",
+          "suggested_change": "无需修改",
+          "status": "unobservable",
+          "mismatch_severity": "none"
+        }
+      ],
+      "unobservable": [
+        "顶部尖端真实形状（圆头/尖头/多面体）因投影可能产生歧义，但参考图可见纵向棱边而模型图光滑",
+        "凸缘真实截面是圆形、六角形还是多边形在正视图中无法完全确认",
+        "孔、内腔、贯穿孔或背面特征在当前 front 视角不可见",
+        "下部圆柱柄内部结构及是否与主体一体不可见"
+      ],
+      "review_model": "moonshotai/Kimi-K2.7-Code",
+      "method": "fresh multimodal request with one selected reference view and current preview",
+      "recorded_at": 1790498999.122188
+    },
+    {
+      "revision": 2,
+      "preview_generation": 3,
+      "view": "top",
+      "reference_image_index": 3,
+      "reference_image_name": "image-3.png",
+      "reference_images_in_request": 1,
+      "score": 55.0,
+      "raw_model_score": 55.0,
+      "score_capped_by_evidence": false,
+      "threshold": 80,
+      "passes_threshold": false,
+      "summary": "参考图显示一个带中心孔的圆形盘状结构，外轮廓在网格背景中呈现为连续圆弧，内部有径向分割线和中心六边形/圆孔。当前模型顶视图显示一个八边形外框包围一个圆形盘，中心有圆孔。核心差异在于参考图外轮廓为圆形，而模型为八边形；同时参考图内部可见径向分割线，模型中未见。",
+      "reference_hole_count": 1,
+      "count_confidence": 0.9,
+      "evidence": [
+        {
+          "item": "外轮廓形状",
+          "reference": "圆形外轮廓（连续圆弧）",
+          "model": "八边形外轮廓（多条直边）",
+          "suggested_change": "将外轮廓从八边形改为圆形，或确认是否为投影/建模错误",
+          "status": "mismatch",
+          "mismatch_severity": "major"
+        },
+        {
+          "item": "中心孔",
+          "reference": "中心有一个孔（六边形或圆形投影）",
+          "model": "中心有一个圆孔",
+          "suggested_change": "保持中心孔",
+          "status": "match",
+          "mismatch_severity": "none"
+        },
+        {
+          "item": "内部径向分割线",
+          "reference": "可见一条或多条径向分割线",
+          "model": "无明显径向分割线",
+          "suggested_change": "添加或确认内部径向分割线",
+          "status": "mismatch",
+          "mismatch_severity": "moderate"
+        },
+        {
+          "item": "外圈台阶/凸缘",
+          "reference": "外圈有一圈较浅的环形台阶/凸缘",
+          "model": "外圈为八边形平面，无明显环形台阶",
+          "suggested_change": "确认外圈应为圆形台阶而非八边形平面",
+          "status": "mismatch",
+          "mismatch_severity": "moderate"
+        }
+      ],
+      "unobservable": [
+        "{'item': '中心孔真实截面形状', 'reference': '可能是六边形孔或圆孔', 'model': '圆孔', 'status': 'unobservable', 'reason': '顶视图投影无法区分六边形与圆形中心孔'}",
+        "{'item': '厚度与侧面结构', 'reference': '未知', 'model': '未知', 'status': 'unobservable', 'reason': '顶视图无法观察厚度、侧壁或底面结构'}"
+      ],
+      "review_model": "moonshotai/Kimi-K2.7-Code",
+      "method": "fresh multimodal request with one selected reference view and current preview",
+      "recorded_at": 1790499017.5258498
+    },
+    {
+      "revision": 2,
+      "preview_generation": 4,
+      "view": "bottom",
+      "reference_image_index": 4,
+      "reference_image_name": "image-4.png",
+      "reference_images_in_request": 1,
+      "score": 55.0,
+      "raw_model_score": 55.0,
+      "score_capped_by_evidence": false,
+      "threshold": 80,
+      "passes_threshold": false,
+      "summary": "参考图 bottom 视角显示外轮廓为近似圆形（带轻微多边形/锯齿感），中心为黄色圆形孔，周围有同心圆台阶。当前模型图显示外轮廓为清晰正八边形，中心为六边形凹陷，无可见通孔。核心差异：外轮廓类型（圆 vs 八边形）、中心特征（圆孔 vs 六边形凹坑）、同心圆台阶结构缺失。",
+      "reference_hole_count": 1,
+      "count_confidence": 0.9,
+      "evidence": [
+        {
+          "item": "外轮廓形状",
+          "reference": "近似圆形（或高阶多边形近似圆）",
+          "model": "清晰正八边形",
+          "suggested_change": "将外轮廓改为圆形或更高阶近似圆的多边形",
+          "status": "mismatch",
+          "mismatch_severity": "major"
+        },
+        {
+          "item": "中心特征",
+          "reference": "黄色圆形通孔",
+          "model": "六边形凹陷，无可见通孔",
+          "suggested_change": "将中心六边形凹陷改为圆形通孔",
+          "status": "mismatch",
+          "mismatch_severity": "major"
+        },
+        {
+          "item": "同心圆台阶",
+          "reference": "中心孔外有多层同心圆台阶",
+          "model": "仅一个圆形凸台/凹陷边界，无多层台阶",
+          "suggested_change": "添加中心孔周围的同心圆台阶结构",
+          "status": "mismatch",
+          "mismatch_severity": "moderate"
+        },
+        {
+          "item": "整体比例/布局",
+          "reference": "中心特征位于正中，外轮廓对称",
+          "model": "中心特征位于正中，外轮廓对称",
+          "suggested_change": "保持中心对称布局",
+          "status": "approximate_match",
+          "mismatch_severity": "none"
+        }
+      ],
+      "unobservable": [
+        "{'item': '外轮廓真实边数', 'reference': '可能是圆形或高阶多边形', 'model': '正八边形', 'reason': '参考图分辨率低，外轮廓圆与多边形存在投影歧义，但当前模型明确为八边形，与参考图的圆形视觉印象差异显著'}",
+        "{'item': '孔是否贯穿', 'reference': '中心黄色区域疑似通孔', 'model': '六边形凹陷深度未知', 'reason': '当前视角无法确认参考孔是否贯穿，也无法确认模型凹陷是否贯穿'}"
+      ],
+      "review_model": "moonshotai/Kimi-K2.7-Code",
+      "method": "fresh multimodal request with one selected reference view and current preview",
+      "recorded_at": 1790499036.3736687
+    }
+  ]
+}

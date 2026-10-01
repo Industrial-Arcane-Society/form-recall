@@ -1,0 +1,184 @@
+{
+  "run_id": "ai-modeler-replica-0857e758-r02",
+  "status": "interrupted_not_accepted",
+  "model": "moonshotai/Kimi-K2.7-Code",
+  "reasoning_effort": "high",
+  "thinking_budget": 2048,
+  "cumulative_reasoning_characters": 80010,
+  "reference_images": [
+    "../references/image-1.png",
+    "../references/image-2.png",
+    "../references/image-3.png",
+    "../references/image-4.png"
+  ],
+  "revision": 18,
+  "feature_count": 3,
+  "finished": false,
+  "finish_state": null,
+  "final_preview_dimensions": {
+    "unit": "mm",
+    "bbox": [
+      -12.0,
+      -12.0,
+      20.0,
+      12.0,
+      12.0,
+      44.0
+    ],
+    "size": [
+      24.0,
+      24.0,
+      24.0
+    ],
+    "volume_mm3": 11703.129941040723,
+    "surface_area_mm2": 2065.2152705293815,
+    "triangles": 3918,
+    "feature_count": 3
+  },
+  "review_scores": [
+    {
+      "revision": 5,
+      "view": "iso",
+      "score": 45.0,
+      "passed": false
+    },
+    {
+      "revision": 12,
+      "view": "iso",
+      "score": 35.0,
+      "passed": false
+    }
+  ],
+  "final_features": [
+    {
+      "id": "shank_cyl",
+      "kind": "cylinder",
+      "operation": "add",
+      "name": "Shank Cylinder",
+      "parameters": {
+        "center": [
+          0,
+          0,
+          0
+        ],
+        "radius": 7,
+        "height": 25,
+        "axis": "Z",
+        "base": true
+      },
+      "sources": {
+        "radius": {
+          "type": "image_estimate",
+          "evidence": "front view shank width ~28% of head width, head visually ~22mm dia so shank ~14mm"
+        },
+        "height": {
+          "type": "image_estimate",
+          "evidence": "temporarily extend shank to overlap flange for debugging geometry union"
+        },
+        "center": {
+          "type": "user",
+          "evidence": "shank placed with base center at global origin for vertical symmetry"
+        }
+      }
+    },
+    {
+      "id": "hex_flange",
+      "kind": "cylinder",
+      "operation": "add",
+      "name": "Hexagonal Flange",
+      "parameters": {
+        "center": [
+          0,
+          0,
+          20
+        ],
+        "radius": 12,
+        "height": 4,
+        "axis": "Z",
+        "base": true,
+        "segments": 6
+      },
+      "sources": {
+        "center": {
+          "type": "derived",
+          "evidence": "flange base at top of shank (Z=20)"
+        },
+        "radius": {
+          "type": "image_estimate",
+          "evidence": "re-interpretation: top/bottom views show hexagonal flange is the widest feature, with circumradius ~12mm; head and shank fit inside"
+        },
+        "height": {
+          "type": "image_estimate",
+          "evidence": "front view flange is thin but clearly wider than head/shank, ~4mm"
+        },
+        "segments": {
+          "type": "user",
+          "evidence": "top/bottom views show six-sided polygon => hexagonal flange"
+        }
+      }
+    },
+    {
+      "id": "bullet_head",
+      "kind": "revolve",
+      "operation": "add",
+      "name": "Bullet Head Revolve",
+      "parameters": {
+        "center": [
+          0,
+          0,
+          0
+        ],
+        "axis": "Z",
+        "angle": 360,
+        "profile": [
+          [
+            10,
+            24
+          ],
+          [
+            9.27,
+            30
+          ],
+          [
+            6.93,
+            36
+          ],
+          [
+            2.35,
+            42
+          ],
+          [
+            0,
+            44
+          ]
+        ]
+      },
+      "sources": {
+        "center": {
+          "type": "user",
+          "evidence": "revolve axis at global Z-axis for vertical rotational symmetry"
+        },
+        "axis": {
+          "type": "user",
+          "evidence": "model is vertical around Z-axis"
+        },
+        "angle": {
+          "type": "user",
+          "evidence": "full 360-degree revolve for axisymmetric head"
+        },
+        "profile": {
+          "type": "image_estimate",
+          "evidence": "re-interpretation: head is narrower than hex flange but wider than shank; tangent ogive nose with base radius ~10mm and length ~20mm sits on top of flange (Z=24)"
+        }
+      }
+    }
+  ],
+  "output_paths": {},
+  "finding": "Document.build/K.csg_union is order-sensitive for an added revolve: with shaft and flange before the revolve, preview bounds shrink to the revolve only; making the revolve the first feature preserves the earlier and later bounds. A local Document diagnostic reproduced both orders.",
+  "unresolved": [
+    "No review reached 80/100.",
+    "The final front preview contains the flange/head but omits the planned shaft.",
+    "The top tip remains pointed; it does not match the rounded reference tip.",
+    "The latest candidate was not reviewed after revision 18."
+  ]
+}

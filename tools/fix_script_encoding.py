@@ -31,7 +31,7 @@ import sys
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 BOM = b"\xef\xbb\xbf"
-SKIP_DIRS = {"__pycache__", ".git", "_wheels", "_selftest_out", ".pytest_cache",
+SKIP_DIRS = {"__pycache__", ".git", "_wheels", ".cache", "artifacts", ".pytest_cache",
              # 数据/临时目录里的脚本不要动（多数是运行时生成的 UTF-16 脚本）
              "零件真实图片", "零件真实图片_带背景", "零件AI建模图片", "零件比对图",
              "零件参数", "kb", "reports"}

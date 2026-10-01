@@ -1,0 +1,362 @@
+{
+  "schema_version": "1.0",
+  "name": "Stepped block with nine through holes",
+  "source_prompt": "依据用户同一工件的等轴测图与正视图复刻；无标注尺寸，全部名义尺寸是图像比例估值。",
+  "units": {
+    "length": "mm",
+    "angle": "deg"
+  },
+  "coordinate_system": {
+    "type": "global_cartesian",
+    "handedness": "right",
+    "axes": [
+      "X",
+      "Y",
+      "Z"
+    ],
+    "origin": [
+      0,
+      0,
+      0
+    ]
+  },
+  "features": [
+    {
+      "id": "outer-envelope",
+      "kind": "box",
+      "operation": "add",
+      "name": "连续外壳主体",
+      "note": "按正视图估计宽高，按等轴图估计深度；先建连续厚实体。",
+      "parameters": {
+        "length": 322,
+        "width": 122,
+        "height": 340,
+        "center": [
+          0,
+          0,
+          170
+        ]
+      },
+      "sources": {
+        "length": {
+          "type": "image_estimate",
+          "evidence": "正视图外轮廓约 322 px，按 340 mm 高度归一后估算 322 mm。",
+          "note": "按图比例估算，不是制造标注。"
+        },
+        "width": {
+          "type": "image_estimate",
+          "evidence": "等轴图可见厚度约为高度的 0.36，取 122 mm。",
+          "note": "按图比例估算，不是制造标注。"
+        },
+        "height": {
+          "type": "image_estimate",
+          "evidence": "正视图总高作为名义尺度，取 340 mm。",
+          "note": "按图比例估算，不是制造标注。"
+        },
+        "center": {
+          "type": "derived",
+          "evidence": "X/Y 居中，底面置于 Z=0。"
+        }
+      }
+    },
+    {
+      "id": "center-recess",
+      "kind": "box",
+      "operation": "cut",
+      "name": "中央贯通高度的后退槽",
+      "note": "正面中段后退约 20 mm；切除体超出前表面和上下边各 1 mm，避免布尔共面。",
+      "parameters": {
+        "length": 68,
+        "width": 21,
+        "height": 342,
+        "center": [
+          0,
+          51.5,
+          170
+        ]
+      },
+      "sources": {
+        "length": {
+          "type": "image_estimate",
+          "evidence": "正视图中央区域约为总宽的 68/322。",
+          "note": "按图比例估算，不是制造标注。"
+        },
+        "width": {
+          "type": "image_estimate",
+          "evidence": "可见等轴图前后退台估为 20 mm，另加 1 mm 布尔越界。",
+          "note": "有效槽深估 20 mm；参数含 1 mm 越界。"
+        },
+        "height": {
+          "type": "image_estimate",
+          "evidence": "槽沿主体全高贯通上下边，参数含上下各 1 mm 越界。",
+          "note": "按图比例估算，不是制造标注。"
+        },
+        "center": {
+          "type": "derived",
+          "evidence": "主体前表面 Y=61；切除范围 Y=41..62，形成 Y=41 的后退面。"
+        }
+      }
+    },
+    {
+      "id": "left-hole-top",
+      "kind": "hole",
+      "operation": "cut",
+      "name": "left top through hole",
+      "parameters": {
+        "diameter": 46,
+        "through": true,
+        "pos": "point",
+        "point": [
+          -97.5,
+          61,
+          276
+        ],
+        "axis": "Y"
+      },
+      "sources": {
+        "diameter": {
+          "type": "image_estimate",
+          "evidence": "正视图孔径与对应面板宽度的比例；上/下为大孔，中排为小孔。",
+          "note": "按图比例估算，不是制造标注。"
+        },
+        "point": {
+          "type": "image_estimate",
+          "evidence": "按正视图孔心行列比例定位；中央孔从后退面 Y=41 起钻，外侧孔从前面 Y=61 起钻。",
+          "note": "按图比例估算，不是制造标注。"
+        }
+      }
+    },
+    {
+      "id": "left-hole-middle",
+      "kind": "hole",
+      "operation": "cut",
+      "name": "left middle through hole",
+      "parameters": {
+        "diameter": 31,
+        "through": true,
+        "pos": "point",
+        "point": [
+          -97.5,
+          61,
+          170
+        ],
+        "axis": "Y"
+      },
+      "sources": {
+        "diameter": {
+          "type": "image_estimate",
+          "evidence": "正视图孔径与对应面板宽度的比例；上/下为大孔，中排为小孔。",
+          "note": "按图比例估算，不是制造标注。"
+        },
+        "point": {
+          "type": "image_estimate",
+          "evidence": "按正视图孔心行列比例定位；中央孔从后退面 Y=41 起钻，外侧孔从前面 Y=61 起钻。",
+          "note": "按图比例估算，不是制造标注。"
+        }
+      }
+    },
+    {
+      "id": "left-hole-bottom",
+      "kind": "hole",
+      "operation": "cut",
+      "name": "left bottom through hole",
+      "parameters": {
+        "diameter": 46,
+        "through": true,
+        "pos": "point",
+        "point": [
+          -97.5,
+          61,
+          64
+        ],
+        "axis": "Y"
+      },
+      "sources": {
+        "diameter": {
+          "type": "image_estimate",
+          "evidence": "正视图孔径与对应面板宽度的比例；上/下为大孔，中排为小孔。",
+          "note": "按图比例估算，不是制造标注。"
+        },
+        "point": {
+          "type": "image_estimate",
+          "evidence": "按正视图孔心行列比例定位；中央孔从后退面 Y=41 起钻，外侧孔从前面 Y=61 起钻。",
+          "note": "按图比例估算，不是制造标注。"
+        }
+      }
+    },
+    {
+      "id": "center-hole-top",
+      "kind": "hole",
+      "operation": "cut",
+      "name": "center top through hole",
+      "parameters": {
+        "diameter": 46,
+        "through": true,
+        "pos": "point",
+        "point": [
+          0,
+          41,
+          276
+        ],
+        "axis": "Y"
+      },
+      "sources": {
+        "diameter": {
+          "type": "image_estimate",
+          "evidence": "正视图孔径与对应面板宽度的比例；上/下为大孔，中排为小孔。",
+          "note": "按图比例估算，不是制造标注。"
+        },
+        "point": {
+          "type": "image_estimate",
+          "evidence": "按正视图孔心行列比例定位；中央孔从后退面 Y=41 起钻，外侧孔从前面 Y=61 起钻。",
+          "note": "按图比例估算，不是制造标注。"
+        }
+      }
+    },
+    {
+      "id": "center-hole-middle",
+      "kind": "hole",
+      "operation": "cut",
+      "name": "center middle through hole",
+      "parameters": {
+        "diameter": 31,
+        "through": true,
+        "pos": "point",
+        "point": [
+          0,
+          41,
+          170
+        ],
+        "axis": "Y"
+      },
+      "sources": {
+        "diameter": {
+          "type": "image_estimate",
+          "evidence": "正视图孔径与对应面板宽度的比例；上/下为大孔，中排为小孔。",
+          "note": "按图比例估算，不是制造标注。"
+        },
+        "point": {
+          "type": "image_estimate",
+          "evidence": "按正视图孔心行列比例定位；中央孔从后退面 Y=41 起钻，外侧孔从前面 Y=61 起钻。",
+          "note": "按图比例估算，不是制造标注。"
+        }
+      }
+    },
+    {
+      "id": "center-hole-bottom",
+      "kind": "hole",
+      "operation": "cut",
+      "name": "center bottom through hole",
+      "parameters": {
+        "diameter": 46,
+        "through": true,
+        "pos": "point",
+        "point": [
+          0,
+          41,
+          64
+        ],
+        "axis": "Y"
+      },
+      "sources": {
+        "diameter": {
+          "type": "image_estimate",
+          "evidence": "正视图孔径与对应面板宽度的比例；上/下为大孔，中排为小孔。",
+          "note": "按图比例估算，不是制造标注。"
+        },
+        "point": {
+          "type": "image_estimate",
+          "evidence": "按正视图孔心行列比例定位；中央孔从后退面 Y=41 起钻，外侧孔从前面 Y=61 起钻。",
+          "note": "按图比例估算，不是制造标注。"
+        }
+      }
+    },
+    {
+      "id": "right-hole-top",
+      "kind": "hole",
+      "operation": "cut",
+      "name": "right top through hole",
+      "parameters": {
+        "diameter": 46,
+        "through": true,
+        "pos": "point",
+        "point": [
+          97.5,
+          61,
+          276
+        ],
+        "axis": "Y"
+      },
+      "sources": {
+        "diameter": {
+          "type": "image_estimate",
+          "evidence": "正视图孔径与对应面板宽度的比例；上/下为大孔，中排为小孔。",
+          "note": "按图比例估算，不是制造标注。"
+        },
+        "point": {
+          "type": "image_estimate",
+          "evidence": "按正视图孔心行列比例定位；中央孔从后退面 Y=41 起钻，外侧孔从前面 Y=61 起钻。",
+          "note": "按图比例估算，不是制造标注。"
+        }
+      }
+    },
+    {
+      "id": "right-hole-middle",
+      "kind": "hole",
+      "operation": "cut",
+      "name": "right middle through hole",
+      "parameters": {
+        "diameter": 31,
+        "through": true,
+        "pos": "point",
+        "point": [
+          97.5,
+          61,
+          170
+        ],
+        "axis": "Y"
+      },
+      "sources": {
+        "diameter": {
+          "type": "image_estimate",
+          "evidence": "正视图孔径与对应面板宽度的比例；上/下为大孔，中排为小孔。",
+          "note": "按图比例估算，不是制造标注。"
+        },
+        "point": {
+          "type": "image_estimate",
+          "evidence": "按正视图孔心行列比例定位；中央孔从后退面 Y=41 起钻，外侧孔从前面 Y=61 起钻。",
+          "note": "按图比例估算，不是制造标注。"
+        }
+      }
+    },
+    {
+      "id": "right-hole-bottom",
+      "kind": "hole",
+      "operation": "cut",
+      "name": "right bottom through hole",
+      "parameters": {
+        "diameter": 46,
+        "through": true,
+        "pos": "point",
+        "point": [
+          97.5,
+          61,
+          64
+        ],
+        "axis": "Y"
+      },
+      "sources": {
+        "diameter": {
+          "type": "image_estimate",
+          "evidence": "正视图孔径与对应面板宽度的比例；上/下为大孔，中排为小孔。",
+          "note": "按图比例估算，不是制造标注。"
+        },
+        "point": {
+          "type": "image_estimate",
+          "evidence": "按正视图孔心行列比例定位；中央孔从后退面 Y=41 起钻，外侧孔从前面 Y=61 起钻。",
+          "note": "按图比例估算，不是制造标注。"
+        }
+      }
+    }
+  ]
+}

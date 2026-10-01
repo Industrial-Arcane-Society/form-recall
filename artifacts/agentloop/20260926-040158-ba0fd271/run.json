@@ -1,0 +1,1907 @@
+{
+  "record_version": 1,
+  "started_at": "2026-09-26T04:01:58+08:00",
+  "finished_at": "2026-09-26T04:03:15+08:00",
+  "state": "previewed",
+  "input": {
+    "prompt": "做一个长方形的遥控器，薄一点，圆角，里面搞3个圆按钮，稍微凸起",
+    "reference_images": []
+  },
+  "routing": {
+    "action": "create",
+    "review_mode": "agent_selected",
+    "review_rounds": 0,
+    "reason": "本轮由统一 AgentLoop 按需调用工具；图片建模默认先生成可见候选。"
+  },
+  "conversation_memory": {
+    "summarized_through": 0,
+    "summary_chars": 0
+  },
+  "limits": {
+    "tool_calls": 256,
+    "web_search_calls": 32,
+    "tool_preview_calls": 256,
+    "multiview_tool_calls_per_round": 8,
+    "review_rounds": 256,
+    "context_turns": 128,
+    "context_chars": 1000000,
+    "context_summary_chars": 32000
+  },
+  "selected_reference_images": [],
+  "active_reference_images": [],
+  "model_calls": [
+    {
+      "phase": "agent_loop",
+      "model": "moonshotai/Kimi-K2.7-Code",
+      "max_output_tokens": 65536,
+      "image_parts_in_request": 0,
+      "response_received": true,
+      "reference_image_names": [],
+      "generated_view": null,
+      "response_chars": 0,
+      "finish_reason": "tool_calls",
+      "api_protocol": "chat_completions_stream",
+      "response_id": "01a0da2910153386afa5327548ff7048",
+      "thinking": null,
+      "reasoning_effort": null,
+      "usage": {
+        "prompt_tokens": 2850,
+        "completion_tokens": 408,
+        "total_tokens": 3258,
+        "reasoning_tokens": 178
+      },
+      "error": null
+    },
+    {
+      "phase": "agent_loop",
+      "model": "moonshotai/Kimi-K2.7-Code",
+      "max_output_tokens": 65536,
+      "image_parts_in_request": 0,
+      "response_received": true,
+      "reference_image_names": [],
+      "generated_view": null,
+      "response_chars": 0,
+      "finish_reason": "tool_calls",
+      "api_protocol": "chat_completions_stream",
+      "response_id": "01a0da2941962a8e71c2f310e940c6bd",
+      "thinking": null,
+      "reasoning_effort": null,
+      "usage": {
+        "prompt_tokens": 3909,
+        "completion_tokens": 442,
+        "total_tokens": 4351,
+        "reasoning_tokens": 227
+      },
+      "error": null
+    },
+    {
+      "phase": "agent_loop",
+      "model": "moonshotai/Kimi-K2.7-Code",
+      "max_output_tokens": 65536,
+      "image_parts_in_request": 0,
+      "response_received": true,
+      "reference_image_names": [],
+      "generated_view": null,
+      "response_chars": 0,
+      "finish_reason": "tool_calls",
+      "api_protocol": "chat_completions_stream",
+      "response_id": "01a0da297a635e5016bf34f066268340",
+      "thinking": null,
+      "reasoning_effort": null,
+      "usage": {
+        "prompt_tokens": 4541,
+        "completion_tokens": 249,
+        "total_tokens": 4790,
+        "reasoning_tokens": 40
+      },
+      "error": null
+    },
+    {
+      "phase": "agent_loop",
+      "model": "moonshotai/Kimi-K2.7-Code",
+      "max_output_tokens": 65536,
+      "image_parts_in_request": 0,
+      "response_received": true,
+      "reference_image_names": [],
+      "generated_view": null,
+      "response_chars": 0,
+      "finish_reason": "tool_calls",
+      "api_protocol": "chat_completions_stream",
+      "response_id": "01a0da299eaabf98a68a21fa98117b56",
+      "thinking": null,
+      "reasoning_effort": null,
+      "usage": {
+        "prompt_tokens": 5618,
+        "completion_tokens": 218,
+        "total_tokens": 5836,
+        "reasoning_tokens": 25
+      },
+      "error": null
+    },
+    {
+      "phase": "agent_loop",
+      "model": "moonshotai/Kimi-K2.7-Code",
+      "max_output_tokens": 65536,
+      "image_parts_in_request": 0,
+      "response_received": true,
+      "reference_image_names": [],
+      "generated_view": null,
+      "response_chars": 0,
+      "finish_reason": "tool_calls",
+      "api_protocol": "chat_completions_stream",
+      "response_id": "01a0da29b7ea5c324fe6ab4551cd35e6",
+      "thinking": null,
+      "reasoning_effort": null,
+      "usage": {
+        "prompt_tokens": 6832,
+        "completion_tokens": 207,
+        "total_tokens": 7039,
+        "reasoning_tokens": 11
+      },
+      "error": null
+    },
+    {
+      "phase": "agent_loop",
+      "model": "moonshotai/Kimi-K2.7-Code",
+      "max_output_tokens": 65536,
+      "image_parts_in_request": 0,
+      "response_received": true,
+      "reference_image_names": [],
+      "generated_view": null,
+      "response_chars": 0,
+      "finish_reason": "tool_calls",
+      "api_protocol": "chat_completions_stream",
+      "response_id": "01a0da29d0ae959d66e842dc92440c58",
+      "thinking": null,
+      "reasoning_effort": null,
+      "usage": {
+        "prompt_tokens": 8203,
+        "completion_tokens": 79,
+        "total_tokens": 8282,
+        "reasoning_tokens": 60
+      },
+      "error": null
+    },
+    {
+      "phase": "agent_loop",
+      "model": "moonshotai/Kimi-K2.7-Code",
+      "max_output_tokens": 65536,
+      "image_parts_in_request": 1,
+      "response_received": true,
+      "reference_image_names": [],
+      "generated_view": null,
+      "response_chars": 0,
+      "finish_reason": "tool_calls",
+      "api_protocol": "chat_completions_stream",
+      "response_id": "01a0da29e0baf10006698e1ba16bca2a",
+      "thinking": null,
+      "reasoning_effort": null,
+      "usage": {
+        "prompt_tokens": 9439,
+        "completion_tokens": 211,
+        "total_tokens": 9650,
+        "reasoning_tokens": 192
+      },
+      "error": null
+    },
+    {
+      "phase": "agent_loop",
+      "model": "moonshotai/Kimi-K2.7-Code",
+      "max_output_tokens": 65536,
+      "image_parts_in_request": 1,
+      "response_received": true,
+      "reference_image_names": [],
+      "generated_view": null,
+      "response_chars": 0,
+      "finish_reason": "tool_calls",
+      "api_protocol": "chat_completions_stream",
+      "response_id": "01a0da2a0b37c4ba787d9a2a09e949d0",
+      "thinking": null,
+      "reasoning_effort": null,
+      "usage": {
+        "prompt_tokens": 10307,
+        "completion_tokens": 250,
+        "total_tokens": 10557,
+        "reasoning_tokens": 156
+      },
+      "error": null
+    }
+  ],
+  "temporary_review_images": [],
+  "recognition": null,
+  "raster_analysis": {
+    "available": true,
+    "images": []
+  },
+  "counts": {
+    "tool_calls": 8,
+    "web_search_calls": 0,
+    "blocked_web_search_calls": 0,
+    "preview_calls": 6,
+    "review_rounds": 0,
+    "repair_cycles": 0,
+    "llm_requests": 8,
+    "image_parts_in_request": 2,
+    "llm_usage": {
+      "prompt_tokens": 51699.0,
+      "completion_tokens": 2064.0,
+      "total_tokens": 53763.0,
+      "reasoning_tokens": 889.0
+    }
+  },
+  "loop_state": {
+    "context_compactions": 0,
+    "truncated_responses": 0,
+    "stagnation_warnings": 0,
+    "stagnant_tool_calls": 0,
+    "candidate_attempted": true,
+    "finish_gate": {
+      "ready": true,
+      "state": "previewed",
+      "validation": {
+        "valid": true,
+        "state": "valid",
+        "errors": [],
+        "confirmations": [],
+        "support": [
+          {
+            "feature_id": "body",
+            "kind": "box",
+            "status": "exact",
+            "reason": "矩形草图加凸台；当前 CATIA 映射仅支持 Z 轴拉伸。"
+          },
+          {
+            "feature_id": "button1",
+            "kind": "cylinder",
+            "status": "exact",
+            "reason": "等半径时为圆草图加凸台；圆锥台会近似，非 Z 轴圆锥台暂不支持。"
+          },
+          {
+            "feature_id": "button2",
+            "kind": "cylinder",
+            "status": "exact",
+            "reason": "等半径时为圆草图加凸台；圆锥台会近似，非 Z 轴圆锥台暂不支持。"
+          },
+          {
+            "feature_id": "button3",
+            "kind": "cylinder",
+            "status": "exact",
+            "reason": "等半径时为圆草图加凸台；圆锥台会近似，非 Z 轴圆锥台暂不支持。"
+          }
+        ],
+        "warnings": [],
+        "schema_version": "1.0"
+      },
+      "note": "已生成候选；本轮没有参考图，因此结果不是视觉验收。"
+    }
+  },
+  "construction_repairs": [],
+  "automatic_repairs": [],
+  "open_multiview_findings": [],
+  "plan": {
+    "schema_version": "1.0",
+    "name": "遥控器",
+    "source_prompt": "做一个长方形的遥控器，薄一点，圆角，里面搞3个圆按钮，稍微凸起",
+    "units": {
+      "length": "mm",
+      "angle": "deg"
+    },
+    "coordinate_system": {
+      "type": "global_cartesian",
+      "handedness": "right",
+      "axes": [
+        "X",
+        "Y",
+        "Z"
+      ],
+      "origin": [
+        0,
+        0,
+        0
+      ]
+    },
+    "features": [
+      {
+        "id": "body",
+        "kind": "box",
+        "operation": "add",
+        "parameters": {
+          "length": 120,
+          "width": 45,
+          "height": 8,
+          "corner": 5,
+          "corner_mode": "fillet"
+        },
+        "sources": {
+          "length": {
+            "type": "image_estimate",
+            "evidence": "长方形遥控器主体，按常见遥控器比例估算长度约120mm",
+            "note": "无绝对尺寸，名义值"
+          },
+          "width": {
+            "type": "image_estimate",
+            "evidence": "常见遥控器宽度约为长度的37%，估算45mm",
+            "note": "无绝对尺寸，名义值"
+          },
+          "height": {
+            "type": "image_estimate",
+            "evidence": "描述为薄一点，估算总厚度8mm",
+            "note": "无绝对尺寸，名义值"
+          },
+          "corner": {
+            "type": "image_estimate",
+            "evidence": "圆角外观，估算圆角半径5mm",
+            "note": "无绝对尺寸，名义值"
+          }
+        }
+      },
+      {
+        "id": "button1",
+        "kind": "cylinder",
+        "operation": "add",
+        "parameters": {
+          "radius": 5,
+          "height": 2,
+          "center": [
+            -35,
+            0,
+            9
+          ],
+          "axis": "Z"
+        },
+        "sources": {
+          "radius": {
+            "type": "image_estimate",
+            "evidence": "遥控器圆按钮，估算直径10mm，半径5mm",
+            "note": "无绝对尺寸，名义值"
+          },
+          "height": {
+            "type": "image_estimate",
+            "evidence": "描述为稍微凸起，估算凸起高度2mm",
+            "note": "无绝对尺寸，名义值"
+          },
+          "center": {
+            "type": "derived",
+            "evidence": "按钮位于遥控器上半区中心线，沿长度方向偏左约35mm，Z向位于主体顶面以上1mm（主体高8mm，圆柱高2mm）",
+            "note": "基于主体尺寸推导"
+          }
+        }
+      },
+      {
+        "id": "button2",
+        "kind": "cylinder",
+        "operation": "add",
+        "parameters": {
+          "radius": 5,
+          "height": 2,
+          "center": [
+            0,
+            0,
+            9
+          ],
+          "axis": "Z"
+        },
+        "sources": {
+          "radius": {
+            "type": "image_estimate",
+            "evidence": "遥控器圆按钮，估算直径10mm，半径5mm",
+            "note": "无绝对尺寸，名义值"
+          },
+          "height": {
+            "type": "image_estimate",
+            "evidence": "描述为稍微凸起，估算凸起高度2mm",
+            "note": "无绝对尺寸，名义值"
+          },
+          "center": {
+            "type": "derived",
+            "evidence": "第二个按钮位于遥控器长度方向中心、宽度中心线，Z向位于主体顶面以上1mm",
+            "note": "基于主体尺寸推导"
+          }
+        }
+      },
+      {
+        "id": "button3",
+        "kind": "cylinder",
+        "operation": "add",
+        "parameters": {
+          "radius": 5,
+          "height": 2,
+          "center": [
+            35,
+            0,
+            9
+          ],
+          "axis": "Z"
+        },
+        "sources": {
+          "radius": {
+            "type": "image_estimate",
+            "evidence": "遥控器圆按钮，估算直径10mm，半径5mm",
+            "note": "无绝对尺寸，名义值"
+          },
+          "height": {
+            "type": "image_estimate",
+            "evidence": "描述为稍微凸起，估算凸起高度2mm",
+            "note": "无绝对尺寸，名义值"
+          },
+          "center": {
+            "type": "derived",
+            "evidence": "第三个按钮位于遥控器长度方向右侧约35mm、宽度中心线，Z向位于主体顶面以上1mm",
+            "note": "基于主体尺寸推导"
+          }
+        }
+      }
+    ],
+    "pending_questions": []
+  },
+  "validation": {
+    "valid": true,
+    "state": "valid",
+    "errors": [],
+    "confirmations": [],
+    "support": [
+      {
+        "feature_id": "body",
+        "kind": "box",
+        "status": "exact",
+        "reason": "矩形草图加凸台；当前 CATIA 映射仅支持 Z 轴拉伸。"
+      },
+      {
+        "feature_id": "button1",
+        "kind": "cylinder",
+        "status": "exact",
+        "reason": "等半径时为圆草图加凸台；圆锥台会近似，非 Z 轴圆锥台暂不支持。"
+      },
+      {
+        "feature_id": "button2",
+        "kind": "cylinder",
+        "status": "exact",
+        "reason": "等半径时为圆草图加凸台；圆锥台会近似，非 Z 轴圆锥台暂不支持。"
+      },
+      {
+        "feature_id": "button3",
+        "kind": "cylinder",
+        "status": "exact",
+        "reason": "等半径时为圆草图加凸台；圆锥台会近似，非 Z 轴圆锥台暂不支持。"
+      }
+    ],
+    "warnings": [],
+    "schema_version": "1.0"
+  },
+  "preview": {
+    "state": "previewed",
+    "validation": {
+      "valid": true,
+      "state": "valid",
+      "errors": [],
+      "confirmations": [],
+      "support": [
+        {
+          "feature_id": "body",
+          "kind": "box",
+          "status": "exact",
+          "reason": "矩形草图加凸台；当前 CATIA 映射仅支持 Z 轴拉伸。"
+        },
+        {
+          "feature_id": "button1",
+          "kind": "cylinder",
+          "status": "exact",
+          "reason": "等半径时为圆草图加凸台；圆锥台会近似，非 Z 轴圆锥台暂不支持。"
+        },
+        {
+          "feature_id": "button2",
+          "kind": "cylinder",
+          "status": "exact",
+          "reason": "等半径时为圆草图加凸台；圆锥台会近似，非 Z 轴圆锥台暂不支持。"
+        },
+        {
+          "feature_id": "button3",
+          "kind": "cylinder",
+          "status": "exact",
+          "reason": "等半径时为圆草图加凸台；圆锥台会近似，非 Z 轴圆锥台暂不支持。"
+        }
+      ],
+      "warnings": [],
+      "schema_version": "1.0"
+    },
+    "catia_executed": false,
+    "dimensions": {
+      "unit": "mm",
+      "bbox": [
+        -60.0,
+        -22.5,
+        0.0,
+        60.0,
+        22.5,
+        11.0
+      ],
+      "size": [
+        120.0,
+        45.0,
+        11.0
+      ],
+      "volume_mm3": 43494.1833224437,
+      "surface_area_mm2": 13985.251441031383,
+      "triangles": 4004,
+      "feature_count": 4
+    },
+    "catia_operations": [
+      {
+        "index": 1,
+        "kind": "poly_pad",
+        "plane": "XY",
+        "center": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "profile": [
+          [
+            55.0,
+            -22.5
+          ],
+          [
+            55.9755,
+            -22.4039
+          ],
+          [
+            56.9134,
+            -22.1194
+          ],
+          [
+            57.7779,
+            -21.6573
+          ],
+          [
+            58.5355,
+            -21.0355
+          ],
+          [
+            59.1573,
+            -20.2779
+          ],
+          [
+            59.6194,
+            -19.4134
+          ],
+          [
+            59.9039,
+            -18.4755
+          ],
+          [
+            60.0,
+            -17.5
+          ],
+          [
+            60.0,
+            17.5
+          ],
+          [
+            59.9039,
+            18.4755
+          ],
+          [
+            59.6194,
+            19.4134
+          ],
+          [
+            59.1573,
+            20.2779
+          ],
+          [
+            58.5355,
+            21.0355
+          ],
+          [
+            57.7779,
+            21.6573
+          ],
+          [
+            56.9134,
+            22.1194
+          ],
+          [
+            55.9755,
+            22.4039
+          ],
+          [
+            55.0,
+            22.5
+          ],
+          [
+            -55.0,
+            22.5
+          ],
+          [
+            -55.9755,
+            22.4039
+          ],
+          [
+            -56.9134,
+            22.1194
+          ],
+          [
+            -57.7779,
+            21.6573
+          ],
+          [
+            -58.5355,
+            21.0355
+          ],
+          [
+            -59.1573,
+            20.2779
+          ],
+          [
+            -59.6194,
+            19.4134
+          ],
+          [
+            -59.9039,
+            18.4755
+          ],
+          [
+            -60.0,
+            17.5
+          ],
+          [
+            -60.0,
+            -17.5
+          ],
+          [
+            -59.9039,
+            -18.4755
+          ],
+          [
+            -59.6194,
+            -19.4134
+          ],
+          [
+            -59.1573,
+            -20.2779
+          ],
+          [
+            -58.5355,
+            -21.0355
+          ],
+          [
+            -57.7779,
+            -21.6573
+          ],
+          [
+            -56.9134,
+            -22.1194
+          ],
+          [
+            -55.9755,
+            -22.4039
+          ],
+          [
+            -55.0,
+            -22.5
+          ]
+        ],
+        "dimensions": {
+          "l": 0.0,
+          "w": 0.0,
+          "r": 0.0,
+          "h": 8.0,
+          "depth": 0.0
+        },
+        "name": "长方体",
+        "note": "长方体 120 × 45 × 8 mm (圆角 5)"
+      },
+      {
+        "index": 2,
+        "kind": "circle_pad",
+        "plane": "Z",
+        "center": [
+          -35.0,
+          0.0,
+          9.0
+        ],
+        "profile": [],
+        "dimensions": {
+          "l": 0.0,
+          "w": 0.0,
+          "r": 5.0,
+          "h": 2.0,
+          "depth": 0.0
+        },
+        "name": "圆柱/圆台",
+        "note": "圆柱 ⌀10 × 2 mm"
+      },
+      {
+        "index": 3,
+        "kind": "circle_pad",
+        "plane": "Z",
+        "center": [
+          0.0,
+          0.0,
+          9.0
+        ],
+        "profile": [],
+        "dimensions": {
+          "l": 0.0,
+          "w": 0.0,
+          "r": 5.0,
+          "h": 2.0,
+          "depth": 0.0
+        },
+        "name": "圆柱/圆台",
+        "note": "圆柱 ⌀10 × 2 mm"
+      },
+      {
+        "index": 4,
+        "kind": "circle_pad",
+        "plane": "Z",
+        "center": [
+          35.0,
+          0.0,
+          9.0
+        ],
+        "profile": [],
+        "dimensions": {
+          "l": 0.0,
+          "w": 0.0,
+          "r": 5.0,
+          "h": 2.0,
+          "depth": 0.0
+        },
+        "name": "圆柱/圆台",
+        "note": "圆柱 ⌀10 × 2 mm"
+      }
+    ],
+    "warnings": [],
+    "feature_manifest": {
+      "body": {
+        "kind": "box",
+        "operation": "add",
+        "name": "长方体",
+        "parameters": {
+          "length": 120,
+          "width": 45,
+          "height": 8,
+          "corner": 5,
+          "corner_mode": "fillet"
+        },
+        "sources": {
+          "length": {
+            "type": "image_estimate",
+            "evidence": "长方形遥控器主体，按常见遥控器比例估算长度约120mm",
+            "note": "无绝对尺寸，名义值"
+          },
+          "width": {
+            "type": "image_estimate",
+            "evidence": "常见遥控器宽度约为长度的37%，估算45mm",
+            "note": "无绝对尺寸，名义值"
+          },
+          "height": {
+            "type": "image_estimate",
+            "evidence": "描述为薄一点，估算总厚度8mm",
+            "note": "无绝对尺寸，名义值"
+          },
+          "corner": {
+            "type": "image_estimate",
+            "evidence": "圆角外观，估算圆角半径5mm",
+            "note": "无绝对尺寸，名义值"
+          }
+        },
+        "relations": []
+      },
+      "button1": {
+        "kind": "cylinder",
+        "operation": "add",
+        "name": "圆柱/圆台",
+        "parameters": {
+          "radius": 5,
+          "height": 2,
+          "center": [
+            -35,
+            0,
+            9
+          ],
+          "axis": "Z"
+        },
+        "sources": {
+          "radius": {
+            "type": "image_estimate",
+            "evidence": "遥控器圆按钮，估算直径10mm，半径5mm",
+            "note": "无绝对尺寸，名义值"
+          },
+          "height": {
+            "type": "image_estimate",
+            "evidence": "描述为稍微凸起，估算凸起高度2mm",
+            "note": "无绝对尺寸，名义值"
+          },
+          "center": {
+            "type": "derived",
+            "evidence": "按钮位于遥控器上半区中心线，沿长度方向偏左约35mm，Z向位于主体顶面以上1mm（主体高8mm，圆柱高2mm）",
+            "note": "基于主体尺寸推导"
+          }
+        },
+        "relations": []
+      },
+      "button2": {
+        "kind": "cylinder",
+        "operation": "add",
+        "name": "圆柱/圆台",
+        "parameters": {
+          "radius": 5,
+          "height": 2,
+          "center": [
+            0,
+            0,
+            9
+          ],
+          "axis": "Z"
+        },
+        "sources": {
+          "radius": {
+            "type": "image_estimate",
+            "evidence": "遥控器圆按钮，估算直径10mm，半径5mm",
+            "note": "无绝对尺寸，名义值"
+          },
+          "height": {
+            "type": "image_estimate",
+            "evidence": "描述为稍微凸起，估算凸起高度2mm",
+            "note": "无绝对尺寸，名义值"
+          },
+          "center": {
+            "type": "derived",
+            "evidence": "第二个按钮位于遥控器长度方向中心、宽度中心线，Z向位于主体顶面以上1mm",
+            "note": "基于主体尺寸推导"
+          }
+        },
+        "relations": []
+      },
+      "button3": {
+        "kind": "cylinder",
+        "operation": "add",
+        "name": "圆柱/圆台",
+        "parameters": {
+          "radius": 5,
+          "height": 2,
+          "center": [
+            35,
+            0,
+            9
+          ],
+          "axis": "Z"
+        },
+        "sources": {
+          "radius": {
+            "type": "image_estimate",
+            "evidence": "遥控器圆按钮，估算直径10mm，半径5mm",
+            "note": "无绝对尺寸，名义值"
+          },
+          "height": {
+            "type": "image_estimate",
+            "evidence": "描述为稍微凸起，估算凸起高度2mm",
+            "note": "无绝对尺寸，名义值"
+          },
+          "center": {
+            "type": "derived",
+            "evidence": "第三个按钮位于遥控器长度方向右侧约35mm、宽度中心线，Z向位于主体顶面以上1mm",
+            "note": "基于主体尺寸推导"
+          }
+        },
+        "relations": []
+      }
+    },
+    "build_log": [
+      "[基准] 长方体 120 × 45 × 8 mm (圆角 5) → 104 面",
+      "[并排] 圆柱 ⌀10 × 2 mm —— 与零件不相交, 直接合并 → 154 面",
+      "[合并] 圆柱 ⌀10 × 2 mm → 961 面",
+      "[合并] 圆柱 ⌀10 × 2 mm → 1904 面"
+    ],
+    "local_geometry_checks": {
+      "state": "passed",
+      "source": "AI Modeler local mesh kernel",
+      "face_count": 1904,
+      "bbox_size_mm": [
+        120.0,
+        45.0,
+        11.0
+      ],
+      "bbox_ratios_from_mesh": {
+        "front_width_height": 10.909090909090908,
+        "depth_height": 4.090909090909091,
+        "top_width_depth": 2.6666666666666665
+      },
+      "feature_count_from_plan": 4,
+      "feature_ids_from_plan": [
+        "body",
+        "button1",
+        "button2",
+        "button3"
+      ],
+      "nonfinite_face_count": 0,
+      "degenerate_face_count": 0,
+      "hole_features_from_plan": [],
+      "through_hole_mesh_checks": [],
+      "hole_visibility": "requires_multimodal_view_review",
+      "through_hole_result": "not_measured"
+    },
+    "orthographic_layout": {
+      "unit": "mm",
+      "axes": {
+        "length": "X",
+        "width": "Y",
+        "height": "Z"
+      },
+      "uniform_scale_across_views": true,
+      "scale_pixels_per_mm": 1.7766666666666668,
+      "tile_size_pixels": [
+        330,
+        260
+      ],
+      "view_extents": {
+        "front": {
+          "horizontal_axis": "X",
+          "horizontal": 120.0,
+          "vertical_axis": "Z",
+          "vertical": 11.0
+        },
+        "right": {
+          "horizontal_axis": "Y",
+          "horizontal": 45.0,
+          "vertical_axis": "Z",
+          "vertical": 11.0
+        },
+        "top": {
+          "horizontal_axis": "X",
+          "horizontal": 120.0,
+          "vertical_axis": "Y",
+          "vertical": 45.0
+        }
+      },
+      "dimension_ratios": {
+        "length_to_height": 10.909090909090908,
+        "width_to_height": 4.090909090909091,
+        "length_to_width": 2.6666666666666665
+      }
+    },
+    "preview_image": "candidate-preview.png",
+    "preview_image_views": [
+      "front"
+    ],
+    "preview_image_view_set": "front",
+    "preview_image_grid_columns": 1,
+    "preview_image_source": "AI Modeler local mesh kernel; not CATIA B-Rep",
+    "preview_image_layout": {
+      "unit": "mm",
+      "axes": {
+        "length": "X",
+        "width": "Y",
+        "height": "Z"
+      },
+      "uniform_scale_across_views": true,
+      "scale_pixels_per_mm": 1.7766666666666668,
+      "tile_size_pixels": [
+        330,
+        260
+      ],
+      "view_extents": {
+        "front": {
+          "horizontal_axis": "X",
+          "horizontal": 120.0,
+          "vertical_axis": "Z",
+          "vertical": 11.0
+        },
+        "right": {
+          "horizontal_axis": "Y",
+          "horizontal": 45.0,
+          "vertical_axis": "Z",
+          "vertical": 11.0
+        },
+        "top": {
+          "horizontal_axis": "X",
+          "horizontal": 120.0,
+          "vertical_axis": "Y",
+          "vertical": 45.0
+        }
+      },
+      "dimension_ratios": {
+        "length_to_height": 10.909090909090908,
+        "width_to_height": 4.090909090909091,
+        "length_to_width": 2.6666666666666665
+      }
+    }
+  },
+  "output_paths": {
+    "aimodel": "C:\\Users\\lycohana\\Desktop\\code\\AI-_-\\artifacts\\agentloop\\20260926-040158-ba0fd271\\candidate.aimodel",
+    "stl": "C:\\Users\\lycohana\\Desktop\\code\\AI-_-\\artifacts\\agentloop\\20260926-040158-ba0fd271\\candidate.stl",
+    "preview": "C:\\Users\\lycohana\\Desktop\\code\\AI-_-\\artifacts\\agentloop\\20260926-040158-ba0fd271\\candidate-preview.png"
+  },
+  "output_warning": null,
+  "dimension_assumptions": [
+    {
+      "feature_id": "body",
+      "parameter": "length",
+      "value": 120,
+      "evidence": "长方形遥控器主体，按常见遥控器比例估算长度约120mm",
+      "note": "无绝对尺寸，名义值"
+    },
+    {
+      "feature_id": "body",
+      "parameter": "width",
+      "value": 45,
+      "evidence": "常见遥控器宽度约为长度的37%，估算45mm",
+      "note": "无绝对尺寸，名义值"
+    },
+    {
+      "feature_id": "body",
+      "parameter": "height",
+      "value": 8,
+      "evidence": "描述为薄一点，估算总厚度8mm",
+      "note": "无绝对尺寸，名义值"
+    },
+    {
+      "feature_id": "body",
+      "parameter": "corner",
+      "value": 5,
+      "evidence": "圆角外观，估算圆角半径5mm",
+      "note": "无绝对尺寸，名义值"
+    },
+    {
+      "feature_id": "button1",
+      "parameter": "radius",
+      "value": 5,
+      "evidence": "遥控器圆按钮，估算直径10mm，半径5mm",
+      "note": "无绝对尺寸，名义值"
+    },
+    {
+      "feature_id": "button1",
+      "parameter": "height",
+      "value": 2,
+      "evidence": "描述为稍微凸起，估算凸起高度2mm",
+      "note": "无绝对尺寸，名义值"
+    },
+    {
+      "feature_id": "button2",
+      "parameter": "radius",
+      "value": 5,
+      "evidence": "遥控器圆按钮，估算直径10mm，半径5mm",
+      "note": "无绝对尺寸，名义值"
+    },
+    {
+      "feature_id": "button2",
+      "parameter": "height",
+      "value": 2,
+      "evidence": "描述为稍微凸起，估算凸起高度2mm",
+      "note": "无绝对尺寸，名义值"
+    },
+    {
+      "feature_id": "button3",
+      "parameter": "radius",
+      "value": 5,
+      "evidence": "遥控器圆按钮，估算直径10mm，半径5mm",
+      "note": "无绝对尺寸，名义值"
+    },
+    {
+      "feature_id": "button3",
+      "parameter": "height",
+      "value": 2,
+      "evidence": "描述为稍微凸起，估算凸起高度2mm",
+      "note": "无绝对尺寸，名义值"
+    }
+  ],
+  "local_geometry_checks": {
+    "state": "passed",
+    "source": "AI Modeler local mesh kernel",
+    "face_count": 1904,
+    "bbox_size_mm": [
+      120.0,
+      45.0,
+      11.0
+    ],
+    "bbox_ratios_from_mesh": {
+      "front_width_height": 10.909090909090908,
+      "depth_height": 4.090909090909091,
+      "top_width_depth": 2.6666666666666665
+    },
+    "feature_count_from_plan": 4,
+    "feature_ids_from_plan": [
+      "body",
+      "button1",
+      "button2",
+      "button3"
+    ],
+    "nonfinite_face_count": 0,
+    "degenerate_face_count": 0,
+    "hole_features_from_plan": [],
+    "through_hole_mesh_checks": [],
+    "hole_visibility": "requires_multimodal_view_review",
+    "through_hole_result": "not_measured"
+  },
+  "multiview_review": null,
+  "similarity_review": null,
+  "review_history": [],
+  "questions": [],
+  "reply": "已完成一个薄型长方形遥控器模型：主体为 120mm×45mm×8mm 的圆角长方体（圆角半径 5mm），顶部沿中心线等距排列 3 个直径 10mm、凸起 2mm 的圆柱形按钮。所有尺寸均为无参考图时的名义估算值，可在需要时按实际尺寸调整。\n\n本地模型外形尺寸：120.00 × 45.00 × 11.00 mm。图像估算参数：10 项。",
+  "tool_trace": [
+    {
+      "phase": "agent_loop",
+      "tool": "cad_create_model",
+      "arguments": {
+        "name": "遥控器",
+        "first_feature": {
+          "id": "body",
+          "kind": "box",
+          "operation": "add",
+          "parameters": {
+            "length": 120,
+            "width": 45,
+            "height": 8,
+            "corner": 5,
+            "corner_mode": "fillet"
+          },
+          "sources": {
+            "length": {
+              "type": "image_estimate",
+              "evidence": "长方形遥控器主体，按常见遥控器比例估算长度约120mm",
+              "note": "无绝对尺寸，名义值"
+            },
+            "width": {
+              "type": "image_estimate",
+              "evidence": "常见遥控器宽度约为长度的37%，估算45mm",
+              "note": "无绝对尺寸，名义值"
+            },
+            "height": {
+              "type": "image_estimate",
+              "evidence": "描述为薄一点，估算总厚度8mm",
+              "note": "无绝对尺寸，名义值"
+            },
+            "corner": {
+              "type": "image_estimate",
+              "evidence": "圆角外观，估算圆角半径5mm",
+              "note": "无绝对尺寸，名义值"
+            }
+          }
+        }
+      },
+      "result": {
+        "state": "valid",
+        "revision": 1,
+        "geometry_fingerprint": "{\"coordinate_system\":{\"axes\":[\"X\",\"Y\",\"Z\"],\"handedness\":\"right\",\"origin\":[0,0,0],\"type\":\"global_cartesian\"},\"features\":[{\"geometry\":\"{\\\"kind\\\":\\\"box\\\",\\\"operation\\\":\\\"add\\\",\\\"parameters\\\":{\\\"corner\\\":5,\\\"corner_mode\\\":\\\"fillet\\\",\\\"height\\\":8,\\\"length\\\":120,\\\"width\\\":45}}\",\"id\":\"body\"}],\"units\":{\"angle\":\"deg\",\"length\":\"mm\"}}",
+        "feature_count": 1,
+        "validation": {
+          "valid": true,
+          "state": "valid",
+          "errors": [],
+          "confirmations": [],
+          "support": [
+            {
+              "feature_id": "body",
+              "kind": "box",
+              "status": "exact",
+              "reason": "矩形草图加凸台；当前 CATIA 映射仅支持 Z 轴拉伸。"
+            }
+          ],
+          "warnings": [],
+          "schema_version": "1.0"
+        },
+        "preview": {
+          "state": "previewed",
+          "geometry_fingerprint": "{\"coordinate_system\":{\"axes\":[\"X\",\"Y\",\"Z\"],\"handedness\":\"right\",\"origin\":[0,0,0],\"type\":\"global_cartesian\"},\"features\":[{\"geometry\":\"{\\\"kind\\\":\\\"box\\\",\\\"operation\\\":\\\"add\\\",\\\"parameters\\\":{\\\"corner\\\":5,\\\"corner_mode\\\":\\\"fillet\\\",\\\"height\\\":8,\\\"length\\\":120,\\\"width\\\":45}}\",\"id\":\"body\"}],\"units\":{\"angle\":\"deg\",\"length\":\"mm\"}}",
+          "preview_image": "candidate-preview.png",
+          "view_set": "iso",
+          "views": [
+            "iso"
+          ],
+          "dimensions": {
+            "unit": "mm",
+            "bbox": [
+              -60.0,
+              -22.5,
+              0.0,
+              60.0,
+              22.5,
+              8.0
+            ],
+            "size": [
+              120.0,
+              45.0,
+              8.0
+            ],
+            "volume_mm3": 43024.289030451604,
+            "surface_area_mm2": 13326.996136856587,
+            "triangles": 140,
+            "feature_count": 1
+          },
+          "local_geometry_checks": {
+            "state": "passed",
+            "source": "AI Modeler local mesh kernel",
+            "face_count": 104,
+            "bbox_size_mm": [
+              120.0,
+              45.0,
+              8.0
+            ],
+            "bbox_ratios_from_mesh": {
+              "front_width_height": 15.0,
+              "depth_height": 5.625,
+              "top_width_depth": 2.6666666666666665
+            },
+            "feature_count_from_plan": 1,
+            "feature_ids_from_plan": [
+              "body"
+            ],
+            "nonfinite_face_count": 0,
+            "degenerate_face_count": 0,
+            "hole_features_from_plan": [],
+            "through_hole_mesh_checks": [],
+            "hole_visibility": "requires_multimodal_view_review",
+            "through_hole_result": "not_measured"
+          },
+          "warnings": [],
+          "catia_executed": false,
+          "next_step_hint": "当前预览已展示，作为逐特征建模进度。若还有几何特征未完成，只追加下一个特征并刷新预览；全部特征完成后再做最终多视图复核。"
+        }
+      },
+      "result_summary": "valid"
+    },
+    {
+      "phase": "agent_loop",
+      "tool": "cad_add_feature",
+      "arguments": {
+        "feature": {
+          "id": "button1",
+          "kind": "cylinder",
+          "operation": "add",
+          "parameters": {
+            "radius": 5,
+            "height": 2,
+            "center": [
+              -35,
+              0,
+              9
+            ],
+            "axis": [
+              0,
+              0,
+              1
+            ]
+          },
+          "sources": {
+            "radius": {
+              "type": "image_estimate",
+              "evidence": "遥控器圆按钮，估算直径10mm，半径5mm",
+              "note": "无绝对尺寸，名义值"
+            },
+            "height": {
+              "type": "image_estimate",
+              "evidence": "描述为稍微凸起，估算凸起高度2mm",
+              "note": "无绝对尺寸，名义值"
+            },
+            "center": {
+              "type": "derived",
+              "evidence": "按钮位于遥控器上半区中心线，沿长度方向偏左约35mm，Z向位于主体顶面以上1mm（主体高8mm，圆柱高2mm）",
+              "note": "基于主体尺寸推导"
+            }
+          }
+        }
+      },
+      "result": {
+        "state": "invalid",
+        "validation": {
+          "valid": false,
+          "state": "invalid",
+          "errors": [
+            {
+              "code": "invalid_parameter_type",
+              "path": "$.features[1].parameters.axis",
+              "message": "此参数必须为字符串。"
+            }
+          ],
+          "confirmations": [
+            {
+              "feature_id": "button1",
+              "parameter": "axis",
+              "question": "请标明参数 axis 的数值来源。"
+            }
+          ],
+          "support": [
+            {
+              "feature_id": "body",
+              "kind": "box",
+              "status": "exact",
+              "reason": "矩形草图加凸台；当前 CATIA 映射仅支持 Z 轴拉伸。"
+            },
+            {
+              "feature_id": "button1",
+              "kind": "cylinder",
+              "status": "exact",
+              "reason": "等半径时为圆草图加凸台；圆锥台会近似，非 Z 轴圆锥台暂不支持。"
+            }
+          ],
+          "warnings": [],
+          "schema_version": "1.0"
+        },
+        "error": "本次特征修改未提交；原模型保持不变。"
+      },
+      "result_summary": "invalid"
+    },
+    {
+      "phase": "agent_loop",
+      "tool": "cad_add_feature",
+      "arguments": {
+        "feature": {
+          "id": "button1",
+          "kind": "cylinder",
+          "operation": "add",
+          "parameters": {
+            "radius": 5,
+            "height": 2,
+            "center": [
+              -35,
+              0,
+              9
+            ],
+            "axis": "Z"
+          },
+          "sources": {
+            "radius": {
+              "type": "image_estimate",
+              "evidence": "遥控器圆按钮，估算直径10mm，半径5mm",
+              "note": "无绝对尺寸，名义值"
+            },
+            "height": {
+              "type": "image_estimate",
+              "evidence": "描述为稍微凸起，估算凸起高度2mm",
+              "note": "无绝对尺寸，名义值"
+            },
+            "center": {
+              "type": "derived",
+              "evidence": "按钮位于遥控器上半区中心线，沿长度方向偏左约35mm，Z向位于主体顶面以上1mm（主体高8mm，圆柱高2mm）",
+              "note": "基于主体尺寸推导"
+            }
+          }
+        }
+      },
+      "result": {
+        "state": "valid",
+        "revision": 2,
+        "geometry_fingerprint": "{\"coordinate_system\":{\"axes\":[\"X\",\"Y\",\"Z\"],\"handedness\":\"right\",\"origin\":[0,0,0],\"type\":\"global_cartesian\"},\"features\":[{\"geometry\":\"{\\\"kind\\\":\\\"box\\\",\\\"operation\\\":\\\"add\\\",\\\"parameters\\\":{\\\"corner\\\":5,\\\"corner_mode\\\":\\\"fillet\\\",\\\"height\\\":8,\\\"length\\\":120,\\\"width\\\":45}}\",\"id\":\"body\"},{\"geometry\":\"{\\\"kind\\\":\\\"cylinder\\\",\\\"operation\\\":\\\"add\\\",\\\"parameters\\\":{\\\"axis\\\":\\\"Z\\\",\\\"center\\\":[-35,0,9],\\\"height\\\":2,\\\"radius\\\":5}}\",\"id\":\"button1\"}],\"units\":{\"angle\":\"deg\",\"length\":\"mm\"}}",
+        "feature_count": 2,
+        "validation": {
+          "valid": true,
+          "state": "valid",
+          "errors": [],
+          "confirmations": [],
+          "support": [
+            {
+              "feature_id": "body",
+              "kind": "box",
+              "status": "exact",
+              "reason": "矩形草图加凸台；当前 CATIA 映射仅支持 Z 轴拉伸。"
+            },
+            {
+              "feature_id": "button1",
+              "kind": "cylinder",
+              "status": "exact",
+              "reason": "等半径时为圆草图加凸台；圆锥台会近似，非 Z 轴圆锥台暂不支持。"
+            }
+          ],
+          "warnings": [],
+          "schema_version": "1.0"
+        },
+        "preview": {
+          "state": "previewed",
+          "geometry_fingerprint": "{\"coordinate_system\":{\"axes\":[\"X\",\"Y\",\"Z\"],\"handedness\":\"right\",\"origin\":[0,0,0],\"type\":\"global_cartesian\"},\"features\":[{\"geometry\":\"{\\\"kind\\\":\\\"box\\\",\\\"operation\\\":\\\"add\\\",\\\"parameters\\\":{\\\"corner\\\":5,\\\"corner_mode\\\":\\\"fillet\\\",\\\"height\\\":8,\\\"length\\\":120,\\\"width\\\":45}}\",\"id\":\"body\"},{\"geometry\":\"{\\\"kind\\\":\\\"cylinder\\\",\\\"operation\\\":\\\"add\\\",\\\"parameters\\\":{\\\"axis\\\":\\\"Z\\\",\\\"center\\\":[-35,0,9],\\\"height\\\":2,\\\"radius\\\":5}}\",\"id\":\"button1\"}],\"units\":{\"angle\":\"deg\",\"length\":\"mm\"}}",
+          "preview_image": "candidate-preview.png",
+          "view_set": "iso",
+          "views": [
+            "iso"
+          ],
+          "dimensions": {
+            "unit": "mm",
+            "bbox": [
+              -60.0,
+              -22.5,
+              0.0,
+              60.0,
+              22.5,
+              11.0
+            ],
+            "size": [
+              120.0,
+              45.0,
+              11.0
+            ],
+            "volume_mm3": 43180.92046111566,
+            "surface_area_mm2": 13546.414571581527,
+            "triangles": 328,
+            "feature_count": 2
+          },
+          "local_geometry_checks": {
+            "state": "passed",
+            "source": "AI Modeler local mesh kernel",
+            "face_count": 154,
+            "bbox_size_mm": [
+              120.0,
+              45.0,
+              11.0
+            ],
+            "bbox_ratios_from_mesh": {
+              "front_width_height": 10.909090909090908,
+              "depth_height": 4.090909090909091,
+              "top_width_depth": 2.6666666666666665
+            },
+            "feature_count_from_plan": 2,
+            "feature_ids_from_plan": [
+              "body",
+              "button1"
+            ],
+            "nonfinite_face_count": 0,
+            "degenerate_face_count": 0,
+            "hole_features_from_plan": [],
+            "through_hole_mesh_checks": [],
+            "hole_visibility": "requires_multimodal_view_review",
+            "through_hole_result": "not_measured"
+          },
+          "warnings": [],
+          "catia_executed": false,
+          "next_step_hint": "当前预览已展示，作为逐特征建模进度。若还有几何特征未完成，只追加下一个特征并刷新预览；全部特征完成后再做最终多视图复核。"
+        }
+      },
+      "result_summary": "valid"
+    },
+    {
+      "phase": "agent_loop",
+      "tool": "cad_add_feature",
+      "arguments": {
+        "feature": {
+          "id": "button2",
+          "kind": "cylinder",
+          "operation": "add",
+          "parameters": {
+            "radius": 5,
+            "height": 2,
+            "center": [
+              0,
+              0,
+              9
+            ],
+            "axis": "Z"
+          },
+          "sources": {
+            "radius": {
+              "type": "image_estimate",
+              "evidence": "遥控器圆按钮，估算直径10mm，半径5mm",
+              "note": "无绝对尺寸，名义值"
+            },
+            "height": {
+              "type": "image_estimate",
+              "evidence": "描述为稍微凸起，估算凸起高度2mm",
+              "note": "无绝对尺寸，名义值"
+            },
+            "center": {
+              "type": "derived",
+              "evidence": "第二个按钮位于遥控器长度方向中心、宽度中心线，Z向位于主体顶面以上1mm",
+              "note": "基于主体尺寸推导"
+            }
+          }
+        }
+      },
+      "result": {
+        "state": "valid",
+        "revision": 3,
+        "geometry_fingerprint": "{\"coordinate_system\":{\"axes\":[\"X\",\"Y\",\"Z\"],\"handedness\":\"right\",\"origin\":[0,0,0],\"type\":\"global_cartesian\"},\"features\":[{\"geometry\":\"{\\\"kind\\\":\\\"box\\\",\\\"operation\\\":\\\"add\\\",\\\"parameters\\\":{\\\"corner\\\":5,\\\"corner_mode\\\":\\\"fillet\\\",\\\"height\\\":8,\\\"length\\\":120,\\\"width\\\":45}}\",\"id\":\"body\"},{\"geometry\":\"{\\\"kind\\\":\\\"cylinder\\\",\\\"operation\\\":\\\"add\\\",\\\"parameters\\\":{\\\"axis\\\":\\\"Z\\\",\\\"center\\\":[-35,0,9],\\\"height\\\":2,\\\"radius\\\":5}}\",\"id\":\"button1\"},{\"geometry\":\"{\\\"kind\\\":\\\"cylinder\\\",\\\"operation\\\":\\\"add\\\",\\\"parameters\\\":{\\\"axis\\\":\\\"Z\\\",\\\"center\\\":[0,0,9],\\\"height\\\":2,\\\"radius\\\":5}}\",\"id\":\"button2\"}],\"units\":{\"angle\":\"deg\",\"length\":\"mm\"}}",
+        "feature_count": 3,
+        "validation": {
+          "valid": true,
+          "state": "valid",
+          "errors": [],
+          "confirmations": [],
+          "support": [
+            {
+              "feature_id": "body",
+              "kind": "box",
+              "status": "exact",
+              "reason": "矩形草图加凸台；当前 CATIA 映射仅支持 Z 轴拉伸。"
+            },
+            {
+              "feature_id": "button1",
+              "kind": "cylinder",
+              "status": "exact",
+              "reason": "等半径时为圆草图加凸台；圆锥台会近似，非 Z 轴圆锥台暂不支持。"
+            },
+            {
+              "feature_id": "button2",
+              "kind": "cylinder",
+              "status": "exact",
+              "reason": "等半径时为圆草图加凸台；圆锥台会近似，非 Z 轴圆锥台暂不支持。"
+            }
+          ],
+          "warnings": [],
+          "schema_version": "1.0"
+        },
+        "preview": {
+          "state": "previewed",
+          "geometry_fingerprint": "{\"coordinate_system\":{\"axes\":[\"X\",\"Y\",\"Z\"],\"handedness\":\"right\",\"origin\":[0,0,0],\"type\":\"global_cartesian\"},\"features\":[{\"geometry\":\"{\\\"kind\\\":\\\"box\\\",\\\"operation\\\":\\\"add\\\",\\\"parameters\\\":{\\\"corner\\\":5,\\\"corner_mode\\\":\\\"fillet\\\",\\\"height\\\":8,\\\"length\\\":120,\\\"width\\\":45}}\",\"id\":\"body\"},{\"geometry\":\"{\\\"kind\\\":\\\"cylinder\\\",\\\"operation\\\":\\\"add\\\",\\\"parameters\\\":{\\\"axis\\\":\\\"Z\\\",\\\"center\\\":[-35,0,9],\\\"height\\\":2,\\\"radius\\\":5}}\",\"id\":\"button1\"},{\"geometry\":\"{\\\"kind\\\":\\\"cylinder\\\",\\\"operation\\\":\\\"add\\\",\\\"parameters\\\":{\\\"axis\\\":\\\"Z\\\",\\\"center\\\":[0,0,9],\\\"height\\\":2,\\\"radius\\\":5}}\",\"id\":\"button2\"}],\"units\":{\"angle\":\"deg\",\"length\":\"mm\"}}",
+          "preview_image": "candidate-preview.png",
+          "view_set": "iso",
+          "views": [
+            "iso"
+          ],
+          "dimensions": {
+            "unit": "mm",
+            "bbox": [
+              -60.0,
+              -22.5,
+              0.0,
+              60.0,
+              22.5,
+              11.0
+            ],
+            "size": [
+              120.0,
+              45.0,
+              11.0
+            ],
+            "volume_mm3": 43337.55189177965,
+            "surface_area_mm2": 13765.83300630645,
+            "triangles": 2030,
+            "feature_count": 3
+          },
+          "local_geometry_checks": {
+            "state": "passed",
+            "source": "AI Modeler local mesh kernel",
+            "face_count": 961,
+            "bbox_size_mm": [
+              120.0,
+              45.0,
+              11.0
+            ],
+            "bbox_ratios_from_mesh": {
+              "front_width_height": 10.909090909090908,
+              "depth_height": 4.090909090909091,
+              "top_width_depth": 2.6666666666666665
+            },
+            "feature_count_from_plan": 3,
+            "feature_ids_from_plan": [
+              "body",
+              "button1",
+              "button2"
+            ],
+            "nonfinite_face_count": 0,
+            "degenerate_face_count": 0,
+            "hole_features_from_plan": [],
+            "through_hole_mesh_checks": [],
+            "hole_visibility": "requires_multimodal_view_review",
+            "through_hole_result": "not_measured"
+          },
+          "warnings": [],
+          "catia_executed": false,
+          "next_step_hint": "当前预览已展示，作为逐特征建模进度。若还有几何特征未完成，只追加下一个特征并刷新预览；全部特征完成后再做最终多视图复核。"
+        }
+      },
+      "result_summary": "valid"
+    },
+    {
+      "phase": "agent_loop",
+      "tool": "cad_add_feature",
+      "arguments": {
+        "feature": {
+          "id": "button3",
+          "kind": "cylinder",
+          "operation": "add",
+          "parameters": {
+            "radius": 5,
+            "height": 2,
+            "center": [
+              35,
+              0,
+              9
+            ],
+            "axis": "Z"
+          },
+          "sources": {
+            "radius": {
+              "type": "image_estimate",
+              "evidence": "遥控器圆按钮，估算直径10mm，半径5mm",
+              "note": "无绝对尺寸，名义值"
+            },
+            "height": {
+              "type": "image_estimate",
+              "evidence": "描述为稍微凸起，估算凸起高度2mm",
+              "note": "无绝对尺寸，名义值"
+            },
+            "center": {
+              "type": "derived",
+              "evidence": "第三个按钮位于遥控器长度方向右侧约35mm、宽度中心线，Z向位于主体顶面以上1mm",
+              "note": "基于主体尺寸推导"
+            }
+          }
+        }
+      },
+      "result": {
+        "state": "valid",
+        "revision": 4,
+        "geometry_fingerprint": "{\"coordinate_system\":{\"axes\":[\"X\",\"Y\",\"Z\"],\"handedness\":\"right\",\"origin\":[0,0,0],\"type\":\"global_cartesian\"},\"features\":[{\"geometry\":\"{\\\"kind\\\":\\\"box\\\",\\\"operation\\\":\\\"add\\\",\\\"parameters\\\":{\\\"corner\\\":5,\\\"corner_mode\\\":\\\"fillet\\\",\\\"height\\\":8,\\\"length\\\":120,\\\"width\\\":45}}\",\"id\":\"body\"},{\"geometry\":\"{\\\"kind\\\":\\\"cylinder\\\",\\\"operation\\\":\\\"add\\\",\\\"parameters\\\":{\\\"axis\\\":\\\"Z\\\",\\\"center\\\":[-35,0,9],\\\"height\\\":2,\\\"radius\\\":5}}\",\"id\":\"button1\"},{\"geometry\":\"{\\\"kind\\\":\\\"cylinder\\\",\\\"operation\\\":\\\"add\\\",\\\"parameters\\\":{\\\"axis\\\":\\\"Z\\\",\\\"center\\\":[0,0,9],\\\"height\\\":2,\\\"radius\\\":5}}\",\"id\":\"button2\"},{\"geometry\":\"{\\\"kind\\\":\\\"cylinder\\\",\\\"operation\\\":\\\"add\\\",\\\"parameters\\\":{\\\"axis\\\":\\\"Z\\\",\\\"center\\\":[35,0,9],\\\"height\\\":2,\\\"radius\\\":5}}\",\"id\":\"button3\"}],\"units\":{\"angle\":\"deg\",\"length\":\"mm\"}}",
+        "feature_count": 4,
+        "validation": {
+          "valid": true,
+          "state": "valid",
+          "errors": [],
+          "confirmations": [],
+          "support": [
+            {
+              "feature_id": "body",
+              "kind": "box",
+              "status": "exact",
+              "reason": "矩形草图加凸台；当前 CATIA 映射仅支持 Z 轴拉伸。"
+            },
+            {
+              "feature_id": "button1",
+              "kind": "cylinder",
+              "status": "exact",
+              "reason": "等半径时为圆草图加凸台；圆锥台会近似，非 Z 轴圆锥台暂不支持。"
+            },
+            {
+              "feature_id": "button2",
+              "kind": "cylinder",
+              "status": "exact",
+              "reason": "等半径时为圆草图加凸台；圆锥台会近似，非 Z 轴圆锥台暂不支持。"
+            },
+            {
+              "feature_id": "button3",
+              "kind": "cylinder",
+              "status": "exact",
+              "reason": "等半径时为圆草图加凸台；圆锥台会近似，非 Z 轴圆锥台暂不支持。"
+            }
+          ],
+          "warnings": [],
+          "schema_version": "1.0"
+        },
+        "preview": {
+          "state": "previewed",
+          "geometry_fingerprint": "{\"coordinate_system\":{\"axes\":[\"X\",\"Y\",\"Z\"],\"handedness\":\"right\",\"origin\":[0,0,0],\"type\":\"global_cartesian\"},\"features\":[{\"geometry\":\"{\\\"kind\\\":\\\"box\\\",\\\"operation\\\":\\\"add\\\",\\\"parameters\\\":{\\\"corner\\\":5,\\\"corner_mode\\\":\\\"fillet\\\",\\\"height\\\":8,\\\"length\\\":120,\\\"width\\\":45}}\",\"id\":\"body\"},{\"geometry\":\"{\\\"kind\\\":\\\"cylinder\\\",\\\"operation\\\":\\\"add\\\",\\\"parameters\\\":{\\\"axis\\\":\\\"Z\\\",\\\"center\\\":[-35,0,9],\\\"height\\\":2,\\\"radius\\\":5}}\",\"id\":\"button1\"},{\"geometry\":\"{\\\"kind\\\":\\\"cylinder\\\",\\\"operation\\\":\\\"add\\\",\\\"parameters\\\":{\\\"axis\\\":\\\"Z\\\",\\\"center\\\":[0,0,9],\\\"height\\\":2,\\\"radius\\\":5}}\",\"id\":\"button2\"},{\"geometry\":\"{\\\"kind\\\":\\\"cylinder\\\",\\\"operation\\\":\\\"add\\\",\\\"parameters\\\":{\\\"axis\\\":\\\"Z\\\",\\\"center\\\":[35,0,9],\\\"height\\\":2,\\\"radius\\\":5}}\",\"id\":\"button3\"}],\"units\":{\"angle\":\"deg\",\"length\":\"mm\"}}",
+          "preview_image": "candidate-preview.png",
+          "view_set": "iso",
+          "views": [
+            "iso"
+          ],
+          "dimensions": {
+            "unit": "mm",
+            "bbox": [
+              -60.0,
+              -22.5,
+              0.0,
+              60.0,
+              22.5,
+              11.0
+            ],
+            "size": [
+              120.0,
+              45.0,
+              11.0
+            ],
+            "volume_mm3": 43494.1833224437,
+            "surface_area_mm2": 13985.251441031383,
+            "triangles": 4004,
+            "feature_count": 4
+          },
+          "local_geometry_checks": {
+            "state": "passed",
+            "source": "AI Modeler local mesh kernel",
+            "face_count": 1904,
+            "bbox_size_mm": [
+              120.0,
+              45.0,
+              11.0
+            ],
+            "bbox_ratios_from_mesh": {
+              "front_width_height": 10.909090909090908,
+              "depth_height": 4.090909090909091,
+              "top_width_depth": 2.6666666666666665
+            },
+            "feature_count_from_plan": 4,
+            "feature_ids_from_plan": [
+              "body",
+              "button1",
+              "button2",
+              "button3"
+            ],
+            "nonfinite_face_count": 0,
+            "degenerate_face_count": 0,
+            "hole_features_from_plan": [],
+            "through_hole_mesh_checks": [],
+            "hole_visibility": "requires_multimodal_view_review",
+            "through_hole_result": "not_measured"
+          },
+          "warnings": [],
+          "catia_executed": false,
+          "next_step_hint": "当前预览已展示，作为逐特征建模进度。若还有几何特征未完成，只追加下一个特征并刷新预览；全部特征完成后再做最终多视图复核。"
+        }
+      },
+      "result_summary": "valid"
+    },
+    {
+      "phase": "agent_loop",
+      "tool": "cad_preview_plan",
+      "arguments": {
+        "view_set": "top"
+      },
+      "result": {
+        "state": "previewed",
+        "geometry_fingerprint": "{\"coordinate_system\":{\"axes\":[\"X\",\"Y\",\"Z\"],\"handedness\":\"right\",\"origin\":[0,0,0],\"type\":\"global_cartesian\"},\"features\":[{\"geometry\":\"{\\\"kind\\\":\\\"box\\\",\\\"operation\\\":\\\"add\\\",\\\"parameters\\\":{\\\"corner\\\":5,\\\"corner_mode\\\":\\\"fillet\\\",\\\"height\\\":8,\\\"length\\\":120,\\\"width\\\":45}}\",\"id\":\"body\"},{\"geometry\":\"{\\\"kind\\\":\\\"cylinder\\\",\\\"operation\\\":\\\"add\\\",\\\"parameters\\\":{\\\"axis\\\":\\\"Z\\\",\\\"center\\\":[-35,0,9],\\\"height\\\":2,\\\"radius\\\":5}}\",\"id\":\"button1\"},{\"geometry\":\"{\\\"kind\\\":\\\"cylinder\\\",\\\"operation\\\":\\\"add\\\",\\\"parameters\\\":{\\\"axis\\\":\\\"Z\\\",\\\"center\\\":[0,0,9],\\\"height\\\":2,\\\"radius\\\":5}}\",\"id\":\"button2\"},{\"geometry\":\"{\\\"kind\\\":\\\"cylinder\\\",\\\"operation\\\":\\\"add\\\",\\\"parameters\\\":{\\\"axis\\\":\\\"Z\\\",\\\"center\\\":[35,0,9],\\\"height\\\":2,\\\"radius\\\":5}}\",\"id\":\"button3\"}],\"units\":{\"angle\":\"deg\",\"length\":\"mm\"}}",
+        "preview_image": "candidate-preview.png",
+        "view_set": "top",
+        "views": [
+          "top"
+        ],
+        "dimensions": {
+          "unit": "mm",
+          "bbox": [
+            -60.0,
+            -22.5,
+            0.0,
+            60.0,
+            22.5,
+            11.0
+          ],
+          "size": [
+            120.0,
+            45.0,
+            11.0
+          ],
+          "volume_mm3": 43494.1833224437,
+          "surface_area_mm2": 13985.251441031383,
+          "triangles": 4004,
+          "feature_count": 4
+        },
+        "local_geometry_checks": {
+          "state": "passed",
+          "source": "AI Modeler local mesh kernel",
+          "face_count": 1904,
+          "bbox_size_mm": [
+            120.0,
+            45.0,
+            11.0
+          ],
+          "bbox_ratios_from_mesh": {
+            "front_width_height": 10.909090909090908,
+            "depth_height": 4.090909090909091,
+            "top_width_depth": 2.6666666666666665
+          },
+          "feature_count_from_plan": 4,
+          "feature_ids_from_plan": [
+            "body",
+            "button1",
+            "button2",
+            "button3"
+          ],
+          "nonfinite_face_count": 0,
+          "degenerate_face_count": 0,
+          "hole_features_from_plan": [],
+          "through_hole_mesh_checks": [],
+          "hole_visibility": "requires_multimodal_view_review",
+          "through_hole_result": "not_measured"
+        },
+        "warnings": [],
+        "catia_executed": false,
+        "next_step_hint": "当前预览已展示，作为逐特征建模进度。若还有几何特征未完成，只追加下一个特征并刷新预览；全部特征完成后再做最终多视图复核。"
+      },
+      "result_summary": "previewed"
+    },
+    {
+      "phase": "agent_loop",
+      "tool": "cad_preview_plan",
+      "arguments": {
+        "view_set": "front"
+      },
+      "result": {
+        "state": "previewed",
+        "geometry_fingerprint": "{\"coordinate_system\":{\"axes\":[\"X\",\"Y\",\"Z\"],\"handedness\":\"right\",\"origin\":[0,0,0],\"type\":\"global_cartesian\"},\"features\":[{\"geometry\":\"{\\\"kind\\\":\\\"box\\\",\\\"operation\\\":\\\"add\\\",\\\"parameters\\\":{\\\"corner\\\":5,\\\"corner_mode\\\":\\\"fillet\\\",\\\"height\\\":8,\\\"length\\\":120,\\\"width\\\":45}}\",\"id\":\"body\"},{\"geometry\":\"{\\\"kind\\\":\\\"cylinder\\\",\\\"operation\\\":\\\"add\\\",\\\"parameters\\\":{\\\"axis\\\":\\\"Z\\\",\\\"center\\\":[-35,0,9],\\\"height\\\":2,\\\"radius\\\":5}}\",\"id\":\"button1\"},{\"geometry\":\"{\\\"kind\\\":\\\"cylinder\\\",\\\"operation\\\":\\\"add\\\",\\\"parameters\\\":{\\\"axis\\\":\\\"Z\\\",\\\"center\\\":[0,0,9],\\\"height\\\":2,\\\"radius\\\":5}}\",\"id\":\"button2\"},{\"geometry\":\"{\\\"kind\\\":\\\"cylinder\\\",\\\"operation\\\":\\\"add\\\",\\\"parameters\\\":{\\\"axis\\\":\\\"Z\\\",\\\"center\\\":[35,0,9],\\\"height\\\":2,\\\"radius\\\":5}}\",\"id\":\"button3\"}],\"units\":{\"angle\":\"deg\",\"length\":\"mm\"}}",
+        "preview_image": "candidate-preview.png",
+        "view_set": "front",
+        "views": [
+          "front"
+        ],
+        "dimensions": {
+          "unit": "mm",
+          "bbox": [
+            -60.0,
+            -22.5,
+            0.0,
+            60.0,
+            22.5,
+            11.0
+          ],
+          "size": [
+            120.0,
+            45.0,
+            11.0
+          ],
+          "volume_mm3": 43494.1833224437,
+          "surface_area_mm2": 13985.251441031383,
+          "triangles": 4004,
+          "feature_count": 4
+        },
+        "local_geometry_checks": {
+          "state": "passed",
+          "source": "AI Modeler local mesh kernel",
+          "face_count": 1904,
+          "bbox_size_mm": [
+            120.0,
+            45.0,
+            11.0
+          ],
+          "bbox_ratios_from_mesh": {
+            "front_width_height": 10.909090909090908,
+            "depth_height": 4.090909090909091,
+            "top_width_depth": 2.6666666666666665
+          },
+          "feature_count_from_plan": 4,
+          "feature_ids_from_plan": [
+            "body",
+            "button1",
+            "button2",
+            "button3"
+          ],
+          "nonfinite_face_count": 0,
+          "degenerate_face_count": 0,
+          "hole_features_from_plan": [],
+          "through_hole_mesh_checks": [],
+          "hole_visibility": "requires_multimodal_view_review",
+          "through_hole_result": "not_measured"
+        },
+        "warnings": [],
+        "catia_executed": false,
+        "next_step_hint": "当前预览已展示，作为逐特征建模进度。若还有几何特征未完成，只追加下一个特征并刷新预览；全部特征完成后再做最终多视图复核。"
+      },
+      "result_summary": "previewed"
+    },
+    {
+      "phase": "agent_loop",
+      "tool": "cad_finish",
+      "arguments": {
+        "summary": "已完成一个薄型长方形遥控器模型：主体为 120mm×45mm×8mm 的圆角长方体（圆角半径 5mm），顶部沿中心线等距排列 3 个直径 10mm、凸起 2mm 的圆柱形按钮。所有尺寸均为无参考图时的名义估算值，可在需要时按实际尺寸调整。"
+      },
+      "result": {
+        "ready": true,
+        "state": "previewed",
+        "validation": {
+          "valid": true,
+          "state": "valid",
+          "errors": [],
+          "confirmations": [],
+          "support": [
+            {
+              "feature_id": "body",
+              "kind": "box",
+              "status": "exact",
+              "reason": "矩形草图加凸台；当前 CATIA 映射仅支持 Z 轴拉伸。"
+            },
+            {
+              "feature_id": "button1",
+              "kind": "cylinder",
+              "status": "exact",
+              "reason": "等半径时为圆草图加凸台；圆锥台会近似，非 Z 轴圆锥台暂不支持。"
+            },
+            {
+              "feature_id": "button2",
+              "kind": "cylinder",
+              "status": "exact",
+              "reason": "等半径时为圆草图加凸台；圆锥台会近似，非 Z 轴圆锥台暂不支持。"
+            },
+            {
+              "feature_id": "button3",
+              "kind": "cylinder",
+              "status": "exact",
+              "reason": "等半径时为圆草图加凸台；圆锥台会近似，非 Z 轴圆锥台暂不支持。"
+            }
+          ],
+          "warnings": [],
+          "schema_version": "1.0"
+        },
+        "note": "已生成候选；本轮没有参考图，因此结果不是视觉验收。"
+      },
+      "result_summary": "previewed"
+    }
+  ],
+  "error": null
+}

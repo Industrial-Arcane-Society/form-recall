@@ -5,9 +5,9 @@ r"""批量给零件建模结果"截图"。
 -> 网格 -> 软件渲染 -> PNG。所以这些图就是程序真实建出来的样子。
 
 输出:
-    零件截图\<序号>_<零件名>.png   每个零件一张四视图 (等轴测 / 前 / 右 / 俯)
-    零件截图\总览.png              所有零件的缩略图拼版
-    零件截图\索引.md               文件名 -> 零件名 / 描述 / 外形尺寸
+    artifacts/model-shots/<序号>_<零件名>.png   每个零件一张四视图 (等轴测 / 前 / 右 / 俯)
+    artifacts/model-shots/总览.png              所有零件的缩略图拼版
+    artifacts/model-shots/索引.md               文件名 -> 零件名 / 描述 / 外形尺寸
 """
 from __future__ import annotations
 
@@ -25,7 +25,7 @@ from ai_modeler import partlib as PL        # noqa: E402
 from ai_modeler.nlparser import CAPS        # noqa: E402
 from ai_modeler import softrender as render  # noqa: E402
 
-OUT_DIR = os.path.join(ROOT, '零件截图')
+OUT_DIR = os.path.join(ROOT, 'artifacts', 'model-shots')
 VIEWS = ('iso', 'front', 'right', 'top')
 TILE = (330, 260)
 THUMB = (200, 150)

@@ -1,0 +1,30 @@
+17:58:36 正在启动空白 CADPlan 的 DSH Agent；只附四张原图；模型=moonshotai/Kimi-K2.7-Code，推理强度=minimal。
+17:58:36 正在启动 DSH SDK 多模态 Agent 会话。
+17:58:36 模型等待中：DSH SDK · 推理强度 minimal
+17:58:40 DSH 状态：running
+17:59:34 Agent 工具调用：exit_plan_mode
+18:00:24 Agent 工具调用：mcp__ai-modeler__cad_create_model
+18:00:25 Agent 决策摘要：CADPlan 已创建，revision 1。
+18:00:40 Agent 工具调用：mcp__ai-modeler__cad_create_model
+18:00:46 Agent 工具调用：mcp__ai-modeler__cad_get_state
+18:00:46 Agent 决策摘要：已读取当前 CADPlan 状态。
+18:00:56 Agent 工具调用：mcp__ai-modeler__cad_update_feature
+18:00:59 Agent 工具调用：mcp__ai-modeler__cad_preview_model
+18:01:15 Agent 工具调用：mcp__ai-modeler__cad_create_model
+18:01:19 Agent 工具调用：mcp__ai-modeler__cad_remove_feature
+18:01:44 Agent 工具调用：mcp__ai-modeler__cad_update_feature
+18:01:44 Agent 决策摘要：仅更新来源或说明，几何未变；当前预览和几何版本仍有效。
+18:01:49 Agent 工具调用：mcp__ai-modeler__cad_update_feature
+18:01:49 Agent 决策摘要：仅更新来源或说明，几何未变；当前预览和几何版本仍有效。
+18:01:53 Agent 工具调用：mcp__ai-modeler__cad_update_feature
+18:01:56 Agent 工具调用：mcp__ai-modeler__cad_preview_model
+18:02:08 Agent 工具调用：mcp__ai-modeler__cad_get_feature_spec
+18:02:20 Agent 工具调用：mcp__ai-modeler__cad_get_state
+18:02:20 Agent 决策摘要：已读取当前 CADPlan 状态。
+18:02:39 Agent 工具调用：mcp__ai-modeler__cad_update_feature
+18:02:39 Agent 决策摘要：仅更新来源或说明，几何未变；当前预览和几何版本仍有效。
+18:02:42 Agent 工具调用：mcp__ai-modeler__cad_preview_model
+18:02:57 Agent 工具调用：mcp__ai-modeler__cad_update_feature
+18:03:28 Agent 工具调用：mcp__ai-modeler__cad_create_model
+18:04:03 DSH 状态：idle
+18:04:03 模型响应已返回：正在保存并整理 CADPlan 与本轮工具结果。
