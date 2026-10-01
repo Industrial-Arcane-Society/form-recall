@@ -18,6 +18,7 @@
 - 本次工作树还包含 `docs/06-roadmap/02-f1-acp-host.md`，但它是 `feat/rust-dsh-acp-host` 分支的 F1 阶段卡，在当前 `main` 树中不存在。按 main 可用文件集审查时，索引不加入该入口，避免目录/文档提交单独进入 main 后产生断链；F1 卡合入 main 时，应在同一提交补回索引入口。
 - 已在 `docs/README.md` 增加本审查记录入口。除上项明确排除的 feature-only 文档外，索引覆盖此轮拟进入 main 的活动文档。
 - 最终复验结果：检查根 `README.md` 及 `docs/**/*.md` 共 12 个 Markdown 文件，识别 26 个本地 Markdown 链接目标，目标缺失 0 个；排除 feature-only F1 卡后，main 提交目标中 9/9 篇子目录文档均由 `docs/README.md` 索引。
+- 合入 `main@0f182d3` 后另按主线工作树复验：根 `README.md` 与 `docs/**/*.md` 共 11 个 Markdown 文件、26 个本地链接目标、缺失 0 个；`docs/README.md` 索引覆盖 9/9 篇主线子目录文档。
 - 结构复验结果：`docs/` 根级 Markdown 只有 `README.md`；7 个目录名均符合 `NN-kebab-case`；子目录 Markdown 文件名均符合 `NN-kebab-case.md`；`temp/agent-logs/` 存在。
 
 ## 链接验证
