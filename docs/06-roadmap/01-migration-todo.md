@@ -11,7 +11,11 @@
 | ID | Feature | 状态 | 完成条件 / 提交边界 |
 |---|---|---|---|
 | F0 | 目录重构、文档重建和路径恢复 | **已完成** | 根目录结构、旧资料归档、文档索引、日志路径、开发启动、测试、Tauri build hook 和 GitHub Actions 已核验；本提交整体落到 `main` |
-| F1 | Rust DSH ACP Host + 固定 Runtime Manifest | 未开始 | 无全局 Node 的安装包启动；文字/图片会话、思考/工具事件、会话恢复和单会话取消可复现；校验下载/升级/回滚 |
+| F1 | Rust DSH ACP Host + 固定 Runtime Manifest | **进行中** | 分为 F1.1–F1.4；完整条件见各子 feature 卡 |
+| F1.1 | Rust ACP stdio 进程与 JSON-RPC 基础 | **已完成** | 行分帧、并发请求响应匹配、通知订阅、错误/超时、关闭时有界回收；以假 ACP 子进程测试，不依赖真实 DSH |
+| F1.2 | 固定 DSH/Node Runtime Manifest 与安装器 | 未开始 | 固定已验收的 Node 与 DSH 包版本/校验值；下载、校验、安装、升级、失败回滚，不依赖全局 Node |
+| F1.3 | Rust Host 会话、图片与 Tauri Agent 路由 | 未开始 | ACP initialize/new/resume/prompt/cancel/close；文字和图片、多轮 history、thought/tool 事件流，Quick 仍使用 Python |
+| F1.4 | DSH ACP 真实运行验收与恢复边界 | 未开始 | 使用固定版本 CLI profile 检查多模态能力、会话恢复、取消、进程清理与 Cordis 工具轨迹；失败项如实记录 |
 | F2 | DSH 原生 Cordis CAD 插件去 Python worker | 未开始 | 插件注册工具由 DSH 原生加载；CAD 工具命令直接进入 Rust；代码和实际运行均不经过 MCP 或 Python SDK 转译 |
 | F3 | Rust CADPlan 与增量模型事务 | 未开始 | 计划版本、schema、校验、preview/build dispatch、回滚和来源信息由 Rust 拥有；Python fixtures 有 golden 对拍 |
 | F4 | Rust/C++ thin OCCT FFI | 未开始 | Rust 几何请求建立有效 B-Rep、布尔、网格与拓扑报告；fixture 对拍有尺寸容差和失败样本 |
@@ -40,3 +44,5 @@
 每项开工前写明输入、成功标准、失败样本和可复现命令；结束前记录代码变动、运行证据、风险和剩余项。Agent 相关 feature 必须留一次真实 DSH 请求的版本/会话/图像输入/工具事件记录；几何 feature 必须留可机器读取的 B-Rep 与尺寸报告；安装 feature 必须留无全局依赖的冷启动结果。
 
 完成后由主 Agent 检查对照标准和未解决项，再以独立 commit 提交。静态测试通过不代表真实 DSH 多模态或 CATIA 验收通过。
+
+F1 拆分与实施记录见[ACP Host 子 feature 卡](./02-f1-acp-host.md)。
