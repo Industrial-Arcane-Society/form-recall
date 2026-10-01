@@ -143,6 +143,11 @@ impl AcpProcess {
         }))
     }
 
+    /// Returns whether the ACP child process and its stdio channel are still open.
+    pub fn is_running(&self) -> bool {
+        self.ensure_running().is_ok()
+    }
+
     /// Closes stdin to let DSH drain its ACP sessions, then waits a bounded
     /// interval before terminating a process that did not exit.
     pub fn shutdown(&self) {

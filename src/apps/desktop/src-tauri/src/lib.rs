@@ -1,4 +1,5 @@
 pub mod acp;
+pub mod agent_host;
 pub mod dsh_runtime;
 
 use serde_json::{Value, json};
@@ -816,6 +817,65 @@ async fn backend_call(
     .await
 }
 
+#[tauri::command(rename_all = "camelCase")]
+async fn agent_send(
+    state: State<'_, agent_host::AgentHostState>,
+    app: AppHandle,
+    request_id: String,
+    text: String,
+    images: Vec<String>,
+    llm_config: Value,
+    online_enabled: bool,
+    on_event: Channel<Value>,
+) -> Result<Value, String> {
+    let host = state.inner().clone();
+    let (sender, receiver) = oneshot::channel();
+    thread::Builder::new()
+        .name("ai-modeler-agent-host".into())
+        .spawn(move || {
+            let result = agent_host::send_turn(
+                &host,
+                app,
+                request_id,
+                text,
+                images,
+                llm_config,
+                online_enabled,
+                on_event,
+            );
+            let _ = sender.send(result);
+        })
+        .map_err(|error| format!("无法启动 Rust Agent Host 线程：{error}"))?;
+    receiver
+        .await
+        .map_err(|_| "Rust Agent Host 线程意外退出。".to_owned())?
+}
+
+#[tauri::command]
+fn agent_cancel(state: State<'_, agent_host::AgentHostState>) -> Result<Value, String> {
+    agent_host::cancel(state.inner())
+}
+
+#[tauri::command]
+async fn agent_reset(state: State<'_, agent_host::AgentHostState>) -> Result<Value, String> {
+    let host = state.inner().clone();
+    let (sender, receiver) = oneshot::channel();
+    thread::Builder::new()
+        .name("ai-modeler-agent-reset".into())
+        .spawn(move || {
+            let _ = sender.send(agent_host::reset(&host));
+        })
+        .map_err(|error| format!("无法关闭 DSH 会话：{error}"))?;
+    receiver
+        .await
+        .map_err(|_| "Rust Agent Host reset 线程意外退出。".to_owned())?
+}
+
+#[tauri::command]
+fn agent_history(app: AppHandle) -> Result<Value, String> {
+    agent_host::history(&app)
+}
+
 fn asset_root() -> Result<PathBuf, String> {
     let base = std::env::var_os("LOCALAPPDATA")
         .map(PathBuf::from)
@@ -1034,11 +1094,16 @@ fn shutdown_backend(state: &BackendState) {
 pub fn run() {
     tauri::Builder::default()
         .manage(BackendState::default())
+        .manage(agent_host::AgentHostState::default())
         .plugin(tauri_plugin_dialog::init())
         .invoke_handler(tauri::generate_handler![
             dependency_status,
             install_dependencies,
             backend_call,
+            agent_send,
+            agent_cancel,
+            agent_reset,
+            agent_history,
             read_asset,
             save_input_image,
             stage_input_image
@@ -1046,6 +1111,7 @@ pub fn run() {
         .on_window_event(|window, event| {
             if matches!(event, tauri::WindowEvent::Destroyed) {
                 shutdown_backend(&window.state::<BackendState>());
+                agent_host::shutdown(&window.state::<agent_host::AgentHostState>());
             }
         })
         .run(tauri::generate_context!())

@@ -18,7 +18,7 @@
 |---|---|---|
 | F1.1 ACP stdio process/JSON-RPC peer | **已完成** | 显式子进程、LF JSON-RPC 行帧、request id 响应匹配、通知订阅、RPC error、请求超时、关闭 stdin 后有界等待/回收；不接入 Tauri，不宣称真实 DSH 已运行 |
 | F1.2 固定 runtime manifest 与安装器 | **已完成** | app 私有 Node 与 DSH 包；校验下载、版本、升级和失败回滚 |
-| F1.3 ACP session 与 Tauri 事件路由 | **进行中** | ACP 初始化、文字/图片、持续会话、恢复/取消/关闭；UI Agent 模式改走 Rust Host，Quick 模式仍走 Python |
+| F1.3 ACP session 与 Tauri 事件路由 | **已完成** | ACP 初始化、文字/图片、持续会话、恢复/取消/关闭；UI Agent 模式改走 Rust Host，Quick 模式仍走 Python；固定 DSH ACP 控制面已通过隔离验收 |
 | F1.4 固定 runtime 真机 CLI 验收 | 未开始 | 无模型 API key 的 ACP 控制面测试与受控的真实路由请求分别记录；图片能力、Cordis 插件、thought/tool 更新和会话清理有结果 |
 
 ## F1.1 实施结果
@@ -49,10 +49,18 @@
 - 在新建临时目录中独立下载并校验 Node 官方 Windows x64 归档，解出 Node/npm，用独立 config/cache 和私有 PATH 运行锁定 `npm ci`：538 packages installed；Node `v22.23.3`、npm `10.9.9`，DSH CLI `--version` 返回 `0.2.0-rc.2`，`dsh --profile acp --help` 可启动。该验证没有读取机器全局 DSH profile，也没有发起模型请求。
 - F1.2 没有验证真实 ACP 会话或图像/模型 route；这些属于 F1.4。真实安装器升级故障通过 filesystem 单元测试覆盖，尚未在已安装 Tauri 包上完成端到端 UI 安装演练。
 
-## 待实施设计
+## F1.3 实施结果
 
-- Rust Host 从版本化 manifest 解析应用私有 Node、DSH 入口和包哈希；启动 `node <dsh-bin> --profile acp --patch <app-profile-patch>`，使用独立 app data 下的 `DSH_HOME`。
-- agent profile patch 复用当前被认可的 provider/system prompt 与项目 Cordis 插件，但将 Python 参数解析/几何 worker 拆到后续 F2/F3；F1 期间如有兼容 worker，只能作为显式过渡，不能称为 Python 已移除。
-- Tauri 必须把 ACP `thought`、`message`、`tool_call`、`tool_call_update` 和 `usage_update` 变为持续 UI 事件；必须识别 unsupported capability，不把缺失的图片/恢复能力伪装成成功。
-- ACP `session/resume` 不回放旧的 UI transcript；应用自己的聊天历史与 ACP session id/cwd 要独立保存。首次迁移采用新的空用户配置和 session store，不自动搬运旧 Python Agent 配置/会话。
-- 单轮 cancel 使用 ACP `session/cancel`，不得杀掉整个 DSH 进程；关闭桌面时再关闭各 ACP session 并结束 runtime。
+- 新增 `src/apps/desktop/src-tauri/src/agent_host.rs`。Rust Host 从版本化 manifest 解析应用私有 Node/DSH 入口，生成不含密钥的 profile patch，密钥只通过 DSH 子进程环境传入；Agent 模式通过 ACP 控制 DSH，Quick 模式保留原 Python 快速建模通道。
+- Agent profile 直接加载项目的 Cordis 原生插件，没有 MCP CAD 转译层。现阶段 CAD 插件仍通过一次性 JSONL worker 调用 Python 几何/CATIA 后端，这是向 F2 迁移前的明确过渡边界，不能视为已经移除 Python。
+- Tauri 持续转发 thought/message/tool/usage 事件，前端展示工具状态，thought 在生成时展开并在本轮结束后折叠；模型预览通过文件哈希变化实时推送。图片采用 ACP image content block，原始用户图保留可校验哈希的会话资产清单。
+- 应用分别保存 ACP `session_id`/工作区与 UI transcript；启动时尝试 `session/resume`，模型或连接配置变化时归档旧 UI history 并创建新会话。取消使用 `session/cancel`，新对话关闭旧 session，退出应用时有界关闭 DSH 进程。
+- profile 中只对已明确核验的 DeepSeek `deepseek-flash` Responses route 和 SiliconFlow `moonshotai/kimi-k2.7-code` route 声明视觉能力；所选 ACP route 不公布图片能力时，会在发送图片前报错。
+
+### F1.3 验证
+
+- `cargo fmt --all --check`：通过；`cargo test --lib`：19 passed。
+- `npm run build`：通过；仍有 CAD viewport 637 KB chunk 体积提示。
+- 私有 DSH `0.2.0-rc.2 --dump-config` 加载应用生成的 profile patch：退出码 0、stderr 为空，配置输出包含 AI Modeler provider 和三个 Cordis 插件。
+- 在隔离临时 `DSH_HOME` 中通过私有 Node/DSH 真实运行 ACP：`initialize`、`session/new`、关闭进程、重新启动、`session/resume`、设置 `reasoning_effort=high`、`session/close` 均成功；ACP 公布 `image=true`。DSH stderr 为空，原生 Cordis 插件已注册 24 个工具（包括 CAD、知识检索、`web_search` 等），没有发送 `session/prompt`，没有使用 API 密钥发起模型请求。
+- 以上通过 DSH ACP 控制面和 Cordis 插件装载验证，不代表已完成已安装 Tauri 应用的界面验收、图片上行到 provider 的验证或 CAD 工具实建；这些留在 F1.4。

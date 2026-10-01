@@ -122,6 +122,11 @@ body.is-resizing-panels, body.is-resizing-panels * { cursor: col-resize !importa
 .message-content p { margin: 0; color: #5e6b76; white-space: pre-wrap; word-break: break-word; font-size: 12px; line-height: 1.7; }
 .theme-dark .message-content p { color: #b8c4cc; }
 .chat-message.user .message-content p { color: var(--ink); }
+.chat-message.thought .message-avatar { background: #f2ecfa; color: #8063a3; }
+.thought-details { color: #77628f; font-size: 12px; }
+.thought-details summary { width: fit-content; margin: 0 0 5px; cursor: pointer; user-select: none; }
+.thought-details p { padding: 8px 10px; border-left: 2px solid #cbb9e0; background: rgba(139, 110, 170, .055); border-radius: 0 6px 6px 0; }
+.theme-dark .thought-details p { background: rgba(180, 151, 211, .08); }
 .message-files { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 8px; }
 .message-files span { max-width: 170px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; border: 1px solid var(--line); border-radius: 5px; padding: 4px 6px; color: #788692; font-size: 12px; }
 .working-indicator { display: flex; align-items: center; gap: 8px; margin: 8px 0 0 35px; color: #73818c; font-size: 12px; }

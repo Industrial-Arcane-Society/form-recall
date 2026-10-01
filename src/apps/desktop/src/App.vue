@@ -14,7 +14,7 @@ type JsonMap = Record<string, any>
 type Feature = { index: number; kind: string; op?: string; name?: string; enabled: boolean; params: JsonMap; description?: string; editable_parameters?: string[] }
 type DocumentState = { revision: number; name: string; source_prompt?: string; current_path?: string | null; features: Feature[]; stats: JsonMap; build_log: string[]; mesh_path?: string | null }
 type WireEvent = { event: string; request_id: string; data: any }
-type ChatLine = { role: 'user' | 'assistant' | 'progress'; text: string; images?: AttachmentItem[] }
+type ChatLine = { role: 'user' | 'assistant' | 'progress' | 'thought'; text: string; images?: AttachmentItem[]; requestId?: string; toolCallId?: string; open?: boolean }
 
 const desktop = isTauri()
 const needsDependencySetup = ref(import.meta.env.DEV && new URLSearchParams(window.location.search).get('setup') === 'dependencies')
@@ -121,7 +121,7 @@ function updateDocument(payload: any, markDirty = true) {
 
 async function handleWireEvent(event: WireEvent) {
   const data = event.data || {}
-  if (['job.progress', 'agent.progress', 'model.preview'].includes(event.event) && event.request_id !== activeRequestId.value) return
+  if (event.request_id && event.request_id !== activeRequestId.value) return
   if (event.event === 'job.progress') {
     setStatus(data.message || '正在计算模型…')
     if (data.message) addLog(data.message)
@@ -138,6 +138,56 @@ async function handleWireEvent(event: WireEvent) {
     setStatus(previewStage.value)
     if (data.preview_path) void loadPreview(data.preview_path)
     addLog('Agent 预览更新：' + previewStage.value)
+  } else if (event.event === 'agent.message') {
+    appendAgentText('assistant', event.request_id, String(data.text || ''))
+  } else if (event.event === 'agent.thought') {
+    appendAgentText('thought', event.request_id, String(data.text || ''))
+  } else if (event.event === 'agent.tool') {
+    const id = String(data.tool_call_id || data.title || 'tool')
+    const label = String(data.title || data.kind || '工具')
+    const state = String(data.status || (data.update === 'tool_call' ? 'running' : 'updated'))
+    let line = chat.value.find((item) => item.role === 'progress' && item.requestId === event.request_id && item.toolCallId === id)
+    const text = `工具：${label} · ${state}`
+    if (line) line.text = text
+    else chat.value.push({ role: 'progress', text, requestId: event.request_id, toolCallId: id })
+    addLog(text)
+  } else if (event.event === 'agent.status') {
+    const message = String(data.message || data.sessionUpdate || '')
+    if (message) setStatus(message)
+  } else if (event.event === 'agent.warning') {
+    const message = String(data.message || 'DSH 返回一条警告。')
+    chat.value.push({ role: 'progress', text: message, requestId: event.request_id })
+    addLog(message)
+  } else if (event.event === 'agent.usage') {
+    const total = Number(data.totalTokens ?? data.total_tokens ?? 0)
+    if (total > 0) addLog(`DSH 用量更新：${total.toLocaleString()} tokens`)
+  }
+}
+
+function appendAgentText(role: 'assistant' | 'thought', requestId: string, text: string) {
+  if (!text) return
+  let line = chat.value.find((item) => item.role === role && item.requestId === requestId)
+  if (!line) {
+    line = { role, requestId, text, ...(role === 'thought' ? { open: true } : {}) }
+    chat.value.push(line)
+  } else {
+    line.text += text
+    if (role === 'thought') line.open = true
+  }
+  scrollChat()
+}
+
+function finishAgentStream(requestId: string, reply: string) {
+  for (const item of chat.value) {
+    if (item.requestId === requestId && item.role === 'thought') item.open = false
+  }
+  const assistant = chat.value.find((item) => item.role === 'assistant' && item.requestId === requestId)
+  if (assistant) {
+    if (!assistant.text) assistant.text = reply || 'Agent 已结束本轮处理。'
+  } else if (reply) {
+    chat.value.push({ role: 'assistant', requestId, text: reply })
+  } else {
+    chat.value.push({ role: 'assistant', requestId, text: 'Agent 已结束本轮处理。' })
   }
 }
 
@@ -161,12 +211,37 @@ async function initialize() {
     const init = await backendCall('system.initialize')
     settingsDraft.value = structuredClone(init.settings || {})
     updateDocument(init.document, false)
+    await restoreAgentHistory()
     setStatus('后端已连接', 'success')
     addLog('已连接 Python ' + (hello.python_version || '') + ' · ' + (hello.python_executable || ''))
   } catch (error) {
     backendInfo.value = '后端未连接'
     setStatus(errorMessage(error), 'error')
     addLog('连接 Python 后端失败：' + errorMessage(error))
+  }
+}
+
+async function restoreAgentHistory() {
+  if (!desktop) return
+  try {
+    const saved = await invoke<{ turns?: any[] }>('agent_history')
+    const turns = Array.isArray(saved.turns) ? saved.turns : []
+    if (!turns.length) return
+    const restored: ChatLine[] = []
+    for (const turn of turns) {
+      if (turn?.role === 'user') {
+        const images = Array.isArray(turn.images)
+          ? await Promise.all(turn.images.map((image: any) => loadAttachment(String(image.path || ''), String(image.name || fileName(String(image.path || '')))).catch(() => null)))
+          : []
+        restored.push({ role: 'user', text: String(turn.text || '请根据参考图建立模型。'), images: images.filter((item): item is AttachmentItem => item !== null) })
+        if (typeof turn.assistant === 'string' && turn.assistant) restored.push({ role: 'assistant', text: turn.assistant })
+      } else if (turn?.role === 'assistant' && typeof turn.text === 'string') {
+        restored.push({ role: 'assistant', text: turn.text })
+      }
+    }
+    if (restored.length) chat.value = restored
+  } catch (error) {
+    addLog('恢复 Agent 对话记录失败：' + errorMessage(error))
   }
 }
 
@@ -324,13 +399,34 @@ async function submitPrompt() {
         setStatus('快速建模完成', 'success')
       }
     } else {
-      const result = await backendCall('agent.send', { text: userText, images: imagePaths }, requestId)
+      const channel = new Channel<WireEvent>()
+      channel.onmessage = (event) => { void handleWireEvent(event) }
+      const profile = activeProvider.value || {}
+      const result = await invoke<any>('agent_send', {
+        requestId,
+        text: userText,
+        images: imagePaths,
+        llmConfig: {
+          base_url: profile.base_url || '',
+          model: profile.model || '',
+          api_key: profile.api_key || '',
+          reasoning_effort: profile.reasoning_effort || 'none',
+          thinking_budget: profile.thinking_budget,
+          dsh_context_window: profile.dsh_context_window,
+          dsh_output_cap: profile.dsh_output_cap,
+          max_tokens: profile.max_tokens,
+        },
+        onlineEnabled: settingsDraft.value?.online?.enabled !== false,
+        onEvent: channel,
+      })
       if (result.document) updateDocument(result.document)
-      chat.value.push({ role: 'assistant', text: result.reply || (result.state === 'cancelled' ? '任务已取消。' : 'Agent 已结束本轮处理。') })
+      finishAgentStream(requestId, result.reply || (result.state === 'cancelled' ? '任务已取消。' : 'Agent 已结束本轮处理。'))
       setStatus(result.state === 'complete' ? 'Agent 建模完成' : 'Agent 已结束', result.state === 'complete' ? 'success' : '')
     }
   } catch (error) {
-    chat.value.push({ role: 'assistant', text: '处理失败：' + errorMessage(error) })
+    const message = '处理失败：' + errorMessage(error)
+    if (mode.value === 'agent') finishAgentStream(requestId, message)
+    else chat.value.push({ role: 'assistant', text: message })
     setStatus('任务失败', 'error')
     addLog('任务失败：' + errorMessage(error))
   } finally {
@@ -343,14 +439,17 @@ async function submitPrompt() {
 async function cancelActive() {
   if (!activeRequestId.value) return
   try {
-    const result = await backendCall('agent.cancel', { request_id: activeRequestId.value })
+    const result = mode.value === 'agent'
+      ? await invoke<any>('agent_cancel')
+      : await backendCall('agent.cancel', { request_id: activeRequestId.value })
     setStatus(result.cancelled ? '正在停止任务…' : result.message || '当前没有可取消任务')
   } catch (error) { setStatus(errorMessage(error), 'error') }
 }
 
 async function resetChat() {
   try {
-    await backendCall('chat.reset')
+    if (mode.value === 'agent') await invoke('agent_reset')
+    else await backendCall('chat.reset')
     releaseAttachmentUrls()
     chat.value = [{ role: 'assistant', text: '新对话已开始。描述零件尺寸，或附上参考图开始建模。' }]
     previewStage.value = ''
@@ -802,8 +901,12 @@ onUnmounted(() => {
           <div v-for="(item, index) in chat" :key="index" class="chat-message" :class="item.role">
             <div class="message-avatar"><template v-if="item.role === 'user'">你</template><UiIcon v-else-if="item.role === 'progress'" name="loading" :size="16" /><template v-else>AI</template></div>
             <div class="message-content">
-              <div class="message-meta">{{ item.role === 'user' ? '你' : item.role === 'progress' ? '处理中' : 'AI Modeler' }} <span>{{ item.role === 'assistant' ? '助手' : '' }}</span></div>
-              <p>{{ item.text }}</p>
+              <div class="message-meta">{{ item.role === 'user' ? '你' : item.role === 'progress' ? 'Agent 状态' : item.role === 'thought' ? '模型思考' : 'AI Modeler' }} <span>{{ item.role === 'assistant' ? '助手' : item.role === 'thought' ? (item.open ? '生成中' : '已折叠') : '' }}</span></div>
+              <details v-if="item.role === 'thought'" class="thought-details" :open="item.open" @toggle="item.open = ($event.currentTarget as HTMLDetailsElement).open">
+                <summary>{{ item.open ? '正在思考…' : '查看思考过程' }}</summary>
+                <p>{{ item.text }}</p>
+              </details>
+              <p v-else>{{ item.text }}</p>
               <AttachmentPreview v-if="item.images?.length" :items="item.images" readonly />
             </div>
           </div>

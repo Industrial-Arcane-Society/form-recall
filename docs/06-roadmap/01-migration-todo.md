@@ -14,7 +14,7 @@
 | F1 | Rust DSH ACP Host + 固定 Runtime Manifest | **进行中** | 分为 F1.1–F1.4；完整条件见各子 feature 卡 |
 | F1.1 | Rust ACP stdio 进程与 JSON-RPC 基础 | **已完成** | 行分帧、并发请求响应匹配、通知订阅、错误/超时、关闭时有界回收；以假 ACP 子进程测试，不依赖真实 DSH |
 | F1.2 | 固定 DSH/Node Runtime Manifest 与安装器 | **已完成** | 固定已验收的 Node 与 DSH 包版本/校验值；下载、校验、安装、升级、失败回滚，不依赖全局 Node |
-| F1.3 | Rust Host 会话、图片与 Tauri Agent 路由 | **进行中** | ACP initialize/new/resume/prompt/cancel/close；文字和图片、多轮 history、thought/tool 事件流，Quick 仍使用 Python |
+| F1.3 | Rust Host 会话、图片与 Tauri Agent 路由 | **已完成** | Agent 模式由 Rust ACP Host 持有会话，支持图片、多轮恢复、取消与关闭；thought/tool 流实时进入 UI；Quick 仍使用 Python。固定 DSH 的无模型 ACP 控制面通过 |
 | F1.4 | DSH ACP 真实运行验收与恢复边界 | 未开始 | 使用固定版本 CLI profile 检查多模态能力、会话恢复、取消、进程清理与 Cordis 工具轨迹；失败项如实记录 |
 | F2 | DSH 原生 Cordis CAD 插件去 Python worker | 未开始 | 插件注册工具由 DSH 原生加载；CAD 工具命令直接进入 Rust；代码和实际运行均不经过 MCP 或 Python SDK 转译 |
 | F3 | Rust CADPlan 与增量模型事务 | 未开始 | 计划版本、schema、校验、preview/build dispatch、回滚和来源信息由 Rust 拥有；Python fixtures 有 golden 对拍 |
