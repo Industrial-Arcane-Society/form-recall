@@ -17,8 +17,8 @@
 | 子 Feature | 状态 | 验收边界 |
 |---|---|---|
 | F1.1 ACP stdio process/JSON-RPC peer | **已完成** | 显式子进程、LF JSON-RPC 行帧、request id 响应匹配、通知订阅、RPC error、请求超时、关闭 stdin 后有界等待/回收；不接入 Tauri，不宣称真实 DSH 已运行 |
-| F1.2 固定 runtime manifest 与安装器 | 未开始 | app 私有 Node 与 DSH 包；校验下载、版本、升级和失败回滚 |
-| F1.3 ACP session 与 Tauri 事件路由 | 未开始 | ACP 初始化、文字/图片、持续会话、恢复/取消/关闭；UI Agent 模式改走 Rust Host，Quick 模式仍走 Python |
+| F1.2 固定 runtime manifest 与安装器 | **已完成** | app 私有 Node 与 DSH 包；校验下载、版本、升级和失败回滚 |
+| F1.3 ACP session 与 Tauri 事件路由 | **进行中** | ACP 初始化、文字/图片、持续会话、恢复/取消/关闭；UI Agent 模式改走 Rust Host，Quick 模式仍走 Python |
 | F1.4 固定 runtime 真机 CLI 验收 | 未开始 | 无模型 API key 的 ACP 控制面测试与受控的真实路由请求分别记录；图片能力、Cordis 插件、thought/tool 更新和会话清理有结果 |
 
 ## F1.1 实施结果
@@ -33,6 +33,21 @@
 - `cargo fmt --all`
 - `cargo test --lib`：9 passed
 - 未启动真实 DSH，未调用 LLM；ACP profile 的图像能力、实际 provider 和模型调用仍属于 F1.4。
+
+## F1.2 实施结果
+
+- 新增固定 Runtime manifest、npm `package.json` 和 lockfile；目标为 Windows x64，Node `v22.23.3` / npm `10.9.9`、DSH/ACP `0.2.0-rc.2`、ACP SDK `1.4.0`。
+- Tauri 资源构建会把 `src/legacy/packaging/dsh-runtime/` 原样暂存到应用资源 `app/packaging/dsh-runtime/`；Rust Host 校验清单与锁文件 SHA-256 后，从官方 Node 归档下载并验证 SHA，再用私有 Node 执行锁定的 `npm ci`。
+- 安装位于用户数据目录，与机器级 Node、DSH 和旧的用户 DSH profile 分离；新版本先安装到暂存目录，切换时保留前一版本，失败时恢复。Python 依赖已就绪的旧用户只补装 DSH Runtime，不重装 Python。
+- 首次安装界面已区分 Python 镜像源与固定的官方 Node/npm 源，并明确说明 Agent Runtime 使用应用私有 Node。
+
+### F1.2 验证
+
+- `cargo fmt --all --check`、`cargo test --lib`：15 passed；包含安全路径、清单哈希、切换失败恢复、崩溃中断恢复和新版本升级切换测试。
+- `npm run build`：通过；Vite 提示 CAD 视口 chunk 637 KB，属于已有体积提示。
+- 执行 `node src/legacy/scripts/build_desktop_resources.mjs`：通过；暂存后的 `runtime-manifest.json`、`package.json`、`package-lock.json` 与源文件 SHA-256 完全一致。
+- 在新建临时目录中独立下载并校验 Node 官方 Windows x64 归档，解出 Node/npm，用独立 config/cache 和私有 PATH 运行锁定 `npm ci`：538 packages installed；Node `v22.23.3`、npm `10.9.9`，DSH CLI `--version` 返回 `0.2.0-rc.2`，`dsh --profile acp --help` 可启动。该验证没有读取机器全局 DSH profile，也没有发起模型请求。
+- F1.2 没有验证真实 ACP 会话或图像/模型 route；这些属于 F1.4。真实安装器升级故障通过 filesystem 单元测试覆盖，尚未在已安装 Tauri 包上完成端到端 UI 安装演练。
 
 ## 待实施设计
 

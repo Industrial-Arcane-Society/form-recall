@@ -1,4 +1,5 @@
 pub mod acp;
+pub mod dsh_runtime;
 
 use serde_json::{Value, json};
 use std::collections::HashMap;
@@ -153,12 +154,25 @@ fn read_runtime_manifest(root: &Path) -> Result<Value, String> {
 
 fn dependency_status_for(root: &Path, data_dir: &Path) -> Result<Value, String> {
     let manifest = read_runtime_manifest(root)?;
+    let python_installed = python_dependencies_installed(&manifest, data_dir);
+    let dsh_status = dsh_runtime::status(root, data_dir)?;
+    let installed = python_installed && dsh_status["installed"] == true;
+    Ok(json!({
+        "required": true,
+        "installed": installed,
+        "pythonInstalled": python_installed,
+        "pythonVersion": manifest.get("pythonVersion").cloned().unwrap_or(Value::Null),
+        "dshRuntime": dsh_status,
+    }))
+}
+
+fn python_dependencies_installed(manifest: &Value, data_dir: &Path) -> bool {
     let expected_hash = manifest
         .get("requirementsSha256")
         .and_then(Value::as_str)
         .unwrap_or("");
     let marker_path = data_dir.join(DEPENDENCY_MARKER);
-    let installed = fs::read_to_string(marker_path)
+    fs::read_to_string(marker_path)
         .ok()
         .and_then(|text| serde_json::from_str::<Value>(&text).ok())
         .map(|marker| {
@@ -172,12 +186,7 @@ fn dependency_status_for(root: &Path, data_dir: &Path) -> Result<Value, String> 
                     .join("python.exe")
                     .is_file()
         })
-        .unwrap_or(false);
-    Ok(json!({
-        "required": true,
-        "installed": installed,
-        "pythonVersion": manifest.get("pythonVersion").cloned().unwrap_or(Value::Null),
-    }))
+        .unwrap_or(false)
 }
 
 #[tauri::command]
@@ -358,6 +367,24 @@ fn install_dependencies_sync(
     fs::create_dir_all(&data_dir)
         .map_err(|error| format!("无法创建用户数据目录（{}）：{error}", data_dir.display()))?;
     let manifest = read_runtime_manifest(&root)?;
+    if python_dependencies_installed(&manifest, &data_dir) {
+        send_install_event(
+            &channel,
+            "progress",
+            "Python 依赖已就绪；正在检查 DSH ACP Runtime…",
+        );
+        let runtime_status = dsh_runtime::install(&root, &data_dir, &channel)?;
+        send_install_event(
+            &channel,
+            "complete",
+            "Python 与 DSH Runtime 均已就绪，正在启动工作区…",
+        );
+        return Ok(json!({
+            "installed": true,
+            "pythonVersion": manifest.get("pythonVersion").cloned().unwrap_or(Value::Null),
+            "dshRuntime": runtime_status,
+        }));
+    }
     let requirements_hash = manifest
         .get("requirementsSha256")
         .and_then(Value::as_str)
@@ -553,10 +580,13 @@ fn install_dependencies_sync(
     }
     fs::rename(&marker_temp, &marker_path)
         .map_err(|error| format!("无法完成依赖安装状态写入：{error}"))?;
+    let runtime_status = dsh_runtime::install(&root, &data_dir, &channel)?;
     send_install_event(&channel, "complete", "依赖安装完成，正在启动工作区…");
-    Ok(
-        json!({ "installed": true, "pythonVersion": manifest.get("pythonVersion").cloned().unwrap_or(Value::Null) }),
-    )
+    Ok(json!({
+        "installed": true,
+        "pythonVersion": manifest.get("pythonVersion").cloned().unwrap_or(Value::Null),
+        "dshRuntime": runtime_status,
+    }))
 }
 
 #[tauri::command(rename_all = "camelCase")]

@@ -64,7 +64,7 @@ async function install() {
         </div>
         <span class="dependency-kicker">ONE-TIME SETUP</span>
         <h1>为建模工作区<br>准备运行环境</h1>
-        <p>源码与轻量 Python 已随软件安装。首次启动时下载几何、图像和 CAD 依赖，完成后就可以离线使用本地建模功能。</p>
+        <p>轻量 Python 已随软件安装。首次启动时会安装几何与 CAD 依赖，并准备应用私有的 Node.js 和 DSH Agent Runtime；这些运行时不会使用电脑上已有的 Node。</p>
         <div class="setup-facts">
           <div><span class="fact-icon"><UiIcon name="package-check" :size="16" /></span><span><strong>只需安装一次</strong><small>后续启动直接进入工作区</small></span></div>
           <div><span class="fact-icon"><UiIcon name="hard-drive" :size="16" /></span><span><strong>保存在当前用户目录</strong><small>不写入 Program Files 安装目录</small></span></div>
@@ -74,8 +74,8 @@ async function install() {
       <section class="dependency-form">
         <div class="form-heading">
           <span class="step-label"><i>01</i> / INITIAL SETUP</span>
-          <h2>选择下载镜像</h2>
-          <p>安装过程需要网络连接。可按网络情况选择软件包镜像源。</p>
+          <h2>选择 Python 下载镜像</h2>
+          <p>Python 依赖使用所选镜像。DSH Runtime 从固定的官方 Node.js 与 npm 地址下载，并在安装前校验 SHA-256 和锁文件完整性。</p>
         </div>
 
         <div class="mirror-list" role="radiogroup" aria-label="Python 软件包镜像">
@@ -102,10 +102,10 @@ async function install() {
           {{ installing ? '正在安装…' : error ? '重试安装' : '安装依赖并启动' }}
           <UiIcon v-if="!installing" name="arrow-right" :size="17" />
         </button>
-        <p class="privacy-note"><UiIcon name="lock-keyhole" :size="14" />依赖从所选镜像下载并安装到本机用户数据目录，不会上传项目文件。</p>
+        <p class="privacy-note"><UiIcon name="lock-keyhole" :size="14" />Python 依赖从所选镜像下载，DSH 使用锁定的官方地址；运行文件保存在本机用户目录，不会上传项目文件。</p>
       </section>
     </section>
-    <footer class="dependency-footer"><span>AI MODELER <i>·</i> 桌面端首次启动</span><span>Python 3.13 <i>·</i> Windows x64</span></footer>
+    <footer class="dependency-footer"><span>AI MODELER <i>·</i> 桌面端首次启动</span><span>Python 3.13 <i>·</i> Node.js 22 LTS <i>·</i> DSH 0.2.0-rc.2</span></footer>
   </main>
 </template>
 
