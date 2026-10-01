@@ -73,6 +73,9 @@ def fix_ansi(path, raw, check):
     if enc == "utf16":
         return "ok", "UTF-16（WSH 支持，不动）"
     text = raw.decode("utf-8")
+    # 编码转换前先剥掉 UTF-8 BOM：BOM 本身是 GBK 打不出的字符，
+    # 而 cmd 见到 BOM 会把第一行当成乱码命令（实测：'@echo off' 直接报错）。
+    text = text.lstrip("\ufeff")
     # 纯 ASCII 的文件两种编码读出来都一样，不算问题（很多 .bat 只有英文命令）
     if all(ord(c) < 128 for c in text):
         return "ok", "纯 ASCII，UTF-8/GBK 都对"
@@ -97,6 +100,8 @@ def walk(base):
 
 
 def main():
+    import console_io
+    console_io.setup()
     ap = argparse.ArgumentParser()
     ap.add_argument("--dir", default=ROOT)
     ap.add_argument("--check", action="store_true")

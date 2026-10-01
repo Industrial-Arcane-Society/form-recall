@@ -22,7 +22,7 @@ U4：意图纠错层 —— 纠正一次，同类表述**不再需要纠正**。
     C.lookup(cat, text) -> {'槽型': 'B', ...}
 """
 from __future__ import annotations
-from ai_modeler.paths import PROJECT_ROOT
+from ai_modeler.paths import PROJECT_ROOT, data_path
 
 import io
 import json
@@ -31,8 +31,9 @@ import re
 from typing import Dict, List, Optional
 
 ROOT = str(PROJECT_ROOT)
-KB = os.path.join(ROOT, "kb")
-PATH = os.path.join(KB, "intent_corrections.json")
+PACKAGED_PATH = os.path.join(ROOT, "kb", "intent_corrections.json")
+PATH = str(data_path("kb", "intent_corrections.json"))
+KB = os.path.dirname(PATH)
 
 _DB: Optional[dict] = None
 
@@ -41,7 +42,8 @@ def _load() -> dict:
     global _DB
     if _DB is None:
         try:
-            with io.open(PATH, encoding="utf-8") as f:
+            source = PATH if os.path.isfile(PATH) else PACKAGED_PATH
+            with io.open(source, encoding="utf-8") as f:
                 _DB = json.load(f)
         except Exception:
             _DB = {"version": 1, "rules": []}

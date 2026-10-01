@@ -6,7 +6,7 @@ preview, evidence review, repair, and completion. CADPlan remains data and the
 runtime never calls CATIA. UI callbacks are optional and Tk-independent.
 """
 from __future__ import annotations
-from ai_modeler.paths import PROJECT_ROOT
+from ai_modeler.paths import PROJECT_ROOT, data_path
 
 import hashlib
 import json
@@ -634,7 +634,7 @@ def _validation_tool(plan):
 
 
 def _make_session_dir(output_dir=None):
-    root = Path(output_dir) if output_dir else ROOT / "artifacts" / "agentloop"
+    root = Path(output_dir) if output_dir else data_path("artifacts", "agentloop")
     stamp = datetime.now().strftime("%Y%m%d-%H%M%S")
     target = root / (stamp + "-" + uuid.uuid4().hex[:8])
     target.mkdir(parents=True, exist_ok=False)

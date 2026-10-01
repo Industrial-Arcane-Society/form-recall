@@ -1,0 +1,11 @@
+# Python runtime dependencies installed on first launch of the Windows desktop app.
+# Resolve binary wheels for bundled CPython 3.13 x64; no system Python is needed.
+numpy>=2.0,<3
+scipy>=1.14,<2
+Pillow>=10,<13
+python-docx>=1.1,<2
+deepseek-harness-sdk==0.1.5rc1
+pydantic>=2.12,<3
+pywin32>=306
+cadquery-ocp-novtk==7.9.3.1.1
+cadquery-ocp-proxy==7.9.3.1.1

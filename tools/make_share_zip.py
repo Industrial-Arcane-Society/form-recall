@@ -70,6 +70,8 @@ def collect(src):
 
 
 def main():
+    import console_io
+    console_io.setup()
     ap = argparse.ArgumentParser()
     ap.add_argument("--src", default=DEF_SRC)
     ap.add_argument("--out", default=DEF_OUT)

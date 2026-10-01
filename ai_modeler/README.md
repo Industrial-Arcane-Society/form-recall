@@ -18,7 +18,7 @@ responsibility:
 | `parts/standard/` | Standard mechanical parts | `std_bolt.py`, `std_bearing.py`, `std_pulley.py` |
 | `parts/measured/` | Measured or reverse-engineered parts | `realparts.py`, `realholes.py`, `reallib.py` |
 | `catia_backend/` | CATIA connection, export, service, and script templates | `catia.py`, `catia_export.py`, `catia_tpl_*.txt` |
-| `ui/` | Desktop application and local rendering | `app.py`, `viewer3d.py`, `softrender.py` |
+| `ui/` | Legacy Tk fallback, Tauri JSONL bridge, shared examples, and local image rendering | `app.py`, `bridge.py`, `examples.py`, `viewer3d.py`, `softrender.py` |
 | `runtime/` | Configuration, MCP service, and self-test | `config.py`, `mcp_server.py`, `selftest.py` |
 | `catia_mcp/` | CATIA MCP server and its tool modules | `server.py`, `bridge.py`, `tools/` |
 

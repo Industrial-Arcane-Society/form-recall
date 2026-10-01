@@ -17,7 +17,7 @@ CATIA V5 的模型库以 *.catalog 文件组织, 默认放在安装目录的
     python -m ai_modeler --catia-lib --rebuild            重新扫描建索引
 """
 from __future__ import annotations
-from ai_modeler.paths import PROJECT_ROOT
+from ai_modeler.paths import PROJECT_ROOT, config_path, data_path
 
 import json
 import os
@@ -25,9 +25,9 @@ import subprocess
 import sys
 
 ROOT_DIR = str(PROJECT_ROOT)
-CONFIG_PATH = os.path.join(ROOT_DIR, 'config.json')
+CONFIG_PATH = str(config_path())
 KB_DIR = os.path.join(ROOT_DIR, 'kb')
-INDEX_PATH = os.path.join(KB_DIR, 'catia_catalogs.json')
+INDEX_PATH = str(data_path('kb', 'catia_catalogs.json'))
 
 CATALOG_EXTS = ('.catalog',)
 PART_EXTS = ('.catpart', '.catproduct', '.model', '.cgr', '.stp', '.step', '.igs', '.iges')

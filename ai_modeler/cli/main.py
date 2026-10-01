@@ -2,6 +2,9 @@
 from __future__ import annotations
 
 import sys
+import os
+import subprocess
+from pathlib import Path
 
 from . import catia as catia_commands
 from . import legacy as legacy_commands
@@ -10,6 +13,17 @@ from . import legacy as legacy_commands
 def main(argv: list[str] | None = None) -> int:
     """Run a package command; with no command, start the desktop UI."""
     argv = list(sys.argv[1:] if argv is None else argv)
+
+    # The Tauri process starts this private mode as its persistent Python
+    # backend. It must be checked before the ordinary no-argument UI path.
+    if "--ui-bridge" in argv:
+        from ai_modeler.ui.bridge import serve_stdio
+
+        return serve_stdio()
+
+    legacy_ui = "--legacy-ui" in argv
+    if legacy_ui:
+        argv.remove("--legacy-ui")
 
     if "--cadplan" in argv:
         from ai_modeler.sdk import cadplan_cli
@@ -47,8 +61,7 @@ def main(argv: list[str] | None = None) -> int:
     if "--selftest" in argv:
         from ai_modeler.runtime.selftest import run_selftest
 
-        run_selftest()
-        return 0
+        return run_selftest()
     if "--catia-info" in argv:
         return catia_commands.show_info()
     if "--push" in argv:
@@ -63,6 +76,26 @@ def main(argv: list[str] | None = None) -> int:
 
         print("AI 自动建模助手 v%s" % __version__)
         return 0
+
+    if not legacy_ui and not argv:
+        from ai_modeler.paths import PROJECT_ROOT
+
+        candidates = [
+            PROJECT_ROOT / "ui-web" / "src-tauri" / "target" / "release" / "ai-modeler.exe",
+            PROJECT_ROOT / "ui-web" / "src-tauri" / "target" / "debug" / "ai-modeler.exe",
+        ]
+        tauri_exe = next((path for path in candidates if path.is_file()), None)
+        if tauri_exe:
+            env = os.environ.copy()
+            python_executable = Path(sys.executable)
+            if python_executable.name.lower() == "pythonw.exe":
+                console_python = python_executable.with_name("python.exe")
+                if console_python.is_file():
+                    python_executable = console_python
+            env["AIMODELER_PYTHON"] = str(python_executable)
+            env["AIMODELER_ROOT"] = str(PROJECT_ROOT)
+            subprocess.Popen([str(tauri_exe)], cwd=str(PROJECT_ROOT), env=env)
+            return 0
 
     from ai_modeler.ui.app import main as gui_main
 
