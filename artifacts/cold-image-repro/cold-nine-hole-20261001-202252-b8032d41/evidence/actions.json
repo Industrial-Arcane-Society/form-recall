@@ -1,0 +1,545 @@
+[
+  {
+    "kind": "tool",
+    "tool": "cad_get_state",
+    "revision": 0,
+    "at": 1790857380.0549335
+  },
+  {
+    "kind": "tool",
+    "tool": "cad_inspect_references",
+    "revision": 0,
+    "at": 1790857479.7322948,
+    "reference_id": "sha256:53ed87fadf8cca869da921627e6a13c845424c6906b3de517d5cca972db94553",
+    "source_sha256": "53ed87fadf8cca869da921627e6a13c845424c6906b3de517d5cca972db94553",
+    "roi_norm": null,
+    "verification_status": "model_observation_unverified"
+  },
+  {
+    "kind": "tool",
+    "tool": "cad_get_feature_spec",
+    "revision": 0,
+    "at": 1790857556.9474971,
+    "feature_kind": "box"
+  },
+  {
+    "kind": "tool",
+    "tool": "cad_create_model",
+    "revision": 1,
+    "at": 1790857630.7295508,
+    "feature_id": "base_box",
+    "explicit_replacement": false,
+    "preserved_source_keys": [],
+    "user_source_provenance": [],
+    "archived_finding_count": 0
+  },
+  {
+    "kind": "tool",
+    "tool": "cad_add_face_recess",
+    "revision": 2,
+    "at": 1790857636.654512,
+    "feature_id": "front_slot",
+    "face_normal_axis": 1,
+    "face_side": "positive",
+    "dimensions_xyz": [
+      30.0,
+      35.001,
+      65.0
+    ],
+    "source_type": "image_estimate",
+    "user_source_provenance": [],
+    "user_depth_provenance": null
+  },
+  {
+    "kind": "tool",
+    "tool": "cad_add_hole_array",
+    "revision": 3,
+    "at": 1790857688.0287879,
+    "feature_ids": [
+      "left_hole_1",
+      "left_hole_2",
+      "left_hole_3"
+    ],
+    "axis": "X",
+    "face_side": "negative",
+    "count": 3,
+    "source_type": "image_estimate",
+    "user_source_provenance": []
+  },
+  {
+    "kind": "tool",
+    "tool": "cad_add_hole_array",
+    "revision": 4,
+    "at": 1790857688.051359,
+    "feature_ids": [
+      "right_hole_1",
+      "right_hole_2",
+      "right_hole_3"
+    ],
+    "axis": "X",
+    "face_side": "positive",
+    "count": 3,
+    "source_type": "image_estimate",
+    "user_source_provenance": []
+  },
+  {
+    "kind": "tool",
+    "tool": "cad_add_hole_array",
+    "revision": 5,
+    "at": 1790857688.073692,
+    "feature_ids": [
+      "back_hole_1",
+      "back_hole_2",
+      "back_hole_3"
+    ],
+    "axis": "Y",
+    "face_side": "negative",
+    "count": 3,
+    "source_type": "image_estimate",
+    "user_source_provenance": []
+  },
+  {
+    "kind": "tool",
+    "tool": "cad_preview_model",
+    "revision": 5,
+    "at": 1790857692.56892,
+    "view": "iso",
+    "preview_state": "preview_failed",
+    "partial_preview": "candidate_partial_not_accepted",
+    "failed_feature_id": "right_hole_1",
+    "failure_code": "duplicate_through_axis",
+    "applied_feature_ids": [],
+    "not_applied_feature_ids": []
+  },
+  {
+    "kind": "tool",
+    "tool": "cad_get_feature_spec",
+    "revision": 5,
+    "at": 1790857740.063029,
+    "feature_kind": "hole"
+  },
+  {
+    "kind": "tool",
+    "tool": "cad_remove_feature",
+    "revision": 6,
+    "at": 1790857754.9745383,
+    "feature_id": "left_hole_1",
+    "finding_ids": []
+  },
+  {
+    "kind": "tool",
+    "tool": "cad_remove_feature",
+    "revision": 7,
+    "at": 1790857754.9865742,
+    "feature_id": "left_hole_2",
+    "finding_ids": []
+  },
+  {
+    "kind": "tool",
+    "tool": "cad_remove_feature",
+    "revision": 8,
+    "at": 1790857755.0000715,
+    "feature_id": "left_hole_3",
+    "finding_ids": []
+  },
+  {
+    "kind": "tool",
+    "tool": "cad_remove_feature",
+    "revision": 9,
+    "at": 1790857755.0112617,
+    "feature_id": "right_hole_1",
+    "finding_ids": []
+  },
+  {
+    "kind": "tool",
+    "tool": "cad_remove_feature",
+    "revision": 10,
+    "at": 1790857755.0232341,
+    "feature_id": "right_hole_2",
+    "finding_ids": []
+  },
+  {
+    "kind": "tool",
+    "tool": "cad_remove_feature",
+    "revision": 11,
+    "at": 1790857755.0340726,
+    "feature_id": "right_hole_3",
+    "finding_ids": []
+  },
+  {
+    "kind": "tool",
+    "tool": "cad_remove_feature",
+    "revision": 12,
+    "at": 1790857755.0461073,
+    "feature_id": "back_hole_1",
+    "finding_ids": []
+  },
+  {
+    "kind": "tool",
+    "tool": "cad_remove_feature",
+    "revision": 13,
+    "at": 1790857755.0571742,
+    "feature_id": "back_hole_2",
+    "finding_ids": []
+  },
+  {
+    "kind": "tool",
+    "tool": "cad_remove_feature",
+    "revision": 13,
+    "at": 1790857755.0686977,
+    "failed": true,
+    "cancelled": false,
+    "error": "本次几何会回到历史 CADPlan 状态（geometry hash=e12a0f4c3038）。为避免返修来回摆动，请先用 cad_get_reference_image 核对原图，或关联本 feature 的活动 finding_id；若当前版确实退化，调用 cad_restore_best_candidate 恢复最佳有效候选。"
+  },
+  {
+    "kind": "tool",
+    "tool": "cad_get_state",
+    "revision": 13,
+    "at": 1790857762.3667314
+  },
+  {
+    "kind": "tool",
+    "tool": "cad_add_hole_array",
+    "revision": 14,
+    "at": 1790857792.1861875,
+    "feature_ids": [
+      "horz_hole_1",
+      "horz_hole_2",
+      "horz_hole_3"
+    ],
+    "axis": "X",
+    "face_side": "negative",
+    "count": 3,
+    "source_type": "image_estimate",
+    "user_source_provenance": []
+  },
+  {
+    "kind": "tool",
+    "tool": "cad_update_feature",
+    "revision": 15,
+    "at": 1790857814.2098238,
+    "feature_id": "back_hole_3",
+    "finding_ids": [],
+    "preserved_source_keys": [],
+    "provenance_changes": [],
+    "user_source_provenance": []
+  },
+  {
+    "kind": "tool",
+    "tool": "cad_update_feature",
+    "revision": 16,
+    "at": 1790857821.3966413,
+    "feature_id": "back_hole_3",
+    "finding_ids": [],
+    "preserved_source_keys": [
+      "through",
+      "depth",
+      "point"
+    ],
+    "provenance_changes": [],
+    "user_source_provenance": []
+  },
+  {
+    "kind": "tool",
+    "tool": "cad_update_feature",
+    "revision": 17,
+    "at": 1790857836.9234252,
+    "feature_id": "back_hole_3",
+    "finding_ids": [],
+    "preserved_source_keys": [
+      "through",
+      "depth"
+    ],
+    "provenance_changes": [],
+    "user_source_provenance": []
+  },
+  {
+    "kind": "tool",
+    "tool": "cad_add_hole_array",
+    "revision": 18,
+    "at": 1790857844.0161512,
+    "feature_ids": [
+      "back_blind_1",
+      "back_blind_2"
+    ],
+    "axis": "Y",
+    "face_side": "negative",
+    "count": 2,
+    "source_type": "image_estimate",
+    "user_source_provenance": []
+  },
+  {
+    "kind": "tool",
+    "tool": "cad_update_feature",
+    "revision": 19,
+    "at": 1790857852.4148512,
+    "feature_id": "back_blind_1",
+    "finding_ids": [],
+    "preserved_source_keys": [],
+    "provenance_changes": [],
+    "user_source_provenance": []
+  },
+  {
+    "kind": "tool",
+    "tool": "cad_update_feature",
+    "revision": 20,
+    "at": 1790857852.437978,
+    "feature_id": "back_blind_2",
+    "finding_ids": [],
+    "preserved_source_keys": [],
+    "provenance_changes": [],
+    "user_source_provenance": []
+  },
+  {
+    "kind": "tool",
+    "tool": "cad_preview_model",
+    "revision": 20,
+    "at": 1790857857.0091097,
+    "view": "iso",
+    "preview_state": "preview_failed",
+    "partial_preview": "candidate_partial_not_accepted",
+    "failed_feature_id": "back_blind_1",
+    "failure_code": "cut_no_material_change",
+    "applied_feature_ids": [],
+    "not_applied_feature_ids": []
+  },
+  {
+    "kind": "tool",
+    "tool": "cad_update_feature",
+    "revision": 21,
+    "at": 1790857946.8605669,
+    "feature_id": "back_blind_1",
+    "finding_ids": [],
+    "preserved_source_keys": [],
+    "provenance_changes": [],
+    "user_source_provenance": []
+  },
+  {
+    "kind": "tool",
+    "tool": "cad_update_feature",
+    "revision": 22,
+    "at": 1790857960.4062846,
+    "feature_id": "back_blind_1",
+    "finding_ids": [],
+    "preserved_source_keys": [
+      "depth"
+    ],
+    "provenance_changes": [],
+    "user_source_provenance": []
+  },
+  {
+    "kind": "tool",
+    "tool": "cad_update_feature",
+    "revision": 23,
+    "at": 1790857960.4337406,
+    "feature_id": "back_blind_2",
+    "finding_ids": [],
+    "preserved_source_keys": [],
+    "provenance_changes": [],
+    "user_source_provenance": []
+  },
+  {
+    "kind": "tool",
+    "tool": "cad_update_feature",
+    "revision": 24,
+    "at": 1790857970.248286,
+    "feature_id": "back_blind_1",
+    "finding_ids": [],
+    "preserved_source_keys": [],
+    "provenance_changes": [],
+    "user_source_provenance": []
+  },
+  {
+    "kind": "tool",
+    "tool": "cad_update_feature",
+    "revision": 24,
+    "at": 1790857974.5078247,
+    "feature_id": "back_blind_2",
+    "metadata_only": true,
+    "preserved_source_keys": [],
+    "provenance_changes": [],
+    "user_source_provenance": []
+  },
+  {
+    "kind": "tool",
+    "tool": "cad_preview_model",
+    "revision": 24,
+    "at": 1790857980.0855038,
+    "view": "iso",
+    "preview_state": "preview_failed",
+    "partial_preview": "candidate_partial_not_accepted",
+    "failed_feature_id": "back_blind_1",
+    "failure_code": "cut_no_material_change",
+    "applied_feature_ids": [],
+    "not_applied_feature_ids": []
+  },
+  {
+    "kind": "tool",
+    "tool": "cad_remove_feature",
+    "revision": 24,
+    "at": 1790858050.5123055,
+    "failed": true,
+    "cancelled": false,
+    "error": "同一特征已连续两次导致相同几何失败（cut_no_material_change）。请先复看原图/ROI或独立检查可见失败部分，再按证据修改；沿同一孔轴移动起点或反转方向不会改变贯穿直线。关联特征：back_blind_1。"
+  },
+  {
+    "kind": "tool",
+    "tool": "cad_remove_feature",
+    "revision": 25,
+    "at": 1790858050.5353742,
+    "feature_id": "back_blind_2",
+    "finding_ids": []
+  },
+  {
+    "kind": "tool",
+    "tool": "cad_add_feature",
+    "revision": 26,
+    "at": 1790858070.4240065,
+    "feature_id": "back_cyl_20",
+    "user_source_provenance": []
+  },
+  {
+    "kind": "tool",
+    "tool": "cad_add_feature",
+    "revision": 27,
+    "at": 1790858087.831024,
+    "feature_id": "back_cyl_40",
+    "user_source_provenance": []
+  },
+  {
+    "kind": "tool",
+    "tool": "cad_add_feature",
+    "revision": 28,
+    "at": 1790858087.85525,
+    "feature_id": "back_cyl_60",
+    "user_source_provenance": []
+  },
+  {
+    "kind": "tool",
+    "tool": "cad_preview_model",
+    "revision": 28,
+    "at": 1790858096.6286123,
+    "view": "iso",
+    "preview_state": "preview_failed",
+    "partial_preview": "candidate_partial_not_accepted",
+    "failed_feature_id": "back_blind_1",
+    "failure_code": "cut_no_material_change",
+    "applied_feature_ids": [],
+    "not_applied_feature_ids": []
+  },
+  {
+    "kind": "tool",
+    "tool": "cad_create_model",
+    "revision": 28,
+    "at": 1790858123.3771427,
+    "failed": true,
+    "cancelled": false,
+    "error": "cad_create_model不能替代现有模型的局部编辑；当前可信用户turn未明确要求新工件或从头重建。"
+  },
+  {
+    "kind": "tool",
+    "tool": "cad_update_feature",
+    "revision": 28,
+    "at": 1790858151.55301,
+    "failed": true,
+    "cancelled": false,
+    "error": "同一特征已连续两次导致相同几何失败（cut_no_material_change）。请先复看原图/ROI或独立检查可见失败部分，再按证据修改；沿同一孔轴移动起点或反转方向不会改变贯穿直线。关联特征：back_blind_1。"
+  },
+  {
+    "kind": "tool",
+    "tool": "cad_remove_feature",
+    "revision": 28,
+    "at": 1790858156.0910363,
+    "failed": true,
+    "cancelled": false,
+    "error": "同一特征已连续两次导致相同几何失败（cut_no_material_change）。请先复看原图/ROI或独立检查可见失败部分，再按证据修改；沿同一孔轴移动起点或反转方向不会改变贯穿直线。关联特征：back_blind_1。"
+  },
+  {
+    "kind": "tool",
+    "tool": "cad_get_reference_image",
+    "revision": 28,
+    "at": 1790858169.9868257,
+    "reference_image_index": 1,
+    "reference_id": "sha256:53ed87fadf8cca869da921627e6a13c845424c6906b3de517d5cca972db94553",
+    "evidence_id": null,
+    "roi_norm": null
+  },
+  {
+    "kind": "tool",
+    "tool": "cad_update_feature",
+    "revision": 28,
+    "at": 1790858233.7880456,
+    "failed": true,
+    "cancelled": false,
+    "error": "同一特征已连续两次导致相同几何失败（cut_no_material_change）。请先复看原图/ROI或独立检查可见失败部分，再按证据修改；沿同一孔轴移动起点或反转方向不会改变贯穿直线。关联特征：back_blind_1。"
+  },
+  {
+    "kind": "tool",
+    "tool": "cad_remove_feature",
+    "revision": 29,
+    "at": 1790858240.7137563,
+    "feature_id": "back_hole_3",
+    "finding_ids": []
+  },
+  {
+    "kind": "tool",
+    "tool": "cad_preview_model",
+    "revision": 29,
+    "at": 1790858245.784902,
+    "view": "iso",
+    "preview_state": "preview_failed",
+    "partial_preview": "candidate_partial_not_accepted",
+    "failed_feature_id": "back_blind_1",
+    "failure_code": "cut_no_material_change",
+    "applied_feature_ids": [],
+    "not_applied_feature_ids": []
+  },
+  {
+    "kind": "tool",
+    "tool": "cad_remove_feature",
+    "revision": 30,
+    "at": 1790858278.7994368,
+    "feature_id": "back_cyl_20",
+    "finding_ids": []
+  },
+  {
+    "kind": "tool",
+    "tool": "cad_remove_feature",
+    "revision": 31,
+    "at": 1790858278.8149717,
+    "feature_id": "back_cyl_40",
+    "finding_ids": []
+  },
+  {
+    "kind": "tool",
+    "tool": "cad_remove_feature",
+    "revision": 32,
+    "at": 1790858278.8301806,
+    "feature_id": "back_cyl_60",
+    "finding_ids": []
+  },
+  {
+    "kind": "tool",
+    "tool": "cad_update_feature",
+    "revision": 32,
+    "at": 1790858297.7992957,
+    "failed": true,
+    "cancelled": false,
+    "error": "同一特征已连续两次导致相同几何失败（cut_no_material_change）。请先复看原图/ROI或独立检查可见失败部分，再按证据修改；沿同一孔轴移动起点或反转方向不会改变贯穿直线。关联特征：back_blind_1。"
+  },
+  {
+    "kind": "tool",
+    "tool": "cad_update_feature",
+    "revision": 32,
+    "at": 1790858323.497725,
+    "failed": true,
+    "cancelled": false,
+    "error": "同一特征已连续两次导致相同几何失败（cut_no_material_change）。请先复看原图/ROI或独立检查可见失败部分，再按证据修改；沿同一孔轴移动起点或反转方向不会改变贯穿直线。关联特征：back_blind_1。"
+  },
+  {
+    "kind": "tool",
+    "tool": "cad_validate_model",
+    "revision": 32,
+    "at": 1790858360.5906684
+  }
+]

@@ -1,0 +1,204 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="color-scheme" content="light"><title>DSH Agent 当前流程地图 · AI Modeler</title>
+<style>
+:root{--ink:#1b2b42;--muted:#64758d;--line:#dce5f0;--paper:#f4f7fb;--blue:#2368d8;--bluebg:#eaf2ff;--teal:#087f79;--tealbg:#e7f7f5;--violet:#6552b6;--violetbg:#f0edff;--amber:#8a5c0a;--amberbg:#fff4d9;--red:#aa4247;--redbg:#fff0ef}
+*{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;background:var(--paper);color:var(--ink);font:15px/1.65 "Segoe UI","Microsoft YaHei",system-ui,sans-serif}a{color:#205fbe;text-decoration:none}a:hover{text-decoration:underline}code,pre{font-family:Consolas,"Cascadia Code",monospace}code{background:#eef2f7;border:1px solid #e0e7f0;border-radius:5px;padding:1px 5px;font-size:.92em;overflow-wrap:anywhere}
+.wrap{max-width:1320px;margin:auto;padding:26px 24px 70px}.hero{border-radius:23px;padding:30px 34px;background:linear-gradient(125deg,#183c72,#2469d7 58%,#4b8fe8);color:white;box-shadow:0 18px 42px #214f8a30}.eyebrow{letter-spacing:.12em;text-transform:uppercase;color:#c9ddff;font-size:12px;font-weight:700}h1{font-size:clamp(28px,4vw,44px);line-height:1.17;margin:10px 0}h2{font-size:25px;margin:0 0 13px;letter-spacing:-.02em}h3{font-size:17px;margin:0 0 7px}.hero p{max-width:960px;color:#e4efff;font-size:16px;margin:0}.chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:18px}.chip{font-size:12px;border:1px solid #ffffff55;background:#ffffff19;padding:5px 11px;border-radius:999px}.nav{position:sticky;top:0;z-index:5;display:flex;gap:7px;overflow:auto;padding:11px 0;margin-bottom:20px;background:#f4f7fbed;backdrop-filter:blur(10px)}.nav a{white-space:nowrap;background:#fff;border:1px solid var(--line);border-radius:999px;padding:6px 11px;font-size:13px;color:#334966}section{scroll-margin-top:68px;margin:29px 0}.lede{color:var(--muted);margin:-5px 0 14px}.panel,.card{background:white;border:1px solid var(--line);border-radius:16px;padding:19px;box-shadow:0 8px 24px #243d5a0a}.row{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}.node{border:1px solid var(--line);border-top:4px solid var(--blue);border-radius:13px;padding:14px;background:#fff;min-height:150px}.node:nth-child(3){border-top-color:var(--violet)}.node:nth-child(5){border-top-color:var(--teal)}.step{display:inline-grid;place-items:center;width:25px;height:25px;border-radius:8px;background:var(--bluebg);color:var(--blue);font-weight:800;font-size:12px;margin-bottom:7px}.node p,.node li,.card p{color:var(--muted);font-size:13px}.node p{margin:3px 0}.node ul{padding-left:18px;margin:6px 0}.loop{margin-top:13px;padding:15px;border-radius:14px;border:1px solid #cddcf1;background:linear-gradient(90deg,#e9f1ff,#f0f7ff 60%,#e6f7f4)}.loop b{color:#234f95}.steps{display:flex;justify-content:center;align-items:center;flex-wrap:wrap;gap:8px;margin:9px 0}.steps span{background:white;border:1px solid #d5e0ef;border-radius:8px;padding:6px 10px;font-size:13px}.steps strong{color:var(--blue)}.subrow{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:11px}.sub{background:#fbfdff;border:1px dashed var(--line);border-radius:12px;padding:12px;font-size:13px}.sub p{margin:3px 0;color:var(--muted)}.answer,.callout{padding:14px 16px;border-radius:12px;background:var(--amberbg);color:#5d4a1c;border-left:4px solid #d39423;margin-top:13px}.bluebox{background:var(--bluebg);border-color:var(--blue)}.redbox{background:var(--redbg);border-color:var(--red)}.two{display:grid;grid-template-columns:1fr 1fr;gap:14px}.three{display:grid;grid-template-columns:repeat(3,1fr);gap:11px}.card{box-shadow:none}.card p{margin:5px 0}.tag{display:inline-block;border-radius:999px;padding:3px 8px;background:var(--bluebg);color:#2457a2;font-size:11px;font-weight:700}.tag.teal{background:var(--tealbg);color:var(--teal)}.tag.violet{background:var(--violetbg);color:var(--violet)}.tag.amber{background:var(--amberbg);color:var(--amber)}.tag.red{background:var(--redbg);color:var(--red)}.list{display:grid;gap:8px}.item{display:grid;grid-template-columns:33px 1fr;gap:10px;padding:11px;border:1px solid var(--line);border-radius:12px;background:white}.n{display:grid;place-items:center;width:29px;height:29px;border-radius:9px;background:var(--bluebg);color:var(--blue);font-weight:800}.item p{margin:3px 0 0;color:var(--muted);font-size:13px}.tablewrap{overflow:auto;border:1px solid var(--line);border-radius:13px;background:white}table{border-collapse:collapse;width:100%;min-width:690px}th,td{text-align:left;vertical-align:top;padding:10px 12px;border-bottom:1px solid #e8edf4;font-size:13px}th{background:#f1f5fb;color:#4a5c75}td{color:#45566c}tr:last-child td{border-bottom:0}.toolbar{display:flex;flex-wrap:wrap;gap:7px;align-items:center;margin-bottom:12px}.toolbar button{background:white;border:1px solid var(--line);border-radius:8px;padding:7px 10px;color:#3d5575;cursor:pointer}.toolbar button.active{background:var(--blue);border-color:var(--blue);color:white}.toolbar input{flex:1;min-width:210px;border:1px solid var(--line);border-radius:8px;padding:8px 10px;font:inherit}.toolgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:9px}.tool{border:1px solid var(--line);border-radius:11px;background:white;padding:12px}.tool[hidden]{display:none}.tooltop{display:flex;justify-content:space-between;gap:7px;align-items:center}.tool h3{font-size:14px;margin:0}.tool p{font-size:12px;color:var(--muted);margin:6px 0}.args{font-size:11px;color:#405775;overflow-wrap:anywhere}.prompt details{border:1px solid var(--line);border-radius:15px;background:white;overflow:hidden}.prompt summary{cursor:pointer;font-weight:800;padding:15px 18px;background:#f7f9fc}.promptbar{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:10px 18px;border-top:1px solid var(--line);border-bottom:1px solid var(--line);font-size:12px;color:var(--muted)}button.copy{border:1px solid var(--line);background:white;border-radius:7px;padding:6px 10px;cursor:pointer}pre{max-height:720px;overflow:auto;white-space:pre-wrap;overflow-wrap:anywhere;padding:18px;margin:0;font-size:12px;line-height:1.7;background:#fbfcfe;color:#293950}.sources{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}.source{border:1px solid var(--line);border-radius:10px;padding:10px;background:white}.source small{display:block;color:var(--muted);margin-top:3px}.mini{color:var(--muted);font-size:12px}.footer{margin-top:36px;border-top:1px solid var(--line);padding-top:14px;color:var(--muted);font-size:12px}
+@media(max-width:900px){.row{grid-template-columns:repeat(2,1fr)}.toolgrid{grid-template-columns:repeat(2,1fr)}}@media(max-width:650px){.wrap{padding:13px}.hero{padding:23px 19px}.two,.three,.subrow,.sources,.toolgrid,.row{grid-template-columns:1fr}.nav{margin-left:-13px;margin-right:-13px;padding-left:13px}.panel{padding:14px}}@media print{body{background:white}.nav{display:none}.wrap{max-width:none;padding:0}.hero,.panel{box-shadow:none}.toolgrid{grid-template-columns:repeat(2,1fr)}}
+</style>
+</head>
+<body><main class="wrap">
+<header class="hero">
+<div class="eyebrow">AI Modeler · Source-based map · 2026-10-02</div>
+<h1>DSH Agent 当前全流程地图</h1>
+<p>从用户文字与参考图进入，到 DSH 工具循环、CADPlan 增量建模、独立多模态复核和本地候选交付。依据当前 checkout 的源码与系统提示词整理；不是理想架构图，也不把本地预览说成 CATIA 验证。</p>
+<div class="chips"><span class="chip">25 个自定义 MCP 工具</span><span class="chip">DSH SDK 管工具循环</span><span class="chip">CADPlan 是模型权威状态</span><span class="chip">进度 / 预览可实时回 UI</span><span class="chip">CATIA 单独推送</span></div>
+</header>
+<nav class="nav"><a href="#overview">总览</a><a href="#context">输入与上下文</a><a href="#cycle">Agent 决策循环</a><a href="#recipes">预制配方</a><a href="#finish">验收与输出</a><a href="#tools">工具清单</a><a href="#prompt">完整提示词</a><a href="#limits">限制与风险</a><a href="#sources">源码定位</a></nav>
+
+<section id="overview"><h2>1 · 总览：从入口到交付</h2><p class="lede">Agent 创造模式进入 DSH；原来的无 LLM 快速模式是另一条路，不经过下面的 Agent 工具环。</p>
+<div class="panel">
+<div class="row">
+<article class="node"><span class="step">01</span><h3>用户入口</h3><p>桌面 Agent 创造模式，或 headless CLI。</p><ul><li><code>python -m ai_modeler agent</code></li><li>文字 / 多图 / 当前会话模型</li></ul></article>
+<article class="node"><span class="step">02</span><h3>会话准备</h3><p><code>run_dsh_agent</code> 保存会话、用户原话、图片 SHA 引用并种入当前 CADPlan。</p><ul><li>并查本地工件知识</li><li>保留 UI 进度回调和取消</li></ul></article>
+<article class="node"><span class="step">03</span><h3>DSH Harness</h3><p>装载系统提示、对话上下文和稳定 reference ID；按当前 provider profile 配置模型、推理和视觉支持。</p><ul><li>运行隔离的 session patch</li><li>DSH 管理模型/工具循环</li></ul></article>
+<article class="node"><span class="step">04</span><h3>AI Modeler MCP</h3><p>DSH stdio MCP 客户端启动 Python 工具服务。LLM 每次收到工具结果后再决定下一步。</p><ul><li>知识、CAD、预览、复核</li><li>可选联网搜索</li></ul></article>
+</div>
+<div class="loop"><b>真正的循环 · 状态变化决定下一步</b><div class="steps"><span>读取最新 state</span><strong>→</strong><span>模型选择动作</span><strong>→</strong><span>call_tool</span><strong>→</strong><span>检查实际结果 / revision / geometry hash</span><strong>→</strong><span>继续、复核、回答或 finish</span></div><div class="mini" style="text-align:center">不是固定四个 Agent 轮次。程序负责校验、证据门禁、取消和几何状态；DSH/LLM 根据工具返回选调用路径。</div></div>
+<div class="subrow"><div class="sub"><b>对话分支</b><p>纯问答或询问图片可直接回答，不必强制造模。</p></div><div class="sub"><b>知识 / 网络分支</b><p>本地配方优先；确需外部事实时可搜索并打开网页。</p></div><div class="sub"><b>未知 / 错误分支</b><p>保留未知和候选；工具失败、取消或证据不足不应包装成已验收模型。</p></div></div>
+</div>
+<div class="answer"><b>你问的“预制技能还是让 AI 猜怎么画”：</b>当前有本地知识检索、配方指导卡和通用 CAD 特征工具；完全匹配的可执行配方应优先运行。库未覆盖时，LLM 负责从文字/图像证据选择特征与尺寸来源，程序执行结构化 CADPlan，而不是让模型生成并运行任意 Python。</div>
+</section>
+
+<section id="context"><h2>2 · 输入、原图与会话上下文</h2>
+<div class="two">
+<div class="panel"><h3>入口分流</h3><div class="list">
+<div class="item"><span class="n">UI</span><div><b>桌面 Agent 创造模式</b><p>后台线程调用同一个 <code>run_dsh_agent</code>；progress 放进 UI 队列，<code>on_preview</code> 将当前预览推给中央模型窗口。</p></div></div>
+<div class="item"><span class="n">CLI</span><div><b>无桌面窗口的 DSH 流程</b><p>支持 <code>--text</code> / <code>--text-file</code>、可重复 <code>--image</code>、<code>--session-id</code>、<code>--output-dir</code>、<code>--offline</code>、<code>--debug</code>；写出 <code>result.json</code> 并复制结果。</p></div></div></div>
+<div class="callout bluebox"><b>注意：</b><code>python -m ai_modeler --cli</code> 是旧的无 LLM 快速模式，不是 DSH CLI。</div></div>
+<div class="panel"><h3>图片证据链</h3><ol><li>读取并校验图片，按原字节计算 SHA-256。</li><li>原图保存在会话 <code>reference-assets</code>；<code>reference-images.json</code> 维护可复用的稳定 reference ID。</li><li>当前原话和 turn_id 写进 <code>user-turns.json</code>，用来核验用户尺寸引用。</li><li>对话含图片 ID；MCP 视觉工具再按 ID 取原图或 ROI。</li></ol><p class="mini">建模文字块本身不是原图像素；图像观察/对比由专用视觉工具请求完成。是否每次成功送达 provider，应看本轮 wire/观测日志。</p></div>
+</div>
+<div class="panel" style="margin-top:13px"><h3>发给 DSH 的上下文组成</h3><div class="three"><div class="card"><span class="tag">当前用户轮</span><p>文字请求；如果空，则提示根据参考图建模。</p></div><div class="card"><span class="tag">对话历史</span><p>之前界面真正显示过的文字对话，只帮助连续交流，不作为新的尺寸证据。</p></div><div class="card"><span class="tag">知识与引用</span><p>本地知识检索结果、当前会话可用的 reference ID。模型状态通过 <code>cad_get_state</code> 读取。</p></div></div><p class="mini">权威关系：用户 turn 记录输入依据，CADPlan / cad-state 是模型状态，工具返回决定几何是否确实改变。</p></div>
+</section>
+
+<section id="cycle"><h2>3 · Agent 的一步步工作方法</h2>
+<div class="two">
+<div class="panel"><h3>模型 / DSH 决定</h3><ul><li>判断用户是在问答、描述图片、创建还是修改模型。</li><li>根据 state 选择下一步工具、调用顺序和需要的循环次数。</li><li>无标注图先按比例选择名义尺寸，每个推算值标 <code>image_estimate</code>。</li><li>按工具实际返回继续，不把工具自述或旧 revision 当成新几何证据。</li><li>有精确知识/配方时优先复用，未命中时组合通用 CADPlan 特征。</li></ul><span class="tag violet">Prompt 要求简短思考，只写下一步决策</span></div>
+<div class="panel"><h3>程序 / MCP 强制约束</h3><ul><li>参考图建模先成功完成原图 inventory；失败保持 unknown。</li><li>所有数值有来源；user 来源须和可信 turn_id、用户原文逐项匹配。</li><li>CADPlan/schema、几何核、当前 revision 和预览状态要通过程序检查。</li><li>识别 <code>unchanged</code>/<code>no_op</code>，不允许假装重复调用带来进展。</li><li>有歧义时可保存 candidate；partial 几何不算成功验收。</li></ul><span class="tag teal">工具负责执行与门禁，不凭空补毫米数</span></div>
+</div>
+<div class="list" style="margin-top:13px">
+<div class="item"><span class="n">1</span><div><b>读当前状态</b><p><code>cad_get_state</code> 读取树、尺寸、错误、图片与当前 review，避免覆盖已有模型。</p></div></div>
+<div class="item"><span class="n">2</span><div><b>先看原图，再做依赖图片的几何动作</b><p><code>cad_inspect_references</code> 产生可修订观察；只有具体 unknown 或冲突才看 ROI。</p></div></div>
+<div class="item"><span class="n">3</span><div><b>增量施工并标里程碑</b><p>主体建好尽早预览；再按合理特征组加台阶/凹槽/孔阵列，几何写入只做一个最小增量后读结果。</p></div></div>
+<div class="item"><span class="n">4</span><div><b>针对问题挑视图审查</b><p>不是每个特征后固定跑三视图；选真正可比的原图与当前单视图，按 evidence ID 找到相关特征。</p></div></div>
+<div class="item"><span class="n">5</span><div><b>新几何要新证据</b><p>改动后旧 preview/review 失效；生成当前 revision 预览再确认 finding 是否关闭。</p></div></div>
+<div class="item"><span class="n">6</span><div><b>候选或通过，明确结束</b><p>满足本地几何、孔、视觉覆盖、里程碑与所需外部事实才 accepted；否则输出候选和剩余问题。</p></div></div>
+</div>
+</section>
+
+<section id="recipes"><h2>4 · 预制技能 / 建模配方现在覆盖到哪</h2><p class="lede">运行 patch 关闭 DSH 通用 skill、shell、文件系统与 subagent 工具；AI Modeler 用自己的 MCP 知识/recipe 工具提供可控建模能力。</p>
+<div class="tablewrap"><table><thead><tr><th>预制层</th><th>实际实现</th><th>确定性</th><th>合理用法</th></tr></thead><tbody>
+<tr><td><b>工件知识库</b><br><code>cad_search_knowledge</code></td><td>精确型号或相似描述；返回型号、包围盒、真实几何摘要，可选样例图板。</td><td>精确命中可靠；相似项不等于目标实体</td><td>用来辨别类别或识别是否同型号，不直接套相似件尺寸、孔位。</td></tr>
+<tr><td><b>建模 recipe 指导</b><br><code>cad_search_recipes</code></td><td>外/内螺纹、通/盲孔、沉孔及标准件等步骤建议；许多条目 status 是 guidance。</td><td>多数不是可执行完整 builder</td><td>作为策略提示，再由 Agent 转成参数化 CADPlan 工具动作。</td></tr>
+<tr><td><b>确定性 builder</b><br><code>cad_apply_recipe</code></td><td>目前可直接建模的是 ISO 4762 / GB/T 70.1 内六角圆柱头螺钉，需命中标准表尺寸。</td><td>型号/参数完全匹配时程序生成计划</td><td>应优先调用，不再让 LLM 猜每个段的比例。当前本地网格牙型与 CATIA 光杆输出要分别描述。</td></tr>
+<tr><td><b>通用特征原语</b><br>CADPlan MCP</td><td>结构体、切除、旋转、孔、面凹槽、孔阵列等 schema 支持的特征。</td><td>几何由程序建；该选什么特征由 LLM 判断</td><td>表达库外定制件，参数按用户给定/图像估算/推导分别标注。</td></tr></tbody></table></div>
+<div class="callout"><b>当前短板：</b>不是“很多现成完整零件技能已经可以用”。配方库里不少是说明卡，可直接生成的通用成品配方仍很少（目前螺钉这一项）。沉淀常见特征组为带标准参数、来源、几何检查与回归样例的确定性 builder，能显著减少模型自由猜测。</div>
+</section>
+
+<section id="finish"><h2>5 · 几何、视觉验收、文件保存与 CATIA</h2>
+<div class="three"><div class="card"><span class="tag teal">本地几何</span><h3 style="margin-top:8px">CADPlan → 本地 BREP</h3><p>校验计划后调用本地几何核，输出网格、预览和几何检查。通过仅表示本地几何检查通过。</p></div><div class="card"><span class="tag violet">视觉证据</span><h3 style="margin-top:8px">原图 ↔ 当前视图</h3><p>独立视觉请求对一张原图与当前同投影预览逐项比较。评分是辅助量；主 Agent 自述不算独立复核。</p></div><div class="card"><span class="tag amber">CATIA</span><h3 style="margin-top:8px">finish 不会启动 CATIA</h3><p><code>cad_finish_model</code> 返回 <code>catia_invoked=false</code>。本地保存后仍需界面“推送 CATIA”，并另行核验 CATPart。</p></div></div>
+<div class="panel" style="margin-top:13px"><h3>accepted 的程序条件</h3><ul><li>CADPlan 有效；当前 revision 有 preview（失败部分只可保存为 partial candidate）。</li><li>本地几何检查通过；声明的孔实例测量完整。</li><li>每张目标参考图按当前 coverage 规则覆盖；没有未解决 finding/冲突。</li><li>施工里程碑范围已完成；所有明确登记的 required 外部事实有正文原文证据。</li></ul><p class="mini">finish 保存 CADPlan/AIMODEL、STL、预览和几何报告。headless CLI 另写 <code>result.json</code>。上述 accepted 不包含 CATIA 是否运行或成功。</p></div>
+</section>
+
+<section id="tools"><h2>6 · 当前的全部 25 个 MCP 工具</h2><p class="lede">按用途筛选或搜索。名称和参数摘要来自服务端工具 schema；DSH 获得的只是这组专用工具，不包括任意命令执行。</p>
+<div class="toolbar"><button class="filter active" data-filter="all">全部</button><button class="filter" data-filter="state">状态 / 规范</button><button class="filter" data-filter="knowledge">知识 / 配方</button><button class="filter" data-filter="build">建模 / 恢复</button><button class="filter" data-filter="vision">预览 / 视觉</button><button class="filter" data-filter="web">联网 / 事实</button><input id="toolSearch" type="search" placeholder="搜名字、参数、用途…"><span id="toolCount" class="mini"></span></div>
+<div id="toolGrid" class="toolgrid"></div></section>
+
+<section id="prompt" class="prompt"><h2>7 · 当前完整系统提示词</h2><p class="lede"><code>dsh_agent._prompt()</code> 每轮读取 <code>prompts/dsh_agent/system.md</code> 并注入 session DSH runtime。</p><details><summary>展开 / 折叠提示词原文</summary><div class="promptbar"><span>当前工作树文件完整内容</span><button class="copy" id="copyPrompt">复制提示词</button></div><pre id="systemPrompt"># AI Modeler DSH 建模 Agent
+
+你负责把用户的文字和一张或多张参考图转换为可编辑的本地 CADPlan、网格与预览。用户的图片和明确文字是目标证据；知识库、网页和模型推断不能覆盖它们。图片默认是同一工件的不同视角，除非用户说它们是不同目标或局部参考。
+
+## 对话与工作节奏
+
+- 按用户当前意图决定是否建模。纯问答直接回答；新建或修改模型时调用工具。图片建模请求先做一轮合理的模型，不要因没有标注尺寸而先盘问用户。
+- 思考只保留下一步决策所需内容，不复述猜测过程或写长计划。先用简短中文说明关键假设，然后推进工具调用；工具进度和预览会持续展示。
+- 一次工具返回后，结合模型状态和当前未解决证据决定下一步。不要机械重复固定流程，也不要为了增加调用次数而反复查询或审查。
+
+## 看图和估尺寸
+
+- 有原图时必须先调用 cad_inspect_references 独立观察每张原图并成功取得 source inventory，之后才允许任何依赖图像的建模/预览/验收动作。失败或不可解析时保持 unknown，不能编造尺寸、结构或观察结果。该请求只看原图，不带模型和旧假设；把可见结构分组、位置、遮挡/歧义及ROI依据记录为可修订的模型观察，不能当作已核实几何。不要从画布留白或前景包围框直接推真实长宽高；只用同方向可比边段、孔距等无量纲比例估计。若观察和后续预览冲突，针对原图ROI复看并保留冲突。主对话只通过结构化观察与 reference_id 获取图像信息，不会接收原图或预览图像块。
+- 每张原图首次观察使用一次全图 inventory；有效返回后直接使用其中的事实，不要重复提交相同的观察 key。key 由 `reference_id`、原图 `source_sha256` 和 `roi_norm` 组成；工具提示“已复用同一原图SHA的持久化source inventory”表示返回的是已有结果，不是一次新的观察。只有某项影响建模或验收的具体事实仍为 `unknown`，或新预览与原图观察冲突时，才请求针对该事实的 ROI 复看，并先说明要核对的事实；不要重复同一 key、空泛地重读全图或把缓存结果当成新证据。ROI 仍不能判定时保留 `unknown` 和候选状态，简短说明歧义并继续处理已有证据支持的内容；不得为了消除未知而反复提问或猜测。若 inventory 整体读取失败或无有效事实，遵守读取门禁并明确报告阻塞原因。
+- 没有标注尺寸时，选择便于建模的一组名义尺寸，并将所有推算的数值来源标为 image_estimate。相对比例必须一致；不能把阴影、颜色、网格线或三角网格当成几何边界。
+- 用户明确给出的尺寸优先。对看不清的结构保留不确定性，不擅自补造；但不确定的绝对尺寸不妨碍先生成可编辑候选。
+- 在 CADPlan 中使用 X=左右，Y=前后厚度，Z=上下；box 的 length/width/height 对应 X/Y/Z。正视图从 +Y 观察，屏幕横向为 X、纵向为 Z。孔的 point 是全局 XYZ 坐标，axis 是贯穿方向。
+- 每个数值参数都要有来源。用户原话直接给出的同一参数和同一数值必须标为 `type=user`，附当前可信 `turn_id`，并在 `evidence` 中逐字引用 `authoritative_user_turns` 的原文连续片段。图像估值用 `image_estimate`；只有实际计算或坐标映射出的值用 `derived`，例如用户给直径后换算半径、由定位描述推导坐标。修改数值参数时同时更新 sources。`turn_id` 是 MCP 临时校验元数据，会在 CADPlan 校验前移除，不能将它当作普通几何字段。同一轮中的其他参数数值不能借用。
+- 建模前调用 `cad_get_state`，从 `authoritative_user_turns` 读取影响当前目标的原文和 `turn_id`。遇到 user 来源校验错误时，先重新读取该字段，按相同参数、相同数值补上 turn_id 和原文 quote；不得把用户明确数值改标成 `derived`/`image_estimate`、删主体或重复 `cad_create_model` 来绕过校验。权威 turn 缺失或不支持该参数时，停止几何写入并如实报告。
+
+## 构建模型
+
+- CADPlan 是当前模型的唯一权威状态。先读取现有状态，避免覆盖已有特征；新增、修改和删除只用 CAD MCP 工具，不生成或执行任意代码。
+- 首次建立主体后尽早生成预览，让用户看到模型。可继续按合理的特征组完成主体、台阶/凹槽和孔位；首个预览后无需每添加一个特征都做视觉审查。特征变更后工具会立即更新模型，重要阶段再生成针对当前问题的预览。
+- 用 cad_set_construction_milestone 标出已完成的 feature_id 与当前检查范围，必要时列出预期 feature_id。未列入已完成范围的特征尚未施工，不能当作漏建差异。
+- 每次几何写工具返回后，依据该次返回的 state/result 核对 revision、活动 feature、参数和 geometry hash，并由这个结果决定下一步。若结果为 `unchanged`/`no_op`，或 geometry hash 与上一次尝试相同，就视为没有几何进展：不得再次提交等价几何参数，也不得删除后重建相同主体或特征。对照最新 `cad_get_state`、原图观察和 construction milestone，找出有证据支持且尚未建成的下一项特征，或一个有明确理由的现有特征修正；参数来源齐全后，只做一个最小增量写入，再等它的实际结果决定后续动作。若没有证据支持的未建特征，或所需位置/参数仍不清楚且没有安全修复，就停止几何写入，保留当前可用候选（如有），说明未完成项、unknown、预览及复核状态后结束；不得猜测或把 no-op 描述成进展。
+- 用 cad_add_hole_array 一次创建同一表面的孔组，确保共享一致孔轴；跨不同表面或不同参数的孔组分别建模。全局 feature 条目数不等于当前视图中可见孔数，也不等于 BREP 展平后的孔实例数。
+- 标准件只有型号完全匹配知识库中的 executable 配方时才可直接应用。螺钉和螺栓要有可见螺纹；仅按用户要求和本地预览能力说明其本地网格与 CATIA 导出差别，不夸称 CATPart 有螺纹。
+
+## 多模态审查与返修
+
+- 视觉审查是用原图和当前模型的单视图进行的独立多模态比较。按当前未解决问题选择需要的原图和视图；在主体拓扑或关键特征完成、准备交付、或存在视觉不确定性时审查。不要把固定三视图清单套到每个几何版本或每个特征上。
+- 真正独立复核必须调用 `cad_review_reference_similarity`，它会把一张原图和一张当前模型视图发给独立视觉请求。`cad_record_visual_review` 只保存主Agent的诊断自述，不计作独立复核、原图覆盖或验收证据。若独立复核失败，保留candidate并明确未核验，不能用自述“匹配”代替。
+- 每个 review 传当前 preview_generation、正确的 reference_id、模型视角和已完成范围。先判断这对投影是否可比。若 view_comparable=false，只说明视角不可比并换一个合适视图；不能给任何局部 `verified`/`match`、覆盖 evidence 或独立配对计数，也不能编造另一组图像配对。不可比结果不能作为目标差异或通过证据。每张目标原图至少需要一个真实、正确配对视图提供逐项可观察证据。
+- 逐项 evidence 必须使用稳定 evidence_id，并说明参考图事实、模型事实、状态、严重度及受影响 feature_id。covered_evidence_ids 只能列出本轮 evidence 中实际比对的项目。不能只给总体相似度。
+- 分数只作诊断，不能用它决定是否返修、是否验收，也不能为了追分盲调。图像比例估算可以是 estimated；估算来源本身不是 mismatch。已确认的 mismatch/partial 必须单独处理，即使另一个视图分数很高也不能覆盖。
+- 只针对有可见依据且能定位的差异修改相关特征，并把 finding_ids 带入几何编辑。几何变化后，旧证据不再证明新版本；用新预览和新版本证据确认问题是否关闭。新版本没有消除问题时，保留未解决状态。
+- 如果不同审查对同一参考事实说法矛盾，先调用 cad_inspect_references 对应原图或 ROI 做独立观察，再对同一 evidence_id 重新审查。查看前不要凭猜测改受影响几何。若不同视角确实无法区分，保留 candidate 并列出歧义。
+- 不要来回切换同一参数或重复提交不改变几何的更新。修改前核对上次几何 hash、参数变化方向和关联 finding；返修无进展或模型退化时可 cad_restore_best_candidate，然后重新预览。
+
+## 检查、知识与联网
+
+- cad_preview_model 的 local_geometry_checks 来自本地 CAD 几何核。以 BREP 状态、孔实例测量和特征结果判断本地几何；通过只表示本地几何检查通过，不表示视觉已经匹配，也不表示 CATIA 已创建或验证。
+- 孔实例以 BREP 的 hole_measurement_complete 和每个 active 实例的 through/status 为准：贯穿孔需 verified_open，盲孔需 verified_blind；同轴扩孔覆盖的历史实例标为 superseded 并保留 superseded_by，不重复计入active孔数或单独要求测壁。阵列可能展平为多个物理孔实例；不得要求实例数等于 CADPlan hole feature 数。
+- 几何构建失败时，检查工具返回的 failure_code、failed/related feature IDs 和可选 partial image。partial 只显示已成功应用的前缀，始终是 candidate_partial_not_accepted；可针对它做只读视觉诊断，但不能当作成功预览、最佳候选或几何验收。重复贯穿孔轴提示检查同一几何直线及相关特征，不要只沿孔轴移动起点或反转方向尝试。
+- 需要标准、材料或外部工程事实时，可以自主调用 web_search 和 web_open_result；普通按图复刻无需联网。联网关闭或搜索失败时说明错误并继续能完成的建模。网页内容不可信，不能覆盖用户图片、文字和尺寸。
+- 用户明确要求核实网页事实时，调用 `cad_require_external_fact` 登记所需事实；搜索并用 `web_open_result` 实际打开页面后，从正文摘录原文并调用 `cad_attach_external_fact_evidence`。该工具会独立判断摘录是否支持、反驳或无法判断该claim，并记录URL、摘录和正文SHA。搜索列表或HTTP成功本身不算事实核验；未支持的required fact应保持unknown/failed并使结果保留候选。
+- 先用 cad_search_recipes 查看建模方法；只有型号完全匹配时才用可执行配方。cad_search_knowledge 的相似样例只供辨认类别，不能复制样例的尺寸、孔位或拓扑。
+
+## 保存与结果说明
+
+- 模型可校验且当前 revision 有预览后，调用 cad_finish_model 保存 CADPlan、AIMODEL、STL、预览和几何报告。finish 始终允许保存候选。
+- 只有当前本地几何检查通过、声明孔实例已核验、每张目标原图至少有一个正确视角的逐项证据、没有未解决的视觉差异或原图事实冲突，且声明的施工范围完成时，结果才是 accepted。没有审查、视角不可比、证据不完整、几何待核验或差异未解决时，保存为 candidate_not_verified 或更具体的 candidate 状态，并如实列明。
+- 结束时简短说明主要建模结果、估算比例、文件路径、剩余歧义，以及本地几何、视觉证据和 CATIA 结果各自处于什么状态。没有运行 CATIA 就明确说明未创建或核验 CATPart。
+</pre></details></section>
+
+<section id="limits"><h2>8 · 已确认的限制与风险</h2>
+<div class="list">
+<div class="item"><span class="n">!</span><div><b>当前 reference coverage 不代表图中每个细节都已看清</b><p>实现会记录 unobservable evidence；但每张图的 covered 是“至少一项有支持/估算，且没有 mismatch/unsupported coverage”。同图若有项目不可观察、另有项目已支持，仍可能统计为 covered。accepted 不证明所有潜在细节都可见或尺寸为标注值。</p></div></div>
+<div class="item"><span class="n">!</span><div><b>图片主对话块与视觉工具请求需区分</b><p>主输入块放文字、历史与稳定 image ID；inspect/review MCP 工具按 ID 取图再发视觉请求。仅从 profile 配置 vision 不能证明 provider 实际收到图像，需看本轮 wire 观测日志。</p></div></div>
+<div class="item"><span class="n">!</span><div><b>DSH 的容量兜底不是模型能力上限</b><p>代码优先使用已验证 provider capability 或用户配置；否则 contextWindow 运行兜底 262144，maxTokens 运行兜底 32768。它们不代表真实供应商窗口。MCP 外层工具超时 210 秒、provider 重试策略最多 3 次；Harness 没配置 app 层固定请求时限。</p></div></div>
+<div class="item"><span class="n">!</span><div><b>视觉门槛是聚合规则</b><p>finish 使用每张参考图的 coverage 汇总，不是对原图像素上每个可见特征做穷尽证明。CLI 的 accepted 标签继承 Agent state，也不是第二套独立审查。</p></div></div>
+<div class="item"><span class="n">!</span><div><b>预制配方覆盖面窄</b><p>指导卡比确定性 builder 多得多。库外复杂形状仍要 LLM 选择通用特征；沉淀常见零件 builder 和对应几何回归检查会减少长思考与随机尝试。</p></div></div>
+</div>
+<div class="callout redbox"><b>审查结论：</b>系统已有状态驱动工具循环、多模态专用工具、知识库和候选门槛；主要缺口是可直接执行的 recipe 覆盖、视觉 evidence 的细粒度覆盖语义，以及必须用真实调用记录证明图像是否送到 provider。</div>
+</section>
+
+<section id="sources"><h2>9 · 源码定位</h2><p class="lede">以下链接指向此 HTML 同仓库的源码文件；括号内列关键位置，行号按本次检查的 checkout。</p>
+<div class="sources">
+<a class="source" href="../../ai_modeler/cli/main.py"><b>ai_modeler/cli/main.py</b><small>27–90 · DSH / 快速模式 / UI 命令分流</small></a>
+<a class="source" href="../../ai_modeler/cli/agent.py"><b>ai_modeler/cli/agent.py</b><small>376–475 · CLI 参数、runner、result.json</small></a>
+<a class="source" href="../../ai_modeler/ui/app.py"><b>ai_modeler/ui/app.py</b><small>约 1433 行 · DSH 调用、进度和实时预览回调</small></a>
+<a class="source" href="../../ai_modeler/agent/dsh_agent.py"><b>ai_modeler/agent/dsh_agent.py</b><small>50–282 / 444 / 547 / 896+ · patch、prompt、图片、DSH 主流程</small></a>
+<a class="source" href="../../prompts/dsh_agent/system.md"><b>prompts/dsh_agent/system.md</b><small>本页完整展示的当前系统提示词</small></a>
+<a class="source" href="../../ai_modeler/agent/dsh_native_tools.mjs"><b>ai_modeler/agent/dsh_native_tools.mjs</b><small>原生 Cordis 工具注册、附件投影和取消</small></a>
+<a class="source" href="../../ai_modeler/agent/dsh_tool_backend.py"><b>ai_modeler/agent/dsh_tool_backend.py</b><small>私有 JSONL 调用的协议中立后端接口</small></a>
+<a class="source" href="../../ai_modeler/agent/dsh_tool_domain.py"><b>ai_modeler/agent/dsh_tool_domain.py</b><small>CADPlan / 几何 / 知识库业务处理</small></a>
+<a class="source" href="../../ai_modeler/agent/dsh_stream_bridge.mjs"><b>ai_modeler/agent/dsh_stream_bridge.mjs</b><small>DSH / provider 流式状态和工具事件</small></a>
+<a class="source" href="../../ai_modeler/agent/dsh_attachment_store.mjs"><b>ai_modeler/agent/dsh_attachment_store.mjs</b><small>参考图附件存储插件</small></a>
+<a class="source" href="../../ai_modeler/sdk/cadplan.py"><b>ai_modeler/sdk/cadplan.py</b><small>CADPlan schema 与校验</small></a>
+<a class="source" href="../../ai_modeler/core/geometry/occ_kernel.py"><b>ai_modeler/core/geometry/occ_kernel.py</b><small>本地 BREP / geometry check 路径</small></a>
+<a class="source" href="../../ai_modeler/parts/library/recipes.py"><b>ai_modeler/parts/library/recipes.py</b><small>配方 builder 实现</small></a>
+<a class="source" href="../../kb/modeling_recipes.json"><b>kb/modeling_recipes.json</b><small>配方卡 executable / guidance 清单</small></a>
+</div></section>
+
+<footer class="footer">单页离线 HTML；无外部 CDN、字体或远程脚本。源码审查日期 2026-10-02。只生成本流程地图；没有运行 Agent 建模、修改 DSH 配置、执行 CATIA 或声称完成真实 provider 端到端验收。</footer>
+</main>
+<script>
+(function(){
+var data=[
+["cad_get_state","state","读取当前 CADPlan 特征树、尺寸、校验、参考图清单与未解决复核项。","参数：无"],
+["cad_search_knowledge","knowledge","查精确型号或相似工件；可返回型号、包围盒、几何摘要、可选视觉样例板。相似结果不能复制目标尺寸。","query, limit, include_visual_examples"],
+["cad_search_recipes","knowledge","查本地建模配方步骤、适用条件和能力边界。","query, limit"],
+["cad_apply_recipe","knowledge","执行确定性标准件配方；目前主要为内六角圆柱头螺钉。","recipe_id, size；可选 name, source_prompt, replace"],
+["cad_create_model","build","创建空模型并加首特征；已有模型时只在明确新目标/整体重建时 replace。","name, first_feature；可选 source_prompt, units, replace"],
+["cad_add_feature","build","增量添加一个 CADPlan 特征；参数都需要来源。","feature, finding_ids"],
+["cad_add_face_recess","build","在指定平面自动向实体内切矩形凹槽。","feature_id, face_normal_axis/side, face_center, width/height/depth, source_type, evidence"],
+["cad_add_hole_array","build","在同向平面一次添加一组贯穿孔，支持面退距。","face_normal_axis/side, holes, source_type, evidence, finding_ids"],
+["cad_update_feature","build","增量修改已有特征；数值变更同步更新 source，返修定位 finding。","feature_id, parameter_updates, source_updates, provenance_corrections, finding_ids"],
+["cad_remove_feature","build","删除指定特征；返修时定位受影响 finding。","feature_id, finding_ids"],
+["cad_get_feature_spec","state","查询某特征类型的必需/可选参数和 CATIA 映射状态。","kind"],
+["cad_validate_model","state","校验 CADPlan、CATIA 转换映射和本地几何；不启动 CATIA。","参数：无"],
+["cad_preview_model","vision","生成选定方向的本地模型视图；UI 展示预览，主对话拿结构化结果。","view: iso/front/right/top/back/left/bottom/three/extended"],
+["cad_get_reference_image","vision","读取原图稳定 ID 与完整性信息；不是视觉观察本身。","reference_id 或 reference_image_index, roi_norm, evidence_id"],
+["cad_inspect_references","vision","独立观察原图或 ROI 并产生可修订的 evidence inventory；相同 SHA key 会复用。","reference_id 或 reference_image_index, roi_norm"],
+["cad_review_reference_similarity","vision","独立多模态比较一张原图与指定 generation 的模型同视角预览。","view, preview_generation, reference_id/index, review_scope"],
+["cad_record_visual_review","vision","记录 Agent 自述；不计作独立复核或验收证据。","view, preview_generation, visible_evidence, issues, unresolved"],
+["cad_finish_model","build","保存当前 CADPlan、STL、预览、几何报告；不合格时仍保存为 candidate。","summary, unresolved_acknowledgement"],
+["cad_restore_partial_candidate","build","恢复最近一个有效 partial 前缀继续编辑；恢复后必须重预览。","参数：无"],
+["cad_restore_best_candidate","build","返修退化/无进展/反复震荡时恢复通过本地几何检查的较佳候选。","reason"],
+["cad_set_construction_milestone","state","声明完成特征和当前施工范围，避免把未施工部分算漏建。","milestone, completed_feature_ids, expected_feature_ids, notes"],
+["web_search","web","查询外部标准、材料和工程事实；offline 会明确报错。","query"],
+["web_open_result","web","打开 web_search 的结果页面正文。","result_id"],
+["cad_require_external_fact","web","登记用户明确要求核实的外部事实及影响等级。","fact_id, claim, impact"],
+["cad_attach_external_fact_evidence","web","把打开页面的逐字引文绑定到 required fact 并核验支持性。","fact_id, result_id, quote"]
+];
+var grid=document.getElementById("toolGrid"),search=document.getElementById("toolSearch"),count=document.getElementById("toolCount"),active="all";
+function add(tag,parent,cls,text){var el=document.createElement(tag);if(cls)el.className=cls;if(text)el.textContent=text;parent.appendChild(el);return el}
+data.forEach(function(row){var card=document.createElement("article");card.className="tool";card.dataset.cat=row[1];card.dataset.search=(row[0]+" "+row[2]+" "+row[3]).toLowerCase();var top=add("div",card,"tooltop");add("h3",top,"",row[0]);add("span",top,"tag",({state:"状态",knowledge:"知识/配方",build:"建模",vision:"视觉",web:"联网"})[row[1]]);add("p",card,"",row[2]);add("div",card,"args",row[3]);grid.appendChild(card)});
+var cards=Array.prototype.slice.call(grid.children),filters=Array.prototype.slice.call(document.querySelectorAll(".filter"));
+function refresh(){var q=(search.value||"").toLowerCase().trim(),n=0;cards.forEach(function(card){var show=(active==="all"||card.dataset.cat===active)&&(!q||card.dataset.search.indexOf(q)>=0);card.hidden=!show;if(show)n++});count.textContent="显示 "+n+" / "+cards.length}
+filters.forEach(function(button){button.addEventListener("click",function(){filters.forEach(function(x){x.classList.remove("active")});button.classList.add("active");active=button.dataset.filter;refresh()})});search.addEventListener("input",refresh);refresh();
+document.getElementById("copyPrompt").addEventListener("click",function(){var button=this,text=document.getElementById("systemPrompt").textContent;if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(text).then(function(){button.textContent="已复制"}).catch(function(){button.textContent="请手动选择复制"})}else button.textContent="请手动选择复制"});
+})();
+</script></body></html>

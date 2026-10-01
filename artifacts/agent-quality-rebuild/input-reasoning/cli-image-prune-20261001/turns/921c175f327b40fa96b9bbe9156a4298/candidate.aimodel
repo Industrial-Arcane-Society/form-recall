@@ -1,0 +1,61 @@
+{
+  "format": "ai-modeler",
+  "version": 1,
+  "name": "u-block-with-recess",
+  "source_prompt": "Simplified U-shaped solid: rectangular block with a centered front-facing rectangular recess/slot; no holes or decorations in this round.",
+  "features": [
+    {
+      "kind": "box",
+      "params": {
+        "length": 90.0,
+        "width": 36.0,
+        "height": 80.0,
+        "center": [
+          0.0,
+          0.0,
+          40.0
+        ],
+        "base": false
+      },
+      "op": "add",
+      "name": "Base rectangular block",
+      "note": "",
+      "feature_id": "main-body",
+      "relations": [],
+      "enabled": true,
+      "provenance": {
+        "length": "image_estimate",
+        "width": "image_estimate",
+        "height": "image_estimate",
+        "center": "derived"
+      }
+    },
+    {
+      "kind": "box",
+      "params": {
+        "length": 36.0,
+        "width": 24.001,
+        "height": 72.0,
+        "center": [
+          0.0,
+          6.000500000000001,
+          36.0
+        ],
+        "base": false
+      },
+      "op": "cut",
+      "name": "Front rectangular recess/slot",
+      "note": "通过统一 CADPlan 坐标语义创建的面内退台。",
+      "feature_id": "front-recess",
+      "relations": [],
+      "enabled": true,
+      "provenance": {
+        "length": "image_estimate",
+        "width": "derived",
+        "height": "image_estimate",
+        "center": "derived"
+      }
+    }
+  ],
+  "exported_at": "2026-10-01 18:41:10"
+}

@@ -1,7 +1,7 @@
 """Checks that stream progress labels distinguish reasoning, answers, and tools."""
 import unittest
 
-from ai_modeler.agent.llm import describe_stream_progress
+from ai_modeler.agent.llm import describe_stream_progress, emit_stream_progress
 
 
 class DescribeStreamProgressTests(unittest.TestCase):
@@ -52,6 +52,21 @@ class DescribeStreamProgressTests(unittest.TestCase):
                          describe_stream_progress({"event": "response.created"}))
         self.assertEqual("正在接收模型流式响应", describe_stream_progress({}))
         self.assertEqual("正在接收模型流式响应", describe_stream_progress(None))
+
+    def test_progress_callback_reports_counts_without_model_text(self):
+        messages = []
+        emit_stream_progress({
+            "reasoning_chars": 137,
+            "reasoning_delta": "PRIVATE THOUGHT",
+            "output_chars": 42,
+            "visible_output": "PRIVATE ANSWER",
+        }, messages.append, detail="主循环")
+
+        self.assertEqual(1, len(messages))
+        self.assertIn("主循环", messages[0])
+        self.assertIn("137", messages[0])
+        self.assertNotIn("PRIVATE THOUGHT", messages[0])
+        self.assertNotIn("PRIVATE ANSWER", messages[0])
 
 
 if __name__ == "__main__":

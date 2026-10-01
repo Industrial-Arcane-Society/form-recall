@@ -1,0 +1,35 @@
+{
+  "format": "ai-modeler",
+  "version": 1,
+  "name": "AA6061-T6 Mounting Plate 80x50x8",
+  "source_prompt": "请创建一块 80×50×8 mm 的铝合金安装板。请自主联网查询 AA6061-T6 的密度，并必须调用 web_search 搜索来源、调用 web_open_result 打开至少一个真实结果页；只把打开的页面证据用于质量信息，若搜索/读取失败则明确保存候选并说明失败诊断，不得假称查阅成功。",
+  "features": [
+    {
+      "kind": "box",
+      "params": {
+        "length": 80.0,
+        "width": 50.0,
+        "height": 8.0,
+        "center": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "base": false
+      },
+      "op": "add",
+      "name": "Main Plate Body",
+      "note": "",
+      "feature_id": "plate_body",
+      "relations": [],
+      "enabled": true,
+      "provenance": {
+        "length": "user",
+        "width": "user",
+        "height": "user",
+        "center": "derived"
+      }
+    }
+  ],
+  "exported_at": "2026-10-01 13:51:42"
+}

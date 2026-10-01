@@ -1,0 +1,1284 @@
+{
+  "source": "DeepSeek Harness SDK Agent",
+  "revision": 4,
+  "name": "u-block-with-recess",
+  "units": {
+    "length": "mm",
+    "angle": "deg"
+  },
+  "validation": {
+    "valid": true,
+    "state": "valid",
+    "errors": [],
+    "confirmations": [],
+    "support": [
+      {
+        "feature_id": "main-body",
+        "kind": "box",
+        "status": "exact",
+        "reason": "矩形草图加凸台；当前 CATIA 映射仅支持 Z 轴拉伸。"
+      },
+      {
+        "feature_id": "front-recess",
+        "kind": "box",
+        "status": "exact",
+        "reason": "矩形草图加凸台；当前 CATIA 映射仅支持 Z 轴拉伸。"
+      }
+    ],
+    "geometry_support": [
+      {
+        "feature_id": "main-body",
+        "kind": "box",
+        "status": "exact",
+        "reason": "OCCT 棱柱；带圆角/倒角时沿用离散轮廓近似",
+        "backend": "occt_brep"
+      },
+      {
+        "feature_id": "front-recess",
+        "kind": "box",
+        "status": "exact",
+        "reason": "OCCT 棱柱；带圆角/倒角时沿用离散轮廓近似",
+        "backend": "occt_brep"
+      }
+    ],
+    "warnings": [],
+    "schema_version": "1.0"
+  },
+  "requested_plan": null,
+  "exported_partial_plan": null,
+  "unapplied_feature_ids": [],
+  "partial_preview": null,
+  "preview": {
+    "state": "previewed",
+    "validation": {
+      "valid": true,
+      "state": "valid",
+      "errors": [],
+      "confirmations": [],
+      "support": [
+        {
+          "feature_id": "main-body",
+          "kind": "box",
+          "status": "exact",
+          "reason": "矩形草图加凸台；当前 CATIA 映射仅支持 Z 轴拉伸。"
+        },
+        {
+          "feature_id": "front-recess",
+          "kind": "box",
+          "status": "exact",
+          "reason": "矩形草图加凸台；当前 CATIA 映射仅支持 Z 轴拉伸。"
+        }
+      ],
+      "geometry_support": [
+        {
+          "feature_id": "main-body",
+          "kind": "box",
+          "status": "exact",
+          "reason": "OCCT 棱柱；带圆角/倒角时沿用离散轮廓近似",
+          "backend": "occt_brep"
+        },
+        {
+          "feature_id": "front-recess",
+          "kind": "box",
+          "status": "exact",
+          "reason": "OCCT 棱柱；带圆角/倒角时沿用离散轮廓近似",
+          "backend": "occt_brep"
+        }
+      ],
+      "warnings": [],
+      "schema_version": "1.0"
+    },
+    "geometry_backend": "occt_brep",
+    "native_brep": {
+      "backend": "occt_brep",
+      "kernel": "可用：OCCT 7.9.3.1 / cadquery-ocp-novtk 7.9.3.1.1",
+      "self_intersection_face_limit": 15000,
+      "geometry_state": "passed",
+      "state": "passed",
+      "brep_valid": true,
+      "shape_type": "TopAbs_COMPOUND",
+      "solid_count": 1,
+      "connected_component_count": 1,
+      "shell_count": 1,
+      "closed_shell_count": 1,
+      "closed": true,
+      "edge_count": 48,
+      "face_count": 10,
+      "free_edge_count": 0,
+      "volume_mm3": 196992.0,
+      "bbox_mm": [
+        -45.0,
+        -18.0,
+        0.0,
+        45.0,
+        18.0,
+        80.0
+      ],
+      "self_intersection": {
+        "status": "checked_no_intersection",
+        "face_count": 10,
+        "face_limit": 15000,
+        "check_result_count": 0,
+        "check_statuses": [],
+        "method": "BOPAlgo_ArgumentAnalyzer(SelfInterMode=True, UseOBB=True)"
+      },
+      "validity_method": "BRepCheck_Analyzer",
+      "geometry_scope": "native_OCCT_BREP_only_visual_comparison_not_performed",
+      "unverified_cut_intents": [],
+      "hole_feature_count": 0,
+      "measured_hole_source_feature_count": 0,
+      "unverified_cut_intent_count": 0,
+      "planned_hole_instance_count": 0,
+      "active_hole_instance_count": 0,
+      "superseded_hole_instance_count": 0,
+      "active_through_hole_count": 0,
+      "through_hole_count": 0,
+      "all_declared_holes_verified": true,
+      "visual_validation": "not_performed",
+      "catia_executed": false,
+      "build_transaction": "每个特征验证成功后才提交；失败保留上一有效实体"
+    },
+    "catia_executed": false,
+    "dimensions": {
+      "unit": "mm",
+      "bbox": [
+        -45.0,
+        -18.0,
+        0.0,
+        45.0,
+        18.0,
+        80.0
+      ],
+      "size": [
+        90.0,
+        36.0,
+        80.0
+      ],
+      "volume_mm3": 196992.0,
+      "surface_area_mm2": 30096.0,
+      "triangles": 28,
+      "feature_count": 2
+    },
+    "catia_operations": [
+      {
+        "index": 1,
+        "kind": "rect_pad",
+        "plane": "XY",
+        "center": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "profile": [],
+        "dimensions": {
+          "l": 90.0,
+          "w": 36.0,
+          "r": 0.0,
+          "h": 80.0,
+          "depth": 0.0
+        },
+        "name": "Base rectangular block",
+        "note": "长方体 90 × 36 × 80 mm"
+      },
+      {
+        "index": 2,
+        "kind": "rect_cut",
+        "plane": "XY",
+        "center": [
+          0.0,
+          6.000500000000001,
+          72.0
+        ],
+        "profile": [],
+        "dimensions": {
+          "l": 36.0,
+          "w": 24.001,
+          "r": 0.0,
+          "h": 72.0,
+          "depth": 72.0
+        },
+        "name": "Front rectangular recess/slot",
+        "note": "长方体 36 × 24 × 72 mm"
+      }
+    ],
+    "warnings": [],
+    "feature_manifest": {
+      "main-body": {
+        "kind": "box",
+        "operation": "add",
+        "name": "Base rectangular block",
+        "parameters": {
+          "length": 90,
+          "width": 36,
+          "height": 80,
+          "center": [
+            0,
+            0,
+            40
+          ]
+        },
+        "sources": {
+          "length": {
+            "type": "image_estimate",
+            "evidence": "Overall left-right span in iso view about 2.5x front-back thickness",
+            "note": "Estimated overall X span"
+          },
+          "width": {
+            "type": "image_estimate",
+            "evidence": "Front-back depth in iso view",
+            "note": "Estimated overall Y thickness"
+          },
+          "height": {
+            "type": "image_estimate",
+            "evidence": "Overall vertical span in iso view",
+            "note": "Estimated overall Z height"
+          },
+          "center": {
+            "type": "derived",
+            "note": "Box centered in X/Y, base at grid plane Z=0"
+          }
+        },
+        "relations": []
+      },
+      "front-recess": {
+        "kind": "box",
+        "operation": "cut",
+        "name": "Front rectangular recess/slot",
+        "parameters": {
+          "length": 36.0,
+          "width": 24.001,
+          "height": 72.0,
+          "center": [
+            0.0,
+            6.000500000000001,
+            36.0
+          ]
+        },
+        "sources": {
+          "length": {
+            "type": "image_estimate",
+            "evidence": "Front-facing rectangular slot visible in iso view between the two outer walls, exposing the recessed back wall with a horizontal top step; proportions estimated relative to outer walls 图像/用户依据：凹槽尺寸。 凹槽面内宽度映射到此坐标轴。"
+          },
+          "width": {
+            "type": "derived",
+            "evidence": "由用户凹槽深度及布尔切除余量计算此坐标轴尺寸。"
+          },
+          "height": {
+            "type": "image_estimate",
+            "evidence": "Front-facing rectangular slot visible in iso view between the two outer walls, exposing the recessed back wall with a horizontal top step; proportions estimated relative to outer walls 图像/用户依据：凹槽尺寸。 凹槽面内高度映射到此坐标轴。"
+          },
+          "center": {
+            "type": "derived",
+            "evidence": "由主 box 表面坐标与凹入深度计算切除体中心。"
+          }
+        },
+        "relations": []
+      }
+    },
+    "build_log": [
+      "[基准] 长方体 90 × 36 × 80 mm → 8 面",
+      "[切除] 长方体 36 × 24 × 72 mm → 18 面"
+    ],
+    "local_geometry_checks": {
+      "backend": "occt_brep",
+      "kernel": "可用：OCCT 7.9.3.1 / cadquery-ocp-novtk 7.9.3.1.1",
+      "self_intersection_face_limit": 15000,
+      "geometry_state": "passed",
+      "state": "passed",
+      "brep_valid": true,
+      "shape_type": "TopAbs_COMPOUND",
+      "solid_count": 1,
+      "connected_component_count": 1,
+      "shell_count": 1,
+      "closed_shell_count": 1,
+      "closed": true,
+      "edge_count": 48,
+      "face_count": 10,
+      "free_edge_count": 0,
+      "volume_mm3": 196992.0,
+      "bbox_mm": [
+        -45.0,
+        -18.0,
+        0.0,
+        45.0,
+        18.0,
+        80.0
+      ],
+      "self_intersection": {
+        "status": "checked_no_intersection",
+        "face_count": 10,
+        "face_limit": 15000,
+        "check_result_count": 0,
+        "check_statuses": [],
+        "method": "BOPAlgo_ArgumentAnalyzer(SelfInterMode=True, UseOBB=True)"
+      },
+      "validity_method": "BRepCheck_Analyzer",
+      "geometry_scope": "native_OCCT_BREP_only_visual_comparison_not_performed",
+      "feature_results": [
+        {
+          "feature_id": "main-body",
+          "kind": "box",
+          "operation": "add",
+          "geometry_support": "exact",
+          "builder": "analytic_prism",
+          "state": "applied",
+          "source_feature_id": null,
+          "source_resolution": null,
+          "solid_count": 1,
+          "brep_valid": true,
+          "before_volume_mm3": 0.0,
+          "after_volume_mm3": 259200.0,
+          "volume_delta_mm3": 259200.0,
+          "cylindrical_cut_intents": [],
+          "depth_measurement": null,
+          "facet_count": null
+        },
+        {
+          "feature_id": "front-recess",
+          "kind": "box",
+          "operation": "cut",
+          "geometry_support": "exact",
+          "builder": "analytic_prism",
+          "state": "applied",
+          "source_feature_id": null,
+          "source_resolution": null,
+          "solid_count": 1,
+          "brep_valid": true,
+          "before_volume_mm3": 259200.0,
+          "after_volume_mm3": 196992.0,
+          "volume_delta_mm3": -62208.0,
+          "cylindrical_cut_intents": [],
+          "depth_measurement": null,
+          "facet_count": null
+        }
+      ],
+      "hole_instances": [],
+      "unverified_cut_intents": [],
+      "hole_feature_count": 0,
+      "measured_hole_source_feature_count": 0,
+      "unverified_cut_intent_count": 0,
+      "planned_hole_instance_count": 0,
+      "active_hole_instance_count": 0,
+      "superseded_hole_instance_count": 0,
+      "active_through_hole_count": 0,
+      "through_hole_count": 0,
+      "all_declared_holes_verified": true,
+      "visual_validation": "not_performed",
+      "catia_executed": false,
+      "build_transaction": "每个特征验证成功后才提交；失败保留上一有效实体",
+      "source": "OpenCASCADE native BREP; preview mesh is display-only",
+      "bbox_size_mm": [
+        90.0,
+        36.0,
+        80.0
+      ],
+      "bbox_ratios_from_brep": {
+        "front_width_height": 1.125,
+        "depth_height": 0.45,
+        "top_width_depth": 2.5
+      },
+      "bbox_ratios_from_mesh": {
+        "front_width_height": 1.125,
+        "depth_height": 0.45,
+        "top_width_depth": 2.5
+      },
+      "feature_count_from_plan": 2,
+      "feature_ids_from_plan": [
+        "main-body",
+        "front-recess"
+      ],
+      "hole_features_from_plan": [],
+      "hole_feature_count_from_plan": 0,
+      "expected_hole_instance_count": 0,
+      "hole_instance_count": 0,
+      "through_hole_checks": [],
+      "through_hole_mesh_checks": [],
+      "hole_measurement_complete": true,
+      "hole_measurement_state": "not_applicable_no_holes_or_cylindrical_cuts",
+      "through_hole_count_expected": 0,
+      "through_hole_count_verified": 0,
+      "through_hole_result": "no_holes_declared",
+      "image_estimate_parameters": [
+        {
+          "feature_id": "main-body",
+          "parameter": "length",
+          "value": 90,
+          "evidence": "Overall left-right span in iso view about 2.5x front-back thickness",
+          "visual_measurement": "not_performed_by_geometry_backend"
+        },
+        {
+          "feature_id": "main-body",
+          "parameter": "width",
+          "value": 36,
+          "evidence": "Front-back depth in iso view",
+          "visual_measurement": "not_performed_by_geometry_backend"
+        },
+        {
+          "feature_id": "main-body",
+          "parameter": "height",
+          "value": 80,
+          "evidence": "Overall vertical span in iso view",
+          "visual_measurement": "not_performed_by_geometry_backend"
+        },
+        {
+          "feature_id": "front-recess",
+          "parameter": "length",
+          "value": 36.0,
+          "evidence": "Front-facing rectangular slot visible in iso view between the two outer walls, exposing the recessed back wall with a horizontal top step; proportions estimated relative to outer walls 图像/用户依据：凹槽尺寸。 凹槽面内宽度映射到此坐标轴。",
+          "visual_measurement": "not_performed_by_geometry_backend"
+        },
+        {
+          "feature_id": "front-recess",
+          "parameter": "height",
+          "value": 72.0,
+          "evidence": "Front-facing rectangular slot visible in iso view between the two outer walls, exposing the recessed back wall with a horizontal top step; proportions estimated relative to outer walls 图像/用户依据：凹槽尺寸。 凹槽面内高度映射到此坐标轴。",
+          "visual_measurement": "not_performed_by_geometry_backend"
+        }
+      ],
+      "catia_geometry_verification": "not_performed"
+    },
+    "orthographic_layout": {
+      "unit": "mm",
+      "axes": {
+        "length": "X",
+        "width": "Y",
+        "height": "Z"
+      },
+      "uniform_scale_across_views": true,
+      "scale_pixels_per_mm": 2.3688888888888893,
+      "tile_size_pixels": [
+        330,
+        260
+      ],
+      "view_extents": {
+        "front": {
+          "horizontal_axis": "X",
+          "horizontal": 90.0,
+          "vertical_axis": "Z",
+          "vertical": 80.0
+        },
+        "right": {
+          "horizontal_axis": "Y",
+          "horizontal": 36.0,
+          "vertical_axis": "Z",
+          "vertical": 80.0
+        },
+        "top": {
+          "horizontal_axis": "X",
+          "horizontal": 90.0,
+          "vertical_axis": "Y",
+          "vertical": 36.0
+        }
+      },
+      "dimension_ratios": {
+        "length_to_height": 1.125,
+        "width_to_height": 0.45,
+        "length_to_width": 2.5
+      }
+    },
+    "preview_image": "C:\\Users\\lycohana\\AppData\\Local\\AI Modeler\\dsh\\sessions\\input-image-prune-20261001\\previews\\r4-g1-iso.png",
+    "preview_image_views": [
+      "iso"
+    ],
+    "preview_image_view_set": "iso",
+    "preview_image_grid_columns": 1,
+    "preview_image_source": "OCCT BREP tessellated for display; not a CATIA screenshot",
+    "preview_render_style": "view-adaptive depth-cued matte shading with visible feature edges",
+    "preview_render_note": "诊断渲染：凹入或远离相机的表面会略暗，清晰线条表示可见的几何折边；亮暗不是零件材质颜色，需结合其它视图判断。",
+    "preview_image_layout": {
+      "unit": "mm",
+      "axes": {
+        "length": "X",
+        "width": "Y",
+        "height": "Z"
+      },
+      "uniform_scale_across_views": true,
+      "scale_pixels_per_mm": 2.3688888888888893,
+      "tile_size_pixels": [
+        330,
+        260
+      ],
+      "view_extents": {
+        "front": {
+          "horizontal_axis": "X",
+          "horizontal": 90.0,
+          "vertical_axis": "Z",
+          "vertical": 80.0
+        },
+        "right": {
+          "horizontal_axis": "Y",
+          "horizontal": 36.0,
+          "vertical_axis": "Z",
+          "vertical": 80.0
+        },
+        "top": {
+          "horizontal_axis": "X",
+          "horizontal": 90.0,
+          "vertical_axis": "Y",
+          "vertical": 36.0
+        }
+      },
+      "dimension_ratios": {
+        "length_to_height": 1.125,
+        "width_to_height": 0.45,
+        "length_to_width": 2.5
+      }
+    },
+    "preview_generation": 1
+  },
+  "visual_review": null,
+  "main_agent_self_reports": {},
+  "visual_reviews": {},
+  "required_external_facts": {},
+  "replaced_plans": [],
+  "reference_similarity_reviews": {
+    "iso": {
+      "revision": 4,
+      "preview_generation": 1,
+      "partial_candidate_diagnostic_only": false,
+      "view": "iso",
+      "view_comparable": false,
+      "pair_note": "两张图均为 U 形主体的 iso/斜向视角，可见外形、轮廓、前侧凹槽及主体比例，足以比较本轮已完成的主体与凹槽。",
+      "reference_image_index": 1,
+      "reference_id": "sha256:53ed87fadf8cca869da921627e6a13c845424c6906b3de517d5cca972db94553",
+      "reference_image_name": "53ed87fadf8cca869da921627e6a13c845424c6906b3de517d5cca972db94553.png",
+      "reference_images_in_request": 1,
+      "score": 82.0,
+      "raw_model_score": 82.0,
+      "score_is_advisory": true,
+      "review_scope": "Completed: main-body base block and front-recess rectangular slot. Not included: nine circular holes and any edge decorations.",
+      "construction_milestone": {},
+      "user_target_fingerprint": "20dbbdb8be6173b4dc3c87b8f310bf127b58624719b0593ff8b60d80e4700fc4",
+      "user_target_turn_ids": [
+        "921c175f327b40fa96b9bbe9156a4298"
+      ],
+      "coverage_status": "verified",
+      "covered_evidence_ids": [],
+      "coverage_integrity": true,
+      "unsupported_coverage_ids": [],
+      "summary": "当前 iso 视角下，模型呈现了用户目标要求的简化 U 形实体主体与前侧矩形凹槽，未添加孔或装饰。主体外形、U 形轮廓及凹槽位置与参考图一致；各关键无量纲比例处于参考图的可接受估算范围内，整体为近似匹配。参考图中的九个圆孔不在本轮施工范围内，不构成缺失差异。",
+      "reference_hole_count": 9,
+      "count_confidence": 0.9,
+      "evidence": [
+        {
+          "item": "整体外形：U 形实体主体（两侧立臂 + 顶部横梁）",
+          "reference": "参考图显示一个 U 形块：左右两条垂直立臂由顶部横梁连接，底部开放，前侧有矩形凹槽。",
+          "target": "根据附图建立简化的 U 形实体主体。",
+          "model": "模型为 U 形块，左右立臂与顶部横梁连接，底部开放，前侧有矩形凹槽。",
+          "suggested_change": "无需修改",
+          "target_turn_id": "921c175f327b40fa96b9bbe9156a4298",
+          "target_quote": "根据附图建立一个简化的 U 形实体主体",
+          "assessment_basis": "user_target",
+          "target_overrides_reference": false,
+          "reference_status": "match",
+          "evidence_id": "ev1_overall_u_shape",
+          "affected_feature_ids": [
+            "main-body"
+          ],
+          "status": "match",
+          "mismatch_severity": "none",
+          "target_context_validated": true
+        },
+        {
+          "item": "立臂宽度 / 整体宽度比例",
+          "reference": "参考图中，外轮廓宽约 200 px，单侧立臂宽约 50 px，臂宽/总宽 ≈ 0.25；两侧臂宽约相等。",
+          "target": "未标注尺寸按图估算，臂宽与整体宽度比例应接近参考图。",
+          "model": "模型外轮廓宽约 180 px，单侧立臂宽约 45–55 px，臂宽/总宽 ≈ 0.25–0.30，两侧基本对称。",
+          "suggested_change": "无需修改，比例在估算允许范围内",
+          "target_turn_id": "921c175f327b40fa96b9bbe9156a4298",
+          "target_quote": "未标注尺寸按图估算",
+          "assessment_basis": "reference",
+          "target_overrides_reference": false,
+          "reference_status": "approximate_match",
+          "evidence_id": "ev2_arm_width_ratio",
+          "affected_feature_ids": [
+            "main-body"
+          ],
+          "status": "approximate_match",
+          "mismatch_severity": "none"
+        },
+        {
+          "item": "顶部横梁厚度 / 总高比例",
+          "reference": "参考图总高约 240 px，顶部横梁厚度约 60 px，厚度/总高 ≈ 0.25。",
+          "target": "未标注尺寸按图估算，顶部横梁厚度比例应接近参考图。",
+          "model": "模型总高约 250 px，顶部横梁厚度约 60 px，厚度/总高 ≈ 0.24。",
+          "suggested_change": "无需修改",
+          "target_turn_id": "921c175f327b40fa96b9bbe9156a4298",
+          "target_quote": "未标注尺寸按图估算",
+          "assessment_basis": "reference",
+          "target_overrides_reference": false,
+          "reference_status": "approximate_match",
+          "evidence_id": "ev3_bridge_thickness_ratio",
+          "affected_feature_ids": [
+            "main-body"
+          ],
+          "status": "approximate_match",
+          "mismatch_severity": "none"
+        },
+        {
+          "item": "前侧凹槽开口宽度 / 整体宽度比例",
+          "reference": "参考图外轮廓宽约 200 px，凹槽内侧间距约 100 px，凹槽宽/总宽 ≈ 0.50。",
+          "target": "未标注尺寸按图估算，凹槽宽度比例应接近参考图。",
+          "model": "模型外轮廓宽约 180 px，凹槽内侧间距约 80 px，凹槽宽/总宽 ≈ 0.44。",
+          "suggested_change": "如要求更严格贴合原图，可略微加宽凹槽开口；当前在估算范围内可接受",
+          "target_turn_id": "921c175f327b40fa96b9bbe9156a4298",
+          "target_quote": "未标注尺寸按图估算",
+          "assessment_basis": "reference",
+          "target_overrides_reference": false,
+          "reference_status": "approximate_match",
+          "evidence_id": "ev4_recess_width_ratio",
+          "affected_feature_ids": [
+            "front-recess-slot"
+          ],
+          "status": "approximate_match",
+          "mismatch_severity": "minor"
+        },
+        {
+          "item": "凹槽深度 / 整体深度比例",
+          "reference": "参考图中凹槽从正面贯穿至后侧内壁，深度与零件深度一致，可见后侧壁。",
+          "target": "前侧矩形凹槽。",
+          "model": "模型凹槽从正面切入，可见后侧内壁，深度方向贯穿整个零件深度。",
+          "suggested_change": "无需修改",
+          "target_turn_id": "921c175f327b40fa96b9bbe9156a4298",
+          "target_quote": "本轮只做主体和凹槽",
+          "assessment_basis": "user_target",
+          "target_overrides_reference": false,
+          "reference_status": "match",
+          "evidence_id": "ev5_recess_depth_ratio",
+          "affected_feature_ids": [
+            "front-recess-slot"
+          ],
+          "status": "match",
+          "mismatch_severity": "none",
+          "target_context_validated": true
+        },
+        {
+          "item": "前侧凹槽形状与位置",
+          "reference": "参考图前侧为矩形凹槽，位于两侧立臂之间、顶部横梁下方，贯通深度方向。",
+          "target": "本轮只做主体和凹槽。",
+          "model": "模型前侧为矩形凹槽，位于两侧立臂之间、顶部横梁下方，贯通深度方向。",
+          "suggested_change": "无需修改",
+          "target_turn_id": "921c175f327b40fa96b9bbe9156a4298",
+          "target_quote": "本轮只做主体和凹槽",
+          "assessment_basis": "user_target",
+          "target_overrides_reference": false,
+          "reference_status": "match",
+          "evidence_id": "ev6_front_recess_rectangular_slot",
+          "affected_feature_ids": [
+            "front-recess-slot"
+          ],
+          "status": "match",
+          "mismatch_severity": "none",
+          "target_context_validated": true
+        },
+        {
+          "item": "圆孔与装饰特征",
+          "reference": "参考图可见九个彩色圆孔（左臂 3、右臂 3、后侧壁 3）以及可能的边缘装饰。",
+          "target": "本轮只做主体和凹槽，不增加孔或装饰；保存候选后结束。",
+          "model": "模型未添加任何孔或装饰。",
+          "suggested_change": "按用户目标，本轮不应添加孔或装饰，模型正确",
+          "target_turn_id": "921c175f327b40fa96b9bbe9156a4298",
+          "target_quote": "本轮只做主体和凹槽，不增加孔或装饰；保存候选后结束。",
+          "assessment_basis": "user_override",
+          "target_overrides_reference": true,
+          "reference_status": "mismatch",
+          "evidence_id": "ev7_holes_excluded",
+          "affected_feature_ids": [
+            "holes",
+            "edge-decorations"
+          ],
+          "status": "match",
+          "mismatch_severity": "none",
+          "target_context_validated": true
+        }
+      ],
+      "unobservable": [],
+      "review_model": "moonshotai/Kimi-K2.7-Code",
+      "request_profile": {
+        "task_kind": "vision_review",
+        "review_complexity": null,
+        "provider_family": "siliconflow",
+        "protocol": "chat_completions",
+        "model": "moonshotai/Kimi-K2.7-Code",
+        "reasoning_effort": "low",
+        "configured_reasoning_effort": "low",
+        "thinking_budget": 2048,
+        "thinking_budget_source": "task_profile_soft_default",
+        "thinking_budget_hard_limit_known": false,
+        "payload_reasoning": {
+          "enable_thinking": true,
+          "thinking_budget": 2048
+        },
+        "reasoning_supported": true,
+        "reasoning_control": "toggle_and_budget",
+        "vision_supported": true,
+        "supported_efforts": [
+          "none",
+          "low"
+        ],
+        "context_window": 256000,
+        "max_output_tokens": null,
+        "context_capacity_source": "official SiliconFlow model center states 256K for moonshotai/Kimi-K2.7-Code",
+        "capability_source": "official SiliconFlow VLM API example for moonshotai/Kimi-K2.7-Code"
+      },
+      "review_configuration": {
+        "configured_reasoning_effort": "low",
+        "configured_thinking_budget": null,
+        "resolved_profile": {
+          "task_kind": "vision_review",
+          "review_complexity": null,
+          "provider_family": "siliconflow",
+          "protocol": "chat_completions",
+          "model": "moonshotai/Kimi-K2.7-Code",
+          "reasoning_effort": "low",
+          "configured_reasoning_effort": "low",
+          "thinking_budget": 2048,
+          "thinking_budget_source": "task_profile_soft_default",
+          "thinking_budget_hard_limit_known": false,
+          "payload_reasoning": {
+            "enable_thinking": true,
+            "thinking_budget": 2048
+          },
+          "reasoning_supported": true,
+          "reasoning_control": "toggle_and_budget",
+          "vision_supported": true,
+          "supported_efforts": [
+            "none",
+            "low"
+          ],
+          "context_window": 256000,
+          "max_output_tokens": null,
+          "context_capacity_source": "official SiliconFlow model center states 256K for moonshotai/Kimi-K2.7-Code",
+          "capability_source": "official SiliconFlow VLM API example for moonshotai/Kimi-K2.7-Code"
+        }
+      },
+      "review_complexity": null,
+      "method": "fresh multimodal request with one selected reference view, authoritative user turns and current preview",
+      "recorded_at": 1790851220.2020938
+    }
+  },
+  "reference_similarity_history": [
+    {
+      "revision": 4,
+      "preview_generation": 1,
+      "partial_candidate_diagnostic_only": false,
+      "view": "iso",
+      "view_comparable": false,
+      "pair_note": "两张图均为 U 形主体的 iso/斜向视角，可见外形、轮廓、前侧凹槽及主体比例，足以比较本轮已完成的主体与凹槽。",
+      "reference_image_index": 1,
+      "reference_id": "sha256:53ed87fadf8cca869da921627e6a13c845424c6906b3de517d5cca972db94553",
+      "reference_image_name": "53ed87fadf8cca869da921627e6a13c845424c6906b3de517d5cca972db94553.png",
+      "reference_images_in_request": 1,
+      "score": 82.0,
+      "raw_model_score": 82.0,
+      "score_is_advisory": true,
+      "review_scope": "Completed: main-body base block and front-recess rectangular slot. Not included: nine circular holes and any edge decorations.",
+      "construction_milestone": {},
+      "user_target_fingerprint": "20dbbdb8be6173b4dc3c87b8f310bf127b58624719b0593ff8b60d80e4700fc4",
+      "user_target_turn_ids": [
+        "921c175f327b40fa96b9bbe9156a4298"
+      ],
+      "coverage_status": "verified",
+      "covered_evidence_ids": [],
+      "coverage_integrity": true,
+      "unsupported_coverage_ids": [],
+      "summary": "当前 iso 视角下，模型呈现了用户目标要求的简化 U 形实体主体与前侧矩形凹槽，未添加孔或装饰。主体外形、U 形轮廓及凹槽位置与参考图一致；各关键无量纲比例处于参考图的可接受估算范围内，整体为近似匹配。参考图中的九个圆孔不在本轮施工范围内，不构成缺失差异。",
+      "reference_hole_count": 9,
+      "count_confidence": 0.9,
+      "evidence": [
+        {
+          "item": "整体外形：U 形实体主体（两侧立臂 + 顶部横梁）",
+          "reference": "参考图显示一个 U 形块：左右两条垂直立臂由顶部横梁连接，底部开放，前侧有矩形凹槽。",
+          "target": "根据附图建立简化的 U 形实体主体。",
+          "model": "模型为 U 形块，左右立臂与顶部横梁连接，底部开放，前侧有矩形凹槽。",
+          "suggested_change": "无需修改",
+          "target_turn_id": "921c175f327b40fa96b9bbe9156a4298",
+          "target_quote": "根据附图建立一个简化的 U 形实体主体",
+          "assessment_basis": "user_target",
+          "target_overrides_reference": false,
+          "reference_status": "match",
+          "evidence_id": "ev1_overall_u_shape",
+          "affected_feature_ids": [
+            "main-body"
+          ],
+          "status": "match",
+          "mismatch_severity": "none",
+          "target_context_validated": true
+        },
+        {
+          "item": "立臂宽度 / 整体宽度比例",
+          "reference": "参考图中，外轮廓宽约 200 px，单侧立臂宽约 50 px，臂宽/总宽 ≈ 0.25；两侧臂宽约相等。",
+          "target": "未标注尺寸按图估算，臂宽与整体宽度比例应接近参考图。",
+          "model": "模型外轮廓宽约 180 px，单侧立臂宽约 45–55 px，臂宽/总宽 ≈ 0.25–0.30，两侧基本对称。",
+          "suggested_change": "无需修改，比例在估算允许范围内",
+          "target_turn_id": "921c175f327b40fa96b9bbe9156a4298",
+          "target_quote": "未标注尺寸按图估算",
+          "assessment_basis": "reference",
+          "target_overrides_reference": false,
+          "reference_status": "approximate_match",
+          "evidence_id": "ev2_arm_width_ratio",
+          "affected_feature_ids": [
+            "main-body"
+          ],
+          "status": "approximate_match",
+          "mismatch_severity": "none"
+        },
+        {
+          "item": "顶部横梁厚度 / 总高比例",
+          "reference": "参考图总高约 240 px，顶部横梁厚度约 60 px，厚度/总高 ≈ 0.25。",
+          "target": "未标注尺寸按图估算，顶部横梁厚度比例应接近参考图。",
+          "model": "模型总高约 250 px，顶部横梁厚度约 60 px，厚度/总高 ≈ 0.24。",
+          "suggested_change": "无需修改",
+          "target_turn_id": "921c175f327b40fa96b9bbe9156a4298",
+          "target_quote": "未标注尺寸按图估算",
+          "assessment_basis": "reference",
+          "target_overrides_reference": false,
+          "reference_status": "approximate_match",
+          "evidence_id": "ev3_bridge_thickness_ratio",
+          "affected_feature_ids": [
+            "main-body"
+          ],
+          "status": "approximate_match",
+          "mismatch_severity": "none"
+        },
+        {
+          "item": "前侧凹槽开口宽度 / 整体宽度比例",
+          "reference": "参考图外轮廓宽约 200 px，凹槽内侧间距约 100 px，凹槽宽/总宽 ≈ 0.50。",
+          "target": "未标注尺寸按图估算，凹槽宽度比例应接近参考图。",
+          "model": "模型外轮廓宽约 180 px，凹槽内侧间距约 80 px，凹槽宽/总宽 ≈ 0.44。",
+          "suggested_change": "如要求更严格贴合原图，可略微加宽凹槽开口；当前在估算范围内可接受",
+          "target_turn_id": "921c175f327b40fa96b9bbe9156a4298",
+          "target_quote": "未标注尺寸按图估算",
+          "assessment_basis": "reference",
+          "target_overrides_reference": false,
+          "reference_status": "approximate_match",
+          "evidence_id": "ev4_recess_width_ratio",
+          "affected_feature_ids": [
+            "front-recess-slot"
+          ],
+          "status": "approximate_match",
+          "mismatch_severity": "minor"
+        },
+        {
+          "item": "凹槽深度 / 整体深度比例",
+          "reference": "参考图中凹槽从正面贯穿至后侧内壁，深度与零件深度一致，可见后侧壁。",
+          "target": "前侧矩形凹槽。",
+          "model": "模型凹槽从正面切入，可见后侧内壁，深度方向贯穿整个零件深度。",
+          "suggested_change": "无需修改",
+          "target_turn_id": "921c175f327b40fa96b9bbe9156a4298",
+          "target_quote": "本轮只做主体和凹槽",
+          "assessment_basis": "user_target",
+          "target_overrides_reference": false,
+          "reference_status": "match",
+          "evidence_id": "ev5_recess_depth_ratio",
+          "affected_feature_ids": [
+            "front-recess-slot"
+          ],
+          "status": "match",
+          "mismatch_severity": "none",
+          "target_context_validated": true
+        },
+        {
+          "item": "前侧凹槽形状与位置",
+          "reference": "参考图前侧为矩形凹槽，位于两侧立臂之间、顶部横梁下方，贯通深度方向。",
+          "target": "本轮只做主体和凹槽。",
+          "model": "模型前侧为矩形凹槽，位于两侧立臂之间、顶部横梁下方，贯通深度方向。",
+          "suggested_change": "无需修改",
+          "target_turn_id": "921c175f327b40fa96b9bbe9156a4298",
+          "target_quote": "本轮只做主体和凹槽",
+          "assessment_basis": "user_target",
+          "target_overrides_reference": false,
+          "reference_status": "match",
+          "evidence_id": "ev6_front_recess_rectangular_slot",
+          "affected_feature_ids": [
+            "front-recess-slot"
+          ],
+          "status": "match",
+          "mismatch_severity": "none",
+          "target_context_validated": true
+        },
+        {
+          "item": "圆孔与装饰特征",
+          "reference": "参考图可见九个彩色圆孔（左臂 3、右臂 3、后侧壁 3）以及可能的边缘装饰。",
+          "target": "本轮只做主体和凹槽，不增加孔或装饰；保存候选后结束。",
+          "model": "模型未添加任何孔或装饰。",
+          "suggested_change": "按用户目标，本轮不应添加孔或装饰，模型正确",
+          "target_turn_id": "921c175f327b40fa96b9bbe9156a4298",
+          "target_quote": "本轮只做主体和凹槽，不增加孔或装饰；保存候选后结束。",
+          "assessment_basis": "user_override",
+          "target_overrides_reference": true,
+          "reference_status": "mismatch",
+          "evidence_id": "ev7_holes_excluded",
+          "affected_feature_ids": [
+            "holes",
+            "edge-decorations"
+          ],
+          "status": "match",
+          "mismatch_severity": "none",
+          "target_context_validated": true
+        }
+      ],
+      "unobservable": [],
+      "review_model": "moonshotai/Kimi-K2.7-Code",
+      "request_profile": {
+        "task_kind": "vision_review",
+        "review_complexity": null,
+        "provider_family": "siliconflow",
+        "protocol": "chat_completions",
+        "model": "moonshotai/Kimi-K2.7-Code",
+        "reasoning_effort": "low",
+        "configured_reasoning_effort": "low",
+        "thinking_budget": 2048,
+        "thinking_budget_source": "task_profile_soft_default",
+        "thinking_budget_hard_limit_known": false,
+        "payload_reasoning": {
+          "enable_thinking": true,
+          "thinking_budget": 2048
+        },
+        "reasoning_supported": true,
+        "reasoning_control": "toggle_and_budget",
+        "vision_supported": true,
+        "supported_efforts": [
+          "none",
+          "low"
+        ],
+        "context_window": 256000,
+        "max_output_tokens": null,
+        "context_capacity_source": "official SiliconFlow model center states 256K for moonshotai/Kimi-K2.7-Code",
+        "capability_source": "official SiliconFlow VLM API example for moonshotai/Kimi-K2.7-Code"
+      },
+      "review_configuration": {
+        "configured_reasoning_effort": "low",
+        "configured_thinking_budget": null,
+        "resolved_profile": {
+          "task_kind": "vision_review",
+          "review_complexity": null,
+          "provider_family": "siliconflow",
+          "protocol": "chat_completions",
+          "model": "moonshotai/Kimi-K2.7-Code",
+          "reasoning_effort": "low",
+          "configured_reasoning_effort": "low",
+          "thinking_budget": 2048,
+          "thinking_budget_source": "task_profile_soft_default",
+          "thinking_budget_hard_limit_known": false,
+          "payload_reasoning": {
+            "enable_thinking": true,
+            "thinking_budget": 2048
+          },
+          "reasoning_supported": true,
+          "reasoning_control": "toggle_and_budget",
+          "vision_supported": true,
+          "supported_efforts": [
+            "none",
+            "low"
+          ],
+          "context_window": 256000,
+          "max_output_tokens": null,
+          "context_capacity_source": "official SiliconFlow model center states 256K for moonshotai/Kimi-K2.7-Code",
+          "capability_source": "official SiliconFlow VLM API example for moonshotai/Kimi-K2.7-Code"
+        }
+      },
+      "review_complexity": null,
+      "method": "fresh multimodal request with one selected reference view, authoritative user turns and current preview",
+      "recorded_at": 1790851220.2020938
+    }
+  ],
+  "visual_evidence_summary": {
+    "revision": 4,
+    "references": {
+      "sha256:53ed87fadf8cca869da921627e6a13c845424c6906b3de517d5cca972db94553": {
+        "reference_id": "sha256:53ed87fadf8cca869da921627e6a13c845424c6906b3de517d5cca972db94553",
+        "filename": "user-nine-hole-recess-iso.png",
+        "comparable_pairs": 0,
+        "noncomparable_pairs": 1,
+        "supported_evidence_ids": [],
+        "estimated_evidence_ids": [],
+        "mismatch_evidence_ids": [],
+        "unobservable_evidence_ids": [],
+        "coverage_status": "unverified",
+        "covered": false
+      }
+    },
+    "latest_review_pairs": 1,
+    "comparable_review_pairs": 0,
+    "noncomparable_review_pairs": 1,
+    "all_references_covered": false
+  },
+  "knowledge_search": {
+    "status": "no_match",
+    "query": "根据附图建立一个简化的 U 形实体主体，未标注尺寸按图估算。本轮只做主体和凹槽，不增加孔或装饰；保存候选后结束。",
+    "matches": [],
+    "negative_examples": [],
+    "image_query_supported": false,
+    "visual_fallback_available": false,
+    "score_meaning": "relevance 是词面相关度排序分数，不是准确率或置信概率。",
+    "message": "当前文字描述没有达到相似检索阈值；这不代表库外不存在对应工件。",
+    "modeling_recipes": []
+  },
+  "knowledge_visual_examples": [],
+  "construction_milestone": {
+    "milestone": "Simplified U-shaped main body and front rectangular recess completed per user request; no holes or decorations added.",
+    "completed_feature_ids": [
+      "main-body",
+      "front-recess"
+    ],
+    "expected_feature_ids": [],
+    "notes": "Nominal dimensions estimated from iso reference image. Holes and edge decorations intentionally excluded for this round.",
+    "revision": 4,
+    "updated_at": 1790851256.312261
+  },
+  "last_valid_candidate": {
+    "revision": 4,
+    "geometry_signature": "f4f38b336c0c5c223f68e2bdc31d4206c1226247178bb88b789b24d642b504be",
+    "rank": [
+      -0.0,
+      -0.0,
+      -0.0,
+      0.0,
+      1.0,
+      1.0,
+      1.0,
+      1.0
+    ],
+    "dimensions": {
+      "unit": "mm",
+      "bbox": [
+        -45.0,
+        -18.0,
+        0.0,
+        45.0,
+        18.0,
+        80.0
+      ],
+      "size": [
+        90.0,
+        36.0,
+        80.0
+      ],
+      "volume_mm3": 196992.0,
+      "surface_area_mm2": 30096.0,
+      "triangles": 28,
+      "feature_count": 2
+    }
+  },
+  "best_evidence_candidate": {
+    "revision": null,
+    "geometry_signature": null,
+    "rank": null,
+    "dimensions": null
+  },
+  "local_geometry_checks": {
+    "backend": "occt_brep",
+    "kernel": "可用：OCCT 7.9.3.1 / cadquery-ocp-novtk 7.9.3.1.1",
+    "self_intersection_face_limit": 15000,
+    "geometry_state": "passed",
+    "state": "passed",
+    "brep_valid": true,
+    "shape_type": "TopAbs_COMPOUND",
+    "solid_count": 1,
+    "connected_component_count": 1,
+    "shell_count": 1,
+    "closed_shell_count": 1,
+    "closed": true,
+    "edge_count": 48,
+    "face_count": 10,
+    "free_edge_count": 0,
+    "volume_mm3": 196992.0,
+    "bbox_mm": [
+      -45.0,
+      -18.0,
+      0.0,
+      45.0,
+      18.0,
+      80.0
+    ],
+    "self_intersection": {
+      "status": "checked_no_intersection",
+      "face_count": 10,
+      "face_limit": 15000,
+      "check_result_count": 0,
+      "check_statuses": [],
+      "method": "BOPAlgo_ArgumentAnalyzer(SelfInterMode=True, UseOBB=True)"
+    },
+    "validity_method": "BRepCheck_Analyzer",
+    "geometry_scope": "native_OCCT_BREP_only_visual_comparison_not_performed",
+    "feature_results": [
+      {
+        "feature_id": "main-body",
+        "kind": "box",
+        "operation": "add",
+        "geometry_support": "exact",
+        "builder": "analytic_prism",
+        "state": "applied",
+        "source_feature_id": null,
+        "source_resolution": null,
+        "solid_count": 1,
+        "brep_valid": true,
+        "before_volume_mm3": 0.0,
+        "after_volume_mm3": 259200.0,
+        "volume_delta_mm3": 259200.0,
+        "cylindrical_cut_intents": [],
+        "depth_measurement": null,
+        "facet_count": null
+      },
+      {
+        "feature_id": "front-recess",
+        "kind": "box",
+        "operation": "cut",
+        "geometry_support": "exact",
+        "builder": "analytic_prism",
+        "state": "applied",
+        "source_feature_id": null,
+        "source_resolution": null,
+        "solid_count": 1,
+        "brep_valid": true,
+        "before_volume_mm3": 259200.0,
+        "after_volume_mm3": 196992.0,
+        "volume_delta_mm3": -62208.0,
+        "cylindrical_cut_intents": [],
+        "depth_measurement": null,
+        "facet_count": null
+      }
+    ],
+    "hole_instances": [],
+    "unverified_cut_intents": [],
+    "hole_feature_count": 0,
+    "measured_hole_source_feature_count": 0,
+    "unverified_cut_intent_count": 0,
+    "planned_hole_instance_count": 0,
+    "active_hole_instance_count": 0,
+    "superseded_hole_instance_count": 0,
+    "active_through_hole_count": 0,
+    "through_hole_count": 0,
+    "all_declared_holes_verified": true,
+    "visual_validation": "not_performed",
+    "catia_executed": false,
+    "build_transaction": "每个特征验证成功后才提交；失败保留上一有效实体",
+    "source": "OpenCASCADE native BREP; preview mesh is display-only",
+    "bbox_size_mm": [
+      90.0,
+      36.0,
+      80.0
+    ],
+    "bbox_ratios_from_brep": {
+      "front_width_height": 1.125,
+      "depth_height": 0.45,
+      "top_width_depth": 2.5
+    },
+    "bbox_ratios_from_mesh": {
+      "front_width_height": 1.125,
+      "depth_height": 0.45,
+      "top_width_depth": 2.5
+    },
+    "feature_count_from_plan": 2,
+    "feature_ids_from_plan": [
+      "main-body",
+      "front-recess"
+    ],
+    "hole_features_from_plan": [],
+    "hole_feature_count_from_plan": 0,
+    "expected_hole_instance_count": 0,
+    "hole_instance_count": 0,
+    "through_hole_checks": [],
+    "through_hole_mesh_checks": [],
+    "hole_measurement_complete": true,
+    "hole_measurement_state": "not_applicable_no_holes_or_cylindrical_cuts",
+    "through_hole_count_expected": 0,
+    "through_hole_count_verified": 0,
+    "through_hole_result": "no_holes_declared",
+    "image_estimate_parameters": [
+      {
+        "feature_id": "main-body",
+        "parameter": "length",
+        "value": 90,
+        "evidence": "Overall left-right span in iso view about 2.5x front-back thickness",
+        "visual_measurement": "not_performed_by_geometry_backend"
+      },
+      {
+        "feature_id": "main-body",
+        "parameter": "width",
+        "value": 36,
+        "evidence": "Front-back depth in iso view",
+        "visual_measurement": "not_performed_by_geometry_backend"
+      },
+      {
+        "feature_id": "main-body",
+        "parameter": "height",
+        "value": 80,
+        "evidence": "Overall vertical span in iso view",
+        "visual_measurement": "not_performed_by_geometry_backend"
+      },
+      {
+        "feature_id": "front-recess",
+        "parameter": "length",
+        "value": 36.0,
+        "evidence": "Front-facing rectangular slot visible in iso view between the two outer walls, exposing the recessed back wall with a horizontal top step; proportions estimated relative to outer walls 图像/用户依据：凹槽尺寸。 凹槽面内宽度映射到此坐标轴。",
+        "visual_measurement": "not_performed_by_geometry_backend"
+      },
+      {
+        "feature_id": "front-recess",
+        "parameter": "height",
+        "value": 72.0,
+        "evidence": "Front-facing rectangular slot visible in iso view between the two outer walls, exposing the recessed back wall with a horizontal top step; proportions estimated relative to outer walls 图像/用户依据：凹槽尺寸。 凹槽面内高度映射到此坐标轴。",
+        "visual_measurement": "not_performed_by_geometry_backend"
+      }
+    ],
+    "catia_geometry_verification": "not_performed"
+  },
+  "view_previews": {
+    "iso": "C:\\Users\\lycohana\\AppData\\Local\\AI Modeler\\dsh\\sessions\\input-image-prune-20261001\\output\\views\\iso.png"
+  },
+  "unresolved_findings": [],
+  "finish_state": "candidate_not_verified",
+  "finish_summary": {
+    "finish_state": "candidate_not_verified",
+    "accepted": false,
+    "local_geometry_state": "passed",
+    "hole_measurement": {
+      "complete": true,
+      "declared_feature_ids": [],
+      "measured_feature_ids": [],
+      "instance_count": 0,
+      "active_instance_count": 0,
+      "superseded_instance_count": 0,
+      "active_through_hole_count": 0,
+      "instance_statuses": [],
+      "measurement_complete_flag": true,
+      "unverified_cut_intents": []
+    },
+    "independent_review_pair_count": 1,
+    "visual_evidence": {
+      "revision": 4,
+      "references": {
+        "sha256:53ed87fadf8cca869da921627e6a13c845424c6906b3de517d5cca972db94553": {
+          "reference_id": "sha256:53ed87fadf8cca869da921627e6a13c845424c6906b3de517d5cca972db94553",
+          "filename": "user-nine-hole-recess-iso.png",
+          "comparable_pairs": 0,
+          "noncomparable_pairs": 1,
+          "supported_evidence_ids": [],
+          "estimated_evidence_ids": [],
+          "mismatch_evidence_ids": [],
+          "unobservable_evidence_ids": [],
+          "coverage_status": "unverified",
+          "covered": false
+        }
+      },
+      "latest_review_pairs": 1,
+      "comparable_review_pairs": 0,
+      "noncomparable_review_pairs": 1,
+      "all_references_covered": false
+    },
+    "required_external_facts": {
+      "required_count": 0,
+      "verified_count": 0,
+      "failed_count": 0,
+      "unknown_count": 0,
+      "facts": {}
+    },
+    "open_finding_count": 0,
+    "construction_complete": true,
+    "catia_invoked": false
+  },
+  "summary": "Candidate model of a simplified U-shaped solid body with a front-facing rectangular recess/slot. Base block 90×36×80 mm with a centered front recess (36 mm wide × 72 mm high × 24 mm deep). Nine holes and edge decorations omitted per the current user request. Absolute dimensions are image estimates because the reference figure has no annotations; the iso visual review shows approximate proportion match. Saved as candidate for this round.",
+  "catia_executed": false
+}

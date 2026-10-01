@@ -1,0 +1,25 @@
+{
+  "schema_version": 1,
+  "session_id": "aq-text-diagnostic-20261001",
+  "turns": [
+    {
+      "turn_id": "9aeb31f903f94672b6d4cf0d50f0b10d",
+      "session_id": "aq-text-diagnostic-20261001",
+      "raw_user_prompt": "创建一个100×60×20毫米长方体",
+      "reference_ids": [],
+      "created_at": "2026-10-01T05:00:10.504Z",
+      "at_epoch_ms": 1790830810504
+    },
+    {
+      "turn_id": "8426d16d85154f6b9cd7cb635db29bd6",
+      "session_id": "aq-text-diagnostic-20261001",
+      "raw_user_prompt": "不要修改模型。请简要复述当前主体的长、宽、高和中心位置，并核对现有CADPlan。",
+      "reference_ids": [],
+      "created_at": "2026-10-01T05:22:09.936Z",
+      "at_epoch_ms": 1790832129936,
+      "intent": "query",
+      "affects_model_target": false,
+      "intent_source": "cli_rules"
+    }
+  ]
+}

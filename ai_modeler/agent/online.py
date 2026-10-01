@@ -23,6 +23,8 @@ import time
 import urllib.error
 import urllib.parse
 import urllib.request
+import socket
+import base64
 
 UA = ('Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 '
       '(KHTML, like Gecko) Chrome/124.0 Safari/537.36')
@@ -113,46 +115,252 @@ def fetch_page_text(url, timeout=6, limit=4000):
     return txt[:limit]
 
 
-def search(query: str, timeout: int = 8, use_cache: bool = True):
-    """搜索并返回 [{'title','snippet','url'}, ...]。失败返回空列表。"""
-    q = (query or '').strip()
-    if not q:
-        return []
-    key = q.lower()
-    if use_cache and key in _CACHE:
-        return _CACHE[key]
-
-    url = 'https://www.bing.com/search?' + urllib.parse.urlencode(
-        {'q': q, 'setlang': 'zh-CN', 'count': '12'})
+def fetch_page_text_detailed(url, timeout=8, limit=12000):
+    """Read a result page with enough diagnostics to distinguish fetch and parse failures."""
+    started = time.time()
     try:
         page = _fetch(url, timeout)
-    except Exception:
-        return []
+    except Exception as exc:
+        diagnostic = _search_error(exc)
+        diagnostic.update({'source_url': url, 'duration_seconds': round(time.time()-started, 3),
+                           'body_chars': 0})
+        return {'text': '', 'diagnostics': diagnostic}
+    text = _text(_SCRIPT.sub(' ', page))[:max(0, int(limit))]
+    status = 'ok' if text.strip() else 'empty_body'
+    return {'text': text, 'diagnostics': {
+        'status': status, 'source_url': url, 'http_response': True,
+        'response_chars': len(page), 'body_chars': len(text),
+        'content_sha256': __import__('hashlib').sha256(text.encode('utf-8')).hexdigest(),
+        'duration_seconds': round(time.time()-started, 3),
+    }}
 
-    page = _SCRIPT.sub(' ', page)
+
+def _is_timeout_error(exc: BaseException) -> bool:
+    if isinstance(exc, (TimeoutError, socket.timeout)):
+        return True
+    reason = getattr(exc, 'reason', None)
+    return isinstance(reason, (TimeoutError, socket.timeout))
+
+
+def _search_error(exc: BaseException) -> dict:
+    if isinstance(exc, urllib.error.HTTPError):
+        return {'status': 'http_error', 'http_status': int(exc.code),
+                'error': 'HTTP %s' % exc.code}
+    reason = getattr(exc, 'reason', None)
+    if isinstance(exc, urllib.error.URLError) and reason is not None:
+        exc = reason
+    if _is_timeout_error(exc):
+        return {'status': 'timeout', 'error': 'request timed out'}
+    return {'status': 'network_error',
+            'error': str(exc)[:300] or type(exc).__name__}
+
+
+def _decode_ddg_url(url: str) -> str:
+    parsed = urllib.parse.urlsplit(html.unescape(url))
+    if parsed.hostname and parsed.hostname.lower().endswith('duckduckgo.com'):
+        redirected = urllib.parse.parse_qs(parsed.query).get('uddg')
+        if redirected:
+            return redirected[0]
+    return html.unescape(url)
+
+
+def _decode_bing_url(url: str) -> str:
+    parsed = urllib.parse.urlsplit(html.unescape(url))
+    if parsed.hostname and parsed.hostname.lower().endswith('bing.com'):
+        encoded = urllib.parse.parse_qs(parsed.query).get('u', [''])[0]
+        if encoded.startswith('a1'):
+            value = encoded[2:]
+            try:
+                return base64.urlsafe_b64decode(value + '=' * (-len(value) % 4)).decode('utf-8')
+            except (ValueError, UnicodeDecodeError):
+                return url
+    return html.unescape(url)
+
+
+def _query_relevance_terms(query: str) -> tuple[set[str], set[str]]:
+    words = {value.lower() for value in re.findall(r'[A-Za-z0-9]+', query)
+             if len(value) >= 3 and value.lower() not in {
+                 'the', 'and', 'for', 'with', 'from', 'please', 'find', 'search',
+                 'official', 'source', 'page', 'value', 'values', 'standard'}}
+    codes = {value.lower() for value in re.findall(r'[A-Za-z]*\d+[A-Za-z0-9-]*', query)}
+    return words, codes
+
+
+def _filter_relevant_rows(query: str, rows: list[dict]) -> list[dict]:
+    words, codes = _query_relevance_terms(query)
+    if not words and not codes:
+        return rows
+    relevant_rows = []
+    for row in rows:
+        text = ('%s %s %s' % (row.get('title') or '', row.get('snippet') or '',
+                              row.get('url') or '')).lower()
+        text_words = set(re.findall(r'[a-z0-9]+', text))
+        text_codes = {value.lower() for value in re.findall(r'[a-z]*\d+[a-z0-9-]*', text)}
+        # When a query includes a model/grade/standard code, require a matching
+        # code token; a generic word like "density" alone is too weak.
+        if codes:
+            code_match = any(code in text_codes or code.replace('-', '') in text.replace('-', '')
+                             for code in codes)
+            if not code_match:
+                continue
+        if words and not (words & text_words):
+            continue
+        relevant_rows.append(row)
+    return relevant_rows
+
+
+def _parse_bing_results(page: str) -> list[dict]:
+    page = _SCRIPT.sub(' ', page or '')
+    blocks = re.findall(
+        r'<li\b[^>]*class=["\'][^"\']*\bb_algo\b[^"\']*["\'][^>]*>.*?</li>',
+        page, re.S | re.I)
     results = []
-    # Bing 的每条结果大致是 <li class="b_algo"> ... <h2><a href=..>标题</a></h2> ... <p>摘要</p>
-    for block in re.findall(r'<li class="b_algo".*?</li>', page, re.S):
-        m = re.search(r'<h2[^>]*>\s*<a[^>]*href="([^"]+)"[^>]*>(.*?)</a>', block, re.S)
-        if not m:
+    for block in blocks:
+        match = re.search(
+            r'<h2\b[^>]*>.*?<a\b[^>]*href=["\']([^"\']+)["\'][^>]*>(.*?)</a>',
+            block, re.S | re.I)
+        if not match:
             continue
-        link = html.unescape(m.group(1))
-        title = _text(m.group(2))
-        if not title:
+        url = _decode_bing_url(match.group(1).strip())
+        title = _text(match.group(2))
+        if not url or not title:
             continue
-        snip = ''
-        for pm in re.finditer(r'<p[^>]*>(.*?)</p>', block, re.S):
-            cand = _text(pm.group(1))
-            if len(cand) > len(snip):
-                snip = cand
-        results.append({'title': title, 'snippet': snip, 'url': link})
+        snippets = [_text(item) for item in re.findall(
+            r'<p\b[^>]*>(.*?)</p>', block, re.S | re.I)]
+        results.append({'title': title, 'snippet': max(snippets, key=len, default=''),
+                        'url': url})
         if len(results) >= 10:
             break
+    return results
+
+
+def _parse_ddg_results(page: str) -> list[dict]:
+    page = _SCRIPT.sub(' ', page or '')
+    anchors = list(re.finditer(
+        r'<a\b(?=[^>]*\bclass=["\'][^"\']*\bresult__a\b[^"\']*["\'])'
+        r'(?=[^>]*\bhref=["\']([^"\']+)["\'])[^>]*>(.*?)</a>',
+        page, re.S | re.I))
+    results = []
+    for index, match in enumerate(anchors[:10]):
+        url = _decode_ddg_url(match.group(1).strip())
+        title = _text(match.group(2))
+        if not url or not title:
+            continue
+        chunk_end = anchors[index + 1].start() if index + 1 < len(anchors) else len(page)
+        tail = page[match.end():min(chunk_end, match.end() + 5000)]
+        snippet_match = re.search(
+            r'<(?:a|div|span)[^>]*class=["\'][^"\']*\bresult__snippet\b'
+            r'[^"\']*["\'][^>]*>(.*?)</(?:a|div|span)>',
+            tail, re.S | re.I)
+        results.append({'title': title,
+                        'snippet': _text(snippet_match.group(1)) if snippet_match else '',
+                        'url': url})
+    return results
+
+
+def _explicit_no_results(page: str) -> bool:
+    return bool(re.search(
+        r'class=["\'][^"\']*\bb_no\b|there are no results|no results for|'
+        r'no results found', page or '', re.I))
+
+
+def search_detailed(query: str, timeout: int = 8,
+                    use_cache: bool = True) -> dict:
+    """Search with diagnostics while keeping result rows in the legacy shape."""
+    q = (query or '').strip()
+    if not q:
+        return {'results': [], 'diagnostics': {
+            'status': 'invalid_query', 'engine': None, 'source_url': None,
+            'query': '', 'result_count': 0}}
+    key = q.lower()
+    if use_cache and key in _CACHE:
+        cached = _CACHE[key]
+        if isinstance(cached, dict) and isinstance(cached.get('results'), list):
+            rows = cached['results']
+            cached_diag = dict(cached.get('diagnostics') or {})
+            cached_diag.update({'status': 'cache_hit' if rows else 'cache_empty',
+                                'query': q, 'result_count': len(rows),
+                                'source_url': None})
+            cached_diag.setdefault('engine', 'unknown')
+        else:
+            rows = cached if isinstance(cached, list) else []
+            cached_diag = {'status': 'cache_hit' if rows else 'cache_empty',
+                           'engine': 'unknown', 'source_url': None,
+                           'query': q, 'result_count': len(rows),
+                           'cache_metadata': 'legacy_cache_without_engine'}
+        return {'results': rows, 'diagnostics': {
+            **cached_diag}}
+
+    attempts = []
+    engine_specs = [
+        ('bing', 'https://www.bing.com/search?' + urllib.parse.urlencode(
+            {'q': q, 'setlang': 'zh-CN', 'count': '12'}), _parse_bing_results),
+        ('duckduckgo', 'https://html.duckduckgo.com/html/?' + urllib.parse.urlencode(
+            {'q': q}), _parse_ddg_results),
+    ]
+    results = []
+    any_response = False
+    explicit_no_results = False
+    for engine, url, parser in engine_specs:
+        try:
+            page = _fetch(url, timeout)
+            any_response = True
+            rows = parser(page)
+            parsed_count = len(rows)
+            rows = _filter_relevant_rows(q, rows)
+            attempt_status = 'ok' if rows else (
+                'no_results' if _explicit_no_results(page) else
+                'irrelevant_results' if parsed_count else 'parser_changed')
+            attempts.append({'engine': engine, 'status': attempt_status,
+                             'source_url': url, 'http_response': True,
+                             'result_count': len(rows), 'parsed_result_count': parsed_count,
+                             'response_chars': len(page)})
+            explicit_no_results = explicit_no_results or attempt_status == 'no_results'
+            if rows:
+                results = rows
+                break
+        except Exception as exc:
+            attempts.append({'engine': engine, 'source_url': url,
+                             'http_response': False, **_search_error(exc)})
 
     if results:
-        _CACHE[key] = results
+        status = 'ok'
+        engine = next(row['engine'] for row in attempts if row.get('result_count'))
+        source_url = next(row['source_url'] for row in attempts
+                          if row.get('engine') == engine)
+    else:
+        engine = None
+        source_url = None
+        if any(row.get('status') == 'irrelevant_results' for row in attempts):
+            status = 'irrelevant_results'
+        elif explicit_no_results:
+            if attempts and all(row.get('status') == 'no_results' for row in attempts):
+                status = 'no_results'
+            else:
+                status = 'mixed_failure'
+        elif any_response:
+            status = 'parser_changed'
+        else:
+            statuses = [row.get('status') for row in attempts]
+            status = 'timeout' if 'timeout' in statuses else (
+                'http_error' if 'http_error' in statuses else 'network_error')
+
+    if results:
+        _CACHE[key] = {'results': results, 'diagnostics': {
+            'engine': engine, 'source_url': source_url,
+            'attempts': attempts, 'fallback_used': len(attempts) > 1}}
         _save_cache()
-    return results
+    diagnostics = {
+        'status': status, 'engine': engine, 'source_url': source_url,
+        'query': q, 'result_count': len(results), 'attempts': attempts,
+        'fallback_used': len(attempts) > 1,
+    }
+    return {'results': results, 'diagnostics': diagnostics}
+
+
+def search(query: str, timeout: int = 8, use_cache: bool = True):
+    """Search and return the historical list of {'title','snippet','url'} rows."""
+    return search_detailed(query, timeout=timeout, use_cache=use_cache)['results']
 
 
 # --------------------------------------------------------------------------

@@ -1,0 +1,19 @@
+{
+  "schema_version": 1,
+  "session_id": "coldimg20261001p0guard",
+  "turns": [
+    {
+      "turn_id": "7460b4e355a944d290c4b7fb29a92ca8",
+      "session_id": "coldimg20261001p0guard",
+      "raw_user_prompt": "请根据参考图生成可编辑模型；图片没有尺寸标注，按图内比例估算并标明尺寸来源。",
+      "reference_ids": [
+        "sha256:53ed87fadf8cca869da921627e6a13c845424c6906b3de517d5cca972db94553"
+      ],
+      "created_at": "2026-10-01T15:40:46.590Z",
+      "at_epoch_ms": 1790869246590,
+      "intent": "model_target",
+      "affects_model_target": true,
+      "intent_source": "cli_rules"
+    }
+  ]
+}

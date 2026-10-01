@@ -1335,11 +1335,34 @@ def _preview_plan(args: dict, state: dict) -> dict:
         preview = cad.cadplan.preview_plan(plan, image_path=str(image_path),
                                            view_set=view_set)
     except Exception as exc:
-        return {"state": "preview_failed", "error": str(exc)}
+        result = {
+            "state": "preview_failed", "error": str(exc),
+            "last_valid_preview_retained": bool(state.get("last_valid_preview")),
+            "last_valid_preview_geometry_fingerprint":
+                state.get("last_valid_preview_geometry_fingerprint"),
+        }
+        state["latest_preview_attempt"] = result
+        return result
     if preview.get("state") != "previewed" or not os.path.isfile(str(image_path)):
-        return {"state": "preview_failed",
-                "error": preview.get("error") or preview.get("preview_image_error") or preview.get("state")}
+        result = dict(preview)
+        result.update({
+            "state": "preview_failed",
+            "error": (preview.get("error") or preview.get("preview_image_error")
+                      or preview.get("state")),
+            # Keep the last successful preview separately. It may remain visible
+            # in the UI, but its fingerprint must never be used as evidence for
+            # this failed geometry revision.
+            "last_valid_preview_retained": bool(state.get("last_valid_preview")),
+            "last_valid_preview_geometry_fingerprint":
+                state.get("last_valid_preview_geometry_fingerprint"),
+        })
+        state["latest_preview_attempt"] = result
+        return result
     state["latest_preview"] = preview
+    state["last_valid_preview"] = preview
+    state["last_valid_preview_geometry_fingerprint"] = state.get(
+        "plan_geometry_fingerprint")
+    state["latest_preview_attempt"] = preview
     state["preview_geometry_fingerprint"] = state["plan_geometry_fingerprint"]
     state["previews"] = {
         cad._plan_fingerprint(plan, view_set): {"result": preview},
@@ -1412,6 +1435,10 @@ def _apply_incremental(name: str, args: dict, state: dict) -> dict:
     notes = []
     # Snapshot before _set_plan runs: a geometry change clears latest_preview.
     previous_preview = state.get("latest_preview") or {}
+    if previous_preview:
+        state.setdefault("last_valid_preview", previous_preview)
+        state.setdefault("last_valid_preview_geometry_fingerprint",
+                         state.get("preview_geometry_fingerprint"))
     if name == "cad_create_model" and state.get("has_reference_images"):
         blockers = _reference_reading_blockers(
             state.get("reference_reading"),
@@ -1508,10 +1535,12 @@ def _apply_incremental(name: str, args: dict, state: dict) -> dict:
         result["preview"] = _preview_plan({"view_set": "iso"}, state)
         if result["preview"].get("state") != "previewed":
             result["state"] = "preview_failed"
-        effect = _feature_effect(name, previous_preview, state.get("latest_preview") or {},
-                                 args.get("feature") or (
-                                     {"operation": "cut"} if name == "cad_remove_feature"
-                                     else None))
+        changed_feature = _changed_feature(name, args, current, candidate)
+        effect = _feature_effect(
+            name, previous_preview, result.get("preview") or {},
+            changed_feature or ({"operation": "cut"} if name == "cad_remove_feature"
+                                else None),
+            feature_id=(changed_feature or {}).get("id"))
         if effect:
             result["feature_effect"] = effect
     coverage = _reference_feature_coverage(candidate, state.get("reference_reading"))
@@ -1522,15 +1551,32 @@ def _apply_incremental(name: str, args: dict, state: dict) -> dict:
     return result
 
 
-def _coincident_face_warning(feature: dict, previous_bbox) -> str:
-    """Warn when a cut face sits exactly on a face of the current solid.
+def _changed_feature(name: str, args: dict, before_plan: dict,
+                     after_plan: dict) -> dict:
+    """Return the feature whose geometry was directly changed, when identifiable."""
+    feature_id = None
+    if name in {"cad_create_model", "cad_add_feature"}:
+        row = args.get("first_feature") if name == "cad_create_model" else args.get("feature")
+        if isinstance(row, dict):
+            feature_id = row.get("id")
+    elif name in {"cad_update_feature", "cad_remove_feature"}:
+        feature_id = args.get("feature_id")
+    if feature_id is None:
+        return {}
+    wanted = str(feature_id)
+    for feature in reversed((after_plan or {}).get("features") or []):
+        if isinstance(feature, dict) and str(feature.get("id")) == wanted:
+            return feature
+    # Removed features are absent from the new plan. Preserve their prior
+    # operation/type for attribution rather than guessing from the whole model.
+    for feature in (before_plan or {}).get("features") or []:
+        if isinstance(feature, dict) and str(feature.get("id")) == wanted:
+            return feature
+    return {"id": wanted}
 
-    Measured on this kernel: a box or prism cut whose bottom face is exactly
-    coplanar with the solid's top face removes 300/346 mm^3 where it must remove
-    0; moving it 0.001 mm gives the right answer. The M6 screw run chased these
-    nonsense volumes for eighteen rounds, so the coincidence is reported instead
-    of being left to arithmetic.
-    """
+
+def _coincident_face_warning(feature: dict, previous_bbox) -> str:
+    """Explain a measured no-op where a cutter face only touches the solid."""
     if not isinstance(feature, dict) or str(feature.get("operation")) != "cut":
         return ""
     if not (isinstance(previous_bbox, list) and len(previous_bbox) == 6):
@@ -1544,6 +1590,7 @@ def _coincident_face_warning(feature: dict, previous_bbox) -> str:
         return ""
     if not (isinstance(own, list) and len(own) == 6):
         return ""
+    tolerance = 1e-6
     for index, name in enumerate(("X", "Y", "Z")):
         for mine in (own[index], own[index + 3]):
             for theirs in (previous_bbox[index], previous_bbox[index + 3]):
@@ -1551,15 +1598,23 @@ def _coincident_face_warning(feature: dict, previous_bbox) -> str:
                     gap = abs(float(mine) - float(theirs))
                 except (TypeError, ValueError):
                     continue
-                if gap < 1e-9:
-                    return ("本次切除在 %s 轴上有面与实体表面完全重合（%g）。实测这种完全共面的"
-                            "布尔运算会给出错误的体积（本应移除 0 却移除数百 mm³），"
-                            "因此不要用当前体积判断这一步的对错。请让切除体越过该面 0.001 mm 以上。"
+                if gap <= tolerance:
+                    # A coincident plane only matters when the cutter also
+                    # overlaps the solid's footprint on both other axes.
+                    other_axes = [axis for axis in range(3) if axis != index]
+                    if any(min(float(own[axis + 3]), float(previous_bbox[axis + 3]))
+                           - max(float(own[axis]), float(previous_bbox[axis]))
+                           <= tolerance for axis in other_axes):
+                        continue
+                    return ("本次切除在 %s 轴上与实体表面完全重合（%g），刀具体只接触边界，"
+                            "未形成可测的切削深度。若需要凹槽，请让刀具体越过该边界至少 0.001 mm；"
+                            "若目标是外侧开口，请重新核对切除方向。"
                             % (name, float(mine)))
     return ""
 
 
-def _feature_effect(name: str, before: dict, after: dict, feature: dict = None) -> dict:
+def _feature_effect(name: str, before: dict, after: dict, feature: dict = None,
+                    feature_id: str = None) -> dict:
     """What this single feature actually did to the material.
 
     Without it the model could only infer its own cuts from a bbox and a volume
@@ -1567,25 +1622,113 @@ def _feature_effect(name: str, before: dict, after: dict, feature: dict = None) 
     those numbers -- including a hole whose diameter equalled the shank and so
     removed nothing at all.
     """
+    def checks(preview):
+        return (preview or {}).get("local_geometry_checks") or {}
+
     def volume(preview):
         dimensions = (preview or {}).get("dimensions") or {}
-        return dimensions.get("volume_mm3", dimensions.get("volume"))
+        value = dimensions.get("volume_mm3", dimensions.get("volume"))
+        if isinstance(value, (int, float)):
+            return float(value)
+        value = checks(preview).get("volume_mm3")
+        return float(value) if isinstance(value, (int, float)) else None
 
-    was, now = volume(before), volume(after)
-    if not isinstance(was, (int, float)) or not isinstance(now, (int, float)):
-        return {}
-    delta = float(now) - float(was)
-    effect = {"volume_before_mm3": round(float(was), 3),
-              "volume_after_mm3": round(float(now), 3),
-              "volume_delta_mm3": round(delta, 3)}
-    coincident = _coincident_face_warning(
-        feature, ((before or {}).get("dimensions") or {}).get("bbox"))
-    if coincident:
-        effect["warning"] = coincident
-    elif abs(delta) < 0.01:
+    def row_for(preview):
+        if not feature_id:
+            return None
+        rows = checks(preview).get("feature_results") or []
+        return next((row for row in rows if isinstance(row, dict)
+                     and str(row.get("feature_id")) == str(feature_id)), None)
+
+    before_volume, after_volume = volume(before), volume(after)
+    report = checks(after)
+    feature_row = row_for(after)
+    effect = {"feature_id": str(feature_id) if feature_id is not None else None,
+              "operation": (feature or {}).get("operation"),
+              "state": "measured"}
+
+    # Prefer the native per-feature BREP record. It measures the material
+    # immediately before and after this operation, unlike a mesh-derived guess
+    # from preview dimensions.
+    if feature_row and feature_row.get("state") == "applied":
+        for output_key, source_key in (("volume_before_mm3", "before_volume_mm3"),
+                                       ("volume_after_mm3", "after_volume_mm3"),
+                                       ("volume_delta_mm3", "volume_delta_mm3")):
+            value = feature_row.get(source_key)
+            if isinstance(value, (int, float)):
+                effect[output_key] = round(float(value), 3)
+        effect["state"] = "applied"
+        effect["measurement_source"] = "occt_brep_feature_result"
+    else:
+        # The OCCT failure report exposes a measured attempted effect only when
+        # it could classify the failing feature without guessing.
+        failed_effect = report.get("failed_feature_effect") or {}
+        if (feature_id is None
+                or str(failed_effect.get("feature_id")) == str(feature_id)):
+            effect_state = failed_effect.get("state")
+            if effect_state in {"no_op", "failed", "unmeasured"}:
+                effect["state"] = effect_state
+                effect["measurement_source"] = "occt_brep_failed_feature_effect"
+                for output_key, source_key in (
+                        ("volume_before_mm3", "before_volume_mm3"),
+                        ("volume_after_mm3", "after_volume_mm3"),
+                        ("volume_delta_mm3", "volume_delta_mm3")):
+                    value = failed_effect.get(source_key)
+                    if isinstance(value, (int, float)):
+                        effect[output_key] = round(float(value), 3)
+                for key in ("reason", "failure_code"):
+                    if failed_effect.get(key):
+                        effect[key] = failed_effect[key]
+                if failed_effect.get("warning"):
+                    effect["warning"] = str(failed_effect["warning"])
+        # Removing a feature leaves no corresponding row in the new feature
+        # table. The total BREP volumes are the truthful fallback for that edit.
+        if (effect.get("state") == "measured" and before_volume is not None
+                and after_volume is not None):
+            effect.update({"state": "applied",
+                           "volume_before_mm3": round(before_volume, 3),
+                           "volume_after_mm3": round(after_volume, 3),
+                           "volume_delta_mm3": round(after_volume - before_volume, 3),
+                           "measurement_scope": "whole_model",
+                           "measurement_source": "occt_brep_total_volume_comparison"})
+
+    if before_volume is not None:
+        effect.setdefault("volume_before_mm3", round(before_volume, 3))
+    if after_volume is not None:
+        effect.setdefault("volume_after_mm3", round(after_volume, 3))
+    if effect.get("volume_delta_mm3") is None:
+        if (effect.get("state") in {"measured", "applied"}
+                and before_volume is not None and after_volume is not None):
+            effect["volume_delta_mm3"] = round(after_volume - before_volume, 3)
+        else:
+            effect["volume_delta_mm3"] = None
+
+    if report.get("failed_feature_id") and str(report.get("failed_feature_id")) == str(feature_id):
+        effect["preview_failure"] = report.get("error")
+        if effect.get("state") == "measured":
+            effect["state"] = "failed"
+            effect["volume_delta_mm3"] = None
+    warning = str(effect.get("warning") or "")
+    if not warning and feature and feature.get("operation") == "cut":
+        # Face-coincidence is useful explanatory evidence for a failed or
+        # measured no-op cut. The tolerance accounts for BREP bbox tolerances.
+        if effect.get("state") in {"no_op", "failed", "unmeasured"} or abs(
+                float(effect.get("volume_delta_mm3") or 0.0)) < 0.01:
+            warning = _coincident_face_warning(
+                feature, ((before or {}).get("dimensions") or {}).get("bbox"))
+    if warning:
+        effect["warning"] = warning
+    elif (effect.get("state") == "no_op" or
+          (isinstance(effect.get("volume_delta_mm3"), (int, float))
+           and abs(effect["volume_delta_mm3"]) < 0.01)):
         effect["warning"] = ("本次「%s」没有改变材料（体积变化 <0.01 mm³）："
-                            "特征没有与实体相交，或切除尺寸等于/小于被切部位。"
-                            "请检查位置与尺寸，不要重复提交同一个特征。" % name)
+                             "特征没有与实体相交，或切除尺寸等于/小于被切部位。"
+                             "请检查位置与尺寸，不要重复提交同一个特征。" % name)
+    if after.get("state") == "preview_failed":
+        effect["last_valid_preview_retained"] = bool(
+            after.get("last_valid_preview_retained"))
+        effect["last_valid_preview_geometry_fingerprint"] = after.get(
+            "last_valid_preview_geometry_fingerprint")
     return effect
 
 

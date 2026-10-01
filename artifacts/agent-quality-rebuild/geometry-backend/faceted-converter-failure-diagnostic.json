@@ -1,0 +1,578 @@
+{
+  "artifact_type": "facet_brep_conversion_stage_diagnostic",
+  "verification_mode": "direct_sdk_not_agent_ui",
+  "tolerance_mm": 1e-05,
+  "rows": [
+    {
+      "kind": "socket_head_bolt",
+      "triangle_count": 14938,
+      "triangle_groups": 4,
+      "group_shapes": [
+        {
+          "group": 0,
+          "triangles": 68,
+          "error": "shell 未闭合（第 1 个 shell，自由边 10）。"
+        },
+        {
+          "group": 1,
+          "triangles": 17,
+          "error": "shell 未闭合（第 1 个 shell，自由边 7）。"
+        },
+        {
+          "group": 2,
+          "triangles": 5,
+          "error": "shell 未闭合（第 1 个 shell，自由边 7）。"
+        },
+        {
+          "group": 3,
+          "triangles": 14848,
+          "solids": 1,
+          "sewing_free_edges": 0,
+          "inspection": [
+            {
+              "brep_valid": true,
+              "shape_type": "TopAbs_SOLID",
+              "solid_count": 1,
+              "connected_component_count": 1,
+              "shell_count": 1,
+              "closed_shell_count": 1,
+              "closed": true,
+              "edge_count": 44544,
+              "face_count": 14848,
+              "free_edge_count": 0,
+              "volume_mm3": 954.095289066138,
+              "bbox_mm": [
+                -4.0,
+                -4.0,
+                8.0,
+                4.0,
+                4.0,
+                32.0
+              ],
+              "self_intersection": {
+                "status": "deferred_to_final_shape",
+                "face_count": 14848
+              },
+              "validity_method": "BRepCheck_Analyzer",
+              "geometry_scope": "native_OCCT_BREP_only_visual_comparison_not_performed"
+            }
+          ]
+        }
+      ],
+      "union": {
+        "brep_valid": true,
+        "shape_type": "TopAbs_SOLID",
+        "solid_count": 1,
+        "connected_component_count": 1,
+        "shell_count": 1,
+        "closed_shell_count": 1,
+        "closed": true,
+        "edge_count": 44544,
+        "face_count": 14848,
+        "free_edge_count": 0,
+        "volume_mm3": 954.095289066138,
+        "bbox_mm": [
+          -4.0,
+          -4.0,
+          8.0,
+          4.0,
+          4.0,
+          32.0
+        ],
+        "self_intersection": {
+          "status": "deferred_to_final_shape",
+          "face_count": 14848
+        },
+        "validity_method": "BRepCheck_Analyzer",
+        "geometry_scope": "native_OCCT_BREP_only_visual_comparison_not_performed"
+      }
+    },
+    {
+      "kind": "spoked_wheel",
+      "triangle_count": 648,
+      "triangle_groups": 8,
+      "group_shapes": [
+        {
+          "group": 0,
+          "triangles": 384,
+          "solids": 1,
+          "sewing_free_edges": 0,
+          "inspection": [
+            {
+              "brep_valid": true,
+              "shape_type": "TopAbs_SOLID",
+              "solid_count": 1,
+              "connected_component_count": 1,
+              "shell_count": 1,
+              "closed_shell_count": 1,
+              "closed": true,
+              "edge_count": 1152,
+              "face_count": 384,
+              "free_edge_count": 0,
+              "volume_mm3": 5613.670474999993,
+              "bbox_mm": [
+                -30.0,
+                -30.0,
+                -4.0,
+                30.0,
+                30.0,
+                4.0
+              ],
+              "self_intersection": {
+                "status": "deferred_to_final_shape",
+                "face_count": 384
+              },
+              "validity_method": "BRepCheck_Analyzer",
+              "geometry_scope": "native_OCCT_BREP_only_visual_comparison_not_performed"
+            }
+          ]
+        },
+        {
+          "group": 1,
+          "triangles": 192,
+          "solids": 1,
+          "sewing_free_edges": 0,
+          "inspection": [
+            {
+              "brep_valid": true,
+              "shape_type": "TopAbs_SOLID",
+              "solid_count": 1,
+              "connected_component_count": 1,
+              "shell_count": 1,
+              "closed_shell_count": 1,
+              "closed": true,
+              "edge_count": 576,
+              "face_count": 192,
+              "free_edge_count": 0,
+              "volume_mm3": 1395.3866470039247,
+              "bbox_mm": [
+                -8.0,
+                -8.0,
+                -4.0,
+                8.0,
+                8.0,
+                4.0
+              ],
+              "self_intersection": {
+                "status": "deferred_to_final_shape",
+                "face_count": 192
+              },
+              "validity_method": "BRepCheck_Analyzer",
+              "geometry_scope": "native_OCCT_BREP_only_visual_comparison_not_performed"
+            }
+          ]
+        },
+        {
+          "group": 2,
+          "triangles": 12,
+          "solids": 1,
+          "sewing_free_edges": 0,
+          "inspection": [
+            {
+              "brep_valid": true,
+              "shape_type": "TopAbs_SOLID",
+              "solid_count": 1,
+              "connected_component_count": 1,
+              "shell_count": 1,
+              "closed_shell_count": 1,
+              "closed": true,
+              "edge_count": 36,
+              "face_count": 12,
+              "free_edge_count": 0,
+              "volume_mm3": 527.9999999999999,
+              "bbox_mm": [
+                8.0,
+                -1.5,
+                -4.0,
+                30.0,
+                1.5,
+                4.0
+              ],
+              "self_intersection": {
+                "status": "deferred_to_final_shape",
+                "face_count": 12
+              },
+              "validity_method": "BRepCheck_Analyzer",
+              "geometry_scope": "native_OCCT_BREP_only_visual_comparison_not_performed"
+            }
+          ]
+        },
+        {
+          "group": 3,
+          "triangles": 12,
+          "solids": 1,
+          "sewing_free_edges": 0,
+          "inspection": [
+            {
+              "brep_valid": true,
+              "shape_type": "TopAbs_SOLID",
+              "solid_count": 1,
+              "connected_component_count": 1,
+              "shell_count": 1,
+              "closed_shell_count": 1,
+              "closed": true,
+              "edge_count": 36,
+              "face_count": 12,
+              "free_edge_count": 0,
+              "volume_mm3": 528.0,
+              "bbox_mm": [
+                2.700961894323342,
+                6.178203230275509,
+                -4.0,
+                16.29903810567666,
+                26.730762113533157,
+                4.0
+              ],
+              "self_intersection": {
+                "status": "deferred_to_final_shape",
+                "face_count": 12
+              },
+              "validity_method": "BRepCheck_Analyzer",
+              "geometry_scope": "native_OCCT_BREP_only_visual_comparison_not_performed"
+            }
+          ]
+        },
+        {
+          "group": 4,
+          "triangles": 12,
+          "solids": 1,
+          "sewing_free_edges": 0,
+          "inspection": [
+            {
+              "brep_valid": true,
+              "shape_type": "TopAbs_SOLID",
+              "solid_count": 1,
+              "connected_component_count": 1,
+              "shell_count": 1,
+              "closed_shell_count": 1,
+              "closed": true,
+              "edge_count": 36,
+              "face_count": 12,
+              "free_edge_count": 0,
+              "volume_mm3": 527.9999999999999,
+              "bbox_mm": [
+                -16.29903810567665,
+                6.17820323027551,
+                -4.0,
+                -2.70096189432334,
+                26.73076211353316,
+                4.0
+              ],
+              "self_intersection": {
+                "status": "deferred_to_final_shape",
+                "face_count": 12
+              },
+              "validity_method": "BRepCheck_Analyzer",
+              "geometry_scope": "native_OCCT_BREP_only_visual_comparison_not_performed"
+            }
+          ]
+        },
+        {
+          "group": 5,
+          "triangles": 12,
+          "solids": 1,
+          "sewing_free_edges": 0,
+          "inspection": [
+            {
+              "brep_valid": true,
+              "shape_type": "TopAbs_SOLID",
+              "solid_count": 1,
+              "connected_component_count": 1,
+              "shell_count": 1,
+              "closed_shell_count": 1,
+              "closed": true,
+              "edge_count": 36,
+              "face_count": 12,
+              "free_edge_count": 0,
+              "volume_mm3": 527.9999999999999,
+              "bbox_mm": [
+                -30.0,
+                -1.4999999999999991,
+                -4.0,
+                -8.0,
+                1.5000000000000038,
+                4.0
+              ],
+              "self_intersection": {
+                "status": "deferred_to_final_shape",
+                "face_count": 12
+              },
+              "validity_method": "BRepCheck_Analyzer",
+              "geometry_scope": "native_OCCT_BREP_only_visual_comparison_not_performed"
+            }
+          ]
+        },
+        {
+          "group": 6,
+          "triangles": 12,
+          "solids": 1,
+          "sewing_free_edges": 0,
+          "inspection": [
+            {
+              "brep_valid": true,
+              "shape_type": "TopAbs_SOLID",
+              "solid_count": 1,
+              "connected_component_count": 1,
+              "shell_count": 1,
+              "closed_shell_count": 1,
+              "closed": true,
+              "edge_count": 36,
+              "face_count": 12,
+              "free_edge_count": 0,
+              "volume_mm3": 528.0000000000002,
+              "bbox_mm": [
+                -16.299038105676672,
+                -26.730762113533153,
+                -4.0,
+                -2.7009618943233455,
+                -6.178203230275507,
+                4.0
+              ],
+              "self_intersection": {
+                "status": "deferred_to_final_shape",
+                "face_count": 12
+              },
+              "validity_method": "BRepCheck_Analyzer",
+              "geometry_scope": "native_OCCT_BREP_only_visual_comparison_not_performed"
+            }
+          ]
+        },
+        {
+          "group": 7,
+          "triangles": 12,
+          "solids": 1,
+          "sewing_free_edges": 0,
+          "inspection": [
+            {
+              "brep_valid": true,
+              "shape_type": "TopAbs_SOLID",
+              "solid_count": 1,
+              "connected_component_count": 1,
+              "shell_count": 1,
+              "closed_shell_count": 1,
+              "closed": true,
+              "edge_count": 36,
+              "face_count": 12,
+              "free_edge_count": 0,
+              "volume_mm3": 528.0,
+              "bbox_mm": [
+                2.700961894323342,
+                -26.730762113533157,
+                -4.0,
+                16.29903810567666,
+                -6.178203230275509,
+                4.0
+              ],
+              "self_intersection": {
+                "status": "deferred_to_final_shape",
+                "face_count": 12
+              },
+              "validity_method": "BRepCheck_Analyzer",
+              "geometry_scope": "native_OCCT_BREP_only_visual_comparison_not_performed"
+            }
+          ]
+        }
+      ],
+      "union": {
+        "brep_valid": true,
+        "shape_type": "TopAbs_COMPOUND",
+        "solid_count": 2,
+        "connected_component_count": 2,
+        "shell_count": 2,
+        "closed_shell_count": 2,
+        "closed": true,
+        "edge_count": 2652,
+        "face_count": 804,
+        "free_edge_count": 12,
+        "volume_mm3": 9601.057122003846,
+        "bbox_mm": [
+          -30.0,
+          -30.0,
+          -4.0,
+          30.0,
+          30.0,
+          4.0
+        ],
+        "self_intersection": {
+          "status": "deferred_to_final_shape",
+          "face_count": 804
+        },
+        "validity_method": "BRepCheck_Analyzer",
+        "geometry_scope": "native_OCCT_BREP_only_visual_comparison_not_performed"
+      }
+    },
+    {
+      "kind": "vbelt_pulley",
+      "triangle_count": 3072,
+      "triangle_groups": 1,
+      "group_shapes": [
+        {
+          "group": 0,
+          "triangles": 3072,
+          "solids": 1,
+          "sewing_free_edges": 0,
+          "inspection": [
+            {
+              "brep_valid": false,
+              "shape_type": "TopAbs_SOLID",
+              "solid_count": 1,
+              "connected_component_count": 1,
+              "shell_count": 1,
+              "closed_shell_count": 1,
+              "closed": true,
+              "edge_count": 10236,
+              "face_count": 3072,
+              "free_edge_count": 0,
+              "volume_mm3": 104204.52417044748,
+              "bbox_mm": [
+                -42.75,
+                -42.75,
+                -10.0,
+                42.75,
+                42.75,
+                10.0
+              ],
+              "self_intersection": {
+                "status": "deferred_to_final_shape",
+                "face_count": 3072
+              },
+              "validity_method": "BRepCheck_Analyzer",
+              "geometry_scope": "native_OCCT_BREP_only_visual_comparison_not_performed"
+            }
+          ]
+        }
+      ],
+      "union": {
+        "brep_valid": false,
+        "shape_type": "TopAbs_SOLID",
+        "solid_count": 1,
+        "connected_component_count": 1,
+        "shell_count": 1,
+        "closed_shell_count": 1,
+        "closed": true,
+        "edge_count": 10236,
+        "face_count": 3072,
+        "free_edge_count": 0,
+        "volume_mm3": 104204.52417044748,
+        "bbox_mm": [
+          -42.75,
+          -42.75,
+          -10.0,
+          42.75,
+          42.75,
+          10.0
+        ],
+        "self_intersection": {
+          "status": "deferred_to_final_shape",
+          "face_count": 3072
+        },
+        "validity_method": "BRepCheck_Analyzer",
+        "geometry_scope": "native_OCCT_BREP_only_visual_comparison_not_performed"
+      }
+    },
+    {
+      "kind": "scroll_disc",
+      "triangle_count": 1688,
+      "triangle_groups": 2,
+      "group_shapes": [
+        {
+          "group": 0,
+          "triangles": 1452,
+          "solids": 1,
+          "sewing_free_edges": 0,
+          "inspection": [
+            {
+              "brep_valid": true,
+              "shape_type": "TopAbs_SOLID",
+              "solid_count": 1,
+              "connected_component_count": 1,
+              "shell_count": 1,
+              "closed_shell_count": 1,
+              "closed": true,
+              "edge_count": 4356,
+              "face_count": 1452,
+              "free_edge_count": 0,
+              "volume_mm3": -4385.680058593735,
+              "bbox_mm": [
+                -30.0,
+                -23.099999999999998,
+                -4.0,
+                25.399999999999995,
+                27.7,
+                4.0
+              ],
+              "self_intersection": {
+                "status": "deferred_to_final_shape",
+                "face_count": 1452
+              },
+              "validity_method": "BRepCheck_Analyzer",
+              "geometry_scope": "native_OCCT_BREP_only_visual_comparison_not_performed"
+            }
+          ]
+        },
+        {
+          "group": 1,
+          "triangles": 236,
+          "solids": 1,
+          "sewing_free_edges": 0,
+          "inspection": [
+            {
+              "brep_valid": true,
+              "shape_type": "TopAbs_SOLID",
+              "solid_count": 1,
+              "connected_component_count": 1,
+              "shell_count": 1,
+              "closed_shell_count": 1,
+              "closed": true,
+              "edge_count": 708,
+              "face_count": 236,
+              "free_edge_count": 0,
+              "volume_mm3": 7902.351823034598,
+              "bbox_mm": [
+                -30.0,
+                -30.0,
+                -4.0,
+                30.000000000000007,
+                30.0,
+                -1.2000000000000002
+              ],
+              "self_intersection": {
+                "status": "deferred_to_final_shape",
+                "face_count": 236
+              },
+              "validity_method": "BRepCheck_Analyzer",
+              "geometry_scope": "native_OCCT_BREP_only_visual_comparison_not_performed"
+            }
+          ]
+        }
+      ],
+      "union": {
+        "brep_valid": false,
+        "shape_type": "TopAbs_COMPOUND",
+        "solid_count": 19,
+        "connected_component_count": 19,
+        "shell_count": 19,
+        "closed_shell_count": 19,
+        "closed": true,
+        "edge_count": 1028,
+        "face_count": 128,
+        "free_edge_count": 18,
+        "volume_mm3": 0.0,
+        "bbox_mm": [
+          -29.553318909450994,
+          -23.00204280453917,
+          -4.0,
+          25.396251489497125,
+          20.655672814198375,
+          -4.0
+        ],
+        "self_intersection": {
+          "status": "deferred_to_final_shape",
+          "face_count": 128
+        },
+        "validity_method": "BRepCheck_Analyzer",
+        "geometry_scope": "native_OCCT_BREP_only_visual_comparison_not_performed"
+      }
+    }
+  ]
+}

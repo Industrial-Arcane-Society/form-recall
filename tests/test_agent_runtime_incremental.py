@@ -1888,13 +1888,7 @@ class IncrementalAgentTests(unittest.TestCase):
         self.assertTrue(any("front-slot" in row for row in result["blockers"]))
 
     def test_coincident_cut_face_is_reported_not_measured(self):
-        """Exact face coincidence corrupts this kernel's boolean.
-
-        Measured: a box/prism cut whose bottom face is exactly coplanar with the
-        solid's top face removes 300/346 mm^3 where it must remove 0; moving it
-        0.001 mm gives 0.00. The screw run inferred its cuts from those volumes
-        for eighteen rounds, so the coincidence is now reported outright.
-        """
+        """Exact face contact has zero cut depth and must identify the failed feature."""
         solid = plan_state.create("Part", _feature())
 
         def fresh():
@@ -1918,7 +1912,13 @@ class IncrementalAgentTests(unittest.TestCase):
         # Bottom face exactly on the solid's top face.
         result = agent_runtime._apply_incremental(
             "cad_add_feature", {"feature": cut(top + 2.5)}, fresh())
-        warning = str((result.get("feature_effect") or {}).get("warning"))
+        effect = result.get("feature_effect") or {}
+        warning = str(effect.get("warning"))
+        self.assertEqual("no_op", effect.get("state"))
+        self.assertEqual("coincident_face", effect.get("failure_code"))
+        self.assertEqual("occt_brep_failed_feature_effect",
+                         effect.get("measurement_source"))
+        self.assertEqual(0.0, effect.get("volume_delta_mm3"))
         self.assertIn("完全重合", warning)
         self.assertIn("0.001", warning)
 
@@ -2034,15 +2034,56 @@ class IncrementalAgentTests(unittest.TestCase):
                     "sources": {key: {"type": "derived", "evidence": "e"}
                                 for key in ("length", "width", "height", "center")}}
 
+        air_state = fresh()
+        previous_geometry = air_state["preview_geometry_fingerprint"]
         air = agent_runtime._apply_incremental(
-            "cad_add_feature", {"feature": cut("in_air", [0, 0, 500])}, fresh())
+            "cad_add_feature", {"feature": cut("in_air", [0, 0, 500])}, air_state)
         effect = air.get("feature_effect") or {}
         self.assertEqual(0.0, effect.get("volume_delta_mm3"))
+        self.assertEqual("no_op", effect.get("state"))
+        self.assertEqual("in_air", effect.get("feature_id"))
+        self.assertEqual("cut_no_material_change", effect.get("failure_code"))
+        self.assertEqual("occt_brep_failed_feature_effect",
+                         effect.get("measurement_source"))
+        self.assertEqual(effect.get("volume_before_mm3"),
+                         effect.get("volume_after_mm3"))
+        self.assertTrue(effect.get("last_valid_preview_retained"))
+        self.assertEqual(previous_geometry,
+                         effect.get("last_valid_preview_geometry_fingerprint"))
         self.assertIn("没有改变材料", str(effect.get("warning")))
 
         real = agent_runtime._apply_incremental(
             "cad_add_feature", {"feature": cut("real", [0, 0, 0])}, fresh())
-        self.assertLess((real.get("feature_effect") or {}).get("volume_delta_mm3", 0), 0)
+        real_effect = real.get("feature_effect") or {}
+        self.assertEqual("applied", real_effect.get("state"))
+        self.assertEqual("real", real_effect.get("feature_id"))
+        self.assertEqual("occt_brep_feature_result",
+                         real_effect.get("measurement_source"))
+        self.assertLess(real_effect.get("volume_delta_mm3", 0), 0)
+
+    def test_unmeasured_failed_feature_does_not_inherit_previous_total_volume(self):
+        before = {
+            "dimensions": {"volume_mm3": 100.0, "bbox": [-5, -5, -5, 5, 5, 5]},
+            "local_geometry_checks": {"volume_mm3": 100.0, "feature_results": []},
+        }
+        failed = {
+            "state": "preview_failed", "error": "boolean operation failed",
+            "local_geometry_checks": {
+                "state": "failed", "volume_mm3": 100.0,
+                "failed_feature_id": "cut-1",
+                "failed_feature_effect": {
+                    "feature_id": "cut-1", "operation": "cut", "state": "unmeasured",
+                    "before_volume_mm3": 100.0, "after_volume_mm3": None,
+                    "volume_delta_mm3": None, "failure_code": "boolean_failure",
+                },
+            },
+        }
+        effect = agent_runtime._feature_effect(
+            "cad_add_feature", before, failed,
+            {"id": "cut-1", "operation": "cut"}, feature_id="cut-1")
+        self.assertEqual("unmeasured", effect["state"])
+        self.assertIsNone(effect["volume_delta_mm3"])
+        self.assertEqual(100.0, effect["volume_before_mm3"])
 
 
 if __name__ == "__main__":

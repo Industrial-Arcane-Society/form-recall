@@ -1,0 +1,19 @@
+{
+  "schema_version": 1,
+  "session_id": "rc2-cold-20261002-020244-21fd2698",
+  "turns": [
+    {
+      "turn_id": "d807f446ad3f41c2858e216ff2bd27cd",
+      "session_id": "rc2-cold-20261002-020244-21fd2698",
+      "raw_user_prompt": "请根据参考图建立模型",
+      "reference_ids": [
+        "sha256:53ed87fadf8cca869da921627e6a13c845424c6906b3de517d5cca972db94553"
+      ],
+      "created_at": "2026-10-01T18:02:45.382Z",
+      "at_epoch_ms": 1790877765382,
+      "intent": "model_target",
+      "affects_model_target": true,
+      "intent_source": "cli_rules"
+    }
+  ]
+}

@@ -1,0 +1,556 @@
+{
+  "source": "DeepSeek Harness SDK Agent",
+  "revision": 2,
+  "name": "100x60x20_block",
+  "units": {
+    "length": "mm",
+    "angle": "deg"
+  },
+  "validation": {
+    "valid": true,
+    "state": "valid",
+    "errors": [],
+    "confirmations": [],
+    "support": [
+      {
+        "feature_id": "block_main",
+        "kind": "box",
+        "status": "exact",
+        "reason": "矩形草图加凸台；当前 CATIA 映射仅支持 Z 轴拉伸。"
+      }
+    ],
+    "geometry_support": [
+      {
+        "feature_id": "block_main",
+        "kind": "box",
+        "status": "exact",
+        "reason": "OCCT 棱柱；带圆角/倒角时沿用离散轮廓近似",
+        "backend": "occt_brep"
+      }
+    ],
+    "warnings": [],
+    "schema_version": "1.0"
+  },
+  "preview": {
+    "state": "previewed",
+    "validation": {
+      "valid": true,
+      "state": "valid",
+      "errors": [],
+      "confirmations": [],
+      "support": [
+        {
+          "feature_id": "block_main",
+          "kind": "box",
+          "status": "exact",
+          "reason": "矩形草图加凸台；当前 CATIA 映射仅支持 Z 轴拉伸。"
+        }
+      ],
+      "geometry_support": [
+        {
+          "feature_id": "block_main",
+          "kind": "box",
+          "status": "exact",
+          "reason": "OCCT 棱柱；带圆角/倒角时沿用离散轮廓近似",
+          "backend": "occt_brep"
+        }
+      ],
+      "warnings": [],
+      "schema_version": "1.0"
+    },
+    "geometry_backend": "occt_brep",
+    "native_brep": {
+      "backend": "occt_brep",
+      "kernel": "可用：OCCT 7.9.3.1 / cadquery-ocp-novtk 7.9.3.1.1",
+      "geometry_state": "passed",
+      "state": "passed",
+      "brep_valid": true,
+      "shape_type": "TopAbs_SOLID",
+      "solid_count": 1,
+      "connected_component_count": 1,
+      "shell_count": 1,
+      "closed_shell_count": 1,
+      "closed": true,
+      "edge_count": 24,
+      "face_count": 6,
+      "free_edge_count": 0,
+      "volume_mm3": 120000.0,
+      "bbox_mm": [
+        -50.0,
+        -30.0,
+        -10.0,
+        50.0,
+        30.0,
+        10.0
+      ],
+      "self_intersection": {
+        "status": "checked_no_intersection",
+        "face_count": 6,
+        "check_result_count": 0,
+        "check_statuses": [],
+        "method": "BOPAlgo_ArgumentAnalyzer(SelfInterMode=True, UseOBB=True)"
+      },
+      "validity_method": "BRepCheck_Analyzer",
+      "geometry_scope": "native_OCCT_BREP_only_visual_comparison_not_performed",
+      "hole_feature_count": 0,
+      "planned_hole_instance_count": 0,
+      "through_hole_count": 0,
+      "all_declared_holes_verified": true,
+      "visual_validation": "not_performed",
+      "catia_executed": false,
+      "build_transaction": "每个特征验证成功后才提交；失败保留上一有效实体"
+    },
+    "catia_executed": false,
+    "dimensions": {
+      "unit": "mm",
+      "bbox": [
+        -50.0,
+        -30.0,
+        -10.0,
+        50.0,
+        30.0,
+        10.0
+      ],
+      "size": [
+        100.0,
+        60.0,
+        20.0
+      ],
+      "volume_mm3": 120000.0,
+      "surface_area_mm2": 18400.0,
+      "triangles": 12,
+      "feature_count": 1
+    },
+    "catia_operations": [
+      {
+        "index": 1,
+        "kind": "rect_pad",
+        "plane": "XY",
+        "center": [
+          0.0,
+          0.0,
+          -10.0
+        ],
+        "profile": [],
+        "dimensions": {
+          "l": 100.0,
+          "w": 60.0,
+          "r": 0.0,
+          "h": 20.0,
+          "depth": 0.0
+        },
+        "name": "长方体主体",
+        "note": "长方体 100 × 60 × 20 mm"
+      }
+    ],
+    "warnings": [],
+    "feature_manifest": {
+      "block_main": {
+        "kind": "box",
+        "operation": "add",
+        "name": "长方体主体",
+        "parameters": {
+          "length": 100,
+          "width": 60,
+          "height": 20,
+          "center": [
+            0,
+            0,
+            0
+          ]
+        },
+        "sources": {
+          "length": {
+            "type": "user",
+            "evidence": "用户指定100×60×20毫米长方体，长度方向100mm"
+          },
+          "width": {
+            "type": "user",
+            "evidence": "用户指定100×60×20毫米长方体，宽度方向60mm"
+          },
+          "height": {
+            "type": "user",
+            "evidence": "用户指定100×60×20毫米长方体，高度方向20mm"
+          },
+          "center": {
+            "type": "derived",
+            "evidence": "居中对齐原点，便于后续定位"
+          }
+        },
+        "relations": []
+      }
+    },
+    "build_log": [
+      "[基准] 长方体 100 × 60 × 20 mm → 8 面"
+    ],
+    "local_geometry_checks": {
+      "backend": "occt_brep",
+      "kernel": "可用：OCCT 7.9.3.1 / cadquery-ocp-novtk 7.9.3.1.1",
+      "geometry_state": "passed",
+      "state": "passed",
+      "brep_valid": true,
+      "shape_type": "TopAbs_SOLID",
+      "solid_count": 1,
+      "connected_component_count": 1,
+      "shell_count": 1,
+      "closed_shell_count": 1,
+      "closed": true,
+      "edge_count": 24,
+      "face_count": 6,
+      "free_edge_count": 0,
+      "volume_mm3": 120000.0,
+      "bbox_mm": [
+        -50.0,
+        -30.0,
+        -10.0,
+        50.0,
+        30.0,
+        10.0
+      ],
+      "self_intersection": {
+        "status": "checked_no_intersection",
+        "face_count": 6,
+        "check_result_count": 0,
+        "check_statuses": [],
+        "method": "BOPAlgo_ArgumentAnalyzer(SelfInterMode=True, UseOBB=True)"
+      },
+      "validity_method": "BRepCheck_Analyzer",
+      "geometry_scope": "native_OCCT_BREP_only_visual_comparison_not_performed",
+      "feature_results": [
+        {
+          "feature_id": "block_main",
+          "kind": "box",
+          "operation": "add",
+          "geometry_support": "exact",
+          "builder": "analytic_prism",
+          "state": "applied",
+          "source_feature_id": null,
+          "source_resolution": null,
+          "solid_count": 1,
+          "brep_valid": true,
+          "before_volume_mm3": 0.0,
+          "after_volume_mm3": 120000.0,
+          "volume_delta_mm3": 120000.0,
+          "depth_measurement": null,
+          "facet_count": null
+        }
+      ],
+      "hole_instances": [],
+      "hole_feature_count": 0,
+      "planned_hole_instance_count": 0,
+      "through_hole_count": 0,
+      "all_declared_holes_verified": true,
+      "visual_validation": "not_performed",
+      "catia_executed": false,
+      "build_transaction": "每个特征验证成功后才提交；失败保留上一有效实体",
+      "source": "OpenCASCADE native BREP; preview mesh is display-only",
+      "bbox_size_mm": [
+        100.0,
+        60.0,
+        20.0
+      ],
+      "bbox_ratios_from_brep": {
+        "front_width_height": 5.0,
+        "depth_height": 3.0,
+        "top_width_depth": 1.6666666666666667
+      },
+      "bbox_ratios_from_mesh": {
+        "front_width_height": 5.0,
+        "depth_height": 3.0,
+        "top_width_depth": 1.6666666666666667
+      },
+      "feature_count_from_plan": 1,
+      "feature_ids_from_plan": [
+        "block_main"
+      ],
+      "hole_features_from_plan": [],
+      "hole_feature_count_from_plan": 0,
+      "expected_hole_instance_count": 0,
+      "hole_instance_count": 0,
+      "through_hole_checks": [],
+      "through_hole_mesh_checks": [],
+      "hole_measurement_complete": true,
+      "through_hole_count_expected": 0,
+      "through_hole_count_verified": 0,
+      "through_hole_result": "no_holes_declared",
+      "image_estimate_parameters": [],
+      "catia_geometry_verification": "not_performed"
+    },
+    "orthographic_layout": {
+      "unit": "mm",
+      "axes": {
+        "length": "X",
+        "width": "Y",
+        "height": "Z"
+      },
+      "uniform_scale_across_views": true,
+      "scale_pixels_per_mm": 2.132,
+      "tile_size_pixels": [
+        330,
+        260
+      ],
+      "view_extents": {
+        "front": {
+          "horizontal_axis": "X",
+          "horizontal": 100.0,
+          "vertical_axis": "Z",
+          "vertical": 20.0
+        },
+        "right": {
+          "horizontal_axis": "Y",
+          "horizontal": 60.0,
+          "vertical_axis": "Z",
+          "vertical": 20.0
+        },
+        "top": {
+          "horizontal_axis": "X",
+          "horizontal": 100.0,
+          "vertical_axis": "Y",
+          "vertical": 60.0
+        }
+      },
+      "dimension_ratios": {
+        "length_to_height": 5.0,
+        "width_to_height": 3.0,
+        "length_to_width": 1.6666666666666667
+      }
+    },
+    "preview_image": "C:\\Users\\lycohana\\AppData\\Local\\AI Modeler\\dsh\\sessions\\aq-text-diagnostic-20261001\\previews\\r2-g1-iso.png",
+    "preview_image_views": [
+      "iso"
+    ],
+    "preview_image_view_set": "iso",
+    "preview_image_grid_columns": 1,
+    "preview_image_source": "OCCT BREP tessellated for display; not a CATIA screenshot",
+    "preview_render_style": "view-adaptive depth-cued matte shading with visible feature edges",
+    "preview_render_note": "诊断渲染：凹入或远离相机的表面会略暗，清晰线条表示可见的几何折边；亮暗不是零件材质颜色，需结合其它视图判断。",
+    "preview_image_layout": {
+      "unit": "mm",
+      "axes": {
+        "length": "X",
+        "width": "Y",
+        "height": "Z"
+      },
+      "uniform_scale_across_views": true,
+      "scale_pixels_per_mm": 2.132,
+      "tile_size_pixels": [
+        330,
+        260
+      ],
+      "view_extents": {
+        "front": {
+          "horizontal_axis": "X",
+          "horizontal": 100.0,
+          "vertical_axis": "Z",
+          "vertical": 20.0
+        },
+        "right": {
+          "horizontal_axis": "Y",
+          "horizontal": 60.0,
+          "vertical_axis": "Z",
+          "vertical": 20.0
+        },
+        "top": {
+          "horizontal_axis": "X",
+          "horizontal": 100.0,
+          "vertical_axis": "Y",
+          "vertical": 60.0
+        }
+      },
+      "dimension_ratios": {
+        "length_to_height": 5.0,
+        "width_to_height": 3.0,
+        "length_to_width": 1.6666666666666667
+      }
+    },
+    "preview_generation": 1
+  },
+  "visual_review": null,
+  "visual_reviews": {},
+  "reference_similarity_reviews": {},
+  "reference_similarity_history": [],
+  "visual_evidence_summary": {
+    "revision": 2,
+    "references": {},
+    "latest_review_pairs": 0,
+    "comparable_review_pairs": 0,
+    "noncomparable_review_pairs": 0,
+    "all_references_covered": false
+  },
+  "knowledge_search": {
+    "status": "similar_matches",
+    "query": "创建一个100×60×20毫米长方体",
+    "matches": [
+      {
+        "id": "bolt:M10x60:2",
+        "prompt": "M10x60",
+        "category": "内六角螺钉",
+        "model": "M10x60",
+        "envelope_dimensions_mm": [
+          70.0,
+          20.0,
+          20.0
+        ],
+        "envelope_text": "70×20×20",
+        "trust": "exact",
+        "source": "kb/bolt_library.json",
+        "source_file": "datasets\\训练提示词\\全部提示词.jsonl",
+        "group": "内六角螺钉",
+        "variant": "裸型号",
+        "relevance": 0.4788,
+        "match_type": "similar_reference",
+        "exact_identifier_match": false,
+        "has_full_feature_tree": false,
+        "provider": "training_prompts"
+      }
+    ],
+    "negative_examples": [],
+    "image_query_supported": false,
+    "visual_fallback_available": false,
+    "score_meaning": "relevance 是词面相关度排序分数，不是准确率或置信概率。",
+    "message": "找到相似描述示例；仅作上下文参考，不得将示例尺寸当作用户目标尺寸。",
+    "modeling_recipes": []
+  },
+  "knowledge_visual_examples": [],
+  "construction_milestone": null,
+  "last_valid_candidate": {
+    "revision": 2,
+    "geometry_signature": "c826bf7d9862d4f7a7b60228b059e879937aab34c0d129d4446f4d33aa8f284d",
+    "rank": [
+      -0.0,
+      -0.0,
+      -0.0,
+      0.0,
+      1.0,
+      1.0,
+      1.0,
+      1.0
+    ],
+    "dimensions": {
+      "unit": "mm",
+      "bbox": [
+        -50.0,
+        -30.0,
+        -10.0,
+        50.0,
+        30.0,
+        10.0
+      ],
+      "size": [
+        100.0,
+        60.0,
+        20.0
+      ],
+      "volume_mm3": 120000.0,
+      "surface_area_mm2": 18400.0,
+      "triangles": 12,
+      "feature_count": 1
+    }
+  },
+  "best_evidence_candidate": {
+    "revision": null,
+    "geometry_signature": null,
+    "rank": null,
+    "dimensions": null
+  },
+  "local_geometry_checks": {
+    "backend": "occt_brep",
+    "kernel": "可用：OCCT 7.9.3.1 / cadquery-ocp-novtk 7.9.3.1.1",
+    "geometry_state": "passed",
+    "state": "passed",
+    "brep_valid": true,
+    "shape_type": "TopAbs_SOLID",
+    "solid_count": 1,
+    "connected_component_count": 1,
+    "shell_count": 1,
+    "closed_shell_count": 1,
+    "closed": true,
+    "edge_count": 24,
+    "face_count": 6,
+    "free_edge_count": 0,
+    "volume_mm3": 120000.0,
+    "bbox_mm": [
+      -50.0,
+      -30.0,
+      -10.0,
+      50.0,
+      30.0,
+      10.0
+    ],
+    "self_intersection": {
+      "status": "checked_no_intersection",
+      "face_count": 6,
+      "check_result_count": 0,
+      "check_statuses": [],
+      "method": "BOPAlgo_ArgumentAnalyzer(SelfInterMode=True, UseOBB=True)"
+    },
+    "validity_method": "BRepCheck_Analyzer",
+    "geometry_scope": "native_OCCT_BREP_only_visual_comparison_not_performed",
+    "feature_results": [
+      {
+        "feature_id": "block_main",
+        "kind": "box",
+        "operation": "add",
+        "geometry_support": "exact",
+        "builder": "analytic_prism",
+        "state": "applied",
+        "source_feature_id": null,
+        "source_resolution": null,
+        "solid_count": 1,
+        "brep_valid": true,
+        "before_volume_mm3": 0.0,
+        "after_volume_mm3": 120000.0,
+        "volume_delta_mm3": 120000.0,
+        "depth_measurement": null,
+        "facet_count": null
+      }
+    ],
+    "hole_instances": [],
+    "hole_feature_count": 0,
+    "planned_hole_instance_count": 0,
+    "through_hole_count": 0,
+    "all_declared_holes_verified": true,
+    "visual_validation": "not_performed",
+    "catia_executed": false,
+    "build_transaction": "每个特征验证成功后才提交；失败保留上一有效实体",
+    "source": "OpenCASCADE native BREP; preview mesh is display-only",
+    "bbox_size_mm": [
+      100.0,
+      60.0,
+      20.0
+    ],
+    "bbox_ratios_from_brep": {
+      "front_width_height": 5.0,
+      "depth_height": 3.0,
+      "top_width_depth": 1.6666666666666667
+    },
+    "bbox_ratios_from_mesh": {
+      "front_width_height": 5.0,
+      "depth_height": 3.0,
+      "top_width_depth": 1.6666666666666667
+    },
+    "feature_count_from_plan": 1,
+    "feature_ids_from_plan": [
+      "block_main"
+    ],
+    "hole_features_from_plan": [],
+    "hole_feature_count_from_plan": 0,
+    "expected_hole_instance_count": 0,
+    "hole_instance_count": 0,
+    "through_hole_checks": [],
+    "through_hole_mesh_checks": [],
+    "hole_measurement_complete": true,
+    "through_hole_count_expected": 0,
+    "through_hole_count_verified": 0,
+    "through_hole_result": "no_holes_declared",
+    "image_estimate_parameters": [],
+    "catia_geometry_verification": "not_performed"
+  },
+  "view_previews": {
+    "iso": "C:\\Users\\lycohana\\AppData\\Local\\AI Modeler\\dsh\\sessions\\aq-text-diagnostic-20261001\\output\\views\\iso.png"
+  },
+  "unresolved_findings": [],
+  "finish_state": "accepted",
+  "summary": "已按用户指定尺寸创建100×60×20 mm长方体，主体居中位于原点。本地BREP几何验证通过：包围盒100×60×20 mm、体积120000 mm³、有效实体、无自由边、无自相交；无孔洞。该模型为用户文字直接给定尺寸的标准矩形体，无需参考图视觉比对。",
+  "catia_executed": false
+}

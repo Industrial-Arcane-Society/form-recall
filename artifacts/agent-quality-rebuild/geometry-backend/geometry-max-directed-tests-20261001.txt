@@ -1,0 +1,17 @@
+..........................................E................
+======================================================================
+ERROR: test_build_plan_saves_unverified_cylindrical_cut_as_candidate_only (tests.test_cadplan_sdk.CADPlanSDKTests.test_build_plan_saves_unverified_cylindrical_cut_as_candidate_only)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "C:\Users\lycohana\Desktop\code\AI-_-\tests\test_cadplan_sdk.py", line 413, in test_build_plan_saves_unverified_cylindrical_cut_as_candidate_only
+    result = build_plan(plan, catpart_path=str(catpart))
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\lycohana\Desktop\code\AI-_-\ai_modeler\sdk\cadplan.py", line 1457, in build_plan
+    ok, message, script = catia.push_to_catia(
+    ^^^^^^^^^^^^^^^^^^^
+ValueError: not enough values to unpack (expected 3, got 0)
+
+----------------------------------------------------------------------
+Ran 59 tests in 40.958s
+
+FAILED (errors=1)

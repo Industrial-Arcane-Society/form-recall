@@ -1,0 +1,1200 @@
+{
+  "state": "accepted",
+  "plan": {
+    "schema_version": "1.0",
+    "name": "长方体 120x60x20",
+    "source_prompt": "创建一个100×60×20毫米长方体，中心位于[0,0,0]。",
+    "units": {
+      "length": "mm",
+      "angle": "deg"
+    },
+    "coordinate_system": {
+      "type": "global_cartesian",
+      "handedness": "right",
+      "axes": [
+        "X",
+        "Y",
+        "Z"
+      ],
+      "origin": [
+        0,
+        0,
+        0
+      ]
+    },
+    "features": [
+      {
+        "id": "block_main",
+        "kind": "box",
+        "operation": "add",
+        "name": "主长方体",
+        "parameters": {
+          "length": 120,
+          "width": 60,
+          "height": 20,
+          "center": [
+            0,
+            0,
+            0
+          ]
+        },
+        "sources": {
+          "length": {
+            "type": "user",
+            "evidence": "当前用户指令：请把长方体的长度改为120毫米。宽度仍为60毫米、高度仍为20毫米、中心仍为[0,0,0]。"
+          },
+          "width": {
+            "type": "user",
+            "evidence": "当前用户指令：请把长方体的长度改为120毫米。宽度仍为60毫米、高度仍为20毫米、中心仍为[0,0,0]。"
+          },
+          "height": {
+            "type": "user",
+            "evidence": "当前用户指令：请把长方体的长度改为120毫米。宽度仍为60毫米、高度仍为20毫米、中心仍为[0,0,0]。"
+          },
+          "center": {
+            "type": "user",
+            "evidence": "当前用户指令：请把长方体的长度改为120毫米。宽度仍为60毫米、高度仍为20毫米、中心仍为[0,0,0]。"
+          }
+        }
+      }
+    ],
+    "pending_questions": []
+  },
+  "validation": {
+    "valid": true,
+    "state": "valid",
+    "errors": [],
+    "confirmations": [],
+    "support": [
+      {
+        "feature_id": "block_main",
+        "kind": "box",
+        "status": "exact",
+        "reason": "矩形草图加凸台；当前 CATIA 映射仅支持 Z 轴拉伸。"
+      }
+    ],
+    "geometry_support": [
+      {
+        "feature_id": "block_main",
+        "kind": "box",
+        "status": "exact",
+        "reason": "OCCT 棱柱；带圆角/倒角时沿用离散轮廓近似",
+        "backend": "occt_brep"
+      }
+    ],
+    "warnings": [],
+    "schema_version": "1.0"
+  },
+  "preview": {
+    "state": "previewed",
+    "validation": {
+      "valid": true,
+      "state": "valid",
+      "errors": [],
+      "confirmations": [],
+      "support": [
+        {
+          "feature_id": "block_main",
+          "kind": "box",
+          "status": "exact",
+          "reason": "矩形草图加凸台；当前 CATIA 映射仅支持 Z 轴拉伸。"
+        }
+      ],
+      "geometry_support": [
+        {
+          "feature_id": "block_main",
+          "kind": "box",
+          "status": "exact",
+          "reason": "OCCT 棱柱；带圆角/倒角时沿用离散轮廓近似",
+          "backend": "occt_brep"
+        }
+      ],
+      "warnings": [],
+      "schema_version": "1.0"
+    },
+    "geometry_backend": "occt_brep",
+    "native_brep": {
+      "backend": "occt_brep",
+      "kernel": "可用：OCCT 7.9.3.1 / cadquery-ocp-novtk 7.9.3.1.1",
+      "geometry_state": "passed",
+      "state": "passed",
+      "brep_valid": true,
+      "shape_type": "TopAbs_SOLID",
+      "solid_count": 1,
+      "connected_component_count": 1,
+      "shell_count": 1,
+      "closed_shell_count": 1,
+      "closed": true,
+      "edge_count": 24,
+      "face_count": 6,
+      "free_edge_count": 0,
+      "volume_mm3": 144000.0,
+      "bbox_mm": [
+        -60.0,
+        -30.0,
+        -10.0,
+        60.0,
+        30.0,
+        10.0
+      ],
+      "self_intersection": {
+        "status": "checked_no_intersection",
+        "face_count": 6,
+        "check_result_count": 0,
+        "check_statuses": [],
+        "method": "BOPAlgo_ArgumentAnalyzer(SelfInterMode=True, UseOBB=True)"
+      },
+      "validity_method": "BRepCheck_Analyzer",
+      "geometry_scope": "native_OCCT_BREP_only_visual_comparison_not_performed",
+      "unverified_cut_intents": [],
+      "hole_feature_count": 0,
+      "measured_hole_source_feature_count": 0,
+      "unverified_cut_intent_count": 0,
+      "planned_hole_instance_count": 0,
+      "active_hole_instance_count": 0,
+      "superseded_hole_instance_count": 0,
+      "active_through_hole_count": 0,
+      "through_hole_count": 0,
+      "all_declared_holes_verified": true,
+      "visual_validation": "not_performed",
+      "catia_executed": false,
+      "build_transaction": "每个特征验证成功后才提交；失败保留上一有效实体"
+    },
+    "catia_executed": false,
+    "dimensions": {
+      "unit": "mm",
+      "bbox": [
+        -60.0,
+        -30.0,
+        -10.0,
+        60.0,
+        30.0,
+        10.0
+      ],
+      "size": [
+        120.0,
+        60.0,
+        20.0
+      ],
+      "volume_mm3": 144000.0,
+      "surface_area_mm2": 21600.0,
+      "triangles": 12,
+      "feature_count": 1
+    },
+    "catia_operations": [
+      {
+        "index": 1,
+        "kind": "rect_pad",
+        "plane": "XY",
+        "center": [
+          0.0,
+          0.0,
+          -10.0
+        ],
+        "profile": [],
+        "dimensions": {
+          "l": 120.0,
+          "w": 60.0,
+          "r": 0.0,
+          "h": 20.0,
+          "depth": 0.0
+        },
+        "name": "主长方体",
+        "note": "长方体 120 × 60 × 20 mm"
+      }
+    ],
+    "warnings": [],
+    "feature_manifest": {
+      "block_main": {
+        "kind": "box",
+        "operation": "add",
+        "name": "主长方体",
+        "parameters": {
+          "length": 120,
+          "width": 60,
+          "height": 20,
+          "center": [
+            0,
+            0,
+            0
+          ]
+        },
+        "sources": {
+          "length": {
+            "type": "user",
+            "evidence": "当前用户指令：请把长方体的长度改为120毫米。宽度仍为60毫米、高度仍为20毫米、中心仍为[0,0,0]。"
+          },
+          "width": {
+            "type": "user",
+            "evidence": "当前用户指令：请把长方体的长度改为120毫米。宽度仍为60毫米、高度仍为20毫米、中心仍为[0,0,0]。"
+          },
+          "height": {
+            "type": "user",
+            "evidence": "当前用户指令：请把长方体的长度改为120毫米。宽度仍为60毫米、高度仍为20毫米、中心仍为[0,0,0]。"
+          },
+          "center": {
+            "type": "user",
+            "evidence": "当前用户指令：请把长方体的长度改为120毫米。宽度仍为60毫米、高度仍为20毫米、中心仍为[0,0,0]。"
+          }
+        },
+        "relations": []
+      }
+    },
+    "build_log": [
+      "[基准] 长方体 120 × 60 × 20 mm → 8 面"
+    ],
+    "local_geometry_checks": {
+      "backend": "occt_brep",
+      "kernel": "可用：OCCT 7.9.3.1 / cadquery-ocp-novtk 7.9.3.1.1",
+      "geometry_state": "passed",
+      "state": "passed",
+      "brep_valid": true,
+      "shape_type": "TopAbs_SOLID",
+      "solid_count": 1,
+      "connected_component_count": 1,
+      "shell_count": 1,
+      "closed_shell_count": 1,
+      "closed": true,
+      "edge_count": 24,
+      "face_count": 6,
+      "free_edge_count": 0,
+      "volume_mm3": 144000.0,
+      "bbox_mm": [
+        -60.0,
+        -30.0,
+        -10.0,
+        60.0,
+        30.0,
+        10.0
+      ],
+      "self_intersection": {
+        "status": "checked_no_intersection",
+        "face_count": 6,
+        "check_result_count": 0,
+        "check_statuses": [],
+        "method": "BOPAlgo_ArgumentAnalyzer(SelfInterMode=True, UseOBB=True)"
+      },
+      "validity_method": "BRepCheck_Analyzer",
+      "geometry_scope": "native_OCCT_BREP_only_visual_comparison_not_performed",
+      "feature_results": [
+        {
+          "feature_id": "block_main",
+          "kind": "box",
+          "operation": "add",
+          "geometry_support": "exact",
+          "builder": "analytic_prism",
+          "state": "applied",
+          "source_feature_id": null,
+          "source_resolution": null,
+          "solid_count": 1,
+          "brep_valid": true,
+          "before_volume_mm3": 0.0,
+          "after_volume_mm3": 144000.0,
+          "volume_delta_mm3": 144000.0,
+          "cylindrical_cut_intents": [],
+          "depth_measurement": null,
+          "facet_count": null
+        }
+      ],
+      "hole_instances": [],
+      "unverified_cut_intents": [],
+      "hole_feature_count": 0,
+      "measured_hole_source_feature_count": 0,
+      "unverified_cut_intent_count": 0,
+      "planned_hole_instance_count": 0,
+      "active_hole_instance_count": 0,
+      "superseded_hole_instance_count": 0,
+      "active_through_hole_count": 0,
+      "through_hole_count": 0,
+      "all_declared_holes_verified": true,
+      "visual_validation": "not_performed",
+      "catia_executed": false,
+      "build_transaction": "每个特征验证成功后才提交；失败保留上一有效实体",
+      "source": "OpenCASCADE native BREP; preview mesh is display-only",
+      "bbox_size_mm": [
+        120.0,
+        60.0,
+        20.0
+      ],
+      "bbox_ratios_from_brep": {
+        "front_width_height": 6.0,
+        "depth_height": 3.0,
+        "top_width_depth": 2.0
+      },
+      "bbox_ratios_from_mesh": {
+        "front_width_height": 6.0,
+        "depth_height": 3.0,
+        "top_width_depth": 2.0
+      },
+      "feature_count_from_plan": 1,
+      "feature_ids_from_plan": [
+        "block_main"
+      ],
+      "hole_features_from_plan": [],
+      "hole_feature_count_from_plan": 0,
+      "expected_hole_instance_count": 0,
+      "hole_instance_count": 0,
+      "through_hole_checks": [],
+      "through_hole_mesh_checks": [],
+      "hole_measurement_complete": true,
+      "hole_measurement_state": "not_applicable_no_holes_or_cylindrical_cuts",
+      "through_hole_count_expected": 0,
+      "through_hole_count_verified": 0,
+      "through_hole_result": "no_holes_declared",
+      "image_estimate_parameters": [],
+      "catia_geometry_verification": "not_performed"
+    },
+    "orthographic_layout": {
+      "unit": "mm",
+      "axes": {
+        "length": "X",
+        "width": "Y",
+        "height": "Z"
+      },
+      "uniform_scale_across_views": true,
+      "scale_pixels_per_mm": 1.7766666666666668,
+      "tile_size_pixels": [
+        330,
+        260
+      ],
+      "view_extents": {
+        "front": {
+          "horizontal_axis": "X",
+          "horizontal": 120.0,
+          "vertical_axis": "Z",
+          "vertical": 20.0
+        },
+        "right": {
+          "horizontal_axis": "Y",
+          "horizontal": 60.0,
+          "vertical_axis": "Z",
+          "vertical": 20.0
+        },
+        "top": {
+          "horizontal_axis": "X",
+          "horizontal": 120.0,
+          "vertical_axis": "Y",
+          "vertical": 60.0
+        }
+      },
+      "dimension_ratios": {
+        "length_to_height": 6.0,
+        "width_to_height": 3.0,
+        "length_to_width": 2.0
+      }
+    },
+    "preview_image": "C:\\Users\\lycohana\\AppData\\Local\\AI Modeler\\dsh\\sessions\\aq-text-provenance-20261001\\previews\\r4-g2-iso.png",
+    "preview_image_views": [
+      "iso"
+    ],
+    "preview_image_view_set": "iso",
+    "preview_image_grid_columns": 1,
+    "preview_image_source": "OCCT BREP tessellated for display; not a CATIA screenshot",
+    "preview_render_style": "view-adaptive depth-cued matte shading with visible feature edges",
+    "preview_render_note": "诊断渲染：凹入或远离相机的表面会略暗，清晰线条表示可见的几何折边；亮暗不是零件材质颜色，需结合其它视图判断。",
+    "preview_image_layout": {
+      "unit": "mm",
+      "axes": {
+        "length": "X",
+        "width": "Y",
+        "height": "Z"
+      },
+      "uniform_scale_across_views": true,
+      "scale_pixels_per_mm": 1.7766666666666668,
+      "tile_size_pixels": [
+        330,
+        260
+      ],
+      "view_extents": {
+        "front": {
+          "horizontal_axis": "X",
+          "horizontal": 120.0,
+          "vertical_axis": "Z",
+          "vertical": 20.0
+        },
+        "right": {
+          "horizontal_axis": "Y",
+          "horizontal": 60.0,
+          "vertical_axis": "Z",
+          "vertical": 20.0
+        },
+        "top": {
+          "horizontal_axis": "X",
+          "horizontal": 120.0,
+          "vertical_axis": "Y",
+          "vertical": 60.0
+        }
+      },
+      "dimension_ratios": {
+        "length_to_height": 6.0,
+        "width_to_height": 3.0,
+        "length_to_width": 2.0
+      }
+    },
+    "preview_generation": 2
+  },
+  "review": null,
+  "open_multiview_findings": [],
+  "reply": "已通过程序验收并保存模型。",
+  "agent_self_report": "已完成。\n\n- **模型**：120 × 60 × 20 mm 长方体，中心位于 `[0,0,0]`。\n- **本地几何**：BREP 有效，闭合实体，体积 144000 mm³，包围盒 `[-60,-30,-10]` 到 `[60,30,10]`，与指定尺寸一致。\n- **输出文件**：\n  - CADPlan / AIMODEL：`.../output/candidate.aimodel`\n  - STL：`.../output/candidate.stl`\n  - 预览图：`.../output/preview.png`\n  - 几何报告：`.../output/geometry-report.json`\n- **状态**：本地检查通过，已保存为 accepted；未在 CATIA 中创建或验证 CATPart。",
+  "finish_reason": "completed",
+  "error": null,
+  "output_paths": {
+    "aimodel": "C:\\Users\\lycohana\\Desktop\\code\\AI-_-\\artifacts\\agent-quality-rebuild\\input-reasoning\\cli-text-provenance-20261001\\turns\\334b834f556f4ba091cc89bcf57623dd\\candidate.aimodel",
+    "stl": "C:\\Users\\lycohana\\Desktop\\code\\AI-_-\\artifacts\\agent-quality-rebuild\\input-reasoning\\cli-text-provenance-20261001\\turns\\334b834f556f4ba091cc89bcf57623dd\\candidate.stl",
+    "preview": "C:\\Users\\lycohana\\Desktop\\code\\AI-_-\\artifacts\\agent-quality-rebuild\\input-reasoning\\cli-text-provenance-20261001\\turns\\334b834f556f4ba091cc89bcf57623dd\\preview.png",
+    "report": "C:\\Users\\lycohana\\Desktop\\code\\AI-_-\\artifacts\\agent-quality-rebuild\\input-reasoning\\cli-text-provenance-20261001\\turns\\334b834f556f4ba091cc89bcf57623dd\\geometry-report.json",
+    "preview_iso": "C:\\Users\\lycohana\\Desktop\\code\\AI-_-\\artifacts\\agent-quality-rebuild\\input-reasoning\\cli-text-provenance-20261001\\turns\\334b834f556f4ba091cc89bcf57623dd\\views\\iso.png"
+  },
+  "output_warning": null,
+  "tool_calls": 10,
+  "web_search_calls": 0,
+  "preview_calls": 1,
+  "review_rounds": 0,
+  "main_self_report_count": 0,
+  "finish_summary": {
+    "finish_state": "accepted",
+    "accepted": true,
+    "local_geometry_state": "passed",
+    "hole_measurement": {
+      "complete": true,
+      "declared_feature_ids": [],
+      "measured_feature_ids": [],
+      "instance_count": 0,
+      "active_instance_count": 0,
+      "superseded_instance_count": 0,
+      "active_through_hole_count": 0,
+      "instance_statuses": [],
+      "measurement_complete_flag": true,
+      "unverified_cut_intents": []
+    },
+    "independent_review_pair_count": 0,
+    "visual_evidence": {
+      "revision": 4,
+      "references": {},
+      "latest_review_pairs": 0,
+      "comparable_review_pairs": 0,
+      "noncomparable_review_pairs": 0,
+      "all_references_covered": false
+    },
+    "required_external_facts": {
+      "required_count": 0,
+      "verified_count": 0,
+      "failed_count": 0,
+      "unknown_count": 0,
+      "facts": {}
+    },
+    "open_finding_count": 0,
+    "construction_complete": true,
+    "catia_invoked": false
+  },
+  "repair_cycles": 5,
+  "model_call_count": 10,
+  "model_call_count_source": "dsh_llm_stream_events",
+  "model_calls": [
+    {
+      "provider": "ai-modeler",
+      "model": "moonshotai/Kimi-K2.7-Code",
+      "reasoning_effort": "low",
+      "dsh_request_image_count": 0,
+      "capture_layer": "dsh_llm_stream_boundary",
+      "provider_wire_observed": true
+    },
+    {
+      "provider": "ai-modeler",
+      "model": "moonshotai/Kimi-K2.7-Code",
+      "reasoning_effort": "low",
+      "dsh_request_image_count": 0,
+      "capture_layer": "dsh_llm_stream_boundary",
+      "provider_wire_observed": true
+    },
+    {
+      "provider": "ai-modeler",
+      "model": "moonshotai/Kimi-K2.7-Code",
+      "reasoning_effort": "low",
+      "dsh_request_image_count": 0,
+      "capture_layer": "dsh_llm_stream_boundary",
+      "provider_wire_observed": true
+    },
+    {
+      "provider": "ai-modeler",
+      "model": "moonshotai/Kimi-K2.7-Code",
+      "reasoning_effort": "low",
+      "dsh_request_image_count": 0,
+      "capture_layer": "dsh_llm_stream_boundary",
+      "provider_wire_observed": true
+    },
+    {
+      "provider": "ai-modeler",
+      "model": "moonshotai/Kimi-K2.7-Code",
+      "reasoning_effort": "low",
+      "dsh_request_image_count": 0,
+      "capture_layer": "dsh_llm_stream_boundary",
+      "provider_wire_observed": true
+    },
+    {
+      "provider": "ai-modeler",
+      "model": "moonshotai/Kimi-K2.7-Code",
+      "reasoning_effort": "low",
+      "dsh_request_image_count": 0,
+      "capture_layer": "dsh_llm_stream_boundary",
+      "provider_wire_observed": true
+    },
+    {
+      "provider": "ai-modeler",
+      "model": "moonshotai/Kimi-K2.7-Code",
+      "reasoning_effort": "low",
+      "dsh_request_image_count": 0,
+      "capture_layer": "dsh_llm_stream_boundary",
+      "provider_wire_observed": true
+    },
+    {
+      "provider": "ai-modeler",
+      "model": "moonshotai/Kimi-K2.7-Code",
+      "reasoning_effort": "low",
+      "dsh_request_image_count": 0,
+      "capture_layer": "dsh_llm_stream_boundary",
+      "provider_wire_observed": true
+    },
+    {
+      "provider": "ai-modeler",
+      "model": "moonshotai/Kimi-K2.7-Code",
+      "reasoning_effort": "low",
+      "dsh_request_image_count": 0,
+      "capture_layer": "dsh_llm_stream_boundary",
+      "provider_wire_observed": true
+    },
+    {
+      "provider": "ai-modeler",
+      "model": "moonshotai/Kimi-K2.7-Code",
+      "reasoning_effort": "low",
+      "dsh_request_image_count": 0,
+      "capture_layer": "dsh_llm_stream_boundary",
+      "provider_wire_observed": true
+    }
+  ],
+  "provider_attempt_count": 10,
+  "provider_finish_reasons": [
+    {
+      "request_id": "334b834f556f4ba091cc89bcf57623dd:1790848014730:3dhbbw",
+      "finish_reason": "tool_calls"
+    },
+    {
+      "request_id": "334b834f556f4ba091cc89bcf57623dd:1790848018760:xwrfr4",
+      "finish_reason": "tool_calls"
+    },
+    {
+      "request_id": "334b834f556f4ba091cc89bcf57623dd:1790848027939:nhj1yb",
+      "finish_reason": "tool_calls"
+    },
+    {
+      "request_id": "334b834f556f4ba091cc89bcf57623dd:1790848035403:2tmipc",
+      "finish_reason": "tool_calls"
+    },
+    {
+      "request_id": "334b834f556f4ba091cc89bcf57623dd:1790848041146:hvnrat",
+      "finish_reason": "tool_calls"
+    },
+    {
+      "request_id": "334b834f556f4ba091cc89bcf57623dd:1790848045821:yxrelt",
+      "finish_reason": "tool_calls"
+    },
+    {
+      "request_id": "334b834f556f4ba091cc89bcf57623dd:1790848055493:e5an79",
+      "finish_reason": "tool_calls"
+    },
+    {
+      "request_id": "334b834f556f4ba091cc89bcf57623dd:1790848068056:z9w93x",
+      "finish_reason": "tool_calls"
+    },
+    {
+      "request_id": "334b834f556f4ba091cc89bcf57623dd:1790848072085:adlipa",
+      "finish_reason": "tool_calls"
+    },
+    {
+      "request_id": "334b834f556f4ba091cc89bcf57623dd:1790848078249:mc27ee",
+      "finish_reason": "stop"
+    }
+  ],
+  "dsh_finish_reasons": [
+    {
+      "finish_reason": "[object Object]",
+      "elapsed_ms": 2865
+    },
+    {
+      "finish_reason": "[object Object]",
+      "elapsed_ms": 9128
+    },
+    {
+      "finish_reason": "[object Object]",
+      "elapsed_ms": 7455
+    },
+    {
+      "finish_reason": "[object Object]",
+      "elapsed_ms": 5692
+    },
+    {
+      "finish_reason": "[object Object]",
+      "elapsed_ms": 4649
+    },
+    {
+      "finish_reason": "[object Object]",
+      "elapsed_ms": 9639
+    },
+    {
+      "finish_reason": "[object Object]",
+      "elapsed_ms": 12532
+    },
+    {
+      "finish_reason": "[object Object]",
+      "elapsed_ms": 2692
+    },
+    {
+      "finish_reason": "[object Object]",
+      "elapsed_ms": 6111
+    },
+    {
+      "finish_reason": "[object Object]",
+      "elapsed_ms": 6625
+    }
+  ],
+  "provider_wire_observed": true,
+  "provider_wire_capture_layer": "node_global_fetch",
+  "request_image_hashes": [
+    {
+      "transport_sha256": "7ef98772bee04415e96f208fc60bd2108670ac6e0c9a651790d6f1515f84c9c4",
+      "byte_length": 9334,
+      "source_sha256": null,
+      "source_reference_ids": [],
+      "roi_norm": null,
+      "source_kind": "tool_preview",
+      "preview_revisions": [
+        4
+      ],
+      "preview_generations": [
+        2
+      ],
+      "preview_views": [
+        "iso"
+      ],
+      "partial_preview": false,
+      "source_mapping": "exact-transport-hash-match"
+    },
+    {
+      "transport_sha256": "7ef98772bee04415e96f208fc60bd2108670ac6e0c9a651790d6f1515f84c9c4",
+      "byte_length": 9334,
+      "source_sha256": null,
+      "source_reference_ids": [],
+      "roi_norm": null,
+      "source_kind": "tool_preview",
+      "preview_revisions": [
+        4
+      ],
+      "preview_generations": [
+        2
+      ],
+      "preview_views": [
+        "iso"
+      ],
+      "partial_preview": false,
+      "source_mapping": "exact-transport-hash-match"
+    }
+  ],
+  "image_parts_in_request": 2,
+  "reference_image_count": 0,
+  "knowledge_search": {
+    "status": "no_match",
+    "query": "请把长方体的长度改为120毫米。宽度仍为60毫米、高度仍为20毫米、中心仍为[0,0,0]。",
+    "matches": [],
+    "negative_examples": [],
+    "image_query_supported": false,
+    "visual_fallback_available": false,
+    "score_meaning": "relevance 是词面相关度排序分数，不是准确率或置信概率。",
+    "message": "当前文字描述没有达到相似检索阈值；这不代表库外不存在对应工件。",
+    "modeling_recipes": []
+  },
+  "knowledge_visual_examples": [],
+  "knowledge_image_parts": 0,
+  "image_input_mode": "individual",
+  "llm_usage": {
+    "input_tokens": 112350,
+    "output_tokens": 2018,
+    "total_tokens": 114368,
+    "reasoning_tokens": 587,
+    "cache_token_details": {
+      "prompt_tokens_details.cached_tokens": 94336
+    }
+  },
+  "usage_source": "provider_response_body",
+  "first_tool_latency_ms": 5875.0,
+  "observability": {
+    "path": "C:\\Users\\lycohana\\AppData\\Local\\AI Modeler\\dsh\\sessions\\aq-text-provenance-20261001\\agent-observability.jsonl",
+    "logical_requests": 10,
+    "provider_attempts_observed": 10,
+    "provider_wire_status": "observed",
+    "copied_path": "C:\\Users\\lycohana\\Desktop\\code\\AI-_-\\artifacts\\agent-quality-rebuild\\input-reasoning\\cli-text-provenance-20261001\\turns\\334b834f556f4ba091cc89bcf57623dd\\agent-observability.jsonl",
+    "copied_turn_id": "334b834f556f4ba091cc89bcf57623dd",
+    "copied_event_count": 1571
+  },
+  "routing": {
+    "action": "dsh_agent",
+    "review_mode": "local_geometry"
+  },
+  "run_record": "C:\\Users\\lycohana\\AppData\\Local\\AI Modeler\\dsh\\sessions\\aq-text-provenance-20261001\\cad-state.json",
+  "run_id": "aq-text-provenance-20261001",
+  "dsh_session_id": "aq-text-provenance-20261001-dsh-dc1d4892b080",
+  "dimension_assumptions": [],
+  "local_geometry_checks": {
+    "backend": "occt_brep",
+    "kernel": "可用：OCCT 7.9.3.1 / cadquery-ocp-novtk 7.9.3.1.1",
+    "geometry_state": "passed",
+    "state": "passed",
+    "brep_valid": true,
+    "shape_type": "TopAbs_SOLID",
+    "solid_count": 1,
+    "connected_component_count": 1,
+    "shell_count": 1,
+    "closed_shell_count": 1,
+    "closed": true,
+    "edge_count": 24,
+    "face_count": 6,
+    "free_edge_count": 0,
+    "volume_mm3": 144000.0,
+    "bbox_mm": [
+      -60.0,
+      -30.0,
+      -10.0,
+      60.0,
+      30.0,
+      10.0
+    ],
+    "self_intersection": {
+      "status": "checked_no_intersection",
+      "face_count": 6,
+      "check_result_count": 0,
+      "check_statuses": [],
+      "method": "BOPAlgo_ArgumentAnalyzer(SelfInterMode=True, UseOBB=True)"
+    },
+    "validity_method": "BRepCheck_Analyzer",
+    "geometry_scope": "native_OCCT_BREP_only_visual_comparison_not_performed",
+    "feature_results": [
+      {
+        "feature_id": "block_main",
+        "kind": "box",
+        "operation": "add",
+        "geometry_support": "exact",
+        "builder": "analytic_prism",
+        "state": "applied",
+        "source_feature_id": null,
+        "source_resolution": null,
+        "solid_count": 1,
+        "brep_valid": true,
+        "before_volume_mm3": 0.0,
+        "after_volume_mm3": 144000.0,
+        "volume_delta_mm3": 144000.0,
+        "cylindrical_cut_intents": [],
+        "depth_measurement": null,
+        "facet_count": null
+      }
+    ],
+    "hole_instances": [],
+    "unverified_cut_intents": [],
+    "hole_feature_count": 0,
+    "measured_hole_source_feature_count": 0,
+    "unverified_cut_intent_count": 0,
+    "planned_hole_instance_count": 0,
+    "active_hole_instance_count": 0,
+    "superseded_hole_instance_count": 0,
+    "active_through_hole_count": 0,
+    "through_hole_count": 0,
+    "all_declared_holes_verified": true,
+    "visual_validation": "not_performed",
+    "catia_executed": false,
+    "build_transaction": "每个特征验证成功后才提交；失败保留上一有效实体",
+    "source": "OpenCASCADE native BREP; preview mesh is display-only",
+    "bbox_size_mm": [
+      120.0,
+      60.0,
+      20.0
+    ],
+    "bbox_ratios_from_brep": {
+      "front_width_height": 6.0,
+      "depth_height": 3.0,
+      "top_width_depth": 2.0
+    },
+    "bbox_ratios_from_mesh": {
+      "front_width_height": 6.0,
+      "depth_height": 3.0,
+      "top_width_depth": 2.0
+    },
+    "feature_count_from_plan": 1,
+    "feature_ids_from_plan": [
+      "block_main"
+    ],
+    "hole_features_from_plan": [],
+    "hole_feature_count_from_plan": 0,
+    "expected_hole_instance_count": 0,
+    "hole_instance_count": 0,
+    "through_hole_checks": [],
+    "through_hole_mesh_checks": [],
+    "hole_measurement_complete": true,
+    "hole_measurement_state": "not_applicable_no_holes_or_cylindrical_cuts",
+    "through_hole_count_expected": 0,
+    "through_hole_count_verified": 0,
+    "through_hole_result": "no_holes_declared",
+    "image_estimate_parameters": [],
+    "catia_geometry_verification": "not_performed"
+  },
+  "cli_progress_events": [
+    {
+      "elapsed_ms": 47.0,
+      "message": "正在查询本地工件知识库。"
+    },
+    {
+      "elapsed_ms": 266.0,
+      "message": "本地知识库未找到可靠文字命中，继续按当前输入建模。"
+    },
+    {
+      "elapsed_ms": 812.0,
+      "message": "正在启动 DSH SDK 多模态 Agent 会话。"
+    },
+    {
+      "elapsed_ms": 812.0,
+      "message": "模型等待中：DSH SDK · 推理强度 low"
+    },
+    {
+      "elapsed_ms": 3766.0,
+      "message": "DSH 状态：running"
+    },
+    {
+      "elapsed_ms": 3875.0,
+      "message": "正在请求模型：请求 moonshotai/Kimi-K2.7-Code · 本次图像 0 张 · 推理 low"
+    },
+    {
+      "elapsed_ms": 3969.0,
+      "message": "正在请求模型：请求 moonshotai/Kimi-K2.7-Code · 本次图像 0 张"
+    },
+    {
+      "elapsed_ms": 5266.0,
+      "message": "模型服务已开始响应 · 1.3 秒"
+    },
+    {
+      "elapsed_ms": 5266.0,
+      "message": "模型首个内容事件已收到 · 1.4 秒"
+    },
+    {
+      "elapsed_ms": 5266.0,
+      "message": "模型正在分析参考图与建模约束 · 00:04"
+    },
+    {
+      "elapsed_ms": 6687.0,
+      "message": "已调用首个工具：mcp__ai-modeler__cad_get_state · 首工具耗时 5.9 秒"
+    },
+    {
+      "elapsed_ms": 6750.0,
+      "message": "模型首个内容事件已收到 · 1.3 秒"
+    },
+    {
+      "elapsed_ms": 7922.0,
+      "message": "Agent 进度：已读取当前 CADPlan 状态。"
+    },
+    {
+      "elapsed_ms": 7953.0,
+      "message": "正在请求模型：请求 moonshotai/Kimi-K2.7-Code · 本次图像 0 张 · 推理 low"
+    },
+    {
+      "elapsed_ms": 7953.0,
+      "message": "正在请求模型：请求 moonshotai/Kimi-K2.7-Code · 本次图像 0 张"
+    },
+    {
+      "elapsed_ms": 8969.0,
+      "message": "模型服务已开始响应 · 1.0 秒"
+    },
+    {
+      "elapsed_ms": 8969.0,
+      "message": "模型首个内容事件已收到 · 1.0 秒"
+    },
+    {
+      "elapsed_ms": 8969.0,
+      "message": "模型正在分析参考图与建模约束 · 00:08"
+    },
+    {
+      "elapsed_ms": 17078.0,
+      "message": "Agent 正在调用工具：mcp__ai-modeler__cad_update_feature"
+    },
+    {
+      "elapsed_ms": 17156.0,
+      "message": "模型首个内容事件已收到 · 1.0 秒"
+    },
+    {
+      "elapsed_ms": 17156.0,
+      "message": "正在请求模型：请求 moonshotai/Kimi-K2.7-Code · 本次图像 0 张 · 推理 low"
+    },
+    {
+      "elapsed_ms": 17156.0,
+      "message": "正在请求模型：请求 moonshotai/Kimi-K2.7-Code · 本次图像 0 张"
+    },
+    {
+      "elapsed_ms": 17984.0,
+      "message": "模型服务已开始响应 · 0.8 秒"
+    },
+    {
+      "elapsed_ms": 17984.0,
+      "message": "模型首个内容事件已收到 · 0.8 秒"
+    },
+    {
+      "elapsed_ms": 17984.0,
+      "message": "模型正在分析参考图与建模约束 · 00:17"
+    },
+    {
+      "elapsed_ms": 24562.0,
+      "message": "Agent 正在调用工具：mcp__ai-modeler__cad_update_feature"
+    },
+    {
+      "elapsed_ms": 24594.0,
+      "message": "模型首个内容事件已收到 · 0.8 秒"
+    },
+    {
+      "elapsed_ms": 24594.0,
+      "message": "正在请求模型：请求 moonshotai/Kimi-K2.7-Code · 本次图像 0 张 · 推理 low"
+    },
+    {
+      "elapsed_ms": 24594.0,
+      "message": "正在请求模型：请求 moonshotai/Kimi-K2.7-Code · 本次图像 0 张"
+    },
+    {
+      "elapsed_ms": 25437.0,
+      "message": "模型服务已开始响应 · 0.8 秒"
+    },
+    {
+      "elapsed_ms": 25437.0,
+      "message": "模型首个内容事件已收到 · 0.8 秒"
+    },
+    {
+      "elapsed_ms": 25437.0,
+      "message": "模型正在分析参考图与建模约束 · 00:24"
+    },
+    {
+      "elapsed_ms": 30281.0,
+      "message": "Agent 正在调用工具：mcp__ai-modeler__cad_update_feature"
+    },
+    {
+      "elapsed_ms": 30312.0,
+      "message": "Agent 进度：特征已修改，revision 3。"
+    },
+    {
+      "elapsed_ms": 30344.0,
+      "message": "模型首个内容事件已收到 · 0.8 秒"
+    },
+    {
+      "elapsed_ms": 30344.0,
+      "message": "正在请求模型：请求 moonshotai/Kimi-K2.7-Code · 本次图像 0 张 · 推理 low"
+    },
+    {
+      "elapsed_ms": 30344.0,
+      "message": "正在请求模型：请求 moonshotai/Kimi-K2.7-Code · 本次图像 0 张"
+    },
+    {
+      "elapsed_ms": 32031.0,
+      "message": "模型服务已开始响应 · 1.6 秒"
+    },
+    {
+      "elapsed_ms": 32031.0,
+      "message": "模型首个内容事件已收到 · 1.7 秒"
+    },
+    {
+      "elapsed_ms": 32031.0,
+      "message": "模型正在分析参考图与建模约束 · 00:31"
+    },
+    {
+      "elapsed_ms": 34969.0,
+      "message": "Agent 正在调用工具：mcp__ai-modeler__cad_update_feature"
+    },
+    {
+      "elapsed_ms": 34984.0,
+      "message": "Agent 进度：这次更新没有改变特征。已记录相同 geometry hash 的无进展调用；不要重放相同参数，请核对 finding 和原图，必要时恢复最佳候选。"
+    },
+    {
+      "elapsed_ms": 35000.0,
+      "message": "模型首个内容事件已收到 · 1.6 秒"
+    },
+    {
+      "elapsed_ms": 35094.0,
+      "message": "正在请求模型：请求 moonshotai/Kimi-K2.7-Code · 本次图像 0 张 · 推理 low"
+    },
+    {
+      "elapsed_ms": 35094.0,
+      "message": "正在请求模型：请求 moonshotai/Kimi-K2.7-Code · 本次图像 0 张"
+    },
+    {
+      "elapsed_ms": 36016.0,
+      "message": "模型服务已开始响应 · 0.9 秒"
+    },
+    {
+      "elapsed_ms": 36016.0,
+      "message": "模型首个内容事件已收到 · 0.9 秒"
+    },
+    {
+      "elapsed_ms": 36016.0,
+      "message": "模型正在分析参考图与建模约束 · 00:35"
+    },
+    {
+      "elapsed_ms": 44641.0,
+      "message": "Agent 正在调用工具：mcp__ai-modeler__cad_update_feature"
+    },
+    {
+      "elapsed_ms": 44656.0,
+      "message": "模型首个内容事件已收到 · 0.9 秒"
+    },
+    {
+      "elapsed_ms": 44656.0,
+      "message": "Agent 进度：这次更新没有改变特征。已记录相同 geometry hash 的无进展调用；不要重放相同参数，请核对 finding 和原图，必要时恢复最佳候选。"
+    },
+    {
+      "elapsed_ms": 44750.0,
+      "message": "正在请求模型：请求 moonshotai/Kimi-K2.7-Code · 本次图像 0 张 · 推理 low"
+    },
+    {
+      "elapsed_ms": 44750.0,
+      "message": "正在请求模型：请求 moonshotai/Kimi-K2.7-Code · 本次图像 0 张"
+    },
+    {
+      "elapsed_ms": 45672.0,
+      "message": "模型服务已开始响应 · 1.0 秒"
+    },
+    {
+      "elapsed_ms": 45672.0,
+      "message": "模型首个内容事件已收到 · 1.0 秒"
+    },
+    {
+      "elapsed_ms": 45766.0,
+      "message": "模型正在分析参考图与建模约束 · 00:44"
+    },
+    {
+      "elapsed_ms": 57203.0,
+      "message": "Agent 正在调用工具：mcp__ai-modeler__cad_create_model"
+    },
+    {
+      "elapsed_ms": 57219.0,
+      "message": "Agent 进度：CADPlan 已创建，revision 4。"
+    },
+    {
+      "elapsed_ms": 57281.0,
+      "message": "模型首个内容事件已收到 · 1.0 秒"
+    },
+    {
+      "elapsed_ms": 57281.0,
+      "message": "正在请求模型：请求 moonshotai/Kimi-K2.7-Code · 本次图像 0 张 · 推理 low"
+    },
+    {
+      "elapsed_ms": 57281.0,
+      "message": "正在请求模型：请求 moonshotai/Kimi-K2.7-Code · 本次图像 0 张"
+    },
+    {
+      "elapsed_ms": 58109.0,
+      "message": "模型服务已开始响应 · 0.8 秒"
+    },
+    {
+      "elapsed_ms": 58109.0,
+      "message": "模型首个内容事件已收到 · 0.8 秒"
+    },
+    {
+      "elapsed_ms": 58109.0,
+      "message": "模型正在分析参考图与建模约束 · 00:57"
+    },
+    {
+      "elapsed_ms": 59922.0,
+      "message": "Agent 正在调用工具：mcp__ai-modeler__cad_preview_model"
+    },
+    {
+      "elapsed_ms": 59969.0,
+      "message": "模型首个内容事件已收到 · 0.8 秒"
+    },
+    {
+      "elapsed_ms": 61234.0,
+      "message": "Agent 进度：当前版本预览已生成，方向 iso；请目视对照原始参考图。"
+    },
+    {
+      "elapsed_ms": 61234.0,
+      "message": "Agent 正在调用工具：mcp__ai-modeler__cad_validate_model"
+    },
+    {
+      "elapsed_ms": 61250.0,
+      "message": "Agent 进度：校验已完成；未启动 CATIA。"
+    },
+    {
+      "elapsed_ms": 61266.0,
+      "message": "正在请求模型：请求 moonshotai/Kimi-K2.7-Code · 本次图像 0 张 · 推理 low"
+    },
+    {
+      "elapsed_ms": 61266.0,
+      "message": "正在请求模型：请求 moonshotai/Kimi-K2.7-Code · 本次图像 1 张"
+    },
+    {
+      "elapsed_ms": 62656.0,
+      "message": "模型服务已开始响应 · 1.3 秒"
+    },
+    {
+      "elapsed_ms": 62656.0,
+      "message": "模型首个内容事件已收到 · 1.4 秒"
+    },
+    {
+      "elapsed_ms": 62656.0,
+      "message": "模型正在分析参考图与建模约束 · 01:01"
+    },
+    {
+      "elapsed_ms": 67375.0,
+      "message": "Agent 正在调用工具：mcp__ai-modeler__cad_finish_model"
+    },
+    {
+      "elapsed_ms": 67375.0,
+      "message": "模型首个内容事件已收到 · 1.4 秒"
+    },
+    {
+      "elapsed_ms": 67422.0,
+      "message": "Agent 进度：当前模型已通过本地几何与可见证据检查并保存。 本地网格预览完成，未创建或验证 CATPart。"
+    },
+    {
+      "elapsed_ms": 67469.0,
+      "message": "正在请求模型：请求 moonshotai/Kimi-K2.7-Code · 本次图像 0 张 · 推理 low"
+    },
+    {
+      "elapsed_ms": 67469.0,
+      "message": "正在请求模型：请求 moonshotai/Kimi-K2.7-Code · 本次图像 1 张"
+    },
+    {
+      "elapsed_ms": 68594.0,
+      "message": "模型服务已开始响应 · 1.1 秒"
+    },
+    {
+      "elapsed_ms": 68594.0,
+      "message": "模型首个内容事件已收到 · 1.1 秒"
+    },
+    {
+      "elapsed_ms": 68594.0,
+      "message": "模型正在分析参考图与建模约束 · 01:07"
+    },
+    {
+      "elapsed_ms": 69703.0,
+      "message": "模型正在生成回复"
+    },
+    {
+      "elapsed_ms": 74047.0,
+      "message": "DSH 状态：idle"
+    },
+    {
+      "elapsed_ms": 74062.0,
+      "message": "模型响应已返回：正在保存并整理 CADPlan 与本轮工具结果。"
+    }
+  ],
+  "cli_session_id": "aq-text-provenance-20261001",
+  "cli_dsh_session_id": "aq-text-provenance-20261001-dsh-dc1d4892b080",
+  "cli_reference_paths": [],
+  "cli_conversation_history_path": "C:\\Users\\lycohana\\AppData\\Local\\Packages\\OpenAI.Codex_2p2nqsd0c76g0\\LocalCache\\Local\\AI Modeler\\dsh\\sessions\\aq-text-provenance-20261001\\conversation-history.json",
+  "cli_conversation_turn_count": 2,
+  "cli_output_dir": "C:\\Users\\lycohana\\Desktop\\code\\AI-_-\\artifacts\\agent-quality-rebuild\\input-reasoning\\cli-text-provenance-20261001\\turns\\334b834f556f4ba091cc89bcf57623dd",
+  "delivery_warnings": [],
+  "cli_exit_code": 0,
+  "cli_outcome": "accepted_and_verified",
+  "cli_result_path": "C:\\Users\\lycohana\\Desktop\\code\\AI-_-\\artifacts\\agent-quality-rebuild\\input-reasoning\\cli-text-provenance-20261001\\turns\\334b834f556f4ba091cc89bcf57623dd\\result.json"
+}

@@ -1,0 +1,1863 @@
+{
+  "artifact_type": "cadplan-public-feature-execution-matrix",
+  "verification_mode": "direct_sdk_not_agent_ui",
+  "kernel": "可用：OCCT 7.9.3.1 / cadquery-ocp-novtk 7.9.3.1.1",
+  "public_document_feature_count": 27,
+  "public_document_features": [
+    "box",
+    "cylinder",
+    "socket_head_bolt",
+    "sphere",
+    "prism",
+    "revolve",
+    "gear",
+    "loft",
+    "hole",
+    "pocket",
+    "pattern",
+    "helix",
+    "spoked_wheel",
+    "vbelt_pulley",
+    "timing_pulley",
+    "worm",
+    "helical_gear",
+    "bevel_gear",
+    "crankshaft",
+    "camshaft",
+    "impeller",
+    "piston",
+    "conrod",
+    "cross_joint",
+    "scroll_disc",
+    "rotor",
+    "shell"
+  ],
+  "kernel_geometry_support_entries": 30,
+  "internal_or_recipe_only_kinds": [
+    "extrude_holes",
+    "hex_bolt",
+    "real_solid"
+  ],
+  "rows": [
+    {
+      "kind": "box",
+      "validation_state": "valid",
+      "catia_support": "exact",
+      "catia_reason": "矩形草图加凸台；当前 CATIA 映射仅支持 Z 轴拉伸。",
+      "local_geometry_support": "exact",
+      "local_geometry_reason": "OCCT 棱柱；带圆角/倒角时沿用离散轮廓近似",
+      "execution_state": "passed",
+      "backend": "occt_brep",
+      "brep_valid": true,
+      "solid_count": 1,
+      "closed": true,
+      "volume_mm3": 48000.0,
+      "feature_result": {
+        "feature_id": "target",
+        "kind": "box",
+        "operation": "add",
+        "geometry_support": "exact",
+        "builder": "analytic_prism",
+        "state": "applied",
+        "source_feature_id": null,
+        "source_resolution": null,
+        "solid_count": 1,
+        "brep_valid": true,
+        "before_volume_mm3": 0.0,
+        "after_volume_mm3": 48000.0,
+        "volume_delta_mm3": 48000.0,
+        "depth_measurement": null,
+        "facet_count": null
+      },
+      "feature_warnings": [
+        {
+          "feature_id": "target",
+          "kind": "box",
+          "operation": "add",
+          "geometry_support": "exact",
+          "builder": "analytic_prism",
+          "state": "applied",
+          "source_feature_id": null,
+          "source_resolution": null,
+          "solid_count": 1,
+          "brep_valid": true,
+          "before_volume_mm3": 0.0,
+          "after_volume_mm3": 48000.0,
+          "volume_delta_mm3": 48000.0,
+          "depth_measurement": null,
+          "facet_count": null
+        }
+      ]
+    },
+    {
+      "kind": "cylinder",
+      "validation_state": "valid",
+      "catia_support": "exact",
+      "catia_reason": "center 默认表示轴向底面中心(base=true)，height 沿 axis 正向拉伸；base=false 时 center 表示几何中点。等半径时为圆草图加凸台；圆锥台会近似，非 Z 轴圆锥台暂不支持。",
+      "local_geometry_support": "exact",
+      "local_geometry_reason": "解析圆柱或圆锥面",
+      "execution_state": "passed",
+      "backend": "occt_brep",
+      "brep_valid": true,
+      "solid_count": 1,
+      "closed": true,
+      "volume_mm3": 6283.185307179586,
+      "feature_result": {
+        "feature_id": "target",
+        "kind": "cylinder",
+        "operation": "add",
+        "geometry_support": "exact",
+        "builder": "analytic_cylinder_or_cone",
+        "state": "applied",
+        "source_feature_id": null,
+        "source_resolution": null,
+        "solid_count": 1,
+        "brep_valid": true,
+        "before_volume_mm3": 0.0,
+        "after_volume_mm3": 6283.185307179586,
+        "volume_delta_mm3": 6283.185307179586,
+        "depth_measurement": null,
+        "facet_count": null
+      },
+      "feature_warnings": [
+        {
+          "feature_id": "target",
+          "kind": "cylinder",
+          "operation": "add",
+          "geometry_support": "exact",
+          "builder": "analytic_cylinder_or_cone",
+          "state": "applied",
+          "source_feature_id": null,
+          "source_resolution": null,
+          "solid_count": 1,
+          "brep_valid": true,
+          "before_volume_mm3": 0.0,
+          "after_volume_mm3": 6283.185307179586,
+          "volume_delta_mm3": 6283.185307179586,
+          "depth_measurement": null,
+          "facet_count": null
+        }
+      ]
+    },
+    {
+      "kind": "socket_head_bolt",
+      "validation_state": "valid",
+      "catia_support": "approximate",
+      "catia_reason": "本地网格按 thread_pitch 生成可见的近似 ISO 公制螺旋牙型；整段杆部带牙，未建牙端倒角/退刀槽。当前 CATIA 导出器仍以光杆凸台和六角凹槽表达，不会创建原生或装饰螺纹。",
+      "local_geometry_support": "approximate",
+      "local_geometry_reason": "当前参数化网格转封闭 facet-BREP",
+      "execution_state": "passed",
+      "backend": "occt_brep",
+      "brep_valid": true,
+      "solid_count": 1,
+      "closed": true,
+      "volume_mm3": 1891.6435345346094,
+      "feature_result": {
+        "feature_id": "target",
+        "kind": "socket_head_bolt",
+        "operation": "add",
+        "geometry_support": "approximate",
+        "builder": "analytic_socket_head_with_faceted_thread_brep",
+        "state": "applied",
+        "source_feature_id": null,
+        "source_resolution": null,
+        "solid_count": 1,
+        "brep_valid": true,
+        "before_volume_mm3": 0.0,
+        "after_volume_mm3": 1891.6435345346094,
+        "volume_delta_mm3": 1891.6435345346094,
+        "depth_measurement": null,
+        "facet_count": null
+      },
+      "feature_warnings": [
+        {
+          "feature_id": "target",
+          "kind": "socket_head_bolt",
+          "operation": "add",
+          "geometry_support": "approximate",
+          "builder": "analytic_socket_head_with_faceted_thread_brep",
+          "state": "applied",
+          "source_feature_id": null,
+          "source_resolution": null,
+          "solid_count": 1,
+          "brep_valid": true,
+          "before_volume_mm3": 0.0,
+          "after_volume_mm3": 1891.6435345346094,
+          "volume_delta_mm3": 1891.6435345346094,
+          "depth_measurement": null,
+          "facet_count": null
+        }
+      ]
+    },
+    {
+      "kind": "sphere",
+      "validation_state": "valid",
+      "catia_support": "approximate",
+      "catia_reason": "CATIA 导出器以多层圆盘近似球体。",
+      "local_geometry_support": "exact",
+      "local_geometry_reason": "OCCT 解析球面",
+      "execution_state": "passed",
+      "backend": "occt_brep",
+      "brep_valid": true,
+      "solid_count": 1,
+      "closed": true,
+      "volume_mm3": 4188.790204786392,
+      "feature_result": {
+        "feature_id": "target",
+        "kind": "sphere",
+        "operation": "add",
+        "geometry_support": "exact",
+        "builder": "analytic_sphere",
+        "state": "applied",
+        "source_feature_id": null,
+        "source_resolution": null,
+        "solid_count": 1,
+        "brep_valid": true,
+        "before_volume_mm3": 0.0,
+        "after_volume_mm3": 4188.790204786392,
+        "volume_delta_mm3": 4188.790204786392,
+        "depth_measurement": null,
+        "facet_count": null
+      },
+      "feature_warnings": [
+        {
+          "feature_id": "target",
+          "kind": "sphere",
+          "operation": "add",
+          "geometry_support": "exact",
+          "builder": "analytic_sphere",
+          "state": "applied",
+          "source_feature_id": null,
+          "source_resolution": null,
+          "solid_count": 1,
+          "brep_valid": true,
+          "before_volume_mm3": 0.0,
+          "after_volume_mm3": 4188.790204786392,
+          "volume_delta_mm3": 4188.790204786392,
+          "depth_measurement": null,
+          "facet_count": null
+        }
+      ]
+    },
+    {
+      "kind": "prism",
+      "validation_state": "valid",
+      "catia_support": "exact",
+      "catia_reason": "闭合多边形草图加凸台；当前仅支持 Z 轴。",
+      "local_geometry_support": "exact",
+      "local_geometry_reason": "多边形轮廓棱柱",
+      "execution_state": "passed",
+      "backend": "occt_brep",
+      "brep_valid": true,
+      "solid_count": 1,
+      "closed": true,
+      "volume_mm3": 500.0,
+      "feature_result": {
+        "feature_id": "target",
+        "kind": "prism",
+        "operation": "add",
+        "geometry_support": "exact",
+        "builder": "analytic_extrusion_of_polygon",
+        "state": "applied",
+        "source_feature_id": null,
+        "source_resolution": null,
+        "solid_count": 1,
+        "brep_valid": true,
+        "before_volume_mm3": 0.0,
+        "after_volume_mm3": 500.0,
+        "volume_delta_mm3": 500.0,
+        "depth_measurement": null,
+        "facet_count": null
+      },
+      "feature_warnings": [
+        {
+          "feature_id": "target",
+          "kind": "prism",
+          "operation": "add",
+          "geometry_support": "exact",
+          "builder": "analytic_extrusion_of_polygon",
+          "state": "applied",
+          "source_feature_id": null,
+          "source_resolution": null,
+          "solid_count": 1,
+          "brep_valid": true,
+          "before_volume_mm3": 0.0,
+          "after_volume_mm3": 500.0,
+          "volume_delta_mm3": 500.0,
+          "depth_measurement": null,
+          "facet_count": null
+        }
+      ]
+    },
+    {
+      "kind": "revolve",
+      "validation_state": "valid",
+      "catia_support": "approximate",
+      "catia_reason": "本地 OCCT BREP 按闭合[半径,轴向坐标]轮廓精确回转，并将新增回转体与已有实体做布尔合并；CATIA 导出器仍用多层圆盘近似，非 CATIA 原生回转特征。",
+      "local_geometry_support": "exact",
+      "local_geometry_reason": "简单闭合半径-轴向轮廓的 OCCT 解析回转",
+      "execution_state": "passed",
+      "backend": "occt_brep",
+      "brep_valid": true,
+      "solid_count": 1,
+      "closed": true,
+      "volume_mm3": 785.3981633974482,
+      "feature_result": {
+        "feature_id": "target",
+        "kind": "revolve",
+        "operation": "add",
+        "geometry_support": "exact",
+        "builder": "analytic_occt_revolve",
+        "state": "applied",
+        "source_feature_id": null,
+        "source_resolution": null,
+        "solid_count": 1,
+        "brep_valid": true,
+        "before_volume_mm3": 0.0,
+        "after_volume_mm3": 785.3981633974482,
+        "volume_delta_mm3": 785.3981633974482,
+        "depth_measurement": null,
+        "facet_count": null
+      },
+      "feature_warnings": [
+        {
+          "feature_id": "target",
+          "kind": "revolve",
+          "operation": "add",
+          "geometry_support": "exact",
+          "builder": "analytic_occt_revolve",
+          "state": "applied",
+          "source_feature_id": null,
+          "source_resolution": null,
+          "solid_count": 1,
+          "brep_valid": true,
+          "before_volume_mm3": 0.0,
+          "after_volume_mm3": 785.3981633974482,
+          "volume_delta_mm3": 785.3981633974482,
+          "depth_measurement": null,
+          "facet_count": null
+        }
+      ]
+    },
+    {
+      "kind": "gear",
+      "validation_state": "valid",
+      "catia_support": "exact",
+      "catia_reason": "齿廓转换为多边形草图并拉伸；当前仅支持 Z 轴。",
+      "local_geometry_support": "approximate",
+      "local_geometry_reason": "梯形齿廓为当前简化齿形，几何由多边形棱柱表达",
+      "execution_state": "passed",
+      "backend": "occt_brep",
+      "brep_valid": true,
+      "solid_count": 1,
+      "closed": true,
+      "volume_mm3": 9670.423153988308,
+      "feature_result": {
+        "feature_id": "target",
+        "kind": "gear",
+        "operation": "add",
+        "geometry_support": "approximate",
+        "builder": "polygonal_tooth_profile",
+        "state": "applied",
+        "source_feature_id": null,
+        "source_resolution": null,
+        "solid_count": 1,
+        "brep_valid": true,
+        "before_volume_mm3": 0.0,
+        "after_volume_mm3": 9670.423153988308,
+        "volume_delta_mm3": 9670.423153988308,
+        "depth_measurement": null,
+        "facet_count": null
+      },
+      "feature_warnings": [
+        {
+          "feature_id": "target",
+          "kind": "gear",
+          "operation": "add",
+          "geometry_support": "approximate",
+          "builder": "polygonal_tooth_profile",
+          "state": "applied",
+          "source_feature_id": null,
+          "source_resolution": null,
+          "solid_count": 1,
+          "brep_valid": true,
+          "before_volume_mm3": 0.0,
+          "after_volume_mm3": 9670.423153988308,
+          "volume_delta_mm3": 9670.423153988308,
+          "depth_measurement": null,
+          "facet_count": null
+        }
+      ]
+    },
+    {
+      "kind": "loft",
+      "validation_state": "valid",
+      "catia_support": "approximate",
+      "catia_reason": "CATIA 中以根部截面拉伸近似多截面放样。",
+      "local_geometry_support": "approximate",
+      "local_geometry_reason": "翼型截面离散后由 OCCT 放样",
+      "execution_state": "passed",
+      "backend": "occt_brep",
+      "brep_valid": true,
+      "solid_count": 1,
+      "closed": true,
+      "volume_mm3": 2581.1870129813765,
+      "feature_result": {
+        "feature_id": "target",
+        "kind": "loft",
+        "operation": "add",
+        "geometry_support": "approximate",
+        "builder": "occt_loft_of_discrete_airfoil_sections",
+        "state": "applied",
+        "source_feature_id": null,
+        "source_resolution": null,
+        "solid_count": 1,
+        "brep_valid": true,
+        "before_volume_mm3": 0.0,
+        "after_volume_mm3": 2581.1870129813765,
+        "volume_delta_mm3": 2581.1870129813765,
+        "depth_measurement": null,
+        "facet_count": null
+      },
+      "feature_warnings": [
+        {
+          "feature_id": "target",
+          "kind": "loft",
+          "operation": "add",
+          "geometry_support": "approximate",
+          "builder": "occt_loft_of_discrete_airfoil_sections",
+          "state": "applied",
+          "source_feature_id": null,
+          "source_resolution": null,
+          "solid_count": 1,
+          "brep_valid": true,
+          "before_volume_mm3": 0.0,
+          "after_volume_mm3": 2581.1870129813765,
+          "volume_delta_mm3": 2581.1870129813765,
+          "depth_measurement": null,
+          "facet_count": null
+        }
+      ]
+    },
+    {
+      "kind": "hole",
+      "validation_state": "valid",
+      "catia_support": "exact",
+      "catia_reason": "圆形凹槽；through=true 时按当前零件包围盒生成贯穿深度。",
+      "local_geometry_support": "exact",
+      "local_geometry_reason": "圆柱刀具体与 BREP 布尔切除",
+      "execution_state": "passed",
+      "backend": "occt_brep",
+      "brep_valid": true,
+      "solid_count": 1,
+      "closed": true,
+      "volume_mm3": 476984.07105255383,
+      "feature_result": {
+        "feature_id": "target",
+        "kind": "hole",
+        "operation": "cut",
+        "geometry_support": "exact",
+        "builder": "analytic_cylindrical_bores",
+        "state": "applied",
+        "source_feature_id": null,
+        "source_resolution": null,
+        "solid_count": 1,
+        "brep_valid": true,
+        "before_volume_mm3": 480000.0,
+        "after_volume_mm3": 476984.07105255383,
+        "volume_delta_mm3": -3015.9289474461693,
+        "depth_measurement": null,
+        "facet_count": null
+      },
+      "feature_warnings": [
+        {
+          "feature_id": "target",
+          "kind": "hole",
+          "operation": "cut",
+          "geometry_support": "exact",
+          "builder": "analytic_cylindrical_bores",
+          "state": "applied",
+          "source_feature_id": null,
+          "source_resolution": null,
+          "solid_count": 1,
+          "brep_valid": true,
+          "before_volume_mm3": 480000.0,
+          "after_volume_mm3": 476984.07105255383,
+          "volume_delta_mm3": -3015.9289474461693,
+          "depth_measurement": null,
+          "facet_count": null
+        }
+      ]
+    },
+    {
+      "kind": "pocket",
+      "validation_state": "valid",
+      "catia_support": "exact",
+      "catia_reason": "矩形/圆角矩形凹槽；当前仅支持 Z 轴。",
+      "local_geometry_support": "exact",
+      "local_geometry_reason": "矩形/离散圆角轮廓与 BREP 布尔切除",
+      "execution_state": "passed",
+      "backend": "occt_brep",
+      "brep_valid": true,
+      "solid_count": 1,
+      "closed": true,
+      "volume_mm3": 479280.0,
+      "feature_result": {
+        "feature_id": "target",
+        "kind": "pocket",
+        "operation": "cut",
+        "geometry_support": "exact",
+        "builder": "polygonal_prismatic_pocket_tool",
+        "state": "applied",
+        "source_feature_id": null,
+        "source_resolution": null,
+        "solid_count": 1,
+        "brep_valid": true,
+        "before_volume_mm3": 480000.0,
+        "after_volume_mm3": 479280.0,
+        "volume_delta_mm3": -720.0,
+        "depth_measurement": {
+          "state": "measured",
+          "requested_depth_mm": 3.0,
+          "measured_depth_mm": 3.0,
+          "signed_error_mm": 0.0,
+          "tolerance_mm": 0.001,
+          "side": "positive",
+          "axis": "Z",
+          "source_face_coordinate_mm": 60.0,
+          "floor_coordinate_mm": 57.0,
+          "selected_probe_point_mm": [
+            0.0,
+            0.0,
+            30.0
+          ],
+          "candidate_probe_count": 9,
+          "candidate_measurements": [
+            {
+              "probe_point_mm": [
+                0.0,
+                0.0,
+                30.0
+              ],
+              "measured_depth_mm": 3.0,
+              "floor_coordinate_mm": 57.0,
+              "material_axis_segments": [
+                {
+                  "axis_interval_mm": [
+                    -0.0,
+                    57.0
+                  ],
+                  "midpoint_mm": 28.5,
+                  "inside_solid": true
+                }
+              ],
+              "line_intersections": 2,
+              "line_method": "IntCurvesFace_ShapeIntersector exact line/trimmed-face events + BRepClass3d interval classification"
+            },
+            {
+              "probe_point_mm": [
+                0.0,
+                -2.0999999999999996,
+                30.0
+              ],
+              "measured_depth_mm": 3.0,
+              "floor_coordinate_mm": 57.0,
+              "material_axis_segments": [
+                {
+                  "axis_interval_mm": [
+                    -0.0,
+                    57.0
+                  ],
+                  "midpoint_mm": 28.5,
+                  "inside_solid": true
+                }
+              ],
+              "line_intersections": 2,
+              "line_method": "IntCurvesFace_ShapeIntersector exact line/trimmed-face events + BRepClass3d interval classification"
+            },
+            {
+              "probe_point_mm": [
+                0.0,
+                2.0999999999999996,
+                30.0
+              ],
+              "measured_depth_mm": 3.0,
+              "floor_coordinate_mm": 57.0,
+              "material_axis_segments": [
+                {
+                  "axis_interval_mm": [
+                    -0.0,
+                    57.0
+                  ],
+                  "midpoint_mm": 28.5,
+                  "inside_solid": true
+                }
+              ],
+              "line_intersections": 2,
+              "line_method": "IntCurvesFace_ShapeIntersector exact line/trimmed-face events + BRepClass3d interval classification"
+            },
+            {
+              "probe_point_mm": [
+                -3.5,
+                0.0,
+                30.0
+              ],
+              "measured_depth_mm": 3.0,
+              "floor_coordinate_mm": 57.0,
+              "material_axis_segments": [
+                {
+                  "axis_interval_mm": [
+                    -0.0,
+                    57.0
+                  ],
+                  "midpoint_mm": 28.5,
+                  "inside_solid": true
+                }
+              ],
+              "line_intersections": 2,
+              "line_method": "IntCurvesFace_ShapeIntersector exact line/trimmed-face events + BRepClass3d interval classification"
+            },
+            {
+              "probe_point_mm": [
+                -3.5,
+                -2.0999999999999996,
+                30.0
+              ],
+              "measured_depth_mm": 3.0,
+              "floor_coordinate_mm": 57.0,
+              "material_axis_segments": [
+                {
+                  "axis_interval_mm": [
+                    -0.0,
+                    57.0
+                  ],
+                  "midpoint_mm": 28.5,
+                  "inside_solid": true
+                }
+              ],
+              "line_intersections": 2,
+              "line_method": "IntCurvesFace_ShapeIntersector exact line/trimmed-face events + BRepClass3d interval classification"
+            },
+            {
+              "probe_point_mm": [
+                -3.5,
+                2.0999999999999996,
+                30.0
+              ],
+              "measured_depth_mm": 3.0,
+              "floor_coordinate_mm": 57.0,
+              "material_axis_segments": [
+                {
+                  "axis_interval_mm": [
+                    -0.0,
+                    57.0
+                  ],
+                  "midpoint_mm": 28.5,
+                  "inside_solid": true
+                }
+              ],
+              "line_intersections": 2,
+              "line_method": "IntCurvesFace_ShapeIntersector exact line/trimmed-face events + BRepClass3d interval classification"
+            },
+            {
+              "probe_point_mm": [
+                3.5,
+                0.0,
+                30.0
+              ],
+              "measured_depth_mm": 3.0,
+              "floor_coordinate_mm": 57.0,
+              "material_axis_segments": [
+                {
+                  "axis_interval_mm": [
+                    -0.0,
+                    57.0
+                  ],
+                  "midpoint_mm": 28.5,
+                  "inside_solid": true
+                }
+              ],
+              "line_intersections": 2,
+              "line_method": "IntCurvesFace_ShapeIntersector exact line/trimmed-face events + BRepClass3d interval classification"
+            },
+            {
+              "probe_point_mm": [
+                3.5,
+                -2.0999999999999996,
+                30.0
+              ],
+              "measured_depth_mm": 3.0,
+              "floor_coordinate_mm": 57.0,
+              "material_axis_segments": [
+                {
+                  "axis_interval_mm": [
+                    -0.0,
+                    57.0
+                  ],
+                  "midpoint_mm": 28.5,
+                  "inside_solid": true
+                }
+              ],
+              "line_intersections": 2,
+              "line_method": "IntCurvesFace_ShapeIntersector exact line/trimmed-face events + BRepClass3d interval classification"
+            },
+            {
+              "probe_point_mm": [
+                3.5,
+                2.0999999999999996,
+                30.0
+              ],
+              "measured_depth_mm": 3.0,
+              "floor_coordinate_mm": 57.0,
+              "material_axis_segments": [
+                {
+                  "axis_interval_mm": [
+                    -0.0,
+                    57.0
+                  ],
+                  "midpoint_mm": 28.5,
+                  "inside_solid": true
+                }
+              ],
+              "line_intersections": 2,
+              "line_method": "IntCurvesFace_ShapeIntersector exact line/trimmed-face events + BRepClass3d interval classification"
+            }
+          ],
+          "method": "IntCurvesFace_ShapeIntersector face event intervals + BRepClass3d solid interval classification"
+        },
+        "facet_count": null
+      },
+      "feature_warnings": [
+        {
+          "feature_id": "target",
+          "kind": "pocket",
+          "operation": "cut",
+          "geometry_support": "exact",
+          "builder": "polygonal_prismatic_pocket_tool",
+          "state": "applied",
+          "source_feature_id": null,
+          "source_resolution": null,
+          "solid_count": 1,
+          "brep_valid": true,
+          "before_volume_mm3": 480000.0,
+          "after_volume_mm3": 479280.0,
+          "volume_delta_mm3": -720.0,
+          "depth_measurement": {
+            "state": "measured",
+            "requested_depth_mm": 3.0,
+            "measured_depth_mm": 3.0,
+            "signed_error_mm": 0.0,
+            "tolerance_mm": 0.001,
+            "side": "positive",
+            "axis": "Z",
+            "source_face_coordinate_mm": 60.0,
+            "floor_coordinate_mm": 57.0,
+            "selected_probe_point_mm": [
+              0.0,
+              0.0,
+              30.0
+            ],
+            "candidate_probe_count": 9,
+            "candidate_measurements": [
+              {
+                "probe_point_mm": [
+                  0.0,
+                  0.0,
+                  30.0
+                ],
+                "measured_depth_mm": 3.0,
+                "floor_coordinate_mm": 57.0,
+                "material_axis_segments": [
+                  {
+                    "axis_interval_mm": [
+                      -0.0,
+                      57.0
+                    ],
+                    "midpoint_mm": 28.5,
+                    "inside_solid": true
+                  }
+                ],
+                "line_intersections": 2,
+                "line_method": "IntCurvesFace_ShapeIntersector exact line/trimmed-face events + BRepClass3d interval classification"
+              },
+              {
+                "probe_point_mm": [
+                  0.0,
+                  -2.0999999999999996,
+                  30.0
+                ],
+                "measured_depth_mm": 3.0,
+                "floor_coordinate_mm": 57.0,
+                "material_axis_segments": [
+                  {
+                    "axis_interval_mm": [
+                      -0.0,
+                      57.0
+                    ],
+                    "midpoint_mm": 28.5,
+                    "inside_solid": true
+                  }
+                ],
+                "line_intersections": 2,
+                "line_method": "IntCurvesFace_ShapeIntersector exact line/trimmed-face events + BRepClass3d interval classification"
+              },
+              {
+                "probe_point_mm": [
+                  0.0,
+                  2.0999999999999996,
+                  30.0
+                ],
+                "measured_depth_mm": 3.0,
+                "floor_coordinate_mm": 57.0,
+                "material_axis_segments": [
+                  {
+                    "axis_interval_mm": [
+                      -0.0,
+                      57.0
+                    ],
+                    "midpoint_mm": 28.5,
+                    "inside_solid": true
+                  }
+                ],
+                "line_intersections": 2,
+                "line_method": "IntCurvesFace_ShapeIntersector exact line/trimmed-face events + BRepClass3d interval classification"
+              },
+              {
+                "probe_point_mm": [
+                  -3.5,
+                  0.0,
+                  30.0
+                ],
+                "measured_depth_mm": 3.0,
+                "floor_coordinate_mm": 57.0,
+                "material_axis_segments": [
+                  {
+                    "axis_interval_mm": [
+                      -0.0,
+                      57.0
+                    ],
+                    "midpoint_mm": 28.5,
+                    "inside_solid": true
+                  }
+                ],
+                "line_intersections": 2,
+                "line_method": "IntCurvesFace_ShapeIntersector exact line/trimmed-face events + BRepClass3d interval classification"
+              },
+              {
+                "probe_point_mm": [
+                  -3.5,
+                  -2.0999999999999996,
+                  30.0
+                ],
+                "measured_depth_mm": 3.0,
+                "floor_coordinate_mm": 57.0,
+                "material_axis_segments": [
+                  {
+                    "axis_interval_mm": [
+                      -0.0,
+                      57.0
+                    ],
+                    "midpoint_mm": 28.5,
+                    "inside_solid": true
+                  }
+                ],
+                "line_intersections": 2,
+                "line_method": "IntCurvesFace_ShapeIntersector exact line/trimmed-face events + BRepClass3d interval classification"
+              },
+              {
+                "probe_point_mm": [
+                  -3.5,
+                  2.0999999999999996,
+                  30.0
+                ],
+                "measured_depth_mm": 3.0,
+                "floor_coordinate_mm": 57.0,
+                "material_axis_segments": [
+                  {
+                    "axis_interval_mm": [
+                      -0.0,
+                      57.0
+                    ],
+                    "midpoint_mm": 28.5,
+                    "inside_solid": true
+                  }
+                ],
+                "line_intersections": 2,
+                "line_method": "IntCurvesFace_ShapeIntersector exact line/trimmed-face events + BRepClass3d interval classification"
+              },
+              {
+                "probe_point_mm": [
+                  3.5,
+                  0.0,
+                  30.0
+                ],
+                "measured_depth_mm": 3.0,
+                "floor_coordinate_mm": 57.0,
+                "material_axis_segments": [
+                  {
+                    "axis_interval_mm": [
+                      -0.0,
+                      57.0
+                    ],
+                    "midpoint_mm": 28.5,
+                    "inside_solid": true
+                  }
+                ],
+                "line_intersections": 2,
+                "line_method": "IntCurvesFace_ShapeIntersector exact line/trimmed-face events + BRepClass3d interval classification"
+              },
+              {
+                "probe_point_mm": [
+                  3.5,
+                  -2.0999999999999996,
+                  30.0
+                ],
+                "measured_depth_mm": 3.0,
+                "floor_coordinate_mm": 57.0,
+                "material_axis_segments": [
+                  {
+                    "axis_interval_mm": [
+                      -0.0,
+                      57.0
+                    ],
+                    "midpoint_mm": 28.5,
+                    "inside_solid": true
+                  }
+                ],
+                "line_intersections": 2,
+                "line_method": "IntCurvesFace_ShapeIntersector exact line/trimmed-face events + BRepClass3d interval classification"
+              },
+              {
+                "probe_point_mm": [
+                  3.5,
+                  2.0999999999999996,
+                  30.0
+                ],
+                "measured_depth_mm": 3.0,
+                "floor_coordinate_mm": 57.0,
+                "material_axis_segments": [
+                  {
+                    "axis_interval_mm": [
+                      -0.0,
+                      57.0
+                    ],
+                    "midpoint_mm": 28.5,
+                    "inside_solid": true
+                  }
+                ],
+                "line_intersections": 2,
+                "line_method": "IntCurvesFace_ShapeIntersector exact line/trimmed-face events + BRepClass3d interval classification"
+              }
+            ],
+            "method": "IntCurvesFace_ShapeIntersector face event intervals + BRepClass3d solid interval classification"
+          },
+          "facet_count": null
+        }
+      ]
+    },
+    {
+      "kind": "pattern",
+      "validation_state": "valid",
+      "catia_support": "exact",
+      "catia_reason": "转换为显式复制的 CATIA 操作；relations 示例：[{\"type\":\"pattern_source\",\"feature_id\":\"紧邻前一特征的 id\"}]。operation 必须与源特征相同：阵列切孔用 cut，阵列加料用 add。",
+      "local_geometry_support": "exact",
+      "local_geometry_reason": "按 CADPlan 来源特征执行实体平移/旋转变换",
+      "execution_state": "passed",
+      "backend": "occt_brep",
+      "brep_valid": true,
+      "solid_count": 1,
+      "closed": true,
+      "volume_mm3": 473968.14210510766,
+      "feature_result": {
+        "feature_id": "target",
+        "kind": "pattern",
+        "operation": "cut",
+        "geometry_support": "exact",
+        "builder": "explicit_pattern_transform",
+        "state": "applied",
+        "source_feature_id": "hole-source",
+        "source_resolution": "declared_relation",
+        "solid_count": 1,
+        "brep_valid": true,
+        "before_volume_mm3": 476984.07105255383,
+        "after_volume_mm3": 473968.14210510766,
+        "volume_delta_mm3": -3015.9289474461693,
+        "depth_measurement": null,
+        "facet_count": null
+      },
+      "feature_warnings": [
+        {
+          "feature_id": "target",
+          "kind": "pattern",
+          "operation": "cut",
+          "geometry_support": "exact",
+          "builder": "explicit_pattern_transform",
+          "state": "applied",
+          "source_feature_id": "hole-source",
+          "source_resolution": "declared_relation",
+          "solid_count": 1,
+          "brep_valid": true,
+          "before_volume_mm3": 476984.07105255383,
+          "after_volume_mm3": 473968.14210510766,
+          "volume_delta_mm3": -3015.9289474461693,
+          "depth_measurement": null,
+          "facet_count": null
+        }
+      ]
+    },
+    {
+      "kind": "helix",
+      "validation_state": "valid",
+      "catia_support": "unsupported",
+      "catia_reason": "弹簧/螺旋不能由当前草图、凸台和凹槽通道表达。",
+      "local_geometry_support": "approximate",
+      "local_geometry_reason": "现有螺旋网格转封闭 facet-BREP",
+      "execution_state": "passed",
+      "backend": "occt_brep",
+      "brep_valid": true,
+      "solid_count": 1,
+      "closed": true,
+      "volume_mm3": 687.0818220773293,
+      "feature_result": {
+        "feature_id": "target",
+        "kind": "helix",
+        "operation": "add",
+        "geometry_support": "approximate",
+        "builder": "faceted_brep_approximation",
+        "state": "applied",
+        "source_feature_id": null,
+        "source_resolution": null,
+        "solid_count": 1,
+        "brep_valid": true,
+        "before_volume_mm3": 0.0,
+        "after_volume_mm3": 687.0818220773293,
+        "volume_delta_mm3": 687.0818220773293,
+        "depth_measurement": null,
+        "facet_count": 912
+      },
+      "feature_warnings": [
+        {
+          "feature_id": "target",
+          "kind": "helix",
+          "operation": "add",
+          "geometry_support": "approximate",
+          "builder": "faceted_brep_approximation",
+          "state": "applied",
+          "source_feature_id": null,
+          "source_resolution": null,
+          "solid_count": 1,
+          "brep_valid": true,
+          "before_volume_mm3": 0.0,
+          "after_volume_mm3": 687.0818220773293,
+          "volume_delta_mm3": 687.0818220773293,
+          "depth_measurement": null,
+          "facet_count": 912
+        }
+      ]
+    },
+    {
+      "kind": "spoked_wheel",
+      "validation_state": "valid",
+      "catia_support": "approximate",
+      "catia_reason": "CATIA 仅生成轮缘与轮毂，辐条需要补建。",
+      "local_geometry_support": "exact",
+      "local_geometry_reason": "解析轮缘与轮毂回转体、显式拉伸辐条并集成一个闭合实体",
+      "execution_state": "passed",
+      "backend": "occt_brep",
+      "brep_valid": true,
+      "solid_count": 1,
+      "closed": true,
+      "volume_mm3": 9639.697547435311,
+      "feature_result": {
+        "feature_id": "target",
+        "kind": "spoked_wheel",
+        "operation": "add",
+        "geometry_support": "exact",
+        "builder": "analytic_ring_hub_with_box_spokes",
+        "state": "applied",
+        "source_feature_id": null,
+        "source_resolution": null,
+        "solid_count": 1,
+        "brep_valid": true,
+        "before_volume_mm3": 0.0,
+        "after_volume_mm3": 9639.697547435311,
+        "volume_delta_mm3": 9639.697547435311,
+        "depth_measurement": null,
+        "facet_count": null
+      },
+      "feature_warnings": [
+        {
+          "feature_id": "target",
+          "kind": "spoked_wheel",
+          "operation": "add",
+          "geometry_support": "exact",
+          "builder": "analytic_ring_hub_with_box_spokes",
+          "state": "applied",
+          "source_feature_id": null,
+          "source_resolution": null,
+          "solid_count": 1,
+          "brep_valid": true,
+          "before_volume_mm3": 0.0,
+          "after_volume_mm3": 9639.697547435311,
+          "volume_delta_mm3": 9639.697547435311,
+          "depth_measurement": null,
+          "facet_count": null
+        }
+      ]
+    },
+    {
+      "kind": "vbelt_pulley",
+      "validation_state": "valid",
+      "catia_support": "approximate",
+      "catia_reason": "CATIA 生成光轮盘体；V 形回转槽需要在 CATIA 中补建。",
+      "local_geometry_support": "approximate",
+      "local_geometry_reason": "标准槽轴向截面原生 OCCT 回转；槽根间距为保证剖面简单可能近似调整，输入轮宽不足时明确拒绝",
+      "execution_state": "passed",
+      "backend": "occt_brep",
+      "brep_valid": true,
+      "solid_count": 1,
+      "closed": true,
+      "volume_mm3": 121182.01239990407,
+      "feature_result": {
+        "feature_id": "target",
+        "kind": "vbelt_pulley",
+        "operation": "add",
+        "geometry_support": "approximate",
+        "builder": "analytic_standard_vbelt_revolve",
+        "state": "applied",
+        "source_feature_id": null,
+        "source_resolution": null,
+        "solid_count": 1,
+        "brep_valid": true,
+        "before_volume_mm3": 0.0,
+        "after_volume_mm3": 121182.01239990407,
+        "volume_delta_mm3": 121182.01239990407,
+        "depth_measurement": null,
+        "facet_count": null
+      },
+      "feature_warnings": [
+        {
+          "feature_id": "target",
+          "kind": "vbelt_pulley",
+          "operation": "add",
+          "geometry_support": "approximate",
+          "builder": "analytic_standard_vbelt_revolve",
+          "state": "applied",
+          "source_feature_id": null,
+          "source_resolution": null,
+          "solid_count": 1,
+          "brep_valid": true,
+          "before_volume_mm3": 0.0,
+          "after_volume_mm3": 121182.01239990407,
+          "volume_delta_mm3": 121182.01239990407,
+          "depth_measurement": null,
+          "facet_count": null
+        }
+      ]
+    },
+    {
+      "kind": "timing_pulley",
+      "validation_state": "valid",
+      "catia_support": "approximate",
+      "catia_reason": "CATIA 生成盘体，齿形需要在 CATIA 中补建。",
+      "local_geometry_support": "approximate",
+      "local_geometry_reason": "现有同步带轮配方转封闭 facet-BREP",
+      "execution_state": "passed",
+      "backend": "occt_brep",
+      "brep_valid": true,
+      "solid_count": 1,
+      "closed": true,
+      "volume_mm3": 20374.01640849667,
+      "feature_result": {
+        "feature_id": "target",
+        "kind": "timing_pulley",
+        "operation": "add",
+        "geometry_support": "approximate",
+        "builder": "faceted_brep_approximation",
+        "state": "applied",
+        "source_feature_id": null,
+        "source_resolution": null,
+        "solid_count": 1,
+        "brep_valid": true,
+        "before_volume_mm3": 0.0,
+        "after_volume_mm3": 20374.01640849667,
+        "volume_delta_mm3": 20374.01640849667,
+        "depth_measurement": null,
+        "facet_count": 1432
+      },
+      "feature_warnings": [
+        {
+          "feature_id": "target",
+          "kind": "timing_pulley",
+          "operation": "add",
+          "geometry_support": "approximate",
+          "builder": "faceted_brep_approximation",
+          "state": "applied",
+          "source_feature_id": null,
+          "source_resolution": null,
+          "solid_count": 1,
+          "brep_valid": true,
+          "before_volume_mm3": 0.0,
+          "after_volume_mm3": 20374.01640849667,
+          "volume_delta_mm3": 20374.01640849667,
+          "depth_measurement": null,
+          "facet_count": 1432
+        }
+      ]
+    },
+    {
+      "kind": "worm",
+      "validation_state": "valid",
+      "catia_support": "approximate",
+      "catia_reason": "CATIA 仅生成光轴，螺旋齿需要补建。",
+      "local_geometry_support": "approximate",
+      "local_geometry_reason": "现有蜗杆配方转封闭 facet-BREP",
+      "execution_state": "passed",
+      "backend": "occt_brep",
+      "brep_valid": true,
+      "solid_count": 1,
+      "closed": true,
+      "volume_mm3": 12563.149251258828,
+      "feature_result": {
+        "feature_id": "target",
+        "kind": "worm",
+        "operation": "add",
+        "geometry_support": "approximate",
+        "builder": "faceted_brep_approximation",
+        "state": "applied",
+        "source_feature_id": null,
+        "source_resolution": null,
+        "solid_count": 1,
+        "brep_valid": true,
+        "before_volume_mm3": 0.0,
+        "after_volume_mm3": 12563.149251258828,
+        "volume_delta_mm3": 12563.149251258828,
+        "depth_measurement": null,
+        "facet_count": 468
+      },
+      "feature_warnings": [
+        {
+          "feature_id": "target",
+          "kind": "worm",
+          "operation": "add",
+          "geometry_support": "approximate",
+          "builder": "faceted_brep_approximation",
+          "state": "applied",
+          "source_feature_id": null,
+          "source_resolution": null,
+          "solid_count": 1,
+          "brep_valid": true,
+          "before_volume_mm3": 0.0,
+          "after_volume_mm3": 12563.149251258828,
+          "volume_delta_mm3": 12563.149251258828,
+          "depth_measurement": null,
+          "facet_count": 468
+        }
+      ]
+    },
+    {
+      "kind": "helical_gear",
+      "validation_state": "valid",
+      "catia_support": "approximate",
+      "catia_reason": "CATIA 以直齿轮近似，省略螺旋角。",
+      "local_geometry_support": "approximate",
+      "local_geometry_reason": "保留当前省略螺旋角的直齿近似并转 facet-BREP",
+      "execution_state": "passed",
+      "backend": "occt_brep",
+      "brep_valid": true,
+      "solid_count": 1,
+      "closed": true,
+      "volume_mm3": 20989.1578581828,
+      "feature_result": {
+        "feature_id": "target",
+        "kind": "helical_gear",
+        "operation": "add",
+        "geometry_support": "approximate",
+        "builder": "faceted_brep_approximation",
+        "state": "applied",
+        "source_feature_id": null,
+        "source_resolution": null,
+        "solid_count": 1,
+        "brep_valid": true,
+        "before_volume_mm3": 0.0,
+        "after_volume_mm3": 20989.1578581828,
+        "volume_delta_mm3": 20989.1578581828,
+        "depth_measurement": null,
+        "facet_count": 764
+      },
+      "feature_warnings": [
+        {
+          "feature_id": "target",
+          "kind": "helical_gear",
+          "operation": "add",
+          "geometry_support": "approximate",
+          "builder": "faceted_brep_approximation",
+          "state": "applied",
+          "source_feature_id": null,
+          "source_resolution": null,
+          "solid_count": 1,
+          "brep_valid": true,
+          "before_volume_mm3": 0.0,
+          "after_volume_mm3": 20989.1578581828,
+          "volume_delta_mm3": 20989.1578581828,
+          "depth_measurement": null,
+          "facet_count": 764
+        }
+      ]
+    },
+    {
+      "kind": "bevel_gear",
+      "validation_state": "valid",
+      "catia_support": "approximate",
+      "catia_reason": "CATIA 以直齿圆柱轮廓近似，省略锥面。",
+      "local_geometry_support": "approximate",
+      "local_geometry_reason": "现有锥齿轮网格配方转 facet-BREP",
+      "execution_state": "passed",
+      "backend": "occt_brep",
+      "brep_valid": true,
+      "solid_count": 1,
+      "closed": true,
+      "volume_mm3": 6930.688114117896,
+      "feature_result": {
+        "feature_id": "target",
+        "kind": "bevel_gear",
+        "operation": "add",
+        "geometry_support": "approximate",
+        "builder": "faceted_brep_approximation",
+        "state": "applied",
+        "source_feature_id": null,
+        "source_resolution": null,
+        "solid_count": 1,
+        "brep_valid": true,
+        "before_volume_mm3": 0.0,
+        "after_volume_mm3": 6930.688114117896,
+        "volume_delta_mm3": 6930.688114117896,
+        "depth_measurement": null,
+        "facet_count": 4400
+      },
+      "feature_warnings": [
+        {
+          "feature_id": "target",
+          "kind": "bevel_gear",
+          "operation": "add",
+          "geometry_support": "approximate",
+          "builder": "faceted_brep_approximation",
+          "state": "applied",
+          "source_feature_id": null,
+          "source_resolution": null,
+          "solid_count": 1,
+          "brep_valid": true,
+          "before_volume_mm3": 0.0,
+          "after_volume_mm3": 6930.688114117896,
+          "volume_delta_mm3": 6930.688114117896,
+          "depth_measurement": null,
+          "facet_count": 4400
+        }
+      ]
+    },
+    {
+      "kind": "crankshaft",
+      "validation_state": "valid",
+      "catia_support": "approximate",
+      "catia_reason": "CATIA 按 X 轴布置主轴颈、交替偏置连杆颈和哑铃形曲柄臂(主轴圆 + 连杆颈圆外公切凸包)，曲柄臂外形被简化。",
+      "local_geometry_support": "approximate",
+      "local_geometry_reason": "现有曲轴网格配方转 facet-BREP",
+      "execution_state": "build_failed",
+      "error": "特征 target (crankshaft) 建模失败：离散部件 1/9 缝合失败：shell 未闭合（第 1 个 shell，自由边 32）。",
+      "brep_report": {
+        "backend": "occt_brep",
+        "kernel": "可用：OCCT 7.9.3.1 / cadquery-ocp-novtk 7.9.3.1.1",
+        "geometry_state": "failed",
+        "state": "failed",
+        "brep_valid": false,
+        "failed_feature_id": "target",
+        "failed_feature_kind": "crankshaft",
+        "failure_code": "feature_build_failed",
+        "related_feature_ids": [],
+        "failed_feature_parameters": {
+          "length": 80.0,
+          "main_d": 20.0,
+          "pin_d": 16.0,
+          "stroke": 30.0,
+          "throws": 2
+        },
+        "error": "离散部件 1/9 缝合失败：shell 未闭合（第 1 个 shell，自由边 32）。",
+        "feature_results": [],
+        "failed_feature_effect": {
+          "feature_id": "target",
+          "operation": "add",
+          "state": "unmeasured",
+          "kind": "crankshaft",
+          "before_volume_mm3": 0.0,
+          "after_volume_mm3": null,
+          "volume_delta_mm3": null,
+          "warning": null,
+          "reason": "离散部件 1/9 缝合失败：shell 未闭合（第 1 个 shell，自由边 32）。",
+          "failure_code": "feature_build_failed",
+          "related_feature_ids": []
+        },
+        "volume_mm3": null,
+        "bbox_mm": null,
+        "hole_instances": [],
+        "visual_validation": "not_performed",
+        "transaction": "失败特征未提交；保留此前有效中间实体"
+      }
+    },
+    {
+      "kind": "camshaft",
+      "validation_state": "valid",
+      "catia_support": "approximate",
+      "catia_reason": "CATIA 凸轮沿轴向等分布置，相位需核对。",
+      "local_geometry_support": "approximate",
+      "local_geometry_reason": "现有凸轮轴网格配方转 facet-BREP",
+      "execution_state": "passed",
+      "backend": "occt_brep",
+      "brep_valid": true,
+      "solid_count": 1,
+      "closed": true,
+      "volume_mm3": 31426.354771460192,
+      "feature_result": {
+        "feature_id": "target",
+        "kind": "camshaft",
+        "operation": "add",
+        "geometry_support": "approximate",
+        "builder": "faceted_brep_approximation",
+        "state": "applied",
+        "source_feature_id": null,
+        "source_resolution": null,
+        "solid_count": 1,
+        "brep_valid": true,
+        "before_volume_mm3": 0.0,
+        "after_volume_mm3": 31426.354771460192,
+        "volume_delta_mm3": 31426.354771460192,
+        "depth_measurement": null,
+        "facet_count": 825
+      },
+      "feature_warnings": [
+        {
+          "feature_id": "target",
+          "kind": "camshaft",
+          "operation": "add",
+          "geometry_support": "approximate",
+          "builder": "faceted_brep_approximation",
+          "state": "applied",
+          "source_feature_id": null,
+          "source_resolution": null,
+          "solid_count": 1,
+          "brep_valid": true,
+          "before_volume_mm3": 0.0,
+          "after_volume_mm3": 31426.354771460192,
+          "volume_delta_mm3": 31426.354771460192,
+          "depth_measurement": null,
+          "facet_count": 825
+        }
+      ]
+    },
+    {
+      "kind": "impeller",
+      "validation_state": "valid",
+      "catia_support": "approximate",
+      "catia_reason": "CATIA 仅生成轮毂和轮盘，扭转叶片需要补建。",
+      "local_geometry_support": "approximate",
+      "local_geometry_reason": "现有叶轮网格配方转 facet-BREP",
+      "execution_state": "build_failed",
+      "error": "特征 target (impeller) 建模失败：离散部件 1/9 缝合失败：shell 未闭合（第 1 个 shell，自由边 72）。",
+      "brep_report": {
+        "backend": "occt_brep",
+        "kernel": "可用：OCCT 7.9.3.1 / cadquery-ocp-novtk 7.9.3.1.1",
+        "geometry_state": "failed",
+        "state": "failed",
+        "brep_valid": false,
+        "failed_feature_id": "target",
+        "failed_feature_kind": "impeller",
+        "failure_code": "feature_build_failed",
+        "related_feature_ids": [],
+        "failed_feature_parameters": {
+          "hub_d": 20.0,
+          "tip_d": 60.0,
+          "height": 15.0,
+          "blades": 6,
+          "blade_t": 2.0,
+          "twist_deg": 25.0
+        },
+        "error": "离散部件 1/9 缝合失败：shell 未闭合（第 1 个 shell，自由边 72）。",
+        "feature_results": [],
+        "failed_feature_effect": {
+          "feature_id": "target",
+          "operation": "add",
+          "state": "unmeasured",
+          "kind": "impeller",
+          "before_volume_mm3": 0.0,
+          "after_volume_mm3": null,
+          "volume_delta_mm3": null,
+          "warning": null,
+          "reason": "离散部件 1/9 缝合失败：shell 未闭合（第 1 个 shell，自由边 72）。",
+          "failure_code": "feature_build_failed",
+          "related_feature_ids": []
+        },
+        "volume_mm3": null,
+        "bbox_mm": null,
+        "hole_instances": [],
+        "visual_validation": "not_performed",
+        "transaction": "失败特征未提交；保留此前有效中间实体"
+      }
+    },
+    {
+      "kind": "piston",
+      "validation_state": "valid",
+      "catia_support": "approximate",
+      "catia_reason": "CATIA 以圆柱体近似，销孔和活塞环槽需要补建。",
+      "local_geometry_support": "approximate",
+      "local_geometry_reason": "现有活塞网格配方转 facet-BREP",
+      "execution_state": "build_failed",
+      "error": "特征 target (piston) 建模失败：离散部件 1/5 缝合失败：shell 未闭合（第 33 个 shell，自由边 137）。",
+      "brep_report": {
+        "backend": "occt_brep",
+        "kernel": "可用：OCCT 7.9.3.1 / cadquery-ocp-novtk 7.9.3.1.1",
+        "geometry_state": "failed",
+        "state": "failed",
+        "brep_valid": false,
+        "failed_feature_id": "target",
+        "failed_feature_kind": "piston",
+        "failure_code": "feature_build_failed",
+        "related_feature_ids": [],
+        "failed_feature_parameters": {
+          "diameter": 40.0,
+          "height": 35.0,
+          "pin_d": 10.0,
+          "grooves": 3
+        },
+        "error": "离散部件 1/5 缝合失败：shell 未闭合（第 33 个 shell，自由边 137）。",
+        "feature_results": [],
+        "failed_feature_effect": {
+          "feature_id": "target",
+          "operation": "add",
+          "state": "unmeasured",
+          "kind": "piston",
+          "before_volume_mm3": 0.0,
+          "after_volume_mm3": null,
+          "volume_delta_mm3": null,
+          "warning": null,
+          "reason": "离散部件 1/5 缝合失败：shell 未闭合（第 33 个 shell，自由边 137）。",
+          "failure_code": "feature_build_failed",
+          "related_feature_ids": []
+        },
+        "volume_mm3": null,
+        "bbox_mm": null,
+        "hole_instances": [],
+        "visual_validation": "not_performed",
+        "transaction": "失败特征未提交；保留此前有效中间实体"
+      }
+    },
+    {
+      "kind": "conrod",
+      "validation_state": "valid",
+      "catia_support": "approximate",
+      "catia_reason": "CATIA 以大头、小头和直杆身近似，杆身过渡被简化。",
+      "local_geometry_support": "approximate",
+      "local_geometry_reason": "现有连杆网格配方转 facet-BREP",
+      "execution_state": "passed",
+      "backend": "occt_brep",
+      "brep_valid": true,
+      "solid_count": 1,
+      "closed": true,
+      "volume_mm3": 7712.303205033596,
+      "feature_result": {
+        "feature_id": "target",
+        "kind": "conrod",
+        "operation": "add",
+        "geometry_support": "approximate",
+        "builder": "faceted_brep_approximation",
+        "state": "applied",
+        "source_feature_id": null,
+        "source_resolution": null,
+        "solid_count": 1,
+        "brep_valid": true,
+        "before_volume_mm3": 0.0,
+        "after_volume_mm3": 7712.303205033596,
+        "volume_delta_mm3": 7712.303205033596,
+        "depth_measurement": null,
+        "facet_count": 538
+      },
+      "feature_warnings": [
+        {
+          "feature_id": "target",
+          "kind": "conrod",
+          "operation": "add",
+          "geometry_support": "approximate",
+          "builder": "faceted_brep_approximation",
+          "state": "applied",
+          "source_feature_id": null,
+          "source_resolution": null,
+          "solid_count": 1,
+          "brep_valid": true,
+          "before_volume_mm3": 0.0,
+          "after_volume_mm3": 7712.303205033596,
+          "volume_delta_mm3": 7712.303205033596,
+          "depth_measurement": null,
+          "facet_count": 538
+        }
+      ]
+    },
+    {
+      "kind": "cross_joint",
+      "validation_state": "valid",
+      "catia_support": "approximate",
+      "catia_reason": "CATIA 仅生成单轴，另一根横轴需要补建。",
+      "local_geometry_support": "approximate",
+      "local_geometry_reason": "现有万向节网格配方转 facet-BREP",
+      "execution_state": "passed",
+      "backend": "occt_brep",
+      "brep_valid": true,
+      "solid_count": 1,
+      "closed": true,
+      "volume_mm3": 10022.082481878939,
+      "feature_result": {
+        "feature_id": "target",
+        "kind": "cross_joint",
+        "operation": "add",
+        "geometry_support": "approximate",
+        "builder": "faceted_brep_approximation",
+        "state": "applied",
+        "source_feature_id": null,
+        "source_resolution": null,
+        "solid_count": 1,
+        "brep_valid": true,
+        "before_volume_mm3": 0.0,
+        "after_volume_mm3": 10022.082481878939,
+        "volume_delta_mm3": 10022.082481878939,
+        "depth_measurement": null,
+        "facet_count": 376
+      },
+      "feature_warnings": [
+        {
+          "feature_id": "target",
+          "kind": "cross_joint",
+          "operation": "add",
+          "geometry_support": "approximate",
+          "builder": "faceted_brep_approximation",
+          "state": "applied",
+          "source_feature_id": null,
+          "source_resolution": null,
+          "solid_count": 1,
+          "brep_valid": true,
+          "before_volume_mm3": 0.0,
+          "after_volume_mm3": 10022.082481878939,
+          "volume_delta_mm3": 10022.082481878939,
+          "depth_measurement": null,
+          "facet_count": 376
+        }
+      ]
+    },
+    {
+      "kind": "scroll_disc",
+      "validation_state": "valid",
+      "catia_support": "approximate",
+      "catia_reason": "CATIA 仅生成底盘，螺旋壁需要补建。",
+      "local_geometry_support": "approximate",
+      "local_geometry_reason": "现有涡旋盘网格配方转 facet-BREP",
+      "execution_state": "timeout_unknown",
+      "timeout_evidence": {
+        "classification": "timeout_unknown_not_passed",
+        "elapsed_wall_seconds": 243,
+        "python_cpu_seconds": 208.05,
+        "working_set_bytes": 376594432,
+        "process_id": 69052,
+        "process_start_local": "2026-10-01 13:36:53",
+        "last_observed_progress": "starting scroll_disc",
+        "termination": "operator_interrupt_after_cpu_bound_stall",
+        "process_confirmed_absent_after_interrupt": true
+      }
+    },
+    {
+      "kind": "rotor",
+      "validation_state": "valid",
+      "catia_support": "exact",
+      "catia_reason": "转子轮廓、厚度与中心孔映射为可编辑草图和凹槽。",
+      "local_geometry_support": "approximate",
+      "local_geometry_reason": "保留当前离散转子轮廓并转 facet-BREP",
+      "execution_state": "build_failed",
+      "error": "特征 target (rotor) 建模失败：离散部件 1/20 缝合失败：shell 未闭合（第 1 个 shell，自由边 50）。",
+      "brep_report": {
+        "backend": "occt_brep",
+        "kernel": "可用：OCCT 7.9.3.1 / cadquery-ocp-novtk 7.9.3.1.1",
+        "geometry_state": "failed",
+        "state": "failed",
+        "brep_valid": false,
+        "failed_feature_id": "target",
+        "failed_feature_kind": "rotor",
+        "failure_code": "feature_build_failed",
+        "related_feature_ids": [],
+        "failed_feature_parameters": {
+          "radius": 30.0,
+          "n": 3,
+          "height": 12.0,
+          "bore_d": 8.0
+        },
+        "error": "离散部件 1/20 缝合失败：shell 未闭合（第 1 个 shell，自由边 50）。",
+        "feature_results": [],
+        "failed_feature_effect": {
+          "feature_id": "target",
+          "operation": "add",
+          "state": "unmeasured",
+          "kind": "rotor",
+          "before_volume_mm3": 0.0,
+          "after_volume_mm3": null,
+          "volume_delta_mm3": null,
+          "warning": null,
+          "reason": "离散部件 1/20 缝合失败：shell 未闭合（第 1 个 shell，自由边 50）。",
+          "failure_code": "feature_build_failed",
+          "related_feature_ids": []
+        },
+        "volume_mm3": null,
+        "bbox_mm": null,
+        "hole_instances": [],
+        "visual_validation": "not_performed",
+        "transaction": "失败特征未提交；保留此前有效中间实体"
+      }
+    },
+    {
+      "kind": "shell",
+      "validation_state": "valid",
+      "catia_support": "unsupported",
+      "catia_reason": "当前 Document/CATIA 转换器没有抽壳实现。",
+      "local_geometry_support": "unavailable",
+      "local_geometry_reason": "CADPlan 未指定要移除的面；缺少可执行的抽壳边界",
+      "execution_state": "needs_review",
+      "backend": "occt_brep",
+      "brep_valid": true,
+      "solid_count": 1,
+      "connected_component_count": 1,
+      "closed": true,
+      "free_edge_count": 0,
+      "face_count": 6,
+      "self_intersection": {
+        "status": "checked_no_intersection",
+        "face_count": 6,
+        "check_result_count": 0,
+        "check_statuses": [],
+        "method": "BOPAlgo_ArgumentAnalyzer(SelfInterMode=True, UseOBB=True)"
+      },
+      "bbox_mm": [
+        -50.0,
+        -40.0,
+        0.0,
+        50.0,
+        40.0,
+        60.0
+      ],
+      "volume_mm3": 480000.0,
+      "feature_result": {
+        "feature_id": "target",
+        "kind": "shell",
+        "operation": "add",
+        "geometry_support": "unavailable",
+        "builder": null,
+        "state": "skipped",
+        "warning": "CADPlan 未指定要移除的面；缺少可执行的抽壳边界"
+      },
+      "hole_instances": [],
+      "feature_warnings": [
+        {
+          "feature_id": "target",
+          "kind": "shell",
+          "operation": "add",
+          "geometry_support": "unavailable",
+          "builder": null,
+          "state": "skipped",
+          "warning": "CADPlan 未指定要移除的面；缺少可执行的抽壳边界"
+        }
+      ]
+    }
+  ],
+  "summary": {
+    "total_feature_rows": 27,
+    "brep_passed": [
+      "box",
+      "cylinder",
+      "socket_head_bolt",
+      "sphere",
+      "prism",
+      "revolve",
+      "gear",
+      "loft",
+      "hole",
+      "pocket",
+      "pattern",
+      "helix",
+      "spoked_wheel",
+      "vbelt_pulley",
+      "timing_pulley",
+      "worm",
+      "helical_gear",
+      "bevel_gear",
+      "camshaft",
+      "conrod",
+      "cross_joint"
+    ],
+    "needs_review": [
+      "shell"
+    ],
+    "build_failed": [
+      "crankshaft",
+      "impeller",
+      "piston",
+      "rotor"
+    ],
+    "validation_blocked": [],
+    "timeout_or_unknown": [
+      "scroll_disc"
+    ],
+    "brep_invalid": [],
+    "self_intersection_unknown": [
+      "box",
+      "cylinder",
+      "socket_head_bolt",
+      "sphere",
+      "prism",
+      "revolve",
+      "gear",
+      "loft",
+      "hole",
+      "pocket",
+      "pattern",
+      "helix",
+      "spoked_wheel",
+      "vbelt_pulley",
+      "timing_pulley",
+      "worm",
+      "helical_gear",
+      "bevel_gear",
+      "crankshaft",
+      "camshaft",
+      "impeller",
+      "piston",
+      "conrod",
+      "cross_joint",
+      "scroll_disc",
+      "rotor"
+    ],
+    "local_approximate": [
+      "socket_head_bolt",
+      "gear",
+      "loft",
+      "helix",
+      "vbelt_pulley",
+      "timing_pulley",
+      "worm",
+      "helical_gear",
+      "bevel_gear",
+      "crankshaft",
+      "camshaft",
+      "impeller",
+      "piston",
+      "conrod",
+      "cross_joint",
+      "scroll_disc",
+      "rotor"
+    ],
+    "local_unavailable": [
+      "shell"
+    ]
+  }
+}

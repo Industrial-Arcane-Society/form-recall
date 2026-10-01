@@ -1,0 +1,24 @@
+{
+  "turn_id": "8343bc304c394b25b23ce1d556ba9efd",
+  "started_at_epoch_ms": 1790831208447,
+  "session_id": "aq-offline-recovery-20261001",
+  "provider": "siliconflow",
+  "model": "moonshotai/Kimi-K2.7-Code",
+  "reasoning_effort": "low",
+  "runtime_capacity_policy": {
+    "context_window": {
+      "value": 256000,
+      "source": "verified_provider_capability",
+      "provider_capability_known": true
+    },
+    "output_cap": {
+      "value": 32768,
+      "source": "dsh_operational_fallback",
+      "provider_maximum_known": false
+    }
+  },
+  "reference_images": [],
+  "user_turns_manifest": "C:\\Users\\lycohana\\AppData\\Local\\AI Modeler\\dsh\\sessions\\aq-offline-recovery-20261001\\user-turns.json",
+  "completed_at_epoch_ms": 1790831272744,
+  "first_tool_observed": true
+}

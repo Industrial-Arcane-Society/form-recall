@@ -10,6 +10,23 @@ from . import catia as catia_commands
 from . import legacy as legacy_commands
 
 
+def _print_help(file=None) -> None:
+    import sys
+
+    file = file or sys.stdout
+    file.write(
+        "用法: python -m ai_modeler [命令]\n\n"
+        "不带命令时启动桌面界面。\n"
+        "  agent / --agent   使用 DSH Agent 根据文字和参考图建模\n"
+        "  --cli             原无 LLM 快速模式\n"
+        "  --cadplan         CADPlan SDK 命令\n"
+        "  --catia-info      查看 CATIA 连接信息\n"
+        "  --mcp             启动 MCP 服务\n"
+        "  --version         显示版本\n"
+        "  --help            显示此帮助\n"
+    )
+
+
 def main(argv: list[str] | None = None) -> int:
     """Run a package command; with no command, start the desktop UI."""
     argv = list(sys.argv[1:] if argv is None else argv)
@@ -24,6 +41,14 @@ def main(argv: list[str] | None = None) -> int:
     legacy_ui = "--legacy-ui" in argv
     if legacy_ui:
         argv.remove("--legacy-ui")
+
+    if argv and argv[0] in {"agent", "--agent"}:
+        from . import agent as agent_commands
+
+        return agent_commands.main(argv[1:])
+    if argv and argv[0] in {"--help", "-h"}:
+        _print_help()
+        return 0
 
     if "--cadplan" in argv:
         from ai_modeler.sdk import cadplan_cli
@@ -96,6 +121,10 @@ def main(argv: list[str] | None = None) -> int:
             env["AIMODELER_ROOT"] = str(PROJECT_ROOT)
             subprocess.Popen([str(tauri_exe)], cwd=str(PROJECT_ROOT), env=env)
             return 0
+
+    if argv:
+        _print_help(sys.stderr)
+        return 2
 
     from ai_modeler.ui.app import main as gui_main
 

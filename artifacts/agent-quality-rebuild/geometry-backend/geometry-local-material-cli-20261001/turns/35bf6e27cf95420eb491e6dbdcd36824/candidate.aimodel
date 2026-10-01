@@ -1,0 +1,132 @@
+{
+  "format": "ai-modeler",
+  "version": 1,
+  "name": "底板_带孔与凸台",
+  "source_prompt": "请用毫米创建一个可编辑的参数化候选模型：底板长100、宽60、厚20，底面z=0且平面中心在原点。顶面有一个直径10的竖直贯穿圆孔，孔中心(0,0)；再有一个直径8、从顶面向下深6的盲孔，中心(25,0)。这两个孔请明确通过圆柱切削工具执行subtract，不要改用hole特征。最后在中心(-25,0)的顶面添加一个轴对称旋转凸台：矩形截面绕Z轴360度旋转，外径12、高8，底面与顶面相接。尺寸必须保持，生成后检查孔径、盲孔深度、包围盒与实体有效性；若某项无法核实请如实标记候选未验收。",
+  "features": [
+    {
+      "kind": "box",
+      "params": {
+        "length": 100.0,
+        "width": 60.0,
+        "height": 20.0,
+        "center": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "base": true
+      },
+      "op": "add",
+      "name": "底板 100x60x20",
+      "note": "",
+      "feature_id": "base_plate",
+      "relations": [],
+      "enabled": true,
+      "provenance": {
+        "length": "derived",
+        "width": "derived",
+        "height": "derived",
+        "center": "derived",
+        "base": "derived"
+      }
+    },
+    {
+      "kind": "cylinder",
+      "params": {
+        "radius": 5.0,
+        "height": 20.0,
+        "center": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "axis": "Z"
+      },
+      "op": "cut",
+      "name": "竖直贯穿圆孔 D10",
+      "note": "",
+      "feature_id": "hole_through",
+      "relations": [],
+      "enabled": true,
+      "provenance": {
+        "radius": "derived",
+        "height": "derived",
+        "center": "derived",
+        "axis": "derived"
+      }
+    },
+    {
+      "kind": "cylinder",
+      "params": {
+        "radius": 4.0,
+        "height": 6.0,
+        "center": [
+          25.0,
+          0.0,
+          14.0
+        ],
+        "axis": "Z"
+      },
+      "op": "cut",
+      "name": "盲孔 D8 深6",
+      "note": "",
+      "feature_id": "hole_blind",
+      "relations": [],
+      "enabled": true,
+      "provenance": {
+        "radius": "derived",
+        "height": "derived",
+        "center": "derived",
+        "axis": "derived"
+      }
+    },
+    {
+      "kind": "revolve",
+      "params": {
+        "profile": [
+          [
+            0.0,
+            20.0
+          ],
+          [
+            6.0,
+            20.0
+          ],
+          [
+            6.0,
+            28.0
+          ],
+          [
+            0.0,
+            28.0
+          ],
+          [
+            0.0,
+            20.0
+          ]
+        ],
+        "angle": 360.0,
+        "center": [
+          -25.0,
+          0.0,
+          0.0
+        ],
+        "axis": "Z"
+      },
+      "op": "add",
+      "name": "旋转凸台 Ø12x8",
+      "note": "",
+      "feature_id": "boss_revolve",
+      "relations": [],
+      "enabled": true,
+      "provenance": {
+        "profile": "derived",
+        "angle": "derived",
+        "center": "derived",
+        "axis": "derived"
+      }
+    }
+  ],
+  "exported_at": "2026-10-01 19:21:43"
+}

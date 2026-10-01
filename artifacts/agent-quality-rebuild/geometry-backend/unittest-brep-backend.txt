@@ -1,0 +1,17 @@
+test_appended_revolve_is_analytic_and_changes_the_valid_solid (tests.test_occt_brep_backend.OCCTBRepBackendTests.test_appended_revolve_is_analytic_and_changes_the_valid_solid) ... ok
+test_axis_base_and_center_semantics_are_consistent_across_xyz (tests.test_occt_brep_backend.OCCTBRepBackendTests.test_axis_base_and_center_semantics_are_consistent_across_xyz) ... ok
+test_blind_hole_reports_measured_depth_and_rejects_through_depth (tests.test_occt_brep_backend.OCCTBRepBackendTests.test_blind_hole_reports_measured_depth_and_rejects_through_depth) ... ok
+test_cadplan_preview_exposes_brep_contract_without_claiming_visual_or_catia_review (tests.test_occt_brep_backend.OCCTBRepBackendTests.test_cadplan_preview_exposes_brep_contract_without_claiming_visual_or_catia_review) ... ok
+test_failed_cut_reports_measured_zero_delta_and_coincident_face_hint (tests.test_occt_brep_backend.OCCTBRepBackendTests.test_failed_cut_reports_measured_zero_delta_and_coincident_face_hint) ... ok
+test_hole_verification_detects_actual_diameter_not_just_planned_diameter (tests.test_occt_brep_backend.OCCTBRepBackendTests.test_hole_verification_detects_actual_diameter_not_just_planned_diameter) ... ok
+test_native_box_recess_and_nine_through_holes_are_measured (tests.test_occt_brep_backend.OCCTBRepBackendTests.test_native_box_recess_and_nine_through_holes_are_measured) ... ok
+test_negative_face_pocket_schema_is_local_exact_and_catia_export_is_limited (tests.test_occt_brep_backend.OCCTBRepBackendTests.test_negative_face_pocket_schema_is_local_exact_and_catia_export_is_limited) ... ok
+test_positive_and_negative_face_pockets_preserve_exact_depth_and_volume (tests.test_occt_brep_backend.OCCTBRepBackendTests.test_positive_and_negative_face_pockets_preserve_exact_depth_and_volume) ... ok
+test_self_intersecting_revolve_is_rejected_transactionally (tests.test_occt_brep_backend.OCCTBRepBackendTests.test_self_intersecting_revolve_is_rejected_transactionally) ... ok
+test_through_hole_pattern_along_axis_is_explicit_noop (tests.test_occt_brep_backend.OCCTBRepBackendTests.test_through_hole_pattern_along_axis_is_explicit_noop) ... ok
+test_unintersecting_cut_reports_measured_no_material_change (tests.test_occt_brep_backend.OCCTBRepBackendTests.test_unintersecting_cut_reports_measured_no_material_change) ... ok
+
+----------------------------------------------------------------------
+Ran 12 tests in 1.724s
+
+OK

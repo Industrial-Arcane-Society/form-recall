@@ -1,0 +1,35 @@
+{
+  "format": "ai-modeler",
+  "version": 1,
+  "name": "100x60x20_block",
+  "source_prompt": "创建一个100×60×20毫米长方体",
+  "features": [
+    {
+      "kind": "box",
+      "params": {
+        "length": 120.0,
+        "width": 60.0,
+        "height": 20.0,
+        "center": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "base": false
+      },
+      "op": "add",
+      "name": "长方体主体",
+      "note": "",
+      "feature_id": "block_main",
+      "relations": [],
+      "enabled": true,
+      "provenance": {
+        "length": "user",
+        "width": "user",
+        "height": "user",
+        "center": "derived"
+      }
+    }
+  ],
+  "exported_at": "2026-10-01 13:48:15"
+}

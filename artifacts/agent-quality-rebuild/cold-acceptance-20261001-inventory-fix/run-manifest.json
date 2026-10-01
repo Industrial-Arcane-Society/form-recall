@@ -1,0 +1,31 @@
+{
+  "session_id": "coldimg20261001inventoryfix",
+  "exec_session_id": 66450,
+  "status": "stopped_incomplete",
+  "exit_code": 1,
+  "cancellation": "Ctrl+C sent to the single CLI exec session; Python/Pythonw/Node/DSH processes matching the session id were 0 after exit.",
+  "user_task": "请根据参考图生成可编辑模型；图片没有尺寸标注，按图内比例估算并标明尺寸来源。",
+  "source_image": "C:\\Users\\lycohana\\Desktop\\code\\AI-_-\\artifacts\\agent-quality-rebuild\\references\\user-nine-hole-recess-iso.png",
+  "source_sha256": "53ed87fadf8cca869da921627e6a13c845424c6906b3de517d5cca972db94553",
+  "source_bytes": 72309,
+  "model": "moonshotai/Kimi-K2.7-Code",
+  "reasoning_effort": "low",
+  "cli_output_dir_requested": "artifacts/agent-quality-rebuild/cold-acceptance-20261001-inventory-fix",
+  "started_local": "2026-10-01 23:03:21 Asia/Shanghai",
+  "stopped_local": "2026-10-01 23:16:06 Asia/Shanghai",
+  "provider_wire_requests": 36,
+  "provider_wire_responses_completed": 35,
+  "provider_wire_request_interrupted": 1,
+  "image_wire_requests": 1,
+  "final_revision": 14,
+  "final_feature_ids": [
+    "base_block",
+    "center_slot",
+    "hole_left_outer_top_v2"
+  ],
+  "final_preview_count": 0,
+  "independent_review_pair_count": 0,
+  "output_files_exported": [],
+  "raw_stdout_stderr_separately_persisted": false,
+  "excluded_session_file": "runtime.patch.yml (not copied because it contains runtime configuration); .agent-cli.lock was not copied."
+}

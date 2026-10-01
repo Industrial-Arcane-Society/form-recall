@@ -1,0 +1,140 @@
+{
+  "format": "ai-modeler",
+  "version": 1,
+  "name": "SDK test",
+  "source_prompt": "",
+  "features": [
+    {
+      "kind": "box",
+      "params": {
+        "length": 100.0,
+        "width": 80.0,
+        "height": 60.0
+      },
+      "op": "add",
+      "name": "长方体",
+      "note": "",
+      "feature_id": "base",
+      "relations": [],
+      "enabled": true,
+      "provenance": {
+        "length": "user",
+        "width": "user",
+        "height": "user"
+      }
+    },
+    {
+      "kind": "shell",
+      "params": {
+        "thickness": 2.0
+      },
+      "op": "add",
+      "name": "抽壳",
+      "note": "",
+      "feature_id": "target",
+      "relations": [],
+      "enabled": true,
+      "provenance": {
+        "thickness": "user"
+      }
+    }
+  ],
+  "exported_at": "2026-10-01 13:58:18",
+  "cadplan_schema_version": "1.0",
+  "cadplan": {
+    "schema_version": "1.0",
+    "name": "SDK test",
+    "units": {
+      "length": "mm",
+      "angle": "deg"
+    },
+    "coordinate_system": {
+      "type": "global_cartesian",
+      "handedness": "right",
+      "axes": [
+        "X",
+        "Y",
+        "Z"
+      ],
+      "origin": [
+        0,
+        0,
+        0
+      ]
+    },
+    "features": [
+      {
+        "id": "base",
+        "kind": "box",
+        "operation": "add",
+        "parameters": {
+          "length": 100,
+          "width": 80,
+          "height": 60
+        },
+        "sources": {
+          "length": {
+            "type": "user"
+          },
+          "width": {
+            "type": "user"
+          },
+          "height": {
+            "type": "user"
+          }
+        }
+      },
+      {
+        "id": "target",
+        "kind": "shell",
+        "operation": "add",
+        "parameters": {
+          "thickness": 2
+        },
+        "sources": {
+          "thickness": {
+            "type": "user"
+          }
+        }
+      }
+    ]
+  },
+  "feature_manifest": {
+    "base": {
+      "kind": "box",
+      "operation": "add",
+      "name": "长方体",
+      "parameters": {
+        "length": 100,
+        "width": 80,
+        "height": 60
+      },
+      "sources": {
+        "length": {
+          "type": "user"
+        },
+        "width": {
+          "type": "user"
+        },
+        "height": {
+          "type": "user"
+        }
+      },
+      "relations": []
+    },
+    "target": {
+      "kind": "shell",
+      "operation": "add",
+      "name": "抽壳",
+      "parameters": {
+        "thickness": 2
+      },
+      "sources": {
+        "thickness": {
+          "type": "user"
+        }
+      },
+      "relations": []
+    }
+  }
+}

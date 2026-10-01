@@ -1,0 +1,204 @@
+{
+  "state": "error",
+  "plan": null,
+  "validation": null,
+  "preview": {},
+  "review": null,
+  "open_multiview_findings": [],
+  "reply": "DSH 模型请求失败：模型图片请求预算无效。（UNKNOWN）",
+  "agent_self_report": null,
+  "finish_reason": "error",
+  "error": "DSH 模型请求失败：模型图片请求预算无效。（UNKNOWN）",
+  "output_paths": {},
+  "output_warning": null,
+  "tool_calls": 0,
+  "web_search_calls": 0,
+  "preview_calls": 0,
+  "review_rounds": 0,
+  "main_self_report_count": 0,
+  "finish_summary": null,
+  "repair_cycles": 0,
+  "model_call_count": 1,
+  "model_call_count_source": "dsh_llm_stream_events",
+  "model_calls": [
+    {
+      "provider": "ai-modeler",
+      "model": "moonshotai/Kimi-K2.7-Code",
+      "reasoning_effort": "low",
+      "dsh_request_image_count": 1,
+      "capture_layer": "dsh_llm_stream_boundary",
+      "provider_wire_observed": false
+    }
+  ],
+  "provider_attempt_count": null,
+  "provider_finish_reasons": [],
+  "dsh_finish_reasons": [
+    {
+      "finish_reason": "[object Object]",
+      "elapsed_ms": 28
+    }
+  ],
+  "provider_wire_observed": false,
+  "provider_wire_capture_layer": "unknown",
+  "request_image_hashes": [],
+  "image_parts_in_request": null,
+  "reference_image_count": 1,
+  "knowledge_search": {
+    "status": "no_match",
+    "query": "请根据参考图建立模型",
+    "matches": [],
+    "negative_examples": [],
+    "image_query_supported": false,
+    "visual_fallback_available": false,
+    "score_meaning": "relevance 是词面相关度排序分数，不是准确率或置信概率。",
+    "message": "当前文字描述没有达到相似检索阈值；这不代表库外不存在对应工件。",
+    "modeling_recipes": []
+  },
+  "knowledge_visual_examples": [
+    {
+      "model": "BES M08MG1-PSC20A-S04G-W",
+      "category": "接近开关"
+    },
+    {
+      "model": "EGT001 SW80x088",
+      "category": "EGT型材"
+    },
+    {
+      "model": "EGT002 SW50x088",
+      "category": "EGT型材"
+    },
+    {
+      "model": "EGT006 D30x073",
+      "category": "EGT型材"
+    },
+    {
+      "model": "GB825_88_M16",
+      "category": "吊环"
+    },
+    {
+      "model": "KMS-M01-D159-A20",
+      "category": "定位销"
+    },
+    {
+      "model": "KMS-M02-H03-20-RD",
+      "category": "销座"
+    },
+    {
+      "model": "KMS-M05-010-100-D",
+      "category": "支座"
+    },
+    {
+      "model": "KMS-M05-020-200",
+      "category": "补高台"
+    },
+    {
+      "model": "KMS-M06-010-K63",
+      "category": "气缸连接块"
+    },
+    {
+      "model": "KMS-M09-H03-20-20",
+      "category": "垫片垫块"
+    },
+    {
+      "model": "KMS-M09-H04-20-20",
+      "category": "垫片垫块"
+    },
+    {
+      "model": "KMS-M09-H06-50-20",
+      "category": "垫片垫块"
+    },
+    {
+      "model": "KMS-M11-H30x25-UD",
+      "category": "止块"
+    },
+    {
+      "model": "KMS-M13-M05-P02-V04",
+      "category": "阀岛"
+    },
+    {
+      "model": "KMS-M14-010",
+      "category": "标牌"
+    },
+    {
+      "model": "KMS-M15-G14-H04",
+      "category": "分气块"
+    },
+    {
+      "model": "LZ01001001_H100",
+      "category": "支座(铝)"
+    },
+    {
+      "model": "MGPA50-50Z-P3DWASE",
+      "category": "双导杆气缸"
+    },
+    {
+      "model": "ULA63040AK0",
+      "category": "双导杆气缸"
+    }
+  ],
+  "knowledge_image_parts": 1,
+  "image_input_mode": "individual",
+  "llm_usage": null,
+  "usage_source": "unknown",
+  "first_tool_latency_ms": null,
+  "observability": {
+    "path": "C:\\Users\\lycohana\\AppData\\Local\\AI Modeler\\dsh\\sessions\\rc2-cold-20261002-015634-6d08f70e\\agent-observability.jsonl",
+    "logical_requests": 1,
+    "provider_attempts_observed": null,
+    "provider_wire_status": "unknown (DSH stream events only)",
+    "copied_path": "C:\\Users\\lycohana\\Desktop\\code\\AI-_-\\artifacts\\agent-quality-rebuild\\rc2-cold-20261002-015634-6d08f70e\\turns\\e6ecde87201c4c7b8fb0729b425edf35\\agent-observability.jsonl",
+    "copied_turn_id": "e6ecde87201c4c7b8fb0729b425edf35",
+    "copied_event_count": 4
+  },
+  "routing": {
+    "action": "dsh_agent",
+    "review_mode": "multimodal"
+  },
+  "run_record": "C:\\Users\\lycohana\\AppData\\Local\\AI Modeler\\dsh\\sessions\\rc2-cold-20261002-015634-6d08f70e\\cad-state.json",
+  "run_id": "rc2-cold-20261002-015634-6d08f70e",
+  "dsh_session_id": "rc2-cold-20261002-015634-6d08f70e-dsh-6b2237b8e39d",
+  "dimension_assumptions": [],
+  "local_geometry_checks": null,
+  "cli_progress_events": [
+    {
+      "elapsed_ms": 141.0,
+      "message": "正在查询本地工件知识库。"
+    },
+    {
+      "elapsed_ms": 219.0,
+      "message": "本地知识库未找到可靠文字命中，继续按当前输入建模。"
+    },
+    {
+      "elapsed_ms": 1234.0,
+      "message": "正在启动 DSH SDK 多模态 Agent 会话。"
+    },
+    {
+      "elapsed_ms": 1234.0,
+      "message": "模型等待中：DSH SDK · 推理强度 low"
+    },
+    {
+      "elapsed_ms": 6750.0,
+      "message": "DSH 状态：running"
+    },
+    {
+      "elapsed_ms": 6828.0,
+      "message": "DSH 状态：idle"
+    },
+    {
+      "elapsed_ms": 6828.0,
+      "message": "模型响应已返回：正在保存并整理 CADPlan 与本轮工具结果。"
+    }
+  ],
+  "cli_session_id": "rc2-cold-20261002-015634-6d08f70e",
+  "cli_dsh_session_id": "rc2-cold-20261002-015634-6d08f70e-dsh-6b2237b8e39d",
+  "cli_reference_paths": [
+    "C:\\Users\\lycohana\\Desktop\\code\\AI-_-\\artifacts\\agent-quality-rebuild\\references\\user-nine-hole-recess-iso.png"
+  ],
+  "cli_conversation_history_path": "C:\\Users\\lycohana\\AppData\\Local\\Packages\\OpenAI.Codex_2p2nqsd0c76g0\\LocalCache\\Local\\AI Modeler\\dsh\\sessions\\rc2-cold-20261002-015634-6d08f70e\\conversation-history.json",
+  "cli_conversation_turn_count": 1,
+  "cli_output_dir": "C:\\Users\\lycohana\\Desktop\\code\\AI-_-\\artifacts\\agent-quality-rebuild\\rc2-cold-20261002-015634-6d08f70e\\turns\\e6ecde87201c4c7b8fb0729b425edf35",
+  "delivery_warnings": [],
+  "cli_exit_code": 3,
+  "cli_outcome": "error",
+  "cli_result_path": "C:\\Users\\lycohana\\Desktop\\code\\AI-_-\\artifacts\\agent-quality-rebuild\\rc2-cold-20261002-015634-6d08f70e\\turns\\e6ecde87201c4c7b8fb0729b425edf35\\result.json"
+}

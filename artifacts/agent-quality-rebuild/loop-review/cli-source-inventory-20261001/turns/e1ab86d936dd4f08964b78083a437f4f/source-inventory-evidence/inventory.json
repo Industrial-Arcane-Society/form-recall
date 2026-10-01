@@ -1,0 +1,112 @@
+{
+  "reference_id": "sha256:53ed87fadf8cca869da921627e6a13c845424c6906b3de517d5cca972db94553",
+  "source_sha256": "53ed87fadf8cca869da921627e6a13c845424c6906b3de517d5cca972db94553",
+  "reference_index": 1,
+  "roi_norm": null,
+  "summary": "Isometric CAD rendering of a U-shaped rectangular block with a front-facing open slot. Two parallel outer walls each show three vertically aligned circular holes; the exposed inner back wall of the slot also shows three vertically aligned circular holes. Nine visible circular openings in total. No holes are visible on the top or right-side surfaces.",
+  "visible_evidence": [
+    {
+      "evidence_id": "block_outer_contour",
+      "description": "Overall U-shaped solid: a rectangular prism with a rectangular notch/slot cut into the front face, producing two vertical walls and an inner back wall.",
+      "image_region": "[0.14,0.08,0.86,0.93]",
+      "confidence": "high"
+    },
+    {
+      "evidence_id": "front_open_slot",
+      "description": "Front-facing rectangular open slot between the left and right walls, exposing a salmon/pink-colored inner back wall.",
+      "image_region": "[0.34,0.21,0.49,0.79]",
+      "confidence": "high"
+    },
+    {
+      "evidence_id": "left_wall_holes",
+      "description": "Left outer vertical wall with three circular holes arranged vertically: top cyan, middle dark blue, bottom cyan.",
+      "image_region": "[0.15,0.15,0.35,0.85]",
+      "confidence": "high"
+    },
+    {
+      "evidence_id": "right_wall_holes",
+      "description": "Right outer vertical wall with three circular holes arranged vertically: top cyan, middle dark blue, bottom cyan.",
+      "image_region": "[0.45,0.20,0.66,0.90]",
+      "confidence": "high"
+    },
+    {
+      "evidence_id": "inner_back_wall_holes",
+      "description": "Inner back wall of the slot with three circular holes arranged vertically: top magenta, middle dark blue, bottom magenta.",
+      "image_region": "[0.35,0.25,0.48,0.76]",
+      "confidence": "high"
+    },
+    {
+      "evidence_id": "top_surface",
+      "description": "Top planar surface of the block; no holes or openings visible.",
+      "image_region": "[0.25,0.08,0.75,0.30]",
+      "confidence": "high"
+    },
+    {
+      "evidence_id": "right_side_surface",
+      "description": "Right-side planar surface of the block; no holes or openings visible.",
+      "image_region": "[0.65,0.20,0.85,0.92]",
+      "confidence": "high"
+    }
+  ],
+  "uncertain": [
+    {
+      "evidence_id": "unc_hole_depth",
+      "description": "Whether the visible circular openings are through-holes, blind holes, or pockets; depth and back-side geometry are not visible.",
+      "image_region": "all hole regions",
+      "confidence": "low"
+    },
+    {
+      "evidence_id": "unc_hidden_faces",
+      "description": "Possible holes, slots, or features on hidden faces (back outer wall, bottom, fully occluded side walls) cannot be confirmed.",
+      "image_region": "occluded/hidden regions",
+      "confidence": "low"
+    },
+    {
+      "evidence_id": "unc_hole_alignment",
+      "description": "Whether any inner-back-wall holes are coaxial with or connect to outer-wall holes is not visible.",
+      "image_region": "center slot and adjacent walls",
+      "confidence": "low"
+    },
+    {
+      "evidence_id": "unc_color_meaning",
+      "description": "The color variation of hole interiors (cyan, magenta, dark blue) may indicate orientation, lighting, or material and does not confirm hole type or size.",
+      "image_region": "all hole regions",
+      "confidence": "medium"
+    }
+  ],
+  "inferred": [],
+  "verification_status": "model_observation_unverified",
+  "request_profile": {
+    "task_kind": "vision_review",
+    "review_complexity": "source_inventory",
+    "provider_family": "siliconflow",
+    "protocol": "chat_completions",
+    "model": "moonshotai/Kimi-K2.7-Code",
+    "reasoning_effort": "low",
+    "configured_reasoning_effort": null,
+    "thinking_budget": null,
+    "payload_reasoning": {
+      "enable_thinking": true
+    },
+    "reasoning_supported": true,
+    "reasoning_control": "toggle_and_budget",
+    "vision_supported": true,
+    "supported_efforts": [
+      "none",
+      "low"
+    ],
+    "context_window": 256000,
+    "max_output_tokens": null,
+    "context_capacity_source": "official SiliconFlow model center states 256K for moonshotai/Kimi-K2.7-Code",
+    "capability_source": "official SiliconFlow VLM API example for moonshotai/Kimi-K2.7-Code"
+  },
+  "usage": {
+    "prompt_tokens": 608,
+    "completion_tokens": 1759,
+    "total_tokens": 2367,
+    "reasoning_tokens": 912
+  },
+  "model": "moonshotai/Kimi-K2.7-Code",
+  "duration_seconds": 46.404,
+  "recorded_at": 1790833681.167995
+}

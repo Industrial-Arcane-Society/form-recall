@@ -1,0 +1,12 @@
+{
+  "requested_stop_window": "2026-10-01T20:40:03+08:00 (invocation recorded END=20:40:03.112)",
+  "pids": [
+    23464,
+    41204,
+    27200
+  ],
+  "cli_exit_code": -1,
+  "status": "not present in process table after Stop-Process",
+  "exit_code_note": "PowerShell invocation recorded -1 after forced termination; not a normal CLI outcome code.",
+  "verified_at": "2026-10-01T20:40:27+08:00"
+}

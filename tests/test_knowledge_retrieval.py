@@ -8,7 +8,7 @@ from pathlib import Path
 from types import SimpleNamespace
 from unittest import mock
 
-from ai_modeler.agent import dsh_agent, dsh_mcp_server
+from ai_modeler.agent import dsh_agent, dsh_tool_domain
 from ai_modeler.parts.library import retrieval
 
 
@@ -191,7 +191,7 @@ class DSHKnowledgeIntegrationTests(unittest.TestCase):
                             if block.get("type") == "image"]
             self.assertTrue(any("exact_match" in text for text in text_blocks))
             self.assertTrue(any("本地视觉样例板条目" in text for text in text_blocks))
-            self.assertEqual(len(image_blocks), 2)  # user input plus one compact sample board
+            self.assertEqual(len(image_blocks), 1)  # compact sample board; user image is tool-fetched on demand
             self.assertEqual(result["knowledge_search"]["status"], "exact_match")
             self.assertEqual(result["knowledge_image_parts"], 1)
             self.assertTrue(any("本地知识库精确命中" in message
@@ -199,16 +199,16 @@ class DSHKnowledgeIntegrationTests(unittest.TestCase):
             self.assertFalse((root / "knowledge-test" /
                               "knowledge-visual-examples.png").exists())
 
-    def test_mcp_followup_knowledge_tool_returns_and_persists_search(self):
+    def test_tool_followup_knowledge_returns_and_persists_search(self):
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)
             state_path = root / "cad-state.json"
-            with mock.patch.object(dsh_mcp_server, "_STATE_DIR", root), \
-                    mock.patch.object(dsh_mcp_server, "_STATE_PATH", state_path), \
-                    mock.patch.object(dsh_mcp_server, "_REFERENCE_IMAGES", []):
-                response = dsh_mcp_server._handle_tool(
+            with mock.patch.object(dsh_tool_domain, "_STATE_DIR", root), \
+                    mock.patch.object(dsh_tool_domain, "_STATE_PATH", state_path), \
+                    mock.patch.object(dsh_tool_domain, "_REFERENCE_IMAGES", []):
+                response = dsh_tool_domain._handle_tool(
                     "cad_search_knowledge", {"query": "M5×8 内六角螺栓", "limit": 3})
-                state = dsh_mcp_server._load()
+                state = dsh_tool_domain._load()
 
         self.assertFalse(response["isError"])
         self.assertTrue(any("exact_match" in block.get("text", "")

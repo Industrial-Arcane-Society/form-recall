@@ -1,0 +1,105 @@
+# Generated for this AI Modeler conversation. Do not edit the global DSH profile.
+- id: llm-pi-ai
+  config:
+    providers:
+      ai-modeler:
+        displayName: AI Modeler
+        apiKeyEnv: AIMODELER_LLM_API_KEY
+        api: openai-completions
+        baseURL: "https://api.siliconflow.cn/v1"
+        retryPolicy:
+          mode: normal
+          maxRetries: 3
+        models:
+          - id: "moonshotai/Kimi-K2.7-Code"
+            name: "moonshotai/Kimi-K2.7-Code"
+            contextWindow: 256000
+            maxTokens: 32768
+            input: [text, image]
+            reasoningEfforts:
+              off: null
+              low: "enabled"
+        defaultInput: [text, image]
+        maxRequestImageBytes: 20971520
+        requestImagePixelBudget: 64000000
+        requestImageMaxBytes: 20971520
+        compat:
+          supportsDeveloperRole: false
+          thinkingTokenBudgetField: "thinking_budget"
+          thinkingFormat: "qwen"
+
+- id: system-prompt
+  config:
+    includeHarnessIdentity: false
+    includeRuntimeContext: false
+    personaPrefix: !!js process.env.DSH_SYSTEM_PROMPT ?? ''
+    personaSuffix: ''
+- id: session-log-deepseek
+  disabled: true
+- id: session-telemetry-otel
+  disabled: true
+- id: attachment-local
+  disabled: true
+- id: agent-instructions
+  disabled: true
+- id: tool-bash
+  disabled: true
+- id: tool-pwsh
+  disabled: true
+- id: tool-fs
+  disabled: true
+- id: tool-fs-search
+  disabled: true
+- id: tool-skill
+  disabled: true
+- id: tool-jobs
+  disabled: true
+- id: tool-subagent-control
+  disabled: true
+- id: tool-subagent-list-agents
+  disabled: true
+- id: tool-subagent
+  disabled: true
+- id: tool-subagent-fork
+  disabled: true
+- id: tool-workflow
+  disabled: true
+- id: tool-todo
+  disabled: true
+- id: tool-goal
+  disabled: true
+- id: tool-ralph
+  disabled: true
+- id: tool-web
+  disabled: true
+
+- insert:
+    - id: ai-modeler-attachment-store
+      name: "file:///C:/Users/lycohana/Desktop/code/AI-_-/ai_modeler/agent/dsh_attachment_store.mjs"
+
+- insert:
+    - id: ai-modeler-mcp
+      name: '@deepseek-ai/dsh-mcp-client'
+      config:
+        serverName: ai-modeler
+        transport: stdio
+        command: "C:\\Users\\lycohana\\AppData\\Local\\Programs\\Python\\Python311\\python.exe"
+        args: ['-u', '-m', 'ai_modeler.agent.dsh_mcp_server']
+        cwd: "C:\\Users\\lycohana\\Desktop\\code\\AI-_-"
+        env:
+          AI_MODELER_STATE_DIR: "C:\\Users\\lycohana\\AppData\\Local\\AI Modeler\\dsh\\sessions\\cold-fresh-20261001-d78fc15f"
+          AI_MODELER_PROJECT_ROOT: "C:\\Users\\lycohana\\Desktop\\code\\AI-_-"
+          AI_MODELER_ONLINE_ENABLED: "true"
+          AI_MODELER_HAS_REFERENCES: "true"
+          AI_MODELER_REFERENCE_MANIFEST: "C:\\Users\\lycohana\\AppData\\Local\\Packages\\OpenAI.Codex_2p2nqsd0c76g0\\LocalCache\\Local\\AI Modeler\\dsh\\sessions\\cold-fresh-20261001-d78fc15f\\reference-images.json"
+          AI_MODELER_REFERENCE_IMAGES: "[\"C:\\\\Users\\\\lycohana\\\\AppData\\\\Local\\\\Packages\\\\OpenAI.Codex_2p2nqsd0c76g0\\\\LocalCache\\\\Local\\\\AI Modeler\\\\dsh\\\\sessions\\\\cold-fresh-20261001-d78fc15f\\\\reference-assets\\\\53ed87fadf8cca869da921627e6a13c845424c6906b3de517d5cca972db94553.png\"]"
+          AI_MODELER_REVIEW_BASE_URL: "https://api.siliconflow.cn/v1"
+          AI_MODELER_REVIEW_MODEL: "moonshotai/Kimi-K2.7-Code"
+          AI_MODELER_STREAM_FILE: !!js process.env.AI_MODELER_STREAM_FILE ?? ''
+          AI_MODELER_ACTIVE_TURN_FILE: !!js process.env.AI_MODELER_ACTIVE_TURN_FILE ?? ''
+          AIMODELER_LLM_API_KEY: !!js process.env.AIMODELER_LLM_API_KEY ?? 'sk-local'
+        failOnStartupError: true
+
+- insert:
+    - id: ai-modeler-live-stream
+      name: "file:///C:/Users/lycohana/Desktop/code/AI-_-/ai_modeler/agent/dsh_stream_bridge.mjs"

@@ -1,0 +1,308 @@
+{
+  "format": "ai-modeler-geometry-report",
+  "version": 1,
+  "plan_schema_version": "1.0",
+  "model": "SDK test",
+  "geometry_source": "OpenCASCADE native BREP; preview/STL use its tessellation.",
+  "geometry_backend": "occt_brep",
+  "local_geometry_checks": {
+    "backend": "occt_brep",
+    "kernel": "可用：OCCT 7.9.3.1 / cadquery-ocp-novtk 7.9.3.1.1",
+    "geometry_state": "needs_review",
+    "state": "needs_review",
+    "brep_valid": true,
+    "shape_type": "TopAbs_SOLID",
+    "solid_count": 1,
+    "connected_component_count": 1,
+    "shell_count": 1,
+    "closed_shell_count": 1,
+    "closed": true,
+    "edge_count": 24,
+    "face_count": 6,
+    "free_edge_count": 0,
+    "volume_mm3": 480000.0,
+    "bbox_mm": [
+      -50.0,
+      -40.0,
+      0.0,
+      50.0,
+      40.0,
+      60.0
+    ],
+    "self_intersection": {
+      "status": "checked_no_intersection",
+      "face_count": 6,
+      "check_result_count": 0,
+      "check_statuses": [],
+      "method": "BOPAlgo_ArgumentAnalyzer(SelfInterMode=True, UseOBB=True)"
+    },
+    "validity_method": "BRepCheck_Analyzer",
+    "geometry_scope": "native_OCCT_BREP_only_visual_comparison_not_performed",
+    "feature_results": [
+      {
+        "feature_id": "base",
+        "kind": "box",
+        "operation": "add",
+        "geometry_support": "exact",
+        "builder": "analytic_prism",
+        "state": "applied",
+        "source_feature_id": null,
+        "source_resolution": null,
+        "solid_count": 1,
+        "brep_valid": true,
+        "before_volume_mm3": 0.0,
+        "after_volume_mm3": 480000.0,
+        "volume_delta_mm3": 480000.0,
+        "depth_measurement": null,
+        "facet_count": null
+      },
+      {
+        "feature_id": "target",
+        "kind": "shell",
+        "operation": "add",
+        "geometry_support": "unavailable",
+        "builder": null,
+        "state": "skipped",
+        "warning": "CADPlan 未指定要移除的面；缺少可执行的抽壳边界"
+      }
+    ],
+    "hole_instances": [],
+    "hole_feature_count": 0,
+    "planned_hole_instance_count": 0,
+    "active_hole_instance_count": 0,
+    "superseded_hole_instance_count": 0,
+    "active_through_hole_count": 0,
+    "through_hole_count": 0,
+    "all_declared_holes_verified": true,
+    "visual_validation": "not_performed",
+    "catia_executed": false,
+    "build_transaction": "每个特征验证成功后才提交；失败保留上一有效实体",
+    "source": "OpenCASCADE native BREP; preview mesh is display-only",
+    "bbox_size_mm": [
+      100.0,
+      80.0,
+      60.0
+    ],
+    "bbox_ratios_from_brep": {
+      "front_width_height": 1.6666666666666667,
+      "depth_height": 1.3333333333333333,
+      "top_width_depth": 1.25
+    },
+    "bbox_ratios_from_mesh": {
+      "front_width_height": 1.6666666666666667,
+      "depth_height": 1.3333333333333333,
+      "top_width_depth": 1.25
+    },
+    "feature_count_from_plan": 2,
+    "feature_ids_from_plan": [
+      "base",
+      "target"
+    ],
+    "hole_features_from_plan": [],
+    "hole_feature_count_from_plan": 0,
+    "expected_hole_instance_count": 0,
+    "hole_instance_count": 0,
+    "through_hole_checks": [],
+    "through_hole_mesh_checks": [],
+    "hole_measurement_complete": true,
+    "through_hole_count_expected": 0,
+    "through_hole_count_verified": 0,
+    "through_hole_result": "no_holes_declared",
+    "image_estimate_parameters": [],
+    "catia_geometry_verification": "not_performed"
+  },
+  "dimensions": {
+    "unit": "mm",
+    "bbox": [
+      -50.0,
+      -40.0,
+      0.0,
+      50.0,
+      40.0,
+      60.0
+    ],
+    "size": [
+      100.0,
+      80.0,
+      60.0
+    ],
+    "volume_mm3": 480000.0,
+    "surface_area_mm2": 37600.0,
+    "triangles": 12,
+    "feature_count": 2
+  },
+  "features": {
+    "base": {
+      "kind": "box",
+      "operation": "add",
+      "name": "长方体",
+      "parameters": {
+        "length": 100,
+        "width": 80,
+        "height": 60
+      },
+      "sources": {
+        "length": {
+          "type": "user"
+        },
+        "width": {
+          "type": "user"
+        },
+        "height": {
+          "type": "user"
+        }
+      },
+      "relations": []
+    },
+    "target": {
+      "kind": "shell",
+      "operation": "add",
+      "name": "抽壳",
+      "parameters": {
+        "thickness": 2
+      },
+      "sources": {
+        "thickness": {
+          "type": "user"
+        }
+      },
+      "relations": []
+    }
+  },
+  "support": [
+    {
+      "feature_id": "base",
+      "kind": "box",
+      "status": "exact",
+      "reason": "矩形草图加凸台；当前 CATIA 映射仅支持 Z 轴拉伸。"
+    },
+    {
+      "feature_id": "target",
+      "kind": "shell",
+      "status": "unsupported",
+      "reason": "当前 Document/CATIA 转换器没有抽壳实现。"
+    }
+  ],
+  "catia_operations": [
+    {
+      "index": 1,
+      "kind": "rect_pad",
+      "plane": "XY",
+      "center": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "profile": [],
+      "dimensions": {
+        "l": 100.0,
+        "w": 80.0,
+        "r": 0.0,
+        "h": 60.0,
+        "depth": 0.0
+      },
+      "name": "长方体",
+      "note": "长方体 100 × 80 × 60 mm"
+    }
+  ],
+  "warnings": [
+    {
+      "code": "LOCAL_BREP_UNAVAILABLE",
+      "feature_id": "target",
+      "kind": "shell",
+      "message": "CADPlan 未指定要移除的面；缺少可执行的抽壳边界"
+    },
+    {
+      "code": "CATIA_UNSUPPORTED",
+      "feature_id": "target",
+      "kind": "shell",
+      "message": "当前 Document/CATIA 转换器没有抽壳实现。"
+    },
+    {
+      "code": "CATIA_TRANSLATOR_NOTE",
+      "feature_id": null,
+      "kind": null,
+      "message": "特征类型「shell」(shell) 无法用 CATIA 的草图/凸台/凹槽/旋转体表达, 已跳过; 可改用「文件 → 导出 STL」再导入 CATIA。",
+      "index": 0
+    }
+  ],
+  "catia": {
+    "invoked": true,
+    "executed": true,
+    "saved": false,
+    "message": "等待 CATIA 响应超时（420 秒）。\nCATIA 侧的进度日志（最后几步）: \n  13:58:18  ---- push start, features=1\n  13:58:29  attached to running CATIA\n  13:58:29    documents=0\n  13:58:32  new document: Part1.CATPart\n  13:58:36  body: ���������\n  13:58:36    [1/1] ������\n  13:58:37        ok\n  13:58:37  features done: ok=1 fail=0\n  13:58:37  save failed (-2147467259): ���� SaveAs ʧ��\n  13:58:37  shown: activated + reframe",
+    "script": "C:\\Users\\lycohana\\AppData\\Local\\Temp\\ai_modeler_push_20261001_135818.vbs"
+  },
+  "catia_geometry_verification": {
+    "state": "not_performed",
+    "reason": "当前 cscript/COM 通道返回 CATIA 操作与保存状态，不回读 CATPart 的 B-Rep 测量值。"
+  },
+  "preview_images": {
+    "state": "awaiting_agent_inspection",
+    "source": "OCCT BREP tessellated for display; not CATIA BREP",
+    "three_view": {
+      "path": "C:\\Users\\lycohana\\Desktop\\code\\AI-_-\\artifacts\\cadplan\\20261001-135817-SDK-test\\SDK-test.three-view.png",
+      "views": [
+        "front",
+        "right",
+        "top"
+      ],
+      "layout": {
+        "unit": "mm",
+        "axes": {
+          "length": "X",
+          "width": "Y",
+          "height": "Z"
+        },
+        "uniform_scale_across_views": true,
+        "scale_pixels_per_mm": 2.132,
+        "tile_size_pixels": [
+          330,
+          260
+        ],
+        "view_extents": {
+          "front": {
+            "horizontal_axis": "X",
+            "horizontal": 100.0,
+            "vertical_axis": "Z",
+            "vertical": 60.0
+          },
+          "right": {
+            "horizontal_axis": "Y",
+            "horizontal": 80.0,
+            "vertical_axis": "Z",
+            "vertical": 60.0
+          },
+          "top": {
+            "horizontal_axis": "X",
+            "horizontal": 100.0,
+            "vertical_axis": "Y",
+            "vertical": 80.0
+          }
+        },
+        "dimension_ratios": {
+          "length_to_height": 1.6666666666666667,
+          "width_to_height": 1.3333333333333333,
+          "length_to_width": 1.25
+        }
+      }
+    },
+    "four_view": {
+      "path": "C:\\Users\\lycohana\\Desktop\\code\\AI-_-\\artifacts\\cadplan\\20261001-135817-SDK-test\\SDK-test.four-view.png",
+      "views": [
+        "iso",
+        "front",
+        "right",
+        "top"
+      ]
+    }
+  },
+  "output_paths": {
+    "catpart": "C:\\Users\\lycohana\\Desktop\\code\\AI-_-\\artifacts\\cadplan\\20261001-135817-SDK-test\\SDK-test.CATPart",
+    "aimodel": "C:\\Users\\lycohana\\Desktop\\code\\AI-_-\\artifacts\\cadplan\\20261001-135817-SDK-test\\SDK-test.aimodel",
+    "stl": "C:\\Users\\lycohana\\Desktop\\code\\AI-_-\\artifacts\\cadplan\\20261001-135817-SDK-test\\SDK-test.stl",
+    "three_view": "C:\\Users\\lycohana\\Desktop\\code\\AI-_-\\artifacts\\cadplan\\20261001-135817-SDK-test\\SDK-test.three-view.png",
+    "four_view": "C:\\Users\\lycohana\\Desktop\\code\\AI-_-\\artifacts\\cadplan\\20261001-135817-SDK-test\\SDK-test.four-view.png",
+    "report": "C:\\Users\\lycohana\\Desktop\\code\\AI-_-\\artifacts\\cadplan\\20261001-135817-SDK-test\\SDK-test.geometry-report.json"
+  }
+}

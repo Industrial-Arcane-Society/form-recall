@@ -1,0 +1,17 @@
+{
+  "schema_version": 1,
+  "session_id": "geom-blind-entry-20261002-01",
+  "turns": [
+    {
+      "turn_id": "8c64c3b593454c3497471c833a4c689e",
+      "session_id": "geom-blind-entry-20261002-01",
+      "raw_user_prompt": "创建一个中心位于原点、尺寸为40×30×20 mm的长方体。在 y=-15 mm 端面上、入口中心 (x=0,z=0)，沿 +Y 方向加工一个直径8 mm、深度6 mm的盲孔；孔只从该端面开口，不能贯穿到相对端面。请按此要求直接建模并完成本地几何验证。",
+      "reference_ids": [],
+      "created_at": "2026-10-01T16:26:11.044Z",
+      "at_epoch_ms": 1790871971044,
+      "intent": "geometry_edit",
+      "affects_model_target": true,
+      "intent_source": "cli_rules"
+    }
+  ]
+}

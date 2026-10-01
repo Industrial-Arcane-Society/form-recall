@@ -1,0 +1,446 @@
+{
+  "format": "ai-modeler-geometry-report",
+  "version": 1,
+  "plan_schema_version": "1.0",
+  "model": "SDK test",
+  "geometry_source": "OpenCASCADE native BREP; preview/STL use its tessellation.",
+  "geometry_backend": "occt_brep",
+  "local_geometry_checks": {
+    "backend": "occt_brep",
+    "kernel": "可用：OCCT 7.9.3.1 / cadquery-ocp-novtk 7.9.3.1.1",
+    "geometry_state": "passed",
+    "state": "passed",
+    "brep_valid": true,
+    "shape_type": "TopAbs_COMPOUND",
+    "solid_count": 1,
+    "connected_component_count": 1,
+    "shell_count": 1,
+    "closed_shell_count": 1,
+    "closed": true,
+    "edge_count": 128,
+    "face_count": 26,
+    "free_edge_count": 0,
+    "volume_mm3": 487022.5657095032,
+    "bbox_mm": [
+      -55.0,
+      -40.0,
+      -4.0,
+      50.0,
+      40.0,
+      60.0
+    ],
+    "self_intersection": {
+      "status": "checked_no_intersection",
+      "face_count": 26,
+      "check_result_count": 0,
+      "check_statuses": [],
+      "method": "BOPAlgo_ArgumentAnalyzer(SelfInterMode=True, UseOBB=True)"
+    },
+    "validity_method": "BRepCheck_Analyzer",
+    "geometry_scope": "native_OCCT_BREP_only_visual_comparison_not_performed",
+    "feature_results": [
+      {
+        "feature_id": "base",
+        "kind": "box",
+        "operation": "add",
+        "geometry_support": "exact",
+        "builder": "analytic_prism",
+        "state": "applied",
+        "source_feature_id": null,
+        "source_resolution": null,
+        "solid_count": 1,
+        "brep_valid": true,
+        "before_volume_mm3": 0.0,
+        "after_volume_mm3": 480000.0,
+        "volume_delta_mm3": 480000.0,
+        "depth_measurement": null,
+        "facet_count": null
+      },
+      {
+        "feature_id": "target",
+        "kind": "conrod",
+        "operation": "add",
+        "geometry_support": "approximate",
+        "builder": "analytic_annular_ends_with_external_tangent_web",
+        "state": "applied",
+        "source_feature_id": null,
+        "source_resolution": null,
+        "solid_count": 1,
+        "brep_valid": true,
+        "before_volume_mm3": 480000.0,
+        "after_volume_mm3": 487022.5657095032,
+        "volume_delta_mm3": 7022.565709503193,
+        "depth_measurement": null,
+        "facet_count": null
+      }
+    ],
+    "hole_instances": [],
+    "hole_feature_count": 0,
+    "planned_hole_instance_count": 0,
+    "active_hole_instance_count": 0,
+    "superseded_hole_instance_count": 0,
+    "active_through_hole_count": 0,
+    "through_hole_count": 0,
+    "all_declared_holes_verified": true,
+    "visual_validation": "not_performed",
+    "catia_executed": false,
+    "build_transaction": "每个特征验证成功后才提交；失败保留上一有效实体",
+    "source": "OpenCASCADE native BREP; preview mesh is display-only",
+    "bbox_size_mm": [
+      105.0,
+      80.0,
+      64.0
+    ],
+    "bbox_ratios_from_brep": {
+      "front_width_height": 1.640625,
+      "depth_height": 1.25,
+      "top_width_depth": 1.3125
+    },
+    "bbox_ratios_from_mesh": {
+      "front_width_height": 1.640625,
+      "depth_height": 1.25,
+      "top_width_depth": 1.3125
+    },
+    "feature_count_from_plan": 2,
+    "feature_ids_from_plan": [
+      "base",
+      "target"
+    ],
+    "hole_features_from_plan": [],
+    "hole_feature_count_from_plan": 0,
+    "expected_hole_instance_count": 0,
+    "hole_instance_count": 0,
+    "through_hole_checks": [],
+    "through_hole_mesh_checks": [],
+    "hole_measurement_complete": true,
+    "through_hole_count_expected": 0,
+    "through_hole_count_verified": 0,
+    "through_hole_result": "no_holes_declared",
+    "image_estimate_parameters": [],
+    "catia_geometry_verification": "not_performed"
+  },
+  "dimensions": {
+    "unit": "mm",
+    "bbox": [
+      -55.0,
+      -40.0,
+      -4.0,
+      50.0,
+      40.0,
+      60.0
+    ],
+    "size": [
+      105.0,
+      80.0,
+      64.0
+    ],
+    "volume_mm3": 487022.5657095032,
+    "surface_area_mm2": 39038.44095354918,
+    "triangles": 434,
+    "feature_count": 2
+  },
+  "features": {
+    "base": {
+      "kind": "box",
+      "operation": "add",
+      "name": "长方体",
+      "parameters": {
+        "length": 100,
+        "width": 80,
+        "height": 60
+      },
+      "sources": {
+        "length": {
+          "type": "user"
+        },
+        "width": {
+          "type": "user"
+        },
+        "height": {
+          "type": "user"
+        }
+      },
+      "relations": []
+    },
+    "target": {
+      "kind": "conrod",
+      "operation": "add",
+      "name": "连杆",
+      "parameters": {
+        "length": 80,
+        "big_d": 30,
+        "small_d": 18,
+        "big_bore": 20,
+        "small_bore": 10,
+        "shank_w": 10,
+        "thick": 8
+      },
+      "sources": {
+        "length": {
+          "type": "user"
+        },
+        "big_d": {
+          "type": "user"
+        },
+        "small_d": {
+          "type": "user"
+        },
+        "big_bore": {
+          "type": "user"
+        },
+        "small_bore": {
+          "type": "user"
+        },
+        "shank_w": {
+          "type": "user"
+        },
+        "thick": {
+          "type": "user"
+        }
+      },
+      "relations": []
+    }
+  },
+  "support": [
+    {
+      "feature_id": "base",
+      "kind": "box",
+      "status": "exact",
+      "reason": "矩形草图加凸台；当前 CATIA 映射仅支持 Z 轴拉伸。"
+    },
+    {
+      "feature_id": "target",
+      "kind": "conrod",
+      "status": "approximate",
+      "reason": "CATIA 以大头、小头和直杆身近似，杆身过渡被简化。"
+    }
+  ],
+  "catia_operations": [
+    {
+      "index": 1,
+      "kind": "rect_pad",
+      "plane": "XY",
+      "center": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "profile": [],
+      "dimensions": {
+        "l": 100.0,
+        "w": 80.0,
+        "r": 0.0,
+        "h": 60.0,
+        "depth": 0.0
+      },
+      "name": "长方体",
+      "note": "长方体 100 × 80 × 60 mm"
+    },
+    {
+      "index": 2,
+      "kind": "circle_pad",
+      "plane": "XY",
+      "center": [
+        0.0,
+        0.0,
+        -4.0
+      ],
+      "profile": [],
+      "dimensions": {
+        "l": 0.0,
+        "w": 0.0,
+        "r": 15.0,
+        "h": 8.0,
+        "depth": 0.0
+      },
+      "name": "连杆",
+      "note": "conrod"
+    },
+    {
+      "index": 3,
+      "kind": "circle_pad",
+      "plane": "XY",
+      "center": [
+        0.0,
+        40.0,
+        -4.0
+      ],
+      "profile": [],
+      "dimensions": {
+        "l": 0.0,
+        "w": 0.0,
+        "r": 9.0,
+        "h": 8.0,
+        "depth": 0.0
+      },
+      "name": "连杆",
+      "note": "conrod"
+    },
+    {
+      "index": 4,
+      "kind": "rect_pad",
+      "plane": "XY",
+      "center": [
+        0.0,
+        20.0,
+        -4.0
+      ],
+      "profile": [],
+      "dimensions": {
+        "l": 10.0,
+        "w": 40.0,
+        "r": 0.0,
+        "h": 8.0,
+        "depth": 0.0
+      },
+      "name": "连杆",
+      "note": "conrod"
+    },
+    {
+      "index": 5,
+      "kind": "circle_cut",
+      "plane": "XY",
+      "center": [
+        0.0,
+        0.0,
+        5.0
+      ],
+      "profile": [],
+      "dimensions": {
+        "l": 0.0,
+        "w": 0.0,
+        "r": 10.0,
+        "h": 0.0,
+        "depth": 10.0
+      },
+      "name": "连杆",
+      "note": "conrod"
+    },
+    {
+      "index": 6,
+      "kind": "circle_cut",
+      "plane": "XY",
+      "center": [
+        0.0,
+        40.0,
+        5.0
+      ],
+      "profile": [],
+      "dimensions": {
+        "l": 0.0,
+        "w": 0.0,
+        "r": 5.0,
+        "h": 0.0,
+        "depth": 10.0
+      },
+      "name": "连杆",
+      "note": "conrod"
+    }
+  ],
+  "warnings": [
+    {
+      "code": "LOCAL_BREP_APPROXIMATION",
+      "feature_id": "target",
+      "kind": "conrod",
+      "message": "解析大小头环与外公切梯形杆身并集，工字截面近似"
+    },
+    {
+      "code": "CATIA_APPROXIMATION",
+      "feature_id": "target",
+      "kind": "conrod",
+      "message": "CATIA 以大头、小头和直杆身近似，杆身过渡被简化。"
+    },
+    {
+      "code": "CATIA_TRANSLATOR_NOTE",
+      "feature_id": null,
+      "kind": null,
+      "message": "连杆「conrod」按 大头 + 小头 + 直杆身 近似（杆身过渡需在 CATIA 里修）",
+      "index": 0
+    },
+    {
+      "code": "CATIA_TRANSLATOR_NOTE",
+      "feature_id": null,
+      "kind": null,
+      "message": "零件库件「conrod」已展开为 5 个 CATIA 操作。",
+      "index": 1
+    }
+  ],
+  "catia": {
+    "invoked": false,
+    "executed": false,
+    "saved": false,
+    "message": ""
+  },
+  "catia_geometry_verification": {
+    "state": "not_performed",
+    "reason": "当前 cscript/COM 通道返回 CATIA 操作与保存状态，不回读 CATPart 的 B-Rep 测量值。"
+  },
+  "preview_images": {
+    "state": "awaiting_agent_inspection",
+    "source": "OCCT BREP tessellated for display; not CATIA BREP",
+    "three_view": {
+      "path": "C:\\Users\\lycohana\\Desktop\\code\\AI-_-\\artifacts\\cadplan\\20261001-135511-SDK-test\\SDK-test.three-view.png",
+      "views": [
+        "front",
+        "right",
+        "top"
+      ],
+      "layout": {
+        "unit": "mm",
+        "axes": {
+          "length": "X",
+          "width": "Y",
+          "height": "Z"
+        },
+        "uniform_scale_across_views": true,
+        "scale_pixels_per_mm": 2.0304761904761905,
+        "tile_size_pixels": [
+          330,
+          260
+        ],
+        "view_extents": {
+          "front": {
+            "horizontal_axis": "X",
+            "horizontal": 105.0,
+            "vertical_axis": "Z",
+            "vertical": 64.0
+          },
+          "right": {
+            "horizontal_axis": "Y",
+            "horizontal": 80.0,
+            "vertical_axis": "Z",
+            "vertical": 64.0
+          },
+          "top": {
+            "horizontal_axis": "X",
+            "horizontal": 105.0,
+            "vertical_axis": "Y",
+            "vertical": 80.0
+          }
+        },
+        "dimension_ratios": {
+          "length_to_height": 1.640625,
+          "width_to_height": 1.25,
+          "length_to_width": 1.3125
+        }
+      }
+    },
+    "four_view": {
+      "path": "C:\\Users\\lycohana\\Desktop\\code\\AI-_-\\artifacts\\cadplan\\20261001-135511-SDK-test\\SDK-test.four-view.png",
+      "views": [
+        "iso",
+        "front",
+        "right",
+        "top"
+      ]
+    }
+  },
+  "output_paths": {
+    "catpart": "C:\\Users\\lycohana\\Desktop\\code\\AI-_-\\artifacts\\cadplan\\20261001-135511-SDK-test\\SDK-test.CATPart",
+    "aimodel": "C:\\Users\\lycohana\\Desktop\\code\\AI-_-\\artifacts\\cadplan\\20261001-135511-SDK-test\\SDK-test.aimodel",
+    "stl": "C:\\Users\\lycohana\\Desktop\\code\\AI-_-\\artifacts\\cadplan\\20261001-135511-SDK-test\\SDK-test.stl",
+    "three_view": "C:\\Users\\lycohana\\Desktop\\code\\AI-_-\\artifacts\\cadplan\\20261001-135511-SDK-test\\SDK-test.three-view.png",
+    "four_view": "C:\\Users\\lycohana\\Desktop\\code\\AI-_-\\artifacts\\cadplan\\20261001-135511-SDK-test\\SDK-test.four-view.png",
+    "report": "C:\\Users\\lycohana\\Desktop\\code\\AI-_-\\artifacts\\cadplan\\20261001-135511-SDK-test\\SDK-test.geometry-report.json"
+  }
+}

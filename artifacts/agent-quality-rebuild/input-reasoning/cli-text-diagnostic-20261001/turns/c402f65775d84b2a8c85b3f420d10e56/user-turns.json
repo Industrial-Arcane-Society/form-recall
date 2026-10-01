@@ -1,0 +1,58 @@
+{
+  "schema_version": 1,
+  "session_id": "aq-text-diagnostic-20261001",
+  "turns": [
+    {
+      "turn_id": "9aeb31f903f94672b6d4cf0d50f0b10d",
+      "session_id": "aq-text-diagnostic-20261001",
+      "raw_user_prompt": "创建一个100×60×20毫米长方体",
+      "reference_ids": [],
+      "created_at": "2026-10-01T05:00:10.504Z",
+      "at_epoch_ms": 1790830810504
+    },
+    {
+      "turn_id": "8426d16d85154f6b9cd7cb635db29bd6",
+      "session_id": "aq-text-diagnostic-20261001",
+      "raw_user_prompt": "不要修改模型。请简要复述当前主体的长、宽、高和中心位置，并核对现有CADPlan。",
+      "reference_ids": [],
+      "created_at": "2026-10-01T05:22:09.936Z",
+      "at_epoch_ms": 1790832129936,
+      "intent": "query",
+      "affects_model_target": false,
+      "intent_source": "cli_rules"
+    },
+    {
+      "turn_id": "fb9e17d012bb40eb92345c7e13f955b6",
+      "session_id": "aq-text-diagnostic-20261001",
+      "raw_user_prompt": "不要修改模型。请简要复述当前主体的长、宽、高和中心位置，并核对现有CADPlan。",
+      "reference_ids": [],
+      "created_at": "2026-10-01T05:33:03.409Z",
+      "at_epoch_ms": 1790832783409,
+      "intent": "query",
+      "affects_model_target": false,
+      "intent_source": "cli_rules"
+    },
+    {
+      "turn_id": "e540c05eca584677a32911a4dd823c0d",
+      "session_id": "aq-text-diagnostic-20261001",
+      "raw_user_prompt": "只把主体长度改为110毫米，宽度60毫米、高度20毫米和中心位置[0,0,0]保持不变。",
+      "reference_ids": [],
+      "created_at": "2026-10-01T05:34:04.988Z",
+      "at_epoch_ms": 1790832844988,
+      "intent": "geometry_edit",
+      "affects_model_target": true,
+      "intent_source": "cli_rules"
+    },
+    {
+      "turn_id": "c402f65775d84b2a8c85b3f420d10e56",
+      "session_id": "aq-text-diagnostic-20261001",
+      "raw_user_prompt": "只把主体长度改为120毫米，宽度60毫米、高度20毫米和中心位置[0,0,0]保持不变。",
+      "reference_ids": [],
+      "created_at": "2026-10-01T05:47:32.565Z",
+      "at_epoch_ms": 1790833652565,
+      "intent": "geometry_edit",
+      "affects_model_target": true,
+      "intent_source": "cli_rules"
+    }
+  ]
+}

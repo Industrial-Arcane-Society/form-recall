@@ -1,0 +1,1265 @@
+{
+  "state": "candidate_geometry_unverified",
+  "plan": {
+    "schema_version": "1.0",
+    "name": "ISO 4762 M6x20 内六角圆柱头螺钉",
+    "source_prompt": "标准件配方：内六角圆柱头螺钉 M6×20",
+    "units": {
+      "length": "mm",
+      "angle": "deg"
+    },
+    "coordinate_system": {
+      "type": "global_cartesian",
+      "handedness": "right",
+      "axes": [
+        "X",
+        "Y",
+        "Z"
+      ],
+      "origin": [
+        0,
+        0,
+        0
+      ]
+    },
+    "features": [
+      {
+        "id": "socket-head-cap-screw",
+        "kind": "socket_head_bolt",
+        "operation": "add",
+        "name": "内六角圆柱头螺钉 M6×20",
+        "note": "ISO 4762 / GB/T 70.1—2008 内六角圆柱头螺钉；公制右旋螺纹 M6，螺距 1 mm；本地网格已生成可见的近似螺旋牙型。CATIA 导出器当前仍输出光杆。",
+        "parameters": {
+          "shank_d": 6.0,
+          "thread_pitch": 1.0,
+          "length": 20.0,
+          "head_d": 10.0,
+          "head_h": 6.0,
+          "hex_s": 5.0,
+          "hex_t": 3.0,
+          "center": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "segments": 48
+        },
+        "sources": {
+          "shank_d": {
+            "type": "user",
+            "evidence": "用户规格 M6×20 中的公称直径。"
+          },
+          "thread_pitch": {
+            "type": "derived",
+            "evidence": "ISO 4762 / GB/T 70.1—2008 内六角圆柱头螺钉 标准表 kb/bolt_std.json 中 M6 的粗牙螺距。"
+          },
+          "length": {
+            "type": "user",
+            "evidence": "用户规格 M6×20 中的螺杆长度。"
+          },
+          "head_d": {
+            "type": "derived",
+            "evidence": "ISO 4762 / GB/T 70.1—2008 内六角圆柱头螺钉 标准表 kb/bolt_std.json。"
+          },
+          "head_h": {
+            "type": "derived",
+            "evidence": "ISO 4762 / GB/T 70.1—2008 内六角圆柱头螺钉 标准表 kb/bolt_std.json。"
+          },
+          "hex_s": {
+            "type": "derived",
+            "evidence": "ISO 4762 / GB/T 70.1—2008 内六角圆柱头螺钉 标准表 kb/bolt_std.json。"
+          },
+          "hex_t": {
+            "type": "derived",
+            "evidence": "ISO 4762 / GB/T 70.1—2008 内六角圆柱头螺钉 标准表 kb/bolt_std.json。"
+          },
+          "center": {
+            "type": "derived",
+            "note": "默认将零件轴线放在全局原点。"
+          },
+          "segments": {
+            "type": "derived",
+            "note": "圆柱网格离散精度，不影响标称尺寸。"
+          }
+        }
+      }
+    ],
+    "pending_questions": []
+  },
+  "validation": {
+    "valid": true,
+    "state": "valid",
+    "errors": [],
+    "confirmations": [],
+    "support": [
+      {
+        "feature_id": "socket-head-cap-screw",
+        "kind": "socket_head_bolt",
+        "status": "approximate",
+        "reason": "本地网格按 thread_pitch 生成可见的近似 ISO 公制螺旋牙型；整段杆部带牙，未建牙端倒角/退刀槽。当前 CATIA 导出器仍以光杆凸台和六角凹槽表达，不会创建原生或装饰螺纹。"
+      }
+    ],
+    "geometry_support": [
+      {
+        "feature_id": "socket-head-cap-screw",
+        "kind": "socket_head_bolt",
+        "status": "approximate",
+        "reason": "当前参数化网格转封闭 facet-BREP",
+        "backend": "occt_brep"
+      }
+    ],
+    "warnings": [
+      {
+        "code": "LOCAL_BREP_APPROXIMATION",
+        "feature_id": "socket-head-cap-screw",
+        "kind": "socket_head_bolt",
+        "message": "当前参数化网格转封闭 facet-BREP"
+      },
+      {
+        "code": "CATIA_APPROXIMATION",
+        "feature_id": "socket-head-cap-screw",
+        "kind": "socket_head_bolt",
+        "message": "本地网格按 thread_pitch 生成可见的近似 ISO 公制螺旋牙型；整段杆部带牙，未建牙端倒角/退刀槽。当前 CATIA 导出器仍以光杆凸台和六角凹槽表达，不会创建原生或装饰螺纹。"
+      }
+    ],
+    "schema_version": "1.0"
+  },
+  "preview": {
+    "state": "previewed",
+    "validation": {
+      "valid": true,
+      "state": "valid",
+      "errors": [],
+      "confirmations": [],
+      "support": [
+        {
+          "feature_id": "socket-head-cap-screw",
+          "kind": "socket_head_bolt",
+          "status": "approximate",
+          "reason": "本地网格按 thread_pitch 生成可见的近似 ISO 公制螺旋牙型；整段杆部带牙，未建牙端倒角/退刀槽。当前 CATIA 导出器仍以光杆凸台和六角凹槽表达，不会创建原生或装饰螺纹。"
+        }
+      ],
+      "geometry_support": [
+        {
+          "feature_id": "socket-head-cap-screw",
+          "kind": "socket_head_bolt",
+          "status": "approximate",
+          "reason": "当前参数化网格转封闭 facet-BREP",
+          "backend": "occt_brep"
+        }
+      ],
+      "warnings": [
+        {
+          "code": "LOCAL_BREP_APPROXIMATION",
+          "feature_id": "socket-head-cap-screw",
+          "kind": "socket_head_bolt",
+          "message": "当前参数化网格转封闭 facet-BREP"
+        },
+        {
+          "code": "CATIA_APPROXIMATION",
+          "feature_id": "socket-head-cap-screw",
+          "kind": "socket_head_bolt",
+          "message": "本地网格按 thread_pitch 生成可见的近似 ISO 公制螺旋牙型；整段杆部带牙，未建牙端倒角/退刀槽。当前 CATIA 导出器仍以光杆凸台和六角凹槽表达，不会创建原生或装饰螺纹。"
+        }
+      ],
+      "schema_version": "1.0"
+    },
+    "geometry_backend": "occt_brep",
+    "native_brep": {
+      "backend": "occt_brep",
+      "kernel": "可用：OCCT 7.9.3.1 / cadquery-ocp-novtk 7.9.3.1.1",
+      "geometry_state": "passed",
+      "state": "passed",
+      "brep_valid": true,
+      "shape_type": "TopAbs_COMPOUND",
+      "solid_count": 1,
+      "connected_component_count": 1,
+      "shell_count": 1,
+      "closed_shell_count": 1,
+      "closed": true,
+      "edge_count": 69830,
+      "face_count": 23242,
+      "free_edge_count": 0,
+      "volume_mm3": 848.3548687124753,
+      "bbox_mm": [
+        -5.0,
+        -5.0,
+        0.0,
+        5.0,
+        5.0,
+        26.009999999999998
+      ],
+      "self_intersection": {
+        "status": "not_checked_complexity_limit",
+        "face_count": 23242,
+        "face_limit": 2500,
+        "method": "BOPAlgo_ArgumentAnalyzer self-interference"
+      },
+      "validity_method": "BRepCheck_Analyzer",
+      "geometry_scope": "native_OCCT_BREP_only_visual_comparison_not_performed",
+      "hole_feature_count": 0,
+      "planned_hole_instance_count": 0,
+      "through_hole_count": 0,
+      "all_declared_holes_verified": true,
+      "visual_validation": "not_performed",
+      "catia_executed": false,
+      "build_transaction": "每个特征验证成功后才提交；失败保留上一有效实体"
+    },
+    "catia_executed": false,
+    "dimensions": {
+      "unit": "mm",
+      "bbox": [
+        -5.0,
+        -5.0,
+        0.0,
+        5.0,
+        5.0,
+        26.009999999999998
+      ],
+      "size": [
+        10.0,
+        10.0,
+        26.009999999999998
+      ],
+      "volume_mm3": 848.3548687124753,
+      "surface_area_mm2": 1014.1252500541816,
+      "triangles": 23448,
+      "feature_count": 1
+    },
+    "catia_operations": [
+      {
+        "index": 1,
+        "kind": "circle_pad",
+        "plane": "XY",
+        "center": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "profile": [],
+        "dimensions": {
+          "l": 0.0,
+          "w": 0.0,
+          "r": 3.0,
+          "h": 20.5,
+          "depth": 0.0
+        },
+        "name": "内六角圆柱头螺钉 M6×20",
+        "note": "CATIA 导出通道暂为光杆；本地预览网格有螺旋牙型"
+      },
+      {
+        "index": 2,
+        "kind": "circle_pad",
+        "plane": "XY",
+        "center": [
+          0.0,
+          0.0,
+          19.5
+        ],
+        "profile": [],
+        "dimensions": {
+          "l": 0.0,
+          "w": 0.0,
+          "r": 5.0,
+          "h": 6.0,
+          "depth": 0.0
+        },
+        "name": "内六角圆柱头螺钉 M6×20",
+        "note": "ISO 4762 圆柱头"
+      },
+      {
+        "index": 3,
+        "kind": "poly_cut",
+        "plane": "XY",
+        "center": [
+          0.0,
+          0.0,
+          26.5
+        ],
+        "profile": [
+          [
+            2.5,
+            1.4434
+          ],
+          [
+            0.0,
+            2.8868
+          ],
+          [
+            -2.5,
+            1.4434
+          ],
+          [
+            -2.5,
+            -1.4434
+          ],
+          [
+            -0.0,
+            -2.8868
+          ],
+          [
+            2.5,
+            -1.4434
+          ]
+        ],
+        "dimensions": {
+          "l": 0.0,
+          "w": 0.0,
+          "r": 0.0,
+          "h": 0.0,
+          "depth": 4.0
+        },
+        "name": "内六角圆柱头螺钉 M6×20",
+        "note": "内六角对边 5 mm、深 3 mm"
+      }
+    ],
+    "warnings": [
+      {
+        "code": "LOCAL_BREP_APPROXIMATION",
+        "feature_id": "socket-head-cap-screw",
+        "kind": "socket_head_bolt",
+        "message": "当前参数化网格转封闭 facet-BREP"
+      },
+      {
+        "code": "CATIA_APPROXIMATION",
+        "feature_id": "socket-head-cap-screw",
+        "kind": "socket_head_bolt",
+        "message": "本地网格按 thread_pitch 生成可见的近似 ISO 公制螺旋牙型；整段杆部带牙，未建牙端倒角/退刀槽。当前 CATIA 导出器仍以光杆凸台和六角凹槽表达，不会创建原生或装饰螺纹。"
+      },
+      {
+        "code": "CATIA_TRANSLATOR_NOTE",
+        "feature_id": null,
+        "kind": null,
+        "message": "螺钉「内六角螺钉 M6 × 20 mm (p=1, 头径10, 头高6)」：CATIA 导出文件的杆部为光杆（当前导出器不创建原生/装饰螺纹）；本地预览与 STL 网格含近似螺旋牙型。",
+        "index": 0
+      },
+      {
+        "code": "CATIA_TRANSLATOR_NOTE",
+        "feature_id": null,
+        "kind": null,
+        "message": "零件库件「内六角螺钉 M6 × 20 mm (p=1, 头径10, 头高6)」已展开为 3 个 CATIA 操作。",
+        "index": 1
+      }
+    ],
+    "feature_manifest": {
+      "socket-head-cap-screw": {
+        "kind": "socket_head_bolt",
+        "operation": "add",
+        "name": "内六角圆柱头螺钉 M6×20",
+        "parameters": {
+          "shank_d": 6.0,
+          "thread_pitch": 1.0,
+          "length": 20.0,
+          "head_d": 10.0,
+          "head_h": 6.0,
+          "hex_s": 5.0,
+          "hex_t": 3.0,
+          "center": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "segments": 48
+        },
+        "sources": {
+          "shank_d": {
+            "type": "user",
+            "evidence": "用户规格 M6×20 中的公称直径。"
+          },
+          "thread_pitch": {
+            "type": "derived",
+            "evidence": "ISO 4762 / GB/T 70.1—2008 内六角圆柱头螺钉 标准表 kb/bolt_std.json 中 M6 的粗牙螺距。"
+          },
+          "length": {
+            "type": "user",
+            "evidence": "用户规格 M6×20 中的螺杆长度。"
+          },
+          "head_d": {
+            "type": "derived",
+            "evidence": "ISO 4762 / GB/T 70.1—2008 内六角圆柱头螺钉 标准表 kb/bolt_std.json。"
+          },
+          "head_h": {
+            "type": "derived",
+            "evidence": "ISO 4762 / GB/T 70.1—2008 内六角圆柱头螺钉 标准表 kb/bolt_std.json。"
+          },
+          "hex_s": {
+            "type": "derived",
+            "evidence": "ISO 4762 / GB/T 70.1—2008 内六角圆柱头螺钉 标准表 kb/bolt_std.json。"
+          },
+          "hex_t": {
+            "type": "derived",
+            "evidence": "ISO 4762 / GB/T 70.1—2008 内六角圆柱头螺钉 标准表 kb/bolt_std.json。"
+          },
+          "center": {
+            "type": "derived",
+            "note": "默认将零件轴线放在全局原点。"
+          },
+          "segments": {
+            "type": "derived",
+            "note": "圆柱网格离散精度，不影响标称尺寸。"
+          }
+        },
+        "relations": []
+      }
+    },
+    "build_log": [
+      "[基准] 内六角螺钉 M6 × 20 mm (p=1, 头径10, 头高6) → 23207 面"
+    ],
+    "local_geometry_checks": {
+      "backend": "occt_brep",
+      "kernel": "可用：OCCT 7.9.3.1 / cadquery-ocp-novtk 7.9.3.1.1",
+      "geometry_state": "needs_review",
+      "state": "needs_review",
+      "brep_valid": true,
+      "shape_type": "TopAbs_COMPOUND",
+      "solid_count": 1,
+      "connected_component_count": 1,
+      "shell_count": 1,
+      "closed_shell_count": 1,
+      "closed": true,
+      "edge_count": 69830,
+      "face_count": 23242,
+      "free_edge_count": 0,
+      "volume_mm3": 848.3548687124753,
+      "bbox_mm": [
+        -5.0,
+        -5.0,
+        0.0,
+        5.0,
+        5.0,
+        26.009999999999998
+      ],
+      "self_intersection": {
+        "status": "not_checked_complexity_limit",
+        "face_count": 23242,
+        "face_limit": 2500,
+        "method": "BOPAlgo_ArgumentAnalyzer self-interference"
+      },
+      "validity_method": "BRepCheck_Analyzer",
+      "geometry_scope": "native_OCCT_BREP_only_visual_comparison_not_performed",
+      "feature_results": [
+        {
+          "feature_id": "socket-head-cap-screw",
+          "kind": "socket_head_bolt",
+          "operation": "add",
+          "geometry_support": "approximate",
+          "builder": "analytic_socket_head_with_faceted_thread_brep",
+          "state": "applied",
+          "source_feature_id": null,
+          "source_resolution": null,
+          "solid_count": 1,
+          "brep_valid": true,
+          "before_volume_mm3": 0.0,
+          "after_volume_mm3": 848.3548687124753,
+          "volume_delta_mm3": 848.3548687124753,
+          "depth_measurement": null,
+          "facet_count": null
+        }
+      ],
+      "hole_instances": [],
+      "hole_feature_count": 0,
+      "planned_hole_instance_count": 0,
+      "through_hole_count": 0,
+      "all_declared_holes_verified": true,
+      "visual_validation": "not_performed",
+      "catia_executed": false,
+      "build_transaction": "每个特征验证成功后才提交；失败保留上一有效实体",
+      "source": "OpenCASCADE native BREP; preview mesh is display-only",
+      "bbox_size_mm": [
+        10.0,
+        10.0,
+        26.009999999999998
+      ],
+      "bbox_ratios_from_brep": {
+        "front_width_height": 0.3844675124951942,
+        "depth_height": 0.3844675124951942,
+        "top_width_depth": 1.0
+      },
+      "bbox_ratios_from_mesh": {
+        "front_width_height": 0.3844675124951942,
+        "depth_height": 0.3844675124951942,
+        "top_width_depth": 1.0
+      },
+      "feature_count_from_plan": 1,
+      "feature_ids_from_plan": [
+        "socket-head-cap-screw"
+      ],
+      "hole_features_from_plan": [],
+      "hole_feature_count_from_plan": 0,
+      "expected_hole_instance_count": 0,
+      "hole_instance_count": 0,
+      "through_hole_checks": [],
+      "through_hole_mesh_checks": [],
+      "hole_measurement_complete": true,
+      "through_hole_count_expected": 0,
+      "through_hole_count_verified": 0,
+      "through_hole_result": "no_holes_declared",
+      "image_estimate_parameters": [],
+      "catia_geometry_verification": "not_performed"
+    },
+    "orthographic_layout": {
+      "unit": "mm",
+      "axes": {
+        "length": "X",
+        "width": "Y",
+        "height": "Z"
+      },
+      "uniform_scale_across_views": true,
+      "scale_pixels_per_mm": 8.19684736639754,
+      "tile_size_pixels": [
+        330,
+        260
+      ],
+      "view_extents": {
+        "front": {
+          "horizontal_axis": "X",
+          "horizontal": 10.0,
+          "vertical_axis": "Z",
+          "vertical": 26.009999999999998
+        },
+        "right": {
+          "horizontal_axis": "Y",
+          "horizontal": 10.0,
+          "vertical_axis": "Z",
+          "vertical": 26.009999999999998
+        },
+        "top": {
+          "horizontal_axis": "X",
+          "horizontal": 10.0,
+          "vertical_axis": "Y",
+          "vertical": 10.0
+        }
+      },
+      "dimension_ratios": {
+        "length_to_height": 0.3844675124951942,
+        "width_to_height": 0.3844675124951942,
+        "length_to_width": 1.0
+      }
+    },
+    "preview_image": "C:\\Users\\lycohana\\AppData\\Local\\AI Modeler\\dsh\\sessions\\aq-web-search-20261001\\previews\\r1-g1-iso.png",
+    "preview_image_views": [
+      "iso"
+    ],
+    "preview_image_view_set": "iso",
+    "preview_image_grid_columns": 1,
+    "preview_image_source": "OCCT BREP tessellated for display; not a CATIA screenshot",
+    "preview_render_style": "view-adaptive depth-cued matte shading with visible feature edges",
+    "preview_render_note": "诊断渲染：凹入或远离相机的表面会略暗，清晰线条表示可见的几何折边；亮暗不是零件材质颜色，需结合其它视图判断。",
+    "preview_image_layout": {
+      "unit": "mm",
+      "axes": {
+        "length": "X",
+        "width": "Y",
+        "height": "Z"
+      },
+      "uniform_scale_across_views": true,
+      "scale_pixels_per_mm": 8.19684736639754,
+      "tile_size_pixels": [
+        330,
+        260
+      ],
+      "view_extents": {
+        "front": {
+          "horizontal_axis": "X",
+          "horizontal": 10.0,
+          "vertical_axis": "Z",
+          "vertical": 26.009999999999998
+        },
+        "right": {
+          "horizontal_axis": "Y",
+          "horizontal": 10.0,
+          "vertical_axis": "Z",
+          "vertical": 26.009999999999998
+        },
+        "top": {
+          "horizontal_axis": "X",
+          "horizontal": 10.0,
+          "vertical_axis": "Y",
+          "vertical": 10.0
+        }
+      },
+      "dimension_ratios": {
+        "length_to_height": 0.3844675124951942,
+        "width_to_height": 0.3844675124951942,
+        "length_to_width": 1.0
+      }
+    },
+    "preview_generation": 1
+  },
+  "review": null,
+  "open_multiview_findings": [],
+  "reply": "已创建 ISO 4762 M6×20 内六角圆柱头螺钉的可编辑候选模型。\n\n## 建模结果\n- **型号**：ISO 4762 / GB/T 70.1 内六角圆柱头螺钉 M6×20\n- **配方来源**：本地 executable 配方 `fastener.socket_head_cap_screw`（M6x20），其尺寸按配方内置标准表读取\n- **关键参数**：\n  - 公称直径：M6\n  - 螺距：1 mm\n  - 螺纹/杆部长度：20 mm（配方实现为整杆带牙）\n  - 圆柱头直径：10 mm\n  - 头高：6 mm\n  - 内六角对边：5 mm\n- **包围盒**：10.0 × 10.0 × 26.0 mm\n- **体积**：约 848.35 mm³\n\n## 可信标准资料核对情况\n- **外部 web_search 当前不可用**，搜索 ISO 4762 M6 标准尺寸无结果，因此**无法从在线标准表二次核对**。\n- 上述参数来源于本地知识库对该型号的精确命中及 executable 配方所依据的标准表；未进行独立的在线标准验证。\n\n## 螺纹与 CATIA 导出说明\n- **本地网格 / STL**：带可见的近似 ISO 公制右旋螺旋牙型（整杆带牙，未建牙端倒角、退刀槽及部分牙长细节）。\n- **CATIA 导出**：当前导出器仅生成光杆凸台和头部内六角凹槽，**不创建原生螺纹或装饰螺纹**。\n\n## 输出文件\n- CADPlan / AIMODEL：`candidate.aimodel`\n- STL：`candidate.stl`\n- 预览图：`preview.png` / `views/iso.png`\n- 几何报告：`geometry-report.json`\n\n## 当前状态\n- 保存状态：`candidate_geometry_unverified`\n- 原因：外部标准搜索不可用，未能完成独立在线标准核验；CATIA 未创建或验证 CATPart。\n- 本地 BRep 几何校验：通过（封闭实体，无自由边）。",
+  "finish_reason": "completed",
+  "error": null,
+  "output_paths": {
+    "aimodel": "C:\\Users\\lycohana\\Desktop\\code\\AI-_-\\artifacts\\agent-quality-rebuild\\loop-review\\cli-web-search-20261001\\turns\\f20045c5900e4708944a8abc3c8facce\\candidate.aimodel",
+    "stl": "C:\\Users\\lycohana\\Desktop\\code\\AI-_-\\artifacts\\agent-quality-rebuild\\loop-review\\cli-web-search-20261001\\turns\\f20045c5900e4708944a8abc3c8facce\\candidate.stl",
+    "preview": "C:\\Users\\lycohana\\Desktop\\code\\AI-_-\\artifacts\\agent-quality-rebuild\\loop-review\\cli-web-search-20261001\\turns\\f20045c5900e4708944a8abc3c8facce\\preview.png",
+    "report": "C:\\Users\\lycohana\\Desktop\\code\\AI-_-\\artifacts\\agent-quality-rebuild\\loop-review\\cli-web-search-20261001\\turns\\f20045c5900e4708944a8abc3c8facce\\geometry-report.json",
+    "preview_iso": "C:\\Users\\lycohana\\Desktop\\code\\AI-_-\\artifacts\\agent-quality-rebuild\\loop-review\\cli-web-search-20261001\\turns\\f20045c5900e4708944a8abc3c8facce\\views\\iso.png"
+  },
+  "output_warning": null,
+  "tool_calls": 3,
+  "web_search_calls": 1,
+  "preview_calls": 1,
+  "review_rounds": 0,
+  "repair_cycles": 0,
+  "model_call_count": 5,
+  "model_call_count_source": "dsh_llm_stream_events",
+  "model_calls": [
+    {
+      "provider": "ai-modeler",
+      "model": "moonshotai/Kimi-K2.7-Code",
+      "reasoning_effort": "low",
+      "dsh_request_image_count": 0,
+      "capture_layer": "dsh_llm_stream_boundary",
+      "provider_wire_observed": true
+    },
+    {
+      "provider": "ai-modeler",
+      "model": "moonshotai/Kimi-K2.7-Code",
+      "reasoning_effort": "low",
+      "dsh_request_image_count": 0,
+      "capture_layer": "dsh_llm_stream_boundary",
+      "provider_wire_observed": true
+    },
+    {
+      "provider": "ai-modeler",
+      "model": "moonshotai/Kimi-K2.7-Code",
+      "reasoning_effort": "low",
+      "dsh_request_image_count": 0,
+      "capture_layer": "dsh_llm_stream_boundary",
+      "provider_wire_observed": true
+    },
+    {
+      "provider": "ai-modeler",
+      "model": "moonshotai/Kimi-K2.7-Code",
+      "reasoning_effort": "low",
+      "dsh_request_image_count": 0,
+      "capture_layer": "dsh_llm_stream_boundary",
+      "provider_wire_observed": true
+    },
+    {
+      "provider": "ai-modeler",
+      "model": "moonshotai/Kimi-K2.7-Code",
+      "reasoning_effort": "low",
+      "dsh_request_image_count": 0,
+      "capture_layer": "dsh_llm_stream_boundary",
+      "provider_wire_observed": true
+    }
+  ],
+  "provider_attempt_count": 5,
+  "provider_wire_observed": true,
+  "provider_wire_capture_layer": "node_global_fetch",
+  "request_image_hashes": [
+    {
+      "transport_sha256": "d6e2f857b0d6803cf6565776f5787ad1b9d3715cf702180f629ac62618a6e189",
+      "byte_length": 44143,
+      "source_sha256": null,
+      "source_reference_ids": [],
+      "roi_norm": null,
+      "source_mapping": "unknown"
+    },
+    {
+      "transport_sha256": "d6e2f857b0d6803cf6565776f5787ad1b9d3715cf702180f629ac62618a6e189",
+      "byte_length": 44143,
+      "source_sha256": null,
+      "source_reference_ids": [],
+      "roi_norm": null,
+      "source_mapping": "unknown"
+    }
+  ],
+  "image_parts_in_request": 2,
+  "reference_image_count": 0,
+  "knowledge_search": {
+    "status": "exact_match",
+    "query": "请创建一个 ISO 4762 M6×20 内六角圆柱头螺钉的可编辑模型。请自主查找可信标准资料核对建模所需参数并在交付中给出来源。如果搜索不可用，请明确报告错误，不要猜测标准尺寸；仍可完成有依据的部分，并保留当前可编辑候选。",
+    "matches": [
+      {
+        "id": "bolt:M6x20:4",
+        "prompt": "内六角圆柱头螺钉 M6x20 带弹垫和平垫",
+        "category": "内六角螺钉",
+        "model": "M6x20",
+        "envelope_dimensions_mm": [
+          26.0,
+          12.0,
+          12.0
+        ],
+        "envelope_text": "26×12×12",
+        "trust": "exact",
+        "source": "kb/bolt_library.json",
+        "source_file": "datasets\\训练提示词\\全部提示词.jsonl",
+        "group": "内六角螺钉",
+        "variant": "带规格描述",
+        "relevance": 1.0,
+        "match_type": "exact_model",
+        "exact_identifier_match": true,
+        "has_full_feature_tree": false,
+        "provider": "training_prompts"
+      }
+    ],
+    "negative_examples": [],
+    "image_query_supported": false,
+    "visual_fallback_available": false,
+    "score_meaning": "relevance 是词面相关度排序分数，不是准确率或置信概率。",
+    "message": "命中已知型号；可引用对应实测数据，仍须按当前 CADPlan 支持范围校验。",
+    "modeling_recipes": [
+      {
+        "id": "fastener.socket_head_cap_screw",
+        "name": "内六角圆柱头螺钉",
+        "aliases": [
+          "内六角螺钉",
+          "内六角螺丝",
+          "内六角圆柱头螺钉",
+          "杯头螺丝",
+          "socket head cap screw",
+          "socket-head screw"
+        ],
+        "intent": "按 M规格×长度 识别 ISO 4762 / GB/T 70.1 内六角圆柱头螺钉。",
+        "strategy": [
+          "从标准表读取螺距、头径、头高、内六角对边和内六角深度",
+          "生成圆柱头、带近似螺旋外牙的杆部和端面内六角",
+          "在结果中分别说明本地网格与 CATIA 导出的螺纹状态"
+        ],
+        "parameters": [
+          "size，例如 M5x8"
+        ],
+        "builder": "cad_apply_recipe",
+        "status": "executable",
+        "limitations": [
+          "本地网格生成可见的近似 ISO 公制螺旋牙型；当前杆部全长带牙，牙端倒角、退刀槽和部分牙长未建模。",
+          "CATIA 导出器当前只生成光杆，不生成原生或装饰螺纹。",
+          "只接受标准库中有尺寸表的公称规格。"
+        ]
+      }
+    ],
+    "measured_geometry": {
+      "category": "内六角螺钉",
+      "model": "M6x20",
+      "parameters": {
+        "d": 6.0,
+        "L": 20.0,
+        "bolt_dk": 10.0,
+        "bolt_head_k": 6.0,
+        "bolt_hex_s": 5.0,
+        "bolt_hex_t": 3.0,
+        "code": "M6x20",
+        "spring_washer": 1,
+        "flat_washer": 1
+      },
+      "measured_envelope_mm": [
+        26.0,
+        12.0,
+        12.0
+      ],
+      "cylindrical_face_diameters_mm": {
+        "12": 2,
+        "10": 2,
+        "9.9": 2,
+        "6.4": 2,
+        "6.1": 2,
+        "6": 2
+      },
+      "solid_count": 3,
+      "face_count": 26,
+      "trust": "exact",
+      "source": "kb/bolt_library.json（CATIA 导出 STEP 实测 + ISO 4762 / GB/T 97.1 / GB/T 93）",
+      "notes": [
+        "真实外形 12×12×26 mm（平垫外径 × 平垫外径 × 公称长+头高）",
+        "真实构成为 3 个实体：螺钉 + 弹性垫圈 + 平垫圈",
+        "装配插入点 (X0,Y0,Z0) = (0,0,-3.2) —— 来自你的《螺钉MyBoltLibrary数据整理》表，是**贴合面偏置**；实测各型号取值并不单调，故逐型号保留、未公式化"
+      ],
+      "limits": [],
+      "geometry_completeness": "measured_metadata_only; no source BRep or complete feature tree"
+    },
+    "legacy_builder_output": {
+      "builder": "ai_modeler.parts.library.partlib.build_features_ex",
+      "category": "内六角螺钉",
+      "expected_dimensions_mm": [
+        26.0,
+        12.0,
+        12.0
+      ],
+      "feature_count": 7,
+      "feature_kind_counts": {
+        "cylinder": 4,
+        "hole": 2,
+        "prism": 1
+      },
+      "features_preview": [
+        {
+          "kind": "cylinder",
+          "operation": "add",
+          "name": "弹性垫圈 ⌀9.9×1.5",
+          "parameters": {
+            "radius": 4.95,
+            "height": 1.5,
+            "center": [
+              0,
+              0,
+              -0.75
+            ],
+            "base": false,
+            "axis": "Z",
+            "segments": 48
+          },
+          "cadplan_kind_and_parameters_supported": true,
+          "parameter_sources": {
+            "radius": "explicit",
+            "height": "explicit"
+          }
+        },
+        {
+          "kind": "hole",
+          "operation": "cut",
+          "name": "弹性垫圈内孔 ⌀6.1",
+          "parameters": {
+            "diameter": 6.1,
+            "through": true,
+            "pos": "center",
+            "axis": "Z",
+            "segments": 32
+          },
+          "cadplan_kind_and_parameters_supported": true,
+          "parameter_sources": {
+            "diameter": "explicit",
+            "through": "explicit"
+          }
+        },
+        {
+          "kind": "cylinder",
+          "operation": "add",
+          "name": "平垫圈 ⌀12×1.6",
+          "parameters": {
+            "radius": 6.0,
+            "height": 1.6,
+            "center": [
+              0,
+              0,
+              -2.3
+            ],
+            "base": false,
+            "axis": "Z",
+            "segments": 48
+          },
+          "cadplan_kind_and_parameters_supported": true,
+          "parameter_sources": {
+            "radius": "explicit",
+            "height": "explicit"
+          }
+        },
+        {
+          "kind": "hole",
+          "operation": "cut",
+          "name": "平垫圈内孔 ⌀6.4",
+          "parameters": {
+            "diameter": 6.4,
+            "through": true,
+            "pos": "center",
+            "axis": "Z",
+            "segments": 32
+          },
+          "cadplan_kind_and_parameters_supported": true,
+          "parameter_sources": {
+            "diameter": "explicit",
+            "through": "explicit"
+          }
+        },
+        {
+          "kind": "cylinder",
+          "operation": "add",
+          "name": "螺杆 ⌀6×20",
+          "parameters": {
+            "radius": 3.0,
+            "height": 20.0,
+            "center": [
+              0,
+              0,
+              -10.0
+            ],
+            "base": false,
+            "axis": "Z",
+            "segments": 32
+          },
+          "cadplan_kind_and_parameters_supported": true,
+          "parameter_sources": {
+            "radius": "explicit",
+            "height": "explicit"
+          }
+        },
+        {
+          "kind": "cylinder",
+          "operation": "add",
+          "name": "螺钉头 ⌀10×6",
+          "parameters": {
+            "radius": 5.0,
+            "height": 6.0,
+            "center": [
+              0,
+              0,
+              3.0
+            ],
+            "base": false,
+            "axis": "Z",
+            "segments": 48
+          },
+          "cadplan_kind_and_parameters_supported": true,
+          "parameter_sources": {
+            "radius": "explicit",
+            "height": "explicit"
+          }
+        },
+        {
+          "kind": "prism",
+          "operation": "cut",
+          "name": "内六角孔 对边5×深3",
+          "parameters": {
+            "profile": [
+              [
+                2.5000000000000004,
+                1.4433756729740643
+              ],
+              [
+                1.767625397874845e-16,
+                2.886751345948129
+              ],
+              [
+                -2.4999999999999996,
+                1.4433756729740654
+              ],
+              [
+                -2.500000000000001,
+                -1.4433756729740637
+              ],
+              [
+                -5.302876193624535e-16,
+                -2.886751345948129
+              ],
+              [
+                2.4999999999999996,
+                -1.4433756729740659
+              ]
+            ],
+            "height": 3.0,
+            "axis": "Z",
+            "segments": 6,
+            "center": [
+              0.0,
+              0.0,
+              3.0
+            ]
+          },
+          "cadplan_kind_and_parameters_supported": false,
+          "parameter_sources": {
+            "height": "explicit"
+          }
+        }
+      ],
+      "omitted_feature_count": 0,
+      "notes": [],
+      "applicability": "这是现有文本解析器生成的旧特征模板，不是 CADPlan JSON，也不是 CATPart/BRep。逐项参考；标为不支持的 kind/参数必须用当前 CADPlan 支持能力重新表达，不能静默丢弃。"
+    }
+  },
+  "knowledge_visual_examples": [],
+  "knowledge_image_parts": 0,
+  "image_input_mode": "individual",
+  "llm_usage": {
+    "input_tokens": 35779,
+    "output_tokens": 1529,
+    "total_tokens": 37308,
+    "reasoning_tokens": 696
+  },
+  "usage_source": "provider_response_body",
+  "first_tool_latency_ms": 12656.0,
+  "observability": {
+    "path": "C:\\Users\\lycohana\\AppData\\Local\\AI Modeler\\dsh\\sessions\\aq-web-search-20261001\\agent-observability.jsonl",
+    "logical_requests": 5,
+    "provider_attempts_observed": 5,
+    "provider_wire_status": "observed",
+    "copied_path": "C:\\Users\\lycohana\\Desktop\\code\\AI-_-\\artifacts\\agent-quality-rebuild\\loop-review\\cli-web-search-20261001\\turns\\f20045c5900e4708944a8abc3c8facce\\agent-observability.jsonl"
+  },
+  "routing": {
+    "action": "dsh_agent",
+    "review_mode": "local_geometry"
+  },
+  "run_record": "C:\\Users\\lycohana\\AppData\\Local\\AI Modeler\\dsh\\sessions\\aq-web-search-20261001\\cad-state.json",
+  "run_id": "aq-web-search-20261001",
+  "dimension_assumptions": [],
+  "local_geometry_checks": {
+    "backend": "occt_brep",
+    "kernel": "可用：OCCT 7.9.3.1 / cadquery-ocp-novtk 7.9.3.1.1",
+    "geometry_state": "needs_review",
+    "state": "needs_review",
+    "brep_valid": true,
+    "shape_type": "TopAbs_COMPOUND",
+    "solid_count": 1,
+    "connected_component_count": 1,
+    "shell_count": 1,
+    "closed_shell_count": 1,
+    "closed": true,
+    "edge_count": 69830,
+    "face_count": 23242,
+    "free_edge_count": 0,
+    "volume_mm3": 848.3548687124753,
+    "bbox_mm": [
+      -5.0,
+      -5.0,
+      0.0,
+      5.0,
+      5.0,
+      26.009999999999998
+    ],
+    "self_intersection": {
+      "status": "not_checked_complexity_limit",
+      "face_count": 23242,
+      "face_limit": 2500,
+      "method": "BOPAlgo_ArgumentAnalyzer self-interference"
+    },
+    "validity_method": "BRepCheck_Analyzer",
+    "geometry_scope": "native_OCCT_BREP_only_visual_comparison_not_performed",
+    "feature_results": [
+      {
+        "feature_id": "socket-head-cap-screw",
+        "kind": "socket_head_bolt",
+        "operation": "add",
+        "geometry_support": "approximate",
+        "builder": "analytic_socket_head_with_faceted_thread_brep",
+        "state": "applied",
+        "source_feature_id": null,
+        "source_resolution": null,
+        "solid_count": 1,
+        "brep_valid": true,
+        "before_volume_mm3": 0.0,
+        "after_volume_mm3": 848.3548687124753,
+        "volume_delta_mm3": 848.3548687124753,
+        "depth_measurement": null,
+        "facet_count": null
+      }
+    ],
+    "hole_instances": [],
+    "hole_feature_count": 0,
+    "planned_hole_instance_count": 0,
+    "through_hole_count": 0,
+    "all_declared_holes_verified": true,
+    "visual_validation": "not_performed",
+    "catia_executed": false,
+    "build_transaction": "每个特征验证成功后才提交；失败保留上一有效实体",
+    "source": "OpenCASCADE native BREP; preview mesh is display-only",
+    "bbox_size_mm": [
+      10.0,
+      10.0,
+      26.009999999999998
+    ],
+    "bbox_ratios_from_brep": {
+      "front_width_height": 0.3844675124951942,
+      "depth_height": 0.3844675124951942,
+      "top_width_depth": 1.0
+    },
+    "bbox_ratios_from_mesh": {
+      "front_width_height": 0.3844675124951942,
+      "depth_height": 0.3844675124951942,
+      "top_width_depth": 1.0
+    },
+    "feature_count_from_plan": 1,
+    "feature_ids_from_plan": [
+      "socket-head-cap-screw"
+    ],
+    "hole_features_from_plan": [],
+    "hole_feature_count_from_plan": 0,
+    "expected_hole_instance_count": 0,
+    "hole_instance_count": 0,
+    "through_hole_checks": [],
+    "through_hole_mesh_checks": [],
+    "hole_measurement_complete": true,
+    "through_hole_count_expected": 0,
+    "through_hole_count_verified": 0,
+    "through_hole_result": "no_holes_declared",
+    "image_estimate_parameters": [],
+    "catia_geometry_verification": "not_performed"
+  },
+  "cli_progress_events": [
+    {
+      "elapsed_ms": 63.0,
+      "message": "正在查询本地工件知识库。"
+    },
+    {
+      "elapsed_ms": 313.0,
+      "message": "本地知识库命中可执行配方：内六角圆柱头螺钉（型号：M6x20）；Agent 将直接调用配方建模。"
+    },
+    {
+      "elapsed_ms": 875.0,
+      "message": "正在启动 DSH SDK 多模态 Agent 会话。"
+    },
+    {
+      "elapsed_ms": 875.0,
+      "message": "模型等待中：DSH SDK · 推理强度 low"
+    },
+    {
+      "elapsed_ms": 6203.0,
+      "message": "DSH 状态：running"
+    },
+    {
+      "elapsed_ms": 6359.0,
+      "message": "正在请求模型：请求 moonshotai/Kimi-K2.7-Code · 本次图像 0 张 · 推理 low"
+    },
+    {
+      "elapsed_ms": 6453.0,
+      "message": "正在请求模型：请求 moonshotai/Kimi-K2.7-Code · 本次图像 0 张"
+    },
+    {
+      "elapsed_ms": 7375.0,
+      "message": "模型服务已开始响应 · 1.0 秒"
+    },
+    {
+      "elapsed_ms": 7375.0,
+      "message": "模型首个内容事件已收到 · 1.1 秒"
+    },
+    {
+      "elapsed_ms": 7375.0,
+      "message": "模型正在分析参考图与建模约束 · 00:06"
+    },
+    {
+      "elapsed_ms": 13531.0,
+      "message": "已调用首个工具：mcp__ai-modeler__web_search · 首工具耗时 12.7 秒"
+    },
+    {
+      "elapsed_ms": 13578.0,
+      "message": "模型首个内容事件已收到 · 1.0 秒"
+    },
+    {
+      "elapsed_ms": 15422.0,
+      "message": "正在请求模型：请求 moonshotai/Kimi-K2.7-Code · 本次图像 0 张 · 推理 low"
+    },
+    {
+      "elapsed_ms": 15422.0,
+      "message": "正在请求模型：请求 moonshotai/Kimi-K2.7-Code · 本次图像 0 张"
+    },
+    {
+      "elapsed_ms": 15984.0,
+      "message": "模型服务已开始响应 · 0.6 秒"
+    },
+    {
+      "elapsed_ms": 15984.0,
+      "message": "模型首个内容事件已收到 · 0.6 秒"
+    },
+    {
+      "elapsed_ms": 15984.0,
+      "message": "模型正在分析参考图与建模约束 · 00:15"
+    },
+    {
+      "elapsed_ms": 20984.0,
+      "message": "模型首个内容事件已收到 · 0.6 秒"
+    },
+    {
+      "elapsed_ms": 20984.0,
+      "message": "Agent 正在调用工具：mcp__ai-modeler__cad_apply_recipe"
+    },
+    {
+      "elapsed_ms": 22547.0,
+      "message": "Agent 进度：标准件配方已一次展开并通过 CADPlan 校验；请预览当前模型。"
+    },
+    {
+      "elapsed_ms": 22734.0,
+      "message": "正在请求模型：请求 moonshotai/Kimi-K2.7-Code · 本次图像 0 张 · 推理 low"
+    },
+    {
+      "elapsed_ms": 22828.0,
+      "message": "正在请求模型：请求 moonshotai/Kimi-K2.7-Code · 本次图像 0 张"
+    },
+    {
+      "elapsed_ms": 23484.0,
+      "message": "模型服务已开始响应 · 0.7 秒"
+    },
+    {
+      "elapsed_ms": 23484.0,
+      "message": "模型首个内容事件已收到 · 0.7 秒"
+    },
+    {
+      "elapsed_ms": 23484.0,
+      "message": "模型正在分析参考图与建模约束 · 00:22"
+    },
+    {
+      "elapsed_ms": 24984.0,
+      "message": "Agent 正在调用工具：mcp__ai-modeler__cad_preview_model"
+    },
+    {
+      "elapsed_ms": 25063.0,
+      "message": "模型首个内容事件已收到 · 0.7 秒"
+    },
+    {
+      "elapsed_ms": 67297.0,
+      "message": "Agent 进度：当前版本预览已生成，方向 iso；请目视对照原始参考图。"
+    },
+    {
+      "elapsed_ms": 67375.0,
+      "message": "正在请求模型：请求 moonshotai/Kimi-K2.7-Code · 本次图像 0 张 · 推理 low"
+    },
+    {
+      "elapsed_ms": 67375.0,
+      "message": "正在请求模型：请求 moonshotai/Kimi-K2.7-Code · 本次图像 1 张"
+    },
+    {
+      "elapsed_ms": 68391.0,
+      "message": "模型服务已开始响应 · 1.1 秒"
+    },
+    {
+      "elapsed_ms": 68391.0,
+      "message": "模型首个内容事件已收到 · 1.1 秒"
+    },
+    {
+      "elapsed_ms": 68391.0,
+      "message": "模型正在分析参考图与建模约束 · 01:07"
+    },
+    {
+      "elapsed_ms": 83344.0,
+      "message": "Agent 正在调用工具：mcp__ai-modeler__cad_finish_model"
+    },
+    {
+      "elapsed_ms": 83422.0,
+      "message": "模型首个内容事件已收到 · 1.1 秒"
+    },
+    {
+      "elapsed_ms": 83609.0,
+      "message": "Agent 进度：已保存当前候选；结果标记为 candidate_geometry_unverified，未解决项和未核验项目已写入报告。 本地网格预览完成，未创建或验证 CATPart。"
+    },
+    {
+      "elapsed_ms": 83703.0,
+      "message": "正在请求模型：请求 moonshotai/Kimi-K2.7-Code · 本次图像 0 张 · 推理 low"
+    },
+    {
+      "elapsed_ms": 83703.0,
+      "message": "正在请求模型：请求 moonshotai/Kimi-K2.7-Code · 本次图像 1 张"
+    },
+    {
+      "elapsed_ms": 84719.0,
+      "message": "模型服务已开始响应 · 1.0 秒"
+    },
+    {
+      "elapsed_ms": 84719.0,
+      "message": "模型首个内容事件已收到 · 1.0 秒"
+    },
+    {
+      "elapsed_ms": 84719.0,
+      "message": "模型正在分析参考图与建模约束 · 01:23"
+    },
+    {
+      "elapsed_ms": 91031.0,
+      "message": "模型正在生成回复"
+    },
+    {
+      "elapsed_ms": 104109.0,
+      "message": "DSH 状态：idle"
+    },
+    {
+      "elapsed_ms": 104125.0,
+      "message": "模型响应已返回：正在保存并整理 CADPlan 与本轮工具结果。"
+    }
+  ],
+  "cli_session_id": "aq-web-search-20261001",
+  "cli_reference_paths": [],
+  "cli_output_dir": "C:\\Users\\lycohana\\Desktop\\code\\AI-_-\\artifacts\\agent-quality-rebuild\\loop-review\\cli-web-search-20261001\\turns\\f20045c5900e4708944a8abc3c8facce",
+  "delivery_warnings": [],
+  "cli_exit_code": 4,
+  "cli_outcome": "candidate_not_accepted",
+  "cli_result_path": "C:\\Users\\lycohana\\Desktop\\code\\AI-_-\\artifacts\\agent-quality-rebuild\\loop-review\\cli-web-search-20261001\\turns\\f20045c5900e4708944a8abc3c8facce\\result.json"
+}

@@ -1,0 +1,212 @@
+{
+  "state": "error",
+  "plan": null,
+  "validation": null,
+  "preview": {},
+  "review": null,
+  "open_multiview_findings": [],
+  "reply": "DSH 模型请求失败：Connection error.（TRANSPORT）",
+  "finish_reason": "error",
+  "error": "DSH 模型请求失败：Connection error.（TRANSPORT）",
+  "output_paths": {},
+  "output_warning": null,
+  "tool_calls": 0,
+  "web_search_calls": 0,
+  "preview_calls": 0,
+  "review_rounds": 0,
+  "repair_cycles": 0,
+  "model_call_count": 4,
+  "model_call_count_source": "dsh_llm_stream_events",
+  "model_calls": [
+    {
+      "provider": "ai-modeler",
+      "model": "moonshotai/Kimi-K2.7-Code",
+      "reasoning_effort": "low",
+      "dsh_request_image_count": 0,
+      "capture_layer": "dsh_llm_stream_boundary",
+      "provider_wire_observed": true
+    },
+    {
+      "provider": "ai-modeler",
+      "model": "moonshotai/Kimi-K2.7-Code",
+      "reasoning_effort": "low",
+      "dsh_request_image_count": 0,
+      "capture_layer": "dsh_llm_stream_boundary",
+      "provider_wire_observed": true
+    },
+    {
+      "provider": "ai-modeler",
+      "model": "moonshotai/Kimi-K2.7-Code",
+      "reasoning_effort": "low",
+      "dsh_request_image_count": 0,
+      "capture_layer": "dsh_llm_stream_boundary",
+      "provider_wire_observed": true
+    },
+    {
+      "provider": "ai-modeler",
+      "model": "moonshotai/Kimi-K2.7-Code",
+      "reasoning_effort": "low",
+      "dsh_request_image_count": 0,
+      "capture_layer": "dsh_llm_stream_boundary",
+      "provider_wire_observed": true
+    }
+  ],
+  "provider_attempt_count": 4,
+  "provider_wire_observed": true,
+  "provider_wire_capture_layer": "node_global_fetch",
+  "request_image_hashes": [],
+  "image_parts_in_request": 0,
+  "reference_image_count": 0,
+  "knowledge_search": {
+    "status": "similar_matches",
+    "query": "创建一个100×60×20毫米长方体",
+    "matches": [
+      {
+        "id": "bolt:M10x60:2",
+        "prompt": "M10x60",
+        "category": "内六角螺钉",
+        "model": "M10x60",
+        "envelope_dimensions_mm": [
+          70.0,
+          20.0,
+          20.0
+        ],
+        "envelope_text": "70×20×20",
+        "trust": "exact",
+        "source": "kb/bolt_library.json",
+        "source_file": "datasets\\训练提示词\\全部提示词.jsonl",
+        "group": "内六角螺钉",
+        "variant": "裸型号",
+        "relevance": 0.4788,
+        "match_type": "similar_reference",
+        "exact_identifier_match": false,
+        "has_full_feature_tree": false,
+        "provider": "training_prompts"
+      }
+    ],
+    "negative_examples": [],
+    "image_query_supported": false,
+    "visual_fallback_available": false,
+    "score_meaning": "relevance 是词面相关度排序分数，不是准确率或置信概率。",
+    "message": "找到相似描述示例；仅作上下文参考，不得将示例尺寸当作用户目标尺寸。",
+    "modeling_recipes": []
+  },
+  "knowledge_visual_examples": [],
+  "knowledge_image_parts": 0,
+  "image_input_mode": "individual",
+  "llm_usage": {
+    "input_tokens": 0,
+    "output_tokens": 0,
+    "total_tokens": 0
+  },
+  "usage_source": "dsh_adapter_stream_event",
+  "first_tool_latency_ms": null,
+  "observability": {
+    "path": "C:\\Users\\lycohana\\AppData\\Local\\AI Modeler\\dsh\\sessions\\aq-text-box-20261001\\agent-observability.jsonl",
+    "logical_requests": 4,
+    "provider_attempts_observed": 4,
+    "provider_wire_status": "observed",
+    "copied_path": "C:\\Users\\lycohana\\Desktop\\code\\AI-_-\\artifacts\\agent-quality-rebuild\\input-reasoning\\cli-text-box\\turns\\5035c0d036c1455d852adc38e80a0e2d\\agent-observability.jsonl"
+  },
+  "routing": {
+    "action": "dsh_agent",
+    "review_mode": "local_geometry"
+  },
+  "run_record": "C:\\Users\\lycohana\\AppData\\Local\\AI Modeler\\dsh\\sessions\\aq-text-box-20261001\\cad-state.json",
+  "run_id": "aq-text-box-20261001",
+  "dimension_assumptions": [],
+  "local_geometry_checks": null,
+  "cli_progress_events": [
+    {
+      "elapsed_ms": 16.0,
+      "message": "正在查询本地工件知识库。"
+    },
+    {
+      "elapsed_ms": 110.0,
+      "message": "本地知识库找到 1 个相似描述，仅作参考。"
+    },
+    {
+      "elapsed_ms": 313.0,
+      "message": "正在启动 DSH SDK 多模态 Agent 会话。"
+    },
+    {
+      "elapsed_ms": 313.0,
+      "message": "模型等待中：DSH SDK · 推理强度 low"
+    },
+    {
+      "elapsed_ms": 2656.0,
+      "message": "DSH 状态：running"
+    },
+    {
+      "elapsed_ms": 2735.0,
+      "message": "正在请求模型：请求 moonshotai/Kimi-K2.7-Code · 本次图像 0 张 · 推理 low"
+    },
+    {
+      "elapsed_ms": 2828.0,
+      "message": "正在请求模型：请求 moonshotai/Kimi-K2.7-Code · 本次图像 0 张"
+    },
+    {
+      "elapsed_ms": 7781.0,
+      "message": "模型请求失败，正在由 DSH 处理重试或返回错误。"
+    },
+    {
+      "elapsed_ms": 7781.0,
+      "message": "模型首个内容事件已收到 · 5.1 秒"
+    },
+    {
+      "elapsed_ms": 8328.0,
+      "message": "正在请求模型：请求 moonshotai/Kimi-K2.7-Code · 本次图像 0 张 · 推理 low"
+    },
+    {
+      "elapsed_ms": 8328.0,
+      "message": "正在请求模型：请求 moonshotai/Kimi-K2.7-Code · 本次图像 0 张"
+    },
+    {
+      "elapsed_ms": 13266.0,
+      "message": "模型请求失败，正在由 DSH 处理重试或返回错误。"
+    },
+    {
+      "elapsed_ms": 13266.0,
+      "message": "模型首个内容事件已收到 · 5.0 秒"
+    },
+    {
+      "elapsed_ms": 14297.0,
+      "message": "正在请求模型：请求 moonshotai/Kimi-K2.7-Code · 本次图像 0 张 · 推理 low"
+    },
+    {
+      "elapsed_ms": 14297.0,
+      "message": "正在请求模型：请求 moonshotai/Kimi-K2.7-Code · 本次图像 0 张"
+    },
+    {
+      "elapsed_ms": 19344.0,
+      "message": "模型请求失败，正在由 DSH 处理重试或返回错误。"
+    },
+    {
+      "elapsed_ms": 19344.0,
+      "message": "模型首个内容事件已收到 · 5.0 秒"
+    },
+    {
+      "elapsed_ms": 21219.0,
+      "message": "正在请求模型：请求 moonshotai/Kimi-K2.7-Code · 本次图像 0 张 · 推理 low"
+    },
+    {
+      "elapsed_ms": 21219.0,
+      "message": "正在请求模型：请求 moonshotai/Kimi-K2.7-Code · 本次图像 0 张"
+    },
+    {
+      "elapsed_ms": 26188.0,
+      "message": "DSH 状态：idle"
+    },
+    {
+      "elapsed_ms": 26188.0,
+      "message": "模型响应已返回：正在保存并整理 CADPlan 与本轮工具结果。"
+    }
+  ],
+  "cli_session_id": "aq-text-box-20261001",
+  "cli_reference_paths": [],
+  "cli_output_dir": "C:\\Users\\lycohana\\Desktop\\code\\AI-_-\\artifacts\\agent-quality-rebuild\\input-reasoning\\cli-text-box\\turns\\5035c0d036c1455d852adc38e80a0e2d",
+  "delivery_warnings": [],
+  "cli_exit_code": 3,
+  "cli_outcome": "error",
+  "cli_result_path": "C:\\Users\\lycohana\\Desktop\\code\\AI-_-\\artifacts\\agent-quality-rebuild\\input-reasoning\\cli-text-box\\turns\\5035c0d036c1455d852adc38e80a0e2d\\result.json"
+}

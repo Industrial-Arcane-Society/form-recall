@@ -1,0 +1,14 @@
+{
+  "schema_version": 1,
+  "session_id": "aq-text-box-20261001",
+  "turns": [
+    {
+      "turn_id": "5035c0d036c1455d852adc38e80a0e2d",
+      "session_id": "aq-text-box-20261001",
+      "raw_user_prompt": "创建一个100×60×20毫米长方体",
+      "reference_ids": [],
+      "created_at": "2026-10-01T04:44:00.116Z",
+      "at_epoch_ms": 1790829840116
+    }
+  ]
+}

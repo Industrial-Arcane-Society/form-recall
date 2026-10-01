@@ -1,0 +1,200 @@
+{
+  "format": "ai-modeler",
+  "version": 1,
+  "name": "SDK test",
+  "source_prompt": "",
+  "features": [
+    {
+      "kind": "box",
+      "params": {
+        "length": 100.0,
+        "width": 80.0,
+        "height": 60.0
+      },
+      "op": "add",
+      "name": "长方体",
+      "note": "",
+      "feature_id": "base",
+      "relations": [],
+      "enabled": true,
+      "provenance": {
+        "length": "user",
+        "width": "user",
+        "height": "user"
+      }
+    },
+    {
+      "kind": "conrod",
+      "params": {
+        "length": 80.0,
+        "big_d": 30.0,
+        "small_d": 18.0,
+        "big_bore": 20.0,
+        "small_bore": 10.0,
+        "shank_w": 10.0,
+        "thick": 8.0
+      },
+      "op": "add",
+      "name": "连杆",
+      "note": "",
+      "feature_id": "target",
+      "relations": [],
+      "enabled": true,
+      "provenance": {
+        "length": "user",
+        "big_d": "user",
+        "small_d": "user",
+        "big_bore": "user",
+        "small_bore": "user",
+        "shank_w": "user",
+        "thick": "user"
+      }
+    }
+  ],
+  "exported_at": "2026-10-01 13:55:12",
+  "cadplan_schema_version": "1.0",
+  "cadplan": {
+    "schema_version": "1.0",
+    "name": "SDK test",
+    "units": {
+      "length": "mm",
+      "angle": "deg"
+    },
+    "coordinate_system": {
+      "type": "global_cartesian",
+      "handedness": "right",
+      "axes": [
+        "X",
+        "Y",
+        "Z"
+      ],
+      "origin": [
+        0,
+        0,
+        0
+      ]
+    },
+    "features": [
+      {
+        "id": "base",
+        "kind": "box",
+        "operation": "add",
+        "parameters": {
+          "length": 100,
+          "width": 80,
+          "height": 60
+        },
+        "sources": {
+          "length": {
+            "type": "user"
+          },
+          "width": {
+            "type": "user"
+          },
+          "height": {
+            "type": "user"
+          }
+        }
+      },
+      {
+        "id": "target",
+        "kind": "conrod",
+        "operation": "add",
+        "parameters": {
+          "length": 80,
+          "big_d": 30,
+          "small_d": 18,
+          "big_bore": 20,
+          "small_bore": 10,
+          "shank_w": 10,
+          "thick": 8
+        },
+        "sources": {
+          "length": {
+            "type": "user"
+          },
+          "big_d": {
+            "type": "user"
+          },
+          "small_d": {
+            "type": "user"
+          },
+          "big_bore": {
+            "type": "user"
+          },
+          "small_bore": {
+            "type": "user"
+          },
+          "shank_w": {
+            "type": "user"
+          },
+          "thick": {
+            "type": "user"
+          }
+        }
+      }
+    ]
+  },
+  "feature_manifest": {
+    "base": {
+      "kind": "box",
+      "operation": "add",
+      "name": "长方体",
+      "parameters": {
+        "length": 100,
+        "width": 80,
+        "height": 60
+      },
+      "sources": {
+        "length": {
+          "type": "user"
+        },
+        "width": {
+          "type": "user"
+        },
+        "height": {
+          "type": "user"
+        }
+      },
+      "relations": []
+    },
+    "target": {
+      "kind": "conrod",
+      "operation": "add",
+      "name": "连杆",
+      "parameters": {
+        "length": 80,
+        "big_d": 30,
+        "small_d": 18,
+        "big_bore": 20,
+        "small_bore": 10,
+        "shank_w": 10,
+        "thick": 8
+      },
+      "sources": {
+        "length": {
+          "type": "user"
+        },
+        "big_d": {
+          "type": "user"
+        },
+        "small_d": {
+          "type": "user"
+        },
+        "big_bore": {
+          "type": "user"
+        },
+        "small_bore": {
+          "type": "user"
+        },
+        "shank_w": {
+          "type": "user"
+        },
+        "thick": {
+          "type": "user"
+        }
+      },
+      "relations": []
+    }
+  }
+}

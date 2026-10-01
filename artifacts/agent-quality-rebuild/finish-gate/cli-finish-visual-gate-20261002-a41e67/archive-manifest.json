@@ -1,0 +1,62 @@
+[
+  {
+    "path": "active-turn.json",
+    "bytes": 1081,
+    "sha256": "27d57ebed24aab732def94901df5619f811da295e2386ccac02b203c3725fc74"
+  },
+  {
+    "path": "agent-observability.jsonl",
+    "bytes": 69459,
+    "sha256": "c84b366e6daf9f067fd3c9efc20ea545d21a185acfea2b242c10a373a559fc33"
+  },
+  {
+    "path": "cad-state.json",
+    "bytes": 361903,
+    "sha256": "f1137526d0b41a8d8e58798256f60467af73fee5e02bb2d1381e73bcb94c24f7"
+  },
+  {
+    "path": "current-preview.png",
+    "bytes": 7016,
+    "sha256": "4e5b23f84429916faf0d3ef17de0240343e259add4a16229cf58ff504841c64b"
+  },
+  {
+    "path": "reference-images.json",
+    "bytes": 666,
+    "sha256": "e09fecd5206eb4c56f1ff86e1035695242dc09d361c2db01fd6a79f01b7ac4d7"
+  },
+  {
+    "path": "run-status.md",
+    "bytes": 1371,
+    "sha256": "01dea188a117b0679b2e6e6a459abadacbd252cec1ff0b099846a3e6a4615888"
+  },
+  {
+    "path": "runtime-capacity-policy.json",
+    "bytes": 268,
+    "sha256": "7b06888a9a3d938fc19c7ff390d96acedce23c21a1c6aca0f237f56ce69f6257"
+  },
+  {
+    "path": "transport-image-map.json",
+    "bytes": 848,
+    "sha256": "da2e4dd54855d97b4b3222624e8ebdfb21317e34c328ed9190ec532fede2bea8"
+  },
+  {
+    "path": "user-turns.json",
+    "bytes": 670,
+    "sha256": "12e6b5a8c403fbb6bfe83081acb43435bcd0eeac0ac943abcf88b33e0150264d"
+  },
+  {
+    "path": "previews\\r6-g1-iso.png",
+    "bytes": 17975,
+    "sha256": "7010ec7bbd0d4e038d509e187a8c5fc432e067d67694fd65885015c3889810e2"
+  },
+  {
+    "path": "previews\\r6-g2-front.png",
+    "bytes": 7016,
+    "sha256": "4e5b23f84429916faf0d3ef17de0240343e259add4a16229cf58ff504841c64b"
+  },
+  {
+    "path": "reference-assets\\53ed87fadf8cca869da921627e6a13c845424c6906b3de517d5cca972db94553.png",
+    "bytes": 72309,
+    "sha256": "53ed87fadf8cca869da921627e6a13c845424c6906b3de517d5cca972db94553"
+  }
+]

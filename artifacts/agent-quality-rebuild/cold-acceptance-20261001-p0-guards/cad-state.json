@@ -1,0 +1,887 @@
+{
+  "plan": {
+    "schema_version": "1.0",
+    "name": "nine-hole-recess-block",
+    "source_prompt": "请根据参考图生成可编辑模型；图片没有尺寸标注，按图内比例估算并标明尺寸来源。",
+    "units": {
+      "length": "mm",
+      "angle": "deg"
+    },
+    "coordinate_system": {
+      "type": "global_cartesian",
+      "handedness": "right",
+      "axes": [
+        "X",
+        "Y",
+        "Z"
+      ],
+      "origin": [
+        0,
+        0,
+        0
+      ]
+    },
+    "features": [
+      {
+        "id": "main-block",
+        "kind": "box",
+        "operation": "add",
+        "name": "main block",
+        "parameters": {
+          "length": 100,
+          "width": 40,
+          "height": 125,
+          "center": [
+            0,
+            0,
+            0
+          ]
+        },
+        "sources": {
+          "length": {
+            "type": "image_estimate",
+            "evidence": "overall width in front view estimated from image proportions"
+          },
+          "width": {
+            "type": "image_estimate",
+            "evidence": "front-to-back thickness estimated from perspective depth"
+          },
+          "height": {
+            "type": "image_estimate",
+            "evidence": "overall height in front view estimated from image proportions"
+          },
+          "center": {
+            "type": "derived",
+            "evidence": "placed at global origin for symmetry"
+          }
+        }
+      }
+    ],
+    "pending_questions": []
+  },
+  "revision": 4,
+  "last_preview": null,
+  "preview_revision": null,
+  "preview_generation": 0,
+  "previews": [],
+  "visual_review": null,
+  "visual_reviews": {},
+  "unresolved_findings": [],
+  "knowledge_search": {
+    "status": "no_match",
+    "query": "请根据参考图生成可编辑模型；图片没有尺寸标注，按图内比例估算并标明尺寸来源。",
+    "matches": [],
+    "negative_examples": [],
+    "image_query_supported": false,
+    "visual_fallback_available": false,
+    "score_meaning": "relevance 是词面相关度排序分数，不是准确率或置信概率。",
+    "message": "当前文字描述没有达到相似检索阈值；这不代表库外不存在对应工件。",
+    "modeling_recipes": []
+  },
+  "knowledge_visual_examples": [],
+  "has_references": true,
+  "actions": [
+    {
+      "kind": "tool",
+      "tool": "cad_inspect_references",
+      "revision": 0,
+      "at": 1790869321.5703819,
+      "reference_id": "sha256:53ed87fadf8cca869da921627e6a13c845424c6906b3de517d5cca972db94553",
+      "source_sha256": "53ed87fadf8cca869da921627e6a13c845424c6906b3de517d5cca972db94553",
+      "roi_norm": null,
+      "observation_valid": true,
+      "verification_status": "model_observation_unverified"
+    },
+    {
+      "kind": "tool",
+      "tool": "cad_get_state",
+      "revision": 0,
+      "at": 1790869375.5013163
+    },
+    {
+      "kind": "tool",
+      "tool": "cad_create_model",
+      "revision": 1,
+      "at": 1790869427.969929,
+      "feature_id": "main-block",
+      "explicit_replacement": false,
+      "preserved_source_keys": [],
+      "user_source_provenance": [],
+      "archived_finding_count": 0
+    },
+    {
+      "kind": "tool",
+      "tool": "cad_create_model",
+      "revision": 1,
+      "at": 1790869437.9331763,
+      "failed": true,
+      "cancelled": false,
+      "error": "当前已有模型；若用户要求从头重建，请显式设置 replace=true。"
+    },
+    {
+      "kind": "tool",
+      "tool": "cad_create_model",
+      "revision": 1,
+      "at": 1790869446.1471367,
+      "failed": true,
+      "cancelled": false,
+      "error": "cad_create_model不能替代现有模型的局部编辑；当前可信用户turn未明确要求新工件或从头重建。"
+    },
+    {
+      "kind": "tool",
+      "tool": "cad_get_state",
+      "revision": 1,
+      "at": 1790869449.334396
+    },
+    {
+      "kind": "tool",
+      "tool": "cad_update_feature",
+      "revision": 1,
+      "at": 1790869455.9918172,
+      "feature_id": "main-block",
+      "no_op": true,
+      "unchanged_geometry_signature": "ad71701d6db0d1b0b5035ea22d4042706e0b3e69a6dee6e8977090e170664c2d",
+      "consecutive_no_progress": 1
+    },
+    {
+      "kind": "tool",
+      "tool": "cad_remove_feature",
+      "revision": 1,
+      "at": 1790869462.449179,
+      "failed": true,
+      "cancelled": false,
+      "error": "不能删除唯一的 operation=add 基础实体 main-block；这会留下没有实体主体的 CADPlan。请保留主体并修改/移除切削特征；若用户明确要求整体重建，可通过 cad_create_model(replace=true) 按该明确请求重建。"
+    },
+    {
+      "kind": "tool",
+      "tool": "cad_update_feature",
+      "revision": 1,
+      "at": 1790869473.7656682,
+      "feature_id": "main-block",
+      "no_op": true,
+      "unchanged_geometry_signature": "ad71701d6db0d1b0b5035ea22d4042706e0b3e69a6dee6e8977090e170664c2d",
+      "consecutive_no_progress": 2
+    },
+    {
+      "kind": "tool",
+      "tool": "cad_update_feature",
+      "revision": 1,
+      "at": 1790869506.451041,
+      "failed": true,
+      "cancelled": false,
+      "error": "不能更新特征字段：sources"
+    },
+    {
+      "kind": "tool",
+      "tool": "cad_update_feature",
+      "revision": 2,
+      "at": 1790869519.42353,
+      "feature_id": "main-block",
+      "finding_ids": [],
+      "preserved_source_keys": [
+        "width",
+        "height",
+        "center"
+      ],
+      "provenance_changes": [],
+      "user_source_provenance": []
+    },
+    {
+      "kind": "tool",
+      "tool": "cad_update_feature",
+      "revision": 3,
+      "at": 1790869531.7212443,
+      "feature_id": "main-block",
+      "finding_ids": [],
+      "preserved_source_keys": [
+        "height",
+        "center"
+      ],
+      "provenance_changes": [],
+      "user_source_provenance": []
+    },
+    {
+      "kind": "tool",
+      "tool": "cad_update_feature",
+      "revision": 4,
+      "at": 1790869539.9022775,
+      "feature_id": "main-block",
+      "finding_ids": [],
+      "preserved_source_keys": [
+        "length",
+        "center"
+      ],
+      "provenance_changes": [],
+      "user_source_provenance": []
+    },
+    {
+      "kind": "tool",
+      "tool": "cad_update_feature",
+      "revision": 4,
+      "at": 1790869546.5130904,
+      "failed": true,
+      "cancelled": false,
+      "error": "本次几何会回到历史 CADPlan 状态（geometry hash=ad71701d6db0）。为避免返修来回摆动，请先用 cad_get_reference_image 核对原图，或关联本 feature 的活动 finding_id；若当前版确实退化，调用 cad_restore_best_candidate 恢复最佳有效候选。"
+    }
+  ],
+  "output_paths": {},
+  "finished": false,
+  "finish_state": null,
+  "source_prompt": "请根据参考图生成可编辑模型；图片没有尺寸标注，按图内比例估算并标明尺寸来源。",
+  "reference_similarity_attempts": [],
+  "reference_similarity_error": null,
+  "reference_images": [
+    {
+      "id": "sha256:53ed87fadf8cca869da921627e6a13c845424c6906b3de517d5cca972db94553",
+      "sha256": "53ed87fadf8cca869da921627e6a13c845424c6906b3de517d5cca972db94553",
+      "filename": "user-nine-hole-recess-iso.png",
+      "width": 494,
+      "height": 544,
+      "media_type": "image/png"
+    }
+  ],
+  "reference_similarity_review": null,
+  "reference_similarity_reviews": {},
+  "reference_similarity_history": [],
+  "finish_summary": null,
+  "finding_ledger": {},
+  "geometry_signatures": [
+    {
+      "signature": "ad71701d6db0d1b0b5035ea22d4042706e0b3e69a6dee6e8977090e170664c2d",
+      "revision": 1
+    },
+    {
+      "signature": "b9ab8cb3a06b6a317b95a3356bd2f56274c8b4e22b5fe4c1413d4894fa87cad9",
+      "revision": 2
+    },
+    {
+      "signature": "9fca99ac3bb233ddbd2724b50ae4fc51b94ec25cb72285d4afa8ff7c45c82652",
+      "revision": 3
+    },
+    {
+      "signature": "631e0fe59b208983b86bcbf2ea446148d1fdf263847aefdb6083b4a94fb840a0",
+      "revision": 4
+    }
+  ],
+  "geometry_mutations": [
+    {
+      "tool": "cad_create_model",
+      "feature_ids": [
+        "main-block"
+      ],
+      "finding_ids": [],
+      "before_signature": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+      "after_signature": "ad71701d6db0d1b0b5035ea22d4042706e0b3e69a6dee6e8977090e170664c2d",
+      "parameter_changes": {},
+      "reversed_directions": [],
+      "revision": 1,
+      "at": 1790869427.969929
+    },
+    {
+      "tool": "cad_update_feature",
+      "feature_ids": [
+        "main-block"
+      ],
+      "finding_ids": [],
+      "before_signature": "ad71701d6db0d1b0b5035ea22d4042706e0b3e69a6dee6e8977090e170664c2d",
+      "after_signature": "b9ab8cb3a06b6a317b95a3356bd2f56274c8b4e22b5fe4c1413d4894fa87cad9",
+      "parameter_changes": {
+        "length": {
+          "before": 100,
+          "after": 105,
+          "direction": "increased"
+        }
+      },
+      "reversed_directions": [],
+      "revision": 2,
+      "at": 1790869519.42353
+    },
+    {
+      "tool": "cad_update_feature",
+      "feature_ids": [
+        "main-block"
+      ],
+      "finding_ids": [],
+      "before_signature": "b9ab8cb3a06b6a317b95a3356bd2f56274c8b4e22b5fe4c1413d4894fa87cad9",
+      "after_signature": "9fca99ac3bb233ddbd2724b50ae4fc51b94ec25cb72285d4afa8ff7c45c82652",
+      "parameter_changes": {
+        "length": {
+          "before": 105,
+          "after": 100,
+          "direction": "decreased"
+        },
+        "width": {
+          "before": 40,
+          "after": 45,
+          "direction": "increased"
+        }
+      },
+      "reversed_directions": [],
+      "revision": 3,
+      "at": 1790869531.7212443
+    },
+    {
+      "tool": "cad_update_feature",
+      "feature_ids": [
+        "main-block"
+      ],
+      "finding_ids": [],
+      "before_signature": "9fca99ac3bb233ddbd2724b50ae4fc51b94ec25cb72285d4afa8ff7c45c82652",
+      "after_signature": "631e0fe59b208983b86bcbf2ea446148d1fdf263847aefdb6083b4a94fb840a0",
+      "parameter_changes": {
+        "height": {
+          "before": 120,
+          "after": 125,
+          "direction": "increased"
+        },
+        "width": {
+          "before": 45,
+          "after": 40,
+          "direction": "decreased"
+        }
+      },
+      "reversed_directions": [],
+      "revision": 4,
+      "at": 1790869539.9022775
+    }
+  ],
+  "last_valid_candidate": null,
+  "best_evidence_candidate": null,
+  "best_candidate": null,
+  "construction_milestone": null,
+  "reference_rechecks": [],
+  "no_progress_by_signature": {
+    "ad71701d6db0d1b0b5035ea22d4042706e0b3e69a6dee6e8977090e170664c2d": 2
+  },
+  "geometry_failure_history": [],
+  "last_preview_failure": null,
+  "geometry_issues": {},
+  "partial_preview": null,
+  "partial_candidate": null,
+  "partial_preview_history": [],
+  "reference_inventory": {
+    "sha256:53ed87fadf8cca869da921627e6a13c845424c6906b3de517d5cca972db94553": {
+      "reference_id": "sha256:53ed87fadf8cca869da921627e6a13c845424c6906b3de517d5cca972db94553",
+      "source_sha256": "53ed87fadf8cca869da921627e6a13c845424c6906b3de517d5cca972db94553",
+      "reference_index": 1,
+      "roi_norm": null,
+      "roi_cache_key": "13a3eed97b0e24fe58891c14d1e9e603fdfb386e42bd694e999e4947ddd009bf",
+      "crop_sha256": "53ed87fadf8cca869da921627e6a13c845424c6906b3de517d5cca972db94553",
+      "summary": "A rectangular block-like part with a front-central vertical slot/recess exposing an inner back wall. Three distinct planar surfaces carry visible circular through-holes: the left front wall, the right front wall, and the inner back wall of the slot. The left wall shows three vertically aligned holes; the right wall shows four vertically aligned holes; the inner back wall shows three vertically aligned holes. Hole colors differ by wall (cyan/blue on outer walls, magenta/blue on the inner wall), likely indicating front/back openings in a CAD preview.",
+      "visible_evidence": [
+        {
+          "evidence_id": "sha256:53ed87fadf8cca869da921627e6a13c845424c6906b3de517d5cca972db94553:roi-13a3eed97b:ev1",
+          "source_evidence_id": "ev1",
+          "group_id": "left_front_wall",
+          "description": "Three circular through-holes arranged in a single vertical column on the left front vertical face.",
+          "image_region": [
+            0.18,
+            0.25,
+            0.35,
+            0.75
+          ],
+          "visible_count": 3,
+          "relative_size_group": "same",
+          "surface_plane_relation": "parallel",
+          "visible_form": "hole",
+          "confidence": null,
+          "confidence_basis": "Clear circular outlines, distinct colors, and consistent vertical spacing on the same planar face."
+        },
+        {
+          "evidence_id": "sha256:53ed87fadf8cca869da921627e6a13c845424c6906b3de517d5cca972db94553:roi-13a3eed97b:ev2",
+          "source_evidence_id": "ev2",
+          "group_id": "right_front_wall",
+          "description": "Four circular through-holes arranged in a single vertical column on the right front vertical face.",
+          "image_region": [
+            0.48,
+            0.35,
+            0.62,
+            0.85
+          ],
+          "visible_count": 4,
+          "relative_size_group": "same",
+          "surface_plane_relation": "parallel",
+          "visible_form": "hole",
+          "confidence": null,
+          "confidence_basis": "Four separate circular outlines visible on the right front planar wall, aligned vertically with uniform spacing."
+        },
+        {
+          "evidence_id": "sha256:53ed87fadf8cca869da921627e6a13c845424c6906b3de517d5cca972db94553:roi-13a3eed97b:ev3",
+          "source_evidence_id": "ev3",
+          "group_id": "inner_back_wall",
+          "description": "Three circular through-holes arranged in a single vertical column on the salmon-colored inner back wall of the central slot.",
+          "image_region": [
+            0.36,
+            0.28,
+            0.45,
+            0.72
+          ],
+          "visible_count": 3,
+          "relative_size_group": "same",
+          "surface_plane_relation": "parallel",
+          "visible_form": "hole",
+          "confidence": null,
+          "confidence_basis": "Three circular openings visible on the recessed back plane, vertically aligned and distinct from the outer-wall holes."
+        },
+        {
+          "evidence_id": "sha256:53ed87fadf8cca869da921627e6a13c845424c6906b3de517d5cca972db94553:roi-13a3eed97b:ev4",
+          "source_evidence_id": "ev4",
+          "group_id": "central_slot",
+          "description": "A vertical rectangular slot/recess cut into the front of the block, separating the left and right front walls and exposing the inner back wall.",
+          "image_region": [
+            0.33,
+            0.22,
+            0.48,
+            0.78
+          ],
+          "visible_count": 1,
+          "relative_size_group": "larger",
+          "surface_plane_relation": "perpendicular",
+          "visible_form": "recess",
+          "confidence": null,
+          "confidence_basis": "Clear rectangular boundary with a differently colored back plane and side walls, creating a front-opening recess."
+        }
+      ],
+      "uncertain": [
+        {
+          "evidence_id": "ev5",
+          "group_id": "rear_and_hidden_faces",
+          "description": "Whether the holes on the left/right front walls are through-holes that also appear on the rear face, and whether additional holes exist on the rear, top, bottom, or far side faces.",
+          "image_region": [
+            0.0,
+            0.0,
+            1.0,
+            1.0
+          ],
+          "visible_count": null,
+          "relative_size_group": "unknown",
+          "surface_plane_relation": "unknown",
+          "visible_form": "unknown",
+          "confidence": "low",
+          "confidence_basis": "Only the front-oriented faces and one inner back wall are visible; the rear and other exterior faces are occluded."
+        },
+        {
+          "evidence_id": "ev6",
+          "group_id": "hole_depth_and_exact_alignment",
+          "description": "Exact depth of the slot and whether the inner back wall holes are coaxial with the outer wall holes.",
+          "image_region": [
+            0.33,
+            0.22,
+            0.62,
+            0.85
+          ],
+          "visible_count": null,
+          "relative_size_group": "unknown",
+          "surface_plane_relation": "unknown",
+          "visible_form": "unknown",
+          "confidence": "low",
+          "confidence_basis": "Perspective and lack of dimensional references prevent confirming coaxiality or true depth."
+        }
+      ],
+      "inferred": [],
+      "observation_valid": true,
+      "observation_status": "observed",
+      "automatic_attempt_count": 1,
+      "retry_exhausted": false,
+      "verification_status": "model_observation_unverified",
+      "error_type": null,
+      "error": null,
+      "response_diagnostics": [
+        {
+          "status": "observed",
+          "finish_reason": "stop",
+          "protocol": "chat_completions",
+          "model": "moonshotai/Kimi-K2.7-Code",
+          "response_chars": 4137,
+          "response_sha256": "3d8d5e4127d49f9d9f1d2d4d87391591f47366f9ff5b7995f7187a1a90a0eb62",
+          "usage": {
+            "prompt_tokens": 746,
+            "completion_tokens": 2030,
+            "total_tokens": 2776,
+            "reasoning_tokens": 1024
+          },
+          "json_shape": {
+            "type": "object",
+            "fields": {
+              "summary": "string",
+              "visible_evidence": {
+                "type": "array",
+                "length": 4,
+                "item": {
+                  "type": "object",
+                  "fields": {},
+                  "other_key_count": 10
+                }
+              },
+              "uncertain": {
+                "type": "array",
+                "length": 2,
+                "item": {
+                  "type": "object",
+                  "fields": {},
+                  "other_key_count": 10
+                }
+              },
+              "inferred": {
+                "type": "array",
+                "length": 0,
+                "item": null
+              }
+            },
+            "other_key_count": 0
+          },
+          "json_top_level_keys": [
+            "summary",
+            "visible_evidence",
+            "uncertain",
+            "inferred"
+          ],
+          "json_top_level_other_key_count": 0,
+          "observation_container_path": [],
+          "attempt": 1,
+          "crop_sha256": "53ed87fadf8cca869da921627e6a13c845424c6906b3de517d5cca972db94553"
+        }
+      ],
+      "request_profile": {
+        "task_kind": "vision_review",
+        "review_complexity": "source_inventory",
+        "provider_family": "siliconflow",
+        "protocol": "chat_completions",
+        "model": "moonshotai/Kimi-K2.7-Code",
+        "reasoning_effort": "low",
+        "configured_reasoning_effort": "low",
+        "thinking_budget": 1024,
+        "thinking_budget_source": "task_profile_soft_default",
+        "thinking_budget_hard_limit_known": false,
+        "payload_reasoning": {
+          "enable_thinking": true,
+          "thinking_budget": 1024
+        },
+        "reasoning_supported": true,
+        "reasoning_control": "toggle_and_budget",
+        "vision_supported": true,
+        "supported_efforts": [
+          "none",
+          "low"
+        ],
+        "context_window": 256000,
+        "max_output_tokens": null,
+        "context_capacity_source": "official SiliconFlow model center states 256K for moonshotai/Kimi-K2.7-Code",
+        "capability_source": "official SiliconFlow VLM API example for moonshotai/Kimi-K2.7-Code"
+      },
+      "review_configuration": {
+        "configured_reasoning_effort": "low",
+        "configured_thinking_budget": null,
+        "resolved_profile": {
+          "task_kind": "vision_review",
+          "review_complexity": "source_inventory",
+          "provider_family": "siliconflow",
+          "protocol": "chat_completions",
+          "model": "moonshotai/Kimi-K2.7-Code",
+          "reasoning_effort": "low",
+          "configured_reasoning_effort": "low",
+          "thinking_budget": 1024,
+          "thinking_budget_source": "task_profile_soft_default",
+          "thinking_budget_hard_limit_known": false,
+          "payload_reasoning": {
+            "enable_thinking": true,
+            "thinking_budget": 1024
+          },
+          "reasoning_supported": true,
+          "reasoning_control": "toggle_and_budget",
+          "vision_supported": true,
+          "supported_efforts": [
+            "none",
+            "low"
+          ],
+          "context_window": 256000,
+          "max_output_tokens": null,
+          "context_capacity_source": "official SiliconFlow model center states 256K for moonshotai/Kimi-K2.7-Code",
+          "capability_source": "official SiliconFlow VLM API example for moonshotai/Kimi-K2.7-Code"
+        }
+      },
+      "usage": {
+        "prompt_tokens": 746,
+        "completion_tokens": 2030,
+        "total_tokens": 2776,
+        "reasoning_tokens": 1024
+      },
+      "model": "moonshotai/Kimi-K2.7-Code",
+      "duration_seconds": 62.383,
+      "recorded_at": 1790869321.5698402
+    }
+  },
+  "reference_inventory_roi": {},
+  "reference_inventory_history": [
+    {
+      "reference_id": "sha256:53ed87fadf8cca869da921627e6a13c845424c6906b3de517d5cca972db94553",
+      "source_sha256": "53ed87fadf8cca869da921627e6a13c845424c6906b3de517d5cca972db94553",
+      "reference_index": 1,
+      "roi_norm": null,
+      "roi_cache_key": "13a3eed97b0e24fe58891c14d1e9e603fdfb386e42bd694e999e4947ddd009bf",
+      "crop_sha256": "53ed87fadf8cca869da921627e6a13c845424c6906b3de517d5cca972db94553",
+      "summary": "A rectangular block-like part with a front-central vertical slot/recess exposing an inner back wall. Three distinct planar surfaces carry visible circular through-holes: the left front wall, the right front wall, and the inner back wall of the slot. The left wall shows three vertically aligned holes; the right wall shows four vertically aligned holes; the inner back wall shows three vertically aligned holes. Hole colors differ by wall (cyan/blue on outer walls, magenta/blue on the inner wall), likely indicating front/back openings in a CAD preview.",
+      "visible_evidence": [
+        {
+          "evidence_id": "sha256:53ed87fadf8cca869da921627e6a13c845424c6906b3de517d5cca972db94553:roi-13a3eed97b:ev1",
+          "source_evidence_id": "ev1",
+          "group_id": "left_front_wall",
+          "description": "Three circular through-holes arranged in a single vertical column on the left front vertical face.",
+          "image_region": [
+            0.18,
+            0.25,
+            0.35,
+            0.75
+          ],
+          "visible_count": 3,
+          "relative_size_group": "same",
+          "surface_plane_relation": "parallel",
+          "visible_form": "hole",
+          "confidence": null,
+          "confidence_basis": "Clear circular outlines, distinct colors, and consistent vertical spacing on the same planar face."
+        },
+        {
+          "evidence_id": "sha256:53ed87fadf8cca869da921627e6a13c845424c6906b3de517d5cca972db94553:roi-13a3eed97b:ev2",
+          "source_evidence_id": "ev2",
+          "group_id": "right_front_wall",
+          "description": "Four circular through-holes arranged in a single vertical column on the right front vertical face.",
+          "image_region": [
+            0.48,
+            0.35,
+            0.62,
+            0.85
+          ],
+          "visible_count": 4,
+          "relative_size_group": "same",
+          "surface_plane_relation": "parallel",
+          "visible_form": "hole",
+          "confidence": null,
+          "confidence_basis": "Four separate circular outlines visible on the right front planar wall, aligned vertically with uniform spacing."
+        },
+        {
+          "evidence_id": "sha256:53ed87fadf8cca869da921627e6a13c845424c6906b3de517d5cca972db94553:roi-13a3eed97b:ev3",
+          "source_evidence_id": "ev3",
+          "group_id": "inner_back_wall",
+          "description": "Three circular through-holes arranged in a single vertical column on the salmon-colored inner back wall of the central slot.",
+          "image_region": [
+            0.36,
+            0.28,
+            0.45,
+            0.72
+          ],
+          "visible_count": 3,
+          "relative_size_group": "same",
+          "surface_plane_relation": "parallel",
+          "visible_form": "hole",
+          "confidence": null,
+          "confidence_basis": "Three circular openings visible on the recessed back plane, vertically aligned and distinct from the outer-wall holes."
+        },
+        {
+          "evidence_id": "sha256:53ed87fadf8cca869da921627e6a13c845424c6906b3de517d5cca972db94553:roi-13a3eed97b:ev4",
+          "source_evidence_id": "ev4",
+          "group_id": "central_slot",
+          "description": "A vertical rectangular slot/recess cut into the front of the block, separating the left and right front walls and exposing the inner back wall.",
+          "image_region": [
+            0.33,
+            0.22,
+            0.48,
+            0.78
+          ],
+          "visible_count": 1,
+          "relative_size_group": "larger",
+          "surface_plane_relation": "perpendicular",
+          "visible_form": "recess",
+          "confidence": null,
+          "confidence_basis": "Clear rectangular boundary with a differently colored back plane and side walls, creating a front-opening recess."
+        }
+      ],
+      "uncertain": [
+        {
+          "evidence_id": "ev5",
+          "group_id": "rear_and_hidden_faces",
+          "description": "Whether the holes on the left/right front walls are through-holes that also appear on the rear face, and whether additional holes exist on the rear, top, bottom, or far side faces.",
+          "image_region": [
+            0.0,
+            0.0,
+            1.0,
+            1.0
+          ],
+          "visible_count": null,
+          "relative_size_group": "unknown",
+          "surface_plane_relation": "unknown",
+          "visible_form": "unknown",
+          "confidence": "low",
+          "confidence_basis": "Only the front-oriented faces and one inner back wall are visible; the rear and other exterior faces are occluded."
+        },
+        {
+          "evidence_id": "ev6",
+          "group_id": "hole_depth_and_exact_alignment",
+          "description": "Exact depth of the slot and whether the inner back wall holes are coaxial with the outer wall holes.",
+          "image_region": [
+            0.33,
+            0.22,
+            0.62,
+            0.85
+          ],
+          "visible_count": null,
+          "relative_size_group": "unknown",
+          "surface_plane_relation": "unknown",
+          "visible_form": "unknown",
+          "confidence": "low",
+          "confidence_basis": "Perspective and lack of dimensional references prevent confirming coaxiality or true depth."
+        }
+      ],
+      "inferred": [],
+      "observation_valid": true,
+      "observation_status": "observed",
+      "automatic_attempt_count": 1,
+      "retry_exhausted": false,
+      "verification_status": "model_observation_unverified",
+      "error_type": null,
+      "error": null,
+      "response_diagnostics": [
+        {
+          "status": "observed",
+          "finish_reason": "stop",
+          "protocol": "chat_completions",
+          "model": "moonshotai/Kimi-K2.7-Code",
+          "response_chars": 4137,
+          "response_sha256": "3d8d5e4127d49f9d9f1d2d4d87391591f47366f9ff5b7995f7187a1a90a0eb62",
+          "usage": {
+            "prompt_tokens": 746,
+            "completion_tokens": 2030,
+            "total_tokens": 2776,
+            "reasoning_tokens": 1024
+          },
+          "json_shape": {
+            "type": "object",
+            "fields": {
+              "summary": "string",
+              "visible_evidence": {
+                "type": "array",
+                "length": 4,
+                "item": {
+                  "type": "object",
+                  "fields": {},
+                  "other_key_count": 10
+                }
+              },
+              "uncertain": {
+                "type": "array",
+                "length": 2,
+                "item": {
+                  "type": "object",
+                  "fields": {},
+                  "other_key_count": 10
+                }
+              },
+              "inferred": {
+                "type": "array",
+                "length": 0,
+                "item": null
+              }
+            },
+            "other_key_count": 0
+          },
+          "json_top_level_keys": [
+            "summary",
+            "visible_evidence",
+            "uncertain",
+            "inferred"
+          ],
+          "json_top_level_other_key_count": 0,
+          "observation_container_path": [],
+          "attempt": 1,
+          "crop_sha256": "53ed87fadf8cca869da921627e6a13c845424c6906b3de517d5cca972db94553"
+        }
+      ],
+      "request_profile": {
+        "task_kind": "vision_review",
+        "review_complexity": "source_inventory",
+        "provider_family": "siliconflow",
+        "protocol": "chat_completions",
+        "model": "moonshotai/Kimi-K2.7-Code",
+        "reasoning_effort": "low",
+        "configured_reasoning_effort": "low",
+        "thinking_budget": 1024,
+        "thinking_budget_source": "task_profile_soft_default",
+        "thinking_budget_hard_limit_known": false,
+        "payload_reasoning": {
+          "enable_thinking": true,
+          "thinking_budget": 1024
+        },
+        "reasoning_supported": true,
+        "reasoning_control": "toggle_and_budget",
+        "vision_supported": true,
+        "supported_efforts": [
+          "none",
+          "low"
+        ],
+        "context_window": 256000,
+        "max_output_tokens": null,
+        "context_capacity_source": "official SiliconFlow model center states 256K for moonshotai/Kimi-K2.7-Code",
+        "capability_source": "official SiliconFlow VLM API example for moonshotai/Kimi-K2.7-Code"
+      },
+      "review_configuration": {
+        "configured_reasoning_effort": "low",
+        "configured_thinking_budget": null,
+        "resolved_profile": {
+          "task_kind": "vision_review",
+          "review_complexity": "source_inventory",
+          "provider_family": "siliconflow",
+          "protocol": "chat_completions",
+          "model": "moonshotai/Kimi-K2.7-Code",
+          "reasoning_effort": "low",
+          "configured_reasoning_effort": "low",
+          "thinking_budget": 1024,
+          "thinking_budget_source": "task_profile_soft_default",
+          "thinking_budget_hard_limit_known": false,
+          "payload_reasoning": {
+            "enable_thinking": true,
+            "thinking_budget": 1024
+          },
+          "reasoning_supported": true,
+          "reasoning_control": "toggle_and_budget",
+          "vision_supported": true,
+          "supported_efforts": [
+            "none",
+            "low"
+          ],
+          "context_window": 256000,
+          "max_output_tokens": null,
+          "context_capacity_source": "official SiliconFlow model center states 256K for moonshotai/Kimi-K2.7-Code",
+          "capability_source": "official SiliconFlow VLM API example for moonshotai/Kimi-K2.7-Code"
+        }
+      },
+      "usage": {
+        "prompt_tokens": 746,
+        "completion_tokens": 2030,
+        "total_tokens": 2776,
+        "reasoning_tokens": 1024
+      },
+      "model": "moonshotai/Kimi-K2.7-Code",
+      "duration_seconds": 62.383,
+      "recorded_at": 1790869321.5698402
+    }
+  ],
+  "web_search_history": [],
+  "required_external_facts": {},
+  "replaced_plans": [],
+  "reference_manifest_error": null,
+  "user_turns": [
+    {
+      "turn_id": "7460b4e355a944d290c4b7fb29a92ca8",
+      "session_id": "coldimg20261001p0guard",
+      "raw_user_prompt": "请根据参考图生成可编辑模型；图片没有尺寸标注，按图内比例估算并标明尺寸来源。",
+      "reference_ids": [
+        "sha256:53ed87fadf8cca869da921627e6a13c845424c6906b3de517d5cca972db94553"
+      ],
+      "intent": "model_target",
+      "intent_source": "cli_rules",
+      "affects_model_target": true,
+      "created_at": "2026-10-01T15:40:46.590Z",
+      "at_epoch_ms": 1790869246590
+    }
+  ],
+  "user_target_context_error": null
+}

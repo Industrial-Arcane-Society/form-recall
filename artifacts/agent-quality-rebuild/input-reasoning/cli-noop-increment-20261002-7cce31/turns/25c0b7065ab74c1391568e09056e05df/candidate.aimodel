@@ -1,0 +1,313 @@
+{
+  "format": "ai-modeler",
+  "version": 1,
+  "name": "nine-hole-recess-block",
+  "source_prompt": "用户要求根据参考图生成可编辑模型，图片无尺寸标注，按图比例估算",
+  "features": [
+    {
+      "kind": "box",
+      "params": {
+        "length": 100.0,
+        "width": 40.0,
+        "height": 80.0,
+        "center": [
+          0.0,
+          0.0,
+          40.0
+        ],
+        "base": false
+      },
+      "op": "add",
+      "name": "基体长方体",
+      "note": "",
+      "feature_id": "base-block",
+      "relations": [],
+      "enabled": true,
+      "provenance": {
+        "length": "image_estimate",
+        "width": "image_estimate",
+        "height": "image_estimate",
+        "center": "derived"
+      }
+    },
+    {
+      "kind": "box",
+      "params": {
+        "length": 40.0,
+        "width": 25.0,
+        "height": 72.0,
+        "center": [
+          0.0,
+          7.5,
+          40.0
+        ],
+        "base": false
+      },
+      "op": "cut",
+      "name": "前部U形凹槽",
+      "note": "",
+      "feature_id": "front-recess",
+      "relations": [],
+      "enabled": true,
+      "provenance": {
+        "length": "image_estimate",
+        "width": "image_estimate",
+        "height": "image_estimate",
+        "center": "derived"
+      }
+    },
+    {
+      "kind": "hole",
+      "params": {
+        "diameter": 12.0,
+        "through": true,
+        "pos": "point",
+        "point": [
+          -35.0,
+          20.0,
+          20.0
+        ],
+        "axis": "Y",
+        "x": -35.0,
+        "y": 20.0
+      },
+      "op": "cut",
+      "name": "左侧壁下孔",
+      "note": "面法线固定为 1 的贯穿孔阵列成员。",
+      "feature_id": "left-wall-hole-1",
+      "relations": [],
+      "enabled": true,
+      "provenance": {
+        "diameter": "image_estimate",
+        "point": "derived",
+        "x": "derived",
+        "y": "derived"
+      }
+    },
+    {
+      "kind": "hole",
+      "params": {
+        "diameter": 8.0,
+        "through": true,
+        "pos": "point",
+        "point": [
+          -35.0,
+          20.0,
+          40.0
+        ],
+        "axis": "Y",
+        "x": -35.0,
+        "y": 40.0
+      },
+      "op": "cut",
+      "name": "左侧壁中孔",
+      "note": "面法线固定为 1 的贯穿孔阵列成员。",
+      "feature_id": "left-wall-hole-2",
+      "relations": [],
+      "enabled": true,
+      "provenance": {
+        "diameter": "image_estimate",
+        "point": "derived",
+        "x": "derived",
+        "y": "derived"
+      }
+    },
+    {
+      "kind": "hole",
+      "params": {
+        "diameter": 12.0,
+        "through": true,
+        "pos": "point",
+        "point": [
+          -35.0,
+          20.0,
+          60.0
+        ],
+        "axis": "Y",
+        "x": -35.0,
+        "y": 60.0
+      },
+      "op": "cut",
+      "name": "左侧壁上孔",
+      "note": "面法线固定为 1 的贯穿孔阵列成员。",
+      "feature_id": "left-wall-hole-3",
+      "relations": [],
+      "enabled": true,
+      "provenance": {
+        "diameter": "image_estimate",
+        "point": "derived",
+        "x": "derived",
+        "y": "derived"
+      }
+    },
+    {
+      "kind": "hole",
+      "params": {
+        "diameter": 12.0,
+        "through": true,
+        "pos": "point",
+        "point": [
+          35.0,
+          20.0,
+          20.0
+        ],
+        "axis": "Y",
+        "x": 35.0,
+        "y": 20.0
+      },
+      "op": "cut",
+      "name": "右侧壁下孔",
+      "note": "面法线固定为 1 的贯穿孔阵列成员。",
+      "feature_id": "right-wall-hole-1",
+      "relations": [],
+      "enabled": true,
+      "provenance": {
+        "diameter": "image_estimate",
+        "point": "derived",
+        "x": "derived",
+        "y": "derived"
+      }
+    },
+    {
+      "kind": "hole",
+      "params": {
+        "diameter": 8.0,
+        "through": true,
+        "pos": "point",
+        "point": [
+          35.0,
+          20.0,
+          40.0
+        ],
+        "axis": "Y",
+        "x": 35.0,
+        "y": 40.0
+      },
+      "op": "cut",
+      "name": "右侧壁中孔",
+      "note": "面法线固定为 1 的贯穿孔阵列成员。",
+      "feature_id": "right-wall-hole-2",
+      "relations": [],
+      "enabled": true,
+      "provenance": {
+        "diameter": "image_estimate",
+        "point": "derived",
+        "x": "derived",
+        "y": "derived"
+      }
+    },
+    {
+      "kind": "hole",
+      "params": {
+        "diameter": 12.0,
+        "through": true,
+        "pos": "point",
+        "point": [
+          35.0,
+          20.0,
+          60.0
+        ],
+        "axis": "Y",
+        "x": 35.0,
+        "y": 60.0
+      },
+      "op": "cut",
+      "name": "右侧壁上孔",
+      "note": "面法线固定为 1 的贯穿孔阵列成员。",
+      "feature_id": "right-wall-hole-3",
+      "relations": [],
+      "enabled": true,
+      "provenance": {
+        "diameter": "image_estimate",
+        "point": "derived",
+        "x": "derived",
+        "y": "derived"
+      }
+    },
+    {
+      "kind": "hole",
+      "params": {
+        "diameter": 12.0,
+        "through": true,
+        "pos": "point",
+        "point": [
+          0.0,
+          -20.0,
+          20.0
+        ],
+        "axis": "Y",
+        "x": 0.0,
+        "y": 20.0
+      },
+      "op": "cut",
+      "name": "内侧壁下孔",
+      "note": "面法线固定为 1 的贯穿孔阵列成员。",
+      "feature_id": "inner-wall-hole-1",
+      "relations": [],
+      "enabled": true,
+      "provenance": {
+        "diameter": "image_estimate",
+        "point": "derived",
+        "x": "derived",
+        "y": "derived"
+      }
+    },
+    {
+      "kind": "hole",
+      "params": {
+        "diameter": 8.0,
+        "through": true,
+        "pos": "point",
+        "point": [
+          0.0,
+          -20.0,
+          40.0
+        ],
+        "axis": "Y",
+        "x": 0.0,
+        "y": 40.0
+      },
+      "op": "cut",
+      "name": "内侧壁中孔",
+      "note": "面法线固定为 1 的贯穿孔阵列成员。",
+      "feature_id": "inner-wall-hole-2",
+      "relations": [],
+      "enabled": true,
+      "provenance": {
+        "diameter": "image_estimate",
+        "point": "derived",
+        "x": "derived",
+        "y": "derived"
+      }
+    },
+    {
+      "kind": "hole",
+      "params": {
+        "diameter": 12.0,
+        "through": true,
+        "pos": "point",
+        "point": [
+          0.0,
+          -20.0,
+          60.0
+        ],
+        "axis": "Y",
+        "x": 0.0,
+        "y": 60.0
+      },
+      "op": "cut",
+      "name": "内侧壁上孔",
+      "note": "面法线固定为 1 的贯穿孔阵列成员。",
+      "feature_id": "inner-wall-hole-3",
+      "relations": [],
+      "enabled": true,
+      "provenance": {
+        "diameter": "image_estimate",
+        "point": "derived",
+        "x": "derived",
+        "y": "derived"
+      }
+    }
+  ],
+  "exported_at": "2026-10-02 00:20:45"
+}

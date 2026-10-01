@@ -1,0 +1,19 @@
+{
+  "schema_version": 1,
+  "session_id": "inputnoop-20261002-7cce31",
+  "turns": [
+    {
+      "turn_id": "25c0b7065ab74c1391568e09056e05df",
+      "session_id": "inputnoop-20261002-7cce31",
+      "raw_user_prompt": "请根据参考图生成可编辑模型；图片没有尺寸标注，按图内比例估算并标明尺寸来源。",
+      "reference_ids": [
+        "sha256:53ed87fadf8cca869da921627e6a13c845424c6906b3de517d5cca972db94553"
+      ],
+      "created_at": "2026-10-01T16:09:14.938Z",
+      "at_epoch_ms": 1790870954938,
+      "intent": "model_target",
+      "affects_model_target": true,
+      "intent_source": "cli_rules"
+    }
+  ]
+}

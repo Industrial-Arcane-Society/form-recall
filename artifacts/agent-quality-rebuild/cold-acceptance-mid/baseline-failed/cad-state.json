@@ -1,0 +1,1177 @@
+{
+  "plan": {
+    "schema_version": "1.0",
+    "name": "U_block_with_side_holes",
+    "source_prompt": "按参考图复刻，尺寸未标注请自行估量。",
+    "units": {
+      "length": "mm",
+      "angle": "deg"
+    },
+    "coordinate_system": {
+      "type": "global_cartesian",
+      "handedness": "right",
+      "axes": [
+        "X",
+        "Y",
+        "Z"
+      ],
+      "origin": [
+        0,
+        0,
+        0
+      ]
+    },
+    "features": [
+      {
+        "id": "main_body",
+        "kind": "box",
+        "operation": "add",
+        "name": "main body",
+        "parameters": {
+          "length": 80,
+          "width": 60,
+          "height": 120,
+          "center": [
+            0,
+            0,
+            60
+          ]
+        },
+        "sources": {
+          "length": {
+            "type": "image_estimate",
+            "evidence": "overall left-right span estimated from reference image aspect ratio"
+          },
+          "width": {
+            "type": "image_estimate",
+            "evidence": "front-to-back thickness estimated from isometric foreshortening"
+          },
+          "height": {
+            "type": "image_estimate",
+            "evidence": "overall vertical span estimated from reference image"
+          },
+          "center": {
+            "type": "image_estimate",
+            "evidence": "origin placed at base center for convenience"
+          }
+        }
+      },
+      {
+        "id": "center_slot",
+        "kind": "box",
+        "operation": "cut",
+        "name": "center slot",
+        "parameters": {
+          "length": 36,
+          "width": 36,
+          "height": 120,
+          "center": [
+            0,
+            12,
+            60
+          ]
+        },
+        "sources": {
+          "length": {
+            "type": "image_estimate",
+            "evidence": "slot width visible between side walls in reference image"
+          },
+          "width": {
+            "type": "image_estimate",
+            "evidence": "slot depth from front face toward back wall"
+          },
+          "height": {
+            "type": "derived",
+            "evidence": "same as main body height"
+          },
+          "center": {
+            "type": "derived",
+            "evidence": "centered in X and Z, Y offset to cut from front face"
+          }
+        }
+      },
+      {
+        "id": "left_hole_top",
+        "kind": "hole",
+        "operation": "cut",
+        "name": "left top hole",
+        "parameters": {
+          "diameter": 16.0,
+          "through": true,
+          "pos": "point",
+          "point": [
+            -40,
+            12,
+            90
+          ],
+          "axis": "X"
+        },
+        "sources": {
+          "diameter": {
+            "type": "image_estimate",
+            "evidence": "three through holes on left side wall from reference image 图像/用户依据：孔位和孔径估计。"
+          },
+          "point": {
+            "type": "image_estimate",
+            "evidence": "hole centered on left wall thickness mid-plane (Y=12)"
+          },
+          "axis": {
+            "type": "derived",
+            "evidence": "hole axis aligned with X for left-right through hole"
+          }
+        },
+        "note": "面法线固定为 0 的贯穿孔阵列成员。"
+      },
+      {
+        "id": "left_hole_mid",
+        "kind": "hole",
+        "operation": "cut",
+        "name": "left middle hole",
+        "parameters": {
+          "diameter": 16.0,
+          "through": true,
+          "pos": "point",
+          "point": [
+            -40,
+            12,
+            60
+          ],
+          "axis": "X"
+        },
+        "sources": {
+          "diameter": {
+            "type": "image_estimate",
+            "evidence": "three through holes on left side wall from reference image 图像/用户依据：孔位和孔径估计。"
+          },
+          "point": {
+            "type": "image_estimate",
+            "evidence": "hole centered on left wall thickness mid-plane (Y=12)"
+          },
+          "axis": {
+            "type": "derived",
+            "evidence": "hole axis aligned with X for left-right through hole"
+          }
+        },
+        "note": "面法线固定为 0 的贯穿孔阵列成员。"
+      },
+      {
+        "id": "left_hole_bot",
+        "kind": "hole",
+        "operation": "cut",
+        "name": "left bottom hole",
+        "parameters": {
+          "diameter": 16.0,
+          "through": true,
+          "pos": "point",
+          "point": [
+            -40,
+            12,
+            30
+          ],
+          "axis": "X"
+        },
+        "sources": {
+          "diameter": {
+            "type": "image_estimate",
+            "evidence": "three through holes on left side wall from reference image 图像/用户依据：孔位和孔径估计。"
+          },
+          "point": {
+            "type": "image_estimate",
+            "evidence": "hole centered on left wall thickness mid-plane (Y=12)"
+          },
+          "axis": {
+            "type": "derived",
+            "evidence": "hole axis aligned with X for left-right through hole"
+          }
+        },
+        "note": "面法线固定为 0 的贯穿孔阵列成员。"
+      },
+      {
+        "id": "right_hole_top",
+        "kind": "hole",
+        "operation": "cut",
+        "name": "right top hole",
+        "parameters": {
+          "diameter": 16.0,
+          "through": true,
+          "pos": "point",
+          "point": [
+            18,
+            12,
+            90
+          ],
+          "axis": "X"
+        },
+        "sources": {
+          "diameter": {
+            "type": "image_estimate",
+            "evidence": "three through holes on right side wall from reference image 图像/用户依据：孔位和孔径估计。"
+          },
+          "point": {
+            "type": "image_estimate",
+            "evidence": "hole centered on right wall inner face at thickness mid-plane (Y=12)"
+          },
+          "axis": {
+            "type": "derived",
+            "evidence": "hole axis X positive starting from slot inner wall toward right outer face"
+          }
+        },
+        "note": "面法线固定为 0 的贯穿孔阵列成员。"
+      },
+      {
+        "id": "right_hole_mid",
+        "kind": "hole",
+        "operation": "cut",
+        "name": "right middle hole",
+        "parameters": {
+          "diameter": 16.0,
+          "through": true,
+          "pos": "point",
+          "point": [
+            18,
+            12,
+            60
+          ],
+          "axis": "X"
+        },
+        "sources": {
+          "diameter": {
+            "type": "image_estimate",
+            "evidence": "three through holes on right side wall from reference image 图像/用户依据：孔位和孔径估计。"
+          },
+          "point": {
+            "type": "image_estimate",
+            "evidence": "hole centered on right wall inner face at thickness mid-plane (Y=12)"
+          },
+          "axis": {
+            "type": "derived",
+            "evidence": "hole axis X positive starting from slot inner wall toward right outer face"
+          }
+        },
+        "note": "面法线固定为 0 的贯穿孔阵列成员。"
+      },
+      {
+        "id": "right_hole_bot",
+        "kind": "hole",
+        "operation": "cut",
+        "name": "right bottom hole",
+        "parameters": {
+          "diameter": 16.0,
+          "through": true,
+          "pos": "point",
+          "point": [
+            18,
+            12,
+            30
+          ],
+          "axis": "X"
+        },
+        "sources": {
+          "diameter": {
+            "type": "image_estimate",
+            "evidence": "three through holes on right side wall from reference image 图像/用户依据：孔位和孔径估计。"
+          },
+          "point": {
+            "type": "image_estimate",
+            "evidence": "hole centered on right wall inner face at thickness mid-plane (Y=12)"
+          },
+          "axis": {
+            "type": "derived",
+            "evidence": "hole axis X positive starting from slot inner wall toward right outer face"
+          }
+        },
+        "note": "面法线固定为 0 的贯穿孔阵列成员。"
+      }
+    ],
+    "pending_questions": []
+  },
+  "revision": 23,
+  "last_preview": null,
+  "preview_revision": null,
+  "preview_generation": 0,
+  "previews": [],
+  "visual_review": null,
+  "visual_reviews": {},
+  "unresolved_findings": [],
+  "knowledge_search": {
+    "status": "no_match",
+    "query": "按参考图复刻，尺寸未标注请自行估量。",
+    "matches": [],
+    "negative_examples": [],
+    "image_query_supported": false,
+    "visual_fallback_available": false,
+    "score_meaning": "relevance 是词面相关度排序分数，不是准确率或置信概率。",
+    "message": "当前文字描述没有达到相似检索阈值；这不代表库外不存在对应工件。",
+    "modeling_recipes": []
+  },
+  "knowledge_visual_examples": [],
+  "has_references": true,
+  "actions": [
+    {
+      "kind": "tool",
+      "tool": "cad_create_model",
+      "revision": 1,
+      "at": 1790831148.9753819,
+      "feature_id": "main_body"
+    },
+    {
+      "kind": "tool",
+      "tool": "cad_create_model",
+      "revision": 1,
+      "at": 1790831157.5538516,
+      "failed": true,
+      "error": "当前已有模型；若用户要求从头重建，请显式设置 replace=true。"
+    },
+    {
+      "kind": "tool",
+      "tool": "cad_create_model",
+      "revision": 2,
+      "at": 1790831165.3211112,
+      "feature_id": "main_body"
+    },
+    {
+      "kind": "tool",
+      "tool": "cad_add_feature",
+      "revision": 3,
+      "at": 1790831174.326575,
+      "feature_id": "center_slot"
+    },
+    {
+      "kind": "tool",
+      "tool": "cad_add_hole_array",
+      "revision": 4,
+      "at": 1790831194.6098914,
+      "feature_ids": [
+        "left_hole_top",
+        "left_hole_mid",
+        "left_hole_bot"
+      ],
+      "axis": 0,
+      "face_side": "negative",
+      "count": 3
+    },
+    {
+      "kind": "tool",
+      "tool": "cad_add_hole_array",
+      "revision": 5,
+      "at": 1790831194.6394176,
+      "feature_ids": [
+        "right_hole_top",
+        "right_hole_mid",
+        "right_hole_bot"
+      ],
+      "axis": 0,
+      "face_side": "positive",
+      "count": 3
+    },
+    {
+      "kind": "tool",
+      "tool": "cad_preview_model",
+      "revision": 5,
+      "at": 1790831200.1898105,
+      "failed": true,
+      "error": "预览失败：invalid"
+    },
+    {
+      "kind": "tool",
+      "tool": "cad_get_feature_spec",
+      "revision": 5,
+      "at": 1790831203.5229545,
+      "feature_kind": "hole"
+    },
+    {
+      "kind": "tool",
+      "tool": "cad_get_state",
+      "revision": 5,
+      "at": 1790831203.5519035
+    },
+    {
+      "kind": "tool",
+      "tool": "cad_update_feature",
+      "revision": 6,
+      "at": 1790831211.9318466,
+      "feature_id": "left_hole_top",
+      "finding_ids": []
+    },
+    {
+      "kind": "tool",
+      "tool": "cad_update_feature",
+      "revision": 7,
+      "at": 1790831223.2234204,
+      "feature_id": "left_hole_mid",
+      "finding_ids": []
+    },
+    {
+      "kind": "tool",
+      "tool": "cad_update_feature",
+      "revision": 8,
+      "at": 1790831223.2579231,
+      "feature_id": "left_hole_bot",
+      "finding_ids": []
+    },
+    {
+      "kind": "tool",
+      "tool": "cad_update_feature",
+      "revision": 9,
+      "at": 1790831223.2898996,
+      "feature_id": "right_hole_top",
+      "finding_ids": []
+    },
+    {
+      "kind": "tool",
+      "tool": "cad_update_feature",
+      "revision": 10,
+      "at": 1790831223.3210568,
+      "feature_id": "right_hole_mid",
+      "finding_ids": []
+    },
+    {
+      "kind": "tool",
+      "tool": "cad_update_feature",
+      "revision": 11,
+      "at": 1790831223.3481336,
+      "feature_id": "right_hole_bot",
+      "finding_ids": []
+    },
+    {
+      "kind": "tool",
+      "tool": "cad_preview_model",
+      "revision": 11,
+      "at": 1790831225.9353948,
+      "failed": true,
+      "error": "预览失败：特征 right_hole_top (hole) 建模失败：切除没有改变材料（刀具体未与实体相交或已位于空腔中）。"
+    },
+    {
+      "kind": "tool",
+      "tool": "cad_update_feature",
+      "revision": 12,
+      "at": 1790831240.7659283,
+      "feature_id": "right_hole_top",
+      "finding_ids": []
+    },
+    {
+      "kind": "tool",
+      "tool": "cad_update_feature",
+      "revision": 13,
+      "at": 1790831240.794361,
+      "feature_id": "right_hole_mid",
+      "finding_ids": []
+    },
+    {
+      "kind": "tool",
+      "tool": "cad_update_feature",
+      "revision": 14,
+      "at": 1790831240.8212686,
+      "feature_id": "right_hole_bot",
+      "finding_ids": []
+    },
+    {
+      "kind": "tool",
+      "tool": "cad_update_feature",
+      "revision": 15,
+      "at": 1790831261.3480072,
+      "feature_id": "right_hole_top",
+      "finding_ids": []
+    },
+    {
+      "kind": "tool",
+      "tool": "cad_update_feature",
+      "revision": 16,
+      "at": 1790831261.371069,
+      "feature_id": "right_hole_mid",
+      "finding_ids": []
+    },
+    {
+      "kind": "tool",
+      "tool": "cad_update_feature",
+      "revision": 17,
+      "at": 1790831261.39594,
+      "feature_id": "right_hole_bot",
+      "finding_ids": []
+    },
+    {
+      "kind": "tool",
+      "tool": "cad_preview_model",
+      "revision": 17,
+      "at": 1790831263.6604607,
+      "failed": true,
+      "error": "预览失败：特征 right_hole_top (hole) 建模失败：切除没有改变材料（刀具体未与实体相交或已位于空腔中）。"
+    },
+    {
+      "kind": "tool",
+      "tool": "cad_update_feature",
+      "revision": 18,
+      "at": 1790831291.5285296,
+      "feature_id": "left_hole_top",
+      "finding_ids": []
+    },
+    {
+      "kind": "tool",
+      "tool": "cad_update_feature",
+      "revision": 19,
+      "at": 1790831291.5443218,
+      "feature_id": "left_hole_mid",
+      "finding_ids": []
+    },
+    {
+      "kind": "tool",
+      "tool": "cad_update_feature",
+      "revision": 20,
+      "at": 1790831291.5572882,
+      "feature_id": "left_hole_bot",
+      "finding_ids": []
+    },
+    {
+      "kind": "tool",
+      "tool": "cad_update_feature",
+      "revision": 21,
+      "at": 1790831291.577441,
+      "feature_id": "right_hole_top",
+      "finding_ids": []
+    },
+    {
+      "kind": "tool",
+      "tool": "cad_update_feature",
+      "revision": 22,
+      "at": 1790831291.5914612,
+      "feature_id": "right_hole_mid",
+      "finding_ids": []
+    },
+    {
+      "kind": "tool",
+      "tool": "cad_update_feature",
+      "revision": 23,
+      "at": 1790831291.6119998,
+      "feature_id": "right_hole_bot",
+      "finding_ids": []
+    },
+    {
+      "kind": "tool",
+      "tool": "cad_preview_model",
+      "revision": 23,
+      "at": 1790831294.1014254,
+      "failed": true,
+      "error": "预览失败：特征 right_hole_top (hole) 建模失败：切除没有改变材料（刀具体未与实体相交或已位于空腔中）。"
+    }
+  ],
+  "output_paths": {},
+  "finished": false,
+  "finish_state": null,
+  "source_prompt": "按参考图复刻，尺寸未标注请自行估量。",
+  "reference_similarity_attempts": [],
+  "reference_similarity_error": null,
+  "reference_images": [
+    {
+      "id": "sha256:53ed87fadf8cca869da921627e6a13c845424c6906b3de517d5cca972db94553",
+      "sha256": "53ed87fadf8cca869da921627e6a13c845424c6906b3de517d5cca972db94553",
+      "filename": "codex-clipboard-c8107ca1-5b7e-4378-9db4-efd0bbe9b9a2.png",
+      "width": 494,
+      "height": 544,
+      "media_type": "image/png"
+    }
+  ],
+  "reference_similarity_review": null,
+  "reference_similarity_reviews": {},
+  "reference_similarity_history": [],
+  "finding_ledger": {},
+  "geometry_signatures": [
+    {
+      "signature": "276c4a10e430926d67762a30de515e062374bb4127130223acb6ce3e2f269f75",
+      "revision": 2
+    },
+    {
+      "signature": "ddac202cbf656698fdf911edbfa6a64a893a2cec9992090ddbff7fd24ea519dd",
+      "revision": 3
+    },
+    {
+      "signature": "7f53a92deebbfe874a330618acd03f967c378f5fddc346791393b30742880b81",
+      "revision": 4
+    },
+    {
+      "signature": "889905d2e668f329cdd87830f1160f507e3172837d9edf0d1437abf0ccab6df7",
+      "revision": 5
+    },
+    {
+      "signature": "53fe08afbaac66e2231c7a2a97fb8a2837abb31b7d8ab4f7528c12397bf942ac",
+      "revision": 6
+    },
+    {
+      "signature": "ba99d851b257a57a3bd258f1a14d46f72811389eaabc9952058de701ee5a859a",
+      "revision": 7
+    },
+    {
+      "signature": "3fefc78efa1b56854f354aa0ca0ac704976996e29efce83b47816ad776bfec99",
+      "revision": 8
+    },
+    {
+      "signature": "ebe75cbd850e8dd140c64b959d4dfa66db93adf88e87a97f88aa2e6df2a4d49b",
+      "revision": 9
+    },
+    {
+      "signature": "656afbcf5d581d7cc16741a3d865e40ca07f3b65376253289a211d4a3b85da7d",
+      "revision": 10
+    },
+    {
+      "signature": "4e1ce879ecba22e91db1d7c2ac3ee175e63434d0abcdfc7b8bd95b0f489a754f",
+      "revision": 11
+    },
+    {
+      "signature": "f224c64dc4cc0b6112c627af300b03f0f44d50b580630f006f31d0c5ed8e640a",
+      "revision": 12
+    },
+    {
+      "signature": "75f4d53b074386165534bb2f441c4df93ea1539d2b46775414e59f778c57ed50",
+      "revision": 13
+    },
+    {
+      "signature": "695bedc2494bfaffe0415875a7d7acd45fb4b9bada1952012e197b88819939bf",
+      "revision": 14
+    },
+    {
+      "signature": "9d41c6c14102e7afcf0ef18bd9c0c21bf107ccea3a4bac28a17ffaab7719b6fe",
+      "revision": 15
+    },
+    {
+      "signature": "3fb450c1f4d481d1950b803e402d53fe6ec71619a8b3a835004e8a454459adcc",
+      "revision": 16
+    },
+    {
+      "signature": "de3a7cd381a6a0575d0bcc94d858fbde75055da9ad8f5f196f905d5d317a66d0",
+      "revision": 17
+    },
+    {
+      "signature": "0997c7af61840df43da766f9fec904d61a924e9ae08d7a1bd55ccb472c04c32b",
+      "revision": 18
+    },
+    {
+      "signature": "368fd72a8c98b05146b3226797f370eae7d0a8dd8fe86f1ba6a4136f04f0b8f9",
+      "revision": 19
+    },
+    {
+      "signature": "0e414be671fd7eedc449dc4317b3588627804504cf97cbb22ea29d2cbdb65a35",
+      "revision": 20
+    },
+    {
+      "signature": "5383a6e4c3fbc08e98cfbce6cf90e90cfdafb47c3919649ee286fe7766bac178",
+      "revision": 21
+    },
+    {
+      "signature": "0b7a4400fa6d91ac76b35ad7e0593265b158e222530b6d097159fca554154495",
+      "revision": 22
+    },
+    {
+      "signature": "c03d7adf38330213aa588cd03f45cbfe2d435edea119e8b1cb693362d3ea30c0",
+      "revision": 23
+    }
+  ],
+  "geometry_mutations": [
+    {
+      "tool": "cad_create_model",
+      "feature_ids": [
+        "main_body"
+      ],
+      "finding_ids": [],
+      "before_signature": "276c4a10e430926d67762a30de515e062374bb4127130223acb6ce3e2f269f75",
+      "after_signature": "276c4a10e430926d67762a30de515e062374bb4127130223acb6ce3e2f269f75",
+      "parameter_changes": {},
+      "reversed_directions": [],
+      "revision": 2,
+      "at": 1790831165.3211112
+    },
+    {
+      "tool": "cad_add_feature",
+      "feature_ids": [
+        "center_slot"
+      ],
+      "finding_ids": [],
+      "before_signature": "276c4a10e430926d67762a30de515e062374bb4127130223acb6ce3e2f269f75",
+      "after_signature": "ddac202cbf656698fdf911edbfa6a64a893a2cec9992090ddbff7fd24ea519dd",
+      "parameter_changes": {},
+      "reversed_directions": [],
+      "revision": 3,
+      "at": 1790831174.326575
+    },
+    {
+      "tool": "cad_add_hole_array",
+      "feature_ids": [
+        "left_hole_top",
+        "left_hole_mid",
+        "left_hole_bot"
+      ],
+      "finding_ids": [],
+      "before_signature": "ddac202cbf656698fdf911edbfa6a64a893a2cec9992090ddbff7fd24ea519dd",
+      "after_signature": "7f53a92deebbfe874a330618acd03f967c378f5fddc346791393b30742880b81",
+      "parameter_changes": {},
+      "reversed_directions": [],
+      "revision": 4,
+      "at": 1790831194.6098914
+    },
+    {
+      "tool": "cad_add_hole_array",
+      "feature_ids": [
+        "right_hole_top",
+        "right_hole_mid",
+        "right_hole_bot"
+      ],
+      "finding_ids": [],
+      "before_signature": "7f53a92deebbfe874a330618acd03f967c378f5fddc346791393b30742880b81",
+      "after_signature": "889905d2e668f329cdd87830f1160f507e3172837d9edf0d1437abf0ccab6df7",
+      "parameter_changes": {},
+      "reversed_directions": [],
+      "revision": 5,
+      "at": 1790831194.6394176
+    },
+    {
+      "tool": "cad_update_feature",
+      "feature_ids": [
+        "left_hole_top"
+      ],
+      "finding_ids": [],
+      "before_signature": "889905d2e668f329cdd87830f1160f507e3172837d9edf0d1437abf0ccab6df7",
+      "after_signature": "53fe08afbaac66e2231c7a2a97fb8a2837abb31b7d8ab4f7528c12397bf942ac",
+      "parameter_changes": {
+        "axis": {
+          "before": 0,
+          "after": "X",
+          "direction": "changed"
+        }
+      },
+      "reversed_directions": [],
+      "revision": 6,
+      "at": 1790831211.9318466
+    },
+    {
+      "tool": "cad_update_feature",
+      "feature_ids": [
+        "left_hole_mid"
+      ],
+      "finding_ids": [],
+      "before_signature": "53fe08afbaac66e2231c7a2a97fb8a2837abb31b7d8ab4f7528c12397bf942ac",
+      "after_signature": "ba99d851b257a57a3bd258f1a14d46f72811389eaabc9952058de701ee5a859a",
+      "parameter_changes": {
+        "axis": {
+          "before": 0,
+          "after": "X",
+          "direction": "changed"
+        }
+      },
+      "reversed_directions": [],
+      "revision": 7,
+      "at": 1790831223.2234204
+    },
+    {
+      "tool": "cad_update_feature",
+      "feature_ids": [
+        "left_hole_bot"
+      ],
+      "finding_ids": [],
+      "before_signature": "ba99d851b257a57a3bd258f1a14d46f72811389eaabc9952058de701ee5a859a",
+      "after_signature": "3fefc78efa1b56854f354aa0ca0ac704976996e29efce83b47816ad776bfec99",
+      "parameter_changes": {
+        "axis": {
+          "before": 0,
+          "after": "X",
+          "direction": "changed"
+        }
+      },
+      "reversed_directions": [],
+      "revision": 8,
+      "at": 1790831223.2579231
+    },
+    {
+      "tool": "cad_update_feature",
+      "feature_ids": [
+        "right_hole_top"
+      ],
+      "finding_ids": [],
+      "before_signature": "3fefc78efa1b56854f354aa0ca0ac704976996e29efce83b47816ad776bfec99",
+      "after_signature": "ebe75cbd850e8dd140c64b959d4dfa66db93adf88e87a97f88aa2e6df2a4d49b",
+      "parameter_changes": {
+        "axis": {
+          "before": 0,
+          "after": "X",
+          "direction": "changed"
+        }
+      },
+      "reversed_directions": [],
+      "revision": 9,
+      "at": 1790831223.2898996
+    },
+    {
+      "tool": "cad_update_feature",
+      "feature_ids": [
+        "right_hole_mid"
+      ],
+      "finding_ids": [],
+      "before_signature": "ebe75cbd850e8dd140c64b959d4dfa66db93adf88e87a97f88aa2e6df2a4d49b",
+      "after_signature": "656afbcf5d581d7cc16741a3d865e40ca07f3b65376253289a211d4a3b85da7d",
+      "parameter_changes": {
+        "axis": {
+          "before": 0,
+          "after": "X",
+          "direction": "changed"
+        }
+      },
+      "reversed_directions": [],
+      "revision": 10,
+      "at": 1790831223.3210568
+    },
+    {
+      "tool": "cad_update_feature",
+      "feature_ids": [
+        "right_hole_bot"
+      ],
+      "finding_ids": [],
+      "before_signature": "656afbcf5d581d7cc16741a3d865e40ca07f3b65376253289a211d4a3b85da7d",
+      "after_signature": "4e1ce879ecba22e91db1d7c2ac3ee175e63434d0abcdfc7b8bd95b0f489a754f",
+      "parameter_changes": {
+        "axis": {
+          "before": 0,
+          "after": "X",
+          "direction": "changed"
+        }
+      },
+      "reversed_directions": [],
+      "revision": 11,
+      "at": 1790831223.3481336
+    },
+    {
+      "tool": "cad_update_feature",
+      "feature_ids": [
+        "right_hole_top"
+      ],
+      "finding_ids": [],
+      "before_signature": "4e1ce879ecba22e91db1d7c2ac3ee175e63434d0abcdfc7b8bd95b0f489a754f",
+      "after_signature": "f224c64dc4cc0b6112c627af300b03f0f44d50b580630f006f31d0c5ed8e640a",
+      "parameter_changes": {
+        "axis": {
+          "before": "X",
+          "after": "-X",
+          "direction": "changed"
+        }
+      },
+      "reversed_directions": [],
+      "revision": 12,
+      "at": 1790831240.7659283
+    },
+    {
+      "tool": "cad_update_feature",
+      "feature_ids": [
+        "right_hole_mid"
+      ],
+      "finding_ids": [],
+      "before_signature": "f224c64dc4cc0b6112c627af300b03f0f44d50b580630f006f31d0c5ed8e640a",
+      "after_signature": "75f4d53b074386165534bb2f441c4df93ea1539d2b46775414e59f778c57ed50",
+      "parameter_changes": {
+        "axis": {
+          "before": "X",
+          "after": "-X",
+          "direction": "changed"
+        }
+      },
+      "reversed_directions": [],
+      "revision": 13,
+      "at": 1790831240.794361
+    },
+    {
+      "tool": "cad_update_feature",
+      "feature_ids": [
+        "right_hole_bot"
+      ],
+      "finding_ids": [],
+      "before_signature": "75f4d53b074386165534bb2f441c4df93ea1539d2b46775414e59f778c57ed50",
+      "after_signature": "695bedc2494bfaffe0415875a7d7acd45fb4b9bada1952012e197b88819939bf",
+      "parameter_changes": {
+        "axis": {
+          "before": "X",
+          "after": "-X",
+          "direction": "changed"
+        }
+      },
+      "reversed_directions": [],
+      "revision": 14,
+      "at": 1790831240.8212686
+    },
+    {
+      "tool": "cad_update_feature",
+      "feature_ids": [
+        "right_hole_top"
+      ],
+      "finding_ids": [],
+      "before_signature": "695bedc2494bfaffe0415875a7d7acd45fb4b9bada1952012e197b88819939bf",
+      "after_signature": "9d41c6c14102e7afcf0ef18bd9c0c21bf107ccea3a4bac28a17ffaab7719b6fe",
+      "parameter_changes": {
+        "point": {
+          "before": [
+            40.0,
+            -18.0,
+            90.0
+          ],
+          "after": [
+            18,
+            -18,
+            90
+          ],
+          "direction": "changed"
+        },
+        "axis": {
+          "before": "-X",
+          "after": "X",
+          "direction": "changed"
+        }
+      },
+      "reversed_directions": [],
+      "revision": 15,
+      "at": 1790831261.3480072
+    },
+    {
+      "tool": "cad_update_feature",
+      "feature_ids": [
+        "right_hole_mid"
+      ],
+      "finding_ids": [],
+      "before_signature": "9d41c6c14102e7afcf0ef18bd9c0c21bf107ccea3a4bac28a17ffaab7719b6fe",
+      "after_signature": "3fb450c1f4d481d1950b803e402d53fe6ec71619a8b3a835004e8a454459adcc",
+      "parameter_changes": {
+        "point": {
+          "before": [
+            40.0,
+            -18.0,
+            60.0
+          ],
+          "after": [
+            18,
+            -18,
+            60
+          ],
+          "direction": "changed"
+        },
+        "axis": {
+          "before": "-X",
+          "after": "X",
+          "direction": "changed"
+        }
+      },
+      "reversed_directions": [],
+      "revision": 16,
+      "at": 1790831261.371069
+    },
+    {
+      "tool": "cad_update_feature",
+      "feature_ids": [
+        "right_hole_bot"
+      ],
+      "finding_ids": [],
+      "before_signature": "3fb450c1f4d481d1950b803e402d53fe6ec71619a8b3a835004e8a454459adcc",
+      "after_signature": "de3a7cd381a6a0575d0bcc94d858fbde75055da9ad8f5f196f905d5d317a66d0",
+      "parameter_changes": {
+        "point": {
+          "before": [
+            40.0,
+            -18.0,
+            30.0
+          ],
+          "after": [
+            18,
+            -18,
+            30
+          ],
+          "direction": "changed"
+        },
+        "axis": {
+          "before": "-X",
+          "after": "X",
+          "direction": "changed"
+        }
+      },
+      "reversed_directions": [],
+      "revision": 17,
+      "at": 1790831261.39594
+    },
+    {
+      "tool": "cad_update_feature",
+      "feature_ids": [
+        "left_hole_top"
+      ],
+      "finding_ids": [],
+      "before_signature": "de3a7cd381a6a0575d0bcc94d858fbde75055da9ad8f5f196f905d5d317a66d0",
+      "after_signature": "0997c7af61840df43da766f9fec904d61a924e9ae08d7a1bd55ccb472c04c32b",
+      "parameter_changes": {
+        "point": {
+          "before": [
+            -40.0,
+            -18.0,
+            90.0
+          ],
+          "after": [
+            -40,
+            12,
+            90
+          ],
+          "direction": "changed"
+        }
+      },
+      "reversed_directions": [],
+      "revision": 18,
+      "at": 1790831291.5285296
+    },
+    {
+      "tool": "cad_update_feature",
+      "feature_ids": [
+        "left_hole_mid"
+      ],
+      "finding_ids": [],
+      "before_signature": "0997c7af61840df43da766f9fec904d61a924e9ae08d7a1bd55ccb472c04c32b",
+      "after_signature": "368fd72a8c98b05146b3226797f370eae7d0a8dd8fe86f1ba6a4136f04f0b8f9",
+      "parameter_changes": {
+        "point": {
+          "before": [
+            -40.0,
+            -18.0,
+            60.0
+          ],
+          "after": [
+            -40,
+            12,
+            60
+          ],
+          "direction": "changed"
+        }
+      },
+      "reversed_directions": [],
+      "revision": 19,
+      "at": 1790831291.5443218
+    },
+    {
+      "tool": "cad_update_feature",
+      "feature_ids": [
+        "left_hole_bot"
+      ],
+      "finding_ids": [],
+      "before_signature": "368fd72a8c98b05146b3226797f370eae7d0a8dd8fe86f1ba6a4136f04f0b8f9",
+      "after_signature": "0e414be671fd7eedc449dc4317b3588627804504cf97cbb22ea29d2cbdb65a35",
+      "parameter_changes": {
+        "point": {
+          "before": [
+            -40.0,
+            -18.0,
+            30.0
+          ],
+          "after": [
+            -40,
+            12,
+            30
+          ],
+          "direction": "changed"
+        }
+      },
+      "reversed_directions": [],
+      "revision": 20,
+      "at": 1790831291.5572882
+    },
+    {
+      "tool": "cad_update_feature",
+      "feature_ids": [
+        "right_hole_top"
+      ],
+      "finding_ids": [],
+      "before_signature": "0e414be671fd7eedc449dc4317b3588627804504cf97cbb22ea29d2cbdb65a35",
+      "after_signature": "5383a6e4c3fbc08e98cfbce6cf90e90cfdafb47c3919649ee286fe7766bac178",
+      "parameter_changes": {
+        "point": {
+          "before": [
+            18,
+            -18,
+            90
+          ],
+          "after": [
+            18,
+            12,
+            90
+          ],
+          "direction": "changed"
+        }
+      },
+      "reversed_directions": [],
+      "revision": 21,
+      "at": 1790831291.577441
+    },
+    {
+      "tool": "cad_update_feature",
+      "feature_ids": [
+        "right_hole_mid"
+      ],
+      "finding_ids": [],
+      "before_signature": "5383a6e4c3fbc08e98cfbce6cf90e90cfdafb47c3919649ee286fe7766bac178",
+      "after_signature": "0b7a4400fa6d91ac76b35ad7e0593265b158e222530b6d097159fca554154495",
+      "parameter_changes": {
+        "point": {
+          "before": [
+            18,
+            -18,
+            60
+          ],
+          "after": [
+            18,
+            12,
+            60
+          ],
+          "direction": "changed"
+        }
+      },
+      "reversed_directions": [],
+      "revision": 22,
+      "at": 1790831291.5914612
+    },
+    {
+      "tool": "cad_update_feature",
+      "feature_ids": [
+        "right_hole_bot"
+      ],
+      "finding_ids": [],
+      "before_signature": "0b7a4400fa6d91ac76b35ad7e0593265b158e222530b6d097159fca554154495",
+      "after_signature": "c03d7adf38330213aa588cd03f45cbfe2d435edea119e8b1cb693362d3ea30c0",
+      "parameter_changes": {
+        "point": {
+          "before": [
+            18,
+            -18,
+            30
+          ],
+          "after": [
+            18,
+            12,
+            30
+          ],
+          "direction": "changed"
+        }
+      },
+      "reversed_directions": [],
+      "revision": 23,
+      "at": 1790831291.6119998
+    }
+  ],
+  "last_valid_candidate": null,
+  "best_evidence_candidate": null,
+  "best_candidate": null,
+  "construction_milestone": null,
+  "reference_rechecks": [],
+  "no_progress_by_signature": {},
+  "reference_manifest_error": null,
+  "user_turns": [
+    {
+      "turn_id": "a64ffbb963234faaa59a2e0ec920fcab",
+      "session_id": "cold-acceptance-mid-20261001-7f3c91d2",
+      "raw_user_prompt": "按参考图复刻，尺寸未标注请自行估量。",
+      "reference_ids": [
+        "sha256:53ed87fadf8cca869da921627e6a13c845424c6906b3de517d5cca972db94553"
+      ],
+      "intent": null,
+      "intent_source": "unclassified",
+      "affects_model_target": null,
+      "created_at": "2026-10-01T05:04:40.734Z",
+      "at_epoch_ms": 1790831080734
+    }
+  ],
+  "user_target_context_error": null
+}

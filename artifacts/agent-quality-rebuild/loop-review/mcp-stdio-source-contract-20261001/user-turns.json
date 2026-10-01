@@ -1,0 +1,1 @@
+{"session_id": "mcp-stdio-source-contract", "turns": [{"turn_id": "turn-create", "raw_user_prompt": "创建长度40毫米、宽度30毫米、高度50毫米的主体", "reference_ids": []}, {"turn_id": "turn-edit", "raw_user_prompt": "把主体长度改为55毫米，宽度改为50毫米", "reference_ids": []}]}

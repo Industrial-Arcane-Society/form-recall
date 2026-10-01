@@ -1,0 +1,417 @@
+{
+  "mode": "diagnostic_not_agent",
+  "results": [
+    {
+      "kind": "socket_head_bolt",
+      "polygon_count": 14888,
+      "attempts": [
+        {
+          "tolerance_mm": 1e-05,
+          "state": "valid",
+          "solid_count": 2,
+          "face_count": 14938,
+          "volume_mm3": 1843.6994000665416,
+          "boolean_fuse": {
+            "brep_valid": true,
+            "shape_type": "TopAbs_COMPOUND",
+            "solid_count": 1,
+            "connected_component_count": 1,
+            "shell_count": 1,
+            "closed_shell_count": 1,
+            "closed": true,
+            "edge_count": 44802,
+            "face_count": 14909,
+            "free_edge_count": 0,
+            "volume_mm3": 1843.6994000665513,
+            "bbox_mm": [
+              -6.5,
+              -6.5,
+              0.0,
+              6.5,
+              6.5,
+              32.0
+            ],
+            "self_intersection": {
+              "status": "not_checked_complexity_limit",
+              "face_count": 14909,
+              "face_limit": 2500,
+              "method": "BOPAlgo_ArgumentAnalyzer self-interference"
+            },
+            "validity_method": "BRepCheck_Analyzer",
+            "geometry_scope": "native_OCCT_BREP_only_visual_comparison_not_performed"
+          }
+        }
+      ]
+    },
+    {
+      "kind": "spoked_wheel",
+      "polygon_count": 336,
+      "attempts": [
+        {
+          "tolerance_mm": 1e-05,
+          "state": "valid",
+          "solid_count": 8,
+          "face_count": 648,
+          "volume_mm3": 10177.057122003915,
+          "boolean_fuse": {
+            "brep_valid": true,
+            "shape_type": "TopAbs_COMPOUND",
+            "solid_count": 2,
+            "connected_component_count": 2,
+            "shell_count": 2,
+            "closed_shell_count": 2,
+            "closed": true,
+            "edge_count": 2652,
+            "face_count": 804,
+            "free_edge_count": 12,
+            "volume_mm3": 9601.057122003846,
+            "bbox_mm": [
+              -30.0,
+              -30.0,
+              -4.0,
+              30.0,
+              30.0,
+              4.0
+            ],
+            "self_intersection": {
+              "status": "checked_no_intersection",
+              "face_count": 804,
+              "check_result_count": 0,
+              "check_statuses": [],
+              "method": "BOPAlgo_ArgumentAnalyzer(SelfInterMode=True, UseOBB=True)"
+            },
+            "validity_method": "BRepCheck_Analyzer",
+            "geometry_scope": "native_OCCT_BREP_only_visual_comparison_not_performed"
+          }
+        }
+      ]
+    },
+    {
+      "kind": "vbelt_pulley",
+      "polygon_count": 1536,
+      "attempts": [
+        {
+          "tolerance_mm": 1e-05,
+          "state": "failed",
+          "error": "离散特征 的 OCCT BREP 无效。"
+        },
+        {
+          "tolerance_mm": 0.0001,
+          "state": "failed",
+          "error": "离散特征 的 OCCT BREP 无效。"
+        },
+        {
+          "tolerance_mm": 0.001,
+          "state": "failed",
+          "error": "离散特征 的 OCCT BREP 无效。"
+        },
+        {
+          "tolerance_mm": 0.01,
+          "state": "failed",
+          "error": "离散特征 的 OCCT BREP 无效。"
+        }
+      ]
+    },
+    {
+      "kind": "timing_pulley",
+      "polygon_count": 736,
+      "attempts": [
+        {
+          "tolerance_mm": 1e-05,
+          "state": "valid",
+          "solid_count": 21,
+          "face_count": 1232,
+          "volume_mm3": 20564.231461447685,
+          "boolean_fuse": {
+            "brep_valid": true,
+            "shape_type": "TopAbs_COMPOUND",
+            "solid_count": 1,
+            "connected_component_count": 1,
+            "shell_count": 1,
+            "closed_shell_count": 1,
+            "closed": true,
+            "edge_count": 5088,
+            "face_count": 1432,
+            "free_edge_count": 0,
+            "volume_mm3": 20374.01640849667,
+            "bbox_mm": [
+              -25.5715,
+              -25.5715,
+              -6.0,
+              25.5715,
+              25.5715,
+              6.0
+            ],
+            "self_intersection": {
+              "status": "checked_no_intersection",
+              "face_count": 1432,
+              "check_result_count": 0,
+              "check_statuses": [],
+              "method": "BOPAlgo_ArgumentAnalyzer(SelfInterMode=True, UseOBB=True)"
+            },
+            "validity_method": "BRepCheck_Analyzer",
+            "geometry_scope": "native_OCCT_BREP_only_visual_comparison_not_performed"
+          }
+        }
+      ]
+    },
+    {
+      "kind": "worm",
+      "polygon_count": 402,
+      "attempts": [
+        {
+          "tolerance_mm": 1e-05,
+          "state": "failed",
+          "error": "离散特征 的 OCCT BREP 无效。"
+        },
+        {
+          "tolerance_mm": 0.0001,
+          "state": "failed",
+          "error": "离散特征 的 OCCT BREP 无效。"
+        },
+        {
+          "tolerance_mm": 0.001,
+          "state": "failed",
+          "error": "离散特征 的 OCCT BREP 无效。"
+        },
+        {
+          "tolerance_mm": 0.01,
+          "state": "failed",
+          "error": "离散特征 的 OCCT BREP 无效。"
+        }
+      ]
+    },
+    {
+      "kind": "crankshaft",
+      "polygon_count": 554,
+      "attempts": [
+        {
+          "tolerance_mm": 1e-05,
+          "state": "failed",
+          "error": "第 1 个 shell 未闭合（自由边 512）。"
+        },
+        {
+          "tolerance_mm": 0.0001,
+          "state": "failed",
+          "error": "第 1 个 shell 未闭合（自由边 512）。"
+        },
+        {
+          "tolerance_mm": 0.001,
+          "state": "failed",
+          "error": "第 1 个 shell 未闭合（自由边 512）。"
+        },
+        {
+          "tolerance_mm": 0.01,
+          "state": "failed",
+          "error": "第 1 个 shell 未闭合（自由边 512）。"
+        }
+      ]
+    },
+    {
+      "kind": "camshaft",
+      "polygon_count": 602,
+      "attempts": [
+        {
+          "tolerance_mm": 1e-05,
+          "state": "valid",
+          "solid_count": 5,
+          "face_count": 860,
+          "volume_mm3": 44813.933148622185,
+          "boolean_fuse": {
+            "brep_valid": true,
+            "shape_type": "TopAbs_COMPOUND",
+            "solid_count": 1,
+            "connected_component_count": 1,
+            "shell_count": 1,
+            "closed_shell_count": 1,
+            "closed": true,
+            "edge_count": 3522,
+            "face_count": 825,
+            "free_edge_count": 0,
+            "volume_mm3": 31426.354771460192,
+            "bbox_mm": [
+              -40.0,
+              -13.832602221715955,
+              -13.832602221715955,
+              40.0,
+              13.832602221715955,
+              13.832602221715955
+            ],
+            "self_intersection": {
+              "status": "checked_no_intersection",
+              "face_count": 825,
+              "check_result_count": 0,
+              "check_statuses": [],
+              "method": "BOPAlgo_ArgumentAnalyzer(SelfInterMode=True, UseOBB=True)"
+            },
+            "validity_method": "BRepCheck_Analyzer",
+            "geometry_scope": "native_OCCT_BREP_only_visual_comparison_not_performed"
+          }
+        }
+      ]
+    },
+    {
+      "kind": "impeller",
+      "polygon_count": 530,
+      "attempts": [
+        {
+          "tolerance_mm": 1e-05,
+          "state": "failed",
+          "error": "第 1 个 shell 未闭合（自由边 96）。"
+        },
+        {
+          "tolerance_mm": 0.0001,
+          "state": "failed",
+          "error": "第 1 个 shell 未闭合（自由边 96）。"
+        },
+        {
+          "tolerance_mm": 0.001,
+          "state": "failed",
+          "error": "第 1 个 shell 未闭合（自由边 96）。"
+        },
+        {
+          "tolerance_mm": 0.01,
+          "state": "failed",
+          "error": "第 1 个 shell 未闭合（自由边 96）。"
+        }
+      ]
+    },
+    {
+      "kind": "piston",
+      "polygon_count": 6406,
+      "attempts": [
+        {
+          "tolerance_mm": 1e-05,
+          "state": "failed",
+          "error": "第 35 个 shell 未闭合（自由边 124）。"
+        },
+        {
+          "tolerance_mm": 0.0001,
+          "state": "failed",
+          "error": "第 35 个 shell 未闭合（自由边 124）。"
+        },
+        {
+          "tolerance_mm": 0.001,
+          "state": "failed",
+          "error": "第 35 个 shell 未闭合（自由边 124）。"
+        },
+        {
+          "tolerance_mm": 0.01,
+          "state": "failed",
+          "error": "第 36 个 shell 未闭合（自由边 124）。"
+        }
+      ]
+    },
+    {
+      "kind": "conrod",
+      "polygon_count": 264,
+      "attempts": [
+        {
+          "tolerance_mm": 1e-05,
+          "state": "valid",
+          "solid_count": 2,
+          "face_count": 524,
+          "volume_mm3": 8123.037724046434,
+          "boolean_fuse": {
+            "brep_valid": true,
+            "shape_type": "TopAbs_COMPOUND",
+            "solid_count": 1,
+            "connected_component_count": 1,
+            "shell_count": 1,
+            "closed_shell_count": 1,
+            "closed": true,
+            "edge_count": 1668,
+            "face_count": 538,
+            "free_edge_count": 0,
+            "volume_mm3": 7712.303205033596,
+            "bbox_mm": [
+              -55.0,
+              -15.0,
+              -4.0,
+              49.0,
+              15.0,
+              4.0
+            ],
+            "self_intersection": {
+              "status": "not_checked_result_api_error",
+              "face_count": 538,
+              "method": "BOPAlgo_ArgumentAnalyzer(SelfInterMode=True, UseOBB=True)",
+              "message": "'OCP.OCP.BOPAlgo.BOPAlgo_ListOfCheckResult' object has no attribute 'Value'"
+            },
+            "validity_method": "BRepCheck_Analyzer",
+            "geometry_scope": "native_OCCT_BREP_only_visual_comparison_not_performed"
+          }
+        }
+      ]
+    },
+    {
+      "kind": "cross_joint",
+      "polygon_count": 112,
+      "attempts": [
+        {
+          "tolerance_mm": 1e-05,
+          "state": "valid",
+          "solid_count": 5,
+          "face_count": 380,
+          "volume_mm3": 10025.602474768248,
+          "boolean_fuse": {
+            "brep_valid": true,
+            "shape_type": "TopAbs_COMPOUND",
+            "solid_count": 1,
+            "connected_component_count": 1,
+            "shell_count": 1,
+            "closed_shell_count": 1,
+            "closed": true,
+            "edge_count": 1338,
+            "face_count": 376,
+            "free_edge_count": 0,
+            "volume_mm3": 10022.082481878939,
+            "bbox_mm": [
+              -25.0,
+              -25.0,
+              -6.0,
+              25.0,
+              25.0,
+              6.000000000000001
+            ],
+            "self_intersection": {
+              "status": "checked_no_intersection",
+              "face_count": 376,
+              "check_result_count": 0,
+              "check_statuses": [],
+              "method": "BOPAlgo_ArgumentAnalyzer(SelfInterMode=True, UseOBB=True)"
+            },
+            "validity_method": "BRepCheck_Analyzer",
+            "geometry_scope": "native_OCCT_BREP_only_visual_comparison_not_performed"
+          }
+        }
+      ]
+    },
+    {
+      "kind": "scroll_disc",
+      "polygon_count": 1030,
+      "attempts": [
+        {
+          "tolerance_mm": 1e-05,
+          "state": "valid",
+          "solid_count": 1,
+          "face_count": 1688,
+          "volume_mm3": 12288.031881628358
+        }
+      ]
+    },
+    {
+      "kind": "rotor",
+      "polygon_count": 178,
+      "attempts": [
+        {
+          "tolerance_mm": 1e-05,
+          "state": "valid",
+          "solid_count": 1,
+          "face_count": 292,
+          "volume_mm3": 10662.307888223671
+        }
+      ]
+    }
+  ]
+}

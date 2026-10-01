@@ -1,0 +1,21 @@
+test_auto_mode_exports_files_and_reports_skipped_features (tests.test_cadplan_sdk.CADPlanSDKTests.test_auto_mode_exports_files_and_reports_skipped_features) ... ok
+test_box_center_is_geometric_center_in_preview (tests.test_cadplan_sdk.CADPlanSDKTests.test_box_center_is_geometric_center_in_preview) ... ok
+test_centered_box_places_three_rows_of_front_through_holes_inside_solid (tests.test_cadplan_sdk.CADPlanSDKTests.test_centered_box_places_three_rows_of_front_through_holes_inside_solid) ... ok
+test_cli_validate_returns_json (tests.test_cadplan_sdk.CADPlanSDKTests.test_cli_validate_returns_json) ... ok
+test_existing_model_provenance_requires_an_explanatory_note (tests.test_cadplan_sdk.CADPlanSDKTests.test_existing_model_provenance_requires_an_explanatory_note) ... ok
+test_hole_coordinates_follow_global_axes_and_catia_sketch_axes (tests.test_cadplan_sdk.CADPlanSDKTests.test_hole_coordinates_follow_global_axes_and_catia_sketch_axes) ... ok
+test_image_estimate_requires_evidence_and_zero_dimension_is_invalid (tests.test_cadplan_sdk.CADPlanSDKTests.test_image_estimate_requires_evidence_and_zero_dimension_is_invalid) ... ok
+test_invalid_pattern_relation_feedback_shows_exact_json_shape (tests.test_cadplan_sdk.CADPlanSDKTests.test_invalid_pattern_relation_feedback_shows_exact_json_shape) ... ok
+test_json_schema_accepts_each_valid_feature_plan (tests.test_cadplan_sdk.CADPlanSDKTests.test_json_schema_accepts_each_valid_feature_plan) ... ok
+test_length_units_convert_to_document_millimetres (tests.test_cadplan_sdk.CADPlanSDKTests.test_length_units_convert_to_document_millimetres) ... ok
+test_missing_parameters_and_missing_provenance_request_confirmation (tests.test_cadplan_sdk.CADPlanSDKTests.test_missing_parameters_and_missing_provenance_request_confirmation) ... ok
+test_pattern_operation_must_match_source_and_cut_holes_as_a_cut (tests.test_cadplan_sdk.CADPlanSDKTests.test_pattern_operation_must_match_source_and_cut_holes_as_a_cut) ... ok
+test_post_build_notice_is_escaped_in_catiascript_host_script (tests.test_cadplan_sdk.CADPlanSDKTests.test_post_build_notice_is_escaped_in_catiascript_host_script) ... ok
+test_preview_writes_inspectable_front_right_top_image (tests.test_cadplan_sdk.CADPlanSDKTests.test_preview_writes_inspectable_front_right_top_image) ... ok
+test_schema_and_validation_cover_all_public_document_kinds (tests.test_cadplan_sdk.CADPlanSDKTests.test_schema_and_validation_cover_all_public_document_kinds) ... ok
+test_strict_mode_blocks_before_catia (tests.test_cadplan_sdk.CADPlanSDKTests.test_strict_mode_blocks_before_catia) ... ok
+
+----------------------------------------------------------------------
+Ran 16 tests in 5.934s
+
+OK

@@ -1,0 +1,313 @@
+{
+  "format": "ai-modeler",
+  "version": 1,
+  "name": "nine-hole-recess-block",
+  "source_prompt": "用户参考图复刻：文件名提示为 nine-hole-recess-iso，按图像比例估算名义尺寸",
+  "features": [
+    {
+      "kind": "box",
+      "params": {
+        "length": 120.0,
+        "width": 30.0,
+        "height": 90.0,
+        "center": [
+          0.0,
+          0.0,
+          45.0
+        ],
+        "base": false
+      },
+      "op": "add",
+      "name": "基体矩形块",
+      "note": "",
+      "feature_id": "base-block",
+      "relations": [],
+      "enabled": true,
+      "provenance": {
+        "length": "image_estimate",
+        "width": "image_estimate",
+        "height": "image_estimate",
+        "center": "derived"
+      }
+    },
+    {
+      "kind": "box",
+      "params": {
+        "length": 100.0,
+        "width": 10.001,
+        "height": 70.0,
+        "center": [
+          0.0,
+          10.000499999999999,
+          45.0
+        ],
+        "base": false
+      },
+      "op": "cut",
+      "name": "正面矩形凹槽",
+      "note": "通过统一 CADPlan 坐标语义创建的面内退台。",
+      "feature_id": "front-recess",
+      "relations": [],
+      "enabled": true,
+      "provenance": {
+        "length": "image_estimate",
+        "width": "derived",
+        "height": "image_estimate",
+        "center": "derived"
+      }
+    },
+    {
+      "kind": "hole",
+      "params": {
+        "diameter": 8.0,
+        "through": true,
+        "pos": "point",
+        "point": [
+          -30.0,
+          15.0,
+          25.0
+        ],
+        "axis": "Y",
+        "x": -30.0,
+        "y": 25.0
+      },
+      "op": "cut",
+      "name": "hole-1",
+      "note": "面法线固定为 1 的贯穿孔阵列成员。",
+      "feature_id": "hole-1",
+      "relations": [],
+      "enabled": true,
+      "provenance": {
+        "diameter": "image_estimate",
+        "point": "derived",
+        "x": "derived",
+        "y": "derived"
+      }
+    },
+    {
+      "kind": "hole",
+      "params": {
+        "diameter": 8.0,
+        "through": true,
+        "pos": "point",
+        "point": [
+          0.0,
+          15.0,
+          25.0
+        ],
+        "axis": "Y",
+        "x": 0.0,
+        "y": 25.0
+      },
+      "op": "cut",
+      "name": "hole-2",
+      "note": "面法线固定为 1 的贯穿孔阵列成员。",
+      "feature_id": "hole-2",
+      "relations": [],
+      "enabled": true,
+      "provenance": {
+        "diameter": "image_estimate",
+        "point": "derived",
+        "x": "derived",
+        "y": "derived"
+      }
+    },
+    {
+      "kind": "hole",
+      "params": {
+        "diameter": 8.0,
+        "through": true,
+        "pos": "point",
+        "point": [
+          30.0,
+          15.0,
+          25.0
+        ],
+        "axis": "Y",
+        "x": 30.0,
+        "y": 25.0
+      },
+      "op": "cut",
+      "name": "hole-3",
+      "note": "面法线固定为 1 的贯穿孔阵列成员。",
+      "feature_id": "hole-3",
+      "relations": [],
+      "enabled": true,
+      "provenance": {
+        "diameter": "image_estimate",
+        "point": "derived",
+        "x": "derived",
+        "y": "derived"
+      }
+    },
+    {
+      "kind": "hole",
+      "params": {
+        "diameter": 8.0,
+        "through": true,
+        "pos": "point",
+        "point": [
+          -30.0,
+          15.0,
+          45.0
+        ],
+        "axis": "Y",
+        "x": -30.0,
+        "y": 45.0
+      },
+      "op": "cut",
+      "name": "hole-4",
+      "note": "面法线固定为 1 的贯穿孔阵列成员。",
+      "feature_id": "hole-4",
+      "relations": [],
+      "enabled": true,
+      "provenance": {
+        "diameter": "image_estimate",
+        "point": "derived",
+        "x": "derived",
+        "y": "derived"
+      }
+    },
+    {
+      "kind": "hole",
+      "params": {
+        "diameter": 8.0,
+        "through": true,
+        "pos": "point",
+        "point": [
+          0.0,
+          15.0,
+          45.0
+        ],
+        "axis": "Y",
+        "x": 0.0,
+        "y": 45.0
+      },
+      "op": "cut",
+      "name": "hole-5",
+      "note": "面法线固定为 1 的贯穿孔阵列成员。",
+      "feature_id": "hole-5",
+      "relations": [],
+      "enabled": true,
+      "provenance": {
+        "diameter": "image_estimate",
+        "point": "derived",
+        "x": "derived",
+        "y": "derived"
+      }
+    },
+    {
+      "kind": "hole",
+      "params": {
+        "diameter": 8.0,
+        "through": true,
+        "pos": "point",
+        "point": [
+          30.0,
+          15.0,
+          45.0
+        ],
+        "axis": "Y",
+        "x": 30.0,
+        "y": 45.0
+      },
+      "op": "cut",
+      "name": "hole-6",
+      "note": "面法线固定为 1 的贯穿孔阵列成员。",
+      "feature_id": "hole-6",
+      "relations": [],
+      "enabled": true,
+      "provenance": {
+        "diameter": "image_estimate",
+        "point": "derived",
+        "x": "derived",
+        "y": "derived"
+      }
+    },
+    {
+      "kind": "hole",
+      "params": {
+        "diameter": 8.0,
+        "through": true,
+        "pos": "point",
+        "point": [
+          -30.0,
+          15.0,
+          65.0
+        ],
+        "axis": "Y",
+        "x": -30.0,
+        "y": 65.0
+      },
+      "op": "cut",
+      "name": "hole-7",
+      "note": "面法线固定为 1 的贯穿孔阵列成员。",
+      "feature_id": "hole-7",
+      "relations": [],
+      "enabled": true,
+      "provenance": {
+        "diameter": "image_estimate",
+        "point": "derived",
+        "x": "derived",
+        "y": "derived"
+      }
+    },
+    {
+      "kind": "hole",
+      "params": {
+        "diameter": 8.0,
+        "through": true,
+        "pos": "point",
+        "point": [
+          0.0,
+          15.0,
+          65.0
+        ],
+        "axis": "Y",
+        "x": 0.0,
+        "y": 65.0
+      },
+      "op": "cut",
+      "name": "hole-8",
+      "note": "面法线固定为 1 的贯穿孔阵列成员。",
+      "feature_id": "hole-8",
+      "relations": [],
+      "enabled": true,
+      "provenance": {
+        "diameter": "image_estimate",
+        "point": "derived",
+        "x": "derived",
+        "y": "derived"
+      }
+    },
+    {
+      "kind": "hole",
+      "params": {
+        "diameter": 8.0,
+        "through": true,
+        "pos": "point",
+        "point": [
+          30.0,
+          15.0,
+          65.0
+        ],
+        "axis": "Y",
+        "x": 30.0,
+        "y": 65.0
+      },
+      "op": "cut",
+      "name": "hole-9",
+      "note": "面法线固定为 1 的贯穿孔阵列成员。",
+      "feature_id": "hole-9",
+      "relations": [],
+      "enabled": true,
+      "provenance": {
+        "diameter": "image_estimate",
+        "point": "derived",
+        "x": "derived",
+        "y": "derived"
+      }
+    }
+  ],
+  "exported_at": "2026-10-01 21:13:50"
+}

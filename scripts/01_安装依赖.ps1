@@ -1,4 +1,4 @@
-# 01 安装依赖（可选；核心功能不需要任何第三方库）
+# 01 安装 AI Modeler 依赖。Agent/CADPlan 的本地实体建模需要 OCCT BREP。
 # 用法：powershell -ExecutionPolicy Bypass -File scripts\01_安装依赖.ps1
 $ErrorActionPreference = "Stop"
 $root = Split-Path -Parent $PSScriptRoot
@@ -16,17 +16,21 @@ Write-Host "`n== DeepSeek Harness Agent SDK（多模态工具循环）==" -Foreg
 python -m pip install --no-input --pre "deepseek-harness-sdk==0.1.5rc1"
 python -c 'import deepseek_harness; print("DeepSeek Harness SDK 可用:", deepseek_harness.__file__)'
 
-Write-Host "`n== OpenCASCADE（可选，多孔/复杂件更快更准）==" -ForegroundColor Cyan
-if (Test-Path "tools\fetch_ocp_wheel.py") {
-    python tools\fetch_ocp_wheel.py
-    $whl = Get-ChildItem "_wheels" -Filter "cadquery_ocp*.whl" -ErrorAction SilentlyContinue | Select-Object -First 1
-    if ($whl) {
-        python -m pip install --no-input --no-index --no-deps --find-links "_wheels" cadquery-ocp-proxy cadquery-ocp
-        $vtk = Get-ChildItem "_wheels" -Filter "vtk-*.whl" -ErrorAction SilentlyContinue | Select-Object -First 1
-        if ($vtk) { python -m pip install --no-input --no-index --no-deps $vtk.FullName }
-    }
-}
-python -c "import importlib.util as u; print('OCP 可用:', bool(u.find_spec('OCP')))"
+Write-Host "`n== DeepSeek Harness DSH 0.2.0-rc.2 runtime（Cordis Agent）==" -ForegroundColor Cyan
+$dshRuntimeRoot = Join-Path $env:LOCALAPPDATA "AI Modeler\dsh-cli"
+npm install --prefix $dshRuntimeRoot --no-audit --no-fund "@deepseek-ai/dsh@0.2.0-rc.2"
+if ($LASTEXITCODE -ne 0) { throw "DSH 0.2.0-rc.2 runtime 安装失败。" }
+$dshCli = Join-Path $dshRuntimeRoot "node_modules\@deepseek-ai\dsh\lib\bin.js"
+node $dshCli --version
+if ($LASTEXITCODE -ne 0) { throw "无法启动已安装的 DSH 0.2.0-rc.2 runtime。" }
+
+Write-Host "`n== OpenCASCADE BREP（CADPlan 与 DSH 建模必需）==" -ForegroundColor Cyan
+Write-Host "安装目标解释器："
+python -c "import sys; print(sys.executable)"
+python -m pip install --no-input -r requirements-geometry.txt
+if ($LASTEXITCODE -ne 0) { throw "OpenCASCADE 安装失败；已停止，Agent CADPlan 不会退回 BSP 网格。" }
+python -c "import importlib.metadata as m; from ai_modeler.core.geometry import occ_kernel as k; assert k.available(), k.status(); print('BREP kernel:', k.status()); print('runtime:', __import__('sys').executable); assert m.version('cadquery-ocp-novtk') == '7.9.3.1.1'"
+if ($LASTEXITCODE -ne 0) { throw "当前 Python 未能导入指定版本的 OCCT；请确认应用也由上面的同一解释器启动。" }
 
 Write-Host "`n== 自检 ==" -ForegroundColor Cyan
 python -m ai_modeler --selftest

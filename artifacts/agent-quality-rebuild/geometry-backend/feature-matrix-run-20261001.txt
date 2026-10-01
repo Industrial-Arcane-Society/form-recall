@@ -1,0 +1,49 @@
+starting box
+done box passed
+starting cylinder
+done cylinder passed
+starting socket_head_bolt
+done socket_head_bolt passed
+starting sphere
+done sphere passed
+starting prism
+done prism passed
+starting revolve
+done revolve passed
+starting gear
+done gear passed
+starting loft
+done loft passed
+starting hole
+done hole passed
+starting pocket
+done pocket passed
+starting pattern
+done pattern passed
+starting helix
+done helix passed
+starting spoked_wheel
+done spoked_wheel passed
+starting vbelt_pulley
+done vbelt_pulley passed
+starting timing_pulley
+done timing_pulley passed
+starting worm
+done worm passed
+starting helical_gear
+done helical_gear passed
+starting bevel_gear
+done bevel_gear passed
+starting crankshaft
+done crankshaft build_failed
+starting camshaft
+done camshaft passed
+starting impeller
+done impeller build_failed
+starting piston
+done piston build_failed
+starting conrod
+done conrod passed
+starting cross_joint
+done cross_joint passed
+starting scroll_disc

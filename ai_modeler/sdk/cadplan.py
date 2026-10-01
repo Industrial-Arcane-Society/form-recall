@@ -90,9 +90,8 @@ FEATURE_SPECS = {
                    "闭合多边形草图加凸台；当前仅支持 Z 轴。",
                    ("profile", "height", "center", "axis")),
     "revolve": _spec(("profile", "angle"), "approximate",
-                     "本地预览按闭合[半径,轴向坐标]轮廓绕轴生成；CATIA 映射用多层圆盘近似。"
-                     "完整同轴主体优先作为第一个 revolve 特征创建；在已有实体后添加 revolve，"
-                     "当前几何核的布尔合并可能丢失先前几何。",
+                     "本地 OCCT BREP 按闭合[半径,轴向坐标]轮廓精确回转，并将新增回转体与已有实体做布尔合并；"
+                     "CATIA 导出器仍用多层圆盘近似，非 CATIA 原生回转特征。",
                      ("profile", "angle", "center", "axis", "segments")),
     "gear": _spec(("teeth", "module", "height"), "exact",
                   "齿廓转换为多边形草图并拉伸；当前仅支持 Z 轴。",
@@ -102,12 +101,13 @@ FEATURE_SPECS = {
                   ("root_chord", "tip_chord", "span", "thickness", "camber", "camber_pos",
                    "twist", "sweep", "sections", "points", "rotate", "translate")),
     "hole": _spec(("diameter", "through", "pos"), "exact",
-                  "圆形凹槽；through=true 时按当前零件包围盒生成贯穿深度。",
+                  "圆形切除；through=true 时按当前零件包围盒生成贯穿深度。盲孔可用 entry_point 与 direction 显式指定入口点和沿全局轴的切入方向；未指定时沿用正轴端面默认语义。",
                   ("diameter", "through", "pos", "point", "x", "y", "count", "pcd",
-                   "phase", "depth", "margin", "axis", "segments")),
+                   "phase", "depth", "margin", "axis", "segments", "entry_point",
+                   "direction")),
     "pocket": _spec(("length", "width", "depth"), "exact",
                     "矩形/圆角矩形凹槽；当前仅支持 Z 轴。",
-                    ("length", "width", "depth", "x", "y", "axis", "corner", "corner_mode")),
+                    ("length", "width", "depth", "x", "y", "axis", "side", "corner", "corner_mode")),
     "pattern": _spec(("mode", "count"), "exact",
                      "转换为显式复制的 CATIA 操作；relations 示例："
                      "[{\"type\":\"pattern_source\",\"feature_id\":\"紧邻前一特征的 id\"}]。"
@@ -191,7 +191,7 @@ _LENGTH_KEYS = {
     "root_chord", "tip_chord", "sweep", "groove_depth", "outer_d", "wall_t", "thickness",
     "module", "spoke_w", "blade_t", "x", "y", "z",
 }
-_LENGTH_ARRAY_KEYS = {"center", "center2", "translate", "step", "point", "profile"}
+_LENGTH_ARRAY_KEYS = {"center", "center2", "translate", "step", "point", "entry_point", "profile"}
 _ANGLE_KEYS = {"angle", "phase", "twist", "twist_deg", "helix_deg", "cone_deg", "lobe_deg"}
 _DIMENSIONLESS_KEYS = {"turns", "taper", "taper_start", "camber", "camber_pos"}
 _NONNEGATIVE_KEYS = {"corner", "bore_d", "groove_depth", "sweep", "lift"}
@@ -202,7 +202,7 @@ _BOOLEAN_KEYS = {"base", "through", "full"}
 _NUMERIC_SCALAR_KEYS = ((_LENGTH_KEYS | _ANGLE_KEYS | _DIMENSIONLESS_KEYS | _INTEGER_KEYS)
                         - _BOOLEAN_KEYS)
 _STRING_KEYS = {"axis", "corner_mode", "mode", "pos", "groove_type", "tooth_type",
-                "offset_mode"}
+                "direction", "offset_mode", "side"}
 _ENUMS = {
     "axis": {"X", "Y", "Z"},
     "corner_mode": {"fillet", "chamfer"},
@@ -211,6 +211,8 @@ _ENUMS = {
     "groove_type": {"Y", "Z", "A", "B", "C", "D", "E", "SPZ", "SPA", "SPB", "SPC"},
     "tooth_type": {"MXL", "XL", "L", "H", "XH", "XXH", "T2.5", "T5", "T10",
                    "T20", "3M", "5M", "8M", "14M"},
+    "side": {"positive", "negative"},
+    "direction": {"positive", "negative"},
 }
 
 
@@ -226,6 +228,38 @@ def support_matrix() -> Dict[str, Dict[str, str]]:
     }
 
 
+def geometry_backend_support_matrix() -> Dict[str, Dict[str, str]]:
+    """Describe local geometry execution separately from CATIA translation."""
+    from ai_modeler.core.geometry import occ_kernel
+    return {
+        kind: {"status": status, "reason": reason,
+               "backend": "OCCT BREP" if occ_kernel.available() else "unavailable",
+               "runtime_available": str(bool(occ_kernel.available())).lower()}
+        for kind, (status, reason) in occ_kernel.GEOMETRY_SUPPORT.items()
+        if kind in FEATURE_SPECS
+    }
+
+
+def _geometry_backend_status(feature: Mapping[str, Any]) -> Dict[str, str]:
+    from ai_modeler.core.geometry import occ_kernel
+    kind = str(feature.get("kind") or "")
+    params = feature.get("parameters") or {}
+    status, reason = occ_kernel.GEOMETRY_SUPPORT.get(
+        kind, ("unavailable", "此特征没有本地 BREP 执行映射。"))
+    if kind == "box" and float(params.get("corner", 0.0) or 0.0) > 0:
+        status, reason = "approximate", "圆角/倒角来自离散轮廓，主体由 OCCT 棱柱生成。"
+    if kind == "pocket" and float(params.get("corner", 0.0) or 0.0) > 0:
+        status, reason = "approximate", "圆角/倒角轮廓已离散后执行 OCCT BREP 切除。"
+    if kind == "pattern" and not any(
+            row.get("type") == "pattern_source" for row in feature.get("relations", [])
+            if isinstance(row, dict)):
+        status, reason = "unavailable", "CADPlan pattern 必须声明唯一 pattern_source 关系。"
+    if not occ_kernel.available():
+        status, reason = "unavailable", "运行桌面程序的 Python 未安装 OpenCASCADE BREP 依赖。"
+    return {"feature_id": str(feature.get("id", "")), "kind": kind,
+            "status": status, "reason": reason, "backend": "occt_brep"}
+
+
 def _feature_status(feature: Mapping[str, Any]) -> str:
     kind = feature.get("kind")
     params = feature.get("parameters") or {}
@@ -239,6 +273,8 @@ def _feature_status(feature: Mapping[str, Any]) -> str:
         return spec["status"]
     axis = str(params.get("axis", "Z")).upper()
     if kind in {"box", "prism", "gear", "pocket", "pattern"} and axis != "Z":
+        return "unsupported"
+    if kind == "pocket" and str(params.get("side", "positive")).lower() == "negative":
         return "unsupported"
     if kind == "pattern" and params.get("mode") == "circular" and axis != "Z":
         return "unsupported"
@@ -260,6 +296,8 @@ def _feature_reason(feature: Mapping[str, Any], status: str) -> str:
     base_status = FEATURE_SPECS[kind]["status"]
     if status == "unsupported" and kind not in {"helix", "shell"} and axis != "Z":
         return "%s 轴上的该特征当前不能由 CATIA 转换器可靠表达。" % axis
+    if kind == "pocket" and str(params.get("side", "positive")).lower() == "negative":
+        return "本地 BREP 支持从负轴面切槽；当前 CATIA 转换器只表达正轴面凹槽。"
     if kind == "cylinder" and status == "approximate":
         return "圆锥台以多层圆盘近似。"
     if kind == "cylinder" and status == "unsupported":
@@ -359,6 +397,7 @@ def validate_plan(plan: Any) -> Dict[str, Any]:
     errors: List[Dict[str, str]] = []
     confirmations: List[Dict[str, str]] = []
     warnings: List[Dict[str, Any]] = []
+    geometry_support: List[Dict[str, str]] = []
     allowed_top = {"schema_version", "name", "source_prompt", "units",
                    "coordinate_system", "features", "pending_questions"}
     for key in data:
@@ -515,7 +554,7 @@ def validate_plan(plan: Any) -> Dict[str, Any]:
         if "center" in params and not _valid_vec(params["center"], 3):
             errors.append({"code": "invalid_vector", "path": path + ".parameters.center",
                            "message": "center 必须是三个有限数值 [x,y,z]。"})
-        for key in ("point", "step", "translate", "center2"):
+        for key in ("point", "entry_point", "step", "translate", "center2"):
             if key in params and not _valid_vec(params[key], 3):
                 errors.append({"code": "invalid_vector", "path": path + ".parameters." + key,
                                "message": key + " 必须是三个有限数值 [x,y,z]。"})
@@ -537,6 +576,48 @@ def validate_plan(plan: Any) -> Dict[str, Any]:
             if pos == "pcd" and isinstance(params.get("count"), int) and params.get("count") < 2:
                 errors.append({"code": "invalid_hole_pattern", "path": path + ".parameters.count",
                                "message": "PCD 孔数至少为 2。"})
+            has_entry = "entry_point" in params
+            has_direction = "direction" in params
+            if has_entry != has_direction:
+                errors.append({"code": "incomplete_hole_entry", "path": path + ".parameters",
+                               "message": "显式盲孔入口必须同时提供 entry_point 与 direction。"})
+            if (has_entry or has_direction) and params.get("through") is not False:
+                errors.append({"code": "hole_entry_requires_blind", "path": path + ".parameters",
+                               "message": "entry_point/direction 只适用于 through=false 的盲孔。"})
+            if (has_entry and has_direction and pos != "point"):
+                errors.append({"code": "hole_entry_requires_point", "path": path + ".parameters.pos",
+                               "message": "显式盲孔入口要求 pos=point，以便核对入口与孔轴位置。"})
+            if (has_entry and _valid_vec(params.get("entry_point"), 3)
+                    and _valid_vec(params.get("point"), 3)):
+                axis = str(params.get("axis", "Z")).upper()
+                plane = {"X": (1, 2), "Y": (0, 2), "Z": (0, 1)}.get(axis)
+                if plane and any(abs(float(params["entry_point"][i]) -
+                                     float(params["point"][i])) > 1e-6 for i in plane):
+                    errors.append({"code": "hole_entry_point_mismatch",
+                                   "path": path + ".parameters.entry_point",
+                                   "message": "entry_point 必须与 point 位于同一孔轴线上；两者的轴法平面坐标必须一致。"})
+        if (kind == "vbelt_pulley" and (params.get("groove_type") or params.get("outer_d"))
+                and all(isinstance(params.get(key), (int, float))
+                        and not isinstance(params.get(key), bool)
+                        for key in ("pitch_d", "grooves", "height"))):
+            try:
+                from ai_modeler.parts import std_pulley
+                pulley_spec = std_pulley.spec(
+                    float(params["pitch_d"]), int(params["grooves"]),
+                    params.get("groove_type"), float(params["height"]),
+                    float(params.get("bore_d", 0.0) or 0.0), keep_width=True)
+                min_width = ((pulley_spec["grooves"] - 1) *
+                             max(pulley_spec["pitch_e"], pulley_spec["root_w"] + 0.5)
+                             + pulley_spec["root_w"] + 0.5)
+                if float(params["height"]) + 1e-8 < min_width:
+                    errors.append({
+                        "code": "vbelt_width_below_profile_minimum",
+                        "path": path + ".parameters.height",
+                        "message": ("输入轮宽 %.6g mm 无法容纳 %d 个标准 V 槽；无自交剖面的最小轮宽为 %.6g mm。"
+                                    % (float(params["height"]), pulley_spec["grooves"], min_width)),
+                    })
+            except (TypeError, ValueError, KeyError):
+                pass
         if kind == "pattern":
             mode = params.get("mode")
             if mode not in {"linear", "circular"}:
@@ -647,6 +728,14 @@ def validate_plan(plan: Any) -> Dict[str, Any]:
         reason = _feature_reason(feature, status)
         support.append({"feature_id": fid, "kind": kind, "status": status,
                         "reason": reason})
+        geometry_row = _geometry_backend_status(feature)
+        geometry_support.append(geometry_row)
+        if geometry_row["status"] == "approximate":
+            warnings.append({"code": "LOCAL_BREP_APPROXIMATION", "feature_id": fid,
+                             "kind": kind, "message": geometry_row["reason"]})
+        elif geometry_row["status"] == "unavailable":
+            warnings.append({"code": "LOCAL_BREP_UNAVAILABLE", "feature_id": fid,
+                             "kind": kind, "message": geometry_row["reason"]})
         if status == "approximate":
             warnings.append({"code": "CATIA_APPROXIMATION", "feature_id": fid,
                              "kind": kind, "message": reason})
@@ -671,6 +760,7 @@ def validate_plan(plan: Any) -> Dict[str, Any]:
         "errors": errors,
         "confirmations": confirmations,
         "support": support,
+        "geometry_support": geometry_support,
         "warnings": warnings,
         "schema_version": CADPLAN_SCHEMA_VERSION,
     }
@@ -707,8 +797,9 @@ def _to_document(plan: Mapping[str, Any]) -> Tuple[Document, Dict[str, Dict[str,
                 params[key] = [value[0], float(value[1]) * angle_factor]
             else:
                 params[key] = copy.deepcopy(value)
-        # CADPlan positions are always global XYZ. Document's hole primitive
-        # expects the two in-plane coordinates in x/y, projected by the axis.
+        # `point` keeps its legacy global XYZ centerline-point meaning and is
+        # projected to the axis plane. `entry_point` is separate: it fixes the
+        # opening location for an explicitly directed blind hole.
         if item["kind"] == "hole" and params.get("pos") == "point":
             x, y, z = params["point"]
             axis = str(params.get("axis", "Z")).upper()
@@ -722,13 +813,16 @@ def _to_document(plan: Mapping[str, Any]) -> Tuple[Document, Dict[str, Dict[str,
             params["base"] = False
         feature = Feature(item["kind"], params,
                           CUT if item["operation"] == CUT else ADD,
-                          item.get("name", ""), item.get("note", ""))
+                          item.get("name", ""), item.get("note", ""),
+                          item.get("id"), item.get("relations", []))
         source_map = item.get("sources") or {}
         provenance = {key: source.get("type", "unknown")
                       for key, source in source_map.items() if isinstance(source, dict)}
         if item["kind"] == "hole" and "point" in source_map:
             source_type = source_map["point"].get("type", "unknown")
             provenance.update({"x": source_type, "y": source_type})
+        if item["kind"] == "hole" and "entry_point" in source_map:
+            provenance["entry_point"] = source_map["entry_point"].get("type", "unknown")
         feature.set_provenance(provenance)
         doc.add(feature)
         manifest[item["id"]] = {
@@ -795,8 +889,131 @@ def _ray_surface_crossings(triangles, point, axis):
     return len(hits)
 
 
-def _local_geometry_checks(body, size, feature_manifest, length_factor=1.0):
+def _local_geometry_checks(body, size, feature_manifest, length_factor=1.0,
+                           brep_report=None):
     """Report deterministic mesh facts without claiming CATIA verification."""
+    if brep_report is not None:
+        intent_feature_ids = {
+            str(intent.get("feature_id"))
+            for item in (brep_report.get("feature_results") or [])
+            for intent in (item.get("cylindrical_cut_intents") or [])
+            if intent.get("feature_id") is not None
+        }
+        intent_feature_ids.update(
+            str(row.get("feature_id")) for row in (brep_report.get("hole_instances") or [])
+            if row.get("feature_id") is not None)
+        inventory = [
+            {"feature_id": feature_id, "kind": feature.get("kind"),
+             "operation": feature.get("operation"),
+             "parameters": feature.get("parameters"),
+             "hole_intent_source": ("declared_hole" if feature.get("kind") == "hole"
+                                    else "inferred_from_cylindrical_cut_geometry")}
+            for feature_id, feature in feature_manifest.items()
+            if feature.get("kind") == "hole" or str(feature_id) in intent_feature_ids
+        ]
+        hole_instances = copy.deepcopy(brep_report.get("hole_instances") or [])
+        unverified_cut_intents = copy.deepcopy(
+            brep_report.get("unverified_cut_intents") or [])
+        size_values = list(size) if size else None
+        invalid_bbox = (not size_values or len(size_values) != 3
+                        or any(not math.isfinite(float(v)) or float(v) <= 0
+                               for v in size_values))
+        self_check = brep_report.get("self_intersection") or {}
+        self_state = self_check.get("status")
+        feature_results = list(brep_report.get("feature_results") or [])
+        skipped_or_noop = any(row.get("state") in {"skipped", "no_op"}
+                              for row in feature_results)
+        valid = bool(brep_report.get("brep_valid"))
+        closed = bool(brep_report.get("closed"))
+        free_edges = brep_report.get("free_edge_count")
+        solid_count = int(brep_report.get("solid_count") or 0)
+        expected_hole_instances = int(
+            brep_report.get("active_hole_instance_count",
+                            brep_report.get("planned_hole_instance_count", len(hole_instances))) or 0)
+        active_hole_instances = [row for row in hole_instances
+                                 if row.get("status") != "superseded"]
+        holes_complete = (
+            len(active_hole_instances) == expected_hole_instances
+            and not unverified_cut_intents
+            and all(row.get("status") in {"verified_open", "verified_blind",
+                                           "verified_counterbore", "verified_blind_segment"}
+                    for row in active_hole_instances))
+        failed_hole_instances = [
+            row for row in active_hole_instances
+            if row.get("status") in {"blocked", "opening_clipped", "diameter_mismatch",
+                                      "no_cylindrical_wall", "depth_mismatch"}]
+        volume = brep_report.get("volume_mm3")
+        if (not valid or not closed or free_edges not in (0, None)
+                or brep_report.get("failed_feature_id")
+                or invalid_bbox or solid_count != 1
+                or failed_hole_instances
+                or volume is None or not math.isfinite(float(volume))
+                or float(volume) <= 0):
+            state = "failed"
+        elif self_state in {"self_intersection", "failed"}:
+            state = "failed"
+        elif (free_edges is None or not holes_complete or skipped_or_noop
+              or self_state not in {"checked_no_intersection", "not_applicable"}):
+            state = "needs_review"
+        else:
+            state = "passed"
+        image_estimates = []
+        for feature_id, feature in feature_manifest.items():
+            for parameter, source in (feature.get("sources") or {}).items():
+                if isinstance(source, dict) and source.get("type") == "image_estimate":
+                    image_estimates.append({
+                        "feature_id": feature_id, "parameter": parameter,
+                        "value": (feature.get("parameters") or {}).get(parameter),
+                        "evidence": source.get("evidence"),
+                        "visual_measurement": "not_performed_by_geometry_backend",
+                    })
+        ratios = ({"front_width_height": size_values[0] / size_values[2],
+                   "depth_height": size_values[1] / size_values[2],
+                   "top_width_depth": size_values[0] / size_values[1]}
+                  if not invalid_bbox else None)
+        return {
+            **copy.deepcopy(brep_report),
+            "state": state,
+            "geometry_state": state,
+            "source": "OpenCASCADE native BREP; preview mesh is display-only",
+            "bbox_size_mm": size_values,
+            "bbox_ratios_from_brep": ratios,
+            "bbox_ratios_from_mesh": ratios,
+            "feature_count_from_plan": len(feature_manifest),
+            "feature_ids_from_plan": list(feature_manifest),
+            "hole_features_from_plan": inventory,
+            "hole_feature_count_from_plan": len(inventory),
+            "expected_hole_instance_count": expected_hole_instances,
+            "hole_instance_count": len(hole_instances),
+            "active_hole_instance_count": len(active_hole_instances),
+            "superseded_hole_instance_count": len(hole_instances) - len(active_hole_instances),
+            "hole_instances": hole_instances,
+            "through_hole_checks": hole_instances,
+            # Retained as a compatibility alias for existing MCP consumers.
+            "through_hole_mesh_checks": hole_instances,
+            "hole_measurement_complete": holes_complete,
+            "hole_measurement_state": (
+                "not_applicable_no_holes_or_cylindrical_cuts"
+                if not inventory and not hole_instances and not unverified_cut_intents
+                else "complete" if holes_complete else "incomplete_or_unverified"),
+            "unverified_cut_intents": unverified_cut_intents,
+            "through_hole_count_expected": int(
+                brep_report.get("active_through_hole_count",
+                                brep_report.get("through_hole_count", 0)) or 0),
+            "through_hole_count_verified": sum(
+                1 for row in active_hole_instances
+                if row.get("through") and row.get("status") == "verified_open"),
+            "through_hole_result": (
+                "measured_by_native_brep" if any(
+                    row.get("through") for row in active_hole_instances) and all(
+                    row.get("status") == "verified_open" for row in active_hole_instances
+                    if row.get("through"))
+                else "no_holes_declared" if not inventory
+                else "not_measured_or_failed"),
+            "image_estimate_parameters": image_estimates,
+            "visual_validation": "not_performed",
+            "catia_geometry_verification": "not_performed",
+        }
     nonfinite_vertices = 0
     degenerate_faces = 0
     for polygon in body:
@@ -902,15 +1119,75 @@ def _preview_internal(plan: Any):
                 None, None, data, None)
     doc, manifest = pair
     try:
-        body = doc.build()
-        stats = doc.stats()
+        from ai_modeler.core.geometry import occ_kernel
+        brep = doc.build_brep()
+        brep_report = doc.brep_report or {}
+        body = occ_kernel.shape_to_polys(brep)
+        bbox = brep_report.get("bbox_mm")
+        size = ([bbox[i + 3] - bbox[i] for i in range(3)]
+                if bbox else None)
+        stats = {
+            "bbox": bbox,
+            "size": size,
+            "volume": brep_report.get("volume_mm3"),
+            "area": occ_kernel.surface_area(brep),
+            "triangles": len(body),
+            "faces": brep_report.get("face_count"),
+        }
         from ai_modeler.catia_backend import catia_export
         catia_features, exporter_warnings = catia_export.build_catia_features(doc)
     except Exception as exc:
+        failure_report = getattr(exc, "report", None)
+        previous = getattr(exc, "last_valid_shape", None)
+        partial_body = None
+        partial_checks = None
+        last_valid_dimensions = None
+        if previous is not None:
+            try:
+                previous_info = occ_kernel.inspect_shape(previous)
+                partial_body = occ_kernel.shape_to_polys(previous)
+                partial_checks = {
+                    **previous_info,
+                    "state": "needs_review", "geometry_state": "needs_review",
+                    "partial": True, "accepted": False,
+                    "applied_feature_results": list((failure_report or {}).get("feature_results", [])),
+                    "failed_feature_effect": (failure_report or {}).get("failed_feature_effect"),
+                }
+                applied_results = [row for row in (failure_report or {}).get("feature_results", [])
+                                   if row.get("state") == "applied"]
+                applied_ids = [str(row.get("feature_id")) for row in applied_results
+                               if row.get("feature_id") is not None]
+                previous_bbox = previous_info.get("bbox_mm")
+                previous_size = ([previous_bbox[i + 3] - previous_bbox[i]
+                                  for i in range(3)] if previous_bbox else None)
+                last_valid_dimensions = {
+                    "unit": "mm", "bbox": previous_bbox,
+                    "size": previous_size,
+                    "volume_mm3": previous_info.get("volume_mm3"),
+                    "face_count": previous_info.get("face_count"),
+                    "feature_count": len(applied_results),
+                    "applied_feature_ids": applied_ids,
+                    "failed_feature_id": (failure_report or {}).get("failed_feature_id"),
+                }
+            except Exception:
+                last_valid_dimensions = None
         return ({"state": "preview_failed", "validation": validation,
                  "error": str(exc), "catia_executed": False,
-                 "dimensions": None, "catia_operations": []},
-                None, None, data, None)
+                 "dimensions": None,
+                 "last_valid_dimensions": last_valid_dimensions,
+                 "feature_manifest": manifest,
+                 "catia_operations": [],
+                 "local_geometry_checks": failure_report,
+                 "last_valid_intermediate_preserved": previous is not None,
+                 "geometry_backend": "occt_brep",
+                 "partial_preview": bool(partial_body),
+                 "partial_state": "candidate_partial_not_accepted" if partial_body else None,
+                 "partial_geometry_checks": partial_checks,
+                 "failed_feature_id": (failure_report or {}).get("failed_feature_id"),
+                 "failure_code": ((failure_report or {}).get("failed_feature_effect") or {}).get("failure_code"),
+                 "related_feature_ids": ((failure_report or {}).get("failed_feature_effect") or {}).get("related_feature_ids", []),
+                 "partial_image": None},
+                None, None, data, partial_body)
     warnings = list(validation["warnings"])
     for index, message in enumerate(exporter_warnings):
         warnings.append({"code": "CATIA_TRANSLATOR_NOTE", "feature_id": None,
@@ -921,6 +1198,9 @@ def _preview_internal(plan: Any):
     result = {
         "state": "previewed" if body else "empty_geometry",
         "validation": validation,
+        "geometry_backend": "occt_brep",
+        "native_brep": {key: value for key, value in brep_report.items()
+                        if key not in {"hole_instances", "feature_results"}},
         "catia_executed": False,
         "dimensions": {
             "unit": "mm",
@@ -937,7 +1217,7 @@ def _preview_internal(plan: Any):
         "build_log": list(doc.last_log),
         "local_geometry_checks": _local_geometry_checks(
             body, stats.get("size"), manifest,
-            LENGTH_UNITS[data["units"]["length"]]),
+            LENGTH_UNITS[data["units"]["length"]], brep_report=brep_report),
     }
     result["orthographic_layout"] = _orthographic_layout(stats.get("size"))
     return result, doc, manifest, data, body
@@ -971,7 +1251,8 @@ def preview_plan(plan: Any, image_path: Optional[str] = None,
         return {"state": "invalid_view_set", "catia_executed": False,
                 "error": "view_set 必须是 three、extended 或一个标准单视图名称。"}
     result, _doc, _manifest, _data, body = _preview_internal(plan)
-    if result.get("state") != "previewed" or not body:
+    is_partial = bool(result.get("partial_preview"))
+    if (result.get("state") != "previewed" and not is_partial) or not body:
         return result
     if image_path:
         target = Path(image_path).expanduser().absolute()
@@ -998,13 +1279,17 @@ def preview_plan(plan: Any, image_path: Optional[str] = None,
             softrender.save_multiview(body, str(target), views=views,
                                       tile=(660, 520), columns=1)
     except Exception as exc:
+        if is_partial:
+            return {**result, "partial_image_error": str(exc)}
         return {**result, "state": "preview_image_failed",
                 "preview_image_error": str(exc)}
     result["preview_image"] = str(target)
+    if is_partial:
+        result["partial_image"] = str(target)
     result["preview_image_views"] = views
     result["preview_image_view_set"] = view_set
     result["preview_image_grid_columns"] = 1 if view_set in single_views else 3
-    result["preview_image_source"] = "AI Modeler local mesh kernel; not CATIA B-Rep"
+    result["preview_image_source"] = "OCCT BREP tessellated for display; not a CATIA screenshot"
     result["preview_render_style"] = "view-adaptive depth-cued matte shading with visible feature edges"
     result["preview_render_note"] = (
         "诊断渲染：凹入或远离相机的表面会略暗，清晰线条表示可见的几何折边；"
@@ -1030,6 +1315,22 @@ def build_plan(plan: Any, catpart_path: Optional[str] = None,
     strict=True returns before any CATIA call if a feature is approximate or
     unsupported. Output files are never overwritten.
     """
+    if strict:
+        preflight = validate_plan(plan)
+        if preflight.get("state") != "valid":
+            return {"state": preflight.get("state", "invalid"),
+                    "catia_executed": False, "validation": preflight,
+                    "errors": preflight.get("errors", []),
+                    "confirmations": preflight.get("confirmations", []),
+                    "dimensions": None, "catia_operations": [],
+                    "output_paths": {}}
+        strict_blockers = [item for item in preflight.get("support", [])
+                           if item.get("status") != "exact"]
+        if strict_blockers:
+            return {"state": "strict_blocked", "catia_executed": False,
+                    "validation": preflight, "dimensions": None,
+                    "catia_operations": [], "warnings": preflight.get("warnings", []),
+                    "blocked_features": strict_blockers, "output_paths": {}}
     preview, doc, manifest, data, body = _preview_internal(plan)
     if preview.get("state") != "previewed":
         return {"state": preview.get("state", "invalid"), "catia_executed": False,
@@ -1037,6 +1338,27 @@ def build_plan(plan: Any, catpart_path: Optional[str] = None,
                 "errors": (preview.get("validation") or {}).get("errors", []),
                 "confirmations": (preview.get("validation") or {}).get("confirmations", []),
                 "dimensions": preview.get("dimensions"), "catia_operations": []}
+    local_checks = preview.get("local_geometry_checks") or {}
+    quality_state = local_checks.get("geometry_state", local_checks.get("state"))
+    check_status = (local_checks.get("self_intersection") or {}).get("status")
+    feature_results = local_checks.get("feature_results") or []
+    explicit_skips_only = (any(row.get("state") == "skipped" for row in feature_results)
+                           and not any(row.get("state") == "no_op" for row in feature_results)
+                           and check_status in {"checked_no_intersection", "not_applicable"})
+    if quality_state == "failed":
+        blocked_state = ("geometry_failed" if quality_state == "failed"
+                         else "geometry_needs_review")
+        support = ((preview.get("validation") or {}).get("support") or [])
+        return {"state": blocked_state, "catia_invoked": False,
+                "catia_executed": False, "catia_saved": False,
+                "catia_operations": [], "dimensions": preview.get("dimensions"),
+                "validation": preview.get("validation"),
+                "local_geometry_checks": local_checks,
+                "warnings": preview.get("warnings", []),
+                "blocked_features": [item for item in support if item.get("status") != "exact"],
+                "output_paths": {},
+                "reason": "OpenCASCADE geometry checks did not pass; export and CATIA execution were blocked."}
+    candidate_only = (quality_state != "passed" and not explicit_skips_only)
     warnings = list(preview.get("warnings", []))
     validation = preview["validation"]
     support = preview["validation"]["support"]
@@ -1078,7 +1400,7 @@ def build_plan(plan: Any, catpart_path: Optional[str] = None,
                                  "four_view": str(four_view), "report": str(report_path)}}
 
     out_dir.mkdir(parents=True, exist_ok=True)
-    stats = doc.stats()
+    stats = {"size": preview["dimensions"].get("size")}
     try:
         from ai_modeler.ui import softrender
         softrender.save_three_view(body, str(three_view), tile=THREE_VIEW_TILE_PX)
@@ -1094,12 +1416,19 @@ def build_plan(plan: Any, catpart_path: Optional[str] = None,
         "feature_manifest": manifest,
     })
     exporters.export_stl(body, str(stl), doc.name)
+    output_paths = {"aimodel": str(aimodel), "stl": str(stl),
+                    "three_view": str(three_view), "four_view": str(four_view),
+                    "report": str(report_path)}
+    if not candidate_only:
+        output_paths["catpart"] = str(catpart)
     report = {
         "format": "ai-modeler-geometry-report",
         "version": 1,
         "plan_schema_version": CADPLAN_SCHEMA_VERSION,
         "model": data["name"],
-        "geometry_source": "AI Modeler mesh kernel; CATIA B-Rep is created separately.",
+        "geometry_source": "OpenCASCADE native BREP; preview/STL use its tessellation.",
+        "geometry_backend": preview.get("geometry_backend", "occt_brep"),
+        "local_geometry_checks": preview.get("local_geometry_checks"),
         "dimensions": preview["dimensions"],
         "features": manifest,
         "support": support,
@@ -1112,14 +1441,14 @@ def build_plan(plan: Any, catpart_path: Optional[str] = None,
         },
         "preview_images": {
             "state": "awaiting_agent_inspection",
-            "source": "AI Modeler local mesh kernel; not CATIA B-Rep",
+            "source": "OCCT BREP tessellated for display; not CATIA BREP",
             "three_view": {"path": str(three_view), "views": ["front", "right", "top"],
                            "layout": _orthographic_layout(stats.get("size"))},
             "four_view": {"path": str(four_view), "views": ["iso", "front", "right", "top"]},
         },
-        "output_paths": {"catpart": str(catpart), "aimodel": str(aimodel),
-                         "stl": str(stl), "three_view": str(three_view),
-                         "four_view": str(four_view), "report": str(report_path)},
+        "output_paths": output_paths,
+        "candidate_saved": bool(candidate_only),
+        "acceptance": "not_accepted" if candidate_only else "awaiting_visual_review",
     }
     _write_report(report_path, report)
     notice_rows = [
@@ -1128,6 +1457,26 @@ def build_plan(plan: Any, catpart_path: Optional[str] = None,
           for item in blockers],
     ]
     notice = "\n".join(notice_rows) if blockers else ""
+    if candidate_only:
+        report["catia"] = {"invoked": False, "executed": False, "saved": False,
+                           "message": "几何有效性/孔实例仍需核验；仅保存CADPlan与BREP派生候选，不生成CATPart。"}
+        _write_report(report_path, report)
+        return {
+            "state": "candidate_unverified",
+            "candidate_saved": True,
+            "acceptance": "not_accepted",
+            "geometry_state": quality_state,
+            "catia_invoked": False,
+            "catia_executed": False,
+            "catia_saved": False,
+            "dimensions": preview["dimensions"],
+            "local_geometry_checks": preview.get("local_geometry_checks"),
+            "warnings": warnings,
+            "blocked_features": [],
+            "output_paths": output_paths,
+            "visual_review": report["preview_images"],
+            "validation": validation,
+        }
     from ai_modeler.catia_backend import catia
     if preview["catia_operations"]:
         ok, message, script = catia.push_to_catia(
@@ -1194,12 +1543,13 @@ def schema_document() -> Dict[str, Any]:
         prop_schemas[key] = strings
     prop_schemas.update({
         "center": vec3, "center2": vec3, "translate": vec3, "step": vec3,
-        "point": vec3, "profile": profile,
+        "point": vec3, "entry_point": vec3, "profile": profile,
         "rotate": {"type": "array", "prefixItems": [
             {"type": "string", "enum": ["X", "Y", "Z"]}, numeric],
             "minItems": 2, "maxItems": 2, "items": False},
     })
-    for key in ("axis", "corner_mode", "mode", "pos", "groove_type", "tooth_type"):
+    for key in ("axis", "corner_mode", "mode", "pos", "side", "direction",
+                "groove_type", "tooth_type"):
         prop_schemas[key] = {"type": "string", "enum": sorted(_ENUMS[key])}
     feature_alternatives = []
     for kind, spec in FEATURE_SPECS.items():
@@ -1230,6 +1580,22 @@ def schema_document() -> Dict[str, Any]:
                                                            "required": ["through"]}}},
                     "then": {"properties": {"parameters": {"required": ["depth"]}}},
                 },
+                {
+                    "if": {"properties": {"parameters": {"required": ["entry_point"]}}},
+                    "then": {"properties": {"parameters": {
+                        "required": ["direction", "point", "pos", "through"],
+                        "properties": {"pos": {"const": "point"},
+                                       "through": {"const": False}},
+                    }}},
+                },
+                {
+                    "if": {"properties": {"parameters": {"required": ["direction"]}}},
+                    "then": {"properties": {"parameters": {
+                        "required": ["entry_point", "point", "pos", "through"],
+                        "properties": {"pos": {"const": "point"},
+                                       "through": {"const": False}},
+                    }}},
+                },
             ])
         if kind == "pattern":
             conditionals.extend([
@@ -1245,8 +1611,7 @@ def schema_document() -> Dict[str, Any]:
                 },
             ])
         numeric_param_keys = (set(spec["params"]) &
-                              (_LENGTH_KEYS | _ANGLE_KEYS | _DIMENSIONLESS_KEYS | _INTEGER_KEYS |
-                               _LENGTH_ARRAY_KEYS | {"rotate"}))
+                              (_NUMERIC_SCALAR_KEYS | _LENGTH_ARRAY_KEYS | {"rotate"}))
         for param_key in sorted(numeric_param_keys):
             conditionals.append({
                 "if": {
