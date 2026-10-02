@@ -10,7 +10,7 @@
 $repo = (Get-Location).Path
 $image = 'temp/evidence-archive/artifacts/agent-quality-rebuild/references/user-nine-hole-recess-iso.png'
 $runtime = 'src/apps/desktop/src-tauri/target/f1-runtime-probe'
-$out = 'temp/acceptance/f7-g1-loopback-wire-20261003-run01'
+$out = 'temp/acceptance/f7-g1-loopback-wire-20261003-run04'
 & "$runtime/node.exe" 'src/apps/desktop/src-tauri/examples/native_agent_loopback_wire_acceptance.mjs' $repo $image $runtime $out
 ```
 
