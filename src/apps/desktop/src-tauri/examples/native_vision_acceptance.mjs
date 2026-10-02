@@ -255,7 +255,7 @@ const acceptance = {
   native_cordis: {
     registered, schema_present: schemaPresent, dsh_tool_events: toolEvents,
     native_actions: actions, called_by_dsh: toolCalled,
-    compatibility_fallback: 'RejectCompatibility: forbidden', python_fallback_invoked: false,
+    python_fallback: 'removed',
   },
   provider_transport: {
     wire_requests: wireRequests, wire_response_headers: wireResponseHeaders,

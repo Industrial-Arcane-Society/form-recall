@@ -1,29 +1,28 @@
 //! Rust-owned DSH ACP session lifecycle for Agent mode.
 //!
-//! Quick mode remains on the Python bridge. The DSH Cordis CAD plugin still
-//! uses its legacy one-shot Python geometry worker until the Rust CAD features
-//! replace that transitional boundary.
+//! Quick mode remains on its legacy path. DSH Agent tools are registered by
+//! Cordis and executed by the Rust host without a Python tool worker.
 
 use crate::acp::AcpProcess;
-use crate::native_tool_bridge::{LegacyPythonExecutor, NativeToolBridge};
+use crate::native_tool_bridge::NativeToolBridge;
 use crate::native_tool_executor::NativeToolExecutor;
 use crate::native_tool_schemas::native_tool_schemas;
 use crate::native_vision_provider::{NativeVisionProvider, ProviderConfig};
-use base64::engine::general_purpose::STANDARD as BASE64;
 use base64::Engine as _;
+use base64::engine::general_purpose::STANDARD as BASE64;
 use reqwest::Url;
-use serde_json::{json, Value};
+use serde_json::{Value, json};
 use sha2::{Digest, Sha256};
 use std::ffi::OsString;
 use std::fs;
 use std::path::{Path, PathBuf};
 use std::process::Command;
 use std::sync::atomic::{AtomicBool, Ordering};
-use std::sync::{mpsc, Arc, Mutex};
+use std::sync::{Arc, Mutex, mpsc};
 use std::thread;
 use std::time::{Duration, SystemTime, UNIX_EPOCH};
-use tauri::ipc::Channel;
 use tauri::AppHandle;
+use tauri::ipc::Channel;
 
 const AGENT_FOLDER: &str = "agent-host";
 const SESSION_FILE: &str = "current-session.json";
@@ -227,7 +226,7 @@ fn get_or_create_session(
         }
     }
 
-    let (root, packaged) = super::project_root(app)?;
+    let (root, _packaged) = super::project_root(app)?;
     let data_dir = super::app_data_dir(app)?;
     let agent_dir = data_dir.join(AGENT_FOLDER);
     let workspace_root = agent_dir.join("workspaces");
@@ -267,11 +266,6 @@ fn get_or_create_session(
             prompt_path.display()
         )
     })?;
-    let (python_path, prefix_args) = super::python_command(app, &root, packaged)?;
-    if !prefix_args.is_empty() {
-        return Err("当前 Python 启动方式带有参数，暂不能作为 DSH Cordis 工具解释器。".into());
-    }
-
     let resume = saved.get("fingerprint").and_then(Value::as_str) == Some(fingerprint)
         && saved.get("session_id").and_then(Value::as_str).is_some()
         && saved
@@ -308,10 +302,6 @@ fn get_or_create_session(
     let native_tools_path = cwd.join("native-tool-registration.json");
     let native_schemas_path = cwd.join("native-tool-schemas.json");
     let tool_environment = vec![
-        (
-            OsString::from("AI_MODELER_PYTHON"),
-            python_path.as_os_str().to_owned(),
-        ),
         (
             OsString::from("AI_MODELER_PROJECT_ROOT"),
             root.as_os_str().to_owned(),
@@ -384,11 +374,6 @@ fn get_or_create_session(
         ),
     ];
     let schemas = native_tool_schemas()?;
-    let legacy_executor = Arc::new(LegacyPythonExecutor::new(
-        python_path.clone(),
-        root.clone(),
-        tool_environment.clone(),
-    ));
     let vision_provider = NativeVisionProvider::new(ProviderConfig {
         base_url: provider.base_url.clone(),
         model: provider.model.clone(),
@@ -398,10 +383,19 @@ fn get_or_create_session(
         max_output_tokens: positive(provider.output_cap).unwrap_or(4096),
     })
     .map_err(|error| format!("无法初始化原生视觉provider：{error}"))?;
-    let tool_executor = Arc::new(
-        NativeToolExecutor::new(root.clone(), cwd.clone(), online_enabled, legacy_executor)?
-            .with_vision(Arc::new(vision_provider)),
-    );
+    let mut native_executor = NativeToolExecutor::new(root.clone(), cwd.clone(), online_enabled)?
+        .with_vision(Arc::new(vision_provider));
+    let geometry_manifest = std::env::var_os("AIMODELER_OCCT_MANIFEST")
+        .map(PathBuf::from)
+        .or_else(|| {
+            root.parent()
+                .map(|src| src.join("apps/desktop/src-tauri/target/f4-occt/runtime-manifest.json"))
+                .filter(|p| p.is_file())
+        });
+    if let Some(manifest) = geometry_manifest {
+        native_executor = native_executor.with_geometry_runtime(manifest);
+    }
+    let tool_executor = Arc::new(native_executor);
     let tool_bridge = NativeToolBridge::start(
         host_tool_session_id,
         &native_schemas_path,
@@ -1508,8 +1502,8 @@ fn sha256(bytes: impl AsRef<[u8]>) -> String {
 #[cfg(test)]
 mod tests {
     use super::{
-        active_turn_record, find_config_value, route_profile, validate_image_signature,
-        write_profile_patch, Image, Provider,
+        Image, Provider, active_turn_record, find_config_value, route_profile,
+        validate_image_signature, write_profile_patch,
     };
     use serde_json::json;
     use std::fs;

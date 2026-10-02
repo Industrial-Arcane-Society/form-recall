@@ -692,6 +692,11 @@ fn user_turn_supports_value(
     } else {
         target
     };
+    if str_field(feature, "kind") == "socket_head_bolt"
+        && let Some(spec_value) = crate::native_fastener_specs::user_size_value(quote, parameter)
+    {
+        return (spec_value - target_value).abs() <= 1e-6;
+    }
     let occurrences = numeric_occurrences(quote, unit, length_parameter);
     let matching: Vec<_> = occurrences
         .iter()
@@ -1725,6 +1730,17 @@ mod tests {
             &plan
         ));
     }
+
+    #[test]
+    fn socket_bolt_user_size_quote_binds_diameter_and_length_by_position() {
+        let feature = json!({"kind":"socket_head_bolt","operation":"add"});
+        let plan = json!({"units":{"length":"mm"}});
+        assert!(user_turn_supports_value("M5x5", &json!(5.0), "shank_d", &feature, &plan));
+        assert!(user_turn_supports_value("M5x5", &json!(5.0), "length", &feature, &plan));
+        assert!(!user_turn_supports_value("M5x8", &json!(8.0), "shank_d", &feature, &plan));
+        assert!(!user_turn_supports_value("M5x8", &json!(5.0), "length", &feature, &plan));
+    }
+
     #[test]
     fn create_add_update_matches_python_domain_delta_fixture() {
         let empty = json!({"revision":0,"actions":[]});

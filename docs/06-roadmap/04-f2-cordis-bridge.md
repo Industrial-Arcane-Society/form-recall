@@ -35,4 +35,6 @@
 2. F2.3–F2.4：迁移只读状态、知识/Web、图像观察及复核。
 3. F2.5：将 CAD 写工具接入 Rust CADPlan 与后续 OCCT 核心，删除 Python 工具 worker。
 
-在 F2.5 及必要的视觉路径迁出前，总体 F2 仍为进行中。
+F2.1 完成时，总体 F2 仍为进行中；此句为当时的历史状态。
+
+**当前状态注记（2026-10-02）：**以上描述是 F2.1 完成时的历史边界。F2.5 已删除 Agent Host 的 Python CAD tool worker 与执行 fallback；当前 25 项 Cordis 工具由 Rust 路由。最新验收见 [F2.5 记录](./21-f2-native-cad-write-tools.md)。

@@ -1,14 +1,13 @@
-//! Session-owned native tool routing during the CAD domain migration.
+//! Session-owned native Cordis tool routing.
 //!
-//! All calls share one transaction gate, including compatibility CAD calls, so
-//! a native read cannot overwrite a concurrent Python CAD state commit.
+//! Every registered DSH tool is executed by Rust under one session transaction.
 use crate::native_feature_specs::feature_spec;
 use crate::native_knowledge::{search_knowledge, search_recipes};
 use crate::native_tool_bridge::ToolExecutor;
 use crate::native_vision_domain::{self, Context as VisionContext};
 use crate::native_vision_provider::NativeVisionProvider;
 use crate::native_web::NativeWeb;
-use serde_json::{json, Value};
+use serde_json::{Value, json};
 use std::collections::HashMap;
 use std::fs;
 use std::path::{Path, PathBuf};
@@ -20,9 +19,9 @@ use std::time::{Duration, Instant, SystemTime, UNIX_EPOCH};
 pub struct NativeToolExecutor {
     project_root: PathBuf,
     session_dir: PathBuf,
-    fallback: Arc<dyn ToolExecutor>,
     web: NativeWeb,
     vision: Option<Arc<NativeVisionProvider>>,
+    geometry_manifest: Option<PathBuf>,
     online_enabled: bool,
     transaction: Mutex<()>,
     active: Mutex<HashMap<String, Arc<AtomicBool>>>,
@@ -34,7 +33,6 @@ impl NativeToolExecutor {
         project_root: impl Into<PathBuf>,
         session_dir: impl Into<PathBuf>,
         online_enabled: bool,
-        fallback: Arc<dyn ToolExecutor>,
     ) -> Result<Self, String> {
         let session_dir = session_dir.into();
         let web = NativeWeb::new(online_enabled);
@@ -45,9 +43,9 @@ impl NativeToolExecutor {
         Ok(Self {
             project_root: project_root.into(),
             session_dir,
-            fallback,
             web,
             vision: None,
+            geometry_manifest: None,
             online_enabled,
             transaction: Mutex::new(()),
             active: Mutex::new(HashMap::new()),
@@ -57,6 +55,11 @@ impl NativeToolExecutor {
 
     pub fn with_vision(mut self, provider: Arc<NativeVisionProvider>) -> Self {
         self.vision = Some(provider);
+        self
+    }
+
+    pub fn with_geometry_runtime(mut self, manifest: PathBuf) -> Self {
+        self.geometry_manifest = Some(manifest);
         self
     }
 
@@ -70,7 +73,6 @@ impl NativeToolExecutor {
 
     fn run(
         &self,
-        call_id: &str,
         name: &str,
         arguments: &Value,
         timeout: Duration,
@@ -89,24 +91,49 @@ impl NativeToolExecutor {
             }
         };
         let remaining = timeout.saturating_sub(started.elapsed());
-        // Native reads and ledger refresh share the same locked state snapshot.
-        // Compatibility CAD calls retain their existing state loader.
-        let native = matches!(
-            name,
-            "cad_get_state"
-                | "cad_get_feature_spec"
-                | "cad_search_knowledge"
-                | "cad_search_recipes"
-                | "web_search"
-                | "web_open_result"
-                | "cad_inspect_references"
-                | "cad_review_reference_similarity"
-        );
-        if !native {
-            return self.fallback.execute(call_id, name, arguments, remaining);
+        // Every name in Cordis is routed into the native Rust domain.
+        if !supports_native_tool(name) {
+            return Err(format!(
+                "Cordis 工具 {name} 没有 Rust 原生实现；拒绝执行未注册工具。"
+            ));
         }
         let mut state = self.load_cad_state()?;
         let (value, images, progress) = match name {
+            name if crate::native_cad_metadata::supports(name) => {
+                let (next, value) =
+                    crate::native_cad_metadata::run(&state, name, arguments, &self.web)?;
+                state = next;
+                (value, vec![], "已更新宿主元数据；自述不作为独立验收证据。")
+            }
+            name if crate::native_cad_tools::supports(name) => {
+                let active_path = self.session_dir.join("active-turn.json");
+                let user_turn_id = if active_path.is_file() {
+                    read_json_object(&active_path)?
+                        .get("turn_id")
+                        .and_then(Value::as_str)
+                        .map(str::to_owned)
+                } else {
+                    None
+                };
+                let outcome = crate::native_cad_tools::run(
+                    &state,
+                    name,
+                    arguments,
+                    &crate::native_cad_tools::Context {
+                        project_root: self.project_root.clone(),
+                        session_dir: self.session_dir.clone(),
+                        runtime_manifest: self.geometry_manifest.clone(),
+                        user_turn_id,
+                    },
+                    cancelled,
+                )?;
+                state = outcome.state;
+                (
+                    outcome.value,
+                    outcome.images,
+                    "已原生更新特征及当前版本预览。",
+                )
+            }
             "cad_get_state" => {
                 check_keys(arguments, &[])?;
                 (
@@ -202,7 +229,7 @@ impl NativeToolExecutor {
                     "网页读取完成。",
                 )
             }
-            _ => return self.fallback.execute(call_id, name, arguments, remaining),
+            _ => return Err(format!("未知原生工具：{name}")),
         };
         self.check_cancelled(cancelled)?;
         if name == "cad_search_knowledge" {
@@ -249,7 +276,20 @@ impl NativeToolExecutor {
             )?;
         }
         self.check_cancelled(cancelled)?;
+        if started.elapsed() >= timeout {
+            return Err("工具超过本次截止时间，生成文件未提交为当前模型。".into());
+        }
         write_json_atomic(&self.session_dir.join("cad-state.json"), &state)?;
+        if crate::native_cad_tools::supports(name) && state["last_preview"].is_object() {
+            if let Some(path) = state["last_preview"]["preview_image_path"].as_str() {
+                if let Ok(bytes) = fs::read(path) {
+                    crate::native_model_io::atomic_write(
+                        &self.session_dir.join("current-preview.png"),
+                        &bytes,
+                    )?;
+                }
+            }
+        }
         Ok(tool_result(name, value, images, progress))
     }
 
@@ -266,7 +306,7 @@ impl NativeToolExecutor {
         let provider = self
             .vision
             .as_ref()
-            .ok_or("原生视觉provider未配置；拒绝回退到Python视觉worker。")?;
+            .ok_or("原生视觉provider未配置；视觉请求不能执行。")?;
         let active_path = self.session_dir.join("active-turn.json");
         let turn_id = if active_path.exists() {
             read_json_object(&active_path)?
@@ -327,7 +367,7 @@ impl ToolExecutor for NativeToolExecutor {
             }
             active.insert(call_id.to_owned(), Arc::clone(&cancelled));
         }
-        let result = self.run(call_id, name, arguments, timeout, &cancelled);
+        let result = self.run(name, arguments, timeout, &cancelled);
         if let Ok(mut active) = self.active.lock() {
             active.remove(call_id);
         }
@@ -343,7 +383,7 @@ impl ToolExecutor for NativeToolExecutor {
         if let Some(cancelled) = &native {
             cancelled.store(true, Ordering::Release);
         }
-        self.fallback.cancel(call_id) || native.is_some()
+        native.is_some()
     }
 
     fn shutdown(&self) {
@@ -353,8 +393,23 @@ impl ToolExecutor for NativeToolExecutor {
                 cancelled.store(true, Ordering::Release);
             }
         }
-        self.fallback.shutdown();
     }
+}
+
+fn supports_native_tool(name: &str) -> bool {
+    crate::native_cad_tools::supports(name)
+        || crate::native_cad_metadata::supports(name)
+        || matches!(
+            name,
+            "cad_get_state"
+                | "cad_get_feature_spec"
+                | "cad_search_knowledge"
+                | "cad_search_recipes"
+                | "web_search"
+                | "web_open_result"
+                | "cad_inspect_references"
+                | "cad_review_reference_similarity"
+        )
 }
 
 fn required_string<'a>(arguments: &'a Value, key: &str) -> Result<&'a str, String> {
@@ -431,7 +486,8 @@ fn unix_seconds() -> f64 {
 
 fn tool_result(name: &str, mut value: Value, images: Vec<Value>, progress: &str) -> Value {
     if name == "cad_search_knowledge" && !images.is_empty() {
-        value["visual_attachment_order"] = json!(images
+        value["visual_attachment_order"] =
+            json!(images
             .iter()
             .enumerate()
             .map(
@@ -448,22 +504,11 @@ fn tool_result(name: &str, mut value: Value, images: Vec<Value>, progress: &str)
 #[cfg(test)]
 mod tests {
     use super::*;
-    use std::sync::atomic::AtomicUsize;
+    fn fixture() -> (PathBuf, Arc<NativeToolExecutor>) {
+        fixture_with_online(false)
+    }
 
-    #[derive(Default)]
-    struct Fallback {
-        calls: AtomicUsize,
-    }
-    impl ToolExecutor for Fallback {
-        fn execute(&self, _: &str, _: &str, _: &Value, _: Duration) -> Result<Value, String> {
-            self.calls.fetch_add(1, Ordering::SeqCst);
-            Ok(json!({"text":"legacy"}))
-        }
-        fn cancel(&self, _: &str) -> bool {
-            false
-        }
-    }
-    fn fixture() -> (PathBuf, Arc<NativeToolExecutor>, Arc<Fallback>) {
+    fn fixture_with_online(online_enabled: bool) -> (PathBuf, Arc<NativeToolExecutor>) {
         let dir = std::env::temp_dir().join(format!(
             "aimodeler-native-tool-{}-{}",
             std::process::id(),
@@ -473,10 +518,32 @@ mod tests {
                 .as_nanos()
         ));
         fs::create_dir_all(&dir).unwrap();
-        let fallback = Arc::new(Fallback::default());
-        let executor =
-            Arc::new(NativeToolExecutor::new(&dir, &dir, false, fallback.clone()).unwrap());
-        (dir, executor, fallback)
+        let executor = Arc::new(NativeToolExecutor::new(&dir, &dir, online_enabled).unwrap());
+        (dir, executor)
+    }
+
+    #[test]
+    fn every_registered_cordis_tool_has_a_native_rust_route() {
+        for schema in crate::native_tool_schemas::native_tool_schemas().unwrap() {
+            let name = schema["name"].as_str().unwrap();
+            assert!(supports_native_tool(name), "{name} has no Rust route");
+        }
+    }
+
+    #[test]
+    fn unknown_tool_is_rejected_without_a_worker_or_state_change() {
+        let (dir, executor) = fixture();
+        let error = executor
+            .execute(
+                "unknown",
+                "legacy_python_tool",
+                &json!({}),
+                Duration::from_secs(1),
+            )
+            .unwrap_err();
+        assert!(error.contains("没有 Rust 原生实现"), "{error}");
+        assert!(!dir.join("cad-state.json").exists());
+        fs::remove_dir_all(dir).unwrap();
     }
 
     #[test]
@@ -485,7 +552,7 @@ mod tests {
         use std::io::{Read, Write};
         use std::net::TcpListener;
 
-        let (dir, _, fallback) = fixture();
+        let (dir, _) = fixture();
         let source = dir.join("source.png");
         image::RgbImage::from_pixel(8, 8, image::Rgb([80, 90, 100]))
             .save(&source)
@@ -557,7 +624,7 @@ mod tests {
             max_output_tokens: 1024,
         })
         .unwrap();
-        let executor = NativeToolExecutor::new(&dir, &dir, true, fallback.clone())
+        let executor = NativeToolExecutor::new(&dir, &dir, true)
             .unwrap()
             .with_vision(Arc::new(provider));
         let result = executor
@@ -572,7 +639,6 @@ mod tests {
         let state = read_json_object(&dir.join("cad-state.json")).unwrap();
         assert_eq!(state["reference_inventory"].as_object().unwrap().len(), 1);
         assert_eq!(state["actions"].as_array().unwrap().len(), 1);
-        assert_eq!(fallback.calls.load(Ordering::SeqCst), 0);
         let (headers, body) = server.join().unwrap();
         assert!(headers.starts_with("POST /v1/chat/completions "));
         assert_eq!(body["model"], "fixture-vlm");
@@ -580,23 +646,20 @@ mod tests {
         fs::remove_dir_all(dir).unwrap();
     }
     #[test]
-    fn vision_tools_reject_legacy_fallback_when_provider_is_missing() {
-        let (dir, _, fallback) = fixture();
-        let executor =
-            Arc::new(NativeToolExecutor::new(&dir, &dir, true, fallback.clone()).unwrap());
+    fn vision_tools_require_the_native_provider_without_fallback() {
+        let (dir, executor) = fixture_with_online(true);
         for tool in ["cad_inspect_references", "cad_review_reference_similarity"] {
             let error = executor
                 .execute("vision", tool, &json!({}), Duration::from_secs(1))
                 .unwrap_err();
-            assert!(error.contains("拒绝回退到Python"), "{error}");
+            assert!(error.contains("原生视觉provider未配置"), "{error}");
         }
-        assert_eq!(fallback.calls.load(Ordering::SeqCst), 0);
         assert!(!dir.join("cad-state.json").exists());
         fs::remove_dir_all(dir).unwrap();
     }
     #[test]
-    fn native_contract_and_disabled_web_do_not_execute_compatibility_backend() {
-        let (dir, executor, fallback) = fixture();
+    fn native_contract_and_disabled_web_keep_state_in_rust() {
+        let (dir, executor) = fixture();
         let original = json!({"plan":{"features":[{"id":"body","sources":{"length":{"type":"image_estimate","evidence":"original"}}}]},
             "revision":7,"actions":[],"extension":{"keep":true}});
         write_json_atomic(&dir.join("cad-state.json"), &original).unwrap();
@@ -622,7 +685,6 @@ mod tests {
             )
             .unwrap();
         assert!(search["text"].as_str().unwrap().contains("disabled"));
-        assert_eq!(fallback.calls.load(Ordering::SeqCst), 0);
         let saved = read_json_object(&dir.join("cad-state.json")).unwrap();
         assert_eq!(saved["plan"], original["plan"]);
         assert_eq!(saved["revision"], 7);
@@ -630,37 +692,40 @@ mod tests {
         executor
             .execute("state", "cad_get_state", &json!({}), Duration::from_secs(1))
             .unwrap();
-        assert_eq!(fallback.calls.load(Ordering::SeqCst), 0);
         fs::remove_dir_all(dir).unwrap();
     }
 
     #[test]
     fn corrupt_or_invalid_state_is_preserved_instead_of_silently_reset() {
-        let (dir, executor, _) = fixture();
+        let (dir, executor) = fixture();
         fs::write(dir.join("cad-state.json"), b"{not-json").unwrap();
-        assert!(executor
-            .execute(
-                "corrupt",
-                "cad_get_feature_spec",
-                &json!({"kind":"box"}),
-                Duration::from_secs(1)
-            )
-            .is_err());
+        assert!(
+            executor
+                .execute(
+                    "corrupt",
+                    "cad_get_feature_spec",
+                    &json!({"kind":"box"}),
+                    Duration::from_secs(1)
+                )
+                .is_err()
+        );
         assert_eq!(fs::read(dir.join("cad-state.json")).unwrap(), b"{not-json");
-        assert!(executor
-            .execute(
-                "invalid",
-                "cad_get_feature_spec",
-                &json!({"kind":"box","ignore":true}),
-                Duration::from_secs(1)
-            )
-            .is_err());
+        assert!(
+            executor
+                .execute(
+                    "invalid",
+                    "cad_get_feature_spec",
+                    &json!({"kind":"box","ignore":true}),
+                    Duration::from_secs(1)
+                )
+                .is_err()
+        );
         fs::remove_dir_all(dir).unwrap();
     }
 
     #[test]
     fn queued_native_call_can_be_cancelled_without_waiting_for_cad_transaction() {
-        let (dir, executor, fallback) = fixture();
+        let (dir, executor) = fixture();
         let lock = executor.transaction.lock().unwrap();
         let spawned = executor.clone();
         let worker = thread::spawn(move || {
@@ -678,7 +743,6 @@ mod tests {
         }
         assert!(executor.cancel("queued"));
         assert!(worker.join().unwrap().unwrap_err().contains("取消"));
-        assert_eq!(fallback.calls.load(Ordering::SeqCst), 0);
         drop(lock);
         assert!(!dir.join("cad-state.json").exists());
         fs::remove_dir_all(dir).unwrap();

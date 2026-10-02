@@ -1,23 +1,13 @@
-//! CLI acceptance endpoint for Rust-owned read tools, with no Python fallback.
+//! CLI acceptance endpoint for Rust-owned Cordis tools; no Python worker exists.
 use ai_modeler_ui_lib::native_tool_bridge::{NativeToolBridge, ToolExecutor};
 use ai_modeler_ui_lib::native_tool_executor::NativeToolExecutor;
 use ai_modeler_ui_lib::native_tool_schemas::native_tool_schemas;
 use ai_modeler_ui_lib::native_vision_provider::{NativeVisionProvider, ProviderConfig};
-use serde_json::{json, Value};
+use serde_json::{Value, json};
 use std::io::{self, BufRead, Write};
 use std::path::PathBuf;
 use std::sync::Arc;
 use std::time::Duration;
-
-struct RejectCompatibility;
-impl ToolExecutor for RejectCompatibility {
-    fn execute(&self, _: &str, name: &str, _: &Value, _: Duration) -> Result<Value, String> {
-        Err(format!("该验收端点禁止 Python compatibility 执行：{name}"))
-    }
-    fn cancel(&self, _: &str) -> bool {
-        false
-    }
-}
 
 fn main() -> Result<(), String> {
     let args: Vec<String> = std::env::args().skip(1).collect();
@@ -25,12 +15,13 @@ fn main() -> Result<(), String> {
         "usage: native_read_probe LEGACY_ROOT SESSION_DIR [--online] [--serve] [--vision]",
     )?);
     let dir = PathBuf::from(args.get(1).ok_or("必须指定隔离会话目录。")?);
-    let mut executor = NativeToolExecutor::new(
-        root,
-        &dir,
-        args.iter().any(|s| s == "--online"),
-        Arc::new(RejectCompatibility),
-    )?;
+    let mut executor = NativeToolExecutor::new(root, &dir, args.iter().any(|s| s == "--online"))?;
+    if let Some(index) = args.iter().position(|s| s == "--occt") {
+        executor = executor.with_geometry_runtime(PathBuf::from(
+            args.get(index + 1)
+                .ok_or("--occt须提供runtime manifest路径。")?,
+        ));
+    }
     if args.iter().any(|s| s == "--vision") {
         if !args.iter().any(|s| s == "--online") {
             return Err("--vision 要求同时显式指定 --online。".into());

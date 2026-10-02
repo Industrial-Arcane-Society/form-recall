@@ -28,3 +28,5 @@ node examples/native_vision_acceptance.mjs <repo> <pinned-runtime> <output-dir> 
 ```
 
 当前单视图视觉复核的真实端到端质量验收仍待有实际原生模型后开展；已有真实调用只证明观察工具的注册和原图传输。
+
+**当前状态注记（2026-10-02）：**这里的 `RejectCompatibility` 是该次验收中临时配置的拒绝型执行器。F2.5 已从生产 Agent Host 移除 Python tool worker；视觉观察精度和复核质量仍由 F7 验收。

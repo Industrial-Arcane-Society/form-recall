@@ -1,27 +1,23 @@
 //! Local JSON-RPC bridge between the DSH Cordis plugin and the Rust desktop host.
 //!
 //! Cordis remains the DSH-native tool registration surface. This loopback
-//! transport keeps tool traffic out of ACP and MCP. Until the CAD domain and
-//! geometry move to Rust, calls are explicitly delegated by this Rust host to
-//! the existing Python compatibility backend.
+//! transport carries tool requests to Rust without ACP tool translation, MCP,
+//! or the Python tool worker.
 
 use serde_json::{Value, json};
 use sha2::{Digest, Sha256};
 use std::collections::{HashMap, HashSet, VecDeque};
-use std::ffi::OsString;
 use std::fs;
 use std::io::{self, BufRead, BufReader, Read, Write};
 use std::net::{SocketAddr, TcpListener, TcpStream};
 use std::path::{Path, PathBuf};
-use std::process::{Child, ChildStdin, Command, Stdio};
 use std::sync::atomic::{AtomicBool, AtomicUsize, Ordering};
-use std::sync::{Arc, Mutex, mpsc};
+use std::sync::{Arc, Mutex};
 use std::thread::{self, JoinHandle};
-use std::time::{Duration, Instant, SystemTime, UNIX_EPOCH};
+use std::time::{Duration, SystemTime, UNIX_EPOCH};
 
 const MAX_REQUEST_BYTES: usize = 16 * 1024 * 1024;
 const MAX_RESPONSE_BYTES: usize = 32 * 1024 * 1024;
-const MAX_WORKER_RESPONSE_BYTES: usize = 32 * 1024 * 1024;
 const MAX_CONNECTIONS: usize = 32;
 const MAX_CACHED_RESULTS: usize = 128;
 const DEFAULT_TOOL_TIMEOUT: Duration = Duration::from_secs(210);
@@ -167,272 +163,6 @@ impl NativeToolBridge {
 impl Drop for NativeToolBridge {
     fn drop(&mut self) {
         self.shutdown();
-    }
-}
-
-/// Transitional executor used until the Rust CAD domain replaces Python.
-/// Cordis talks only to Rust; Python is no longer launched by the plugin.
-pub struct LegacyPythonExecutor {
-    python: PathBuf,
-    project_root: PathBuf,
-    environment: Vec<(OsString, OsString)>,
-    active: Mutex<HashMap<String, Arc<PythonWorker>>>,
-    stopping: AtomicBool,
-}
-
-struct PythonWorker {
-    child: Mutex<Child>,
-    stdin: Mutex<ChildStdin>,
-    cancelled: AtomicBool,
-}
-
-impl LegacyPythonExecutor {
-    pub fn new(
-        python: impl Into<PathBuf>,
-        project_root: impl Into<PathBuf>,
-        environment: Vec<(OsString, OsString)>,
-    ) -> Self {
-        Self {
-            python: python.into(),
-            project_root: project_root.into(),
-            environment,
-            active: Mutex::new(HashMap::new()),
-            stopping: AtomicBool::new(false),
-        }
-    }
-
-    fn kill_worker(worker: &PythonWorker) {
-        if let Ok(mut child) = worker.child.lock() {
-            let _ = child.kill();
-            let _ = child.wait();
-        }
-    }
-}
-
-impl ToolExecutor for LegacyPythonExecutor {
-    fn execute(
-        &self,
-        tool_call_id: &str,
-        name: &str,
-        arguments: &Value,
-        timeout: Duration,
-    ) -> Result<Value, String> {
-        if self.stopping.load(Ordering::Acquire) {
-            return Err("Rust Cordis 工具桥正在关闭。".into());
-        }
-        if !arguments.is_object() {
-            return Err("工具参数必须为 JSON 对象。".into());
-        }
-        let mut command = Command::new(&self.python);
-        command
-            .args(["-u", "-m", "ai_modeler.agent.dsh_tool_worker"])
-            .current_dir(&self.project_root)
-            .envs(self.environment.iter().map(|(key, value)| (key, value)))
-            .stdin(Stdio::piped())
-            .stdout(Stdio::piped())
-            .stderr(Stdio::piped());
-        hide_console(&mut command);
-        let mut child = command
-            .spawn()
-            .map_err(|error| format!("无法启动 CAD 过渡期工具执行器：{error}"))?;
-        let Some(stdin) = child.stdin.take() else {
-            let _ = child.kill();
-            let _ = child.wait();
-            return Err("无法连接 CAD 工具执行器输入。".into());
-        };
-        let Some(stdout) = child.stdout.take() else {
-            let _ = child.kill();
-            let _ = child.wait();
-            return Err("无法读取 CAD 工具执行器结果。".into());
-        };
-        let Some(stderr) = child.stderr.take() else {
-            let _ = child.kill();
-            let _ = child.wait();
-            return Err("无法读取 CAD 工具执行器日志。".into());
-        };
-        let worker = Arc::new(PythonWorker {
-            child: Mutex::new(child),
-            stdin: Mutex::new(stdin),
-            cancelled: AtomicBool::new(false),
-        });
-        {
-            let mut active = self
-                .active
-                .lock()
-                .map_err(|_| "CAD 工具执行器取消表已损坏。")?;
-            if active.contains_key(tool_call_id) {
-                Self::kill_worker(&worker);
-                return Err("重复的 toolCallId。".into());
-            }
-            active.insert(tool_call_id.to_owned(), Arc::clone(&worker));
-        }
-
-        let initial_request = json!({"name":name,"arguments":arguments});
-        let write_result = (|| {
-            let mut stdin = worker
-                .stdin
-                .lock()
-                .map_err(|_| "CAD 工具输入管道已损坏。")?;
-            serde_json::to_writer(&mut *stdin, &initial_request)
-                .map_err(|error| error.to_string())?;
-            stdin.write_all(b"\n").map_err(|error| error.to_string())?;
-            stdin.flush().map_err(|error| error.to_string())
-        })();
-        if let Err(error) = write_result {
-            if let Ok(mut active) = self.active.lock() {
-                active.remove(tool_call_id);
-            }
-            Self::kill_worker(&worker);
-            return Err(format!("无法发送 CAD 工具请求：{error}"));
-        }
-
-        let (sender, receiver) = mpsc::channel();
-        let stdout_reader = thread::spawn(move || {
-            let response = read_worker_response(stdout);
-            let _ = sender.send(response);
-        });
-        let stderr_reader = thread::spawn(move || {
-            let mut stderr = stderr;
-            let _ = io::copy(&mut stderr, &mut io::sink());
-        });
-        let response = receiver.recv_timeout(timeout.min(MAX_TOOL_TIMEOUT));
-        if let Ok(mut active) = self.active.lock() {
-            active.remove(tool_call_id);
-        }
-        match response {
-            Ok(Ok(response)) => {
-                if worker.cancelled.load(Ordering::Acquire) {
-                    Self::kill_worker(&worker);
-                    let _ = stdout_reader.join();
-                    let _ = stderr_reader.join();
-                    return Err("工具请求已取消。".into());
-                }
-                let status = match finish_worker(&worker, Duration::from_secs(2)) {
-                    Ok(status) => status,
-                    Err(error) => {
-                        Self::kill_worker(&worker);
-                        let _ = stdout_reader.join();
-                        let _ = stderr_reader.join();
-                        return Err(error);
-                    }
-                };
-                let _ = stdout_reader.join();
-                let _ = stderr_reader.join();
-                if !status.success() {
-                    return Err(format!(
-                        "CAD 工具执行器返回失败退出码 {:?}。",
-                        status.code()
-                    ));
-                }
-                if response.get("ok") != Some(&Value::Bool(true)) {
-                    return Err(response
-                        .pointer("/error/message")
-                        .and_then(Value::as_str)
-                        .unwrap_or("CAD 工具执行失败。")
-                        .to_owned());
-                }
-                response
-                    .get("result")
-                    .cloned()
-                    .ok_or_else(|| "CAD 工具执行器没有返回 result。".to_owned())
-            }
-            Ok(Err(error)) => {
-                Self::kill_worker(&worker);
-                let _ = stdout_reader.join();
-                let _ = stderr_reader.join();
-                Err(error)
-            }
-            Err(mpsc::RecvTimeoutError::Timeout) => {
-                Self::kill_worker(&worker);
-                let _ = stdout_reader.join();
-                let _ = stderr_reader.join();
-                Err(format!(
-                    "CAD 工具执行超过 {:?}。",
-                    timeout.min(MAX_TOOL_TIMEOUT)
-                ))
-            }
-            Err(mpsc::RecvTimeoutError::Disconnected) => {
-                Self::kill_worker(&worker);
-                let _ = stdout_reader.join();
-                let _ = stderr_reader.join();
-                Err("CAD 工具执行结果通道意外关闭。".into())
-            }
-        }
-    }
-
-    fn cancel(&self, tool_call_id: &str) -> bool {
-        let worker = self
-            .active
-            .lock()
-            .ok()
-            .and_then(|active| active.get(tool_call_id).cloned());
-        let Some(worker) = worker else { return false };
-        worker.cancelled.store(true, Ordering::Release);
-        if let Ok(mut stdin) = worker.stdin.lock() {
-            let _ = serde_json::to_writer(&mut *stdin, &json!({"cancel":true}));
-            let _ = stdin.write_all(b"\n");
-            let _ = stdin.flush();
-        }
-        true
-    }
-
-    fn shutdown(&self) {
-        if self.stopping.swap(true, Ordering::AcqRel) {
-            return;
-        }
-        let workers = self
-            .active
-            .lock()
-            .map(|active| active.values().cloned().collect::<Vec<_>>())
-            .unwrap_or_default();
-        for worker in workers {
-            worker.cancelled.store(true, Ordering::Release);
-            Self::kill_worker(&worker);
-        }
-    }
-}
-
-fn read_worker_response(stdout: impl Read) -> Result<Value, String> {
-    let limited = stdout.take((MAX_WORKER_RESPONSE_BYTES + 1) as u64);
-    let mut reader = BufReader::new(limited);
-    let mut line = Vec::new();
-    reader
-        .read_until(b'\n', &mut line)
-        .map_err(|error| format!("读取 CAD 工具结果失败：{error}"))?;
-    if line.len() > MAX_WORKER_RESPONSE_BYTES {
-        return Err("CAD 工具执行器响应超过大小上限。".into());
-    }
-    let value: Value = serde_json::from_slice(&line)
-        .map_err(|error| format!("CAD 工具执行器返回无效 JSON：{error}"))?;
-    if !value.is_object() {
-        return Err("CAD 工具执行器响应必须是 JSON 对象。".into());
-    }
-    Ok(value)
-}
-
-fn finish_worker(
-    worker: &PythonWorker,
-    timeout: Duration,
-) -> Result<std::process::ExitStatus, String> {
-    let deadline = Instant::now() + timeout;
-    loop {
-        let mut child = worker
-            .child
-            .lock()
-            .map_err(|_| "CAD 工具进程状态已损坏。")?;
-        match child.try_wait() {
-            Ok(Some(status)) => return Ok(status),
-            Ok(None) if Instant::now() < deadline => {
-                drop(child);
-                thread::sleep(Duration::from_millis(20));
-            }
-            Ok(None) => {
-                let _ = child.kill();
-                let _ = child.wait();
-                return Err("CAD 工具执行器返回结果后未按时退出。".into());
-            }
-            Err(error) => return Err(format!("无法回收 CAD 工具执行器：{error}")),
-        }
     }
 }
 
@@ -805,14 +535,6 @@ fn hex(bytes: &[u8]) -> String {
         output.push(DIGITS[(byte & 0x0f) as usize] as char);
     }
     output
-}
-
-fn hide_console(command: &mut Command) {
-    #[cfg(windows)]
-    {
-        use std::os::windows::process::CommandExt;
-        command.creation_flags(0x08000000);
-    }
 }
 
 struct ConnectionCountGuard(Arc<Shared>);
