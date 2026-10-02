@@ -75,7 +75,7 @@
 |---|---|---|---|---|
 | F7.G1 | P0 | 主 Agent 直接查看原图和当前单视图 | 主 DSH provider 本机 wire 已证实原图 SHA 一致；远端 provider 接收及模型理解待真实验收 | 固定 Runtime 的本机 loopback 仅收到一条主 Chat Completions 请求，原图、DSH stream boundary 与 wire 解码 SHA/字节数一致；4/4 helper tests 通过。该结果证明本机请求序列化，不证明远端或模型理解。原图视觉质量仍有 run01 误报负样本，详见 [loopback 验收](./41-f7-g1-loopback-wire-acceptance.md) 与 [实测](./35-f7-image-acceptance-run-01.md)。 |
 | F7.G2 | P0 | CADPlan、Agent 与桌面模型统一同步 | **核心代码已提交；定向检查通过，真实桌面/Agent端到端待验收** | Agent/Quick/特征编辑、活动模型恢复、Save As、STL/OBJ/report/多视图快照和显式旧工程转换都路由到活动模型；Agent 几何工具通过 generation CAS 防止旧会话覆盖，CAS 失败时会话/证据/预览会回同步到活动记录。定向离线测试与 Cargo check 通过。CLI/无头预览不能代替真实 DSH→`model.changed`→桌面显示的端到端验收；启停与 CATIA 原生导出仍明确受限。见 [活动模型同步记录](./38-f7-active-model-sync.md)。 |
-| F7.G3 | P0 | 请求结束与模型验收状态区分 | 代码完成，端到端待验收 | Host 9/9、Vue build通过；turn_status独立，旧finish不得accepted，旧preview显示stale，纯问答不称建模完成；真实四场景见 G8，记录见 [状态真值](./29-f7-turn-and-model-status.md) |
+| F7.G3 | P0 | 请求结束与模型验收状态区分 | UI 状态与当前 revision/fingerprint 绑定已提交；真实 AgentHost→Vue 事件和模型验收仍待端到端 | 对话区分别显示本轮终态、当前模型候选/已验收、完成/几何/视觉状态；ACP completed 不提升模型状态；过期 finish revision/fingerprint 显示已过期。7/7状态映射测试与 Vue build 通过；未开 GUI。见 [状态真值](./29-f7-turn-and-model-status.md) 与 [可见状态记录](./42-f7-g3-visible-acceptance-state.md)。 |
 | F7.G4 | P0 | 阶段复核与施工范围一致 | 施工范围门禁与 revision 绑定 finding 生命周期已接入；定向 fixture 通过，真实视觉返修待验收 | mismatch 必须映射到本阶段已完成 feature 才建 finding；几何修改后进入 awaiting_verification；新版、完整覆盖的独立 exact match 才关闭并保留 closure binding。4 个生命周期 fixture、12 个 vision-domain fixture、7 个 aggregate gate fixture及 offline cargo check 通过。未来结构语义误归到当前 feature 仍需真实模型验收；见 [范围记录](./32-f7-stage-review-scope.md) 与 [finding 生命周期记录](./40-f7-stage-review-findings.md)。 |
 | F7.G5 | P1 | 观察因冲突可重新读取、版本可追踪 | **代码完成，真实视觉链路待验收** | 普通同 SHA/ROI 复用缓存；Agent 显式传 `conflict`/`reobserve` 才重新观察并递增版本；保留历史、SHA/ROI/reason/telemetry；新版 evidence ID 隔离旧 review/finding。定向测试 11+5+3 通过；见 [记录](./34-f7-observation-refresh.md)。 |
 | F7.G6 | P1 | 统一实际工具与几何能力契约 | **代码完成，运行期遵循待 G8 验收** | 26 类注册特征统一公开本地 exact/approximate/unsupported、支持/拒绝变体和参数边界；preflight 共用同一 native kind registry；面工具 source_type 与 hole-array 上限对齐。3 项定向测试已由 subagent 跑通；`parameter_limits` 当前为说明型契约，后续需随 preflight 同步。见 [记录](./36-f7-native-capability-contract.md)。 |
@@ -122,6 +122,7 @@ F2.4.2 的原生视觉工具接线、单视图复核数据隔离及质量验收�
 F2.5 的原生 CAD 写工具、真实 DSH→Cordis→Rust→OCCT 调用及 Python worker 移除见[Rust 原生 CAD 写工具](./21-f2-native-cad-write-tools.md)。
 
 F5.4 的原生活动模型 Wavefront OBJ 导出见[Rust 原生 OBJ 导出](./40-f5-native-obj-export.md)。
+F7.G3 的本轮终态与当前模型验收状态展示见[可见状态记录](./42-f7-g3-visible-acceptance-state.md)。
 
 F4.1 的真实 SDK、DLL 生命周期缺陷和几何检查记录见[固定 OCCT SDK 与 Rust 几何基础](./10-f4-native-occt-foundation.md)。
 
