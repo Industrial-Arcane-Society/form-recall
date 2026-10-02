@@ -1,6 +1,7 @@
 //! Transactional native CAD session edits. Geometry execution is delegated to F4.
 use crate::{cad_plan, cad_plan_validation};
 use serde_json::{json, Value};
+use sha2::{Digest, Sha256};
 
 #[derive(Clone, Debug)]
 pub enum SessionCommand {
@@ -319,6 +320,7 @@ pub fn complete_preview(state: &Value, outcome: BackendOutcome) -> Result<Sessio
     preview["revision"] = json!(rev);
     preview["geometry_fingerprint"] = json!(sig);
     preview["output_paths"] = outcome.output_paths.clone();
+    stamp_local_geometry_checks(&mut preview, rev, &sig)?;
     next["last_preview"] = preview.clone();
     next["preview_revision"] = json!(rev);
     next["output_paths"] = outcome.output_paths;
@@ -376,6 +378,45 @@ pub fn complete_preview(state: &Value, outcome: BackendOutcome) -> Result<Sessio
         value: json!({"preview":preview,"revision":rev}),
         backend: None,
     })
+}
+
+fn stamp_local_geometry_checks(
+    preview: &mut Value,
+    rev: i64,
+    fingerprint: &str,
+) -> Result<(), String> {
+    if preview.get("execution_engine").and_then(Value::as_str) != Some("rust_c_abi_occt") {
+        return Err("F4 preview 不是 Rust/OCCT 本地几何后端生成的结果。".into());
+    }
+    let checks = preview
+        .get_mut("local_geometry_checks")
+        .filter(|value| value.is_object())
+        .ok_or("F4 preview 缺少 local_geometry_checks 对象。")?;
+    if checks.get("execution_engine").and_then(Value::as_str) != Some("rust_c_abi_occt")
+        || checks.get("revision").and_then(Value::as_i64) != Some(rev)
+        || checks.get("geometry_fingerprint").and_then(Value::as_str) != Some(fingerprint)
+        || !matches!(
+            checks.get("state").and_then(Value::as_str),
+            Some("passed" | "partial" | "failed")
+        )
+    {
+        return Err("F4 local_geometry_checks 缺少匹配当前版本的 Rust/OCCT 报告。".into());
+    }
+    let mut unsigned = checks.clone();
+    unsigned
+        .as_object_mut()
+        .expect("local_geometry_checks was checked as object")
+        .remove("host_attestation");
+    let bytes = serde_json::to_vec(&unsigned).map_err(|error| error.to_string())?;
+    let digest = format!("{:x}", Sha256::digest(bytes));
+    checks["host_attestation"] = json!({
+        "schema_version":1,
+        "issuer":"native_cad_session.complete_preview",
+        "revision":rev,
+        "geometry_fingerprint":fingerprint,
+        "report_sha256":digest
+    });
+    Ok(())
 }
 
 /// `turn_id` is transient tool input: keep it out of the public CADPlan source
@@ -615,7 +656,9 @@ fn validate_user_source_provenance(
                 "用户来源校验失败：{feature_id}.{parameter} 的 evidence 不是该宿主 turn 的逐字连续片段。"
             ));
         }
-        if !user_turn_supports_value(prompt, value, parameter, feature, plan) {
+        // Only the quoted span is evidence for this parameter. A number elsewhere
+        // in the same user turn cannot be borrowed to justify this claim.
+        if !user_turn_supports_value(quote, value, parameter, feature, plan) {
             return Err(format!(
                 "用户来源校验失败：{feature_id}.{parameter} 的数值或参数名称无法由绑定的用户原文支持。"
             ));
@@ -625,36 +668,39 @@ fn validate_user_source_provenance(
 }
 
 fn user_turn_supports_value(
-    prompt: &str,
+    quote: &str,
     value: &Value,
     parameter: &str,
     feature: &Value,
     plan: &Value,
 ) -> bool {
     let Some(target) = value.as_f64().filter(|_| !value.is_boolean()) else {
-        // Vectors, enums, and booleans still need the exact quote/turn binding;
-        // Python's source checker does not infer their semantics from numbers.
-        return true;
+        // Complex values receive a literal gate only. Every numeric component
+        // must occur in the quote; enums/booleans must also be present literally.
+        return literal_value_occurs(quote, value);
     };
     if !target.is_finite() {
         return false;
     }
+    let length_parameter = is_length_parameter(parameter);
     let unit = plan["units"]["length"].as_str().unwrap_or("mm");
-    let target_mm = match unit.to_ascii_lowercase().as_str() {
-        "mm" | "millimeter" | "millimeters" => target,
-        "cm" | "centimeter" | "centimeters" => target * 10.0,
-        "m" | "meter" | "meters" => target * 1000.0,
-        _ => target,
+    let target_value = if length_parameter {
+        match length_to_mm(target, unit) {
+            Some(converted) => converted,
+            None => return false,
+        }
+    } else {
+        target
     };
-    let occurrences = numeric_occurrences_mm(prompt, unit);
+    let occurrences = numeric_occurrences(quote, unit, length_parameter);
     let matching: Vec<_> = occurrences
         .iter()
-        .filter(|occurrence| (occurrence.value_mm - target_mm).abs() <= 1e-6)
+        .filter(|occurrence| (occurrence.value - target_value).abs() <= 1e-6)
         .collect();
     if matching.is_empty() {
         return false;
     }
-    let text = prompt.to_lowercase();
+    let text = quote.to_lowercase();
     let groups = parameter_groups(parameter, feature);
     let has_target_cue = groups
         .iter()
@@ -663,34 +709,92 @@ fn user_turn_supports_value(
         return matching.len() == 1 && !has_any_parameter_cue(&text);
     }
     matching.iter().any(|occurrence| {
-        let start = prompt
+        let start = quote
             .char_indices()
             .take_while(|(byte, _)| *byte < occurrence.start_byte)
             .count()
             .saturating_sub(64);
-        let number_char = prompt
+        let number_char = quote
             .char_indices()
             .take_while(|(byte, _)| *byte < occurrence.start_byte)
             .count();
-        let prefix: String = prompt
-            .chars()
-            .skip(start)
-            .take(number_char - start)
-            .collect();
-        let prefix = prefix.to_lowercase();
+        let suffix_end = (number_char + 64).min(quote.chars().count());
+        let nearby: String = quote.chars().skip(start).take(suffix_end - start).collect();
+        let nearby = nearby.to_lowercase();
         groups
             .iter()
-            .any(|group| group.iter().any(|cue| prefix.contains(cue)))
+            .any(|group| group.iter().any(|cue| nearby.contains(cue)))
     })
 }
 
 #[derive(Clone, Copy)]
 struct NumericOccurrence {
-    value_mm: f64,
+    value: f64,
     start_byte: usize,
 }
 
-fn numeric_occurrences_mm(text: &str, plan_unit: &str) -> Vec<NumericOccurrence> {
+fn length_to_mm(value: f64, plan_unit: &str) -> Option<f64> {
+    let scale = match plan_unit.trim().to_ascii_lowercase().as_str() {
+        "mm" | "millimeter" | "millimeters" => 1.0,
+        "cm" | "centimeter" | "centimeters" => 10.0,
+        "m" | "meter" | "meters" => 1000.0,
+        "in" | "inch" | "inches" => 25.4,
+        _ => return None,
+    };
+    Some(value * scale)
+}
+
+fn is_length_parameter(parameter: &str) -> bool {
+    let key = parameter.trim().to_ascii_lowercase();
+    if ["count", "segments", "angle", "rotation", "index"].contains(&key.as_str()) {
+        return false;
+    }
+    [
+        "length",
+        "width",
+        "height",
+        "thickness",
+        "depth",
+        "diameter",
+        "radius",
+        "pitch",
+        "margin",
+        "offset",
+        "distance",
+        "_mm",
+        "_cm",
+    ]
+    .iter()
+    .any(|term| key.contains(term))
+}
+
+fn literal_value_occurs(text: &str, value: &Value) -> bool {
+    match value {
+        Value::Number(number) => number.as_f64().is_some_and(|target| {
+            target.is_finite()
+                && numeric_occurrences(text, "mm", false)
+                    .iter()
+                    .any(|row| (row.value - target).abs() <= 1e-6)
+        }),
+        Value::String(target) => {
+            !target.is_empty() && text.to_lowercase().contains(&target.to_lowercase())
+        }
+        Value::Bool(target) => text.to_lowercase().contains(&target.to_string()),
+        Value::Array(values) => {
+            !values.is_empty() && values.iter().all(|item| literal_value_occurs(text, item))
+        }
+        Value::Object(values) => {
+            !values.is_empty() && values.values().all(|item| literal_value_occurs(text, item))
+        }
+        Value::Null => false,
+    }
+}
+
+fn numeric_occurrences(
+    text: &str,
+    plan_unit: &str,
+    convert_length_units: bool,
+) -> Vec<NumericOccurrence> {
     let bytes = text.as_bytes();
     let mut rows = Vec::new();
     let mut i = 0;
@@ -736,22 +840,27 @@ fn numeric_occurrences_mm(text: &str, plan_unit: &str) -> Vec<NumericOccurrence>
             suffix += 1;
         }
         let rest = text[suffix..].to_ascii_lowercase();
-        let scale = if rest.starts_with("毫米") || rest.starts_with("mm") {
+        let scale = if !convert_length_units {
+            1.0
+        } else if rest.starts_with("毫米") || rest.starts_with("mm") {
             1.0
         } else if rest.starts_with("厘米") || rest.starts_with("cm") {
             10.0
+        } else if rest.starts_with("英寸") || rest.starts_with("inch") || rest.starts_with("in") {
+            25.4
         } else if rest.starts_with("米") || rest.starts_with("m") {
             1000.0
         } else {
-            match plan_unit.to_ascii_lowercase().as_str() {
+            match plan_unit.trim().to_ascii_lowercase().as_str() {
                 "cm" | "centimeter" | "centimeters" => 10.0,
                 "m" | "meter" | "meters" => 1000.0,
+                "in" | "inch" | "inches" => 25.4,
                 _ => 1.0,
             }
         };
         if value.is_finite() {
             rows.push(NumericOccurrence {
-                value_mm: value * scale,
+                value: value * scale,
                 start_byte: start,
             });
         }
@@ -772,6 +881,11 @@ fn parameter_groups(parameter: &str, feature: &Value) -> Vec<Vec<&'static str>> 
         "count" | "segments" => vec!["count", "segments", "数量", "个数", "孔数", "分段"],
         "angle" => vec!["angle", "角度"],
         "pitch" | "thread_pitch" => vec!["pitch", "thread pitch", "螺距"],
+        "center" | "point" | "position" | "origin" | "base" | "entry_point" | "centerline_mm" => {
+            vec![
+                "center", "中心", "point", "位置", "坐标", "origin", "原点", "base", "入口",
+            ]
+        }
         _ => vec![],
     };
     let kind = str_field(feature, "kind");
@@ -1033,6 +1147,46 @@ mod tests {
         write_json(&path, &json!({"session_id":"session-1","turns":turns}));
         path
     }
+    fn geometry_report(plan: &Value, revision: i64, state: &str) -> Value {
+        json!({
+            "state":state,
+            "execution_engine":"rust_c_abi_occt",
+            "revision":revision,
+            "geometry_fingerprint":cad_plan::geometry_fingerprint(plan).unwrap(),
+            "valid":state=="passed",
+            "closed_solid_count":if state=="passed" {1} else {0},
+            "validation":{"state":if state=="passed" {"valid"} else {"partial"}},
+            "hole_measurements_verified":false,
+            "hole_measurement_complete":false,
+            "requested_holes":[],
+            "sampled_hole_evidence":[]
+        })
+    }
+    fn with_preview(state: &Value, geometry_state: &str) -> Value {
+        let plan = state.get("plan").expect("fixture has a CADPlan");
+        let revision = super::revision(state);
+        let report = geometry_report(plan, revision, geometry_state);
+        with_report_preview(state, report)
+    }
+    fn with_report_preview(state: &Value, report: Value) -> Value {
+        let plan = state.get("plan").expect("fixture has a CADPlan");
+        let revision = super::revision(state);
+        let fingerprint = cad_plan::geometry_fingerprint(plan).unwrap();
+        complete_preview(state, BackendOutcome {
+            revision,
+            geometry_fingerprint:fingerprint,
+            output_paths:json!({"preview":"fixture-preview.png","geometry_report":"fixture-geometry.json"}),
+            preview:json!({
+                "execution_engine":"rust_c_abi_occt",
+                "local_geometry_checks":report
+            }),
+        }).expect("fixture preview should pass current host binding").state
+    }
+    fn with_aggregate(state: &Value, refs: &std::path::Path, turns: &std::path::Path) -> Value {
+        crate::native_review_gate::aggregate(state, refs, turns)
+            .expect("fixture aggregate should run")
+            .0
+    }
     fn image_state_with_coverage(
         overall_review: Option<Value>,
     ) -> (Value, PathBuf, PathBuf, PathBuf) {
@@ -1058,12 +1212,10 @@ mod tests {
                     .as_bytes()
             )
         );
-        let mut state = json!({
+        let state = json!({
             "revision":2,
-            "preview_revision":2,
             "has_references":true,
             "plan":plan,
-            "last_preview":{"revision":2,"geometry_fingerprint":fingerprint,"local_geometry_checks":{"state":"passed"}},
             "reference_inventory":{},
             "reference_similarity_history":[{
                 "revision":2,"recorded_at":1,"reference_id":reference_id,
@@ -1073,6 +1225,7 @@ mod tests {
             }],
             "finding_ledger":{},"required_external_facts":{},"actions":[]
         });
+        let mut state = with_preview(&state, "passed");
         state["reference_inventory"][reference_id.as_str()] = json!({
             "reference_id":reference_id,
             "source_sha256":digest,
@@ -1184,7 +1337,9 @@ mod tests {
     fn finish_gate_requires_local_geometry_pass_and_exports_are_separate() {
         let plan = valid_body_plan();
         let fingerprint = cad_plan::geometry_fingerprint(&plan).unwrap();
-        let s = json!({"revision":2,"preview_revision":2,"has_references":false,"plan":plan,"last_preview":{"revision":2,"geometry_fingerprint":fingerprint,"local_geometry_checks":{"state":"passed"}},"finding_ledger":{},"required_external_facts":{},"actions":[]});
+        let base = json!({"revision":2,"has_references":false,"plan":plan,"finding_ledger":{},"required_external_facts":{},"actions":[]});
+        let s = with_preview(&base, "passed");
+        let s = with_aggregate(&s, std::path::Path::new(""), std::path::Path::new(""));
         let result = finish_assessment(&s, std::path::Path::new(""), std::path::Path::new(""));
         assert!(result.is_ok(), "{:?}", result.err());
         let (next, dispatch) = result.unwrap();
@@ -1205,7 +1360,10 @@ mod tests {
             true
         );
         let error = finish_assessment(&state, &refs, &turns).unwrap_err();
-        assert!(error.contains("没有整体 geometry_review"), "{error}");
+        assert!(
+            error.contains("尚无宿主生成的整体 geometry_review"),
+            "{error}"
+        );
         std::fs::remove_dir_all(dir).unwrap();
     }
     #[test]
@@ -1229,16 +1387,22 @@ mod tests {
             error.contains("旧 revision") || error.contains("不同 geometry fingerprint"),
             "{error}"
         );
+
+        state["latest_geometry_review"] = json!({
+            "review_type":"geometry","revision":2,"geometry_fingerprint":fingerprint,
+            "score":100,"confidence":1.0,"result":{"decision":"accept"}
+        });
+        let error = finish_assessment(&state, &refs, &turns).unwrap_err();
+        assert!(
+            error.contains("不一致") || error.contains("过期"),
+            "{error}"
+        );
         std::fs::remove_dir_all(dir).unwrap();
     }
     #[test]
     fn current_overall_geometry_acceptance_unlocks_image_finish() {
-        let (mut state, refs, turns, dir) = image_state_with_coverage(None);
-        let fingerprint = cad_plan::geometry_fingerprint(&state["plan"]).unwrap();
-        state["latest_geometry_review"] = json!({
-            "review_type":"geometry","revision":2,"geometry_fingerprint":fingerprint,
-            "result":{"decision":"accept"}
-        });
+        let (state, refs, turns, dir) = image_state_with_coverage(None);
+        let state = with_aggregate(&state, &refs, &turns);
         let (_, dispatch) = finish_assessment(&state, &refs, &turns).unwrap();
         assert_eq!(dispatch.finish_state, "accepted");
         assert_eq!(dispatch.report["overall_geometry_review_accepted"], true);
@@ -1286,11 +1450,12 @@ mod tests {
                 revision: 1,
                 geometry_fingerprint: fingerprint,
                 output_paths: json!({"preview":"preview.png"}),
-                preview: json!({"local_geometry_checks":{"state":"passed"}}),
+                preview: json!({"execution_engine":"rust_c_abi_occt","local_geometry_checks":geometry_report(&created["plan"],1,"passed")}),
             },
         )
         .unwrap()
         .state;
+        created = with_aggregate(&created, std::path::Path::new(""), &turns);
         let (_, dispatch) = finish_assessment(&created, std::path::Path::new(""), &turns).unwrap();
         assert_eq!(dispatch.finish_state, "accepted");
         assert_eq!(dispatch.report["verified_user_source_count"], 1);
@@ -1327,7 +1492,7 @@ mod tests {
                 revision: 1,
                 geometry_fingerprint: fingerprint,
                 output_paths: json!({"preview":"preview.png"}),
-                preview: json!({"local_geometry_checks":{"state":"passed"}}),
+                preview: json!({"execution_engine":"rust_c_abi_occt","local_geometry_checks":geometry_report(&forged["plan"],1,"passed")}),
             },
         )
         .unwrap()
@@ -1361,7 +1526,7 @@ mod tests {
                 revision: 1,
                 geometry_fingerprint: fingerprint,
                 output_paths: json!({"preview":"preview.png"}),
-                preview: json!({"local_geometry_checks":{"state":"passed"}}),
+                preview: json!({"execution_engine":"rust_c_abi_occt","local_geometry_checks":geometry_report(&self_verified["plan"],1,"passed")}),
             },
         )
         .unwrap()
@@ -1404,7 +1569,7 @@ mod tests {
                     revision: 1,
                     geometry_fingerprint: fingerprint,
                     output_paths: json!({"preview":"preview.png"}),
-                    preview: json!({"local_geometry_checks":{"state":"passed"}}),
+                    preview: json!({"execution_engine":"rust_c_abi_occt","local_geometry_checks":geometry_report(&state["plan"],1,"passed")}),
                 },
             )
             .unwrap()
@@ -1446,13 +1611,18 @@ mod tests {
                 revision: 2,
                 geometry_fingerprint: fingerprint,
                 output_paths: json!({"preview":"partial.png"}),
-                preview: json!({"local_geometry_checks":{"state":"partial"}}),
+                preview: json!({"execution_engine":"rust_c_abi_occt","local_geometry_checks":geometry_report(&s["plan"],2,"partial")}),
             },
         )
         .unwrap();
         assert!(partial.state["partial_candidate"].is_null());
-        let (_, dispatch) = finish_assessment(
+        let partial_state = with_aggregate(
             &partial.state,
+            std::path::Path::new(""),
+            std::path::Path::new(""),
+        );
+        let (_, dispatch) = finish_assessment(
+            &partial_state,
             std::path::Path::new(""),
             std::path::Path::new(""),
         )
@@ -1468,17 +1638,19 @@ mod tests {
             "parameters":{"diameter":2,"axis":"Y","pos":"point","point":[0,0,0],"through":true},
             "sources":{"diameter":{"type":"image_estimate","evidence":"visual"},"point":{"type":"image_estimate","evidence":"visual"}}
         }));
-        let geometry = json!({
-            "state":"passed","requested_holes":[{"feature_id":"h1"}],
-            "count_confidence":1.0,"hole_measurement_complete":true,
-            "hole_instances":[{"feature_id":"h1","through":true,"status":"verified_open"}]
-        });
+        let mut geometry = geometry_report(&plan, 2, "passed");
+        geometry["requested_holes"] = json!([{"feature_id":"h1"}]);
+        geometry["count_confidence"] = json!(1.0);
+        geometry["hole_measurement_complete"] = json!(true);
+        geometry["hole_instances"] =
+            json!([{"feature_id":"h1","through":true,"status":"verified_open"}]);
         let summary = hole_measurement(&plan, &geometry);
         assert_eq!(summary["complete"], false);
         assert_eq!(summary["geometry_backend_verified"], false);
 
-        let fingerprint = cad_plan::geometry_fingerprint(&plan).unwrap();
-        let state = json!({"revision":2,"preview_revision":2,"has_references":false,"plan":plan,"last_preview":{"revision":2,"geometry_fingerprint":fingerprint,"local_geometry_checks":geometry},"finding_ledger":{},"required_external_facts":{},"actions":[]});
+        let base = json!({"revision":2,"has_references":false,"plan":plan,"finding_ledger":{},"required_external_facts":{},"actions":[]});
+        let state = with_report_preview(&base, geometry);
+        let state = with_aggregate(&state, std::path::Path::new(""), std::path::Path::new(""));
         let (_, dispatch) =
             finish_assessment(&state, std::path::Path::new(""), std::path::Path::new("")).expect(
                 "the diagnostic candidate remains reportable without claiming hole verification",
@@ -1505,6 +1677,53 @@ mod tests {
         .unwrap();
         assert_eq!(out.state["unresolved_findings"], json!([]));
         assert!(out.state["finish_summary"].is_null());
+    }
+
+    #[test]
+    fn aggregate_with_open_findings_can_finish_as_an_unaccepted_candidate() {
+        let base = json!({
+            "revision":2,"has_references":false,"plan":valid_body_plan(),"actions":[],
+            "finding_ledger":{"f1":{"finding_id":"f1","status":"open","severity":"major","item":"outline mismatch"}},
+            "required_external_facts":{}
+        });
+        let state = with_preview(&base, "passed");
+        let state = with_aggregate(&state, std::path::Path::new(""), std::path::Path::new(""));
+        let (_, dispatch) =
+            finish_assessment(&state, std::path::Path::new(""), std::path::Path::new(""))
+                .expect("a current non-accept aggregate should remain deliverable as a candidate");
+        assert_eq!(dispatch.finish_state, "candidate_needs_repair");
+        assert_eq!(dispatch.report["accepted"], false);
+        assert_eq!(
+            dispatch.report["overall_geometry_review"]["result"]["decision"],
+            "needs_repair"
+        );
+    }
+
+    #[test]
+    fn quoted_count_and_angle_are_not_converted_as_lengths_and_vectors_require_every_value() {
+        let plan = json!({"units":{"length":"cm"}});
+        let feature = json!({"kind":"pattern","operation":"add"});
+        assert!(user_turn_supports_value(
+            "孔数为 2 个",
+            &json!(2),
+            "count",
+            &feature,
+            &plan
+        ));
+        assert!(user_turn_supports_value(
+            "角度为 90°",
+            &json!(90),
+            "angle",
+            &feature,
+            &plan
+        ));
+        assert!(!user_turn_supports_value(
+            "坐标为 (1, 2) mm",
+            &json!([1, 2, 3]),
+            "point",
+            &feature,
+            &plan
+        ));
     }
     #[test]
     fn create_add_update_matches_python_domain_delta_fixture() {
@@ -1661,6 +1880,33 @@ pub fn finish_assessment(
             return Err("当前预览对应旧 revision 或不同 CADPlan geometry fingerprint。".into());
         }
     }
+    let user_source_count =
+        validate_user_source_provenance(&plan, &next, user_turns_manifest_path)?;
+    let aggregate = crate::native_review_gate::evaluate(
+        &next,
+        reference_manifest_path,
+        user_turns_manifest_path,
+    )?;
+    next = aggregate.state;
+    let summary = aggregate.summary;
+    let expected_geometry_review = aggregate.review;
+    let stored_geometry_review = next
+        .get("latest_geometry_review")
+        .filter(|value| value.is_object());
+    if stored_geometry_review != Some(&expected_geometry_review) {
+        let message = match stored_geometry_review {
+            None => "当前 revision 尚无宿主生成的整体 geometry_review，请先运行整体复核再保存候选。".to_owned(),
+            Some(review)
+                if review.get("revision").and_then(Value::as_i64) != Some(current_revision)
+                    || review.get("geometry_fingerprint").and_then(Value::as_str)
+                        != Some(current_fingerprint.as_str()) =>
+            {
+                "整体 geometry_review 绑定的是旧 revision 或不同 geometry fingerprint，请重新运行整体复核。".to_owned()
+            }
+            Some(_) => "整体 geometry_review 与当前宿主证据不一致或已过期，请重新运行整体复核。".to_owned(),
+        };
+        return Err(message);
+    }
     let geometry = if partial {
         next.get("partial_preview")
             .and_then(|v| v.get("partial_geometry_checks"))
@@ -1673,13 +1919,6 @@ pub fn finish_assessment(
     let geometry_passed = geometry.get("state").and_then(Value::as_str) == Some("passed");
     let holes = hole_measurement(&plan, &geometry);
     let holes_complete = holes["complete"] == true;
-    let summary = crate::native_state_summary::summary(
-        &mut next,
-        reference_manifest_path,
-        user_turns_manifest_path,
-    )?;
-    let user_source_count =
-        validate_user_source_provenance(&plan, &next, user_turns_manifest_path)?;
     let findings = next
         .get("unresolved_findings")
         .and_then(Value::as_array)
@@ -1707,38 +1946,13 @@ pub fn finish_assessment(
             .get("has_references")
             .and_then(Value::as_bool)
             .unwrap_or(false);
-    let geometry_review = next
-        .get("latest_geometry_review")
-        .filter(|value| value.is_object());
-    let overall_geometry_review_accepted = geometry_review.is_some_and(|review| {
-        review.get("review_type").and_then(Value::as_str) == Some("geometry")
-            && review.get("revision").and_then(Value::as_i64) == Some(current_revision)
-            && review.get("geometry_fingerprint").and_then(Value::as_str)
-                == Some(current_fingerprint.as_str())
-            && review.get("result").and_then(|value| value.get("decision"))
-                == Some(&json!("accept"))
-    });
-    if refs && !overall_geometry_review_accepted {
-        let reason = match geometry_review {
-            None => "没有整体 geometry_review 记录".to_owned(),
-            Some(review)
-                if review.get("revision").and_then(Value::as_i64) != Some(current_revision)
-                    || review.get("geometry_fingerprint").and_then(Value::as_str)
-                        != Some(current_fingerprint.as_str()) =>
-            {
-                "整体 geometry_review 绑定的是旧 revision 或不同 geometry fingerprint".to_owned()
-            }
-            Some(review)
-                if review.get("review_type").and_then(Value::as_str) != Some("geometry") =>
-            {
-                "记录不是整体 geometry_review".to_owned()
-            }
-            Some(_) => "整体 geometry_review 的 result.decision 不是 accept".to_owned(),
-        };
-        return Err(format!(
-            "图片任务暂不能完成验收：{reason}。请由宿主对当前 CADPlan revision {current_revision} / geometry fingerprint 生成整体复核并明确接受；逐图覆盖率或单视图记录不能替代整体判定。"
-        ));
-    }
+    let geometry_review = Some(&expected_geometry_review);
+    let geometry_review_decision = expected_geometry_review
+        .get("result")
+        .and_then(|result| result.get("decision"))
+        .and_then(Value::as_str)
+        .unwrap_or("unverified");
+    let overall_geometry_review_accepted = geometry_review_decision == "accept";
     let reference_coverage =
         manifest_ok && (!refs || visual.get("all_references_covered") == Some(&Value::Bool(true)));
     let milestone = next
@@ -1763,7 +1977,8 @@ pub fn finish_assessment(
         .count();
     let unknown = facts.len().saturating_sub(verified + failed);
     let external_complete = verified == facts.len();
-    let accepted = geometry_passed
+    let accepted = overall_geometry_review_accepted
+        && geometry_passed
         && holes_complete
         && reference_coverage
         && construction_complete
@@ -1777,6 +1992,12 @@ pub fn finish_assessment(
         "candidate_geometry_unverified"
     } else if !holes_complete {
         "candidate_holes_unverified"
+    } else if geometry_review_decision == "needs_repair" {
+        "candidate_needs_repair"
+    } else if geometry_review_decision == "partial" {
+        "candidate_review_partial"
+    } else if geometry_review_decision != "accept" {
+        "candidate_review_unverified"
     } else if !construction_complete {
         "candidate_construction_incomplete"
     } else if !external_complete {
@@ -1837,10 +2058,13 @@ fn string_set(v: &Value) -> std::collections::BTreeSet<String> {
         .map(str::to_string)
         .collect()
 }
-fn hole_measurement(plan: &Value, geometry: &Value) -> Value {
+pub(crate) fn hole_measurement(plan: &Value, geometry: &Value) -> Value {
     let holes: Vec<&Value> = features(plan)
         .iter()
-        .filter(|f| str_field(f, "kind") == "hole")
+        .filter(|f| {
+            str_field(f, "kind") == "hole"
+                && f.get("enabled").and_then(Value::as_bool) != Some(false)
+        })
         .collect();
     let rows = geometry
         .get("hole_instances")
