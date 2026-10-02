@@ -7,6 +7,143 @@ const MAX_PISTON_GROOVES: usize = 256;
 const MAX_PISTON_PROFILE_POINTS: usize = 4 * MAX_PISTON_GROOVES + 4;
 const MAX_SPOKED_WHEEL_SPOKES: u64 = 512;
 
+pub fn preflight_cross_joint(parameters: &Value) -> Result<(), String> {
+    let span = number(parameters, "span")?;
+    let journal_d = number(parameters, "journal_d")?;
+    if span <= 0.0 || journal_d <= 0.0 {
+        return Err("十字轴 span 与 journal_d 必须为正数。".into());
+    }
+    let hub = (span * 0.30).min(journal_d * 0.90);
+    let half_journal = (span - hub) / 2.0;
+    if !hub.is_finite() || hub <= 0.0 || !half_journal.is_finite() || half_journal <= 0.0 {
+        return Err("十字轴参数无法形成有限的中心块和轴颈。".into());
+    }
+    let center = point3(parameters.get("center"))?;
+    if center.iter().any(|coordinate| !coordinate.is_finite()) {
+        return Err("十字轴 center 必须为有限XYZ坐标。".into());
+    }
+    Ok(())
+}
+
+pub fn build_cross_joint(
+    kernel: &Kernel,
+    parameters: &Value,
+) -> Result<(Vec<Shape>, Value), String> {
+    preflight_cross_joint(parameters)?;
+    let span = number(parameters, "span")?;
+    let journal_d = number(parameters, "journal_d")?;
+    let center = point3(parameters.get("center"))?;
+    let radius = journal_d / 2.0;
+    let hub = (span * 0.30).min(journal_d * 0.90);
+    let half = (span - hub) / 2.0;
+    let axial_start = hub / 2.0;
+
+    // Match the legacy dimensions without its faceted approximation. Each
+    // axial cylinder starts on the hub face and keeps its stated full length.
+    // No overlap offset is added: OCCT must validate the actual shared faces.
+    let hub_shape = kernel.make_box([hub; 3], center)?;
+    let journals = [
+        kernel.cylinder(
+            radius,
+            half,
+            [center[0] + axial_start, center[1], center[2]],
+            [1.0, 0.0, 0.0],
+        )?,
+        kernel.cylinder(
+            radius,
+            half,
+            [center[0] - span / 2.0, center[1], center[2]],
+            [1.0, 0.0, 0.0],
+        )?,
+        kernel.cylinder(
+            radius,
+            half,
+            [center[0], center[1] + axial_start, center[2]],
+            [0.0, 1.0, 0.0],
+        )?,
+        kernel.cylinder(
+            radius,
+            half,
+            [center[0], center[1] - span / 2.0, center[2]],
+            [0.0, 1.0, 0.0],
+        )?,
+    ];
+    let mut references = Vec::with_capacity(5);
+    references.push(&hub_shape);
+    references.extend(journals.iter());
+    let result = kernel.fuse(&references)?;
+    let analysis = result.analyze()?;
+    if analysis.valid != 1 || analysis.solid_count != 1 || analysis.closed_solid_count != 1 {
+        return Err(format!(
+            "十字轴原始尺寸融合后必须是单一有效闭合实体；当前 valid={}, solids={}, closed={}",
+            analysis.valid, analysis.solid_count, analysis.closed_solid_count
+        ));
+    }
+
+    let samples = [
+        (
+            "x_journal",
+            [center[0], center[1], center[2]],
+            [1.0, 0.0, 0.0],
+            span / 2.0,
+        ),
+        (
+            "y_journal",
+            [center[0], center[1], center[2]],
+            [0.0, 1.0, 0.0],
+            span / 2.0,
+        ),
+        (
+            "z_hub",
+            [center[0], center[1], center[2]],
+            [0.0, 0.0, 1.0],
+            hub / 2.0,
+        ),
+    ];
+    let mut material_samples = Vec::with_capacity(samples.len());
+    for (label, origin, direction, expected_half_span) in samples {
+        let intervals = result.line_material_intervals(
+            origin,
+            direction,
+            -expected_half_span - 1.0,
+            expected_half_span + 1.0,
+            1e-7,
+        )?;
+        if intervals.len() != 1
+            || (intervals[0][0] + expected_half_span).abs() > 1e-6
+            || (intervals[0][1] - expected_half_span).abs() > 1e-6
+        {
+            return Err(format!(
+                "十字轴 {label} 轴心材料采样不连续或尺寸不符：{intervals:?}"
+            ));
+        }
+        material_samples.push(json!({
+            "label":label,
+            "origin_mm":origin,
+            "direction":direction,
+            "material_intervals_mm":intervals,
+            "expected_span_mm":2.0 * expected_half_span,
+            "passed":true
+        }));
+    }
+    let details = json!({
+        "kind":"cross_joint",
+        "status":"approximate",
+        "geometry_support":"approximate",
+        "builder":"analytic_hub_box_with_four_fused_cylindrical_journals",
+        "center_mm":center,
+        "span_mm":span,
+        "journal_d_mm":journal_d,
+        "hub_size_mm":hub,
+        "journal_length_mm":half,
+        "axis_layout":"four journals along global +X,-X,+Y,-Y; hub centered at global XYZ",
+        "baseline_comparison":"analytic OCCT cylinders compared with the legacy 24-segment faceted approximation; bounds are checked independently, volume difference is reported but is not exact-parity acceptance",
+        "material_samples":material_samples,
+        "warnings":["Legacy facet cylinders are replaced by analytic OCCT cylinders; facet-volume equality is not expected."]
+    });
+    Ok((vec![result], details))
+}
+
 pub fn preflight_conrod(parameters: &Value) -> Result<(), String> {
     let length = number(parameters, "length")?;
     let big_d = number(parameters, "big_d")?;
@@ -492,6 +629,29 @@ mod tests {
     use serde_json::json;
 
     #[test]
+    fn cross_joint_preflight_rejects_missing_or_nonpositive_dimensions() {
+        let valid = json!({"span":40,"journal_d":12,"center":[12,-7,5]});
+        assert!(preflight_cross_joint(&valid).is_ok());
+        for key in ["span", "journal_d"] {
+            let mut missing = valid.clone();
+            missing.as_object_mut().unwrap().remove(key);
+            assert!(preflight_cross_joint(&missing).is_err(), "missing {key}");
+        }
+        for (key, value) in [("span", 0.0), ("journal_d", -1.0)] {
+            let mut invalid = valid.clone();
+            invalid[key] = json!(value);
+            assert!(preflight_cross_joint(&invalid)
+                .unwrap_err()
+                .contains("必须为正数"));
+        }
+        let mut invalid_center = valid;
+        invalid_center["center"] = json!([0, "bad", 0]);
+        assert!(preflight_cross_joint(&invalid_center)
+            .unwrap_err()
+            .contains("有限数值"));
+    }
+
+    #[test]
     fn conrod_preflight_rejects_missing_or_impossible_required_geometry() {
         let valid = json!({
             "length":80,"big_d":30,"small_d":18,"big_bore":20,
@@ -617,11 +777,9 @@ mod tests {
         );
         parameters["diameter"] = json!(20);
         parameters["grooves"] = json!(MAX_PISTON_GROOVES + 1);
-        assert!(
-            preflight_piston(&parameters)
-                .unwrap_err()
-                .contains("资源上限")
-        );
+        assert!(preflight_piston(&parameters)
+            .unwrap_err()
+            .contains("资源上限"));
     }
 
     #[test]

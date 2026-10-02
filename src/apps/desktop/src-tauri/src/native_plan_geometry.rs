@@ -56,6 +56,7 @@ pub fn preflight(plan: &Value) -> Result<Value, String> {
             "spoked_wheel",
             "piston",
             "conrod",
+            "cross_joint",
         ]
         .contains(&kind)
         {
@@ -92,6 +93,7 @@ pub fn preflight(plan: &Value) -> Result<Value, String> {
                 "shank_w",
                 "thick",
             ],
+            "cross_joint" => &["span", "journal_d"],
             _ => &[],
         };
         for key in required_native_parameters {
@@ -113,6 +115,10 @@ pub fn preflight(plan: &Value) -> Result<Value, String> {
         if kind == "conrod" {
             let normalized = normalized_feature(feature, plan)?;
             native_parametric_features::preflight_conrod(&normalized["parameters"])?;
+        }
+        if kind == "cross_joint" {
+            let normalized = normalized_feature(feature, plan)?;
+            native_parametric_features::preflight_cross_joint(&normalized["parameters"])?;
         }
         if kind == "pattern" {
             let count = p
@@ -196,6 +202,10 @@ pub fn build(plan: &Value, manifest: &Path, cancelled: &AtomicBool) -> Result<Bu
         } else if normalized["kind"] == "conrod" {
             let (tools, support) =
                 native_parametric_features::build_conrod(&kernel, &normalized["parameters"])?;
+            (tools, vec![], Some(support))
+        } else if normalized["kind"] == "cross_joint" {
+            let (tools, support) =
+                native_parametric_features::build_cross_joint(&kernel, &normalized["parameters"])?;
             (tools, vec![], Some(support))
         } else {
             let (tools, holes) = feature_tools(&kernel, &normalized, bb, current.as_ref())?;
@@ -1009,6 +1019,8 @@ fn normalized_feature(feature: &Value, plan: &Value) -> Result<Value, String> {
             "small_bore",
             "shank_w",
             "thick",
+            "span",
+            "journal_d",
         ]
         .contains(&key.as_str())
         {

@@ -64,6 +64,13 @@ def main():
         dict(length=8, big_d=3, small_d=1.8, big_bore=2, small_bore=1,
              shank_w=1, thick=0.8, center=[2, -1.1, 0.7]),
         dict(length="cm", angle="deg"))
+    add("cross-joint-origin", "cross_joint",
+        dict(span=40, journal_d=12, center=[0, 0, 0], segments=24))
+    add("cross-joint-translated", "cross_joint",
+        dict(span=40, journal_d=12, center=[12, -7, 5], segments=24))
+    add("cross-joint-cm-unit-scaling", "cross_joint",
+        dict(span=4, journal_d=1.2, center=[1.2, -0.7, 0.5], segments=24),
+        dict(length="cm", angle="deg"))
 
     for axis in "XYZ":
         for mode in ("center", "base_true", "base_false"):
@@ -183,6 +190,12 @@ def main():
         "conrod-translated-center": ([-35, -26, 3, 69, 4, 11], [20, -11, 7], 13425.635002984112),
         "conrod-cm-unit-scaling": ([-35, -26, 3, 69, 4, 11], [20, -11, 7], 13425.635002984112),
     }
+    expected_cross_joint_bounds = {
+        "cross-joint-origin": [-20, -20, -6, 20, 20, 6],
+        "cross-joint-translated": [-8, -27, -1, 32, 13, 11],
+        "cross-joint-cm-unit-scaling": [-8, -27, -1, 32, 13, 11],
+    }
+    cross_joint_native_volumes = {}
 
     records = []
     for name, plan in cases:
@@ -243,6 +256,29 @@ def main():
                     or any(abs(a - b) > 1e-9 for a, b in zip(details.get("center_mm", []), expected_center))):
                 raise AssertionError((name, "conrod-geometry-contract", native["bounds_mm"],
                                       native["volume_mm3"], support))
+        if name in expected_cross_joint_bounds:
+            expected_bounds = expected_cross_joint_bounds[name]
+            support = native["feature_results"][0]
+            details = support.get("support_details", {})
+            expected_samples = {
+                "x_journal": [-20.0, 20.0],
+                "y_journal": [-20.0, 20.0],
+                "z_hub": [-5.4, 5.4],
+            }
+            sample_rows = {row.get("label"): row for row in details.get("material_samples", [])}
+            if (max(abs(a - b) for a, b in zip(native["bounds_mm"], expected_bounds)) > 1e-6
+                    or native.get("valid") is not True
+                    or native.get("closed_solid_count") != 1
+                    or support.get("geometry_support") != "approximate"
+                    or details.get("geometry_support") != "approximate"
+                    or details.get("builder") != "analytic_hub_box_with_four_fused_cylindrical_journals"
+                    or details.get("baseline_comparison", "").find("volume difference is reported") < 0
+                    or set(sample_rows) != set(expected_samples)
+                    or any(sample_rows[label].get("passed") is not True
+                           or sample_rows[label].get("material_intervals_mm") != [interval]
+                           for label, interval in expected_samples.items())):
+                raise AssertionError((name, "cross-joint-geometry-contract", native["bounds_mm"], support))
+            cross_joint_native_volumes[name] = native["volume_mm3"]
         if name == "pattern-circular-four-through-holes":
             holes = native.get("hole_instances", [])
             if (len(holes) != 4 or native.get("hole_measurements_verified") is not True
@@ -273,13 +309,35 @@ def main():
                     native.get("hole_measurements_verified"),
                     [(row.get("feature_id"), row.get("instance_index"), row.get("status"),
                       row.get("final_measurement", {}).get("actual_radius_measurements")) for row in measured]))
-        shape, _ = occ_kernel.build_document(plan_to_document(plan))
+        shape, baseline_report = occ_kernel.build_document(plan_to_document(plan))
         bounds_error = max(abs(a - b) for a, b in zip(occ_kernel._bbox(shape), native["bounds_mm"]))
         volume_error = abs(occ_kernel.volume(shape) - native["volume_mm3"])
-        if bounds_error > 1e-6 or volume_error > 1e-5:
+        if name in expected_cross_joint_bounds:
+            if (bounds_error > 1e-6
+                    or baseline_report.get("geometry_state") != "passed"
+                    or baseline_report.get("brep_valid") is not True
+                    or baseline_report.get("solid_count") != 1
+                    or baseline_report.get("closed") is not True):
+                raise AssertionError((name, "cross-joint-bounds-or-legacy-brep", bounds_error,
+                                      baseline_report.get("geometry_state"), baseline_report.get("brep_valid"),
+                                      baseline_report.get("solid_count"), baseline_report.get("closed")))
+        elif bounds_error > 1e-6 or volume_error > 1e-5:
             raise AssertionError((name, bounds_error, volume_error))
         records.append(dict(case=name, passed=True, bounds_max_error_mm=bounds_error,
-                            volume_error_mm3=volume_error))
+                            volume_error_mm3=volume_error,
+                            volume_comparison=("reported_only_faceted_legacy_vs_analytic_native"
+                                               if name in expected_cross_joint_bounds else "parity_checked"),
+                            legacy_volume_mm3=(occ_kernel.volume(shape)
+                                               if name in expected_cross_joint_bounds else None),
+                            native_volume_mm3=(native["volume_mm3"]
+                                               if name in expected_cross_joint_bounds else None),
+                            volume_relative_difference=(volume_error / max(abs(occ_kernel.volume(shape)), 1e-12)
+                                                        if name in expected_cross_joint_bounds else None)))
+    cross_joint_origin_volume = cross_joint_native_volumes["cross-joint-origin"]
+    for name in ("cross-joint-translated", "cross-joint-cm-unit-scaling"):
+        if abs(cross_joint_native_volumes[name] - cross_joint_origin_volume) > 1e-6:
+            raise AssertionError(("cross-joint-transform-volume-invariance", name,
+                                  cross_joint_native_volumes[name], cross_joint_origin_volume))
     python_version = "unknown"
     for package in ("cadquery-ocp", "cadquery-ocp-novtk"):
         try:
@@ -352,6 +410,14 @@ def main():
     conrod_short["features"][0]["parameters"]["length"] = 5
     conrod_short["features"][0]["sources"]["length"] = {"type": "user"}
     negatives.append(("conrod-short-external-tangent", conrod_short, "外公切"))
+    cross_joint_missing = copy.deepcopy(wheel_case_by_name["cross-joint-origin"])
+    cross_joint_missing["features"][0]["parameters"].pop("journal_d")
+    cross_joint_missing["features"][0]["sources"].pop("journal_d")
+    negatives.append(("cross-joint-missing-journal-d", cross_joint_missing, "journal_d"))
+    cross_joint_nonpositive = copy.deepcopy(wheel_case_by_name["cross-joint-origin"])
+    cross_joint_nonpositive["features"][0]["parameters"]["span"] = 0
+    cross_joint_nonpositive["features"][0]["sources"]["span"] = {"type": "user"}
+    negatives.append(("cross-joint-nonpositive-span", cross_joint_nonpositive, "必须大于 0"))
 
     # The first plan leaves only the recessed local span;
     # the second asks for more depth than that span, and the third samples an
