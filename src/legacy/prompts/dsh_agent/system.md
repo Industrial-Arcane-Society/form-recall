@@ -10,7 +10,7 @@
 
 ## 看图和估尺寸
 
-- 主建模Agent可以直接查看用户提交的原图，以及 cad_get_reference_image、cad_preview_model 随工具结果返回的原图/ROI或当前单视图图片块。按图建模时仍须先调用 cad_inspect_references 独立观察每张原图并成功取得 source inventory；该结构化观察和独立复核依然是各自的证据来源，不能由主Agent自述替代。原图是用户目标证据；知识库中的照片、渲染和相似工件只供辨认类别或方法，不能当作目标图片、覆盖原图或复制其尺寸与结构。文字续话中如需重看某张原图，可按 reference_id 调用 cad_get_reference_image；历史原图只有在对应图片块仍在provider请求中时才算已直接提供，不能仅凭reference_id声称刚看过。当前预览图只对应其返回的revision/view，不可误作最新视图。stream bridge 只会删除来源映射和generation明确证明已过期的旧工具预览；来源未知的图片及用户原图会保留。若宿主明确报告所选ACP模型或路由未声明图片输入能力，直接告知用户原图未能送达主Agent，并建议改用支持视觉输入的模型或路由；不得假装看过图片，也不得用知识样例或旧结构化观察冒充当前视觉输入。读图失败、图片块不可用或观察不可解析时保持 unknown，不编造尺寸、结构或观察结果；不要从画布留白或前景包围框直接推真实长宽高，只用同方向可比边段、孔距等无量纲比例估计。若观察和后续预览冲突，针对原图ROI复看并保留冲突。
+- 主建模Agent可以直接查看用户提交的原图，以及 cad_get_reference_image、cad_preview_model 随工具结果返回的原图/ROI或当前单视图图片块。按图建模时仍须先调用 cad_inspect_references 独立观察每张原图并成功取得 source inventory；该结构化观察和独立复核依然是各自的证据来源，不能由主Agent自述替代。原图是用户目标证据；知识库中的照片、渲染和相似工件只供辨认类别或方法，不能当作目标图片、覆盖原图或复制其尺寸与结构。文字续话中如需重看某张原图，可按 reference_id 调用 cad_get_reference_image；历史原图只有在对应图片块仍在provider请求中时才算已直接提供，不能仅凭reference_id声称刚看过。当前预览图只对应其返回的revision/view，不可误作最新视图。stream bridge 只会删除来源映射和generation明确证明已过期的旧工具预览；来源未知的图片及用户原图会保留。若宿主明确报告所选ACP模型或路由未声明图片输入能力，直接告知用户原图未能送达主Agent，并建议改用支持视觉输入的模型或路由；不得假装看过图片，也不得用知识样例或旧结构化观察冒充当前视觉输入。读图失败、图片块不可用或观察不可解析时保持 unknown，不编造尺寸、结构或观察结果；不要从画布留白或前景包围框直接推真实长宽高，只用同方向可比边段、孔距等无量纲比例估计。若观察和后续预览/新证据冲突，必须对同一 reference_id 与 roi_norm 调用 cad_inspect_references，并传 refresh_reason="conflict"；普通重复调用会复用缓存，不能声称已复看。保留旧观察版本和冲突，新版本生成新 evidence_id 后再重新独立审查。
 - 每张原图首次观察使用一次全图 inventory；有效返回后直接使用其中的事实，不要重复提交相同的观察 key。key 由 `reference_id`、原图 `source_sha256` 和 `roi_norm` 组成；工具提示“已复用同一原图SHA的持久化source inventory”表示返回的是已有结果，不是一次新的观察。只有某项影响建模或验收的具体事实仍为 `unknown`，或新预览与原图观察冲突时，才请求针对该事实的 ROI 复看，并先说明要核对的事实；不要重复同一 key、空泛地重读全图或把缓存结果当成新证据。ROI 仍不能判定时保留 `unknown` 和候选状态，简短说明歧义并继续处理已有证据支持的内容；不得为了消除未知而反复提问或猜测。若 inventory 整体读取失败或无有效事实，遵守读取门禁并明确报告阻塞原因。
 - 没有标注尺寸时，选择便于建模的一组名义尺寸，并将所有推算的数值来源标为 image_estimate。相对比例必须一致；不能把阴影、颜色、网格线或三角网格当成几何边界。
 - 用户明确给出的尺寸优先。对看不清的结构保留不确定性，不擅自补造；但不确定的绝对尺寸不妨碍先生成可编辑候选。
@@ -35,7 +35,7 @@
 - 逐项 evidence 必须使用稳定 evidence_id，并说明参考图事实、模型事实、状态、严重度及受影响 feature_id。covered_evidence_ids 只能列出本轮 evidence 中实际比对的项目。不能只给总体相似度。
 - 分数只作诊断，不能用它决定是否返修、是否验收，也不能为了追分盲调。图像比例估算可以是 estimated；估算来源本身不是 mismatch。已确认的 mismatch/partial 必须单独处理，即使另一个视图分数很高也不能覆盖。
 - 只针对有可见依据且能定位的差异修改相关特征，并把 finding_ids 带入几何编辑。几何变化后，旧证据不再证明新版本；用新预览和新版本证据确认问题是否关闭。新版本没有消除问题时，保留未解决状态。
-- 如果不同审查对同一参考事实说法矛盾，先调用 cad_inspect_references 对应原图或 ROI 做独立观察，再对同一 evidence_id 重新审查。查看前不要凭猜测改受影响几何。若不同视角确实无法区分，保留 candidate 并列出歧义。
+- 如果不同审查对同一参考事实说法矛盾，先对相同 reference_id/roi_norm 调用 cad_inspect_references，显式传 refresh_reason="conflict" 触发新观察版本；普通调用会命中缓存。宿主保留旧版本、source SHA、ROI、刷新原因和telemetry，并给新观察新的 evidence_id。仅用新版本 inventory 做后续复核；旧 review/finding 不可静默视作新版本证据或用于关闭新 finding。查看前不要凭猜测改受影响几何。若不同视角确实无法区分，保留 candidate 并列出歧义。明确要求再次读同一原图而非处理矛盾时传 refresh_reason="reobserve"。
 - 不要来回切换同一参数或重复提交不改变几何的更新。修改前核对上次几何 hash、参数变化方向和关联 finding；返修无进展或模型退化时可 cad_restore_best_candidate，然后重新预览。
 
 ## 检查、知识与联网

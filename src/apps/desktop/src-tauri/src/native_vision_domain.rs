@@ -134,25 +134,46 @@ pub async fn inspect(
     cancelled: &AtomicBool,
     ctx: &Context,
 ) -> Result<DomainResult, String> {
-    validate_keys(args, &["reference_image_index", "reference_id", "roi_norm"])?;
+    validate_keys(
+        args,
+        &[
+            "reference_image_index",
+            "reference_id",
+            "roi_norm",
+            "refresh_reason",
+        ],
+    )?;
+    let refresh_reason = match args.get("refresh_reason") {
+        None | Some(Value::Null) => None,
+        Some(Value::String(reason)) if reason == "conflict" => Some("conflict"),
+        Some(Value::String(reason)) if reason == "reobserve" => Some("reobserve"),
+        Some(_) => return Err("refresh_reason只能是conflict或reobserve。".into()),
+    };
     let ref_id = nonempty_string(&args["reference_id"]);
     let index = reference_index_arg(args)?;
     let roi = args.get("roi_norm").filter(|v| !v.is_null());
     let input = native_vision_assets::reference_input(&ctx.reference_manifest, ref_id, index, roi)
         .map_err(vision_error)?;
     let mut next = state.clone();
-    let cached = get_inventory(&next, &input);
-    if let Some(entry) = cached.filter(|x| inventory_is_valid(&input, x)) {
-        record(
-            &mut next,
-            "cad_inspect_references",
-            json!({"reference_id":input.image.reference_id,"source_sha256":input.image.source_sha256,"roi_norm":input.image.roi_norm,"reused_cached_inventory":true,"observation_valid":true,"verification_status":"unknown"}),
-        );
-        return Ok(DomainResult {
-            state: next,
-            value: entry,
-        });
+    let cached = get_cached_observation(&next, &input);
+    if refresh_reason.is_none() {
+        if let Some(entry) = cached.clone() {
+            record(
+                &mut next,
+                "cad_inspect_references",
+                json!({"reference_id":input.image.reference_id,"source_sha256":input.image.source_sha256,"roi_norm":input.image.roi_norm,"observation_version":entry["observation_version"],"observation_id":entry["observation_id"],"reused_cached_inventory":true,"observation_valid":entry["observation_valid"],"verification_status":"unknown"}),
+            );
+            return Ok(DomainResult {
+                state: next,
+                value: entry,
+            });
+        }
     }
+    let observation_version = cached
+        .as_ref()
+        .and_then(|v| v["observation_version"].as_u64())
+        .unwrap_or(0)
+        .saturating_add(1);
     let prompt = inspection_prompt(&input);
     let messages = vec![
         VisionMessage {
@@ -182,7 +203,7 @@ pub async fn inspect(
         )
         .await
         .map_err(vision_error)?;
-    let mut normalized = normalize_observation(&result.parsed_json, &input);
+    let mut normalized = normalize_observation(&result.parsed_json, &input, observation_version);
     if !inventory_evidence_is_valid(&input, &normalized)
         && !cancelled.load(std::sync::atomic::Ordering::Acquire)
     {
@@ -205,7 +226,7 @@ pub async fn inspect(
             )
             .await
             .map_err(vision_error)?;
-        normalized = normalize_observation(&result.parsed_json, &input);
+        normalized = normalize_observation(&result.parsed_json, &input, observation_version);
     }
     let valid = normalized["visible_evidence"]
         .as_array()
@@ -230,12 +251,26 @@ pub async fn inspect(
     });
     normalized["verification_status"] = json!("unknown");
     normalized["recorded_at"] = json!(now());
+    normalized["observation_version"] = json!(observation_version);
+    normalized["observation_id"] = json!(format!(
+        "{}:{}:v{}",
+        input.image.reference_id.as_deref().unwrap_or("reference"),
+        input.roi_cache_key,
+        observation_version
+    ));
+    normalized["refresh_reason"] = refresh_reason.map_or(Value::Null, |s| json!(s));
     normalized["diagnostics"] = profile_diag(&result);
+    if refresh_reason.is_some() {
+        if let Some(previous) = cached.as_ref() {
+            append_observation_history(&mut next, previous);
+        }
+    }
+    append_observation_history(&mut next, &normalized);
     store_inventory(&mut next, &input, normalized.clone());
     record(
         &mut next,
         "cad_inspect_references",
-        json!({"reference_id":input.image.reference_id,"source_sha256":input.image.source_sha256,"roi_norm":input.image.roi_norm,"observation_valid":valid,"verification_status":"unknown"}),
+        json!({"reference_id":input.image.reference_id,"source_sha256":input.image.source_sha256,"roi_norm":input.image.roi_norm,"observation_version":observation_version,"observation_id":normalized["observation_id"],"refresh_reason":refresh_reason,"observation_valid":valid,"verification_status":"unknown"}),
     );
     Ok(DomainResult {
         state: next,
@@ -256,7 +291,11 @@ fn inspection_prompt(input: &ReferenceInput) -> String {
         metadata
     )
 }
-fn normalize_observation(input: &Value, reference: &ReferenceInput) -> Value {
+fn normalize_observation(
+    input: &Value,
+    reference: &ReferenceInput,
+    observation_version: u64,
+) -> Value {
     let Some((payload, _)) = payload(input) else {
         return json!({"summary":"","visible_evidence":[],"uncertain":[],"inferred":[]});
     };
@@ -322,7 +361,7 @@ fn normalize_observation(input: &Value, reference: &ReferenceInput) -> Value {
                     )
                 });
             let evidence_id = format!(
-                "{reference_id}:roi-{roi_prefix}:{}",
+                "{reference_id}:roi-{roi_prefix}:obs-{observation_version}:{}",
                 source_id.chars().take(160).collect::<String>()
             );
             let identity_collision = !ids.insert(evidence_id.clone());
@@ -462,6 +501,10 @@ fn safe_image_region(value: Option<&Value>) -> Value {
     safe_data(value, 0)
 }
 fn get_inventory(s: &Value, input: &ReferenceInput) -> Option<Value> {
+    let v = get_cached_observation(s, input)?;
+    inventory_is_valid(input, &v).then_some(v)
+}
+fn get_cached_observation(s: &Value, input: &ReferenceInput) -> Option<Value> {
     let id = input.image.reference_id.as_deref()?;
     let roi = input.image.roi_norm.as_ref();
     let v = if roi.is_none() {
@@ -475,9 +518,28 @@ fn get_inventory(s: &Value, input: &ReferenceInput) -> Option<Value> {
     (v.get("reference_id").and_then(Value::as_str) == Some(id)
         && v.get("source_sha256").and_then(Value::as_str) == input.image.source_sha256.as_deref()
         && v.get("roi_cache_key").and_then(Value::as_str) == Some(&input.roi_cache_key)
-        && v.get("roi_norm").cloned().unwrap_or(Value::Null) == roi.cloned().unwrap_or(Value::Null)
-        && inventory_is_valid(input, &v))
+        && v.get("roi_norm").cloned().unwrap_or(Value::Null) == roi.cloned().unwrap_or(Value::Null))
     .then_some(v)
+}
+fn append_observation_history(s: &mut Value, observation: &Value) {
+    if !s
+        .get("reference_observation_history")
+        .is_some_and(Value::is_array)
+    {
+        s["reference_observation_history"] = json!([]);
+    }
+    let history = s["reference_observation_history"].as_array_mut().unwrap();
+    let already_recorded =
+        if let Some(id) = observation.get("observation_id").and_then(Value::as_str) {
+            history
+                .iter()
+                .any(|entry| entry.get("observation_id").and_then(Value::as_str) == Some(id))
+        } else {
+            history.contains(observation)
+        };
+    if !already_recorded {
+        history.push(observation.clone());
+    }
 }
 fn inventory_is_valid(input: &ReferenceInput, inventory: &Value) -> bool {
     let Some(reference_id) = input.image.reference_id.as_deref() else {
@@ -700,6 +762,8 @@ pub async fn review(
     )?;
     let inventory = get_inventory(state, &reference)
         .ok_or("当前原图SHA/ROI没有匹配的持久source inventory；先调用cad_inspect_references。")?;
+    let observation_fingerprint = sha(&serde_json::to_vec(&inventory).unwrap_or_default());
+    let observation_version = inventory["observation_version"].as_u64().unwrap_or(1);
     let required = visible(&inventory)
         .iter()
         .filter_map(|x| {
@@ -729,6 +793,9 @@ pub async fn review(
         "revision": rev,
         "preview_generation": generation,
         "preview_sha256": preview_sha,
+        "observation_id": inventory["observation_id"],
+        "observation_version": observation_version,
+        "observation_fingerprint": observation_fingerprint,
         "stage_scope": stage_scope,
         "stage_complete": stage_complete,
         "full_current_geometry_in_scope": full_current_geometry_in_scope,
@@ -948,6 +1015,9 @@ pub async fn review(
         "reference_id": reference.image.reference_id,
         "reference_image_name": reference.metadata.get("filename"),
         "source_sha256": reference.image.source_sha256,
+        "observation_id": inventory["observation_id"],
+        "observation_version": observation_version,
+        "observation_fingerprint": observation_fingerprint,
         "roi_norm": reference.image.roi_norm,
         "transport_sha256": reference.image.transport_sha256,
         "preview_sha256": preview_sha,
@@ -1513,61 +1583,65 @@ mod tests {
         }
     }
 
-    fn mock_chat_server(response_content: Value) -> (String, thread::JoinHandle<(Value, String)>) {
+    fn mock_chat_server(
+        responses: Vec<Value>,
+    ) -> (String, thread::JoinHandle<Vec<(Value, String)>>) {
         let listener = TcpListener::bind(("127.0.0.1", 0)).unwrap();
         let address = listener.local_addr().unwrap();
         let task = thread::spawn(move || {
-            let (mut stream, _) = listener.accept().unwrap();
-            stream
-                .set_read_timeout(Some(Duration::from_secs(5)))
-                .unwrap();
-            let mut request = Vec::new();
-            let mut chunk = [0u8; 8192];
-            let header_end = loop {
-                let count = stream.read(&mut chunk).unwrap();
-                assert_ne!(count, 0, "provider closed before sending a request");
-                request.extend_from_slice(&chunk[..count]);
-                if let Some(position) = request.windows(4).position(|window| window == b"\r\n\r\n")
-                {
-                    break position + 4;
+            let mut requests = Vec::new();
+            for response_content in responses {
+                let (mut stream, _) = listener.accept().unwrap();
+                stream
+                    .set_read_timeout(Some(Duration::from_secs(5)))
+                    .unwrap();
+                let mut request = Vec::new();
+                let mut chunk = [0u8; 8192];
+                let header_end = loop {
+                    let count = stream.read(&mut chunk).unwrap();
+                    assert_ne!(count, 0, "provider closed before sending a request");
+                    request.extend_from_slice(&chunk[..count]);
+                    if let Some(position) =
+                        request.windows(4).position(|window| window == b"\r\n\r\n")
+                    {
+                        break position + 4;
+                    }
+                    assert!(
+                        request.len() < 4 * 1024 * 1024,
+                        "HTTP headers are unexpectedly large"
+                    );
+                };
+                let headers = String::from_utf8_lossy(&request[..header_end]);
+                let content_length = headers
+                    .lines()
+                    .find_map(|line| {
+                        line.split_once(':')
+                            .filter(|(name, _)| name.eq_ignore_ascii_case("content-length"))
+                    })
+                    .and_then(|(_, value)| value.trim().parse::<usize>().ok())
+                    .expect("request must use a bounded Content-Length body");
+                while request.len() < header_end + content_length {
+                    let count = stream.read(&mut chunk).unwrap();
+                    assert_ne!(count, 0, "provider closed before sending the request body");
+                    request.extend_from_slice(&chunk[..count]);
                 }
-                assert!(
-                    request.len() < 4 * 1024 * 1024,
-                    "HTTP headers are unexpectedly large"
+                let request_value: Value =
+                    serde_json::from_slice(&request[header_end..header_end + content_length])
+                        .unwrap();
+                let content = serde_json::to_string(&response_content).unwrap();
+                let response_body = serde_json::to_vec(&json!({
+                    "id": "mock-response",
+                    "choices": [{"message": {"role": "assistant", "content": content}, "finish_reason": "stop"}]
+                })).unwrap();
+                let response_headers = format!(
+                    "HTTP/1.1 200 OK\r\nContent-Type: application/json\r\nContent-Length: {}\r\nConnection: close\r\n\r\n",
+                    response_body.len()
                 );
-            };
-            let headers = String::from_utf8_lossy(&request[..header_end]);
-            let content_length = headers
-                .lines()
-                .find_map(|line| {
-                    line.split_once(':')
-                        .filter(|(name, _)| name.eq_ignore_ascii_case("content-length"))
-                })
-                .and_then(|(_, value)| value.trim().parse::<usize>().ok())
-                .expect("request must use a bounded Content-Length body");
-            while request.len() < header_end + content_length {
-                let count = stream.read(&mut chunk).unwrap();
-                assert_ne!(count, 0, "provider closed before sending the request body");
-                request.extend_from_slice(&chunk[..count]);
+                stream.write_all(response_headers.as_bytes()).unwrap();
+                stream.write_all(&response_body).unwrap();
+                requests.push((request_value, content));
             }
-            let request_value: Value =
-                serde_json::from_slice(&request[header_end..header_end + content_length]).unwrap();
-            let content = serde_json::to_string(&response_content).unwrap();
-            let response_body = serde_json::to_vec(&json!({
-                "id": "mock-response",
-                "choices": [{
-                    "message": {"role": "assistant", "content": content},
-                    "finish_reason": "stop"
-                }]
-            }))
-            .unwrap();
-            let headers = format!(
-                "HTTP/1.1 200 OK\r\nContent-Type: application/json\r\nContent-Length: {}\r\nConnection: close\r\n\r\n",
-                response_body.len()
-            );
-            stream.write_all(headers.as_bytes()).unwrap();
-            stream.write_all(&response_body).unwrap();
-            (request_value, content)
+            requests
         });
         (format!("http://{address}/v1/chat/completions"), task)
     }
@@ -1614,10 +1688,11 @@ mod tests {
         let got = normalize_observation(
             &json!({"data":{"summary":"side view","visible_evidence":[{"id":"group-a","description":"Two circular openings","visible_count":2,"confidence":0.99,"visible_form":"hole"}]}}),
             &r,
+            1,
         );
         assert_eq!(
             got["visible_evidence"][0]["evidence_id"],
-            "sha256:abc:roi-0123456789:group-a"
+            "sha256:abc:roi-0123456789:obs-1:group-a"
         );
         assert_eq!(got["visible_evidence"][0]["visible_count"], 2);
         assert_eq!(got["visible_evidence"][0]["confidence"], 0.99);
@@ -1629,11 +1704,13 @@ mod tests {
         let got = normalize_observation(
             &json!({"visible_evidence":[{"description":"  ","confidence":4.2}]}),
             &r,
+            1,
         );
         assert!(got["visible_evidence"].as_array().unwrap().is_empty());
         let bad = normalize_observation(
             &json!({"visible_evidence":[{"description":"An opening","confidence":4.2}]}),
             &r,
+            1,
         );
         assert!(bad["visible_evidence"][0]["confidence"].is_null());
         assert_eq!(bad["visible_evidence"][0]["verification_status"], "unknown");
@@ -1650,6 +1727,7 @@ mod tests {
                 ]
             }),
             &reference,
+            1,
         );
         let value = json!({
             "reference_id": reference.image.reference_id,
@@ -1733,14 +1811,14 @@ mod tests {
     #[test]
     fn inspect_sends_only_rehashed_original_and_ignores_filename_text() {
         let session = test_session();
-        let (base_url, server) = mock_chat_server(json!({
+        let (base_url, server) = mock_chat_server(vec![json!({
             "summary": "A visible object outline is present.",
             "visible_evidence": [{
                 "id": "outline",
                 "description": "A closed outer outline is visible.",
                 "image_region": [[0.1, 0.1], [0.9, 0.9]]
             }]
-        }));
+        })]);
         let model = provider(base_url);
         let result = run(inspect(
             &json!({}),
@@ -1750,7 +1828,7 @@ mod tests {
             &session.context,
         ))
         .unwrap();
-        let (request, _) = server.join().unwrap();
+        let (request, _) = server.join().unwrap().into_iter().next().unwrap();
         let contents = request
             .pointer("/messages/1/content")
             .unwrap()
@@ -1780,6 +1858,201 @@ mod tests {
     }
 
     #[test]
+    fn explicit_conflict_refresh_versions_inventory_and_invalidates_old_review_and_finding_evidence(
+    ) {
+        let mut session = test_session();
+        session.state["reference_inventory"] = json!({});
+        let (base_url, server) = mock_chat_server(vec![
+            json!({"summary":"A shallow circular recess is visible.","visible_evidence":[{"id":"center-opening","description":"A shallow circular recess","visible_form":"recess","image_region":[[0.4,0.4],[0.6,0.6]]}]}),
+            json!({"summary":"A circular through opening is visible.","visible_evidence":[{"id":"center-opening","description":"A clear circular through opening","visible_form":"hole","image_region":[[0.4,0.4],[0.6,0.6]]}]}),
+            json!({"summary":"ROI shows a dark circular patch.","visible_evidence":[{"id":"roi-opening","description":"A dark circular patch","image_region":[[0.2,0.2],[0.8,0.8]]}]}),
+            json!({"summary":"ROI shows a circular bore edge.","visible_evidence":[{"id":"roi-opening","description":"A circular bore edge is visible","image_region":[[0.2,0.2],[0.8,0.8]]}]}),
+        ]);
+        let model = provider(base_url);
+        let first = run(inspect(
+            &session.state,
+            &json!({"reference_id":session.reference_id}),
+            &model,
+            &AtomicBool::new(false),
+            &session.context,
+        ))
+        .unwrap();
+        assert_eq!(first.value["observation_version"], 1);
+        let old_evidence_id = first.value["visible_evidence"][0]["evidence_id"]
+            .as_str()
+            .unwrap()
+            .to_owned();
+
+        // An ordinary repeat returns the same cached version and does not consume a mock request.
+        let cached = run(inspect(
+            &first.state,
+            &json!({"reference_id":session.reference_id}),
+            &model,
+            &AtomicBool::new(false),
+            &session.context,
+        ))
+        .unwrap();
+        assert_eq!(
+            cached.value["observation_id"],
+            first.value["observation_id"]
+        );
+
+        let geometry_signature =
+            crate::cad_plan::geometry_fingerprint(&first.state["plan"]).unwrap();
+        let mut state_with_old_evidence = first.state.clone();
+        state_with_old_evidence["reference_similarity_history"] = json!([{
+            "revision":4,"recorded_at":1,"reference_id":session.reference_id,"reference_image_index":1,
+            "source_sha256":first.value["source_sha256"],"roi_norm":null,"view":"front","view_comparable":true,
+            "geometry_signature":geometry_signature,"observation_id":first.value["observation_id"],
+            "covered_evidence_ids":[old_evidence_id],
+            "evidence":[{"evidence_id":old_evidence_id,"status":"match","reference":"A circular opening is visible.","model":"A circular opening is visible.","assessment_basis":"reference"}]
+        }]);
+        state_with_old_evidence["finding_ledger"] = json!({"f-old":{"finding_id":"f-old","status":"open","severity":"major","item":"opening morphology conflict","reference_id":session.reference_id,"evidence_id":old_evidence_id,"affected_feature_ids":["body"],"last_revision":4}});
+
+        let refreshed = run(inspect(
+            &state_with_old_evidence,
+            &json!({"reference_id":session.reference_id,"refresh_reason":"conflict"}),
+            &model,
+            &AtomicBool::new(false),
+            &session.context,
+        ))
+        .unwrap();
+        let new_evidence_id = refreshed.value["visible_evidence"][0]["evidence_id"]
+            .as_str()
+            .unwrap();
+        assert_eq!(refreshed.value["observation_version"], 2);
+        assert_ne!(new_evidence_id, old_evidence_id);
+        assert_eq!(refreshed.value["refresh_reason"], "conflict");
+        assert_eq!(
+            refreshed.state["reference_observation_history"]
+                .as_array()
+                .unwrap()
+                .len(),
+            2
+        );
+        assert_eq!(
+            refreshed.state["reference_observation_history"][0]["visible_evidence"][0]
+                ["evidence_id"],
+            old_evidence_id
+        );
+        assert_eq!(
+            refreshed.state["reference_observation_history"][1]["source_sha256"],
+            first.value["source_sha256"]
+        );
+        assert_eq!(
+            refreshed.state["reference_observation_history"][1]["roi_norm"],
+            Value::Null
+        );
+        assert_eq!(
+            refreshed.state["reference_observation_history"][1]["refresh_reason"],
+            "conflict"
+        );
+
+        let summary = crate::native_state_summary::summary(
+            &mut refreshed.state.clone(),
+            &session.context.reference_manifest,
+            &session.context.user_turns_manifest,
+        )
+        .unwrap();
+        let visual = &summary["visual_evidence_summary"];
+        let ref_id = session.reference_id.as_str();
+        assert_eq!(visual["references"][ref_id]["noncomparable_pairs"], 1);
+        assert_eq!(
+            visual["references"][ref_id]["supported_evidence_ids"],
+            json!([])
+        );
+        assert_eq!(
+            visual["references"][ref_id]["missing_required_evidence_ids"],
+            json!([new_evidence_id])
+        );
+        assert_eq!(summary["unresolved_findings"].as_array().unwrap().len(), 1);
+        assert_eq!(
+            summary["reference_observation_history"]
+                .as_array()
+                .unwrap()
+                .len(),
+            2
+        );
+        assert!(summary["reference_similarity_review"].is_null());
+
+        let roi = json!([0.1, 0.1, 0.5, 0.5]);
+        let roi_first = run(inspect(
+            &refreshed.state,
+            &json!({"reference_id":session.reference_id,"roi_norm":roi}),
+            &model,
+            &AtomicBool::new(false),
+            &session.context,
+        ))
+        .unwrap();
+        let roi_reobserved = run(inspect(
+            &roi_first.state,
+            &json!({"reference_id":session.reference_id,"roi_norm":roi,"refresh_reason":"reobserve"}),
+            &model,
+            &AtomicBool::new(false),
+            &session.context,
+        )).unwrap();
+        assert_eq!(roi_first.value["observation_version"], 1);
+        assert_eq!(roi_reobserved.value["observation_version"], 2);
+        assert_eq!(
+            roi_reobserved.value["source_sha256"],
+            first.value["source_sha256"]
+        );
+        assert_eq!(roi_reobserved.value["roi_norm"], roi);
+        assert_ne!(
+            roi_first.value["visible_evidence"][0]["evidence_id"],
+            roi_reobserved.value["visible_evidence"][0]["evidence_id"]
+        );
+        assert_eq!(
+            roi_reobserved.state["reference_observation_history"]
+                .as_array()
+                .unwrap()
+                .len(),
+            4
+        );
+        assert_eq!(
+            roi_reobserved.state["reference_observation_history"][3]["refresh_reason"],
+            "reobserve"
+        );
+
+        let requests = server.join().unwrap();
+        assert_eq!(
+            requests.len(),
+            4,
+            "ordinary cached read must not reach the observer"
+        );
+        for (request, _) in requests.iter().take(2) {
+            let body = request.to_string();
+            assert!(!body.contains("test-secret"));
+            let content = request
+                .pointer("/messages/1/content")
+                .unwrap()
+                .as_array()
+                .unwrap();
+            let image = content
+                .iter()
+                .find(|part| part["type"] == "image_url")
+                .unwrap();
+            let encoded = image["image_url"]["url"]
+                .as_str()
+                .unwrap()
+                .split_once(',')
+                .unwrap()
+                .1;
+            assert_eq!(
+                base64::engine::general_purpose::STANDARD
+                    .decode(encoded)
+                    .unwrap(),
+                session.source_bytes
+            );
+        }
+        for (request, _) in requests.iter().skip(2) {
+            let body = request.to_string();
+            assert!(!body.contains("test-secret"));
+            assert!(body.contains("roi_norm"));
+        }
+    }
+
+    #[test]
     fn review_uses_exact_images_and_reports_specific_mismatch_without_accepting_score() {
         let session = test_session();
         let evidence_id = session.state["reference_inventory"][&session.reference_id]
@@ -1787,7 +2060,7 @@ mod tests {
             .as_str()
             .unwrap()
             .to_owned();
-        let (base_url, server) = mock_chat_server(json!({
+        let (base_url, server) = mock_chat_server(vec![json!({
             "view_comparable": true,
             "score": 100,
             "coverage_status": "verified",
@@ -1807,7 +2080,7 @@ mod tests {
                 "suggested_change": "Review the outer profile width."
             }],
             "summary": "The visible silhouette differs."
-        }));
+        })]);
         let model = provider(base_url);
         let result = run(review(
             &session.state,
@@ -1823,7 +2096,7 @@ mod tests {
             &session.context,
         ))
         .unwrap();
-        let (request, _) = server.join().unwrap();
+        let (request, _) = server.join().unwrap().into_iter().next().unwrap();
         let contents = request
             .pointer("/messages/1/content")
             .unwrap()

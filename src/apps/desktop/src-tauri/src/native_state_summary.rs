@@ -23,6 +23,11 @@ const HISTORY_FIELDS: &[&str] = &[
     "reference_image_index",
     "reference_id",
     "reference_image_name",
+    "source_sha256",
+    "roi_norm",
+    "observation_id",
+    "observation_version",
+    "observation_fingerprint",
     "view_comparable",
     "score",
     "coverage_status",
@@ -86,6 +91,11 @@ pub fn summary(
     out["partial_preview"] = get(state, "partial_preview");
     out["last_preview_failure"] = get(state, "last_preview_failure");
     out["reference_inventory"] = obj_or_empty(state, "reference_inventory");
+    out["reference_observation_history"] = state
+        .get("reference_observation_history")
+        .filter(|value| value.is_array())
+        .cloned()
+        .unwrap_or_else(|| json!([]));
     out["preview_views"] = json!(state
         .get("previews")
         .and_then(Value::as_array)
@@ -121,12 +131,15 @@ pub fn summary(
     let latest = latest_reviews(state, &ctx.turns, &revision);
     out["independent_reference_review_pairs"] = json!(latest
         .iter()
-        .filter(|r| comparable(r, &signature, &ctx.refs))
+        .filter(|r| comparable(r, &signature, &ctx.refs)
+            && review_matches_current_observation(state, r))
         .count());
     out["coordinate_contract"] = json!(COORDINATE_CONTRACT);
     out["reference_similarity_review"] = state
         .get("reference_similarity_review")
-        .filter(|r| r.get("revision") == Some(&revision))
+        .filter(|r| {
+            r.get("revision") == Some(&revision) && review_matches_current_observation(state, r)
+        })
         .cloned()
         .unwrap_or(Value::Null);
     out["reference_similarity_reviews"] = Value::Object(
@@ -135,7 +148,9 @@ pub fn summary(
             .and_then(Value::as_object)
             .into_iter()
             .flat_map(|m| m.iter())
-            .filter(|(_, r)| r.get("revision") == Some(&revision))
+            .filter(|(_, r)| {
+                r.get("revision") == Some(&revision) && review_matches_current_observation(state, r)
+            })
             .map(|(k, v)| (k.clone(), v.clone()))
             .collect(),
     );
@@ -797,7 +812,8 @@ fn visual_summary(
             );
         }
         let rec = records.get_mut(&id).unwrap();
-        if !comparable(review, geometry, refs) {
+        if !comparable(review, geometry, refs) || !review_matches_current_observation(state, review)
+        {
             rec["noncomparable_pairs"] =
                 json!(rec["noncomparable_pairs"].as_u64().unwrap_or(0) + 1);
             continue;
@@ -1041,6 +1057,28 @@ fn visual_summary(
     json!({"revision":revision,"references":records,"latest_review_pairs":n,"comparable_review_pairs":c,"noncomparable_review_pairs":n-c,
   "all_references_covered":!records.is_empty()&&records.values().all(|r|r["covered"]==true),
   "all_required_evidence_covered":!records.is_empty()&&records.values().all(|r|r["covered"]==true)})
+}
+fn review_matches_current_observation(state: &Value, review: &Value) -> bool {
+    let Some(reference_id) = review.get("reference_id").and_then(Value::as_str) else {
+        return true;
+    };
+    let current = state
+        .get("reference_inventory")
+        .and_then(|rows| rows.get(reference_id))
+        .or_else(|| {
+            state
+                .get("reference_inventory_roi")
+                .and_then(|rows| rows.get(reference_id))
+                .and_then(Value::as_object)
+                .and_then(|rows| rows.values().next())
+        });
+    let Some(current) = current else {
+        return true;
+    };
+    let Some(current_id) = current.get("observation_id").and_then(Value::as_str) else {
+        return true;
+    };
+    review.get("observation_id").and_then(Value::as_str) == Some(current_id)
 }
 fn blank_ref(id: &str, filename: Option<&Value>, req: &Value) -> Value {
     json!({"reference_id":id,"filename":filename.cloned().unwrap_or(Value::Null),"comparable_pairs":0,"noncomparable_pairs":0,
