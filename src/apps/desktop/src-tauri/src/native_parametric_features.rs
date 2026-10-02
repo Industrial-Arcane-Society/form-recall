@@ -1,10 +1,160 @@
 //! Native builders for deterministic parametric CADPlan features.
 //! These are exact local B-Rep implementations and do not imply CATIA support.
 use crate::native_occt::{Axis, Kernel, Shape};
-use serde_json::{json, Value};
+use serde_json::{Value, json};
 
 const MAX_PISTON_GROOVES: usize = 256;
 const MAX_PISTON_PROFILE_POINTS: usize = 4 * MAX_PISTON_GROOVES + 4;
+const MAX_SPOKED_WHEEL_SPOKES: u64 = 512;
+
+pub fn preflight_spoked_wheel(parameters: &Value) -> Result<(), String> {
+    if let Some(axis) = parameters.get("axis") {
+        if axis.as_str() != Some("Z") {
+            return Err("辐条轮只支持沿全局 Z 轴建模。".into());
+        }
+    }
+    let outer_r = number(parameters, "outer_r")?;
+    let rim_w = number(parameters, "rim_w")?;
+    let hub_r = number(parameters, "hub_r")?;
+    let height = number(parameters, "height")?;
+    let spoke_w = number(parameters, "spoke_w")?;
+    if [outer_r, rim_w, hub_r, height, spoke_w]
+        .iter()
+        .any(|value| *value <= 0.0)
+    {
+        return Err("辐条轮尺寸必须为正。".into());
+    }
+    let spokes = parameters
+        .get("spokes")
+        .and_then(Value::as_u64)
+        .filter(|count| *count >= 2)
+        .ok_or("辐条轮至少需要两根整数辐条。")?;
+    if spokes > MAX_SPOKED_WHEEL_SPOKES {
+        return Err(format!(
+            "辐条轮辐条数超过当前原生几何资源上限 {MAX_SPOKED_WHEEL_SPOKES}。"
+        ));
+    }
+    let inner_r = outer_r - rim_w;
+    if inner_r <= hub_r {
+        return Err("辐条轮轮缘内半径必须大于轮毂半径。".into());
+    }
+    if spoke_w >= 2.0 * hub_r {
+        return Err("辐条轮辐条宽度必须小于轮毂直径。".into());
+    }
+    let center = point3(parameters.get("center"))?;
+    if center.iter().any(|coordinate| !coordinate.is_finite()) {
+        return Err("辐条轮 center 必须是有限数值。".into());
+    }
+    let radial_start = hub_r - 0.05_f64.max(0.25_f64.min(rim_w * 0.05));
+    let radial_length = outer_r - radial_start;
+    let bore_r = 1.0_f64.max(hub_r * 0.35);
+    if !radial_start.is_finite()
+        || !radial_length.is_finite()
+        || radial_length <= 0.0
+        || !bore_r.is_finite()
+        || bore_r >= hub_r
+    {
+        return Err("辐条轮尺寸组合无法形成有效轮缘、轮毂或辐条。".into());
+    }
+    Ok(())
+}
+
+pub fn build_spoked_wheel(
+    kernel: &Kernel,
+    parameters: &Value,
+) -> Result<(Vec<Shape>, Value), String> {
+    preflight_spoked_wheel(parameters)?;
+    let outer_r = number(parameters, "outer_r")?;
+    let rim_w = number(parameters, "rim_w")?;
+    let hub_r = number(parameters, "hub_r")?;
+    let height = number(parameters, "height")?;
+    let spoke_w = number(parameters, "spoke_w")?;
+    let spokes = parameters["spokes"].as_u64().ok_or("spokes 必须是整数。")?;
+    let center = point3(parameters.get("center"))?;
+    let inner_r = outer_r - rim_w;
+    let hub_bore_r = 1.0_f64.max(hub_r * 0.35);
+    let half_height = height / 2.0;
+
+    // Match the legacy Python OCP profile exactly: a hollow annular rim and
+    // annular hub, both centered on the feature center along global Z.
+    let rim = kernel.revolve(
+        &[
+            [inner_r, -half_height],
+            [outer_r, -half_height],
+            [outer_r, half_height],
+            [inner_r, half_height],
+        ],
+        360.0,
+        center,
+        Axis::Z,
+    )?;
+    let hub = kernel.revolve(
+        &[
+            [hub_bore_r, -half_height],
+            [hub_r, -half_height],
+            [hub_r, half_height],
+            [hub_bore_r, half_height],
+        ],
+        360.0,
+        center,
+        Axis::Z,
+    )?;
+
+    let radial_start = hub_r - 0.05_f64.max(0.25_f64.min(rim_w * 0.05));
+    let radial_length = outer_r - radial_start;
+    let mid = radial_start + radial_length / 2.0;
+    let mut parts = Vec::with_capacity(usize::try_from(spokes).unwrap_or(0) + 2);
+    parts.push(rim);
+    parts.push(hub);
+    for index in 0..spokes {
+        let bar = kernel.make_box(
+            [radial_length, spoke_w, height],
+            [center[0] + mid, center[1], center[2]],
+        )?;
+        let angle = 360.0 * index as f64 / spokes as f64;
+        let matrix = rotation_about_z(center, angle)?;
+        parts.push(kernel.transform(&bar, matrix)?);
+    }
+    let references = parts.iter().collect::<Vec<_>>();
+    let result = kernel.fuse(&references)?;
+    let analysis = result.analyze()?;
+    if analysis.valid != 1 || analysis.solid_count != 1 || analysis.closed_solid_count != 1 {
+        return Err(format!(
+            "辐条轮必须是单一有效封闭实体；当前 valid={}, solids={}, closed={}",
+            analysis.valid, analysis.solid_count, analysis.closed_solid_count
+        ));
+    }
+    let details = json!({
+        "kind":"spoked_wheel",
+        "status":"exact",
+        "geometry_support":"exact",
+        "builder":"analytic_annular_rim_hub_and_rotated_prismatic_spokes",
+        "axis":"Z",
+        "center_mm":center,
+        "outer_radius_mm":outer_r,
+        "rim_inner_radius_mm":inner_r,
+        "hub_radius_mm":hub_r,
+        "hub_bore_radius_mm":hub_bore_r,
+        "spoke_count":spokes,
+        "spoke_width_mm":spoke_w,
+        "warnings":[],
+        "limits":{"max_spokes":MAX_SPOKED_WHEEL_SPOKES,"catia":"approximate"}
+    });
+    Ok((vec![result], details))
+}
+
+fn rotation_about_z(center: [f64; 3], angle_degrees: f64) -> Result<[f64; 16], String> {
+    if !angle_degrees.is_finite() || center.iter().any(|coordinate| !coordinate.is_finite()) {
+        return Err("辐条轮旋转参数必须为有限数值。".into());
+    }
+    let angle = angle_degrees.to_radians();
+    let (sin, cos) = angle.sin_cos();
+    let tx = center[0] - cos * center[0] + sin * center[1];
+    let ty = center[1] - sin * center[0] - cos * center[1];
+    Ok([
+        cos, -sin, 0.0, tx, sin, cos, 0.0, ty, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0,
+    ])
+}
 
 pub fn preflight_piston(parameters: &Value) -> Result<(), String> {
     let diameter = number(parameters, "diameter")?;
@@ -201,6 +351,57 @@ mod tests {
     use serde_json::json;
 
     #[test]
+    fn spoked_wheel_preflight_validates_profile_dimensions_and_resource_bounds() {
+        let mut parameters = json!({
+            "outer_r":20,"rim_w":4,"hub_r":6,"height":8,
+            "spokes":5,"spoke_w":3,"center":[12,-7,5]
+        });
+        assert!(preflight_spoked_wheel(&parameters).is_ok());
+
+        parameters["rim_w"] = json!(15);
+        assert!(
+            preflight_spoked_wheel(&parameters)
+                .unwrap_err()
+                .contains("轮缘内半径")
+        );
+        parameters["rim_w"] = json!(4);
+        parameters["spoke_w"] = json!(12);
+        assert!(
+            preflight_spoked_wheel(&parameters)
+                .unwrap_err()
+                .contains("轮毂直径")
+        );
+        parameters["spoke_w"] = json!(3);
+        parameters["spokes"] = json!(1);
+        assert!(
+            preflight_spoked_wheel(&parameters)
+                .unwrap_err()
+                .contains("至少需要两根")
+        );
+        parameters["spokes"] = json!(MAX_SPOKED_WHEEL_SPOKES + 1);
+        assert!(
+            preflight_spoked_wheel(&parameters)
+                .unwrap_err()
+                .contains("资源上限")
+        );
+    }
+
+    #[test]
+    fn spoked_wheel_rotation_is_about_the_global_feature_center() {
+        let center = [10.0, -5.0, 5.0];
+        let matrix = rotation_about_z(center, 90.0).unwrap();
+        let point = [center[0] + 2.0, center[1], center[2]];
+        let transformed = [
+            matrix[0] * point[0] + matrix[1] * point[1] + matrix[3],
+            matrix[4] * point[0] + matrix[5] * point[1] + matrix[7],
+            matrix[8] * point[0] + matrix[9] * point[1] + matrix[10] * point[2] + matrix[11],
+        ];
+        assert!((transformed[0] - center[0]).abs() < 1e-12);
+        assert!((transformed[1] - (center[1] + 2.0)).abs() < 1e-12);
+        assert!((transformed[2] - center[2]).abs() < 1e-12);
+    }
+
+    #[test]
     fn piston_profile_matches_legacy_annular_section_and_grooves() {
         let (plain, plain_grooves) = piston_profile(10.0, 12.0, 0, 5.5).unwrap();
         assert_eq!(
@@ -226,14 +427,18 @@ mod tests {
         let mut parameters = json!({"diameter":20,"height":12,"pin_d":1,"grooves":1});
         assert!(preflight_piston(&parameters).is_ok());
         parameters["diameter"] = json!(0);
-        assert!(preflight_piston(&parameters)
-            .unwrap_err()
-            .contains("必须为正"));
+        assert!(
+            preflight_piston(&parameters)
+                .unwrap_err()
+                .contains("必须为正")
+        );
         parameters["diameter"] = json!(20);
         parameters["grooves"] = json!(MAX_PISTON_GROOVES + 1);
-        assert!(preflight_piston(&parameters)
-            .unwrap_err()
-            .contains("资源上限"));
+        assert!(
+            preflight_piston(&parameters)
+                .unwrap_err()
+                .contains("资源上限")
+        );
     }
 
     #[test]

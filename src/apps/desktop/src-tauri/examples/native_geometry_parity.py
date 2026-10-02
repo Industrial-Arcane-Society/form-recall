@@ -44,6 +44,16 @@ def main():
     add("piston-cm-unit-scaling", "piston",
         dict(diameter=2, height=1.2, pin_d=0.4, grooves=2, center=[0.2, -0.3, 1]),
         dict(length="cm", angle="deg"))
+    add("spoked-wheel-z-origin", "spoked_wheel",
+        dict(outer_r=30, rim_w=4, hub_r=8, height=8, spokes=6, spoke_w=3,
+             center=[0, 0, 0]))
+    add("spoked-wheel-z-translated", "spoked_wheel",
+        dict(outer_r=20, rim_w=4, hub_r=6, height=10, spokes=5, spoke_w=3,
+             center=[12, -7, 5]))
+    add("spoked-wheel-cm-unit-scaling", "spoked_wheel",
+        dict(outer_r=2, rim_w=0.4, hub_r=0.6, height=1, spokes=5, spoke_w=0.3,
+             center=[1.2, -0.7, 0.5]),
+        dict(length="cm", angle="deg"))
 
     for axis in "XYZ":
         for mode in ("center", "base_true", "base_false"):
@@ -153,6 +163,11 @@ def main():
         "piston-two-grooves-and-x-pin": ([-8, -13, 4, 12, 7, 16], None),
         "piston-cm-unit-scaling": ([-8, -13, 4, 12, 7, 16], None),
     }
+    expected_wheels = {
+        "spoked-wheel-z-origin": ([-30, -30, -4, 30, 30, 4], [0, 0, 0]),
+        "spoked-wheel-z-translated": ([-8, -27, 0, 32, 13, 10], [12, -7, 5]),
+        "spoked-wheel-cm-unit-scaling": ([-8, -27, 0, 32, 13, 10], [12, -7, 5]),
+    }
 
     records = []
     for name, plan in cases:
@@ -191,6 +206,16 @@ def main():
                     or bore.get("centerline_mm") != expected_center
                     or abs(bore.get("diameter_mm", 0) - expected_diameter) > 1e-9):
                 raise AssertionError((name, "piston-pin-bore-contract", bore))
+        if name in expected_wheels:
+            expected_bounds, expected_center = expected_wheels[name]
+            support = native["feature_results"][0]
+            details = support.get("support_details", {})
+            if (max(abs(a - b) for a, b in zip(native["bounds_mm"], expected_bounds)) > 1e-6
+                    or support.get("geometry_support") != "exact"
+                    or details.get("geometry_support") != "exact"
+                    or details.get("axis") != "Z"
+                    or any(abs(a - b) > 1e-9 for a, b in zip(details.get("center_mm", []), expected_center))):
+                raise AssertionError((name, "spoked-wheel-geometry-contract", native["bounds_mm"], support))
         if name == "pattern-circular-four-through-holes":
             holes = native.get("hole_instances", [])
             if (len(holes) != 4 or native.get("hole_measurements_verified") is not True
@@ -274,6 +299,19 @@ def main():
     piston_overlapping_grooves["features"][0]["parameters"]["grooves"] = 7
     piston_overlapping_grooves["features"][0]["sources"]["grooves"] = {"type": "user"}
     negatives.append(("piston-overlapping-grooves", piston_overlapping_grooves, "会自交"))
+
+    wheel_case_by_name = {name: plan for name, plan in cases}
+    wheel_non_z = copy.deepcopy(wheel_case_by_name["spoked-wheel-z-origin"])
+    wheel_non_z["features"][0]["parameters"]["axis"] = "X"
+    negatives.append(("spoked-wheel-non-z-axis", wheel_non_z, "该特征不支持此参数"))
+    wheel_bad_count = copy.deepcopy(wheel_case_by_name["spoked-wheel-z-origin"])
+    wheel_bad_count["features"][0]["parameters"]["spokes"] = 1
+    wheel_bad_count["features"][0]["sources"]["spokes"] = {"type": "user"}
+    negatives.append(("spoked-wheel-too-few-spokes", wheel_bad_count, "至少需要两根"))
+    wheel_bad_profile = copy.deepcopy(wheel_case_by_name["spoked-wheel-z-origin"])
+    wheel_bad_profile["features"][0]["parameters"]["rim_w"] = 23
+    wheel_bad_profile["features"][0]["sources"]["rim_w"] = {"type": "user"}
+    negatives.append(("spoked-wheel-invalid-rim-hub", wheel_bad_profile, "轮缘内半径"))
 
     # The first plan leaves only the recessed local span;
     # the second asks for more depth than that span, and the third samples an

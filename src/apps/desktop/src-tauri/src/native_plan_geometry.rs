@@ -6,7 +6,7 @@ use crate::{
     native_occt::{Axis, Bounds, Kernel, Shape},
     native_parametric_features, native_standard_features,
 };
-use serde_json::{json, Value};
+use serde_json::{Value, json};
 use std::{
     path::Path,
     sync::atomic::{AtomicBool, Ordering},
@@ -53,6 +53,7 @@ pub fn preflight(plan: &Value) -> Result<Value, String> {
             "pattern",
             "gear",
             "socket_head_bolt",
+            "spoked_wheel",
             "piston",
         ]
         .contains(&kind)
@@ -80,6 +81,7 @@ pub fn preflight(plan: &Value) -> Result<Value, String> {
                 "hex_t",
             ],
             "piston" => &["diameter", "height", "pin_d", "grooves"],
+            "spoked_wheel" => &["outer_r", "rim_w", "hub_r", "height", "spokes", "spoke_w"],
             _ => &[],
         };
         for key in required_native_parameters {
@@ -93,6 +95,10 @@ pub fn preflight(plan: &Value) -> Result<Value, String> {
         if kind == "piston" {
             let normalized = normalized_feature(feature, plan)?;
             native_parametric_features::preflight_piston(&normalized["parameters"])?;
+        }
+        if kind == "spoked_wheel" {
+            let normalized = normalized_feature(feature, plan)?;
+            native_parametric_features::preflight_spoked_wheel(&normalized["parameters"])?;
         }
         if kind == "pattern" {
             let count = p
@@ -168,6 +174,10 @@ pub fn build(plan: &Value, manifest: &Path, cancelled: &AtomicBool) -> Result<Bu
         } else if normalized["kind"] == "piston" {
             let (tools, support) =
                 native_parametric_features::build_piston(&kernel, &normalized["parameters"])?;
+            (tools, vec![], Some(support))
+        } else if normalized["kind"] == "spoked_wheel" {
+            let (tools, support) =
+                native_parametric_features::build_spoked_wheel(&kernel, &normalized["parameters"])?;
             (tools, vec![], Some(support))
         } else {
             let (tools, holes) = feature_tools(&kernel, &normalized, bb, current.as_ref())?;
@@ -652,9 +662,11 @@ fn pattern_tools(
             let hole_offset = multiplier
                 .checked_mul(source_hole_count)
                 .ok_or("pattern 孔实例索引溢出。")?;
-            record["instance_index"] = json!(base_index
-                .checked_add(hole_offset)
-                .ok_or("pattern 孔实例索引溢出。")?);
+            record["instance_index"] = json!(
+                base_index
+                    .checked_add(hole_offset)
+                    .ok_or("pattern 孔实例索引溢出。")?
+            );
             holes.push(record);
         }
     }
@@ -969,6 +981,10 @@ fn normalized_feature(feature: &Value, plan: &Value) -> Result<Value, String> {
             "head_h",
             "hex_s",
             "hex_t",
+            "outer_r",
+            "rim_w",
+            "hub_r",
+            "spoke_w",
         ]
         .contains(&key.as_str())
         {
@@ -1174,18 +1190,24 @@ mod tests {
         let around_x = transform_point(rotation_matrix(0, 90., center).unwrap(), [1., 3., 3.]);
         let around_y = transform_point(rotation_matrix(1, 90., center).unwrap(), [1., 2., 4.]);
         let around_z = transform_point(rotation_matrix(2, 90., center).unwrap(), [2., 2., 3.]);
-        assert!(around_x
-            .iter()
-            .zip([1., 2., 4.])
-            .all(|(a, b)| (a - b).abs() < 1e-10));
-        assert!(around_y
-            .iter()
-            .zip([2., 2., 3.])
-            .all(|(a, b)| (a - b).abs() < 1e-10));
-        assert!(around_z
-            .iter()
-            .zip([1., 3., 3.])
-            .all(|(a, b)| (a - b).abs() < 1e-10));
+        assert!(
+            around_x
+                .iter()
+                .zip([1., 2., 4.])
+                .all(|(a, b)| (a - b).abs() < 1e-10)
+        );
+        assert!(
+            around_y
+                .iter()
+                .zip([2., 2., 3.])
+                .all(|(a, b)| (a - b).abs() < 1e-10)
+        );
+        assert!(
+            around_z
+                .iter()
+                .zip([1., 3., 3.])
+                .all(|(a, b)| (a - b).abs() < 1e-10)
+        );
 
         let rotated_axis = normalize_vector(transform_vector(
             rotation_matrix(2, 45., [0., 0., 0.]).unwrap(),
@@ -1197,10 +1219,12 @@ mod tests {
             std::f64::consts::FRAC_1_SQRT_2,
             0.,
         ];
-        assert!(rotated_axis
-            .iter()
-            .zip(expected_axis)
-            .all(|(a, b)| (a - b).abs() < 1e-10));
+        assert!(
+            rotated_axis
+                .iter()
+                .zip(expected_axis)
+                .all(|(a, b)| (a - b).abs() < 1e-10)
+        );
         let limits = projected_line_limits(
             [2., 2., 0.],
             rotated_axis,
@@ -1292,14 +1316,16 @@ mod tests {
     }
     #[test]
     fn invalid_or_cancelled_input_cannot_reach_dll_loading() {
-        assert!(build(
-            &json!({}),
-            Path::new("nonexistent"),
-            &AtomicBool::new(false)
-        )
-        .err()
-        .expect("invalid plan cannot build")
-        .contains("校验"));
+        assert!(
+            build(
+                &json!({}),
+                Path::new("nonexistent"),
+                &AtomicBool::new(false)
+            )
+            .err()
+            .expect("invalid plan cannot build")
+            .contains("校验")
+        );
         assert!(check_cancel(&AtomicBool::new(true)).is_err());
     }
 }
