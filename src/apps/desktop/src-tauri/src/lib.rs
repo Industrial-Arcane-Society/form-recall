@@ -13,6 +13,7 @@ pub mod native_model_io;
 pub mod native_occt;
 pub mod native_occt_runtime;
 pub mod native_plan_geometry;
+pub mod native_standard_features;
 pub mod native_render;
 pub mod native_state_summary;
 pub mod native_tool_bridge;

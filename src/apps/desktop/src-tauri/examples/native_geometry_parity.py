@@ -33,6 +33,11 @@ def main():
             plan["units"] = units
         cases.append((name, plan))
 
+    add("gear-native-approximation", "gear", dict(teeth=20, module=2, height=10,
+        center=[0, 0, 0], axis="Z", base=False))
+    add("socket-bolt-visible-thread", "socket_head_bolt", dict(shank_d=8, thread_pitch=1.25,
+        length=20, head_d=13, head_h=8, hex_s=6, hex_t=4, center=[0, 0, 0], segments=48))
+
     for axis in "XYZ":
         for mode in ("center", "base_true", "base_false"):
             parameters = dict(length=10, width=20, height=30, center=[10, 20, 30], axis=axis)
@@ -83,6 +88,12 @@ def main():
         if result.returncode:
             raise RuntimeError(f"{name}: {result.stderr[:1500]}")
         native = json.loads(report_path.read_text(encoding="utf-8"))
+        if name in ("gear-native-approximation", "socket-bolt-visible-thread"):
+            support = native["feature_results"][0]
+            if support.get("geometry_support") != "approximate" or not support.get("support_details", {}).get("warnings"):
+                raise AssertionError(("native-standard-feature-support-not-labeled", name, support))
+            if name == "socket-bolt-visible-thread" and support["support_details"].get("thread", {}).get("visible_geometry") is not True:
+                raise AssertionError(("native-bolt-thread-not-visible", support["support_details"]))
         if name == "recess-nine-holes":
             measured = native.get("hole_instances", [])
             if (native.get("hole_measurements_verified") is not True
@@ -125,6 +136,10 @@ def main():
     first_cut = copy.deepcopy(base)
     first_cut["features"] = first_cut["features"][2:3]
     negatives.append(("first-cut", first_cut, "前置实体"))
+    missing_bolt_size = copy.deepcopy(cases[[name for name, _ in cases].index("socket-bolt-visible-thread")][1])
+    missing_bolt_size["features"][0]["parameters"].pop("head_d")
+    missing_bolt_size["features"][0]["sources"].pop("head_d")
+    negatives.append(("bolt-missing-head-d", missing_bolt_size, "校验"))
 
     # Additional blind-hole checks do not change the established 44 positive
     # parity cases above. The first plan leaves only the recessed local span;

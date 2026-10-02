@@ -4,6 +4,7 @@ use crate::{
     cad_plan, cad_plan_validation, native_bore_metrology,
     native_geometry_evidence::{self, HoleRequest},
     native_occt::{Axis, Bounds, Kernel, Shape},
+    native_standard_features,
 };
 use serde_json::{Value, json};
 use std::{
@@ -39,7 +40,15 @@ pub fn preflight(plan: &Value) -> Result<Value, String> {
         let p = &feature["parameters"];
         let kind = feature["kind"].as_str().unwrap_or("");
         if ![
-            "box", "cylinder", "sphere", "hole", "pocket", "prism", "revolve",
+            "box",
+            "cylinder",
+            "sphere",
+            "hole",
+            "pocket",
+            "prism",
+            "revolve",
+            "gear",
+            "socket_head_bolt",
         ]
         .contains(&kind)
         {
@@ -53,6 +62,27 @@ pub fn preflight(plan: &Value) -> Result<Value, String> {
         }
         if kind == "hole" && p.get("entry_point").is_some_and(|v| !v.is_null()) {
             return Err("Rust 显式盲孔入口局部材料核验尚未接入。".into());
+        }
+        let required_standard_parameters: &[&str] = match kind {
+            "gear" => &["teeth", "module", "height"],
+            "socket_head_bolt" => &[
+                "shank_d",
+                "thread_pitch",
+                "length",
+                "head_d",
+                "head_h",
+                "hex_s",
+                "hex_t",
+            ],
+            _ => &[],
+        };
+        for key in required_standard_parameters {
+            if p.get(*key).is_none() || p[*key].is_null() {
+                return Err(format!(
+                    "{} 缺少必填几何参数 {key}；拒绝用标准件默认值猜测。",
+                    feature["id"]
+                ));
+            }
         }
     }
     Ok(validation)
@@ -78,8 +108,20 @@ pub fn build(plan: &Value, manifest: &Path, cancelled: &AtomicBool) -> Result<Bu
             .unwrap_or(0.);
         let bb = current.as_ref().map(Shape::bounds).transpose()?;
         let normalized = normalized_feature(feature, plan)?;
-        let (tools, mut requested_holes) =
-            feature_tools(&kernel, &normalized, bb, current.as_ref())?;
+        let (tools, mut requested_holes, standard_support) = if matches!(
+            normalized["kind"].as_str(),
+            Some("gear" | "socket_head_bolt")
+        ) {
+            let (tools, support) = native_standard_features::tools(
+                &kernel,
+                normalized["kind"].as_str().unwrap_or(""),
+                &normalized["parameters"],
+            )?;
+            (tools, vec![], Some(support))
+        } else {
+            let (tools, holes) = feature_tools(&kernel, &normalized, bb, current.as_ref())?;
+            (tools, holes, None)
+        };
         let operation = feature["operation"].as_str().unwrap_or("add");
         let hole_pre_cut = if !requested_holes.is_empty() && operation == "cut" {
             current
@@ -141,7 +183,8 @@ pub fn build(plan: &Value, manifest: &Path, cancelled: &AtomicBool) -> Result<Bu
         }
         rows.push(
             json!({"feature_id":feature["id"],"kind":feature["kind"],"operation":operation,
-            "state":"built","geometry_support":"exact","volume_before_mm3":before_volume,
+            "state":"built","geometry_support":standard_support.as_ref().and_then(|v|v.get("status")).cloned().unwrap_or(json!("exact")),
+            "support_details":standard_support,"volume_before_mm3":before_volume,
             "volume_after_mm3":volume,"volume_delta_mm3":delta}),
         );
         let report_start = holes.len();
@@ -599,6 +642,7 @@ fn normalized_feature(feature: &Value, plan: &Value) -> Result<Value, String> {
             "height",
             "radius",
             "radius2",
+            "module",
             "corner",
             "margin",
             "diameter",
@@ -611,6 +655,12 @@ fn normalized_feature(feature: &Value, plan: &Value) -> Result<Value, String> {
             "point",
             "entry_point",
             "profile",
+            "shank_d",
+            "thread_pitch",
+            "head_d",
+            "head_h",
+            "hex_s",
+            "hex_t",
         ]
         .contains(&key.as_str())
         {
