@@ -60,7 +60,7 @@
 | ID | 优先级 | 任务 | 状态 | 完成条件 |
 |---|---|---|---|---|
 | F7.G1 | P0 | 主 Agent 直接查看原图和当前单视图 | 代码完成；原图经视觉工具真实传输，主对话模型直收证据仍缺 | 无条件剥离已移除，mock wire 7/7、schema契约1/1。实跑证明原图以精确 SHA 到达本地 source inventory 和图像审查请求；当前 runner 没有单独记录主 DSH provider 的图像 wire，故不能宣称主对话模型本身已直接收到原图；视觉审查还误报了左面孔位，详见 [实测](./35-f7-image-acceptance-run-01.md)。 |
-| F7.G2 | P0 | CADPlan、Agent 与桌面模型统一同步 | **进行中，未验收** | 活动模型恢复、Agent/Quick 部分写入、参数/名称原生重建及 save/STL/report 路由已搭建；snapshot 命令注册、UI 特征删除/移动/启停、多视图导出、旧工程导入和 generation 并发防旧写仍在实现/验证。最终需写工具后发送同版交互网格/特征树/尺寸/输出路径；所有编辑保存导出共享活动模型。 |
+| F7.G2 | P0 | CADPlan、Agent 与桌面模型统一同步 | **核心代码已提交；定向检查通过，真实桌面/Agent端到端待验收** | Agent/Quick/特征编辑、活动模型恢复、Save As、STL/report/多视图快照和显式旧工程转换都路由到活动模型；Agent 几何工具通过 generation CAS 防止旧会话覆盖，CAS 失败时会话/证据/预览会回同步到活动记录。定向离线测试与 Cargo check 通过。CLI/无头预览不能代替真实 DSH→`model.changed`→桌面显示的端到端验收；启停、OBJ/CATIA 原生导出仍明确受限。见 [活动模型同步记录](./38-f7-active-model-sync.md)。 |
 | F7.G3 | P0 | 请求结束与模型验收状态区分 | 代码完成，端到端待验收 | Host 9/9、Vue build通过；turn_status独立，旧finish不得accepted，旧preview显示stale，纯问答不称建模完成；真实四场景见 G8，记录见 [状态真值](./29-f7-turn-and-model-status.md) |
 | F7.G4 | P0 | 阶段复核与施工范围一致 | 代码完成，真实视觉待验收 | 宿主revision/ID范围、out_of_scope、全当前几何覆盖门槛已接入；定向集成通过，不完整范围只能诊断不可贡献覆盖；真实返修待 G8；见 [记录](./32-f7-stage-review-scope.md) |
 | F7.G5 | P1 | 观察因冲突可重新读取、版本可追踪 | **代码完成，真实视觉链路待验收** | 普通同 SHA/ROI 复用缓存；Agent 显式传 `conflict`/`reobserve` 才重新观察并递增版本；保留历史、SHA/ROI/reason/telemetry；新版 evidence ID 隔离旧 review/finding。定向测试 11+5+3 通过；见 [记录](./34-f7-observation-refresh.md)。 |

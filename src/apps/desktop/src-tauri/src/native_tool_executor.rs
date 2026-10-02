@@ -23,6 +23,7 @@ pub struct NativeToolExecutor {
     web: NativeWeb,
     vision: Option<Arc<NativeVisionProvider>>,
     geometry_manifest: Option<PathBuf>,
+    active_model_root: Option<PathBuf>,
     online_enabled: bool,
     transaction: Mutex<()>,
     audit_lock: Mutex<()>,
@@ -48,6 +49,7 @@ impl NativeToolExecutor {
             web,
             vision: None,
             geometry_manifest: None,
+            active_model_root: None,
             online_enabled,
             transaction: Mutex::new(()),
             audit_lock: Mutex::new(()),
@@ -63,6 +65,11 @@ impl NativeToolExecutor {
 
     pub fn with_geometry_runtime(mut self, manifest: PathBuf) -> Self {
         self.geometry_manifest = Some(manifest);
+        self
+    }
+
+    pub fn with_active_model_root(mut self, root: PathBuf) -> Self {
+        self.active_model_root = Some(root);
         self
     }
 
@@ -101,6 +108,31 @@ impl NativeToolExecutor {
             ));
         }
         let mut state = self.load_cad_state()?;
+        let active_generation = if crate::native_cad_tools::supports(name) {
+            if let Some(root) = self.active_model_root.as_deref() {
+                let active = crate::native_active_model::load(root)?;
+                match active {
+                    Some(active) => {
+                        if !active_model_state_matches(&state, &active) {
+                            reconcile_session_to_active(&self.session_dir, &active)?;
+                            return Err("Agent 会话中的 CADPlan 已过期，活动模型已由 Quick/UI/另一 Agent 更新；为避免覆盖新版本，请重置或重新打开 Agent 会话。".into());
+                        }
+                        active.get("generation").and_then(Value::as_u64)
+                    }
+                    None if state.get("plan").is_some_and(Value::is_object) => {
+                        reset_session_without_active_model(&self.session_dir)?;
+                        return Err(
+                            "Agent 会话含 CADPlan，但活动模型记录已不存在；拒绝重建旧状态。".into(),
+                        );
+                    }
+                    None => Some(0),
+                }
+            } else {
+                None
+            }
+        } else {
+            None
+        };
         let (value, images, progress) = match name {
             name if crate::native_cad_metadata::supports(name) => {
                 let (next, value) =
@@ -282,16 +314,29 @@ impl NativeToolExecutor {
         if started.elapsed() >= timeout {
             return Err("工具超过本次截止时间，生成文件未提交为当前模型。".into());
         }
+        if let (Some(root), Some(expected_generation)) =
+            (self.active_model_root.as_deref(), active_generation)
+            && state["plan"].is_object()
+            && state["last_preview"].is_object()
+        {
+            let references = read_json_object(&self.session_dir.join("reference-images.json"))?;
+            let user_turns = read_json_object(&self.session_dir.join("user-turns.json"))?;
+            let active = commit_agent_model_state(
+                &self.session_dir,
+                root,
+                expected_generation,
+                &mut state,
+                &references,
+                &user_turns,
+            )?;
+            let mut value = value;
+            value["active_model_generation"] = active["generation"].clone();
+            publish_committed_preview(&self.session_dir, &state);
+            return Ok(tool_result(name, value, images, progress));
+        }
         write_json_atomic(&self.session_dir.join("cad-state.json"), &state)?;
-        if crate::native_cad_tools::supports(name) && state["last_preview"].is_object() {
-            if let Some(path) = state["last_preview"]["preview_image_path"].as_str() {
-                if let Ok(bytes) = fs::read(path) {
-                    crate::native_model_io::atomic_write(
-                        &self.session_dir.join("current-preview.png"),
-                        &bytes,
-                    )?;
-                }
-            }
+        if crate::native_cad_tools::supports(name) {
+            publish_committed_preview(&self.session_dir, &state);
         }
         Ok(tool_result(name, value, images, progress))
     }
@@ -429,6 +474,125 @@ impl NativeToolExecutor {
             read_json_object(&path)
         } else {
             Ok(json!({"plan":null,"revision":0,"actions":[],"web_search_history":[]}))
+        }
+    }
+}
+
+fn commit_agent_model_state(
+    session_dir: &Path,
+    active_root: &Path,
+    expected_generation: u64,
+    state: &mut Value,
+    references: &Value,
+    user_turns: &Value,
+) -> Result<Value, String> {
+    let next_generation = expected_generation
+        .checked_add(1)
+        .ok_or("活动模型 generation 已溢出。")?;
+    state["active_model_generation"] = json!(next_generation);
+    let candidate = crate::native_active_model::candidate_from_cad_state(
+        "agent",
+        state,
+        references,
+        user_turns,
+    )?;
+    match crate::native_active_model::commit(active_root, expected_generation, &candidate) {
+        Ok(active) => {
+            if let Err(write_error) = write_json_atomic(&session_dir.join("cad-state.json"), state) {
+                let resync = crate::native_active_model::load(active_root)
+                    .and_then(|record| record.ok_or_else(|| "活动模型提交后记录消失。".into()))
+                    .and_then(|record| reconcile_session_to_active(session_dir, &record));
+                return match resync {
+                    Ok(synced) => {
+                        *state = synced;
+                        Err(format!("活动模型已提交，但会话状态写入失败；已从活动模型恢复：{write_error}"))
+                    }
+                    Err(sync_error) => Err(format!(
+                        "活动模型已提交，但会话状态写入失败：{write_error}；重新同步也失败：{sync_error}"
+                    )),
+                };
+            }
+            Ok(active)
+        }
+        Err(commit_error) => {
+            let resync = crate::native_active_model::load(active_root)
+                .and_then(|record| record.ok_or_else(|| "活动模型冲突后记录不存在。".into()))
+                .and_then(|record| reconcile_session_to_active(session_dir, &record));
+            match resync {
+                Ok(synced) => {
+                    *state = synced;
+                    Err(commit_error)
+                }
+                Err(sync_error) => Err(format!(
+                    "{commit_error}；Agent 会话同步至活动模型也失败：{sync_error}"
+                )),
+            }
+        }
+    }
+}
+
+fn reconcile_session_to_active(session_dir: &Path, active: &Value) -> Result<Value, String> {
+    let mut state = active
+        .get("cad_state")
+        .filter(|value| value.is_object())
+        .cloned()
+        .ok_or("活动模型记录缺少 CAD 会话状态。")?;
+    state["active_model_generation"] = active["generation"].clone();
+    write_json_atomic(&session_dir.join("cad-state.json"), &state)?;
+    let session_id = active["model_id"].as_str().unwrap_or("active-model");
+    for (manifest_key, file_name, rows_key) in [
+        ("reference_manifest", "reference-images.json", "images"),
+        ("user_turns_manifest", "user-turns.json", "turns"),
+    ] {
+        let manifest = active
+            .get(manifest_key)
+            .filter(|value| value.is_object())
+            .cloned()
+            .unwrap_or_else(|| {
+                json!({"schema_version":1,"session_id":session_id,rows_key:[]})
+            });
+        write_json_atomic(&session_dir.join(file_name), &manifest)?;
+    }
+    sync_session_preview(session_dir, &state);
+    Ok(state)
+}
+
+fn reset_session_without_active_model(session_dir: &Path) -> Result<(), String> {
+    let unavailable = json!({"plan":null,"revision":0,"active_model_generation":0,
+        "output_paths":{},"actions":[],"last_preview":null,"preview_revision":null,
+        "finish_summary":null,"active_model_status":"unavailable"});
+    write_json_atomic(&session_dir.join("cad-state.json"), &unavailable)?;
+    let session_id = "active-model-unavailable";
+    write_json_atomic(
+        &session_dir.join("reference-images.json"),
+        &json!({"schema_version":1,"session_id":session_id,"images":[]}),
+    )?;
+    write_json_atomic(
+        &session_dir.join("user-turns.json"),
+        &json!({"schema_version":1,"session_id":session_id,"turns":[]}),
+    )?;
+    let _ = fs::remove_file(session_dir.join("current-preview.png"));
+    Ok(())
+}
+
+fn publish_committed_preview(session_dir: &Path, state: &Value) {
+    sync_session_preview(session_dir, state);
+}
+
+fn sync_session_preview(session_dir: &Path, state: &Value) {
+    let Some(path) = state["last_preview"]["preview_image_path"].as_str() else {
+        let _ = fs::remove_file(session_dir.join("current-preview.png"));
+        return;
+    };
+    match fs::read(path) {
+        Ok(bytes) => {
+            let _ = crate::native_model_io::atomic_write(
+                &session_dir.join("current-preview.png"),
+                &bytes,
+            );
+        }
+        Err(_) => {
+            let _ = fs::remove_file(session_dir.join("current-preview.png"));
         }
     }
 }
@@ -660,6 +824,35 @@ fn unix_seconds() -> f64 {
         .as_secs_f64()
 }
 
+fn active_model_state_matches(session_state: &Value, active_record: &Value) -> bool {
+    let session_plan = session_state.get("plan").filter(|value| value.is_object());
+    let active_plan = active_record
+        .get("cadplan")
+        .filter(|value| value.is_object());
+    let active_state = active_record
+        .get("cad_state")
+        .filter(|value| value.is_object());
+    let snapshot_fields_match = [
+        "plan",
+        "revision",
+        "active_model_generation",
+        "output_paths",
+        "last_preview",
+    ]
+    .iter()
+    .all(|key| session_state.get(*key) == active_state.and_then(|value| value.get(*key)));
+    session_state
+        .get("active_model_generation")
+        .and_then(Value::as_u64)
+        == active_record.get("generation").and_then(Value::as_u64)
+        && snapshot_fields_match
+        && session_plan.is_some() == active_plan.is_some()
+        && session_plan.is_none_or(|plan| active_plan == Some(plan))
+        && (session_plan.is_none()
+            || session_state.get("revision").and_then(Value::as_i64)
+                == active_record.get("revision").and_then(Value::as_i64))
+}
+
 fn tool_result(name: &str, mut value: Value, images: Vec<Value>, progress: &str) -> Value {
     if name == "cad_search_knowledge" && !images.is_empty() {
         value["visual_attachment_order"] =
@@ -680,6 +873,142 @@ fn tool_result(name: &str, mut value: Value, images: Vec<Value>, progress: &str)
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn rejects_agent_state_after_active_model_generation_or_artifacts_change() {
+        let plan = json!({"name":"part","features":[{"id":"body","kind":"box"}]});
+        let session = json!({"plan":plan,"revision":3,"active_model_generation":7,
+            "output_paths":{"glb":"active.glb"},"last_preview":{"revision":3,"geometry_fingerprint":"same"}});
+        let active = json!({"generation":7,"revision":3,"cadplan":plan,
+            "cad_state":session});
+        assert!(active_model_state_matches(&session, &active));
+
+        let mut stale_generation = active.clone();
+        stale_generation["generation"] = json!(8);
+        assert!(!active_model_state_matches(&session, &stale_generation));
+
+        let mut changed_artifacts = active.clone();
+        changed_artifacts["cad_state"]["output_paths"]["glb"] = json!("new-model.glb");
+        assert!(!active_model_state_matches(&session, &changed_artifacts));
+    }
+
+    fn cad_state(plan: Value, revision: i64, generation: u64) -> Value {
+        let fingerprint = crate::cad_plan::geometry_fingerprint(&plan).unwrap();
+        json!({"plan":plan,"revision":revision,"preview_revision":revision,
+            "active_model_generation":generation,"output_paths":{},"actions":[],
+            "last_preview":{"revision":revision,"geometry_fingerprint":fingerprint,
+                "local_geometry_checks":{"state":"passed"}},"finish_summary":null})
+    }
+
+    fn box_plan(length: i64) -> Value {
+        crate::cad_plan::create(
+            "transaction fixture",
+            json!({"id":"body","kind":"box","operation":"add","parameters":{"length":length,"width":8,"height":4},"sources":{
+                "length":{"type":"user","evidence":"fixture"},"width":{"type":"user","evidence":"fixture"},"height":{"type":"user","evidence":"fixture"}}}),
+            "fixture",
+            None,
+        )
+    }
+
+    #[test]
+    fn cas_conflict_reconciles_session_to_the_committed_active_model() {
+        let root = fixture().0;
+        let session_dir = root.join("agent-session");
+        let active_root = root.join("active-model");
+        fs::create_dir_all(&session_dir).unwrap();
+        let references = json!({"schema_version":1,"session_id":"fixture","images":[]});
+        let turns = json!({"schema_version":1,"session_id":"fixture","turns":[]});
+
+        let initial_state = cad_state(box_plan(10), 1, 1);
+        let initial_candidate = crate::native_active_model::candidate_from_cad_state(
+            "agent",
+            &initial_state,
+            &references,
+            &turns,
+        )
+        .unwrap();
+        crate::native_active_model::commit(&active_root, 0, &initial_candidate).unwrap();
+        write_json_atomic(&session_dir.join("cad-state.json"), &initial_state).unwrap();
+
+        let replacement_state = cad_state(box_plan(20), 2, 2);
+        let replacement_references = json!({"schema_version":1,"session_id":"fixture-new","images":[{"id":"new-image"}]});
+        let replacement_turns = json!({"schema_version":1,"session_id":"fixture-new","turns":[{"turn_id":"new-turn"}]});
+        let replacement_candidate = crate::native_active_model::candidate_from_cad_state(
+            "agent",
+            &replacement_state,
+            &replacement_references,
+            &replacement_turns,
+        )
+        .unwrap();
+        let active = crate::native_active_model::commit(&active_root, 1, &replacement_candidate)
+            .unwrap();
+
+        let mut losing_state = cad_state(box_plan(30), 2, 2);
+        fs::write(session_dir.join("current-preview.png"), b"stale preview").unwrap();
+        let error = commit_agent_model_state(
+            &session_dir,
+            &active_root,
+            1,
+            &mut losing_state,
+            &references,
+            &turns,
+        )
+        .unwrap_err();
+        assert!(error.contains("活动模型已变化"), "{error}");
+        let session_state = read_json_object(&session_dir.join("cad-state.json")).unwrap();
+        assert_eq!(losing_state, active["cad_state"]);
+        assert_eq!(session_state, active["cad_state"]);
+        assert_eq!(
+            session_state["active_model_generation"],
+            active["generation"]
+        );
+        assert_eq!(
+            read_json_object(&session_dir.join("reference-images.json")).unwrap(),
+            replacement_references
+        );
+        assert_eq!(
+            read_json_object(&session_dir.join("user-turns.json")).unwrap(),
+            replacement_turns
+        );
+        assert!(!session_dir.join("current-preview.png").exists());
+
+        fs::remove_dir_all(root).unwrap();
+    }
+
+    #[test]
+    fn missing_active_record_clears_stale_session_model_and_evidence() {
+        let (root, _executor) = fixture();
+        let session_dir = root.join("agent-session");
+        fs::create_dir_all(&session_dir).unwrap();
+        let old_plan = box_plan(10);
+        let stale = cad_state(old_plan, 3, 7);
+        write_json_atomic(&session_dir.join("cad-state.json"), &stale).unwrap();
+        write_json_atomic(
+            &session_dir.join("reference-images.json"),
+            &json!({"schema_version":1,"session_id":"old","images":[{"id":"old-image"}]}),
+        )
+        .unwrap();
+        write_json_atomic(
+            &session_dir.join("user-turns.json"),
+            &json!({"schema_version":1,"session_id":"old","turns":[{"turn_id":"old-turn"}]}),
+        )
+        .unwrap();
+        fs::write(session_dir.join("current-preview.png"), b"stale image").unwrap();
+
+        reset_session_without_active_model(&session_dir).unwrap();
+        let state = read_json_object(&session_dir.join("cad-state.json")).unwrap();
+        assert!(state["plan"].is_null());
+        assert_eq!(state["active_model_status"], "unavailable");
+        assert_eq!(state["active_model_generation"], 0);
+        assert!(read_json_object(&session_dir.join("reference-images.json")).unwrap()["images"]
+            .as_array().unwrap().is_empty());
+        assert!(read_json_object(&session_dir.join("user-turns.json")).unwrap()["turns"]
+            .as_array().unwrap().is_empty());
+        assert!(!session_dir.join("current-preview.png").exists());
+
+        fs::remove_dir_all(root).unwrap();
+    }
+
     fn fixture() -> (PathBuf, Arc<NativeToolExecutor>) {
         fixture_with_online(false)
     }

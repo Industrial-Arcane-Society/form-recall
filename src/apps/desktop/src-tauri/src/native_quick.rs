@@ -80,7 +80,9 @@ pub fn build(
     document["build_log"] = json!(["Quick parser → CADPlan 校验 → Rust/OCCT → GLB、AIMODEL、STL"]);
     document["warnings"] = parsed["warnings"].clone();
     document["output_paths"] = json!({"glb":glb,"aimodel":aimodel,"stl":stl});
-    let report = built.report;
+    let mut report = built.report;
+    report["triangle_count"] = json!(mesh.positions.len() / 3);
+    report["state"] = json!("passed");
     document["stats"] = json!({"faces":0,"triangles":mesh.positions.len()/3,
         "volume":report["volume_mm3"],"size":report["dimensions_mm"]});
     document["geometry_report"] = report;
@@ -88,7 +90,51 @@ pub fn build(
     Ok(document)
 }
 
-fn write_glb(mesh: &TriangleMesh, path: &Path) -> Result<(), String> {
+pub fn active_model_candidate(text: &str, document: &Value) -> Result<Value, String> {
+    let plan = document
+        .get("cadplan")
+        .filter(|plan| plan.is_object())
+        .cloned()
+        .ok_or("Quick 结果缺少 CADPlan。")?;
+    let revision = document["revision"]
+        .as_i64()
+        .ok_or("Quick revision 无效。")?;
+    let turn_id = format!("quick-turn-{revision}");
+    let mut provenance = Vec::new();
+    for feature in plan["features"].as_array().into_iter().flatten() {
+        for (parameter, source) in feature["sources"].as_object().into_iter().flatten() {
+            if source["type"] == "user"
+                && let Some(value) = feature["parameters"].get(parameter)
+            {
+                provenance.push(json!({"feature_id":feature["id"],"parameter":parameter,
+                    "turn_id":turn_id,"value":value,"source":source}));
+            }
+        }
+    }
+    let state = json!({"plan":plan,"revision":revision,"preview_revision":revision,
+        "preview_generation":1,"output_paths":document["output_paths"],"finish_summary":null,
+        "last_preview":{"revision":revision,"geometry_fingerprint":crate::cad_plan::geometry_fingerprint(&document["cadplan"])? ,
+            "preview_generation":1,"execution_engine":"rust_c_abi_occt","local_geometry_checks":document["geometry_report"]},
+        "actions":[{"kind":"model","tool":"quick_build","revision":revision,"execution_engine":"rust",
+            "user_source_provenance":provenance}],"geometry_signatures":[],"previews":[]});
+    let references = json!({"schema_version":1,"session_id":"quick","images":[]});
+    let turns = json!({"schema_version":1,"session_id":"quick","turns":[
+        {"turn_id":turn_id,"raw_user_prompt":text,"reference_ids":[]} ]});
+    let mut candidate =
+        crate::native_active_model::candidate_from_cad_state("quick", &state, &references, &turns)?;
+    candidate["document"]["warnings"] = document
+        .get("warnings")
+        .cloned()
+        .unwrap_or_else(|| json!([]));
+    candidate["document"]["geometry_report"] = document
+        .get("geometry_report")
+        .cloned()
+        .unwrap_or(Value::Null);
+    candidate["document"]["state"] = json!("complete");
+    Ok(candidate)
+}
+
+pub(crate) fn write_glb(mesh: &TriangleMesh, path: &Path) -> Result<(), String> {
     use serde_json::json;
     if mesh.positions.is_empty()
         || mesh.positions.len() % 3 != 0
@@ -133,7 +179,7 @@ fn write_glb(mesh: &TriangleMesh, path: &Path) -> Result<(), String> {
             .map(|p| p[i])
             .fold(f64::NEG_INFINITY, f64::max)
     });
-    let doc = json!({"asset":{"version":"2.0","generator":"AI Modeler native Quick"},"scene":0,"scenes":[{"nodes":[0]}],"nodes":[{"mesh":0}],"meshes":[{"primitives":[{"attributes":{"POSITION":0,"NORMAL":1},"mode":4}]}],"buffers":[{"byteLength":binary.len()}],"bufferViews":[{"buffer":0,"byteOffset":0,"byteLength":position_bytes,"target":34962},{"buffer":0,"byteOffset":position_bytes,"byteLength":normal_bytes,"target":34962}],"accessors":[{"bufferView":0,"componentType":5126,"count":mesh.positions.len(),"type":"VEC3","min":mins,"max":maxs},{"bufferView":1,"componentType":5126,"count":mesh.normals.len(),"type":"VEC3"}]});
+    let doc = json!({"asset":{"version":"2.0","generator":"AI Modeler native"},"scene":0,"scenes":[{"nodes":[0]}],"nodes":[{"mesh":0}],"meshes":[{"primitives":[{"attributes":{"POSITION":0,"NORMAL":1},"mode":4}]}],"buffers":[{"byteLength":binary.len()}],"bufferViews":[{"buffer":0,"byteOffset":0,"byteLength":position_bytes,"target":34962},{"buffer":0,"byteOffset":position_bytes,"byteLength":normal_bytes,"target":34962}],"accessors":[{"bufferView":0,"componentType":5126,"count":mesh.positions.len(),"type":"VEC3","min":mins,"max":maxs},{"bufferView":1,"componentType":5126,"count":mesh.normals.len(),"type":"VEC3"}]});
     let mut json_bytes = serde_json::to_vec(&doc).map_err(|e| e.to_string())?;
     while json_bytes.len() % 4 != 0 {
         json_bytes.push(b' ');

@@ -27,6 +27,7 @@ const mode = ref<'agent' | 'quick'>('agent')
 const panel = ref<'tree' | 'params' | 'stats' | 'logs' | 'parts'>('tree')
 const themeDark = ref(false)
 const documentState = ref<DocumentState>({ revision: 0, name: 'Part1', features: [], stats: {}, build_log: [] })
+const nativeModelActive = ref(false)
 const selectedIndex = ref(-1)
 const paramDraft = ref<Record<string, string>>({})
 const featureNameDraft = ref('')
@@ -129,6 +130,7 @@ async function handleWireEvent(event: WireEvent) {
     setStatus(data.message || 'Agent 正在处理…')
     if (data.message) addLog(data.message)
   } else if (event.event === 'model.changed') {
+    nativeModelActive.value = true
     updateDocument(data)
     clearPreview()
     setStatus('模型已更新', 'success')
@@ -227,7 +229,25 @@ async function initialize() {
     backendInfo.value = 'Python ' + (hello.python_version || '')
     const init = await backendCall('system.initialize')
     settingsDraft.value = structuredClone(init.settings || {})
-    updateDocument(init.document, false)
+    const active = await invoke<any>('active_model_snapshot')
+    if (active?.document) {
+      nativeModelActive.value = true
+      updateDocument(active.document, false)
+      addLog('已恢复 Rust 原生活动模型 generation ' + String(active.generation || '?'))
+    } else if ((init.document?.features || []).length === 0) {
+      const document = await invoke<DocumentState>('active_model_new', { name: init.document?.name || 'Part1' })
+      nativeModelActive.value = true
+      updateDocument(document, false)
+      addLog('已创建 Rust 原生空活动模型')
+    } else {
+      // Keep a legacy in-memory model visible, but all model write routes stay
+      // on the native commands and fail closed until the user explicitly opens
+      // and converts its source project.
+      nativeModelActive.value = true
+      updateDocument(init.document, false)
+      setStatus('检测到旧 Python 模型，请通过“打开工程”显式转换后继续编辑。', 'warning')
+      addLog('已有 Python 模型未自动接管；需要显式 CADPlan 转换。')
+    }
     await restoreAgentHistory()
     setStatus('后端已连接', 'success')
     addLog('已连接 Python ' + (hello.python_version || '') + ' · ' + (hello.python_executable || ''))
@@ -410,6 +430,7 @@ async function submitPrompt() {
         chat.value.push({ role: 'assistant', text: '暂时无法识别这条描述：' + (result.message || '请补充零件类型和尺寸。') + (suggestion ? '\n\n联网建议：' + suggestion : '') })
         setStatus('描述未识别', 'warning')
       } else {
+        nativeModelActive.value = true
         updateDocument(result)
         const warnings = (result.warnings || []).map((item: any) => typeof item === 'string' ? item : item.message || JSON.stringify(item))
         chat.value.push({ role: 'assistant', text: '模型已生成，共 ' + ((result.features || []).length) + ' 个特征。' + (warnings.length ? '\n\n提示：' + warnings.join('；') : '') })
@@ -530,9 +551,32 @@ function parseDraftValue(key: string, value: string) {
 }
 
 async function editFeature(action: string, extra: JsonMap = {}) {
-  if (!selectedFeature.value) return
+  const index = Number.isInteger(extra.index) ? Number(extra.index) : selectedFeature.value?.index
+  if (index === undefined) return
+  if (nativeModelActive.value) {
+    if (action === 'toggle') {
+      await showMessage('原生特征无法启停', 'CADPlan v1 不包含 enabled 状态，禁用与重新启用无法无损转换。可删除特征或清空模型。')
+      return
+    }
+    try {
+      const document = await invoke<DocumentState>('active_model_update_feature', {
+        index,
+        params: extra.params || {},
+        name: extra.name || null,
+        action,
+        delta: extra.delta ?? null,
+        enabled: extra.enabled ?? null,
+      })
+      updateDocument(document)
+      selectedIndex.value = action === 'move'
+        ? Math.max(0, Math.min(index + Number(extra.delta || 0), document.features.length - 1))
+        : action === 'delete' ? Math.min(index, document.features.length - 1) : index
+      setStatus(action === 'delete' ? '原生特征已删除并重建' : action === 'move' ? '原生特征顺序已更新并重建' : '原生特征已重建并更新', 'success')
+    } catch (error) { await showMessage('原生特征更新失败', errorMessage(error), 'error') }
+    return
+  }
   try {
-    const result = await backendCall('feature.' + action, { index: selectedFeature.value.index, ...extra })
+    const result = await backendCall('feature.' + action, { index, ...extra })
     updateDocument(result)
     setStatus('特征已更新', 'success')
   } catch (error) { await showMessage('特征操作失败', errorMessage(error), 'error') }
@@ -549,6 +593,12 @@ async function renameFeature(feature: Feature) {
   const name = window.prompt('输入特征名称', feature.name || feature.kind)
   if (!name?.trim()) return
   try {
+    if (nativeModelActive.value) {
+      const document = await invoke<DocumentState>('active_model_update_feature', { index: feature.index, params: {}, name: name.trim() })
+      updateDocument(document)
+      setStatus('原生特征名称已更新', 'success')
+      return
+    }
     const result = await backendCall('feature.rename', { index: feature.index, name: name.trim() })
     updateDocument(result)
     setStatus('特征名称已更新', 'success')
@@ -558,14 +608,22 @@ async function renameFeature(feature: Feature) {
 async function clearFeatures() {
   if (!documentState.value.features.length) return
   if (!await confirm('清空当前零件的全部特征？', { title: '清空特征', kind: 'warning' })) return
-  try { updateDocument(await backendCall('document.clear')); setStatus('特征已清空', 'success') }
-  catch (error) { await showMessage('清空失败', errorMessage(error), 'error') }
+  try {
+    const document = await invoke<DocumentState>('active_model_new', { name: documentState.value.name || 'Part1' })
+    nativeModelActive.value = true
+    updateDocument(document)
+    selectedIndex.value = -1
+    setStatus('原生零件已清空', 'success')
+  } catch (error) { await showMessage('清空失败', errorMessage(error), 'error') }
+  return
 }
 
 async function newDocument() {
   try {
     if (documentState.value.features.length && !await confirm('新建零件将替换当前工作区模型，继续吗？', { title: '新建零件', kind: 'warning' })) return
-    updateDocument(await backendCall('document.new', { name: 'Part1' }), false)
+    const document = await invoke<DocumentState>('active_model_new', { name: 'Part1' })
+    nativeModelActive.value = true
+    updateDocument(document, false)
     selectedIndex.value = -1
     isDirty.value = false
     setStatus('已新建零件', 'success')
@@ -576,12 +634,16 @@ async function openProject() {
   try {
     const path = await open({ title: '打开 AI Modeler 工程', multiple: false, filters: [{ name: 'AI Modeler 工程', extensions: ['aimodel', 'json'] }] })
     if (typeof path !== 'string') return
-    setStatus('正在打开工程…')
-    updateDocument(await backendCall('project.open', { path }), false)
+    const agreed = await confirm('将逐特征检查旧工程。只有类型、参数和操作完整映射到 CADPlan 且原生 OCCT 构建成功时才导入；数值来源标记为“已有模型”，原始 AIMODEL 会保存在活动记录以保留扩展字段。继续转换？', { title: '显式转换旧工程', kind: 'warning' })
+    if (!agreed) return
+    setStatus('正在显式转换并原生构建工程…')
+    const document = await invoke<DocumentState>('active_model_import_project', { path, confirmed: true })
+    nativeModelActive.value = true
+    updateDocument(document, false)
     selectedIndex.value = -1
     isDirty.value = false
-    setStatus('工程已打开：' + fileName(path), 'success')
-    addLog('打开工程：' + path)
+    setStatus('工程已显式转换为原生 CADPlan：' + fileName(path), 'success')
+    addLog('原生打开工程：' + path)
   } catch (error) { await showMessage('打开工程失败', errorMessage(error), 'error') }
 }
 
@@ -593,7 +655,12 @@ async function saveProject() {
       if (!chosen) return
       path = chosen
     }
-    await backendCall('project.save', { path })
+    if (nativeModelActive.value) {
+      const document = await invoke<DocumentState>('active_model_save', { path })
+      updateDocument(document, false)
+    } else {
+      await backendCall('project.save', { path })
+    }
     documentState.value.current_path = path
     isDirty.value = false
     setStatus('工程已保存：' + fileName(path), 'success')
@@ -607,7 +674,8 @@ async function exportFile(kind: 'stl' | 'obj' | 'report' | 'catia') {
   try {
     const path = await save({ title: '导出' + labels[kind], defaultPath: documentState.value.name + (kind === 'report' ? '_建模报告' : '') + '.' + ext[kind], filters: [{ name: labels[kind], extensions: [ext[kind]] }] })
     if (!path) return
-    await backendCall('export', { kind, path })
+    if (nativeModelActive.value) await invoke('active_model_export', { kind, path })
+    else await backendCall('export', { kind, path })
     setStatus('已导出：' + fileName(path), 'success')
     addLog('导出 ' + kind.toUpperCase() + '：' + path)
     await showMessage('导出完成', '文件已保存到：\n' + path)
@@ -619,7 +687,8 @@ async function saveSnapshot(viewSet: 'single' | 'four' | 'three' | 'extended') {
   try {
     const path = await save({ title: '保存模型截图', defaultPath: documentState.value.name + '_' + suffix[viewSet] + '.png', filters: [{ name: 'PNG 图片', extensions: ['png'] }] })
     if (!path) return
-    await backendCall('render.snapshot', { path, view_set: viewSet })
+    if (nativeModelActive.value) await invoke('active_model_export_snapshot', { path, viewSet })
+    else await backendCall('render.snapshot', { path, view_set: viewSet })
     setStatus('截图已保存：' + fileName(path), 'success')
     await showMessage('截图完成', '图片已保存到：\n' + path)
   } catch (error) { await showMessage('截图失败', errorMessage(error), 'error') }
@@ -778,6 +847,10 @@ async function runBackendAction(method: string, label: string, params: JsonMap =
 
 async function pushToCatia() {
   if (!documentState.value.features.length) { await showMessage('推送到 CATIA', '请先创建一个模型。'); return }
+  if (nativeModelActive.value) {
+    await showMessage('原生 CATIA 推送暂不支持', '当前活动模型由 Rust CADPlan 管理。为避免把另一份 Python 旧文档推入 CATIA，操作已拒绝；可使用导出菜单中原生模式明确支持的格式。')
+    return
+  }
   const probe = await runBackendAction('catia.probe', '检测 CATIA')
   if (!probe?.ok) { if (probe) await showMessage('未检测到 CATIA V5', probe.message || '请检查 CATIA 安装和连接。', 'warning'); return }
   const result = await runBackendAction('catia.push', '推送到 CATIA')
@@ -1002,7 +1075,7 @@ onUnmounted(() => {
               <span class="tree-branch"></span><span class="feature-symbol" :class="'kind-' + feature.kind"><UiIcon :name="featureIconName(feature)" :size="16" /></span>
               <span class="feature-title"><strong>{{ featureLabel(feature) }}</strong><small>{{ feature.kind }} <i v-if="feature.op === 'cut'">· 切除</i></small></span>
               <button class="row-mini" title="重命名" @click.stop="renameFeature(feature)"><UiIcon name="pencil" :size="15" /></button>
-              <button class="row-mini" :title="feature.enabled === false ? '启用特征' : '停用特征'" @click.stop="editFeature('toggle', { index: feature.index, enabled: feature.enabled === false })"><UiIcon :name="feature.enabled === false ? 'eye-off' : 'eye'" :size="15" /></button>
+              <button class="row-mini" :disabled="nativeModelActive" :title="nativeModelActive ? 'CADPlan v1 不支持无损启停特征' : feature.enabled === false ? '启用特征' : '停用特征'" @click.stop="editFeature('toggle', { index: feature.index, enabled: feature.enabled === false })"><UiIcon :name="feature.enabled === false ? 'eye-off' : 'eye'" :size="15" /></button>
             </div>
           </div>
           <div class="tree-footer"><button @click="panel = 'params'" :disabled="!selectedFeature"><UiIcon name="settings" :size="16" />编辑所选特征</button><button @click="clearFeatures" :disabled="!documentState.features.length"><UiIcon name="trash" :size="16" />清空</button></div>

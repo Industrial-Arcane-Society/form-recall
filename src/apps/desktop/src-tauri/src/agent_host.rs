@@ -318,7 +318,7 @@ fn get_or_create_session(
             prompt_path.display()
         )
     })?;
-    let resume = saved.get("fingerprint").and_then(Value::as_str) == Some(fingerprint)
+    let mut resume = saved.get("fingerprint").and_then(Value::as_str) == Some(fingerprint)
         && saved.get("session_id").and_then(Value::as_str).is_some()
         && saved
             .get("cwd")
@@ -327,6 +327,47 @@ fn get_or_create_session(
                 let cwd = Path::new(value);
                 cwd.is_absolute() && cwd.starts_with(&workspace_root)
             });
+    if resume {
+        let cwd = PathBuf::from(saved["cwd"].as_str().unwrap_or_default());
+        let local_state = read_json_optional(&cwd.join("cad-state.json"))?.unwrap_or(Value::Null);
+        let active = crate::native_active_model::load(
+            &crate::native_active_model::root_from_data_dir(&data_dir),
+        )?;
+        let generation_matches = match active.as_ref() {
+            Some(active) => {
+                local_state
+                    .get("active_model_generation")
+                    .and_then(Value::as_u64)
+                    == active.get("generation").and_then(Value::as_u64)
+            }
+            None => {
+                local_state
+                    .get("active_model_generation")
+                    .and_then(Value::as_u64)
+                    .unwrap_or(0)
+                    == 0
+            }
+        };
+        let state_matches = match active.as_ref() {
+            Some(active) => {
+                let active_state = active.get("cad_state").filter(|value| value.is_object());
+                let session_plan = local_state.get("plan").filter(|value| value.is_object());
+                let active_plan = active_state
+                    .and_then(|state| state.get("plan"))
+                    .filter(|value| value.is_object());
+                session_plan == active_plan
+                    && local_state.get("revision").and_then(Value::as_i64)
+                        == active.get("revision").and_then(Value::as_i64)
+            }
+            None => local_state.get("plan").is_none_or(Value::is_null),
+        };
+        if !generation_matches || !state_matches {
+            resume = false;
+            let _ = events.send(event("agent.warning", "", json!({
+                "message":"检测到 Agent 会话的 CADPlan generation 已过期，将从当前原生活动模型新建 DSH 会话。"
+            })));
+        }
+    }
     let cwd = if resume {
         PathBuf::from(saved["cwd"].as_str().unwrap_or_default())
     } else {
@@ -350,6 +391,21 @@ fn get_or_create_session(
         json!({"schema_version": 1, "session_id": session_id_saved, "turns": []}),
         "turns",
     )?;
+    if !resume {
+        let active_root = crate::native_active_model::root_from_data_dir(&data_dir);
+        if let Some(active) = crate::native_active_model::load(&active_root)? {
+            let mut cad_state = active.get("cad_state").filter(|value| value.is_object()).cloned()
+                .unwrap_or_else(|| json!({"plan":null,"revision":active["revision"],"actions":[],"web_search_history":[]}));
+            cad_state["active_model_generation"] = active["generation"].clone();
+            write_json_atomic(&cwd.join("cad-state.json"), &cad_state)?;
+            if active["reference_manifest"].is_object() {
+                write_json_atomic(&reference_path, &active["reference_manifest"])?;
+            }
+            if active["user_turns_manifest"].is_object() {
+                write_json_atomic(&turns_path, &active["user_turns_manifest"])?;
+            }
+        }
+    }
     let host_tool_session_id = format!("tool-{}", unique_id());
     let native_tools_path = cwd.join("native-tool-registration.json");
     let native_schemas_path = cwd.join("native-tool-schemas.json");
@@ -436,7 +492,8 @@ fn get_or_create_session(
     })
     .map_err(|error| format!("无法初始化原生视觉provider：{error}"))?;
     let mut native_executor = NativeToolExecutor::new(root.clone(), cwd.clone(), online_enabled)?
-        .with_vision(Arc::new(vision_provider));
+        .with_vision(Arc::new(vision_provider))
+        .with_active_model_root(crate::native_active_model::root_from_data_dir(&data_dir));
     if let Some(manifest) = crate::native_occt_runtime::available_manifest(&root)? {
         native_executor = native_executor.with_geometry_runtime(manifest);
     }
@@ -592,6 +649,9 @@ fn run_turn(
     online_enabled: bool,
     events: &Channel<Value>,
 ) -> Result<Value, String> {
+    let active_model_root =
+        crate::native_active_model::root_from_data_dir(&super::app_data_dir(app)?);
+    let mut last_active_generation = crate::native_active_model::generation(&active_model_root)?;
     let images = persist_images(&session.cwd, paths)?;
     if !images.is_empty() && !session.image_supported {
         return Err(
@@ -684,6 +744,12 @@ fn run_turn(
                     &mut last_preview_hash,
                     false,
                 );
+                publish_active_model(
+                    &active_model_root,
+                    request_id,
+                    events,
+                    &mut last_active_generation,
+                )?;
             }
             Err(mpsc::RecvTimeoutError::Timeout) => {
                 publish_preview(
@@ -694,6 +760,12 @@ fn run_turn(
                     &mut last_preview_hash,
                     false,
                 );
+                publish_active_model(
+                    &active_model_root,
+                    request_id,
+                    events,
+                    &mut last_active_generation,
+                )?;
             }
             Err(mpsc::RecvTimeoutError::Disconnected) => {}
         }
@@ -722,6 +794,12 @@ fn run_turn(
             &mut last_preview_hash,
             false,
         );
+        publish_active_model(
+            &active_model_root,
+            request_id,
+            events,
+            &mut last_active_generation,
+        )?;
     }
     publish_preview(
         &session.cwd,
@@ -731,6 +809,12 @@ fn run_turn(
         &mut last_preview_hash,
         true,
     );
+    publish_active_model(
+        &active_model_root,
+        request_id,
+        events,
+        &mut last_active_generation,
+    )?;
     let stop_reason = response.get("stopReason").and_then(Value::as_str);
     let turn_status = classify_turn_status(stop_reason);
     let current_model = current_model_summary(&session.cwd);
@@ -979,6 +1063,31 @@ fn publish_preview(
         }),
     );
     let _ = app;
+}
+
+fn publish_active_model(
+    root: &Path,
+    request_id: &str,
+    events: &Channel<Value>,
+    previous_generation: &mut u64,
+) -> Result<(), String> {
+    let Some(active) = crate::native_active_model::load(root)? else {
+        return Ok(());
+    };
+    let generation = active["generation"]
+        .as_u64()
+        .ok_or("活动模型 generation 无效。")?;
+    if generation <= *previous_generation {
+        return Ok(());
+    }
+    let document = active
+        .get("document")
+        .filter(|value| value.is_object())
+        .cloned()
+        .ok_or("活动模型缺少有效的 DocumentState。")?;
+    emit(events, "model.changed", request_id, document);
+    *previous_generation = generation;
+    Ok(())
 }
 
 fn emit(channel: &Channel<Value>, name: &str, request_id: &str, data: Value) {
