@@ -25,7 +25,13 @@ export function modelAcceptanceView(model) {
   }
 
   const finishSummary = model.finish_summary
-  const accepted = model.status === 'accepted'
+  const finishCurrent = Number.isInteger(model.revision)
+    && finishSummary?.revision === model.revision
+    && typeof model.geometry_fingerprint === 'string'
+    && model.geometry_fingerprint.length > 0
+    && finishSummary?.geometry_fingerprint === model.geometry_fingerprint
+  const accepted = finishCurrent
+    && model.status === 'accepted'
     && model.finish_status === 'accepted'
     && finishSummary?.accepted === true
   const geometry = label(model.geometric?.status)
@@ -33,10 +39,30 @@ export function modelAcceptanceView(model) {
   return {
     outcome: accepted ? 'accepted' : 'candidate',
     outcomeLabel: accepted ? '已验收' : '候选模型',
-    finish: label(model.finish_status),
+    finish: finishCurrent ? label(model.finish_status) : finishSummary ? '已过期' : label(model.finish_status),
     geometry: labels.geometric[geometry] || geometry,
     visual: labels.visual[visual] || visual,
   }
+}
+
+/** @param {any} document */
+export function documentAcceptanceView(document) {
+  const finishSummary = document?.finish_summary
+  const finishCurrent = Number.isInteger(document?.cad_revision)
+    && finishSummary?.revision === document.cad_revision
+    && typeof document?.geometry_fingerprint === 'string'
+    && document.geometry_fingerprint.length > 0
+    && finishSummary?.geometry_fingerprint === document.geometry_fingerprint
+  return modelAcceptanceView({
+    exists: Array.isArray(document?.features) && document.features.length > 0,
+    status: finishCurrent && finishSummary?.accepted === true ? 'accepted' : 'candidate',
+    revision: document?.cad_revision,
+    geometry_fingerprint: document?.geometry_fingerprint,
+    finish_status: finishCurrent ? finishSummary?.finish_state || 'unknown' : finishSummary ? 'stale' : 'not_finished',
+    finish_summary: finishSummary,
+    geometric: { status: document?.geometric_status || 'unknown' },
+    visual: { status: document?.visual_status || 'unknown' },
+  })
 }
 
 /** @param {unknown} status @param {unknown} stopReason */

@@ -7,14 +7,14 @@ import AttachmentPreview from './components/AttachmentPreview.vue'
 import DependencySetup from './components/DependencySetup.vue'
 import ModelStats from './components/ModelStats.vue'
 import UiIcon from './components/UiIcon.vue'
-import { modelAcceptanceView, turnStatusView } from './agentStatus.mjs'
+import { documentAcceptanceView, modelAcceptanceView, turnStatusView } from './agentStatus.mjs'
 import type { ModelAcceptanceView } from './agentStatus.mjs'
 
 const CadViewport = defineAsyncComponent(() => import('./components/CadViewport.vue'))
 
 type JsonMap = Record<string, any>
 type Feature = { index: number; kind: string; op?: string; name?: string; enabled: boolean; params: JsonMap; description?: string; editable_parameters?: string[] }
-type DocumentState = { revision: number; name: string; source_prompt?: string; current_path?: string | null; features: Feature[]; stats: JsonMap; build_log: string[]; mesh_path?: string | null; warnings?: any[]; finish_summary?: JsonMap | null; geometric_status?: string; visual_status?: string }
+type DocumentState = { revision: number; cad_revision?: number; geometry_fingerprint?: string; name: string; source_prompt?: string; current_path?: string | null; features: Feature[]; stats: JsonMap; build_log: string[]; mesh_path?: string | null; warnings?: any[]; finish_summary?: JsonMap | null; geometric_status?: string; visual_status?: string }
 type WireEvent = { event: string; request_id: string; data: any }
 type ChatLine = { role: 'user' | 'assistant' | 'progress' | 'thought'; text: string; images?: AttachmentItem[]; requestId?: string; toolCallId?: string; open?: boolean }
 
@@ -168,14 +168,7 @@ function updateDocument(payload: any, markDirty = true) {
   if (revision < currentRevision) return
   currentRevision = revision
   documentState.value = { ...documentState.value, ...payload, features: Array.isArray(payload.features) ? payload.features : [] }
-  modelAcceptance.value = modelAcceptanceView({
-    exists: documentState.value.features.length > 0,
-    status: documentState.value.finish_summary?.accepted === true ? 'accepted' : 'candidate',
-    finish_status: documentState.value.finish_summary?.accepted === true ? 'accepted' : documentState.value.finish_summary?.finish_state || 'candidate',
-    finish_summary: documentState.value.finish_summary,
-    geometric: { status: documentState.value.geometric_status || 'unknown' },
-    visual: { status: documentState.value.visual_status || 'unknown' },
-  })
+  modelAcceptance.value = documentAcceptanceView(documentState.value)
   isDirty.value = markDirty && payload.state !== 'opened'
   if (selectedIndex.value >= documentState.value.features.length) selectedIndex.value = -1
   if (Array.isArray(payload.build_log) && payload.build_log.length) {

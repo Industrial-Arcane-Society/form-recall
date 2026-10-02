@@ -7,4 +7,5 @@ export type ModelAcceptanceView = {
 }
 
 export function modelAcceptanceView(model: any): ModelAcceptanceView
+export function documentAcceptanceView(document: any): ModelAcceptanceView
 export function turnStatusView(status: unknown, stopReason?: unknown): { key: string; text: string }

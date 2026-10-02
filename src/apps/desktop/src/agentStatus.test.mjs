@@ -1,6 +1,6 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
-import { modelAcceptanceView, turnStatusView } from './agentStatus.mjs'
+import { documentAcceptanceView, modelAcceptanceView, turnStatusView } from './agentStatus.mjs'
 
 test('ACP turn completion never promotes a candidate model to accepted', () => {
   const candidate = modelAcceptanceView({
@@ -21,14 +21,56 @@ test('only an accepted current model summary is shown as accepted', () => {
   const accepted = modelAcceptanceView({
     exists: true,
     status: 'accepted',
+    revision: 7,
+    geometry_fingerprint: 'fp-current',
     finish_status: 'accepted',
-    finish_summary: { accepted: true },
+    finish_summary: { accepted: true, revision: 7, geometry_fingerprint: 'fp-current' },
     geometric: { status: 'passed' },
     visual: { status: 'covered' },
   })
   assert.equal(accepted.outcome, 'accepted')
   assert.equal(accepted.outcomeLabel, '已验收')
   assert.equal(accepted.visual, '已覆盖')
+})
+
+test('document finish summary with a stale CAD revision remains a candidate', () => {
+  const view = documentAcceptanceView({
+    cad_revision: 8,
+    geometry_fingerprint: 'fp-current',
+    features: [{ index: 0 }],
+    finish_summary: { accepted: true, finish_state: 'accepted', revision: 7, geometry_fingerprint: 'fp-current' },
+    geometric_status: 'passed',
+    visual_status: 'covered',
+  })
+  assert.equal(view.outcome, 'candidate')
+  assert.equal(view.outcomeLabel, '候选模型')
+  assert.equal(view.finish, '已过期')
+})
+
+test('document finish summary with a stale geometry fingerprint remains a candidate', () => {
+  const view = documentAcceptanceView({
+    cad_revision: 7,
+    geometry_fingerprint: 'fp-current',
+    features: [{ index: 0 }],
+    finish_summary: { accepted: true, finish_state: 'accepted', revision: 7, geometry_fingerprint: 'fp-old' },
+  })
+  assert.equal(view.outcome, 'candidate')
+  assert.equal(view.finish, '已过期')
+})
+
+test('host accepted status is rejected when its finish binding is stale', () => {
+  const view = modelAcceptanceView({
+    exists: true,
+    status: 'accepted',
+    revision: 7,
+    geometry_fingerprint: 'fp-current',
+    finish_status: 'accepted',
+    finish_summary: { accepted: true, revision: 7, geometry_fingerprint: 'fp-old' },
+    geometric: { status: 'passed' },
+    visual: { status: 'covered' },
+  })
+  assert.equal(view.outcome, 'candidate')
+  assert.equal(view.finish, '已过期')
 })
 
 test('cancelled and stopped turns stay distinct from completion', () => {
