@@ -1,6 +1,6 @@
 //! Read-only port of the legacy DSH CAD state summary.
 use crate::{cad_plan, cad_plan_validation};
-use serde_json::{Map, Value, json};
+use serde_json::{json, Map, Value};
 use sha2::{Digest, Sha256};
 use std::collections::{BTreeMap, BTreeSet};
 use std::fs;
@@ -30,6 +30,11 @@ const HISTORY_FIELDS: &[&str] = &[
     "summary",
     "evidence",
     "unobservable",
+    "out_of_scope_evidence_ids",
+    "stage_scope",
+    "stage_complete",
+    "full_current_geometry_in_scope",
+    "stage_diagnostic_only",
 ];
 #[derive(Default)]
 struct Context {
@@ -81,8 +86,7 @@ pub fn summary(
     out["partial_preview"] = get(state, "partial_preview");
     out["last_preview_failure"] = get(state, "last_preview_failure");
     out["reference_inventory"] = obj_or_empty(state, "reference_inventory");
-    out["preview_views"] =
-        json!(state
+    out["preview_views"] = json!(state
         .get("previews")
         .and_then(Value::as_array)
         .into_iter()
@@ -90,40 +94,35 @@ pub fn summary(
         .filter(|r| r.get("revision") == Some(&revision))
         .map(|r| json!({"view":r.get("view"),"preview_generation":r.get("preview_generation")}))
         .collect::<Vec<_>>());
-    out["reference_images"] = json!(
-        ctx.refs
-            .iter()
-            .enumerate()
-            .map(|(i, r)| {
-                let mut v = project(
-                    r,
-                    &["id", "sha256", "filename", "width", "height", "media_type"],
-                );
-                v["index"] = json!(i + 1);
-                v
-            })
-            .collect::<Vec<_>>()
-    );
+    out["reference_images"] = json!(ctx
+        .refs
+        .iter()
+        .enumerate()
+        .map(|(i, r)| {
+            let mut v = project(
+                r,
+                &["id", "sha256", "filename", "width", "height", "media_type"],
+            );
+            v["index"] = json!(i + 1);
+            v
+        })
+        .collect::<Vec<_>>());
     out["reference_manifest_error"] = json!(ctx.ref_error);
     out["user_target_context_error"] = json!(ctx.turns_error);
     out["authoritative_user_turns"] = json!(authoritative_turns(&ctx.turns));
-    out["main_agent_self_report_views"] = json!(
-        state
-            .get("visual_reviews")
-            .and_then(Value::as_object)
-            .into_iter()
-            .flat_map(|m| m.iter())
-            .filter(|(_, r)| r.get("revision") == Some(&revision))
-            .map(|(k, _)| k.clone())
-            .collect::<BTreeSet<_>>()
-    );
+    out["main_agent_self_report_views"] = json!(state
+        .get("visual_reviews")
+        .and_then(Value::as_object)
+        .into_iter()
+        .flat_map(|m| m.iter())
+        .filter(|(_, r)| r.get("revision") == Some(&revision))
+        .map(|(k, _)| k.clone())
+        .collect::<BTreeSet<_>>());
     let latest = latest_reviews(state, &ctx.turns, &revision);
-    out["independent_reference_review_pairs"] = json!(
-        latest
-            .iter()
-            .filter(|r| comparable(r, &signature, &ctx.refs))
-            .count()
-    );
+    out["independent_reference_review_pairs"] = json!(latest
+        .iter()
+        .filter(|r| comparable(r, &signature, &ctx.refs))
+        .count());
     out["coordinate_contract"] = json!(COORDINATE_CONTRACT);
     out["reference_similarity_review"] = state
         .get("reference_similarity_review")
@@ -143,22 +142,18 @@ pub fn summary(
     let history = state
         .get("reference_similarity_history")
         .and_then(Value::as_array);
-    out["recent_reference_similarity_history"] = json!(
-        history
-            .into_iter()
-            .flatten()
-            .skip(history.map_or(0, |v| v.len().saturating_sub(6)))
-            .map(|r| project(r, HISTORY_FIELDS))
-            .collect::<Vec<_>>()
-    );
+    out["recent_reference_similarity_history"] = json!(history
+        .into_iter()
+        .flatten()
+        .skip(history.map_or(0, |v| v.len().saturating_sub(6)))
+        .map(|r| project(r, HISTORY_FIELDS))
+        .collect::<Vec<_>>());
     out["reference_similarity_error"] = get(state, "reference_similarity_error");
     out["required_external_facts"] = obj_or_empty(state, "required_external_facts");
-    out["replaced_plan_count"] = json!(
-        state
-            .get("replaced_plans")
-            .and_then(Value::as_array)
-            .map_or(0, Vec::len)
-    );
+    out["replaced_plan_count"] = json!(state
+        .get("replaced_plans")
+        .and_then(Value::as_array)
+        .map_or(0, Vec::len));
     out["finish_summary"] = get(state, "finish_summary");
     out["construction_milestone"] = get(state, "construction_milestone");
     out["visual_evidence_summary"] =
@@ -823,6 +818,10 @@ fn visual_summary(
                 continue;
             }
             seen.insert(evidence.to_owned());
+            if e["status"].as_str() == Some("out_of_scope") {
+                push(&mut rec["out_of_scope_evidence_ids"], json!(evidence));
+                continue;
+            }
             if !req.contains(evidence) {
                 push(&mut rec["unmapped_evidence_ids"], json!(evidence));
                 continue;
@@ -1011,6 +1010,7 @@ fn visual_summary(
             "missing_required_evidence_ids",
             "unknown_required_evidence_ids",
             "unobservable_evidence_ids",
+            "out_of_scope_evidence_ids",
             "mismatch_evidence_ids",
         ]
         .iter()
@@ -1046,6 +1046,7 @@ fn blank_ref(id: &str, filename: Option<&Value>, req: &Value) -> Value {
     json!({"reference_id":id,"filename":filename.cloned().unwrap_or(Value::Null),"comparable_pairs":0,"noncomparable_pairs":0,
   "supported_evidence_ids":[],"estimated_evidence_ids":[],"mismatch_evidence_ids":[],"unobservable_evidence_ids":[],
   "missing_required_evidence_ids":[],"unknown_required_evidence_ids":[],"unresolved_required_evidence_ids":[],
+  "out_of_scope_evidence_ids":[],
   "required_evidence_ids":req["required_evidence_ids"],"optional_unknowns":req["optional_unknowns"],
   "unmapped_evidence_ids":[],"unmapped_coverage_ids":[],"unsupported_coverage_ids":[],"failed_review_attempts":[],
   "inventory_valid":req["inventory_valid"],"invalid_inventory_evidence_count":req["invalid_evidence_count"],
@@ -1229,12 +1230,10 @@ mod tests {
         m["images"][0]["sha256"] = json!("wrong");
         put(&r, &m);
         let out = summary(&mut s, &r, &t).unwrap();
-        assert!(
-            out["reference_manifest_error"]
-                .as_str()
-                .unwrap()
-                .contains("sha256")
-        );
+        assert!(out["reference_manifest_error"]
+            .as_str()
+            .unwrap()
+            .contains("sha256"));
         assert_eq!(out["reference_images"].as_array().unwrap().len(), 0);
         fs::remove_dir_all(d).unwrap();
     }

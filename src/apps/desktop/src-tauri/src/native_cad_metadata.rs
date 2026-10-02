@@ -20,8 +20,8 @@ pub fn run(
     let mut next = state.clone();
     let result = match name {
         "cad_set_construction_milestone" => {
-            let completed = list(args, "completed_feature_ids")?;
-            let expected = list(args, "expected_feature_ids")?;
+            let completed = validated_id_list(args, "completed_feature_ids")?;
+            let expected = validated_id_list(args, "expected_feature_ids")?;
             let actual = state["plan"]["features"]
                 .as_array()
                 .ok_or("里程碑需要已有计划。")?;
@@ -124,6 +124,23 @@ fn list(args: &Value, key: &str) -> Result<Vec<String>, String> {
         _ => Err(format!("{key}须为数组。")),
     }
 }
+fn validated_id_list(args: &Value, key: &str) -> Result<Vec<String>, String> {
+    let values = list(args, key)?;
+    let mut seen = std::collections::BTreeSet::new();
+    for id in &values {
+        if id.trim() != id
+            || id.is_empty()
+            || id.chars().count() > 160
+            || id.chars().any(char::is_control)
+        {
+            return Err(format!("{key}包含格式无效的特征ID。"));
+        }
+        if !seen.insert(id.as_str()) {
+            return Err(format!("{key}不能包含重复特征ID。"));
+        }
+    }
+    Ok(values)
+}
 
 #[cfg(test)]
 mod tests {
@@ -144,6 +161,27 @@ mod tests {
         assert!(s.get("construction_milestone").is_none());
     }
     #[test]
+    fn milestone_rejects_malformed_or_duplicate_ids_but_allows_future_expected_ids() {
+        let s = json!({"revision":2,"plan":{"features":[{"id":"body"}]}});
+        let w = NativeWeb::new(false);
+        for ids in [
+            json!(["body", "body"]),
+            json!([" body"]),
+            json!(["bad\nID"]),
+        ] {
+            assert!(
+                run(
+                    &s,
+                    "cad_set_construction_milestone",
+                    &json!({"milestone":"partial","completed_feature_ids":ids}),
+                    &w
+                )
+                .is_err()
+            );
+        }
+        assert!(run(&s, "cad_set_construction_milestone", &json!({"milestone":"partial","completed_feature_ids":["body"],"expected_feature_ids":["future-hole"]}), &w).is_ok());
+    }
+    #[test]
     fn invented_page_quote_cannot_verify_fact() {
         let w = NativeWeb::new(false);
         let (s, _) = run(
@@ -153,7 +191,13 @@ mod tests {
             &w,
         )
         .unwrap();
-        assert!(run(&s,"cad_attach_external_fact_evidence",&json!({"fact_id":"f","result_id":"invented","quote":"this quote was never opened"}),&w).is_err());
+        assert!(run(
+            &s,
+            "cad_attach_external_fact_evidence",
+            &json!({"fact_id":"f","result_id":"invented","quote":"this quote was never opened"}),
+            &w
+        )
+        .is_err());
         assert_eq!(s["required_external_facts"]["f"]["status"], "unknown");
     }
 }
