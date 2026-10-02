@@ -41,6 +41,9 @@ const isDirty = ref(false)
 const activeRequestId = ref('')
 const eventLog = ref<string[]>([])
 const menuOpen = ref(false)
+const menuPosition = ref({ left: 8, top: 8 })
+const menuTrigger = ref<HTMLElement | null>(null)
+const menuPopover = ref<HTMLElement | null>(null)
 const settingsOpen = ref(false)
 const settingsTab = ref<'llm' | 'online' | 'build' | 'viewer'>('llm')
 const settingsDraft = ref<JsonMap | null>(null)
@@ -571,11 +574,44 @@ async function loadParts() {
 }
 
 async function openSamples() {
+  closeMenu()
   if (!sampleRows.value.length) {
     try { sampleRows.value = await backendCall('samples.list') }
     catch (error) { setStatus('示例列表加载失败：' + errorMessage(error), 'error'); return }
   }
   samplesOpen.value = !samplesOpen.value
+}
+
+function closeMenu() {
+  menuOpen.value = false
+  menuTrigger.value = null
+}
+
+function toggleMenu(event: MouseEvent) {
+  const trigger = event.currentTarget as HTMLElement
+  if (menuOpen.value && menuTrigger.value === trigger) {
+    closeMenu()
+    return
+  }
+
+  samplesOpen.value = false
+  const triggerRect = trigger.getBoundingClientRect()
+  const menuWidth = Math.min(238, window.innerWidth - 16)
+  const left = Math.max(8, Math.min(triggerRect.right - menuWidth, window.innerWidth - menuWidth - 8))
+  menuPosition.value = { left, top: Math.max(8, triggerRect.bottom + 4) }
+  menuTrigger.value = trigger
+  menuOpen.value = true
+
+  void nextTick(() => {
+    const menuRect = menuPopover.value?.getBoundingClientRect()
+    if (!menuRect) return
+    const below = triggerRect.bottom + 4
+    const preferredTop = menuRect.bottom <= window.innerHeight - 8
+      ? below
+      : triggerRect.top - menuRect.height - 4
+    const top = Math.max(8, Math.min(preferredTop, window.innerHeight - menuRect.height - 8))
+    menuPosition.value = { left, top }
+  })
 }
 
 function usePromptSample(sample: any) {
@@ -716,7 +752,7 @@ async function openManual(path: string) {
 }
 
 function onKeydown(event: KeyboardEvent) {
-  if (event.key === 'Escape') { menuOpen.value = false; return }
+  if (event.key === 'Escape') { closeMenu(); samplesOpen.value = false; return }
   if (!(event.ctrlKey || event.metaKey)) {
     if (event.key === 'f' && !(event.target instanceof HTMLInputElement) && !(event.target instanceof HTMLTextAreaElement)) fitView()
     return
@@ -735,12 +771,14 @@ watch(partsQuery, () => { if (panel.value === 'parts') void loadParts() })
 onMounted(() => {
   window.addEventListener('paste', onPaste)
   window.addEventListener('keydown', onKeydown)
+  window.addEventListener('resize', closeMenu)
   void startApplication()
 })
 
 onUnmounted(() => {
   window.removeEventListener('paste', onPaste)
   window.removeEventListener('keydown', onKeydown)
+  window.removeEventListener('resize', closeMenu)
   if (currentPreviewObjectUrl) URL.revokeObjectURL(currentPreviewObjectUrl)
   releaseAttachmentUrls()
 })
@@ -761,22 +799,8 @@ onUnmounted(() => {
         <span class="nav-separator"></span>
         <button @click="exportFile('stl')"><UiIcon name="download" :size="16" />导出 STL</button>
         <button @click="exportFile('obj')">导出 OBJ</button>
-        <button @click="menuOpen = !menuOpen">更多 <UiIcon name="chevron-down" :size="14" /></button>
-        <div v-if="menuOpen" class="menu-popover" @mouseleave="menuOpen = false">
-          <button @click="exportFile('report'); menuOpen = false">导出建模报告 TXT</button>
-          <button @click="exportFile('catia'); menuOpen = false">导出 CATIA 自动化脚本</button>
-          <button @click="saveSnapshot('single'); menuOpen = false">模型截图 PNG</button>
-          <button @click="saveSnapshot('four'); menuOpen = false">四视图 PNG</button>
-          <button @click="saveSnapshot('three'); menuOpen = false">三视图 PNG</button>
-          <button @click="saveSnapshot('extended'); menuOpen = false">扩展多视图 PNG</button>
-          <div class="menu-divider"></div>
-          <button @click="openSettings('llm'); menuOpen = false">AI 大模型设置</button>
-          <button @click="openSettings('online'); menuOpen = false">联网搜索设置</button>
-          <button @click="openMcp(); menuOpen = false">MCP 服务配置</button>
-          <button @click="openTools(); menuOpen = false">CATIA 与本地工具</button>
-          <button @click="runSelftest(); menuOpen = false">运行内置自检</button>
-          <button @click="helpOpen = true; menuOpen = false">帮助与使用说明</button>
-          <button @click="aboutOpen = true; menuOpen = false">关于 AI Modeler</button>
+        <div class="nav-dropdown">
+          <button @click="toggleMenu">更多 <UiIcon name="chevron-down" :size="14" /></button>
         </div>
       </nav>
       <div class="top-actions">
@@ -786,13 +810,41 @@ onUnmounted(() => {
       </div>
     </header>
 
+    <Teleport to="body">
+      <div v-if="menuOpen" ref="menuPopover" class="menu-popover" :class="{ 'theme-dark': themeDark }" :style="{ left: menuPosition.left + 'px', top: menuPosition.top + 'px' }" @mouseleave="closeMenu">
+        <button @click="exportFile('report'); closeMenu()">导出建模报告 TXT</button>
+        <button @click="exportFile('catia'); closeMenu()">导出 CATIA 自动化脚本</button>
+        <button @click="saveSnapshot('single'); closeMenu()">模型截图 PNG</button>
+        <button @click="saveSnapshot('four'); closeMenu()">四视图 PNG</button>
+        <button @click="saveSnapshot('three'); closeMenu()">三视图 PNG</button>
+        <button @click="saveSnapshot('extended'); closeMenu()">扩展多视图 PNG</button>
+        <div class="menu-divider"></div>
+        <button @click="openSettings('llm'); closeMenu()">AI 大模型设置</button>
+        <button @click="openSettings('online'); closeMenu()">联网搜索设置</button>
+        <button @click="openMcp(); closeMenu()">MCP 服务配置</button>
+        <button @click="openTools(); closeMenu()">CATIA 与本地工具</button>
+        <button @click="runSelftest(); closeMenu()">运行内置自检</button>
+        <button @click="helpOpen = true; closeMenu()">帮助与使用说明</button>
+        <button @click="aboutOpen = true; closeMenu()">关于 AI Modeler</button>
+      </div>
+    </Teleport>
+
     <main ref="workbenchRef" class="workbench" :style="workbenchStyle">
       <section v-show="!chatCollapsed" class="chat-panel">
         <div class="panel-heading chat-heading">
           <div><span class="eyebrow">WORKSPACE / 01</span><h1>建模对话</h1></div>
-          <div class="heading-tools"><button class="sample-button" @click="openSamples">示例 <UiIcon name="chevron-down" :size="14" /></button><button class="quiet-icon" title="新对话" @click="resetChat"><UiIcon name="plus" /></button><button class="quiet-icon" title="收起对话栏" @click="chatCollapsed = true"><UiIcon name="panel-left-close" /></button></div>
+          <div class="heading-tools">
+            <div class="sample-dropdown">
+              <button class="sample-button" @click="openSamples">示例 <UiIcon name="chevron-down" :size="14" /></button>
+              <div v-if="samplesOpen" class="sample-popover">
+                <div class="sample-popover-title">常用建模示例 <button @click="samplesOpen = false"><UiIcon name="close" :size="16" /></button></div>
+                <button v-for="sample in sampleRows" :key="sample.label" @click="usePromptSample(sample)"><strong>{{ sample.label }}</strong><small>{{ sample.prompt }}</small></button>
+              </div>
+            </div>
+            <button class="quiet-icon" title="新对话" @click="resetChat"><UiIcon name="plus" /></button>
+            <button class="quiet-icon" title="收起对话栏" @click="chatCollapsed = true"><UiIcon name="panel-left-close" /></button>
+          </div>
         </div>
-        <div v-if="samplesOpen" class="sample-popover"><div class="sample-popover-title">常用建模示例 <button @click="samplesOpen = false"><UiIcon name="close" :size="16" /></button></div><button v-for="sample in sampleRows" :key="sample.label" @click="usePromptSample(sample)"><strong>{{ sample.label }}</strong><small>{{ sample.prompt }}</small></button></div>
         <div class="mode-switch">
           <button :class="{ active: mode === 'agent' }" @click="mode = 'agent'"><UiIcon name="sparkle" :size="16" /> Agent 模式</button>
           <button :class="{ active: mode === 'quick' }" @click="mode = 'quick'"><UiIcon name="zap" :size="16" /> 快速建模</button>
@@ -845,7 +897,7 @@ onUnmounted(() => {
             <button class="view-icon-button" :class="{ selected: settingsDraft?.viewer?.grid }" title="显示参考网格" @click="toggleViewSetting('grid', !settingsDraft?.viewer?.grid)"><UiIcon name="grid" :size="17" /></button>
             <button class="view-icon-button" :class="{ selected: settingsDraft?.viewer?.axes }" title="显示坐标轴" @click="toggleViewSetting('axes', !settingsDraft?.viewer?.axes)"><UiIcon name="axes" :size="17" /></button>
           </div>
-          <button class="toolbar-more" title="截图与导出" @click="menuOpen = !menuOpen"><UiIcon name="more" /></button>
+          <button class="toolbar-more" title="截图与导出" @click="toggleMenu"><UiIcon name="more" /></button>
         </div>
         <div class="canvas-wrap">
           <CadViewport ref="viewportRef" class="viewport-canvas" :mesh-path="documentState.mesh_path" :revision="documentState.revision" :dark="themeDark" :view-settings="settingsDraft?.viewer || {}" @loaded="setStatus('三维预览已更新', 'success'); clearPreview()" @error="(text) => { addLog('读取 GLB 失败：' + text); setStatus('三维预览加载失败', 'error') }" />

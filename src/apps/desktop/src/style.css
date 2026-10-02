@@ -60,9 +60,10 @@ button:disabled { opacity: .42; cursor: not-allowed !important; }
 .brand-mark span:nth-child(2) { left: 12px; top: 4px; border-color: #efa26e; }
 .brand-mark span:nth-child(3) { left: 17px; top: 13px; border-color: #b96037; }
 .main-nav { display: flex; align-items: center; gap: 5px; height: 100%; position: relative; flex: 1; }
-.main-nav > button { border: 0; background: transparent; color: #55636f; padding: 8px 10px; font-size: 14px; border-radius: 7px; cursor: pointer; white-space: nowrap; transition: background .16s, color .16s; }
-.theme-dark .main-nav > button { color: #b5c2cb; }
-.main-nav > button:hover { background: var(--panel-soft); color: var(--ink); }
+.main-nav > button, .main-nav .nav-dropdown > button { border: 0; background: transparent; color: #55636f; padding: 8px 10px; font-size: 14px; border-radius: 7px; cursor: pointer; white-space: nowrap; transition: background .16s, color .16s; }
+.main-nav .nav-dropdown { display: flex; flex: 0 0 auto; align-items: center; }
+.theme-dark .main-nav > button, .theme-dark .main-nav .nav-dropdown > button { color: #b5c2cb; }
+.main-nav > button:hover, .main-nav .nav-dropdown > button:hover { background: var(--panel-soft); color: var(--ink); }
 .nav-separator { height: 19px; width: 1px; margin: 0 4px; background: var(--line); }
 .chevron { color: #a2acb4; margin-left: 3px; }
 .top-actions { display: flex; align-items: center; gap: 13px; }
@@ -73,14 +74,15 @@ button:disabled { opacity: .42; cursor: not-allowed !important; }
 .icon-button { width: 29px; height: 29px; border-radius: 8px; background: transparent; color: #74828d; font-size: 18px; }
 .icon-button:hover { background: var(--panel-soft); }
 .avatar-button { width: 29px; height: 29px; background: #293c49; color: #fff; border-radius: 9px; font: 700 12px Manrope, sans-serif; letter-spacing: .08em; }
-.menu-popover { position: absolute; z-index: 30; left: min(600px, 60%); top: 53px; width: 238px; padding: 6px; border: 1px solid var(--line); border-radius: 10px; background: var(--panel); box-shadow: 0 12px 38px rgba(23, 37, 49, .16); }
+.menu-popover { position: fixed; z-index: 90; width: min(238px, calc(100vw - 16px)); max-height: calc(100vh - 16px); overflow-y: auto; padding: 6px; border: 1px solid var(--line); border-radius: 10px; background: var(--panel); box-shadow: 0 12px 38px rgba(23, 37, 49, .16); }
+.menu-popover.theme-dark { --ink: #e2e9ef; --line: #344451; --panel: #1b2732; --panel-soft: #23313c; color: var(--ink); background: var(--panel); }
 .menu-popover button { width: 100%; text-align: left; padding: 9px 11px; color: var(--ink); font-size: 12px; border: 0; border-radius: 6px; background: transparent; cursor: pointer; }
 .menu-popover button:hover { background: var(--panel-soft); }
 .menu-divider { height: 1px; background: var(--line); margin: 5px 4px; }
 
 .workbench { flex: 1 1 auto; min-height: 0; display: grid; grid-template-columns: var(--chat-width) 7px minmax(500px, 1fr) 7px var(--inspector-width); grid-template-areas: "chat chat-resizer model inspector-resizer inspector"; gap: 1px; background: var(--line); }
 .chat-panel, .model-panel, .inspector-panel { min-width: 0; min-height: 0; background: var(--panel); }
-.chat-panel { grid-area: chat; display: flex; flex-direction: column; overflow: hidden; }
+.chat-panel { grid-area: chat; position: relative; z-index: 10; display: flex; flex-direction: column; overflow: visible; }
 .model-panel { grid-area: model; }
 .inspector-panel { grid-area: inspector; }
 .panel-resizer { position: relative; z-index: 4; grid-row: 1; width: 7px; background: var(--panel); cursor: col-resize; touch-action: none; }
@@ -92,10 +94,11 @@ body.is-resizing-panels, body.is-resizing-panels * { cursor: col-resize !importa
 .panel-heading { height: 76px; flex: 0 0 76px; display: flex; align-items: center; justify-content: space-between; padding: 14px 20px 10px; }
 .chat-heading { position: relative; z-index: 12; }
 .heading-tools { display: flex; align-items: center; gap: 7px; }
+.sample-dropdown { position: relative; flex: 0 0 auto; }
 .sample-button { padding: 6px 7px; border: 1px solid var(--line); border-radius: 6px; color: #77868f; background: var(--panel); font-size: 12px; cursor: pointer; }
 .sample-button:hover { border-color: #e2c2ae; color: #bd7147; }
 .sample-button span { padding-left: 3px; color: #abb4ba; }
-.sample-popover { position: absolute; z-index: 30; top: 68px; right: 14px; width: 275px; max-height: 380px; overflow: auto; padding: 6px; border: 1px solid var(--line); border-radius: 9px; background: var(--panel); box-shadow: 0 12px 38px rgba(23,37,49,.17); }
+.sample-popover { position: absolute; z-index: 30; top: calc(100% + 8px); left: 0; width: min(275px, calc(100vw - 16px)); max-height: min(380px, calc(100vh - 120px)); overflow: auto; padding: 6px; border: 1px solid var(--line); border-radius: 9px; background: var(--panel); box-shadow: 0 12px 38px rgba(23,37,49,.17); }
 .sample-popover-title { display: flex; justify-content: space-between; align-items: center; padding: 5px 7px 7px; color: #95a1a9; font-size: 12px; }
 .sample-popover-title button { border: 0; color: #a6b0b6; background: transparent; cursor: pointer; }
 .sample-popover > button { display: flex; flex-direction: column; gap: 4px; width: 100%; padding: 8px; border: 0; border-radius: 6px; text-align: left; background: transparent; cursor: pointer; }
@@ -321,7 +324,7 @@ kbd { padding: 1px 4px; border: 1px solid #dce2e6; border-radius: 3px; color: #7
 @media (max-width: 1370px) {
   .workbench { grid-template-columns: var(--chat-width) 7px minmax(500px, 1fr) 7px var(--inspector-width); }
   .topbar { gap: 16px; padding: 0 15px; }.brand-lockup { width: 190px; flex-basis: 190px; }
-  .main-nav { gap: 1px; }.main-nav > button { padding-left: 7px; padding-right: 7px; font-size: 12px; }
+  .main-nav { gap: 1px; }.main-nav > button, .main-nav .nav-dropdown > button { padding-left: 7px; padding-right: 7px; font-size: 12px; }
   .inspector-tabs { padding: 0 5px; }.inspector-tabs button { padding: 0 4px; font-size: 12px; }
   .view-buttons button { min-width: 22px; padding: 0 4px; }
 }
@@ -332,9 +335,9 @@ kbd { padding: 1px 4px; border: 1px solid #dce2e6; border-radius: 3px; color: #7
 .brand-mark span { border-color: #416b91; }
 .brand-mark span:nth-child(2) { border-color: #7c9dbb; }
 .brand-mark span:nth-child(3) { border-color: #315675; }
-.main-nav > button { border-radius: 10px; color: #53697b; }
-.main-nav > button:hover { color: #294e6d; }
-.main-nav > button:focus-visible { background: var(--accent-soft); }
+.main-nav > button, .main-nav .nav-dropdown > button { border-radius: 10px; color: #53697b; }
+.main-nav > button:hover, .main-nav .nav-dropdown > button:hover { color: #294e6d; }
+.main-nav > button:focus-visible, .main-nav .nav-dropdown > button:focus-visible { background: var(--accent-soft); }
 .backend-chip { font-size: 13px; }
 .icon-button, .avatar-button { width: 34px; height: 34px; border-radius: 10px; }
 .menu-popover, .sample-popover { border-radius: 12px; }
@@ -485,7 +488,7 @@ kbd { padding: 1px 4px; border: 1px solid #dce2e6; border-radius: 3px; color: #7
 
 /* Follow-up visual QA fixes: stable icon baselines, usable controls and clear empty states. */
 .ui-icon { display: inline-block; flex: 0 0 auto; vertical-align: -0.12em; }
-.main-nav > button, .sample-button, .quiet-icon, .tool-icon, .tool-text,
+.main-nav > button, .main-nav .nav-dropdown > button, .sample-button, .quiet-icon, .tool-icon, .tool-text,
 .send-button, .stop-button, .fit-button, .view-buttons button, .view-icon-button,
 .panel-toggle, .toolbar-more, .inspector-tabs button, .tree-footer button,
 .secondary-button, .danger-button, .primary-button, .primary-wide, .copy-config,
