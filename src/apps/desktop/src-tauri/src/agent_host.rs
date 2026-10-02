@@ -679,31 +679,157 @@ fn run_turn(
         &mut last_preview_hash,
         true,
     );
-    let cancelled = response.get("stopReason").and_then(Value::as_str) == Some("cancelled");
+    let stop_reason = response.get("stopReason").and_then(Value::as_str);
+    let turn_status = classify_turn_status(stop_reason);
+    let current_model = current_model_summary(&session.cwd);
     append_transcript(
         session,
         json!({
             "role":"assistant", "text":answer, "thought":thought,
+            "turn_status":turn_status,
             "stop_reason":response.get("stopReason").cloned().unwrap_or(Value::Null)
         }),
     )?;
+    let cancelled = turn_status == "cancelled";
     emit(
         events,
         "agent.turn_complete",
         request_id,
-        json!({"cancelled":cancelled}),
+        json!({"turn_status":turn_status,"cancelled":cancelled,"stop_reason":stop_reason,"current_model":current_model}),
     );
     let metadata = session
         .metadata
         .lock()
         .map_err(|_| "Agent 会话记录锁已损坏。")?;
     Ok(json!({
-        "state": if cancelled { "cancelled" } else { "complete" },
+        "turn_status": turn_status,
         "session_id": session.id,
         "reply": answer,
         "stop_reason": response.get("stopReason").cloned().unwrap_or(Value::Null),
+        "current_model": current_model,
         "turns": metadata.get("turns").cloned().unwrap_or_else(|| json!([]))
     }))
+}
+
+fn classify_turn_status(stop_reason: Option<&str>) -> &'static str {
+    match stop_reason {
+        Some("end_turn") => "completed",
+        Some("cancelled") => "cancelled",
+        Some(_) => "stopped",
+        None => "ended",
+    }
+}
+
+/// Report CAD state independently from whether this ACP conversation turn ended.
+fn current_model_summary(session_dir: &Path) -> Value {
+    let state_path = session_dir.join("cad-state.json");
+    let state = match read_json_optional(&state_path) {
+        Ok(Some(value)) => value,
+        Ok(None) => {
+            return json!({"exists":false,"status":"none","finish_summary":null,
+            "geometric":{"status":"not_built"},"visual":{"status":"not_reviewed"}});
+        }
+        Err(error) => {
+            return json!({"exists":false,"status":"unavailable","error":error,
+            "finish_summary":null,"geometric":{"status":"unknown"},"visual":{"status":"unknown"}});
+        }
+    };
+    let Some(plan) = state.get("plan").filter(|value| value.is_object()) else {
+        return json!({"exists":false,"status":"none","revision":state.get("revision"),
+            "finish_summary":null,"geometric":{"status":"not_built"},"visual":{"status":"not_reviewed"}});
+    };
+    let revision = state.get("revision").and_then(Value::as_i64).unwrap_or(0);
+    let fingerprint = match crate::cad_plan::geometry_fingerprint(plan) {
+        Ok(value) => value,
+        Err(error) => {
+            return json!({"exists":true,"status":"unavailable","revision":revision,
+            "error":error,"finish_summary":null,"geometric":{"status":"unknown"},"visual":{"status":"unknown"}});
+        }
+    };
+    let preview = state.get("last_preview").filter(|value| value.is_object());
+    let preview_current = state.get("preview_revision").and_then(Value::as_i64) == Some(revision)
+        && preview.is_some_and(|value| {
+            value.get("revision").and_then(Value::as_i64) == Some(revision)
+                && value.get("geometry_fingerprint").and_then(Value::as_str)
+                    == Some(fingerprint.as_str())
+        });
+    let geometric_status = if preview_current {
+        preview
+            .and_then(|value| value.pointer("/local_geometry_checks/state"))
+            .and_then(Value::as_str)
+            .unwrap_or("unknown")
+    } else if preview.is_some() {
+        "stale"
+    } else {
+        "not_built"
+    };
+    let stored_finish = state
+        .get("finish_summary")
+        .filter(|value| value.is_object());
+    let finish_current = stored_finish.is_some_and(|value| {
+        value.get("revision").and_then(Value::as_i64) == Some(revision)
+            && value.get("geometry_fingerprint").and_then(Value::as_str)
+                == Some(fingerprint.as_str())
+    });
+    let finish_summary = if finish_current {
+        stored_finish.cloned().unwrap_or(Value::Null)
+    } else {
+        Value::Null
+    };
+    let mut state_for_summary = state.clone();
+    let evaluated = crate::native_state_summary::summary(
+        &mut state_for_summary,
+        &session_dir.join("reference-images.json"),
+        &session_dir.join("user-turns.json"),
+    );
+    let visual_summary = evaluated
+        .as_ref()
+        .ok()
+        .and_then(|value| value.get("visual_evidence_summary"));
+    let visual_status = match visual_summary {
+        None => "unknown",
+        Some(summary)
+            if summary.get("reference_count").and_then(Value::as_u64) == Some(0)
+                || summary
+                    .get("references")
+                    .and_then(Value::as_object)
+                    .is_some_and(|rows| rows.is_empty()) =>
+        {
+            "no_references"
+        }
+        Some(summary) if summary.get("all_references_covered") == Some(&Value::Bool(true)) => {
+            "covered"
+        }
+        Some(summary)
+            if summary
+                .get("comparable_review_pairs")
+                .and_then(Value::as_u64)
+                .unwrap_or(0)
+                > 0 =>
+        {
+            "partial"
+        }
+        Some(_) => "not_reviewed",
+    };
+    let finish_status = if finish_current {
+        finish_summary
+            .get("finish_state")
+            .and_then(Value::as_str)
+            .unwrap_or("unknown")
+    } else {
+        "not_finished"
+    };
+    let status = if finish_current && finish_summary.get("accepted") == Some(&Value::Bool(true)) {
+        "accepted"
+    } else {
+        "candidate"
+    };
+    json!({"exists":true,"status":status,"revision":revision,"geometry_fingerprint":fingerprint,
+        "finish_status":finish_status,"finish_summary":finish_summary,
+        "geometric":{"status":geometric_status,"revision":if preview_current {json!(revision)} else {Value::Null},
+            "geometry_fingerprint":if preview_current {json!(fingerprint)} else {Value::Null}},
+        "visual":{"status":visual_status,"summary":visual_summary.cloned().unwrap_or(Value::Null)},
+        "summary_error":evaluated.err()})
 }
 
 fn route_update(
@@ -1495,10 +1621,10 @@ fn sha256(bytes: impl AsRef<[u8]>) -> String {
 #[cfg(test)]
 mod tests {
     use super::{
-        Image, Provider, active_turn_record, find_config_value, route_profile,
-        validate_image_signature, write_profile_patch,
+        Image, Provider, active_turn_record, classify_turn_status, current_model_summary,
+        find_config_value, route_profile, validate_image_signature, write_profile_patch,
     };
-    use serde_json::json;
+    use serde_json::{Value, json};
     use std::fs;
     use std::path::PathBuf;
 
@@ -1580,6 +1706,107 @@ mod tests {
         );
         let serialized = serde_json::to_string(&record).unwrap();
         assert!(!serialized.contains("png-bytes"));
+    }
+
+    #[test]
+    fn turn_status_is_separate_from_model_completion() {
+        assert_eq!(classify_turn_status(Some("end_turn")), "completed");
+        assert_eq!(classify_turn_status(Some("cancelled")), "cancelled");
+        assert_eq!(classify_turn_status(Some("max_tokens")), "stopped");
+        assert_eq!(classify_turn_status(None), "ended");
+    }
+
+    #[test]
+    fn current_model_reports_geometry_visual_and_finish_independently() {
+        let root = std::env::temp_dir().join(format!("agent-current-model-{}", super::unique_id()));
+        fs::create_dir_all(&root).unwrap();
+        let empty = current_model_summary(&root);
+        assert_eq!(empty["exists"], false);
+        assert_eq!(empty["status"], "none");
+        let plan = crate::cad_plan::create(
+            "fixture",
+            json!({"id":"body","kind":"box","operation":"add","parameters":{"length":10,"width":8,"height":5},"sources":{}}),
+            "fixture",
+            None,
+        );
+        let fingerprint = crate::cad_plan::geometry_fingerprint(&plan).unwrap();
+        let state = json!({"revision":2,"plan":plan,"preview_revision":2,"last_preview":{
+            "revision":2,"geometry_fingerprint":fingerprint,"local_geometry_checks":{"state":"passed"}},
+            "finish_summary":null});
+        fs::write(
+            root.join("cad-state.json"),
+            serde_json::to_vec(&state).unwrap(),
+        )
+        .unwrap();
+        fs::write(root.join("reference-images.json"), br#"{"images":[]}"#).unwrap();
+        fs::write(root.join("user-turns.json"), br#"{"turns":[]}"#).unwrap();
+        let summary = current_model_summary(&root);
+        assert_eq!(summary["exists"], true);
+        assert_eq!(summary["finish_status"], "not_finished");
+        assert_eq!(summary["geometric"]["status"], "passed");
+        assert_eq!(summary["visual"]["status"], "no_references");
+        fs::remove_dir_all(root).unwrap();
+    }
+
+    #[test]
+    fn stale_finish_summary_cannot_make_current_model_accepted() {
+        let root = std::env::temp_dir().join(format!("agent-stale-finish-{}", super::unique_id()));
+        fs::create_dir_all(&root).unwrap();
+        let plan = crate::cad_plan::create(
+            "fixture",
+            json!({"id":"body","kind":"box","operation":"add","parameters":{"length":10,"width":8,"height":5},"sources":{}}),
+            "fixture",
+            None,
+        );
+        let fingerprint = crate::cad_plan::geometry_fingerprint(&plan).unwrap();
+        fs::write(root.join("reference-images.json"), br#"{"images":[]}"#).unwrap();
+        fs::write(root.join("user-turns.json"), br#"{"turns":[]}"#).unwrap();
+        for finish in [
+            json!({"accepted":true,"finish_state":"accepted","revision":1,"geometry_fingerprint":fingerprint.clone()}),
+            json!({"accepted":true,"finish_state":"accepted","revision":2,"geometry_fingerprint":"old-fingerprint"}),
+        ] {
+            let state = json!({"revision":2,"plan":plan.clone(),"finish_summary":finish});
+            fs::write(
+                root.join("cad-state.json"),
+                serde_json::to_vec(&state).unwrap(),
+            )
+            .unwrap();
+            let summary = current_model_summary(&root);
+            assert_eq!(summary["status"], "candidate");
+            assert_eq!(summary["finish_status"], "not_finished");
+            assert_eq!(summary["finish_summary"], Value::Null);
+        }
+        fs::remove_dir_all(root).unwrap();
+    }
+
+    #[test]
+    fn stale_preview_revision_or_fingerprint_is_not_current_geometry() {
+        let root = std::env::temp_dir().join(format!("agent-stale-preview-{}", super::unique_id()));
+        fs::create_dir_all(&root).unwrap();
+        let plan = crate::cad_plan::create(
+            "fixture",
+            json!({"id":"body","kind":"box","operation":"add","parameters":{"length":10,"width":8,"height":5},"sources":{}}),
+            "fixture",
+            None,
+        );
+        let fingerprint = crate::cad_plan::geometry_fingerprint(&plan).unwrap();
+        fs::write(root.join("reference-images.json"), br#"{"images":[]}"#).unwrap();
+        fs::write(root.join("user-turns.json"), br#"{"turns":[]}"#).unwrap();
+        for (preview_revision, row_revision, preview_fingerprint) in
+            [(1, 1, fingerprint.as_str()), (2, 2, "old-fingerprint")]
+        {
+            let state = json!({"revision":2,"plan":plan.clone(),"preview_revision":preview_revision,"last_preview":{
+                "revision":row_revision,"geometry_fingerprint":preview_fingerprint,"local_geometry_checks":{"state":"passed"}}});
+            fs::write(
+                root.join("cad-state.json"),
+                serde_json::to_vec(&state).unwrap(),
+            )
+            .unwrap();
+            let summary = current_model_summary(&root);
+            assert_eq!(summary["geometric"]["status"], "stale");
+            assert_eq!(summary["geometric"]["revision"], Value::Null);
+        }
+        fs::remove_dir_all(root).unwrap();
     }
 
     #[test]

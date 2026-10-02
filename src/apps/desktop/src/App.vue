@@ -161,7 +161,24 @@ async function handleWireEvent(event: WireEvent) {
   } else if (event.event === 'agent.usage') {
     const total = Number(data.totalTokens ?? data.total_tokens ?? 0)
     if (total > 0) addLog(`DSH 用量更新：${total.toLocaleString()} tokens`)
+  } else if (event.event === 'agent.turn_complete') {
+    addLog(`Agent 回合：${turnStatusLabel(data.turn_status, data.stop_reason)}；${currentModelStatusLabel(data.current_model)}`)
   }
+}
+
+function turnStatusLabel(status: string, stopReason?: string | null) {
+  if (status === 'completed') return '回复完成'
+  if (status === 'cancelled') return '已取消'
+  if (status === 'stopped') return '已停止' + (stopReason ? ` (${stopReason})` : '')
+  return '已结束（停止原因未提供）'
+}
+
+function currentModelStatusLabel(model: any) {
+  if (!model || model.exists !== true) return model?.status === 'unavailable' ? '当前模型状态不可读取' : '当前没有 CADPlan 模型'
+  const finish = String(model.finish_status || 'unknown')
+  const geometric = String(model.geometric?.status || 'unknown')
+  const visual = String(model.visual?.status || 'unknown')
+  return `模型完成状态=${finish}，几何状态=${geometric}，视觉状态=${visual}`
 }
 
 function appendAgentText(role: 'assistant' | 'thought', requestId: string, text: string) {
@@ -420,8 +437,9 @@ async function submitPrompt() {
         onEvent: channel,
       })
       if (result.document) updateDocument(result.document)
-      finishAgentStream(requestId, result.reply || (result.state === 'cancelled' ? '任务已取消。' : 'Agent 已结束本轮处理。'))
-      setStatus(result.state === 'complete' ? 'Agent 建模完成' : 'Agent 已结束', result.state === 'complete' ? 'success' : '')
+      finishAgentStream(requestId, result.reply || (result.turn_status === 'cancelled' ? '本轮已取消。' : 'Agent 已结束本轮处理。'))
+      const turnStatus = result.turn_status || 'ended'
+      setStatus('Agent ' + turnStatusLabel(turnStatus, result.stop_reason), turnStatus === 'completed' ? 'success' : turnStatus === 'cancelled' ? 'warning' : '')
     }
   } catch (error) {
     const message = '处理失败：' + errorMessage(error)
