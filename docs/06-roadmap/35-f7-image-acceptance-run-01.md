@@ -11,15 +11,17 @@
 
 ## 候选结果与拒收理由
 
-OCCT 成功生成一个 `40 × 24 × 36 mm` 的有效闭合实体，局部几何检查通过。但 CADPlan 只有三个孔特征，轴向均为 X，中心线为 `(0,0,30)`、`(0,0,24)`、`(0,0,18) mm`，直径均为 `4.5 mm`。这不是参考图所需的左、中、右三列各三孔；最终正视图没有孔，等轴预览只在右侧板和凹槽内壁显示孔，左侧板缺孔。几何证据只有 3 个物理孔实例，`hole_measurement.complete=false`。
+OCCT 成功生成一个 `40 × 24 × 36 mm` 的有效闭合实体，局部几何检查通过。但 CADPlan 只有三个孔特征，轴向均为 X，中心线为 `(0,0,30)`、`(0,0,24)`、`(0,0,18) mm`，直径均为 `4.5 mm`。这不是参考图所需的左、中、右三列各三孔；最终正视图没有孔，等轴预览没有呈现目标的三列孔布局。几何计量只记录 3 个物理孔实例，`hole_measurement.complete=false`。
 
-最终会话状态为 `model_status=candidate`、`accepted=false`、`finish_state=candidate_holes_unverified`。review 汇总为 `partial`：一组视觉 review 不可比较，`independent_review_pair_count=0`，参考结构 coverage 不完整。运行的 exit 0 只证明 ACP、图片传输和工具执行流程结束，**本次建模验收失败**。不能用 Agent 的最终文字陈述覆盖可见模型、B-Rep 计量和宿主 gate 的拒收结论。
+review 请求确实把原图和 ISO 预览一起传给视觉模型，模型返回 `view_comparable=true`，但响应声称预览左侧外壁已有三个孔，并总结“9 个可见圆孔”，与预览/正视图不符。返回的 review 项 `evidence_id` 都为空字符串，报告为 unmapped；尽管模型报告了 covered ID，宿主未采纳覆盖，`covered_evidence_ids=[]`、有效配对 `independent_review_pair_count=0`，最终 review 为 `partial`。这次运行也尝试 `cad_add_hole_array`，但工具日志显示调用前后 revision 都为 5；当前归档未记录该调用的参数与工具返回值，尚不能区分参数校验失败、无效数组或其他拒绝原因。
+
+最终会话状态为 `model_status=candidate`、`accepted=false`、`finish_state=candidate_holes_unverified`。运行的 exit 0 只证明 ACP、原图传输和工具执行流程结束，**本次建模验收失败**。不能用 Agent 的最终文字陈述或相似度分数覆盖可见模型、B-Rep 计量和宿主 gate 的拒收结论。
 
 候选 `candidate.aimodel`、STL、GLB、几何报告及单视图位于上述目录的 `state/native-output/r5-g4-a082a29e47e51cc28c79cfb72f139e24407ca627fd011587402e3de92b7111b8-1790960352994348100/`；正视图与等轴视图均可用于对照。运行元数据记录的基线提交为 `9724ec2cabe45a2cdeabddaf588c81820c477818`，运行时工作树包含并行功能改动，故此记录不冒充 clean-tree release 测试。
 
 ## 接下来的修复/验收
 
-1. 修正 3×3 孔布局的视觉规划与方向语义，确保模型按几何特征数表达九个孔，而非把一条横向孔误当成正面九孔布局。
-2. 审查必须选取可比较的前视图及等轴视图，得到宿主认可的 evidence pair；若结果不一致，触发 F7.G5 显式 conflict refresh。
+1. 修正 3×3 孔布局的视觉规划与方向语义，确保模型按几何特征数表达九个孔，而非把三条横向孔误当成正面九孔布局。
+2. 将每项视觉判断绑定到可验证的 observation evidence ID；模型不能声称某面有孔而不给出与该视图匹配的 evidence mapping。正视图和等轴视图分别检查可见孔列及朝向；若复核和原始 observation 冲突，触发 F7.G5 显式 conflict refresh。
 3. 原图盲测冷启动重跑，保存每版 plan、几何、正视与等轴视图、review response、finding 关闭依据；仅当宿主 gate 接受才记通过。
 4. 后续再覆盖多图、文字、多轮续话、取消/恢复、空白目录安装和 CATIA 独立导出验收。
