@@ -245,28 +245,6 @@ export function pruneStalePreviewImages(payload, transportMap) {
   return stats
 }
 
-// The DSH conversation is text/structured state only. All vision calls happen
-// through the dedicated Python observer; fail closed for every mapped image.
-export function stripConversationImages(payload) {
-  let removed = 0
-  const visit = value => {
-    if (Array.isArray(value)) {
-      for (let index = value.length - 1; index >= 0; index -= 1) {
-        const item = value[index]
-        if (item && typeof item === 'object' &&
-            ['image', 'image_url', 'input_image'].includes(String(item.type || '').toLowerCase())) {
-          value.splice(index, 1)
-          removed += 1
-        } else visit(item)
-      }
-    } else if (value && typeof value === 'object') {
-      for (const child of Object.values(value)) visit(child)
-    }
-  }
-  visit(payload)
-  return { removed_conversation_images: removed }
-}
-
 function requestPayload(request, init) {
   if (typeof init?.body === 'string') {
     try { return JSON.parse(init.body) } catch { return null }
@@ -397,9 +375,7 @@ function installFetchObserver() {
     const inboundImageParts = collectImageParts(payload?.messages || payload?.input || [])
     const inboundImageRows = imageEvidenceRows(inboundImageParts, activeTurn.reference_images, transportMap)
     const imageContextCleanup = pruneStalePreviewImages(payload, transportMap)
-    Object.assign(imageContextCleanup, stripConversationImages(payload))
-    if (imageContextCleanup.removed_stale_tool_previews > 0 ||
-        imageContextCleanup.removed_conversation_images > 0) {
+    if (imageContextCleanup.removed_stale_tool_previews > 0) {
       const body = JSON.stringify(payload)
       if (typeof init?.body === 'string') {
         observedInit = { ...init, body }
