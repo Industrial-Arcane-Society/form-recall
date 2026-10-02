@@ -22,6 +22,7 @@ pub mod native_plan_geometry;
 pub mod native_quick;
 pub mod native_quick_parser;
 pub mod native_render;
+pub mod native_rotor;
 pub mod native_review_gate;
 pub mod native_review_findings;
 pub mod native_standard_features;

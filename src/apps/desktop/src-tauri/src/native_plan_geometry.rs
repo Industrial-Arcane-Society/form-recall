@@ -39,6 +39,7 @@ pub fn supports_native_kind(kind: &str) -> bool {
             | "piston"
             | "conrod"
             | "cross_joint"
+            | "rotor"
     )
 }
 
@@ -99,6 +100,7 @@ pub fn preflight(plan: &Value) -> Result<Value, String> {
                 "thick",
             ],
             "cross_joint" => &["span", "journal_d"],
+            "rotor" => &["radius", "n", "height", "bore_d"],
             _ => &[],
         };
         for key in required_native_parameters {
@@ -124,6 +126,10 @@ pub fn preflight(plan: &Value) -> Result<Value, String> {
         if kind == "cross_joint" {
             let normalized = normalized_feature(feature, plan)?;
             native_parametric_features::preflight_cross_joint(&normalized["parameters"])?;
+        }
+        if kind == "rotor" {
+            let normalized = normalized_feature(feature, plan)?;
+            crate::native_rotor::preflight(&normalized["parameters"])?;
         }
         if kind == "pattern" {
             let count = p
@@ -195,6 +201,9 @@ pub fn build(plan: &Value, manifest: &Path, cancelled: &AtomicBool) -> Result<Bu
                 normalized["kind"].as_str().unwrap_or(""),
                 &normalized["parameters"],
             )?;
+            (tools, vec![], Some(support))
+        } else if normalized["kind"] == "rotor" {
+            let (tools, support) = crate::native_rotor::build(&kernel, &normalized["parameters"])?;
             (tools, vec![], Some(support))
         } else if normalized["kind"] == "piston" {
             let (tools, support) =
@@ -1026,6 +1035,7 @@ fn normalized_feature(feature: &Value, plan: &Value) -> Result<Value, String> {
             "thick",
             "span",
             "journal_d",
+            "bore_d",
         ]
         .contains(&key.as_str())
         {

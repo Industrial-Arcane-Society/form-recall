@@ -36,8 +36,14 @@ pub fn feature_spec(kind: &str) -> Result<Value, String> {
 /// below describe the additional gates applied by preflight/build.
 fn native_execution_contract(kind: &str) -> Value {
     let implemented = crate::native_plan_geometry::supports_native_kind(kind);
-    let approximate = matches!(kind, "gear" | "socket_head_bolt" | "conrod" | "cross_joint");
+    let approximate = matches!(kind, "gear" | "socket_head_bolt" | "conrod" | "cross_joint" | "rotor");
     let (supported_variants, unsupported_variants, parameter_limits, note) = match kind {
+        "rotor" => (
+            json!(["global Z extrusion centered on center", "explicit bore_d=0 or enclosed circular bore"]),
+            json!(["axis other than Z", "base convention", "bore intersecting discrete outer profile"]),
+            json!({"radius":">0 explicit", "height":">0 explicit", "bore_d":">=0 explicit; radius smaller than actual polygon clearance", "n":"explicit integer 12..=4096"}),
+            "Approximate legacy rounded-triangle radial profile (fixed flank=0.82, cosine exponent=6), polygonal OCCT prism and analytic central bore. Not an exact Reuleaux curve or production engine rotor.",
+        ),
         "box" => (json!(["axis=X|Y|Z", "corner=0"]), json!(["corner!=0"]), json!({"length":">0", "width":">0", "height":">0"}), "Analytic OCCT box; nonzero corner is rejected by native preflight."),
         "cylinder" => (json!(["cylinder", "frustum", "axis=X|Y|Z", "base=true|false"]), json!([]), json!({"radius":">0", "radius2":">0 when supplied", "height":">0"}), "Analytic cylinder/frustum; dimensions must be positive."),
         "sphere" => (json!(["analytic sphere"]), json!([]), json!({"radius":">0"}), "Analytic sphere; dimensions must be positive."),
@@ -196,7 +202,7 @@ mod tests {
                 );
             }
         }
-        assert_eq!(supported_count, 14);
+        assert_eq!(supported_count, 15);
         assert_eq!(kinds.len(), specs.as_object().unwrap().len());
     }
 }
