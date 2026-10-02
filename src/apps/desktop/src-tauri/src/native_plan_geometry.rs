@@ -4,7 +4,7 @@ use crate::{
     cad_plan, cad_plan_validation, native_bore_metrology,
     native_geometry_evidence::{self, HoleRequest},
     native_occt::{Axis, Bounds, Kernel, Shape},
-    native_standard_features,
+    native_parametric_features, native_standard_features,
 };
 use serde_json::{json, Value};
 use std::{
@@ -53,6 +53,7 @@ pub fn preflight(plan: &Value) -> Result<Value, String> {
             "pattern",
             "gear",
             "socket_head_bolt",
+            "piston",
         ]
         .contains(&kind)
         {
@@ -67,7 +68,7 @@ pub fn preflight(plan: &Value) -> Result<Value, String> {
         if kind == "hole" && p.get("entry_point").is_some_and(|v| !v.is_null()) {
             return Err("Rust 显式盲孔入口局部材料核验尚未接入。".into());
         }
-        let required_standard_parameters: &[&str] = match kind {
+        let required_native_parameters: &[&str] = match kind {
             "gear" => &["teeth", "module", "height"],
             "socket_head_bolt" => &[
                 "shank_d",
@@ -78,15 +79,20 @@ pub fn preflight(plan: &Value) -> Result<Value, String> {
                 "hex_s",
                 "hex_t",
             ],
+            "piston" => &["diameter", "height", "pin_d", "grooves"],
             _ => &[],
         };
-        for key in required_standard_parameters {
+        for key in required_native_parameters {
             if p.get(*key).is_none() || p[*key].is_null() {
                 return Err(format!(
-                    "{} 缺少必填几何参数 {key}；拒绝用标准件默认值猜测。",
+                    "{} 缺少必填几何参数 {key}；拒绝用默认值猜测。",
                     feature["id"]
                 ));
             }
+        }
+        if kind == "piston" {
+            let normalized = normalized_feature(feature, plan)?;
+            native_parametric_features::preflight_piston(&normalized["parameters"])?;
         }
         if kind == "pattern" {
             let count = p
@@ -158,6 +164,10 @@ pub fn build(plan: &Value, manifest: &Path, cancelled: &AtomicBool) -> Result<Bu
                 normalized["kind"].as_str().unwrap_or(""),
                 &normalized["parameters"],
             )?;
+            (tools, vec![], Some(support))
+        } else if normalized["kind"] == "piston" {
+            let (tools, support) =
+                native_parametric_features::build_piston(&kernel, &normalized["parameters"])?;
             (tools, vec![], Some(support))
         } else {
             let (tools, holes) = feature_tools(&kernel, &normalized, bb, current.as_ref())?;
@@ -953,6 +963,7 @@ fn normalized_feature(feature: &Value, plan: &Value) -> Result<Value, String> {
             "entry_point",
             "profile",
             "shank_d",
+            "pin_d",
             "thread_pitch",
             "head_d",
             "head_h",
@@ -1243,6 +1254,31 @@ mod tests {
             "sources":{"count":{"type":"user"},"step":{"type":"user"}}});
         let normalized = normalized_feature(&pattern, &plan).unwrap();
         assert_eq!(normalized["parameters"]["step"], json!([10., 0., 0.]));
+    }
+    #[test]
+    fn piston_dimensions_use_the_plan_length_unit() {
+        let mut plan = fixture();
+        plan["units"]["length"] = json!("cm");
+        let piston = json!({"id":"piston","kind":"piston","operation":"add",
+            "parameters":{"diameter":2,"height":1.2,"pin_d":0.4,"grooves":2,"center":[0.2,-0.3,1]},
+            "sources":{"diameter":{"type":"user"},"height":{"type":"user"},
+                "pin_d":{"type":"user"},"grooves":{"type":"user"},"center":{"type":"user"}}});
+        let normalized = normalized_feature(&piston, &plan).unwrap();
+        assert_eq!(normalized["parameters"]["diameter"], json!(20.));
+        assert_eq!(normalized["parameters"]["height"], json!(12.));
+        assert_eq!(normalized["parameters"]["pin_d"], json!(4.));
+        assert_eq!(normalized["parameters"]["center"], json!([2., -3., 10.]));
+        assert_eq!(piston["parameters"]["pin_d"], json!(0.4));
+        plan["features"] = json!([piston]);
+        assert_eq!(preflight(&plan).unwrap()["state"], "valid");
+    }
+
+    #[test]
+    fn piston_geometry_is_advertised_as_native_exact_without_overstating_catia() {
+        let support = crate::native_feature_specs::feature_spec("piston").unwrap();
+        assert_eq!(support["native_execution"]["status"], "implemented");
+        assert_eq!(support["native_execution"]["geometry_support"], "exact");
+        assert_eq!(support["catia_mapping"], "approximate");
     }
     #[test]
     fn unit_scaling_preserves_boolean_flags_and_source_plan() {

@@ -34,6 +34,9 @@ pub fn feature_spec(kind: &str) -> Result<Value, String> {
         "gear" | "socket_head_bolt" => serde_json::json!({"status":"implemented_approximate",
             "geometry_support":"approximate","scope":"local_candidate_geometry",
             "note":"Native OCCT generation is available with approximation warnings; consult support_details on the build report."}),
+        "piston" => serde_json::json!({"status":"implemented","geometry_support":"exact",
+            "scope":"local_candidate_geometry",
+            "note":"Rust/OCCT builds the legacy closed piston profile by revolution and cuts the X-axis pin bore. CATIA mapping remains approximate."}),
         "box" | "cylinder" | "sphere" | "hole" | "pocket" | "prism" | "revolve" => {
             serde_json::json!({"status":"basic_variants_implemented","geometry_support":"exact",
                 "scope":"local_candidate_geometry",

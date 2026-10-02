@@ -37,6 +37,13 @@ def main():
         center=[0, 0, 0], axis="Z", base=False))
     add("socket-bolt-visible-thread", "socket_head_bolt", dict(shank_d=8, thread_pitch=1.25,
         length=20, head_d=13, head_h=8, hex_s=6, hex_t=4, center=[0, 0, 0], segments=48))
+    add("piston-one-groove-with-x-pin", "piston",
+        dict(diameter=20, height=12, pin_d=1, grooves=1, center=[0, 0, 0]))
+    add("piston-two-grooves-and-x-pin", "piston",
+        dict(diameter=20, height=12, pin_d=4, grooves=2, center=[2, -3, 10]))
+    add("piston-cm-unit-scaling", "piston",
+        dict(diameter=2, height=1.2, pin_d=0.4, grooves=2, center=[0.2, -0.3, 1]),
+        dict(length="cm", angle="deg"))
 
     for axis in "XYZ":
         for mode in ("center", "base_true", "base_false"):
@@ -141,6 +148,11 @@ def main():
         "pattern-circular-rotated-tool": ([-7.778174593, -10, -1, 7.778174593, 10, 1], None),
         "pattern-circular-cut-no-op": ([-10, -10, -10, 10, 10, 10], 8000 - 20 * 3.141592653589793),
     }
+    expected_pistons = {
+        "piston-one-groove-with-x-pin": ([-10, -10, -6, 10, 10, 6], None),
+        "piston-two-grooves-and-x-pin": ([-8, -13, 4, 12, 7, 16], None),
+        "piston-cm-unit-scaling": ([-8, -13, 4, 12, 7, 16], None),
+    }
 
     records = []
     for name, plan in cases:
@@ -159,6 +171,26 @@ def main():
                         and abs(native["volume_mm3"] - expected_volume) > 1e-5)):
                 raise AssertionError((name, "unexpected-pattern-geometry", native["bounds_mm"],
                                       native["volume_mm3"], expected_bounds, expected_volume))
+        if name in expected_pistons:
+            expected_bounds, expected_volume = expected_pistons[name]
+            if (max(abs(a - b) for a, b in zip(native["bounds_mm"], expected_bounds)) > 1e-6
+                    or (expected_volume is not None
+                        and abs(native["volume_mm3"] - expected_volume) > 1e-5)):
+                raise AssertionError((name, "unexpected-piston-geometry", native["bounds_mm"],
+                                      native["volume_mm3"], expected_bounds, expected_volume))
+            support = native["feature_results"][0]
+            details = support.get("support_details", {})
+            if (support.get("geometry_support") != "exact"
+                    or details.get("geometry_support") != "exact"
+                    or details.get("grooves_built") != (1 if name == "piston-one-groove-with-x-pin" else 2)):
+                raise AssertionError((name, "piston-support-not-exact", support))
+            bore = details.get("pin_bore", {})
+            expected_center = [0, 0, 0] if name == "piston-one-groove-with-x-pin" else [2, -3, 10]
+            expected_diameter = 1.0 if name == "piston-one-groove-with-x-pin" else 4.0
+            if (bore.get("axis") != "X"
+                    or bore.get("centerline_mm") != expected_center
+                    or abs(bore.get("diameter_mm", 0) - expected_diameter) > 1e-9):
+                raise AssertionError((name, "piston-pin-bore-contract", bore))
         if name == "pattern-circular-four-through-holes":
             holes = native.get("hole_instances", [])
             if (len(holes) != 4 or native.get("hole_measurements_verified") is not True
@@ -229,6 +261,19 @@ def main():
     disjoint_pattern["features"][-1]["parameters"]["step"] = [4, 0, 0]
     disjoint_pattern["features"][-1]["sources"]["step"] = {"type": "user"}
     negatives.append(("pattern-disjoint-solids", disjoint_pattern, "未生成单一有效封闭实体"))
+
+    piston_grooves = copy.deepcopy(cases[[name for name, _ in cases].index("piston-two-grooves-and-x-pin")][1])
+    piston_grooves["features"][0]["parameters"]["grooves"] = 257
+    piston_grooves["features"][0]["sources"]["grooves"] = {"type": "user"}
+    negatives.append(("piston-groove-resource-limit", piston_grooves, "资源上限"))
+    piston_small = copy.deepcopy(cases[[name for name, _ in cases].index("piston-one-groove-with-x-pin")][1])
+    piston_small["features"][0]["parameters"]["diameter"] = 1.5
+    piston_small["features"][0]["sources"]["diameter"] = {"type": "user"}
+    negatives.append(("piston-invalid-inner-radius", piston_small, "直径过小"))
+    piston_overlapping_grooves = copy.deepcopy(cases[[name for name, _ in cases].index("piston-two-grooves-and-x-pin")][1])
+    piston_overlapping_grooves["features"][0]["parameters"]["grooves"] = 7
+    piston_overlapping_grooves["features"][0]["sources"]["grooves"] = {"type": "user"}
+    negatives.append(("piston-overlapping-grooves", piston_overlapping_grooves, "会自交"))
 
     # The first plan leaves only the recessed local span;
     # the second asks for more depth than that span, and the third samples an

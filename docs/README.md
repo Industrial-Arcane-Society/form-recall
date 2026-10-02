@@ -19,6 +19,7 @@
 - [F3.1 Rust CADPlan 增量事务](06-roadmap/07-f3-plan-transactions.md)
 - [F3.2 Rust CADPlan Schema 与静态校验](06-roadmap/08-f3-plan-validation.md)
 - [F4.2.4 CADPlan pattern 原生执行](06-roadmap/22-f4-native-pattern-execution.md)
+- [F4.2.5 CADPlan piston 原生执行](06-roadmap/23-f4-native-piston-execution.md)
 - [文档目录、索引与链接审查记录](06-roadmap/03-docs-index-audit.md)
 
 ## 归档说明
