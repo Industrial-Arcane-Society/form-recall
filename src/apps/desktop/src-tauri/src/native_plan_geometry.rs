@@ -1,10 +1,11 @@
 //! CADPlan-to-OCCT execution. Unsupported variants fail before kernel execution.
-//! Hole metadata describes requested cuts, not independently measured bores.
+//! Hole reports include sampled material intervals, not fitted bore metrology.
 use crate::{
     cad_plan, cad_plan_validation,
-    native_occt::{Bounds, Kernel, Shape, Axis},
+    native_geometry_evidence::{self, HoleRequest},
+    native_occt::{Axis, Bounds, Kernel, Shape},
 };
-use serde_json::{Value, json};
+use serde_json::{json, Value};
 use std::{
     path::Path,
     sync::atomic::{AtomicBool, Ordering},
@@ -65,7 +66,8 @@ pub fn build(plan: &Value, manifest: &Path, cancelled: &AtomicBool) -> Result<Bu
             .unwrap_or(0.);
         let bb = current.as_ref().map(Shape::bounds).transpose()?;
         let normalized = normalized_feature(feature, plan)?;
-        let (tools, requested_holes) = feature_tools(&kernel, &normalized, bb)?;
+        let (tools, mut requested_holes) =
+            feature_tools(&kernel, &normalized, bb, current.as_ref())?;
         let tool_refs: Vec<_> = tools.iter().collect();
         let operation = feature["operation"].as_str().unwrap_or("add");
         let candidate = match (&current, operation) {
@@ -95,6 +97,28 @@ pub fn build(plan: &Value, manifest: &Path, cancelled: &AtomicBool) -> Result<Bu
                 feature["id"]
             ));
         }
+        if !requested_holes.is_empty() {
+            if operation == "cut" {
+                if let Some(pre_cut) = current.as_ref() {
+                    for record in &mut requested_holes {
+                        let evidence = verify_hole_record(pre_cut, &candidate, record)?;
+                        let status = evidence["status"].clone();
+                        record["status"] = status;
+                        record["sampled_evidence"] = evidence;
+                    }
+                } else {
+                    for record in &mut requested_holes {
+                        record["status"] = json!("unverified");
+                        record["sampling_reason"] = json!("no_pre_cut_shape");
+                    }
+                }
+            } else {
+                for record in &mut requested_holes {
+                    record["status"] = json!("unverified");
+                    record["sampling_reason"] = json!("hole_feature_operation_not_cut");
+                }
+            }
+        }
         rows.push(
             json!({"feature_id":feature["id"],"kind":feature["kind"],"operation":operation,
             "state":"built","geometry_support":"exact","volume_before_mm3":before_volume,
@@ -111,7 +135,8 @@ pub fn build(plan: &Value, manifest: &Path, cancelled: &AtomicBool) -> Result<Bu
         "bounds_mm":[bb.xmin,bb.ymin,bb.zmin,bb.xmax,bb.ymax,bb.zmax],
         "dimensions_mm":[bb.xmax-bb.xmin,bb.ymax-bb.ymin,bb.zmax-bb.zmin],
         "volume_mm3":shape.volume()?,"valid":true,"closed_solid_count":1,
-        "requested_holes":holes,"hole_measurements_verified":false,
+        "requested_holes":holes.clone(),"sampled_hole_evidence":holes,
+        "hole_measurements_verified":false,
         "catia_executed":false,"image_acceptance":"not_performed"});
     Ok(BuiltPlan { shape, report })
 }
@@ -120,6 +145,7 @@ fn feature_tools(
     kernel: &Kernel,
     feature: &Value,
     bb: Option<Bounds>,
+    pre_cut: Option<&Shape>,
 ) -> Result<(Vec<Shape>, Vec<Value>), String> {
     let p = &feature["parameters"];
     let axis = axis_index(p)?;
@@ -195,29 +221,63 @@ fn feature_tools(
             } else {
                 Some(num(p, "depth")?)
             };
-            if depth
-                .is_some_and(|d| d <= 0. || d >= high - low - (1e-6_f64.max((high - low) * 1e-8)))
-            {
-                return Err("盲孔深度必须小于实体轴向厚度，不能改成通孔。".into());
+            if depth.is_some_and(|d| d <= 0.) {
+                return Err("盲孔深度必须为正。".into());
             }
             let positions = hole_positions(p, bounds, axis, diameter)?;
             let mut tools = vec![];
             let mut records = vec![];
             for (i, [a, b]) in positions.iter().enumerate() {
-                let (start, height) = if let Some(d) = depth {
-                    (high - d, d + 1.)
-                } else {
-                    (low - 10., high - low + 20.)
-                };
                 let mut base = [0.; 3];
                 base[plane[0]] = *a;
                 base[plane[1]] = *b;
-                base[axis] = start;
-                tools.push(kernel.cylinder(diameter / 2., height, base, axis_vector(axis))?);
-                base[axis] = (low + high) / 2.;
+                let (start, height, local_span) = if let Some(d) = depth {
+                    let shape = pre_cut.ok_or("盲孔前缺少实体。")?;
+                    let mut origin = base;
+                    origin[axis] = 0.;
+                    let margin = ((high - low) * 0.05).max(1.0);
+                    let spans = shape.line_material_intervals(
+                        origin,
+                        axis_vector(axis),
+                        low - margin,
+                        high + margin,
+                        1e-7,
+                    )?;
+                    let span = spans
+                        .last()
+                        .copied()
+                        .ok_or("盲孔中心线没有前置材料区间；拒绝按全局包围盒猜测入口。")?;
+                    let thickness = span[1] - span[0];
+                    let depth_tolerance = 1e-6_f64.max(thickness * 1e-8);
+                    if thickness <= d + depth_tolerance {
+                        return Err(format!(
+                            "盲孔深度 {d:.6} mm 不小于孔位局部正向材料厚度 {thickness:.6} mm。"
+                        ));
+                    }
+                    let epsilon = (d * 1e-6).clamp(1e-5, 1e-3);
+                    base[axis] = (span[0] + span[1]) / 2.;
+                    (span[1] - d, d + epsilon, Some(span))
+                } else {
+                    (low - 10., high - low + 20., None)
+                };
+                let mut cutter_base = base;
+                cutter_base[axis] = start;
+                tools.push(kernel.cylinder(
+                    diameter / 2.,
+                    height,
+                    cutter_base,
+                    axis_vector(axis),
+                )?);
+                let mut centerline = base;
+                if let Some(span) = local_span {
+                    centerline[axis] = (span[0] + span[1]) / 2.;
+                } else {
+                    centerline[axis] = (low + high) / 2.;
+                }
                 records.push(json!({"feature_id":feature["id"],"instance_index":i+1,
-                    "centerline_mm":base,"axis":(["X","Y","Z"][axis]),"diameter_mm":diameter,
-                    "through":through,"depth_mm":depth,"status":"requested_not_measured"}));
+                    "centerline_mm":centerline,"axis":(["X","Y","Z"][axis]),"diameter_mm":diameter,
+                    "through":through,"depth_mm":depth,"status":"requested_not_measured",
+                    "local_positive_material_span_mm":local_span}));
             }
             Ok((tools, records))
         }
@@ -250,6 +310,129 @@ fn feature_tools(
         }
         _ => Err("未实现的 Rust 特征。".into()),
     }
+}
+
+fn verify_hole_record(pre_cut: &Shape, post_cut: &Shape, record: &Value) -> Result<Value, String> {
+    let centerline = point(record.get("centerline_mm"), [0.; 3])?;
+    let axis_name = record["axis"].as_str().ok_or("孔记录缺少轴。")?;
+    let axis = match axis_name {
+        "X" => 0,
+        "Y" => 1,
+        "Z" => 2,
+        _ => return Err("孔记录包含未知轴。".into()),
+    };
+    let axis_vector = axis_vector(axis);
+    let radius = num(record, "diameter_mm")? / 2.0;
+    let bounds = bounds_array(pre_cut.bounds()?);
+    let margin = ((bounds[axis + 3] - bounds[axis]) * 0.05).max(1.0);
+    let tmin = bounds[axis] - centerline[axis] - margin;
+    let tmax = bounds[axis + 3] - centerline[axis] + margin;
+    let request = HoleRequest {
+        origin: centerline,
+        axis: axis_vector,
+        radius,
+        tmin,
+        tmax,
+        tolerance: 1e-7,
+    };
+    let sampled = match native_geometry_evidence::verify_hole(pre_cut, post_cut, &request) {
+        Ok(evidence) => evidence,
+        Err(error) => {
+            return Ok(json!({
+                "status":"unverified",
+                "reason_codes":["line_sampling_failed"],
+                "reason":error,
+                "expected_through":record["through"],
+                "expected_depth_mm":record["depth_mm"],
+                "actual_material":Value::Null,
+                "through_on_sampled_rays":Value::Null,
+                "ray_evidence":Value::Null,
+            }));
+        }
+    };
+    let expected_through = record["through"].as_bool().unwrap_or(true);
+    let expected_depth = record["depth_mm"].as_f64();
+    let center = &sampled["center_ray"];
+    let before_length = center["before_material_length"].as_f64().unwrap_or(0.0);
+    let after_length = center["after_material_length"].as_f64().unwrap_or(0.0);
+    let removed_length = (before_length - after_length).max(0.0);
+    let depth_tolerance = expected_depth.map(|d| 1e-4_f64.max(d * 1e-5));
+    let depth_matches =
+        expected_depth.is_some_and(|d| (removed_length - d).abs() <= depth_tolerance.unwrap());
+    let sampled_through = sampled["summary"]["through_on_sampled_rays"] == true;
+    let center_pre_material = sampled["summary"]["center_pre_material_present"] == true;
+    let center_remaining = sampled["summary"]["center_remaining_material"] == true;
+    let base_samples_pass = sampled["accepted"] == true;
+    let mode_pass = if expected_through {
+        sampled_through && after_length <= 4e-7
+    } else {
+        center_remaining && depth_matches && !sampled_through
+    };
+    let passed = center_pre_material && base_samples_pass && mode_pass;
+    let status = if passed {
+        "verified_by_sampled_rays"
+    } else if center_pre_material
+        || sampled["summary"]["interior_rays_with_pre_material"]
+            .as_u64()
+            .unwrap_or(0)
+            > 0
+    {
+        "partial"
+    } else {
+        "unverified"
+    };
+    let mut reasons = Vec::new();
+    if !center_pre_material {
+        reasons.push("centerline_has_no_pre_cut_material");
+    }
+    if sampled["summary"]["interior_rays_with_material_removed"]
+        .as_u64()
+        .unwrap_or(0)
+        < sampled["summary"]["interior_rays_total"].as_u64().unwrap_or(0)
+    {
+        reasons.push("some_interior_rays_lack_pre_material_or_removal");
+    }
+    if sampled["summary"]["outside_rays_retaining_material"]
+        .as_u64()
+        .unwrap_or(0)
+        < sampled["summary"]["outside_rays_total"].as_u64().unwrap_or(0)
+    {
+        reasons.push("some_outside_rays_lack_pre_material_or_change_material");
+    }
+    if expected_through && !sampled_through {
+        reasons.push("requested_through_hole_has_remaining_material_on_sampled_rays");
+    }
+    if !expected_through && !depth_matches {
+        reasons.push("centerline_removed_length_does_not_match_requested_depth");
+    }
+    if !expected_through && !center_remaining {
+        reasons.push("blind_hole_centerline_has_no_remaining_material");
+    }
+    let center_before_intervals = center["before_material_intervals"].clone();
+    let center_after_intervals = center["after_material_intervals"].clone();
+    Ok(json!({
+        "status":status,
+        "reason_codes":reasons,
+        "expected_through":expected_through,
+        "expected_depth_mm":expected_depth,
+        "center_removed_material_mm":removed_length,
+        "depth_tolerance_mm":depth_tolerance,
+        "depth_matches_sampled_center_change":expected_depth.map(|_|depth_matches),
+        "through_on_sampled_rays":sampled_through,
+        "actual_material":{
+            "center_before_intervals":center_before_intervals,
+            "center_after_intervals":center_after_intervals,
+            "center_before_length_mm":before_length,
+            "center_after_length_mm":after_length,
+            "center_remaining_material":center_remaining,
+            "interior_rays_with_removal":sampled["summary"]["interior_rays_with_material_removed"],
+            "interior_rays_total":sampled["summary"]["interior_rays_total"],
+            "outside_rays_retaining_material":sampled["summary"]["outside_rays_retaining_material"],
+            "outside_rays_total":sampled["summary"]["outside_rays_total"],
+        },
+        "ray_evidence":sampled,
+        "measurement_scope":"sampled material intervals; not fitted diameter metrology",
+    }))
 }
 
 fn normalized_feature(feature: &Value, plan: &Value) -> Result<Value, String> {

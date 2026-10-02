@@ -111,18 +111,93 @@ def main():
     first_cut = copy.deepcopy(base)
     first_cut["features"] = first_cut["features"][2:3]
     negatives.append(("first-cut", first_cut, "前置实体"))
+
+    # Additional blind-hole checks do not change the established 44 positive
+    # parity cases above. The first plan leaves only the recessed local span;
+    # the second asks for more depth than that span, and the third samples an
+    # already-through-cut centerline with no pre-cut material.
+    blind_local = copy.deepcopy(base)
+    blind_local["features"] = blind_local["features"][:2]
+    blind_parameters = dict(diameter=8, axis="Y", pos="point", point=[0, 0, 60],
+                            through=False, depth=5)
+    blind_local["features"].append({"id": "blind-local-positive", "kind": "hole",
+        "operation": "cut", "parameters": blind_parameters,
+        "sources": {key: {"type": "user"} for key in blind_parameters
+                    if key in ("diameter", "point", "depth")}})
+    deep_local = copy.deepcopy(blind_local)
+    deep_local["features"][-1]["id"] = "blind-local-too-deep"
+    deep_local["features"][-1]["parameters"]["depth"] = 33
+    deep_local["features"][-1]["sources"]["depth"] = {"type": "user"}
+    negatives.append(("blind-depth-exceeds-local-span", deep_local, "局部正向材料厚度"))
+
+    no_material = copy.deepcopy(base)
+    no_material_parameters = dict(diameter=8, axis="Y", pos="point", point=[0, 0, 60],
+                                  through=False, depth=5)
+    no_material["features"].append({"id": "blind-no-local-material", "kind": "hole",
+        "operation": "cut", "parameters": no_material_parameters,
+        "sources": {key: {"type": "user"} for key in no_material_parameters
+                    if key in ("diameter", "point", "depth")}})
+    negatives.append(("blind-centerline-no-precut-material", no_material,
+                      "没有前置材料区间"))
     for name, plan, expected in negatives:
         source, report_path = output / f"negative-{name}.json", output / f"negative-{name}.report.json"
+        if report_path.exists():
+            report_path.unlink()
         source.write_text(json.dumps(plan), encoding="utf-8")
         result = subprocess.run([str(executable), str(source), str(manifest), str(report_path)],
                                 stdout=subprocess.DEVNULL, stderr=subprocess.PIPE,
                                 text=True, encoding="utf-8", timeout=30)
         if result.returncode == 0 or expected not in result.stderr or report_path.exists():
             raise AssertionError((name, result.returncode, result.stderr, "report_exists", report_path.exists()))
+
+    blind_source = output / "blind-local-positive.json"
+    blind_report_path = output / "blind-local-positive.report.json"
+    blind_source.write_text(json.dumps(blind_local), encoding="utf-8")
+    result = subprocess.run([str(executable), str(blind_source), str(manifest), str(blind_report_path)],
+                            stdout=subprocess.DEVNULL, stderr=subprocess.PIPE,
+                            text=True, encoding="utf-8", timeout=30)
+    if result.returncode:
+        raise RuntimeError(f"blind-local-positive: {result.stderr[:1500]}")
+    blind_report = json.loads(blind_report_path.read_text(encoding="utf-8"))
+    blind_hole = blind_report["sampled_hole_evidence"][-1]
+    blind_evidence = blind_hole["sampled_evidence"]
+    local_span = blind_report["requested_holes"][-1]["local_positive_material_span_mm"]
+    if (blind_hole["status"] != "verified_by_sampled_rays"
+            or blind_evidence["expected_through"] is not False
+            or blind_evidence["depth_matches_sampled_center_change"] is not True
+            or abs(blind_evidence["center_removed_material_mm"] - 5) > 1e-4
+            or local_span is None or local_span[1] - local_span[0] <= 5):
+        raise AssertionError(("blind-local-positive", blind_evidence, local_span))
+
+    edge_partial = copy.deepcopy(base)
+    edge_partial["features"] = edge_partial["features"][:1]
+    edge_parameters = dict(diameter=10, axis="Z", pos="point", point=[48, 0, 60], through=True)
+    edge_partial["features"].append({"id": "near-edge-hole", "kind": "hole",
+        "operation": "cut", "parameters": edge_parameters,
+        "sources": {key: {"type": "user"} for key in ("diameter", "point")}})
+    edge_source = output / "near-edge-partial-evidence.json"
+    edge_report_path = output / "near-edge-partial-evidence.report.json"
+    if edge_report_path.exists():
+        edge_report_path.unlink()
+    edge_source.write_text(json.dumps(edge_partial), encoding="utf-8")
+    result = subprocess.run([str(executable), str(edge_source), str(manifest), str(edge_report_path)],
+                            stdout=subprocess.DEVNULL, stderr=subprocess.PIPE,
+                            text=True, encoding="utf-8", timeout=30)
+    if result.returncode:
+        raise RuntimeError(f"near-edge-partial-evidence unexpectedly blocked geometry: {result.stderr[:1500]}")
+    edge_report = json.loads(edge_report_path.read_text(encoding="utf-8"))
+    edge_evidence = edge_report["sampled_hole_evidence"][-1]
+    if (edge_report["state"] != "built"
+            or edge_report["hole_measurements_verified"] is not False
+            or edge_evidence["status"] not in ("partial", "unverified")
+            or not edge_evidence["sampled_evidence"]["reason_codes"]):
+        raise AssertionError(("near-edge-partial-evidence", edge_evidence))
     summary = dict(scope="CADPlan_geometry_parameter_parity_not_Agent_image_acceptance",
                    cases=records, passed=len(records), bounds_tolerance_mm=1e-6,
                    volume_tolerance_mm3=1e-5,
                    negative_cases_rejected=len(negatives),
+                   blind_local_span_positive=True,
+                   near_edge_partial_did_not_block=True,
                    python_ocp_version=python_version, rust_occt_version="7.9.3")
     (output / "summary.json").write_text(json.dumps(summary, indent=2), encoding="utf-8")
     print(json.dumps({key: value for key, value in summary.items() if key != "cases"}))
