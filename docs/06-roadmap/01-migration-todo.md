@@ -19,12 +19,12 @@
 | F2 | DSH 原生 Cordis CAD 插件去 Python worker | **进行中** | Cordis schema 已由 Rust 持有，工具请求经过 Rust 本机桥；仍需迁出 Python CAD 状态/执行与图片观察，并完成真实 DSH 工具调用验收 |
 | F2.1 | Cordis → Rust 本机工具桥 | **已完成** | Cordis 原生注册与 Rust Host 的认证 JSON-RPC、取消、超时、去重和图片返回链路测试通过；Rust 下游仍调用旧 Python worker，故不代表 F2 完成；提交 `501d47b` |
 | F2.2 | Rust 持有 CAD 工具 schema 与参数契约 | **已完成** | Rust 内嵌 25 项 schema，与迁移时 Python 函数输出逐字段相同；不再启动 Python 取 schema；固定 DSH `defineTool()` 成功注册 25 项 |
-| F2.3 | 只读状态、知识及联网工具迁入 Rust Host | 未开始 | 状态查询、知识检索与 web search 的请求/结果处理迁出 Python worker，并完成 Cordis 工具验收 |
+| F2.3 | 只读状态、知识及联网工具迁入 Rust Host | **进行中** | 原生知识检索、配方、特征契约和联网工具已接入 Rust executor；当前状态摘要及 SHA/版本门禁正在迁移；完整生产编译和真实 DSH 工具验收未完成 |
 | F2.4 | 图片观察与视觉复核迁出 Python | 未开始 | 用户原图、单视图预览和复核证据由 DSH 原生多模态请求或 Rust 服务链处理，Python 不再承担视觉观察 |
 | F2.5 | CAD 写工具迁移到 Rust CAD domain | 未开始 | 建立/修改/删除/预览/构建工具直接调用 F3 Rust CADPlan，移除 Python tool worker 兼容执行器 |
 | F3 | Rust CADPlan 与增量模型事务 | **进行中** | 纯增量事务已移植；完整参数校验、会话版本/回滚及 preview/build dispatch 尚待接线验收 |
 | F3.1 | Rust CADPlan 纯增量事务与几何指纹 | **已完成** | create/add/update/remove/snapshot 保留来源与扩展字段；数值更新来源 guard、失败原计划不变；140 组 Python 几何指纹对拍一致，精确浮点解析已启用 |
-| F3.2 | Rust CADPlan schema 与静态校验 | **进行中** | 覆盖全部当前特征、条件参数、来源、关系、单位/坐标和支持状态，并与 Python 报告 golden 对拍 |
+| F3.2 | Rust CADPlan schema 与静态校验 | **已完成** | 覆盖 27 类特征、条件参数、来源、关系、单位/坐标和静态支持状态；27 个 Python golden 双接口对拍通过，strict 执行前阻断已验证，未执行几何或 CATIA |
 | F3.3 | Rust CAD 会话事务与 preview/build dispatch | 未开始 | revision、候选/回滚、来源及差异生命周期由 Rust 会话维护；对接几何内核并完成工具端到端验收 |
 | F4 | Rust/C++ thin OCCT FFI | 未开始 | Rust 几何请求建立有效 B-Rep、布尔、网格与拓扑报告；fixture 对拍有尺寸容差和失败样本 |
 | F5 | Quick 模式与本地导出迁移 | 未开始 | Quick 与 Agent 共用稳定 CAD domain；AIMODEL/STL/视图导出有兼容性验收 |
@@ -57,3 +57,5 @@ F1 拆分与实施记录见[ACP Host 子 feature 卡](./02-f1-acp-host.md)。
 F2.1 的本机 Cordis 工具桥边界与验收记录见[原生 Cordis → Rust 工具桥](./04-f2-cordis-bridge.md)。
 F2.2 的 Rust schema 来源与真实 DSH schema 编译验收记录见[Rust 持有 Cordis 工具 schema](./05-f2-rust-tool-schemas.md)。
 F3.1 的事务语义、浮点解析与对拍记录见[Rust CADPlan 增量事务](./07-f3-plan-transactions.md)。
+
+F3.2 的参数校验、静态支持边界和双接口对拍记录见[Rust CADPlan Schema 与静态校验](./08-f3-plan-validation.md)。

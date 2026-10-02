@@ -1,6 +1,7 @@
 pub mod acp;
 pub mod agent_host;
 pub mod cad_plan;
+pub mod cad_plan_validation;
 pub mod dsh_runtime;
 pub mod native_tool_bridge;
 pub mod native_tool_schemas;

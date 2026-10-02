@@ -1,5 +1,6 @@
 //! JSONL migration probe: use the same Rust CADPlan library as the application.
 use ai_modeler_ui_lib::cad_plan;
+use ai_modeler_ui_lib::cad_plan_validation;
 use serde_json::{Value, json};
 use std::io::{self, BufRead};
 
@@ -10,6 +11,9 @@ fn dispatch(request: &Value) -> Result<Value, String> {
         .and_then(Value::as_str)
         .unwrap_or("");
     match request.get("method").and_then(Value::as_str) {
+        Some("validate") => Ok(cad_plan_validation::validate_plan(plan)),
+        Some("strict_preflight") => Ok(cad_plan_validation::strict_preflight(plan)),
+        Some("schema") => Ok(cad_plan_validation::schema_document()),
         Some("fingerprint") => {
             Ok(json!({"geometry_fingerprint":cad_plan::geometry_fingerprint(plan)?}))
         }
