@@ -811,7 +811,10 @@ pub async fn review(
         .and_then(|h| {
             h.iter()
                 .rev()
-                .find(|r| r.get("pair_fingerprint").and_then(Value::as_str) == Some(&pair_fp))
+                .find(|r| {
+                    r.get("pair_fingerprint").and_then(Value::as_str) == Some(&pair_fp)
+                        && r.get("finding_lifecycle").is_some()
+                })
         })
         .cloned()
     {
@@ -897,7 +900,8 @@ pub async fn review(
         .call(&messages, &images, &req, cancelled)
         .await
         .map_err(vision_error)?;
-    let norm = normalize_review(&response.parsed_json, &required, &turns, &stage_feature_ids);
+    let mut norm = normalize_review(&response.parsed_json, &required, &turns, &stage_feature_ids);
+    crate::native_review_findings::attribute_review(&mut norm, &stage_feature_ids);
     let comparable = norm["view_comparable"].as_bool().unwrap_or(false);
     let mut evidence = norm["evidence"].as_array().cloned().unwrap_or_default();
     if !comparable {
@@ -1019,6 +1023,7 @@ pub async fn review(
         "observation_version": observation_version,
         "observation_fingerprint": observation_fingerprint,
         "roi_norm": reference.image.roi_norm,
+        "user_target_fingerprint": target_fp,
         "transport_sha256": reference.image.transport_sha256,
         "preview_sha256": preview_sha,
         "geometry_fingerprint": geom,
@@ -1070,6 +1075,8 @@ pub async fn review(
                     .clone(),
             );
     }
+    result_value["finding_lifecycle"] =
+        crate::native_review_findings::reconcile(&mut next, &result_value)?;
     next["reference_similarity_review"] = result_value.clone();
     if !next
         .get("reference_similarity_reviews")
@@ -1347,6 +1354,7 @@ fn normalize_review(
             "target_context_validated": target_context_validated,
             "status": status,
             "mismatch_severity": enum_value(item.get("mismatch_severity"), &["none", "minor", "moderate", "major", "critical", "unknown"]),
+            "reported_affected_feature_ids": string_list(item.get("affected_feature_ids"), 40),
             "affected_feature_ids": string_list(item.get("affected_feature_ids"), 40).as_array().into_iter().flatten().filter_map(Value::as_str).filter(|id| stage_feature_ids.contains(*id)).collect::<Vec<_>>(),
             "suggested_change": short(item.get("suggested_change"), 800)
         }))
@@ -2053,6 +2061,37 @@ mod tests {
     }
 
     #[test]
+    fn stage_review_provider_response_is_attributed_before_coverage_and_ledger() {
+        for (affected, expected_status, expected_findings) in [
+            ("future-hole", "unknown", 0),
+            ("body", "mismatch", 1),
+        ] {
+            let mut session = test_session();
+            session.state["reference_inventory"][&session.reference_id]["observation_id"] =
+                json!("fixture-observation");
+            let evidence_id = session.state["reference_inventory"][&session.reference_id]
+                ["visible_evidence"][0]["evidence_id"].clone();
+            let (base_url, server) = mock_chat_server(vec![json!({
+                "view_comparable":true,"coverage_status":"verified", "covered_evidence_ids":[evidence_id],
+                "evidence":[{"evidence_id":evidence_id,"item":"opening location",
+                    "reference":"An opening is visible in the reference.",
+                    "model":"The current image does not show it at that location.",
+                    "difference":"Opening location differs.","assessment_basis":"reference",
+                    "status":"mismatch","mismatch_severity":"major","affected_feature_ids":[affected]}]
+            })]);
+            let result = run(review(&session.state,
+                &json!({"view":"front","preview_generation":9,"reference_id":session.reference_id}),
+                &provider(base_url),&AtomicBool::new(false),&session.context)).unwrap();
+            server.join().unwrap();
+            assert_eq!(result.value["evidence"][0]["status"], expected_status);
+            assert_eq!(result.value["covered_evidence_ids"],json!([]));
+            assert_eq!(result.value["finding_lifecycle"]["binding_status"],"current");
+            assert_eq!(result.state["finding_ledger"].as_object().unwrap().len(),expected_findings);
+            assert_eq!(result.state["unresolved_findings"].as_array().unwrap().len(),expected_findings);
+        }
+    }
+
+    #[test]
     fn review_uses_exact_images_and_reports_specific_mismatch_without_accepting_score() {
         let session = test_session();
         let evidence_id = session.state["reference_inventory"][&session.reference_id]
@@ -2076,7 +2115,7 @@ mod tests {
                 "mismatch_severity": "major",
                 "reference_region": "upper silhouette",
                 "model_region": "upper silhouette",
-                "affected_feature_ids": [],
+                "affected_feature_ids": ["body"],
                 "suggested_change": "Review the outer profile width."
             }],
             "summary": "The visible silhouette differs."
