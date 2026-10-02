@@ -83,6 +83,50 @@ struct Image {
     bytes: Vec<u8>,
 }
 
+/// Headless acceptance uses the exact desktop route and profile generator.
+/// Credentials remain in memory; this result and the patch never contain them.
+pub fn prepare_cli_profile(root: &Path, patch: &Path, config: &Value) -> Result<Value, String> {
+    let provider = Provider::parse(config)?;
+    let route = route_profile(&provider.base_url, &provider.model)?;
+    let plugins = [
+        root.join("ai_modeler/agent/dsh_native_tools.mjs"),
+        root.join("ai_modeler/agent/dsh_attachment_store.mjs"),
+        root.join("ai_modeler/agent/dsh_stream_bridge.mjs"),
+    ];
+    write_profile_patch(
+        patch,
+        root,
+        [&plugins[0], &plugins[1], &plugins[2]],
+        &provider,
+        &route,
+    )?;
+    let prompt_path = root.join("prompts/dsh_agent/system.md");
+    let prompt = fs::read(&prompt_path).map_err(|error| error.to_string())?;
+    Ok(json!({
+        "schema_version":1,"configuration_source":"desktop_production_profile",
+        "model":provider.model,"api":route.api,"base_url":route.base_url,
+        "image_supported_by_route":route.vision,"reasoning_effort_requested":provider.effort,
+        "reasoning_configurable":!route.reasoning.is_empty(),
+        "thinking_budget_requested":provider.budget,
+        "main_output_cap":positive(provider.output_cap).unwrap_or(32_768),
+        "vision_output_cap":positive(provider.output_cap).unwrap_or(4096),
+        "context_window":positive(provider.context_window).or(route.context_window).unwrap_or(262_144),
+        "prompt_path":prompt_path,"prompt_sha256":sha256(&prompt),"patch_path":patch
+    }))
+}
+
+/// Apply reasoning through the same ACP option lookup as the desktop host.
+pub fn configure_cli_reasoning(
+    process: &AcpProcess,
+    session_id: &str,
+    response: &Value,
+    config: &Value,
+) -> Result<(), String> {
+    let provider = Provider::parse(config)?;
+    let route = route_profile(&provider.base_url, &provider.model)?;
+    configure_reasoning(process, session_id, response, &route, &provider.effort)
+}
+
 pub fn send_turn(
     state: &AgentHostState,
     app: AppHandle,
