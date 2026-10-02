@@ -8,6 +8,7 @@ pub mod native_knowledge;
 pub mod native_occt;
 pub mod native_occt_runtime;
 pub mod native_plan_geometry;
+pub mod native_render;
 pub mod native_state_summary;
 pub mod native_tool_bridge;
 pub mod native_tool_executor;
