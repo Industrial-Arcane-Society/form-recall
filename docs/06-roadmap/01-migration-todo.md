@@ -50,8 +50,22 @@
 | F5.1 | Rust 七视图 PNG 与深度遮挡 | **已完成** | 五项定向测试、真实 OCCT 1000 三角形 CLI 七视图通过；非 Agent 图片验收 |
 | F5.2 | Rust AIMODEL / binary STL 兼容读写 | **已完成** | 5 项单测、旧工程 roundtrip、Python Document 对拍及实际 STL 全顶点检查通过；Quick 和生产导出接线尚待完成 |
 | F5.3 | Quick 明确尺寸原生创建闭环 | **已完成（限定范围）** | Rust Quick 3/3、解析 7/7、Vue build；CADPlan→OCCT→GLB/AIMODEL/STL，旧语法全量迁移和共享活动状态仍待 F7.G2；见 [记录](./27-f5-native-quick-build.md) |
-| F6 | Python 缩减到 CATIA COM | **进行中** | DSH Agent 的 Python tool worker 已删除；桌面初始化、设置/provider、parts/samples、联网/MCP仍调用 Python bridge，安装仍带科学/CAD依赖；需逐项迁移服务并把 Python 收敛到 CATIA COM |
+| F6 | Python 缩减到 CATIA COM | **进行中（拆为 F6.1–F6.7）** | Agent Python tool worker 已删除；桌面启动仍强制 Python bridge。按下方子任务先迁原生配置/provider 与 bootstrap，再迁桌面服务，最后将 Python 限定为按需 CATIA COM 并验收安装包 |
 | F7 | 多模态盲测与科学验收基线 | **进行中** | 生产同源冷启动 runner 已执行一轮真实原图盲测，模型候选因孔位/视图复核未通过而被拒；仍需修复并完成图片、纯文字、多轮、返修、取消及 CATIA 分层验收 |
+
+## F6 子任务与验收顺序
+
+| ID | 优先级 | Feature | 完成条件 / 提交边界 |
+|---|---|---|---|
+| F6.1 | P0 | Rust 原生设置与 provider 管理 | 原生保存/加载 defaults、旧 flat 配置迁移、多档案与 stage overrides、活动档案、模型列表；保留未知字段，fixture 覆盖保存/重载、无效模型及失败行为，不输出凭据。 |
+| F6.2 | P0 | Rust 桌面 bootstrap 与依赖状态 | Vue 初始化使用原生 settings/runtime/resource/active-model 命令；Python 缺失时 Quick、Agent 和本地模型仍可启动；DSH、OCCT、CATIA readiness 分开报告。资源定位不再要求 Python 源码存在。依赖 F6.1。 |
+| F6.3 | P1 | 原生零件目录与示例列表 | 迁移只读 metadata、aliases、sample values/prompts、顺序与计数；与旧 Python 输出逐字段对拍，不把目录项冒充已支持的几何能力。 |
+| F6.4 | P1 | 原生诊断、帮助和路径操作 | 版本/打开路径/自检走 Rust；分别显示 Runtime、OCCT、CATIA 与外部 MCP 状态。Cordis 工具数不能冒充 MCP 服务连接成功。 |
+| F6.5 | P1 | 桌面手工联网查询 | 保留旧 `online.ask` 的 query 扩展、正文读取、尺寸参数和 suggestion 契约；只迁移 `search/open_result` 不算等价完成。 |
+| F6.6 | P2 | 按需 CATIA COM adapter | 仅在 CATIA 操作时启动最小 Python COM 服务；输入来自 Rust 当前活动模型，并对齐 F5 原生导出格式/来源，不使用独立旧 Python Document。 |
+| F6.7 | P2 | Python 依赖与安装包收缩 | 前述桌面服务迁完后再精简 requirements/资源清单；通过无全局 Python/Node 的安装包冷启动证明非 CATIA 场景不启动 Python，CATIA 操作按需启动适配器。 |
+
+当前审计依据：`feat/rust-dsh-acp-host` 的实际源码。F6.1 与 F6.2 是解除桌面常驻 Python 门槛的 P0；parts、examples、联网、外部 MCP 均需保留各自旧契约，不以同名 Rust 工具存在视为迁移完成。
 
 ## 已确认的 Agent 链路治理
 
