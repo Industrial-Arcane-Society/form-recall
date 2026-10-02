@@ -1,10 +1,12 @@
 #include "occt_bridge.h"
 
 #include <BRepBndLib.hxx>
+#include <BRepAdaptor_Surface.hxx>
 #include <BRepBuilderAPI_GTransform.hxx>
 #include <BRepBuilderAPI_MakeFace.hxx>
 #include <BRepBuilderAPI_MakePolygon.hxx>
 #include <BRepBuilderAPI_MakeSolid.hxx>
+#include <BRepBuilderAPI_Sewing.hxx>
 #include <BRepBuilderAPI_Transform.hxx>
 #include <BRepAlgoAPI_Cut.hxx>
 #include <BRepCheck_Analyzer.hxx>
@@ -19,6 +21,7 @@
 #include <BRepPrimAPI_MakeRevol.hxx>
 #include <BRepPrimAPI_MakeSphere.hxx>
 #include <BRep_Tool.hxx>
+#include <BRepTools.hxx>
 #include <Bnd_Box.hxx>
 #include <Standard_Failure.hxx>
 #include <Standard_Version.hxx>
@@ -28,6 +31,7 @@
 #include <TopAbs_Orientation.hxx>
 #include <TopAbs_State.hxx>
 #include <TopAbs_ShapeEnum.hxx>
+#include <GeomAbs_SurfaceType.hxx>
 #include <TopExp_Explorer.hxx>
 #include <TopoDS.hxx>
 #include <TopoDS_Compound.hxx>
@@ -264,6 +268,52 @@ OcctStatus occt_make_revolve(const double *pairs,size_t count,double degrees,dou
   });
 }
 
+OcctStatus occt_make_solid_from_triangles(const double *xyz,size_t vertex_count,double tolerance,OcctShape **out) {
+  return guard([&] {
+    check_out(out);
+    constexpr size_t kMaxTriangles=100000;
+    if(!xyz || vertex_count<12 || vertex_count%3!=0 || vertex_count/3>kMaxTriangles
+       || !finite(tolerance) || tolerance<=0 || tolerance>0.1)
+      throw std::invalid_argument("triangle mesh must have 4..100000 triangles and positive sewing tolerance <= 0.1");
+    BRepBuilderAPI_Sewing sewing(tolerance,true,true,true,false);
+    for(size_t i=0;i<vertex_count;i+=3) {
+      gp_Pnt p[3];
+      for(size_t j=0;j<3;++j) {
+        const size_t coordinate=(i+j)*3;
+        const double x=xyz[coordinate],y=xyz[coordinate+1],z=xyz[coordinate+2];
+        if(!finite(x)||!finite(y)||!finite(z)) throw std::invalid_argument("triangle mesh coordinates must be finite");
+        p[j]=gp_Pnt(x,y,z);
+      }
+      const double area2=(p[1].XYZ()-p[0].XYZ()).Crossed(p[2].XYZ()-p[0].XYZ()).SquareModulus();
+      if(!finite(area2)||area2<=tolerance*tolerance*tolerance*tolerance)
+        throw std::invalid_argument("triangle mesh contains a degenerate face");
+      BRepBuilderAPI_MakePolygon polygon;
+      polygon.Add(p[0]);polygon.Add(p[1]);polygon.Add(p[2]);polygon.Close();
+      if(!polygon.IsDone()) throw std::invalid_argument("OCCT could not construct a triangle wire");
+      BRepBuilderAPI_MakeFace face(polygon.Wire(),true);
+      if(!face.IsDone()) throw std::invalid_argument("OCCT could not construct a triangle face");
+      sewing.Add(face.Face());
+    }
+    sewing.Perform();
+    const TopoDS_Shape sewn=sewing.SewedShape();
+    if(sewn.IsNull()) throw std::invalid_argument("mesh sewing produced a null shape");
+    std::vector<TopoDS_Shell> shells;
+    for(TopExp_Explorer ex(sewn,TopAbs_SHELL);ex.More();ex.Next()) shells.push_back(TopoDS::Shell(ex.Current()));
+    if(shells.empty() && sewn.ShapeType()==TopAbs_SHELL) shells.push_back(TopoDS::Shell(sewn));
+    if(shells.size()!=1 || !BRep_Tool::IsClosed(shells.front()))
+      throw std::invalid_argument("triangle mesh must sew to exactly one closed shell (shells="+std::to_string(shells.size())+", free_edges="+std::to_string(sewing.NbFreeEdges())+")");
+    BRepBuilderAPI_MakeSolid solid_builder(shells.front());
+    if(!solid_builder.IsDone()) throw std::invalid_argument("OCCT could not make a solid from the closed shell");
+    TopoDS_Solid solid=solid_builder.Solid();
+    if(!BRepCheck_Analyzer(solid,true).IsValid()) throw std::invalid_argument("sewn mesh solid failed BRepCheck");
+    GProp_GProps props;BRepGProp::VolumeProperties(solid,props);
+    if(!finite(props.Mass()) || std::abs(props.Mass())<=std::numeric_limits<double>::epsilon())
+      throw std::invalid_argument("mesh solid must have nonzero finite volume");
+    if(props.Mass()<0) solid.Reverse();
+    *out=wrap(solid);
+  });
+}
+
 OcctStatus occt_fuse(const OcctShape *const *shapes,size_t count,OcctShape **out) {
   return guard([&] {
     check_out(out);
@@ -445,6 +495,50 @@ OcctStatus occt_shape_line_material_intervals(const OcctShape *shape,
 }
 
 void occt_material_intervals_release(OcctMaterialInterval *intervals) { std::free(intervals); }
+
+OcctStatus occt_shape_cylindrical_faces(const OcctShape *shape,
+    OcctCylinderFace **out_faces,size_t *out_count) {
+  if(out_faces) *out_faces=nullptr;
+  if(out_count) *out_count=0;
+  return guard([&] {
+    if(!valid(shape)||!out_faces||!out_count)
+      throw std::invalid_argument("shape and cylinder face output pointers are required");
+    std::vector<OcctCylinderFace> faces;
+    for(TopExp_Explorer ex(shape->value,TopAbs_FACE);ex.More();ex.Next()) {
+      const TopoDS_Face face=TopoDS::Face(ex.Current());
+      BRepAdaptor_Surface surface(face,Standard_True);
+      if(surface.GetType()!=GeomAbs_Cylinder) continue;
+      const gp_Cylinder cylinder=surface.Cylinder();
+      double umin,umax,vmin,vmax;
+      BRepTools::UVBounds(face,umin,umax,vmin,vmax);
+      if(!(finite(umin)&&finite(umax)&&finite(vmin)&&finite(vmax)) || umax<umin || vmax<vmin)
+        throw std::runtime_error("cylindrical face has invalid trimmed UV bounds");
+      const double umid=umin+(umax-umin)*0.5;
+      const double vmid=vmin+(vmax-vmin)*0.5;
+      gp_Pnt point; gp_Vec du,dv;
+      surface.D1(umid,vmid,point,du,dv);
+      gp_Vec normal=du.Crossed(dv);
+      if(normal.SquareMagnitude()<=std::numeric_limits<double>::epsilon())
+        throw std::runtime_error("cylindrical face has degenerate midpoint normal");
+      normal.Normalize();
+      if(face.Orientation()==TopAbs_REVERSED) normal.Reverse();
+      const gp_Ax1 axis=cylinder.Axis();
+      const gp_Pnt origin=axis.Location(); const gp_Dir direction=axis.Direction();
+      faces.push_back({cylinder.Radius(),
+        {origin.X(),origin.Y(),origin.Z()},
+        {direction.X(),direction.Y(),direction.Z()},
+        vmin,vmax,umin,umax,{point.X(),point.Y(),point.Z()},
+        {normal.X(),normal.Y(),normal.Z()}});
+    }
+    if(faces.empty()) return;
+    if(faces.size()>std::numeric_limits<size_t>::max()/sizeof(OcctCylinderFace)) throw std::bad_alloc();
+    auto *buffer=static_cast<OcctCylinderFace*>(std::malloc(faces.size()*sizeof(OcctCylinderFace)));
+    if(!buffer) throw std::bad_alloc();
+    std::memcpy(buffer,faces.data(),faces.size()*sizeof(OcctCylinderFace));
+    *out_faces=buffer; *out_count=faces.size();
+  });
+}
+void occt_cylindrical_faces_release(OcctCylinderFace *faces) { std::free(faces); }
 
 OcctStatus occt_shape_tessellate(const OcctShape *shape,double lin,double ang,OcctMesh *out) {
   if(out) { out->xyz=nullptr; out->normals=nullptr; out->vertex_count=0; }

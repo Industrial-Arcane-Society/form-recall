@@ -141,10 +141,15 @@ int main() {
             == OCCT_BRIDGE_INVALID_ARGUMENT, sample.label);
     require(rejected == nullptr, "rejected prism profile must not return a handle");
   }
-  for (const double bad_angle : {0.0,-1.0,360.1}) {
+  OcctShape *negative_tube = nullptr;
+  require_ok(occt_make_revolve(tube_profile,4,-90,0,0,0,OCCT_AXIS_Z,&negative_tube),"negative quarter revolve");
+  require_ok(occt_shape_volume(negative_tube,&volume),"negative quarter revolve volume");
+  require(std::abs(volume-52.5*pi)<1e-5,"negative quarter revolve must have positive quarter volume");
+  occt_shape_release(negative_tube);
+  for (const double bad_angle : {0.0,-360.1,360.1}) {
     OcctShape *rejected = nullptr;
     require(occt_make_revolve(tube_profile,4,bad_angle,0,0,0,OCCT_AXIS_Z,&rejected)
-            == OCCT_BRIDGE_INVALID_ARGUMENT, "revolve angle outside (0,360] must be rejected");
+            == OCCT_BRIDGE_INVALID_ARGUMENT, "zero or magnitude above 360 revolve angle must be rejected");
     require(rejected == nullptr, "rejected revolve must not return a handle");
   }
   const double negative_radius[] = {-1,0, 2,0, 2,2, -1,2};

@@ -59,6 +59,19 @@ typedef struct OcctMaterialInterval {
   double t_end;
 } OcctMaterialInterval;
 
+/* One trimmed cylindrical B-Rep face. v_min/v_max are axial parameters in
+   model units; u_min/u_max are angular parameters in radians. normal is the
+   oriented face normal sampled at the UV midpoint. */
+typedef struct OcctCylinderFace {
+  double radius;
+  double axis_origin[3];
+  double axis_direction[3];
+  double v_min, v_max;
+  double u_min, u_max;
+  double surface_point[3];
+  double normal[3];
+} OcctCylinderFace;
+
 /* Error text remains valid until the next bridge call on the same thread. */
 OCCT_BRIDGE_API const char *occt_last_error(void);
 OCCT_BRIDGE_API const char *occt_version(void);
@@ -85,6 +98,10 @@ OCCT_BRIDGE_API OcctStatus occt_make_prism(const double *uv_pairs,
 OCCT_BRIDGE_API OcctStatus occt_make_revolve(const double *radius_axial_pairs,
   size_t point_count, double angle_degrees, double ox, double oy, double oz,
   OcctAxis axis, OcctShape **out_shape);
+/* Build one closed solid from triangle soup. xyz is tightly packed xyz triples;
+   vertex_count is the number of vertices and must be a multiple of three. */
+OCCT_BRIDGE_API OcctStatus occt_make_solid_from_triangles(const double *xyz,
+  size_t vertex_count, double sewing_tolerance, OcctShape **out_shape);
 OCCT_BRIDGE_API OcctStatus occt_fuse(const OcctShape *const *shapes,
   size_t count, OcctShape **out_shape);
 OCCT_BRIDGE_API OcctStatus occt_cut(const OcctShape *base,
@@ -110,6 +127,11 @@ OCCT_BRIDGE_API OcctStatus occt_shape_line_material_intervals(
   double ax, double ay, double az, double tmin, double tmax, double tolerance,
   OcctMaterialInterval **out_intervals, size_t *out_count);
 OCCT_BRIDGE_API void occt_material_intervals_release(OcctMaterialInterval *intervals);
+/* Returns one record per trimmed cylindrical face (partial cylinders may
+   therefore yield several records). Release with the matching function. */
+OCCT_BRIDGE_API OcctStatus occt_shape_cylindrical_faces(
+  const OcctShape *shape, OcctCylinderFace **out_faces, size_t *out_count);
+OCCT_BRIDGE_API void occt_cylindrical_faces_release(OcctCylinderFace *faces);
 OCCT_BRIDGE_API OcctStatus occt_shape_tessellate(const OcctShape *shape,
   double linear_deflection, double angular_deflection, OcctMesh *out_mesh);
 OCCT_BRIDGE_API void occt_mesh_release(OcctMesh *mesh);

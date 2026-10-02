@@ -1,11 +1,11 @@
 //! CADPlan-to-OCCT execution. Unsupported variants fail before kernel execution.
-//! Hole reports include sampled material intervals, not fitted bore metrology.
+//! Hole reports retain sampled evidence and final B-Rep bore measurements.
 use crate::{
-    cad_plan, cad_plan_validation,
+    cad_plan, cad_plan_validation, native_bore_metrology,
     native_geometry_evidence::{self, HoleRequest},
     native_occt::{Axis, Bounds, Kernel, Shape},
 };
-use serde_json::{json, Value};
+use serde_json::{Value, json};
 use std::{
     path::Path,
     sync::atomic::{AtomicBool, Ordering},
@@ -14,6 +14,17 @@ use std::{
 pub struct BuiltPlan {
     pub shape: Shape,
     pub report: Value,
+}
+
+struct PendingBore {
+    report_index: usize,
+    request: HoleRequest,
+    expected_blind_depth: Option<f64>,
+}
+
+struct PendingBoreGroup {
+    pre_cut: Shape,
+    instances: Vec<PendingBore>,
 }
 
 pub fn preflight(plan: &Value) -> Result<Value, String> {
@@ -54,6 +65,7 @@ pub fn build(plan: &Value, manifest: &Path, cancelled: &AtomicBool) -> Result<Bu
     let mut current: Option<Shape> = None;
     let mut rows = Vec::new();
     let mut holes = Vec::new();
+    let mut pending_bore_groups = Vec::new();
     for feature in plan["features"].as_array().ok_or("缺少 features")? {
         check_cancel(cancelled)?;
         if feature.get("enabled").and_then(Value::as_bool) == Some(false) {
@@ -68,8 +80,16 @@ pub fn build(plan: &Value, manifest: &Path, cancelled: &AtomicBool) -> Result<Bu
         let normalized = normalized_feature(feature, plan)?;
         let (tools, mut requested_holes) =
             feature_tools(&kernel, &normalized, bb, current.as_ref())?;
-        let tool_refs: Vec<_> = tools.iter().collect();
         let operation = feature["operation"].as_str().unwrap_or("add");
+        let hole_pre_cut = if !requested_holes.is_empty() && operation == "cut" {
+            current
+                .as_ref()
+                .map(|shape| kernel.transform(shape, identity_matrix()))
+                .transpose()?
+        } else {
+            None
+        };
+        let tool_refs: Vec<_> = tools.iter().collect();
         let candidate = match (&current, operation) {
             (None, "add") => kernel.fuse(&tool_refs)?,
             (Some(stock), "cut") => kernel.cut(stock, &tool_refs)?,
@@ -124,10 +144,86 @@ pub fn build(plan: &Value, manifest: &Path, cancelled: &AtomicBool) -> Result<Bu
             "state":"built","geometry_support":"exact","volume_before_mm3":before_volume,
             "volume_after_mm3":volume,"volume_delta_mm3":delta}),
         );
+        let report_start = holes.len();
+        if let Some(pre_cut) = hole_pre_cut {
+            let mut instances = Vec::with_capacity(requested_holes.len());
+            for (offset, record) in requested_holes.iter_mut().enumerate() {
+                match hole_request_from_record(&pre_cut, record) {
+                    Ok((request, expected_blind_depth)) => instances.push(PendingBore {
+                        report_index: report_start + offset,
+                        request,
+                        expected_blind_depth,
+                    }),
+                    Err(error) => {
+                        record["final_measurement_status"] = json!("candidate_unverified");
+                        record["final_measurement_reason"] = json!(error);
+                    }
+                }
+            }
+            if !instances.is_empty() {
+                pending_bore_groups.push(PendingBoreGroup { pre_cut, instances });
+            }
+        }
         holes.extend(requested_holes);
         current = Some(candidate);
     }
     let shape = current.ok_or("没有启用的实体特征。")?;
+    let mut hole_instances = holes.clone();
+    for group in pending_bore_groups {
+        for pending in group.instances {
+            check_cancel(cancelled)?;
+            let measurement = native_bore_metrology::measure_bore(
+                &group.pre_cut,
+                &shape,
+                &pending.request,
+                pending.expected_blind_depth,
+            );
+            let (status, payload) = match measurement {
+                Ok(value) => {
+                    let angle_coverage = value["angular_coverage_radians"].as_f64().unwrap_or(0.0);
+                    let full_cylinder = (angle_coverage - 2.0 * std::f64::consts::PI).abs() <= 1e-5;
+                    let accepted = value["accepted"] == true && full_cylinder;
+                    let kind = if pending.expected_blind_depth.is_some() {
+                        "verified_blind"
+                    } else {
+                        "verified_open"
+                    };
+                    let status = if accepted {
+                        kind
+                    } else {
+                        "candidate_unverified"
+                    };
+                    let mut report = value;
+                    report["full_angular_coverage"] = json!(full_cylinder);
+                    report["status"] = json!(status);
+                    if !full_cylinder {
+                        report["reason_code"] =
+                            json!("partial_or_incomplete_cylindrical_face_coverage");
+                    } else if report["accepted"] != true {
+                        report["reason_code"] =
+                            json!("final_revision_geometry_or_material_evidence_mismatch");
+                    }
+                    (status, report)
+                }
+                Err(error) => (
+                    "candidate_unverified",
+                    json!({"status":"candidate_unverified","reason_code":"final_brep_measurement_failed","reason":error,
+                        "measurement_method":"OCCT BRepAdaptor_Surface GeomAbs_Cylinder; not measured"}),
+                ),
+            };
+            if let Some(record) = hole_instances.get_mut(pending.report_index) {
+                record["status"] = json!(status);
+                record["final_measurement"] = payload;
+            }
+        }
+    }
+    let hole_measurements_verified = !hole_instances.is_empty()
+        && hole_instances.iter().all(|record| {
+            matches!(
+                record["status"].as_str(),
+                Some("verified_open" | "verified_blind")
+            )
+        });
     let bb = shape.bounds()?;
     let fingerprint = cad_plan::geometry_fingerprint(plan)?;
     let report = json!({"state":"built","execution_engine":"rust_c_abi_occt","occt_version":kernel.version(),
@@ -136,7 +232,8 @@ pub fn build(plan: &Value, manifest: &Path, cancelled: &AtomicBool) -> Result<Bu
         "dimensions_mm":[bb.xmax-bb.xmin,bb.ymax-bb.ymin,bb.zmax-bb.zmin],
         "volume_mm3":shape.volume()?,"valid":true,"closed_solid_count":1,
         "requested_holes":holes.clone(),"sampled_hole_evidence":holes,
-        "hole_measurements_verified":false,
+        "hole_instances":hole_instances,
+        "hole_measurements_verified":hole_measurements_verified,
         "catia_executed":false,"image_acceptance":"not_performed"});
     Ok(BuiltPlan { shape, report })
 }
@@ -312,6 +409,45 @@ fn feature_tools(
     }
 }
 
+fn identity_matrix() -> [f64; 16] {
+    [
+        1., 0., 0., 0., 0., 1., 0., 0., 0., 0., 1., 0., 0., 0., 0., 1.,
+    ]
+}
+
+fn hole_request_from_record(
+    pre_cut: &Shape,
+    record: &Value,
+) -> Result<(HoleRequest, Option<f64>), String> {
+    let origin = point(record.get("centerline_mm"), [0.; 3])?;
+    let axis_index = match record["axis"].as_str() {
+        Some("X") => 0,
+        Some("Y") => 1,
+        Some("Z") => 2,
+        _ => return Err("孔记录缺少有效轴向。".into()),
+    };
+    let radius = num(record, "diameter_mm")? / 2.0;
+    if radius <= 0.0 {
+        return Err("孔记录直径必须为正。".into());
+    }
+    let bounds = bounds_array(pre_cut.bounds()?);
+    let margin = ((bounds[axis_index + 3] - bounds[axis_index]) * 0.05).max(1.0);
+    let request = HoleRequest {
+        origin,
+        axis: axis_vector(axis_index),
+        radius,
+        tmin: bounds[axis_index] - origin[axis_index] - margin,
+        tmax: bounds[axis_index + 3] - origin[axis_index] + margin,
+        tolerance: 1e-6,
+    };
+    let expected_blind_depth = if record["through"].as_bool() == Some(false) {
+        Some(num(record, "depth_mm")?)
+    } else {
+        None
+    };
+    Ok((request, expected_blind_depth))
+}
+
 fn verify_hole_record(pre_cut: &Shape, post_cut: &Shape, record: &Value) -> Result<Value, String> {
     let centerline = point(record.get("centerline_mm"), [0.; 3])?;
     let axis_name = record["axis"].as_str().ok_or("孔记录缺少轴。")?;
@@ -388,14 +524,18 @@ fn verify_hole_record(pre_cut: &Shape, post_cut: &Shape, record: &Value) -> Resu
     if sampled["summary"]["interior_rays_with_material_removed"]
         .as_u64()
         .unwrap_or(0)
-        < sampled["summary"]["interior_rays_total"].as_u64().unwrap_or(0)
+        < sampled["summary"]["interior_rays_total"]
+            .as_u64()
+            .unwrap_or(0)
     {
         reasons.push("some_interior_rays_lack_pre_material_or_removal");
     }
     if sampled["summary"]["outside_rays_retaining_material"]
         .as_u64()
         .unwrap_or(0)
-        < sampled["summary"]["outside_rays_total"].as_u64().unwrap_or(0)
+        < sampled["summary"]["outside_rays_total"]
+            .as_u64()
+            .unwrap_or(0)
     {
         reasons.push("some_outside_rays_lack_pre_material_or_change_material");
     }
@@ -679,14 +819,16 @@ mod tests {
     }
     #[test]
     fn invalid_or_cancelled_input_cannot_reach_dll_loading() {
-        assert!(build(
-            &json!({}),
-            Path::new("nonexistent"),
-            &AtomicBool::new(false)
-        )
-        .err()
-        .expect("invalid plan cannot build")
-        .contains("校验"));
+        assert!(
+            build(
+                &json!({}),
+                Path::new("nonexistent"),
+                &AtomicBool::new(false)
+            )
+            .err()
+            .expect("invalid plan cannot build")
+            .contains("校验")
+        );
         assert!(check_cancel(&AtomicBool::new(true)).is_err());
     }
 }

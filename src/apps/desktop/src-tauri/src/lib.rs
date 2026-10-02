@@ -7,6 +7,7 @@ pub mod native_cad_session;
 pub mod native_review_gate;
 pub mod native_feature_specs;
 pub mod native_geometry_evidence;
+pub mod native_bore_metrology;
 pub mod native_knowledge;
 pub mod native_model_io;
 pub mod native_occt;

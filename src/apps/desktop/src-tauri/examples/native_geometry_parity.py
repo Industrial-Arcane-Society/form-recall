@@ -83,6 +83,20 @@ def main():
         if result.returncode:
             raise RuntimeError(f"{name}: {result.stderr[:1500]}")
         native = json.loads(report_path.read_text(encoding="utf-8"))
+        if name == "recess-nine-holes":
+            measured = native.get("hole_instances", [])
+            if (native.get("hole_measurements_verified") is not True
+                    or len(measured) != 9
+                    or any(row.get("status") != "verified_open"
+                           or row.get("final_measurement", {}).get("accepted") is not True
+                           or len(row.get("final_measurement", {}).get("actual_radius_measurements", [])) == 0
+                           or abs(row.get("final_measurement", {}).get("actual_radius_measurements", [0])[0]
+                                  - row.get("diameter_mm", 0) / 2) > 1e-6
+                           for row in measured)):
+                raise AssertionError(("final-nine-hole-metrology",
+                    native.get("hole_measurements_verified"),
+                    [(row.get("feature_id"), row.get("instance_index"), row.get("status"),
+                      row.get("final_measurement", {}).get("actual_radius_measurements")) for row in measured]))
         shape, _ = occ_kernel.build_document(plan_to_document(plan))
         bounds_error = max(abs(a - b) for a, b in zip(occ_kernel._bbox(shape), native["bounds_mm"]))
         volume_error = abs(occ_kernel.volume(shape) - native["volume_mm3"])
@@ -192,12 +206,42 @@ def main():
             or edge_evidence["status"] not in ("partial", "unverified")
             or not edge_evidence["sampled_evidence"]["reason_codes"]):
         raise AssertionError(("near-edge-partial-evidence", edge_evidence))
+
+    # A later operation enlarges one previously valid hole. The final B-Rep
+    # must invalidate the old diameter measurement rather than reusing the
+    # successful intermediate revision.
+    widened = copy.deepcopy(base)
+    widened_hole = copy.deepcopy(widened["features"][2])
+    widened_hole["id"] = "hole-1-1-widened"
+    widened_hole["parameters"]["diameter"] = 14
+    widened_hole["sources"]["diameter"] = {"type": "user", "note": "final B-Rep invalidation probe"}
+    widened["features"].append(widened_hole)
+    widened_source = output / "later-feature-widens-bore.json"
+    widened_report_path = output / "later-feature-widens-bore.report.json"
+    widened_source.write_text(json.dumps(widened), encoding="utf-8")
+    result = subprocess.run([str(executable), str(widened_source), str(manifest), str(widened_report_path)],
+                            stdout=subprocess.DEVNULL, stderr=subprocess.PIPE,
+                            text=True, encoding="utf-8", timeout=30)
+    if result.returncode:
+        raise RuntimeError(f"later-feature-widens-bore unexpectedly blocked geometry: {result.stderr[:1500]}")
+    widened_report = json.loads(widened_report_path.read_text(encoding="utf-8"))
+    widened_rows = [row for row in widened_report["hole_instances"] if row["feature_id"] in ("hole-1-1", "hole-1-1-widened")]
+    if (widened_report["hole_measurements_verified"] is not False
+            or not any(row["feature_id"] == "hole-1-1" and row["status"] == "candidate_unverified" for row in widened_rows)
+            or not any(row["feature_id"] == "hole-1-1-widened" and row["status"] == "candidate_unverified"
+                       and row.get("final_measurement", {}).get("actual_radius_measurements") == [7.0]
+                       for row in widened_rows)):
+        raise AssertionError(("later-feature-widens-bore-not-remeasured",
+            [(row.get("feature_id"), row.get("status"),
+              row.get("final_measurement", {}).get("actual_radius_measurements")) for row in widened_rows]))
     summary = dict(scope="CADPlan_geometry_parameter_parity_not_Agent_image_acceptance",
                    cases=records, passed=len(records), bounds_tolerance_mm=1e-6,
                    volume_tolerance_mm3=1e-5,
                    negative_cases_rejected=len(negatives),
                    blind_local_span_positive=True,
                    near_edge_partial_did_not_block=True,
+                   final_brep_holes_measured=True,
+                   later_feature_invalidates_stale_bore_measurement=True,
                    python_ocp_version=python_version, rust_occt_version="7.9.3")
     (output / "summary.json").write_text(json.dumps(summary, indent=2), encoding="utf-8")
     print(json.dumps({key: value for key, value in summary.items() if key != "cases"}))

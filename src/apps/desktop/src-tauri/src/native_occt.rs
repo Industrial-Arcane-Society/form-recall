@@ -1,7 +1,7 @@
 //! Runtime-loaded OCCT C ABI. No C++ objects or allocations cross ownership.
 use libloading::Library;
 use std::{
-    ffi::{c_char, c_void, CStr},
+    ffi::{CStr, c_char, c_void},
     marker::PhantomData,
     path::Path,
     ptr::NonNull,
@@ -14,6 +14,7 @@ type Out = *mut Handle;
 type Status = i32;
 type ConeFn = unsafe extern "C" fn(f64, f64, f64, f64, f64, f64, i32, Out) -> Status;
 type ProfileFn = unsafe extern "C" fn(*const f64, usize, f64, f64, f64, f64, i32, Out) -> Status;
+type TriangleSolidFn = unsafe extern "C" fn(*const f64, usize, f64, Out) -> Status;
 type LineIntervalsFn = unsafe extern "C" fn(
     Handle,
     f64,
@@ -28,6 +29,8 @@ type LineIntervalsFn = unsafe extern "C" fn(
     *mut *mut RawMaterialInterval,
     *mut usize,
 ) -> Status;
+type CylindricalFacesFn =
+    unsafe extern "C" fn(Handle, *mut *mut RawCylinderFace, *mut usize) -> Status;
 #[repr(i32)]
 #[derive(Clone, Copy, Debug)]
 pub enum Axis {
@@ -75,6 +78,29 @@ struct RawMaterialInterval {
     t_start: f64,
     t_end: f64,
 }
+#[repr(C)]
+#[derive(Clone, Copy)]
+struct RawCylinderFace {
+    radius: f64,
+    axis_origin: [f64; 3],
+    axis_direction: [f64; 3],
+    v_min: f64,
+    v_max: f64,
+    u_min: f64,
+    u_max: f64,
+    surface_point: [f64; 3],
+    normal: [f64; 3],
+}
+#[derive(Debug, Clone, Copy)]
+pub struct CylindricalFace {
+    pub radius: f64,
+    pub axis_origin: [f64; 3],
+    pub axis_direction: [f64; 3],
+    pub axial_span: [f64; 2],
+    pub angular_span: [f64; 2],
+    pub surface_point: [f64; 3],
+    pub oriented_normal: [f64; 3],
+}
 #[derive(Debug)]
 pub struct TriangleMesh {
     pub positions: Vec<[f64; 3]>,
@@ -92,6 +118,7 @@ struct Api {
     cone: Option<ConeFn>,
     prism: Option<ProfileFn>,
     revolve: Option<ProfileFn>,
+    triangle_solid: Option<TriangleSolidFn>,
     fuse: unsafe extern "C" fn(*const Handle, usize, Out) -> Status,
     cut: unsafe extern "C" fn(Handle, *const Handle, usize, Out) -> Status,
     transform: unsafe extern "C" fn(Handle, *const f64, Out) -> Status,
@@ -102,6 +129,8 @@ struct Api {
     mesh_release: unsafe extern "C" fn(*mut RawMesh),
     line_intervals: Option<LineIntervalsFn>,
     intervals_release: Option<unsafe extern "C" fn(*mut RawMaterialInterval)>,
+    cylindrical_faces: Option<CylindricalFacesFn>,
+    cylindrical_faces_release: Option<unsafe extern "C" fn(*mut RawCylinderFace)>,
 }
 #[derive(Clone)]
 pub struct Kernel {
@@ -182,6 +211,12 @@ impl Kernel {
                     .ok()
                     .map(|f| *f)
             },
+            triangle_solid: unsafe {
+                library
+                    .get::<TriangleSolidFn>(b"occt_make_solid_from_triangles\0")
+                    .ok()
+                    .map(|f| *f)
+            },
             fuse: sym!("occt_fuse"),
             cut: sym!("occt_cut"),
             transform: sym!("occt_transform"),
@@ -200,6 +235,20 @@ impl Kernel {
                 library
                     .get::<unsafe extern "C" fn(*mut RawMaterialInterval)>(
                         b"occt_material_intervals_release\0",
+                    )
+                    .ok()
+                    .map(|f| *f)
+            },
+            cylindrical_faces: unsafe {
+                library
+                    .get::<CylindricalFacesFn>(b"occt_shape_cylindrical_faces\0")
+                    .ok()
+                    .map(|f| *f)
+            },
+            cylindrical_faces_release: unsafe {
+                library
+                    .get::<unsafe extern "C" fn(*mut RawCylinderFace)>(
+                        b"occt_cylindrical_faces_release\0",
                     )
                     .ok()
                     .map(|f| *f)
@@ -310,6 +359,36 @@ impl Kernel {
             axis,
         )
     }
+    /// Convert triangle soup to one validated closed OCCT solid. Input is
+    /// copied by the C ABI; no Rust-owned buffer or OCCT handle crosses lifetimes.
+    pub fn triangle_mesh_to_solid(
+        &self,
+        mesh: &TriangleMesh,
+        sewing_tolerance: f64,
+    ) -> Result<Shape, String> {
+        if mesh.positions.len() < 12
+            || mesh.positions.len() % 3 != 0
+            || mesh.positions.len() / 3 > 100_000
+            || mesh.positions.iter().flatten().any(|v| !v.is_finite())
+            || !sewing_tolerance.is_finite()
+            || sewing_tolerance <= 0.0
+            || sewing_tolerance > 0.1
+        {
+            return Err("triangle mesh must contain 4..=100000 finite triangles and a sewing tolerance in (0, 0.1]".into());
+        }
+        let function = self
+            .api
+            .triangle_solid
+            .ok_or("已安装的OCCT桥尚未提供三角网格闭合实体构造器。")?;
+        let xyz: Vec<f64> = mesh
+            .positions
+            .iter()
+            .flat_map(|p| p.iter().copied())
+            .collect();
+        self.create(|out| unsafe {
+            function(xyz.as_ptr(), mesh.positions.len(), sewing_tolerance, out)
+        })
+    }
     fn profile(
         &self,
         function: ProfileFn,
@@ -385,6 +464,75 @@ impl Api {
     }
 }
 impl Shape {
+    /// Return analytic cylindrical faces and their actual trimmed B-Rep bounds.
+    /// One record is a face, not necessarily one complete bore: seam/boolean
+    /// splits can represent the same cylinder with multiple trimmed faces.
+    pub fn cylindrical_faces(&self) -> Result<Vec<CylindricalFace>, String> {
+        let function = self
+            .api
+            .cylindrical_faces
+            .ok_or("已安装的OCCT桥尚未提供圆柱面扫描。")?;
+        let release = self
+            .api
+            .cylindrical_faces_release
+            .ok_or("已安装的OCCT桥尚未提供圆柱面数组释放函数。")?;
+        let mut pointer = std::ptr::null_mut();
+        let mut count = 0usize;
+        let status = unsafe { function(self.handle.as_ptr(), &mut pointer, &mut count) };
+        struct CylinderFaceGuard {
+            pointer: *mut RawCylinderFace,
+            release: unsafe extern "C" fn(*mut RawCylinderFace),
+        }
+        impl Drop for CylinderFaceGuard {
+            fn drop(&mut self) {
+                if !self.pointer.is_null() {
+                    unsafe { (self.release)(self.pointer) }
+                }
+            }
+        }
+        let guard = CylinderFaceGuard { pointer, release };
+        self.api.check(status)?;
+        if count == 0 {
+            if !guard.pointer.is_null() {
+                return Err("OCCT 返回空圆柱面数但分配了数组。".into());
+            }
+            return Ok(Vec::new());
+        }
+        if guard.pointer.is_null() || count > 1_000_000 {
+            return Err("OCCT 返回无效或过大的圆柱面数组。".into());
+        }
+        let mut faces = Vec::with_capacity(count);
+        for row in unsafe { std::slice::from_raw_parts(guard.pointer, count) } {
+            let finite = row.radius.is_finite()
+                && row.axis_origin.iter().all(|v| v.is_finite())
+                && row.axis_direction.iter().all(|v| v.is_finite())
+                && row.v_min.is_finite()
+                && row.v_max.is_finite()
+                && row.u_min.is_finite()
+                && row.u_max.is_finite()
+                && row.surface_point.iter().all(|v| v.is_finite())
+                && row.normal.iter().all(|v| v.is_finite());
+            if !finite || row.radius <= 0.0 || row.v_min > row.v_max || row.u_min > row.u_max {
+                return Err("OCCT 圆柱面记录包含无效半径、轴线或修剪范围。".into());
+            }
+            let axis_norm = row.axis_direction.iter().map(|v| v * v).sum::<f64>().sqrt();
+            let normal_norm = row.normal.iter().map(|v| v * v).sum::<f64>().sqrt();
+            if (axis_norm - 1.0).abs() > 1.0e-8 || (normal_norm - 1.0).abs() > 1.0e-8 {
+                return Err("OCCT 圆柱面轴线或法向未归一化。".into());
+            }
+            faces.push(CylindricalFace {
+                radius: row.radius,
+                axis_origin: row.axis_origin,
+                axis_direction: row.axis_direction,
+                axial_span: [row.v_min, row.v_max],
+                angular_span: [row.u_min, row.u_max],
+                surface_point: row.surface_point,
+                oriented_normal: row.normal,
+            });
+        }
+        Ok(faces)
+    }
+
     /// Return exact B-Rep material spans along a normalized line direction.
     /// The OCCT ABI reports t in the shape's length unit (mm in CADPlan).
     pub fn line_material_intervals(
