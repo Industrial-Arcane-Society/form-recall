@@ -59,8 +59,8 @@
 
 | ID | 优先级 | 任务 | 状态 | 完成条件 |
 |---|---|---|---|---|
-| F7.G1 | P0 | 主 Agent 直接查看原图和当前单视图 | 代码完成，真实链路待验收 | 已移除无条件剥离，mock wire 7/7、schema契约1/1；原图与当前预览保留，过期工具预览清理。真实上行与模型端验收仍待 G8；见 [记录](./28-f7-main-agent-image-input.md) |
-| F7.G2 | P0 | CADPlan、Agent 与桌面模型统一同步 | 已定位，待 G3 后实现 | 写工具完成后发送同版本交互网格、特征树、尺寸及输出路径；Quick/Agent/参数编辑/保存/导出使用同一活动模型，拒绝旧 revision 覆盖，不能修改 Python 中另一份旧文档。 |
+| F7.G1 | P0 | 主 Agent 直接查看原图和当前单视图 | 代码完成；原图经视觉工具真实传输，主对话模型直收证据仍缺 | 无条件剥离已移除，mock wire 7/7、schema契约1/1。实跑证明原图以精确 SHA 到达本地 source inventory 和图像审查请求；当前 runner 没有单独记录主 DSH provider 的图像 wire，故不能宣称主对话模型本身已直接收到原图；视觉审查还误报了左面孔位，详见 [实测](./35-f7-image-acceptance-run-01.md)。 |
+| F7.G2 | P0 | CADPlan、Agent 与桌面模型统一同步 | **进行中，未验收** | 活动模型恢复、Agent/Quick 部分写入、参数/名称原生重建及 save/STL/report 路由已搭建；snapshot 命令注册、UI 特征删除/移动/启停、多视图导出、旧工程导入和 generation 并发防旧写仍在实现/验证。最终需写工具后发送同版交互网格/特征树/尺寸/输出路径；所有编辑保存导出共享活动模型。 |
 | F7.G3 | P0 | 请求结束与模型验收状态区分 | 代码完成，端到端待验收 | Host 9/9、Vue build通过；turn_status独立，旧finish不得accepted，旧preview显示stale，纯问答不称建模完成；真实四场景见 G8，记录见 [状态真值](./29-f7-turn-and-model-status.md) |
 | F7.G4 | P0 | 阶段复核与施工范围一致 | 代码完成，真实视觉待验收 | 宿主revision/ID范围、out_of_scope、全当前几何覆盖门槛已接入；定向集成通过，不完整范围只能诊断不可贡献覆盖；真实返修待 G8；见 [记录](./32-f7-stage-review-scope.md) |
 | F7.G5 | P1 | 观察因冲突可重新读取、版本可追踪 | **代码完成，真实视觉链路待验收** | 普通同 SHA/ROI 复用缓存；Agent 显式传 `conflict`/`reobserve` 才重新观察并递增版本；保留历史、SHA/ROI/reason/telemetry；新版 evidence ID 隔离旧 review/finding。定向测试 11+5+3 通过；见 [记录](./34-f7-observation-refresh.md)。 |
@@ -68,7 +68,7 @@
 | F7.G7 | P1 | 分阶段模型、推理预算及行为熔断 | 待实现 | 感知/建模/审查可独立配置、默认共用；记录requested/effective reasoning。对不支持设置明确反馈；按运行时间、重复无变化、错误类别管理有界终止与恢复，不以小固定返修次数截断正常任务。 |
 | F7.G8 | P1 | 真实多模态与多轮链路可复跑验收 | **已完成 1 次真实图片负样本，整体未通过** | 原图真实传输、DSH工具执行和多模态review均发生；review错误地声称左侧有孔，且所有返回 `evidence_id` 为空/未映射，因此宿主 coverage 为 partial、`accepted=false`。hole-array 调用后 revision 未变，现有运行轨迹缺少原始参数/结果，原因待查。见 [冷启动实测 01](./35-f7-image-acceptance-run-01.md)。修复后仍需重跑单图、多图、文字、多轮返修、取消与 CATIA 独立验收。 |
 
-执行顺序：先 F7.G1–G4，随后 G5–G8；F4 完整几何、F5/F6 原生状态迁移同时继续。F7 总体只有上述链路整改和原有科学验收全部完成后才可标记完成。当前新建的冷启动 runner 仍是未验收草稿：其硬编码模型/只读提示词与生产不一致，修正前不能作为 F7 结果。
+执行顺序：先完成 P0 G1–G4 的缺口，再推进 G5–G8；F4 完整几何、F5/F6 原生状态迁移同时继续。生产同源冷启动 runner 已执行并记录一轮失败样本，不代表整个 G8 或 F7 通过。F7 总体只有所有链路整改和真实验收完成后才可标记完成。
 
 ## F0 验收记录
 
