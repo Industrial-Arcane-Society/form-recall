@@ -55,6 +55,7 @@ pub fn preflight(plan: &Value) -> Result<Value, String> {
             "socket_head_bolt",
             "spoked_wheel",
             "piston",
+            "conrod",
         ]
         .contains(&kind)
         {
@@ -82,6 +83,15 @@ pub fn preflight(plan: &Value) -> Result<Value, String> {
             ],
             "piston" => &["diameter", "height", "pin_d", "grooves"],
             "spoked_wheel" => &["outer_r", "rim_w", "hub_r", "height", "spokes", "spoke_w"],
+            "conrod" => &[
+                "length",
+                "big_d",
+                "small_d",
+                "big_bore",
+                "small_bore",
+                "shank_w",
+                "thick",
+            ],
             _ => &[],
         };
         for key in required_native_parameters {
@@ -99,6 +109,10 @@ pub fn preflight(plan: &Value) -> Result<Value, String> {
         if kind == "spoked_wheel" {
             let normalized = normalized_feature(feature, plan)?;
             native_parametric_features::preflight_spoked_wheel(&normalized["parameters"])?;
+        }
+        if kind == "conrod" {
+            let normalized = normalized_feature(feature, plan)?;
+            native_parametric_features::preflight_conrod(&normalized["parameters"])?;
         }
         if kind == "pattern" {
             let count = p
@@ -178,6 +192,10 @@ pub fn build(plan: &Value, manifest: &Path, cancelled: &AtomicBool) -> Result<Bu
         } else if normalized["kind"] == "spoked_wheel" {
             let (tools, support) =
                 native_parametric_features::build_spoked_wheel(&kernel, &normalized["parameters"])?;
+            (tools, vec![], Some(support))
+        } else if normalized["kind"] == "conrod" {
+            let (tools, support) =
+                native_parametric_features::build_conrod(&kernel, &normalized["parameters"])?;
             (tools, vec![], Some(support))
         } else {
             let (tools, holes) = feature_tools(&kernel, &normalized, bb, current.as_ref())?;
@@ -985,6 +1003,12 @@ fn normalized_feature(feature: &Value, plan: &Value) -> Result<Value, String> {
             "rim_w",
             "hub_r",
             "spoke_w",
+            "big_d",
+            "small_d",
+            "big_bore",
+            "small_bore",
+            "shank_w",
+            "thick",
         ]
         .contains(&key.as_str())
         {

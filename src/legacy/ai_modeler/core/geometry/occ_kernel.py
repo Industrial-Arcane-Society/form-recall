@@ -1631,15 +1631,17 @@ def _feature_geometry(doc, feature, bbox, max_mesh_faces, host_shape=None):
         radial_big = r_big - min(shank_w / 2.0, (r_big - bore_big) * 0.8)
         radial_small = r_small - min(shank_w / 2.0, (r_small - bore_small) * 0.8)
         inset = 0.25
+        # Profile coordinates are local to `center`; pre-applying x_big/cy
+        # here and passing `center` to make_prism translates the web twice.
         web_profile = [
-            (x_big + (radial_big - inset) * delta_ratio,
-             cy + (radial_big - inset) * tangent_y),
-            (x_small + (radial_small - inset) * delta_ratio,
-             cy + (radial_small - inset) * tangent_y),
-            (x_small + (radial_small - inset) * delta_ratio,
-             cy - (radial_small - inset) * tangent_y),
-            (x_big + (radial_big - inset) * delta_ratio,
-             cy - (radial_big - inset) * tangent_y),
+            (-length / 2.0 + (radial_big - inset) * delta_ratio,
+             (radial_big - inset) * tangent_y),
+            (length / 2.0 + (radial_small - inset) * delta_ratio,
+             (radial_small - inset) * tangent_y),
+            (length / 2.0 + (radial_small - inset) * delta_ratio,
+             -(radial_small - inset) * tangent_y),
+            (-length / 2.0 + (radial_big - inset) * delta_ratio,
+             -(radial_big - inset) * tangent_y),
         ]
         web = make_prism(web_profile, thickness, center, "Z", True)
         result = fuse_many(rings + [web])

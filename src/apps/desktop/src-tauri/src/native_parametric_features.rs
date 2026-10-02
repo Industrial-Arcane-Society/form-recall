@@ -7,6 +7,147 @@ const MAX_PISTON_GROOVES: usize = 256;
 const MAX_PISTON_PROFILE_POINTS: usize = 4 * MAX_PISTON_GROOVES + 4;
 const MAX_SPOKED_WHEEL_SPOKES: u64 = 512;
 
+pub fn preflight_conrod(parameters: &Value) -> Result<(), String> {
+    let length = number(parameters, "length")?;
+    let big_d = number(parameters, "big_d")?;
+    let small_d = number(parameters, "small_d")?;
+    let big_bore = number(parameters, "big_bore")?;
+    let small_bore = number(parameters, "small_bore")?;
+    let shank_w = number(parameters, "shank_w")?;
+    let thick = number(parameters, "thick")?;
+    if [length, big_d, small_d, big_bore, small_bore, shank_w, thick]
+        .iter()
+        .any(|value| *value <= 0.0)
+    {
+        return Err("连杆 length、直径、孔径、杆宽和厚度必须为正数。".into());
+    }
+    let big_r = big_d / 2.0;
+    let small_r = small_d / 2.0;
+    let big_bore_r = big_bore / 2.0;
+    let small_bore_r = small_bore / 2.0;
+    if big_bore >= big_d || small_bore >= small_d {
+        return Err("连杆大小头孔径必须小于对应头部直径。".into());
+    }
+    let delta_ratio = (big_r - small_r) / length;
+    if !delta_ratio.is_finite() || delta_ratio.abs() >= 1.0 {
+        return Err("连杆长度不足以构造大小头外公切杆身。".into());
+    }
+    let radial_big = big_r - (shank_w / 2.0).min((big_r - big_bore_r) * 0.8);
+    let radial_small = small_r - (shank_w / 2.0).min((small_r - small_bore_r) * 0.8);
+    let inset = 0.25;
+    if !radial_big.is_finite()
+        || !radial_small.is_finite()
+        || radial_big - inset <= big_bore_r
+        || radial_small - inset <= small_bore_r
+    {
+        return Err("连杆杆身无法在保留大小头孔壁的条件下连接。".into());
+    }
+    let center = point3(parameters.get("center"))?;
+    if center.iter().any(|coordinate| !coordinate.is_finite()) {
+        return Err("连杆 center 必须为有限XYZ坐标。".into());
+    }
+    Ok(())
+}
+
+pub fn build_conrod(kernel: &Kernel, parameters: &Value) -> Result<(Vec<Shape>, Value), String> {
+    preflight_conrod(parameters)?;
+    let length = number(parameters, "length")?;
+    let big_d = number(parameters, "big_d")?;
+    let small_d = number(parameters, "small_d")?;
+    let big_bore = number(parameters, "big_bore")?;
+    let small_bore = number(parameters, "small_bore")?;
+    let shank_w = number(parameters, "shank_w")?;
+    let thick = number(parameters, "thick")?;
+    let center = point3(parameters.get("center"))?;
+    let big_r = big_d / 2.0;
+    let small_r = small_d / 2.0;
+    let big_bore_r = big_bore / 2.0;
+    let small_bore_r = small_bore / 2.0;
+    let big_x = -length / 2.0;
+    let small_x = length / 2.0;
+    let half_thick = thick / 2.0;
+
+    let big_ring = kernel.revolve(
+        &[
+            [big_bore_r, -half_thick],
+            [big_r, -half_thick],
+            [big_r, half_thick],
+            [big_bore_r, half_thick],
+        ],
+        360.0,
+        [center[0] + big_x, center[1], center[2]],
+        Axis::Z,
+    )?;
+    let small_ring = kernel.revolve(
+        &[
+            [small_bore_r, -half_thick],
+            [small_r, -half_thick],
+            [small_r, half_thick],
+            [small_bore_r, half_thick],
+        ],
+        360.0,
+        [center[0] + small_x, center[1], center[2]],
+        Axis::Z,
+    )?;
+
+    let delta_ratio = (big_r - small_r) / length;
+    let tangent_y = (1.0 - delta_ratio * delta_ratio).sqrt();
+    let radial_big = big_r - (shank_w / 2.0).min((big_r - big_bore_r) * 0.8);
+    let radial_small = small_r - (shank_w / 2.0).min((small_r - small_bore_r) * 0.8);
+    let inset = 0.25;
+    let web_profile = [
+        [
+            big_x + (radial_big - inset) * delta_ratio,
+            (radial_big - inset) * tangent_y,
+        ],
+        [
+            small_x + (radial_small - inset) * delta_ratio,
+            (radial_small - inset) * tangent_y,
+        ],
+        [
+            small_x + (radial_small - inset) * delta_ratio,
+            -(radial_small - inset) * tangent_y,
+        ],
+        [
+            big_x + (radial_big - inset) * delta_ratio,
+            -(radial_big - inset) * tangent_y,
+        ],
+    ];
+    // Keep web coordinates local to center; unlike the legacy implementation,
+    // do not pre-translate the profile and then translate it again as a prism.
+    let web = kernel.prism(
+        &web_profile,
+        thick,
+        [center[0], center[1], center[2] - half_thick],
+        Axis::Z,
+    )?;
+    let result = kernel.fuse(&[&big_ring, &small_ring, &web])?;
+    let analysis = result.analyze()?;
+    if analysis.valid != 1 || analysis.solid_count != 1 || analysis.closed_solid_count != 1 {
+        return Err(format!(
+            "连杆必须是单一有效闭合实体；当前 valid={}, solids={}, closed={}",
+            analysis.valid, analysis.solid_count, analysis.closed_solid_count
+        ));
+    }
+    let details = json!({
+        "kind":"conrod",
+        "status":"approximate",
+        "geometry_support":"approximate",
+        "builder":"analytic_annular_ends_with_external_tangent_web",
+        "center_mm":center,
+        "big_end_center_mm":[center[0] + big_x, center[1], center[2]],
+        "small_end_center_mm":[center[0] + small_x, center[1], center[2]],
+        "big_d_mm":big_d,
+        "small_d_mm":small_d,
+        "big_bore_mm":big_bore,
+        "small_bore_mm":small_bore,
+        "shank_width_mm":shank_w,
+        "thickness_mm":thick,
+        "warnings":["杆身采用外公切梯形棱柱近似；未表达工字截面、锻造过渡及倒角。"]
+    });
+    Ok((vec![result], details))
+}
+
 pub fn preflight_spoked_wheel(parameters: &Value) -> Result<(), String> {
     if let Some(axis) = parameters.get("axis") {
         if axis.as_str() != Some("Z") {
@@ -324,7 +465,7 @@ fn number(parameters: &Value, key: &str) -> Result<f64, String> {
         .get(key)
         .and_then(Value::as_f64)
         .filter(|value| value.is_finite())
-        .ok_or_else(|| format!("活塞参数 {key} 必须是有限数值。"))
+        .ok_or_else(|| format!("几何参数 {key} 必须是有限数值。"))
 }
 
 fn point3(value: Option<&Value>) -> Result<[f64; 3], String> {
@@ -334,13 +475,13 @@ fn point3(value: Option<&Value>) -> Result<[f64; 3], String> {
     let values = value
         .as_array()
         .filter(|values| values.len() == 3)
-        .ok_or("活塞 center 必须是全局 XYZ 三维数组。")?;
+        .ok_or("center 必须是全局 XYZ 三维数组。")?;
     let mut point = [0.0; 3];
     for (index, value) in values.iter().enumerate() {
         point[index] = value
             .as_f64()
             .filter(|coordinate| coordinate.is_finite())
-            .ok_or("活塞 center 必须是有限数值。")?;
+            .ok_or("center 必须是有限数值。")?;
     }
     Ok(point)
 }
@@ -349,6 +490,48 @@ fn point3(value: Option<&Value>) -> Result<[f64; 3], String> {
 mod tests {
     use super::*;
     use serde_json::json;
+
+    #[test]
+    fn conrod_preflight_rejects_missing_or_impossible_required_geometry() {
+        let valid = json!({
+            "length":80,"big_d":30,"small_d":18,"big_bore":20,
+            "small_bore":10,"shank_w":10,"thick":8,"center":[20,-11,7]
+        });
+        assert!(preflight_conrod(&valid).is_ok());
+        for key in [
+            "length",
+            "big_d",
+            "small_d",
+            "big_bore",
+            "small_bore",
+            "shank_w",
+            "thick",
+        ] {
+            let mut missing = valid.clone();
+            missing.as_object_mut().unwrap().remove(key);
+            assert!(
+                preflight_conrod(&missing).is_err(),
+                "missing {key} must be rejected"
+            );
+        }
+        let mut bad_bore = valid.clone();
+        bad_bore["big_bore"] = json!(30);
+        assert!(
+            preflight_conrod(&bad_bore)
+                .unwrap_err()
+                .contains("孔径必须小于")
+        );
+        let mut too_short = valid.clone();
+        too_short["length"] = json!(5);
+        assert!(preflight_conrod(&too_short).unwrap_err().contains("外公切"));
+        let mut non_finite = valid.clone();
+        non_finite["shank_w"] = json!(f64::INFINITY);
+        assert!(
+            preflight_conrod(&non_finite)
+                .unwrap_err()
+                .contains("有限数值")
+        );
+    }
 
     #[test]
     fn spoked_wheel_preflight_validates_profile_dimensions_and_resource_bounds() {

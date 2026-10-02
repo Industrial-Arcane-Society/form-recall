@@ -54,6 +54,16 @@ def main():
         dict(outer_r=2, rim_w=0.4, hub_r=0.6, height=1, spokes=5, spoke_w=0.3,
              center=[1.2, -0.7, 0.5]),
         dict(length="cm", angle="deg"))
+    add("conrod-origin", "conrod",
+        dict(length=80, big_d=30, small_d=18, big_bore=20, small_bore=10,
+             shank_w=10, thick=8, center=[0, 0, 0]))
+    add("conrod-translated-center", "conrod",
+        dict(length=80, big_d=30, small_d=18, big_bore=20, small_bore=10,
+             shank_w=10, thick=8, center=[20, -11, 7]))
+    add("conrod-cm-unit-scaling", "conrod",
+        dict(length=8, big_d=3, small_d=1.8, big_bore=2, small_bore=1,
+             shank_w=1, thick=0.8, center=[2, -1.1, 0.7]),
+        dict(length="cm", angle="deg"))
 
     for axis in "XYZ":
         for mode in ("center", "base_true", "base_false"):
@@ -168,6 +178,11 @@ def main():
         "spoked-wheel-z-translated": ([-8, -27, 0, 32, 13, 10], [12, -7, 5]),
         "spoked-wheel-cm-unit-scaling": ([-8, -27, 0, 32, 13, 10], [12, -7, 5]),
     }
+    expected_conrods = {
+        "conrod-origin": ([-55, -15, -4, 49, 15, 4], [0, 0, 0], 13425.635002984112),
+        "conrod-translated-center": ([-35, -26, 3, 69, 4, 11], [20, -11, 7], 13425.635002984112),
+        "conrod-cm-unit-scaling": ([-35, -26, 3, 69, 4, 11], [20, -11, 7], 13425.635002984112),
+    }
 
     records = []
     for name, plan in cases:
@@ -216,6 +231,18 @@ def main():
                     or details.get("axis") != "Z"
                     or any(abs(a - b) > 1e-9 for a, b in zip(details.get("center_mm", []), expected_center))):
                 raise AssertionError((name, "spoked-wheel-geometry-contract", native["bounds_mm"], support))
+        if name in expected_conrods:
+            expected_bounds, expected_center, expected_volume = expected_conrods[name]
+            support = native["feature_results"][0]
+            details = support.get("support_details", {})
+            if (max(abs(a - b) for a, b in zip(native["bounds_mm"], expected_bounds)) > 1e-6
+                    or abs(native["volume_mm3"] - expected_volume) > 1e-5
+                    or support.get("geometry_support") != "approximate"
+                    or details.get("geometry_support") != "approximate"
+                    or details.get("builder") != "analytic_annular_ends_with_external_tangent_web"
+                    or any(abs(a - b) > 1e-9 for a, b in zip(details.get("center_mm", []), expected_center))):
+                raise AssertionError((name, "conrod-geometry-contract", native["bounds_mm"],
+                                      native["volume_mm3"], support))
         if name == "pattern-circular-four-through-holes":
             holes = native.get("hole_instances", [])
             if (len(holes) != 4 or native.get("hole_measurements_verified") is not True
@@ -312,6 +339,19 @@ def main():
     wheel_bad_profile["features"][0]["parameters"]["rim_w"] = 23
     wheel_bad_profile["features"][0]["sources"]["rim_w"] = {"type": "user"}
     negatives.append(("spoked-wheel-invalid-rim-hub", wheel_bad_profile, "轮缘内半径"))
+
+    conrod_missing = copy.deepcopy(wheel_case_by_name["conrod-origin"])
+    conrod_missing["features"][0]["parameters"].pop("small_bore")
+    conrod_missing["features"][0]["sources"].pop("small_bore")
+    negatives.append(("conrod-missing-required-small-bore", conrod_missing, "small_bore"))
+    conrod_bad_bore = copy.deepcopy(wheel_case_by_name["conrod-origin"])
+    conrod_bad_bore["features"][0]["parameters"]["big_bore"] = 30
+    conrod_bad_bore["features"][0]["sources"]["big_bore"] = {"type": "user"}
+    negatives.append(("conrod-bore-not-inside-head", conrod_bad_bore, "孔径必须小于"))
+    conrod_short = copy.deepcopy(wheel_case_by_name["conrod-origin"])
+    conrod_short["features"][0]["parameters"]["length"] = 5
+    conrod_short["features"][0]["sources"]["length"] = {"type": "user"}
+    negatives.append(("conrod-short-external-tangent", conrod_short, "外公切"))
 
     # The first plan leaves only the recessed local span;
     # the second asks for more depth than that span, and the third samples an

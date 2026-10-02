@@ -143,6 +143,34 @@ class OCCTBRepBackendTests(unittest.TestCase):
         self.assertAlmostEqual(30, report["bbox_mm"][4] - report["bbox_mm"][1], places=5)
         self.assertAlmostEqual(8, report["bbox_mm"][5] - report["bbox_mm"][2], places=5)
 
+    def test_conrod_translation_moves_web_and_heads_once(self):
+        base = {"length": 80, "big_d": 30, "small_d": 18,
+                "big_bore": 20, "small_bore": 10,
+                "shank_w": 10, "thick": 8, "center": [0, 0, 0]}
+        reports = []
+        volumes = []
+        for center in ([0, 0, 0], [20, -11, 7]):
+            parameters = {**base, "center": center}
+            doc = Document("conrod-translation")
+            doc.add(Feature("conrod", parameters, feature_id="conrod"))
+            shape, report = K.build_document(doc)
+            self.assertEqual("passed", report["state"], report)
+            self.assertTrue(report["brep_valid"], report)
+            self.assertEqual(1, report["solid_count"], report)
+            self.assertEqual(1, report["connected_component_count"], report)
+            self.assertTrue(report["closed"], report)
+            reports.append(report)
+            volumes.append(K.volume(shape))
+
+        for axis, offset in enumerate((20, -11, 7)):
+            self.assertAlmostEqual(
+                reports[0]["bbox_mm"][axis] + offset,
+                reports[1]["bbox_mm"][axis], places=6)
+            self.assertAlmostEqual(
+                reports[0]["bbox_mm"][axis + 3] + offset,
+                reports[1]["bbox_mm"][axis + 3], places=6)
+        self.assertAlmostEqual(volumes[0], volumes[1], places=5)
+
     def test_impeller_builds_closed_native_twisted_blade_lofts(self):
         params = {"hub_d": 20, "tip_d": 60, "height": 15,
                   "blades": 6, "blade_t": 2, "twist_deg": 25}
