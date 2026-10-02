@@ -84,6 +84,138 @@ test('conversation image scrub removes references and previews from the actual p
   ] }], input: [] })
 })
 
+test('DSH stream boundary maps unchanged user image bytes to active-turn references', async () => {
+  const temp = fs.mkdtempSync(path.join(os.tmpdir(), 'ai-modeler-stream-image-source-'))
+  const telemetryPath = path.join(temp, 'observability.jsonl')
+  const activeTurnPath = path.join(temp, 'active-turn.json')
+  const previousEnvironment = {
+    telemetry: process.env.AI_MODELER_STREAM_FILE,
+    activeTurn: process.env.AI_MODELER_ACTIVE_TURN_FILE,
+    providerBase: process.env.AI_MODELER_PROVIDER_BASE_URL,
+  }
+  const imageBytes = Buffer.from('exact-user-image-bytes')
+  const imageHash = sha256(imageBytes)
+  const patchSymbol = Symbol.for('ai-modeler.provider-fetch-observer.v1')
+  const previousPatch = globalThis[patchSymbol]
+  const previousFetch = globalThis.fetch
+  try {
+    process.env.AI_MODELER_STREAM_FILE = telemetryPath
+    process.env.AI_MODELER_ACTIVE_TURN_FILE = activeTurnPath
+    process.env.AI_MODELER_PROVIDER_BASE_URL = ''
+    fs.writeFileSync(activeTurnPath, JSON.stringify({
+      turn_id: 'image-turn',
+      reference_images: [{ id: `sha256:${imageHash}`, sha256: imageHash }],
+    }))
+    globalThis[patchSymbol] = undefined
+    globalThis.fetch = previousFetch
+    const handlers = new Map()
+    apply({ on(event, handler) { handlers.set(event, handler) } })
+    const stream = handlers.get('llm/stream')({ messages: [{ role: 'user', content: [
+      imagePart(imageBytes),
+    ] }] }, async function * () {
+      yield { type: 'text-delta', text: 'response not persisted' }
+    })
+    for await (const _chunk of stream) {}
+
+    const rows = fs.readFileSync(telemetryPath, 'utf8').trim().split(/\r?\n/).map(JSON.parse)
+    const request = rows.find(row => row.kind === 'dsh_request_start')
+    assert.equal(request.turn_id, 'image-turn')
+    assert.equal(request.request_image_count, 1)
+    assert.deepEqual(request.request_images, [{
+      transport_sha256: imageHash,
+      byte_length: imageBytes.length,
+      source_sha256: imageHash,
+      source_reference_ids: [`sha256:${imageHash}`],
+      source_kind: 'user_reference',
+      source_mapping: 'exact-source-hash-match',
+      identity_source: 'embedded_image_bytes',
+    }])
+    assert.equal(JSON.stringify(rows).includes('exact-user-image-bytes'), false)
+  } finally {
+    globalThis.fetch = previousFetch
+    if (previousPatch === undefined) delete globalThis[patchSymbol]
+    else globalThis[patchSymbol] = previousPatch
+    const restore = (name, value) => {
+      if (value === undefined) delete process.env[name]
+      else process.env[name] = value
+    }
+    restore('AI_MODELER_STREAM_FILE', previousEnvironment.telemetry)
+    restore('AI_MODELER_ACTIVE_TURN_FILE', previousEnvironment.activeTurn)
+    restore('AI_MODELER_PROVIDER_BASE_URL', previousEnvironment.providerBase)
+    fs.rmSync(temp, { recursive: true, force: true })
+  }
+})
+
+test('DSH content-addressed ACP attachments map to the exact active-turn source hash', async () => {
+  const temp = fs.mkdtempSync(path.join(os.tmpdir(), 'ai-modeler-stream-attachment-source-'))
+  const telemetryPath = path.join(temp, 'observability.jsonl')
+  const activeTurnPath = path.join(temp, 'active-turn.json')
+  const previousEnvironment = {
+    telemetry: process.env.AI_MODELER_STREAM_FILE,
+    activeTurn: process.env.AI_MODELER_ACTIVE_TURN_FILE,
+    providerBase: process.env.AI_MODELER_PROVIDER_BASE_URL,
+  }
+  const imageBytes = Buffer.from('exact-acp-attachment-image-bytes')
+  const imageHash = sha256(imageBytes)
+  const patchSymbol = Symbol.for('ai-modeler.provider-fetch-observer.v1')
+  const previousPatch = globalThis[patchSymbol]
+  const previousFetch = globalThis.fetch
+  try {
+    process.env.AI_MODELER_STREAM_FILE = telemetryPath
+    process.env.AI_MODELER_ACTIVE_TURN_FILE = activeTurnPath
+    process.env.AI_MODELER_PROVIDER_BASE_URL = ''
+    fs.writeFileSync(activeTurnPath, JSON.stringify({
+      turn_id: 'attachment-turn',
+      // The same image may be attached twice in one turn while retaining a
+      // content-addressed identity. Hash provenance must remain exact.
+      reference_images: [
+        { id: `sha256:${imageHash}`, sha256: imageHash },
+        { id: `sha256:${imageHash}`, sha256: imageHash },
+      ],
+    }))
+    globalThis[patchSymbol] = undefined
+    globalThis.fetch = previousFetch
+    const handlers = new Map()
+    apply({ on(event, handler) { handlers.set(event, handler) } })
+    const stream = handlers.get('llm/stream')({ messages: [{ role: 'user', content: [{
+      type: 'image', attachment: {
+        attachmentId: `sha256:${imageHash}`, mediaType: 'image/png', bytes: imageBytes.length,
+      },
+    }] }] }, async function * () {
+      yield { type: 'text-delta', text: 'response not persisted' }
+    })
+    for await (const _chunk of stream) {}
+
+    const rows = fs.readFileSync(telemetryPath, 'utf8').trim().split(/\r?\n/).map(JSON.parse)
+    const request = rows.find(row => row.kind === 'dsh_request_start')
+    assert.equal(request.turn_id, 'attachment-turn')
+    assert.equal(request.request_image_count, 1)
+    assert.equal(request.request_image_hash_count, 1)
+    assert.deepEqual(request.request_images, [{
+      transport_sha256: imageHash,
+      byte_length: imageBytes.length,
+      source_sha256: imageHash,
+      source_reference_ids: [`sha256:${imageHash}`],
+      source_kind: 'user_reference',
+      source_mapping: 'exact-dsh-attachment-id-match',
+      identity_source: 'dsh_content_addressed_attachment',
+    }])
+    assert.equal(JSON.stringify(rows).includes('exact-acp-attachment-image-bytes'), false)
+  } finally {
+    globalThis.fetch = previousFetch
+    if (previousPatch === undefined) delete globalThis[patchSymbol]
+    else globalThis[patchSymbol] = previousPatch
+    const restore = (name, value) => {
+      if (value === undefined) delete process.env[name]
+      else process.env[name] = value
+    }
+    restore('AI_MODELER_STREAM_FILE', previousEnvironment.telemetry)
+    restore('AI_MODELER_ACTIVE_TURN_FILE', previousEnvironment.activeTurn)
+    restore('AI_MODELER_PROVIDER_BASE_URL', previousEnvironment.providerBase)
+    fs.rmSync(temp, { recursive: true, force: true })
+  }
+})
+
 test('rewriting a Request preserves the caller init headers and reports image inventory', async () => {
   const temp = fs.mkdtempSync(path.join(os.tmpdir(), 'ai-modeler-stream-bridge-'))
   const telemetryPath = path.join(temp, 'observability.jsonl')
@@ -170,6 +302,11 @@ test('rewriting a Request preserves the caller init headers and reports image in
     }
     const wireRequest = rows.find(row => row.kind === 'provider_wire_request')
     const completion = rows.find(row => row.kind === 'provider_wire_response_complete')
+    assert.equal(wireRequest.image_count_before_cleanup, 4)
+    assert.equal(wireRequest.image_hash_count_before_cleanup, 3)
+    assert.equal(wireRequest.images_before_cleanup[0].identity_source, 'embedded_image_bytes')
+    assert.equal(wireRequest.images_before_cleanup[2].source_kind, 'user_reference')
+    assert.equal(wireRequest.images_before_cleanup[2].source_mapping, 'exact-transport-hash-match')
     assert.equal(wireRequest.image_count, 0)
     assert.equal(wireRequest.image_hash_count, 0)
     assert.deepEqual(wireRequest.images, [])

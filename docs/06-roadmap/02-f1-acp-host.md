@@ -19,7 +19,7 @@
 | F1.1 ACP stdio process/JSON-RPC peer | **已完成** | 显式子进程、LF JSON-RPC 行帧、request id 响应匹配、通知订阅、RPC error、请求超时、关闭 stdin 后有界等待/回收；不接入 Tauri，不宣称真实 DSH 已运行 |
 | F1.2 固定 runtime manifest 与安装器 | **已完成** | app 私有 Node 与 DSH 包；校验下载、版本、升级和失败回滚 |
 | F1.3 ACP session 与 Tauri 事件路由 | **已完成** | ACP 初始化、文字/图片、持续会话、恢复/取消/关闭；UI Agent 模式改走 Rust Host，Quick 模式仍走 Python；固定 DSH ACP 控制面已通过隔离验收 |
-| F1.4 固定 runtime 真机 CLI 验收 | 未开始 | 无模型 API key 的 ACP 控制面测试与受控的真实路由请求分别记录；图片能力、Cordis 插件、thought/tool 更新和会话清理有结果 |
+| F1.4 固定 runtime 真机 CLI 验收 | **已完成：链路通过，识图负样本已登记** | 固定 runtime CLI 已验收 ACP 图片、Cordis 工具、多轮恢复、取消及进程清理；图像观察准确率单独由 F7 评估 |
 
 ## F1.1 实施结果
 
@@ -63,4 +63,28 @@
 - `npm run build`：通过；仍有 CAD viewport 637 KB chunk 体积提示。
 - 私有 DSH `0.2.0-rc.2 --dump-config` 加载应用生成的 profile patch：退出码 0、stderr 为空，配置输出包含 AI Modeler provider 和三个 Cordis 插件。
 - 在隔离临时 `DSH_HOME` 中通过私有 Node/DSH 真实运行 ACP：`initialize`、`session/new`、关闭进程、重新启动、`session/resume`、设置 `reasoning_effort=high`、`session/close` 均成功；ACP 公布 `image=true`。DSH stderr 为空，原生 Cordis 插件已注册 24 个工具（包括 CAD、知识检索、`web_search` 等），没有发送 `session/prompt`，没有使用 API 密钥发起模型请求。
-- 以上通过 DSH ACP 控制面和 Cordis 插件装载验证，不代表已完成已安装 Tauri 应用的界面验收、图片上行到 provider 的验证或 CAD 工具实建；这些留在 F1.4。
+- 上述为 F1.3 截止时的结论：通过 DSH ACP 控制面和 Cordis 插件装载验证，但尚未完成 live prompt、图片路由或 CAD 工具实建。F1.4 的后续验收结果见下文。
+
+## F1.4 固定 runtime 真实运行验收
+
+### CLI/runtime 与控制面
+
+- 在隔离 worktree 的 `src/apps/desktop/src-tauri/target/f1-runtime-probe/` 准备 Node/DSH 运行目录。Node v22.23.3 官方归档 SHA-256 与 manifest 相符，package.json 与 package-lock.json SHA-256 也均相符。私有 npm 安装完成 538 个包；Node v22.23.3、npm 10.9.9、DSH/ACP 0.2.0-rc.2、ACP SDK 1.4.0。
+- DSH `--profile acp --patch ... --dump-config` 返回 0、stderr 为空，合并配置内能看到 `ai-modeler-native-tools`、`ai-modeler-attachment-store` 与 `ai-modeler-live-stream` 三个 Cordis 插件。`DSH_HOME` 全程指向隔离目录，没有读取或修改全局 DSH profile。
+- ACP `initialize` 返回 `promptCapabilities.image=true`。受控 API 请求将 reasoning effort 设为 off；session/prompt 返回 `end_turn`。只使用仓库中的 `src/legacy/examples/真实照片样本/50x50x5/KMS-M09-H06-50-20.png`，文件 SHA-256 为 `941e1f4b78255cbc2178a9e3daca3ffe54e6ac602a24f22b0a699fd113858851`，大小 17,849 bytes；没有把它描述成此前用户提供的参考图。
+- 真实 Cordis 只读工具轨迹为 `cad_inspect_references`（完成）和 `cad_get_state`（完成）；没有调用写模型工具，CADPlan 保持 empty/revision 0。
+- 第一次 live session 收到 `session/close` 后，另一 DSH 进程用同一 session id 与 cwd 调用 `session/resume` 成功；随后发出 `session/prompt` 并发送 `session/cancel`，ACP 返回 `stopReason=cancelled`。两个 DSH 进程均以 exit code 0 退出、stderr 为空。
+
+### 图片路径与质量负样本
+
+- Rust Host 的 `active-turn.json` 将 turn id、原图引用 id 与 SHA-256 绑定。DSH ACP 会把图片内联字节持久化为内容寻址附件，LLM stream 中的图片结构是 `image.attachment.attachmentId=sha256:…`，不是原始 base64。stream bridge 现按 DSH attachment id 与活动轮次 SHA 做精确匹配；Node 定向测试覆盖该实际结构。
+- 真实运行记录显示 DSH LLM stream 有 1 张图，SHA 与本轮源图完全一致。Node provider 拦截器也在清理前观察到同 SHA、同字节数的 1 张图片；应用现行策略随后从主对话 provider payload 移除该图片，实际发往主模型的 request image count 是 0。视觉调用由 `cad_inspect_references` 的专用 Python observer 完成。因此本轮证明 ACP 附件及 Cordis 观察路径收到原图，也明确发现主 Agent 当前并不直接以图像 token 看图；F2–F6 迁移时必须决定并迁移该依赖，不能把工具观察说成 DSH 主模型直传视觉。
+- 尽管原图 SHA 路径正确，图上实际有 6 个明显孔，`cad_inspect_references` 将两组各判成 4 个，主 Agent 最后复述为约 8 个。观察置信度为 0.8，但计数错误；这是 F7 图像理解精度负样本，不能算成模型通过或几何结果。
+- Python observer 的结构化记录确认了实际调用模型/Responses route、reasoning off、输入 crop SHA 与源图 SHA 一致并收到 observation 响应；目前 Python 请求没有接入 Rust/Node provider-wire 原始请求记录，其 provider 线上图片 payload 的独立捕获仍是迁移/审计缺口。
+
+### 实施与验证
+
+- Rust 增加活动轮次图像哈希记录；Node stream bridge 根据 DSH 内容寻址附件 id 关联源 SHA，并分别记录清理前 provider 输入图片数与清理后实际发送图片数。
+- `node --test src/legacy/tests/test_dsh_stream_bridge.mjs`：7/7 通过，覆盖原始图像字节、DSH attachment id、provider 清理及无文本落盘。
+- `cargo fmt --all --check`：通过；`cargo test --lib agent_host::tests::active_turn_record_binds_user_image_hash_to_provider_observation`：1/1 通过。
+- 前端下拉菜单修复另在 `main` 的提交 `b597a69`，不属于本 F1.4 提交。

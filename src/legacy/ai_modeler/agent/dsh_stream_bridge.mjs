@@ -68,6 +68,74 @@ function imagePartBytes(value) {
   return collectImages(value)
 }
 
+function imagePartIdentity(value) {
+  const byteVariants = imagePartBytes(value)
+  if (byteVariants.length === 1) {
+    const bytes = byteVariants[0]
+    return { sha256: sha256(bytes), byte_length: bytes.byteLength, identity_source: 'embedded_image_bytes' }
+  }
+  // ACP persists accepted image bytes before they enter the DSH LLM stream.
+  // The attachment ID is itself the SHA-256 of the admitted bytes.
+  const attachmentId = value?.attachment?.attachmentId ?? value?.attachmentId
+  const match = typeof attachmentId === 'string' ? /^sha256:([a-f0-9]{64})$/i.exec(attachmentId) : null
+  if (match) {
+    return {
+      sha256: match[1].toLowerCase(),
+      byte_length: knownNonNegativeCount(value?.attachment?.bytes),
+      identity_source: 'dsh_content_addressed_attachment',
+    }
+  }
+  return { sha256: null, byte_length: null, identity_source: 'unavailable' }
+}
+
+function imageEvidenceRows(parts, referenceImages = [], transportMap = {}) {
+  return parts.map(part => {
+    const identity = imagePartIdentity(part)
+    const digest = identity.sha256
+    const references = digest ? referenceImages.filter(row =>
+      row && typeof row === 'object' && (row.sha256 === digest || row.id === `sha256:${digest}`)) : []
+    const mapValue = digest ? transportMap[digest] : null
+    const mapRows = Array.isArray(mapValue) ? mapValue.map(reference_id => ({ reference_id }))
+      : Array.isArray(mapValue?.sources) ? mapValue.sources : []
+    const userSources = mapRows.filter(row => row && row.source_kind === 'user_reference')
+    const previewSources = mapRows.filter(row => row && row.source_kind === 'tool_preview')
+    const ids = [...new Set([
+      ...references.map(row => row.id),
+      ...mapRows.map(row => row.reference_id),
+    ].filter(Boolean))]
+    const sourceHashes = [...new Set(userSources.map(row => row.source_sha256)
+      .filter(value => typeof value === 'string'))]
+    let sourceMapping = 'unknown'
+    if (references.length > 0) {
+      sourceMapping = identity.identity_source === 'dsh_content_addressed_attachment'
+        ? 'exact-dsh-attachment-id-match' : 'exact-source-hash-match'
+    } else if (mapRows.length) {
+      sourceMapping = 'exact-transport-hash-match'
+    }
+    const unique = field => [...new Set(mapRows.map(row => row[field])
+      .filter(value => value !== undefined && value !== null))]
+    return {
+      transport_sha256: digest,
+      byte_length: identity.byte_length,
+      source_sha256: references.length > 0 ? digest : sourceHashes.length === 1 ? sourceHashes[0] : null,
+      source_reference_ids: ids,
+      source_kind: references.length || userSources.length ? 'user_reference'
+        : previewSources.length ? 'tool_preview'
+        : mapRows.length ? 'mapped_other' : 'unknown',
+      source_mapping: sourceMapping,
+      identity_source: identity.identity_source,
+      ...(mapRows.length ? {
+        roi_norm: mapRows.length === 1 ? mapRows[0].roi_norm ?? null : null,
+        preview_revisions: unique('revision'),
+        preview_generations: unique('preview_generation'),
+        preview_views: unique('view'),
+        preview_geometry_signatures: unique('geometry_signature'),
+        partial_preview: previewSources.some(row => row.partial === true),
+      } : {}),
+    }
+  })
+}
+
 function collectImageParts(value, output = []) {
   if (Array.isArray(value)) {
     for (const child of value) collectImageParts(child, output)
@@ -326,6 +394,8 @@ function installFetchObserver() {
     }
     const activeTurn = readJson(activeTurnPath, {})
     const transportMap = readJson(imageMapPath, {})
+    const inboundImageParts = collectImageParts(payload?.messages || payload?.input || [])
+    const inboundImageRows = imageEvidenceRows(inboundImageParts, activeTurn.reference_images, transportMap)
     const imageContextCleanup = pruneStalePreviewImages(payload, transportMap)
     Object.assign(imageContextCleanup, stripConversationImages(payload))
     if (imageContextCleanup.removed_stale_tool_previews > 0 ||
@@ -349,46 +419,7 @@ function installFetchObserver() {
       }
     }
     const requestImages = collectImageParts(payload?.messages || payload?.input || [])
-    const imageRows = requestImages.map(part => {
-      const byteVariants = imagePartBytes(part)
-      if (byteVariants.length !== 1) {
-        return {
-          transport_sha256: null, byte_length: null,
-          source_kind: 'unknown', source_mapping: 'unavailable',
-        }
-      }
-      const bytes = byteVariants[0]
-      const transportHash = sha256(bytes)
-      const mapValue = transportMap[transportHash]
-      const mapRows = Array.isArray(mapValue)
-        ? mapValue.map(referenceId => ({ reference_id: referenceId }))
-        : Array.isArray(mapValue?.sources) ? mapValue.sources : []
-      const mappedIds = mapRows.map(row => row.reference_id).filter(Boolean)
-      const manifestImages = Array.isArray(activeTurn.reference_images) ? activeTurn.reference_images : []
-      const refs = mappedIds.map(id => manifestImages.find(row => row.id === id)).filter(Boolean)
-      const uniqueSourceHashes = [...new Set(mapRows.map(row => row.source_sha256)
-        .filter(value => typeof value === 'string'))]
-      const previewSources = mapRows.filter(row => row.source_kind === 'tool_preview')
-      const values = field => [...new Set(mapRows.map(row => row[field])
-        .filter(value => value !== undefined && value !== null))]
-      return {
-        transport_sha256: transportHash,
-        byte_length: bytes.byteLength,
-        source_sha256: uniqueSourceHashes.length === 1 ? uniqueSourceHashes[0]
-          : refs.length === 1 ? refs[0].sha256 : null,
-        source_reference_ids: mappedIds,
-        roi_norm: mapRows.length === 1 ? mapRows[0].roi_norm ?? null : null,
-        source_kind: refs.length ? 'user_reference'
-          : previewSources.length ? 'tool_preview'
-          : mapRows.length ? 'mapped_other' : 'unknown',
-        preview_revisions: values('revision'),
-        preview_generations: values('preview_generation'),
-        preview_views: values('view'),
-        preview_geometry_signatures: values('geometry_signature'),
-        partial_preview: previewSources.some(row => row.partial === true),
-        source_mapping: mapRows.length ? 'exact-transport-hash-match' : 'unknown',
-      }
-    })
+    const imageRows = imageEvidenceRows(requestImages, activeTurn.reference_images, transportMap)
     const requestId = `${activeTurn.turn_id || 'turn-unknown'}:${Date.now()}:${Math.random().toString(36).slice(2, 8)}`
     const startedAt = Date.now()
     append(telemetryPath, {
@@ -410,6 +441,9 @@ function installFetchObserver() {
             })),
         stream: payload?.stream === true,
       },
+      image_count_before_cleanup: inboundImageParts.length,
+      image_hash_count_before_cleanup: inboundImageRows.filter(row => row.transport_sha256).length,
+      images_before_cleanup: inboundImageRows,
       image_count: payload === null ? null : requestImages.length,
       image_hash_count: payload === null ? null : imageRows.filter(row => row.transport_sha256).length,
       image_inventory_source: payload === null ? 'unavailable' : 'parsed_provider_payload',
@@ -579,10 +613,9 @@ export function apply(ctx) {
     const turn = readJson(process.env.AI_MODELER_ACTIVE_TURN_FILE, {})
     const start = Date.now()
     const imageParts = collectImageParts(options?.messages || [])
-    const imageHashes = imageParts.flatMap(part => {
-      const byteVariants = imagePartBytes(part)
-      return byteVariants.length === 1 ? [sha256(byteVariants[0])] : []
-    })
+    const referenceImages = Array.isArray(turn.reference_images) ? turn.reference_images : []
+    const imageRows = imageEvidenceRows(imageParts, referenceImages)
+    const hashedImageRows = imageRows.filter(row => row.transport_sha256)
     append(target, {
       kind: 'dsh_request_start', turn_id: turn.turn_id || null,
       provider: options?.provider || null,
@@ -590,8 +623,9 @@ export function apply(ctx) {
       reasoning_effort: options?.reasoningEffort || null,
       purpose: options?.purpose || null,
       request_image_count: imageParts.length,
-      request_image_hash_count: imageHashes.length,
-      request_image_sha256: imageHashes,
+      request_image_hash_count: hashedImageRows.length,
+      request_image_sha256: hashedImageRows.map(row => row.transport_sha256),
+      request_images: imageRows,
       request_capture_layer: 'dsh_llm_stream_boundary',
       provider_wire_observed: false,
       at: Date.now(),

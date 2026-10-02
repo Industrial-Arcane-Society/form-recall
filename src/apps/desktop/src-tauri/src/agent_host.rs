@@ -325,6 +325,7 @@ fn get_or_create_session(
         .env("AI_MODELER_REFERENCE_MANIFEST", &reference_path)
         .env("AI_MODELER_USER_TURNS_MANIFEST", &turns_path)
         .env("AI_MODELER_ACTIVE_TURN_FILE", cwd.join("active-turn.json"))
+        .env("AI_MODELER_STREAM_FILE", cwd.join("stream-events.jsonl"))
         .env(
             "AI_MODELER_TRANSPORT_IMAGE_MAP",
             cwd.join("transport-image-map.json"),
@@ -488,6 +489,10 @@ fn run_turn(
         .iter()
         .map(|image| image.id.clone())
         .collect::<Vec<_>>();
+    write_json_atomic(
+        &session.cwd.join("active-turn.json"),
+        &active_turn_record(&session.id, &turn_id, &images),
+    )?;
     append_user_turn(
         &session.cwd.join(USER_TURNS_FILE),
         &session.id,
@@ -729,6 +734,28 @@ fn emit(channel: &Channel<Value>, name: &str, request_id: &str, data: Value) {
 
 fn event(name: &str, request_id: &str, data: Value) -> Value {
     json!({"event":name, "request_id":request_id, "data":data})
+}
+
+fn active_turn_record(session_id: &str, turn_id: &str, images: &[Image]) -> Value {
+    let reference_images = images
+        .iter()
+        .map(|image| {
+            json!({
+                "id": image.id,
+                "sha256": image.id.strip_prefix("sha256:"),
+                "filename": image.filename,
+                "media_type": image.media_type,
+                "bytes": image.bytes.len(),
+                "source_kind": "user_reference"
+            })
+        })
+        .collect::<Vec<_>>();
+    json!({
+        "schema_version": 1,
+        "session_id": session_id,
+        "turn_id": turn_id,
+        "reference_images": reference_images,
+    })
 }
 
 fn persist_images(cwd: &Path, paths: &[String]) -> Result<Vec<Image>, String> {
@@ -1392,7 +1419,8 @@ fn sha256(bytes: impl AsRef<[u8]>) -> String {
 #[cfg(test)]
 mod tests {
     use super::{
-        Provider, find_config_value, route_profile, validate_image_signature, write_profile_patch,
+        Image, Provider, active_turn_record, find_config_value, route_profile,
+        validate_image_signature, write_profile_patch,
     };
     use serde_json::json;
     use std::fs;
@@ -1448,6 +1476,34 @@ mod tests {
         assert!(validate_image_signature(b"\x89PNG\r\n\x1a\n...", "image/png", "a.png").is_ok());
         assert!(validate_image_signature(b"GIF89a...", "image/gif", "a.gif").is_ok());
         assert!(validate_image_signature(b"GIF89a...", "image/png", "a.png").is_err());
+    }
+
+    #[test]
+    fn active_turn_record_binds_user_image_hash_to_provider_observation() {
+        let hash = "ab".repeat(32);
+        let image = Image {
+            id: format!("sha256:{hash}"),
+            path: PathBuf::from("reference-assets/image.png"),
+            source_path: PathBuf::from("image.png"),
+            filename: "image.png".into(),
+            media_type: "image/png",
+            bytes: b"png-bytes".to_vec(),
+        };
+        let record = active_turn_record("session-1", "turn-2", &[image]);
+        assert_eq!(record["schema_version"], 1);
+        assert_eq!(record["session_id"], "session-1");
+        assert_eq!(record["turn_id"], "turn-2");
+        assert_eq!(
+            record["reference_images"][0]["id"],
+            format!("sha256:{hash}")
+        );
+        assert_eq!(record["reference_images"][0]["sha256"], hash);
+        assert_eq!(
+            record["reference_images"][0]["source_kind"],
+            "user_reference"
+        );
+        let serialized = serde_json::to_string(&record).unwrap();
+        assert!(!serialized.contains("png-bytes"));
     }
 
     #[test]
