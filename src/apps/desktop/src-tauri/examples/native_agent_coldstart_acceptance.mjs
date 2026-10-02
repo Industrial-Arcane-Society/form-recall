@@ -1,13 +1,18 @@
 // Cold-start DSH Agent image + text run; no plan or answer fixture is loaded.
-// API credentials are passed only in child-process environments.
+// API credentials stay in process memory / child env or stdin, never argv or logs.
 import { spawn, spawnSync } from 'node:child_process'
-import { createHash } from 'node:crypto'
+import { createHash, randomUUID } from 'node:crypto'
 import { mkdirSync, readFileSync, writeFileSync, existsSync } from 'node:fs'
 import { basename, dirname, join, resolve } from 'node:path'
 import { createInterface } from 'node:readline'
+import { createAuditedToolProxy, evaluateColdstartGates, parseEvidenceJsonl, parsePostcheckState, readRunArtifacts } from './native_agent_coldstart_gates.mjs'
 
 const [repoArg, runtimeArg, outputArg, configArg, imageArg, userTextArg] = process.argv.slice(2)
 let archiveDir = null
+const managedChildren = []
+const stopManagedChildren = () => {
+  for (const child of managedChildren) if (child.exitCode === null) child.kill()
+}
 const archiveFailure = error => {
   if (!archiveDir) return
   try {
@@ -16,8 +21,8 @@ const archiveFailure = error => {
     writeFileSync(join(archiveDir, 'preflight-failure.json'), JSON.stringify({ status: 'failed', at: new Date().toISOString(), error: safeError.slice(0, 1200) }, null, 2))
   } catch { /* preserve the original process failure */ }
 }
-process.on('uncaughtException', error => { archiveFailure(error); console.error('Acceptance failed; evidence location:', archiveDir || '(output argument missing)'); process.exit(1) })
-process.on('unhandledRejection', error => { archiveFailure(error); console.error('Acceptance failed; evidence location:', archiveDir || '(output argument missing)'); process.exit(1) })
+process.on('uncaughtException', error => { stopManagedChildren(); archiveFailure(error); console.error('Acceptance failed; evidence location:', archiveDir || '(output argument missing)'); process.exit(1) })
+process.on('unhandledRejection', error => { stopManagedChildren(); archiveFailure(error); console.error('Acceptance failed; evidence location:', archiveDir || '(output argument missing)'); process.exit(1) })
 if (!repoArg || !runtimeArg || !outputArg || !configArg) {
   throw new Error('usage: node native_agent_coldstart_acceptance.mjs REPO PINNED_RUNTIME FRESH_OUTPUT PROVIDER_JSON [ORIGINAL_PNG] [USER_TEXT]')
 }
@@ -55,7 +60,8 @@ if (!imageBytes.subarray(0, 8).equals(Buffer.from([137, 80, 78, 71, 13, 10, 26, 
 const width = imageBytes.readUInt32BE(16)
 const height = imageBytes.readUInt32BE(20)
 const referenceId = 'sha256:' + sourceSha
-const turnId = 'native-agent-coldstart-' + Date.now()
+const runId = 'native-agent-coldstart-' + randomUUID()
+const turnId = runId
 const userText = userTextArg || '请根据参考图片复刻模型，未标注尺寸按图像比例自行估算并记录来源，使用工具生成模型并复核。'
 const prompt = userText
 
@@ -68,10 +74,21 @@ if (nodeVersion.status !== 0 || nodeVersion.stdout.trim() !== 'v22.23.3') {
 }
 const dshPackage = JSON.parse(readFileSync(join(modules, '@deepseek-ai/dsh/package.json'), 'utf8'))
 if (dshPackage.version !== '0.2.0-rc.2') throw new Error('Pinned DSH version mismatch: ' + dshPackage.version)
+// Always rebuild against this checkout before any provider request. Old binaries
+// must not validate newly edited gates, schemas or the native tool audit.
+const buildStarted = Date.now()
+const build = spawnSync('cargo', ['build', '--manifest-path', join(repo, 'src/apps/desktop/src-tauri/Cargo.toml'),
+  '--example', 'native_read_probe', '--example', 'native_agent_profile', '--offline'],
+{ cwd: repo, encoding: 'utf8', windowsHide: true, timeout: 20 * 60 * 1000, maxBuffer: 8 * 1024 * 1024 })
+writeFileSync(join(output, 'build-status.json'), JSON.stringify({ status: build.status === 0 ? 'passed' : 'failed',
+  exit_code: build.status, elapsed_ms: Date.now() - buildStarted,
+  stdout_bytes: Buffer.byteLength(build.stdout || ''), stderr_bytes: Buffer.byteLength(build.stderr || '') }, null, 2))
+if (build.status !== 0) throw new Error('Offline Cargo example rebuild failed; no provider request was sent.')
 const probePath = join(repo, 'src/apps/desktop/src-tauri/target/debug/examples/native_read_probe.exe')
 if (!existsSync(probePath)) throw new Error('native_read_probe.exe is missing; build --example native_read_probe first.')
 const profilePath = join(repo, 'src/apps/desktop/src-tauri/target/debug/examples/native_agent_profile.exe')
 if (!existsSync(profilePath)) throw new Error('native_agent_profile.exe is missing; build the production profile example first.')
+const executableHashes = { native_read_probe: hash(readFileSync(probePath)), native_agent_profile: hash(readFileSync(profilePath)) }
 const patchPath = join(output, 'profile.yml')
 const prepared = spawnSync(profilePath, [legacy, patchPath], { input: JSON.stringify({ ...provider, api_key: apiKey }), encoding: 'utf8', windowsHide: true })
 if (prepared.status !== 0) throw new Error('生产profile构造失败。')
@@ -93,6 +110,7 @@ const probe = spawn(probePath, [legacy, state, '--online', '--serve', '--vision'
     AI_MODELER_REVIEW_OUTPUT_CAP: String(effectiveProfile.vision_output_cap),
   },
 })
+managedChildren.push(probe)
 let probeStderrBytes = 0
 probe.stderr.on('data', chunk => { probeStderrBytes += chunk.length })
 const probeLines = createInterface({ input: probe.stdout })
@@ -105,6 +123,9 @@ const bridge = await new Promise((yes, no) => {
   probe.once('error', error => { clearTimeout(timer); no(error) })
   probe.once('exit', () => { clearTimeout(timer); no(new Error('Rust native vision probe exited at startup')) })
 }).catch(error => { probe.kill(); probeLines.close(); throw error })
+const toolProxy = await createAuditedToolProxy({ address: bridge.address, token: bridge.token,
+  sessionId: bridge.session_id, turnId, runId }).catch(error => { probe.kill(); throw error })
+const runStartedAt = Date.now()
 
 const refsPath = join(state, 'reference-images.json')
 const turnsPath = join(state, 'user-turns.json')
@@ -136,7 +157,7 @@ const child = spawn(nodePath, [join(modules, '@deepseek-ai/dsh/lib/bin.js'),
     DSH_TELEMETRY_DISABLED: '1',
     DSH_SYSTEM_PROMPT: productionPrompt,
     AIMODELER_LLM_API_KEY: apiKey,
-    AI_MODELER_TOOL_BRIDGE_ADDR: bridge.address,
+    AI_MODELER_TOOL_BRIDGE_ADDR: toolProxy.address,
     AI_MODELER_TOOL_BRIDGE_TOKEN: bridge.token,
     AI_MODELER_TOOL_SESSION_ID: bridge.session_id,
     AI_MODELER_NATIVE_TOOL_SCHEMAS_FILE: bridge.schemas_path,
@@ -152,20 +173,22 @@ const child = spawn(nodePath, [join(modules, '@deepseek-ai/dsh/lib/bin.js'),
     AI_MODELER_HAS_REFERENCES: 'true',
   },
 })
+managedChildren.push(child)
 let seq = 0, dshStderrBytes = 0, dshExitCode = null, answer = '', thoughts = 0
-const pending = new Map(), toolEvents = [], updateKinds = new Set()
+const pending = new Map(), toolEvents = [], updateKinds = new Set(), evidenceErrors = []
 child.stderr.on('data', chunk => { dshStderrBytes += chunk.length })
 const messages = createInterface({ input: child.stdout })
 messages.on('line', line => {
   let row
-  try { row = JSON.parse(line) } catch { return }
+  try { row = JSON.parse(line) } catch { evidenceErrors.push('acp_stdout_invalid_json_record'); return }
   if (row.method === 'session/update') {
     const update = row.params?.update || {}, kind = update.sessionUpdate
     updateKinds.add(kind)
     if (kind === 'agent_message_chunk') answer += update.content?.text || ''
     if (kind === 'agent_thought_chunk') thoughts += (update.content?.text || '').length
     if (kind === 'tool_call' || kind === 'tool_call_update') {
-      toolEvents.push({ kind, title: update.title, status: update.status, tool_call_id: update.toolCallId })
+      toolEvents.push({ kind, title: update.title, status: update.status, tool_call_id: update.toolCallId,
+        session_id: row.params?.sessionId, run_id: runId, turn_id: turnId, at_ms: Date.now() })
     }
   } else if (row.id !== undefined && !row.method && pending.has(row.id)) {
     const task = pending.get(row.id); pending.delete(row.id); clearTimeout(task.timer)
@@ -178,6 +201,11 @@ messages.on('line', line => {
 child.once('exit', code => {
   dshExitCode = code
   for (const task of pending.values()) { clearTimeout(task.timer); task.no(new Error('DSH exited')) }
+  pending.clear()
+})
+child.once('error', () => {
+  evidenceErrors.push('dsh_process_start_failed')
+  for (const task of pending.values()) { clearTimeout(task.timer); task.no(new Error('DSH process failed to start')) }
   pending.clear()
 })
 function rpc(method, params, ms = 45000) {
@@ -196,13 +224,16 @@ async function boundedExit(process, ms) {
   })
   if (process.exitCode === null) process.kill()
 }
-let sessionId = null, dshStatus = 'failed', dshError = null, stopReason = null
+let sessionId = null, dshStatus = 'failed', dshError = null, stopReason = null, computedState = null
 try {
   const initialized = await rpc('initialize', { protocolVersion: 1,
     clientInfo: { name: 'native-agent-coldstart-acceptance', version: '1' }, clientCapabilities: {} })
   if (initialized.agentCapabilities?.promptCapabilities?.image !== true) throw new Error('DSH未声明图片输入能力。')
   const session = await rpc('session/new', { cwd: output, mcpServers: [] })
   sessionId = session.sessionId
+  writeFileSync(join(output, 'run-context.json'), JSON.stringify({ run_id: runId, turn_id: turnId,
+    acp_session_id: sessionId, tool_session_id: bridge.session_id, started_at_ms: runStartedAt,
+    source_sha256: sourceSha, executable_sha256: executableHashes }, null, 2))
   const selection = spawnSync(profilePath, ['--select-reasoning'], {
     input: JSON.stringify({ provider: { ...provider, api_key: apiKey }, session_response: session }),
     encoding: 'utf8', windowsHide: true,
@@ -229,43 +260,86 @@ try {
 } finally {
   child.stdin.end()
   await boundedExit(child, 5500)
-  probe.stdin.write('quit\n')
-  probe.stdin.end()
+  await toolProxy.close()
+  // Recompute the plan signature in Rust, without calling a provider or
+  // finishing/reviewing the model. This direct probe call is not Cordis proof.
+  if (probe.exitCode === null) {
+    computedState = await new Promise(resolveState => {
+      const onLine = line => {
+        clearTimeout(timer)
+        try { resolveState(parsePostcheckState(JSON.parse(line))) } catch { resolveState(null) }
+      }
+      const timer = setTimeout(() => { probeLines.off('line', onLine); resolveState(null) }, 5000)
+      probeLines.once('line', onLine)
+      probe.stdin.write(JSON.stringify({ name: 'cad_get_state', arguments: {} }) + '\n')
+    })
+  }
+  if (probe.exitCode === null && !probe.stdin.destroyed) {
+    probe.stdin.write('quit\n')
+    probe.stdin.end()
+  }
   await boundedExit(probe, 1500)
 }
 
+const readJsonFile = (path, fallback = {}) => {
+  try {
+    const value = JSON.parse(readFileSync(path, 'utf8'))
+    if (!value || typeof value !== 'object' || Array.isArray(value)) throw new Error('Expected an object')
+    return value
+  } catch { evidenceErrors.push(`${basename(path)}_missing_or_invalid`); return fallback }
+}
 const regPath = join(state, 'native-tool-registration.json')
 const schemaPath = join(state, 'schemas.json')
-const registration = existsSync(regPath) ? JSON.parse(readFileSync(regPath, 'utf8')) : null
-const schemaManifest = existsSync(schemaPath) ? JSON.parse(readFileSync(schemaPath, 'utf8')) : null
+const registration = readJsonFile(regPath)
+const schemaManifest = readJsonFile(schemaPath)
 const registered = registration?.phase === 'registered'
   && registration.registeredToolNames?.includes('cad_inspect_references') === true
 const schemaPresent = schemaManifest?.schemaVersion === 1
   && schemaManifest.tools?.some(tool => tool.name === 'cad_inspect_references') === true
 const cadStatePath = join(state, 'cad-state.json')
-const domain = existsSync(cadStatePath) ? JSON.parse(readFileSync(cadStatePath, 'utf8')) : {}
+const domain = readJsonFile(cadStatePath)
+const runEndedAt = Date.now()
+const readJsonl = path => {
+  if (!existsSync(path)) { evidenceErrors.push(`${basename(path)}_missing`); return [] }
+  const parsed = parseEvidenceJsonl(readFileSync(path, 'utf8'), basename(path))
+  evidenceErrors.push(...parsed.errors)
+  return parsed.records
+}
+const nativeAudit = readJsonl(join(state, 'native-tool-audit.jsonl'))
+const artifacts = readRunArtifacts(output, domain)
 const actions = domain.actions || []
 const observation = domain.reference_inventory?.[referenceId] || null
-const streamEvents = existsSync(streamPath) ? readFileSync(streamPath, 'utf8').split(/\r?\n/).filter(Boolean).flatMap(line => {
-  try { return [JSON.parse(line)] } catch { return [] }
-}) : []
+const streamEvents = readJsonl(streamPath)
+const sourceShaAfter = hash(readFileSync(imagePath))
+const strict = evaluateColdstartGates({
+  run: { id: runId, turn_id: turnId, acp_session_id: sessionId, tool_session_id: bridge.session_id,
+    started_at_ms: runStartedAt, ended_at_ms: runEndedAt },
+  source: { sha256: sourceSha, sha256_after: sourceShaAfter, bytes: imageBytes.length, reference_id: referenceId },
+  domain, computedState, artifacts, registration, schema: schemaManifest,
+  provider: { model: effectiveProfile.model, host: new URL(effectiveProfile.base_url).host },
+  references: readJsonFile(refsPath), userTurns: readJsonFile(turnsPath), activeTurn: readJsonFile(activeTurnPath),
+  dsh: { status: dshStatus, exit_code: dshExitCode }, toolEvents, toolBridgeCalls: toolProxy.records,
+  nativeAudit, streamEvents, evidenceErrors,
+})
+writeFileSync(join(output, 'strict-gates.json'), JSON.stringify(strict, null, 2))
+writeFileSync(join(output, 'tool-bridge-calls.json'), JSON.stringify(toolProxy.records, null, 2))
+writeFileSync(join(output, 'rust-postcheck-state.json'), JSON.stringify({ source: 'direct_local_postcheck_not_cordis', state: computedState }, null, 2))
+writeFileSync(join(output, 'artifact-inventory.json'), JSON.stringify(artifacts.files, null, 2))
 const wireRequests = streamEvents.filter(row => row.kind === 'provider_wire_request')
 const wireResponseHeaders = streamEvents.filter(row => row.kind === 'provider_wire_response_headers')
 const wireResponses = streamEvents.filter(row => row.kind === 'provider_wire_response_complete')
-const successfulWireResponse = wireRequests.some(request =>
-  wireResponseHeaders.some(row => row.request_id === request.request_id && row.status_code === 200)
-  && wireResponses.some(row => row.request_id === request.request_id))
-const wireIdentityValid = wireRequests.some(row => row.wire_observed === true && row.images?.some(image =>
-  image.source_sha256 === sourceSha && image.transport_sha256 === sourceSha
-  && image.byte_length === imageBytes.length && image.source_reference_ids?.includes(referenceId)))
-const toolEventObserved = toolEvents.length > 0
-  || actions.length > 0
-const toolCalled = registered && schemaPresent && toolEventObserved
-const sourceShaAfter = hash(readFileSync(imagePath))
+const successfulWireResponse = strict.successful_image_request_ids.length > 0
+const wireIdentityValid = strict.gates.main_image_wire.reasons.indexOf('main_model_original_image_wire_missing') < 0
+const toolCalled = strict.matched_native_call_ids.length > 0
 const acceptance = {
-  status: dshStatus === 'completed' && wireIdentityValid && successfulWireResponse ? 'completed' : 'failed',
-  status_scope: 'ACP_and_original_image_transport_only_not_model_acceptance',
-  model_status: domain.finish_summary?.accepted === true ? 'accepted_by_host' : domain.plan ? 'candidate' : 'none',
+  status: strict.status,
+  status_scope: strict.scope,
+  transport_status: dshStatus === 'completed' && wireIdentityValid && successfulWireResponse ? 'completed' : 'failed',
+  strict_gates: strict,
+  run_id: runId,
+  executable_sha256: executableHashes,
+  model_status: strict.status === 'passed' ? 'accepted_by_strict_cli_gate' : domain.plan ? 'candidate' : 'none',
+  host_claims_accepted: domain.finish_summary?.accepted === true,
   finish_summary: domain.finish_summary || null,
   configuration: effectiveProfile,
   dsh_status: dshStatus,
@@ -308,7 +382,7 @@ const acceptance = {
       diagnostics: observation.diagnostics,
     } : null,
   },
-  observation_quality: 'not_scored_by_this_transport_and_tool-wiring_acceptance',
+  observation_quality: 'host_evidence_gates_checked_independent_visual_quality_not_scored',
   answer,
   answer_sha256: hash(Buffer.from(answer)),
   thought_characters_observed: thoughts,
@@ -325,7 +399,8 @@ const acceptance = {
 writeFileSync(join(output, 'summary.json'), JSON.stringify(acceptance, null, 2))
 writeFileSync(join(output, 'tool-trace.json'), JSON.stringify({ dsh_events: toolEvents, native_actions: actions, provider_requests: wireRequests, responses: wireResponses }, null, 2))
 writeFileSync(join(output, 'run-metadata.json'), JSON.stringify({ completed_at: new Date().toISOString(), commit: acceptance.git.commit, dirty_paths: acceptance.git.dirty_paths, node: process.version, pinned_node: nodeVersion.stdout.trim(), dsh: dshPackage.version, image_sha256: sourceSha, image_bytes: imageBytes.length, text_sha256: hash(Buffer.from(userText)), status: acceptance.status }, null, 2))
-console.log(JSON.stringify(acceptance, null, 2))
-if (acceptance.status !== 'completed' || !acceptance.original_image.unchanged || dshExitCode !== 0) {
+console.log(JSON.stringify({ run_id: runId, status: strict.status, transport_status: acceptance.transport_status,
+  model_status: acceptance.model_status, failure_reasons: strict.failure_reasons, evidence_archive: output }, null, 2))
+if (acceptance.status !== 'passed') {
   process.exitCode = 1
 }
