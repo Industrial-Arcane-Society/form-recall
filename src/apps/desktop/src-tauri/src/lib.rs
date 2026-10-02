@@ -9,6 +9,8 @@ pub mod native_state_summary;
 pub mod native_tool_bridge;
 pub mod native_tool_executor;
 pub mod native_tool_schemas;
+pub mod native_vision_assets;
+pub mod native_vision_provider;
 pub mod native_web;
 
 use serde_json::{Value, json};

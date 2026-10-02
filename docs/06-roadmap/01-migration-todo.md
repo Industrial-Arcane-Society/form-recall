@@ -20,13 +20,15 @@
 | F2.1 | Cordis → Rust 本机工具桥 | **已完成** | Cordis 原生注册与 Rust Host 的认证 JSON-RPC、取消、超时、去重和图片返回链路测试通过；Rust 下游仍调用旧 Python worker，故不代表 F2 完成；提交 `501d47b` |
 | F2.2 | Rust 持有 CAD 工具 schema 与参数契约 | **已完成** | Rust 内嵌 25 项 schema，与迁移时 Python 函数输出逐字段相同；不再启动 Python 取 schema；固定 DSH `defineTool()` 成功注册 25 项 |
 | F2.3 | 只读状态、知识及联网工具迁入 Rust Host | **已完成** | 六项原生读取工具已接入 Rust；生产测试 55/55，实际 DSH CLI 完成五项调用且禁止 Python 回退；外网搜索因本机 DNS 非公网解析失败，如实返回，正文成功路径以 HTTP fixture 验证 |
-| F2.4 | 图片观察与视觉复核迁出 Python | 未开始 | 用户原图、单视图预览和复核证据由 DSH 原生多模态请求或 Rust 服务链处理，Python 不再承担视觉观察 |
+| F2.4 | 图片观察与视觉复核迁出 Python | **进行中** | 请求与图片基础已完成；原图观察/单视图审查 domain 尚待接线及实际多模态验收，生产当前仍走 Python |
+| F2.4.1 | Rust 多模态 provider 与图片资产 | **已完成（传输通过，观察质量未通过）** | 双协议、取消、SHA 遥测、EXIF/ROI 输入已实现；真实原图请求成功，观察错误作为后续负样本保留 |
 | F2.5 | CAD 写工具迁移到 Rust CAD domain | 未开始 | 建立/修改/删除/预览/构建工具直接调用 F3 Rust CADPlan，移除 Python tool worker 兼容执行器 |
 | F3 | Rust CADPlan 与增量模型事务 | **进行中** | 纯增量事务已移植；完整参数校验、会话版本/回滚及 preview/build dispatch 尚待接线验收 |
 | F3.1 | Rust CADPlan 纯增量事务与几何指纹 | **已完成** | create/add/update/remove/snapshot 保留来源与扩展字段；数值更新来源 guard、失败原计划不变；140 组 Python 几何指纹对拍一致，精确浮点解析已启用 |
 | F3.2 | Rust CADPlan schema 与静态校验 | **已完成** | 覆盖 27 类特征、条件参数、来源、关系、单位/坐标和静态支持状态；27 个 Python golden 双接口对拍通过，strict 执行前阻断已验证，未执行几何或 CATIA |
-| F3.3 | Rust CAD 会话事务与 preview/build dispatch | 未开始 | revision、候选/回滚、来源及差异生命周期由 Rust 会话维护；对接几何内核并完成工具端到端验收 |
-| F4 | Rust/C++ thin OCCT FFI | 未开始 | Rust 几何请求建立有效 B-Rep、布尔、网格与拓扑报告；fixture 对拍有尺寸容差和失败样本 |
+| F3.3 | Rust CAD 会话事务与 preview/build dispatch | **进行中** | 会话版本、候选/回滚、来源及差异生命周期正在移植；真实几何回传和端到端验收尚待 F4 接入 |
+| F4 | Rust/C++ thin OCCT FFI | **进行中** | 固定官方 OCCT 7.9.3 SDK 已构建，C ABI/Rust 包装已通过真实几何 fixture；CADPlan 全特征执行和安装交付仍未完成 |
+| F4.1 | 固定 OCCT SDK、C ABI 与 Rust 几何基础 | **进行中** | 正在收尾运行 manifest、动态库加载/释放及真实 B-Rep 验收 |
 | F5 | Quick 模式与本地导出迁移 | 未开始 | Quick 与 Agent 共用稳定 CAD domain；AIMODEL/STL/视图导出有兼容性验收 |
 | F6 | Python 缩减到 CATIA COM | 未开始 | Python 包只剩 CATIA Windows/COM adapter 和必要协议代码；其余业务逻辑和 Agent 代码不再由 Python 执行 |
 | F7 | 多模态盲测与科学验收基线 | 未开始 | 图像/文字盲测、工具轨迹、几何量测、视觉差异关闭、真实 CATIA 证据分别归档并可复跑 |
@@ -61,3 +63,5 @@ F2.3 的原生读取工具、真实 DSH 轨迹与联网边界见[Rust 原生状�
 F3.1 的事务语义、浮点解析与对拍记录见[Rust CADPlan 增量事务](./07-f3-plan-transactions.md)。
 
 F3.2 的参数校验、静态支持边界和双接口对拍记录见[Rust CADPlan Schema 与静态校验](./08-f3-plan-validation.md)。
+
+F2.4.1 的真实图片传输、解析器缺陷和观察质量边界见[Rust 多模态请求与图片输入基础](./09-f2-native-vision-transport.md)。

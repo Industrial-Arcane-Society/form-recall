@@ -27,5 +27,6 @@ sha2 = "0.10.9"
 serde_json = { version = "1.0", features = ["float_roundtrip"] }
 tauri = { version = "2", features = [] }
 tauri-plugin-dialog = "2"
-tokio = { version = "1", features = ["sync"] }
+tokio = { version = "1", features = ["sync", "time", "macros", "rt"] }
 zip = { version = "2.4.2", default-features = false, features = ["deflate"] }
+image = { version = "0.25", default-features = false, features = ["png", "jpeg", "webp", "gif"] }
