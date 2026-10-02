@@ -12,7 +12,7 @@ const CadViewport = defineAsyncComponent(() => import('./components/CadViewport.
 
 type JsonMap = Record<string, any>
 type Feature = { index: number; kind: string; op?: string; name?: string; enabled: boolean; params: JsonMap; description?: string; editable_parameters?: string[] }
-type DocumentState = { revision: number; name: string; source_prompt?: string; current_path?: string | null; features: Feature[]; stats: JsonMap; build_log: string[]; mesh_path?: string | null }
+type DocumentState = { revision: number; name: string; source_prompt?: string; current_path?: string | null; features: Feature[]; stats: JsonMap; build_log: string[]; mesh_path?: string | null; warnings?: any[] }
 type WireEvent = { event: string; request_id: string; data: any }
 type ChatLine = { role: 'user' | 'assistant' | 'progress' | 'thought'; text: string; images?: AttachmentItem[]; requestId?: string; toolCallId?: string; open?: boolean }
 
@@ -387,7 +387,7 @@ async function submitPrompt() {
   setStatus(mode.value === 'agent' ? 'Agent 正在处理…' : '正在快速建模…')
   try {
     if (mode.value === 'quick') {
-      const result = await backendCall('model.quick_build', { text: userText, new_model: true }, requestId)
+      const result = await invoke<any>('quick_build', { text: userText, revision: documentState.value.revision + 1 })
       if (result.state === 'parse_failed') {
         const suggestion = result.online_suggestion?.answer || result.online_suggestion?.summary || ''
         chat.value.push({ role: 'assistant', text: '暂时无法识别这条描述：' + (result.message || '请补充零件类型和尺寸。') + (suggestion ? '\n\n联网建议：' + suggestion : '') })

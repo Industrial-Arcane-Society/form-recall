@@ -47,6 +47,7 @@
 | F5 | Quick 模式与本地导出迁移 | **进行中** | 原生单视图渲染基础完成；Quick、生产预览接线及 AIMODEL/STL 兼容性尚待完成 |
 | F5.1 | Rust 七视图 PNG 与深度遮挡 | **已完成** | 五项定向测试、真实 OCCT 1000 三角形 CLI 七视图通过；非 Agent 图片验收 |
 | F5.2 | Rust AIMODEL / binary STL 兼容读写 | **已完成** | 5 项单测、旧工程 roundtrip、Python Document 对拍及实际 STL 全顶点检查通过；Quick 和生产导出接线尚待完成 |
+| F5.3 | Quick 明确尺寸原生创建闭环 | **已完成（限定范围）** | Rust Quick 3/3、解析 7/7、Vue build；CADPlan→OCCT→GLB/AIMODEL/STL，旧语法全量迁移和共享活动状态仍待 F7.G2；见 [记录](./27-f5-native-quick-build.md) |
 | F6 | Python 缩减到 CATIA COM | **进行中** | DSH Agent 的 Python tool worker 已删除；Quick 模式和 CATIA/遗留包仍依赖 Python，后续继续收缩至 CATIA COM |
 | F7 | 多模态盲测与科学验收基线 | 未开始 | 图像/文字盲测、工具轨迹、几何量测、视觉差异关闭、真实 CATIA 证据分别归档并可复跑 |
 

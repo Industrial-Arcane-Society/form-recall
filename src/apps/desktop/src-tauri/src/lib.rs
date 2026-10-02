@@ -14,9 +14,10 @@ pub mod native_geometry_evidence;
 pub mod native_knowledge;
 pub mod native_model_io;
 pub mod native_occt;
-pub mod native_parametric_features;
 pub mod native_occt_runtime;
+pub mod native_parametric_features;
 pub mod native_plan_geometry;
+pub mod native_quick;
 pub mod native_render;
 pub mod native_review_gate;
 pub mod native_standard_features;
@@ -28,6 +29,7 @@ pub mod native_vision_assets;
 pub mod native_vision_domain;
 pub mod native_vision_provider;
 pub mod native_web;
+pub mod native_quick_parser;
 
 use serde_json::{Value, json};
 use std::collections::HashMap;
@@ -844,6 +846,20 @@ async fn backend_call(
     .await
 }
 
+#[tauri::command]
+async fn quick_build(app: AppHandle, text: String, revision: i64) -> Result<Value, String> {
+    let (legacy_root, _) = project_root(&app)?;
+    let manifest = native_occt_runtime::resolve_manifest(&legacy_root)?;
+    let session_dir = app
+        .path()
+        .app_local_data_dir()
+        .map_err(|error| format!("无法定位 Quick 本地数据目录：{error}"))?
+        .join("native-quick");
+    tokio::task::spawn_blocking(move || native_quick::build(&text, revision, &manifest, &session_dir))
+        .await
+        .map_err(|error| format!("Quick 原生构建线程失败：{error}"))?
+}
+
 #[tauri::command(rename_all = "camelCase")]
 async fn agent_send(
     state: State<'_, agent_host::AgentHostState>,
@@ -1127,6 +1143,7 @@ pub fn run() {
             dependency_status,
             install_dependencies,
             backend_call,
+            quick_build,
             agent_send,
             agent_cancel,
             agent_reset,
