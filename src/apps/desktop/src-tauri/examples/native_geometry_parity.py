@@ -78,16 +78,97 @@ def main():
                     if isinstance(value, (int, float)) and not isinstance(value, bool)}})
     cases.append(("pcd-radians", plan))
 
+    def user_sources(parameters):
+        return {key: {"type": "user"} for key, value in parameters.items()
+                if isinstance(value, (int, float, list)) and not isinstance(value, bool)}
+
+    def add_pattern_case(name, features, parameters, source_id, operation):
+        features.append({"id": "pattern", "kind": "pattern", "operation": operation,
+            "parameters": parameters, "sources": user_sources(parameters),
+            "relations": [{"type": "pattern_source", "feature_id": source_id}]})
+        pattern_plan = copy.deepcopy(base)
+        pattern_plan["features"] = features
+        cases.append((name, pattern_plan))
+
+    seed_box_parameters = dict(length=2, width=2, height=2, center=[0, 0, 0], base=False)
+    seed_box = {"id": "seed-box", "kind": "box", "operation": "add",
+        "parameters": seed_box_parameters, "sources": user_sources(seed_box_parameters)}
+    add_pattern_case("pattern-linear-overlap", [seed_box],
+        dict(mode="linear", count=3, step=[1.5, 0, 0]), "seed-box", "add")
+    add_pattern_case("pattern-linear-y", [seed_box],
+        dict(mode="linear", count=3, step=[0, 1.5, 0]), "seed-box", "add")
+    add_pattern_case("pattern-linear-z", [seed_box],
+        dict(mode="linear", count=3, step=[0, 0, 1.5]), "seed-box", "add")
+
+    def stock_and_hole(hole_axis):
+        stock_parameters = dict(length=20, width=20, height=20, center=[0, 0, 0], base=False)
+        hole_parameters = dict(diameter=2, axis=hole_axis, pos="point", point=[3, 0, 0], through=True)
+        return [
+            {"id": "stock", "kind": "box", "operation": "add", "parameters": stock_parameters,
+             "sources": user_sources(stock_parameters)},
+            {"id": "hole-seed", "kind": "hole", "operation": "cut", "parameters": hole_parameters,
+             "sources": user_sources(hole_parameters)},
+        ]
+
+    add_pattern_case("pattern-circular-four-through-holes", stock_and_hole("Z"),
+        dict(mode="circular", count=4, axis="Z", angle=360, full=True, center=[0, 0, 0]),
+        "hole-seed", "cut")
+    seed_cylinder_parameters = dict(radius=1, height=20, axis="Y", center=[0, 0, 0], base=False)
+    seed_cylinder = {"id": "seed-cylinder", "kind": "cylinder", "operation": "add",
+        "parameters": seed_cylinder_parameters, "sources": user_sources(seed_cylinder_parameters)}
+    add_pattern_case("pattern-circular-rotated-tool", [seed_cylinder],
+        dict(mode="circular", count=2, axis="Z", angle=45, full=False, center=[0, 0, 0]),
+        "seed-cylinder", "add")
+    for pattern_axis, source_axis in (("X", "Z"), ("Y", "X")):
+        cylinder_parameters = dict(radius=1, height=20, axis=source_axis,
+                                   center=[0, 0, 0], base=False)
+        cylinder = {"id": "seed-cylinder", "kind": "cylinder", "operation": "add",
+            "parameters": cylinder_parameters, "sources": user_sources(cylinder_parameters)}
+        add_pattern_case(f"pattern-circular-{pattern_axis.lower()}-axis",
+            [cylinder], dict(mode="circular", count=2, axis=pattern_axis,
+            angle=45, full=False, center=[0, 0, 0]), "seed-cylinder", "add")
+    add_pattern_case("pattern-circular-cut-no-op", stock_and_hole("Z"),
+        dict(mode="circular", count=3, axis="Z", angle=0, full=False, center=[0, 0, 0]),
+        "hole-seed", "cut")
+
+    expected_patterns = {
+        "pattern-linear-overlap": ([-1, -1, -1, 4, 1, 1], 20.0),
+        "pattern-linear-y": ([-1, -1, -1, 1, 4, 1], 20.0),
+        "pattern-linear-z": ([-1, -1, -1, 1, 1, 4], 20.0),
+        "pattern-circular-x-axis": ([-1, -7.778174593, -10, 1, 7.778174593, 10], None),
+        "pattern-circular-y-axis": ([-10, -1, -7.778174593, 10, 1, 7.778174593], None),
+        "pattern-circular-four-through-holes": ([-10, -10, -10, 10, 10, 10], 8000 - 80 * 3.141592653589793),
+        "pattern-circular-rotated-tool": ([-7.778174593, -10, -1, 7.778174593, 10, 1], None),
+        "pattern-circular-cut-no-op": ([-10, -10, -10, 10, 10, 10], 8000 - 20 * 3.141592653589793),
+    }
+
     records = []
     for name, plan in cases:
         source, report_path = output / f"{name}.json", output / f"{name}.report.json"
         source.write_text(json.dumps(plan), encoding="utf-8")
         result = subprocess.run([str(executable), str(source), str(manifest), str(report_path)],
                                 stdout=subprocess.DEVNULL, stderr=subprocess.PIPE,
-                                text=True, encoding="utf-8", timeout=30)
+                                text=True, encoding="utf-8", timeout=120)
         if result.returncode:
             raise RuntimeError(f"{name}: {result.stderr[:1500]}")
         native = json.loads(report_path.read_text(encoding="utf-8"))
+        if name in expected_patterns:
+            expected_bounds, expected_volume = expected_patterns[name]
+            if (max(abs(a - b) for a, b in zip(native["bounds_mm"], expected_bounds)) > 1e-6
+                    or (expected_volume is not None
+                        and abs(native["volume_mm3"] - expected_volume) > 1e-5)):
+                raise AssertionError((name, "unexpected-pattern-geometry", native["bounds_mm"],
+                                      native["volume_mm3"], expected_bounds, expected_volume))
+        if name == "pattern-circular-four-through-holes":
+            holes = native.get("hole_instances", [])
+            if (len(holes) != 4 or native.get("hole_measurements_verified") is not True
+                    or any(row.get("status") != "verified_open" for row in holes)):
+                raise AssertionError((name, "four-patterned-holes-not-measured", holes))
+        if name == "pattern-circular-cut-no-op":
+            result = native["feature_results"][-1]
+            if result.get("state") != "no_op" or len(native.get("hole_instances", [])) != 1:
+                raise AssertionError((name, "no-op-pattern-not-reported", result,
+                                      native.get("hole_instances")))
         if name in ("gear-native-approximation", "socket-bolt-visible-thread"):
             support = native["feature_results"][0]
             if support.get("geometry_support") != "approximate" or not support.get("support_details", {}).get("warnings"):
@@ -140,9 +221,16 @@ def main():
     missing_bolt_size["features"][0]["parameters"].pop("head_d")
     missing_bolt_size["features"][0]["sources"].pop("head_d")
     negatives.append(("bolt-missing-head-d", missing_bolt_size, "校验"))
+    over_limit_pattern = copy.deepcopy(cases[[name for name, _ in cases].index("pattern-linear-overlap")][1])
+    over_limit_pattern["features"][-1]["parameters"]["count"] = 10_001
+    over_limit_pattern["features"][-1]["sources"]["count"] = {"type": "user"}
+    negatives.append(("pattern-over-resource-limit", over_limit_pattern, "OCCT 单特征上限"))
+    disjoint_pattern = copy.deepcopy(cases[[name for name, _ in cases].index("pattern-linear-overlap")][1])
+    disjoint_pattern["features"][-1]["parameters"]["step"] = [4, 0, 0]
+    disjoint_pattern["features"][-1]["sources"]["step"] = {"type": "user"}
+    negatives.append(("pattern-disjoint-solids", disjoint_pattern, "未生成单一有效封闭实体"))
 
-    # Additional blind-hole checks do not change the established 44 positive
-    # parity cases above. The first plan leaves only the recessed local span;
+    # The first plan leaves only the recessed local span;
     # the second asks for more depth than that span, and the third samples an
     # already-through-cut centerline with no pre-cut material.
     blind_local = copy.deepcopy(base)

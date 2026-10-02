@@ -27,16 +27,20 @@ pub fn feature_spec(kind: &str) -> Result<Value, String> {
             "X":["Y","Z"],"Y":["X","Z"],"Z":["X","Y"]
         });
     }
-    result["native_execution"] = if [
-        "box", "cylinder", "sphere", "hole", "pocket", "prism", "revolve",
-    ]
-    .contains(&kind)
-    {
-        serde_json::json!({"status":"basic_variants_implemented","scope":"local_candidate_geometry",
-            "note":"Plain box/pocket, cylinder/cone and simple polygon prism/revolve are implemented. Explicit blind entry is not yet supported. Hole metadata is requested, not independently measured. Production write-tool dispatch is still being migrated."})
-    } else {
-        serde_json::json!({"status":"not_implemented","scope":"rust_plan_geometry",
-            "note":"Legacy/CATIA static support does not prove native Rust execution support."})
+    result["native_execution"] = match kind {
+        "pattern" => serde_json::json!({"status":"implemented","geometry_support":"exact",
+            "scope":"local_candidate_geometry",
+            "note":"Rust/OCCT executes source-related global XYZ linear and right-handed circular transforms. Per-feature instance and transformed-tool resource limits apply; geometry is not CATIA execution."}),
+        "gear" | "socket_head_bolt" => serde_json::json!({"status":"implemented_approximate",
+            "geometry_support":"approximate","scope":"local_candidate_geometry",
+            "note":"Native OCCT generation is available with approximation warnings; consult support_details on the build report."}),
+        "box" | "cylinder" | "sphere" | "hole" | "pocket" | "prism" | "revolve" => {
+            serde_json::json!({"status":"basic_variants_implemented","geometry_support":"exact",
+                "scope":"local_candidate_geometry",
+                "note":"Rust/OCCT implements the supported basic variants. Explicit blind-entry geometry remains unsupported. Hole geometry is sampled and final B-Rep bores are measured; local execution does not imply CATIA execution."})
+        }
+        _ => serde_json::json!({"status":"not_implemented","scope":"rust_plan_geometry",
+            "note":"Legacy/CATIA static support does not prove native Rust execution support."}),
     };
     Ok(result)
 }

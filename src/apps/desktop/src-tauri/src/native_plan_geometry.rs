@@ -6,7 +6,7 @@ use crate::{
     native_occt::{Axis, Bounds, Kernel, Shape},
     native_standard_features,
 };
-use serde_json::{Value, json};
+use serde_json::{json, Value};
 use std::{
     path::Path,
     sync::atomic::{AtomicBool, Ordering},
@@ -16,6 +16,9 @@ pub struct BuiltPlan {
     pub shape: Shape,
     pub report: Value,
 }
+
+const MAX_PATTERN_COUNT: u64 = 10_000;
+const MAX_PATTERN_TRANSFORMED_TOOLS: usize = 100_000;
 
 struct PendingBore {
     report_index: usize,
@@ -47,6 +50,7 @@ pub fn preflight(plan: &Value) -> Result<Value, String> {
             "pocket",
             "prism",
             "revolve",
+            "pattern",
             "gear",
             "socket_head_bolt",
         ]
@@ -84,6 +88,30 @@ pub fn preflight(plan: &Value) -> Result<Value, String> {
                 ));
             }
         }
+        if kind == "pattern" {
+            let count = p
+                .get("count")
+                .and_then(Value::as_u64)
+                .filter(|count| *count > 0)
+                .ok_or("pattern.count 必须是大于零的整数。")?;
+            usize::try_from(count).map_err(|_| "pattern.count 超出当前平台可表示范围。")?;
+            if count > MAX_PATTERN_COUNT {
+                return Err(format!(
+                    "pattern.count={count} 超过当前 OCCT 单特征上限 {MAX_PATTERN_COUNT}；请拆分为多个可复核特征。"
+                ));
+            }
+            match p.get("mode").and_then(Value::as_str) {
+                Some("linear") => {
+                    point(p.get("step"), [10., 0., 0.])?;
+                }
+                Some("circular") => {
+                    axis_index(p)?;
+                    optional_num(p, "angle", 360.)?;
+                    point(p.get("center"), [0.; 3])?;
+                }
+                _ => return Err("pattern.mode 必须是 linear 或 circular。".into()),
+            }
+        }
     }
     Ok(validation)
 }
@@ -96,6 +124,9 @@ pub fn build(plan: &Value, manifest: &Path, cancelled: &AtomicBool) -> Result<Bu
     let mut rows = Vec::new();
     let mut holes = Vec::new();
     let mut pending_bore_groups = Vec::new();
+    let mut previous_feature_id: Option<String> = None;
+    let mut previous_feature_tools = Vec::<Shape>::new();
+    let mut previous_feature_holes = Vec::<Value>::new();
     for feature in plan["features"].as_array().ok_or("缺少 features")? {
         check_cancel(cancelled)?;
         if feature.get("enabled").and_then(Value::as_bool) == Some(false) {
@@ -108,7 +139,17 @@ pub fn build(plan: &Value, manifest: &Path, cancelled: &AtomicBool) -> Result<Bu
             .unwrap_or(0.);
         let bb = current.as_ref().map(Shape::bounds).transpose()?;
         let normalized = normalized_feature(feature, plan)?;
-        let (tools, mut requested_holes, standard_support) = if matches!(
+        let (tools, mut requested_holes, standard_support) = if normalized["kind"] == "pattern" {
+            let (tools, holes, support) = pattern_tools(
+                &kernel,
+                &normalized,
+                previous_feature_id.as_deref(),
+                &previous_feature_tools,
+                &previous_feature_holes,
+                cancelled,
+            )?;
+            (tools, holes, Some(support))
+        } else if matches!(
             normalized["kind"].as_str(),
             Some("gear" | "socket_head_bolt")
         ) {
@@ -123,6 +164,7 @@ pub fn build(plan: &Value, manifest: &Path, cancelled: &AtomicBool) -> Result<Bu
             (tools, holes, None)
         };
         let operation = feature["operation"].as_str().unwrap_or("add");
+        let mut no_op_pattern = normalized["kind"] == "pattern" && tools.is_empty();
         let hole_pre_cut = if !requested_holes.is_empty() && operation == "cut" {
             current
                 .as_ref()
@@ -132,16 +174,21 @@ pub fn build(plan: &Value, manifest: &Path, cancelled: &AtomicBool) -> Result<Bu
             None
         };
         let tool_refs: Vec<_> = tools.iter().collect();
-        let candidate = match (&current, operation) {
-            (None, "add") => kernel.fuse(&tool_refs)?,
-            (Some(stock), "cut") => kernel.cut(stock, &tool_refs)?,
-            (Some(stock), "add") => {
-                let mut refs = vec![stock];
-                refs.extend(tool_refs);
-                kernel.fuse(&refs)?
+        let candidate = if no_op_pattern {
+            let stock = current.as_ref().ok_or("空阵列不能作为首个实体特征。")?;
+            kernel.transform(stock, identity_matrix())?
+        } else {
+            match (&current, operation) {
+                (None, "add") => kernel.fuse(&tool_refs)?,
+                (Some(stock), "cut") => kernel.cut(stock, &tool_refs)?,
+                (Some(stock), "add") => {
+                    let mut refs = vec![stock];
+                    refs.extend(tool_refs);
+                    kernel.fuse(&refs)?
+                }
+                (None, "cut") => return Err("首特征不能切除；未提交候选。".into()),
+                _ => return Err("operation 必须是 add 或 cut。".into()),
             }
-            (None, "cut") => return Err("首特征不能切除；未提交候选。".into()),
-            _ => return Err("operation 必须是 add 或 cut。".into()),
         };
         check_cancel(cancelled)?;
         let analysis = candidate.analyze()?;
@@ -153,7 +200,17 @@ pub fn build(plan: &Value, manifest: &Path, cancelled: &AtomicBool) -> Result<Bu
         }
         let volume = candidate.volume()?;
         let delta = volume - before_volume;
-        if operation == "cut" && delta >= -1e-7_f64.max(before_volume * 1e-10) {
+        if normalized["kind"] == "pattern"
+            && operation == "cut"
+            && delta >= -1e-7_f64.max(before_volume * 1e-10)
+        {
+            // A patterned cutter can land entirely in existing void. Keep the
+            // valid stock and report the pattern as a no-op, matching the
+            // legacy OCCT builder instead of failing the whole candidate.
+            no_op_pattern = true;
+            requested_holes.clear();
+        }
+        if operation == "cut" && !no_op_pattern && delta >= -1e-7_f64.max(before_volume * 1e-10) {
             return Err(format!(
                 "特征 {} 切除没有实际减少材料；请检查孔位、方向或重复切除。",
                 feature["id"]
@@ -183,9 +240,10 @@ pub fn build(plan: &Value, manifest: &Path, cancelled: &AtomicBool) -> Result<Bu
         }
         rows.push(
             json!({"feature_id":feature["id"],"kind":feature["kind"],"operation":operation,
-            "state":"built","geometry_support":standard_support.as_ref().and_then(|v|v.get("status")).cloned().unwrap_or(json!("exact")),
+            "state":if no_op_pattern {"no_op"} else {"built"},"geometry_support":standard_support.as_ref().and_then(|v|v.get("status")).cloned().unwrap_or(json!("exact")),
             "support_details":standard_support,"volume_before_mm3":before_volume,
-            "volume_after_mm3":volume,"volume_delta_mm3":delta}),
+            "volume_after_mm3":volume,"volume_delta_mm3":delta,
+            "warning":if no_op_pattern {Some("阵列没有新增几何；可能数量为 1，或所有切除实例都落在已有空腔中。") } else {None}}),
         );
         let report_start = holes.len();
         if let Some(pre_cut) = hole_pre_cut {
@@ -207,6 +265,9 @@ pub fn build(plan: &Value, manifest: &Path, cancelled: &AtomicBool) -> Result<Bu
                 pending_bore_groups.push(PendingBoreGroup { pre_cut, instances });
             }
         }
+        previous_feature_id = feature["id"].as_str().map(str::to_owned);
+        previous_feature_tools = tools;
+        previous_feature_holes = requested_holes.clone();
         holes.extend(requested_holes);
         current = Some(candidate);
     }
@@ -415,7 +476,8 @@ fn feature_tools(
                     centerline[axis] = (low + high) / 2.;
                 }
                 records.push(json!({"feature_id":feature["id"],"instance_index":i+1,
-                    "centerline_mm":centerline,"axis":(["X","Y","Z"][axis]),"diameter_mm":diameter,
+                    "centerline_mm":centerline,"axis":(["X","Y","Z"][axis]),
+                    "axis_vector_mm":axis_vector(axis),"diameter_mm":diameter,
                     "through":through,"depth_mm":depth,"status":"requested_not_measured",
                     "local_positive_material_span_mm":local_span}));
             }
@@ -452,10 +514,254 @@ fn feature_tools(
     }
 }
 
+fn pattern_tools(
+    kernel: &Kernel,
+    feature: &Value,
+    previous_feature_id: Option<&str>,
+    source_tools: &[Shape],
+    source_holes: &[Value],
+    cancelled: &AtomicBool,
+) -> Result<(Vec<Shape>, Vec<Value>, Value), String> {
+    let parameters = &feature["parameters"];
+    let relation_rows = feature["relations"]
+        .as_array()
+        .ok_or("pattern 必须声明唯一 pattern_source 关系。")?;
+    let source_ids = relation_rows
+        .iter()
+        .filter(|row| row["type"] == "pattern_source")
+        .filter_map(|row| row["feature_id"].as_str())
+        .collect::<Vec<_>>();
+    if source_ids.len() != 1 {
+        return Err("pattern 必须声明唯一 pattern_source 关系。".into());
+    }
+    let source_id = source_ids[0];
+    if previous_feature_id != Some(source_id) {
+        return Err(format!(
+            "pattern_source {source_id} 不是当前已构建的紧邻前一特征。"
+        ));
+    }
+    let count = parameters["count"]
+        .as_u64()
+        .filter(|count| *count > 0)
+        .ok_or("pattern.count 必须是大于零的整数。")?;
+    if count > 1 && source_tools.is_empty() {
+        return Err("pattern_source 没有可复制的原生几何。".into());
+    }
+    let instance_count =
+        usize::try_from(count - 1).map_err(|_| "pattern 实例数量超出当前平台可表示范围。")?;
+    let tool_capacity = instance_count
+        .checked_mul(source_tools.len())
+        .ok_or("pattern 几何数量溢出。")?;
+    if tool_capacity > MAX_PATTERN_TRANSFORMED_TOOLS {
+        return Err(format!(
+            "pattern 需要变换 {tool_capacity} 个刀具，超过当前 OCCT 单特征上限 {MAX_PATTERN_TRANSFORMED_TOOLS}。"
+        ));
+    }
+    let hole_capacity = instance_count
+        .checked_mul(source_holes.len())
+        .ok_or("pattern 孔记录数量溢出。")?;
+    if hole_capacity > MAX_PATTERN_TRANSFORMED_TOOLS {
+        return Err(format!(
+            "pattern 需要生成 {hole_capacity} 条孔记录，超过当前单特征上限 {MAX_PATTERN_TRANSFORMED_TOOLS}。"
+        ));
+    }
+    let mut tools = Vec::new();
+    tools
+        .try_reserve_exact(tool_capacity)
+        .map_err(|error| format!("无法为 pattern 几何分配空间：{error}"))?;
+    let mut holes = Vec::new();
+    holes
+        .try_reserve_exact(hole_capacity)
+        .map_err(|error| format!("无法为 pattern 孔记录分配空间：{error}"))?;
+
+    let mode = parameters["mode"].as_str().ok_or("pattern.mode 无效。")?;
+    let mut linear_step = [0.; 3];
+    let mut rotation_axis = 2;
+    let mut rotation_center = [0.; 3];
+    let mut angle_per_instance = 0.;
+    match mode {
+        "linear" => linear_step = point(parameters.get("step"), [10., 0., 0.])?,
+        "circular" => {
+            rotation_axis = axis_index(parameters)?;
+            rotation_center = point(parameters.get("center"), [0.; 3])?;
+            let angle = optional_num(parameters, "angle", 360.)?;
+            let full = parameters
+                .get("full")
+                .and_then(Value::as_bool)
+                .unwrap_or((angle - 360.).abs() <= 1e-8);
+            let denominator = if full {
+                count.max(1)
+            } else {
+                count.saturating_sub(1).max(1)
+            } as f64;
+            angle_per_instance = angle / denominator;
+        }
+        _ => return Err("pattern.mode 必须是 linear 或 circular。".into()),
+    }
+
+    for instance in 1..count {
+        check_cancel(cancelled)?;
+        let multiplier = instance as f64;
+        let matrix = if mode == "linear" {
+            let shift = linear_step.map(|value| value * multiplier);
+            if shift.iter().any(|value| !value.is_finite()) {
+                return Err("pattern 线性位移超出有限范围。".into());
+            }
+            translation_matrix(shift)
+        } else {
+            rotation_matrix(
+                rotation_axis,
+                angle_per_instance * multiplier,
+                rotation_center,
+            )?
+        };
+        for shape in source_tools {
+            check_cancel(cancelled)?;
+            tools.push(kernel.transform(shape, matrix)?);
+        }
+        for source in source_holes {
+            check_cancel(cancelled)?;
+            let mut record = source.clone();
+            let centerline = point(source.get("centerline_mm"), [0.; 3])?;
+            let transformed_centerline = transform_point(matrix, centerline);
+            if transformed_centerline
+                .iter()
+                .any(|value| !value.is_finite())
+            {
+                return Err("pattern 变换后的孔中心线超出有限范围。".into());
+            }
+            record["centerline_mm"] = json!(transformed_centerline);
+            let axis_direction = record_axis_direction(source)?;
+            let transformed_axis_direction =
+                normalize_vector(transform_vector(matrix, axis_direction))?;
+            record["axis_vector_mm"] = json!(transformed_axis_direction);
+            let base_index = source["instance_index"].as_u64().unwrap_or(1);
+            let multiplier = instance;
+            let source_hole_count =
+                u64::try_from(source_holes.len()).map_err(|_| "pattern 孔记录数溢出。")?;
+            let hole_offset = multiplier
+                .checked_mul(source_hole_count)
+                .ok_or("pattern 孔实例索引溢出。")?;
+            record["instance_index"] = json!(base_index
+                .checked_add(hole_offset)
+                .ok_or("pattern 孔实例索引溢出。")?);
+            holes.push(record);
+        }
+    }
+    Ok((
+        tools,
+        holes,
+        json!({"kind":"pattern","status":"exact","builder":"explicit_pattern_transform",
+            "mode":mode,"source_feature_id":source_id,"count":count,
+            "created_instances":count.saturating_sub(1)}),
+    ))
+}
+
 fn identity_matrix() -> [f64; 16] {
     [
         1., 0., 0., 0., 0., 1., 0., 0., 0., 0., 1., 0., 0., 0., 0., 1.,
     ]
+}
+
+fn translation_matrix(shift: [f64; 3]) -> [f64; 16] {
+    let mut matrix = identity_matrix();
+    matrix[3] = shift[0];
+    matrix[7] = shift[1];
+    matrix[11] = shift[2];
+    matrix
+}
+
+fn rotation_matrix(axis: usize, angle_degrees: f64, center: [f64; 3]) -> Result<[f64; 16], String> {
+    if axis > 2 || !angle_degrees.is_finite() || center.iter().any(|value| !value.is_finite()) {
+        return Err("pattern 圆周变换参数无效。".into());
+    }
+    let angle = angle_degrees.to_radians();
+    let (sin, cos) = angle.sin_cos();
+    let rotation = match axis {
+        0 => [[1., 0., 0.], [0., cos, -sin], [0., sin, cos]],
+        1 => [[cos, 0., sin], [0., 1., 0.], [-sin, 0., cos]],
+        2 => [[cos, -sin, 0.], [sin, cos, 0.], [0., 0., 1.]],
+        _ => unreachable!("axis checked above"),
+    };
+    let mut translation = center;
+    for row in 0..3 {
+        translation[row] -= (0..3)
+            .map(|column| rotation[row][column] * center[column])
+            .sum::<f64>();
+    }
+    if translation.iter().any(|value| !value.is_finite()) {
+        return Err("pattern 旋转中心超出有限范围。".into());
+    }
+    Ok([
+        rotation[0][0],
+        rotation[0][1],
+        rotation[0][2],
+        translation[0],
+        rotation[1][0],
+        rotation[1][1],
+        rotation[1][2],
+        translation[1],
+        rotation[2][0],
+        rotation[2][1],
+        rotation[2][2],
+        translation[2],
+        0.,
+        0.,
+        0.,
+        1.,
+    ])
+}
+
+fn transform_point(matrix: [f64; 16], point: [f64; 3]) -> [f64; 3] {
+    [
+        matrix[0] * point[0] + matrix[1] * point[1] + matrix[2] * point[2] + matrix[3],
+        matrix[4] * point[0] + matrix[5] * point[1] + matrix[6] * point[2] + matrix[7],
+        matrix[8] * point[0] + matrix[9] * point[1] + matrix[10] * point[2] + matrix[11],
+    ]
+}
+
+fn transform_vector(matrix: [f64; 16], vector: [f64; 3]) -> [f64; 3] {
+    [
+        matrix[0] * vector[0] + matrix[1] * vector[1] + matrix[2] * vector[2],
+        matrix[4] * vector[0] + matrix[5] * vector[1] + matrix[6] * vector[2],
+        matrix[8] * vector[0] + matrix[9] * vector[1] + matrix[10] * vector[2],
+    ]
+}
+
+fn record_axis_direction(record: &Value) -> Result<[f64; 3], String> {
+    let fallback = match record["axis"].as_str() {
+        Some("X") => axis_vector(0),
+        Some("Y") => axis_vector(1),
+        Some("Z") => axis_vector(2),
+        _ => return Err("孔记录缺少有效轴向。".into()),
+    };
+    normalize_vector(point(record.get("axis_vector_mm"), fallback)?)
+}
+
+fn normalize_vector(vector: [f64; 3]) -> Result<[f64; 3], String> {
+    let length = vector.iter().map(|value| value * value).sum::<f64>().sqrt();
+    if !length.is_finite() || length <= 1e-12 {
+        return Err("孔轴向变换后不是有限的非零向量。".into());
+    }
+    Ok(vector.map(|value| value / length))
+}
+
+fn projected_line_limits(origin: [f64; 3], axis: [f64; 3], bounds: [f64; 6]) -> (f64, f64) {
+    let mut low = f64::INFINITY;
+    let mut high = f64::NEG_INFINITY;
+    for mask in 0..8 {
+        let corner = [
+            if mask & 1 == 0 { bounds[0] } else { bounds[3] },
+            if mask & 2 == 0 { bounds[1] } else { bounds[4] },
+            if mask & 4 == 0 { bounds[2] } else { bounds[5] },
+        ];
+        let parameter = (0..3)
+            .map(|index| (corner[index] - origin[index]) * axis[index])
+            .sum::<f64>();
+        low = low.min(parameter);
+        high = high.max(parameter);
+    }
+    (low, high)
 }
 
 fn hole_request_from_record(
@@ -463,24 +769,20 @@ fn hole_request_from_record(
     record: &Value,
 ) -> Result<(HoleRequest, Option<f64>), String> {
     let origin = point(record.get("centerline_mm"), [0.; 3])?;
-    let axis_index = match record["axis"].as_str() {
-        Some("X") => 0,
-        Some("Y") => 1,
-        Some("Z") => 2,
-        _ => return Err("孔记录缺少有效轴向。".into()),
-    };
+    let axis = record_axis_direction(record)?;
     let radius = num(record, "diameter_mm")? / 2.0;
     if radius <= 0.0 {
         return Err("孔记录直径必须为正。".into());
     }
     let bounds = bounds_array(pre_cut.bounds()?);
-    let margin = ((bounds[axis_index + 3] - bounds[axis_index]) * 0.05).max(1.0);
+    let (low, high) = projected_line_limits(origin, axis, bounds);
+    let margin = ((high - low) * 0.05).max(1.0);
     let request = HoleRequest {
         origin,
-        axis: axis_vector(axis_index),
+        axis,
         radius,
-        tmin: bounds[axis_index] - origin[axis_index] - margin,
-        tmax: bounds[axis_index + 3] - origin[axis_index] + margin,
+        tmin: low - margin,
+        tmax: high + margin,
         tolerance: 1e-6,
     };
     let expected_blind_depth = if record["through"].as_bool() == Some(false) {
@@ -493,22 +795,16 @@ fn hole_request_from_record(
 
 fn verify_hole_record(pre_cut: &Shape, post_cut: &Shape, record: &Value) -> Result<Value, String> {
     let centerline = point(record.get("centerline_mm"), [0.; 3])?;
-    let axis_name = record["axis"].as_str().ok_or("孔记录缺少轴。")?;
-    let axis = match axis_name {
-        "X" => 0,
-        "Y" => 1,
-        "Z" => 2,
-        _ => return Err("孔记录包含未知轴。".into()),
-    };
-    let axis_vector = axis_vector(axis);
+    let axis = record_axis_direction(record)?;
     let radius = num(record, "diameter_mm")? / 2.0;
     let bounds = bounds_array(pre_cut.bounds()?);
-    let margin = ((bounds[axis + 3] - bounds[axis]) * 0.05).max(1.0);
-    let tmin = bounds[axis] - centerline[axis] - margin;
-    let tmax = bounds[axis + 3] - centerline[axis] + margin;
+    let (low, high) = projected_line_limits(centerline, axis, bounds);
+    let margin = ((high - low) * 0.05).max(1.0);
+    let tmin = low - margin;
+    let tmax = high + margin;
     let request = HoleRequest {
         origin: centerline,
-        axis: axis_vector,
+        axis,
         radius,
         tmin,
         tmax,
@@ -653,6 +949,7 @@ fn normalized_feature(feature: &Value, plan: &Value) -> Result<Value, String> {
             "z",
             "center",
             "point",
+            "step",
             "entry_point",
             "profile",
             "shank_d",
@@ -858,6 +1155,96 @@ mod tests {
         assert!((positions[1][1] - 10.).abs() < 1e-10);
     }
     #[test]
+    fn pattern_transform_preserves_global_linear_and_right_handed_circular_semantics() {
+        let translated = transform_point(translation_matrix([2., -3., 4.]), [1., 2., 3.]);
+        assert_eq!(translated, [3., -1., 7.]);
+
+        let center = [1., 2., 3.];
+        let around_x = transform_point(rotation_matrix(0, 90., center).unwrap(), [1., 3., 3.]);
+        let around_y = transform_point(rotation_matrix(1, 90., center).unwrap(), [1., 2., 4.]);
+        let around_z = transform_point(rotation_matrix(2, 90., center).unwrap(), [2., 2., 3.]);
+        assert!(around_x
+            .iter()
+            .zip([1., 2., 4.])
+            .all(|(a, b)| (a - b).abs() < 1e-10));
+        assert!(around_y
+            .iter()
+            .zip([2., 2., 3.])
+            .all(|(a, b)| (a - b).abs() < 1e-10));
+        assert!(around_z
+            .iter()
+            .zip([1., 3., 3.])
+            .all(|(a, b)| (a - b).abs() < 1e-10));
+
+        let rotated_axis = normalize_vector(transform_vector(
+            rotation_matrix(2, 45., [0., 0., 0.]).unwrap(),
+            axis_vector(1),
+        ))
+        .unwrap();
+        let expected_axis = [
+            -std::f64::consts::FRAC_1_SQRT_2,
+            std::f64::consts::FRAC_1_SQRT_2,
+            0.,
+        ];
+        assert!(rotated_axis
+            .iter()
+            .zip(expected_axis)
+            .all(|(a, b)| (a - b).abs() < 1e-10));
+        let limits = projected_line_limits(
+            [2., 2., 0.],
+            rotated_axis,
+            [-10., -10., -10., 10., 10., 10.],
+        );
+        assert!(limits.0 < -14. && limits.1 > 14.);
+    }
+
+    #[test]
+    fn native_pattern_preflight_requires_a_valid_mode_and_finite_transform() {
+        let mut plan = fixture();
+        plan["features"] = json!([
+            {"id":"body","kind":"box","operation":"add","parameters":{"length":10,"width":10,"height":10},
+             "sources":{"length":{"type":"user"},"width":{"type":"user"},"height":{"type":"user"}}},
+            {"id":"pattern","kind":"pattern","operation":"add","parameters":{"mode":"linear","count":2,"step":[1,0,0]},
+             "sources":{"count":{"type":"user"},"step":{"type":"user"}},
+             "relations":[{"type":"pattern_source","feature_id":"body"}]}
+        ]);
+        assert_eq!(preflight(&plan).unwrap()["state"], "valid");
+        let mut missing_step = plan.clone();
+        missing_step["features"][1]["parameters"]
+            .as_object_mut()
+            .unwrap()
+            .remove("step");
+        missing_step["features"][1]["sources"]
+            .as_object_mut()
+            .unwrap()
+            .remove("step");
+        assert!(preflight(&missing_step).is_err());
+        plan["features"][1]["parameters"] = json!({
+            "mode":"circular","count":4,"axis":"Z","angle":360,"center":[0,0,0]
+        });
+        plan["features"][1]["sources"] = json!({
+            "count":{"type":"user"},"angle":{"type":"user"},"center":{"type":"user"}
+        });
+        assert_eq!(preflight(&plan).unwrap()["state"], "valid");
+        plan["features"][1]["parameters"]["count"] = json!(MAX_PATTERN_COUNT + 1);
+        assert!(preflight(&plan).unwrap_err().contains("OCCT 单特征上限"));
+        plan["features"][1]["parameters"]["count"] = json!(2);
+        plan["features"][1]["parameters"]["mode"] = json!("linear");
+        plan["features"][1]["parameters"]["step"] = json!([1, "bad", 0]);
+        assert!(preflight(&plan).is_err());
+    }
+
+    #[test]
+    fn pattern_step_uses_the_plan_length_unit() {
+        let mut plan = fixture();
+        plan["units"]["length"] = json!("cm");
+        let pattern = json!({"id":"pattern","kind":"pattern","operation":"add",
+            "parameters":{"mode":"linear","count":3,"step":[1,0,0]},
+            "sources":{"count":{"type":"user"},"step":{"type":"user"}}});
+        let normalized = normalized_feature(&pattern, &plan).unwrap();
+        assert_eq!(normalized["parameters"]["step"], json!([10., 0., 0.]));
+    }
+    #[test]
     fn unit_scaling_preserves_boolean_flags_and_source_plan() {
         let mut plan = fixture();
         plan["units"] = json!({"length":"cm","angle":"rad"});
@@ -869,16 +1256,14 @@ mod tests {
     }
     #[test]
     fn invalid_or_cancelled_input_cannot_reach_dll_loading() {
-        assert!(
-            build(
-                &json!({}),
-                Path::new("nonexistent"),
-                &AtomicBool::new(false)
-            )
-            .err()
-            .expect("invalid plan cannot build")
-            .contains("校验")
-        );
+        assert!(build(
+            &json!({}),
+            Path::new("nonexistent"),
+            &AtomicBool::new(false)
+        )
+        .err()
+        .expect("invalid plan cannot build")
+        .contains("校验"));
         assert!(check_cancel(&AtomicBool::new(true)).is_err());
     }
 }
