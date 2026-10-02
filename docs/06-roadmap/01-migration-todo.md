@@ -20,8 +20,9 @@
 | F2.1 | Cordis → Rust 本机工具桥 | **已完成** | Cordis 原生注册与 Rust Host 的认证 JSON-RPC、取消、超时、去重和图片返回链路测试通过；Rust 下游仍调用旧 Python worker，故不代表 F2 完成；提交 `501d47b` |
 | F2.2 | Rust 持有 CAD 工具 schema 与参数契约 | **已完成** | Rust 内嵌 25 项 schema，与迁移时 Python 函数输出逐字段相同；不再启动 Python 取 schema；固定 DSH `defineTool()` 成功注册 25 项 |
 | F2.3 | 只读状态、知识及联网工具迁入 Rust Host | **已完成** | 六项原生读取工具已接入 Rust；生产测试 55/55，实际 DSH CLI 完成五项调用且禁止 Python 回退；外网搜索因本机 DNS 非公网解析失败，如实返回，正文成功路径以 HTTP fixture 验证 |
-| F2.4 | 图片观察与视觉复核迁出 Python | **进行中** | 请求与图片基础已完成；原图观察/单视图审查 domain 尚待接线及实际多模态验收，生产当前仍走 Python |
+| F2.4 | 图片观察与视觉复核迁出 Python | **进行中（原生接线已提交）** | domain/executor 原生接线完成；真实 DSH 观察工具及原图传输通过，完整复核质量仍待 F7 |
 | F2.4.1 | Rust 多模态 provider 与图片资产 | **已完成（传输通过，观察质量未通过）** | 双协议、取消、SHA 遥测、EXIF/ROI 输入已实现；真实原图请求成功，观察错误作为后续负样本保留 |
+| F2.4.2 | 原生视觉 domain 与 Cordis 接线 | **已完成（接线/传输）** | 真实 DSH cad_inspect_references、SHA、Responses、禁止 Python fallback 通过；单视图复核为 fixture 验收，不冒充质量通过 |
 | F2.5 | CAD 写工具迁移到 Rust CAD domain | 未开始 | 建立/修改/删除/预览/构建工具直接调用 F3 Rust CADPlan，移除 Python tool worker 兼容执行器 |
 | F3 | Rust CADPlan 与增量模型事务 | **进行中** | 纯增量事务已移植；完整参数校验、会话版本/回滚及 preview/build dispatch 尚待接线验收 |
 | F3.1 | Rust CADPlan 纯增量事务与几何指纹 | **已完成** | create/add/update/remove/snapshot 保留来源与扩展字段；数值更新来源 guard、失败原计划不变；140 组 Python 几何指纹对拍一致，精确浮点解析已启用 |

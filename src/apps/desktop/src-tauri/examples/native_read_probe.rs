@@ -2,7 +2,8 @@
 use ai_modeler_ui_lib::native_tool_bridge::{NativeToolBridge, ToolExecutor};
 use ai_modeler_ui_lib::native_tool_executor::NativeToolExecutor;
 use ai_modeler_ui_lib::native_tool_schemas::native_tool_schemas;
-use serde_json::{Value, json};
+use ai_modeler_ui_lib::native_vision_provider::{NativeVisionProvider, ProviderConfig};
+use serde_json::{json, Value};
 use std::io::{self, BufRead, Write};
 use std::path::PathBuf;
 use std::sync::Arc;
@@ -20,17 +21,68 @@ impl ToolExecutor for RejectCompatibility {
 
 fn main() -> Result<(), String> {
     let args: Vec<String> = std::env::args().skip(1).collect();
-    let root = PathBuf::from(
-        args.first()
-            .ok_or("usage: native_read_probe LEGACY_ROOT SESSION_DIR [--online] [--serve]")?,
-    );
+    let root = PathBuf::from(args.first().ok_or(
+        "usage: native_read_probe LEGACY_ROOT SESSION_DIR [--online] [--serve] [--vision]",
+    )?);
     let dir = PathBuf::from(args.get(1).ok_or("必须指定隔离会话目录。")?);
-    let executor = Arc::new(NativeToolExecutor::new(
+    let mut executor = NativeToolExecutor::new(
         root,
         &dir,
         args.iter().any(|s| s == "--online"),
         Arc::new(RejectCompatibility),
-    )?);
+    )?;
+    if args.iter().any(|s| s == "--vision") {
+        if !args.iter().any(|s| s == "--online") {
+            return Err("--vision 要求同时显式指定 --online。".into());
+        }
+        // The key is read from an existing environment variable and never
+        // included in probe output, logs, or the ACP profile file.
+        let key = std::env::var("AIMODELER_LLM_API_KEY")
+            .or_else(|_| std::env::var("DEEPSEEK_API_KEY"))
+            .map_err(|_| "--vision 需要 AIMODELER_LLM_API_KEY 或 DEEPSEEK_API_KEY。")?;
+        let base_url = std::env::var("AI_MODELER_REVIEW_BASE_URL")
+            .unwrap_or_else(|_| "https://api.deepseek.com/responses".into());
+        let model =
+            std::env::var("AI_MODELER_REVIEW_MODEL").unwrap_or_else(|_| "deepseek-flash".into());
+        let effort =
+            std::env::var("AI_MODELER_REVIEW_REASONING_EFFORT").unwrap_or_else(|_| "none".into());
+        let thinking_budget = std::env::var("AI_MODELER_REVIEW_THINKING_BUDGET")
+            .ok()
+            .filter(|value| !value.trim().is_empty())
+            .map(|value| {
+                value
+                    .parse::<u64>()
+                    .map_err(|_| "AI_MODELER_REVIEW_THINKING_BUDGET 必须是非负整数。")
+            })
+            .transpose()?;
+        let max_output_tokens = std::env::var("AI_MODELER_REVIEW_OUTPUT_CAP")
+            .ok()
+            .filter(|value| !value.trim().is_empty())
+            .map(|value| {
+                value
+                    .parse::<u64>()
+                    .map_err(|_| "AI_MODELER_REVIEW_OUTPUT_CAP 必须是正整数。")
+            })
+            .transpose()?
+            .filter(|value| *value > 0)
+            .unwrap_or(2048);
+        let provider = NativeVisionProvider::new(ProviderConfig {
+            base_url,
+            model,
+            api_key: key,
+            effort,
+            thinking_budget,
+            max_output_tokens,
+        })
+        .map_err(|error| {
+            format!(
+                "无法初始化原生视觉provider：{}: {}",
+                error.kind, error.message
+            )
+        })?;
+        executor = executor.with_vision(Arc::new(provider));
+    }
+    let executor = Arc::new(executor);
     let mut stdout = io::stdout().lock();
     let bridge = if args.iter().any(|s| s == "--serve") {
         let bridge = NativeToolBridge::start(

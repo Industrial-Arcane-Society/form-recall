@@ -8,21 +8,22 @@ use crate::acp::AcpProcess;
 use crate::native_tool_bridge::{LegacyPythonExecutor, NativeToolBridge};
 use crate::native_tool_executor::NativeToolExecutor;
 use crate::native_tool_schemas::native_tool_schemas;
-use base64::Engine as _;
+use crate::native_vision_provider::{NativeVisionProvider, ProviderConfig};
 use base64::engine::general_purpose::STANDARD as BASE64;
+use base64::Engine as _;
 use reqwest::Url;
-use serde_json::{Value, json};
+use serde_json::{json, Value};
 use sha2::{Digest, Sha256};
 use std::ffi::OsString;
 use std::fs;
 use std::path::{Path, PathBuf};
 use std::process::Command;
 use std::sync::atomic::{AtomicBool, Ordering};
-use std::sync::{Arc, Mutex, mpsc};
+use std::sync::{mpsc, Arc, Mutex};
 use std::thread;
 use std::time::{Duration, SystemTime, UNIX_EPOCH};
-use tauri::AppHandle;
 use tauri::ipc::Channel;
+use tauri::AppHandle;
 
 const AGENT_FOLDER: &str = "agent-host";
 const SESSION_FILE: &str = "current-session.json";
@@ -388,12 +389,19 @@ fn get_or_create_session(
         root.clone(),
         tool_environment.clone(),
     ));
-    let tool_executor = Arc::new(NativeToolExecutor::new(
-        root.clone(),
-        cwd.clone(),
-        online_enabled,
-        legacy_executor,
-    )?);
+    let vision_provider = NativeVisionProvider::new(ProviderConfig {
+        base_url: provider.base_url.clone(),
+        model: provider.model.clone(),
+        api_key: provider.api_key.clone(),
+        effort: provider.effort.clone(),
+        thinking_budget: provider.budget,
+        max_output_tokens: positive(provider.output_cap).unwrap_or(4096),
+    })
+    .map_err(|error| format!("无法初始化原生视觉provider：{error}"))?;
+    let tool_executor = Arc::new(
+        NativeToolExecutor::new(root.clone(), cwd.clone(), online_enabled, legacy_executor)?
+            .with_vision(Arc::new(vision_provider)),
+    );
     let tool_bridge = NativeToolBridge::start(
         host_tool_session_id,
         &native_schemas_path,
@@ -1500,8 +1508,8 @@ fn sha256(bytes: impl AsRef<[u8]>) -> String {
 #[cfg(test)]
 mod tests {
     use super::{
-        Image, Provider, active_turn_record, find_config_value, route_profile,
-        validate_image_signature, write_profile_patch,
+        active_turn_record, find_config_value, route_profile, validate_image_signature,
+        write_profile_patch, Image, Provider,
     };
     use serde_json::json;
     use std::fs;

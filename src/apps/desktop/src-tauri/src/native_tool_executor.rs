@@ -5,8 +5,10 @@
 use crate::native_feature_specs::feature_spec;
 use crate::native_knowledge::{search_knowledge, search_recipes};
 use crate::native_tool_bridge::ToolExecutor;
+use crate::native_vision_domain::{self, Context as VisionContext};
+use crate::native_vision_provider::NativeVisionProvider;
 use crate::native_web::NativeWeb;
-use serde_json::{Value, json};
+use serde_json::{json, Value};
 use std::collections::HashMap;
 use std::fs;
 use std::path::{Path, PathBuf};
@@ -20,6 +22,8 @@ pub struct NativeToolExecutor {
     session_dir: PathBuf,
     fallback: Arc<dyn ToolExecutor>,
     web: NativeWeb,
+    vision: Option<Arc<NativeVisionProvider>>,
+    online_enabled: bool,
     transaction: Mutex<()>,
     active: Mutex<HashMap<String, Arc<AtomicBool>>>,
     stopping: AtomicBool,
@@ -43,10 +47,17 @@ impl NativeToolExecutor {
             session_dir,
             fallback,
             web,
+            vision: None,
+            online_enabled,
             transaction: Mutex::new(()),
             active: Mutex::new(HashMap::new()),
             stopping: AtomicBool::new(false),
         })
+    }
+
+    pub fn with_vision(mut self, provider: Arc<NativeVisionProvider>) -> Self {
+        self.vision = Some(provider);
+        self
     }
 
     fn check_cancelled(&self, cancelled: &AtomicBool) -> Result<(), String> {
@@ -88,6 +99,8 @@ impl NativeToolExecutor {
                 | "cad_search_recipes"
                 | "web_search"
                 | "web_open_result"
+                | "cad_inspect_references"
+                | "cad_review_reference_similarity"
         );
         if !native {
             return self.fallback.execute(call_id, name, arguments, remaining);
@@ -164,6 +177,19 @@ impl NativeToolExecutor {
                     "网页搜索完成。",
                 )
             }
+            "cad_inspect_references" | "cad_review_reference_similarity" => {
+                let outcome = self.run_vision(name, &state, arguments, cancelled)?;
+                state = outcome.state;
+                (
+                    outcome.value,
+                    vec![],
+                    if name == "cad_inspect_references" {
+                        "已原生观察所选原图；结果保持unknown直到独立验证。"
+                    } else {
+                        "已原生完成独立单视图复核。"
+                    },
+                )
+            }
             "web_open_result" => {
                 check_keys(arguments, &["result_id"])?;
                 (
@@ -184,19 +210,25 @@ impl NativeToolExecutor {
             state["knowledge_visual_examples"] =
                 value.get("visual_examples").cloned().unwrap_or(json!([]));
         }
-        let revision = state.get("revision").cloned().unwrap_or(json!(0));
-        let action = json!({"kind": if name == "web_search" {"web_search"} else {"tool"},
+        let vision_domain_recorded = matches!(
+            name,
+            "cad_inspect_references" | "cad_review_reference_similarity"
+        );
+        if !vision_domain_recorded {
+            let revision = state.get("revision").cloned().unwrap_or(json!(0));
+            let action = json!({"kind": if name == "web_search" {"web_search"} else {"tool"},
             "tool":name,"revision":revision,"at":unix_seconds(),"execution_engine":"rust",
             "feature_kind":arguments.get("kind"),"query":arguments.get("query"),
             "result_id":arguments.get("result_id"),"diagnostics":value.get("diagnostics")});
-        state
-            .as_object_mut()
-            .unwrap()
-            .entry("actions")
-            .or_insert(json!([]))
-            .as_array_mut()
-            .ok_or("CAD actions 不是数组。")?
-            .push(action);
+            state
+                .as_object_mut()
+                .unwrap()
+                .entry("actions")
+                .or_insert(json!([]))
+                .as_array_mut()
+                .ok_or("CAD actions 不是数组。")?
+                .push(action);
+        }
         if name.starts_with("web_") {
             let history = state
                 .as_object_mut()
@@ -221,6 +253,51 @@ impl NativeToolExecutor {
         Ok(tool_result(name, value, images, progress))
     }
 
+    fn run_vision(
+        &self,
+        name: &str,
+        state: &Value,
+        args: &Value,
+        cancelled: &AtomicBool,
+    ) -> Result<native_vision_domain::DomainResult, String> {
+        if !self.online_enabled {
+            return Err("在线视觉工具已禁用。".into());
+        }
+        let provider = self
+            .vision
+            .as_ref()
+            .ok_or("原生视觉provider未配置；拒绝回退到Python视觉worker。")?;
+        let active_path = self.session_dir.join("active-turn.json");
+        let turn_id = if active_path.exists() {
+            read_json_object(&active_path)?
+                .get("turn_id")
+                .and_then(Value::as_str)
+                .map(str::to_owned)
+        } else {
+            None
+        };
+        let context = VisionContext {
+            session_dir: self.session_dir.clone(),
+            reference_manifest: self.session_dir.join("reference-images.json"),
+            user_turns_manifest: self.session_dir.join("user-turns.json"),
+            stream_file: self.session_dir.join("stream-events.jsonl"),
+            turn_id,
+        };
+        self.check_cancelled(cancelled)?;
+        let result = tauri::async_runtime::block_on(async {
+            match name {
+                "cad_inspect_references" => {
+                    native_vision_domain::inspect(state, args, provider, cancelled, &context).await
+                }
+                "cad_review_reference_similarity" => {
+                    native_vision_domain::review(state, args, provider, cancelled, &context).await
+                }
+                _ => Err(format!("未知原生视觉工具：{name}")),
+            }
+        })?;
+        self.check_cancelled(cancelled)?;
+        Ok(result)
+    }
     fn load_cad_state(&self) -> Result<Value, String> {
         let path = self.session_dir.join("cad-state.json");
         if path.exists() {
@@ -354,11 +431,15 @@ fn unix_seconds() -> f64 {
 
 fn tool_result(name: &str, mut value: Value, images: Vec<Value>, progress: &str) -> Value {
     if name == "cad_search_knowledge" && !images.is_empty() {
-        value["visual_attachment_order"] =
-            json!(images.iter().enumerate().map(|(index,image)|
-            json!({"attachment_index":index+1,"model":image.get("model"),
+        value["visual_attachment_order"] = json!(images
+            .iter()
+            .enumerate()
+            .map(
+                |(index, image)| json!({"attachment_index":index+1,"model":image.get("model"),
                 "category":image.get("category"),"role":image.get("role"),
-                "source_kind":"knowledge_example","is_user_reference":false})).collect::<Vec<_>>());
+                "source_kind":"knowledge_example","is_user_reference":false})
+            )
+            .collect::<Vec<_>>());
     }
     json!({"text":format!("AI_MODELER_PROGRESS:{progress}\n{}",value),"images":images,
         "payload":{"isError":false,"execution_engine":"rust","tool":name}})
@@ -398,6 +479,121 @@ mod tests {
         (dir, executor, fallback)
     }
 
+    #[test]
+    fn executor_uses_native_vision_provider_http_and_commits_only_domain_state() {
+        use sha2::{Digest, Sha256};
+        use std::io::{Read, Write};
+        use std::net::TcpListener;
+
+        let (dir, _, fallback) = fixture();
+        let source = dir.join("source.png");
+        image::RgbImage::from_pixel(8, 8, image::Rgb([80, 90, 100]))
+            .save(&source)
+            .unwrap();
+        let bytes = fs::read(&source).unwrap();
+        let sha = Sha256::digest(&bytes)
+            .iter()
+            .map(|b| format!("{b:02x}"))
+            .collect::<String>();
+        let reference_id = format!("sha256:{sha}");
+        fs::write(dir.join("reference-images.json"), serde_json::to_vec(&json!({
+            "images":[{"id":reference_id,"sha256":sha,"path":source,"filename":"source.png","media_type":"image/png"}]
+        })).unwrap()).unwrap();
+        fs::write(dir.join("user-turns.json"), br#"{"turns":[]}"#).unwrap();
+        fs::write(dir.join("active-turn.json"), br#"{"turn_id":"turn-http"}"#).unwrap();
+
+        let listener = TcpListener::bind("127.0.0.1:0").unwrap();
+        let addr = listener.local_addr().unwrap();
+        let server = thread::spawn(move || {
+            let (mut stream, _) = listener.accept().unwrap();
+            stream
+                .set_read_timeout(Some(Duration::from_secs(3)))
+                .unwrap();
+            let mut request = Vec::new();
+            let mut buffer = [0u8; 4096];
+            let header_end;
+            loop {
+                let n = stream.read(&mut buffer).unwrap();
+                request.extend_from_slice(&buffer[..n]);
+                if let Some(pos) = request.windows(4).position(|w| w == b"\r\n\r\n") {
+                    header_end = pos + 4;
+                    break;
+                }
+            }
+            let headers = String::from_utf8_lossy(&request[..header_end]).to_string();
+            let content_length = headers
+                .lines()
+                .find_map(|line| {
+                    let (key, value) = line.split_once(':')?;
+                    key.eq_ignore_ascii_case("content-length")
+                        .then(|| value.trim().parse::<usize>().ok())
+                        .flatten()
+                })
+                .unwrap();
+            while request.len() < header_end + content_length {
+                let n = stream.read(&mut buffer).unwrap();
+                if n == 0 {
+                    break;
+                }
+                request.extend_from_slice(&buffer[..n]);
+            }
+            let body: Value =
+                serde_json::from_slice(&request[header_end..header_end + content_length]).unwrap();
+            let response = json!({"choices":[{"message":{"content":json!({
+                "summary":"visible object",
+                "visible_evidence":[{"description":"a visible circular opening","visible_form":"hole","relative_size_group":"unknown","surface_plane_relation":"unknown","confidence":0.7}]
+            }).to_string()},"finish_reason":"stop"}]});
+            let response = serde_json::to_vec(&response).unwrap();
+            write!(stream, "HTTP/1.1 200 OK\r\nContent-Type: application/json\r\nContent-Length: {}\r\nConnection: close\r\n\r\n", response.len()).unwrap();
+            stream.write_all(&response).unwrap();
+            (headers, body)
+        });
+        let provider = NativeVisionProvider::new(crate::native_vision_provider::ProviderConfig {
+            base_url: format!("http://{addr}/v1"),
+            model: "fixture-vlm".into(),
+            api_key: "fixture-key".into(),
+            effort: "none".into(),
+            thinking_budget: None,
+            max_output_tokens: 1024,
+        })
+        .unwrap();
+        let executor = NativeToolExecutor::new(&dir, &dir, true, fallback.clone())
+            .unwrap()
+            .with_vision(Arc::new(provider));
+        let result = executor
+            .execute(
+                "http",
+                "cad_inspect_references",
+                &json!({}),
+                Duration::from_secs(10),
+            )
+            .unwrap();
+        assert_eq!(result["payload"]["execution_engine"], "rust");
+        let state = read_json_object(&dir.join("cad-state.json")).unwrap();
+        assert_eq!(state["reference_inventory"].as_object().unwrap().len(), 1);
+        assert_eq!(state["actions"].as_array().unwrap().len(), 1);
+        assert_eq!(fallback.calls.load(Ordering::SeqCst), 0);
+        let (headers, body) = server.join().unwrap();
+        assert!(headers.starts_with("POST /v1/chat/completions "));
+        assert_eq!(body["model"], "fixture-vlm");
+        assert_eq!(body["stream"], false);
+        fs::remove_dir_all(dir).unwrap();
+    }
+    #[test]
+    fn vision_tools_reject_legacy_fallback_when_provider_is_missing() {
+        let (dir, _, fallback) = fixture();
+        let executor =
+            Arc::new(NativeToolExecutor::new(&dir, &dir, true, fallback.clone()).unwrap());
+        for tool in ["cad_inspect_references", "cad_review_reference_similarity"] {
+            let error = executor
+                .execute("vision", tool, &json!({}), Duration::from_secs(1))
+                .unwrap_err();
+            assert!(error.contains("拒绝回退到Python"), "{error}");
+        }
+        assert_eq!(fallback.calls.load(Ordering::SeqCst), 0);
+        assert!(!dir.join("cad-state.json").exists());
+        fs::remove_dir_all(dir).unwrap();
+    }
     #[test]
     fn native_contract_and_disabled_web_do_not_execute_compatibility_backend() {
         let (dir, executor, fallback) = fixture();
@@ -442,27 +638,23 @@ mod tests {
     fn corrupt_or_invalid_state_is_preserved_instead_of_silently_reset() {
         let (dir, executor, _) = fixture();
         fs::write(dir.join("cad-state.json"), b"{not-json").unwrap();
-        assert!(
-            executor
-                .execute(
-                    "corrupt",
-                    "cad_get_feature_spec",
-                    &json!({"kind":"box"}),
-                    Duration::from_secs(1)
-                )
-                .is_err()
-        );
+        assert!(executor
+            .execute(
+                "corrupt",
+                "cad_get_feature_spec",
+                &json!({"kind":"box"}),
+                Duration::from_secs(1)
+            )
+            .is_err());
         assert_eq!(fs::read(dir.join("cad-state.json")).unwrap(), b"{not-json");
-        assert!(
-            executor
-                .execute(
-                    "invalid",
-                    "cad_get_feature_spec",
-                    &json!({"kind":"box","ignore":true}),
-                    Duration::from_secs(1)
-                )
-                .is_err()
-        );
+        assert!(executor
+            .execute(
+                "invalid",
+                "cad_get_feature_spec",
+                &json!({"kind":"box","ignore":true}),
+                Duration::from_secs(1)
+            )
+            .is_err());
         fs::remove_dir_all(dir).unwrap();
     }
 
