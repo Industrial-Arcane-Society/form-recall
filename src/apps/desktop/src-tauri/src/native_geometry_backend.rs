@@ -47,9 +47,11 @@ pub fn build_preview(
     let project = native_model_io::cadplan_to_project(plan)?;
     let project_path = directory.join("candidate.aimodel");
     let stl_path = directory.join("candidate.stl");
+    let obj_path = directory.join("candidate.obj");
     let glb_path = directory.join("candidate.glb");
     native_model_io::save_aimodel(&project_path, &project)?;
     native_model_io::write_binary_stl(&stl_path, &mesh, "native CADPlan")?;
+    native_model_io::write_wavefront_obj(&obj_path, &mesh)?;
     crate::native_quick::write_glb(&mesh, &glb_path)?;
     let plan_path = directory.join("cadplan.json");
     native_model_io::atomic_write(
@@ -91,7 +93,7 @@ pub fn build_preview(
         "local_geometry_checks":report,"preview_image_path":views[0]["preview_image_path"],
         "preview_sha256":views[0]["preview_sha256"],"triangle_count":mesh.positions.len()/3,
         "catia_executed":false});
-    let output_paths = json!({"aimodel":project_path,"stl":stl_path,"glb":glb_path,"cadplan":plan_path,
+    let output_paths = json!({"aimodel":project_path,"stl":stl_path,"obj":obj_path,"glb":glb_path,"cadplan":plan_path,
         "geometry_report":report_path,"preview":views[0]["preview_image_path"]});
     Ok(PreviewOutput {
         outcome: BackendOutcome {

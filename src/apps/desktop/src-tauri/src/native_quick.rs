@@ -59,9 +59,11 @@ pub fn build(
     fs::create_dir_all(&dir).map_err(|e| format!("无法创建 Quick 模型目录：{e}"))?;
     let aimodel = dir.join("quick.aimodel");
     let stl = dir.join("quick.stl");
+    let obj = dir.join("quick.obj");
     let glb = dir.join("mesh.glb");
     native_model_io::save_aimodel(&aimodel, &project)?;
     native_model_io::write_binary_stl(&stl, &mesh, "native Quick")?;
+    native_model_io::write_wavefront_obj(&obj, &mesh)?;
     write_glb(&mesh, &glb)?;
     let mut document = project;
     if let Some(features) = document["features"].as_array_mut() {
@@ -77,9 +79,9 @@ pub fn build(
     document["name"] = json!("Quick Model");
     document["source_prompt"] = json!(text);
     document["mesh_path"] = json!(glb);
-    document["build_log"] = json!(["Quick parser → CADPlan 校验 → Rust/OCCT → GLB、AIMODEL、STL"]);
+    document["build_log"] = json!(["Quick parser → CADPlan 校验 → Rust/OCCT → GLB、AIMODEL、STL、OBJ"]);
     document["warnings"] = parsed["warnings"].clone();
-    document["output_paths"] = json!({"glb":glb,"aimodel":aimodel,"stl":stl});
+    document["output_paths"] = json!({"glb":glb,"aimodel":aimodel,"stl":stl,"obj":obj});
     let mut report = built.report;
     report["triangle_count"] = json!(mesh.positions.len() / 3);
     report["state"] = json!("passed");
@@ -280,6 +282,11 @@ mod tests {
         );
         assert!(
             result["output_paths"]["stl"]
+                .as_str()
+                .is_some_and(|p| Path::new(p).is_file())
+        );
+        assert!(
+            result["output_paths"]["obj"]
                 .as_str()
                 .is_some_and(|p| Path::new(p).is_file())
         );

@@ -1027,7 +1027,7 @@ fn active_model_export(app: AppHandle, kind: String, path: String) -> Result<(),
     let record = native_active_model::load(&root)?.ok_or("当前没有原生活动模型可导出。")?;
     let source = match kind.as_str() {
         "stl" => record["output_paths"]["stl"].as_str(),
-        "obj" => return Err("原生活动模型目前不生成 OBJ；请导出 STL 或使用 GLB 预览。".into()),
+        "obj" => record["output_paths"]["obj"].as_str(),
         "report" => {
             if let Some(report_path) = record["output_paths"]["geometry_report"].as_str() {
                 return fs::copy(report_path, &path)

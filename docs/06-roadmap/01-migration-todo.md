@@ -31,7 +31,7 @@
 | F3.3 | Rust CAD 会话事务与 preview/build dispatch | **已完成** | Rust 会话事务连接原生 OCCT backend；create/add/update/remove/preview/build 和候选状态完成本地 CLI 验收，回滚需关联当前 finding ID |
 | F3.3.1 | 会话事务及版本/来源/验收门禁 | **已完成（domain）** | 16 项定向正负测试通过；真实后端及 Cordis 写工具接线尚待完成，复杂来源语义仍有限制 |
 | F3.3.2 | 宿主整体复核与完成门禁 | **已完成（domain）** | session 18/18、gate 7/7；旧版本/篡改证据阻断，当前未验收候选可保存；真实视觉质量待 F7 |
-| F4 | Rust/C++ thin OCCT FFI | **进行中** | 固定官方 OCCT 7.9.3 SDK 已构建，C ABI/Rust 包装已通过真实几何 fixture；CADPlan 全特征执行和安装交付仍未完成 |
+| F4 | Rust/C++ thin OCCT FFI | **进行中** | 固定官方 OCCT 7.9.3 SDK、C ABI/Rust 包装及本机 packaged probe 已通过；执行 registry 当前覆盖 27 类规格中的 14 类，另 13 类及已实现类的拒绝变体、最终安装包/干净机验收仍未完成 |
 | F4.1 | 固定 OCCT SDK、C ABI 与 Rust 几何基础 | **已完成** | 实际 Rust → C ABI → OCCT fixture 通过，正常退出；原生 27 类 CADPlan 执行及安装交付仍待完成 |
 | F4.2 | CADPlan 基础特征到 OCCT 的原生执行 | **进行中** | 已接入 box/cylinder/sphere/hole/pocket、cone/prism/revolve、gear/socket_head_bolt、pattern、piston 等特征；其余特征映射与安装 runtime 仍未完成 |
 | F4.2.1 | 五类基础特征与参数坐标对拍 | **已完成** | box/cylinder/sphere/hole/pocket 的基础变体已执行；24 组真实几何对拍、4 个负样本通过，孔记录未冒充独立测量 |
@@ -46,11 +46,11 @@
 | F4.3.2 | 孔材料采样接入 CADPlan | **已完成** | 44 对拍、6 负样例、局部材料盲孔与近边孔部分证据通过；采样不冒充孔径计量 |
 | F4.3.3 | 最终 B-Rep 孔计量接入 CADPlan | **已完成** | 最终形体实测孔半径、轴线与 360° 覆盖；盲孔/贯穿孔核验，后续特征会使旧测量失效 |
 | F4.4.1 | 精简 OCCT 资源组装与定位 | **已完成** | 17 DLL 哈希校验打包，Node 2/2、Rust 7/7；系统 PATH 下实际 packaged probe 通过，最终安装包/干净机器仍待验收；见 [记录](./26-f4-packaged-occt-runtime.md) |
-| F5 | Quick 模式与本地导出迁移 | **进行中** | 原生单视图渲染基础完成；Quick、生产预览接线及 AIMODEL/STL 兼容性尚待完成 |
+| F5 | Quick 模式与本地导出迁移 | **进行中** | Rust Quick、活动模型路由、AIMODEL/STL/GLB、七视图和原生 OBJ 生成/菜单导出已有代码与定向验收；旧 Quick 模板语法、禁用特征兼容、原生 CATIA 导出和桌面/Agent端到端仍待完成 |
 | F5.1 | Rust 七视图 PNG 与深度遮挡 | **已完成** | 五项定向测试、真实 OCCT 1000 三角形 CLI 七视图通过；非 Agent 图片验收 |
 | F5.2 | Rust AIMODEL / binary STL 兼容读写 | **已完成** | 5 项单测、旧工程 roundtrip、Python Document 对拍及实际 STL 全顶点检查通过；Quick 和生产导出接线尚待完成 |
 | F5.3 | Quick 明确尺寸原生创建闭环 | **已完成（限定范围）** | Rust Quick 3/3、解析 7/7、Vue build；CADPlan→OCCT→GLB/AIMODEL/STL，旧语法全量迁移和共享活动状态仍待 F7.G2；见 [记录](./27-f5-native-quick-build.md) |
-| F6 | Python 缩减到 CATIA COM | **进行中** | DSH Agent 的 Python tool worker 已删除；Quick 模式和 CATIA/遗留包仍依赖 Python，后续继续收缩至 CATIA COM |
+| F6 | Python 缩减到 CATIA COM | **进行中** | DSH Agent 的 Python tool worker 已删除；桌面初始化、设置/provider、parts/samples、联网/MCP仍调用 Python bridge，安装仍带科学/CAD依赖；需逐项迁移服务并把 Python 收敛到 CATIA COM |
 | F7 | 多模态盲测与科学验收基线 | **进行中** | 生产同源冷启动 runner 已执行一轮真实原图盲测，模型候选因孔位/视图复核未通过而被拒；仍需修复并完成图片、纯文字、多轮、返修、取消及 CATIA 分层验收 |
 
 ## 已确认的 Agent 链路治理
@@ -60,7 +60,7 @@
 | ID | 优先级 | 任务 | 状态 | 完成条件 |
 |---|---|---|---|---|
 | F7.G1 | P0 | 主 Agent 直接查看原图和当前单视图 | 代码完成；原图经视觉工具真实传输，主对话模型直收证据仍缺 | 无条件剥离已移除，mock wire 7/7、schema契约1/1。实跑证明原图以精确 SHA 到达本地 source inventory 和图像审查请求；当前 runner 没有单独记录主 DSH provider 的图像 wire，故不能宣称主对话模型本身已直接收到原图；视觉审查还误报了左面孔位，详见 [实测](./35-f7-image-acceptance-run-01.md)。 |
-| F7.G2 | P0 | CADPlan、Agent 与桌面模型统一同步 | **核心代码已提交；定向检查通过，真实桌面/Agent端到端待验收** | Agent/Quick/特征编辑、活动模型恢复、Save As、STL/report/多视图快照和显式旧工程转换都路由到活动模型；Agent 几何工具通过 generation CAS 防止旧会话覆盖，CAS 失败时会话/证据/预览会回同步到活动记录。定向离线测试与 Cargo check 通过。CLI/无头预览不能代替真实 DSH→`model.changed`→桌面显示的端到端验收；启停、OBJ/CATIA 原生导出仍明确受限。见 [活动模型同步记录](./38-f7-active-model-sync.md)。 |
+| F7.G2 | P0 | CADPlan、Agent 与桌面模型统一同步 | **核心代码已提交；定向检查通过，真实桌面/Agent端到端待验收** | Agent/Quick/特征编辑、活动模型恢复、Save As、STL/OBJ/report/多视图快照和显式旧工程转换都路由到活动模型；Agent 几何工具通过 generation CAS 防止旧会话覆盖，CAS 失败时会话/证据/预览会回同步到活动记录。定向离线测试与 Cargo check 通过。CLI/无头预览不能代替真实 DSH→`model.changed`→桌面显示的端到端验收；启停与 CATIA 原生导出仍明确受限。见 [活动模型同步记录](./38-f7-active-model-sync.md)。 |
 | F7.G3 | P0 | 请求结束与模型验收状态区分 | 代码完成，端到端待验收 | Host 9/9、Vue build通过；turn_status独立，旧finish不得accepted，旧preview显示stale，纯问答不称建模完成；真实四场景见 G8，记录见 [状态真值](./29-f7-turn-and-model-status.md) |
 | F7.G4 | P0 | 阶段复核与施工范围一致 | 代码完成，真实视觉待验收 | 宿主revision/ID范围、out_of_scope、全当前几何覆盖门槛已接入；定向集成通过，不完整范围只能诊断不可贡献覆盖；真实返修待 G8；见 [记录](./32-f7-stage-review-scope.md) |
 | F7.G5 | P1 | 观察因冲突可重新读取、版本可追踪 | **代码完成，真实视觉链路待验收** | 普通同 SHA/ROI 复用缓存；Agent 显式传 `conflict`/`reobserve` 才重新观察并递增版本；保留历史、SHA/ROI/reason/telemetry；新版 evidence ID 隔离旧 review/finding。定向测试 11+5+3 通过；见 [记录](./34-f7-observation-refresh.md)。 |
@@ -106,6 +106,8 @@ F2.4.1 的真实图片传输、解析器缺陷和观察质量边界见[Rust 多�
 F2.4.2 的原生视觉工具接线、单视图复核数据隔离及质量验收边界见[原生视觉工具接线](./15-f2-native-vision-domain.md)。
 
 F2.5 的原生 CAD 写工具、真实 DSH→Cordis→Rust→OCCT 调用及 Python worker 移除见[Rust 原生 CAD 写工具](./21-f2-native-cad-write-tools.md)。
+
+F5.4 的原生活动模型 Wavefront OBJ 导出见[Rust 原生 OBJ 导出](./40-f5-native-obj-export.md)。
 
 F4.1 的真实 SDK、DLL 生命周期缺陷和几何检查记录见[固定 OCCT SDK 与 Rust 几何基础](./10-f4-native-occt-foundation.md)。
 

@@ -2,6 +2,7 @@
 use crate::cad_plan_validation;
 use crate::native_occt::TriangleMesh;
 use serde_json::{Map, Number, Value, json};
+use std::fmt::Write as FmtWrite;
 use std::fs::{self, OpenOptions};
 use std::io::Write;
 use std::path::Path;
@@ -9,6 +10,7 @@ use std::sync::atomic::{AtomicU64, Ordering};
 
 const MAX_AIMODEL_BYTES: u64 = 128 * 1024 * 1024;
 const MAX_TRIANGLES: usize = 5_000_000;
+const MAX_OBJ_BYTES: usize = 128 * 1024 * 1024;
 static TEMP_ID: AtomicU64 = AtomicU64::new(1);
 
 #[derive(Clone, Debug, PartialEq)]
@@ -278,6 +280,65 @@ pub fn write_binary_stl(path: &Path, mesh: &TriangleMesh, name: &str) -> Result<
         bounds,
         signed_volume: volume,
     })
+}
+
+/// Write the same triangle stream as a Wavefront OBJ mesh in model millimeters.
+/// Each triangle owns three vertices and matching normals, so face indices are
+/// deterministic and do not depend on vertex deduplication or material files.
+pub fn write_wavefront_obj(path: &Path, mesh: &TriangleMesh) -> Result<usize, String> {
+    if mesh.positions.is_empty()
+        || mesh.positions.len() % 3 != 0
+        || mesh.normals.len() != mesh.positions.len()
+        || mesh.positions.len() / 3 > MAX_TRIANGLES
+    {
+        return Err("invalid or oversized mesh for OBJ".into());
+    }
+    if mesh
+        .positions
+        .iter()
+        .chain(mesh.normals.iter())
+        .flatten()
+        .any(|value| !value.is_finite())
+    {
+        return Err("mesh contains non-finite values".into());
+    }
+
+    let mut text = String::new();
+    text.push_str("# AI Modeler native mesh; units: mm\no AI_Modeler\n");
+    for position in &mesh.positions {
+        writeln!(
+            &mut text,
+            "v {} {} {}",
+            position[0], position[1], position[2]
+        )
+        .map_err(|error| error.to_string())?;
+        if text.len() > MAX_OBJ_BYTES {
+            return Err("OBJ exceeds 128 MiB limit".into());
+        }
+    }
+    for normal in &mesh.normals {
+        writeln!(&mut text, "vn {} {} {}", normal[0], normal[1], normal[2])
+            .map_err(|error| error.to_string())?;
+        if text.len() > MAX_OBJ_BYTES {
+            return Err("OBJ exceeds 128 MiB limit".into());
+        }
+    }
+    for first in (1..=mesh.positions.len()).step_by(3) {
+        writeln!(
+            &mut text,
+            "f {0}//{0} {1}//{1} {2}//{2}",
+            first,
+            first + 1,
+            first + 2
+        )
+        .map_err(|error| error.to_string())?;
+        if text.len() > MAX_OBJ_BYTES {
+            return Err("OBJ exceeds 128 MiB limit".into());
+        }
+    }
+    let byte_len = text.len();
+    atomic_write(path, text.as_bytes())?;
+    Ok(byte_len)
 }
 
 fn validate_document(v: &Value) -> Result<(), String> {
@@ -578,6 +639,53 @@ mod tests {
         assert_eq!(u32::from_le_bytes(b[80..84].try_into().unwrap()), 4);
         assert_eq!(stats.bounds, [[0., 1.], [0., 1.], [0., 1.]]);
         assert!((stats.signed_volume - 1.0 / 6.0).abs() < 1e-12);
+        let _ = fs::remove_file(path);
+    }
+    #[test]
+    fn wavefront_obj_keeps_mm_coordinates_normals_and_triangle_faces() {
+        let positions = vec![[0., 0., 0.], [1.25, 0., 0.], [0., 2., 0.]];
+        let mesh = TriangleMesh {
+            normals: vec![[0., 0., 1.]; positions.len()],
+            positions,
+        };
+        let path = std::env::temp_dir().join(format!(
+            "aimodeler-native-{}.obj",
+            TEMP_ID.fetch_add(1, Ordering::Relaxed)
+        ));
+        let byte_len = write_wavefront_obj(&path, &mesh).unwrap();
+        let text = fs::read_to_string(&path).unwrap();
+        assert_eq!(byte_len, text.len());
+        assert!(text.starts_with("# AI Modeler native mesh; units: mm\no AI_Modeler\n"));
+        assert!(text.contains("v 1.25 0 0\n"));
+        assert_eq!(
+            text.lines().filter(|line| line.starts_with("v ")).count(),
+            3
+        );
+        assert_eq!(
+            text.lines().filter(|line| line.starts_with("vn ")).count(),
+            3
+        );
+        assert_eq!(
+            text.lines()
+                .filter(|line| line.starts_with("f "))
+                .collect::<Vec<_>>(),
+            ["f 1//1 2//2 3//3"]
+        );
+        let _ = fs::remove_file(path);
+    }
+    #[test]
+    fn invalid_obj_mesh_does_not_replace_existing_output() {
+        let path = std::env::temp_dir().join(format!(
+            "aimodeler-native-invalid-{}.obj",
+            TEMP_ID.fetch_add(1, Ordering::Relaxed)
+        ));
+        fs::write(&path, b"keep").unwrap();
+        let bad = TriangleMesh {
+            positions: vec![[f64::INFINITY, 0., 0.]; 3],
+            normals: vec![[0., 0., 1.]; 3],
+        };
+        assert!(write_wavefront_obj(&path, &bad).is_err());
+        assert_eq!(fs::read(&path).unwrap(), b"keep");
         let _ = fs::remove_file(path);
     }
     #[test]
