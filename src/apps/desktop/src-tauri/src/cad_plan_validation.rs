@@ -4,7 +4,7 @@
 //! This module validates plan data and reports static CATIA/local-backend support
 //! mappings. It does not build geometry, check a BREP, or invoke CATIA.
 
-use serde_json::{json, Map, Value};
+use serde_json::{Map, Value, json};
 use std::collections::{BTreeSet, HashMap};
 
 pub const CADPLAN_SCHEMA_VERSION: &str = "1.0";
@@ -23,33 +23,249 @@ struct Spec {
 // CADPlan v1.0 registry mirrored from cadplan.py FEATURE_SPECS and
 // occ_kernel.GEOMETRY_SUPPORT. Parameter names are space-separated identifiers.
 const SPECS: &[Spec] = &[
-    Spec { kind:"box", required:"length width height", params:"length width height center axis base corner corner_mode", catia_status:"exact", catia_reason:"矩形草图加凸台；当前 CATIA 映射仅支持 Z 轴拉伸。", local_status:"exact", local_reason:"OCCT 棱柱；带圆角/倒角时沿用离散轮廓近似" },
-    Spec { kind:"cylinder", required:"radius height", params:"radius radius2 height center axis base segments", catia_status:"exact", catia_reason:"center 默认表示轴向底面中心(base=true)，height 沿 axis 正向拉伸；base=false 时 center 表示几何中点。等半径时为圆草图加凸台；圆锥台会近似，非 Z 轴圆锥台暂不支持。", local_status:"exact", local_reason:"解析圆柱或圆锥面" },
-    Spec { kind:"socket_head_bolt", required:"shank_d thread_pitch length head_d head_h hex_s hex_t", params:"shank_d thread_pitch length head_d head_h hex_s hex_t center segments", catia_status:"approximate", catia_reason:"本地网格按 thread_pitch 生成可见的近似 ISO 公制螺旋牙型；整段杆部带牙，未建牙端倒角/退刀槽。当前 CATIA 导出器仍以光杆凸台和六角凹槽表达，不会创建原生或装饰螺纹。", local_status:"approximate", local_reason:"当前参数化网格转封闭 facet-BREP" },
-    Spec { kind:"sphere", required:"radius", params:"radius center segments rings", catia_status:"approximate", catia_reason:"CATIA 导出器以多层圆盘近似球体。", local_status:"exact", local_reason:"OCCT 解析球面" },
-    Spec { kind:"prism", required:"profile height", params:"profile height center axis", catia_status:"exact", catia_reason:"闭合多边形草图加凸台；当前仅支持 Z 轴。", local_status:"exact", local_reason:"多边形轮廓棱柱" },
-    Spec { kind:"revolve", required:"profile angle", params:"profile angle center axis segments", catia_status:"approximate", catia_reason:"本地 OCCT BREP 按闭合[半径,轴向坐标]轮廓精确回转，并将新增回转体与已有实体做布尔合并；CATIA 导出器仍用多层圆盘近似，非 CATIA 原生回转特征。", local_status:"exact", local_reason:"简单闭合半径-轴向轮廓的 OCCT 解析回转" },
-    Spec { kind:"gear", required:"teeth module height", params:"teeth module height center axis base", catia_status:"exact", catia_reason:"齿廓转换为多边形草图并拉伸；当前仅支持 Z 轴。", local_status:"approximate", local_reason:"梯形齿廓为当前简化齿形，几何由多边形棱柱表达" },
-    Spec { kind:"loft", required:"root_chord tip_chord span thickness", params:"root_chord tip_chord span thickness camber camber_pos twist sweep sections points rotate translate", catia_status:"approximate", catia_reason:"CATIA 中以根部截面拉伸近似多截面放样。", local_status:"approximate", local_reason:"翼型截面离散后由 OCCT 放样" },
-    Spec { kind:"hole", required:"diameter through pos", params:"diameter through pos point x y count pcd phase depth margin axis segments entry_point direction", catia_status:"exact", catia_reason:"圆形切除；through=true 时按当前零件包围盒生成贯穿深度。盲孔可用 entry_point 与 direction 显式指定入口点和沿全局轴的切入方向；未指定时沿用正轴端面默认语义。", local_status:"exact", local_reason:"圆柱刀具体与 BREP 布尔切除" },
-    Spec { kind:"pocket", required:"length width depth", params:"length width depth x y axis side corner corner_mode", catia_status:"exact", catia_reason:"矩形/圆角矩形凹槽；当前仅支持 Z 轴。", local_status:"exact", local_reason:"矩形/离散圆角轮廓与 BREP 布尔切除" },
-    Spec { kind:"pattern", required:"mode count", params:"mode count step axis angle full center", catia_status:"exact", catia_reason:"转换为显式复制的 CATIA 操作；relations 示例：[{\"type\":\"pattern_source\",\"feature_id\":\"紧邻前一特征的 id\"}]。operation 必须与源特征相同：阵列切孔用 cut，阵列加料用 add。", local_status:"exact", local_reason:"按 CADPlan 来源特征执行实体平移/旋转变换" },
-    Spec { kind:"helix", required:"radius wire_r height turns", params:"radius wire_r height turns center axis taper seg_per_turn wire_seg taper_start", catia_status:"unsupported", catia_reason:"弹簧/螺旋不能由当前草图、凸台和凹槽通道表达。", local_status:"approximate", local_reason:"现有螺旋网格转封闭 facet-BREP" },
-    Spec { kind:"spoked_wheel", required:"outer_r rim_w hub_r height spokes spoke_w", params:"outer_r rim_w hub_r height spokes spoke_w center segments", catia_status:"approximate", catia_reason:"CATIA 仅生成轮缘与轮毂，辐条需要补建。", local_status:"exact", local_reason:"解析轮缘与轮毂回转体、显式拉伸辐条并集成一个闭合实体" },
-    Spec { kind:"vbelt_pulley", required:"pitch_d grooves height groove_type", params:"pitch_d grooves height groove_type outer_d groove_depth bore_d center segments", catia_status:"approximate", catia_reason:"CATIA 生成光轮盘体；V 形回转槽需要在 CATIA 中补建。", local_status:"approximate", local_reason:"标准槽轴向截面原生 OCCT 回转；槽根间距为保证剖面简单可能近似调整，输入轮宽不足时明确拒绝" },
-    Spec { kind:"timing_pulley", required:"pitch_d teeth height tooth_type", params:"pitch_d teeth height tooth_type bore_d center segments", catia_status:"approximate", catia_reason:"CATIA 生成盘体，齿形需要在 CATIA 中补建。", local_status:"approximate", local_reason:"现有同步带轮配方转封闭 facet-BREP" },
-    Spec { kind:"worm", required:"radius height thread_r wire_r turns", params:"radius height center center2 thread_r wire_r height2 turns segments seg_per_turn wire_seg", catia_status:"approximate", catia_reason:"CATIA 仅生成光轴，螺旋齿需要补建。", local_status:"approximate", local_reason:"现有蜗杆配方转封闭 facet-BREP" },
-    Spec { kind:"helical_gear", required:"teeth module height", params:"teeth module height helix_deg bore_d center segments", catia_status:"approximate", catia_reason:"CATIA 以直齿轮近似，省略螺旋角。", local_status:"approximate", local_reason:"保留当前省略螺旋角的直齿近似并转 facet-BREP" },
-    Spec { kind:"bevel_gear", required:"teeth module height cone_deg", params:"teeth module height cone_deg bore_d center segments", catia_status:"approximate", catia_reason:"CATIA 以直齿圆柱轮廓近似，省略锥面。", local_status:"approximate", local_reason:"现有锥齿轮网格配方转 facet-BREP" },
-    Spec { kind:"crankshaft", required:"length main_d pin_d stroke throws", params:"length main_d pin_d stroke throws center segments", catia_status:"approximate", catia_reason:"CATIA 按 X 轴布置主轴颈、交替偏置连杆颈和哑铃形曲柄臂(主轴圆 + 连杆颈圆外公切凸包)，曲柄臂外形被简化。", local_status:"approximate", local_reason:"解析主轴颈/偏心连杆颈与矩形曲柄臂并集，曲柄臂外形近似" },
-    Spec { kind:"camshaft", required:"length journal_d base_d lift lobes lobe_deg", params:"length journal_d base_d lift lobes lobe_deg center segments", catia_status:"approximate", catia_reason:"CATIA 凸轮沿轴向等分布置，相位需核对。", local_status:"approximate", local_reason:"现有凸轮轴网格配方转 facet-BREP" },
-    Spec { kind:"impeller", required:"hub_d tip_d height blades blade_t twist_deg", params:"hub_d tip_d height blades blade_t twist_deg center segments", catia_status:"approximate", catia_reason:"CATIA 仅生成轮毂和轮盘，扭转叶片需要补建。", local_status:"approximate", local_reason:"现有叶轮网格配方转 facet-BREP" },
-    Spec { kind:"piston", required:"diameter height pin_d grooves", params:"diameter height pin_d grooves center segments", catia_status:"approximate", catia_reason:"CATIA 以圆柱体近似，销孔和活塞环槽需要补建。", local_status:"exact", local_reason:"闭合多段线剖面原生 OCCT 回转，横向销孔解析布尔切除" },
-    Spec { kind:"conrod", required:"length big_d small_d big_bore small_bore shank_w thick", params:"length big_d small_d big_bore small_bore shank_w thick center segments", catia_status:"approximate", catia_reason:"CATIA 以大头、小头和直杆身近似，杆身过渡被简化。", local_status:"approximate", local_reason:"解析大小头环与外公切梯形杆身并集，工字截面近似" },
-    Spec { kind:"cross_joint", required:"span journal_d", params:"span journal_d center segments", catia_status:"approximate", catia_reason:"CATIA 仅生成单轴，另一根横轴需要补建。", local_status:"approximate", local_reason:"现有万向节网格配方转 facet-BREP" },
-    Spec { kind:"scroll_disc", required:"outer_d height wall_t turns", params:"outer_d height wall_t turns center segments", catia_status:"approximate", catia_reason:"CATIA 仅生成底盘，螺旋壁需要补建。", local_status:"approximate", local_reason:"简单多边形涡旋壁原生拉伸并与背盘合并；壁面以多段线近似渐开线" },
-    Spec { kind:"rotor", required:"radius n height bore_d", params:"radius n height bore_d center", catia_status:"exact", catia_reason:"转子轮廓、厚度与中心孔映射为可编辑草图和凹槽。", local_status:"approximate", local_reason:"圆角三角转子离散轮廓原生拉伸并按需切中心孔" },
-    Spec { kind:"shell", required:"thickness", params:"thickness", catia_status:"unsupported", catia_reason:"当前 Document/CATIA 转换器没有抽壳实现。", local_status:"unavailable", local_reason:"CADPlan 未指定要移除的面；缺少可执行的抽壳边界" },
+    Spec {
+        kind: "box",
+        required: "length width height",
+        params: "length width height center axis base corner corner_mode",
+        catia_status: "exact",
+        catia_reason: "矩形草图加凸台；当前 CATIA 映射仅支持 Z 轴拉伸。",
+        local_status: "exact",
+        local_reason: "OCCT 棱柱；带圆角/倒角时沿用离散轮廓近似",
+    },
+    Spec {
+        kind: "cylinder",
+        required: "radius height",
+        params: "radius radius2 height center axis base segments",
+        catia_status: "exact",
+        catia_reason: "center 默认表示轴向底面中心(base=true)，height 沿 axis 正向拉伸；base=false 时 center 表示几何中点。等半径时为圆草图加凸台；圆锥台会近似，非 Z 轴圆锥台暂不支持。",
+        local_status: "exact",
+        local_reason: "解析圆柱或圆锥面",
+    },
+    Spec {
+        kind: "socket_head_bolt",
+        required: "shank_d thread_pitch length head_d head_h hex_s hex_t",
+        params: "shank_d thread_pitch length head_d head_h hex_s hex_t center segments",
+        catia_status: "approximate",
+        catia_reason: "本地网格按 thread_pitch 生成可见的近似 ISO 公制螺旋牙型；整段杆部带牙，未建牙端倒角/退刀槽。当前 CATIA 导出器仍以光杆凸台和六角凹槽表达，不会创建原生或装饰螺纹。",
+        local_status: "approximate",
+        local_reason: "当前参数化网格转封闭 facet-BREP",
+    },
+    Spec {
+        kind: "sphere",
+        required: "radius",
+        params: "radius center segments rings",
+        catia_status: "approximate",
+        catia_reason: "CATIA 导出器以多层圆盘近似球体。",
+        local_status: "exact",
+        local_reason: "OCCT 解析球面",
+    },
+    Spec {
+        kind: "prism",
+        required: "profile height",
+        params: "profile height center axis",
+        catia_status: "exact",
+        catia_reason: "闭合多边形草图加凸台；当前仅支持 Z 轴。",
+        local_status: "exact",
+        local_reason: "多边形轮廓棱柱",
+    },
+    Spec {
+        kind: "revolve",
+        required: "profile angle",
+        params: "profile angle center axis segments",
+        catia_status: "approximate",
+        catia_reason: "本地 OCCT BREP 按闭合[半径,轴向坐标]轮廓精确回转，并将新增回转体与已有实体做布尔合并；CATIA 导出器仍用多层圆盘近似，非 CATIA 原生回转特征。",
+        local_status: "exact",
+        local_reason: "简单闭合半径-轴向轮廓的 OCCT 解析回转",
+    },
+    Spec {
+        kind: "gear",
+        required: "teeth module height",
+        params: "teeth module height center axis base",
+        catia_status: "exact",
+        catia_reason: "齿廓转换为多边形草图并拉伸；当前仅支持 Z 轴。",
+        local_status: "approximate",
+        local_reason: "梯形齿廓为当前简化齿形，几何由多边形棱柱表达",
+    },
+    Spec {
+        kind: "loft",
+        required: "root_chord tip_chord span thickness",
+        params: "root_chord tip_chord span thickness camber camber_pos twist sweep sections points rotate translate",
+        catia_status: "approximate",
+        catia_reason: "CATIA 中以根部截面拉伸近似多截面放样。",
+        local_status: "approximate",
+        local_reason: "翼型截面离散后由 OCCT 放样",
+    },
+    Spec {
+        kind: "hole",
+        required: "diameter through pos",
+        params: "diameter through pos point x y count pcd phase depth margin axis segments entry_point direction",
+        catia_status: "exact",
+        catia_reason: "圆形切除；through=true 时按当前零件包围盒生成贯穿深度。盲孔可用 entry_point 与 direction 显式指定入口点和沿全局轴的切入方向；未指定时沿用正轴端面默认语义。",
+        local_status: "exact",
+        local_reason: "圆柱刀具体与 BREP 布尔切除",
+    },
+    Spec {
+        kind: "pocket",
+        required: "length width depth",
+        params: "length width depth x y axis side corner corner_mode",
+        catia_status: "exact",
+        catia_reason: "矩形/圆角矩形凹槽；当前仅支持 Z 轴。",
+        local_status: "exact",
+        local_reason: "矩形/离散圆角轮廓与 BREP 布尔切除",
+    },
+    Spec {
+        kind: "pattern",
+        required: "mode count",
+        params: "mode count step axis angle full center",
+        catia_status: "exact",
+        catia_reason: "转换为显式复制的 CATIA 操作；relations 示例：[{\"type\":\"pattern_source\",\"feature_id\":\"紧邻前一特征的 id\"}]。operation 必须与源特征相同：阵列切孔用 cut，阵列加料用 add。",
+        local_status: "exact",
+        local_reason: "按 CADPlan 来源特征执行实体平移/旋转变换",
+    },
+    Spec {
+        kind: "helix",
+        required: "radius wire_r height turns",
+        params: "radius wire_r height turns center axis taper seg_per_turn wire_seg taper_start",
+        catia_status: "unsupported",
+        catia_reason: "弹簧/螺旋不能由当前草图、凸台和凹槽通道表达。",
+        local_status: "approximate",
+        local_reason: "现有螺旋网格转封闭 facet-BREP",
+    },
+    Spec {
+        kind: "spoked_wheel",
+        required: "outer_r rim_w hub_r height spokes spoke_w",
+        params: "outer_r rim_w hub_r height spokes spoke_w center segments",
+        catia_status: "approximate",
+        catia_reason: "CATIA 仅生成轮缘与轮毂，辐条需要补建。",
+        local_status: "exact",
+        local_reason: "解析轮缘与轮毂回转体、显式拉伸辐条并集成一个闭合实体",
+    },
+    Spec {
+        kind: "vbelt_pulley",
+        required: "pitch_d grooves height groove_type",
+        params: "pitch_d grooves height groove_type outer_d groove_depth bore_d center segments",
+        catia_status: "approximate",
+        catia_reason: "CATIA 生成光轮盘体；V 形回转槽需要在 CATIA 中补建。",
+        local_status: "approximate",
+        local_reason: "标准槽轴向截面原生 OCCT 回转；槽根间距为保证剖面简单可能近似调整，输入轮宽不足时明确拒绝",
+    },
+    Spec {
+        kind: "timing_pulley",
+        required: "pitch_d teeth height tooth_type",
+        params: "pitch_d teeth height tooth_type bore_d center segments",
+        catia_status: "approximate",
+        catia_reason: "CATIA 生成盘体，齿形需要在 CATIA 中补建。",
+        local_status: "approximate",
+        local_reason: "现有同步带轮配方转封闭 facet-BREP",
+    },
+    Spec {
+        kind: "worm",
+        required: "radius height thread_r wire_r turns",
+        params: "radius height center center2 thread_r wire_r height2 turns segments seg_per_turn wire_seg",
+        catia_status: "approximate",
+        catia_reason: "CATIA 仅生成光轴，螺旋齿需要补建。",
+        local_status: "approximate",
+        local_reason: "现有蜗杆配方转封闭 facet-BREP",
+    },
+    Spec {
+        kind: "helical_gear",
+        required: "teeth module height",
+        params: "teeth module height helix_deg bore_d center segments",
+        catia_status: "approximate",
+        catia_reason: "CATIA 以直齿轮近似，省略螺旋角。",
+        local_status: "approximate",
+        local_reason: "保留当前省略螺旋角的直齿近似并转 facet-BREP",
+    },
+    Spec {
+        kind: "bevel_gear",
+        required: "teeth module height cone_deg",
+        params: "teeth module height cone_deg bore_d center segments",
+        catia_status: "approximate",
+        catia_reason: "CATIA 以直齿圆柱轮廓近似，省略锥面。",
+        local_status: "approximate",
+        local_reason: "现有锥齿轮网格配方转 facet-BREP",
+    },
+    Spec {
+        kind: "crankshaft",
+        required: "length main_d pin_d stroke throws",
+        params: "length main_d pin_d stroke throws center segments",
+        catia_status: "approximate",
+        catia_reason: "CATIA 按 X 轴布置主轴颈、交替偏置连杆颈和哑铃形曲柄臂(主轴圆 + 连杆颈圆外公切凸包)，曲柄臂外形被简化。",
+        local_status: "approximate",
+        local_reason: "解析主轴颈/偏心连杆颈与矩形曲柄臂并集，曲柄臂外形近似",
+    },
+    Spec {
+        kind: "camshaft",
+        required: "length journal_d base_d lift lobes lobe_deg",
+        params: "length journal_d base_d lift lobes lobe_deg center segments",
+        catia_status: "approximate",
+        catia_reason: "CATIA 凸轮沿轴向等分布置，相位需核对。",
+        local_status: "approximate",
+        local_reason: "现有凸轮轴网格配方转 facet-BREP",
+    },
+    Spec {
+        kind: "impeller",
+        required: "hub_d tip_d height blades blade_t twist_deg",
+        params: "hub_d tip_d height blades blade_t twist_deg center segments",
+        catia_status: "approximate",
+        catia_reason: "CATIA 仅生成轮毂和轮盘，扭转叶片需要补建。",
+        local_status: "approximate",
+        local_reason: "现有叶轮网格配方转 facet-BREP",
+    },
+    Spec {
+        kind: "piston",
+        required: "diameter height pin_d grooves",
+        params: "diameter height pin_d grooves center segments",
+        catia_status: "approximate",
+        catia_reason: "CATIA 以圆柱体近似，销孔和活塞环槽需要补建。",
+        local_status: "exact",
+        local_reason: "闭合多段线剖面原生 OCCT 回转，横向销孔解析布尔切除",
+    },
+    Spec {
+        kind: "conrod",
+        required: "length big_d small_d big_bore small_bore shank_w thick",
+        params: "length big_d small_d big_bore small_bore shank_w thick center segments",
+        catia_status: "approximate",
+        catia_reason: "CATIA 以大头、小头和直杆身近似，杆身过渡被简化。",
+        local_status: "approximate",
+        local_reason: "解析大小头环与外公切梯形杆身并集，工字截面近似",
+    },
+    Spec {
+        kind: "cross_joint",
+        required: "span journal_d",
+        params: "span journal_d center segments",
+        catia_status: "approximate",
+        catia_reason: "CATIA 仅生成单轴，另一根横轴需要补建。",
+        local_status: "approximate",
+        local_reason: "现有万向节网格配方转 facet-BREP",
+    },
+    Spec {
+        kind: "scroll_disc",
+        required: "outer_d height wall_t turns",
+        params: "outer_d height wall_t turns center segments",
+        catia_status: "approximate",
+        catia_reason: "CATIA 仅生成底盘，螺旋壁需要补建。",
+        local_status: "approximate",
+        local_reason: "简单多边形涡旋壁原生拉伸并与背盘合并；壁面以多段线近似渐开线",
+    },
+    Spec {
+        kind: "rotor",
+        required: "radius n height bore_d",
+        params: "radius n height bore_d center",
+        catia_status: "exact",
+        catia_reason: "转子轮廓、厚度与中心孔映射为可编辑草图和凹槽。",
+        local_status: "approximate",
+        local_reason: "圆角三角转子离散轮廓原生拉伸并按需切中心孔",
+    },
+    Spec {
+        kind: "shell",
+        required: "thickness",
+        params: "thickness",
+        catia_status: "unsupported",
+        catia_reason: "当前 Document/CATIA 转换器没有抽壳实现。",
+        local_status: "unavailable",
+        local_reason: "CADPlan 未指定要移除的面；缺少可执行的抽壳边界",
+    },
 ];
 
 const LENGTH_KEYS: &[&str] = &[
@@ -720,7 +936,8 @@ fn validate_parameter(key: &str, value: &Value, path: &str, errors: &mut Vec<Val
             ppath.clone(),
             "此参数必须为字符串。",
         );
-    } else if (has(key, LENGTH_KEYS) || has(key, ANGLE_KEYS) || has(key, DIMENSIONLESS_KEYS))
+    } else if !has(key, BOOLEAN_KEYS)
+        && (has(key, LENGTH_KEYS) || has(key, ANGLE_KEYS) || has(key, DIMENSIONLESS_KEYS))
         && !is_number(value)
     {
         append_error(
@@ -1197,7 +1414,12 @@ fn validate_relations(
         None => &[][..],
         Some(Value::Array(rows)) => rows.as_slice(),
         Some(_) => {
-            append_error(errors,"invalid_relations",format!("{path}.relations"),"relations 必须是数组，例如：[{\"type\":\"pattern_source\",\"feature_id\":\"上一个特征ID\"}]。");
+            append_error(
+                errors,
+                "invalid_relations",
+                format!("{path}.relations"),
+                "relations 必须是数组，例如：[{\"type\":\"pattern_source\",\"feature_id\":\"上一个特征ID\"}]。",
+            );
             &[]
         }
     };
@@ -1205,12 +1427,22 @@ fn validate_relations(
     for (ri, relation) in relations.iter().enumerate() {
         let rpath = format!("{path}.relations[{ri}]");
         let Some(row) = relation.as_object() else {
-            append_error(errors,"invalid_relation",rpath,"关系项必须使用 type 字段（depends_on 或 pattern_source）和 feature_id 字段，例如：{\"type\":\"pattern_source\",\"feature_id\":\"上一个特征ID\"}。");
+            append_error(
+                errors,
+                "invalid_relation",
+                rpath,
+                "关系项必须使用 type 字段（depends_on 或 pattern_source）和 feature_id 字段，例如：{\"type\":\"pattern_source\",\"feature_id\":\"上一个特征ID\"}。",
+            );
             continue;
         };
         let rtype = row.get("type").and_then(Value::as_str).unwrap_or("");
         if rtype != "depends_on" && rtype != "pattern_source" {
-            append_error(errors,"invalid_relation",rpath,"关系项必须使用 type 字段（depends_on 或 pattern_source）和 feature_id 字段，例如：{\"type\":\"pattern_source\",\"feature_id\":\"上一个特征ID\"}。");
+            append_error(
+                errors,
+                "invalid_relation",
+                rpath,
+                "关系项必须使用 type 字段（depends_on 或 pattern_source）和 feature_id 字段，例如：{\"type\":\"pattern_source\",\"feature_id\":\"上一个特征ID\"}。",
+            );
             continue;
         }
         for key in row.keys() {
@@ -1266,7 +1498,15 @@ fn validate_relations(
                 .and_then(Value::as_str)
                 .unwrap_or("");
             if source != operation && (source == "add" || source == "cut") {
-                append_error(errors,"pattern_operation_mismatch",format!("{path}.operation"),format!("阵列 operation 必须与 pattern_source 源特征「{}」一致：源操作是 {source}，阵列也必须用 {source}。切孔阵列必须为 cut；若写 add，程序会把孔的圆柱刀具加成实体。",pattern_sources[0]));
+                append_error(
+                    errors,
+                    "pattern_operation_mismatch",
+                    format!("{path}.operation"),
+                    format!(
+                        "阵列 operation 必须与 pattern_source 源特征「{}」一致：源操作是 {source}，阵列也必须用 {source}。切孔阵列必须为 cut；若写 add，程序会把孔的圆柱刀具加成实体。",
+                        pattern_sources[0]
+                    ),
+                );
             }
         }
     }
@@ -1559,11 +1799,13 @@ mod tests {
             .unwrap()
             .iter()
             .any(|row| row["code"] == "LOCAL_BREP_UNAVAILABLE" && row["feature_id"] == "target"));
-        assert!(result["warnings"]
-            .as_array()
-            .unwrap()
-            .iter()
-            .any(|row| row["code"] == "CATIA_UNSUPPORTED" && row["feature_id"] == "target"));
+        assert!(
+            result["warnings"]
+                .as_array()
+                .unwrap()
+                .iter()
+                .any(|row| row["code"] == "CATIA_UNSUPPORTED" && row["feature_id"] == "target")
+        );
     }
     #[test]
     fn guards_units_coordinate_and_unknown_keys() {
@@ -1602,11 +1844,13 @@ mod tests {
             json!({"mode":"linear","count":3}),
             json!({"count":{"type":"user"}}),
         ));
-        assert!(validate_plan(&p)["confirmations"]
-            .as_array()
-            .unwrap()
-            .iter()
-            .any(|q| q["parameter"] == "step"));
+        assert!(
+            validate_plan(&p)["confirmations"]
+                .as_array()
+                .unwrap()
+                .iter()
+                .any(|q| q["parameter"] == "step")
+        );
     }
     #[test]
     fn relation_precedence_and_strict_support_gate() {
@@ -1628,11 +1872,13 @@ mod tests {
         assert_eq!(strict_preflight(&p)["state"], "strict_blocked");
         let mut bad = p.clone();
         bad["features"][1]["relations"] = json!([{"type":"depends_on","feature_id":"missing"}]);
-        assert!(validate_plan(&bad)["errors"]
-            .as_array()
-            .unwrap()
-            .iter()
-            .any(|e| e["code"] == "invalid_relation_target"));
+        assert!(
+            validate_plan(&bad)["errors"]
+                .as_array()
+                .unwrap()
+                .iter()
+                .any(|e| e["code"] == "invalid_relation_target")
+        );
     }
     fn json_semantic_eq(left: &Value, right: &Value) -> bool {
         match (left, right) {
@@ -1691,5 +1937,19 @@ mod tests {
         assert!(feature_schema("not_public").is_none());
         assert!(schema.to_string().contains("image_estimate"));
         assert_eq!(SPECS.len(), 27);
+    }
+    #[test]
+    fn boolean_base_matches_actual_python_validation() {
+        let fixture: Value = serde_json::from_str(include_str!(
+            "../examples/fixtures/cadplan_base_validation_golden.json"
+        ))
+        .unwrap();
+        for case in fixture["cases"].as_array().unwrap() {
+            assert!(
+                json_semantic_eq(&validate_plan(&case["plan"]), &case["expected"]),
+                "base validation differs for {}",
+                case["name"]
+            );
+        }
     }
 }

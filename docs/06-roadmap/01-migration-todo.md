@@ -26,9 +26,11 @@
 | F3 | Rust CADPlan 与增量模型事务 | **进行中** | 纯增量事务已移植；完整参数校验、会话版本/回滚及 preview/build dispatch 尚待接线验收 |
 | F3.1 | Rust CADPlan 纯增量事务与几何指纹 | **已完成** | create/add/update/remove/snapshot 保留来源与扩展字段；数值更新来源 guard、失败原计划不变；140 组 Python 几何指纹对拍一致，精确浮点解析已启用 |
 | F3.2 | Rust CADPlan schema 与静态校验 | **已完成** | 覆盖 27 类特征、条件参数、来源、关系、单位/坐标和静态支持状态；27 个 Python golden 双接口对拍通过，strict 执行前阻断已验证，未执行几何或 CATIA |
+| F3.2.1 | 布尔 base 校验迁移缺陷修复 | **已完成** | 实际几何接线暴露合法 base 被误当长度拒绝；补 8 个真实 Python 校验样例，Rust 对拍通过 |
 | F3.3 | Rust CAD 会话事务与 preview/build dispatch | **进行中** | 会话版本、候选/回滚、来源及差异生命周期正在移植；真实几何回传和端到端验收尚待 F4 接入 |
 | F4 | Rust/C++ thin OCCT FFI | **进行中** | 固定官方 OCCT 7.9.3 SDK 已构建，C ABI/Rust 包装已通过真实几何 fixture；CADPlan 全特征执行和安装交付仍未完成 |
 | F4.1 | 固定 OCCT SDK、C ABI 与 Rust 几何基础 | **已完成** | 实际 Rust → C ABI → OCCT fixture 通过，正常退出；原生 27 类 CADPlan 执行及安装交付仍待完成 |
+| F4.2 | CADPlan 基础特征到 OCCT 的原生执行 | **进行中** | 五类特征执行与旧内核参数对拍正在验收；其余类型、孔位独立测量和生产 dispatch 尚未完成 |
 | F5 | Quick 模式与本地导出迁移 | 未开始 | Quick 与 Agent 共用稳定 CAD domain；AIMODEL/STL/视图导出有兼容性验收 |
 | F6 | Python 缩减到 CATIA COM | 未开始 | Python 包只剩 CATIA Windows/COM adapter 和必要协议代码；其余业务逻辑和 Agent 代码不再由 Python 执行 |
 | F7 | 多模态盲测与科学验收基线 | 未开始 | 图像/文字盲测、工具轨迹、几何量测、视觉差异关闭、真实 CATIA 证据分别归档并可复跑 |

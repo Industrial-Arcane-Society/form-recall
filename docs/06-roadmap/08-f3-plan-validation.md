@@ -32,4 +32,8 @@ JSONL probe 新增 `validate`、`strict_preflight` 和 `schema` 方法；前两�
 
 ## 剩余工作
 
+### F3.2.1 修复：布尔 base
+
+F4 接线真实几何 fixture 时发现 Rust 把合法 `base:true/false` 继续落入长度数值检查，Python 原接口已从数值集合排除布尔字段。修复了 Rust 条件，并补充 `cadplan_base_validation_golden.json`：8 个真实 Python 校验结果，覆盖 box/cylinder/gear 的布尔值与非法数字/字符串。完整结果对拍通过；原 27 案例继续通过。此项为参数迁移缺陷修复，不是 Agent 视觉质量验收。同步整理本模块的 Rust 格式。
+
 F3.3 会话版本、候选恢复、证据生命周期及几何 dispatch 尚未完成；F2.5 原生 CAD 写工具仍需接入这些组件。F3.2 不代表整个 F3 或 Agent 建模质量通过。
