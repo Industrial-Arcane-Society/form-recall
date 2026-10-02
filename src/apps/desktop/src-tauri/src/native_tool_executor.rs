@@ -8,6 +8,7 @@ use crate::native_vision_domain::{self, Context as VisionContext};
 use crate::native_vision_provider::NativeVisionProvider;
 use crate::native_web::NativeWeb;
 use serde_json::{Value, json};
+use sha2::{Digest, Sha256};
 use std::collections::HashMap;
 use std::fs;
 use std::path::{Path, PathBuf};
@@ -24,6 +25,7 @@ pub struct NativeToolExecutor {
     geometry_manifest: Option<PathBuf>,
     online_enabled: bool,
     transaction: Mutex<()>,
+    audit_lock: Mutex<()>,
     active: Mutex<HashMap<String, Arc<AtomicBool>>>,
     stopping: AtomicBool,
 }
@@ -48,6 +50,7 @@ impl NativeToolExecutor {
             geometry_manifest: None,
             online_enabled,
             transaction: Mutex::new(()),
+            audit_lock: Mutex::new(()),
             active: Mutex::new(HashMap::new()),
             stopping: AtomicBool::new(false),
         })
@@ -293,6 +296,88 @@ impl NativeToolExecutor {
         Ok(tool_result(name, value, images, progress))
     }
 
+    fn audit_revision(&self) -> Option<i64> {
+        let path = self.session_dir.join("cad-state.json");
+        if path.exists() {
+            read_json_object(&path)
+                .ok()
+                .and_then(|state| state.get("revision").and_then(Value::as_i64))
+        } else {
+            None
+        }
+    }
+
+    fn append_tool_audit(
+        &self,
+        call_id: &str,
+        name: &str,
+        arguments: &Value,
+        result: &Result<Value, String>,
+        revision_before: Option<i64>,
+        revision_after: Option<i64>,
+    ) -> Result<(), String> {
+        let (success, validation, error, result_summary) = match result {
+            Ok(value) => {
+                let text = value.get("text").and_then(Value::as_str).unwrap_or("");
+                let summary = json!({
+                    "text_bytes": text.len(),
+                    "text_sha256": format!("{:x}", Sha256::digest(text.as_bytes())),
+                    "image_count": value.get("images").and_then(Value::as_array).map(Vec::len).unwrap_or(0),
+                    "payload_is_error": value.pointer("/payload/isError").cloned().unwrap_or(Value::Null),
+                    "execution_engine": value.pointer("/payload/execution_engine").cloned().unwrap_or(Value::Null),
+                    "tool": value.pointer("/payload/tool").cloned().unwrap_or(Value::Null)
+                });
+                (
+                    true,
+                    json!({"status":"accepted_by_executor","basis":"executor returned successfully; no standalone schema validation is claimed"}),
+                    Value::Null,
+                    summary,
+                )
+            }
+            Err(message) => {
+                let error_type = classify_tool_error(message);
+                let validation_status = if error_type == "argument_validation" {
+                    "rejected_by_executor"
+                } else {
+                    "not_proven"
+                };
+                (
+                    false,
+                    json!({"status":validation_status,"basis":error_type}),
+                    json!({"type":error_type,"message":message}),
+                    Value::Null,
+                )
+            }
+        };
+        let record = json!({
+            "schema_version":1,
+            "at":unix_seconds(),
+            "call_id":call_id,
+            "tool":name,
+            "arguments":redact_tool_arguments(arguments),
+            "argument_redaction_policy":"Preserve arguments except values under credential, image, and binary-content keys; those values are replaced with [REDACTED].",
+            "parameter_validation":validation,
+            "success":success,
+            "error":error,
+            "result_summary":result_summary,
+            "revision_before":revision_before,
+            "revision_after":revision_after
+        });
+        let mut line = serde_json::to_vec(&record).map_err(|error| error.to_string())?;
+        line.push(b'\n');
+        use std::io::Write;
+        let _audit = self.audit_lock.lock().map_err(|_| "工具审计锁已损坏。")?;
+        fs::create_dir_all(&self.session_dir).map_err(|error| error.to_string())?;
+        let path = self.session_dir.join("native-tool-audit.jsonl");
+        let mut file = fs::OpenOptions::new()
+            .create(true)
+            .append(true)
+            .open(path)
+            .map_err(|error| error.to_string())?;
+        file.write_all(&line).map_err(|error| error.to_string())?;
+        file.flush().map_err(|error| error.to_string())
+    }
+
     fn run_vision(
         &self,
         name: &str,
@@ -356,20 +441,37 @@ impl ToolExecutor for NativeToolExecutor {
         arguments: &Value,
         timeout: Duration,
     ) -> Result<Value, String> {
-        if !arguments.is_object() {
-            return Err("工具参数必须为 JSON 对象。".into());
-        }
-        let cancelled = Arc::new(AtomicBool::new(false));
-        {
-            let mut active = self.active.lock().map_err(|_| "工具取消表已损坏。")?;
-            if active.contains_key(call_id) {
-                return Err("重复的 toolCallId。".into());
+        let revision_before = self.audit_revision();
+        let result = (|| {
+            if !arguments.is_object() {
+                return Err("工具参数必须为 JSON 对象。".into());
             }
-            active.insert(call_id.to_owned(), Arc::clone(&cancelled));
-        }
-        let result = self.run(name, arguments, timeout, &cancelled);
-        if let Ok(mut active) = self.active.lock() {
-            active.remove(call_id);
+            let cancelled = Arc::new(AtomicBool::new(false));
+            {
+                let mut active = self.active.lock().map_err(|_| "工具取消表已损坏。")?;
+                if active.contains_key(call_id) {
+                    return Err("重复的 toolCallId。".into());
+                }
+                active.insert(call_id.to_owned(), Arc::clone(&cancelled));
+            }
+            let result = self.run(name, arguments, timeout, &cancelled);
+            if let Ok(mut active) = self.active.lock() {
+                active.remove(call_id);
+            }
+            result
+        })();
+        let revision_after = self.audit_revision();
+        if let Err(audit_error) = self.append_tool_audit(
+            call_id,
+            name,
+            arguments,
+            &result,
+            revision_before,
+            revision_after,
+        ) {
+            // An audit write failure must never replace the original CAD/tool error, nor
+            // turn an already committed successful operation into a reported failure.
+            eprintln!("native tool audit write failed for {call_id}: {audit_error}");
         }
         result
     }
@@ -410,6 +512,80 @@ fn supports_native_tool(name: &str) -> bool {
                 | "cad_inspect_references"
                 | "cad_review_reference_similarity"
         )
+}
+
+fn classify_tool_error(message: &str) -> &'static str {
+    let lower = message.to_ascii_lowercase();
+    if [
+        "参数",
+        "必须",
+        "缺少",
+        "无效",
+        "须为",
+        "须有",
+        "不支持原生cad工具",
+        "不支持未注册工具",
+        "unknown native tool",
+        "must be",
+        "required",
+        "invalid",
+        "unsupported",
+    ]
+    .iter()
+    .any(|marker| lower.contains(&marker.to_ascii_lowercase()))
+    {
+        "argument_validation"
+    } else if message.contains("过期")
+        || message.contains("generation")
+        || message.contains("旧 revision")
+    {
+        "state_conflict"
+    } else {
+        "execution"
+    }
+}
+
+fn redact_tool_arguments(arguments: &Value) -> Value {
+    const REDACTED_KEYS: &[&str] = &[
+        "api_key",
+        "apikey",
+        "authorization",
+        "password",
+        "secret",
+        "token",
+        "access_token",
+        "image",
+        "image_data",
+        "image_bytes",
+        "image_base64",
+        "data_url",
+        "bytes",
+        "binary",
+    ];
+    match arguments {
+        Value::Object(object) => {
+            let mut safe = serde_json::Map::new();
+            for (key, value) in object {
+                let normalized = key.to_ascii_lowercase().replace('-', "_");
+                if REDACTED_KEYS.contains(&normalized.as_str())
+                    || normalized.starts_with("image")
+                    || normalized.contains("base64")
+                    || normalized.ends_with("_bytes")
+                    || normalized.ends_with("_api_key")
+                    || normalized.ends_with("_token")
+                    || normalized.ends_with("_password")
+                    || normalized.ends_with("_secret")
+                {
+                    safe.insert(key.clone(), json!("[REDACTED]"));
+                } else {
+                    safe.insert(key.clone(), redact_tool_arguments(value));
+                }
+            }
+            Value::Object(safe)
+        }
+        Value::Array(rows) => Value::Array(rows.iter().map(redact_tool_arguments).collect()),
+        _ => arguments.clone(),
+    }
 }
 
 fn required_string<'a>(arguments: &'a Value, key: &str) -> Result<&'a str, String> {
@@ -692,6 +868,141 @@ mod tests {
         executor
             .execute("state", "cad_get_state", &json!({}), Duration::from_secs(1))
             .unwrap();
+        fs::remove_dir_all(dir).unwrap();
+    }
+
+    fn audit_rows(dir: &Path) -> Vec<Value> {
+        fs::read_to_string(dir.join("native-tool-audit.jsonl"))
+            .unwrap()
+            .lines()
+            .map(|line| serde_json::from_str(line).unwrap())
+            .collect()
+    }
+
+    #[test]
+    fn audit_records_success_call_id_arguments_and_result_summary() {
+        let (dir, executor) = fixture();
+        executor
+            .execute(
+                "dsh-call-17",
+                "cad_get_feature_spec",
+                &json!({"kind":"box"}),
+                Duration::from_secs(1),
+            )
+            .unwrap();
+        let rows = audit_rows(&dir);
+        assert_eq!(rows.len(), 1);
+        assert_eq!(rows[0]["call_id"], "dsh-call-17");
+        assert_eq!(rows[0]["tool"], "cad_get_feature_spec");
+        assert_eq!(rows[0]["arguments"]["kind"], "box");
+        assert_eq!(
+            rows[0]["parameter_validation"]["status"],
+            "accepted_by_executor"
+        );
+        assert_eq!(rows[0]["success"], true);
+        assert!(rows[0]["result_summary"]["text_sha256"].as_str().is_some());
+        assert_eq!(rows[0]["revision_before"], Value::Null);
+        assert_eq!(rows[0]["revision_after"], 0);
+        fs::remove_dir_all(dir).unwrap();
+
+        let redacted = redact_tool_arguments(&json!({
+            "api_key":"credential",
+            "nested":{"image_bytes":[1,2,3],"image_preview":"data:image/png;base64,secret"},
+            "kind":"box"
+        }));
+        assert_eq!(redacted["api_key"], "[REDACTED]");
+        assert_eq!(redacted["nested"]["image_bytes"], "[REDACTED]");
+        assert_eq!(redacted["nested"]["image_preview"], "[REDACTED]");
+        assert_eq!(redacted["kind"], "box");
+    }
+
+    #[test]
+    fn audit_records_duplicate_hole_geometry_noop_without_revision_change() {
+        let (dir, executor) = fixture();
+        let existing_hole = json!({
+            "id":"hole-1","kind":"hole","operation":"cut",
+            "parameters":{"diameter":4.0,"through":true,"pos":"point","point":[40.0,12.0,18.0],"axis":"X"},
+            "sources":{"diameter":{"type":"image_estimate","evidence":"photo"},
+                "point":{"type":"derived","evidence":"face placement"}}
+        });
+        let state = json!({
+            "plan":{"units":{"length":"mm","angle":"deg"},"features":[
+                {"id":"body","kind":"box","operation":"add","parameters":{}}, existing_hole
+            ]},
+            "revision":5,"actions":[],
+            "last_preview":{"local_geometry_checks":{"bounds_mm":[0.0,0.0,0.0,40.0,24.0,36.0]}}
+        });
+        write_json_atomic(&dir.join("cad-state.json"), &state).unwrap();
+        executor
+            .execute(
+                "dsh-hole-array-1",
+                "cad_add_hole_array",
+                &json!({"face_normal_axis":"X","face_side":"positive","source_type":"image_estimate","evidence":"same photo",
+                    "holes":[{"id":"hole-1","face_center":[12.0,18.0],"diameter":4.0}]}),
+                Duration::from_secs(2),
+            )
+            .unwrap();
+        let rows = audit_rows(&dir);
+        assert_eq!(rows.len(), 1);
+        assert_eq!(rows[0]["call_id"], "dsh-hole-array-1");
+        assert_eq!(rows[0]["success"], true);
+        assert_eq!(rows[0]["revision_before"], 5);
+        assert_eq!(rows[0]["revision_after"], 5);
+        let saved = read_json_object(&dir.join("cad-state.json")).unwrap();
+        assert_eq!(saved["revision"], 5);
+        assert_eq!(saved["plan"]["features"].as_array().unwrap().len(), 2);
+        fs::remove_dir_all(dir).unwrap();
+    }
+
+    #[test]
+    fn audit_records_argument_rejection_and_preserves_readable_error() {
+        let (dir, executor) = fixture();
+        let error = executor
+            .execute(
+                "dsh-feature-spec-bad-args",
+                "cad_get_feature_spec",
+                &json!({"kind":"box","unexpected":true}),
+                Duration::from_secs(1),
+            )
+            .unwrap_err();
+        let rows = audit_rows(&dir);
+        assert_eq!(rows.len(), 1);
+        assert_eq!(rows[0]["call_id"], "dsh-feature-spec-bad-args");
+        assert_eq!(rows[0]["success"], false);
+        assert_eq!(
+            rows[0]["parameter_validation"]["status"],
+            "rejected_by_executor"
+        );
+        assert_eq!(rows[0]["error"]["type"], "argument_validation");
+        assert!(
+            error.contains("未知工具参数"),
+            "unexpected rejection: {error}"
+        );
+        assert_eq!(rows[0]["error"]["message"], error);
+        assert_eq!(rows[0]["revision_before"], Value::Null);
+        assert_eq!(rows[0]["revision_after"], Value::Null);
+        fs::remove_dir_all(dir).unwrap();
+    }
+
+    #[test]
+    fn audit_records_execution_failure_type_and_original_message() {
+        let (dir, executor) = fixture_with_online(true);
+        let error = executor
+            .execute(
+                "dsh-vision-no-provider",
+                "cad_inspect_references",
+                &json!({}),
+                Duration::from_secs(1),
+            )
+            .unwrap_err();
+        assert!(error.contains("原生视觉provider未配置"));
+        let rows = audit_rows(&dir);
+        assert_eq!(rows.len(), 1);
+        assert_eq!(rows[0]["call_id"], "dsh-vision-no-provider");
+        assert_eq!(rows[0]["success"], false);
+        assert_eq!(rows[0]["parameter_validation"]["status"], "not_proven");
+        assert_eq!(rows[0]["error"]["type"], "execution");
+        assert_eq!(rows[0]["error"]["message"], error);
         fs::remove_dir_all(dir).unwrap();
     }
 
