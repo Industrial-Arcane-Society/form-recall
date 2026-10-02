@@ -2,7 +2,7 @@
 //! Hole metadata describes requested cuts, not independently measured bores.
 use crate::{
     cad_plan, cad_plan_validation,
-    native_occt::{Bounds, Kernel, Shape},
+    native_occt::{Bounds, Kernel, Shape, Axis},
 };
 use serde_json::{Value, json};
 use std::{
@@ -26,7 +26,11 @@ pub fn preflight(plan: &Value) -> Result<Value, String> {
         }
         let p = &feature["parameters"];
         let kind = feature["kind"].as_str().unwrap_or("");
-        if !["box", "cylinder", "sphere", "hole", "pocket"].contains(&kind) {
+        if ![
+            "box", "cylinder", "sphere", "hole", "pocket", "prism", "revolve",
+        ]
+        .contains(&kind)
+        {
             return Err(format!(
                 "Rust 几何执行尚不支持 {} ({kind})，未执行任何特征。",
                 feature["id"]
@@ -34,12 +38,6 @@ pub fn preflight(plan: &Value) -> Result<Value, String> {
         }
         if matches!(kind, "box" | "pocket") && optional_num(p, "corner", 0.)? != 0. {
             return Err("Rust 圆角矩形尚未接入；不能静默忽略 corner。".into());
-        }
-        if kind == "cylinder"
-            && p.get("radius2").is_some_and(|v| !v.is_null())
-            && (num(p, "radius2")? - num(p, "radius")?).abs() > 1e-10
-        {
-            return Err("Rust 圆锥尚未接入；不能改成等径圆柱。".into());
         }
         if kind == "hole" && p.get("entry_point").is_some_and(|v| !v.is_null()) {
             return Err("Rust 显式盲孔入口局部材料核验尚未接入。".into());
@@ -150,10 +148,38 @@ fn feature_tools(
             if !p.get("base").and_then(Value::as_bool).unwrap_or(true) {
                 center[axis] -= height / 2.;
             }
-            Ok((
-                vec![kernel.cylinder(num(p, "radius")?, height, center, axis_vector(axis))?],
-                vec![],
-            ))
+            let radius = num(p, "radius")?;
+            let radius2 = optional_num(p, "radius2", radius)?;
+            let shape = if (radius - radius2).abs() <= 1e-10 {
+                kernel.cylinder(radius, height, center, axis_vector(axis))?
+            } else {
+                kernel.cone(radius, radius2, height, center, Axis::from_index(axis)?)?
+            };
+            Ok((vec![shape], vec![]))
+        }
+        "prism" | "revolve" => {
+            let profile = p["profile"]
+                .as_array()
+                .ok_or("profile 必须是二维点数组。")?
+                .iter()
+                .map(|row| {
+                    let values = row
+                        .as_array()
+                        .filter(|a| a.len() == 2)
+                        .ok_or("轮廓点必须包含两个数值。")?;
+                    Ok([
+                        values[0].as_f64().ok_or("轮廓坐标必须是数值。")?,
+                        values[1].as_f64().ok_or("轮廓坐标必须是数值。")?,
+                    ])
+                })
+                .collect::<Result<Vec<[f64; 2]>, String>>()?;
+            let axis = Axis::from_index(axis)?;
+            let shape = if kind == "prism" {
+                kernel.prism(&profile, num(p, "height")?, center, axis)?
+            } else {
+                kernel.revolve(&profile, optional_num(p, "angle", 360.)?, center, axis)?
+            };
+            Ok((vec![shape], vec![]))
         }
         "sphere" => Ok((vec![kernel.sphere(num(p, "radius")?, center)?], vec![])),
         "hole" => {
@@ -261,11 +287,12 @@ fn normalized_feature(feature: &Value, plan: &Value) -> Result<Value, String> {
             "center",
             "point",
             "entry_point",
+            "profile",
         ]
         .contains(&key.as_str())
         {
             length_factor
-        } else if key == "phase" {
+        } else if key == "phase" || key == "angle" {
             angle_factor
         } else {
             continue;
@@ -469,16 +496,14 @@ mod tests {
     }
     #[test]
     fn invalid_or_cancelled_input_cannot_reach_dll_loading() {
-        assert!(
-            build(
-                &json!({}),
-                Path::new("nonexistent"),
-                &AtomicBool::new(false)
-            )
-            .err()
-            .expect("invalid plan cannot build")
-            .contains("校验")
-        );
+        assert!(build(
+            &json!({}),
+            Path::new("nonexistent"),
+            &AtomicBool::new(false)
+        )
+        .err()
+        .expect("invalid plan cannot build")
+        .contains("校验"));
         assert!(check_cancel(&AtomicBool::new(true)).is_err());
     }
 }

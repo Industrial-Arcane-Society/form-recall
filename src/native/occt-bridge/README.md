@@ -56,6 +56,24 @@ git -C src/apps/desktop/src-tauri/target/f4-occt/git-check rev-parse HEAD
   other nonsingular affine matrices use `BRepBuilderAPI_GTransform`.
 - Geometry dimensions are in millimeters and volumes in cubic millimeters,
   matching the existing CADPlan geometry kernel.
+- Additive ABI 1 constructors include `occt_make_cone`,
+  `occt_make_prism`, and `occt_make_revolve`. `OcctAxis` is X=0, Y=1, Z=2;
+  profile coordinates use the right-handed planes X=(Y,Z), Y=(Z,X),
+  Z=(X,Y). Prism profiles are [u,v] pairs extruded in the positive axis
+  direction. Revolve profiles are [radius,axial] pairs, use the first vector
+  of that axis basis as radial zero, and accept angles in (0,360] degrees.
+- Profile inputs must have at least three finite points, nonzero signed area,
+  no repeated adjacent/closing point, and no self-intersection. The bridge
+  rejects invalid profiles and does not reverse, simplify, de-duplicate, or
+  otherwise repair them before building exact analytic OCCT B-Reps.
+- `occt_shape_line_material_intervals` intersects a normalized ray direction
+  with exact B-Rep faces over `[tmin,tmax]`, de-duplicates events within the
+  requested tolerance, then classifies each segment midpoint against every
+  solid. `t` uses the shape's length unit (mm in the CADPlan bridge); returned
+  intervals are owned by the bridge and must be released with
+  `occt_material_intervals_release`. An empty result states only that the
+  queried line has no material span. It does not by itself verify a hole,
+  diameter, or feature; those require additional offset rays and evidence.
 - `occt_shape_analyze` reports validity, total solid count, and closed-valid
   solid count independently; `occt_shape_is_closed_solid` is the one-solid
   convenience check.
@@ -71,7 +89,10 @@ After every rebuilt bridge, regenerate `runtime-manifest.json` with
 artifact bytes; source archive verification and release signing are separate.
 Rust loads only a manifest-verified runtime and checks its reported version/ABI.
 
-`tests/smoke.cpp` checks an analytic 100×80×20 mm box, a separate 3×3
+`tests/smoke.cpp` checks cone/prism/revolve analytical volume and bounds,
+profile rejection cases, line material intervals through solid/through-hole/
+blind-hole/recess/empty and disjoint-solid paths, and edge-tangent event handling;
+an analytic 100×80×20 mm box, a separate 3×3
 counterbore boolean case, and the target topology fixture: one 80×12×4 mm
 rectangular recess plus nine through holes with Ø10/Ø6/Ø10 columns. It checks
 single-solid closure, BRep validity, exact stock bounds, analytical volume,

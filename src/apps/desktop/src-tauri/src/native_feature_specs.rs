@@ -27,10 +27,13 @@ pub fn feature_spec(kind: &str) -> Result<Value, String> {
             "X":["Y","Z"],"Y":["X","Z"],"Z":["X","Y"]
         });
     }
-    result["native_execution"] = if ["box", "cylinder", "sphere", "hole", "pocket"].contains(&kind)
+    result["native_execution"] = if [
+        "box", "cylinder", "sphere", "hole", "pocket", "prism", "revolve",
+    ]
+    .contains(&kind)
     {
         serde_json::json!({"status":"basic_variants_implemented","scope":"local_candidate_geometry",
-            "note":"Plain box/pocket only; cylindrical radius2 must equal radius; explicit blind entry not yet supported. Hole metadata is requested, not independently measured. Production write-tool dispatch is still being migrated."})
+            "note":"Plain box/pocket, cylinder/cone and simple polygon prism/revolve are implemented. Explicit blind entry is not yet supported. Hole metadata is requested, not independently measured. Production write-tool dispatch is still being migrated."})
     } else {
         serde_json::json!({"status":"not_implemented","scope":"rust_plan_geometry",
             "note":"Legacy/CATIA static support does not prove native Rust execution support."})
@@ -56,16 +59,12 @@ mod tests {
             let result = feature_spec(kind.as_str().unwrap()).unwrap();
             assert!(result["required_parameters"].is_array());
             assert!(result["optional_parameters"].is_array());
-            assert!(
-                ["exact", "approximate", "unsupported"]
-                    .contains(&result["catia_mapping"].as_str().unwrap())
-            );
-            assert!(
-                result["coordinate_contract"]
-                    .as_str()
-                    .unwrap()
-                    .contains("+Y")
-            );
+            assert!(["exact", "approximate", "unsupported"]
+                .contains(&result["catia_mapping"].as_str().unwrap()));
+            assert!(result["coordinate_contract"]
+                .as_str()
+                .unwrap()
+                .contains("+Y"));
         }
         assert!(feature_spec("unknown").is_err());
         assert_eq!(

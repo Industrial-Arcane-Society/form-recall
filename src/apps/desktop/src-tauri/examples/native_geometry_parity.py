@@ -42,6 +42,17 @@ def main():
         for bottom in (True, False):
             add(f"cylinder-{axis}-{bottom}", "cylinder",
                 dict(radius=5, height=10, axis=axis, center=[10, 20, 30], base=bottom))
+            add(f"cone-{axis}-{bottom}", "cylinder",
+                dict(radius=5, radius2=2, height=10, axis=axis, center=[10, 20, 30], base=bottom))
+        add(f"prism-{axis}", "prism", dict(profile=[[0, 0], [12, 0], [10, 7], [0, 9]],
+            height=13, axis=axis, center=[10, 20, 30]))
+        for angle in (360, 180, -90):
+            add(f"revolve-{axis}-{angle}", "revolve", dict(profile=[[2, -3], [8, -3], [6, 7], [2, 7]],
+                angle=angle, axis=axis, center=[10, 20, 30]))
+    add("prism-cm", "prism", dict(profile=[[0, 0], [1, 0], [1, 2], [0, 2]],
+        height=3, center=[1, 2, 3]), dict(length="cm", angle="deg"))
+    add("revolve-cm-rad", "revolve", dict(profile=[[0, 0], [1, 0], [1, 2], [0, 2]],
+        angle=1.5707963267948966, center=[1, 2, 3]), dict(length="cm", angle="rad"))
     add("sphere-cm", "sphere", dict(radius=2, center=[1, 2, 3]), dict(length="cm", angle="deg"))
     for axis in "XYZ":
         for side in ("positive", "negative"):

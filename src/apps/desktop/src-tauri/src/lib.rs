@@ -4,6 +4,7 @@ pub mod cad_plan;
 pub mod cad_plan_validation;
 pub mod dsh_runtime;
 pub mod native_feature_specs;
+pub mod native_geometry_evidence;
 pub mod native_knowledge;
 pub mod native_occt;
 pub mod native_occt_runtime;

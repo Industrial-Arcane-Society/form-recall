@@ -8,19 +8,25 @@
 #include <BRepBuilderAPI_Transform.hxx>
 #include <BRepAlgoAPI_Cut.hxx>
 #include <BRepCheck_Analyzer.hxx>
+#include <BRepClass3d_SolidClassifier.hxx>
 #include <BRepGProp.hxx>
 #include <BRep_Builder.hxx>
 #include <BRepMesh_IncrementalMesh.hxx>
 #include <BRepPrimAPI_MakeBox.hxx>
+#include <BRepPrimAPI_MakeCone.hxx>
 #include <BRepPrimAPI_MakeCylinder.hxx>
+#include <BRepPrimAPI_MakePrism.hxx>
+#include <BRepPrimAPI_MakeRevol.hxx>
 #include <BRepPrimAPI_MakeSphere.hxx>
 #include <BRep_Tool.hxx>
 #include <Bnd_Box.hxx>
 #include <Standard_Failure.hxx>
 #include <Standard_Version.hxx>
 #include <GProp_GProps.hxx>
+#include <IntCurvesFace_ShapeIntersector.hxx>
 #include <Poly_Triangulation.hxx>
 #include <TopAbs_Orientation.hxx>
+#include <TopAbs_State.hxx>
 #include <TopAbs_ShapeEnum.hxx>
 #include <TopExp_Explorer.hxx>
 #include <TopoDS.hxx>
@@ -33,6 +39,7 @@
 #include <BOPAlgo_BOP.hxx>
 #include <BOPAlgo_Operation.hxx>
 #include <gp_Ax2.hxx>
+#include <gp_Ax1.hxx>
 #include <gp_Dir.hxx>
 #include <gp_GTrsf.hxx>
 #include <gp_Mat.hxx>
@@ -43,10 +50,12 @@
 
 #include <cmath>
 #include <algorithm>
+#include <array>
 #include <cstdlib>
 #include <cstring>
 #include <exception>
 #include <new>
+#include <limits>
 #include <string>
 #include <stdexcept>
 #include <utility>
@@ -75,6 +84,76 @@ OcctStatus guard(F &&function) noexcept {
 
 bool finite(double x) { return std::isfinite(x); }
 bool valid(const OcctShape *s) { return s && !s->value.IsNull(); }
+struct AxisFrame { gp_Dir axis; gp_Vec u; gp_Vec v; };
+AxisFrame axis_frame(OcctAxis axis) {
+  switch(axis) {
+    case OCCT_AXIS_X: return {gp_Dir(1,0,0),gp_Vec(0,1,0),gp_Vec(0,0,1)};
+    case OCCT_AXIS_Y: return {gp_Dir(0,1,0),gp_Vec(0,0,1),gp_Vec(1,0,0)};
+    case OCCT_AXIS_Z: return {gp_Dir(0,0,1),gp_Vec(1,0,0),gp_Vec(0,1,0)};
+    default: throw std::invalid_argument("axis must be OCCT_AXIS_X, Y, or Z");
+  }
+}
+using Point2 = std::array<double,2>;
+long double orient2(const Point2 &a,const Point2 &b,const Point2 &c) {
+  return (static_cast<long double>(b[0])-a[0])*(static_cast<long double>(c[1])-a[1])
+       - (static_cast<long double>(b[1])-a[1])*(static_cast<long double>(c[0])-a[0]);
+}
+bool on_segment(const Point2 &a,const Point2 &b,const Point2 &p) {
+  return p[0]>=std::min(a[0],b[0]) && p[0]<=std::max(a[0],b[0])
+      && p[1]>=std::min(a[1],b[1]) && p[1]<=std::max(a[1],b[1]);
+}
+bool segments_intersect(const Point2 &a,const Point2 &b,const Point2 &c,const Point2 &d) {
+  const long double o1=orient2(a,b,c),o2=orient2(a,b,d),o3=orient2(c,d,a),o4=orient2(c,d,b);
+  if(((o1<0 && o2>0)||(o1>0 && o2<0)) && ((o3<0 && o4>0)||(o3>0 && o4<0))) return true;
+  return (o1==0 && on_segment(a,b,c)) || (o2==0 && on_segment(a,b,d))
+      || (o3==0 && on_segment(c,d,a)) || (o4==0 && on_segment(c,d,b));
+}
+std::vector<Point2> checked_profile(const double *pairs,size_t count,bool radial) {
+  if(!pairs || count<3) throw std::invalid_argument("profile requires at least three 2D points");
+  if(count>100000) throw std::invalid_argument("profile exceeds the point limit");
+  std::vector<Point2> points; points.reserve(count);
+  for(size_t i=0;i<count;++i) {
+    const double a=pairs[2*i],b=pairs[2*i+1];
+    if(!finite(a)||!finite(b)) throw std::invalid_argument("profile coordinates must be finite");
+    if(radial && a<0) throw std::invalid_argument("revolve profile radius must be nonnegative");
+    points.push_back({a,b});
+  }
+  for(size_t i=0;i<count;++i) {
+    const auto &a=points[i],&b=points[(i+1)%count];
+    if(a[0]==b[0] && a[1]==b[1]) throw std::invalid_argument("profile has a repeated adjacent point or repeated closing point");
+  }
+  long double area2=0;
+  for(size_t i=0;i<count;++i) {
+    const auto &a=points[i],&b=points[(i+1)%count];
+    area2+=static_cast<long double>(a[0])*b[1]-static_cast<long double>(b[0])*a[1];
+  }
+  if(!std::isfinite(area2)||area2==0) throw std::invalid_argument("profile area must be finite and nonzero");
+  for(size_t i=0;i<count;++i) {
+    const size_t in=(i+1)%count;
+    for(size_t j=i+1;j<count;++j) {
+      const size_t jn=(j+1)%count;
+      if(j==in || i==jn) continue;
+      if(segments_intersect(points[i],points[in],points[j],points[jn]))
+        throw std::invalid_argument("profile is self-intersecting");
+    }
+  }
+  return points;
+}
+TopoDS_Face profile_face(const std::vector<Point2> &profile,const gp_Pnt &origin,
+                         const gp_Vec &basis_u,const gp_Vec &basis_v) {
+  BRepBuilderAPI_MakePolygon wire_builder;
+  for(const auto &p:profile) {
+    const gp_Pnt point=origin.Translated(basis_u*p[0]+basis_v*p[1]);
+    if(!finite(point.X())||!finite(point.Y())||!finite(point.Z()))
+      throw std::invalid_argument("mapped profile coordinates must be finite");
+    wire_builder.Add(point);
+  }
+  wire_builder.Close();
+  if(!wire_builder.IsDone()) throw std::runtime_error("OCCT could not close the profile wire");
+  BRepBuilderAPI_MakeFace face_builder(wire_builder.Wire(),true);
+  if(!face_builder.IsDone()) throw std::invalid_argument("profile does not form a planar face");
+  return face_builder.Face();
+}
 void check_out(OcctShape **out) {
   if (!out) throw std::invalid_argument("out_shape must not be null");
   *out = nullptr;
@@ -135,6 +214,53 @@ OcctStatus occt_make_sphere(double r,double cx,double cy,double cz,OcctShape **o
     check_out(out);
     if (!(finite(r)&&finite(cx)&&finite(cy)&&finite(cz)) || r<=0) throw std::invalid_argument("sphere radius must be finite and positive");
     *out = wrap(BRepPrimAPI_MakeSphere(gp_Pnt(cx,cy,cz), r).Shape());
+  });
+}
+
+OcctStatus occt_make_cone(double rb,double rt,double h,double bx,double by,double bz,OcctAxis axis,OcctShape **out) {
+  return guard([&] {
+    check_out(out);
+    const AxisFrame frame=axis_frame(axis);
+    if(!(finite(rb)&&finite(rt)&&finite(h)&&finite(bx)&&finite(by)&&finite(bz))
+       || rb<0 || rt<0 || h<=0 || (rb==0 && rt==0))
+      throw std::invalid_argument("cone radii must be finite and nonnegative, height positive, and at least one radius nonzero");
+    BRepPrimAPI_MakeCone cone(gp_Ax2(gp_Pnt(bx,by,bz),frame.axis),rb,rt,h);
+    cone.Build();
+    if(!cone.IsDone()) throw std::runtime_error("OCCT cone construction did not complete");
+    *out=wrap(cone.Shape());
+  });
+}
+
+OcctStatus occt_make_prism(const double *pairs,size_t count,double h,double ox,double oy,double oz,OcctAxis axis,OcctShape **out) {
+  return guard([&] {
+    check_out(out);
+    const AxisFrame frame=axis_frame(axis);
+    if(!finite(h)||h<=0||!finite(ox)||!finite(oy)||!finite(oz))
+      throw std::invalid_argument("prism height and origin must be finite; height must be positive");
+    const auto profile=checked_profile(pairs,count,false);
+    const TopoDS_Face face=profile_face(profile,gp_Pnt(ox,oy,oz),frame.u,frame.v);
+    const gp_Vec translation(frame.axis.X()*h,frame.axis.Y()*h,frame.axis.Z()*h);
+    BRepPrimAPI_MakePrism prism(face,translation);
+    prism.Build();
+    if(!prism.IsDone()) throw std::runtime_error("OCCT prism construction did not complete");
+    *out=wrap(prism.Shape());
+  });
+}
+
+OcctStatus occt_make_revolve(const double *pairs,size_t count,double degrees,double ox,double oy,double oz,OcctAxis axis,OcctShape **out) {
+  return guard([&] {
+    check_out(out);
+    const AxisFrame frame=axis_frame(axis);
+    if(!finite(degrees)||std::abs(degrees)<=1e-9||std::abs(degrees)>360.0+1e-8||!finite(ox)||!finite(oy)||!finite(oz))
+      throw std::invalid_argument("revolve angle must be nonzero within [-360,360] degrees and origin must be finite");
+    const auto profile=checked_profile(pairs,count,true);
+    const gp_Pnt origin(ox,oy,oz);
+    const TopoDS_Face face=profile_face(profile,origin,frame.u,gp_Vec(frame.axis));
+    constexpr double pi=3.141592653589793238462643383279502884;
+    BRepPrimAPI_MakeRevol revolve(face,gp_Ax1(origin,frame.axis),degrees*pi/180.0,true);
+    revolve.Build();
+    if(!revolve.IsDone()) throw std::runtime_error("OCCT revolve construction did not complete");
+    *out=wrap(revolve.Shape());
   });
 }
 
@@ -248,6 +374,77 @@ OcctStatus occt_shape_bounds(const OcctShape *shape,OcctBounds *out) {
 OcctStatus occt_shape_volume(const OcctShape *shape,double *out) {
   return guard([&] { if(!valid(shape)||!out) throw std::invalid_argument("shape and output are required"); GProp_GProps props; BRepGProp::VolumeProperties(shape->value,props); *out=props.Mass(); });
 }
+
+OcctStatus occt_shape_line_material_intervals(const OcctShape *shape,
+    double ox,double oy,double oz,double ax,double ay,double az,
+    double tmin,double tmax,double tolerance,
+    OcctMaterialInterval **out_intervals,size_t *out_count) {
+  if(out_intervals) *out_intervals=nullptr;
+  if(out_count) *out_count=0;
+  return guard([&] {
+    if(!out_intervals||!out_count) throw std::invalid_argument("interval output pointers must not be null");
+    if(!valid(shape)) throw std::invalid_argument("shape handle must not be null");
+    if(!(finite(ox)&&finite(oy)&&finite(oz)&&finite(ax)&&finite(ay)&&finite(az)
+         &&finite(tmin)&&finite(tmax)&&finite(tolerance)) || !(tmin<tmax) || tolerance<=0)
+      throw std::invalid_argument("line coordinates, range, and tolerance must be finite; range must increase and tolerance must be positive");
+    const double axis_length=std::hypot(ax,std::hypot(ay,az));
+    if(!finite(axis_length)||axis_length==0) throw std::invalid_argument("line axis must be nonzero and finite");
+    const gp_Dir direction(ax,ay,az);
+    const gp_Lin line(gp_Pnt(ox,oy,oz),direction);
+    IntCurvesFace_ShapeIntersector intersector;
+    intersector.Load(shape->value,tolerance);
+    intersector.Perform(line,tmin,tmax);
+    if(!intersector.IsDone()) throw std::runtime_error("OCCT line/face intersection did not complete");
+
+    std::vector<double> cuts{tmin,tmax};
+    cuts.reserve(static_cast<size_t>(intersector.NbPnt())+2);
+    for(Standard_Integer i=1;i<=intersector.NbPnt();++i) {
+      const double t=intersector.WParameter(i);
+      if(finite(t)&&t>=tmin-tolerance&&t<=tmax+tolerance)
+        cuts.push_back(std::clamp(t,tmin,tmax));
+    }
+    std::sort(cuts.begin(),cuts.end());
+    std::vector<double> unique;
+    unique.reserve(cuts.size());
+    for(size_t begin=0;begin<cuts.size();) {
+      size_t end=begin+1;
+      long double sum=cuts[begin];
+      while(end<cuts.size()&&cuts[end]-cuts[end-1]<=tolerance) { sum+=cuts[end]; ++end; }
+      double value=static_cast<double>(sum/static_cast<long double>(end-begin));
+      if(begin==0) value=tmin;
+      if(end==cuts.size()) value=tmax;
+      unique.push_back(value);
+      begin=end;
+    }
+    if(unique.front()!=tmin) unique.insert(unique.begin(),tmin);
+    if(unique.back()!=tmax) unique.push_back(tmax);
+
+    std::vector<OcctMaterialInterval> material;
+    for(size_t i=0;i+1<unique.size();++i) {
+      const double lo=unique[i],hi=unique[i+1];
+      if(!(hi>lo)) continue;
+      const gp_Pnt point=line.Location().Translated(gp_Vec(direction)*(lo+(hi-lo)*0.5));
+      bool inside=false;
+      for(TopExp_Explorer it(shape->value,TopAbs_SOLID);it.More();it.Next()) {
+        BRepClass3d_SolidClassifier classifier(TopoDS::Solid(it.Current()),point,tolerance);
+        if(classifier.State()==TopAbs_IN) { inside=true; break; }
+      }
+      if(inside) {
+        if(!material.empty()&&lo-material.back().t_end<=tolerance) material.back().t_end=hi;
+        else material.push_back({lo,hi});
+      }
+    }
+    if(material.empty()) return;
+    if(material.size()>std::numeric_limits<size_t>::max()/sizeof(OcctMaterialInterval)) throw std::bad_alloc();
+    auto *buffer=static_cast<OcctMaterialInterval*>(std::malloc(material.size()*sizeof(OcctMaterialInterval)));
+    if(!buffer) throw std::bad_alloc();
+    std::memcpy(buffer,material.data(),material.size()*sizeof(OcctMaterialInterval));
+    *out_intervals=buffer;
+    *out_count=material.size();
+  });
+}
+
+void occt_material_intervals_release(OcctMaterialInterval *intervals) { std::free(intervals); }
 
 OcctStatus occt_shape_tessellate(const OcctShape *shape,double lin,double ang,OcctMesh *out) {
   if(out) { out->xyz=nullptr; out->normals=nullptr; out->vertex_count=0; }

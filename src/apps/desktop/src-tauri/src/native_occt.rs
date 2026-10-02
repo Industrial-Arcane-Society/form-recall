@@ -1,7 +1,7 @@
 //! Runtime-loaded OCCT C ABI. No C++ objects or allocations cross ownership.
 use libloading::Library;
 use std::{
-    ffi::{CStr, c_char, c_void},
+    ffi::{c_char, c_void, CStr},
     marker::PhantomData,
     path::Path,
     ptr::NonNull,
@@ -12,6 +12,39 @@ use std::{
 type Handle = *mut c_void;
 type Out = *mut Handle;
 type Status = i32;
+type ConeFn = unsafe extern "C" fn(f64, f64, f64, f64, f64, f64, i32, Out) -> Status;
+type ProfileFn = unsafe extern "C" fn(*const f64, usize, f64, f64, f64, f64, i32, Out) -> Status;
+type LineIntervalsFn = unsafe extern "C" fn(
+    Handle,
+    f64,
+    f64,
+    f64,
+    f64,
+    f64,
+    f64,
+    f64,
+    f64,
+    f64,
+    *mut *mut RawMaterialInterval,
+    *mut usize,
+) -> Status;
+#[repr(i32)]
+#[derive(Clone, Copy, Debug)]
+pub enum Axis {
+    X = 0,
+    Y = 1,
+    Z = 2,
+}
+impl Axis {
+    pub fn from_index(index: usize) -> Result<Self, String> {
+        match index {
+            0 => Ok(Self::X),
+            1 => Ok(Self::Y),
+            2 => Ok(Self::Z),
+            _ => Err("未知OCCT轴。".into()),
+        }
+    }
+}
 #[repr(C)]
 #[derive(Default, Debug, Clone, Copy)]
 pub struct Bounds {
@@ -36,6 +69,12 @@ struct RawMesh {
     normals: *mut f64,
     vertex_count: usize,
 }
+#[repr(C)]
+#[derive(Clone, Copy)]
+struct RawMaterialInterval {
+    t_start: f64,
+    t_end: f64,
+}
 #[derive(Debug)]
 pub struct TriangleMesh {
     pub positions: Vec<[f64; 3]>,
@@ -50,6 +89,9 @@ struct Api {
     make_box: unsafe extern "C" fn(f64, f64, f64, f64, f64, f64, Out) -> Status,
     cylinder: unsafe extern "C" fn(f64, f64, f64, f64, f64, f64, f64, f64, Out) -> Status,
     sphere: unsafe extern "C" fn(f64, f64, f64, f64, Out) -> Status,
+    cone: Option<ConeFn>,
+    prism: Option<ProfileFn>,
+    revolve: Option<ProfileFn>,
     fuse: unsafe extern "C" fn(*const Handle, usize, Out) -> Status,
     cut: unsafe extern "C" fn(Handle, *const Handle, usize, Out) -> Status,
     transform: unsafe extern "C" fn(Handle, *const f64, Out) -> Status,
@@ -58,6 +100,8 @@ struct Api {
     volume: unsafe extern "C" fn(Handle, *mut f64) -> Status,
     tessellate: unsafe extern "C" fn(Handle, f64, f64, *mut RawMesh) -> Status,
     mesh_release: unsafe extern "C" fn(*mut RawMesh),
+    line_intervals: Option<LineIntervalsFn>,
+    intervals_release: Option<unsafe extern "C" fn(*mut RawMaterialInterval)>,
 }
 #[derive(Clone)]
 pub struct Kernel {
@@ -123,6 +167,21 @@ impl Kernel {
             make_box: sym!("occt_make_box"),
             cylinder: sym!("occt_make_cylinder"),
             sphere: sym!("occt_make_sphere"),
+            // ABI 1 extensions are optional so the already verified primitive
+            // runtime remains usable; each new operation checks its symbol.
+            cone: unsafe { library.get::<ConeFn>(b"occt_make_cone\0").ok().map(|f| *f) },
+            prism: unsafe {
+                library
+                    .get::<ProfileFn>(b"occt_make_prism\0")
+                    .ok()
+                    .map(|f| *f)
+            },
+            revolve: unsafe {
+                library
+                    .get::<ProfileFn>(b"occt_make_revolve\0")
+                    .ok()
+                    .map(|f| *f)
+            },
             fuse: sym!("occt_fuse"),
             cut: sym!("occt_cut"),
             transform: sym!("occt_transform"),
@@ -131,6 +190,20 @@ impl Kernel {
             volume: sym!("occt_shape_volume"),
             tessellate: sym!("occt_shape_tessellate"),
             mesh_release: sym!("occt_mesh_release"),
+            line_intervals: unsafe {
+                library
+                    .get::<LineIntervalsFn>(b"occt_shape_line_material_intervals\0")
+                    .ok()
+                    .map(|f| *f)
+            },
+            intervals_release: unsafe {
+                library
+                    .get::<unsafe extern "C" fn(*mut RawMaterialInterval)>(
+                        b"occt_material_intervals_release\0",
+                    )
+                    .ok()
+                    .map(|f| *f)
+            },
             _library: library,
         };
         Ok(Self { api: Arc::new(api) })
@@ -183,6 +256,85 @@ impl Kernel {
             (self.api.sphere)(radius, center[0], center[1], center[2], out)
         })
     }
+    pub fn cone(
+        &self,
+        bottom_radius: f64,
+        top_radius: f64,
+        height: f64,
+        base: [f64; 3],
+        axis: Axis,
+    ) -> Result<Shape, String> {
+        let function = self.api.cone.ok_or("已安装的OCCT桥尚未提供圆锥构造器。")?;
+        self.create(|out| unsafe {
+            function(
+                bottom_radius,
+                top_radius,
+                height,
+                base[0],
+                base[1],
+                base[2],
+                axis as i32,
+                out,
+            )
+        })
+    }
+    pub fn prism(
+        &self,
+        points: &[[f64; 2]],
+        height: f64,
+        origin: [f64; 3],
+        axis: Axis,
+    ) -> Result<Shape, String> {
+        self.profile(
+            self.api.prism.ok_or("已安装的OCCT桥尚未提供棱柱构造器。")?,
+            points,
+            height,
+            origin,
+            axis,
+        )
+    }
+    pub fn revolve(
+        &self,
+        points: &[[f64; 2]],
+        angle: f64,
+        origin: [f64; 3],
+        axis: Axis,
+    ) -> Result<Shape, String> {
+        self.profile(
+            self.api
+                .revolve
+                .ok_or("已安装的OCCT桥尚未提供回转构造器。")?,
+            points,
+            angle,
+            origin,
+            axis,
+        )
+    }
+    fn profile(
+        &self,
+        function: ProfileFn,
+        points: &[[f64; 2]],
+        extent: f64,
+        origin: [f64; 3],
+        axis: Axis,
+    ) -> Result<Shape, String> {
+        if !(3..=100_000).contains(&points.len()) {
+            return Err("轮廓点数必须为3到100000。".into());
+        }
+        let pairs: Vec<f64> = points.iter().flat_map(|p| p.iter().copied()).collect();
+        self.create(|out| unsafe {
+            function(
+                pairs.as_ptr(),
+                points.len(),
+                extent,
+                origin[0],
+                origin[1],
+                origin[2],
+                axis as i32,
+                out,
+            )
+        })
+    }
     fn handles(&self, shapes: &[&Shape]) -> Result<Vec<Handle>, String> {
         shapes
             .iter()
@@ -233,6 +385,93 @@ impl Api {
     }
 }
 impl Shape {
+    /// Return exact B-Rep material spans along a normalized line direction.
+    /// The OCCT ABI reports t in the shape's length unit (mm in CADPlan).
+    pub fn line_material_intervals(
+        &self,
+        origin: [f64; 3],
+        axis: [f64; 3],
+        tmin: f64,
+        tmax: f64,
+        tolerance: f64,
+    ) -> Result<Vec<[f64; 2]>, String> {
+        if origin.iter().chain(axis.iter()).any(|v| !v.is_finite())
+            || !tmin.is_finite()
+            || !tmax.is_finite()
+            || !tolerance.is_finite()
+            || tmin >= tmax
+            || tolerance <= 0.0
+            || axis.iter().all(|v| *v == 0.0)
+        {
+            return Err("射线参数必须有限、方向非零、范围递增且公差为正。".into());
+        }
+        let function = self
+            .api
+            .line_intervals
+            .ok_or("已安装的OCCT桥尚未提供材料区间查询。")?;
+        let release = self
+            .api
+            .intervals_release
+            .ok_or("已安装的OCCT桥尚未提供材料区间释放函数。")?;
+        let mut pointer = std::ptr::null_mut();
+        let mut count = 0usize;
+        let status = unsafe {
+            function(
+                self.handle.as_ptr(),
+                origin[0],
+                origin[1],
+                origin[2],
+                axis[0],
+                axis[1],
+                axis[2],
+                tmin,
+                tmax,
+                tolerance,
+                &mut pointer,
+                &mut count,
+            )
+        };
+        struct IntervalGuard {
+            pointer: *mut RawMaterialInterval,
+            release: unsafe extern "C" fn(*mut RawMaterialInterval),
+        }
+        impl Drop for IntervalGuard {
+            fn drop(&mut self) {
+                if !self.pointer.is_null() {
+                    unsafe { (self.release)(self.pointer) }
+                }
+            }
+        }
+        let guard = IntervalGuard { pointer, release };
+        self.api.check(status)?;
+        if count == 0 {
+            if !guard.pointer.is_null() {
+                return Err("OCCT 返回空区间数但分配了数组。".into());
+            }
+            return Ok(Vec::new());
+        }
+        if guard.pointer.is_null() || count > 1_000_000 {
+            return Err("OCCT 返回无效或过大的材料区间数组。".into());
+        }
+        let raw = unsafe { std::slice::from_raw_parts(guard.pointer, count) };
+        let mut intervals = Vec::with_capacity(count);
+        let mut previous_end = tmin;
+        for interval in raw {
+            if !interval.t_start.is_finite()
+                || !interval.t_end.is_finite()
+                || interval.t_start < tmin - tolerance
+                || interval.t_end > tmax + tolerance
+                || interval.t_start >= interval.t_end
+                || interval.t_start < previous_end - tolerance
+            {
+                return Err("OCCT 返回无效、重叠或越界的材料区间。".into());
+            }
+            previous_end = interval.t_end;
+            intervals.push([interval.t_start, interval.t_end]);
+        }
+        Ok(intervals)
+    }
+
     pub fn bounds(&self) -> Result<Bounds, String> {
         let mut value = Bounds::default();
         self.api

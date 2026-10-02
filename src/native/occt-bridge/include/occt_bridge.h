@@ -20,6 +20,13 @@ extern "C" {
 
 typedef struct OcctShape OcctShape;
 typedef int32_t OcctStatus;
+typedef int32_t OcctAxis;
+
+enum {
+  OCCT_AXIS_X = 0,
+  OCCT_AXIS_Y = 1,
+  OCCT_AXIS_Z = 2
+};
 
 enum {
   OCCT_BRIDGE_OK = 0,
@@ -47,6 +54,11 @@ typedef struct OcctMesh {
   size_t vertex_count;
 } OcctMesh;
 
+typedef struct OcctMaterialInterval {
+  double t_start;
+  double t_end;
+} OcctMaterialInterval;
+
 /* Error text remains valid until the next bridge call on the same thread. */
 OCCT_BRIDGE_API const char *occt_last_error(void);
 OCCT_BRIDGE_API const char *occt_version(void);
@@ -60,6 +72,19 @@ OCCT_BRIDGE_API OcctStatus occt_make_cylinder(double radius, double height,
   OcctShape **out_shape);
 OCCT_BRIDGE_API OcctStatus occt_make_sphere(double radius,
   double cx, double cy, double cz, OcctShape **out_shape);
+/* Axes are positive global X/Y/Z and profile coordinates follow the
+   right-handed bases X=(Y,Z), Y=(Z,X), Z=(X,Y). */
+OCCT_BRIDGE_API OcctStatus occt_make_cone(double bottom_radius, double top_radius,
+  double height, double bx, double by, double bz, OcctAxis axis,
+  OcctShape **out_shape);
+/* xy_pairs is [u0,v0,u1,v1,...]; omit a repeated final copy of point zero. */
+OCCT_BRIDGE_API OcctStatus occt_make_prism(const double *uv_pairs,
+  size_t point_count, double height, double ox, double oy, double oz,
+  OcctAxis axis, OcctShape **out_shape);
+/* radius_axial_pairs is [r0,z0,r1,z1,...]; angle is in (0,360] degrees. */
+OCCT_BRIDGE_API OcctStatus occt_make_revolve(const double *radius_axial_pairs,
+  size_t point_count, double angle_degrees, double ox, double oy, double oz,
+  OcctAxis axis, OcctShape **out_shape);
 OCCT_BRIDGE_API OcctStatus occt_fuse(const OcctShape *const *shapes,
   size_t count, OcctShape **out_shape);
 OCCT_BRIDGE_API OcctStatus occt_cut(const OcctShape *base,
@@ -77,6 +102,14 @@ OCCT_BRIDGE_API OcctStatus occt_shape_bounds(const OcctShape *shape,
   OcctBounds *out_bounds);
 OCCT_BRIDGE_API OcctStatus occt_shape_volume(const OcctShape *shape,
   double *out_volume);
+/* Exact line/face events clipped to [tmin,tmax], then midpoint-classified.
+   axis is normalized internally; t is measured in the shape's length unit.
+   Release returned storage with occt_material_intervals_release. */
+OCCT_BRIDGE_API OcctStatus occt_shape_line_material_intervals(
+  const OcctShape *shape, double ox, double oy, double oz,
+  double ax, double ay, double az, double tmin, double tmax, double tolerance,
+  OcctMaterialInterval **out_intervals, size_t *out_count);
+OCCT_BRIDGE_API void occt_material_intervals_release(OcctMaterialInterval *intervals);
 OCCT_BRIDGE_API OcctStatus occt_shape_tessellate(const OcctShape *shape,
   double linear_deflection, double angular_deflection, OcctMesh *out_mesh);
 OCCT_BRIDGE_API void occt_mesh_release(OcctMesh *mesh);
