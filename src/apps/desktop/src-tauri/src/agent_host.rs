@@ -5,11 +5,13 @@
 //! replace that transitional boundary.
 
 use crate::acp::AcpProcess;
+use crate::native_tool_bridge::{LegacyPythonExecutor, NativeToolBridge, load_legacy_tool_schemas};
 use base64::Engine as _;
 use base64::engine::general_purpose::STANDARD as BASE64;
 use reqwest::Url;
 use serde_json::{Value, json};
 use sha2::{Digest, Sha256};
+use std::ffi::OsString;
 use std::fs;
 use std::path::{Path, PathBuf};
 use std::process::Command;
@@ -40,6 +42,7 @@ struct HostState {
 
 struct ActiveSession {
     process: Arc<AcpProcess>,
+    tool_bridge: NativeToolBridge,
     id: String,
     fingerprint: String,
     cwd: PathBuf,
@@ -261,7 +264,7 @@ fn get_or_create_session(
             prompt_path.display()
         )
     })?;
-    let (_, prefix_args) = super::python_command(app, &root, packaged)?;
+    let (python_path, prefix_args) = super::python_command(app, &root, packaged)?;
     if !prefix_args.is_empty() {
         return Err("当前 Python 启动方式带有参数，暂不能作为 DSH Cordis 工具解释器。".into());
     }
@@ -298,6 +301,97 @@ fn get_or_create_session(
         json!({"schema_version": 1, "session_id": session_id_saved, "turns": []}),
         "turns",
     )?;
+    let host_tool_session_id = format!("tool-{}", unique_id());
+    let native_tools_path = cwd.join("native-tool-registration.json");
+    let native_schemas_path = cwd.join("native-tool-schemas.json");
+    let tool_environment = vec![
+        (
+            OsString::from("AI_MODELER_PYTHON"),
+            python_path.as_os_str().to_owned(),
+        ),
+        (
+            OsString::from("AI_MODELER_PROJECT_ROOT"),
+            root.as_os_str().to_owned(),
+        ),
+        (
+            OsString::from("AI_MODELER_STATE_DIR"),
+            cwd.as_os_str().to_owned(),
+        ),
+        (
+            OsString::from("AI_MODELER_REFERENCE_MANIFEST"),
+            reference_path.as_os_str().to_owned(),
+        ),
+        (
+            OsString::from("AI_MODELER_USER_TURNS_MANIFEST"),
+            turns_path.as_os_str().to_owned(),
+        ),
+        (
+            OsString::from("AI_MODELER_ACTIVE_TURN_FILE"),
+            cwd.join("active-turn.json").into_os_string(),
+        ),
+        (
+            OsString::from("AI_MODELER_STREAM_FILE"),
+            cwd.join("stream-events.jsonl").into_os_string(),
+        ),
+        (
+            OsString::from("AI_MODELER_TRANSPORT_IMAGE_MAP"),
+            cwd.join("transport-image-map.json").into_os_string(),
+        ),
+        (
+            OsString::from("AI_MODELER_NATIVE_TOOLS_FILE"),
+            native_tools_path.clone().into_os_string(),
+        ),
+        (
+            OsString::from("AI_MODELER_ONLINE_ENABLED"),
+            online_enabled.to_string().into(),
+        ),
+        (OsString::from("AI_MODELER_HAS_REFERENCES"), "false".into()),
+        (OsString::from("AI_MODELER_REFERENCE_IMAGES"), "[]".into()),
+        (
+            OsString::from("AI_MODELER_PROVIDER_BASE_URL"),
+            provider.base_url.clone().into(),
+        ),
+        (
+            OsString::from("AI_MODELER_PROVIDER_MODEL"),
+            provider.model.clone().into(),
+        ),
+        (
+            OsString::from("AI_MODELER_REVIEW_BASE_URL"),
+            provider.base_url.clone().into(),
+        ),
+        (
+            OsString::from("AI_MODELER_REVIEW_MODEL"),
+            provider.model.clone().into(),
+        ),
+        (
+            OsString::from("AI_MODELER_REVIEW_REASONING_EFFORT"),
+            provider.effort.clone().into(),
+        ),
+        (
+            OsString::from("AI_MODELER_REVIEW_THINKING_BUDGET"),
+            provider
+                .budget
+                .map(|value| value.to_string())
+                .unwrap_or_default()
+                .into(),
+        ),
+        (
+            OsString::from("AIMODELER_LLM_API_KEY"),
+            provider.api_key.clone().into(),
+        ),
+    ];
+    let schemas = load_legacy_tool_schemas(&python_path, &root, &tool_environment)?;
+    let tool_executor = Arc::new(LegacyPythonExecutor::new(
+        python_path.clone(),
+        root.clone(),
+        tool_environment.clone(),
+    ));
+    let tool_bridge = NativeToolBridge::start(
+        host_tool_session_id,
+        &native_schemas_path,
+        schemas,
+        tool_executor,
+    )?;
     let profile = route_profile(&provider.base_url, &provider.model)?;
     let patch_path = agent_dir.join("profile-patch.yml");
     write_profile_patch(
@@ -308,51 +402,28 @@ fn get_or_create_session(
         &profile,
     )?;
     fs::create_dir_all(&runtime.home).map_err(|error| format!("无法创建私有 DSH_HOME：{error}"))?;
-    let python_path = super::python_command(app, &root, packaged)?.0;
     let mut command = Command::new(&runtime.node);
     command
         .arg(&runtime.dsh_cli)
         .args(["--profile", "acp", "--patch"])
         .arg(&patch_path)
         .current_dir(&cwd)
+        .envs(tool_environment.iter().map(|(key, value)| (key, value)))
         .env("DSH_HOME", &runtime.home)
         .env("DSH_TELEMETRY_DISABLED", "1")
         .env("DSH_SYSTEM_PROMPT", system_prompt)
         .env("AIMODELER_LLM_API_KEY", &provider.api_key)
-        .env("AI_MODELER_PYTHON", python_path)
-        .env("AI_MODELER_PROJECT_ROOT", &root)
-        .env("AI_MODELER_STATE_DIR", &cwd)
-        .env("AI_MODELER_REFERENCE_MANIFEST", &reference_path)
-        .env("AI_MODELER_USER_TURNS_MANIFEST", &turns_path)
-        .env("AI_MODELER_ACTIVE_TURN_FILE", cwd.join("active-turn.json"))
-        .env("AI_MODELER_STREAM_FILE", cwd.join("stream-events.jsonl"))
-        .env(
-            "AI_MODELER_TRANSPORT_IMAGE_MAP",
-            cwd.join("transport-image-map.json"),
-        )
         .env(
             "AI_MODELER_DSH_NODE_MODULES",
             runtime.root.join("dsh/node_modules"),
         )
         .env(
-            "AI_MODELER_NATIVE_TOOLS_FILE",
-            cwd.join("native-tool-registration.json"),
+            "AI_MODELER_NATIVE_TOOL_SCHEMAS_FILE",
+            tool_bridge.schemas_path(),
         )
-        .env("AI_MODELER_ONLINE_ENABLED", online_enabled.to_string())
-        .env("AI_MODELER_HAS_REFERENCES", "false")
-        .env("AI_MODELER_REFERENCE_IMAGES", "[]")
-        .env("AI_MODELER_PROVIDER_BASE_URL", &provider.base_url)
-        .env("AI_MODELER_PROVIDER_MODEL", &provider.model)
-        .env("AI_MODELER_REVIEW_BASE_URL", &provider.base_url)
-        .env("AI_MODELER_REVIEW_MODEL", &provider.model)
-        .env("AI_MODELER_REVIEW_REASONING_EFFORT", &provider.effort)
-        .env(
-            "AI_MODELER_REVIEW_THINKING_BUDGET",
-            provider
-                .budget
-                .map(|value| value.to_string())
-                .unwrap_or_default(),
-        );
+        .env("AI_MODELER_TOOL_BRIDGE_ADDR", tool_bridge.address())
+        .env("AI_MODELER_TOOL_BRIDGE_TOKEN", tool_bridge.token())
+        .env("AI_MODELER_TOOL_SESSION_ID", tool_bridge.session_id());
     let process = Arc::new(AcpProcess::spawn(&mut command)?);
     let initialize_events = process.subscribe()?;
     let initialized = process.request(
@@ -443,6 +514,7 @@ fn get_or_create_session(
     drop(initialize_events);
     let session = Arc::new(ActiveSession {
         process,
+        tool_bridge,
         id: session_id,
         fingerprint: fingerprint.to_owned(),
         cwd,
@@ -1324,6 +1396,7 @@ fn close_session(session: &ActiveSession) {
         Some(Duration::from_secs(4)),
     );
     session.process.shutdown();
+    session.tool_bridge.shutdown();
 }
 
 fn ensure_json_file(path: &Path, value: Value, list_key: &str) -> Result<(), String> {
