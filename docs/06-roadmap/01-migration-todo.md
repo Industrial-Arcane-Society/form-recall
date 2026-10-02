@@ -31,7 +31,7 @@
 | F3.3 | Rust CAD 会话事务与 preview/build dispatch | **已完成** | Rust 会话事务连接原生 OCCT backend；create/add/update/remove/preview/build 和候选状态完成本地 CLI 验收，回滚需关联当前 finding ID |
 | F3.3.1 | 会话事务及版本/来源/验收门禁 | **已完成（domain）** | 16 项定向正负测试通过；真实后端及 Cordis 写工具接线尚待完成，复杂来源语义仍有限制 |
 | F3.3.2 | 宿主整体复核与完成门禁 | **已完成（domain）** | session 18/18、gate 7/7；旧版本/篡改证据阻断，当前未验收候选可保存；真实视觉质量待 F7 |
-| F4 | Rust/C++ thin OCCT FFI | **进行中** | 固定官方 OCCT 7.9.3 SDK、C ABI/Rust 包装及本机 packaged probe 已通过；执行 registry 当前覆盖 27 类规格中的 14 类，另 13 类及已实现类的拒绝变体、最终安装包/干净机验收仍未完成 |
+| F4 | Rust/C++ thin OCCT FFI | **进行中** | 固定官方 OCCT 7.9.3 SDK、C ABI/Rust 包装及本机 packaged probe 已通过；执行 registry 当前覆盖 27 类规格中的 15 类，另 12 类及已实现类的拒绝变体、最终安装包/干净机验收仍未完成 |
 | F4.1 | 固定 OCCT SDK、C ABI 与 Rust 几何基础 | **已完成** | 实际 Rust → C ABI → OCCT fixture 通过，正常退出；原生 27 类 CADPlan 执行及安装交付仍待完成 |
 | F4.2 | CADPlan 基础特征到 OCCT 的原生执行 | **进行中** | 已接入 box/cylinder/sphere/hole/pocket、cone/prism/revolve、gear/socket_head_bolt、pattern、piston 等特征；其余特征映射与安装 runtime 仍未完成 |
 | F4.2.1 | 五类基础特征与参数坐标对拍 | **已完成** | box/cylinder/sphere/hole/pocket 的基础变体已执行；24 组真实几何对拍、4 个负样本通过，孔记录未冒充独立测量 |
@@ -42,6 +42,7 @@
 | F4.2.6 | CADPlan spoked_wheel 原生几何执行 | **已完成** | 全局 Z 轴轮缘、带孔轮毂、辐条及 cm 单位换算；真实几何全量 60 正例/15 负例通过；见 [F4.2.6 记录](./24-f4-native-spoked-wheel.md) |
 | F4.2.7 | CADPlan conrod 原生执行与平移修复 | **已完成（标记近似）** | 修复旧Python杆身重复平移，Rust环形头+梯形杆身；63正例/18负例对拍，平移不变性与cm换算；见 [记录](./31-f4-native-conrod.md) |
 | F4.2.8 | CADPlan cross_joint 原生执行 | **已完成（标记近似）** | OCCT 中心块与四轴颈解析融合；有效单闭合体及轴心材料区间检查；66正例/20负例；与旧24段网格体积差0.95857%，不作精确体积对拍；见 [记录](./33-f4-native-cross-joint.md) |
+| F4.2.9 | CADPlan rotor 原生执行 | **已完成（标记近似）** | 固定径向离散轮廓经Rust→C ABI→OCCT构造，拒绝隐式尺寸/非Z轴/base及不满足实际内切间隙的孔；5个真实B-Rep、3个定向测试、能力规格2项及offline cargo check通过；见 [记录](./41-f4-native-rotor.md) |
 | F4.3.1 | B-Rep 材料区间与离散孔证据基础 | **已完成** | 精确面交事件、Rust RAII、41 射线 pre/post 对比；真实九孔/盲孔/错位/错径正负样例通过，非孔径计量，生产接线待完成 |
 | F4.3.2 | 孔材料采样接入 CADPlan | **已完成** | 44 对拍、6 负样例、局部材料盲孔与近边孔部分证据通过；采样不冒充孔径计量 |
 | F4.3.3 | 最终 B-Rep 孔计量接入 CADPlan | **已完成** | 最终形体实测孔半径、轴线与 360° 覆盖；盲孔/贯穿孔核验，后续特征会使旧测量失效 |
@@ -57,7 +58,7 @@
 
 | ID | 优先级 | Feature | 完成条件 / 提交边界 |
 |---|---|---|---|
-| F6.1 | P0 | Rust 原生设置与 provider 管理 | 原生保存/加载 defaults、旧 flat 配置迁移、多档案与 stage overrides、活动档案、模型列表；保留未知字段，fixture 覆盖保存/重载、无效模型及失败行为，不输出凭据。 |
+| F6.1 | P0 | Rust 原生设置与 provider 管理 | **已完成，提交 `16756a3`**：原生 defaults、旧 flat 配置迁移、多档案与 stage overrides、活动档案、未知字段保留、模板及 `/models` 请求；Rust 7/7、Vue wiring 8/8、前端 build 通过。 |
 | F6.2 | P0 | Rust 桌面 bootstrap 与依赖状态 | Vue 初始化使用原生 settings/runtime/resource/active-model 命令；Python 缺失时 Quick、Agent 和本地模型仍可启动；DSH、OCCT、CATIA readiness 分开报告。资源定位不再要求 Python 源码存在。依赖 F6.1。 |
 | F6.3 | P1 | 原生零件目录与示例列表 | 迁移只读 metadata、aliases、sample values/prompts、顺序与计数；与旧 Python 输出逐字段对拍，不把目录项冒充已支持的几何能力。 |
 | F6.4 | P1 | 原生诊断、帮助和路径操作 | 版本/打开路径/自检走 Rust；分别显示 Runtime、OCCT、CATIA 与外部 MCP 状态。Cordis 工具数不能冒充 MCP 服务连接成功。 |
@@ -80,7 +81,7 @@
 | F7.G5 | P1 | 观察因冲突可重新读取、版本可追踪 | **代码完成，真实视觉链路待验收** | 普通同 SHA/ROI 复用缓存；Agent 显式传 `conflict`/`reobserve` 才重新观察并递增版本；保留历史、SHA/ROI/reason/telemetry；新版 evidence ID 隔离旧 review/finding。定向测试 11+5+3 通过；见 [记录](./34-f7-observation-refresh.md)。 |
 | F7.G6 | P1 | 统一实际工具与几何能力契约 | **代码完成，运行期遵循待 G8 验收** | 26 类注册特征统一公开本地 exact/approximate/unsupported、支持/拒绝变体和参数边界；preflight 共用同一 native kind registry；面工具 source_type 与 hole-array 上限对齐。3 项定向测试已由 subagent 跑通；`parameter_limits` 当前为说明型契约，后续需随 preflight 同步。见 [记录](./36-f7-native-capability-contract.md)。 |
 | F7.G7 | P1 | 分阶段模型、推理预算及行为熔断 | **代码完成、定向检查通过；真实DSH多模态链路待验收** | 感知/建模/审查可独立选择供应商与推理强度，空或空白 provider ID 继承全局当前配置；ACP reasoning 仅在回执给出有效值时标记生效，未确认会告警。视觉请求遥测明确记录发送前预期值，不声称服务端已生效；未知 Chat Completions 路由不发送通用 reasoning 字段。Agent turn 使用 60 分钟总时限、10 分钟无有效进展时限、15 秒取消宽限；相同写工具/脱敏参数且 revision 未变化或错误重复 5 次才触发无进展熔断，不设总工具/返修次数上限。超时后回收挂起 ACP 请求；用户取消、超时、无进展与 Host 错误分别记录，终态单点发出，所有退出路径清理 active。定向 cargo check、策略单测、ACP pending 请求释放 fixture、AgentHost、阶段空值和视觉路由测试以及前端配置往返测试通过；fixture 未覆盖完整 Tauri watchdog 回路。未做真实 DSH/LLM 多模态验收。阶段配置存于全局桌面设置，不随 `.aimodel` 工程保存。见 [阶段模型与运行熔断记录](./39-f7-stage-routing-watchdog.md)。 |
-| F7.G8 | P1 | 真实多模态与多轮链路可复跑验收 | **已完成 1 次真实图片负样本；调用审计已实现，整体未通过** | 原图真实传输、DSH工具执行和多模态review均发生；review错误地声称左侧有孔，且所有返回 `evidence_id` 为空/未映射，因此宿主 coverage 为 partial、`accepted=false`。hole-array 调用后 revision 未变，历史轨迹缺少原始参数/结果，无法追溯该次调用原因。后续 native 工具调用会写入 `native-tool-audit.jsonl`，记录脱敏参数、执行结果/错误与 revision 前后值；这只能改善未来归因，不能补回历史证据，也不等于模型意图或几何已验收。见 [冷启动实测 01](./35-f7-image-acceptance-run-01.md) 和 [工具调用审计](./37-f7-native-tool-audit.md)。修复后仍需重跑单图、多图、文字、多轮返修、取消与 CATIA 独立验收。 |
+| F7.G8 | P1 | 真实多模态与多轮链路可复跑验收 | **严格单图 CLI gate 已实现；真实新轮次及多场景仍待验收** | run01原图负样本保留；冷启动runner现在要求同一主模型request携图且完整成功响应、同轮真实Cordis CAD工具与native UUID审计、Rust当前几何签名、非空当前目录产物、孔计量、完整视觉review及finish门禁同时通过；36/36 gate fixture与3项语法检查通过。尚未执行真实 provider 新轮次，也未验收多图、纯文字、多轮返修、取消、桌面通道或 CATIA；严格 CLI gate 通过后仍需独立视觉对照。见 [冷启动实测 01](./35-f7-image-acceptance-run-01.md)、[工具调用审计](./37-f7-native-tool-audit.md) 与 [严格冷启动 gate](./43-f7-g8-strict-coldstart-gates.md)。 |
 
 执行顺序：先完成 P0 G1–G4 的缺口，再推进 G5–G8；F4 完整几何、F5/F6 原生状态迁移同时继续。生产同源冷启动 runner 已执行并记录一轮失败样本，不代表整个 G8 或 F7 通过。F7 总体只有所有链路整改和真实验收完成后才可标记完成。
 
