@@ -41,6 +41,7 @@
 | F4.2.5 | CADPlan piston 原生几何执行 | **已完成** | 保留旧活塞剖面、环槽和 X 轴销孔语义；Rust/Python OCP 57 正例、12 负例全量对拍通过（本项新增 3 正例、3 负例）；CATIA 映射仍为 approximate，证据见 [F4.2.5 验收记录](./23-f4-native-piston-execution.md) |
 | F4.2.6 | CADPlan spoked_wheel 原生几何执行 | **已完成** | 全局 Z 轴轮缘、带孔轮毂、辐条及 cm 单位换算；真实几何全量 60 正例/15 负例通过；见 [F4.2.6 记录](./24-f4-native-spoked-wheel.md) |
 | F4.2.7 | CADPlan conrod 原生执行与平移修复 | **已完成（标记近似）** | 修复旧Python杆身重复平移，Rust环形头+梯形杆身；63正例/18负例对拍，平移不变性与cm换算；见 [记录](./31-f4-native-conrod.md) |
+| F4.2.8 | CADPlan cross_joint 原生执行 | **已完成（标记近似）** | OCCT 中心块与四轴颈解析融合；有效单闭合体及轴心材料区间检查；66正例/20负例；与旧24段网格体积差0.95857%，不作精确体积对拍；见 [记录](./33-f4-native-cross-joint.md) |
 | F4.3.1 | B-Rep 材料区间与离散孔证据基础 | **已完成** | 精确面交事件、Rust RAII、41 射线 pre/post 对比；真实九孔/盲孔/错位/错径正负样例通过，非孔径计量，生产接线待完成 |
 | F4.3.2 | 孔材料采样接入 CADPlan | **已完成** | 44 对拍、6 负样例、局部材料盲孔与近边孔部分证据通过；采样不冒充孔径计量 |
 | F4.3.3 | 最终 B-Rep 孔计量接入 CADPlan | **已完成** | 最终形体实测孔半径、轴线与 360° 覆盖；盲孔/贯穿孔核验，后续特征会使旧测量失效 |
@@ -50,7 +51,7 @@
 | F5.2 | Rust AIMODEL / binary STL 兼容读写 | **已完成** | 5 项单测、旧工程 roundtrip、Python Document 对拍及实际 STL 全顶点检查通过；Quick 和生产导出接线尚待完成 |
 | F5.3 | Quick 明确尺寸原生创建闭环 | **已完成（限定范围）** | Rust Quick 3/3、解析 7/7、Vue build；CADPlan→OCCT→GLB/AIMODEL/STL，旧语法全量迁移和共享活动状态仍待 F7.G2；见 [记录](./27-f5-native-quick-build.md) |
 | F6 | Python 缩减到 CATIA COM | **进行中** | DSH Agent 的 Python tool worker 已删除；Quick 模式和 CATIA/遗留包仍依赖 Python，后续继续收缩至 CATIA COM |
-| F7 | 多模态盲测与科学验收基线 | 未开始 | 图像/文字盲测、工具轨迹、几何量测、视觉差异关闭、真实 CATIA 证据分别归档并可复跑 |
+| F7 | 多模态盲测与科学验收基线 | **进行中** | 生产同源冷启动 runner 已执行一轮真实原图盲测，模型候选因孔位/视图复核未通过而被拒；仍需修复并完成图片、纯文字、多轮、返修、取消及 CATIA 分层验收 |
 
 ## 已确认的 Agent 链路治理
 
@@ -62,10 +63,10 @@
 | F7.G2 | P0 | CADPlan、Agent 与桌面模型统一同步 | 已定位，待 G3 后实现 | 写工具完成后发送同版本交互网格、特征树、尺寸及输出路径；Quick/Agent/参数编辑/保存/导出使用同一活动模型，拒绝旧 revision 覆盖，不能修改 Python 中另一份旧文档。 |
 | F7.G3 | P0 | 请求结束与模型验收状态区分 | 代码完成，端到端待验收 | Host 9/9、Vue build通过；turn_status独立，旧finish不得accepted，旧preview显示stale，纯问答不称建模完成；真实四场景见 G8，记录见 [状态真值](./29-f7-turn-and-model-status.md) |
 | F7.G4 | P0 | 阶段复核与施工范围一致 | 代码完成，真实视觉待验收 | 宿主revision/ID范围、out_of_scope、全当前几何覆盖门槛已接入；定向集成通过，不完整范围只能诊断不可贡献覆盖；真实返修待 G8；见 [记录](./32-f7-stage-review-scope.md) |
-| F7.G5 | P1 | 观察因冲突可重新读取、版本可追踪 | 待实现 | observation缓存不等同事实真值；明确冲突可触发全图或ROI的新观察，保留旧版、依据与证据ID映射，过期观察不能静默用于关闭finding。 |
+| F7.G5 | P1 | 观察因冲突可重新读取、版本可追踪 | **代码完成，真实视觉链路待验收** | 普通同 SHA/ROI 复用缓存；Agent 显式传 `conflict`/`reobserve` 才重新观察并递增版本；保留历史、SHA/ROI/reason/telemetry；新版 evidence ID 隔离旧 review/finding。定向测试 11+5+3 通过；见 [记录](./34-f7-observation-refresh.md)。 |
 | F7.G6 | P1 | 统一实际工具与几何能力契约 | 待实现 | registry、feature spec、preflight、工具提示使用一致的能力来源，包含具体变体限制、近似和不支持原因。不存在参数合法但Agent获知可执行、执行器却未实现的误导。 |
 | F7.G7 | P1 | 分阶段模型、推理预算及行为熔断 | 待实现 | 感知/建模/审查可独立配置、默认共用；记录requested/effective reasoning。对不支持设置明确反馈；按运行时间、重复无变化、错误类别管理有界终止与恢复，不以小固定返修次数截断正常任务。 |
-| F7.G8 | P1 | 真实多模态与多轮链路可复跑验收 | 基础入口完成，实跑待完成 | 新增生产同源 profile CLI，定向1/1，见 [记录](./30-f7-production-profile-cli.md)；执行runner与原图盲测、每次成功/失败、图片wire SHA、工具轨迹、revision、几何、差异关闭、续话及取消证据仍待完成。fixture不充当真实建模通过；CATIA独立实测。 |
+| F7.G8 | P1 | 真实多模态与多轮链路可复跑验收 | **已完成 1 次真实图片负样本，整体未通过** | 生产 profile runner 已完成原图真实传输和 DSH 工具执行；候选仅 3 个 X 向孔、正视无孔、视觉审查无有效可比较配对，`accepted=false`。失败证据见 [冷启动实测 01](./35-f7-image-acceptance-run-01.md)。修复后仍需重跑单图、多图、文字、多轮返修、取消与 CATIA 独立验收。 |
 
 执行顺序：先 F7.G1–G4，随后 G5–G8；F4 完整几何、F5/F6 原生状态迁移同时继续。F7 总体只有上述链路整改和原有科学验收全部完成后才可标记完成。当前新建的冷启动 runner 仍是未验收草稿：其硬编码模型/只读提示词与生产不一致，修正前不能作为 F7 结果。
 
