@@ -127,6 +127,14 @@ pub fn configure_cli_reasoning(
     configure_reasoning(process, session_id, response, &route, &provider.effort)
 }
 
+pub fn select_cli_reasoning(config: &Value, session_response: &Value) -> Result<Value, String> {
+    let provider = Provider::parse(config)?;
+    let route = route_profile(&provider.base_url, &provider.model)?;
+    let selected = reasoning_option(session_response, &route, &provider.effort)?;
+    Ok(json!({"config_id":"reasoning_effort","value":selected,
+        "requested":provider.effort,"configurable":selected.is_some()}))
+}
+
 pub fn send_turn(
     state: &AgentHostState,
     app: AppHandle,
@@ -1412,8 +1420,28 @@ fn configure_reasoning(
     route: &Route,
     configured: &str,
 ) -> Result<(), String> {
-    if route.reasoning.is_empty() {
+    let Some(value) = reasoning_option(response, route, configured)? else {
         return Ok(());
+    };
+    process
+        .request(
+            "session/set_config_option",
+            json!({
+                "sessionId":session_id,"configId":"reasoning_effort","value":value
+            }),
+            Some(Duration::from_secs(15)),
+        )
+        .map_err(|error| format!("无法设置 DSH 思考强度：{error}"))?;
+    Ok(())
+}
+
+fn reasoning_option(
+    response: &Value,
+    route: &Route,
+    configured: &str,
+) -> Result<Option<String>, String> {
+    if route.reasoning.is_empty() {
+        return Ok(None);
     }
     let configured = configured.to_ascii_lowercase();
     let target = match configured.as_str() {
@@ -1425,16 +1453,7 @@ fn configure_reasoning(
     };
     let value = find_config_value(&response["configOptions"], "reasoning_effort", target)
         .ok_or_else(|| format!("DSH ACP 未公布思考强度 `{target}`，没有启动本轮请求。"))?;
-    process
-        .request(
-            "session/set_config_option",
-            json!({
-                "sessionId":session_id,"configId":"reasoning_effort","value":value
-            }),
-            Some(Duration::from_secs(15)),
-        )
-        .map_err(|error| format!("无法设置 DSH 思考强度 `{target}`：{error}"))?;
-    Ok(())
+    Ok(Some(value))
 }
 
 fn positive(value: Option<u64>) -> Option<u64> {
