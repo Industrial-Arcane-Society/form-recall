@@ -16,9 +16,9 @@
 | F1.2 | 固定 DSH/Node Runtime Manifest 与安装器 | **已完成** | 固定已验收的 Node 与 DSH 包版本/校验值；下载、校验、安装、升级、失败回滚，不依赖全局 Node |
 | F1.3 | Rust Host 会话、图片与 Tauri Agent 路由 | **已完成** | Agent 模式由 Rust ACP Host 持有会话，支持图片、多轮恢复、取消与关闭；thought/tool 流实时进入 UI；Quick 仍使用 Python。固定 DSH 的无模型 ACP 控制面通过 |
 | F1.4 | DSH ACP 真实运行验收与恢复边界 | **已完成（链路通过，识图错误转 F7）** | 固定版本 CLI profile 已真实跑通图片 ACP 输入、Cordis 只读工具、恢复、取消和退出；实际识图把 6 孔判成约 8 孔，记录为 F7 负样本 |
-| F2 | DSH 原生 Cordis CAD 插件去 Python worker | **进行中** | Cordis 已改为只调用 Rust 本机桥；仍需把 schema、CAD 状态/执行和图片观察从 Python worker 迁出，并完成 DSH 真实工具调用验收 |
-| F2.1 | Cordis → Rust 本机工具桥 | **已实现，待单独提交** | Cordis 原生注册与 Rust Host 的认证 JSON-RPC、取消、超时、去重和图片返回链路通过单元测试；Rust 下游仍调用旧 Python worker，故不代表 F2 完成 |
-| F2.2 | Rust 持有 CAD 工具 schema 与参数契约 | 未开始 | Rust 源码提供版本化 schema；不再启动 Python 进程生成 schema；DSH 插件注册清单与 Rust 工具实现一致 |
+| F2 | DSH 原生 Cordis CAD 插件去 Python worker | **进行中** | Cordis schema 已由 Rust 持有，工具请求经过 Rust 本机桥；仍需迁出 Python CAD 状态/执行与图片观察，并完成真实 DSH 工具调用验收 |
+| F2.1 | Cordis → Rust 本机工具桥 | **已完成** | Cordis 原生注册与 Rust Host 的认证 JSON-RPC、取消、超时、去重和图片返回链路测试通过；Rust 下游仍调用旧 Python worker，故不代表 F2 完成；提交 `501d47b` |
+| F2.2 | Rust 持有 CAD 工具 schema 与参数契约 | **已完成** | Rust 内嵌 25 项 schema，与迁移时 Python 函数输出逐字段相同；不再启动 Python 取 schema；固定 DSH `defineTool()` 成功注册 25 项 |
 | F2.3 | 只读状态、知识及联网工具迁入 Rust Host | 未开始 | 状态查询、知识检索与 web search 的请求/结果处理迁出 Python worker，并完成 Cordis 工具验收 |
 | F2.4 | 图片观察与视觉复核迁出 Python | 未开始 | 用户原图、单视图预览和复核证据由 DSH 原生多模态请求或 Rust 服务链处理，Python 不再承担视觉观察 |
 | F2.5 | CAD 写工具迁移到 Rust CAD domain | 未开始 | 建立/修改/删除/预览/构建工具直接调用 F3 Rust CADPlan，移除 Python tool worker 兼容执行器 |
@@ -52,3 +52,4 @@
 
 F1 拆分与实施记录见[ACP Host 子 feature 卡](./02-f1-acp-host.md)。
 F2.1 的本机 Cordis 工具桥边界与验收记录见[原生 Cordis → Rust 工具桥](./04-f2-cordis-bridge.md)。
+F2.2 的 Rust schema 来源与真实 DSH schema 编译验收记录见[Rust 持有 Cordis 工具 schema](./05-f2-rust-tool-schemas.md)。

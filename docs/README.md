@@ -13,6 +13,7 @@
 - [构建、启动和验证](05-operations/01-build-and-run.md)
 - [完整迁移 Todo 与提交状态](06-roadmap/01-migration-todo.md)
 - [F2.1 原生 Cordis → Rust 本机工具桥](06-roadmap/04-f2-cordis-bridge.md)
+- [F2.2 Rust 持有 Cordis 工具 schema](06-roadmap/05-f2-rust-tool-schemas.md)
 - [文档目录、索引与链接审查记录](06-roadmap/03-docs-index-audit.md)
 
 ## 归档说明

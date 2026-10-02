@@ -35,7 +35,14 @@ function fixtureEnvironment(manifest = {
       properties: {
         view: { type: 'string', enum: ['front', 'iso'], description: 'Requested view.' },
         generation: { type: 'integer', minimum: 1 },
-        sources: { type: 'object', additionalProperties: { type: 'object', properties: { type: { type: 'string' } } } },
+        sources: {
+          type: 'object',
+          additionalProperties: {
+            type: 'object',
+            description: 'CADPlan provenance value with type and evidence fields.',
+            properties: { type: { type: 'string' }, evidence: { type: 'string' } },
+          },
+        },
       },
       required: ['view'],
       additionalProperties: false,
@@ -146,8 +153,9 @@ test('Cordis tools register from Rust schema manifest and call the local bridge 
     assert.deepEqual(registered[0].parameters.view.enum, ['front', 'iso'])
     assert.equal(registered[0].parameters.generation.type, 'integer')
     assert.equal(registered[0].parameters.generation.description.includes('minimum=1'), true)
-    assert.equal(registered[0].parameters.sources.additionalProperties.type, 'object')
-    assert.equal(registered[0].parameters.sources.additionalProperties.properties.type.type, 'string')
+    assert.equal(registered[0].parameters.sources.additionalProperties, true)
+    assert.match(registered[0].parameters.sources.description, /additionalProperties schema=/)
+    assert.match(registered[0].parameters.sources.description, /CADPlan provenance value/)
 
     const output = await registered[0].execute({ view: 'front', generation: 4 }, { signal: new AbortController().signal })
     assert.equal(output.text, 'front preview ready')

@@ -2,6 +2,8 @@
 
 更新时间：2026-10-02。该 feature 只建立 DSH 插件到 Rust Host 的工具执行边界，不代表 CAD 业务逻辑已从 Python 迁出。
 
+后续 F2.2 已将此阶段由 Python 读取的 schema 来源替换为 Rust 内嵌清单；本卡保留 F2.1 当时的实施边界。
+
 ## 目标与边界
 
 - DSH 内继续由 Cordis 原生 `ctx.tools.register` 注册建模工具；不引入 MCP 工具转译。
@@ -29,7 +31,7 @@
 
 ## 后续拆分
 
-1. F2.2：让 Rust 成为工具 schema/参数契约的唯一来源，移除 Python schema worker 启动。
+1. F2.2：**已完成**。Rust 成为工具 schema 来源并移除 Python schema worker，详见 [F2.2 验收卡](./05-f2-rust-tool-schemas.md)。
 2. F2.3–F2.4：迁移只读状态、知识/Web、图像观察及复核。
 3. F2.5：将 CAD 写工具接入 Rust CADPlan 与后续 OCCT 核心，删除 Python 工具 worker。
 

@@ -119,6 +119,9 @@ function authorSchema(schema, required = false) {
   const constraints = ['minimum', 'maximum', 'exclusiveMinimum', 'exclusiveMaximum',
     'minLength', 'maxLength', 'minItems', 'maxItems', 'pattern']
     .filter(key => Object.hasOwn(schema, key)).map(key => `${key}=${JSON.stringify(schema[key])}`)
+  if (isRecord(schema.additionalProperties)) {
+    constraints.push(`additionalProperties schema=${JSON.stringify(schema.additionalProperties)}`)
+  }
   if (constraints.length) {
     annotations.description = `${annotations.description ? `${annotations.description} ` : ''}Constraints: ${constraints.join(', ')}.`
   }
@@ -131,9 +134,10 @@ function authorSchema(schema, required = false) {
     node = {
       type: 'object',
       properties,
-      additionalProperties: isRecord(schema.additionalProperties)
-        ? authorSchema(schema.additionalProperties)
-        : schema.additionalProperties === true,
+      // DSH's defineTool schema compiler accepts only a boolean here. Keep
+      // the value shape in the description so dynamic provenance maps remain
+      // usable without emitting an unsupported JSON Schema object.
+      additionalProperties: schema.additionalProperties === true || isRecord(schema.additionalProperties),
     }
   } else if (schema.type === 'array') {
     node = { type: 'array', ...(schema.items ? { items: authorSchema(schema.items) } : {}) }

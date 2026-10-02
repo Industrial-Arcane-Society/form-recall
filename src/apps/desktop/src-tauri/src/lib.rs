@@ -2,6 +2,7 @@ pub mod acp;
 pub mod agent_host;
 pub mod dsh_runtime;
 pub mod native_tool_bridge;
+pub mod native_tool_schemas;
 
 use serde_json::{Value, json};
 use std::collections::HashMap;

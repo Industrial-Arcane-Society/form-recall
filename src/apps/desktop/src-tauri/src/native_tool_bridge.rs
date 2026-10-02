@@ -13,7 +13,7 @@ use std::fs;
 use std::io::{self, BufRead, BufReader, Read, Write};
 use std::net::{SocketAddr, TcpListener, TcpStream};
 use std::path::{Path, PathBuf};
-use std::process::{Child, ChildStdin, Command, Output, Stdio};
+use std::process::{Child, ChildStdin, Command, Stdio};
 use std::sync::atomic::{AtomicBool, AtomicUsize, Ordering};
 use std::sync::{Arc, Mutex, mpsc};
 use std::thread::{self, JoinHandle};
@@ -168,131 +168,6 @@ impl Drop for NativeToolBridge {
     fn drop(&mut self) {
         self.shutdown();
     }
-}
-
-/// Reads the existing protocol-neutral Python schema source during the bridge
-/// transition. Cordis itself receives only the Rust-authored session manifest.
-pub fn load_legacy_tool_schemas(
-    python: &Path,
-    project_root: &Path,
-    environment: &[(OsString, OsString)],
-) -> Result<Vec<Value>, String> {
-    let mut command = Command::new(python);
-    command
-        .args(["-u", "-m", "ai_modeler.agent.dsh_tool_worker", "--schemas"])
-        .current_dir(project_root)
-        .envs(environment.iter().map(|(key, value)| (key, value)))
-        .stdout(Stdio::piped())
-        .stderr(Stdio::piped());
-    hide_console(&mut command);
-    let output = bounded_output(
-        command,
-        Duration::from_secs(20),
-        4 * 1024 * 1024,
-        1024 * 1024,
-    )
-    .map_err(|error| format!("无法通过过渡期 Python CAD 后端读取 Cordis schema：{error}"))?;
-    if !output.status.success() {
-        let stderr = String::from_utf8_lossy(&output.stderr);
-        return Err(format!(
-            "过渡期 Python schema 后端退出 {}：{}",
-            output.status,
-            stderr.chars().take(1200).collect::<String>()
-        ));
-    }
-    let response: Value = serde_json::from_slice(&output.stdout)
-        .map_err(|error| format!("Python schema 后端返回无效 JSON：{error}"))?;
-    if response.get("ok") != Some(&Value::Bool(true)) {
-        return Err("Python schema 后端没有确认成功。".into());
-    }
-    let tools = response
-        .get("schemas")
-        .and_then(Value::as_array)
-        .ok_or("Python schema 后端没有返回工具数组。")?;
-    if tools.is_empty() || tools.len() > 128 {
-        return Err(format!("Cordis 工具数量超出允许范围：{}", tools.len()));
-    }
-    let mut names = HashSet::new();
-    for tool in tools {
-        let valid = tool
-            .get("name")
-            .and_then(Value::as_str)
-            .is_some_and(|name| !name.is_empty() && names.insert(name.to_owned()))
-            && tool.get("description").and_then(Value::as_str).is_some()
-            && tool.get("inputSchema").is_some_and(Value::is_object);
-        if !valid {
-            return Err("Python schema 后端返回了无效或重复的 Cordis 工具 schema。".into());
-        }
-    }
-    Ok(tools.clone())
-}
-
-fn bounded_output(
-    mut command: Command,
-    timeout: Duration,
-    max_stdout_bytes: usize,
-    max_stderr_bytes: usize,
-) -> Result<Output, String> {
-    command.stdout(Stdio::piped()).stderr(Stdio::piped());
-    let mut child = command
-        .spawn()
-        .map_err(|error| format!("無法啟動 schema provider：{error}"))?;
-    let Some(stdout) = child.stdout.take() else {
-        let _ = child.kill();
-        let _ = child.wait();
-        return Err("schema provider 没有标准输出管道。".into());
-    };
-    let Some(stderr) = child.stderr.take() else {
-        let _ = child.kill();
-        let _ = child.wait();
-        return Err("schema provider 没有标准错误管道。".into());
-    };
-    let stdout_reader = thread::spawn(move || read_capped(stdout, max_stdout_bytes));
-    let stderr_reader = thread::spawn(move || read_capped(stderr, max_stderr_bytes));
-    let deadline = Instant::now() + timeout;
-    let status = loop {
-        match child.try_wait() {
-            Ok(Some(status)) => break status,
-            Ok(None) if Instant::now() < deadline => thread::sleep(Duration::from_millis(20)),
-            Ok(None) => {
-                let _ = child.kill();
-                let _ = child.wait();
-                let _ = stdout_reader.join();
-                let _ = stderr_reader.join();
-                return Err(format!("schema provider 超过 {timeout:?}。"));
-            }
-            Err(error) => {
-                let _ = child.kill();
-                let _ = child.wait();
-                let _ = stdout_reader.join();
-                let _ = stderr_reader.join();
-                return Err(format!("无法等待 schema provider：{error}"));
-            }
-        }
-    };
-    let stdout = stdout_reader
-        .join()
-        .map_err(|_| "schema provider 标准输出读取线程异常退出。")??;
-    let stderr = stderr_reader
-        .join()
-        .map_err(|_| "schema provider 标准错误读取线程异常退出。")??;
-    Ok(Output {
-        status,
-        stdout,
-        stderr,
-    })
-}
-
-fn read_capped(reader: impl Read, limit: usize) -> Result<Vec<u8>, String> {
-    let mut reader = reader.take((limit + 1) as u64);
-    let mut bytes = Vec::new();
-    reader
-        .read_to_end(&mut bytes)
-        .map_err(|error| format!("读取 schema provider 输出失败：{error}"))?;
-    if bytes.len() > limit {
-        return Err("schema provider 输出超过大小上限。".into());
-    }
-    Ok(bytes)
 }
 
 /// Transitional executor used until the Rust CAD domain replaces Python.

@@ -5,7 +5,8 @@
 //! replace that transitional boundary.
 
 use crate::acp::AcpProcess;
-use crate::native_tool_bridge::{LegacyPythonExecutor, NativeToolBridge, load_legacy_tool_schemas};
+use crate::native_tool_bridge::{LegacyPythonExecutor, NativeToolBridge};
+use crate::native_tool_schemas::native_tool_schemas;
 use base64::Engine as _;
 use base64::engine::general_purpose::STANDARD as BASE64;
 use reqwest::Url;
@@ -380,7 +381,7 @@ fn get_or_create_session(
             provider.api_key.clone().into(),
         ),
     ];
-    let schemas = load_legacy_tool_schemas(&python_path, &root, &tool_environment)?;
+    let schemas = native_tool_schemas()?;
     let tool_executor = Arc::new(LegacyPythonExecutor::new(
         python_path.clone(),
         root.clone(),
