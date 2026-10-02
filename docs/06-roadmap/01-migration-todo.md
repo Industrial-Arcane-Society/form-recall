@@ -64,7 +64,7 @@
 | F7.G3 | P0 | 请求结束与模型验收状态区分 | 代码完成，端到端待验收 | Host 9/9、Vue build通过；turn_status独立，旧finish不得accepted，旧preview显示stale，纯问答不称建模完成；真实四场景见 G8，记录见 [状态真值](./29-f7-turn-and-model-status.md) |
 | F7.G4 | P0 | 阶段复核与施工范围一致 | 代码完成，真实视觉待验收 | 宿主revision/ID范围、out_of_scope、全当前几何覆盖门槛已接入；定向集成通过，不完整范围只能诊断不可贡献覆盖；真实返修待 G8；见 [记录](./32-f7-stage-review-scope.md) |
 | F7.G5 | P1 | 观察因冲突可重新读取、版本可追踪 | **代码完成，真实视觉链路待验收** | 普通同 SHA/ROI 复用缓存；Agent 显式传 `conflict`/`reobserve` 才重新观察并递增版本；保留历史、SHA/ROI/reason/telemetry；新版 evidence ID 隔离旧 review/finding。定向测试 11+5+3 通过；见 [记录](./34-f7-observation-refresh.md)。 |
-| F7.G6 | P1 | 统一实际工具与几何能力契约 | 待实现 | registry、feature spec、preflight、工具提示使用一致的能力来源，包含具体变体限制、近似和不支持原因。不存在参数合法但Agent获知可执行、执行器却未实现的误导。 |
+| F7.G6 | P1 | 统一实际工具与几何能力契约 | **代码完成，运行期遵循待 G8 验收** | 26 类注册特征统一公开本地 exact/approximate/unsupported、支持/拒绝变体和参数边界；preflight 共用同一 native kind registry；面工具 source_type 与 hole-array 上限对齐。3 项定向测试已由 subagent 跑通；`parameter_limits` 当前为说明型契约，后续需随 preflight 同步。见 [记录](./36-f7-native-capability-contract.md)。 |
 | F7.G7 | P1 | 分阶段模型、推理预算及行为熔断 | 待实现 | 感知/建模/审查可独立配置、默认共用；记录requested/effective reasoning。对不支持设置明确反馈；按运行时间、重复无变化、错误类别管理有界终止与恢复，不以小固定返修次数截断正常任务。 |
 | F7.G8 | P1 | 真实多模态与多轮链路可复跑验收 | **已完成 1 次真实图片负样本，整体未通过** | 原图真实传输、DSH工具执行和多模态review均发生；review错误地声称左侧有孔，且所有返回 `evidence_id` 为空/未映射，因此宿主 coverage 为 partial、`accepted=false`。hole-array 调用后 revision 未变，现有运行轨迹缺少原始参数/结果，原因待查。见 [冷启动实测 01](./35-f7-image-acceptance-run-01.md)。修复后仍需重跑单图、多图、文字、多轮返修、取消与 CATIA 独立验收。 |
 

@@ -20,6 +20,28 @@ pub struct BuiltPlan {
 const MAX_PATTERN_COUNT: u64 = 10_000;
 const MAX_PATTERN_TRANSFORMED_TOOLS: usize = 100_000;
 
+/// Native plan-builder kinds. Keep this contract aligned with the dispatch
+/// branches in `build` and `feature_tools`; registry tests enforce parity.
+pub fn supports_native_kind(kind: &str) -> bool {
+    matches!(
+        kind,
+        "box"
+            | "cylinder"
+            | "sphere"
+            | "hole"
+            | "pocket"
+            | "prism"
+            | "revolve"
+            | "pattern"
+            | "gear"
+            | "socket_head_bolt"
+            | "spoked_wheel"
+            | "piston"
+            | "conrod"
+            | "cross_joint"
+    )
+}
+
 struct PendingBore {
     report_index: usize,
     request: HoleRequest,
@@ -42,24 +64,7 @@ pub fn preflight(plan: &Value) -> Result<Value, String> {
         }
         let p = &feature["parameters"];
         let kind = feature["kind"].as_str().unwrap_or("");
-        if ![
-            "box",
-            "cylinder",
-            "sphere",
-            "hole",
-            "pocket",
-            "prism",
-            "revolve",
-            "pattern",
-            "gear",
-            "socket_head_bolt",
-            "spoked_wheel",
-            "piston",
-            "conrod",
-            "cross_joint",
-        ]
-        .contains(&kind)
-        {
+        if !supports_native_kind(kind) {
             return Err(format!(
                 "Rust 几何执行尚不支持 {} ({kind})，未执行任何特征。",
                 feature["id"]

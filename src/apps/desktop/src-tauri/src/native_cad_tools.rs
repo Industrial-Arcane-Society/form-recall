@@ -9,6 +9,8 @@ use base64::{Engine, engine::general_purpose::STANDARD};
 use serde_json::{Value, json};
 use std::{fs, path::PathBuf, sync::atomic::AtomicBool};
 
+const FACE_TOOL_SOURCE_TYPES: &[&str] = &["image_estimate", "user", "derived"];
+
 pub struct Context {
     pub project_root: PathBuf,
     pub session_dir: PathBuf,
@@ -561,7 +563,7 @@ fn bounds(state: &Value) -> Result<[f64; 6], String> {
 }
 fn source(args: &Value, user_turn_id: Option<&str>) -> Result<Value, String> {
     let kind = args["source_type"].as_str().unwrap_or("image_estimate");
-    if !["image_estimate", "user", "derived"].contains(&kind) {
+    if !FACE_TOOL_SOURCE_TYPES.contains(&kind) {
         return Err("面工具source_type无效。".into());
     }
     let mut source = json!({"type":kind,"evidence":string(args,"evidence")?});
@@ -660,6 +662,31 @@ fn hole_array(
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn face_tool_schema_matches_source_type_and_hole_array_executor_limits() {
+        let schemas = crate::native_tool_schemas::native_tool_schemas().unwrap();
+        for tool_name in ["cad_add_face_recess", "cad_add_hole_array"] {
+            let tool = schemas.iter().find(|tool| tool["name"] == tool_name).unwrap();
+            let schema_types = tool["inputSchema"]["properties"]["source_type"]["enum"]
+                .as_array()
+                .unwrap()
+                .iter()
+                .map(|value| value.as_str().unwrap())
+                .collect::<Vec<_>>();
+            assert_eq!(schema_types, FACE_TOOL_SOURCE_TYPES);
+        }
+        let hole_array = schemas
+            .iter()
+            .find(|tool| tool["name"] == "cad_add_hole_array")
+            .unwrap();
+        assert_eq!(hole_array["inputSchema"]["properties"]["holes"]["maxItems"], 4096);
+
+        for accepted in FACE_TOOL_SOURCE_TYPES {
+            assert!(source(&json!({"source_type":accepted,"evidence":"verified evidence","turn_id":"turn-1"}), None).is_ok());
+        }
+        assert!(source(&json!({"source_type":"existing_model","evidence":"evidence"}), None).is_err());
+    }
 
     #[test]
     fn rejects_undeclared_arguments_before_reading_session_state() {

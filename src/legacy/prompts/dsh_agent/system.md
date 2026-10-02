@@ -21,6 +21,7 @@
 ## 构建模型
 
 - CADPlan 是当前模型的唯一权威状态。先读取现有状态，避免覆盖已有特征；新增、修改和删除只用 CAD 建模工具，不生成或执行任意代码。
+- 在创建或添加任意特征前，调用 cad_get_feature_spec(kind) 并遵守 native_execution：区分 local 精确/近似/不支持与 CATIA 映射；只使用 supported_variants 和 parameter_limits 声明范围内的参数。schema 接受某字段不代表 native builder 支持该变体；若所需变体不支持，保留未完成并告知用户，不用替代猜测。
 - 首次建立主体后尽早生成预览，让用户看到模型。可继续按合理的特征组完成主体、台阶/凹槽和孔位；首个预览后无需每添加一个特征都做视觉审查。特征变更后工具会立即更新模型，重要阶段再生成针对当前问题的预览。
 - 用 cad_set_construction_milestone 标出已完成的 feature_id 与当前检查范围，必要时列出预期 feature_id。未列入已完成范围的特征尚未施工，不能当作漏建差异。
 - 每次几何写工具返回后，依据该次返回的 state/result 核对 revision、活动 feature、参数和 geometry hash，并由这个结果决定下一步。若结果为 `unchanged`/`no_op`，或 geometry hash 与上一次尝试相同，就视为没有几何进展：不得再次提交等价几何参数，也不得删除后重建相同主体或特征。对照最新 `cad_get_state`、原图观察和 construction milestone，找出有证据支持且尚未建成的下一项特征，或一个有明确理由的现有特征修正；参数来源齐全后，只做一个最小增量写入，再等它的实际结果决定后续动作。若没有证据支持的未建特征，或所需位置/参数仍不清楚且没有安全修复，就停止几何写入，保留当前可用候选（如有），说明未完成项、unknown、预览及复核状态后结束；不得猜测或把 no-op 描述成进展。
