@@ -7,7 +7,7 @@
 ## 已完成
 
 - `native_plan_geometry::supports_native_kind` 成为原生建模能力清单，preflight 和 feature spec 共用它。
-- `cad_get_feature_spec` 对全部 26 个已注册 kind 返回本地执行状态、几何精度类别、支持与拒绝的变体、参数边界和说明；CATIA 的精确/近似映射继续独立描述。
+- `cad_get_feature_spec` 对全部 27 个已注册 kind 返回本地执行状态、几何精度类别、支持与拒绝的变体、参数边界和说明；CATIA 的精确/近似映射继续独立描述。当前 `supports_native_kind` 执行其中 14 类，另外 13 类有参数契约但明确返回 unsupported。
 - `cad_create_model`、`cad_add_feature`、工具描述和系统提示要求 Agent 在构建前读取并遵守 `native_execution`。
 - 面工具 `source_type` schema 与 executor 允许值统一。hole-array schema 上限与 native executor 的 4096 项资源上限一致。
 
@@ -20,3 +20,5 @@ Subagent 已执行并报告以下定向测试通过：
 - `coordinate_and_mapping_contracts_are_present_for_every_registered_kind`
 
 `parameter_limits` 目前是人工维护的说明型契约，不是自动生成的参数 JSON Schema；它帮助模型选择正确的变体，但不能替代执行器校验。G8 仍需用真实 DSH 请求核实模型是否按契约建模。当前没有声称完整 Rust 测试套件或真实模型验证已通过。
+
+2026-10-03 源码复核修正了早期记录的特征数：Rust feature specs 与 CADPlan 当前均注册 27 类，不是 26 类；原生几何执行为 14 类，未接入执行器的 13 类为 `loft`、`helix`、`vbelt_pulley`、`timing_pulley`、`worm`、`helical_gear`、`bevel_gear`、`crankshaft`、`camshaft`、`impeller`、`scroll_disc`、`rotor`、`shell`。此外 `box/pocket corner != 0` 和显式盲孔 `entry_point` 会在 OCCT 前被明确拒绝。该记录修正文档计数，不代表缺失特征已实现。
