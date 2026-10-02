@@ -4,10 +4,38 @@ const SPECS: &str = r###"{"box":{"kind":"box","required_parameters":["length","w
 
 pub fn feature_spec(kind: &str) -> Result<Value, String> {
     let specs: Value = serde_json::from_str(SPECS).map_err(|error| error.to_string())?;
-    specs
+    let mut result = specs
         .get(kind)
         .cloned()
-        .ok_or_else(|| format!("未知特征类型：{kind}"))
+        .ok_or_else(|| format!("未知特征类型：{kind}"))?;
+    if ["box", "prism", "pocket"].contains(&kind) {
+        result["parameter_semantics"]["profile_basis_by_axis"] = serde_json::json!({
+            "X":{"u":"Y","v":"Z","extrusion":"X"},
+            "Y":{"u":"Z","v":"X","extrusion":"Y"},
+            "Z":{"u":"X","v":"Y","extrusion":"Z"}
+        });
+        result["parameter_semantics"]["profile_dimensions"] = serde_json::json!(
+            "length follows profile u, width follows profile v; axis=Y means length along Z and width along X. This differs from hole/pocket location x/y, which follow ascending global plane axes."
+        );
+    }
+    if kind == "box" {
+        result["parameter_semantics"]["base_default_with_center"] = serde_json::json!(false);
+        result["parameter_semantics"]["base_default_without_center"] = serde_json::json!(true);
+    }
+    if ["hole", "pocket"].contains(&kind) {
+        result["parameter_semantics"]["position_basis_by_axis"] = serde_json::json!({
+            "X":["Y","Z"],"Y":["X","Z"],"Z":["X","Y"]
+        });
+    }
+    result["native_execution"] = if ["box", "cylinder", "sphere", "hole", "pocket"].contains(&kind)
+    {
+        serde_json::json!({"status":"basic_variants_implemented","scope":"local_candidate_geometry",
+            "note":"Plain box/pocket only; cylindrical radius2 must equal radius; explicit blind entry not yet supported. Hole metadata is requested, not independently measured. Production write-tool dispatch is still being migrated."})
+    } else {
+        serde_json::json!({"status":"not_implemented","scope":"rust_plan_geometry",
+            "note":"Legacy/CATIA static support does not prove native Rust execution support."})
+    };
+    Ok(result)
 }
 
 #[cfg(test)]
@@ -43,6 +71,14 @@ mod tests {
         assert_eq!(
             feature_spec("cylinder").unwrap()["parameter_semantics"]["base_default"],
             true
+        );
+        assert_eq!(
+            feature_spec("box").unwrap()["parameter_semantics"]["profile_basis_by_axis"]["Y"]["u"],
+            "Z"
+        );
+        assert_eq!(
+            feature_spec("pocket").unwrap()["parameter_semantics"]["position_basis_by_axis"]["Y"],
+            serde_json::json!(["X", "Z"])
         );
     }
 }

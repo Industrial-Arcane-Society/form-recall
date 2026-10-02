@@ -1,0 +1,342 @@
+{
+  "schema_version": "1.0",
+  "name": "Native geometry fixture, not Agent image reproduction",
+  "source_prompt": "Deterministic fixture dimensions",
+  "units": {
+    "length": "mm",
+    "angle": "deg"
+  },
+  "coordinate_system": {
+    "type": "global_cartesian",
+    "handedness": "right",
+    "axes": [
+      "X",
+      "Y",
+      "Z"
+    ],
+    "origin": [
+      0,
+      0,
+      0
+    ]
+  },
+  "features": [
+    {
+      "id": "stock",
+      "name": "stock",
+      "kind": "box",
+      "operation": "add",
+      "parameters": {
+        "length": 100,
+        "width": 40,
+        "height": 120,
+        "center": [
+          0,
+          0,
+          0
+        ],
+        "axis": "Z",
+        "base": true
+      },
+      "sources": {
+        "length": {
+          "type": "user",
+          "note": "deterministic geometry fixture, not reference-image estimate"
+        },
+        "width": {
+          "type": "user",
+          "note": "deterministic geometry fixture, not reference-image estimate"
+        },
+        "height": {
+          "type": "user",
+          "note": "deterministic geometry fixture, not reference-image estimate"
+        },
+        "center": {
+          "type": "user",
+          "note": "deterministic geometry fixture, not reference-image estimate"
+        }
+      }
+    },
+    {
+      "id": "recess",
+      "name": "recess",
+      "kind": "pocket",
+      "operation": "cut",
+      "parameters": {
+        "length": 124,
+        "width": 20,
+        "depth": 8,
+        "x": 0,
+        "y": 60,
+        "axis": "Y",
+        "side": "positive"
+      },
+      "sources": {
+        "length": {
+          "type": "user",
+          "note": "deterministic geometry fixture, not reference-image estimate"
+        },
+        "width": {
+          "type": "user",
+          "note": "deterministic geometry fixture, not reference-image estimate"
+        },
+        "depth": {
+          "type": "user",
+          "note": "deterministic geometry fixture, not reference-image estimate"
+        },
+        "x": {
+          "type": "user",
+          "note": "deterministic geometry fixture, not reference-image estimate"
+        },
+        "y": {
+          "type": "user",
+          "note": "deterministic geometry fixture, not reference-image estimate"
+        }
+      }
+    },
+    {
+      "id": "hole-1-1",
+      "name": "hole-1-1",
+      "kind": "hole",
+      "operation": "cut",
+      "parameters": {
+        "diameter": 12,
+        "axis": "Y",
+        "pos": "point",
+        "point": [
+          -32,
+          0,
+          22
+        ],
+        "through": true
+      },
+      "sources": {
+        "diameter": {
+          "type": "user",
+          "note": "deterministic geometry fixture, not reference-image estimate"
+        },
+        "point": {
+          "type": "user",
+          "note": "deterministic geometry fixture, not reference-image estimate"
+        }
+      }
+    },
+    {
+      "id": "hole-1-2",
+      "name": "hole-1-2",
+      "kind": "hole",
+      "operation": "cut",
+      "parameters": {
+        "diameter": 8,
+        "axis": "Y",
+        "pos": "point",
+        "point": [
+          -32,
+          0,
+          60
+        ],
+        "through": true
+      },
+      "sources": {
+        "diameter": {
+          "type": "user",
+          "note": "deterministic geometry fixture, not reference-image estimate"
+        },
+        "point": {
+          "type": "user",
+          "note": "deterministic geometry fixture, not reference-image estimate"
+        }
+      }
+    },
+    {
+      "id": "hole-1-3",
+      "name": "hole-1-3",
+      "kind": "hole",
+      "operation": "cut",
+      "parameters": {
+        "diameter": 12,
+        "axis": "Y",
+        "pos": "point",
+        "point": [
+          -32,
+          0,
+          98
+        ],
+        "through": true
+      },
+      "sources": {
+        "diameter": {
+          "type": "user",
+          "note": "deterministic geometry fixture, not reference-image estimate"
+        },
+        "point": {
+          "type": "user",
+          "note": "deterministic geometry fixture, not reference-image estimate"
+        }
+      }
+    },
+    {
+      "id": "hole-2-1",
+      "name": "hole-2-1",
+      "kind": "hole",
+      "operation": "cut",
+      "parameters": {
+        "diameter": 12,
+        "axis": "Y",
+        "pos": "point",
+        "point": [
+          0,
+          0,
+          22
+        ],
+        "through": true
+      },
+      "sources": {
+        "diameter": {
+          "type": "user",
+          "note": "deterministic geometry fixture, not reference-image estimate"
+        },
+        "point": {
+          "type": "user",
+          "note": "deterministic geometry fixture, not reference-image estimate"
+        }
+      }
+    },
+    {
+      "id": "hole-2-2",
+      "name": "hole-2-2",
+      "kind": "hole",
+      "operation": "cut",
+      "parameters": {
+        "diameter": 8,
+        "axis": "Y",
+        "pos": "point",
+        "point": [
+          0,
+          0,
+          60
+        ],
+        "through": true
+      },
+      "sources": {
+        "diameter": {
+          "type": "user",
+          "note": "deterministic geometry fixture, not reference-image estimate"
+        },
+        "point": {
+          "type": "user",
+          "note": "deterministic geometry fixture, not reference-image estimate"
+        }
+      }
+    },
+    {
+      "id": "hole-2-3",
+      "name": "hole-2-3",
+      "kind": "hole",
+      "operation": "cut",
+      "parameters": {
+        "diameter": 12,
+        "axis": "Y",
+        "pos": "point",
+        "point": [
+          0,
+          0,
+          98
+        ],
+        "through": true
+      },
+      "sources": {
+        "diameter": {
+          "type": "user",
+          "note": "deterministic geometry fixture, not reference-image estimate"
+        },
+        "point": {
+          "type": "user",
+          "note": "deterministic geometry fixture, not reference-image estimate"
+        }
+      }
+    },
+    {
+      "id": "hole-3-1",
+      "name": "hole-3-1",
+      "kind": "hole",
+      "operation": "cut",
+      "parameters": {
+        "diameter": 12,
+        "axis": "Y",
+        "pos": "point",
+        "point": [
+          32,
+          0,
+          22
+        ],
+        "through": true
+      },
+      "sources": {
+        "diameter": {
+          "type": "user",
+          "note": "deterministic geometry fixture, not reference-image estimate"
+        },
+        "point": {
+          "type": "user",
+          "note": "deterministic geometry fixture, not reference-image estimate"
+        }
+      }
+    },
+    {
+      "id": "hole-3-2",
+      "name": "hole-3-2",
+      "kind": "hole",
+      "operation": "cut",
+      "parameters": {
+        "diameter": 8,
+        "axis": "Y",
+        "pos": "point",
+        "point": [
+          32,
+          0,
+          60
+        ],
+        "through": true
+      },
+      "sources": {
+        "diameter": {
+          "type": "user",
+          "note": "deterministic geometry fixture, not reference-image estimate"
+        },
+        "point": {
+          "type": "user",
+          "note": "deterministic geometry fixture, not reference-image estimate"
+        }
+      }
+    },
+    {
+      "id": "hole-3-3",
+      "name": "hole-3-3",
+      "kind": "hole",
+      "operation": "cut",
+      "parameters": {
+        "diameter": 12,
+        "axis": "Y",
+        "pos": "point",
+        "point": [
+          32,
+          0,
+          98
+        ],
+        "through": true
+      },
+      "sources": {
+        "diameter": {
+          "type": "user",
+          "note": "deterministic geometry fixture, not reference-image estimate"
+        },
+        "point": {
+          "type": "user",
+          "note": "deterministic geometry fixture, not reference-image estimate"
+        }
+      }
+    }
+  ],
+  "pending_questions": []
+}
