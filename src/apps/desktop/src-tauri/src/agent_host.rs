@@ -6,6 +6,7 @@
 
 use crate::acp::AcpProcess;
 use crate::native_tool_bridge::{LegacyPythonExecutor, NativeToolBridge};
+use crate::native_tool_executor::NativeToolExecutor;
 use crate::native_tool_schemas::native_tool_schemas;
 use base64::Engine as _;
 use base64::engine::general_purpose::STANDARD as BASE64;
@@ -382,11 +383,17 @@ fn get_or_create_session(
         ),
     ];
     let schemas = native_tool_schemas()?;
-    let tool_executor = Arc::new(LegacyPythonExecutor::new(
+    let legacy_executor = Arc::new(LegacyPythonExecutor::new(
         python_path.clone(),
         root.clone(),
         tool_environment.clone(),
     ));
+    let tool_executor = Arc::new(NativeToolExecutor::new(
+        root.clone(),
+        cwd.clone(),
+        online_enabled,
+        legacy_executor,
+    )?);
     let tool_bridge = NativeToolBridge::start(
         host_tool_session_id,
         &native_schemas_path,

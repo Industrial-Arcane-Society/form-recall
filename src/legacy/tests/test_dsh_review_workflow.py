@@ -1464,6 +1464,32 @@ class DSHReviewWorkflowTests(unittest.TestCase):
         self.assertEqual("body-sha256", fact["evidence"]["page_text_sha256"])
         self.assertEqual("https://example.test/material", fact["evidence"]["url"])
 
+    def test_external_fact_verifier_reads_rust_persisted_opened_page_in_new_worker(self):
+        quote = "The material density is exactly 2.70 g/cm3."
+        url, title = "https://example.test/data", "Material facts"
+        result_id = hashlib.sha256((url + title).encode("utf-8")).hexdigest()[:16]
+        text_sha = hashlib.sha256(quote.encode("utf-8")).hexdigest()
+        native_state = {"schemaVersion": 1,
+                        "results": [{"result_id": result_id, "url": url, "title": title}],
+                        "opened_pages": [{"result_id": result_id, "url": url, "text": quote,
+                                          "text_sha256": text_sha, "opened_at_epoch_ms": 1}]}
+        server._STATE_DIR.mkdir(parents=True, exist_ok=True)
+        state_path = server._STATE_DIR / "native-web-state.json"
+        state_path.write_text(json.dumps(native_state), encoding="utf-8")
+        server._handle_tool("cad_require_external_fact", {
+            "fact_id": "native-density", "claim": "Material density is 2.70 g/cm3",
+            "impact": "informational"})
+        with mock.patch.dict(server._SEARCH_RESULT_DETAILS, {}, clear=True), mock.patch.object(
+                server.llm, "chat_completion", return_value={
+                    "content": '{"verdict":"supported","rationale":"The exact density is present."}'}):
+            server._handle_tool("cad_attach_external_fact_evidence", {
+                "fact_id": "native-density", "result_id": result_id, "quote": quote})
+        self.assertEqual(text_sha, server._load()["required_external_facts"]["native-density"]["evidence"]["page_text_sha256"])
+        native_state["opened_pages"][0]["text"] = "Tampered page text"
+        state_path.write_text(json.dumps(native_state), encoding="utf-8")
+        with self.assertRaisesRegex(ValueError, "正文 SHA"):
+            server._native_web_evidence_page(result_id)
+
     def test_external_fact_cannot_be_verified_from_unrelated_quote(self):
         quote = "The alloy is available in several colors."
         server._SEARCH_RESULT_DETAILS["result-2"] = {

@@ -3,8 +3,13 @@ pub mod agent_host;
 pub mod cad_plan;
 pub mod cad_plan_validation;
 pub mod dsh_runtime;
+pub mod native_feature_specs;
+pub mod native_knowledge;
+pub mod native_state_summary;
 pub mod native_tool_bridge;
+pub mod native_tool_executor;
 pub mod native_tool_schemas;
+pub mod native_web;
 
 use serde_json::{Value, json};
 use std::collections::HashMap;

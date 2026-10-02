@@ -14,6 +14,7 @@
 - [完整迁移 Todo 与提交状态](06-roadmap/01-migration-todo.md)
 - [F2.1 原生 Cordis → Rust 本机工具桥](06-roadmap/04-f2-cordis-bridge.md)
 - [F2.2 Rust 持有 Cordis 工具 schema](06-roadmap/05-f2-rust-tool-schemas.md)
+- [F2.3 Rust 原生状态、知识与联网工具](06-roadmap/06-f2-native-read-tools.md)
 - [F3.1 Rust CADPlan 增量事务](06-roadmap/07-f3-plan-transactions.md)
 - [F3.2 Rust CADPlan Schema 与静态校验](06-roadmap/08-f3-plan-validation.md)
 - [文档目录、索引与链接审查记录](06-roadmap/03-docs-index-audit.md)
