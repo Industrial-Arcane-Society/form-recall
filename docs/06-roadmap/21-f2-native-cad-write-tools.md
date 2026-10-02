@@ -8,6 +8,8 @@ DSH 仍由原生 Cordis 注册建模工具，Cordis 通过 Rust Host 的本机 J
 
 Rust 原生路由覆盖当前全部 25 个 Cordis schema：创建模型、标准件配方、添加/修改/删除特征、凹槽与孔阵列、校验、单视图预览、候选恢复、读取参考图、模型完成、施工里程碑、自述复核、知识库与网页工具、独立视觉观察和复核。测试会对 schema 与 Rust 路由逐一核对；未知工具在读取或改变 CAD 状态前拒绝。
 
+完成路由迁移后，仓库中仍残留旧的 `dsh_tool_worker.py` 私有 JSONL 启动脚本，但已没有任何生产调用方。本次 F2 收尾删除了该死入口；保留 `dsh_tool_domain.py` 等遗留模块，因为旧 Python 测试仍直接覆盖其知识检索与复核逻辑，且 schema 迁移记录仍引用原始来源。
+
 原生几何调用写入本地 `.aimodel`、STL、CADPlan、几何报告及七张单视图预览图。该路径只证明本地 OCCT 结果；不代表 CATIA 已启动或 CATPart 已验收。F4 安装交付尚未完成时，应用需要显式 OCCT runtime manifest；开发验收使用仓库中固定的 OCCT 7.9.3 manifest。
 
 ## 验收记录
