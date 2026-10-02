@@ -7,12 +7,14 @@ import AttachmentPreview from './components/AttachmentPreview.vue'
 import DependencySetup from './components/DependencySetup.vue'
 import ModelStats from './components/ModelStats.vue'
 import UiIcon from './components/UiIcon.vue'
+import { modelAcceptanceView, turnStatusView } from './agentStatus.mjs'
+import type { ModelAcceptanceView } from './agentStatus.mjs'
 
 const CadViewport = defineAsyncComponent(() => import('./components/CadViewport.vue'))
 
 type JsonMap = Record<string, any>
 type Feature = { index: number; kind: string; op?: string; name?: string; enabled: boolean; params: JsonMap; description?: string; editable_parameters?: string[] }
-type DocumentState = { revision: number; name: string; source_prompt?: string; current_path?: string | null; features: Feature[]; stats: JsonMap; build_log: string[]; mesh_path?: string | null; warnings?: any[] }
+type DocumentState = { revision: number; name: string; source_prompt?: string; current_path?: string | null; features: Feature[]; stats: JsonMap; build_log: string[]; mesh_path?: string | null; warnings?: any[]; finish_summary?: JsonMap | null; geometric_status?: string; visual_status?: string }
 type WireEvent = { event: string; request_id: string; data: any }
 type ChatLine = { role: 'user' | 'assistant' | 'progress' | 'thought'; text: string; images?: AttachmentItem[]; requestId?: string; toolCallId?: string; open?: boolean }
 
@@ -27,6 +29,8 @@ const mode = ref<'agent' | 'quick'>('agent')
 const panel = ref<'tree' | 'params' | 'stats' | 'logs' | 'parts'>('tree')
 const themeDark = ref(false)
 const documentState = ref<DocumentState>({ revision: 0, name: 'Part1', features: [], stats: {}, build_log: [] })
+const modelAcceptance = ref<ModelAcceptanceView>(modelAcceptanceView(null))
+const turnStatus = ref(turnStatusView('idle'))
 const nativeModelActive = ref(false)
 const selectedIndex = ref(-1)
 const paramDraft = ref<Record<string, string>>({})
@@ -164,6 +168,14 @@ function updateDocument(payload: any, markDirty = true) {
   if (revision < currentRevision) return
   currentRevision = revision
   documentState.value = { ...documentState.value, ...payload, features: Array.isArray(payload.features) ? payload.features : [] }
+  modelAcceptance.value = modelAcceptanceView({
+    exists: documentState.value.features.length > 0,
+    status: documentState.value.finish_summary?.accepted === true ? 'accepted' : 'candidate',
+    finish_status: documentState.value.finish_summary?.accepted === true ? 'accepted' : documentState.value.finish_summary?.finish_state || 'candidate',
+    finish_summary: documentState.value.finish_summary,
+    geometric: { status: documentState.value.geometric_status || 'unknown' },
+    visual: { status: documentState.value.visual_status || 'unknown' },
+  })
   isDirty.value = markDirty && payload.state !== 'opened'
   if (selectedIndex.value >= documentState.value.features.length) selectedIndex.value = -1
   if (Array.isArray(payload.build_log) && payload.build_log.length) {
@@ -215,6 +227,8 @@ async function handleWireEvent(event: WireEvent) {
     const total = Number(data.totalTokens ?? data.total_tokens ?? 0)
     if (total > 0) addLog(`DSH 用量更新：${total.toLocaleString()} tokens`)
   } else if (event.event === 'agent.turn_complete') {
+    turnStatus.value = turnStatusView(data.turn_status, data.stop_reason)
+    modelAcceptance.value = modelAcceptanceView(data.current_model)
     addLog(`Agent 回合：${turnStatusLabel(data.turn_status, data.stop_reason)}；${currentModelStatusLabel(data.current_model)}`)
   }
 }
@@ -472,6 +486,7 @@ async function submitPrompt() {
   const requestId = makeId()
   activeRequestId.value = requestId
   busy.value = true
+  turnStatus.value = turnStatusView('running')
   setStatus(mode.value === 'agent' ? 'Agent 正在处理…' : '正在快速建模…')
   try {
     if (mode.value === 'quick') {
@@ -480,12 +495,14 @@ async function submitPrompt() {
         const suggestion = result.online_suggestion?.answer || result.online_suggestion?.summary || ''
         chat.value.push({ role: 'assistant', text: '暂时无法识别这条描述：' + (result.message || '请补充零件类型和尺寸。') + (suggestion ? '\n\n联网建议：' + suggestion : '') })
         setStatus('描述未识别', 'warning')
+        turnStatus.value = turnStatusView('completed')
       } else {
         nativeModelActive.value = true
         updateDocument(result)
         const warnings = (result.warnings || []).map((item: any) => typeof item === 'string' ? item : item.message || JSON.stringify(item))
         chat.value.push({ role: 'assistant', text: '模型已生成，共 ' + ((result.features || []).length) + ' 个特征。' + (warnings.length ? '\n\n提示：' + warnings.join('；') : '') })
         setStatus('快速建模完成', 'success')
+        turnStatus.value = turnStatusView('completed')
       }
     } else {
       const channel = new Channel<WireEvent>()
@@ -500,10 +517,14 @@ async function submitPrompt() {
       })
       if (result.document) updateDocument(result.document)
       finishAgentStream(requestId, result.reply || (result.turn_status === 'cancelled' ? '本轮已取消。' : 'Agent 已结束本轮处理。'))
-      const turnStatus = result.turn_status || 'ended'
-      setStatus('Agent ' + turnStatusLabel(turnStatus, result.stop_reason), turnStatus === 'completed' ? 'success' : turnStatus === 'cancelled' ? 'warning' : '')
+      const finalTurnStatus = result.turn_status || 'ended'
+      const turnView = turnStatusView(finalTurnStatus, result.stop_reason)
+      turnStatus.value = turnView
+      if (result.current_model) modelAcceptance.value = modelAcceptanceView(result.current_model)
+      setStatus('Agent ' + turnStatusLabel(finalTurnStatus, result.stop_reason), finalTurnStatus === 'completed' ? 'success' : finalTurnStatus === 'cancelled' ? 'warning' : '')
     }
   } catch (error) {
+    turnStatus.value = turnStatusView('error')
     const message = '处理失败：' + errorMessage(error)
     if (mode.value === 'agent') finishAgentStream(requestId, message)
     else chat.value.push({ role: 'assistant', text: message })
@@ -1035,6 +1056,19 @@ onUnmounted(() => {
           <button :class="{ active: mode === 'quick' }" @click="mode = 'quick'"><UiIcon name="zap" :size="16" /> 快速建模</button>
         </div>
         <div class="mode-hint">{{ mode === 'agent' ? '支持多轮对话、参考图片与设计推理' : '离线解析常见几何和标准零件描述' }}</div>
+        <section class="acceptance-summary" aria-label="本轮与模型验收状态">
+          <div class="acceptance-summary__row">
+            <span>本轮</span><strong :data-state="turnStatus.key">{{ turnStatus.text }}</strong>
+          </div>
+          <div class="acceptance-summary__row">
+            <span>当前模型</span><strong :data-state="modelAcceptance.outcome">{{ modelAcceptance.outcomeLabel }}</strong>
+          </div>
+          <div class="acceptance-summary__evidence">
+            <span>完成：{{ modelAcceptance.finish }}</span>
+            <span>几何：{{ modelAcceptance.geometry }}</span>
+            <span>视觉：{{ modelAcceptance.visual }}</span>
+          </div>
+        </section>
         <div ref="chatScroll" class="chat-history">
           <div v-for="(item, index) in chat" :key="index" class="chat-message" :class="item.role">
             <div class="message-avatar"><template v-if="item.role === 'user'">你</template><UiIcon v-else-if="item.role === 'progress'" name="loading" :size="16" /><template v-else>AI</template></div>
@@ -1274,3 +1308,23 @@ onUnmounted(() => {
     <div v-if="aboutOpen" class="modal-backdrop" @click.self="aboutOpen = false"><section class="modal about-modal"><div class="about-mark"><span></span><span></span><span></span></div><span class="eyebrow">AI MODELER DESKTOP</span><h2>AI Modeler</h2><p>自然语言驱动的参数化三维建模工作台</p><div class="about-version">应用 {{ handshake?.app_version || '—' }} <span>·</span> Python {{ handshake?.python_version || '—' }}</div><footer class="modal-footer"><button class="secondary-button" @click="aboutOpen = false">关闭</button></footer></section></div>
   </div>
 </template>
+
+<style scoped>
+.acceptance-summary {
+  display: grid;
+  gap: 5px;
+  padding: 9px 18px 10px;
+  border-bottom: 1px solid var(--line);
+  color: var(--muted, #7b8790);
+  font-size: 11px;
+}
+.acceptance-summary__row { display: flex; justify-content: space-between; gap: 8px; }
+.acceptance-summary__row strong { color: var(--text, #26343c); font-weight: 600; text-align: right; }
+.acceptance-summary__row strong[data-state="accepted"],
+.acceptance-summary__row strong[data-state="completed"] { color: #23825d; }
+.acceptance-summary__row strong[data-state="candidate"],
+.acceptance-summary__row strong[data-state="cancelled"],
+.acceptance-summary__row strong[data-state="stopped"] { color: #a66b12; }
+.acceptance-summary__evidence { display: flex; flex-wrap: wrap; gap: 4px 10px; }
+.theme-dark .acceptance-summary__row strong { color: var(--text, #e0e7eb); }
+</style>
