@@ -23,6 +23,7 @@ pub mod native_quick;
 pub mod native_quick_parser;
 pub mod native_render;
 pub mod native_rotor;
+pub mod native_settings;
 pub mod native_review_gate;
 pub mod native_review_findings;
 pub mod native_standard_features;
@@ -1844,6 +1845,11 @@ pub fn run() {
             active_model_update_feature,
             active_model_import_project,
             active_model_export_snapshot,
+            native_settings::native_settings_load,
+            native_settings::native_settings_save,
+            native_settings::native_provider_templates,
+            native_settings::native_provider_template,
+            native_settings::native_provider_fetch_models,
             agent_send,
             agent_cancel,
             agent_reset,

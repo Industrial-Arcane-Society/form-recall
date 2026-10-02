@@ -286,7 +286,7 @@ async function initialize() {
     rootPath.value = hello.project_root || ''
     backendInfo.value = 'Python ' + (hello.python_version || '')
     const init = await backendCall('system.initialize')
-    settingsDraft.value = ensureLlmDraft(structuredClone(init.settings || {}))
+    settingsDraft.value = ensureLlmDraft(structuredClone(await invoke<any>('native_settings_load')))
     const active = await invoke<any>('active_model_snapshot')
     if (active?.document) {
       nativeModelActive.value = true
@@ -835,9 +835,9 @@ function usePartSample(sample: string) {
 
 async function openSettings(tab: typeof settingsTab.value = 'llm') {
   try {
-    const fresh = await backendCall('settings.get')
+    const fresh = await invoke<any>('native_settings_load')
     settingsDraft.value = ensureLlmDraft(structuredClone(fresh))
-    providerTemplates.value = await backendCall('settings.provider_templates')
+    providerTemplates.value = await invoke<any[]>('native_provider_templates')
     settingsTab.value = tab
     showApiKey.value = false
     settingsOpen.value = true
@@ -846,7 +846,7 @@ async function openSettings(tab: typeof settingsTab.value = 'llm') {
 
 async function addProvider(key: string) {
   try {
-    const profile = await backendCall('settings.provider_template', { id: key })
+    const profile = await invoke<any>('native_provider_template', { id: key })
     if (!settingsDraft.value) return
     ensureLlmDraft(settingsDraft.value)
     settingsDraft.value.llm.providers.push(profile)
@@ -872,7 +872,7 @@ function removeProvider() {
 
 async function fetchModels() {
   try {
-    const response = await backendCall('settings.fetch_models', { base_url: activeProvider.value.base_url, api_key: activeProvider.value.api_key })
+    const response = await invoke<any>('native_provider_fetch_models', { baseUrl: activeProvider.value.base_url, apiKey: activeProvider.value.api_key })
     modelOptions.value = response.models || []
     setStatus('已获取 ' + modelOptions.value.length + ' 个模型', 'success')
   } catch (error) { await showMessage('获取模型列表失败', errorMessage(error), 'error') }
@@ -882,8 +882,8 @@ async function saveSettings() {
   if (!settingsDraft.value) return
   try {
     ensureLlmDraft(settingsDraft.value)
-    const result = await backendCall('settings.save', { settings: settingsDraft.value })
-    settingsDraft.value = ensureLlmDraft(structuredClone(result.settings))
+    const result = await invoke<any>('native_settings_save', { settings: settingsDraft.value })
+    settingsDraft.value = ensureLlmDraft(structuredClone(result.settings || result))
     settingsOpen.value = false
     setStatus('设置已保存', 'success')
   } catch (error) { await showMessage('保存设置失败', errorMessage(error), 'error') }
