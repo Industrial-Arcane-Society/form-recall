@@ -357,6 +357,7 @@ mod tests {
                         "result": { "protocolVersion": 1, "agentCapabilities": {} },
                     }),
                 ),
+                "session/prompt" if message["params"]["fixture_stall"].as_bool() == Some(true) => {}
                 "session/prompt" => {
                     let session_id = message["params"]["sessionId"].clone();
                     write_frame(
@@ -464,6 +465,38 @@ mod tests {
             .notify("session/cancel", json!({ "sessionId": "session-2" }))
             .expect("send cancellation notification");
         client.shutdown();
+    }
+
+    #[test]
+    fn stalled_prompt_cancel_then_shutdown_releases_unbounded_request() {
+        use std::sync::Arc;
+        use std::sync::mpsc;
+        use std::thread;
+
+        let mut command = fixture_command();
+        let client = Arc::new(AcpProcess::spawn(&mut command).expect("spawn fake ACP process"));
+        let worker_client = Arc::clone(&client);
+        let (tx, rx) = mpsc::channel();
+        let worker = thread::spawn(move || {
+            let _ = tx.send(worker_client.request(
+                "session/prompt",
+                json!({"sessionId":"session-stalled", "fixture_stall":true}),
+                None,
+            ));
+        });
+        client
+            .notify("session/cancel", json!({"sessionId":"session-stalled"}))
+            .unwrap();
+        assert!(matches!(
+            rx.recv_timeout(Duration::from_millis(50)),
+            Err(mpsc::RecvTimeoutError::Timeout)
+        ));
+        client.shutdown();
+        let result = rx
+            .recv_timeout(Duration::from_secs(1))
+            .expect("shutdown releases pending request");
+        assert!(result.unwrap_err().contains("关闭"));
+        worker.join().unwrap();
     }
 
     #[test]

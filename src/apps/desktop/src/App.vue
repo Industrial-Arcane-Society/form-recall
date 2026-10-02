@@ -45,6 +45,11 @@ const menuOpen = ref(false)
 const settingsOpen = ref(false)
 const settingsTab = ref<'llm' | 'online' | 'build' | 'viewer'>('llm')
 const settingsDraft = ref<JsonMap | null>(null)
+const agentStages = [
+  { key: 'perception', label: '感知（原图识别）' },
+  { key: 'modeling', label: '建模（ACP 主 Agent）' },
+  { key: 'review', label: '审查（视觉复核）' },
+] as const
 const providerTemplates = ref<any[]>([])
 const modelOptions = ref<string[]>([])
 const showApiKey = ref(false)
@@ -81,7 +86,7 @@ const featureEntries = computed(() => {
 })
 const llmDraft = computed(() => settingsDraft.value?.llm || {})
 const providersDraft = computed(() => Array.isArray(llmDraft.value.providers) ? llmDraft.value.providers : [])
-const activeProvider = computed(() => providersDraft.value.find((row: any) => row.id === llmDraft.value.active_provider_id) || providersDraft.value[0] || {})
+const activeProvider = computed(() => providersDraft.value.find((row: any) => row.id === llmDraft.value.active_provider_id) || providersDraft.value[0] || llmDraft.value || {})
 const stats = computed(() => documentState.value.stats || {})
 const canSubmit = computed(() => !busy.value && !attachmentLoading.value && (Boolean(prompt.value.trim()) || attachments.value.length > 0))
 const workbenchStyle = computed(() => ({
@@ -100,6 +105,52 @@ function makeId() {
 function setStatus(text: string, tone = '') {
   statusText.value = text
   statusTone.value = tone
+}
+
+function ensureLlmDraft(settings: JsonMap) {
+  if (!settings.llm || typeof settings.llm !== 'object' || Array.isArray(settings.llm)) settings.llm = {}
+  const llm = settings.llm as JsonMap
+  if (!Array.isArray(llm.providers)) llm.providers = []
+  if (!llm.agent_stage_overrides || typeof llm.agent_stage_overrides !== 'object' || Array.isArray(llm.agent_stage_overrides)) {
+    llm.agent_stage_overrides = {}
+  }
+  const providerIds = new Set(llm.providers.map((row: any) => String(row?.id || '')).filter(Boolean))
+  for (const { key } of agentStages) {
+    const current = llm.agent_stage_overrides[key]
+    const override = current && typeof current === 'object' && !Array.isArray(current) ? current : {}
+    override.provider_id = typeof override.provider_id === 'string' && providerIds.has(override.provider_id) ? override.provider_id : ''
+    override.reasoning_effort = typeof override.reasoning_effort === 'string' ? override.reasoning_effort : ''
+    llm.agent_stage_overrides[key] = override
+  }
+  return settings
+}
+
+function stageProvider(stage: typeof agentStages[number]['key']) {
+  const overrideId = llmDraft.value.agent_stage_overrides?.[stage]?.provider_id
+  return providersDraft.value.find((row: any) => row.id === overrideId) || activeProvider.value
+}
+
+function resetAgentStage(stage: typeof agentStages[number]['key']) {
+  const overrides = llmDraft.value.agent_stage_overrides?.[stage]
+  if (!overrides) return
+  overrides.provider_id = ''
+  overrides.reasoning_effort = ''
+}
+
+function agentLlmConfig() {
+  const config = structuredClone(llmDraft.value || {})
+  const profile = activeProvider.value || {}
+  return {
+    ...config,
+    base_url: profile.base_url || config.base_url || '',
+    model: profile.model || config.model || '',
+    api_key: profile.api_key || config.api_key || '',
+    reasoning_effort: profile.reasoning_effort || config.reasoning_effort || 'none',
+    thinking_budget: profile.thinking_budget ?? config.thinking_budget,
+    dsh_context_window: profile.dsh_context_window ?? config.dsh_context_window,
+    dsh_output_cap: profile.dsh_output_cap ?? config.dsh_output_cap,
+    max_tokens: profile.max_tokens ?? config.max_tokens,
+  }
 }
 
 function addLog(text: string) {
@@ -228,7 +279,7 @@ async function initialize() {
     rootPath.value = hello.project_root || ''
     backendInfo.value = 'Python ' + (hello.python_version || '')
     const init = await backendCall('system.initialize')
-    settingsDraft.value = structuredClone(init.settings || {})
+    settingsDraft.value = ensureLlmDraft(structuredClone(init.settings || {}))
     const active = await invoke<any>('active_model_snapshot')
     if (active?.document) {
       nativeModelActive.value = true
@@ -439,21 +490,11 @@ async function submitPrompt() {
     } else {
       const channel = new Channel<WireEvent>()
       channel.onmessage = (event) => { void handleWireEvent(event) }
-      const profile = activeProvider.value || {}
       const result = await invoke<any>('agent_send', {
         requestId,
         text: userText,
         images: imagePaths,
-        llmConfig: {
-          base_url: profile.base_url || '',
-          model: profile.model || '',
-          api_key: profile.api_key || '',
-          reasoning_effort: profile.reasoning_effort || 'none',
-          thinking_budget: profile.thinking_budget,
-          dsh_context_window: profile.dsh_context_window,
-          dsh_output_cap: profile.dsh_output_cap,
-          max_tokens: profile.max_tokens,
-        },
+        llmConfig: agentLlmConfig(),
         onlineEnabled: settingsDraft.value?.online?.enabled !== false,
         onEvent: channel,
       })
@@ -781,7 +822,7 @@ function usePartSample(sample: string) {
 async function openSettings(tab: typeof settingsTab.value = 'llm') {
   try {
     const fresh = await backendCall('settings.get')
-    settingsDraft.value = structuredClone(fresh)
+    settingsDraft.value = ensureLlmDraft(structuredClone(fresh))
     providerTemplates.value = await backendCall('settings.provider_templates')
     settingsTab.value = tab
     showApiKey.value = false
@@ -793,8 +834,7 @@ async function addProvider(key: string) {
   try {
     const profile = await backendCall('settings.provider_template', { id: key })
     if (!settingsDraft.value) return
-    if (!settingsDraft.value.llm) settingsDraft.value.llm = {}
-    if (!Array.isArray(settingsDraft.value.llm.providers)) settingsDraft.value.llm.providers = []
+    ensureLlmDraft(settingsDraft.value)
     settingsDraft.value.llm.providers.push(profile)
     settingsDraft.value.llm.active_provider_id = profile.id
     modelOptions.value = []
@@ -805,7 +845,13 @@ function removeProvider() {
   const rows = providersDraft.value
   if (rows.length <= 1) { void showMessage('无法删除', '至少保留一份供应商档案。'); return }
   const index = rows.findIndex((row: any) => row.id === llmDraft.value.active_provider_id)
+  const removedId = rows[index]?.id
   rows.splice(index, 1)
+  for (const { key } of agentStages) {
+    if (llmDraft.value.agent_stage_overrides?.[key]?.provider_id === removedId) {
+      llmDraft.value.agent_stage_overrides[key].provider_id = ''
+    }
+  }
   llmDraft.value.active_provider_id = rows[Math.max(0, index - 1)].id
   modelOptions.value = []
 }
@@ -821,8 +867,9 @@ async function fetchModels() {
 async function saveSettings() {
   if (!settingsDraft.value) return
   try {
+    ensureLlmDraft(settingsDraft.value)
     const result = await backendCall('settings.save', { settings: settingsDraft.value })
-    settingsDraft.value = structuredClone(result.settings)
+    settingsDraft.value = ensureLlmDraft(structuredClone(result.settings))
     settingsOpen.value = false
     setStatus('设置已保存', 'success')
   } catch (error) { await showMessage('保存设置失败', errorMessage(error), 'error') }
@@ -1134,21 +1181,45 @@ onUnmounted(() => {
       <section class="modal settings-modal">
         <header class="modal-head"><div><span class="eyebrow">PREFERENCES</span><h2>工作区设置</h2></div><button class="modal-close" aria-label="关闭设置" @click="settingsOpen = false"><UiIcon name="close" /></button></header>
         <div class="modal-tabs"><button :class="{ active: settingsTab === 'llm' }" @click="settingsTab = 'llm'">AI 供应商</button><button :class="{ active: settingsTab === 'online' }" @click="settingsTab = 'online'">联网搜索</button><button :class="{ active: settingsTab === 'build' }" @click="settingsTab = 'build'">几何计算</button><button :class="{ active: settingsTab === 'viewer' }" @click="settingsTab = 'viewer'">视图</button></div>
-        <div v-if="settingsTab === 'llm' && settingsDraft && providersDraft.length" class="settings-body">
-          <label class="check-setting"><input v-model="llmDraft.enabled" type="checkbox"><span><strong>启用多模态 Agent</strong><small>使用当前供应商处理多轮对话与参考图片。</small></span></label>
-          <div class="settings-row"><label>供应商档案<select v-model="llmDraft.active_provider_id" @change="modelOptions = []"><option v-for="provider in providersDraft" :key="provider.id" :value="provider.id">{{ provider.name || provider.base_url || '未命名' }}</option></select></label><button class="secondary-button" @click="removeProvider">删除档案</button></div>
-          <div class="settings-row"><label>显示名称<input v-model="activeProvider.name" type="text"></label><label>思考强度<select v-model="activeProvider.reasoning_effort"><option value="none">默认 / 关闭</option><option value="low">低</option><option value="high">高</option><option value="max">最大</option></select></label></div>
-          <label>接口地址<input v-model="activeProvider.base_url" type="url" placeholder="https://api.example.com/v1"></label>
-          <div class="settings-row"><label>模型名称<input v-model="activeProvider.model" type="text" list="available-models" placeholder="模型 ID"><datalist id="available-models"><option v-for="name in modelOptions" :key="name" :value="name"></option></datalist></label><button class="secondary-button fetch-button" @click="fetchModels">获取模型列表</button></div>
-          <label>API Key<div class="password-row"><input v-model="activeProvider.api_key" :type="showApiKey ? 'text' : 'password'" autocomplete="off"><button @click="showApiKey = !showApiKey">{{ showApiKey ? '隐藏' : '显示' }}</button></div></label>
-          <label v-if="activeProvider.thinking_budget !== undefined">思考预算<input v-model.number="activeProvider.thinking_budget" type="number" min="0"></label>
-          <div class="template-row"><span>新建供应商</span><button v-for="template in providerTemplates" :key="template.id" @click="addProvider(template.id)">{{ template.label.split(' — ')[0] }} <UiIcon name="plus" :size="14" /></button></div>
-          <p class="settings-help">供应商配置保存在当前项目的 config.json 中。切换档案后会激活对应的 API 地址、模型和密钥。</p>
-        </div>
-        <div v-else-if="settingsTab === 'llm' && settingsDraft" class="settings-body provider-empty-state">
-          <div class="provider-empty"><span><UiIcon name="network" :size="23" /></span><strong>还没有 AI 供应商</strong><p>添加供应商档案后，再填写模型名称和 API Key。你也可以先配置本地服务。</p></div>
-          <div class="template-row provider-templates"><span>选择供应商</span><button v-for="template in providerTemplates" :key="template.id" @click="addProvider(template.id)">{{ template.label.split(' — ')[0] }} <UiIcon name="plus" :size="14" /></button></div>
-          <p v-if="!providerTemplates.length" class="settings-help">正在读取可用的供应商类型…</p>
+        <div v-if="settingsTab === 'llm' && settingsDraft" class="settings-body">
+          <template v-if="providersDraft.length">
+            <label class="check-setting"><input v-model="llmDraft.enabled" type="checkbox"><span><strong>启用多模态 Agent</strong><small>使用当前供应商处理多轮对话与参考图片。</small></span></label>
+            <div class="settings-row"><label>供应商档案<select v-model="llmDraft.active_provider_id" @change="modelOptions = []"><option v-for="provider in providersDraft" :key="provider.id" :value="provider.id">{{ provider.name || provider.base_url || '未命名' }}</option></select></label><button class="secondary-button" @click="removeProvider">删除档案</button></div>
+            <div class="settings-row"><label>显示名称<input v-model="activeProvider.name" type="text"></label><label>思考强度<select v-model="activeProvider.reasoning_effort"><option value="none">默认 / 关闭</option><option value="low">低</option><option value="high">高</option><option value="max">最大</option></select></label></div>
+            <label>接口地址<input v-model="activeProvider.base_url" type="url" placeholder="https://api.example.com/v1"></label>
+            <div class="settings-row"><label>模型名称<input v-model="activeProvider.model" type="text" list="available-models" placeholder="模型 ID"><datalist id="available-models"><option v-for="name in modelOptions" :key="name" :value="name"></option></datalist></label><button class="secondary-button fetch-button" @click="fetchModels">获取模型列表</button></div>
+            <label>API Key<div class="password-row"><input v-model="activeProvider.api_key" :type="showApiKey ? 'text' : 'password'" autocomplete="off"><button @click="showApiKey = !showApiKey">{{ showApiKey ? '隐藏' : '显示' }}</button></div></label>
+            <label v-if="activeProvider.thinking_budget !== undefined">思考预算<input v-model.number="activeProvider.thinking_budget" type="number" min="0"></label>
+            <div class="template-row"><span>新建供应商</span><button v-for="template in providerTemplates" :key="template.id" @click="addProvider(template.id)">{{ template.label.split(' — ')[0] }} <UiIcon name="plus" :size="14" /></button></div>
+            <p class="settings-help">供应商配置保存在当前项目的 config.json 中。切换档案后会激活对应的 API 地址、模型和密钥。</p>
+          </template>
+          <template v-else>
+            <div class="provider-empty"><span><UiIcon name="network" :size="23" /></span><strong>还没有 AI 供应商</strong><p>添加供应商档案后，再填写模型名称和 API Key。你也可以先配置本地服务。</p></div>
+            <div class="template-row provider-templates"><span>选择供应商</span><button v-for="template in providerTemplates" :key="template.id" @click="addProvider(template.id)">{{ template.label.split(' — ')[0] }} <UiIcon name="plus" :size="14" /></button></div>
+            <p v-if="!providerTemplates.length" class="settings-help">正在读取可用的供应商类型…</p>
+          </template>
+          <div class="setting-callout">
+            <strong>Agent 分阶段模型</strong>
+            <div>留空的供应商和思考强度会继承对应供应商档案的默认值。可为原图识别、主 Agent 和视觉复核分别指定档案。</div>
+          </div>
+          <div v-for="stage in agentStages" :key="stage.key" class="settings-stage">
+            <div class="settings-row">
+              <label>{{ stage.label }} · 供应商档案
+                <select v-model="llmDraft.agent_stage_overrides[stage.key].provider_id">
+                  <option value="">共用默认（{{ activeProvider.name || '当前供应商' }}）</option>
+                  <option v-for="provider in providersDraft" :key="provider.id" :value="provider.id">{{ provider.name || provider.base_url || provider.id }} · {{ provider.model || '未配置模型' }}</option>
+                </select>
+                <small>所选档案默认模型：{{ stageProvider(stage.key).model || '未配置' }}</small>
+              </label>
+              <label>思考强度
+                <select v-model="llmDraft.agent_stage_overrides[stage.key].reasoning_effort">
+                  <option value="">继承档案默认（{{ stageProvider(stage.key).reasoning_effort || 'none' }}）</option>
+                  <option value="none">默认 / 关闭</option><option value="low">低</option><option value="high">高</option><option value="max">最大</option>
+                </select>
+              </label>
+              <button class="secondary-button" @click="resetAgentStage(stage.key)">共用默认</button>
+            </div>
+          </div>
         </div>
         <div v-else-if="settingsTab === 'online' && settingsDraft" class="settings-body">
           <label class="check-setting"><input v-model="settingsDraft.online.enabled" type="checkbox"><span><strong>启用联网搜索</strong><small>本地描述无法解析时，可请求在线术语检索。</small></span></label>

@@ -22,6 +22,7 @@ pub struct NativeToolExecutor {
     session_dir: PathBuf,
     web: NativeWeb,
     vision: Option<Arc<NativeVisionProvider>>,
+    review_vision: Option<Arc<NativeVisionProvider>>,
     geometry_manifest: Option<PathBuf>,
     active_model_root: Option<PathBuf>,
     online_enabled: bool,
@@ -48,6 +49,7 @@ impl NativeToolExecutor {
             session_dir,
             web,
             vision: None,
+            review_vision: None,
             geometry_manifest: None,
             active_model_root: None,
             online_enabled,
@@ -61,6 +63,21 @@ impl NativeToolExecutor {
     pub fn with_vision(mut self, provider: Arc<NativeVisionProvider>) -> Self {
         self.vision = Some(provider);
         self
+    }
+
+    pub fn with_review_vision(mut self, provider: Arc<NativeVisionProvider>) -> Self {
+        self.review_vision = Some(provider);
+        self
+    }
+
+    fn vision_provider(&self, name: &str) -> Option<&Arc<NativeVisionProvider>> {
+        match name {
+            "cad_inspect_references" => self.vision.as_ref(),
+            "cad_review_reference_similarity" => {
+                self.review_vision.as_ref().or(self.vision.as_ref())
+            }
+            _ => None,
+        }
     }
 
     pub fn with_geometry_runtime(mut self, manifest: PathBuf) -> Self {
@@ -434,8 +451,7 @@ impl NativeToolExecutor {
             return Err("在线视觉工具已禁用。".into());
         }
         let provider = self
-            .vision
-            .as_ref()
+            .vision_provider(name)
             .ok_or("原生视觉provider未配置；视觉请求不能执行。")?;
         let active_path = self.session_dir.join("active-turn.json");
         let turn_id = if active_path.exists() {
@@ -873,6 +889,53 @@ fn tool_result(name: &str, mut value: Value, images: Vec<Value>, progress: &str)
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    fn vision_provider(base_url: &str, model: &str) -> Arc<NativeVisionProvider> {
+        Arc::new(
+            NativeVisionProvider::new(crate::native_vision_provider::ProviderConfig {
+                base_url: base_url.into(),
+                model: model.into(),
+                api_key: "unit-test-secret".into(),
+                effort: "none".into(),
+                thinking_budget: None,
+                max_output_tokens: 128,
+            })
+            .unwrap(),
+        )
+    }
+
+    #[test]
+    fn vision_tools_use_stage_provider_and_legacy_provider_fallback() {
+        let (dir, _) = fixture();
+        let perception = vision_provider("https://perception.example/v1", "perception-model");
+        let review = vision_provider("https://review.example/v1", "review-model");
+        let executor = NativeToolExecutor::new(&dir, &dir, true)
+            .unwrap()
+            .with_vision(perception.clone())
+            .with_review_vision(review.clone());
+        assert!(Arc::ptr_eq(
+            executor.vision_provider("cad_inspect_references").unwrap(),
+            &perception
+        ));
+        assert!(Arc::ptr_eq(
+            executor
+                .vision_provider("cad_review_reference_similarity")
+                .unwrap(),
+            &review
+        ));
+        assert!(executor.vision_provider("cad_unknown").is_none());
+
+        let legacy = NativeToolExecutor::new(&dir, &dir, true)
+            .unwrap()
+            .with_vision(perception.clone());
+        assert!(Arc::ptr_eq(
+            legacy
+                .vision_provider("cad_review_reference_similarity")
+                .unwrap(),
+            &perception
+        ));
+        fs::remove_dir_all(dir).unwrap();
+    }
 
     #[test]
     fn rejects_agent_state_after_active_model_generation_or_artifacts_change() {

@@ -211,6 +211,8 @@ pub struct NativeVisionProvider {
     config: ProviderConfig,
     client: Client,
     route: Route,
+    stage_role: Option<&'static str>,
+    provider_id: Option<String>,
 }
 
 impl NativeVisionProvider {
@@ -234,7 +236,20 @@ impl NativeVisionProvider {
             config,
             client,
             route,
+            stage_role: None,
+            provider_id: None,
         })
+    }
+
+    /// Attach a non-secret stage/profile identity for provider telemetry.
+    pub fn with_stage_identity(
+        mut self,
+        role: &'static str,
+        provider_id: impl Into<String>,
+    ) -> Self {
+        self.stage_role = Some(role);
+        self.provider_id = Some(provider_id.into());
+        self
     }
 
     /// Send one independent inventory or similarity-review request.
@@ -294,19 +309,47 @@ impl NativeVisionProvider {
         }
         let request_id = next_request_id();
         let started = Instant::now();
+        let reasoning_effort_expected = if self.route.protocol == Protocol::Responses
+            && self.route.reasoning_control == "effort"
+        {
+            payload
+                .pointer("/reasoning/effort")
+                .cloned()
+                .unwrap_or(Value::Null)
+        } else {
+            Value::Null
+        };
+        let reasoning_expected_status = if self.route.reasoning_control == "unknown" {
+            "unknown_route_not_sent"
+        } else if reasoning_effort_expected.is_string() {
+            "known_protocol_payload_value"
+        } else if self.route.reasoning_control == "toggle_and_budget"
+            && profile
+                .get("enable_thinking")
+                .and_then(Value::as_bool)
+                .is_some()
+        {
+            "known_toggle_payload"
+        } else {
+            "no_reasoning_field_sent"
+        };
         self.write_telemetry(
             context,
             json!({
                 "kind":"provider_wire_request",
                 "request_id":request_id,
-                "wire_observed":true,
+                "payload_capture":"pre_send_expected",
                 "provider_host":self.route.host,
                 "protocol_path":self.route.endpoint.path(),
                 "protocol":self.route.protocol.name(),
                 "model":self.config.model,
+                "stage_role":self.stage_role,
+                "provider_id":self.provider_id,
                 "task":context.task,
                 "request_fields":{
-                    "reasoning_effort":profile["reasoning_effort"],
+                    "reasoning_effort_requested":self.config.effort,
+                    "reasoning_effort_expected":reasoning_effort_expected,
+                    "reasoning_expected_status":reasoning_expected_status,
                     "enable_thinking":profile["enable_thinking"],
                     "thinking_budget":profile["thinking_budget"],
                     "thinking_budget_source":profile["thinking_budget_source"],
@@ -651,7 +694,13 @@ impl NativeVisionProvider {
                 "stream":false,
             }),
         };
-        if self.route.protocol == Protocol::Responses && self.route.reasoning_control == "effort" {
+        if self.route.protocol == Protocol::Responses
+            && self.route.reasoning_control == "effort"
+            && self
+                .route
+                .supported_efforts
+                .contains(&profile["reasoning_effort"].as_str().unwrap_or_default())
+        {
             payload["reasoning"] = json!({"effort":profile["reasoning_effort"]});
         }
         if self.route.protocol == Protocol::ChatCompletions {
@@ -660,11 +709,6 @@ impl NativeVisionProvider {
             }
             if let Some(enabled) = profile.get("enable_thinking").and_then(Value::as_bool) {
                 payload["enable_thinking"] = json!(enabled);
-            } else if !matches!(
-                profile.get("reasoning_effort").and_then(Value::as_str),
-                None | Some("")
-            ) {
-                payload["reasoning_effort"] = profile["reasoning_effort"].clone();
             }
             if let Some(budget) = profile.get("thinking_budget").and_then(Value::as_u64) {
                 payload["thinking_budget"] = json!(budget);
@@ -1437,15 +1481,17 @@ mod tests {
             headers_delay: Duration::ZERO,
             body_delay: Duration::ZERO,
         });
-        let mut config = ProviderConfig {
+        let config = ProviderConfig {
             base_url: format!("{base}/v1"),
             model: "custom-vlm".into(),
             api_key: "secret-chat-key".into(),
-            effort: "none".into(),
+            effort: "high".into(),
             thinking_budget: None,
             max_output_tokens: 2400,
         };
-        let provider = NativeVisionProvider::new(config.clone()).unwrap();
+        let provider = NativeVisionProvider::new(config.clone())
+            .unwrap()
+            .with_stage_identity("perception", "profile-vision");
         let result = run(provider.call(
             &request_messages(),
             &[image()],
@@ -1466,6 +1512,7 @@ mod tests {
         assert_eq!(path, "/v1/chat/completions");
         assert_eq!(payload["stream"], false);
         assert_eq!(payload["max_tokens"], 2400);
+        assert!(payload.get("reasoning_effort").is_none());
         assert_eq!(
             payload["messages"][1]["content"][1]["image_url"]["detail"],
             "high"
@@ -1474,8 +1521,91 @@ mod tests {
         assert!(telemetry.contains("rust_native_vision"));
         assert!(telemetry.contains(&hex_sha256(b"verified tiny image")));
         assert!(!telemetry.contains("secret-chat-key"));
+        let rows = telemetry
+            .lines()
+            .map(|line| serde_json::from_str::<Value>(line).unwrap())
+            .collect::<Vec<_>>();
+        let request = rows
+            .iter()
+            .find(|row| row["kind"] == "provider_wire_request")
+            .unwrap();
+        assert_eq!(request["stage_role"], "perception");
+        assert_eq!(request["provider_id"], "profile-vision");
+        assert_eq!(
+            request["request_fields"]["reasoning_effort_requested"],
+            "high"
+        );
+        assert_eq!(request["payload_capture"], "pre_send_expected");
+        assert_eq!(
+            request["request_fields"]["reasoning_effort_expected"],
+            Value::Null
+        );
+        assert_eq!(
+            request["request_fields"]["reasoning_expected_status"],
+            "unknown_route_not_sent"
+        );
+        assert!(
+            request["request_fields"]
+                .get("reasoning_effort_effective")
+                .is_none()
+        );
         let _ = std::fs::remove_file(output);
-        config.api_key.clear();
+    }
+
+    #[test]
+    fn unknown_chat_route_does_not_send_none_or_claim_effective_reasoning() {
+        let output = temp_file("unknown-none");
+        let (base, server) = mock_server(MockReply {
+            path: "/v1/chat/completions".into(),
+            body: json!({"choices":[{"message":{"content":"{\"ok\":true}"},"finish_reason":"stop"}]}),
+            status: 200,
+            headers_delay: Duration::ZERO,
+            body_delay: Duration::ZERO,
+        });
+        let provider = NativeVisionProvider::new(ProviderConfig {
+            base_url: format!("{base}/v1"),
+            model: "custom-vlm".into(),
+            api_key: "secret-none-key".into(),
+            effort: "none".into(),
+            thinking_budget: None,
+            max_output_tokens: 1200,
+        })
+        .unwrap();
+        run(provider.call(
+            &request_messages(),
+            &[image()],
+            &context(output.clone(), "source_inventory"),
+            &AtomicBool::new(false),
+        ))
+        .unwrap();
+        let (_, payload, _) = server.join().unwrap();
+        assert!(payload.get("reasoning_effort").is_none());
+        let telemetry = std::fs::read_to_string(&output).unwrap();
+        assert!(!telemetry.contains("secret-none-key"));
+        let request = telemetry
+            .lines()
+            .map(|line| serde_json::from_str::<Value>(line).unwrap())
+            .find(|row| row["kind"] == "provider_wire_request")
+            .unwrap();
+        assert_eq!(request["payload_capture"], "pre_send_expected");
+        assert_eq!(
+            request["request_fields"]["reasoning_effort_requested"],
+            "none"
+        );
+        assert_eq!(
+            request["request_fields"]["reasoning_effort_expected"],
+            Value::Null
+        );
+        assert_eq!(
+            request["request_fields"]["reasoning_expected_status"],
+            "unknown_route_not_sent"
+        );
+        assert!(
+            request["request_fields"]
+                .get("reasoning_effort_effective")
+                .is_none()
+        );
+        let _ = std::fs::remove_file(output);
     }
 
     #[test]
@@ -1638,6 +1768,7 @@ mod tests {
 
     #[test]
     fn full_endpoint_suffix_is_not_duplicated_and_chat_json_mode_is_provider_specific() {
+        let output = temp_file("chat-toggle");
         let (base, server) = mock_server(MockReply {
             path: "/v1/chat/completions".into(),
             body: json!({"choices":[{"message":{"content":"{\"ok\":true}"},"finish_reason":"stop"}]}),
@@ -1649,7 +1780,7 @@ mod tests {
             base_url: format!("{base}/v1/chat/completions"),
             model: "moonshotai/Kimi-K2.7-Code".into(),
             api_key: "secret".into(),
-            effort: "low".into(),
+            effort: "high".into(),
             thinking_budget: Some(1024),
             max_output_tokens: 2400,
         })
@@ -1661,7 +1792,7 @@ mod tests {
         let result = run(provider.call(
             &request_messages(),
             &[image()],
-            &context(PathBuf::new(), "source_inventory"),
+            &context(output.clone(), "source_inventory"),
             &AtomicBool::new(false),
         ))
         .unwrap();
@@ -1672,6 +1803,32 @@ mod tests {
         assert_eq!(payload["response_format"]["type"], "json_object");
         assert_eq!(payload["enable_thinking"], true);
         assert_eq!(payload["thinking_budget"], 1024);
+        assert!(payload.get("reasoning_effort").is_none());
+        let telemetry = std::fs::read_to_string(&output).unwrap();
+        let request = telemetry
+            .lines()
+            .map(|line| serde_json::from_str::<Value>(line).unwrap())
+            .find(|row| row["kind"] == "provider_wire_request")
+            .unwrap();
+        assert_eq!(request["payload_capture"], "pre_send_expected");
+        assert_eq!(
+            request["request_fields"]["reasoning_effort_requested"],
+            "high"
+        );
+        assert_eq!(
+            request["request_fields"]["reasoning_effort_expected"],
+            Value::Null
+        );
+        assert_eq!(
+            request["request_fields"]["reasoning_expected_status"],
+            "known_toggle_payload"
+        );
+        assert!(
+            request["request_fields"]
+                .get("reasoning_effort_effective")
+                .is_none()
+        );
+        let _ = std::fs::remove_file(output);
     }
 
     #[test]

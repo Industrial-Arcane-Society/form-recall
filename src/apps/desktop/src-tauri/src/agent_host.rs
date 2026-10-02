@@ -4,10 +4,16 @@
 //! Cordis and executed by the Rust host without a Python tool worker.
 
 use crate::acp::AcpProcess;
+#[path = "agent_run_guard.rs"]
+mod agent_run_guard;
+use crate::agent_model_config::{
+    STAGE_MODELING, STAGE_PERCEPTION, STAGE_REVIEW, resolve_all as resolve_agent_model_configs,
+};
 use crate::native_tool_bridge::NativeToolBridge;
 use crate::native_tool_executor::NativeToolExecutor;
 use crate::native_tool_schemas::native_tool_schemas;
 use crate::native_vision_provider::{NativeVisionProvider, ProviderConfig};
+use agent_run_guard::{Deadline, ProgressClock, WatchdogPolicy, WriteNoProgressBreaker};
 use base64::Engine as _;
 use base64::engine::general_purpose::STANDARD as BASE64;
 use reqwest::Url;
@@ -17,7 +23,7 @@ use std::ffi::OsString;
 use std::fs;
 use std::path::{Path, PathBuf};
 use std::process::Command;
-use std::sync::atomic::{AtomicBool, Ordering};
+use std::sync::atomic::{AtomicBool, AtomicU8, Ordering};
 use std::sync::{Arc, Mutex, mpsc};
 use std::thread;
 use std::time::{Duration, SystemTime, UNIX_EPOCH};
@@ -31,6 +37,11 @@ const USER_TURNS_FILE: &str = "user-turns.json";
 const MAX_IMAGE_BYTES: u64 = 20 * 1024 * 1024;
 const MAX_MESSAGE_IMAGES: usize = 20;
 const MAX_MESSAGE_IMAGE_BYTES: u64 = 200 * 1024 * 1024;
+const CANCEL_NONE: u8 = 0;
+const CANCEL_USER: u8 = 1;
+const CANCEL_WATCHDOG_TOTAL: u8 = 2;
+const CANCEL_WATCHDOG_IDLE: u8 = 3;
+const CANCEL_NO_PROGRESS: u8 = 4;
 
 #[derive(Clone, Default)]
 pub struct AgentHostState {
@@ -51,10 +62,12 @@ struct ActiveSession {
     metadata_path: PathBuf,
     image_supported: bool,
     active: AtomicBool,
+    cancel_reason: AtomicU8,
     metadata: Mutex<Value>,
 }
 
 struct Provider {
+    id: String,
     base_url: String,
     model: String,
     api_key: String,
@@ -72,6 +85,23 @@ struct Route {
     thinking_format: Option<&'static str>,
     thinking_budget_field: bool,
     context_window: Option<u64>,
+}
+
+#[derive(Clone, Debug)]
+struct ReasoningReport {
+    requested: String,
+    effective: Option<String>,
+    status: &'static str,
+}
+
+impl ReasoningReport {
+    fn to_value(&self) -> Value {
+        json!({
+            "reasoning_effort_requested":self.requested,
+            "reasoning_effort_effective":self.effective,
+            "reasoning_effective_status":self.status
+        })
+    }
 }
 
 struct Image {
@@ -124,7 +154,14 @@ pub fn configure_cli_reasoning(
 ) -> Result<(), String> {
     let provider = Provider::parse(config)?;
     let route = route_profile(&provider.base_url, &provider.model)?;
-    configure_reasoning(process, session_id, response, &route, &provider.effort)
+    let report = configure_reasoning(process, session_id, response, &route, &provider.effort);
+    match report.status {
+        "unsupported_route" | "acknowledged" | "acknowledgment_missing_effective_value" => Ok(()),
+        "requested_option_unavailable" => {
+            Err("DSH ACP 未公布所请求的思考强度，没有启动本轮请求。".into())
+        }
+        _ => Err("无法设置 DSH 思考强度。".into()),
+    }
 }
 
 pub fn select_cli_reasoning(config: &Value, session_response: &Value) -> Result<Value, String> {
@@ -152,12 +189,18 @@ pub fn send_turn(
     if image_paths.len() > MAX_MESSAGE_IMAGES {
         return Err(format!("单轮最多接收 {MAX_MESSAGE_IMAGES} 张参考图。"));
     }
-    let provider = Provider::parse(&llm_config)?;
-    let fingerprint = provider.fingerprint(online_enabled);
+    let stage_configs = resolve_stage_configs(&llm_config)?;
+    let provider = Provider::parse(&stage_configs[STAGE_MODELING])?;
+    let perception_provider = Provider::parse(&stage_configs[STAGE_PERCEPTION])?;
+    let review_provider = Provider::parse(&stage_configs[STAGE_REVIEW])?;
+    let fingerprint = session_fingerprint(&provider, &stage_configs, online_enabled);
     let session = get_or_create_session(
         state,
         &app,
+        &request_id,
         &provider,
+        &perception_provider,
+        &review_provider,
         &fingerprint,
         online_enabled,
         &on_event,
@@ -169,6 +212,8 @@ pub fn send_turn(
     {
         return Err("当前 Agent 会话仍在处理上一条消息。".into());
     }
+    session.cancel_reason.store(CANCEL_NONE, Ordering::Release);
+    let _active_reset = ActiveReset(&session.active, &session.cancel_reason);
     let result = run_turn(
         &session,
         &app,
@@ -179,8 +224,51 @@ pub fn send_turn(
         online_enabled,
         &on_event,
     );
-    session.active.store(false, Ordering::Release);
     result
+}
+
+struct ActiveReset<'a>(&'a AtomicBool, &'a AtomicU8);
+
+impl Drop for ActiveReset<'_> {
+    fn drop(&mut self) {
+        self.1.store(CANCEL_NONE, Ordering::Release);
+        self.0.store(false, Ordering::Release);
+    }
+}
+
+fn resolve_stage_configs(llm_config: &Value) -> Result<serde_json::Map<String, Value>, String> {
+    let llm = llm_config.get("llm").unwrap_or(llm_config);
+    if !llm.is_object() {
+        return Err("模型设置 llm 必须是对象。".into());
+    }
+    let mut global = llm.clone();
+    // `agent_send` historically receives only a flattened profile. Preserve
+    // that format by assigning an internal identity before stage resolution.
+    if global.get("providers").and_then(Value::as_array).is_none()
+        && global.get("id").and_then(Value::as_str).is_none()
+    {
+        global["id"] = json!("legacy-flat-profile");
+    }
+    let overrides = global
+        .get("agent_stage_overrides")
+        .cloned()
+        .unwrap_or_else(|| json!({}));
+    resolve_agent_model_configs(&global, &overrides)
+}
+
+fn session_fingerprint(
+    modeling: &Provider,
+    stage_configs: &serde_json::Map<String, Value>,
+    online_enabled: bool,
+) -> String {
+    // This JSON contains API keys only in transient memory; persist and expose
+    // only the final digest so changing any role's key invalidates its session.
+    let bytes = serde_json::to_vec(stage_configs).unwrap_or_default();
+    sha256(format!(
+        "{}:{}",
+        modeling.fingerprint(online_enabled),
+        sha256(bytes)
+    ))
 }
 
 pub fn cancel(state: &AgentHostState) -> Result<Value, String> {
@@ -194,6 +282,12 @@ pub fn cancel(state: &AgentHostState) -> Result<Value, String> {
     if !session.active.load(Ordering::Acquire) {
         return Ok(json!({"cancelled": false, "message": "当前没有正在运行的 Agent 请求。"}));
     }
+    let _ = session.cancel_reason.compare_exchange(
+        CANCEL_NONE,
+        CANCEL_USER,
+        Ordering::AcqRel,
+        Ordering::Acquire,
+    );
     session
         .process
         .notify("session/cancel", json!({"sessionId": session.id}))?;
@@ -253,7 +347,10 @@ pub fn history(app: &AppHandle) -> Result<Value, String> {
 fn get_or_create_session(
     state: &AgentHostState,
     app: &AppHandle,
+    request_id: &str,
     provider: &Provider,
+    perception_provider: &Provider,
+    review_provider: &Provider,
     fingerprint: &str,
     online_enabled: bool,
     events: &Channel<Value>,
@@ -458,19 +555,19 @@ fn get_or_create_session(
         ),
         (
             OsString::from("AI_MODELER_REVIEW_BASE_URL"),
-            provider.base_url.clone().into(),
+            review_provider.base_url.clone().into(),
         ),
         (
             OsString::from("AI_MODELER_REVIEW_MODEL"),
-            provider.model.clone().into(),
+            review_provider.model.clone().into(),
         ),
         (
             OsString::from("AI_MODELER_REVIEW_REASONING_EFFORT"),
-            provider.effort.clone().into(),
+            review_provider.effort.clone().into(),
         ),
         (
             OsString::from("AI_MODELER_REVIEW_THINKING_BUDGET"),
-            provider
+            review_provider
                 .budget
                 .map(|value| value.to_string())
                 .unwrap_or_default()
@@ -482,17 +579,15 @@ fn get_or_create_session(
         ),
     ];
     let schemas = native_tool_schemas()?;
-    let vision_provider = NativeVisionProvider::new(ProviderConfig {
-        base_url: provider.base_url.clone(),
-        model: provider.model.clone(),
-        api_key: provider.api_key.clone(),
-        effort: provider.effort.clone(),
-        thinking_budget: provider.budget,
-        max_output_tokens: positive(provider.output_cap).unwrap_or(4096),
-    })
-    .map_err(|error| format!("无法初始化原生视觉provider：{error}"))?;
+    let vision_provider = NativeVisionProvider::new(vision_provider_config(perception_provider))
+        .map_err(|error| format!("无法初始化感知视觉provider：{error}"))?
+        .with_stage_identity(STAGE_PERCEPTION, perception_provider.id.clone());
+    let review_vision_provider = NativeVisionProvider::new(vision_provider_config(review_provider))
+        .map_err(|error| format!("无法初始化审查视觉provider：{error}"))?
+        .with_stage_identity(STAGE_REVIEW, review_provider.id.clone());
     let mut native_executor = NativeToolExecutor::new(root.clone(), cwd.clone(), online_enabled)?
         .with_vision(Arc::new(vision_provider))
+        .with_review_vision(Arc::new(review_vision_provider))
         .with_active_model_root(crate::native_active_model::root_from_data_dir(&data_dir));
     if let Some(manifest) = crate::native_occt_runtime::available_manifest(&root)? {
         native_executor = native_executor.with_geometry_runtime(manifest);
@@ -599,13 +694,54 @@ fn get_or_create_session(
             .to_owned();
         (id, result, false)
     };
-    configure_reasoning(
+    let modeling_reasoning = configure_reasoning(
         &process,
         &session_id,
         &session_response,
         &profile,
         &provider.effort,
-    )?;
+    );
+    let model_settings = json!({
+        "modeling":{
+            "provider_id":provider.id,"model":provider.model,
+            "reasoning":modeling_reasoning.to_value()
+        },
+        "perception":{
+            "provider_id":perception_provider.id,"model":perception_provider.model,
+            "reasoning_effort_requested":perception_provider.effort,
+            "reasoning_effort_effective":Value::Null,
+            "reasoning_effective_status":"unknown_until_wire_request"
+        },
+        "review":{
+            "provider_id":review_provider.id,"model":review_provider.model,
+            "reasoning_effort_requested":review_provider.effort,
+            "reasoning_effort_effective":Value::Null,
+            "reasoning_effective_status":"unknown_until_wire_request"
+        }
+    });
+    saved["stage_model_settings"] = model_settings;
+    let (reasoning_event, message) =
+        if let Some(effective) = modeling_reasoning.effective.as_deref() {
+            (
+                "agent.status",
+                format!(
+                    "建模模型 reasoning 已确认：requested={} effective={effective}。",
+                    modeling_reasoning.requested
+                ),
+            )
+        } else {
+            (
+                "agent.warning",
+                format!(
+                    "建模模型 reasoning effective 未知：requested={} status={}。",
+                    modeling_reasoning.requested, modeling_reasoning.status
+                ),
+            )
+        };
+    let _ = events.send(event(reasoning_event, request_id, json!({
+        "message":message,"stage":STAGE_MODELING,"provider_id":provider.id,"model":provider.model,
+        "reasoning":modeling_reasoning.to_value()
+    })));
     if !resumed
         && saved
             .get("turns")
@@ -622,6 +758,13 @@ fn get_or_create_session(
     saved["fingerprint"] = json!(fingerprint);
     saved["model"] = json!(provider.model);
     saved["reasoning_effort"] = json!(provider.effort);
+    saved["reasoning_effort_requested"] = json!(modeling_reasoning.requested);
+    saved["reasoning_effort_effective"] = modeling_reasoning
+        .effective
+        .as_ref()
+        .map(|value| json!(value))
+        .unwrap_or(Value::Null);
+    saved["reasoning_effective_status"] = json!(modeling_reasoning.status);
     write_json_atomic(&metadata_path, &saved)?;
     drop(initialize_events);
     let session = Arc::new(ActiveSession {
@@ -633,6 +776,7 @@ fn get_or_create_session(
         metadata_path,
         image_supported,
         active: AtomicBool::new(false),
+        cancel_reason: AtomicU8::new(CANCEL_NONE),
         metadata: Mutex::new(saved),
     });
     guard.current = Some(session.clone());
@@ -640,6 +784,156 @@ fn get_or_create_session(
 }
 
 fn run_turn(
+    session: &Arc<ActiveSession>,
+    app: &AppHandle,
+    request_id: &str,
+    text: &str,
+    paths: &[String],
+    provider: &Provider,
+    online_enabled: bool,
+    events: &Channel<Value>,
+) -> Result<Value, String> {
+    let result = run_turn_inner(
+        session,
+        app,
+        request_id,
+        text,
+        paths,
+        provider,
+        online_enabled,
+        events,
+    );
+    let requested = session.cancel_reason.load(Ordering::Acquire);
+    let current_model = result
+        .as_ref()
+        .ok()
+        .and_then(|value| value.get("current_model"))
+        .cloned()
+        .unwrap_or_else(|| current_model_summary(&session.cwd));
+    let turns = session
+        .metadata
+        .lock()
+        .ok()
+        .and_then(|metadata| metadata.get("turns").cloned())
+        .unwrap_or_else(|| json!([]));
+    let error_category = if termination_from_cancel(requested).is_some() {
+        None
+    } else {
+        result
+            .as_ref()
+            .err()
+            .map(|error| classify_host_error(error))
+    };
+    let result =
+        normalize_terminal_result(result, requested, &session.id, current_model.clone(), turns);
+    let (turn_status, stop_reason, termination_reason) = match termination_from_cancel(requested) {
+        Some(value) => value,
+        None => match &result {
+            Ok(value) => (
+                value
+                    .get("turn_status")
+                    .and_then(Value::as_str)
+                    .unwrap_or("ended"),
+                value
+                    .get("stop_reason")
+                    .and_then(Value::as_str)
+                    .unwrap_or("ended"),
+                "acp_completed",
+            ),
+            Err(error) => ("error", "host_error", classify_host_error(error)),
+        },
+    };
+    emit(
+        events,
+        "agent.turn_complete",
+        request_id,
+        json!({
+            "turn_status":turn_status,
+            "cancelled":turn_status == "cancelled",
+            "stop_reason":stop_reason,
+            "termination_reason":termination_reason,
+        "error_category":error_category,
+            "current_model":current_model
+        }),
+    );
+    result
+}
+
+fn normalize_terminal_result(
+    result: Result<Value, String>,
+    cancel_reason: u8,
+    session_id: &str,
+    current_model: Value,
+    turns: Value,
+) -> Result<Value, String> {
+    let Some((status, stop_reason, termination_reason)) = termination_from_cancel(cancel_reason)
+    else {
+        return result;
+    };
+    let mut value = result.unwrap_or_else(|_| json!({}));
+    if !value.is_object() {
+        value = json!({});
+    }
+    let fallback_reply = match termination_reason {
+        "user_cancelled" => "本轮已按用户请求取消。",
+        "watchdog_total_timeout" => "本轮因达到总时限而停止。",
+        "watchdog_idle_timeout" => "本轮因长时间没有有效进展而停止。",
+        "repeated_write_no_progress" => "本轮因重复写操作没有进展而停止。",
+        _ => "本轮已停止。",
+    };
+    let reply = value
+        .get("reply")
+        .and_then(Value::as_str)
+        .filter(|reply| !reply.is_empty())
+        .map(str::to_owned)
+        .unwrap_or_else(|| fallback_reply.to_owned());
+    value["turn_status"] = json!(status);
+    value["stop_reason"] = json!(stop_reason);
+    value["termination_reason"] = json!(termination_reason);
+    value["session_id"] = json!(session_id);
+    value["reply"] = json!(reply);
+    value["current_model"] = current_model;
+    if value.get("turns").is_none() {
+        value["turns"] = turns;
+    }
+    Ok(value)
+}
+
+fn classify_host_error(error: &str) -> &'static str {
+    let lower = error.to_ascii_lowercase();
+    if lower.contains("acp") || lower.contains("json-rpc") || lower.contains("rpc") {
+        "acp_rpc_or_transport"
+    } else if lower.contains("provider") || lower.contains("模型设置") || lower.contains("配置")
+    {
+        "configuration"
+    } else if lower.contains("图片") || lower.contains("输入") || lower.contains("reference") {
+        "input_validation"
+    } else if lower.contains("cad") || lower.contains("工具") || lower.contains("geometry") {
+        "native_tool_or_geometry"
+    } else {
+        "host_internal"
+    }
+}
+
+fn termination_from_cancel(reason: u8) -> Option<(&'static str, &'static str, &'static str)> {
+    match reason {
+        CANCEL_USER => Some(("cancelled", "cancelled", "user_cancelled")),
+        CANCEL_WATCHDOG_TOTAL => Some((
+            "stopped",
+            "watchdog_total_timeout",
+            "watchdog_total_timeout",
+        )),
+        CANCEL_WATCHDOG_IDLE => Some(("stopped", "watchdog_idle_timeout", "watchdog_idle_timeout")),
+        CANCEL_NO_PROGRESS => Some((
+            "stopped",
+            "repeated_write_no_progress",
+            "repeated_write_no_progress",
+        )),
+        _ => None,
+    }
+}
+
+fn run_turn_inner(
     session: &Arc<ActiveSession>,
     app: &AppHandle,
     request_id: &str,
@@ -725,9 +1019,67 @@ fn run_turn(
         request_id,
         json!({"message":"DSH 正在处理本轮请求。", "model":provider.model, "online_enabled":online_enabled}),
     );
+    let policy = WatchdogPolicy::default();
+    let started = std::time::Instant::now();
+    let mut progress = ProgressClock::new(policy);
+    let mut breaker = WriteNoProgressBreaker::with_limit(policy.repeated_write_limit);
+    let mut audit_tail = ToolAuditTail::new(session.cwd.join("native-tool-audit.jsonl"));
+    let mut tool_statuses = std::collections::HashMap::<String, String>::new();
+    let mut previous_text_delta = String::new();
+    let mut cancellation_started: Option<std::time::Instant> = None;
+    let mut cancellation_deadline = None;
     let response = loop {
+        let elapsed = started.elapsed();
+        let cancel_reason = session.cancel_reason.load(Ordering::Acquire);
+        if cancel_reason != CANCEL_NONE && cancellation_started.is_none() {
+            cancellation_started = Some(std::time::Instant::now());
+        }
+        if cancel_reason == CANCEL_NONE {
+            if let Some(deadline) = progress.expired(elapsed) {
+                let (code, label) = match deadline {
+                    Deadline::Total => (CANCEL_WATCHDOG_TOTAL, "watchdog_total_timeout"),
+                    Deadline::Idle => (CANCEL_WATCHDOG_IDLE, "watchdog_idle_timeout"),
+                };
+                if session
+                    .cancel_reason
+                    .compare_exchange(CANCEL_NONE, code, Ordering::AcqRel, Ordering::Acquire)
+                    .is_ok()
+                {
+                    cancellation_deadline = Some(label);
+                    let _ = session
+                        .process
+                        .notify("session/cancel", json!({"sessionId":session.id}));
+                    cancellation_started = Some(std::time::Instant::now());
+                    emit(
+                        events,
+                        "agent.status",
+                        request_id,
+                        json!({"message":"Agent watchdog 已请求取消，并开始有界收尾。", "reason":label}),
+                    );
+                }
+            }
+        }
+        if let Some(cancelled_at) = cancellation_started {
+            if cancelled_at.elapsed() >= policy.cancel_grace {
+                // ACP request(None) has no client timeout; killing the child releases it via fail_pending.
+                session.process.shutdown();
+                session.tool_bridge.shutdown();
+                let reason = cancellation_deadline.unwrap_or("user_cancelled");
+                break Err(format!(
+                    "DSH ACP cancelled ({reason}); process shut down after bounded drain."
+                ));
+            }
+        }
         match receiver.recv_timeout(Duration::from_millis(120)) {
             Ok(message) => {
+                if meaningful_update(
+                    &message,
+                    &session.id,
+                    &mut tool_statuses,
+                    &mut previous_text_delta,
+                ) {
+                    progress.record_progress(started.elapsed());
+                }
                 route_update(
                     &message,
                     &session.id,
@@ -769,14 +1121,53 @@ fn run_turn(
             }
             Err(mpsc::RecvTimeoutError::Disconnected) => {}
         }
+        for row in audit_tail.read_new_rows() {
+            if row["success"] == true
+                && row["revision_before"]
+                    .as_i64()
+                    .zip(row["revision_after"].as_i64())
+                    .is_some_and(|(before, after)| after > before)
+            {
+                progress.record_progress(started.elapsed());
+            }
+            if breaker.observe(&row) {
+                if session
+                    .cancel_reason
+                    .compare_exchange(
+                        CANCEL_NONE,
+                        CANCEL_NO_PROGRESS,
+                        Ordering::AcqRel,
+                        Ordering::Acquire,
+                    )
+                    .is_ok()
+                {
+                    let _ = session
+                        .process
+                        .notify("session/cancel", json!({"sessionId":session.id}));
+                    cancellation_started = Some(std::time::Instant::now());
+                    emit(
+                        events,
+                        "agent.status",
+                        request_id,
+                        json!({"message":"检测到重复写操作无进展，已请求停止本轮。", "reason":"repeated_write_no_progress"}),
+                    );
+                }
+            }
+        }
         match rx.try_recv() {
-            Ok(result) => break result?,
+            Ok(result) => break result,
             Err(mpsc::TryRecvError::Disconnected) => {
                 return Err("DSH ACP 请求线程意外退出。".into());
             }
             Err(mpsc::TryRecvError::Empty) => {}
         }
     };
+    let mut response = response?;
+    if let Some((_, stop_reason, _)) =
+        termination_from_cancel(session.cancel_reason.load(Ordering::Acquire))
+    {
+        response["stopReason"] = json!(stop_reason);
+    }
     while let Ok(message) = receiver.try_recv() {
         route_update(
             &message,
@@ -826,13 +1217,6 @@ fn run_turn(
             "stop_reason":response.get("stopReason").cloned().unwrap_or(Value::Null)
         }),
     )?;
-    let cancelled = turn_status == "cancelled";
-    emit(
-        events,
-        "agent.turn_complete",
-        request_id,
-        json!({"turn_status":turn_status,"cancelled":cancelled,"stop_reason":stop_reason,"current_model":current_model}),
-    );
     let metadata = session
         .metadata
         .lock()
@@ -853,6 +1237,125 @@ fn classify_turn_status(stop_reason: Option<&str>) -> &'static str {
         Some("cancelled") => "cancelled",
         Some(_) => "stopped",
         None => "ended",
+    }
+}
+
+struct ToolAuditTail {
+    path: PathBuf,
+    offset: u64,
+    partial: Vec<u8>,
+}
+
+impl ToolAuditTail {
+    fn new(path: PathBuf) -> Self {
+        let offset = fs::metadata(&path)
+            .map(|metadata| metadata.len())
+            .unwrap_or(0);
+        Self {
+            path,
+            offset,
+            partial: Vec::new(),
+        }
+    }
+
+    fn read_new_rows(&mut self) -> Vec<Value> {
+        let Ok(metadata) = fs::metadata(&self.path) else {
+            return Vec::new();
+        };
+        if metadata.len() < self.offset {
+            self.offset = 0;
+            self.partial.clear();
+        }
+        if metadata.len() == self.offset {
+            return Vec::new();
+        }
+        use std::io::{Read, Seek, SeekFrom};
+        let Ok(mut file) = fs::File::open(&self.path) else {
+            return Vec::new();
+        };
+        if file.seek(SeekFrom::Start(self.offset)).is_err() {
+            return Vec::new();
+        }
+        let mut added = Vec::new();
+        if file.read_to_end(&mut added).is_err() {
+            return Vec::new();
+        }
+        self.offset += added.len() as u64;
+        self.partial.extend_from_slice(&added);
+        let complete = self
+            .partial
+            .iter()
+            .rposition(|byte| *byte == b'\n')
+            .map(|index| index + 1)
+            .unwrap_or(0);
+        let rows = self.partial[..complete]
+            .split(|byte| *byte == b'\n')
+            .filter(|line| !line.is_empty())
+            .filter_map(|line| serde_json::from_slice::<Value>(line).ok())
+            .collect();
+        self.partial.drain(..complete);
+        rows
+    }
+}
+
+fn meaningful_update(
+    message: &Value,
+    session_id: &str,
+    tool_statuses: &mut std::collections::HashMap<String, String>,
+    previous_text_delta: &mut String,
+) -> bool {
+    if message.get("method").and_then(Value::as_str) != Some("session/update")
+        || message.pointer("/params/sessionId").and_then(Value::as_str) != Some(session_id)
+    {
+        return false;
+    }
+    let update = &message["params"]["update"];
+    match update
+        .get("sessionUpdate")
+        .and_then(Value::as_str)
+        .unwrap_or_default()
+    {
+        "agent_message_chunk" | "agent_thought_chunk" => {
+            let text = update
+                .pointer("/content/text")
+                .and_then(Value::as_str)
+                .unwrap_or_default();
+            if text.is_empty() || *previous_text_delta == text {
+                return false;
+            }
+            *previous_text_delta = text.to_owned();
+            true
+        }
+        "tool_call" | "tool_call_update" => {
+            let Some(id) = update
+                .get("toolCallId")
+                .or_else(|| update.get("id"))
+                .and_then(Value::as_str)
+            else {
+                return false;
+            };
+            let state = format!(
+                "{}|{}|{}",
+                update
+                    .get("status")
+                    .and_then(Value::as_str)
+                    .unwrap_or_default(),
+                update
+                    .get("title")
+                    .and_then(Value::as_str)
+                    .unwrap_or_default(),
+                update
+                    .get("kind")
+                    .and_then(Value::as_str)
+                    .unwrap_or_default()
+            );
+            tool_statuses
+                .insert(id.to_owned(), state.clone())
+                .as_deref()
+                != Some(state.as_str())
+        }
+        // Polling, repeated status, and usage counters are telemetry, not progress.
+        _ => false,
     }
 }
 
@@ -1528,20 +2031,115 @@ fn configure_reasoning(
     response: &Value,
     route: &Route,
     configured: &str,
-) -> Result<(), String> {
-    let Some(value) = reasoning_option(response, route, configured)? else {
-        return Ok(());
+) -> ReasoningReport {
+    if route.reasoning.is_empty() {
+        return ReasoningReport {
+            requested: configured.to_owned(),
+            effective: None,
+            status: "unsupported_route",
+        };
+    }
+    let selected = match reasoning_option(response, route, configured) {
+        Ok(Some(value)) => value,
+        Ok(None) => {
+            return ReasoningReport {
+                requested: configured.to_owned(),
+                effective: None,
+                status: "unsupported_route",
+            };
+        }
+        Err(_) => {
+            return ReasoningReport {
+                requested: configured.to_owned(),
+                effective: None,
+                status: "requested_option_unavailable",
+            };
+        }
     };
-    process
-        .request(
-            "session/set_config_option",
-            json!({
-                "sessionId":session_id,"configId":"reasoning_effort","value":value
-            }),
-            Some(Duration::from_secs(15)),
-        )
-        .map_err(|error| format!("无法设置 DSH 思考强度：{error}"))?;
-    Ok(())
+    match process.request(
+        "session/set_config_option",
+        json!({
+            "sessionId":session_id,"configId":"reasoning_effort","value":selected
+        }),
+        Some(Duration::from_secs(15)),
+    ) {
+        Ok(ack) => match acknowledged_config_value(&ack) {
+            Some(effective) => ReasoningReport {
+                requested: configured.to_owned(),
+                effective: Some(effective),
+                status: "acknowledged",
+            },
+            None => ReasoningReport {
+                requested: configured.to_owned(),
+                effective: None,
+                status: "acknowledgment_missing_effective_value",
+            },
+        },
+        Err(_) => ReasoningReport {
+            requested: configured.to_owned(),
+            effective: None,
+            status: "set_config_option_failed",
+        },
+    }
+}
+
+fn acknowledged_config_value(response: &Value) -> Option<String> {
+    let matches_reasoning = |object: &Value| {
+        object
+            .get("configId")
+            .or_else(|| object.get("config_id"))
+            .or_else(|| object.get("id"))
+            .and_then(Value::as_str)
+            == Some("reasoning_effort")
+    };
+    let value_from = |object: &Value| {
+        [
+            "currentValue",
+            "current_value",
+            "selectedValue",
+            "selected_value",
+            "value",
+        ]
+        .iter()
+        .find_map(|key| object.get(*key).and_then(Value::as_str))
+        .map(str::to_owned)
+    };
+
+    if matches_reasoning(response) {
+        return value_from(response);
+    }
+    for key in ["configOptions", "config_options"] {
+        if let Some(rows) = response.get(key).and_then(Value::as_array) {
+            if let Some(value) = rows
+                .iter()
+                .find_map(|row| matches_reasoning(row).then(|| value_from(row)).flatten())
+            {
+                return Some(value);
+            }
+        }
+    }
+    if let Some(option) = response
+        .get("configOption")
+        .or_else(|| response.get("config_option"))
+    {
+        if matches_reasoning(option) {
+            return value_from(option);
+        }
+    }
+    if response
+        .get("configId")
+        .or_else(|| response.get("config_id"))
+        .or_else(|| response.get("id"))
+        .is_some()
+    {
+        return None;
+    }
+    // A bare explicit value in this method's response is an acknowledgement
+    // because the request itself names exactly one config option.
+    response
+        .get("value")
+        .and_then(Value::as_str)
+        .map(str::to_owned)
 }
 
 fn reasoning_option(
@@ -1652,6 +2250,13 @@ impl Provider {
             .unwrap_or("none")
             .trim()
             .to_ascii_lowercase();
+        let id = value
+            .get("provider_id")
+            .or_else(|| value.get("id"))
+            .and_then(Value::as_str)
+            .unwrap_or("legacy-flat-profile")
+            .trim()
+            .to_owned();
         let positive_json = |key: &str| {
             value
                 .get(key)
@@ -1661,6 +2266,7 @@ impl Provider {
         let output_cap = positive_json("dsh_output_cap").or_else(|| positive_json("max_tokens"));
         route_profile(&base_url, &model)?;
         Ok(Self {
+            id,
             base_url,
             model,
             api_key: if api_key.is_empty() {
@@ -1682,6 +2288,17 @@ impl Provider {
             "output_cap":self.output_cap, "online":online
         });
         sha256(serde_json::to_vec(&value).unwrap_or_default())
+    }
+}
+
+fn vision_provider_config(provider: &Provider) -> ProviderConfig {
+    ProviderConfig {
+        base_url: provider.base_url.clone(),
+        model: provider.model.clone(),
+        api_key: provider.api_key.clone(),
+        effort: provider.effort.clone(),
+        thinking_budget: provider.budget,
+        max_output_tokens: positive(provider.output_cap).unwrap_or(4096),
     }
 }
 
@@ -1793,12 +2410,114 @@ fn sha256(bytes: impl AsRef<[u8]>) -> String {
 #[cfg(test)]
 mod tests {
     use super::{
-        Image, Provider, active_turn_record, classify_turn_status, current_model_summary,
-        find_config_value, route_profile, validate_image_signature, write_profile_patch,
+        ActiveReset, CANCEL_NONE, CANCEL_USER, CANCEL_WATCHDOG_IDLE, Image, Provider,
+        ToolAuditTail, acknowledged_config_value, active_turn_record, classify_host_error,
+        classify_turn_status, current_model_summary, find_config_value, normalize_terminal_result,
+        resolve_stage_configs, route_profile, termination_from_cancel, validate_image_signature,
+        write_profile_patch,
     };
+    use crate::agent_model_config::{STAGE_MODELING, STAGE_PERCEPTION, STAGE_REVIEW};
     use serde_json::{Value, json};
     use std::fs;
     use std::path::PathBuf;
+    use std::sync::atomic::{AtomicBool, AtomicU8, Ordering};
+
+    #[test]
+    fn tool_audit_tail_reads_only_new_complete_rows() {
+        let path =
+            std::env::temp_dir().join(format!("agent-tool-audit-{}.jsonl", super::unique_id()));
+        fs::write(&path, b"").unwrap();
+        let mut tail = ToolAuditTail::new(path.clone());
+        assert!(tail.read_new_rows().is_empty());
+        use std::io::Write;
+        let mut file = fs::OpenOptions::new().append(true).open(&path).unwrap();
+        file.write_all(b"{\"first\":1}").unwrap();
+        assert!(tail.read_new_rows().is_empty());
+        file.write_all(b"\n{\"second\":2}\n").unwrap();
+        assert_eq!(
+            tail.read_new_rows(),
+            vec![json!({"first":1}), json!({"second":2})]
+        );
+        assert!(tail.read_new_rows().is_empty());
+        let _ = fs::remove_file(path);
+    }
+
+    #[test]
+    fn terminal_reason_distinguishes_user_cancel_watchdog_and_error_classes() {
+        assert_eq!(
+            termination_from_cancel(CANCEL_USER),
+            Some(("cancelled", "cancelled", "user_cancelled"))
+        );
+        assert_eq!(
+            termination_from_cancel(2).unwrap().2,
+            "watchdog_total_timeout"
+        );
+        assert_eq!(
+            classify_host_error("DSH ACP response channel closed"),
+            "acp_rpc_or_transport"
+        );
+        assert_eq!(
+            classify_host_error("模型设置 llm 必须是对象"),
+            "configuration"
+        );
+        assert_eq!(
+            classify_host_error("cad geometry rejected"),
+            "native_tool_or_geometry"
+        );
+    }
+
+    #[test]
+    fn active_guard_resets_state_when_turn_returns_with_error() {
+        let active = AtomicBool::new(true);
+        let cancel = AtomicU8::new(CANCEL_USER);
+        {
+            let _reset = ActiveReset(&active, &cancel);
+            let simulated_error: Result<(), &str> = Err("RPC error");
+            assert!(simulated_error.is_err());
+        }
+        assert!(!active.load(Ordering::Acquire));
+        assert_eq!(cancel.load(Ordering::Acquire), CANCEL_NONE);
+    }
+
+    #[test]
+    fn cancellation_errors_become_structured_results_but_host_errors_remain_errors() {
+        let cancelled = normalize_terminal_result(
+            Err("ACP process closed after cancel".into()),
+            CANCEL_USER,
+            "session-1",
+            json!({"exists":false}),
+            json!([]),
+        )
+        .unwrap();
+        assert_eq!(cancelled["turn_status"], "cancelled");
+        assert_eq!(cancelled["termination_reason"], "user_cancelled");
+        assert!(
+            cancelled["reply"]
+                .as_str()
+                .is_some_and(|reply| !reply.is_empty())
+        );
+
+        let stopped = normalize_terminal_result(
+            Err("ACP request released by watchdog shutdown".into()),
+            CANCEL_WATCHDOG_IDLE,
+            "session-1",
+            json!({"exists":false}),
+            json!([]),
+        )
+        .unwrap();
+        assert_eq!(stopped["turn_status"], "stopped");
+        assert_eq!(stopped["termination_reason"], "watchdog_idle_timeout");
+        assert!(stopped["reply"].as_str().unwrap().contains("没有有效进展"));
+
+        let real_error = normalize_terminal_result(
+            Err("ACP JSON-RPC request failed".into()),
+            CANCEL_NONE,
+            "session-1",
+            json!({}),
+            json!([]),
+        );
+        assert!(real_error.is_err());
+    }
 
     #[test]
     fn only_verified_provider_routes_advertise_vision() {
@@ -1843,6 +2562,61 @@ mod tests {
             Some("high")
         );
         assert_eq!(find_config_value(&options, "reasoning_effort", "low"), None);
+    }
+
+    #[test]
+    fn set_reasoning_ack_must_report_effective_value() {
+        assert_eq!(
+            acknowledged_config_value(&json!({"configOptions":[
+                {"id":"reasoning_effort","currentValue":"high"}
+            ]}))
+            .as_deref(),
+            Some("high")
+        );
+        assert_eq!(
+            acknowledged_config_value(&json!({"configId":"reasoning_effort","value":"low"}))
+                .as_deref(),
+            Some("low")
+        );
+        assert_eq!(acknowledged_config_value(&json!({})), None);
+        assert_eq!(
+            acknowledged_config_value(&json!({"configId":"other","value":"high"})),
+            None
+        );
+    }
+
+    #[test]
+    fn stage_profiles_route_per_role_and_keep_legacy_flat_config() {
+        let settings = json!({"active_provider_id":"main","providers":[
+            {"id":"main","base_url":"https://api.deepseek.com/responses","model":"deepseek-flash","api_key":"main-secret","reasoning_effort":"none"},
+            {"id":"perception-p","base_url":"https://api.example.test/v1","model":"vision-a","models":["vision-a"],"api_key":"perception-secret","reasoning_effort":"low"},
+            {"id":"review-p","base_url":"https://review.example.test/v1","model":"review-b","api_key":"review-secret","reasoning_effort":"high"}
+        ],"agent_stage_overrides":{
+            "perception":{"provider_id":"perception-p"},
+            "review":{"provider_id":"review-p"}
+        }});
+        let resolved = resolve_stage_configs(&settings).unwrap();
+        assert_eq!(
+            Provider::parse(&resolved[STAGE_MODELING]).unwrap().id,
+            "main"
+        );
+        assert_eq!(
+            Provider::parse(&resolved[STAGE_PERCEPTION]).unwrap().model,
+            "vision-a"
+        );
+        assert_eq!(
+            Provider::parse(&resolved[STAGE_REVIEW]).unwrap().id,
+            "review-p"
+        );
+
+        let legacy = json!({"base_url":"https://api.deepseek.com/responses",
+            "model":"deepseek-flash","api_key":"legacy-secret","reasoning_effort":"high"});
+        let resolved = resolve_stage_configs(&legacy).unwrap();
+        for role in [STAGE_MODELING, STAGE_PERCEPTION, STAGE_REVIEW] {
+            let provider = Provider::parse(&resolved[role]).unwrap();
+            assert_eq!(provider.id, "legacy-flat-profile");
+            assert_eq!(provider.model, "deepseek-flash");
+        }
     }
 
     #[test]
@@ -1990,6 +2764,7 @@ mod tests {
             root.join("ai_modeler/agent/dsh_stream_bridge.mjs"),
         ];
         let provider = Provider {
+            id: "provider-test".into(),
             base_url: "https://api.deepseek.com/responses".into(),
             model: "deepseek-flash".into(),
             api_key: "test-secret-that-must-not-be-written".into(),
