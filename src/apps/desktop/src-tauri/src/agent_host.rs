@@ -385,14 +385,7 @@ fn get_or_create_session(
     .map_err(|error| format!("无法初始化原生视觉provider：{error}"))?;
     let mut native_executor = NativeToolExecutor::new(root.clone(), cwd.clone(), online_enabled)?
         .with_vision(Arc::new(vision_provider));
-    let geometry_manifest = std::env::var_os("AIMODELER_OCCT_MANIFEST")
-        .map(PathBuf::from)
-        .or_else(|| {
-            root.parent()
-                .map(|src| src.join("apps/desktop/src-tauri/target/f4-occt/runtime-manifest.json"))
-                .filter(|p| p.is_file())
-        });
-    if let Some(manifest) = geometry_manifest {
+    if let Some(manifest) = crate::native_occt_runtime::available_manifest(&root)? {
         native_executor = native_executor.with_geometry_runtime(manifest);
     }
     let tool_executor = Arc::new(native_executor);

@@ -3,6 +3,7 @@ import { spawnSync } from "node:child_process";
 import { createWriteStream, existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { dirname, join, relative, resolve, sep } from "node:path";
 import { fileURLToPath } from "node:url";
+import { stageOcctRuntime } from "./stage_occt_runtime.mjs";
 
 const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), "../../..");
 const desktopRoot = join(repoRoot, "src", "apps", "desktop");
@@ -83,6 +84,10 @@ async function main() {
 
   mkdirSync(downloadRoot, { recursive: true });
   mkdirSync(packageRoot, { recursive: true });
+  // Fail before replacing the Python/app resources when native CAD cannot ship.
+  const occtManifest = process.env.AIMODELER_OCCT_MANIFEST || join(targetRoot, "f4-occt", "runtime-manifest.json");
+  const occt = stageOcctRuntime(occtManifest, packageRoot);
+  console.log(`Prepared ${occt.dllCount} verified native OCCT runtime DLLs in ${occt.destination}`);
   const archivePath = join(downloadRoot, pythonArchive);
   if (existsSync(archivePath) && sha256(archivePath) !== pythonArchiveSha256) {
     rmSync(archivePath, { force: true });

@@ -31,6 +31,48 @@ const EXPECTED_OCCT_DLLS: [&str; 13] = [
 ];
 const EXPECTED_MSVC_DLLS: [&str; 3] = ["msvcp140.dll", "vcruntime140.dll", "vcruntime140_1.dll"];
 
+/// Resolve the explicitly configured, packaged, or development runtime.
+/// An explicit or present packaged runtime must validate; never conceal a bad
+/// release by silently switching to a developer's build.
+pub fn resolve_manifest(legacy_root: &Path) -> Result<PathBuf, String> {
+    available_manifest(legacy_root)?.ok_or_else(||
+        "未找到 OCCT 7.9.3 几何运行时；安装包必须包含 occt-runtime，开发时可设置 AIMODELER_OCCT_MANIFEST。".into())
+}
+
+/// Read-only sessions may start without geometry. A present invalid runtime is
+/// still an error; modelling commands use the mandatory resolver above.
+pub fn available_manifest(root: &Path) -> Result<Option<PathBuf>, String> {
+    resolve_manifest_with_override(
+        root,
+        std::env::var_os("AIMODELER_OCCT_MANIFEST").map(PathBuf::from),
+    )
+}
+
+fn resolve_manifest_with_override(
+    root: &Path,
+    explicit: Option<PathBuf>,
+) -> Result<Option<PathBuf>, String> {
+    if let Some(path) = explicit {
+        verified_bridge_path(&path)?;
+        return path.canonicalize().map(Some).map_err(|e| e.to_string());
+    }
+    let parent = root.parent().ok_or("应用源码目录缺少父目录。")?;
+    let packaged = parent.join("occt-runtime/runtime-manifest.json");
+    if packaged.exists() {
+        verified_bridge_path(&packaged)?;
+        return packaged.canonicalize().map(Some).map_err(|e| e.to_string());
+    }
+    let development = parent.join("apps/desktop/src-tauri/target/f4-occt/runtime-manifest.json");
+    if development.exists() {
+        verified_bridge_path(&development)?;
+        return development
+            .canonicalize()
+            .map(Some)
+            .map_err(|e| e.to_string());
+    }
+    Ok(None)
+}
+
 /// Validate a F4 runtime manifest and all runtime DLL bytes, returning the
 /// canonical absolute path of the verified `occt_bridge.dll`.
 pub fn verified_bridge_path(manifest_path: &Path) -> Result<PathBuf, String> {
@@ -363,6 +405,80 @@ mod tests {
         let bridge = verified_bridge_path(&fixture.manifest).unwrap();
         assert_eq!(bridge, fixture.bridge.canonicalize().unwrap());
         assert!(bridge.is_absolute());
+    }
+
+    fn copy_fixture(fixture: &Fixture, destination: &Path) -> PathBuf {
+        for field in ["bridge_artifacts", "occt_runtime_dlls", "msvc_runtime_dlls"] {
+            for row in fixture.value[field].as_array().unwrap() {
+                let relative = row["path"].as_str().unwrap();
+                let from = fixture.root.join(relative);
+                if from.is_file() {
+                    let to = destination.join(relative);
+                    fs::create_dir_all(to.parent().unwrap()).unwrap();
+                    fs::copy(from, to).unwrap();
+                }
+            }
+        }
+        let manifest = destination.join("runtime-manifest.json");
+        fs::write(&manifest, serde_json::to_vec(&fixture.value).unwrap()).unwrap();
+        manifest
+    }
+
+    #[test]
+    fn resolves_packaged_runtime_and_rejects_corruption_without_dev_fallback() {
+        let fixture = Fixture::new();
+        let root = fixture.root.join("app");
+        fs::create_dir_all(&root).unwrap();
+        let packaged = copy_fixture(&fixture, &fixture.root.join("occt-runtime"));
+        copy_fixture(
+            &fixture,
+            &fixture.root.join("apps/desktop/src-tauri/target/f4-occt"),
+        );
+        assert_eq!(
+            resolve_manifest_with_override(&root, None).unwrap(),
+            Some(packaged.canonicalize().unwrap())
+        );
+        fs::write(
+            fixture
+                .root
+                .join("occt-runtime/install/win64/vc14/bin/TKBO.dll"),
+            b"corrupt",
+        )
+        .unwrap();
+        assert!(
+            resolve_manifest_with_override(&root, None)
+                .unwrap_err()
+                .contains("哈希不匹配")
+        );
+    }
+
+    #[test]
+    fn resolves_development_and_explicit_runtime_and_reports_absence() {
+        let fixture = Fixture::new();
+        let root = fixture.root.join("src/legacy");
+        fs::create_dir_all(&root).unwrap();
+        assert!(
+            resolve_manifest_with_override(&root, None)
+                .unwrap()
+                .is_none()
+        );
+        let dev = copy_fixture(
+            &fixture,
+            &fixture
+                .root
+                .join("src/apps/desktop/src-tauri/target/f4-occt"),
+        );
+        assert_eq!(
+            resolve_manifest_with_override(&root, None).unwrap(),
+            Some(dev.canonicalize().unwrap())
+        );
+        assert_eq!(
+            resolve_manifest_with_override(&root, Some(fixture.manifest.clone())).unwrap(),
+            Some(fixture.manifest.canonicalize().unwrap())
+        );
+        assert!(
+            resolve_manifest_with_override(&root, Some(fixture.root.join("missing.json"))).is_err()
+        );
     }
 
     #[test]
