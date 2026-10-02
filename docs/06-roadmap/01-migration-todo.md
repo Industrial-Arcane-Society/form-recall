@@ -28,7 +28,7 @@
 | F3.2 | Rust CADPlan schema 与静态校验 | **已完成** | 覆盖 27 类特征、条件参数、来源、关系、单位/坐标和静态支持状态；27 个 Python golden 双接口对拍通过，strict 执行前阻断已验证，未执行几何或 CATIA |
 | F3.3 | Rust CAD 会话事务与 preview/build dispatch | **进行中** | 会话版本、候选/回滚、来源及差异生命周期正在移植；真实几何回传和端到端验收尚待 F4 接入 |
 | F4 | Rust/C++ thin OCCT FFI | **进行中** | 固定官方 OCCT 7.9.3 SDK 已构建，C ABI/Rust 包装已通过真实几何 fixture；CADPlan 全特征执行和安装交付仍未完成 |
-| F4.1 | 固定 OCCT SDK、C ABI 与 Rust 几何基础 | **进行中** | 正在收尾运行 manifest、动态库加载/释放及真实 B-Rep 验收 |
+| F4.1 | 固定 OCCT SDK、C ABI 与 Rust 几何基础 | **已完成** | 实际 Rust → C ABI → OCCT fixture 通过，正常退出；原生 27 类 CADPlan 执行及安装交付仍待完成 |
 | F5 | Quick 模式与本地导出迁移 | 未开始 | Quick 与 Agent 共用稳定 CAD domain；AIMODEL/STL/视图导出有兼容性验收 |
 | F6 | Python 缩减到 CATIA COM | 未开始 | Python 包只剩 CATIA Windows/COM adapter 和必要协议代码；其余业务逻辑和 Agent 代码不再由 Python 执行 |
 | F7 | 多模态盲测与科学验收基线 | 未开始 | 图像/文字盲测、工具轨迹、几何量测、视觉差异关闭、真实 CATIA 证据分别归档并可复跑 |
@@ -65,3 +65,5 @@ F3.1 的事务语义、浮点解析与对拍记录见[Rust CADPlan 增量事务]
 F3.2 的参数校验、静态支持边界和双接口对拍记录见[Rust CADPlan Schema 与静态校验](./08-f3-plan-validation.md)。
 
 F2.4.1 的真实图片传输、解析器缺陷和观察质量边界见[Rust 多模态请求与图片输入基础](./09-f2-native-vision-transport.md)。
+
+F4.1 的真实 SDK、DLL 生命周期缺陷和几何检查记录见[固定 OCCT SDK 与 Rust 几何基础](./10-f4-native-occt-foundation.md)。

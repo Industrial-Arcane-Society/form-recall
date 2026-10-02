@@ -1,0 +1,87 @@
+#ifndef OCCT_BRIDGE_H
+#define OCCT_BRIDGE_H
+
+#include <stddef.h>
+#include <stdint.h>
+
+#if defined(_WIN32)
+#  if defined(OCCT_BRIDGE_BUILD)
+#    define OCCT_BRIDGE_API __declspec(dllexport)
+#  else
+#    define OCCT_BRIDGE_API __declspec(dllimport)
+#  endif
+#else
+#  define OCCT_BRIDGE_API __attribute__((visibility("default")))
+#endif
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+typedef struct OcctShape OcctShape;
+typedef int32_t OcctStatus;
+
+enum {
+  OCCT_BRIDGE_OK = 0,
+  OCCT_BRIDGE_INVALID_ARGUMENT = 1,
+  OCCT_BRIDGE_KERNEL_ERROR = 2,
+  OCCT_BRIDGE_OUT_OF_MEMORY = 3
+};
+
+typedef struct OcctBounds {
+  double xmin, ymin, zmin;
+  double xmax, ymax, zmax;
+} OcctBounds;
+
+typedef struct OcctShapeAnalysis {
+  int32_t valid;
+  size_t solid_count;
+  size_t closed_solid_count;
+} OcctShapeAnalysis;
+
+/* Triangle soup: xyz and normal are tightly packed triples; vertex_count is
+   the number of triples. Release with occt_mesh_release. */
+typedef struct OcctMesh {
+  double *xyz;
+  double *normals;
+  size_t vertex_count;
+} OcctMesh;
+
+/* Error text remains valid until the next bridge call on the same thread. */
+OCCT_BRIDGE_API const char *occt_last_error(void);
+OCCT_BRIDGE_API const char *occt_version(void);
+OCCT_BRIDGE_API uint32_t occt_bridge_abi_version(void);
+OCCT_BRIDGE_API void occt_shape_release(OcctShape *shape);
+
+OCCT_BRIDGE_API OcctStatus occt_make_box(double dx, double dy, double dz,
+  double cx, double cy, double cz, OcctShape **out_shape);
+OCCT_BRIDGE_API OcctStatus occt_make_cylinder(double radius, double height,
+  double bx, double by, double bz, double ax, double ay, double az,
+  OcctShape **out_shape);
+OCCT_BRIDGE_API OcctStatus occt_make_sphere(double radius,
+  double cx, double cy, double cz, OcctShape **out_shape);
+OCCT_BRIDGE_API OcctStatus occt_fuse(const OcctShape *const *shapes,
+  size_t count, OcctShape **out_shape);
+OCCT_BRIDGE_API OcctStatus occt_cut(const OcctShape *base,
+  const OcctShape *const *cutters, size_t count, OcctShape **out_shape);
+/* Matrix is row-major 4x4 and transforms homogeneous points; output is new. */
+OCCT_BRIDGE_API OcctStatus occt_transform(const OcctShape *shape,
+  const double matrix4x4[16], OcctShape **out_shape);
+OCCT_BRIDGE_API OcctStatus occt_shape_is_valid(const OcctShape *shape,
+  int32_t *out_valid);
+OCCT_BRIDGE_API OcctStatus occt_shape_is_closed_solid(const OcctShape *shape,
+  int32_t *out_closed_solid);
+OCCT_BRIDGE_API OcctStatus occt_shape_analyze(const OcctShape *shape,
+  OcctShapeAnalysis *out_analysis);
+OCCT_BRIDGE_API OcctStatus occt_shape_bounds(const OcctShape *shape,
+  OcctBounds *out_bounds);
+OCCT_BRIDGE_API OcctStatus occt_shape_volume(const OcctShape *shape,
+  double *out_volume);
+OCCT_BRIDGE_API OcctStatus occt_shape_tessellate(const OcctShape *shape,
+  double linear_deflection, double angular_deflection, OcctMesh *out_mesh);
+OCCT_BRIDGE_API void occt_mesh_release(OcctMesh *mesh);
+
+#ifdef __cplusplus
+}
+#endif
+#endif
