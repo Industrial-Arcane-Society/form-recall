@@ -27,7 +27,7 @@
 - 安全提取的最终 CADPlan 是 `110 × 45 × 120 mm` 主体，9 个贯穿孔为 3×3 分布；孔中心比例约为 X=`±32.5/110`、Z=`±35/120`，和参考图按像素归一化估算的中心布局接近。但 9 个孔都用 `12 mm` 直径，未表达同列大—小—大变化；参考图同方向投影中大/小孔直径比例约为 `46/31 ≈ 1.48`，只作为图像比例估算。
 - CADPlan 将九个孔保存为独立 feature，后端可分别设置直径，因此转译器能表达该大小变化。失败处是九孔最终都用了 `12 mm`；`sources.diameter` 虽为 `image_estimate`，证据却只有每列孔数和统一约 12 mm，没有逐排相对大小依据。
 - 中间凹槽由 `30 × 8.001 × 102 mm` 的盒体切除，位于约定的正面 `+Y`。宽度比例为 `30/110 ≈ 27.3%`；参考正视图中央带约 `68/322 ≈ 21.1%`，所以模型中段相对偏宽。Z 范围为 `[-60, 42]`，主体范围是 `[-60, 60]`，顶部留下 18 mm 连接料；观察 inventory 记录中央开口上下贯通可见，因此该候选的槽高与原图证据冲突。CADPlan 来源说明显示 Agent 有意保留连续顶料；最终等轴预览里中间上孔仅部分显露，与参考图中完整圆孔不一致。
-- 当前观察结果按每列一个 evidence group 记录 3 个孔，description 只记录了颜色和数量，组级 `relative_size_group` 为 `unknown`；没有表达同一列上、中、下孔的各自大小。`cad_get_state` 保留完整 inventory，信息丢失发生在 observation 的组级提示/归一化契约，而非 state summary 删除字段。主系统提示已补上逐个比较同类可见结构、按 image_estimate 保留大小顺序和检查槽口边界的要求；结构化 observation 的逐实例表达仍待实现。
+- 当前观察结果按每列一个 evidence group 记录 3 个孔，description 只记录了颜色和数量，组级 `relative_size_group` 为 `unknown`；没有表达同一列上、中、下孔的各自大小。`cad_get_state` 保留完整 inventory，信息丢失发生在 observation 的组级提示/归一化契约，而非 state summary 删除字段。提交 `1fbfaf5` 已加入成员级位置/大小证据字段；Run03 中所有成员比值仍返回 1.0，说明 schema 扩展本身没有改善视觉判断。提交 `eb98c99` 又把无量纲轴比、逐孔轮廓比较和冲突 ROI 重读要求加入实际加载的 DSH 提示词；仍须用新冷启动验证模型行为。
 - 最终孔实例为 9，但 `hole_measurement.complete=false`、`geometry_backend_verified=false`。
 - 视觉覆盖为 `partial`：required evidence 6、supported evidence 0、mismatch evidence 5、missing required evidence 6；当前独立可接受 review pair 数为 0。
 - 6 个 finding 仍为 `awaiting_verification`，最后绑定到旧 revision 11 或 27。
