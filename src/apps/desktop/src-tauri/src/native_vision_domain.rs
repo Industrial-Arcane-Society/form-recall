@@ -287,7 +287,7 @@ fn inspection_prompt(input: &ReferenceInput) -> String {
         "roi_norm": input.image.roi_norm,
     });
     format!(
-        "只观察本次一张原始参考图。逐区记录外轮廓、清晰可见结构组、相对位置/数量/相对大小及遮挡不确定项；不要猜绝对尺寸、深度或隐藏结构。至少输出一个真实可见 visible_evidence 项；确实看不清时可留空并说明原因，不得伪造。返回 JSON 对象字段 summary、visible_evidence 数组、uncertain 数组、inferred 数组。每项 visible_evidence 可含 evidence_id、group_id、description、image_region、visible_count、relative_size_group(larger/smaller/same/unknown)、surface_plane_relation(parallel/perpendicular/distinct/unknown)、visible_form(hole/open_slot/notch/recess/unknown)、confidence(0..1)、confidence_basis、members 数组和 touches_boundary 对象。可分辨的重复孔/凸台必须逐个列入 members，每项含 member_id、relative_position:{{x,y}}、relative_size_group(larger/smaller/same/unknown)、relative_diameter_ratio、image_region:[[x0,y0],[x1,y1]]、confidence；位置和图像区域均使用本图/当前 ROI 的 0..1 归一化坐标，直径比相对本组典型尺寸（典型值=1.0），只按同视图可见轮廓估算。touches_boundary 对象含 top/bottom/left/right，每项只能为 yes/no/unknown，表示该结构是否实际触及图像/ROI边界；看不清必须写 unknown。没有可辨成员时 members=[]，不得补造。缺少的新字段一律保持空/unknown。confidence仅记录观察把握，不能设verification。图片元数据（仅供解码坐标使用，不是视觉证据）：{}",
+        "只观察本次一张原始参考图。逐区记录外轮廓、清晰可见结构组、相对位置/数量/相对大小及遮挡不确定项；不要猜绝对尺寸、深度或隐藏结构。至少输出一个真实可见 visible_evidence 项；确实看不清时可留空并说明原因，不得伪造。返回 JSON 对象字段 summary、visible_evidence 数组、uncertain 数组、inferred 数组。每项 visible_evidence 可含 evidence_id、group_id、description、image_region、visible_count、relative_size_group(larger/smaller/same/unknown)、surface_plane_relation(parallel/perpendicular/distinct/unknown)、visible_form(hole/open_slot/notch/recess/unknown)、confidence(0..1)、confidence_basis、members 数组和 touches_boundary 对象。可分辨的重复孔/凸台必须逐个列入 members，每项含 member_id、relative_position:{{x,y}}、relative_size_group(larger/smaller/same/unknown)、relative_diameter_ratio、image_region:[[x0,y0],[x1,y1]]、confidence；位置和图像区域均使用本图/当前 ROI 的 0..1 归一化坐标。直径比应针对每个成员独立按同组可见轮廓估算，以清晰可比的代表成员为 1.0 参照；不得因成员同组、对齐或等距而把所有值默认成 1.0。只有可见边界大小确实相同才标 same/相同比值；透视影响或边界不清时标 unknown，并在 confidence_basis/evidence 中说明。主体比例可从同视向边长投影估算，局部轮廓比例应比较同一平面上可比结构；不要直接把等轴图跨方向像素长度当成真实轴比。只输出无量纲视觉比例和可见事实，不输出绝对尺寸。touches_boundary 对象含 top/bottom/left/right，每项只能为 yes/no/unknown，表示该结构是否实际触及图像/ROI边界；看不清必须写 unknown。没有可辨成员时 members=[]，不得补造。缺少的新字段一律保持空/unknown。confidence仅记录观察把握，不能设verification。图片元数据（仅供解码坐标使用，不是视觉证据）：{}",
         metadata
     )
 }
@@ -1891,6 +1891,9 @@ mod tests {
         let prompt = request.to_string();
         assert!(prompt.contains("relative_diameter_ratio"));
         assert!(prompt.contains("touches_boundary"));
+        assert!(prompt.contains("不得因成员同组、对齐或等距而把所有值默认成 1.0"));
+        assert!(prompt.contains("只有可见边界大小确实相同才标 same/相同比值"));
+        assert!(prompt.contains("不要直接把等轴图跨方向像素长度当成真实轴比"));
     }
     #[test]
     fn empty_observation_and_invalid_confidence_are_not_promoted() {
