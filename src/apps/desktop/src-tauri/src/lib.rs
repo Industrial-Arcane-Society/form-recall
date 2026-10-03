@@ -1835,6 +1835,10 @@ mod agent_ipc_integration_tests {
                     true
                 );
                 assert_eq!(
+                    model_changed["message"]["data"]["acceptance_confirmed"],
+                    true
+                );
+                assert_eq!(
                     model_changed["message"]["data"]["finish_summary"]["revision"],
                     1
                 );
@@ -1847,12 +1851,12 @@ mod agent_ipc_integration_tests {
                 assert_eq!(terminal_model["finish_summary"]["accepted"], true);
             } else {
                 assert_eq!(
-                    model_changed["message"]["data"]["finish_summary"]["accepted"],
-                    true
+                    model_changed["message"]["data"]["finish_summary"],
+                    Value::Null
                 );
                 assert_eq!(
-                    model_changed["message"]["data"]["finish_summary"]["revision"],
-                    0
+                    model_changed["message"]["data"]["acceptance_confirmed"],
+                    false
                 );
                 assert_eq!(terminal_model["status"], "candidate");
                 assert_eq!(terminal_model["finish_status"], "not_finished");

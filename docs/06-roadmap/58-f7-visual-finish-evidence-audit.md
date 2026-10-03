@@ -97,7 +97,9 @@ Headless predicate 覆盖进展（本次新增）：`native_agent_coldstart_gate
 
 集成测试还捕获并修复了一个证据字段互操作缺口：review 已用 host 校验的 geometry fingerprint 记录当前签名，但遗漏了 state summary 用于精确比较的 `geometry_signature` 字段。review 现在把同一个已校验当前值写入该字段；没有变更比较 predicate 或验收门槛。若没有此字段，真实经过 executor 的 review 会在 get_state 被标为 noncomparable，required coverage 不会升级。
 
-其余 headless 增补仍待实现：两个跨 gate 独立性反例、Rust `finish_assessment` 每个合取项的翻转测试，以及 executor 集成层的 source SHA 错绑、旧 observation、ROI-only inventory、空/重复 evidence、partial stage、mismatch/unsupported coverage 负例。相邻的 `native_vision_domain` 和 `native_state_summary` 既有单元测试仍覆盖其中若干领域校验，但不能替代完整的 executor 集成负例。
+2026-10-04 新增 `native_cad_session::tests::finish_acceptance_local_geometry_construction_and_external_facts_fail_closed` 与 `finish_reference_coverage_failure_remains_unaccepted`。它们先验证当前完整 fixture 可 accepted，再分别翻转 local geometry、construction milestone、required external fact 和 reference inventory coverage；每个结果仍可作为 candidate 报告，但 `accepted=false`，且 construction/external fact 的 finish state 与对应阻断一致。既有 `current_overall_geometry_acceptance_unlocks_image_finish` / stale-review 用例覆盖整体复核条件，`requested_hole_count_confidence_and_status_rows_are_not_measurements` 覆盖孔测量不完整，`aggregate_with_open_findings_can_finish_as_an_unaccepted_candidate` 覆盖开放 finding。这样 `finish_assessment` 的七个接受合取项均有 headless 正例/负例证据；新增项使用 host session/aggregate fixture，不启动 DSH/provider/CATIA，也没有改变生产门禁。
+
+仍待实现：两个跨 gate 独立性反例，以及 executor 集成层的 source SHA 错绑、旧 observation、ROI-only inventory、空/重复 evidence、partial stage、mismatch/unsupported coverage 负例。相邻的 `native_vision_domain` 和 `native_state_summary` 既有单元测试仍覆盖其中若干领域校验，但不能替代完整的 executor 集成负例。
 
 **证据边界：**以上只证明本地 headless mock provider 路径在合成 fixture 下保留严格绑定与当前性检查。它不代表真实 DSH/provider 视觉质量、不代表 Run13/Run15 已通过，也不改变 `F7.G1` 或 `F7.G8` 验收状态；真实 provider 行为仍须依据独立的脱敏运行证据评估。
 

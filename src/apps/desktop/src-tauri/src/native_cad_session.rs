@@ -1705,6 +1705,77 @@ mod tests {
     }
 
     #[test]
+    fn finish_acceptance_local_geometry_construction_and_external_facts_fail_closed() {
+        let refs = std::path::Path::new("");
+        let turns = std::path::Path::new("");
+        let base = json!({
+            "revision":2,"has_references":false,"plan":valid_body_plan(),"actions":[],
+            "finding_ledger":{},"required_external_facts":{}
+        });
+        let accepted = with_preview(&base, "passed");
+        let accepted = with_aggregate(&accepted, refs, turns);
+        let (_, baseline) = finish_assessment(&accepted, refs, turns).unwrap();
+        assert_eq!(baseline.report["accepted"], true);
+
+        let mut local_geometry_failure = accepted.clone();
+        local_geometry_failure["last_preview"]["local_geometry_checks"]["state"] = json!("failed");
+        local_geometry_failure = with_aggregate(&local_geometry_failure, refs, turns);
+        let (_, geometry_dispatch) = finish_assessment(&local_geometry_failure, refs, turns)
+            .expect("failed local geometry remains a reportable candidate");
+        assert_eq!(geometry_dispatch.report["local_geometry_state"], "failed");
+        assert_eq!(geometry_dispatch.report["accepted"], false);
+
+        let mut construction_incomplete = accepted.clone();
+        construction_incomplete["construction_milestone"] = json!({
+            "revision":2,"expected_feature_ids":["body"],"completed_feature_ids":[]
+        });
+        construction_incomplete = with_aggregate(&construction_incomplete, refs, turns);
+        let (_, construction_dispatch) = finish_assessment(&construction_incomplete, refs, turns)
+            .expect("incomplete construction remains a reportable candidate");
+        assert_eq!(construction_dispatch.report["construction_complete"], false);
+        assert_eq!(construction_dispatch.report["accepted"], false);
+        assert_eq!(
+            construction_dispatch.finish_state,
+            "candidate_construction_incomplete"
+        );
+
+        let mut external_fact_unknown = accepted;
+        external_fact_unknown["required_external_facts"] = json!({
+            "fact-1":{"status":"unknown"}
+        });
+        external_fact_unknown = with_aggregate(&external_fact_unknown, refs, turns);
+        let (_, facts_dispatch) = finish_assessment(&external_fact_unknown, refs, turns)
+            .expect("unknown external fact remains a reportable candidate");
+        assert_eq!(
+            facts_dispatch.report["required_external_facts"]["unknown_count"],
+            1
+        );
+        assert_eq!(facts_dispatch.report["accepted"], false);
+        assert_eq!(
+            facts_dispatch.finish_state,
+            "candidate_external_facts_unverified"
+        );
+    }
+
+    #[test]
+    fn finish_reference_coverage_failure_remains_unaccepted() {
+        let (state, refs, turns, dir) = image_state_with_coverage(None);
+        let mut state = with_aggregate(&state, &refs, &turns);
+        let (_, baseline) = finish_assessment(&state, &refs, &turns).unwrap();
+        assert_eq!(baseline.report["accepted"], true);
+        state["reference_inventory"]
+            .as_object_mut()
+            .unwrap()
+            .clear();
+        let state = with_aggregate(&state, &refs, &turns);
+        let (_, dispatch) = finish_assessment(&state, &refs, &turns)
+            .expect("missing visual inventory remains a reportable candidate");
+        assert_eq!(dispatch.report["reference_coverage"], false);
+        assert_eq!(dispatch.report["accepted"], false);
+        std::fs::remove_dir_all(dir).unwrap();
+    }
+
+    #[test]
     fn quoted_count_and_angle_are_not_converted_as_lengths_and_vectors_require_every_value() {
         let plan = json!({"units":{"length":"cm"}});
         let feature = json!({"kind":"pattern","operation":"add"});
