@@ -49,3 +49,9 @@ Run12 实测确认原图与预览图片均成功通过 decode、attachment save 
 Cordis 报告的 `other` 或缺 error type/code 只说明安全白名单没有得到可分类标识；现有证据不能区分 DSH 参数校验、工具结果校验、输出 finalization 或 Rust executor 失败。没有读取错误正文或参数，也不据此扩充 allowlist。
 
 后续离线回归要证明缺 ID 只导致 identity-missing，不额外形成 duplicate；同一有效 ID 的双 terminal 仍必须失败。安全遥测只增加 error/error.info/name/code 存在性布尔值和匹配计数，不写入原始 ID、参数、内容或错误正文。当前问题定位和修复仍在进行中。
+
+## 后续修正：缺 ACP ID 不再误并调用
+
+提交 `3cb635b` 将没有 `tool_call_id` 的 ACP result 事件单独报告为 `acp_cad_tool_call_id_missing`，不再以共同 `undefined` 键归并；同一个有效 ID 的多个 terminal update 仍会触发 duplicate gate。Cordis安全诊断增加 `error_present`、`error_info_present`、`error_name_present`、`error_code_present` 四项存在性布尔值，不保存错误正文。
+
+离线 Node fixtures **55/55 通过**，覆盖缺 ID 的独立拒绝、有效 ID 重复仍被拒绝以及安全字段存在性。此修正确认了门禁的缺失 ID 边界，但不能反向证明 Run12 的 ACP 事件实际缺 ID；需要新冷启动确认生产事件关联。
