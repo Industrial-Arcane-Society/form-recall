@@ -47,11 +47,11 @@
 | F4.3.2 | 孔材料采样接入 CADPlan | **已完成** | 44 对拍、6 负样例、局部材料盲孔与近边孔部分证据通过；采样不冒充孔径计量 |
 | F4.3.3 | 最终 B-Rep 孔计量接入 CADPlan | **已完成** | 最终形体实测孔半径、轴线与 360° 覆盖；盲孔/贯穿孔核验，后续特征会使旧测量失效 |
 | F4.4.1 | 精简 OCCT 资源组装与定位 | **已完成** | 17 DLL 哈希校验打包，Node 2/2、Rust 7/7；系统 PATH 下实际 packaged probe 通过，最终安装包/干净机器仍待验收；见 [记录](./26-f4-packaged-occt-runtime.md) |
-| F5 | Quick 模式与本地导出迁移 | **进行中** | Rust Quick、活动模型路由、AIMODEL/STL/GLB、七视图和原生 OBJ 生成/菜单导出已有代码与定向验收；旧 Quick 模板语法、禁用特征兼容、原生 CATIA 导出和桌面/Agent端到端仍待完成 |
+| F5 | Quick 模式与本地导出迁移 | **进行中** | Rust Quick、活动模型路由、AIMODEL/STL/GLB、七视图、原生 OBJ 和 CATIA COM adapter 已有实现与定向验收；CATIA 仅完成 mock COM，真实 CATIA 几何仍待验。旧 Quick 模板语法、禁用特征兼容及桌面/Agent端到端仍待完成 |
 | F5.1 | Rust 七视图 PNG 与深度遮挡 | **已完成** | 五项定向测试、真实 OCCT 1000 三角形 CLI 七视图通过；非 Agent 图片验收 |
 | F5.2 | Rust AIMODEL / binary STL 兼容读写 | **已完成** | 5 项单测、旧工程 roundtrip、Python Document 对拍及实际 STL 全顶点检查通过；Quick 和生产导出接线尚待完成 |
 | F5.3 | Quick 明确尺寸原生创建闭环 | **已完成（限定范围）** | Rust Quick 3/3、解析 7/7、Vue build；CADPlan→OCCT→GLB/AIMODEL/STL，旧语法全量迁移和共享活动状态仍待 F7.G2；见 [记录](./27-f5-native-quick-build.md) |
-| F6 | Python 缩减到 CATIA COM | **进行中（拆为 F6.1–F6.7）** | Agent Python tool worker 已删除；F6.1 原生配置/provider、F6.2 原生 bootstrap/readiness、F6.3 零件目录和示例、F6.4 原生诊断/帮助/路径命令已单独提交。Quick、Agent 启动和活动模型不再要求 Python bridge；手工联网、CATIA adapter、依赖收缩及无全局 Python/Node 安装包冷启动仍待迁移和验收 |
+| F6 | Python 缩减到 CATIA COM | **进行中（拆为 F6.1–F6.7）** | Agent Python tool worker 已删除；F6.1–F6.6 原生设置、bootstrap/readiness、零件目录、诊断/路径、联网查询及按需 CATIA COM adapter 已实现和单独验收。Quick、Agent 启动和活动模型不再要求 Python bridge；依赖收缩及无全局 Python/Node 安装包冷启动仍待 F6.7 |
 | F7 | 多模态盲测与科学验收基线 | **进行中** | Run03–10八次真实单图冷启动失败；Run11在读图前被runner拒绝。Run12验证图片返回修复。Run13原图/预览解码和附件保存成功，current_geometry、artifacts、holes通过；ACP重复终态、visual coverage/original-reference binding、finish仍失败。Run14 使用原图、DeepSeek `deepseek-flash` / low 和隔离 DSH home 完成单次 CLI 运行；transport/DSH、原图、主图 wire、current_geometry、artifacts、holes 通过，Cordis 调用/审计、ACP tool result、visual 与 finish 失败。allowlisted projection 汇总 24 个 CAD 调用组，其中 11 组有重复同类终态更新、1 组失败终态、missing-ID event 为 0；投影不能判定重复原因，严格 gate 未放宽。详见[Run14](./59-f7-g8-run-14-diagnosis.md)。G3 Channel→Vue四场景headless矩阵、G4移除特征finding回归及manifest-aware Rust测试通过。真实WebView IPC、视觉复核与差异返修、多输入/多轮/取消、桌面运行态和CATIA分层验收未完成，F7不得标记通过。见[Run12](./55-f7-g8-run-12-diagnosis.md)、[Run13](./56-f7-g8-run-13-diagnosis.md)和[Run14](./59-f7-g8-run-14-diagnosis.md)。
 
 ## F6 子任务与验收顺序
@@ -62,8 +62,8 @@
 | F6.2 | P0 | Rust 桌面 bootstrap 与依赖状态 | **代码已提交 `3e8b247`**：Vue 使用原生 settings/runtime/resource/active-model 命令，不再握手/初始化 Python；资源根不要求 Python 源码；DSH 缺失不阻塞桌面、Quick 与本地活动模型，仅用户发起 Agent 时进入 DSH 安装；DSH/OCCT/CATIA/Python 状态分开显示。`native_bootstrap` 3/3、`native_active_model` 7/7、Vue wiring 2/2、前端 build 通过。未开 GUI，物理无 Python 安装包冷启动留待 F6.7。依赖 F6.1。 |
 | F6.3 | P1 | 原生零件目录与示例列表 | **已完成，提交 `6e48a0e`**：Rust 原生命令和 Vue 直连迁移 `parts.list`/`samples.list`；与旧 Python `Bridge.dispatch` 实例逐字段对拍，66 个零件行、17 个示例及 4 种筛选完全一致，涵盖类别、别名、参数、样例值/提示、计数、顺序。Rust 3/3、Vue 2/2、`npm run build` 通过。快照是静态资源，源 metadata/KB/sample 更新后需重建并重跑 parity；目录条目不代表几何内核支持。详情见 [F6.3 验收记录](./55-f6.3-native-parts-catalog.md)。 |
 | F6.4 | P1 | 原生诊断、帮助和路径操作 | **已完成，提交 `1882053`**：版本、自检与资源目录内帮助路径由Rust处理；分开显示DSH、OCCT、CATIA COM、Cordis schema和外部MCP状态，不虚报进程/连接。Rust diagnostics 4/4、bootstrap 3/3、Vue 3/3、`npm run build`通过；未开GUI。 |
-| F6.5 | P1 | 桌面手工联网查询 | **已完成，提交见 feature 分支**：Rust 原生复刻旧 `online.ask` 的四级 query 扩展/顺序、两层相关性筛选与首批结果回退、前两条正文读取、尺寸参数和标准件 suggestion；Tauri/Vue 手工查询已移除 Python bridge。12 组 Python golden fixture 字段与调用顺序对拍，Rust 3/3、query-relevance 本地 mock 1/1、Python parity 5/5、Vue wiring 3/3、生产前端 build 通过；无真实公网、DSH 或 CATIA 验收。见 [F6.5 验收记录](./56-f6.5-native-online-lookup.md)。 |
-| F6.6 | P2 | 按需 CATIA COM adapter | 仅在 CATIA 操作时启动最小 Python COM 服务；输入来自 Rust 当前活动模型，并对齐 F5 原生导出格式/来源，不使用独立旧 Python Document。 |
+| F6.5 | P1 | 桌面手工联网查询 | **已完成，提交 `323f569`**：Rust 原生复刻旧 `online.ask` 的四级 query 扩展/顺序、两层相关性筛选与首批结果回退、前两条正文读取、尺寸参数和标准件 suggestion；Tauri/Vue 手工查询已移除 Python bridge。12 组 Python golden fixture 字段与调用顺序对拍，Rust 3/3、query-relevance 本地 mock 1/1、Python parity 5/5、Vue wiring 3/3、生产前端 build 通过；无真实公网、DSH 或 CATIA 验收。见 [F6.5 验收记录](./56-f6.5-native-online-lookup.md)。 |
+| F6.6 | P2 | 按需 CATIA COM adapter | **已完成（headless/mock 验收）**：只有 CATPart 导出或推送命令才启动最小 Python adapter；输入是 Rust 活动模型的 F5 `ai-modeler` v1 工程、generation/revision/fingerprint 与 CADPlan 来源证据，不调用旧 Python `Document`。结果和 sidecar 对每特征标记近似映射或跳过项，并声明未验证 CATPart 几何。Python mock 4/4、Rust adapter 3/3、前端 build 通过；真实 CATIA COM/B-Rep 未验。详见 [F6.6 验收记录](./57-f6.6-catia-com-adapter.md)。 |
 | F6.7 | P2 | Python 依赖与安装包收缩 | 前述桌面服务迁完后再精简 requirements/资源清单；通过无全局 Python/Node 的安装包冷启动证明非 CATIA 场景不启动 Python，CATIA 操作按需启动适配器。 |
 
 当前审计依据：`feat/rust-dsh-acp-host` 的实际源码。F6.1 与 F6.2 是解除桌面常驻 Python 门槛的 P0；F6.3 已按旧 Python 输出对拍完成。联网和外部 MCP 仍需保留各自旧契约，不以同名 Rust 工具存在视为迁移完成。

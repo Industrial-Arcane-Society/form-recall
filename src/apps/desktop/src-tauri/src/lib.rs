@@ -10,6 +10,7 @@ pub mod native_bore_metrology;
 pub mod native_cad_metadata;
 pub mod native_cad_session;
 pub mod native_cad_tools;
+pub mod native_catia_adapter;
 pub mod native_diagnostics;
 pub mod native_fastener_specs;
 pub mod native_feature_specs;
@@ -1186,6 +1187,102 @@ fn serialize_active_model_project(project: &Value) -> Result<Vec<u8>, String> {
     Ok(bytes)
 }
 
+fn catia_adapter_root(app: &AppHandle) -> Result<(PathBuf, bool), String> {
+    if let Some(root) =
+        std::env::var_os("AIMODELER_RESOURCE_ROOT").or_else(|| std::env::var_os("AIMODELER_ROOT"))
+    {
+        let path = PathBuf::from(root);
+        if !path.join("ai_modeler").join("catia_com_adapter.py").is_file() {
+            return Err(format!(
+                "CATIA adapter 资源目录不完整：{}",
+                path.display()
+            ));
+        }
+        return path
+            .canonicalize()
+            .map(|root| (root, false))
+            .map_err(|error| format!("无法解析 CATIA adapter 资源目录：{error}"));
+    }
+    if let Ok(path) = app.path().resolve("app", BaseDirectory::Resource) {
+        if path
+            .join("ai_modeler")
+            .join("catia_com_adapter.py")
+            .is_file()
+        {
+            return path
+                .canonicalize()
+                .map(|root| (root, true))
+                .map_err(|error| format!("无法解析已安装的 CATIA adapter：{error}"));
+        }
+    }
+    let checkout = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../../../legacy");
+    if checkout
+        .join("ai_modeler")
+        .join("catia_com_adapter.py")
+        .is_file()
+    {
+        return checkout
+            .canonicalize()
+            .map(|root| (root, false))
+            .map_err(|error| format!("无法解析开发版 CATIA adapter：{error}"));
+    }
+    Err("找不到按需 CATIA COM adapter 资源。".into())
+}
+
+fn run_active_catia_adapter(
+    app: &AppHandle,
+    record: &Value,
+    output: &Path,
+    open_in_catia: bool,
+) -> Result<Value, String> {
+    let (root, packaged) = catia_adapter_root(app)?;
+    let (python, args) = python_command(app, &root, packaged)?;
+    let adapter = root.join("ai_modeler").join("catia_com_adapter.py");
+    let data_dir = app_data_dir(app)?;
+    native_catia_adapter::run(
+        &python,
+        &args,
+        &adapter,
+        &data_dir,
+        record,
+        output,
+        open_in_catia,
+    )
+}
+
+#[tauri::command(rename_all = "camelCase")]
+fn active_model_push_catia(app: AppHandle) -> Result<Value, String> {
+    let data_dir = app_data_dir(&app)?;
+    let root = native_active_model::root_from_data_dir(&data_dir);
+    let record = native_active_model::load(&root)?.ok_or("当前没有原生活动模型可推送。")?;
+    let generation = record["generation"]
+        .as_u64()
+        .ok_or("活动模型 generation 无效。")?;
+    let raw_name = record["document"]["name"].as_str().unwrap_or("Part1");
+    let name = raw_name
+        .chars()
+        .map(|ch| {
+            if ch.is_ascii_alphanumeric() || ch == '-' || ch == '_' {
+                ch
+            } else {
+                '_'
+            }
+        })
+        .take(48)
+        .collect::<String>();
+    let export_dir = data_dir.join("catia-exports");
+    fs::create_dir_all(&export_dir).map_err(|error| format!("无法创建 CATIA 导出目录：{error}"))?;
+    let nonce = std::time::SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)
+        .map(|value| value.as_nanos())
+        .unwrap_or_default();
+    let target = export_dir.join(format!(
+        "{}-g{generation}-{nonce}.CATPart",
+        if name.is_empty() { "Part1" } else { &name }
+    ));
+    run_active_catia_adapter(&app, &record, &target, true)
+}
+
 #[tauri::command(rename_all = "camelCase")]
 fn active_model_export(app: AppHandle, kind: String, path: String) -> Result<(), String> {
     let data_dir = app_data_dir(&app)?;
@@ -1211,7 +1308,10 @@ fn active_model_export(app: AppHandle, kind: String, path: String) -> Result<(),
                     .as_bytes(),
             );
         }
-        "catia" => return Err("原生活动模型尚无 CATIA 脚本导出器。".into()),
+        "catia" => {
+            run_active_catia_adapter(&app, &record, Path::new(&path), false)?;
+            return Ok(());
+        }
         _ => return Err(format!("不支持的原生导出类型：{kind}")),
     }
     .ok_or_else(|| format!("活动模型缺少 {kind} 输出路径。"))?;
@@ -2032,6 +2132,7 @@ pub fn run() {
             active_model_new,
             active_model_save,
             active_model_export,
+            active_model_push_catia,
             active_model_update_feature,
             active_model_import_project,
             active_model_export_snapshot,

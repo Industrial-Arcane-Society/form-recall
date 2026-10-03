@@ -726,8 +726,9 @@ async function saveProject() {
 }
 
 async function exportFile(kind: 'stl' | 'obj' | 'report' | 'catia') {
-  const ext: Record<string, string> = { stl: 'stl', obj: 'obj', report: 'txt', catia: 'py' }
-  const labels: Record<string, string> = { stl: 'STL 模型', obj: 'Wavefront OBJ', report: '建模报告', catia: 'CATIA Python 脚本' }
+  const nativeCatia = kind === 'catia' && nativeModelActive.value
+  const ext: Record<string, string> = { stl: 'stl', obj: 'obj', report: 'txt', catia: nativeCatia ? 'CATPart' : 'py' }
+  const labels: Record<string, string> = { stl: 'STL 模型', obj: 'Wavefront OBJ', report: '建模报告', catia: nativeCatia ? 'CATIA 原生零件' : 'CATIA Python 脚本' }
   try {
     const path = await save({ title: '导出' + labels[kind], defaultPath: documentState.value.name + (kind === 'report' ? '_建模报告' : '') + '.' + ext[kind], filters: [{ name: labels[kind], extensions: [ext[kind]] }] })
     if (!path) return
@@ -911,7 +912,22 @@ async function runBackendAction(method: string, label: string, params: JsonMap =
 async function pushToCatia() {
   if (!documentState.value.features.length) { await showMessage('推送到 CATIA', '请先创建一个模型。'); return }
   if (nativeModelActive.value) {
-    await showMessage('原生 CATIA 推送暂不支持', '当前活动模型由 Rust CADPlan 管理。为避免把另一份 Python 旧文档推入 CATIA，操作已拒绝；可使用导出菜单中原生模式明确支持的格式。')
+    setStatus('正在按需启动 CATIA COM adapter…')
+    try {
+      const result = await invoke<any>('active_model_push_catia')
+      const skipped = Array.isArray(result?.skipped) ? result.skipped.length : 0
+      const approximate = Array.isArray(result?.approximations) ? result.approximations.length : 0
+      const completed = Array.isArray(result?.completed) ? result.completed.length : 0
+      setStatus(`CATIA 候选已生成 · ${completed} 项已建，${approximate} 项近似，${skipped} 项跳过`, approximate || skipped ? 'warning' : 'success')
+      addLog(`CATIA ${result?.state || '完成'}：generation ${result?.identity?.generation ?? '?'} · ${completed} 项已建 · ${approximate} 项近似 · ${skipped} 项跳过`)
+      const details = approximate || skipped ? `\n近似映射 ${approximate} 项，跳过 ${skipped} 项；请查看报告：\n${result.report_path || '报告未生成'}` : ''
+      await showMessage(approximate || skipped ? 'CATIA 候选已生成（含近似或跳过项）' : 'CATIA 推送完成', `已从当前 Rust 活动模型创建 CATPart：\n${result?.output_path || ''}${details}`,
+        approximate || skipped ? 'warning' : 'info')
+    } catch (error) {
+      setStatus('CATIA 推送失败', 'error')
+      addLog('CATIA 推送失败：' + errorMessage(error))
+      await showMessage('CATIA 推送失败', errorMessage(error), 'error')
+    }
     return
   }
   const probe = await runBackendAction('catia.probe', '检测 CATIA')
@@ -1031,7 +1047,7 @@ onUnmounted(() => {
         <button @click="menuOpen = !menuOpen">更多 <UiIcon name="chevron-down" :size="14" /></button>
         <div v-if="menuOpen" class="menu-popover" @mouseleave="menuOpen = false">
           <button @click="exportFile('report'); menuOpen = false">导出建模报告 TXT</button>
-          <button @click="exportFile('catia'); menuOpen = false">导出 CATIA 自动化脚本</button>
+          <button @click="exportFile('catia'); menuOpen = false">{{ nativeModelActive ? '导出 CATIA 原生零件' : '导出 CATIA 自动化脚本' }}</button>
           <button @click="saveSnapshot('single'); menuOpen = false">模型截图 PNG</button>
           <button @click="saveSnapshot('four'); menuOpen = false">四视图 PNG</button>
           <button @click="saveSnapshot('three'); menuOpen = false">三视图 PNG</button>
