@@ -437,6 +437,16 @@ mod tests {
             },
             {
                 let mut r = current.clone();
+                r["coverage_status"] = json!("partial");
+                r
+            },
+            {
+                let mut r = current.clone();
+                r["full_current_geometry_in_scope"] = json!(false);
+                r
+            },
+            {
+                let mut r = current.clone();
                 r["partial_candidate_diagnostic_only"] = json!(true);
                 r
             },
