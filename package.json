@@ -1,0 +1,8 @@
+{
+  "name": "ai-modeler",
+  "private": true,
+  "scripts": {
+    "dev": "npm --prefix src/apps/desktop run tauri:dev",
+    "dev:web": "npm --prefix src/apps/desktop run dev"
+  }
+}
