@@ -28,6 +28,10 @@ test('Cordis tools/result fixture identifies output-contract failures without re
     tool: 'cad_preview_model',
     stage: 'cordis_tools_result',
     isError: true,
+    error_present: true,
+    error_info_present: true,
+    error_name_present: true,
+    error_code_present: true,
     content_blocks: [
       { type: 'text', text_utf8_bytes: Buffer.byteLength(rawMarkers[2], 'utf8') },
       { type: 'image', media_type: 'image/png' },
@@ -53,6 +57,10 @@ test('native image decode fixture stores only media type and byte counts', () =>
     tool: 'cad_get_reference_image',
     stage: 'native_image_decode',
     isError: false,
+    error_present: false,
+    error_info_present: false,
+    error_name_present: false,
+    error_code_present: false,
     text_utf8_bytes: Buffer.byteLength(marker, 'utf8'),
     images: [{ media_type: 'image/jpeg', decoded_bytes: 12_345 }],
   })
@@ -71,8 +79,29 @@ test('diagnostics reduce unknown tool names, phases, and error identifiers to al
 
   assert.deepEqual(record, {
     tool: 'other', stage: 'other', isError: true,
+    error_present: true, error_info_present: true,
+    error_name_present: true, error_code_present: true,
     content_blocks: [{ type: 'other' }],
     error_type: 'other', error_code: 'other',
   })
   assert.equal(JSON.stringify(record).includes('private'), false)
+})
+
+test('diagnostics distinguish present error with missing error info/code without retaining values', () => {
+  const record = summarizeToolResultDiagnostic({
+    tool: 'cad_add_hole_array',
+    stage: 'cordis_tools_result',
+    isError: true,
+    error: { name: 'PrivateErrorName', message: 'Private error detail' },
+  })
+
+  assert.deepEqual(record, {
+    tool: 'cad_add_hole_array', stage: 'cordis_tools_result', isError: true,
+    error_present: true, error_info_present: false,
+    error_name_present: true, error_code_present: false,
+    error_type: 'other',
+  })
+  const serialized = JSON.stringify(record)
+  assert.equal(serialized.includes('PrivateErrorName'), false)
+  assert.equal(serialized.includes('Private error detail'), false)
 })

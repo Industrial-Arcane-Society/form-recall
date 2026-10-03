@@ -170,9 +170,19 @@ export function evaluateColdstartGates(input) {
   gate('main_image_wire', [[imageRequests.length > 0, 'main_model_original_image_wire_missing'],
     [successfulImageRequests.length > 0, 'same_image_request_successful_response_missing']])
   const calls = rows(toolBridgeCalls).filter(row => typeof row.tool === 'string' && row.tool.startsWith('cad_'))
-  const acpTools = new Map()
+  const acpTools = new Map(), acpEventsMissingIdentity = []
   for (const event of rows(toolEvents)) {
     if (event.session_id !== run.acp_session_id || event.run_id !== run.id || event.turn_id !== run.turn_id || !inRun(event.at_ms)) continue
+    if (!nonempty(event.tool_call_id)) {
+      // Never coalesce unidentified events under the same `undefined` Map key.
+      // CAD starts identify their tool by title; terminal updates have no
+      // required title, so an unidentified terminal is also unbindable.
+      if ((event.kind === 'tool_call' && event.title?.startsWith('cad_'))
+        || (event.kind === 'tool_call_update' && ['completed', 'failed'].includes(event.status))) {
+        acpEventsMissingIdentity.push(event)
+      }
+      continue
+    }
     const old = acpTools.get(event.tool_call_id) || {}
     acpTools.set(event.tool_call_id, { tool: event.title || old.tool, status: event.status || old.status,
       tool_call_id: event.tool_call_id, starts: (old.starts || 0) + (event.kind === 'tool_call' ? 1 : 0),
@@ -184,6 +194,7 @@ export function evaluateColdstartGates(input) {
       arguments_sha256_24: event.arguments_sha256_24 || old.arguments_sha256_24 })
   }
   const observedCadTools = [...acpTools.values()].filter(row => row.tool?.startsWith('cad_'))
+  const acpCadIdentityMissing = acpEventsMissingIdentity.length > 0
   const correlationKey = row => nonempty(row.tool) && /^[a-f0-9]{24}$/.test(row.arguments_sha256_24 || '')
     ? `${row.tool}\u0000${row.arguments_sha256_24}` : null
   const bridgeCallsByKey = new Map(), acpCallsByKey = new Map()
@@ -251,6 +262,7 @@ export function evaluateColdstartGates(input) {
     [matched.length > 0, 'successful_cordis_cad_call_and_native_audit_missing'],
     [calls.length > 0 && matched.length === calls.length, 'cad_tool_rejected_unbound_or_unaudited'],
     [allInvocationsPaired && pairedOnce, 'cordis_tool_arguments_or_identity_missing_or_unmatched'],
+    [!acpCadIdentityMissing, 'acp_cad_tool_call_id_missing'],
     [individualAcpCallsValid && new Set(calls.map(call => call.call_id)).size === calls.length, 'native_calls_not_individually_observed_or_duplicate'],
     [!rows(toolBridgeCalls).some(call => call.success !== true)
       && ![...acpTools.values()].some(event => event.tool?.startsWith('cad_') && event.status === 'failed'), 'tool_call_rejected_or_failed'],
@@ -259,9 +271,11 @@ export function evaluateColdstartGates(input) {
     [![...acpTools.values()].some(event => event.tool?.startsWith('cad_') && event.status === 'failed'), 'acp_cad_tool_failed'],
   ])
   const acpResultReasons = []
-  if (observedCadTools.length === 0 || observedCadTools.some(event => event.terminal_updates === 0)) {
+  if ((observedCadTools.length === 0 && !acpCadIdentityMissing)
+    || observedCadTools.some(event => event.terminal_updates === 0)) {
     acpResultReasons.push('acp_cad_tool_result_completion_missing')
   }
+  if (acpCadIdentityMissing) acpResultReasons.push('acp_cad_tool_call_id_missing')
   if (observedCadTools.some(event => event.terminal_updates > 0 && event.status === 'failed')) {
     acpResultReasons.push('acp_cad_tool_result_failed')
   }

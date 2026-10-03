@@ -139,6 +139,25 @@ test('missing repeated-call terminal interval remains ambiguous', () => {
   assert.ok(result.failure_reasons.includes('cordis_tool_arguments_or_identity_missing_or_unmatched'))
 })
 
+test('ACP result updates without call IDs fail identity without coalescing as duplicate terminals', () => {
+  const input = fixture()
+  delete input.toolEvents[1].tool_call_id
+  input.toolEvents.push({ ...input.toolEvents[1], at_ms: 3000 })
+  const result = evaluateColdstartGates(input)
+  assert.equal(result.status, 'failed')
+  assert.ok(result.gates.acp_cad_tool_results.reasons.includes('acp_cad_tool_call_id_missing'))
+  assert.ok(result.gates.acp_cad_tool_results.reasons.includes('acp_cad_tool_result_completion_missing'))
+  assert.equal(result.gates.acp_cad_tool_results.reasons.includes('acp_cad_tool_result_terminal_update_duplicated'), false)
+})
+
+test('two terminal ACP updates with the same valid call ID remain a hard duplicate failure', () => {
+  const input = fixture()
+  input.toolEvents.push({ ...input.toolEvents[1], at_ms: 3000 })
+  const result = evaluateColdstartGates(input)
+  assert.equal(result.status, 'failed')
+  assert.ok(result.gates.acp_cad_tool_results.reasons.includes('acp_cad_tool_result_terminal_update_duplicated'))
+})
+
 const negativeFixtures = [
   ['different request successful response', f => { f.streamEvents[1].request_id = 'other'; f.streamEvents[2].request_id = 'other' }, 'same_image_request_successful_response_missing'],
   ['missing response completion', f => f.streamEvents.pop(), 'same_image_request_successful_response_missing'],

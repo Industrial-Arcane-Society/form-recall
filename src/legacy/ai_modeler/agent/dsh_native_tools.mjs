@@ -56,6 +56,10 @@ export function summarizeToolResultDiagnostic({ tool, stage, isError, error, con
     tool: safeToolName(tool),
     stage: DIAGNOSTIC_STAGES.has(stage) ? stage : 'other',
     isError: typeof isError === 'boolean' ? isError : null,
+    error_present: error !== undefined && error !== null,
+    error_info_present: isRecord(error?.info),
+    error_name_present: false,
+    error_code_present: false,
   }
   if (typeof text === 'string') record.text_utf8_bytes = Buffer.byteLength(text, 'utf8')
   if (Array.isArray(content)) record.content_blocks = summarizeContentBlocks(content)
@@ -67,6 +71,8 @@ export function summarizeToolResultDiagnostic({ tool, stage, isError, error, con
   }
   if (isRecord(error)) {
     const info = isRecord(error.info) ? error.info : error
+    record.error_name_present = info.name !== undefined && info.name !== null
+    record.error_code_present = info.code !== undefined && info.code !== null
     if (DIAGNOSTIC_ERROR_TYPES.has(info.name)) record.error_type = info.name
     else if (info.name !== undefined) record.error_type = 'other'
     if (DIAGNOSTIC_ERROR_CODES.has(info.code)) record.error_code = info.code
