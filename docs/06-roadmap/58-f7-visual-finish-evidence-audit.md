@@ -85,14 +85,16 @@ host 的数据来源是 `native_cad_session.rs:1845–2039`。`finish_assessment
 - `native_cad_session.rs` 中 `image_task_with_high_per_view_coverage_still_needs_current_aggregate_acceptance`、`stale_overall_geometry_review_cannot_unlock_image_finish`、`current_overall_geometry_acceptance_unlocks_image_finish`、`aggregate_with_open_findings_can_finish_as_an_unaccepted_candidate`。
 - `native_agent_coldstart_gates.test.mjs:58–64, 231–244` 有同轮完整 evidence 正例，以及 `host accepted false`、visual coverage false、缺 mandatory 字段等负例。
 
-建议的 headless 增补：
+Headless predicate 覆盖进展（本次新增）：`native_agent_coldstart_gates.test.mjs` 新增 table-driven 翻转矩阵，分别覆盖 `visual_coverage_incomplete_or_conflicting` 的 6 个合取项、`visual_gate_original_reference_binding_missing` 的 6 个合取项、`host_finish_not_accepted` 的 7 个合取项。每个 fixture 先确认完整合成基线 gate 通过，再单独破坏一项并确认总结果失败及目标 reason 出现；生产门禁未改动、没有放宽条件。该覆盖仅证明当前 Node gate evaluator 对这些字段的严格判定，不证明字段在真实运行中由正确视觉分析生成，也不代表真实视觉/finish/F7 通过。
+
+仍待实现的 headless 增补：
 
 1. 用 mock vision provider 驱动 native executor 完成 inspect → current preview review → `cad_get_state`，断言 Cordis 工具执行只在有效全图 inventory 和当前可比较 review 存在后形成 required evidence coverage；同时校验 source ID/SHA 错绑、旧 observation、ROI inventory、空/重复 evidence、partial stage、mismatch 和 unsupported coverage 均 fail closed。
-2. 给 runner 三个 gate 做条件逐一翻转的 table-driven fixtures，分别精确断言两个 visual reason 的各 predicate 和 finish 的每个 predicate；添加“视觉全覆盖但 host finish 因其他条件未接受”与“host finish 汇总接受但原图行错绑”的反例，确保原因相互独立。
+2. 增加“视觉全覆盖但 host finish 因其他条件未接受”与“host finish 汇总接受但原图行错绑”的反例，确保原因相互独立。
 3. 覆盖 finish summary 每个合取项被单独置 false 的 Rust `finish_assessment` 测试，并断言候选导出状态不能误变成 accepted。
 
-本审计没有运行或新增测试；上述为待实现的测试建议，不代表验证已通过。
+本次只验证 Node gate predicate 矩阵；mock vision provider 到 native executor 的集成覆盖、两个跨 gate 独立性反例和 Rust `finish_assessment` 各合取项仍未覆盖。
 
 ## 维护状态
 
-`F7.G1` 的视觉覆盖与原图 binding 仍未通过；`F7.G8` 的 Run13 严格冷启动仍未通过。该记录仅收敛生产数据来源、门槛语义和排障/测试路线，没有改变任何实现或验收状态。
+`F7.G1` 的视觉覆盖与原图 binding 仍未通过；`F7.G8` 的 Run13 严格冷启动仍未通过。本次新增的测试记录仅收敛 gate evaluator 的合成字段判定，不改变生产实现或 F7 验收状态。

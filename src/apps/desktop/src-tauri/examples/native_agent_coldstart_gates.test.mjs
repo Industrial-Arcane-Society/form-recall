@@ -397,6 +397,40 @@ const negativeFixtures = [
   ['missing preview artifact', f => { f.artifacts.failures = ['artifact_preview_missing'] }, 'current_run_artifacts_missing_or_invalid'],
   ['missing mandatory fields', f => { delete f.domain.finish_summary; delete f.computedState }, 'host_finish_not_accepted'],
 ]
+const criticalGatePredicateFlips = [
+  ['visual coverage: finish reference coverage missing', f => { f.domain.finish_summary.reference_coverage = false }, 'visual_coverage_incomplete_or_conflicting'],
+  ['visual coverage: all references covered missing', f => { f.domain.finish_summary.visual_evidence.all_references_covered = false; f.computedState.visual_evidence_summary.all_references_covered = false }, 'visual_coverage_incomplete_or_conflicting'],
+  ['visual coverage: independent review pair count zero', f => { f.domain.finish_summary.independent_review_pair_count = 0 }, 'visual_coverage_incomplete_or_conflicting'],
+  ['visual coverage: Rust complete flag missing', f => { f.domain.finish_summary.overall_geometry_review.result.evidence.references.visual_coverage_complete = false }, 'visual_coverage_incomplete_or_conflicting'],
+  ['visual coverage: reference manifest invalid', f => { f.domain.finish_summary.overall_geometry_review.result.evidence.references.manifest_valid = false }, 'visual_coverage_incomplete_or_conflicting'],
+  ['visual coverage: mismatch count nonzero', f => { f.domain.finish_summary.overall_geometry_review.result.evidence.references.mismatch_count = 1 }, 'visual_coverage_incomplete_or_conflicting'],
+  ['original binding: inventory row missing', f => { f.domain.finish_summary.overall_geometry_review.result.evidence.references.original_reference_sources = [] }, 'visual_gate_original_reference_binding_missing'],
+  ['original binding: duplicate inventory rows', f => { const refs = f.domain.finish_summary.overall_geometry_review.result.evidence.references; refs.original_reference_sources.push({ ...refs.original_reference_sources[0] }) }, 'visual_gate_original_reference_binding_missing'],
+  ['original binding: reference id wrong', f => { f.domain.finish_summary.overall_geometry_review.result.evidence.references.original_reference_sources[0].id = 'sha256:' + 'd'.repeat(64) }, 'visual_gate_original_reference_binding_missing'],
+  ['original binding: source hash wrong', f => { f.domain.finish_summary.overall_geometry_review.result.evidence.references.original_reference_sources[0].sha256 = 'd'.repeat(64) }, 'visual_gate_original_reference_binding_missing'],
+  ['original binding: coverage false', f => { f.domain.finish_summary.overall_geometry_review.result.evidence.references.original_reference_sources[0].covered = false }, 'visual_gate_original_reference_binding_missing'],
+  ['original binding: inventory invalid', f => { f.domain.finish_summary.overall_geometry_review.result.evidence.references.original_reference_sources[0].inventory_valid = false }, 'visual_gate_original_reference_binding_missing'],
+  ['host finish: domain finished false', f => { f.domain.finished = false }, 'host_finish_not_accepted'],
+  ['host finish: domain state not accepted', f => { f.domain.finish_state = 'candidate' }, 'host_finish_not_accepted'],
+  ['host finish: summary state not accepted', f => { f.domain.finish_summary.finish_state = 'candidate' }, 'host_finish_not_accepted'],
+  ['host finish: summary acceptance false', f => { f.domain.finish_summary.accepted = false }, 'host_finish_not_accepted'],
+  ['host finish: geometry review acceptance false', f => { f.domain.finish_summary.overall_geometry_review_accepted = false }, 'host_finish_not_accepted'],
+  ['host finish: review issuer wrong', f => { f.domain.finish_summary.overall_geometry_review.issuer = 'other' }, 'host_finish_not_accepted'],
+  ['host finish: review decision not accept', f => { f.domain.finish_summary.overall_geometry_review.result.decision = 'reject' }, 'host_finish_not_accepted'],
+]
+for (const [label, modify, reason] of criticalGatePredicateFlips) test(`critical gate predicate flip: ${label}`, () => {
+  const accepted = evaluateColdstartGates(fixture())
+  assert.equal(accepted.status, 'passed', 'all predicates satisfied must pass')
+  assert.equal(accepted.gates.visual.status, 'passed')
+  assert.equal(accepted.gates.finish.status, 'passed')
+
+  const input = fixture()
+  modify(input)
+  const result = evaluateColdstartGates(input)
+  assert.equal(result.status, 'failed')
+  assert.equal(result.gates[reason.startsWith('host_finish') ? 'finish' : 'visual'].status, 'failed')
+  assert.ok(result.failure_reasons.includes(reason), JSON.stringify(result.failure_reasons))
+})
 for (const [label, modify, reason] of negativeFixtures) test(label, () => {
   const input = fixture(); modify(input)
   const result = evaluateColdstartGates(input)
