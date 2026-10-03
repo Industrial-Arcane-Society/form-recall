@@ -289,6 +289,7 @@ body.is-resizing-panels, body.is-resizing-panels * { cursor: col-resize !importa
 .inspector-foot button { border: 0; color: #9aa6ad; background: transparent; cursor: pointer; }
 .bottom-bar { height: 29px; flex: 0 0 29px; display: flex; align-items: center; justify-content: space-between; padding: 0 14px; border-top: 1px solid var(--line); color: #98a4ac; background: var(--panel); font-size: 12px; }
 .bottom-bar > div { display: flex; align-items: center; gap: 8px; }.bottom-bar button { border: 0; color: #778690; background: transparent; cursor: pointer; font-size: 12px; }
+.runtime-indicators { gap: 12px !important; }.runtime-indicators > span { display: inline-flex; align-items: center; gap: 4px; white-space: nowrap; }.runtime-indicators i { width: 6px; height: 6px; border-radius: 50%; background: #b1bbc1; }.runtime-indicators i.ready { background: #4e9a7b; }
 .bottom-brand { color: #75838c; font: 700 12px Manrope, sans-serif; letter-spacing: .1em; }.python-indicator { width: 5px; height: 5px; box-shadow: none; }
 kbd { padding: 1px 4px; border: 1px solid #dce2e6; border-radius: 3px; color: #71808a; background: var(--panel-soft); font: 12px 'DM Mono', monospace; }
 

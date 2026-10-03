@@ -5,6 +5,7 @@ pub mod cad_plan;
 pub mod cad_plan_validation;
 pub mod dsh_runtime;
 pub mod native_active_model;
+pub mod native_bootstrap;
 pub mod native_bore_metrology;
 pub mod native_cad_metadata;
 pub mod native_cad_session;
@@ -178,6 +179,102 @@ fn app_data_dir(app: &AppHandle) -> Result<PathBuf, String> {
     app.path()
         .app_local_data_dir()
         .map_err(|error| format!("无法解析 AI Modeler 用户数据目录：{error}"))
+}
+
+fn resource_root(app: &AppHandle) -> Result<PathBuf, String> {
+    let explicit = std::env::var_os("AIMODELER_RESOURCE_ROOT")
+        .or_else(|| std::env::var_os("AIMODELER_ROOT"))
+        .map(PathBuf::from);
+    let packaged = app.path().resolve("app", BaseDirectory::Resource).ok();
+    let development = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../../../legacy");
+    native_bootstrap::resolve_resource_root(
+        explicit.as_deref(),
+        packaged.as_deref(),
+        Some(&development),
+    )
+}
+
+fn private_python_available(data_dir: &Path) -> bool {
+    if let Some(path) = std::env::var_os("AIMODELER_PYTHON") {
+        return Path::new(&path).is_file();
+    }
+    data_dir
+        .join("runtime")
+        .join("python")
+        .join(if cfg!(windows) {
+            "python.exe"
+        } else {
+            "bin/python3"
+        })
+        .is_file()
+}
+
+fn catia_com_registered() -> Option<bool> {
+    if !cfg!(windows) {
+        return None;
+    }
+    std::process::Command::new("reg.exe")
+        .args(["query", r"HKCR\CATIA.Application\CLSID"])
+        .output()
+        .ok()
+        .map(|output| output.status.success())
+}
+
+#[tauri::command]
+fn native_resource_status(app: AppHandle) -> Result<Value, String> {
+    native_bootstrap::resource_status(&resource_root(&app)?)
+}
+
+#[tauri::command]
+fn native_runtime_status(app: AppHandle) -> Result<Value, String> {
+    let data_dir = app_data_dir(&app)?;
+    let root = resource_root(&app)?;
+    let dsh = match dsh_runtime::status(&root, &data_dir) {
+        Ok(mut status) => {
+            let installed = status
+                .get("installed")
+                .and_then(Value::as_bool)
+                .unwrap_or(false);
+            status["available"] = json!(installed);
+            status["state"] = json!(if installed { "ready" } else { "missing" });
+            status
+        }
+        Err(error) => json!({"available":false,"installed":false,"state":"invalid","reason":error}),
+    };
+    let occt = match native_occt_runtime::available_manifest(&root) {
+        Ok(Some(_)) => json!({"available":true,"state":"ready"}),
+        Ok(None) => json!({"available":false,"state":"missing"}),
+        Err(error) => json!({"available":false,"state":"invalid","reason":error}),
+    };
+    let catia = native_bootstrap::catia_readiness(catia_com_registered());
+    let mut readiness = native_bootstrap::runtime_readiness(
+        private_python_available(&data_dir),
+        dsh,
+        occt,
+        catia,
+    );
+    readiness["appVersion"] = json!(env!("CARGO_PKG_VERSION"));
+    Ok(readiness)
+}
+
+#[tauri::command(rename_all = "camelCase")]
+async fn install_dsh_runtime(
+    app: AppHandle,
+    on_event: Channel<Value>,
+) -> Result<Value, String> {
+    let (sender, receiver) = oneshot::channel();
+    thread::spawn(move || {
+        let result = (|| {
+            let root = resource_root(&app)?;
+            let data_dir = app_data_dir(&app)?;
+            let _ = dsh_runtime::install(&root, &data_dir, &on_event)?;
+            native_runtime_status(app)
+        })();
+        let _ = sender.send(result);
+    });
+    receiver
+        .await
+        .map_err(|_| "DSH Runtime 安装线程意外退出。".to_owned())?
 }
 
 fn read_runtime_manifest(root: &Path) -> Result<Value, String> {
@@ -853,8 +950,8 @@ async fn backend_call(
 
 #[tauri::command]
 async fn quick_build(app: AppHandle, text: String, revision: i64) -> Result<Value, String> {
-    let (legacy_root, _) = project_root(&app)?;
-    let manifest = native_occt_runtime::resolve_manifest(&legacy_root)?;
+    let resources = resource_root(&app)?;
+    let manifest = native_occt_runtime::resolve_manifest(&resources)?;
     let data_dir = app_data_dir(&app)?;
     let session_dir = data_dir.join("native-quick");
     let active_root = native_active_model::root_from_data_dir(&data_dir);
@@ -1836,6 +1933,9 @@ pub fn run() {
         .invoke_handler(tauri::generate_handler![
             dependency_status,
             install_dependencies,
+            native_resource_status,
+            native_runtime_status,
+            install_dsh_runtime,
             backend_call,
             quick_build,
             active_model_snapshot,

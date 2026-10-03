@@ -23,7 +23,7 @@ const needsDependencySetup = ref(import.meta.env.DEV && new URLSearchParams(wind
 const dependencySetupError = ref('')
 const rootPath = ref('')
 const backendInfo = ref('连接中')
-const statusText = ref('正在连接 Python 后端…')
+const statusText = ref('正在启动原生 CAD 工作区…')
 const statusTone = ref('')
 const mode = ref<'agent' | 'quick'>('agent')
 const panel = ref<'tree' | 'params' | 'stats' | 'logs' | 'parts'>('tree')
@@ -71,6 +71,7 @@ const partsBusy = ref(false)
 const sampleRows = ref<any[]>([])
 const samplesOpen = ref(false)
 const handshake = ref<any>(null)
+const runtimeReadiness = ref<any>(null)
 const previewUrl = ref('')
 const previewStage = ref('')
 const promptEl = ref<HTMLTextAreaElement | null>(null)
@@ -281,38 +282,31 @@ function scrollChat() {
 
 async function initialize() {
   try {
-    const hello = await backendCall('system.handshake')
-    handshake.value = hello
-    rootPath.value = hello.project_root || ''
-    backendInfo.value = 'Python ' + (hello.python_version || '')
-    const init = await backendCall('system.initialize')
+    const resources = await invoke<any>('native_resource_status')
+    rootPath.value = resources.root || ''
+    const readiness = await invoke<any>('native_runtime_status')
+    runtimeReadiness.value = readiness
+    handshake.value = { app_version: readiness.appVersion || '—' }
+    backendInfo.value = 'Rust 原生核心'
     settingsDraft.value = ensureLlmDraft(structuredClone(await invoke<any>('native_settings_load')))
     const active = await invoke<any>('active_model_snapshot')
     if (active?.document) {
       nativeModelActive.value = true
       updateDocument(active.document, false)
       addLog('已恢复 Rust 原生活动模型 generation ' + String(active.generation || '?'))
-    } else if ((init.document?.features || []).length === 0) {
-      const document = await invoke<DocumentState>('active_model_new', { name: init.document?.name || 'Part1' })
+    } else {
+      const document = await invoke<DocumentState>('active_model_new', { name: 'Part1' })
       nativeModelActive.value = true
       updateDocument(document, false)
       addLog('已创建 Rust 原生空活动模型')
-    } else {
-      // Keep a legacy in-memory model visible, but all model write routes stay
-      // on the native commands and fail closed until the user explicitly opens
-      // and converts its source project.
-      nativeModelActive.value = true
-      updateDocument(init.document, false)
-      setStatus('检测到旧 Python 模型，请通过“打开工程”显式转换后继续编辑。', 'warning')
-      addLog('已有 Python 模型未自动接管；需要显式 CADPlan 转换。')
     }
     await restoreAgentHistory()
-    setStatus('后端已连接', 'success')
-    addLog('已连接 Python ' + (hello.python_version || '') + ' · ' + (hello.python_executable || ''))
+    setStatus('原生 CAD 工作区已连接', 'success')
+    addLog(`桌面已就绪 · DSH ${readiness.dsh?.state || 'unknown'} · OCCT ${readiness.occt?.state || 'unknown'} · CATIA ${readiness.catia?.state || 'unknown'}`)
   } catch (error) {
-    backendInfo.value = '后端未连接'
+    backendInfo.value = '桌面核心未就绪'
     setStatus(errorMessage(error), 'error')
-    addLog('连接 Python 后端失败：' + errorMessage(error))
+    addLog('启动 Rust 原生工作区失败：' + errorMessage(error))
   }
 }
 
@@ -346,11 +340,12 @@ async function startApplication() {
     return
   }
   try {
-    const status = await invoke<{ required: boolean; installed: boolean }>('dependency_status')
-    if (status.required && !status.installed) {
-      needsDependencySetup.value = true
-      return
-    }
+    const [resources, readiness] = await Promise.all([
+      invoke<any>('native_resource_status'),
+      invoke<any>('native_runtime_status'),
+    ])
+    runtimeReadiness.value = readiness
+    if (!resources.available) throw new Error('桌面静态资源不可用。')
     await initialize()
   } catch (error) {
     dependencySetupError.value = errorMessage(error)
@@ -361,7 +356,7 @@ async function startApplication() {
 function onDependenciesInstalled() {
   dependencySetupError.value = ''
   needsDependencySetup.value = false
-  void initialize()
+  void startApplication()
 }
 
 function errorMessage(error: unknown) {
@@ -466,6 +461,11 @@ async function submitPrompt() {
   if (busy.value || attachmentLoading.value) return
   const text = prompt.value.trim()
   if (!text && !attachments.value.length) return
+  if (mode.value === 'agent' && !runtimeReadiness.value?.dsh?.installed) {
+    dependencySetupError.value = 'Agent 需要先安装应用私有的 DSH Runtime；本地 CAD 模型和 Quick 模式仍可继续使用。'
+    needsDependencySetup.value = true
+    return
+  }
   if (mode.value === 'quick' && attachments.value.length) {
     await showMessage('快速模式暂不接收图片', '请切换到 Agent 模式处理文字和参考图片。')
     return
@@ -1202,7 +1202,7 @@ onUnmounted(() => {
       </aside>
     </main>
 
-    <footer class="bottom-bar"><div><span class="bottom-brand">AI MODELER</span><span>桌面建模工作区</span></div><div><span class="python-indicator"></span>{{ backendInfo }}<span class="status-divider"></span><span>版本 {{ handshake?.app_version || '—' }}</span></div><div><button @click="helpOpen = true">帮助</button><span class="status-divider"></span><span>快捷键 <kbd>Ctrl</kbd>+<kbd>S</kbd> 保存 · <kbd>F</kbd> 适应视图</span></div></footer>
+    <footer class="bottom-bar"><div><span class="bottom-brand">AI MODELER</span><span>桌面建模工作区</span></div><div class="runtime-indicators"><span><i :class="{ ready: runtimeReadiness?.dsh?.available }"></i>DSH {{ runtimeReadiness?.dsh?.state || '检测中' }}</span><span><i :class="{ ready: runtimeReadiness?.occt?.available }"></i>OCCT {{ runtimeReadiness?.occt?.state || '检测中' }}</span><span><i :class="{ ready: runtimeReadiness?.catia?.registered }"></i>CATIA {{ runtimeReadiness?.catia?.state || '检测中' }}</span><span><i :class="{ ready: runtimeReadiness?.python?.available }"></i>Python {{ runtimeReadiness?.python?.available ? '可用' : '未安装' }}</span><span class="status-divider"></span><span>Rust 原生核心 · 版本 {{ handshake?.app_version || '—' }}</span></div><div><button @click="helpOpen = true">帮助</button><span class="status-divider"></span><span>快捷键 <kbd>Ctrl</kbd>+<kbd>S</kbd> 保存 · <kbd>F</kbd> 适应视图</span></div></footer>
 
     <div v-if="settingsOpen" class="modal-backdrop" @click.self="settingsOpen = false">
       <section class="modal settings-modal">

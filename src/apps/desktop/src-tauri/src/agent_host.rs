@@ -375,7 +375,7 @@ fn get_or_create_session(
         }
     }
 
-    let (root, _packaged) = super::project_root(app)?;
+    let root = super::resource_root(app)?;
     let data_dir = super::app_data_dir(app)?;
     let agent_dir = data_dir.join(AGENT_FOLDER);
     let workspace_root = agent_dir.join("workspaces");
