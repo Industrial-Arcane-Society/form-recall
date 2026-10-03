@@ -18,6 +18,7 @@ pub fn tools(
         .ok_or("standard feature parameters must be an object")?;
     match kind {
         "gear" => build_gear(kernel, p),
+        "helical_gear" => build_helical_gear(kernel, p),
         "socket_head_bolt" => build_socket_head_bolt(kernel, p),
         _ => Err(format!(
             "native standard feature is not implemented: {kind}"
@@ -216,6 +217,77 @@ fn build_gear(
     Ok((vec![shape], support))
 }
 
+/// Build the retained CADPlan -> Document helical_gear semantics: a straight,
+/// centered trapezoidal gear prism. The legacy Document builder ignores
+/// `helix_deg`, adds no implicit bore, and facets an explicitly requested bore.
+fn build_helical_gear(
+    kernel: &Kernel,
+    p: &serde_json::Map<String, Value>,
+) -> Result<(Vec<Shape>, Value), String> {
+    let teeth = integer(p, "teeth", 20)?;
+    if !(MIN_GEAR_TEETH..=MAX_GEAR_TEETH).contains(&teeth) {
+        return Err(format!(
+            "helical_gear teeth must be {MIN_GEAR_TEETH}..={MAX_GEAR_TEETH}"
+        ));
+    }
+    let module = number(p, "module", 2.0)?;
+    let height = number(p, "height", 10.0)?;
+    // The retained CADPlan -> Document -> OCP path deliberately ignores helix_deg.
+    let helix_deg = number(p, "helix_deg", 18.0)?;
+    let bore_d = number(p, "bore_d", 0.0)?;
+    if module <= 0.0 || height <= 0.0 || bore_d < 0.0 {
+        return Err("helical_gear module/height must be positive and bore_d nonnegative".into());
+    }
+    let center = point3(p.get("center"))?;
+    let mut origin = center;
+    origin[2] -= height * 0.5;
+    let profile = gear_profile(teeth as usize, module);
+    let blank = kernel.prism(&profile, height, origin, Axis::Z)?;
+    let (shape, bore_support) = if bore_d > 0.0 {
+        let bore = circle_profile(bore_d * 0.5, 40);
+        let cutter = kernel.prism(
+            &bore,
+            height + 0.02,
+            [center[0], center[1], origin[2] - 0.01],
+            Axis::Z,
+        )?;
+        (
+            kernel.cut(&blank, &[&cutter])?,
+            json!({
+                "kind":"polygonal_through_bore", "diameter_mm":bore_d, "profile_points":40,
+                "source":"explicit bore_d; no implicit bore is added"
+            }),
+        )
+    } else {
+        (blank, json!({"kind":"none", "source":"bore_d=0"}))
+    };
+    let analysis = shape.analyze()?;
+    if analysis.valid == 0 || analysis.solid_count != 1 || analysis.closed_solid_count != 1 {
+        return Err(format!(
+            "helical_gear must be one valid closed solid; got valid={}, solids={}, closed={}",
+            analysis.valid, analysis.solid_count, analysis.closed_solid_count
+        ));
+    }
+    Ok((
+        vec![shape],
+        json!({
+            "kind":"helical_gear", "status":"approximate", "builder":"legacy_straight_trapezoidal_gear_prism",
+            "teeth":teeth, "module_mm":module, "height_mm":height, "center_mm":center,
+            "helix_deg_input":helix_deg, "helix_deg_applied":0.0, "bore":bore_support,
+            "warnings":["The retained CADPlan/Document geometry path omits helix_deg and builds a straight trapezoidal gear; no implicit bore is added. CATIA export is also approximate and does not preserve helix angle."]
+        }),
+    ))
+}
+
+fn circle_profile(radius: f64, segments: usize) -> Vec<[f64; 2]> {
+    (0..segments)
+        .map(|i| {
+            let angle = 2.0 * std::f64::consts::PI * i as f64 / segments as f64;
+            [radius * angle.cos(), radius * angle.sin()]
+        })
+        .collect()
+}
+
 /// Match `core.geometry.kernel.profile_gear`: trapezoidal teeth sampled at
 /// eight radial points per tooth, extruded by the native OCCT prism builder.
 fn gear_profile(teeth: usize, module: f64) -> Vec<[f64; 2]> {
@@ -291,6 +363,14 @@ mod tests {
         let r = p.iter().map(|v| v[0].hypot(v[1])).fold(0.0, f64::max);
         assert!((r - 22.0).abs() < 1e-10);
     }
+    #[test]
+    fn helical_gear_circle_profile_uses_forty_facets_for_explicit_bores() {
+        let bore = circle_profile(4.0, 40);
+        assert_eq!(bore.len(), 40);
+        assert!((bore[0][0] - 4.0).abs() < 1e-12);
+        assert!(bore.iter().all(|p| (p[0].hypot(p[1]) - 4.0).abs() < 1e-12));
+    }
+
     #[test]
     fn guard_helpers_reject_invalid_resource_and_nonfinite_values() {
         let p = json!({"teeth":10001,"module":2,"height":10})

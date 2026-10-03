@@ -35,6 +35,12 @@ def main():
 
     add("gear-native-approximation", "gear", dict(teeth=20, module=2, height=10,
         center=[0, 0, 0], axis="Z", base=False))
+    add("helical-gear-legacy-straight", "helical_gear", dict(teeth=20, module=2, height=10,
+        helix_deg=18, bore_d=0, center=[0, 0, 0], segments=20))
+    add("helical-gear-angle-ignored", "helical_gear", dict(teeth=20, module=2, height=10,
+        helix_deg=42, bore_d=0, center=[0, 0, 0], segments=20))
+    add("helical-gear-explicit-bore", "helical_gear", dict(teeth=20, module=2, height=10,
+        helix_deg=18, bore_d=8, center=[10, -5, 7], segments=20))
     add("socket-bolt-visible-thread", "socket_head_bolt", dict(shank_d=8, thread_pitch=1.25,
         length=20, head_d=13, head_h=8, hex_s=6, hex_t=4, center=[0, 0, 0], segments=48))
     add("piston-one-groove-with-x-pin", "piston",
@@ -212,6 +218,7 @@ def main():
     cross_joint_native_volumes = {}
     camshaft_native_volumes = {}
     crankshaft_native_volumes = {}
+    helical_native_results = {}
 
     records = []
     for name, plan in cases:
@@ -305,10 +312,19 @@ def main():
             if result.get("state") != "no_op" or len(native.get("hole_instances", [])) != 1:
                 raise AssertionError((name, "no-op-pattern-not-reported", result,
                                       native.get("hole_instances")))
-        if name in ("gear-native-approximation", "socket-bolt-visible-thread"):
+        if name in ("gear-native-approximation", "helical-gear-legacy-straight",
+                    "helical-gear-angle-ignored", "helical-gear-explicit-bore", "socket-bolt-visible-thread"):
             support = native["feature_results"][0]
             if support.get("geometry_support") != "approximate" or not support.get("support_details", {}).get("warnings"):
                 raise AssertionError(("native-standard-feature-support-not-labeled", name, support))
+            if name.startswith("helical-gear-"):
+                details = support["support_details"]
+                if (details.get("builder") != "legacy_straight_trapezoidal_gear_prism"
+                        or details.get("helix_deg_applied") != 0.0
+                        or native.get("valid") is not True
+                        or native.get("closed_solid_count") != 1):
+                    raise AssertionError((name, "helical-gear-contract", native, support))
+                helical_native_results[name] = (native["bounds_mm"], native["volume_mm3"])
             if name == "socket-bolt-visible-thread" and support["support_details"].get("thread", {}).get("visible_geometry") is not True:
                 raise AssertionError(("native-bolt-thread-not-visible", support["support_details"]))
         if name == "recess-nine-holes":
@@ -328,6 +344,14 @@ def main():
         shape, baseline_report = occ_kernel.build_document(plan_to_document(plan))
         bounds_error = max(abs(a - b) for a, b in zip(occ_kernel._bbox(shape), native["bounds_mm"]))
         volume_error = abs(occ_kernel.volume(shape) - native["volume_mm3"])
+        if name.startswith("helical-gear-"):
+            if (native.get("valid") is not True or native.get("closed_solid_count") != 1
+                    or baseline_report.get("geometry_state") != "passed"
+                    or baseline_report.get("brep_valid") is not True
+                    or baseline_report.get("solid_count") != 1
+                    or baseline_report.get("closed") is not True
+                    or bounds_error > 1e-6):
+                raise AssertionError((name, "validity-or-bounds", native, baseline_report, bounds_error))
         if name.startswith("camshaft-"):
             if (bounds_error > 1e-6 or baseline_report.get("geometry_state") != "passed"
                     or baseline_report.get("brep_valid") is not True
@@ -362,11 +386,11 @@ def main():
                                                if name in expected_cross_joint_bounds or name.startswith("camshaft-")
                                                else "parity_checked"),
                             legacy_volume_mm3=(occ_kernel.volume(shape)
-                                               if name in expected_cross_joint_bounds or name.startswith("camshaft-") or name.startswith("crankshaft-") else None),
+                                               if name in expected_cross_joint_bounds or name.startswith("camshaft-") or name.startswith("crankshaft-") or name.startswith("helical-gear-") else None),
                             native_volume_mm3=(native["volume_mm3"]
-                                               if name in expected_cross_joint_bounds or name.startswith("camshaft-") or name.startswith("crankshaft-") else None),
+                                               if name in expected_cross_joint_bounds or name.startswith("camshaft-") or name.startswith("crankshaft-") or name.startswith("helical-gear-") else None),
                             volume_relative_difference=(volume_error / max(abs(occ_kernel.volume(shape)), 1e-12)
-                                                        if name in expected_cross_joint_bounds or name.startswith("camshaft-") or name.startswith("crankshaft-") else None)))
+                                                        if name in expected_cross_joint_bounds or name.startswith("camshaft-") or name.startswith("crankshaft-") or name.startswith("helical-gear-") else None)))
     cross_joint_origin_volume = cross_joint_native_volumes["cross-joint-origin"]
     for name in ("cross-joint-translated", "cross-joint-cm-unit-scaling"):
         if abs(cross_joint_native_volumes[name] - cross_joint_origin_volume) > 1e-6:
@@ -382,6 +406,12 @@ def main():
         raise AssertionError(("crankshaft-unit-volume-invariance",
                               crankshaft_native_volumes["crankshaft-cm-unit-scaling"],
                               crankshaft_origin_volume))
+
+    if (helical_native_results["helical-gear-legacy-straight"] !=
+            helical_native_results["helical-gear-angle-ignored"]):
+        raise AssertionError(("legacy-helical-gear-angle-must-remain-ignored",
+                              helical_native_results["helical-gear-legacy-straight"],
+                              helical_native_results["helical-gear-angle-ignored"]))
     python_version = "unknown"
     for package in ("cadquery-ocp", "cadquery-ocp-novtk"):
         try:
@@ -407,6 +437,14 @@ def main():
     missing_bolt_size["features"][0]["parameters"].pop("head_d")
     missing_bolt_size["features"][0]["sources"].pop("head_d")
     negatives.append(("bolt-missing-head-d", missing_bolt_size, "校验"))
+    helical_case = copy.deepcopy(cases[[name for name, _ in cases].index("helical-gear-legacy-straight")][1])
+    helical_bad_module = copy.deepcopy(helical_case)
+    helical_bad_module["features"][0]["parameters"]["module"] = 0
+    negatives.append(("helical-gear-zero-module", helical_bad_module, "module"))
+    helical_bad_bore = copy.deepcopy(helical_case)
+    helical_bad_bore["features"][0]["parameters"]["bore_d"] = -1
+    helical_bad_bore["features"][0]["sources"]["bore_d"] = {"type": "user"}
+    negatives.append(("helical-gear-negative-bore", helical_bad_bore, "bore_d"))
     over_limit_pattern = copy.deepcopy(cases[[name for name, _ in cases].index("pattern-linear-overlap")][1])
     over_limit_pattern["features"][-1]["parameters"]["count"] = 10_001
     over_limit_pattern["features"][-1]["sources"]["count"] = {"type": "user"}

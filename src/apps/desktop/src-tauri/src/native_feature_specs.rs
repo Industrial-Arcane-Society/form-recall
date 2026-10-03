@@ -36,7 +36,7 @@ pub fn feature_spec(kind: &str) -> Result<Value, String> {
 /// below describe the additional gates applied by preflight/build.
 fn native_execution_contract(kind: &str) -> Value {
     let implemented = crate::native_plan_geometry::supports_native_kind(kind);
-    let approximate = matches!(kind, "gear" | "socket_head_bolt" | "conrod" | "cross_joint" | "rotor" | "crankshaft");
+    let approximate = matches!(kind, "gear" | "helical_gear" | "socket_head_bolt" | "conrod" | "cross_joint" | "rotor" | "crankshaft");
     let (supported_variants, unsupported_variants, parameter_limits, note) = match kind {
         "rotor" => (
             json!(["global Z extrusion centered on center", "explicit bore_d=0 or enclosed circular bore"]),
@@ -53,6 +53,7 @@ fn native_execution_contract(kind: &str) -> Value {
         "revolve" => (json!(["closed radius-axial profile", "axis=X|Y|Z"]), json!([]), json!({"angle":"valid OCCT revolution angle", "profile":"valid closed radius-axial polygon"}), "OCCT revolution; CATIA mapping remains approximate."),
         "pattern" => (json!(["mode=linear", "mode=circular"]), json!(["other modes"]), json!({"count":"1..=10000", "transformed tools":"<=100000", "transformed hole records":"<=100000", "linear step":"finite XYZ", "circular angle":"finite; axis and center required/validated"}), "Transforms the immediately preceding related feature; per-feature instance and transformed-tool resource caps apply."),
         "gear" => (json!(["axis=X|Y|Z", "trapezoidal tooth profile"]), json!([]), json!({"teeth":"6..=10000", "module":">0", "height":">0", "base":"boolean when supplied"}), "Native trapezoidal tooth profile is approximate; build report carries support details."),
+        "helical_gear" => (json!(["global-Z centered legacy straight trapezoidal profile", "bore_d=0 means no bore", "explicit bore_d>0 creates the legacy 40-sided through bore"]), json!(["true helical twist (helix_deg is ignored by the retained Document geometry)", "axis other than global Z"]), json!({"teeth":"6..=10000", "module":">0", "height":">0", "helix_deg":"finite; accepted but ignored by the retained legacy geometry path", "bore_d":"0=no bore; >0 explicit 40-sided through bore", "segments":"accepted by schema; has no geometric effect in the straight Document path"}), "The retained CADPlan/Document B-Rep path builds a centered straight trapezoidal gear and omits helix_deg; tooth form remains approximate. CATIA export is also approximate and does not preserve helix angle."),
         "socket_head_bolt" => (json!(["native screw mesh geometry", "centered on global Z axis"]), json!([]), json!({"shank_d":">0", "thread_pitch":">0", "length":">0", "head_d":">0", "head_h":">0", "hex_s":">0", "hex_t":">0 and <=head_h", "segments":"integer clamped to 32..=48"}), "Local screw thread mesh is approximate; CATIA export remains a smooth shank."),
         "spoked_wheel" => (json!(["global-Z radial spokes"]), json!(["axis other than Z", "spokes<2 or >512"]), json!({"spokes":"2..=512", "outer_r":">0", "rim_w":">0 and outer_r-rim_w > hub_r", "hub_r":">0", "height":">0", "spoke_w":">0 and <2*hub_r"}), "Native analytic rim, hub and radial prism spokes; CATIA mapping remains approximate."),
         "piston" => (json!(["legacy closed profile plus X-axis pin bore"]), json!([]), json!({"diameter":">2 mm because legacy inner profile radius has a 1 mm floor", "height":">0", "pin_d":">=0; bore radius clamped to 0.75 body radius and 0.45 height", "grooves":"finite value >=0 and <=256; truncated toward zero"}), "Native analytic build; CATIA mapping remains approximate."),
@@ -94,6 +95,18 @@ mod tests {
         assert_eq!(spec["catia_mapping"], "approximate");
         assert_eq!(spec["required_parameters"], json!(["length", "main_d", "pin_d", "stroke", "throws"]));
     }
+
+    #[test]
+    fn helical_gear_is_native_approximate_and_catia_remains_straight_gear_approximation() {
+        let spec = feature_spec("helical_gear").unwrap();
+        assert_eq!(spec["catia_mapping"], "approximate");
+        assert_eq!(spec["native_execution"]["status"], "implemented_approximate");
+        assert_eq!(spec["native_execution"]["geometry_support"], "approximate");
+        assert_eq!(spec["native_execution"]["scope"], "local_candidate_geometry");
+        assert!(spec["native_execution"]["note"].as_str().unwrap().contains("does not preserve helix angle"));
+        assert!(spec["native_execution"]["parameter_limits"]["helix_deg"].as_str().unwrap().contains("ignored"));
+    }
+
     #[test]
     fn coordinate_and_mapping_contracts_are_present_for_every_registered_kind() {
         let specs: Value = serde_json::from_str(SPECS).unwrap();

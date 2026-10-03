@@ -34,6 +34,7 @@ pub fn supports_native_kind(kind: &str) -> bool {
             | "revolve"
             | "pattern"
             | "gear"
+            | "helical_gear"
             | "socket_head_bolt"
             | "spoked_wheel"
             | "piston"
@@ -80,7 +81,7 @@ pub fn preflight(plan: &Value) -> Result<Value, String> {
             return Err("Rust 显式盲孔入口局部材料核验尚未接入。".into());
         }
         let required_native_parameters: &[&str] = match kind {
-            "gear" => &["teeth", "module", "height"],
+            "gear" | "helical_gear" => &["teeth", "module", "height"],
             "socket_head_bolt" => &[
                 "shank_d",
                 "thread_pitch",
@@ -115,23 +116,22 @@ pub fn preflight(plan: &Value) -> Result<Value, String> {
                 ));
             }
         }
-        if kind == "gear" {
-            let teeth = p
-                .get("teeth")
-                .and_then(Value::as_u64)
-                .ok_or_else(|| {
-                    format!(
-                        "{} 的 gear.teeth 必须是整数。",
-                        feature["id"].as_str().unwrap_or("feature")
-                    )
-                })?;
+        if matches!(kind, "gear" | "helical_gear") {
+            let teeth = p.get("teeth").and_then(Value::as_u64).ok_or_else(|| {
+                format!(
+                    "{} 的 {}.teeth 必须是整数。",
+                    feature["id"].as_str().unwrap_or("feature"),
+                    kind
+                )
+            })?;
             if !(native_standard_features::MIN_GEAR_TEETH
                 ..=native_standard_features::MAX_GEAR_TEETH)
                 .contains(&teeth)
             {
                 return Err(format!(
-                    "{} 的 gear.teeth={teeth} 超出原生支持范围 {}..={}；请调整齿数后再预览。",
+                    "{} 的 {}.teeth={teeth} 超出原生支持范围 {}..={}；请调整齿数后再预览。",
                     feature["id"].as_str().unwrap_or("feature"),
+                    kind,
                     native_standard_features::MIN_GEAR_TEETH,
                     native_standard_features::MAX_GEAR_TEETH
                 ));
@@ -228,7 +228,7 @@ pub fn build(plan: &Value, manifest: &Path, cancelled: &AtomicBool) -> Result<Bu
             (tools, holes, Some(support))
         } else if matches!(
             normalized["kind"].as_str(),
-            Some("gear" | "socket_head_bolt")
+            Some("gear" | "helical_gear" | "socket_head_bolt")
         ) {
             let (tools, support) = native_standard_features::tools(
                 &kernel,
@@ -1286,8 +1286,8 @@ mod tests {
         assert!(error.contains("调整齿数后再预览"), "{error}");
 
         assert_eq!(preflight(&make_plan(6)).unwrap()["state"], "valid");
-        let limits = crate::native_feature_specs::feature_spec("gear").unwrap()
-            ["native_execution"]["parameter_limits"]["teeth"]
+        let limits = crate::native_feature_specs::feature_spec("gear").unwrap()["native_execution"]
+            ["parameter_limits"]["teeth"]
             .as_str()
             .unwrap()
             .to_owned();
@@ -1296,6 +1296,36 @@ mod tests {
             native_standard_features::MIN_GEAR_TEETH,
             native_standard_features::MAX_GEAR_TEETH
         )));
+    }
+
+    #[test]
+    fn helical_gear_is_registered_preflighted_and_rejects_missing_or_out_of_range_teeth() {
+        let make_plan = |parameters| {
+            crate::cad_plan::create(
+                "helical gear preflight fixture",
+                json!({"id":"helical-1","kind":"helical_gear","operation":"add",
+                    "parameters":parameters,
+                    "sources":{"teeth":{"type":"image_estimate","evidence":"fixture top view"},
+                        "module":{"type":"image_estimate","evidence":"fixture top view"},
+                        "height":{"type":"image_estimate","evidence":"fixture front view"}}}),
+                "fixture",
+                None,
+            )
+        };
+        assert!(supports_native_kind("helical_gear"));
+        assert_eq!(
+            preflight(&make_plan(json!({"teeth":20,"module":2,"height":10}))).unwrap()["state"],
+            "valid"
+        );
+        let missing = preflight(&make_plan(json!({"teeth":20,"module":2}))).unwrap_err();
+        assert!(missing.contains("height"), "{missing}");
+        let out_of_range =
+            preflight(&make_plan(json!({"teeth":10_001,"module":2,"height":10}))).unwrap_err();
+        assert!(
+            out_of_range.contains("helical-1 的 helical_gear.teeth=10001"),
+            "{out_of_range}"
+        );
+        assert!(out_of_range.contains("6..=10000"), "{out_of_range}");
     }
 
     #[test]
