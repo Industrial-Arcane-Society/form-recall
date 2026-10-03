@@ -51,3 +51,9 @@ cargo check --lib --offline
 未运行真实DSH/LLM、Tauri窗口、OCCT重建、CATIA或安装包。G4仍需要原始用户图片下的真实未施工结构/已施工错位/返修/新版复查验收，不能把本fixture计为G8质量通过。现有run01不可补写成已关闭finding历史。
 
 无法归属的缺陷只保留unknown诊断；若模型把未来孔错误归属到body，ID校验不能识别其语义错误，仍需真实视觉及更细粒度evidence归属验收。删除受影响feature、变更用户目标或刷新observation不会自动关闭旧finding；旧问题需要后续明确的归档/目标变更策略。近似match、不同视角或PNG字节未变化不会关闭；本提交优先保留未证实问题。
+
+## 2026-10-03：已删除特征不能被当前 review 关闭
+
+提交 `97778c6` 增加负样例：旧 finding 所属孔特征从模型中删除后，当前 review 的完整 scope 即使返回 `match`，该 finding 仍保持未解决。静态审查未发现生产 finding 闭合绕过：review 会校验当前 revision、preview SHA 与 geometry fingerprint，并在 `native_review_findings::reconcile` 中复算 scope/coverage。
+
+定向 Rust 测试二进制编译成功；运行 `cargo test --lib native_review_findings::tests --offline` 的测试进程时 Windows loader 返回 `0xc0000139 STATUS_ENTRYPOINT_NOT_FOUND`，因此新增测试只记为“已编译、未执行”，不记为通过。目标文件 `rustfmt --check` 与 `git diff --check` 通过。没有运行真实 DSH、GUI、CATIA 或几何重建。

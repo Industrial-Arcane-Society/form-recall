@@ -19,3 +19,9 @@ Agent 对话区固定展示两组独立状态：当前轮次（处理中、回�
 
 - Tauri 实际模型变更事件、恢复已验收模型和 stale finish 的浏览器/桌面可视检查。
 - 真实多模态模型行为和 CATIA 接受状态。
+
+## 2026-10-03：Rust Channel stale finish 联验
+
+提交 `52b38e1` 将 `accepted=true`、但 finish revision 已过期的状态送入 `App.vue` 生产 Channel handler：Rust 终态保持 `candidate/not_finished`，UI 显示候选模型且不显示“已验收”。`npm run test:agent-channel-vue` 在隔离 worktree 通过，包含 Rust MockRuntime 1/1 和生产 Vue headless handler 检查。测试脚本临时设置 `TAURI_CONFIG.bundle.resources=[]` 以免测试依赖 release-only package-resources，并恢复调用前环境值。
+
+这不是实际 WebView JS 投递。纯问答、工具错误、当前有效 accepted、真实 DSH 与窗口渲染仍未覆盖；G3 不据此整体完成。
