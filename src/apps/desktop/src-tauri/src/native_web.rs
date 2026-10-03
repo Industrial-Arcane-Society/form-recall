@@ -1724,6 +1724,23 @@ mod tests {
     }
 
     #[test]
+    fn search_filters_unrelated_rows_before_legacy_manual_fallback() {
+        let (base, worker) = spawn_responder_for(|base| {
+            let body = format!(
+                "<html><li class=\"b_algo\"><h2><a href=\"{base}/widget\">Widget guide</a></h2><p>widget dimension</p></li><li class=\"b_algo\"><h2><a href=\"{base}/other\">Other unrelated guide</a></h2><p>unrelated result</p></li></html>"
+            );
+            vec![response("200 OK", &body)]
+        });
+        let result = web(true, &base)
+            .search("widget", Duration::from_secs(2), &not_cancelled())
+            .unwrap();
+        let rows = result["results"].as_array().unwrap();
+        assert_eq!(rows.len(), 1);
+        assert!(rows[0]["title"].as_str().unwrap().contains("Widget"));
+        worker.join().unwrap();
+    }
+
+    #[test]
     fn disabled_invalid_and_pre_cancelled_calls_do_not_contact_a_server() {
         let (base, worker) = spawn_responder(vec![]);
         let disabled = web(false, &base);

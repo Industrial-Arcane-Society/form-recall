@@ -62,7 +62,7 @@
 | F6.2 | P0 | Rust 桌面 bootstrap 与依赖状态 | **代码已提交 `3e8b247`**：Vue 使用原生 settings/runtime/resource/active-model 命令，不再握手/初始化 Python；资源根不要求 Python 源码；DSH 缺失不阻塞桌面、Quick 与本地活动模型，仅用户发起 Agent 时进入 DSH 安装；DSH/OCCT/CATIA/Python 状态分开显示。`native_bootstrap` 3/3、`native_active_model` 7/7、Vue wiring 2/2、前端 build 通过。未开 GUI，物理无 Python 安装包冷启动留待 F6.7。依赖 F6.1。 |
 | F6.3 | P1 | 原生零件目录与示例列表 | **已完成，提交 `6e48a0e`**：Rust 原生命令和 Vue 直连迁移 `parts.list`/`samples.list`；与旧 Python `Bridge.dispatch` 实例逐字段对拍，66 个零件行、17 个示例及 4 种筛选完全一致，涵盖类别、别名、参数、样例值/提示、计数、顺序。Rust 3/3、Vue 2/2、`npm run build` 通过。快照是静态资源，源 metadata/KB/sample 更新后需重建并重跑 parity；目录条目不代表几何内核支持。详情见 [F6.3 验收记录](./55-f6.3-native-parts-catalog.md)。 |
 | F6.4 | P1 | 原生诊断、帮助和路径操作 | **已完成，提交 `1882053`**：版本、自检与资源目录内帮助路径由Rust处理；分开显示DSH、OCCT、CATIA COM、Cordis schema和外部MCP状态，不虚报进程/连接。Rust diagnostics 4/4、bootstrap 3/3、Vue 3/3、`npm run build`通过；未开GUI。 |
-| F6.5 | P1 | 桌面手工联网查询 | 保留旧 `online.ask` 的 query 扩展、正文读取、尺寸参数和 suggestion 契约；只迁移 `search/open_result` 不算等价完成。 |
+| F6.5 | P1 | 桌面手工联网查询 | **已完成，提交见 feature 分支**：Rust 原生复刻旧 `online.ask` 的四级 query 扩展/顺序、两层相关性筛选与首批结果回退、前两条正文读取、尺寸参数和标准件 suggestion；Tauri/Vue 手工查询已移除 Python bridge。12 组 Python golden fixture 字段与调用顺序对拍，Rust 3/3、query-relevance 本地 mock 1/1、Python parity 5/5、Vue wiring 3/3、生产前端 build 通过；无真实公网、DSH 或 CATIA 验收。见 [F6.5 验收记录](./56-f6.5-native-online-lookup.md)。 |
 | F6.6 | P2 | 按需 CATIA COM adapter | 仅在 CATIA 操作时启动最小 Python COM 服务；输入来自 Rust 当前活动模型，并对齐 F5 原生导出格式/来源，不使用独立旧 Python Document。 |
 | F6.7 | P2 | Python 依赖与安装包收缩 | 前述桌面服务迁完后再精简 requirements/资源清单；通过无全局 Python/Node 的安装包冷启动证明非 CATIA 场景不启动 Python，CATIA 操作按需启动适配器。 |
 

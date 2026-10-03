@@ -19,6 +19,7 @@ pub mod native_knowledge;
 pub mod native_model_io;
 pub mod native_occt;
 pub mod native_occt_runtime;
+pub mod native_online_lookup;
 pub mod native_parts_catalog;
 pub mod native_parametric_features;
 pub mod native_plan_geometry;
@@ -1759,6 +1760,18 @@ async fn agent_send(
     .await
 }
 
+#[tauri::command(rename_all = "camelCase")]
+async fn native_online_ask(query: String) -> Result<Value, String> {
+    let web = native_web::NativeWeb::new(true);
+    tokio::task::spawn_blocking(move || {
+        let cancelled = std::sync::atomic::AtomicBool::new(false);
+        let mut backend = native_online_lookup::NativeLookupBackend::new(&web, &cancelled);
+        native_online_lookup::ask(&mut backend, &query)
+    })
+    .await
+    .map_err(|error| format!("联网查询任务异常退出：{error}"))?
+}
+
 #[tauri::command]
 fn agent_cancel(state: State<'_, agent_host::AgentHostState>) -> Result<Value, String> {
     agent_host::cancel(state.inner())
@@ -2024,6 +2037,7 @@ pub fn run() {
             active_model_export_snapshot,
             native_parts_catalog::native_parts_list,
             native_parts_catalog::native_samples_list,
+            native_online_ask,
             native_settings::native_settings_load,
             native_settings::native_settings_save,
             native_settings::native_provider_templates,

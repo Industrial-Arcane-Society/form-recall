@@ -946,13 +946,23 @@ async function showCatiaLibrary() {
 }
 
 async function manualOnline() {
-  onlineQuery.value = prompt.value.trim()
-  if (!onlineQuery.value) onlineQuery.value = window.prompt('输入要联网搜索的零件或建模术语') || ''
-  if (!onlineQuery.value) return
+  const query = onlineQuery.value.trim() || prompt.value.trim() || (window.prompt('输入要联网搜索的零件或建模术语') || '').trim()
+  if (!query) return
+  onlineQuery.value = query
   onlineOpen.value = true
   onlineResult.value = null
-  const result = await runBackendAction('online.search', '联网搜索', { query: onlineQuery.value })
-  onlineResult.value = result
+  setStatus('联网搜索…')
+  try {
+    const result = await invoke<any>('native_online_ask', { query })
+    onlineResult.value = result
+    setStatus('联网查询完成：' + (result?.results?.length || 0) + ' 条结果', 'success')
+    addLog('原生联网查询完成')
+  } catch (error) {
+    const reason = errorMessage(error)
+    onlineResult.value = { ok: false, results: [], suggestion: null, reason, query, notes: [] }
+    setStatus('联网查询失败', 'error')
+    addLog('原生联网查询失败：' + reason)
+  }
 }
 
 async function useOnlineSuggestion() {
@@ -1299,7 +1309,32 @@ onUnmounted(() => {
         <button class="secondary-button" @click="openIntegrations">刷新状态</button><button class="text-button" @click="openManual('docs/01-architecture/01-target-architecture.md')">打开架构说明 <UiIcon name="arrow-up-right" :size="14" /></button>
       </div><footer class="modal-footer"><button class="secondary-button" @click="integrationsOpen = false">关闭</button></footer></section></div>
 
-    <div v-if="onlineOpen" class="modal-backdrop" @click.self="onlineOpen = false"><section class="modal online-modal"><header class="modal-head"><div><span class="eyebrow">ONLINE LOOKUP</span><h2>联网搜索</h2></div><button class="modal-close" aria-label="关闭联网搜索" @click="onlineOpen = false"><UiIcon name="close" /></button></header><div class="online-query"><input v-model="onlineQuery" placeholder="搜索标准零件、术语或建模方法"><button class="primary-button" @click="manualOnline">搜索</button></div><div class="online-result"><pre v-if="onlineResult">{{ JSON.stringify(onlineResult, null, 2) }}</pre><p v-else>搜索结果会显示在这里。</p></div><footer class="modal-footer"><button class="secondary-button" @click="onlineOpen = false">关闭</button><button class="primary-button" :disabled="!onlineResult" @click="useOnlineSuggestion">填入对话</button></footer></section></div>
+    <div v-if="onlineOpen" class="modal-backdrop" @click.self="onlineOpen = false"><section class="modal online-modal"><header class="modal-head"><div><span class="eyebrow">ONLINE LOOKUP</span><h2>联网搜索</h2></div><button class="modal-close" aria-label="关闭联网搜索" @click="onlineOpen = false"><UiIcon name="close" /></button></header><div class="online-query"><input v-model="onlineQuery" placeholder="搜索标准零件、术语或建模方法" @keydown.enter="manualOnline"><button class="primary-button" @click="manualOnline">搜索</button></div><div class="online-result">
+      <p v-if="!onlineResult">搜索结果会显示在这里。</p>
+      <template v-else>
+        <section class="online-suggestion" :class="{ 'has-suggestion': onlineResult.suggestion }">
+          <strong>{{ onlineResult.suggestion ? '建议描述' : '未能生成建议' }}</strong>
+          <p>{{ onlineResult.reason }}</p>
+          <pre v-if="onlineResult.suggestion">{{ onlineResult.suggestion }}</pre>
+          <div v-if="onlineResult.params && Object.keys(onlineResult.params).length" class="online-params">
+            <span v-for="(value, key) in onlineResult.params" :key="key">{{ key }}：{{ value }}</span>
+          </div>
+        </section>
+        <ul v-if="onlineResult.notes?.length" class="online-notes"><li v-for="(note, index) in onlineResult.notes" :key="index">{{ note }}</li></ul>
+        <div v-if="onlineResult.page_read_errors?.length" class="online-read-errors">
+          <strong>详情页读取失败</strong>
+          <p v-for="(failure, index) in onlineResult.page_read_errors" :key="index">{{ failure.title || failure.url }} · {{ failure.status }} · {{ failure.message }}</p>
+        </div>
+        <div v-if="onlineResult.results?.length" class="online-result-list">
+          <article v-for="(row, index) in onlineResult.results" :key="row.url || index" class="online-result-card">
+            <a :href="row.url" target="_blank" rel="noreferrer">{{ row.title || row.url }}</a>
+            <p>{{ row.snippet || '没有搜索摘要。' }}</p>
+            <small>{{ row.url }}</small>
+          </article>
+        </div>
+        <p v-else class="online-empty">没有搜索结果。</p>
+      </template>
+    </div><footer class="modal-footer"><button class="secondary-button" @click="onlineOpen = false">关闭</button><button class="primary-button" :disabled="!onlineResult?.suggestion" @click="useOnlineSuggestion">填入对话</button></footer></section></div>
 
     <div v-if="helpOpen" class="modal-backdrop" @click.self="helpOpen = false"><section class="modal help-modal"><header class="modal-head"><div><span class="eyebrow">GETTING STARTED</span><h2>帮助与使用说明</h2></div><button class="modal-close" aria-label="关闭帮助" @click="helpOpen = false"><UiIcon name="close" /></button></header><div class="help-grid"><article><span>01</span><h3>描述零件</h3><p>写明零件类型、主要尺寸和孔位。快速模式适合离线几何描述；Agent 模式支持参考图片和多轮修改。</p></article><article><span>02</span><h3>检查特征与参数</h3><p>选择右侧特征树中的项目，修改可编辑参数并重新计算几何。</p></article><article><span>03</span><h3>保存与导出</h3><p>保存为 AI Modeler 工程，或导出 STL、OBJ、建模报告和 CATIA 自动化脚本。</p></article><article><span>04</span><h3>CATIA 集成</h3><p>从“更多”菜单打开集成工具，连接 CATIA V5 或安装插件。</p></article></div><div class="help-link-row"><button @click="openManual('docs/README.md')">打开研究与文档索引 <UiIcon name="arrow-up-right" :size="14" /></button><button @click="openManual('docs/05-operations/01-build-and-run.md')">打开运行与 CATIA 说明 <UiIcon name="arrow-up-right" :size="14" /></button></div><footer class="modal-footer"><button class="secondary-button" @click="helpOpen = false">关闭</button></footer></section></div>
 
