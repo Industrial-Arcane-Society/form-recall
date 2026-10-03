@@ -42,3 +42,14 @@ The equal-summary-pair count means equality only under that safe projection. It 
 ## Verification performed
 
 `node --check` passed for the runner and gate module. `node --test src/apps/desktop/src-tauri/examples/native_agent_coldstart_gates.test.mjs` passed 52/52. Existing cases still include missing-ID non-coalescing and rejection of two terminal updates with one valid ID. These checks validate the current strict behavior and the privacy of the projection, not the classification of the historical Run13 event or a replay-safe repair. No provider or new cold-start was run for this change.
+
+## Follow-up: prospective run-local projection v2
+
+The runner now emits `acp_terminal_update_projection_v2` and `cordis_binding_projection_v1` when `--tool-result-diagnostics` is enabled. This code change does not reinterpret Run13/Run14 and does not alter any strict gate.
+
+- Terminal update comparison consumes the full ACP `session/update.params.update` object at the event listener. A fresh random HMAC key exists only in the current process; HMACs live in a `WeakMap` attached to normalized event objects and are not serialized. The output contains pair counts for equal/different terminal update HMACs within one call ID, never the HMAC, key, ID, or update body. This establishes equality of the complete parsed ACP update object under the canonical JSON encoding, not delivery replay or causality.
+- Tool/status counts and call-group terminal distributions use an explicit allowlist mirrored from the 25 current native Cordis tool schemas. Unknown titles collapse to `unknown`; output statuses and terminal categories are enums.
+- Binding counts use the runner's actual ACP event rows, authenticated loopback bridge records, schema/registration names and Rust native audit rows. They report two joins (`acp_to_bridge`, `bridge_to_audit`) by allowlisted tool name and fixed reason codes such as `acp_call_missing`, `identity_pairing_ambiguous`, `bridge_execution_rejected`, `native_audit_missing` and `native_audit_rejected`. IDs, fingerprints, timestamps and free-form error fields are only compared in memory and never emitted. There is no error-body parsing or provider-error classification.
+- The gate implementation remains unchanged: repeated terminal updates and failed updates continue to fail. The new projection adds diagnosis only; its reason counts must not be treated as permission to coalesce events or accept a run.
+
+The strict runner was not started while implementing this follow-up. The synthetic runner test suite verifies HMAC equality/difference behavior, allowlist collapse, missing/rejected binding cases and absence of sentinel IDs/hashes/payloads/error bodies from serialized projections.

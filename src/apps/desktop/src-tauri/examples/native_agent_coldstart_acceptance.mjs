@@ -1,11 +1,11 @@
 // Cold-start DSH Agent image + text run; no plan or answer fixture is loaded.
 // API credentials stay in process memory / child env or stdin, never argv or logs.
 import { spawn, spawnSync } from 'node:child_process'
-import { createHash, randomUUID } from 'node:crypto'
+import { createHash, randomBytes, randomUUID } from 'node:crypto'
 import { appendFileSync, mkdirSync, readFileSync, writeFileSync, existsSync } from 'node:fs'
 import { basename, dirname, join, resolve } from 'node:path'
 import { createInterface } from 'node:readline'
-import { createAuditedToolProxy, evaluateColdstartGates, parseEvidenceJsonl, parsePostcheckState, readRunArtifacts, summarizeAcpTerminalUpdateDiagnostics, toolArgumentsFingerprint } from './native_agent_coldstart_gates.mjs'
+import { createAuditedToolProxy, createTerminalUpdateHmac, evaluateColdstartGates, parseEvidenceJsonl, parsePostcheckState, readRunArtifacts, summarizeAcpTerminalUpdateDiagnostics, summarizeCordisBindingDiagnostics, toolArgumentsFingerprint } from './native_agent_coldstart_gates.mjs'
 
 const cliArgs = process.argv.slice(2)
 const toolResultDiagnosticsEnabled = cliArgs.includes('--tool-result-diagnostics')
@@ -186,6 +186,10 @@ const child = spawn(nodePath, [join(modules, '@deepseek-ai/dsh/lib/bin.js'),
 managedChildren.push(child)
 let seq = 0, dshStderrBytes = 0, dshExitCode = null, answer = '', thoughts = 0
 const pending = new Map(), toolEvents = [], updateKinds = new Set(), evidenceErrors = []
+// The random key and WeakMap are run-local. Digests are never attached to
+// persisted event rows and cannot be compared across process runs.
+const terminalUpdateHmacKey = toolResultDiagnosticsEnabled ? randomBytes(32) : null
+const terminalUpdateHmacByEvent = new WeakMap()
 child.stderr.on('data', chunk => { dshStderrBytes += chunk.length })
 const messages = createInterface({ input: child.stdout })
 messages.on('line', line => {
@@ -197,9 +201,13 @@ messages.on('line', line => {
     if (kind === 'agent_message_chunk') answer += update.content?.text || ''
     if (kind === 'agent_thought_chunk') thoughts += (update.content?.text || '').length
     if (kind === 'tool_call' || kind === 'tool_call_update') {
-      toolEvents.push({ kind, title: update.title, status: update.status, tool_call_id: update.toolCallId,
+      const toolEvent = { kind, title: update.title, status: update.status, tool_call_id: update.toolCallId,
         ...(kind === 'tool_call' ? { arguments_sha256_24: toolArgumentsFingerprint(update.rawInput) } : {}),
-        session_id: row.params?.sessionId, run_id: runId, turn_id: turnId, at_ms: Date.now() })
+        session_id: row.params?.sessionId, run_id: runId, turn_id: turnId, at_ms: Date.now() }
+      if (kind === 'tool_call_update' && ['completed', 'failed'].includes(update.status) && terminalUpdateHmacKey) {
+        terminalUpdateHmacByEvent.set(toolEvent, createTerminalUpdateHmac(update, terminalUpdateHmacKey))
+      }
+      toolEvents.push(toolEvent)
     }
   } else if (row.id !== undefined && !row.method && pending.has(row.id)) {
     const task = pending.get(row.id); pending.delete(row.id); clearTimeout(task.timer)
@@ -335,9 +343,15 @@ const strict = evaluateColdstartGates({
 if (toolResultDiagnosticsPath) {
   const inRunToolEvents = toolEvents.filter(event => event.session_id === sessionId && event.run_id === runId
     && event.turn_id === turnId && Number.isFinite(event.at_ms) && event.at_ms >= runStartedAt && event.at_ms <= runEndedAt)
-  const projection = summarizeAcpTerminalUpdateDiagnostics(inRunToolEvents)
+  const projection = summarizeAcpTerminalUpdateDiagnostics(inRunToolEvents, { terminalUpdateHmacByEvent })
+  const bindingProjection = summarizeCordisBindingDiagnostics({
+    run: { id: runId, turn_id: turnId, acp_session_id: sessionId, tool_session_id: bridge.session_id,
+      started_at_ms: runStartedAt, ended_at_ms: runEndedAt },
+    registration, schema: schemaManifest, toolEvents, toolBridgeCalls: toolProxy.records, nativeAudit,
+  })
   try {
     appendFileSync(toolResultDiagnosticsPath, JSON.stringify({ stage: 'acp_terminal_update_projection', ...projection }) + '\n', { mode: 0o600 })
+    appendFileSync(toolResultDiagnosticsPath, JSON.stringify({ stage: 'cordis_binding_projection', ...bindingProjection }) + '\n', { mode: 0o600 })
   } catch { /* diagnostic persistence must never change the acceptance result */ }
 }
 writeFileSync(join(output, 'strict-gates.json'), JSON.stringify(strict, null, 2))

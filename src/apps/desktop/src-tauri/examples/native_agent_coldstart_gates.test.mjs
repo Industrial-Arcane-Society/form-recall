@@ -2,9 +2,10 @@ import test from 'node:test'
 import assert from 'node:assert/strict'
 import { createServer, createConnection } from 'node:net'
 import { mkdtempSync, mkdirSync, writeFileSync, rmSync } from 'node:fs'
+import { randomBytes } from 'node:crypto'
 import { join } from 'node:path'
 import { tmpdir } from 'node:os'
-import { createAuditedToolProxy, evaluateColdstartGates, parseEvidenceJsonl, parsePostcheckState, readRunArtifacts, summarizeAcpTerminalUpdateDiagnostics, toolArgumentsFingerprint } from './native_agent_coldstart_gates.mjs'
+import { createAuditedToolProxy, createTerminalUpdateHmac, evaluateColdstartGates, parseEvidenceJsonl, parsePostcheckState, readRunArtifacts, summarizeAcpTerminalUpdateDiagnostics, summarizeCordisBindingDiagnostics, toolArgumentsFingerprint } from './native_agent_coldstart_gates.mjs'
 
 // Synthetic contract fixture: no provider credentials, image bytes, geometry
 // execution or model API are used. It is not scientific acceptance evidence.
@@ -158,37 +159,115 @@ test('two terminal ACP updates with the same valid call ID remain a hard duplica
   assert.ok(result.gates.acp_cad_tool_results.reasons.includes('acp_cad_tool_result_terminal_update_duplicated'))
 })
 
-test('ACP terminal diagnostics expose only sanitized status categories and aggregate counts', () => {
-  const marker = 'private-event-id-or-payload-marker'
-  const projection = summarizeAcpTerminalUpdateDiagnostics([
-    { kind: 'tool_call', tool_call_id: marker, title: 'cad_private_tool_name', status: 'in_progress', rawInput: marker },
-    { kind: 'tool_call_update', tool_call_id: marker, status: 'completed', content: marker, rawOutput: marker },
-    { kind: 'tool_call_update', tool_call_id: marker, status: 'completed', content: marker, rawOutput: marker },
-    { kind: 'tool_call', tool_call_id: 'another-private-id', title: 'cad_other_private_tool', status: 'pending' },
-    { kind: 'tool_call_update', tool_call_id: 'another-private-id', status: 'completed' },
-    { kind: 'tool_call_update', tool_call_id: 'another-private-id', status: 'failed' },
-    { kind: 'tool_call_update', status: 'failed', error: marker },
-    { kind: 'tool_call', title: 'web_search', status: 'pending' },
+test('ACP terminal projection uses per-run full-update HMACs and an exact tool-name allowlist', () => {
+  const marker = 'private-event-id-or-payload-marker', key = randomBytes(32), digestByEvent = new WeakMap()
+  const makeTerminal = (id, rawOutput, at, status = 'completed') => {
+    const update = { sessionUpdate: 'tool_call_update', toolCallId: id, status, rawOutput,
+      content: { image: { data: 'private-image-payload-marker' } }, error: 'private-acp-error-marker', title: 'private-title-marker' }
+    const row = { kind: 'tool_call_update', tool_call_id: id, status, at_ms: at }
+    digestByEvent.set(row, createTerminalUpdateHmac(update, key))
+    return row
+  }
+  const start = (id, title, at) => ({ kind: 'tool_call', tool_call_id: id, title, status: 'in_progress', at_ms: at })
+  const repeatedId = 'private-acp-id-repeated', distinctId = 'private-acp-id-distinct', mixedId = 'private-acp-id-mixed'
+  const identical = { text: marker, nested: { z: 2, a: 1 } }
+  const rows = [
+    start(repeatedId, 'cad_finish_model', 1),
+    makeTerminal(repeatedId, identical, 2),
+    makeTerminal(repeatedId, identical, 3),
+    start(distinctId, 'cad_inspect_references', 4),
+    makeTerminal(distinctId, identical, 5),
+    makeTerminal(distinctId, { text: 'different-private-payload' }, 6),
+    start(mixedId, 'cad_update_feature', 7),
+    makeTerminal(mixedId, { text: marker }, 8),
+    makeTerminal(mixedId, { text: marker }, 9, 'failed'),
+    start('private-web-id', 'web_search', 10),
+    start('private-unknown-id', 'cad_private_tool_name', 11),
+    { kind: 'tool_call_update', status: 'failed', content: marker, error: marker },
+  ]
+  const hmacA = createTerminalUpdateHmac({ b: 2, a: 1 }, key)
+  const hmacB = createTerminalUpdateHmac({ a: 1, b: 2 }, key)
+  assert.equal(hmacA, hmacB)
+  assert.notEqual(hmacA, createTerminalUpdateHmac({ a: 1, b: 2 }, randomBytes(32)))
+  const projection = summarizeAcpTerminalUpdateDiagnostics(rows, { terminalUpdateHmacByEvent: digestByEvent })
+  assert.equal(projection.schema, 'acp_terminal_update_projection_v2')
+  assert.deepEqual(projection.call_group_terminal_distribution, [
+    { tool_name: 'cad_finish_model', terminal_category: 'repeated_same_status_identical_update', count: 1 },
+    { tool_name: 'cad_inspect_references', terminal_category: 'repeated_same_status_distinct_updates', count: 1 },
+    { tool_name: 'cad_update_feature', terminal_category: 'repeated_mixed_terminal_statuses', count: 1 },
+    { tool_name: 'unknown', terminal_category: 'no_terminal', count: 1 },
+    { tool_name: 'web_search', terminal_category: 'no_terminal', count: 1 },
   ])
-  assert.deepEqual(projection.call_group_status_sequences, [
-    { tool_type: 'cad', sequence_category: 'conflicting_terminal_statuses', count: 1 },
-    { tool_type: 'cad', sequence_category: 'repeated_same_terminal_status', count: 1 },
+  assert.deepEqual(projection.call_group_terminal_status_counts, [
+    { tool_name: 'cad_finish_model', terminal_status: 'completed', count: 1 },
+    { tool_name: 'cad_inspect_references', terminal_status: 'completed', count: 1 },
+    { tool_name: 'cad_update_feature', terminal_status: 'mixed', count: 1 },
+    { tool_name: 'unknown', terminal_status: 'none', count: 1 },
+    { tool_name: 'web_search', terminal_status: 'none', count: 1 },
   ])
-  assert.deepEqual(projection.terminal_count_distribution, { '0': 0, '1': 0, '2': 2, '3_plus': 0 })
-  assert.equal(projection.same_sanitized_terminal_summary_pair_count, 1)
-  assert.equal(projection.different_sanitized_terminal_summary_pair_count, 1)
-  assert.equal(projection.missing_tool_call_id_event_count, 2)
+  assert.equal(projection.same_terminal_event_pair_count, 1)
+  assert.equal(projection.different_terminal_event_pair_count, 2)
+  assert.equal(projection.missing_tool_call_id_event_count, 1)
+  assert.ok(projection.tool_status_counts.some(row => row.tool_name === 'cad_finish_model'
+    && row.kind === 'update' && row.status === 'completed' && row.count === 2))
+  assert.ok(projection.tool_status_counts.some(row => row.tool_name === 'unknown'
+    && row.kind === 'start' && row.status === 'in_progress' && row.count === 1))
   const serialized = JSON.stringify(projection)
-  for (const secret of [marker, 'another-private-id', 'cad_private_tool_name', 'cad_other_private_tool']) {
+  for (const secret of [marker, 'different-private-payload', repeatedId, distinctId, mixedId,
+    'private-web-id', 'private-unknown-id', 'cad_private_tool_name', 'private-image-payload-marker',
+    'private-acp-error-marker', 'private-title-marker', hmacA, key.toString('hex')]) {
     assert.equal(serialized.includes(secret), false)
   }
-  assert.equal(projection.schema, 'acp_terminal_update_projection_v1')
-  assert.ok(projection.tool_status_update_counts.some(row => row.tool_type === 'cad'
-    && row.kind === 'update' && row.status === 'failed' && row.count === 1))
-  assert.ok(projection.tool_status_update_counts.some(row => row.tool_type === 'unknown'
-    && row.kind === 'update' && row.status === 'failed' && row.count === 1))
-  assert.ok(projection.tool_status_update_counts.some(row => row.tool_type === 'cad'
-    && row.kind === 'update' && row.status === 'completed' && row.count === 3))
+})
+
+test('Cordis binding projection reports exact static reason counts and never leaks identities or bodies', () => {
+  const input = fixture()
+  const projection = summarizeCordisBindingDiagnostics(input)
+  assert.deepEqual(projection, { schema: 'cordis_binding_projection_v1', counts: [
+    { tool_name: 'cad_finish_model', stage: 'acp_to_bridge', outcome: 'matched', count: 1 },
+    { tool_name: 'cad_finish_model', stage: 'bridge_to_audit', outcome: 'matched', count: 1 },
+  ] })
+  const failed = fixture()
+  failed.toolBridgeCalls[0].success = false
+  failed.toolBridgeCalls[0].error = 'private-error-body-marker'
+  failed.nativeAudit[0].error = 'private-audit-marker'
+  failed.toolBridgeCalls[0].arguments_sha256_24 = 'd'.repeat(24)
+  const rejected = summarizeCordisBindingDiagnostics(failed)
+  assert.ok(rejected.counts.some(row => row.tool_name === 'cad_finish_model'
+    && row.stage === 'bridge_to_audit' && row.outcome === 'bridge_execution_rejected' && row.count === 1))
+  const hidden = fixture()
+  hidden.toolBridgeCalls[0].tool = 'cad_private_tool_name'
+  hidden.toolEvents[0].title = 'cad_private_tool_name'
+  hidden.nativeAudit[0].tool = 'cad_private_tool_name'
+  hidden.toolBridgeCalls[0].error = 'private-error-body-marker'
+  const hiddenProjection = summarizeCordisBindingDiagnostics(hidden)
+  const serialized = JSON.stringify(hiddenProjection)
+  for (const secret of ['cad_private_tool_name', 'private-error-body-marker', '11111111-1111-4111-8111-111111111111',
+    'acp-call', hidden.toolBridgeCalls[0].arguments_sha256_24]) assert.equal(serialized.includes(secret), false)
+  assert.ok(hiddenProjection.counts.every(row => ['matched', 'bridge_call_missing', 'acp_call_missing', 'tool_name_not_allowlisted',
+    'correlation_fingerprint_missing', 'invocation_count_mismatch', 'identity_pairing_ambiguous', 'acp_identity_missing',
+    'run_scope_mismatch', 'bridge_call_id_missing', 'bridge_scope_rejected', 'bridge_time_invalid',
+    'bridge_execution_rejected', 'schema_missing', 'registration_missing', 'native_audit_missing',
+    'native_audit_tool_mismatch', 'native_audit_out_of_run', 'native_audit_rejected'].includes(row.outcome)))
+})
+
+test('Cordis binding reasons distinguish missing ACP/audit rows from explicit rejection', () => {
+  const outcome = (projection, stage, code) => projection.counts.find(row => row.stage === stage && row.outcome === code)?.count || 0
+  const noAcp = fixture()
+  noAcp.toolEvents = []
+  assert.equal(outcome(summarizeCordisBindingDiagnostics(noAcp), 'acp_to_bridge', 'acp_call_missing'), 1)
+  const noAudit = fixture()
+  noAudit.nativeAudit = []
+  assert.equal(outcome(summarizeCordisBindingDiagnostics(noAudit), 'bridge_to_audit', 'native_audit_missing'), 1)
+  const auditRejected = fixture()
+  auditRejected.nativeAudit[0].success = false
+  assert.equal(outcome(summarizeCordisBindingDiagnostics(auditRejected), 'bridge_to_audit', 'native_audit_rejected'), 1)
+  const foreignScope = fixture()
+  foreignScope.toolBridgeCalls[0].session_id = 'foreign-session-marker'
+  const scopeProjection = summarizeCordisBindingDiagnostics(foreignScope)
+  assert.equal(outcome(scopeProjection, 'acp_to_bridge', 'run_scope_mismatch'), 1)
+  assert.equal(outcome(scopeProjection, 'bridge_to_audit', 'bridge_scope_rejected'), 1)
+  assert.equal(JSON.stringify(scopeProjection).includes('foreign-session-marker'), false)
 })
 
 const negativeFixtures = [

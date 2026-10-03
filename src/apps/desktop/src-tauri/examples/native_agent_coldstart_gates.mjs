@@ -1,5 +1,5 @@
 import { createServer, createConnection } from 'node:net'
-import { createHash } from 'node:crypto'
+import { createHash, createHmac } from 'node:crypto'
 import { readFileSync, realpathSync, statSync } from 'node:fs'
 import { resolve, relative, isAbsolute } from 'node:path'
 import { isDeepStrictEqual } from 'node:util'
@@ -10,12 +10,43 @@ const nonempty = value => typeof value === 'string' && value.length > 0
 const digest = value => typeof value === 'string' && /^[a-f0-9]{64}$/.test(value)
 
 const acpStatusCategory = value => ['pending', 'in_progress', 'completed', 'failed'].includes(value) ? value : 'other'
-const acpToolCategory = value => typeof value === 'string' && value.startsWith('cad_') ? 'cad'
-  : typeof value === 'string' && value.length ? 'non_cad' : 'unknown'
+export const COLDSTART_TOOL_NAME_ALLOWLIST = Object.freeze([
+  'cad_add_face_recess', 'cad_add_feature', 'cad_add_hole_array', 'cad_apply_recipe',
+  'cad_attach_external_fact_evidence', 'cad_create_model', 'cad_finish_model', 'cad_get_feature_spec',
+  'cad_get_reference_image', 'cad_get_state', 'cad_inspect_references', 'cad_preview_model',
+  'cad_record_visual_review', 'cad_remove_feature', 'cad_require_external_fact', 'cad_restore_best_candidate',
+  'cad_restore_partial_candidate', 'cad_review_reference_similarity', 'cad_search_knowledge',
+  'cad_search_recipes', 'cad_set_construction_milestone', 'cad_update_feature', 'cad_validate_model',
+  'web_open_result', 'web_search',
+])
+const coldstartToolNames = new Set(COLDSTART_TOOL_NAME_ALLOWLIST)
+const safeToolName = value => coldstartToolNames.has(value) ? value : 'unknown'
+const bindingOutcomes = Object.freeze({
+  acp_to_bridge: Object.freeze(['matched', 'bridge_call_missing', 'acp_call_missing', 'tool_name_not_allowlisted',
+    'correlation_fingerprint_missing', 'invocation_count_mismatch', 'identity_pairing_ambiguous',
+    'acp_identity_missing', 'run_scope_mismatch']),
+  bridge_to_audit: Object.freeze(['matched', 'tool_name_not_allowlisted', 'bridge_call_id_missing',
+    'bridge_scope_rejected', 'bridge_time_invalid', 'bridge_execution_rejected', 'schema_missing',
+    'registration_missing', 'native_audit_missing', 'native_audit_tool_mismatch', 'native_audit_out_of_run',
+    'native_audit_rejected']),
+})
+
+const stableJson = value => {
+  if (value === null || typeof value !== 'object') return JSON.stringify(value) ?? 'null'
+  if (Array.isArray(value)) return `[${value.map(item => stableJson(item)).join(',')}]`
+  const entries = Object.keys(value).sort().filter(key => value[key] !== undefined)
+  return `{${entries.map(key => `${JSON.stringify(key)}:${stableJson(value[key])}`).join(',')}}`
+}
+
+// HMACs exist only in memory for one run. Callers must never persist the
+// returned value; it is used only to compare terminal ACP update equality.
+export function createTerminalUpdateHmac(update, key) {
+  return createHmac('sha256', key).update(stableJson(update)).digest('hex')
+}
 
 // Return an allowlisted count-only projection. Call IDs are used transiently
 // for grouping and are never included in the returned diagnostic.
-export function summarizeAcpTerminalUpdateDiagnostics(toolEvents = []) {
+export function summarizeAcpTerminalUpdateDiagnostics(toolEvents = [], { terminalUpdateHmacByEvent = new WeakMap() } = {}) {
   const groups = new Map()
   let missingIdentityEventCount = 0
   const statusCounts = new Map()
@@ -26,70 +57,189 @@ export function summarizeAcpTerminalUpdateDiagnostics(toolEvents = []) {
     const callId = nonempty(event.tool_call_id) ? event.tool_call_id : null
     const group = callId ? groups.get(callId) : null
     const status = acpStatusCategory(event.status)
-    const titleCategory = acpToolCategory(event.title)
-    const toolCategory = titleCategory !== 'unknown' ? titleCategory : group?.tool_type || 'unknown'
-    const countKey = `${toolCategory}\u0000${isStart ? 'start' : 'update'}\u0000${status}`
+    const eventToolName = event.title ? safeToolName(event.title) : 'unknown'
+    const toolName = eventToolName !== 'unknown' ? eventToolName : group?.tool_name || 'unknown'
+    const countKey = `${toolName}\u0000${isStart ? 'start' : 'update'}\u0000${status}`
     statusCounts.set(countKey, (statusCounts.get(countKey) || 0) + 1)
     const terminal = isUpdate && ['completed', 'failed'].includes(status)
     if (!callId) {
       missingIdentityEventCount += 1
       continue
     }
-    const currentGroup = group || { tool_type: 'unknown', statuses: [], terminal_summaries: [] }
-    if (titleCategory !== 'unknown') currentGroup.tool_type = titleCategory
-    currentGroup.statuses.push({ kind: isStart ? 'start' : 'update', status })
-    if (terminal) currentGroup.terminal_summaries.push({ status })
+    const currentGroup = group || { tool_name: 'unknown', terminal_summaries: [] }
+    if (eventToolName !== 'unknown') currentGroup.tool_name = eventToolName
+    if (terminal) currentGroup.terminal_summaries.push({ status, hmac: terminalUpdateHmacByEvent.get(event) || null })
     groups.set(callId, currentGroup)
   }
 
-  const countRows = [...statusCounts.entries()].map(([key, count]) => {
-    const [tool_type, kind, status] = key.split('\u0000')
-    return { tool_type, kind, status, count }
-  }).sort((a, b) => a.tool_type.localeCompare(b.tool_type) || a.kind.localeCompare(b.kind) || a.status.localeCompare(b.status))
-  const sequenceCounts = new Map(), terminalCountDistribution = { '0': 0, '1': 0, '2': 0, '3_plus': 0 }
-  let sameTerminalSummaryPairCount = 0, differentTerminalSummaryPairCount = 0
+  const toolStatusCounts = [...statusCounts.entries()].map(([key, count]) => {
+    const [tool_name, kind, status] = key.split('\u0000')
+    return { tool_name, kind, status, count }
+  }).sort((a, b) => a.tool_name.localeCompare(b.tool_name) || a.kind.localeCompare(b.kind) || a.status.localeCompare(b.status))
+  const groupCounts = new Map(), terminalStatusCounts = new Map()
+  let sameTerminalEventPairCount = 0, differentTerminalEventPairCount = 0, unavailableHmacEventCount = 0
   for (const group of groups.values()) {
     const terminal = group.terminal_summaries
-    const terminalCountBucket = terminal.length >= 3 ? '3_plus' : String(terminal.length)
-    terminalCountDistribution[terminalCountBucket] += 1
-    let sequence_category = 'status_only_other'
-    const statuses = group.statuses.map(item => item.status)
-    const terminalStatuses = terminal.map(item => item.status)
-    if (!terminal.length) sequence_category = statuses.includes('in_progress') || statuses.includes('pending')
-      ? 'progress_without_terminal' : 'no_terminal_status'
-    else if (new Set(terminalStatuses).size > 1) sequence_category = 'conflicting_terminal_statuses'
-    else if (terminal.length > 1) sequence_category = 'repeated_same_terminal_status'
-    else {
-      const terminalIndex = statuses.findIndex(status => ['completed', 'failed'].includes(status))
-      const progressBeforeTerminal = statuses.slice(0, terminalIndex).some(status => ['pending', 'in_progress'].includes(status))
-      const updateAfterTerminal = statuses.slice(terminalIndex + 1).length > 0
-      if (updateAfterTerminal) sequence_category = 'update_after_terminal'
-      else if (terminalStatuses[0] === 'completed') sequence_category = progressBeforeTerminal ? 'progress_then_completed' : 'completed_without_progress'
-      else sequence_category = progressBeforeTerminal ? 'progress_then_failed' : 'failed_without_progress'
+    const statuses = terminal.map(item => item.status)
+    const terminal_status = terminal.length === 0 ? 'none'
+      : new Set(statuses).size > 1 ? 'mixed' : statuses[0]
+    const statusKey = `${group.tool_name}\u0000${terminal_status}`
+    terminalStatusCounts.set(statusKey, (terminalStatusCounts.get(statusKey) || 0) + 1)
+    let terminal_category = 'no_terminal'
+    if (terminal.length === 1) terminal_category = statuses[0] === 'completed' ? 'completed_once' : 'failed_once'
+    else if (terminal.length > 1 && new Set(statuses).size > 1) terminal_category = 'repeated_mixed_terminal_statuses'
+    else if (terminal.length > 1) {
+      const hmacs = terminal.map(item => item.hmac)
+      if (hmacs.some(value => !value)) terminal_category = 'repeated_same_status_digest_unavailable'
+      else if (new Set(hmacs).size === 1) terminal_category = 'repeated_same_status_identical_update'
+      else terminal_category = 'repeated_same_status_distinct_updates'
     }
-    const key = `${group.tool_type}\u0000${sequence_category}`
-    sequenceCounts.set(key, (sequenceCounts.get(key) || 0) + 1)
-    for (let left = 0; left < terminal.length; left += 1) {
-      for (let right = left + 1; right < terminal.length; right += 1) {
-        if (terminal[left].status === terminal[right].status) {
-          sameTerminalSummaryPairCount += 1
-        } else differentTerminalSummaryPairCount += 1
+    const key = `${group.tool_name}\u0000${terminal_category}`
+    groupCounts.set(key, (groupCounts.get(key) || 0) + 1)
+    const hmacs = terminal.map(item => item.hmac)
+    unavailableHmacEventCount += hmacs.filter(value => !value).length
+    for (let left = 0; left < hmacs.length; left += 1) {
+      for (let right = left + 1; right < hmacs.length; right += 1) {
+        if (!hmacs[left] || !hmacs[right]) continue
+        if (hmacs[left] === hmacs[right]) sameTerminalEventPairCount += 1
+        else differentTerminalEventPairCount += 1
       }
     }
   }
-  const callGroupStatusSequences = [...sequenceCounts.entries()].map(([key, count]) => {
-    const [tool_type, sequence_category] = key.split('\u0000')
-    return { tool_type, sequence_category, count }
-  }).sort((a, b) => a.tool_type.localeCompare(b.tool_type) || a.sequence_category.localeCompare(b.sequence_category))
+  const callGroupTerminalDistribution = [...groupCounts.entries()].map(([key, count]) => {
+    const [tool_name, terminal_category] = key.split('\u0000')
+    return { tool_name, terminal_category, count }
+  }).sort((a, b) => a.tool_name.localeCompare(b.tool_name) || a.terminal_category.localeCompare(b.terminal_category))
+  const callGroupTerminalStatusCounts = [...terminalStatusCounts.entries()].map(([key, count]) => {
+    const [tool_name, terminal_status] = key.split('\u0000')
+    return { tool_name, terminal_status, count }
+  }).sort((a, b) => a.tool_name.localeCompare(b.tool_name) || a.terminal_status.localeCompare(b.terminal_status))
   return {
-    schema: 'acp_terminal_update_projection_v1',
-    tool_status_update_counts: countRows,
-    call_group_status_sequences: callGroupStatusSequences,
-    terminal_count_distribution: terminalCountDistribution,
-    same_sanitized_terminal_summary_pair_count: sameTerminalSummaryPairCount,
-    different_sanitized_terminal_summary_pair_count: differentTerminalSummaryPairCount,
+    schema: 'acp_terminal_update_projection_v2',
+    tool_status_counts: toolStatusCounts,
+    call_group_terminal_status_counts: callGroupTerminalStatusCounts,
+    call_group_terminal_distribution: callGroupTerminalDistribution,
+    same_terminal_event_pair_count: sameTerminalEventPairCount,
+    different_terminal_event_pair_count: differentTerminalEventPairCount,
+    terminal_update_hmac_unavailable_event_count: unavailableHmacEventCount,
     missing_tool_call_id_event_count: missingIdentityEventCount,
   }
+}
+
+// Aggregate the ACP -> bridge -> Rust audit relationship without disclosing
+// IDs, argument fingerprints, timestamps or free-form error fields.
+export function summarizeCordisBindingDiagnostics(input = {}) {
+  const { run = {}, registration, schema, toolEvents = [], toolBridgeCalls = [], nativeAudit = [] } = input
+  const counts = new Map()
+  const bump = (toolName, stage, outcome, count = 1) => {
+    const name = safeToolName(toolName)
+    const code = bindingOutcomes[stage].includes(outcome) ? outcome : 'tool_name_not_allowlisted'
+    const key = `${name}\u0000${stage}\u0000${code}`
+    counts.set(key, (counts.get(key) || 0) + count)
+  }
+  const inRun = at => Number.isFinite(at) && at >= run.started_at_ms && at <= run.ended_at_ms
+  const groups = new Map(), missingAcpIdentity = []
+  for (const event of rows(toolEvents)) {
+    if (event.run_id !== run.id || event.session_id !== run.acp_session_id || event.turn_id !== run.turn_id || !inRun(event.at_ms)) continue
+    const start = event.kind === 'tool_call'
+    const terminal = event.kind === 'tool_call_update' && ['completed', 'failed'].includes(event.status)
+    if (!nonempty(event.tool_call_id)) {
+      if ((start && safeToolName(event.title) !== 'unknown') || terminal) missingAcpIdentity.push(event)
+      continue
+    }
+    const previous = groups.get(event.tool_call_id) || { tool: '', starts: 0 }
+    groups.set(event.tool_call_id, {
+      ...previous, tool: event.title || previous.tool,
+      tool_call_id: event.tool_call_id,
+      starts: previous.starts + (start ? 1 : 0),
+      started_at_ms: start ? event.at_ms : previous.started_at_ms,
+      terminal_updates: (previous.terminal_updates || 0) + (terminal ? 1 : 0),
+      terminal_at_ms: terminal ? event.at_ms : previous.terminal_at_ms,
+      arguments_sha256_24: event.arguments_sha256_24 || previous.arguments_sha256_24,
+    })
+  }
+  const acpCalls = [...groups.values()].filter(event => safeToolName(event.tool) !== 'unknown')
+  const keyFor = row => coldstartToolNames.has(row.tool) && /^[a-f0-9]{24}$/.test(row.arguments_sha256_24 || '')
+    ? `${row.tool}\u0000${row.arguments_sha256_24}` : null
+  const acpByKey = new Map(), bridgeByKey = new Map()
+  for (const event of acpCalls) {
+    const key = keyFor(event)
+    if (key) acpByKey.set(key, [...(acpByKey.get(key) || []), event])
+  }
+  for (const call of rows(toolBridgeCalls)) {
+    const key = keyFor(call)
+    if (key) bridgeByKey.set(key, [...(bridgeByKey.get(key) || []), call])
+  }
+  const pairedKeys = new Set()
+  const validIdentity = (call, event) => event?.starts === 1 && nonempty(event.tool_call_id)
+    && call.run_id === run.id && call.session_id === run.tool_session_id && call.turn_id === run.turn_id
+    && nonempty(call.call_id)
+  for (const key of new Set([...acpByKey.keys(), ...bridgeByKey.keys()])) {
+    const acp = acpByKey.get(key) || [], bridge = bridgeByKey.get(key) || []
+    if (acp.length === 1 && bridge.length === 1) {
+      if (validIdentity(bridge[0], acp[0])) pairedKeys.add(key)
+      continue
+    }
+    if (!acp.length || acp.length !== bridge.length) continue
+    const candidatesByBridge = bridge.map(call => acp.filter(event => validIdentity(call, event)
+      && event.terminal_updates === 1 && Number.isFinite(event.started_at_ms) && Number.isFinite(event.terminal_at_ms)
+      && event.terminal_at_ms >= event.started_at_ms && Number.isFinite(call.started_at_ms)
+      && Number.isFinite(call.completed_at_ms) && call.completed_at_ms >= call.started_at_ms
+      && call.started_at_ms >= event.started_at_ms && call.completed_at_ms <= event.terminal_at_ms))
+    const candidatesByAcp = acp.map(event => candidatesByBridge.flatMap((candidateRows, index) => candidateRows.includes(event) ? [index] : []))
+    if (!candidatesByBridge.some(candidateRows => candidateRows.length !== 1)
+      && !candidatesByAcp.some(candidateRows => candidateRows.length !== 1)) pairedKeys.add(key)
+  }
+
+  for (const call of rows(toolBridgeCalls)) {
+    const name = safeToolName(call.tool), key = keyFor(call), acp = key ? acpByKey.get(key) || [] : []
+    let outcome
+    if (name === 'unknown') outcome = 'tool_name_not_allowlisted'
+    else if (!key) outcome = 'correlation_fingerprint_missing'
+    else if (!acp.length) outcome = 'acp_call_missing'
+    else if (acp.length !== (bridgeByKey.get(key) || []).length) outcome = 'invocation_count_mismatch'
+    else if (call.run_id !== run.id || call.session_id !== run.tool_session_id || call.turn_id !== run.turn_id) outcome = 'run_scope_mismatch'
+    else if (!acp.some(event => validIdentity(call, event))) outcome = 'acp_identity_missing'
+    else if (!pairedKeys.has(key)) outcome = 'identity_pairing_ambiguous'
+    else outcome = 'matched'
+    bump(name, 'acp_to_bridge', outcome)
+  }
+  for (const [key, acp] of acpByKey) {
+    const bridgeCount = (bridgeByKey.get(key) || []).length
+    if (bridgeCount < acp.length) bump(acp[0].tool, 'acp_to_bridge', 'bridge_call_missing', acp.length - bridgeCount)
+  }
+  for (const event of missingAcpIdentity) bump(event.title, 'acp_to_bridge', 'acp_identity_missing')
+  for (const event of acpCalls) if (!keyFor(event)) bump(event.tool, 'acp_to_bridge', 'correlation_fingerprint_missing')
+
+  const schemaNames = new Set(rows(schema?.tools).map(row => row.name))
+  const registeredNames = new Set(rows(registration?.registeredToolNames))
+  for (const call of rows(toolBridgeCalls)) {
+    const name = safeToolName(call.tool)
+    let outcome = 'matched'
+    const idRows = nonempty(call.call_id) ? rows(nativeAudit).filter(row => row.call_id === call.call_id) : []
+    const toolRows = idRows.filter(row => row.tool === call.tool)
+    const timedRows = toolRows.filter(row => Number.isFinite(row.at)
+      && row.at >= Math.floor(run.started_at_ms / 1000) && row.at <= Math.ceil(run.ended_at_ms / 1000))
+    if (name === 'unknown') outcome = 'tool_name_not_allowlisted'
+    else if (!nonempty(call.call_id)) outcome = 'bridge_call_id_missing'
+    else if (call.authenticated_scope !== true || call.run_id !== run.id || call.session_id !== run.tool_session_id || call.turn_id !== run.turn_id) outcome = 'bridge_scope_rejected'
+    else if (!Number.isFinite(call.started_at_ms) || !Number.isFinite(call.completed_at_ms)
+      || call.completed_at_ms < call.started_at_ms || !inRun(call.started_at_ms) || !inRun(call.completed_at_ms)) outcome = 'bridge_time_invalid'
+    else if (call.success !== true) outcome = 'bridge_execution_rejected'
+    else if (!schemaNames.has(call.tool)) outcome = 'schema_missing'
+    else if (!registeredNames.has(call.tool)) outcome = 'registration_missing'
+    else if (!idRows.length) outcome = 'native_audit_missing'
+    else if (!toolRows.length) outcome = 'native_audit_tool_mismatch'
+    else if (!timedRows.length) outcome = 'native_audit_out_of_run'
+    else if (!timedRows.some(row => row.success === true)) outcome = 'native_audit_rejected'
+    bump(name, 'bridge_to_audit', outcome)
+  }
+  const countRows = [...counts.entries()].map(([key, count]) => {
+    const [tool_name, stage, outcome] = key.split('\u0000')
+    return { tool_name, stage, outcome, count }
+  }).sort((left, right) => left.tool_name.localeCompare(right.tool_name)
+    || left.stage.localeCompare(right.stage) || left.outcome.localeCompare(right.outcome))
+  return { schema: 'cordis_binding_projection_v1', counts: countRows }
 }
 
 // Persist only a short digest of tool arguments so ACP invocation events can
