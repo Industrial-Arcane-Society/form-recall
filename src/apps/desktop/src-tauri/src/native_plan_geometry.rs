@@ -45,6 +45,7 @@ pub fn supports_native_kind(kind: &str) -> bool {
             | "camshaft"
             | "crankshaft"
             | "timing_pulley"
+            | "vbelt_pulley"
     )
 }
 
@@ -107,6 +108,7 @@ pub fn preflight(plan: &Value) -> Result<Value, String> {
             ],
             "cross_joint" => &["span", "journal_d"],
             "rotor" => &["radius", "n", "height", "bore_d"],
+            "vbelt_pulley" => &["pitch_d", "grooves", "height", "groove_type"],
             "camshaft" => &["length", "journal_d", "base_d", "lift", "lobes", "lobe_deg"],
             "crankshaft" => &["length", "main_d", "pin_d", "stroke", "throws"],
             "timing_pulley" => &["pitch_d", "teeth", "height", "tooth_type"],
@@ -176,6 +178,10 @@ pub fn preflight(plan: &Value) -> Result<Value, String> {
         if kind == "rotor" {
             let normalized = normalized_feature(feature, plan)?;
             crate::native_rotor::preflight(&normalized["parameters"])?;
+        }
+        if kind == "vbelt_pulley" {
+            let normalized = normalized_feature(feature, plan)?;
+            crate::native_vbelt_pulley::preflight(&normalized["parameters"])?;
         }
         if kind == "pattern" {
             let count = p
@@ -253,6 +259,10 @@ pub fn build(plan: &Value, manifest: &Path, cancelled: &AtomicBool) -> Result<Bu
             (tools, vec![], Some(support))
         } else if normalized["kind"] == "rotor" {
             let (tools, support) = crate::native_rotor::build(&kernel, &normalized["parameters"])?;
+            (tools, vec![], Some(support))
+        } else if normalized["kind"] == "vbelt_pulley" {
+            let (tools, support) =
+                crate::native_vbelt_pulley::build(&kernel, &normalized["parameters"])?;
             (tools, vec![], Some(support))
         } else if normalized["kind"] == "piston" {
             let (tools, support) =
@@ -1075,6 +1085,9 @@ fn normalized_feature(feature: &Value, plan: &Value) -> Result<Value, String> {
             "corner",
             "margin",
             "diameter",
+            "pitch_d",
+            "outer_d",
+            "groove_depth",
             "depth",
             "pcd",
             "x",
@@ -1345,6 +1358,37 @@ mod tests {
             "{out_of_range}"
         );
         assert!(out_of_range.contains("6..=10000"), "{out_of_range}");
+    }
+
+    #[test]
+    fn vbelt_pulley_native_preflight_accepts_supported_profile_and_rejects_missing_or_narrow_width() {
+        let make_plan = |parameters| {
+            crate::cad_plan::create(
+                "V belt pulley preflight fixture",
+                json!({"id":"pulley-1","kind":"vbelt_pulley","operation":"add",
+                    "parameters":parameters,
+                    "sources":{"pitch_d":{"type":"user"},"grooves":{"type":"user"},
+                        "height":{"type":"user"},"groove_type":{"type":"user"},
+                        "bore_d":{"type":"user"}}}),
+                "fixture",
+                None,
+            )
+        };
+        assert!(supports_native_kind("vbelt_pulley"));
+        let good = make_plan(
+            json!({"pitch_d":80,"grooves":3,"height":55,"groove_type":"A","bore_d":12}),
+        );
+        assert_eq!(preflight(&good).unwrap()["state"], "valid");
+        let missing = make_plan(json!({"pitch_d":80,"grooves":3,"height":55}));
+        assert!(preflight(&missing).unwrap_err().contains("groove_type"));
+        let narrow =
+            make_plan(json!({"pitch_d":80,"grooves":3,"height":40,"groove_type":"A"}));
+        assert!(preflight(&narrow).unwrap_err().contains("最小轮宽"));
+        let mut centimeters = make_plan(json!({"pitch_d":24,"grooves":3,"height":70,
+            "groove_type":"B","bore_d":2,"outer_d":24.7}));
+        centimeters["units"]["length"] = json!("cm");
+        centimeters["features"][0]["sources"]["outer_d"] = json!({"type":"user"});
+        assert_eq!(preflight(&centimeters).unwrap()["state"], "valid");
     }
 
     #[test]

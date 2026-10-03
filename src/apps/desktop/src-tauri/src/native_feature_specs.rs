@@ -36,13 +36,19 @@ pub fn feature_spec(kind: &str) -> Result<Value, String> {
 /// below describe the additional gates applied by preflight/build.
 fn native_execution_contract(kind: &str) -> Value {
     let implemented = crate::native_plan_geometry::supports_native_kind(kind);
-    let approximate = matches!(kind, "gear" | "helical_gear" | "bevel_gear" | "socket_head_bolt" | "conrod" | "cross_joint" | "rotor" | "crankshaft" | "timing_pulley");
+    let approximate = matches!(kind, "gear" | "helical_gear" | "bevel_gear" | "socket_head_bolt" | "conrod" | "cross_joint" | "rotor" | "crankshaft" | "timing_pulley" | "vbelt_pulley");
     let (supported_variants, unsupported_variants, parameter_limits, note) = match kind {
         "rotor" => (
             json!(["global Z extrusion centered on center", "explicit bore_d=0 or enclosed circular bore"]),
             json!(["axis other than Z", "base convention", "bore intersecting discrete outer profile"]),
             json!({"radius":">0 explicit", "height":">0 explicit", "bore_d":">=0 explicit; radius smaller than actual polygon clearance", "n":"explicit integer 12..=4096"}),
             "Approximate legacy rounded-triangle radial profile (fixed flank=0.82, cosine exponent=6), polygonal OCCT prism and analytic central bore. Not an exact Reuleaux curve or production engine rotor.",
+        ),
+        "vbelt_pulley" => (
+            json!(["standard Y/Z/A/B/C/D/E groove profile", "single global-Z analytic OCCT revolve", "explicit bore or legacy default bore", "width at or above legacy simple-profile minimum"]),
+            json!(["outer_d inconsistent with pitch_d and standard groove", "groove_depth inconsistent with standard ha+hf", "oversized bore requiring legacy silent clamp", "large spoke-style pulley", "axis other than Z", "base=true", "standard=false legacy cylindrical-groove approximation"]),
+            json!({"pitch_d":">0 explicit", "grooves":"integer 1..=64", "height":">= legacy profile minimum width", "groove_type":"required Y/Z/A/B/C/D/E; SPZ/SPA/SPB/SPC aliases", "bore_d":"0 selects legacy default; positive and < 0.92*pitch_d", "outer_d":"must equal pitch_d+2*ha", "groove_depth":"must equal standard ha+hf", "center":"finite global XYZ", "axis":"Z only", "segments":"accepted by legacy schema; no geometric effect on the analytic B-Rep"}),
+            "Native analytic OCCT revolve reproduces the retained std_pulley fallback-table axial profile and strict-width CADPlan path. Groove spacing, web and hub dimensions follow Document formulas. Geometry is approximate to the engineering standard and does not include spokes; CATIA still exports a smooth disk and omits V grooves.",
         ),
         "box" => (json!(["axis=X|Y|Z", "corner=0"]), json!(["corner!=0"]), json!({"length":">0", "width":">0", "height":">0"}), "Analytic OCCT box; nonzero corner is rejected by native preflight."),
         "cylinder" => (json!(["cylinder", "frustum", "axis=X|Y|Z", "base=true|false"]), json!([]), json!({"radius":">0", "radius2":">0 when supplied", "height":">0"}), "Analytic cylinder/frustum; dimensions must be positive."),

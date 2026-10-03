@@ -20,6 +20,7 @@
 - [F3.2 Rust CADPlan Schema 与静态校验](06-roadmap/08-f3-plan-validation.md)
 - [F4.2.4 CADPlan pattern 原生执行](06-roadmap/22-f4-native-pattern-execution.md)
 - [F4.2.5 CADPlan piston 原生执行](06-roadmap/23-f4-native-piston-execution.md)
+- [F4.2.14 CADPlan V 带轮原生执行](06-roadmap/63-f4-native-vbelt-pulley.md)
 - [F6.3 Rust 原生零件目录与示例列表](06-roadmap/55-f6.3-native-parts-catalog.md)
 - [文档目录、索引与链接审查记录](06-roadmap/03-docs-index-audit.md)
 

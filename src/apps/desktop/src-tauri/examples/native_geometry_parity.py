@@ -70,6 +70,21 @@ def main():
         height=12, cone_deg=45, bore_d=0, center=[0, 0, 0], segments=12))
     add("bevel-gear-translated-explicit-bore-angle-clamp", "bevel_gear", dict(teeth=24,
         module=1.5, height=18, cone_deg=90, bore_d=16, center=[12, -7, 5], segments=8))
+    add("vbelt-pulley-standard-a-translated", "vbelt_pulley", dict(pitch_d=80,
+        grooves=3, height=55, groove_type="A", bore_d=12, outer_d=85.5,
+        center=[3, -4, 5]))
+    add("vbelt-pulley-standard-y", "vbelt_pulley", dict(pitch_d=50,
+        grooves=2, height=25, groove_type="Y", bore_d=8, outer_d=53.2,
+        center=[0, 0, 0]))
+    add("vbelt-pulley-standard-b", "vbelt_pulley", dict(pitch_d=150,
+        grooves=3, height=70, groove_type="B", bore_d=20, outer_d=157,
+        center=[12, -7, 5]))
+    add("vbelt-pulley-standard-b-large-mm", "vbelt_pulley", dict(pitch_d=240,
+        grooves=3, height=700, groove_type="B", bore_d=20, outer_d=247,
+        center=[120, -70, 50]))
+    add("vbelt-pulley-standard-b-large-cm", "vbelt_pulley", dict(pitch_d=24,
+        grooves=3, height=70, groove_type="B", bore_d=2, outer_d=24.7,
+        center=[12, -7, 5]), dict(length="cm", angle="rad"))
     add("bevel-gear-cm-rad-scaling", "bevel_gear", dict(teeth=20, module=0.2,
         height=1.2, cone_deg=0.7853981633974483, bore_d=0,
         center=[0, 0, 0], segments=12), dict(length="cm", angle="rad"))
@@ -239,6 +254,7 @@ def main():
     crankshaft_native_volumes = {}
     timing_pulley_native_volumes = {}
     helical_native_results = {}
+    vbelt_native_volumes = {}
 
     records = []
     for name, plan in cases:
@@ -322,6 +338,16 @@ def main():
                            for label, interval in expected_samples.items())):
                 raise AssertionError((name, "cross-joint-geometry-contract", native["bounds_mm"], support))
             cross_joint_native_volumes[name] = native["volume_mm3"]
+        if name.startswith("vbelt-pulley-"):
+            support = native["feature_results"][0]
+            details = support.get("support_details", {})
+            if (native.get("valid") is not True or native.get("closed_solid_count") != 1
+                    or support.get("geometry_support") != "approximate"
+                    or details.get("geometry_support") != "approximate"
+                    or details.get("builder") != "legacy_standard_vbelt_axial_profile_analytic_revolve"
+                    or details.get("axis") != "Z"):
+                raise AssertionError((name, "vbelt-pulley-native-contract", native, support))
+            vbelt_native_volumes[name] = native["volume_mm3"]
         if name == "pattern-circular-four-through-holes":
             holes = native.get("hole_instances", [])
             if (len(holes) != 4 or native.get("hole_measurements_verified") is not True
@@ -474,6 +500,9 @@ def main():
     if abs(bevel_gear_cm_volume - bevel_gear_origin_volume) > 1e-5:
         raise AssertionError(("bevel-gear-unit-volume-invariance", bevel_gear_cm_volume,
                               bevel_gear_origin_volume))
+    if abs(vbelt_native_volumes["vbelt-pulley-standard-b-large-mm"]
+           - vbelt_native_volumes["vbelt-pulley-standard-b-large-cm"]) > 1e-5:
+        raise AssertionError(("vbelt-pulley-cm-volume-invariance", vbelt_native_volumes))
     python_version = "unknown"
     for package in ("cadquery-ocp", "cadquery-ocp-novtk"):
         try:
@@ -585,6 +614,21 @@ def main():
     timing_no_overlap["features"][0]["parameters"]["tooth_type"] = "8M"
     timing_no_overlap["features"][0]["sources"]["tooth_type"] = {"type": "user"}
     negatives.append(("timing-pulley-no-tooth-blank-overlap", timing_no_overlap, "没有材料重叠"))
+
+    vbelt_case = cases[[name for name, _ in cases].index("vbelt-pulley-standard-a-translated")][1]
+    vbelt_narrow = copy.deepcopy(vbelt_case)
+    vbelt_narrow["features"][0]["parameters"]["height"] = 40
+    negatives.append(("vbelt-pulley-width-below-minimum", vbelt_narrow, "最小轮宽"))
+    vbelt_bore = copy.deepcopy(vbelt_case)
+    vbelt_bore["features"][0]["parameters"]["bore_d"] = 80
+    negatives.append(("vbelt-pulley-oversized-bore", vbelt_bore, "不会静默缩小"))
+    vbelt_spokes = copy.deepcopy(vbelt_case)
+    vbelt_spokes["features"][0]["parameters"].update(
+        pitch_d=300, grooves=3, height=140, groove_type="C", bore_d=8, outer_d=309.6)
+    negatives.append(("vbelt-pulley-spoke-variant", vbelt_spokes, "辐条"))
+    vbelt_axis = copy.deepcopy(vbelt_case)
+    vbelt_axis["features"][0]["parameters"]["axis"] = "X"
+    negatives.append(("vbelt-pulley-non-z-axis", vbelt_axis, "unknown_parameter"))
 
     wheel_case_by_name = {name: plan for name, plan in cases}
     wheel_non_z = copy.deepcopy(wheel_case_by_name["spoked-wheel-z-origin"])
@@ -736,6 +780,7 @@ def main():
                    final_brep_holes_measured=True,
                    later_feature_invalidates_stale_bore_measurement=True,
                    timing_pulley_positive_cases=len(timing_pulley_native_volumes),
+                   vbelt_pulley_positive_cases=len(vbelt_native_volumes),
                    timing_pulley_faceted_blank_volume_boundary="analytic-minus-segmented-annulus; each positive case checked against segment formula and <=1% legacy relative delta",
                    python_ocp_version=python_version, rust_occt_version="7.9.3")
     (output / "summary.json").write_text(json.dumps(summary, indent=2), encoding="utf-8")
