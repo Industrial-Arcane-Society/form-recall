@@ -2071,6 +2071,191 @@ mod input_image_tests {
 }
 
 #[cfg(test)]
+mod agent_ipc_integration_tests {
+    use super::*;
+    use crate::agent_host::TestSetup;
+    use serde_json::{Value, json};
+    use std::ffi::OsString;
+    use std::fs;
+    use std::path::{Path, PathBuf};
+    use std::sync::{Arc, Mutex};
+    use std::time::{SystemTime, UNIX_EPOCH};
+
+    struct TestRoot(PathBuf);
+
+    impl TestRoot {
+        fn new() -> Self {
+            let stamp = SystemTime::now()
+                .duration_since(UNIX_EPOCH)
+                .unwrap_or_default()
+                .as_nanos();
+            let path = std::env::temp_dir().join(format!(
+                "aimodeler-agent-ipc-test-{}-{stamp}",
+                std::process::id()
+            ));
+            fs::create_dir_all(&path).expect("create isolated test root");
+            Self(path)
+        }
+    }
+
+    impl Drop for TestRoot {
+        fn drop(&mut self) {
+            let _ = fs::remove_dir_all(&self.0);
+        }
+    }
+
+    #[test]
+    fn send_turn_routes_fake_acp_updates_and_model_status_through_event_sink() {
+        let scratch = TestRoot::new();
+        let app_data = scratch.0.join("app-data");
+        fs::create_dir_all(&app_data).expect("create isolated app data directory");
+
+        let root = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+            .join("../../../legacy")
+            .canonicalize()
+            .expect("resolve checkout legacy resources");
+        let fake_runtime_root = scratch.0.join("fake-runtime");
+        let fake_cli = fake_runtime_root.join("dsh/lib/bin.js");
+        let fake_node_modules = fake_runtime_root.join("dsh/node_modules");
+        fs::create_dir_all(fake_cli.parent().unwrap()).expect("create fake CLI parent");
+        fs::create_dir_all(&fake_node_modules).expect("create fake DSH modules directory");
+        fs::create_dir_all(fake_runtime_root.join("node")).expect("create fake node directory");
+        fs::write(
+            &fake_cli,
+            "fixture ACP process is supplied by the Rust test harness\n",
+        )
+        .expect("create fake CLI marker");
+        let runtime = crate::dsh_runtime::RuntimePaths {
+            root: fake_runtime_root.clone(),
+            node: std::env::current_exe().expect("resolve test executable"),
+            dsh_cli: fake_cli,
+            home: scratch.0.join("dsh-home"),
+        };
+        let release_file = scratch.0.join("release-fake-acp.prompt");
+        let host_state = agent_host::AgentHostState::default();
+
+        let plan = cad_plan::create(
+            "IPC fixture model",
+            json!({"id":"fixture-body","kind":"box","operation":"add","parameters":{"length":20,"width":10,"height":5},"sources":{
+                "length":{"type":"user","evidence":"20 mm"},"width":{"type":"user","evidence":"10 mm"},"height":{"type":"user","evidence":"5 mm"}}}),
+            "fixture prompt",
+            None,
+        );
+        let cad_state = json!({"plan":plan,"revision":1,"actions":[],"output_paths":{}});
+        let candidate = native_active_model::candidate_from_cad_state(
+            "agent",
+            &cad_state,
+            &json!({"schema_version":1,"images":[]}),
+            &json!({"schema_version":1,"turns":[]}),
+        )
+        .expect("make isolated candidate model");
+        let active_model_root = native_active_model::root_from_data_dir(&app_data);
+        let captured_events = Arc::new(Mutex::new(Vec::<Value>::new()));
+        let sink_events = Arc::clone(&captured_events);
+        let sink_candidate = candidate;
+        let sink_cad_state = cad_state;
+        let sink_active_model_root = active_model_root;
+        let sink_app_data = app_data.clone();
+        let sink_release_file = release_file.clone();
+
+        let result = agent_host::send_turn_with_fixture(
+            &host_state,
+            TestSetup {
+                root,
+                data_dir: app_data.clone(),
+                runtime,
+                dsh_args: vec![
+                    OsString::from("--exact"),
+                    OsString::from("acp::tests::fake_acp_child_process"),
+                ],
+                dsh_env: vec![
+                    (OsString::from("AIMODELER_ACP_TEST_FIXTURE"), OsString::from("1")),
+                    (
+                        OsString::from("AIMODELER_ACP_TEST_RELEASE_FILE"),
+                        release_file.into_os_string(),
+                    ),
+                ],
+            },
+            "headless-agent-ipc".into(),
+            "fixture prompt reaches ACP".into(),
+            Vec::new(),
+            json!({"base_url":"https://api.deepseek.com/responses","model":"deepseek-flash","api_key":"fixture","reasoning_effort":"none"}),
+            false,
+            move |value| {
+                if value["event"] == "agent.message"
+                    && value["request_id"] == "headless-agent-ipc"
+                    && !sink_release_file.exists()
+                {
+                    let committed = native_active_model::commit(
+                        &sink_active_model_root,
+                        0,
+                        &sink_candidate,
+                    )
+                    .expect("publish fixture CAD transaction");
+                    let mut committed_cad_state = sink_cad_state.clone();
+                    committed_cad_state["active_model_generation"] = committed["generation"].clone();
+                    let session_meta: Value = serde_json::from_slice(
+                        &fs::read(sink_app_data.join("agent-host/current-session.json"))
+                            .expect("Agent Host must persist the active session path"),
+                    )
+                    .expect("session metadata must be valid JSON");
+                    let session_dir = Path::new(
+                        session_meta["cwd"].as_str().expect("session metadata has workspace path"),
+                    );
+                    fs::write(
+                        session_dir.join("cad-state.json"),
+                        serde_json::to_vec(&committed_cad_state).expect("serialize fixture CAD state"),
+                    )
+                    .expect("publish session CAD state");
+                    fs::write(&sink_release_file, b"ready").expect("release fake ACP child");
+                }
+                sink_events.lock().expect("event sink lock").push(value);
+            },
+        )
+        .expect("Agent Host turn should resolve against the fake ACP process");
+
+        let events = captured_events.lock().expect("event sink lock").clone();
+        assert_eq!(result["turn_status"], "completed");
+        assert_eq!(result["reply"], "fixture prompt reaches ACP");
+        assert!(events.iter().any(|event| {
+            event["event"] == "agent.message"
+                && event["request_id"] == "headless-agent-ipc"
+                && event["data"]["text"] == "fixture prompt reaches ACP"
+        }));
+        assert!(events.iter().any(|event| {
+            event["event"] == "agent.thought" && event["data"]["text"] == "fixture thought"
+        }));
+        assert!(events.iter().any(|event| {
+            event["event"] == "agent.tool"
+                && event["data"]["tool_call_id"] == "fixture-tool-1"
+                && event["data"]["status"] == "running"
+        }));
+        assert!(events.iter().any(|event| {
+            event["event"] == "agent.status" && event["data"]["message"] == "DSH 正在处理本轮请求。"
+        }));
+        let model_changed = events
+            .iter()
+            .find(|event| event["event"] == "model.changed")
+            .expect("active-model commit should emit model.changed through the event sink");
+        assert_eq!(model_changed["request_id"], "headless-agent-ipc");
+        assert_eq!(model_changed["data"]["revision"], 1);
+        assert_eq!(model_changed["data"]["name"], "IPC fixture model");
+        let terminal = events
+            .iter()
+            .find(|event| event["event"] == "agent.turn_complete")
+            .expect("turn completion should be emitted through the event sink");
+        assert_eq!(terminal["data"]["turn_status"], "completed");
+        assert_eq!(terminal["data"]["stop_reason"], "end_turn");
+        assert_eq!(terminal["data"]["current_model"]["exists"], true);
+        assert_eq!(terminal["data"]["current_model"]["status"], "candidate");
+        assert_eq!(terminal["data"]["current_model"]["revision"], 1);
+
+        agent_host::shutdown(&host_state);
+        drop(scratch);
+    }
+}
+
+#[cfg(test)]
 mod native_active_model_import_tests {
     use super::legacy_document_to_cadplan;
     use serde_json::json;

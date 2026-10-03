@@ -30,6 +30,25 @@ use std::time::{Duration, SystemTime, UNIX_EPOCH};
 use tauri::AppHandle;
 use tauri::ipc::Channel;
 
+#[derive(Clone)]
+struct EventSink(Arc<dyn Fn(Value) + Send + Sync>);
+
+impl EventSink {
+    fn new(callback: impl Fn(Value) + Send + Sync + 'static) -> Self {
+        Self(Arc::new(callback))
+    }
+
+    fn from_channel(channel: Channel<Value>) -> Self {
+        Self::new(move |value| {
+            let _ = channel.send(value);
+        })
+    }
+
+    fn send(&self, value: Value) {
+        (self.0)(value);
+    }
+}
+
 const AGENT_FOLDER: &str = "agent-host";
 const SESSION_FILE: &str = "current-session.json";
 const REFERENCE_FILE: &str = "reference-images.json";
@@ -46,6 +65,23 @@ const CANCEL_NO_PROGRESS: u8 = 4;
 #[derive(Clone, Default)]
 pub struct AgentHostState {
     inner: Arc<Mutex<HostState>>,
+}
+
+#[cfg(test)]
+#[derive(Clone)]
+pub(crate) struct TestSetup {
+    pub root: PathBuf,
+    pub data_dir: PathBuf,
+    pub runtime: crate::dsh_runtime::RuntimePaths,
+    pub dsh_args: Vec<OsString>,
+    pub dsh_env: Vec<(OsString, OsString)>,
+}
+
+struct SessionSetup {
+    root: PathBuf,
+    runtime: crate::dsh_runtime::RuntimePaths,
+    dsh_args: Vec<OsString>,
+    dsh_env: Vec<(OsString, OsString)>,
 }
 
 #[derive(Default)]
@@ -182,6 +218,79 @@ pub fn send_turn(
     online_enabled: bool,
     on_event: Channel<Value>,
 ) -> Result<Value, String> {
+    let data_dir = super::app_data_dir(&app)?;
+    let setup_data_dir = data_dir.clone();
+    send_turn_core(
+        state,
+        data_dir,
+        || {
+            let root = super::resource_root(&app)?;
+            let runtime = crate::dsh_runtime::resolve(&root, &setup_data_dir)?;
+            Ok(SessionSetup {
+                root,
+                runtime,
+                dsh_args: Vec::new(),
+                dsh_env: Vec::new(),
+            })
+        },
+        request_id,
+        text,
+        image_paths,
+        llm_config,
+        online_enabled,
+        EventSink::from_channel(on_event),
+    )
+}
+
+#[cfg(test)]
+pub(crate) fn send_turn_with_fixture(
+    state: &AgentHostState,
+    setup: TestSetup,
+    request_id: String,
+    text: String,
+    image_paths: Vec<String>,
+    llm_config: Value,
+    online_enabled: bool,
+    on_event: impl Fn(Value) + Send + Sync + 'static,
+) -> Result<Value, String> {
+    let TestSetup {
+        root,
+        data_dir,
+        runtime,
+        dsh_args,
+        dsh_env,
+    } = setup;
+    send_turn_core(
+        state,
+        data_dir,
+        || {
+            Ok(SessionSetup {
+                root,
+                runtime,
+                dsh_args,
+                dsh_env,
+            })
+        },
+        request_id,
+        text,
+        image_paths,
+        llm_config,
+        online_enabled,
+        EventSink::new(on_event),
+    )
+}
+
+fn send_turn_core(
+    state: &AgentHostState,
+    data_dir: PathBuf,
+    setup_session: impl FnOnce() -> Result<SessionSetup, String>,
+    request_id: String,
+    text: String,
+    image_paths: Vec<String>,
+    llm_config: Value,
+    online_enabled: bool,
+    on_event: EventSink,
+) -> Result<Value, String> {
     let text = text.trim().to_owned();
     if text.is_empty() && image_paths.is_empty() {
         return Err("请输入建模描述或添加参考图片。".into());
@@ -196,7 +305,8 @@ pub fn send_turn(
     let fingerprint = session_fingerprint(&provider, &stage_configs, online_enabled);
     let session = get_or_create_session(
         state,
-        &app,
+        &data_dir,
+        setup_session,
         &request_id,
         &provider,
         &perception_provider,
@@ -214,17 +324,16 @@ pub fn send_turn(
     }
     session.cancel_reason.store(CANCEL_NONE, Ordering::Release);
     let _active_reset = ActiveReset(&session.active, &session.cancel_reason);
-    let result = run_turn(
+    run_turn(
         &session,
-        &app,
+        &data_dir,
         &request_id,
         &text,
         &image_paths,
         &provider,
         online_enabled,
         &on_event,
-    );
-    result
+    )
 }
 
 struct ActiveReset<'a>(&'a AtomicBool, &'a AtomicU8);
@@ -346,14 +455,15 @@ pub fn history(app: &AppHandle) -> Result<Value, String> {
 
 fn get_or_create_session(
     state: &AgentHostState,
-    app: &AppHandle,
+    data_dir: &Path,
+    setup_session: impl FnOnce() -> Result<SessionSetup, String>,
     request_id: &str,
     provider: &Provider,
     perception_provider: &Provider,
     review_provider: &Provider,
     fingerprint: &str,
     online_enabled: bool,
-    events: &Channel<Value>,
+    events: &EventSink,
 ) -> Result<Arc<ActiveSession>, String> {
     let mut guard = state
         .inner
@@ -375,8 +485,6 @@ fn get_or_create_session(
         }
     }
 
-    let root = super::resource_root(app)?;
-    let data_dir = super::app_data_dir(app)?;
     let agent_dir = data_dir.join(AGENT_FOLDER);
     let workspace_root = agent_dir.join("workspaces");
     fs::create_dir_all(&workspace_root)
@@ -392,7 +500,12 @@ fn get_or_create_session(
             "message":"模型或连接设置已变化，DSH 会新建会话。此前的消息保留在对话显示中，但不会发送给新模型。"
         })));
     }
-    let runtime = crate::dsh_runtime::resolve(&root, &data_dir)?;
+    let SessionSetup {
+        root,
+        runtime,
+        dsh_args,
+        dsh_env,
+    } = setup_session()?;
     if !runtime.node.is_file() || !runtime.dsh_cli.is_file() {
         return Err("应用私有 DSH Runtime 文件不完整，请重新安装运行时。".into());
     }
@@ -610,10 +723,15 @@ fn get_or_create_session(
     )?;
     fs::create_dir_all(&runtime.home).map_err(|error| format!("无法创建私有 DSH_HOME：{error}"))?;
     let mut command = Command::new(&runtime.node);
+    if dsh_args.is_empty() {
+        command
+            .arg(&runtime.dsh_cli)
+            .args(["--profile", "acp", "--patch"])
+            .arg(&patch_path);
+    } else {
+        command.args(&dsh_args);
+    }
     command
-        .arg(&runtime.dsh_cli)
-        .args(["--profile", "acp", "--patch"])
-        .arg(&patch_path)
         .current_dir(&cwd)
         .envs(tool_environment.iter().map(|(key, value)| (key, value)))
         .env("DSH_HOME", &runtime.home)
@@ -631,6 +749,7 @@ fn get_or_create_session(
         .env("AI_MODELER_TOOL_BRIDGE_ADDR", tool_bridge.address())
         .env("AI_MODELER_TOOL_BRIDGE_TOKEN", tool_bridge.token())
         .env("AI_MODELER_TOOL_SESSION_ID", tool_bridge.session_id());
+    command.envs(dsh_env.iter().cloned());
     let process = Arc::new(AcpProcess::spawn(&mut command)?);
     let initialize_events = process.subscribe()?;
     let initialized = process.request(
@@ -785,17 +904,17 @@ fn get_or_create_session(
 
 fn run_turn(
     session: &Arc<ActiveSession>,
-    app: &AppHandle,
+    data_dir: &Path,
     request_id: &str,
     text: &str,
     paths: &[String],
     provider: &Provider,
     online_enabled: bool,
-    events: &Channel<Value>,
+    events: &EventSink,
 ) -> Result<Value, String> {
     let result = run_turn_inner(
         session,
-        app,
+        data_dir,
         request_id,
         text,
         paths,
@@ -951,16 +1070,15 @@ fn termination_from_cancel(reason: u8) -> Option<(&'static str, &'static str, &'
 
 fn run_turn_inner(
     session: &Arc<ActiveSession>,
-    app: &AppHandle,
+    data_dir: &Path,
     request_id: &str,
     text: &str,
     paths: &[String],
     provider: &Provider,
     online_enabled: bool,
-    events: &Channel<Value>,
+    events: &EventSink,
 ) -> Result<Value, String> {
-    let active_model_root =
-        crate::native_active_model::root_from_data_dir(&super::app_data_dir(app)?);
+    let active_model_root = crate::native_active_model::root_from_data_dir(data_dir);
     let mut last_active_generation = crate::native_active_model::generation(&active_model_root)?;
     let images = persist_images(&session.cwd, paths)?;
     if !images.is_empty() && !session.image_supported {
@@ -1106,7 +1224,6 @@ fn run_turn_inner(
                 );
                 publish_preview(
                     &session.cwd,
-                    app,
                     request_id,
                     events,
                     &mut last_preview_hash,
@@ -1122,7 +1239,6 @@ fn run_turn_inner(
             Err(mpsc::RecvTimeoutError::Timeout) => {
                 publish_preview(
                     &session.cwd,
-                    app,
                     request_id,
                     events,
                     &mut last_preview_hash,
@@ -1195,7 +1311,6 @@ fn run_turn_inner(
         );
         publish_preview(
             &session.cwd,
-            app,
             request_id,
             events,
             &mut last_preview_hash,
@@ -1210,7 +1325,6 @@ fn run_turn_inner(
     }
     publish_preview(
         &session.cwd,
-        app,
         request_id,
         events,
         &mut last_preview_hash,
@@ -1491,7 +1605,7 @@ fn route_update(
     message: &Value,
     session_id: &str,
     request_id: &str,
-    events: &Channel<Value>,
+    events: &EventSink,
     answer: &mut String,
     thought: &mut String,
 ) {
@@ -1542,9 +1656,8 @@ fn route_update(
 
 fn publish_preview(
     cwd: &Path,
-    app: &AppHandle,
     request_id: &str,
-    events: &Channel<Value>,
+    events: &EventSink,
     previous_hash: &mut String,
     force: bool,
 ) {
@@ -1581,13 +1694,12 @@ fn publish_preview(
             "stage":"DSH 工具生成模型预览", "preview_path":target.to_string_lossy(), "sha256":hash
         }),
     );
-    let _ = app;
 }
 
 fn publish_active_model(
     root: &Path,
     request_id: &str,
-    events: &Channel<Value>,
+    events: &EventSink,
     previous_generation: &mut u64,
 ) -> Result<(), String> {
     let Some(active) = crate::native_active_model::load(root)? else {
@@ -1609,8 +1721,8 @@ fn publish_active_model(
     Ok(())
 }
 
-fn emit(channel: &Channel<Value>, name: &str, request_id: &str, data: Value) {
-    let _ = channel.send(event(name, request_id, data));
+fn emit(channel: &EventSink, name: &str, request_id: &str, data: Value) {
+    channel.send(event(name, request_id, data));
 }
 
 fn event(name: &str, request_id: &str, data: Value) -> Value {

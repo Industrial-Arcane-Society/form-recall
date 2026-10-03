@@ -357,9 +357,28 @@ mod tests {
                         "result": { "protocolVersion": 1, "agentCapabilities": {} },
                     }),
                 ),
+                "session/new" => write_frame(
+                    &mut output,
+                    json!({
+                        "jsonrpc": "2.0",
+                        "id": id,
+                        "result": { "sessionId": "fixture-session", "configOptions": [] },
+                    }),
+                ),
                 "session/prompt" if message["params"]["fixture_stall"].as_bool() == Some(true) => {}
                 "session/prompt" => {
                     let session_id = message["params"]["sessionId"].clone();
+                    let prompt_text = message
+                        .pointer("/params/prompt/0/text")
+                        .and_then(Value::as_str)
+                        .unwrap_or("fixture")
+                        .to_owned();
+                    let release_path = std::env::var_os("AIMODELER_ACP_TEST_RELEASE_FILE");
+                    let response_text = if release_path.is_some() {
+                        prompt_text
+                    } else {
+                        "fixture".to_owned()
+                    };
                     write_frame(
                         &mut output,
                         json!({
@@ -367,10 +386,39 @@ mod tests {
                             "method": "session/update",
                             "params": {
                                 "sessionId": session_id,
-                                "update": { "sessionUpdate": "agent_message_chunk", "content": { "type": "text", "text": "fixture" } },
+                                "update": { "sessionUpdate": "agent_message_chunk", "content": { "type": "text", "text": response_text } },
                             },
                         }),
                     );
+                    if let Some(release_path) = release_path {
+                        let deadline = std::time::Instant::now() + Duration::from_secs(5);
+                        while !std::path::Path::new(&release_path).is_file()
+                            && std::time::Instant::now() < deadline
+                        {
+                            std::thread::sleep(Duration::from_millis(10));
+                        }
+                        if !std::path::Path::new(&release_path).is_file() {
+                            write_frame(
+                                &mut output,
+                                json!({
+                                    "jsonrpc":"2.0", "id":id,
+                                    "error":{"code":-32001,"message":"fixture release timed out"}
+                                }),
+                            );
+                            line.clear();
+                            continue;
+                        }
+                    }
+                    for update in [
+                        json!({"sessionUpdate":"agent_thought_chunk","content":{"type":"text","text":"fixture thought"}}),
+                        json!({"sessionUpdate":"tool_call","toolCallId":"fixture-tool-1","title":"fixture tool","status":"running"}),
+                        json!({"sessionUpdate":"session_info_update","message":"fixture status"}),
+                    ] {
+                        write_frame(
+                            &mut output,
+                            json!({"jsonrpc":"2.0","method":"session/update","params":{"sessionId":session_id,"update":update}}),
+                        );
+                    }
                     write_frame(
                         &mut output,
                         json!({
