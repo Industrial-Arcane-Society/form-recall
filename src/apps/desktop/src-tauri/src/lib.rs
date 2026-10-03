@@ -35,6 +35,7 @@ pub mod native_rotor;
 pub mod native_settings;
 pub mod native_standard_features;
 pub mod native_state_summary;
+pub mod native_timing_pulley;
 pub mod native_tool_bridge;
 pub mod native_tool_executor;
 pub mod native_tool_schemas;

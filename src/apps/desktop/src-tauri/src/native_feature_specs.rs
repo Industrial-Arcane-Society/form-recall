@@ -36,7 +36,7 @@ pub fn feature_spec(kind: &str) -> Result<Value, String> {
 /// below describe the additional gates applied by preflight/build.
 fn native_execution_contract(kind: &str) -> Value {
     let implemented = crate::native_plan_geometry::supports_native_kind(kind);
-    let approximate = matches!(kind, "gear" | "helical_gear" | "bevel_gear" | "socket_head_bolt" | "conrod" | "cross_joint" | "rotor" | "crankshaft");
+    let approximate = matches!(kind, "gear" | "helical_gear" | "bevel_gear" | "socket_head_bolt" | "conrod" | "cross_joint" | "rotor" | "crankshaft" | "timing_pulley");
     let (supported_variants, unsupported_variants, parameter_limits, note) = match kind {
         "rotor" => (
             json!(["global Z extrusion centered on center", "explicit bore_d=0 or enclosed circular bore"]),
@@ -62,6 +62,7 @@ fn native_execution_contract(kind: &str) -> Value {
         "crankshaft" => (json!(["global X main shaft", "alternating eccentric pin journals", "two rectangular overlapping webs per throw", "segments is accepted but ignored by the analytic B-Rep"]), json!(["throws outside 1..=128"]), json!({"length":">0 mm", "main_d":">0 mm", "pin_d":">0 mm", "stroke":">0 mm", "throws":"integer 1..=128", "segments":"integer when supplied; ignored", "center":"finite global XYZ"}), "Native analytic cylinders and rectangular webs reproduce the legacy CADPlan B-Rep recipe; the feature remains approximate and the mesh-only Document cheek recipe is a different representation."),
         "conrod" => (json!(["annular heads with tangent web approximation"]), json!([]), json!({"length":">0 and long enough for tangent web", "big_d":">big_bore", "small_d":">small_bore", "big_bore":">0", "small_bore":">0", "shank_w":">0", "thick":">0"}), "Analytic annular heads with approximate external-tangent trapezoidal web; web contact and I-section details are simplified."),
         "cross_joint" => (json!(["hub plus four journals on global +/-X|+/-Y"]), json!([]), json!({"span":">0 and large enough for hub plus positive journal length", "journal_d":">0", "center":"finite global XYZ"}), "Native analytic construction; legacy faceted-volume equality is not claimed."),
+        "timing_pulley" => (json!(["global-Z centered legacy trapezoidal tooth prisms", "MXL, XL, T2.5, T5, 3M profiles with radial tooth/blank overlap", "implicit legacy center bore or explicit bore_d", "teeth 6..=512"]), json!(["L, H, XH, XXH, T10, T20, 5M, 8M, 14M have no overlap between legacy tooth inner edge and blank root wall", "teeth above 512", "negative bore or bore reaching the effective tooth-root wall", "tooth-tip circumferential pitch smaller than tooth-tip width", "unknown tooth_type strings", "segments outside 3..=512"]), json!({"pitch_d":">0; legacy pitch radius floor=2 mm", "height":">0", "teeth":"integer 6..=512", "tooth_type":"MXL, XL, T2.5, T5, 3M (the other legacy profiles are rejected because they cannot guarantee a single solid)", "bore_d":">=0; 0 uses legacy implicit bore; explicit bore floored to 2 mm diameter", "segments":"3..=512 integer; retained for legacy baseline but ignored by analytic OCCT blank", "center":"finite global XYZ"}), "Supported legacy trapezoidal tooth prisms overlap the analytic annular revolve. Taller profiles whose legacy prism starts outside the blank root are rejected because a single closed solid cannot be guaranteed. The retained Document/CADPlan baseline is a faceted mesh; this analytic blank intentionally replaces its segmented boundary, so geometry remains approximate with a bounded blank-volume difference."),
         _ => (json!([]), json!(["all native geometry variants"]), json!({}), "No native Rust geometry builder is registered for this kind."),
     };
     json!({
@@ -247,7 +248,7 @@ mod tests {
                 );
             }
         }
-        assert_eq!(supported_count, 19);
+        assert_eq!(supported_count, 20);
         assert_eq!(kinds.len(), specs.as_object().unwrap().len());
     }
 }

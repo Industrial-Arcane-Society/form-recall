@@ -4,7 +4,7 @@ use crate::{
     cad_plan, cad_plan_validation, native_bevel_gear, native_bore_metrology,
     native_geometry_evidence::{self, HoleRequest},
     native_occt::{Axis, Bounds, Kernel, Shape},
-    native_parametric_features, native_standard_features,
+    native_parametric_features, native_standard_features, native_timing_pulley,
 };
 use serde_json::{Value, json};
 use std::{
@@ -44,6 +44,7 @@ pub fn supports_native_kind(kind: &str) -> bool {
             | "rotor"
             | "camshaft"
             | "crankshaft"
+            | "timing_pulley"
     )
 }
 
@@ -108,6 +109,7 @@ pub fn preflight(plan: &Value) -> Result<Value, String> {
             "rotor" => &["radius", "n", "height", "bore_d"],
             "camshaft" => &["length", "journal_d", "base_d", "lift", "lobes", "lobe_deg"],
             "crankshaft" => &["length", "main_d", "pin_d", "stroke", "throws"],
+            "timing_pulley" => &["pitch_d", "teeth", "height", "tooth_type"],
             _ => &[],
         };
         for key in required_native_parameters {
@@ -154,6 +156,10 @@ pub fn preflight(plan: &Value) -> Result<Value, String> {
         if kind == "crankshaft" {
             let normalized = normalized_feature(feature, plan)?;
             native_parametric_features::preflight_crankshaft(&normalized["parameters"])?;
+        }
+        if kind == "timing_pulley" {
+            let normalized = normalized_feature(feature, plan)?;
+            native_timing_pulley::preflight(&normalized["parameters"])?;
         }
         if kind == "spoked_wheel" {
             let normalized = normalized_feature(feature, plan)?;
@@ -259,6 +265,9 @@ pub fn build(plan: &Value, manifest: &Path, cancelled: &AtomicBool) -> Result<Bu
         } else if normalized["kind"] == "crankshaft" {
             let (tools, support) =
                 native_parametric_features::build_crankshaft(&kernel, &normalized["parameters"])?;
+            (tools, vec![], Some(support))
+        } else if normalized["kind"] == "timing_pulley" {
+            let (tools, support) = native_timing_pulley::build(&kernel, &normalized["parameters"])?;
             (tools, vec![], Some(support))
         } else if normalized["kind"] == "spoked_wheel" {
             let (tools, support) =
@@ -1100,6 +1109,7 @@ fn normalized_feature(feature: &Value, plan: &Value) -> Result<Value, String> {
             "base_d",
             "lift",
             "bore_d",
+            "pitch_d",
         ]
         .contains(&key.as_str())
         {
@@ -1599,6 +1609,27 @@ mod tests {
         assert_eq!(normalized["parameters"]["stroke"], json!(86.));
         assert_eq!(normalized["parameters"]["center"], json!([12., -7., 5.]));
         assert_eq!(crankshaft["parameters"]["length"], json!(32));
+    }
+
+    #[test]
+    fn timing_pulley_is_registered_and_normalizes_length_center_and_bore() {
+        let mut plan = fixture();
+        plan["units"] = json!({"length":"cm","angle":"deg"});
+        let feature = json!({"id":"timing","kind":"timing_pulley","operation":"add",
+            "parameters":{"pitch_d":8,"teeth":50,"height":1,"tooth_type":"XL",
+                "bore_d":2,"center":[1.2,-0.7,0.5]},
+            "sources":{"pitch_d":{"type":"user"},"teeth":{"type":"user"},
+                "height":{"type":"user"},"tooth_type":{"type":"user"},
+                "bore_d":{"type":"user"},"center":{"type":"user"}}});
+        let normalized = normalized_feature(&feature, &plan).unwrap();
+        assert_eq!(normalized["parameters"]["pitch_d"], json!(80.0));
+        assert_eq!(normalized["parameters"]["height"], json!(10.0));
+        assert_eq!(normalized["parameters"]["bore_d"], json!(20.0));
+        assert_eq!(normalized["parameters"]["center"], json!([12.0, -7.0, 5.0]));
+        assert!(supports_native_kind("timing_pulley"));
+        let capability = crate::native_feature_specs::feature_spec("timing_pulley").unwrap();
+        assert_eq!(capability["native_execution"]["status"], "implemented_approximate");
+        assert_eq!(capability["catia_mapping"], "approximate");
     }
 
     #[test]

@@ -5,6 +5,7 @@ This does not drive an Agent, inject image estimates, or provide runtime fallbac
 import copy
 import importlib.metadata
 import json
+import math
 import subprocess
 import sys
 from pathlib import Path
@@ -14,6 +15,7 @@ TAURI = ROOT / "src/apps/desktop/src-tauri"
 sys.path.insert(0, str(ROOT / "src/legacy"))
 from ai_modeler.core.geometry import occ_kernel
 from ai_modeler.sdk.cadplan import plan_to_document
+from ai_modeler.parts import std_pulley
 
 
 def main():
@@ -71,6 +73,16 @@ def main():
     add("bevel-gear-cm-rad-scaling", "bevel_gear", dict(teeth=20, module=0.2,
         height=1.2, cone_deg=0.7853981633974483, bore_d=0,
         center=[0, 0, 0], segments=12), dict(length="cm", angle="rad"))
+    add("timing-pulley-xl-default-bore", "timing_pulley",
+        dict(pitch_d=80, teeth=50, height=10, tooth_type="XL", bore_d=0,
+             center=[0, 0, 0]))
+    add("timing-pulley-t5-translated-explicit-bore", "timing_pulley",
+        dict(pitch_d=60, teeth=60, height=14, tooth_type="T5", bore_d=12,
+             center=[12, -7, 5], segments=32))
+    add("timing-pulley-mxl-cm-unit-scaling", "timing_pulley",
+        dict(pitch_d=10, teeth=40, height=1.2, tooth_type="MXL", bore_d=2.5,
+             center=[1.2, -0.7, 0.5], segments=48),
+        dict(length="cm", angle="deg"))
     add("spoked-wheel-z-origin", "spoked_wheel",
         dict(outer_r=30, rim_w=4, hub_r=8, height=8, spokes=6, spoke_w=3,
              center=[0, 0, 0]))
@@ -225,6 +237,7 @@ def main():
     cross_joint_native_volumes = {}
     camshaft_native_volumes = {}
     crankshaft_native_volumes = {}
+    timing_pulley_native_volumes = {}
     helical_native_results = {}
 
     records = []
@@ -351,6 +364,32 @@ def main():
         shape, baseline_report = occ_kernel.build_document(plan_to_document(plan))
         bounds_error = max(abs(a - b) for a, b in zip(occ_kernel._bbox(shape), native["bounds_mm"]))
         volume_error = abs(occ_kernel.volume(shape) - native["volume_mm3"])
+        if name.startswith("timing-pulley-"):
+            support = native["feature_results"][0]
+            details = support.get("support_details", {})
+            parameters = plan["features"][0]["parameters"]
+            scale = 10.0 if plan.get("units", {}).get("length") == "cm" else 1.0
+            pitch_d = parameters["pitch_d"] * scale
+            height = parameters["height"] * scale
+            bore_d = parameters.get("bore_d", 0.0) * scale
+            info = std_pulley.timing_pitch(parameters["tooth_type"])
+            pitch_radius = max(2.0, pitch_d / 2.0)
+            root_radius = pitch_radius - info["tooth_h"] * 0.55
+            inner_radius = max(1.0, bore_d / 2.0) if bore_d else max(2.0, root_radius * 0.35)
+            segments = max(3, int(parameters.get("segments", 64)))
+            analytic_blank_delta = (math.pi - segments / 2.0 * math.sin(2.0 * math.pi / segments)) * (
+                root_radius * root_radius - inner_radius * inner_radius) * height
+            if (bounds_error > 1e-6 or native.get("valid") is not True
+                    or native.get("closed_solid_count") != 1
+                    or support.get("geometry_support") != "approximate"
+                    or details.get("builder") != "legacy_trapezoidal_teeth_with_analytic_annular_blank"
+                    or details.get("teeth_built") != parameters["teeth"]
+                    or volume_error <= 0
+                    or volume_error > analytic_blank_delta * 1.02
+                    or volume_error / max(occ_kernel.volume(shape), 1e-12) > 0.01):
+                raise AssertionError((name, "timing-pulley-faceted-blank-boundary", bounds_error,
+                                      volume_error, analytic_blank_delta, native, baseline_report))
+            timing_pulley_native_volumes[name] = native["volume_mm3"]
         if name.startswith("helical-gear-"):
             if (native.get("valid") is not True or native.get("closed_solid_count") != 1
                     or baseline_report.get("geometry_state") != "passed"
@@ -395,19 +434,19 @@ def main():
                 raise AssertionError((name, "cross-joint-bounds-or-legacy-brep", bounds_error,
                                       baseline_report.get("geometry_state"), baseline_report.get("brep_valid"),
                                       baseline_report.get("solid_count"), baseline_report.get("closed")))
-        elif not name.startswith("camshaft-") and (bounds_error > 1e-6 or volume_error > 1e-5):
+        elif not name.startswith(("camshaft-", "timing-pulley-")) and (bounds_error > 1e-6 or volume_error > 1e-5):
             raise AssertionError((name, bounds_error, volume_error))
         records.append(dict(case=name, passed=True, bounds_max_error_mm=bounds_error,
                             volume_error_mm3=volume_error,
                             volume_comparison=("reported_only_faceted_legacy_vs_analytic_native"
-                                               if name in expected_cross_joint_bounds or name.startswith("camshaft-")
+                                               if name in expected_cross_joint_bounds or name.startswith(("camshaft-", "timing-pulley-"))
                                                else "parity_checked"),
                             legacy_volume_mm3=(occ_kernel.volume(shape)
-                                               if name in expected_cross_joint_bounds or name.startswith("camshaft-") or name.startswith("crankshaft-") or name.startswith("helical-gear-") or name.startswith("bevel-gear-") else None),
+                                               if name in expected_cross_joint_bounds or name.startswith(("camshaft-", "timing-pulley-", "crankshaft-", "helical-gear-", "bevel-gear-")) else None),
                             native_volume_mm3=(native["volume_mm3"]
-                                               if name in expected_cross_joint_bounds or name.startswith("camshaft-") or name.startswith("crankshaft-") or name.startswith("helical-gear-") or name.startswith("bevel-gear-") else None),
+                                               if name in expected_cross_joint_bounds or name.startswith(("camshaft-", "timing-pulley-", "crankshaft-", "helical-gear-", "bevel-gear-")) else None),
                             volume_relative_difference=(volume_error / max(abs(occ_kernel.volume(shape)), 1e-12)
-                                                        if name in expected_cross_joint_bounds or name.startswith("camshaft-") or name.startswith("crankshaft-") or name.startswith("helical-gear-") or name.startswith("bevel-gear-") else None)))
+                                                        if name in expected_cross_joint_bounds or name.startswith(("camshaft-", "timing-pulley-", "crankshaft-", "helical-gear-", "bevel-gear-")) else None)))
     cross_joint_origin_volume = cross_joint_native_volumes["cross-joint-origin"]
     for name in ("cross-joint-translated", "cross-joint-cm-unit-scaling"):
         if abs(cross_joint_native_volumes[name] - cross_joint_origin_volume) > 1e-6:
@@ -525,6 +564,27 @@ def main():
     bevel_gear_missing_angle["features"][0]["parameters"].pop("cone_deg")
     bevel_gear_missing_angle["features"][0]["sources"].pop("cone_deg")
     negatives.append(("bevel-gear-missing-cone-angle", bevel_gear_missing_angle, "校验"))
+
+    timing_case = cases[[name for name, _ in cases].index("timing-pulley-xl-default-bore")][1]
+    timing_missing = copy.deepcopy(timing_case)
+    timing_missing["features"][0]["parameters"].pop("tooth_type")
+    timing_missing["features"][0]["sources"].pop("tooth_type", None)
+    negatives.append(("timing-pulley-missing-tooth-type", timing_missing, "校验"))
+    for key, value, message in (("teeth", 513, "6..=512"), ("bore_d", -1, "不能小于 0"),
+                                ("bore_d", 79, "齿根半径"), ("segments", 513, "3..=512")):
+        invalid = copy.deepcopy(timing_case)
+        invalid["features"][0]["parameters"][key] = value
+        invalid["features"][0]["sources"][key] = {"type": "user"}
+        negatives.append((f"timing-pulley-invalid-{key}-{value}", invalid, message))
+    timing_overlap = copy.deepcopy(timing_case)
+    timing_overlap["features"][0]["parameters"].update(pitch_d=20, teeth=50)
+    timing_overlap["features"][0]["sources"].update({
+        "pitch_d": {"type": "user"}, "teeth": {"type": "user"}})
+    negatives.append(("timing-pulley-overlapping-tooth-tips", timing_overlap, "齿顶圆切向齿距"))
+    timing_no_overlap = copy.deepcopy(timing_case)
+    timing_no_overlap["features"][0]["parameters"]["tooth_type"] = "8M"
+    timing_no_overlap["features"][0]["sources"]["tooth_type"] = {"type": "user"}
+    negatives.append(("timing-pulley-no-tooth-blank-overlap", timing_no_overlap, "没有材料重叠"))
 
     wheel_case_by_name = {name: plan for name, plan in cases}
     wheel_non_z = copy.deepcopy(wheel_case_by_name["spoked-wheel-z-origin"])
@@ -675,6 +735,8 @@ def main():
                    near_edge_partial_did_not_block=True,
                    final_brep_holes_measured=True,
                    later_feature_invalidates_stale_bore_measurement=True,
+                   timing_pulley_positive_cases=len(timing_pulley_native_volumes),
+                   timing_pulley_faceted_blank_volume_boundary="analytic-minus-segmented-annulus; each positive case checked against segment formula and <=1% legacy relative delta",
                    python_ocp_version=python_version, rust_occt_version="7.9.3")
     (output / "summary.json").write_text(json.dumps(summary, indent=2), encoding="utf-8")
     print(json.dumps({key: value for key, value in summary.items() if key != "cases"}))
