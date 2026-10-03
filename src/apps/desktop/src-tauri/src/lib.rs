@@ -2148,7 +2148,7 @@ mod agent_ipc_integration_tests {
     }
 
     #[test]
-    fn agent_send_routes_fake_acp_updates_through_tauri_channel() {
+    fn agent_send_routes_stale_finish_as_candidate_through_tauri_channel() {
         let scratch = TestRoot::new();
         let app_data = scratch.0.join("app-data");
         fs::create_dir_all(&app_data).expect("create isolated app data directory");
@@ -2188,7 +2188,11 @@ mod agent_ipc_integration_tests {
             "fixture prompt",
             None,
         );
-        let cad_state = json!({"plan":plan,"revision":1,"actions":[],"output_paths":{}});
+        let plan_fingerprint = crate::cad_plan::geometry_fingerprint(&plan)
+            .expect("calculate fixture plan fingerprint");
+        let cad_state = json!({"plan":plan,"revision":1,"actions":[],"output_paths":{},
+            "finish_summary":{"accepted":true,"finish_state":"accepted","revision":0,
+                "geometry_fingerprint":plan_fingerprint}});
         let candidate = native_active_model::candidate_from_cad_state(
             "agent",
             &cad_state,
@@ -2325,6 +2329,13 @@ mod agent_ipc_integration_tests {
             model_changed["message"]["data"]["name"],
             "IPC fixture model"
         );
+        assert_eq!(
+            model_changed["message"]["data"]["finish_summary"]["accepted"],
+            true,
+            "fixture must carry a stale summary that claims acceptance"
+        );
+        assert_eq!(model_changed["message"]["data"]["cad_revision"], 1);
+        assert_eq!(model_changed["message"]["data"]["finish_summary"]["revision"], 0);
         let terminal = events
             .iter()
             .find(|event| event["message"]["event"] == "agent.turn_complete")
@@ -2341,6 +2352,15 @@ mod agent_ipc_integration_tests {
             "candidate"
         );
         assert_eq!(terminal["message"]["data"]["current_model"]["revision"], 1);
+        assert_eq!(
+            terminal["message"]["data"]["current_model"]["finish_status"],
+            "not_finished",
+            "stale finish summary must not become current acceptance"
+        );
+        assert_eq!(
+            terminal["message"]["data"]["current_model"]["finish_summary"],
+            Value::Null
+        );
 
         println!(
             "AIMODELER_AGENT_IPC_CAPTURE={}",

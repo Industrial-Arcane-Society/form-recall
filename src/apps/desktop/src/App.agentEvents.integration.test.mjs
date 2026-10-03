@@ -178,11 +178,18 @@ try {
   assert.ok(submittedRequestId, 'production submit handler calls agent_send')
   if (rustChannelCapture) {
     assert.equal(submittedRequestId, rustModelChange.request_id, 'Rust event request id must match the production Vue turn')
+    assert.equal(expectedModelDocument.finish_summary?.accepted, true, 'Rust event must contain the stale accepted fixture')
+    assert.notEqual(expectedModelDocument.finish_summary?.revision, expectedModelDocument.cad_revision, 'finish summary must be stale for the current CAD revision')
+    const terminalModel = rustChannelCapture.events.find(row => row.message?.event === 'agent.turn_complete')?.message?.data?.current_model
+    assert.equal(terminalModel?.status, 'candidate', 'Rust terminal snapshot must not accept the stale finish summary')
+    assert.equal(terminalModel?.finish_status, 'not_finished')
+    assert.equal(terminalModel?.finish_summary, null)
   }
   const rendered = descendants(root)
   const summary = rendered.find(node => hasClass(node, 'acceptance-summary'))
   assert.match(renderedText(summary), /本轮回复完成/)
   assert.match(renderedText(summary), /候选模型/)
+  assert.doesNotMatch(renderedText(summary), /已验收/, 'stale accepted finish evidence must not appear as accepted in the production Vue UI')
   const viewport = rendered.find(node => hasClass(node, 'headless-cad-viewport'))
   assert.equal(viewport.props['data-revision'], String(expectedModelDocument.revision))
   const modelTitle = rendered.find(node => hasClass(node, 'document-title'))
@@ -192,7 +199,7 @@ try {
   const expectedReply = rustChannelCapture?.result?.reply || 'Fixture response from Agent'
   assert.ok(rendered.find(node => hasClass(node, 'chat-message') && hasClass(node, 'assistant') && renderedText(node).includes(expectedReply)))
   console.log(rustChannelCapture
-    ? `PASS: mounted production Vue App headlessly; Rust MockRuntime Channel capture was passed into its Tauri Channel callback; revision ${expectedModelDocument.revision}/document, feature row, turn completion, candidate status, and reply rendered. WebView delivery remains untested.`
+    ? `PASS: mounted production Vue App headlessly; Rust MockRuntime Channel capture was passed into its Tauri Channel callback; stale accepted finish remained a candidate at revision ${expectedModelDocument.revision}, and document, feature row, turn completion, and reply rendered. WebView delivery remains untested.`
     : 'PASS: mounted production Vue App headlessly; mocked agent_send IPC events rendered.')
   app.unmount()
 } finally {

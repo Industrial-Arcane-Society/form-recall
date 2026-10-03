@@ -8,7 +8,7 @@ $tauriRoot = Join-Path $desktopRoot 'src-tauri'
 $cargoManifest = Join-Path $tauriRoot 'Cargo.toml'
 $commonControlsManifest = Join-Path $tauriRoot 'tests\common-controls-v6.manifest'
 $acpFixture = Join-Path $tauriRoot 'tests\fixtures\fake-acp.mjs'
-$testName = 'agent_ipc_integration_tests::agent_send_routes_fake_acp_updates_through_tauri_channel'
+$testName = 'agent_ipc_integration_tests::agent_send_routes_stale_finish_as_candidate_through_tauri_channel'
 
 if (-not (Test-Path -LiteralPath $commonControlsManifest)) {
     throw "Missing Common-Controls v6 manifest: $commonControlsManifest"
@@ -17,8 +17,27 @@ if (-not (Test-Path -LiteralPath $acpFixture)) {
     throw "Missing standalone ACP fixture: $acpFixture"
 }
 
-$compileOutput = @(& cargo test --manifest-path $cargoManifest --lib $testName --no-run --message-format=json --color=never 2>&1)
-$compileExitCode = $LASTEXITCODE
+$previousTauriConfig = [Environment]::GetEnvironmentVariable('TAURI_CONFIG', 'Process')
+try {
+    $testTauriConfig = if ($previousTauriConfig) {
+        ConvertFrom-Json -InputObject $previousTauriConfig -AsHashtable
+    }
+    else {
+        @{}
+    }
+    if (-not $testTauriConfig.Contains('bundle') -or $null -eq $testTauriConfig['bundle']) {
+        $testTauriConfig['bundle'] = @{}
+    }
+    # The headless test does not bundle the app. Avoid requiring release-only
+    # package resources while compiling Tauri's MockRuntime test executable.
+    $testTauriConfig['bundle']['resources'] = @()
+    [Environment]::SetEnvironmentVariable('TAURI_CONFIG', ($testTauriConfig | ConvertTo-Json -Compress -Depth 100), 'Process')
+    $compileOutput = @(& cargo test --manifest-path $cargoManifest --lib $testName --no-run --message-format=json --color=never 2>&1)
+    $compileExitCode = $LASTEXITCODE
+}
+finally {
+    [Environment]::SetEnvironmentVariable('TAURI_CONFIG', $previousTauriConfig, 'Process')
+}
 if ($compileExitCode -ne 0) {
     $compileOutput | ForEach-Object { Write-Output $_ }
     throw "Rust test compilation failed with exit code $compileExitCode"
