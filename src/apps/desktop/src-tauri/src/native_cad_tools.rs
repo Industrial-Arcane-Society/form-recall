@@ -158,9 +158,11 @@ pub fn run(
             index,
             args.get("roi_norm").filter(|v| !v.is_null()),
         )?;
-        let image = json!({"mime_type":reference.image.mime,"data":STANDARD.encode(&reference.image.bytes),
-            "reference_id":reference.image.reference_id,"source_sha256":reference.image.source_sha256,
-            "transport_sha256":reference.image.transport_sha256,"roi_norm":reference.image.roi_norm});
+        let mut image = cordis_image_result(&reference.image.mime, &reference.image.bytes);
+        image["reference_id"] = json!(reference.image.reference_id);
+        image["source_sha256"] = json!(reference.image.source_sha256);
+        image["transport_sha256"] = json!(reference.image.transport_sha256);
+        image["roi_norm"] = json!(reference.image.roi_norm);
         return Ok(ToolOutput {
             state: state.clone(),
             value: reference.metadata,
@@ -309,8 +311,12 @@ pub fn run(
             .ok_or("view必须为iso/front/right/top/back/left/bottom。")?;
         let path = row["preview_image_path"].as_str().ok_or("视图路径缺失。")?;
         let bytes = fs::read(path).map_err(|e| e.to_string())?;
-        images.push(json!({"mime_type":"image/png","data":STANDARD.encode(bytes),"view":view,
-            "revision":revision,"preview_generation":next["preview_generation"],"preview_sha256":row["preview_sha256"]}));
+        let mut image = cordis_image_result("image/png", &bytes);
+        image["view"] = json!(view);
+        image["revision"] = json!(revision);
+        image["preview_generation"] = next["preview_generation"].clone();
+        image["preview_sha256"] = row["preview_sha256"].clone();
+        images.push(image);
     }
     let value = json!({"state":"candidate","revision":revision,"changed":changed,"geometry_fingerprint":next["last_preview"]["geometry_fingerprint"],
         "preview_generation":next["preview_generation"],"preview":next["last_preview"],"views":next["previews"],
@@ -327,6 +333,12 @@ fn required<'a>(v: &'a Value, key: &str) -> Result<&'a Value, String> {
         .filter(|v| !v.is_null())
         .ok_or_else(|| format!("缺少{key}。"))
 }
+
+/// Serialize image results using the Cordis attachment bridge's camelCase wire contract.
+fn cordis_image_result(media_type: &str, bytes: &[u8]) -> Value {
+    json!({"mediaType":media_type,"data":STANDARD.encode(bytes)})
+}
+
 fn check_args(value: &Value, allowed: &[&str]) -> Result<(), String> {
     let object = value.as_object().ok_or("工具参数必须为 JSON 对象。")?;
     if let Some(key) = object.keys().find(|key| !allowed.contains(&key.as_str())) {
@@ -664,10 +676,24 @@ mod tests {
     use super::*;
 
     #[test]
+    fn image_results_use_the_cordis_attachment_wire_contract() {
+        let image = cordis_image_result("image/png", b"png-bytes");
+        let serialized = serde_json::to_string(&image).unwrap();
+        let wire: Value = serde_json::from_str(&serialized).unwrap();
+
+        assert_eq!(wire["mediaType"], "image/png");
+        assert_eq!(wire["data"], STANDARD.encode(b"png-bytes"));
+        assert!(wire.get("mime_type").is_none());
+    }
+
+    #[test]
     fn face_tool_schema_matches_source_type_and_hole_array_executor_limits() {
         let schemas = crate::native_tool_schemas::native_tool_schemas().unwrap();
         for tool_name in ["cad_add_face_recess", "cad_add_hole_array"] {
-            let tool = schemas.iter().find(|tool| tool["name"] == tool_name).unwrap();
+            let tool = schemas
+                .iter()
+                .find(|tool| tool["name"] == tool_name)
+                .unwrap();
             let schema_types = tool["inputSchema"]["properties"]["source_type"]["enum"]
                 .as_array()
                 .unwrap()
@@ -680,12 +706,21 @@ mod tests {
             .iter()
             .find(|tool| tool["name"] == "cad_add_hole_array")
             .unwrap();
-        assert_eq!(hole_array["inputSchema"]["properties"]["holes"]["maxItems"], 4096);
+        assert_eq!(
+            hole_array["inputSchema"]["properties"]["holes"]["maxItems"],
+            4096
+        );
 
         for accepted in FACE_TOOL_SOURCE_TYPES {
             assert!(source(&json!({"source_type":accepted,"evidence":"verified evidence","turn_id":"turn-1"}), None).is_ok());
         }
-        assert!(source(&json!({"source_type":"existing_model","evidence":"evidence"}), None).is_err());
+        assert!(
+            source(
+                &json!({"source_type":"existing_model","evidence":"evidence"}),
+                None
+            )
+            .is_err()
+        );
     }
 
     #[test]
