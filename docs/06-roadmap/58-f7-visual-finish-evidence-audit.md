@@ -100,10 +100,21 @@ mock provider → Rust NativeToolExecutor → cad_get_state 的最小组合路�
 
 2026-10-04 新增 `native_cad_session::tests::finish_acceptance_local_geometry_construction_and_external_facts_fail_closed` 与 `finish_reference_coverage_failure_remains_unaccepted`。它们先验证当前完整 fixture 可 accepted，再分别翻转 local geometry、construction milestone、required external fact 和 reference inventory coverage；每个结果仍可作为 candidate 报告，但 `accepted=false`，且 construction/external fact 的 finish state 与对应阻断一致。既有 `current_overall_geometry_acceptance_unlocks_image_finish` / stale-review 用例覆盖整体复核条件，`requested_hole_count_confidence_and_status_rows_are_not_measurements` 覆盖孔测量不完整，`aggregate_with_open_findings_can_finish_as_an_unaccepted_candidate` 覆盖开放 finding。这样 `finish_assessment` 的七个接受合取项均有 headless 正例/负例证据；新增项使用 host session/aggregate fixture，不启动 DSH/provider/CATIA，也没有改变生产门禁。
 
-仍待实现：两个跨 gate 独立性反例，以及 executor 集成层的旧 observation、partial stage、mismatch 和 unsupported coverage 负例。source SHA 不匹配、ROI-only inventory、空/重复 evidence、错误 reference ID 与过期 preview generation 已由 executor 集成测试覆盖；相邻的 native_vision_domain 和 native_state_summary 单元测试仍不能替代剩余的 executor 集成负例。
+2026-10-04 headless follow-up 已补齐上面列出的本地负例：executor 集成覆盖旧 observation 刷新、partial stage、mismatch 与 unsupported coverage；跨 gate 用例覆盖 open finding 阻断 finish，以及错误原图 SHA/reference row 阻断自报 accepted。`native_state_summary` 也保留并拒绝 unsupported coverage，避免 `cad_get_state` 把未知 evidence claim 提升为完整 coverage。以上新增用例经仓库 Windows test wrapper `src/apps/desktop/src-tauri/scripts/test-lib.ps1 -Offline` 全量复跑，302/302 通过。直接启动裸测试 exe 曾触发 `STATUS_ENTRYPOINT_NOT_FOUND`；wrapper 临时附加 Common Controls v6 sidecar manifest 后运行通过。
+
+复跑命令（需设置项目 IPC 测试依赖的 `AIMODELER_TEST_NODE` 与 `AIMODELER_TEST_ACP_FIXTURE`）：
+
+```powershell
+$root = (Get-Location).Path
+Push-Location $root
+$env:AIMODELER_TEST_NODE = (Get-Command node.exe).Source
+$env:AIMODELER_TEST_ACP_FIXTURE = Join-Path $root 'src\apps\desktop\src-tauri\tests\fixtures\fake-acp.mjs'
+pwsh -NoProfile -File 'src/apps/desktop/src-tauri/scripts/test-lib.ps1' -Offline
+Pop-Location
+```
 
 **证据边界：**以上只证明本地 headless mock provider 路径在合成 fixture 下保留严格绑定与当前性检查。它不代表真实 DSH/provider 视觉质量、不代表 Run13/Run15 已通过，也不改变 `F7.G1` 或 `F7.G8` 验收状态；真实 provider 行为仍须依据独立的脱敏运行证据评估。
 
 ## 维护状态
 
-F7.G1 的真实视觉覆盖与原图 binding、F7.G8 的真实严格冷启动仍未通过。本次新增 headless 负例与 summary fail-closed 修复只证明 host 接线和本地门禁，不证明真实模型视觉质量。
+F7.G1 的真实视觉覆盖与原图 binding、F7.G8 的真实严格冷启动仍未通过。本次新增 headless 负例与 summary fail-closed 修复只证明 host 接线和本地门禁，不证明真实模型视觉质量。真实 DSH/provider 原图理解、差异定位与返修仍须另行验收。
