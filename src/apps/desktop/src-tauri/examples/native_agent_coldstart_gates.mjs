@@ -176,6 +176,11 @@ export function evaluateColdstartGates(input) {
     const old = acpTools.get(event.tool_call_id) || {}
     acpTools.set(event.tool_call_id, { tool: event.title || old.tool, status: event.status || old.status,
       tool_call_id: event.tool_call_id, starts: (old.starts || 0) + (event.kind === 'tool_call' ? 1 : 0),
+      started_at_ms: event.kind === 'tool_call' ? event.at_ms : old.started_at_ms,
+      terminal_updates: (old.terminal_updates || 0) + (event.kind === 'tool_call_update'
+        && ['completed', 'failed'].includes(event.status) ? 1 : 0),
+      terminal_at_ms: event.kind === 'tool_call_update' && ['completed', 'failed'].includes(event.status)
+        ? event.at_ms : old.terminal_at_ms,
       arguments_sha256_24: event.arguments_sha256_24 || old.arguments_sha256_24 })
   }
   const observedCadTools = [...acpTools.values()].filter(row => row.tool?.startsWith('cad_'))
@@ -200,14 +205,35 @@ export function evaluateColdstartGates(input) {
   const allInvocationsPaired = [...new Set([...bridgeCallsByKey.keys(), ...acpCallsByKey.keys()])].every(key => {
     const native = bridgeCallsByKey.get(key) || [], acp = acpCallsByKey.get(key) || []
     if (native.length !== acp.length) return false
-    return native.every((call, index) => {
-      const event = acp[index]
-      if (!event || event.starts !== 1 || !nonempty(event.tool_call_id)
-        || call.run_id !== run.id || call.session_id !== run.tool_session_id || call.turn_id !== run.turn_id
-        || !nonempty(call.call_id)) return false
-      pairedCallIds.set(call.call_id, event)
-      return true
+    const validIdentity = (call, event) => event?.starts === 1 && nonempty(event.tool_call_id)
+      && call.run_id === run.id && call.session_id === run.tool_session_id && call.turn_id === run.turn_id
+      && nonempty(call.call_id)
+    let pairs
+    if (native.length === 1) pairs = [[native[0], acp[0]]]
+    else {
+      // Repeated identical calls have no identity in common across ACP and the
+      // native bridge. Disambiguate only when each bridge interval is wholly
+      // contained in exactly one complete ACP invocation interval, and vice
+      // versa. Missing, overlapping, or merely ordered timestamps stay ambiguous.
+      const candidatesByNative = native.map(call => acp.filter(event => validIdentity(call, event)
+        && event.terminal_updates === 1 && Number.isFinite(event.started_at_ms)
+        && Number.isFinite(event.terminal_at_ms) && event.terminal_at_ms >= event.started_at_ms
+        && Number.isFinite(call.started_at_ms) && Number.isFinite(call.completed_at_ms)
+        && call.completed_at_ms >= call.started_at_ms
+        && call.started_at_ms >= event.started_at_ms && call.completed_at_ms <= event.terminal_at_ms))
+      const candidatesByAcp = acp.map(event => candidatesByNative.flatMap((candidates, nativeIndex) =>
+        candidates.includes(event) ? [nativeIndex] : []))
+      if (candidatesByNative.some(candidates => candidates.length !== 1)
+        || candidatesByAcp.some(candidates => candidates.length !== 1)) return false
+      pairs = candidatesByNative.map((candidates, nativeIndex) => [native[nativeIndex], candidates[0]])
+    }
+    const groupPairs = pairs.map(([call, event]) => {
+      if (!validIdentity(call, event)) return null
+      return [call.call_id, event]
     })
+    if (groupPairs.some(pair => !pair)) return false
+    for (const [callId, event] of groupPairs) pairedCallIds.set(callId, event)
+    return true
   }) && argumentsAndIdentityPresent && observedCadTools.length === calls.length
   const pairedOnce = pairedCallIds.size === calls.length && new Set(calls.map(call => call.call_id)).size === calls.length
   const schemaNames = new Set(rows(schema?.tools).map(row => row.name))

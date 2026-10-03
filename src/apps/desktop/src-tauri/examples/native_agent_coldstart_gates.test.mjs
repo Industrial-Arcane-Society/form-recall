@@ -81,16 +81,52 @@ test('normalized argument fingerprints ignore object key order and reveal no arg
   assert.equal(toolArgumentsFingerprint(undefined), null)
 })
 
-test('two same-name calls require two distinct ACP invocations and exact native audits', () => {
+test('serial repeated identical calls pair only through unique complete temporal intervals', () => {
   const input = fixture(), nativeCallId = '22222222-2222-4222-8222-222222222222'
-  input.toolEvents.push({ ...input.toolEvents[0], tool_call_id: 'second-acp-call' })
-  input.toolBridgeCalls.push({ ...input.toolBridgeCalls[0], call_id: nativeCallId })
+  input.toolEvents.push({ ...input.toolEvents[0], at_ms: 3100, tool_call_id: 'second-acp-call' })
+  input.toolEvents.push({ ...input.toolEvents[1], at_ms: 3500, tool_call_id: 'second-acp-call' })
+  input.toolBridgeCalls.push({ ...input.toolBridgeCalls[0], call_id: nativeCallId, started_at_ms: 3200, completed_at_ms: 3400 })
   input.nativeAudit.push({ ...input.nativeAudit[0], call_id: nativeCallId })
   const result = evaluateColdstartGates(input)
   assert.equal(result.gates.cordis_cad_tools.status, 'passed')
   assert.deepEqual(result.matched_native_call_ids.sort(), [
     '11111111-1111-4111-8111-111111111111', nativeCallId,
   ])
+})
+
+test('overlapping repeated-call intervals stay ambiguous', () => {
+  const input = fixture(), nativeCallId = '22222222-2222-4222-8222-222222222222'
+  input.toolEvents[1].at_ms = 3200
+  input.toolEvents.push({ ...input.toolEvents[0], at_ms: 2700, tool_call_id: 'second-acp-call' })
+  input.toolEvents.push({ ...input.toolEvents[1], at_ms: 3500, tool_call_id: 'second-acp-call' })
+  input.toolBridgeCalls[0].completed_at_ms = 3200
+  input.toolBridgeCalls.push({ ...input.toolBridgeCalls[0], call_id: nativeCallId, started_at_ms: 2800, completed_at_ms: 3000 })
+  input.nativeAudit.push({ ...input.nativeAudit[0], call_id: nativeCallId })
+  const result = evaluateColdstartGates(input)
+  assert.equal(result.status, 'failed')
+  assert.ok(result.failure_reasons.includes('cordis_tool_arguments_or_identity_missing_or_unmatched'))
+})
+
+test('foreign repeated-call scope cannot be paired by matching fingerprints or timestamps', () => {
+  const input = fixture(), nativeCallId = '22222222-2222-4222-8222-222222222222'
+  input.toolEvents.push({ ...input.toolEvents[0], at_ms: 3100, tool_call_id: 'second-acp-call' })
+  input.toolEvents.push({ ...input.toolEvents[1], at_ms: 3500, tool_call_id: 'second-acp-call' })
+  input.toolBridgeCalls.push({ ...input.toolBridgeCalls[0], call_id: nativeCallId, session_id: 'foreign-session', started_at_ms: 3200, completed_at_ms: 3400 })
+  input.nativeAudit.push({ ...input.nativeAudit[0], call_id: nativeCallId })
+  const result = evaluateColdstartGates(input)
+  assert.equal(result.status, 'failed')
+  assert.ok(result.failure_reasons.includes('cad_tool_rejected_unbound_or_unaudited'))
+  assert.ok(result.failure_reasons.includes('cordis_tool_arguments_or_identity_missing_or_unmatched'))
+})
+
+test('missing repeated-call terminal interval remains ambiguous', () => {
+  const input = fixture(), nativeCallId = '22222222-2222-4222-8222-222222222222'
+  input.toolEvents.push({ ...input.toolEvents[0], at_ms: 3100, tool_call_id: 'second-acp-call' })
+  input.toolBridgeCalls.push({ ...input.toolBridgeCalls[0], call_id: nativeCallId, started_at_ms: 3200, completed_at_ms: 3400 })
+  input.nativeAudit.push({ ...input.nativeAudit[0], call_id: nativeCallId })
+  const result = evaluateColdstartGates(input)
+  assert.equal(result.status, 'failed')
+  assert.ok(result.failure_reasons.includes('cordis_tool_arguments_or_identity_missing_or_unmatched'))
 })
 
 const negativeFixtures = [
