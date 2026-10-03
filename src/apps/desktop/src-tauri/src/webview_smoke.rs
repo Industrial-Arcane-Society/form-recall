@@ -83,6 +83,7 @@ fn model_snapshot(document: &Value, accepted: bool) -> Value {
         json!({
             "exists": true,
             "status": "accepted",
+            "acceptance_confirmed": true,
             "revision": document["cad_revision"],
             "geometry_fingerprint": document["geometry_fingerprint"],
             "finish_status": "accepted",
@@ -94,6 +95,7 @@ fn model_snapshot(document: &Value, accepted: bool) -> Value {
         json!({
             "exists": true,
             "status": "candidate",
+            "acceptance_confirmed": false,
             "revision": document["cad_revision"],
             "geometry_fingerprint": document["geometry_fingerprint"],
             "finish_status": "not_finished",
@@ -321,6 +323,10 @@ mod tests {
     fn only_current_revision_and_geometry_fixture_is_accepted() {
         let accepted = fixture_turn(Scenario::AcceptedCurrent, "request-accepted");
         assert_eq!(accepted.result["current_model"]["status"], "accepted");
+        assert_eq!(
+            accepted.result["current_model"]["acceptance_confirmed"],
+            true
+        );
         assert_eq!(
             accepted.result["current_model"]["finish_summary"]["revision"],
             accepted.result["current_model"]["revision"]

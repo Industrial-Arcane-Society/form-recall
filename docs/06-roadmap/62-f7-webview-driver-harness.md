@@ -42,15 +42,28 @@ Tauri 官方列出 Windows `tauri-driver` → Microsoft Edge Driver 路线；Mic
 
 ## 当前验证与边界
 
-本次只编译和运行了无窗口的静态/fixture 验证：
+### 真实 WebView 运行
+
+本机安装的 WebView2 Runtime 为 `154.0.4258.53`。从微软官方 EdgeDriver CDN 下载了匹配版本的 x64 `msedgedriver.exe`，并在 worktree 的 `temp/acceptance/f7-webview-tools-20261004-045233-57ba6b1f/` 下构建/安装 `tauri-driver 2.1.0`。tauri-driver 使用任务专属 `CARGO_HOME` 与 `--root`；没有全局安装、改 PATH 或用户设置。
+
+第一轮 `npm run test:agent-webview` 的前端构建和 smoke binary 构建通过，真实隐藏 WebView 的前两个场景通过：纯问答、CAD 工具失败。第三个 `accepted-current` 场景在 30 秒后超时。静态比对发现 fixture 的 terminal `current_model` 漏传 `acceptance_confirmed: true`：生产 acceptance predicate 要求 host 明确确认，即使 `status`、finish revision 和 geometry fingerprint 都有效，也不会仅凭 `status: accepted` 接受模型。
+
+已修复 smoke fixture：accepted snapshot 显式设 `acceptance_confirmed: true`，candidate snapshot 设为 `false`，并为 accepted snapshot 增加 Rust 回归断言。按项目测试 wrapper 加载 Common-Controls v6 manifest 后，`webview_smoke` fixture 测试通过（5/5）。直接运行未嵌 manifest 的测试 exe 曾以 Windows `0xc0000139` 退出；这不是 WebView 或产品处理错误。
+
+修复后唯一一次 CLI WebDriver 复跑中，四个场景全部通过：纯问答、CAD 工具失败、当前版本验收、过期 finish 保持候选。输出确认真实 `WebView2 JavaScript → Rust Tauri Channel → 生产 Vue handler` 路径收到事件并更新状态。WebDriver session 结束后未发现该验收目录下仍在运行的 smoke/driver 进程。
+
+### 编译与 fixture 验证
+
+静态、fixture 与真实 WebView 验证结果：
 
 - `cargo check --bin ai-modeler-webview-smoke --features agent-webview-smoke,tauri/custom-protocol --offline`：通过。
 - `cargo build --bin ai-modeler-webview-smoke --features agent-webview-smoke,tauri/custom-protocol --offline`：通过；只生成 executable，没有启动它。
-- smoke fixture Rust 单测：5/5 通过。
+- `pwsh -NoProfile -File src-tauri/scripts/test-lib.ps1 -Offline -Filter webview_smoke`：5/5 通过。
 - `node --check scripts/test-agent-webview.mjs`：通过。
+- 修复后的唯一一次 `npm run test:agent-webview`：真实隐藏 WebView 四场景全部通过。
 
-没有启动 Tauri、WebView2、WebDriver、DSH、provider、CATIA。当前环境找不到 `tauri-driver.exe` 或 `msedgedriver.exe`，所以隐藏 WebView 是否能被此 WebDriver 版本稳定启动和附着仍未知；必须在具备匹配驱动且获准启动隐藏 WebView 的 Windows 环境中首次运行后才能确认。
+没有运行 DSH、provider 或 CATIA，也没有截图、保存 WebDriver 会话内容或改动原始运行日志。后续 CLI WebView 运行仍只允许使用这个 smoke-only binary、隔离 WebDriver 和固定 fixture。
 
-这项测试证明目标应是实际 `WebView2 JavaScript → Tauri Channel callback → 生产 Vue handler`，不检查窗口像素、布局、3D WebGL 绘制或用户可见渲染质量。隐藏窗口的 WebDriver 可交互性也未经实机验证。真实视觉 QA 仍需单独的可见桌面验收。
+本次运行验证了 `WebView2 JavaScript → Tauri Channel callback → 生产 Vue handler` 四场景投递及状态处理。测试不检查窗口像素、布局、3D WebGL 绘制或用户可见渲染质量。真实视觉 QA 仍需单独验收。
 
 现有 `npm run test:agent-channel-vue` 仍覆盖 MockRuntime Channel 序列化与 Vue 状态 handler 的快速回归；它与本 harness 是不同证据层，不能互相替代。
