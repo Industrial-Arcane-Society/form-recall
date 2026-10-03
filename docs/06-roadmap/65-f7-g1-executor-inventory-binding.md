@@ -25,3 +25,15 @@ native_executor_rejects_unbound_or_invalid_inventory_before_review_provider 将�
 ## 验收边界
 
 此测试覆盖 executor 对 source inventory 的 fail-closed 绑定，不证明真实模型能正确读图，也不验证 provider/ACP/DSH 的线上或进程链路。真实图像理解和视觉返修仍待允许执行的严格冷启动；不得用本地 fixture 代替该验收。
+
+## 2026-10-04 executor 状态闭环扩展
+
+在初始四类 inventory 拒绝用例之外，新增 executor→cad_get_state 集成覆盖：
+
+- 原图 reobserve 从 observation v1 升级到 v2 后，旧 review 不再贡献 current/comparable coverage。
+- construction milestone 未完成时，provider 即便报告 verified/match，stage 结果保持 diagnostic-only，covered evidence 不晋升。
+- mismatch 与 unknown covered evidence claim 均保持未覆盖；其中 unsupported_coverage_ids 必须传递到 cad_get_state 汇总。
+
+unsupported case 暴露了生产缺口：NativeToolExecutor 已计算并保存 host 派生的 unsupported_coverage_ids，但 native_state_summary 未把该字段并入 reference row，可能只因一个额外的未知 claim 被过滤便错误显示全图 covered。现已在 Rust 状态汇总中保留 host 计算的 unsupported IDs，并以 executor 集成回归确认 coverage=false。
+
+验证：设置 AIMODELER_TEST_NODE 与 AIMODELER_TEST_ACP_FIXTURE 后，通过 scripts/test-lib.ps1 -Offline 运行全量 Rust suite，302 passed、0 failed。测试使用本地 mock HTTP provider 和已由 complete_preview 认证的 host fixture；不证明真实 DSH/provider 视觉质量、原图理解或 CATIA 结果。

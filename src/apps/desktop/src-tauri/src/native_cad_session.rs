@@ -1413,6 +1413,31 @@ mod tests {
         assert_eq!(dispatch.report["overall_geometry_review_accepted"], true);
         std::fs::remove_dir_all(dir).unwrap();
     }
+
+    #[test]
+    fn complete_visual_coverage_cannot_override_an_open_finding_at_finish() {
+        let (mut state, refs, turns, dir) = image_state_with_coverage(None);
+        state["finding_ledger"] = json!({
+            "f-open":{"finding_id":"f-open","status":"open","severity":"major","item":"unresolved reference mismatch"}
+        });
+        let state = with_aggregate(&state, &refs, &turns);
+        let mut summary_state = state.clone();
+        let summary = crate::native_state_summary::summary(&mut summary_state, &refs, &turns)
+            .expect("fixture should produce visual evidence summary");
+        assert_eq!(
+            summary["visual_evidence_summary"]["all_references_covered"],
+            true
+        );
+        assert_eq!(state["latest_geometry_review"]["result"]["decision"], "needs_repair");
+
+        let (finished, dispatch) = finish_assessment(&state, &refs, &turns)
+            .expect("open finding should return a rejected candidate report");
+        assert_eq!(dispatch.finish_state, "candidate_needs_repair");
+        assert_eq!(dispatch.report["accepted"], false);
+        assert_eq!(dispatch.report["visual_evidence"]["all_references_covered"], true);
+        assert_eq!(finished["finish_summary"]["accepted"], false);
+        std::fs::remove_dir_all(dir).unwrap();
+    }
     #[test]
     fn trusted_user_turn_source_can_finish_but_forged_turn_is_rejected() {
         let dir = temp_dir("user-source");

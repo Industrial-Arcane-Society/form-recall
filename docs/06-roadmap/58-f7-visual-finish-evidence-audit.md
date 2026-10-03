@@ -87,12 +87,13 @@ host 的数据来源是 `native_cad_session.rs:1845–2039`。`finish_assessment
 
 Headless predicate 覆盖进展（本次新增）：`native_agent_coldstart_gates.test.mjs` 新增 table-driven 翻转矩阵，分别覆盖 `visual_coverage_incomplete_or_conflicting` 的 6 个合取项、`visual_gate_original_reference_binding_missing` 的 6 个合取项、`host_finish_not_accepted` 的 7 个合取项。每个 fixture 先确认完整合成基线 gate 通过，再单独破坏一项并确认总结果失败及目标 reason 出现；生产门禁未改动、没有放宽条件。该覆盖仅证明当前 Node gate evaluator 对这些字段的严格判定，不证明字段在真实运行中由正确视觉分析生成，也不代表真实视觉/finish/F7 通过。
 
-仍待实现的 headless 增补：
+2026-10-04 headless coverage follow-up（已实现并经全量 Rust suite 验证）：
 
-1. 用 mock vision provider 驱动 native executor 完成 inspect → current preview review → cad_get_state，断言 Cordis 工具执行只在有效全图 inventory 和当前可比较 review 存在后形成 required evidence coverage。commit 1ed886c 已补 executor 负例：错误 reference ID、source SHA 不匹配、ROI-only inventory、空/重复 evidence、过期 preview generation 均 fail closed；仍待补旧 observation、partial stage、mismatch 与 unsupported coverage。
-2. 增加“视觉全覆盖但 host finish 因其他条件未接受”与“host finish 汇总接受但原图行错绑”的反例，确保原因相互独立。
-3. 覆盖 finish summary 每个合取项被单独置 false 的 Rust `finish_assessment` 测试，并断言候选导出状态不能误变成 accepted。
+- executor 路由负例覆盖 source SHA 不匹配、错误 reference ID、ROI-only inventory、空/重复 evidence、旧 observation 刷新、partial construction stage、mismatch 与 unsupported coverage。
+- 两个跨 gate 反例确认：视觉覆盖完整不能覆盖 open finding；finish 汇总的自报 accepted 不能覆盖错误绑定的原图 SHA/reference row。
+- finish_assessment 的七项必要条件均有独立翻转测试；candidate 仍会明确保持未 accepted。
 
+这些用例只验证本地 Rust/mock provider 的 gate 与状态接线，不等价真实 DSH/provider 视觉验收。
 mock provider → Rust NativeToolExecutor → cad_get_state 的最小组合路径已有 headless 集成覆盖：正例依序通过 cad_inspect_references、对预先提交且与 revision/fingerprint 绑定的当前预览执行 cad_review_reference_similarity、再执行 cad_get_state；断言原图 ID/SHA、ROI 派生 evidence ID、review revision/generation/fingerprint 和最终 coverage 均从会话状态对齐。负例覆盖错误 reference ID、source SHA 不匹配、ROI-only inventory、空/重复 evidence 和过期 preview generation，确认相关调用在绑定、inventory 或当前性校验失败后不升级证据。commit 1ed886c 的 Rust executor 集成用例通过。该测试使用本地 mock HTTP vision provider，且预览是 fixture 中已提交的当前 host preview；它不证明 CAD 预览生成器、外部 provider 或真实视觉判断质量。
 
 集成测试还捕获并修复了一个证据字段互操作缺口：review 已用 host 校验的 geometry fingerprint 记录当前签名，但遗漏了 state summary 用于精确比较的 `geometry_signature` 字段。review 现在把同一个已校验当前值写入该字段；没有变更比较 predicate 或验收门槛。若没有此字段，真实经过 executor 的 review 会在 get_state 被标为 noncomparable，required coverage 不会升级。
@@ -105,4 +106,4 @@ mock provider → Rust NativeToolExecutor → cad_get_state 的最小组合路�
 
 ## 维护状态
 
-`F7.G1` 的视觉覆盖与原图 binding 仍未通过；`F7.G8` 的 Run13 严格冷启动仍未通过。本次新增的测试记录仅收敛 gate evaluator 的合成字段判定，不改变生产实现或 F7 验收状态。
+F7.G1 的真实视觉覆盖与原图 binding、F7.G8 的真实严格冷启动仍未通过。本次新增 headless 负例与 summary fail-closed 修复只证明 host 接线和本地门禁，不证明真实模型视觉质量。

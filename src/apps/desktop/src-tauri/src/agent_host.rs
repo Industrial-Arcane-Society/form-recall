@@ -3061,6 +3061,59 @@ mod tests {
     }
 
     #[test]
+    fn accepted_finish_claim_cannot_survive_misbound_original_reference_row() {
+        let root = std::env::temp_dir().join(format!("agent-reference-binding-{}", super::unique_id()));
+        fs::create_dir_all(&root).unwrap();
+        let image_path = root.join("original.png");
+        let image_bytes = b"original reference fixture";
+        fs::write(&image_path, image_bytes).unwrap();
+        let image_hash = super::sha256(image_bytes);
+        let reference_id = format!("sha256:{image_hash}");
+        let refs_path = root.join("reference-images.json");
+        let reference_manifest = json!({"images":[{
+            "path":image_path,"id":reference_id,"sha256":image_hash,
+            "filename":"original.png","width":64,"height":48,"media_type":"image/png"
+        }]});
+        fs::write(&refs_path, serde_json::to_vec(&reference_manifest).unwrap()).unwrap();
+        let turns_path = root.join("user-turns.json");
+        fs::write(&turns_path, br#"{"turns":[]}"#).unwrap();
+
+        let plan = crate::cad_plan::create(
+            "fixture",
+            json!({"id":"body","kind":"box","operation":"add","parameters":{"length":10,"width":8,"height":5},"sources":{}}),
+            "fixture",
+            None,
+        );
+        let geometry_fingerprint = crate::cad_plan::geometry_fingerprint(&plan).unwrap();
+        let mut state = json!({
+            "revision":7,"plan":plan,"finding_ledger":{},"required_external_facts":{},
+            "construction_milestone":{"expected_feature_ids":["body"],"completed_feature_ids":["body"]},
+            "reference_inventory":{},"reference_observation_history":[],
+            "reference_similarity_history":[],"reference_similarity_reviews":{},
+            "reference_similarity_attempts":[],"visual_reviews":[]
+        });
+        let snapshot = crate::native_finish_evidence::current_snapshot(&state, &refs_path, &turns_path)
+            .expect("valid reference row should produce the original accepted snapshot");
+        state["finish_summary"] = json!({
+            "accepted":true,"finish_state":"accepted","revision":7,
+            "geometry_fingerprint":geometry_fingerprint,"evidence_fingerprint":snapshot.fingerprint
+        });
+        fs::write(root.join("cad-state.json"), serde_json::to_vec(&state).unwrap()).unwrap();
+
+        let accepted = current_model_summary(&root);
+        assert_eq!(accepted["acceptance_confirmed"], true);
+
+        let mut misbound_manifest = reference_manifest;
+        misbound_manifest["images"][0]["sha256"] = json!("0".repeat(64));
+        fs::write(&refs_path, serde_json::to_vec(&misbound_manifest).unwrap()).unwrap();
+        let summary = current_model_summary(&root);
+        assert_eq!(summary["acceptance_confirmed"], false);
+        assert_eq!(summary["status"], "candidate");
+        assert_ne!(summary["finish_status"], "accepted");
+        fs::remove_dir_all(root).unwrap();
+    }
+
+    #[test]
     fn same_revision_visual_reference_findings_and_facts_changes_expire_finish_binding() {
         let root =
             std::env::temp_dir().join(format!("agent-finish-evidence-{}", super::unique_id()));

@@ -1335,14 +1335,14 @@ mod tests {
         (dir, reference_id, source_sha, evidence_id)
     }
 
-    fn mock_two_vision_responses(first: Value, second: Value) -> String {
+    fn mock_vision_responses(responses: Vec<Value>) -> String {
         use std::io::{Read, Write};
         use std::net::TcpListener;
 
         let listener = TcpListener::bind("127.0.0.1:0").unwrap();
         let address = listener.local_addr().unwrap();
         thread::spawn(move || {
-            for content in [first, second] {
+            for content in responses {
                 let (mut stream, _) = listener.accept().unwrap();
                 stream.set_read_timeout(Some(Duration::from_secs(5))).unwrap();
                 let mut request = Vec::new();
@@ -1377,6 +1377,9 @@ mod tests {
         format!("http://{address}/v1/chat/completions")
     }
 
+    fn mock_two_vision_responses(first: Value, second: Value) -> String {
+        mock_vision_responses(vec![first, second])
+    }
     #[test]
     fn native_executor_inspect_current_review_and_get_state_preserve_current_bindings() {
         let (dir, reference_id, source_sha, evidence_id) = current_vision_fixture();
@@ -1436,6 +1439,217 @@ mod tests {
         fs::remove_dir_all(dir).unwrap();
     }
 
+    #[test]
+    fn native_executor_get_state_rejects_review_from_previous_observation() {
+        let (dir, reference_id, _source_sha, evidence_id) = current_vision_fixture();
+        let observation = || json!({
+            "summary":"A visible outline.",
+            "visible_evidence":[{"id":"outline","description":"A closed outer outline is visible."}]
+        });
+        let review = json!({
+            "view_comparable":true,
+            "score":92,
+            "coverage_status":"verified",
+            "covered_evidence_ids":[evidence_id.clone()],
+            "evidence":[{
+                "evidence_id":evidence_id.clone(),
+                "item":"outer outline",
+                "reference":"A closed outline is visible.",
+                "model":"A closed outline is visible.",
+                "assessment_basis":"reference",
+                "status":"match",
+                "affected_feature_ids":["body"]
+            }]
+        });
+        let endpoint = mock_vision_responses(vec![observation(), review, observation()]);
+        let provider = Arc::new(NativeVisionProvider::new(
+            crate::native_vision_provider::ProviderConfig {
+                base_url: endpoint,
+                model: "headless-fixture".into(),
+                api_key: "fixture-key".into(),
+                effort: "none".into(),
+                thinking_budget: None,
+                max_output_tokens: 1024,
+            },
+        ).unwrap());
+        let executor = NativeToolExecutor::new(&dir, &dir, true).unwrap().with_vision(provider);
+
+        executor.execute(
+            "inspect-v1",
+            "cad_inspect_references",
+            &json!({"reference_id":reference_id}),
+            Duration::from_secs(10),
+        ).unwrap();
+        executor.execute(
+            "review-v1",
+            "cad_review_reference_similarity",
+            &json!({"view":"front","preview_generation":9,"reference_id":reference_id}),
+            Duration::from_secs(10),
+        ).unwrap();
+        let before = executor.execute("state-before-refresh", "cad_get_state", &json!({}), Duration::from_secs(3)).unwrap();
+        let before_summary: Value = serde_json::from_str(
+            before["text"].as_str().unwrap().split_once('\n').unwrap().1
+        ).unwrap();
+        assert_eq!(before_summary["visual_evidence_summary"]["all_references_covered"], true);
+
+        executor.execute(
+            "refresh-observation",
+            "cad_inspect_references",
+            &json!({"reference_id":reference_id,"refresh_reason":"reobserve"}),
+            Duration::from_secs(10),
+        ).unwrap();
+        let after = executor.execute("state-after-refresh", "cad_get_state", &json!({}), Duration::from_secs(3)).unwrap();
+        let after_summary: Value = serde_json::from_str(
+            after["text"].as_str().unwrap().split_once('\n').unwrap().1
+        ).unwrap();
+        let reference = &after_summary["visual_evidence_summary"]["references"][reference_id.as_str()];
+        assert_eq!(after_summary["visual_evidence_summary"]["all_references_covered"], false, "{after_summary:#}");
+        assert_eq!(reference["covered"], false, "{reference:#}");
+        assert_eq!(reference["comparable_pairs"], 0, "{reference:#}");
+        let saved = read_json_object(&dir.join("cad-state.json")).unwrap();
+        assert_eq!(saved["reference_inventory"][reference_id.as_str()]["observation_version"], 2);
+        assert_eq!(saved["reference_similarity_history"][0]["observation_version"], 1);
+        fs::remove_dir_all(dir).unwrap();
+    }
+
+    #[test]
+    fn native_executor_does_not_promote_partial_construction_stage_coverage() {
+        let (dir, reference_id, _source_sha, evidence_id) = current_vision_fixture();
+        let mut state = read_json_object(&dir.join("cad-state.json")).unwrap();
+        state["construction_milestone"] = json!({
+            "revision":4,
+            "completed_feature_ids":[],
+            "expected_feature_ids":["body"]
+        });
+        write_json_atomic(&dir.join("cad-state.json"), &state).unwrap();
+        let endpoint = mock_two_vision_responses(
+            json!({"summary":"A visible outline.","visible_evidence":[{"id":"outline","description":"A closed outer outline is visible."}]}),
+            json!({
+                "view_comparable":true,
+                "score":92,
+                "coverage_status":"verified",
+                "covered_evidence_ids":[evidence_id.clone()],
+                "evidence":[{
+                    "evidence_id":evidence_id,
+                    "item":"outer outline",
+                    "reference":"A closed outline is visible.",
+                    "model":"A closed outline is visible.",
+                    "assessment_basis":"reference",
+                    "status":"match",
+                    "affected_feature_ids":["body"]
+                }]
+            }),
+        );
+        let provider = Arc::new(NativeVisionProvider::new(
+            crate::native_vision_provider::ProviderConfig {
+                base_url: endpoint,
+                model: "headless-fixture".into(),
+                api_key: "fixture-key".into(),
+                effort: "none".into(),
+                thinking_budget: None,
+                max_output_tokens: 1024,
+            },
+        ).unwrap());
+        let executor = NativeToolExecutor::new(&dir, &dir, true).unwrap().with_vision(provider);
+
+        executor.execute(
+            "inspect",
+            "cad_inspect_references",
+            &json!({"reference_id":reference_id}),
+            Duration::from_secs(10),
+        ).unwrap();
+        executor.execute(
+            "review-partial-stage",
+            "cad_review_reference_similarity",
+            &json!({"view":"front","preview_generation":9,"reference_id":reference_id}),
+            Duration::from_secs(10),
+        ).unwrap();
+        let result = executor.execute("partial-stage-state", "cad_get_state", &json!({}), Duration::from_secs(3)).unwrap();
+        let summary: Value = serde_json::from_str(
+            result["text"].as_str().unwrap().split_once('\n').unwrap().1
+        ).unwrap();
+        let reference = &summary["visual_evidence_summary"]["references"][reference_id.as_str()];
+        assert_eq!(summary["visual_evidence_summary"]["all_references_covered"], false, "{summary:#}");
+        assert_eq!(reference["covered"], false, "{reference:#}");
+        let saved = read_json_object(&dir.join("cad-state.json")).unwrap();
+        let review = &saved["reference_similarity_history"][0];
+        assert_eq!(review["stage_complete"], false, "{review:#}");
+        assert_eq!(review["stage_diagnostic_only"], true, "{review:#}");
+        assert_eq!(review["covered_evidence_ids"], json!([]), "{review:#}");
+        fs::remove_dir_all(dir).unwrap();
+    }
+
+    #[test]
+    fn native_executor_get_state_keeps_mismatch_and_unsupported_coverage_unaccepted() {
+        for case in ["mismatch", "unsupported"] {
+            let (dir, reference_id, _source_sha, evidence_id) = current_vision_fixture();
+            let (status, claim) = if case == "mismatch" {
+                ("mismatch", evidence_id.clone())
+            } else {
+                ("match", "unlisted-evidence".to_string())
+            };
+            let mut covered = vec![evidence_id.clone()];
+            if case == "unsupported" {
+                covered.push(claim.clone());
+            }
+            let endpoint = mock_two_vision_responses(
+                json!({"summary":"A visible outline.","visible_evidence":[{"id":"outline","description":"A closed outer outline is visible."}]}),
+                json!({
+                    "view_comparable":true,
+                    "score":92,
+                    "coverage_status":"verified",
+                    "covered_evidence_ids":covered,
+                    "evidence":[{
+                        "evidence_id":evidence_id.clone(),
+                        "item":"outer outline",
+                        "reference":"A closed outline is visible.",
+                        "model":if case == "mismatch" {"A different contour is visible."} else {"A closed outline is visible."},
+                        "difference":if case == "mismatch" {"The visible outline differs from the model."} else {""},
+                        "mismatch_severity":if case == "mismatch" {"major"} else {"none"},
+                        "assessment_basis":"reference",
+                        "status":status,
+                        "affected_feature_ids":["body"]
+                    }]
+                }),
+            );
+            let provider = Arc::new(NativeVisionProvider::new(
+                crate::native_vision_provider::ProviderConfig {
+                    base_url: endpoint,
+                    model: "headless-fixture".into(),
+                    api_key: "fixture-key".into(),
+                    effort: "none".into(),
+                    thinking_budget: None,
+                    max_output_tokens: 1024,
+                },
+            ).unwrap());
+            let executor = NativeToolExecutor::new(&dir, &dir, true).unwrap().with_vision(provider);
+            executor.execute(
+                "inspect",
+                "cad_inspect_references",
+                &json!({"reference_id":reference_id}),
+                Duration::from_secs(10),
+            ).unwrap();
+            executor.execute(
+                "review",
+                "cad_review_reference_similarity",
+                &json!({"view":"front","preview_generation":9,"reference_id":reference_id}),
+                Duration::from_secs(10),
+            ).unwrap();
+            let result = executor.execute("state", "cad_get_state", &json!({}), Duration::from_secs(3)).unwrap();
+            let summary: Value = serde_json::from_str(
+                result["text"].as_str().unwrap().split_once('\n').unwrap().1
+            ).unwrap();
+            let reference = &summary["visual_evidence_summary"]["references"][reference_id.as_str()];
+            assert_eq!(reference["covered"], false, "case={case}, {reference:#}");
+            assert_eq!(summary["visual_evidence_summary"]["all_references_covered"], false, "case={case}, {summary:#}");
+            if case == "mismatch" {
+                assert!(reference["mismatch_evidence_ids"].as_array().unwrap().contains(&json!(evidence_id)), "{reference:#}");
+            } else {
+                assert!(reference["unsupported_coverage_ids"].as_array().unwrap().contains(&json!(claim)), "{reference:#}");
+            }
+            fs::remove_dir_all(dir).unwrap();
+        }
+    }
     #[test]
     fn native_executor_rejects_misbound_reference_before_provider_request() {
         let (dir, _reference_id, _source_sha, _) = current_vision_fixture();

@@ -881,6 +881,9 @@ fn visual_summary(
         for x in covered.difference(&seen) {
             push(&mut rec["unsupported_coverage_ids"], json!(x))
         }
+        for x in strings(&review["unsupported_coverage_ids"]) {
+            push(&mut rec["unsupported_coverage_ids"], json!(x))
+        }
         for x in covered.intersection(&seen).filter(|x| !req.contains(*x)) {
             push(&mut rec["unmapped_coverage_ids"], json!(x))
         }
