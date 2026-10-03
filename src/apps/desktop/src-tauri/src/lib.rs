@@ -44,6 +44,8 @@ pub mod native_vision_assets;
 pub mod native_vision_domain;
 pub mod native_vision_provider;
 pub mod native_web;
+#[cfg(feature = "agent-webview-smoke")]
+pub mod webview_smoke;
 
 use serde_json::{Value, json};
 use std::fs;
