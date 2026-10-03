@@ -2247,6 +2247,26 @@ mod tests {
     }
 
     #[test]
+    fn invalid_observation_refresh_reason_is_rejected_before_provider_call() {
+        let session = test_session();
+        let model = provider("http://127.0.0.1:1".into());
+        for reason in [json!("automatic"), json!(3)] {
+            let error = run(inspect(
+                &session.state,
+                &json!({"reference_id":session.reference_id,"refresh_reason":reason}),
+                &model,
+                &AtomicBool::new(false),
+                &session.context,
+            ))
+            .unwrap_err();
+            assert!(
+                error.contains("refresh_reason只能是conflict或reobserve"),
+                "{error}"
+            );
+        }
+    }
+
+    #[test]
     fn stage_review_provider_response_is_attributed_before_coverage_and_ledger() {
         for (affected, expected_status, expected_findings) in [
             ("future-hole", "unknown", 0),
