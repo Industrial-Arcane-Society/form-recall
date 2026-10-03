@@ -1126,18 +1126,11 @@ fn run_turn_inner(
         }),
     )?;
 
-    let mut prompt = Vec::with_capacity(images.len() + 1);
-    if !text.is_empty() {
-        prompt.push(json!({"type":"text", "text":text}));
-    }
-    for image in images {
-        prompt.push(json!({"type":"image", "mimeType":image.media_type, "data":BASE64.encode(&image.bytes)}));
-    }
     let receiver = session.process.subscribe()?;
     let process = Arc::clone(&session.process);
     let sid = session.id.clone();
     let (tx, rx) = mpsc::channel();
-    let params = json!({"sessionId":sid, "prompt":prompt});
+    let params = session_prompt_params(&sid, text, &images);
     thread::Builder::new()
         .name("ai-modeler-acp-prompt".into())
         .spawn(move || {
@@ -1803,6 +1796,21 @@ fn active_turn_record(session_id: &str, turn_id: &str, images: &[Image]) -> Valu
         "turn_id": turn_id,
         "reference_images": reference_images,
     })
+}
+
+fn session_prompt_params(session_id: &str, text: &str, images: &[Image]) -> Value {
+    let mut prompt = Vec::with_capacity(images.len() + 1);
+    if !text.is_empty() {
+        prompt.push(json!({"type":"text", "text":text}));
+    }
+    for image in images {
+        prompt.push(json!({
+            "type":"image",
+            "mimeType":image.media_type,
+            "data":BASE64.encode(&image.bytes)
+        }));
+    }
+    json!({"sessionId":session_id,"prompt":prompt})
 }
 
 fn persist_images(cwd: &Path, paths: &[String]) -> Result<Vec<Image>, String> {
@@ -2599,11 +2607,13 @@ mod tests {
         ActiveReset, CANCEL_NONE, CANCEL_USER, CANCEL_WATCHDOG_IDLE, Image, Provider,
         ToolAuditTail, acknowledged_config_value, active_turn_record, classify_host_error,
         classify_turn_status, current_model_summary, effective_output_token_cap, find_config_value,
-        normalize_terminal_result, resolve_stage_configs, route_profile, terminal_event_data,
-        termination_from_cancel, validate_image_signature, vision_provider_config,
-        write_profile_patch,
+        normalize_terminal_result, resolve_stage_configs, route_profile, session_prompt_params,
+        terminal_event_data, termination_from_cancel, validate_image_signature,
+        vision_provider_config, write_profile_patch,
     };
     use crate::agent_model_config::{STAGE_MODELING, STAGE_PERCEPTION, STAGE_REVIEW};
+    use base64::Engine as _;
+    use base64::engine::general_purpose::STANDARD;
     use serde_json::{Value, json};
     use std::fs;
     use std::path::PathBuf;
@@ -2860,6 +2870,69 @@ mod tests {
         );
         let serialized = serde_json::to_string(&record).unwrap();
         assert!(!serialized.contains("png-bytes"));
+    }
+
+    #[test]
+    fn acp_session_prompt_preserves_multi_image_order_and_manifest_sha_bindings() {
+        let fixtures: [(&str, &'static str, &[u8]); 3] = [
+            (
+                "image/png",
+                "front.png",
+                b"\x89PNG\r\n\x1a\nfront-reference",
+            ),
+            ("image/jpeg", "side.jpg", b"\xff\xd8\xffside-reference"),
+            ("image/webp", "top.webp", b"RIFF\x04\0\0\0WEBPtop-reference"),
+        ];
+        let images = fixtures
+            .iter()
+            .map(|(media_type, filename, bytes)| Image {
+                id: format!("sha256:{}", super::sha256(bytes)),
+                path: PathBuf::from(format!("reference-assets/{filename}")),
+                source_path: PathBuf::from(filename),
+                filename: (*filename).into(),
+                media_type: *media_type,
+                bytes: bytes.to_vec(),
+            })
+            .collect::<Vec<_>>();
+        let manifest = active_turn_record("session-multi", "turn-multi", &images);
+        let params = session_prompt_params("session-multi", "Compare these references.", &images);
+
+        // Exercise the same JSON serialization boundary passed to AcpProcess::request.
+        let serialized = serde_json::to_vec(&params).unwrap();
+        let params: Value = serde_json::from_slice(&serialized).unwrap();
+        assert_eq!(params["sessionId"], "session-multi");
+        let prompt = params["prompt"].as_array().unwrap();
+        assert_eq!(
+            prompt[0],
+            json!({"type":"text","text":"Compare these references."})
+        );
+        let image_parts = &prompt[1..];
+        assert_eq!(image_parts.len(), fixtures.len());
+
+        for (index, ((expected_mime, expected_filename, expected_bytes), part)) in
+            fixtures.iter().zip(image_parts).enumerate()
+        {
+            assert_eq!(part["type"], "image");
+            assert_eq!(part["mimeType"], *expected_mime);
+            let decoded = STANDARD.decode(part["data"].as_str().unwrap()).unwrap();
+            assert_eq!(
+                decoded, *expected_bytes,
+                "image order changed at index {index}"
+            );
+            assert_eq!(
+                super::sha256(&decoded),
+                manifest["reference_images"][index]["sha256"],
+                "ACP image does not match its ordered reference manifest entry"
+            );
+            assert_eq!(
+                manifest["reference_images"][index]["filename"],
+                *expected_filename
+            );
+            assert_eq!(
+                manifest["reference_images"][index]["media_type"],
+                *expected_mime
+            );
+        }
     }
 
     #[test]
