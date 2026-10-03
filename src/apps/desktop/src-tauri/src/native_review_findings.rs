@@ -1,7 +1,7 @@
 //! Host-owned, revision-bound lifecycle for independently reviewed stage findings.
 //! Attribution proves ID membership, not whether the model understood the image.
 use crate::cad_plan;
-use serde_json::{Value, json};
+use serde_json::{json, Value};
 use sha2::{Digest, Sha256};
 use std::collections::BTreeSet;
 
@@ -491,5 +491,64 @@ mod tests {
                 .len(),
             1
         );
+    }
+
+    #[test]
+    fn out_of_scope_match_cannot_close_a_finding_for_a_removed_feature() {
+        let mut state = state();
+        let bad = review(&mut state, "mismatch", json!(["hole1"]));
+        let created = reconcile(&mut state, &bad).unwrap();
+        let finding_id = created["created"][0].as_str().unwrap().to_owned();
+        assert_eq!(state["finding_ledger"][&finding_id]["status"], "open");
+
+        state = native_cad_session::apply(
+            &state,
+            SessionCommand::Remove {
+                feature_id: "hole1".into(),
+                finding_ids: vec![finding_id.clone()],
+            },
+        )
+        .unwrap()
+        .state;
+        let revision = state["revision"].clone();
+        assert_eq!(revision, 3);
+        assert_eq!(
+            state["finding_ledger"][&finding_id]["status"],
+            "awaiting_verification"
+        );
+
+        // A complete current review can legitimately be scoped to the remaining body,
+        // but a provider must not resolve the old hole finding by attributing it to the
+        // feature that is no longer present in that stage.
+        let mut current = review(&mut state, "match", json!(["hole1"]));
+        let body_scope = BTreeSet::from(["body".to_owned()]);
+        state["construction_milestone"] = json!({
+            "revision": revision,
+            "completed_feature_ids": ["body"],
+            "expected_feature_ids": ["body"]
+        });
+        current["stage_scope"] = json!({"revision":revision,"features":[{"id":"body"}]});
+        current["full_current_geometry_in_scope"] = json!(true);
+        current["stage_diagnostic_only"] = json!(false);
+        attribute_review(&mut current, &body_scope);
+
+        assert_eq!(current["coverage_status"], "verified");
+        assert_eq!(current["evidence"][0]["status"], "match");
+        assert_eq!(
+            current["evidence"][0]["stage_attribution_status"],
+            "unattributed"
+        );
+        assert_eq!(
+            current["evidence"][0]["affected_feature_ids"],
+            json!(["hole1"])
+        );
+        let output = reconcile(&mut state, &current).unwrap();
+        assert_eq!(output["binding_status"], "current");
+        assert_eq!(output["resolved"], json!([]));
+        assert_eq!(
+            state["finding_ledger"][&finding_id]["status"],
+            "awaiting_verification"
+        );
+        assert_eq!(state["unresolved_findings"].as_array().unwrap().len(), 1);
     }
 }
