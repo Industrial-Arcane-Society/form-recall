@@ -27,7 +27,7 @@ test('release configuration still requires all packaged resources and the stagin
   assert.deepEqual(base.bundle.resources, {
     'target/package-resources/app/': 'app/',
     'target/package-resources/python/': 'python/',
-    'target/package-resources/bootstrap/': 'bootstrap/',
+    'target/package-resources/catia-bootstrap/': 'catia-bootstrap/',
     'target/package-resources/occt-runtime/': 'occt-runtime/',
     'target/package-resources/RUNTIME-INFORMATION.txt': 'RUNTIME-INFORMATION.txt',
   })

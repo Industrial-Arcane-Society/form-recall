@@ -11,17 +11,12 @@ const legacyRoot = join(repoRoot, "src", "legacy");
 const targetRoot = join(desktopRoot, "src-tauri", "target");
 const packageRoot = join(targetRoot, "package-resources");
 const downloadRoot = join(targetRoot, "package-downloads");
-const buildEnvRoot = join(targetRoot, "desktop-package-builder");
 const pythonRoot = join(packageRoot, "python");
 const catiaBootstrapRoot = join(packageRoot, "catia-bootstrap");
 const appRoot = join(packageRoot, "app");
-const requirements = join(legacyRoot, "packaging", "desktop-requirements-win-x64.txt");
 const catiaRequirements = join(legacyRoot, "packaging", "desktop-catia-requirements-win-x64.txt");
-const bootstrapRoot = join(packageRoot, "bootstrap");
 
 const pythonVersion = "3.13.16";
-const pipVersion = "25.3";
-const pipWheel = `pip-${pipVersion}-py3-none-any.whl`;
 const pythonArchive = `python-${pythonVersion}-embeddable-amd64.zip`;
 const pythonArchiveUrl = `https://www.python.org/ftp/python/${pythonVersion}/${pythonArchive}`;
 const pythonArchiveSha256 = "589dc1e9d02549ca5f680710307ff9b77f6e3ffc4aa3efccd7fa54eeeafac94b";
@@ -66,20 +61,27 @@ async function download(url, destination) {
 
 function stageSources() {
   const legacyPrefix = "src/legacy/";
-  const rootFiles = new Set(["README.md", "LICENSE", "config.example.json"]);
+  const runtimeFiles = new Set([
+    "src/legacy/ai_modeler/agent/dsh_native_tools.mjs",
+    "src/legacy/ai_modeler/agent/dsh_attachment_store.mjs",
+    "src/legacy/ai_modeler/agent/dsh_stream_bridge.mjs",
+    "src/legacy/ai_modeler/catia_com_adapter.py",
+    "src/legacy/prompts/dsh_agent/system.md",
+    "src/legacy/packaging/desktop-catia-requirements-win-x64.txt",
+    "src/legacy/packaging/dsh-runtime/runtime-manifest.json",
+    "src/legacy/packaging/dsh-runtime/package.json",
+    "src/legacy/packaging/dsh-runtime/package-lock.json",
+    "src/legacy/kb/bolt_std.json",
+    "src/legacy/kb/modeling_recipes.json",
+    "src/legacy/kb/native_knowledge_enrichments.v1.json",
+    "src/legacy/datasets/训练提示词/全部提示词.jsonl",
+  ]);
   const fileList = runCapture("git", ["ls-files", "-co", "--exclude-standard", "-z"], { cwd: repoRoot });
   for (const relativePath of fileList.split("\0").filter(Boolean)) {
     const normalized = relativePath.replaceAll("\\", "/");
     const fromLegacy = normalized.startsWith(legacyPrefix);
     const fromDocs = normalized.startsWith("docs/");
-    if (!rootFiles.has(normalized) && !fromLegacy && !fromDocs) continue;
-    if (fromLegacy) {
-      const legacyRelative = normalized.slice(legacyPrefix.length);
-      const segments = legacyRelative.split("/");
-      // Test modules are not imported by the packaged UI or Python backend.
-      if (segments.some((segment) => ["tests", "__pycache__"].includes(segment))) continue;
-      if (/^(test_.*\.py|.*\.(test|spec)\.(py|mjs|js|ts))$/i.test(segments.at(-1) || "")) continue;
-    }
+    if (!runtimeFiles.has(normalized) && !fromDocs) continue;
     const appRelative = fromLegacy ? normalized.slice(legacyPrefix.length) : normalized;
     const source = join(repoRoot, normalized);
     if (!existsSync(source)) continue;
@@ -115,30 +117,13 @@ async function main() {
 
   removeOwnedPath(pythonRoot);
   removeOwnedPath(appRoot);
-  removeOwnedPath(bootstrapRoot);
   removeOwnedPath(catiaBootstrapRoot);
-  removeOwnedPath(join(packageRoot, "PYTHON-PACKAGES.txt"));
   mkdirSync(pythonRoot, { recursive: true });
-  mkdirSync(bootstrapRoot, { recursive: true });
-  if (!existsSync(buildEnvRoot)) run("python", ["-m", "venv", buildEnvRoot]);
-  const buildPython = join(buildEnvRoot, "Scripts", "python.exe");
-  if (!existsSync(buildPython)) throw new Error(`Build Python environment is missing: ${buildPython}`);
-  const buildPythonVersion = runCapture(buildPython, ["-c", "import sys; print('.'.join(map(str, sys.version_info[:2])))"]).trim();
-  console.log(`Build-time Python: ${buildPython} (Python ${buildPythonVersion})`);
-
-  // Dependencies are downloaded on first launch into the user's writable data folder.
-  run(buildPython, ["-m", "zipfile", "-e", archivePath, pythonRoot]);
+  // tar.exe (libarchive) can extract the official ZIP without machine Python.
+  run("tar", ["-xf", archivePath, "-C", pythonRoot]);
   writeFileSync(join(pythonRoot, "python313._pth"), [
     "python313.zip", ".", "Lib\\site-packages", "import site", "",
   ].join("\r\n"), "utf8");
-
-  console.log(`Downloading pip ${pipVersion} for the first-launch dependency installer...`);
-  run(buildPython, [
-    "-m", "pip", "download", "--disable-pip-version-check", "--only-binary=:all:",
-    "--no-deps", "--dest", bootstrapRoot, `pip==${pipVersion}`,
-  ]);
-  const stagedPipWheel = join(bootstrapRoot, pipWheel);
-  if (!existsSync(stagedPipWheel)) throw new Error(`Expected pip bootstrap wheel is missing: ${stagedPipWheel}`);
 
   mkdirSync(catiaBootstrapRoot, { recursive: true });
   const stagedPywin32Wheel = join(catiaBootstrapRoot, pywin32Wheel);
@@ -153,8 +138,6 @@ async function main() {
 
   stageSources();
 
-  const requirementBytes = readFileSync(requirements);
-  const requirementsSha256 = createHash("sha256").update(requirementBytes).digest("hex");
   const catiaRequirementBytes = readFileSync(catiaRequirements);
   const catiaRequirementsSha256 = createHash("sha256").update(catiaRequirementBytes).digest("hex");
   const pythonFiles = [];
@@ -183,26 +166,17 @@ async function main() {
     pythonFiles,
   };
   writeFileSync(join(catiaBootstrapRoot, "catia-runtime-manifest.json"), `${JSON.stringify(catiaManifest, null, 2)}\n`, "utf8");
-  const runtimeManifest = { pythonVersion, pipVersion, pipWheel, requirementsSha256 };
-  writeFileSync(
-    join(appRoot, "packaging", "desktop-runtime.json"),
-    `${JSON.stringify(runtimeManifest, null, 2)}\n`,
-    "utf8",
-  );
-
   const runtimeInfo = [
     "AI Modeler bundled desktop runtime",
-    `Python: ${pythonVersion} x64 (CPython embeddable distribution)`,
-    "Python source: app\\ai_modeler\\",
-    `pip bootstrap: bootstrap\\${pipWheel}`,
+    `CATIA-only Python: ${pythonVersion} x64 (CPython embeddable distribution)`,
     `CATIA-only COM dependency: ${pywin32Wheel} (validated by catia-bootstrap\\catia-runtime-manifest.json)`,
     "CATIA Python and pywin32 are copied into the user's private runtime only after a CATIA export or push request.",
-    "Legacy Python bridge dependency set remains separate and is not required by native Quick, Agent, or model operations.",
+    "Quick, Agent, local CAD, export and rendering do not start or depend on Python.",
     `Build archive SHA-256: ${actualSha}`,
     "",
   ].join("\r\n");
   writeFileSync(join(packageRoot, "RUNTIME-INFORMATION.txt"), runtimeInfo, "utf8");
-  console.log(`Prepared embedded Python, pip bootstrap, CATIA-only pywin32 payload and application source in ${packageRoot}`);
+  console.log(`Prepared CATIA-only embedded Python, pywin32 payload and allowlisted application resources in ${packageRoot}`);
 }
 
 main().catch((error) => {

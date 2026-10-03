@@ -14,6 +14,12 @@ const REQUIRED_FILES: &[&str] = &[
     "packaging/dsh-runtime/runtime-manifest.json",
     "packaging/dsh-runtime/package.json",
     "packaging/dsh-runtime/package-lock.json",
+    "ai_modeler/catia_com_adapter.py",
+    "packaging/desktop-catia-requirements-win-x64.txt",
+    "kb/bolt_std.json",
+    "kb/modeling_recipes.json",
+    "kb/native_knowledge_enrichments.v1.json",
+    "datasets/训练提示词/全部提示词.jsonl",
 ];
 
 pub fn validate_resource_root(root: &Path) -> Result<PathBuf, String> {
@@ -59,7 +65,9 @@ pub fn resource_status(root: &Path) -> Result<Value, String> {
         "available": true,
         "root": root.to_string_lossy(),
         "nativeAgentAssets": REQUIRED_FILES[..4].iter().all(|relative| root.join(relative).is_file()),
-        "dshManifest": REQUIRED_FILES[4..].iter().all(|relative| root.join(relative).is_file()),
+        "dshManifest": REQUIRED_FILES[4..7].iter().all(|relative| root.join(relative).is_file()),
+        "catiaAdapterAssets": REQUIRED_FILES[7..9].iter().all(|relative| root.join(relative).is_file()),
+        "nativeKnowledgeAssets": REQUIRED_FILES[9..].iter().all(|relative| root.join(relative).is_file()),
         "knowledge": root.join("kb").is_dir(),
     }))
 }
