@@ -12,6 +12,7 @@ from pathlib import Path
 from unittest import mock
 
 from ai_modeler.agent import dsh_tool_domain as server
+from ai_modeler.agent import dsh_agent
 from ai_modeler.agent import plan_state
 from ai_modeler.sdk import cadplan
 
@@ -902,6 +903,7 @@ class DSHReviewWorkflowTests(unittest.TestCase):
     def test_agent_prompt_has_no_fixed_review_or_score_acceptance_gate(self):
         prompt_path = Path(__file__).parents[1] / "prompts" / "dsh_agent" / "system.md"
         prompt = prompt_path.read_text(encoding="utf-8")
+        self.assertEqual(dsh_agent._prompt(), prompt)
         self.assertIn("无需每添加一个特征都做视觉审查", prompt)
         self.assertIn("分数只作诊断", prompt)
         self.assertIn("finish 始终允许保存候选", prompt)
@@ -909,6 +911,16 @@ class DSHReviewWorkflowTests(unittest.TestCase):
         for obsolete_gate in ("80分门槛", "至少80分", "每个特征都必须先复核",
                               "match 即可直接结束", "自评相似度达标即可验收"):
             self.assertNotIn(obsolete_gate, prompt)
+
+    def test_production_agent_prompt_preserves_image_axis_and_member_ratios(self):
+        prompt = dsh_agent._prompt()
+        self.assertIn("先从同视向可见的主体边界和边长投影确定各轴之间的无量纲比例", prompt)
+        self.assertIn("不能只因一组名义尺寸看起来顺眼", prompt)
+        self.assertIn("每个推算参数分别写入所属 feature 的 `sources`", prompt)
+        self.assertIn("inventory 给出的成员比值全部为 1.0", prompt)
+        self.assertIn('传 refresh_reason="conflict" 重观察', prompt)
+        self.assertIn("主体创建后以及关键特征完成时", prompt)
+        self.assertIn("修订对应 CADPlan 参数", prompt)
 
     def test_finish_without_current_visual_evidence_saves_unverified_candidate(self):
         self._write_state()
