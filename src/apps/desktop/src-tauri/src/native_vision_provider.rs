@@ -347,7 +347,8 @@ impl NativeVisionProvider {
                 "provider_id":self.provider_id,
                 "task":context.task,
                 "request_fields":{
-                    "reasoning_effort_requested":self.config.effort,
+                    "reasoning_effort_configured":profile["reasoning_effort_configured"],
+                    "reasoning_effort_requested":profile["reasoning_effort"],
                     "reasoning_effort_expected":reasoning_effort_expected,
                     "reasoning_expected_status":reasoning_expected_status,
                     "enable_thinking":profile["enable_thinking"],
@@ -610,7 +611,21 @@ impl NativeVisionProvider {
     }
 
     fn profile(&self, context: &RequestContext) -> Value {
-        let effort = normalize_effort(&self.config.effort, self.route.protocol);
+        let configured_effort = normalize_effort(&self.config.effort, self.route.protocol);
+        let effort = if context.task == "source_inventory"
+            && self.route.protocol == Protocol::Responses
+            && self.route.host == "api.deepseek.com"
+            && self.route.reasoning_control == "effort"
+            && self.route.supported_efforts.contains(&"none")
+        {
+            // Source inventory extracts image-grounded facts into a constrained
+            // schema. On the verified DeepSeek Responses route, disable
+            // reasoning for this task to reserve the shared output budget for
+            // the visible structured result. Other tasks retain configuration.
+            "none".to_owned()
+        } else {
+            configured_effort.clone()
+        };
         let (enable_thinking, thinking_budget, budget_source) =
             self.thinking_values(context, &effort);
         let response_format = if self.route.protocol == Protocol::ChatCompletions
@@ -626,6 +641,8 @@ impl NativeVisionProvider {
                 else { "openai_compatible" },
             "protocol":self.route.protocol.name(),
             "model":self.config.model,
+            "reasoning_effort_configured":configured_effort,
+            "reasoning_effort_requested":effort,
             "reasoning_effort":effort,
             "reasoning_control":self.route.reasoning_control,
             "reasoning_supported":if self.route.reasoning_control == "unknown" { Value::Null }
@@ -1655,6 +1672,80 @@ mod tests {
         assert_eq!(payload["reasoning"]["effort"], "low");
         assert_eq!(payload["input"][1]["content"][1]["type"], "input_image");
         assert_eq!(payload["input"][1]["content"][1]["detail"], "high");
+    }
+
+    #[test]
+    fn deepseek_source_inventory_disables_reasoning_but_vision_review_keeps_configured_effort() {
+        for (task, expected_effort) in
+            [("source_inventory", "none"), ("vision_review", "low")]
+        {
+            let output = temp_file(task);
+            let (base, server) = mock_server(MockReply {
+                path: "/v1/responses".into(),
+                body: json!({
+                    "id":"resp-task-effort",
+                    "status":"completed",
+                    "output":[{"type":"message","content":[
+                        {"type":"output_text","text":"{\"summary\":\"ok\"}"}
+                    ]}]
+                }),
+                status: 200,
+                headers_delay: Duration::ZERO,
+                body_delay: Duration::ZERO,
+            });
+            let mut provider = NativeVisionProvider::new(ProviderConfig {
+                base_url: format!("{base}/v1/responses"),
+                model: "deepseek-flash".into(),
+                api_key: "test-key".into(),
+                effort: "low".into(),
+                thinking_budget: None,
+                max_output_tokens: 4096,
+            })
+            .unwrap();
+            provider.route.host = "api.deepseek.com".into();
+            provider.route.vision_supported = Some(true);
+            provider.route.reasoning_control = "effort";
+            provider.route.supported_efforts = vec!["none", "low", "high", "max"];
+
+            let result = run(provider.call(
+                &request_messages(),
+                &[image()],
+                &context(output.clone(), task),
+                &AtomicBool::new(false),
+            ))
+            .unwrap();
+            assert_eq!(result.profile["reasoning_effort_configured"], "low");
+            assert_eq!(result.profile["reasoning_effort_requested"], expected_effort);
+
+            let (_, payload, path) = server.join().unwrap();
+            assert_eq!(path, "/v1/responses");
+            assert_eq!(payload["reasoning"]["effort"], expected_effort);
+
+            let telemetry = std::fs::read_to_string(&output).unwrap();
+            let request = telemetry
+                .lines()
+                .map(|line| serde_json::from_str::<Value>(line).unwrap())
+                .find(|row| row["kind"] == "provider_wire_request")
+                .unwrap();
+            assert_eq!(
+                request["request_fields"]["reasoning_effort_configured"],
+                "low"
+            );
+            assert_eq!(
+                request["request_fields"]["reasoning_effort_requested"],
+                expected_effort
+            );
+            assert_eq!(
+                request["request_fields"]["reasoning_effort_expected"],
+                expected_effort
+            );
+            assert_eq!(
+                request["request_fields"]["reasoning_expected_status"],
+                "known_protocol_payload_value"
+            );
+            assert!(request["request_fields"].get("reasoning_effort_effective").is_none());
+            let _ = std::fs::remove_file(output);
+        }
     }
 
     #[test]
