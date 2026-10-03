@@ -1,7 +1,7 @@
 //! CADPlan-to-OCCT execution. Unsupported variants fail before kernel execution.
 //! Hole reports retain sampled evidence and final B-Rep bore measurements.
 use crate::{
-    cad_plan, cad_plan_validation, native_bore_metrology,
+    cad_plan, cad_plan_validation, native_bevel_gear, native_bore_metrology,
     native_geometry_evidence::{self, HoleRequest},
     native_occt::{Axis, Bounds, Kernel, Shape},
     native_parametric_features, native_standard_features,
@@ -35,6 +35,7 @@ pub fn supports_native_kind(kind: &str) -> bool {
             | "pattern"
             | "gear"
             | "helical_gear"
+            | "bevel_gear"
             | "socket_head_bolt"
             | "spoked_wheel"
             | "piston"
@@ -82,6 +83,7 @@ pub fn preflight(plan: &Value) -> Result<Value, String> {
         }
         let required_native_parameters: &[&str] = match kind {
             "gear" | "helical_gear" => &["teeth", "module", "height"],
+            "bevel_gear" => &["teeth", "module", "height", "cone_deg"],
             "socket_head_bolt" => &[
                 "shank_d",
                 "thread_pitch",
@@ -140,6 +142,10 @@ pub fn preflight(plan: &Value) -> Result<Value, String> {
         if kind == "piston" {
             let normalized = normalized_feature(feature, plan)?;
             native_parametric_features::preflight_piston(&normalized["parameters"])?;
+        }
+        if kind == "bevel_gear" {
+            let normalized = normalized_feature(feature, plan)?;
+            native_bevel_gear::preflight(&normalized["parameters"])?;
         }
         if kind == "camshaft" {
             let normalized = normalized_feature(feature, plan)?;
@@ -235,6 +241,9 @@ pub fn build(plan: &Value, manifest: &Path, cancelled: &AtomicBool) -> Result<Bu
                 normalized["kind"].as_str().unwrap_or(""),
                 &normalized["parameters"],
             )?;
+            (tools, vec![], Some(support))
+        } else if normalized["kind"] == "bevel_gear" {
+            let (tools, support) = native_bevel_gear::build(&kernel, &normalized["parameters"])?;
             (tools, vec![], Some(support))
         } else if normalized["kind"] == "rotor" {
             let (tools, support) = crate::native_rotor::build(&kernel, &normalized["parameters"])?;
@@ -1095,7 +1104,7 @@ fn normalized_feature(feature: &Value, plan: &Value) -> Result<Value, String> {
         .contains(&key.as_str())
         {
             length_factor
-        } else if key == "phase" || key == "angle" || key == "lobe_deg" {
+        } else if key == "phase" || key == "angle" || key == "lobe_deg" || key == "cone_deg" {
             angle_factor
         } else {
             continue;
@@ -1326,6 +1335,24 @@ mod tests {
             "{out_of_range}"
         );
         assert!(out_of_range.contains("6..=10000"), "{out_of_range}");
+    }
+
+    #[test]
+    fn bevel_gear_length_and_cone_angle_units_are_normalized_before_preflight() {
+        let mut plan = fixture();
+        plan["units"] = json!({"length":"cm","angle":"rad"});
+        let feature = json!({"id":"bevel","kind":"bevel_gear","operation":"add",
+            "parameters":{"teeth":20,"module":0.2,"height":1.2,
+                "cone_deg":0.7853981633974483,"bore_d":0,"center":[1.2,-0.7,0.5],"segments":12},
+            "sources":{"teeth":{"type":"user"},"module":{"type":"user"},
+                "height":{"type":"user"},"cone_deg":{"type":"user"},
+                "bore_d":{"type":"user"},"center":{"type":"user"},"segments":{"type":"user"}}});
+        let normalized = normalized_feature(&feature, &plan).unwrap();
+        assert_eq!(normalized["parameters"]["module"], json!(2.0));
+        assert_eq!(normalized["parameters"]["height"], json!(12.0));
+        assert_eq!(normalized["parameters"]["center"], json!([12.0,-7.0,5.0]));
+        assert_eq!(normalized["parameters"]["bore_d"], json!(0.0));
+        assert!((normalized["parameters"]["cone_deg"].as_f64().unwrap() - 45.0).abs() < 1e-12);
     }
 
     #[test]

@@ -5,6 +5,7 @@ pub mod cad_plan;
 pub mod cad_plan_validation;
 pub mod dsh_runtime;
 pub mod native_active_model;
+pub mod native_bevel_gear;
 pub mod native_bootstrap;
 pub mod native_bore_metrology;
 pub mod native_cad_metadata;

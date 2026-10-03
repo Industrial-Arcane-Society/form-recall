@@ -64,6 +64,13 @@ def main():
     add("crankshaft-cm-unit-scaling", "crankshaft", dict(length=32, main_d=5, pin_d=4.2,
         stroke=8.6, throws=4, center=[1.2, -0.7, 0.5]),
         dict(length="cm", angle="rad"))
+    add("bevel-gear-origin-default-bore", "bevel_gear", dict(teeth=20, module=2,
+        height=12, cone_deg=45, bore_d=0, center=[0, 0, 0], segments=12))
+    add("bevel-gear-translated-explicit-bore-angle-clamp", "bevel_gear", dict(teeth=24,
+        module=1.5, height=18, cone_deg=90, bore_d=16, center=[12, -7, 5], segments=8))
+    add("bevel-gear-cm-rad-scaling", "bevel_gear", dict(teeth=20, module=0.2,
+        height=1.2, cone_deg=0.7853981633974483, bore_d=0,
+        center=[0, 0, 0], segments=12), dict(length="cm", angle="rad"))
     add("spoked-wheel-z-origin", "spoked_wheel",
         dict(outer_r=30, rim_w=4, hub_r=8, height=8, spokes=6, spoke_w=3,
              center=[0, 0, 0]))
@@ -369,6 +376,16 @@ def main():
                     or details.get("builder") != "analytic_journals_with_rectangular_webs"):
                 raise AssertionError((name, "crankshaft-native-brep-contract", support))
             crankshaft_native_volumes[name] = native["volume_mm3"]
+        if name.startswith("bevel-gear-"):
+            support = native["feature_results"][0]
+            details = support.get("support_details", {})
+            if (native.get("valid") is not True or native.get("closed_solid_count") != 1
+                    or support.get("geometry_support") != "approximate"
+                    or details.get("geometry_support") != "approximate"
+                    or details.get("builder") != "legacy_tapered_trapezoidal_gear_faceted_brep"
+                    or details.get("triangles_built", 0) <= 0
+                    or details.get("segments_built", 0) < 4):
+                raise AssertionError((name, "bevel-gear-native-brep-contract", support))
         if name in expected_cross_joint_bounds:
             if (bounds_error > 1e-6
                     or baseline_report.get("geometry_state") != "passed"
@@ -386,11 +403,11 @@ def main():
                                                if name in expected_cross_joint_bounds or name.startswith("camshaft-")
                                                else "parity_checked"),
                             legacy_volume_mm3=(occ_kernel.volume(shape)
-                                               if name in expected_cross_joint_bounds or name.startswith("camshaft-") or name.startswith("crankshaft-") or name.startswith("helical-gear-") else None),
+                                               if name in expected_cross_joint_bounds or name.startswith("camshaft-") or name.startswith("crankshaft-") or name.startswith("helical-gear-") or name.startswith("bevel-gear-") else None),
                             native_volume_mm3=(native["volume_mm3"]
-                                               if name in expected_cross_joint_bounds or name.startswith("camshaft-") or name.startswith("crankshaft-") or name.startswith("helical-gear-") else None),
+                                               if name in expected_cross_joint_bounds or name.startswith("camshaft-") or name.startswith("crankshaft-") or name.startswith("helical-gear-") or name.startswith("bevel-gear-") else None),
                             volume_relative_difference=(volume_error / max(abs(occ_kernel.volume(shape)), 1e-12)
-                                                        if name in expected_cross_joint_bounds or name.startswith("camshaft-") or name.startswith("crankshaft-") or name.startswith("helical-gear-") else None)))
+                                                        if name in expected_cross_joint_bounds or name.startswith("camshaft-") or name.startswith("crankshaft-") or name.startswith("helical-gear-") or name.startswith("bevel-gear-") else None)))
     cross_joint_origin_volume = cross_joint_native_volumes["cross-joint-origin"]
     for name in ("cross-joint-translated", "cross-joint-cm-unit-scaling"):
         if abs(cross_joint_native_volumes[name] - cross_joint_origin_volume) > 1e-6:
@@ -406,12 +423,18 @@ def main():
         raise AssertionError(("crankshaft-unit-volume-invariance",
                               crankshaft_native_volumes["crankshaft-cm-unit-scaling"],
                               crankshaft_origin_volume))
-
     if (helical_native_results["helical-gear-legacy-straight"] !=
             helical_native_results["helical-gear-angle-ignored"]):
         raise AssertionError(("legacy-helical-gear-angle-must-remain-ignored",
                               helical_native_results["helical-gear-legacy-straight"],
                               helical_native_results["helical-gear-angle-ignored"]))
+    bevel_gear_origin_volume = next(row["native_volume_mm3"] for row in records
+                                    if row["case"] == "bevel-gear-origin-default-bore")
+    bevel_gear_cm_volume = next(row["native_volume_mm3"] for row in records
+                                if row["case"] == "bevel-gear-cm-rad-scaling")
+    if abs(bevel_gear_cm_volume - bevel_gear_origin_volume) > 1e-5:
+        raise AssertionError(("bevel-gear-unit-volume-invariance", bevel_gear_cm_volume,
+                              bevel_gear_origin_volume))
     python_version = "unknown"
     for package in ("cadquery-ocp", "cadquery-ocp-novtk"):
         try:
@@ -479,6 +502,29 @@ def main():
         invalid["features"][0]["parameters"][key] = value
         invalid["features"][0]["sources"][key] = {"type": "user"}
         negatives.append((f"crankshaft-invalid-{key}", invalid, message))
+
+    bevel_gear_case = cases[[name for name, _ in cases].index("bevel-gear-origin-default-bore")][1]
+    for key, value, message in (("module", 0, "必须大于 0"), ("height", -1, "必须大于 0"),
+                                ("bore_d", -1, "不能小于 0"),
+                                ("teeth", 5, "不足以生成有效轮廓"),
+                                ("segments", 2, "不足以生成有效轮廓")):
+        invalid = copy.deepcopy(bevel_gear_case)
+        invalid["features"][0]["parameters"][key] = value
+        invalid["features"][0]["sources"][key] = {"type": "user"}
+        negatives.append((f"bevel-gear-invalid-{key}", invalid, message))
+    bevel_gear_wide_bore = copy.deepcopy(bevel_gear_case)
+    bevel_gear_wide_bore["features"][0]["parameters"].update(teeth=6, module=2, bore_d=9)
+    bevel_gear_wide_bore["features"][0]["sources"].update({
+        "teeth":{"type":"user"}, "module":{"type":"user"}, "bore_d":{"type":"user"}})
+    negatives.append(("bevel-gear-bore-crosses-tooth-root", bevel_gear_wide_bore, "中心孔半径"))
+    bevel_gear_over_budget = copy.deepcopy(bevel_gear_case)
+    bevel_gear_over_budget["features"][0]["parameters"]["teeth"] = 100_000
+    bevel_gear_over_budget["features"][0]["sources"]["teeth"] = {"type":"user"}
+    negatives.append(("bevel-gear-over-triangle-budget", bevel_gear_over_budget, "超过原生上限"))
+    bevel_gear_missing_angle = copy.deepcopy(bevel_gear_case)
+    bevel_gear_missing_angle["features"][0]["parameters"].pop("cone_deg")
+    bevel_gear_missing_angle["features"][0]["sources"].pop("cone_deg")
+    negatives.append(("bevel-gear-missing-cone-angle", bevel_gear_missing_angle, "校验"))
 
     wheel_case_by_name = {name: plan for name, plan in cases}
     wheel_non_z = copy.deepcopy(wheel_case_by_name["spoked-wheel-z-origin"])
