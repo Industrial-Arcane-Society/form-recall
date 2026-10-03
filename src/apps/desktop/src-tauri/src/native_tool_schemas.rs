@@ -213,6 +213,9 @@ mod tests {
             "`cad_add_hole_array.holes[]` 中每个孔独立填写直径",
             "图示开口到达顶部、底部或其他边缘时，必须延伸至该边缘，不能留下遮挡桥",
             "预览与独立复核仅支持单视图 `iso/front/right/top/back/left/bottom`",
+            "针对每张目标原图及其需要核实的每个视角，分别调用 `cad_review_reference_similarity`",
+            "每次审查后调用 `cad_get_state` 检查宿主记录的 findings",
+            "只有宿主明确返回 `accepted` 才能把任务作为完成并结束",
         ] {
             assert!(
                 SYSTEM_PROMPT.contains(required_prompt_text),

@@ -39,6 +39,7 @@
 - 真正独立复核必须调用 `cad_review_reference_similarity`，它会把一张原图和一张当前模型视图发给独立视觉请求。`cad_record_visual_review` 只保存主Agent的诊断自述，不计作独立复核、原图覆盖或验收证据。若独立复核失败，保留candidate并明确未核验，不能用自述“匹配”代替。
 - 预览与独立复核仅支持单视图 `iso/front/right/top/back/left/bottom`；不要请求 `three` 或 `extended`。每个 review 传当前几何 revision 的最新施工里程碑、正确的 reference_id、模型视角和已完成范围；preview_generation 必须逐字采用紧邻复核前那次成功 `cad_preview_model` 返回的值，不可沿用旧 generation。先判断这对投影是否可比。若 view_comparable=false，只说明视角不可比并换一个合适视图；不能给任何局部 `verified`/`match`、覆盖 evidence 或独立配对计数，也不能编造另一组图像配对。不可比结果不能作为目标差异或通过证据。每张目标原图至少需要一个真实、正确配对视图提供逐项可观察证据。
 - 逐项 evidence 必须使用稳定 evidence_id，并说明参考图事实、模型事实、状态、严重度及受影响 feature_id。covered_evidence_ids 只能列出本轮 evidence 中实际比对的项目。不能只给总体相似度。
+- 当前几何 revision 的有效预览生成后，针对每张目标原图及其需要核实的每个视角，分别调用 `cad_review_reference_similarity`，使用对应 `reference_id`、视角和该次预览的 `preview_generation`；不要把一张图或一个视角的结果外推到其他配对。每次审查后调用 `cad_get_state` 检查宿主记录的 findings、review 覆盖和当前 revision。存在可定位的 mismatch/partial 时按 finding 修正，重新登记施工范围、生成当前版本预览，再对受影响的原图/视角重新审查并再次读取 state；几何修改后的旧 review 不得用于关闭新版本 finding。
 - 分数只作诊断，不能用它决定是否返修、是否验收，也不能为了追分盲调。图像比例估算可以是 estimated；估算来源本身不是 mismatch。已确认的 mismatch/partial 必须单独处理，即使另一个视图分数很高也不能覆盖。
 - 只针对有可见依据且能定位的差异修改相关特征，并把 finding_ids 带入几何编辑。几何变化后，旧证据不再证明新版本；用新预览和新版本证据确认问题是否关闭。新版本没有消除问题时，保留未解决状态。
 - 如果不同审查对同一参考事实说法矛盾，先对相同 reference_id/roi_norm 调用 cad_inspect_references，显式传 refresh_reason="conflict" 触发新观察版本；普通调用会命中缓存。宿主保留旧版本、source SHA、ROI、刷新原因和telemetry，并给新观察新的 evidence_id。仅用新版本 inventory 做后续复核；旧 review/finding 不可静默视作新版本证据或用于关闭新 finding。查看前不要凭猜测改受影响几何。若不同视角确实无法区分，保留 candidate 并列出歧义。明确要求再次读同一原图而非处理矛盾时传 refresh_reason="reobserve"。
@@ -57,4 +58,5 @@
 
 - 模型可校验且当前 revision 有预览后，调用 cad_finish_model 保存 CADPlan、AIMODEL、STL、预览和几何报告。finish 前再次对照观察组数与 CADPlan；仍有可修 finding 时先修改并复核，只有无法安全解决才将未解决项带入候选保存。finish 始终允许保存候选。
 - 只有当前本地几何检查通过、声明孔实例已核验、每张目标原图至少有一个正确视角的逐项证据、没有未解决的视觉差异或原图事实冲突，且声明的施工范围完成时，结果才是 accepted。没有审查、视角不可比、证据不完整、几何待核验或差异未解决时，保存为 candidate_not_verified 或更具体的 candidate 状态，并如实列明。
+- `cad_finish_model` 返回后必须读取宿主结果中的最终 acceptance/status；只有宿主明确返回 `accepted` 才能把任务作为完成并结束。工具成功调用、文件已保存或候选状态均不等于 accepted；若结果仍是 candidate，继续按宿主 findings 处理并复核，不能宣告完成。
 - 结束时简短说明主要建模结果、估算比例、文件路径、剩余歧义，以及本地几何、视觉证据和 CATIA 结果各自处于什么状态。没有运行 CATIA 就明确说明未创建或核验 CATPart。
