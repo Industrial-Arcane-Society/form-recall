@@ -393,6 +393,16 @@ test('published cold-start files contain only safe gates and aggregate projectio
     assert.equal(knownValues.model_status, 'accepted_by_strict_cli_gate')
     assert.equal(knownValues.scratch_cleanup_status, 'removed')
     assert.equal(buildSafeAcceptanceSummary({ scratchCleanupStatus: 'failed' }).scratch_cleanup_status, 'failed')
+    const strictPassCleanupFailure = buildSafeAcceptanceSummary({
+      strict: { status: 'passed', scope: 'single_image_single_turn_cli_host_gates_not_independent_visual_or_CATIA_acceptance',
+        gates: { run_scope: { status: 'passed', reasons: [] } } },
+      transportStatus: 'completed', modelStatus: 'accepted_by_strict_cli_gate',
+      runtime: { node: 'v22.23.3', dsh: '0.2.0-rc.2' },
+      source: { bytes: 72309, sha256: 'b'.repeat(64), unchanged: true }, scratchCleanupStatus: 'failed',
+    })
+    assert.equal(strictPassCleanupFailure.status, 'failed')
+    assert.equal(strictPassCleanupFailure.strict_gates.status, 'passed')
+    assert.equal(strictPassCleanupFailure.scratch_cleanup_status, 'failed')
     const projections = readFileSync(join(output, 'tool-result-diagnostics.jsonl'), 'utf8').trim().split('\n').map(JSON.parse)
     assert.equal(projections[0].schema, 'acp_terminal_update_projection_v2')
     assert.deepEqual(projections[0].call_group_terminal_distribution,

@@ -363,9 +363,9 @@ const strict = evaluateColdstartGates({
   writeSafeAcceptanceArtifacts(output, { summary: safeSummary, acpProjection: projection,
     bindingProjection, buildStatus })
 }
-const finalStatus = strict.status
+const finalStatus = safeSummary.status
 const cleanupFailed = !managedChildrenExited || scratchCleanupStatus !== 'removed'
 console.log(JSON.stringify({ status: finalStatus, scratch_cleanup_status: cleanupFailed ? 'failed' : 'removed', evidence_archive: output }, null, 2))
-if (finalStatus !== 'passed' || cleanupFailed) {
+if (finalStatus !== 'passed') {
   process.exitCode = 1
 }

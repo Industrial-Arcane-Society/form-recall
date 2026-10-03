@@ -96,9 +96,10 @@ const safeGate = (name, gate) => ({
 
 export function buildSafeAcceptanceSummary({ strict, transportStatus, modelStatus, runtime, source, scratchCleanupStatus }) {
   const gates = Object.fromEntries(GATE_NAMES.map(name => [name, safeGate(name, strict?.gates?.[name])]))
+  const overallPassed = strict?.status === 'passed' && scratchCleanupStatus === 'removed'
   return {
     schema_version: 1,
-    status: strict?.status === 'passed' ? 'passed' : 'failed',
+    status: overallPassed ? 'passed' : 'failed',
     status_scope: strict?.scope === SAFE_SCOPE ? SAFE_SCOPE : 'scope_unverified',
     transport_status: transportStatus === 'completed' ? 'completed' : 'failed',
     model_status: MODEL_STATUSES.has(modelStatus) ? modelStatus : 'none',
