@@ -10,7 +10,7 @@
 
 | ID | Feature | 状态 | 完成条件 / 提交边界 |
 |---|---|---|---|
-| F0 | 目录重构、文档重建和路径恢复 | **已完成** | 根目录结构、旧资料归档、文档索引、日志路径、开发启动、测试、Tauri build hook 和 GitHub Actions 已核验；本提交整体落到 `main`。后续发现仓库根缺少 `package.json`：提交 `7099e99` 增加根 `npm run dev`（Tauri 桌面开发版）和 `npm run dev:web`（纯 Vite）；headless HTTP/Chromium 与构建通过，真实桌面窗口未启动验收。 |
+| F0 | 目录重构、文档重建和路径恢复 | **已完成（根 Tauri dev 资源构建前置已修复；窗口验收待做）** | 根目录结构、旧资料归档、文档索引、日志路径、测试、Tauri build hook 和 GitHub Actions 已核验；本提交整体落到 `main`。提交 `7099e99` 增加根 `npm run dev`（Tauri 桌面开发版）和 `npm run dev:web`（纯 Vite）。2026-10-03 在隔离干净 target 复现 Tauri dev 因缺 package-resources 无法编译，提交 `0d3d2f3` 为 `tauri:dev` 加载 dev-only `bundle.resources=[]` 配置；Cargo offline check、Vue build、定向配置测试通过，发布资源映射不变。按用户“不要直接开软件”未执行根 `npm run dev`、Tauri 窗口或 WebView，故不能断言实际窗口首屏已恢复。浏览器预览的独立修复 `fbe8616` 仍在 `feat/f7-dev-startup-fix`，没有合并到 F7 主分支；证据见 [Tauri dev CLI 前置检查](./03-tauri-dev-cli-preflight.md)。 |
 | F1 | Rust DSH ACP Host + 固定 Runtime Manifest | **已完成** | F1.1–F1.4 已分别实现、验收并单独提交；多模态识别准确率问题保留为 F7 质量验收项 |
 | F1.1 | Rust ACP stdio 进程与 JSON-RPC 基础 | **已完成** | 行分帧、并发请求响应匹配、通知订阅、错误/超时、关闭时有界回收；以假 ACP 子进程测试，不依赖真实 DSH |
 | F1.2 | 固定 DSH/Node Runtime Manifest 与安装器 | **已完成** | 固定已验收的 Node 与 DSH 包版本/校验值；下载、校验、安装、升级、失败回滚，不依赖全局 Node |
