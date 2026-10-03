@@ -2,16 +2,16 @@
 // API credentials stay in process memory / child env or stdin, never argv or logs.
 import { spawn, spawnSync } from 'node:child_process'
 import { createHash, randomBytes, randomUUID } from 'node:crypto'
-import { appendFileSync, mkdirSync, readFileSync, writeFileSync, existsSync } from 'node:fs'
+import { mkdirSync, readFileSync, writeFileSync, existsSync, mkdtempSync, rmSync } from 'node:fs'
 import { basename, dirname, join, resolve } from 'node:path'
+import { tmpdir } from 'node:os'
 import { createInterface } from 'node:readline'
 import { createAuditedToolProxy, createTerminalUpdateHmac, evaluateColdstartGates, parseEvidenceJsonl, parsePostcheckState, readRunArtifacts, summarizeAcpTerminalUpdateDiagnostics, summarizeCordisBindingDiagnostics, toolArgumentsFingerprint } from './native_agent_coldstart_gates.mjs'
+import { buildSafeAcceptanceSummary, writeSafeAcceptanceArtifacts } from './native_agent_coldstart_publication.mjs'
 
-const cliArgs = process.argv.slice(2)
-const toolResultDiagnosticsEnabled = cliArgs.includes('--tool-result-diagnostics')
-const positionalArgs = cliArgs.filter(arg => arg !== '--tool-result-diagnostics')
-const [repoArg, runtimeArg, outputArg, configArg, imageArg, userTextArg] = positionalArgs
+const [repoArg, runtimeArg, outputArg, configArg, imageArg, userTextArg] = process.argv.slice(2)
 let archiveDir = null
+let scratchDir = null
 const managedChildren = []
 const stopManagedChildren = () => {
   for (const child of managedChildren) if (child.exitCode === null) child.kill()
@@ -20,14 +20,21 @@ const archiveFailure = error => {
   if (!archiveDir) return
   try {
     mkdirSync(archiveDir, { recursive: true })
-    const safeError = String(error?.stack || error?.message || error).replace(/(api[_-]?key|authorization|token)\s*[:=]\s*[^\s,;]+/ig, '$1=[REDACTED]')
-    writeFileSync(join(archiveDir, 'preflight-failure.json'), JSON.stringify({ status: 'failed', at: new Date().toISOString(), error: safeError.slice(0, 1200) }, null, 2))
+    writeFileSync(join(archiveDir, 'summary.json'), JSON.stringify({ schema_version: 1, status: 'failed',
+      transport_status: 'failed', model_status: 'none',
+      strict_gates: { status: 'failed', failure_reasons: ['runner_preflight_failed'], evidence_errors: [], gates: {} } }, null, 2),
+    { flag: 'wx', mode: 0o600 })
   } catch { /* preserve the original process failure */ }
 }
-process.on('uncaughtException', error => { stopManagedChildren(); archiveFailure(error); console.error('Acceptance failed; evidence location:', archiveDir || '(output argument missing)'); process.exit(1) })
-process.on('unhandledRejection', error => { stopManagedChildren(); archiveFailure(error); console.error('Acceptance failed; evidence location:', archiveDir || '(output argument missing)'); process.exit(1) })
+const cleanupScratch = () => {
+  if (!scratchDir) return
+  try { rmSync(scratchDir, { recursive: true, force: true }); scratchDir = null } catch { /* do not disclose scratch contents */ }
+}
+process.once('exit', cleanupScratch)
+process.on('uncaughtException', error => { stopManagedChildren(); archiveFailure(error); console.error('Acceptance failed; see safe summary in the evidence directory.'); process.exit(1) })
+process.on('unhandledRejection', error => { stopManagedChildren(); archiveFailure(error); console.error('Acceptance failed; see safe summary in the evidence directory.'); process.exit(1) })
 if (!repoArg || !runtimeArg || !outputArg || !configArg) {
-  throw new Error('usage: node native_agent_coldstart_acceptance.mjs [--tool-result-diagnostics] REPO PINNED_RUNTIME FRESH_OUTPUT PROVIDER_JSON [ORIGINAL_PNG] [USER_TEXT]')
+  throw new Error('usage: node native_agent_coldstart_acceptance.mjs REPO PINNED_RUNTIME FRESH_OUTPUT PROVIDER_JSON [ORIGINAL_PNG] [USER_TEXT]')
 }
 const suppliedConfig = JSON.parse(readFileSync(resolve(configArg), 'utf8').replace(/^\uFEFF/, ''))
 const provider = suppliedConfig.llm
@@ -45,11 +52,12 @@ if (existsSync(output)) throw new Error('验收输出目录已经存在；请提
 mkdirSync(dirname(output), { recursive: true })
 mkdirSync(output)
 archiveDir = output
-const toolResultDiagnosticsPath = toolResultDiagnosticsEnabled ? join(output, 'tool-result-diagnostics.jsonl') : null
-if (toolResultDiagnosticsPath) writeFileSync(toolResultDiagnosticsPath, '', { flag: 'wx', mode: 0o600 })
+scratchDir = mkdtempSync(join(tmpdir(), 'aimodeler-coldstart-private-'))
+const workDir = scratchDir
+const toolResultDiagnosticsPath = join(workDir, 'tool-result-diagnostics.jsonl')
 const legacy = join(repo, 'src/legacy')
-const state = join(output, 'state')
-const home = join(output, 'dsh-home')
+const state = join(workDir, 'state')
+const home = join(workDir, 'dsh-home')
 const defaultImage = join(repo, 'temp/evidence-archive/artifacts/agent-quality-rebuild/references/user-nine-hole-recess-iso.png')
 const imagePath = resolve(imageArg || defaultImage)
 const imageBytes = readFileSync(imagePath)
@@ -70,7 +78,7 @@ const turnId = runId
 const userText = userTextArg || '请根据参考图片复刻模型，未标注尺寸按图像比例自行估算并记录来源，使用工具生成模型并复核。'
 const prompt = userText
 
-for (const directory of [output, state, home]) mkdirSync(directory, { recursive: true })
+for (const directory of [workDir, state, home]) mkdirSync(directory, { recursive: true })
 const nodePath = existsSync(join(runtime, 'node/node.exe')) ? join(runtime, 'node/node.exe') : join(runtime, 'node.exe')
 const modules = existsSync(join(runtime, 'dsh/node_modules')) ? join(runtime, 'dsh/node_modules') : join(runtime, 'node_modules')
 const nodeVersion = spawnSync(nodePath, ['--version'], { encoding: 'utf8', windowsHide: true })
@@ -85,21 +93,18 @@ const buildStarted = Date.now()
 const build = spawnSync('cargo', ['build', '--manifest-path', join(repo, 'src/apps/desktop/src-tauri/Cargo.toml'),
   '--example', 'native_read_probe', '--example', 'native_agent_profile', '--offline'],
 { cwd: repo, encoding: 'utf8', windowsHide: true, timeout: 20 * 60 * 1000, maxBuffer: 8 * 1024 * 1024 })
-writeFileSync(join(output, 'build-status.json'), JSON.stringify({ status: build.status === 0 ? 'passed' : 'failed',
-  exit_code: build.status, elapsed_ms: Date.now() - buildStarted,
-  stdout_bytes: Buffer.byteLength(build.stdout || ''), stderr_bytes: Buffer.byteLength(build.stderr || '') }, null, 2))
+const buildStatus = { status: build.status === 0 ? 'passed' : 'failed', exit_code: build.status,
+  elapsed_ms: Date.now() - buildStarted, stdout_bytes: Buffer.byteLength(build.stdout || ''), stderr_bytes: Buffer.byteLength(build.stderr || '') }
 if (build.status !== 0) throw new Error('Offline Cargo example rebuild failed; no provider request was sent.')
 const probePath = join(repo, 'src/apps/desktop/src-tauri/target/debug/examples/native_read_probe.exe')
 if (!existsSync(probePath)) throw new Error('native_read_probe.exe is missing; build --example native_read_probe first.')
 const profilePath = join(repo, 'src/apps/desktop/src-tauri/target/debug/examples/native_agent_profile.exe')
 if (!existsSync(profilePath)) throw new Error('native_agent_profile.exe is missing; build the production profile example first.')
-const executableHashes = { native_read_probe: hash(readFileSync(probePath)), native_agent_profile: hash(readFileSync(profilePath)) }
-const patchPath = join(output, 'profile.yml')
+const patchPath = join(workDir, 'profile.yml')
 const prepared = spawnSync(profilePath, [legacy, patchPath], { input: JSON.stringify({ ...provider, api_key: apiKey }), encoding: 'utf8', windowsHide: true })
 if (prepared.status !== 0) throw new Error('生产profile构造失败。')
 const effectiveProfile = JSON.parse(prepared.stdout)
 const productionPrompt = readFileSync(effectiveProfile.prompt_path, 'utf8')
-writeFileSync(join(output, 'effective-profile.json'), JSON.stringify(effectiveProfile, null, 2))
 const occtManifest = process.env.AIMODELER_OCCT_MANIFEST || join(repo, 'src/apps/desktop/src-tauri/target/f4-occt/runtime-manifest.json')
 if (!existsSync(occtManifest)) throw new Error('OCCT manifest不存在，不能执行建模验收。')
 
@@ -116,9 +121,8 @@ const probe = spawn(probePath, [legacy, state, '--online', '--serve', '--vision'
   },
 })
 managedChildren.push(probe)
-let probeStderrBytes = 0
-probe.stderr.on('data', chunk => { probeStderrBytes += chunk.length })
 const probeLines = createInterface({ input: probe.stdout })
+probe.stderr.resume()
 const bridge = await new Promise((yes, no) => {
   const timer = setTimeout(() => no(new Error('Rust native vision probe startup timed out')), 15000)
   probeLines.once('line', line => {
@@ -156,7 +160,7 @@ const streamPath = join(state, 'stream-events.jsonl')
 
 const child = spawn(nodePath, [join(modules, '@deepseek-ai/dsh/lib/bin.js'),
   '--profile', 'acp', '--patch', patchPath], {
-  cwd: output, windowsHide: true, stdio: ['pipe', 'pipe', 'pipe'], env: {
+  cwd: workDir, windowsHide: true, stdio: ['pipe', 'pipe', 'pipe'], env: {
     ...process.env,
     DSH_HOME: home,
     DSH_TELEMETRY_DISABLED: '1',
@@ -180,26 +184,23 @@ const child = spawn(nodePath, [join(modules, '@deepseek-ai/dsh/lib/bin.js'),
     AI_MODELER_DSH_NODE_MODULES: modules,
     AI_MODELER_ONLINE_ENABLED: 'true',
     AI_MODELER_HAS_REFERENCES: 'true',
-    AI_MODELER_TOOL_RESULT_DIAGNOSTICS_FILE: toolResultDiagnosticsPath || '',
+    AI_MODELER_TOOL_RESULT_DIAGNOSTICS_FILE: toolResultDiagnosticsPath,
   },
 })
 managedChildren.push(child)
-let seq = 0, dshStderrBytes = 0, dshExitCode = null, answer = '', thoughts = 0
-const pending = new Map(), toolEvents = [], updateKinds = new Set(), evidenceErrors = []
+let seq = 0, dshExitCode = null
+const pending = new Map(), toolEvents = [], evidenceErrors = []
 // The random key and WeakMap are run-local. Digests are never attached to
 // persisted event rows and cannot be compared across process runs.
-const terminalUpdateHmacKey = toolResultDiagnosticsEnabled ? randomBytes(32) : null
+const terminalUpdateHmacKey = randomBytes(32)
 const terminalUpdateHmacByEvent = new WeakMap()
-child.stderr.on('data', chunk => { dshStderrBytes += chunk.length })
 const messages = createInterface({ input: child.stdout })
+child.stderr.resume()
 messages.on('line', line => {
   let row
   try { row = JSON.parse(line) } catch { evidenceErrors.push('acp_stdout_invalid_json_record'); return }
   if (row.method === 'session/update') {
     const update = row.params?.update || {}, kind = update.sessionUpdate
-    updateKinds.add(kind)
-    if (kind === 'agent_message_chunk') answer += update.content?.text || ''
-    if (kind === 'agent_thought_chunk') thoughts += (update.content?.text || '').length
     if (kind === 'tool_call' || kind === 'tool_call_update') {
       const toolEvent = { kind, title: update.title, status: update.status, tool_call_id: update.toolCallId,
         ...(kind === 'tool_call' ? { arguments_sha256_24: toolArgumentsFingerprint(update.rawInput) } : {}),
@@ -243,16 +244,13 @@ async function boundedExit(process, ms) {
   })
   if (process.exitCode === null) process.kill()
 }
-let sessionId = null, dshStatus = 'failed', dshError = null, stopReason = null, computedState = null
+let sessionId = null, dshStatus = 'failed', computedState = null
 try {
   const initialized = await rpc('initialize', { protocolVersion: 1,
     clientInfo: { name: 'native-agent-coldstart-acceptance', version: '1' }, clientCapabilities: {} })
   if (initialized.agentCapabilities?.promptCapabilities?.image !== true) throw new Error('DSH未声明图片输入能力。')
-  const session = await rpc('session/new', { cwd: output, mcpServers: [] })
+  const session = await rpc('session/new', { cwd: workDir, mcpServers: [] })
   sessionId = session.sessionId
-  writeFileSync(join(output, 'run-context.json'), JSON.stringify({ run_id: runId, turn_id: turnId,
-    acp_session_id: sessionId, tool_session_id: bridge.session_id, started_at_ms: runStartedAt,
-    source_sha256: sourceSha, executable_sha256: executableHashes }, null, 2))
   const selection = spawnSync(profilePath, ['--select-reasoning'], {
     input: JSON.stringify({ provider: { ...provider, api_key: apiKey }, session_response: session }),
     encoding: 'utf8', windowsHide: true,
@@ -260,18 +258,15 @@ try {
   if (selection.status !== 0) throw new Error('生产推理选项映射失败，未发起模型请求。')
   const reasoning = JSON.parse(selection.stdout)
   if (reasoning.configurable) await rpc('session/set_config_option', { sessionId, configId: reasoning.config_id, value: reasoning.value })
-  writeFileSync(join(output, 'reasoning-selection.json'), JSON.stringify(reasoning, null, 2))
   const deadlineSeconds = Number(process.env.AIMODELER_ACCEPTANCE_DEADLINE_SECONDS || 1800)
   if (!Number.isFinite(deadlineSeconds) || deadlineSeconds < 1 || deadlineSeconds > 86400) throw new Error('验收时限须为1..86400秒。')
-  const response = await rpc('session/prompt', { sessionId, prompt: [
+  await rpc('session/prompt', { sessionId, prompt: [
     { type: 'text', text: prompt },
     { type: 'image', mimeType: 'image/png', data: imageBytes.toString('base64') },
   ] }, deadlineSeconds * 1000)
   await rpc('session/close', { sessionId })
   dshStatus = 'completed'
-  stopReason = response.stopReason || null
 } catch (error) {
-  dshError = String(error.message).slice(0, 300)
   if (sessionId && child.exitCode === null) {
     await rpc('session/cancel', { sessionId }, 15000).catch(() => {})
     await rpc('session/close', { sessionId }, 15000).catch(() => {})
@@ -311,10 +306,6 @@ const regPath = join(state, 'native-tool-registration.json')
 const schemaPath = join(state, 'schemas.json')
 const registration = readJsonFile(regPath)
 const schemaManifest = readJsonFile(schemaPath)
-const registered = registration?.phase === 'registered'
-  && registration.registeredToolNames?.includes('cad_inspect_references') === true
-const schemaPresent = schemaManifest?.schemaVersion === 1
-  && schemaManifest.tools?.some(tool => tool.name === 'cad_inspect_references') === true
 const cadStatePath = join(state, 'cad-state.json')
 const domain = readJsonFile(cadStatePath)
 const runEndedAt = Date.now()
@@ -325,9 +316,7 @@ const readJsonl = path => {
   return parsed.records
 }
 const nativeAudit = readJsonl(join(state, 'native-tool-audit.jsonl'))
-const artifacts = readRunArtifacts(output, domain)
-const actions = domain.actions || []
-const observation = domain.reference_inventory?.[referenceId] || null
+const artifacts = readRunArtifacts(workDir, domain)
 const streamEvents = readJsonl(streamPath)
 const sourceShaAfter = hash(readFileSync(imagePath))
 const strict = evaluateColdstartGates({
@@ -340,7 +329,7 @@ const strict = evaluateColdstartGates({
   dsh: { status: dshStatus, exit_code: dshExitCode }, toolEvents, toolBridgeCalls: toolProxy.records,
   nativeAudit, streamEvents, evidenceErrors,
 })
-if (toolResultDiagnosticsPath) {
+{
   const inRunToolEvents = toolEvents.filter(event => event.session_id === sessionId && event.run_id === runId
     && event.turn_id === turnId && Number.isFinite(event.at_ms) && event.at_ms >= runStartedAt && event.at_ms <= runEndedAt)
   const projection = summarizeAcpTerminalUpdateDiagnostics(inRunToolEvents, { terminalUpdateHmacByEvent })
@@ -349,91 +338,22 @@ if (toolResultDiagnosticsPath) {
       started_at_ms: runStartedAt, ended_at_ms: runEndedAt },
     registration, schema: schemaManifest, toolEvents, toolBridgeCalls: toolProxy.records, nativeAudit,
   })
-  try {
-    appendFileSync(toolResultDiagnosticsPath, JSON.stringify({ stage: 'acp_terminal_update_projection', ...projection }) + '\n', { mode: 0o600 })
-    appendFileSync(toolResultDiagnosticsPath, JSON.stringify({ stage: 'cordis_binding_projection', ...bindingProjection }) + '\n', { mode: 0o600 })
-  } catch { /* diagnostic persistence must never change the acceptance result */ }
+  const wireRequests = streamEvents.filter(row => row.kind === 'provider_wire_request')
+  const successfulWireResponse = strict.successful_image_request_ids.length > 0
+  const wireIdentityValid = strict.gates.main_image_wire.reasons.indexOf('main_model_original_image_wire_missing') < 0
+  const safeSummary = buildSafeAcceptanceSummary({
+    strict,
+    transportStatus: dshStatus === 'completed' && wireIdentityValid && successfulWireResponse ? 'completed' : 'failed',
+    modelStatus: strict.status === 'passed' ? 'accepted_by_strict_cli_gate' : domain.plan ? 'candidate' : 'none',
+    runtime: { node: nodeVersion.stdout.trim(), dsh: dshPackage.version },
+    source: { bytes: imageBytes.length, sha256: sourceSha, unchanged: hash(readFileSync(imagePath)) === sourceSha },
+  })
+  writeSafeAcceptanceArtifacts(output, { summary: safeSummary, acpProjection: projection,
+    bindingProjection, buildStatus })
 }
-writeFileSync(join(output, 'strict-gates.json'), JSON.stringify(strict, null, 2))
-writeFileSync(join(output, 'tool-bridge-calls.json'), JSON.stringify(toolProxy.records, null, 2))
-writeFileSync(join(output, 'rust-postcheck-state.json'), JSON.stringify({ source: 'direct_local_postcheck_not_cordis', state: computedState }, null, 2))
-writeFileSync(join(output, 'artifact-inventory.json'), JSON.stringify(artifacts.files, null, 2))
-const wireRequests = streamEvents.filter(row => row.kind === 'provider_wire_request')
-const wireResponseHeaders = streamEvents.filter(row => row.kind === 'provider_wire_response_headers')
-const wireResponses = streamEvents.filter(row => row.kind === 'provider_wire_response_complete')
-const successfulWireResponse = strict.successful_image_request_ids.length > 0
-const wireIdentityValid = strict.gates.main_image_wire.reasons.indexOf('main_model_original_image_wire_missing') < 0
-const toolCalled = strict.matched_native_call_ids.length > 0
-const acceptance = {
-  status: strict.status,
-  status_scope: strict.scope,
-  transport_status: dshStatus === 'completed' && wireIdentityValid && successfulWireResponse ? 'completed' : 'failed',
-  strict_gates: strict,
-  run_id: runId,
-  executable_sha256: executableHashes,
-  model_status: strict.status === 'passed' ? 'accepted_by_strict_cli_gate' : domain.plan ? 'candidate' : 'none',
-  host_claims_accepted: domain.finish_summary?.accepted === true,
-  finish_summary: domain.finish_summary || null,
-  configuration: effectiveProfile,
-  dsh_status: dshStatus,
-  input_text: userText,
-  git: {
-    commit: spawnSync('git', ['rev-parse', 'HEAD'], { cwd: repo, encoding: 'utf8' }).stdout.trim(),
-    dirty_paths: spawnSync('git', ['status', '--porcelain'], { cwd: repo, encoding: 'utf8' }).stdout.split(/\r?\n/).filter(Boolean).map(line => line.slice(3)),
-  },
-  evidence_archive: output,
-  current_revision: domain.revision ?? domain.cadplan?.revision ?? null,
-  error: dshError,
-  session_id: sessionId,
-  stop_reason: stopReason,
-  runtime: { node: nodeVersion.stdout.trim(), dsh: dshPackage.version, directory: runtime },
-  original_image: {
-    path: imagePath, immutable: true, bytes: imageBytes.length, width, height,
-    source_sha256_before: sourceSha, source_sha256_after: sourceShaAfter,
-    unchanged: sourceShaAfter === sourceSha, reference_id: referenceId,
-  },
-  native_cordis: {
-    registered, schema_present: schemaPresent, dsh_tool_events: toolEvents,
-    native_actions: actions, called_by_dsh: toolCalled,
-    python_fallback: 'removed',
-  },
-  provider_transport: {
-    wire_requests: wireRequests, wire_response_headers: wireResponseHeaders,
-    wire_responses: wireResponses, image_hashes_match_original: wireIdentityValid,
-    successful_wire_response: successfulWireResponse,
-    protocol: observation?.diagnostics?.protocol || wireRequests.map(row => row.protocol),
-    usage: observation?.diagnostics?.usage || null,
-    request_profile: observation?.diagnostics?.request_profile || null,
-    observation_status: observation?.observation_status || null,
-    observation_valid: observation?.observation_valid ?? null,
-    observation: observation ? {
-      summary: observation.summary,
-      visible_evidence: observation.visible_evidence,
-      uncertain: observation.uncertain,
-      inferred: observation.inferred,
-      source_sha256: observation.source_sha256,
-      diagnostics: observation.diagnostics,
-    } : null,
-  },
-  observation_quality: 'host_evidence_gates_checked_independent_visual_quality_not_scored',
-  answer,
-  answer_sha256: hash(Buffer.from(answer)),
-  thought_characters_observed: thoughts,
-  update_kinds: [...updateKinds],
-  stderr_bytes: { dsh: dshStderrBytes, rust_probe: probeStderrBytes },
-  dsh_exit_code: dshExitCode,
-  direct_cli_reproduction: toolCalled ? null : {
-    executable: probePath,
-    arguments: [legacy, state, '--online', '--vision', '--occt', occtManifest],
-    stdin_json: JSON.stringify({ name: 'cad_inspect_references', arguments: { reference_image_index: 1 } }),
-    note: '直接 CLI 复现用于定位 Rust 工具；不计作 DSH 工具调用通过。',
-  },
-}
-writeFileSync(join(output, 'summary.json'), JSON.stringify(acceptance, null, 2))
-writeFileSync(join(output, 'tool-trace.json'), JSON.stringify({ dsh_events: toolEvents, native_actions: actions, provider_requests: wireRequests, responses: wireResponses }, null, 2))
-writeFileSync(join(output, 'run-metadata.json'), JSON.stringify({ completed_at: new Date().toISOString(), commit: acceptance.git.commit, dirty_paths: acceptance.git.dirty_paths, node: process.version, pinned_node: nodeVersion.stdout.trim(), dsh: dshPackage.version, image_sha256: sourceSha, image_bytes: imageBytes.length, text_sha256: hash(Buffer.from(userText)), status: acceptance.status, tool_result_diagnostics_enabled: toolResultDiagnosticsEnabled }, null, 2))
-console.log(JSON.stringify({ run_id: runId, status: strict.status, transport_status: acceptance.transport_status,
-  model_status: acceptance.model_status, failure_reasons: strict.failure_reasons, evidence_archive: output }, null, 2))
-if (acceptance.status !== 'passed') {
+const finalStatus = strict.status
+console.log(JSON.stringify({ status: finalStatus, evidence_archive: output }, null, 2))
+cleanupScratch()
+if (finalStatus !== 'passed') {
   process.exitCode = 1
 }

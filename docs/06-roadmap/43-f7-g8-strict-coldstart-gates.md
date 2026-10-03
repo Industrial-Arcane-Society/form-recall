@@ -2,7 +2,7 @@
 
 ## 本次改动与证据边界
 
-`native_agent_coldstart_acceptance.mjs` 的总状态现在只有 `passed` / `failed`。只有下表所有 gate 通过，进程才退出 0；ACP 结束、图片成功传输或宿主单独声称 `accepted=true` 都不能单独产生通过。`transport_status` 继续单独记录传输完成，`host_claims_accepted` 保留宿主原始结论，失败的候选仍保存输出。
+`native_agent_coldstart_acceptance.mjs` 的总状态只有 `passed` / `failed`。只有下表所有 gate 通过，进程才退出 0；ACP 结束、图片成功传输或宿主单独声称 `accepted=true` 都不能单独产生通过。发布目录只保留安全 gate 摘要、两种 allowlist aggregate/HMAC projection 和离线 build 状态。原始 ACP event、临时 ID、工具参数、answer/thought 和模型候选只用于当前进程内 gate 计算；运行时所需 scratch 在正常结束时删除。
 
 本次只运行合成 fixtures、Node 语法检查和本地 loopback 工具桥测试，没有发起真实模型请求。36 项定向测试通过不表示原图建模、视觉理解、孔计量或 CATIA 已通过。历史 `temp/acceptance/f7-production-image-20261003-run01/` 和对应负样本文档保留不变；下一次真实运行必须新建目录。
 
@@ -40,7 +40,7 @@ runner 在发起模型请求前，自动对当前 checkout 执行以下离线重
 cargo build --manifest-path "$repo/src/apps/desktop/src-tauri/Cargo.toml" --example native_read_probe --example native_agent_profile --offline
 ```
 
-`build-status.json` 记录结果/退出码/耗时/输出字节数；`run-context.json` 与 `summary.json` 记录两个可执行文件 SHA、run/turn/session 绑定。不持久化原始构建 stdout/stderr。
+`build-status.json` 只记录结果/退出码/耗时/输出字节数。summary 只记录总体状态、固定 gate 名称/状态/原因、固定 runtime 版本与原图摘要；不包含 run/session/request/call ID、answer/hash、thought 内容/长度、参数或 profile。只有当前 gate 计算使用内存中的标识符与原始事件。
 
 ## 审阅后由操作者执行的真实命令
 
@@ -72,7 +72,6 @@ $resultCode = $LASTEXITCODE
 $summary = Get-Content -LiteralPath (Join-Path $output 'summary.json') -Raw | ConvertFrom-Json
 [pscustomobject]@{
   exit_code = $resultCode
-  run_id = $summary.run_id
   status = $summary.status
   transport_status = $summary.transport_status
   model_status = $summary.model_status
@@ -85,20 +84,20 @@ $summary = Get-Content -LiteralPath (Join-Path $output 'summary.json') -Raw | Co
 
 ## 运行后查看的安全证据
 
-- 先看 exit code、`summary.status`、`strict-gates.json` 的每项状态/原因，不能只看 `transport_status` 或 Agent 最终答复。预检失败看 `preflight-failure.json` / `build-status.json`，此时可能没有 summary。
-- `run-context.json`：本轮 run/turn/两个 session/executable hash；`strict-gates.json`：同图像 request ID、匹配 native call UUID 与失败码。
-- `tool-bridge-calls.json`：无 token/正文的真实工具桥 scope 与返回状态；与本轮 `state/native-tool-audit.jsonl` 精确 ID 联结。native audit 原始参数虽有 redaction，仍应留在本地，不直接整份打印/分享。
-- `rust-postcheck-state.json`：当前 Rust 重算状态，标记为直接本地 postcheck；`artifact-inventory.json`：当前输出路径/文件 SHA/字节数；核对当前 geometry report、CADPlan、finish/review revision/fingerprint。
+- 只检查 exit code、`summary.json` 的状态与各 gate 状态/固定原因，及 `tool-result-diagnostics.jsonl` 的两个固定 projection。不能只看 transport 状态或 Agent 最终答复。
+- 输出目录只包含 `summary.json`、`tool-result-diagnostics.jsonl` 和 `build-status.json`。runner 不提供 raw trace、tool bridge calls、Rust postcheck 或 CAD 文件 dump。
+- gate 通过表示本轮 host evidence 满足严格 CLI 条件；候选几何和临时会话在正常结束时随私有 scratch 一并删除，视觉质量和 CATIA 仍须单独验收。
 - 人工对照原图、front/iso 和必要其它视图，核对孔实例数量、孔列、孔轴、凹槽和外轮廓；这是严格 CLI gate 之外的视觉质量证据。不得用模型自报相似度替代该检查。
-- 不整份打印 profile、原始 provider/DSH 日志、summary.answer 或配置。session/profile/evidence 目录为本机私有运行档案，不加入 Git；对外只摘录本轮 gate 与安全摘要。
+- 不整份打印 profile、provider/DSH 原始日志或配置。异常处理只输出固定失败代码，不回显错误正文。scratch 位于系统临时目录，正常退出时删除；异常断电或强制终止可能阻止清理，需在允许运行前考虑这一限制。
 
 ## 离线定向检查
 
 ```powershell
-node --test src/apps/desktop/src-tauri/examples/native_agent_coldstart_gates.test.mjs
 node --check src/apps/desktop/src-tauri/examples/native_agent_coldstart_acceptance.mjs
+node --check src/apps/desktop/src-tauri/examples/native_agent_coldstart_publication.mjs
 node --check src/apps/desktop/src-tauri/examples/native_agent_coldstart_gates.mjs
 node --check src/apps/desktop/src-tauri/examples/native_agent_coldstart_gates.test.mjs
+node --test src/apps/desktop/src-tauri/examples/native_agent_coldstart_gates.test.mjs
 ```
 
-fixtures 包含完整合成阳性及 request 错配、缺成功完整响应、旧 turn、错误 provider、原图变化、漏工具、只有 actions、native/ACP 拒绝、外来 session/UUID、直接 CLI 冒充 DSH、DSH 非零、accepted=false、geometry stale、holes incomplete、视觉不完整/旧摘要、无效 attestation、缺 artifact/字段、日志损坏等阴性。文件路径检查和 loopback 代理另有测试；代理测试确认不会把 dummy token 或正文 marker 写入审计。
+fixtures 包含完整合成阳性及 request 错配、缺成功完整响应、旧 turn、错误 provider、原图变化、漏工具、只有 actions、native/ACP 拒绝、外来 session/UUID、直接 CLI 冒充 DSH、DSH 非零、accepted=false、geometry stale、holes incomplete、视觉不完整/旧摘要、无效 attestation、缺 artifact/字段、日志损坏等阴性。新增 publication sentinel fixture 检查输出目录所有文件都不含 ACP/native ID、answer、thought、payload 与参数 sentinel，并确认 gate 和投影 schema/内容仍有效。文件路径检查和 loopback 代理另有测试；代理测试确认不会把 dummy token 或正文 marker 写入审计。

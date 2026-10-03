@@ -1,11 +1,12 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
 import { createServer, createConnection } from 'node:net'
-import { mkdtempSync, mkdirSync, writeFileSync, rmSync } from 'node:fs'
+import { mkdtempSync, mkdirSync, writeFileSync, rmSync, readdirSync, readFileSync } from 'node:fs'
 import { randomBytes } from 'node:crypto'
-import { join } from 'node:path'
+import { join, relative } from 'node:path'
 import { tmpdir } from 'node:os'
 import { createAuditedToolProxy, createTerminalUpdateHmac, evaluateColdstartGates, parseEvidenceJsonl, parsePostcheckState, readRunArtifacts, summarizeAcpTerminalUpdateDiagnostics, summarizeCordisBindingDiagnostics, toolArgumentsFingerprint } from './native_agent_coldstart_gates.mjs'
+import { buildSafeAcceptanceSummary, writeSafeAcceptanceArtifacts } from './native_agent_coldstart_publication.mjs'
 
 // Synthetic contract fixture: no provider credentials, image bytes, geometry
 // execution or model API are used. It is not scientific acceptance evidence.
@@ -268,6 +269,58 @@ test('Cordis binding reasons distinguish missing ACP/audit rows from explicit re
   assert.equal(outcome(scopeProjection, 'acp_to_bridge', 'run_scope_mismatch'), 1)
   assert.equal(outcome(scopeProjection, 'bridge_to_audit', 'bridge_scope_rejected'), 1)
   assert.equal(JSON.stringify(scopeProjection).includes('foreign-session-marker'), false)
+})
+
+test('published cold-start files contain only safe gates and aggregate projections', () => {
+  const root = mkdtempSync(join(tmpdir(), 'coldstart-safe-publication-'))
+  const output = join(root, 'run')
+  const secrets = ['sentinel-acp-call-id', 'sentinel-native-uuid', 'sentinel-answer-body',
+    'sentinel-thought-body', 'sentinel-tool-payload', 'sentinel-argument-value']
+  try {
+    const key = randomBytes(32), digestByEvent = new WeakMap()
+    const start = { kind: 'tool_call', tool_call_id: secrets[0], title: 'cad_finish_model', status: 'in_progress', at_ms: 1 }
+    const update = { sessionUpdate: 'tool_call_update', toolCallId: secrets[0], status: 'completed',
+      rawOutput: { text: secrets[2], payload: secrets[4] }, thought: secrets[3], arguments: secrets[5] }
+    const terminal = { kind: 'tool_call_update', tool_call_id: secrets[0], status: 'completed', at_ms: 2 }
+    digestByEvent.set(terminal, createTerminalUpdateHmac(update, key))
+    const events = [start, terminal]
+    const acpProjection = summarizeAcpTerminalUpdateDiagnostics(events, { terminalUpdateHmacByEvent: digestByEvent })
+    acpProjection.raw_trace = secrets.join('|')
+    const bindingProjection = summarizeCordisBindingDiagnostics({
+      ...fixture(),
+      toolEvents: events.map(event => ({ ...event, run_id: 'temporary-run-id', session_id: secrets[1], turn_id: 'temporary-turn-id' })),
+    })
+    bindingProjection.debug_payload = secrets.join('|')
+    const strict = {
+      status: 'passed', scope: 'single_image_single_turn_cli_host_gates_not_independent_visual_or_CATIA_acceptance',
+      successful_image_request_ids: [secrets[1]], matched_native_call_ids: [secrets[1]],
+      answer: secrets[2], thought: secrets[3], payload: secrets[4], arguments: secrets[5],
+      failure_reasons: [], evidence_errors: [], gates: { run_scope: { status: 'passed', reasons: [] },
+        acp_cad_tool_results: { status: 'passed', reasons: [] } },
+    }
+    const summary = buildSafeAcceptanceSummary({ strict, transportStatus: 'completed', modelStatus: 'accepted_by_strict_cli_gate',
+      runtime: { node: 'v22.23.3', dsh: '0.2.0-rc.2', directory: secrets[0] },
+      source: { bytes: 72309, sha256: 'b'.repeat(64), unchanged: true, reference_id: secrets[1] } })
+    writeSafeAcceptanceArtifacts(output, { summary, acpProjection, bindingProjection,
+      buildStatus: { status: 'passed', exit_code: 0, elapsed_ms: 12, stdout_bytes: 0, stderr_bytes: 0, raw: secrets[4] } })
+    const listFiles = directory => readdirSync(directory, { withFileTypes: true }).flatMap(entry => {
+      const path = join(directory, entry.name)
+      return entry.isDirectory() ? listFiles(path) : [relative(output, path)]
+    })
+    const files = listFiles(output).sort()
+    assert.deepEqual(files, ['build-status.json', 'summary.json', 'tool-result-diagnostics.jsonl'])
+    const serialized = files.map(path => readFileSync(join(output, path), 'utf8')).join('\n')
+    for (const secret of secrets) assert.equal(serialized.includes(secret), false)
+    assert.equal(summary.status, 'passed')
+    assert.equal(summary.strict_gates.gates.run_scope.status, 'passed')
+    const projections = readFileSync(join(output, 'tool-result-diagnostics.jsonl'), 'utf8').trim().split('\n').map(JSON.parse)
+    assert.equal(projections[0].schema, 'acp_terminal_update_projection_v2')
+    assert.deepEqual(projections[0].call_group_terminal_distribution,
+      [{ tool_name: 'cad_finish_model', terminal_category: 'completed_once', count: 1 }])
+    assert.equal(projections[1].schema, 'cordis_binding_projection_v1')
+  } finally {
+    rmSync(root, { recursive: true, force: true })
+  }
 })
 
 const negativeFixtures = [
