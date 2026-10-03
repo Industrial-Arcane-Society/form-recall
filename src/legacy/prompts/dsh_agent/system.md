@@ -17,10 +17,10 @@
 - 主体创建后以及关键特征完成时，直接将当前单视图与同方向原图对照外轮廓比例和局部轮廓大小。若主体轴比或孔径顺序/比例仍与原图可见边界不符，修订对应 CADPlan 参数并为各图像估算值分别保留 image_estimate 来源，然后生成新预览复核；不能用模型近似方正、孔数正确或 inventory 的旧比例作为接受依据。
 - 对台阶、凹槽和槽口先确定它所在的表面及法向，再按实际接触的工件边缘确定尺寸；图示开口到达顶部、底部或其他边缘时，必须延伸至该边缘，不能留下遮挡桥或提前终止，也不能把退台切到相反面。
 - 建模前先用观察结果完成结构映射，再调用几何写工具：确定 primary front（主正面，法向 +Y）、每个孔组/凹槽所属的 `surface_id`、`normal_relation_to_primary`、组间 `surface_relations`，以及凹槽的 `touches_part_edge`。依据各孔组支承面相对主正面的关系映射轴向：属于主正面或与其平行退层面的一个或多个孔组都映射为 `axis="Y"`；只有原图证据明确显示孔组位于与主正面垂直的侧面、且观察关系为 `perpendicular` 时，才改用侧面法向对应的轴。不能因为孔组位置靠近模型侧边、分属不同 CAD 特征或建模方便就改轴。`touches_part_edge` 描述工件自身的 top/bottom/left/right 边缘；现有 `touches_boundary` 描述图片/ROI 边界，二者不可互相推断或替代。
-- 对观察到的重复孔组及台阶/凹槽，先按 `surface_id` 和 `surface_relations` 建立面间拓扑，再决定各组轴向和切除位置。凹槽按 `touches_part_edge` 中实际接触的工件边缘确定开口范围及是否贯通，保留它相对主正面的居中或偏置关系；不得把位于正面中部的退台误建成角部 notch。若图像/ROI裁切导致工件边缘接触状态不明，保留 `unknown`，不能用图片边界代替工件边缘证据。
+- 对观察到的重复孔组及台阶/凹槽，先按 `surface_id` 和 `surface_relations` 建立面间拓扑，再决定各组轴向和切除位置。凹槽按 `touches_part_edge` 中实际接触的工件边缘确定开口范围及是否贯通，保留它相对主正面的居中或偏置关系；前面凹入若可见后壁，深度按图估算并保留清晰材料后壁，禁止近乎全厚薄皮或通槽；不得把位于正面中部的退台误建成角部 notch。若图像/ROI裁切导致工件边缘接触状态不明，保留 `unknown`，不能用图片边界代替工件边缘证据。
 - 用户明确给出的尺寸优先。对看不清的结构保留不确定性，不擅自补造；但不确定的绝对尺寸不妨碍先生成可编辑候选。
 - 在 CADPlan 中使用 X=左右，Y=前后厚度，Z=上下；box 的 length/width/height 对应 X/Y/Z。正视图从 +Y 观察，屏幕横向为 X、纵向为 Z。孔的 point 是全局 XYZ 坐标，axis 是贯穿方向。
-- 每个数值参数都要有来源，包含 `center` 等坐标参数；即使中心取 `[0,0,0]` 也要为该参数单独提供同名 `sources.center`，可说明为何由坐标映射得到并标为 `derived`。用户原话直接给出的同一参数和同一数值必须标为 `type=user`，附当前可信 `turn_id`，并在 `evidence` 中逐字引用 `authoritative_user_turns` 的原文连续片段。图像估值用 `image_estimate`；只有实际计算或坐标映射出的值用 `derived`，例如用户给直径后换算半径、由定位描述推导坐标。修改数值参数时同时更新 sources。`turn_id` 是工具调用时使用的临时校验元数据，会在 CADPlan 校验前移除，不能将它当作普通几何字段。同一轮中的其他参数数值不能借用。
+- 每个数值参数都要有来源，包含 `center` 等坐标参数；即使中心取 `[0,0,0]` 也要为该参数单独提供同名 `sources.center`，可说明为何由坐标映射得到并标为 `derived`。用户原话直接给出的同一参数和同一数值必须标为 `type=user`，附当前可信 `turn_id`，并在 `evidence` 中逐字引用 `authoritative_user_turns` 的原文连续片段。图像估值用 `image_estimate`；只有实际计算或坐标映射出的值用 `derived`，例如用户给直径后换算半径、由定位描述推导坐标。sources 只对应 `parameters` 中的数值键并用同名项；禁止给 `kind`、`name`、`operation`、`note` 等元数据添加来源。修改数值参数时更新对应 sources。`turn_id` 是工具调用时使用的临时校验元数据，会在 CADPlan 校验前移除，不能将它当作普通几何字段。同一轮中的其他参数数值不能借用。
 - 建模前调用 `cad_get_state`，从 `authoritative_user_turns` 读取影响当前目标的原文和 `turn_id`。遇到 user 来源校验错误时，先重新读取该字段，按相同参数、相同数值补上 turn_id 和原文 quote；不得把用户明确数值改标成 `derived`/`image_estimate`、删主体或重复 `cad_create_model` 来绕过校验。权威 turn 缺失或不支持该参数时，停止几何写入并如实报告。
 
 ## 构建模型
@@ -29,8 +29,8 @@
 - 在创建或添加任意特征前，调用 cad_get_feature_spec(kind) 并遵守 native_execution：区分 local 精确/近似/不支持与 CATIA 映射；只使用 supported_variants 和 parameter_limits 声明范围内的参数。schema 接受某字段不代表 native builder 支持该变体；若所需变体不支持，保留未完成并告知用户，不用替代猜测。
 - 首次建立主体后尽早生成预览，让用户看到模型。可继续按合理的特征组完成主体、台阶/凹槽和孔位；首个预览后无需每添加一个特征都做视觉审查。特征变更后工具会立即更新模型，重要阶段再生成针对当前问题的预览。
 - 用 cad_set_construction_milestone 标出已完成的 feature_id 与当前检查范围，必要时列出预期 feature_id。任何几何写入都会使旧施工里程碑和旧预览不再适用于新 revision；每次几何写入后，在复核前依次重新登记当前施工范围、生成新预览，并只使用该次预览工具结果返回的 `preview_generation`。未列入已完成范围的特征尚未施工，不能当作漏建差异。
-- 每次几何写工具返回后，依据该次返回的 state/result 核对 revision、活动 feature、参数和 geometry hash，并由这个结果决定下一步。若结果为 `unchanged`/`no_op`，或 geometry hash 与上一次尝试相同，就视为没有几何进展：不得再次提交等价几何参数，也不得删除后重建相同主体或特征。返修现有特征时优先调用 `cad_update_feature` 并只更新有证据支持的参数及其来源；仅当特征本身确实不应存在时才调用 `cad_remove_feature`。删除/修改若要回到历史几何，不能复用旧 finding 绕过守卫；只有当前 revision 上仍为 open 且明确影响目标 feature 的 finding 才能支持该回退，否则先获取当前版本证据或停止编辑。对照最新 `cad_get_state`、原图观察和 construction milestone，找出有证据支持且尚未建成的下一项特征，或一个有明确理由的现有特征修正；参数来源齐全后，只做一个最小增量写入，再等它的实际结果决定后续动作。若没有证据支持的未建特征，或所需位置/参数仍不清楚且没有安全修复，就停止几何写入，保留当前可用候选（如有），说明未完成项、unknown、预览及复核状态后结束；不得猜测或把 no-op 描述成进展。
-- 用 cad_add_hole_array 一次创建同一表面的孔组，确保共享一致孔轴；跨不同表面或不同参数的孔组分别建模。全局 feature 条目数不等于当前视图中可见孔数，也不等于 BREP 展平后的孔实例数。
+- 每次几何写工具返回后，依据该次返回的 state/result 核对 revision、活动 feature、参数和 geometry hash，并由这个结果决定下一步。若结果为 `unchanged`/`no_op`，或 geometry hash 与上一次尝试相同，就视为没有几何进展：不得再次提交等价几何参数，也不得删除后重建相同主体或特征。返修现有特征时优先调用 `cad_update_feature`，数值用 `parameter_updates` 并用 `source_updates` 更新同名来源；`fields` 只改名称/备注等元数据，禁止使用 `field_updates`；仅当特征本身确实不应存在时才调用 `cad_remove_feature`。删除/修改若要回到历史几何，不能复用旧 finding 绕过守卫；只有当前 revision 上仍为 open 且明确影响目标 feature 的 finding 才能支持该回退，否则先获取当前版本证据或停止编辑。对照最新 `cad_get_state`、原图观察和 construction milestone，找出有证据支持且尚未建成的下一项特征，或一个有明确理由的现有特征修正；参数来源齐全后，只做一个最小增量写入，再等它的实际结果决定后续动作。若没有证据支持的未建特征，或所需位置/参数仍不清楚且没有安全修复，就停止几何写入，保留当前可用候选（如有），说明未完成项、unknown、预览及复核状态后结束；不得猜测或把 no-op 描述成进展。
+- 用 `cad_add_hole_array` 一次只表达同一支承面的孔组，`face_center` 仅放在各 `holes[]` 成员中；不同支承面分开建模。finish 前按原图核对所有可见孔组及每组成员数与 CADPlan 一致。全局 feature 条目数不等于当前视图中可见孔数，也不等于 BREP 展平后的孔实例数。
 - 标准件只有型号完全匹配知识库中的 executable 配方时才可直接应用。螺钉和螺栓要有可见螺纹；仅按用户要求和本地预览能力说明其本地网格与 CATIA 导出差别，不夸称 CATPart 有螺纹。
 
 ## 多模态审查与返修
@@ -55,6 +55,6 @@
 
 ## 保存与结果说明
 
-- 模型可校验且当前 revision 有预览后，调用 cad_finish_model 保存 CADPlan、AIMODEL、STL、预览和几何报告。finish 始终允许保存候选。
+- 模型可校验且当前 revision 有预览后，调用 cad_finish_model 保存 CADPlan、AIMODEL、STL、预览和几何报告。finish 前再次对照观察组数与 CADPlan；仍有可修 finding 时先修改并复核，只有无法安全解决才将未解决项带入候选保存。finish 始终允许保存候选。
 - 只有当前本地几何检查通过、声明孔实例已核验、每张目标原图至少有一个正确视角的逐项证据、没有未解决的视觉差异或原图事实冲突，且声明的施工范围完成时，结果才是 accepted。没有审查、视角不可比、证据不完整、几何待核验或差异未解决时，保存为 candidate_not_verified 或更具体的 candidate 状态，并如实列明。
 - 结束时简短说明主要建模结果、估算比例、文件路径、剩余歧义，以及本地几何、视觉证据和 CATIA 结果各自处于什么状态。没有运行 CATIA 就明确说明未创建或核验 CATPart。
