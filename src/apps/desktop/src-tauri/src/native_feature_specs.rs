@@ -247,7 +247,7 @@ mod tests {
                 );
             }
         }
-        assert_eq!(supported_count, 18);
+        assert_eq!(supported_count, 19);
         assert_eq!(kinds.len(), specs.as_object().unwrap().len());
     }
 }
