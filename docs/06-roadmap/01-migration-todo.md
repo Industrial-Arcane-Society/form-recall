@@ -52,7 +52,7 @@
 | F5.2 | Rust AIMODEL / binary STL 兼容读写 | **已完成** | 5 项单测、旧工程 roundtrip、Python Document 对拍及实际 STL 全顶点检查通过；Quick 和生产导出接线尚待完成 |
 | F5.3 | Quick 明确尺寸原生创建闭环 | **已完成（限定范围）** | Rust Quick 3/3、解析 7/7、Vue build；CADPlan→OCCT→GLB/AIMODEL/STL，旧语法全量迁移和共享活动状态仍待 F7.G2；见 [记录](./27-f5-native-quick-build.md) |
 | F6 | Python 缩减到 CATIA COM | **进行中（拆为 F6.1–F6.7）** | Agent Python tool worker 已删除；F6.1 原生配置/provider 与 F6.2 原生 bootstrap/readiness 代码及定向接线已提交。Quick、Agent 启动和本地活动模型代码不再要求 Python bridge；parts、examples、手工联网、诊断等桌面服务仍待迁移，最终无 Python 安装包冷启动仍待验收 |
-| F7 | 多模态盲测与科学验收基线 | **进行中** | 生产同源冷启动 runner 已执行一轮真实原图盲测，模型候选因孔位/视图复核未通过而被拒；仍需修复并完成图片、纯文字、多轮、返修、取消及 CATIA 分层验收 |
+| F7 | 多模态盲测与科学验收基线 | **进行中** | 真实原图 CLI 冷启动已有两轮负样本；最新一轮 DSH 正常结束，但候选因孔计量未验证、视觉覆盖不完整和 6 项 finding 未关闭被拒，同时暴露主模型 wire 观测和 ACP 工具完成关联缺口；已记录脱敏归因，仍需修复并完成图片、纯文字、多轮、返修、取消及 CATIA 分层验收 |
 
 ## F6 子任务与验收顺序
 
@@ -81,7 +81,7 @@
 | F7.G5 | P1 | 观察因冲突可重新读取、版本可追踪 | **代码完成，真实视觉链路待验收** | 普通同 SHA/ROI 复用缓存；Agent 显式传 `conflict`/`reobserve` 才重新观察并递增版本；保留历史、SHA/ROI/reason/telemetry；新版 evidence ID 隔离旧 review/finding。定向测试 11+5+3 通过；见 [记录](./34-f7-observation-refresh.md)。 |
 | F7.G6 | P1 | 统一实际工具与几何能力契约 | **代码完成，运行期遵循待 G8 验收** | 26 类注册特征统一公开本地 exact/approximate/unsupported、支持/拒绝变体和参数边界；preflight 共用同一 native kind registry；面工具 source_type 与 hole-array 上限对齐。3 项定向测试已由 subagent 跑通；`parameter_limits` 当前为说明型契约，后续需随 preflight 同步。见 [记录](./36-f7-native-capability-contract.md)。 |
 | F7.G7 | P1 | 分阶段模型、推理预算及行为熔断 | **代码完成、定向检查通过；真实DSH多模态链路待验收** | 感知/建模/审查可独立选择供应商与推理强度，空或空白 provider ID 继承全局当前配置；ACP reasoning 仅在回执给出有效值时标记生效，未确认会告警。视觉请求遥测明确记录发送前预期值，不声称服务端已生效；未知 Chat Completions 路由不发送通用 reasoning 字段。Agent turn 使用 60 分钟总时限、10 分钟无有效进展时限、15 秒取消宽限；相同写工具/脱敏参数且 revision 未变化或错误重复 5 次才触发无进展熔断，不设总工具/返修次数上限。超时后回收挂起 ACP 请求；用户取消、超时、无进展与 Host 错误分别记录，终态单点发出，所有退出路径清理 active。定向 cargo check、策略单测、ACP pending 请求释放 fixture、AgentHost、阶段空值和视觉路由测试以及前端配置往返测试通过；fixture 未覆盖完整 Tauri watchdog 回路。未做真实 DSH/LLM 多模态验收。阶段配置存于全局桌面设置，不随 `.aimodel` 工程保存。见 [阶段模型与运行熔断记录](./39-f7-stage-routing-watchdog.md)。 |
-| F7.G8 | P1 | 真实多模态与多轮链路可复跑验收 | **严格单图 CLI gate 已实现；真实新轮次及多场景仍待验收** | run01原图负样本保留；冷启动runner现在要求同一主模型request携图且完整成功响应、同轮真实Cordis CAD工具与native UUID审计、Rust当前几何签名、非空当前目录产物、孔计量、完整视觉review及finish门禁同时通过；36/36 gate fixture与3项语法检查通过。尚未执行真实 provider 新轮次，也未验收多图、纯文字、多轮返修、取消、桌面通道或 CATIA；严格 CLI gate 通过后仍需独立视觉对照。见 [冷启动实测 01](./35-f7-image-acceptance-run-01.md)、[工具调用审计](./37-f7-native-tool-audit.md) 与 [严格冷启动 gate](./43-f7-g8-strict-coldstart-gates.md)。 |
+| F7.G8 | P1 | 真实多模态与多轮链路可复跑验收 | **真实单图冷启动已执行但未通过；wire/工具关联修复已提交，待新 run 验收** | run01原图负样本保留。最新 run 中 DSH 正常 end_turn；主模型 37 个输入边界事件带原图 SHA，但旧 runner 未传 provider route identity，故无 `node_global_fetch` wire 记录，不能据此断言图片未发送。此后 `000ee1d` 修复冷启动 runner/stream bridge wire 采集，`f105e8f` 增加 ACP invocation 参数哈希与 Rust UUID 精确关联；59/59 定向 Node 测试、脚本语法和 diff check 通过。run02候选 revision 29 孔后端计量未完成、视觉覆盖为 partial、6 个 finding 未关闭且 finish 未接受；其安全提取的 CADPlan 显示孔径全相同、中段过宽且凹槽顶部留料。严格 runner exit 1。下一步执行新盲测验证主模型 wire/ACP 关联及候选几何改进；仍需验收多图、纯文字、多轮返修、取消、桌面通道、CATIA 与独立视觉对照。见 [冷启动实测 01](./35-f7-image-acceptance-run-01.md)、[工具调用审计](./37-f7-native-tool-audit.md)、[严格冷启动 gate](./43-f7-g8-strict-coldstart-gates.md) 与 [本轮归因](./44-f7-g8-run-02-diagnosis.md)。 |
 
 执行顺序：先完成 P0 G1–G4 的缺口，再推进 G5–G8；F4 完整几何、F5/F6 原生状态迁移同时继续。生产同源冷启动 runner 已执行并记录一轮失败样本，不代表整个 G8 或 F7 通过。F7 总体只有所有链路整改和真实验收完成后才可标记完成。
 
