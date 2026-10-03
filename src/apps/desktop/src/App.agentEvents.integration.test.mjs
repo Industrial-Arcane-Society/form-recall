@@ -59,6 +59,8 @@ const scenario = rustChannelCapture?.scenario || 'stale-finish'
 // Provide the Tauri transport expected by the real Channel/invoke implementations.
 globalThis.Document = class Document {}; globalThis.ShadowRoot = class ShadowRoot {};
 globalThis.window = globalThis
+// Tauri's `isTauri()` checks this marker; __TAURI_INTERNALS__ only mocks IPC.
+window.isTauri = true
 window.location = { search: '' }
 window.addEventListener = () => {}
 window.removeEventListener = () => {}
