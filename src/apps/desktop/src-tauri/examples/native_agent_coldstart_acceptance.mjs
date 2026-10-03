@@ -2,38 +2,52 @@
 // API credentials stay in process memory / child env or stdin, never argv or logs.
 import { spawn, spawnSync } from 'node:child_process'
 import { createHash, randomBytes, randomUUID } from 'node:crypto'
-import { mkdirSync, readFileSync, writeFileSync, existsSync, mkdtempSync, rmSync } from 'node:fs'
+import { mkdirSync, readFileSync, writeFileSync, existsSync, mkdtempSync } from 'node:fs'
 import { basename, dirname, join, resolve } from 'node:path'
 import { tmpdir } from 'node:os'
 import { createInterface } from 'node:readline'
 import { createAuditedToolProxy, createTerminalUpdateHmac, evaluateColdstartGates, parseEvidenceJsonl, parsePostcheckState, readRunArtifacts, summarizeAcpTerminalUpdateDiagnostics, summarizeCordisBindingDiagnostics, toolArgumentsFingerprint } from './native_agent_coldstart_gates.mjs'
 import { buildSafeAcceptanceSummary, writeSafeAcceptanceArtifacts } from './native_agent_coldstart_publication.mjs'
+import { removeScratchDirectory, safeScratchCleanupStatus, terminateChildrenAndWait, waitThenTerminateChild } from './native_agent_coldstart_lifecycle.mjs'
 
 const [repoArg, runtimeArg, outputArg, configArg, imageArg, userTextArg] = process.argv.slice(2)
 let archiveDir = null
 let scratchDir = null
 const managedChildren = []
-const stopManagedChildren = () => {
-  for (const child of managedChildren) if (child.exitCode === null) child.kill()
-}
-const archiveFailure = error => {
+let fatalFailurePromise = null
+const stopManagedChildren = () => terminateChildrenAndWait(managedChildren, 1500)
+const archiveFailure = scratchCleanupStatus => {
   if (!archiveDir) return
   try {
     mkdirSync(archiveDir, { recursive: true })
     writeFileSync(join(archiveDir, 'summary.json'), JSON.stringify({ schema_version: 1, status: 'failed',
       transport_status: 'failed', model_status: 'none',
       status_scope: 'scope_unverified', runtime: { node: 'unverified', dsh: 'unverified' },
+      scratch_cleanup_status: scratchCleanupStatus,
       strict_gates: { status: 'failed', failure_reason_count: 1, evidence_error_count: 0, gates: {} } }, null, 2),
     { flag: 'wx', mode: 0o600 })
   } catch { /* preserve the original process failure */ }
 }
 const cleanupScratch = () => {
-  if (!scratchDir) return
-  try { rmSync(scratchDir, { recursive: true, force: true }); scratchDir = null } catch { /* do not disclose scratch contents */ }
+  if (!scratchDir) return 'not_created'
+  const status = removeScratchDirectory(scratchDir)
+  if (status === 'removed') scratchDir = null
+  return status
 }
 process.once('exit', cleanupScratch)
-process.on('uncaughtException', error => { stopManagedChildren(); archiveFailure(error); console.error('Acceptance failed; see safe summary in the evidence directory.'); process.exit(1) })
-process.on('unhandledRejection', error => { stopManagedChildren(); archiveFailure(error); console.error('Acceptance failed; see safe summary in the evidence directory.'); process.exit(1) })
+const failSafely = () => {
+  if (fatalFailurePromise) return fatalFailurePromise
+  fatalFailurePromise = (async () => {
+    const childrenStopped = await stopManagedChildren().catch(() => false)
+    const cleanupStatus = cleanupScratch()
+    archiveFailure(safeScratchCleanupStatus(childrenStopped, cleanupStatus))
+    console.error('Acceptance failed; see safe summary in the evidence directory.')
+    process.exit(1)
+  })()
+  return fatalFailurePromise
+}
+process.on('uncaughtException', () => { void failSafely() })
+process.on('unhandledRejection', () => { void failSafely() })
 if (!repoArg || !runtimeArg || !outputArg || !configArg) {
   throw new Error('usage: node native_agent_coldstart_acceptance.mjs REPO PINNED_RUNTIME FRESH_OUTPUT PROVIDER_JSON [ORIGINAL_PNG] [USER_TEXT]')
 }
@@ -237,15 +251,8 @@ function rpc(method, params, ms = 45000) {
     child.stdin.write(JSON.stringify({ jsonrpc: '2.0', id, method, params }) + '\n')
   })
 }
-async function boundedExit(process, ms) {
-  if (process.exitCode !== null) return
-  await new Promise(done => {
-    const timer = setTimeout(done, ms)
-    process.once('exit', () => { clearTimeout(timer); done() })
-  })
-  if (process.exitCode === null) process.kill()
-}
-let sessionId = null, dshStatus = 'failed', computedState = null
+let sessionId = null, dshStatus = 'failed', computedState = null, managedChildrenExited = true
+let scratchCleanupStatus = 'not_created'
 try {
   const initialized = await rpc('initialize', { protocolVersion: 1,
     clientInfo: { name: 'native-agent-coldstart-acceptance', version: '1' }, clientCapabilities: {} })
@@ -274,7 +281,7 @@ try {
   }
 } finally {
   child.stdin.end()
-  await boundedExit(child, 5500)
+  const childExited = await waitThenTerminateChild(child, 5500, 1500)
   await toolProxy.close()
   // Recompute the plan signature in Rust, without calling a provider or
   // finishing/reviewing the model. This direct probe call is not Cordis proof.
@@ -293,7 +300,9 @@ try {
     probe.stdin.write('quit\n')
     probe.stdin.end()
   }
-  await boundedExit(probe, 1500)
+  const probeExited = await waitThenTerminateChild(probe, 1500, 1500)
+  managedChildrenExited = childExited && probeExited
+  if (!childExited || !probeExited) evidenceErrors.push('managed_child_exit_timeout')
 }
 
 const readJsonFile = (path, fallback = {}) => {
@@ -342,19 +351,21 @@ const strict = evaluateColdstartGates({
   const wireRequests = streamEvents.filter(row => row.kind === 'provider_wire_request')
   const successfulWireResponse = strict.successful_image_request_ids.length > 0
   const wireIdentityValid = strict.gates.main_image_wire.reasons.indexOf('main_model_original_image_wire_missing') < 0
+  scratchCleanupStatus = cleanupScratch()
   const safeSummary = buildSafeAcceptanceSummary({
     strict,
     transportStatus: dshStatus === 'completed' && wireIdentityValid && successfulWireResponse ? 'completed' : 'failed',
     modelStatus: strict.status === 'passed' ? 'accepted_by_strict_cli_gate' : domain.plan ? 'candidate' : 'none',
     runtime: { node: nodeVersion.stdout.trim(), dsh: dshPackage.version },
     source: { bytes: imageBytes.length, sha256: sourceSha, unchanged: hash(readFileSync(imagePath)) === sourceSha },
+    scratchCleanupStatus: safeScratchCleanupStatus(managedChildrenExited, scratchCleanupStatus),
   })
   writeSafeAcceptanceArtifacts(output, { summary: safeSummary, acpProjection: projection,
     bindingProjection, buildStatus })
 }
 const finalStatus = strict.status
-console.log(JSON.stringify({ status: finalStatus, evidence_archive: output }, null, 2))
-cleanupScratch()
-if (finalStatus !== 'passed') {
+const cleanupFailed = !managedChildrenExited || scratchCleanupStatus !== 'removed'
+console.log(JSON.stringify({ status: finalStatus, scratch_cleanup_status: cleanupFailed ? 'failed' : 'removed', evidence_archive: output }, null, 2))
+if (finalStatus !== 'passed' || cleanupFailed) {
   process.exitCode = 1
 }

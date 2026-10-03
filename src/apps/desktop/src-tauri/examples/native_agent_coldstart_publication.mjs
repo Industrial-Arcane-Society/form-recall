@@ -12,6 +12,7 @@ const SAFE_SCOPE = 'single_image_single_turn_cli_host_gates_not_independent_visu
 const SAFE_NODE_VERSIONS = new Set(['v22.23.3'])
 const SAFE_DSH_VERSIONS = new Set(['0.2.0-rc.2'])
 const MODEL_STATUSES = new Set(['accepted_by_strict_cli_gate', 'candidate', 'none'])
+const SCRATCH_CLEANUP_STATUSES = new Set(['removed', 'failed', 'not_created'])
 const pickCounts = (rows, keys, enums) => Array.isArray(rows) ? rows.map(row => {
   const result = {}
   for (const key of keys) {
@@ -65,7 +66,7 @@ const safeGate = gate => ({
   reason_count: Array.isArray(gate?.reasons) ? safeCount(gate.reasons.length) : 0,
 })
 
-export function buildSafeAcceptanceSummary({ strict, transportStatus, modelStatus, runtime, source }) {
+export function buildSafeAcceptanceSummary({ strict, transportStatus, modelStatus, runtime, source, scratchCleanupStatus }) {
   const gates = Object.fromEntries(GATE_NAMES.map(name => [name, safeGate(strict?.gates?.[name])]))
   return {
     schema_version: 1,
@@ -73,6 +74,7 @@ export function buildSafeAcceptanceSummary({ strict, transportStatus, modelStatu
     status_scope: strict?.scope === SAFE_SCOPE ? SAFE_SCOPE : 'scope_unverified',
     transport_status: transportStatus === 'completed' ? 'completed' : 'failed',
     model_status: MODEL_STATUSES.has(modelStatus) ? modelStatus : 'none',
+    scratch_cleanup_status: SCRATCH_CLEANUP_STATUSES.has(scratchCleanupStatus) ? scratchCleanupStatus : 'not_created',
     strict_gates: {
       status: strict?.status === 'passed' ? 'passed' : 'failed',
       failure_reason_count: Array.isArray(strict?.failure_reasons) ? safeCount(strict.failure_reasons.length) : 0,

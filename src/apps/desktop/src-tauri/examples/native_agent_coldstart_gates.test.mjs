@@ -3,10 +3,62 @@ import assert from 'node:assert/strict'
 import { createServer, createConnection } from 'node:net'
 import { mkdtempSync, mkdirSync, writeFileSync, rmSync, readdirSync, readFileSync } from 'node:fs'
 import { randomBytes } from 'node:crypto'
+import { EventEmitter } from 'node:events'
 import { join, relative } from 'node:path'
 import { tmpdir } from 'node:os'
 import { createAuditedToolProxy, createTerminalUpdateHmac, evaluateColdstartGates, parseEvidenceJsonl, parsePostcheckState, readRunArtifacts, summarizeAcpTerminalUpdateDiagnostics, summarizeCordisBindingDiagnostics, toolArgumentsFingerprint } from './native_agent_coldstart_gates.mjs'
 import { buildSafeAcceptanceSummary, writeSafeAcceptanceArtifacts } from './native_agent_coldstart_publication.mjs'
+import { removeScratchDirectory, safeScratchCleanupStatus, terminateChildrenAndWait, waitThenTerminateChild } from './native_agent_coldstart_lifecycle.mjs'
+
+class FakeChild extends EventEmitter {
+  constructor({ exitAfterKillMs = null } = {}) {
+    super()
+    this.pid = 123
+    this.exitCode = null
+    this.signalCode = null
+    this.killed = false
+    this.exitAfterKillMs = exitAfterKillMs
+  }
+
+  kill() {
+    this.killed = true
+    if (this.exitAfterKillMs !== null) {
+      setTimeout(() => {
+        this.exitCode = null
+        this.signalCode = 'SIGTERM'
+        this.emit('exit', null, 'SIGTERM')
+      }, this.exitAfterKillMs)
+    }
+    return true
+  }
+}
+
+test('bounded child timeout waits for termination exit before reporting success', async () => {
+  const child = new FakeChild({ exitAfterKillMs: 2 })
+  assert.equal(await waitThenTerminateChild(child, 2, 50), true)
+  assert.equal(child.killed, true)
+  assert.equal(child.signalCode, 'SIGTERM')
+})
+
+test('failure shutdown waits for fake child exit and reports cleanup failure without details', async () => {
+  const child = new FakeChild({ exitAfterKillMs: 2 })
+  assert.equal(await terminateChildrenAndWait([child], 50), true)
+
+  const cleanup = removeScratchDirectory('private-scratch-marker', () => {
+    throw new Error('private-path-or-error-marker')
+  })
+  assert.equal(cleanup, 'failed')
+  assert.equal(JSON.stringify({ cleanup }).includes('private-'), false)
+  assert.equal(safeScratchCleanupStatus(true, cleanup), 'failed')
+  assert.equal(safeScratchCleanupStatus(false, 'removed'), 'failed')
+  assert.equal(safeScratchCleanupStatus(true, 'removed'), 'removed')
+})
+
+test('bounded child timeout reports when termination does not exit', async () => {
+  const child = new FakeChild()
+  assert.equal(await waitThenTerminateChild(child, 2, 2), false)
+  assert.equal(child.killed, true)
+})
 
 // Synthetic contract fixture: no provider credentials, image bytes, geometry
 // execution or model API are used. It is not scientific acceptance evidence.
@@ -303,7 +355,8 @@ test('published cold-start files contain only safe gates and aggregate projectio
     }
     const summary = buildSafeAcceptanceSummary({ strict, transportStatus: 'completed', modelStatus: secrets[7],
       runtime: { node: secrets[7], dsh: secrets[7], directory: secrets[0] },
-      source: { bytes: 72309, sha256: 'b'.repeat(64), unchanged: true, reference_id: secrets[1] } })
+      source: { bytes: 72309, sha256: 'b'.repeat(64), unchanged: true, reference_id: secrets[1] },
+      scratchCleanupStatus: secrets[7] })
     writeSafeAcceptanceArtifacts(output, { summary, acpProjection, bindingProjection,
       buildStatus: { status: 'passed', exit_code: 0, elapsed_ms: 12, stdout_bytes: 0, stderr_bytes: 0, raw: secrets[4] } })
     const listFiles = directory => readdirSync(directory, { withFileTypes: true }).flatMap(entry => {
@@ -321,6 +374,7 @@ test('published cold-start files contain only safe gates and aggregate projectio
     assert.equal(summary.strict_gates.evidence_error_count, 1)
     assert.equal(summary.status_scope, 'scope_unverified')
     assert.equal(summary.runtime.node, 'unverified')
+    assert.equal(summary.scratch_cleanup_status, 'not_created')
     assert.deepEqual(Object.keys(summary.strict_gates.gates), [
       'run_scope', 'dsh', 'trace_integrity', 'original_image', 'main_image_wire', 'cordis_cad_tools',
       'acp_cad_tool_results', 'current_geometry', 'artifacts', 'holes', 'visual', 'finish',
@@ -330,11 +384,13 @@ test('published cold-start files contain only safe gates and aggregate projectio
         gates: { run_scope: { status: 'passed', reasons: [] } } },
       transportStatus: 'completed', modelStatus: 'accepted_by_strict_cli_gate',
       runtime: { node: 'v22.23.3', dsh: '0.2.0-rc.2' },
-      source: { bytes: 72309, sha256: 'b'.repeat(64), unchanged: true },
+      source: { bytes: 72309, sha256: 'b'.repeat(64), unchanged: true }, scratchCleanupStatus: 'removed',
     })
     assert.equal(knownValues.status_scope, 'single_image_single_turn_cli_host_gates_not_independent_visual_or_CATIA_acceptance')
     assert.deepEqual(knownValues.runtime, { node: 'v22.23.3', dsh: '0.2.0-rc.2' })
     assert.equal(knownValues.model_status, 'accepted_by_strict_cli_gate')
+    assert.equal(knownValues.scratch_cleanup_status, 'removed')
+    assert.equal(buildSafeAcceptanceSummary({ scratchCleanupStatus: 'failed' }).scratch_cleanup_status, 'failed')
     const projections = readFileSync(join(output, 'tool-result-diagnostics.jsonl'), 'utf8').trim().split('\n').map(JSON.parse)
     assert.equal(projections[0].schema, 'acp_terminal_update_projection_v2')
     assert.deepEqual(projections[0].call_group_terminal_distribution,
