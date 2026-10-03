@@ -847,16 +847,32 @@ fn run_turn(
         events,
         "agent.turn_complete",
         request_id,
-        json!({
-            "turn_status":turn_status,
-            "cancelled":turn_status == "cancelled",
-            "stop_reason":stop_reason,
-            "termination_reason":termination_reason,
-        "error_category":error_category,
-            "current_model":current_model
-        }),
+        terminal_event_data(
+            turn_status,
+            stop_reason,
+            termination_reason,
+            error_category,
+            current_model,
+        ),
     );
     result
+}
+
+fn terminal_event_data(
+    turn_status: &str,
+    stop_reason: &str,
+    termination_reason: &str,
+    error_category: Option<&str>,
+    current_model: Value,
+) -> Value {
+    json!({
+        "turn_status":turn_status,
+        "cancelled":turn_status == "cancelled",
+        "stop_reason":stop_reason,
+        "termination_reason":termination_reason,
+        "error_category":error_category,
+        "current_model":current_model
+    })
 }
 
 fn normalize_terminal_result(
@@ -2413,8 +2429,8 @@ mod tests {
         ActiveReset, CANCEL_NONE, CANCEL_USER, CANCEL_WATCHDOG_IDLE, Image, Provider,
         ToolAuditTail, acknowledged_config_value, active_turn_record, classify_host_error,
         classify_turn_status, current_model_summary, find_config_value, normalize_terminal_result,
-        resolve_stage_configs, route_profile, termination_from_cancel, validate_image_signature,
-        write_profile_patch,
+        resolve_stage_configs, route_profile, terminal_event_data, termination_from_cancel,
+        validate_image_signature, write_profile_patch,
     };
     use crate::agent_model_config::{STAGE_MODELING, STAGE_PERCEPTION, STAGE_REVIEW};
     use serde_json::{Value, json};
@@ -2660,6 +2676,53 @@ mod tests {
         assert_eq!(classify_turn_status(Some("cancelled")), "cancelled");
         assert_eq!(classify_turn_status(Some("max_tokens")), "stopped");
         assert_eq!(classify_turn_status(None), "ended");
+    }
+
+    #[test]
+    fn terminal_event_keeps_turn_outcome_independent_from_current_model_acceptance() {
+        let root =
+            std::env::temp_dir().join(format!("agent-terminal-model-{}", super::unique_id()));
+        fs::create_dir_all(&root).unwrap();
+        fs::write(root.join("reference-images.json"), br#"{"images":[]}"#).unwrap();
+        fs::write(root.join("user-turns.json"), br#"{"turns":[]}"#).unwrap();
+        let plan = crate::cad_plan::create(
+            "fixture",
+            json!({"id":"body","kind":"box","operation":"add","parameters":{"length":10,"width":8,"height":5},"sources":{}}),
+            "fixture",
+            None,
+        );
+        let fingerprint = crate::cad_plan::geometry_fingerprint(&plan).unwrap();
+        fs::write(
+            root.join("cad-state.json"),
+            serde_json::to_vec(&json!({
+                "revision": 3,
+                "plan": plan,
+                "finish_summary": {
+                    "accepted": true,
+                    "finish_state": "accepted",
+                    "revision": 3,
+                    "geometry_fingerprint": fingerprint
+                }
+            }))
+            .unwrap(),
+        )
+        .unwrap();
+
+        let model = current_model_summary(&root);
+        assert_eq!(model["status"], "accepted");
+        for (turn_status, stop_reason) in [("completed", "end_turn"), ("stopped", "max_tokens")] {
+            let payload = terminal_event_data(
+                turn_status,
+                stop_reason,
+                "acp_completed",
+                None,
+                model.clone(),
+            );
+            assert_eq!(payload["turn_status"], turn_status);
+            assert_eq!(payload["stop_reason"], stop_reason);
+            assert_eq!(payload["current_model"]["status"], "accepted");
+        }
+        fs::remove_dir_all(root).unwrap();
     }
 
     #[test]
