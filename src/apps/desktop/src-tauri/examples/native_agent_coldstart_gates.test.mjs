@@ -345,11 +345,11 @@ test('published cold-start files contain only safe gates and aggregate projectio
     })
     bindingProjection.debug_payload = secrets.join('|')
     const strict = {
-      status: 'passed', scope: secrets[6],
+      status: 'failed', scope: secrets[6],
       successful_image_request_ids: [secrets[1]], matched_native_call_ids: [secrets[1]],
       answer: secrets[2], thought: secrets[3], payload: secrets[4], arguments: secrets[5],
       failure_reasons: [secrets[8]], evidence_errors: [secrets[9]], gates: {
-        run_scope: { status: 'passed', reasons: [secrets[8]] },
+        run_scope: { status: 'failed', reasons: ['run_identity_missing', secrets[8]] },
         acp_cad_tool_results: { status: 'passed', reasons: [] }, [secrets[10]]: { status: 'passed', reasons: [] },
       },
     }
@@ -367,9 +367,11 @@ test('published cold-start files contain only safe gates and aggregate projectio
     assert.deepEqual(files, ['build-status.json', 'summary.json', 'tool-result-diagnostics.jsonl'])
     const serialized = files.map(path => readFileSync(join(output, path), 'utf8')).join('\n')
     for (const secret of secrets) assert.equal(serialized.includes(secret), false)
-    assert.equal(summary.status, 'passed')
-    assert.equal(summary.strict_gates.gates.run_scope.status, 'passed')
-    assert.equal(summary.strict_gates.gates.run_scope.reason_count, 1)
+    assert.equal(summary.status, 'failed')
+    assert.equal(summary.strict_gates.gates.run_scope.status, 'failed')
+    assert.equal(summary.strict_gates.gates.run_scope.reason_count, 2)
+    assert.deepEqual(summary.strict_gates.gates.run_scope.reason_codes, ['run_identity_missing'])
+    assert.deepEqual(summary.strict_gates.gates.acp_cad_tool_results.reason_codes, [])
     assert.equal(summary.strict_gates.failure_reason_count, 1)
     assert.equal(summary.strict_gates.evidence_error_count, 1)
     assert.equal(summary.status_scope, 'scope_unverified')

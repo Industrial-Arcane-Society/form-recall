@@ -13,6 +13,31 @@ const SAFE_NODE_VERSIONS = new Set(['v22.23.3'])
 const SAFE_DSH_VERSIONS = new Set(['0.2.0-rc.2'])
 const MODEL_STATUSES = new Set(['accepted_by_strict_cli_gate', 'candidate', 'none'])
 const SCRATCH_CLEANUP_STATUSES = new Set(['removed', 'failed', 'not_created'])
+const GATE_REASON_CODES = Object.freeze({
+  run_scope: new Set(['run_identity_missing', 'manifest_session_or_turn_mismatch',
+    'original_reference_manifest_mismatch', 'user_turn_reference_binding_missing']),
+  dsh: new Set(['dsh_not_completed_or_nonzero_exit']),
+  trace_integrity: new Set(['evidence_trace_missing_or_malformed']),
+  original_image: new Set(['original_image_changed_or_invalid']),
+  main_image_wire: new Set(['main_model_original_image_wire_missing', 'same_image_request_successful_response_missing']),
+  cordis_cad_tools: new Set(['cordis_registration_or_schema_missing', 'successful_cordis_cad_call_and_native_audit_missing',
+    'cad_tool_rejected_unbound_or_unaudited', 'cordis_tool_arguments_or_identity_missing_or_unmatched',
+    'acp_cad_tool_call_id_missing', 'native_calls_not_individually_observed_or_duplicate',
+    'tool_call_rejected_or_failed', 'native_cad_audit_without_cordis_call', 'acp_cad_tool_failed']),
+  acp_cad_tool_results: new Set(['acp_cad_tool_result_completion_missing', 'acp_cad_tool_call_id_missing',
+    'acp_cad_tool_result_failed', 'acp_cad_tool_result_terminal_update_duplicated',
+    'acp_cad_tool_result_terminal_status_invalid']),
+  current_geometry: new Set(['rust_postcheck_state_missing_or_stale', 'preview_geometry_finish_revision_or_fingerprint_stale',
+    'complete_valid_native_geometry_missing', 'partial_preview_not_accepted', 'geometry_attestation_or_gate_binding_invalid',
+    'finish_geometry_review_differs_from_current_gate']),
+  artifacts: new Set(['current_run_artifacts_missing_or_invalid', 'geometry_report_file_stale',
+    'published_geometry_report_differs_from_preview_checks', 'published_cadplan_differs_from_current_state',
+    'preview_image_hash_mismatch']),
+  holes: new Set(['holes_incomplete_or_unverified']),
+  visual: new Set(['visual_coverage_incomplete_or_conflicting', 'visual_gate_original_reference_binding_missing',
+    'visual_evidence_not_current_rust_summary']),
+  finish: new Set(['host_finish_not_accepted', 'finish_findings_construction_or_external_facts_incomplete']),
+})
 const pickCounts = (rows, keys, enums) => Array.isArray(rows) ? rows.map(row => {
   const result = {}
   for (const key of keys) {
@@ -61,13 +86,16 @@ function safeBindingProjection(value) {
   }
 }
 
-const safeGate = gate => ({
+const safeGate = (name, gate) => ({
   status: gate?.status === 'passed' ? 'passed' : 'failed',
   reason_count: Array.isArray(gate?.reasons) ? safeCount(gate.reasons.length) : 0,
+  reason_codes: Array.isArray(gate?.reasons) && GATE_REASON_CODES[name]
+    ? [...new Set(gate.reasons.filter(reason => GATE_REASON_CODES[name].has(reason)))].sort()
+    : [],
 })
 
 export function buildSafeAcceptanceSummary({ strict, transportStatus, modelStatus, runtime, source, scratchCleanupStatus }) {
-  const gates = Object.fromEntries(GATE_NAMES.map(name => [name, safeGate(strict?.gates?.[name])]))
+  const gates = Object.fromEntries(GATE_NAMES.map(name => [name, safeGate(name, strict?.gates?.[name])]))
   return {
     schema_version: 1,
     status: strict?.status === 'passed' ? 'passed' : 'failed',
