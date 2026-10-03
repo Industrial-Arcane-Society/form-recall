@@ -10,7 +10,7 @@
 
 | ID | Feature | 状态 | 完成条件 / 提交边界 |
 |---|---|---|---|
-| F0 | 目录重构、文档重建和路径恢复 | **已完成（目录迁移完成；Tauri dev 运行入口待复验）** | 根目录结构、旧资料归档、文档索引、日志路径、测试、Tauri build hook 和 GitHub Actions 已核验；本提交整体落到 `main`。提交 `7099e99` 增加根 `npm run dev`（Tauri 桌面开发版）和 `npm run dev:web`（纯 Vite）。2026-10-03 在隔离干净 target 复现 Tauri dev 因缺 package-resources 无法编译，提交 `0d3d2f3` 为 `tauri:dev` 加载 dev-only `bundle.resources=[]` 配置；Cargo offline check、Vue build、定向配置测试通过，发布资源映射不变。浏览器预览初始化修复已 cherry-pick 到当前集成分支，提交 `e3f22aa`；启动测试 4/4、Vite build 通过。2026-10-04 用户报告根 `npm run dev` 在 `tauri dev` 阶段提示 `'tauri' is not recognized`；当前集成 checkout 的本地 CLI 单独可执行（`tauri-cli 2.12.1`），但尚未复现根脚本链路，也未执行 `tauri dev`。因此 CLI 解析/工作目录问题和真实 Tauri 窗口/WebView 验收仍待处理，不声称桌面启动已恢复；证据见 [Tauri dev CLI 前置检查](./03-tauri-dev-cli-preflight.md)。 |
+| F0 | 目录重构、文档重建和路径恢复 | **进行中（目录迁移完成；开发启动 headless 部分验收）** | 根目录没有 package.json；桌面包位于 src/apps/desktop，npm run dev 是 Vite 浏览器预览，npm run tauri:dev 才启动 Tauri 桌面端。2026-10-04 Playwright CLI 对 main b597a69 的 Vite 页面快照能看到完整界面，但状态错误地显示后端未连接，Console 有 favicon 404；集成分支同命令显示浏览器预览已就绪、桌面操作禁用、Console 0 error/0 warning。tauri-cli 2.12.1 与 tauri:dev --help 均成功；实际桌面窗口/WebView、Rust IPC 初始化仍未运行，用户报告的桌面无界面症状未在 Vite headless 预览中复现。见 [Tauri dev 与 Vite 启动核查](../05-operations/03-tauri-dev-cli-preflight.md)。 |
 | F1 | Rust DSH ACP Host + 固定 Runtime Manifest | **已完成** | F1.1–F1.4 已分别实现、验收并单独提交；多模态识别准确率问题保留为 F7 质量验收项 |
 | F1.1 | Rust ACP stdio 进程与 JSON-RPC 基础 | **已完成** | 行分帧、并发请求响应匹配、通知订阅、错误/超时、关闭时有界回收；以假 ACP 子进程测试，不依赖真实 DSH |
 | F1.2 | 固定 DSH/Node Runtime Manifest 与安装器 | **已完成** | 固定已验收的 Node 与 DSH 包版本/校验值；下载、校验、安装、升级、失败回滚，不依赖全局 Node |

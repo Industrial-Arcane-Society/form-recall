@@ -1,81 +1,41 @@
-# 根目录 Tauri dev：CLI 构建前置检查
+# Tauri dev 与 Vite 启动核查（2026-10-04）
 
-## 实际入口与验证边界
+## 当前命令入口
 
-当前根目录脚本为：
+仓库根目录没有 package.json。桌面前端包位于 src/apps/desktop，且它的脚本定义如下：
 
-```text
-npm run dev
-  → npm --prefix src/apps/desktop run tauri:dev
-  → tauri dev --config src-tauri/tauri.dev.conf.json
-  → beforeDevCommand: npm run dev（子目录的 Vite）
-  → Rust 构建
-  → 执行 ai-modeler / Tauri 窗口
-```
+~~~text
+npm run dev       → Vite 浏览器预览
+npm run tauri:dev → Tauri 桌面开发启动
+npm run build     → vue-tsc -b && vite build
+~~~
 
-根 `npm run dev:web` 才只启动 Vite。根目录没有 `build` script，前端构建检查用 `npm --prefix src/apps/desktop run build`。
+因此，从仓库根目录运行 npm run dev 并不是本仓库定义的命令。从 src/apps/desktop 运行 npm run dev 才是 Vite；它不会启动 Rust 宿主，也不连接本机建模后端。桌面程序使用 npm run tauri:dev。
 
-此前浏览器预览修复提交 `fbe8616` 属于独立分支 `feat/f7-dev-startup-fix`。它证明子目录 Vite/浏览器预览修复，不能称为根目录 `npm run dev` 的修复。当前 Tauri 资源配置修复分支 `feat/tauri-dev-resource-config` 从原 HEAD `3bd7782` 创建，不包含该浏览器提交，建议浏览器提交暂留原分支单独审阅。
+main 的 src/apps/desktop/package.json 将 tauri:dev 定义为 tauri dev。当前 feat/rust-dsh-acp-host 集成分支已改为 tauri dev --config src-tauri/tauri.dev.conf.json；该 dev-only 配置覆盖 bundle.resources 为空数组，绕过开发编译对安装包资源 staging 的要求，发布资源清单不变。
 
-本次没有执行实际 `tauri dev`、应用二进制、桌面窗口或 WebView，没有调用 provider 或读取真实配置/凭据。`tauri dev --help` 列出的 `--no-watch`、`--no-dev-server-wait` 和 `--no-dev-server` 都不表示“不运行应用”；没有据此绕过窗口禁令。只调用了带 `--help` 的 CLI、前端 build、定向配置检查与 Cargo check。
+## 2026-10-04 headless 验证
 
-## 已复现的确定阻断
+本次没有打开 Tauri 窗口，也没有运行桌面二进制。
 
-在上述基线的独立 worktree、无 `target/package-resources` 的状态下，以下命令退出 1：
+### main 基线 b597a69
 
-```powershell
-cargo check --manifest-path src/apps/desktop/src-tauri/Cargo.toml --lib --bins --offline --target-dir src/apps/desktop/src-tauri/target
-```
+在 src/apps/desktop 启动 npm run dev -- --host 127.0.0.1 --port 5173 --strictPort，Vite 约 1.11 秒就绪。使用 Playwright CLI 无头打开并快照，得到完整的建模工作区 DOM；页面标题为 AI Modeler · 参数化建模工作台，状态显示“后端未连接”。因此，本次没有在 Vite 浏览器预览中复现“完全没有界面”，但基线仍按桌面流程初始化，预览状态不够准确。Console 有一个 favicon.ico 404。
 
-失败发生在 `tauri_build::build()` 的 build script，关键错误为：
+### feat/rust-dsh-acp-host 集成分支
 
-```text
-resource path `target\package-resources\python` doesn't exist
-```
+在相同包目录启动 npm run dev -- --host 127.0.0.1 --port 5174 --strictPort，Vite 约 1.03 秒就绪。Playwright CLI 快照显示完整工作区、明确的“浏览器预览已就绪”状态和被禁用的本机操作；Console 为 0 error、0 warning。该结果验证的是 headless Vite 页面渲染，不是桌面 WebView、Rust IPC 或 DSH Agent 运行。
 
-base `tauri.conf.json` 无条件声明五项安装包资源。Tauri build helper 在 dev 构建时也复制这些 resources；`beforeDevCommand` 只启动 Vite，并不准备安装包资源。完整 staging 仅在 `beforeBuildCommand` 中，且涉及 OCCT runtime、CPython/pip 下载与生成目录替换。开发启动不应为编译 Rust 被迫运行完整 Windows 安装包 staging。
+在 main 与集成分支中，npm exec --offline tauri -- --version 均输出 tauri-cli 2.12.1；npm run tauri:dev -- --help 均以 exit code 0 返回。当前本地依赖安装状态下没有复现“tauri is not recognized”。这不能证明用户机器缺失依赖时也可运行。
 
-该错误是干净 target 的确定构建阻断。如果某个既有 checkout 已有完整 package-resources，则该阻断可能不出现；它不能直接解释已有窗口中的所有白屏/卡顿。历史已有 target 状态没有被删除、覆盖或用于“修复”。
+集成分支执行 npm run build 成功；Vite 提示 CadViewport chunk 超过 500 kB，这是打包体积提示，不是构建失败。
 
-## 最小修复
+## 旧资源构建阻断与当前修复
 
-新增 dev-only fragment `src/apps/desktop/src-tauri/tauri.dev.conf.json`，仅将 `bundle.resources` 替换成空数组；`tauri:dev` 显式加载该 fragment。
+此前在干净 target 上，Tauri build script 因 base 配置无条件声明的 target/package-resources/python 不存在而失败。开发构建不应被迫下载和 staging 发布运行时资源。集成分支的 tauri.dev.conf.json 将开发构建的 bundle.resources 覆盖为空数组；其 npm 级配置测试、Rust offline 检查和前端 build 已通过，发布 tauri:build 的资源映射保持原样。
 
-发布 `tauri:build`、base 的 resources 五项映射、发布 staging hook 和窗口配置都保留。应用资源查找仍使用既有开发路径 `CARGO_MANIFEST_DIR/../../../legacy`；本次不复制 Python、OCCT、DSH 或安装包资源，也不创建占位文件。
+## 仍未验证
 
-本机已安装的 `tauri-build 2.7.1` 和 `tauri-codegen 2.7.1` 都使用 `TAURI_CONFIG` merge patch 读取 dev fragment；资源由 map 替换为 `[]`，不是给 map 增加空字段。
-
-## 不开窗口的复跑命令与结果
-
-在仓库根目录：
-
-```powershell
-# Help only; --help 返回，不执行 beforeDevCommand / 应用。
-npm --prefix src/apps/desktop run tauri:dev -- --help
-
-# 前端与 script/config 合约检查，不创建窗口。
-npm --prefix src/apps/desktop run build
-node --test src/apps/desktop/src/tauriDevConfig.test.mjs
-
-# 与 CLI dev merge 相同的 fragment，只检查 Rust，不运行应用。
-$devConfig = Get-Content -LiteralPath src/apps/desktop/src-tauri/tauri.dev.conf.json -Raw
-$previousConfig = $env:TAURI_CONFIG
-try {
-  $env:TAURI_CONFIG = $devConfig
-  cargo check --manifest-path src/apps/desktop/src-tauri/Cargo.toml --lib --bins --offline --target-dir src/apps/desktop/src-tauri/target
-  $checkCode = $LASTEXITCODE
-} finally {
-  $env:TAURI_CONFIG = $previousConfig
-}
-if ($checkCode -ne 0) { throw 'Rust dev preflight failed.' }
-```
-
-基线 check 已复现资源缺失；dev fragment 下 `cargo check --lib --bins --offline` 成功，且 `target/package-resources` 仍不存在。前端 `vue-tsc -b && vite build` 成功（保留既有大 chunk 提示），定向 Node 配置检查 3/3 通过，`tauri:dev -- --help` 返回成功。没有把 check 或 help 结果当成已执行 Tauri 启动；实际 CLI config 路径解析、hook 执行和 app 运行仍属于下面的未验证边界。直接 Cargo check 不会自动加载 CLI `--config`，所以复跑须显式使用上述临时环境 merge。
-
-## 尚未验证及后续最小边界
-
-- CLI 真正执行 beforeDevCommand、等待 devUrl、Rust link、WebView2 创建和前端在桌面窗口中初始化尚未验证；Cargo check 不执行 binary，也不能替代 linker/runtime 证据。
-- `devUrl=http://localhost:1420` 与 Vite `host=127.0.0.1` 保留当前配置；本次没有把它改成一个未经 WebView 实证的白屏“根因”。
-- WebView 进程、JS/IPC console、真实 native initialize/settings/active-model 恢复均需运行中的窗口或另行认可的 WebView harness。纯 headless Chromium 不提供 native Tauri IPC。
-- 若继续禁止启动窗口，可继续收集用户已运行根命令的启动前日志，定位编译错误、devUrl等待或进程退出；不能声称窗口首屏已通过。
-- 未来只有在用户明确允许窗口验收后，才运行根 `npm run dev`，记录终端 build/startup 阶段、WebView console/DOM和关闭时状态。届时仍不需要调用模型 API即可验证首屏；真实模型属于独立授权范围。
+- tauri:dev 的实际 beforeDevCommand、Rust link、devUrl 等待、WebView2 创建、Tauri IPC 初始化和窗口首屏均未执行或验证。
+- “npm run dev 完全无界面”的原报告无法由本次 main Vite headless 验证复现；如果原命令实际在桌面环境里运行，请保留它的工作目录、命令行、终端输出与进程退出码，才能区分 Vite 浏览器预览与 Tauri 桌面启动故障。
+- 后续桌面验收需明确允许启动 Tauri 窗口。当前记录不把 CLI help、Vue build 或 headless Chromium 页面当作桌面启动通过。
