@@ -1,5 +1,5 @@
 //! Version-controlled CAD feature parameter contracts, migrated from CADPlan v1.
-use serde_json::{Value, json};
+use serde_json::{json, Value};
 const SPECS: &str = r###"{"box":{"kind":"box","required_parameters":["length","width","height"],"optional_parameters":["center","axis","base","corner","corner_mode"],"catia_mapping":"exact","catia_note":"矩形草图加凸台；当前 CATIA 映射仅支持 Z 轴拉伸。","coordinate_contract":"CADPlan/global preview: X=left-right (box.length), Y=front-back thickness (box.width), Z=vertical (box.height); box center is global XYZ. The front orthographic view looks from +Y with screen horizontal X and vertical Z. For cylinder/cone, base defaults to true: center is the axial base-center point and height extends in the positive axis direction; set base=false only when center is the geometric midpoint. For prism, center is the profile's base-plane origin and height extends in the positive axis direction. For revolve about Z, profile points are [radius, axial-Z] and center is the global axis origin. Sphere center is its geometric center. A hole point is global XYZ and its axis is the bore direction.","parameter_semantics":{}},"cylinder":{"kind":"cylinder","required_parameters":["radius","height"],"optional_parameters":["radius2","center","axis","base","segments"],"catia_mapping":"exact","catia_note":"center 默认表示轴向底面中心(base=true)，height 沿 axis 正向拉伸；base=false 时 center 表示几何中点。等半径时为圆草图加凸台；圆锥台会近似，非 Z 轴圆锥台暂不支持。","coordinate_contract":"CADPlan/global preview: X=left-right (box.length), Y=front-back thickness (box.width), Z=vertical (box.height); box center is global XYZ. The front orthographic view looks from +Y with screen horizontal X and vertical Z. For cylinder/cone, base defaults to true: center is the axial base-center point and height extends in the positive axis direction; set base=false only when center is the geometric midpoint. For prism, center is the profile's base-plane origin and height extends in the positive axis direction. For revolve about Z, profile points are [radius, axial-Z] and center is the global axis origin. Sphere center is its geometric center. A hole point is global XYZ and its axis is the bore direction.","parameter_semantics":{"center":"base-center point when base=true (default); geometric midpoint when base=false","height":"extends along positive axis when base=true; straddles center when base=false","base_default":true}},"socket_head_bolt":{"kind":"socket_head_bolt","required_parameters":["shank_d","thread_pitch","length","head_d","head_h","hex_s","hex_t"],"optional_parameters":["center","segments"],"catia_mapping":"approximate","catia_note":"本地网格按 thread_pitch 生成可见的近似 ISO 公制螺旋牙型；整段杆部带牙，未建牙端倒角/退刀槽。当前 CATIA 导出器仍以光杆凸台和六角凹槽表达，不会创建原生或装饰螺纹。","coordinate_contract":"CADPlan/global preview: X=left-right (box.length), Y=front-back thickness (box.width), Z=vertical (box.height); box center is global XYZ. The front orthographic view looks from +Y with screen horizontal X and vertical Z. For cylinder/cone, base defaults to true: center is the axial base-center point and height extends in the positive axis direction; set base=false only when center is the geometric midpoint. For prism, center is the profile's base-plane origin and height extends in the positive axis direction. For revolve about Z, profile points are [radius, axial-Z] and center is the global axis origin. Sphere center is its geometric center. A hole point is global XYZ and its axis is the bore direction.","parameter_semantics":{}},"sphere":{"kind":"sphere","required_parameters":["radius"],"optional_parameters":["center","segments","rings"],"catia_mapping":"approximate","catia_note":"CATIA 导出器以多层圆盘近似球体。","coordinate_contract":"CADPlan/global preview: X=left-right (box.length), Y=front-back thickness (box.width), Z=vertical (box.height); box center is global XYZ. The front orthographic view looks from +Y with screen horizontal X and vertical Z. For cylinder/cone, base defaults to true: center is the axial base-center point and height extends in the positive axis direction; set base=false only when center is the geometric midpoint. For prism, center is the profile's base-plane origin and height extends in the positive axis direction. For revolve about Z, profile points are [radius, axial-Z] and center is the global axis origin. Sphere center is its geometric center. A hole point is global XYZ and its axis is the bore direction.","parameter_semantics":{"center":"geometric center"}},"prism":{"kind":"prism","required_parameters":["profile","height"],"optional_parameters":["center","axis"],"catia_mapping":"exact","catia_note":"闭合多边形草图加凸台；当前仅支持 Z 轴。","coordinate_contract":"CADPlan/global preview: X=left-right (box.length), Y=front-back thickness (box.width), Z=vertical (box.height); box center is global XYZ. The front orthographic view looks from +Y with screen horizontal X and vertical Z. For cylinder/cone, base defaults to true: center is the axial base-center point and height extends in the positive axis direction; set base=false only when center is the geometric midpoint. For prism, center is the profile's base-plane origin and height extends in the positive axis direction. For revolve about Z, profile points are [radius, axial-Z] and center is the global axis origin. Sphere center is its geometric center. A hole point is global XYZ and its axis is the bore direction.","parameter_semantics":{"center":"origin of the profile's base plane","height":"extends along positive axis"}},"revolve":{"kind":"revolve","required_parameters":["profile","angle"],"optional_parameters":["center","axis","segments"],"catia_mapping":"approximate","catia_note":"本地 OCCT BREP 按闭合[半径,轴向坐标]轮廓精确回转，并将新增回转体与已有实体做布尔合并；CATIA 导出器仍用多层圆盘近似，非 CATIA 原生回转特征。","coordinate_contract":"CADPlan/global preview: X=left-right (box.length), Y=front-back thickness (box.width), Z=vertical (box.height); box center is global XYZ. The front orthographic view looks from +Y with screen horizontal X and vertical Z. For cylinder/cone, base defaults to true: center is the axial base-center point and height extends in the positive axis direction; set base=false only when center is the geometric midpoint. For prism, center is the profile's base-plane origin and height extends in the positive axis direction. For revolve about Z, profile points are [radius, axial-Z] and center is the global axis origin. Sphere center is its geometric center. A hole point is global XYZ and its axis is the bore direction.","parameter_semantics":{"profile":"closed [radius, axial-Z] points when axis=Z","center":"global origin on the revolve axis","order":"can be added to an existing body when the OCCT backend can perform a valid union; legacy tessellated/approximate export paths may have stricter Boolean limits"}},"gear":{"kind":"gear","required_parameters":["teeth","module","height"],"optional_parameters":["center","axis","base"],"catia_mapping":"exact","catia_note":"齿廓转换为多边形草图并拉伸；当前仅支持 Z 轴。","coordinate_contract":"CADPlan/global preview: X=left-right (box.length), Y=front-back thickness (box.width), Z=vertical (box.height); box center is global XYZ. The front orthographic view looks from +Y with screen horizontal X and vertical Z. For cylinder/cone, base defaults to true: center is the axial base-center point and height extends in the positive axis direction; set base=false only when center is the geometric midpoint. For prism, center is the profile's base-plane origin and height extends in the positive axis direction. For revolve about Z, profile points are [radius, axial-Z] and center is the global axis origin. Sphere center is its geometric center. A hole point is global XYZ and its axis is the bore direction.","parameter_semantics":{}},"loft":{"kind":"loft","required_parameters":["root_chord","tip_chord","span","thickness"],"optional_parameters":["camber","camber_pos","twist","sweep","sections","points","rotate","translate"],"catia_mapping":"approximate","catia_note":"CATIA 中以根部截面拉伸近似多截面放样。","coordinate_contract":"CADPlan/global preview: X=left-right (box.length), Y=front-back thickness (box.width), Z=vertical (box.height); box center is global XYZ. The front orthographic view looks from +Y with screen horizontal X and vertical Z. For cylinder/cone, base defaults to true: center is the axial base-center point and height extends in the positive axis direction; set base=false only when center is the geometric midpoint. For prism, center is the profile's base-plane origin and height extends in the positive axis direction. For revolve about Z, profile points are [radius, axial-Z] and center is the global axis origin. Sphere center is its geometric center. A hole point is global XYZ and its axis is the bore direction.","parameter_semantics":{}},"hole":{"kind":"hole","required_parameters":["diameter","through","pos"],"optional_parameters":["point","x","y","count","pcd","phase","depth","margin","axis","segments","entry_point","direction"],"catia_mapping":"exact","catia_note":"圆形切除；through=true 时按当前零件包围盒生成贯穿深度。盲孔可用 entry_point 与 direction 显式指定入口点和沿全局轴的切入方向；未指定时沿用正轴端面默认语义。","coordinate_contract":"CADPlan/global preview: X=left-right (box.length), Y=front-back thickness (box.width), Z=vertical (box.height); box center is global XYZ. The front orthographic view looks from +Y with screen horizontal X and vertical Z. For cylinder/cone, base defaults to true: center is the axial base-center point and height extends in the positive axis direction; set base=false only when center is the geometric midpoint. For prism, center is the profile's base-plane origin and height extends in the positive axis direction. For revolve about Z, profile points are [radius, axial-Z] and center is the global axis origin. Sphere center is its geometric center. A hole point is global XYZ and its axis is the bore direction.","parameter_semantics":{}},"pocket":{"kind":"pocket","required_parameters":["length","width","depth"],"optional_parameters":["x","y","axis","side","corner","corner_mode"],"catia_mapping":"exact","catia_note":"矩形/圆角矩形凹槽；当前仅支持 Z 轴。","coordinate_contract":"CADPlan/global preview: X=left-right (box.length), Y=front-back thickness (box.width), Z=vertical (box.height); box center is global XYZ. The front orthographic view looks from +Y with screen horizontal X and vertical Z. For cylinder/cone, base defaults to true: center is the axial base-center point and height extends in the positive axis direction; set base=false only when center is the geometric midpoint. For prism, center is the profile's base-plane origin and height extends in the positive axis direction. For revolve about Z, profile points are [radius, axial-Z] and center is the global axis origin. Sphere center is its geometric center. A hole point is global XYZ and its axis is the bore direction.","parameter_semantics":{}},"pattern":{"kind":"pattern","required_parameters":["mode","count"],"optional_parameters":["step","axis","angle","full","center"],"catia_mapping":"exact","catia_note":"转换为显式复制的 CATIA 操作；relations 示例：[{\"type\":\"pattern_source\",\"feature_id\":\"紧邻前一特征的 id\"}]。operation 必须与源特征相同：阵列切孔用 cut，阵列加料用 add。","coordinate_contract":"CADPlan/global preview: X=left-right (box.length), Y=front-back thickness (box.width), Z=vertical (box.height); box center is global XYZ. The front orthographic view looks from +Y with screen horizontal X and vertical Z. For cylinder/cone, base defaults to true: center is the axial base-center point and height extends in the positive axis direction; set base=false only when center is the geometric midpoint. For prism, center is the profile's base-plane origin and height extends in the positive axis direction. For revolve about Z, profile points are [radius, axial-Z] and center is the global axis origin. Sphere center is its geometric center. A hole point is global XYZ and its axis is the bore direction.","parameter_semantics":{}},"helix":{"kind":"helix","required_parameters":["radius","wire_r","height","turns"],"optional_parameters":["center","axis","taper","seg_per_turn","wire_seg","taper_start"],"catia_mapping":"unsupported","catia_note":"弹簧/螺旋不能由当前草图、凸台和凹槽通道表达。","coordinate_contract":"CADPlan/global preview: X=left-right (box.length), Y=front-back thickness (box.width), Z=vertical (box.height); box center is global XYZ. The front orthographic view looks from +Y with screen horizontal X and vertical Z. For cylinder/cone, base defaults to true: center is the axial base-center point and height extends in the positive axis direction; set base=false only when center is the geometric midpoint. For prism, center is the profile's base-plane origin and height extends in the positive axis direction. For revolve about Z, profile points are [radius, axial-Z] and center is the global axis origin. Sphere center is its geometric center. A hole point is global XYZ and its axis is the bore direction.","parameter_semantics":{}},"spoked_wheel":{"kind":"spoked_wheel","required_parameters":["outer_r","rim_w","hub_r","height","spokes","spoke_w"],"optional_parameters":["center","segments"],"catia_mapping":"approximate","catia_note":"CATIA 仅生成轮缘与轮毂，辐条需要补建。","coordinate_contract":"CADPlan/global preview: X=left-right (box.length), Y=front-back thickness (box.width), Z=vertical (box.height); box center is global XYZ. The front orthographic view looks from +Y with screen horizontal X and vertical Z. For cylinder/cone, base defaults to true: center is the axial base-center point and height extends in the positive axis direction; set base=false only when center is the geometric midpoint. For prism, center is the profile's base-plane origin and height extends in the positive axis direction. For revolve about Z, profile points are [radius, axial-Z] and center is the global axis origin. Sphere center is its geometric center. A hole point is global XYZ and its axis is the bore direction.","parameter_semantics":{}},"vbelt_pulley":{"kind":"vbelt_pulley","required_parameters":["pitch_d","grooves","height","groove_type"],"optional_parameters":["outer_d","groove_depth","bore_d","center","segments"],"catia_mapping":"approximate","catia_note":"CATIA 生成光轮盘体；V 形回转槽需要在 CATIA 中补建。","coordinate_contract":"CADPlan/global preview: X=left-right (box.length), Y=front-back thickness (box.width), Z=vertical (box.height); box center is global XYZ. The front orthographic view looks from +Y with screen horizontal X and vertical Z. For cylinder/cone, base defaults to true: center is the axial base-center point and height extends in the positive axis direction; set base=false only when center is the geometric midpoint. For prism, center is the profile's base-plane origin and height extends in the positive axis direction. For revolve about Z, profile points are [radius, axial-Z] and center is the global axis origin. Sphere center is its geometric center. A hole point is global XYZ and its axis is the bore direction.","parameter_semantics":{}},"timing_pulley":{"kind":"timing_pulley","required_parameters":["pitch_d","teeth","height","tooth_type"],"optional_parameters":["bore_d","center","segments"],"catia_mapping":"approximate","catia_note":"CATIA 生成盘体，齿形需要在 CATIA 中补建。","coordinate_contract":"CADPlan/global preview: X=left-right (box.length), Y=front-back thickness (box.width), Z=vertical (box.height); box center is global XYZ. The front orthographic view looks from +Y with screen horizontal X and vertical Z. For cylinder/cone, base defaults to true: center is the axial base-center point and height extends in the positive axis direction; set base=false only when center is the geometric midpoint. For prism, center is the profile's base-plane origin and height extends in the positive axis direction. For revolve about Z, profile points are [radius, axial-Z] and center is the global axis origin. Sphere center is its geometric center. A hole point is global XYZ and its axis is the bore direction.","parameter_semantics":{}},"worm":{"kind":"worm","required_parameters":["radius","height","thread_r","wire_r","turns"],"optional_parameters":["center","center2","height2","segments","seg_per_turn","wire_seg"],"catia_mapping":"approximate","catia_note":"CATIA 仅生成光轴，螺旋齿需要补建。","coordinate_contract":"CADPlan/global preview: X=left-right (box.length), Y=front-back thickness (box.width), Z=vertical (box.height); box center is global XYZ. The front orthographic view looks from +Y with screen horizontal X and vertical Z. For cylinder/cone, base defaults to true: center is the axial base-center point and height extends in the positive axis direction; set base=false only when center is the geometric midpoint. For prism, center is the profile's base-plane origin and height extends in the positive axis direction. For revolve about Z, profile points are [radius, axial-Z] and center is the global axis origin. Sphere center is its geometric center. A hole point is global XYZ and its axis is the bore direction.","parameter_semantics":{}},"helical_gear":{"kind":"helical_gear","required_parameters":["teeth","module","height"],"optional_parameters":["helix_deg","bore_d","center","segments"],"catia_mapping":"approximate","catia_note":"CATIA 以直齿轮近似，省略螺旋角。","coordinate_contract":"CADPlan/global preview: X=left-right (box.length), Y=front-back thickness (box.width), Z=vertical (box.height); box center is global XYZ. The front orthographic view looks from +Y with screen horizontal X and vertical Z. For cylinder/cone, base defaults to true: center is the axial base-center point and height extends in the positive axis direction; set base=false only when center is the geometric midpoint. For prism, center is the profile's base-plane origin and height extends in the positive axis direction. For revolve about Z, profile points are [radius, axial-Z] and center is the global axis origin. Sphere center is its geometric center. A hole point is global XYZ and its axis is the bore direction.","parameter_semantics":{}},"bevel_gear":{"kind":"bevel_gear","required_parameters":["teeth","module","height","cone_deg"],"optional_parameters":["bore_d","center","segments"],"catia_mapping":"approximate","catia_note":"CATIA 以直齿圆柱轮廓近似，省略锥面。","coordinate_contract":"CADPlan/global preview: X=left-right (box.length), Y=front-back thickness (box.width), Z=vertical (box.height); box center is global XYZ. The front orthographic view looks from +Y with screen horizontal X and vertical Z. For cylinder/cone, base defaults to true: center is the axial base-center point and height extends in the positive axis direction; set base=false only when center is the geometric midpoint. For prism, center is the profile's base-plane origin and height extends in the positive axis direction. For revolve about Z, profile points are [radius, axial-Z] and center is the global axis origin. Sphere center is its geometric center. A hole point is global XYZ and its axis is the bore direction.","parameter_semantics":{"teeth":"CADPlan requires an integer >= 6; direct legacy geometry helper clamps counts below 6","module":"positive length in the plan length unit; normalized to mm","height":"positive thickness centered on global Z through center","cone_deg":"finite angle in the plan angle unit, clamped by the legacy recipe to 5..75 degrees","bore_d":"diameter; omitted or 0 selects legacy implicit bore max(0.5 mm, 0.28 times pitch radius); positive values are capped at a bore radius of 0.7 times pitch radius","center":"geometric midpoint in global XYZ; omitted means the origin","segments":"Optional integer >= 3 by CADPlan; legacy geometry uses max(4, min(requested, floor(teeth/2))), default 12"}},"crankshaft":{"kind":"crankshaft","required_parameters":["length","main_d","pin_d","stroke","throws"],"optional_parameters":["center","segments"],"catia_mapping":"approximate","catia_note":"CATIA 按 X 轴布置主轴颈、交替偏置连杆颈和哑铃形曲柄臂(主轴圆 + 连杆颈圆外公切凸包)，曲柄臂外形被简化。","coordinate_contract":"CADPlan/global preview: X=left-right (box.length), Y=front-back thickness (box.width), Z=vertical (box.height); box center is global XYZ. The front orthographic view looks from +Y with screen horizontal X and vertical Z. For cylinder/cone, base defaults to true: center is the axial base-center point and height extends in the positive axis direction; set base=false only when center is the geometric midpoint. For prism, center is the profile's base-plane origin and height extends in the positive axis direction. For revolve about Z, profile points are [radius, axial-Z] and center is the global axis origin. Sphere center is its geometric center. A hole point is global XYZ and its axis is the bore direction.","parameter_semantics":{}},"camshaft":{"kind":"camshaft","required_parameters":["length","journal_d","base_d","lift","lobes","lobe_deg"],"optional_parameters":["center","segments"],"catia_mapping":"approximate","catia_note":"CATIA 凸轮沿轴向等分布置，相位需核对。","coordinate_contract":"CADPlan/global preview: X=left-right (box.length), Y=front-back thickness (box.width), Z=vertical (box.height); box center is global XYZ. The front orthographic view looks from +Y with screen horizontal X and vertical Z. For cylinder/cone, base defaults to true: center is the axial base-center point and height extends in the positive axis direction; set base=false only when center is the geometric midpoint. For prism, center is the profile's base-plane origin and height extends in the positive axis direction. For revolve about Z, profile points are [radius, axial-Z] and center is the global axis origin. Sphere center is its geometric center. A hole point is global XYZ and its axis is the bore direction.","parameter_semantics":{}},"impeller":{"kind":"impeller","required_parameters":["hub_d","tip_d","height","blades","blade_t","twist_deg"],"optional_parameters":["center","segments"],"catia_mapping":"approximate","catia_note":"CATIA 仅生成轮毂和轮盘，扭转叶片需要补建。","coordinate_contract":"CADPlan/global preview: X=left-right (box.length), Y=front-back thickness (box.width), Z=vertical (box.height); box center is global XYZ. The front orthographic view looks from +Y with screen horizontal X and vertical Z. For cylinder/cone, base defaults to true: center is the axial base-center point and height extends in the positive axis direction; set base=false only when center is the geometric midpoint. For prism, center is the profile's base-plane origin and height extends in the positive axis direction. For revolve about Z, profile points are [radius, axial-Z] and center is the global axis origin. Sphere center is its geometric center. A hole point is global XYZ and its axis is the bore direction.","parameter_semantics":{}},"piston":{"kind":"piston","required_parameters":["diameter","height","pin_d","grooves"],"optional_parameters":["center","segments"],"catia_mapping":"approximate","catia_note":"CATIA 以圆柱体近似，销孔和活塞环槽需要补建。","coordinate_contract":"CADPlan/global preview: X=left-right (box.length), Y=front-back thickness (box.width), Z=vertical (box.height); box center is global XYZ. The front orthographic view looks from +Y with screen horizontal X and vertical Z. For cylinder/cone, base defaults to true: center is the axial base-center point and height extends in the positive axis direction; set base=false only when center is the geometric midpoint. For prism, center is the profile's base-plane origin and height extends in the positive axis direction. For revolve about Z, profile points are [radius, axial-Z] and center is the global axis origin. Sphere center is its geometric center. A hole point is global XYZ and its axis is the bore direction.","parameter_semantics":{}},"conrod":{"kind":"conrod","required_parameters":["length","big_d","small_d","big_bore","small_bore","shank_w","thick"],"optional_parameters":["center","segments"],"catia_mapping":"approximate","catia_note":"CATIA 以大头、小头和直杆身近似，杆身过渡被简化。","coordinate_contract":"CADPlan/global preview: X=left-right (box.length), Y=front-back thickness (box.width), Z=vertical (box.height); box center is global XYZ. The front orthographic view looks from +Y with screen horizontal X and vertical Z. For cylinder/cone, base defaults to true: center is the axial base-center point and height extends in the positive axis direction; set base=false only when center is the geometric midpoint. For prism, center is the profile's base-plane origin and height extends in the positive axis direction. For revolve about Z, profile points are [radius, axial-Z] and center is the global axis origin. Sphere center is its geometric center. A hole point is global XYZ and its axis is the bore direction.","parameter_semantics":{},"native_execution":{"status":"implemented_approximate","geometry_support":"approximate","scope":"local_candidate_geometry","note":"Rust/OCCT builds analytic annular heads with an approximate external-tangent trapezoidal web. Web contact and I-section details are simplified; consult support_details. CATIA mapping remains approximate."}},"cross_joint":{"kind":"cross_joint","required_parameters":["span","journal_d"],"optional_parameters":["center","segments"],"catia_mapping":"approximate","catia_note":"CATIA 仅生成单轴，另一根横轴需要补建。","coordinate_contract":"CADPlan/global preview: X=left-right (box.length), Y=front-back thickness (box.width), Z=vertical (box.height); box center is global XYZ. The front orthographic view looks from +Y with screen horizontal X and vertical Z. For cylinder/cone, base defaults to true: center is the axial base-center point and height extends in the positive axis direction; set base=false only when center is the geometric midpoint. For prism, center is the profile's base-plane origin and height extends in the positive axis direction. For revolve about Z, profile points are [radius, axial-Z] and center is the global axis origin. Sphere center is its geometric center. A hole point is global XYZ and its axis is the bore direction.","parameter_semantics":{"center":"global XYZ center of the hub","segments":"legacy facet tessellation setting; ignored by the native analytic-cylinder builder"}},"scroll_disc":{"kind":"scroll_disc","required_parameters":["outer_d","height","wall_t","turns"],"optional_parameters":["center","segments"],"catia_mapping":"approximate","catia_note":"CATIA 仅生成底盘，螺旋壁需要补建。","coordinate_contract":"CADPlan/global preview: X=left-right (box.length), Y=front-back thickness (box.width), Z=vertical (box.height); box center is global XYZ. The front orthographic view looks from +Y with screen horizontal X and vertical Z. For cylinder/cone, base defaults to true: center is the axial base-center point and height extends in the positive axis direction; set base=false only when center is the geometric midpoint. For prism, center is the profile's base-plane origin and height extends in the positive axis direction. For revolve about Z, profile points are [radius, axial-Z] and center is the global axis origin. Sphere center is its geometric center. A hole point is global XYZ and its axis is the bore direction.","parameter_semantics":{}},"rotor":{"kind":"rotor","required_parameters":["radius","n","height","bore_d"],"optional_parameters":["center"],"catia_mapping":"exact","catia_note":"转子轮廓、厚度与中心孔映射为可编辑草图和凹槽。","coordinate_contract":"CADPlan/global preview: X=left-right (box.length), Y=front-back thickness (box.width), Z=vertical (box.height); box center is global XYZ. The front orthographic view looks from +Y with screen horizontal X and vertical Z. For cylinder/cone, base defaults to true: center is the axial base-center point and height extends in the positive axis direction; set base=false only when center is the geometric midpoint. For prism, center is the profile's base-plane origin and height extends in the positive axis direction. For revolve about Z, profile points are [radius, axial-Z] and center is the global axis origin. Sphere center is its geometric center. A hole point is global XYZ and its axis is the bore direction.","parameter_semantics":{}},"shell":{"kind":"shell","required_parameters":["thickness"],"optional_parameters":[],"catia_mapping":"unsupported","catia_note":"当前 Document/CATIA 转换器没有抽壳实现。","coordinate_contract":"CADPlan/global preview: X=left-right (box.length), Y=front-back thickness (box.width), Z=vertical (box.height); box center is global XYZ. The front orthographic view looks from +Y with screen horizontal X and vertical Z. For cylinder/cone, base defaults to true: center is the axial base-center point and height extends in the positive axis direction; set base=false only when center is the geometric midpoint. For prism, center is the profile's base-plane origin and height extends in the positive axis direction. For revolve about Z, profile points are [radius, axial-Z] and center is the global axis origin. Sphere center is its geometric center. A hole point is global XYZ and its axis is the bore direction.","parameter_semantics":{}}}"###;
 
 pub fn feature_spec(kind: &str) -> Result<Value, String> {
@@ -36,7 +36,19 @@ pub fn feature_spec(kind: &str) -> Result<Value, String> {
 /// below describe the additional gates applied by preflight/build.
 fn native_execution_contract(kind: &str) -> Value {
     let implemented = crate::native_plan_geometry::supports_native_kind(kind);
-    let approximate = matches!(kind, "gear" | "helical_gear" | "bevel_gear" | "socket_head_bolt" | "conrod" | "cross_joint" | "rotor" | "crankshaft" | "timing_pulley" | "vbelt_pulley");
+    let approximate = matches!(
+        kind,
+        "gear"
+            | "helical_gear"
+            | "bevel_gear"
+            | "socket_head_bolt"
+            | "conrod"
+            | "cross_joint"
+            | "rotor"
+            | "crankshaft"
+            | "timing_pulley"
+            | "vbelt_pulley"
+    );
     let (supported_variants, unsupported_variants, parameter_limits, note) = match kind {
         "rotor" => (
             json!(["global Z extrusion centered on center", "explicit bore_d=0 or enclosed circular bore"]),
@@ -92,39 +104,78 @@ mod tests {
         assert_eq!(spec["native_execution"]["status"], "implemented_exact");
         assert_eq!(spec["native_execution"]["geometry_support"], "exact");
         assert_eq!(spec["catia_mapping"], "approximate");
-        assert!(spec["native_execution"]["supported_variants"].as_array().unwrap().len() >= 3);
+        assert!(
+            spec["native_execution"]["supported_variants"]
+                .as_array()
+                .unwrap()
+                .len()
+                >= 3
+        );
     }
 
     #[test]
     fn crankshaft_is_advertised_as_native_approximate_with_matching_catia_limit() {
         let spec = feature_spec("crankshaft").unwrap();
-        assert_eq!(spec["native_execution"]["status"], "implemented_approximate");
+        assert_eq!(
+            spec["native_execution"]["status"],
+            "implemented_approximate"
+        );
         assert_eq!(spec["native_execution"]["geometry_support"], "approximate");
         assert_eq!(spec["catia_mapping"], "approximate");
-        assert_eq!(spec["required_parameters"], json!(["length", "main_d", "pin_d", "stroke", "throws"]));
+        assert_eq!(
+            spec["required_parameters"],
+            json!(["length", "main_d", "pin_d", "stroke", "throws"])
+        );
     }
 
     #[test]
     fn helical_gear_is_native_approximate_and_catia_remains_straight_gear_approximation() {
         let spec = feature_spec("helical_gear").unwrap();
         assert_eq!(spec["catia_mapping"], "approximate");
-        assert_eq!(spec["native_execution"]["status"], "implemented_approximate");
+        assert_eq!(
+            spec["native_execution"]["status"],
+            "implemented_approximate"
+        );
         assert_eq!(spec["native_execution"]["geometry_support"], "approximate");
-        assert_eq!(spec["native_execution"]["scope"], "local_candidate_geometry");
-        assert!(spec["native_execution"]["note"].as_str().unwrap().contains("does not preserve helix angle"));
-        assert!(spec["native_execution"]["parameter_limits"]["helix_deg"].as_str().unwrap().contains("ignored"));
+        assert_eq!(
+            spec["native_execution"]["scope"],
+            "local_candidate_geometry"
+        );
+        assert!(spec["native_execution"]["note"]
+            .as_str()
+            .unwrap()
+            .contains("does not preserve helix angle"));
+        assert!(spec["native_execution"]["parameter_limits"]["helix_deg"]
+            .as_str()
+            .unwrap()
+            .contains("ignored"));
     }
 
     #[test]
     fn bevel_gear_is_advertised_as_native_approximate_and_keeps_catia_boundary() {
         let spec = feature_spec("bevel_gear").unwrap();
-        assert_eq!(spec["native_execution"]["status"], "implemented_approximate");
+        assert_eq!(
+            spec["native_execution"]["status"],
+            "implemented_approximate"
+        );
         assert_eq!(spec["native_execution"]["geometry_support"], "approximate");
         assert_eq!(spec["catia_mapping"], "approximate");
-        assert_eq!(spec["required_parameters"], json!(["teeth", "module", "height", "cone_deg"]));
-        assert_eq!(spec["optional_parameters"], json!(["bore_d", "center", "segments"]));
-        assert!(spec["parameter_semantics"]["bore_d"].as_str().unwrap().contains("implicit bore"));
-        assert!(spec["native_execution"]["note"].as_str().unwrap().contains("not an involute gear"));
+        assert_eq!(
+            spec["required_parameters"],
+            json!(["teeth", "module", "height", "cone_deg"])
+        );
+        assert_eq!(
+            spec["optional_parameters"],
+            json!(["bore_d", "center", "segments"])
+        );
+        assert!(spec["parameter_semantics"]["bore_d"]
+            .as_str()
+            .unwrap()
+            .contains("implicit bore"));
+        assert!(spec["native_execution"]["note"]
+            .as_str()
+            .unwrap()
+            .contains("not an involute gear"));
     }
     #[test]
     fn coordinate_and_mapping_contracts_are_present_for_every_registered_kind() {
@@ -256,5 +307,521 @@ mod tests {
         }
         assert_eq!(supported_count, 21);
         assert_eq!(kinds.len(), specs.as_object().unwrap().len());
+    }
+
+    #[test]
+    fn native_capability_registry_has_an_explicit_state_for_all_public_kinds() {
+        const IMPLEMENTED: &[&str] = &[
+            "box",
+            "cylinder",
+            "sphere",
+            "hole",
+            "pocket",
+            "prism",
+            "revolve",
+            "pattern",
+            "gear",
+            "helical_gear",
+            "bevel_gear",
+            "socket_head_bolt",
+            "spoked_wheel",
+            "piston",
+            "conrod",
+            "cross_joint",
+            "rotor",
+            "camshaft",
+            "crankshaft",
+            "timing_pulley",
+            "vbelt_pulley",
+        ];
+        const UNSUPPORTED: &[&str] = &["helix", "loft", "impeller", "worm", "scroll_disc", "shell"];
+        const APPROXIMATE: &[&str] = &[
+            "gear",
+            "helical_gear",
+            "bevel_gear",
+            "socket_head_bolt",
+            "conrod",
+            "cross_joint",
+            "rotor",
+            "crankshaft",
+            "timing_pulley",
+            "vbelt_pulley",
+        ];
+
+        let schemas = crate::native_tool_schemas::native_tool_schemas().unwrap();
+        let kinds = schemas
+            .iter()
+            .find(|tool| tool["name"] == "cad_get_feature_spec")
+            .unwrap()["inputSchema"]["properties"]["kind"]["enum"]
+            .as_array()
+            .unwrap();
+        let actual: std::collections::HashSet<_> =
+            kinds.iter().map(|kind| kind.as_str().unwrap()).collect();
+        let expected: std::collections::HashSet<_> = IMPLEMENTED
+            .iter()
+            .chain(UNSUPPORTED.iter())
+            .copied()
+            .collect();
+        assert_eq!(
+            actual, expected,
+            "the native contract must cover all 27 schema kinds"
+        );
+        assert_eq!(actual.len(), 27);
+        assert_eq!(IMPLEMENTED.len(), 21);
+        assert_eq!(UNSUPPORTED.len(), 6);
+
+        for kind in IMPLEMENTED {
+            let contract = feature_spec(kind).unwrap()["native_execution"].clone();
+            let expected_status = if APPROXIMATE.contains(kind) {
+                "implemented_approximate"
+            } else {
+                "implemented_exact"
+            };
+            assert_eq!(contract["status"], expected_status, "{kind}");
+            assert!(
+                crate::native_plan_geometry::supports_native_kind(kind),
+                "{kind}"
+            );
+            assert_eq!(contract["scope"], "local_candidate_geometry", "{kind}");
+            assert!(
+                !contract["supported_variants"]
+                    .as_array()
+                    .unwrap()
+                    .is_empty(),
+                "{kind}"
+            );
+            assert!(
+                contract["parameter_limits"]
+                    .as_object()
+                    .is_some_and(|limits| !limits.is_empty()),
+                "{kind} needs parameter limits"
+            );
+        }
+
+        for kind in UNSUPPORTED {
+            let contract = feature_spec(kind).unwrap()["native_execution"].clone();
+            assert_eq!(contract["status"], "not_implemented", "{kind}");
+            assert_eq!(contract["geometry_support"], "unsupported", "{kind}");
+            assert_eq!(contract["scope"], "rust_plan_geometry", "{kind}");
+            assert!(contract["supported_variants"]
+                .as_array()
+                .unwrap()
+                .is_empty());
+            assert!(
+                !contract["unsupported_variants"]
+                    .as_array()
+                    .unwrap()
+                    .is_empty(),
+                "{kind}"
+            );
+            assert!(
+                !crate::native_plan_geometry::supports_native_kind(kind),
+                "{kind}"
+            );
+
+            // A schema-valid request for an unsupported kind must be stopped
+            // by native preflight before build() tries to load OCCT.
+            let plan = unsupported_kind_plan(kind);
+            assert_eq!(
+                crate::cad_plan_validation::validate_plan(&plan)["state"],
+                "valid",
+                "unsupported-kind probe must be valid CADPlan: {kind}"
+            );
+            let preflight_error = crate::native_plan_geometry::preflight(&plan).unwrap_err();
+            assert!(preflight_error.contains(kind), "{kind}: {preflight_error}");
+            let build_error = crate::native_plan_geometry::build(
+                &plan,
+                std::path::Path::new("native-contract-no-runtime.json"),
+                &std::sync::atomic::AtomicBool::new(false),
+            )
+            .err()
+            .unwrap();
+            assert_eq!(build_error, preflight_error, "{kind}");
+        }
+    }
+
+    #[test]
+    fn advertised_native_parameter_limits_are_exercised_by_preflight_and_builder() {
+        struct Probe {
+            kind: &'static str,
+            valid: Value,
+            invalid: Value,
+            limit_key: &'static str,
+            limit_text: &'static str,
+            error_text: &'static str,
+        }
+
+        // Each row is a valid request plus a boundary violation. Keeping the
+        // executable probe separate from the prose contract catches drift in
+        // either the advertised limit or the actual validator/builder gate.
+        let probes = [
+            Probe {
+                kind: "box",
+                valid: json!({"length":10,"width":8,"height":6}),
+                invalid: json!({"length":10,"width":8,"height":6,"corner":1}),
+                limit_key: "",
+                limit_text: "corner!=0",
+                error_text: "圆角矩形",
+            },
+            Probe {
+                kind: "cylinder",
+                valid: json!({"radius":4,"height":8}),
+                invalid: json!({"radius":0,"height":8}),
+                limit_key: "radius",
+                limit_text: ">0",
+                error_text: "radius",
+            },
+            Probe {
+                kind: "sphere",
+                valid: json!({"radius":4}),
+                invalid: json!({"radius":0}),
+                limit_key: "radius",
+                limit_text: ">0",
+                error_text: "radius",
+            },
+            Probe {
+                kind: "hole",
+                valid: json!({"diameter":2,"through":true,"pos":"point","point":[0,0,0]}),
+                invalid: json!({"diameter":0,"through":true,"pos":"point","point":[0,0,0]}),
+                limit_key: "diameter",
+                limit_text: ">0",
+                error_text: "diameter",
+            },
+            Probe {
+                kind: "pocket",
+                valid: json!({"length":4,"width":4,"depth":2}),
+                invalid: json!({"length":4,"width":4,"depth":0}),
+                limit_key: "depth",
+                limit_text: "smaller than stock thickness",
+                error_text: "depth",
+            },
+            Probe {
+                kind: "prism",
+                valid: json!({"profile":[[0,0],[8,0],[8,6],[0,6]],"height":4}),
+                invalid: json!({"profile":[[0,0],[8,0],[8,6],[0,6]],"height":0}),
+                limit_key: "height",
+                limit_text: ">0",
+                error_text: "height",
+            },
+            Probe {
+                kind: "revolve",
+                valid: json!({"profile":[[2,0],[4,0],[4,6],[2,6]],"angle":360}),
+                invalid: json!({"profile":[[2,0],[4,0],[4,6],[2,6]],"angle":0}),
+                limit_key: "angle",
+                limit_text: "valid OCCT revolution angle",
+                error_text: "angle",
+            },
+            Probe {
+                kind: "pattern",
+                valid: json!({"mode":"linear","count":2,"step":[5,0,0]}),
+                invalid: json!({"mode":"linear","count":10001,"step":[5,0,0]}),
+                limit_key: "count",
+                limit_text: "1..=10000",
+                error_text: "10001",
+            },
+            Probe {
+                kind: "gear",
+                valid: json!({"teeth":12,"module":1,"height":4}),
+                invalid: json!({"teeth":10001,"module":1,"height":4}),
+                limit_key: "teeth",
+                limit_text: "6..=10000",
+                error_text: "10001",
+            },
+            Probe {
+                kind: "helical_gear",
+                valid: json!({"teeth":12,"module":1,"height":4}),
+                invalid: json!({"teeth":10001,"module":1,"height":4}),
+                limit_key: "teeth",
+                limit_text: "6..=10000",
+                error_text: "10001",
+            },
+            Probe {
+                kind: "bevel_gear",
+                valid: json!({"teeth":20,"module":1,"height":4,"cone_deg":30}),
+                invalid: json!({"teeth":1000,"module":1,"height":4,"cone_deg":30,"segments":100}),
+                limit_key: "",
+                limit_text: "facet count above 100000",
+                error_text: "facet-BREP",
+            },
+            Probe {
+                kind: "socket_head_bolt",
+                valid: json!({"shank_d":6,"thread_pitch":1,"length":10,"head_d":10,"head_h":4,"hex_s":5,"hex_t":2}),
+                invalid: json!({"shank_d":6,"thread_pitch":1,"length":10,"head_d":10,"head_h":4,"hex_s":5,"hex_t":5}),
+                limit_key: "hex_t",
+                limit_text: "<=head_h",
+                error_text: "hex_t must not exceed head_h",
+            },
+            Probe {
+                kind: "spoked_wheel",
+                valid: json!({"outer_r":20,"rim_w":3,"hub_r":5,"height":8,"spokes":4,"spoke_w":3}),
+                invalid: json!({"outer_r":20,"rim_w":3,"hub_r":5,"height":8,"spokes":513,"spoke_w":3}),
+                limit_key: "spokes",
+                limit_text: "2..=512",
+                error_text: "512",
+            },
+            Probe {
+                kind: "piston",
+                valid: json!({"diameter":20,"height":20,"pin_d":4,"grooves":3}),
+                invalid: json!({"diameter":20,"height":20,"pin_d":4,"grooves":257}),
+                limit_key: "grooves",
+                limit_text: "<=256",
+                error_text: "256",
+            },
+            Probe {
+                kind: "conrod",
+                valid: json!({"length":60,"big_d":20,"small_d":14,"big_bore":10,"small_bore":6,"shank_w":8,"thick":5}),
+                invalid: json!({"length":60,"big_d":20,"small_d":14,"big_bore":20,"small_bore":6,"shank_w":8,"thick":5}),
+                limit_key: "big_d",
+                limit_text: ">big_bore",
+                error_text: "孔径必须小于",
+            },
+            Probe {
+                kind: "cross_joint",
+                valid: json!({"span":20,"journal_d":6}),
+                invalid: json!({"span":0,"journal_d":6}),
+                limit_key: "span",
+                limit_text: ">0",
+                error_text: "span",
+            },
+            Probe {
+                kind: "rotor",
+                valid: json!({"radius":20,"n":48,"height":8,"bore_d":0}),
+                invalid: json!({"radius":20,"n":11,"height":8,"bore_d":0}),
+                limit_key: "n",
+                limit_text: "12..=4096",
+                error_text: "12..=4096",
+            },
+            Probe {
+                kind: "vbelt_pulley",
+                valid: json!({"pitch_d":80,"grooves":1,"height":20,"groove_type":"Y"}),
+                invalid: json!({"pitch_d":80,"grooves":65,"height":1000,"groove_type":"Y"}),
+                limit_key: "grooves",
+                limit_text: "1..=64",
+                error_text: "1..=64",
+            },
+            Probe {
+                kind: "camshaft",
+                valid: json!({"length":80,"journal_d":10,"base_d":14,"lift":3,"lobes":2,"lobe_deg":0}),
+                invalid: json!({"length":80,"journal_d":10,"base_d":14,"lift":3,"lobes":513,"lobe_deg":0}),
+                limit_key: "lobes",
+                limit_text: "1..=512",
+                error_text: "1..=512",
+            },
+            Probe {
+                kind: "crankshaft",
+                valid: json!({"length":80,"main_d":10,"pin_d":8,"stroke":16,"throws":2}),
+                invalid: json!({"length":80,"main_d":10,"pin_d":8,"stroke":16,"throws":129}),
+                limit_key: "throws",
+                limit_text: "1..=128",
+                error_text: "1..=128",
+            },
+            Probe {
+                kind: "timing_pulley",
+                valid: json!({"pitch_d":40,"teeth":12,"height":10,"tooth_type":"XL"}),
+                invalid: json!({"pitch_d":40,"teeth":513,"height":10,"tooth_type":"XL"}),
+                limit_key: "teeth",
+                limit_text: "6..=512",
+                error_text: "6..=512",
+            },
+        ];
+
+        let schemas = crate::native_tool_schemas::native_tool_schemas().unwrap();
+        let public_kinds = schemas
+            .iter()
+            .find(|tool| tool["name"] == "cad_get_feature_spec")
+            .unwrap()["inputSchema"]["properties"]["kind"]["enum"]
+            .as_array()
+            .unwrap();
+        let expected_probes: std::collections::HashSet<_> = public_kinds
+            .iter()
+            .filter_map(Value::as_str)
+            .filter(|kind| crate::native_plan_geometry::supports_native_kind(kind))
+            .collect();
+        let actual_probes: std::collections::HashSet<_> =
+            probes.iter().map(|probe| probe.kind).collect();
+        assert_eq!(
+            actual_probes, expected_probes,
+            "every registered native builder kind needs an executable parameter-boundary probe"
+        );
+
+        for probe in probes {
+            let capability = feature_spec(probe.kind).unwrap()["native_execution"].clone();
+            if probe.limit_key.is_empty() {
+                assert!(
+                    capability["unsupported_variants"]
+                        .as_array()
+                        .unwrap()
+                        .iter()
+                        .any(|item| item
+                            .as_str()
+                            .is_some_and(|text| text.contains(probe.limit_text))),
+                    "{} unsupported_variants must publish {:?}",
+                    probe.kind,
+                    probe.limit_text
+                );
+            } else {
+                let limit = capability["parameter_limits"][probe.limit_key]
+                    .as_str()
+                    .unwrap_or_else(|| {
+                        panic!("{} has no limit for {}", probe.kind, probe.limit_key)
+                    });
+                assert!(
+                    limit.contains(probe.limit_text),
+                    "{} {}: {limit}",
+                    probe.kind,
+                    probe.limit_key
+                );
+            }
+
+            let valid = contract_probe_plan(probe.kind, &probe.valid);
+            assert_eq!(
+                crate::native_plan_geometry::preflight(&valid).unwrap()["state"],
+                "valid",
+                "valid {} probe",
+                probe.kind
+            );
+            let invalid = contract_probe_plan(probe.kind, &probe.invalid);
+            let preflight = crate::native_plan_geometry::preflight(&invalid);
+            if probe.kind == "socket_head_bolt" || probe.kind == "revolve" {
+                // These constraints are enforced after CADPlan preflight by
+                // the geometry builder itself.
+                assert_eq!(
+                    preflight.unwrap()["state"],
+                    "valid",
+                    "{} is a builder-time limit",
+                    probe.kind
+                );
+                let manifest = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
+                    .join("target/f4-occt/runtime-manifest.json");
+                if !manifest.is_file() {
+                    continue;
+                }
+                let error = crate::native_plan_geometry::build(
+                    &invalid,
+                    &manifest,
+                    &std::sync::atomic::AtomicBool::new(false),
+                )
+                .err()
+                .unwrap();
+                assert!(error.contains(probe.error_text), "{}: {error}", probe.kind);
+            } else {
+                let error = preflight.unwrap_err();
+                assert!(error.contains(probe.error_text), "{}: {error}", probe.kind);
+                let build_error = crate::native_plan_geometry::build(
+                    &invalid,
+                    std::path::Path::new("native-contract-no-runtime.json"),
+                    &std::sync::atomic::AtomicBool::new(false),
+                )
+                .err()
+                .unwrap();
+                assert_eq!(build_error, error, "{}", probe.kind);
+            }
+        }
+    }
+
+    #[test]
+    fn native_pocket_depth_limit_is_checked_against_stock_before_candidate_build() {
+        let manifest = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
+            .join("target/f4-occt/runtime-manifest.json");
+        if !manifest.is_file() {
+            return;
+        }
+        let stock = json!({"id":"stock","kind":"box","operation":"add",
+            "parameters":{"length":20,"width":20,"height":20},
+            "sources":{"length":{"type":"user"},"width":{"type":"user"},"height":{"type":"user"}}});
+        let pocket = json!({"id":"pocket-1","kind":"pocket","operation":"cut",
+            "parameters":{"length":10,"width":10,"depth":20,"x":0,"y":0,"axis":"Z","side":"positive"},
+            "sources":{"length":{"type":"user"},"width":{"type":"user"},"depth":{"type":"user"},"x":{"type":"user"},"y":{"type":"user"}}});
+        let plan = crate::cad_plan::create("pocket depth boundary", stock, "contract probe", None);
+        let plan = crate::cad_plan::add(&plan, &pocket).unwrap();
+        let contract = feature_spec("pocket").unwrap()["native_execution"]["parameter_limits"]
+            ["depth"]
+            .as_str()
+            .unwrap()
+            .to_owned();
+        assert!(contract.contains("smaller than stock thickness"));
+        assert_eq!(
+            crate::native_plan_geometry::preflight(&plan).unwrap()["state"],
+            "valid"
+        );
+        let error = crate::native_plan_geometry::build(
+            &plan,
+            &manifest,
+            &std::sync::atomic::AtomicBool::new(false),
+        )
+        .err()
+        .unwrap();
+        assert!(error.contains("盲槽深度必须小于实体轴向厚度"), "{error}");
+    }
+
+    fn contains_number(value: &Value) -> bool {
+        value.is_number()
+            || value
+                .as_array()
+                .is_some_and(|items| items.iter().any(contains_number))
+    }
+
+    fn contract_feature(id: &str, kind: &str, parameters: &Value, relations: Value) -> Value {
+        let sources: serde_json::Map<String, Value> = parameters
+            .as_object()
+            .unwrap()
+            .iter()
+            .filter(|(_, value)| contains_number(value))
+            .map(|(key, _)| {
+                (
+                    key.clone(),
+                    json!({"type":"user","note":"native capability contract test"}),
+                )
+            })
+            .collect();
+        json!({"id":id,"kind":kind,"operation":"add","parameters":parameters,"sources":sources,"relations":relations})
+    }
+
+    fn contract_probe_plan(kind: &str, parameters: &Value) -> Value {
+        if kind == "pattern" {
+            let seed = contract_feature(
+                "seed",
+                "box",
+                &json!({"length":4,"width":4,"height":4}),
+                json!([]),
+            );
+            let pattern = contract_feature(
+                "pattern-1",
+                kind,
+                parameters,
+                json!([{"type":"pattern_source","feature_id":"seed"}]),
+            );
+            let plan =
+                crate::cad_plan::create("native capability contract", seed, "contract probe", None);
+            return crate::cad_plan::add(&plan, &pattern).unwrap();
+        }
+        let feature = contract_feature("probe-1", kind, parameters, json!([]));
+        crate::cad_plan::create(
+            "native capability contract",
+            feature,
+            "contract probe",
+            None,
+        )
+    }
+
+    fn unsupported_kind_plan(kind: &str) -> Value {
+        let parameters = match kind {
+            "helix" => json!({"radius":8,"wire_r":1,"height":20,"turns":3}),
+            "loft" => json!({"root_chord":20,"tip_chord":10,"span":30,"thickness":3}),
+            "impeller" => {
+                json!({"hub_d":10,"tip_d":40,"height":8,"blades":6,"blade_t":2,"twist_deg":15})
+            }
+            "worm" => json!({"radius":8,"height":30,"thread_r":2,"wire_r":1,"turns":3}),
+            "scroll_disc" => json!({"outer_d":80,"height":8,"wall_t":3,"turns":2}),
+            "shell" => json!({"thickness":2}),
+            _ => panic!("not an explicitly unsupported kind: {kind}"),
+        };
+        let feature = contract_feature("unsupported-probe", kind, &parameters, json!([]));
+        crate::cad_plan::create(
+            "unsupported capability contract",
+            feature,
+            "contract probe",
+            None,
+        )
     }
 }
