@@ -1039,6 +1039,51 @@ mod tests {
     }
 
     #[test]
+    fn agent_cad_edit_publishes_shared_generation_and_session_snapshot() {
+        let root = fixture().0;
+        let session_dir = root.join("agent-session");
+        let active_root = root.join("active-model");
+        fs::create_dir_all(&session_dir).unwrap();
+        let references = json!({"schema_version":1,"session_id":"fixture","images":[]});
+        let turns = json!({"schema_version":1,"session_id":"fixture","turns":[]});
+
+        let initial_state = cad_state(box_plan(10), 1, 1);
+        let initial_candidate = crate::native_active_model::candidate_from_cad_state(
+            "agent",
+            &initial_state,
+            &references,
+            &turns,
+        )
+        .unwrap();
+        crate::native_active_model::commit(&active_root, 0, &initial_candidate).unwrap();
+        write_json_atomic(&session_dir.join("cad-state.json"), &initial_state).unwrap();
+
+        let mut edited_state = cad_state(box_plan(20), 2, 1);
+        let committed = commit_agent_model_state(
+            &session_dir,
+            &active_root,
+            1,
+            &mut edited_state,
+            &references,
+            &turns,
+        )
+        .unwrap();
+        let shared = crate::native_active_model::load(&active_root)
+            .unwrap()
+            .unwrap();
+        let session_snapshot = read_json_object(&session_dir.join("cad-state.json")).unwrap();
+
+        assert_eq!(committed["generation"], 2);
+        assert_eq!(shared["generation"], 2);
+        assert_eq!(shared["origin"], "agent");
+        assert_eq!(shared["cad_state"], edited_state);
+        assert_eq!(session_snapshot, shared["cad_state"]);
+        assert_eq!(session_snapshot["active_model_generation"], 2);
+
+        fs::remove_dir_all(root).unwrap();
+    }
+
+    #[test]
     fn missing_active_record_clears_stale_session_model_and_evidence() {
         let (root, _executor) = fixture();
         let session_dir = root.join("agent-session");
