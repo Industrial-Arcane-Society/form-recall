@@ -405,13 +405,8 @@ pub fn build(plan: &Value, manifest: &Path, cancelled: &AtomicBool) -> Result<Bu
             }
         }
     }
-    let hole_measurements_verified = !hole_instances.is_empty()
-        && hole_instances.iter().all(|record| {
-            matches!(
-                record["status"].as_str(),
-                Some("verified_open" | "verified_blind")
-            )
-        });
+    let hole_measurement_complete = hole_measurements_complete(&hole_instances);
+    let hole_measurements_verified = !hole_instances.is_empty() && hole_measurement_complete;
     let bb = shape.bounds()?;
     let fingerprint = cad_plan::geometry_fingerprint(plan)?;
     let report = json!({"state":"built","execution_engine":"rust_c_abi_occt","occt_version":kernel.version(),
@@ -421,9 +416,23 @@ pub fn build(plan: &Value, manifest: &Path, cancelled: &AtomicBool) -> Result<Bu
         "volume_mm3":shape.volume()?,"valid":true,"closed_solid_count":1,
         "requested_holes":holes.clone(),"sampled_hole_evidence":holes,
         "hole_instances":hole_instances,
+        "hole_measurement_complete":hole_measurement_complete,
         "hole_measurements_verified":hole_measurements_verified,
         "catia_executed":false,"image_acceptance":"not_performed"});
     Ok(BuiltPlan { shape, report })
+}
+
+fn hole_measurements_complete(instances: &[Value]) -> bool {
+    // The build loop only adds instances from enabled features. A verified
+    // sampling status alone is not a final B-Rep measurement: require the
+    // accepted final measurement and its complete cylindrical coverage.
+    instances.iter().all(|record| {
+        matches!(
+            record["status"].as_str(),
+            Some("verified_open" | "verified_blind")
+        ) && record["final_measurement"]["accepted"] == true
+            && record["final_measurement"]["full_angular_coverage"] == true
+    })
 }
 
 fn feature_tools(
@@ -1281,6 +1290,74 @@ mod tests {
             vec![[11., 22.]]
         );
     }
+
+    #[test]
+    fn hole_measurement_complete_requires_every_enabled_instance_to_be_finally_accepted() {
+        let through = json!({
+            "feature_id":"h1","through":true,"status":"verified_open",
+            "final_measurement":{"accepted":true,"full_angular_coverage":true}
+        });
+        let blind = json!({
+            "feature_id":"h2","through":false,"status":"verified_blind",
+            "final_measurement":{"accepted":true,"full_angular_coverage":true}
+        });
+        assert!(hole_measurements_complete(&[through.clone(), blind]));
+        assert!(hole_measurements_complete(&[]));
+
+        // Sampling may have marked the bore open, but a failed request to
+        // construct its final measurement must not count as complete.
+        let sampled_only = json!({
+            "feature_id":"h3","through":true,"status":"verified_open",
+            "final_measurement_status":"candidate_unverified"
+        });
+        assert!(!hole_measurements_complete(&[
+            through.clone(),
+            sampled_only.clone(),
+        ]));
+
+        let rejected = json!({
+            "feature_id":"h4","through":true,"status":"candidate_unverified",
+            "final_measurement":{"accepted":false,"full_angular_coverage":true}
+        });
+        assert!(!hole_measurements_complete(&[through.clone(), rejected]));
+
+        let partial_coverage = json!({
+            "feature_id":"h5","through":true,"status":"candidate_unverified",
+            "final_measurement":{"accepted":true,"full_angular_coverage":false}
+        });
+        assert!(!hole_measurements_complete(&[through, partial_coverage]));
+
+        let plan = json!({"features":[
+            {"id":"h1","kind":"hole","enabled":true},
+            {"id":"h2","kind":"hole","enabled":false}
+        ]});
+        let report = json!({
+            "hole_measurements_verified":true,
+            "hole_measurement_complete":true,
+            "hole_instances":[{
+                "feature_id":"h1","through":true,"status":"verified_open"
+            }]
+        });
+        assert_eq!(
+            crate::native_cad_session::hole_measurement(&plan, &report)["complete"],
+            true,
+            "the finish gate should accept complete measurements for every enabled hole"
+        );
+
+        let incomplete_report = json!({
+            "hole_measurements_verified":true,
+            "hole_measurement_complete":hole_measurements_complete(&[sampled_only]),
+            "hole_instances":[{
+                "feature_id":"h1","through":true,"status":"verified_open"
+            }]
+        });
+        assert_eq!(
+            crate::native_cad_session::hole_measurement(&plan, &incomplete_report)["complete"],
+            false,
+            "the finish gate must reject sampled-only or failed final measurements"
+        );
+    }
+
     #[test]
     fn pcd_remains_global_origin_as_legacy_contract() {
         let positions =
