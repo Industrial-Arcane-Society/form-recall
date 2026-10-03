@@ -130,6 +130,8 @@ pub fn run(
                 output_paths,
             },
         )?;
+        let evidence = crate::native_finish_evidence::current_snapshot(&next, &references, &turns)?;
+        next["finish_summary"]["evidence_fingerprint"] = json!(evidence.fingerprint);
         next["agent_finish_description"] = json!(summary);
         return Ok(ToolOutput {
             value: json!({"finish":next["finish_summary"],"output_paths":next["output_paths"],"catia_executed":false}),

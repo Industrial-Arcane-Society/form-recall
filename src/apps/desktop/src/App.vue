@@ -15,7 +15,7 @@ const CadViewport = defineAsyncComponent(() => import('./components/CadViewport.
 
 type JsonMap = Record<string, any>
 type Feature = { index: number; kind: string; op?: string; name?: string; enabled: boolean; params: JsonMap; description?: string; editable_parameters?: string[] }
-type DocumentState = { revision: number; cad_revision?: number; geometry_fingerprint?: string; name: string; source_prompt?: string; current_path?: string | null; features: Feature[]; stats: JsonMap; build_log: string[]; mesh_path?: string | null; warnings?: any[]; finish_summary?: JsonMap | null; geometric_status?: string; visual_status?: string }
+type DocumentState = { revision: number; cad_revision?: number; geometry_fingerprint?: string; acceptance_confirmed?: boolean; acceptance_source?: string; finish_status?: string; name: string; source_prompt?: string; current_path?: string | null; features: Feature[]; stats: JsonMap; build_log: string[]; mesh_path?: string | null; warnings?: any[]; finish_summary?: JsonMap | null; geometric_status?: string; visual_status?: string }
 type WireEvent = { event: string; request_id: string; data: any }
 type ChatLine = { role: 'user' | 'assistant' | 'progress' | 'thought'; text: string; images?: AttachmentItem[]; requestId?: string; toolCallId?: string; open?: boolean }
 

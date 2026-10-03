@@ -21,6 +21,7 @@ test('only an accepted current model summary is shown as accepted', () => {
   const accepted = modelAcceptanceView({
     exists: true,
     status: 'accepted',
+    acceptance_confirmed: true,
     revision: 7,
     geometry_fingerprint: 'fp-current',
     finish_status: 'accepted',
@@ -41,6 +42,7 @@ test('document finish summary with a stale CAD revision remains a candidate', ()
     finish_summary: { accepted: true, finish_state: 'accepted', revision: 7, geometry_fingerprint: 'fp-current' },
     geometric_status: 'passed',
     visual_status: 'covered',
+    acceptance_confirmed: true,
   })
   assert.equal(view.outcome, 'candidate')
   assert.equal(view.outcomeLabel, '候选模型')
@@ -62,6 +64,7 @@ test('host accepted status is rejected when its finish binding is stale', () => 
   const view = modelAcceptanceView({
     exists: true,
     status: 'accepted',
+    acceptance_confirmed: true,
     revision: 7,
     geometry_fingerprint: 'fp-current',
     finish_status: 'accepted',
@@ -71,6 +74,21 @@ test('host accepted status is rejected when its finish binding is stale', () => 
   })
   assert.equal(view.outcome, 'candidate')
   assert.equal(view.finish, '已过期')
+})
+
+test('an accepted-looking summary requires host terminal confirmation', () => {
+  const model = modelAcceptanceView({
+    exists: true,
+    status: 'accepted',
+    revision: 7,
+    geometry_fingerprint: 'fp-current',
+    finish_status: 'accepted',
+    finish_summary: { accepted: true, finish_state: 'accepted', revision: 7, geometry_fingerprint: 'fp-current' },
+    geometric: { status: 'passed' },
+    visual: { status: 'covered' },
+  })
+  assert.equal(model.outcome, 'candidate')
+  assert.equal(model.finish, '未由主机确认')
 })
 
 test('cancelled and stopped turns stay distinct from completion', () => {

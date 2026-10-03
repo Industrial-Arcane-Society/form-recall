@@ -30,16 +30,20 @@ export function modelAcceptanceView(model) {
     && typeof model.geometry_fingerprint === 'string'
     && model.geometry_fingerprint.length > 0
     && finishSummary?.geometry_fingerprint === model.geometry_fingerprint
-  const accepted = finishCurrent
+  const accepted = model.acceptance_confirmed === true
+    && finishCurrent
     && model.status === 'accepted'
     && model.finish_status === 'accepted'
     && finishSummary?.accepted === true
   const geometry = label(model.geometric?.status)
   const visual = label(model.visual?.status)
+  const finish = finishCurrent
+    ? (!model.acceptance_confirmed && finishSummary?.accepted === true ? '未由主机确认' : label(model.finish_status))
+    : finishSummary ? '已过期' : label(model.finish_status)
   return {
     outcome: accepted ? 'accepted' : 'candidate',
     outcomeLabel: accepted ? '已验收' : '候选模型',
-    finish: finishCurrent ? label(model.finish_status) : finishSummary ? '已过期' : label(model.finish_status),
+    finish,
     geometry: labels.geometric[geometry] || geometry,
     visual: labels.visual[visual] || visual,
   }
@@ -55,7 +59,8 @@ export function documentAcceptanceView(document) {
     && finishSummary?.geometry_fingerprint === document.geometry_fingerprint
   return modelAcceptanceView({
     exists: Array.isArray(document?.features) && document.features.length > 0,
-    status: finishCurrent && finishSummary?.accepted === true ? 'accepted' : 'candidate',
+    status: document?.acceptance_confirmed === true && finishCurrent && finishSummary?.accepted === true ? 'accepted' : 'candidate',
+    acceptance_confirmed: document?.acceptance_confirmed === true,
     revision: document?.cad_revision,
     geometry_fingerprint: document?.geometry_fingerprint,
     finish_status: finishCurrent ? finishSummary?.finish_state || 'unknown' : finishSummary ? 'stale' : 'not_finished',

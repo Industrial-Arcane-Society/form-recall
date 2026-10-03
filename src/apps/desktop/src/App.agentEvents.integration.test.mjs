@@ -44,6 +44,7 @@ const changedDocument = {
 const currentModel = {
   exists: true,
   status: 'candidate',
+  acceptance_confirmed: false,
   revision: 7,
   geometry_fingerprint: 'event-fixture-fingerprint',
   finish_status: 'candidate_holes_unverified',
@@ -186,6 +187,7 @@ try {
     if (scenario === 'stale-finish') {
       assert.equal(expectedModelDocument.finish_summary?.accepted, true, 'Rust event must contain the stale accepted fixture')
       assert.notEqual(expectedModelDocument.finish_summary?.revision, expectedModelDocument.cad_revision, 'finish summary must be stale for the current CAD revision')
+      assert.equal(expectedModelDocument.acceptance_confirmed, false, 'Rust model.changed event must not carry stale host acceptance')
       assert.equal(terminalModel?.status, 'candidate', 'Rust terminal snapshot must not accept the stale finish summary')
       assert.equal(terminalModel?.finish_status, 'not_finished')
       assert.equal(terminalModel?.finish_summary, null)
@@ -198,6 +200,8 @@ try {
       assert.equal(rustChannelCapture.result?.turn_status, 'stopped', 'tool failure must be reflected in the turn result')
     } else if (scenario === 'accepted-current') {
       assert.equal(terminalModel?.status, 'accepted')
+      assert.equal(terminalModel?.acceptance_confirmed, true)
+      assert.equal(expectedModelDocument.acceptance_confirmed, true, 'live model.changed status must come from host confirmation')
       assert.equal(terminalModel?.finish_summary?.accepted, true)
       assert.equal(terminalModel?.finish_summary?.revision, terminalModel?.revision)
       assert.equal(terminalModel?.finish_summary?.geometry_fingerprint, terminalModel?.geometry_fingerprint)

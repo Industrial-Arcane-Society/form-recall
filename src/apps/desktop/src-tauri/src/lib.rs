@@ -15,6 +15,7 @@ pub mod native_catia_adapter;
 pub mod native_catia_runtime;
 pub mod native_diagnostics;
 pub mod native_fastener_specs;
+pub mod native_finish_evidence;
 pub mod native_feature_specs;
 pub mod native_geometry_backend;
 pub mod native_geometry_evidence;

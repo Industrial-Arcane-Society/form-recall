@@ -1232,6 +1232,7 @@ fn run_turn_inner(
                 );
                 publish_active_model(
                     &active_model_root,
+                    &session.cwd,
                     request_id,
                     events,
                     &mut last_active_generation,
@@ -1247,6 +1248,7 @@ fn run_turn_inner(
                 );
                 publish_active_model(
                     &active_model_root,
+                    &session.cwd,
                     request_id,
                     events,
                     &mut last_active_generation,
@@ -1319,6 +1321,7 @@ fn run_turn_inner(
         );
         publish_active_model(
             &active_model_root,
+            &session.cwd,
             request_id,
             events,
             &mut last_active_generation,
@@ -1333,6 +1336,7 @@ fn run_turn_inner(
     );
     publish_active_model(
         &active_model_root,
+        &session.cwd,
         request_id,
         events,
         &mut last_active_generation,
@@ -1497,23 +1501,23 @@ fn current_model_summary(session_dir: &Path) -> Value {
         Ok(Some(value)) => value,
         Ok(None) => {
             return json!({"exists":false,"status":"none","finish_summary":null,
-            "geometric":{"status":"not_built"},"visual":{"status":"not_reviewed"}});
+            "acceptance_confirmed":false,"geometric":{"status":"not_built"},"visual":{"status":"not_reviewed"}});
         }
         Err(error) => {
             return json!({"exists":false,"status":"unavailable","error":error,
-            "finish_summary":null,"geometric":{"status":"unknown"},"visual":{"status":"unknown"}});
+            "finish_summary":null,"acceptance_confirmed":false,"geometric":{"status":"unknown"},"visual":{"status":"unknown"}});
         }
     };
     let Some(plan) = state.get("plan").filter(|value| value.is_object()) else {
         return json!({"exists":false,"status":"none","revision":state.get("revision"),
-            "finish_summary":null,"geometric":{"status":"not_built"},"visual":{"status":"not_reviewed"}});
+            "finish_summary":null,"acceptance_confirmed":false,"geometric":{"status":"not_built"},"visual":{"status":"not_reviewed"}});
     };
     let revision = state.get("revision").and_then(Value::as_i64).unwrap_or(0);
     let fingerprint = match crate::cad_plan::geometry_fingerprint(plan) {
         Ok(value) => value,
         Err(error) => {
             return json!({"exists":true,"status":"unavailable","revision":revision,
-            "error":error,"finish_summary":null,"geometric":{"status":"unknown"},"visual":{"status":"unknown"}});
+            "error":error,"finish_summary":null,"acceptance_confirmed":false,"geometric":{"status":"unknown"},"visual":{"status":"unknown"}});
         }
     };
     let preview = state.get("last_preview").filter(|value| value.is_object());
@@ -1536,26 +1540,35 @@ fn current_model_summary(session_dir: &Path) -> Value {
     let stored_finish = state
         .get("finish_summary")
         .filter(|value| value.is_object());
+    let reference_manifest = session_dir.join("reference-images.json");
+    let user_turns_manifest = session_dir.join("user-turns.json");
+    let current_evidence = crate::native_finish_evidence::current_snapshot(
+        &state,
+        &reference_manifest,
+        &user_turns_manifest,
+    );
+    let current_evidence_fingerprint = current_evidence
+        .as_ref()
+        .ok()
+        .map(|snapshot| snapshot.fingerprint.as_str());
+    let evidence_error = current_evidence.as_ref().err().cloned();
     let finish_current = stored_finish.is_some_and(|value| {
         value.get("revision").and_then(Value::as_i64) == Some(revision)
             && value.get("geometry_fingerprint").and_then(Value::as_str)
                 == Some(fingerprint.as_str())
+            && value.get("evidence_fingerprint").and_then(Value::as_str)
+                == current_evidence_fingerprint
+            && current_evidence_fingerprint.is_some()
     });
     let finish_summary = if finish_current {
         stored_finish.cloned().unwrap_or(Value::Null)
     } else {
         Value::Null
     };
-    let mut state_for_summary = state.clone();
-    let evaluated = crate::native_state_summary::summary(
-        &mut state_for_summary,
-        &session_dir.join("reference-images.json"),
-        &session_dir.join("user-turns.json"),
-    );
-    let visual_summary = evaluated
+    let visual_summary = current_evidence
         .as_ref()
         .ok()
-        .and_then(|value| value.get("visual_evidence_summary"));
+        .and_then(|snapshot| snapshot.summary.get("visual_evidence_summary"));
     let visual_status = match visual_summary {
         None => "unknown",
         Some(summary)
@@ -1589,17 +1602,20 @@ fn current_model_summary(session_dir: &Path) -> Value {
     } else {
         "not_finished"
     };
-    let status = if finish_current && finish_summary.get("accepted") == Some(&Value::Bool(true)) {
+    let acceptance_confirmed = finish_current
+        && finish_summary.get("accepted") == Some(&Value::Bool(true))
+        && finish_summary.get("finish_state").and_then(Value::as_str) == Some("accepted");
+    let status = if acceptance_confirmed {
         "accepted"
     } else {
         "candidate"
     };
-    json!({"exists":true,"status":status,"revision":revision,"geometry_fingerprint":fingerprint,
+    json!({"exists":true,"status":status,"acceptance_confirmed":acceptance_confirmed,"revision":revision,"geometry_fingerprint":fingerprint,
         "finish_status":finish_status,"finish_summary":finish_summary,
         "geometric":{"status":geometric_status,"revision":if preview_current {json!(revision)} else {Value::Null},
             "geometry_fingerprint":if preview_current {json!(fingerprint)} else {Value::Null}},
         "visual":{"status":visual_status,"summary":visual_summary.cloned().unwrap_or(Value::Null)},
-        "summary_error":evaluated.err()})
+        "summary_error":evidence_error})
 }
 
 fn route_update(
@@ -1699,6 +1715,7 @@ fn publish_preview(
 
 fn publish_active_model(
     root: &Path,
+    session_dir: &Path,
     request_id: &str,
     events: &EventSink,
     previous_generation: &mut u64,
@@ -1712,11 +1729,47 @@ fn publish_active_model(
     if generation <= *previous_generation {
         return Ok(());
     }
-    let document = active
+    let mut document = active
         .get("document")
         .filter(|value| value.is_object())
         .cloned()
         .ok_or("活动模型缺少有效的 DocumentState。")?;
+    let host_model = current_model_summary(session_dir);
+    let same_host_model = host_model.get("exists") == Some(&Value::Bool(true))
+        && document.get("cad_revision").and_then(Value::as_i64)
+            == host_model.get("revision").and_then(Value::as_i64)
+        && document.get("geometry_fingerprint").and_then(Value::as_str)
+            == host_model
+                .get("geometry_fingerprint")
+                .and_then(Value::as_str);
+    let acceptance_confirmed =
+        same_host_model && host_model.get("acceptance_confirmed") == Some(&Value::Bool(true));
+    document["acceptance_confirmed"] = json!(acceptance_confirmed);
+    document["finish_summary"] = if same_host_model {
+        host_model
+            .get("finish_summary")
+            .cloned()
+            .unwrap_or(Value::Null)
+    } else {
+        Value::Null
+    };
+    document["finish_status"] = if same_host_model {
+        host_model
+            .get("finish_status")
+            .cloned()
+            .unwrap_or_else(|| json!("not_finished"))
+    } else {
+        json!("not_finished")
+    };
+    document["geometric_status"] = host_model
+        .pointer("/geometric/status")
+        .cloned()
+        .unwrap_or_else(|| json!("unknown"));
+    document["visual_status"] = host_model
+        .pointer("/visual/status")
+        .cloned()
+        .unwrap_or_else(|| json!("unknown"));
+    document["acceptance_source"] = json!("native_host_terminal_snapshot");
     emit(events, "model.changed", request_id, document);
     *previous_generation = generation;
     Ok(())
@@ -2831,24 +2884,29 @@ mod tests {
             None,
         );
         let fingerprint = crate::cad_plan::geometry_fingerprint(&plan).unwrap();
+        let mut state = json!({"revision":3,"plan":plan});
+        let evidence = crate::native_finish_evidence::current_snapshot(
+            &state,
+            &root.join("reference-images.json"),
+            &root.join("user-turns.json"),
+        )
+        .unwrap();
+        state["finish_summary"] = json!({
+            "accepted":true,
+            "finish_state":"accepted",
+            "revision":3,
+            "geometry_fingerprint":fingerprint,
+            "evidence_fingerprint":evidence.fingerprint
+        });
         fs::write(
             root.join("cad-state.json"),
-            serde_json::to_vec(&json!({
-                "revision": 3,
-                "plan": plan,
-                "finish_summary": {
-                    "accepted": true,
-                    "finish_state": "accepted",
-                    "revision": 3,
-                    "geometry_fingerprint": fingerprint
-                }
-            }))
-            .unwrap(),
+            serde_json::to_vec(&state).unwrap(),
         )
         .unwrap();
 
         let model = current_model_summary(&root);
         assert_eq!(model["status"], "accepted");
+        assert_eq!(model["acceptance_confirmed"], true);
         for (turn_status, stop_reason) in [("completed", "end_turn"), ("stopped", "max_tokens")] {
             let payload = terminal_event_data(
                 turn_status,
@@ -2910,6 +2968,7 @@ mod tests {
         fs::write(root.join("reference-images.json"), br#"{"images":[]}"#).unwrap();
         fs::write(root.join("user-turns.json"), br#"{"turns":[]}"#).unwrap();
         for finish in [
+            json!({"accepted":true,"finish_state":"accepted","revision":2,"geometry_fingerprint":fingerprint.clone()}),
             json!({"accepted":true,"finish_state":"accepted","revision":1,"geometry_fingerprint":fingerprint.clone()}),
             json!({"accepted":true,"finish_state":"accepted","revision":2,"geometry_fingerprint":"old-fingerprint"}),
         ] {
@@ -2921,9 +2980,139 @@ mod tests {
             .unwrap();
             let summary = current_model_summary(&root);
             assert_eq!(summary["status"], "candidate");
+            assert_eq!(summary["acceptance_confirmed"], false);
             assert_eq!(summary["finish_status"], "not_finished");
             assert_eq!(summary["finish_summary"], Value::Null);
         }
+        fs::remove_dir_all(root).unwrap();
+    }
+
+    #[test]
+    fn same_revision_visual_reference_findings_and_facts_changes_expire_finish_binding() {
+        let root =
+            std::env::temp_dir().join(format!("agent-finish-evidence-{}", super::unique_id()));
+        fs::create_dir_all(&root).unwrap();
+        let image_path = root.join("original.png");
+        let image_bytes = b"sanitized-reference-fixture";
+        fs::write(&image_path, image_bytes).unwrap();
+        let image_hash = super::sha256(image_bytes);
+        let reference_id = format!("sha256:{image_hash}");
+        let refs_path = root.join("reference-images.json");
+        let reference_manifest = json!({"images":[{
+            "path":image_path,"id":reference_id,"sha256":image_hash,
+            "filename":"original.png","width":64,"height":48,"media_type":"image/png"
+        }]});
+        fs::write(&refs_path, serde_json::to_vec(&reference_manifest).unwrap()).unwrap();
+        let turns_path = root.join("user-turns.json");
+        fs::write(&turns_path, br#"{"turns":[]}"#).unwrap();
+
+        let plan = crate::cad_plan::create(
+            "fixture",
+            json!({"id":"body","kind":"box","operation":"add","parameters":{"length":10,"width":8,"height":5},"sources":{"width":{"type":"image_estimate"}}}),
+            "fixture",
+            None,
+        );
+        let geometry_fingerprint = crate::cad_plan::geometry_fingerprint(&plan).unwrap();
+        let mut baseline = json!({
+            "revision":9,
+            "plan":plan,
+            "finding_ledger":{},
+            "required_external_facts":{},
+            "construction_milestone":{"expected_feature_ids":["body"],"completed_feature_ids":["body"]},
+            "reference_inventory":{},
+            "reference_observation_history":[],
+            "reference_similarity_history":[],
+            "reference_similarity_reviews":{},
+            "reference_similarity_attempts":[],
+            "visual_reviews":[]
+        });
+        let initial =
+            crate::native_finish_evidence::current_snapshot(&baseline, &refs_path, &turns_path)
+                .unwrap();
+        baseline["finish_summary"] = json!({
+            "accepted":true,"finish_state":"accepted","revision":9,
+            "geometry_fingerprint":geometry_fingerprint,"evidence_fingerprint":initial.fingerprint
+        });
+        let state_path = root.join("cad-state.json");
+        fs::write(&state_path, serde_json::to_vec(&baseline).unwrap()).unwrap();
+
+        let unchanged = current_model_summary(&root);
+        assert_eq!(unchanged["status"], "accepted");
+        assert_eq!(unchanged["acceptance_confirmed"], true);
+        assert_eq!(unchanged["finish_summary"]["accepted"], true);
+
+        let mut visual_inventory = baseline.clone();
+        visual_inventory["reference_inventory"][&reference_id] = json!({
+            "reference_id":reference_id,"source_sha256":image_hash,"observation_valid":true,
+            "visible_evidence":[{"evidence_id":"bore-1","description":"visible bore"}]
+        });
+        let mut visual_review = baseline.clone();
+        visual_review["reference_similarity_history"] = json!([{
+            "revision":9,"reference_id":reference_id,"view":"front","summary":"hole alignment reviewed"
+        }]);
+        let mut original_reference_changed = reference_manifest.clone();
+        original_reference_changed["images"][0]["width"] = json!(65);
+        let mut findings = baseline.clone();
+        findings["finding_ledger"] =
+            json!({"f1":{"status":"open","severity":"major","item":"unresolved mismatch"}});
+        let mut external_facts = baseline.clone();
+        external_facts["required_external_facts"] =
+            json!({"standard":{"status":"unknown","source":"user request"}});
+
+        for (label, changed_state, changed_manifest) in [
+            ("visual inventory", visual_inventory, None),
+            ("visual review", visual_review, None),
+            ("finding ledger", findings, None),
+            ("external facts", external_facts, None),
+            (
+                "original reference manifest",
+                baseline.clone(),
+                Some(original_reference_changed.clone()),
+            ),
+        ] {
+            fs::write(&state_path, serde_json::to_vec(&changed_state).unwrap()).unwrap();
+            if let Some(manifest) = changed_manifest.as_ref() {
+                fs::write(&refs_path, serde_json::to_vec(manifest).unwrap()).unwrap();
+            } else {
+                fs::write(&refs_path, serde_json::to_vec(&reference_manifest).unwrap()).unwrap();
+            }
+            let summary = current_model_summary(&root);
+            assert_eq!(
+                summary["revision"], 9,
+                "{label} keeps the CAD revision unchanged"
+            );
+            assert_eq!(
+                summary["geometry_fingerprint"], geometry_fingerprint,
+                "{label} keeps the geometry unchanged"
+            );
+            assert_eq!(
+                summary["status"], "candidate",
+                "{label} must expire prior acceptance"
+            );
+            assert_eq!(
+                summary["acceptance_confirmed"], false,
+                "{label} cannot use stale host confirmation"
+            );
+            assert_eq!(
+                summary["finish_status"], "not_finished",
+                "{label} invalidates the finish binding"
+            );
+            assert_eq!(
+                summary["finish_summary"],
+                Value::Null,
+                "{label} hides the stale accepted report"
+            );
+            fs::write(&refs_path, serde_json::to_vec(&reference_manifest).unwrap()).unwrap();
+        }
+
+        fs::write(&state_path, serde_json::to_vec(&baseline).unwrap()).unwrap();
+        fs::write(&refs_path, serde_json::to_vec(&reference_manifest).unwrap()).unwrap();
+        let restored = current_model_summary(&root);
+        assert_eq!(
+            restored["status"], "accepted",
+            "restoring the same evidence restores the original bound acceptance"
+        );
+        assert_eq!(restored["acceptance_confirmed"], true);
         fs::remove_dir_all(root).unwrap();
     }
 
