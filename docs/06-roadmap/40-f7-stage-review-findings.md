@@ -57,3 +57,15 @@ cargo check --lib --offline
 提交 `97778c6` 增加负样例：旧 finding 所属孔特征从模型中删除后，当前 review 的完整 scope 即使返回 `match`，该 finding 仍保持未解决。静态审查未发现生产 finding 闭合绕过：review 会校验当前 revision、preview SHA 与 geometry fingerprint，并在 `native_review_findings::reconcile` 中复算 scope/coverage。
 
 定向 Rust 测试二进制编译成功；运行 `cargo test --lib native_review_findings::tests --offline` 的测试进程时 Windows loader 返回 `0xc0000139 STATUS_ENTRYPOINT_NOT_FOUND`，因此新增测试只记为“已编译、未执行”，不记为通过。目标文件 `rustfmt --check` 与 `git diff --check` 通过。没有运行真实 DSH、GUI、CATIA 或几何重建。
+
+## 2026-10-03 补充：manifest-aware Rust test runner 验证
+
+提交 `e9b9f8e` 增加 Windows Rust lib test CLI runner，构建时临时配置 `TAURI_CONFIG.bundle.resources=[]`，运行前为测试 exe 加 Common Controls v6 sidecar manifest，结束后清理 manifest。它解决了此前 Cargo test exe 在 Windows loader 阶段的 `0xc0000139 STATUS_ENTRYPOINT_NOT_FOUND`。
+
+在干净隔离 worktree（HEAD `e9b9f8e`）使用以下命令执行新增负样例：
+
+```powershell
+pwsh -NoProfile -File src/apps/desktop/src-tauri/scripts/test-lib.ps1 -Offline -Filter 'native_review_findings::tests::out_of_scope_match_cannot_close_a_finding_for_a_removed_feature' -Exact
+```
+
+结果为 exit 0，`1 passed; 0 failed; 0 ignored; 242 filtered out`。旧 finding 仍为 `awaiting_verification`，`resolved=[]`。未启动 GUI、DSH 或 CATIA；该结果是宿主状态负样例，不是视觉质量验收。
