@@ -5,7 +5,7 @@ import { createHash, randomUUID } from 'node:crypto'
 import { mkdirSync, readFileSync, writeFileSync, existsSync } from 'node:fs'
 import { basename, dirname, join, resolve } from 'node:path'
 import { createInterface } from 'node:readline'
-import { createAuditedToolProxy, evaluateColdstartGates, parseEvidenceJsonl, parsePostcheckState, readRunArtifacts } from './native_agent_coldstart_gates.mjs'
+import { createAuditedToolProxy, evaluateColdstartGates, parseEvidenceJsonl, parsePostcheckState, readRunArtifacts, toolArgumentsFingerprint } from './native_agent_coldstart_gates.mjs'
 
 const [repoArg, runtimeArg, outputArg, configArg, imageArg, userTextArg] = process.argv.slice(2)
 let archiveDir = null
@@ -192,6 +192,7 @@ messages.on('line', line => {
     if (kind === 'agent_thought_chunk') thoughts += (update.content?.text || '').length
     if (kind === 'tool_call' || kind === 'tool_call_update') {
       toolEvents.push({ kind, title: update.title, status: update.status, tool_call_id: update.toolCallId,
+        ...(kind === 'tool_call' ? { arguments_sha256_24: toolArgumentsFingerprint(update.rawInput) } : {}),
         session_id: row.params?.sessionId, run_id: runId, turn_id: turnId, at_ms: Date.now() })
     }
   } else if (row.id !== undefined && !row.method && pending.has(row.id)) {

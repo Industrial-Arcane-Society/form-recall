@@ -9,7 +9,19 @@ const rows = value => Array.isArray(value) ? value : []
 const nonempty = value => typeof value === 'string' && value.length > 0
 const digest = value => typeof value === 'string' && /^[a-f0-9]{64}$/.test(value)
 
-// Observe the authenticated Cordis bridge without persisting tokens, arguments,
+// Persist only a short digest of tool arguments so ACP invocation events can
+// be joined to the native bridge without retaining user/model parameter data.
+export function toolArgumentsFingerprint(value) {
+  if (value === undefined) return null
+  const normalize = item => {
+    if (Array.isArray(item)) return item.map(normalize)
+    if (item && typeof item === 'object') return Object.fromEntries(Object.keys(item).sort().map(key => [key, normalize(item[key])]))
+    return item
+  }
+  try { return sha(JSON.stringify(normalize(value))).slice(0, 24) } catch { return null }
+}
+
+// Observe the authenticated Cordis bridge without persisting tokens, raw arguments,
 // image bodies, response bodies or provider credentials. The native audit's UUID
 // is distinct from ACP's tool ID; this gives an exact native call-ID join.
 export async function createAuditedToolProxy({ address, token, sessionId, turnId, runId }) {
@@ -38,6 +50,7 @@ export async function createAuditedToolProxy({ address, token, sessionId, turnId
         if (request.method === 'tools/call') record = {
           run_id: runId, session_id: p.sessionId, turn_id: p.turnId,
           call_id: p.toolCallId, tool: p.name, started_at_ms: Date.now(),
+          arguments_sha256_24: toolArgumentsFingerprint(p.arguments),
           authenticated_scope: p.token === token && p.sessionId === sessionId && p.turnId === turnId,
         }
       } catch { /* malformed native requests cannot become success evidence */ }
@@ -157,13 +170,46 @@ export function evaluateColdstartGates(input) {
   gate('main_image_wire', [[imageRequests.length > 0, 'main_model_original_image_wire_missing'],
     [successfulImageRequests.length > 0, 'same_image_request_successful_response_missing']])
   const calls = rows(toolBridgeCalls).filter(row => typeof row.tool === 'string' && row.tool.startsWith('cad_'))
-  const completedTools = new Map()
+  const acpTools = new Map()
   for (const event of rows(toolEvents)) {
     if (event.session_id !== run.acp_session_id || event.run_id !== run.id || event.turn_id !== run.turn_id || !inRun(event.at_ms)) continue
-    const old = completedTools.get(event.tool_call_id) || {}
-    completedTools.set(event.tool_call_id, { tool: event.title || old.tool, status: event.status || old.status })
+    const old = acpTools.get(event.tool_call_id) || {}
+    acpTools.set(event.tool_call_id, { tool: event.title || old.tool, status: event.status || old.status,
+      tool_call_id: event.tool_call_id, starts: (old.starts || 0) + (event.kind === 'tool_call' ? 1 : 0),
+      arguments_sha256_24: event.arguments_sha256_24 || old.arguments_sha256_24 })
   }
-  const successfulTools = [...completedTools.values()].filter(row => row.status === 'completed')
+  const observedCadTools = [...acpTools.values()].filter(row => row.tool?.startsWith('cad_'))
+  const correlationKey = row => nonempty(row.tool) && /^[a-f0-9]{24}$/.test(row.arguments_sha256_24 || '')
+    ? `${row.tool}\u0000${row.arguments_sha256_24}` : null
+  const bridgeCallsByKey = new Map(), acpCallsByKey = new Map()
+  for (const call of calls) {
+    const key = correlationKey(call)
+    if (key) bridgeCallsByKey.set(key, [...(bridgeCallsByKey.get(key) || []), call])
+  }
+  for (const event of observedCadTools) {
+    const key = correlationKey(event)
+    if (key) acpCallsByKey.set(key, [...(acpCallsByKey.get(key) || []), event])
+  }
+  // ACP IDs and native UUIDs differ. Join invocations by exact tool name and
+  // normalized argument digest in the same run/turn; then bind each bridge UUID
+  // independently to its Rust audit row below.
+  const pairedCallIds = new Map()
+  const argumentsAndIdentityPresent = calls.every(call => correlationKey(call) !== null && nonempty(call.call_id)
+    && call.run_id === run.id && call.session_id === run.tool_session_id && call.turn_id === run.turn_id)
+    && observedCadTools.every(event => correlationKey(event) !== null && nonempty(event.tool_call_id) && event.starts === 1)
+  const allInvocationsPaired = [...new Set([...bridgeCallsByKey.keys(), ...acpCallsByKey.keys()])].every(key => {
+    const native = bridgeCallsByKey.get(key) || [], acp = acpCallsByKey.get(key) || []
+    if (native.length !== acp.length) return false
+    return native.every((call, index) => {
+      const event = acp[index]
+      if (!event || event.starts !== 1 || !nonempty(event.tool_call_id)
+        || call.run_id !== run.id || call.session_id !== run.tool_session_id || call.turn_id !== run.turn_id
+        || !nonempty(call.call_id)) return false
+      pairedCallIds.set(call.call_id, event)
+      return true
+    })
+  }) && argumentsAndIdentityPresent && observedCadTools.length === calls.length
+  const pairedOnce = pairedCallIds.size === calls.length && new Set(calls.map(call => call.call_id)).size === calls.length
   const schemaNames = new Set(rows(schema?.tools).map(row => row.name))
   const registrationNames = new Set(rows(registration?.registeredToolNames))
   const matched = calls.filter(call => call.authenticated_scope === true && call.run_id === run.id
@@ -172,19 +218,22 @@ export function evaluateColdstartGates(input) {
     && schemaNames.has(call.tool) && registrationNames.has(call.tool)
     && rows(nativeAudit).some(audit => audit.call_id === call.call_id && audit.tool === call.tool && audit.success === true
       && Number.isFinite(audit.at) && audit.at >= Math.floor(run.started_at_ms / 1000) && audit.at <= Math.ceil(run.ended_at_ms / 1000))
-    && successfulTools.some(event => event.tool === call.tool))
-  const completionCountsValid = [...new Set(matched.map(call => call.tool))].every(tool =>
-    successfulTools.filter(event => event.tool === tool).length >= matched.filter(call => call.tool === tool).length)
+    && pairedCallIds.has(call.call_id))
+  const individualAcpCallsValid = allInvocationsPaired && pairedOnce
   gate('cordis_cad_tools', [
     [registration?.phase === 'registered' && schema?.schemaVersion === 1, 'cordis_registration_or_schema_missing'],
     [matched.length > 0, 'successful_cordis_cad_call_and_native_audit_missing'],
     [calls.length > 0 && matched.length === calls.length, 'cad_tool_rejected_unbound_or_unaudited'],
-    [completionCountsValid && new Set(calls.map(call => call.call_id)).size === calls.length, 'native_calls_not_individually_completed_or_duplicate'],
+    [allInvocationsPaired && pairedOnce, 'cordis_tool_arguments_or_identity_missing_or_unmatched'],
+    [individualAcpCallsValid && new Set(calls.map(call => call.call_id)).size === calls.length, 'native_calls_not_individually_observed_or_duplicate'],
     [!rows(toolBridgeCalls).some(call => call.success !== true)
-      && ![...completedTools.values()].some(event => event.status === 'failed'), 'tool_call_rejected_or_failed'],
+      && ![...acpTools.values()].some(event => event.tool?.startsWith('cad_') && event.status === 'failed'), 'tool_call_rejected_or_failed'],
     [!rows(nativeAudit).some(audit => typeof audit.tool === 'string' && audit.tool.startsWith('cad_')
       && !String(audit.call_id).startsWith('probe-') && !calls.some(call => call.call_id === audit.call_id)), 'native_cad_audit_without_cordis_call'],
-    [![...completedTools.values()].some(event => event.tool?.startsWith('cad_') && event.status === 'failed'), 'acp_cad_tool_failed'],
+    [![...acpTools.values()].some(event => event.tool?.startsWith('cad_') && event.status === 'failed'), 'acp_cad_tool_failed'],
+  ])
+  gate('acp_cad_tool_results', [
+    [observedCadTools.length > 0 && observedCadTools.every(event => event.status === 'completed'), 'acp_cad_tool_result_completion_missing'],
   ])
   const preview = domain.last_preview, checks = preview?.local_geometry_checks, finish = domain.finish_summary
   const review = finish?.overall_geometry_review, evidence = review?.result?.evidence

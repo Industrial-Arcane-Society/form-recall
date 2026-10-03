@@ -4,12 +4,14 @@ import { createServer, createConnection } from 'node:net'
 import { mkdtempSync, mkdirSync, writeFileSync, rmSync } from 'node:fs'
 import { join } from 'node:path'
 import { tmpdir } from 'node:os'
-import { createAuditedToolProxy, evaluateColdstartGates, parseEvidenceJsonl, parsePostcheckState, readRunArtifacts } from './native_agent_coldstart_gates.mjs'
+import { createAuditedToolProxy, evaluateColdstartGates, parseEvidenceJsonl, parsePostcheckState, readRunArtifacts, toolArgumentsFingerprint } from './native_agent_coldstart_gates.mjs'
 
 // Synthetic contract fixture: no provider credentials, image bytes, geometry
 // execution or model API are used. It is not scientific acceptance evidence.
 function fixture() {
   const fp = 'a'.repeat(64), image = 'b'.repeat(64), rid = 'sha256:' + image
+  const nativeCallId = '11111111-1111-4111-8111-111111111111'
+  const argsFingerprint = toolArgumentsFingerprint({ fixture: true })
   const run = { id: 'run-new', turn_id: 'turn-new', acp_session_id: 'acp-new', tool_session_id: 'bridge-new', started_at_ms: 1000, ended_at_ms: 5000 }
   const checks = { execution_engine: 'rust_c_abi_occt', state: 'passed', valid: true, closed_solid_count: 1,
     validation: { state: 'valid' }, revision: 2, geometry_fingerprint: fp, hole_measurement_complete: true,
@@ -40,12 +42,12 @@ function fixture() {
       { kind: 'provider_wire_response_complete', request_id: 'image-request', turn_id: run.turn_id, at: 2200, response_terminator: 'sse_done' },
     ],
     toolEvents: [
-      { run_id: run.id, session_id: run.acp_session_id, turn_id: run.turn_id, at_ms: 2500, tool_call_id: 'acp-call', title: 'cad_finish_model', status: 'in_progress' },
-      { run_id: run.id, session_id: run.acp_session_id, turn_id: run.turn_id, at_ms: 2900, tool_call_id: 'acp-call', status: 'completed' },
+      { run_id: run.id, session_id: run.acp_session_id, turn_id: run.turn_id, at_ms: 2500, tool_call_id: 'acp-call', title: 'cad_finish_model', status: 'in_progress', kind: 'tool_call', arguments_sha256_24: argsFingerprint },
+      { run_id: run.id, session_id: run.acp_session_id, turn_id: run.turn_id, at_ms: 2900, tool_call_id: 'acp-call', status: 'completed', kind: 'tool_call_update' },
     ],
-    toolBridgeCalls: [{ run_id: run.id, session_id: run.tool_session_id, turn_id: run.turn_id, call_id: 'native-uuid', tool: 'cad_finish_model', authenticated_scope: true,
-      started_at_ms: 2600, completed_at_ms: 2800, success: true }],
-    nativeAudit: [{ call_id: 'native-uuid', tool: 'cad_finish_model', at: 2, success: true, revision_before: 2, revision_after: 2 }],
+    toolBridgeCalls: [{ run_id: run.id, session_id: run.tool_session_id, turn_id: run.turn_id, call_id: nativeCallId, tool: 'cad_finish_model', authenticated_scope: true,
+      started_at_ms: 2600, completed_at_ms: 2800, success: true, arguments_sha256_24: argsFingerprint }],
+    nativeAudit: [{ call_id: nativeCallId, tool: 'cad_finish_model', at: 2, success: true, revision_before: 2, revision_after: 2 }],
     computedState: { revision: 2, geometry_signature: fp, visual_evidence_summary: visual },
     domain: { plan, finished: true, finish_state: 'accepted', revision: 2, preview_revision: 2, latest_geometry_review: review,
       last_preview: { revision: 2, geometry_fingerprint: fp, execution_engine: 'rust_c_abi_occt', local_geometry_checks: checks, preview_sha256: 'c'.repeat(64) }, finish_summary: finish },
@@ -57,7 +59,38 @@ test('complete same-run evidence is passed; host acceptance alone is insufficien
   const result = evaluateColdstartGates(fixture())
   assert.equal(result.status, 'passed')
   assert.deepEqual(result.successful_image_request_ids, ['image-request'])
-  assert.deepEqual(result.matched_native_call_ids, ['native-uuid'])
+  assert.deepEqual(result.matched_native_call_ids, ['11111111-1111-4111-8111-111111111111'])
+})
+
+test('Rust success and exact tool/argument binding pass without ACP completed update', () => {
+  const input = fixture()
+  input.toolEvents = [input.toolEvents[0]]
+  const result = evaluateColdstartGates(input)
+  assert.equal(result.gates.cordis_cad_tools.status, 'passed')
+  assert.equal(result.gates.acp_cad_tool_results.status, 'failed')
+  assert.deepEqual(result.gates.acp_cad_tool_results.reasons, ['acp_cad_tool_result_completion_missing'])
+  assert.deepEqual(result.matched_native_call_ids, ['11111111-1111-4111-8111-111111111111'])
+})
+
+test('normalized argument fingerprints ignore object key order and reveal no argument text', () => {
+  const left = toolArgumentsFingerprint({ z: 2, nested: { b: true, a: 1 } })
+  const right = toolArgumentsFingerprint({ nested: { a: 1, b: true }, z: 2 })
+  assert.equal(left, right)
+  assert.match(left, /^[a-f0-9]{24}$/)
+  assert.equal(toolArgumentsFingerprint({ z: 3, nested: { b: true, a: 1 } }) === left, false)
+  assert.equal(toolArgumentsFingerprint(undefined), null)
+})
+
+test('two same-name calls require two distinct ACP invocations and exact native audits', () => {
+  const input = fixture(), nativeCallId = '22222222-2222-4222-8222-222222222222'
+  input.toolEvents.push({ ...input.toolEvents[0], tool_call_id: 'second-acp-call' })
+  input.toolBridgeCalls.push({ ...input.toolBridgeCalls[0], call_id: nativeCallId })
+  input.nativeAudit.push({ ...input.nativeAudit[0], call_id: nativeCallId })
+  const result = evaluateColdstartGates(input)
+  assert.equal(result.gates.cordis_cad_tools.status, 'passed')
+  assert.deepEqual(result.matched_native_call_ids.sort(), [
+    '11111111-1111-4111-8111-111111111111', nativeCallId,
+  ])
 })
 
 const negativeFixtures = [
@@ -78,10 +111,24 @@ const negativeFixtures = [
   ['native tool rejected', f => { f.nativeAudit[0].success = false }, 'cad_tool_rejected_unbound_or_unaudited'],
   ['successful call followed by rejected CAD call', f => f.toolBridgeCalls.push({ ...f.toolBridgeCalls[0], call_id: 'rejected', success: false }), 'cad_tool_rejected_unbound_or_unaudited'],
   ['rejected native web tool also fails', f => f.toolBridgeCalls.push({ ...f.toolBridgeCalls[0], tool: 'web_search', call_id: 'rejected', success: false }), 'tool_call_rejected_or_failed'],
-  ['one ACP completion cannot prove two native calls', f => {
-    f.toolBridgeCalls.push({ ...f.toolBridgeCalls[0], call_id: 'second-native' })
-    f.nativeAudit.push({ ...f.nativeAudit[0], call_id: 'second-native' })
-  }, 'native_calls_not_individually_completed_or_duplicate'],
+  ['one ACP invocation cannot prove two native calls', f => {
+    f.toolBridgeCalls.push({ ...f.toolBridgeCalls[0], call_id: '22222222-2222-4222-8222-222222222222' })
+    f.nativeAudit.push({ ...f.nativeAudit[0], call_id: '22222222-2222-4222-8222-222222222222' })
+  }, 'cordis_tool_arguments_or_identity_missing_or_unmatched'],
+  ['duplicate native UUID cannot represent two invocations', f => {
+    f.toolEvents.push({ ...f.toolEvents[0], tool_call_id: 'second-acp-call' })
+    f.toolBridgeCalls.push({ ...f.toolBridgeCalls[0] })
+    f.nativeAudit.push({ ...f.nativeAudit[0] })
+  }, 'native_calls_not_individually_observed_or_duplicate'],
+  ['ACP call with different arguments cannot prove bridge call', f => {
+    f.toolEvents[0].arguments_sha256_24 = toolArgumentsFingerprint({ fixture: false })
+  }, 'cordis_tool_arguments_or_identity_missing_or_unmatched'],
+  ['unbound ACP CAD call is rejected', f => {
+    f.toolEvents.push({ ...f.toolEvents[0], tool_call_id: 'extra-call|44444444-4444-4444-8444-444444444444' })
+  }, 'cad_tool_rejected_unbound_or_unaudited'],
+  ['ACP tool name mismatch cannot prove bridge call', f => { f.toolEvents.forEach(event => { event.title = 'cad_preview_model' }) }, 'cad_tool_rejected_unbound_or_unaudited'],
+  ['ACP failed update remains a hard failure after Rust success', f => { f.toolEvents[1].status = 'failed' }, 'tool_call_rejected_or_failed'],
+  ['missing ACP argument fingerprint fails closed', f => { delete f.toolEvents[0].arguments_sha256_24 }, 'cordis_tool_arguments_or_identity_missing_or_unmatched'],
   ['foreign bridge session', f => { f.toolBridgeCalls[0].session_id = 'old' }, 'cad_tool_rejected_unbound_or_unaudited'],
   ['audit from unrelated UUID', f => { f.nativeAudit[0].call_id = 'other' }, 'cad_tool_rejected_unbound_or_unaudited'],
   ['direct CLI postcheck is not DSH execution', f => { f.nativeAudit[0].call_id = 'probe-0'; f.toolBridgeCalls = [] }, 'successful_cordis_cad_call_and_native_audit_missing'],
@@ -154,6 +201,7 @@ test('loopback bridge records exact native UUID and scope without token or bodie
     assert.equal(proxy.records[0].success, true)
     assert.equal(proxy.records[0].authenticated_scope, true)
     assert.equal(proxy.records[0].call_id, 'native-uuid')
+    assert.equal(proxy.records[0].arguments_sha256_24, toolArgumentsFingerprint({ private: 'private-argument-marker' }))
     const serialized = JSON.stringify(proxy.records)
     for (const secret of ['fixture-token-marker', 'private-argument-marker', 'private-result-marker']) assert.equal(serialized.includes(secret), false)
   } finally { await proxy.close(); await new Promise(done => native.close(done)) }
