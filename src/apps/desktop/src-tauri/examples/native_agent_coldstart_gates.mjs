@@ -258,9 +258,21 @@ export function evaluateColdstartGates(input) {
       && !String(audit.call_id).startsWith('probe-') && !calls.some(call => call.call_id === audit.call_id)), 'native_cad_audit_without_cordis_call'],
     [![...acpTools.values()].some(event => event.tool?.startsWith('cad_') && event.status === 'failed'), 'acp_cad_tool_failed'],
   ])
-  gate('acp_cad_tool_results', [
-    [observedCadTools.length > 0 && observedCadTools.every(event => event.status === 'completed'), 'acp_cad_tool_result_completion_missing'],
-  ])
+  const acpResultReasons = []
+  if (observedCadTools.length === 0 || observedCadTools.some(event => event.terminal_updates === 0)) {
+    acpResultReasons.push('acp_cad_tool_result_completion_missing')
+  }
+  if (observedCadTools.some(event => event.terminal_updates > 0 && event.status === 'failed')) {
+    acpResultReasons.push('acp_cad_tool_result_failed')
+  }
+  if (observedCadTools.some(event => event.terminal_updates > 1)) {
+    acpResultReasons.push('acp_cad_tool_result_terminal_update_duplicated')
+  }
+  if (observedCadTools.some(event => event.terminal_updates === 1 && !['completed', 'failed'].includes(event.status))) {
+    acpResultReasons.push('acp_cad_tool_result_terminal_status_invalid')
+  }
+  gates.acp_cad_tool_results = { status: acpResultReasons.length ? 'failed' : 'passed', reasons: acpResultReasons }
+  failed.push(...acpResultReasons)
   const preview = domain.last_preview, checks = preview?.local_geometry_checks, finish = domain.finish_summary
   const review = finish?.overall_geometry_review, evidence = review?.result?.evidence
   const { host_attestation: ignoredAttestation, ...unsignedChecks } = checks || {}

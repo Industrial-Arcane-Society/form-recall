@@ -62,7 +62,7 @@ test('complete same-run evidence is passed; host acceptance alone is insufficien
   assert.deepEqual(result.matched_native_call_ids, ['11111111-1111-4111-8111-111111111111'])
 })
 
-test('Rust success and exact tool/argument binding pass without ACP completed update', () => {
+test('missing ACP terminal update is distinguished from a failed terminal update', () => {
   const input = fixture()
   input.toolEvents = [input.toolEvents[0]]
   const result = evaluateColdstartGates(input)
@@ -70,6 +70,16 @@ test('Rust success and exact tool/argument binding pass without ACP completed up
   assert.equal(result.gates.acp_cad_tool_results.status, 'failed')
   assert.deepEqual(result.gates.acp_cad_tool_results.reasons, ['acp_cad_tool_result_completion_missing'])
   assert.deepEqual(result.matched_native_call_ids, ['11111111-1111-4111-8111-111111111111'])
+})
+
+test('ACP failed terminal update has its own reason and remains a hard failure', () => {
+  const input = fixture()
+  input.toolEvents[1].status = 'failed'
+  const result = evaluateColdstartGates(input)
+  assert.equal(result.gates.cordis_cad_tools.status, 'failed')
+  assert.equal(result.gates.acp_cad_tool_results.status, 'failed')
+  assert.deepEqual(result.gates.acp_cad_tool_results.reasons, ['acp_cad_tool_result_failed'])
+  assert.equal(result.status, 'failed')
 })
 
 test('normalized argument fingerprints ignore object key order and reveal no argument text', () => {
