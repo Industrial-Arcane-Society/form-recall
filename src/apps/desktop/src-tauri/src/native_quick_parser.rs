@@ -331,7 +331,7 @@ fn parse_stepped_shaft(raw: &str, text: &str) -> Value {
 fn parse_flange(raw: &str, text: &str) -> Value {
     let diameter = scalar(text, &["outer diameter", "外径"]).unwrap_or(120.0);
     let thickness = scalar(text, &["thickness", "厚度", "厚", "height", "高"]).unwrap_or(20.0);
-    let inner = scalar(text, &["inner diameter", "内径", "内孔"])
+    let inner = scalar(text, &["inner diameter", "内径", "内孔", "孔径"])
         .filter(|value| value.is_finite() && *value > 0.0);
     if !diameter.is_finite() || !thickness.is_finite() || diameter <= 0.0 || thickness <= 0.0 {
         return parse_result_with_issue(

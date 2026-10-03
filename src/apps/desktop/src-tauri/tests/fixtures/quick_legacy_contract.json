@@ -10,6 +10,13 @@
       ]
     },
     {
+      "input": "法兰外径100厚10孔径20",
+      "features": [
+        {"index": 0, "kind": "cylinder", "operation": "add", "parameters": {"radius": 50.0, "height": 10.0, "base": false, "segments": 64}},
+        {"index": 1, "kind": "hole", "operation": "cut", "parameters": {"diameter": 20.0, "through": true, "pos": "center", "segments": 24}}
+      ]
+    },
+    {
       "input": "阶梯轴 直径 40 长 60, 直径 30 长 50, 直径 20 长 40",
       "features": [
         {"index": 0, "kind": "cylinder", "operation": "add", "parameters": {"radius": 20.0, "height": 60.0, "center": [0.0, 0.0, 0.0], "base": true, "segments": 48}},
