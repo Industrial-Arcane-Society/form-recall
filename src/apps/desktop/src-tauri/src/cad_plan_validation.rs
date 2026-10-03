@@ -183,7 +183,7 @@ const SPECS: &[Spec] = &[
         catia_status: "approximate",
         catia_reason: "CATIA 以直齿圆柱轮廓近似，省略锥面。",
         local_status: "approximate",
-        local_reason: "复刻当前 Document/CADPlan 梯形齿与线性锥缩网格并转为闭合 facet-BREP；不是渐开线或解析齿面",
+        local_reason: "现有锥齿轮网格配方转 facet-BREP",
     },
     Spec {
         kind: "crankshaft",
