@@ -1451,6 +1451,90 @@ mod tests {
     }
 
     #[test]
+    fn native_executor_rejects_unbound_or_invalid_inventory_before_review_provider() {
+        let cases = [
+            "stale_source_sha",
+            "roi_only",
+            "empty_evidence",
+            "duplicate_evidence",
+        ];
+        for case in cases {
+            let (dir, reference_id, source_sha, evidence_id) = current_vision_fixture();
+            let reference = crate::native_vision_assets::reference_input(
+                &dir.join("reference-images.json"),
+                Some(&reference_id),
+                Some(1),
+                None,
+            )
+            .unwrap();
+            let mut inventory = json!({
+                "reference_id":reference_id,
+                "source_sha256":source_sha,
+                "roi_norm":null,
+                "roi_cache_key":reference.roi_cache_key,
+                "observation_valid":true,
+                "observation_id":"fixture-observation-v1",
+                "observation_version":1,
+                "visible_evidence":[{
+                    "evidence_id":evidence_id,
+                    "description":"A clearly visible outer outline"
+                }]
+            });
+            let mut state = read_json_object(&dir.join("cad-state.json")).unwrap();
+            match case {
+                "stale_source_sha" => {
+                    inventory["source_sha256"] = json!("0".repeat(64));
+                    state["reference_inventory"][&reference_id] = inventory;
+                }
+                "roi_only" => {
+                    state["reference_inventory_roi"] = json!({});
+                    state["reference_inventory_roi"][&reference_id] = json!({});
+                    state["reference_inventory_roi"][&reference_id][&reference.roi_cache_key] =
+                        inventory;
+                }
+                "empty_evidence" => {
+                    inventory["visible_evidence"] = json!([]);
+                    state["reference_inventory"][&reference_id] = inventory;
+                }
+                "duplicate_evidence" => {
+                    let evidence = inventory["visible_evidence"][0].clone();
+                    inventory["visible_evidence"]
+                        .as_array_mut()
+                        .unwrap()
+                        .push(evidence);
+                    state["reference_inventory"][&reference_id] = inventory;
+                }
+                _ => unreachable!("test case is enumerated above"),
+            }
+            write_json_atomic(&dir.join("cad-state.json"), &state).unwrap();
+
+            let provider = vision_provider("http://127.0.0.1:1/v1", "must-not-be-called");
+            let executor = NativeToolExecutor::new(&dir, &dir, true)
+                .unwrap()
+                .with_vision(provider);
+            let error = executor
+                .execute(
+                    "invalid-inventory",
+                    "cad_review_reference_similarity",
+                    &json!({"view":"front","preview_generation":9,"reference_id":reference_id}),
+                    Duration::from_secs(2),
+                )
+                .unwrap_err();
+            assert!(
+                error.contains("source inventory") || error.contains("原图SHA/ROI"),
+                "case={case}, error={error}"
+            );
+            assert!(
+                read_json_object(&dir.join("cad-state.json")).unwrap()["reference_similarity_history"]
+                    .as_array()
+                    .is_none_or(Vec::is_empty),
+                "case={case} must not create a review record"
+            );
+            fs::remove_dir_all(dir).unwrap();
+        }
+    }
+
+    #[test]
     fn vision_tools_require_the_native_provider_without_fallback() {
         let (dir, executor) = fixture_with_online(true);
         for tool in ["cad_inspect_references", "cad_review_reference_similarity"] {
