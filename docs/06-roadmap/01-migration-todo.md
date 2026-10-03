@@ -51,7 +51,7 @@
 | F5.1 | Rust 七视图 PNG 与深度遮挡 | **已完成** | 五项定向测试、真实 OCCT 1000 三角形 CLI 七视图通过；非 Agent 图片验收 |
 | F5.2 | Rust AIMODEL / binary STL 兼容读写 | **已完成** | 5 项单测、旧工程 roundtrip、Python Document 对拍及实际 STL 全顶点检查通过；Quick 和生产导出接线尚待完成 |
 | F5.3 | Quick 明确尺寸原生创建闭环 | **已完成（限定范围）** | Rust Quick 3/3、解析 7/7、Vue build；CADPlan→OCCT→GLB/AIMODEL/STL，旧语法全量迁移和共享活动状态仍待 F7.G2；见 [记录](./27-f5-native-quick-build.md) |
-| F6 | Python 缩减到 CATIA COM | **进行中（拆为 F6.1–F6.7）** | Agent Python tool worker 已删除；桌面启动仍强制 Python bridge。按下方子任务先迁原生配置/provider 与 bootstrap，再迁桌面服务，最后将 Python 限定为按需 CATIA COM 并验收安装包 |
+| F6 | Python 缩减到 CATIA COM | **进行中（拆为 F6.1–F6.7）** | Agent Python tool worker 已删除；F6.1 原生配置/provider 与 F6.2 原生 bootstrap/readiness 代码及定向接线已提交。Quick、Agent 启动和本地活动模型代码不再要求 Python bridge；parts、examples、手工联网、诊断等桌面服务仍待迁移，最终无 Python 安装包冷启动仍待验收 |
 | F7 | 多模态盲测与科学验收基线 | **进行中** | 生产同源冷启动 runner 已执行一轮真实原图盲测，模型候选因孔位/视图复核未通过而被拒；仍需修复并完成图片、纯文字、多轮、返修、取消及 CATIA 分层验收 |
 
 ## F6 子任务与验收顺序
@@ -59,7 +59,7 @@
 | ID | 优先级 | Feature | 完成条件 / 提交边界 |
 |---|---|---|---|
 | F6.1 | P0 | Rust 原生设置与 provider 管理 | **已完成，提交 `16756a3`**：原生 defaults、旧 flat 配置迁移、多档案与 stage overrides、活动档案、未知字段保留、模板及 `/models` 请求；Rust 7/7、Vue wiring 8/8、前端 build 通过。 |
-| F6.2 | P0 | Rust 桌面 bootstrap 与依赖状态 | Vue 初始化使用原生 settings/runtime/resource/active-model 命令；Python 缺失时 Quick、Agent 和本地模型仍可启动；DSH、OCCT、CATIA readiness 分开报告。资源定位不再要求 Python 源码存在。依赖 F6.1。 |
+| F6.2 | P0 | Rust 桌面 bootstrap 与依赖状态 | **代码已提交 `3e8b247`**：Vue 使用原生 settings/runtime/resource/active-model 命令，不再握手/初始化 Python；资源根不要求 Python 源码；DSH 缺失不阻塞桌面、Quick 与本地活动模型，仅用户发起 Agent 时进入 DSH 安装；DSH/OCCT/CATIA/Python 状态分开显示。`native_bootstrap` 3/3、`native_active_model` 7/7、Vue wiring 2/2、前端 build 通过。未开 GUI，物理无 Python 安装包冷启动留待 F6.7。依赖 F6.1。 |
 | F6.3 | P1 | 原生零件目录与示例列表 | 迁移只读 metadata、aliases、sample values/prompts、顺序与计数；与旧 Python 输出逐字段对拍，不把目录项冒充已支持的几何能力。 |
 | F6.4 | P1 | 原生诊断、帮助和路径操作 | 版本/打开路径/自检走 Rust；分别显示 Runtime、OCCT、CATIA 与外部 MCP 状态。Cordis 工具数不能冒充 MCP 服务连接成功。 |
 | F6.5 | P1 | 桌面手工联网查询 | 保留旧 `online.ask` 的 query 扩展、正文读取、尺寸参数和 suggestion 契约；只迁移 `search/open_result` 不算等价完成。 |
