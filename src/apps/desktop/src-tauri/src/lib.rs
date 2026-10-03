@@ -11,6 +11,7 @@ pub mod native_cad_metadata;
 pub mod native_cad_session;
 pub mod native_cad_tools;
 pub mod native_catia_adapter;
+pub mod native_catia_runtime;
 pub mod native_diagnostics;
 pub mod native_fastener_specs;
 pub mod native_feature_specs;
@@ -1236,9 +1237,24 @@ fn run_active_catia_adapter(
     open_in_catia: bool,
 ) -> Result<Value, String> {
     let (root, packaged) = catia_adapter_root(app)?;
-    let (python, args) = python_command(app, &root, packaged)?;
-    let adapter = root.join("ai_modeler").join("catia_com_adapter.py");
     let data_dir = app_data_dir(app)?;
+    let (python, args) = if packaged {
+        let python_bundle = app
+            .path()
+            .resolve("python", BaseDirectory::Resource)
+            .map_err(|error| format!("无法定位嵌入式 CATIA Python 资源：{error}"))?;
+        let catia_bootstrap = app
+            .path()
+            .resolve("catia-bootstrap", BaseDirectory::Resource)
+            .map_err(|error| format!("无法定位 CATIA pywin32 资源：{error}"))?;
+        (
+            native_catia_runtime::prepare(&root, &python_bundle, &catia_bootstrap, &data_dir)?,
+            Vec::new(),
+        )
+    } else {
+        python_command(app, &root, false)?
+    };
+    let adapter = root.join("ai_modeler").join("catia_com_adapter.py");
     native_catia_adapter::run(
         &python,
         &args,
