@@ -4,7 +4,7 @@ import { createServer, createConnection } from 'node:net'
 import { mkdtempSync, mkdirSync, writeFileSync, rmSync } from 'node:fs'
 import { join } from 'node:path'
 import { tmpdir } from 'node:os'
-import { createAuditedToolProxy, evaluateColdstartGates, parseEvidenceJsonl, parsePostcheckState, readRunArtifacts, toolArgumentsFingerprint } from './native_agent_coldstart_gates.mjs'
+import { createAuditedToolProxy, evaluateColdstartGates, parseEvidenceJsonl, parsePostcheckState, readRunArtifacts, summarizeAcpTerminalUpdateDiagnostics, toolArgumentsFingerprint } from './native_agent_coldstart_gates.mjs'
 
 // Synthetic contract fixture: no provider credentials, image bytes, geometry
 // execution or model API are used. It is not scientific acceptance evidence.
@@ -156,6 +156,36 @@ test('two terminal ACP updates with the same valid call ID remain a hard duplica
   const result = evaluateColdstartGates(input)
   assert.equal(result.status, 'failed')
   assert.ok(result.gates.acp_cad_tool_results.reasons.includes('acp_cad_tool_result_terminal_update_duplicated'))
+})
+
+test('ACP terminal diagnostics expose only sanitized status categories and aggregate counts', () => {
+  const marker = 'private-event-id-or-payload-marker'
+  const projection = summarizeAcpTerminalUpdateDiagnostics([
+    { kind: 'tool_call', tool_call_id: marker, title: 'cad_private_tool_name', status: 'in_progress', rawInput: marker },
+    { kind: 'tool_call_update', tool_call_id: marker, status: 'completed', content: marker, rawOutput: marker },
+    { kind: 'tool_call_update', tool_call_id: marker, status: 'completed', content: marker, rawOutput: marker },
+    { kind: 'tool_call', tool_call_id: 'another-private-id', title: 'cad_other_private_tool', status: 'pending' },
+    { kind: 'tool_call_update', tool_call_id: 'another-private-id', status: 'completed' },
+    { kind: 'tool_call_update', tool_call_id: 'another-private-id', status: 'failed' },
+    { kind: 'tool_call_update', title: 'cad_unbound_private_tool', status: 'failed', error: marker },
+  ])
+  assert.deepEqual(projection.call_group_status_sequences, [
+    { tool_type: 'cad', sequence_category: 'conflicting_terminal_statuses', count: 1 },
+    { tool_type: 'cad', sequence_category: 'repeated_same_terminal_status', count: 1 },
+  ])
+  assert.deepEqual(projection.terminal_count_distribution, { '0': 0, '1': 0, '2': 2, '3_plus': 0 })
+  assert.equal(projection.same_sanitized_terminal_summary_pair_count, 1)
+  assert.equal(projection.different_sanitized_terminal_summary_pair_count, 1)
+  assert.equal(projection.missing_tool_call_id_event_count, 1)
+  const serialized = JSON.stringify(projection)
+  for (const secret of [marker, 'another-private-id', 'cad_private_tool_name', 'cad_other_private_tool', 'cad_unbound_private_tool']) {
+    assert.equal(serialized.includes(secret), false)
+  }
+  assert.equal(projection.schema, 'acp_terminal_update_projection_v1')
+  assert.ok(projection.tool_status_update_counts.some(row => row.tool_type === 'cad'
+    && row.kind === 'update' && row.status === 'failed' && row.count === 1))
+  assert.ok(projection.tool_status_update_counts.some(row => row.tool_type === 'unknown'
+    && row.kind === 'update' && row.status === 'failed' && row.count === 1))
 })
 
 const negativeFixtures = [

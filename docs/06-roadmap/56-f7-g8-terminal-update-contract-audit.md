@@ -15,7 +15,7 @@ Protocol reference: [ACP v1 Tool Calls](https://agentclientprotocol.com/protocol
 
 ## What can and cannot be concluded
 
-The redacted Run13 gate reason establishes only that the current evaluator observed more than one terminal-status event in at least one aggregated CAD call row. It does not establish the number of affected calls, whether IDs were present, which terminal statuses occurred, their order, whether sanitized update fields agreed, or whether the collector observed one incoming notification more than once. Static code and the gate reason are insufficient to choose a correctness-preserving coalescing rule.
+The first redacted Run13 gate reason established only that the current evaluator observed more than one terminal-status event in at least one aggregated CAD call row. A later whitelist-only summary contained 38 diagnostics; the duplicate-terminal gate failed, `acp_cad_tool_call_id_missing` was absent, `isError=true` count was zero, and all four error/error-info/name/code presence flags were false. This narrows the duplicate observation to a nonempty-ID aggregation group and provides no Cordis tool-error presence signal. It still does not identify the group, terminal statuses/order, payload equality, or whether the collector observed one incoming notification more than once. No IDs, ordering, payloads, or raw events were read. Static code and the permitted summary remain insufficient to choose a correctness-preserving coalescing rule.
 
 Do not resolve this by lowering the threshold, ignoring one status, choosing the last status, or deduplicating solely by `(tool_call_id, status)`: each could conceal a real `completed`/`failed` conflict or erase a later meaningful state change. No production gate change is made in this audit.
 
@@ -33,6 +33,12 @@ Keep the existing cases that reject two terminal-status updates under a call ID 
 
 The fixture must model only fields exposed by the real adapter. Any new safe telemetry should be limited to counts, ordering/status classes, and a keyed or cryptographic digest over explicitly defined normalized fields; never persist raw tool content, arguments, error bodies, thoughts, provider responses, or images for this gate.
 
+## Safe diagnostic projection added after Run13
+
+The runner can now append an optional `acp_terminal_update_projection_v1` record to the existing tool-result diagnostics JSONL. It contains counts by broad tool category (`cad`, `non_cad`, `unknown`), event kind, and ACP status enum; a distribution of call-group status-sequence categories; terminal-count histogram; counts of equal/different pairs under the deliberately limited sanitized `(tool category, terminal status)` summary; and missing-ID event count. ACP IDs are used only transiently to aggregate groups and never emitted. Tool titles are reduced to the broad category; arbitrary title strings, payload fields, arguments, error data, and images are never included. Updates without an ID and without a title are classified as `unknown`. The existing strict gate is unchanged.
+
+The equal-summary-pair count means equality only under that safe projection. It is not evidence that full update payloads matched or that a replay occurred. Mixed status summaries show disagreement in the projected terminal status class, not the cause or source of that disagreement. The new fixture verifies aggregation, mixed/same terminal classifications, missing-ID counting, and absence of sentinel IDs/titles/payload fields from serialized output. This improves the next authorized diagnosis without classifying the historical Run13 event.
+
 ## Verification performed
 
-`node --test src/apps/desktop/src-tauri/examples/native_agent_coldstart_gates.test.mjs` passed 51/51 existing tests. These tests include missing-ID non-coalescing and rejection of two terminal updates with one valid ID. They validate the current strict behavior, not the classification of the Run13 event or a replay-safe repair. No runtime or external system was started.
+`node --check` passed for the runner and gate module. `node --test src/apps/desktop/src-tauri/examples/native_agent_coldstart_gates.test.mjs` passed 52/52. Existing cases still include missing-ID non-coalescing and rejection of two terminal updates with one valid ID. These checks validate the current strict behavior and the privacy of the projection, not the classification of the historical Run13 event or a replay-safe repair. No provider or new cold-start was run for this change.

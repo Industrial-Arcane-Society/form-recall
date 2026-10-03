@@ -2,10 +2,10 @@
 // API credentials stay in process memory / child env or stdin, never argv or logs.
 import { spawn, spawnSync } from 'node:child_process'
 import { createHash, randomUUID } from 'node:crypto'
-import { mkdirSync, readFileSync, writeFileSync, existsSync } from 'node:fs'
+import { appendFileSync, mkdirSync, readFileSync, writeFileSync, existsSync } from 'node:fs'
 import { basename, dirname, join, resolve } from 'node:path'
 import { createInterface } from 'node:readline'
-import { createAuditedToolProxy, evaluateColdstartGates, parseEvidenceJsonl, parsePostcheckState, readRunArtifacts, toolArgumentsFingerprint } from './native_agent_coldstart_gates.mjs'
+import { createAuditedToolProxy, evaluateColdstartGates, parseEvidenceJsonl, parsePostcheckState, readRunArtifacts, summarizeAcpTerminalUpdateDiagnostics, toolArgumentsFingerprint } from './native_agent_coldstart_gates.mjs'
 
 const cliArgs = process.argv.slice(2)
 const toolResultDiagnosticsEnabled = cliArgs.includes('--tool-result-diagnostics')
@@ -332,6 +332,14 @@ const strict = evaluateColdstartGates({
   dsh: { status: dshStatus, exit_code: dshExitCode }, toolEvents, toolBridgeCalls: toolProxy.records,
   nativeAudit, streamEvents, evidenceErrors,
 })
+if (toolResultDiagnosticsPath) {
+  const inRunToolEvents = toolEvents.filter(event => event.session_id === sessionId && event.run_id === runId
+    && event.turn_id === turnId && Number.isFinite(event.at_ms) && event.at_ms >= runStartedAt && event.at_ms <= runEndedAt)
+  const projection = summarizeAcpTerminalUpdateDiagnostics(inRunToolEvents)
+  try {
+    appendFileSync(toolResultDiagnosticsPath, JSON.stringify({ stage: 'acp_terminal_update_projection', ...projection }) + '\n', { mode: 0o600 })
+  } catch { /* diagnostic persistence must never change the acceptance result */ }
+}
 writeFileSync(join(output, 'strict-gates.json'), JSON.stringify(strict, null, 2))
 writeFileSync(join(output, 'tool-bridge-calls.json'), JSON.stringify(toolProxy.records, null, 2))
 writeFileSync(join(output, 'rust-postcheck-state.json'), JSON.stringify({ source: 'direct_local_postcheck_not_cordis', state: computedState }, null, 2))

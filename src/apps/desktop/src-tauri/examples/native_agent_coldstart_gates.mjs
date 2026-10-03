@@ -9,6 +9,85 @@ const rows = value => Array.isArray(value) ? value : []
 const nonempty = value => typeof value === 'string' && value.length > 0
 const digest = value => typeof value === 'string' && /^[a-f0-9]{64}$/.test(value)
 
+const acpStatusCategory = value => ['pending', 'in_progress', 'completed', 'failed'].includes(value) ? value : 'other'
+const acpToolCategory = value => typeof value === 'string' && value.startsWith('cad_') ? 'cad'
+  : typeof value === 'string' && value.length ? 'non_cad' : 'unknown'
+
+// Return an allowlisted count-only projection. Call IDs are used transiently
+// for grouping and are never included in the returned diagnostic.
+export function summarizeAcpTerminalUpdateDiagnostics(toolEvents = []) {
+  const groups = new Map(), missingIdentityEvents = []
+  const statusCounts = new Map()
+  for (const event of rows(toolEvents)) {
+    const isStart = event?.kind === 'tool_call'
+    const isUpdate = event?.kind === 'tool_call_update'
+    if (!isStart && !isUpdate) continue
+    const status = acpStatusCategory(event.status)
+    const titleCategory = acpToolCategory(event.title)
+    const countKey = `${titleCategory}\u0000${isStart ? 'start' : 'update'}\u0000${status}`
+    statusCounts.set(countKey, (statusCounts.get(countKey) || 0) + 1)
+    const terminal = isUpdate && ['completed', 'failed'].includes(status)
+    if (!nonempty(event.tool_call_id)) {
+      if ((isStart && titleCategory === 'cad') || terminal) missingIdentityEvents.push(event)
+      continue
+    }
+    const group = groups.get(event.tool_call_id) || { tool_type: 'unknown', statuses: [], terminal_summaries: [] }
+    if (titleCategory !== 'unknown') group.tool_type = titleCategory
+    group.statuses.push({ kind: isStart ? 'start' : 'update', status })
+    if (terminal) group.terminal_summaries.push({ tool_type: group.tool_type, status })
+    groups.set(event.tool_call_id, group)
+  }
+
+  const countRows = [...statusCounts.entries()].map(([key, count]) => {
+    const [tool_type, kind, status] = key.split('\u0000')
+    return { tool_type, kind, status, count }
+  }).sort((a, b) => a.tool_type.localeCompare(b.tool_type) || a.kind.localeCompare(b.kind) || a.status.localeCompare(b.status))
+  const sequenceCounts = new Map(), terminalCountDistribution = { '0': 0, '1': 0, '2': 0, '3_plus': 0 }
+  let sameTerminalSummaryPairCount = 0, differentTerminalSummaryPairCount = 0
+  for (const group of groups.values()) {
+    const terminal = group.terminal_summaries
+    const terminalCountBucket = terminal.length >= 3 ? '3_plus' : String(terminal.length)
+    terminalCountDistribution[terminalCountBucket] += 1
+    let sequence_category = 'status_only_other'
+    const statuses = group.statuses.map(item => item.status)
+    const terminalStatuses = terminal.map(item => item.status)
+    if (!terminal.length) sequence_category = statuses.includes('in_progress') || statuses.includes('pending')
+      ? 'progress_without_terminal' : 'no_terminal_status'
+    else if (new Set(terminalStatuses).size > 1) sequence_category = 'conflicting_terminal_statuses'
+    else if (terminal.length > 1) sequence_category = 'repeated_same_terminal_status'
+    else {
+      const terminalIndex = statuses.findIndex(status => ['completed', 'failed'].includes(status))
+      const progressBeforeTerminal = statuses.slice(0, terminalIndex).some(status => ['pending', 'in_progress'].includes(status))
+      const updateAfterTerminal = statuses.slice(terminalIndex + 1).length > 0
+      if (updateAfterTerminal) sequence_category = 'update_after_terminal'
+      else if (terminalStatuses[0] === 'completed') sequence_category = progressBeforeTerminal ? 'progress_then_completed' : 'completed_without_progress'
+      else sequence_category = progressBeforeTerminal ? 'progress_then_failed' : 'failed_without_progress'
+    }
+    const key = `${group.tool_type}\u0000${sequence_category}`
+    sequenceCounts.set(key, (sequenceCounts.get(key) || 0) + 1)
+    for (let left = 0; left < terminal.length; left += 1) {
+      for (let right = left + 1; right < terminal.length; right += 1) {
+        if (terminal[left].tool_type === terminal[right].tool_type && terminal[left].status === terminal[right].status) {
+          sameTerminalSummaryPairCount += 1
+        } else differentTerminalSummaryPairCount += 1
+      }
+    }
+  }
+  const callGroupStatusSequences = [...sequenceCounts.entries()].map(([key, count]) => {
+    const [tool_type, sequence_category] = key.split('\u0000')
+    return { tool_type, sequence_category, count }
+  }).sort((a, b) => a.tool_type.localeCompare(b.tool_type) || a.sequence_category.localeCompare(b.sequence_category))
+  return {
+    schema: 'acp_terminal_update_projection_v1',
+    tool_status_update_counts: countRows,
+    call_group_status_sequences: callGroupStatusSequences,
+    terminal_count_distribution: terminalCountDistribution,
+    same_sanitized_terminal_summary_pair_count: sameTerminalSummaryPairCount,
+    different_sanitized_terminal_summary_pair_count: differentTerminalSummaryPairCount,
+    missing_tool_call_id_event_count: missingIdentityEvents.length,
+  }
+}
+
 // Persist only a short digest of tool arguments so ACP invocation events can
 // be joined to the native bridge without retaining user/model parameter data.
 export function toolArgumentsFingerprint(value) {
