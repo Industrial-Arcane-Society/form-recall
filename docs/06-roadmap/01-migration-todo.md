@@ -60,13 +60,13 @@
 |---|---|---|---|
 | F6.1 | P0 | Rust 原生设置与 provider 管理 | **已完成，提交 `16756a3`**：原生 defaults、旧 flat 配置迁移、多档案与 stage overrides、活动档案、未知字段保留、模板及 `/models` 请求；Rust 7/7、Vue wiring 8/8、前端 build 通过。 |
 | F6.2 | P0 | Rust 桌面 bootstrap 与依赖状态 | **代码已提交 `3e8b247`**：Vue 使用原生 settings/runtime/resource/active-model 命令，不再握手/初始化 Python；资源根不要求 Python 源码；DSH 缺失不阻塞桌面、Quick 与本地活动模型，仅用户发起 Agent 时进入 DSH 安装；DSH/OCCT/CATIA/Python 状态分开显示。`native_bootstrap` 3/3、`native_active_model` 7/7、Vue wiring 2/2、前端 build 通过。未开 GUI，物理无 Python 安装包冷启动留待 F6.7。依赖 F6.1。 |
-| F6.3 | P1 | 原生零件目录与示例列表 | 迁移只读 metadata、aliases、sample values/prompts、顺序与计数；与旧 Python 输出逐字段对拍，不把目录项冒充已支持的几何能力。 |
+| F6.3 | P1 | 原生零件目录与示例列表 | **已完成，提交 `6e48a0e`**：Rust 原生命令和 Vue 直连迁移 `parts.list`/`samples.list`；与旧 Python `Bridge.dispatch` 实例逐字段对拍，66 个零件行、17 个示例及 4 种筛选完全一致，涵盖类别、别名、参数、样例值/提示、计数、顺序。Rust 3/3、Vue 2/2、`npm run build` 通过。快照是静态资源，源 metadata/KB/sample 更新后需重建并重跑 parity；目录条目不代表几何内核支持。详情见 [F6.3 验收记录](./55-f6.3-native-parts-catalog.md)。 |
 | F6.4 | P1 | 原生诊断、帮助和路径操作 | 版本/打开路径/自检走 Rust；分别显示 Runtime、OCCT、CATIA 与外部 MCP 状态。Cordis 工具数不能冒充 MCP 服务连接成功。 |
 | F6.5 | P1 | 桌面手工联网查询 | 保留旧 `online.ask` 的 query 扩展、正文读取、尺寸参数和 suggestion 契约；只迁移 `search/open_result` 不算等价完成。 |
 | F6.6 | P2 | 按需 CATIA COM adapter | 仅在 CATIA 操作时启动最小 Python COM 服务；输入来自 Rust 当前活动模型，并对齐 F5 原生导出格式/来源，不使用独立旧 Python Document。 |
 | F6.7 | P2 | Python 依赖与安装包收缩 | 前述桌面服务迁完后再精简 requirements/资源清单；通过无全局 Python/Node 的安装包冷启动证明非 CATIA 场景不启动 Python，CATIA 操作按需启动适配器。 |
 
-当前审计依据：`feat/rust-dsh-acp-host` 的实际源码。F6.1 与 F6.2 是解除桌面常驻 Python 门槛的 P0；parts、examples、联网、外部 MCP 均需保留各自旧契约，不以同名 Rust 工具存在视为迁移完成。
+当前审计依据：`feat/rust-dsh-acp-host` 的实际源码。F6.1 与 F6.2 是解除桌面常驻 Python 门槛的 P0；F6.3 已按旧 Python 输出对拍完成。联网和外部 MCP 仍需保留各自旧契约，不以同名 Rust 工具存在视为迁移完成。
 
 ## 已确认的 Agent 链路治理
 
