@@ -806,14 +806,14 @@ async function showMessage(title: string, body: string, kind: 'info' | 'warning'
 
 async function loadParts() {
   partsBusy.value = true
-  try { parts.value = await backendCall('parts.list', { query: partsQuery.value }) }
+  try { parts.value = await invoke('native_parts_list', { query: partsQuery.value }) }
   catch (error) { setStatus('零件库加载失败：' + errorMessage(error), 'error') }
   finally { partsBusy.value = false }
 }
 
 async function openSamples() {
   if (!sampleRows.value.length) {
-    try { sampleRows.value = await backendCall('samples.list') }
+    try { sampleRows.value = await invoke('native_samples_list') }
     catch (error) { setStatus('示例列表加载失败：' + errorMessage(error), 'error'); return }
   }
   samplesOpen.value = !samplesOpen.value
@@ -1121,8 +1121,8 @@ onUnmounted(() => {
           <div v-if="!documentState.features.length && !previewUrl" class="canvas-empty">
             <span class="empty-icon"><UiIcon name="box" :size="27" :stroke-width="1.6" /></span>
             <strong>开始创建你的第一个模型</strong>
-            <p>从左侧输入描述，或从零件库选择标准件示例</p>
-            <button @click="panel = 'parts'"><UiIcon name="boxes" :size="16" />浏览标准零件库</button>
+            <p>从左侧输入描述，或从零件目录选择文本示例</p>
+            <button @click="panel = 'parts'"><UiIcon name="boxes" :size="16" />浏览零件目录</button>
           </div>
           <div class="axis-legend"><span><i class="axis-x"></i>X</span><span><i class="axis-y"></i>Y</span><span><i class="axis-z"></i>Z</span><small>毫米 (mm)</small></div>
           <div class="canvas-tools-bottom"><button @click="saveSnapshot('single')"><UiIcon name="camera" :size="15" />截图</button><button @click="saveSnapshot('four')"><UiIcon name="grid" :size="15" />四视图</button><button @click="fitView"><UiIcon name="maximize" :size="15" />适应</button></div>
@@ -1138,7 +1138,7 @@ onUnmounted(() => {
           <button :class="{ active: panel === 'params' }" @click="panel = 'params'"><UiIcon name="settings" :size="16" />参数</button>
           <button :class="{ active: panel === 'stats' }" @click="panel = 'stats'"><UiIcon name="chart" :size="16" />统计</button>
           <button :class="{ active: panel === 'logs' }" @click="panel = 'logs'"><UiIcon name="file-text" :size="16" />日志</button>
-          <button :class="{ active: panel === 'parts' }" @click="panel = 'parts'"><UiIcon name="boxes" :size="16" />零件库</button>
+          <button :class="{ active: panel === 'parts' }" @click="panel = 'parts'"><UiIcon name="boxes" :size="16" />零件目录</button>
         </div>
         <section v-if="panel === 'tree'" class="inspector-content tree-content">
           <div class="inspector-section-title"><div><span class="section-icon"><UiIcon name="list-tree" :size="17" /></span><strong>零件特征</strong><small>{{ documentState.features.length }}</small></div><button class="quiet-icon" title="清空特征" @click="clearFeatures"><UiIcon name="trash" /></button></div>
@@ -1186,12 +1186,13 @@ onUnmounted(() => {
         </section>
 
         <section v-else class="inspector-content parts-content">
-          <div class="inspector-section-title"><div><span class="section-icon"><UiIcon name="boxes" :size="17" /></span><strong>标准零件库</strong></div><button class="quiet-icon" title="刷新" @click="loadParts"><UiIcon name="refresh" /></button></div>
+          <div class="inspector-section-title"><div><span class="section-icon"><UiIcon name="boxes" :size="17" /></span><strong>零件目录</strong></div><button class="quiet-icon" title="刷新" @click="loadParts"><UiIcon name="refresh" /></button></div>
+          <p class="parts-catalog-note">目录条目和文本示例仅供参考，不代表几何内核已支持对应零件建模。</p>
           <div class="parts-search"><UiIcon name="search" :size="16" /><input v-model="partsQuery" placeholder="搜索零件类别或别名"><button v-if="partsQuery" @click="partsQuery = ''"><UiIcon name="close" :size="15" /></button></div>
           <div class="parts-list">
-            <div v-if="partsBusy" class="parts-loading">正在读取参数化零件定义…</div>
+            <div v-if="partsBusy" class="parts-loading">正在读取零件目录…</div>
             <div v-for="part in parts" :key="part.category" class="part-card">
-            <div class="part-card-top"><span class="part-icon"><UiIcon name="box" :size="17" /></span><div><strong>{{ part.category }}</strong><small>{{ part.manual_count ? '手册数据 ' + part.manual_count + ' 条' : '参数化零件' }}</small></div><button title="填入示例描述" @click="usePartSample(part.sample_prompt)"><UiIcon name="arrow-up-right" :size="16" /></button></div>
+            <div class="part-card-top"><span class="part-icon"><UiIcon name="box" :size="17" /></span><div><strong>{{ part.category }}</strong><small>{{ part.manual_count ? '参考条目 ' + part.manual_count + ' 条' : '描述参考' }}</small></div><button title="填入示例描述" @click="usePartSample(part.sample_prompt)"><UiIcon name="arrow-up-right" :size="16" /></button></div>
               <p>{{ (part.aliases || []).slice(0, 4).join(' · ') }}</p>
               <button class="part-sample" @click="usePartSample(part.sample_prompt)">{{ part.sample_prompt || part.category }} <span>填入 <UiIcon name="arrow-up-right" :size="14" /></span></button>
             </div>

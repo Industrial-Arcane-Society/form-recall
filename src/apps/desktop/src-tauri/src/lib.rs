@@ -18,6 +18,7 @@ pub mod native_knowledge;
 pub mod native_model_io;
 pub mod native_occt;
 pub mod native_occt_runtime;
+pub mod native_parts_catalog;
 pub mod native_parametric_features;
 pub mod native_plan_geometry;
 pub mod native_quick;
@@ -1954,6 +1955,8 @@ pub fn run() {
             active_model_update_feature,
             active_model_import_project,
             active_model_export_snapshot,
+            native_parts_catalog::native_parts_list,
+            native_parts_catalog::native_samples_list,
             native_settings::native_settings_load,
             native_settings::native_settings_save,
             native_settings::native_provider_templates,

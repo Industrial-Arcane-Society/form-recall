@@ -276,6 +276,7 @@ body.is-resizing-panels, body.is-resizing-panels * { cursor: col-resize !importa
 .log-group h3 { margin: 0 0 8px; color: #88949d; font-size: 12px; }.log-group p, .event-log p { margin: 0 0 7px; color: #76858e; font: 12px/1.5 'DM Mono', monospace; white-space: pre-wrap; word-break: break-word; }
 .event-log { min-height: 0; overflow: auto; }.event-log p { color: #909da5; }
 .parts-search { display: flex; align-items: center; gap: 7px; height: 32px; margin-bottom: 12px; padding: 0 8px; border: 1px solid var(--line); border-radius: 6px; color: #a1acb3; }
+.parts-catalog-note { margin: -4px 0 11px; color: #929ea6; font-size: 11px; line-height: 1.5; }
 .parts-search input { width: 100%; border: 0; outline: 0; color: var(--ink); background: transparent; font-size: 12px; }.parts-search input::placeholder { color: #adb7bd; }.parts-search button { border: 0; color: #a1acb3; background: transparent; cursor: pointer; }
 .parts-list { display: flex; flex-direction: column; gap: 8px; }.parts-loading { padding: 14px 4px; color: #92a0a8; font-size: 12px; }
 .part-card { padding: 9px; border: 1px solid var(--line); border-radius: 7px; background: var(--panel); }.part-card-top { display: flex; align-items: center; gap: 7px; }
