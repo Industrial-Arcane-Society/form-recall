@@ -1258,6 +1258,178 @@ mod tests {
         assert_eq!(body["stream"], false);
         fs::remove_dir_all(dir).unwrap();
     }
+
+    // The preview is a previously committed, current host preview. Generating
+    // a CAD preview is runtime-specific and is covered separately.
+    fn current_vision_fixture() -> (PathBuf, String, String, String) {
+        use sha2::{Digest, Sha256};
+
+        let (dir, _) = fixture();
+        let source = dir.join("reference.png");
+        let preview = dir.join("preview-front.png");
+        image::RgbImage::from_pixel(12, 10, image::Rgb([30, 80, 140]))
+            .save(&source)
+            .unwrap();
+        image::RgbImage::from_pixel(12, 10, image::Rgb([140, 80, 30]))
+            .save(&preview)
+            .unwrap();
+        let source_bytes = fs::read(&source).unwrap();
+        let source_sha = format!("{:x}", Sha256::digest(&source_bytes));
+        let reference_id = format!("sha256:{source_sha}");
+        let manifest = dir.join("reference-images.json");
+        fs::write(
+            &manifest,
+            serde_json::to_vec(&json!({"images":[{"id":reference_id,"sha256":source_sha,
+                "path":source,"filename":"fixture.png","media_type":"image/png"}]})).unwrap(),
+        )
+        .unwrap();
+        fs::write(&dir.join("user-turns.json"), br#"{"turns":[]}"#).unwrap();
+        let selected = crate::native_vision_assets::reference_input(
+            &manifest,
+            Some(&reference_id),
+            Some(1),
+            None,
+        )
+        .unwrap();
+        let evidence_id = format!(
+            "{reference_id}:roi-{}:obs-1:outline",
+            &selected.roi_cache_key[..10]
+        );
+        let plan = json!({"features":[{"id":"body","kind":"box","operation":"add"}]});
+        let fingerprint = crate::cad_plan::geometry_fingerprint(&plan).unwrap();
+        let preview_bytes = fs::read(&preview).unwrap();
+        let preview_sha = format!("{:x}", Sha256::digest(&preview_bytes));
+        let state = json!({
+            "revision": 4,
+            "plan": plan,
+            "last_preview": preview,
+            "preview_revision": 4,
+            "previews": [{"revision":4,"preview_generation":9,"view":"front",
+                "preview_image_path":preview,"preview_sha256":preview_sha,
+                "geometry_fingerprint":fingerprint,"render_options":{"view":"front"}}],
+            "reference_inventory": {},
+            "construction_milestone":{"revision":4,"completed_feature_ids":["body"],"expected_feature_ids":["body"]},
+            "actions": []
+        });
+        write_json_atomic(&dir.join("cad-state.json"), &state).unwrap();
+        (dir, reference_id, source_sha, evidence_id)
+    }
+
+    fn mock_two_vision_responses(first: Value, second: Value) -> String {
+        use std::io::{Read, Write};
+        use std::net::TcpListener;
+
+        let listener = TcpListener::bind("127.0.0.1:0").unwrap();
+        let address = listener.local_addr().unwrap();
+        thread::spawn(move || {
+            for content in [first, second] {
+                let (mut stream, _) = listener.accept().unwrap();
+                stream.set_read_timeout(Some(Duration::from_secs(5))).unwrap();
+                let mut request = Vec::new();
+                let mut chunk = [0u8; 8192];
+                let header_end = loop {
+                    let n = stream.read(&mut chunk).unwrap();
+                    assert_ne!(n, 0);
+                    request.extend_from_slice(&chunk[..n]);
+                    if let Some(i) = request.windows(4).position(|w| w == b"\r\n\r\n") {
+                        break i + 4;
+                    }
+                };
+                let headers = String::from_utf8_lossy(&request[..header_end]);
+                let length = headers.lines().find_map(|line| {
+                    let (key, value) = line.split_once(':')?;
+                    key.eq_ignore_ascii_case("content-length")
+                        .then(|| value.trim().parse::<usize>().ok()).flatten()
+                }).unwrap();
+                while request.len() < header_end + length {
+                    let n = stream.read(&mut chunk).unwrap();
+                    assert_ne!(n, 0);
+                    request.extend_from_slice(&chunk[..n]);
+                }
+                let content = serde_json::to_string(&content).unwrap();
+                let body = serde_json::to_vec(&json!({
+                    "choices":[{"message":{"content":content},"finish_reason":"stop"}]
+                })).unwrap();
+                write!(stream, "HTTP/1.1 200 OK\r\nContent-Type: application/json\r\nContent-Length: {}\r\nConnection: close\r\n\r\n", body.len()).unwrap();
+                stream.write_all(&body).unwrap();
+            }
+        });
+        format!("http://{address}/v1/chat/completions")
+    }
+
+    #[test]
+    fn native_executor_inspect_current_review_and_get_state_preserve_current_bindings() {
+        let (dir, reference_id, source_sha, evidence_id) = current_vision_fixture();
+        let endpoint = mock_two_vision_responses(
+            json!({"summary":"A visible outline.","visible_evidence":[{"id":"outline","description":"A closed outer outline is visible."}]}),
+            json!({"view_comparable":true,"score":92,"coverage_status":"verified",
+                "covered_evidence_ids":[evidence_id],"evidence":[{"evidence_id":evidence_id,
+                    "item":"outer outline","reference":"A closed outline is visible.",
+                    "model":"A closed outline is visible.","assessment_basis":"reference","status":"match",
+                    "affected_feature_ids":["body"]}]}),
+        );
+        let provider = Arc::new(NativeVisionProvider::new(crate::native_vision_provider::ProviderConfig {
+            base_url: endpoint,
+            model: "headless-fixture".into(),
+            api_key: "fixture-key".into(),
+            effort: "none".into(),
+            thinking_budget: None,
+            max_output_tokens: 1024,
+        }).unwrap());
+        let executor = NativeToolExecutor::new(&dir, &dir, true).unwrap().with_vision(provider);
+
+        for (call, tool, args) in [
+            ("inspect", "cad_inspect_references", json!({"reference_id":reference_id})),
+            ("review", "cad_review_reference_similarity", json!({"view":"front","preview_generation":9,"reference_id":reference_id})),
+        ] {
+            let result = executor.execute(call, tool, &args, Duration::from_secs(10)).unwrap();
+            assert_eq!(result["payload"]["execution_engine"], "rust");
+        }
+        let result = executor.execute("state", "cad_get_state", &json!({}), Duration::from_secs(3)).unwrap();
+        let summary: Value = serde_json::from_str(result["text"].as_str().unwrap().split_once('\n').unwrap().1).unwrap();
+        assert_eq!(summary["visual_evidence_summary"]["all_references_covered"], true, "{summary:#}");
+        let reference = &summary["visual_evidence_summary"]["references"][reference_id.as_str()];
+        assert_eq!(reference["inventory_valid"], true);
+        assert_eq!(reference["covered"], true);
+        assert_eq!(reference["missing_required_evidence_ids"], json!([]));
+        assert_eq!(summary["reference_images"][0]["id"], reference_id);
+        assert_eq!(summary["reference_images"][0]["sha256"], source_sha);
+        let saved = read_json_object(&dir.join("cad-state.json")).unwrap();
+        let inventory = &saved["reference_inventory"][reference_id.as_str()];
+        assert_eq!(inventory["source_sha256"], source_sha);
+        assert!(inventory["roi_norm"].is_null());
+        assert_eq!(inventory["visible_evidence"][0]["evidence_id"], evidence_id);
+        assert_eq!(saved["reference_similarity_history"][0]["revision"], 4);
+        assert_eq!(saved["reference_similarity_history"][0]["preview_generation"], 9);
+        assert_eq!(saved["reference_similarity_history"][0]["reference_id"], reference_id);
+        assert_eq!(saved["reference_similarity_history"][0]["source_sha256"], source_sha);
+        assert!(saved["reference_similarity_history"][0]["roi_norm"].is_null());
+        assert_eq!(saved["reference_similarity_history"][0]["observation_id"], inventory["observation_id"]);
+        assert_eq!(saved["reference_similarity_history"][0]["geometry_fingerprint"], saved["previews"][0]["geometry_fingerprint"]);
+        assert_eq!(saved["reference_similarity_history"][0]["geometry_signature"], saved["previews"][0]["geometry_fingerprint"]);
+        let stale = executor.execute(
+            "stale-generation", "cad_review_reference_similarity",
+            &json!({"view":"front","preview_generation":8,"reference_id":reference_id}),
+            Duration::from_secs(3),
+        ).unwrap_err();
+        assert!(stale.contains("preview_generation") || stale.contains("预览"), "{stale}");
+        fs::remove_dir_all(dir).unwrap();
+    }
+
+    #[test]
+    fn native_executor_rejects_misbound_reference_before_provider_request() {
+        let (dir, _reference_id, _source_sha, _) = current_vision_fixture();
+        let provider = vision_provider("http://127.0.0.1:1/v1", "must-not-be-called");
+        let executor = NativeToolExecutor::new(&dir, &dir, true).unwrap().with_vision(provider);
+        let error = executor.execute(
+            "wrong-reference", "cad_inspect_references",
+            &json!({"reference_id":"sha256:wrong"}), Duration::from_secs(2),
+        ).unwrap_err();
+        assert!(error.contains("原图") || error.contains("reference"), "{error}");
+        assert!(read_json_object(&dir.join("cad-state.json")).unwrap()["reference_inventory"].as_object().unwrap().is_empty());
+        fs::remove_dir_all(dir).unwrap();
+    }
+
     #[test]
     fn vision_tools_require_the_native_provider_without_fallback() {
         let (dir, executor) = fixture_with_online(true);

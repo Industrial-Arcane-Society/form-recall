@@ -1231,6 +1231,8 @@ pub async fn review(
         "transport_sha256": reference.image.transport_sha256,
         "preview_sha256": preview_sha,
         "geometry_fingerprint": geom,
+        // Mirror the validated current fingerprint for the state summary comparator.
+        "geometry_signature": geom,
         "reference_images_in_request": 1,
         "images_in_request": 2,
         "score": if comparable { score } else { None },

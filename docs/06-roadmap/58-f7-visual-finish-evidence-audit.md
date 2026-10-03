@@ -93,7 +93,13 @@ Headless predicate 覆盖进展（本次新增）：`native_agent_coldstart_gate
 2. 增加“视觉全覆盖但 host finish 因其他条件未接受”与“host finish 汇总接受但原图行错绑”的反例，确保原因相互独立。
 3. 覆盖 finish summary 每个合取项被单独置 false 的 Rust `finish_assessment` 测试，并断言候选导出状态不能误变成 accepted。
 
-本次只验证 Node gate predicate 矩阵；mock vision provider 到 native executor 的集成覆盖、两个跨 gate 独立性反例和 Rust `finish_assessment` 各合取项仍未覆盖。
+本次之后，mock provider → Rust `NativeToolExecutor` → `cad_get_state` 的最小组合路径已有 headless 集成覆盖：正例依序通过 `cad_inspect_references`、对预先提交且与 revision/fingerprint 绑定的当前预览执行 `cad_review_reference_similarity`、再执行 `cad_get_state`；断言原图 ID/SHA、ROI 派生 evidence ID、review revision/generation/fingerprint 和最终 coverage 均从会话状态对齐。负例覆盖 executor 路由上的错误 reference ID 与过期 preview generation，确认调用在绑定/当前性校验失败后不升级证据。该测试使用本地 mock HTTP vision provider，且预览是 fixture 中已提交的当前 host preview；它不证明 CAD 预览生成器、外部 provider 或真实视觉判断质量。
+
+集成测试还捕获并修复了一个证据字段互操作缺口：review 已用 host 校验的 geometry fingerprint 记录当前签名，但遗漏了 state summary 用于精确比较的 `geometry_signature` 字段。review 现在把同一个已校验当前值写入该字段；没有变更比较 predicate 或验收门槛。若没有此字段，真实经过 executor 的 review 会在 get_state 被标为 noncomparable，required coverage 不会升级。
+
+其余 headless 增补仍待实现：两个跨 gate 独立性反例、Rust `finish_assessment` 每个合取项的翻转测试，以及 executor 集成层的 source SHA 错绑、旧 observation、ROI-only inventory、空/重复 evidence、partial stage、mismatch/unsupported coverage 负例。相邻的 `native_vision_domain` 和 `native_state_summary` 既有单元测试仍覆盖其中若干领域校验，但不能替代完整的 executor 集成负例。
+
+**证据边界：**以上只证明本地 headless mock provider 路径在合成 fixture 下保留严格绑定与当前性检查。它不代表真实 DSH/provider 视觉质量、不代表 Run13/Run15 已通过，也不改变 `F7.G1` 或 `F7.G8` 验收状态；真实 provider 行为仍须依据独立的脱敏运行证据评估。
 
 ## 维护状态
 
