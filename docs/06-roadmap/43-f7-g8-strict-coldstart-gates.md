@@ -40,7 +40,7 @@ runner 在发起模型请求前，自动对当前 checkout 执行以下离线重
 cargo build --manifest-path "$repo/src/apps/desktop/src-tauri/Cargo.toml" --example native_read_probe --example native_agent_profile --offline
 ```
 
-`build-status.json` 只记录结果/退出码/耗时/输出字节数。summary 只记录总体状态、固定 gate 名称/状态/原因、固定 runtime 版本与原图摘要；不包含 run/session/request/call ID、answer/hash、thought 内容/长度、参数或 profile。只有当前 gate 计算使用内存中的标识符与原始事件。
+`build-status.json` 只记录结果/退出码/耗时/输出字节数。summary 只记录总体状态、固定 gate 名称/状态/reason 数、匹配固定表的 runtime 版本与原图摘要；不包含自由文本原因、evidence error、run/session/request/call ID、answer/hash、thought 内容/长度、参数或 profile。未知 scope/runtime/model status 会映射到固定标签。
 
 ## 审阅后由操作者执行的真实命令
 
@@ -75,7 +75,8 @@ $summary = Get-Content -LiteralPath (Join-Path $output 'summary.json') -Raw | Co
   status = $summary.status
   transport_status = $summary.transport_status
   model_status = $summary.model_status
-  failure_reasons = $summary.strict_gates.failure_reasons
+  failure_reason_count = $summary.strict_gates.failure_reason_count
+  evidence_error_count = $summary.strict_gates.evidence_error_count
   archive = $output
 }
 ```

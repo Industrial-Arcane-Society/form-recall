@@ -4,6 +4,14 @@ import { COLDSTART_TOOL_NAME_ALLOWLIST } from './native_agent_coldstart_gates.mj
 
 const toolNames = new Set([...COLDSTART_TOOL_NAME_ALLOWLIST, 'unknown'])
 const safeCount = value => Number.isSafeInteger(value) && value >= 0 ? value : 0
+const GATE_NAMES = Object.freeze([
+  'run_scope', 'dsh', 'trace_integrity', 'original_image', 'main_image_wire',
+  'cordis_cad_tools', 'acp_cad_tool_results', 'current_geometry', 'artifacts', 'holes', 'visual', 'finish',
+])
+const SAFE_SCOPE = 'single_image_single_turn_cli_host_gates_not_independent_visual_or_CATIA_acceptance'
+const SAFE_NODE_VERSIONS = new Set(['v22.23.3'])
+const SAFE_DSH_VERSIONS = new Set(['0.2.0-rc.2'])
+const MODEL_STATUSES = new Set(['accepted_by_strict_cli_gate', 'candidate', 'none'])
 const pickCounts = (rows, keys, enums) => Array.isArray(rows) ? rows.map(row => {
   const result = {}
   for (const key of keys) {
@@ -54,30 +62,30 @@ function safeBindingProjection(value) {
 
 const safeGate = gate => ({
   status: gate?.status === 'passed' ? 'passed' : 'failed',
-  reasons: Array.isArray(gate?.reasons) ? gate.reasons.filter(value => typeof value === 'string') : [],
+  reason_count: Array.isArray(gate?.reasons) ? safeCount(gate.reasons.length) : 0,
 })
 
 export function buildSafeAcceptanceSummary({ strict, transportStatus, modelStatus, runtime, source }) {
-  const gates = Object.fromEntries(Object.entries(strict?.gates || {}).map(([name, gate]) => [name, safeGate(gate)]))
+  const gates = Object.fromEntries(GATE_NAMES.map(name => [name, safeGate(strict?.gates?.[name])]))
   return {
     schema_version: 1,
     status: strict?.status === 'passed' ? 'passed' : 'failed',
-    status_scope: typeof strict?.scope === 'string' ? strict.scope : 'single_image_single_turn_cli_host_gates_not_independent_visual_or_CATIA_acceptance',
+    status_scope: strict?.scope === SAFE_SCOPE ? SAFE_SCOPE : 'scope_unverified',
     transport_status: transportStatus === 'completed' ? 'completed' : 'failed',
-    model_status: typeof modelStatus === 'string' ? modelStatus : 'none',
+    model_status: MODEL_STATUSES.has(modelStatus) ? modelStatus : 'none',
     strict_gates: {
       status: strict?.status === 'passed' ? 'passed' : 'failed',
-      failure_reasons: Array.isArray(strict?.failure_reasons) ? strict.failure_reasons.filter(value => typeof value === 'string') : [],
-      evidence_errors: Array.isArray(strict?.evidence_errors) ? strict.evidence_errors.filter(value => typeof value === 'string') : [],
+      failure_reason_count: Array.isArray(strict?.failure_reasons) ? safeCount(strict.failure_reasons.length) : 0,
+      evidence_error_count: Array.isArray(strict?.evidence_errors) ? safeCount(strict.evidence_errors.length) : 0,
       gates,
     },
     runtime: {
-      node: runtime?.node || null,
-      dsh: runtime?.dsh || null,
+      node: SAFE_NODE_VERSIONS.has(runtime?.node) ? runtime.node : 'unverified',
+      dsh: SAFE_DSH_VERSIONS.has(runtime?.dsh) ? runtime.dsh : 'unverified',
     },
     original_image: {
       bytes: Number.isSafeInteger(source?.bytes) ? source.bytes : null,
-      sha256: typeof source?.sha256 === 'string' ? source.sha256 : null,
+      sha256: typeof source?.sha256 === 'string' && /^[a-f0-9]{64}$/.test(source.sha256) ? source.sha256 : null,
       unchanged: source?.unchanged === true,
     },
   }

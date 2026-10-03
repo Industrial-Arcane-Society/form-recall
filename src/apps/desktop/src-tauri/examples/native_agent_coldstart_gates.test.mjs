@@ -275,7 +275,8 @@ test('published cold-start files contain only safe gates and aggregate projectio
   const root = mkdtempSync(join(tmpdir(), 'coldstart-safe-publication-'))
   const output = join(root, 'run')
   const secrets = ['sentinel-acp-call-id', 'sentinel-native-uuid', 'sentinel-answer-body',
-    'sentinel-thought-body', 'sentinel-tool-payload', 'sentinel-argument-value']
+    'sentinel-thought-body', 'sentinel-tool-payload', 'sentinel-argument-value', 'sentinel-scope',
+    'sentinel-runtime', 'sentinel-reason', 'sentinel-evidence-error', 'sentinel-gate-name']
   try {
     const key = randomBytes(32), digestByEvent = new WeakMap()
     const start = { kind: 'tool_call', tool_call_id: secrets[0], title: 'cad_finish_model', status: 'in_progress', at_ms: 1 }
@@ -292,14 +293,16 @@ test('published cold-start files contain only safe gates and aggregate projectio
     })
     bindingProjection.debug_payload = secrets.join('|')
     const strict = {
-      status: 'passed', scope: 'single_image_single_turn_cli_host_gates_not_independent_visual_or_CATIA_acceptance',
+      status: 'passed', scope: secrets[6],
       successful_image_request_ids: [secrets[1]], matched_native_call_ids: [secrets[1]],
       answer: secrets[2], thought: secrets[3], payload: secrets[4], arguments: secrets[5],
-      failure_reasons: [], evidence_errors: [], gates: { run_scope: { status: 'passed', reasons: [] },
-        acp_cad_tool_results: { status: 'passed', reasons: [] } },
+      failure_reasons: [secrets[8]], evidence_errors: [secrets[9]], gates: {
+        run_scope: { status: 'passed', reasons: [secrets[8]] },
+        acp_cad_tool_results: { status: 'passed', reasons: [] }, [secrets[10]]: { status: 'passed', reasons: [] },
+      },
     }
-    const summary = buildSafeAcceptanceSummary({ strict, transportStatus: 'completed', modelStatus: 'accepted_by_strict_cli_gate',
-      runtime: { node: 'v22.23.3', dsh: '0.2.0-rc.2', directory: secrets[0] },
+    const summary = buildSafeAcceptanceSummary({ strict, transportStatus: 'completed', modelStatus: secrets[7],
+      runtime: { node: secrets[7], dsh: secrets[7], directory: secrets[0] },
       source: { bytes: 72309, sha256: 'b'.repeat(64), unchanged: true, reference_id: secrets[1] } })
     writeSafeAcceptanceArtifacts(output, { summary, acpProjection, bindingProjection,
       buildStatus: { status: 'passed', exit_code: 0, elapsed_ms: 12, stdout_bytes: 0, stderr_bytes: 0, raw: secrets[4] } })
@@ -313,6 +316,25 @@ test('published cold-start files contain only safe gates and aggregate projectio
     for (const secret of secrets) assert.equal(serialized.includes(secret), false)
     assert.equal(summary.status, 'passed')
     assert.equal(summary.strict_gates.gates.run_scope.status, 'passed')
+    assert.equal(summary.strict_gates.gates.run_scope.reason_count, 1)
+    assert.equal(summary.strict_gates.failure_reason_count, 1)
+    assert.equal(summary.strict_gates.evidence_error_count, 1)
+    assert.equal(summary.status_scope, 'scope_unverified')
+    assert.equal(summary.runtime.node, 'unverified')
+    assert.deepEqual(Object.keys(summary.strict_gates.gates), [
+      'run_scope', 'dsh', 'trace_integrity', 'original_image', 'main_image_wire', 'cordis_cad_tools',
+      'acp_cad_tool_results', 'current_geometry', 'artifacts', 'holes', 'visual', 'finish',
+    ])
+    const knownValues = buildSafeAcceptanceSummary({
+      strict: { status: 'passed', scope: 'single_image_single_turn_cli_host_gates_not_independent_visual_or_CATIA_acceptance',
+        gates: { run_scope: { status: 'passed', reasons: [] } } },
+      transportStatus: 'completed', modelStatus: 'accepted_by_strict_cli_gate',
+      runtime: { node: 'v22.23.3', dsh: '0.2.0-rc.2' },
+      source: { bytes: 72309, sha256: 'b'.repeat(64), unchanged: true },
+    })
+    assert.equal(knownValues.status_scope, 'single_image_single_turn_cli_host_gates_not_independent_visual_or_CATIA_acceptance')
+    assert.deepEqual(knownValues.runtime, { node: 'v22.23.3', dsh: '0.2.0-rc.2' })
+    assert.equal(knownValues.model_status, 'accepted_by_strict_cli_gate')
     const projections = readFileSync(join(output, 'tool-result-diagnostics.jsonl'), 'utf8').trim().split('\n').map(JSON.parse)
     assert.equal(projections[0].schema, 'acp_terminal_update_projection_v2')
     assert.deepEqual(projections[0].call_group_terminal_distribution,

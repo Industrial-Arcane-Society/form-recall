@@ -22,7 +22,8 @@ const archiveFailure = error => {
     mkdirSync(archiveDir, { recursive: true })
     writeFileSync(join(archiveDir, 'summary.json'), JSON.stringify({ schema_version: 1, status: 'failed',
       transport_status: 'failed', model_status: 'none',
-      strict_gates: { status: 'failed', failure_reasons: ['runner_preflight_failed'], evidence_errors: [], gates: {} } }, null, 2),
+      status_scope: 'scope_unverified', runtime: { node: 'unverified', dsh: 'unverified' },
+      strict_gates: { status: 'failed', failure_reason_count: 1, evidence_error_count: 0, gates: {} } }, null, 2),
     { flag: 'wx', mode: 0o600 })
   } catch { /* preserve the original process failure */ }
 }
