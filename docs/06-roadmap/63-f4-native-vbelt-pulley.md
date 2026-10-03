@@ -39,7 +39,7 @@
 
 ## 完整 runner 状态与剩余验证
 
-完整 `examples/native_geometry_parity.py` 使用当前 Rust probe 和真实 runtime 成功完成：**83 正例通过 / 40 负例拒绝**，包围盒容差 `1e-6 mm`、体积容差 `1e-5 mm³`；OCP `7.9.3.1.1`、Rust OCCT `7.9.3`。完整矩阵覆盖了 feature-only 样本，并保留既有 CADPlan 孔证据 flags（blind local span、near-edge partial、final B-Rep metrology、later-feature stale measurement invalidation）均为 true。先前 runner 失败分别来自旧 probe、legacy cm 预校验限制及 legacy 自动辐条尺寸边界；更新夹具后当前 run 全部通过。
+V-belt 功能分支上的完整 `examples/native_geometry_parity.py` 使用 Rust probe 和真实 runtime 通过：**83 正例 / 40 负例**，当时不包含 timing pulley。合入 timing pulley 后，在当前集成分支重建 probe 并完整复跑：**86 正例 / 47 负例**，其中 5 个 V-belt 正例和 3 个 timing pulley 正例；包围盒容差 `1e-6 mm`、体积容差 `1e-5 mm³`；OCP `7.9.3.1.1`、Rust OCCT `7.9.3`。集成矩阵的 blind local span、near-edge partial、final B-Rep metrology、later-feature stale measurement invalidation 均为 true。先前 runner 失败分别来自旧 probe、legacy cm 预校验限制及 legacy 自动辐条尺寸边界；更新夹具后两轮 runner 均通过。
 
 CATIA 映射仍生成光轮盘体、未自动构造 V 槽；真实 CATIA 几何不在此项验收范围内。
 

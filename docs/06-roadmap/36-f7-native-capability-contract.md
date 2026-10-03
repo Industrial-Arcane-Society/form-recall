@@ -21,4 +21,4 @@ Subagent 已执行并报告以下定向测试通过：
 
 `parameter_limits` 目前是人工维护的说明型契约，不是自动生成的参数 JSON Schema；它帮助模型选择正确的变体，但不能替代执行器校验。G8 仍需用真实 DSH 请求核实模型是否按契约建模。当前没有声称完整 Rust 测试套件或真实模型验证已通过。
 
-2026-10-04 F4.2.14 timing pulley 与 F4.2.15 V-belt pulley 后，Rust feature specs 与 CADPlan 仍各注册 27 类；原生执行为 21 类，未接入执行器的 6 类为 `loft`、`helix`、`worm`、`impeller`、`scroll_disc`、`shell`。`box/pocket corner != 0` 和显式盲孔 `entry_point` 仍会在 OCCT 前被明确拒绝。V 带轮的4项定向 Rust 单测、1项能力契约测试及feature-only 4正例/4负例 Rust/OCP 对拍通过；更新后的完整集成对拍数以集成分支完整 runner 复跑结果为准（bbox容差1e-6 mm、volume容差1e-5 mm³）。能力计数不代表完整变体覆盖或 Agent 遵循已验收。
+2026-10-04 F4.2.14 timing pulley 与 F4.2.15 V-belt pulley 后，Rust feature specs 与 CADPlan 仍各注册 27 类；原生执行为 21 类，未接入执行器的 6 类为 `loft`、`helix`、`worm`、`impeller`、`scroll_disc`、`shell`。`box/pocket corner != 0` 和显式盲孔 `entry_point` 仍会在 OCCT 前被明确拒绝。集成分支 `native_vbelt_pulley` 模块测试 3/3、capability registry 测试 6/6 通过；完整集成 OCP/Rust 对拍 **86 正例 / 47 负例**，其中 V-belt 5 正例、timing pulley 3 正例，bbox 容差 `1e-6 mm`、volume 容差 `1e-5 mm³`。能力计数不代表完整变体覆盖或 Agent 遵循已验收。
