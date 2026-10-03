@@ -7,7 +7,10 @@ import { basename, dirname, join, resolve } from 'node:path'
 import { createInterface } from 'node:readline'
 import { createAuditedToolProxy, evaluateColdstartGates, parseEvidenceJsonl, parsePostcheckState, readRunArtifacts, toolArgumentsFingerprint } from './native_agent_coldstart_gates.mjs'
 
-const [repoArg, runtimeArg, outputArg, configArg, imageArg, userTextArg] = process.argv.slice(2)
+const cliArgs = process.argv.slice(2)
+const toolResultDiagnosticsEnabled = cliArgs.includes('--tool-result-diagnostics')
+const positionalArgs = cliArgs.filter(arg => arg !== '--tool-result-diagnostics')
+const [repoArg, runtimeArg, outputArg, configArg, imageArg, userTextArg] = positionalArgs
 let archiveDir = null
 const managedChildren = []
 const stopManagedChildren = () => {
@@ -24,7 +27,7 @@ const archiveFailure = error => {
 process.on('uncaughtException', error => { stopManagedChildren(); archiveFailure(error); console.error('Acceptance failed; evidence location:', archiveDir || '(output argument missing)'); process.exit(1) })
 process.on('unhandledRejection', error => { stopManagedChildren(); archiveFailure(error); console.error('Acceptance failed; evidence location:', archiveDir || '(output argument missing)'); process.exit(1) })
 if (!repoArg || !runtimeArg || !outputArg || !configArg) {
-  throw new Error('usage: node native_agent_coldstart_acceptance.mjs REPO PINNED_RUNTIME FRESH_OUTPUT PROVIDER_JSON [ORIGINAL_PNG] [USER_TEXT]')
+  throw new Error('usage: node native_agent_coldstart_acceptance.mjs [--tool-result-diagnostics] REPO PINNED_RUNTIME FRESH_OUTPUT PROVIDER_JSON [ORIGINAL_PNG] [USER_TEXT]')
 }
 const suppliedConfig = JSON.parse(readFileSync(resolve(configArg), 'utf8').replace(/^\uFEFF/, ''))
 const provider = suppliedConfig.llm
@@ -42,6 +45,8 @@ if (existsSync(output)) throw new Error('验收输出目录已经存在；请提
 mkdirSync(dirname(output), { recursive: true })
 mkdirSync(output)
 archiveDir = output
+const toolResultDiagnosticsPath = toolResultDiagnosticsEnabled ? join(output, 'tool-result-diagnostics.jsonl') : null
+if (toolResultDiagnosticsPath) writeFileSync(toolResultDiagnosticsPath, '', { flag: 'wx', mode: 0o600 })
 const legacy = join(repo, 'src/legacy')
 const state = join(output, 'state')
 const home = join(output, 'dsh-home')
@@ -175,6 +180,7 @@ const child = spawn(nodePath, [join(modules, '@deepseek-ai/dsh/lib/bin.js'),
     AI_MODELER_DSH_NODE_MODULES: modules,
     AI_MODELER_ONLINE_ENABLED: 'true',
     AI_MODELER_HAS_REFERENCES: 'true',
+    AI_MODELER_TOOL_RESULT_DIAGNOSTICS_FILE: toolResultDiagnosticsPath || '',
   },
 })
 managedChildren.push(child)
@@ -403,7 +409,7 @@ const acceptance = {
 }
 writeFileSync(join(output, 'summary.json'), JSON.stringify(acceptance, null, 2))
 writeFileSync(join(output, 'tool-trace.json'), JSON.stringify({ dsh_events: toolEvents, native_actions: actions, provider_requests: wireRequests, responses: wireResponses }, null, 2))
-writeFileSync(join(output, 'run-metadata.json'), JSON.stringify({ completed_at: new Date().toISOString(), commit: acceptance.git.commit, dirty_paths: acceptance.git.dirty_paths, node: process.version, pinned_node: nodeVersion.stdout.trim(), dsh: dshPackage.version, image_sha256: sourceSha, image_bytes: imageBytes.length, text_sha256: hash(Buffer.from(userText)), status: acceptance.status }, null, 2))
+writeFileSync(join(output, 'run-metadata.json'), JSON.stringify({ completed_at: new Date().toISOString(), commit: acceptance.git.commit, dirty_paths: acceptance.git.dirty_paths, node: process.version, pinned_node: nodeVersion.stdout.trim(), dsh: dshPackage.version, image_sha256: sourceSha, image_bytes: imageBytes.length, text_sha256: hash(Buffer.from(userText)), status: acceptance.status, tool_result_diagnostics_enabled: toolResultDiagnosticsEnabled }, null, 2))
 console.log(JSON.stringify({ run_id: runId, status: strict.status, transport_status: acceptance.transport_status,
   model_status: acceptance.model_status, failure_reasons: strict.failure_reasons, evidence_archive: output }, null, 2))
 if (acceptance.status !== 'passed') {

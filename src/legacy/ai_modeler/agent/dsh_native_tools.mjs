@@ -1,7 +1,7 @@
 // Native Cordis tool registration for the DSH Agent. Tool schemas are supplied
 // by the Rust host and calls cross its authenticated loopback JSON-RPC bridge.
 import { randomUUID } from 'node:crypto'
-import { readFileSync, statSync, writeFileSync } from 'node:fs'
+import { appendFileSync, readFileSync, statSync, writeFileSync } from 'node:fs'
 import { createRequire } from 'node:module'
 import { createConnection } from 'node:net'
 import { join, resolve } from 'node:path'
@@ -15,9 +15,71 @@ const CANCEL_TIMEOUT_MS = 5_000
 const MAX_JSON_LINE_BYTES = 64 * 1024 * 1024
 const MAX_SCHEMA_FILE_BYTES = 8 * 1024 * 1024
 const MAX_IMAGE_BYTES = 20 * 1024 * 1024
+const DIAGNOSTIC_STAGES = new Set([
+  'native_bridge_result', 'native_image_decode', 'native_image_validation',
+  'attachment_save', 'cordis_tools_result',
+])
+const DIAGNOSTIC_ERROR_CODES = new Set([
+  'ABORTED', 'ABORTED_BEFORE_DISPATCH', 'UNKNOWN_TOOL', 'INVALID_TOOL_OUTPUT',
+  'IMAGE_RESULT_INVALID', 'IMAGE_RESULT_SIZE_LIMIT', 'ATTACHMENT_SAVE_FAILED',
+])
+const DIAGNOSTIC_ERROR_TYPES = new Set([
+  'AbortError', 'ToolNotFoundError', 'ToolOutputError', 'TypeError', 'RangeError', 'Error',
+])
+const DIAGNOSTIC_MEDIA_TYPES = new Set(['image/png', 'image/jpeg', 'image/webp', 'image/gif'])
+const DIAGNOSTIC_CONTENT_TYPES = new Set(['text', 'reasoning', 'image', 'file', 'tool-call', 'tool-addition', 'tool-removal'])
 
 function isRecord(value) {
   return value !== null && typeof value === 'object' && !Array.isArray(value)
+}
+
+const safeToolName = value => typeof value === 'string' && /^[a-z][a-z0-9_.-]{0,63}$/i.test(value) ? value : 'other'
+const safeCount = value => Number.isSafeInteger(value) && value >= 0 ? value : null
+
+function summarizeContentBlocks(content) {
+  if (!Array.isArray(content)) return []
+  return content.slice(0, 64).map(block => {
+    const type = DIAGNOSTIC_CONTENT_TYPES.has(block?.type) ? block.type : 'other'
+    const summary = { type }
+    if (type === 'text' || type === 'reasoning') {
+      if (typeof block.text === 'string') summary.text_utf8_bytes = Buffer.byteLength(block.text, 'utf8')
+    }
+    if (type === 'image' && isRecord(block.attachment)) {
+      summary.media_type = DIAGNOSTIC_MEDIA_TYPES.has(block.attachment.mediaType) ? block.attachment.mediaType : 'other'
+    }
+    return summary
+  })
+}
+
+export function summarizeToolResultDiagnostic({ tool, stage, isError, error, content, text, decodedImages } = {}) {
+  const record = {
+    tool: safeToolName(tool),
+    stage: DIAGNOSTIC_STAGES.has(stage) ? stage : 'other',
+    isError: typeof isError === 'boolean' ? isError : null,
+  }
+  if (typeof text === 'string') record.text_utf8_bytes = Buffer.byteLength(text, 'utf8')
+  if (Array.isArray(content)) record.content_blocks = summarizeContentBlocks(content)
+  if (Array.isArray(decodedImages)) {
+    record.images = decodedImages.slice(0, 64).map(image => ({
+      media_type: DIAGNOSTIC_MEDIA_TYPES.has(image?.mediaType) ? image.mediaType : 'other',
+      decoded_bytes: safeCount(image?.decodedBytes),
+    }))
+  }
+  if (isRecord(error)) {
+    const info = isRecord(error.info) ? error.info : error
+    if (DIAGNOSTIC_ERROR_TYPES.has(info.name)) record.error_type = info.name
+    else if (info.name !== undefined) record.error_type = 'other'
+    if (DIAGNOSTIC_ERROR_CODES.has(info.code)) record.error_code = info.code
+    else if (info.code !== undefined) record.error_code = 'other'
+  }
+  return record
+}
+
+function recordToolResultDiagnostic(filePath, event) {
+  if (!filePath) return
+  try {
+    appendFileSync(resolve(filePath), JSON.stringify(summarizeToolResultDiagnostic(event)) + '\n', { mode: 0o600 })
+  } catch { /* diagnostics must never affect tool execution */ }
 }
 
 function validateJsonSchema(schema, location, depth = 0) {
@@ -363,6 +425,7 @@ export function createToolBridgeClient({
 
 export function apply(ctx) {
   const registrationPath = process.env.AI_MODELER_NATIVE_TOOLS_FILE
+  const diagnosticPath = process.env.AI_MODELER_TOOL_RESULT_DIAGNOSTICS_FILE
   if (registrationPath) writeFileSync(resolve(registrationPath), JSON.stringify({ phase: 'apply-entered' }), { mode: 0o600 })
   const packageRoot = process.env.AI_MODELER_DSH_NODE_MODULES
   if (!packageRoot) throw new Error('AI Modeler DSH Node package root was not configured.')
@@ -371,6 +434,17 @@ export function apply(ctx) {
   if (typeof defineTool !== 'function') throw new Error('AI Modeler could not load DSH defineTool().')
 
   const schemas = readNativeToolSchemas()
+  if (diagnosticPath) {
+    ctx.on('tools/result', (exec, result) => {
+      recordToolResultDiagnostic(diagnosticPath, {
+        tool: exec?.name,
+        stage: 'cordis_tools_result',
+        isError: result?.isError,
+        error: result?.error,
+        content: result?.content,
+      })
+    })
+  }
   const client = createToolBridgeClient({
     address: process.env.AI_MODELER_TOOL_BRIDGE_ADDR,
     token: process.env.AI_MODELER_TOOL_BRIDGE_TOKEN,
@@ -398,19 +472,59 @@ export function apply(ctx) {
         const result = await client.callTool(tool.name, args, exec.signal)
         if (!isRecord(result)) throw new Error(`AI Modeler tool bridge returned an invalid result for ${tool.name}.`)
         const images = Array.isArray(result.images) ? result.images : []
+        recordToolResultDiagnostic(diagnosticPath, {
+          tool: tool.name,
+          stage: 'native_bridge_result',
+          isError: typeof result.payload?.isError === 'boolean' ? result.payload.isError : null,
+          text: typeof result.text === 'string' ? result.text : undefined,
+          content: [
+            ...(typeof result.text === 'string' ? [{ type: 'text', text: result.text }] : []),
+            ...images.map(image => ({ type: 'image', attachment: { mediaType: image?.mediaType } })),
+          ],
+        })
+        const decodedImages = []
         const prepared = images.map((image, index) => {
           if (!['image/png', 'image/jpeg'].includes(image?.mediaType)
               || typeof image.data !== 'string'
               || !/^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?$/.test(image.data)) {
+            recordToolResultDiagnostic(diagnosticPath, {
+              tool: tool.name, stage: 'native_image_validation', isError: true,
+              error: { name: 'TypeError', code: 'IMAGE_RESULT_INVALID' },
+              content: [{ type: 'image', attachment: { mediaType: image?.mediaType } }],
+            })
             throw new Error(`AI Modeler returned an invalid image attachment at images[${index}].`)
           }
           const data = Buffer.from(image.data, 'base64')
           if (data.byteLength === 0 || data.byteLength > MAX_IMAGE_BYTES) {
+            recordToolResultDiagnostic(diagnosticPath, {
+              tool: tool.name, stage: 'native_image_validation', isError: true,
+              error: { name: 'RangeError', code: 'IMAGE_RESULT_SIZE_LIMIT' },
+              decodedImages: [{ mediaType: image.mediaType, decodedBytes: data.byteLength }],
+            })
             throw new Error(`AI Modeler image result at images[${index}] exceeds the native attachment limit.`)
           }
+          decodedImages.push({ mediaType: image.mediaType, decodedBytes: data.byteLength })
+          recordToolResultDiagnostic(diagnosticPath, {
+            tool: tool.name, stage: 'native_image_decode', isError: false,
+            decodedImages: [{ mediaType: image.mediaType, decodedBytes: data.byteLength }],
+          })
           return { data, mediaType: image.mediaType }
         })
-        const imageAttachments = prepared.length ? await ctx.attachments.saveImages(prepared) : []
+        let imageAttachments = []
+        try {
+          imageAttachments = prepared.length ? await ctx.attachments.saveImages(prepared) : []
+          if (prepared.length) recordToolResultDiagnostic(diagnosticPath, {
+            tool: tool.name, stage: 'attachment_save', isError: false,
+            decodedImages,
+          })
+        } catch (error) {
+          recordToolResultDiagnostic(diagnosticPath, {
+            tool: tool.name, stage: 'attachment_save', isError: true,
+            error: { name: 'Error', code: 'ATTACHMENT_SAVE_FAILED' },
+            decodedImages,
+          })
+          throw error
+        }
         return {
           text: typeof result.text === 'string' ? result.text : JSON.stringify(result),
           payload: result.payload || {},
