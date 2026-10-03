@@ -1,7 +1,7 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
 import { createServer, createConnection } from 'node:net'
-import { mkdtempSync, mkdirSync, writeFileSync, rmSync, readdirSync, readFileSync } from 'node:fs'
+import { mkdtempSync, mkdirSync, writeFileSync, rmSync, readdirSync, readFileSync, symlinkSync, existsSync } from 'node:fs'
 import { randomBytes } from 'node:crypto'
 import { EventEmitter } from 'node:events'
 import { join, relative } from 'node:path'
@@ -9,6 +9,8 @@ import { tmpdir } from 'node:os'
 import { createAuditedToolProxy, createTerminalUpdateHmac, evaluateColdstartGates, parseEvidenceJsonl, parsePostcheckState, readRunArtifacts, summarizeAcpTerminalUpdateDiagnostics, summarizeCordisBindingDiagnostics, toolArgumentsFingerprint } from './native_agent_coldstart_gates.mjs'
 import { buildSafeAcceptanceSummary, writeSafeAcceptanceArtifacts } from './native_agent_coldstart_publication.mjs'
 import { removeScratchDirectory, safeScratchCleanupStatus, terminateChildrenAndWait, waitThenTerminateChild } from './native_agent_coldstart_lifecycle.mjs'
+import { COLDSTART_SCRATCH_MAX_AGE_MS, COLDSTART_SCRATCH_PREFIX, createColdstartScratchDirectory,
+  recoverStaleColdstartScratch } from './native_agent_coldstart_scratch.mjs'
 
 class FakeChild extends EventEmitter {
   constructor({ exitAfterKillMs = null } = {}) {
@@ -58,6 +60,98 @@ test('bounded child timeout reports when termination does not exit', async () =>
   const child = new FakeChild()
   assert.equal(await waitThenTerminateChild(child, 2, 2), false)
   assert.equal(child.killed, true)
+})
+
+function scratchFixture(t, { pid = 71, ageMs = COLDSTART_SCRATCH_MAX_AGE_MS + 1000, nonceByte = 'a' } = {}) {
+  const root = mkdtempSync(join(tmpdir(), 'coldstart-scratch-recovery-'))
+  t.after(() => rmSync(root, { recursive: true, force: true }))
+  const directory = createColdstartScratchDirectory({ root, pid, now: 2_000_000,
+    random: () => Buffer.from(nonceByte.repeat(64), 'hex') })
+  return { root, directory, now: 2_000_000 + ageMs }
+}
+
+test('stale scratch with ESRCH owner is removed and only fixed counts are returned', t => {
+  const fixture = scratchFixture(t)
+  writeFileSync(join(fixture.directory, 'sentinel'), 'private-payload-sentinel')
+  const summary = recoverStaleColdstartScratch({ root: fixture.root, now: fixture.now,
+    processIsAlive: () => { const error = new Error('private pid'); error.code = 'ESRCH'; throw error } })
+  assert.equal(summary.status, 'complete')
+  assert.equal(summary.removed_count, 1)
+  assert.equal(summary.scanned_count, 1)
+  assert.equal(JSON.stringify(summary).includes('private'), false)
+  assert.equal(readdirSync(fixture.root).length, 0)
+})
+
+test('live and unknown owner PIDs preserve stale scratch', t => {
+  const live = scratchFixture(t, { nonceByte: 'b' })
+  const liveSummary = recoverStaleColdstartScratch({ root: live.root, now: live.now, processIsAlive: () => 'alive' })
+  assert.equal(liveSummary.preserved_count, 1)
+  assert.equal(readdirSync(live.root).length, 1)
+
+  const unknown = scratchFixture(t, { nonceByte: 'c' })
+  const unknownSummary = recoverStaleColdstartScratch({ root: unknown.root, now: unknown.now, processIsAlive: () => 'unknown' })
+  assert.equal(unknownSummary.unknown_owner_count, 1)
+  assert.equal(unknownSummary.removed_count, 0)
+  assert.equal(readdirSync(unknown.root).length, 1)
+})
+
+test('fresh scratch is preserved regardless of dead owner', t => {
+  const fixture = scratchFixture(t, { ageMs: COLDSTART_SCRATCH_MAX_AGE_MS - 1, nonceByte: 'd' })
+  const summary = recoverStaleColdstartScratch({ root: fixture.root, now: fixture.now, processIsAlive: () => 'dead' })
+  assert.equal(summary.preserved_count, 1)
+  assert.equal(summary.removed_count, 0)
+})
+
+test('recovery rejects invalid marker, nonmatching prefix, nested path and symlink target', t => {
+  const root = mkdtempSync(join(tmpdir(), 'coldstart-scratch-reject-'))
+  const outside = mkdtempSync(join(tmpdir(), 'coldstart-scratch-outside-'))
+  t.after(() => { rmSync(root, { recursive: true, force: true }); rmSync(outside, { recursive: true, force: true }) })
+  const link = join(root, COLDSTART_SCRATCH_PREFIX + 'e'.repeat(64))
+  symlinkSync(outside, link, 'junction')
+  const wrongPrefix = join(root, 'other-private-' + 'f'.repeat(64))
+  mkdirSync(wrongPrefix)
+  const nestedParent = join(root, 'nested')
+  mkdirSync(nestedParent)
+  const nested = join(nestedParent, COLDSTART_SCRATCH_PREFIX + '1'.repeat(64))
+  mkdirSync(nested)
+  const invalid = join(root, COLDSTART_SCRATCH_PREFIX + '2'.repeat(64))
+  mkdirSync(invalid)
+  writeFileSync(join(invalid, '.aimodeler-scratch-owner.json'), JSON.stringify({ schema: 'wrong' }))
+
+  const summary = recoverStaleColdstartScratch({ root, now: Date.now() + COLDSTART_SCRATCH_MAX_AGE_MS + 1,
+    processIsAlive: () => 'dead' })
+  assert.equal(summary.rejected_count, 2)
+  assert.equal(summary.scanned_count, 2)
+  assert.equal(readdirSync(outside).length, 0)
+  assert.equal(existsSync(link), true)
+  assert.equal(existsSync(wrongPrefix), true)
+  assert.equal(existsSync(nested), true)
+})
+
+test('recovery rejects a symlink temp root without scanning its external target', t => {
+  const root = mkdtempSync(join(tmpdir(), 'coldstart-scratch-root-'))
+  const alias = join(tmpdir(), 'coldstart-scratch-root-link-' + randomBytes(8).toString('hex'))
+  t.after(() => { rmSync(root, { recursive: true, force: true }); rmSync(alias, { recursive: true, force: true }) })
+  symlinkSync(root, alias, 'junction')
+  const summary = recoverStaleColdstartScratch({ root: alias, now: Date.now() + COLDSTART_SCRATCH_MAX_AGE_MS + 1,
+    processIsAlive: () => 'dead' })
+  assert.equal(summary.status, 'partial')
+  assert.equal(summary.failed_count, 1)
+  assert.equal(summary.scanned_count, 0)
+  assert.equal(readdirSync(root).length, 0)
+})
+
+test('scratch deletion failure reports safe state without path or error text', t => {
+  const fixture = scratchFixture(t, { nonceByte: '3' })
+  const summary = recoverStaleColdstartScratch({ root: fixture.root, now: fixture.now,
+    processIsAlive: () => 'dead', remove: () => { throw new Error('private-path-and-error-sentinel') } })
+  assert.equal(summary.status, 'partial')
+  assert.equal(summary.failed_count, 1)
+  const output = JSON.stringify(summary)
+  assert.equal(output.includes(fixture.directory), false)
+  assert.equal(output.includes('private-path'), false)
+  assert.deepEqual(Object.keys(summary), ['status', 'scanned_count', 'removed_count', 'preserved_count',
+    'rejected_count', 'unknown_owner_count', 'failed_count'])
 })
 
 // Synthetic contract fixture: no provider credentials, image bytes, geometry
@@ -387,11 +481,15 @@ test('published cold-start files contain only safe gates and aggregate projectio
       transportStatus: 'completed', modelStatus: 'accepted_by_strict_cli_gate',
       runtime: { node: 'v22.23.3', dsh: '0.2.0-rc.2' },
       source: { bytes: 72309, sha256: 'b'.repeat(64), unchanged: true }, scratchCleanupStatus: 'removed',
+      scratchRecovery: { status: 'secret-status', scanned_count: 2, removed_count: 1, path: 'private-path-sentinel' },
     })
     assert.equal(knownValues.status_scope, 'single_image_single_turn_cli_host_gates_not_independent_visual_or_CATIA_acceptance')
     assert.deepEqual(knownValues.runtime, { node: 'v22.23.3', dsh: '0.2.0-rc.2' })
     assert.equal(knownValues.model_status, 'accepted_by_strict_cli_gate')
     assert.equal(knownValues.scratch_cleanup_status, 'removed')
+    assert.deepEqual(knownValues.scratch_recovery, { status: 'complete', scanned_count: 2, removed_count: 1,
+      preserved_count: 0, rejected_count: 0, unknown_owner_count: 0, failed_count: 0 })
+    assert.equal(JSON.stringify(knownValues.scratch_recovery).includes('private-path'), false)
     assert.equal(buildSafeAcceptanceSummary({ scratchCleanupStatus: 'failed' }).scratch_cleanup_status, 'failed')
     const strictPassCleanupFailure = buildSafeAcceptanceSummary({
       strict: { status: 'passed', scope: 'single_image_single_turn_cli_host_gates_not_independent_visual_or_CATIA_acceptance',

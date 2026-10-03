@@ -27,3 +27,13 @@ node --test src/apps/desktop/src-tauri/examples/native_agent_coldstart_gates.tes
 另检查 runner、生命周期模块及 publication module 的 Node 语法，并运行 `git diff --check`。未启动 DSH/provider/GUI/CATIA，未执行真实 Run15；因此真实 Windows 子进程退出和真实文件锁条件仍没有运行态证据。
 
 本修复仅收敛 runner 清理边界，不改变 strict gates，也不改变 Run15 `blocked by policy` 事实或 F7/G8 总体验收状态。
+
+## 崩溃残留的启动时保守清扫
+
+后续实现新增 `native_agent_coldstart_scratch.mjs`。runner 在创建本轮 scratch 前，扫描系统 `tmpdir()` 的直接子目录，只考虑精确前缀 `aimodeler-coldstart-private-` 加 64 位十六进制 nonce 的目录。新目录以独占 `mkdir` 创建，并通过同目录临时 marker + rename 原子写入 owner marker；marker 仅含固定 schema、PID、UTC 创建时间和目录 nonce。
+
+清扫器仅在 temp root 与目标路径均可确认不是 symlink/reparse point、marker 格式和目录 nonce 完全匹配、marker 年龄至少 24 小时、PID 探测明确返回 `ESRCH` 时删除。活动 PID 保留；`EPERM`、探测异常及其他非 `ESRCH` 状态均按 owner unknown 保留。无效目录/marker、年轻目录和删除失败均只增加固定分类计数，不返回/打印路径、marker 内容、PID 或错误正文。`summary.json` 和 stdout 仅记录清扫 status 与计数；这些计数不影响 strict gate，也不把清扫成功当作视觉验收。
+
+新增合成测试覆盖死 PID 清理、活 PID 与未知 PID保留、marker 年龄门槛、错误 marker、非前缀/嵌套目录不扫描、symlink 目标和 symlink root 拒绝、删除失败不泄露敏感路径/错误。运行验证：`node --test src/apps/desktop/src-tauri/examples/native_agent_coldstart_gates.test.mjs`：83/83 通过；语法检查覆盖 runner、清扫器和 publication module；`git diff --check` 通过。没有启动 GUI、DSH 或 provider。
+
+边界：该逻辑只能在后续 runner 启动时清扫仍可访问且 marker 完整的过期目录；活动/状态不明 PID、marker 损坏、清扫失败及尚无后续启动的残留都会保留。它不是可靠擦除保证，不弥补真实模型视觉理解、返修或新版复核验收。

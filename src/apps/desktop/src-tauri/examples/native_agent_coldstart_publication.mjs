@@ -1,6 +1,7 @@
 import { mkdirSync, writeFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { COLDSTART_TOOL_NAME_ALLOWLIST } from './native_agent_coldstart_gates.mjs'
+import { sanitizeScratchRecoverySummary } from './native_agent_coldstart_scratch.mjs'
 
 const toolNames = new Set([...COLDSTART_TOOL_NAME_ALLOWLIST, 'unknown'])
 const safeCount = value => Number.isSafeInteger(value) && value >= 0 ? value : 0
@@ -94,7 +95,7 @@ const safeGate = (name, gate) => ({
     : [],
 })
 
-export function buildSafeAcceptanceSummary({ strict, transportStatus, modelStatus, runtime, source, scratchCleanupStatus }) {
+export function buildSafeAcceptanceSummary({ strict, transportStatus, modelStatus, runtime, source, scratchCleanupStatus, scratchRecovery }) {
   const gates = Object.fromEntries(GATE_NAMES.map(name => [name, safeGate(name, strict?.gates?.[name])]))
   const overallPassed = strict?.status === 'passed' && scratchCleanupStatus === 'removed'
   return {
@@ -104,6 +105,7 @@ export function buildSafeAcceptanceSummary({ strict, transportStatus, modelStatu
     transport_status: transportStatus === 'completed' ? 'completed' : 'failed',
     model_status: MODEL_STATUSES.has(modelStatus) ? modelStatus : 'none',
     scratch_cleanup_status: SCRATCH_CLEANUP_STATUSES.has(scratchCleanupStatus) ? scratchCleanupStatus : 'not_created',
+    scratch_recovery: sanitizeScratchRecoverySummary(scratchRecovery),
     strict_gates: {
       status: strict?.status === 'passed' ? 'passed' : 'failed',
       failure_reason_count: Array.isArray(strict?.failure_reasons) ? safeCount(strict.failure_reasons.length) : 0,

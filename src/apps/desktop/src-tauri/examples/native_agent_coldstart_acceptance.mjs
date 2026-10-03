@@ -2,17 +2,19 @@
 // API credentials stay in process memory / child env or stdin, never argv or logs.
 import { spawn, spawnSync } from 'node:child_process'
 import { createHash, randomBytes, randomUUID } from 'node:crypto'
-import { mkdirSync, readFileSync, writeFileSync, existsSync, mkdtempSync } from 'node:fs'
+import { mkdirSync, readFileSync, writeFileSync, existsSync } from 'node:fs'
 import { basename, dirname, join, resolve } from 'node:path'
-import { tmpdir } from 'node:os'
 import { createInterface } from 'node:readline'
 import { createAuditedToolProxy, createTerminalUpdateHmac, evaluateColdstartGates, parseEvidenceJsonl, parsePostcheckState, readRunArtifacts, summarizeAcpTerminalUpdateDiagnostics, summarizeCordisBindingDiagnostics, toolArgumentsFingerprint } from './native_agent_coldstart_gates.mjs'
 import { buildSafeAcceptanceSummary, writeSafeAcceptanceArtifacts } from './native_agent_coldstart_publication.mjs'
 import { removeScratchDirectory, safeScratchCleanupStatus, terminateChildrenAndWait, waitThenTerminateChild } from './native_agent_coldstart_lifecycle.mjs'
+import { createColdstartScratchDirectory, recoverStaleColdstartScratch } from './native_agent_coldstart_scratch.mjs'
 
 const [repoArg, runtimeArg, outputArg, configArg, imageArg, userTextArg] = process.argv.slice(2)
 let archiveDir = null
 let scratchDir = null
+let scratchRecovery = { status: 'complete', scanned_count: 0, removed_count: 0, preserved_count: 0,
+  rejected_count: 0, unknown_owner_count: 0, failed_count: 0 }
 const managedChildren = []
 let fatalFailurePromise = null
 const stopManagedChildren = () => terminateChildrenAndWait(managedChildren, 1500)
@@ -24,6 +26,7 @@ const archiveFailure = scratchCleanupStatus => {
       transport_status: 'failed', model_status: 'none',
       status_scope: 'scope_unverified', runtime: { node: 'unverified', dsh: 'unverified' },
       scratch_cleanup_status: scratchCleanupStatus,
+      scratch_recovery: scratchRecovery,
       strict_gates: { status: 'failed', failure_reason_count: 1, evidence_error_count: 0, gates: {} } }, null, 2),
     { flag: 'wx', mode: 0o600 })
   } catch { /* preserve the original process failure */ }
@@ -67,7 +70,8 @@ if (existsSync(output)) throw new Error('验收输出目录已经存在；请提
 mkdirSync(dirname(output), { recursive: true })
 mkdirSync(output)
 archiveDir = output
-scratchDir = mkdtempSync(join(tmpdir(), 'aimodeler-coldstart-private-'))
+scratchRecovery = recoverStaleColdstartScratch()
+scratchDir = createColdstartScratchDirectory()
 const workDir = scratchDir
 const toolResultDiagnosticsPath = join(workDir, 'tool-result-diagnostics.jsonl')
 const legacy = join(repo, 'src/legacy')
@@ -359,13 +363,15 @@ const strict = evaluateColdstartGates({
     runtime: { node: nodeVersion.stdout.trim(), dsh: dshPackage.version },
     source: { bytes: imageBytes.length, sha256: sourceSha, unchanged: hash(readFileSync(imagePath)) === sourceSha },
     scratchCleanupStatus: safeScratchCleanupStatus(managedChildrenExited, scratchCleanupStatus),
+    scratchRecovery,
   })
   writeSafeAcceptanceArtifacts(output, { summary: safeSummary, acpProjection: projection,
     bindingProjection, buildStatus })
 }
 const finalStatus = safeSummary.status
 const cleanupFailed = !managedChildrenExited || scratchCleanupStatus !== 'removed'
-console.log(JSON.stringify({ status: finalStatus, scratch_cleanup_status: cleanupFailed ? 'failed' : 'removed', evidence_archive: output }, null, 2))
+console.log(JSON.stringify({ status: finalStatus, scratch_cleanup_status: cleanupFailed ? 'failed' : 'removed',
+  scratch_recovery: scratchRecovery, evidence_archive: output }, null, 2))
 if (finalStatus !== 'passed') {
   process.exitCode = 1
 }
