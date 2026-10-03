@@ -5,7 +5,7 @@ use crate::native_vision_provider::{
 };
 use serde_json::{json, Map, Value};
 use sha2::{Digest, Sha256};
-use std::collections::{BTreeSet, HashSet};
+use std::collections::{BTreeSet, HashMap, HashSet};
 use std::fs;
 use std::io::Read;
 use std::path::{Path, PathBuf};
@@ -184,7 +184,7 @@ pub async fn inspect(
         },
         VisionMessage {
             role: "user".into(),
-            content: vec![VisionPart::Text(prompt), VisionPart::Image(0)],
+            content: vec![VisionPart::Text(prompt.clone()), VisionPart::Image(0)],
         },
     ];
     let req = RequestContext {
@@ -211,7 +211,7 @@ pub async fn inspect(
             role: "user".into(),
             content: vec![
                 VisionPart::Text(
-                    "有限schema修复重试：重新查看本次原图，输出规定对象。看得清时描述实际可见事实；确实无法辨读时visible_evidence=[]并说明原因，不得伪造。".into(),
+                    format!("有限schema修复重试：重新查看本次原图，并完整遵守以下观察字段与枚举约束；只修复结构化格式，不改变已观察事实。\n{prompt}"),
                 ),
                 VisionPart::Image(0),
             ],
@@ -286,9 +286,12 @@ fn inspection_prompt(input: &ReferenceInput) -> String {
         "roi_coordinate_space": input.metadata.get("roi_coordinate_space"),
         "roi_norm": input.image.roi_norm,
     });
-    format!(
+    let base_prompt = format!(
         "只观察本次一张原始参考图。逐区记录外轮廓、清晰可见结构组、相对位置/数量/相对大小及遮挡不确定项；不要猜绝对尺寸、深度或隐藏结构。至少输出一个真实可见 visible_evidence 项；确实看不清时可留空并说明原因，不得伪造。返回 JSON 对象字段 summary、visible_evidence 数组、uncertain 数组、inferred 数组。每项 visible_evidence 可含 evidence_id、group_id、description、image_region、visible_count、relative_size_group(larger/smaller/same/unknown)、surface_plane_relation(parallel/perpendicular/distinct/unknown)、visible_form(hole/open_slot/notch/recess/unknown)、confidence(0..1)、confidence_basis、members 数组和 touches_boundary 对象。可分辨的重复孔/凸台必须逐个列入 members，每项含 member_id、relative_position:{{x,y}}、relative_size_group(larger/smaller/same/unknown)、relative_diameter_ratio、image_region:[[x0,y0],[x1,y1]]、confidence；位置和图像区域均使用本图/当前 ROI 的 0..1 归一化坐标。直径比应针对每个成员独立按同组可见轮廓估算，以清晰可比的代表成员为 1.0 参照；不得因成员同组、对齐或等距而把所有值默认成 1.0。只有可见边界大小确实相同才标 same/相同比值；透视影响或边界不清时标 unknown，并在 confidence_basis/evidence 中说明。主体比例可从同视向边长投影估算，局部轮廓比例应比较同一平面上可比结构；不要直接把等轴图跨方向像素长度当成真实轴比。只输出无量纲视觉比例和可见事实，不输出绝对尺寸。touches_boundary 对象含 top/bottom/left/right，每项只能为 yes/no/unknown，表示该结构是否实际触及图像/ROI边界；看不清必须写 unknown。没有可辨成员时 members=[]，不得补造。缺少的新字段一律保持空/unknown。confidence仅记录观察把握，不能设verification。图片元数据（仅供解码坐标使用，不是视觉证据）：{}",
         metadata
+    );
+    format!(
+        "{base_prompt}\n同时返回 primary_surface_id 与 surface_relations。每项 visible_evidence 增加 surface_id（同一实际支承平面使用同一 ID）、normal_relation_to_primary(same/opposite/perpendicular/unknown) 和 touches_part_edge(top/bottom/left/right，每项 yes/no/unknown)。primary_surface_id 必须引用一个可见 surface_id；字段无法确定时用空值或 unknown。touches_part_edge 表示结构是否接触工件自身边缘，touches_boundary 仍只表示图像/ROI边界，两者不能混用。surface_relations 的每项用 source_evidence_id 和 target_evidence_id 引用两个 evidence_id，描述支承平面关系 coplanar（共面）、parallel_offset（平行退层）、perpendicular（垂直）或 unknown；parallel_offset 可给 offset_direction(away_from_viewer/toward_viewer/unknown)，方向相对原图观察者，其他关系必须为 unknown。写明共享边界/轮廓依据和 confidence；证据不足时用 unknown。对重复孔组，显式归属支承面；同向面或平行退层面不能误判为侧面。"
     )
 }
 fn normalize_observation(
@@ -297,7 +300,7 @@ fn normalize_observation(
     observation_version: u64,
 ) -> Value {
     let Some((payload, _)) = payload(input) else {
-        return json!({"summary":"","visible_evidence":[],"uncertain":[],"inferred":[]});
+        return json!({"summary":"","primary_surface_id":null,"visible_evidence":[],"surface_relations":[],"uncertain":[],"inferred":[]});
     };
     let summary = payload
         .get("summary")
@@ -375,6 +378,10 @@ fn normalize_observation(
                 "identity_collision": identity_collision,
                 "group_id": item.get("group_id").or_else(|| item.get("group"))
                     .and_then(Value::as_str).unwrap_or("").chars().take(200).collect::<String>(),
+                "surface_id": item.get("surface_id").and_then(Value::as_str)
+                    .unwrap_or("").trim().chars().take(120).collect::<String>(),
+                "normal_relation_to_primary": enum_value(item.get("normal_relation_to_primary"), &["same", "opposite", "perpendicular", "unknown"]),
+                "touches_part_edge": normalize_touches_boundary(item.get("touches_part_edge")),
                 "description": description.chars().take(1200).collect::<String>(),
                 "image_region": safe_image_region(item.get("image_region")),
                 "visible_count": parse_count(item.get("visible_count")),
@@ -390,9 +397,21 @@ fn normalize_observation(
             }))
         })
         .collect::<Vec<_>>();
+    let surface_relations = normalize_surface_relations(payload.get("surface_relations"), &visible);
+    let primary_surface_id = payload
+        .get("primary_surface_id")
+        .and_then(Value::as_str)
+        .map(str::trim)
+        .filter(|candidate| {
+            !candidate.is_empty()
+                && visible.iter().any(|item| item["surface_id"].as_str() == Some(candidate))
+        })
+        .map(str::to_owned);
     json!({
         "summary": summary,
+        "primary_surface_id": primary_surface_id,
         "visible_evidence": visible,
+        "surface_relations": surface_relations,
         "uncertain": safe_array(payload.get("uncertain").or_else(|| payload.get("uncertainties"))),
         "inferred": safe_array(payload.get("inferred").or_else(|| payload.get("inferences")))
     })
@@ -444,6 +463,98 @@ fn enum_value(v: Option<&Value>, allowed: &[&str]) -> String {
     } else {
         "unknown".into()
     }
+}
+fn normalize_surface_relations(value: Option<&Value>, evidence: &[Value]) -> Value {
+    let Some(rows) = value.and_then(Value::as_array) else {
+        return json!([]);
+    };
+
+    let mut aliases = HashMap::<String, String>::new();
+    let mut ambiguous_aliases = HashSet::<String>::new();
+    for item in evidence {
+        let Some(canonical) = item.get("evidence_id").and_then(Value::as_str) else {
+            continue;
+        };
+        for key in ["source_evidence_id", "group_id"] {
+            let Some(alias) = item.get(key).and_then(Value::as_str).map(str::trim)
+                .filter(|alias| !alias.is_empty()) else { continue };
+            if ambiguous_aliases.contains(alias) {
+                continue;
+            }
+            if let Some(previous) = aliases.get(alias).cloned() {
+                if previous != canonical {
+                    aliases.remove(alias);
+                    ambiguous_aliases.insert(alias.to_owned());
+                }
+            } else {
+                aliases.insert(alias.to_owned(), canonical.to_owned());
+            }
+        }
+    }
+
+    let mut output = Vec::<Value>::new();
+    let mut relation_indices = HashMap::<(String, String), usize>::new();
+    for row in rows.iter().take(100) {
+        let Some(source_alias) = row.get("source_evidence_id")
+            .or_else(|| row.get("from_evidence_id"))
+            .and_then(Value::as_str).map(str::trim).filter(|id| !id.is_empty()) else { continue };
+        let Some(target_alias) = row.get("target_evidence_id")
+            .or_else(|| row.get("to_evidence_id"))
+            .and_then(Value::as_str).map(str::trim).filter(|id| !id.is_empty()) else { continue };
+        let (Some(source), Some(target)) = (aliases.get(source_alias), aliases.get(target_alias)) else {
+            continue;
+        };
+        if source == target {
+            continue;
+        }
+        let relation = enum_value(row.get("relation"), &[
+            "coplanar", "parallel_offset", "perpendicular", "unknown",
+        ]);
+        let offset_direction = if relation == "parallel_offset" {
+            enum_value(row.get("offset_direction"), &["away_from_viewer", "toward_viewer", "unknown"])
+        } else {
+            "unknown".into()
+        };
+        let pair = if source <= target {
+            (source.clone(), target.clone())
+        } else {
+            (target.clone(), source.clone())
+        };
+        if let Some(index) = relation_indices.get(&pair).copied() {
+            if output[index]["relation"].as_str() != Some(&relation) {
+                output[index]["relation"] = json!("unknown");
+                output[index]["offset_direction"] = json!("unknown");
+                output[index]["confidence"] = Value::Null;
+                output[index]["confidence_basis"] = json!("conflicting duplicate relation labels");
+            } else if relation == "parallel_offset" {
+                let previous_direction = output[index]["offset_direction"].as_str().unwrap_or("unknown");
+                if previous_direction == "unknown" {
+                    output[index]["offset_direction"] = json!(offset_direction);
+                } else if offset_direction != "unknown" && previous_direction != offset_direction {
+                    output[index]["offset_direction"] = json!("unknown");
+                    output[index]["confidence"] = Value::Null;
+                    output[index]["confidence_basis"] = json!("conflicting duplicate offset directions");
+                }
+            }
+            continue;
+        }
+
+        let confidence = row.get("confidence").and_then(Value::as_f64)
+            .filter(|value| value.is_finite() && *value >= 0. && *value <= 1.)
+            .filter(|_| relation != "unknown");
+        let confidence_basis = row.get("confidence_basis").or_else(|| row.get("evidence"))
+            .and_then(Value::as_str).unwrap_or("").trim().chars().take(500).collect::<String>();
+        relation_indices.insert(pair, output.len());
+        output.push(json!({
+            "source_evidence_id": source,
+            "target_evidence_id": target,
+            "relation": relation,
+            "offset_direction": offset_direction,
+            "confidence": confidence,
+            "confidence_basis": confidence_basis
+        }));
+    }
+    json!(output)
 }
 fn normalize_members(value: Option<&Value>) -> Value {
     let Some(rows) = value.and_then(Value::as_array) else {
@@ -1850,8 +1961,11 @@ mod tests {
         session.state["reference_inventory"] = json!({});
         let response = json!({
             "summary":"A repeated opening group is visible.",
+            "primary_surface_id":"front-main",
             "visible_evidence":[{
                 "id":"hole-column",
+                "surface_id":"front-main",
+                "normal_relation_to_primary":"same",
                 "description":"Three vertically aligned holes.",
                 "visible_count":3,
                 "visible_form":"hole",
@@ -1861,7 +1975,25 @@ mod tests {
                     {"member_id":"lower","relative_position":{"x":0.5,"y":0.8},"relative_size_group":"larger","relative_diameter_ratio":1.35,"image_region":[[0.4,0.75],[0.6,0.85]],"confidence":0.9}
                 ],
                 "touches_boundary":{"top":"yes","bottom":"no","left":"unknown","right":"no"}
-            }]
+            },{
+                "id":"center-recess",
+                "surface_id":"recess-floor",
+                "normal_relation_to_primary":"same",
+                "description":"The middle face is set back from the two outer faces.",
+                "visible_form":"recess",
+                "touches_boundary":{"top":"no","bottom":"no","left":"no","right":"no"},
+                "touches_part_edge":{"top":"yes","bottom":"yes","left":"no","right":"no"}
+            },{
+                "id":"side-holes",
+                "surface_id":"right-side",
+                "normal_relation_to_primary":"perpendicular",
+                "description":"A perpendicular side face with visible openings.",
+                "visible_form":"hole"
+            }],
+            "surface_relations":[
+                {"source_evidence_id":"hole-column","target_evidence_id":"center-recess","relation":"parallel_offset","offset_direction":"away_from_viewer","confidence":0.94,"confidence_basis":"The center face is visibly behind the coplanar outer front face."},
+                {"source_evidence_id":"center-recess","target_evidence_id":"side-holes","relation":"perpendicular","offset_direction":"toward_viewer","confidence":0.9,"confidence_basis":"The side silhouette shows a right angle."}
+            ]
         });
         let (base_url, server) = mock_chat_server(vec![response]);
         let model = provider(base_url);
@@ -1883,10 +2015,24 @@ mod tests {
         );
         assert_eq!(evidence["touches_boundary"]["top"], "yes");
         assert_eq!(evidence["touches_boundary"]["left"], "unknown");
+        assert_eq!(evidence["surface_id"], "front-main");
+        assert_eq!(evidence["normal_relation_to_primary"], "same");
+        assert_eq!(result.value["primary_surface_id"], "front-main");
+        assert_eq!(result.value["surface_relations"].as_array().unwrap().len(), 2);
+        assert_eq!(result.value["surface_relations"][0]["relation"], "parallel_offset");
+        assert_eq!(result.value["surface_relations"][0]["offset_direction"], "away_from_viewer");
+        let center_recess = &result.value["visible_evidence"][1];
+        assert_eq!(center_recess["touches_boundary"]["top"], "no");
+        assert_eq!(center_recess["touches_part_edge"]["top"], "yes");
+        assert_eq!(center_recess["touches_part_edge"]["bottom"], "yes");
         let stored =
             &result.state["reference_inventory"][&session.reference_id]["visible_evidence"][0];
         assert_eq!(stored["members"], evidence["members"]);
         assert_eq!(stored["touches_boundary"], evidence["touches_boundary"]);
+        assert_eq!(
+            result.state["reference_inventory"][&session.reference_id]["surface_relations"],
+            result.value["surface_relations"]
+        );
         let (request, _) = server.join().unwrap().into_iter().next().unwrap();
         let prompt = request.to_string();
         assert!(prompt.contains("relative_diameter_ratio"));
@@ -1894,7 +2040,89 @@ mod tests {
         assert!(prompt.contains("不得因成员同组、对齐或等距而把所有值默认成 1.0"));
         assert!(prompt.contains("只有可见边界大小确实相同才标 same/相同比值"));
         assert!(prompt.contains("不要直接把等轴图跨方向像素长度当成真实轴比"));
+        assert!(prompt.contains("normal_relation_to_primary"));
+        assert!(prompt.contains("touches_part_edge"));
+        assert!(prompt.contains("away_from_viewer/toward_viewer/unknown"));
     }
+
+    #[test]
+    fn surface_relations_reject_unmapped_or_ambiguous_ids_and_conflicts_stay_unknown() {
+        let reference = ref_input();
+        let got = normalize_observation(
+            &json!({
+                "primary_surface_id":"front",
+                "visible_evidence":[
+                    {"id":"left","group_id":"G-L","surface_id":"front","description":"left openings"},
+                    {"id":"center","group_id":"G-C","surface_id":"recess","description":"center openings"},
+                    {"id":"right","group_id":"G-R","surface_id":"front","description":"right openings"},
+                    {"id":"side-a","group_id":"G-DUP","surface_id":"side-a","description":"side group a"},
+                    {"id":"side-b","group_id":"G-DUP","surface_id":"side-b","description":"side group b"}
+                ],
+                "surface_relations":[
+                    {"source_evidence_id":"G-L","target_evidence_id":"G-C","relation":"parallel_offset","offset_direction":"away_from_viewer","confidence":0.9},
+                    {"source_evidence_id":"G-C","target_evidence_id":"G-R","relation":"parallel_offset","offset_direction":"away_from_viewer","confidence":0.9},
+                    {"source_evidence_id":"G-L","target_evidence_id":"G-R","relation":"coplanar","confidence":0.9},
+                    {"source_evidence_id":"G-R","target_evidence_id":"G-L","relation":"perpendicular","confidence":0.9},
+                    {"source_evidence_id":"G-L","target_evidence_id":"missing","relation":"perpendicular"},
+                    {"source_evidence_id":"G-DUP","target_evidence_id":"G-L","relation":"perpendicular"},
+                    {"source_evidence_id":"G-C","target_evidence_id":"G-C","relation":"coplanar"}
+                ]
+            }),
+            &reference,
+            1,
+        );
+        assert_eq!(got["primary_surface_id"], "front");
+        let relations = got["surface_relations"].as_array().unwrap();
+        assert_eq!(relations.len(), 3);
+        assert_eq!(relations[0]["relation"], "parallel_offset");
+        assert_eq!(relations[0]["offset_direction"], "away_from_viewer");
+        assert_eq!(relations[1]["relation"], "parallel_offset");
+        assert_eq!(relations[2]["relation"], "unknown");
+        assert!(relations[2]["confidence"].is_null());
+        assert_eq!(got["visible_evidence"][0]["normal_relation_to_primary"], "unknown");
+        assert_eq!(got["visible_evidence"][0]["touches_part_edge"]["top"], "unknown");
+        assert_eq!(got["primary_surface_id"], "front");
+    }
+
+    #[test]
+    fn schema_repair_retry_includes_surface_relationship_contract() {
+        let mut session = test_session();
+        session.state["reference_inventory"] = json!({});
+        let (base_url, server) = mock_chat_server(vec![
+            json!({"summary":"I cannot identify the groups.","visible_evidence":[]}),
+            json!({
+                "summary":"A front group and a recessed group are visible.",
+                "primary_surface_id":"front",
+                "visible_evidence":[
+                    {"id":"front-group","surface_id":"front","normal_relation_to_primary":"same","description":"front holes"},
+                    {"id":"recess-group","surface_id":"recess","normal_relation_to_primary":"same","description":"recessed holes","touches_part_edge":{"top":"yes","bottom":"yes"}}
+                ],
+                "surface_relations":[
+                    {"source_evidence_id":"front-group","target_evidence_id":"recess-group","relation":"parallel_offset","offset_direction":"away_from_viewer","confidence":0.9}
+                ]
+            }),
+        ]);
+        let model = provider(base_url);
+        let result = run(inspect(
+            &session.state,
+            &json!({"reference_id":session.reference_id}),
+            &model,
+            &AtomicBool::new(false),
+            &session.context,
+        ))
+        .unwrap();
+        assert_eq!(result.value["observation_valid"], true);
+        assert_eq!(result.value["surface_relations"][0]["offset_direction"], "away_from_viewer");
+        let requests = server.join().unwrap();
+        assert_eq!(requests.len(), 2);
+        let retry_request = requests[1].0.to_string();
+        assert!(retry_request.contains("surface_id"));
+        assert!(retry_request.contains("normal_relation_to_primary"));
+        assert!(retry_request.contains("touches_part_edge"));
+        assert!(retry_request.contains("surface_relations"));
+        assert!(retry_request.contains("offset_direction"));
+    }
+
     #[test]
     fn empty_observation_and_invalid_confidence_are_not_promoted() {
         let r = ref_input();

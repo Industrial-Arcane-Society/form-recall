@@ -922,6 +922,22 @@ class DSHReviewWorkflowTests(unittest.TestCase):
         self.assertIn("主体创建后以及关键特征完成时", prompt)
         self.assertIn("修订对应 CADPlan 参数", prompt)
 
+    def test_production_prompt_maps_front_surface_holes_and_open_recess_edges(self):
+        prompt = dsh_agent._prompt()
+        self.assertIn("primary front（主正面，法向 +Y）", prompt)
+        self.assertIn("每个孔组/凹槽所属的 `surface_id`", prompt)
+        self.assertIn("`normal_relation_to_primary`", prompt)
+        self.assertIn("组间 `surface_relations`", prompt)
+        self.assertIn("依据各孔组支承面相对主正面的关系映射轴向", prompt)
+        self.assertIn("属于主正面或与其平行退层面的一个或多个孔组都映射为 `axis=\"Y\"`", prompt)
+        self.assertIn("只有原图证据明确显示孔组位于与主正面垂直的侧面", prompt)
+        self.assertIn("`touches_part_edge` 描述工件自身的 top/bottom/left/right 边缘", prompt)
+        self.assertIn("`touches_boundary` 描述图片/ROI 边界", prompt)
+        self.assertIn("先按 `surface_id` 和 `surface_relations` 建立面间拓扑", prompt)
+        self.assertIn("凹槽按 `touches_part_edge` 中实际接触的工件边缘确定开口范围及是否贯通", prompt)
+        self.assertIn("保留它相对主正面的居中或偏置关系", prompt)
+        self.assertIn("不得把位于正面中部的退台误建成角部 notch", prompt)
+
     def test_finish_without_current_visual_evidence_saves_unverified_candidate(self):
         self._write_state()
         with mock.patch.object(server, "_export_candidate", return_value={"aimodel": "candidate.aimodel"}):
