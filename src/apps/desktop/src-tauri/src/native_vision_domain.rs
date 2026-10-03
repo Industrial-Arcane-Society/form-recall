@@ -287,7 +287,7 @@ fn inspection_prompt(input: &ReferenceInput) -> String {
         "roi_norm": input.image.roi_norm,
     });
     format!(
-        "只观察本次一张原始参考图。逐区记录外轮廓、清晰可见结构组、相对位置/数量/相对大小及遮挡不确定项；不要猜尺寸/深度/隐藏结构。至少输出一个真实可见 visible_evidence 项；确实看不清时可留空并说明原因，不得伪造。JSON对象字段 summary、visible_evidence数组、uncertain数组、inferred数组。每项visible_evidence可含 evidence_id、group_id、description、image_region、visible_count、relative_size_group(larger/smaller/same/unknown)、surface_plane_relation(parallel/perpendicular/distinct/unknown)、visible_form(hole/open_slot/notch/recess/unknown)、confidence(0..1)、confidence_basis。confidence仅记录观察把握，不能设verification。图片元数据（仅供解码坐标使用，不是视觉证据）：{}",
+        "只观察本次一张原始参考图。逐区记录外轮廓、清晰可见结构组、相对位置/数量/相对大小及遮挡不确定项；不要猜绝对尺寸、深度或隐藏结构。至少输出一个真实可见 visible_evidence 项；确实看不清时可留空并说明原因，不得伪造。返回 JSON 对象字段 summary、visible_evidence 数组、uncertain 数组、inferred 数组。每项 visible_evidence 可含 evidence_id、group_id、description、image_region、visible_count、relative_size_group(larger/smaller/same/unknown)、surface_plane_relation(parallel/perpendicular/distinct/unknown)、visible_form(hole/open_slot/notch/recess/unknown)、confidence(0..1)、confidence_basis、members 数组和 touches_boundary 对象。可分辨的重复孔/凸台必须逐个列入 members，每项含 member_id、relative_position:{{x,y}}、relative_size_group(larger/smaller/same/unknown)、relative_diameter_ratio、image_region:[[x0,y0],[x1,y1]]、confidence；位置和图像区域均使用本图/当前 ROI 的 0..1 归一化坐标，直径比相对本组典型尺寸（典型值=1.0），只按同视图可见轮廓估算。touches_boundary 对象含 top/bottom/left/right，每项只能为 yes/no/unknown，表示该结构是否实际触及图像/ROI边界；看不清必须写 unknown。没有可辨成员时 members=[]，不得补造。缺少的新字段一律保持空/unknown。confidence仅记录观察把握，不能设verification。图片元数据（仅供解码坐标使用，不是视觉证据）：{}",
         metadata
     )
 }
@@ -379,6 +379,8 @@ fn normalize_observation(
                 "image_region": safe_image_region(item.get("image_region")),
                 "visible_count": parse_count(item.get("visible_count")),
                 "relative_size_group": enum_value(item.get("relative_size_group"), &["larger", "smaller", "same", "unknown"]),
+                "members": normalize_members(item.get("members")),
+                "touches_boundary": normalize_touches_boundary(item.get("touches_boundary")),
                 "surface_plane_relation": enum_value(item.get("surface_plane_relation"), &["parallel", "perpendicular", "distinct", "unknown"]),
                 "visible_form": enum_value(item.get("visible_form"), &["hole", "open_slot", "notch", "recess", "unknown"]),
                 "confidence": confidence,
@@ -441,6 +443,97 @@ fn enum_value(v: Option<&Value>, allowed: &[&str]) -> String {
         x
     } else {
         "unknown".into()
+    }
+}
+fn normalize_members(value: Option<&Value>) -> Value {
+    let Some(rows) = value.and_then(Value::as_array) else {
+        return json!([]);
+    };
+    let mut ids = HashSet::new();
+    let normalized = rows
+        .iter()
+        .take(100)
+        .filter_map(|member| {
+            let id = member
+                .get("member_id")
+                .and_then(Value::as_str)
+                .map(str::trim)
+                .filter(|id| !id.is_empty())?;
+            let id = id.chars().take(80).collect::<String>();
+            if id.is_empty() || !ids.insert(id.clone()) {
+                return None;
+            }
+            let ratio = member
+                .get("relative_diameter_ratio")
+                .and_then(Value::as_f64)
+                .filter(|ratio| ratio.is_finite() && *ratio > 0. && *ratio <= 20.);
+            let confidence = member
+                .get("confidence")
+                .and_then(Value::as_f64)
+                .filter(|value| value.is_finite() && *value >= 0. && *value <= 1.);
+            Some(json!({
+                "member_id": id,
+                "relative_position": safe_normalized_point(member.get("relative_position")),
+                "relative_size_group": enum_value(member.get("relative_size_group"), &["larger", "smaller", "same", "unknown"]),
+                "relative_diameter_ratio": ratio,
+                "image_region": safe_normalized_region(member.get("image_region")),
+                "confidence": confidence
+            }))
+        })
+        .collect::<Vec<_>>();
+    json!(normalized)
+}
+fn normalize_touches_boundary(value: Option<&Value>) -> Value {
+    let sides = ["top", "bottom", "left", "right"];
+    let Some(object) = value.and_then(Value::as_object) else {
+        return json!({"top":"unknown","bottom":"unknown","left":"unknown","right":"unknown"});
+    };
+    let mut output = Map::new();
+    for side in sides {
+        output.insert(
+            side.into(),
+            json!(enum_value(object.get(side), &["yes", "no", "unknown"])),
+        );
+    }
+    Value::Object(output)
+}
+fn safe_normalized_point(value: Option<&Value>) -> Value {
+    let Some(object) = value.and_then(Value::as_object) else {
+        return Value::Null;
+    };
+    let coordinate = |key: &str| {
+        object
+            .get(key)
+            .and_then(Value::as_f64)
+            .filter(|value| value.is_finite() && (0. ..=1.).contains(value))
+    };
+    match (coordinate("x"), coordinate("y")) {
+        (Some(x), Some(y)) => json!({"x":x,"y":y}),
+        _ => Value::Null,
+    }
+}
+fn safe_normalized_region(value: Option<&Value>) -> Value {
+    let Some(points) = value.and_then(Value::as_array) else {
+        return Value::Null;
+    };
+    if points.len() != 2 {
+        return Value::Null;
+    }
+    let point = |value: &Value| -> Option<[f64; 2]> {
+        let pair = value.as_array()?;
+        if pair.len() != 2 {
+            return None;
+        }
+        let x = pair[0].as_f64()?;
+        let y = pair[1].as_f64()?;
+        ((0. ..=1.).contains(&x) && (0. ..=1.).contains(&y) && x.is_finite() && y.is_finite())
+            .then_some([x, y])
+    };
+    match (point(&points[0]), point(&points[1])) {
+        (Some(first), Some(second)) if first[0] <= second[0] && first[1] <= second[1] => {
+            json!([first, second])
+        }
+        _ => Value::Null,
     }
 }
 fn safe_array(v: Option<&Value>) -> Value {
@@ -1704,7 +1797,100 @@ mod tests {
         );
         assert_eq!(got["visible_evidence"][0]["visible_count"], 2);
         assert_eq!(got["visible_evidence"][0]["confidence"], 0.99);
+        assert!(
+            got["visible_evidence"][0]["members"]
+                .as_array()
+                .unwrap()
+                .is_empty()
+        );
+        assert_eq!(
+            got["visible_evidence"][0]["touches_boundary"]["top"],
+            "unknown"
+        );
         assert_eq!(got["visible_evidence"][0]["verification_status"], "unknown");
+    }
+    #[test]
+    fn observation_member_fields_are_whitelisted_and_invalid_values_stay_unknown() {
+        let got = normalize_observation(
+            &json!({
+                "visible_evidence":[{
+                    "description":"A repeated feature group.",
+                    "members":[{
+                        "member_id":"member-1",
+                        "relative_position":{"x":2.0,"y":0.5},
+                        "relative_size_group":"huge",
+                        "relative_diameter_ratio":0.0,
+                        "image_region":[[-0.1,0.2],[0.3,0.4]],
+                        "confidence":1.1,
+                        "untrusted_extra":"must not persist"
+                    }],
+                    "touches_boundary":{"top":"yes","bottom":"false","left":"no","right":"maybe","extra":"ignored"}
+                }]
+            }),
+            &ref_input(),
+            1,
+        );
+        let evidence = &got["visible_evidence"][0];
+        let member = &evidence["members"][0];
+        assert!(member["relative_position"].is_null());
+        assert_eq!(member["relative_size_group"], "unknown");
+        assert!(member["relative_diameter_ratio"].is_null());
+        assert!(member["image_region"].is_null());
+        assert!(member["confidence"].is_null());
+        assert!(member.get("untrusted_extra").is_none());
+        assert_eq!(evidence["touches_boundary"]["top"], "yes");
+        assert_eq!(evidence["touches_boundary"]["bottom"], "unknown");
+        assert_eq!(evidence["touches_boundary"]["left"], "no");
+        assert_eq!(evidence["touches_boundary"]["right"], "unknown");
+        assert!(evidence["touches_boundary"].get("extra").is_none());
+    }
+    #[test]
+    fn inspect_preserves_valid_member_ratios_and_boundary_states_in_inventory() {
+        let mut session = test_session();
+        session.state["reference_inventory"] = json!({});
+        let response = json!({
+            "summary":"A repeated opening group is visible.",
+            "visible_evidence":[{
+                "id":"hole-column",
+                "description":"Three vertically aligned holes.",
+                "visible_count":3,
+                "visible_form":"hole",
+                "members":[
+                    {"member_id":"upper","relative_position":{"x":0.5,"y":0.2},"relative_size_group":"larger","relative_diameter_ratio":1.4,"image_region":[[0.4,0.15],[0.6,0.25]],"confidence":0.9},
+                    {"member_id":"middle","relative_position":{"x":0.5,"y":0.5},"relative_size_group":"smaller","relative_diameter_ratio":0.7,"image_region":[[0.45,0.45],[0.55,0.55]],"confidence":0.85},
+                    {"member_id":"lower","relative_position":{"x":0.5,"y":0.8},"relative_size_group":"larger","relative_diameter_ratio":1.35,"image_region":[[0.4,0.75],[0.6,0.85]],"confidence":0.9}
+                ],
+                "touches_boundary":{"top":"yes","bottom":"no","left":"unknown","right":"no"}
+            }]
+        });
+        let (base_url, server) = mock_chat_server(vec![response]);
+        let model = provider(base_url);
+        let result = run(inspect(
+            &session.state,
+            &json!({"reference_id":session.reference_id}),
+            &model,
+            &AtomicBool::new(false),
+            &session.context,
+        ))
+        .unwrap();
+        let evidence = &result.value["visible_evidence"][0];
+        assert_eq!(evidence["members"][0]["member_id"], "upper");
+        assert_eq!(evidence["members"][0]["relative_diameter_ratio"], 1.4);
+        assert_eq!(evidence["members"][1]["relative_size_group"], "smaller");
+        assert_eq!(
+            evidence["members"][1]["image_region"],
+            json!([[0.45, 0.45], [0.55, 0.55]])
+        );
+        assert_eq!(evidence["touches_boundary"]["top"], "yes");
+        assert_eq!(evidence["touches_boundary"]["left"], "unknown");
+        let stored =
+            &result.state["reference_inventory"][&session.reference_id]["visible_evidence"][0];
+        assert_eq!(stored["members"], evidence["members"]);
+        assert_eq!(stored["touches_boundary"], evidence["touches_boundary"]);
+        let (request, _) = server.join().unwrap().into_iter().next().unwrap();
+        let prompt = request.to_string();
+        assert!(prompt.contains("relative_diameter_ratio"));
+        assert!(prompt.contains("touches_boundary"));
     }
     #[test]
     fn empty_observation_and_invalid_confidence_are_not_promoted() {
