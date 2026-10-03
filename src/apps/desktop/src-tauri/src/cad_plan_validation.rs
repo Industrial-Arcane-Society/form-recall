@@ -519,6 +519,7 @@ pub fn validate_plan(plan: &Value) -> Value {
                 "sources",
                 "relations",
                 "note",
+                "enabled",
             ]
             .contains(&key.as_str())
             {
@@ -554,6 +555,17 @@ pub fn validate_plan(plan: &Value) -> Value {
                 format!("index-{index}")
             }
         };
+        if feature
+            .get("enabled")
+            .is_some_and(|value| !value.is_boolean())
+        {
+            append_error(
+                &mut errors,
+                "invalid_enabled",
+                format!("{path}.enabled"),
+                "enabled 必须是布尔值。",
+            );
+        }
         let Some(kind) = feature.get("kind").and_then(Value::as_str) else {
             append_error(
                 &mut errors,
@@ -602,7 +614,7 @@ pub fn validate_plan(plan: &Value) -> Value {
                 "该切除特征之前没有可切除的实体；请确认前置实体。",
             );
         }
-        if operation == "add" {
+        if operation == "add" && feature.get("enabled").and_then(Value::as_bool) != Some(false) {
             has_add = true;
         }
 
@@ -1668,7 +1680,7 @@ fn feature_schema_for(spec: &Spec) -> Value {
     let kind_enum = vec![
         json!({"const":spec.kind,"x-catia-support-status":spec.catia_status,"x-catia-support-note":spec.catia_reason}),
     ];
-    json!({"type":"object","properties":{"id":{"type":"string","minLength":1},"kind":kind_enum[0],"operation":{"type":"string","enum":["add","cut"]},"name":{"type":"string"},"note":{"type":"string"},"parameters":{"type":"object","properties":pp,"required":conditional_required,"additionalProperties":false},"sources":{"type":"object","propertyNames":{"enum":words(spec.params)},"additionalProperties":{"$ref":"#/$defs/source"}},"relations":{"type":"array","items":{"$ref":"#/$defs/relation"}}},"required":["id","kind","operation","parameters","sources"],"additionalProperties":false,"allOf":all_of})
+    json!({"type":"object","properties":{"id":{"type":"string","minLength":1},"kind":kind_enum[0],"operation":{"type":"string","enum":["add","cut"]},"name":{"type":"string"},"note":{"type":"string"},"enabled":{"type":"boolean","default":true},"parameters":{"type":"object","properties":pp,"required":conditional_required,"additionalProperties":false},"sources":{"type":"object","propertyNames":{"enum":words(spec.params)},"additionalProperties":{"$ref":"#/$defs/source"}},"relations":{"type":"array","items":{"$ref":"#/$defs/relation"}}},"required":["id","kind","operation","parameters","sources"],"additionalProperties":false,"allOf":all_of})
 }
 fn is_provenance_parameter(key: &str) -> bool {
     has(key, LENGTH_KEYS)

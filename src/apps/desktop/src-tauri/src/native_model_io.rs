@@ -195,8 +195,12 @@ pub fn cadplan_to_project(plan: &Value) -> Result<Value, String> {
         let op = item["operation"]
             .as_str()
             .ok_or("CADPlan feature operation missing")?;
+        let enabled = item.get("enabled").cloned().unwrap_or(json!(true));
+        if !enabled.is_boolean() {
+            return Err(format!("CADPlan feature {id} enabled must be a boolean"));
+        }
         docs.push(json!({"kind":kind,"params":params,"op":op,"name":name,"note":item.get("note").cloned().unwrap_or(json!("")),
-            "feature_id":id,"relations":relations,"enabled":true,"provenance":provenance}));
+            "feature_id":id,"relations":relations,"enabled":enabled,"provenance":provenance}));
         manifest.insert(id.into(),json!({"kind":kind,"operation":op,"name":name,"parameters":item["parameters"],"sources":sources,"relations":relations}));
     }
     let project = json!({"format":"ai-modeler","version":1,"name":plan["name"],"source_prompt":plan.get("source_prompt").cloned().unwrap_or(json!("")),"features":docs,
@@ -597,11 +601,12 @@ mod tests {
     use super::*;
     #[test]
     fn cadplan_document_conversion_preserves_plan_sources_and_unit_semantics() {
-        let plan = json!({"schema_version":"1.0","name":"cm part","source_prompt":"test","units":{"length":"cm","angle":"rad"},"coordinate_system":{"type":"global_cartesian","handedness":"right","axes":["X","Y","Z"],"origin":[0,0,0]},"features":[{"id":"body","kind":"box","operation":"add","parameters":{"length":2,"width":3,"height":4,"center":[1,2,3]},"sources":{"length":{"type":"user","evidence":"two cm"},"width":{"type":"user","evidence":"three cm"},"height":{"type":"user","evidence":"four cm"},"center":{"type":"derived","evidence":"origin"}}}]});
+        let plan = json!({"schema_version":"1.0","name":"cm part","source_prompt":"test","units":{"length":"cm","angle":"rad"},"coordinate_system":{"type":"global_cartesian","handedness":"right","axes":["X","Y","Z"],"origin":[0,0,0]},"features":[{"id":"body","kind":"box","operation":"add","enabled":false,"parameters":{"length":2,"width":3,"height":4,"center":[1,2,3]},"sources":{"length":{"type":"user","evidence":"two cm"},"width":{"type":"user","evidence":"three cm"},"height":{"type":"user","evidence":"four cm"},"center":{"type":"derived","evidence":"origin"}}}]});
         let project = cadplan_to_project(&plan).unwrap();
         assert_eq!(project["features"][0]["params"]["length"], 20.0);
         assert_eq!(project["features"][0]["params"]["center"][2], 30.0);
         assert_eq!(project["features"][0]["params"]["base"], false);
+        assert_eq!(project["features"][0]["enabled"], false);
         assert_eq!(project["features"][0]["provenance"]["length"], "user");
         assert_eq!(project["cadplan"], plan);
         assert_eq!(
@@ -712,7 +717,7 @@ mod tests {
             TEMP_ID.fetch_add(1, Ordering::Relaxed)
         ));
         let project = json!({"format":"ai-modeler","version":1,"name":"legacy","source_prompt":"goal",
-            "features":[{"kind":"box","params":{"length":10,"width":5,"height":2,"base":false},"op":"add","name":"part","note":"","feature_id":"body","relations":[],"enabled":true,"provenance":{"length":"user"}}],
+            "features":[{"kind":"box","params":{"length":10,"width":5,"height":2,"base":false},"op":"add","name":"part","note":"","feature_id":"body","relations":[],"enabled":false,"provenance":{"length":"user"}}],
             "cadplan_schema_version":"1.0","cadplan":{"schema_version":"1.0","future_extension":{"keep":true}}});
         save_aimodel(&path, &project).unwrap();
         let loaded = load_aimodel(&path).unwrap();

@@ -469,9 +469,12 @@ def validate_plan(plan: Any) -> Dict[str, Any]:
             continue
         for key in feature:
             if key not in {"id", "kind", "operation", "name", "parameters", "sources",
-                           "relations", "note"}:
+                           "relations", "note", "enabled"}:
                 errors.append({"code": "unknown_field", "path": path + "." + str(key),
                                "message": "特征不支持此字段。"})
+        if "enabled" in feature and not isinstance(feature["enabled"], bool):
+            errors.append({"code": "invalid_enabled", "path": path + ".enabled",
+                           "message": "enabled 必须是布尔值。"})
         fid = feature.get("id")
         if not isinstance(fid, str) or not fid.strip():
             errors.append({"code": "missing_feature_id", "path": path + ".id",
@@ -499,7 +502,7 @@ def validate_plan(plan: Any) -> Dict[str, Any]:
         if op == CUT and not has_add:
             confirmations.append({"feature_id": fid, "parameter": "operation",
                                   "question": "该切除特征之前没有可切除的实体；请确认前置实体。"})
-        if op == ADD:
+        if op == ADD and feature.get("enabled", True) is not False:
             has_add = True
 
         params = feature.get("parameters")
@@ -816,6 +819,7 @@ def _to_document(plan: Mapping[str, Any]) -> Tuple[Document, Dict[str, Dict[str,
                           CUT if item["operation"] == CUT else ADD,
                           item.get("name", ""), item.get("note", ""),
                           item.get("id"), item.get("relations", []))
+        feature.enabled = item.get("enabled", True)
         source_map = item.get("sources") or {}
         provenance = {key: source.get("type", "unknown")
                       for key, source in source_map.items() if isinstance(source, dict)}
@@ -1634,6 +1638,7 @@ def schema_document() -> Dict[str, Any]:
                 "operation": {"type": "string", "enum": ["add", "cut"]},
                 "name": strings,
                 "note": strings,
+                "enabled": {"type": "boolean", "default": True},
                 "parameters": parameter_schema,
                 "sources": {"type": "object",
                             "propertyNames": {"enum": list(spec["params"])},

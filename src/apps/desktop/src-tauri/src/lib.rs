@@ -1484,7 +1484,7 @@ async fn active_model_import_project(
             );
         }
         for (index, (old, new)) in original_features.iter().zip(generated_features).enumerate() {
-            for key in ["kind", "op", "params"] {
+            for key in ["kind", "op", "params", "enabled"] {
                 if old.get(key) != new.get(key) {
                     return Err(format!(
                         "旧工程第 {index} 个特征的 {key} 与 CADPlan 不一致；拒绝静默改写。"
@@ -1601,11 +1601,10 @@ fn legacy_document_to_cadplan(document: &Value) -> Result<Value, String> {
                 "旧工程特征 {index} 缺少必需参数 {key}，无法精确转换。"
             ));
         }
-        if feature.get("enabled").and_then(Value::as_bool) == Some(false) {
-            return Err(format!(
-                "旧工程特征 {index} 为禁用状态；CADPlan 没有无损 enabled 映射。"
-            ));
-        }
+        let enabled = feature
+            .get("enabled")
+            .and_then(Value::as_bool)
+            .unwrap_or(true);
         let operation = match feature["op"].as_str().unwrap_or("add") {
             "add" => "add",
             "cut" => "cut",
@@ -1618,7 +1617,7 @@ fn legacy_document_to_cadplan(document: &Value) -> Result<Value, String> {
             .unwrap_or_else(|| format!("legacy-{index}-{kind}"));
         let sources = params.as_object().into_iter().flatten().map(|(key, _)| (key.clone(), json!({"type":"existing_model","note":"从旧 AIMODEL 数值字段显式导入，原始文档保存在活动模型中。"}))).collect::<serde_json::Map<_, _>>();
         converted.push(json!({"id":id,"kind":kind,"operation":operation,"name":feature.get("name").cloned().unwrap_or_else(|| json!(kind)),
-            "parameters":params,"sources":sources,"relations":feature.get("relations").cloned().unwrap_or_else(|| json!([]))}));
+            "parameters":params,"sources":sources,"relations":feature.get("relations").cloned().unwrap_or_else(|| json!([])),"enabled":enabled}));
     }
     Ok(
         json!({"schema_version":"1.0","name":document.get("name").cloned().unwrap_or_else(|| json!("Imported Model")),
@@ -1661,11 +1660,11 @@ async fn active_model_update_feature(
         .cloned()
         .ok_or("此旧工程没有 CADPlan；必须先进行显式导入转换。")?;
     let action = action.as_deref().unwrap_or("update");
-    if action == "toggle" || enabled == Some(false) {
-        return Err(
-            "CADPlan v1 没有 enabled/disabled 状态，不能无损切换特征启停；请删除特征或清空模型。"
-                .into(),
-        );
+    if action == "toggle" && enabled.is_none() {
+        return Err("切换特征启停需要显式提供 enabled 布尔值。".into());
+    }
+    if action != "toggle" && enabled.is_some() {
+        return Err("enabled 只能用于 toggle 特征操作。".into());
     }
     let params_are_changed = params.as_object().is_some_and(|changes| {
         plan.pointer(&format!("/features/{index}/parameters"))
@@ -1693,6 +1692,10 @@ async fn active_model_update_feature(
     let feature_id = row["id"].as_str().ok_or("特征 id 无效。")?.to_owned();
     let mut sources = serde_json::Map::new();
     match action {
+        "toggle" => {
+            let enabled = enabled.expect("toggle validates enabled before edit");
+            plan = cad_plan::set_enabled(&plan, &feature_id, enabled)?;
+        }
         "update" => {
             for (key, value) in params.as_object().into_iter().flatten() {
                 if !row["parameters"].get(key).is_some() {
@@ -2670,7 +2673,7 @@ mod native_active_model_import_tests {
     }
 
     #[test]
-    fn refuses_legacy_fields_that_cannot_be_mapped_without_loss() {
+    fn refuses_legacy_fields_that_cannot_be_mapped_without_loss_but_preserves_disabled_flag() {
         let mut document = legacy_box();
         document["features"][0]["params"]["legacy_opaque"] = json!(17);
         assert!(
@@ -2680,10 +2683,11 @@ mod native_active_model_import_tests {
         );
         let mut disabled = legacy_box();
         disabled["features"][0]["enabled"] = json!(false);
-        assert!(
-            legacy_document_to_cadplan(&disabled)
-                .unwrap_err()
-                .contains("禁用状态")
+        let plan = legacy_document_to_cadplan(&disabled).expect("disabled feature state maps");
+        assert_eq!(plan["features"][0]["enabled"], false);
+        assert_eq!(
+            crate::cad_plan_validation::validate_plan(&plan)["valid"],
+            true
         );
     }
 }

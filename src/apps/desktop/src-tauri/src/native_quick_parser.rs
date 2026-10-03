@@ -1,7 +1,6 @@
-//! Bounded, offline Quick parser for common CADPlan primitives and cuts.
-//!
-//! This intentionally does not port the legacy part-library/template matcher.
-//! Missing sizes and ambiguous cut locations are surfaced to the caller.
+//! Bounded, offline Quick parser for common CADPlan primitives, selected
+//! executable legacy templates, and cuts. Legacy template defaults are kept
+//! only for the explicitly ported templates and are returned as warnings.
 use serde_json::{Value, json};
 
 #[derive(Clone, Debug)]
@@ -41,6 +40,10 @@ pub fn parse(text: &str) -> Value {
         );
     }
 
+    if let Some(parsed) = parse_legacy_template(text, &normalized) {
+        return parsed;
+    }
+
     let clauses = split_clauses(&normalized);
     let mut base_kinds = Vec::new();
     for kind in [
@@ -77,6 +80,26 @@ pub fn parse(text: &str) -> Value {
         ("阵列", "阵列尚未迁入 Quick 基础解析范围。"),
         ("thread", "螺纹紧固件尚未迁入 Quick 基础解析范围。"),
         ("螺纹", "螺纹紧固件尚未迁入 Quick 基础解析范围。"),
+        (
+            "叶片",
+            "旧 Quick 可解析叶片放样，但当前原生几何执行器不支持 loft；已拒绝，不生成空模型。",
+        ),
+        (
+            "blade",
+            "旧 Quick 可解析叶片放样，但当前原生几何执行器不支持 loft；已拒绝，不生成空模型。",
+        ),
+        (
+            "叶盘",
+            "旧 Quick 可解析叶盘，但当前原生几何执行器不支持 loft；已拒绝，不生成不完整模型。",
+        ),
+        (
+            "叶轮",
+            "叶轮模板当前依赖未迁入的叶片/放样几何；Quick 已拒绝，不生成不完整模型。",
+        ),
+        (
+            "blisk",
+            "旧 Quick 可解析叶盘，但当前原生几何执行器不支持 loft；已拒绝，不生成不完整模型。",
+        ),
     ] {
         if normalized.contains(word) {
             unsupported.push(issue("unsupported_feature", explanation));
@@ -213,7 +236,384 @@ fn result(
     unsupported: Vec<Value>,
 ) -> Value {
     json!({"status":status,"source_text":text,"plan":plan,"warnings":warnings,"questions":questions,"unsupported":unsupported,
-        "compatibility":{"scope":"common explicit primitives and cuts only","legacy_typical_defaults":"intentionally removed; missing required values now need clarification"}})
+        "compatibility":{"scope":"common explicit primitives/cuts plus executable flange, stepped-shaft, and sleeve/tube legacy templates","legacy_typical_defaults":"kept only for migrated templates and reported as warnings; other missing required values need clarification"}})
+}
+
+fn parse_legacy_template(raw: &str, normalized: &str) -> Option<Value> {
+    if contains_any(normalized, &["阶梯轴", "台阶轴", "stepped shaft"]) {
+        return Some(parse_stepped_shaft(raw, normalized));
+    }
+    if contains_any(normalized, &["法兰", "flange"]) {
+        return Some(parse_flange(raw, normalized));
+    }
+    if contains_any(normalized, &["套筒", "圆管", "钢管", "sleeve", "tube"]) {
+        return Some(parse_tube(raw, normalized));
+    }
+    None
+}
+
+fn parse_stepped_shaft(raw: &str, text: &str) -> Value {
+    let pairs = legacy_diameter_length_pairs(text);
+    let pairs = if !pairs.is_empty() {
+        pairs
+    } else if let Some([diameter, length, _]) = find_dimension_triplet(text) {
+        vec![(diameter, length)]
+    } else {
+        vec![(30.0, 50.0), (20.0, 40.0), (30.0, 30.0)]
+    };
+    let used_defaults =
+        legacy_diameter_length_pairs(text).is_empty() && find_dimension_triplet(text).is_none();
+    let mut features = Vec::with_capacity(pairs.len());
+    let mut z = 0.0;
+    for (index, (diameter, length)) in pairs.into_iter().enumerate() {
+        if !diameter.is_finite() || !length.is_finite() || diameter <= 0.0 || length <= 0.0 {
+            return parse_result_with_issue(
+                "needs_clarification",
+                raw,
+                "step_shaft_invalid_segment",
+                "阶梯轴每段必须提供正直径和正长度。",
+            );
+        }
+        let mut p = serde_json::Map::new();
+        let mut s = serde_json::Map::new();
+        add_user(&mut p, &mut s, raw, "radius", json!(diameter / 2.0));
+        if used_defaults {
+            s.insert(
+                "radius".into(),
+                derived_source(raw, "沿用 Python Quick 阶梯轴模板默认尺寸。"),
+            );
+        } else {
+            s.insert(
+                "radius".into(),
+                derived_source(raw, "radius = explicit diameter / 2."),
+            );
+        }
+        if used_defaults {
+            p.insert("height".into(), json!(length));
+            s.insert(
+                "height".into(),
+                derived_source(raw, "沿用 Python Quick 阶梯轴模板默认尺寸。"),
+            );
+        } else {
+            add_user(&mut p, &mut s, raw, "height", json!(length));
+        }
+        p.insert("center".into(), json!([0.0, 0.0, z]));
+        s.insert(
+            "center".into(),
+            derived_source(raw, "每段沿 Z 轴首尾堆叠。"),
+        );
+        p.insert("base".into(), json!(true));
+        p.insert("axis".into(), json!("Z"));
+        p.insert("segments".into(), json!(48));
+        s.insert(
+            "segments".into(),
+            derived_source(raw, "沿用 Python Quick 阶梯轴模板分段数 48。"),
+        );
+        features.push(
+            json!({"id":format!("quick-{:04}",index+1),"kind":"cylinder","operation":"add",
+            "name":format!("轴段{}",index+1),"parameters":p,"sources":s,"relations":[]}),
+        );
+        z += length;
+    }
+    let mut warnings = vec![issue(
+        "legacy_template_migrated",
+        "已按 Python Quick 阶梯轴模板建立轴段；尺寸使用 mm。",
+    )];
+    if used_defaults {
+        warnings.push(issue(
+            "legacy_template_defaults",
+            "未提供分段尺寸，沿用旧模板的默认轴段：⌀30×50、⌀20×40、⌀30×30 mm。",
+        ));
+    }
+    plan_result(raw, "阶梯轴", features, warnings)
+}
+
+fn parse_flange(raw: &str, text: &str) -> Value {
+    let diameter = scalar(text, &["outer diameter", "外径"]).unwrap_or(120.0);
+    let thickness = scalar(text, &["thickness", "厚度", "厚", "height", "高"]).unwrap_or(20.0);
+    let inner = scalar(text, &["inner diameter", "内径", "内孔"])
+        .filter(|value| value.is_finite() && *value > 0.0);
+    if !diameter.is_finite() || !thickness.is_finite() || diameter <= 0.0 || thickness <= 0.0 {
+        return parse_result_with_issue(
+            "needs_clarification",
+            raw,
+            "flange_invalid_dimensions",
+            "法兰外径和厚度必须是正数。",
+        );
+    }
+    let mut features = Vec::new();
+    let defaults = !has_labeled_value(text, &["outer diameter", "外径"])
+        || !has_labeled_value(text, &["thickness", "厚度", "厚", "height", "高"]);
+    features.push(cylinder_template_feature(
+        raw,
+        1,
+        "法兰盘体",
+        diameter / 2.0,
+        thickness,
+        false,
+        64,
+        defaults,
+    ));
+    if let Some(inner) = inner {
+        features.push(hole_template_feature(
+            raw,
+            2,
+            "中心孔",
+            inner,
+            "center",
+            None,
+            None,
+            defaults,
+        ));
+    }
+    let count = scalar(text, &["count", "均布", "等分", "孔数"])
+        .filter(|value| value.is_finite() && *value >= 2.0)
+        .map(|value| value.floor() as u64);
+    if let Some(count) = count {
+        let bolt_diameter = bolt_hole_diameter(text).unwrap_or((diameter * 0.08).max(6.0));
+        let pcd = scalar(text, &["pcd", "分度圆"])
+            .filter(|value| value.is_finite() && *value > 0.0)
+            .or_else(|| Some((diameter + inner.unwrap_or(diameter * 0.3)) / 2.0))
+            .unwrap_or(0.0);
+        features.push(hole_template_feature(
+            raw,
+            features.len() + 1,
+            "螺栓孔",
+            bolt_diameter,
+            "pcd",
+            Some(count),
+            Some(pcd),
+            defaults,
+        ));
+    }
+    let mut warnings = vec![issue(
+        "legacy_template_migrated",
+        "已按 Python Quick 法兰模板映射为圆盘和明确描述的贯穿孔。",
+    )];
+    if defaults {
+        warnings.push(issue(
+            "legacy_template_defaults",
+            "缺少外径或厚度时沿用旧法兰模板默认值：外径 120 mm、厚度 20 mm。",
+        ));
+    }
+    plan_result(raw, "法兰", features, warnings)
+}
+
+fn parse_tube(raw: &str, text: &str) -> Value {
+    let diameter = scalar(text, &["outer diameter", "外径"]).unwrap_or(60.0);
+    let length = scalar(text, &["length", "长度", "长", "height", "高度", "高"])
+        .or_else(|| find_dimension_triplet(text).map(|values| values[2]))
+        .unwrap_or(80.0);
+    let explicit_inner = scalar(text, &["inner diameter", "内径", "内孔"])
+        .filter(|value| value.is_finite() && *value > 0.0);
+    // The public Python entrypoint has two observable routes: ordinary tube
+    // parsing keeps the inner diameter and emits 32 segments, while the
+    // part-library path selected by the legacy field order outer→inner→length
+    // halves the inner diameter and emits 48 segments. Keep both behaviors.
+    let legacy_partlib_route = explicit_inner.is_some()
+        && ordered_labels(text, &[&["outer diameter", "外径"], &["inner diameter", "内径", "内孔"], &["length", "长度", "长", "height", "高度", "高"]]);
+    let inner = explicit_inner
+        .map(|value| if legacy_partlib_route { value / 2.0 } else { value })
+        .unwrap_or(diameter * 0.6);
+    if !diameter.is_finite()
+        || !length.is_finite()
+        || !inner.is_finite()
+        || diameter <= 0.0
+        || length <= 0.0
+        || inner <= 0.0
+        || inner >= diameter
+    {
+        return parse_result_with_issue(
+            "needs_clarification",
+            raw,
+            "tube_invalid_dimensions",
+            "圆管外径、内孔直径和长度必须为正数，且内孔直径小于外径。旧 Python 对显式内径存在二分行为；请核对该尺寸。",
+        );
+    }
+    let defaults = !has_labeled_value(text, &["outer diameter", "外径"])
+        || !has_labeled_value(text, &["length", "长度", "长", "height", "高度", "高"]);
+    let mut features = vec![
+        cylinder_template_feature(raw, 1, "管体", diameter / 2.0, length, false, 64, defaults),
+        hole_template_feature(raw, 2, "内孔", inner, "center", None, None, defaults),
+    ];
+    features[1]["parameters"]["segments"] = json!(if legacy_partlib_route { 48 } else { 32 });
+    let mut warnings = vec![issue(
+        "legacy_template_migrated",
+        "已按 Python Quick 套筒/圆管模板映射为外圆柱与中心贯穿孔。",
+    )];
+    if legacy_partlib_route {
+        warnings.push(issue("legacy_template_inner_diameter_compatibility", "兼容旧 Python 解析结果：输入内径值按其既有行为除以 2 后作为孔直径，请确认该旧语法单位含义。"));
+    }
+    if defaults {
+        warnings.push(issue(
+            "legacy_template_defaults",
+            "缺少必需尺寸时沿用旧套筒模板默认值：外径 60 mm、长度 80 mm；默认孔径为外径的 60%。",
+        ));
+    }
+    plan_result(raw, "套筒/圆管", features, warnings)
+}
+
+fn ordered_labels(text: &str, groups: &[&[&str]]) -> bool {
+    let mut previous = None;
+    for aliases in groups {
+        let found = aliases.iter().filter_map(|alias| text.find(alias)).min();
+        let Some(found) = found else { return false; };
+        if previous.is_some_and(|prior| found <= prior) { return false; }
+        previous = Some(found);
+    }
+    true
+}
+
+fn plan_result(raw: &str, name: &str, features: Vec<Value>, warnings: Vec<Value>) -> Value {
+    let plan = json!({"schema_version":"1.0","name":name,"source_prompt":raw,
+        "units":{"length":"mm","angle":"deg"},
+        "coordinate_system":{"type":"global_cartesian","handedness":"right","axes":["X","Y","Z"],"origin":[0,0,0]},
+        "features":features,"pending_questions":[]});
+    result("ready", raw, Some(plan), warnings, vec![], vec![])
+}
+
+fn parse_result_with_issue(status: &str, raw: &str, code: &str, message: &str) -> Value {
+    result(
+        status,
+        raw,
+        None,
+        vec![],
+        vec![issue(code, message)],
+        vec![],
+    )
+}
+
+fn cylinder_template_feature(
+    raw: &str,
+    id: usize,
+    name: &str,
+    radius: f64,
+    height: f64,
+    base: bool,
+    segments: u64,
+    defaults: bool,
+) -> Value {
+    let mut parameters = serde_json::Map::new();
+    let mut sources = serde_json::Map::new();
+    parameters.insert("radius".into(), json!(radius));
+    sources.insert(
+        "radius".into(),
+        derived_source(raw, "radius = outer diameter / 2."),
+    );
+    parameters.insert("height".into(), json!(height));
+    sources.insert(
+        "height".into(),
+        if defaults {
+            derived_source(raw, "沿用 Python Quick 模板默认尺寸。")
+        } else {
+            user_source(raw)
+        },
+    );
+    parameters.insert("center".into(), json!([0.0, 0.0, 0.0]));
+    sources.insert(
+        "center".into(),
+        derived_source(raw, "旧 Quick 模板将圆柱中心置于原点。"),
+    );
+    parameters.insert("base".into(), json!(base));
+    parameters.insert("axis".into(), json!("Z"));
+    parameters.insert("segments".into(), json!(segments));
+    sources.insert(
+        "segments".into(),
+        derived_source(raw, "沿用 Python Quick 模板分段数。"),
+    );
+    json!({"id":format!("quick-{id:04}"),"kind":"cylinder","operation":"add","name":name,
+        "parameters":parameters,"sources":sources,"relations":[]})
+}
+
+fn hole_template_feature(
+    raw: &str,
+    id: usize,
+    name: &str,
+    diameter: f64,
+    position: &str,
+    count: Option<u64>,
+    pcd: Option<f64>,
+    defaults: bool,
+) -> Value {
+    let mut parameters = serde_json::Map::new();
+    let mut sources = serde_json::Map::new();
+    parameters.insert("diameter".into(), json!(diameter));
+    sources.insert(
+        "diameter".into(),
+        if defaults {
+            derived_source(raw, "沿用 Python Quick 模板默认孔径。")
+        } else {
+            user_source(raw)
+        },
+    );
+    parameters.insert("through".into(), json!(true));
+    parameters.insert("pos".into(), json!(position));
+    parameters.insert("axis".into(), json!("Z"));
+    parameters.insert("segments".into(), json!(24));
+    sources.insert(
+        "segments".into(),
+        derived_source(raw, "沿用 Python Quick 模板分段数。"),
+    );
+    if let (Some(count), Some(pcd)) = (count, pcd) {
+        parameters.insert("count".into(), json!(count));
+        parameters.insert("pcd".into(), json!(pcd));
+        sources.insert("count".into(), user_source(raw));
+        sources.insert(
+            "pcd".into(),
+            if has_labeled_value(raw, &["pcd", "分度圆"]) {
+                user_source(raw)
+            } else {
+                derived_source(raw, "按旧 Python Quick 法兰模板从外径与中心孔推导分度圆。")
+            },
+        );
+    }
+    json!({"id":format!("quick-{id:04}"),"kind":"hole","operation":"cut","name":name,
+        "parameters":parameters,"sources":sources,"relations":[]})
+}
+
+fn legacy_diameter_length_pairs(text: &str) -> Vec<(f64, f64)> {
+    let number = r"([+-]?(?:\d+(?:\.\d*)?|\.\d+))";
+    let patterns = [
+        format!(
+            r"(?:⌀|ø|diameter\s*)\s*{number}\s*(?:mm)?\s*x\s*{number}",
+            number = number
+        ),
+        format!(
+            r"(?:直径|diameter)\s*{number}\s*(?:mm)?\s*(?:长度|长|length)\s*{number}",
+            number = number
+        ),
+    ];
+    for pattern in patterns {
+        if let Ok(regex) = regex::Regex::new(&pattern) {
+            let found = regex
+                .captures_iter(text)
+                .filter_map(|capture| {
+                    Some((
+                        capture.get(1)?.as_str().parse::<f64>().ok()?,
+                        capture.get(2)?.as_str().parse::<f64>().ok()?,
+                    ))
+                })
+                .collect::<Vec<_>>();
+            if !found.is_empty() {
+                return found;
+            }
+        }
+    }
+    Vec::new()
+}
+
+fn has_labeled_value(text: &str, labels: &[&str]) -> bool {
+    labels
+        .iter()
+        .any(|label| scalar(text, &[*label]).is_some_and(f64::is_finite))
+}
+
+fn bolt_hole_diameter(text: &str) -> Option<f64> {
+    let regex = regex::Regex::new(r"(?:螺栓孔|bolt\s*hole).{0,16}(?:直径|diameter|⌀)\s*([0-9]+(?:\.[0-9]+)?)|(?:直径|diameter|⌀)\s*([0-9]+(?:\.[0-9]+)?).{0,16}(?:螺栓孔|bolt\s*hole)").ok()?;
+    regex
+        .captures(text)
+        .and_then(|capture| capture.get(1).or_else(|| capture.get(2)))
+        .and_then(|value| value.as_str().parse::<f64>().ok())
 }
 fn issue(code: &str, message: &str) -> Value {
     json!({"code":code,"message":message})
@@ -1123,5 +1523,50 @@ mod tests {
             parse("frustum bottom diameter 30mm height 20mm")["status"],
             "needs_clarification"
         );
+    }
+
+    #[test]
+    fn migrated_legacy_templates_match_python_parser_golden_contract() {
+        let fixture: Value = serde_json::from_str(include_str!("../tests/fixtures/quick_legacy_contract.json"))
+            .expect("legacy Quick oracle fixture is valid JSON");
+        for case in fixture["accepted"].as_array().unwrap() {
+            let output = parse(case["input"].as_str().unwrap());
+            assert_eq!(output["status"], "ready", "{}: {output}", case["input"]);
+            let validation = crate::cad_plan_validation::validate_plan(&output["plan"]);
+            assert_eq!(validation["state"], "valid", "{}: {validation}", case["input"]);
+            for expected in case["features"].as_array().unwrap() {
+                let id = expected["index"].as_u64().unwrap() as usize;
+                let actual = &output["plan"]["features"][id];
+                assert_eq!(actual["kind"], expected["kind"], "{}", case["input"]);
+                assert_eq!(actual["operation"], expected["operation"], "{}", case["input"]);
+                for (key, value) in expected["parameters"].as_object().unwrap() {
+                    assert_eq!(actual["parameters"][key], *value, "{}: {key}", case["input"]);
+                }
+            }
+        }
+        for case in fixture["rejected"].as_array().unwrap() {
+            let output = parse(case["input"].as_str().unwrap());
+            assert_eq!(output["status"], case["status"], "{}: {output}", case["input"]);
+            assert!(output["plan"].is_null(), "rejected input must not yield a plan: {output}");
+        }
+    }
+
+    #[test]
+    fn disabled_native_unsupported_feature_is_retained_but_skipped_by_preflight() {
+        let mut candidate = parse("box 20×10×8 mm")["plan"].clone();
+        let mut disabled = candidate["features"][0].clone();
+        disabled["id"] = json!("disabled-rounded-box");
+        disabled["name"] = json!("disabled feature");
+        disabled["enabled"] = json!(false);
+        disabled["parameters"]["corner"] = json!(4.0);
+        disabled["sources"]["corner"] = derived_source("disabled fixture", "test");
+        candidate["features"].as_array_mut().unwrap().push(disabled);
+
+        assert_eq!(
+            crate::native_plan_geometry::preflight(&candidate).unwrap()["state"],
+            "valid"
+        );
+        assert_eq!(candidate["features"][1]["enabled"], false);
+        assert_eq!(candidate["features"][1]["parameters"]["corner"], 4.0);
     }
 }

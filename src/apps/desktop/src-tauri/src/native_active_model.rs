@@ -460,6 +460,27 @@ fn validate_candidate_with_staged(
     if document["features"].as_array().map_or(usize::MAX, Vec::len) != expected_features {
         return Err("活动模型 document 特征数与 CADPlan 不匹配。".into());
     }
+    for (index, (planned, saved)) in plan["features"]
+        .as_array()
+        .into_iter()
+        .flatten()
+        .zip(document["features"].as_array().into_iter().flatten())
+        .enumerate()
+    {
+        let planned_enabled = planned
+            .get("enabled")
+            .and_then(Value::as_bool)
+            .unwrap_or(true);
+        let saved_enabled = saved
+            .get("enabled")
+            .and_then(Value::as_bool)
+            .unwrap_or(true);
+        if planned_enabled != saved_enabled {
+            return Err(format!(
+                "活动模型第 {index} 个特征的 enabled 与 CADPlan 不匹配。"
+            ));
+        }
+    }
     validate_artifacts(candidate, staged_output)
 }
 

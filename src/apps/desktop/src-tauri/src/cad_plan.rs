@@ -9,7 +9,7 @@ use sha2::{Digest, Sha256};
 
 const SCHEMA_VERSION: &str = "1.0";
 const GEOMETRY_FIELDS: [&str; 5] = ["id", "kind", "operation", "parameters", "relations"];
-const EDITABLE_FIELDS: [&str; 5] = ["name", "note", "relations", "kind", "operation"];
+const EDITABLE_FIELDS: [&str; 6] = ["name", "note", "relations", "kind", "operation", "enabled"];
 
 /// Construct a one-feature plan using the legacy Python plan_state defaults.
 pub fn create(
@@ -133,6 +133,19 @@ pub fn remove(plan: &Value, feature_id: &str) -> Result<Value, String> {
     Ok(candidate)
 }
 
+/// Change whether a feature participates in previews and exports while keeping
+/// its parameters, source evidence, and serialized row in the plan.
+pub fn set_enabled(plan: &Value, feature_id: &str, enabled: bool) -> Result<Value, String> {
+    update(
+        plan,
+        feature_id,
+        &Value::Null,
+        &Value::Null,
+        &[],
+        &json!({"enabled":enabled}),
+    )
+}
+
 /// Build the compact UI/tool summary; this is not the full validator.
 pub fn snapshot(
     plan: &Value,
@@ -188,6 +201,9 @@ pub fn geometry_fingerprint(plan: &Value) -> Result<String, String> {
                             key.to_owned(),
                             feature.get(key).cloned().unwrap_or(Value::Null),
                         );
+                    }
+                    if feature.get("enabled").and_then(Value::as_bool) == Some(false) {
+                        projection.insert("enabled".into(), Value::Bool(false));
                     }
                     Value::Object(projection)
                 })
@@ -392,6 +408,25 @@ mod tests {
             updated["features"][0]["sources"]["height"]["type"],
             "derived"
         );
+    }
+
+    #[test]
+    fn enabled_toggle_is_serialized_and_changes_fingerprint_without_rewriting_feature() {
+        let mut plan = plan();
+        let original_fingerprint = geometry_fingerprint(&plan).unwrap();
+        let disabled = set_enabled(&plan, "base", false).unwrap();
+        assert_eq!(plan["features"][0].get("enabled"), None);
+        assert_eq!(disabled["features"][0]["enabled"], false);
+        assert_eq!(
+            disabled["features"][0]["parameters"],
+            plan["features"][0]["parameters"]
+        );
+        assert_ne!(
+            geometry_fingerprint(&disabled).unwrap(),
+            original_fingerprint
+        );
+        plan["features"][0]["enabled"] = json!(true);
+        assert_eq!(geometry_fingerprint(&plan).unwrap(), original_fingerprint);
     }
 
     #[test]

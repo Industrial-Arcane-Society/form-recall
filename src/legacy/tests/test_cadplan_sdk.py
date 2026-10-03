@@ -17,6 +17,7 @@ from ai_modeler.cadplan import (
     schema_document,
     validate_plan,
 )
+from ai_modeler.cadplan import _to_document
 from ai_modeler.docmodel import Document, Feature, KIND_LABELS
 from ai_modeler.catia_export import build_catia_features, render_push_vbs
 from ai_modeler.softrender import BG_BOT, BG_TOP
@@ -129,6 +130,30 @@ def _plan(kind, parameters=None):
 
 
 class CADPlanSDKTests(unittest.TestCase):
+    def test_disabled_feature_is_schema_valid_serialized_and_ignored_by_preview(self):
+        import jsonschema
+
+        plan = _plan("box", {"length": 20, "width": 10, "height": 8})
+        plan["features"][1]["enabled"] = False
+        self.assertEqual("valid", validate_plan(plan)["state"])
+        self.assertEqual([], list(jsonschema.Draft202012Validator(
+            schema_document()).iter_errors(plan)))
+
+        document, _ = _to_document(plan)
+        self.assertFalse(document.features[1].enabled)
+        preview = preview_plan(plan)
+        self.assertEqual("previewed", preview["state"], preview)
+        self.assertEqual(["base"], [item["feature_id"] for item in
+                                     preview["local_geometry_checks"]["feature_results"]])
+        self.assertEqual([100.0, 80.0, 60.0], preview["dimensions"]["size"])
+
+    def test_enabled_must_be_boolean(self):
+        plan = _plan("box", {"length": 20, "width": 10, "height": 8})
+        plan["features"][0]["enabled"] = "false"
+        result = validate_plan(plan)
+        self.assertEqual("invalid", result["state"], result)
+        self.assertIn("invalid_enabled", {item["code"] for item in result["errors"]})
+
     def test_explicit_blind_entry_schema_and_legacy_high_side_plan(self):
         parameters = {
             "diameter": 6, "through": False, "depth": 6, "axis": "Y",
