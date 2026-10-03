@@ -12,6 +12,10 @@ rust-version = "1.90"
 name = "ai-modeler"
 path = "src/main.rs"
 
+[[bin]]
+name = "ai-modeler-headless-smoke"
+path = "src/headless_smoke.rs"
+
 [lib]
 name = "ai_modeler_ui_lib"
 crate-type = ["staticlib", "cdylib", "rlib"]

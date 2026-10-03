@@ -271,13 +271,6 @@ function finishAgentStream(requestId: string, reply: string) {
   }
 }
 
-async function backendCall<T = any>(method: string, params: JsonMap = {}, requestId = makeId()): Promise<T> {
-  if (!desktop) throw new Error('请使用 AI Modeler 桌面程序连接本机 Python 后端。')
-  const channel = new Channel<WireEvent>()
-  channel.onmessage = (event) => { void handleWireEvent(event) }
-  return await invoke<T>('backend_call', { id: requestId, method, params, onEvent: channel })
-}
-
 function scrollChat() {
   void nextTick(() => { if (chatScroll.value) chatScroll.value.scrollTop = chatScroll.value.scrollHeight })
 }
@@ -540,10 +533,12 @@ async function submitPrompt() {
 
 async function cancelActive() {
   if (!activeRequestId.value) return
+  if (mode.value === 'quick') {
+    setStatus('快速模式正在执行单次本地构建；当前操作无法中途取消。')
+    return
+  }
   try {
-    const result = mode.value === 'agent'
-      ? await invoke<any>('agent_cancel')
-      : await backendCall('agent.cancel', { request_id: activeRequestId.value })
+    const result = await invoke<any>('agent_cancel')
     setStatus(result.cancelled ? '正在停止任务…' : result.message || '当前没有可取消任务')
   } catch (error) { setStatus(errorMessage(error), 'error') }
 }
@@ -551,7 +546,6 @@ async function cancelActive() {
 async function resetChat() {
   try {
     if (mode.value === 'agent') await invoke('agent_reset')
-    else await backendCall('chat.reset')
     releaseAttachmentUrls()
     chat.value = [{ role: 'assistant', text: '新对话已开始。描述零件尺寸，或附上参考图开始建模。' }]
     previewStage.value = ''
@@ -616,33 +610,25 @@ function parseDraftValue(key: string, value: string) {
 async function editFeature(action: string, extra: JsonMap = {}) {
   const index = Number.isInteger(extra.index) ? Number(extra.index) : selectedFeature.value?.index
   if (index === undefined) return
-  if (nativeModelActive.value) {
-    if (action === 'toggle') {
-      await showMessage('原生特征无法启停', 'CADPlan v1 不包含 enabled 状态，禁用与重新启用无法无损转换。可删除特征或清空模型。')
-      return
-    }
-    try {
-      const document = await invoke<DocumentState>('active_model_update_feature', {
-        index,
-        params: extra.params || {},
-        name: extra.name || null,
-        action,
-        delta: extra.delta ?? null,
-        enabled: extra.enabled ?? null,
-      })
-      updateDocument(document)
-      selectedIndex.value = action === 'move'
-        ? Math.max(0, Math.min(index + Number(extra.delta || 0), document.features.length - 1))
-        : action === 'delete' ? Math.min(index, document.features.length - 1) : index
-      setStatus(action === 'delete' ? '原生特征已删除并重建' : action === 'move' ? '原生特征顺序已更新并重建' : '原生特征已重建并更新', 'success')
-    } catch (error) { await showMessage('原生特征更新失败', errorMessage(error), 'error') }
+  if (action === 'toggle') {
+    await showMessage('原生特征无法启停', 'CADPlan v1 不包含 enabled 状态，禁用与重新启用无法无损转换。可删除特征或清空模型。')
     return
   }
   try {
-    const result = await backendCall('feature.' + action, { index, ...extra })
-    updateDocument(result)
-    setStatus('特征已更新', 'success')
-  } catch (error) { await showMessage('特征操作失败', errorMessage(error), 'error') }
+    const document = await invoke<DocumentState>('active_model_update_feature', {
+      index,
+      params: extra.params || {},
+      name: extra.name || null,
+      action,
+      delta: extra.delta ?? null,
+      enabled: extra.enabled ?? null,
+    })
+    updateDocument(document)
+    selectedIndex.value = action === 'move'
+      ? Math.max(0, Math.min(index + Number(extra.delta || 0), document.features.length - 1))
+      : action === 'delete' ? Math.min(index, document.features.length - 1) : index
+    setStatus(action === 'delete' ? '原生特征已删除并重建' : action === 'move' ? '原生特征顺序已更新并重建' : '原生特征已重建并更新', 'success')
+  } catch (error) { await showMessage('原生特征更新失败', errorMessage(error), 'error') }
 }
 
 async function applyFeatureParams() {
@@ -656,15 +642,9 @@ async function renameFeature(feature: Feature) {
   const name = window.prompt('输入特征名称', feature.name || feature.kind)
   if (!name?.trim()) return
   try {
-    if (nativeModelActive.value) {
-      const document = await invoke<DocumentState>('active_model_update_feature', { index: feature.index, params: {}, name: name.trim() })
-      updateDocument(document)
-      setStatus('原生特征名称已更新', 'success')
-      return
-    }
-    const result = await backendCall('feature.rename', { index: feature.index, name: name.trim() })
-    updateDocument(result)
-    setStatus('特征名称已更新', 'success')
+    const document = await invoke<DocumentState>('active_model_update_feature', { index: feature.index, params: {}, name: name.trim() })
+    updateDocument(document)
+    setStatus('原生特征名称已更新', 'success')
   } catch (error) { await showMessage('重命名失败', errorMessage(error), 'error') }
 }
 
@@ -718,12 +698,8 @@ async function saveProject() {
       if (!chosen) return
       path = chosen
     }
-    if (nativeModelActive.value) {
-      const document = await invoke<DocumentState>('active_model_save', { path })
-      updateDocument(document, false)
-    } else {
-      await backendCall('project.save', { path })
-    }
+    const document = await invoke<DocumentState>('active_model_save', { path })
+    updateDocument(document, false)
     documentState.value.current_path = path
     isDirty.value = false
     setStatus('工程已保存：' + fileName(path), 'success')
@@ -732,14 +708,12 @@ async function saveProject() {
 }
 
 async function exportFile(kind: 'stl' | 'obj' | 'report' | 'catia') {
-  const nativeCatia = kind === 'catia' && nativeModelActive.value
-  const ext: Record<string, string> = { stl: 'stl', obj: 'obj', report: 'txt', catia: nativeCatia ? 'CATPart' : 'py' }
-  const labels: Record<string, string> = { stl: 'STL 模型', obj: 'Wavefront OBJ', report: '建模报告', catia: nativeCatia ? 'CATIA 原生零件' : 'CATIA Python 脚本' }
+  const ext: Record<string, string> = { stl: 'stl', obj: 'obj', report: 'txt', catia: 'CATPart' }
+  const labels: Record<string, string> = { stl: 'STL 模型', obj: 'Wavefront OBJ', report: '建模报告', catia: 'CATIA 原生零件' }
   try {
     const path = await save({ title: '导出' + labels[kind], defaultPath: documentState.value.name + (kind === 'report' ? '_建模报告' : '') + '.' + ext[kind], filters: [{ name: labels[kind], extensions: [ext[kind]] }] })
     if (!path) return
-    if (nativeModelActive.value) await invoke('active_model_export', { kind, path })
-    else await backendCall('export', { kind, path })
+    await invoke('active_model_export', { kind, path })
     setStatus('已导出：' + fileName(path), 'success')
     addLog('导出 ' + kind.toUpperCase() + '：' + path)
     await showMessage('导出完成', '文件已保存到：\n' + path)
@@ -751,8 +725,7 @@ async function saveSnapshot(viewSet: 'single' | 'four' | 'three' | 'extended') {
   try {
     const path = await save({ title: '保存模型截图', defaultPath: documentState.value.name + '_' + suffix[viewSet] + '.png', filters: [{ name: 'PNG 图片', extensions: ['png'] }] })
     if (!path) return
-    if (nativeModelActive.value) await invoke('active_model_export_snapshot', { path, viewSet })
-    else await backendCall('render.snapshot', { path, view_set: viewSet })
+    await invoke('active_model_export_snapshot', { path, viewSet })
     setStatus('截图已保存：' + fileName(path), 'success')
     await showMessage('截图完成', '图片已保存到：\n' + path)
   } catch (error) { await showMessage('截图失败', errorMessage(error), 'error') }
@@ -900,19 +873,20 @@ async function saveSettings() {
 
 async function openTools() { toolsOpen.value = true }
 
-async function runBackendAction(method: string, label: string, params: JsonMap = {}) {
-  setStatus(label + '…')
+async function showCatiaStatus() {
   try {
-    const result = await backendCall(method, params)
-    setStatus(label + '完成', 'success')
-    addLog(label + '完成')
-    return result
+    const result = await invoke<any>('native_runtime_status')
+    runtimeReadiness.value = result
+    await showMessage('CATIA COM 状态', result.catia?.registered === true
+      ? '检测到 CATIA.Application COM 注册。这里只能确认已注册；当前尚未尝试连接 CATIA。'
+      : result.catia?.registered === false ? '未检测到 CATIA.Application COM 注册。' : '当前平台未执行 CATIA COM 注册检测。')
   } catch (error) {
-    setStatus(label + '失败', 'error')
-    addLog(label + '失败：' + errorMessage(error))
-    await showMessage(label + '失败', errorMessage(error), 'error')
-    return null
+    await showMessage('读取 CATIA 状态失败', errorMessage(error), 'error')
   }
+}
+
+async function explainNativeCatiaFlow() {
+  await showMessage('CATIA 接入方式', '旧的 Python/CATScript 插件安装流程已停用。桌面端只在“推送当前模型到 CATIA V5”时按需启动应用私有的 Python COM adapter；该操作不安装 MCP 或旧宏插件。')
 }
 
 async function pushToCatia() {
@@ -936,10 +910,7 @@ async function pushToCatia() {
     }
     return
   }
-  const probe = await runBackendAction('catia.probe', '检测 CATIA')
-  if (!probe?.ok) { if (probe) await showMessage('未检测到 CATIA V5', probe.message || '请检查 CATIA 安装和连接。', 'warning'); return }
-  const result = await runBackendAction('catia.push', '推送到 CATIA')
-  if (result) await showMessage(result.ok ? 'CATIA 推送完成' : 'CATIA 推送失败', result.message || '')
+  await showMessage('原生模型不可用', '当前活动记录没有可推送的 Rust 原生模型。请重新打开或创建模型后再推送。', 'error')
 }
 
 async function openIntegrations() {
@@ -963,8 +934,13 @@ async function runNativeSelftest() {
 }
 
 async function showCatiaLibrary() {
-  const result = await runBackendAction('catia.library', '读取 CATIA 模型库')
-  if (result) await showMessage('CATIA 模型库', JSON.stringify(result, null, 2))
+  const result = await invoke<any[]>('native_parts_list', { query: '' })
+  await showMessage('内置常用零件知识库', `当前内置 ${result.length} 类常用零件描述。此列表是建模参考，不代表 CATIA 安装目录中的可加载 Catalog 文件。`)
+}
+
+function openLocalModelSettings() {
+  settingsTab.value = 'llm'
+  settingsOpen.value = true
 }
 
 async function manualOnline() {
@@ -1054,7 +1030,7 @@ onUnmounted(() => {
         <button :disabled="!desktop" @click="menuOpen = !menuOpen">更多 <UiIcon name="chevron-down" :size="14" /></button>
         <div v-if="menuOpen" class="menu-popover" @mouseleave="menuOpen = false">
           <button @click="exportFile('report'); menuOpen = false">导出建模报告 TXT</button>
-          <button @click="exportFile('catia'); menuOpen = false">{{ nativeModelActive ? '导出 CATIA 原生零件' : '导出 CATIA 自动化脚本' }}</button>
+          <button @click="exportFile('catia'); menuOpen = false">导出 CATIA 原生零件</button>
           <button @click="saveSnapshot('single'); menuOpen = false">模型截图 PNG</button>
           <button @click="saveSnapshot('four'); menuOpen = false">四视图 PNG</button>
           <button @click="saveSnapshot('three'); menuOpen = false">三视图 PNG</button>
@@ -1188,7 +1164,7 @@ onUnmounted(() => {
               <span class="tree-branch"></span><span class="feature-symbol" :class="'kind-' + feature.kind"><UiIcon :name="featureIconName(feature)" :size="16" /></span>
               <span class="feature-title"><strong>{{ featureLabel(feature) }}</strong><small>{{ feature.kind }} <i v-if="feature.op === 'cut'">· 切除</i></small></span>
               <button class="row-mini" title="重命名" @click.stop="renameFeature(feature)"><UiIcon name="pencil" :size="15" /></button>
-              <button class="row-mini" :disabled="nativeModelActive" :title="nativeModelActive ? 'CADPlan v1 不支持无损启停特征' : feature.enabled === false ? '启用特征' : '停用特征'" @click.stop="editFeature('toggle', { index: feature.index, enabled: feature.enabled === false })"><UiIcon :name="feature.enabled === false ? 'eye-off' : 'eye'" :size="15" /></button>
+              <button class="row-mini" disabled title="CADPlan v1 不支持无损启停特征"><UiIcon :name="feature.enabled === false ? 'eye-off' : 'eye'" :size="15" /></button>
             </div>
           </div>
           <div class="tree-footer"><button @click="panel = 'params'" :disabled="!selectedFeature"><UiIcon name="settings" :size="16" />编辑所选特征</button><button @click="clearFeatures" :disabled="!documentState.features.length"><UiIcon name="trash" :size="16" />清空</button></div>
@@ -1314,11 +1290,11 @@ onUnmounted(() => {
       <section class="modal tools-modal"><header class="modal-head"><div><span class="eyebrow">INTEGRATIONS</span><h2>CATIA 与本地工具</h2></div><button class="modal-close" aria-label="关闭工具" @click="toolsOpen = false"><UiIcon name="close" /></button></header>
         <div class="integration-grid">
           <button @click="pushToCatia"><span><UiIcon name="box" /></span><strong>推送当前模型到 CATIA V5</strong><small>检测连接并通过 COM 自动化建立模型</small></button>
-          <button @click="runBackendAction('catia.probe', '检测 CATIA').then((result) => result && showMessage('CATIA 检测', result.message || ''))"><span><UiIcon name="search" /></span><strong>检测 CATIA 连接</strong><small>读取当前 CATIA V5 状态</small></button>
-          <button @click="runBackendAction('catia.connect', '连接 CATIA')"><span><UiIcon name="network" /></span><strong>一键连接 CATIA</strong><small>写入 MCP 配置并安装插件</small></button>
-          <button @click="runBackendAction('catia.install_plugin', '安装 CATIA 插件')"><span><UiIcon name="wrench" /></span><strong>安装 / 修复 CATIA 插件</strong><small>在新控制台运行安装脚本</small></button>
-          <button @click="showCatiaLibrary"><span><UiIcon name="boxes" /></span><strong>CATIA 标准件模型库</strong><small>查看 catalog 索引</small></button>
-          <button @click="runBackendAction('local_ai.install', '安装本地 DeepSeek')"><span><UiIcon name="cpu" /></span><strong>安装 / 管理本地 DeepSeek</strong><small>启动本地推理服务管理器</small></button>
+          <button @click="showCatiaStatus"><span><UiIcon name="search" /></span><strong>检测 CATIA COM 注册</strong><small>只检查 COM 注册状态，不主动启动 CATIA</small></button>
+          <button @click="explainNativeCatiaFlow"><span><UiIcon name="network" /></span><strong>CATIA 原生接入说明</strong><small>推送时按需启动私有 COM adapter</small></button>
+          <button @click="explainNativeCatiaFlow"><span><UiIcon name="wrench" /></span><strong>旧 CATScript 插件已停用</strong><small>不再安装旧 Python bridge 宏插件</small></button>
+          <button @click="showCatiaLibrary"><span><UiIcon name="boxes" /></span><strong>内置常用零件知识库</strong><small>查看建模参考条目，不是 CATIA Catalog 文件</small></button>
+          <button @click="openLocalModelSettings"><span><UiIcon name="cpu" /></span><strong>配置本地模型 Provider</strong><small>在模型设置中配置兼容 API 地址</small></button>
           <button @click="openIntegrations"><span><UiIcon name="network" /></span><strong>查看 Agent 与外部接入状态</strong><small>分别显示 Cordis 工具定义和外部 MCP 配置</small></button>
           <button @click="runNativeSelftest"><span><UiIcon name="circle-check" /></span><strong>运行 Rust 原生自检</strong><small>检查资源、DSH Runtime、OCCT 与 Quick 解析器</small></button>
         </div>
@@ -1359,7 +1335,7 @@ onUnmounted(() => {
       </template>
     </div><footer class="modal-footer"><button class="secondary-button" @click="onlineOpen = false">关闭</button><button class="primary-button" :disabled="!onlineResult?.suggestion" @click="useOnlineSuggestion">填入对话</button></footer></section></div>
 
-    <div v-if="helpOpen" class="modal-backdrop" @click.self="helpOpen = false"><section class="modal help-modal"><header class="modal-head"><div><span class="eyebrow">GETTING STARTED</span><h2>帮助与使用说明</h2></div><button class="modal-close" aria-label="关闭帮助" @click="helpOpen = false"><UiIcon name="close" /></button></header><div class="help-grid"><article><span>01</span><h3>描述零件</h3><p>写明零件类型、主要尺寸和孔位。快速模式适合离线几何描述；Agent 模式支持参考图片和多轮修改。</p></article><article><span>02</span><h3>检查特征与参数</h3><p>选择右侧特征树中的项目，修改可编辑参数并重新计算几何。</p></article><article><span>03</span><h3>保存与导出</h3><p>保存为 AI Modeler 工程，或导出 STL、OBJ、建模报告和 CATIA 自动化脚本。</p></article><article><span>04</span><h3>CATIA 集成</h3><p>从“更多”菜单打开集成工具，连接 CATIA V5 或安装插件。</p></article></div><div class="help-link-row"><button @click="openManual('docs/README.md')">打开研究与文档索引 <UiIcon name="arrow-up-right" :size="14" /></button><button @click="openManual('docs/05-operations/01-build-and-run.md')">打开运行与 CATIA 说明 <UiIcon name="arrow-up-right" :size="14" /></button></div><footer class="modal-footer"><button class="secondary-button" @click="helpOpen = false">关闭</button></footer></section></div>
+    <div v-if="helpOpen" class="modal-backdrop" @click.self="helpOpen = false"><section class="modal help-modal"><header class="modal-head"><div><span class="eyebrow">GETTING STARTED</span><h2>帮助与使用说明</h2></div><button class="modal-close" aria-label="关闭帮助" @click="helpOpen = false"><UiIcon name="close" /></button></header><div class="help-grid"><article><span>01</span><h3>描述零件</h3><p>写明零件类型、主要尺寸和孔位。快速模式适合离线几何描述；Agent 模式支持参考图片和多轮修改。</p></article><article><span>02</span><h3>检查特征与参数</h3><p>选择右侧特征树中的项目，修改可编辑参数并重新计算几何。</p></article><article><span>03</span><h3>保存与导出</h3><p>保存为 AI Modeler 工程，或导出 STL、OBJ、建模报告和 CATIA 原生零件。</p></article><article><span>04</span><h3>CATIA 集成</h3><p>推送模型时桌面端会按需启用应用私有 Python COM adapter；不再安装旧的 Python bridge 宏插件。</p></article></div><div class="help-link-row"><button @click="openManual('docs/README.md')">打开研究与文档索引 <UiIcon name="arrow-up-right" :size="14" /></button><button @click="openManual('docs/05-operations/01-build-and-run.md')">打开运行与 CATIA 说明 <UiIcon name="arrow-up-right" :size="14" /></button></div><footer class="modal-footer"><button class="secondary-button" @click="helpOpen = false">关闭</button></footer></section></div>
 
     <div v-if="aboutOpen" class="modal-backdrop" @click.self="aboutOpen = false"><section class="modal about-modal"><div class="about-mark"><span></span><span></span><span></span></div><span class="eyebrow">AI MODELER DESKTOP</span><h2>AI Modeler</h2><p>{{ handshake?.description || '自然语言驱动的参数化三维建模工作台' }}</p><div class="about-version">Rust 桌面应用 {{ handshake?.app_version || '—' }}</div><footer class="modal-footer"><button class="secondary-button" @click="aboutOpen = false">关闭</button></footer></section></div>
   </div>
