@@ -1,4 +1,4 @@
-# F4.2.12：CADPlan bevel_gear 原生几何执行
+# F4.2.13：CADPlan bevel_gear 原生几何执行
 
 验收日期：2026-10-04。
 
@@ -26,11 +26,11 @@ Rust 直接生成同一拓扑三角面，并复用现有 `occt_make_solid_from_t
 
 - `scripts/test-lib.ps1 -Offline -Filter bevel_gear`：4/4 通过，覆盖公式/旧版夹紧、必需参数、孔根净空和面数上限、计划单位换算与近似能力状态。
 - `scripts/test-lib.ps1 -Offline -Filter native_plan_geometry::tests::`：15/15 通过。
-- `scripts/test-lib.ps1 -Offline -Filter native_feature_specs::tests::`：5/5 通过；包含 27 类 feature spec、CADPlan schema 和 preflight/build registry 一致性检查，目前原生执行 18 类。
+- `scripts/test-lib.ps1 -Offline -Filter native_feature_specs::tests::`：5/5 通过；包含 27 类 feature spec、CADPlan schema 和 preflight/build registry 一致性检查，目前原生执行 19 类。
 
 ## Rust OCCT 与 Python OCP 几何对拍
 
-运行 `python src/apps/desktop/src-tauri/examples/native_geometry_parity.py`：总计 **75 个正例通过、34 个负例拒绝**。新增 3 个 bevel gear 正例、8 个负例。Rust OCCT 7.9.3 与 Python OCP 7.9.3.1.1 对比旧 `Document` recipe 经 `occ_kernel.build_document` 产生的实际 B-Rep；全量矩阵容差为包围盒 `1e-6 mm`、体积 `1e-5 mm³`。三个新增实例均为单个有效闭合体，并逐项得到包围盒差 `0 mm`、体积差 `0 mm³`：
+运行 `python src/apps/desktop/src-tauri/examples/native_geometry_parity.py`：bevel 独立特征分支记录为 **75 个正例通过、34 个负例拒绝**；并入当前集成分支后复跑为 **78 个正例通过、36 个负例拒绝**。新增 3 个 bevel gear 正例、8 个负例。Rust OCCT 7.9.3 与 Python OCP 7.9.3.1.1 对比旧 `Document` recipe 经 `occ_kernel.build_document` 产生的实际 B-Rep；全量矩阵容差为包围盒 `1e-6 mm`、体积 `1e-5 mm³`。三个新增实例均为单个有效闭合体，并逐项得到包围盒差 `0 mm`、体积差 `0 mm³`：
 
 | 样例 | 旧/新 B-Rep 面数 | 包围盒 mm `[xmin,ymin,zmin,xmax,ymax,zmax]` | Python OCP 体积 mm³ | Rust OCCT 体积 mm³ |
 |---|---:|---|---:|---:|

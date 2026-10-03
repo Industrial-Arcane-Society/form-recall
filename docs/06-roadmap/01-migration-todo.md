@@ -46,7 +46,7 @@
 | F4.2.10 | CADPlan camshaft 原生执行 | **已完成（旧 facet 体积仅报告）** | 48点凸轮截面与轴颈经 Rust→C ABI→OCCT 构建；3个有效单闭合 B-Rep 与3个负例通过；包围盒误差0 mm，旧 faceted B-Rep 相对体积差0.18146%，仅报告不作精确体积对拍；见 [记录](./60-f4-native-camshaft.md) |
 | F4.2.11 | CADPlan crankshaft 原生执行 | **已完成（CADPlan OCP B-Rep 精确对拍）** | X轴主轴/交替偏心轴颈/矩形曲柄臂经 Rust→C ABI→OCCT 构建；3个有效单闭合 B-Rep 与3个拒绝负例；对旧 Python OCP B-Rep 包围盒差0 mm、体积差≤2.33e-10 mm³。Document polygon-only 网格转 B-Rep 因自由边失败，不宣称 facet 体积通过；见 [记录](./61-f4-native-crankshaft.md) |
 | F4.2.12 | CADPlan helical_gear 原生几何 | **已完成（标记近似）** | 保留 Document 直梯形齿语义（helix_deg 忽略、bore_d=0 无孔、显式孔 40 边）；该特征 3 个正例、2 个负例通过；并入曲轴后的集成对拍为 75 正例、28 负例，bbox 最大误差 0 mm，helical 显式孔体积绝对误差 3.04e-10 mm³；CATIA approximate；见 [F4.2.12 验收记录](./62-f4-native-helical-gear.md) |
-| F4.2.13 | CADPlan bevel_gear 原生执行 | **已完成（旧 facet-BREP 精确对拍，仍标近似）** | Rust 复刻当前 Document 梯形齿/线性锥缩网格并缝合为有效单闭合 B-Rep；Python OCP 7.9.3.1.1 对拍 3 个正例包围盒差 0 mm、体积差 0 mm³，75 正例 / 34 负例全量对拍通过（bevel_gear 新增 3 正例、8 负例）；这不是渐开线齿面或解析锥齿轮，CATIA 映射仍省略锥缩。详见[记录](./62-f4-native-bevel-gear.md) |
+| F4.2.13 | CADPlan bevel_gear 原生执行 | **已完成（旧 facet-BREP 精确对拍，仍标近似）** | Rust 复刻当前 Document 梯形齿/线性锥缩网格并缝合为有效单闭合 B-Rep；新增 3 个正例包围盒差 0 mm、体积差 0 mm³，8 个负例拒绝；完整集成 OCP/Rust 对拍 78 正例 / 36 负例通过。这不是渐开线齿面或解析锥齿轮，CATIA 映射仍省略锥缩。详见[记录](./62-f4-native-bevel-gear.md) |
 | F4.3.1 | B-Rep 材料区间与离散孔证据基础 | **已完成** | 精确面交事件、Rust RAII、41 射线 pre/post 对比；真实九孔/盲孔/错位/错径正负样例通过，非孔径计量，生产接线待完成 |
 | F4.3.2 | 孔材料采样接入 CADPlan | **已完成** | 44 对拍、6 负样例、局部材料盲孔与近边孔部分证据通过；采样不冒充孔径计量 |
 | F4.3.3 | 最终 B-Rep 孔计量接入 CADPlan | **已完成** | 最终形体实测孔半径、轴线与 360° 覆盖；盲孔/贯穿孔核验，后续特征会使旧测量失效 |
