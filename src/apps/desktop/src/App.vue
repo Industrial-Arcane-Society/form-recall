@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, defineAsyncComponent, nextTick, onMounted, onUnmounted, ref, watch } from 'vue'
+import { computed, defineAsyncComponent, nextTick, onMounted, onUnmounted, ref, toRaw, watch } from 'vue'
 import { Channel, invoke, isTauri } from '@tauri-apps/api/core'
 import { confirm, message, open, save } from '@tauri-apps/plugin-dialog'
 import type { AttachmentItem } from './components/AttachmentPreview.vue'
@@ -143,7 +143,7 @@ function resetAgentStage(stage: typeof agentStages[number]['key']) {
 }
 
 function agentLlmConfig() {
-  const config = structuredClone(llmDraft.value || {})
+  const config = structuredClone(toRaw(llmDraft.value || {}))
   const profile = activeProvider.value || {}
   return {
     ...config,
