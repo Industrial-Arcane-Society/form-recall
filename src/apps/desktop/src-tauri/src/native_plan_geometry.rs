@@ -41,6 +41,7 @@ pub fn supports_native_kind(kind: &str) -> bool {
             | "cross_joint"
             | "rotor"
             | "camshaft"
+            | "crankshaft"
     )
 }
 
@@ -103,6 +104,7 @@ pub fn preflight(plan: &Value) -> Result<Value, String> {
             "cross_joint" => &["span", "journal_d"],
             "rotor" => &["radius", "n", "height", "bore_d"],
             "camshaft" => &["length", "journal_d", "base_d", "lift", "lobes", "lobe_deg"],
+            "crankshaft" => &["length", "main_d", "pin_d", "stroke", "throws"],
             _ => &[],
         };
         for key in required_native_parameters {
@@ -142,6 +144,10 @@ pub fn preflight(plan: &Value) -> Result<Value, String> {
         if kind == "camshaft" {
             let normalized = normalized_feature(feature, plan)?;
             native_parametric_features::preflight_camshaft(&normalized["parameters"])?;
+        }
+        if kind == "crankshaft" {
+            let normalized = normalized_feature(feature, plan)?;
+            native_parametric_features::preflight_crankshaft(&normalized["parameters"])?;
         }
         if kind == "spoked_wheel" {
             let normalized = normalized_feature(feature, plan)?;
@@ -240,6 +246,10 @@ pub fn build(plan: &Value, manifest: &Path, cancelled: &AtomicBool) -> Result<Bu
         } else if normalized["kind"] == "camshaft" {
             let (tools, support) =
                 native_parametric_features::build_camshaft(&kernel, &normalized["parameters"])?;
+            (tools, vec![], Some(support))
+        } else if normalized["kind"] == "crankshaft" {
+            let (tools, support) =
+                native_parametric_features::build_crankshaft(&kernel, &normalized["parameters"])?;
             (tools, vec![], Some(support))
         } else if normalized["kind"] == "spoked_wheel" {
             let (tools, support) =
@@ -1069,6 +1079,8 @@ fn normalized_feature(feature: &Value, plan: &Value) -> Result<Value, String> {
             "hub_r",
             "spoke_w",
             "big_d",
+            "main_d",
+            "stroke",
             "small_d",
             "big_bore",
             "small_bore",
@@ -1511,6 +1523,25 @@ mod tests {
         assert_eq!(normalized["parameters"]["lobe_deg"], json!(17.));
         assert_eq!(normalized["parameters"]["center"], json!([12., -7., 5.]));
         assert_eq!(camshaft["parameters"]["length"], json!(8));
+    }
+
+    #[test]
+    fn crankshaft_dimensions_use_the_plan_length_unit() {
+        let mut plan = fixture();
+        plan["units"]["length"] = json!("cm");
+        let crankshaft = json!({"id":"crankshaft","kind":"crankshaft","operation":"add",
+            "parameters":{"length":32,"main_d":5,"pin_d":4.2,"stroke":8.6,
+                "throws":4,"center":[1.2,-0.7,0.5]},
+            "sources":{"length":{"type":"user"},"main_d":{"type":"user"},
+                "pin_d":{"type":"user"},"stroke":{"type":"user"},
+                "throws":{"type":"user"},"center":{"type":"user"}}});
+        let normalized = normalized_feature(&crankshaft, &plan).unwrap();
+        assert_eq!(normalized["parameters"]["length"], json!(320.));
+        assert_eq!(normalized["parameters"]["main_d"], json!(50.));
+        assert_eq!(normalized["parameters"]["pin_d"], json!(42.));
+        assert_eq!(normalized["parameters"]["stroke"], json!(86.));
+        assert_eq!(normalized["parameters"]["center"], json!([12., -7., 5.]));
+        assert_eq!(crankshaft["parameters"]["length"], json!(32));
     }
 
     #[test]

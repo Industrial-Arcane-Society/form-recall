@@ -51,6 +51,13 @@ def main():
     add("camshaft-cm-unit-scaling", "camshaft", dict(length=8, journal_d=1.2, base_d=2,
         lift=0.4, lobes=4, lobe_deg=0.296705972839036, center=[1.2, -0.7, 0.5]),
         dict(length="cm", angle="rad"))
+    add("crankshaft-b30-four-throw", "crankshaft", dict(length=320, main_d=50, pin_d=42,
+        stroke=86, throws=4, center=[0, 0, 0]))
+    add("crankshaft-translated-three-throw", "crankshaft", dict(length=180, main_d=36, pin_d=28,
+        stroke=54, throws=3, center=[12, -7, 5]))
+    add("crankshaft-cm-unit-scaling", "crankshaft", dict(length=32, main_d=5, pin_d=4.2,
+        stroke=8.6, throws=4, center=[1.2, -0.7, 0.5]),
+        dict(length="cm", angle="rad"))
     add("spoked-wheel-z-origin", "spoked_wheel",
         dict(outer_r=30, rim_w=4, hub_r=8, height=8, spokes=6, spoke_w=3,
              center=[0, 0, 0]))
@@ -204,6 +211,7 @@ def main():
     }
     cross_joint_native_volumes = {}
     camshaft_native_volumes = {}
+    crankshaft_native_volumes = {}
 
     records = []
     for name, plan in cases:
@@ -329,6 +337,14 @@ def main():
                                       baseline_report.get("geometry_state"), baseline_report.get("brep_valid"),
                                       baseline_report.get("solid_count"), baseline_report.get("closed")))
             camshaft_native_volumes[name] = native["volume_mm3"]
+        if name.startswith("crankshaft-"):
+            support = native["feature_results"][0]
+            details = support.get("support_details", {})
+            if (native.get("valid") is not True or native.get("closed_solid_count") != 1
+                    or support.get("geometry_support") != "approximate"
+                    or details.get("builder") != "analytic_journals_with_rectangular_webs"):
+                raise AssertionError((name, "crankshaft-native-brep-contract", support))
+            crankshaft_native_volumes[name] = native["volume_mm3"]
         if name in expected_cross_joint_bounds:
             if (bounds_error > 1e-6
                     or baseline_report.get("geometry_state") != "passed"
@@ -346,11 +362,11 @@ def main():
                                                if name in expected_cross_joint_bounds or name.startswith("camshaft-")
                                                else "parity_checked"),
                             legacy_volume_mm3=(occ_kernel.volume(shape)
-                                               if name in expected_cross_joint_bounds or name.startswith("camshaft-") else None),
+                                               if name in expected_cross_joint_bounds or name.startswith("camshaft-") or name.startswith("crankshaft-") else None),
                             native_volume_mm3=(native["volume_mm3"]
-                                               if name in expected_cross_joint_bounds or name.startswith("camshaft-") else None),
+                                               if name in expected_cross_joint_bounds or name.startswith("camshaft-") or name.startswith("crankshaft-") else None),
                             volume_relative_difference=(volume_error / max(abs(occ_kernel.volume(shape)), 1e-12)
-                                                        if name in expected_cross_joint_bounds or name.startswith("camshaft-") else None)))
+                                                        if name in expected_cross_joint_bounds or name.startswith("camshaft-") or name.startswith("crankshaft-") else None)))
     cross_joint_origin_volume = cross_joint_native_volumes["cross-joint-origin"]
     for name in ("cross-joint-translated", "cross-joint-cm-unit-scaling"):
         if abs(cross_joint_native_volumes[name] - cross_joint_origin_volume) > 1e-6:
@@ -361,6 +377,11 @@ def main():
         if abs(camshaft_native_volumes[name] - camshaft_origin_volume) > 1e-5:
             raise AssertionError(("camshaft-transform-volume-invariance", name,
                                   camshaft_native_volumes[name], camshaft_origin_volume))
+    crankshaft_origin_volume = crankshaft_native_volumes["crankshaft-b30-four-throw"]
+    if abs(crankshaft_native_volumes["crankshaft-cm-unit-scaling"] - crankshaft_origin_volume) > 1e-5:
+        raise AssertionError(("crankshaft-unit-volume-invariance",
+                              crankshaft_native_volumes["crankshaft-cm-unit-scaling"],
+                              crankshaft_origin_volume))
     python_version = "unknown"
     for package in ("cadquery-ocp", "cadquery-ocp-novtk"):
         try:
@@ -413,6 +434,13 @@ def main():
         invalid["features"][0]["parameters"][key] = value
         invalid["features"][0]["sources"][key] = {"type": "user"}
         negatives.append((f"camshaft-invalid-{key}", invalid, message))
+    crankshaft_case = cases[[name for name, _ in cases].index("crankshaft-b30-four-throw")][1]
+    for key, value, message in (("main_d", 0, "main_d"), ("stroke", -1, "stroke"),
+                                ("throws", 129, "128")):
+        invalid = copy.deepcopy(crankshaft_case)
+        invalid["features"][0]["parameters"][key] = value
+        invalid["features"][0]["sources"][key] = {"type": "user"}
+        negatives.append((f"crankshaft-invalid-{key}", invalid, message))
 
     wheel_case_by_name = {name: plan for name, plan in cases}
     wheel_non_z = copy.deepcopy(wheel_case_by_name["spoked-wheel-z-origin"])

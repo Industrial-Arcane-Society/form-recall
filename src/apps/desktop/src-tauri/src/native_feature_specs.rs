@@ -36,7 +36,7 @@ pub fn feature_spec(kind: &str) -> Result<Value, String> {
 /// below describe the additional gates applied by preflight/build.
 fn native_execution_contract(kind: &str) -> Value {
     let implemented = crate::native_plan_geometry::supports_native_kind(kind);
-    let approximate = matches!(kind, "gear" | "socket_head_bolt" | "conrod" | "cross_joint" | "rotor");
+    let approximate = matches!(kind, "gear" | "socket_head_bolt" | "conrod" | "cross_joint" | "rotor" | "crankshaft");
     let (supported_variants, unsupported_variants, parameter_limits, note) = match kind {
         "rotor" => (
             json!(["global Z extrusion centered on center", "explicit bore_d=0 or enclosed circular bore"]),
@@ -57,6 +57,7 @@ fn native_execution_contract(kind: &str) -> Value {
         "spoked_wheel" => (json!(["global-Z radial spokes"]), json!(["axis other than Z", "spokes<2 or >512"]), json!({"spokes":"2..=512", "outer_r":">0", "rim_w":">0 and outer_r-rim_w > hub_r", "hub_r":">0", "height":">0", "spoke_w":">0 and <2*hub_r"}), "Native analytic rim, hub and radial prism spokes; CATIA mapping remains approximate."),
         "piston" => (json!(["legacy closed profile plus X-axis pin bore"]), json!([]), json!({"diameter":">2 mm because legacy inner profile radius has a 1 mm floor", "height":">0", "pin_d":">=0; bore radius clamped to 0.75 body radius and 0.45 height", "grooves":"finite value >=0 and <=256; truncated toward zero"}), "Native analytic build; CATIA mapping remains approximate."),
         "camshaft" => (json!(["global X journal shaft", "48-point 120-degree harmonic cam profiles", "phased cams distributed evenly along shaft"]), json!(["axis other than X", "lobes outside 1..=512", "lobe width exceeding shaft length"]), json!({"length":">=2 mm", "journal_d":">=2 mm", "base_d":">=2 mm", "lift":">=0 mm", "lobes":"integer 1..=512", "lobe_deg":"finite; angle units honored", "center":"finite global XYZ"}), "Exact local analytic OCCT B-Rep for the legacy Document cam profile; CATIA mapping remains approximate."),
+        "crankshaft" => (json!(["global X main shaft", "alternating eccentric pin journals", "two rectangular overlapping webs per throw", "segments is accepted but ignored by the analytic B-Rep"]), json!(["throws outside 1..=128"]), json!({"length":">0 mm", "main_d":">0 mm", "pin_d":">0 mm", "stroke":">0 mm", "throws":"integer 1..=128", "segments":"integer when supplied; ignored", "center":"finite global XYZ"}), "Native analytic cylinders and rectangular webs reproduce the legacy CADPlan B-Rep recipe; the feature remains approximate and the mesh-only Document cheek recipe is a different representation."),
         "conrod" => (json!(["annular heads with tangent web approximation"]), json!([]), json!({"length":">0 and long enough for tangent web", "big_d":">big_bore", "small_d":">small_bore", "big_bore":">0", "small_bore":">0", "shank_w":">0", "thick":">0"}), "Analytic annular heads with approximate external-tangent trapezoidal web; web contact and I-section details are simplified."),
         "cross_joint" => (json!(["hub plus four journals on global +/-X|+/-Y"]), json!([]), json!({"span":">0 and large enough for hub plus positive journal length", "journal_d":">0", "center":"finite global XYZ"}), "Native analytic construction; legacy faceted-volume equality is not claimed."),
         _ => (json!([]), json!(["all native geometry variants"]), json!({}), "No native Rust geometry builder is registered for this kind."),
@@ -83,6 +84,15 @@ mod tests {
         assert_eq!(spec["native_execution"]["geometry_support"], "exact");
         assert_eq!(spec["catia_mapping"], "approximate");
         assert!(spec["native_execution"]["supported_variants"].as_array().unwrap().len() >= 3);
+    }
+
+    #[test]
+    fn crankshaft_is_advertised_as_native_approximate_with_matching_catia_limit() {
+        let spec = feature_spec("crankshaft").unwrap();
+        assert_eq!(spec["native_execution"]["status"], "implemented_approximate");
+        assert_eq!(spec["native_execution"]["geometry_support"], "approximate");
+        assert_eq!(spec["catia_mapping"], "approximate");
+        assert_eq!(spec["required_parameters"], json!(["length", "main_d", "pin_d", "stroke", "throws"]));
     }
     #[test]
     fn coordinate_and_mapping_contracts_are_present_for_every_registered_kind() {
@@ -212,7 +222,7 @@ mod tests {
                 );
             }
         }
-        assert_eq!(supported_count, 16);
+        assert_eq!(supported_count, 17);
         assert_eq!(kinds.len(), specs.as_object().unwrap().len());
     }
 }

@@ -7,6 +7,72 @@ const MAX_PISTON_GROOVES: usize = 256;
 const MAX_PISTON_PROFILE_POINTS: usize = 4 * MAX_PISTON_GROOVES + 4;
 const MAX_SPOKED_WHEEL_SPOKES: u64 = 512;
 const MAX_CAMSHAFT_LOBES: u64 = 512;
+const MAX_CRANKSHAFT_THROWS: u64 = 128;
+
+pub fn preflight_crankshaft(parameters: &Value) -> Result<(), String> {
+    let length = number(parameters, "length")?;
+    let main_d = number(parameters, "main_d")?;
+    let pin_d = number(parameters, "pin_d")?;
+    let stroke = number(parameters, "stroke")?;
+    let throws = integer(parameters, "throws")?;
+    let center = point3(parameters.get("center"))?;
+    if length <= 0.0 || main_d <= 0.0 || pin_d <= 0.0 || stroke <= 0.0
+        || throws == 0 || throws > MAX_CRANKSHAFT_THROWS
+        || center.iter().any(|v| !v.is_finite())
+    {
+        return Err("曲轴要求 length/main_d/pin_d/stroke 为正数、throws 为 1..=128，且中心坐标有限。".into());
+    }
+    Ok(())
+}
+
+/// Reproduces the legacy Document B-Rep path: an analytic X-axis main shaft,
+/// alternating eccentric pin journals, and two overlapping rectangular webs
+/// per throw. The more detailed polygon-only cheek mesh remains a separate
+/// legacy compatibility path and is not claimed as this exact B-Rep contract.
+pub fn build_crankshaft(kernel: &Kernel, parameters: &Value) -> Result<(Vec<Shape>, Value), String> {
+    preflight_crankshaft(parameters)?;
+    let length = number(parameters, "length")?;
+    let main_r = number(parameters, "main_d")? / 2.0;
+    let pin_r = number(parameters, "pin_d")? / 2.0;
+    let stroke = number(parameters, "stroke")?;
+    let throws = integer(parameters, "throws")? as usize;
+    let center = point3(parameters.get("center"))?;
+    let spacing = length / throws as f64;
+    let pin_length = spacing * 0.42;
+    let web_width = (number(parameters, "main_d")? * 0.28).max(2.0).min(spacing * 0.25);
+    let shaft = kernel.cylinder(main_r, length,
+        [center[0] - length / 2.0, center[1], center[2]], [1.0, 0.0, 0.0])?;
+    let mut shapes = vec![shaft];
+    let mut web_count = 0usize;
+    for index in 0..throws {
+        let x0 = center[0] - length / 2.0 + spacing * (index as f64 + 0.5);
+        let dy = if index % 2 == 0 { stroke / 2.0 } else { -stroke / 2.0 };
+        shapes.push(kernel.cylinder(pin_r, pin_length,
+            [x0 - pin_length / 2.0, center[1] + dy, center[2]], [1.0, 0.0, 0.0])?);
+        let y0 = (center[1] - main_r).min(center[1] + dy - pin_r);
+        let y1 = (center[1] + dy - pin_r).max(center[1] - main_r);
+        let y2 = (center[1] + main_r).min(center[1] + dy + pin_r);
+        let y3 = (center[1] + dy + pin_r).max(center[1] + main_r);
+        let ylo = y0.min(y2);
+        let yhi = y1.max(y3);
+        let zhalf = main_r.max(pin_r);
+        for xmid in [x0 - pin_length / 2.0 - web_width / 2.0,
+                     x0 + pin_length / 2.0 + web_width / 2.0] {
+            shapes.push(kernel.make_box([web_width, yhi - ylo, 2.0 * zhalf],
+                [xmid, (ylo + yhi) / 2.0, center[2]])?);
+            web_count += 1;
+        }
+    }
+    let refs: Vec<_> = shapes.iter().collect();
+    let result = kernel.fuse(&refs)?;
+    let analysis = result.analyze()?;
+    if analysis.valid != 1 || analysis.solid_count != 1 || analysis.closed_solid_count != 1 {
+        return Err(format!("曲轴必须构成单一有效闭合实体；当前 valid={}, solids={}, closed={}",
+            analysis.valid, analysis.solid_count, analysis.closed_solid_count));
+    }
+    Ok((vec![result], json!({"status":"approximate", "geometry_support":"approximate", "builder":"analytic_journals_with_rectangular_webs",
+        "throws_built":throws, "webs_built":web_count, "axis":"global X", "segments_ignored_by_analytic_brep":true})))
+}
 
 pub fn preflight_camshaft(parameters: &Value) -> Result<(), String> {
     let length = number(parameters, "length")?;
@@ -718,6 +784,24 @@ mod tests {
         ] {
             assert!(preflight_camshaft(&invalid).is_err(), "accepted {invalid}");
         }
+    }
+
+    #[test]
+    fn crankshaft_preflight_enforces_dimensions_and_resource_bounds() {
+        let valid = json!({"length":320,"main_d":50,"pin_d":42,"stroke":86,
+            "throws":4,"center":[12,-7,5]});
+        assert!(preflight_crankshaft(&valid).is_ok());
+        for invalid in [
+            json!({"length":0,"main_d":50,"pin_d":42,"stroke":86,"throws":4}),
+            json!({"length":320,"main_d":0,"pin_d":42,"stroke":86,"throws":4}),
+            json!({"length":320,"main_d":50,"pin_d":42,"stroke":-1,"throws":4}),
+            json!({"length":320,"main_d":50,"pin_d":42,"stroke":86,"throws":0}),
+            json!({"length":320,"main_d":50,"pin_d":42,"stroke":86,"throws":129}),
+        ] {
+            assert!(preflight_crankshaft(&invalid).is_err(), "accepted {invalid}");
+        }
+        assert!(preflight_crankshaft(&json!({"length":320,"main_d":50,"pin_d":42,
+            "stroke":86,"throws":4,"segments":3})).is_ok());
     }
 
     #[test]
