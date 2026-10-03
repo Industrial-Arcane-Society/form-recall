@@ -9,7 +9,7 @@
     "test:agent-channel-vue": "pwsh -NoProfile -File scripts/test-agent-channel-vue.ps1",
     "preview": "vite preview",
     "tauri": "tauri",
-    "tauri:dev": "tauri dev",
+    "tauri:dev": "tauri dev --config src-tauri/tauri.dev.conf.json",
     "tauri:build": "tauri build"
   },
   "dependencies": {
