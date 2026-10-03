@@ -1516,7 +1516,7 @@ mod tests {
     #[test]
     fn piston_geometry_is_advertised_as_native_exact_without_overstating_catia() {
         let support = crate::native_feature_specs::feature_spec("piston").unwrap();
-        assert_eq!(support["native_execution"]["status"], "implemented");
+        assert_eq!(support["native_execution"]["status"], "implemented_exact");
         assert_eq!(support["native_execution"]["geometry_support"], "exact");
         assert_eq!(support["catia_mapping"], "approximate");
     }
