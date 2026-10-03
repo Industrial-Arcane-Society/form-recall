@@ -1358,6 +1358,7 @@ fn verified_stage_scope(
     state: &Value,
     revision: i64,
 ) -> Result<(Value, bool, bool, BTreeSet<String>), String> {
+    require_host_verified_build(state, revision)?;
     let milestone = state
         .get("construction_milestone")
         .filter(|v| v.is_object())
@@ -1414,6 +1415,49 @@ fn verified_stage_scope(
         ids,
     ))
 }
+
+/// Construction IDs are useful only after the host has a successful geometry
+/// result for this exact revision and plan. The milestone tool is a scope
+/// declaration, not evidence that the declared features were built.
+fn require_host_verified_build(state: &Value, revision: i64) -> Result<(), String> {
+    let preview = state
+        .get("last_preview")
+        .filter(|value| value.is_object())
+        .ok_or("当前revision没有宿主记录的成功几何构建；不能核验施工范围。")?;
+    let fingerprint = crate::cad_plan::geometry_fingerprint(&state["plan"])?;
+    let checks = preview
+        .get("local_geometry_checks")
+        .filter(|value| value.is_object())
+        .ok_or("当前revision缺少宿主签署的几何构建报告。")?;
+    let attestation = checks
+        .get("host_attestation")
+        .filter(|value| value.is_object())
+        .ok_or("当前revision几何构建报告缺少宿主签署。")?;
+    let mut unsigned = checks.clone();
+    unsigned
+        .as_object_mut()
+        .expect("geometry checks were checked as an object")
+        .remove("host_attestation");
+    let report_sha = sha(&serde_json::to_vec(&unsigned).map_err(|error| error.to_string())?);
+    let current_build = state["preview_revision"].as_i64() == Some(revision)
+        && preview["revision"].as_i64() == Some(revision)
+        && preview["geometry_fingerprint"].as_str() == Some(fingerprint.as_str())
+        && preview["execution_engine"] == "rust_c_abi_occt"
+        && checks["state"] == "passed"
+        && checks["execution_engine"] == "rust_c_abi_occt"
+        && checks["revision"].as_i64() == Some(revision)
+        && checks["geometry_fingerprint"].as_str() == Some(fingerprint.as_str())
+        && attestation["schema_version"].as_u64() == Some(1)
+        && attestation["issuer"] == "native_cad_session.complete_preview"
+        && attestation["revision"].as_i64() == Some(revision)
+        && attestation["geometry_fingerprint"].as_str() == Some(fingerprint.as_str())
+        && attestation["report_sha256"].as_str() == Some(report_sha.as_str());
+    if !current_build {
+        return Err("当前revision没有与CADPlan匹配的宿主签署成功构建；不能核验施工范围。".into());
+    }
+    Ok(())
+}
+
 fn validated_scope_ids(value: Option<&Value>, label: &str) -> Result<BTreeSet<String>, String> {
     let rows = value
         .and_then(Value::as_array)
@@ -1687,6 +1731,30 @@ mod tests {
         output.into_inner()
     }
 
+    fn with_host_verified_build(state: &Value) -> Value {
+        let revision = state["revision"].as_i64().unwrap();
+        let fingerprint = crate::cad_plan::geometry_fingerprint(&state["plan"]).unwrap();
+        crate::native_cad_session::complete_preview(
+            state,
+            crate::native_cad_session::BackendOutcome {
+                revision,
+                geometry_fingerprint: fingerprint.clone(),
+                output_paths: json!({"preview":"fixture-preview.png"}),
+                preview: json!({
+                    "execution_engine":"rust_c_abi_occt",
+                    "local_geometry_checks": {
+                        "execution_engine":"rust_c_abi_occt",
+                        "revision":revision,
+                        "geometry_fingerprint":fingerprint,
+                        "state":"passed"
+                    }
+                }),
+            },
+        )
+        .unwrap()
+        .state
+    }
+
     fn test_session() -> TestSession {
         let suffix = NEXT_TEMP.fetch_add(1, Ordering::Relaxed);
         let root = std::env::temp_dir().join(format!(
@@ -1781,6 +1849,7 @@ mod tests {
             "actions": [{"private_note": "AGENT_ACTION_SENTINEL_do_not_send"}],
             "agent_history": "AGENT_HISTORY_SENTINEL_do_not_send"
         });
+        let state = with_host_verified_build(&state);
         TestSession {
             context: Context {
                 session_dir: root.clone(),
@@ -2195,11 +2264,11 @@ mod tests {
 
     #[test]
     fn stage_scope_is_revision_bound_and_only_exposes_completed_enabled_features() {
-        let state = json!({
+        let state = with_host_verified_build(&json!({
             "revision":7,
             "plan":{"features":[{"id":"body","kind":"box","operation":"add","parameters":{"length":999},"name":"private name"},{"id":"hole","kind":"hole","operation":"cut","enabled":false}]},
             "construction_milestone":{"revision":7,"completed_feature_ids":["body"],"expected_feature_ids":["body","future-hole"],"notes":"agent narration"}
-        });
+        }));
         let (scope, complete, full_scope, ids) = verified_stage_scope(&state, 7).unwrap();
         assert_eq!(
             scope,
@@ -2209,13 +2278,32 @@ mod tests {
         assert!(full_scope); // Disabled future feature does not block a completed current scope.
         assert_eq!(ids, BTreeSet::from(["body".to_string()]));
         assert!(verified_stage_scope(&state, 8).is_err());
-        let duplicate = json!({"revision":7,"plan":{"features":[{"id":"body","kind":"box","operation":"add"}]},"construction_milestone":{"revision":7,"completed_feature_ids":["body","body"],"expected_feature_ids":[]}});
+        let duplicate = with_host_verified_build(&json!({
+            "revision":7,
+            "plan":{"features":[{"id":"body","kind":"box","operation":"add"}]},
+            "construction_milestone":{"revision":7,"completed_feature_ids":["body","body"],"expected_feature_ids":[]}
+        }));
         assert!(verified_stage_scope(&duplicate, 7).is_err());
 
-        let partial_scope = json!({"revision":7,"plan":{"features":[{"id":"body","kind":"box","operation":"add"},{"id":"hole","kind":"hole","operation":"cut"}]},"construction_milestone":{"revision":7,"completed_feature_ids":["body"],"expected_feature_ids":["body"]}});
+        let partial_scope = with_host_verified_build(&json!({
+            "revision":7,
+            "plan":{"features":[{"id":"body","kind":"box","operation":"add"},{"id":"hole","kind":"hole","operation":"cut"}]},
+            "construction_milestone":{"revision":7,"completed_feature_ids":["body"],"expected_feature_ids":["body"]}
+        }));
         let (_, complete, full_scope, _) = verified_stage_scope(&partial_scope, 7).unwrap();
         assert!(complete);
         assert!(!full_scope);
+    }
+
+    #[test]
+    fn enabled_feature_self_report_is_rejected_without_host_verified_build() {
+        let state = json!({
+            "revision":7,
+            "plan":{"features":[{"id":"body","kind":"box","operation":"add"},{"id":"hole","kind":"hole","operation":"cut"}]},
+            "construction_milestone":{"revision":7,"completed_feature_ids":["body","hole"],"expected_feature_ids":["body","hole"]}
+        });
+        let error = verified_stage_scope(&state, 7).unwrap_err();
+        assert!(error.contains("宿主记录的成功几何构建"), "{error}");
     }
 
     #[test]
@@ -2525,9 +2613,43 @@ mod tests {
             assert_eq!(result.value["evidence"][0]["status"], expected_status);
             assert_eq!(result.value["covered_evidence_ids"],json!([]));
             assert_eq!(result.value["finding_lifecycle"]["binding_status"],"current");
+            assert_eq!(
+                result.value["finding_lifecycle"]["created"]
+                    .as_array()
+                    .unwrap()
+                    .len(),
+                expected_findings
+            );
             assert_eq!(result.state["finding_ledger"].as_object().unwrap().len(),expected_findings);
             assert_eq!(result.state["unresolved_findings"].as_array().unwrap().len(),expected_findings);
         }
+    }
+
+    #[test]
+    fn review_rejects_unbuilt_self_reported_scope_before_provider() {
+        let mut session = test_session();
+        session.state["construction_milestone"] = json!({
+            "revision":4,
+            "completed_feature_ids":["body","hole"],
+            "expected_feature_ids":["body","hole"]
+        });
+        let fingerprint = crate::cad_plan::geometry_fingerprint(&session.state["plan"]).unwrap();
+        session.state["last_preview"] = json!({
+            "revision":4,
+            "geometry_fingerprint":fingerprint,
+            "execution_engine":"rust_c_abi_occt"
+        });
+        let model = provider("http://127.0.0.1:1/v1/chat/completions".into());
+        let error = run(review(
+            &session.state,
+            &json!({"view":"front","preview_generation":9,"reference_id":session.reference_id}),
+            &model,
+            &AtomicBool::new(false),
+            &session.context,
+        ))
+        .unwrap_err();
+        assert!(error.contains("宿主签署的几何构建报告"), "{error}");
+        assert!(session.state.get("finding_ledger").is_none());
     }
 
     #[test]

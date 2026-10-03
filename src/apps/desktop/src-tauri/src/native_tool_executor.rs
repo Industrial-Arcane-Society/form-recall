@@ -1311,6 +1311,26 @@ mod tests {
             "construction_milestone":{"revision":4,"completed_feature_ids":["body"],"expected_feature_ids":["body"]},
             "actions": []
         });
+        let state = crate::native_cad_session::complete_preview(
+            &state,
+            crate::native_cad_session::BackendOutcome {
+                revision: 4,
+                geometry_fingerprint: fingerprint,
+                output_paths: json!({"preview":preview.display().to_string()}),
+                preview: json!({
+                    "execution_engine":"rust_c_abi_occt",
+                    "preview_generation":9,
+                    "local_geometry_checks": {
+                        "execution_engine":"rust_c_abi_occt",
+                        "revision":4,
+                        "geometry_fingerprint":crate::cad_plan::geometry_fingerprint(&plan).unwrap(),
+                        "state":"passed"
+                    }
+                }),
+            },
+        )
+        .unwrap()
+        .state;
         write_json_atomic(&dir.join("cad-state.json"), &state).unwrap();
         (dir, reference_id, source_sha, evidence_id)
     }
