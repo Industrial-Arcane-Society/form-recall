@@ -10,6 +10,7 @@ pub mod native_bore_metrology;
 pub mod native_cad_metadata;
 pub mod native_cad_session;
 pub mod native_cad_tools;
+pub mod native_diagnostics;
 pub mod native_fastener_specs;
 pub mod native_feature_specs;
 pub mod native_geometry_backend;
@@ -237,15 +238,32 @@ fn native_runtime_status(app: AppHandle) -> Result<Value, String> {
                 .and_then(Value::as_bool)
                 .unwrap_or(false);
             status["available"] = json!(installed);
-            status["state"] = json!(if installed { "ready" } else { "missing" });
+            status["verified"] = json!(installed);
+            status["state"] = json!(if installed { "installed" } else { "missing" });
             status
         }
         Err(error) => json!({"available":false,"installed":false,"state":"invalid","reason":error}),
     };
     let occt = match native_occt_runtime::available_manifest(&root) {
-        Ok(Some(_)) => json!({"available":true,"state":"ready"}),
-        Ok(None) => json!({"available":false,"state":"missing"}),
-        Err(error) => json!({"available":false,"state":"invalid","reason":error}),
+        Ok(Some(_)) => json!({
+            "available": true,
+            "verified": true,
+            "loaded": false,
+            "state": "runtime_verified",
+        }),
+        Ok(None) => json!({
+            "available": false,
+            "verified": false,
+            "loaded": false,
+            "state": "missing",
+        }),
+        Err(error) => json!({
+            "available": false,
+            "verified": false,
+            "loaded": false,
+            "state": "invalid",
+            "reason": error,
+        }),
     };
     let catia = native_bootstrap::catia_readiness(catia_com_registered());
     let mut readiness = native_bootstrap::runtime_readiness(
@@ -255,7 +273,53 @@ fn native_runtime_status(app: AppHandle) -> Result<Value, String> {
         catia,
     );
     readiness["appVersion"] = json!(env!("CARGO_PKG_VERSION"));
+    let cordis_schemas = native_tool_schemas::native_tool_schemas().ok();
+    readiness["cordis"] =
+        native_diagnostics::cordis_schema_status(cordis_schemas.as_ref().map(Vec::len));
+    readiness["externalMcp"] = native_diagnostics::external_mcp_status();
     Ok(readiness)
+}
+
+#[tauri::command]
+fn native_about() -> Value {
+    native_diagnostics::about(env!("CARGO_PKG_VERSION"))
+}
+
+#[tauri::command]
+fn native_selftest(app: AppHandle) -> Result<Value, String> {
+    let resources = native_resource_status(app.clone())?;
+    let runtime = native_runtime_status(app)?;
+    let quick_parser_ready =
+        native_quick_parser::parse("创建 100×60×20毫米 长方体")["status"] == "ready";
+    Ok(native_diagnostics::selftest(
+        env!("CARGO_PKG_VERSION"),
+        resources,
+        runtime,
+        quick_parser_ready,
+    ))
+}
+
+#[tauri::command(rename_all = "camelCase")]
+fn native_open_help_path(app: AppHandle, relative_path: String) -> Result<Value, String> {
+    let root = resource_root(&app)?;
+    let path = native_diagnostics::resolve_help_path(&root, &relative_path)?;
+    let mut command = if cfg!(windows) {
+        let mut command = Command::new("explorer.exe");
+        command.arg(&path);
+        command
+    } else if cfg!(target_os = "macos") {
+        let mut command = Command::new("open");
+        command.arg(&path);
+        command
+    } else {
+        let mut command = Command::new("xdg-open");
+        command.arg(&path);
+        command
+    };
+    command
+        .spawn()
+        .map_err(|error| format!("无法打开帮助文件（{}）：{error}", path.display()))?;
+    Ok(json!({"opened": path.to_string_lossy(), "relative_path": relative_path}))
 }
 
 #[tauri::command(rename_all = "camelCase")]
@@ -1945,6 +2009,9 @@ pub fn run() {
             install_dependencies,
             native_resource_status,
             native_runtime_status,
+            native_about,
+            native_selftest,
+            native_open_help_path,
             install_dsh_runtime,
             backend_call,
             quick_build,

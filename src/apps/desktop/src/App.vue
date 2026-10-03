@@ -8,6 +8,7 @@ import DependencySetup from './components/DependencySetup.vue'
 import ModelStats from './components/ModelStats.vue'
 import UiIcon from './components/UiIcon.vue'
 import { documentAcceptanceView, modelAcceptanceView, turnStatusView } from './agentStatus.mjs'
+import { diagnosticStatusRows, nativeSelftestMessage } from './diagnosticStatus.mjs'
 import type { ModelAcceptanceView } from './agentStatus.mjs'
 
 const CadViewport = defineAsyncComponent(() => import('./components/CadViewport.vue'))
@@ -58,8 +59,8 @@ const providerTemplates = ref<any[]>([])
 const modelOptions = ref<string[]>([])
 const showApiKey = ref(false)
 const toolsOpen = ref(false)
-const mcpOpen = ref(false)
-const mcpData = ref<any>(null)
+const integrationsOpen = ref(false)
+const integrationStatus = ref<any>(null)
 const helpOpen = ref(false)
 const aboutOpen = ref(false)
 const onlineOpen = ref(false)
@@ -72,6 +73,7 @@ const sampleRows = ref<any[]>([])
 const samplesOpen = ref(false)
 const handshake = ref<any>(null)
 const runtimeReadiness = ref<any>(null)
+const diagnosticRows = computed(() => diagnosticStatusRows(runtimeReadiness.value))
 const previewUrl = ref('')
 const previewStage = ref('')
 const promptEl = ref<HTMLTextAreaElement | null>(null)
@@ -286,7 +288,7 @@ async function initialize() {
     rootPath.value = resources.root || ''
     const readiness = await invoke<any>('native_runtime_status')
     runtimeReadiness.value = readiness
-    handshake.value = { app_version: readiness.appVersion || '—' }
+    handshake.value = await invoke<any>('native_about')
     backendInfo.value = 'Rust 原生核心'
     settingsDraft.value = ensureLlmDraft(structuredClone(await invoke<any>('native_settings_load')))
     const active = await invoke<any>('active_model_snapshot')
@@ -918,24 +920,24 @@ async function pushToCatia() {
   if (result) await showMessage(result.ok ? 'CATIA 推送完成' : 'CATIA 推送失败', result.message || '')
 }
 
-async function openMcp() {
-  const result = await runBackendAction('mcp.info', '读取 MCP 配置')
-  if (result) { mcpData.value = result; mcpOpen.value = true }
+async function openIntegrations() {
+  try {
+    const result = await invoke<any>('native_runtime_status')
+    runtimeReadiness.value = result
+    integrationStatus.value = result
+    integrationsOpen.value = true
+  } catch (error) {
+    await showMessage('读取接入状态失败', errorMessage(error), 'error')
+  }
 }
 
-async function testMcp() {
-  const result = await runBackendAction('mcp.test', '测试 MCP 服务')
-  if (result) await showMessage('MCP 自检', JSON.stringify(result, null, 2))
-}
-
-async function copyText(text: string) {
-  try { await navigator.clipboard.writeText(text); setStatus('已复制到剪贴板', 'success') }
-  catch (error) { await showMessage('复制失败', errorMessage(error), 'error') }
-}
-
-async function runSelftest() {
-  const result = await runBackendAction('system.selftest', '运行内置自检')
-  if (result) await showMessage('内置自检', (result.lines || []).join('\n') + '\n\n状态：' + (result.ok ? '通过' : '有项目未通过'))
+async function runNativeSelftest() {
+  try {
+    const result = await invoke<any>('native_selftest')
+    await showMessage('本机组件自检', nativeSelftestMessage(result))
+  } catch (error) {
+    await showMessage('本机组件自检失败', errorMessage(error), 'error')
+  }
 }
 
 async function showCatiaLibrary() {
@@ -963,7 +965,11 @@ async function useOnlineSuggestion() {
 
 async function openManual(path: string) {
   if (!rootPath.value) return
-  await runBackendAction('system.open_path', '打开说明', { path: rootPath.value + '/' + path })
+  try {
+    await invoke('native_open_help_path', { relativePath: path })
+  } catch (error) {
+    await showMessage('打开说明失败', errorMessage(error), 'error')
+  }
 }
 
 function onKeydown(event: KeyboardEvent) {
@@ -1023,9 +1029,9 @@ onUnmounted(() => {
           <div class="menu-divider"></div>
           <button @click="openSettings('llm'); menuOpen = false">AI 大模型设置</button>
           <button @click="openSettings('online'); menuOpen = false">联网搜索设置</button>
-          <button @click="openMcp(); menuOpen = false">MCP 服务配置</button>
+          <button @click="openIntegrations(); menuOpen = false">Agent 与外部接入状态</button>
           <button @click="openTools(); menuOpen = false">CATIA 与本地工具</button>
-          <button @click="runSelftest(); menuOpen = false">运行内置自检</button>
+          <button @click="runNativeSelftest(); menuOpen = false">运行 Rust 原生自检</button>
           <button @click="helpOpen = true; menuOpen = false">帮助与使用说明</button>
           <button @click="aboutOpen = true; menuOpen = false">关于 AI Modeler</button>
         </div>
@@ -1203,7 +1209,7 @@ onUnmounted(() => {
       </aside>
     </main>
 
-    <footer class="bottom-bar"><div><span class="bottom-brand">AI MODELER</span><span>桌面建模工作区</span></div><div class="runtime-indicators"><span><i :class="{ ready: runtimeReadiness?.dsh?.available }"></i>DSH {{ runtimeReadiness?.dsh?.state || '检测中' }}</span><span><i :class="{ ready: runtimeReadiness?.occt?.available }"></i>OCCT {{ runtimeReadiness?.occt?.state || '检测中' }}</span><span><i :class="{ ready: runtimeReadiness?.catia?.registered }"></i>CATIA {{ runtimeReadiness?.catia?.state || '检测中' }}</span><span><i :class="{ ready: runtimeReadiness?.python?.available }"></i>Python {{ runtimeReadiness?.python?.available ? '可用' : '未安装' }}</span><span class="status-divider"></span><span>Rust 原生核心 · 版本 {{ handshake?.app_version || '—' }}</span></div><div><button @click="helpOpen = true">帮助</button><span class="status-divider"></span><span>快捷键 <kbd>Ctrl</kbd>+<kbd>S</kbd> 保存 · <kbd>F</kbd> 适应视图</span></div></footer>
+    <footer class="bottom-bar"><div><span class="bottom-brand">AI MODELER</span><span>桌面建模工作区</span></div><div class="runtime-indicators"><span v-for="row in diagnosticRows" :key="row.key" :title="row.value"><i :class="{ ready: row.ready === true }"></i>{{ row.label }} {{ row.footerValue }}</span><span class="status-divider"></span><span>Rust 原生核心 · 版本 {{ handshake?.app_version || '—' }}</span></div><div><button @click="helpOpen = true">帮助</button><span class="status-divider"></span><span>快捷键 <kbd>Ctrl</kbd>+<kbd>S</kbd> 保存 · <kbd>F</kbd> 适应视图</span></div></footer>
 
     <div v-if="settingsOpen" class="modal-backdrop" @click.self="settingsOpen = false">
       <section class="modal settings-modal">
@@ -1280,26 +1286,24 @@ onUnmounted(() => {
           <button @click="runBackendAction('catia.install_plugin', '安装 CATIA 插件')"><span><UiIcon name="wrench" /></span><strong>安装 / 修复 CATIA 插件</strong><small>在新控制台运行安装脚本</small></button>
           <button @click="showCatiaLibrary"><span><UiIcon name="boxes" /></span><strong>CATIA 标准件模型库</strong><small>查看 catalog 索引</small></button>
           <button @click="runBackendAction('local_ai.install', '安装本地 DeepSeek')"><span><UiIcon name="cpu" /></span><strong>安装 / 管理本地 DeepSeek</strong><small>启动本地推理服务管理器</small></button>
-          <button @click="openMcp"><span><UiIcon name="network" /></span><strong>MCP 服务配置</strong><small>离线工具与 CATIA 工具服务器</small></button>
-          <button @click="testMcp"><span><UiIcon name="circle-check" /></span><strong>测试 MCP 服务</strong><small>检查工具数量与 CATIA 自检</small></button>
-          <button @click="runSelftest"><span><UiIcon name="settings" /></span><strong>运行内置自检</strong><small>检查 Python、几何内核和连接</small></button>
+          <button @click="openIntegrations"><span><UiIcon name="network" /></span><strong>查看 Agent 与外部接入状态</strong><small>分别显示 Cordis 工具定义和外部 MCP 配置</small></button>
+          <button @click="runNativeSelftest"><span><UiIcon name="circle-check" /></span><strong>运行 Rust 原生自检</strong><small>检查资源、DSH Runtime、OCCT 与 Quick 解析器</small></button>
         </div>
         <footer class="modal-footer"><button class="secondary-button" @click="toolsOpen = false">关闭</button></footer>
       </section>
     </div>
 
-    <div v-if="mcpOpen" class="modal-backdrop" @click.self="mcpOpen = false"><section class="modal mcp-modal"><header class="modal-head"><div><span class="eyebrow">MODEL CONTEXT PROTOCOL</span><h2>MCP 服务配置</h2></div><button class="modal-close" aria-label="关闭 MCP 配置" @click="mcpOpen = false"><UiIcon name="close" /></button></header>
-      <div v-if="mcpData" class="mcp-body"><div class="mcp-stat-row"><div><strong>{{ mcpData.offline_tool_count }}</strong><span>离线工具</span></div><div><strong>{{ mcpData.catia_tool_count }}</strong><span>CATIA 工具</span></div></div>
-        <label>离线建模 MCP 配置<button class="copy-config" @click="copyText(JSON.stringify(mcpData.offline, null, 2))">复制</button></label><pre>{{ JSON.stringify(mcpData.offline, null, 2) }}</pre>
-        <label>CATIA MCP 配置<button class="copy-config" @click="copyText(JSON.stringify(mcpData.catia, null, 2))">复制</button></label><pre>{{ JSON.stringify(mcpData.catia, null, 2) }}</pre>
-        <button class="secondary-button" @click="testMcp">测试服务</button><button class="text-button" @click="openManual('docs/01-architecture/01-target-architecture.md')">打开架构说明 <UiIcon name="arrow-up-right" :size="14" /></button>
-      </div><footer class="modal-footer"><button class="secondary-button" @click="mcpOpen = false">关闭</button></footer></section></div>
+    <div v-if="integrationsOpen" class="modal-backdrop" @click.self="integrationsOpen = false"><section class="modal mcp-modal"><header class="modal-head"><div><span class="eyebrow">AGENT INTEGRATIONS</span><h2>Agent 与外部接入状态</h2></div><button class="modal-close" aria-label="关闭接入状态" @click="integrationsOpen = false"><UiIcon name="close" /></button></header>
+      <div v-if="integrationStatus" class="mcp-body"><div class="diagnostic-grid"><div v-for="row in diagnosticRows" :key="row.key" class="diagnostic-row"><span>{{ row.label }}</span><strong>{{ row.value }}</strong></div></div>
+        <p class="diagnostic-note">Cordis 工具数量只表示本地原生插件的 schema 定义数量，不代表外部 MCP server 已配置或连通。CATIA 状态只检查 COM 注册，不会启动 CATIA。</p>
+        <button class="secondary-button" @click="openIntegrations">刷新状态</button><button class="text-button" @click="openManual('docs/01-architecture/01-target-architecture.md')">打开架构说明 <UiIcon name="arrow-up-right" :size="14" /></button>
+      </div><footer class="modal-footer"><button class="secondary-button" @click="integrationsOpen = false">关闭</button></footer></section></div>
 
     <div v-if="onlineOpen" class="modal-backdrop" @click.self="onlineOpen = false"><section class="modal online-modal"><header class="modal-head"><div><span class="eyebrow">ONLINE LOOKUP</span><h2>联网搜索</h2></div><button class="modal-close" aria-label="关闭联网搜索" @click="onlineOpen = false"><UiIcon name="close" /></button></header><div class="online-query"><input v-model="onlineQuery" placeholder="搜索标准零件、术语或建模方法"><button class="primary-button" @click="manualOnline">搜索</button></div><div class="online-result"><pre v-if="onlineResult">{{ JSON.stringify(onlineResult, null, 2) }}</pre><p v-else>搜索结果会显示在这里。</p></div><footer class="modal-footer"><button class="secondary-button" @click="onlineOpen = false">关闭</button><button class="primary-button" :disabled="!onlineResult" @click="useOnlineSuggestion">填入对话</button></footer></section></div>
 
     <div v-if="helpOpen" class="modal-backdrop" @click.self="helpOpen = false"><section class="modal help-modal"><header class="modal-head"><div><span class="eyebrow">GETTING STARTED</span><h2>帮助与使用说明</h2></div><button class="modal-close" aria-label="关闭帮助" @click="helpOpen = false"><UiIcon name="close" /></button></header><div class="help-grid"><article><span>01</span><h3>描述零件</h3><p>写明零件类型、主要尺寸和孔位。快速模式适合离线几何描述；Agent 模式支持参考图片和多轮修改。</p></article><article><span>02</span><h3>检查特征与参数</h3><p>选择右侧特征树中的项目，修改可编辑参数并重新计算几何。</p></article><article><span>03</span><h3>保存与导出</h3><p>保存为 AI Modeler 工程，或导出 STL、OBJ、建模报告和 CATIA 自动化脚本。</p></article><article><span>04</span><h3>CATIA 集成</h3><p>从“更多”菜单打开集成工具，连接 CATIA V5 或安装插件。</p></article></div><div class="help-link-row"><button @click="openManual('docs/README.md')">打开研究与文档索引 <UiIcon name="arrow-up-right" :size="14" /></button><button @click="openManual('docs/05-operations/01-build-and-run.md')">打开运行与 CATIA 说明 <UiIcon name="arrow-up-right" :size="14" /></button></div><footer class="modal-footer"><button class="secondary-button" @click="helpOpen = false">关闭</button></footer></section></div>
 
-    <div v-if="aboutOpen" class="modal-backdrop" @click.self="aboutOpen = false"><section class="modal about-modal"><div class="about-mark"><span></span><span></span><span></span></div><span class="eyebrow">AI MODELER DESKTOP</span><h2>AI Modeler</h2><p>自然语言驱动的参数化三维建模工作台</p><div class="about-version">应用 {{ handshake?.app_version || '—' }} <span>·</span> Python {{ handshake?.python_version || '—' }}</div><footer class="modal-footer"><button class="secondary-button" @click="aboutOpen = false">关闭</button></footer></section></div>
+    <div v-if="aboutOpen" class="modal-backdrop" @click.self="aboutOpen = false"><section class="modal about-modal"><div class="about-mark"><span></span><span></span><span></span></div><span class="eyebrow">AI MODELER DESKTOP</span><h2>AI Modeler</h2><p>{{ handshake?.description || '自然语言驱动的参数化三维建模工作台' }}</p><div class="about-version">Rust 桌面应用 {{ handshake?.app_version || '—' }}</div><footer class="modal-footer"><button class="secondary-button" @click="aboutOpen = false">关闭</button></footer></section></div>
   </div>
 </template>
 
@@ -1321,4 +1325,11 @@ onUnmounted(() => {
 .acceptance-summary__row strong[data-state="stopped"] { color: #a66b12; }
 .acceptance-summary__evidence { display: flex; flex-wrap: wrap; gap: 4px 10px; }
 .theme-dark .acceptance-summary__row strong { color: var(--text, #e0e7eb); }
+.diagnostic-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; margin: 8px 0 14px; }
+.diagnostic-row { display: grid; gap: 5px; min-width: 0; padding: 11px 12px; border: 1px solid var(--line); border-radius: 9px; background: var(--surface-muted, #f7f8fa); }
+.diagnostic-row span { color: var(--muted, #71808a); font-size: 11px; }
+.diagnostic-row strong { color: var(--text, #26343c); font-size: 13px; font-weight: 600; }
+.diagnostic-note { margin: 8px 0 14px; color: var(--muted, #71808a); font-size: 12px; line-height: 1.6; }
+.theme-dark .diagnostic-row { background: var(--surface-muted, #212934); }
+.theme-dark .diagnostic-row strong { color: var(--text, #e0e7eb); }
 </style>

@@ -66,9 +66,27 @@ pub fn resource_status(root: &Path) -> Result<Value, String> {
 
 pub fn catia_readiness(registered: Option<bool>) -> Value {
     match registered {
-        Some(true) => json!({"available":true,"registered":true,"state":"com_registered"}),
-        Some(false) => json!({"available":false,"registered":false,"state":"not_registered"}),
-        None => json!({"available":null,"registered":null,"state":"not_checked"}),
+        Some(true) => json!({
+            "available": null,
+            "registered": true,
+            "connected": null,
+            "connectionChecked": false,
+            "state": "com_registered",
+        }),
+        Some(false) => json!({
+            "available": null,
+            "registered": false,
+            "connected": null,
+            "connectionChecked": false,
+            "state": "not_registered",
+        }),
+        None => json!({
+            "available": null,
+            "registered": null,
+            "connected": null,
+            "connectionChecked": false,
+            "state": "not_checked",
+        }),
     }
 }
 
@@ -158,6 +176,8 @@ mod tests {
         assert_eq!(report["catia"]["available"], Value::Null);
         assert_eq!(report["catia"]["state"], "not_checked");
         assert_eq!(catia_readiness(Some(true))["state"], "com_registered");
-        assert_eq!(catia_readiness(Some(false))["available"], false);
+        assert_eq!(catia_readiness(Some(false))["available"], Value::Null);
+        assert_eq!(catia_readiness(Some(false))["connected"], Value::Null);
+        assert_eq!(catia_readiness(Some(false))["connectionChecked"], false);
     }
 }
