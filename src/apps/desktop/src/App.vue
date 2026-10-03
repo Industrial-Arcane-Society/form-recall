@@ -95,7 +95,7 @@ const llmDraft = computed(() => settingsDraft.value?.llm || {})
 const providersDraft = computed(() => Array.isArray(llmDraft.value.providers) ? llmDraft.value.providers : [])
 const activeProvider = computed(() => providersDraft.value.find((row: any) => row.id === llmDraft.value.active_provider_id) || providersDraft.value[0] || llmDraft.value || {})
 const stats = computed(() => documentState.value.stats || {})
-const canSubmit = computed(() => !busy.value && !attachmentLoading.value && (Boolean(prompt.value.trim()) || attachments.value.length > 0))
+const canSubmit = computed(() => desktop && !busy.value && !attachmentLoading.value && (Boolean(prompt.value.trim()) || attachments.value.length > 0))
 const workbenchStyle = computed(() => ({
   '--chat-width': chatCollapsed.value ? '0px' : `${chatWidth.value}px`,
   '--inspector-width': inspectorCollapsed.value ? '0px' : `${inspectorWidth.value}px`,
@@ -338,7 +338,9 @@ async function restoreAgentHistory() {
 
 async function startApplication() {
   if (!desktop) {
-    await initialize()
+    backendInfo.value = '浏览器预览'
+    settingsDraft.value = ensureLlmDraft({ viewer: { edges: true, grid: true, axes: true, perspective: true } })
+    setStatus('浏览器预览已就绪；本地建模与文件操作请在桌面程序中使用。')
     return
   }
   try {
@@ -460,6 +462,10 @@ async function onPaste(event: ClipboardEvent) {
 }
 
 async function submitPrompt() {
+  if (!desktop) {
+    setStatus('浏览器预览不提供本地建模，请在桌面程序中发送描述。')
+    return
+  }
   if (busy.value || attachmentLoading.value) return
   const text = prompt.value.trim()
   if (!text && !attachments.value.length) return
@@ -1004,6 +1010,7 @@ function onKeydown(event: KeyboardEvent) {
     if (event.key === 'f' && !(event.target instanceof HTMLInputElement) && !(event.target instanceof HTMLTextAreaElement)) fitView()
     return
   }
+  if (!desktop) return
   if (event.key.toLowerCase() === 's') { event.preventDefault(); void saveProject() }
   if (event.key.toLowerCase() === 'o') { event.preventDefault(); void openProject() }
   if (event.key.toLowerCase() === 'n') { event.preventDefault(); void newDocument() }
@@ -1038,13 +1045,13 @@ onUnmounted(() => {
         <div><strong>AI MODELER</strong><small>参数化建模工作台</small></div>
       </div>
       <nav class="main-nav">
-        <button @click="newDocument"><UiIcon name="plus" :size="16" />新建</button>
-        <button @click="openProject"><UiIcon name="folder-open" :size="16" />打开工程</button>
-        <button @click="saveProject"><UiIcon name="save" :size="16" />保存</button>
+        <button :disabled="!desktop" @click="newDocument"><UiIcon name="plus" :size="16" />新建</button>
+        <button :disabled="!desktop" @click="openProject"><UiIcon name="folder-open" :size="16" />打开工程</button>
+        <button :disabled="!desktop" @click="saveProject"><UiIcon name="save" :size="16" />保存</button>
         <span class="nav-separator"></span>
-        <button @click="exportFile('stl')"><UiIcon name="download" :size="16" />导出 STL</button>
-        <button @click="exportFile('obj')">导出 OBJ</button>
-        <button @click="menuOpen = !menuOpen">更多 <UiIcon name="chevron-down" :size="14" /></button>
+        <button :disabled="!desktop" @click="exportFile('stl')"><UiIcon name="download" :size="16" />导出 STL</button>
+        <button :disabled="!desktop" @click="exportFile('obj')">导出 OBJ</button>
+        <button :disabled="!desktop" @click="menuOpen = !menuOpen">更多 <UiIcon name="chevron-down" :size="14" /></button>
         <div v-if="menuOpen" class="menu-popover" @mouseleave="menuOpen = false">
           <button @click="exportFile('report'); menuOpen = false">导出建模报告 TXT</button>
           <button @click="exportFile('catia'); menuOpen = false">{{ nativeModelActive ? '导出 CATIA 原生零件' : '导出 CATIA 自动化脚本' }}</button>
@@ -1065,7 +1072,7 @@ onUnmounted(() => {
       <div class="top-actions">
         <span class="backend-chip" :class="{ disconnected: backendInfo === '后端未连接' }"><i></i>{{ backendInfo }}</span>
         <button class="icon-button" :title="themeDark ? '切换浅色主题' : '切换深色主题'" @click="themeDark = !themeDark"><UiIcon :name="themeDark ? 'sun' : 'moon'" /></button>
-        <button class="icon-button" title="设置" @click="openSettings('llm')"><UiIcon name="settings" /></button>
+        <button class="icon-button" title="设置" :disabled="!desktop" @click="openSettings('llm')"><UiIcon name="settings" /></button>
       </div>
     </header>
 
@@ -1073,7 +1080,7 @@ onUnmounted(() => {
       <section v-show="!chatCollapsed" class="chat-panel">
         <div class="panel-heading chat-heading">
           <div><span class="eyebrow">WORKSPACE / 01</span><h1>建模对话</h1></div>
-          <div class="heading-tools"><button class="sample-button" @click="openSamples">示例 <UiIcon name="chevron-down" :size="14" /></button><button class="quiet-icon" title="新对话" @click="resetChat"><UiIcon name="plus" /></button><button class="quiet-icon" title="收起对话栏" @click="chatCollapsed = true"><UiIcon name="panel-left-close" /></button></div>
+          <div class="heading-tools"><button class="sample-button" :disabled="!desktop" @click="openSamples">示例 <UiIcon name="chevron-down" :size="14" /></button><button class="quiet-icon" title="新对话" :disabled="!desktop" @click="resetChat"><UiIcon name="plus" /></button><button class="quiet-icon" title="收起对话栏" @click="chatCollapsed = true"><UiIcon name="panel-left-close" /></button></div>
         </div>
         <div v-if="samplesOpen" class="sample-popover"><div class="sample-popover-title">常用建模示例 <button @click="samplesOpen = false"><UiIcon name="close" :size="16" /></button></div><button v-for="sample in sampleRows" :key="sample.label" @click="usePromptSample(sample)"><strong>{{ sample.label }}</strong><small>{{ sample.prompt }}</small></button></div>
         <div class="mode-switch">
@@ -1116,15 +1123,15 @@ onUnmounted(() => {
             <textarea ref="promptEl" v-model="prompt" :placeholder="mode === 'agent' ? '描述零件，或粘贴参考图…' : '例如：长方体 80×40×20，中心通孔 Ø8'" :disabled="busy" aria-label="建模描述" @keydown="onPromptKeydown"></textarea>
             <div class="composer-toolbar">
               <div class="composer-tools">
-                <button class="tool-icon" title="添加参考图片" :disabled="busy || mode === 'quick'" @click="chooseImages"><UiIcon name="image-plus" /></button>
-                <button class="tool-text" @click="manualOnline"><UiIcon name="search" :size="16" />联网搜索</button>
-                <span v-if="mode === 'agent'" class="image-note">支持粘贴图片</span>
+                <button class="tool-icon" title="添加参考图片" :disabled="!desktop || busy || mode === 'quick'" @click="chooseImages"><UiIcon name="image-plus" /></button>
+                <button class="tool-text" :disabled="!desktop" @click="manualOnline"><UiIcon name="search" :size="16" />联网搜索</button>
+                <span v-if="desktop && mode === 'agent'" class="image-note">支持粘贴图片</span>
               </div>
               <button v-if="busy" class="stop-button" @click="cancelActive"><UiIcon name="stop" :size="16" />停止</button>
               <button v-else class="send-button" :disabled="!canSubmit" @click="submitPrompt">{{ attachmentLoading ? '读取图片…' : '发送' }} <UiIcon name="send" :size="16" /></button>
             </div>
           </div>
-          <div class="composer-footnote">{{ mode === 'agent' ? 'Agent 会保留当前会话上下文' : '快速模式使用本地参数解析器' }} <span>Enter 发送 · Shift+Enter 换行</span></div>
+          <div class="composer-footnote">{{ !desktop ? '浏览器预览 · 建模请使用桌面程序' : mode === 'agent' ? 'Agent 会保留当前会话上下文' : '快速模式使用本地参数解析器' }} <span v-if="desktop">Enter 发送 · Shift+Enter 换行</span></div>
         </div>
       </section>
       <div v-show="!chatCollapsed" class="panel-resizer chat-resizer" role="separator" aria-orientation="vertical" aria-label="调整对话栏宽度" @pointerdown.prevent="beginResize('chat', $event)"></div>
@@ -1145,7 +1152,7 @@ onUnmounted(() => {
             <button class="view-icon-button" :class="{ selected: settingsDraft?.viewer?.grid }" title="显示参考网格" @click="toggleViewSetting('grid', !settingsDraft?.viewer?.grid)"><UiIcon name="grid" :size="17" /></button>
             <button class="view-icon-button" :class="{ selected: settingsDraft?.viewer?.axes }" title="显示坐标轴" @click="toggleViewSetting('axes', !settingsDraft?.viewer?.axes)"><UiIcon name="axes" :size="17" /></button>
           </div>
-          <button class="toolbar-more" title="截图与导出" @click="menuOpen = !menuOpen"><UiIcon name="more" /></button>
+          <button class="toolbar-more" title="截图与导出" :disabled="!desktop" @click="menuOpen = !menuOpen"><UiIcon name="more" /></button>
         </div>
         <div class="canvas-wrap">
           <CadViewport ref="viewportRef" class="viewport-canvas" :mesh-path="documentState.mesh_path" :revision="documentState.revision" :dark="themeDark" :view-settings="settingsDraft?.viewer || {}" @loaded="setStatus('三维预览已更新', 'success'); clearPreview()" @error="(text) => { addLog('读取 GLB 失败：' + text); setStatus('三维预览加载失败', 'error') }" />
@@ -1154,10 +1161,10 @@ onUnmounted(() => {
             <span class="empty-icon"><UiIcon name="box" :size="27" :stroke-width="1.6" /></span>
             <strong>开始创建你的第一个模型</strong>
             <p>从左侧输入描述，或从零件目录选择文本示例</p>
-            <button @click="panel = 'parts'"><UiIcon name="boxes" :size="16" />浏览零件目录</button>
+            <button :disabled="!desktop" @click="panel = 'parts'"><UiIcon name="boxes" :size="16" />浏览零件目录</button>
           </div>
           <div class="axis-legend"><span><i class="axis-x"></i>X</span><span><i class="axis-y"></i>Y</span><span><i class="axis-z"></i>Z</span><small>毫米 (mm)</small></div>
-          <div class="canvas-tools-bottom"><button @click="saveSnapshot('single')"><UiIcon name="camera" :size="15" />截图</button><button @click="saveSnapshot('four')"><UiIcon name="grid" :size="15" />四视图</button><button @click="fitView"><UiIcon name="maximize" :size="15" />适应</button></div>
+          <div class="canvas-tools-bottom"><button :disabled="!desktop" @click="saveSnapshot('single')"><UiIcon name="camera" :size="15" />截图</button><button :disabled="!desktop" @click="saveSnapshot('four')"><UiIcon name="grid" :size="15" />四视图</button><button @click="fitView"><UiIcon name="maximize" :size="15" />适应</button></div>
           <div class="canvas-watermark">AI MODELER <span>3D WORKSPACE</span></div>
         </div>
         <div class="canvas-status"><span class="status-light" :class="statusTone"></span><span class="status-message" :title="statusText">{{ statusText }}</span><span class="canvas-status-spacer"></span><span>{{ documentState.features.length }} 个特征</span><span class="status-divider"></span><span>{{ stats.faces || 0 }} 面</span><span class="status-divider"></span><span>{{ stats.triangles || 0 }} 三角面</span></div>
@@ -1170,7 +1177,7 @@ onUnmounted(() => {
           <button :class="{ active: panel === 'params' }" @click="panel = 'params'"><UiIcon name="settings" :size="16" />参数</button>
           <button :class="{ active: panel === 'stats' }" @click="panel = 'stats'"><UiIcon name="chart" :size="16" />统计</button>
           <button :class="{ active: panel === 'logs' }" @click="panel = 'logs'"><UiIcon name="file-text" :size="16" />日志</button>
-          <button :class="{ active: panel === 'parts' }" @click="panel = 'parts'"><UiIcon name="boxes" :size="16" />零件目录</button>
+          <button :class="{ active: panel === 'parts' }" :disabled="!desktop" @click="panel = 'parts'"><UiIcon name="boxes" :size="16" />零件目录</button>
         </div>
         <section v-if="panel === 'tree'" class="inspector-content tree-content">
           <div class="inspector-section-title"><div><span class="section-icon"><UiIcon name="list-tree" :size="17" /></span><strong>零件特征</strong><small>{{ documentState.features.length }}</small></div><button class="quiet-icon" title="清空特征" @click="clearFeatures"><UiIcon name="trash" /></button></div>
@@ -1231,11 +1238,11 @@ onUnmounted(() => {
             <div v-if="!partsBusy && !parts.length" class="empty-inspector compact"><strong>没有找到匹配零件</strong><p>尝试缩短关键词。</p></div>
           </div>
         </section>
-        <div class="inspector-foot"><span class="status-light" :class="statusTone"></span><span>{{ statusText }}</span><button title="打开设置" @click="openSettings('llm')"><UiIcon name="settings" :size="16" /></button></div>
+        <div class="inspector-foot"><span class="status-light" :class="statusTone"></span><span>{{ statusText }}</span><button title="打开设置" :disabled="!desktop" @click="openSettings('llm')"><UiIcon name="settings" :size="16" /></button></div>
       </aside>
     </main>
 
-    <footer class="bottom-bar"><div><span class="bottom-brand">AI MODELER</span><span>桌面建模工作区</span></div><div class="runtime-indicators"><span v-for="row in diagnosticRows" :key="row.key" :title="row.value"><i :class="{ ready: row.ready === true }"></i>{{ row.label }} {{ row.footerValue }}</span><span class="status-divider"></span><span>Rust 原生核心 · 版本 {{ handshake?.app_version || '—' }}</span></div><div><button @click="helpOpen = true">帮助</button><span class="status-divider"></span><span>快捷键 <kbd>Ctrl</kbd>+<kbd>S</kbd> 保存 · <kbd>F</kbd> 适应视图</span></div></footer>
+    <footer class="bottom-bar"><div><span class="bottom-brand">AI MODELER</span><span>{{ desktop ? '桌面建模工作区' : '浏览器预览' }}</span></div><div v-if="desktop" class="runtime-indicators"><span v-for="row in diagnosticRows" :key="row.key" :title="row.value"><i :class="{ ready: row.ready === true }"></i>{{ row.label }} {{ row.footerValue }}</span><span class="status-divider"></span><span>Rust 原生核心 · 版本 {{ handshake?.app_version || '—' }}</span></div><span v-else>本地运行时状态仅在桌面程序中检测</span><div><button @click="helpOpen = true">帮助</button><span class="status-divider"></span><span v-if="desktop">快捷键 <kbd>Ctrl</kbd>+<kbd>S</kbd> 保存 · <kbd>F</kbd> 适应视图</span><span v-else>主题、视图与面板可在浏览器中预览</span></div></footer>
 
     <div v-if="settingsOpen" class="modal-backdrop" @click.self="settingsOpen = false">
       <section class="modal settings-modal">
