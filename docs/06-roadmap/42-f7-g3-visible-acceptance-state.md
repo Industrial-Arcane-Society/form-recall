@@ -25,3 +25,16 @@ Agent 对话区固定展示两组独立状态：当前轮次（处理中、回�
 提交 `52b38e1` 将 `accepted=true`、但 finish revision 已过期的状态送入 `App.vue` 生产 Channel handler：Rust 终态保持 `candidate/not_finished`，UI 显示候选模型且不显示“已验收”。`npm run test:agent-channel-vue` 在隔离 worktree 通过，包含 Rust MockRuntime 1/1 和生产 Vue headless handler 检查。测试脚本临时设置 `TAURI_CONFIG.bundle.resources=[]` 以免测试依赖 release-only package-resources，并恢复调用前环境值。
 
 这不是实际 WebView JS 投递。纯问答、工具错误、当前有效 accepted、真实 DSH 与窗口渲染仍未覆盖；G3 不据此整体完成。
+
+## 2026-10-03：Channel→Vue 四场景矩阵
+
+提交 `1dd79b5` 扩展 `npm run test:agent-channel-vue`，同一个生产 `App.vue` Channel handler 现在检查四个由 Rust MockRuntime 捕获的真实 Tauri `Channel<Value>` payload：
+
+| 场景 | Rust/Channel 断言 | 生产 Vue headless 断言 |
+|---|---|---|
+| 纯问答 | 不发 `model.changed`，`current_model.exists=false` | 显示“尚无 CADPlan 模型”，不出现候选或已验收 |
+| CAD 工具失败 | `cad_preview_model` failed、`tool_error`、turn stopped | 显示失败工具和本轮停止，不出现已验收 |
+| 当前验收 | finish revision 与 CAD revision 相同，geometry fingerprint 相同 | 显示“已验收” |
+| 过期验收 | finish `accepted=true` 但 revision 过期，terminal 为 candidate/not_finished | 显示“候选模型”，不显示已验收 |
+
+`npm run test:agent-channel-vue` 通过；两个 Node 文件 `node --check` 与 `git diff --check` 通过。测试用 fake ACP 场景和 MockRuntime 注入来驱动生产前端 handler，验证消息状态契约；它没有启动真实 WebView，未连接真实 DSH 或 CAD bridge，也不是视觉建模验收。
