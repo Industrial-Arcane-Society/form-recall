@@ -40,6 +40,7 @@ pub fn supports_native_kind(kind: &str) -> bool {
             | "conrod"
             | "cross_joint"
             | "rotor"
+            | "camshaft"
     )
 }
 
@@ -101,6 +102,7 @@ pub fn preflight(plan: &Value) -> Result<Value, String> {
             ],
             "cross_joint" => &["span", "journal_d"],
             "rotor" => &["radius", "n", "height", "bore_d"],
+            "camshaft" => &["length", "journal_d", "base_d", "lift", "lobes", "lobe_deg"],
             _ => &[],
         };
         for key in required_native_parameters {
@@ -136,6 +138,10 @@ pub fn preflight(plan: &Value) -> Result<Value, String> {
         if kind == "piston" {
             let normalized = normalized_feature(feature, plan)?;
             native_parametric_features::preflight_piston(&normalized["parameters"])?;
+        }
+        if kind == "camshaft" {
+            let normalized = normalized_feature(feature, plan)?;
+            native_parametric_features::preflight_camshaft(&normalized["parameters"])?;
         }
         if kind == "spoked_wheel" {
             let normalized = normalized_feature(feature, plan)?;
@@ -230,6 +236,10 @@ pub fn build(plan: &Value, manifest: &Path, cancelled: &AtomicBool) -> Result<Bu
         } else if normalized["kind"] == "piston" {
             let (tools, support) =
                 native_parametric_features::build_piston(&kernel, &normalized["parameters"])?;
+            (tools, vec![], Some(support))
+        } else if normalized["kind"] == "camshaft" {
+            let (tools, support) =
+                native_parametric_features::build_camshaft(&kernel, &normalized["parameters"])?;
             (tools, vec![], Some(support))
         } else if normalized["kind"] == "spoked_wheel" {
             let (tools, support) =
@@ -1066,12 +1076,14 @@ fn normalized_feature(feature: &Value, plan: &Value) -> Result<Value, String> {
             "thick",
             "span",
             "journal_d",
+            "base_d",
+            "lift",
             "bore_d",
         ]
         .contains(&key.as_str())
         {
             length_factor
-        } else if key == "phase" || key == "angle" {
+        } else if key == "phase" || key == "angle" || key == "lobe_deg" {
             angle_factor
         } else {
             continue;
@@ -1479,6 +1491,26 @@ mod tests {
         assert_eq!(piston["parameters"]["pin_d"], json!(0.4));
         plan["features"] = json!([piston]);
         assert_eq!(preflight(&plan).unwrap()["state"], "valid");
+    }
+
+    #[test]
+    fn camshaft_dimensions_use_plan_length_and_angle_units() {
+        let mut plan = fixture();
+        plan["units"] = json!({"length":"cm","angle":"rad"});
+        let camshaft = json!({"id":"camshaft","kind":"camshaft","operation":"add",
+            "parameters":{"length":8,"journal_d":1.2,"base_d":2,"lift":0.4,
+                "lobes":4,"lobe_deg":0.296705972839036,"center":[1.2,-0.7,0.5]},
+            "sources":{"length":{"type":"user"},"journal_d":{"type":"user"},
+                "base_d":{"type":"user"},"lift":{"type":"user"},"lobes":{"type":"user"},
+                "lobe_deg":{"type":"user"},"center":{"type":"user"}}});
+        let normalized = normalized_feature(&camshaft, &plan).unwrap();
+        assert_eq!(normalized["parameters"]["length"], json!(80.));
+        assert_eq!(normalized["parameters"]["journal_d"], json!(12.));
+        assert_eq!(normalized["parameters"]["base_d"], json!(20.));
+        assert_eq!(normalized["parameters"]["lift"], json!(4.));
+        assert_eq!(normalized["parameters"]["lobe_deg"], json!(17.));
+        assert_eq!(normalized["parameters"]["center"], json!([12., -7., 5.]));
+        assert_eq!(camshaft["parameters"]["length"], json!(8));
     }
 
     #[test]

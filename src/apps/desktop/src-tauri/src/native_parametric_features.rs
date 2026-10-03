@@ -6,6 +6,71 @@ use serde_json::{Value, json};
 const MAX_PISTON_GROOVES: usize = 256;
 const MAX_PISTON_PROFILE_POINTS: usize = 4 * MAX_PISTON_GROOVES + 4;
 const MAX_SPOKED_WHEEL_SPOKES: u64 = 512;
+const MAX_CAMSHAFT_LOBES: u64 = 512;
+
+pub fn preflight_camshaft(parameters: &Value) -> Result<(), String> {
+    let length = number(parameters, "length")?;
+    let journal_d = number(parameters, "journal_d")?;
+    let base_d = number(parameters, "base_d")?;
+    let lift = number(parameters, "lift")?;
+    let lobes = integer(parameters, "lobes")?;
+    let angle = optional_number(parameters, "lobe_deg", 0.0)?;
+    let center = point3(parameters.get("center"))?;
+    if !length.is_finite() || length < 2.0 || !journal_d.is_finite() || journal_d < 2.0
+        || !base_d.is_finite() || base_d < 2.0 || !lift.is_finite() || lift < 0.0
+        || lobes == 0 || lobes > MAX_CAMSHAFT_LOBES || !angle.is_finite()
+        || center.iter().any(|v| !v.is_finite())
+    {
+        return Err("凸轮轴要求 length>=2、journal_d/base_d>=2、lift>=0、lobes 为 1..=512，且角度与中心有限。".into());
+    }
+    Ok(())
+}
+
+pub fn build_camshaft(kernel: &Kernel, parameters: &Value) -> Result<(Vec<Shape>, Value), String> {
+    preflight_camshaft(parameters)?;
+    let length = number(parameters, "length")?;
+    let journal_d = number(parameters, "journal_d")?;
+    let base_r = number(parameters, "base_d")? / 2.0;
+    let lift = number(parameters, "lift")?;
+    let lobes = integer(parameters, "lobes")? as usize;
+    let phase = optional_number(parameters, "lobe_deg", 0.0)?.to_radians();
+    let center = point3(parameters.get("center"))?;
+    let lobe_width = (length / (lobes as f64 * 1.8)).max(2.0);
+    if lobe_width > length {
+        return Err("凸轮轴凸轮宽度超过轴长。".into());
+    }
+    let shaft = kernel.cylinder(journal_d / 2.0, length,
+        [center[0] - length / 2.0, center[1], center[2]], [1.0, 0.0, 0.0])?;
+    let mut shapes = vec![shaft];
+    for i in 0..lobes {
+        let theta = phase + std::f64::consts::TAU * i as f64 / lobes as f64;
+        let mut profile = Vec::with_capacity(48);
+        for j in 0..48 {
+            let a = std::f64::consts::TAU * j as f64 / 48.0;
+            let degrees = a.to_degrees();
+            let r = if degrees < 72.0 {
+                let t = degrees / 72.0;
+                base_r + lift * 0.5 * (1.0 - (std::f64::consts::PI * t).cos())
+            } else if degrees < 120.0 { base_r + lift } else {
+                let t = (degrees - 120.0) / 240.0;
+                base_r + lift * 0.5 * (1.0 + (std::f64::consts::PI * t).cos())
+            };
+            let (s, c) = (a + theta).sin_cos();
+            profile.push([r * c, r * s]);
+        }
+        let x = center[0] - length / 2.0 + length * (i as f64 + 0.5) / lobes as f64;
+        shapes.push(kernel.prism(&profile, lobe_width,
+            [x - lobe_width / 2.0, center[1], center[2]], Axis::X)?);
+    }
+    let refs: Vec<_> = shapes.iter().collect();
+    let result = kernel.fuse(&refs)?;
+    let analysis = result.analyze()?;
+    if analysis.valid != 1 || analysis.solid_count != 1 || analysis.closed_solid_count != 1 {
+        return Err("凸轮轴必须构成单一有效闭合实体。".into());
+    }
+    Ok((vec![result], json!({"geometry_support":"exact", "lobes_built":lobes,
+        "profile_samples":48, "shaft_axis":"global X", "legacy_cam_profile_angle_deg":120.0})))
+}
 
 pub fn preflight_cross_joint(parameters: &Value) -> Result<(), String> {
     let span = number(parameters, "span")?;
@@ -605,6 +670,19 @@ fn number(parameters: &Value, key: &str) -> Result<f64, String> {
         .ok_or_else(|| format!("几何参数 {key} 必须是有限数值。"))
 }
 
+fn integer(parameters: &Value, key: &str) -> Result<u64, String> {
+    parameters.get(key).and_then(Value::as_u64)
+        .ok_or_else(|| format!("几何参数 {key} 必须是非负整数。"))
+}
+
+fn optional_number(parameters: &Value, key: &str, default: f64) -> Result<f64, String> {
+    match parameters.get(key) {
+        None | Some(Value::Null) => Ok(default),
+        Some(value) => value.as_f64().filter(|v| v.is_finite())
+            .ok_or_else(|| format!("几何参数 {key} 必须是有限数值。")),
+    }
+}
+
 fn point3(value: Option<&Value>) -> Result<[f64; 3], String> {
     let Some(value) = value.filter(|value| !value.is_null()) else {
         return Ok([0.0; 3]);
@@ -627,6 +705,20 @@ fn point3(value: Option<&Value>) -> Result<[f64; 3], String> {
 mod tests {
     use super::*;
     use serde_json::json;
+
+    #[test]
+    fn camshaft_preflight_accepts_buildable_variants_and_rejects_invalid_dimensions() {
+        assert!(preflight_camshaft(&json!({"length":80,"journal_d":12,"base_d":20,"lift":4,"lobes":4,"lobe_deg":15,"center":[2,-3,4]})).is_ok());
+        for invalid in [
+            json!({"length":1,"journal_d":12,"base_d":20,"lift":4,"lobes":4}),
+            json!({"length":80,"journal_d":0,"base_d":20,"lift":4,"lobes":4}),
+            json!({"length":80,"journal_d":12,"base_d":20,"lift":-1,"lobes":4}),
+            json!({"length":80,"journal_d":12,"base_d":20,"lift":4,"lobes":513}),
+            json!({"length":80,"journal_d":12,"base_d":20,"lift":4,"lobes":4,"center":[0,0,"NaN"]}),
+        ] {
+            assert!(preflight_camshaft(&invalid).is_err(), "accepted {invalid}");
+        }
+    }
 
     #[test]
     fn cross_joint_preflight_rejects_missing_or_nonpositive_dimensions() {
