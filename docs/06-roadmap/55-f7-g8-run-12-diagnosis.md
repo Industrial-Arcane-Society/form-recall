@@ -41,3 +41,11 @@
 ## 结论与限制
 
 Run12 实测确认原图与预览图片均成功通过 decode、attachment save 以及 Cordis result，`mediaType` 修复的目标链路有效。整体验收仍失败：Cordis/ACP 工具门禁、holes、visual 与 finish 未通过。`current_geometry` 和 `artifacts` 门禁通过，但本报告未读取几何明细文件，故不进一步声称具体尺寸/孔数量/几何质量。未运行 GUI/CATIA；当前 `geometry` gate 通过不替代 CATIA 实测，`visual` gate 失败也不支持宣称图像验收通过。
+
+## Run12 安全 gate 源码审计补充
+
+在只读取本报告与 strict gate 名称/reasons 的约束下，审查了 ACP result 收集、Rust bridge 配对和 Cordis 安全错误摘要的静态源码。当前验收器用 `tool_call_id` 聚合 ACP 事件；缺少该字段时可能共用 `undefined` key，因此多个终态存在被误报为同一调用重复的边界风险。但 Run12 的允许证据没有调用 ID 是否存在、session/run/turn 关联或每条参数摘要候选匹配数，不能断定该边界是本次 `terminal_update_duplicated` 的实际根因。
+
+Cordis 报告的 `other` 或缺 error type/code 只说明安全白名单没有得到可分类标识；现有证据不能区分 DSH 参数校验、工具结果校验、输出 finalization 或 Rust executor 失败。没有读取错误正文或参数，也不据此扩充 allowlist。
+
+后续离线回归要证明缺 ID 只导致 identity-missing，不额外形成 duplicate；同一有效 ID 的双 terminal 仍必须失败。安全遥测只增加 error/error.info/name/code 存在性布尔值和匹配计数，不写入原始 ID、参数、内容或错误正文。当前问题定位和修复仍在进行中。
