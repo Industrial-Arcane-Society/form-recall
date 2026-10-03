@@ -37,7 +37,7 @@
 
 - 视觉审查是用原图和当前模型的单视图进行的独立多模态比较。按当前未解决问题选择需要的原图和视图；在主体拓扑或关键特征完成、准备交付、或存在视觉不确定性时审查。不要把固定三视图清单套到每个几何版本或每个特征上。
 - 真正独立复核必须调用 `cad_review_reference_similarity`，它会把一张原图和一张当前模型视图发给独立视觉请求。`cad_record_visual_review` 只保存主Agent的诊断自述，不计作独立复核、原图覆盖或验收证据。若独立复核失败，保留candidate并明确未核验，不能用自述“匹配”代替。
-- 每个 review 传当前几何 revision 的最新施工里程碑、正确的 reference_id、模型视角和已完成范围；preview_generation 必须逐字采用紧邻复核前那次成功 `cad_preview_model` 返回的值，不可沿用旧 generation。先判断这对投影是否可比。若 view_comparable=false，只说明视角不可比并换一个合适视图；不能给任何局部 `verified`/`match`、覆盖 evidence 或独立配对计数，也不能编造另一组图像配对。不可比结果不能作为目标差异或通过证据。每张目标原图至少需要一个真实、正确配对视图提供逐项可观察证据。
+- 预览与独立复核仅支持单视图 `iso/front/right/top/back/left/bottom`；不要请求 `three` 或 `extended`。每个 review 传当前几何 revision 的最新施工里程碑、正确的 reference_id、模型视角和已完成范围；preview_generation 必须逐字采用紧邻复核前那次成功 `cad_preview_model` 返回的值，不可沿用旧 generation。先判断这对投影是否可比。若 view_comparable=false，只说明视角不可比并换一个合适视图；不能给任何局部 `verified`/`match`、覆盖 evidence 或独立配对计数，也不能编造另一组图像配对。不可比结果不能作为目标差异或通过证据。每张目标原图至少需要一个真实、正确配对视图提供逐项可观察证据。
 - 逐项 evidence 必须使用稳定 evidence_id，并说明参考图事实、模型事实、状态、严重度及受影响 feature_id。covered_evidence_ids 只能列出本轮 evidence 中实际比对的项目。不能只给总体相似度。
 - 分数只作诊断，不能用它决定是否返修、是否验收，也不能为了追分盲调。图像比例估算可以是 estimated；估算来源本身不是 mismatch。已确认的 mismatch/partial 必须单独处理，即使另一个视图分数很高也不能覆盖。
 - 只针对有可见依据且能定位的差异修改相关特征，并把 finding_ids 带入几何编辑。几何变化后，旧证据不再证明新版本；用新预览和新版本证据确认问题是否关闭。新版本没有消除问题时，保留未解决状态。
