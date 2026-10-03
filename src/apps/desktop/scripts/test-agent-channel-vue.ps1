@@ -76,42 +76,45 @@ if ($LASTEXITCODE -ne 0) {
 $nodeExecutable = (Get-Command node.exe -ErrorAction Stop).Source
 $previousTestNode = [Environment]::GetEnvironmentVariable('AIMODELER_TEST_NODE', 'Process')
 $previousAcpFixture = [Environment]::GetEnvironmentVariable('AIMODELER_TEST_ACP_FIXTURE', 'Process')
+$previousScenario = [Environment]::GetEnvironmentVariable('AIMODELER_TEST_AGENT_SCENARIO', 'Process')
+$previousCapture = [Environment]::GetEnvironmentVariable('AIMODELER_AGENT_IPC_CAPTURE', 'Process')
 try {
     [Environment]::SetEnvironmentVariable('AIMODELER_TEST_NODE', $nodeExecutable, 'Process')
     [Environment]::SetEnvironmentVariable('AIMODELER_TEST_ACP_FIXTURE', $acpFixture, 'Process')
-    $rustOutput = @(& $testExecutable $testName --exact --nocapture 2>&1)
-    $rustExitCode = $LASTEXITCODE
-}
-finally {
-    [Environment]::SetEnvironmentVariable('AIMODELER_TEST_NODE', $previousTestNode, 'Process')
-    [Environment]::SetEnvironmentVariable('AIMODELER_TEST_ACP_FIXTURE', $previousAcpFixture, 'Process')
-}
-$rustOutput | ForEach-Object {
-    $line = [string]$_
-    if (-not $line.StartsWith('AIMODELER_AGENT_IPC_CAPTURE=')) {
-        Write-Output $line
-    }
-}
-if ($rustExitCode -ne 0) {
-    throw "MockRuntime Rust event test failed with exit code $rustExitCode"
-}
-
-$captureLine = $rustOutput | ForEach-Object { [string]$_ } |
-    Where-Object { $_.StartsWith('AIMODELER_AGENT_IPC_CAPTURE=') } |
-    Select-Object -Last 1
-if (-not $captureLine) {
-    throw 'Rust test passed but did not print its Channel event capture.'
-}
-$captureJson = $captureLine.Substring('AIMODELER_AGENT_IPC_CAPTURE='.Length)
-
-$previousCapture = [Environment]::GetEnvironmentVariable('AIMODELER_AGENT_IPC_CAPTURE', 'Process')
-try {
-    [Environment]::SetEnvironmentVariable('AIMODELER_AGENT_IPC_CAPTURE', $captureJson, 'Process')
     Push-Location $desktopRoot
     try {
-        & node 'src/App.agentEvents.integration.test.mjs'
-        if ($LASTEXITCODE -ne 0) {
-            throw "Production Vue headless integration failed with exit code $LASTEXITCODE"
+        $scenarios = if ($env:AIMODELER_TEST_AGENT_SCENARIOS) {
+            $env:AIMODELER_TEST_AGENT_SCENARIOS.Split(',') | ForEach-Object { $_.Trim() } | Where-Object { $_ }
+        }
+        else {
+            @('stale-finish', 'pure-qa', 'cad-tool-failure', 'accepted-current')
+        }
+        foreach ($scenario in $scenarios) {
+            [Environment]::SetEnvironmentVariable('AIMODELER_TEST_AGENT_SCENARIO', $scenario, 'Process')
+            $rustOutput = @(& $testExecutable $testName --exact --nocapture 2>&1)
+            $rustExitCode = $LASTEXITCODE
+            $rustOutput | ForEach-Object {
+                $line = [string]$_
+                if (-not $line.StartsWith('AIMODELER_AGENT_IPC_CAPTURE=')) {
+                    Write-Output $line
+                }
+            }
+            if ($rustExitCode -ne 0) {
+                throw "MockRuntime Rust event test failed for scenario '$scenario' with exit code $rustExitCode"
+            }
+
+            $captureLine = $rustOutput | ForEach-Object { [string]$_ } |
+                Where-Object { $_.StartsWith('AIMODELER_AGENT_IPC_CAPTURE=') } |
+                Select-Object -Last 1
+            if (-not $captureLine) {
+                throw "Rust test passed without a Channel event capture for scenario '$scenario'."
+            }
+            $captureJson = $captureLine.Substring('AIMODELER_AGENT_IPC_CAPTURE='.Length)
+            [Environment]::SetEnvironmentVariable('AIMODELER_AGENT_IPC_CAPTURE', $captureJson, 'Process')
+            & node 'src/App.agentEvents.integration.test.mjs'
+            if ($LASTEXITCODE -ne 0) {
+                throw "Production Vue headless integration failed for scenario '$scenario' with exit code $LASTEXITCODE"
+            }
         }
     }
     finally {
@@ -119,6 +122,9 @@ try {
     }
 }
 finally {
+    [Environment]::SetEnvironmentVariable('AIMODELER_TEST_NODE', $previousTestNode, 'Process')
+    [Environment]::SetEnvironmentVariable('AIMODELER_TEST_ACP_FIXTURE', $previousAcpFixture, 'Process')
+    [Environment]::SetEnvironmentVariable('AIMODELER_TEST_AGENT_SCENARIO', $previousScenario, 'Process')
     [Environment]::SetEnvironmentVariable('AIMODELER_AGENT_IPC_CAPTURE', $previousCapture, 'Process')
 }
 

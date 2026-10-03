@@ -54,6 +54,7 @@ const currentModel = {
 const rustModelChange = rustChannelCapture?.events?.find(row => row.message?.event === 'model.changed')?.message
 const expectedModelDocument = rustModelChange?.data || changedDocument
 const expectedUserText = rustChannelCapture?.events?.find(row => row.message?.event === 'agent.message')?.message?.data?.text || 'Create a bracket'
+const scenario = rustChannelCapture?.scenario || 'stale-finish'
 
 // Provide the Tauri transport expected by the real Channel/invoke implementations.
 globalThis.Document = class Document {}; globalThis.ShadowRoot = class ShadowRoot {};
@@ -177,29 +178,63 @@ try {
 
   assert.ok(submittedRequestId, 'production submit handler calls agent_send')
   if (rustChannelCapture) {
-    assert.equal(submittedRequestId, rustModelChange.request_id, 'Rust event request id must match the production Vue turn')
-    assert.equal(expectedModelDocument.finish_summary?.accepted, true, 'Rust event must contain the stale accepted fixture')
-    assert.notEqual(expectedModelDocument.finish_summary?.revision, expectedModelDocument.cad_revision, 'finish summary must be stale for the current CAD revision')
+    const firstEvent = rustChannelCapture.events[0]?.message
+    assert.equal(submittedRequestId, firstEvent?.request_id, 'Rust event request id must match the production Vue turn')
     const terminalModel = rustChannelCapture.events.find(row => row.message?.event === 'agent.turn_complete')?.message?.data?.current_model
-    assert.equal(terminalModel?.status, 'candidate', 'Rust terminal snapshot must not accept the stale finish summary')
-    assert.equal(terminalModel?.finish_status, 'not_finished')
-    assert.equal(terminalModel?.finish_summary, null)
+    if (scenario === 'stale-finish') {
+      assert.equal(expectedModelDocument.finish_summary?.accepted, true, 'Rust event must contain the stale accepted fixture')
+      assert.notEqual(expectedModelDocument.finish_summary?.revision, expectedModelDocument.cad_revision, 'finish summary must be stale for the current CAD revision')
+      assert.equal(terminalModel?.status, 'candidate', 'Rust terminal snapshot must not accept the stale finish summary')
+      assert.equal(terminalModel?.finish_status, 'not_finished')
+      assert.equal(terminalModel?.finish_summary, null)
+    } else if (scenario === 'pure-qa') {
+      assert.equal(rustModelChange, undefined, 'pure Q&A must not publish a model.changed event')
+      assert.equal(terminalModel?.exists, false, 'pure Q&A must leave the model absent')
+    } else if (scenario === 'cad-tool-failure') {
+      assert.equal(terminalModel?.status, 'candidate', 'a failed CAD tool must not become accepted')
+      assert.equal(terminalModel?.finish_summary, null, 'failed CAD work must not carry accepted finish evidence')
+      assert.equal(rustChannelCapture.result?.turn_status, 'stopped', 'tool failure must be reflected in the turn result')
+    } else if (scenario === 'accepted-current') {
+      assert.equal(terminalModel?.status, 'accepted')
+      assert.equal(terminalModel?.finish_summary?.accepted, true)
+      assert.equal(terminalModel?.finish_summary?.revision, terminalModel?.revision)
+      assert.equal(terminalModel?.finish_summary?.geometry_fingerprint, terminalModel?.geometry_fingerprint)
+    } else {
+      assert.fail(`unexpected Rust Channel fixture scenario: ${scenario}`)
+    }
   }
   const rendered = descendants(root)
   const summary = rendered.find(node => hasClass(node, 'acceptance-summary'))
-  assert.match(renderedText(summary), /本轮回复完成/)
-  assert.match(renderedText(summary), /候选模型/)
-  assert.doesNotMatch(renderedText(summary), /已验收/, 'stale accepted finish evidence must not appear as accepted in the production Vue UI')
-  const viewport = rendered.find(node => hasClass(node, 'headless-cad-viewport'))
-  assert.equal(viewport.props['data-revision'], String(expectedModelDocument.revision))
-  const modelTitle = rendered.find(node => hasClass(node, 'document-title'))
-  assert.ok(renderedText(modelTitle).includes(expectedModelDocument.name))
-  const featureRow = rendered.find(node => hasClass(node, 'feature-row'))
-  assert.ok(renderedText(featureRow).includes(expectedModelDocument.features[0].name))
+  if (scenario === 'pure-qa') {
+    assert.match(renderedText(summary), /本轮回复完成/)
+    assert.match(renderedText(summary), /尚无 CADPlan 模型/)
+    assert.doesNotMatch(renderedText(summary), /候选模型|已验收/)
+  } else if (scenario === 'cad-tool-failure') {
+    assert.match(renderedText(summary), /本轮已停止（tool_error）/)
+    assert.match(renderedText(summary), /候选模型/)
+    assert.doesNotMatch(renderedText(summary), /已验收/, 'CAD tool failure must remain unaccepted in the production Vue UI')
+    assert.ok(rendered.find(node => hasClass(node, 'chat-message') && renderedText(node).includes('工具：cad_preview_model · failed')), 'failed CAD tool must be visible in chat')
+    assert.ok(rendered.find(node => hasClass(node, 'document-title') && renderedText(node).includes(expectedModelDocument.name)))
+  } else if (scenario === 'accepted-current') {
+    assert.match(renderedText(summary), /本轮回复完成/)
+    assert.match(renderedText(summary), /已验收/)
+  } else {
+    assert.match(renderedText(summary), /本轮回复完成/)
+    assert.match(renderedText(summary), /候选模型/)
+    assert.doesNotMatch(renderedText(summary), /已验收/, 'stale accepted finish evidence must not appear as accepted in the production Vue UI')
+  }
+  if (scenario !== 'pure-qa') {
+    const viewport = rendered.find(node => hasClass(node, 'headless-cad-viewport'))
+    assert.equal(viewport.props['data-revision'], String(expectedModelDocument.revision))
+    const modelTitle = rendered.find(node => hasClass(node, 'document-title'))
+    assert.ok(renderedText(modelTitle).includes(expectedModelDocument.name))
+    const featureRow = rendered.find(node => hasClass(node, 'feature-row'))
+    assert.ok(renderedText(featureRow).includes(expectedModelDocument.features[0].name))
+  }
   const expectedReply = rustChannelCapture?.result?.reply || 'Fixture response from Agent'
   assert.ok(rendered.find(node => hasClass(node, 'chat-message') && hasClass(node, 'assistant') && renderedText(node).includes(expectedReply)))
   console.log(rustChannelCapture
-    ? `PASS: mounted production Vue App headlessly; Rust MockRuntime Channel capture was passed into its Tauri Channel callback; stale accepted finish remained a candidate at revision ${expectedModelDocument.revision}, and document, feature row, turn completion, and reply rendered. WebView delivery remains untested.`
+    ? `PASS: mounted production Vue App headlessly; Rust MockRuntime Channel capture scenario=${scenario} reached its Tauri Channel callback and rendered expected model/turn state. WebView delivery remains untested.`
     : 'PASS: mounted production Vue App headlessly; mocked agent_send IPC events rendered.')
   app.unmount()
 } finally {

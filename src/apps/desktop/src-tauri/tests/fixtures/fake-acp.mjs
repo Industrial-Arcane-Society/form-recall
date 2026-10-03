@@ -3,6 +3,7 @@ import { existsSync } from 'node:fs';
 import { setTimeout as delay } from 'node:timers/promises';
 
 const releaseFile = process.env.AIMODELER_ACP_TEST_RELEASE_FILE;
+const scenario = process.env.AIMODELER_TEST_AGENT_SCENARIO ?? 'stale-finish';
 const input = createInterface({ input: process.stdin, crlfDelay: Infinity });
 
 function write(message) {
@@ -45,14 +46,21 @@ for await (const line of input) {
       }
     }
 
-    for (const update of [
-      { sessionUpdate: 'agent_thought_chunk', content: { type: 'text', text: 'fixture thought' } },
-      { sessionUpdate: 'tool_call', toolCallId: 'fixture-tool-1', title: 'fixture tool', status: 'running' },
-      { sessionUpdate: 'session_info_update', message: 'fixture status' },
-    ]) {
-      write({ jsonrpc: '2.0', method: 'session/update', params: { sessionId, update } });
+    if (scenario !== 'pure-qa') {
+      for (const update of [
+        { sessionUpdate: 'agent_thought_chunk', content: { type: 'text', text: 'fixture thought' } },
+        { sessionUpdate: 'tool_call', toolCallId: 'fixture-tool-1', title: scenario === 'cad-tool-failure' ? 'cad_preview_model' : 'fixture tool', status: 'running' },
+        { sessionUpdate: 'session_info_update', message: 'fixture status' },
+      ]) {
+        write({ jsonrpc: '2.0', method: 'session/update', params: { sessionId, update } });
+      }
+      if (scenario === 'cad-tool-failure') {
+        write({ jsonrpc: '2.0', method: 'session/update', params: { sessionId, update: {
+          sessionUpdate: 'tool_call_update', toolCallId: 'fixture-tool-1', title: 'cad_preview_model', status: 'failed',
+        } } });
+      }
     }
-    write({ jsonrpc: '2.0', id, result: { stopReason: 'end_turn' } });
+    write({ jsonrpc: '2.0', id, result: { stopReason: scenario === 'cad-tool-failure' ? 'tool_error' : 'end_turn' } });
   } else if (method === 'fixture/error') {
     write({ jsonrpc: '2.0', id, error: { code: -32000, message: 'fixture error' } });
   } else if (method === 'fixture/exit') {

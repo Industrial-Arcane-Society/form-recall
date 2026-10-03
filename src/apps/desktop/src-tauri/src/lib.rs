@@ -2149,6 +2149,18 @@ mod agent_ipc_integration_tests {
 
     #[test]
     fn agent_send_routes_stale_finish_as_candidate_through_tauri_channel() {
+        let scenario = std::env::var("AIMODELER_TEST_AGENT_SCENARIO")
+            .unwrap_or_else(|_| "stale-finish".to_owned());
+        assert!(
+            [
+                "stale-finish",
+                "pure-qa",
+                "cad-tool-failure",
+                "accepted-current"
+            ]
+            .contains(&scenario.as_str()),
+            "unknown Channel/Vue acceptance scenario: {scenario}"
+        );
         let scratch = TestRoot::new();
         let app_data = scratch.0.join("app-data");
         fs::create_dir_all(&app_data).expect("create isolated app data directory");
@@ -2190,8 +2202,9 @@ mod agent_ipc_integration_tests {
         );
         let plan_fingerprint = crate::cad_plan::geometry_fingerprint(&plan)
             .expect("calculate fixture plan fingerprint");
+        let finish_revision = if scenario == "accepted-current" { 1 } else { 0 };
         let cad_state = json!({"plan":plan,"revision":1,"actions":[],"output_paths":{},
-            "finish_summary":{"accepted":true,"finish_state":"accepted","revision":0,
+            "finish_summary":{"accepted":true,"finish_state":"accepted","revision":finish_revision,
                 "geometry_fingerprint":plan_fingerprint}});
         let candidate = native_active_model::candidate_from_cad_state(
             "agent",
@@ -2219,6 +2232,10 @@ mod agent_ipc_integration_tests {
                     "AIMODELER_ACP_TEST_RELEASE_FILE".into(),
                     release_file.clone().into_os_string(),
                 ),
+                (
+                    "AIMODELER_TEST_AGENT_SCENARIO".into(),
+                    scenario.clone().into(),
+                ),
             ],
         });
 
@@ -2238,28 +2255,35 @@ mod agent_ipc_integration_tests {
                     && value["request_id"] == "headless-agent-ipc"
                     && !sink_release_file.exists()
                 {
-                    let committed =
-                        native_active_model::commit(&sink_active_model_root, 0, &sink_candidate)
-                            .expect("publish fixture CAD transaction");
-                    let mut committed_cad_state = sink_cad_state.clone();
-                    committed_cad_state["active_model_generation"] =
-                        committed["generation"].clone();
-                    let session_meta: Value = serde_json::from_slice(
-                        &fs::read(sink_app_data.join("agent-host/current-session.json"))
-                            .expect("Agent Host must persist the active session path"),
-                    )
-                    .expect("session metadata must be valid JSON");
-                    let session_dir = Path::new(
-                        session_meta["cwd"]
-                            .as_str()
-                            .expect("session metadata has workspace path"),
-                    );
-                    fs::write(
-                        session_dir.join("cad-state.json"),
-                        serde_json::to_vec(&committed_cad_state)
-                            .expect("serialize fixture CAD state"),
-                    )
-                    .expect("publish session CAD state");
+                    let scenario = std::env::var("AIMODELER_TEST_AGENT_SCENARIO")
+                        .unwrap_or_else(|_| "stale-finish".to_owned());
+                    if scenario != "pure-qa" {
+                        let committed = native_active_model::commit(
+                            &sink_active_model_root,
+                            0,
+                            &sink_candidate,
+                        )
+                        .expect("publish fixture CAD transaction");
+                        let mut committed_cad_state = sink_cad_state.clone();
+                        committed_cad_state["active_model_generation"] =
+                            committed["generation"].clone();
+                        let session_meta: Value = serde_json::from_slice(
+                            &fs::read(sink_app_data.join("agent-host/current-session.json"))
+                                .expect("Agent Host must persist the active session path"),
+                        )
+                        .expect("session metadata must be valid JSON");
+                        let session_dir = Path::new(
+                            session_meta["cwd"]
+                                .as_str()
+                                .expect("session metadata has workspace path"),
+                        );
+                        fs::write(
+                            session_dir.join("cad-state.json"),
+                            serde_json::to_vec(&committed_cad_state)
+                                .expect("serialize fixture CAD state"),
+                        )
+                        .expect("publish session CAD state");
+                    }
                     fs::write(&sink_release_file, b"ready").expect("release fake ACP child");
                 }
                 sink_events
@@ -2283,7 +2307,7 @@ mod agent_ipc_integration_tests {
                 .expect("parse local mock URL"),
             body: tauri::ipc::InvokeBody::Json(json!({
                 "requestId":"headless-agent-ipc",
-                "text":"fixture prompt reaches ACP",
+                "text":if scenario == "pure-qa" { "What is a box bracket used for?" } else { "fixture prompt reaches ACP" },
                 "images":[],
                 "llmConfig":{"base_url":"https://api.deepseek.com/responses","model":"deepseek-flash","api_key":"fixture","reasoning_effort":"none"},
                 "onlineEnabled":false,
@@ -2299,72 +2323,113 @@ mod agent_ipc_integration_tests {
             .expect("deserialize AgentHost command result");
 
         let events = captured_events.lock().expect("event sink lock").clone();
-        assert_eq!(result["turn_status"], "completed");
-        assert_eq!(result["reply"], "fixture prompt reaches ACP");
+        let expected_turn_status = if scenario == "cad-tool-failure" {
+            "stopped"
+        } else {
+            "completed"
+        };
+        assert_eq!(result["turn_status"], expected_turn_status);
+        let expected_prompt = if scenario == "pure-qa" {
+            "What is a box bracket used for?"
+        } else {
+            "fixture prompt reaches ACP"
+        };
+        assert_eq!(result["reply"], expected_prompt);
         assert!(events.iter().any(|row| {
             row["message"]["event"] == "agent.message"
                 && row["message"]["request_id"] == "headless-agent-ipc"
-                && row["message"]["data"]["text"] == "fixture prompt reaches ACP"
+                && row["message"]["data"]["text"] == expected_prompt
         }));
-        assert!(events.iter().any(|event| {
-            event["message"]["event"] == "agent.thought"
-                && event["message"]["data"]["text"] == "fixture thought"
-        }));
-        assert!(events.iter().any(|event| {
-            event["message"]["event"] == "agent.tool"
-                && event["message"]["data"]["tool_call_id"] == "fixture-tool-1"
-                && event["message"]["data"]["status"] == "running"
-        }));
+        if scenario != "pure-qa" {
+            assert!(events.iter().any(|event| {
+                event["message"]["event"] == "agent.thought"
+                    && event["message"]["data"]["text"] == "fixture thought"
+            }));
+            assert!(events.iter().any(|event| {
+                event["message"]["event"] == "agent.tool"
+                    && event["message"]["data"]["tool_call_id"] == "fixture-tool-1"
+                    && event["message"]["data"]["status"] == "running"
+            }));
+        }
         assert!(events.iter().any(|event| {
             event["message"]["event"] == "agent.status"
                 && event["message"]["data"]["message"] == "DSH 正在处理本轮请求。"
         }));
-        let model_changed = events
-            .iter()
-            .find(|event| event["message"]["event"] == "model.changed")
-            .expect("active-model commit should emit model.changed through Tauri Channel");
-        assert_eq!(model_changed["message"]["request_id"], "headless-agent-ipc");
-        assert_eq!(model_changed["message"]["data"]["revision"], 1);
-        assert_eq!(
-            model_changed["message"]["data"]["name"],
-            "IPC fixture model"
-        );
-        assert_eq!(
-            model_changed["message"]["data"]["finish_summary"]["accepted"],
-            true,
-            "fixture must carry a stale summary that claims acceptance"
-        );
-        assert_eq!(model_changed["message"]["data"]["cad_revision"], 1);
-        assert_eq!(model_changed["message"]["data"]["finish_summary"]["revision"], 0);
         let terminal = events
             .iter()
             .find(|event| event["message"]["event"] == "agent.turn_complete")
             .expect("turn completion should be emitted through Tauri Channel");
-        assert!(
-            terminal["index"].as_u64().unwrap() > model_changed["index"].as_u64().unwrap(),
-            "terminal event must follow the geometry commit event"
-        );
-        assert_eq!(terminal["message"]["data"]["turn_status"], "completed");
-        assert_eq!(terminal["message"]["data"]["stop_reason"], "end_turn");
-        assert_eq!(terminal["message"]["data"]["current_model"]["exists"], true);
         assert_eq!(
-            terminal["message"]["data"]["current_model"]["status"],
-            "candidate"
+            terminal["message"]["data"]["turn_status"],
+            expected_turn_status
         );
-        assert_eq!(terminal["message"]["data"]["current_model"]["revision"], 1);
-        assert_eq!(
-            terminal["message"]["data"]["current_model"]["finish_status"],
-            "not_finished",
-            "stale finish summary must not become current acceptance"
-        );
-        assert_eq!(
-            terminal["message"]["data"]["current_model"]["finish_summary"],
-            Value::Null
-        );
+        if scenario == "pure-qa" {
+            assert!(!events
+                .iter()
+                .any(|event| event["message"]["event"] == "model.changed"));
+            assert_eq!(
+                terminal["message"]["data"]["current_model"]["exists"],
+                false
+            );
+        } else {
+            let model_changed = events
+                .iter()
+                .find(|event| event["message"]["event"] == "model.changed")
+                .expect("fixture CAD transaction should emit model.changed through Tauri Channel");
+            assert_eq!(model_changed["message"]["request_id"], "headless-agent-ipc");
+            assert_eq!(model_changed["message"]["data"]["revision"], 1);
+            assert_eq!(
+                model_changed["message"]["data"]["name"],
+                "IPC fixture model"
+            );
+            assert_eq!(model_changed["message"]["data"]["cad_revision"], 1);
+            let terminal_model = &terminal["message"]["data"]["current_model"];
+            assert_eq!(terminal_model["exists"], true);
+            assert_eq!(terminal_model["revision"], 1);
+            assert!(terminal["index"].as_u64().unwrap() > model_changed["index"].as_u64().unwrap());
+            if scenario == "accepted-current" {
+                assert_eq!(
+                    model_changed["message"]["data"]["finish_summary"]["accepted"],
+                    true
+                );
+                assert_eq!(
+                    model_changed["message"]["data"]["finish_summary"]["revision"],
+                    1
+                );
+                assert_eq!(
+                    model_changed["message"]["data"]["finish_summary"]["geometry_fingerprint"],
+                    model_changed["message"]["data"]["geometry_fingerprint"]
+                );
+                assert_eq!(terminal_model["status"], "accepted");
+                assert_eq!(terminal_model["finish_status"], "accepted");
+                assert_eq!(terminal_model["finish_summary"]["accepted"], true);
+            } else {
+                assert_eq!(
+                    model_changed["message"]["data"]["finish_summary"]["accepted"],
+                    true
+                );
+                assert_eq!(
+                    model_changed["message"]["data"]["finish_summary"]["revision"],
+                    0
+                );
+                assert_eq!(terminal_model["status"], "candidate");
+                assert_eq!(terminal_model["finish_status"], "not_finished");
+                assert_eq!(terminal_model["finish_summary"], Value::Null);
+            }
+        }
+        if scenario == "cad-tool-failure" {
+            assert_eq!(terminal["message"]["data"]["stop_reason"], "tool_error");
+            assert!(events.iter().any(|event| {
+                event["message"]["event"] == "agent.tool"
+                    && event["message"]["data"]["status"] == "failed"
+            }));
+        } else {
+            assert_eq!(terminal["message"]["data"]["stop_reason"], "end_turn");
+        }
 
         println!(
             "AIMODELER_AGENT_IPC_CAPTURE={}",
-            json!({"result":result,"events":events})
+            json!({"scenario":scenario,"result":result,"events":events})
         );
 
         agent_host::shutdown(&host_state);
