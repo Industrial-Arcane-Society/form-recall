@@ -13,6 +13,16 @@ const seenCommands = []
 let nextCallbackId = 1
 let submittedRequestId = ''
 let initializationFinished = false
+const rustChannelCapture = process.env.AIMODELER_AGENT_IPC_CAPTURE
+  ? JSON.parse(process.env.AIMODELER_AGENT_IPC_CAPTURE)
+  : null
+
+Object.defineProperty(globalThis, 'crypto', {
+  configurable: true,
+  value: {
+    randomUUID: () => rustChannelCapture?.events?.[0]?.message?.request_id || 'headless-agent-ipc',
+  },
+})
 
 const changedDocument = {
   revision: 7,
@@ -41,6 +51,9 @@ const currentModel = {
   geometric: { status: 'passed' },
   visual: { status: 'not_reviewed' },
 }
+const rustModelChange = rustChannelCapture?.events?.find(row => row.message?.event === 'model.changed')?.message
+const expectedModelDocument = rustModelChange?.data || changedDocument
+const expectedUserText = rustChannelCapture?.events?.find(row => row.message?.event === 'agent.message')?.message?.data?.text || 'Create a bracket'
 
 // Provide the Tauri transport expected by the real Channel/invoke implementations.
 globalThis.Document = class Document {}; globalThis.ShadowRoot = class ShadowRoot {};
@@ -67,6 +80,11 @@ window.__TAURI_INTERNALS__ = {
       submittedRequestId = args.requestId
       const callback = tauriCallbacks.get(args.onEvent.id)
       assert.ok(callback, 'App must pass a registered Tauri Channel callback to agent_send')
+      if (rustChannelCapture) {
+        assert.ok(Array.isArray(rustChannelCapture.events), 'Rust fixture must provide captured Channel events')
+        for (const event of rustChannelCapture.events) callback(event)
+        return rustChannelCapture.result
+      }
       callback({ index: 0, message: { event: 'model.changed', request_id: submittedRequestId, data: changedDocument } })
       callback({ index: 1, message: { event: 'agent.turn_complete', request_id: submittedRequestId, data: { turn_status: 'completed', stop_reason: 'end_turn', current_model: currentModel } } })
       return { reply: 'Fixture response from Agent', turn_status: 'completed', current_model: currentModel }
@@ -150,7 +168,7 @@ try {
   await nextTick()
   const textarea = descendants(root).find(node => node.type === 'textarea')
   assert.ok(textarea, 'mounted production Vue app renders the composer')
-  textarea.props['onUpdate:modelValue']('Create a bracket')
+  textarea.props['onUpdate:modelValue'](expectedUserText)
   await nextTick()
   const sendButton = descendants(root).find(node => node.type === 'button' && hasClass(node, 'send-button'))
   assert.ok(sendButton, 'production composer renders the send button')
@@ -158,18 +176,24 @@ try {
   await nextTick()
 
   assert.ok(submittedRequestId, 'production submit handler calls agent_send')
+  if (rustChannelCapture) {
+    assert.equal(submittedRequestId, rustModelChange.request_id, 'Rust event request id must match the production Vue turn')
+  }
   const rendered = descendants(root)
   const summary = rendered.find(node => hasClass(node, 'acceptance-summary'))
   assert.match(renderedText(summary), /本轮回复完成/)
   assert.match(renderedText(summary), /候选模型/)
   const viewport = rendered.find(node => hasClass(node, 'headless-cad-viewport'))
-  assert.equal(viewport.props['data-revision'], '7')
+  assert.equal(viewport.props['data-revision'], String(expectedModelDocument.revision))
   const modelTitle = rendered.find(node => hasClass(node, 'document-title'))
-  assert.match(renderedText(modelTitle), /Event fixture bracket/)
+  assert.ok(renderedText(modelTitle).includes(expectedModelDocument.name))
   const featureRow = rendered.find(node => hasClass(node, 'feature-row'))
-  assert.match(renderedText(featureRow), /Base plate/)
-  assert.ok(rendered.find(node => hasClass(node, 'chat-message') && hasClass(node, 'assistant') && renderedText(node).includes('Fixture response from Agent')))
-  console.log('PASS: mounted production Vue App headlessly; real Tauri Channel callback consumed mocked agent_send IPC events; model revision 7/document, feature row, turn completion, candidate acceptance, and reply rendered.')
+  assert.ok(renderedText(featureRow).includes(expectedModelDocument.features[0].name))
+  const expectedReply = rustChannelCapture?.result?.reply || 'Fixture response from Agent'
+  assert.ok(rendered.find(node => hasClass(node, 'chat-message') && hasClass(node, 'assistant') && renderedText(node).includes(expectedReply)))
+  console.log(rustChannelCapture
+    ? `PASS: mounted production Vue App headlessly; Rust MockRuntime Channel capture was passed into its Tauri Channel callback; revision ${expectedModelDocument.revision}/document, feature row, turn completion, candidate status, and reply rendered. WebView delivery remains untested.`
+    : 'PASS: mounted production Vue App headlessly; mocked agent_send IPC events rendered.')
   app.unmount()
 } finally {
   await fs.rm(compiledPath, { force: true })

@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "vite",
     "build": "vue-tsc -b && vite build",
+    "test:agent-channel-vue": "pwsh -NoProfile -File scripts/test-agent-channel-vue.ps1",
     "preview": "vite preview",
     "tauri": "tauri",
     "tauri:dev": "tauri dev",

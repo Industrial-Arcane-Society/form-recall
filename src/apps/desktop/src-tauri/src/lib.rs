@@ -1651,6 +1651,22 @@ async fn active_model_update_feature(
     .map(|committed| committed["document"].clone())
 }
 
+async fn run_agent_send<F>(send_turn: F) -> Result<Value, String>
+where
+    F: FnOnce() -> Result<Value, String> + Send + 'static,
+{
+    let (sender, receiver) = oneshot::channel();
+    thread::Builder::new()
+        .name("ai-modeler-agent-host".into())
+        .spawn(move || {
+            let _ = sender.send(send_turn());
+        })
+        .map_err(|error| format!("无法启动 Rust Agent Host 线程：{error}"))?;
+    receiver
+        .await
+        .map_err(|_| "Rust Agent Host 线程意外退出。".to_owned())?
+}
+
 #[tauri::command(rename_all = "camelCase")]
 async fn agent_send(
     state: State<'_, agent_host::AgentHostState>,
@@ -1663,26 +1679,19 @@ async fn agent_send(
     on_event: Channel<Value>,
 ) -> Result<Value, String> {
     let host = state.inner().clone();
-    let (sender, receiver) = oneshot::channel();
-    thread::Builder::new()
-        .name("ai-modeler-agent-host".into())
-        .spawn(move || {
-            let result = agent_host::send_turn(
-                &host,
-                app,
-                request_id,
-                text,
-                images,
-                llm_config,
-                online_enabled,
-                on_event,
-            );
-            let _ = sender.send(result);
-        })
-        .map_err(|error| format!("无法启动 Rust Agent Host 线程：{error}"))?;
-    receiver
-        .await
-        .map_err(|_| "Rust Agent Host 线程意外退出。".to_owned())?
+    run_agent_send(move || {
+        agent_host::send_turn(
+            &host,
+            app,
+            request_id,
+            text,
+            images,
+            llm_config,
+            online_enabled,
+            on_event,
+        )
+    })
+    .await
 }
 
 #[tauri::command]
@@ -2081,6 +2090,41 @@ mod agent_ipc_integration_tests {
     use std::sync::{Arc, Mutex};
     use std::time::{SystemTime, UNIX_EPOCH};
 
+    #[derive(Clone)]
+    struct FixtureSetup(TestSetup);
+
+    // Tauri's production AppHandle alias is Wry-backed and cannot be supplied
+    // by MockRuntime. Keep this command as a thin argument adapter: it calls
+    // the same threaded runner and AgentHost core, substituting only fake ACP
+    // runtime paths and app-data for the test fixture.
+    #[tauri::command(rename = "agent_send", rename_all = "camelCase")]
+    async fn agent_send_fixture(
+        state: State<'_, agent_host::AgentHostState>,
+        setup: State<'_, FixtureSetup>,
+        request_id: String,
+        text: String,
+        images: Vec<String>,
+        llm_config: Value,
+        online_enabled: bool,
+        on_event: Channel<Value>,
+    ) -> Result<Value, String> {
+        let host = state.inner().clone();
+        let setup = setup.0.clone();
+        run_agent_send(move || {
+            agent_host::send_turn_with_fixture(
+                &host,
+                setup,
+                request_id,
+                text,
+                images,
+                llm_config,
+                online_enabled,
+                on_event,
+            )
+        })
+        .await
+    }
+
     struct TestRoot(PathBuf);
 
     impl TestRoot {
@@ -2105,7 +2149,7 @@ mod agent_ipc_integration_tests {
     }
 
     #[test]
-    fn send_turn_routes_fake_acp_updates_and_model_status_through_event_sink() {
+    fn agent_send_routes_fake_acp_updates_through_tauri_channel() {
         let scratch = TestRoot::new();
         let app_data = scratch.0.join("app-data");
         fs::create_dir_all(&app_data).expect("create isolated app data directory");
@@ -2158,97 +2202,155 @@ mod agent_ipc_integration_tests {
         let sink_app_data = app_data.clone();
         let sink_release_file = release_file.clone();
 
-        let result = agent_host::send_turn_with_fixture(
-            &host_state,
-            TestSetup {
-                root,
-                data_dir: app_data.clone(),
-                runtime,
-                dsh_args: vec![
-                    OsString::from("--exact"),
-                    OsString::from("acp::tests::fake_acp_child_process"),
-                ],
-                dsh_env: vec![
-                    (OsString::from("AIMODELER_ACP_TEST_FIXTURE"), OsString::from("1")),
-                    (
-                        OsString::from("AIMODELER_ACP_TEST_RELEASE_FILE"),
-                        release_file.into_os_string(),
-                    ),
-                ],
-            },
-            "headless-agent-ipc".into(),
-            "fixture prompt reaches ACP".into(),
-            Vec::new(),
-            json!({"base_url":"https://api.deepseek.com/responses","model":"deepseek-flash","api_key":"fixture","reasoning_effort":"none"}),
-            false,
-            move |value| {
+        let setup = FixtureSetup(TestSetup {
+            root,
+            data_dir: app_data.clone(),
+            runtime,
+            dsh_args: vec![
+                OsString::from("--quiet"),
+                OsString::from("--exact"),
+                OsString::from("acp::tests::fake_acp_child_process"),
+            ],
+            dsh_env: vec![
+                (
+                    OsString::from("AIMODELER_ACP_TEST_FIXTURE"),
+                    OsString::from("1"),
+                ),
+                (
+                    OsString::from("AIMODELER_ACP_TEST_RELEASE_FILE"),
+                    release_file.clone().into_os_string(),
+                ),
+            ],
+        });
+
+        let app = tauri::test::mock_builder()
+            .manage(host_state.clone())
+            .manage(setup)
+            .channel_interceptor(move |_webview, _callback, index, body| {
+                let value = match body {
+                    tauri::ipc::InvokeResponseBody::Json(value) => {
+                        serde_json::from_str::<Value>(value).expect("decode AgentHost event JSON")
+                    }
+                    tauri::ipc::InvokeResponseBody::Raw(_) => {
+                        panic!("AgentHost events are sent as JSON")
+                    }
+                };
                 if value["event"] == "agent.message"
                     && value["request_id"] == "headless-agent-ipc"
                     && !sink_release_file.exists()
                 {
-                    let committed = native_active_model::commit(
-                        &sink_active_model_root,
-                        0,
-                        &sink_candidate,
-                    )
-                    .expect("publish fixture CAD transaction");
+                    let committed =
+                        native_active_model::commit(&sink_active_model_root, 0, &sink_candidate)
+                            .expect("publish fixture CAD transaction");
                     let mut committed_cad_state = sink_cad_state.clone();
-                    committed_cad_state["active_model_generation"] = committed["generation"].clone();
+                    committed_cad_state["active_model_generation"] =
+                        committed["generation"].clone();
                     let session_meta: Value = serde_json::from_slice(
                         &fs::read(sink_app_data.join("agent-host/current-session.json"))
                             .expect("Agent Host must persist the active session path"),
                     )
                     .expect("session metadata must be valid JSON");
                     let session_dir = Path::new(
-                        session_meta["cwd"].as_str().expect("session metadata has workspace path"),
+                        session_meta["cwd"]
+                            .as_str()
+                            .expect("session metadata has workspace path"),
                     );
                     fs::write(
                         session_dir.join("cad-state.json"),
-                        serde_json::to_vec(&committed_cad_state).expect("serialize fixture CAD state"),
+                        serde_json::to_vec(&committed_cad_state)
+                            .expect("serialize fixture CAD state"),
                     )
                     .expect("publish session CAD state");
                     fs::write(&sink_release_file, b"ready").expect("release fake ACP child");
                 }
-                sink_events.lock().expect("event sink lock").push(value);
-            },
-        )
-        .expect("Agent Host turn should resolve against the fake ACP process");
+                sink_events
+                    .lock()
+                    .expect("event sink lock")
+                    .push(json!({"index":index,"message":value}));
+                true
+            })
+            .invoke_handler(tauri::generate_handler![agent_send_fixture])
+            .build(tauri::test::mock_context(tauri::test::noop_assets()))
+            .expect("build headless Tauri MockRuntime app");
+        let webview = tauri::WebviewWindowBuilder::new(&app, "main", Default::default())
+            .build()
+            .expect("build MockRuntime webview");
+        let request = tauri::webview::InvokeRequest {
+            cmd: "agent_send".into(),
+            callback: tauri::ipc::CallbackFn(0),
+            error: tauri::ipc::CallbackFn(1),
+            url: "http://tauri.localhost"
+                .parse()
+                .expect("parse local mock URL"),
+            body: tauri::ipc::InvokeBody::Json(json!({
+                "requestId":"headless-agent-ipc",
+                "text":"fixture prompt reaches ACP",
+                "images":[],
+                "llmConfig":{"base_url":"https://api.deepseek.com/responses","model":"deepseek-flash","api_key":"fixture","reasoning_effort":"none"},
+                "onlineEnabled":false,
+                "onEvent":"__CHANNEL__:97"
+            })),
+            headers: Default::default(),
+            invoke_key: tauri::test::INVOKE_KEY.to_owned(),
+        };
+        let response = tauri::test::get_ipc_response(&webview, request)
+            .expect("invoke shared agent_send core through MockRuntime");
+        let result = response
+            .deserialize::<Value>()
+            .expect("deserialize AgentHost command result");
 
         let events = captured_events.lock().expect("event sink lock").clone();
         assert_eq!(result["turn_status"], "completed");
         assert_eq!(result["reply"], "fixture prompt reaches ACP");
-        assert!(events.iter().any(|event| {
-            event["event"] == "agent.message"
-                && event["request_id"] == "headless-agent-ipc"
-                && event["data"]["text"] == "fixture prompt reaches ACP"
+        assert!(events.iter().any(|row| {
+            row["message"]["event"] == "agent.message"
+                && row["message"]["request_id"] == "headless-agent-ipc"
+                && row["message"]["data"]["text"] == "fixture prompt reaches ACP"
         }));
         assert!(events.iter().any(|event| {
-            event["event"] == "agent.thought" && event["data"]["text"] == "fixture thought"
+            event["message"]["event"] == "agent.thought"
+                && event["message"]["data"]["text"] == "fixture thought"
         }));
         assert!(events.iter().any(|event| {
-            event["event"] == "agent.tool"
-                && event["data"]["tool_call_id"] == "fixture-tool-1"
-                && event["data"]["status"] == "running"
+            event["message"]["event"] == "agent.tool"
+                && event["message"]["data"]["tool_call_id"] == "fixture-tool-1"
+                && event["message"]["data"]["status"] == "running"
         }));
         assert!(events.iter().any(|event| {
-            event["event"] == "agent.status" && event["data"]["message"] == "DSH 正在处理本轮请求。"
+            event["message"]["event"] == "agent.status"
+                && event["message"]["data"]["message"] == "DSH 正在处理本轮请求。"
         }));
         let model_changed = events
             .iter()
-            .find(|event| event["event"] == "model.changed")
-            .expect("active-model commit should emit model.changed through the event sink");
-        assert_eq!(model_changed["request_id"], "headless-agent-ipc");
-        assert_eq!(model_changed["data"]["revision"], 1);
-        assert_eq!(model_changed["data"]["name"], "IPC fixture model");
+            .find(|event| event["message"]["event"] == "model.changed")
+            .expect("active-model commit should emit model.changed through Tauri Channel");
+        assert_eq!(model_changed["message"]["request_id"], "headless-agent-ipc");
+        assert_eq!(model_changed["message"]["data"]["revision"], 1);
+        assert_eq!(
+            model_changed["message"]["data"]["name"],
+            "IPC fixture model"
+        );
         let terminal = events
             .iter()
-            .find(|event| event["event"] == "agent.turn_complete")
-            .expect("turn completion should be emitted through the event sink");
-        assert_eq!(terminal["data"]["turn_status"], "completed");
-        assert_eq!(terminal["data"]["stop_reason"], "end_turn");
-        assert_eq!(terminal["data"]["current_model"]["exists"], true);
-        assert_eq!(terminal["data"]["current_model"]["status"], "candidate");
-        assert_eq!(terminal["data"]["current_model"]["revision"], 1);
+            .find(|event| event["message"]["event"] == "agent.turn_complete")
+            .expect("turn completion should be emitted through Tauri Channel");
+        assert!(
+            terminal["index"].as_u64().unwrap() > model_changed["index"].as_u64().unwrap(),
+            "terminal event must follow the geometry commit event"
+        );
+        assert_eq!(terminal["message"]["data"]["turn_status"], "completed");
+        assert_eq!(terminal["message"]["data"]["stop_reason"], "end_turn");
+        assert_eq!(terminal["message"]["data"]["current_model"]["exists"], true);
+        assert_eq!(
+            terminal["message"]["data"]["current_model"]["status"],
+            "candidate"
+        );
+        assert_eq!(terminal["message"]["data"]["current_model"]["revision"], 1);
+
+        println!(
+            "AIMODELER_AGENT_IPC_CAPTURE={}",
+            json!({"result":result,"events":events})
+        );
 
         agent_host::shutdown(&host_state);
         drop(scratch);

@@ -252,7 +252,7 @@ pub(crate) fn send_turn_with_fixture(
     image_paths: Vec<String>,
     llm_config: Value,
     online_enabled: bool,
-    on_event: impl Fn(Value) + Send + Sync + 'static,
+    on_event: Channel<Value>,
 ) -> Result<Value, String> {
     let TestSetup {
         root,
@@ -277,7 +277,7 @@ pub(crate) fn send_turn_with_fixture(
         image_paths,
         llm_config,
         online_enabled,
-        EventSink::new(on_event),
+        EventSink::from_channel(on_event),
     )
 }
 
