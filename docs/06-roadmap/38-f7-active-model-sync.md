@@ -24,4 +24,6 @@ Luna subagent 报告以下定向离线验证通过：
 - `cargo check --lib --offline`；
 - Vue build 与活动模型导入测试（此前 G2 验证）。
 
+2026-10-03 新增提交 `a4dfe2b` 的 production-helper 测试：从活动 generation 1 执行 Agent CAD 编辑后，共享活动记录升至 generation 2，来源为 `agent`，会话快照与共享 CAD state 相同。新 happy-path 测试和既有 stale-CAS 回同步测试各 1/1 通过，`cargo check --lib --offline` 通过。
+
 这些验证覆盖原生状态和保存事务，不证明运行中的 DSH 真实触发了 `model.changed`、桌面视口即时接收了更新，也不证明 UI 初始化和旧工程转换在真实 Tauri 窗口中完成。F7.G2 在真实 host/Agent/桌面闭环验收完成之前保持未验收。

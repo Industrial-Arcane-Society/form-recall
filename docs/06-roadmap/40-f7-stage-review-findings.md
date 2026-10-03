@@ -41,6 +41,7 @@ cargo check --lib --offline
 ```
 
 - 新增生命周期4项通过；含一个fixture中的多个否决分支。
+- 提交 `b921717` 增加两个否决输入：`coverage_status=partial` 和 `full_current_geometry_in_scope=false`；两者都保留 awaiting-verification finding 且不改 ledger。
 - native vision domain 12项通过，含新增provider mock接线检查。
 - 既有aggregate gate 7项通过。
 - 离线library check通过。

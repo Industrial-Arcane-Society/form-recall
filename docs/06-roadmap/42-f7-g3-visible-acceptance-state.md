@@ -13,6 +13,7 @@ Agent 对话区固定展示两组独立状态：当前轮次（处理中、回�
 - `node --test src/agentStatus.test.mjs`：7/7通过，覆盖 ACP completed+candidate、当前 accepted、取消/停止/结束、缺少模型摘要、finish revision 过期、geometry fingerprint 过期和宿主摘要错绑。
 - `npm run build`：Vue 类型检查和生产 bundle 通过；构建保留现有单个 500 KB 以上 chunk 提示。
 - 没有打开 Tauri GUI。本记录证明状态映射与 bundle 接线，不证明真实 `AgentHost → Tauri Channel → Vue` 事件渲染或真实模型达到 accepted；这两项仍需 G2/G8 端到端证据。
+- `73938f4` 新增 Rust 终态载荷单测，确认 `completed`/`stopped` 轮次状态不改写当前模型 `accepted` 状态；`agent_host::tests` 16/16。它补的是 Host 载荷层证据，channel/UI运行时仍未验证。
 
 ## 未覆盖
 
