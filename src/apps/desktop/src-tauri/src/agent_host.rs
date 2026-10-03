@@ -60,6 +60,7 @@ const CANCEL_NONE: u8 = 0;
 const CANCEL_USER: u8 = 1;
 const CANCEL_WATCHDOG_TOTAL: u8 = 2;
 const CANCEL_WATCHDOG_IDLE: u8 = 3;
+const DEFAULT_OUTPUT_TOKEN_CAP: u64 = 32_768;
 const CANCEL_NO_PROGRESS: u8 = 4;
 
 #[derive(Clone, Default)]
@@ -174,8 +175,8 @@ pub fn prepare_cli_profile(root: &Path, patch: &Path, config: &Value) -> Result<
         "image_supported_by_route":route.vision,"reasoning_effort_requested":provider.effort,
         "reasoning_configurable":!route.reasoning.is_empty(),
         "thinking_budget_requested":provider.budget,
-        "main_output_cap":positive(provider.output_cap).unwrap_or(32_768),
-        "vision_output_cap":positive(provider.output_cap).unwrap_or(4096),
+        "main_output_cap":effective_output_token_cap(&provider),
+        "vision_output_cap":effective_output_token_cap(&provider),
         "context_window":positive(provider.context_window).or(route.context_window).unwrap_or(262_144),
         "prompt_path":prompt_path,"prompt_sha256":sha256(&prompt),"patch_path":patch
     }))
@@ -2024,7 +2025,7 @@ fn write_profile_patch(
     let context_window = positive(provider.context_window)
         .or(route.context_window)
         .unwrap_or(262_144);
-    let output_cap = positive(provider.output_cap).unwrap_or(32_768);
+    let output_cap = effective_output_token_cap(provider);
     let mut provider_lines = vec![
         "        displayName: AI Modeler".to_owned(),
         "        apiKeyEnv: AIMODELER_LLM_API_KEY".to_owned(),
@@ -2426,8 +2427,12 @@ fn vision_provider_config(provider: &Provider) -> ProviderConfig {
         api_key: provider.api_key.clone(),
         effort: provider.effort.clone(),
         thinking_budget: provider.budget,
-        max_output_tokens: positive(provider.output_cap).unwrap_or(4096),
+        max_output_tokens: effective_output_token_cap(provider),
     }
+}
+
+fn effective_output_token_cap(provider: &Provider) -> u64 {
+    positive(provider.output_cap).unwrap_or(DEFAULT_OUTPUT_TOKEN_CAP)
 }
 
 fn close_session(session: &ActiveSession) {
@@ -2540,9 +2545,10 @@ mod tests {
     use super::{
         ActiveReset, CANCEL_NONE, CANCEL_USER, CANCEL_WATCHDOG_IDLE, Image, Provider,
         ToolAuditTail, acknowledged_config_value, active_turn_record, classify_host_error,
-        classify_turn_status, current_model_summary, find_config_value, normalize_terminal_result,
-        resolve_stage_configs, route_profile, terminal_event_data, termination_from_cancel,
-        validate_image_signature, write_profile_patch,
+        classify_turn_status, current_model_summary, effective_output_token_cap, find_config_value,
+        normalize_terminal_result, resolve_stage_configs, route_profile, terminal_event_data,
+        termination_from_cancel, validate_image_signature, vision_provider_config,
+        write_profile_patch,
     };
     use crate::agent_model_config::{STAGE_MODELING, STAGE_PERCEPTION, STAGE_REVIEW};
     use serde_json::{Value, json};
@@ -2674,6 +2680,27 @@ mod tests {
                 .unwrap()
                 .vision
         );
+    }
+
+    #[test]
+    fn vision_output_limit_uses_main_default_and_respects_provider_override() {
+        let mut provider = Provider {
+            id: "provider-test".into(),
+            base_url: "https://api.deepseek.com/responses".into(),
+            model: "deepseek-flash".into(),
+            api_key: "test-secret".into(),
+            effort: "low".into(),
+            budget: None,
+            context_window: None,
+            output_cap: None,
+        };
+
+        assert_eq!(effective_output_token_cap(&provider), 32_768);
+        assert_eq!(vision_provider_config(&provider).max_output_tokens, 32_768);
+
+        provider.output_cap = Some(12_000);
+        assert_eq!(effective_output_token_cap(&provider), 12_000);
+        assert_eq!(vision_provider_config(&provider).max_output_tokens, 12_000);
     }
 
     #[test]
@@ -2966,6 +2993,7 @@ mod tests {
         assert!(contents.contains("ai-modeler-attachment-store"));
         assert!(contents.contains("ai-modeler-live-stream"));
         assert!(contents.contains("input: [text, image]"));
+        assert!(contents.contains("            maxTokens: 32768"));
         assert!(!contents.contains("test-secret-that-must-not-be-written"));
         if std::env::var_os("AIMODELER_KEEP_PROFILE_PATCH").is_none() {
             let _ = fs::remove_file(path);
