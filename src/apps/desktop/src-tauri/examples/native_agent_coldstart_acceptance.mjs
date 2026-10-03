@@ -157,6 +157,10 @@ const child = spawn(nodePath, [join(modules, '@deepseek-ai/dsh/lib/bin.js'),
     DSH_TELEMETRY_DISABLED: '1',
     DSH_SYSTEM_PROMPT: productionPrompt,
     AIMODELER_LLM_API_KEY: apiKey,
+    // Required by dsh_stream_bridge to install its provider-fetch observer.
+    // Telemetry retains only hashes, lengths, request correlation and status.
+    AI_MODELER_PROVIDER_BASE_URL: provider.base_url,
+    AI_MODELER_PROVIDER_MODEL: provider.model,
     AI_MODELER_TOOL_BRIDGE_ADDR: toolProxy.address,
     AI_MODELER_TOOL_BRIDGE_TOKEN: bridge.token,
     AI_MODELER_TOOL_SESSION_ID: bridge.session_id,

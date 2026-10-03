@@ -280,7 +280,8 @@ test('provider wire preserves prior original and current preview images across t
 
     const request = new Request('https://provider.example.test/v1/chat/completions', {
       method: 'POST',
-      headers: { 'content-type': 'application/json', 'x-original': 'from-request' },
+      headers: { 'content-type': 'application/json', 'x-original': 'from-request',
+        authorization: 'Bearer wire-secret-must-not-leak' },
       body: JSON.stringify(requestPayload),
     })
     const controller = new AbortController()
@@ -317,6 +318,7 @@ test('provider wire preserves prior original and current preview images across t
     assert.equal(wireRequest.images_before_cleanup[0].source_mapping, 'exact-transport-hash-match')
     assert.equal(wireRequest.image_count, 3)
     assert.equal(wireRequest.image_hash_count, 2)
+    assert.equal(wireRequest.images[0].byte_length, original.length)
     assert.deepEqual(wireRequest.images.map(row => row.source_kind), [
       'user_reference', 'tool_preview', 'unknown',
     ])
@@ -324,10 +326,16 @@ test('provider wire preserves prior original and current preview images across t
       sha256(original), sha256(latestPreview),
     ])
     assert.equal(wireRequest.images[0].source_sha256, sha256(original))
+    const telemetryText = fs.readFileSync(telemetryPath, 'utf8')
+    for (const sensitive of ['from-init', 'wire-secret-must-not-leak', 'prior image turn',
+      'model response', 'data:image/png;base64,']) {
+      assert.equal(telemetryText.includes(sensitive), false, `telemetry must omit ${sensitive}`)
+    }
     assert.equal(wireRequest.request_fields.thinking_budget, null)
     assert.equal(wireRequest.image_context_cleanup.removed_stale_tool_previews, 1)
     assert.equal(wireRequest.image_context_cleanup.kept_user_references, 1)
     assert.equal(completion.response_terminator, 'sse_done')
+    assert.equal(rows.find(row => row.kind === 'provider_wire_response_headers').status_code, 200)
     assert.deepEqual(completion.usage, {
       input_tokens: 10, output_tokens: 3, total_tokens: 13,
     })
@@ -342,6 +350,52 @@ test('provider wire preserves prior original and current preview images across t
     restore('AI_MODELER_STREAM_FILE', previousEnvironment.telemetry)
     restore('AI_MODELER_ACTIVE_TURN_FILE', previousEnvironment.activeTurn)
     restore('AI_MODELER_TRANSPORT_IMAGE_MAP', previousEnvironment.imageMap)
+    restore('AI_MODELER_PROVIDER_BASE_URL', previousEnvironment.providerBase)
+    fs.rmSync(temp, { recursive: true, force: true })
+  }
+})
+
+test('provider wire observation bypasses text-only turns', async () => {
+  const temp = fs.mkdtempSync(path.join(os.tmpdir(), 'ai-modeler-stream-text-turn-'))
+  const telemetryPath = path.join(temp, 'observability.jsonl')
+  const activeTurnPath = path.join(temp, 'active-turn.json')
+  const previousEnvironment = {
+    telemetry: process.env.AI_MODELER_STREAM_FILE,
+    activeTurn: process.env.AI_MODELER_ACTIVE_TURN_FILE,
+    providerBase: process.env.AI_MODELER_PROVIDER_BASE_URL,
+  }
+  const patchSymbol = Symbol.for('ai-modeler.provider-fetch-observer.v1')
+  const previousPatch = globalThis[patchSymbol]
+  const previousFetch = globalThis.fetch
+  let actualRequest = null
+  try {
+    process.env.AI_MODELER_STREAM_FILE = telemetryPath
+    process.env.AI_MODELER_ACTIVE_TURN_FILE = activeTurnPath
+    process.env.AI_MODELER_PROVIDER_BASE_URL = 'https://provider.example.test/v1'
+    fs.writeFileSync(activeTurnPath, JSON.stringify({ turn_id: 'text-only-turn', reference_images: [] }))
+    globalThis[patchSymbol] = undefined
+    globalThis.fetch = async input => {
+      actualRequest = input
+      return new Response('{}', { status: 200 })
+    }
+    apply({ on() {} })
+    const request = new Request('https://provider.example.test/v1/responses', {
+      method: 'POST', body: JSON.stringify({ model: 'fixture-model', input: 'private prompt' }),
+    })
+    const response = await globalThis.fetch(request)
+    assert.equal(response.status, 200)
+    assert.equal(actualRequest, request)
+    assert.equal(fs.existsSync(telemetryPath), false)
+  } finally {
+    globalThis.fetch = previousFetch
+    if (previousPatch === undefined) delete globalThis[patchSymbol]
+    else globalThis[patchSymbol] = previousPatch
+    const restore = (name, value) => {
+      if (value === undefined) delete process.env[name]
+      else process.env[name] = value
+    }
+    restore('AI_MODELER_STREAM_FILE', previousEnvironment.telemetry)
+    restore('AI_MODELER_ACTIVE_TURN_FILE', previousEnvironment.activeTurn)
     restore('AI_MODELER_PROVIDER_BASE_URL', previousEnvironment.providerBase)
     fs.rmSync(temp, { recursive: true, force: true })
   }

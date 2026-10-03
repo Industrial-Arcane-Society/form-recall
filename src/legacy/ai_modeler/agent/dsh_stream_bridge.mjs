@@ -359,8 +359,14 @@ function installFetchObserver() {
     const matches = Boolean(url && url.host === target.host && /\/(?:chat\/completions|responses)(?:$|\/|\?)/i.test(url.pathname + url.search))
     if (!matches) return originalFetch(input, init)
 
+    const activeTurn = readJson(activeTurnPath, {})
     const payloadValue = requestPayload(input, init)
     const payload = payloadValue && typeof payloadValue.then === 'function' ? await payloadValue : payloadValue
+    const inboundImageParts = payload === null ? [] : collectImageParts(payload?.messages || payload?.input || [])
+    // Text continuations can resend images from earlier turns, so inspect the
+    // serialized payload and observe only requests that actually carry images.
+    // Text-only turns continue untouched and generate no provider-wire record.
+    if (payload !== null && inboundImageParts.length === 0) return originalFetch(input, init)
     if (payload === null) {
       append(telemetryPath, {
         kind: 'provider_wire_request', wire_observed: false,
@@ -370,9 +376,7 @@ function installFetchObserver() {
       })
       throw new Error('拒绝发送无法解析的DSH provider请求体；无法证明其中不含图片。')
     }
-    const activeTurn = readJson(activeTurnPath, {})
     const transportMap = readJson(imageMapPath, {})
-    const inboundImageParts = collectImageParts(payload?.messages || payload?.input || [])
     const inboundImageRows = imageEvidenceRows(inboundImageParts, activeTurn.reference_images, transportMap)
     const imageContextCleanup = pruneStalePreviewImages(payload, transportMap)
     if (imageContextCleanup.removed_stale_tool_previews > 0) {
