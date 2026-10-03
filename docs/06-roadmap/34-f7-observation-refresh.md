@@ -10,6 +10,7 @@
 - `cargo test --manifest-path src/apps/desktop/src-tauri/Cargo.toml --lib --offline native_state_summary::tests`：5/5。
 - `cargo test --manifest-path src/apps/desktop/src-tauri/Cargo.toml --lib --offline native_tool_schemas::tests`：3/3。
 - 回归覆盖：首次观察、普通重复调用复用、冲突刷新、新版 ID、ROI 重新读取、旧 review 不贡献新版覆盖，以及旧 evidence 不能关闭新 finding。
+- 提交 `4f70e61` 增加未知字符串与非字符串 `refresh_reason` 的拒绝测试；`native_vision_domain::tests` 当前 15/15，通过离线运行。
 - `git diff --check` 通过。
 
 这是 mock provider 下的 domain/schema/summary 验证，尚未证明真实视觉模型在几何冲突时会主动调用刷新；该模型决策与差异关闭由 F7.G8 后续实测。

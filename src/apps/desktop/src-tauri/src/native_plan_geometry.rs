@@ -111,6 +111,28 @@ pub fn preflight(plan: &Value) -> Result<Value, String> {
                 ));
             }
         }
+        if kind == "gear" {
+            let teeth = p
+                .get("teeth")
+                .and_then(Value::as_u64)
+                .ok_or_else(|| {
+                    format!(
+                        "{} 的 gear.teeth 必须是整数。",
+                        feature["id"].as_str().unwrap_or("feature")
+                    )
+                })?;
+            if !(native_standard_features::MIN_GEAR_TEETH
+                ..=native_standard_features::MAX_GEAR_TEETH)
+                .contains(&teeth)
+            {
+                return Err(format!(
+                    "{} 的 gear.teeth={teeth} 超出原生支持范围 {}..={}；请调整齿数后再预览。",
+                    feature["id"].as_str().unwrap_or("feature"),
+                    native_standard_features::MIN_GEAR_TEETH,
+                    native_standard_features::MAX_GEAR_TEETH
+                ));
+            }
+        }
         if kind == "piston" {
             let normalized = normalized_feature(feature, plan)?;
             native_parametric_features::preflight_piston(&normalized["parameters"])?;
@@ -1209,6 +1231,40 @@ mod tests {
         assert!(preflight(&rounded).unwrap_err().contains("corner"));
         assert_eq!(original["features"].as_array().unwrap().len(), 11);
     }
+
+    #[test]
+    fn gear_tooth_parameter_limit_is_enforced_by_preflight() {
+        let make_plan = |teeth| {
+            crate::cad_plan::create(
+                "gear preflight fixture",
+                json!({"id":"gear-1","kind":"gear","operation":"add",
+                    "parameters":{"teeth":teeth,"module":2,"height":5},
+                    "sources":{"teeth":{"type":"image_estimate","evidence":"fixture top view"},
+                        "module":{"type":"image_estimate","evidence":"fixture top view"},
+                        "height":{"type":"image_estimate","evidence":"fixture front view"}}}),
+                "fixture",
+                None,
+            )
+        };
+        let out_of_range = make_plan(10_001);
+        let error = preflight(&out_of_range).unwrap_err();
+        assert!(error.contains("gear-1 的 gear.teeth=10001"), "{error}");
+        assert!(error.contains("6..=10000"), "{error}");
+        assert!(error.contains("调整齿数后再预览"), "{error}");
+
+        assert_eq!(preflight(&make_plan(6)).unwrap()["state"], "valid");
+        let limits = crate::native_feature_specs::feature_spec("gear").unwrap()
+            ["native_execution"]["parameter_limits"]["teeth"]
+            .as_str()
+            .unwrap()
+            .to_owned();
+        assert!(limits.contains(&format!(
+            "{}..={}",
+            native_standard_features::MIN_GEAR_TEETH,
+            native_standard_features::MAX_GEAR_TEETH
+        )));
+    }
+
     #[test]
     fn hole_point_uses_global_coordinates_on_each_axis() {
         let p = json!({"pos":"point","point":[11,22,33]});

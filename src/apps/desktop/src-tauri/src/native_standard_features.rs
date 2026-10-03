@@ -3,7 +3,8 @@
 use crate::native_occt::{Axis, Kernel, Shape};
 use serde_json::{Value, json};
 
-const MAX_GEAR_TEETH: u64 = 10_000; // 8-point profile stays under the OCCT 100k point guard.
+pub const MIN_GEAR_TEETH: u64 = 6;
+pub const MAX_GEAR_TEETH: u64 = 10_000; // 8-point profile stays under the OCCT 100k point guard.
 
 /// Build supported standard-feature tool shapes and return an explicit
 /// geometry support report. `parameters` must already be in millimetres/degrees.
@@ -171,9 +172,9 @@ fn build_gear(
     p: &serde_json::Map<String, Value>,
 ) -> Result<(Vec<Shape>, Value), String> {
     let teeth = integer(p, "teeth", 20)?;
-    if !(6..=MAX_GEAR_TEETH).contains(&teeth) {
+    if !(MIN_GEAR_TEETH..=MAX_GEAR_TEETH).contains(&teeth) {
         return Err(format!(
-            "gear teeth must be 6..={MAX_GEAR_TEETH} (OCCT profile resource limit)"
+            "gear teeth must be {MIN_GEAR_TEETH}..={MAX_GEAR_TEETH} (OCCT profile resource limit)"
         ));
     }
     let module = number(p, "module", 2.0)?;
