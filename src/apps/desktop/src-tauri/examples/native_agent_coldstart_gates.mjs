@@ -16,26 +16,30 @@ const acpToolCategory = value => typeof value === 'string' && value.startsWith('
 // Return an allowlisted count-only projection. Call IDs are used transiently
 // for grouping and are never included in the returned diagnostic.
 export function summarizeAcpTerminalUpdateDiagnostics(toolEvents = []) {
-  const groups = new Map(), missingIdentityEvents = []
+  const groups = new Map()
+  let missingIdentityEventCount = 0
   const statusCounts = new Map()
   for (const event of rows(toolEvents)) {
     const isStart = event?.kind === 'tool_call'
     const isUpdate = event?.kind === 'tool_call_update'
     if (!isStart && !isUpdate) continue
+    const callId = nonempty(event.tool_call_id) ? event.tool_call_id : null
+    const group = callId ? groups.get(callId) : null
     const status = acpStatusCategory(event.status)
     const titleCategory = acpToolCategory(event.title)
-    const countKey = `${titleCategory}\u0000${isStart ? 'start' : 'update'}\u0000${status}`
+    const toolCategory = titleCategory !== 'unknown' ? titleCategory : group?.tool_type || 'unknown'
+    const countKey = `${toolCategory}\u0000${isStart ? 'start' : 'update'}\u0000${status}`
     statusCounts.set(countKey, (statusCounts.get(countKey) || 0) + 1)
     const terminal = isUpdate && ['completed', 'failed'].includes(status)
-    if (!nonempty(event.tool_call_id)) {
-      if ((isStart && titleCategory === 'cad') || terminal) missingIdentityEvents.push(event)
+    if (!callId) {
+      missingIdentityEventCount += 1
       continue
     }
-    const group = groups.get(event.tool_call_id) || { tool_type: 'unknown', statuses: [], terminal_summaries: [] }
-    if (titleCategory !== 'unknown') group.tool_type = titleCategory
-    group.statuses.push({ kind: isStart ? 'start' : 'update', status })
-    if (terminal) group.terminal_summaries.push({ tool_type: group.tool_type, status })
-    groups.set(event.tool_call_id, group)
+    const currentGroup = group || { tool_type: 'unknown', statuses: [], terminal_summaries: [] }
+    if (titleCategory !== 'unknown') currentGroup.tool_type = titleCategory
+    currentGroup.statuses.push({ kind: isStart ? 'start' : 'update', status })
+    if (terminal) currentGroup.terminal_summaries.push({ status })
+    groups.set(callId, currentGroup)
   }
 
   const countRows = [...statusCounts.entries()].map(([key, count]) => {
@@ -67,7 +71,7 @@ export function summarizeAcpTerminalUpdateDiagnostics(toolEvents = []) {
     sequenceCounts.set(key, (sequenceCounts.get(key) || 0) + 1)
     for (let left = 0; left < terminal.length; left += 1) {
       for (let right = left + 1; right < terminal.length; right += 1) {
-        if (terminal[left].tool_type === terminal[right].tool_type && terminal[left].status === terminal[right].status) {
+        if (terminal[left].status === terminal[right].status) {
           sameTerminalSummaryPairCount += 1
         } else differentTerminalSummaryPairCount += 1
       }
@@ -84,7 +88,7 @@ export function summarizeAcpTerminalUpdateDiagnostics(toolEvents = []) {
     terminal_count_distribution: terminalCountDistribution,
     same_sanitized_terminal_summary_pair_count: sameTerminalSummaryPairCount,
     different_sanitized_terminal_summary_pair_count: differentTerminalSummaryPairCount,
-    missing_tool_call_id_event_count: missingIdentityEvents.length,
+    missing_tool_call_id_event_count: missingIdentityEventCount,
   }
 }
 

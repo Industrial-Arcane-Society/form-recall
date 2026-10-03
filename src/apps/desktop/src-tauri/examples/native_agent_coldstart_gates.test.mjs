@@ -167,7 +167,8 @@ test('ACP terminal diagnostics expose only sanitized status categories and aggre
     { kind: 'tool_call', tool_call_id: 'another-private-id', title: 'cad_other_private_tool', status: 'pending' },
     { kind: 'tool_call_update', tool_call_id: 'another-private-id', status: 'completed' },
     { kind: 'tool_call_update', tool_call_id: 'another-private-id', status: 'failed' },
-    { kind: 'tool_call_update', title: 'cad_unbound_private_tool', status: 'failed', error: marker },
+    { kind: 'tool_call_update', status: 'failed', error: marker },
+    { kind: 'tool_call', title: 'web_search', status: 'pending' },
   ])
   assert.deepEqual(projection.call_group_status_sequences, [
     { tool_type: 'cad', sequence_category: 'conflicting_terminal_statuses', count: 1 },
@@ -176,9 +177,9 @@ test('ACP terminal diagnostics expose only sanitized status categories and aggre
   assert.deepEqual(projection.terminal_count_distribution, { '0': 0, '1': 0, '2': 2, '3_plus': 0 })
   assert.equal(projection.same_sanitized_terminal_summary_pair_count, 1)
   assert.equal(projection.different_sanitized_terminal_summary_pair_count, 1)
-  assert.equal(projection.missing_tool_call_id_event_count, 1)
+  assert.equal(projection.missing_tool_call_id_event_count, 2)
   const serialized = JSON.stringify(projection)
-  for (const secret of [marker, 'another-private-id', 'cad_private_tool_name', 'cad_other_private_tool', 'cad_unbound_private_tool']) {
+  for (const secret of [marker, 'another-private-id', 'cad_private_tool_name', 'cad_other_private_tool']) {
     assert.equal(serialized.includes(secret), false)
   }
   assert.equal(projection.schema, 'acp_terminal_update_projection_v1')
@@ -186,6 +187,8 @@ test('ACP terminal diagnostics expose only sanitized status categories and aggre
     && row.kind === 'update' && row.status === 'failed' && row.count === 1))
   assert.ok(projection.tool_status_update_counts.some(row => row.tool_type === 'unknown'
     && row.kind === 'update' && row.status === 'failed' && row.count === 1))
+  assert.ok(projection.tool_status_update_counts.some(row => row.tool_type === 'cad'
+    && row.kind === 'update' && row.status === 'completed' && row.count === 3))
 })
 
 const negativeFixtures = [
