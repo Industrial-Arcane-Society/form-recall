@@ -10,7 +10,7 @@
 
 | ID | Feature | 状态 | 完成条件 / 提交边界 |
 |---|---|---|---|
-| F0 | 目录重构、文档重建和路径恢复 | **已完成** | 根目录结构、旧资料归档、文档索引、日志路径、开发启动、测试、Tauri build hook 和 GitHub Actions 已核验；本提交整体落到 `main` |
+| F0 | 目录重构、文档重建和路径恢复 | **已完成** | 根目录结构、旧资料归档、文档索引、日志路径、开发启动、测试、Tauri build hook 和 GitHub Actions 已核验；本提交整体落到 `main`。后续发现仓库根缺少 `package.json`：提交 `7099e99` 增加根 `npm run dev`（Tauri 桌面开发版）和 `npm run dev:web`（纯 Vite）；headless HTTP/Chromium 与构建通过，真实桌面窗口未启动验收。 |
 | F1 | Rust DSH ACP Host + 固定 Runtime Manifest | **已完成** | F1.1–F1.4 已分别实现、验收并单独提交；多模态识别准确率问题保留为 F7 质量验收项 |
 | F1.1 | Rust ACP stdio 进程与 JSON-RPC 基础 | **已完成** | 行分帧、并发请求响应匹配、通知订阅、错误/超时、关闭时有界回收；以假 ACP 子进程测试，不依赖真实 DSH |
 | F1.2 | 固定 DSH/Node Runtime Manifest 与安装器 | **已完成** | 固定已验收的 Node 与 DSH 包版本/校验值；下载、校验、安装、升级、失败回滚，不依赖全局 Node |
@@ -52,7 +52,7 @@
 | F5.2 | Rust AIMODEL / binary STL 兼容读写 | **已完成** | 5 项单测、旧工程 roundtrip、Python Document 对拍及实际 STL 全顶点检查通过；Quick 和生产导出接线尚待完成 |
 | F5.3 | Quick 明确尺寸原生创建闭环 | **已完成（限定范围）** | Rust Quick 3/3、解析 7/7、Vue build；CADPlan→OCCT→GLB/AIMODEL/STL，旧语法全量迁移和共享活动状态仍待 F7.G2；见 [记录](./27-f5-native-quick-build.md) |
 | F6 | Python 缩减到 CATIA COM | **进行中（拆为 F6.1–F6.7）** | Agent Python tool worker 已删除；F6.1 原生配置/provider 与 F6.2 原生 bootstrap/readiness 代码及定向接线已提交。Quick、Agent 启动和本地活动模型代码不再要求 Python bridge；parts、examples、手工联网、诊断等桌面服务仍待迁移，最终无 Python 安装包冷启动仍待验收 |
-| F7 | 多模态盲测与科学验收基线 | **进行中** | Run03 真实冷启动确认主 DSH 线上请求携带原图并收到成功响应，但模型仍把九孔做成等径、整体宽深比例近立方；候选被严格 gate 拒绝。已提交生产提示词和严格工具调用关联修正，Run04 以同一原图全新冷启动复验中。多图、纯文字、多轮、真实差异返修、取消、桌面运行态与 CATIA 分层验收仍未完成；不能以有效 B-Rep 或候选存在代替通过。详见 [Run03 归因](./45-f7-g8-run-03-diagnosis.md)。 |
+| F7 | 多模态盲测与科学验收基线 | **进行中** | Run03–07 五次真实单图冷启动均未通过严格门禁。Run07 证明 `three/extended` 视图枚举修正生效，但模型只创建单组三个等径孔，中央槽切到近乎全厚全高；独立复核只覆盖部分证据，finding 未关闭，孔/视觉/finish 门禁失败。当前修正方向是把原图各可见孔组映射到计划并逐项完成、约束凹入保留可见后壁、收紧 sources/孔心/参数更新工具字段契约。AgentHost 核心→fake ACP→可注入事件 sink 已由 `c60e92e` 默认 Rust 测试通过；真实 Tauri Channel/WebView IPC 仍未验收。多图、纯文字、多轮、真实差异返修、取消、桌面运行态与 CATIA 分层验收仍未完成；F7 不得标记通过。详见 [Run03](./45-f7-g8-run-03-diagnosis.md)、[Run04](./46-f7-g8-run-04-diagnosis.md)、[Run05](./47-f7-g8-run-05-diagnosis.md)、[Run06](./48-f7-g8-run-06-diagnosis.md) 与 [Run07](./49-f7-g8-run-07-diagnosis.md)。 |
 
 ## F6 子任务与验收顺序
 
@@ -74,16 +74,16 @@
 
 | ID | 优先级 | 任务 | 状态 | 完成条件 |
 |---|---|---|---|---|
-| F7.G1 | P0 | 主 Agent 直接查看原图和当前单视图 | **Run03 实际主请求/响应已核实；生产提示词已修，Run04 等待行为复核** | 原有 loopback 证据证明本机请求序列化；Run03 固定 DSH Runtime 实跑中，严格 gate 以原图同 SHA/bytes、request ID 和成功响应核实 34 个含图主模型请求。提交 `eb98c99` 在真实 `_prompt()` 加入同视向主体无量纲轴比、逐孔比例、冲突 ROI 重读与建模后同向视图核对规则。Run04 使用同一原图冷启动，核对规则是否改变计划及新视图；尚未证明视觉理解通过。见 [Run01](./35-f7-image-acceptance-run-01.md)、[Run03](./45-f7-g8-run-03-diagnosis.md)。 |
-| F7.G2 | P0 | CADPlan、Agent 与桌面模型统一同步 | **核心代码已提交；headless 路径补测；真实桌面/Agent端到端待验收** | Agent/Quick/特征编辑、活动模型恢复、Save As、STL/OBJ/report/多视图快照和显式旧工程转换都路由到活动模型；Agent 几何工具通过 generation CAS 防止旧会话覆盖，CAS 失败时会话/证据/预览会回同步到活动记录。新增 `a4dfe2b` 通过生产 `commit_agent_model_state` 验证 Agent 编辑发布共享 generation 并同步会话快照；新测、stale-CAS 测试和 offline Cargo check 通过。仍需真实 DSH→`model.changed`→桌面显示验收；启停与 CATIA 原生导出仍明确受限。见 [活动模型同步记录](./38-f7-active-model-sync.md)。 |
-| F7.G3 | P0 | 请求结束与模型验收状态区分 | **Rust 终态载荷补测；真实 AgentHost→Vue 事件仍待端到端** | 对话区分别显示本轮终态、当前模型候选/已验收、完成/几何/视觉状态；ACP completed 不提升模型状态；过期 finish revision/fingerprint 显示已过期。新增 `73938f4` 验证 completed/stopped 本轮状态与当前 accepted 模型摘要独立，`agent_host::tests` 16/16；7/7状态映射与 Vue build 通过。未开 GUI，真实 channel 传递、纯问答/工具失败/候选/验收四场景仍待运行态验收。见 [状态真值](./29-f7-turn-and-model-status.md) 与 [可见状态记录](./42-f7-g3-visible-acceptance-state.md)。 |
+| F7.G1 | P0 | 主 Agent 直接查看原图和当前单视图 | **Run05–07 主模型图像 wire 通过；正确建模与视觉门禁仍失败** | Run07 使用原图 SHA `53ed87fadf8cca869da921627e6a13c845424c6906b3de517d5cca972db94553`，image wire 通过，且实际完成单视图独立复核；review 只覆盖部分证据，缺少原图绑定，严格 visual gate 失败。模型仍只创建三个等径孔，没按原图完成 9 孔与后退背壁孔组。见 [Run07 归因](./49-f7-g8-run-07-diagnosis.md)。 |
+| F7.G2 | P0 | CADPlan、Agent 与桌面模型统一同步 | **核心同步已提交；Host→fake ACP→事件 sink 默认 Rust 集成测试通过；WebView IPC 未验收** | Agent/Quick/特征编辑、活动模型恢复、Save As、STL/OBJ/report/多视图快照和显式旧工程转换都路由到活动模型；Agent 几何工具通过 generation CAS 防止旧会话覆盖。a4dfe2b 验证 Agent 编辑发布共享 generation 并同步会话快照；a2cc562 修复 Vue reactive settings 序列化问题。`c60e92e` 以真实 `send_turn_core`、fake ACP 子进程及本地事件 sink 覆盖 message/thought/tool/status/model.changed/turn_complete；测试未调用真实 Tauri Channel、WebView 或 Vue handler。启停与 CATIA 原生导出仍明确受限。见 [活动模型同步记录](./38-f7-active-model-sync.md)。 |
+| F7.G3 | P0 | 请求结束与模型验收状态区分 | **Host 终态事件与模型状态测试通过；真实 Rust→WebView 事件仍待验收** | 对话区分别显示本轮终态、当前模型候选/已验收、完成/几何/视觉状态；ACP completed 不提升模型状态；过期 finish revision/fingerprint 显示已过期。73938f4 验证 completed/stopped 状态独立；a2cc562 覆盖 Vue headless callback 格式；`c60e92e` 覆盖 Host 向注入 sink 发出的终态及当前 candidate revision。尚未验证真实 Tauri Channel/WebView 事件流及纯问答、工具失败、候选、验收四场景。见 [状态真值](./29-f7-turn-and-model-status.md) 与 [可见状态记录](./42-f7-g3-visible-acceptance-state.md)。 |
 | F7.G4 | P0 | 阶段复核与施工范围一致 | **施工范围门禁和 finding 生命周期 fixture 完成；真实视觉返修待验收** | mismatch 必须映射到本阶段已完成 feature 才建 finding；几何修改后进入 awaiting_verification；新版、完整覆盖的独立 exact match 才关闭并保留 closure binding。`b921717` 补测 `coverage_status=partial` 与 `full_current_geometry_in_scope=false` 均不能关闭 finding 且不改 ledger；生命周期 4/4、12 个 vision-domain fixture、7 个 aggregate gate fixture及 offline cargo check 通过。未来结构语义误归到当前 feature 仍需真实模型验收；见 [范围记录](./32-f7-stage-review-scope.md) 与 [finding 生命周期记录](./40-f7-stage-review-findings.md)。 |
 | F7.G5 | P1 | 观察因冲突可重新读取、版本可追踪 | **代码及非法刷新原因拒绝已验收；真实视觉模型行为待验收** | 普通同 SHA/ROI 复用缓存；Agent 显式传 `conflict`/`reobserve` 才重新观察并递增版本；保留历史、SHA/ROI/reason/telemetry；新版 evidence ID 隔离旧 review/finding。新增 `4f70e61` 验证未知字符串和非字符串原因在 provider 请求前被拒；vision domain 15/15，state summary 5/5，tool schemas 3/3。见 [记录](./34-f7-observation-refresh.md)。 |
 | F7.G6 | P1 | 统一实际工具与几何能力契约 | **范围契约已接线；15 类可构建、12 类明确不支持；27 类变体与运行期遵循待验收** | 当前登记 27 类，`supports_native_kind` 中实际有 15 类（含 `rotor`），另 12 类不支持；preflight 共用 native kind registry，面工具 `source_type` 与 hole-array 上限一致。提交 `b616fc4` 把 gear 齿数 6..=10000 的 builder 限制同步到 preflight 并验证可操作拒绝信息。其余 feature `parameter_limits` 仍主要是说明型契约，没有自动生成通用验证；仍需 27 类支持/拒绝变体实际样例与真实 Agent 遵循检查。见 [记录](./36-f7-native-capability-contract.md)。 |
 | F7.G7 | P1 | 分阶段模型、推理预算及行为熔断 | **代码完成、定向检查通过；真实DSH多模态链路待验收** | 感知/建模/审查可独立选择供应商与推理强度，空或空白 provider ID 继承全局当前配置；ACP reasoning 仅在回执给出有效值时标记生效，未确认会告警。视觉请求遥测明确记录发送前预期值，不声称服务端已生效；未知 Chat Completions 路由不发送通用 reasoning 字段。Agent turn 使用 60 分钟总时限、10 分钟无有效进展时限、15 秒取消宽限；相同写工具/脱敏参数且 revision 未变化或错误重复 5 次才触发无进展熔断，不设总工具/返修次数上限。超时后回收挂起 ACP 请求；用户取消、超时、无进展与 Host 错误分别记录，终态单点发出，所有退出路径清理 active。定向 cargo check、策略单测、ACP pending 请求释放 fixture、AgentHost、阶段空值和视觉路由测试以及前端配置往返测试通过；fixture 未覆盖完整 Tauri watchdog 回路。未做真实 DSH/LLM 多模态验收。阶段配置存于全局桌面设置，不随 `.aimodel` 工程保存。见 [阶段模型与运行熔断记录](./39-f7-stage-routing-watchdog.md)。 |
-| F7.G8 | P1 | 真实多模态与多轮链路可复跑验收 | **Run03 严格冷启动未通过；调用关联修正已提交，Run04 复验中** | Run03 原图 wire gate 通过：34 个同图主模型请求有成功响应。DSH `end_turn`，严格 runner exit 1。revision 27 几何有效但主体 45×51×60 mm 接近立方、9 孔全为直径 8 mm；hole measurement 未完成、视觉 coverage partial、0 个可接受 pair、6 个 finding 未关闭，finish 未接受。旧匹配统计为 46 ACP invocations / 44 bridge calls，36 唯一配对、8 歧义、2 未配对。提交 `9ee6eb7` 只在完整区间和 scope 双向唯一时关联相同工具调用，重叠/缺失/跨 scope 仍拒绝；48 个门禁测试通过，但 Run03/Run04 运行证据待重新核验。多图、纯文字、多轮返修、取消、桌面运行态、CATIA及独立视觉验收继续开放。见 [Run02](./44-f7-g8-run-02-diagnosis.md) 与 [Run03](./45-f7-g8-run-03-diagnosis.md)。 |
+| F7.G8 | P1 | 真实多模态与多轮链路可复跑验收 | **Run03–07 严格冷启动均失败；Run07 的视图请求契约已实测通过** | Run07 DSH/transport exit 0，严格 runner exit 1；原图 SHA/wire、本地几何与产物门禁通过。只建 `96×60×78 mm` 主体上的 3 个 Ø18.5 孔；中央槽约切入 59.9/60 mm、近全高，没有清晰后退背壁和背壁孔组。review partial、advisory 45，3 个 finding open。`cad_create_model` 首次来源含非参数键、hole-array 两次把 `face_center` 放错层级、两组孔布尔无材料交集、update 使用未声明 `field_updates`。视图修复后不再请求 three/extended，三次预览成功；完整归因见 [Run07](./49-f7-g8-run-07-diagnosis.md)。本次运行基于 HEAD `9222bea` 的 dirty worktree，不能把几何结果全归因单一提交。桌面 Rust AgentHost fake ACP event sink 测试已通过，真实 WebView IPC 未覆盖；多图、纯文字、多轮返修、取消及 CATIA 仍开放。 |
 
-执行顺序：先完成 P0 G1–G4 的缺口，再推进 G5–G8；F4 完整几何、F5/F6 原生状态迁移同时继续。生产同源冷启动 runner 已执行并记录一轮失败样本，不代表整个 G8 或 F7 通过。F7 总体只有所有链路整改和真实验收完成后才可标记完成。
+执行顺序：先完成 P0 G1–G4 的缺口，再推进 G5–G8；F4 完整几何、F5/F6 原生状态迁移同时继续。Run03–07 均为严格冷启动失败样本，不代表整个 G8 或 F7 通过。每次 Schema/prompt 修正都要由新隔离冷启动验证；视图工具正确调用也不能替代孔组、凹槽拓扑和独立视觉验收。F7 总体只有所有链路整改和真实验收完成后才可标记完成。
 
 ## F0 验收记录
 
@@ -123,7 +123,7 @@ F2.4.2 的原生视觉工具接线、单视图复核数据隔离及质量验收�
 F2.5 的原生 CAD 写工具、真实 DSH→Cordis→Rust→OCCT 调用及 Python worker 移除见[Rust 原生 CAD 写工具](./21-f2-native-cad-write-tools.md)。
 
 F5.4 的原生活动模型 Wavefront OBJ 导出见[Rust 原生 OBJ 导出](./40-f5-native-obj-export.md)。
-F7.G3 的本轮终态与当前模型验收状态展示见[可见状态记录](./42-f7-g3-visible-acceptance-state.md)。
+F7.G3 的状态真值与当前模型验收展示见[可见状态记录](./42-f7-g3-visible-acceptance-state.md)。Run03–07 均为严格冷启动失败样本；Run07 只通过了视图枚举修正的行为检查，不能据此推断 F7/G8 通过。
 
 F4.1 的真实 SDK、DLL 生命周期缺陷和几何检查记录见[固定 OCCT SDK 与 Rust 几何基础](./10-f4-native-occt-foundation.md)。
 
