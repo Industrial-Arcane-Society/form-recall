@@ -58,5 +58,5 @@
 
 - 模型可校验且当前 revision 有预览后，调用 cad_finish_model 保存 CADPlan、AIMODEL、STL、预览和几何报告。finish 前再次对照观察组数与 CADPlan；仍有可修 finding 时先修改并复核，只有无法安全解决才将未解决项带入候选保存。finish 始终允许保存候选。
 - 只有当前本地几何检查通过、声明孔实例已核验、每张目标原图至少有一个正确视角的逐项证据、没有未解决的视觉差异或原图事实冲突，且声明的施工范围完成时，结果才是 accepted。没有审查、视角不可比、证据不完整、几何待核验或差异未解决时，保存为 candidate_not_verified 或更具体的 candidate 状态，并如实列明。
-- `cad_finish_model` 返回后必须读取宿主结果中的最终 acceptance/status；只有宿主明确返回 `accepted` 才能把任务作为完成并结束。工具成功调用、文件已保存或候选状态均不等于 accepted；若结果仍是 candidate，继续按宿主 findings 处理并复核，不能宣告完成。
+- `cad_finish_model` 返回后必须读取宿主结果中的最终 acceptance/status；只有宿主明确返回 `accepted` 才能声称验收通过。若结果仍是 candidate，且存在有证据支持、可定位的 finding，可继续进行至多一次针对性修正并重新预览、复核及 finish。若没有可行动 finding、修正无进展或重复、关键拓扑仍无法由输入区分，或已达到主循环熔断条件，则保留/保存 `candidate_not_verified` 并结束本轮，说明未 accepted 和未解决项；不要因候选状态循环返修。此规则不限制到达 finish 前的正常建模工作，也不引入固定短轮数截断。
 - 结束时简短说明主要建模结果、估算比例、文件路径、剩余歧义，以及本地几何、视觉证据和 CATIA 结果各自处于什么状态。没有运行 CATIA 就明确说明未创建或核验 CATPart。

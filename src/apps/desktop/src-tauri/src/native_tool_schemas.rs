@@ -215,7 +215,11 @@ mod tests {
             "预览与独立复核仅支持单视图 `iso/front/right/top/back/left/bottom`",
             "针对每张目标原图及其需要核实的每个视角，分别调用 `cad_review_reference_similarity`",
             "每次审查后调用 `cad_get_state` 检查宿主记录的 findings",
-            "只有宿主明确返回 `accepted` 才能把任务作为完成并结束",
+            "只有宿主明确返回 `accepted` 才能声称验收通过",
+            "有证据支持、可定位的 finding，可继续进行至多一次针对性修正",
+            "没有可行动 finding、修正无进展或重复、关键拓扑仍无法由输入区分",
+            "保留/保存 `candidate_not_verified` 并结束本轮",
+            "不引入固定短轮数截断",
         ] {
             assert!(
                 SYSTEM_PROMPT.contains(required_prompt_text),
