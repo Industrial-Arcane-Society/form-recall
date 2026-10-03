@@ -30,9 +30,9 @@ CAD 功能作为 Cordis 原生插件执行；不能因为 ACP server 可选挂�
 
 ## 运行时固定与升级
 
-应用发布版本携带一个机器可读的 runtime manifest，精确列出兼容的 Node、DSH、ACP profile、Cordis 插件、OCCT native payload 与 CATIA adapter 版本，并记录平台、下载地址、SHA-256 与签名/来源信息。桌面端首次使用按该清单获取资源；应用升级只切换到新应用内的清单版本。运行时校验失败时不得启动部分升级的服务，应保留上一版本并回滚。
+应用发布版本携带机器可读 runtime manifest，精确列出已交付运行时的兼容版本和 SHA-256 来源。桌面端按该清单获取应用私有 Node/DSH Runtime；新版本在暂存目录安装，校验通过后切换，失败则恢复上一版。manifest 未来可扩展至 OCCT native payload 与 CATIA adapter，但这些当前不属于 DSH Runtime manifest 的已交付范围。
 
-manifest、下载、哈希校验、暂存、原子切换、离线安装与回滚目前尚未实现，列在[迁移 Todo](../06-roadmap/01-migration-todo.md)。
+截至 F1.3，Node/DSH manifest、私有安装、版本校验、暂存切换和失败恢复已有实现；Rust ACP Host、会话恢复及 Tauri Agent 事件也已接入。固定 DSH 的控制面与 Cordis 装载已经过隔离验证。已安装桌面端完整演练、真实模型请求、原图到 provider 的传输、CAD 工具实建和几何验收仍未完成，见[F1 ACP 验收卡](../06-roadmap/02-f1-acp-host.md)与[迁移 Todo](../06-roadmap/01-migration-todo.md)。
 
 ## 会话与事件
 

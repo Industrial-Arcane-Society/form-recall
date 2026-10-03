@@ -3404,6 +3404,41 @@ def _inspect_reference(state: dict[str, Any], reference_image_index: int | None 
     return inventory
 
 
+def _native_web_evidence_page(result_id: str) -> dict[str, Any] | None:
+    """Read Rust-owned opened evidence while the verifier remains transitional.
+
+    The Rust session persists the search index because compatibility workers
+    have no shared Python process memory. Never promote snippets to page text.
+    """
+    path = _STATE_DIR / "native-web-state.json"
+    if not path.is_file():
+        return None
+    if path.stat().st_size > 32 * 1024 * 1024:
+        raise ValueError("Rust 网页证据状态超过允许大小；原文件已保留。")
+    value = json.loads(path.read_text(encoding="utf-8"))
+    if not isinstance(value, dict) or value.get("schemaVersion") != 1:
+        raise ValueError("Rust 网页证据状态版本无效。")
+    results, pages = value.get("results"), value.get("opened_pages")
+    if not isinstance(results, list) or not isinstance(pages, list):
+        raise ValueError("Rust 网页证据状态缺少结果索引或已打开正文。")
+    row = next((row for row in results if isinstance(row, dict)
+                and row.get("result_id") == result_id), None)
+    page = next((page for page in pages if isinstance(page, dict)
+                 and page.get("result_id") == result_id), None)
+    if row is None or page is None:
+        return None
+    url, title, text = row.get("url"), row.get("title"), page.get("text")
+    if not all(isinstance(field, str) for field in (url, title, text)) or not text:
+        raise ValueError("Rust 网页证据字段无效。")
+    expected_id = hashlib.sha256((url + title).encode("utf-8")).hexdigest()[:16]
+    text_sha = hashlib.sha256(text.encode("utf-8")).hexdigest()
+    if expected_id != result_id or page.get("url") != url or page.get("text_sha256") != text_sha:
+        raise ValueError("Rust 网页证据 result_id、URL 或正文 SHA 不一致。")
+    return {"url": url, "text": text, "text_sha256": text_sha,
+            "diagnostics": page.get("diagnostics"),
+            "opened_at": float(page.get("opened_at_epoch_ms") or 0) / 1000}
+
+
 def _validate_public_web_url(url: str) -> urllib.parse.SplitResult:
     parsed = urllib.parse.urlsplit(url)
     if parsed.scheme.lower() not in {"http", "https"} or not parsed.hostname:
@@ -4922,7 +4957,7 @@ def _handle_tool(name: str, args: dict[str, Any],
         result_id = str(args.get("result_id") or "").strip()
         quote = str(args.get("quote") or "").strip()
         fact = (state.get("required_external_facts") or {}).get(fact_id)
-        page = _SEARCH_RESULT_DETAILS.get(result_id) or {}
+        page = _SEARCH_RESULT_DETAILS.get(result_id) or _native_web_evidence_page(result_id) or {}
         if not isinstance(fact, dict):
             raise ValueError("fact_id 尚未登记为required external fact。")
         if not page.get("text"):

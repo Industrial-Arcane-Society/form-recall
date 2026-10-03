@@ -1,31 +1,180 @@
-// Native Cordis tool registration for the DSH Agent. Python work crosses a
-// private one-shot JSONL boundary; no MCP client, server, or protocol is used.
-import { spawn, spawnSync } from 'node:child_process'
+// Native Cordis tool registration for the DSH Agent. Tool schemas are supplied
+// by the Rust host and calls cross its authenticated loopback JSON-RPC bridge.
+import { randomUUID } from 'node:crypto'
+import { appendFileSync, readFileSync, statSync, writeFileSync } from 'node:fs'
 import { createRequire } from 'node:module'
-import { writeFileSync } from 'node:fs'
+import { createConnection } from 'node:net'
 import { join, resolve } from 'node:path'
 
 export const name = 'ai-modeler-native-cordis-tools'
 export const inject = ['tools', 'attachments']
 
-const PYTHON = process.env.AI_MODELER_PYTHON || 'python'
-const PROJECT_ROOT = process.env.AI_MODELER_PROJECT_ROOT || process.cwd()
-const TIMEOUT_MS = 210_000
+const TOOL_TIMEOUT_MS = 210_000
+const CONNECT_TIMEOUT_MS = 5_000
+const CANCEL_TIMEOUT_MS = 5_000
+const MAX_JSON_LINE_BYTES = 64 * 1024 * 1024
+const MAX_SCHEMA_FILE_BYTES = 8 * 1024 * 1024
+const MAX_IMAGE_BYTES = 20 * 1024 * 1024
+const DIAGNOSTIC_STAGES = new Set([
+  'native_bridge_result', 'native_image_decode', 'native_image_validation',
+  'attachment_save', 'cordis_tools_result',
+])
+const DIAGNOSTIC_ERROR_CODES = new Set([
+  'ABORTED', 'ABORTED_BEFORE_DISPATCH', 'UNKNOWN_TOOL', 'INVALID_TOOL_OUTPUT',
+  'IMAGE_RESULT_INVALID', 'IMAGE_RESULT_SIZE_LIMIT', 'ATTACHMENT_SAVE_FAILED',
+])
+const DIAGNOSTIC_ERROR_TYPES = new Set([
+  'AbortError', 'ToolNotFoundError', 'ToolOutputError', 'TypeError', 'RangeError', 'Error',
+])
+const DIAGNOSTIC_MEDIA_TYPES = new Set(['image/png', 'image/jpeg', 'image/webp', 'image/gif'])
+const DIAGNOSTIC_CONTENT_TYPES = new Set(['text', 'reasoning', 'image', 'file', 'tool-call', 'tool-addition', 'tool-removal'])
 
-function loadSchemas() {
-  const proc = spawnSync(PYTHON, ['-u', '-m', 'ai_modeler.agent.dsh_tool_worker', '--schemas'], {
-    cwd: PROJECT_ROOT,
-    env: process.env,
-    encoding: 'utf8',
-    timeout: 20_000,
-    windowsHide: true,
-    maxBuffer: 4 * 1024 * 1024,
+function isRecord(value) {
+  return value !== null && typeof value === 'object' && !Array.isArray(value)
+}
+
+const safeToolName = value => typeof value === 'string' && /^[a-z][a-z0-9_.-]{0,63}$/i.test(value) ? value : 'other'
+const safeCount = value => Number.isSafeInteger(value) && value >= 0 ? value : null
+
+function summarizeContentBlocks(content) {
+  if (!Array.isArray(content)) return []
+  return content.slice(0, 64).map(block => {
+    const type = DIAGNOSTIC_CONTENT_TYPES.has(block?.type) ? block.type : 'other'
+    const summary = { type }
+    if (type === 'text' || type === 'reasoning') {
+      if (typeof block.text === 'string') summary.text_utf8_bytes = Buffer.byteLength(block.text, 'utf8')
+    }
+    if (type === 'image' && isRecord(block.attachment)) {
+      summary.media_type = DIAGNOSTIC_MEDIA_TYPES.has(block.attachment.mediaType) ? block.attachment.mediaType : 'other'
+    }
+    return summary
   })
-  if (proc.error) throw proc.error
-  if (proc.status !== 0) throw new Error(`AI Modeler schema worker exited ${proc.status}: ${proc.stderr || ''}`)
-  const response = JSON.parse(proc.stdout.trim())
-  if (response?.ok !== true || !Array.isArray(response.schemas)) throw new Error('AI Modeler returned invalid native tool schemas.')
-  return response.schemas
+}
+
+export function summarizeToolResultDiagnostic({ tool, stage, isError, error, content, text, decodedImages } = {}) {
+  const record = {
+    tool: safeToolName(tool),
+    stage: DIAGNOSTIC_STAGES.has(stage) ? stage : 'other',
+    isError: typeof isError === 'boolean' ? isError : null,
+    error_present: error !== undefined && error !== null,
+    error_info_present: isRecord(error?.info),
+    error_name_present: false,
+    error_code_present: false,
+  }
+  if (typeof text === 'string') record.text_utf8_bytes = Buffer.byteLength(text, 'utf8')
+  if (Array.isArray(content)) record.content_blocks = summarizeContentBlocks(content)
+  if (Array.isArray(decodedImages)) {
+    record.images = decodedImages.slice(0, 64).map(image => ({
+      media_type: DIAGNOSTIC_MEDIA_TYPES.has(image?.mediaType) ? image.mediaType : 'other',
+      decoded_bytes: safeCount(image?.decodedBytes),
+    }))
+  }
+  if (isRecord(error)) {
+    const info = isRecord(error.info) ? error.info : error
+    record.error_name_present = info.name !== undefined && info.name !== null
+    record.error_code_present = info.code !== undefined && info.code !== null
+    if (DIAGNOSTIC_ERROR_TYPES.has(info.name)) record.error_type = info.name
+    else if (info.name !== undefined) record.error_type = 'other'
+    if (DIAGNOSTIC_ERROR_CODES.has(info.code)) record.error_code = info.code
+    else if (info.code !== undefined) record.error_code = 'other'
+  }
+  return record
+}
+
+function recordToolResultDiagnostic(filePath, event) {
+  if (!filePath) return
+  try {
+    appendFileSync(resolve(filePath), JSON.stringify(summarizeToolResultDiagnostic(event)) + '\n', { mode: 0o600 })
+  } catch { /* diagnostics must never affect tool execution */ }
+}
+
+function validateJsonSchema(schema, location, depth = 0) {
+  if (!isRecord(schema) || depth > 48) {
+    throw new Error(`AI Modeler native tool schema ${location} is malformed or nested too deeply.`)
+  }
+  const supportedTypes = new Set(['object', 'array', 'string', 'number', 'integer', 'boolean', 'null'])
+  if (schema.type !== undefined && !supportedTypes.has(schema.type)) {
+    throw new Error(`AI Modeler native tool schema ${location} has an unsupported type.`)
+  }
+  if (schema.enum !== undefined && !Array.isArray(schema.enum)) {
+    throw new Error(`AI Modeler native tool schema ${location} has a malformed enum.`)
+  }
+  if (schema.oneOf !== undefined && (!Array.isArray(schema.oneOf) || schema.oneOf.length === 0)) {
+    throw new Error(`AI Modeler native tool schema ${location} has a malformed oneOf.`)
+  }
+  if (schema.required !== undefined
+      && (!Array.isArray(schema.required) || schema.required.some(key => typeof key !== 'string'))) {
+    throw new Error(`AI Modeler native tool schema ${location} has an invalid required list.`)
+  }
+  if (schema.properties !== undefined && !isRecord(schema.properties)) {
+    throw new Error(`AI Modeler native tool schema ${location} has malformed properties.`)
+  }
+  for (const key of schema.required || []) {
+    if (schema.properties && !Object.hasOwn(schema.properties, key)) {
+      throw new Error(`AI Modeler native tool schema ${location} requires unknown property "${key}".`)
+    }
+  }
+  for (const [key, child] of Object.entries(schema.properties || {})) {
+    validateJsonSchema(child, `${location}.properties.${key}`, depth + 1)
+  }
+  if (schema.items !== undefined) validateJsonSchema(schema.items, `${location}.items`, depth + 1)
+  if (Array.isArray(schema.oneOf)) {
+    schema.oneOf.forEach((branch, index) => validateJsonSchema(branch, `${location}.oneOf[${index}]`, depth + 1))
+  }
+  if (isRecord(schema.additionalProperties)) {
+    validateJsonSchema(schema.additionalProperties, `${location}.additionalProperties`, depth + 1)
+  } else if (schema.additionalProperties !== undefined && typeof schema.additionalProperties !== 'boolean') {
+    throw new Error(`AI Modeler native tool schema ${location} has malformed additionalProperties.`)
+  }
+}
+
+function validateToolSchemaManifest(manifest) {
+  if (!isRecord(manifest) || manifest.schemaVersion !== 1 || !Array.isArray(manifest.tools)) {
+    throw new Error('AI Modeler Rust host returned an invalid native tool schema manifest (expected schemaVersion 1 and tools[]).')
+  }
+  if (manifest.tools.length === 0) throw new Error('AI Modeler native tool schema manifest contains no tools.')
+
+  const names = new Set()
+  for (const [index, tool] of manifest.tools.entries()) {
+    const location = `tools[${index}]`
+    if (!isRecord(tool) || typeof tool.name !== 'string'
+        || !/^[a-z][a-z0-9_]{0,63}$/.test(tool.name)) {
+      throw new Error(`AI Modeler native tool schema ${location} has an invalid tool name.`)
+    }
+    if (names.has(tool.name)) throw new Error(`AI Modeler native tool schema contains duplicate tool name "${tool.name}".`)
+    names.add(tool.name)
+    if (typeof tool.description !== 'string' || !tool.description.trim()) {
+      throw new Error(`AI Modeler native tool schema "${tool.name}" needs a non-empty description.`)
+    }
+    const schema = tool.inputSchema
+    if (!isRecord(schema) || schema.type !== 'object' || !isRecord(schema.properties || {})) {
+      throw new Error(`AI Modeler native tool schema "${tool.name}" needs an object inputSchema with properties.`)
+    }
+    validateJsonSchema(schema, `"${tool.name}".inputSchema`)
+  }
+  return manifest.tools
+}
+
+export function readNativeToolSchemas(filePath = process.env.AI_MODELER_NATIVE_TOOL_SCHEMAS_FILE) {
+  if (typeof filePath !== 'string' || !filePath.trim()) {
+    throw new Error('AI_MODELER_NATIVE_TOOL_SCHEMAS_FILE was not configured by the Rust host.')
+  }
+  let fileSize
+  try {
+    fileSize = statSync(filePath).size
+  } catch (error) {
+    throw new Error(`Unable to read AI Modeler native tool schema file "${filePath}": ${error.message}`)
+  }
+  if (fileSize <= 0 || fileSize > MAX_SCHEMA_FILE_BYTES) {
+    throw new Error(`AI Modeler native tool schema file must be between 1 byte and ${MAX_SCHEMA_FILE_BYTES} bytes.`)
+  }
+  let manifest
+  try {
+    manifest = JSON.parse(readFileSync(filePath, 'utf8'))
+  } catch (error) {
+    throw new Error(`AI Modeler native tool schema file is not valid JSON: ${error.message}`)
+  }
+  return validateToolSchemaManifest(manifest)
 }
 
 function authorSchema(schema, required = false) {
@@ -38,6 +187,9 @@ function authorSchema(schema, required = false) {
   const constraints = ['minimum', 'maximum', 'exclusiveMinimum', 'exclusiveMaximum',
     'minLength', 'maxLength', 'minItems', 'maxItems', 'pattern']
     .filter(key => Object.hasOwn(schema, key)).map(key => `${key}=${JSON.stringify(schema[key])}`)
+  if (isRecord(schema.additionalProperties)) {
+    constraints.push(`additionalProperties schema=${JSON.stringify(schema.additionalProperties)}`)
+  }
   if (constraints.length) {
     annotations.description = `${annotations.description ? `${annotations.description} ` : ''}Constraints: ${constraints.join(', ')}.`
   }
@@ -47,7 +199,14 @@ function authorSchema(schema, required = false) {
   } else if (schema.type === 'object') {
     const requiredKeys = new Set(Array.isArray(schema.required) ? schema.required : [])
     const properties = Object.fromEntries(Object.entries(schema.properties || {}).map(([key, value]) => [key, authorSchema(value, requiredKeys.has(key))]))
-    node = { type: 'object', properties, additionalProperties: schema.additionalProperties === true }
+    node = {
+      type: 'object',
+      properties,
+      // DSH's defineTool schema compiler accepts only a boolean here. Keep
+      // the value shape in the description so dynamic provenance maps remain
+      // usable without emitting an unsupported JSON Schema object.
+      additionalProperties: schema.additionalProperties === true || isRecord(schema.additionalProperties),
+    }
   } else if (schema.type === 'array') {
     node = { type: 'array', ...(schema.items ? { items: authorSchema(schema.items) } : {}) }
   } else if (['string', 'number', 'integer', 'boolean', 'null'].includes(schema.type)) {
@@ -62,79 +221,250 @@ function authorSchema(schema, required = false) {
   return node
 }
 
-function executeWorker(toolName, args, signal) {
-  if (signal.aborted) return Promise.reject(signal.reason || new Error('Tool call cancelled.'))
-  return new Promise((resolve, reject) => {
-    const child = spawn(PYTHON, ['-u', '-m', 'ai_modeler.agent.dsh_tool_worker'], {
-      cwd: PROJECT_ROOT,
-      env: process.env,
-      stdio: ['pipe', 'pipe', 'pipe'],
-      windowsHide: true,
-    })
-    let stdout = ''
-    let stderr = ''
+function parseLoopbackAddress(address) {
+  if (typeof address !== 'string') throw new Error('AI_MODELER_TOOL_BRIDGE_ADDR was not configured by the Rust host.')
+  const match = /^127\.0\.0\.1:(\d{1,5})$/.exec(address.trim())
+  const port = match ? Number(match[1]) : NaN
+  if (!Number.isInteger(port) || port < 1 || port > 65535) {
+    throw new Error('AI_MODELER_TOOL_BRIDGE_ADDR must be a loopback address in the form 127.0.0.1:PORT.')
+  }
+  return { host: '127.0.0.1', port }
+}
+
+function responseError(response, requestId, method) {
+  if (!isRecord(response)) return new Error(`AI Modeler tool bridge ${method} returned a non-object JSON response.`)
+  if (response.jsonrpc !== '2.0') return new Error(`AI Modeler tool bridge ${method} returned a response without JSON-RPC 2.0.`)
+  if (response.id !== requestId) return new Error(`AI Modeler tool bridge ${method} response id did not match the request.`)
+  if (Object.hasOwn(response, 'error')) {
+    const error = response.error
+    if (!isRecord(error) || (typeof error.code !== 'string' && typeof error.code !== 'number')
+        || typeof error.message !== 'string') {
+      return new Error(`AI Modeler tool bridge ${method} returned a malformed JSON-RPC error.`)
+    }
+    return new Error(`AI Modeler tool bridge ${method} failed (${error.code}): ${error.message.slice(0, 1200)}`)
+  }
+  if (!Object.hasOwn(response, 'result')) return new Error(`AI Modeler tool bridge ${method} response has neither result nor error.`)
+  return null
+}
+
+export function requestToolBridge(method, params, {
+  address,
+  connectTimeoutMs = CONNECT_TIMEOUT_MS,
+  timeoutMs = TOOL_TIMEOUT_MS,
+  maxLineBytes = MAX_JSON_LINE_BYTES,
+  signal,
+} = {}) {
+  if (!['tools/call', 'tools/cancel'].includes(method)) {
+    return Promise.reject(new Error(`Unsupported AI Modeler tool bridge method "${method}".`))
+  }
+  const endpoint = parseLoopbackAddress(address)
+  const request = { jsonrpc: '2.0', id: randomUUID(), method, params }
+  let wire
+  try {
+    wire = `${JSON.stringify(request)}\n`
+  } catch (error) {
+    return Promise.reject(new Error(`Unable to encode AI Modeler tool bridge ${method} request: ${error.message}`))
+  }
+  if (Buffer.byteLength(wire) > maxLineBytes) {
+    return Promise.reject(new Error(`AI Modeler tool bridge ${method} request exceeds the ${maxLineBytes}-byte line limit.`))
+  }
+  if (signal?.aborted) return Promise.reject(abortError(signal))
+
+  return new Promise((resolvePromise, rejectPromise) => {
+    const socket = createConnection(endpoint)
+    let buffer = Buffer.alloc(0)
     let settled = false
-    let aborted = false
+    let connectTimer
+    let operationTimer
+    const onAbort = () => fail(abortError(signal))
     const cleanup = () => {
-      clearTimeout(timer)
-      signal.removeEventListener('abort', abort)
+      clearTimeout(connectTimer)
+      clearTimeout(operationTimer)
+      signal?.removeEventListener('abort', onAbort)
+      socket.removeAllListeners()
+      if (!socket.destroyed) socket.destroy()
     }
     const fail = error => {
       if (settled) return
       settled = true
       cleanup()
-      reject(error)
+      rejectPromise(error instanceof Error ? error : new Error(String(error)))
     }
-    const abort = () => {
-      aborted = true
-      if (!child.stdin.destroyed) child.stdin.write(JSON.stringify({ cancel: true }) + '\n')
-    }
-    const timer = setTimeout(() => {
-      child.kill()
-      fail(new Error(`AI Modeler tool ${toolName} timed out after ${TIMEOUT_MS}ms.`))
-    }, TIMEOUT_MS)
-    signal.addEventListener('abort', abort, { once: true })
-    child.on('error', fail)
-    child.stdout.setEncoding('utf8')
-    child.stderr.setEncoding('utf8')
-    child.stdout.on('data', chunk => { stdout += chunk })
-    child.stderr.on('data', chunk => { stderr += chunk })
-    child.on('close', code => {
+    const finish = value => {
       if (settled) return
-      if (code !== 0) return fail(new Error(`AI Modeler tool worker exited ${code}: ${stderr.slice(0, 1200)}`))
-      try {
-        const response = JSON.parse(stdout.trim())
-        if (!response?.ok) return fail(new Error(response?.error?.message || 'AI Modeler tool failed.'))
-        if (aborted) return fail(signal.reason || new Error('Tool call cancelled.'))
-        settled = true
-        cleanup()
-        resolve(response.result)
-      } catch (error) {
-        fail(new Error(`AI Modeler tool worker returned invalid JSON: ${String(error)}; ${stderr.slice(0, 500)}`))
-      }
+      settled = true
+      cleanup()
+      resolvePromise(value)
+    }
+    connectTimer = setTimeout(() => {
+      fail(new Error(`AI Modeler tool bridge connection timed out after ${connectTimeoutMs}ms.`))
+    }, connectTimeoutMs)
+    signal?.addEventListener('abort', onAbort, { once: true })
+    socket.once('connect', () => {
+      clearTimeout(connectTimer)
+      operationTimer = setTimeout(() => {
+        fail(new Error(`AI Modeler tool bridge ${method} timed out after ${timeoutMs}ms.`))
+      }, timeoutMs)
+      socket.write(wire, error => {
+        if (error) fail(new Error(`Unable to send AI Modeler tool bridge ${method} request: ${error.message}`))
+      })
     })
-    child.stdin.write(JSON.stringify({ name: toolName, arguments: args }) + '\n')
+    socket.on('data', chunk => {
+      if (settled) return
+      buffer = Buffer.concat([buffer, chunk])
+      if (buffer.byteLength > maxLineBytes) {
+        return fail(new Error(`AI Modeler tool bridge ${method} response exceeds the ${maxLineBytes}-byte line limit.`))
+      }
+      const newline = buffer.indexOf(0x0a)
+      if (newline < 0) return
+      const line = buffer.subarray(0, newline).toString('utf8').replace(/\r$/, '')
+      const trailing = buffer.subarray(newline + 1).toString('utf8').trim()
+      if (trailing) return fail(new Error(`AI Modeler tool bridge ${method} returned extra data after its response line.`))
+      let response
+      try {
+        response = JSON.parse(line)
+      } catch (error) {
+        return fail(new Error(`AI Modeler tool bridge ${method} returned invalid JSON: ${error.message}`))
+      }
+      const error = responseError(response, request.id, method)
+      if (error) return fail(error)
+      finish(response.result)
+    })
+    socket.once('error', error => fail(new Error(`AI Modeler tool bridge ${method} connection failed: ${error.message}`)))
+    socket.once('end', () => {
+      if (!settled) fail(new Error(`AI Modeler tool bridge ${method} closed before sending a complete JSON-RPC response line.`))
+    })
+    socket.once('close', () => {
+      if (!settled) fail(new Error(`AI Modeler tool bridge ${method} connection closed without a response.`))
+    })
   })
+}
+
+function activeTurnId(filePath) {
+  if (typeof filePath !== 'string' || !filePath.trim()) return undefined
+  let record
+  try {
+    record = JSON.parse(readFileSync(filePath, 'utf8'))
+  } catch (error) {
+    if (error?.code === 'ENOENT') return undefined
+    throw new Error(`Unable to read AI Modeler active turn id: ${error.message}`)
+  }
+  return typeof record?.turn_id === 'string' && record.turn_id.trim() ? record.turn_id.trim() : undefined
+}
+
+function abortError(signal) {
+  if (signal?.reason instanceof Error) return signal.reason
+  return new Error('AI Modeler tool call cancelled.')
+}
+
+export function createToolBridgeClient({
+  address,
+  token,
+  sessionId,
+  activeTurnFile,
+  connectTimeoutMs = CONNECT_TIMEOUT_MS,
+  operationTimeoutMs = TOOL_TIMEOUT_MS,
+  cancelTimeoutMs = CANCEL_TIMEOUT_MS,
+  maxLineBytes = MAX_JSON_LINE_BYTES,
+} = {}) {
+  parseLoopbackAddress(address)
+  if (typeof token !== 'string' || !token.trim()) throw new Error('AI_MODELER_TOOL_BRIDGE_TOKEN was not configured by the Rust host.')
+  if (typeof sessionId !== 'string' || !sessionId.trim()) throw new Error('AI_MODELER_TOOL_SESSION_ID was not configured by the Rust host.')
+
+  const request = (method, params, timeoutMs, signal) => requestToolBridge(method, params, {
+    address,
+    connectTimeoutMs,
+    timeoutMs,
+    maxLineBytes,
+    signal,
+  })
+
+  return {
+    async callTool(toolName, args, signal) {
+      if (!/^[a-z][a-z0-9_]{0,63}$/.test(toolName)) throw new Error(`Invalid AI Modeler tool name "${toolName}".`)
+      if (signal?.aborted) throw abortError(signal)
+
+      const toolCallId = randomUUID()
+      const turnId = activeTurnId(activeTurnFile)
+      const params = {
+        token,
+        sessionId,
+        toolCallId,
+        ...(turnId ? { turnId } : {}),
+        name: toolName,
+        arguments: args,
+        deadlineMs: Date.now() + operationTimeoutMs,
+      }
+      let cancelPromise
+      const onAbort = () => {
+        if (cancelPromise) return
+        cancelPromise = request('tools/cancel', {
+          token,
+          sessionId,
+          toolCallId,
+          ...(turnId ? { turnId } : {}),
+          deadlineMs: Date.now() + cancelTimeoutMs,
+        }, cancelTimeoutMs).catch(() => undefined)
+      }
+      signal?.addEventListener('abort', onAbort, { once: true })
+      try {
+        const result = await request('tools/call', params, operationTimeoutMs, signal)
+        if (signal?.aborted) {
+          onAbort()
+          await cancelPromise
+          throw abortError(signal)
+        }
+        return result
+      } catch (error) {
+        if (signal?.aborted) {
+          onAbort()
+          await cancelPromise
+          throw abortError(signal)
+        }
+        throw error
+      } finally {
+        signal?.removeEventListener('abort', onAbort)
+      }
+    },
+  }
 }
 
 export function apply(ctx) {
   const registrationPath = process.env.AI_MODELER_NATIVE_TOOLS_FILE
+  const diagnosticPath = process.env.AI_MODELER_TOOL_RESULT_DIAGNOSTICS_FILE
   if (registrationPath) writeFileSync(resolve(registrationPath), JSON.stringify({ phase: 'apply-entered' }), { mode: 0o600 })
   const packageRoot = process.env.AI_MODELER_DSH_NODE_MODULES
   if (!packageRoot) throw new Error('AI Modeler DSH Node package root was not configured.')
   const requireFromDsh = createRequire(join(packageRoot, '@deepseek-ai', 'dsh', 'package.json'))
   const { defineTool } = requireFromDsh('@deepseek-ai/dsh-tools')
-  const schemas = loadSchemas()
+  if (typeof defineTool !== 'function') throw new Error('AI Modeler could not load DSH defineTool().')
+
+  const schemas = readNativeToolSchemas()
+  if (diagnosticPath) {
+    ctx.on('tools/result', (exec, result) => {
+      recordToolResultDiagnostic(diagnosticPath, {
+        tool: exec?.name,
+        stage: 'cordis_tools_result',
+        isError: result?.isError,
+        error: result?.error,
+        content: result?.content,
+      })
+    })
+  }
+  const client = createToolBridgeClient({
+    address: process.env.AI_MODELER_TOOL_BRIDGE_ADDR,
+    token: process.env.AI_MODELER_TOOL_BRIDGE_TOKEN,
+    sessionId: process.env.AI_MODELER_TOOL_SESSION_ID,
+    activeTurnFile: process.env.AI_MODELER_ACTIVE_TURN_FILE,
+  })
+
   for (const tool of schemas) {
-    if (!tool || typeof tool.name !== 'string' || typeof tool.description !== 'string'
-        || !tool.inputSchema || tool.inputSchema.type !== 'object') {
-      throw new Error('AI Modeler contains an invalid native tool schema.')
-    }
+    const requiredKeys = new Set(Array.isArray(tool.inputSchema.required) ? tool.inputSchema.required : [])
     ctx.tools.register(defineTool({
       name: tool.name,
       description: tool.description,
       parameters: Object.fromEntries(Object.entries(tool.inputSchema.properties || {}).map(([key, value]) => [
-        key, authorSchema(value, Array.isArray(tool.inputSchema.required) && tool.inputSchema.required.includes(key)),
+        key, authorSchema(value, requiredKeys.has(key)),
       ])),
       output: {
         schema: { type: 'json' },
@@ -143,20 +473,64 @@ export function apply(ctx) {
           ...(value.imageAttachments || []).map(attachment => ({ type: 'image', attachment })),
         ],
       },
-      timeoutMs: TIMEOUT_MS,
+      timeoutMs: TOOL_TIMEOUT_MS,
       async execute(args, exec) {
-        const result = await executeWorker(tool.name, args, exec.signal)
+        const result = await client.callTool(tool.name, args, exec.signal)
+        if (!isRecord(result)) throw new Error(`AI Modeler tool bridge returned an invalid result for ${tool.name}.`)
         const images = Array.isArray(result.images) ? result.images : []
-        const prepared = images.map(image => {
+        recordToolResultDiagnostic(diagnosticPath, {
+          tool: tool.name,
+          stage: 'native_bridge_result',
+          isError: typeof result.payload?.isError === 'boolean' ? result.payload.isError : null,
+          text: typeof result.text === 'string' ? result.text : undefined,
+          content: [
+            ...(typeof result.text === 'string' ? [{ type: 'text', text: result.text }] : []),
+            ...images.map(image => ({ type: 'image', attachment: { mediaType: image?.mediaType } })),
+          ],
+        })
+        const decodedImages = []
+        const prepared = images.map((image, index) => {
           if (!['image/png', 'image/jpeg'].includes(image?.mediaType)
-              || typeof image.data !== 'string') throw new Error('AI Modeler returned an invalid image attachment.')
-          const data = Buffer.from(image.data, 'base64')
-          if (data.byteLength === 0 || data.byteLength > 20 * 1024 * 1024) {
-            throw new Error('AI Modeler image result exceeds the native attachment limit.')
+              || typeof image.data !== 'string'
+              || !/^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?$/.test(image.data)) {
+            recordToolResultDiagnostic(diagnosticPath, {
+              tool: tool.name, stage: 'native_image_validation', isError: true,
+              error: { name: 'TypeError', code: 'IMAGE_RESULT_INVALID' },
+              content: [{ type: 'image', attachment: { mediaType: image?.mediaType } }],
+            })
+            throw new Error(`AI Modeler returned an invalid image attachment at images[${index}].`)
           }
+          const data = Buffer.from(image.data, 'base64')
+          if (data.byteLength === 0 || data.byteLength > MAX_IMAGE_BYTES) {
+            recordToolResultDiagnostic(diagnosticPath, {
+              tool: tool.name, stage: 'native_image_validation', isError: true,
+              error: { name: 'RangeError', code: 'IMAGE_RESULT_SIZE_LIMIT' },
+              decodedImages: [{ mediaType: image.mediaType, decodedBytes: data.byteLength }],
+            })
+            throw new Error(`AI Modeler image result at images[${index}] exceeds the native attachment limit.`)
+          }
+          decodedImages.push({ mediaType: image.mediaType, decodedBytes: data.byteLength })
+          recordToolResultDiagnostic(diagnosticPath, {
+            tool: tool.name, stage: 'native_image_decode', isError: false,
+            decodedImages: [{ mediaType: image.mediaType, decodedBytes: data.byteLength }],
+          })
           return { data, mediaType: image.mediaType }
         })
-        const imageAttachments = prepared.length ? await ctx.attachments.saveImages(prepared) : []
+        let imageAttachments = []
+        try {
+          imageAttachments = prepared.length ? await ctx.attachments.saveImages(prepared) : []
+          if (prepared.length) recordToolResultDiagnostic(diagnosticPath, {
+            tool: tool.name, stage: 'attachment_save', isError: false,
+            decodedImages,
+          })
+        } catch (error) {
+          recordToolResultDiagnostic(diagnosticPath, {
+            tool: tool.name, stage: 'attachment_save', isError: true,
+            error: { name: 'Error', code: 'ATTACHMENT_SAVE_FAILED' },
+            decodedImages,
+          })
+          throw error
+        }
         return {
           text: typeof result.text === 'string' ? result.text : JSON.stringify(result),
           payload: result.payload || {},

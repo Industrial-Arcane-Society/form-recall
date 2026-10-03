@@ -1,0 +1,22 @@
+{
+  "manifestVersion": 1,
+  "platform": "windows-x86_64",
+  "node": {
+    "version": "v22.23.3",
+    "archiveFile": "node-v22.23.3-win-x64.zip",
+    "archiveUrl": "https://nodejs.org/dist/v22.23.3/node-v22.23.3-win-x64.zip",
+    "archiveSha256": "2b0ff57b049cda1bbcea2240eec20467018713c1efe1f7360c2681859b90ed71",
+    "npmVersion": "10.9.9"
+  },
+  "dsh": {
+    "version": "0.2.0-rc.2",
+    "acpVersion": "0.2.0-rc.2",
+    "acpSdkVersion": "1.4.0",
+    "cliPath": "node_modules/@deepseek-ai/dsh/lib/bin.js"
+  },
+  "npm": {
+    "registry": "https://registry.npmjs.org",
+    "packageJsonSha256": "19b3545689e15956aaab1b760dc4c99b7736cc2f29b1640d1dd23ac0fb4f1c6d",
+    "packageLockSha256": "15e46d8cdbc966f833527f3d3878443f03639fdf4036f1c5a5fddf90ae943ada"
+  }
+}

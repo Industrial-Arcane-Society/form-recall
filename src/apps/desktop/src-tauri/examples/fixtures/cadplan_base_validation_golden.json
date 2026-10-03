@@ -1,0 +1,652 @@
+{
+  "fixture_format": "cadplan-base-validation-golden-v1",
+  "python_source_sha256": "35a43284201add8c9ad8a462c1e828fcae76545060b34a0c719aaf50c2548afd",
+  "cases": [
+    {
+      "name": "box-base-True",
+      "plan": {
+        "schema_version": "1.0",
+        "name": "Native geometry fixture, not Agent image reproduction",
+        "source_prompt": "Deterministic fixture dimensions",
+        "units": {
+          "length": "mm",
+          "angle": "deg"
+        },
+        "coordinate_system": {
+          "type": "global_cartesian",
+          "handedness": "right",
+          "axes": [
+            "X",
+            "Y",
+            "Z"
+          ],
+          "origin": [
+            0,
+            0,
+            0
+          ]
+        },
+        "features": [
+          {
+            "id": "f1",
+            "kind": "box",
+            "operation": "add",
+            "parameters": {
+              "length": 10,
+              "width": 20,
+              "height": 30,
+              "base": true
+            },
+            "sources": {
+              "length": {
+                "type": "user"
+              },
+              "width": {
+                "type": "user"
+              },
+              "height": {
+                "type": "user"
+              },
+              "base": {
+                "type": "user"
+              }
+            }
+          }
+        ],
+        "pending_questions": []
+      },
+      "expected": {
+        "valid": true,
+        "state": "valid",
+        "errors": [],
+        "confirmations": [],
+        "support": [
+          {
+            "feature_id": "f1",
+            "kind": "box",
+            "status": "exact",
+            "reason": "矩形草图加凸台；当前 CATIA 映射仅支持 Z 轴拉伸。"
+          }
+        ],
+        "geometry_support": [
+          {
+            "feature_id": "f1",
+            "kind": "box",
+            "status": "exact",
+            "reason": "OCCT 棱柱；带圆角/倒角时沿用离散轮廓近似",
+            "backend": "occt_brep"
+          }
+        ],
+        "warnings": [],
+        "schema_version": "1.0"
+      }
+    },
+    {
+      "name": "box-base-False",
+      "plan": {
+        "schema_version": "1.0",
+        "name": "Native geometry fixture, not Agent image reproduction",
+        "source_prompt": "Deterministic fixture dimensions",
+        "units": {
+          "length": "mm",
+          "angle": "deg"
+        },
+        "coordinate_system": {
+          "type": "global_cartesian",
+          "handedness": "right",
+          "axes": [
+            "X",
+            "Y",
+            "Z"
+          ],
+          "origin": [
+            0,
+            0,
+            0
+          ]
+        },
+        "features": [
+          {
+            "id": "f1",
+            "kind": "box",
+            "operation": "add",
+            "parameters": {
+              "length": 10,
+              "width": 20,
+              "height": 30,
+              "base": false
+            },
+            "sources": {
+              "length": {
+                "type": "user"
+              },
+              "width": {
+                "type": "user"
+              },
+              "height": {
+                "type": "user"
+              },
+              "base": {
+                "type": "user"
+              }
+            }
+          }
+        ],
+        "pending_questions": []
+      },
+      "expected": {
+        "valid": true,
+        "state": "valid",
+        "errors": [],
+        "confirmations": [],
+        "support": [
+          {
+            "feature_id": "f1",
+            "kind": "box",
+            "status": "exact",
+            "reason": "矩形草图加凸台；当前 CATIA 映射仅支持 Z 轴拉伸。"
+          }
+        ],
+        "geometry_support": [
+          {
+            "feature_id": "f1",
+            "kind": "box",
+            "status": "exact",
+            "reason": "OCCT 棱柱；带圆角/倒角时沿用离散轮廓近似",
+            "backend": "occt_brep"
+          }
+        ],
+        "warnings": [],
+        "schema_version": "1.0"
+      }
+    },
+    {
+      "name": "box-base-0",
+      "plan": {
+        "schema_version": "1.0",
+        "name": "Native geometry fixture, not Agent image reproduction",
+        "source_prompt": "Deterministic fixture dimensions",
+        "units": {
+          "length": "mm",
+          "angle": "deg"
+        },
+        "coordinate_system": {
+          "type": "global_cartesian",
+          "handedness": "right",
+          "axes": [
+            "X",
+            "Y",
+            "Z"
+          ],
+          "origin": [
+            0,
+            0,
+            0
+          ]
+        },
+        "features": [
+          {
+            "id": "f1",
+            "kind": "box",
+            "operation": "add",
+            "parameters": {
+              "length": 10,
+              "width": 20,
+              "height": 30,
+              "base": 0
+            },
+            "sources": {
+              "length": {
+                "type": "user"
+              },
+              "width": {
+                "type": "user"
+              },
+              "height": {
+                "type": "user"
+              },
+              "base": {
+                "type": "user"
+              }
+            }
+          }
+        ],
+        "pending_questions": []
+      },
+      "expected": {
+        "valid": false,
+        "state": "invalid",
+        "errors": [
+          {
+            "code": "invalid_parameter_type",
+            "path": "$.features[0].parameters.base",
+            "message": "此参数必须为布尔值。"
+          }
+        ],
+        "confirmations": [],
+        "support": [
+          {
+            "feature_id": "f1",
+            "kind": "box",
+            "status": "exact",
+            "reason": "矩形草图加凸台；当前 CATIA 映射仅支持 Z 轴拉伸。"
+          }
+        ],
+        "geometry_support": [
+          {
+            "feature_id": "f1",
+            "kind": "box",
+            "status": "exact",
+            "reason": "OCCT 棱柱；带圆角/倒角时沿用离散轮廓近似",
+            "backend": "occt_brep"
+          }
+        ],
+        "warnings": [],
+        "schema_version": "1.0"
+      }
+    },
+    {
+      "name": "cylinder-base-True",
+      "plan": {
+        "schema_version": "1.0",
+        "name": "Native geometry fixture, not Agent image reproduction",
+        "source_prompt": "Deterministic fixture dimensions",
+        "units": {
+          "length": "mm",
+          "angle": "deg"
+        },
+        "coordinate_system": {
+          "type": "global_cartesian",
+          "handedness": "right",
+          "axes": [
+            "X",
+            "Y",
+            "Z"
+          ],
+          "origin": [
+            0,
+            0,
+            0
+          ]
+        },
+        "features": [
+          {
+            "id": "f1",
+            "kind": "cylinder",
+            "operation": "add",
+            "parameters": {
+              "radius": 5,
+              "height": 10,
+              "base": true
+            },
+            "sources": {
+              "radius": {
+                "type": "user"
+              },
+              "height": {
+                "type": "user"
+              },
+              "base": {
+                "type": "user"
+              }
+            }
+          }
+        ],
+        "pending_questions": []
+      },
+      "expected": {
+        "valid": true,
+        "state": "valid",
+        "errors": [],
+        "confirmations": [],
+        "support": [
+          {
+            "feature_id": "f1",
+            "kind": "cylinder",
+            "status": "exact",
+            "reason": "center 默认表示轴向底面中心(base=true)，height 沿 axis 正向拉伸；base=false 时 center 表示几何中点。等半径时为圆草图加凸台；圆锥台会近似，非 Z 轴圆锥台暂不支持。"
+          }
+        ],
+        "geometry_support": [
+          {
+            "feature_id": "f1",
+            "kind": "cylinder",
+            "status": "exact",
+            "reason": "解析圆柱或圆锥面",
+            "backend": "occt_brep"
+          }
+        ],
+        "warnings": [],
+        "schema_version": "1.0"
+      }
+    },
+    {
+      "name": "cylinder-base-False",
+      "plan": {
+        "schema_version": "1.0",
+        "name": "Native geometry fixture, not Agent image reproduction",
+        "source_prompt": "Deterministic fixture dimensions",
+        "units": {
+          "length": "mm",
+          "angle": "deg"
+        },
+        "coordinate_system": {
+          "type": "global_cartesian",
+          "handedness": "right",
+          "axes": [
+            "X",
+            "Y",
+            "Z"
+          ],
+          "origin": [
+            0,
+            0,
+            0
+          ]
+        },
+        "features": [
+          {
+            "id": "f1",
+            "kind": "cylinder",
+            "operation": "add",
+            "parameters": {
+              "radius": 5,
+              "height": 10,
+              "base": false
+            },
+            "sources": {
+              "radius": {
+                "type": "user"
+              },
+              "height": {
+                "type": "user"
+              },
+              "base": {
+                "type": "user"
+              }
+            }
+          }
+        ],
+        "pending_questions": []
+      },
+      "expected": {
+        "valid": true,
+        "state": "valid",
+        "errors": [],
+        "confirmations": [],
+        "support": [
+          {
+            "feature_id": "f1",
+            "kind": "cylinder",
+            "status": "exact",
+            "reason": "center 默认表示轴向底面中心(base=true)，height 沿 axis 正向拉伸；base=false 时 center 表示几何中点。等半径时为圆草图加凸台；圆锥台会近似，非 Z 轴圆锥台暂不支持。"
+          }
+        ],
+        "geometry_support": [
+          {
+            "feature_id": "f1",
+            "kind": "cylinder",
+            "status": "exact",
+            "reason": "解析圆柱或圆锥面",
+            "backend": "occt_brep"
+          }
+        ],
+        "warnings": [],
+        "schema_version": "1.0"
+      }
+    },
+    {
+      "name": "cylinder-base-'false'",
+      "plan": {
+        "schema_version": "1.0",
+        "name": "Native geometry fixture, not Agent image reproduction",
+        "source_prompt": "Deterministic fixture dimensions",
+        "units": {
+          "length": "mm",
+          "angle": "deg"
+        },
+        "coordinate_system": {
+          "type": "global_cartesian",
+          "handedness": "right",
+          "axes": [
+            "X",
+            "Y",
+            "Z"
+          ],
+          "origin": [
+            0,
+            0,
+            0
+          ]
+        },
+        "features": [
+          {
+            "id": "f1",
+            "kind": "cylinder",
+            "operation": "add",
+            "parameters": {
+              "radius": 5,
+              "height": 10,
+              "base": "false"
+            },
+            "sources": {
+              "radius": {
+                "type": "user"
+              },
+              "height": {
+                "type": "user"
+              },
+              "base": {
+                "type": "user"
+              }
+            }
+          }
+        ],
+        "pending_questions": []
+      },
+      "expected": {
+        "valid": false,
+        "state": "invalid",
+        "errors": [
+          {
+            "code": "invalid_parameter_type",
+            "path": "$.features[0].parameters.base",
+            "message": "此参数必须为布尔值。"
+          }
+        ],
+        "confirmations": [],
+        "support": [
+          {
+            "feature_id": "f1",
+            "kind": "cylinder",
+            "status": "exact",
+            "reason": "center 默认表示轴向底面中心(base=true)，height 沿 axis 正向拉伸；base=false 时 center 表示几何中点。等半径时为圆草图加凸台；圆锥台会近似，非 Z 轴圆锥台暂不支持。"
+          }
+        ],
+        "geometry_support": [
+          {
+            "feature_id": "f1",
+            "kind": "cylinder",
+            "status": "exact",
+            "reason": "解析圆柱或圆锥面",
+            "backend": "occt_brep"
+          }
+        ],
+        "warnings": [],
+        "schema_version": "1.0"
+      }
+    },
+    {
+      "name": "gear-base-True",
+      "plan": {
+        "schema_version": "1.0",
+        "name": "Native geometry fixture, not Agent image reproduction",
+        "source_prompt": "Deterministic fixture dimensions",
+        "units": {
+          "length": "mm",
+          "angle": "deg"
+        },
+        "coordinate_system": {
+          "type": "global_cartesian",
+          "handedness": "right",
+          "axes": [
+            "X",
+            "Y",
+            "Z"
+          ],
+          "origin": [
+            0,
+            0,
+            0
+          ]
+        },
+        "features": [
+          {
+            "id": "f1",
+            "kind": "gear",
+            "operation": "add",
+            "parameters": {
+              "teeth": 12,
+              "module": 2,
+              "height": 5,
+              "base": true
+            },
+            "sources": {
+              "teeth": {
+                "type": "user"
+              },
+              "module": {
+                "type": "user"
+              },
+              "height": {
+                "type": "user"
+              },
+              "base": {
+                "type": "user"
+              }
+            }
+          }
+        ],
+        "pending_questions": []
+      },
+      "expected": {
+        "valid": true,
+        "state": "valid",
+        "errors": [],
+        "confirmations": [],
+        "support": [
+          {
+            "feature_id": "f1",
+            "kind": "gear",
+            "status": "exact",
+            "reason": "齿廓转换为多边形草图并拉伸；当前仅支持 Z 轴。"
+          }
+        ],
+        "geometry_support": [
+          {
+            "feature_id": "f1",
+            "kind": "gear",
+            "status": "approximate",
+            "reason": "梯形齿廓为当前简化齿形，几何由多边形棱柱表达",
+            "backend": "occt_brep"
+          }
+        ],
+        "warnings": [
+          {
+            "code": "LOCAL_BREP_APPROXIMATION",
+            "feature_id": "f1",
+            "kind": "gear",
+            "message": "梯形齿廓为当前简化齿形，几何由多边形棱柱表达"
+          }
+        ],
+        "schema_version": "1.0"
+      }
+    },
+    {
+      "name": "gear-base-False",
+      "plan": {
+        "schema_version": "1.0",
+        "name": "Native geometry fixture, not Agent image reproduction",
+        "source_prompt": "Deterministic fixture dimensions",
+        "units": {
+          "length": "mm",
+          "angle": "deg"
+        },
+        "coordinate_system": {
+          "type": "global_cartesian",
+          "handedness": "right",
+          "axes": [
+            "X",
+            "Y",
+            "Z"
+          ],
+          "origin": [
+            0,
+            0,
+            0
+          ]
+        },
+        "features": [
+          {
+            "id": "f1",
+            "kind": "gear",
+            "operation": "add",
+            "parameters": {
+              "teeth": 12,
+              "module": 2,
+              "height": 5,
+              "base": false
+            },
+            "sources": {
+              "teeth": {
+                "type": "user"
+              },
+              "module": {
+                "type": "user"
+              },
+              "height": {
+                "type": "user"
+              },
+              "base": {
+                "type": "user"
+              }
+            }
+          }
+        ],
+        "pending_questions": []
+      },
+      "expected": {
+        "valid": true,
+        "state": "valid",
+        "errors": [],
+        "confirmations": [],
+        "support": [
+          {
+            "feature_id": "f1",
+            "kind": "gear",
+            "status": "exact",
+            "reason": "齿廓转换为多边形草图并拉伸；当前仅支持 Z 轴。"
+          }
+        ],
+        "geometry_support": [
+          {
+            "feature_id": "f1",
+            "kind": "gear",
+            "status": "approximate",
+            "reason": "梯形齿廓为当前简化齿形，几何由多边形棱柱表达",
+            "backend": "occt_brep"
+          }
+        ],
+        "warnings": [
+          {
+            "code": "LOCAL_BREP_APPROXIMATION",
+            "feature_id": "f1",
+            "kind": "gear",
+            "message": "梯形齿廓为当前简化齿形，几何由多边形棱柱表达"
+          }
+        ],
+        "schema_version": "1.0"
+      }
+    }
+  ]
+}

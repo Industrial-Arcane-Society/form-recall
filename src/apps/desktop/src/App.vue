@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, defineAsyncComponent, nextTick, onMounted, onUnmounted, ref, watch } from 'vue'
+import { computed, defineAsyncComponent, nextTick, onMounted, onUnmounted, ref, toRaw, watch } from 'vue'
 import { Channel, invoke, isTauri } from '@tauri-apps/api/core'
 import { confirm, message, open, save } from '@tauri-apps/plugin-dialog'
 import type { AttachmentItem } from './components/AttachmentPreview.vue'
@@ -7,26 +7,32 @@ import AttachmentPreview from './components/AttachmentPreview.vue'
 import DependencySetup from './components/DependencySetup.vue'
 import ModelStats from './components/ModelStats.vue'
 import UiIcon from './components/UiIcon.vue'
+import { documentAcceptanceView, modelAcceptanceView, turnStatusView } from './agentStatus.mjs'
+import { diagnosticStatusRows, nativeSelftestMessage } from './diagnosticStatus.mjs'
+import type { ModelAcceptanceView } from './agentStatus.mjs'
 
 const CadViewport = defineAsyncComponent(() => import('./components/CadViewport.vue'))
 
 type JsonMap = Record<string, any>
 type Feature = { index: number; kind: string; op?: string; name?: string; enabled: boolean; params: JsonMap; description?: string; editable_parameters?: string[] }
-type DocumentState = { revision: number; name: string; source_prompt?: string; current_path?: string | null; features: Feature[]; stats: JsonMap; build_log: string[]; mesh_path?: string | null }
+type DocumentState = { revision: number; cad_revision?: number; geometry_fingerprint?: string; acceptance_confirmed?: boolean; acceptance_source?: string; finish_status?: string; name: string; source_prompt?: string; current_path?: string | null; features: Feature[]; stats: JsonMap; build_log: string[]; mesh_path?: string | null; warnings?: any[]; finish_summary?: JsonMap | null; geometric_status?: string; visual_status?: string }
 type WireEvent = { event: string; request_id: string; data: any }
-type ChatLine = { role: 'user' | 'assistant' | 'progress'; text: string; images?: AttachmentItem[] }
+type ChatLine = { role: 'user' | 'assistant' | 'progress' | 'thought'; text: string; images?: AttachmentItem[]; requestId?: string; toolCallId?: string; open?: boolean }
 
 const desktop = isTauri()
 const needsDependencySetup = ref(import.meta.env.DEV && new URLSearchParams(window.location.search).get('setup') === 'dependencies')
 const dependencySetupError = ref('')
 const rootPath = ref('')
 const backendInfo = ref('连接中')
-const statusText = ref('正在连接 Python 后端…')
+const statusText = ref('正在启动原生 CAD 工作区…')
 const statusTone = ref('')
 const mode = ref<'agent' | 'quick'>('agent')
 const panel = ref<'tree' | 'params' | 'stats' | 'logs' | 'parts'>('tree')
 const themeDark = ref(false)
 const documentState = ref<DocumentState>({ revision: 0, name: 'Part1', features: [], stats: {}, build_log: [] })
+const modelAcceptance = ref<ModelAcceptanceView>(modelAcceptanceView(null))
+const turnStatus = ref(turnStatusView('idle'))
+const nativeModelActive = ref(false)
 const selectedIndex = ref(-1)
 const paramDraft = ref<Record<string, string>>({})
 const featureNameDraft = ref('')
@@ -47,12 +53,17 @@ const menuPopover = ref<HTMLElement | null>(null)
 const settingsOpen = ref(false)
 const settingsTab = ref<'llm' | 'online' | 'build' | 'viewer'>('llm')
 const settingsDraft = ref<JsonMap | null>(null)
+const agentStages = [
+  { key: 'perception', label: '感知（原图识别）' },
+  { key: 'modeling', label: '建模（ACP 主 Agent）' },
+  { key: 'review', label: '审查（视觉复核）' },
+] as const
 const providerTemplates = ref<any[]>([])
 const modelOptions = ref<string[]>([])
 const showApiKey = ref(false)
 const toolsOpen = ref(false)
-const mcpOpen = ref(false)
-const mcpData = ref<any>(null)
+const integrationsOpen = ref(false)
+const integrationStatus = ref<any>(null)
 const helpOpen = ref(false)
 const aboutOpen = ref(false)
 const onlineOpen = ref(false)
@@ -64,6 +75,8 @@ const partsBusy = ref(false)
 const sampleRows = ref<any[]>([])
 const samplesOpen = ref(false)
 const handshake = ref<any>(null)
+const runtimeReadiness = ref<any>(null)
+const diagnosticRows = computed(() => diagnosticStatusRows(runtimeReadiness.value))
 const previewUrl = ref('')
 const previewStage = ref('')
 const promptEl = ref<HTMLTextAreaElement | null>(null)
@@ -83,9 +96,9 @@ const featureEntries = computed(() => {
 })
 const llmDraft = computed(() => settingsDraft.value?.llm || {})
 const providersDraft = computed(() => Array.isArray(llmDraft.value.providers) ? llmDraft.value.providers : [])
-const activeProvider = computed(() => providersDraft.value.find((row: any) => row.id === llmDraft.value.active_provider_id) || providersDraft.value[0] || {})
+const activeProvider = computed(() => providersDraft.value.find((row: any) => row.id === llmDraft.value.active_provider_id) || providersDraft.value[0] || llmDraft.value || {})
 const stats = computed(() => documentState.value.stats || {})
-const canSubmit = computed(() => !busy.value && !attachmentLoading.value && (Boolean(prompt.value.trim()) || attachments.value.length > 0))
+const canSubmit = computed(() => desktop && !busy.value && !attachmentLoading.value && (Boolean(prompt.value.trim()) || attachments.value.length > 0))
 const workbenchStyle = computed(() => ({
   '--chat-width': chatCollapsed.value ? '0px' : `${chatWidth.value}px`,
   '--inspector-width': inspectorCollapsed.value ? '0px' : `${inspectorWidth.value}px`,
@@ -104,6 +117,52 @@ function setStatus(text: string, tone = '') {
   statusTone.value = tone
 }
 
+function ensureLlmDraft(settings: JsonMap) {
+  if (!settings.llm || typeof settings.llm !== 'object' || Array.isArray(settings.llm)) settings.llm = {}
+  const llm = settings.llm as JsonMap
+  if (!Array.isArray(llm.providers)) llm.providers = []
+  if (!llm.agent_stage_overrides || typeof llm.agent_stage_overrides !== 'object' || Array.isArray(llm.agent_stage_overrides)) {
+    llm.agent_stage_overrides = {}
+  }
+  const providerIds = new Set(llm.providers.map((row: any) => String(row?.id || '')).filter(Boolean))
+  for (const { key } of agentStages) {
+    const current = llm.agent_stage_overrides[key]
+    const override = current && typeof current === 'object' && !Array.isArray(current) ? current : {}
+    override.provider_id = typeof override.provider_id === 'string' && providerIds.has(override.provider_id) ? override.provider_id : ''
+    override.reasoning_effort = typeof override.reasoning_effort === 'string' ? override.reasoning_effort : ''
+    llm.agent_stage_overrides[key] = override
+  }
+  return settings
+}
+
+function stageProvider(stage: typeof agentStages[number]['key']) {
+  const overrideId = llmDraft.value.agent_stage_overrides?.[stage]?.provider_id
+  return providersDraft.value.find((row: any) => row.id === overrideId) || activeProvider.value
+}
+
+function resetAgentStage(stage: typeof agentStages[number]['key']) {
+  const overrides = llmDraft.value.agent_stage_overrides?.[stage]
+  if (!overrides) return
+  overrides.provider_id = ''
+  overrides.reasoning_effort = ''
+}
+
+function agentLlmConfig() {
+  const config = structuredClone(toRaw(llmDraft.value || {}))
+  const profile = activeProvider.value || {}
+  return {
+    ...config,
+    base_url: profile.base_url || config.base_url || '',
+    model: profile.model || config.model || '',
+    api_key: profile.api_key || config.api_key || '',
+    reasoning_effort: profile.reasoning_effort || config.reasoning_effort || 'none',
+    thinking_budget: profile.thinking_budget ?? config.thinking_budget,
+    dsh_context_window: profile.dsh_context_window ?? config.dsh_context_window,
+    dsh_output_cap: profile.dsh_output_cap ?? config.dsh_output_cap,
+    max_tokens: profile.max_tokens ?? config.max_tokens,
+  }
+}
+
 function addLog(text: string) {
   const stamp = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })
   eventLog.value = [stamp + '  ' + text, ...eventLog.value].slice(0, 260)
@@ -115,6 +174,7 @@ function updateDocument(payload: any, markDirty = true) {
   if (revision < currentRevision) return
   currentRevision = revision
   documentState.value = { ...documentState.value, ...payload, features: Array.isArray(payload.features) ? payload.features : [] }
+  modelAcceptance.value = documentAcceptanceView(documentState.value)
   isDirty.value = markDirty && payload.state !== 'opened'
   if (selectedIndex.value >= documentState.value.features.length) selectedIndex.value = -1
   if (Array.isArray(payload.build_log) && payload.build_log.length) {
@@ -124,7 +184,7 @@ function updateDocument(payload: any, markDirty = true) {
 
 async function handleWireEvent(event: WireEvent) {
   const data = event.data || {}
-  if (['job.progress', 'agent.progress', 'model.preview'].includes(event.event) && event.request_id !== activeRequestId.value) return
+  if (event.request_id && event.request_id !== activeRequestId.value) return
   if (event.event === 'job.progress') {
     setStatus(data.message || '正在计算模型…')
     if (data.message) addLog(data.message)
@@ -132,6 +192,7 @@ async function handleWireEvent(event: WireEvent) {
     setStatus(data.message || 'Agent 正在处理…')
     if (data.message) addLog(data.message)
   } else if (event.event === 'model.changed') {
+    nativeModelActive.value = true
     updateDocument(data)
     clearPreview()
     setStatus('模型已更新', 'success')
@@ -141,14 +202,76 @@ async function handleWireEvent(event: WireEvent) {
     setStatus(previewStage.value)
     if (data.preview_path) void loadPreview(data.preview_path)
     addLog('Agent 预览更新：' + previewStage.value)
+  } else if (event.event === 'agent.message') {
+    appendAgentText('assistant', event.request_id, String(data.text || ''))
+  } else if (event.event === 'agent.thought') {
+    appendAgentText('thought', event.request_id, String(data.text || ''))
+  } else if (event.event === 'agent.tool') {
+    const id = String(data.tool_call_id || data.title || 'tool')
+    const label = String(data.title || data.kind || '工具')
+    const state = String(data.status || (data.update === 'tool_call' ? 'running' : 'updated'))
+    let line = chat.value.find((item) => item.role === 'progress' && item.requestId === event.request_id && item.toolCallId === id)
+    const text = `工具：${label} · ${state}`
+    if (line) line.text = text
+    else chat.value.push({ role: 'progress', text, requestId: event.request_id, toolCallId: id })
+    addLog(text)
+  } else if (event.event === 'agent.status') {
+    const message = String(data.message || data.sessionUpdate || '')
+    if (message) setStatus(message)
+  } else if (event.event === 'agent.warning') {
+    const message = String(data.message || 'DSH 返回一条警告。')
+    chat.value.push({ role: 'progress', text: message, requestId: event.request_id })
+    addLog(message)
+  } else if (event.event === 'agent.usage') {
+    const total = Number(data.totalTokens ?? data.total_tokens ?? 0)
+    if (total > 0) addLog(`DSH 用量更新：${total.toLocaleString()} tokens`)
+  } else if (event.event === 'agent.turn_complete') {
+    turnStatus.value = turnStatusView(data.turn_status, data.stop_reason)
+    modelAcceptance.value = modelAcceptanceView(data.current_model)
+    addLog(`Agent 回合：${turnStatusLabel(data.turn_status, data.stop_reason)}；${currentModelStatusLabel(data.current_model)}`)
   }
 }
 
-async function backendCall<T = any>(method: string, params: JsonMap = {}, requestId = makeId()): Promise<T> {
-  if (!desktop) throw new Error('请使用 AI Modeler 桌面程序连接本机 Python 后端。')
-  const channel = new Channel<WireEvent>()
-  channel.onmessage = (event) => { void handleWireEvent(event) }
-  return await invoke<T>('backend_call', { id: requestId, method, params, onEvent: channel })
+function turnStatusLabel(status: string, stopReason?: string | null) {
+  if (status === 'completed') return '回复完成'
+  if (status === 'cancelled') return '已取消'
+  if (status === 'stopped') return '已停止' + (stopReason ? ` (${stopReason})` : '')
+  return '已结束（停止原因未提供）'
+}
+
+function currentModelStatusLabel(model: any) {
+  if (!model || model.exists !== true) return model?.status === 'unavailable' ? '当前模型状态不可读取' : '当前没有 CADPlan 模型'
+  const finish = String(model.finish_status || 'unknown')
+  const geometric = String(model.geometric?.status || 'unknown')
+  const visual = String(model.visual?.status || 'unknown')
+  return `模型完成状态=${finish}，几何状态=${geometric}，视觉状态=${visual}`
+}
+
+function appendAgentText(role: 'assistant' | 'thought', requestId: string, text: string) {
+  if (!text) return
+  let line = chat.value.find((item) => item.role === role && item.requestId === requestId)
+  if (!line) {
+    line = { role, requestId, text, ...(role === 'thought' ? { open: true } : {}) }
+    chat.value.push(line)
+  } else {
+    line.text += text
+    if (role === 'thought') line.open = true
+  }
+  scrollChat()
+}
+
+function finishAgentStream(requestId: string, reply: string) {
+  for (const item of chat.value) {
+    if (item.requestId === requestId && item.role === 'thought') item.open = false
+  }
+  const assistant = chat.value.find((item) => item.role === 'assistant' && item.requestId === requestId)
+  if (assistant) {
+    if (!assistant.text) assistant.text = reply || 'Agent 已结束本轮处理。'
+  } else if (reply) {
+    chat.value.push({ role: 'assistant', requestId, text: reply })
+  } else {
+    chat.value.push({ role: 'assistant', requestId, text: 'Agent 已结束本轮处理。' })
+  }
 }
 
 function scrollChat() {
@@ -157,33 +280,72 @@ function scrollChat() {
 
 async function initialize() {
   try {
-    const hello = await backendCall('system.handshake')
-    handshake.value = hello
-    rootPath.value = hello.project_root || ''
-    backendInfo.value = 'Python ' + (hello.python_version || '')
-    const init = await backendCall('system.initialize')
-    settingsDraft.value = structuredClone(init.settings || {})
-    updateDocument(init.document, false)
-    setStatus('后端已连接', 'success')
-    addLog('已连接 Python ' + (hello.python_version || '') + ' · ' + (hello.python_executable || ''))
+    const resources = await invoke<any>('native_resource_status')
+    rootPath.value = resources.root || ''
+    const readiness = await invoke<any>('native_runtime_status')
+    runtimeReadiness.value = readiness
+    handshake.value = await invoke<any>('native_about')
+    backendInfo.value = 'Rust 原生核心'
+    settingsDraft.value = ensureLlmDraft(structuredClone(await invoke<any>('native_settings_load')))
+    const active = await invoke<any>('active_model_snapshot')
+    if (active?.document) {
+      nativeModelActive.value = true
+      updateDocument(active.document, false)
+      addLog('已恢复 Rust 原生活动模型 generation ' + String(active.generation || '?'))
+    } else {
+      const document = await invoke<DocumentState>('active_model_new', { name: 'Part1' })
+      nativeModelActive.value = true
+      updateDocument(document, false)
+      addLog('已创建 Rust 原生空活动模型')
+    }
+    await restoreAgentHistory()
+    setStatus('原生 CAD 工作区已连接', 'success')
+    addLog(`桌面已就绪 · DSH ${readiness.dsh?.state || 'unknown'} · OCCT ${readiness.occt?.state || 'unknown'} · CATIA ${readiness.catia?.state || 'unknown'}`)
   } catch (error) {
-    backendInfo.value = '后端未连接'
+    backendInfo.value = '桌面核心未就绪'
     setStatus(errorMessage(error), 'error')
-    addLog('连接 Python 后端失败：' + errorMessage(error))
+    addLog('启动 Rust 原生工作区失败：' + errorMessage(error))
+  }
+}
+
+async function restoreAgentHistory() {
+  if (!desktop) return
+  try {
+    const saved = await invoke<{ turns?: any[] }>('agent_history')
+    const turns = Array.isArray(saved.turns) ? saved.turns : []
+    if (!turns.length) return
+    const restored: ChatLine[] = []
+    for (const turn of turns) {
+      if (turn?.role === 'user') {
+        const images = Array.isArray(turn.images)
+          ? await Promise.all(turn.images.map((image: any) => loadAttachment(String(image.path || ''), String(image.name || fileName(String(image.path || '')))).catch(() => null)))
+          : []
+        restored.push({ role: 'user', text: String(turn.text || '请根据参考图建立模型。'), images: images.filter((item): item is AttachmentItem => item !== null) })
+        if (typeof turn.assistant === 'string' && turn.assistant) restored.push({ role: 'assistant', text: turn.assistant })
+      } else if (turn?.role === 'assistant' && typeof turn.text === 'string') {
+        restored.push({ role: 'assistant', text: turn.text })
+      }
+    }
+    if (restored.length) chat.value = restored
+  } catch (error) {
+    addLog('恢复 Agent 对话记录失败：' + errorMessage(error))
   }
 }
 
 async function startApplication() {
   if (!desktop) {
-    await initialize()
+    backendInfo.value = '浏览器预览'
+    settingsDraft.value = ensureLlmDraft({ viewer: { edges: true, grid: true, axes: true, perspective: true } })
+    setStatus('浏览器预览已就绪；本地建模与文件操作请在桌面程序中使用。')
     return
   }
   try {
-    const status = await invoke<{ required: boolean; installed: boolean }>('dependency_status')
-    if (status.required && !status.installed) {
-      needsDependencySetup.value = true
-      return
-    }
+    const [resources, readiness] = await Promise.all([
+      invoke<any>('native_resource_status'),
+      invoke<any>('native_runtime_status'),
+    ])
+    runtimeReadiness.value = readiness
+    if (!resources.available) throw new Error('桌面静态资源不可用。')
     await initialize()
   } catch (error) {
     dependencySetupError.value = errorMessage(error)
@@ -194,7 +356,7 @@ async function startApplication() {
 function onDependenciesInstalled() {
   dependencySetupError.value = ''
   needsDependencySetup.value = false
-  void initialize()
+  void startApplication()
 }
 
 function errorMessage(error: unknown) {
@@ -296,9 +458,18 @@ async function onPaste(event: ClipboardEvent) {
 }
 
 async function submitPrompt() {
+  if (!desktop) {
+    setStatus('浏览器预览不提供本地建模，请在桌面程序中发送描述。')
+    return
+  }
   if (busy.value || attachmentLoading.value) return
   const text = prompt.value.trim()
   if (!text && !attachments.value.length) return
+  if (mode.value === 'agent' && !runtimeReadiness.value?.dsh?.installed) {
+    dependencySetupError.value = 'Agent 需要先安装应用私有的 DSH Runtime；本地 CAD 模型和 Quick 模式仍可继续使用。'
+    needsDependencySetup.value = true
+    return
+  }
   if (mode.value === 'quick' && attachments.value.length) {
     await showMessage('快速模式暂不接收图片', '请切换到 Agent 模式处理文字和参考图片。')
     return
@@ -312,28 +483,48 @@ async function submitPrompt() {
   const requestId = makeId()
   activeRequestId.value = requestId
   busy.value = true
+  turnStatus.value = turnStatusView('running')
   setStatus(mode.value === 'agent' ? 'Agent 正在处理…' : '正在快速建模…')
   try {
     if (mode.value === 'quick') {
-      const result = await backendCall('model.quick_build', { text: userText, new_model: true }, requestId)
+      const result = await invoke<any>('quick_build', { text: userText, revision: documentState.value.revision + 1 })
       if (result.state === 'parse_failed') {
         const suggestion = result.online_suggestion?.answer || result.online_suggestion?.summary || ''
         chat.value.push({ role: 'assistant', text: '暂时无法识别这条描述：' + (result.message || '请补充零件类型和尺寸。') + (suggestion ? '\n\n联网建议：' + suggestion : '') })
         setStatus('描述未识别', 'warning')
+        turnStatus.value = turnStatusView('completed')
       } else {
+        nativeModelActive.value = true
         updateDocument(result)
         const warnings = (result.warnings || []).map((item: any) => typeof item === 'string' ? item : item.message || JSON.stringify(item))
         chat.value.push({ role: 'assistant', text: '模型已生成，共 ' + ((result.features || []).length) + ' 个特征。' + (warnings.length ? '\n\n提示：' + warnings.join('；') : '') })
         setStatus('快速建模完成', 'success')
+        turnStatus.value = turnStatusView('completed')
       }
     } else {
-      const result = await backendCall('agent.send', { text: userText, images: imagePaths }, requestId)
+      const channel = new Channel<WireEvent>()
+      channel.onmessage = (event) => { void handleWireEvent(event) }
+      const result = await invoke<any>('agent_send', {
+        requestId,
+        text: userText,
+        images: imagePaths,
+        llmConfig: agentLlmConfig(),
+        onlineEnabled: settingsDraft.value?.online?.enabled !== false,
+        onEvent: channel,
+      })
       if (result.document) updateDocument(result.document)
-      chat.value.push({ role: 'assistant', text: result.reply || (result.state === 'cancelled' ? '任务已取消。' : 'Agent 已结束本轮处理。') })
-      setStatus(result.state === 'complete' ? 'Agent 建模完成' : 'Agent 已结束', result.state === 'complete' ? 'success' : '')
+      finishAgentStream(requestId, result.reply || (result.turn_status === 'cancelled' ? '本轮已取消。' : 'Agent 已结束本轮处理。'))
+      const finalTurnStatus = result.turn_status || 'ended'
+      const turnView = turnStatusView(finalTurnStatus, result.stop_reason)
+      turnStatus.value = turnView
+      if (result.current_model) modelAcceptance.value = modelAcceptanceView(result.current_model)
+      setStatus('Agent ' + turnStatusLabel(finalTurnStatus, result.stop_reason), finalTurnStatus === 'completed' ? 'success' : finalTurnStatus === 'cancelled' ? 'warning' : '')
     }
   } catch (error) {
-    chat.value.push({ role: 'assistant', text: '处理失败：' + errorMessage(error) })
+    turnStatus.value = turnStatusView('error')
+    const message = '处理失败：' + errorMessage(error)
+    if (mode.value === 'agent') finishAgentStream(requestId, message)
+    else chat.value.push({ role: 'assistant', text: message })
     setStatus('任务失败', 'error')
     addLog('任务失败：' + errorMessage(error))
   } finally {
@@ -345,15 +536,19 @@ async function submitPrompt() {
 
 async function cancelActive() {
   if (!activeRequestId.value) return
+  if (mode.value === 'quick') {
+    setStatus('快速模式正在执行单次本地构建；当前操作无法中途取消。')
+    return
+  }
   try {
-    const result = await backendCall('agent.cancel', { request_id: activeRequestId.value })
+    const result = await invoke<any>('agent_cancel')
     setStatus(result.cancelled ? '正在停止任务…' : result.message || '当前没有可取消任务')
   } catch (error) { setStatus(errorMessage(error), 'error') }
 }
 
 async function resetChat() {
   try {
-    await backendCall('chat.reset')
+    if (mode.value === 'agent') await invoke('agent_reset')
     releaseAttachmentUrls()
     chat.value = [{ role: 'assistant', text: '新对话已开始。描述零件尺寸，或附上参考图开始建模。' }]
     previewStage.value = ''
@@ -416,12 +611,27 @@ function parseDraftValue(key: string, value: string) {
 }
 
 async function editFeature(action: string, extra: JsonMap = {}) {
-  if (!selectedFeature.value) return
+  const index = Number.isInteger(extra.index) ? Number(extra.index) : selectedFeature.value?.index
+  if (index === undefined) return
+  if (action === 'toggle') {
+    await showMessage('原生特征无法启停', 'CADPlan v1 不包含 enabled 状态，禁用与重新启用无法无损转换。可删除特征或清空模型。')
+    return
+  }
   try {
-    const result = await backendCall('feature.' + action, { index: selectedFeature.value.index, ...extra })
-    updateDocument(result)
-    setStatus('特征已更新', 'success')
-  } catch (error) { await showMessage('特征操作失败', errorMessage(error), 'error') }
+    const document = await invoke<DocumentState>('active_model_update_feature', {
+      index,
+      params: extra.params || {},
+      name: extra.name || null,
+      action,
+      delta: extra.delta ?? null,
+      enabled: extra.enabled ?? null,
+    })
+    updateDocument(document)
+    selectedIndex.value = action === 'move'
+      ? Math.max(0, Math.min(index + Number(extra.delta || 0), document.features.length - 1))
+      : action === 'delete' ? Math.min(index, document.features.length - 1) : index
+    setStatus(action === 'delete' ? '原生特征已删除并重建' : action === 'move' ? '原生特征顺序已更新并重建' : '原生特征已重建并更新', 'success')
+  } catch (error) { await showMessage('原生特征更新失败', errorMessage(error), 'error') }
 }
 
 async function applyFeatureParams() {
@@ -435,23 +645,31 @@ async function renameFeature(feature: Feature) {
   const name = window.prompt('输入特征名称', feature.name || feature.kind)
   if (!name?.trim()) return
   try {
-    const result = await backendCall('feature.rename', { index: feature.index, name: name.trim() })
-    updateDocument(result)
-    setStatus('特征名称已更新', 'success')
+    const document = await invoke<DocumentState>('active_model_update_feature', { index: feature.index, params: {}, name: name.trim() })
+    updateDocument(document)
+    setStatus('原生特征名称已更新', 'success')
   } catch (error) { await showMessage('重命名失败', errorMessage(error), 'error') }
 }
 
 async function clearFeatures() {
   if (!documentState.value.features.length) return
   if (!await confirm('清空当前零件的全部特征？', { title: '清空特征', kind: 'warning' })) return
-  try { updateDocument(await backendCall('document.clear')); setStatus('特征已清空', 'success') }
-  catch (error) { await showMessage('清空失败', errorMessage(error), 'error') }
+  try {
+    const document = await invoke<DocumentState>('active_model_new', { name: documentState.value.name || 'Part1' })
+    nativeModelActive.value = true
+    updateDocument(document)
+    selectedIndex.value = -1
+    setStatus('原生零件已清空', 'success')
+  } catch (error) { await showMessage('清空失败', errorMessage(error), 'error') }
+  return
 }
 
 async function newDocument() {
   try {
     if (documentState.value.features.length && !await confirm('新建零件将替换当前工作区模型，继续吗？', { title: '新建零件', kind: 'warning' })) return
-    updateDocument(await backendCall('document.new', { name: 'Part1' }), false)
+    const document = await invoke<DocumentState>('active_model_new', { name: 'Part1' })
+    nativeModelActive.value = true
+    updateDocument(document, false)
     selectedIndex.value = -1
     isDirty.value = false
     setStatus('已新建零件', 'success')
@@ -462,12 +680,16 @@ async function openProject() {
   try {
     const path = await open({ title: '打开 AI Modeler 工程', multiple: false, filters: [{ name: 'AI Modeler 工程', extensions: ['aimodel', 'json'] }] })
     if (typeof path !== 'string') return
-    setStatus('正在打开工程…')
-    updateDocument(await backendCall('project.open', { path }), false)
+    const agreed = await confirm('将逐特征检查旧工程。只有类型、参数和操作完整映射到 CADPlan 且原生 OCCT 构建成功时才导入；数值来源标记为“已有模型”，原始 AIMODEL 会保存在活动记录以保留扩展字段。继续转换？', { title: '显式转换旧工程', kind: 'warning' })
+    if (!agreed) return
+    setStatus('正在显式转换并原生构建工程…')
+    const document = await invoke<DocumentState>('active_model_import_project', { path, confirmed: true })
+    nativeModelActive.value = true
+    updateDocument(document, false)
     selectedIndex.value = -1
     isDirty.value = false
-    setStatus('工程已打开：' + fileName(path), 'success')
-    addLog('打开工程：' + path)
+    setStatus('工程已显式转换为原生 CADPlan：' + fileName(path), 'success')
+    addLog('原生打开工程：' + path)
   } catch (error) { await showMessage('打开工程失败', errorMessage(error), 'error') }
 }
 
@@ -479,7 +701,8 @@ async function saveProject() {
       if (!chosen) return
       path = chosen
     }
-    await backendCall('project.save', { path })
+    const document = await invoke<DocumentState>('active_model_save', { path })
+    updateDocument(document, false)
     documentState.value.current_path = path
     isDirty.value = false
     setStatus('工程已保存：' + fileName(path), 'success')
@@ -488,12 +711,12 @@ async function saveProject() {
 }
 
 async function exportFile(kind: 'stl' | 'obj' | 'report' | 'catia') {
-  const ext: Record<string, string> = { stl: 'stl', obj: 'obj', report: 'txt', catia: 'py' }
-  const labels: Record<string, string> = { stl: 'STL 模型', obj: 'Wavefront OBJ', report: '建模报告', catia: 'CATIA Python 脚本' }
+  const ext: Record<string, string> = { stl: 'stl', obj: 'obj', report: 'txt', catia: 'CATPart' }
+  const labels: Record<string, string> = { stl: 'STL 模型', obj: 'Wavefront OBJ', report: '建模报告', catia: 'CATIA 原生零件' }
   try {
     const path = await save({ title: '导出' + labels[kind], defaultPath: documentState.value.name + (kind === 'report' ? '_建模报告' : '') + '.' + ext[kind], filters: [{ name: labels[kind], extensions: [ext[kind]] }] })
     if (!path) return
-    await backendCall('export', { kind, path })
+    await invoke('active_model_export', { kind, path })
     setStatus('已导出：' + fileName(path), 'success')
     addLog('导出 ' + kind.toUpperCase() + '：' + path)
     await showMessage('导出完成', '文件已保存到：\n' + path)
@@ -505,7 +728,7 @@ async function saveSnapshot(viewSet: 'single' | 'four' | 'three' | 'extended') {
   try {
     const path = await save({ title: '保存模型截图', defaultPath: documentState.value.name + '_' + suffix[viewSet] + '.png', filters: [{ name: 'PNG 图片', extensions: ['png'] }] })
     if (!path) return
-    await backendCall('render.snapshot', { path, view_set: viewSet })
+    await invoke('active_model_export_snapshot', { path, viewSet })
     setStatus('截图已保存：' + fileName(path), 'success')
     await showMessage('截图完成', '图片已保存到：\n' + path)
   } catch (error) { await showMessage('截图失败', errorMessage(error), 'error') }
@@ -568,7 +791,7 @@ async function showMessage(title: string, body: string, kind: 'info' | 'warning'
 
 async function loadParts() {
   partsBusy.value = true
-  try { parts.value = await backendCall('parts.list', { query: partsQuery.value }) }
+  try { parts.value = await invoke('native_parts_list', { query: partsQuery.value }) }
   catch (error) { setStatus('零件库加载失败：' + errorMessage(error), 'error') }
   finally { partsBusy.value = false }
 }
@@ -576,7 +799,7 @@ async function loadParts() {
 async function openSamples() {
   closeMenu()
   if (!sampleRows.value.length) {
-    try { sampleRows.value = await backendCall('samples.list') }
+    try { sampleRows.value = await invoke('native_samples_list') }
     catch (error) { setStatus('示例列表加载失败：' + errorMessage(error), 'error'); return }
   }
   samplesOpen.value = !samplesOpen.value
@@ -630,9 +853,9 @@ function usePartSample(sample: string) {
 
 async function openSettings(tab: typeof settingsTab.value = 'llm') {
   try {
-    const fresh = await backendCall('settings.get')
-    settingsDraft.value = structuredClone(fresh)
-    providerTemplates.value = await backendCall('settings.provider_templates')
+    const fresh = await invoke<any>('native_settings_load')
+    settingsDraft.value = ensureLlmDraft(structuredClone(fresh))
+    providerTemplates.value = await invoke<any[]>('native_provider_templates')
     settingsTab.value = tab
     showApiKey.value = false
     settingsOpen.value = true
@@ -641,10 +864,9 @@ async function openSettings(tab: typeof settingsTab.value = 'llm') {
 
 async function addProvider(key: string) {
   try {
-    const profile = await backendCall('settings.provider_template', { id: key })
+    const profile = await invoke<any>('native_provider_template', { id: key })
     if (!settingsDraft.value) return
-    if (!settingsDraft.value.llm) settingsDraft.value.llm = {}
-    if (!Array.isArray(settingsDraft.value.llm.providers)) settingsDraft.value.llm.providers = []
+    ensureLlmDraft(settingsDraft.value)
     settingsDraft.value.llm.providers.push(profile)
     settingsDraft.value.llm.active_provider_id = profile.id
     modelOptions.value = []
@@ -655,14 +877,20 @@ function removeProvider() {
   const rows = providersDraft.value
   if (rows.length <= 1) { void showMessage('无法删除', '至少保留一份供应商档案。'); return }
   const index = rows.findIndex((row: any) => row.id === llmDraft.value.active_provider_id)
+  const removedId = rows[index]?.id
   rows.splice(index, 1)
+  for (const { key } of agentStages) {
+    if (llmDraft.value.agent_stage_overrides?.[key]?.provider_id === removedId) {
+      llmDraft.value.agent_stage_overrides[key].provider_id = ''
+    }
+  }
   llmDraft.value.active_provider_id = rows[Math.max(0, index - 1)].id
   modelOptions.value = []
 }
 
 async function fetchModels() {
   try {
-    const response = await backendCall('settings.fetch_models', { base_url: activeProvider.value.base_url, api_key: activeProvider.value.api_key })
+    const response = await invoke<any>('native_provider_fetch_models', { baseUrl: activeProvider.value.base_url, apiKey: activeProvider.value.api_key })
     modelOptions.value = response.models || []
     setStatus('已获取 ' + modelOptions.value.length + ' 个模型', 'success')
   } catch (error) { await showMessage('获取模型列表失败', errorMessage(error), 'error') }
@@ -671,8 +899,9 @@ async function fetchModels() {
 async function saveSettings() {
   if (!settingsDraft.value) return
   try {
-    const result = await backendCall('settings.save', { settings: settingsDraft.value })
-    settingsDraft.value = structuredClone(result.settings)
+    ensureLlmDraft(settingsDraft.value)
+    const result = await invoke<any>('native_settings_save', { settings: settingsDraft.value })
+    settingsDraft.value = ensureLlmDraft(structuredClone(result.settings || result))
     settingsOpen.value = false
     setStatus('设置已保存', 'success')
   } catch (error) { await showMessage('保存设置失败', errorMessage(error), 'error') }
@@ -680,62 +909,94 @@ async function saveSettings() {
 
 async function openTools() { toolsOpen.value = true }
 
-async function runBackendAction(method: string, label: string, params: JsonMap = {}) {
-  setStatus(label + '…')
+async function showCatiaStatus() {
   try {
-    const result = await backendCall(method, params)
-    setStatus(label + '完成', 'success')
-    addLog(label + '完成')
-    return result
+    const result = await invoke<any>('native_runtime_status')
+    runtimeReadiness.value = result
+    await showMessage('CATIA COM 状态', result.catia?.registered === true
+      ? '检测到 CATIA.Application COM 注册。这里只能确认已注册；当前尚未尝试连接 CATIA。'
+      : result.catia?.registered === false ? '未检测到 CATIA.Application COM 注册。' : '当前平台未执行 CATIA COM 注册检测。')
   } catch (error) {
-    setStatus(label + '失败', 'error')
-    addLog(label + '失败：' + errorMessage(error))
-    await showMessage(label + '失败', errorMessage(error), 'error')
-    return null
+    await showMessage('读取 CATIA 状态失败', errorMessage(error), 'error')
   }
+}
+
+async function explainNativeCatiaFlow() {
+  await showMessage('CATIA 接入方式', '旧的 Python/CATScript 插件安装流程已停用。桌面端只在“推送当前模型到 CATIA V5”时按需启动应用私有的 Python COM adapter；该操作不安装 MCP 或旧宏插件。')
 }
 
 async function pushToCatia() {
   if (!documentState.value.features.length) { await showMessage('推送到 CATIA', '请先创建一个模型。'); return }
-  const probe = await runBackendAction('catia.probe', '检测 CATIA')
-  if (!probe?.ok) { if (probe) await showMessage('未检测到 CATIA V5', probe.message || '请检查 CATIA 安装和连接。', 'warning'); return }
-  const result = await runBackendAction('catia.push', '推送到 CATIA')
-  if (result) await showMessage(result.ok ? 'CATIA 推送完成' : 'CATIA 推送失败', result.message || '')
+  if (nativeModelActive.value) {
+    setStatus('正在按需启动 CATIA COM adapter…')
+    try {
+      const result = await invoke<any>('active_model_push_catia')
+      const skipped = Array.isArray(result?.skipped) ? result.skipped.length : 0
+      const approximate = Array.isArray(result?.approximations) ? result.approximations.length : 0
+      const completed = Array.isArray(result?.completed) ? result.completed.length : 0
+      setStatus(`CATIA 候选已生成 · ${completed} 项已建，${approximate} 项近似，${skipped} 项跳过`, approximate || skipped ? 'warning' : 'success')
+      addLog(`CATIA ${result?.state || '完成'}：generation ${result?.identity?.generation ?? '?'} · ${completed} 项已建 · ${approximate} 项近似 · ${skipped} 项跳过`)
+      const details = approximate || skipped ? `\n近似映射 ${approximate} 项，跳过 ${skipped} 项；请查看报告：\n${result.report_path || '报告未生成'}` : ''
+      await showMessage(approximate || skipped ? 'CATIA 候选已生成（含近似或跳过项）' : 'CATIA 推送完成', `已从当前 Rust 活动模型创建 CATPart：\n${result?.output_path || ''}${details}`,
+        approximate || skipped ? 'warning' : 'info')
+    } catch (error) {
+      setStatus('CATIA 推送失败', 'error')
+      addLog('CATIA 推送失败：' + errorMessage(error))
+      await showMessage('CATIA 推送失败', errorMessage(error), 'error')
+    }
+    return
+  }
+  await showMessage('原生模型不可用', '当前活动记录没有可推送的 Rust 原生模型。请重新打开或创建模型后再推送。', 'error')
 }
 
-async function openMcp() {
-  const result = await runBackendAction('mcp.info', '读取 MCP 配置')
-  if (result) { mcpData.value = result; mcpOpen.value = true }
+async function openIntegrations() {
+  try {
+    const result = await invoke<any>('native_runtime_status')
+    runtimeReadiness.value = result
+    integrationStatus.value = result
+    integrationsOpen.value = true
+  } catch (error) {
+    await showMessage('读取接入状态失败', errorMessage(error), 'error')
+  }
 }
 
-async function testMcp() {
-  const result = await runBackendAction('mcp.test', '测试 MCP 服务')
-  if (result) await showMessage('MCP 自检', JSON.stringify(result, null, 2))
-}
-
-async function copyText(text: string) {
-  try { await navigator.clipboard.writeText(text); setStatus('已复制到剪贴板', 'success') }
-  catch (error) { await showMessage('复制失败', errorMessage(error), 'error') }
-}
-
-async function runSelftest() {
-  const result = await runBackendAction('system.selftest', '运行内置自检')
-  if (result) await showMessage('内置自检', (result.lines || []).join('\n') + '\n\n状态：' + (result.ok ? '通过' : '有项目未通过'))
+async function runNativeSelftest() {
+  try {
+    const result = await invoke<any>('native_selftest')
+    await showMessage('本机组件自检', nativeSelftestMessage(result))
+  } catch (error) {
+    await showMessage('本机组件自检失败', errorMessage(error), 'error')
+  }
 }
 
 async function showCatiaLibrary() {
-  const result = await runBackendAction('catia.library', '读取 CATIA 模型库')
-  if (result) await showMessage('CATIA 模型库', JSON.stringify(result, null, 2))
+  const result = await invoke<any[]>('native_parts_list', { query: '' })
+  await showMessage('内置常用零件知识库', `当前内置 ${result.length} 类常用零件描述。此列表是建模参考，不代表 CATIA 安装目录中的可加载 Catalog 文件。`)
+}
+
+function openLocalModelSettings() {
+  settingsTab.value = 'llm'
+  settingsOpen.value = true
 }
 
 async function manualOnline() {
-  onlineQuery.value = prompt.value.trim()
-  if (!onlineQuery.value) onlineQuery.value = window.prompt('输入要联网搜索的零件或建模术语') || ''
-  if (!onlineQuery.value) return
+  const query = onlineQuery.value.trim() || prompt.value.trim() || (window.prompt('输入要联网搜索的零件或建模术语') || '').trim()
+  if (!query) return
+  onlineQuery.value = query
   onlineOpen.value = true
   onlineResult.value = null
-  const result = await runBackendAction('online.search', '联网搜索', { query: onlineQuery.value })
-  onlineResult.value = result
+  setStatus('联网搜索…')
+  try {
+    const result = await invoke<any>('native_online_ask', { query })
+    onlineResult.value = result
+    setStatus('联网查询完成：' + (result?.results?.length || 0) + ' 条结果', 'success')
+    addLog('原生联网查询完成')
+  } catch (error) {
+    const reason = errorMessage(error)
+    onlineResult.value = { ok: false, results: [], suggestion: null, reason, query, notes: [] }
+    setStatus('联网查询失败', 'error')
+    addLog('原生联网查询失败：' + reason)
+  }
 }
 
 async function useOnlineSuggestion() {
@@ -748,7 +1009,11 @@ async function useOnlineSuggestion() {
 
 async function openManual(path: string) {
   if (!rootPath.value) return
-  await runBackendAction('system.open_path', '打开说明', { path: rootPath.value + '/' + path })
+  try {
+    await invoke('native_open_help_path', { relativePath: path })
+  } catch (error) {
+    await showMessage('打开说明失败', errorMessage(error), 'error')
+  }
 }
 
 function onKeydown(event: KeyboardEvent) {
@@ -757,6 +1022,7 @@ function onKeydown(event: KeyboardEvent) {
     if (event.key === 'f' && !(event.target instanceof HTMLInputElement) && !(event.target instanceof HTMLTextAreaElement)) fitView()
     return
   }
+  if (!desktop) return
   if (event.key.toLowerCase() === 's') { event.preventDefault(); void saveProject() }
   if (event.key.toLowerCase() === 'o') { event.preventDefault(); void openProject() }
   if (event.key.toLowerCase() === 'n') { event.preventDefault(); void newDocument() }
@@ -793,27 +1059,27 @@ onUnmounted(() => {
         <div><strong>AI MODELER</strong><small>参数化建模工作台</small></div>
       </div>
       <nav class="main-nav">
-        <button @click="newDocument"><UiIcon name="plus" :size="16" />新建</button>
-        <button @click="openProject"><UiIcon name="folder-open" :size="16" />打开工程</button>
-        <button @click="saveProject"><UiIcon name="save" :size="16" />保存</button>
+        <button :disabled="!desktop" @click="newDocument"><UiIcon name="plus" :size="16" />新建</button>
+        <button :disabled="!desktop" @click="openProject"><UiIcon name="folder-open" :size="16" />打开工程</button>
+        <button :disabled="!desktop" @click="saveProject"><UiIcon name="save" :size="16" />保存</button>
         <span class="nav-separator"></span>
-        <button @click="exportFile('stl')"><UiIcon name="download" :size="16" />导出 STL</button>
-        <button @click="exportFile('obj')">导出 OBJ</button>
+        <button :disabled="!desktop" @click="exportFile('stl')"><UiIcon name="download" :size="16" />导出 STL</button>
+        <button :disabled="!desktop" @click="exportFile('obj')">导出 OBJ</button>
         <div class="nav-dropdown">
-          <button @click="toggleMenu">更多 <UiIcon name="chevron-down" :size="14" /></button>
+          <button :disabled="!desktop" @click="toggleMenu">更多 <UiIcon name="chevron-down" :size="14" /></button>
         </div>
       </nav>
       <div class="top-actions">
         <span class="backend-chip" :class="{ disconnected: backendInfo === '后端未连接' }"><i></i>{{ backendInfo }}</span>
         <button class="icon-button" :title="themeDark ? '切换浅色主题' : '切换深色主题'" @click="themeDark = !themeDark"><UiIcon :name="themeDark ? 'sun' : 'moon'" /></button>
-        <button class="icon-button" title="设置" @click="openSettings('llm')"><UiIcon name="settings" /></button>
+        <button class="icon-button" title="设置" :disabled="!desktop" @click="openSettings('llm')"><UiIcon name="settings" /></button>
       </div>
     </header>
 
     <Teleport to="body">
       <div v-if="menuOpen" ref="menuPopover" class="menu-popover" :class="{ 'theme-dark': themeDark }" :style="{ left: menuPosition.left + 'px', top: menuPosition.top + 'px' }" @mouseleave="closeMenu">
         <button @click="exportFile('report'); closeMenu()">导出建模报告 TXT</button>
-        <button @click="exportFile('catia'); closeMenu()">导出 CATIA 自动化脚本</button>
+        <button @click="exportFile('catia'); closeMenu()">导出 CATIA 原生零件</button>
         <button @click="saveSnapshot('single'); closeMenu()">模型截图 PNG</button>
         <button @click="saveSnapshot('four'); closeMenu()">四视图 PNG</button>
         <button @click="saveSnapshot('three'); closeMenu()">三视图 PNG</button>
@@ -821,9 +1087,9 @@ onUnmounted(() => {
         <div class="menu-divider"></div>
         <button @click="openSettings('llm'); closeMenu()">AI 大模型设置</button>
         <button @click="openSettings('online'); closeMenu()">联网搜索设置</button>
-        <button @click="openMcp(); closeMenu()">MCP 服务配置</button>
+        <button @click="openIntegrations(); closeMenu()">Agent 与外部接入状态</button>
         <button @click="openTools(); closeMenu()">CATIA 与本地工具</button>
-        <button @click="runSelftest(); closeMenu()">运行内置自检</button>
+        <button @click="runNativeSelftest(); closeMenu()">运行 Rust 原生自检</button>
         <button @click="helpOpen = true; closeMenu()">帮助与使用说明</button>
         <button @click="aboutOpen = true; closeMenu()">关于 AI Modeler</button>
       </div>
@@ -835,13 +1101,13 @@ onUnmounted(() => {
           <div><span class="eyebrow">WORKSPACE / 01</span><h1>建模对话</h1></div>
           <div class="heading-tools">
             <div class="sample-dropdown">
-              <button class="sample-button" @click="openSamples">示例 <UiIcon name="chevron-down" :size="14" /></button>
+              <button class="sample-button" :disabled="!desktop" @click="openSamples">示例 <UiIcon name="chevron-down" :size="14" /></button>
               <div v-if="samplesOpen" class="sample-popover">
                 <div class="sample-popover-title">常用建模示例 <button @click="samplesOpen = false"><UiIcon name="close" :size="16" /></button></div>
                 <button v-for="sample in sampleRows" :key="sample.label" @click="usePromptSample(sample)"><strong>{{ sample.label }}</strong><small>{{ sample.prompt }}</small></button>
               </div>
             </div>
-            <button class="quiet-icon" title="新对话" @click="resetChat"><UiIcon name="plus" /></button>
+            <button class="quiet-icon" title="新对话" :disabled="!desktop" @click="resetChat"><UiIcon name="plus" /></button>
             <button class="quiet-icon" title="收起对话栏" @click="chatCollapsed = true"><UiIcon name="panel-left-close" /></button>
           </div>
         </div>
@@ -850,12 +1116,29 @@ onUnmounted(() => {
           <button :class="{ active: mode === 'quick' }" @click="mode = 'quick'"><UiIcon name="zap" :size="16" /> 快速建模</button>
         </div>
         <div class="mode-hint">{{ mode === 'agent' ? '支持多轮对话、参考图片与设计推理' : '离线解析常见几何和标准零件描述' }}</div>
+        <section class="acceptance-summary" aria-label="本轮与模型验收状态">
+          <div class="acceptance-summary__row">
+            <span>本轮</span><strong :data-state="turnStatus.key">{{ turnStatus.text }}</strong>
+          </div>
+          <div class="acceptance-summary__row">
+            <span>当前模型</span><strong :data-state="modelAcceptance.outcome">{{ modelAcceptance.outcomeLabel }}</strong>
+          </div>
+          <div class="acceptance-summary__evidence">
+            <span>完成：{{ modelAcceptance.finish }}</span>
+            <span>几何：{{ modelAcceptance.geometry }}</span>
+            <span>视觉：{{ modelAcceptance.visual }}</span>
+          </div>
+        </section>
         <div ref="chatScroll" class="chat-history">
           <div v-for="(item, index) in chat" :key="index" class="chat-message" :class="item.role">
             <div class="message-avatar"><template v-if="item.role === 'user'">你</template><UiIcon v-else-if="item.role === 'progress'" name="loading" :size="16" /><template v-else>AI</template></div>
             <div class="message-content">
-              <div class="message-meta">{{ item.role === 'user' ? '你' : item.role === 'progress' ? '处理中' : 'AI Modeler' }} <span>{{ item.role === 'assistant' ? '助手' : '' }}</span></div>
-              <p>{{ item.text }}</p>
+              <div class="message-meta">{{ item.role === 'user' ? '你' : item.role === 'progress' ? 'Agent 状态' : item.role === 'thought' ? '模型思考' : 'AI Modeler' }} <span>{{ item.role === 'assistant' ? '助手' : item.role === 'thought' ? (item.open ? '生成中' : '已折叠') : '' }}</span></div>
+              <details v-if="item.role === 'thought'" class="thought-details" :open="item.open" @toggle="item.open = ($event.currentTarget as HTMLDetailsElement).open">
+                <summary>{{ item.open ? '正在思考…' : '查看思考过程' }}</summary>
+                <p>{{ item.text }}</p>
+              </details>
+              <p v-else>{{ item.text }}</p>
               <AttachmentPreview v-if="item.images?.length" :items="item.images" readonly />
             </div>
           </div>
@@ -868,15 +1151,15 @@ onUnmounted(() => {
             <textarea ref="promptEl" v-model="prompt" :placeholder="mode === 'agent' ? '描述零件，或粘贴参考图…' : '例如：长方体 80×40×20，中心通孔 Ø8'" :disabled="busy" aria-label="建模描述" @keydown="onPromptKeydown"></textarea>
             <div class="composer-toolbar">
               <div class="composer-tools">
-                <button class="tool-icon" title="添加参考图片" :disabled="busy || mode === 'quick'" @click="chooseImages"><UiIcon name="image-plus" /></button>
-                <button class="tool-text" @click="manualOnline"><UiIcon name="search" :size="16" />联网搜索</button>
-                <span v-if="mode === 'agent'" class="image-note">支持粘贴图片</span>
+                <button class="tool-icon" title="添加参考图片" :disabled="!desktop || busy || mode === 'quick'" @click="chooseImages"><UiIcon name="image-plus" /></button>
+                <button class="tool-text" :disabled="!desktop" @click="manualOnline"><UiIcon name="search" :size="16" />联网搜索</button>
+                <span v-if="desktop && mode === 'agent'" class="image-note">支持粘贴图片</span>
               </div>
               <button v-if="busy" class="stop-button" @click="cancelActive"><UiIcon name="stop" :size="16" />停止</button>
               <button v-else class="send-button" :disabled="!canSubmit" @click="submitPrompt">{{ attachmentLoading ? '读取图片…' : '发送' }} <UiIcon name="send" :size="16" /></button>
             </div>
           </div>
-          <div class="composer-footnote">{{ mode === 'agent' ? 'Agent 会保留当前会话上下文' : '快速模式使用本地参数解析器' }} <span>Enter 发送 · Shift+Enter 换行</span></div>
+          <div class="composer-footnote">{{ !desktop ? '浏览器预览 · 建模请使用桌面程序' : mode === 'agent' ? 'Agent 会保留当前会话上下文' : '快速模式使用本地参数解析器' }} <span v-if="desktop">Enter 发送 · Shift+Enter 换行</span></div>
         </div>
       </section>
       <div v-show="!chatCollapsed" class="panel-resizer chat-resizer" role="separator" aria-orientation="vertical" aria-label="调整对话栏宽度" @pointerdown.prevent="beginResize('chat', $event)"></div>
@@ -897,7 +1180,7 @@ onUnmounted(() => {
             <button class="view-icon-button" :class="{ selected: settingsDraft?.viewer?.grid }" title="显示参考网格" @click="toggleViewSetting('grid', !settingsDraft?.viewer?.grid)"><UiIcon name="grid" :size="17" /></button>
             <button class="view-icon-button" :class="{ selected: settingsDraft?.viewer?.axes }" title="显示坐标轴" @click="toggleViewSetting('axes', !settingsDraft?.viewer?.axes)"><UiIcon name="axes" :size="17" /></button>
           </div>
-          <button class="toolbar-more" title="截图与导出" @click="toggleMenu"><UiIcon name="more" /></button>
+          <button class="toolbar-more" title="截图与导出" :disabled="!desktop" @click="toggleMenu"><UiIcon name="more" /></button>
         </div>
         <div class="canvas-wrap">
           <CadViewport ref="viewportRef" class="viewport-canvas" :mesh-path="documentState.mesh_path" :revision="documentState.revision" :dark="themeDark" :view-settings="settingsDraft?.viewer || {}" @loaded="setStatus('三维预览已更新', 'success'); clearPreview()" @error="(text) => { addLog('读取 GLB 失败：' + text); setStatus('三维预览加载失败', 'error') }" />
@@ -905,11 +1188,11 @@ onUnmounted(() => {
           <div v-if="!documentState.features.length && !previewUrl" class="canvas-empty">
             <span class="empty-icon"><UiIcon name="box" :size="27" :stroke-width="1.6" /></span>
             <strong>开始创建你的第一个模型</strong>
-            <p>从左侧输入描述，或从零件库选择标准件示例</p>
-            <button @click="panel = 'parts'"><UiIcon name="boxes" :size="16" />浏览标准零件库</button>
+            <p>从左侧输入描述，或从零件目录选择文本示例</p>
+            <button :disabled="!desktop" @click="panel = 'parts'"><UiIcon name="boxes" :size="16" />浏览零件目录</button>
           </div>
           <div class="axis-legend"><span><i class="axis-x"></i>X</span><span><i class="axis-y"></i>Y</span><span><i class="axis-z"></i>Z</span><small>毫米 (mm)</small></div>
-          <div class="canvas-tools-bottom"><button @click="saveSnapshot('single')"><UiIcon name="camera" :size="15" />截图</button><button @click="saveSnapshot('four')"><UiIcon name="grid" :size="15" />四视图</button><button @click="fitView"><UiIcon name="maximize" :size="15" />适应</button></div>
+          <div class="canvas-tools-bottom"><button :disabled="!desktop" @click="saveSnapshot('single')"><UiIcon name="camera" :size="15" />截图</button><button :disabled="!desktop" @click="saveSnapshot('four')"><UiIcon name="grid" :size="15" />四视图</button><button @click="fitView"><UiIcon name="maximize" :size="15" />适应</button></div>
           <div class="canvas-watermark">AI MODELER <span>3D WORKSPACE</span></div>
         </div>
         <div class="canvas-status"><span class="status-light" :class="statusTone"></span><span class="status-message" :title="statusText">{{ statusText }}</span><span class="canvas-status-spacer"></span><span>{{ documentState.features.length }} 个特征</span><span class="status-divider"></span><span>{{ stats.faces || 0 }} 面</span><span class="status-divider"></span><span>{{ stats.triangles || 0 }} 三角面</span></div>
@@ -922,7 +1205,7 @@ onUnmounted(() => {
           <button :class="{ active: panel === 'params' }" @click="panel = 'params'"><UiIcon name="settings" :size="16" />参数</button>
           <button :class="{ active: panel === 'stats' }" @click="panel = 'stats'"><UiIcon name="chart" :size="16" />统计</button>
           <button :class="{ active: panel === 'logs' }" @click="panel = 'logs'"><UiIcon name="file-text" :size="16" />日志</button>
-          <button :class="{ active: panel === 'parts' }" @click="panel = 'parts'"><UiIcon name="boxes" :size="16" />零件库</button>
+          <button :class="{ active: panel === 'parts' }" :disabled="!desktop" @click="panel = 'parts'"><UiIcon name="boxes" :size="16" />零件目录</button>
         </div>
         <section v-if="panel === 'tree'" class="inspector-content tree-content">
           <div class="inspector-section-title"><div><span class="section-icon"><UiIcon name="list-tree" :size="17" /></span><strong>零件特征</strong><small>{{ documentState.features.length }}</small></div><button class="quiet-icon" title="清空特征" @click="clearFeatures"><UiIcon name="trash" /></button></div>
@@ -933,7 +1216,7 @@ onUnmounted(() => {
               <span class="tree-branch"></span><span class="feature-symbol" :class="'kind-' + feature.kind"><UiIcon :name="featureIconName(feature)" :size="16" /></span>
               <span class="feature-title"><strong>{{ featureLabel(feature) }}</strong><small>{{ feature.kind }} <i v-if="feature.op === 'cut'">· 切除</i></small></span>
               <button class="row-mini" title="重命名" @click.stop="renameFeature(feature)"><UiIcon name="pencil" :size="15" /></button>
-              <button class="row-mini" :title="feature.enabled === false ? '启用特征' : '停用特征'" @click.stop="editFeature('toggle', { index: feature.index, enabled: feature.enabled === false })"><UiIcon :name="feature.enabled === false ? 'eye-off' : 'eye'" :size="15" /></button>
+              <button class="row-mini" disabled title="CADPlan v1 不支持无损启停特征"><UiIcon :name="feature.enabled === false ? 'eye-off' : 'eye'" :size="15" /></button>
             </div>
           </div>
           <div class="tree-footer"><button @click="panel = 'params'" :disabled="!selectedFeature"><UiIcon name="settings" :size="16" />编辑所选特征</button><button @click="clearFeatures" :disabled="!documentState.features.length"><UiIcon name="trash" :size="16" />清空</button></div>
@@ -970,43 +1253,68 @@ onUnmounted(() => {
         </section>
 
         <section v-else class="inspector-content parts-content">
-          <div class="inspector-section-title"><div><span class="section-icon"><UiIcon name="boxes" :size="17" /></span><strong>标准零件库</strong></div><button class="quiet-icon" title="刷新" @click="loadParts"><UiIcon name="refresh" /></button></div>
+          <div class="inspector-section-title"><div><span class="section-icon"><UiIcon name="boxes" :size="17" /></span><strong>零件目录</strong></div><button class="quiet-icon" title="刷新" @click="loadParts"><UiIcon name="refresh" /></button></div>
+          <p class="parts-catalog-note">目录条目和文本示例仅供参考，不代表几何内核已支持对应零件建模。</p>
           <div class="parts-search"><UiIcon name="search" :size="16" /><input v-model="partsQuery" placeholder="搜索零件类别或别名"><button v-if="partsQuery" @click="partsQuery = ''"><UiIcon name="close" :size="15" /></button></div>
           <div class="parts-list">
-            <div v-if="partsBusy" class="parts-loading">正在读取参数化零件定义…</div>
+            <div v-if="partsBusy" class="parts-loading">正在读取零件目录…</div>
             <div v-for="part in parts" :key="part.category" class="part-card">
-            <div class="part-card-top"><span class="part-icon"><UiIcon name="box" :size="17" /></span><div><strong>{{ part.category }}</strong><small>{{ part.manual_count ? '手册数据 ' + part.manual_count + ' 条' : '参数化零件' }}</small></div><button title="填入示例描述" @click="usePartSample(part.sample_prompt)"><UiIcon name="arrow-up-right" :size="16" /></button></div>
+            <div class="part-card-top"><span class="part-icon"><UiIcon name="box" :size="17" /></span><div><strong>{{ part.category }}</strong><small>{{ part.manual_count ? '参考条目 ' + part.manual_count + ' 条' : '描述参考' }}</small></div><button title="填入示例描述" @click="usePartSample(part.sample_prompt)"><UiIcon name="arrow-up-right" :size="16" /></button></div>
               <p>{{ (part.aliases || []).slice(0, 4).join(' · ') }}</p>
               <button class="part-sample" @click="usePartSample(part.sample_prompt)">{{ part.sample_prompt || part.category }} <span>填入 <UiIcon name="arrow-up-right" :size="14" /></span></button>
             </div>
             <div v-if="!partsBusy && !parts.length" class="empty-inspector compact"><strong>没有找到匹配零件</strong><p>尝试缩短关键词。</p></div>
           </div>
         </section>
-        <div class="inspector-foot"><span class="status-light" :class="statusTone"></span><span>{{ statusText }}</span><button title="打开设置" @click="openSettings('llm')"><UiIcon name="settings" :size="16" /></button></div>
+        <div class="inspector-foot"><span class="status-light" :class="statusTone"></span><span>{{ statusText }}</span><button title="打开设置" :disabled="!desktop" @click="openSettings('llm')"><UiIcon name="settings" :size="16" /></button></div>
       </aside>
     </main>
 
-    <footer class="bottom-bar"><div><span class="bottom-brand">AI MODELER</span><span>桌面建模工作区</span></div><div><span class="python-indicator"></span>{{ backendInfo }}<span class="status-divider"></span><span>版本 {{ handshake?.app_version || '—' }}</span></div><div><button @click="helpOpen = true">帮助</button><span class="status-divider"></span><span>快捷键 <kbd>Ctrl</kbd>+<kbd>S</kbd> 保存 · <kbd>F</kbd> 适应视图</span></div></footer>
+    <footer class="bottom-bar"><div><span class="bottom-brand">AI MODELER</span><span>{{ desktop ? '桌面建模工作区' : '浏览器预览' }}</span></div><div v-if="desktop" class="runtime-indicators"><span v-for="row in diagnosticRows" :key="row.key" :title="row.value"><i :class="{ ready: row.ready === true }"></i>{{ row.label }} {{ row.footerValue }}</span><span class="status-divider"></span><span>Rust 原生核心 · 版本 {{ handshake?.app_version || '—' }}</span></div><span v-else>本地运行时状态仅在桌面程序中检测</span><div><button @click="helpOpen = true">帮助</button><span class="status-divider"></span><span v-if="desktop">快捷键 <kbd>Ctrl</kbd>+<kbd>S</kbd> 保存 · <kbd>F</kbd> 适应视图</span><span v-else>主题、视图与面板可在浏览器中预览</span></div></footer>
 
     <div v-if="settingsOpen" class="modal-backdrop" @click.self="settingsOpen = false">
       <section class="modal settings-modal">
         <header class="modal-head"><div><span class="eyebrow">PREFERENCES</span><h2>工作区设置</h2></div><button class="modal-close" aria-label="关闭设置" @click="settingsOpen = false"><UiIcon name="close" /></button></header>
         <div class="modal-tabs"><button :class="{ active: settingsTab === 'llm' }" @click="settingsTab = 'llm'">AI 供应商</button><button :class="{ active: settingsTab === 'online' }" @click="settingsTab = 'online'">联网搜索</button><button :class="{ active: settingsTab === 'build' }" @click="settingsTab = 'build'">几何计算</button><button :class="{ active: settingsTab === 'viewer' }" @click="settingsTab = 'viewer'">视图</button></div>
-        <div v-if="settingsTab === 'llm' && settingsDraft && providersDraft.length" class="settings-body">
-          <label class="check-setting"><input v-model="llmDraft.enabled" type="checkbox"><span><strong>启用多模态 Agent</strong><small>使用当前供应商处理多轮对话与参考图片。</small></span></label>
-          <div class="settings-row"><label>供应商档案<select v-model="llmDraft.active_provider_id" @change="modelOptions = []"><option v-for="provider in providersDraft" :key="provider.id" :value="provider.id">{{ provider.name || provider.base_url || '未命名' }}</option></select></label><button class="secondary-button" @click="removeProvider">删除档案</button></div>
-          <div class="settings-row"><label>显示名称<input v-model="activeProvider.name" type="text"></label><label>思考强度<select v-model="activeProvider.reasoning_effort"><option value="none">默认 / 关闭</option><option value="low">低</option><option value="high">高</option><option value="max">最大</option></select></label></div>
-          <label>接口地址<input v-model="activeProvider.base_url" type="url" placeholder="https://api.example.com/v1"></label>
-          <div class="settings-row"><label>模型名称<input v-model="activeProvider.model" type="text" list="available-models" placeholder="模型 ID"><datalist id="available-models"><option v-for="name in modelOptions" :key="name" :value="name"></option></datalist></label><button class="secondary-button fetch-button" @click="fetchModels">获取模型列表</button></div>
-          <label>API Key<div class="password-row"><input v-model="activeProvider.api_key" :type="showApiKey ? 'text' : 'password'" autocomplete="off"><button @click="showApiKey = !showApiKey">{{ showApiKey ? '隐藏' : '显示' }}</button></div></label>
-          <label v-if="activeProvider.thinking_budget !== undefined">思考预算<input v-model.number="activeProvider.thinking_budget" type="number" min="0"></label>
-          <div class="template-row"><span>新建供应商</span><button v-for="template in providerTemplates" :key="template.id" @click="addProvider(template.id)">{{ template.label.split(' — ')[0] }} <UiIcon name="plus" :size="14" /></button></div>
-          <p class="settings-help">供应商配置保存在当前项目的 config.json 中。切换档案后会激活对应的 API 地址、模型和密钥。</p>
-        </div>
-        <div v-else-if="settingsTab === 'llm' && settingsDraft" class="settings-body provider-empty-state">
-          <div class="provider-empty"><span><UiIcon name="network" :size="23" /></span><strong>还没有 AI 供应商</strong><p>添加供应商档案后，再填写模型名称和 API Key。你也可以先配置本地服务。</p></div>
-          <div class="template-row provider-templates"><span>选择供应商</span><button v-for="template in providerTemplates" :key="template.id" @click="addProvider(template.id)">{{ template.label.split(' — ')[0] }} <UiIcon name="plus" :size="14" /></button></div>
-          <p v-if="!providerTemplates.length" class="settings-help">正在读取可用的供应商类型…</p>
+        <div v-if="settingsTab === 'llm' && settingsDraft" class="settings-body">
+          <template v-if="providersDraft.length">
+            <label class="check-setting"><input v-model="llmDraft.enabled" type="checkbox"><span><strong>启用多模态 Agent</strong><small>使用当前供应商处理多轮对话与参考图片。</small></span></label>
+            <div class="settings-row"><label>供应商档案<select v-model="llmDraft.active_provider_id" @change="modelOptions = []"><option v-for="provider in providersDraft" :key="provider.id" :value="provider.id">{{ provider.name || provider.base_url || '未命名' }}</option></select></label><button class="secondary-button" @click="removeProvider">删除档案</button></div>
+            <div class="settings-row"><label>显示名称<input v-model="activeProvider.name" type="text"></label><label>思考强度<select v-model="activeProvider.reasoning_effort"><option value="none">默认 / 关闭</option><option value="low">低</option><option value="high">高</option><option value="max">最大</option></select></label></div>
+            <label>接口地址<input v-model="activeProvider.base_url" type="url" placeholder="https://api.example.com/v1"></label>
+            <div class="settings-row"><label>模型名称<input v-model="activeProvider.model" type="text" list="available-models" placeholder="模型 ID"><datalist id="available-models"><option v-for="name in modelOptions" :key="name" :value="name"></option></datalist></label><button class="secondary-button fetch-button" @click="fetchModels">获取模型列表</button></div>
+            <label>API Key<div class="password-row"><input v-model="activeProvider.api_key" :type="showApiKey ? 'text' : 'password'" autocomplete="off"><button @click="showApiKey = !showApiKey">{{ showApiKey ? '隐藏' : '显示' }}</button></div></label>
+            <label v-if="activeProvider.thinking_budget !== undefined">思考预算<input v-model.number="activeProvider.thinking_budget" type="number" min="0"></label>
+            <div class="template-row"><span>新建供应商</span><button v-for="template in providerTemplates" :key="template.id" @click="addProvider(template.id)">{{ template.label.split(' — ')[0] }} <UiIcon name="plus" :size="14" /></button></div>
+            <p class="settings-help">供应商配置保存在当前项目的 config.json 中。切换档案后会激活对应的 API 地址、模型和密钥。</p>
+          </template>
+          <template v-else>
+            <div class="provider-empty"><span><UiIcon name="network" :size="23" /></span><strong>还没有 AI 供应商</strong><p>添加供应商档案后，再填写模型名称和 API Key。你也可以先配置本地服务。</p></div>
+            <div class="template-row provider-templates"><span>选择供应商</span><button v-for="template in providerTemplates" :key="template.id" @click="addProvider(template.id)">{{ template.label.split(' — ')[0] }} <UiIcon name="plus" :size="14" /></button></div>
+            <p v-if="!providerTemplates.length" class="settings-help">正在读取可用的供应商类型…</p>
+          </template>
+          <div class="setting-callout">
+            <strong>Agent 分阶段模型</strong>
+            <div>留空的供应商和思考强度会继承对应供应商档案的默认值。可为原图识别、主 Agent 和视觉复核分别指定档案。</div>
+          </div>
+          <div v-for="stage in agentStages" :key="stage.key" class="settings-stage">
+            <div class="settings-row">
+              <label>{{ stage.label }} · 供应商档案
+                <select v-model="llmDraft.agent_stage_overrides[stage.key].provider_id">
+                  <option value="">共用默认（{{ activeProvider.name || '当前供应商' }}）</option>
+                  <option v-for="provider in providersDraft" :key="provider.id" :value="provider.id">{{ provider.name || provider.base_url || provider.id }} · {{ provider.model || '未配置模型' }}</option>
+                </select>
+                <small>所选档案默认模型：{{ stageProvider(stage.key).model || '未配置' }}</small>
+              </label>
+              <label>思考强度
+                <select v-model="llmDraft.agent_stage_overrides[stage.key].reasoning_effort">
+                  <option value="">继承档案默认（{{ stageProvider(stage.key).reasoning_effort || 'none' }}）</option>
+                  <option value="none">默认 / 关闭</option><option value="low">低</option><option value="high">高</option><option value="max">最大</option>
+                </select>
+              </label>
+              <button class="secondary-button" @click="resetAgentStage(stage.key)">共用默认</button>
+            </div>
+          </div>
         </div>
         <div v-else-if="settingsTab === 'online' && settingsDraft" class="settings-body">
           <label class="check-setting"><input v-model="settingsDraft.online.enabled" type="checkbox"><span><strong>启用联网搜索</strong><small>本地描述无法解析时，可请求在线术语检索。</small></span></label>
@@ -1034,30 +1342,80 @@ onUnmounted(() => {
       <section class="modal tools-modal"><header class="modal-head"><div><span class="eyebrow">INTEGRATIONS</span><h2>CATIA 与本地工具</h2></div><button class="modal-close" aria-label="关闭工具" @click="toolsOpen = false"><UiIcon name="close" /></button></header>
         <div class="integration-grid">
           <button @click="pushToCatia"><span><UiIcon name="box" /></span><strong>推送当前模型到 CATIA V5</strong><small>检测连接并通过 COM 自动化建立模型</small></button>
-          <button @click="runBackendAction('catia.probe', '检测 CATIA').then((result) => result && showMessage('CATIA 检测', result.message || ''))"><span><UiIcon name="search" /></span><strong>检测 CATIA 连接</strong><small>读取当前 CATIA V5 状态</small></button>
-          <button @click="runBackendAction('catia.connect', '连接 CATIA')"><span><UiIcon name="network" /></span><strong>一键连接 CATIA</strong><small>写入 MCP 配置并安装插件</small></button>
-          <button @click="runBackendAction('catia.install_plugin', '安装 CATIA 插件')"><span><UiIcon name="wrench" /></span><strong>安装 / 修复 CATIA 插件</strong><small>在新控制台运行安装脚本</small></button>
-          <button @click="showCatiaLibrary"><span><UiIcon name="boxes" /></span><strong>CATIA 标准件模型库</strong><small>查看 catalog 索引</small></button>
-          <button @click="runBackendAction('local_ai.install', '安装本地 DeepSeek')"><span><UiIcon name="cpu" /></span><strong>安装 / 管理本地 DeepSeek</strong><small>启动本地推理服务管理器</small></button>
-          <button @click="openMcp"><span><UiIcon name="network" /></span><strong>MCP 服务配置</strong><small>离线工具与 CATIA 工具服务器</small></button>
-          <button @click="testMcp"><span><UiIcon name="circle-check" /></span><strong>测试 MCP 服务</strong><small>检查工具数量与 CATIA 自检</small></button>
-          <button @click="runSelftest"><span><UiIcon name="settings" /></span><strong>运行内置自检</strong><small>检查 Python、几何内核和连接</small></button>
+          <button @click="showCatiaStatus"><span><UiIcon name="search" /></span><strong>检测 CATIA COM 注册</strong><small>只检查 COM 注册状态，不主动启动 CATIA</small></button>
+          <button @click="explainNativeCatiaFlow"><span><UiIcon name="network" /></span><strong>CATIA 原生接入说明</strong><small>推送时按需启动私有 COM adapter</small></button>
+          <button @click="explainNativeCatiaFlow"><span><UiIcon name="wrench" /></span><strong>旧 CATScript 插件已停用</strong><small>不再安装旧 Python bridge 宏插件</small></button>
+          <button @click="showCatiaLibrary"><span><UiIcon name="boxes" /></span><strong>内置常用零件知识库</strong><small>查看建模参考条目，不是 CATIA Catalog 文件</small></button>
+          <button @click="openLocalModelSettings"><span><UiIcon name="cpu" /></span><strong>配置本地模型 Provider</strong><small>在模型设置中配置兼容 API 地址</small></button>
+          <button @click="openIntegrations"><span><UiIcon name="network" /></span><strong>查看 Agent 与外部接入状态</strong><small>分别显示 Cordis 工具定义和外部 MCP 配置</small></button>
+          <button @click="runNativeSelftest"><span><UiIcon name="circle-check" /></span><strong>运行 Rust 原生自检</strong><small>检查资源、DSH Runtime、OCCT 与 Quick 解析器</small></button>
         </div>
         <footer class="modal-footer"><button class="secondary-button" @click="toolsOpen = false">关闭</button></footer>
       </section>
     </div>
 
-    <div v-if="mcpOpen" class="modal-backdrop" @click.self="mcpOpen = false"><section class="modal mcp-modal"><header class="modal-head"><div><span class="eyebrow">MODEL CONTEXT PROTOCOL</span><h2>MCP 服务配置</h2></div><button class="modal-close" aria-label="关闭 MCP 配置" @click="mcpOpen = false"><UiIcon name="close" /></button></header>
-      <div v-if="mcpData" class="mcp-body"><div class="mcp-stat-row"><div><strong>{{ mcpData.offline_tool_count }}</strong><span>离线工具</span></div><div><strong>{{ mcpData.catia_tool_count }}</strong><span>CATIA 工具</span></div></div>
-        <label>离线建模 MCP 配置<button class="copy-config" @click="copyText(JSON.stringify(mcpData.offline, null, 2))">复制</button></label><pre>{{ JSON.stringify(mcpData.offline, null, 2) }}</pre>
-        <label>CATIA MCP 配置<button class="copy-config" @click="copyText(JSON.stringify(mcpData.catia, null, 2))">复制</button></label><pre>{{ JSON.stringify(mcpData.catia, null, 2) }}</pre>
-        <button class="secondary-button" @click="testMcp">测试服务</button><button class="text-button" @click="openManual('docs/01-architecture/01-target-architecture.md')">打开架构说明 <UiIcon name="arrow-up-right" :size="14" /></button>
-      </div><footer class="modal-footer"><button class="secondary-button" @click="mcpOpen = false">关闭</button></footer></section></div>
+    <div v-if="integrationsOpen" class="modal-backdrop" @click.self="integrationsOpen = false"><section class="modal mcp-modal"><header class="modal-head"><div><span class="eyebrow">AGENT INTEGRATIONS</span><h2>Agent 与外部接入状态</h2></div><button class="modal-close" aria-label="关闭接入状态" @click="integrationsOpen = false"><UiIcon name="close" /></button></header>
+      <div v-if="integrationStatus" class="mcp-body"><div class="diagnostic-grid"><div v-for="row in diagnosticRows" :key="row.key" class="diagnostic-row"><span>{{ row.label }}</span><strong>{{ row.value }}</strong></div></div>
+        <p class="diagnostic-note">Cordis 工具数量只表示本地原生插件的 schema 定义数量，不代表外部 MCP server 已配置或连通。CATIA 状态只检查 COM 注册，不会启动 CATIA。</p>
+        <button class="secondary-button" @click="openIntegrations">刷新状态</button><button class="text-button" @click="openManual('docs/01-architecture/01-target-architecture.md')">打开架构说明 <UiIcon name="arrow-up-right" :size="14" /></button>
+      </div><footer class="modal-footer"><button class="secondary-button" @click="integrationsOpen = false">关闭</button></footer></section></div>
 
-    <div v-if="onlineOpen" class="modal-backdrop" @click.self="onlineOpen = false"><section class="modal online-modal"><header class="modal-head"><div><span class="eyebrow">ONLINE LOOKUP</span><h2>联网搜索</h2></div><button class="modal-close" aria-label="关闭联网搜索" @click="onlineOpen = false"><UiIcon name="close" /></button></header><div class="online-query"><input v-model="onlineQuery" placeholder="搜索标准零件、术语或建模方法"><button class="primary-button" @click="manualOnline">搜索</button></div><div class="online-result"><pre v-if="onlineResult">{{ JSON.stringify(onlineResult, null, 2) }}</pre><p v-else>搜索结果会显示在这里。</p></div><footer class="modal-footer"><button class="secondary-button" @click="onlineOpen = false">关闭</button><button class="primary-button" :disabled="!onlineResult" @click="useOnlineSuggestion">填入对话</button></footer></section></div>
+    <div v-if="onlineOpen" class="modal-backdrop" @click.self="onlineOpen = false"><section class="modal online-modal"><header class="modal-head"><div><span class="eyebrow">ONLINE LOOKUP</span><h2>联网搜索</h2></div><button class="modal-close" aria-label="关闭联网搜索" @click="onlineOpen = false"><UiIcon name="close" /></button></header><div class="online-query"><input v-model="onlineQuery" placeholder="搜索标准零件、术语或建模方法" @keydown.enter="manualOnline"><button class="primary-button" @click="manualOnline">搜索</button></div><div class="online-result">
+      <p v-if="!onlineResult">搜索结果会显示在这里。</p>
+      <template v-else>
+        <section class="online-suggestion" :class="{ 'has-suggestion': onlineResult.suggestion }">
+          <strong>{{ onlineResult.suggestion ? '建议描述' : '未能生成建议' }}</strong>
+          <p>{{ onlineResult.reason }}</p>
+          <pre v-if="onlineResult.suggestion">{{ onlineResult.suggestion }}</pre>
+          <div v-if="onlineResult.params && Object.keys(onlineResult.params).length" class="online-params">
+            <span v-for="(value, key) in onlineResult.params" :key="key">{{ key }}：{{ value }}</span>
+          </div>
+        </section>
+        <ul v-if="onlineResult.notes?.length" class="online-notes"><li v-for="(note, index) in onlineResult.notes" :key="index">{{ note }}</li></ul>
+        <div v-if="onlineResult.page_read_errors?.length" class="online-read-errors">
+          <strong>详情页读取失败</strong>
+          <p v-for="(failure, index) in onlineResult.page_read_errors" :key="index">{{ failure.title || failure.url }} · {{ failure.status }} · {{ failure.message }}</p>
+        </div>
+        <div v-if="onlineResult.results?.length" class="online-result-list">
+          <article v-for="(row, index) in onlineResult.results" :key="row.url || index" class="online-result-card">
+            <a :href="row.url" target="_blank" rel="noreferrer">{{ row.title || row.url }}</a>
+            <p>{{ row.snippet || '没有搜索摘要。' }}</p>
+            <small>{{ row.url }}</small>
+          </article>
+        </div>
+        <p v-else class="online-empty">没有搜索结果。</p>
+      </template>
+    </div><footer class="modal-footer"><button class="secondary-button" @click="onlineOpen = false">关闭</button><button class="primary-button" :disabled="!onlineResult?.suggestion" @click="useOnlineSuggestion">填入对话</button></footer></section></div>
 
-    <div v-if="helpOpen" class="modal-backdrop" @click.self="helpOpen = false"><section class="modal help-modal"><header class="modal-head"><div><span class="eyebrow">GETTING STARTED</span><h2>帮助与使用说明</h2></div><button class="modal-close" aria-label="关闭帮助" @click="helpOpen = false"><UiIcon name="close" /></button></header><div class="help-grid"><article><span>01</span><h3>描述零件</h3><p>写明零件类型、主要尺寸和孔位。快速模式适合离线几何描述；Agent 模式支持参考图片和多轮修改。</p></article><article><span>02</span><h3>检查特征与参数</h3><p>选择右侧特征树中的项目，修改可编辑参数并重新计算几何。</p></article><article><span>03</span><h3>保存与导出</h3><p>保存为 AI Modeler 工程，或导出 STL、OBJ、建模报告和 CATIA 自动化脚本。</p></article><article><span>04</span><h3>CATIA 集成</h3><p>从“更多”菜单打开集成工具，连接 CATIA V5 或安装插件。</p></article></div><div class="help-link-row"><button @click="openManual('docs/README.md')">打开研究与文档索引 <UiIcon name="arrow-up-right" :size="14" /></button><button @click="openManual('docs/05-operations/01-build-and-run.md')">打开运行与 CATIA 说明 <UiIcon name="arrow-up-right" :size="14" /></button></div><footer class="modal-footer"><button class="secondary-button" @click="helpOpen = false">关闭</button></footer></section></div>
+    <div v-if="helpOpen" class="modal-backdrop" @click.self="helpOpen = false"><section class="modal help-modal"><header class="modal-head"><div><span class="eyebrow">GETTING STARTED</span><h2>帮助与使用说明</h2></div><button class="modal-close" aria-label="关闭帮助" @click="helpOpen = false"><UiIcon name="close" /></button></header><div class="help-grid"><article><span>01</span><h3>描述零件</h3><p>写明零件类型、主要尺寸和孔位。快速模式适合离线几何描述；Agent 模式支持参考图片和多轮修改。</p></article><article><span>02</span><h3>检查特征与参数</h3><p>选择右侧特征树中的项目，修改可编辑参数并重新计算几何。</p></article><article><span>03</span><h3>保存与导出</h3><p>保存为 AI Modeler 工程，或导出 STL、OBJ、建模报告和 CATIA 原生零件。</p></article><article><span>04</span><h3>CATIA 集成</h3><p>推送模型时桌面端会按需启用应用私有 Python COM adapter；不再安装旧的 Python bridge 宏插件。</p></article></div><div class="help-link-row"><button @click="openManual('docs/README.md')">打开研究与文档索引 <UiIcon name="arrow-up-right" :size="14" /></button><button @click="openManual('docs/05-operations/01-build-and-run.md')">打开运行与 CATIA 说明 <UiIcon name="arrow-up-right" :size="14" /></button></div><footer class="modal-footer"><button class="secondary-button" @click="helpOpen = false">关闭</button></footer></section></div>
 
-    <div v-if="aboutOpen" class="modal-backdrop" @click.self="aboutOpen = false"><section class="modal about-modal"><div class="about-mark"><span></span><span></span><span></span></div><span class="eyebrow">AI MODELER DESKTOP</span><h2>AI Modeler</h2><p>自然语言驱动的参数化三维建模工作台</p><div class="about-version">应用 {{ handshake?.app_version || '—' }} <span>·</span> Python {{ handshake?.python_version || '—' }}</div><footer class="modal-footer"><button class="secondary-button" @click="aboutOpen = false">关闭</button></footer></section></div>
+    <div v-if="aboutOpen" class="modal-backdrop" @click.self="aboutOpen = false"><section class="modal about-modal"><div class="about-mark"><span></span><span></span><span></span></div><span class="eyebrow">AI MODELER DESKTOP</span><h2>AI Modeler</h2><p>{{ handshake?.description || '自然语言驱动的参数化三维建模工作台' }}</p><div class="about-version">Rust 桌面应用 {{ handshake?.app_version || '—' }}</div><footer class="modal-footer"><button class="secondary-button" @click="aboutOpen = false">关闭</button></footer></section></div>
   </div>
 </template>
+
+<style scoped>
+.acceptance-summary {
+  display: grid;
+  gap: 5px;
+  padding: 9px 18px 10px;
+  border-bottom: 1px solid var(--line);
+  color: var(--muted, #7b8790);
+  font-size: 11px;
+}
+.acceptance-summary__row { display: flex; justify-content: space-between; gap: 8px; }
+.acceptance-summary__row strong { color: var(--text, #26343c); font-weight: 600; text-align: right; }
+.acceptance-summary__row strong[data-state="accepted"],
+.acceptance-summary__row strong[data-state="completed"] { color: #23825d; }
+.acceptance-summary__row strong[data-state="candidate"],
+.acceptance-summary__row strong[data-state="cancelled"],
+.acceptance-summary__row strong[data-state="stopped"] { color: #a66b12; }
+.acceptance-summary__evidence { display: flex; flex-wrap: wrap; gap: 4px 10px; }
+.theme-dark .acceptance-summary__row strong { color: var(--text, #e0e7eb); }
+.diagnostic-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; margin: 8px 0 14px; }
+.diagnostic-row { display: grid; gap: 5px; min-width: 0; padding: 11px 12px; border: 1px solid var(--line); border-radius: 9px; background: var(--surface-muted, #f7f8fa); }
+.diagnostic-row span { color: var(--muted, #71808a); font-size: 11px; }
+.diagnostic-row strong { color: var(--text, #26343c); font-size: 13px; font-weight: 600; }
+.diagnostic-note { margin: 8px 0 14px; color: var(--muted, #71808a); font-size: 12px; line-height: 1.6; }
+.theme-dark .diagnostic-row { background: var(--surface-muted, #212934); }
+.theme-dark .diagnostic-row strong { color: var(--text, #e0e7eb); }
+</style>

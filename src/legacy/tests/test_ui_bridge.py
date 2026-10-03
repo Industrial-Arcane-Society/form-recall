@@ -8,6 +8,52 @@ from ai_modeler.core import docmodel as DM
 from ai_modeler.ui import bridge as ui_bridge
 
 
+def test_settings_save_get_round_trips_agent_stage_overrides(tmp_path, monkeypatch):
+    config_path = tmp_path / "isolated-config.json"
+    monkeypatch.setattr(ui_bridge.cfgmod, "CONFIG_PATH", str(config_path))
+    bridge = ui_bridge.Bridge(output_stream=io.StringIO())
+    overrides = {
+        "perception": {"provider_id": "vision", "reasoning_effort": "high"},
+        "modeling": {"provider_id": "builder", "reasoning_effort": "max"},
+        "review": {"provider_id": "vision", "reasoning_effort": "low"},
+    }
+    settings = {
+        "llm": {
+            "active_provider_id": "builder",
+            "providers": [
+                {
+                    "id": "vision",
+                    "name": "Vision",
+                    "base_url": "https://vision.example/v1",
+                    "model": "vision-model",
+                    "api_key": "vision-secret",
+                    "reasoning_effort": "high",
+                },
+                {
+                    "id": "builder",
+                    "name": "Builder",
+                    "base_url": "https://builder.example/v1",
+                    "model": "builder-model",
+                    "api_key": "builder-secret",
+                    "reasoning_effort": "max",
+                },
+            ],
+            "agent_stage_overrides": overrides,
+        },
+    }
+
+    saved = bridge.dispatch("settings.save", {"settings": settings}, "settings-save")
+    loaded = bridge.dispatch("settings.get", {}, "settings-get")
+
+    assert config_path.is_file()
+    assert saved["settings"] == loaded
+    assert loaded["llm"]["agent_stage_overrides"] == overrides
+    assert loaded["llm"]["base_url"] == "https://builder.example/v1"
+    assert loaded["llm"]["model"] == "builder-model"
+    assert loaded["llm"]["api_key"] == "builder-secret"
+    assert loaded["llm"]["reasoning_effort"] == "max"
+
+
 class InlinePool:
     """Keep JSONL protocol tests deterministic while exercising serve_stdio."""
 

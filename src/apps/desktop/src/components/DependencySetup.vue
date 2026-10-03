@@ -7,15 +7,6 @@ const props = defineProps<{ initialError?: string }>()
 const emit = defineEmits<{ installed: [] }>()
 
 type InstallEvent = { kind: 'progress' | 'complete'; message: string }
-type MirrorId = 'pypi' | 'tsinghua' | 'aliyun'
-
-const mirrors: { id: MirrorId; name: string; subtitle: string }[] = [
-  { id: 'pypi', name: '官方 PyPI', subtitle: '全球官方源' },
-  { id: 'tsinghua', name: '清华大学', subtitle: '国内镜像 · 推荐' },
-  { id: 'aliyun', name: '阿里云', subtitle: '国内镜像' },
-]
-const storedMirror = localStorage.getItem('aimodeler-package-mirror') as MirrorId | null
-const selectedMirror = ref<MirrorId>(mirrors.some((mirror) => mirror.id === storedMirror) ? storedMirror! : 'tsinghua')
 const installing = ref(false)
 const error = ref('')
 const progress = ref('准备就绪')
@@ -27,7 +18,6 @@ async function install() {
   error.value = ''
   logs.value = []
   progress.value = '正在准备安装…'
-  localStorage.setItem('aimodeler-package-mirror', selectedMirror.value)
 
   const channel = new Channel<InstallEvent>()
   channel.onmessage = (event) => {
@@ -35,7 +25,7 @@ async function install() {
     logs.value = [...logs.value.slice(-5), event.message]
   }
   try {
-    await invoke('install_dependencies', { mirror: selectedMirror.value, onEvent: channel })
+    await invoke('install_dsh_runtime', { onEvent: channel })
     emit('installed')
   } catch (reason) {
     error.value = reason instanceof Error ? reason.message : String(reason)
@@ -64,7 +54,7 @@ async function install() {
         </div>
         <span class="dependency-kicker">ONE-TIME SETUP</span>
         <h1>为建模工作区<br>准备运行环境</h1>
-        <p>源码与轻量 Python 已随软件安装。首次启动时下载几何、图像和 CAD 依赖，完成后就可以离线使用本地建模功能。</p>
+        <p>桌面工作区使用 Rust 原生 CAD 模型。首次使用 Agent 时，需要准备应用私有的 Node.js 和 DSH Agent Runtime；Python 不作为启动 Quick、本地模型或 Agent 的前置条件。</p>
         <div class="setup-facts">
           <div><span class="fact-icon"><UiIcon name="package-check" :size="16" /></span><span><strong>只需安装一次</strong><small>后续启动直接进入工作区</small></span></div>
           <div><span class="fact-icon"><UiIcon name="hard-drive" :size="16" /></span><span><strong>保存在当前用户目录</strong><small>不写入 Program Files 安装目录</small></span></div>
@@ -74,20 +64,12 @@ async function install() {
       <section class="dependency-form">
         <div class="form-heading">
           <span class="step-label"><i>01</i> / INITIAL SETUP</span>
-          <h2>选择下载镜像</h2>
-          <p>安装过程需要网络连接。可按网络情况选择软件包镜像源。</p>
-        </div>
-
-        <div class="mirror-list" role="radiogroup" aria-label="Python 软件包镜像">
-          <button v-for="mirror in mirrors" :key="mirror.id" class="mirror-option" :class="{ selected: selectedMirror === mirror.id }" role="radio" :aria-checked="selectedMirror === mirror.id" :disabled="installing" @click="selectedMirror = mirror.id">
-            <span class="mirror-radio"><i></i></span>
-            <span class="mirror-copy"><strong>{{ mirror.name }}</strong><small>{{ mirror.subtitle }}</small></span>
-            <UiIcon v-if="selectedMirror === mirror.id" class="mirror-check" name="circle-check" :size="18" />
-          </button>
+          <h2>准备 DSH Agent Runtime</h2>
+          <p>DSH Runtime 从固定的官方 Node.js 与 npm 地址下载，并在安装前校验 SHA-256 和锁文件完整性。Python、OCCT 与 CATIA 状态独立检测。</p>
         </div>
 
         <div v-if="initialError && !logs.length" class="setup-notice"><UiIcon name="info" :size="17" /><span>{{ initialError }}</span></div>
-        <div v-if="error" class="setup-error"><UiIcon name="warning" :size="18" /><div><strong>依赖安装失败</strong><p>{{ error }}</p><small>可以切换镜像后重试。已下载的文件会留在缓存中。</small></div></div>
+        <div v-if="error" class="setup-error"><UiIcon name="warning" :size="18" /><div><strong>DSH Runtime 安装失败</strong><p>{{ error }}</p><small>可重试安装。已下载的文件会留在缓存中。</small></div></div>
 
         <div class="install-status" :class="{ active: installing }">
           <span class="status-indicator"><UiIcon v-if="installing" name="loading" :size="16" /><UiIcon v-else name="shield-check" :size="16" /></span>
@@ -99,13 +81,13 @@ async function install() {
         <button class="install-button" :disabled="installing" @click="install">
           <UiIcon v-if="installing" name="loading" :size="17" />
           <UiIcon v-else name="download" :size="17" />
-          {{ installing ? '正在安装…' : error ? '重试安装' : '安装依赖并启动' }}
+          {{ installing ? '正在安装…' : error ? '重试安装' : '安装 DSH 并启动' }}
           <UiIcon v-if="!installing" name="arrow-right" :size="17" />
         </button>
-        <p class="privacy-note"><UiIcon name="lock-keyhole" :size="14" />依赖从所选镜像下载并安装到本机用户数据目录，不会上传项目文件。</p>
+        <p class="privacy-note"><UiIcon name="lock-keyhole" :size="14" />DSH 运行文件保存在本机用户目录；项目文件不会上传到安装服务。</p>
       </section>
     </section>
-    <footer class="dependency-footer"><span>AI MODELER <i>·</i> 桌面端首次启动</span><span>Python 3.13 <i>·</i> Windows x64</span></footer>
+    <footer class="dependency-footer"><span>AI MODELER <i>·</i> 桌面端首次启动</span><span>Node.js 22 LTS <i>·</i> DSH Agent Runtime</span></footer>
   </main>
 </template>
 

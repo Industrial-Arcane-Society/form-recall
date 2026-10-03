@@ -12,6 +12,7 @@ from pathlib import Path
 from unittest import mock
 
 from ai_modeler.agent import dsh_tool_domain as server
+from ai_modeler.agent import dsh_agent
 from ai_modeler.agent import plan_state
 from ai_modeler.sdk import cadplan
 
@@ -902,6 +903,7 @@ class DSHReviewWorkflowTests(unittest.TestCase):
     def test_agent_prompt_has_no_fixed_review_or_score_acceptance_gate(self):
         prompt_path = Path(__file__).parents[1] / "prompts" / "dsh_agent" / "system.md"
         prompt = prompt_path.read_text(encoding="utf-8")
+        self.assertEqual(dsh_agent._prompt(), prompt)
         self.assertIn("无需每添加一个特征都做视觉审查", prompt)
         self.assertIn("分数只作诊断", prompt)
         self.assertIn("finish 始终允许保存候选", prompt)
@@ -909,6 +911,32 @@ class DSHReviewWorkflowTests(unittest.TestCase):
         for obsolete_gate in ("80分门槛", "至少80分", "每个特征都必须先复核",
                               "match 即可直接结束", "自评相似度达标即可验收"):
             self.assertNotIn(obsolete_gate, prompt)
+
+    def test_production_agent_prompt_preserves_image_axis_and_member_ratios(self):
+        prompt = dsh_agent._prompt()
+        self.assertIn("先从同视向可见的主体边界和边长投影确定各轴之间的无量纲比例", prompt)
+        self.assertIn("不能只因一组名义尺寸看起来顺眼", prompt)
+        self.assertIn("每个推算参数分别写入所属 feature 的 `sources`", prompt)
+        self.assertIn("inventory 给出的成员比值全部为 1.0", prompt)
+        self.assertIn('传 refresh_reason="conflict" 重观察', prompt)
+        self.assertIn("主体创建后以及关键特征完成时", prompt)
+        self.assertIn("修订对应 CADPlan 参数", prompt)
+
+    def test_production_prompt_maps_front_surface_holes_and_open_recess_edges(self):
+        prompt = dsh_agent._prompt()
+        self.assertIn("primary front（主正面，法向 +Y）", prompt)
+        self.assertIn("每个孔组/凹槽所属的 `surface_id`", prompt)
+        self.assertIn("`normal_relation_to_primary`", prompt)
+        self.assertIn("组间 `surface_relations`", prompt)
+        self.assertIn("依据各孔组支承面相对主正面的关系映射轴向", prompt)
+        self.assertIn("属于主正面或与其平行退层面的一个或多个孔组都映射为 `axis=\"Y\"`", prompt)
+        self.assertIn("只有原图证据明确显示孔组位于与主正面垂直的侧面", prompt)
+        self.assertIn("`touches_part_edge` 描述工件自身的 top/bottom/left/right 边缘", prompt)
+        self.assertIn("`touches_boundary` 描述图片/ROI 边界", prompt)
+        self.assertIn("先按 `surface_id` 和 `surface_relations` 建立面间拓扑", prompt)
+        self.assertIn("凹槽按 `touches_part_edge` 中实际接触的工件边缘确定开口范围及是否贯通", prompt)
+        self.assertIn("保留它相对主正面的居中或偏置关系", prompt)
+        self.assertIn("不得把位于正面中部的退台误建成角部 notch", prompt)
 
     def test_finish_without_current_visual_evidence_saves_unverified_candidate(self):
         self._write_state()
@@ -1463,6 +1491,32 @@ class DSHReviewWorkflowTests(unittest.TestCase):
         self.assertEqual("verified", fact["status"])
         self.assertEqual("body-sha256", fact["evidence"]["page_text_sha256"])
         self.assertEqual("https://example.test/material", fact["evidence"]["url"])
+
+    def test_external_fact_verifier_reads_rust_persisted_opened_page_in_new_worker(self):
+        quote = "The material density is exactly 2.70 g/cm3."
+        url, title = "https://example.test/data", "Material facts"
+        result_id = hashlib.sha256((url + title).encode("utf-8")).hexdigest()[:16]
+        text_sha = hashlib.sha256(quote.encode("utf-8")).hexdigest()
+        native_state = {"schemaVersion": 1,
+                        "results": [{"result_id": result_id, "url": url, "title": title}],
+                        "opened_pages": [{"result_id": result_id, "url": url, "text": quote,
+                                          "text_sha256": text_sha, "opened_at_epoch_ms": 1}]}
+        server._STATE_DIR.mkdir(parents=True, exist_ok=True)
+        state_path = server._STATE_DIR / "native-web-state.json"
+        state_path.write_text(json.dumps(native_state), encoding="utf-8")
+        server._handle_tool("cad_require_external_fact", {
+            "fact_id": "native-density", "claim": "Material density is 2.70 g/cm3",
+            "impact": "informational"})
+        with mock.patch.dict(server._SEARCH_RESULT_DETAILS, {}, clear=True), mock.patch.object(
+                server.llm, "chat_completion", return_value={
+                    "content": '{"verdict":"supported","rationale":"The exact density is present."}'}):
+            server._handle_tool("cad_attach_external_fact_evidence", {
+                "fact_id": "native-density", "result_id": result_id, "quote": quote})
+        self.assertEqual(text_sha, server._load()["required_external_facts"]["native-density"]["evidence"]["page_text_sha256"])
+        native_state["opened_pages"][0]["text"] = "Tampered page text"
+        state_path.write_text(json.dumps(native_state), encoding="utf-8")
+        with self.assertRaisesRegex(ValueError, "正文 SHA"):
+            server._native_web_evidence_page(result_id)
 
     def test_external_fact_cannot_be_verified_from_unrelated_quote(self):
         quote = "The alloy is available in several colors."

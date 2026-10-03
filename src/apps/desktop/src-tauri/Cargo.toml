@@ -7,10 +7,23 @@ license = "MIT"
 repository = "https://github.com/Mary111222/AI-_-"
 edition = "2024"
 rust-version = "1.90"
+default-run = "ai-modeler"
+
+[features]
+agent-webview-smoke = []
 
 [[bin]]
 name = "ai-modeler"
 path = "src/main.rs"
+
+[[bin]]
+name = "ai-modeler-headless-smoke"
+path = "src/headless_smoke.rs"
+
+[[bin]]
+name = "ai-modeler-webview-smoke"
+path = "src/webview_smoke_main.rs"
+required-features = ["agent-webview-smoke"]
 
 [lib]
 name = "ai_modeler_ui_lib"
@@ -20,7 +33,18 @@ crate-type = ["staticlib", "cdylib", "rlib"]
 tauri-build = { version = "2", features = [] }
 
 [dependencies]
-serde_json = "1.0"
+base64 = "0.22.1"
+getrandom = "0.3.4"
+reqwest = { version = "0.12.26", default-features = false, features = ["blocking", "rustls-tls-webpki-roots"] }
+regex = "1"
+sha2 = "0.10.9"
+serde_json = { version = "1.0", features = ["float_roundtrip"] }
 tauri = { version = "2", features = [] }
 tauri-plugin-dialog = "2"
-tokio = { version = "1", features = ["sync"] }
+tokio = { version = "1", features = ["sync", "time", "macros", "rt"] }
+zip = { version = "2.4.2", default-features = false, features = ["deflate"] }
+image = { version = "0.25", default-features = false, features = ["png", "jpeg", "webp", "gif"] }
+libloading = "0.8"
+
+[dev-dependencies]
+tauri = { version = "2", features = ["test"] }

@@ -1,0 +1,703 @@
+[
+  {
+    "id": "expanded_queries_deep_pages_and_m_size_override",
+    "query": "M5 内六角螺钉",
+    "search_responses": [
+      {
+        "rows": [
+          {
+            "title": "内六角螺钉初步规格",
+            "snippet": "外径5mm，适用于常见连接",
+            "url": "https://example.test/initial"
+          },
+          {
+            "title": "无关装配说明",
+            "snippet": "用于其他产品的安装说明",
+            "url": "https://example.test/noise"
+          }
+        ]
+      },
+      {
+        "rows": [
+          {
+            "title": "内六角螺钉 M5 产品规格",
+            "snippet": "螺纹直径6mm，螺杆长度12mm",
+            "url": "https://example.test/screw-a"
+          },
+          {
+            "title": "内六角螺钉 M5 标准尺寸",
+            "snippet": "螺纹直径5mm，螺杆长度8mm",
+            "url": "https://example.test/screw-b"
+          }
+        ]
+      }
+    ],
+    "page_responses": {
+      "https://example.test/screw-a": {
+        "text": "螺纹直径5mm，螺杆长度10mm",
+        "status": "ok"
+      },
+      "https://example.test/screw-b": {
+        "text": "螺纹直径5mm，螺杆长度8mm",
+        "status": "ok"
+      }
+    },
+    "expected": {
+      "search_queries": [
+        "M5 内六角螺钉 标准 规格 尺寸表 mm",
+        "M5 内六角螺钉 规格参数 mm"
+      ],
+      "opened_urls": [
+        "https://example.test/screw-a",
+        "https://example.test/screw-b"
+      ],
+      "response": {
+        "ok": true,
+        "results": [
+          {
+            "title": "内六角螺钉 M5 产品规格",
+            "snippet": "螺纹直径6mm，螺杆长度12mm",
+            "url": "https://example.test/screw-a"
+          },
+          {
+            "title": "内六角螺钉 M5 标准尺寸",
+            "snippet": "螺纹直径5mm，螺杆长度8mm",
+            "url": "https://example.test/screw-b"
+          }
+        ],
+        "suggestion": "阶梯轴 直径5 长8, 直径7.5 长5",
+        "reason": "直径≈5; 长度≈8; 公称直径 M5 (以此为准); 按内六角估算: 杆径5 杆长8 头径7.5 头高5",
+        "query": "M5 内六角螺钉",
+        "notes": [
+          "查询「M5 内六角螺钉 标准 规格 尺寸表 mm」命中 1 条 (相关性过滤后不足, 保留原始结果)",
+          "查询「M5 内六角螺钉 规格参数 mm」命中 2 条相关结果 (共 2 条)",
+          "已读取详情页: 内六角螺钉 M5 产品规格",
+          "已读取详情页: 内六角螺钉 M5 标准尺寸",
+          "从网页中提取到参数: 直径=5, 长度=8"
+        ],
+        "params": {
+          "直径": 5.0,
+          "长度": 8.0
+        }
+      }
+    }
+  },
+  {
+    "id": "first_raw_fallback_is_retained",
+    "query": "螺钉",
+    "search_responses": [
+      {
+        "rows": [
+          {
+            "title": "螺钉规格",
+            "snippet": "直径4mm，长度10mm",
+            "url": "https://example.test/fallback-a"
+          },
+          {
+            "title": "其他产品说明",
+            "snippet": "没有相关信息",
+            "url": "https://example.test/fallback-b"
+          }
+        ]
+      },
+      {
+        "rows": [
+          {
+            "title": "螺钉介绍",
+            "snippet": "用途说明",
+            "url": "https://example.test/later"
+          }
+        ]
+      },
+      {
+        "rows": [
+          {
+            "title": "螺钉应用",
+            "snippet": "安装说明",
+            "url": "https://example.test/later-two"
+          }
+        ]
+      },
+      {
+        "rows": []
+      }
+    ],
+    "page_responses": {
+      "https://example.test/fallback-a": {
+        "text": "直径4mm，长度10mm",
+        "status": "ok"
+      },
+      "https://example.test/fallback-b": {
+        "text": "",
+        "status": "empty_body"
+      }
+    },
+    "expected": {
+      "search_queries": [
+        "螺钉 标准 规格 尺寸表 mm",
+        "螺钉 规格参数 mm",
+        "螺钉 尺寸",
+        "螺钉"
+      ],
+      "opened_urls": [
+        "https://example.test/fallback-a",
+        "https://example.test/fallback-b"
+      ],
+      "response": {
+        "ok": true,
+        "results": [
+          {
+            "title": "螺钉规格",
+            "snippet": "直径4mm，长度10mm",
+            "url": "https://example.test/fallback-a"
+          },
+          {
+            "title": "其他产品说明",
+            "snippet": "没有相关信息",
+            "url": "https://example.test/fallback-b"
+          }
+        ],
+        "suggestion": "阶梯轴 直径4 长10, 直径6.4 长4",
+        "reason": "直径≈4; 长度≈10; 按螺钉估算: 杆径4 杆长10 头径6.4 头高4",
+        "query": "螺钉",
+        "notes": [
+          "查询「螺钉 标准 规格 尺寸表 mm」命中 1 条 (相关性过滤后不足, 保留原始结果)",
+          "已读取详情页: 螺钉规格",
+          "从网页中提取到参数: 直径=4, 长度=10"
+        ],
+        "params": {
+          "直径": 4.0,
+          "长度": 10.0
+        }
+      }
+    }
+  },
+  {
+    "id": "search_results_without_dimensions",
+    "query": "法兰",
+    "search_responses": [
+      {
+        "rows": [
+          {
+            "title": "法兰连接说明",
+            "snippet": "用于管道连接和固定",
+            "url": "https://example.test/flange-a"
+          },
+          {
+            "title": "法兰产品介绍",
+            "snippet": "工业管件信息",
+            "url": "https://example.test/flange-b"
+          }
+        ]
+      }
+    ],
+    "page_responses": {},
+    "expected": {
+      "search_queries": [
+        "法兰 标准 规格 尺寸表 mm"
+      ],
+      "opened_urls": [
+        "https://example.test/flange-a",
+        "https://example.test/flange-b"
+      ],
+      "response": {
+        "ok": false,
+        "results": [
+          {
+            "title": "法兰连接说明",
+            "snippet": "用于管道连接和固定",
+            "url": "https://example.test/flange-a"
+          },
+          {
+            "title": "法兰产品介绍",
+            "snippet": "工业管件信息",
+            "url": "https://example.test/flange-b"
+          }
+        ],
+        "suggestion": null,
+        "reason": "搜索结果里没有找到可用的尺寸参数。（搜到 2 条结果，但没有带单位的直径/长度等信息）",
+        "query": "法兰",
+        "notes": [
+          "查询「法兰 标准 规格 尺寸表 mm」命中 2 条相关结果 (共 2 条)"
+        ],
+        "params": {}
+      }
+    }
+  },
+  {
+    "id": "no_results_omits_params",
+    "query": "不存在的零件",
+    "search_responses": [
+      {
+        "rows": []
+      },
+      {
+        "rows": []
+      },
+      {
+        "rows": []
+      },
+      {
+        "rows": []
+      }
+    ],
+    "page_responses": {},
+    "expected": {
+      "search_queries": [
+        "不存在的零件 标准 规格 尺寸表 mm",
+        "不存在的零件 规格参数 mm",
+        "不存在的零件 尺寸",
+        "不存在的零件"
+      ],
+      "opened_urls": [],
+      "response": {
+        "ok": false,
+        "results": [],
+        "suggestion": null,
+        "reason": "搜索没有返回结果 (网络不可用或被拦截)",
+        "query": "不存在的零件",
+        "notes": []
+      }
+    }
+  },
+  {
+    "id": "bearing_code_heuristic",
+    "query": "6204 轴承",
+    "search_responses": [
+      {
+        "rows": [
+          {
+            "title": "6204轴承产品资料",
+            "snippet": "轴承型号与结构介绍",
+            "url": "https://example.test/bearing-a"
+          },
+          {
+            "title": "6204轴承技术说明",
+            "snippet": "滚动轴承应用介绍",
+            "url": "https://example.test/bearing-b"
+          }
+        ]
+      }
+    ],
+    "page_responses": {},
+    "expected": {
+      "search_queries": [
+        "6204 轴承 标准 规格 尺寸表 mm"
+      ],
+      "opened_urls": [
+        "https://example.test/bearing-a",
+        "https://example.test/bearing-b"
+      ],
+      "response": {
+        "ok": true,
+        "results": [
+          {
+            "title": "6204轴承产品资料",
+            "snippet": "轴承型号与结构介绍",
+            "url": "https://example.test/bearing-a"
+          },
+          {
+            "title": "6204轴承技术说明",
+            "snippet": "滚动轴承应用介绍",
+            "url": "https://example.test/bearing-b"
+          }
+        ],
+        "suggestion": "套筒 内径20 长60",
+        "reason": "按轴承型号 6204 推算内径 20mm; 按搜到的尺寸估算",
+        "query": "6204 轴承",
+        "notes": [
+          "查询「6204 轴承 标准 规格 尺寸表 mm」命中 2 条相关结果 (共 2 条)"
+        ],
+        "params": {}
+      }
+    }
+  },
+  {
+    "id": "profile_code_heuristic",
+    "query": "4040铝型材",
+    "search_responses": [
+      {
+        "rows": [
+          {
+            "title": "4040铝型材介绍",
+            "snippet": "铝型材结构说明",
+            "url": "https://example.test/profile-a"
+          },
+          {
+            "title": "4040铝型材规格",
+            "snippet": "型材连接应用",
+            "url": "https://example.test/profile-b"
+          }
+        ]
+      }
+    ],
+    "page_responses": {},
+    "expected": {
+      "search_queries": [
+        "4040铝型材 标准 规格 尺寸表 mm"
+      ],
+      "opened_urls": [
+        "https://example.test/profile-a",
+        "https://example.test/profile-b"
+      ],
+      "response": {
+        "ok": true,
+        "results": [
+          {
+            "title": "4040铝型材介绍",
+            "snippet": "铝型材结构说明",
+            "url": "https://example.test/profile-a"
+          },
+          {
+            "title": "4040铝型材规格",
+            "snippet": "型材连接应用",
+            "url": "https://example.test/profile-b"
+          }
+        ],
+        "suggestion": "套筒 外径40 内径36 长100",
+        "reason": "按型材截面 40×40 估算 (壁厚 2mm, 默认长度 100mm, 用圆管近似)",
+        "query": "4040铝型材",
+        "notes": [
+          "查询「4040铝型材 标准 规格 尺寸表 mm」命中 2 条相关结果 (共 2 条)"
+        ],
+        "params": {}
+      }
+    }
+  },
+  {
+    "id": "nut_suggestion_heuristic",
+    "query": "M6螺母",
+    "search_responses": [
+      {
+        "rows": [
+          {
+            "title": "M6螺母尺寸",
+            "snippet": "外径6mm，厚度5mm",
+            "url": "https://example.test/nut-a"
+          },
+          {
+            "title": "M6螺母标准",
+            "snippet": "外径6mm，厚度5mm",
+            "url": "https://example.test/nut-b"
+          }
+        ]
+      }
+    ],
+    "page_responses": {},
+    "expected": {
+      "search_queries": [
+        "M6螺母 标准 规格 尺寸表 mm"
+      ],
+      "opened_urls": [
+        "https://example.test/nut-a",
+        "https://example.test/nut-b"
+      ],
+      "response": {
+        "ok": true,
+        "results": [
+          {
+            "title": "M6螺母尺寸",
+            "snippet": "外径6mm，厚度5mm",
+            "url": "https://example.test/nut-a"
+          },
+          {
+            "title": "M6螺母标准",
+            "snippet": "外径6mm，厚度5mm",
+            "url": "https://example.test/nut-b"
+          }
+        ],
+        "suggestion": "套筒 外径9.6 内径6 长4.8",
+        "reason": "直径≈6; 高度≈5; 公称直径 M6 (以此为准); 按螺母估算",
+        "query": "M6螺母",
+        "notes": [
+          "查询「M6螺母 标准 规格 尺寸表 mm」命中 2 条相关结果 (共 2 条)",
+          "从网页中提取到参数: 直径=6, 高度=5"
+        ],
+        "params": {
+          "直径": 6.0,
+          "高度": 5.0
+        }
+      }
+    }
+  },
+  {
+    "id": "washer_suggestion_heuristic",
+    "query": "垫圈",
+    "search_responses": [
+      {
+        "rows": [
+          {
+            "title": "垫圈规格A",
+            "snippet": "外径8mm，厚度1.6mm",
+            "url": "https://example.test/washer-a"
+          },
+          {
+            "title": "垫圈规格B",
+            "snippet": "外径8mm，厚度1.6mm",
+            "url": "https://example.test/washer-b"
+          }
+        ]
+      }
+    ],
+    "page_responses": {},
+    "expected": {
+      "search_queries": [
+        "垫圈 标准 规格 尺寸表 mm"
+      ],
+      "opened_urls": [
+        "https://example.test/washer-a",
+        "https://example.test/washer-b"
+      ],
+      "response": {
+        "ok": true,
+        "results": [
+          {
+            "title": "垫圈规格A",
+            "snippet": "外径8mm，厚度1.6mm",
+            "url": "https://example.test/washer-a"
+          },
+          {
+            "title": "垫圈规格B",
+            "snippet": "外径8mm，厚度1.6mm",
+            "url": "https://example.test/washer-b"
+          }
+        ],
+        "suggestion": "套筒 外径17.6 内径8 长1.6",
+        "reason": "直径≈8; 高度≈1.6; 按垫圈估算",
+        "query": "垫圈",
+        "notes": [
+          "查询「垫圈 标准 规格 尺寸表 mm」命中 2 条相关结果 (共 2 条)",
+          "从网页中提取到参数: 直径=8, 高度=1.6"
+        ],
+        "params": {
+          "直径": 8.0,
+          "高度": 1.6
+        }
+      }
+    }
+  },
+  {
+    "id": "generic_dimension_suggestion",
+    "query": "圆柱件",
+    "search_responses": [
+      {
+        "rows": [
+          {
+            "title": "圆柱件尺寸A",
+            "snippet": "外径12mm，长度30mm",
+            "url": "https://example.test/generic-a"
+          },
+          {
+            "title": "圆柱件尺寸B",
+            "snippet": "外径12mm，长度30mm",
+            "url": "https://example.test/generic-b"
+          }
+        ]
+      }
+    ],
+    "page_responses": {},
+    "expected": {
+      "search_queries": [
+        "圆柱件 标准 规格 尺寸表 mm"
+      ],
+      "opened_urls": [
+        "https://example.test/generic-a",
+        "https://example.test/generic-b"
+      ],
+      "response": {
+        "ok": true,
+        "results": [
+          {
+            "title": "圆柱件尺寸A",
+            "snippet": "外径12mm，长度30mm",
+            "url": "https://example.test/generic-a"
+          },
+          {
+            "title": "圆柱件尺寸B",
+            "snippet": "外径12mm，长度30mm",
+            "url": "https://example.test/generic-b"
+          }
+        ],
+        "suggestion": "套筒 直径12 长30",
+        "reason": "直径≈12; 长度≈30; 按搜到的尺寸估算",
+        "query": "圆柱件",
+        "notes": [
+          "查询「圆柱件 标准 规格 尺寸表 mm」命中 2 条相关结果 (共 2 条)",
+          "从网页中提取到参数: 直径=12, 长度=30"
+        ],
+        "params": {
+          "直径": 12.0,
+          "长度": 30.0
+        }
+      }
+    }
+  },
+  {
+    "id": "unit_conversion_and_all_dimension_fields",
+    "query": "端盖",
+    "search_responses": [
+      {
+        "rows": [
+          {
+            "title": "端盖参数A",
+            "snippet": "外径1.2cm，长度0.02m，宽度1英寸，厚度0.5mm，齿数12，模数2mm",
+            "url": "https://example.test/cover-a"
+          },
+          {
+            "title": "端盖参数B",
+            "snippet": "外径1.2cm，长度0.02m，宽度1英寸，厚度0.5mm，齿数12，模数2mm",
+            "url": "https://example.test/cover-b"
+          }
+        ]
+      }
+    ],
+    "page_responses": {},
+    "expected": {
+      "search_queries": [
+        "端盖 标准 规格 尺寸表 mm"
+      ],
+      "opened_urls": [
+        "https://example.test/cover-a",
+        "https://example.test/cover-b"
+      ],
+      "response": {
+        "ok": true,
+        "results": [
+          {
+            "title": "端盖参数A",
+            "snippet": "外径1.2cm，长度0.02m，宽度1英寸，厚度0.5mm，齿数12，模数2mm",
+            "url": "https://example.test/cover-a"
+          },
+          {
+            "title": "端盖参数B",
+            "snippet": "外径1.2cm，长度0.02m，宽度1英寸，厚度0.5mm，齿数12，模数2mm",
+            "url": "https://example.test/cover-b"
+          }
+        ],
+        "suggestion": "套筒 直径12 长20",
+        "reason": "直径≈12; 长度≈20; 宽度≈25.4; 高度≈0.5; 齿数≈12; 模数≈2; 按搜到的尺寸估算",
+        "query": "端盖",
+        "notes": [
+          "查询「端盖 标准 规格 尺寸表 mm」命中 2 条相关结果 (共 2 条)",
+          "从网页中提取到参数: 直径=12, 长度=20, 宽度=25.4, 高度=0.5, 齿数=12, 模数=2"
+        ],
+        "params": {
+          "直径": 12.0,
+          "长度": 20.0,
+          "宽度": 25.4,
+          "高度": 0.5,
+          "齿数": 12.0,
+          "模数": 2.0
+        }
+      }
+    }
+  },
+  {
+    "id": "parameter_frequency_tie_keeps_first_value",
+    "query": "法兰",
+    "search_responses": [
+      {
+        "rows": [
+          {
+            "title": "法兰规格甲",
+            "snippet": "直径5mm",
+            "url": "https://example.test/flange-tie-a"
+          },
+          {
+            "title": "法兰规格乙",
+            "snippet": "直径6mm",
+            "url": "https://example.test/flange-tie-b"
+          }
+        ]
+      }
+    ],
+    "page_responses": {},
+    "expected": {
+      "search_queries": [
+        "法兰 标准 规格 尺寸表 mm"
+      ],
+      "opened_urls": [
+        "https://example.test/flange-tie-a",
+        "https://example.test/flange-tie-b"
+      ],
+      "response": {
+        "ok": true,
+        "results": [
+          {
+            "title": "法兰规格甲",
+            "snippet": "直径5mm",
+            "url": "https://example.test/flange-tie-a"
+          },
+          {
+            "title": "法兰规格乙",
+            "snippet": "直径6mm",
+            "url": "https://example.test/flange-tie-b"
+          }
+        ],
+        "suggestion": "套筒 直径5 长15",
+        "reason": "直径≈5; 按搜到的尺寸估算",
+        "query": "法兰",
+        "notes": [
+          "查询「法兰 标准 规格 尺寸表 mm」命中 2 条相关结果 (共 2 条)",
+          "从网页中提取到参数: 直径=5"
+        ],
+        "params": {
+          "直径": 5.0
+        }
+      }
+    }
+  },
+  {
+    "id": "page_body_is_limited_to_4000_characters",
+    "query": "端盖",
+    "search_responses": [
+      {
+        "rows": [
+          {
+            "title": "端盖技术说明",
+            "snippet": "产品说明",
+            "url": "https://example.test/end-cap-long"
+          }
+        ]
+      }
+    ],
+    "page_responses": {
+      "https://example.test/end-cap-long": {
+        "text_repeat": {
+          "value": "x",
+          "count": 4000,
+          "suffix": "直径999mm"
+        }
+      }
+    },
+    "expected": {
+      "search_queries": [
+        "端盖 标准 规格 尺寸表 mm",
+        "端盖 规格参数 mm",
+        "端盖 尺寸",
+        "端盖"
+      ],
+      "opened_urls": [
+        "https://example.test/end-cap-long"
+      ],
+      "response": {
+        "ok": false,
+        "results": [
+          {
+            "title": "端盖技术说明",
+            "snippet": "产品说明",
+            "url": "https://example.test/end-cap-long"
+          }
+        ],
+        "suggestion": null,
+        "reason": "搜索结果里没有找到可用的尺寸参数。（搜到 1 条结果，但没有带单位的直径/长度等信息）",
+        "query": "端盖",
+        "notes": [
+          "查询「端盖 标准 规格 尺寸表 mm」命中 1 条 (相关性过滤后不足, 保留原始结果)",
+          "已读取详情页: 端盖技术说明"
+        ],
+        "params": {}
+      }
+    }
+  }
+]

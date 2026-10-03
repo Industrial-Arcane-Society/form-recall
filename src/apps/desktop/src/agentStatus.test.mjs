@@ -1,0 +1,103 @@
+import test from 'node:test'
+import assert from 'node:assert/strict'
+import { documentAcceptanceView, modelAcceptanceView, turnStatusView } from './agentStatus.mjs'
+
+test('ACP turn completion never promotes a candidate model to accepted', () => {
+  const candidate = modelAcceptanceView({
+    exists: true,
+    status: 'candidate',
+    finish_status: 'candidate_holes_unverified',
+    finish_summary: { accepted: false },
+    geometric: { status: 'passed' },
+    visual: { status: 'not_reviewed' },
+  })
+  assert.equal(turnStatusView('completed').key, 'completed')
+  assert.equal(candidate.outcome, 'candidate')
+  assert.equal(candidate.geometry, '通过')
+  assert.equal(candidate.visual, '未复核')
+})
+
+test('only an accepted current model summary is shown as accepted', () => {
+  const accepted = modelAcceptanceView({
+    exists: true,
+    status: 'accepted',
+    acceptance_confirmed: true,
+    revision: 7,
+    geometry_fingerprint: 'fp-current',
+    finish_status: 'accepted',
+    finish_summary: { accepted: true, revision: 7, geometry_fingerprint: 'fp-current' },
+    geometric: { status: 'passed' },
+    visual: { status: 'covered' },
+  })
+  assert.equal(accepted.outcome, 'accepted')
+  assert.equal(accepted.outcomeLabel, '已验收')
+  assert.equal(accepted.visual, '已覆盖')
+})
+
+test('document finish summary with a stale CAD revision remains a candidate', () => {
+  const view = documentAcceptanceView({
+    cad_revision: 8,
+    geometry_fingerprint: 'fp-current',
+    features: [{ index: 0 }],
+    finish_summary: { accepted: true, finish_state: 'accepted', revision: 7, geometry_fingerprint: 'fp-current' },
+    geometric_status: 'passed',
+    visual_status: 'covered',
+    acceptance_confirmed: true,
+  })
+  assert.equal(view.outcome, 'candidate')
+  assert.equal(view.outcomeLabel, '候选模型')
+  assert.equal(view.finish, '已过期')
+})
+
+test('document finish summary with a stale geometry fingerprint remains a candidate', () => {
+  const view = documentAcceptanceView({
+    cad_revision: 7,
+    geometry_fingerprint: 'fp-current',
+    features: [{ index: 0 }],
+    finish_summary: { accepted: true, finish_state: 'accepted', revision: 7, geometry_fingerprint: 'fp-old' },
+  })
+  assert.equal(view.outcome, 'candidate')
+  assert.equal(view.finish, '已过期')
+})
+
+test('host accepted status is rejected when its finish binding is stale', () => {
+  const view = modelAcceptanceView({
+    exists: true,
+    status: 'accepted',
+    acceptance_confirmed: true,
+    revision: 7,
+    geometry_fingerprint: 'fp-current',
+    finish_status: 'accepted',
+    finish_summary: { accepted: true, revision: 7, geometry_fingerprint: 'fp-old' },
+    geometric: { status: 'passed' },
+    visual: { status: 'covered' },
+  })
+  assert.equal(view.outcome, 'candidate')
+  assert.equal(view.finish, '已过期')
+})
+
+test('an accepted-looking summary requires host terminal confirmation', () => {
+  const model = modelAcceptanceView({
+    exists: true,
+    status: 'accepted',
+    revision: 7,
+    geometry_fingerprint: 'fp-current',
+    finish_status: 'accepted',
+    finish_summary: { accepted: true, finish_state: 'accepted', revision: 7, geometry_fingerprint: 'fp-current' },
+    geometric: { status: 'passed' },
+    visual: { status: 'covered' },
+  })
+  assert.equal(model.outcome, 'candidate')
+  assert.equal(model.finish, '未由主机确认')
+})
+
+test('cancelled and stopped turns stay distinct from completion', () => {
+  assert.deepEqual(turnStatusView('cancelled'), { key: 'cancelled', text: '本轮已取消' })
+  assert.deepEqual(turnStatusView('stopped', 'max_turns'), { key: 'stopped', text: '本轮已停止（max_turns）' })
+  assert.equal(turnStatusView('ended').key, 'ended')
+})
+
+test('missing and unavailable model summaries stay explicit', () => {
+  assert.equal(modelAcceptanceView(null).outcomeLabel, '尚无 CADPlan 模型')
+  assert.equal(modelAcceptanceView({ status: 'unavailable' }).outcomeLabel, '状态不可读取')
+})

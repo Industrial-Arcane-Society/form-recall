@@ -4,7 +4,8 @@
 
 ## 开发入口
 
-- 桌面应用：进入 `src/apps/desktop/`，运行 `npm ci`、`npm run tauri:dev`。
+- 桌面应用：先在 `src/apps/desktop/` 运行一次 `npm ci`，之后可从仓库根目录运行 `npm run dev` 启动 Tauri 桌面开发版；也可进入 `src/apps/desktop/` 运行 `npm run tauri:dev`。
+- 仅启动无桌面窗口的 Vite 前端服务：从仓库根目录运行 `npm run dev:web`，再访问终端显示的本地地址。
 - 现有 Python CLI：进入 `src/legacy/`，运行 `python -m ai_modeler --selftest`；输入 `python -m ai_modeler --help` 查看选项。
 - 当前迁移状态、研究记录、设计规范和复现方法：从 [`docs/README.md`](docs/README.md) 进入。
 
