@@ -2084,7 +2084,6 @@ mod agent_ipc_integration_tests {
     use super::*;
     use crate::agent_host::TestSetup;
     use serde_json::{Value, json};
-    use std::ffi::OsString;
     use std::fs;
     use std::path::{Path, PathBuf};
     use std::sync::{Arc, Mutex};
@@ -2163,7 +2162,6 @@ mod agent_ipc_integration_tests {
         let fake_node_modules = fake_runtime_root.join("dsh/node_modules");
         fs::create_dir_all(fake_cli.parent().unwrap()).expect("create fake CLI parent");
         fs::create_dir_all(&fake_node_modules).expect("create fake DSH modules directory");
-        fs::create_dir_all(fake_runtime_root.join("node")).expect("create fake node directory");
         fs::write(
             &fake_cli,
             "fixture ACP process is supplied by the Rust test harness\n",
@@ -2171,10 +2169,15 @@ mod agent_ipc_integration_tests {
         .expect("create fake CLI marker");
         let runtime = crate::dsh_runtime::RuntimePaths {
             root: fake_runtime_root.clone(),
-            node: std::env::current_exe().expect("resolve test executable"),
+            node: PathBuf::from(
+                std::env::var_os("AIMODELER_TEST_NODE")
+                    .expect("CLI acceptance provides the Node executable"),
+            ),
             dsh_cli: fake_cli,
             home: scratch.0.join("dsh-home"),
         };
+        let fixture_script = std::env::var_os("AIMODELER_TEST_ACP_FIXTURE")
+            .expect("CLI acceptance provides the standalone ACP fixture");
         let release_file = scratch.0.join("release-fake-acp.prompt");
         let host_state = agent_host::AgentHostState::default();
 
@@ -2206,18 +2209,10 @@ mod agent_ipc_integration_tests {
             root,
             data_dir: app_data.clone(),
             runtime,
-            dsh_args: vec![
-                OsString::from("--quiet"),
-                OsString::from("--exact"),
-                OsString::from("acp::tests::fake_acp_child_process"),
-            ],
+            dsh_args: vec![fixture_script],
             dsh_env: vec![
                 (
-                    OsString::from("AIMODELER_ACP_TEST_FIXTURE"),
-                    OsString::from("1"),
-                ),
-                (
-                    OsString::from("AIMODELER_ACP_TEST_RELEASE_FILE"),
+                    "AIMODELER_ACP_TEST_RELEASE_FILE".into(),
                     release_file.clone().into_os_string(),
                 ),
             ],

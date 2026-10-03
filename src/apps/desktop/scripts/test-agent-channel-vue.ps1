@@ -7,10 +7,14 @@ $desktopRoot = (Resolve-Path (Join-Path $PSScriptRoot '..')).Path
 $tauriRoot = Join-Path $desktopRoot 'src-tauri'
 $cargoManifest = Join-Path $tauriRoot 'Cargo.toml'
 $commonControlsManifest = Join-Path $tauriRoot 'tests\common-controls-v6.manifest'
+$acpFixture = Join-Path $tauriRoot 'tests\fixtures\fake-acp.mjs'
 $testName = 'agent_ipc_integration_tests::agent_send_routes_fake_acp_updates_through_tauri_channel'
 
 if (-not (Test-Path -LiteralPath $commonControlsManifest)) {
     throw "Missing Common-Controls v6 manifest: $commonControlsManifest"
+}
+if (-not (Test-Path -LiteralPath $acpFixture)) {
+    throw "Missing standalone ACP fixture: $acpFixture"
 }
 
 $compileOutput = @(& cargo test --manifest-path $cargoManifest --lib $testName --no-run --message-format=json --color=never 2>&1)
@@ -50,8 +54,19 @@ if ($LASTEXITCODE -ne 0) {
     throw "Embedding the Common-Controls v6 manifest failed with exit code $LASTEXITCODE"
 }
 
-$rustOutput = @(& $testExecutable $testName --exact --nocapture 2>&1)
-$rustExitCode = $LASTEXITCODE
+$nodeExecutable = (Get-Command node.exe -ErrorAction Stop).Source
+$previousTestNode = [Environment]::GetEnvironmentVariable('AIMODELER_TEST_NODE', 'Process')
+$previousAcpFixture = [Environment]::GetEnvironmentVariable('AIMODELER_TEST_ACP_FIXTURE', 'Process')
+try {
+    [Environment]::SetEnvironmentVariable('AIMODELER_TEST_NODE', $nodeExecutable, 'Process')
+    [Environment]::SetEnvironmentVariable('AIMODELER_TEST_ACP_FIXTURE', $acpFixture, 'Process')
+    $rustOutput = @(& $testExecutable $testName --exact --nocapture 2>&1)
+    $rustExitCode = $LASTEXITCODE
+}
+finally {
+    [Environment]::SetEnvironmentVariable('AIMODELER_TEST_NODE', $previousTestNode, 'Process')
+    [Environment]::SetEnvironmentVariable('AIMODELER_TEST_ACP_FIXTURE', $previousAcpFixture, 'Process')
+}
 $rustOutput | ForEach-Object {
     $line = [string]$_
     if (-not $line.StartsWith('AIMODELER_AGENT_IPC_CAPTURE=')) {
