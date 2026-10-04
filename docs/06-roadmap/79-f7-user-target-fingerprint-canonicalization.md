@@ -41,14 +41,21 @@ CATIA compatibility, or the result of a new cold-start acceptance run.
 
 ## Verification performed
 
-- `cargo test --manifest-path src/apps/desktop/src-tauri/Cargo.toml native_executor_inspect_current_review_and_get_state_preserve_current_bindings --no-run`
-  compiled the library and test executables successfully with the Tauri resource
-  override `TAURI_CONFIG={"bundle":{"resources":[]}}` required by this clean
-  worktree.
-- Running the targeted unit or integration test executable is blocked on this
-  Windows host: the process exits before the Rust test harness starts with
-  `0xC0000139` (`STATUS_ENTRYPOINT_NOT_FOUND`). This is an execution-environment
-  failure, not a reported test assertion failure.
-- `git diff --check` passes. A whole-file `rustfmt --check` on the three touched
-  Rust files reports formatting changes beginning in untouched baseline code;
-  applying it would create unrelated churn, so no broad reformat was applied.
+- The feature worktree compiled the targeted integration test with
+  `cargo test --manifest-path src/apps/desktop/src-tauri/Cargo.toml
+  native_executor_inspect_current_review_and_get_state_preserve_current_bindings
+  --no-run` and `TAURI_CONFIG={"bundle":{"resources":[]}}`.
+- The feature worktree's direct test executable exited before the Rust harness
+  with Windows loader error `0xC0000139` (`STATUS_ENTRYPOINT_NOT_FOUND`). After
+  cherry-picking both commits into the integration worktree, the repository's
+  supported offline wrapper `src/apps/desktop/src-tauri/scripts/test-lib.ps1
+  -Offline` passed **346/346 Rust tests**, including the canonicalizer and native
+  executor regressions.
+- `git diff --check` passed before commit. A whole-file `rustfmt --check` on the
+  three touched Rust files reports formatting changes beginning in untouched
+  baseline code; applying it would create unrelated churn, so no broad reformat
+  was applied.
+
+The passing native tests verify the producer/consumer binding behavior. A new
+real DSH cold-start run is still required to establish whether this repairs the
+Run23 visual-review gate failure.
