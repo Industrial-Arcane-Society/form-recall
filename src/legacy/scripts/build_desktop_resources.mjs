@@ -4,6 +4,7 @@ import { existsSync, mkdirSync, readFileSync, readdirSync, rmSync, statSync, wri
 import { dirname, join, relative, resolve, sep } from "node:path";
 import { fileURLToPath } from "node:url";
 import { stageOcctRuntime } from "./stage_occt_runtime.mjs";
+import { prepareOcctPackageInput } from "./prepare_occt_package_input.mjs";
 
 const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), "../../..");
 const desktopRoot = join(repoRoot, "src", "apps", "desktop");
@@ -96,12 +97,20 @@ async function main() {
     throw new Error("The self-contained Windows desktop package must be built on Windows.");
   }
 
+  const occtRuntimeRoot = join(targetRoot, "f4-occt");
+  const occtManifestPath = process.env.AIMODELER_OCCT_MANIFEST
+    ? resolve(process.env.AIMODELER_OCCT_MANIFEST)
+    : join(occtRuntimeRoot, "runtime-manifest.json");
+  const verifiedOcctManifest = prepareOcctPackageInput({
+    manifestPath: occtManifestPath,
+    runtimeRoot: occtRuntimeRoot,
+    buildScriptPath: join(repoRoot, "src", "native", "occt-bridge", "Build-Runtime.ps1"),
+  });
+  const stagedOcct = stageOcctRuntime(verifiedOcctManifest, packageRoot);
+  console.log(`Staged ${stagedOcct.dllCount} hash-verified OCCT runtime DLLs from ${stagedOcct.sourceManifestSha256}.`);
+
   mkdirSync(downloadRoot, { recursive: true });
   mkdirSync(packageRoot, { recursive: true });
-  // Fail before replacing the Python/app resources when native CAD cannot ship.
-  const occtManifest = process.env.AIMODELER_OCCT_MANIFEST || join(targetRoot, "f4-occt", "runtime-manifest.json");
-  const occt = stageOcctRuntime(occtManifest, packageRoot);
-  console.log(`Prepared ${occt.dllCount} verified native OCCT runtime DLLs in ${occt.destination}`);
   const archivePath = join(downloadRoot, pythonArchive);
   if (existsSync(archivePath) && sha256(archivePath) !== pythonArchiveSha256) {
     rmSync(archivePath, { force: true });

@@ -13,7 +13,13 @@ function Get-Artifact([string]$relativePath) {
         sha256 = (Get-FileHash -LiteralPath $absolutePath -Algorithm SHA256).Hash.ToLowerInvariant()
     }
 }
-$runtimeBin = 'install/win64/vc14/bin'
+$runtimeBins = @(Get-ChildItem -LiteralPath (Join-Path $runtimeDirectory 'install/win64') -Directory -Filter 'vc*' |
+    ForEach-Object { Join-Path $_.FullName 'bin' } |
+    Where-Object { Test-Path -LiteralPath (Join-Path $_ 'occt_bridge.dll') })
+if ($runtimeBins.Count -ne 1) {
+    throw "Expected exactly one installed OCCT bin directory containing occt_bridge.dll; found $($runtimeBins.Count)."
+}
+$runtimeBin = [IO.Path]::GetRelativePath($runtimeDirectory, $runtimeBins[0]).Replace('\', '/')
 $occtNames = @('TKBO', 'TKBool', 'TKBRep', 'TKernel', 'TKG2d', 'TKG3d', 'TKGeomAlgo', 'TKGeomBase', 'TKMath', 'TKMesh', 'TKPrim', 'TKShHealing', 'TKTopAlgo')
 $manifest = [ordered]@{
     occt_version = '7.9.3'
