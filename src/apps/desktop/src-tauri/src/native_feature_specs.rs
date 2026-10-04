@@ -51,6 +51,7 @@ fn native_execution_contract(kind: &str) -> Value {
             | "scroll_disc"
             | "helix"
             | "worm"
+            | "loft"
     );
     let (supported_variants, unsupported_variants, parameter_limits, note) = match kind {
         "rotor" => (
@@ -100,6 +101,12 @@ fn native_execution_contract(kind: &str) -> Value {
             json!(["axis other than Z", "center and center2 with different X/Y axis", "radial gap between shaft and helix", "buried thread crown", "no axial overlap", "fuse result with more than one solid", "shaft segments outside 8..=512"]),
             json!({"radius":">0 mm shaft radius", "height":">0 mm shaft height", "thread_r":">0 mm helix centerline radius", "wire_r":">0 mm helix wire radius", "turns":">=0.25", "height2":">0 mm; defaults to height", "center":"finite global XYZ shaft base; default origin", "center2":"finite global XYZ helix start; defaults to center and must share its X/Y axis", "axis":"global Z only; omitted means Z", "segments":"integer 8..=512; default 48", "seg_per_turn":"integer 6..=512; default 14", "wire_seg":"integer 3..=64; default 8", "engagement":"thread_r - wire_r <= radius and thread_r + wire_r > radius; shaft/helix must overlap axially"}),
             "Rust builds the legacy faceted shaft prism and reuses native helix to build the sampled ridge, then performs an actual OCCT fuse. It rejects non-Z, non-coaxial, disjoint, buried, invalid, or multi-solid results. The helical ridge remains approximate facet-BREP and CATIA continues to export only the smooth shaft.",
+        ),
+        "loft" => (
+            json!(["legacy NACA four-digit airfoil point layout", "root-to-tip chord interpolation", "spanwise sweep and twist", "optional global XYZ rigid rotation and translation", "one valid closed OCCT faceted B-Rep"]),
+            json!(["thickness ratio outside 0.01..=0.4", "camber outside -0.2..=0.2", "camber_pos outside 0.05..=0.95", "sections outside 2..=64", "points outside 8..=128", "twist magnitude above 720 degrees", "OCCT sewing without one valid closed solid"]),
+            json!({"root_chord":">0 mm", "tip_chord":">0 mm", "span":">0 mm", "thickness":"dimensionless NACA thickness ratio 0.01..=0.4", "camber":"dimensionless -0.2..=0.2; defaults to 0.05", "camber_pos":"0.05..=0.95; defaults to 0.4", "twist":"finite angle, magnitude <=720 degrees; angle units honored", "sweep":">=0 mm; length units normalized", "sections":"integer 2..=64; defaults to 8", "points":"integer 8..=128 per surface; defaults to 26", "rotate":"optional [X|Y|Z, angle]; angle units honored", "translate":"finite global XYZ; length units normalized", "triangle_faces":"2*sections*(2*points)+2*(2*points-2) <=100000"}),
+            "Rust reproduces the retained legacy NACA section loops, chord/span/twist/sweep layout and triangulates side faces plus caps before OCCT sewing. The result is a valid closed faceted B-Rep approximation, not an analytic ThruSections loft; CATIA mapping remains the legacy root-section extrusion approximation.",
         ),
         "timing_pulley" => (json!(["global-Z centered legacy trapezoidal tooth prisms", "MXL, XL, T2.5, T5, 3M profiles with radial tooth/blank overlap", "implicit legacy center bore or explicit bore_d", "teeth 6..=512"]), json!(["L, H, XH, XXH, T10, T20, 5M, 8M, 14M have no overlap between legacy tooth inner edge and blank root wall", "teeth above 512", "negative bore or bore reaching the effective tooth-root wall", "tooth-tip circumferential pitch smaller than tooth-tip width", "unknown tooth_type strings", "segments outside 3..=512"]), json!({"pitch_d":">0; legacy pitch radius floor=2 mm", "height":">0", "teeth":"integer 6..=512", "tooth_type":"MXL, XL, T2.5, T5, 3M (the other legacy profiles are rejected because they cannot guarantee a single solid)", "bore_d":">=0; 0 uses legacy implicit bore; explicit bore floored to 2 mm diameter", "segments":"3..=512 integer; retained for legacy baseline but ignored by analytic OCCT blank", "center":"finite global XYZ"}), "Supported legacy trapezoidal tooth prisms overlap the analytic annular revolve. Taller profiles whose legacy prism starts outside the blank root are rejected because a single closed solid cannot be guaranteed. The retained Document/CADPlan baseline is a faceted mesh; this analytic blank intentionally replaces its segmented boundary, so geometry remains approximate with a bounded blank-volume difference."),
         _ => (json!([]), json!(["all native geometry variants"]), json!({}), "No native Rust geometry builder is registered for this kind."),
@@ -199,6 +206,23 @@ mod tests {
             .as_array().unwrap().iter().any(|item| item
                 .as_str().is_some_and(|text| text.contains("more than one solid"))));
         assert!(spec["catia_note"].as_str().unwrap().contains("光轴"));
+    }
+
+    #[test]
+    fn loft_is_native_approximate_and_reports_legacy_catia_boundary() {
+        let spec = feature_spec("loft").unwrap();
+        assert_eq!(spec["catia_mapping"], "approximate");
+        assert_eq!(spec["native_execution"]["status"], "implemented_approximate");
+        assert_eq!(spec["native_execution"]["geometry_support"], "approximate");
+        assert_eq!(spec["native_execution"]["scope"], "local_candidate_geometry");
+        assert!(spec["native_execution"]["parameter_limits"]["thickness"]
+            .as_str().unwrap().contains("0.01..=0.4"));
+        assert!(spec["native_execution"]["unsupported_variants"]
+            .as_array().unwrap().iter().any(|item| item
+                .as_str().is_some_and(|text| text.contains("one valid closed solid"))));
+        assert!(spec["native_execution"]["note"]
+            .as_str().unwrap().contains("not an analytic ThruSections loft"));
+        assert!(spec["catia_note"].as_str().unwrap().contains("根部截面拉伸近似"));
     }
 
     #[test]
@@ -355,7 +379,7 @@ mod tests {
                 );
             }
         }
-        assert_eq!(supported_count, 24);
+        assert_eq!(supported_count, 25);
         assert_eq!(kinds.len(), specs.as_object().unwrap().len());
     }
 
@@ -386,8 +410,9 @@ mod tests {
             "scroll_disc",
             "helix",
             "worm",
+            "loft",
         ];
-        const UNSUPPORTED: &[&str] = &["loft", "impeller", "shell"];
+        const UNSUPPORTED: &[&str] = &["impeller", "shell"];
         const APPROXIMATE: &[&str] = &[
             "gear",
             "helical_gear",
@@ -402,6 +427,7 @@ mod tests {
             "scroll_disc",
             "helix",
             "worm",
+            "loft",
         ];
 
         let schemas = crate::native_tool_schemas::native_tool_schemas().unwrap();
@@ -423,8 +449,8 @@ mod tests {
             "the native contract must cover all 27 schema kinds"
         );
         assert_eq!(actual.len(), 27);
-        assert_eq!(IMPLEMENTED.len(), 24);
-        assert_eq!(UNSUPPORTED.len(), 3);
+        assert_eq!(IMPLEMENTED.len(), 25);
+        assert_eq!(UNSUPPORTED.len(), 2);
 
         for kind in IMPLEMENTED {
             let contract = feature_spec(kind).unwrap()["native_execution"].clone();
@@ -566,6 +592,14 @@ mod tests {
                 limit_key: "angle",
                 limit_text: "valid OCCT revolution angle",
                 error_text: "angle",
+            },
+            Probe {
+                kind: "loft",
+                valid: json!({"root_chord":30,"tip_chord":16.5,"span":60,"thickness":0.12,"camber":0.05,"camber_pos":0.4,"twist":18,"sweep":0,"sections":8,"points":26}),
+                invalid: json!({"root_chord":30,"tip_chord":16.5,"span":60,"thickness":0.41,"camber":0.05,"camber_pos":0.4,"twist":18,"sweep":0,"sections":8,"points":26}),
+                limit_key: "thickness",
+                limit_text: "0.01..=0.4",
+                error_text: "0.01..=0.4",
             },
             Probe {
                 kind: "pattern",
@@ -919,7 +953,6 @@ mod tests {
     fn unsupported_kind_plan(kind: &str) -> Value {
         let parameters = match kind {
             "helix" => json!({"radius":8,"wire_r":1,"height":20,"turns":3}),
-            "loft" => json!({"root_chord":20,"tip_chord":10,"span":30,"thickness":3}),
             "impeller" => {
                 json!({"hub_d":10,"tip_d":40,"height":8,"blades":6,"blade_t":2,"twist_deg":15})
             }

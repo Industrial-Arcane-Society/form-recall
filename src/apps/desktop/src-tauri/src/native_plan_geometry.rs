@@ -4,7 +4,7 @@ use crate::{
     cad_plan, cad_plan_validation, native_bevel_gear, native_bore_metrology,
     native_geometry_evidence::{self, HoleRequest},
     native_occt::{Axis, Bounds, Kernel, Shape},
-    native_parametric_features, native_standard_features, native_timing_pulley,
+    native_loft, native_parametric_features, native_standard_features, native_timing_pulley,
 };
 use serde_json::{Value, json};
 use std::{
@@ -50,6 +50,7 @@ pub fn supports_native_kind(kind: &str) -> bool {
             | "vbelt_pulley"
             | "scroll_disc"
             | "helix"
+            | "loft"
             | "worm"
     )
 }
@@ -119,6 +120,7 @@ pub fn preflight(plan: &Value) -> Result<Value, String> {
             "timing_pulley" => &["pitch_d", "teeth", "height", "tooth_type"],
             "scroll_disc" => &["outer_d", "height", "wall_t", "turns"],
             "helix" => &["radius", "wire_r", "height", "turns"],
+            "loft" => &["root_chord", "tip_chord", "span", "thickness"],
             "worm" => &["radius", "height", "thread_r", "wire_r", "turns"],
             _ => &[],
         };
@@ -202,6 +204,10 @@ pub fn preflight(plan: &Value) -> Result<Value, String> {
         if kind == "worm" {
             let normalized = normalized_feature(feature, plan)?;
             crate::native_worm::preflight(&normalized["parameters"])?;
+        }
+        if kind == "loft" {
+            let normalized = normalized_feature(feature, plan)?;
+            native_loft::preflight(&normalized["parameters"])?;
         }
         if kind == "pattern" {
             let count = p
@@ -293,6 +299,9 @@ pub fn build(plan: &Value, manifest: &Path, cancelled: &AtomicBool) -> Result<Bu
             (tools, vec![], Some(support))
         } else if normalized["kind"] == "worm" {
             let (tools, support) = crate::native_worm::build(&kernel, &normalized["parameters"])?;
+            (tools, vec![], Some(support))
+        } else if normalized["kind"] == "loft" {
+            let (tools, support) = native_loft::build(&kernel, &normalized["parameters"])?;
             (tools, vec![], Some(support))
         } else if normalized["kind"] == "piston" {
             let (tools, support) =
@@ -1158,11 +1167,15 @@ fn normalized_feature(feature: &Value, plan: &Value) -> Result<Value, String> {
             "thread_r",
             "height2",
             "pitch_d",
+            "root_chord",
+            "tip_chord",
+            "sweep",
+            "translate",
         ]
         .contains(&key.as_str())
         {
             length_factor
-        } else if key == "phase" || key == "angle" || key == "lobe_deg" || key == "cone_deg" {
+        } else if key == "phase" || key == "angle" || key == "lobe_deg" || key == "cone_deg" || key == "twist" {
             angle_factor
         } else {
             continue;
@@ -1185,6 +1198,17 @@ fn normalized_feature(feature: &Value, plan: &Value) -> Result<Value, String> {
             Ok(())
         }
         scale(value, factor)?;
+    }
+    if let Some(rotate) = params.get_mut("rotate").filter(|value| !value.is_null()) {
+        let values = rotate
+            .as_array_mut()
+            .filter(|values| values.len() == 2)
+            .ok_or("rotate 必须是 [X|Y|Z, 角度]。")?;
+        let angle = values[1].as_f64().ok_or("rotate 角度必须为数值。")? * angle_factor;
+        if !angle.is_finite() {
+            return Err("rotate 单位换算超出有限数值范围。".into());
+        }
+        values[1] = json!(angle);
     }
     Ok(result)
 }
@@ -1442,6 +1466,25 @@ mod tests {
         assert_eq!(normalized["parameters"]["center"], json!([12.0,-7.0,5.0]));
         assert_eq!(normalized["parameters"]["bore_d"], json!(0.0));
         assert!((normalized["parameters"]["cone_deg"].as_f64().unwrap() - 45.0).abs() < 1e-12);
+    }
+
+    #[test]
+    fn loft_length_angle_and_rigid_transform_units_are_normalized() {
+        let mut plan = fixture();
+        plan["units"] = json!({"length":"cm","angle":"rad"});
+        let feature = json!({"id":"loft","kind":"loft","operation":"add",
+            "parameters":{"root_chord":3,"tip_chord":1.65,"span":6,"thickness":0.12,
+                "twist":0.3141592653589793,"sweep":0.5,"translate":[1,2,3],
+                "rotate":["Y",1.5707963267948966]},"sources":{}});
+        let normalized = normalized_feature(&feature, &plan).unwrap();
+        assert_eq!(normalized["parameters"]["root_chord"], json!(30.0));
+        assert_eq!(normalized["parameters"]["tip_chord"], json!(16.5));
+        assert_eq!(normalized["parameters"]["span"], json!(60.0));
+        assert_eq!(normalized["parameters"]["sweep"], json!(5.0));
+        assert_eq!(normalized["parameters"]["translate"], json!([10.0,20.0,30.0]));
+        assert!((normalized["parameters"]["twist"].as_f64().unwrap() - 18.0).abs() < 1e-12);
+        assert!((normalized["parameters"]["rotate"][1].as_f64().unwrap() - 90.0).abs() < 1e-12);
+        assert_eq!(normalized["parameters"]["thickness"], json!(0.12));
     }
 
     #[test]
