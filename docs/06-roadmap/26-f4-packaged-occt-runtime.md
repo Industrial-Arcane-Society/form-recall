@@ -43,3 +43,13 @@ Rust 按显式 `AIMODELER_OCCT_MANIFEST`、安装资源、开发资源依次定�
   - `src/apps/desktop/src-tauri/target/release/bundle/nsis/AI Modeler_0.1.0_x64-setup.exe`：30,366,314 bytes，SHA-256 `E868DCD3D660EBAA3E67CBF81C79DA5E00793CE97EDB1E1230649CEECBFCDBC2`
 - Release `ai-modeler-headless-smoke` 对同一 `target/package-resources/app` 运行，移除 Python/Node/manifest override 环境变量并将 PATH 限为 `%SystemRoot%\System32`，结果 `status=ok`、`native_quick -> OCCT -> active_model_commit`、单个有效闭合实体、100×60×20 mm，输出 AIMODEL/GLB/OBJ/STL；`pythonChildStarted=false`、`nodeChildStarted=false`。这是 packaged resource root 的 Quick/OCCT smoke，不是安装后 UI、DSH Agent 或 CATIA 验收。
 - MSI/NSIS 未安装或启动；尚未完成无全局 Node/Python 的 Agent 冷启动、真实 CATIA COM、干净用户账户验收。父任务集成 F4 改动后必须重新打包；上述哈希只标识基于 `c851967` 的本地产物，不能作为最终合并包哈希。
+
+## 2026-10-04：TKFillet 依赖修复后的最终集成包
+
+- 最终源码 HEAD：`b74925d5504524be58eb673a5f241db0323fbcb2`。在独立 package worktree 以默认 manifest 路径运行 `npm run tauri:build`，没有设置 `AIMODELER_OCCT_MANIFEST`。检测到旧 runtime manifest 不完整后，构建脚本从 pinned OCCT archive 重建 runtime 子树，编译 2,000 个 C++ translation units，OCCT bridge CTest 1/1 通过，stage 含 19 个 DLL（15 OCCT toolkit、bridge 1、MSVC 3）。整个 `target` 目录有部分非 runtime 缓存，不将此结果描述为空 target 全量冷构建。
+- 最终 stage 的 PE toolkit import closure 检查没有缺失依赖。Vite、Rust release、MSI 与 NSIS 构建均成功；Vite 输出既有 chunk-size 提示。
+- 对同一 stage 的 release headless Quick smoke 在 PATH 仅含 `%SystemRoot%\System32`、清除 Python/Node/manifest override 环境变量后通过：`status=ok`、`native_quick → OCCT → active_model_commit`、1 个闭合实体、100×60×20 mm，`globalPythonRequired=false`、`globalNodeRequired=false`，没有启动 Python/Node 子进程。只验证 Quick/OCCT staging 调用，不代表安装后 Agent、CATIA 或安装体验已验收。
+- 最终本地安装包（未提交到 Git）：
+  - `AI Modeler_0.1.0_x64_zh-CN.msi`：39,674,013 bytes，SHA-256 `7EA365DC78E80C13C66B711DB9464C4EC45A020A6F5F23EE82E11FD1B0A8ACFC`。
+  - `AI Modeler_0.1.0_x64-setup.exe`：31,605,294 bytes，SHA-256 `B2102A2413E086DDD43F627E29D5A9DC3AFD481F1E3539D763D7152830A28C44`。
+- 修复代码的 Node 定向测试 7/7、Rust runtime 定向测试 7/7、PowerShell builder/manifest AST 检查通过。安装包尚未安装运行；干净用户/机器、安装后 DSH Agent 无全局 Python/Node 冷启动、CATIA COM/B-Rep 验收仍未完成。
