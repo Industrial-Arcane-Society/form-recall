@@ -21,6 +21,10 @@ name = "ai-modeler-headless-smoke"
 path = "src/headless_smoke.rs"
 
 [[bin]]
+name = "dsh-runtime-coldstart"
+path = "src/bin/dsh_runtime_coldstart.rs"
+
+[[bin]]
 name = "ai-modeler-webview-smoke"
 path = "src/webview_smoke_main.rs"
 required-features = ["agent-webview-smoke"]
