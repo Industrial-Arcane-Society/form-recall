@@ -48,6 +48,7 @@ fn native_execution_contract(kind: &str) -> Value {
             | "crankshaft"
             | "timing_pulley"
             | "vbelt_pulley"
+            | "scroll_disc"
     );
     let (supported_variants, unsupported_variants, parameter_limits, note) = match kind {
         "rotor" => (
@@ -80,6 +81,12 @@ fn native_execution_contract(kind: &str) -> Value {
         "crankshaft" => (json!(["global X main shaft", "alternating eccentric pin journals", "two rectangular overlapping webs per throw", "segments is accepted but ignored by the analytic B-Rep"]), json!(["throws outside 1..=128"]), json!({"length":">0 mm", "main_d":">0 mm", "pin_d":">0 mm", "stroke":">0 mm", "throws":"integer 1..=128", "segments":"integer when supplied; ignored", "center":"finite global XYZ"}), "Native analytic cylinders and rectangular webs reproduce the legacy CADPlan B-Rep recipe; the feature remains approximate and the mesh-only Document cheek recipe is a different representation."),
         "conrod" => (json!(["annular heads with tangent web approximation"]), json!([]), json!({"length":">0 and long enough for tangent web", "big_d":">big_bore", "small_d":">small_bore", "big_bore":">0", "small_bore":">0", "shank_w":">0", "thick":">0"}), "Analytic annular heads with approximate external-tangent trapezoidal web; web contact and I-section details are simplified."),
         "cross_joint" => (json!(["hub plus four journals on global +/-X|+/-Y"]), json!([]), json!({"span":">0 and large enough for hub plus positive journal length", "journal_d":">0", "center":"finite global XYZ"}), "Native analytic construction; legacy faceted-volume equality is not claimed."),
+        "scroll_disc" => (
+            json!(["global-Z sampled Archimedean spiral wall", "analytic cylindrical backplate", "one fused closed solid", "origin or finite translated center"]),
+            json!(["outer_d<4 mm", "height<1 mm", "wall_t<0.5 mm", "turns<0.5", "inner spiral radius <= wall_t/2", "neighboring turns self-intersect or touch", "segments outside 24..=4096", "fewer than 24 profile samples per turn", "disjoint fusion or invalid/non-closed B-Rep"]),
+            json!({"outer_d":">=4 mm", "height":">=1 mm", "wall_t":">=0.5 mm and smaller than minimum normal turn spacing", "turns":">=0.5; profile requires at least 24 samples per turn", "segments":"integer 24..=4096; defaults to 120", "center":"finite global XYZ; all dimensions are normalized to mm"}),
+            "Native OCCT prism of the legacy polygonal Archimedean spiral fused with the legacy analytic cylindrical backplate. The profile is an approximation of a continuous spiral. Bounds and volume are compared against the same legacy sampled B-Rep; tessellated surface-area estimate is allowed 0.6% relative error. CATIA export omits the spiral wall.",
+        ),
         "timing_pulley" => (json!(["global-Z centered legacy trapezoidal tooth prisms", "MXL, XL, T2.5, T5, 3M profiles with radial tooth/blank overlap", "implicit legacy center bore or explicit bore_d", "teeth 6..=512"]), json!(["L, H, XH, XXH, T10, T20, 5M, 8M, 14M have no overlap between legacy tooth inner edge and blank root wall", "teeth above 512", "negative bore or bore reaching the effective tooth-root wall", "tooth-tip circumferential pitch smaller than tooth-tip width", "unknown tooth_type strings", "segments outside 3..=512"]), json!({"pitch_d":">0; legacy pitch radius floor=2 mm", "height":">0", "teeth":"integer 6..=512", "tooth_type":"MXL, XL, T2.5, T5, 3M (the other legacy profiles are rejected because they cannot guarantee a single solid)", "bore_d":">=0; 0 uses legacy implicit bore; explicit bore floored to 2 mm diameter", "segments":"3..=512 integer; retained for legacy baseline but ignored by analytic OCCT blank", "center":"finite global XYZ"}), "Supported legacy trapezoidal tooth prisms overlap the analytic annular revolve. Taller profiles whose legacy prism starts outside the blank root are rejected because a single closed solid cannot be guaranteed. The retained Document/CADPlan baseline is a faceted mesh; this analytic blank intentionally replaces its segmented boundary, so geometry remains approximate with a bounded blank-volume difference."),
         _ => (json!([]), json!(["all native geometry variants"]), json!({}), "No native Rust geometry builder is registered for this kind."),
     };
@@ -305,7 +312,7 @@ mod tests {
                 );
             }
         }
-        assert_eq!(supported_count, 21);
+        assert_eq!(supported_count, 22);
         assert_eq!(kinds.len(), specs.as_object().unwrap().len());
     }
 
@@ -333,8 +340,9 @@ mod tests {
             "crankshaft",
             "timing_pulley",
             "vbelt_pulley",
+            "scroll_disc",
         ];
-        const UNSUPPORTED: &[&str] = &["helix", "loft", "impeller", "worm", "scroll_disc", "shell"];
+        const UNSUPPORTED: &[&str] = &["helix", "loft", "impeller", "worm", "shell"];
         const APPROXIMATE: &[&str] = &[
             "gear",
             "helical_gear",
@@ -346,6 +354,7 @@ mod tests {
             "crankshaft",
             "timing_pulley",
             "vbelt_pulley",
+            "scroll_disc",
         ];
 
         let schemas = crate::native_tool_schemas::native_tool_schemas().unwrap();
@@ -367,8 +376,8 @@ mod tests {
             "the native contract must cover all 27 schema kinds"
         );
         assert_eq!(actual.len(), 27);
-        assert_eq!(IMPLEMENTED.len(), 21);
-        assert_eq!(UNSUPPORTED.len(), 6);
+        assert_eq!(IMPLEMENTED.len(), 22);
+        assert_eq!(UNSUPPORTED.len(), 5);
 
         for kind in IMPLEMENTED {
             let contract = feature_spec(kind).unwrap()["native_execution"].clone();
@@ -623,6 +632,14 @@ mod tests {
                 limit_text: "6..=512",
                 error_text: "6..=512",
             },
+            Probe {
+                kind: "scroll_disc",
+                valid: json!({"outer_d":60,"height":8,"wall_t":2,"turns":2.5}),
+                invalid: json!({"outer_d":60,"height":8,"wall_t":8,"turns":2.5}),
+                limit_key: "wall_t",
+                limit_text: "smaller than minimum normal turn spacing",
+                error_text: "自交或相切",
+            },
         ];
 
         let schemas = crate::native_tool_schemas::native_tool_schemas().unwrap();
@@ -812,7 +829,6 @@ mod tests {
                 json!({"hub_d":10,"tip_d":40,"height":8,"blades":6,"blade_t":2,"twist_deg":15})
             }
             "worm" => json!({"radius":8,"height":30,"thread_r":2,"wire_r":1,"turns":3}),
-            "scroll_disc" => json!({"outer_d":80,"height":8,"wall_t":3,"turns":2}),
             "shell" => json!({"thickness":2}),
             _ => panic!("not an explicitly unsupported kind: {kind}"),
         };

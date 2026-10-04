@@ -7,21 +7,21 @@ Scope: executable parity among the public CAD feature registry, native Rust supp
 
 The native capability contract now has an executable state for all 27 `cad_get_feature_spec` feature kinds. The test asserts the complete schema set, Rust dispatch membership, exact/approximate status, advertised variants, parameter-limit entries, and explicit unsupported status. It also runs one accepted baseline and one rejected boundary case for every registered native builder kind.
 
-Current registry: 21 implemented kinds (11 exact local B-Rep and 10 approximate local geometry) and 6 explicitly unsupported kinds. CATIA mapping is a separate contract and is not inferred from native support.
+Current registry: 22 implemented kinds (11 exact local B-Rep and 11 approximate local geometry) and 5 explicitly unsupported kinds. CATIA mapping is a separate contract and is not inferred from native support.
 
 ## Capability state for the 27 public kinds
 
 | Native status | Feature kinds | Executable check |
 | --- | --- | --- |
 | Implemented, exact local geometry | `box`, `cylinder`, `sphere`, `hole`, `pocket`, `prism`, `revolve`, `pattern`, `spoked_wheel`, `piston`, `camshaft` | Listed in the native dispatch set; non-empty supported variants and parameter limits; preflight boundary probe |
-| Implemented, approximate local geometry | `gear`, `helical_gear`, `bevel_gear`, `socket_head_bolt`, `conrod`, `cross_joint`, `rotor`, `crankshaft`, `timing_pulley`, `vbelt_pulley` | Listed in the native dispatch set; non-empty supported variants and parameter limits; preflight or builder boundary probe |
-| Not implemented in the native Rust builder | `helix`, `loft`, `impeller`, `worm`, `scroll_disc`, `shell` | Each has a schema-valid fixture. `native_execution.status` is `not_implemented`, geometry support is `unsupported`, the unsupported-variant list is non-empty, Rust dispatch excludes it, and both preflight and `build()` reject it before OCCT loading. |
+| Implemented, approximate local geometry | `gear`, `helical_gear`, `bevel_gear`, `socket_head_bolt`, `conrod`, `cross_joint`, `rotor`, `crankshaft`, `timing_pulley`, `vbelt_pulley`, `scroll_disc` | Listed in the native dispatch set; non-empty supported variants and parameter limits; preflight or builder boundary probe |
+| Not implemented in the native Rust builder | `helix`, `loft`, `impeller`, `worm`, `shell` | Each has a schema-valid fixture. `native_execution.status` is `not_implemented`, geometry support is `unsupported`, the unsupported-variant list is non-empty, Rust dispatch excludes it, and both preflight and `build()` reject it before OCCT loading. |
 
-The registry test asserts the total is 27, with 21 native-dispatch kinds and 6 non-dispatch kinds. The expected list is explicit, so adding/removing a schema kind without updating the native support contract fails the test.
+The registry test asserts the total is 27, with 22 native-dispatch kinds and 5 non-dispatch kinds. The expected list is explicit, so adding/removing a schema kind without updating the native support contract fails the test.
 
 ## Parameter-boundary probes
 
-For all 21 registered builders, the test checks that the published limit text contains the asserted bound and that a valid plan passes native preflight. It then mutates the boundary and checks the gate. Preflight-level rejections are passed through `build()` with a deliberately absent manifest; the builder must return the same preflight error before loading any runtime.
+For all 22 registered builders, the test checks that the published limit text contains the asserted bound and that a valid plan passes native preflight. It then mutates the boundary and checks the gate. Preflight-level rejections are passed through `build()` with a deliberately absent manifest; the builder must return the same preflight error before loading any runtime.
 
 | Kind | Accepted baseline | Boundary mutation | Observed gate |
 | --- | --- | --- | --- |
@@ -46,8 +46,9 @@ For all 21 registered builders, the test checks that the published limit text co
 | `camshaft` | `length=80, journal_d=10, base_d=14, lift=3, lobes=2, lobe_deg=0` | `lobes=513` | Native preflight rejects the 512-lobe resource limit. |
 | `crankshaft` | `length=80, main_d=10, pin_d=8, stroke=16, throws=2` | `throws=129` | Native preflight rejects throws outside `1..=128`. |
 | `timing_pulley` | `pitch_d=40, teeth=12, height=10, tooth_type=XL` | `teeth=513` | Native preflight rejects teeth outside `6..=512`. |
+| `scroll_disc` | `outer_d=60, height=8, wall_t=2, turns=2.5` | `wall_t=8` | Scroll-disc preflight rejects touching or self-intersecting neighboring spiral turns. |
 
-The six unsupported-kind fixtures are schema-valid and include each kind's required parameters: `helix` (`radius=8, wire_r=1, height=20, turns=3`), `loft` (`root_chord=20, tip_chord=10, span=30, thickness=3`), `impeller` (`hub_d=10, tip_d=40, height=8, blades=6, blade_t=2, twist_deg=15`), `worm` (`radius=8, height=30, thread_r=2, wire_r=1, turns=3`), `scroll_disc` (`outer_d=80, height=8, wall_t=3, turns=2`), and `shell` (`thickness=2`). Each reaches the native unsupported-kind gate rather than failing earlier schema validation.
+The five unsupported-kind fixtures are schema-valid and include each kind's required parameters: `helix` (`radius=8, wire_r=1, height=20, turns=3`), `loft` (`root_chord=20, tip_chord=10, span=30, thickness=3`), `impeller` (`hub_d=10, tip_d=40, height=8, blades=6, blade_t=2, twist_deg=15`), `worm` (`radius=8, height=30, thread_r=2, wire_r=1, turns=3`), and `shell` (`thickness=2`). Each reaches the native unsupported-kind gate rather than failing earlier schema validation.
 
 ## Real OCCT builder-boundary probes
 

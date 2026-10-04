@@ -33,6 +33,7 @@ pub mod native_render;
 pub mod native_review_findings;
 pub mod native_review_gate;
 pub mod native_rotor;
+pub mod native_scroll_disc;
 pub mod native_settings;
 pub mod native_standard_features;
 pub mod native_state_summary;

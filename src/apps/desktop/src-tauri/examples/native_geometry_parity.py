@@ -125,6 +125,13 @@ def main():
     add("cross-joint-cm-unit-scaling", "cross_joint",
         dict(span=4, journal_d=1.2, center=[1.2, -0.7, 0.5], segments=24),
         dict(length="cm", angle="deg"))
+    add("scroll-disc-legacy-oracle", "scroll_disc",
+        dict(outer_d=60, height=8, wall_t=2, turns=2.5))
+    add("scroll-disc-translated", "scroll_disc",
+        dict(outer_d=60, height=8, wall_t=2, turns=2.5, center=[12, -7, 5]))
+    add("scroll-disc-cm-unit-scaling", "scroll_disc",
+        dict(outer_d=6, height=0.8, wall_t=0.2, turns=2.5, center=[1.2, -0.7, 0.5]),
+        dict(length="cm", angle="deg"))
 
     for axis in "XYZ":
         for mode in ("center", "base_true", "base_false"):
@@ -249,12 +256,19 @@ def main():
         "cross-joint-translated": [-8, -27, -1, 32, 13, 11],
         "cross-joint-cm-unit-scaling": [-8, -27, -1, 32, 13, 11],
     }
+    expected_scroll_disc_bounds = {
+        "scroll-disc-legacy-oracle": [-30, -30, -4, 30, 30, 4],
+        "scroll-disc-translated": [-18, -37, 1, 42, 23, 9],
+        "scroll-disc-cm-unit-scaling": [-18, -37, 1, 42, 23, 9],
+    }
     cross_joint_native_volumes = {}
     camshaft_native_volumes = {}
     crankshaft_native_volumes = {}
     timing_pulley_native_volumes = {}
     helical_native_results = {}
     vbelt_native_volumes = {}
+    scroll_disc_native_volumes = {}
+    scroll_disc_native_areas = {}
 
     records = []
     for name, plan in cases:
@@ -338,6 +352,34 @@ def main():
                            for label, interval in expected_samples.items())):
                 raise AssertionError((name, "cross-joint-geometry-contract", native["bounds_mm"], support))
             cross_joint_native_volumes[name] = native["volume_mm3"]
+        if name in expected_scroll_disc_bounds:
+            shape, baseline_report = occ_kernel.build_document(plan_to_document(plan))
+            bounds_error = max(abs(a - b) for a, b in zip(occ_kernel._bbox(shape), native["bounds_mm"]))
+            volume_error = abs(occ_kernel.volume(shape) - native["volume_mm3"])
+            support = native["feature_results"][0]
+            details = support.get("support_details", {})
+            baseline_area = occ_kernel.surface_area(shape)
+            area_estimate = details.get("surface_area_estimate_mm2")
+            area_relative_error = (abs(area_estimate - baseline_area) / max(baseline_area, 1e-12)
+                                   if isinstance(area_estimate, (int, float)) else math.inf)
+            if (max(abs(a - b) for a, b in zip(native["bounds_mm"], expected_scroll_disc_bounds[name])) > 1e-6
+                    or native.get("valid") is not True
+                    or native.get("closed_solid_count") != 1
+                    or baseline_report.get("geometry_state") != "passed"
+                    or baseline_report.get("brep_valid") is not True
+                    or baseline_report.get("solid_count") != 1
+                    or baseline_report.get("closed") is not True
+                    or support.get("geometry_support") != "approximate"
+                    or details.get("builder") != "legacy_prismatic_archimedean_spiral_and_backplate"
+                    or details.get("axis") != "Z"
+                    or details.get("surface_area_estimate_method", {}).get("relative_comparison_tolerance") != 0.006
+                    or bounds_error > 1e-6 or volume_error > 1e-5
+                    or area_relative_error > 0.006):
+                raise AssertionError((name, "scroll-disc-brep-or-approximation-boundary",
+                                      native, baseline_report, bounds_error, volume_error,
+                                      area_estimate, baseline_area, area_relative_error))
+            scroll_disc_native_volumes[name] = native["volume_mm3"]
+            scroll_disc_native_areas[name] = area_estimate
         if name.startswith("vbelt-pulley-"):
             support = native["feature_results"][0]
             details = support.get("support_details", {})
@@ -460,7 +502,7 @@ def main():
                 raise AssertionError((name, "cross-joint-bounds-or-legacy-brep", bounds_error,
                                       baseline_report.get("geometry_state"), baseline_report.get("brep_valid"),
                                       baseline_report.get("solid_count"), baseline_report.get("closed")))
-        elif not name.startswith(("camshaft-", "timing-pulley-")) and (bounds_error > 1e-6 or volume_error > 1e-5):
+        elif not name.startswith(("camshaft-", "timing-pulley-", "scroll-disc-")) and (bounds_error > 1e-6 or volume_error > 1e-5):
             raise AssertionError((name, bounds_error, volume_error))
         records.append(dict(case=name, passed=True, bounds_max_error_mm=bounds_error,
                             volume_error_mm3=volume_error,
@@ -503,6 +545,13 @@ def main():
     if abs(vbelt_native_volumes["vbelt-pulley-standard-b-large-mm"]
            - vbelt_native_volumes["vbelt-pulley-standard-b-large-cm"]) > 1e-5:
         raise AssertionError(("vbelt-pulley-cm-volume-invariance", vbelt_native_volumes))
+    scroll_disc_oracle_volume = scroll_disc_native_volumes["scroll-disc-legacy-oracle"]
+    scroll_disc_oracle_area = scroll_disc_native_areas["scroll-disc-legacy-oracle"]
+    for name in ("scroll-disc-translated", "scroll-disc-cm-unit-scaling"):
+        if (abs(scroll_disc_native_volumes[name] - scroll_disc_oracle_volume) > 1e-5
+                or abs(scroll_disc_native_areas[name] - scroll_disc_oracle_area) > 1e-5):
+            raise AssertionError(("scroll-disc-transform-unit-invariance", name,
+                                  scroll_disc_native_volumes, scroll_disc_native_areas))
     python_version = "unknown"
     for package in ("cadquery-ocp", "cadquery-ocp-novtk"):
         try:
@@ -664,6 +713,26 @@ def main():
     cross_joint_nonpositive["features"][0]["sources"]["span"] = {"type": "user"}
     negatives.append(("cross-joint-nonpositive-span", cross_joint_nonpositive, "必须大于 0"))
 
+    scroll_disc_case = cases[[name for name, _ in cases].index("scroll-disc-legacy-oracle")][1]
+    for key, value, message in (("outer_d", 0, "outer_d"), ("height", 0, "height"),
+                                ("wall_t", -1, "wall_t"), ("turns", 0, "turns"),
+                                ("segments", 4097, "segments")):
+        invalid = copy.deepcopy(scroll_disc_case)
+        invalid["features"][0]["parameters"][key] = value
+        invalid["features"][0]["sources"][key] = {"type": "user"}
+        negatives.append((f"scroll-disc-invalid-{key}-{value}", invalid, message))
+    scroll_disc_overlap = copy.deepcopy(scroll_disc_case)
+    scroll_disc_overlap["features"][0]["parameters"]["wall_t"] = 8
+    scroll_disc_overlap["features"][0]["sources"]["wall_t"] = {"type": "user"}
+    negatives.append(("scroll-disc-self-intersecting-turns", scroll_disc_overlap, "自交或相切"))
+    scroll_disc_disjoint_fusion = copy.deepcopy(scroll_disc_case)
+    stock_parameters = dict(length=10, width=10, height=10, center=[500, 500, 500], base=False)
+    scroll_disc_disjoint_fusion["features"].insert(0, {
+        "id": "disjoint-stock", "kind": "box", "operation": "add",
+        "parameters": stock_parameters, "sources": user_sources(stock_parameters)})
+    negatives.append(("scroll-disc-disjoint-fusion", scroll_disc_disjoint_fusion,
+                      "未生成单一有效封闭实体"))
+
     # The first plan leaves only the recessed local span;
     # the second asks for more depth than that span, and the third samples an
     # already-through-cut centerline with no pre-cut material.
@@ -781,6 +850,9 @@ def main():
                    later_feature_invalidates_stale_bore_measurement=True,
                    timing_pulley_positive_cases=len(timing_pulley_native_volumes),
                    vbelt_pulley_positive_cases=len(vbelt_native_volumes),
+                   scroll_disc_positive_cases=len(scroll_disc_native_volumes),
+                   scroll_disc_area_comparison="OCCT tessellation at 0.08 mm / 0.35 rad; <=0.6% relative to legacy exact B-Rep area",
+                   scroll_disc_volume_comparison="same sampled spiral and analytic backplate; <=1e-5 mm3",
                    timing_pulley_faceted_blank_volume_boundary="analytic-minus-segmented-annulus; each positive case checked against segment formula and <=1% legacy relative delta",
                    python_ocp_version=python_version, rust_occt_version="7.9.3")
     (output / "summary.json").write_text(json.dumps(summary, indent=2), encoding="utf-8")

@@ -46,6 +46,7 @@ pub fn supports_native_kind(kind: &str) -> bool {
             | "crankshaft"
             | "timing_pulley"
             | "vbelt_pulley"
+            | "scroll_disc"
     )
 }
 
@@ -112,6 +113,7 @@ pub fn preflight(plan: &Value) -> Result<Value, String> {
             "camshaft" => &["length", "journal_d", "base_d", "lift", "lobes", "lobe_deg"],
             "crankshaft" => &["length", "main_d", "pin_d", "stroke", "throws"],
             "timing_pulley" => &["pitch_d", "teeth", "height", "tooth_type"],
+            "scroll_disc" => &["outer_d", "height", "wall_t", "turns"],
             _ => &[],
         };
         for key in required_native_parameters {
@@ -182,6 +184,10 @@ pub fn preflight(plan: &Value) -> Result<Value, String> {
         if kind == "vbelt_pulley" {
             let normalized = normalized_feature(feature, plan)?;
             crate::native_vbelt_pulley::preflight(&normalized["parameters"])?;
+        }
+        if kind == "scroll_disc" {
+            let normalized = normalized_feature(feature, plan)?;
+            crate::native_scroll_disc::preflight(&normalized["parameters"])?;
         }
         if kind == "pattern" {
             let count = p
@@ -263,6 +269,10 @@ pub fn build(plan: &Value, manifest: &Path, cancelled: &AtomicBool) -> Result<Bu
         } else if normalized["kind"] == "vbelt_pulley" {
             let (tools, support) =
                 crate::native_vbelt_pulley::build(&kernel, &normalized["parameters"])?;
+            (tools, vec![], Some(support))
+        } else if normalized["kind"] == "scroll_disc" {
+            let (tools, support) =
+                crate::native_scroll_disc::build(&kernel, &normalized["parameters"])?;
             (tools, vec![], Some(support))
         } else if normalized["kind"] == "piston" {
             let (tools, support) =
@@ -1079,6 +1089,7 @@ fn normalized_feature(feature: &Value, plan: &Value) -> Result<Value, String> {
             "length",
             "width",
             "height",
+            "wall_t",
             "radius",
             "radius2",
             "module",
