@@ -153,10 +153,11 @@ export function summarizeAcpTerminalUpdateDiagnostics(toolEvents = [], { termina
 export function summarizeCordisBindingDiagnostics(input = {}) {
   const { run = {}, registration, schema, toolEvents = [], toolBridgeCalls = [], nativeAudit = [] } = input
   const counts = new Map()
-  const bump = (toolName, stage, outcome, count = 1) => {
+  const bump = (toolName, stage, outcome, count = 1, errorClass = null) => {
     const name = safeToolName(toolName)
     const code = bindingOutcomes[stage].includes(outcome) ? outcome : 'tool_name_not_allowlisted'
-    const key = `${name}\u0000${stage}\u0000${code}`
+    const safeClass = code === 'native_audit_rejected' ? safeNativeAuditErrorClass(errorClass) : ''
+    const key = `${name}\u0000${stage}\u0000${code}\u0000${safeClass}`
     counts.set(key, (counts.get(key) || 0) + count)
   }
   const inRun = at => Number.isFinite(at) && at >= run.started_at_ms && at <= run.ended_at_ms
@@ -240,14 +241,20 @@ export function summarizeCordisBindingDiagnostics(input = {}) {
     else if (!toolRows.length) outcome = 'native_audit_tool_mismatch'
     else if (!timedRows.length) outcome = 'native_audit_out_of_run'
     else if (!timedRows.some(row => row.success === true)) outcome = 'native_audit_rejected'
-    bump(name, 'bridge_to_audit', outcome)
+    const rejectedAudit = outcome === 'native_audit_rejected' ? timedRows.find(row => row.success === false) : null
+    bump(name, 'bridge_to_audit', outcome, 1, rejectedAudit?.error?.type)
   }
   const countRows = [...counts.entries()].map(([key, count]) => {
-    const [tool_name, stage, outcome] = key.split('\u0000')
-    return { tool_name, stage, outcome, count }
+    const [tool_name, stage, outcome, error_class] = key.split('\u0000')
+    return { tool_name, stage, outcome, ...(error_class ? { error_class } : {}), count }
   }).sort((left, right) => left.tool_name.localeCompare(right.tool_name)
     || left.stage.localeCompare(right.stage) || left.outcome.localeCompare(right.outcome))
   return { schema: 'cordis_binding_projection_v1', counts: countRows }
+}
+
+const nativeAuditErrorClasses = new Set(['argument_validation', 'state_conflict', 'execution', 'unknown'])
+function safeNativeAuditErrorClass(value) {
+  return nativeAuditErrorClasses.has(value) ? value : 'unknown'
 }
 
 // Persist only a short digest of tool arguments so ACP invocation events can

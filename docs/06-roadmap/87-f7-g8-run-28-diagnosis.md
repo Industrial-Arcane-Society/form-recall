@@ -64,6 +64,8 @@ Build status `passed`、Cargo exit `0`、`180,173 ms`；stdout 为 0 bytes，std
 
 ACP/Cordis 安全投影显示 `cad_add_hole_array` 有 1 个 completed terminal 和 1 个 failed terminal，另有 1 个 `cad_set_construction_milestone` failed terminal；对应的 `bridge_to_audit` 各有 1 个 `native_audit_rejected`。其余投影列出的 CAD 工具身份绑定/审计匹配。该投影没有工具参数或失败正文，不能解释拒绝的具体内容。
 
+后续诊断安全增强仅为同调用、同工具、运行时间范围内匹配到的 rejected native audit 聚合增加 `error_class`；只允许 `argument_validation`、`state_conflict`、`execution`、`unknown`，未识别值归为 `unknown`。Run28 本身没有该字段，不能据此回填 Run28 两次拒绝的类别。自由文本 message、工具参数、call ID、ACP ID 与参数 fingerprint 均不进入 safe projection；这一变更是静态投影代码和合成回归覆盖，不是新的 Agent/Provider 运行证据。
+
 Run28 visual/finish 子条件投影的固定字段显示：
 
 - Visual：`manifest_valid`、`independent_review_present`、原图 inventory 行数、reference ID/SHA binding、inventory validity 与 summary 当前性均 true；但 `finish_coverage`、`all_references_covered`、`host_coverage_complete`、`mismatch_free`、`original_reference_covered` 均 false。

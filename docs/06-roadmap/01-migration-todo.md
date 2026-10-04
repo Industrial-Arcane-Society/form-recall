@@ -134,6 +134,7 @@ Coldstart runner 已采用默认且唯一发布 safe gate summary、ACP/Cordis a
 - [x] Run25 快速退出的根因由启动契约确认：launcher 创建 `safe-output` 父目录即可，runner 要求其自身负责创建 leaf。Run26 使用新父目录且 leaf 预先不存在，单次冷启动完成并生成 allowlist 产物；见[Run26诊断](./83-f7-g8-run-26-diagnosis.md)。
 - [x] 完成 Run26 视觉与 finish 失败的安全诊断投影：summary 新增固定 visual/finish 子条件布尔值、失败计数与安全状态枚举，未知 reason 只报告 `unclassified_failure`，不输出原始理由或证据正文。没有改变 acceptance thresholds。Run27 单次尝试在 `input_validation` 阶段失败，没有 provider/strict gate 证据；见[Run27诊断](./86-f7-g8-run-27-diagnosis.md)及[安全子条件投影设计与实现](./85-f7-safe-visual-finish-projection.md)。
 - [x] 调查 Run27 的 `input_validation` 失败：runner positional arguments 由本地 `node -e` 预检确认，使用固定4个必需参数并省略可选 image/userText 参数可走默认输入分支；原图校验通过，未启动 provider。Run28 随后按此形状独立运行一次；见[Run27](./86-f7-g8-run-27-diagnosis.md)、[Run28](./87-f7-g8-run-28-diagnosis.md)。
+- [x] 为匹配到的 rejected native audit 增加固定枚举 `error_class` 聚合；仅投影 `argument_validation`、`state_conflict`、`execution`、`unknown`，未知类型统一映射 `unknown`。原始错误正文、工具参数、调用 ID 与指纹不进入 projection；Node 回归含 sentinel 泄漏断言。Run28 历史投影不含 error_class，此实现没有新增真实 DSH/Provider 运行证据。
 
 ## F0 验收记录
 

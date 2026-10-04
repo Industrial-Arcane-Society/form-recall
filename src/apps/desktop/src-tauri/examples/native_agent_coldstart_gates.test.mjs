@@ -565,14 +565,25 @@ test('failed bridge call reports a matching timed native audit rejection without
   call.error = 'private-bridge-error-marker'
   call.arguments = { diameter: 'private-argument-marker' }
   input.nativeAudit[0].success = false
-  input.nativeAudit[0].error = 'private-native-error-marker'
+  input.nativeAudit[0].error = { type: 'argument_validation', message: 'private-native-error-marker' }
   const projection = summarizeCordisBindingDiagnostics(input)
   const outcomeCount = code => projection.counts.find(row => row.stage === 'bridge_to_audit' && row.outcome === code)?.count || 0
   assert.equal(outcomeCount('native_audit_rejected'), 1)
   assert.equal(outcomeCount('bridge_execution_rejected'), 0)
+  assert.equal(projection.counts.find(row => row.stage === 'bridge_to_audit' && row.outcome === 'native_audit_rejected')?.error_class,
+    'argument_validation')
   const serialized = JSON.stringify(projection)
   for (const secret of [call.call_id, call.acp_call_id, call.arguments_sha256_24, call.error,
-    call.arguments.diameter, input.nativeAudit[0].error]) assert.equal(serialized.includes(secret), false)
+    call.arguments.diameter, input.nativeAudit[0].error.message]) assert.equal(serialized.includes(secret), false)
+  for (const errorType of ['state_conflict', 'execution', 'private-type-sentinel']) {
+    input.nativeAudit[0].error.type = errorType
+    const safe = JSON.stringify(summarizeCordisBindingDiagnostics(input))
+    assert.equal(safe.includes(errorType === 'private-type-sentinel' ? errorType : 'private-native-error-marker'), false)
+    const classes = summarizeCordisBindingDiagnostics(input).counts
+      .filter(row => row.stage === 'bridge_to_audit' && row.outcome === 'native_audit_rejected')
+      .map(row => row.error_class)
+    assert.deepEqual(classes, [errorType === 'private-type-sentinel' ? 'unknown' : errorType])
+  }
 })
 
 test('failed bridge call without a native audit row remains a bridge rejection', () => {
