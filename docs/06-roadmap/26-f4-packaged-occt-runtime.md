@@ -29,5 +29,6 @@ Rust 按显式 `AIMODELER_OCCT_MANIFEST`、安装资源、开发资源依次定�
 
 - 在 `src/apps/desktop/` 执行 `npm run tauri:build`，指定本机忽略目录中的 `src-tauri/target/package-build-input-20261004/runtime-manifest.json`。manifest SHA256 仍为 `39402baa4a84d3d8903e1ea97d8085e78ab047b75a568d4bb50617031a2f9649`；resource staging 校验并准备 17 个 OCCT DLL 及 CATIA 按需 Python 资源，Rust release 编译和 MSI/NSIS bundle 均成功。
 - 本次 Vite production build 有一个既有的 `CadViewport` chunk 大小提示（637.32 kB）；没有影响构建。
+- 同一 `package-resources/app` staging 通过生产 headless smoke：以 PATH 仅含 `%SystemRoot%\System32`、清除 Python/Node 环境变量执行 `ai-modeler-headless-smoke`，返回 `status=ok`、`globalPythonRequired=false`、`globalNodeRequired=false`、无 Python/Node child；100×60×20 mm 单一有效闭合 OCCT 实体以及 AIMODEL/GLB/OBJ/STL 输出通过。该项验证 staging resource root 的 Quick→OCCT 生产调用，不是安装后的 Agent/DSH 或 CATIA 验收。
 - 当前输出：`AI Modeler_0.1.0_x64_zh-CN.msi`（37,952,009 bytes，SHA256 `8d1c148523109caea2bf7eb3779b3532d6a8791a0e7cd3e7357174e9fa8212a2`）；`AI Modeler_0.1.0_x64-setup.exe`（30,354,021 bytes，SHA256 `bb77c803b1f14553b47f7bbfc5e9e7e718eacae1bdd0ba395a70dd37abe4e82a`）。两者是被忽略的本地产物，未提交到 Git。
 - 该包对应当时集成 HEAD `c5187180a1541fbde8f23d59eb1cfd533c4f8f45`。构建输入包含不在 Git 中的已核验 manifest，故不构成 clean-checkout 可复现构建证据；默认 OCCT 输入仍缺失根目录许可证。没有安装测试，没有验证干净账户/机器、完整 Agent 无全局 Python/Node 冷启动或 CATIA COM。
