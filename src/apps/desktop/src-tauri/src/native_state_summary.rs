@@ -642,10 +642,10 @@ fn comparable(r: &Value, signature: &str, refs: &[Value]) -> bool {
     {
         return false;
     }
-    if r.get("source_sha256")
-        .and_then(Value::as_str)
-        .is_some_and(|sha| record["sha256"].as_str() != Some(sha))
-    {
+    let Some(source_sha256) = r.get("source_sha256").and_then(Value::as_str) else {
+        return false;
+    };
+    if record["sha256"].as_str() != Some(source_sha256) {
         return false;
     }
     // Reference similarity reviews cover the full immutable source, never an ROI crop.
@@ -949,7 +949,7 @@ fn visual_summary(
             .cloned()
             .collect();
         for e in &required {
-            if !facts_present(&latest, id, e, geometry, refs) {
+            if !facts_present(state, &latest, id, e, geometry, refs) {
                 push(&mut rec["missing_required_evidence_ids"], json!(e))
             }
         }
@@ -1055,33 +1055,33 @@ fn visual_summary(
     let n = latest.len();
     let c = latest
         .iter()
-        .filter(|r| comparable(r, geometry, refs))
+        .filter(|r| comparable(r, geometry, refs) && review_matches_current_observation(state, r))
         .count();
     json!({"revision":revision,"references":records,"latest_review_pairs":n,"comparable_review_pairs":c,"noncomparable_review_pairs":n-c,
   "all_references_covered":!records.is_empty()&&records.values().all(|r|r["covered"]==true),
   "all_required_evidence_covered":!records.is_empty()&&records.values().all(|r|r["covered"]==true)})
 }
 fn review_matches_current_observation(state: &Value, review: &Value) -> bool {
-    let Some(reference_id) = review.get("reference_id").and_then(Value::as_str) else {
-        return true;
+    let (Some(reference_id), Some(source_sha256), Some(review_observation_id)) = (
+        review.get("reference_id").and_then(Value::as_str),
+        review.get("source_sha256").and_then(Value::as_str),
+        review.get("observation_id").and_then(Value::as_str),
+    ) else {
+        return false;
     };
-    let current = state
+    let Some(current) = state
         .get("reference_inventory")
         .and_then(|rows| rows.get(reference_id))
-        .or_else(|| {
-            state
-                .get("reference_inventory_roi")
-                .and_then(|rows| rows.get(reference_id))
-                .and_then(Value::as_object)
-                .and_then(|rows| rows.values().next())
-        });
-    let Some(current) = current else {
-        return true;
+    else {
+        return false;
     };
-    let Some(current_id) = current.get("observation_id").and_then(Value::as_str) else {
-        return true;
+    let (Some(current_source_sha256), Some(current_observation_id)) = (
+        current.get("source_sha256").and_then(Value::as_str),
+        current.get("observation_id").and_then(Value::as_str),
+    ) else {
+        return false;
     };
-    review.get("observation_id").and_then(Value::as_str) == Some(current_id)
+    source_sha256 == current_source_sha256 && review_observation_id == current_observation_id
 }
 fn blank_ref(id: &str, filename: Option<&Value>, req: &Value) -> Value {
     json!({"reference_id":id,"filename":filename.cloned().unwrap_or(Value::Null),"comparable_pairs":0,"noncomparable_pairs":0,
@@ -1093,7 +1093,14 @@ fn blank_ref(id: &str, filename: Option<&Value>, req: &Value) -> Value {
   "inventory_valid":req["inventory_valid"],"invalid_inventory_evidence_count":req["invalid_evidence_count"],
   "coverage_status":"unverified","covered":false})
 }
-fn facts_present(latest: &[Value], id: &str, e: &str, geometry: &str, refs: &[Value]) -> bool {
+fn facts_present(
+    state: &Value,
+    latest: &[Value],
+    id: &str,
+    e: &str,
+    geometry: &str,
+    refs: &[Value],
+) -> bool {
     latest.iter().any(|r| {
         r.get("reference_id")
             .or_else(|| r.get("reference_image_index"))
@@ -1101,6 +1108,7 @@ fn facts_present(latest: &[Value], id: &str, e: &str, geometry: &str, refs: &[Va
             .as_deref()
             == Some(id)
             && comparable(r, geometry, refs)
+            && review_matches_current_observation(state, r)
             && r["evidence"]
                 .as_array()
                 .is_some_and(|rows| rows.iter().any(|v| v["evidence_id"] == e))
@@ -1262,6 +1270,77 @@ mod tests {
             2
         );
         fs::remove_dir_all(d).unwrap();
+    }
+
+    #[test]
+    fn visual_coverage_requires_complete_reference_observation_binding() {
+        for missing in [
+            "none",
+            "source_sha256",
+            "review_observation_id",
+            "inventory",
+            "inventory_observation_id",
+        ] {
+            let (r, t, d, mut s) = fixture();
+            s["finding_ledger"]["f1"]["status"] = json!("resolved");
+            let manifest: Value = serde_json::from_slice(&fs::read(&r).unwrap()).unwrap();
+            let rid = manifest["images"][0]["id"].clone();
+            let source = manifest["images"][0]["sha256"].as_str().unwrap();
+            let sig = cad_plan::geometry_fingerprint(&s["plan"]).unwrap();
+            let (turns, err) = load_turns(&t);
+            assert!(err.is_none());
+            let fp = target_fingerprint(&turns);
+            let observation_id = format!("{}:{}:v1", rid.as_str().unwrap(), "observation");
+            let mut review = json!({"revision":3,"recorded_at":1,"reference_id":rid,
+                "reference_image_index":1,"source_sha256":source,"observation_id":observation_id,
+                "view":"iso","view_comparable":true,"geometry_signature":sig,
+                "user_target_fingerprint":fp,"covered_evidence_ids":["e1"],
+                "evidence":[{"evidence_id":"e1","status":"match",
+                    "reference":"one circular hole","model":"one circular hole"}]});
+            let mut inventory = json!({"reference_id":rid,"source_sha256":source,
+                "observation_valid":true,"observation_id":observation_id,
+                "roi_cache_key":inventory_key(source),
+                "visible_evidence":[{"evidence_id":"e1","group_id":"g","description":"hole"}]});
+            match missing {
+                "source_sha256" => {
+                    review.as_object_mut().unwrap().remove("source_sha256");
+                }
+                "review_observation_id" => {
+                    review.as_object_mut().unwrap().remove("observation_id");
+                }
+                "inventory" => {
+                    s["reference_inventory"].as_object_mut().unwrap().clear();
+                }
+                "inventory_observation_id" => {
+                    inventory.as_object_mut().unwrap().remove("observation_id");
+                }
+                _ => {}
+            }
+            if missing != "inventory" {
+                s["reference_inventory"][rid.as_str().unwrap()] = inventory;
+            }
+            s["reference_similarity_history"] = json!([review]);
+
+            let out = summary(&mut s, &r, &t).unwrap();
+            let visual = &out["visual_evidence_summary"];
+            assert_eq!(
+                visual["comparable_review_pairs"],
+                if missing == "none" { 1 } else { 0 },
+                "case={missing}"
+            );
+            assert_eq!(
+                visual["all_references_covered"],
+                missing == "none",
+                "case={missing}"
+            );
+            let reference = &visual["references"][rid.as_str().unwrap()];
+            assert_eq!(reference["covered"], missing == "none", "case={missing}");
+            if missing == "inventory_observation_id" {
+                assert_eq!(reference["inventory_valid"], true, "case={missing}");
+                assert_eq!(visual["noncomparable_review_pairs"], 1, "case={missing}");
+            }
+            fs::remove_dir_all(d).unwrap();
+        }
     }
 
     #[test]
