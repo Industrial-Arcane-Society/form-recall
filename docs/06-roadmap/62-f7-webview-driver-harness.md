@@ -50,7 +50,13 @@ Tauri 官方列出 Windows `tauri-driver` → Microsoft Edge Driver 路线；Mic
 
 已修复 smoke fixture：accepted snapshot 显式设 `acceptance_confirmed: true`，candidate snapshot 设为 `false`，并为 accepted snapshot 增加 Rust 回归断言。按项目测试 wrapper 加载 Common-Controls v6 manifest 后，`webview_smoke` fixture 测试通过（5/5）。直接运行未嵌 manifest 的测试 exe 曾以 Windows `0xc0000139` 退出；这不是 WebView 或产品处理错误。
 
-修复后唯一一次 CLI WebDriver 复跑中，四个场景全部通过：纯问答、CAD 工具失败、当前版本验收、过期 finish 保持候选。输出确认真实 `WebView2 JavaScript → Rust Tauri Channel → 生产 Vue handler` 路径收到事件并更新状态。WebDriver session 结束后未发现该验收目录下仍在运行的 smoke/driver 进程。
+此前修复后的 CLI WebDriver 复跑记录中，四个场景全部通过：纯问答、CAD 工具失败、当前版本验收、过期 finish 保持候选。输出确认真实 `WebView2 JavaScript → Rust Tauri Channel → 生产 Vue handler` 路径收到事件并更新状态。WebDriver session 结束后未发现该验收目录下仍在运行的 smoke/driver 进程。
+
+### 2026-10-04 隐藏 WebView CLI 复跑
+
+在目标 worktree 的 `src/apps/desktop` 再次运行 `npm run test:agent-webview`，命令退出码为 0。Vue production build 与 smoke binary 构建通过；Vite 提示 `CadViewport` chunk 大于 500 kB（minified），属于非阻断 warning。四个场景 `pure-qa`、`cad-tool-failure`、`accepted-current`、`stale-finish` 全部输出 `PASS`。runner 等待生产 Vue 应用首屏 mount 成功，并通过真实 Windows WebView2 验证 `WebView2 JavaScript → Rust Tauri Channel → 生产 Vue handler` 事件投递及状态更新；未见启动或 IPC 错误。
+
+本次使用的 smoke 配置将窗口设为 `visible: false`、`skipTaskbar: true`，Rust setup 后再次调用 `window.hide()`。结束后进程检查未发现 `tauri-driver.exe`、`msedgedriver.exe` 或 `ai-modeler-webview-smoke.exe` 残留；CLI 运行结束后的状态检查未发现工作树改动。本次仍未运行真实 DSH、provider 或 CATIA。该 CLI 验收只证明隐藏 WebView 的首屏挂载与 Channel→Vue 事件路径及 fixture 状态处理，不检查像素、布局或 3D WebGL 绘制质量。
 
 ### 编译与 fixture 验证
 
@@ -60,7 +66,7 @@ Tauri 官方列出 Windows `tauri-driver` → Microsoft Edge Driver 路线；Mic
 - `cargo build --bin ai-modeler-webview-smoke --features agent-webview-smoke,tauri/custom-protocol --offline`：通过；只生成 executable，没有启动它。
 - `pwsh -NoProfile -File src-tauri/scripts/test-lib.ps1 -Offline -Filter webview_smoke`：5/5 通过。
 - `node --check scripts/test-agent-webview.mjs`：通过。
-- 修复后的唯一一次 `npm run test:agent-webview`：真实隐藏 WebView 四场景全部通过。
+- 此前记录的修复后 `npm run test:agent-webview` 复跑：真实隐藏 WebView 四场景全部通过；本次 2026-10-04 复跑另见上文。
 
 没有运行 DSH、provider 或 CATIA，也没有截图、保存 WebDriver 会话内容或改动原始运行日志。后续 CLI WebView 运行仍只允许使用这个 smoke-only binary、隔离 WebDriver 和固定 fixture。
 
