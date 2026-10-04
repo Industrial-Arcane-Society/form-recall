@@ -37,9 +37,12 @@
 - `npm.cmd run build`：通过；仅有既有 `CadViewport` 大 chunk 提示。
 - 在仓库根目录运行 `npm.cmd run dev:web -- -- --host 127.0.0.1 --strictPort`：Vite 8.3.2 于 559 ms 就绪，`GET /` 与 `GET /src/main.ts` 均返回 200；Ctrl-C 后监听端口释放。该结果验证根目录 `dev:web` 到 Vite 的实际转发。
 - `npm.cmd run tauri:dev -- --help` 显示 Tauri dev 命令读取 `devUrl` 并执行 `beforeDevCommand`；帮助调用没有启动应用。根目录 `npm run dev` 配置为调用该 Tauri dev 脚本，它会打开桌面窗口。按本次“不打开可见软件”的约束，没有运行实际 Tauri dev，因此没有复现或排除用户报告的空白桌面窗口。
-- 尝试 `npm.cmd run test:agent-webview`，harness 在启动应用前因找不到 `tauri-driver` 与匹配 WebView2 Runtime 的 `msedgedriver` 退出。没有 WebView2 session，也没有应用故障日志；这属于验收前置条件缺失，不能记作应用测试失败或通过。
+- 首次尝试 `npm.cmd run test:agent-webview` 时，harness 在启动应用前因找不到 `tauri-driver` 与匹配 WebView2 Runtime 的 `msedgedriver` 退出；该次只有验收前置条件缺失证据。
+- 后续将驱动安装在此隔离 worktree 的 `temp/acceptance/f0-webview-drivers-20261004`：`tauri-driver 2.1.0` 使用独立 `CARGO_HOME`/`--root` 编译安装；从 Microsoft 官方版本目录下载与已安装 WebView2 Runtime `154.0.4258.53` 匹配的 EdgeDriver。归档 SHA-256 为 `16ACCCCA3DD71DA28348A5A6852B9FA681D1F177F758339EABACFBD3CAC8D72B`；`msedgedriver --version` 报告 `154.0.4258.53`。
+- 不带覆盖配置的首次构建失败于 Tauri build script：主 `tauri.conf.json` 的 bundle resource map 要求生成物 `target/package-resources/RUNTIME-INFORMATION.txt`，而干净 worktree 中没有该打包目录。没有运行会下载/准备 Python 与 CATIA bootstrap payload 的 `build_desktop_resources.mjs`。为保持 smoke-only 构建无打包依赖，第二次 harness 命令仅在子进程环境设置 `TAURI_CONFIG={"bundle":{"resources":[]}}`，清空该 smoke 构建继承的发布资源映射；没有修改配置文件或 refs。
+- 带该临时覆盖运行 `npm.cmd run test:agent-webview`，退出码 0：Vue production build、专用 `ai-modeler-webview-smoke.exe` 构建成功；隐藏 Windows WebView2 session 四场景 `pure-qa`、`cad-tool-failure`、`accepted-current`、`stale-finish` 全部 `PASS`。验证到 production Vue 首屏 mount 与 WebView JavaScript → Rust Tauri Channel → production Vue handler 的事件和状态更新；日志明确显示未使用 DSH/provider/CATIA。
 
-本次没有发现可由 CLI 证据复现的启动缺陷。当前未验证层是 Tauri dev 进程启动、WebView2 创建后的可见窗口绘制/渲染，以及原生 IPC。最强的下一步 CLI 验收是准备匹配版本的 `tauri-driver` 与 `msedgedriver` 后运行 `npm run test:agent-webview`；该 harness 可无可见交互地验证生产 Vue 首屏 mount 和四类 Channel 事件处理，但仍不证明用户屏幕上的窗口像素与布局质量。
+当前隐藏 WebView2 smoke 路径可以启动并通过生产 Vue 首屏/Channel 行为验收，未发现该路径上的可复现启动缺陷。仍未验证的是普通 `npm run dev`/Tauri dev 进程的实际启动、可见窗口绘制与屏幕像素/布局；该任务按“不打开用户软件”的约束没有运行这些路径。smoke binary 使用 fixture-only handler，不能代表真实后端或 CATIA/provider 集成。此前配置级和 Vite HTTP 检查仍只证明配置与前端服务，不替代可见窗口验收。
 
 ## 未合入 F0 分支行为对照
 
