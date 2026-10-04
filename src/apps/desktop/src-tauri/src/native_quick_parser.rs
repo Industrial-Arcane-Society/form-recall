@@ -111,6 +111,8 @@ pub fn parse(text: &str) -> Value {
         }
     }
 
+    let circular_pattern_requested =
+        contains_any(&normalized, &["圆周阵列", "环形阵列"]);
     for (word, explanation) in [
         ("gear", "齿轮配方不在 Quick 基础形体范围内。"),
         ("齿轮", "齿轮配方不在 Quick 基础形体范围内。"),
@@ -147,7 +149,8 @@ pub fn parse(text: &str) -> Value {
             && regex::Regex::new(r"(?:阵列|linear\s+array)\s*[0-9]+\s*(?:个|份|次)?")
                 .is_ok_and(|re| re.is_match(&normalized));
         if normalized.contains(word)
-            && !(explicit_linear_array && (word == "array" || word == "阵列"))
+            && !((explicit_linear_array || circular_pattern_requested)
+                && (word == "array" || word == "阵列"))
         {
             unsupported.push(issue("unsupported_feature", explanation));
         }
@@ -233,7 +236,8 @@ pub fn parse(text: &str) -> Value {
         }
     }
 
-    let linear_pattern_requested = contains_any(&normalized, &["阵列", "linear array"]);
+    let linear_pattern_requested = contains_any(&normalized, &["阵列", "linear array"])
+        && !circular_pattern_requested;
     if linear_pattern_requested {
         let count = regex::Regex::new(r"(?:阵列|linear\s+array)\s*([0-9]+)\s*(?:个|份|次)?")
             .ok()
@@ -260,6 +264,84 @@ pub fn parse(text: &str) -> Value {
                 }
             }
             _ => questions.push(issue("linear_pattern_needs_explicit_values", "线性阵列需明确阵列数量、X/Y/Z 方向和正间距。")),
+        }
+    }
+
+    if circular_pattern_requested {
+        let count = regex::Regex::new(r"(?:圆周阵列|环形阵列)\s*([0-9]+)\s*(?:个|份|次)?")
+            .ok()
+            .and_then(|re| re.captures(&normalized))
+            .and_then(|captures| captures.get(1))
+            .and_then(|value| value.as_str().parse::<u64>().ok());
+        let axis = axis_value(&normalized, &mut questions);
+        let angle = circular_pattern_angle(&normalized);
+        match (count, axis, angle) {
+            (Some(count), Some(axis), Ok(Some(angle)))
+                if (2..=crate::native_plan_geometry::MAX_HOLE_PATTERN_COUNT).contains(&count)
+                    && angle.is_finite()
+                    && angle > 0.0 =>
+            {
+                if let Some(source) = features.last() {
+                    let source_id = source["id"].as_str().unwrap_or("").to_owned();
+                    let operation = source["operation"].as_str().unwrap_or("add").to_owned();
+                    features.push(json!({
+                        "id":format!("quick-{:04}", features.len() + 1),
+                        "kind":"pattern",
+                        "operation":operation,
+                        "name":"圆周阵列",
+                        "parameters":{
+                            "mode":"circular",
+                            "count":count,
+                            "axis":axis,
+                            "angle":angle,
+                            "full":(angle - 360.0).abs() < 1e-6,
+                            "center":[0.0, 0.0, 0.0]
+                        },
+                        "sources":{
+                            "count":user_source(text),
+                            "axis":user_source(text),
+                            "angle":user_source(text),
+                            "full":derived_source(text, "根据圆周阵列角度推导是否为完整圆周。"),
+                            "center":derived_source(text, "沿用 Python Quick 圆周阵列的全局原点旋转中心。")
+                        },
+                        "relations":[{"type":"pattern_source", "feature_id":source_id}]
+                    }));
+                } else {
+                    questions.push(issue(
+                        "circular_pattern_source_missing",
+                        "圆周阵列前必须先定义一个基础或切除特征。",
+                    ));
+                }
+            }
+            (_, _, Err("radians")) => questions.push(issue(
+                "circular_pattern_angle_unit_unsupported",
+                "圆周阵列角度只接受度（°/deg/度），不接受弧度。",
+            )),
+            (_, _, Err("conflict")) => questions.push(issue(
+                "circular_pattern_angle_conflict",
+                "圆周阵列描述了互相冲突的角度值。",
+            )),
+            (Some(count), _, _) if count < 2 || count > crate::native_plan_geometry::MAX_HOLE_PATTERN_COUNT => {
+                questions.push(issue(
+                    "circular_pattern_count_invalid",
+                    format!(
+                        "圆周阵列数量必须为 2 到 {} 之间的整数。",
+                        crate::native_plan_geometry::MAX_HOLE_PATTERN_COUNT
+                    ),
+                ));
+            }
+            (Some(_), Some(_), Ok(Some(angle))) if angle <= 0.0 => questions.push(issue(
+                "circular_pattern_angle_invalid",
+                "圆周阵列角度必须是有限的正数。",
+            )),
+            (_, _, Ok(Some(_))) => questions.push(issue(
+                "circular_pattern_values_missing",
+                "圆周阵列需明确数量、X/Y/Z 旋转轴和正角度。",
+            )),
+            _ => questions.push(issue(
+                "circular_pattern_values_missing",
+                "圆周阵列需明确数量、X/Y/Z 旋转轴和正角度。",
+            )),
         }
     }
 
@@ -1544,6 +1626,43 @@ fn scalar(s: &str, aliases: &[&str]) -> Option<f64> {
     }
 }
 
+fn circular_pattern_angle(s: &str) -> Result<Option<f64>, &'static str> {
+    let mut found = Vec::<f64>::new();
+    for (start, ch) in s.char_indices() {
+        if !ch.is_ascii_digit() && ch != '-' && ch != '+' {
+            continue;
+        }
+        if s[..start]
+            .chars()
+            .next_back()
+            .is_some_and(|previous| previous.is_ascii_digit() || previous == '.')
+        {
+            continue;
+        }
+        let Some((number, end)) = parse_number(s, start) else {
+            continue;
+        };
+        let suffix = skip_ws(s, end);
+        if s[suffix..].starts_with("rad") || s[suffix..].starts_with("弧度") {
+            return Err("radians");
+        }
+        if number.unit.is_empty()
+            && (s[suffix..].starts_with('°')
+                || s[suffix..].starts_with("度")
+                || s[suffix..].starts_with("deg"))
+        {
+            found.push(number.value);
+        }
+    }
+    if found.is_empty() {
+        Ok(None)
+    } else if found.iter().all(|value| close(*value, found[0])) {
+        Ok(Some(found[0]))
+    } else {
+        Err("conflict")
+    }
+}
+
 fn hole_pattern_count(s: &str) -> Result<Option<u64>, &'static str> {
     let mut found = Vec::<f64>::new();
     for alias in ["hole count", "count", "孔数", "数量", "均布", "等分"] {
@@ -2034,6 +2153,84 @@ mod tests {
             let output = parse(input);
             assert_eq!(output["status"], "needs_clarification", "{output}");
             assert!(output["plan"].is_null(), "{output}");
+        }
+    }
+
+    #[test]
+    fn explicit_circular_pattern_matches_python_oracle_and_rejects_incomplete_requests() {
+        let fixture: Value = serde_json::from_str(include_str!(
+            "../tests/fixtures/quick_circular_pattern_contract.json"
+        ))
+        .expect("circular Quick oracle fixture is valid JSON");
+        for case in fixture["legacy_accepted"].as_array().unwrap() {
+            let input = case["input"].as_str().unwrap();
+            let output = parse(input);
+            assert_eq!(output["status"], "ready", "{input}: {output}");
+            let plan = &output["plan"];
+            let validation = crate::cad_plan_validation::validate_plan(plan);
+            assert_eq!(validation["state"], "valid", "{input}: {validation}");
+
+            let features = plan["features"].as_array().unwrap();
+            let source_index = case["source_index"].as_u64().unwrap() as usize;
+            let source = &features[source_index];
+            let pattern = features.last().unwrap();
+            assert_eq!(source["kind"], case["source_kind"], "{input}");
+            assert_eq!(source["operation"], case["source_operation"], "{input}");
+            assert_eq!(pattern["kind"], "pattern", "{input}");
+            assert_eq!(pattern["operation"], source["operation"], "{input}");
+            for (key, value) in case["pattern"].as_object().unwrap() {
+                assert_eq!(pattern["parameters"][key], *value, "{input}: {key}");
+            }
+            assert_eq!(
+                pattern["relations"][0]["feature_id"],
+                source["id"],
+                "{input}"
+            );
+            for key in ["count", "axis", "angle"] {
+                assert_eq!(pattern["sources"][key]["type"], "user", "{input}: {key}");
+                assert_eq!(
+                    pattern["sources"][key]["evidence"], input,
+                    "{input}: {key}"
+                );
+            }
+            for key in ["full", "center"] {
+                assert_eq!(
+                    pattern["sources"][key]["type"], "derived",
+                    "{input}: {key}"
+                );
+            }
+        }
+
+        for (input, issue_id) in [
+            (
+                "圆柱 直径30mm 长50mm，绕Z轴圆周阵列4个",
+                "circular_pattern_values_missing",
+            ),
+            (
+                "圆柱 直径30mm 长50mm，绕Z轴圆周阵列角度180度",
+                "circular_pattern_values_missing",
+            ),
+            (
+                "圆柱 直径30mm 长50mm，圆周阵列4个角度180度",
+                "circular_pattern_values_missing",
+            ),
+            (
+                "圆柱 直径30mm 长50mm，绕Z轴圆周阵列4个角度180rad",
+                "circular_pattern_angle_unit_unsupported",
+            ),
+            (
+                "圆柱 直径30mm 长50mm，绕Z轴圆周阵列1个角度180度",
+                "circular_pattern_count_invalid",
+            ),
+            (
+                "圆柱 直径30mm 长50mm，绕Z轴圆周阵列4个角度0度",
+                "circular_pattern_angle_invalid",
+            ),
+        ] {
+            let output = parse(input);
+            assert_eq!(output["status"], "needs_clarification", "{input}: {output}");
+            assert!(output["plan"].is_null(), "{input}: {output}");
+            assert!(output["questions"].to_string().contains(issue_id), "{input}: {output}");
         }
     }
 

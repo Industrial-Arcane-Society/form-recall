@@ -1,0 +1,49 @@
+{
+  "legacy_accepted": [
+    {
+      "input": "圆柱 直径30mm 长50mm，绕Z轴圆周阵列4个角度180度",
+      "source_index": 0,
+      "source_kind": "cylinder",
+      "source_operation": "add",
+      "pattern": {
+        "mode": "circular",
+        "count": 4,
+        "axis": "Z",
+        "angle": 180.0,
+        "full": false,
+        "center": [0.0, 0.0, 0.0]
+      },
+      "legacy_flags": {"compound": false, "stack": true}
+    },
+    {
+      "input": "圆柱 直径30mm 长50mm，绕Z轴环形阵列4个角度360度",
+      "source_index": 0,
+      "source_kind": "cylinder",
+      "source_operation": "add",
+      "pattern": {
+        "mode": "circular",
+        "count": 4,
+        "axis": "Z",
+        "angle": 360.0,
+        "full": true,
+        "center": [0.0, 0.0, 0.0]
+      },
+      "legacy_flags": {"compound": false, "stack": true}
+    },
+    {
+      "input": "长方体 长100宽80高20，中心孔直径10通孔，绕Z轴圆周阵列4个角度180度",
+      "source_index": 1,
+      "source_kind": "hole",
+      "source_operation": "cut",
+      "pattern": {
+        "mode": "circular",
+        "count": 4,
+        "axis": "Z",
+        "angle": 180.0,
+        "full": false,
+        "center": [0.0, 0.0, 0.0]
+      },
+      "legacy_flags": {"compound": false}
+    }
+  ]
+}
