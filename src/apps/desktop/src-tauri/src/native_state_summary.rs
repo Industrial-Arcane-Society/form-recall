@@ -578,12 +578,51 @@ fn has_dimension_unit(s: &str) -> bool {
     false
 }
 
-fn target_fingerprint(turns: &[Value]) -> String {
-    let rows:Vec<Value>=turns.iter().filter(|r|turn_affects(r)).map(|r|json!({"turn_id":r["turn_id"],"raw_user_prompt":r["raw_user_prompt"],"reference_ids":r["reference_ids"]})).collect();
+/// Stable identity for the user-controlled model target, independent of host
+/// bookkeeping fields such as session IDs and receive timestamps. Both review
+/// production and summary consumption call this function so they cannot hash
+/// different representations of the same user turns.
+pub(crate) fn user_target_fingerprint(turns: &[Value]) -> String {
+    let rows: Vec<Value> = turns
+        .iter()
+        .filter_map(|row| {
+            let mut reference_ids = Vec::new();
+            for value in row["reference_ids"].as_array().into_iter().flatten() {
+                let id = strval(value);
+                if !id.trim().is_empty() && !reference_ids.contains(&json!(id)) {
+                    reference_ids.push(json!(id));
+                }
+            }
+            let intent = row
+                .get("intent")
+                .and_then(Value::as_str)
+                .map(|value| value.trim().to_ascii_lowercase())
+                .filter(|value| !value.is_empty());
+            let affects_model_target = row
+                .get("affects_model_target")
+                .filter(|value| value.is_boolean())
+                .cloned()
+                .unwrap_or(Value::Null);
+            let canonical_turn = json!({
+                "turn_id": row["turn_id"].as_str().unwrap_or_default().trim(),
+                "raw_user_prompt": row.get("raw_user_prompt").cloned().unwrap_or(Value::Null),
+                "reference_ids": reference_ids,
+                "intent": intent,
+                "affects_model_target": affects_model_target,
+            });
+            turn_affects(&canonical_turn).then(|| {
+                json!({
+                    "turn_id": canonical_turn["turn_id"],
+                    "raw_user_prompt": canonical_turn["raw_user_prompt"],
+                    "reference_ids": canonical_turn["reference_ids"],
+                })
+            })
+        })
+        .collect();
     sha(serde_json::to_string(&rows).unwrap_or_default().as_bytes())
 }
 fn latest_reviews(state: &Value, turns: &[Value], revision: &Value) -> Vec<Value> {
-    let fp = target_fingerprint(turns);
+    let fp = user_target_fingerprint(turns);
     let has = !turns.is_empty();
     let mut latest: BTreeMap<(String, String), Value> = BTreeMap::new();
     for r in state["reference_similarity_history"]
@@ -1156,6 +1195,57 @@ mod tests {
     fn put(path: &Path, v: &Value) {
         fs::write(path, serde_json::to_vec(v).unwrap()).unwrap()
     }
+    #[test]
+    fn user_target_fingerprint_ignores_host_metadata_but_tracks_target_and_references() {
+        let host_turns = json!([{
+            "turn_id":"target-turn",
+            "session_id":"session-a",
+            "raw_user_prompt":"请按参考图创建支架",
+            "reference_ids":["sha256:reference-a"],
+            "at_epoch_ms":123456,
+            "intent_source":"unclassified"
+        }]);
+        let normalized_turns = json!([{
+            "turn_id":"target-turn",
+            "session_id":"session-a",
+            "raw_user_prompt":"请按参考图创建支架",
+            "reference_ids":["sha256:reference-a"],
+            "intent":null,
+            "intent_source":"unclassified",
+            "affects_model_target":null,
+            "created_at":null,
+            "at_epoch_ms":123456
+        }]);
+
+        let original = user_target_fingerprint(host_turns.as_array().unwrap());
+        assert_eq!(
+            original,
+            user_target_fingerprint(normalized_turns.as_array().unwrap())
+        );
+
+        let mut metadata_only = host_turns.clone();
+        metadata_only[0]["session_id"] = json!("session-b");
+        metadata_only[0]["at_epoch_ms"] = json!(654321);
+        metadata_only[0]["intent_source"] = json!("classifier");
+        assert_eq!(
+            original,
+            user_target_fingerprint(metadata_only.as_array().unwrap())
+        );
+
+        let mut changed_prompt = host_turns.clone();
+        changed_prompt[0]["raw_user_prompt"] = json!("请按参考图创建并加宽支架");
+        assert_ne!(
+            original,
+            user_target_fingerprint(changed_prompt.as_array().unwrap())
+        );
+
+        let mut changed_references = host_turns;
+        changed_references[0]["reference_ids"] = json!(["sha256:reference-b"]);
+        assert_ne!(
+            original,
+            user_target_fingerprint(changed_references.as_array().unwrap())
+        );
+    }
     fn fixture() -> (PathBuf, PathBuf, PathBuf, Value) {
         let d = dir();
         let image = d.join("sample.png");
@@ -1211,7 +1301,7 @@ mod tests {
         let source = manifest["images"][0]["sha256"].as_str().unwrap();
         let (turns, err) = load_turns(&t);
         assert!(err.is_none());
-        let fp = target_fingerprint(&turns);
+        let fp = user_target_fingerprint(&turns);
         let good = json!({"revision":3,"recorded_at":10,"reference_id":rid,"view":"iso","view_comparable":true,"geometry_signature":sig,
    "user_target_fingerprint":fp,"covered_evidence_ids":["e1"],"evidence":[{"evidence_id":"e1","status":"match","reference":"one circular hole","model":"one circular hole"}]});
         let mut older = good.clone();
@@ -1289,7 +1379,7 @@ mod tests {
             let sig = cad_plan::geometry_fingerprint(&s["plan"]).unwrap();
             let (turns, err) = load_turns(&t);
             assert!(err.is_none());
-            let fp = target_fingerprint(&turns);
+            let fp = user_target_fingerprint(&turns);
             let observation_id = format!("{}:{}:v1", rid.as_str().unwrap(), "observation");
             let mut review = json!({"revision":3,"recorded_at":1,"reference_id":rid,
                 "reference_image_index":1,"source_sha256":source,"observation_id":observation_id,

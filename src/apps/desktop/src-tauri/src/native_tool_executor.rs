@@ -1383,6 +1383,23 @@ mod tests {
     #[test]
     fn native_executor_inspect_current_review_and_get_state_preserve_current_bindings() {
         let (dir, reference_id, source_sha, evidence_id) = current_vision_fixture();
+        let turns_path = dir.join("user-turns.json");
+        let target_prompt = "请按参考图创建支架";
+        write_json_atomic(
+            &turns_path,
+            &json!({
+                "schema_version":1,
+                "session_id":"fixture-session",
+                "turns":[{
+                    "turn_id":"fixture-turn",
+                    "session_id":"fixture-session",
+                    "raw_user_prompt":target_prompt,
+                    "reference_ids":[reference_id.clone()],
+                    "at_epoch_ms":123456789,
+                    "intent_source":"unclassified"
+                }]
+            }),
+        ).unwrap();
         let endpoint = mock_two_vision_responses(
             json!({"summary":"A visible outline.","visible_evidence":[{"id":"outline","description":"A closed outer outline is visible."}]}),
             json!({"view_comparable":true,"score":92,"coverage_status":"verified",
@@ -1411,6 +1428,8 @@ mod tests {
         let result = executor.execute("state", "cad_get_state", &json!({}), Duration::from_secs(3)).unwrap();
         let summary: Value = serde_json::from_str(result["text"].as_str().unwrap().split_once('\n').unwrap().1).unwrap();
         assert_eq!(summary["visual_evidence_summary"]["all_references_covered"], true, "{summary:#}");
+        assert_eq!(summary["independent_reference_review_pairs"], 1, "{summary:#}");
+        assert_eq!(summary["visual_evidence_summary"]["comparable_review_pairs"], 1, "{summary:#}");
         let reference = &summary["visual_evidence_summary"]["references"][reference_id.as_str()];
         assert_eq!(reference["inventory_valid"], true);
         assert_eq!(reference["covered"], true);
@@ -1430,6 +1449,45 @@ mod tests {
         assert_eq!(saved["reference_similarity_history"][0]["observation_id"], inventory["observation_id"]);
         assert_eq!(saved["reference_similarity_history"][0]["geometry_fingerprint"], saved["previews"][0]["geometry_fingerprint"]);
         assert_eq!(saved["reference_similarity_history"][0]["geometry_signature"], saved["previews"][0]["geometry_fingerprint"]);
+
+        let mut turns = read_json_object(&turns_path).unwrap();
+        turns["turns"][0]["at_epoch_ms"] = json!(987654321);
+        turns["turns"][0]["intent_source"] = json!("classifier");
+        write_json_atomic(&turns_path, &turns).unwrap();
+        let metadata_only = executor.execute(
+            "state-after-metadata-change",
+            "cad_get_state",
+            &json!({}),
+            Duration::from_secs(3),
+        ).unwrap();
+        let metadata_summary: Value = serde_json::from_str(
+            metadata_only["text"].as_str().unwrap().split_once('\n').unwrap().1,
+        ).unwrap();
+        assert_eq!(metadata_summary["independent_reference_review_pairs"], 1, "{metadata_summary:#}");
+        assert_eq!(metadata_summary["visual_evidence_summary"]["all_references_covered"], true, "{metadata_summary:#}");
+
+        turns["turns"][0]["raw_user_prompt"] = json!("请按参考图创建并加宽支架");
+        write_json_atomic(&turns_path, &turns).unwrap();
+        let target_changed = executor.execute(
+            "state-after-target-change",
+            "cad_get_state",
+            &json!({}),
+            Duration::from_secs(3),
+        ).unwrap();
+        let changed_summary: Value = serde_json::from_str(
+            target_changed["text"].as_str().unwrap().split_once('\n').unwrap().1,
+        ).unwrap();
+        let changed_reference = &changed_summary["visual_evidence_summary"]["references"][reference_id.as_str()];
+        assert_eq!(changed_summary["independent_reference_review_pairs"], 0, "{changed_summary:#}");
+        assert_eq!(changed_summary["visual_evidence_summary"]["comparable_review_pairs"], 0, "{changed_summary:#}");
+        assert_eq!(changed_reference["covered"], false, "{changed_reference:#}");
+        assert!(
+            changed_reference["missing_required_evidence_ids"]
+                .as_array()
+                .unwrap()
+                .contains(&json!(evidence_id)),
+            "{changed_reference:#}"
+        );
         let stale = executor.execute(
             "stale-generation", "cad_review_reference_similarity",
             &json!({"view":"front","preview_generation":8,"reference_id":reference_id}),

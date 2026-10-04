@@ -980,7 +980,7 @@ pub async fn review(
     let (stage_scope, stage_complete, full_current_geometry_in_scope, stage_feature_ids) =
         verified_stage_scope(state, rev)?;
     let review_scope = "verified_construction_stage";
-    let target_fp = sha(serde_json::to_string(&turns).unwrap_or_default().as_bytes());
+    let target_fp = crate::native_state_summary::user_target_fingerprint(&turns);
     let geom_view = preview_row
         .get("render_options")
         .cloned()
