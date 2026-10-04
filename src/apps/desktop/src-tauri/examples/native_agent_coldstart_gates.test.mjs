@@ -7,7 +7,7 @@ import { EventEmitter } from 'node:events'
 import { join, relative } from 'node:path'
 import { tmpdir } from 'node:os'
 import { createAuditedToolProxy, createTerminalUpdateHmac, evaluateColdstartGates, parseEvidenceJsonl, parsePostcheckState, readRunArtifacts, summarizeAcpTerminalUpdateDiagnostics, summarizeCordisBindingDiagnostics, toolArgumentsFingerprint } from './native_agent_coldstart_gates.mjs'
-import { buildSafeAcceptanceSummary, writeSafeAcceptanceArtifacts } from './native_agent_coldstart_publication.mjs'
+import { buildSafeAcceptanceSummary, writeSafeAcceptanceArtifacts, writeSafeFailureSummary } from './native_agent_coldstart_publication.mjs'
 import { removeScratchDirectory, safeScratchCleanupStatus, terminateChildrenAndWait, waitThenTerminateChild } from './native_agent_coldstart_lifecycle.mjs'
 import { COLDSTART_SCRATCH_MAX_AGE_MS, COLDSTART_SCRATCH_PREFIX, createColdstartScratchDirectory,
   recoverStaleColdstartScratch } from './native_agent_coldstart_scratch.mjs'
@@ -628,6 +628,47 @@ test('published cold-start files contain only safe gates and aggregate projectio
     assert.deepEqual(projections[0].call_group_terminal_distribution,
       [{ tool_name: 'cad_finish_model', terminal_category: 'completed_once', count: 1 }])
     assert.equal(projections[1].schema, 'cordis_binding_projection_v1')
+  } finally {
+    rmSync(root, { recursive: true, force: true })
+  }
+})
+
+test('fatal failure publication uses only fixed stage and code enums', () => {
+  const root = mkdtempSync(join(tmpdir(), 'coldstart-safe-failure-'))
+  const output = join(root, 'run')
+  const secrets = ['provider-error-sentinel', 'secret-key-sentinel', 'model-answer-sentinel',
+    'prompt-sentinel', 'tool-arguments-sentinel', 'payload-sentinel', 'exception-stack-sentinel']
+  try {
+    const summary = writeSafeFailureSummary(output, {
+      stage: 'dsh_session', code: 'unhandled_rejection', scratchCleanupStatus: 'removed',
+      scratchRecovery: { status: 'complete', scanned_count: 1, path: secrets[0], error: secrets[1] },
+      // Exception details are deliberately not accepted by the publisher.
+      exception: new Error(secrets.join('|')),
+    })
+    assert.deepEqual(readdirSync(output).sort(), ['summary.json'])
+    assert.deepEqual(summary.failure_diagnostic, { stage: 'dsh_session', code: 'unhandled_rejection' })
+    const serialized = readFileSync(join(output, 'summary.json'), 'utf8')
+    for (const secret of secrets) assert.equal(serialized.includes(secret), false)
+    assert.equal(serialized.includes('exception'), false)
+    assert.equal(summary.strict_gates.status, 'failed')
+    assert.equal(summary.status, 'failed')
+    assert.throws(() => writeSafeFailureSummary(output, { stage: 'publication', code: 'uncaught_exception' }), /EEXIST/)
+    assert.equal(readFileSync(join(output, 'summary.json'), 'utf8'), serialized)
+  } finally {
+    rmSync(root, { recursive: true, force: true })
+  }
+})
+
+test('fatal failure publication rejects unknown stage and code values', () => {
+  // The synthetic error-like strings stand in for any provider/exception text;
+  // callers can publish only these fixed classifications.
+  const root = mkdtempSync(join(tmpdir(), 'coldstart-safe-failure-enum-'))
+  try {
+    const failed = writeSafeFailureSummary(join(root, 'run'), {
+      stage: 'private-provider-response-sentinel', code: 'raw-error-message-sentinel',
+    })
+    assert.deepEqual(failed.failure_diagnostic, { stage: 'unknown', code: 'uncaught_exception' })
+    assert.equal(JSON.stringify(failed).includes('sentinel'), false)
   } finally {
     rmSync(root, { recursive: true, force: true })
   }

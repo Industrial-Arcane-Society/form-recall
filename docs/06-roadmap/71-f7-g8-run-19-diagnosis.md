@@ -39,4 +39,8 @@
 
 Run19 是一次失败且安全发布不完整的 runner 尝试，不能作为完整真实多模态 DSH 冷启动验收，也不能评估逐 gate 结果、ACP/Cordis 绑定、schema 修复或视觉/几何质量。预检原图 SHA 只证明启动前文件符合基线，摘要未绑定该哈希。不得把它表述为通过或据此放宽 F7 门禁；F7 保持失败。
 
-后续先静态检查 runner 的启动与安全发布路径，查明本次为何进入泛化失败发布路径；具体抛错原因在现有安全证据中不可知。未知原因保持 unknown。在获得授权并保证新鲜隔离输出后，才考虑另一次单独验收；不得把 Run19 当作可重跑输出目录。
+Run19 后续静态检查已完成，并修复了未来 fatal 路径的安全诊断缺口；具体代码与合成测试见[安全失败发布验收](./72-f7-g8-safe-failure-publication.md)。该修复不能恢复本次缺失的 stage、projection 或 build status，具体抛错原因仍 unknown。后续真实验收须使用新固定 commit、全新隔离 worktree 与新输出目录；不得把 Run19 当作可重跑输出目录。
+
+## 后续安全发布修复（2026-10-04）
+
+后续静态代码审查确认：`uncaughtException` / `unhandledRejection` handler 忽略事件内容，`failSafely()` 停止子进程、清理 scratch、只调用 `archiveFailure()` 写泛化 `summary.json`，随后 `process.exit(1)`；正常 gate/projection/build-status 写入处于该退出之后，所以 fatal 路径会跳过它们。该控制流解释“只有 summary”的文件形状，但并不能识别 Run19 的具体异常或根因。新 runner 已在 fatal 摘要新增固定枚举 `failure_diagnostic.stage/code`，并以合成隐私 sentinel 回归覆盖；不得回溯套用该新诊断到 Run19。修复与局限见[安全失败发布验收](./72-f7-g8-safe-failure-publication.md)。

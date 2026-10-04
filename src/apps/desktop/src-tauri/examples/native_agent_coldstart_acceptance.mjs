@@ -6,7 +6,7 @@ import { mkdirSync, readFileSync, writeFileSync, existsSync } from 'node:fs'
 import { basename, dirname, join, resolve } from 'node:path'
 import { createInterface } from 'node:readline'
 import { createAuditedToolProxy, createTerminalUpdateHmac, evaluateColdstartGates, parseEvidenceJsonl, parsePostcheckState, readRunArtifacts, summarizeAcpTerminalUpdateDiagnostics, summarizeCordisBindingDiagnostics, toolArgumentsFingerprint } from './native_agent_coldstart_gates.mjs'
-import { buildSafeAcceptanceSummary, writeSafeAcceptanceArtifacts } from './native_agent_coldstart_publication.mjs'
+import { buildSafeAcceptanceSummary, writeSafeAcceptanceArtifacts, writeSafeFailureSummary } from './native_agent_coldstart_publication.mjs'
 import { removeScratchDirectory, safeScratchCleanupStatus, terminateChildrenAndWait, waitThenTerminateChild } from './native_agent_coldstart_lifecycle.mjs'
 import { createColdstartScratchDirectory, recoverStaleColdstartScratch } from './native_agent_coldstart_scratch.mjs'
 
@@ -17,18 +17,14 @@ let scratchRecovery = { status: 'complete', scanned_count: 0, removed_count: 0, 
   rejected_count: 0, unknown_owner_count: 0, failed_count: 0 }
 const managedChildren = []
 let fatalFailurePromise = null
+// Only a fixed stage enum is ever published. It marks the runner phase, not
+// the exception location or message; raw error/provider content is discarded.
+let failureStage = 'startup'
 const stopManagedChildren = () => terminateChildrenAndWait(managedChildren, 1500)
-const archiveFailure = scratchCleanupStatus => {
+const archiveFailure = (scratchCleanupStatus, code) => {
   if (!archiveDir) return
   try {
-    mkdirSync(archiveDir, { recursive: true })
-    writeFileSync(join(archiveDir, 'summary.json'), JSON.stringify({ schema_version: 1, status: 'failed',
-      transport_status: 'failed', model_status: 'none',
-      status_scope: 'scope_unverified', runtime: { node: 'unverified', dsh: 'unverified' },
-      scratch_cleanup_status: scratchCleanupStatus,
-      scratch_recovery: scratchRecovery,
-      strict_gates: { status: 'failed', failure_reason_count: 1, evidence_error_count: 0, gates: {} } }, null, 2),
-    { flag: 'wx', mode: 0o600 })
+    writeSafeFailureSummary(archiveDir, { stage: failureStage, code, scratchCleanupStatus, scratchRecovery })
   } catch { /* preserve the original process failure */ }
 }
 const cleanupScratch = () => {
@@ -38,22 +34,23 @@ const cleanupScratch = () => {
   return status
 }
 process.once('exit', cleanupScratch)
-const failSafely = () => {
+const failSafely = code => {
   if (fatalFailurePromise) return fatalFailurePromise
   fatalFailurePromise = (async () => {
     const childrenStopped = await stopManagedChildren().catch(() => false)
     const cleanupStatus = cleanupScratch()
-    archiveFailure(safeScratchCleanupStatus(childrenStopped, cleanupStatus))
+    archiveFailure(safeScratchCleanupStatus(childrenStopped, cleanupStatus), code)
     console.error('Acceptance failed; see safe summary in the evidence directory.')
     process.exit(1)
   })()
   return fatalFailurePromise
 }
-process.on('uncaughtException', () => { void failSafely() })
-process.on('unhandledRejection', () => { void failSafely() })
+process.on('uncaughtException', () => { void failSafely('uncaught_exception') })
+process.on('unhandledRejection', () => { void failSafely('unhandled_rejection') })
 if (!repoArg || !runtimeArg || !outputArg || !configArg) {
   throw new Error('usage: node native_agent_coldstart_acceptance.mjs REPO PINNED_RUNTIME FRESH_OUTPUT PROVIDER_JSON [ORIGINAL_PNG] [USER_TEXT]')
 }
+failureStage = 'config_validation'
 const suppliedConfig = JSON.parse(readFileSync(resolve(configArg), 'utf8').replace(/^\uFEFF/, ''))
 const provider = suppliedConfig.llm
   ? suppliedConfig.llm.providers?.find(item => item.id === suppliedConfig.llm.active_provider_id) || suppliedConfig.llm
@@ -70,6 +67,7 @@ if (existsSync(output)) throw new Error('验收输出目录已经存在；请提
 mkdirSync(dirname(output), { recursive: true })
 mkdirSync(output)
 archiveDir = output
+failureStage = 'input_validation'
 scratchRecovery = recoverStaleColdstartScratch()
 scratchDir = createColdstartScratchDirectory()
 const workDir = scratchDir
@@ -97,6 +95,7 @@ const turnId = runId
 const userText = userTextArg || '请根据参考图片复刻模型，未标注尺寸按图像比例自行估算并记录来源，使用工具生成模型并复核。'
 const prompt = userText
 
+failureStage = 'runtime_validation'
 for (const directory of [workDir, state, home]) mkdirSync(directory, { recursive: true })
 const nodePath = existsSync(join(runtime, 'node/node.exe')) ? join(runtime, 'node/node.exe') : join(runtime, 'node.exe')
 const modules = existsSync(join(runtime, 'dsh/node_modules')) ? join(runtime, 'dsh/node_modules') : join(runtime, 'node_modules')
@@ -109,6 +108,7 @@ if (dshPackage.version !== '0.2.0-rc.2') throw new Error('Pinned DSH version mis
 // Always rebuild against this checkout before any provider request. Old binaries
 // must not validate newly edited gates, schemas or the native tool audit.
 const buildStarted = Date.now()
+failureStage = 'offline_build'
 const build = spawnSync('cargo', ['build', '--manifest-path', join(repo, 'src/apps/desktop/src-tauri/Cargo.toml'),
   '--example', 'native_read_probe', '--example', 'native_agent_profile', '--offline'],
 { cwd: repo, encoding: 'utf8', windowsHide: true, timeout: 20 * 60 * 1000, maxBuffer: 8 * 1024 * 1024 })
@@ -127,6 +127,7 @@ const productionPrompt = readFileSync(effectiveProfile.prompt_path, 'utf8')
 const occtManifest = process.env.AIMODELER_OCCT_MANIFEST || join(repo, 'src/apps/desktop/src-tauri/target/f4-occt/runtime-manifest.json')
 if (!existsSync(occtManifest)) throw new Error('OCCT manifest不存在，不能执行建模验收。')
 
+failureStage = 'native_probe'
 const probe = spawn(probePath, [legacy, state, '--online', '--serve', '--vision', '--occt', occtManifest], {
   windowsHide: true, stdio: ['pipe', 'pipe', 'pipe'],
   env: {
@@ -177,6 +178,7 @@ writeFileSync(activeTurnPath, JSON.stringify({
 
 const streamPath = join(state, 'stream-events.jsonl')
 
+failureStage = 'dsh_launch'
 const child = spawn(nodePath, [join(modules, '@deepseek-ai/dsh/lib/bin.js'),
   '--profile', 'acp', '--patch', patchPath], {
   cwd: workDir, windowsHide: true, stdio: ['pipe', 'pipe', 'pipe'], env: {
@@ -258,6 +260,7 @@ function rpc(method, params, ms = 45000) {
 let sessionId = null, dshStatus = 'failed', computedState = null, managedChildrenExited = true
 let scratchCleanupStatus = 'not_created'
 try {
+  failureStage = 'dsh_session'
   const initialized = await rpc('initialize', { protocolVersion: 1,
     clientInfo: { name: 'native-agent-coldstart-acceptance', version: '1' }, clientCapabilities: {} })
   if (initialized.agentCapabilities?.promptCapabilities?.image !== true) throw new Error('DSH未声明图片输入能力。')
@@ -333,6 +336,7 @@ const nativeAudit = readJsonl(join(state, 'native-tool-audit.jsonl'))
 const artifacts = readRunArtifacts(workDir, domain)
 const streamEvents = readJsonl(streamPath)
 const sourceShaAfter = hash(readFileSync(imagePath))
+failureStage = 'strict_gate_evaluation'
 const strict = evaluateColdstartGates({
   run: { id: runId, turn_id: turnId, acp_session_id: sessionId, tool_session_id: bridge.session_id,
     started_at_ms: runStartedAt, ended_at_ms: runEndedAt },
@@ -365,6 +369,7 @@ const strict = evaluateColdstartGates({
     scratchCleanupStatus: safeScratchCleanupStatus(managedChildrenExited, scratchCleanupStatus),
     scratchRecovery,
   })
+  failureStage = 'publication'
   writeSafeAcceptanceArtifacts(output, { summary: safeSummary, acpProjection: projection,
     bindingProjection, buildStatus })
 }

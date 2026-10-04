@@ -14,6 +14,9 @@ const SAFE_NODE_VERSIONS = new Set(['v22.23.3'])
 const SAFE_DSH_VERSIONS = new Set(['0.2.0-rc.2'])
 const MODEL_STATUSES = new Set(['accepted_by_strict_cli_gate', 'candidate', 'none'])
 const SCRATCH_CLEANUP_STATUSES = new Set(['removed', 'failed', 'not_created'])
+const FAILURE_STAGES = new Set(['startup', 'config_validation', 'input_validation', 'runtime_validation',
+  'offline_build', 'native_probe', 'dsh_launch', 'dsh_session', 'strict_gate_evaluation', 'publication', 'unknown'])
+const FAILURE_CODES = new Set(['uncaught_exception', 'unhandled_rejection'])
 const GATE_REASON_CODES = Object.freeze({
   run_scope: new Set(['run_identity_missing', 'manifest_session_or_turn_mismatch',
     'original_reference_manifest_mismatch', 'user_turn_reference_binding_missing']),
@@ -94,6 +97,31 @@ const safeGate = (name, gate) => ({
     ? [...new Set(gate.reasons.filter(reason => GATE_REASON_CODES[name].has(reason)))].sort()
     : [],
 })
+
+export function buildSafeFailureDiagnostic({ stage, code } = {}) {
+  return {
+    stage: FAILURE_STAGES.has(stage) ? stage : 'unknown',
+    code: FAILURE_CODES.has(code) ? code : 'uncaught_exception',
+  }
+}
+
+export function writeSafeFailureSummary(output, { stage, code, scratchCleanupStatus, scratchRecovery } = {}) {
+  mkdirSync(output, { recursive: true })
+  const summary = {
+    schema_version: 1,
+    status: 'failed',
+    transport_status: 'failed',
+    model_status: 'none',
+    status_scope: 'scope_unverified',
+    runtime: { node: 'unverified', dsh: 'unverified' },
+    scratch_cleanup_status: SCRATCH_CLEANUP_STATUSES.has(scratchCleanupStatus) ? scratchCleanupStatus : 'not_created',
+    scratch_recovery: sanitizeScratchRecoverySummary(scratchRecovery),
+    failure_diagnostic: buildSafeFailureDiagnostic({ stage, code }),
+    strict_gates: { status: 'failed', failure_reason_count: 1, evidence_error_count: 0, gates: {} },
+  }
+  writeFileSync(join(output, 'summary.json'), JSON.stringify(summary, null, 2), { flag: 'wx', mode: 0o600 })
+  return summary
+}
 
 export function buildSafeAcceptanceSummary({ strict, transportStatus, modelStatus, runtime, source, scratchCleanupStatus, scratchRecovery }) {
   const gates = Object.fromEntries(GATE_NAMES.map(name => [name, safeGate(name, strict?.gates?.[name])]))
