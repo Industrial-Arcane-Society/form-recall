@@ -173,7 +173,7 @@ FEATURE_SPECS = {
                    ("radius", "n", "height", "bore_d", "center")),
     # The legacy Python geometry and CATIA exporters still do not build shell.
     "shell": _spec(("thickness",), "unsupported",
-                   "旧 v1.0 thickness-only shell 需要确认且不可执行；1.1 的显式 planar 子集仅由桌面 Rust executor 执行。",
+                   "当前 Document/CATIA 转换器没有抽壳实现。",
                    ("thickness", "offset_mode", "removed_faces")),
 }
 
@@ -256,7 +256,7 @@ def _geometry_backend_status(feature: Mapping[str, Any]) -> Dict[str, str]:
         status = "unavailable"
         reason = ("显式平面 shell 仅由桌面原生 Rust/OCCT executor 执行；Python Document/OCP 路径不迁移或执行 shell。"
                   if explicit else
-                  "旧 v1.0 thickness-only shell 不会自动迁移；1.1 shell 必须重新枚举面并显式指定 shell_target 和 offset_mode。")
+                  "旧 v1.0 thickness-only shell 不支持自动迁移；CADPlan 1.1 shell 须重新枚举面并显式指定 shell_target 与 offset_mode。")
     if kind == "box" and float(params.get("corner", 0.0) or 0.0) > 0:
         status, reason = "approximate", "圆角/倒角来自离散轮廓，主体由 OCCT 棱柱生成。"
     if kind == "pocket" and float(params.get("corner", 0.0) or 0.0) > 0:

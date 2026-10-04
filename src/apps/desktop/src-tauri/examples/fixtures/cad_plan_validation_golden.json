@@ -2,7 +2,7 @@
   "fixture_format": "cadplan-validation-golden-v1",
   "python_source": {
     "path": "src/legacy/ai_modeler/sdk/cadplan.py",
-    "sha256": "35a43284201add8c9ad8a462c1e828fcae76545060b34a0c719aaf50c2548afd"
+    "sha256": "bb526c3b2e22f359f3b644107e7889ec2ce0db99099a1089c164dc7363a6a1db"
   },
   "feature_kinds": [
     "box",
@@ -866,10 +866,16 @@
         ]
       },
       "expected": {
-        "valid": true,
-        "state": "valid",
+        "valid": false,
+        "state": "needs_confirmation",
         "errors": [],
-        "confirmations": [],
+        "confirmations": [
+          {
+            "feature_id": "f26-shell",
+            "parameter": "shell_migration",
+            "question": "CADPlan 1.0 shell 只有 thickness，不能推断开口面、方向或目标；请在 1.1 中重新枚举并显式选择。"
+          }
+        ],
         "support": [
           {
             "feature_id": "f0-box",
@@ -1221,7 +1227,7 @@
             "feature_id": "f26-shell",
             "kind": "shell",
             "status": "unavailable",
-            "reason": "CADPlan 未指定要移除的面；缺少可执行的抽壳边界",
+            "reason": "旧 v1.0 thickness-only shell 不支持自动迁移；CADPlan 1.1 shell 须重新枚举面并显式指定 shell_target 与 offset_mode。",
             "backend": "occt_brep"
           }
         ],
@@ -1434,7 +1440,7 @@
             "code": "LOCAL_BREP_UNAVAILABLE",
             "feature_id": "f26-shell",
             "kind": "shell",
-            "message": "CADPlan 未指定要移除的面；缺少可执行的抽壳边界"
+            "message": "旧 v1.0 thickness-only shell 不支持自动迁移；CADPlan 1.1 shell 须重新枚举面并显式指定 shell_target 与 offset_mode。"
           },
           {
             "code": "CATIA_UNSUPPORTED",
@@ -1446,13 +1452,19 @@
         "schema_version": "1.0"
       },
       "strict_expected": {
-        "state": "strict_blocked",
+        "state": "needs_confirmation",
         "catia_executed": false,
         "validation": {
-          "valid": true,
-          "state": "valid",
+          "valid": false,
+          "state": "needs_confirmation",
           "errors": [],
-          "confirmations": [],
+          "confirmations": [
+            {
+              "feature_id": "f26-shell",
+              "parameter": "shell_migration",
+              "question": "CADPlan 1.0 shell 只有 thickness，不能推断开口面、方向或目标；请在 1.1 中重新枚举并显式选择。"
+            }
+          ],
           "support": [
             {
               "feature_id": "f0-box",
@@ -1804,7 +1816,7 @@
               "feature_id": "f26-shell",
               "kind": "shell",
               "status": "unavailable",
-              "reason": "CADPlan 未指定要移除的面；缺少可执行的抽壳边界",
+              "reason": "旧 v1.0 thickness-only shell 不支持自动迁移；CADPlan 1.1 shell 须重新枚举面并显式指定 shell_target 与 offset_mode。",
               "backend": "occt_brep"
             }
           ],
@@ -2017,7 +2029,7 @@
               "code": "LOCAL_BREP_UNAVAILABLE",
               "feature_id": "f26-shell",
               "kind": "shell",
-              "message": "CADPlan 未指定要移除的面；缺少可执行的抽壳边界"
+              "message": "旧 v1.0 thickness-only shell 不支持自动迁移；CADPlan 1.1 shell 须重新枚举面并显式指定 shell_target 与 offset_mode。"
             },
             {
               "code": "CATIA_UNSUPPORTED",
@@ -2028,342 +2040,16 @@
           ],
           "schema_version": "1.0"
         },
+        "errors": [],
+        "confirmations": [
+          {
+            "feature_id": "f26-shell",
+            "parameter": "shell_migration",
+            "question": "CADPlan 1.0 shell 只有 thickness，不能推断开口面、方向或目标；请在 1.1 中重新枚举并显式选择。"
+          }
+        ],
         "dimensions": null,
         "catia_operations": [],
-        "warnings": [
-          {
-            "code": "LOCAL_BREP_APPROXIMATION",
-            "feature_id": "f2-socket_head_bolt",
-            "kind": "socket_head_bolt",
-            "message": "当前参数化网格转封闭 facet-BREP"
-          },
-          {
-            "code": "CATIA_APPROXIMATION",
-            "feature_id": "f2-socket_head_bolt",
-            "kind": "socket_head_bolt",
-            "message": "本地网格按 thread_pitch 生成可见的近似 ISO 公制螺旋牙型；整段杆部带牙，未建牙端倒角/退刀槽。当前 CATIA 导出器仍以光杆凸台和六角凹槽表达，不会创建原生或装饰螺纹。"
-          },
-          {
-            "code": "CATIA_APPROXIMATION",
-            "feature_id": "f3-sphere",
-            "kind": "sphere",
-            "message": "CATIA 导出器以多层圆盘近似球体。"
-          },
-          {
-            "code": "CATIA_APPROXIMATION",
-            "feature_id": "f5-revolve",
-            "kind": "revolve",
-            "message": "本地 OCCT BREP 按闭合[半径,轴向坐标]轮廓精确回转，并将新增回转体与已有实体做布尔合并；CATIA 导出器仍用多层圆盘近似，非 CATIA 原生回转特征。"
-          },
-          {
-            "code": "LOCAL_BREP_APPROXIMATION",
-            "feature_id": "f6-gear",
-            "kind": "gear",
-            "message": "梯形齿廓为当前简化齿形，几何由多边形棱柱表达"
-          },
-          {
-            "code": "LOCAL_BREP_APPROXIMATION",
-            "feature_id": "f7-loft",
-            "kind": "loft",
-            "message": "翼型截面离散后由 OCCT 放样"
-          },
-          {
-            "code": "CATIA_APPROXIMATION",
-            "feature_id": "f7-loft",
-            "kind": "loft",
-            "message": "CATIA 中以根部截面拉伸近似多截面放样。"
-          },
-          {
-            "code": "LOCAL_BREP_APPROXIMATION",
-            "feature_id": "f11-helix",
-            "kind": "helix",
-            "message": "现有螺旋网格转封闭 facet-BREP"
-          },
-          {
-            "code": "CATIA_UNSUPPORTED",
-            "feature_id": "f11-helix",
-            "kind": "helix",
-            "message": "弹簧/螺旋不能由当前草图、凸台和凹槽通道表达。"
-          },
-          {
-            "code": "CATIA_APPROXIMATION",
-            "feature_id": "f12-spoked_wheel",
-            "kind": "spoked_wheel",
-            "message": "CATIA 仅生成轮缘与轮毂，辐条需要补建。"
-          },
-          {
-            "code": "LOCAL_BREP_APPROXIMATION",
-            "feature_id": "f13-vbelt_pulley",
-            "kind": "vbelt_pulley",
-            "message": "标准槽轴向截面原生 OCCT 回转；槽根间距为保证剖面简单可能近似调整，输入轮宽不足时明确拒绝"
-          },
-          {
-            "code": "CATIA_APPROXIMATION",
-            "feature_id": "f13-vbelt_pulley",
-            "kind": "vbelt_pulley",
-            "message": "CATIA 生成光轮盘体；V 形回转槽需要在 CATIA 中补建。"
-          },
-          {
-            "code": "LOCAL_BREP_APPROXIMATION",
-            "feature_id": "f14-timing_pulley",
-            "kind": "timing_pulley",
-            "message": "现有同步带轮配方转封闭 facet-BREP"
-          },
-          {
-            "code": "CATIA_APPROXIMATION",
-            "feature_id": "f14-timing_pulley",
-            "kind": "timing_pulley",
-            "message": "CATIA 生成盘体，齿形需要在 CATIA 中补建。"
-          },
-          {
-            "code": "LOCAL_BREP_APPROXIMATION",
-            "feature_id": "f15-worm",
-            "kind": "worm",
-            "message": "现有蜗杆配方转封闭 facet-BREP"
-          },
-          {
-            "code": "CATIA_APPROXIMATION",
-            "feature_id": "f15-worm",
-            "kind": "worm",
-            "message": "CATIA 仅生成光轴，螺旋齿需要补建。"
-          },
-          {
-            "code": "LOCAL_BREP_APPROXIMATION",
-            "feature_id": "f16-helical_gear",
-            "kind": "helical_gear",
-            "message": "保留当前省略螺旋角的直齿近似并转 facet-BREP"
-          },
-          {
-            "code": "CATIA_APPROXIMATION",
-            "feature_id": "f16-helical_gear",
-            "kind": "helical_gear",
-            "message": "CATIA 以直齿轮近似，省略螺旋角。"
-          },
-          {
-            "code": "LOCAL_BREP_APPROXIMATION",
-            "feature_id": "f17-bevel_gear",
-            "kind": "bevel_gear",
-            "message": "现有锥齿轮网格配方转 facet-BREP"
-          },
-          {
-            "code": "CATIA_APPROXIMATION",
-            "feature_id": "f17-bevel_gear",
-            "kind": "bevel_gear",
-            "message": "CATIA 以直齿圆柱轮廓近似，省略锥面。"
-          },
-          {
-            "code": "LOCAL_BREP_APPROXIMATION",
-            "feature_id": "f18-crankshaft",
-            "kind": "crankshaft",
-            "message": "解析主轴颈/偏心连杆颈与矩形曲柄臂并集，曲柄臂外形近似"
-          },
-          {
-            "code": "CATIA_APPROXIMATION",
-            "feature_id": "f18-crankshaft",
-            "kind": "crankshaft",
-            "message": "CATIA 按 X 轴布置主轴颈、交替偏置连杆颈和哑铃形曲柄臂(主轴圆 + 连杆颈圆外公切凸包)，曲柄臂外形被简化。"
-          },
-          {
-            "code": "LOCAL_BREP_APPROXIMATION",
-            "feature_id": "f19-camshaft",
-            "kind": "camshaft",
-            "message": "现有凸轮轴网格配方转 facet-BREP"
-          },
-          {
-            "code": "CATIA_APPROXIMATION",
-            "feature_id": "f19-camshaft",
-            "kind": "camshaft",
-            "message": "CATIA 凸轮沿轴向等分布置，相位需核对。"
-          },
-          {
-            "code": "LOCAL_BREP_APPROXIMATION",
-            "feature_id": "f20-impeller",
-            "kind": "impeller",
-            "message": "现有叶轮网格配方转 facet-BREP"
-          },
-          {
-            "code": "CATIA_APPROXIMATION",
-            "feature_id": "f20-impeller",
-            "kind": "impeller",
-            "message": "CATIA 仅生成轮毂和轮盘，扭转叶片需要补建。"
-          },
-          {
-            "code": "CATIA_APPROXIMATION",
-            "feature_id": "f21-piston",
-            "kind": "piston",
-            "message": "CATIA 以圆柱体近似，销孔和活塞环槽需要补建。"
-          },
-          {
-            "code": "LOCAL_BREP_APPROXIMATION",
-            "feature_id": "f22-conrod",
-            "kind": "conrod",
-            "message": "解析大小头环与外公切梯形杆身并集，工字截面近似"
-          },
-          {
-            "code": "CATIA_APPROXIMATION",
-            "feature_id": "f22-conrod",
-            "kind": "conrod",
-            "message": "CATIA 以大头、小头和直杆身近似，杆身过渡被简化。"
-          },
-          {
-            "code": "LOCAL_BREP_APPROXIMATION",
-            "feature_id": "f23-cross_joint",
-            "kind": "cross_joint",
-            "message": "现有万向节网格配方转 facet-BREP"
-          },
-          {
-            "code": "CATIA_APPROXIMATION",
-            "feature_id": "f23-cross_joint",
-            "kind": "cross_joint",
-            "message": "CATIA 仅生成单轴，另一根横轴需要补建。"
-          },
-          {
-            "code": "LOCAL_BREP_APPROXIMATION",
-            "feature_id": "f24-scroll_disc",
-            "kind": "scroll_disc",
-            "message": "简单多边形涡旋壁原生拉伸并与背盘合并；壁面以多段线近似渐开线"
-          },
-          {
-            "code": "CATIA_APPROXIMATION",
-            "feature_id": "f24-scroll_disc",
-            "kind": "scroll_disc",
-            "message": "CATIA 仅生成底盘，螺旋壁需要补建。"
-          },
-          {
-            "code": "LOCAL_BREP_APPROXIMATION",
-            "feature_id": "f25-rotor",
-            "kind": "rotor",
-            "message": "圆角三角转子离散轮廓原生拉伸并按需切中心孔"
-          },
-          {
-            "code": "LOCAL_BREP_UNAVAILABLE",
-            "feature_id": "f26-shell",
-            "kind": "shell",
-            "message": "CADPlan 未指定要移除的面；缺少可执行的抽壳边界"
-          },
-          {
-            "code": "CATIA_UNSUPPORTED",
-            "feature_id": "f26-shell",
-            "kind": "shell",
-            "message": "当前 Document/CATIA 转换器没有抽壳实现。"
-          }
-        ],
-        "blocked_features": [
-          {
-            "feature_id": "f2-socket_head_bolt",
-            "kind": "socket_head_bolt",
-            "status": "approximate",
-            "reason": "本地网格按 thread_pitch 生成可见的近似 ISO 公制螺旋牙型；整段杆部带牙，未建牙端倒角/退刀槽。当前 CATIA 导出器仍以光杆凸台和六角凹槽表达，不会创建原生或装饰螺纹。"
-          },
-          {
-            "feature_id": "f3-sphere",
-            "kind": "sphere",
-            "status": "approximate",
-            "reason": "CATIA 导出器以多层圆盘近似球体。"
-          },
-          {
-            "feature_id": "f5-revolve",
-            "kind": "revolve",
-            "status": "approximate",
-            "reason": "本地 OCCT BREP 按闭合[半径,轴向坐标]轮廓精确回转，并将新增回转体与已有实体做布尔合并；CATIA 导出器仍用多层圆盘近似，非 CATIA 原生回转特征。"
-          },
-          {
-            "feature_id": "f7-loft",
-            "kind": "loft",
-            "status": "approximate",
-            "reason": "CATIA 中以根部截面拉伸近似多截面放样。"
-          },
-          {
-            "feature_id": "f11-helix",
-            "kind": "helix",
-            "status": "unsupported",
-            "reason": "弹簧/螺旋不能由当前草图、凸台和凹槽通道表达。"
-          },
-          {
-            "feature_id": "f12-spoked_wheel",
-            "kind": "spoked_wheel",
-            "status": "approximate",
-            "reason": "CATIA 仅生成轮缘与轮毂，辐条需要补建。"
-          },
-          {
-            "feature_id": "f13-vbelt_pulley",
-            "kind": "vbelt_pulley",
-            "status": "approximate",
-            "reason": "CATIA 生成光轮盘体；V 形回转槽需要在 CATIA 中补建。"
-          },
-          {
-            "feature_id": "f14-timing_pulley",
-            "kind": "timing_pulley",
-            "status": "approximate",
-            "reason": "CATIA 生成盘体，齿形需要在 CATIA 中补建。"
-          },
-          {
-            "feature_id": "f15-worm",
-            "kind": "worm",
-            "status": "approximate",
-            "reason": "CATIA 仅生成光轴，螺旋齿需要补建。"
-          },
-          {
-            "feature_id": "f16-helical_gear",
-            "kind": "helical_gear",
-            "status": "approximate",
-            "reason": "CATIA 以直齿轮近似，省略螺旋角。"
-          },
-          {
-            "feature_id": "f17-bevel_gear",
-            "kind": "bevel_gear",
-            "status": "approximate",
-            "reason": "CATIA 以直齿圆柱轮廓近似，省略锥面。"
-          },
-          {
-            "feature_id": "f18-crankshaft",
-            "kind": "crankshaft",
-            "status": "approximate",
-            "reason": "CATIA 按 X 轴布置主轴颈、交替偏置连杆颈和哑铃形曲柄臂(主轴圆 + 连杆颈圆外公切凸包)，曲柄臂外形被简化。"
-          },
-          {
-            "feature_id": "f19-camshaft",
-            "kind": "camshaft",
-            "status": "approximate",
-            "reason": "CATIA 凸轮沿轴向等分布置，相位需核对。"
-          },
-          {
-            "feature_id": "f20-impeller",
-            "kind": "impeller",
-            "status": "approximate",
-            "reason": "CATIA 仅生成轮毂和轮盘，扭转叶片需要补建。"
-          },
-          {
-            "feature_id": "f21-piston",
-            "kind": "piston",
-            "status": "approximate",
-            "reason": "CATIA 以圆柱体近似，销孔和活塞环槽需要补建。"
-          },
-          {
-            "feature_id": "f22-conrod",
-            "kind": "conrod",
-            "status": "approximate",
-            "reason": "CATIA 以大头、小头和直杆身近似，杆身过渡被简化。"
-          },
-          {
-            "feature_id": "f23-cross_joint",
-            "kind": "cross_joint",
-            "status": "approximate",
-            "reason": "CATIA 仅生成单轴，另一根横轴需要补建。"
-          },
-          {
-            "feature_id": "f24-scroll_disc",
-            "kind": "scroll_disc",
-            "status": "approximate",
-            "reason": "CATIA 仅生成底盘，螺旋壁需要补建。"
-          },
-          {
-            "feature_id": "f26-shell",
-            "kind": "shell",
-            "status": "unsupported",
-            "reason": "当前 Document/CATIA 转换器没有抽壳实现。"
-          }
-        ],
         "output_paths": {}
       }
     },
@@ -3214,6 +2900,11 @@
             "feature_id": "f0-box",
             "parameter": "mystery",
             "question": "请标明参数 mystery 的数值来源。"
+          },
+          {
+            "feature_id": "f26-shell",
+            "parameter": "shell_migration",
+            "question": "CADPlan 1.0 shell 只有 thickness，不能推断开口面、方向或目标；请在 1.1 中重新枚举并显式选择。"
           }
         ],
         "support": [
@@ -3567,7 +3258,7 @@
             "feature_id": "f26-shell",
             "kind": "shell",
             "status": "unavailable",
-            "reason": "CADPlan 未指定要移除的面；缺少可执行的抽壳边界",
+            "reason": "旧 v1.0 thickness-only shell 不支持自动迁移；CADPlan 1.1 shell 须重新枚举面并显式指定 shell_target 与 offset_mode。",
             "backend": "occt_brep"
           }
         ],
@@ -3780,7 +3471,7 @@
             "code": "LOCAL_BREP_UNAVAILABLE",
             "feature_id": "f26-shell",
             "kind": "shell",
-            "message": "CADPlan 未指定要移除的面；缺少可执行的抽壳边界"
+            "message": "旧 v1.0 thickness-only shell 不支持自动迁移；CADPlan 1.1 shell 须重新枚举面并显式指定 shell_target 与 offset_mode。"
           },
           {
             "code": "CATIA_UNSUPPORTED",
@@ -3809,6 +3500,11 @@
               "feature_id": "f0-box",
               "parameter": "mystery",
               "question": "请标明参数 mystery 的数值来源。"
+            },
+            {
+              "feature_id": "f26-shell",
+              "parameter": "shell_migration",
+              "question": "CADPlan 1.0 shell 只有 thickness，不能推断开口面、方向或目标；请在 1.1 中重新枚举并显式选择。"
             }
           ],
           "support": [
@@ -4162,7 +3858,7 @@
               "feature_id": "f26-shell",
               "kind": "shell",
               "status": "unavailable",
-              "reason": "CADPlan 未指定要移除的面；缺少可执行的抽壳边界",
+              "reason": "旧 v1.0 thickness-only shell 不支持自动迁移；CADPlan 1.1 shell 须重新枚举面并显式指定 shell_target 与 offset_mode。",
               "backend": "occt_brep"
             }
           ],
@@ -4375,7 +4071,7 @@
               "code": "LOCAL_BREP_UNAVAILABLE",
               "feature_id": "f26-shell",
               "kind": "shell",
-              "message": "CADPlan 未指定要移除的面；缺少可执行的抽壳边界"
+              "message": "旧 v1.0 thickness-only shell 不支持自动迁移；CADPlan 1.1 shell 须重新枚举面并显式指定 shell_target 与 offset_mode。"
             },
             {
               "code": "CATIA_UNSUPPORTED",
@@ -4398,6 +4094,11 @@
             "feature_id": "f0-box",
             "parameter": "mystery",
             "question": "请标明参数 mystery 的数值来源。"
+          },
+          {
+            "feature_id": "f26-shell",
+            "parameter": "shell_migration",
+            "question": "CADPlan 1.0 shell 只有 thickness，不能推断开口面、方向或目标；请在 1.1 中重新枚举并显式选择。"
           }
         ],
         "dimensions": null,
@@ -5247,7 +4948,13 @@
             "message": "CADPlan 不支持此字段。"
           }
         ],
-        "confirmations": [],
+        "confirmations": [
+          {
+            "feature_id": "f26-shell",
+            "parameter": "shell_migration",
+            "question": "CADPlan 1.0 shell 只有 thickness，不能推断开口面、方向或目标；请在 1.1 中重新枚举并显式选择。"
+          }
+        ],
         "support": [
           {
             "feature_id": "f0-box",
@@ -5599,7 +5306,7 @@
             "feature_id": "f26-shell",
             "kind": "shell",
             "status": "unavailable",
-            "reason": "CADPlan 未指定要移除的面；缺少可执行的抽壳边界",
+            "reason": "旧 v1.0 thickness-only shell 不支持自动迁移；CADPlan 1.1 shell 须重新枚举面并显式指定 shell_target 与 offset_mode。",
             "backend": "occt_brep"
           }
         ],
@@ -5812,7 +5519,7 @@
             "code": "LOCAL_BREP_UNAVAILABLE",
             "feature_id": "f26-shell",
             "kind": "shell",
-            "message": "CADPlan 未指定要移除的面；缺少可执行的抽壳边界"
+            "message": "旧 v1.0 thickness-only shell 不支持自动迁移；CADPlan 1.1 shell 须重新枚举面并显式指定 shell_target 与 offset_mode。"
           },
           {
             "code": "CATIA_UNSUPPORTED",
@@ -5836,7 +5543,13 @@
               "message": "CADPlan 不支持此字段。"
             }
           ],
-          "confirmations": [],
+          "confirmations": [
+            {
+              "feature_id": "f26-shell",
+              "parameter": "shell_migration",
+              "question": "CADPlan 1.0 shell 只有 thickness，不能推断开口面、方向或目标；请在 1.1 中重新枚举并显式选择。"
+            }
+          ],
           "support": [
             {
               "feature_id": "f0-box",
@@ -6188,7 +5901,7 @@
               "feature_id": "f26-shell",
               "kind": "shell",
               "status": "unavailable",
-              "reason": "CADPlan 未指定要移除的面；缺少可执行的抽壳边界",
+              "reason": "旧 v1.0 thickness-only shell 不支持自动迁移；CADPlan 1.1 shell 须重新枚举面并显式指定 shell_target 与 offset_mode。",
               "backend": "occt_brep"
             }
           ],
@@ -6401,7 +6114,7 @@
               "code": "LOCAL_BREP_UNAVAILABLE",
               "feature_id": "f26-shell",
               "kind": "shell",
-              "message": "CADPlan 未指定要移除的面；缺少可执行的抽壳边界"
+              "message": "旧 v1.0 thickness-only shell 不支持自动迁移；CADPlan 1.1 shell 须重新枚举面并显式指定 shell_target 与 offset_mode。"
             },
             {
               "code": "CATIA_UNSUPPORTED",
@@ -6419,7 +6132,13 @@
             "message": "CADPlan 不支持此字段。"
           }
         ],
-        "confirmations": [],
+        "confirmations": [
+          {
+            "feature_id": "f26-shell",
+            "parameter": "shell_migration",
+            "question": "CADPlan 1.0 shell 只有 thickness，不能推断开口面、方向或目标；请在 1.1 中重新枚举并显式选择。"
+          }
+        ],
         "dimensions": null,
         "catia_operations": [],
         "output_paths": {}
@@ -7266,7 +6985,13 @@
             "message": "长度单位只支持 mm、cm、m、in。"
           }
         ],
-        "confirmations": [],
+        "confirmations": [
+          {
+            "feature_id": "f26-shell",
+            "parameter": "shell_migration",
+            "question": "CADPlan 1.0 shell 只有 thickness，不能推断开口面、方向或目标；请在 1.1 中重新枚举并显式选择。"
+          }
+        ],
         "support": [
           {
             "feature_id": "f0-box",
@@ -7618,7 +7343,7 @@
             "feature_id": "f26-shell",
             "kind": "shell",
             "status": "unavailable",
-            "reason": "CADPlan 未指定要移除的面；缺少可执行的抽壳边界",
+            "reason": "旧 v1.0 thickness-only shell 不支持自动迁移；CADPlan 1.1 shell 须重新枚举面并显式指定 shell_target 与 offset_mode。",
             "backend": "occt_brep"
           }
         ],
@@ -7831,7 +7556,7 @@
             "code": "LOCAL_BREP_UNAVAILABLE",
             "feature_id": "f26-shell",
             "kind": "shell",
-            "message": "CADPlan 未指定要移除的面；缺少可执行的抽壳边界"
+            "message": "旧 v1.0 thickness-only shell 不支持自动迁移；CADPlan 1.1 shell 须重新枚举面并显式指定 shell_target 与 offset_mode。"
           },
           {
             "code": "CATIA_UNSUPPORTED",
@@ -7855,7 +7580,13 @@
               "message": "长度单位只支持 mm、cm、m、in。"
             }
           ],
-          "confirmations": [],
+          "confirmations": [
+            {
+              "feature_id": "f26-shell",
+              "parameter": "shell_migration",
+              "question": "CADPlan 1.0 shell 只有 thickness，不能推断开口面、方向或目标；请在 1.1 中重新枚举并显式选择。"
+            }
+          ],
           "support": [
             {
               "feature_id": "f0-box",
@@ -8207,7 +7938,7 @@
               "feature_id": "f26-shell",
               "kind": "shell",
               "status": "unavailable",
-              "reason": "CADPlan 未指定要移除的面；缺少可执行的抽壳边界",
+              "reason": "旧 v1.0 thickness-only shell 不支持自动迁移；CADPlan 1.1 shell 须重新枚举面并显式指定 shell_target 与 offset_mode。",
               "backend": "occt_brep"
             }
           ],
@@ -8420,7 +8151,7 @@
               "code": "LOCAL_BREP_UNAVAILABLE",
               "feature_id": "f26-shell",
               "kind": "shell",
-              "message": "CADPlan 未指定要移除的面；缺少可执行的抽壳边界"
+              "message": "旧 v1.0 thickness-only shell 不支持自动迁移；CADPlan 1.1 shell 须重新枚举面并显式指定 shell_target 与 offset_mode。"
             },
             {
               "code": "CATIA_UNSUPPORTED",
@@ -8438,7 +8169,13 @@
             "message": "长度单位只支持 mm、cm、m、in。"
           }
         ],
-        "confirmations": [],
+        "confirmations": [
+          {
+            "feature_id": "f26-shell",
+            "parameter": "shell_migration",
+            "question": "CADPlan 1.0 shell 只有 thickness，不能推断开口面、方向或目标；请在 1.1 中重新枚举并显式选择。"
+          }
+        ],
         "dimensions": null,
         "catia_operations": [],
         "output_paths": {}
@@ -9276,10 +9013,16 @@
         ]
       },
       "expected": {
-        "valid": true,
-        "state": "valid",
+        "valid": false,
+        "state": "needs_confirmation",
         "errors": [],
-        "confirmations": [],
+        "confirmations": [
+          {
+            "feature_id": "f26-shell",
+            "parameter": "shell_migration",
+            "question": "CADPlan 1.0 shell 只有 thickness，不能推断开口面、方向或目标；请在 1.1 中重新枚举并显式选择。"
+          }
+        ],
         "support": [
           {
             "feature_id": "f0-box",
@@ -9631,7 +9374,7 @@
             "feature_id": "f26-shell",
             "kind": "shell",
             "status": "unavailable",
-            "reason": "CADPlan 未指定要移除的面；缺少可执行的抽壳边界",
+            "reason": "旧 v1.0 thickness-only shell 不支持自动迁移；CADPlan 1.1 shell 须重新枚举面并显式指定 shell_target 与 offset_mode。",
             "backend": "occt_brep"
           }
         ],
@@ -9844,7 +9587,7 @@
             "code": "LOCAL_BREP_UNAVAILABLE",
             "feature_id": "f26-shell",
             "kind": "shell",
-            "message": "CADPlan 未指定要移除的面；缺少可执行的抽壳边界"
+            "message": "旧 v1.0 thickness-only shell 不支持自动迁移；CADPlan 1.1 shell 须重新枚举面并显式指定 shell_target 与 offset_mode。"
           },
           {
             "code": "CATIA_UNSUPPORTED",
@@ -9856,13 +9599,19 @@
         "schema_version": "1.0"
       },
       "strict_expected": {
-        "state": "strict_blocked",
+        "state": "needs_confirmation",
         "catia_executed": false,
         "validation": {
-          "valid": true,
-          "state": "valid",
+          "valid": false,
+          "state": "needs_confirmation",
           "errors": [],
-          "confirmations": [],
+          "confirmations": [
+            {
+              "feature_id": "f26-shell",
+              "parameter": "shell_migration",
+              "question": "CADPlan 1.0 shell 只有 thickness，不能推断开口面、方向或目标；请在 1.1 中重新枚举并显式选择。"
+            }
+          ],
           "support": [
             {
               "feature_id": "f0-box",
@@ -10214,7 +9963,7 @@
               "feature_id": "f26-shell",
               "kind": "shell",
               "status": "unavailable",
-              "reason": "CADPlan 未指定要移除的面；缺少可执行的抽壳边界",
+              "reason": "旧 v1.0 thickness-only shell 不支持自动迁移；CADPlan 1.1 shell 须重新枚举面并显式指定 shell_target 与 offset_mode。",
               "backend": "occt_brep"
             }
           ],
@@ -10427,7 +10176,7 @@
               "code": "LOCAL_BREP_UNAVAILABLE",
               "feature_id": "f26-shell",
               "kind": "shell",
-              "message": "CADPlan 未指定要移除的面；缺少可执行的抽壳边界"
+              "message": "旧 v1.0 thickness-only shell 不支持自动迁移；CADPlan 1.1 shell 须重新枚举面并显式指定 shell_target 与 offset_mode。"
             },
             {
               "code": "CATIA_UNSUPPORTED",
@@ -10438,342 +10187,16 @@
           ],
           "schema_version": "1.0"
         },
+        "errors": [],
+        "confirmations": [
+          {
+            "feature_id": "f26-shell",
+            "parameter": "shell_migration",
+            "question": "CADPlan 1.0 shell 只有 thickness，不能推断开口面、方向或目标；请在 1.1 中重新枚举并显式选择。"
+          }
+        ],
         "dimensions": null,
         "catia_operations": [],
-        "warnings": [
-          {
-            "code": "LOCAL_BREP_APPROXIMATION",
-            "feature_id": "f2-socket_head_bolt",
-            "kind": "socket_head_bolt",
-            "message": "当前参数化网格转封闭 facet-BREP"
-          },
-          {
-            "code": "CATIA_APPROXIMATION",
-            "feature_id": "f2-socket_head_bolt",
-            "kind": "socket_head_bolt",
-            "message": "本地网格按 thread_pitch 生成可见的近似 ISO 公制螺旋牙型；整段杆部带牙，未建牙端倒角/退刀槽。当前 CATIA 导出器仍以光杆凸台和六角凹槽表达，不会创建原生或装饰螺纹。"
-          },
-          {
-            "code": "CATIA_APPROXIMATION",
-            "feature_id": "f3-sphere",
-            "kind": "sphere",
-            "message": "CATIA 导出器以多层圆盘近似球体。"
-          },
-          {
-            "code": "CATIA_APPROXIMATION",
-            "feature_id": "f5-revolve",
-            "kind": "revolve",
-            "message": "本地 OCCT BREP 按闭合[半径,轴向坐标]轮廓精确回转，并将新增回转体与已有实体做布尔合并；CATIA 导出器仍用多层圆盘近似，非 CATIA 原生回转特征。"
-          },
-          {
-            "code": "LOCAL_BREP_APPROXIMATION",
-            "feature_id": "f6-gear",
-            "kind": "gear",
-            "message": "梯形齿廓为当前简化齿形，几何由多边形棱柱表达"
-          },
-          {
-            "code": "LOCAL_BREP_APPROXIMATION",
-            "feature_id": "f7-loft",
-            "kind": "loft",
-            "message": "翼型截面离散后由 OCCT 放样"
-          },
-          {
-            "code": "CATIA_APPROXIMATION",
-            "feature_id": "f7-loft",
-            "kind": "loft",
-            "message": "CATIA 中以根部截面拉伸近似多截面放样。"
-          },
-          {
-            "code": "LOCAL_BREP_APPROXIMATION",
-            "feature_id": "f11-helix",
-            "kind": "helix",
-            "message": "现有螺旋网格转封闭 facet-BREP"
-          },
-          {
-            "code": "CATIA_UNSUPPORTED",
-            "feature_id": "f11-helix",
-            "kind": "helix",
-            "message": "弹簧/螺旋不能由当前草图、凸台和凹槽通道表达。"
-          },
-          {
-            "code": "CATIA_APPROXIMATION",
-            "feature_id": "f12-spoked_wheel",
-            "kind": "spoked_wheel",
-            "message": "CATIA 仅生成轮缘与轮毂，辐条需要补建。"
-          },
-          {
-            "code": "LOCAL_BREP_APPROXIMATION",
-            "feature_id": "f13-vbelt_pulley",
-            "kind": "vbelt_pulley",
-            "message": "标准槽轴向截面原生 OCCT 回转；槽根间距为保证剖面简单可能近似调整，输入轮宽不足时明确拒绝"
-          },
-          {
-            "code": "CATIA_APPROXIMATION",
-            "feature_id": "f13-vbelt_pulley",
-            "kind": "vbelt_pulley",
-            "message": "CATIA 生成光轮盘体；V 形回转槽需要在 CATIA 中补建。"
-          },
-          {
-            "code": "LOCAL_BREP_APPROXIMATION",
-            "feature_id": "f14-timing_pulley",
-            "kind": "timing_pulley",
-            "message": "现有同步带轮配方转封闭 facet-BREP"
-          },
-          {
-            "code": "CATIA_APPROXIMATION",
-            "feature_id": "f14-timing_pulley",
-            "kind": "timing_pulley",
-            "message": "CATIA 生成盘体，齿形需要在 CATIA 中补建。"
-          },
-          {
-            "code": "LOCAL_BREP_APPROXIMATION",
-            "feature_id": "f15-worm",
-            "kind": "worm",
-            "message": "现有蜗杆配方转封闭 facet-BREP"
-          },
-          {
-            "code": "CATIA_APPROXIMATION",
-            "feature_id": "f15-worm",
-            "kind": "worm",
-            "message": "CATIA 仅生成光轴，螺旋齿需要补建。"
-          },
-          {
-            "code": "LOCAL_BREP_APPROXIMATION",
-            "feature_id": "f16-helical_gear",
-            "kind": "helical_gear",
-            "message": "保留当前省略螺旋角的直齿近似并转 facet-BREP"
-          },
-          {
-            "code": "CATIA_APPROXIMATION",
-            "feature_id": "f16-helical_gear",
-            "kind": "helical_gear",
-            "message": "CATIA 以直齿轮近似，省略螺旋角。"
-          },
-          {
-            "code": "LOCAL_BREP_APPROXIMATION",
-            "feature_id": "f17-bevel_gear",
-            "kind": "bevel_gear",
-            "message": "现有锥齿轮网格配方转 facet-BREP"
-          },
-          {
-            "code": "CATIA_APPROXIMATION",
-            "feature_id": "f17-bevel_gear",
-            "kind": "bevel_gear",
-            "message": "CATIA 以直齿圆柱轮廓近似，省略锥面。"
-          },
-          {
-            "code": "LOCAL_BREP_APPROXIMATION",
-            "feature_id": "f18-crankshaft",
-            "kind": "crankshaft",
-            "message": "解析主轴颈/偏心连杆颈与矩形曲柄臂并集，曲柄臂外形近似"
-          },
-          {
-            "code": "CATIA_APPROXIMATION",
-            "feature_id": "f18-crankshaft",
-            "kind": "crankshaft",
-            "message": "CATIA 按 X 轴布置主轴颈、交替偏置连杆颈和哑铃形曲柄臂(主轴圆 + 连杆颈圆外公切凸包)，曲柄臂外形被简化。"
-          },
-          {
-            "code": "LOCAL_BREP_APPROXIMATION",
-            "feature_id": "f19-camshaft",
-            "kind": "camshaft",
-            "message": "现有凸轮轴网格配方转 facet-BREP"
-          },
-          {
-            "code": "CATIA_APPROXIMATION",
-            "feature_id": "f19-camshaft",
-            "kind": "camshaft",
-            "message": "CATIA 凸轮沿轴向等分布置，相位需核对。"
-          },
-          {
-            "code": "LOCAL_BREP_APPROXIMATION",
-            "feature_id": "f20-impeller",
-            "kind": "impeller",
-            "message": "现有叶轮网格配方转 facet-BREP"
-          },
-          {
-            "code": "CATIA_APPROXIMATION",
-            "feature_id": "f20-impeller",
-            "kind": "impeller",
-            "message": "CATIA 仅生成轮毂和轮盘，扭转叶片需要补建。"
-          },
-          {
-            "code": "CATIA_APPROXIMATION",
-            "feature_id": "f21-piston",
-            "kind": "piston",
-            "message": "CATIA 以圆柱体近似，销孔和活塞环槽需要补建。"
-          },
-          {
-            "code": "LOCAL_BREP_APPROXIMATION",
-            "feature_id": "f22-conrod",
-            "kind": "conrod",
-            "message": "解析大小头环与外公切梯形杆身并集，工字截面近似"
-          },
-          {
-            "code": "CATIA_APPROXIMATION",
-            "feature_id": "f22-conrod",
-            "kind": "conrod",
-            "message": "CATIA 以大头、小头和直杆身近似，杆身过渡被简化。"
-          },
-          {
-            "code": "LOCAL_BREP_APPROXIMATION",
-            "feature_id": "f23-cross_joint",
-            "kind": "cross_joint",
-            "message": "现有万向节网格配方转 facet-BREP"
-          },
-          {
-            "code": "CATIA_APPROXIMATION",
-            "feature_id": "f23-cross_joint",
-            "kind": "cross_joint",
-            "message": "CATIA 仅生成单轴，另一根横轴需要补建。"
-          },
-          {
-            "code": "LOCAL_BREP_APPROXIMATION",
-            "feature_id": "f24-scroll_disc",
-            "kind": "scroll_disc",
-            "message": "简单多边形涡旋壁原生拉伸并与背盘合并；壁面以多段线近似渐开线"
-          },
-          {
-            "code": "CATIA_APPROXIMATION",
-            "feature_id": "f24-scroll_disc",
-            "kind": "scroll_disc",
-            "message": "CATIA 仅生成底盘，螺旋壁需要补建。"
-          },
-          {
-            "code": "LOCAL_BREP_APPROXIMATION",
-            "feature_id": "f25-rotor",
-            "kind": "rotor",
-            "message": "圆角三角转子离散轮廓原生拉伸并按需切中心孔"
-          },
-          {
-            "code": "LOCAL_BREP_UNAVAILABLE",
-            "feature_id": "f26-shell",
-            "kind": "shell",
-            "message": "CADPlan 未指定要移除的面；缺少可执行的抽壳边界"
-          },
-          {
-            "code": "CATIA_UNSUPPORTED",
-            "feature_id": "f26-shell",
-            "kind": "shell",
-            "message": "当前 Document/CATIA 转换器没有抽壳实现。"
-          }
-        ],
-        "blocked_features": [
-          {
-            "feature_id": "f2-socket_head_bolt",
-            "kind": "socket_head_bolt",
-            "status": "approximate",
-            "reason": "本地网格按 thread_pitch 生成可见的近似 ISO 公制螺旋牙型；整段杆部带牙，未建牙端倒角/退刀槽。当前 CATIA 导出器仍以光杆凸台和六角凹槽表达，不会创建原生或装饰螺纹。"
-          },
-          {
-            "feature_id": "f3-sphere",
-            "kind": "sphere",
-            "status": "approximate",
-            "reason": "CATIA 导出器以多层圆盘近似球体。"
-          },
-          {
-            "feature_id": "f5-revolve",
-            "kind": "revolve",
-            "status": "approximate",
-            "reason": "本地 OCCT BREP 按闭合[半径,轴向坐标]轮廓精确回转，并将新增回转体与已有实体做布尔合并；CATIA 导出器仍用多层圆盘近似，非 CATIA 原生回转特征。"
-          },
-          {
-            "feature_id": "f7-loft",
-            "kind": "loft",
-            "status": "approximate",
-            "reason": "CATIA 中以根部截面拉伸近似多截面放样。"
-          },
-          {
-            "feature_id": "f11-helix",
-            "kind": "helix",
-            "status": "unsupported",
-            "reason": "弹簧/螺旋不能由当前草图、凸台和凹槽通道表达。"
-          },
-          {
-            "feature_id": "f12-spoked_wheel",
-            "kind": "spoked_wheel",
-            "status": "approximate",
-            "reason": "CATIA 仅生成轮缘与轮毂，辐条需要补建。"
-          },
-          {
-            "feature_id": "f13-vbelt_pulley",
-            "kind": "vbelt_pulley",
-            "status": "approximate",
-            "reason": "CATIA 生成光轮盘体；V 形回转槽需要在 CATIA 中补建。"
-          },
-          {
-            "feature_id": "f14-timing_pulley",
-            "kind": "timing_pulley",
-            "status": "approximate",
-            "reason": "CATIA 生成盘体，齿形需要在 CATIA 中补建。"
-          },
-          {
-            "feature_id": "f15-worm",
-            "kind": "worm",
-            "status": "approximate",
-            "reason": "CATIA 仅生成光轴，螺旋齿需要补建。"
-          },
-          {
-            "feature_id": "f16-helical_gear",
-            "kind": "helical_gear",
-            "status": "approximate",
-            "reason": "CATIA 以直齿轮近似，省略螺旋角。"
-          },
-          {
-            "feature_id": "f17-bevel_gear",
-            "kind": "bevel_gear",
-            "status": "approximate",
-            "reason": "CATIA 以直齿圆柱轮廓近似，省略锥面。"
-          },
-          {
-            "feature_id": "f18-crankshaft",
-            "kind": "crankshaft",
-            "status": "approximate",
-            "reason": "CATIA 按 X 轴布置主轴颈、交替偏置连杆颈和哑铃形曲柄臂(主轴圆 + 连杆颈圆外公切凸包)，曲柄臂外形被简化。"
-          },
-          {
-            "feature_id": "f19-camshaft",
-            "kind": "camshaft",
-            "status": "approximate",
-            "reason": "CATIA 凸轮沿轴向等分布置，相位需核对。"
-          },
-          {
-            "feature_id": "f20-impeller",
-            "kind": "impeller",
-            "status": "approximate",
-            "reason": "CATIA 仅生成轮毂和轮盘，扭转叶片需要补建。"
-          },
-          {
-            "feature_id": "f21-piston",
-            "kind": "piston",
-            "status": "approximate",
-            "reason": "CATIA 以圆柱体近似，销孔和活塞环槽需要补建。"
-          },
-          {
-            "feature_id": "f22-conrod",
-            "kind": "conrod",
-            "status": "approximate",
-            "reason": "CATIA 以大头、小头和直杆身近似，杆身过渡被简化。"
-          },
-          {
-            "feature_id": "f23-cross_joint",
-            "kind": "cross_joint",
-            "status": "approximate",
-            "reason": "CATIA 仅生成单轴，另一根横轴需要补建。"
-          },
-          {
-            "feature_id": "f24-scroll_disc",
-            "kind": "scroll_disc",
-            "status": "approximate",
-            "reason": "CATIA 仅生成底盘，螺旋壁需要补建。"
-          },
-          {
-            "feature_id": "f26-shell",
-            "kind": "shell",
-            "status": "unsupported",
-            "reason": "当前 Document/CATIA 转换器没有抽壳实现。"
-          }
-        ],
         "output_paths": {}
       }
     },
@@ -11617,6 +11040,11 @@
             "feature_id": "f0-box",
             "parameter": "length",
             "question": "图像估算参数 length 请补充视图/位置证据。"
+          },
+          {
+            "feature_id": "f26-shell",
+            "parameter": "shell_migration",
+            "question": "CADPlan 1.0 shell 只有 thickness，不能推断开口面、方向或目标；请在 1.1 中重新枚举并显式选择。"
           }
         ],
         "support": [
@@ -11970,7 +11398,7 @@
             "feature_id": "f26-shell",
             "kind": "shell",
             "status": "unavailable",
-            "reason": "CADPlan 未指定要移除的面；缺少可执行的抽壳边界",
+            "reason": "旧 v1.0 thickness-only shell 不支持自动迁移；CADPlan 1.1 shell 须重新枚举面并显式指定 shell_target 与 offset_mode。",
             "backend": "occt_brep"
           }
         ],
@@ -12183,7 +11611,7 @@
             "code": "LOCAL_BREP_UNAVAILABLE",
             "feature_id": "f26-shell",
             "kind": "shell",
-            "message": "CADPlan 未指定要移除的面；缺少可执行的抽壳边界"
+            "message": "旧 v1.0 thickness-only shell 不支持自动迁移；CADPlan 1.1 shell 须重新枚举面并显式指定 shell_target 与 offset_mode。"
           },
           {
             "code": "CATIA_UNSUPPORTED",
@@ -12206,6 +11634,11 @@
               "feature_id": "f0-box",
               "parameter": "length",
               "question": "图像估算参数 length 请补充视图/位置证据。"
+            },
+            {
+              "feature_id": "f26-shell",
+              "parameter": "shell_migration",
+              "question": "CADPlan 1.0 shell 只有 thickness，不能推断开口面、方向或目标；请在 1.1 中重新枚举并显式选择。"
             }
           ],
           "support": [
@@ -12559,7 +11992,7 @@
               "feature_id": "f26-shell",
               "kind": "shell",
               "status": "unavailable",
-              "reason": "CADPlan 未指定要移除的面；缺少可执行的抽壳边界",
+              "reason": "旧 v1.0 thickness-only shell 不支持自动迁移；CADPlan 1.1 shell 须重新枚举面并显式指定 shell_target 与 offset_mode。",
               "backend": "occt_brep"
             }
           ],
@@ -12772,7 +12205,7 @@
               "code": "LOCAL_BREP_UNAVAILABLE",
               "feature_id": "f26-shell",
               "kind": "shell",
-              "message": "CADPlan 未指定要移除的面；缺少可执行的抽壳边界"
+              "message": "旧 v1.0 thickness-only shell 不支持自动迁移；CADPlan 1.1 shell 须重新枚举面并显式指定 shell_target 与 offset_mode。"
             },
             {
               "code": "CATIA_UNSUPPORTED",
@@ -12789,6 +12222,11 @@
             "feature_id": "f0-box",
             "parameter": "length",
             "question": "图像估算参数 length 请补充视图/位置证据。"
+          },
+          {
+            "feature_id": "f26-shell",
+            "parameter": "shell_migration",
+            "question": "CADPlan 1.0 shell 只有 thickness，不能推断开口面、方向或目标；请在 1.1 中重新枚举并显式选择。"
           }
         ],
         "dimensions": null,
@@ -13637,7 +13075,13 @@
             "message": "来源 type 必须是 user、image_estimate、derived 或 existing_model。"
           }
         ],
-        "confirmations": [],
+        "confirmations": [
+          {
+            "feature_id": "f26-shell",
+            "parameter": "shell_migration",
+            "question": "CADPlan 1.0 shell 只有 thickness，不能推断开口面、方向或目标；请在 1.1 中重新枚举并显式选择。"
+          }
+        ],
         "support": [
           {
             "feature_id": "f0-box",
@@ -13989,7 +13433,7 @@
             "feature_id": "f26-shell",
             "kind": "shell",
             "status": "unavailable",
-            "reason": "CADPlan 未指定要移除的面；缺少可执行的抽壳边界",
+            "reason": "旧 v1.0 thickness-only shell 不支持自动迁移；CADPlan 1.1 shell 须重新枚举面并显式指定 shell_target 与 offset_mode。",
             "backend": "occt_brep"
           }
         ],
@@ -14202,7 +13646,7 @@
             "code": "LOCAL_BREP_UNAVAILABLE",
             "feature_id": "f26-shell",
             "kind": "shell",
-            "message": "CADPlan 未指定要移除的面；缺少可执行的抽壳边界"
+            "message": "旧 v1.0 thickness-only shell 不支持自动迁移；CADPlan 1.1 shell 须重新枚举面并显式指定 shell_target 与 offset_mode。"
           },
           {
             "code": "CATIA_UNSUPPORTED",
@@ -14226,7 +13670,13 @@
               "message": "来源 type 必须是 user、image_estimate、derived 或 existing_model。"
             }
           ],
-          "confirmations": [],
+          "confirmations": [
+            {
+              "feature_id": "f26-shell",
+              "parameter": "shell_migration",
+              "question": "CADPlan 1.0 shell 只有 thickness，不能推断开口面、方向或目标；请在 1.1 中重新枚举并显式选择。"
+            }
+          ],
           "support": [
             {
               "feature_id": "f0-box",
@@ -14578,7 +14028,7 @@
               "feature_id": "f26-shell",
               "kind": "shell",
               "status": "unavailable",
-              "reason": "CADPlan 未指定要移除的面；缺少可执行的抽壳边界",
+              "reason": "旧 v1.0 thickness-only shell 不支持自动迁移；CADPlan 1.1 shell 须重新枚举面并显式指定 shell_target 与 offset_mode。",
               "backend": "occt_brep"
             }
           ],
@@ -14791,7 +14241,7 @@
               "code": "LOCAL_BREP_UNAVAILABLE",
               "feature_id": "f26-shell",
               "kind": "shell",
-              "message": "CADPlan 未指定要移除的面；缺少可执行的抽壳边界"
+              "message": "旧 v1.0 thickness-only shell 不支持自动迁移；CADPlan 1.1 shell 须重新枚举面并显式指定 shell_target 与 offset_mode。"
             },
             {
               "code": "CATIA_UNSUPPORTED",
@@ -14809,7 +14259,13 @@
             "message": "来源 type 必须是 user、image_estimate、derived 或 existing_model。"
           }
         ],
-        "confirmations": [],
+        "confirmations": [
+          {
+            "feature_id": "f26-shell",
+            "parameter": "shell_migration",
+            "question": "CADPlan 1.0 shell 只有 thickness，不能推断开口面、方向或目标；请在 1.1 中重新枚举并显式选择。"
+          }
+        ],
         "dimensions": null,
         "catia_operations": [],
         "output_paths": {}
@@ -15656,6 +15112,11 @@
             "feature_id": "f0-box",
             "parameter": "length",
             "question": "继承参数 length 请说明来自当前模型特征树；原始来源未知时请明确注明。"
+          },
+          {
+            "feature_id": "f26-shell",
+            "parameter": "shell_migration",
+            "question": "CADPlan 1.0 shell 只有 thickness，不能推断开口面、方向或目标；请在 1.1 中重新枚举并显式选择。"
           }
         ],
         "support": [
@@ -16009,7 +15470,7 @@
             "feature_id": "f26-shell",
             "kind": "shell",
             "status": "unavailable",
-            "reason": "CADPlan 未指定要移除的面；缺少可执行的抽壳边界",
+            "reason": "旧 v1.0 thickness-only shell 不支持自动迁移；CADPlan 1.1 shell 须重新枚举面并显式指定 shell_target 与 offset_mode。",
             "backend": "occt_brep"
           }
         ],
@@ -16222,7 +15683,7 @@
             "code": "LOCAL_BREP_UNAVAILABLE",
             "feature_id": "f26-shell",
             "kind": "shell",
-            "message": "CADPlan 未指定要移除的面；缺少可执行的抽壳边界"
+            "message": "旧 v1.0 thickness-only shell 不支持自动迁移；CADPlan 1.1 shell 须重新枚举面并显式指定 shell_target 与 offset_mode。"
           },
           {
             "code": "CATIA_UNSUPPORTED",
@@ -16245,6 +15706,11 @@
               "feature_id": "f0-box",
               "parameter": "length",
               "question": "继承参数 length 请说明来自当前模型特征树；原始来源未知时请明确注明。"
+            },
+            {
+              "feature_id": "f26-shell",
+              "parameter": "shell_migration",
+              "question": "CADPlan 1.0 shell 只有 thickness，不能推断开口面、方向或目标；请在 1.1 中重新枚举并显式选择。"
             }
           ],
           "support": [
@@ -16598,7 +16064,7 @@
               "feature_id": "f26-shell",
               "kind": "shell",
               "status": "unavailable",
-              "reason": "CADPlan 未指定要移除的面；缺少可执行的抽壳边界",
+              "reason": "旧 v1.0 thickness-only shell 不支持自动迁移；CADPlan 1.1 shell 须重新枚举面并显式指定 shell_target 与 offset_mode。",
               "backend": "occt_brep"
             }
           ],
@@ -16811,7 +16277,7 @@
               "code": "LOCAL_BREP_UNAVAILABLE",
               "feature_id": "f26-shell",
               "kind": "shell",
-              "message": "CADPlan 未指定要移除的面；缺少可执行的抽壳边界"
+              "message": "旧 v1.0 thickness-only shell 不支持自动迁移；CADPlan 1.1 shell 须重新枚举面并显式指定 shell_target 与 offset_mode。"
             },
             {
               "code": "CATIA_UNSUPPORTED",
@@ -16828,6 +16294,11 @@
             "feature_id": "f0-box",
             "parameter": "length",
             "question": "继承参数 length 请说明来自当前模型特征树；原始来源未知时请明确注明。"
+          },
+          {
+            "feature_id": "f26-shell",
+            "parameter": "shell_migration",
+            "question": "CADPlan 1.0 shell 只有 thickness，不能推断开口面、方向或目标；请在 1.1 中重新枚举并显式选择。"
           }
         ],
         "dimensions": null,
@@ -17679,7 +17150,13 @@
             "message": "来源字段必须对应一个参数。"
           }
         ],
-        "confirmations": [],
+        "confirmations": [
+          {
+            "feature_id": "f26-shell",
+            "parameter": "shell_migration",
+            "question": "CADPlan 1.0 shell 只有 thickness，不能推断开口面、方向或目标；请在 1.1 中重新枚举并显式选择。"
+          }
+        ],
         "support": [
           {
             "feature_id": "f0-box",
@@ -18031,7 +17508,7 @@
             "feature_id": "f26-shell",
             "kind": "shell",
             "status": "unavailable",
-            "reason": "CADPlan 未指定要移除的面；缺少可执行的抽壳边界",
+            "reason": "旧 v1.0 thickness-only shell 不支持自动迁移；CADPlan 1.1 shell 须重新枚举面并显式指定 shell_target 与 offset_mode。",
             "backend": "occt_brep"
           }
         ],
@@ -18244,7 +17721,7 @@
             "code": "LOCAL_BREP_UNAVAILABLE",
             "feature_id": "f26-shell",
             "kind": "shell",
-            "message": "CADPlan 未指定要移除的面；缺少可执行的抽壳边界"
+            "message": "旧 v1.0 thickness-only shell 不支持自动迁移；CADPlan 1.1 shell 须重新枚举面并显式指定 shell_target 与 offset_mode。"
           },
           {
             "code": "CATIA_UNSUPPORTED",
@@ -18268,7 +17745,13 @@
               "message": "来源字段必须对应一个参数。"
             }
           ],
-          "confirmations": [],
+          "confirmations": [
+            {
+              "feature_id": "f26-shell",
+              "parameter": "shell_migration",
+              "question": "CADPlan 1.0 shell 只有 thickness，不能推断开口面、方向或目标；请在 1.1 中重新枚举并显式选择。"
+            }
+          ],
           "support": [
             {
               "feature_id": "f0-box",
@@ -18620,7 +18103,7 @@
               "feature_id": "f26-shell",
               "kind": "shell",
               "status": "unavailable",
-              "reason": "CADPlan 未指定要移除的面；缺少可执行的抽壳边界",
+              "reason": "旧 v1.0 thickness-only shell 不支持自动迁移；CADPlan 1.1 shell 须重新枚举面并显式指定 shell_target 与 offset_mode。",
               "backend": "occt_brep"
             }
           ],
@@ -18833,7 +18316,7 @@
               "code": "LOCAL_BREP_UNAVAILABLE",
               "feature_id": "f26-shell",
               "kind": "shell",
-              "message": "CADPlan 未指定要移除的面；缺少可执行的抽壳边界"
+              "message": "旧 v1.0 thickness-only shell 不支持自动迁移；CADPlan 1.1 shell 须重新枚举面并显式指定 shell_target 与 offset_mode。"
             },
             {
               "code": "CATIA_UNSUPPORTED",
@@ -18851,7 +18334,13 @@
             "message": "来源字段必须对应一个参数。"
           }
         ],
-        "confirmations": [],
+        "confirmations": [
+          {
+            "feature_id": "f26-shell",
+            "parameter": "shell_migration",
+            "question": "CADPlan 1.0 shell 只有 thickness，不能推断开口面、方向或目标；请在 1.1 中重新枚举并显式选择。"
+          }
+        ],
         "dimensions": null,
         "catia_operations": [],
         "output_paths": {}
@@ -19703,7 +19192,13 @@
             "message": "feature_id 必须填写此前定义特征的 id；pattern_source 还必须指向紧邻的前一个特征。"
           }
         ],
-        "confirmations": [],
+        "confirmations": [
+          {
+            "feature_id": "f26-shell",
+            "parameter": "shell_migration",
+            "question": "CADPlan 1.0 shell 只有 thickness，不能推断开口面、方向或目标；请在 1.1 中重新枚举并显式选择。"
+          }
+        ],
         "support": [
           {
             "feature_id": "f0-box",
@@ -20055,7 +19550,7 @@
             "feature_id": "f26-shell",
             "kind": "shell",
             "status": "unavailable",
-            "reason": "CADPlan 未指定要移除的面；缺少可执行的抽壳边界",
+            "reason": "旧 v1.0 thickness-only shell 不支持自动迁移；CADPlan 1.1 shell 须重新枚举面并显式指定 shell_target 与 offset_mode。",
             "backend": "occt_brep"
           }
         ],
@@ -20268,7 +19763,7 @@
             "code": "LOCAL_BREP_UNAVAILABLE",
             "feature_id": "f26-shell",
             "kind": "shell",
-            "message": "CADPlan 未指定要移除的面；缺少可执行的抽壳边界"
+            "message": "旧 v1.0 thickness-only shell 不支持自动迁移；CADPlan 1.1 shell 须重新枚举面并显式指定 shell_target 与 offset_mode。"
           },
           {
             "code": "CATIA_UNSUPPORTED",
@@ -20292,7 +19787,13 @@
               "message": "feature_id 必须填写此前定义特征的 id；pattern_source 还必须指向紧邻的前一个特征。"
             }
           ],
-          "confirmations": [],
+          "confirmations": [
+            {
+              "feature_id": "f26-shell",
+              "parameter": "shell_migration",
+              "question": "CADPlan 1.0 shell 只有 thickness，不能推断开口面、方向或目标；请在 1.1 中重新枚举并显式选择。"
+            }
+          ],
           "support": [
             {
               "feature_id": "f0-box",
@@ -20644,7 +20145,7 @@
               "feature_id": "f26-shell",
               "kind": "shell",
               "status": "unavailable",
-              "reason": "CADPlan 未指定要移除的面；缺少可执行的抽壳边界",
+              "reason": "旧 v1.0 thickness-only shell 不支持自动迁移；CADPlan 1.1 shell 须重新枚举面并显式指定 shell_target 与 offset_mode。",
               "backend": "occt_brep"
             }
           ],
@@ -20857,7 +20358,7 @@
               "code": "LOCAL_BREP_UNAVAILABLE",
               "feature_id": "f26-shell",
               "kind": "shell",
-              "message": "CADPlan 未指定要移除的面；缺少可执行的抽壳边界"
+              "message": "旧 v1.0 thickness-only shell 不支持自动迁移；CADPlan 1.1 shell 须重新枚举面并显式指定 shell_target 与 offset_mode。"
             },
             {
               "code": "CATIA_UNSUPPORTED",
@@ -20875,7 +20376,13 @@
             "message": "feature_id 必须填写此前定义特征的 id；pattern_source 还必须指向紧邻的前一个特征。"
           }
         ],
-        "confirmations": [],
+        "confirmations": [
+          {
+            "feature_id": "f26-shell",
+            "parameter": "shell_migration",
+            "question": "CADPlan 1.0 shell 只有 thickness，不能推断开口面、方向或目标；请在 1.1 中重新枚举并显式选择。"
+          }
+        ],
         "dimensions": null,
         "catia_operations": [],
         "output_paths": {}
@@ -21722,7 +21229,13 @@
             "message": "当前 Document 阵列只复制紧邻的前一特征；请调整顺序或 source 关系。"
           }
         ],
-        "confirmations": [],
+        "confirmations": [
+          {
+            "feature_id": "f26-shell",
+            "parameter": "shell_migration",
+            "question": "CADPlan 1.0 shell 只有 thickness，不能推断开口面、方向或目标；请在 1.1 中重新枚举并显式选择。"
+          }
+        ],
         "support": [
           {
             "feature_id": "f0-box",
@@ -22074,7 +21587,7 @@
             "feature_id": "f26-shell",
             "kind": "shell",
             "status": "unavailable",
-            "reason": "CADPlan 未指定要移除的面；缺少可执行的抽壳边界",
+            "reason": "旧 v1.0 thickness-only shell 不支持自动迁移；CADPlan 1.1 shell 须重新枚举面并显式指定 shell_target 与 offset_mode。",
             "backend": "occt_brep"
           }
         ],
@@ -22287,7 +21800,7 @@
             "code": "LOCAL_BREP_UNAVAILABLE",
             "feature_id": "f26-shell",
             "kind": "shell",
-            "message": "CADPlan 未指定要移除的面；缺少可执行的抽壳边界"
+            "message": "旧 v1.0 thickness-only shell 不支持自动迁移；CADPlan 1.1 shell 须重新枚举面并显式指定 shell_target 与 offset_mode。"
           },
           {
             "code": "CATIA_UNSUPPORTED",
@@ -22311,7 +21824,13 @@
               "message": "当前 Document 阵列只复制紧邻的前一特征；请调整顺序或 source 关系。"
             }
           ],
-          "confirmations": [],
+          "confirmations": [
+            {
+              "feature_id": "f26-shell",
+              "parameter": "shell_migration",
+              "question": "CADPlan 1.0 shell 只有 thickness，不能推断开口面、方向或目标；请在 1.1 中重新枚举并显式选择。"
+            }
+          ],
           "support": [
             {
               "feature_id": "f0-box",
@@ -22663,7 +22182,7 @@
               "feature_id": "f26-shell",
               "kind": "shell",
               "status": "unavailable",
-              "reason": "CADPlan 未指定要移除的面；缺少可执行的抽壳边界",
+              "reason": "旧 v1.0 thickness-only shell 不支持自动迁移；CADPlan 1.1 shell 须重新枚举面并显式指定 shell_target 与 offset_mode。",
               "backend": "occt_brep"
             }
           ],
@@ -22876,7 +22395,7 @@
               "code": "LOCAL_BREP_UNAVAILABLE",
               "feature_id": "f26-shell",
               "kind": "shell",
-              "message": "CADPlan 未指定要移除的面；缺少可执行的抽壳边界"
+              "message": "旧 v1.0 thickness-only shell 不支持自动迁移；CADPlan 1.1 shell 须重新枚举面并显式指定 shell_target 与 offset_mode。"
             },
             {
               "code": "CATIA_UNSUPPORTED",
@@ -22894,7 +22413,13 @@
             "message": "当前 Document 阵列只复制紧邻的前一特征；请调整顺序或 source 关系。"
           }
         ],
-        "confirmations": [],
+        "confirmations": [
+          {
+            "feature_id": "f26-shell",
+            "parameter": "shell_migration",
+            "question": "CADPlan 1.0 shell 只有 thickness，不能推断开口面、方向或目标；请在 1.1 中重新枚举并显式选择。"
+          }
+        ],
         "dimensions": null,
         "catia_operations": [],
         "output_paths": {}
@@ -23735,6 +23260,11 @@
             "feature_id": "f10-pattern",
             "parameter": "relations",
             "question": "阵列必须用唯一的 pattern_source 关系指定源特征。"
+          },
+          {
+            "feature_id": "f26-shell",
+            "parameter": "shell_migration",
+            "question": "CADPlan 1.0 shell 只有 thickness，不能推断开口面、方向或目标；请在 1.1 中重新枚举并显式选择。"
           }
         ],
         "support": [
@@ -24088,7 +23618,7 @@
             "feature_id": "f26-shell",
             "kind": "shell",
             "status": "unavailable",
-            "reason": "CADPlan 未指定要移除的面；缺少可执行的抽壳边界",
+            "reason": "旧 v1.0 thickness-only shell 不支持自动迁移；CADPlan 1.1 shell 须重新枚举面并显式指定 shell_target 与 offset_mode。",
             "backend": "occt_brep"
           }
         ],
@@ -24307,7 +23837,7 @@
             "code": "LOCAL_BREP_UNAVAILABLE",
             "feature_id": "f26-shell",
             "kind": "shell",
-            "message": "CADPlan 未指定要移除的面；缺少可执行的抽壳边界"
+            "message": "旧 v1.0 thickness-only shell 不支持自动迁移；CADPlan 1.1 shell 须重新枚举面并显式指定 shell_target 与 offset_mode。"
           },
           {
             "code": "CATIA_UNSUPPORTED",
@@ -24330,6 +23860,11 @@
               "feature_id": "f10-pattern",
               "parameter": "relations",
               "question": "阵列必须用唯一的 pattern_source 关系指定源特征。"
+            },
+            {
+              "feature_id": "f26-shell",
+              "parameter": "shell_migration",
+              "question": "CADPlan 1.0 shell 只有 thickness，不能推断开口面、方向或目标；请在 1.1 中重新枚举并显式选择。"
             }
           ],
           "support": [
@@ -24683,7 +24218,7 @@
               "feature_id": "f26-shell",
               "kind": "shell",
               "status": "unavailable",
-              "reason": "CADPlan 未指定要移除的面；缺少可执行的抽壳边界",
+              "reason": "旧 v1.0 thickness-only shell 不支持自动迁移；CADPlan 1.1 shell 须重新枚举面并显式指定 shell_target 与 offset_mode。",
               "backend": "occt_brep"
             }
           ],
@@ -24902,7 +24437,7 @@
               "code": "LOCAL_BREP_UNAVAILABLE",
               "feature_id": "f26-shell",
               "kind": "shell",
-              "message": "CADPlan 未指定要移除的面；缺少可执行的抽壳边界"
+              "message": "旧 v1.0 thickness-only shell 不支持自动迁移；CADPlan 1.1 shell 须重新枚举面并显式指定 shell_target 与 offset_mode。"
             },
             {
               "code": "CATIA_UNSUPPORTED",
@@ -24919,6 +24454,11 @@
             "feature_id": "f10-pattern",
             "parameter": "relations",
             "question": "阵列必须用唯一的 pattern_source 关系指定源特征。"
+          },
+          {
+            "feature_id": "f26-shell",
+            "parameter": "shell_migration",
+            "question": "CADPlan 1.0 shell 只有 thickness，不能推断开口面、方向或目标；请在 1.1 中重新枚举并显式选择。"
           }
         ],
         "dimensions": null,
@@ -25764,7 +25304,7 @@
           {
             "code": "invalid_relation",
             "path": "$.features[10].relations[0]",
-            "message": "关系项必须使用 type 字段（depends_on 或 pattern_source）和 feature_id 字段，例如：{\"type\":\"pattern_source\",\"feature_id\":\"上一个特征ID\"}。"
+            "message": "关系项必须使用 type 字段（depends_on、pattern_source）和 feature_id 字段，例如：{\"type\":\"pattern_source\",\"feature_id\":\"上一个特征ID\"}。"
           }
         ],
         "confirmations": [
@@ -25772,6 +25312,11 @@
             "feature_id": "f10-pattern",
             "parameter": "relations",
             "question": "阵列必须用唯一的 pattern_source 关系指定源特征。"
+          },
+          {
+            "feature_id": "f26-shell",
+            "parameter": "shell_migration",
+            "question": "CADPlan 1.0 shell 只有 thickness，不能推断开口面、方向或目标；请在 1.1 中重新枚举并显式选择。"
           }
         ],
         "support": [
@@ -26125,7 +25670,7 @@
             "feature_id": "f26-shell",
             "kind": "shell",
             "status": "unavailable",
-            "reason": "CADPlan 未指定要移除的面；缺少可执行的抽壳边界",
+            "reason": "旧 v1.0 thickness-only shell 不支持自动迁移；CADPlan 1.1 shell 须重新枚举面并显式指定 shell_target 与 offset_mode。",
             "backend": "occt_brep"
           }
         ],
@@ -26344,7 +25889,7 @@
             "code": "LOCAL_BREP_UNAVAILABLE",
             "feature_id": "f26-shell",
             "kind": "shell",
-            "message": "CADPlan 未指定要移除的面；缺少可执行的抽壳边界"
+            "message": "旧 v1.0 thickness-only shell 不支持自动迁移；CADPlan 1.1 shell 须重新枚举面并显式指定 shell_target 与 offset_mode。"
           },
           {
             "code": "CATIA_UNSUPPORTED",
@@ -26365,7 +25910,7 @@
             {
               "code": "invalid_relation",
               "path": "$.features[10].relations[0]",
-              "message": "关系项必须使用 type 字段（depends_on 或 pattern_source）和 feature_id 字段，例如：{\"type\":\"pattern_source\",\"feature_id\":\"上一个特征ID\"}。"
+              "message": "关系项必须使用 type 字段（depends_on、pattern_source）和 feature_id 字段，例如：{\"type\":\"pattern_source\",\"feature_id\":\"上一个特征ID\"}。"
             }
           ],
           "confirmations": [
@@ -26373,6 +25918,11 @@
               "feature_id": "f10-pattern",
               "parameter": "relations",
               "question": "阵列必须用唯一的 pattern_source 关系指定源特征。"
+            },
+            {
+              "feature_id": "f26-shell",
+              "parameter": "shell_migration",
+              "question": "CADPlan 1.0 shell 只有 thickness，不能推断开口面、方向或目标；请在 1.1 中重新枚举并显式选择。"
             }
           ],
           "support": [
@@ -26726,7 +26276,7 @@
               "feature_id": "f26-shell",
               "kind": "shell",
               "status": "unavailable",
-              "reason": "CADPlan 未指定要移除的面；缺少可执行的抽壳边界",
+              "reason": "旧 v1.0 thickness-only shell 不支持自动迁移；CADPlan 1.1 shell 须重新枚举面并显式指定 shell_target 与 offset_mode。",
               "backend": "occt_brep"
             }
           ],
@@ -26945,7 +26495,7 @@
               "code": "LOCAL_BREP_UNAVAILABLE",
               "feature_id": "f26-shell",
               "kind": "shell",
-              "message": "CADPlan 未指定要移除的面；缺少可执行的抽壳边界"
+              "message": "旧 v1.0 thickness-only shell 不支持自动迁移；CADPlan 1.1 shell 须重新枚举面并显式指定 shell_target 与 offset_mode。"
             },
             {
               "code": "CATIA_UNSUPPORTED",
@@ -26960,7 +26510,7 @@
           {
             "code": "invalid_relation",
             "path": "$.features[10].relations[0]",
-            "message": "关系项必须使用 type 字段（depends_on 或 pattern_source）和 feature_id 字段，例如：{\"type\":\"pattern_source\",\"feature_id\":\"上一个特征ID\"}。"
+            "message": "关系项必须使用 type 字段（depends_on、pattern_source）和 feature_id 字段，例如：{\"type\":\"pattern_source\",\"feature_id\":\"上一个特征ID\"}。"
           }
         ],
         "confirmations": [
@@ -26968,6 +26518,11 @@
             "feature_id": "f10-pattern",
             "parameter": "relations",
             "question": "阵列必须用唯一的 pattern_source 关系指定源特征。"
+          },
+          {
+            "feature_id": "f26-shell",
+            "parameter": "shell_migration",
+            "question": "CADPlan 1.0 shell 只有 thickness，不能推断开口面、方向或目标；请在 1.1 中重新枚举并显式选择。"
           }
         ],
         "dimensions": null,
@@ -27815,6 +27370,11 @@
             "feature_id": "f8-hole",
             "parameter": "depth",
             "question": "请补充必需参数 depth。"
+          },
+          {
+            "feature_id": "f26-shell",
+            "parameter": "shell_migration",
+            "question": "CADPlan 1.0 shell 只有 thickness，不能推断开口面、方向或目标；请在 1.1 中重新枚举并显式选择。"
           }
         ],
         "support": [
@@ -28168,7 +27728,7 @@
             "feature_id": "f26-shell",
             "kind": "shell",
             "status": "unavailable",
-            "reason": "CADPlan 未指定要移除的面；缺少可执行的抽壳边界",
+            "reason": "旧 v1.0 thickness-only shell 不支持自动迁移；CADPlan 1.1 shell 须重新枚举面并显式指定 shell_target 与 offset_mode。",
             "backend": "occt_brep"
           }
         ],
@@ -28381,7 +27941,7 @@
             "code": "LOCAL_BREP_UNAVAILABLE",
             "feature_id": "f26-shell",
             "kind": "shell",
-            "message": "CADPlan 未指定要移除的面；缺少可执行的抽壳边界"
+            "message": "旧 v1.0 thickness-only shell 不支持自动迁移；CADPlan 1.1 shell 须重新枚举面并显式指定 shell_target 与 offset_mode。"
           },
           {
             "code": "CATIA_UNSUPPORTED",
@@ -28404,6 +27964,11 @@
               "feature_id": "f8-hole",
               "parameter": "depth",
               "question": "请补充必需参数 depth。"
+            },
+            {
+              "feature_id": "f26-shell",
+              "parameter": "shell_migration",
+              "question": "CADPlan 1.0 shell 只有 thickness，不能推断开口面、方向或目标；请在 1.1 中重新枚举并显式选择。"
             }
           ],
           "support": [
@@ -28757,7 +28322,7 @@
               "feature_id": "f26-shell",
               "kind": "shell",
               "status": "unavailable",
-              "reason": "CADPlan 未指定要移除的面；缺少可执行的抽壳边界",
+              "reason": "旧 v1.0 thickness-only shell 不支持自动迁移；CADPlan 1.1 shell 须重新枚举面并显式指定 shell_target 与 offset_mode。",
               "backend": "occt_brep"
             }
           ],
@@ -28970,7 +28535,7 @@
               "code": "LOCAL_BREP_UNAVAILABLE",
               "feature_id": "f26-shell",
               "kind": "shell",
-              "message": "CADPlan 未指定要移除的面；缺少可执行的抽壳边界"
+              "message": "旧 v1.0 thickness-only shell 不支持自动迁移；CADPlan 1.1 shell 须重新枚举面并显式指定 shell_target 与 offset_mode。"
             },
             {
               "code": "CATIA_UNSUPPORTED",
@@ -28987,6 +28552,11 @@
             "feature_id": "f8-hole",
             "parameter": "depth",
             "question": "请补充必需参数 depth。"
+          },
+          {
+            "feature_id": "f26-shell",
+            "parameter": "shell_migration",
+            "question": "CADPlan 1.0 shell 只有 thickness，不能推断开口面、方向或目标；请在 1.1 中重新枚举并显式选择。"
           }
         ],
         "dimensions": null,
@@ -29850,6 +29420,11 @@
             "feature_id": "f8-hole",
             "parameter": "entry_point",
             "question": "请标明参数 entry_point 的数值来源。"
+          },
+          {
+            "feature_id": "f26-shell",
+            "parameter": "shell_migration",
+            "question": "CADPlan 1.0 shell 只有 thickness，不能推断开口面、方向或目标；请在 1.1 中重新枚举并显式选择。"
           }
         ],
         "support": [
@@ -30203,7 +29778,7 @@
             "feature_id": "f26-shell",
             "kind": "shell",
             "status": "unavailable",
-            "reason": "CADPlan 未指定要移除的面；缺少可执行的抽壳边界",
+            "reason": "旧 v1.0 thickness-only shell 不支持自动迁移；CADPlan 1.1 shell 须重新枚举面并显式指定 shell_target 与 offset_mode。",
             "backend": "occt_brep"
           }
         ],
@@ -30416,7 +29991,7 @@
             "code": "LOCAL_BREP_UNAVAILABLE",
             "feature_id": "f26-shell",
             "kind": "shell",
-            "message": "CADPlan 未指定要移除的面；缺少可执行的抽壳边界"
+            "message": "旧 v1.0 thickness-only shell 不支持自动迁移；CADPlan 1.1 shell 须重新枚举面并显式指定 shell_target 与 offset_mode。"
           },
           {
             "code": "CATIA_UNSUPPORTED",
@@ -30450,6 +30025,11 @@
               "feature_id": "f8-hole",
               "parameter": "entry_point",
               "question": "请标明参数 entry_point 的数值来源。"
+            },
+            {
+              "feature_id": "f26-shell",
+              "parameter": "shell_migration",
+              "question": "CADPlan 1.0 shell 只有 thickness，不能推断开口面、方向或目标；请在 1.1 中重新枚举并显式选择。"
             }
           ],
           "support": [
@@ -30803,7 +30383,7 @@
               "feature_id": "f26-shell",
               "kind": "shell",
               "status": "unavailable",
-              "reason": "CADPlan 未指定要移除的面；缺少可执行的抽壳边界",
+              "reason": "旧 v1.0 thickness-only shell 不支持自动迁移；CADPlan 1.1 shell 须重新枚举面并显式指定 shell_target 与 offset_mode。",
               "backend": "occt_brep"
             }
           ],
@@ -31016,7 +30596,7 @@
               "code": "LOCAL_BREP_UNAVAILABLE",
               "feature_id": "f26-shell",
               "kind": "shell",
-              "message": "CADPlan 未指定要移除的面；缺少可执行的抽壳边界"
+              "message": "旧 v1.0 thickness-only shell 不支持自动迁移；CADPlan 1.1 shell 须重新枚举面并显式指定 shell_target 与 offset_mode。"
             },
             {
               "code": "CATIA_UNSUPPORTED",
@@ -31044,6 +30624,11 @@
             "feature_id": "f8-hole",
             "parameter": "entry_point",
             "question": "请标明参数 entry_point 的数值来源。"
+          },
+          {
+            "feature_id": "f26-shell",
+            "parameter": "shell_migration",
+            "question": "CADPlan 1.0 shell 只有 thickness，不能推断开口面、方向或目标；请在 1.1 中重新枚举并显式选择。"
           }
         ],
         "dimensions": null,
@@ -31892,6 +31477,11 @@
             "feature_id": "f10-pattern",
             "parameter": "step",
             "question": "请补充必需参数 step。"
+          },
+          {
+            "feature_id": "f26-shell",
+            "parameter": "shell_migration",
+            "question": "CADPlan 1.0 shell 只有 thickness，不能推断开口面、方向或目标；请在 1.1 中重新枚举并显式选择。"
           }
         ],
         "support": [
@@ -32245,7 +31835,7 @@
             "feature_id": "f26-shell",
             "kind": "shell",
             "status": "unavailable",
-            "reason": "CADPlan 未指定要移除的面；缺少可执行的抽壳边界",
+            "reason": "旧 v1.0 thickness-only shell 不支持自动迁移；CADPlan 1.1 shell 须重新枚举面并显式指定 shell_target 与 offset_mode。",
             "backend": "occt_brep"
           }
         ],
@@ -32458,7 +32048,7 @@
             "code": "LOCAL_BREP_UNAVAILABLE",
             "feature_id": "f26-shell",
             "kind": "shell",
-            "message": "CADPlan 未指定要移除的面；缺少可执行的抽壳边界"
+            "message": "旧 v1.0 thickness-only shell 不支持自动迁移；CADPlan 1.1 shell 须重新枚举面并显式指定 shell_target 与 offset_mode。"
           },
           {
             "code": "CATIA_UNSUPPORTED",
@@ -32487,6 +32077,11 @@
               "feature_id": "f10-pattern",
               "parameter": "step",
               "question": "请补充必需参数 step。"
+            },
+            {
+              "feature_id": "f26-shell",
+              "parameter": "shell_migration",
+              "question": "CADPlan 1.0 shell 只有 thickness，不能推断开口面、方向或目标；请在 1.1 中重新枚举并显式选择。"
             }
           ],
           "support": [
@@ -32840,7 +32435,7 @@
               "feature_id": "f26-shell",
               "kind": "shell",
               "status": "unavailable",
-              "reason": "CADPlan 未指定要移除的面；缺少可执行的抽壳边界",
+              "reason": "旧 v1.0 thickness-only shell 不支持自动迁移；CADPlan 1.1 shell 须重新枚举面并显式指定 shell_target 与 offset_mode。",
               "backend": "occt_brep"
             }
           ],
@@ -33053,7 +32648,7 @@
               "code": "LOCAL_BREP_UNAVAILABLE",
               "feature_id": "f26-shell",
               "kind": "shell",
-              "message": "CADPlan 未指定要移除的面；缺少可执行的抽壳边界"
+              "message": "旧 v1.0 thickness-only shell 不支持自动迁移；CADPlan 1.1 shell 须重新枚举面并显式指定 shell_target 与 offset_mode。"
             },
             {
               "code": "CATIA_UNSUPPORTED",
@@ -33076,6 +32671,11 @@
             "feature_id": "f10-pattern",
             "parameter": "step",
             "question": "请补充必需参数 step。"
+          },
+          {
+            "feature_id": "f26-shell",
+            "parameter": "shell_migration",
+            "question": "CADPlan 1.0 shell 只有 thickness，不能推断开口面、方向或目标；请在 1.1 中重新枚举并显式选择。"
           }
         ],
         "dimensions": null,
@@ -33915,10 +33515,16 @@
         ]
       },
       "expected": {
-        "valid": true,
-        "state": "valid",
+        "valid": false,
+        "state": "needs_confirmation",
         "errors": [],
-        "confirmations": [],
+        "confirmations": [
+          {
+            "feature_id": "f26-shell",
+            "parameter": "shell_migration",
+            "question": "CADPlan 1.0 shell 只有 thickness，不能推断开口面、方向或目标；请在 1.1 中重新枚举并显式选择。"
+          }
+        ],
         "support": [
           {
             "feature_id": "f0-box",
@@ -34270,7 +33876,7 @@
             "feature_id": "f26-shell",
             "kind": "shell",
             "status": "unavailable",
-            "reason": "CADPlan 未指定要移除的面；缺少可执行的抽壳边界",
+            "reason": "旧 v1.0 thickness-only shell 不支持自动迁移；CADPlan 1.1 shell 须重新枚举面并显式指定 shell_target 与 offset_mode。",
             "backend": "occt_brep"
           }
         ],
@@ -34483,7 +34089,7 @@
             "code": "LOCAL_BREP_UNAVAILABLE",
             "feature_id": "f26-shell",
             "kind": "shell",
-            "message": "CADPlan 未指定要移除的面；缺少可执行的抽壳边界"
+            "message": "旧 v1.0 thickness-only shell 不支持自动迁移；CADPlan 1.1 shell 须重新枚举面并显式指定 shell_target 与 offset_mode。"
           },
           {
             "code": "CATIA_UNSUPPORTED",
@@ -34495,13 +34101,19 @@
         "schema_version": "1.0"
       },
       "strict_expected": {
-        "state": "strict_blocked",
+        "state": "needs_confirmation",
         "catia_executed": false,
         "validation": {
-          "valid": true,
-          "state": "valid",
+          "valid": false,
+          "state": "needs_confirmation",
           "errors": [],
-          "confirmations": [],
+          "confirmations": [
+            {
+              "feature_id": "f26-shell",
+              "parameter": "shell_migration",
+              "question": "CADPlan 1.0 shell 只有 thickness，不能推断开口面、方向或目标；请在 1.1 中重新枚举并显式选择。"
+            }
+          ],
           "support": [
             {
               "feature_id": "f0-box",
@@ -34853,7 +34465,7 @@
               "feature_id": "f26-shell",
               "kind": "shell",
               "status": "unavailable",
-              "reason": "CADPlan 未指定要移除的面；缺少可执行的抽壳边界",
+              "reason": "旧 v1.0 thickness-only shell 不支持自动迁移；CADPlan 1.1 shell 须重新枚举面并显式指定 shell_target 与 offset_mode。",
               "backend": "occt_brep"
             }
           ],
@@ -35066,7 +34678,7 @@
               "code": "LOCAL_BREP_UNAVAILABLE",
               "feature_id": "f26-shell",
               "kind": "shell",
-              "message": "CADPlan 未指定要移除的面；缺少可执行的抽壳边界"
+              "message": "旧 v1.0 thickness-only shell 不支持自动迁移；CADPlan 1.1 shell 须重新枚举面并显式指定 shell_target 与 offset_mode。"
             },
             {
               "code": "CATIA_UNSUPPORTED",
@@ -35077,342 +34689,16 @@
           ],
           "schema_version": "1.0"
         },
+        "errors": [],
+        "confirmations": [
+          {
+            "feature_id": "f26-shell",
+            "parameter": "shell_migration",
+            "question": "CADPlan 1.0 shell 只有 thickness，不能推断开口面、方向或目标；请在 1.1 中重新枚举并显式选择。"
+          }
+        ],
         "dimensions": null,
         "catia_operations": [],
-        "warnings": [
-          {
-            "code": "LOCAL_BREP_APPROXIMATION",
-            "feature_id": "f2-socket_head_bolt",
-            "kind": "socket_head_bolt",
-            "message": "当前参数化网格转封闭 facet-BREP"
-          },
-          {
-            "code": "CATIA_APPROXIMATION",
-            "feature_id": "f2-socket_head_bolt",
-            "kind": "socket_head_bolt",
-            "message": "本地网格按 thread_pitch 生成可见的近似 ISO 公制螺旋牙型；整段杆部带牙，未建牙端倒角/退刀槽。当前 CATIA 导出器仍以光杆凸台和六角凹槽表达，不会创建原生或装饰螺纹。"
-          },
-          {
-            "code": "CATIA_APPROXIMATION",
-            "feature_id": "f3-sphere",
-            "kind": "sphere",
-            "message": "CATIA 导出器以多层圆盘近似球体。"
-          },
-          {
-            "code": "CATIA_APPROXIMATION",
-            "feature_id": "f5-revolve",
-            "kind": "revolve",
-            "message": "本地 OCCT BREP 按闭合[半径,轴向坐标]轮廓精确回转，并将新增回转体与已有实体做布尔合并；CATIA 导出器仍用多层圆盘近似，非 CATIA 原生回转特征。"
-          },
-          {
-            "code": "LOCAL_BREP_APPROXIMATION",
-            "feature_id": "f6-gear",
-            "kind": "gear",
-            "message": "梯形齿廓为当前简化齿形，几何由多边形棱柱表达"
-          },
-          {
-            "code": "LOCAL_BREP_APPROXIMATION",
-            "feature_id": "f7-loft",
-            "kind": "loft",
-            "message": "翼型截面离散后由 OCCT 放样"
-          },
-          {
-            "code": "CATIA_APPROXIMATION",
-            "feature_id": "f7-loft",
-            "kind": "loft",
-            "message": "CATIA 中以根部截面拉伸近似多截面放样。"
-          },
-          {
-            "code": "LOCAL_BREP_APPROXIMATION",
-            "feature_id": "f11-helix",
-            "kind": "helix",
-            "message": "现有螺旋网格转封闭 facet-BREP"
-          },
-          {
-            "code": "CATIA_UNSUPPORTED",
-            "feature_id": "f11-helix",
-            "kind": "helix",
-            "message": "弹簧/螺旋不能由当前草图、凸台和凹槽通道表达。"
-          },
-          {
-            "code": "CATIA_APPROXIMATION",
-            "feature_id": "f12-spoked_wheel",
-            "kind": "spoked_wheel",
-            "message": "CATIA 仅生成轮缘与轮毂，辐条需要补建。"
-          },
-          {
-            "code": "LOCAL_BREP_APPROXIMATION",
-            "feature_id": "f13-vbelt_pulley",
-            "kind": "vbelt_pulley",
-            "message": "标准槽轴向截面原生 OCCT 回转；槽根间距为保证剖面简单可能近似调整，输入轮宽不足时明确拒绝"
-          },
-          {
-            "code": "CATIA_APPROXIMATION",
-            "feature_id": "f13-vbelt_pulley",
-            "kind": "vbelt_pulley",
-            "message": "CATIA 生成光轮盘体；V 形回转槽需要在 CATIA 中补建。"
-          },
-          {
-            "code": "LOCAL_BREP_APPROXIMATION",
-            "feature_id": "f14-timing_pulley",
-            "kind": "timing_pulley",
-            "message": "现有同步带轮配方转封闭 facet-BREP"
-          },
-          {
-            "code": "CATIA_APPROXIMATION",
-            "feature_id": "f14-timing_pulley",
-            "kind": "timing_pulley",
-            "message": "CATIA 生成盘体，齿形需要在 CATIA 中补建。"
-          },
-          {
-            "code": "LOCAL_BREP_APPROXIMATION",
-            "feature_id": "f15-worm",
-            "kind": "worm",
-            "message": "现有蜗杆配方转封闭 facet-BREP"
-          },
-          {
-            "code": "CATIA_APPROXIMATION",
-            "feature_id": "f15-worm",
-            "kind": "worm",
-            "message": "CATIA 仅生成光轴，螺旋齿需要补建。"
-          },
-          {
-            "code": "LOCAL_BREP_APPROXIMATION",
-            "feature_id": "f16-helical_gear",
-            "kind": "helical_gear",
-            "message": "保留当前省略螺旋角的直齿近似并转 facet-BREP"
-          },
-          {
-            "code": "CATIA_APPROXIMATION",
-            "feature_id": "f16-helical_gear",
-            "kind": "helical_gear",
-            "message": "CATIA 以直齿轮近似，省略螺旋角。"
-          },
-          {
-            "code": "LOCAL_BREP_APPROXIMATION",
-            "feature_id": "f17-bevel_gear",
-            "kind": "bevel_gear",
-            "message": "现有锥齿轮网格配方转 facet-BREP"
-          },
-          {
-            "code": "CATIA_APPROXIMATION",
-            "feature_id": "f17-bevel_gear",
-            "kind": "bevel_gear",
-            "message": "CATIA 以直齿圆柱轮廓近似，省略锥面。"
-          },
-          {
-            "code": "LOCAL_BREP_APPROXIMATION",
-            "feature_id": "f18-crankshaft",
-            "kind": "crankshaft",
-            "message": "解析主轴颈/偏心连杆颈与矩形曲柄臂并集，曲柄臂外形近似"
-          },
-          {
-            "code": "CATIA_APPROXIMATION",
-            "feature_id": "f18-crankshaft",
-            "kind": "crankshaft",
-            "message": "CATIA 按 X 轴布置主轴颈、交替偏置连杆颈和哑铃形曲柄臂(主轴圆 + 连杆颈圆外公切凸包)，曲柄臂外形被简化。"
-          },
-          {
-            "code": "LOCAL_BREP_APPROXIMATION",
-            "feature_id": "f19-camshaft",
-            "kind": "camshaft",
-            "message": "现有凸轮轴网格配方转 facet-BREP"
-          },
-          {
-            "code": "CATIA_APPROXIMATION",
-            "feature_id": "f19-camshaft",
-            "kind": "camshaft",
-            "message": "CATIA 凸轮沿轴向等分布置，相位需核对。"
-          },
-          {
-            "code": "LOCAL_BREP_APPROXIMATION",
-            "feature_id": "f20-impeller",
-            "kind": "impeller",
-            "message": "现有叶轮网格配方转 facet-BREP"
-          },
-          {
-            "code": "CATIA_APPROXIMATION",
-            "feature_id": "f20-impeller",
-            "kind": "impeller",
-            "message": "CATIA 仅生成轮毂和轮盘，扭转叶片需要补建。"
-          },
-          {
-            "code": "CATIA_APPROXIMATION",
-            "feature_id": "f21-piston",
-            "kind": "piston",
-            "message": "CATIA 以圆柱体近似，销孔和活塞环槽需要补建。"
-          },
-          {
-            "code": "LOCAL_BREP_APPROXIMATION",
-            "feature_id": "f22-conrod",
-            "kind": "conrod",
-            "message": "解析大小头环与外公切梯形杆身并集，工字截面近似"
-          },
-          {
-            "code": "CATIA_APPROXIMATION",
-            "feature_id": "f22-conrod",
-            "kind": "conrod",
-            "message": "CATIA 以大头、小头和直杆身近似，杆身过渡被简化。"
-          },
-          {
-            "code": "LOCAL_BREP_APPROXIMATION",
-            "feature_id": "f23-cross_joint",
-            "kind": "cross_joint",
-            "message": "现有万向节网格配方转 facet-BREP"
-          },
-          {
-            "code": "CATIA_APPROXIMATION",
-            "feature_id": "f23-cross_joint",
-            "kind": "cross_joint",
-            "message": "CATIA 仅生成单轴，另一根横轴需要补建。"
-          },
-          {
-            "code": "LOCAL_BREP_APPROXIMATION",
-            "feature_id": "f24-scroll_disc",
-            "kind": "scroll_disc",
-            "message": "简单多边形涡旋壁原生拉伸并与背盘合并；壁面以多段线近似渐开线"
-          },
-          {
-            "code": "CATIA_APPROXIMATION",
-            "feature_id": "f24-scroll_disc",
-            "kind": "scroll_disc",
-            "message": "CATIA 仅生成底盘，螺旋壁需要补建。"
-          },
-          {
-            "code": "LOCAL_BREP_APPROXIMATION",
-            "feature_id": "f25-rotor",
-            "kind": "rotor",
-            "message": "圆角三角转子离散轮廓原生拉伸并按需切中心孔"
-          },
-          {
-            "code": "LOCAL_BREP_UNAVAILABLE",
-            "feature_id": "f26-shell",
-            "kind": "shell",
-            "message": "CADPlan 未指定要移除的面；缺少可执行的抽壳边界"
-          },
-          {
-            "code": "CATIA_UNSUPPORTED",
-            "feature_id": "f26-shell",
-            "kind": "shell",
-            "message": "当前 Document/CATIA 转换器没有抽壳实现。"
-          }
-        ],
-        "blocked_features": [
-          {
-            "feature_id": "f2-socket_head_bolt",
-            "kind": "socket_head_bolt",
-            "status": "approximate",
-            "reason": "本地网格按 thread_pitch 生成可见的近似 ISO 公制螺旋牙型；整段杆部带牙，未建牙端倒角/退刀槽。当前 CATIA 导出器仍以光杆凸台和六角凹槽表达，不会创建原生或装饰螺纹。"
-          },
-          {
-            "feature_id": "f3-sphere",
-            "kind": "sphere",
-            "status": "approximate",
-            "reason": "CATIA 导出器以多层圆盘近似球体。"
-          },
-          {
-            "feature_id": "f5-revolve",
-            "kind": "revolve",
-            "status": "approximate",
-            "reason": "本地 OCCT BREP 按闭合[半径,轴向坐标]轮廓精确回转，并将新增回转体与已有实体做布尔合并；CATIA 导出器仍用多层圆盘近似，非 CATIA 原生回转特征。"
-          },
-          {
-            "feature_id": "f7-loft",
-            "kind": "loft",
-            "status": "approximate",
-            "reason": "CATIA 中以根部截面拉伸近似多截面放样。"
-          },
-          {
-            "feature_id": "f11-helix",
-            "kind": "helix",
-            "status": "unsupported",
-            "reason": "弹簧/螺旋不能由当前草图、凸台和凹槽通道表达。"
-          },
-          {
-            "feature_id": "f12-spoked_wheel",
-            "kind": "spoked_wheel",
-            "status": "approximate",
-            "reason": "CATIA 仅生成轮缘与轮毂，辐条需要补建。"
-          },
-          {
-            "feature_id": "f13-vbelt_pulley",
-            "kind": "vbelt_pulley",
-            "status": "approximate",
-            "reason": "CATIA 生成光轮盘体；V 形回转槽需要在 CATIA 中补建。"
-          },
-          {
-            "feature_id": "f14-timing_pulley",
-            "kind": "timing_pulley",
-            "status": "approximate",
-            "reason": "CATIA 生成盘体，齿形需要在 CATIA 中补建。"
-          },
-          {
-            "feature_id": "f15-worm",
-            "kind": "worm",
-            "status": "approximate",
-            "reason": "CATIA 仅生成光轴，螺旋齿需要补建。"
-          },
-          {
-            "feature_id": "f16-helical_gear",
-            "kind": "helical_gear",
-            "status": "approximate",
-            "reason": "CATIA 以直齿轮近似，省略螺旋角。"
-          },
-          {
-            "feature_id": "f17-bevel_gear",
-            "kind": "bevel_gear",
-            "status": "approximate",
-            "reason": "CATIA 以直齿圆柱轮廓近似，省略锥面。"
-          },
-          {
-            "feature_id": "f18-crankshaft",
-            "kind": "crankshaft",
-            "status": "approximate",
-            "reason": "CATIA 按 X 轴布置主轴颈、交替偏置连杆颈和哑铃形曲柄臂(主轴圆 + 连杆颈圆外公切凸包)，曲柄臂外形被简化。"
-          },
-          {
-            "feature_id": "f19-camshaft",
-            "kind": "camshaft",
-            "status": "approximate",
-            "reason": "CATIA 凸轮沿轴向等分布置，相位需核对。"
-          },
-          {
-            "feature_id": "f20-impeller",
-            "kind": "impeller",
-            "status": "approximate",
-            "reason": "CATIA 仅生成轮毂和轮盘，扭转叶片需要补建。"
-          },
-          {
-            "feature_id": "f21-piston",
-            "kind": "piston",
-            "status": "approximate",
-            "reason": "CATIA 以圆柱体近似，销孔和活塞环槽需要补建。"
-          },
-          {
-            "feature_id": "f22-conrod",
-            "kind": "conrod",
-            "status": "approximate",
-            "reason": "CATIA 以大头、小头和直杆身近似，杆身过渡被简化。"
-          },
-          {
-            "feature_id": "f23-cross_joint",
-            "kind": "cross_joint",
-            "status": "approximate",
-            "reason": "CATIA 仅生成单轴，另一根横轴需要补建。"
-          },
-          {
-            "feature_id": "f24-scroll_disc",
-            "kind": "scroll_disc",
-            "status": "approximate",
-            "reason": "CATIA 仅生成底盘，螺旋壁需要补建。"
-          },
-          {
-            "feature_id": "f26-shell",
-            "kind": "shell",
-            "status": "unsupported",
-            "reason": "当前 Document/CATIA 转换器没有抽壳实现。"
-          }
-        ],
         "output_paths": {}
       }
     },
@@ -36257,7 +35543,13 @@
             "message": "该尺寸/计数必须大于 0。"
           }
         ],
-        "confirmations": [],
+        "confirmations": [
+          {
+            "feature_id": "f26-shell",
+            "parameter": "shell_migration",
+            "question": "CADPlan 1.0 shell 只有 thickness，不能推断开口面、方向或目标；请在 1.1 中重新枚举并显式选择。"
+          }
+        ],
         "support": [
           {
             "feature_id": "f0-box",
@@ -36609,7 +35901,7 @@
             "feature_id": "f26-shell",
             "kind": "shell",
             "status": "unavailable",
-            "reason": "CADPlan 未指定要移除的面；缺少可执行的抽壳边界",
+            "reason": "旧 v1.0 thickness-only shell 不支持自动迁移；CADPlan 1.1 shell 须重新枚举面并显式指定 shell_target 与 offset_mode。",
             "backend": "occt_brep"
           }
         ],
@@ -36822,7 +36114,7 @@
             "code": "LOCAL_BREP_UNAVAILABLE",
             "feature_id": "f26-shell",
             "kind": "shell",
-            "message": "CADPlan 未指定要移除的面；缺少可执行的抽壳边界"
+            "message": "旧 v1.0 thickness-only shell 不支持自动迁移；CADPlan 1.1 shell 须重新枚举面并显式指定 shell_target 与 offset_mode。"
           },
           {
             "code": "CATIA_UNSUPPORTED",
@@ -36846,7 +36138,13 @@
               "message": "该尺寸/计数必须大于 0。"
             }
           ],
-          "confirmations": [],
+          "confirmations": [
+            {
+              "feature_id": "f26-shell",
+              "parameter": "shell_migration",
+              "question": "CADPlan 1.0 shell 只有 thickness，不能推断开口面、方向或目标；请在 1.1 中重新枚举并显式选择。"
+            }
+          ],
           "support": [
             {
               "feature_id": "f0-box",
@@ -37198,7 +36496,7 @@
               "feature_id": "f26-shell",
               "kind": "shell",
               "status": "unavailable",
-              "reason": "CADPlan 未指定要移除的面；缺少可执行的抽壳边界",
+              "reason": "旧 v1.0 thickness-only shell 不支持自动迁移；CADPlan 1.1 shell 须重新枚举面并显式指定 shell_target 与 offset_mode。",
               "backend": "occt_brep"
             }
           ],
@@ -37411,7 +36709,7 @@
               "code": "LOCAL_BREP_UNAVAILABLE",
               "feature_id": "f26-shell",
               "kind": "shell",
-              "message": "CADPlan 未指定要移除的面；缺少可执行的抽壳边界"
+              "message": "旧 v1.0 thickness-only shell 不支持自动迁移；CADPlan 1.1 shell 须重新枚举面并显式指定 shell_target 与 offset_mode。"
             },
             {
               "code": "CATIA_UNSUPPORTED",
@@ -37429,7 +36727,13 @@
             "message": "该尺寸/计数必须大于 0。"
           }
         ],
-        "confirmations": [],
+        "confirmations": [
+          {
+            "feature_id": "f26-shell",
+            "parameter": "shell_migration",
+            "question": "CADPlan 1.0 shell 只有 thickness，不能推断开口面、方向或目标；请在 1.1 中重新枚举并显式选择。"
+          }
+        ],
         "dimensions": null,
         "catia_operations": [],
         "output_paths": {}
@@ -38267,10 +37571,16 @@
         ]
       },
       "expected": {
-        "valid": true,
-        "state": "valid",
+        "valid": false,
+        "state": "needs_confirmation",
         "errors": [],
-        "confirmations": [],
+        "confirmations": [
+          {
+            "feature_id": "f26-shell",
+            "parameter": "shell_migration",
+            "question": "CADPlan 1.0 shell 只有 thickness，不能推断开口面、方向或目标；请在 1.1 中重新枚举并显式选择。"
+          }
+        ],
         "support": [
           {
             "feature_id": "f0-box",
@@ -38622,7 +37932,7 @@
             "feature_id": "f26-shell",
             "kind": "shell",
             "status": "unavailable",
-            "reason": "CADPlan 未指定要移除的面；缺少可执行的抽壳边界",
+            "reason": "旧 v1.0 thickness-only shell 不支持自动迁移；CADPlan 1.1 shell 须重新枚举面并显式指定 shell_target 与 offset_mode。",
             "backend": "occt_brep"
           }
         ],
@@ -38835,7 +38145,7 @@
             "code": "LOCAL_BREP_UNAVAILABLE",
             "feature_id": "f26-shell",
             "kind": "shell",
-            "message": "CADPlan 未指定要移除的面；缺少可执行的抽壳边界"
+            "message": "旧 v1.0 thickness-only shell 不支持自动迁移；CADPlan 1.1 shell 须重新枚举面并显式指定 shell_target 与 offset_mode。"
           },
           {
             "code": "CATIA_UNSUPPORTED",
@@ -38847,13 +38157,19 @@
         "schema_version": "1.0"
       },
       "strict_expected": {
-        "state": "strict_blocked",
+        "state": "needs_confirmation",
         "catia_executed": false,
         "validation": {
-          "valid": true,
-          "state": "valid",
+          "valid": false,
+          "state": "needs_confirmation",
           "errors": [],
-          "confirmations": [],
+          "confirmations": [
+            {
+              "feature_id": "f26-shell",
+              "parameter": "shell_migration",
+              "question": "CADPlan 1.0 shell 只有 thickness，不能推断开口面、方向或目标；请在 1.1 中重新枚举并显式选择。"
+            }
+          ],
           "support": [
             {
               "feature_id": "f0-box",
@@ -39205,7 +38521,7 @@
               "feature_id": "f26-shell",
               "kind": "shell",
               "status": "unavailable",
-              "reason": "CADPlan 未指定要移除的面；缺少可执行的抽壳边界",
+              "reason": "旧 v1.0 thickness-only shell 不支持自动迁移；CADPlan 1.1 shell 须重新枚举面并显式指定 shell_target 与 offset_mode。",
               "backend": "occt_brep"
             }
           ],
@@ -39418,7 +38734,7 @@
               "code": "LOCAL_BREP_UNAVAILABLE",
               "feature_id": "f26-shell",
               "kind": "shell",
-              "message": "CADPlan 未指定要移除的面；缺少可执行的抽壳边界"
+              "message": "旧 v1.0 thickness-only shell 不支持自动迁移；CADPlan 1.1 shell 须重新枚举面并显式指定 shell_target 与 offset_mode。"
             },
             {
               "code": "CATIA_UNSUPPORTED",
@@ -39429,342 +38745,16 @@
           ],
           "schema_version": "1.0"
         },
+        "errors": [],
+        "confirmations": [
+          {
+            "feature_id": "f26-shell",
+            "parameter": "shell_migration",
+            "question": "CADPlan 1.0 shell 只有 thickness，不能推断开口面、方向或目标；请在 1.1 中重新枚举并显式选择。"
+          }
+        ],
         "dimensions": null,
         "catia_operations": [],
-        "warnings": [
-          {
-            "code": "LOCAL_BREP_APPROXIMATION",
-            "feature_id": "f2-socket_head_bolt",
-            "kind": "socket_head_bolt",
-            "message": "当前参数化网格转封闭 facet-BREP"
-          },
-          {
-            "code": "CATIA_APPROXIMATION",
-            "feature_id": "f2-socket_head_bolt",
-            "kind": "socket_head_bolt",
-            "message": "本地网格按 thread_pitch 生成可见的近似 ISO 公制螺旋牙型；整段杆部带牙，未建牙端倒角/退刀槽。当前 CATIA 导出器仍以光杆凸台和六角凹槽表达，不会创建原生或装饰螺纹。"
-          },
-          {
-            "code": "CATIA_APPROXIMATION",
-            "feature_id": "f3-sphere",
-            "kind": "sphere",
-            "message": "CATIA 导出器以多层圆盘近似球体。"
-          },
-          {
-            "code": "CATIA_APPROXIMATION",
-            "feature_id": "f5-revolve",
-            "kind": "revolve",
-            "message": "本地 OCCT BREP 按闭合[半径,轴向坐标]轮廓精确回转，并将新增回转体与已有实体做布尔合并；CATIA 导出器仍用多层圆盘近似，非 CATIA 原生回转特征。"
-          },
-          {
-            "code": "LOCAL_BREP_APPROXIMATION",
-            "feature_id": "f6-gear",
-            "kind": "gear",
-            "message": "梯形齿廓为当前简化齿形，几何由多边形棱柱表达"
-          },
-          {
-            "code": "LOCAL_BREP_APPROXIMATION",
-            "feature_id": "f7-loft",
-            "kind": "loft",
-            "message": "翼型截面离散后由 OCCT 放样"
-          },
-          {
-            "code": "CATIA_APPROXIMATION",
-            "feature_id": "f7-loft",
-            "kind": "loft",
-            "message": "CATIA 中以根部截面拉伸近似多截面放样。"
-          },
-          {
-            "code": "LOCAL_BREP_APPROXIMATION",
-            "feature_id": "f11-helix",
-            "kind": "helix",
-            "message": "现有螺旋网格转封闭 facet-BREP"
-          },
-          {
-            "code": "CATIA_UNSUPPORTED",
-            "feature_id": "f11-helix",
-            "kind": "helix",
-            "message": "弹簧/螺旋不能由当前草图、凸台和凹槽通道表达。"
-          },
-          {
-            "code": "CATIA_APPROXIMATION",
-            "feature_id": "f12-spoked_wheel",
-            "kind": "spoked_wheel",
-            "message": "CATIA 仅生成轮缘与轮毂，辐条需要补建。"
-          },
-          {
-            "code": "LOCAL_BREP_APPROXIMATION",
-            "feature_id": "f13-vbelt_pulley",
-            "kind": "vbelt_pulley",
-            "message": "标准槽轴向截面原生 OCCT 回转；槽根间距为保证剖面简单可能近似调整，输入轮宽不足时明确拒绝"
-          },
-          {
-            "code": "CATIA_APPROXIMATION",
-            "feature_id": "f13-vbelt_pulley",
-            "kind": "vbelt_pulley",
-            "message": "CATIA 生成光轮盘体；V 形回转槽需要在 CATIA 中补建。"
-          },
-          {
-            "code": "LOCAL_BREP_APPROXIMATION",
-            "feature_id": "f14-timing_pulley",
-            "kind": "timing_pulley",
-            "message": "现有同步带轮配方转封闭 facet-BREP"
-          },
-          {
-            "code": "CATIA_APPROXIMATION",
-            "feature_id": "f14-timing_pulley",
-            "kind": "timing_pulley",
-            "message": "CATIA 生成盘体，齿形需要在 CATIA 中补建。"
-          },
-          {
-            "code": "LOCAL_BREP_APPROXIMATION",
-            "feature_id": "f15-worm",
-            "kind": "worm",
-            "message": "现有蜗杆配方转封闭 facet-BREP"
-          },
-          {
-            "code": "CATIA_APPROXIMATION",
-            "feature_id": "f15-worm",
-            "kind": "worm",
-            "message": "CATIA 仅生成光轴，螺旋齿需要补建。"
-          },
-          {
-            "code": "LOCAL_BREP_APPROXIMATION",
-            "feature_id": "f16-helical_gear",
-            "kind": "helical_gear",
-            "message": "保留当前省略螺旋角的直齿近似并转 facet-BREP"
-          },
-          {
-            "code": "CATIA_APPROXIMATION",
-            "feature_id": "f16-helical_gear",
-            "kind": "helical_gear",
-            "message": "CATIA 以直齿轮近似，省略螺旋角。"
-          },
-          {
-            "code": "LOCAL_BREP_APPROXIMATION",
-            "feature_id": "f17-bevel_gear",
-            "kind": "bevel_gear",
-            "message": "现有锥齿轮网格配方转 facet-BREP"
-          },
-          {
-            "code": "CATIA_APPROXIMATION",
-            "feature_id": "f17-bevel_gear",
-            "kind": "bevel_gear",
-            "message": "CATIA 以直齿圆柱轮廓近似，省略锥面。"
-          },
-          {
-            "code": "LOCAL_BREP_APPROXIMATION",
-            "feature_id": "f18-crankshaft",
-            "kind": "crankshaft",
-            "message": "解析主轴颈/偏心连杆颈与矩形曲柄臂并集，曲柄臂外形近似"
-          },
-          {
-            "code": "CATIA_APPROXIMATION",
-            "feature_id": "f18-crankshaft",
-            "kind": "crankshaft",
-            "message": "CATIA 按 X 轴布置主轴颈、交替偏置连杆颈和哑铃形曲柄臂(主轴圆 + 连杆颈圆外公切凸包)，曲柄臂外形被简化。"
-          },
-          {
-            "code": "LOCAL_BREP_APPROXIMATION",
-            "feature_id": "f19-camshaft",
-            "kind": "camshaft",
-            "message": "现有凸轮轴网格配方转 facet-BREP"
-          },
-          {
-            "code": "CATIA_APPROXIMATION",
-            "feature_id": "f19-camshaft",
-            "kind": "camshaft",
-            "message": "CATIA 凸轮沿轴向等分布置，相位需核对。"
-          },
-          {
-            "code": "LOCAL_BREP_APPROXIMATION",
-            "feature_id": "f20-impeller",
-            "kind": "impeller",
-            "message": "现有叶轮网格配方转 facet-BREP"
-          },
-          {
-            "code": "CATIA_APPROXIMATION",
-            "feature_id": "f20-impeller",
-            "kind": "impeller",
-            "message": "CATIA 仅生成轮毂和轮盘，扭转叶片需要补建。"
-          },
-          {
-            "code": "CATIA_APPROXIMATION",
-            "feature_id": "f21-piston",
-            "kind": "piston",
-            "message": "CATIA 以圆柱体近似，销孔和活塞环槽需要补建。"
-          },
-          {
-            "code": "LOCAL_BREP_APPROXIMATION",
-            "feature_id": "f22-conrod",
-            "kind": "conrod",
-            "message": "解析大小头环与外公切梯形杆身并集，工字截面近似"
-          },
-          {
-            "code": "CATIA_APPROXIMATION",
-            "feature_id": "f22-conrod",
-            "kind": "conrod",
-            "message": "CATIA 以大头、小头和直杆身近似，杆身过渡被简化。"
-          },
-          {
-            "code": "LOCAL_BREP_APPROXIMATION",
-            "feature_id": "f23-cross_joint",
-            "kind": "cross_joint",
-            "message": "现有万向节网格配方转 facet-BREP"
-          },
-          {
-            "code": "CATIA_APPROXIMATION",
-            "feature_id": "f23-cross_joint",
-            "kind": "cross_joint",
-            "message": "CATIA 仅生成单轴，另一根横轴需要补建。"
-          },
-          {
-            "code": "LOCAL_BREP_APPROXIMATION",
-            "feature_id": "f24-scroll_disc",
-            "kind": "scroll_disc",
-            "message": "简单多边形涡旋壁原生拉伸并与背盘合并；壁面以多段线近似渐开线"
-          },
-          {
-            "code": "CATIA_APPROXIMATION",
-            "feature_id": "f24-scroll_disc",
-            "kind": "scroll_disc",
-            "message": "CATIA 仅生成底盘，螺旋壁需要补建。"
-          },
-          {
-            "code": "LOCAL_BREP_APPROXIMATION",
-            "feature_id": "f25-rotor",
-            "kind": "rotor",
-            "message": "圆角三角转子离散轮廓原生拉伸并按需切中心孔"
-          },
-          {
-            "code": "LOCAL_BREP_UNAVAILABLE",
-            "feature_id": "f26-shell",
-            "kind": "shell",
-            "message": "CADPlan 未指定要移除的面；缺少可执行的抽壳边界"
-          },
-          {
-            "code": "CATIA_UNSUPPORTED",
-            "feature_id": "f26-shell",
-            "kind": "shell",
-            "message": "当前 Document/CATIA 转换器没有抽壳实现。"
-          }
-        ],
-        "blocked_features": [
-          {
-            "feature_id": "f2-socket_head_bolt",
-            "kind": "socket_head_bolt",
-            "status": "approximate",
-            "reason": "本地网格按 thread_pitch 生成可见的近似 ISO 公制螺旋牙型；整段杆部带牙，未建牙端倒角/退刀槽。当前 CATIA 导出器仍以光杆凸台和六角凹槽表达，不会创建原生或装饰螺纹。"
-          },
-          {
-            "feature_id": "f3-sphere",
-            "kind": "sphere",
-            "status": "approximate",
-            "reason": "CATIA 导出器以多层圆盘近似球体。"
-          },
-          {
-            "feature_id": "f5-revolve",
-            "kind": "revolve",
-            "status": "approximate",
-            "reason": "本地 OCCT BREP 按闭合[半径,轴向坐标]轮廓精确回转，并将新增回转体与已有实体做布尔合并；CATIA 导出器仍用多层圆盘近似，非 CATIA 原生回转特征。"
-          },
-          {
-            "feature_id": "f7-loft",
-            "kind": "loft",
-            "status": "approximate",
-            "reason": "CATIA 中以根部截面拉伸近似多截面放样。"
-          },
-          {
-            "feature_id": "f11-helix",
-            "kind": "helix",
-            "status": "unsupported",
-            "reason": "弹簧/螺旋不能由当前草图、凸台和凹槽通道表达。"
-          },
-          {
-            "feature_id": "f12-spoked_wheel",
-            "kind": "spoked_wheel",
-            "status": "approximate",
-            "reason": "CATIA 仅生成轮缘与轮毂，辐条需要补建。"
-          },
-          {
-            "feature_id": "f13-vbelt_pulley",
-            "kind": "vbelt_pulley",
-            "status": "approximate",
-            "reason": "CATIA 生成光轮盘体；V 形回转槽需要在 CATIA 中补建。"
-          },
-          {
-            "feature_id": "f14-timing_pulley",
-            "kind": "timing_pulley",
-            "status": "approximate",
-            "reason": "CATIA 生成盘体，齿形需要在 CATIA 中补建。"
-          },
-          {
-            "feature_id": "f15-worm",
-            "kind": "worm",
-            "status": "approximate",
-            "reason": "CATIA 仅生成光轴，螺旋齿需要补建。"
-          },
-          {
-            "feature_id": "f16-helical_gear",
-            "kind": "helical_gear",
-            "status": "approximate",
-            "reason": "CATIA 以直齿轮近似，省略螺旋角。"
-          },
-          {
-            "feature_id": "f17-bevel_gear",
-            "kind": "bevel_gear",
-            "status": "approximate",
-            "reason": "CATIA 以直齿圆柱轮廓近似，省略锥面。"
-          },
-          {
-            "feature_id": "f18-crankshaft",
-            "kind": "crankshaft",
-            "status": "approximate",
-            "reason": "CATIA 按 X 轴布置主轴颈、交替偏置连杆颈和哑铃形曲柄臂(主轴圆 + 连杆颈圆外公切凸包)，曲柄臂外形被简化。"
-          },
-          {
-            "feature_id": "f19-camshaft",
-            "kind": "camshaft",
-            "status": "approximate",
-            "reason": "CATIA 凸轮沿轴向等分布置，相位需核对。"
-          },
-          {
-            "feature_id": "f20-impeller",
-            "kind": "impeller",
-            "status": "approximate",
-            "reason": "CATIA 仅生成轮毂和轮盘，扭转叶片需要补建。"
-          },
-          {
-            "feature_id": "f21-piston",
-            "kind": "piston",
-            "status": "approximate",
-            "reason": "CATIA 以圆柱体近似，销孔和活塞环槽需要补建。"
-          },
-          {
-            "feature_id": "f22-conrod",
-            "kind": "conrod",
-            "status": "approximate",
-            "reason": "CATIA 以大头、小头和直杆身近似，杆身过渡被简化。"
-          },
-          {
-            "feature_id": "f23-cross_joint",
-            "kind": "cross_joint",
-            "status": "approximate",
-            "reason": "CATIA 仅生成单轴，另一根横轴需要补建。"
-          },
-          {
-            "feature_id": "f24-scroll_disc",
-            "kind": "scroll_disc",
-            "status": "approximate",
-            "reason": "CATIA 仅生成底盘，螺旋壁需要补建。"
-          },
-          {
-            "feature_id": "f26-shell",
-            "kind": "shell",
-            "status": "unsupported",
-            "reason": "当前 Document/CATIA 转换器没有抽壳实现。"
-          }
-        ],
         "output_paths": {}
       }
     },
@@ -40609,7 +39599,13 @@
             "message": "未知或非公开特征类型；支持类型见 CADPlan Schema。"
           }
         ],
-        "confirmations": [],
+        "confirmations": [
+          {
+            "feature_id": "f26-shell",
+            "parameter": "shell_migration",
+            "question": "CADPlan 1.0 shell 只有 thickness，不能推断开口面、方向或目标；请在 1.1 中重新枚举并显式选择。"
+          }
+        ],
         "support": [
           {
             "feature_id": "f0-box",
@@ -40948,7 +39944,7 @@
             "feature_id": "f26-shell",
             "kind": "shell",
             "status": "unavailable",
-            "reason": "CADPlan 未指定要移除的面；缺少可执行的抽壳边界",
+            "reason": "旧 v1.0 thickness-only shell 不支持自动迁移；CADPlan 1.1 shell 须重新枚举面并显式指定 shell_target 与 offset_mode。",
             "backend": "occt_brep"
           }
         ],
@@ -41149,7 +40145,7 @@
             "code": "LOCAL_BREP_UNAVAILABLE",
             "feature_id": "f26-shell",
             "kind": "shell",
-            "message": "CADPlan 未指定要移除的面；缺少可执行的抽壳边界"
+            "message": "旧 v1.0 thickness-only shell 不支持自动迁移；CADPlan 1.1 shell 须重新枚举面并显式指定 shell_target 与 offset_mode。"
           },
           {
             "code": "CATIA_UNSUPPORTED",
@@ -41173,7 +40169,13 @@
               "message": "未知或非公开特征类型；支持类型见 CADPlan Schema。"
             }
           ],
-          "confirmations": [],
+          "confirmations": [
+            {
+              "feature_id": "f26-shell",
+              "parameter": "shell_migration",
+              "question": "CADPlan 1.0 shell 只有 thickness，不能推断开口面、方向或目标；请在 1.1 中重新枚举并显式选择。"
+            }
+          ],
           "support": [
             {
               "feature_id": "f0-box",
@@ -41512,7 +40514,7 @@
               "feature_id": "f26-shell",
               "kind": "shell",
               "status": "unavailable",
-              "reason": "CADPlan 未指定要移除的面；缺少可执行的抽壳边界",
+              "reason": "旧 v1.0 thickness-only shell 不支持自动迁移；CADPlan 1.1 shell 须重新枚举面并显式指定 shell_target 与 offset_mode。",
               "backend": "occt_brep"
             }
           ],
@@ -41713,7 +40715,7 @@
               "code": "LOCAL_BREP_UNAVAILABLE",
               "feature_id": "f26-shell",
               "kind": "shell",
-              "message": "CADPlan 未指定要移除的面；缺少可执行的抽壳边界"
+              "message": "旧 v1.0 thickness-only shell 不支持自动迁移；CADPlan 1.1 shell 须重新枚举面并显式指定 shell_target 与 offset_mode。"
             },
             {
               "code": "CATIA_UNSUPPORTED",
@@ -41731,7 +40733,13 @@
             "message": "未知或非公开特征类型；支持类型见 CADPlan Schema。"
           }
         ],
-        "confirmations": [],
+        "confirmations": [
+          {
+            "feature_id": "f26-shell",
+            "parameter": "shell_migration",
+            "question": "CADPlan 1.0 shell 只有 thickness，不能推断开口面、方向或目标；请在 1.1 中重新枚举并显式选择。"
+          }
+        ],
         "dimensions": null,
         "catia_operations": [],
         "output_paths": {}
@@ -42578,7 +41586,13 @@
             "message": "operation 必须是 add 或 cut。"
           }
         ],
-        "confirmations": [],
+        "confirmations": [
+          {
+            "feature_id": "f26-shell",
+            "parameter": "shell_migration",
+            "question": "CADPlan 1.0 shell 只有 thickness，不能推断开口面、方向或目标；请在 1.1 中重新枚举并显式选择。"
+          }
+        ],
         "support": [
           {
             "feature_id": "f0-box",
@@ -42930,7 +41944,7 @@
             "feature_id": "f26-shell",
             "kind": "shell",
             "status": "unavailable",
-            "reason": "CADPlan 未指定要移除的面；缺少可执行的抽壳边界",
+            "reason": "旧 v1.0 thickness-only shell 不支持自动迁移；CADPlan 1.1 shell 须重新枚举面并显式指定 shell_target 与 offset_mode。",
             "backend": "occt_brep"
           }
         ],
@@ -43143,7 +42157,7 @@
             "code": "LOCAL_BREP_UNAVAILABLE",
             "feature_id": "f26-shell",
             "kind": "shell",
-            "message": "CADPlan 未指定要移除的面；缺少可执行的抽壳边界"
+            "message": "旧 v1.0 thickness-only shell 不支持自动迁移；CADPlan 1.1 shell 须重新枚举面并显式指定 shell_target 与 offset_mode。"
           },
           {
             "code": "CATIA_UNSUPPORTED",
@@ -43167,7 +42181,13 @@
               "message": "operation 必须是 add 或 cut。"
             }
           ],
-          "confirmations": [],
+          "confirmations": [
+            {
+              "feature_id": "f26-shell",
+              "parameter": "shell_migration",
+              "question": "CADPlan 1.0 shell 只有 thickness，不能推断开口面、方向或目标；请在 1.1 中重新枚举并显式选择。"
+            }
+          ],
           "support": [
             {
               "feature_id": "f0-box",
@@ -43519,7 +42539,7 @@
               "feature_id": "f26-shell",
               "kind": "shell",
               "status": "unavailable",
-              "reason": "CADPlan 未指定要移除的面；缺少可执行的抽壳边界",
+              "reason": "旧 v1.0 thickness-only shell 不支持自动迁移；CADPlan 1.1 shell 须重新枚举面并显式指定 shell_target 与 offset_mode。",
               "backend": "occt_brep"
             }
           ],
@@ -43732,7 +42752,7 @@
               "code": "LOCAL_BREP_UNAVAILABLE",
               "feature_id": "f26-shell",
               "kind": "shell",
-              "message": "CADPlan 未指定要移除的面；缺少可执行的抽壳边界"
+              "message": "旧 v1.0 thickness-only shell 不支持自动迁移；CADPlan 1.1 shell 须重新枚举面并显式指定 shell_target 与 offset_mode。"
             },
             {
               "code": "CATIA_UNSUPPORTED",
@@ -43750,7 +42770,13 @@
             "message": "operation 必须是 add 或 cut。"
           }
         ],
-        "confirmations": [],
+        "confirmations": [
+          {
+            "feature_id": "f26-shell",
+            "parameter": "shell_migration",
+            "question": "CADPlan 1.0 shell 只有 thickness，不能推断开口面、方向或目标；请在 1.1 中重新枚举并显式选择。"
+          }
+        ],
         "dimensions": null,
         "catia_operations": [],
         "output_paths": {}
@@ -44601,6 +43627,11 @@
             "feature_id": "f0-box",
             "parameter": "length",
             "question": "请补充必需参数 length。"
+          },
+          {
+            "feature_id": "f26-shell",
+            "parameter": "shell_migration",
+            "question": "CADPlan 1.0 shell 只有 thickness，不能推断开口面、方向或目标；请在 1.1 中重新枚举并显式选择。"
           }
         ],
         "support": [
@@ -44954,7 +43985,7 @@
             "feature_id": "f26-shell",
             "kind": "shell",
             "status": "unavailable",
-            "reason": "CADPlan 未指定要移除的面；缺少可执行的抽壳边界",
+            "reason": "旧 v1.0 thickness-only shell 不支持自动迁移；CADPlan 1.1 shell 须重新枚举面并显式指定 shell_target 与 offset_mode。",
             "backend": "occt_brep"
           }
         ],
@@ -45167,7 +44198,7 @@
             "code": "LOCAL_BREP_UNAVAILABLE",
             "feature_id": "f26-shell",
             "kind": "shell",
-            "message": "CADPlan 未指定要移除的面；缺少可执行的抽壳边界"
+            "message": "旧 v1.0 thickness-only shell 不支持自动迁移；CADPlan 1.1 shell 须重新枚举面并显式指定 shell_target 与 offset_mode。"
           },
           {
             "code": "CATIA_UNSUPPORTED",
@@ -45196,6 +44227,11 @@
               "feature_id": "f0-box",
               "parameter": "length",
               "question": "请补充必需参数 length。"
+            },
+            {
+              "feature_id": "f26-shell",
+              "parameter": "shell_migration",
+              "question": "CADPlan 1.0 shell 只有 thickness，不能推断开口面、方向或目标；请在 1.1 中重新枚举并显式选择。"
             }
           ],
           "support": [
@@ -45549,7 +44585,7 @@
               "feature_id": "f26-shell",
               "kind": "shell",
               "status": "unavailable",
-              "reason": "CADPlan 未指定要移除的面；缺少可执行的抽壳边界",
+              "reason": "旧 v1.0 thickness-only shell 不支持自动迁移；CADPlan 1.1 shell 须重新枚举面并显式指定 shell_target 与 offset_mode。",
               "backend": "occt_brep"
             }
           ],
@@ -45762,7 +44798,7 @@
               "code": "LOCAL_BREP_UNAVAILABLE",
               "feature_id": "f26-shell",
               "kind": "shell",
-              "message": "CADPlan 未指定要移除的面；缺少可执行的抽壳边界"
+              "message": "旧 v1.0 thickness-only shell 不支持自动迁移；CADPlan 1.1 shell 须重新枚举面并显式指定 shell_target 与 offset_mode。"
             },
             {
               "code": "CATIA_UNSUPPORTED",
@@ -45785,6 +44821,11 @@
             "feature_id": "f0-box",
             "parameter": "length",
             "question": "请补充必需参数 length。"
+          },
+          {
+            "feature_id": "f26-shell",
+            "parameter": "shell_migration",
+            "question": "CADPlan 1.0 shell 只有 thickness，不能推断开口面、方向或目标；请在 1.1 中重新枚举并显式选择。"
           }
         ],
         "dimensions": null,
@@ -46629,7 +45670,13 @@
             "message": "profile 必须至少包含 3 个二维有限数值点。"
           }
         ],
-        "confirmations": [],
+        "confirmations": [
+          {
+            "feature_id": "f26-shell",
+            "parameter": "shell_migration",
+            "question": "CADPlan 1.0 shell 只有 thickness，不能推断开口面、方向或目标；请在 1.1 中重新枚举并显式选择。"
+          }
+        ],
         "support": [
           {
             "feature_id": "f0-box",
@@ -46981,7 +46028,7 @@
             "feature_id": "f26-shell",
             "kind": "shell",
             "status": "unavailable",
-            "reason": "CADPlan 未指定要移除的面；缺少可执行的抽壳边界",
+            "reason": "旧 v1.0 thickness-only shell 不支持自动迁移；CADPlan 1.1 shell 须重新枚举面并显式指定 shell_target 与 offset_mode。",
             "backend": "occt_brep"
           }
         ],
@@ -47194,7 +46241,7 @@
             "code": "LOCAL_BREP_UNAVAILABLE",
             "feature_id": "f26-shell",
             "kind": "shell",
-            "message": "CADPlan 未指定要移除的面；缺少可执行的抽壳边界"
+            "message": "旧 v1.0 thickness-only shell 不支持自动迁移；CADPlan 1.1 shell 须重新枚举面并显式指定 shell_target 与 offset_mode。"
           },
           {
             "code": "CATIA_UNSUPPORTED",
@@ -47218,7 +46265,13 @@
               "message": "profile 必须至少包含 3 个二维有限数值点。"
             }
           ],
-          "confirmations": [],
+          "confirmations": [
+            {
+              "feature_id": "f26-shell",
+              "parameter": "shell_migration",
+              "question": "CADPlan 1.0 shell 只有 thickness，不能推断开口面、方向或目标；请在 1.1 中重新枚举并显式选择。"
+            }
+          ],
           "support": [
             {
               "feature_id": "f0-box",
@@ -47570,7 +46623,7 @@
               "feature_id": "f26-shell",
               "kind": "shell",
               "status": "unavailable",
-              "reason": "CADPlan 未指定要移除的面；缺少可执行的抽壳边界",
+              "reason": "旧 v1.0 thickness-only shell 不支持自动迁移；CADPlan 1.1 shell 须重新枚举面并显式指定 shell_target 与 offset_mode。",
               "backend": "occt_brep"
             }
           ],
@@ -47783,7 +46836,7 @@
               "code": "LOCAL_BREP_UNAVAILABLE",
               "feature_id": "f26-shell",
               "kind": "shell",
-              "message": "CADPlan 未指定要移除的面；缺少可执行的抽壳边界"
+              "message": "旧 v1.0 thickness-only shell 不支持自动迁移；CADPlan 1.1 shell 须重新枚举面并显式指定 shell_target 与 offset_mode。"
             },
             {
               "code": "CATIA_UNSUPPORTED",
@@ -47801,7 +46854,13 @@
             "message": "profile 必须至少包含 3 个二维有限数值点。"
           }
         ],
-        "confirmations": [],
+        "confirmations": [
+          {
+            "feature_id": "f26-shell",
+            "parameter": "shell_migration",
+            "question": "CADPlan 1.0 shell 只有 thickness，不能推断开口面、方向或目标；请在 1.1 中重新枚举并显式选择。"
+          }
+        ],
         "dimensions": null,
         "catia_operations": [],
         "output_paths": {}
@@ -48645,7 +47704,13 @@
             "message": "参数来源必须是对象。"
           }
         ],
-        "confirmations": [],
+        "confirmations": [
+          {
+            "feature_id": "f26-shell",
+            "parameter": "shell_migration",
+            "question": "CADPlan 1.0 shell 只有 thickness，不能推断开口面、方向或目标；请在 1.1 中重新枚举并显式选择。"
+          }
+        ],
         "support": [
           {
             "feature_id": "f0-box",
@@ -48997,7 +48062,7 @@
             "feature_id": "f26-shell",
             "kind": "shell",
             "status": "unavailable",
-            "reason": "CADPlan 未指定要移除的面；缺少可执行的抽壳边界",
+            "reason": "旧 v1.0 thickness-only shell 不支持自动迁移；CADPlan 1.1 shell 须重新枚举面并显式指定 shell_target 与 offset_mode。",
             "backend": "occt_brep"
           }
         ],
@@ -49210,7 +48275,7 @@
             "code": "LOCAL_BREP_UNAVAILABLE",
             "feature_id": "f26-shell",
             "kind": "shell",
-            "message": "CADPlan 未指定要移除的面；缺少可执行的抽壳边界"
+            "message": "旧 v1.0 thickness-only shell 不支持自动迁移；CADPlan 1.1 shell 须重新枚举面并显式指定 shell_target 与 offset_mode。"
           },
           {
             "code": "CATIA_UNSUPPORTED",
@@ -49234,7 +48299,13 @@
               "message": "参数来源必须是对象。"
             }
           ],
-          "confirmations": [],
+          "confirmations": [
+            {
+              "feature_id": "f26-shell",
+              "parameter": "shell_migration",
+              "question": "CADPlan 1.0 shell 只有 thickness，不能推断开口面、方向或目标；请在 1.1 中重新枚举并显式选择。"
+            }
+          ],
           "support": [
             {
               "feature_id": "f0-box",
@@ -49586,7 +48657,7 @@
               "feature_id": "f26-shell",
               "kind": "shell",
               "status": "unavailable",
-              "reason": "CADPlan 未指定要移除的面；缺少可执行的抽壳边界",
+              "reason": "旧 v1.0 thickness-only shell 不支持自动迁移；CADPlan 1.1 shell 须重新枚举面并显式指定 shell_target 与 offset_mode。",
               "backend": "occt_brep"
             }
           ],
@@ -49799,7 +48870,7 @@
               "code": "LOCAL_BREP_UNAVAILABLE",
               "feature_id": "f26-shell",
               "kind": "shell",
-              "message": "CADPlan 未指定要移除的面；缺少可执行的抽壳边界"
+              "message": "旧 v1.0 thickness-only shell 不支持自动迁移；CADPlan 1.1 shell 须重新枚举面并显式指定 shell_target 与 offset_mode。"
             },
             {
               "code": "CATIA_UNSUPPORTED",
@@ -49817,7 +48888,13 @@
             "message": "参数来源必须是对象。"
           }
         ],
-        "confirmations": [],
+        "confirmations": [
+          {
+            "feature_id": "f26-shell",
+            "parameter": "shell_migration",
+            "question": "CADPlan 1.0 shell 只有 thickness，不能推断开口面、方向或目标；请在 1.1 中重新枚举并显式选择。"
+          }
+        ],
         "dimensions": null,
         "catia_operations": [],
         "output_paths": {}
@@ -50664,7 +49741,13 @@
             "message": "阵列 operation 必须与 pattern_source 源特征「f9-pocket」一致：源操作是 add，阵列也必须用 add。切孔阵列必须为 cut；若写 add，程序会把孔的圆柱刀具加成实体。"
           }
         ],
-        "confirmations": [],
+        "confirmations": [
+          {
+            "feature_id": "f26-shell",
+            "parameter": "shell_migration",
+            "question": "CADPlan 1.0 shell 只有 thickness，不能推断开口面、方向或目标；请在 1.1 中重新枚举并显式选择。"
+          }
+        ],
         "support": [
           {
             "feature_id": "f0-box",
@@ -51016,7 +50099,7 @@
             "feature_id": "f26-shell",
             "kind": "shell",
             "status": "unavailable",
-            "reason": "CADPlan 未指定要移除的面；缺少可执行的抽壳边界",
+            "reason": "旧 v1.0 thickness-only shell 不支持自动迁移；CADPlan 1.1 shell 须重新枚举面并显式指定 shell_target 与 offset_mode。",
             "backend": "occt_brep"
           }
         ],
@@ -51229,7 +50312,7 @@
             "code": "LOCAL_BREP_UNAVAILABLE",
             "feature_id": "f26-shell",
             "kind": "shell",
-            "message": "CADPlan 未指定要移除的面；缺少可执行的抽壳边界"
+            "message": "旧 v1.0 thickness-only shell 不支持自动迁移；CADPlan 1.1 shell 须重新枚举面并显式指定 shell_target 与 offset_mode。"
           },
           {
             "code": "CATIA_UNSUPPORTED",
@@ -51253,7 +50336,13 @@
               "message": "阵列 operation 必须与 pattern_source 源特征「f9-pocket」一致：源操作是 add，阵列也必须用 add。切孔阵列必须为 cut；若写 add，程序会把孔的圆柱刀具加成实体。"
             }
           ],
-          "confirmations": [],
+          "confirmations": [
+            {
+              "feature_id": "f26-shell",
+              "parameter": "shell_migration",
+              "question": "CADPlan 1.0 shell 只有 thickness，不能推断开口面、方向或目标；请在 1.1 中重新枚举并显式选择。"
+            }
+          ],
           "support": [
             {
               "feature_id": "f0-box",
@@ -51605,7 +50694,7 @@
               "feature_id": "f26-shell",
               "kind": "shell",
               "status": "unavailable",
-              "reason": "CADPlan 未指定要移除的面；缺少可执行的抽壳边界",
+              "reason": "旧 v1.0 thickness-only shell 不支持自动迁移；CADPlan 1.1 shell 须重新枚举面并显式指定 shell_target 与 offset_mode。",
               "backend": "occt_brep"
             }
           ],
@@ -51818,7 +50907,7 @@
               "code": "LOCAL_BREP_UNAVAILABLE",
               "feature_id": "f26-shell",
               "kind": "shell",
-              "message": "CADPlan 未指定要移除的面；缺少可执行的抽壳边界"
+              "message": "旧 v1.0 thickness-only shell 不支持自动迁移；CADPlan 1.1 shell 须重新枚举面并显式指定 shell_target 与 offset_mode。"
             },
             {
               "code": "CATIA_UNSUPPORTED",
@@ -51836,7 +50925,13 @@
             "message": "阵列 operation 必须与 pattern_source 源特征「f9-pocket」一致：源操作是 add，阵列也必须用 add。切孔阵列必须为 cut；若写 add，程序会把孔的圆柱刀具加成实体。"
           }
         ],
-        "confirmations": [],
+        "confirmations": [
+          {
+            "feature_id": "f26-shell",
+            "parameter": "shell_migration",
+            "question": "CADPlan 1.0 shell 只有 thickness，不能推断开口面、方向或目标；请在 1.1 中重新枚举并显式选择。"
+          }
+        ],
         "dimensions": null,
         "catia_operations": [],
         "output_paths": {}
@@ -52684,7 +51779,13 @@
             "message": "可选值为：X、Y、Z。"
           }
         ],
-        "confirmations": [],
+        "confirmations": [
+          {
+            "feature_id": "f26-shell",
+            "parameter": "shell_migration",
+            "question": "CADPlan 1.0 shell 只有 thickness，不能推断开口面、方向或目标；请在 1.1 中重新枚举并显式选择。"
+          }
+        ],
         "support": [
           {
             "feature_id": "f0-box",
@@ -53036,7 +52137,7 @@
             "feature_id": "f26-shell",
             "kind": "shell",
             "status": "unavailable",
-            "reason": "CADPlan 未指定要移除的面；缺少可执行的抽壳边界",
+            "reason": "旧 v1.0 thickness-only shell 不支持自动迁移；CADPlan 1.1 shell 须重新枚举面并显式指定 shell_target 与 offset_mode。",
             "backend": "occt_brep"
           }
         ],
@@ -53255,7 +52356,7 @@
             "code": "LOCAL_BREP_UNAVAILABLE",
             "feature_id": "f26-shell",
             "kind": "shell",
-            "message": "CADPlan 未指定要移除的面；缺少可执行的抽壳边界"
+            "message": "旧 v1.0 thickness-only shell 不支持自动迁移；CADPlan 1.1 shell 须重新枚举面并显式指定 shell_target 与 offset_mode。"
           },
           {
             "code": "CATIA_UNSUPPORTED",
@@ -53279,7 +52380,13 @@
               "message": "可选值为：X、Y、Z。"
             }
           ],
-          "confirmations": [],
+          "confirmations": [
+            {
+              "feature_id": "f26-shell",
+              "parameter": "shell_migration",
+              "question": "CADPlan 1.0 shell 只有 thickness，不能推断开口面、方向或目标；请在 1.1 中重新枚举并显式选择。"
+            }
+          ],
           "support": [
             {
               "feature_id": "f0-box",
@@ -53631,7 +52738,7 @@
               "feature_id": "f26-shell",
               "kind": "shell",
               "status": "unavailable",
-              "reason": "CADPlan 未指定要移除的面；缺少可执行的抽壳边界",
+              "reason": "旧 v1.0 thickness-only shell 不支持自动迁移；CADPlan 1.1 shell 须重新枚举面并显式指定 shell_target 与 offset_mode。",
               "backend": "occt_brep"
             }
           ],
@@ -53850,7 +52957,7 @@
               "code": "LOCAL_BREP_UNAVAILABLE",
               "feature_id": "f26-shell",
               "kind": "shell",
-              "message": "CADPlan 未指定要移除的面；缺少可执行的抽壳边界"
+              "message": "旧 v1.0 thickness-only shell 不支持自动迁移；CADPlan 1.1 shell 须重新枚举面并显式指定 shell_target 与 offset_mode。"
             },
             {
               "code": "CATIA_UNSUPPORTED",
@@ -53868,7 +52975,13 @@
             "message": "可选值为：X、Y、Z。"
           }
         ],
-        "confirmations": [],
+        "confirmations": [
+          {
+            "feature_id": "f26-shell",
+            "parameter": "shell_migration",
+            "question": "CADPlan 1.0 shell 只有 thickness，不能推断开口面、方向或目标；请在 1.1 中重新枚举并显式选择。"
+          }
+        ],
         "dimensions": null,
         "catia_operations": [],
         "output_paths": {}
@@ -54715,7 +53828,13 @@
             "message": "特征 id 重复：f0-box。"
           }
         ],
-        "confirmations": [],
+        "confirmations": [
+          {
+            "feature_id": "f26-shell",
+            "parameter": "shell_migration",
+            "question": "CADPlan 1.0 shell 只有 thickness，不能推断开口面、方向或目标；请在 1.1 中重新枚举并显式选择。"
+          }
+        ],
         "support": [
           {
             "feature_id": "f0-box",
@@ -55067,7 +54186,7 @@
             "feature_id": "f26-shell",
             "kind": "shell",
             "status": "unavailable",
-            "reason": "CADPlan 未指定要移除的面；缺少可执行的抽壳边界",
+            "reason": "旧 v1.0 thickness-only shell 不支持自动迁移；CADPlan 1.1 shell 须重新枚举面并显式指定 shell_target 与 offset_mode。",
             "backend": "occt_brep"
           }
         ],
@@ -55280,7 +54399,7 @@
             "code": "LOCAL_BREP_UNAVAILABLE",
             "feature_id": "f26-shell",
             "kind": "shell",
-            "message": "CADPlan 未指定要移除的面；缺少可执行的抽壳边界"
+            "message": "旧 v1.0 thickness-only shell 不支持自动迁移；CADPlan 1.1 shell 须重新枚举面并显式指定 shell_target 与 offset_mode。"
           },
           {
             "code": "CATIA_UNSUPPORTED",
@@ -55304,7 +54423,13 @@
               "message": "特征 id 重复：f0-box。"
             }
           ],
-          "confirmations": [],
+          "confirmations": [
+            {
+              "feature_id": "f26-shell",
+              "parameter": "shell_migration",
+              "question": "CADPlan 1.0 shell 只有 thickness，不能推断开口面、方向或目标；请在 1.1 中重新枚举并显式选择。"
+            }
+          ],
           "support": [
             {
               "feature_id": "f0-box",
@@ -55656,7 +54781,7 @@
               "feature_id": "f26-shell",
               "kind": "shell",
               "status": "unavailable",
-              "reason": "CADPlan 未指定要移除的面；缺少可执行的抽壳边界",
+              "reason": "旧 v1.0 thickness-only shell 不支持自动迁移；CADPlan 1.1 shell 须重新枚举面并显式指定 shell_target 与 offset_mode。",
               "backend": "occt_brep"
             }
           ],
@@ -55869,7 +54994,7 @@
               "code": "LOCAL_BREP_UNAVAILABLE",
               "feature_id": "f26-shell",
               "kind": "shell",
-              "message": "CADPlan 未指定要移除的面；缺少可执行的抽壳边界"
+              "message": "旧 v1.0 thickness-only shell 不支持自动迁移；CADPlan 1.1 shell 须重新枚举面并显式指定 shell_target 与 offset_mode。"
             },
             {
               "code": "CATIA_UNSUPPORTED",
@@ -55887,7 +55012,13 @@
             "message": "特征 id 重复：f0-box。"
           }
         ],
-        "confirmations": [],
+        "confirmations": [
+          {
+            "feature_id": "f26-shell",
+            "parameter": "shell_migration",
+            "question": "CADPlan 1.0 shell 只有 thickness，不能推断开口面、方向或目标；请在 1.1 中重新枚举并显式选择。"
+          }
+        ],
         "dimensions": null,
         "catia_operations": [],
         "output_paths": {}

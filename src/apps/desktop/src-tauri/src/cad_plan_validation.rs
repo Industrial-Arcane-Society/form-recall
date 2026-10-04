@@ -262,7 +262,7 @@ const SPECS: &[Spec] = &[
         required: "thickness",
         params: "thickness offset_mode removed_faces",
         catia_status: "unsupported",
-        catia_reason: "旧 v1.0 thickness-only shell 需要确认；CATIA 映射仍不支持抽壳。",
+        catia_reason: "当前 Document/CATIA 转换器没有抽壳实现。",
         local_status: "unavailable",
         local_reason: "旧 v1.0 thickness-only shell 不会自动迁移；1.1 仅原生执行显式 planar 子集。",
     },
@@ -1713,6 +1713,11 @@ fn validate_relations(
         }
     };
     let mut pattern_sources = Vec::<String>::new();
+    let relation_error_message = if kind == "shell" {
+        "关系项必须使用 type 字段（depends_on、pattern_source、shell_target）和 feature_id 字段，例如：{\"type\":\"pattern_source\",\"feature_id\":\"上一个特征ID\"}。"
+    } else {
+        "关系项必须使用 type 字段（depends_on、pattern_source）和 feature_id 字段，例如：{\"type\":\"pattern_source\",\"feature_id\":\"上一个特征ID\"}。"
+    };
     for (ri, relation) in relations.iter().enumerate() {
         let rpath = format!("{path}.relations[{ri}]");
         let Some(row) = relation.as_object() else {
@@ -1720,7 +1725,7 @@ fn validate_relations(
                 errors,
                 "invalid_relation",
                 rpath,
-                "关系项必须使用 type 字段（depends_on 或 pattern_source）和 feature_id 字段，例如：{\"type\":\"pattern_source\",\"feature_id\":\"上一个特征ID\"}。",
+                relation_error_message,
             );
             continue;
         };
@@ -1733,7 +1738,7 @@ fn validate_relations(
                 errors,
                 "invalid_relation",
                 rpath,
-                "关系项必须使用 type 字段（depends_on 或 pattern_source）和 feature_id 字段，例如：{\"type\":\"pattern_source\",\"feature_id\":\"上一个特征ID\"}。",
+                relation_error_message,
             );
             continue;
         }
@@ -1929,7 +1934,7 @@ fn local_support(
             reason = "原生 OCCT shell：仅支持显式 shell_target、当前 revision/fingerprint 绑定的平面移除面和显式 inward/outward 偏置。";
         } else {
             status = "unavailable";
-            reason = "旧 v1.0 thickness-only shell 不支持自动迁移；1.1 shell 须重新枚举面并显式指定 shell_target 与 offset_mode。";
+            reason = "旧 v1.0 thickness-only shell 不支持自动迁移；CADPlan 1.1 shell 须重新枚举面并显式指定 shell_target 与 offset_mode。";
         }
     }
     (status, reason)
@@ -2295,12 +2300,16 @@ mod tests {
             let actual = validate_plan(&case["plan"]);
             assert!(
                 json_semantic_eq(&actual, &case["expected"]),
-                "validate_plan mismatch in case {name}"
+                "validate_plan mismatch in case {name}\nexpected: {expected}\nactual: {actual}",
+                expected = case["expected"],
+                actual = actual
             );
             let strict = strict_preflight(&case["plan"]);
             assert!(
                 json_semantic_eq(&strict, &case["strict_expected"]),
-                "strict preflight mismatch in case {name}"
+                "strict preflight mismatch in case {name}\nexpected: {expected}\nactual: {actual}",
+                expected = case["strict_expected"],
+                actual = strict
             );
         }
     }
