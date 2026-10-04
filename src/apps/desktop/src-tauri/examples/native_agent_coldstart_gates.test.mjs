@@ -240,13 +240,14 @@ test('normalized argument fingerprints ignore object key order and reveal no arg
   assert.equal(toolArgumentsFingerprint(undefined), null)
 })
 
-test('duplicate same-status terminal snapshots fail strict one-terminal identity pairing', () => {
+test('duplicate same-status terminal snapshots are idempotent for strict identity pairing', () => {
   const input = fixture()
   input.toolEvents.push({ ...input.toolEvents[1], at_ms: 3000 })
   const result = evaluateColdstartGates(input)
-  assert.equal(result.status, 'failed')
-  assert.ok(result.gates.acp_cad_tool_results.reasons.includes('acp_cad_tool_result_terminal_status_invalid'))
-  assert.deepEqual(result.matched_native_call_ids, [])
+  assert.equal(result.status, 'passed')
+  assert.equal(result.gates.cordis_cad_tools.status, 'passed')
+  assert.equal(result.gates.acp_cad_tool_results.status, 'passed')
+  assert.deepEqual(result.matched_native_call_ids, ['11111111-1111-4111-8111-111111111111'])
 })
 
 test('repeated identical calls pair by exact ACP identity despite same arguments', () => {
@@ -395,15 +396,13 @@ test('ACP result updates without call IDs fail identity without coalescing as du
   assert.equal(result.gates.acp_cad_tool_results.reasons.includes('acp_cad_tool_result_terminal_update_duplicated'), false)
 })
 
-test('repeated failed terminal snapshots remain failed and violate exactly-one-terminal binding', () => {
+test('repeated failed terminal snapshots remain failed without a duplicate-notification failure', () => {
   const input = fixture()
   input.toolEvents[1].status = 'failed'
   input.toolEvents.push({ ...input.toolEvents[1], at_ms: 3000 })
   const result = evaluateColdstartGates(input)
   assert.equal(result.status, 'failed')
-  assert.deepEqual(result.gates.acp_cad_tool_results.reasons, [
-    'acp_cad_tool_result_failed', 'acp_cad_tool_result_terminal_status_invalid',
-  ])
+  assert.deepEqual(result.gates.acp_cad_tool_results.reasons, ['acp_cad_tool_result_failed'])
 })
 
 test('conflicting terminal ACP states remain a hard failure', () => {

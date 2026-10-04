@@ -176,7 +176,7 @@ export function summarizeCordisBindingDiagnostics(input = {}) {
   const validIdentity = (call, event) => event?.starts === 1 && nonempty(event.tool_call_id)
     && call.acp_call_id === event.tool_call_id && keyFor(call) !== null && keyFor(call) === keyFor(event)
     && call.run_id === run.id && call.session_id === run.tool_session_id && call.turn_id === run.turn_id
-    && nonempty(call.call_id) && event.terminal_updates === 1 && hasSingleTerminalStatus(event)
+    && nonempty(call.call_id) && event.terminal_updates > 0 && hasSingleTerminalStatus(event)
 
   for (const call of rows(toolBridgeCalls)) {
     const name = safeToolName(call.tool), key = keyFor(call)
@@ -428,7 +428,7 @@ export function evaluateColdstartGates(input) {
   const allInvocationsPaired = calls.every(call => {
     const matches = byAcpId.get(call.acp_call_id) || []
     const event = matches.length === 1 ? matches[0] : null
-    if (!event || correlationKey(call) !== correlationKey(event) || event.starts !== 1 || event.terminal_updates !== 1
+    if (!event || correlationKey(call) !== correlationKey(event) || event.starts !== 1 || event.terminal_updates === 0
       || !hasSingleTerminalStatus(event) || call.run_id !== run.id
       || call.session_id !== run.tool_session_id || call.turn_id !== run.turn_id || !nonempty(call.call_id)) return false
     pairedCallIds.set(call.call_id, event)
@@ -470,8 +470,7 @@ export function evaluateColdstartGates(input) {
   if (observedCadTools.some(event => event.terminal_statuses?.includes('failed'))) {
     acpResultReasons.push('acp_cad_tool_result_failed')
   }
-  if (observedCadTools.some(event => event.terminal_statuses?.length > 1
-    || (event.terminal_updates > 0 && (!hasSingleTerminalStatus(event) || event.terminal_updates !== 1)))) {
+  if (observedCadTools.some(event => event.terminal_updates > 0 && !hasSingleTerminalStatus(event))) {
     acpResultReasons.push('acp_cad_tool_result_terminal_status_invalid')
   }
   gates.acp_cad_tool_results = { status: acpResultReasons.length ? 'failed' : 'passed', reasons: acpResultReasons }
