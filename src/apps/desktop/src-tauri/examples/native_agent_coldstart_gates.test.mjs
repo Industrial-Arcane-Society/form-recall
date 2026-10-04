@@ -736,6 +736,75 @@ test('offline Cargo failure publishes only safe status fields before fatal publi
   }
 })
 
+test('offline Cargo example build clears missing bundle resources and preserves caller config', () => {
+  const root = mkdtempSync(join(tmpdir(), 'coldstart-offline-build-tauri-config-'))
+  const sourceEnvironment = {
+    TAURI_CONFIG: JSON.stringify({
+      productName: 'caller config sentinel',
+      build: { devUrl: 'http://127.0.0.1:1420' },
+      bundle: { active: true, resources: ['target/package-resources/app'] },
+    }),
+    COLDSTART_ENV_SENTINEL: 'preserved',
+  }
+  let childOptions
+  try {
+    const status = runOfflineCargoBuild({
+      spawnSyncImpl: (_command, _args, options) => {
+        childOptions = options
+        return { status: 0, stdout: '', stderr: '' }
+      },
+      args: ['build', '--offline', '--example', 'native_read_probe'],
+      cwd: root,
+      output: join(root, 'run'),
+      environment: sourceEnvironment,
+    })
+
+    assert.equal(status.status, 'passed')
+    assert.deepEqual(JSON.parse(childOptions.env.TAURI_CONFIG), {
+      productName: 'caller config sentinel',
+      build: { devUrl: 'http://127.0.0.1:1420' },
+      bundle: { active: true, resources: [] },
+    })
+    assert.equal(childOptions.env.COLDSTART_ENV_SENTINEL, 'preserved')
+    assert.deepEqual(JSON.parse(sourceEnvironment.TAURI_CONFIG).bundle.resources, [
+      'target/package-resources/app',
+    ])
+    assert.equal(sourceEnvironment.COLDSTART_ENV_SENTINEL, 'preserved')
+  } finally {
+    rmSync(root, { recursive: true, force: true })
+  }
+})
+
+test('offline Cargo build rejects malformed TAURI_CONFIG without spawning Cargo or leaking it', () => {
+  const root = mkdtempSync(join(tmpdir(), 'coldstart-offline-build-invalid-config-'))
+  const output = join(root, 'run')
+  const invalid = '{invalid-tauri-config-sentinel'
+  let spawnCount = 0
+  try {
+    const status = runOfflineCargoBuild({
+      spawnSyncImpl: () => {
+        spawnCount += 1
+        return { status: 0, stdout: '', stderr: '' }
+      },
+      args: ['build', '--offline'],
+      cwd: root,
+      output,
+      environment: { TAURI_CONFIG: invalid },
+      now: () => 123,
+    })
+
+    assert.deepEqual(status, {
+      status: 'failed', exit_code: null, elapsed_ms: 0, stdout_bytes: 0, stderr_bytes: 0,
+    })
+    assert.equal(spawnCount, 0)
+    const published = readFileSync(join(output, 'build-status.json'), 'utf8')
+    assert.deepEqual(JSON.parse(published), status)
+    assert.equal(published.includes(invalid), false)
+  } finally {
+    rmSync(root, { recursive: true, force: true })
+  }
+})
+
 const negativeFixtures = [
   ['different request successful response', f => { f.streamEvents[1].request_id = 'other'; f.streamEvents[2].request_id = 'other' }, 'same_image_request_successful_response_missing'],
   ['missing response completion', f => f.streamEvents.pop(), 'same_image_request_successful_response_missing'],

@@ -9,15 +9,18 @@ export function runOfflineCargoBuild({
   args,
   cwd,
   output,
+  environment = process.env,
   now = Date.now,
   timeout = 20 * 60 * 1000,
 }) {
   const startedAt = now()
   let result
   try {
+    const env = buildCargoEnvironment(environment)
     result = spawnSyncImpl(command, args, {
       cwd,
       encoding: 'utf8',
+      env,
       windowsHide: true,
       timeout,
       maxBuffer: 8 * 1024 * 1024,
@@ -45,4 +48,23 @@ export function runOfflineCargoBuild({
 function byteCount(value) {
   if (typeof value === 'string' || Buffer.isBuffer(value)) return Buffer.byteLength(value)
   return 0
+}
+
+function buildCargoEnvironment(source) {
+  const env = { ...source }
+  let config = {}
+  if (env.TAURI_CONFIG !== undefined) {
+    config = JSON.parse(env.TAURI_CONFIG)
+    if (!isJsonObject(config)) throw new TypeError('TAURI_CONFIG must be a JSON object')
+  }
+
+  const bundle = config.bundle === undefined ? {} : config.bundle
+  if (!isJsonObject(bundle)) throw new TypeError('TAURI_CONFIG.bundle must be a JSON object')
+  config.bundle = { ...bundle, resources: [] }
+  env.TAURI_CONFIG = JSON.stringify(config)
+  return env
+}
+
+function isJsonObject(value) {
+  return value !== null && typeof value === 'object' && !Array.isArray(value)
 }
