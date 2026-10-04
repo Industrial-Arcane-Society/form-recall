@@ -33,6 +33,7 @@
 - [F7/G5 观察刷新与 finding 生命周期](06-roadmap/40-f7-stage-review-findings.md)
 - [F7/G8 Safe gate 细分诊断](06-roadmap/78-f7-g8-subcondition-diagnostics.md)
 - [F7/G8 Run23 真实 provider 冷启动诊断](06-roadmap/79-f7-g8-run-23-diagnosis.md)
+- [F7 review/summary target fingerprint 规范与 G5 修复验收](06-roadmap/79-f7-user-target-fingerprint-canonicalization.md)
 - [F6.3 Rust 原生零件目录与示例列表](06-roadmap/55-f6.3-native-parts-catalog.md)
 - [文档目录、索引与链接审查记录](06-roadmap/03-docs-index-audit.md)
 
