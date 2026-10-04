@@ -31,9 +31,9 @@
 | F3.3 | Rust CAD 会话事务与 preview/build dispatch | **已完成** | Rust 会话事务连接原生 OCCT backend；create/add/update/remove/preview/build 和候选状态完成本地 CLI 验收，回滚需关联当前 finding ID |
 | F3.3.1 | 会话事务及版本/来源/验收门禁 | **已完成（domain）** | 16 项定向正负测试通过；真实后端及 Cordis 写工具接线尚待完成，复杂来源语义仍有限制 |
 | F3.3.2 | 宿主整体复核与完成门禁 | **已完成（domain）** | session 18/18、gate 7/7；旧版本/篡改证据阻断，当前未验收候选可保存；真实视觉质量待 F7 |
-| F4 | Rust/C++ thin OCCT FFI | **进行中** | 固定官方 OCCT 7.9.3 SDK、C ABI/Rust 包装及本机 packaged probe 已通过；原生 registry 覆盖 27 类规格中的 22 类，另 5 类及已实现类的完整拒绝变体、最终安装包/干净机验收仍未完成；含 scroll_disc 的本机 Rust/Python OCP 矩阵 89 正例、54 负例通过 |
+| F4 | Rust/C++ thin OCCT FFI | **进行中** | 固定官方 OCCT 7.9.3 SDK、C ABI/Rust 包装及本机 packaged probe 已通过；原生 registry 覆盖 27 类规格中的 24 类，未实现 `loft`、`impeller`、`shell`；已实现类仍有完整拒绝变体及最终安装包/干净机验收缺口；含 scroll_disc 的本机 Rust/Python OCP 矩阵 89 正例、54 负例通过 |
 | F4.1 | 固定 OCCT SDK、C ABI 与 Rust 几何基础 | **已完成** | 实际 Rust → C ABI → OCCT fixture 通过，正常退出；27 类 CADPlan feature registry 中有 22 类已接入原生执行器，安装交付仍待完成 |
-| F4.2 | CADPlan 基础特征到 OCCT 的原生执行 | **进行中** | 已接入 box/cylinder/sphere/hole/pocket、cone/prism/revolve、gear/helical_gear/bevel_gear/socket_head_bolt、pattern、piston、camshaft、crankshaft、timing_pulley、vbelt_pulley、scroll_disc 等特征；其余特征映射与安装 runtime 仍未完成 |
+| F4.2 | CADPlan 基础特征到 OCCT 的原生执行 | **进行中** | 已接入 box/cylinder/sphere/hole/pocket、cone/prism/revolve、gear/helical_gear/bevel_gear/socket_head_bolt、pattern、piston、camshaft、crankshaft、timing_pulley、vbelt_pulley、scroll_disc、helix、worm 等特征；其余 `loft`、`impeller`、`shell` 特征映射与安装 runtime 仍未完成 |
 | F4.2.1 | 五类基础特征与参数坐标对拍 | **已完成** | box/cylinder/sphere/hole/pocket 的基础变体已执行；24 组真实几何对拍、4 个负样本通过，孔记录未冒充独立测量 |
 | F4.2.2 | 圆锥、棱柱和回转能力 | **已完成** | 三类原生构造器及单位/坐标接线完成；含负角回转的 44 组旧内核几何对拍通过 |
 | F4.2.3 | 齿轮与螺钉原生几何执行 | **已完成（标记近似）** | 完整 CADPlan 接入 gear/socket_head_bolt；无尺寸时拒绝兜底；几何包围盒/体积对拍，螺纹近似 warning |
@@ -51,6 +51,7 @@
 | F4.2.15 | CADPlan vbelt_pulley 原生执行 | **已完成（标记近似）** | fallback 标准槽轴向 profile 经 Rust→C ABI→OCCT 回转；feature-only 4 正例/4 负例通过，bbox 与体积误差均为0。集成分支完整矩阵 **86 正例 / 47 负例** 通过（5 个 V-belt 正例、3 个 timing 正例），bbox 容差 `1e-6 mm`、体积容差 `1e-5 mm³`。窄轮宽、辐条结构、要求 legacy 静默缩孔的变体拒绝。当前 `native_vbelt_pulley` 模块 3 项、native capability registry 6 项通过；CATIA 仍省略 V 槽。此结果是 CADPlan 几何对拍，不是 Agent 图像验收。详见[记录](./63-f4-native-vbelt-pulley.md) |
 | F4.2.16 | CADPlan scroll_disc 原生执行 | **已完成（标记近似）** | Rust OCCT 采样阿基米德螺旋棱柱与圆柱背盘融合；全局 Z 轴、center 几何中点、mm 归一化、有效单闭合体；旧 B-Rep 正例 bbox 差 0 mm、volume 差 ≤`9.1e-12 mm³`，OCCT tessellated area 估算最大相对差 `0.10913%`（边界 `0.6%`）；旧 oracle、平移与 cm 正例共 3 个，退化/资源/自交/不相交融合拒绝 7 个；CATIA 仍省略螺旋壁。详见[验收记录](./64-f4-native-scroll-disc.md) |
 | F4.2.17 | CADPlan helix 原生执行 | **已完成（标记近似）** | 接入 Rust native builder、单位归一化、preflight 与 capability；4 个轴向/平移/taper/cm Rust→OCCT 正例均生成单一有效闭合 facet-BRep，与旧 Python OCP 包围盒/体积误差均为 0（容差分别 `1e-6 mm` / `1e-5 mm³`）；3 类 schema-valid 负例在 OCCT 前拒绝。完整共享 parity 矩阵未完成；CATIA mapping 仍 unsupported。详见[验收记录](./65-f4-native-helix.md) |
+| F4.2.18 | CADPlan worm 原生执行 | **已完成（标记近似）** | Rust 用 48 边棱柱轴身 + native helix facet-BRep 实际 fuse；3 个旧 Document/OCP 对拍（标准切触、平移、cm）BBox 最大差 0 mm、体积误差 ≤`6.19e-11 mm³`；5 类负例在建模前拒绝。另以 8 边轴身验证实际 OCCT fuse 返回 `valid=1, solid_count=2, closed=2` 时 builder 拒绝候选，不冒报成功。结果强制单有效闭合体；仅全局 Z 同轴。wire/helix 和轴身多边形仍为近似 facet-BRep；CATIA 仍只导出光轴。详见[验收记录](./66-f4-native-worm.md) |
 | F4.3.1 | B-Rep 材料区间与离散孔证据基础 | **已完成** | 精确面交事件、Rust RAII、41 射线 pre/post 对比；真实九孔/盲孔/错位/错径正负样例通过，非孔径计量，生产接线待完成 |
 | F4.3.2 | 孔材料采样接入 CADPlan | **已完成** | 44 对拍、6 负样例、局部材料盲孔与近边孔部分证据通过；采样不冒充孔径计量 |
 | F4.3.3 | 最终 B-Rep 孔计量接入 CADPlan | **已完成** | 最终形体实测孔半径、轴线与 360° 覆盖；盲孔/贯穿孔核验，后续特征会使旧测量失效 |

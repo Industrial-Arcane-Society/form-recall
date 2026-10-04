@@ -43,6 +43,7 @@ pub mod native_tool_bridge;
 pub mod native_tool_executor;
 pub mod native_tool_schemas;
 pub mod native_vbelt_pulley;
+pub mod native_worm;
 pub mod native_vision_assets;
 pub mod native_vision_domain;
 pub mod native_vision_provider;

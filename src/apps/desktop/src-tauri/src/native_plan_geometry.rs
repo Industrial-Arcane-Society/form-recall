@@ -48,6 +48,7 @@ pub fn supports_native_kind(kind: &str) -> bool {
             | "vbelt_pulley"
             | "scroll_disc"
             | "helix"
+            | "worm"
     )
 }
 
@@ -116,6 +117,7 @@ pub fn preflight(plan: &Value) -> Result<Value, String> {
             "timing_pulley" => &["pitch_d", "teeth", "height", "tooth_type"],
             "scroll_disc" => &["outer_d", "height", "wall_t", "turns"],
             "helix" => &["radius", "wire_r", "height", "turns"],
+            "worm" => &["radius", "height", "thread_r", "wire_r", "turns"],
             _ => &[],
         };
         for key in required_native_parameters {
@@ -194,6 +196,10 @@ pub fn preflight(plan: &Value) -> Result<Value, String> {
         if kind == "helix" {
             let normalized = normalized_feature(feature, plan)?;
             crate::native_helix::preflight(&normalized["parameters"])?;
+        }
+        if kind == "worm" {
+            let normalized = normalized_feature(feature, plan)?;
+            crate::native_worm::preflight(&normalized["parameters"])?;
         }
         if kind == "pattern" {
             let count = p
@@ -282,6 +288,9 @@ pub fn build(plan: &Value, manifest: &Path, cancelled: &AtomicBool) -> Result<Bu
             (tools, vec![], Some(support))
         } else if normalized["kind"] == "helix" {
             let (tools, support) = crate::native_helix::build(&kernel, &normalized["parameters"])?;
+            (tools, vec![], Some(support))
+        } else if normalized["kind"] == "worm" {
+            let (tools, support) = crate::native_worm::build(&kernel, &normalized["parameters"])?;
             (tools, vec![], Some(support))
         } else if normalized["kind"] == "piston" {
             let (tools, support) =
@@ -1114,6 +1123,7 @@ fn normalized_feature(feature: &Value, plan: &Value) -> Result<Value, String> {
             "y",
             "z",
             "center",
+            "center2",
             "point",
             "step",
             "entry_point",
@@ -1143,6 +1153,8 @@ fn normalized_feature(feature: &Value, plan: &Value) -> Result<Value, String> {
             "lift",
             "bore_d",
             "wire_r",
+            "thread_r",
+            "height2",
             "pitch_d",
         ]
         .contains(&key.as_str())
@@ -1715,6 +1727,43 @@ mod tests {
         assert_eq!(normalized["parameters"]["height"], json!(20.0));
         assert_eq!(preflight(&plan).unwrap()["state"], "valid");
         assert_eq!(plan["features"][0]["parameters"]["wire_r"], json!(0.1));
+    }
+
+    #[test]
+    fn worm_is_registered_and_normalizes_both_centers_and_all_radial_lengths() {
+        let mut plan = fixture();
+        plan["units"]["length"] = json!("cm");
+        let parameters = json!({
+            "radius":1.0,"height":6.0,"thread_r":1.25,"wire_r":0.25,
+            "height2":5.0,"turns":3.75,"axis":"Z","segments":48,
+            "seg_per_turn":16,"wire_seg":8,
+            "center":[0.0,0.0,-3.0],"center2":[0.0,0.0,-2.5]
+        });
+        let mut sources = serde_json::Map::new();
+        for key in [
+            "radius", "height", "thread_r", "wire_r", "height2", "turns",
+            "segments", "seg_per_turn", "wire_seg", "center", "center2",
+        ] {
+            sources.insert(key.into(), json!({"type":"user"}));
+        }
+        plan["features"] = json!([{
+            "id":"worm","kind":"worm","operation":"add",
+            "parameters":parameters,"sources":sources
+        }]);
+        assert_eq!(crate::cad_plan_validation::validate_plan(&plan)["state"], "valid");
+        assert!(supports_native_kind("worm"));
+        let normalized = normalized_feature(&plan["features"][0], &plan).unwrap();
+        for (key, value) in [
+            ("radius", 10.0), ("height", 60.0), ("thread_r", 12.5),
+            ("wire_r", 2.5), ("height2", 50.0),
+        ] {
+            assert_eq!(normalized["parameters"][key], json!(value), "{key}");
+        }
+        assert_eq!(normalized["parameters"]["center"], json!([0.0,0.0,-30.0]));
+        assert_eq!(normalized["parameters"]["center2"], json!([0.0,0.0,-25.0]));
+        assert_eq!(preflight(&plan).unwrap()["state"], "valid");
+        assert_eq!(plan["features"][0]["parameters"]["wire_r"], json!(0.25));
+        assert_eq!(plan["features"][0]["parameters"]["center2"], json!([0.0,0.0,-2.5]));
     }
 
     #[test]

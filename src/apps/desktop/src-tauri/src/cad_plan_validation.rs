@@ -161,7 +161,7 @@ const SPECS: &[Spec] = &[
     Spec {
         kind: "worm",
         required: "radius height thread_r wire_r turns",
-        params: "radius height center center2 thread_r wire_r height2 turns segments seg_per_turn wire_seg",
+        params: "radius height center center2 thread_r wire_r axis height2 turns segments seg_per_turn wire_seg",
         catia_status: "approximate",
         catia_reason: "CATIA 仅生成光轴，螺旋齿需要补建。",
         local_status: "approximate",

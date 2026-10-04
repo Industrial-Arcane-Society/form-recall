@@ -132,7 +132,7 @@ FEATURE_SPECS = {
                             "center", "segments")),
     "worm": _spec(("radius", "height", "thread_r", "wire_r", "turns"), "approximate",
                   "CATIA 仅生成光轴，螺旋齿需要补建。",
-                  ("radius", "height", "center", "center2", "thread_r", "wire_r",
+                  ("radius", "height", "center", "center2", "thread_r", "wire_r", "axis",
                    "height2", "turns", "segments", "seg_per_turn", "wire_seg")),
     "helical_gear": _spec(("teeth", "module", "height"), "approximate",
                           "CATIA 以直齿轮近似，省略螺旋角。",
