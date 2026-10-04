@@ -24,6 +24,15 @@ DSH session 失败只发布白名单阶段、RPC method 和 error class。阶段
 
 ACP projection schema 从 `acp_terminal_update_projection_v2` 升为 `v3`，新增 `repeated_argument_fingerprint_counts`，按 allowlisted CAD tool 汇总重复参数指纹对应的额外调用数。指纹仅用于 runner 内存分组，projection 不发布指纹、调用 ID、ROI 或参数；不同指纹不会被算作同参数重复。该指标提示重复行为，不单独证明无进展或判断 ROI 是否相同。
 
+## Run22 静态链路审查
+
+- `native_tool_schemas.rs` 中存在 `cad_finish_model` schema/契约断言；`native_cad_tools.rs` 将它列为支持工具并路由至 finish 处理器。`agent_host.rs` 读取 `src/legacy/prompts/dsh_agent/system.md` 并把 native tool schema 提供给 DSH Host。
+- 系统提示词要求在当前 revision 有效预览后调用 finish，并明确允许保存未验收 candidate。`native_cad_session.rs` 的回归覆盖了存在 open finding 时仍可保存 `accepted=false` candidate。因此，所有验收 gate 失败本身不足以解释 Run22 未见 finish 记录。
+- 几何变更会使已有预览及 finish 状态失效；finish 需要当前 revision/geometry fingerprint 对应的预览。若最后工具顺序导致 stale preview，finish handler 可能拒绝该状态；这是源码允许的路径之一，不能据此断言 Run22 实际发生了这一情况。
+- Run22 的 safe projection 不含工具顺序、finish 请求是否发出或 finish 工具结果分类。现有证据只能证明 allowlist 中没有 finish terminal group，以及 DSH 未正常完成/退出码门禁失败；是模型未请求、调用失败、session 提前结束或绑定状态不匹配，仍未知。
+
+本次静态审查没有放宽 finish/geometry/visual gates，也没有读取 raw provider/DSH logs、工具 payload 或模型回答。Run23 使用本诊断提交进行单次真实 provider 冷启动，以新增的安全 subcondition 摘要区分 DSH session/process 与各几何、孔、视觉和 finish 子门禁；具体结论以 Run23 的 allowlist artifacts 为准。
+
 ## 验证与边界
 
 `node --test src/apps/desktop/src-tauri/examples/native_agent_coldstart_gates.test.mjs`：**123/123 通过**。测试覆盖新增 reason predicate 翻转、相同/不同参数指纹计数、非法枚举降级、secret sentinel 不外泄及既有 fail-closed 和 publication 行为。
