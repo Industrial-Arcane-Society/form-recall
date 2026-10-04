@@ -27,7 +27,8 @@
 - [F4.2.5 CADPlan piston 原生执行](06-roadmap/23-f4-native-piston-execution.md)
 - [F4.2.15 CADPlan V 带轮原生执行](06-roadmap/63-f4-native-vbelt-pulley.md)
 - [F4.2.20 CADPlan impeller 原生执行](06-roadmap/68-f4-native-impeller.md)
-- [F4.2.21 CADPlan shell 原生执行阻塞记录](06-roadmap/69-f4-native-shell-blocker.md)
+- [F4.2.21 CADPlan 显式平面抽壳子集](06-roadmap/84-f4-native-explicit-planar-shell.md)
+- [F4.2.21 CADPlan shell 原生执行阻塞记录（历史）](06-roadmap/69-f4-native-shell-blocker.md)
 - [F4.4.1 精简 OCCT 资源与当前 MSI/NSIS 构建](06-roadmap/26-f4-packaged-occt-runtime.md)
 - [F6.7 Python/CATIA 资源拆分与安装包边界](06-roadmap/59-f6.7-python-resource-split.md)
 - [F7/G5 观察刷新与 finding 生命周期](06-roadmap/40-f7-stage-review-findings.md)
@@ -37,6 +38,7 @@
 - [F7/G8 Run24 fingerprint 修复后冷启动诊断](06-roadmap/80-f7-g8-run-24-diagnosis.md)
 - [F7/G8 bridge/native audit 拒绝诊断修复](06-roadmap/81-f7-g8-bridge-audit-rejection-diagnostic.md)
 - [F7/G8 Run25 runner 快速退出诊断](06-roadmap/82-f7-g8-run-25-diagnosis.md)
+- [F7/G8 Run26 冷启动门禁结果](06-roadmap/83-f7-g8-run-26-diagnosis.md)
 - [F6.3 Rust 原生零件目录与示例列表](06-roadmap/55-f6.3-native-parts-catalog.md)
 - [文档目录、索引与链接审查记录](06-roadmap/03-docs-index-audit.md)
 
