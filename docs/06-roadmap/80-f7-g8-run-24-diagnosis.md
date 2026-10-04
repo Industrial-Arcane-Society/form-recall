@@ -48,6 +48,8 @@ Run24 全部 13 个 safe gate 状态与 allowlisted reason codes：
 
 Run24 仍没有被 strict gate 接受。安全投影记录一次 `cad_finish_model` terminal `completed`，但 `finish` 的 7 条原因码表明 acceptance 状态仍为 candidate，并有 open/unresolved findings。ACP terminal projection 对 `cad_add_hole_array` 记录 3 个 completed、3 个 failed terminal。Cordis binding projection 对同一 allowlisted tool 汇总 `acp_to_bridge: matched=6`，`bridge_to_audit: matched=3, bridge_execution_rejected=3`；所有工具合计 ACP→bridge 34 个 matched、bridge→audit 31 个 matched/3 个 rejected。`bridge_execution_rejected` 是本次拒绝的公开 allowlisted bridge result code。摘要不含参数或逐调用关联细节，不能判断哪个输入/操作导致拒绝。缺失 call ID 事件数为 0。
 
+后续对固定源码的只读复核发现，旧版 projection 在 `call.success !== true` 时会先输出 `bridge_execution_rejected`，可能短路同一调用的失败 native audit。此缺陷只说明 Run24 的公开原因码可能不够具体；Run24 历史产物无法据此重新分类，也不能判断具体孔参数或拒绝尺寸。修复提交 `4d0bd26` 在匹配到同工具、同调用 ID、运行时间范围内的失败 audit 时公开 `native_audit_rejected`；无匹配 audit 或 audit 成功时保留 `bridge_execution_rejected`。修复只通过合成回归验证，不能视为 Run24 根因证明；实现与边界见[诊断修复记录](./81-f7-g8-bridge-audit-rejection-diagnostic.md)。
+
 ## 允许读取的产物
 
 唯一诊断目录：`C:\Users\lycohana\AppData\Local\Temp\f7-g8-run24-20261004-150844-438225d3cee540eea60314bf5ce860cc\safe-output`。仅读取 runner allowlist 的 `summary.json`、`build-status.json`、`tool-result-diagnostics.jsonl`；没有读取 raw provider/DSH logs、scratch、工具参数、模型 answer/thought、几何 payload 或预览图片。
@@ -62,4 +64,4 @@ Run24 仍没有被 strict gate 接受。安全投影记录一次 `cad_finish_mod
 
 Run24 的真实单图 DSH 冷启动支持了 review fingerprint 修复的目标：视觉 summary gate 从 Run23 的失败变为通过，且 Run24 在 `current_geometry`、`holes` 和原图 wire gate 上通过。严格验收仍失败，当前可由 allowlist 确认的问题集中在三次 `cad_add_hole_array` 被拒绝/失败，以及 finish 因未接受状态和 open/unresolved findings 而未完成验收；安全投影不含足够上下文来说明调用参数或 finding 内容。
 
-下一步按 hole-array 工具 producer → Rust bridge → ACP terminal 的安全契约追查拒绝原因，并确认失败工具结果如何进入 findings/finish；代码修复后再用新固定 commit 和全新 output 执行真实冷启动。不可读取原始调用参数、raw provider logs 或几何负载，也不能因 visual gate 通过就把候选标记为 accepted。F7/G8 仍未完成。
+下一步在包含 projection 修复的新固定 commit 上，以全新 output 执行真实冷启动，确认是否有 `native_audit_rejected` 记录，再按 hole-array 工具 producer → Rust bridge → ACP terminal 的安全契约继续追查失败工具结果如何进入 findings/finish。不可读取原始调用参数、raw provider logs 或几何负载，也不能因 visual gate 通过就把候选标记为 accepted。Run24 是修复前的历史记录，不能被新 projection 追溯分类。F7/G8 仍未完成。

@@ -123,6 +123,11 @@ Coldstart runner 已采用默认且唯一发布 safe gate summary、ACP/Cordis a
 | F7.G9 | P0 | 原生 Cordis CAD 工具契约修复 | **代码/fixture 已提交；Run22安全Cordis/ACP工具身份与审计 gate通过，整体验收仍失败** | 主实现 `542ca3f`；集成全量测试发现动态 map 说明删掉了数值来源与 metadata 边界，follow-up `75ff1bc` 已恢复 `sources`/增量更新/fields 约束；定向回归 1/1、集成 Rust 单测 326/326 通过。Run22 `cordis_cad_tools` 与 `acp_cad_tool_results` gate通过；projection中24个 ACP→bridge 及24个 bridge→audit 调用 outcome 均 matched，无 missing call ID。此证据不证明所有Dsh阶段完成、几何视觉正确或finish通过。详见[契约记录](./71-f7-native-tool-contracts.md)与[Run22诊断](./77-f7-g8-run-22-diagnosis.md)。 |
 执行顺序：Run21 的缺失 `bundle.resources` 根因已修复并在 Run22 构建验证。Run23 进一步证明 DSH session/process、当前几何、孔核验均通过，具体失败锁定在 visual reference coverage/独立review/mismatch 及未解决 finding；`cad_finish_model` 已调用，所以调查方向应是 review/coverage evidence 的创建和聚合，而不是继续猜 DSH 是否完成。只读 Run23 allowlist artifacts，禁止读取 raw provider logs、scratch、参数或几何文件。已定位并修复 review producer/summary consumer 的 target fingerprint 规范不一致，集成 Rust 全量 346/346 通过。下一步固定修复后的 commit，在全新 worktree 重跑真实 DSH 多模态 cold-start，检验 visual/finish gate；单测不能替代该验收。F4 shell 显式选择器仍在开发，完成后需补齐 schema/迁移/能力矩阵和验证。之后继续 F6 干净账户/安装后 runtime 与真实 CATIA COM验收及剩余F7 P0/P1；F7未有真实链路strict通过不得标记完成。
 
+### F7.G8 诊断投影跟进（2026-10-04）
+
+- [x] 修复桥接失败优先级短路：只有同工具、同调用 ID、同运行时间范围内存在失败 native audit 且没有成功 audit 时，才输出 `native_audit_rejected`；没有匹配 audit 或 audit 成功仍输出 `bridge_execution_rejected`。代码提交 `4d0bd26`；cold-start gate Node 测试 126/126 通过，三条新回归确认错误正文、调用 ID、参数与指纹不进入投影。
+- [ ] 用该修复版固定 SHA 和全新 output 重跑真实多模态冷启动。Run24 的旧汇总仍是历史 `bridge_execution_rejected`，不能追溯判断三次拒绝是否来自失败 native audit，也不能推断输入参数或几何原因。详见[Run24诊断补充](./80-f7-g8-run-24-diagnosis.md)与[投影修复记录](./81-f7-g8-bridge-audit-rejection-diagnostic.md)。
+
 ## F0 验收记录
 
 - [x] 2026-10-04：修复 Tauri devUrl `localhost` 与 Vite `127.0.0.1:1420` 的地址契约不一致；新增 Node 配置回归，修改前失败、修改后 4/4 通过；`npm run build` 通过，只有 637.32 kB `CadViewport` chunk 大小提示。CSP 为 `null`、capability 不含按 host 授权项，无需同步 host allowlist。此项没有运行 `npm run dev`、Tauri dev 或可见 WebView。
