@@ -14,7 +14,7 @@
 
 ## Safe allowlist 结果
 
-仅读取 `summary.json`、`build-status.json`、`tool-result-diagnostics.jsonl`。摘要报告 `status=passed`、`transport_status=completed`、`model_status=accepted_by_strict_cli_gate`、`failure_reason_count=0`、`evidence_error_count=0`、scratch cleanup `removed`。12 个 gate 全部 passed：run_scope、dsh_session、dsh_process、trace_integrity、original_image、main_image_wire、cordis_cad_tools、acp_cad_tool_results、current_geometry、artifacts、holes、visual、finish。
+仅读取 `summary.json`、`build-status.json`、`tool-result-diagnostics.jsonl`。摘要报告 `status=passed`、`transport_status=completed`、`model_status=accepted_by_strict_cli_gate`、`failure_reason_count=0`、`evidence_error_count=0`、scratch cleanup `removed`。`strict_gates.gates` 有 13 个 gate，逐项确认其 `status` 均为 `passed`：run_scope、dsh_session、dsh_process、trace_integrity、original_image、main_image_wire、cordis_cad_tools、acp_cad_tool_results、current_geometry、artifacts、holes、visual、finish。
 
 新增 visual/finish 子条件 projection 的所有检查均为 true。Visual 包括 manifest、independent review、reference ID/SHA binding、original coverage、inventory validity、summary freshness、coverage completeness 与 mismatch-free。Finish 包括 domain/summary accepted、geometry review accepted、construction complete、无 open/unresolved findings，以及外部事实计数和验证状态。
 
