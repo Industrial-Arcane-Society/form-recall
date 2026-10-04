@@ -7,7 +7,8 @@ import { EventEmitter } from 'node:events'
 import { join, relative } from 'node:path'
 import { tmpdir } from 'node:os'
 import { createAuditedToolProxy, createTerminalUpdateHmac, evaluateColdstartGates, parseEvidenceJsonl, parsePostcheckState, readRunArtifacts, summarizeAcpTerminalUpdateDiagnostics, summarizeCordisBindingDiagnostics, toolArgumentsFingerprint } from './native_agent_coldstart_gates.mjs'
-import { buildSafeAcceptanceSummary, writeSafeAcceptanceArtifacts, writeSafeFailureSummary } from './native_agent_coldstart_publication.mjs'
+import { buildSafeAcceptanceSummary, replacePublishedSafeFailureSummary, writeSafeAcceptanceArtifacts,
+  writeSafeFailureSummary } from './native_agent_coldstart_publication.mjs'
 import { runOfflineCargoBuild } from './native_agent_coldstart_build.mjs'
 import { removeScratchDirectory, safeScratchCleanupStatus, terminateChildrenAndWait, waitThenTerminateChild } from './native_agent_coldstart_lifecycle.mjs'
 import { COLDSTART_SCRATCH_MAX_AGE_MS, COLDSTART_SCRATCH_PREFIX, createColdstartScratchDirectory,
@@ -760,6 +761,41 @@ test('fatal failure publication rejects unknown stage and code values', () => {
     })
     assert.deepEqual(failed.failure_diagnostic, { stage: 'unknown', code: 'uncaught_exception' })
     assert.equal(JSON.stringify(failed).includes('sentinel'), false)
+  } finally {
+    rmSync(root, { recursive: true, force: true })
+  }
+})
+
+test('Windows late fatal atomically replaces only a published passed summary with a safe failed summary', {
+  skip: process.platform !== 'win32',
+}, () => {
+  const root = mkdtempSync(join(tmpdir(), 'coldstart-late-fatal-'))
+  const output = join(root, 'run')
+  const sentinel = 'late-fatal-private-error-sentinel'
+  try {
+    const gateNames = ['run_scope', 'dsh_session', 'dsh_process', 'trace_integrity', 'original_image',
+      'main_image_wire', 'cordis_cad_tools', 'acp_cad_tool_results', 'current_geometry', 'artifacts', 'holes',
+      'visual', 'finish']
+    const strict = {
+      status: 'passed', scope: 'single_image_single_turn_cli_host_gates_not_independent_visual_or_CATIA_acceptance',
+      failure_reasons: [], evidence_errors: [],
+      gates: Object.fromEntries(gateNames.map(name => [name, { status: 'passed', reasons: [] }])),
+    }
+    const passed = buildSafeAcceptanceSummary({ strict, scratchCleanupStatus: 'removed' })
+    writeSafeAcceptanceArtifacts(output, { summary: passed, acpProjection: {}, bindingProjection: {},
+      buildStatus: { status: 'passed', exit_code: 0 } })
+    assert.equal(passed.status, 'passed')
+
+    const failed = replacePublishedSafeFailureSummary(output, {
+      stage: 'publication', code: 'unhandled_rejection', scratchCleanupStatus: 'failed', exception: sentinel,
+    })
+    const serialized = readFileSync(join(output, 'summary.json'), 'utf8')
+    assert.equal(failed.status, 'failed')
+    assert.deepEqual(failed.failure_diagnostic, { stage: 'publication', code: 'unhandled_rejection' })
+    assert.equal(JSON.parse(serialized).status, 'failed')
+    assert.equal(serialized.includes(sentinel), false)
+    assert.equal(readdirSync(output).some(name => name.startsWith('.summary-')), false)
+    assert.throws(() => writeSafeFailureSummary(output, { stage: 'publication', code: 'uncaught_exception' }), /EEXIST/)
   } finally {
     rmSync(root, { recursive: true, force: true })
   }

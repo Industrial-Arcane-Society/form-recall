@@ -33,3 +33,9 @@ Build status：passed，Cargo exit `0`，elapsed `77,396 ms`，stdout `0` bytes�
 Run29 的单次真实 DSH/CLI 冷启动安全摘要报告 strict gates 全部通过，包含视觉覆盖与 finish host predicates；这是相较 Run28 strict failed 的可归因运行结果变化。它不能证明独立视觉质量、几何准确性、CATIA 可用性或用户可见桌面体验。运行命令返回 exit code `1` 与摘要 passed 状态的冲突仍未解释，需作为复核项保留。没有读取 raw provider/DSH logs、scratch、工具参数、几何载荷、图片或预览，也没有启动 GUI/CATIA。不得只凭本次 host projection 将整体 F7 标记完成。
 
 针对新增 rejected-audit `error_class` projection 的定向 Node 测试通过：`failed bridge call reports a matching timed native audit rejection without leaking call data`（1/1）。该合成测试不是本次真实运行证据。
+
+## 后续 late-fatal 状态一致性修复
+
+后续静态审计确认，runner 的正常最终路径只会在 final summary 非 `passed` 时返回 exit code 1；独立 fatal handler 也可能在 summary 发布后以 exit code 1 退出。现已修复该一般性一致性风险：runner 仅在本次 safe summary 成功发布后，才可用同目录临时文件 + rename 原子替换为固定枚举的 failed summary；默认 fresh-output failure publication 仍为 `wx` 且拒绝覆盖。成功摘要改为最后写入，避免 companion artifact 写入失败后留下半发布的 passed summary。Windows 定向合成测试验证 passed→late fatal→failed、现有文件替换成功、默认 `wx` 仍拒绝覆盖且异常 sentinel 不泄漏。
+
+这项代码修复降低未来 summary/exit-status 矛盾风险；由于 Run29 stdout/stderr 被按要求丢弃，且没有允许的安全字段证明发生 late fatal，本修复不证明它是 Run29 `exit=1` 的历史原因。Run29 的原始 exit-code 差异仍标记为未知。修复仅经 Windows Node 合成回归与静态 diff 检查，未重新启动 Provider/DSH。

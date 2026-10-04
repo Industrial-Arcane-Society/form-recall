@@ -1,5 +1,6 @@
-import { mkdirSync, writeFileSync } from 'node:fs'
+import { mkdirSync, renameSync, unlinkSync, writeFileSync } from 'node:fs'
 import { join } from 'node:path'
+import { randomUUID } from 'node:crypto'
 import { COLDSTART_TOOL_NAME_ALLOWLIST } from './native_agent_coldstart_gates.mjs'
 import { sanitizeScratchRecoverySummary } from './native_agent_coldstart_scratch.mjs'
 
@@ -189,9 +190,8 @@ export function buildSafeDshDiagnostic(value = {}) {
   }
 }
 
-export function writeSafeFailureSummary(output, { stage, code, scratchCleanupStatus, scratchRecovery } = {}) {
-  mkdirSync(output, { recursive: true })
-  const summary = {
+function createSafeFailureSummary({ stage, code, scratchCleanupStatus, scratchRecovery } = {}) {
+  return {
     schema_version: 1,
     status: 'failed',
     transport_status: 'failed',
@@ -203,7 +203,29 @@ export function writeSafeFailureSummary(output, { stage, code, scratchCleanupSta
     failure_diagnostic: buildSafeFailureDiagnostic({ stage, code }),
     strict_gates: { status: 'failed', failure_reason_count: 1, evidence_error_count: 0, gates: {} },
   }
+}
+
+export function writeSafeFailureSummary(output, failure = {}) {
+  mkdirSync(output, { recursive: true })
+  const summary = createSafeFailureSummary(failure)
   writeFileSync(join(output, 'summary.json'), JSON.stringify(summary, null, 2), { flag: 'wx', mode: 0o600 })
+  return summary
+}
+
+// Late fatal errors may supersede only this process's already-published summary.
+// A same-directory rename keeps replacement atomic on Windows and POSIX.
+export function replacePublishedSafeFailureSummary(output, failure = {}) {
+  mkdirSync(output, { recursive: true })
+  const target = join(output, 'summary.json')
+  const temporary = join(output, `.summary-${randomUUID()}.tmp`)
+  const summary = createSafeFailureSummary(failure)
+  try {
+    writeFileSync(temporary, JSON.stringify(summary, null, 2), { flag: 'wx', mode: 0o600 })
+    renameSync(temporary, target)
+  } catch (error) {
+    try { unlinkSync(temporary) } catch { /* preserve the original failure */ }
+    throw error
+  }
   return summary
 }
 
@@ -263,12 +285,13 @@ export function writeSafeBuildStatus(output, buildStatus) {
 export function writeSafeAcceptanceArtifacts(output, { summary, acpProjection, bindingProjection, buildStatus }) {
   mkdirSync(output, { recursive: true })
   const artifacts = new Map([
-    ['summary.json', summary],
     ['tool-result-diagnostics.jsonl', [
       { stage: 'acp_terminal_update_projection', ...safeAcpProjection(acpProjection) },
       { stage: 'cordis_binding_projection', ...safeBindingProjection(bindingProjection) },
     ].map(row => JSON.stringify(row)).join('\n') + '\n'],
     ['build-status.json', sanitizeSafeBuildStatus(buildStatus)],
+    // Publish the summary last so it also serves as the complete-set marker.
+    ['summary.json', summary],
   ])
   for (const [name, value] of artifacts) {
     const body = typeof value === 'string' ? value : JSON.stringify(value, null, 2)

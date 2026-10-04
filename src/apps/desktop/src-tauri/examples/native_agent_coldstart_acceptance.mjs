@@ -6,13 +6,15 @@ import { mkdirSync, readFileSync, writeFileSync, existsSync } from 'node:fs'
 import { basename, dirname, join, resolve } from 'node:path'
 import { createInterface } from 'node:readline'
 import { createAuditedToolProxy, createTerminalUpdateHmac, evaluateColdstartGates, parseEvidenceJsonl, parsePostcheckState, readRunArtifacts, summarizeAcpTerminalUpdateDiagnostics, summarizeCordisBindingDiagnostics, toolArgumentsFingerprint } from './native_agent_coldstart_gates.mjs'
-import { buildSafeAcceptanceSummary, writeSafeAcceptanceArtifacts, writeSafeFailureSummary } from './native_agent_coldstart_publication.mjs'
+import { buildSafeAcceptanceSummary, replacePublishedSafeFailureSummary, writeSafeAcceptanceArtifacts,
+  writeSafeFailureSummary } from './native_agent_coldstart_publication.mjs'
 import { removeScratchDirectory, safeScratchCleanupStatus, terminateChildrenAndWait, waitThenTerminateChild } from './native_agent_coldstart_lifecycle.mjs'
 import { createColdstartScratchDirectory, recoverStaleColdstartScratch } from './native_agent_coldstart_scratch.mjs'
 import { runOfflineCargoBuild } from './native_agent_coldstart_build.mjs'
 
 const [repoArg, runtimeArg, outputArg, configArg, imageArg, userTextArg] = process.argv.slice(2)
 let archiveDir = null
+let safeSummaryPublished = false
 let scratchDir = null
 let scratchRecovery = { status: 'complete', scanned_count: 0, removed_count: 0, preserved_count: 0,
   rejected_count: 0, unknown_owner_count: 0, failed_count: 0 }
@@ -25,7 +27,9 @@ const stopManagedChildren = () => terminateChildrenAndWait(managedChildren, 1500
 const archiveFailure = (scratchCleanupStatus, code) => {
   if (!archiveDir) return
   try {
-    writeSafeFailureSummary(archiveDir, { stage: failureStage, code, scratchCleanupStatus, scratchRecovery })
+    const failure = { stage: failureStage, code, scratchCleanupStatus, scratchRecovery }
+    if (safeSummaryPublished) replacePublishedSafeFailureSummary(archiveDir, failure)
+    else writeSafeFailureSummary(archiveDir, failure)
   } catch { /* preserve the original process failure */ }
 }
 const cleanupScratch = () => {
@@ -388,6 +392,7 @@ const strict = evaluateColdstartGates({
   failureStage = 'publication'
   writeSafeAcceptanceArtifacts(output, { summary: safeSummary, acpProjection: projection,
     bindingProjection, buildStatus })
+  safeSummaryPublished = true
 }
 const finalStatus = safeSummary.status
 const cleanupFailed = !managedChildrenExited || scratchCleanupStatus !== 'removed'
