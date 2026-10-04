@@ -1,4 +1,4 @@
-# F4.2.20：CADPlan shell 原生执行阻塞记录
+# F4.2.21：CADPlan shell 原生执行阻塞记录
 
 ## 结论
 
@@ -10,7 +10,7 @@
 - `cadplan.py` 将 shell 厚度按长度单位归一化，但单位换算不会提供被移除面的身份或偏置侧。
 - `src/legacy/ai_modeler/core/model/docmodel.py` 的 `Feature.build` 没有 `shell` 分支，故 legacy polygon `Document.build()` 路径不能作为 shell 几何 oracle。
 - `src/legacy/ai_modeler/core/geometry/occ_kernel.py` 将 shell 列为 `unavailable`，执行分派直接抛出 `NotImplementedError`，理由是 CADPlan 未指定要移除的面、缺少可执行的抽壳边界。
-- 当前 Rust 原生能力契约只应报告 `shell` 为 unsupported；`impeller` 是另一个未实现 kind。该能力状态不是构造器实现或正例验收。
+- 当前 Rust 原生能力契约只应报告 `shell` 为 unsupported；`impeller` 已在 F4.2.20 接入近似 builder 并完成有限 OCP 对拍。该能力状态不是构造器实现或正例验收。
 
 ## 最小 schema 缺口
 

@@ -52,6 +52,7 @@ fn native_execution_contract(kind: &str) -> Value {
             | "helix"
             | "worm"
             | "loft"
+            | "impeller"
     );
     let (supported_variants, unsupported_variants, parameter_limits, note) = match kind {
         "rotor" => (
@@ -107,6 +108,12 @@ fn native_execution_contract(kind: &str) -> Value {
             json!(["thickness ratio outside 0.01..=0.4", "camber outside -0.2..=0.2", "camber_pos outside 0.05..=0.95", "sections outside 2..=64", "points outside 8..=128", "twist magnitude above 720 degrees", "OCCT sewing without one valid closed solid"]),
             json!({"root_chord":">0 mm", "tip_chord":">0 mm", "span":">0 mm", "thickness":"dimensionless NACA thickness ratio 0.01..=0.4", "camber":"dimensionless -0.2..=0.2; defaults to 0.05", "camber_pos":"0.05..=0.95; defaults to 0.4", "twist":"finite angle, magnitude <=720 degrees; angle units honored", "sweep":">=0 mm; length units normalized", "sections":"integer 2..=64; defaults to 8", "points":"integer 8..=128 per surface; defaults to 26", "rotate":"optional [X|Y|Z, angle]; angle units honored", "translate":"finite global XYZ; length units normalized", "triangle_faces":"2*sections*(2*points)+2*(2*points-2) <=100000"}),
             "Rust reproduces the retained legacy NACA section loops, chord/span/twist/sweep layout and triangulates side faces plus caps before OCCT sewing. The result is a valid closed faceted B-Rep approximation, not an analytic ThruSections loft; CATIA mapping remains the legacy root-section extrusion approximation.",
+        ),
+        "impeller" => (
+            json!(["global-Z explicit impeller dimensions and blade count", "legacy analytic hub cone and revolved backplate", "legacy twisted rectangular blade sections", "one valid closed OCCT fused solid"]),
+            json!(["hub_d below 2 mm or tip_d < 1.05*hub_d", "height below 1 mm", "blade_t <= 0", "blade count outside 3..=128", "segments outside 4..=128", "triangle face budget above 100000", "invalid/non-closed/disconnected fusion"]),
+            json!({"hub_d":">=2 mm; legacy 1 mm hub-radius floor is rejected", "tip_d":">=1.05*hub_d; rejects legacy minimum tip-radius fallback", "height":">=1 mm; legacy height floor is rejected", "blades":"integer 3..=128", "blade_t":">0 mm; OCP uses min(height, blade_t) for blade axial span", "twist_deg":"finite with absolute value <=720 degrees", "center":"finite global XYZ; omitted means origin", "segments":"integer 4..=128; defaults to legacy 12", "triangle_faces":"blades*(8*segments+4) <=100000"}),
+            "Rust matches the retained OCP hub cone, analytic backplate, twisted rectangular section placement and dimension scaling. Blade sides are triangulated and sewn into facet-BREP before OCCT fusion; this is approximate, not an analytic ThruSections surface. CATIA mapping remains hub/backplate only.",
         ),
         "timing_pulley" => (json!(["global-Z centered legacy trapezoidal tooth prisms", "MXL, XL, T2.5, T5, 3M profiles with radial tooth/blank overlap", "implicit legacy center bore or explicit bore_d", "teeth 6..=512"]), json!(["L, H, XH, XXH, T10, T20, 5M, 8M, 14M have no overlap between legacy tooth inner edge and blank root wall", "teeth above 512", "negative bore or bore reaching the effective tooth-root wall", "tooth-tip circumferential pitch smaller than tooth-tip width", "unknown tooth_type strings", "segments outside 3..=512"]), json!({"pitch_d":">0; legacy pitch radius floor=2 mm", "height":">0", "teeth":"integer 6..=512", "tooth_type":"MXL, XL, T2.5, T5, 3M (the other legacy profiles are rejected because they cannot guarantee a single solid)", "bore_d":">=0; 0 uses legacy implicit bore; explicit bore floored to 2 mm diameter", "segments":"3..=512 integer; retained for legacy baseline but ignored by analytic OCCT blank", "center":"finite global XYZ"}), "Supported legacy trapezoidal tooth prisms overlap the analytic annular revolve. Taller profiles whose legacy prism starts outside the blank root are rejected because a single closed solid cannot be guaranteed. The retained Document/CADPlan baseline is a faceted mesh; this analytic blank intentionally replaces its segmented boundary, so geometry remains approximate with a bounded blank-volume difference."),
         _ => (json!([]), json!(["all native geometry variants"]), json!({}), "No native Rust geometry builder is registered for this kind."),
@@ -379,7 +386,7 @@ mod tests {
                 );
             }
         }
-        assert_eq!(supported_count, 25);
+        assert_eq!(supported_count, 26);
         assert_eq!(kinds.len(), specs.as_object().unwrap().len());
     }
 
@@ -411,8 +418,9 @@ mod tests {
             "helix",
             "worm",
             "loft",
+            "impeller",
         ];
-        const UNSUPPORTED: &[&str] = &["impeller", "shell"];
+        const UNSUPPORTED: &[&str] = &["shell"];
         const APPROXIMATE: &[&str] = &[
             "gear",
             "helical_gear",
@@ -428,6 +436,7 @@ mod tests {
             "helix",
             "worm",
             "loft",
+            "impeller",
         ];
 
         let schemas = crate::native_tool_schemas::native_tool_schemas().unwrap();
@@ -449,8 +458,8 @@ mod tests {
             "the native contract must cover all 27 schema kinds"
         );
         assert_eq!(actual.len(), 27);
-        assert_eq!(IMPLEMENTED.len(), 25);
-        assert_eq!(UNSUPPORTED.len(), 2);
+        assert_eq!(IMPLEMENTED.len(), 26);
+        assert_eq!(UNSUPPORTED.len(), 1);
 
         for kind in IMPLEMENTED {
             let contract = feature_spec(kind).unwrap()["native_execution"].clone();
@@ -600,6 +609,22 @@ mod tests {
                 limit_key: "thickness",
                 limit_text: "0.01..=0.4",
                 error_text: "0.01..=0.4",
+            },
+            Probe {
+                kind: "impeller",
+                valid: json!({"hub_d":20,"tip_d":60,"height":15,"blades":6,"blade_t":2,"twist_deg":25}),
+                invalid: json!({"hub_d":20,"tip_d":60,"height":15,"blades":129,"blade_t":2,"twist_deg":25}),
+                limit_key: "blades",
+                limit_text: "3..=128",
+                error_text: "3..=128",
+            },
+            Probe {
+                kind: "impeller",
+                valid: json!({"hub_d":20,"tip_d":60,"height":15,"blades":6,"blade_t":2,"twist_deg":25}),
+                invalid: json!({"hub_d":20,"tip_d":20.5,"height":15,"blades":6,"blade_t":2,"twist_deg":25}),
+                limit_key: "tip_d",
+                limit_text: ">=1.05*hub_d",
+                error_text: "tip_d>=1.05*hub_d",
             },
             Probe {
                 kind: "pattern",
@@ -953,9 +978,6 @@ mod tests {
     fn unsupported_kind_plan(kind: &str) -> Value {
         let parameters = match kind {
             "helix" => json!({"radius":8,"wire_r":1,"height":20,"turns":3}),
-            "impeller" => {
-                json!({"hub_d":10,"tip_d":40,"height":8,"blades":6,"blade_t":2,"twist_deg":15})
-            }
             "worm" => json!({"radius":8,"height":30,"thread_r":2,"wire_r":1,"turns":3}),
             "shell" => json!({"thickness":2}),
             _ => panic!("not an explicitly unsupported kind: {kind}"),

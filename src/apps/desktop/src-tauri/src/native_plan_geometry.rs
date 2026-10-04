@@ -4,7 +4,8 @@ use crate::{
     cad_plan, cad_plan_validation, native_bevel_gear, native_bore_metrology,
     native_geometry_evidence::{self, HoleRequest},
     native_occt::{Axis, Bounds, Kernel, Shape},
-    native_loft, native_parametric_features, native_standard_features, native_timing_pulley,
+    native_impeller, native_loft, native_parametric_features, native_standard_features,
+    native_timing_pulley,
 };
 use serde_json::{Value, json};
 use std::{
@@ -52,6 +53,7 @@ pub fn supports_native_kind(kind: &str) -> bool {
             | "helix"
             | "loft"
             | "worm"
+            | "impeller"
     )
 }
 
@@ -122,6 +124,7 @@ pub fn preflight(plan: &Value) -> Result<Value, String> {
             "helix" => &["radius", "wire_r", "height", "turns"],
             "loft" => &["root_chord", "tip_chord", "span", "thickness"],
             "worm" => &["radius", "height", "thread_r", "wire_r", "turns"],
+            "impeller" => &["hub_d", "tip_d", "height", "blades", "blade_t", "twist_deg"],
             _ => &[],
         };
         for key in required_native_parameters {
@@ -208,6 +211,10 @@ pub fn preflight(plan: &Value) -> Result<Value, String> {
         if kind == "loft" {
             let normalized = normalized_feature(feature, plan)?;
             native_loft::preflight(&normalized["parameters"])?;
+        }
+        if kind == "impeller" {
+            let normalized = normalized_feature(feature, plan)?;
+            native_impeller::preflight(&normalized["parameters"])?;
         }
         if kind == "pattern" {
             let count = p
@@ -302,6 +309,9 @@ pub fn build(plan: &Value, manifest: &Path, cancelled: &AtomicBool) -> Result<Bu
             (tools, vec![], Some(support))
         } else if normalized["kind"] == "loft" {
             let (tools, support) = native_loft::build(&kernel, &normalized["parameters"])?;
+            (tools, vec![], Some(support))
+        } else if normalized["kind"] == "impeller" {
+            let (tools, support) = native_impeller::build(&kernel, &normalized["parameters"])?;
             (tools, vec![], Some(support))
         } else if normalized["kind"] == "piston" {
             let (tools, support) =
@@ -1127,6 +1137,9 @@ fn normalized_feature(feature: &Value, plan: &Value) -> Result<Value, String> {
             "diameter",
             "pitch_d",
             "outer_d",
+            "hub_d",
+            "tip_d",
+            "blade_t",
             "groove_depth",
             "depth",
             "pcd",
@@ -1175,7 +1188,13 @@ fn normalized_feature(feature: &Value, plan: &Value) -> Result<Value, String> {
         .contains(&key.as_str())
         {
             length_factor
-        } else if key == "phase" || key == "angle" || key == "lobe_deg" || key == "cone_deg" || key == "twist" {
+        } else if key == "phase"
+            || key == "angle"
+            || key == "lobe_deg"
+            || key == "cone_deg"
+            || key == "twist"
+            || key == "twist_deg"
+        {
             angle_factor
         } else {
             continue;

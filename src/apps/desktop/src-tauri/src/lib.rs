@@ -20,6 +20,7 @@ pub mod native_feature_specs;
 pub mod native_geometry_backend;
 pub mod native_geometry_evidence;
 pub mod native_helix;
+pub mod native_impeller;
 pub mod native_knowledge;
 pub mod native_loft;
 pub mod native_model_io;
