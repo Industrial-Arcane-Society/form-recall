@@ -36,6 +36,7 @@
 - [F7 review/summary target fingerprint 规范与 G5 修复验收](06-roadmap/79-f7-user-target-fingerprint-canonicalization.md)
 - [F7/G8 Run24 fingerprint 修复后冷启动诊断](06-roadmap/80-f7-g8-run-24-diagnosis.md)
 - [F7/G8 bridge/native audit 拒绝诊断修复](06-roadmap/81-f7-g8-bridge-audit-rejection-diagnostic.md)
+- [F7/G8 Run25 runner 快速退出诊断](06-roadmap/82-f7-g8-run-25-diagnosis.md)
 - [F6.3 Rust 原生零件目录与示例列表](06-roadmap/55-f6.3-native-parts-catalog.md)
 - [文档目录、索引与链接审查记录](06-roadmap/03-docs-index-audit.md)
 
