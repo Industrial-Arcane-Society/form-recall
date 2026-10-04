@@ -8,6 +8,9 @@ const sha = value => createHash('sha256').update(value).digest('hex')
 const rows = value => Array.isArray(value) ? value : []
 const nonempty = value => typeof value === 'string' && value.length > 0
 const digest = value => typeof value === 'string' && /^[a-f0-9]{64}$/.test(value)
+const hasSingleTerminalStatus = event => Array.isArray(event?.terminal_statuses)
+  && event.terminal_statuses.length === 1
+  && ['completed', 'failed'].includes(event.terminal_statuses[0])
 
 const acpStatusCategory = value => ['pending', 'in_progress', 'completed', 'failed'].includes(value) ? value : 'other'
 export const COLDSTART_TOOL_NAME_ALLOWLIST = Object.freeze([
@@ -148,13 +151,17 @@ export function summarizeCordisBindingDiagnostics(input = {}) {
       continue
     }
     const previous = groups.get(event.tool_call_id) || { tool: '', starts: 0 }
+    const terminalStatuses = terminal ? [...new Set([...(previous.terminal_statuses || []), event.status])] : previous.terminal_statuses || []
     groups.set(event.tool_call_id, {
       ...previous, tool: event.title || previous.tool,
       tool_call_id: event.tool_call_id,
       starts: previous.starts + (start ? 1 : 0),
       started_at_ms: start ? event.at_ms : previous.started_at_ms,
       terminal_updates: (previous.terminal_updates || 0) + (terminal ? 1 : 0),
-      terminal_at_ms: terminal ? event.at_ms : previous.terminal_at_ms,
+      terminal_statuses: terminalStatuses,
+      // ACP updates are upserts, so repeated snapshots with the same terminal
+      // state do not extend this call's execution interval.
+      terminal_at_ms: terminal && !Number.isFinite(previous.terminal_at_ms) ? event.at_ms : previous.terminal_at_ms,
       arguments_sha256_24: event.arguments_sha256_24 || previous.arguments_sha256_24,
     })
   }
@@ -182,7 +189,7 @@ export function summarizeCordisBindingDiagnostics(input = {}) {
     }
     if (!acp.length || acp.length !== bridge.length) continue
     const candidatesByBridge = bridge.map(call => acp.filter(event => validIdentity(call, event)
-      && event.terminal_updates === 1 && Number.isFinite(event.started_at_ms) && Number.isFinite(event.terminal_at_ms)
+      && hasSingleTerminalStatus(event) && Number.isFinite(event.started_at_ms) && Number.isFinite(event.terminal_at_ms)
       && event.terminal_at_ms >= event.started_at_ms && Number.isFinite(call.started_at_ms)
       && Number.isFinite(call.completed_at_ms) && call.completed_at_ms >= call.started_at_ms
       && call.started_at_ms >= event.started_at_ms && call.completed_at_ms <= event.terminal_at_ms))
@@ -417,13 +424,14 @@ export function evaluateColdstartGates(input) {
       continue
     }
     const old = acpTools.get(event.tool_call_id) || {}
+    const terminal = event.kind === 'tool_call_update' && ['completed', 'failed'].includes(event.status)
+    const terminalStatuses = terminal ? [...new Set([...(old.terminal_statuses || []), event.status])] : old.terminal_statuses || []
     acpTools.set(event.tool_call_id, { tool: event.title || old.tool, status: event.status || old.status,
       tool_call_id: event.tool_call_id, starts: (old.starts || 0) + (event.kind === 'tool_call' ? 1 : 0),
       started_at_ms: event.kind === 'tool_call' ? event.at_ms : old.started_at_ms,
-      terminal_updates: (old.terminal_updates || 0) + (event.kind === 'tool_call_update'
-        && ['completed', 'failed'].includes(event.status) ? 1 : 0),
-      terminal_at_ms: event.kind === 'tool_call_update' && ['completed', 'failed'].includes(event.status)
-        ? event.at_ms : old.terminal_at_ms,
+      terminal_updates: (old.terminal_updates || 0) + (terminal ? 1 : 0),
+      terminal_statuses: terminalStatuses,
+      terminal_at_ms: terminal && !Number.isFinite(old.terminal_at_ms) ? event.at_ms : old.terminal_at_ms,
       arguments_sha256_24: event.arguments_sha256_24 || old.arguments_sha256_24 })
   }
   const observedCadTools = [...acpTools.values()].filter(row => row.tool?.startsWith('cad_'))
@@ -460,7 +468,7 @@ export function evaluateColdstartGates(input) {
       // contained in exactly one complete ACP invocation interval, and vice
       // versa. Missing, overlapping, or merely ordered timestamps stay ambiguous.
       const candidatesByNative = native.map(call => acp.filter(event => validIdentity(call, event)
-        && event.terminal_updates === 1 && Number.isFinite(event.started_at_ms)
+        && hasSingleTerminalStatus(event) && Number.isFinite(event.started_at_ms)
         && Number.isFinite(event.terminal_at_ms) && event.terminal_at_ms >= event.started_at_ms
         && Number.isFinite(call.started_at_ms) && Number.isFinite(call.completed_at_ms)
         && call.completed_at_ms >= call.started_at_ms
@@ -509,13 +517,11 @@ export function evaluateColdstartGates(input) {
     acpResultReasons.push('acp_cad_tool_result_completion_missing')
   }
   if (acpCadIdentityMissing) acpResultReasons.push('acp_cad_tool_call_id_missing')
-  if (observedCadTools.some(event => event.terminal_updates > 0 && event.status === 'failed')) {
+  if (observedCadTools.some(event => event.terminal_statuses?.includes('failed'))) {
     acpResultReasons.push('acp_cad_tool_result_failed')
   }
-  if (observedCadTools.some(event => event.terminal_updates > 1)) {
-    acpResultReasons.push('acp_cad_tool_result_terminal_update_duplicated')
-  }
-  if (observedCadTools.some(event => event.terminal_updates === 1 && !['completed', 'failed'].includes(event.status))) {
+  if (observedCadTools.some(event => event.terminal_statuses?.length > 1
+    || (event.terminal_updates > 0 && !hasSingleTerminalStatus(event)))) {
     acpResultReasons.push('acp_cad_tool_result_terminal_status_invalid')
   }
   gates.acp_cad_tool_results = { status: acpResultReasons.length ? 'failed' : 'passed', reasons: acpResultReasons }

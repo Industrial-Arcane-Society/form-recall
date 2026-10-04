@@ -239,10 +239,20 @@ test('normalized argument fingerprints ignore object key order and reveal no arg
   assert.equal(toolArgumentsFingerprint(undefined), null)
 })
 
-test('serial repeated identical calls pair only through unique complete temporal intervals', () => {
+test('same-status terminal snapshots are idempotent for strict completion and identity matching', () => {
+  const input = fixture()
+  input.toolEvents.push({ ...input.toolEvents[1], at_ms: 3000 })
+  const result = evaluateColdstartGates(input)
+  assert.equal(result.status, 'passed')
+  assert.deepEqual(result.gates.acp_cad_tool_results.reasons, [])
+  assert.deepEqual(result.matched_native_call_ids, ['11111111-1111-4111-8111-111111111111'])
+})
+
+test('repeated identical calls pair by first terminal transition, not later snapshots', () => {
   const input = fixture(), nativeCallId = '22222222-2222-4222-8222-222222222222'
   input.toolEvents.push({ ...input.toolEvents[0], at_ms: 3100, tool_call_id: 'second-acp-call' })
   input.toolEvents.push({ ...input.toolEvents[1], at_ms: 3500, tool_call_id: 'second-acp-call' })
+  input.toolEvents.push({ ...input.toolEvents[1], at_ms: 3600 })
   input.toolBridgeCalls.push({ ...input.toolBridgeCalls[0], call_id: nativeCallId, started_at_ms: 3200, completed_at_ms: 3400 })
   input.nativeAudit.push({ ...input.nativeAudit[0], call_id: nativeCallId })
   const result = evaluateColdstartGates(input)
@@ -298,12 +308,23 @@ test('ACP result updates without call IDs fail identity without coalescing as du
   assert.equal(result.gates.acp_cad_tool_results.reasons.includes('acp_cad_tool_result_terminal_update_duplicated'), false)
 })
 
-test('two terminal ACP updates with the same valid call ID remain a hard duplicate failure', () => {
+test('repeated same-status failed snapshots remain a failed tool result without a duplicate-notification error', () => {
   const input = fixture()
+  input.toolEvents[1].status = 'failed'
   input.toolEvents.push({ ...input.toolEvents[1], at_ms: 3000 })
   const result = evaluateColdstartGates(input)
   assert.equal(result.status, 'failed')
-  assert.ok(result.gates.acp_cad_tool_results.reasons.includes('acp_cad_tool_result_terminal_update_duplicated'))
+  assert.deepEqual(result.gates.acp_cad_tool_results.reasons, ['acp_cad_tool_result_failed'])
+})
+
+test('conflicting terminal ACP states remain a hard failure', () => {
+  const input = fixture()
+  input.toolEvents.push({ ...input.toolEvents[1], at_ms: 3000, status: 'failed' })
+  const result = evaluateColdstartGates(input)
+  assert.equal(result.status, 'failed')
+  assert.deepEqual(result.gates.acp_cad_tool_results.reasons, [
+    'acp_cad_tool_result_failed', 'acp_cad_tool_result_terminal_status_invalid',
+  ])
 })
 
 test('ACP terminal projection uses per-run full-update HMACs and an exact tool-name allowlist', () => {
@@ -396,6 +417,19 @@ test('Cordis binding projection reports exact static reason counts and never lea
     'run_scope_mismatch', 'bridge_call_id_missing', 'bridge_scope_rejected', 'bridge_time_invalid',
     'bridge_execution_rejected', 'schema_missing', 'registration_missing', 'native_audit_missing',
     'native_audit_tool_mismatch', 'native_audit_out_of_run', 'native_audit_rejected'].includes(row.outcome)))
+})
+
+test('Cordis binding projection uses the first terminal transition for repeated identical calls', () => {
+  const input = fixture(), nativeCallId = '22222222-2222-4222-8222-222222222222'
+  input.toolEvents.push({ ...input.toolEvents[0], at_ms: 3100, tool_call_id: 'second-acp-call' })
+  input.toolEvents.push({ ...input.toolEvents[1], at_ms: 3500, tool_call_id: 'second-acp-call' })
+  input.toolEvents.push({ ...input.toolEvents[1], at_ms: 3600 })
+  input.toolBridgeCalls.push({ ...input.toolBridgeCalls[0], call_id: nativeCallId, started_at_ms: 3200, completed_at_ms: 3400 })
+  input.nativeAudit.push({ ...input.nativeAudit[0], call_id: nativeCallId })
+  const projection = summarizeCordisBindingDiagnostics(input)
+  assert.deepEqual(projection.counts.filter(row => row.stage === 'acp_to_bridge'), [
+    { tool_name: 'cad_finish_model', stage: 'acp_to_bridge', outcome: 'matched', count: 2 },
+  ])
 })
 
 test('Cordis binding reasons distinguish missing ACP/audit rows from explicit rejection', () => {

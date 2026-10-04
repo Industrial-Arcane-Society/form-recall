@@ -26,7 +26,7 @@ const GATE_REASON_CODES = Object.freeze({
     'acp_cad_tool_call_id_missing', 'native_calls_not_individually_observed_or_duplicate',
     'tool_call_rejected_or_failed', 'native_cad_audit_without_cordis_call', 'acp_cad_tool_failed']),
   acp_cad_tool_results: new Set(['acp_cad_tool_result_completion_missing', 'acp_cad_tool_call_id_missing',
-    'acp_cad_tool_result_failed', 'acp_cad_tool_result_terminal_update_duplicated',
+    'acp_cad_tool_result_failed',
     'acp_cad_tool_result_terminal_status_invalid']),
   current_geometry: new Set(['rust_postcheck_state_missing_or_stale', 'preview_geometry_finish_revision_or_fingerprint_stale',
     'complete_valid_native_geometry_missing', 'partial_preview_not_accepted', 'geometry_attestation_or_gate_binding_invalid',

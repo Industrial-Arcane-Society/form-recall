@@ -53,3 +53,9 @@ The runner now emits `acp_terminal_update_projection_v2` and `cordis_binding_pro
 - The gate implementation remains unchanged: repeated terminal updates and failed updates continue to fail. The new projection adds diagnosis only; its reason counts must not be treated as permission to coalesce events or accept a run.
 
 The strict runner was not started while implementing this follow-up. The synthetic runner test suite verifies HMAC equality/difference behavior, allowlist collapse, missing/rejected binding cases and absence of sentinel IDs/hashes/payloads/error bodies from serialized projections.
+
+## Follow-up: terminal status interpretation
+
+After the Run15 safe projection was available, the local runner's result gate was updated in `62-f7-acp-terminal-state-gate.md`. It now retains each terminal notification count for diagnosis but evaluates the set of terminal states per call: repeated `completed` snapshots are idempotent, any `failed` state remains blocking, and mixed `completed`/`failed` states remain invalid. Repeated identical calls still require a unique two-way timestamp match, using the first terminal transition as the end of the interval.
+
+This resolves a known gate-level false-positive mechanism; it does **not** identify why Run15 produced repeated updates and does not establish that they were transport replays. Run15 itself ran before this change and remains failed. A new strict cold start is required to test the updated gate against actual ACP events. The pure gate suite passes 86/86 synthetic cases; this is not provider or visual acceptance evidence.

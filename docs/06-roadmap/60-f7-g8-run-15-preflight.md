@@ -85,3 +85,7 @@ runner exit code 为 `1`；总体与 strict-gates 状态均为 `failed`，transp
 bridge→audit 阶段的匹配计数为：`cad_add_face_recess` 2、`cad_add_feature` 1、`cad_add_hole_array` 2、`cad_create_model` 1、`cad_finish_model` 1、`cad_get_feature_spec` 2、`cad_get_reference_image` 7、`cad_get_state` 2、`cad_inspect_references` 4、`cad_preview_model` 2、`cad_review_reference_similarity` 2、`cad_set_construction_milestone` 2、`cad_validate_model` 1；另有 `cad_get_feature_spec` 1 次 `bridge_execution_rejected`。这些计数不包含可识别调用 ID、工具参数或错误正文。
 
 本轮严格门禁失败，不代表模型视觉验收通过；`current_geometry`、`artifacts` 通过也不能替代独立视觉复核或 CATIA 验收。安全投影只缩小了 Cordis binding、孔完整性、视觉覆盖/原图绑定及 finish 未通过的范围，不足以从投影推断具体工具参数或模型答复。不得据此放宽 gate。
+
+### 后续门禁修正
+
+Run15 在旧 gate 逻辑下执行；当时同一调用存在多条 terminal 状态更新会直接触发 `acp_cad_tool_result_terminal_update_duplicated`。随后按 ACP 更新/upsert 语义，将 gate 调整为按终态状态集合判断：重复相同状态快照幂等，同状态通知数仍保留在诊断投影中；`failed`、混合终态、缺身份与无法唯一关联仍阻断。细节和 86/86 合成回归见[ACP 终态状态门禁](./62-f7-acp-terminal-state-gate.md)。Run15 原始结果不回写或重解释；新规则尚未在真实 DSH 冷启动中复验，且不会解决本次独立失败的孔位、视觉覆盖/原图绑定、finish 和剩余 ACP↔Cordis 关联。
