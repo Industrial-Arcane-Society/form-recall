@@ -523,6 +523,7 @@ async function main() {
     `Agent runtime: Node.js ${dshBundle.manifest.nodeVersion}, npm ${dshBundle.manifest.npmVersion}, DSH/ACP ${dshBundle.manifest.dshVersion}, ACP SDK ${dshBundle.manifest.acpSdkVersion}`,
     `Agent runtime bundle: app\\packaging\\dsh-runtime\\dsh-runtime-win-x64.zip (${dshBundle.manifest.bundleSize} bytes; SHA-256 ${dshBundle.manifest.bundleSha256})`,
     `Agent runtime expands to ${(dshBundle.manifest.unpackedSize / 1_048_576).toFixed(1)} MiB on first use; all Node/DSH npm dependencies are included, so no npm install is needed at runtime.`,
+    "Windows WebView2: MSI and NSIS bundle the x64 offline installer; installation does not need to download it.",
     `CATIA-only Python: ${pythonVersion} x64 (CPython embeddable distribution)`,
     `CATIA-only COM dependency: ${pywin32Wheel} (validated by catia-bootstrap\\catia-runtime-manifest.json)`,
     "CATIA Python and pywin32 are copied into the user's private runtime only after a CATIA export or push request.",
