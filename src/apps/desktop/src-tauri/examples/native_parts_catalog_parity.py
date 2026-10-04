@@ -11,10 +11,10 @@ from __future__ import annotations
 
 import argparse
 import json
-import os
 from pathlib import Path
-import subprocess
 import sys
+
+from tauri_cargo import run_cargo
 
 
 REPO = Path(__file__).resolve().parents[5]
@@ -34,7 +34,6 @@ def legacy_bridge():
 
 def run_rust(*arguments: str):
     command = [
-        "cargo",
         "run",
         "--quiet",
         "--manifest-path",
@@ -44,14 +43,9 @@ def run_rust(*arguments: str):
         "--",
         *arguments,
     ]
-    env = os.environ.copy()
-    # `tauri-build` otherwise insists that release-only package-resources have
-    # been staged before any crate example can compile.
-    env["TAURI_CONFIG"] = '{"bundle":{"resources":[]}}'
-    result = subprocess.run(
+    result = run_cargo(
         command,
         cwd=REPO,
-        env=env,
         check=False,
         capture_output=True,
         text=True,
