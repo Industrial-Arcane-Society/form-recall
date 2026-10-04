@@ -144,7 +144,7 @@ function respond(socket, request, body = { result: { text: 'ok' } }) {
   socket.end(JSON.stringify({ jsonrpc: '2.0', id: request.id, ...body }) + '\n')
 }
 
-test('Cordis tools register from Rust schema manifest and call the local bridge with turn/session identity', async () => {
+test('Cordis tools register from Rust schema manifest and render bridge images as image content blocks', async () => {
   const fixture = fixtureEnvironment()
   const bridge = await createBridgeServer((request, socket) => {
     respond(socket, request, { result: {
@@ -178,6 +178,10 @@ test('Cordis tools register from Rust schema manifest and call the local bridge 
     assert.equal(output.text, 'front preview ready')
     assert.deepEqual(output.payload, { previewGeneration: 4 })
     assert.deepEqual(output.imageAttachments, ['attachment-preview-4'])
+    assert.deepEqual(registered[0].output.render({ view: 'front', generation: 4 }, output), [
+      { type: 'text', text: 'front preview ready' },
+      { type: 'image', attachment: 'attachment-preview-4' },
+    ])
     assert.equal(saved.length, 1)
     assert.equal(saved[0].mediaType, 'image/png')
     assert.equal(saved[0].data.toString(), 'preview image bytes')

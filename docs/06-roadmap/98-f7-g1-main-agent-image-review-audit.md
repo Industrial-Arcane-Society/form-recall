@@ -15,23 +15,25 @@
 
 ## 可证边界 / 待补验证
 
-- `src/legacy/tests/test_dsh_native_tools_rpc.mjs` 的 Cordis fixture 断言工具结果图被解码、保存，且 `imageAttachments` 被返回；它没有直接调用并断言 `output.render` 的最终 image content block。这里是测试覆盖缺口，源码实现本身可见且目前没有可证明的缺失赋值或错误映射，因此本次不改生产代码、不把测试缺口写成产品 bug。
-- ACP helper 单测不是真实 DSH/provider 证明；Cordis fixture 也不证明 DSH 模型实际在下一轮多模态请求消费了该 content block。
+- `src/legacy/tests/test_dsh_native_tools_rpc.mjs` 的 Cordis fixture 现直接执行由生产 `apply()` 注册的 `output.render(args, output)`，并精确断言返回顺序为文本 block 加 `{ type: 'image', attachment: <saved attachment reference> }`。fixture 的 PNG bytes 经实际 bridge response、base64 decode、`saveImages` 与 render 回调贯通，因此锁定了本机 tool-result 到 Cordis 多模态 render content 的生产传输契约；没有发现需要改生产逻辑的接线缺陷。
+- ACP helper 单测不是真实 DSH/provider 证明；Cordis `output.render` fixture 证明本地生产回调输出 image content block，不证明 DSH 模型实际在下一轮多模态请求消费或正确理解了该 content block。
 - 已发布 safe summary/diagnostic 仅用于状态边界。Run31 `vision_review_projection` 的计数摘要、Run32 13-gate map 都不能证明真实视觉理解或 review 质量。Run32 `publication/uncaught_exception` 的具体根因仍未知。
 - G9 的既有 schema/bridge/runtime gate 证据（包括 Run22 的 Cordis/ACP 身份与审计 gate）只证明工具契约/调用匹配层；不能推出视觉判断正确，也不解释 Run31/32 的视觉或 publication 结果。
 
 ## 最小下一步
 
-若要关闭剩余的确定性测试盲点，后续可在 Cordis fixture 中显式调用 `registered[0].output.render(args, output)`，并断言第一块为文本、图片块数量/附件引用与 `imageAttachments` 顺序一致。若要完成 G1，仍需获准的严格冷启动及独立视觉验收；需要仅检查允许发布的 safe summary/projection，不检查 raw trace 或 provider 内容。运行时的 DSH/provider 是否真正消费并理解这些图像，静态代码和本地 fixture 均无法回答。
+本次回归关闭了确定性本地 render-block 测试盲点：调用生产注册的 `output.render` 并校验最终 content array 包含保存后的图片附件引用。若要完成 G1，仍需独立视觉质量/模型理解验收；真实 DSH/provider 是否在后续请求消费该图像以及是否理解正确，本地传输契约测试无法回答。
 
 ## 本次检查
 
-本次不改 Rust/JS 行为，也不运行 provider 或 GUI。检查当前测试源码的静态语法与既有 Cordis plugin fixture：
+本次只增加 Cordis fixture 对生产 `output.render` 图片 block 的断言，不改 Rust/JS 生产行为，也不运行 provider 或 GUI。定向检查命令：
 
 ```powershell
 node --check src/legacy/ai_modeler/agent/dsh_native_tools.mjs
 node --check src/legacy/tests/test_dsh_native_tools_rpc.mjs
 node --test src/legacy/tests/test_dsh_native_tools_rpc.mjs
+pwsh -NoProfile -File src/apps/desktop/src-tauri/scripts/test-lib.ps1 -Offline -Filter agent_host::tests::acp_session_prompt_preserves_multi_image_order_and_manifest_sha_bindings -Exact
+git diff --check
 ```
 
-执行结果：两个 `node --check` 均通过；Cordis fixture 为 6 passed、0 failed、1 skipped（pinned DSH `defineTool` fixture 因本地未安装锁定 runtime 而按条件跳过）；`git diff --check` 通过。测试只覆盖本地 bridge/attachment fixture，不构成真实 DSH 或视觉验收。
+执行结果：两个 `node --check` 均通过；Cordis/tool registration fixture 6 passed、0 failed、1 skipped（pinned DSH `defineTool` 测试因本地未安装锁定 runtime 按条件跳过）；Rust ACP helper 回归 1 passed、356 filtered；`git diff --check` 通过。Node fixture 使用测试版 `defineTool` stub，不启动 DSH/provider，只证明本地 bridge/attachment/render 生产回调的输出契约；Rust fixture只证明生产 ACP prompt helper 的图片顺序/MIME/字节与 manifest 绑定。两项均不是 provider 视觉理解验收。
