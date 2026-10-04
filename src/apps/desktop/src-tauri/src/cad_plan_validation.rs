@@ -344,7 +344,7 @@ const ANGLE_KEYS: &[&str] = &[
     "lobe_deg",
 ];
 const DIMENSIONLESS_KEYS: &[&str] = &["turns", "taper", "taper_start", "camber", "camber_pos"];
-const NONNEGATIVE_KEYS: &[&str] = &["corner", "bore_d", "groove_depth", "sweep", "lift"];
+const NONNEGATIVE_KEYS: &[&str] = &["corner", "margin", "bore_d", "groove_depth", "sweep", "lift"];
 const INTEGER_KEYS: &[&str] = &[
     "teeth",
     "count",

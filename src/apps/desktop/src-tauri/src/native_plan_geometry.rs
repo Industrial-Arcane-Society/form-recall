@@ -1460,6 +1460,15 @@ mod tests {
     }
 
     #[test]
+    fn four_corner_hole_positions_apply_edge_margin_plus_hole_radius() {
+        let p = json!({"pos":"corners","margin":15.0});
+        assert_eq!(
+            hole_positions(&p, [0., 0., 0., 100., 80., 20.], 2, 10.).unwrap(),
+            vec![[20., 20.], [80., 20.], [80., 60.], [20., 60.]]
+        );
+    }
+
+    #[test]
     fn hole_measurement_complete_requires_every_enabled_instance_to_be_finally_accepted() {
         let through = json!({
             "feature_id":"h1","through":true,"status":"verified_open",

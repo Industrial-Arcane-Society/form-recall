@@ -44,7 +44,31 @@ pub fn parse(text: &str) -> Value {
         return parsed;
     }
 
-    let clauses = split_clauses(&normalized);
+    let mut clauses = split_clauses(&normalized);
+    let mut clause_index = 1;
+    while clause_index < clauses.len() {
+        if has_hole(&clauses[clause_index - 1])
+            && contains_any(
+                &clauses[clause_index],
+                &[
+                    "edge margin",
+                    "edge distance",
+                    "margin",
+                    "边距",
+                    "距边",
+                    "离边",
+                    "留边",
+                    "内缩",
+                ],
+            )
+        {
+            let continuation = clauses.remove(clause_index);
+            clauses[clause_index - 1].push(' ');
+            clauses[clause_index - 1].push_str(&continuation);
+        } else {
+            clause_index += 1;
+        }
+    }
     let mut base_kinds = Vec::new();
     for kind in [
         BaseKind::Box,
@@ -68,6 +92,21 @@ pub fn parse(text: &str) -> Value {
     } else {
         None
     };
+
+    for clause in clauses.iter().filter(|clause| has_hole(clause) && has_corner_location(clause)) {
+        if base_kind != Some(BaseKind::Box) {
+            unsupported.push(issue(
+                "corner_holes_require_box",
+                "Quick 四角孔与边距语法当前仅支持长方体基础形体。",
+            ));
+        }
+        if contains_any(clause, &["pcd", "分度圆", "均布", "equally spaced", "孔数"]) {
+            unsupported.push(issue(
+                "corner_hole_pattern_unsupported",
+                "四角孔当前固定生成四孔；与 PCD/均布/孔数阵列语法组合尚未支持。",
+            ));
+        }
+    }
 
     for (word, explanation) in [
         ("gear", "齿轮配方不在 Quick 基础形体范围内。"),
@@ -985,16 +1024,55 @@ fn build_hole(
             questions.push(issue("hole_depth_invalid", "盲孔深度必须是正数。"));
         }
     }
+    let corners = has_corner_location(clause);
+    let margin = scalar(
+        clause,
+        &[
+            "edge margin",
+            "edge distance",
+            "margin",
+            "边距",
+            "距边",
+            "离边",
+            "留边",
+            "内缩",
+        ],
+    );
     let center = has_center_location(clause);
     let coords = center_coordinates(clause);
     let named = named_xyz(clause);
-    if center && (coords.is_some() || named.is_some()) {
+    if (center || corners) && (coords.is_some() || named.is_some()) {
         questions.push(issue(
             "hole_position_conflict",
-            "孔同时描述了中心位置与坐标点。",
+            "孔同时描述了规则位置（中心/四角）与坐标点。",
         ));
     }
-    if center {
+    if corners {
+        p.insert("pos".into(), json!("corners"));
+        s.insert("pos".into(), user_source(raw));
+        p.insert("segments".into(), json!(24));
+        s.insert(
+            "segments".into(),
+            derived_source(raw, "沿用 Python Quick 四角孔默认圆周分段数 24。"),
+        );
+        match margin {
+            Some(v) if v.is_finite() && v >= 0. => {
+                p.insert("margin".into(), json!(v));
+                s.insert("margin".into(), user_source(raw));
+            }
+            Some(_) => questions.push(issue(
+                "hole_margin_invalid",
+                "四角孔边距必须是有限的非负数。",
+            )),
+            None => {
+                p.insert("margin".into(), json!(0.0));
+                s.insert(
+                    "margin".into(),
+                    derived_source(raw, "未指定边距时沿用 Python Quick 四角孔默认值 0 mm。"),
+                );
+            }
+        }
+    } else if center {
         p.insert("pos".into(), json!("center"));
         s.insert("pos".into(), user_source(raw));
     } else if let Some((point, _)) = coords.or(named) {
@@ -1011,6 +1089,12 @@ fn build_hole(
     if let Some(axis) = axis_value(clause, questions) {
         p.insert("axis".into(), json!(axis));
         s.insert("axis".into(), user_source(raw));
+    } else if corners {
+        p.insert("axis".into(), json!("Z"));
+        s.insert(
+            "axis".into(),
+            derived_source(raw, "四角孔未指定切入轴时沿用 Python Quick 默认 Z 轴。"),
+        );
     }
     if !has_unit(clause) {
         warnings.push(issue(
@@ -1391,6 +1475,9 @@ fn axis_value(s: &str, questions: &mut Vec<Value>) -> Option<&'static str> {
 fn has_center_location(s: &str) -> bool {
     contains_any(s, &["center", "centre", "middle", "中心", "中间", "正中"])
 }
+fn has_corner_location(s: &str) -> bool {
+    contains_any(s, &["four corners", "corner holes", "四角", "四个角", "各角"])
+}
 fn text_contains_center_midpoint(s: &str) -> bool {
     has_center_location(s)
 }
@@ -1502,6 +1589,51 @@ mod tests {
             parse("box 100×60×20 mm, through hole diameter 10 mm")["status"],
             "needs_clarification"
         );
+    }
+
+    #[test]
+    fn four_corner_holes_match_python_and_keep_margin_provenance() {
+        let out = parse("长方体长100宽80高20，四角孔直径10通孔，边距15");
+        assert_eq!(out["status"], "ready", "{out}");
+        let features = out["plan"]["features"].as_array().unwrap();
+        assert_eq!(features.len(), 2);
+        assert_eq!(features[1]["parameters"]["pos"], "corners");
+        assert_eq!(features[1]["parameters"]["margin"], 15.0);
+        assert_eq!(features[1]["sources"]["pos"]["type"], "user");
+        assert_eq!(features[1]["sources"]["margin"]["type"], "user");
+        assert_eq!(features[1]["sources"]["margin"]["evidence"],
+            "长方体长100宽80高20，四角孔直径10通孔，边距15");
+    }
+
+    #[test]
+    fn four_corner_holes_use_legacy_zero_margin_and_refuse_missing_or_invalid_sizes() {
+        let no_margin = plan("长方体长100宽80高20，四角孔直径10通孔");
+        assert_eq!(no_margin["features"][1]["parameters"]["margin"], 0.0);
+        assert_eq!(no_margin["features"][1]["sources"]["margin"]["type"], "derived");
+        assert_eq!(
+            crate::cad_plan_validation::validate_plan(&no_margin)["state"],
+            "valid"
+        );
+
+        let missing_diameter = parse("长方体长100宽80高20，四角通孔，边距15");
+        assert_eq!(missing_diameter["status"], "needs_clarification");
+        assert!(missing_diameter["questions"].to_string().contains("hole_diameter_missing"));
+
+        let negative_margin = parse("长方体长100宽80高20，四角孔直径10通孔，边距-2");
+        assert_eq!(negative_margin["status"], "needs_clarification");
+        assert!(negative_margin["questions"].to_string().contains("hole_margin_invalid"));
+
+        let point_conflict = parse("长方体长100宽80高20，四角孔直径10通孔中心坐标(10,10,0)");
+        assert_eq!(point_conflict["status"], "needs_clarification");
+        assert!(point_conflict["questions"].to_string().contains("hole_position_conflict"));
+
+        let non_box = parse("圆柱直径50高20，四角孔直径5通孔");
+        assert_eq!(non_box["status"], "unsupported");
+        assert!(non_box["unsupported"].to_string().contains("corner_holes_require_box"));
+
+        let pcd = parse("长方体长100宽80高20，四角孔直径10通孔均布8孔分度圆60");
+        assert_eq!(pcd["status"], "unsupported");
+        assert!(pcd["unsupported"].to_string().contains("corner_hole_pattern_unsupported"));
     }
     #[test]
     fn contradictory_sizes_and_unsupported_operations_fail_closed() {

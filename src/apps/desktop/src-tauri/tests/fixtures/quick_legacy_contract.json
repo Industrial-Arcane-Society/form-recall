@@ -17,6 +17,13 @@
       ]
     },
     {
+      "input": "长方体长100宽80高20，四角孔直径10通孔，边距15",
+      "features": [
+        {"index": 0, "kind": "box", "operation": "add", "parameters": {"length": 100.0, "width": 80.0, "height": 20.0}},
+        {"index": 1, "kind": "hole", "operation": "cut", "parameters": {"diameter": 10.0, "through": true, "axis": "Z", "pos": "corners", "segments": 24, "margin": 15.0}}
+      ]
+    },
+    {
       "input": "阶梯轴 直径 40 长 60, 直径 30 长 50, 直径 20 长 40",
       "features": [
         {"index": 0, "kind": "cylinder", "operation": "add", "parameters": {"radius": 20.0, "height": 60.0, "center": [0.0, 0.0, 0.0], "base": true, "segments": 48}},
