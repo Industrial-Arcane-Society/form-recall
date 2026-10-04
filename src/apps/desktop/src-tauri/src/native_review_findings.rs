@@ -598,14 +598,27 @@ pub fn reconcile(state: &mut Value, review: &Value) -> Result<Value, String> {
                     .then(|| key.clone())
                 })
                 .collect();
-            // A new observation may continue one old finding only when its
-            // structured source identity maps to exactly one active finding.
+            // A provider-supplied source identity can only nominate a possible
+            // cross-observation match. It is not a host-verified image anchor,
+            // so always require human adjudication before carrying a finding
+            // across observations.
+            if !ledger.contains_key(&id)
+                && current_candidates.is_empty()
+                && !rebind_candidates.is_empty()
+            {
+                for key in &rebind_candidates {
+                    if let Some(finding) = ledger.get_mut(key) {
+                        finding["rebind_status"] = json!("confirmation_required");
+                        finding["rebind_attempt_binding"] =
+                            row_binding(review, eid, stable_id.as_deref());
+                    }
+                }
+                continue;
+            }
             let existing_key = if ledger.contains_key(&id) {
                 Some(id.clone())
             } else if current_candidates.len() == 1 {
                 current_candidates.first().cloned()
-            } else if rebind_candidates.len() == 1 {
-                rebind_candidates.first().cloned()
             } else {
                 None
             };
@@ -683,7 +696,7 @@ pub fn reconcile(state: &mut Value, review: &Value) -> Result<Value, String> {
                         && ids(&finding["affected_feature_ids"]) == affected;
                     let after_human_adjudication = finding["human_adjudication"].is_null()
                         || (revision
-                            >= finding["human_adjudication"]["adjudicated_revision"]
+                            > finding["human_adjudication"]["adjudicated_revision"]
                                 .as_i64()
                                 .unwrap_or(i64::MAX)
                             && review["preview_generation"].as_i64().unwrap_or(-1)
@@ -694,10 +707,7 @@ pub fn reconcile(state: &mut Value, review: &Value) -> Result<Value, String> {
                                 != finding["human_adjudication"]["binding"]["pair_fingerprint"]);
                     let refreshed_observation = finding["evidence_id"] != eid
                         && old["observation_id"] != review["observation_id"]
-                        && (human_authorized
-                            || stable_id.as_deref().is_some_and(|identity| {
-                                same_rebind_scope(state, finding, review, &affected, identity)
-                            }));
+                        && human_authorized;
                     if (!exact_observation && !refreshed_observation) || !after_human_adjudication {
                         return None;
                     }
@@ -909,24 +919,54 @@ mod tests {
     }
 
     #[test]
-    fn refreshed_observation_rebinds_same_structured_evidence_and_new_review_closes_finding() {
+    fn refreshed_observation_requires_human_adjudication_and_new_revision_review_to_close() {
         let (mut state, finding) = open_refreshed_finding();
+        state["active_model_generation"] = json!(9);
         let current = review(&mut state, "match", json!(["hole1"]));
         let result = reconcile(&mut state, &current).unwrap();
 
-        assert_eq!(result["resolved"], json!([finding]));
+        assert_eq!(result["resolved"], json!([]));
+        let ledger = &state["finding_ledger"][finding.as_str()];
+        assert_eq!(ledger["status"], "awaiting_verification");
+        assert_eq!(ledger["evidence_id"], "hole-evidence");
+        assert_eq!(ledger["last_mismatch_binding"]["observation_id"], "obs1");
+        assert_eq!(ledger["rebind_status"], "confirmation_required");
+        assert_eq!(
+            ledger["rebind_attempt_binding"]["evidence_id"],
+            "hole-evidence-v2"
+        );
+        assert_eq!(ledger["closure_binding"], Value::Null);
+
+        let request = request_for(&state, &finding, 9);
+        let confirmation = adjudicate_rebind(&mut state, &request).unwrap();
+        assert_eq!(confirmation["resolved"], false);
+        assert_eq!(
+            state["finding_ledger"][finding.as_str()]["status"],
+            "awaiting_verification"
+        );
+        assert_eq!(
+            reconcile(&mut state, &current).unwrap()["resolved"],
+            json!([])
+        );
+
+        state["revision"] = json!(state["revision"].as_i64().unwrap() + 1);
+        let later = review(&mut state, "match", json!(["hole1"]));
+        assert_eq!(
+            reconcile(&mut state, &later).unwrap()["resolved"],
+            json!([finding])
+        );
         let ledger = &state["finding_ledger"][finding.as_str()];
         assert_eq!(ledger["status"], "resolved");
-        assert_eq!(ledger["rebound_from_evidence_id"], "hole-evidence");
         assert_eq!(ledger["evidence_id"], "hole-evidence-v2");
         assert_eq!(ledger["closure_binding"]["observation_id"], "obs2");
-        assert_eq!(ledger["closure_binding"]["evidence_id"], "hole-evidence-v2");
+        assert_eq!(ledger["closure_binding"]["revision"], later["revision"]);
         let history = ledger["history"].as_array().unwrap();
-        assert_eq!(history.len(), 2);
+        assert_eq!(history.len(), 3);
         assert_eq!(history[0]["binding"]["observation_id"], "obs1");
         assert_eq!(history[0]["binding"]["evidence_id"], "hole-evidence");
-        assert_eq!(history[1]["binding"]["observation_id"], "obs2");
-        assert_eq!(history[1]["binding"]["evidence_id"], "hole-evidence-v2");
+        assert_eq!(history[1]["event"], "human_rebind_confirmed");
+        assert_eq!(history[2]["binding"]["observation_id"], "obs2");
+        assert_eq!(history[2]["binding"]["evidence_id"], "hole-evidence-v2");
         assert_eq!(state["unresolved_findings"], json!([]));
     }
 
@@ -936,14 +976,21 @@ mod tests {
         let still_wrong = review(&mut state, "mismatch", json!(["hole1"]));
         let result = reconcile(&mut state, &still_wrong).unwrap();
         assert_eq!(result["resolved"], json!([]));
-        assert_eq!(state["finding_ledger"][finding.as_str()]["status"], "open");
+        assert_eq!(
+            state["finding_ledger"][finding.as_str()]["status"],
+            "awaiting_verification"
+        );
         assert_eq!(
             state["finding_ledger"][finding.as_str()]["evidence_id"],
-            "hole-evidence-v2"
+            "hole-evidence"
         );
         assert_eq!(
             state["finding_ledger"][finding.as_str()]["last_mismatch_binding"]["observation_id"],
-            "obs2"
+            "obs1"
+        );
+        assert_eq!(
+            state["finding_ledger"][finding.as_str()]["rebind_status"],
+            "confirmation_required"
         );
         assert_eq!(state["unresolved_findings"].as_array().unwrap().len(), 1);
     }
@@ -982,8 +1029,12 @@ mod tests {
     }
 
     #[test]
-    fn refreshed_finding_requires_unique_nonempty_provider_identity() {
-        for identity in [json!(""), json!("observation-01-abcdef1234")] {
+    fn refreshed_finding_requires_confirmation_even_with_unique_provider_identity() {
+        for identity in [
+            json!(""),
+            json!("observation-01-abcdef1234"),
+            json!("hole-source"),
+        ] {
             let (mut state, finding) = open_refreshed_finding();
             state["reference_inventory"]["ref"]["visible_evidence"][0]["source_evidence_id"] =
                 identity;
