@@ -54,6 +54,36 @@ const GATE_REASON_CODES = Object.freeze({
     'finish_external_fact_required_count_invalid', 'finish_external_facts_unverified', 'finish_external_facts_failed',
     'finish_external_facts_unknown']),
 })
+const VISUAL_DIAGNOSTIC_CHECKS = Object.freeze({
+  finish_coverage: 'visual_finish_coverage_incomplete',
+  all_references_covered: 'visual_all_references_not_covered',
+  independent_review_present: 'visual_independent_review_missing',
+  host_coverage_complete: 'visual_gate_coverage_incomplete',
+  manifest_valid: 'visual_reference_manifest_invalid',
+  mismatch_free: 'visual_reference_mismatch_detected',
+  one_reference_in_inventory: 'original_reference_inventory_count_invalid',
+  reference_id_bound: 'original_reference_id_mismatch',
+  reference_sha_bound: 'original_reference_sha256_mismatch',
+  original_reference_covered: 'original_reference_not_covered',
+  original_inventory_valid: 'original_reference_inventory_invalid',
+  visual_summary_current: 'visual_summary_stale_or_mismatched',
+})
+const FINISH_DIAGNOSTIC_CHECKS = Object.freeze({
+  host_finished: 'finish_host_not_finished',
+  domain_accepted: 'finish_domain_state_not_accepted',
+  summary_accepted: 'finish_summary_state_not_accepted',
+  accepted_flag: 'finish_acceptance_flag_false',
+  geometry_review_accepted: 'finish_geometry_review_acceptance_false',
+  review_issuer_valid: 'finish_geometry_review_issuer_invalid',
+  review_decision_accept: 'finish_geometry_review_decision_not_accept',
+  construction_complete: 'finish_construction_incomplete',
+  no_open_findings: 'finish_open_findings_nonzero',
+  no_unresolved_findings: 'finish_unresolved_findings_present',
+  external_fact_count_valid: 'finish_external_fact_required_count_invalid',
+  external_facts_verified: 'finish_external_facts_unverified',
+  no_failed_external_facts: 'finish_external_facts_failed',
+  no_unknown_external_facts: 'finish_external_facts_unknown',
+})
 const RPC_METHODS = new Set(['initialize', 'session/new', 'session/set_config_option', 'session/prompt', 'session/close', 'session/cancel'])
 const DSH_FAILURE_STAGES = new Set(['session_rpc', 'capability_check', 'reasoning_selection', 'unknown'])
 const RPC_ERROR_CLASSES = new Set(['none', 'rpc_error', 'timeout', 'child_exit', 'write_error', 'capability_missing',
@@ -119,6 +149,30 @@ const safeGate = (name, gate) => ({
     : [],
 })
 
+const safePredicateProjection = (gate, predicates, allowedReasons) => {
+  const reasons = Array.isArray(gate?.reasons) ? gate.reasons : null
+  const checks = Object.fromEntries(Object.entries(predicates).map(([name, reason]) => [
+    name, reasons !== null && !reasons.includes(reason),
+  ]))
+  const unclassifiedFailure = reasons !== null && reasons.some(reason => !allowedReasons.has(reason))
+  return {
+    status: gate?.status === 'passed' && reasons?.length === 0 ? 'passed' : 'failed',
+    failed_check_count: reasons === null ? 0 : safeCount(reasons.length),
+    unclassified_failure: unclassifiedFailure,
+    checks,
+  }
+}
+
+export function buildSafeVisualFinishDiagnostics(strict = {}) {
+  return {
+    schema: 'visual_finish_subconditions_v1',
+    visual: safePredicateProjection(strict?.gates?.visual, VISUAL_DIAGNOSTIC_CHECKS,
+      new Set(Object.values(VISUAL_DIAGNOSTIC_CHECKS))),
+    finish: safePredicateProjection(strict?.gates?.finish, FINISH_DIAGNOSTIC_CHECKS,
+      new Set(Object.values(FINISH_DIAGNOSTIC_CHECKS))),
+  }
+}
+
 export function buildSafeFailureDiagnostic({ stage, code } = {}) {
   return {
     stage: FAILURE_STAGES.has(stage) ? stage : 'unknown',
@@ -171,6 +225,7 @@ export function buildSafeAcceptanceSummary({ strict, transportStatus, modelStatu
       evidence_error_count: Array.isArray(strict?.evidence_errors) ? safeCount(strict.evidence_errors.length) : 0,
       gates,
     },
+    visual_finish_diagnostics: buildSafeVisualFinishDiagnostics(strict),
     runtime: {
       node: SAFE_NODE_VERSIONS.has(runtime?.node) ? runtime.node : 'unverified',
       dsh: SAFE_DSH_VERSIONS.has(runtime?.dsh) ? runtime.dsh : 'unverified',

@@ -767,6 +767,59 @@ test('DSH diagnostic publication keeps only allowlisted RPC method and error cla
   assert.equal(JSON.stringify(unknown).includes('sentinel'), false)
 })
 
+test('visual and finish subcondition projection exposes fixed booleans and strips private fields', () => {
+  const strict = {
+    status: 'failed',
+    gates: {
+      visual: { status: 'failed', reasons: ['visual_all_references_not_covered', 'visual_reference_mismatch_detected',
+        'private-reason-sentinel'], raw: 'provider-text-sentinel', reference_id: 'private-id-sentinel' },
+      finish: { status: 'failed', reasons: ['finish_geometry_review_decision_not_accept', 'finish_open_findings_nonzero'],
+        unresolved_findings: [{ text: 'private-finding-sentinel' }], geometry: { secret: 'payload-sentinel' } },
+    },
+    answer: 'answer-sentinel', thought: 'thought-sentinel', image: 'image-sentinel',
+  }
+  const summary = buildSafeAcceptanceSummary({ strict })
+  const diagnostic = summary.visual_finish_diagnostics
+  assert.deepEqual(Object.keys(diagnostic), ['schema', 'visual', 'finish'])
+  assert.equal(diagnostic.schema, 'visual_finish_subconditions_v1')
+  assert.equal(diagnostic.visual.status, 'failed')
+  assert.equal(diagnostic.visual.failed_check_count, 3)
+  assert.equal(diagnostic.visual.unclassified_failure, true)
+  assert.equal(diagnostic.visual.checks.all_references_covered, false)
+  assert.equal(diagnostic.visual.checks.mismatch_free, false)
+  assert.equal(diagnostic.visual.checks.finish_coverage, true)
+  assert.equal(diagnostic.finish.status, 'failed')
+  assert.equal(diagnostic.finish.failed_check_count, 2)
+  assert.equal(diagnostic.finish.checks.review_decision_accept, false)
+  assert.equal(diagnostic.finish.checks.no_open_findings, false)
+  assert.equal(diagnostic.finish.checks.accepted_flag, true)
+  assert.deepEqual(Object.keys(diagnostic.visual.checks), [
+    'finish_coverage', 'all_references_covered', 'independent_review_present', 'host_coverage_complete', 'manifest_valid',
+    'mismatch_free', 'one_reference_in_inventory', 'reference_id_bound', 'reference_sha_bound', 'original_reference_covered',
+    'original_inventory_valid', 'visual_summary_current',
+  ])
+  assert.deepEqual(Object.keys(diagnostic.finish.checks), [
+    'host_finished', 'domain_accepted', 'summary_accepted', 'accepted_flag', 'geometry_review_accepted',
+    'review_issuer_valid', 'review_decision_accept', 'construction_complete', 'no_open_findings',
+    'no_unresolved_findings', 'external_fact_count_valid', 'external_facts_verified', 'no_failed_external_facts',
+    'no_unknown_external_facts',
+  ])
+  for (const gate of [diagnostic.visual, diagnostic.finish]) {
+    assert.ok(['passed', 'failed'].includes(gate.status))
+    assert.equal(Number.isSafeInteger(gate.failed_check_count), true)
+    assert.ok(Object.values(gate.checks).every(value => typeof value === 'boolean'))
+  }
+  const serialized = JSON.stringify(summary)
+  for (const secret of ['private-reason-sentinel', 'provider-text-sentinel', 'private-id-sentinel', 'private-finding-sentinel',
+    'payload-sentinel', 'answer-sentinel', 'thought-sentinel', 'image-sentinel']) {
+    assert.equal(serialized.includes(secret), false)
+  }
+  const missing = buildSafeAcceptanceSummary({}).visual_finish_diagnostics
+  assert.equal(missing.visual.status, 'failed')
+  assert.equal(missing.visual.checks.mismatch_free, false)
+  assert.equal(missing.finish.status, 'failed')
+})
+
 test('offline Cargo failure publishes only safe status fields before fatal publication', () => {
   const root = mkdtempSync(join(tmpdir(), 'coldstart-offline-build-safe-'))
   const output = join(root, 'run')
@@ -997,6 +1050,34 @@ const criticalGatePredicateFlips = [
   ['finish external fact unknown', f => { f.domain.finish_summary.required_external_facts.unknown_count = 1 }, 'finish_external_facts_unknown'],
   ['finish external fact unverified', f => { f.domain.finish_summary.required_external_facts.required_count = 1 }, 'finish_external_facts_unverified'],
 ]
+const safeVisualFinishCheckByReason = new Map([
+  ['visual_finish_coverage_incomplete', ['visual', 'finish_coverage']],
+  ['visual_all_references_not_covered', ['visual', 'all_references_covered']],
+  ['visual_independent_review_missing', ['visual', 'independent_review_present']],
+  ['visual_gate_coverage_incomplete', ['visual', 'host_coverage_complete']],
+  ['visual_reference_manifest_invalid', ['visual', 'manifest_valid']],
+  ['visual_reference_mismatch_detected', ['visual', 'mismatch_free']],
+  ['original_reference_inventory_count_invalid', ['visual', 'one_reference_in_inventory']],
+  ['original_reference_id_mismatch', ['visual', 'reference_id_bound']],
+  ['original_reference_sha256_mismatch', ['visual', 'reference_sha_bound']],
+  ['original_reference_not_covered', ['visual', 'original_reference_covered']],
+  ['original_reference_inventory_invalid', ['visual', 'original_inventory_valid']],
+  ['visual_summary_stale_or_mismatched', ['visual', 'visual_summary_current']],
+  ['finish_host_not_finished', ['finish', 'host_finished']],
+  ['finish_domain_state_not_accepted', ['finish', 'domain_accepted']],
+  ['finish_summary_state_not_accepted', ['finish', 'summary_accepted']],
+  ['finish_acceptance_flag_false', ['finish', 'accepted_flag']],
+  ['finish_geometry_review_acceptance_false', ['finish', 'geometry_review_accepted']],
+  ['finish_geometry_review_issuer_invalid', ['finish', 'review_issuer_valid']],
+  ['finish_geometry_review_decision_not_accept', ['finish', 'review_decision_accept']],
+  ['finish_construction_incomplete', ['finish', 'construction_complete']],
+  ['finish_open_findings_nonzero', ['finish', 'no_open_findings']],
+  ['finish_unresolved_findings_present', ['finish', 'no_unresolved_findings']],
+  ['finish_external_fact_required_count_invalid', ['finish', 'external_fact_count_valid']],
+  ['finish_external_facts_unverified', ['finish', 'external_facts_verified']],
+  ['finish_external_facts_failed', ['finish', 'no_failed_external_facts']],
+  ['finish_external_facts_unknown', ['finish', 'no_unknown_external_facts']],
+])
 for (const [label, modify, reason] of criticalGatePredicateFlips) test(`critical gate predicate flip: ${label}`, () => {
   const accepted = evaluateColdstartGates(fixture())
   assert.equal(accepted.status, 'passed', 'all predicates satisfied must pass')
@@ -1012,6 +1093,12 @@ for (const [label, modify, reason] of criticalGatePredicateFlips) test(`critical
   assert.ok(result.failure_reasons.includes(reason), JSON.stringify(result.failure_reasons))
   const safe = buildSafeAcceptanceSummary({ strict: result })
   assert.ok(safe.strict_gates.gates[gateName].reason_codes.includes(reason), `${reason} must be allowlisted for publication`)
+  const mappedCheck = safeVisualFinishCheckByReason.get(reason)
+  if (mappedCheck) {
+    const [diagnosticGate, check] = mappedCheck
+    assert.equal(safe.visual_finish_diagnostics[diagnosticGate].checks[check], false,
+      `${reason} must mark its fixed diagnostic check failed`)
+  }
 })
 for (const [label, modify, reason] of negativeFixtures) test(label, () => {
   const input = fixture(); modify(input)

@@ -128,7 +128,7 @@ Coldstart runner 已采用默认且唯一发布 safe gate summary、ACP/Cordis a
 - [x] 修复桥接失败优先级短路：只有同工具、同调用 ID、同运行时间范围内存在失败 native audit 且没有成功 audit 时，才输出 `native_audit_rejected`；没有匹配 audit 或 audit 成功仍输出 `bridge_execution_rejected`。代码提交 `dd8b3d3bc290ffd5814afb6c0a2418451fab9bc7`；cold-start gate Node 测试 126/126 通过，三条新回归确认错误正文、调用 ID、参数与指纹不进入投影。
 - [x] 使用固定修复 SHA `5168dbc65bb8df63e4c3edd027154bb6a30e2da9` 和新 output 单次运行真实多模态冷启动。Run25 在 0.240 秒后 exit 1，三个 allowlist 产物均不存在，因此没有 gate/failure code，也无法验证诊断修复效果；stdout/stderr 已丢弃，禁止据此归因。详见[Run25诊断](./82-f7-g8-run-25-diagnosis.md)。
 - [x] Run25 快速退出的根因由启动契约确认：launcher 创建 `safe-output` 父目录即可，runner 要求其自身负责创建 leaf。Run26 使用新父目录且 leaf 预先不存在，单次冷启动完成并生成 allowlist 产物；见[Run26诊断](./83-f7-g8-run-26-diagnosis.md)。
-- [ ] 对 Run26 的视觉与 finish 失败开展下一轮有针对性的审查；仅用安全 allowlist 摘要决定所需诊断，不读取 raw logs、工具参数或几何载荷，也不把 host reason codes 当成多模态质量的独立结论。
+- [x] 完成 Run26 视觉与 finish 失败的安全诊断投影：summary 新增固定 visual/finish 子条件布尔值、失败计数与安全状态枚举，未知 reason 只报告 `unclassified_failure`，不输出原始理由或证据正文。没有改变 acceptance thresholds；真实 Run27 冷启动仍待执行。见[安全子条件投影设计与实现](./85-f7-safe-visual-finish-projection.md)。
 
 ## F0 验收记录
 
