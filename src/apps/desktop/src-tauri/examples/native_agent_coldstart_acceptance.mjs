@@ -9,6 +9,7 @@ import { createAuditedToolProxy, createTerminalUpdateHmac, evaluateColdstartGate
 import { buildSafeAcceptanceSummary, writeSafeAcceptanceArtifacts, writeSafeFailureSummary } from './native_agent_coldstart_publication.mjs'
 import { removeScratchDirectory, safeScratchCleanupStatus, terminateChildrenAndWait, waitThenTerminateChild } from './native_agent_coldstart_lifecycle.mjs'
 import { createColdstartScratchDirectory, recoverStaleColdstartScratch } from './native_agent_coldstart_scratch.mjs'
+import { runOfflineCargoBuild } from './native_agent_coldstart_build.mjs'
 
 const [repoArg, runtimeArg, outputArg, configArg, imageArg, userTextArg] = process.argv.slice(2)
 let archiveDir = null
@@ -107,14 +108,15 @@ const dshPackage = JSON.parse(readFileSync(join(modules, '@deepseek-ai/dsh/packa
 if (dshPackage.version !== '0.2.0-rc.2') throw new Error('Pinned DSH version mismatch: ' + dshPackage.version)
 // Always rebuild against this checkout before any provider request. Old binaries
 // must not validate newly edited gates, schemas or the native tool audit.
-const buildStarted = Date.now()
 failureStage = 'offline_build'
-const build = spawnSync('cargo', ['build', '--manifest-path', join(repo, 'src/apps/desktop/src-tauri/Cargo.toml'),
-  '--example', 'native_read_probe', '--example', 'native_agent_profile', '--offline'],
-{ cwd: repo, encoding: 'utf8', windowsHide: true, timeout: 20 * 60 * 1000, maxBuffer: 8 * 1024 * 1024 })
-const buildStatus = { status: build.status === 0 ? 'passed' : 'failed', exit_code: build.status,
-  elapsed_ms: Date.now() - buildStarted, stdout_bytes: Buffer.byteLength(build.stdout || ''), stderr_bytes: Buffer.byteLength(build.stderr || '') }
-if (build.status !== 0) throw new Error('Offline Cargo example rebuild failed; no provider request was sent.')
+const buildStatus = runOfflineCargoBuild({
+  spawnSyncImpl: spawnSync,
+  args: ['build', '--manifest-path', join(repo, 'src/apps/desktop/src-tauri/Cargo.toml'),
+    '--example', 'native_read_probe', '--example', 'native_agent_profile', '--offline'],
+  cwd: repo,
+  output,
+})
+if (buildStatus.status !== 'passed') throw new Error('Offline Cargo example rebuild failed; no provider request was sent.')
 const probePath = join(repo, 'src/apps/desktop/src-tauri/target/debug/examples/native_read_probe.exe')
 if (!existsSync(probePath)) throw new Error('native_read_probe.exe is missing; build --example native_read_probe first.')
 const profilePath = join(repo, 'src/apps/desktop/src-tauri/target/debug/examples/native_agent_profile.exe')

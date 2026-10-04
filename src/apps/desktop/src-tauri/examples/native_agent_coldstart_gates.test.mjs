@@ -8,6 +8,7 @@ import { join, relative } from 'node:path'
 import { tmpdir } from 'node:os'
 import { createAuditedToolProxy, createTerminalUpdateHmac, evaluateColdstartGates, parseEvidenceJsonl, parsePostcheckState, readRunArtifacts, summarizeAcpTerminalUpdateDiagnostics, summarizeCordisBindingDiagnostics, toolArgumentsFingerprint } from './native_agent_coldstart_gates.mjs'
 import { buildSafeAcceptanceSummary, writeSafeAcceptanceArtifacts, writeSafeFailureSummary } from './native_agent_coldstart_publication.mjs'
+import { runOfflineCargoBuild } from './native_agent_coldstart_build.mjs'
 import { removeScratchDirectory, safeScratchCleanupStatus, terminateChildrenAndWait, waitThenTerminateChild } from './native_agent_coldstart_lifecycle.mjs'
 import { COLDSTART_SCRATCH_MAX_AGE_MS, COLDSTART_SCRATCH_PREFIX, createColdstartScratchDirectory,
   recoverStaleColdstartScratch } from './native_agent_coldstart_scratch.mjs'
@@ -669,6 +670,67 @@ test('fatal failure publication rejects unknown stage and code values', () => {
     })
     assert.deepEqual(failed.failure_diagnostic, { stage: 'unknown', code: 'uncaught_exception' })
     assert.equal(JSON.stringify(failed).includes('sentinel'), false)
+  } finally {
+    rmSync(root, { recursive: true, force: true })
+  }
+})
+
+test('offline Cargo failure publishes only safe status fields before fatal publication', () => {
+  const root = mkdtempSync(join(tmpdir(), 'coldstart-offline-build-safe-'))
+  const output = join(root, 'run')
+  const secret = 'provider-error-secret-key-stack-and-path-sentinel'
+  let time = 100
+  try {
+    const failed = runOfflineCargoBuild({
+      spawnSyncImpl: () => ({ status: 101, stdout: `stdout ${secret}`, stderr: `stderr ${secret}` }),
+      args: ['build'], cwd: root, output, now: () => (time += 12),
+    })
+    assert.deepEqual(failed, {
+      status: 'failed', exit_code: 101, elapsed_ms: 12,
+      stdout_bytes: Buffer.byteLength(`stdout ${secret}`), stderr_bytes: Buffer.byteLength(`stderr ${secret}`),
+    })
+    const buildStatusText = readFileSync(join(output, 'build-status.json'), 'utf8')
+    const buildStatus = JSON.parse(buildStatusText)
+    assert.deepEqual(Object.keys(buildStatus).sort(), ['elapsed_ms', 'exit_code', 'status', 'stderr_bytes', 'stdout_bytes'])
+    assert.deepEqual(buildStatus, failed)
+    assert.equal(buildStatusText.includes(secret), false)
+    writeSafeFailureSummary(output, { stage: 'offline_build', code: 'uncaught_exception' })
+    assert.deepEqual(readdirSync(output).sort(), ['build-status.json', 'summary.json'])
+    const fatalPublication = readdirSync(output).map(name => readFileSync(join(output, name), 'utf8')).join('\n')
+    assert.equal(fatalPublication.includes(secret), false)
+
+    const threwOutput = join(root, 'threw')
+    const thrown = runOfflineCargoBuild({
+      spawnSyncImpl: () => { throw new Error(secret) },
+      args: ['build'], cwd: root, output: threwOutput, now: () => (time += 7),
+    })
+    assert.deepEqual(thrown, {
+      status: 'failed', exit_code: null, elapsed_ms: 7, stdout_bytes: 0, stderr_bytes: 0,
+    })
+    const thrownText = readFileSync(join(threwOutput, 'build-status.json'), 'utf8')
+    assert.deepEqual(JSON.parse(thrownText), thrown)
+    assert.equal(thrownText.includes(secret), false)
+
+    const erroredOutput = join(root, 'errored')
+    const errored = runOfflineCargoBuild({
+      spawnSyncImpl: () => ({ status: 0, stdout: `partial ${secret}`, stderr: '', error: new Error(secret) }),
+      args: ['build'], cwd: root, output: erroredOutput, now: () => (time += 4),
+    })
+    assert.deepEqual(errored, {
+      status: 'failed', exit_code: null, elapsed_ms: 4,
+      stdout_bytes: Buffer.byteLength(`partial ${secret}`), stderr_bytes: 0,
+    })
+    const erroredText = readFileSync(join(erroredOutput, 'build-status.json'), 'utf8')
+    assert.deepEqual(JSON.parse(erroredText), errored)
+    assert.equal(erroredText.includes(secret), false)
+
+    const passedOutput = join(root, 'passed')
+    const passed = runOfflineCargoBuild({
+      spawnSyncImpl: () => ({ status: 0, stdout: 'build output', stderr: '' }),
+      args: ['build'], cwd: root, output: passedOutput, now: () => (time += 2),
+    })
+    assert.equal(passed.status, 'passed')
+    assert.equal(existsSync(join(passedOutput, 'build-status.json')), false)
   } finally {
     rmSync(root, { recursive: true, force: true })
   }

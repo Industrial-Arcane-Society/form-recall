@@ -152,6 +152,28 @@ export function buildSafeAcceptanceSummary({ strict, transportStatus, modelStatu
   }
 }
 
+export function sanitizeSafeBuildStatus(buildStatus = {}) {
+  const passed = buildStatus?.status === 'passed' && buildStatus?.exit_code === 0
+  return {
+    status: passed ? 'passed' : 'failed',
+    exit_code: Number.isInteger(buildStatus?.exit_code) ? buildStatus.exit_code : null,
+    elapsed_ms: Number.isFinite(buildStatus?.elapsed_ms) && buildStatus.elapsed_ms >= 0
+      ? buildStatus.elapsed_ms : null,
+    stdout_bytes: Number.isSafeInteger(buildStatus?.stdout_bytes) && buildStatus.stdout_bytes >= 0
+      ? buildStatus.stdout_bytes : 0,
+    stderr_bytes: Number.isSafeInteger(buildStatus?.stderr_bytes) && buildStatus.stderr_bytes >= 0
+      ? buildStatus.stderr_bytes : 0,
+  }
+}
+
+export function writeSafeBuildStatus(output, buildStatus) {
+  mkdirSync(output, { recursive: true })
+  const safeStatus = sanitizeSafeBuildStatus(buildStatus)
+  writeFileSync(join(output, 'build-status.json'), JSON.stringify(safeStatus, null, 2),
+    { flag: 'wx', mode: 0o600 })
+  return safeStatus
+}
+
 export function writeSafeAcceptanceArtifacts(output, { summary, acpProjection, bindingProjection, buildStatus }) {
   mkdirSync(output, { recursive: true })
   const artifacts = new Map([
@@ -160,13 +182,7 @@ export function writeSafeAcceptanceArtifacts(output, { summary, acpProjection, b
       { stage: 'acp_terminal_update_projection', ...safeAcpProjection(acpProjection) },
       { stage: 'cordis_binding_projection', ...safeBindingProjection(bindingProjection) },
     ].map(row => JSON.stringify(row)).join('\n') + '\n'],
-    ['build-status.json', {
-      status: buildStatus?.status === 'passed' ? 'passed' : 'failed',
-      exit_code: Number.isInteger(buildStatus?.exit_code) ? buildStatus.exit_code : null,
-      elapsed_ms: Number.isFinite(buildStatus?.elapsed_ms) ? buildStatus.elapsed_ms : null,
-      stdout_bytes: Number.isSafeInteger(buildStatus?.stdout_bytes) ? buildStatus.stdout_bytes : 0,
-      stderr_bytes: Number.isSafeInteger(buildStatus?.stderr_bytes) ? buildStatus.stderr_bytes : 0,
-    }],
+    ['build-status.json', sanitizeSafeBuildStatus(buildStatus)],
   ])
   for (const [name, value] of artifacts) {
     const body = typeof value === 'string' ? value : JSON.stringify(value, null, 2)
