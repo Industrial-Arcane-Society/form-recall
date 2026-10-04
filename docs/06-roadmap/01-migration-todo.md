@@ -10,7 +10,7 @@
 
 | ID | Feature | 状态 | 完成条件 / 提交边界 |
 |---|---|---|---|
-| F0 | 目录重构、文档重建和路径恢复 | **进行中（目录迁移、Vite headless 与隐藏 WebView CLI 验收通过；`devUrl`/Vite IPv4 地址契约已修正；用户报告的 `npm run dev` 无界面仍未由运行时复现）** | 根目录 npm run dev 启动 Tauri，npm run dev:web 启动 Vite；桌面包目录 npm run dev 是 Vite，npm run tauri:dev 启动 Tauri。2026-10-04 合并前 main 的浏览器快照出现后端未连接和 favicon 404；集成分支 Vite headless 显示浏览器预览已就绪、桌面操作禁用、Console 0 error/0 warning。隐藏窗口 CLI WebView2 harness 四场景通过，确认 smoke production bundle 首屏 mount 和 Tauri Channel→Vue handler 事件投递；它不验证可见窗口，也不是 `npm run dev` 实测。本次将 Tauri devUrl 固定为 `127.0.0.1:1420` 以匹配 Vite IPv4 bind，并以 Node 配置回归锁定该契约；真实 Tauri dev/WebView 启动仍待验证。见 [Tauri dev 与 Vite 启动核查](../05-operations/03-tauri-dev-cli-preflight.md) 与 [WebView harness](./62-f7-webview-driver-harness.md)。 |
+| F0 | 目录重构、文档重建和路径恢复 | **进行中（目录迁移、Vite headless、`npm run dev` CLI 与隐藏 WebView CLI 验收通过；Tauri `devUrl`/Vite IPv4 地址契约已修正；可见窗口和原报告的无界面现象仍待验证）** | 根目录 npm run dev 启动 Tauri，npm run dev:web 启动 Vite；桌面包目录 npm run dev 是 Vite，npm run tauri:dev 启动 Tauri。2026-10-04 合并前 main 的浏览器快照出现后端未连接和 favicon 404；集成分支 Vite headless 显示浏览器预览已就绪、桌面操作禁用、Console 0 error/0 warning。隐藏窗口 CLI WebView2 harness 四场景通过，确认 smoke production bundle 首屏 mount 和 Tauri Channel→Vue handler 事件投递。隔离 F0 worktree 实际执行桌面包 `npm run dev`，Vite 监听 `127.0.0.1:1420`，首页和入口模块均 HTTP 200，Ctrl-C 后端口释放；这些 CLI 检查不验证浏览器渲染、可见 Tauri/WebView2 或原生 IPC。Tauri devUrl 固定为 `127.0.0.1:1420` 匹配 Vite IPv4 bind，并有 Node 配置回归锁定。详见 [Tauri dev 与 Vite 启动核查](../05-operations/03-tauri-dev-cli-preflight.md)、[F0 Vite CLI 实测](./72-f0-vite-cli-verification.md) 与 [WebView harness](./62-f7-webview-driver-harness.md)。 |
 | F1 | Rust DSH ACP Host + 固定 Runtime Manifest | **已完成** | F1.1–F1.4 已分别实现、验收并单独提交；多模态识别准确率问题保留为 F7 质量验收项 |
 | F1.1 | Rust ACP stdio 进程与 JSON-RPC 基础 | **已完成** | 行分帧、并发请求响应匹配、通知订阅、错误/超时、关闭时有界回收；以假 ACP 子进程测试，不依赖真实 DSH |
 | F1.2 | 固定 DSH/Node Runtime Manifest 与安装器 | **已完成** | 固定已验收的 Node 与 DSH 包版本/校验值；下载、校验、安装、升级、失败回滚，不依赖全局 Node |
@@ -94,8 +94,8 @@ Coldstart runner 已采用默认且唯一发布 safe gate summary、ACP/Cordis a
 - `2461295` 为 runner 增加对后续启动时过期 private scratch 的保守回收，83/83；`fd52e62` 记录 Run15 安全真实复跑。F4 `scroll_disc` 原生近似构造已由 `e492aab` 单独提交：89 正例、54 负例对拍通过，CATIA 仍不支持其螺旋壁。
 - Run17 单次真实冷启动以非零结果结束：8 个 gate 通过，4 个 gate 失败，细节见 [Run17诊断](./69-f7-g8-run-17-diagnosis.md)。安全聚合显示 7 组重复同态终态更新和 7 次 ACP→bridge 歧义，但不含逐调用关联，不能声称二者一一对应。当前 gate 因 `terminal_updates !== 1` 拒绝重复 upsert；静态审查与既有 ACP 状态契约确认这是过严计数，`e8f02ce` 已移除该条件并保留唯一终态状态与精确调用关联要求，89/89 回归通过。`cad_review_reference_similarity` 有一次 bridge 执行被拒绝，尚待源代码层面归因。
 - Run18 在固定 HEAD `9a2f5b04a5c90d29a36283dda89f4c852c3d2bdf` 上完成一次真实 DSH 冷启动，exit code 1、耗时 787.8 秒；原图 SHA 与既有 Run 相同。DSH、main image wire、current geometry、holes、artifacts gate 通过；Cordis/ACP 工具与结果、visual、finish gate 失败。ACP projection 记录同态 pair 0、missing call ID 0；Cordis projection 有 4 个 `bridge_execution_rejected` 和一个 `cad_update_feature` `bridge_call_missing`。摘要没有逐调用参数，不能据此归因 request args；详细安全结果见[Run18诊断](./70-f7-g8-run-18-diagnosis.md)。`cad_review_reference_similarity` 未列于本轮拒绝枚举，但 visual gate 仍失败，不宣称视觉复核通过。
-- F0 隐藏 WebView CLI harness 已通过四场景，production Vue 首屏挂载与 Channel 事件投递正常；该测试未验证可见窗口，也没有直接复现用户报告的 `npm run dev` 完全无界面。证据见[WebView harness](./62-f7-webview-driver-harness.md)。
-- F0 的 `devUrl`/Vite IPv4 对齐已通过独立提交 `52757c3` 集成到当前分支；配置回归和前端 build 通过，但未启动 `npm run dev` 或可见窗口，实际无界面问题仍未运行时复现；Run18 不覆盖该问题。
+- F0 隐藏 WebView CLI harness 已通过四场景，production Vue 首屏挂载与 Channel 事件投递正常；它不验证可见窗口。随后在隔离 F0 worktree 实际执行桌面包 `npm run dev`：Vite 8.3.2 在 1103 ms 就绪并监听 `127.0.0.1:1420`，`/` 与 `/src/main.ts` 均返回 HTTP 200，Ctrl-C 后监听端口释放。此项只验证 Vite CLI 服务与资源响应，不验证浏览器像素/交互、Tauri 窗口、WebView2 或原生 IPC，因此仍不能声称用户报告的“完全没有界面”已由运行时复现或修复。见[F0 Vite CLI 实测](./72-f0-vite-cli-verification.md)与[WebView harness](./62-f7-webview-driver-harness.md)。
+- F0 的 `devUrl`/Vite IPv4 对齐已通过独立提交 `52757c3` 集成到当前分支；配置回归、前端 build 和 Vite CLI HTTP 检查通过，实际 Tauri dev/WebView 可见窗口仍未启动；Run18 不覆盖该问题。
 - 所有累计提交仍仅在本机 `feat/f7-p0-completion`，尚未合并或推送到 `origin/main`。Run18 只确认继承环境中的 provider key 存在，无法验证与 Run17 的 key 字节相同。下一步先按 Run18 projection 静态审查 producer→consumer 工具参数/身份路径，特别是 `cad_update_feature` schema 与 bridge 缺失、四类 bridge 执行拒绝；不读取 raw trace 或工具 payload。完成有证据支持的代码修复后，再固定新 HEAD、同一原图和隔离输出重跑真实 DSH；不降低视觉/finish 门槛。Run18 失败细节见[Run18诊断](./70-f7-g8-run-18-diagnosis.md)。
 | ID | 优先级 | 任务 | 状态 | 完成条件 |
 |---|---|---|---|---|
@@ -113,6 +113,7 @@ Coldstart runner 已采用默认且唯一发布 safe gate summary、ACP/Cordis a
 ## F0 验收记录
 
 - [x] 2026-10-04：修复 Tauri devUrl `localhost` 与 Vite `127.0.0.1:1420` 的地址契约不一致；新增 Node 配置回归，修改前失败、修改后 4/4 通过；`npm run build` 通过，只有 637.32 kB `CadViewport` chunk 大小提示。CSP 为 `null`、capability 不含按 host 授权项，无需同步 host allowlist。此项没有运行 `npm run dev`、Tauri dev 或可见 WebView。
+- [x] 2026-10-04：隔离 F0 worktree 运行桌面包 `npm.cmd run dev`，Vite 8.3.2 于 1103 ms 就绪，监听 `127.0.0.1:1420`；`GET /` 返回 200 HTML，`GET /src/main.ts` 返回 200 JS；Ctrl-C 后确认监听端口释放。该证据不涵盖浏览器渲染、Tauri/WebView2 窗口或 IPC，用户报告的无界面表现仍未复现。详见[CLI 实测记录](./72-f0-vite-cli-verification.md)。
 
 - [x] 迁移前工作树干净；记录 tracked 1,654 文件基线。
 - [x] 把桌面端归入 `src/apps/desktop/`，Python 过渡工程归入 `src/legacy/`。
