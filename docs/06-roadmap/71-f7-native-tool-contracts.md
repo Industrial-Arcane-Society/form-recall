@@ -40,3 +40,9 @@ Run18 可用的事件摘要仅表明 `cad_create_model`、`cad_inspect_reference
 - vision dispatch 与引用观察检查：[native_tool_executor.rs](../../src/apps/desktop/src-tauri/src/native_tool_executor.rs)、[native_vision_domain.rs](../../src/apps/desktop/src-tauri/src/native_vision_domain.rs)
 - 删除守卫回归：[native_cad_session.rs](../../src/apps/desktop/src-tauri/src/native_cad_session.rs)
 - pinned Cordis fixture：[test_dsh_native_tools_rpc.mjs](../../src/legacy/tests/test_dsh_native_tools_rpc.mjs)
+
+## 集成复核补充（2026-10-04）
+
+集成分支全量 Rust 单测第一次运行发现，G9 将 `sources`、`parameter_updates`、`source_updates` 与 `fields` 的模型说明改成较短的动态 map 描述时，丢失了既有提示契约中的语义：来源只对应数值参数、不能附到特征元数据、数值更新必须提供来源、`fields` 仅编辑名称/备注。既有 `run07_provenance_hole_group_update_recess_and_finish_contracts_are_explicit` 因此失败。代码中的 executor / CADPlan validator 仍有结构校验，但不足以替代明确的模型提示。
+
+本次 follow-up 在保留动态 map 和 native validator 说明的同时恢复以上提示，并明确 `image_estimate` 必须有 evidence、`existing_model` 必须有 note，以及 Host 对 `user.turn_id` 的可信绑定。定向测试 `native_tool_schemas::tests::run07_provenance_hole_group_update_recess_and_finish_contracts_are_explicit` 在修复后 **1/1 通过**。这只证明 schema/prompt 文本契约，真实 DSH 对提示的遵循仍须 Run20+ 冷启动验收。
