@@ -806,6 +806,59 @@ test('fatal failure publication uses only fixed stage and code enums', () => {
   }
 })
 
+test('publication fatal preserves evaluated gate allowlist and marks unavailable gates unknown', () => {
+  const root = mkdtempSync(join(tmpdir(), 'coldstart-publication-gates-'))
+  const output = join(root, 'run')
+  const sentinel = 'provider-tool-geometry-secret-sentinel'
+  try {
+    mkdirSync(output, { recursive: true })
+    // Force the regular artifact publisher to fail after its first allowlisted
+    // file but before summary publication, as in the coldstart fatal fallback.
+    mkdirSync(join(output, 'build-status.json'))
+    const strict = {
+      status: 'failed', failure_reasons: ['private-summary-reason'], evidence_errors: ['private-evidence-error'],
+      gates: {
+        run_scope: { status: 'passed', reasons: [] },
+        dsh_session: { status: 'failed', reasons: ['dsh_session_not_completed', sentinel] },
+      },
+      provider: { response: sentinel }, geometry: { payload: sentinel },
+    }
+    const evaluatedSummary = buildSafeAcceptanceSummary({ strict })
+    assert.throws(() => writeSafeAcceptanceArtifacts(output, {
+      summary: evaluatedSummary, acpProjection: {}, bindingProjection: {}, visionProjection: {},
+      buildStatus: { status: 'passed', exit_code: 0 },
+    }), error => ['EISDIR', 'EPERM', 'EEXIST'].includes(error.code))
+    const evaluated = evaluatedSummary.strict_gates
+    const failed = writeSafeFailureSummary(output, {
+      stage: 'publication', code: 'uncaught_exception', strictGates: evaluated,
+      exception: new Error(sentinel),
+    })
+    assert.deepEqual(Object.keys(failed.strict_gates.gates), [
+      'run_scope', 'dsh_session', 'dsh_process', 'trace_integrity', 'original_image', 'main_image_wire',
+      'cordis_cad_tools', 'acp_cad_tool_results', 'current_geometry', 'artifacts', 'holes', 'visual', 'finish',
+    ])
+    assert.deepEqual(failed.strict_gates.gates.run_scope,
+      { status: 'passed', reason_count: 0, reason_codes: [] })
+    assert.deepEqual(failed.strict_gates.gates.dsh_session,
+      { status: 'failed', reason_count: 2, reason_codes: ['dsh_session_not_completed'] })
+    assert.deepEqual(failed.strict_gates.gates.visual,
+      { status: 'unknown', reason_count: null, reason_codes: [] })
+    assert.equal(failed.strict_gates.failure_reason_count, 1)
+    assert.equal(failed.strict_gates.evidence_error_count, 1)
+    const serialized = readFileSync(join(output, 'summary.json'), 'utf8')
+    assert.equal(serialized.includes(sentinel), false)
+    assert.equal(serialized.includes('private-summary-reason'), false)
+
+    const noEvaluation = writeSafeFailureSummary(join(root, 'no-evaluation'), {
+      stage: 'publication', code: 'uncaught_exception',
+    })
+    assert.ok(Object.values(noEvaluation.strict_gates.gates).every(gate => gate.status === 'unknown'))
+    assert.ok(Object.values(noEvaluation.strict_gates.gates).every(gate => gate.reason_count === null))
+  } finally {
+    rmSync(root, { recursive: true, force: true })
+  }
+})
+
 test('fatal failure publication rejects unknown stage and code values', () => {
   // The synthetic error-like strings stand in for any provider/exception text;
   // callers can publish only these fixed classifications.

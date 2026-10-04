@@ -38,3 +38,7 @@ safe-output：`C:\Users\lycohana\AppData\Local\Temp\f7-g8-run31-20261004-93e2b1b
 Run31 确认新版本 safe allowlist diagnostics 确实包含 `vision_review_projection`，并发布两条固定计数/枚举摘要。但 runner 以 exit `1` 结束，safe summary 是 publication-stage `uncaught_exception` failure、scope unverified、transport failed、model none，严格门禁没有逐项结果。不能据此称 `visual` gate 通过、不能评估主图 wire 与模型行为，也不能标记 G1 或 F7 完成。
 
 投影字段不含图像、预览、review 正文或几何载荷；没有读取 raw provider/DSH logs、thought、scratch 或参数；没有启动 GUI/CATIA，也没有重跑。本轮不提供独立视觉或 CATIA 验收证据。
+
+## 2026-10-05 后续代码修复
+
+Run31 结果保持不变：当次 summary 确实没有逐项 gate map。后续在独立 `feat/f7-safe-publication-gate-fallback` 分支修复 runner：strict gate evaluation 结束时立即缓存固定 allowlist projection；若后续 artifact publication 抛错，fatal summary 会重新清洗并保留已评估 gate 的 `passed`/`failed` 状态与固定 reason code。若 evaluation 尚未完成或某 gate 缺失，则明确发布 `unknown`。合成测试模拟 artifact 发布中途失败并检查 sentinel 不泄漏；Node suite 130/130 通过。该修复没有读取 Run31 以外的运行产物，也未真实重跑 Run32；它不改变 Run31 当时不可判定的历史事实，也不证明 Run29 exit-code 矛盾已解释。详见[修复设计与验证](./95-f7-g8-publication-gate-fallback.md)。

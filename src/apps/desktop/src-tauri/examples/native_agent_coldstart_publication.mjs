@@ -165,12 +165,38 @@ function safeVisionReviewProjection(value) {
 }
 
 const safeGate = (name, gate) => ({
-  status: gate?.status === 'passed' ? 'passed' : 'failed',
-  reason_count: Array.isArray(gate?.reasons) ? safeCount(gate.reasons.length) : 0,
-  reason_codes: Array.isArray(gate?.reasons) && GATE_REASON_CODES[name]
-    ? [...new Set(gate.reasons.filter(reason => GATE_REASON_CODES[name].has(reason)))].sort()
+  status: gate?.status === 'passed' ? 'passed' : gate?.status === 'failed' ? 'failed' : 'unknown',
+  reason_count: Number.isSafeInteger(gate?.reason_count) && gate.reason_count >= 0
+    ? gate.reason_count : Array.isArray(gate?.reasons) ? safeCount(gate.reasons.length) : null,
+  reason_codes: GATE_REASON_CODES[name]
+    ? [...new Set([...(Array.isArray(gate?.reasons) ? gate.reasons : []),
+      ...(Array.isArray(gate?.reason_codes) ? gate.reason_codes : [])]
+      .filter(reason => GATE_REASON_CODES[name].has(reason)))].sort()
     : [],
 })
+
+export function buildSafeStrictGateProjection(strict) {
+  const gates = Object.fromEntries(GATE_NAMES.map(name => [name, safeGate(name, strict?.gates?.[name])]))
+  return {
+    status: strict?.status === 'passed' ? 'passed' : strict?.status === 'failed' ? 'failed' : 'unknown',
+    failure_reason_count: Array.isArray(strict?.failure_reasons) ? safeCount(strict.failure_reasons.length) : null,
+    evidence_error_count: Array.isArray(strict?.evidence_errors) ? safeCount(strict.evidence_errors.length) : null,
+    gates,
+  }
+}
+
+function sanitizeSafeStrictGateProjection(value) {
+  const gates = Object.fromEntries(GATE_NAMES.map(name => [name, safeGate(name, value?.gates?.[name])]))
+  return {
+    // The overall run is fatal even when the in-memory gate evaluation passed.
+    status: 'failed',
+    failure_reason_count: Number.isSafeInteger(value?.failure_reason_count) && value.failure_reason_count >= 0
+      ? value.failure_reason_count : 1,
+    evidence_error_count: Number.isSafeInteger(value?.evidence_error_count) && value.evidence_error_count >= 0
+      ? value.evidence_error_count : 0,
+    gates,
+  }
+}
 
 const safePredicateProjection = (gate, predicates, allowedReasons) => {
   const reasons = Array.isArray(gate?.reasons) ? gate.reasons : null
@@ -212,7 +238,7 @@ export function buildSafeDshDiagnostic(value = {}) {
   }
 }
 
-function createSafeFailureSummary({ stage, code, scratchCleanupStatus, scratchRecovery } = {}) {
+function createSafeFailureSummary({ stage, code, scratchCleanupStatus, scratchRecovery, strictGates } = {}) {
   return {
     schema_version: 1,
     status: 'failed',
@@ -223,7 +249,7 @@ function createSafeFailureSummary({ stage, code, scratchCleanupStatus, scratchRe
     scratch_cleanup_status: SCRATCH_CLEANUP_STATUSES.has(scratchCleanupStatus) ? scratchCleanupStatus : 'not_created',
     scratch_recovery: sanitizeScratchRecoverySummary(scratchRecovery),
     failure_diagnostic: buildSafeFailureDiagnostic({ stage, code }),
-    strict_gates: { status: 'failed', failure_reason_count: 1, evidence_error_count: 0, gates: {} },
+    strict_gates: strictGates ? sanitizeSafeStrictGateProjection(strictGates) : sanitizeSafeStrictGateProjection({}),
   }
 }
 
@@ -252,7 +278,7 @@ export function replacePublishedSafeFailureSummary(output, failure = {}) {
 }
 
 export function buildSafeAcceptanceSummary({ strict, transportStatus, modelStatus, runtime, source, scratchCleanupStatus, scratchRecovery, dshDiagnostic }) {
-  const gates = Object.fromEntries(GATE_NAMES.map(name => [name, safeGate(name, strict?.gates?.[name])]))
+  const strictGateProjection = buildSafeStrictGateProjection(strict)
   const overallPassed = strict?.status === 'passed' && scratchCleanupStatus === 'removed'
   return {
     schema_version: 1,
@@ -263,12 +289,7 @@ export function buildSafeAcceptanceSummary({ strict, transportStatus, modelStatu
     scratch_cleanup_status: SCRATCH_CLEANUP_STATUSES.has(scratchCleanupStatus) ? scratchCleanupStatus : 'not_created',
     scratch_recovery: sanitizeScratchRecoverySummary(scratchRecovery),
     dsh_diagnostic: buildSafeDshDiagnostic(dshDiagnostic),
-    strict_gates: {
-      status: strict?.status === 'passed' ? 'passed' : 'failed',
-      failure_reason_count: Array.isArray(strict?.failure_reasons) ? safeCount(strict.failure_reasons.length) : 0,
-      evidence_error_count: Array.isArray(strict?.evidence_errors) ? safeCount(strict.evidence_errors.length) : 0,
-      gates,
-    },
+    strict_gates: strictGateProjection,
     visual_finish_diagnostics: buildSafeVisualFinishDiagnostics(strict),
     runtime: {
       node: SAFE_NODE_VERSIONS.has(runtime?.node) ? runtime.node : 'unverified',

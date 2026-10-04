@@ -6,7 +6,7 @@ import { mkdirSync, readFileSync, writeFileSync, existsSync } from 'node:fs'
 import { basename, dirname, join, resolve } from 'node:path'
 import { createInterface } from 'node:readline'
 import { createAuditedToolProxy, createTerminalUpdateHmac, evaluateColdstartGates, parseEvidenceJsonl, parsePostcheckState, readRunArtifacts, summarizeAcpTerminalUpdateDiagnostics, summarizeCordisBindingDiagnostics, summarizeVisualReviewDiagnostics, toolArgumentsFingerprint } from './native_agent_coldstart_gates.mjs'
-import { buildSafeAcceptanceSummary, replacePublishedSafeFailureSummary, writeSafeAcceptanceArtifacts,
+import { buildSafeAcceptanceSummary, buildSafeStrictGateProjection, replacePublishedSafeFailureSummary, writeSafeAcceptanceArtifacts,
   writeSafeFailureSummary } from './native_agent_coldstart_publication.mjs'
 import { removeScratchDirectory, safeScratchCleanupStatus, terminateChildrenAndWait, waitThenTerminateChild } from './native_agent_coldstart_lifecycle.mjs'
 import { createColdstartScratchDirectory, recoverStaleColdstartScratch } from './native_agent_coldstart_scratch.mjs'
@@ -23,11 +23,12 @@ let fatalFailurePromise = null
 // Only a fixed stage enum is ever published. It marks the runner phase, not
 // the exception location or message; raw error/provider content is discarded.
 let failureStage = 'startup'
+let safeStrictGates = null
 const stopManagedChildren = () => terminateChildrenAndWait(managedChildren, 1500)
 const archiveFailure = (scratchCleanupStatus, code) => {
   if (!archiveDir) return
   try {
-    const failure = { stage: failureStage, code, scratchCleanupStatus, scratchRecovery }
+    const failure = { stage: failureStage, code, scratchCleanupStatus, scratchRecovery, strictGates: safeStrictGates }
     if (safeSummaryPublished) replacePublishedSafeFailureSummary(archiveDir, failure)
     else writeSafeFailureSummary(archiveDir, failure)
   } catch { /* preserve the original process failure */ }
@@ -366,6 +367,9 @@ const strict = evaluateColdstartGates({
   dsh: { status: dshStatus, exit_code: dshExitCode, child_exited: dshChildExited, failure: dshFailure }, toolEvents, toolBridgeCalls: toolProxy.records,
   nativeAudit, streamEvents, evidenceErrors,
 })
+// Cache only the fixed allowlist projection so a later artifact-publication
+// exception can preserve evaluated gate outcomes without retaining raw evidence.
+safeStrictGates = buildSafeStrictGateProjection(strict)
 {
   const inRunToolEvents = toolEvents.filter(event => event.session_id === sessionId && event.run_id === runId
     && event.turn_id === turnId && Number.isFinite(event.at_ms) && event.at_ms >= runStartedAt && event.at_ms <= runEndedAt)
