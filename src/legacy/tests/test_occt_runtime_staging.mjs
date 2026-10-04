@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';
 import { mkdtempSync, mkdirSync, writeFileSync, readFileSync, readdirSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
-import { join } from 'node:path';
+import { join, resolve } from 'node:path';
 import { stageOcctRuntime } from '../scripts/stage_occt_runtime.mjs';
 
 function fixture() {
@@ -11,7 +11,7 @@ function fixture() {
   const source = join(root, 'source');
   const bin = join(source, 'install/win64/vc14/bin');
   mkdirSync(bin, { recursive: true });
-  const names = ['TKBO', 'TKBool', 'TKBRep', 'TKernel', 'TKG2d', 'TKG3d', 'TKGeomAlgo', 'TKGeomBase', 'TKMath', 'TKMesh', 'TKPrim', 'TKShHealing', 'TKTopAlgo'];
+  const names = ['TKBO', 'TKBool', 'TKBRep', 'TKernel', 'TKG2d', 'TKG3d', 'TKGeomAlgo', 'TKGeomBase', 'TKMath', 'TKMesh', 'TKOffset', 'TKPrim', 'TKShHealing', 'TKTopAlgo'];
   const row = name => {
     const bytes = Buffer.from(name);
     writeFileSync(join(bin, name), bytes);
@@ -35,12 +35,42 @@ test('stages only runtime bytes/licenses and safely replaces a prior runtime', (
     const m = JSON.parse(bytes);
     assert.equal(m.packaged_runtime, true);
     assert.equal(m.licenses.length, 2);
-    assert.equal(m.occt_runtime_dlls.length, 13);
-    assert.equal(first.dllCount, 17);
+    assert.equal(m.occt_runtime_dlls.length, 14);
+    assert.equal(first.dllCount, 18);
     stageOcctRuntime(f.path, f.package);
     assert.deepEqual(readFileSync(target), bytes);
     assert.deepEqual(readdirSync(f.package), ['occt-runtime']);
   } finally { rmSync(f.root, { recursive: true, force: true }); }
+});
+
+test('packaged OCCT DLL allowlists cover every toolkit linked by the bridge', () => {
+  const repoRoot = resolve(import.meta.dirname, '../../..');
+  const cmake = readFileSync(join(repoRoot, 'src/native/occt-bridge/CMakeLists.txt'), 'utf8');
+  const runtimeBuilder = readFileSync(join(repoRoot, 'src/native/occt-bridge/Build-Runtime.ps1'), 'utf8');
+  const manifestWriter = readFileSync(join(repoRoot, 'src/native/occt-bridge/Write-RuntimeManifest.ps1'), 'utf8');
+  const rustRuntime = readFileSync(join(repoRoot, 'src/apps/desktop/src-tauri/src/native_occt_runtime.rs'), 'utf8');
+  const staging = readFileSync(join(repoRoot, 'src/legacy/scripts/stage_occt_runtime.mjs'), 'utf8');
+
+  const toolkitBlock = cmake.match(/set\(OCCT_TOOLKITS\s+([\s\S]*?)\)/);
+  assert.ok(toolkitBlock, 'CMake OCCT_TOOLKITS list exists');
+  const linked = toolkitBlock[1].trim().split(/\s+/).filter(Boolean).map(name => `${name}.dll`).sort();
+  const builderBlock = runtimeBuilder.match(/\$toolkits\s*=\s*'([^']+)'/);
+  assert.ok(builderBlock, 'PowerShell runtime build toolkit list exists');
+  const built = builderBlock[1].split(';').map(name => `${name}.dll`).sort();
+  const writerBlock = manifestWriter.match(/\$occtNames\s*=\s*@\(([^)]*)\)/);
+  assert.ok(writerBlock, 'PowerShell runtime manifest OCCT list exists');
+  const writerNames = writerBlock[1].match(/'([^']+)'/g).map(name => name.slice(1, -1) + '.dll').sort();
+  const rustBlock = rustRuntime.match(/const EXPECTED_OCCT_DLLS:\s*\[&str;\s*\d+\]\s*=\s*\[([\s\S]*?)\];/);
+  assert.ok(rustBlock, 'Rust runtime OCCT list exists');
+  const rustNames = rustBlock[1].match(/"([^"]+\.dll)"/g).map(name => name.slice(1, -1)).sort();
+  const stagingBlock = staging.match(/occt_runtime_dlls:\s*\[([^\]]*)\]/);
+  assert.ok(stagingBlock, 'JavaScript staging OCCT list exists');
+  const stagedNames = stagingBlock[1].match(/'([^']+\.dll)'/g).map(name => name.slice(1, -1)).sort();
+
+  assert.deepEqual(built, linked, 'runtime build must build every bridge-linked toolkit');
+  assert.deepEqual(writerNames, linked, 'manifest writer must include every bridge-linked toolkit');
+  assert.deepEqual(rustNames, linked, 'Rust runtime validation must require every bridge-linked toolkit');
+  assert.deepEqual(stagedNames, linked, 'package staging must include every bridge-linked toolkit');
 });
 
 test('rejects tampering and traversal before changing a packaged runtime', () => {

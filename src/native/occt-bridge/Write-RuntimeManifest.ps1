@@ -20,7 +20,7 @@ if ($runtimeBins.Count -ne 1) {
     throw "Expected exactly one installed OCCT bin directory containing occt_bridge.dll; found $($runtimeBins.Count)."
 }
 $runtimeBin = [IO.Path]::GetRelativePath($runtimeDirectory, $runtimeBins[0]).Replace('\', '/')
-$occtNames = @('TKBO', 'TKBool', 'TKBRep', 'TKernel', 'TKG2d', 'TKG3d', 'TKGeomAlgo', 'TKGeomBase', 'TKMath', 'TKMesh', 'TKPrim', 'TKShHealing', 'TKTopAlgo')
+$occtNames = @('TKBO', 'TKBool', 'TKBRep', 'TKernel', 'TKG2d', 'TKG3d', 'TKGeomAlgo', 'TKGeomBase', 'TKMath', 'TKMesh', 'TKOffset', 'TKPrim', 'TKShHealing', 'TKTopAlgo')
 $manifest = [ordered]@{
     occt_version = '7.9.3'
     abi_version = 1
