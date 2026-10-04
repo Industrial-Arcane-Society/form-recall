@@ -84,7 +84,7 @@ pub fn save_aimodel(path: &Path, project: &Value) -> Result<(), String> {
     atomic_write(path, &bytes)
 }
 
-/// Convert a validated CADPlan v1.0 using the same unit scaling and legacy
+/// Convert a validated CADPlan 1.0/1.1 using the same unit scaling and legacy
 /// Feature serialization rules as `cadplan._to_document`, retaining the full
 /// source plan and per-feature source maps beside the executable Document.
 pub fn cadplan_to_project(plan: &Value) -> Result<Value, String> {
@@ -192,9 +192,11 @@ pub fn cadplan_to_project(plan: &Value) -> Result<Value, String> {
             .filter(|s| !s.is_empty())
             .map(str::to_owned)
             .unwrap_or_else(|| kind_label(kind).to_owned());
-        let op = item["operation"]
-            .as_str()
-            .ok_or("CADPlan feature operation missing")?;
+        let op = match item["operation"].as_str() {
+            Some("add") => "add",
+            Some("cut") => "cut",
+            _ => return Err(format!("CADPlan feature {id} operation must be add or cut")),
+        };
         let enabled = item.get("enabled").cloned().unwrap_or(json!(true));
         if !enabled.is_boolean() {
             return Err(format!("CADPlan feature {id} enabled must be a boolean"));

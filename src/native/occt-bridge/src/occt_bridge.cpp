@@ -9,6 +9,7 @@
 #include <BRepBuilderAPI_Sewing.hxx>
 #include <BRepBuilderAPI_Transform.hxx>
 #include <BRepAlgoAPI_Cut.hxx>
+#include <BRepOffsetAPI_MakeThickSolid.hxx>
 #include <BRepCheck_Analyzer.hxx>
 #include <BRepClass3d_SolidClassifier.hxx>
 #include <BRepGProp.hxx>
@@ -21,6 +22,7 @@
 #include <BRepPrimAPI_MakeRevol.hxx>
 #include <BRepPrimAPI_MakeSphere.hxx>
 #include <BRep_Tool.hxx>
+#include <BRepOffset_Mode.hxx>
 #include <BRepTools.hxx>
 #include <Bnd_Box.hxx>
 #include <Standard_Failure.hxx>
@@ -62,6 +64,7 @@
 #include <limits>
 #include <string>
 #include <stdexcept>
+#include <set>
 #include <utility>
 #include <vector>
 
@@ -539,6 +542,97 @@ OcctStatus occt_shape_cylindrical_faces(const OcctShape *shape,
   });
 }
 void occt_cylindrical_faces_release(OcctCylinderFace *faces) { std::free(faces); }
+
+OcctStatus occt_shape_faces(const OcctShape *shape, OcctFaceInfo **out_faces,
+    size_t *out_count) {
+  if(out_faces) *out_faces=nullptr;
+  if(out_count) *out_count=0;
+  return guard([&] {
+    if(!valid(shape)||!out_faces||!out_count)
+      throw std::invalid_argument("shape and face output pointers are required");
+    std::vector<OcctFaceInfo> faces;
+    for(TopExp_Explorer ex(shape->value,TopAbs_FACE);ex.More();ex.Next()) {
+      const size_t ordinal=faces.size();
+      const TopoDS_Face face=TopoDS::Face(ex.Current());
+      GProp_GProps props;
+      BRepGProp::SurfaceProperties(face,props);
+      const gp_Pnt center=props.CentreOfMass();
+      const double area=props.Mass();
+      if(!finite(area)||area<=0||!finite(center.X())||!finite(center.Y())||!finite(center.Z()))
+        throw std::runtime_error("face inventory contains invalid surface area or center");
+      OcctFaceInfo row{};
+      row.ordinal=ordinal;
+      row.area=area;
+      row.center[0]=center.X(); row.center[1]=center.Y(); row.center[2]=center.Z();
+      BRepAdaptor_Surface surface(face,Standard_True);
+      row.surface_type=surface.GetType()==GeomAbs_Plane ? 0 : 1;
+      if(row.surface_type==0) {
+        gp_Dir normal=surface.Plane().Axis().Direction();
+        if(face.Orientation()==TopAbs_REVERSED) normal.Reverse();
+        row.oriented_normal[0]=normal.X();
+        row.oriented_normal[1]=normal.Y();
+        row.oriented_normal[2]=normal.Z();
+      }
+      faces.push_back(row);
+    }
+    if(faces.empty()) return;
+    if(faces.size()>std::numeric_limits<size_t>::max()/sizeof(OcctFaceInfo)) throw std::bad_alloc();
+    auto *buffer=static_cast<OcctFaceInfo*>(std::malloc(faces.size()*sizeof(OcctFaceInfo)));
+    if(!buffer) throw std::bad_alloc();
+    std::memcpy(buffer,faces.data(),faces.size()*sizeof(OcctFaceInfo));
+    *out_faces=buffer; *out_count=faces.size();
+  });
+}
+void occt_faces_release(OcctFaceInfo *faces) { std::free(faces); }
+
+OcctStatus occt_make_thick_solid(const OcctShape *shape,
+    const size_t *face_ordinals,size_t count,double thickness,
+    int32_t direction,OcctShape **out) {
+  return guard([&] {
+    check_out(out);
+    if(!valid(shape)||!face_ordinals||count==0||count>256||!finite(thickness)||thickness<=0
+       ||(direction!=0&&direction!=1))
+      throw std::invalid_argument("shell requires a shape, 1..256 selected faces, positive finite thickness, and inward/outward direction");
+    if(shape->value.ShapeType()!=TopAbs_SOLID)
+      throw std::invalid_argument("shell target must be the current single closed solid");
+    const TopoDS_Solid stock=TopoDS::Solid(shape->value);
+    if(!is_closed_solid(stock))
+      throw std::invalid_argument("shell target is not a valid closed solid");
+    std::vector<TopoDS_Face> faces;
+    std::set<size_t> unique;
+    size_t ordinal=0;
+    for(TopExp_Explorer ex(shape->value,TopAbs_FACE);ex.More();ex.Next(),++ordinal) {
+      if(std::find(face_ordinals,face_ordinals+count,ordinal)==face_ordinals+count) continue;
+      if(!unique.insert(ordinal).second)
+        throw std::invalid_argument("shell selector matched a face more than once");
+      const TopoDS_Face face=TopoDS::Face(ex.Current());
+      BRepAdaptor_Surface surface(face,Standard_True);
+      if(surface.GetType()!=GeomAbs_Plane)
+        throw std::invalid_argument("shell supports only selected planar faces");
+      faces.push_back(face);
+    }
+    if(unique.size()!=count||faces.size()!=count)
+      throw std::invalid_argument("shell selector matched zero or multiple current faces");
+    TopTools_ListOfShape removed;
+    for(const auto &face:faces) removed.Append(face);
+    const double offset=direction==0 ? -thickness : thickness;
+    BRepOffsetAPI_MakeThickSolid maker;
+    maker.MakeThickSolidByJoin(stock,removed,offset,1.0e-6,BRepOffset_Skin,
+      Standard_False,Standard_False,GeomAbs_Arc,Standard_False);
+    if(!maker.IsDone())
+      throw std::runtime_error("OCCT thick-solid offset failed for the requested direction and thickness");
+    const TopoDS_Shape result=maker.Shape();
+    size_t solid_count=0;
+    for(TopExp_Explorer ex(result,TopAbs_SOLID);ex.More();ex.Next()) {
+      ++solid_count;
+      if(!is_closed_solid(TopoDS::Solid(ex.Current())))
+        throw std::runtime_error("shell offset did not produce a valid closed solid");
+    }
+    if(solid_count!=1)
+      throw std::runtime_error("shell offset did not produce exactly one closed solid");
+    *out=wrap(result);
+  });
+}
 
 OcctStatus occt_shape_tessellate(const OcctShape *shape,double lin,double ang,OcctMesh *out) {
   if(out) { out->xyz=nullptr; out->normals=nullptr; out->vertex_count=0; }

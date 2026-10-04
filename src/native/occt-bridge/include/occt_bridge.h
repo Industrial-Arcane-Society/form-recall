@@ -72,6 +72,17 @@ typedef struct OcctCylinderFace {
   double normal[3];
 } OcctCylinderFace;
 
+/* Face inventory record. ordinal is an internal, zero-based handle that must
+   never be exposed as a model-facing selector. surface_type is 0 for plane,
+   1 for every other surface. center and oriented_normal are valid for planes. */
+typedef struct OcctFaceInfo {
+  size_t ordinal;
+  int32_t surface_type;
+  double area;
+  double center[3];
+  double oriented_normal[3];
+} OcctFaceInfo;
+
 /* Error text remains valid until the next bridge call on the same thread. */
 OCCT_BRIDGE_API const char *occt_last_error(void);
 OCCT_BRIDGE_API const char *occt_version(void);
@@ -132,6 +143,16 @@ OCCT_BRIDGE_API void occt_material_intervals_release(OcctMaterialInterval *inter
 OCCT_BRIDGE_API OcctStatus occt_shape_cylindrical_faces(
   const OcctShape *shape, OcctCylinderFace **out_faces, size_t *out_count);
 OCCT_BRIDGE_API void occt_cylindrical_faces_release(OcctCylinderFace *faces);
+/* Returns all faces in OCCT enumeration order. Release with the matching
+   function. Face ordinals are only valid for the exact source shape. */
+OCCT_BRIDGE_API OcctStatus occt_shape_faces(const OcctShape *shape,
+  OcctFaceInfo **out_faces, size_t *out_count);
+OCCT_BRIDGE_API void occt_faces_release(OcctFaceInfo *faces);
+/* Removes only the selected planar faces and creates one thick solid. Direction
+   0=inward (negative OCCT offset), 1=outward (positive OCCT offset). */
+OCCT_BRIDGE_API OcctStatus occt_make_thick_solid(const OcctShape *shape,
+  const size_t *face_ordinals, size_t count, double thickness,
+  int32_t direction, OcctShape **out_shape);
 OCCT_BRIDGE_API OcctStatus occt_shape_tessellate(const OcctShape *shape,
   double linear_deflection, double angular_deflection, OcctMesh *out_mesh);
 OCCT_BRIDGE_API void occt_mesh_release(OcctMesh *mesh);

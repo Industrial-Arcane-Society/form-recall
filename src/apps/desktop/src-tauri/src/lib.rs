@@ -38,6 +38,7 @@ pub mod native_review_gate;
 pub mod native_rotor;
 pub mod native_scroll_disc;
 pub mod native_settings;
+pub mod native_shell;
 pub mod native_standard_features;
 pub mod native_state_summary;
 pub mod native_timing_pulley;

@@ -938,7 +938,11 @@ fn str_field(v: &Value, k: &str) -> String {
     v.get(k).and_then(Value::as_str).unwrap_or("").to_string()
 }
 fn geometry_projection(v: &Value) -> Value {
-    json!({"id":v.get("id"),"kind":v.get("kind"),"operation":v.get("operation"),"parameters":v.get("parameters"),"relations":v.get("relations")})
+    let mut projection = json!({"id":v.get("id"),"kind":v.get("kind"),"operation":v.get("operation"),"parameters":v.get("parameters"),"relations":v.get("relations")});
+    if let Some(binding) = v.get("selection_binding") {
+        projection["selection_binding"] = binding.clone();
+    }
+    projection
 }
 fn result(state: Value, backend: Option<BackendRequest>) -> SessionResult {
     SessionResult {

@@ -27,7 +27,35 @@ pub fn feature_spec(kind: &str) -> Result<Value, String> {
             "X":["Y","Z"],"Y":["X","Z"],"Z":["X","Y"]
         });
     }
-    result["native_execution"] = native_execution_contract(kind);
+    if kind == "shell" {
+        result["optional_parameters"] = json!(["offset_mode", "removed_faces"]);
+        result["native_execution"] = json!({
+            "status":"implemented_exact",
+            "geometry_support":"exact",
+            "scope":"local_candidate_geometry",
+            "supported_variants":[
+                "explicit planar face selection from the current face inventory",
+                "one current unique closed solid",
+                "explicit inward or outward offset"
+            ],
+            "unsupported_variants":[
+                "curved or non-planar removed faces",
+                "stale or ambiguous selectors",
+                "offset failure or result other than one valid closed solid",
+                "legacy thickness-only shell"
+            ],
+            "parameter_limits":{
+                "thickness":">0 in CADPlan length units",
+                "offset_mode":"required inward|outward; never inferred or flipped",
+                "shell_target":"one relation to the enumerated current plan-head feature",
+                "removed_faces":"1..=256 planar selectors from current cad_list_shell_faces",
+                "selection_binding":"current revision, target id, fingerprint, kernel and inventory version"
+            },
+            "note":"Native OCCT shell is exact only for explicitly selected planar faces on the current unique closed solid. Stale, ambiguous, curved-face, or offset failures are rejected. Legacy thickness-only plans remain readable but are unsupported and never auto-migrated. CATIA export remains unsupported."
+        });
+    } else {
+        result["native_execution"] = native_execution_contract(kind);
+    }
     Ok(result)
 }
 
@@ -132,6 +160,25 @@ fn native_execution_contract(kind: &str) -> Value {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn shell_advertises_only_the_explicit_planar_native_subset() {
+        let spec = feature_spec("shell").unwrap();
+        assert_eq!(
+            spec["optional_parameters"],
+            serde_json::json!(["offset_mode", "removed_faces"])
+        );
+        assert_eq!(spec["native_execution"]["status"], "implemented_exact");
+        assert_eq!(spec["native_execution"]["geometry_support"], "exact");
+        assert!(
+            spec["native_execution"]["unsupported_variants"]
+                .as_array()
+                .unwrap()
+                .iter()
+                .any(|item| item.as_str().is_some_and(|value| value.contains("curved")))
+        );
+        assert_eq!(spec["catia_mapping"], "unsupported");
+    }
 
     #[test]
     fn camshaft_is_advertised_native_exact_while_catia_mapping_stays_approximate() {
@@ -386,7 +433,7 @@ mod tests {
                 );
             }
         }
-        assert_eq!(supported_count, 26);
+        assert_eq!(supported_count, 27);
         assert_eq!(kinds.len(), specs.as_object().unwrap().len());
     }
 
@@ -419,8 +466,9 @@ mod tests {
             "worm",
             "loft",
             "impeller",
+            "shell",
         ];
-        const UNSUPPORTED: &[&str] = &["shell"];
+        const UNSUPPORTED: &[&str] = &[];
         const APPROXIMATE: &[&str] = &[
             "gear",
             "helical_gear",
@@ -458,8 +506,8 @@ mod tests {
             "the native contract must cover all 27 schema kinds"
         );
         assert_eq!(actual.len(), 27);
-        assert_eq!(IMPLEMENTED.len(), 26);
-        assert_eq!(UNSUPPORTED.len(), 1);
+        assert_eq!(IMPLEMENTED.len(), 27);
+        assert_eq!(UNSUPPORTED.len(), 0);
 
         for kind in IMPLEMENTED {
             let contract = feature_spec(kind).unwrap()["native_execution"].clone();
@@ -553,6 +601,16 @@ mod tests {
                 limit_key: "",
                 limit_text: "corner!=0",
                 error_text: "圆角矩形",
+            },
+            Probe {
+                kind: "shell",
+                valid: json!({"thickness":2,"offset_mode":"inward",
+                    "removed_faces":[format!("shell-face-v1:{}", "a".repeat(64))]}),
+                invalid: json!({"thickness":2,"offset_mode":"sideways",
+                    "removed_faces":[format!("shell-face-v1:{}", "a".repeat(64))]}),
+                limit_key: "offset_mode",
+                limit_text: "required inward|outward",
+                error_text: "必须显式为 inward 或 outward",
             },
             Probe {
                 kind: "cylinder",
@@ -965,6 +1023,32 @@ mod tests {
             let plan =
                 crate::cad_plan::create("native capability contract", seed, "contract probe", None);
             return crate::cad_plan::add(&plan, &pattern).unwrap();
+        }
+        if kind == "shell" {
+            let seed = contract_feature(
+                "seed",
+                "box",
+                &json!({"length":10,"width":8,"height":6}),
+                json!([]),
+            );
+            let mut plan = crate::cad_plan::create(
+                "native shell capability contract",
+                seed,
+                "contract probe",
+                None,
+            );
+            let fingerprint = crate::cad_plan::geometry_fingerprint(&plan).unwrap();
+            let mut shell = contract_feature(
+                "shell-probe",
+                kind,
+                parameters,
+                json!([{"type":"shell_target","feature_id":"seed"}]),
+            );
+            shell["operation"] = json!("cut");
+            shell["selection_binding"] =
+                crate::native_shell::binding(0, &fingerprint, "7.9.3", "seed");
+            plan = crate::cad_plan::add(&plan, &shell).unwrap();
+            return plan;
         }
         let feature = contract_feature("probe-1", kind, parameters, json!([]));
         crate::cad_plan::create(

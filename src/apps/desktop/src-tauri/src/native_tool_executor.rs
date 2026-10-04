@@ -29,6 +29,7 @@ pub struct NativeToolExecutor {
     transaction: Mutex<()>,
     audit_lock: Mutex<()>,
     active: Mutex<HashMap<String, Arc<AtomicBool>>>,
+    shell_face_selectors: Mutex<HashMap<String, crate::native_shell::SelectorGrant>>,
     stopping: AtomicBool,
 }
 
@@ -56,6 +57,7 @@ impl NativeToolExecutor {
             transaction: Mutex::new(()),
             audit_lock: Mutex::new(()),
             active: Mutex::new(HashMap::new()),
+            shell_face_selectors: Mutex::new(HashMap::new()),
             stopping: AtomicBool::new(false),
         })
     }
@@ -158,6 +160,39 @@ impl NativeToolExecutor {
                 (value, vec![], "已更新宿主元数据；自述不作为独立验收证据。")
             }
             name if crate::native_cad_tools::supports(name) => {
+                if name == "cad_add_feature" {
+                    let feature = arguments
+                        .get("feature")
+                        .ok_or("cad_add_feature 缺少 feature。")?;
+                    if feature.get("kind").and_then(Value::as_str) == Some("shell") {
+                        let plan = state
+                            .get("plan")
+                            .filter(|value| value.is_object())
+                            .ok_or("shell 必须作用于当前已有实体。")?;
+                        let revision = state.get("revision").and_then(Value::as_i64).unwrap_or(0);
+                        let fingerprint = crate::cad_plan::geometry_fingerprint(plan)?;
+                        let target_feature_id =
+                            crate::native_shell::current_target_feature_id(plan)?;
+                        let manifest = self
+                            .geometry_manifest
+                            .as_deref()
+                            .ok_or("原生OCCT runtime尚未配置；拒绝调用Python几何fallback。")?;
+                        let kernel_version =
+                            crate::native_occt::Kernel::load_manifest(manifest)?.version();
+                        let grants = self
+                            .shell_face_selectors
+                            .lock()
+                            .map_err(|_| "shell selector registry 已损坏。")?;
+                        crate::native_shell::validate_request_feature(
+                            feature,
+                            revision,
+                            &fingerprint,
+                            &kernel_version,
+                            &target_feature_id,
+                            &grants,
+                        )?;
+                    }
+                }
                 let active_path = self.session_dir.join("active-turn.json");
                 let user_turn_id = if active_path.is_file() {
                     read_json_object(&active_path)?
@@ -179,7 +214,14 @@ impl NativeToolExecutor {
                     },
                     cancelled,
                 )?;
+                let changed_geometry = outcome.state.get("revision") != state.get("revision");
                 state = outcome.state;
+                if changed_geometry {
+                    self.shell_face_selectors
+                        .lock()
+                        .map_err(|_| "shell selector registry 已损坏。")?
+                        .clear();
+                }
                 (
                     outcome.value,
                     outcome.images,
@@ -204,6 +246,49 @@ impl NativeToolExecutor {
                     feature_spec(required_string(arguments, "kind")?)?,
                     vec![],
                     "已读取特征参数契约。",
+                )
+            }
+            "cad_list_shell_faces" => {
+                check_keys(arguments, &[])?;
+                let plan = state
+                    .get("plan")
+                    .filter(|value| value.is_object())
+                    .ok_or("cad_list_shell_faces 需要当前模型中的唯一闭合实体。")?;
+                let revision = state.get("revision").and_then(Value::as_i64).unwrap_or(0);
+                let manifest = self
+                    .geometry_manifest
+                    .as_deref()
+                    .ok_or("原生OCCT runtime尚未配置；拒绝调用Python几何fallback。")?;
+                let built = crate::native_plan_geometry::build(plan, manifest, cancelled)?;
+                let fingerprint = crate::cad_plan::geometry_fingerprint(plan)?;
+                let kernel_version = built.report["occt_version"]
+                    .as_str()
+                    .ok_or("OCCT 几何报告缺少 kernel version。")?;
+                let target_feature_id = crate::native_shell::current_target_feature_id(plan)?;
+                let (inventory, grants) = crate::native_shell::inventory(
+                    &built.shape,
+                    revision,
+                    &fingerprint,
+                    kernel_version,
+                    &target_feature_id,
+                )?;
+                let mut registry = self
+                    .shell_face_selectors
+                    .lock()
+                    .map_err(|_| "shell selector registry 已损坏。")?;
+                registry.retain(|_, grant| {
+                    grant.revision == revision
+                        && grant.geometry_fingerprint == fingerprint
+                        && grant.kernel_version == kernel_version
+                        && grant.target_feature_id == target_feature_id
+                });
+                for (selector, grant) in grants {
+                    registry.insert(selector, grant);
+                }
+                (
+                    inventory,
+                    vec![],
+                    "已为当前 CADPlan revision 枚举可支持的平面移除面。",
                 )
             }
             "cad_search_knowledge" => {
@@ -685,6 +770,7 @@ fn supports_native_tool(name: &str) -> bool {
             name,
             "cad_get_state"
                 | "cad_get_feature_spec"
+                | "cad_list_shell_faces"
                 | "cad_search_knowledge"
                 | "cad_search_recipes"
                 | "web_search"

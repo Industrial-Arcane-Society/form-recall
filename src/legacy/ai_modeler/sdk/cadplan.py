@@ -19,7 +19,7 @@ from typing import Any, Dict, List, Mapping, Optional, Tuple
 from ai_modeler.core.model.docmodel import ADD, CUT, Document, Feature, KIND_LABELS
 from ai_modeler.paths import temp_path
 
-CADPLAN_SCHEMA_VERSION = "1.0"
+CADPLAN_SCHEMA_VERSION = "1.1"
 LENGTH_UNITS = {"mm": 1.0, "cm": 10.0, "m": 1000.0, "in": 25.4}
 ANGLE_UNITS = {"deg": 1.0, "rad": 180.0 / math.pi}
 THREE_VIEW_TILE_PX = (330, 260)
@@ -171,11 +171,10 @@ FEATURE_SPECS = {
     "rotor": _spec(("radius", "n", "height", "bore_d"), "exact",
                    "转子轮廓、厚度与中心孔映射为可编辑草图和凹槽。",
                    ("radius", "n", "height", "bore_d", "center")),
-    # Document recognizes this label, but Feature.build currently emits no shell
-    # geometry and the CATIA exporter has no shell branch.
+    # The legacy Python geometry and CATIA exporters still do not build shell.
     "shell": _spec(("thickness",), "unsupported",
-                   "当前 Document/CATIA 转换器没有抽壳实现。",
-                   ("thickness",)),
+                   "旧 v1.0 thickness-only shell 需要确认且不可执行；1.1 的显式 planar 子集仅由桌面 Rust executor 执行。",
+                   ("thickness", "offset_mode", "removed_faces")),
 }
 
 EXACT_KINDS = {k for k, s in FEATURE_SPECS.items() if s["status"] == "exact"}
@@ -214,6 +213,7 @@ _ENUMS = {
                    "T20", "3M", "5M", "8M", "14M"},
     "side": {"positive", "negative"},
     "direction": {"positive", "negative"},
+    "offset_mode": {"inward", "outward"},
 }
 
 
@@ -247,6 +247,16 @@ def _geometry_backend_status(feature: Mapping[str, Any]) -> Dict[str, str]:
     params = feature.get("parameters") or {}
     status, reason = occ_kernel.GEOMETRY_SUPPORT.get(
         kind, ("unavailable", "此特征没有本地 BREP 执行映射。"))
+    if kind == "shell":
+        params = feature.get("parameters") or {}
+        explicit = (all(key in params for key in ("offset_mode", "removed_faces"))
+                    and isinstance(feature.get("selection_binding"), dict)
+                    and any(row.get("type") == "shell_target"
+                            for row in feature.get("relations", []) if isinstance(row, dict)))
+        status = "unavailable"
+        reason = ("显式平面 shell 仅由桌面原生 Rust/OCCT executor 执行；Python Document/OCP 路径不迁移或执行 shell。"
+                  if explicit else
+                  "旧 v1.0 thickness-only shell 不会自动迁移；1.1 shell 必须重新枚举面并显式指定 shell_target 和 offset_mode。")
     if kind == "box" and float(params.get("corner", 0.0) or 0.0) > 0:
         status, reason = "approximate", "圆角/倒角来自离散轮廓，主体由 OCCT 棱柱生成。"
     if kind == "pocket" and float(params.get("corner", 0.0) or 0.0) > 0:
@@ -256,7 +266,8 @@ def _geometry_backend_status(feature: Mapping[str, Any]) -> Dict[str, str]:
             if isinstance(row, dict)):
         status, reason = "unavailable", "CADPlan pattern 必须声明唯一 pattern_source 关系。"
     if not occ_kernel.available():
-        status, reason = "unavailable", "运行桌面程序的 Python 未安装 OpenCASCADE BREP 依赖。"
+        if kind != "shell":
+            status, reason = "unavailable", "运行桌面程序的 Python 未安装 OpenCASCADE BREP 依赖。"
     return {"feature_id": str(feature.get("id", "")), "kind": kind,
             "status": status, "reason": reason, "backend": "occt_brep"}
 
@@ -308,6 +319,97 @@ def _feature_reason(feature: Mapping[str, Any], status: str) -> str:
     if status == base_status:
         return FEATURE_SPECS[kind]["reason"]
     return FEATURE_SPECS[kind]["reason"]
+
+
+def _validate_shell_feature(feature: Mapping[str, Any], params: Mapping[str, Any],
+                            feature_id: str, path: str, schema_version: str,
+                            features: Sequence[Any], index: int, ids: Mapping[str, int],
+                            errors: List[Dict[str, str]],
+                            confirmations: List[Dict[str, str]]) -> None:
+    if feature.get("kind") != "shell":
+        if "selection_binding" in feature:
+            errors.append({"code": "selection_binding_only_for_shell",
+                           "path": path + ".selection_binding",
+                           "message": "selection_binding 仅允许用于 shell 特征。"})
+        return
+    if schema_version == "1.0":
+        confirmations.append({"feature_id": feature_id, "parameter": "shell_migration",
+                              "question": "CADPlan 1.0 shell 只有 thickness，不能推断开口面、方向或目标；请在 1.1 中重新枚举并显式选择。"})
+        return
+    if feature.get("operation") != "cut":
+        errors.append({"code": "shell_requires_cut_operation", "path": path + ".operation",
+                       "message": "显式 shell 必须使用 operation=cut。"})
+    for key in ("thickness", "offset_mode", "removed_faces"):
+        if key not in params:
+            errors.append({"code": "incomplete_explicit_shell", "path": path + ".parameters." + key,
+                           "message": "CADPlan 1.1 shell 必须包含 %s；旧 thickness-only shell 不会自动迁移。" % key})
+    if params.get("offset_mode") not in {"inward", "outward"}:
+        errors.append({"code": "invalid_shell_offset_mode", "path": path + ".parameters.offset_mode",
+                       "message": "shell.offset_mode 必须显式为 inward 或 outward。"})
+    raw_relations = feature.get("relations", [])
+    relations = raw_relations if isinstance(raw_relations, list) else []
+    shell_targets = [row for row in relations
+                     if isinstance(row, dict) and row.get("type") == "shell_target"]
+    target_id = shell_targets[0].get("feature_id") if len(shell_targets) == 1 else None
+    if not isinstance(target_id, str):
+        errors.append({"code": "invalid_shell_target_relation", "path": path + ".relations",
+                       "message": "shell 必须通过唯一 shell_target relation 显式指定目标 feature。"})
+    elif target_id not in ids or ids.get(target_id, index) >= index:
+        errors.append({"code": "invalid_shell_target_relation", "path": path + ".relations",
+                       "message": "shell_target 必须指向此前已定义的 feature。"})
+    else:
+        current_head = next((row.get("id") for row in reversed(features[:index])
+                             if isinstance(row, dict) and row.get("enabled", True) is not False), None)
+        if target_id != current_head:
+            errors.append({"code": "stale_shell_target_relation", "path": path + ".relations",
+                           "message": "shell_target 必须指向当前累计实体末端的前序 feature。"})
+    selectors = params.get("removed_faces")
+    if not isinstance(selectors, list) or not 1 <= len(selectors) <= 256:
+        errors.append({"code": "invalid_shell_removed_faces", "path": path + ".parameters.removed_faces",
+                       "message": "shell.removed_faces 须为1到256个 cad_list_shell_faces opaque selector。"})
+    else:
+        seen = set()
+        prefix = "shell-face-v1:"
+        for index, selector in enumerate(selectors):
+            digest = selector[len(prefix):] if isinstance(selector, str) and selector.startswith(prefix) else ""
+            if len(digest) != 64 or any(char not in "0123456789abcdef" for char in digest):
+                errors.append({"code": "invalid_shell_face_selector",
+                               "path": "%s.parameters.removed_faces[%d]" % (path, index),
+                               "message": "必须使用 cad_list_shell_faces 返回的 opaque selector。"})
+            if selector in seen:
+                errors.append({"code": "duplicate_shell_face_selector",
+                               "path": "%s.parameters.removed_faces[%d]" % (path, index),
+                               "message": "removed_faces 不允许重复 selector。"})
+            seen.add(selector)
+    binding = feature.get("selection_binding")
+    fields = {"revision", "geometry_fingerprint", "kernel_version", "inventory_version",
+              "target_feature_id"}
+    if not isinstance(binding, dict):
+        errors.append({"code": "missing_shell_selection_binding", "path": path + ".selection_binding",
+                       "message": "显式 shell 必须保存 cad_list_shell_faces 返回的 selection_binding。"})
+        return
+    if set(binding) - fields:
+        errors.append({"code": "unknown_shell_selection_binding_field", "path": path + ".selection_binding",
+                       "message": "selection_binding 只接受 revision、geometry_fingerprint、kernel_version、inventory_version、target_feature_id。"})
+    revision = binding.get("revision")
+    if not isinstance(revision, int) or isinstance(revision, bool) or revision < 0:
+        errors.append({"code": "invalid_shell_selection_revision", "path": path + ".selection_binding.revision",
+                       "message": "revision 须为非负整数。"})
+    fingerprint = binding.get("geometry_fingerprint")
+    if (not isinstance(fingerprint, str) or len(fingerprint) != 64
+            or any(char not in "0123456789abcdef" for char in fingerprint)):
+        errors.append({"code": "invalid_shell_selection_fingerprint", "path": path + ".selection_binding.geometry_fingerprint",
+                       "message": "geometry_fingerprint 须为64位小写SHA-256。"})
+    version = binding.get("kernel_version")
+    if not isinstance(version, str) or not version.strip():
+        errors.append({"code": "invalid_shell_selection_kernel_version", "path": path + ".selection_binding.kernel_version",
+                       "message": "kernel_version 须为非空字符串。"})
+    if binding.get("inventory_version") != 2:
+        errors.append({"code": "unsupported_shell_inventory_version", "path": path + ".selection_binding.inventory_version",
+                       "message": "inventory_version 只支持 2。"})
+    if binding.get("target_feature_id") != target_id:
+        errors.append({"code": "shell_target_binding_mismatch", "path": path + ".selection_binding.target_feature_id",
+                       "message": "selection_binding.target_feature_id 必须与唯一 shell_target relation 一致。"})
 
 
 def _contains_number(value: Any) -> bool:
@@ -405,9 +507,10 @@ def validate_plan(plan: Any) -> Dict[str, Any]:
         if key not in allowed_top:
             errors.append({"code": "unknown_field", "path": "$." + str(key),
                            "message": "CADPlan 不支持此字段。"})
-    if data.get("schema_version") != CADPLAN_SCHEMA_VERSION:
+    schema_version = data.get("schema_version")
+    if schema_version not in {"1.0", CADPLAN_SCHEMA_VERSION}:
         errors.append({"code": "unsupported_schema_version", "path": "$.schema_version",
-                       "message": "只支持 schema_version=1.0。"})
+                       "message": "只支持 schema_version=1.0 或 1.1。"})
     if not isinstance(data.get("name"), str) or not data.get("name", "").strip():
         errors.append({"code": "missing_name", "path": "$.name",
                        "message": "必须提供非空模型名称。"})
@@ -469,7 +572,7 @@ def validate_plan(plan: Any) -> Dict[str, Any]:
             continue
         for key in feature:
             if key not in {"id", "kind", "operation", "name", "parameters", "sources",
-                           "relations", "note", "enabled"}:
+                           "relations", "note", "enabled", "selection_binding"}:
                 errors.append({"code": "unknown_field", "path": path + "." + str(key),
                                "message": "特征不支持此字段。"})
         if "enabled" in feature and not isinstance(feature["enabled"], bool):
@@ -689,12 +792,16 @@ def validate_plan(plan: Any) -> Dict[str, Any]:
         pattern_sources = []
         for ri, relation in enumerate(relations):
             rpath = "%s.relations[%d]" % (path, ri)
-            if not isinstance(relation, dict) or relation.get("type") not in {"depends_on", "pattern_source"}:
+            allowed_relation_types = {"depends_on", "pattern_source"}
+            if kind == "shell":
+                allowed_relation_types.add("shell_target")
+            if not isinstance(relation, dict) or relation.get("type") not in allowed_relation_types:
                 errors.append({"code": "invalid_relation", "path": rpath,
-                               "message": ("关系项必须使用 type 字段（depends_on 或 pattern_source）"
+                               "message": ("关系项必须使用 type 字段（depends_on、pattern_source%s）"
                                            "和 feature_id 字段，例如："
                                            "{\"type\":\"pattern_source\","
-                                           "\"feature_id\":\"上一个特征ID\"}。")})
+                                           "\"feature_id\":\"上一个特征ID\"}。" %
+                                           (" 或 shell_target" if kind == "shell" else ""))})
                 continue
             if set(relation) - {"type", "feature_id"}:
                 errors.append({"code": "unknown_field", "path": rpath,
@@ -706,6 +813,8 @@ def validate_plan(plan: Any) -> Dict[str, Any]:
                                            "pattern_source 还必须指向紧邻的前一个特征。")})
             if relation.get("type") == "pattern_source":
                 pattern_sources.append(target)
+        _validate_shell_feature(feature, params, fid, path, schema_version,
+                                features, index, ids, errors, confirmations)
         if kind == "pattern":
             if len(pattern_sources) != 1:
                 confirmations.append({"feature_id": fid, "parameter": "relations",
@@ -766,7 +875,7 @@ def validate_plan(plan: Any) -> Dict[str, Any]:
         "support": support,
         "geometry_support": geometry_support,
         "warnings": warnings,
-        "schema_version": CADPLAN_SCHEMA_VERSION,
+        "schema_version": schema_version,
     }
 
 
@@ -815,8 +924,11 @@ def _to_document(plan: Mapping[str, Any]) -> Tuple[Document, Dict[str, Dict[str,
         if (item["kind"] == "box" and "center" in params
                 and "base" not in item["parameters"]):
             params["base"] = False
+        operation = item.get("operation")
+        if operation not in {ADD, CUT}:
+            raise ValueError("unsupported CADPlan operation: %r" % operation)
         feature = Feature(item["kind"], params,
-                          CUT if item["operation"] == CUT else ADD,
+                          CUT if operation == CUT else ADD,
                           item.get("name", ""), item.get("note", ""),
                           item.get("id"), item.get("relations", []))
         feature.enabled = item.get("enabled", True)
@@ -1560,6 +1672,14 @@ def schema_document() -> Dict[str, Any]:
     for kind, spec in FEATURE_SPECS.items():
         parameter_props = {key: copy.deepcopy(prop_schemas[key])
                            for key in spec["params"] if key in prop_schemas}
+        if kind == "shell":
+            parameter_props.update({
+                "offset_mode": {"type": "string", "enum": ["inward", "outward"]},
+                "removed_faces": {"type": "array", "minItems": 1, "maxItems": 256,
+                                  "items": {"type": "string",
+                                            "pattern": "^shell-face-v1:[0-9a-f]{64}$"},
+                                  "uniqueItems": True},
+            })
         parameter_schema = {"type": "object", "properties": parameter_props,
                             "additionalProperties": False}
         conditional_required = list(spec["required"])
@@ -1629,34 +1749,62 @@ def schema_document() -> Dict[str, Any]:
                 },
             })
         parameter_schema["required"] = conditional_required
+        feature_properties = {
+            "id": {"type": "string", "minLength": 1},
+            "kind": {"const": kind, "x-catia-support-status": spec["status"],
+                     "x-catia-support-note": spec["reason"]},
+            "operation": {"type": "string", "enum": ["add", "cut"]},
+            "name": strings,
+            "note": strings,
+            "enabled": {"type": "boolean", "default": True},
+            "parameters": parameter_schema,
+            "sources": {"type": "object",
+                        "propertyNames": {"enum": list(spec["params"])},
+                        "additionalProperties": {"$ref": "#/$defs/source"}},
+            "relations": {"type": "array", "items": {"$ref": "#/$defs/relation"}},
+        }
+        if kind == "shell":
+            feature_properties["selection_binding"] = {
+                "type": "object",
+                "properties": {
+                    "revision": {"type": "integer", "minimum": 0},
+                    "geometry_fingerprint": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+                    "kernel_version": {"type": "string", "minLength": 1},
+                    "inventory_version": {"const": 2},
+                    "target_feature_id": {"type": "string", "minLength": 1},
+                },
+                "required": ["revision", "geometry_fingerprint", "kernel_version",
+                             "inventory_version", "target_feature_id"],
+                "additionalProperties": False,
+            }
+            feature_properties["relations"] = {
+                "type": "array",
+                "items": {
+                    "type": "object",
+                    "properties": {
+                        "type": {"type": "string", "enum": [
+                            "depends_on", "pattern_source", "shell_target"]},
+                        "feature_id": {"type": "string", "minLength": 1},
+                    },
+                    "required": ["type", "feature_id"],
+                    "additionalProperties": False,
+                },
+            }
         feature_alternatives.append({
             "type": "object",
-            "properties": {
-                "id": {"type": "string", "minLength": 1},
-                "kind": {"const": kind, "x-catia-support-status": spec["status"],
-                         "x-catia-support-note": spec["reason"]},
-                "operation": {"type": "string", "enum": ["add", "cut"]},
-                "name": strings,
-                "note": strings,
-                "enabled": {"type": "boolean", "default": True},
-                "parameters": parameter_schema,
-                "sources": {"type": "object",
-                            "propertyNames": {"enum": list(spec["params"])},
-                            "additionalProperties": {"$ref": "#/$defs/source"}},
-                "relations": {"type": "array", "items": {"$ref": "#/$defs/relation"}},
-            },
+            "properties": feature_properties,
             "required": ["id", "kind", "operation", "parameters", "sources"],
             "additionalProperties": False,
             "allOf": conditionals,
         })
     return {
         "$schema": "https://json-schema.org/draft/2020-12/schema",
-        "$id": "https://ai-modeler.local/schemas/cadplan-1.0.schema.json",
+        "$id": "https://ai-modeler.local/schemas/cadplan-1.1.schema.json",
         "title": "AI Modeler CADPlan",
         "description": "Provider-neutral, data-only plan for validated CATIA V5 construction.",
         "type": "object",
         "properties": {
-            "schema_version": {"const": CADPLAN_SCHEMA_VERSION},
+            "schema_version": {"type": "string", "enum": ["1.0", "1.1"]},
             "name": {"type": "string", "minLength": 1},
             "source_prompt": strings,
             "units": {
@@ -1684,6 +1832,30 @@ def schema_document() -> Dict[str, Any]:
         },
         "required": ["schema_version", "name", "units", "coordinate_system", "features"],
         "additionalProperties": False,
+        "allOf": [{
+            "if": {"properties": {"schema_version": {"const": "1.1"}},
+                   "required": ["schema_version"]},
+            "then": {"properties": {"features": {"items": {
+                "allOf": [{
+                    "if": {"properties": {"kind": {"const": "shell"}},
+                           "required": ["kind"]},
+                    "then": {
+                        "required": ["selection_binding"],
+                        "properties": {
+                            "operation": {"const": "cut"},
+                            "parameters": {"required": [
+                                "thickness", "offset_mode", "removed_faces"]},
+                            "relations": {
+                                "contains": {"type": "object", "properties": {
+                                    "type": {"const": "shell_target"}},
+                                    "required": ["type", "feature_id"]},
+                                "minContains": 1, "maxContains": 1,
+                            },
+                        },
+                    },
+                }],
+            }}}},
+        }],
         "$defs": {
             "source": {
                 "type": "object",
@@ -1706,7 +1878,7 @@ def schema_document() -> Dict[str, Any]:
             "relation": {
                 "type": "object",
                 "properties": {
-                    "type": {"type": "string", "enum": ["depends_on", "pattern_source"]},
+                    "type": {"type": "string", "enum": ["depends_on", "pattern_source", "shell_target"]},
                     "feature_id": {"type": "string", "minLength": 1},
                 },
                 "required": ["type", "feature_id"], "additionalProperties": False,

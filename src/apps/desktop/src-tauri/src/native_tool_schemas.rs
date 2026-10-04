@@ -11,8 +11,72 @@ const SCHEMAS_JSON: &str = r###"[{"name":"cad_get_state","description":"读取�
 
 /// Return the model-facing schemas for the native Cordis CADPlan tools.
 pub fn native_tool_schemas() -> Result<Vec<Value>, String> {
-    serde_json::from_str(SCHEMAS_JSON)
-        .map_err(|error| format!("内置 Cordis 工具 schema 无效：{error}"))
+    let mut schemas: Vec<Value> = serde_json::from_str(SCHEMAS_JSON)
+        .map_err(|error| format!("内置 Cordis 工具 schema 无效：{error}"))?;
+    let selection_binding = serde_json::json!({
+        "type":"object",
+        "description":"原样复制 cad_list_shell_faces 当前 revision、target feature 和几何 fingerprint 返回的 selection_binding；不得自行构造或复用旧版本。",
+        "properties":{
+            "revision":{"type":"integer","minimum":0},
+            "geometry_fingerprint":{"type":"string","pattern":"^[0-9a-f]{64}$"},
+            "kernel_version":{"type":"string","minLength":1},
+            "inventory_version":{"const":2},
+            "target_feature_id":{"type":"string","minLength":1}
+        },
+        "required":["revision","geometry_fingerprint","kernel_version","inventory_version","target_feature_id"],
+        "additionalProperties":false
+    });
+    for feature_path in [
+        "/inputSchema/properties/first_feature",
+        "/inputSchema/properties/feature",
+    ] {
+        let feature = schemas
+            .iter_mut()
+            .find(|schema| {
+                schema["name"]
+                    == if feature_path.ends_with("first_feature") {
+                        "cad_create_model"
+                    } else {
+                        "cad_add_feature"
+                    }
+            })
+            .and_then(|schema| schema.pointer_mut(feature_path))
+            .ok_or_else(|| format!("缺少工具 feature schema：{feature_path}"))?;
+        feature["properties"]["selection_binding"] = selection_binding.clone();
+        feature["properties"]["relations"]["items"]["properties"]["type"]["enum"] =
+            serde_json::json!(["depends_on", "pattern_source", "shell_target"]);
+        feature["allOf"] = serde_json::json!([{
+            "if":{"properties":{"kind":{"const":"shell"}},"required":["kind"]},
+            "then":{
+                "required":["selection_binding"],
+                "properties":{
+                    "operation":{"const":"cut"},
+                    "parameters":{
+                        "required":["thickness","offset_mode","removed_faces"],
+                        "properties":{
+                            "thickness":{"type":"number","exclusiveMinimum":0.0},
+                            "offset_mode":{"type":"string","enum":["inward","outward"]},
+                            "removed_faces":{"type":"array","minItems":1,"maxItems":256,"uniqueItems":true,
+                                "items":{"type":"string","pattern":"^shell-face-v1:[0-9a-f]{64}$"}}
+                        }
+                    },
+                    "relations":{
+                        "type":"array",
+                        "items":{"properties":{"type":{"enum":["depends_on","pattern_source","shell_target"]}}},
+                        "contains":{"type":"object","properties":{"type":{"const":"shell_target"}},
+                            "required":["type","feature_id"]},
+                        "minContains":1,
+                        "maxContains":1
+                    }
+                }}
+        }]);
+    }
+    schemas.push(serde_json::json!({
+        "name":"cad_list_shell_faces",
+        "description":"读取当前 plan-head 所代表的唯一有效闭合实体面清单。返回唯一 shell_target feature id、revision/fingerprint/kernel 绑定及每个平面面的 opaque selector；非平面只报告为不可选。创建 shell 时必须把当前 target_feature_id 写成唯一 shell_target relation，原样复制 selection_binding 与 removed_faces selector；任何几何修改后都须重新枚举。",
+        "inputSchema":{"type":"object","properties":{},"additionalProperties":false}
+    }));
+    Ok(schemas)
 }
 
 #[cfg(test)]
@@ -26,7 +90,7 @@ mod tests {
     #[test]
     fn exposes_all_tools_with_unique_names_and_valid_schema_shapes() {
         let schemas = native_tool_schemas().expect("embedded schemas must parse");
-        assert_eq!(schemas.len(), 24);
+        assert_eq!(schemas.len(), 25);
 
         let mut names = HashSet::new();
         for schema in &schemas {
@@ -78,6 +142,34 @@ mod tests {
                 .find(|schema| schema["name"] == name)
                 .unwrap_or_else(|| panic!("missing native tool {name}"))
         };
+
+        let face_list = tool("cad_list_shell_faces");
+        assert_eq!(face_list["inputSchema"]["properties"], json!({}));
+        for (tool_name, field_name) in [
+            ("cad_create_model", "first_feature"),
+            ("cad_add_feature", "feature"),
+        ] {
+            let feature = &tool(tool_name)["inputSchema"]["properties"][field_name];
+            assert!(feature["properties"].get("selection_binding").is_some());
+            let relation_types = feature["properties"]["relations"]["items"]["properties"]["type"]
+                ["enum"]
+                .as_array()
+                .unwrap();
+            assert!(relation_types.iter().any(|kind| kind == "shell_target"));
+            assert_eq!(
+                feature["allOf"][0]["then"]["required"],
+                json!(["selection_binding"])
+            );
+            assert_eq!(
+                feature["allOf"][0]["then"]["properties"]["parameters"]["required"],
+                json!(["thickness", "offset_mode", "removed_faces"])
+            );
+            assert_eq!(
+                feature["allOf"][0]["then"]["properties"]["parameters"]["properties"]["offset_mode"]
+                    ["enum"],
+                json!(["inward", "outward"])
+            );
+        }
 
         let create = &tool("cad_create_model")["inputSchema"]["properties"];
         assert_eq!(

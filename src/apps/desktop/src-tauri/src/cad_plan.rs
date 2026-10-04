@@ -7,11 +7,11 @@
 use serde_json::{Map, Value, json};
 use sha2::{Digest, Sha256};
 
-const SCHEMA_VERSION: &str = "1.0";
+const SCHEMA_VERSION: &str = "1.1";
 const GEOMETRY_FIELDS: [&str; 5] = ["id", "kind", "operation", "parameters", "relations"];
 const EDITABLE_FIELDS: [&str; 6] = ["name", "note", "relations", "kind", "operation", "enabled"];
 
-/// Construct a one-feature plan using the legacy Python plan_state defaults.
+/// Construct a new CADPlan using the current Python CADPlan schema version.
 pub fn create(
     name: impl Into<String>,
     first_feature: Value,
@@ -36,6 +36,15 @@ pub fn create(
 /// Return a new plan with the feature appended; `plan` is never mutated.
 pub fn add(plan: &Value, feature: &Value) -> Result<Value, String> {
     let mut candidate = plan.clone();
+    // A legacy 1.0 plan can only acquire the explicit shell contract by
+    // upgrading its schema marker when a new shell feature is appended. No
+    // fields are inferred or added to pre-existing thickness-only features;
+    // validation will continue to return needs_confirmation for those rows.
+    if feature.get("kind").and_then(Value::as_str) == Some("shell")
+        && candidate.get("schema_version").and_then(Value::as_str) == Some("1.0")
+    {
+        candidate["schema_version"] = json!(SCHEMA_VERSION);
+    }
     let rows = candidate
         .get_mut("features")
         .and_then(Value::as_array_mut)
@@ -201,6 +210,11 @@ pub fn geometry_fingerprint(plan: &Value) -> Result<String, String> {
                             key.to_owned(),
                             feature.get(key).cloned().unwrap_or(Value::Null),
                         );
+                    }
+                    // Preserve the exact SHA of every existing non-shell plan while
+                    // binding explicit shell geometry to its face-inventory basis.
+                    if let Some(binding) = feature.get("selection_binding") {
+                        projection.insert("selection_binding".into(), binding.clone());
                     }
                     if feature.get("enabled").and_then(Value::as_bool) == Some(false) {
                         projection.insert("enabled".into(), Value::Bool(false));
@@ -450,6 +464,36 @@ mod tests {
         assert_eq!(
             snapshot(&Value::Null, None, None, 4, None, true),
             json!({"state":"empty","revision":4})
+        );
+    }
+
+    #[test]
+    fn explicit_shell_add_upgrades_legacy_plan_without_migrating_old_shell_rows() {
+        let old_shell = json!({"id":"old-shell","kind":"shell","operation":"cut",
+            "parameters":{"thickness":2},"sources":{"thickness":{"type":"user"}}});
+        let old = json!({"schema_version":"1.0","name":"legacy","features":[
+            {"id":"base","kind":"box","operation":"add","parameters":{"length":10}},
+            old_shell
+        ]});
+        let explicit = json!({"id":"new-shell","kind":"shell","operation":"cut",
+            "parameters":{"thickness":1,"offset_mode":"inward","removed_faces":[
+                format!("shell-face-v1:{}", "a".repeat(64))]},
+            "selection_binding":{"revision":1,"geometry_fingerprint":"a".repeat(64),"kernel_version":"7.9.3",
+                "inventory_version":2,"target_feature_id":"old-shell"},
+            "relations":[{"type":"shell_target","feature_id":"old-shell"}]});
+
+        let upgraded = add(&old, &explicit).unwrap();
+        assert_eq!(old["schema_version"], "1.0");
+        assert_eq!(upgraded["schema_version"], "1.1");
+        assert_eq!(upgraded["features"][1], old_shell);
+        assert_eq!(
+            upgraded["features"][2]["parameters"]["offset_mode"],
+            "inward"
+        );
+        assert_eq!(
+            upgraded["features"][1]["parameters"],
+            json!({"thickness":2}),
+            "legacy shell migration must not invent faces or offset direction"
         );
     }
 

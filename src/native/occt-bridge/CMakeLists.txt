@@ -14,7 +14,7 @@ get_filename_component(OCCT_BIN_DIR "${OCCT_LIB_DIR}/../bin" ABSOLUTE)
 
 set(OCCT_TOOLKITS
   TKernel TKMath TKG2d TKG3d TKGeomBase TKBRep TKGeomAlgo TKTopAlgo TKPrim
-  TKBO TKBool TKMesh TKShHealing)
+  TKBO TKBool TKMesh TKShHealing TKOffset)
 set(OCCT_LIBS)
 foreach(toolkit IN LISTS OCCT_TOOLKITS)
   find_library(OCCT_${toolkit} NAMES ${toolkit} PATHS "${OCCT_LIB_DIR}" NO_DEFAULT_PATH REQUIRED)

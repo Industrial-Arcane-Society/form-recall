@@ -31,6 +31,9 @@ type LineIntervalsFn = unsafe extern "C" fn(
 ) -> Status;
 type CylindricalFacesFn =
     unsafe extern "C" fn(Handle, *mut *mut RawCylinderFace, *mut usize) -> Status;
+type FacesFn = unsafe extern "C" fn(Handle, *mut *mut RawFaceInfo, *mut usize) -> Status;
+type ReleaseFacesFn = unsafe extern "C" fn(*mut RawFaceInfo);
+type ThickSolidFn = unsafe extern "C" fn(Handle, *const usize, usize, f64, i32, Out) -> Status;
 #[repr(i32)]
 #[derive(Clone, Copy, Debug)]
 pub enum Axis {
@@ -91,6 +94,35 @@ struct RawCylinderFace {
     surface_point: [f64; 3],
     normal: [f64; 3],
 }
+#[repr(C)]
+#[derive(Clone, Copy)]
+struct RawFaceInfo {
+    ordinal: usize,
+    surface_type: i32,
+    area: f64,
+    center: [f64; 3],
+    oriented_normal: [f64; 3],
+}
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum FaceSurfaceType {
+    Plane,
+    Unsupported,
+}
+#[derive(Debug, Clone, Copy)]
+pub struct FaceInfo {
+    /// Kernel-local ordinal. Do not expose this value to model-facing tools.
+    pub ordinal: usize,
+    pub surface_type: FaceSurfaceType,
+    pub area: f64,
+    pub center: [f64; 3],
+    pub oriented_normal: Option<[f64; 3]>,
+}
+#[repr(i32)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum ShellDirection {
+    Inward = 0,
+    Outward = 1,
+}
 #[derive(Debug, Clone, Copy)]
 pub struct CylindricalFace {
     pub radius: f64,
@@ -131,6 +163,9 @@ struct Api {
     intervals_release: Option<unsafe extern "C" fn(*mut RawMaterialInterval)>,
     cylindrical_faces: Option<CylindricalFacesFn>,
     cylindrical_faces_release: Option<unsafe extern "C" fn(*mut RawCylinderFace)>,
+    faces: Option<FacesFn>,
+    faces_release: Option<ReleaseFacesFn>,
+    thick_solid: Option<ThickSolidFn>,
 }
 #[derive(Clone)]
 pub struct Kernel {
@@ -250,6 +285,24 @@ impl Kernel {
                     .get::<unsafe extern "C" fn(*mut RawCylinderFace)>(
                         b"occt_cylindrical_faces_release\0",
                     )
+                    .ok()
+                    .map(|f| *f)
+            },
+            faces: unsafe {
+                library
+                    .get::<FacesFn>(b"occt_shape_faces\0")
+                    .ok()
+                    .map(|f| *f)
+            },
+            faces_release: unsafe {
+                library
+                    .get::<ReleaseFacesFn>(b"occt_faces_release\0")
+                    .ok()
+                    .map(|f| *f)
+            },
+            thick_solid: unsafe {
+                library
+                    .get::<ThickSolidFn>(b"occt_make_thick_solid\0")
                     .ok()
                     .map(|f| *f)
             },
@@ -440,6 +493,42 @@ impl Kernel {
             (self.api.cut)(base.handle.as_ptr(), handles.as_ptr(), handles.len(), out)
         })
     }
+    pub fn make_thick_solid(
+        &self,
+        stock: &Shape,
+        face_ordinals: &[usize],
+        thickness: f64,
+        direction: ShellDirection,
+    ) -> Result<Shape, String> {
+        self.handles(&[stock])?;
+        if face_ordinals.is_empty()
+            || face_ordinals.len() > 256
+            || face_ordinals
+                .iter()
+                .copied()
+                .collect::<std::collections::HashSet<_>>()
+                .len()
+                != face_ordinals.len()
+            || !thickness.is_finite()
+            || thickness <= 0.0
+        {
+            return Err("shell requires 1..=256 unique faces and positive finite thickness".into());
+        }
+        let function = self
+            .api
+            .thick_solid
+            .ok_or("已安装的OCCT桥尚未提供显式 shell 构造器。")?;
+        self.create(|out| unsafe {
+            function(
+                stock.handle.as_ptr(),
+                face_ordinals.as_ptr(),
+                face_ordinals.len(),
+                thickness,
+                direction as i32,
+                out,
+            )
+        })
+    }
     pub fn transform(&self, shape: &Shape, matrix: [f64; 16]) -> Result<Shape, String> {
         self.handles(&[shape])?;
         self.create(|out| unsafe {
@@ -464,6 +553,85 @@ impl Api {
     }
 }
 impl Shape {
+    /// Enumerate faces for a current-revision inventory. The ordinal is only an
+    /// internal bridge detail and must be wrapped in a revision-bound opaque selector.
+    pub fn faces(&self) -> Result<Vec<FaceInfo>, String> {
+        let function = self.api.faces.ok_or("已安装的OCCT桥尚未提供面清单扫描。")?;
+        let release = self
+            .api
+            .faces_release
+            .ok_or("已安装的OCCT桥尚未提供面清单释放函数。")?;
+        let mut pointer = std::ptr::null_mut();
+        let mut count = 0usize;
+        let status = unsafe { function(self.handle.as_ptr(), &mut pointer, &mut count) };
+        struct FaceGuard {
+            pointer: *mut RawFaceInfo,
+            release: ReleaseFacesFn,
+        }
+        impl Drop for FaceGuard {
+            fn drop(&mut self) {
+                if !self.pointer.is_null() {
+                    unsafe { (self.release)(self.pointer) }
+                }
+            }
+        }
+        let guard = FaceGuard { pointer, release };
+        self.api.check(status)?;
+        if count == 0 {
+            if !guard.pointer.is_null() {
+                return Err("OCCT 返回空面数量但分配了数组。".into());
+            }
+            return Ok(Vec::new());
+        }
+        if guard.pointer.is_null() || count > 1_000_000 {
+            return Err("OCCT 返回无效或过大的面清单。".into());
+        }
+        let mut faces = Vec::with_capacity(count);
+        for (expected_ordinal, row) in unsafe { std::slice::from_raw_parts(guard.pointer, count) }
+            .iter()
+            .enumerate()
+        {
+            if row.ordinal != expected_ordinal
+                || !row.area.is_finite()
+                || row.area <= 0.0
+                || row.center.iter().any(|v| !v.is_finite())
+                || row.oriented_normal.iter().any(|v| !v.is_finite())
+            {
+                return Err("OCCT 面清单包含无效序号、面积、中心或法向。".into());
+            }
+            let surface_type = match row.surface_type {
+                0 => FaceSurfaceType::Plane,
+                1 => FaceSurfaceType::Unsupported,
+                _ => return Err("OCCT 面清单返回未知表面类型。".into()),
+            };
+            let oriented_normal = if surface_type == FaceSurfaceType::Plane {
+                let norm = row
+                    .oriented_normal
+                    .iter()
+                    .map(|v| v * v)
+                    .sum::<f64>()
+                    .sqrt();
+                if (norm - 1.0).abs() > 1.0e-8 {
+                    return Err("OCCT 平面法向未归一化。".into());
+                }
+                Some(row.oriented_normal)
+            } else {
+                if row.oriented_normal.iter().any(|v| *v != 0.0) {
+                    return Err("OCCT 非平面面记录不应包含平面法向。".into());
+                }
+                None
+            };
+            faces.push(FaceInfo {
+                ordinal: row.ordinal,
+                surface_type,
+                area: row.area,
+                center: row.center,
+                oriented_normal,
+            });
+        }
+        Ok(faces)
+    }
+
     /// Return analytic cylindrical faces and their actual trimmed B-Rep bounds.
     /// One record is a face, not necessarily one complete bore: seam/boolean
     /// splits can represent the same cylinder with multiple trimmed faces.

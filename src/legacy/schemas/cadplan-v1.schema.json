@@ -1,12 +1,16 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://ai-modeler.local/schemas/cadplan-1.0.schema.json",
+  "$id": "https://ai-modeler.local/schemas/cadplan-1.1.schema.json",
   "title": "AI Modeler CADPlan",
   "description": "Provider-neutral, data-only plan for validated CATIA V5 construction.",
   "type": "object",
   "properties": {
     "schema_version": {
-      "const": "1.0"
+      "type": "string",
+      "enum": [
+        "1.0",
+        "1.1"
+      ]
     },
     "name": {
       "type": "string",
@@ -102,6 +106,10 @@
               },
               "note": {
                 "type": "string"
+              },
+              "enabled": {
+                "type": "boolean",
+                "default": true
               },
               "parameters": {
                 "type": "object",
@@ -199,32 +207,6 @@
             ],
             "additionalProperties": false,
             "allOf": [
-              {
-                "if": {
-                  "required": [
-                    "parameters"
-                  ],
-                  "properties": {
-                    "parameters": {
-                      "required": [
-                        "base"
-                      ]
-                    }
-                  }
-                },
-                "then": {
-                  "required": [
-                    "sources"
-                  ],
-                  "properties": {
-                    "sources": {
-                      "required": [
-                        "base"
-                      ]
-                    }
-                  }
-                }
-              },
               {
                 "if": {
                   "required": [
@@ -367,7 +349,7 @@
               "kind": {
                 "const": "cylinder",
                 "x-catia-support-status": "exact",
-                "x-catia-support-note": "等半径时为圆草图加凸台；圆锥台会近似，非 Z 轴圆锥台暂不支持。"
+                "x-catia-support-note": "center 默认表示轴向底面中心(base=true)，height 沿 axis 正向拉伸；base=false 时 center 表示几何中点。等半径时为圆草图加凸台；圆锥台会近似，非 Z 轴圆锥台暂不支持。"
               },
               "operation": {
                 "type": "string",
@@ -381,6 +363,10 @@
               },
               "note": {
                 "type": "string"
+              },
+              "enabled": {
+                "type": "boolean",
+                "default": true
               },
               "parameters": {
                 "type": "object",
@@ -469,32 +455,6 @@
             ],
             "additionalProperties": false,
             "allOf": [
-              {
-                "if": {
-                  "required": [
-                    "parameters"
-                  ],
-                  "properties": {
-                    "parameters": {
-                      "required": [
-                        "base"
-                      ]
-                    }
-                  }
-                },
-                "then": {
-                  "required": [
-                    "sources"
-                  ],
-                  "properties": {
-                    "sources": {
-                      "required": [
-                        "base"
-                      ]
-                    }
-                  }
-                }
-              },
               {
                 "if": {
                   "required": [
@@ -635,6 +595,370 @@
                 "minLength": 1
               },
               "kind": {
+                "const": "socket_head_bolt",
+                "x-catia-support-status": "approximate",
+                "x-catia-support-note": "本地网格按 thread_pitch 生成可见的近似 ISO 公制螺旋牙型；整段杆部带牙，未建牙端倒角/退刀槽。当前 CATIA 导出器仍以光杆凸台和六角凹槽表达，不会创建原生或装饰螺纹。"
+              },
+              "operation": {
+                "type": "string",
+                "enum": [
+                  "add",
+                  "cut"
+                ]
+              },
+              "name": {
+                "type": "string"
+              },
+              "note": {
+                "type": "string"
+              },
+              "enabled": {
+                "type": "boolean",
+                "default": true
+              },
+              "parameters": {
+                "type": "object",
+                "properties": {
+                  "shank_d": {
+                    "type": "number",
+                    "exclusiveMinimum": 0
+                  },
+                  "thread_pitch": {
+                    "type": "number",
+                    "exclusiveMinimum": 0
+                  },
+                  "length": {
+                    "type": "number",
+                    "exclusiveMinimum": 0
+                  },
+                  "head_d": {
+                    "type": "number",
+                    "exclusiveMinimum": 0
+                  },
+                  "head_h": {
+                    "type": "number",
+                    "exclusiveMinimum": 0
+                  },
+                  "hex_s": {
+                    "type": "number",
+                    "exclusiveMinimum": 0
+                  },
+                  "hex_t": {
+                    "type": "number",
+                    "exclusiveMinimum": 0
+                  },
+                  "center": {
+                    "type": "array",
+                    "prefixItems": [
+                      {
+                        "type": "number"
+                      },
+                      {
+                        "type": "number"
+                      },
+                      {
+                        "type": "number"
+                      }
+                    ],
+                    "minItems": 3,
+                    "maxItems": 3,
+                    "items": false
+                  },
+                  "segments": {
+                    "type": "integer",
+                    "minimum": 3
+                  }
+                },
+                "additionalProperties": false,
+                "required": [
+                  "shank_d",
+                  "thread_pitch",
+                  "length",
+                  "head_d",
+                  "head_h",
+                  "hex_s",
+                  "hex_t"
+                ]
+              },
+              "sources": {
+                "type": "object",
+                "propertyNames": {
+                  "enum": [
+                    "shank_d",
+                    "thread_pitch",
+                    "length",
+                    "head_d",
+                    "head_h",
+                    "hex_s",
+                    "hex_t",
+                    "center",
+                    "segments"
+                  ]
+                },
+                "additionalProperties": {
+                  "$ref": "#/$defs/source"
+                }
+              },
+              "relations": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/$defs/relation"
+                }
+              }
+            },
+            "required": [
+              "id",
+              "kind",
+              "operation",
+              "parameters",
+              "sources"
+            ],
+            "additionalProperties": false,
+            "allOf": [
+              {
+                "if": {
+                  "required": [
+                    "parameters"
+                  ],
+                  "properties": {
+                    "parameters": {
+                      "required": [
+                        "center"
+                      ]
+                    }
+                  }
+                },
+                "then": {
+                  "required": [
+                    "sources"
+                  ],
+                  "properties": {
+                    "sources": {
+                      "required": [
+                        "center"
+                      ]
+                    }
+                  }
+                }
+              },
+              {
+                "if": {
+                  "required": [
+                    "parameters"
+                  ],
+                  "properties": {
+                    "parameters": {
+                      "required": [
+                        "head_d"
+                      ]
+                    }
+                  }
+                },
+                "then": {
+                  "required": [
+                    "sources"
+                  ],
+                  "properties": {
+                    "sources": {
+                      "required": [
+                        "head_d"
+                      ]
+                    }
+                  }
+                }
+              },
+              {
+                "if": {
+                  "required": [
+                    "parameters"
+                  ],
+                  "properties": {
+                    "parameters": {
+                      "required": [
+                        "head_h"
+                      ]
+                    }
+                  }
+                },
+                "then": {
+                  "required": [
+                    "sources"
+                  ],
+                  "properties": {
+                    "sources": {
+                      "required": [
+                        "head_h"
+                      ]
+                    }
+                  }
+                }
+              },
+              {
+                "if": {
+                  "required": [
+                    "parameters"
+                  ],
+                  "properties": {
+                    "parameters": {
+                      "required": [
+                        "hex_s"
+                      ]
+                    }
+                  }
+                },
+                "then": {
+                  "required": [
+                    "sources"
+                  ],
+                  "properties": {
+                    "sources": {
+                      "required": [
+                        "hex_s"
+                      ]
+                    }
+                  }
+                }
+              },
+              {
+                "if": {
+                  "required": [
+                    "parameters"
+                  ],
+                  "properties": {
+                    "parameters": {
+                      "required": [
+                        "hex_t"
+                      ]
+                    }
+                  }
+                },
+                "then": {
+                  "required": [
+                    "sources"
+                  ],
+                  "properties": {
+                    "sources": {
+                      "required": [
+                        "hex_t"
+                      ]
+                    }
+                  }
+                }
+              },
+              {
+                "if": {
+                  "required": [
+                    "parameters"
+                  ],
+                  "properties": {
+                    "parameters": {
+                      "required": [
+                        "length"
+                      ]
+                    }
+                  }
+                },
+                "then": {
+                  "required": [
+                    "sources"
+                  ],
+                  "properties": {
+                    "sources": {
+                      "required": [
+                        "length"
+                      ]
+                    }
+                  }
+                }
+              },
+              {
+                "if": {
+                  "required": [
+                    "parameters"
+                  ],
+                  "properties": {
+                    "parameters": {
+                      "required": [
+                        "segments"
+                      ]
+                    }
+                  }
+                },
+                "then": {
+                  "required": [
+                    "sources"
+                  ],
+                  "properties": {
+                    "sources": {
+                      "required": [
+                        "segments"
+                      ]
+                    }
+                  }
+                }
+              },
+              {
+                "if": {
+                  "required": [
+                    "parameters"
+                  ],
+                  "properties": {
+                    "parameters": {
+                      "required": [
+                        "shank_d"
+                      ]
+                    }
+                  }
+                },
+                "then": {
+                  "required": [
+                    "sources"
+                  ],
+                  "properties": {
+                    "sources": {
+                      "required": [
+                        "shank_d"
+                      ]
+                    }
+                  }
+                }
+              },
+              {
+                "if": {
+                  "required": [
+                    "parameters"
+                  ],
+                  "properties": {
+                    "parameters": {
+                      "required": [
+                        "thread_pitch"
+                      ]
+                    }
+                  }
+                },
+                "then": {
+                  "required": [
+                    "sources"
+                  ],
+                  "properties": {
+                    "sources": {
+                      "required": [
+                        "thread_pitch"
+                      ]
+                    }
+                  }
+                }
+              }
+            ]
+          },
+          {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "minLength": 1
+              },
+              "kind": {
                 "const": "sphere",
                 "x-catia-support-status": "approximate",
                 "x-catia-support-note": "CATIA 导出器以多层圆盘近似球体。"
@@ -651,6 +975,10 @@
               },
               "note": {
                 "type": "string"
+              },
+              "enabled": {
+                "type": "boolean",
+                "default": true
               },
               "parameters": {
                 "type": "object",
@@ -851,6 +1179,10 @@
               "note": {
                 "type": "string"
               },
+              "enabled": {
+                "type": "boolean",
+                "default": true
+              },
               "parameters": {
                 "type": "object",
                 "properties": {
@@ -1028,7 +1360,7 @@
               "kind": {
                 "const": "revolve",
                 "x-catia-support-status": "approximate",
-                "x-catia-support-note": "当前用多层圆盘近似回转体。"
+                "x-catia-support-note": "本地 OCCT BREP 按闭合[半径,轴向坐标]轮廓精确回转，并将新增回转体与已有实体做布尔合并；CATIA 导出器仍用多层圆盘近似，非 CATIA 原生回转特征。"
               },
               "operation": {
                 "type": "string",
@@ -1042,6 +1374,10 @@
               },
               "note": {
                 "type": "string"
+              },
+              "enabled": {
+                "type": "boolean",
+                "default": true
               },
               "parameters": {
                 "type": "object",
@@ -1265,6 +1601,10 @@
               "note": {
                 "type": "string"
               },
+              "enabled": {
+                "type": "boolean",
+                "default": true
+              },
               "parameters": {
                 "type": "object",
                 "properties": {
@@ -1348,32 +1688,6 @@
             ],
             "additionalProperties": false,
             "allOf": [
-              {
-                "if": {
-                  "required": [
-                    "parameters"
-                  ],
-                  "properties": {
-                    "parameters": {
-                      "required": [
-                        "base"
-                      ]
-                    }
-                  }
-                },
-                "then": {
-                  "required": [
-                    "sources"
-                  ],
-                  "properties": {
-                    "sources": {
-                      "required": [
-                        "base"
-                      ]
-                    }
-                  }
-                }
-              },
               {
                 "if": {
                   "required": [
@@ -1504,6 +1818,10 @@
               },
               "note": {
                 "type": "string"
+              },
+              "enabled": {
+                "type": "boolean",
+                "default": true
               },
               "parameters": {
                 "type": "object",
@@ -1952,7 +2270,7 @@
               "kind": {
                 "const": "hole",
                 "x-catia-support-status": "exact",
-                "x-catia-support-note": "圆形凹槽；through=true 时按当前零件包围盒生成贯穿深度。"
+                "x-catia-support-note": "圆形切除；through=true 时按当前零件包围盒生成贯穿深度。盲孔可用 entry_point 与 direction 显式指定入口点和沿全局轴的切入方向；未指定时沿用正轴端面默认语义。"
               },
               "operation": {
                 "type": "string",
@@ -1966,6 +2284,10 @@
               },
               "note": {
                 "type": "string"
+              },
+              "enabled": {
+                "type": "boolean",
+                "default": true
               },
               "parameters": {
                 "type": "object",
@@ -2039,6 +2361,30 @@
                   "segments": {
                     "type": "integer",
                     "minimum": 3
+                  },
+                  "entry_point": {
+                    "type": "array",
+                    "prefixItems": [
+                      {
+                        "type": "number"
+                      },
+                      {
+                        "type": "number"
+                      },
+                      {
+                        "type": "number"
+                      }
+                    ],
+                    "minItems": 3,
+                    "maxItems": 3,
+                    "items": false
+                  },
+                  "direction": {
+                    "type": "string",
+                    "enum": [
+                      "negative",
+                      "positive"
+                    ]
                   }
                 },
                 "additionalProperties": false,
@@ -2064,7 +2410,9 @@
                     "depth",
                     "margin",
                     "axis",
-                    "segments"
+                    "segments",
+                    "entry_point",
+                    "direction"
                   ]
                 },
                 "additionalProperties": {
@@ -2165,6 +2513,68 @@
               },
               {
                 "if": {
+                  "properties": {
+                    "parameters": {
+                      "required": [
+                        "entry_point"
+                      ]
+                    }
+                  }
+                },
+                "then": {
+                  "properties": {
+                    "parameters": {
+                      "required": [
+                        "direction",
+                        "point",
+                        "pos",
+                        "through"
+                      ],
+                      "properties": {
+                        "pos": {
+                          "const": "point"
+                        },
+                        "through": {
+                          "const": false
+                        }
+                      }
+                    }
+                  }
+                }
+              },
+              {
+                "if": {
+                  "properties": {
+                    "parameters": {
+                      "required": [
+                        "direction"
+                      ]
+                    }
+                  }
+                },
+                "then": {
+                  "properties": {
+                    "parameters": {
+                      "required": [
+                        "entry_point",
+                        "point",
+                        "pos",
+                        "through"
+                      ],
+                      "properties": {
+                        "pos": {
+                          "const": "point"
+                        },
+                        "through": {
+                          "const": false
+                        }
+                      }
+                    }
+                  }
+                }
+              },
+              {
+                "if": {
                   "required": [
                     "parameters"
                   ],
@@ -2236,6 +2646,32 @@
                     "sources": {
                       "required": [
                         "diameter"
+                      ]
+                    }
+                  }
+                }
+              },
+              {
+                "if": {
+                  "required": [
+                    "parameters"
+                  ],
+                  "properties": {
+                    "parameters": {
+                      "required": [
+                        "entry_point"
+                      ]
+                    }
+                  }
+                },
+                "then": {
+                  "required": [
+                    "sources"
+                  ],
+                  "properties": {
+                    "sources": {
+                      "required": [
+                        "entry_point"
                       ]
                     }
                   }
@@ -2450,6 +2886,10 @@
               "note": {
                 "type": "string"
               },
+              "enabled": {
+                "type": "boolean",
+                "default": true
+              },
               "parameters": {
                 "type": "object",
                 "properties": {
@@ -2477,6 +2917,13 @@
                       "X",
                       "Y",
                       "Z"
+                    ]
+                  },
+                  "side": {
+                    "type": "string",
+                    "enum": [
+                      "negative",
+                      "positive"
                     ]
                   },
                   "corner": {
@@ -2508,6 +2955,7 @@
                     "x",
                     "y",
                     "axis",
+                    "side",
                     "corner",
                     "corner_mode"
                   ]
@@ -2700,7 +3148,7 @@
               "kind": {
                 "const": "pattern",
                 "x-catia-support-status": "exact",
-                "x-catia-support-note": "转换为显式复制的 CATIA 操作；source 关系必须指向紧邻的前一特征。"
+                "x-catia-support-note": "转换为显式复制的 CATIA 操作；relations 示例：[{\"type\":\"pattern_source\",\"feature_id\":\"紧邻前一特征的 id\"}]。operation 必须与源特征相同：阵列切孔用 cut，阵列加料用 add。"
               },
               "operation": {
                 "type": "string",
@@ -2714,6 +3162,10 @@
               },
               "note": {
                 "type": "string"
+              },
+              "enabled": {
+                "type": "boolean",
+                "default": true
               },
               "parameters": {
                 "type": "object",
@@ -2999,6 +3451,10 @@
               },
               "note": {
                 "type": "string"
+              },
+              "enabled": {
+                "type": "boolean",
+                "default": true
               },
               "parameters": {
                 "type": "object",
@@ -3363,6 +3819,10 @@
               "note": {
                 "type": "string"
               },
+              "enabled": {
+                "type": "boolean",
+                "default": true
+              },
               "parameters": {
                 "type": "object",
                 "properties": {
@@ -3690,6 +4150,10 @@
               },
               "note": {
                 "type": "string"
+              },
+              "enabled": {
+                "type": "boolean",
+                "default": true
               },
               "parameters": {
                 "type": "object",
@@ -4034,6 +4498,10 @@
               "note": {
                 "type": "string"
               },
+              "enabled": {
+                "type": "boolean",
+                "default": true
+              },
               "parameters": {
                 "type": "object",
                 "properties": {
@@ -4318,6 +4786,10 @@
               "note": {
                 "type": "string"
               },
+              "enabled": {
+                "type": "boolean",
+                "default": true
+              },
               "parameters": {
                 "type": "object",
                 "properties": {
@@ -4371,6 +4843,14 @@
                     "type": "number",
                     "exclusiveMinimum": 0
                   },
+                  "axis": {
+                    "type": "string",
+                    "enum": [
+                      "X",
+                      "Y",
+                      "Z"
+                    ]
+                  },
                   "height2": {
                     "type": "number",
                     "exclusiveMinimum": 0
@@ -4410,6 +4890,7 @@
                     "center2",
                     "thread_r",
                     "wire_r",
+                    "axis",
                     "height2",
                     "turns",
                     "segments",
@@ -4750,6 +5231,10 @@
               "note": {
                 "type": "string"
               },
+              "enabled": {
+                "type": "boolean",
+                "default": true
+              },
               "parameters": {
                 "type": "object",
                 "properties": {
@@ -5043,6 +5528,10 @@
               "note": {
                 "type": "string"
               },
+              "enabled": {
+                "type": "boolean",
+                "default": true
+              },
               "parameters": {
                 "type": "object",
                 "properties": {
@@ -5322,7 +5811,7 @@
               "kind": {
                 "const": "crankshaft",
                 "x-catia-support-status": "approximate",
-                "x-catia-support-note": "CATIA 按 X 轴布置主轴颈、交替偏置连杆颈和哑铃形曲柄臂（主轴圆 + 连杆颈圆外公切凸包），曲柄臂外形被简化。"
+                "x-catia-support-note": "CATIA 按 X 轴布置主轴颈、交替偏置连杆颈和哑铃形曲柄臂(主轴圆 + 连杆颈圆外公切凸包)，曲柄臂外形被简化。"
               },
               "operation": {
                 "type": "string",
@@ -5336,6 +5825,10 @@
               },
               "note": {
                 "type": "string"
+              },
+              "enabled": {
+                "type": "boolean",
+                "default": true
               },
               "parameters": {
                 "type": "object",
@@ -5632,6 +6125,10 @@
               },
               "note": {
                 "type": "string"
+              },
+              "enabled": {
+                "type": "boolean",
+                "default": true
               },
               "parameters": {
                 "type": "object",
@@ -5960,6 +6457,10 @@
               "note": {
                 "type": "string"
               },
+              "enabled": {
+                "type": "boolean",
+                "default": true
+              },
               "parameters": {
                 "type": "object",
                 "properties": {
@@ -6287,6 +6788,10 @@
               "note": {
                 "type": "string"
               },
+              "enabled": {
+                "type": "boolean",
+                "default": true
+              },
               "parameters": {
                 "type": "object",
                 "properties": {
@@ -6550,6 +7055,10 @@
               },
               "note": {
                 "type": "string"
+              },
+              "enabled": {
+                "type": "boolean",
+                "default": true
               },
               "parameters": {
                 "type": "object",
@@ -6911,6 +7420,10 @@
               "note": {
                 "type": "string"
               },
+              "enabled": {
+                "type": "boolean",
+                "default": true
+              },
               "parameters": {
                 "type": "object",
                 "properties": {
@@ -7110,6 +7623,10 @@
               },
               "note": {
                 "type": "string"
+              },
+              "enabled": {
+                "type": "boolean",
+                "default": true
               },
               "parameters": {
                 "type": "object",
@@ -7374,6 +7891,10 @@
               "note": {
                 "type": "string"
               },
+              "enabled": {
+                "type": "boolean",
+                "default": true
+              },
               "parameters": {
                 "type": "object",
                 "properties": {
@@ -7592,7 +8113,7 @@
               "kind": {
                 "const": "shell",
                 "x-catia-support-status": "unsupported",
-                "x-catia-support-note": "当前 Document/CATIA 转换器没有抽壳实现。"
+                "x-catia-support-note": "旧 v1.0 thickness-only shell 需要确认且不可执行；1.1 的显式 planar 子集仅由桌面 Rust executor 执行。"
               },
               "operation": {
                 "type": "string",
@@ -7607,12 +8128,33 @@
               "note": {
                 "type": "string"
               },
+              "enabled": {
+                "type": "boolean",
+                "default": true
+              },
               "parameters": {
                 "type": "object",
                 "properties": {
                   "thickness": {
                     "type": "number",
                     "exclusiveMinimum": 0
+                  },
+                  "offset_mode": {
+                    "type": "string",
+                    "enum": [
+                      "inward",
+                      "outward"
+                    ]
+                  },
+                  "removed_faces": {
+                    "type": "array",
+                    "minItems": 1,
+                    "maxItems": 256,
+                    "items": {
+                      "type": "string",
+                      "pattern": "^shell-face-v1:[0-9a-f]{64}$"
+                    },
+                    "uniqueItems": true
                   }
                 },
                 "additionalProperties": false,
@@ -7624,7 +8166,9 @@
                 "type": "object",
                 "propertyNames": {
                   "enum": [
-                    "thickness"
+                    "thickness",
+                    "offset_mode",
+                    "removed_faces"
                   ]
                 },
                 "additionalProperties": {
@@ -7634,8 +8178,59 @@
               "relations": {
                 "type": "array",
                 "items": {
-                  "$ref": "#/$defs/relation"
+                  "type": "object",
+                  "properties": {
+                    "type": {
+                      "type": "string",
+                      "enum": [
+                        "depends_on",
+                        "pattern_source",
+                        "shell_target"
+                      ]
+                    },
+                    "feature_id": {
+                      "type": "string",
+                      "minLength": 1
+                    }
+                  },
+                  "required": [
+                    "type",
+                    "feature_id"
+                  ],
+                  "additionalProperties": false
                 }
+              },
+              "selection_binding": {
+                "type": "object",
+                "properties": {
+                  "revision": {
+                    "type": "integer",
+                    "minimum": 0
+                  },
+                  "geometry_fingerprint": {
+                    "type": "string",
+                    "pattern": "^[0-9a-f]{64}$"
+                  },
+                  "kernel_version": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "inventory_version": {
+                    "const": 2
+                  },
+                  "target_feature_id": {
+                    "type": "string",
+                    "minLength": 1
+                  }
+                },
+                "required": [
+                  "revision",
+                  "geometry_fingerprint",
+                  "kernel_version",
+                  "inventory_version",
+                  "target_feature_id"
+                ],
+                "additionalProperties": false
               }
             },
             "required": [
@@ -7693,6 +8288,75 @@
     "features"
   ],
   "additionalProperties": false,
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "schema_version": {
+            "const": "1.1"
+          }
+        },
+        "required": [
+          "schema_version"
+        ]
+      },
+      "then": {
+        "properties": {
+          "features": {
+            "items": {
+              "allOf": [
+                {
+                  "if": {
+                    "properties": {
+                      "kind": {
+                        "const": "shell"
+                      }
+                    },
+                    "required": [
+                      "kind"
+                    ]
+                  },
+                  "then": {
+                    "required": [
+                      "selection_binding"
+                    ],
+                    "properties": {
+                      "operation": {
+                        "const": "cut"
+                      },
+                      "parameters": {
+                        "required": [
+                          "thickness",
+                          "offset_mode",
+                          "removed_faces"
+                        ]
+                      },
+                      "relations": {
+                        "contains": {
+                          "type": "object",
+                          "properties": {
+                            "type": {
+                              "const": "shell_target"
+                            }
+                          },
+                          "required": [
+                            "type",
+                            "feature_id"
+                          ]
+                        },
+                        "minContains": 1,
+                        "maxContains": 1
+                      }
+                    }
+                  }
+                }
+              ]
+            }
+          }
+        }
+      }
+    }
+  ],
   "$defs": {
     "source": {
       "type": "object",
@@ -7761,7 +8425,8 @@
           "type": "string",
           "enum": [
             "depends_on",
-            "pattern_source"
+            "pattern_source",
+            "shell_target"
           ]
         },
         "feature_id": {
@@ -7788,10 +8453,23 @@
     },
     "cylinder": {
       "status": "exact",
-      "reason": "等半径时为圆草图加凸台；圆锥台会近似，非 Z 轴圆锥台暂不支持。",
+      "reason": "center 默认表示轴向底面中心(base=true)，height 沿 axis 正向拉伸；base=false 时 center 表示几何中点。等半径时为圆草图加凸台；圆锥台会近似，非 Z 轴圆锥台暂不支持。",
       "required_parameters": [
         "radius",
         "height"
+      ]
+    },
+    "socket_head_bolt": {
+      "status": "approximate",
+      "reason": "本地网格按 thread_pitch 生成可见的近似 ISO 公制螺旋牙型；整段杆部带牙，未建牙端倒角/退刀槽。当前 CATIA 导出器仍以光杆凸台和六角凹槽表达，不会创建原生或装饰螺纹。",
+      "required_parameters": [
+        "shank_d",
+        "thread_pitch",
+        "length",
+        "head_d",
+        "head_h",
+        "hex_s",
+        "hex_t"
       ]
     },
     "sphere": {
@@ -7811,7 +8489,7 @@
     },
     "revolve": {
       "status": "approximate",
-      "reason": "当前用多层圆盘近似回转体。",
+      "reason": "本地 OCCT BREP 按闭合[半径,轴向坐标]轮廓精确回转，并将新增回转体与已有实体做布尔合并；CATIA 导出器仍用多层圆盘近似，非 CATIA 原生回转特征。",
       "required_parameters": [
         "profile",
         "angle"
@@ -7838,7 +8516,7 @@
     },
     "hole": {
       "status": "exact",
-      "reason": "圆形凹槽；through=true 时按当前零件包围盒生成贯穿深度。",
+      "reason": "圆形切除；through=true 时按当前零件包围盒生成贯穿深度。盲孔可用 entry_point 与 direction 显式指定入口点和沿全局轴的切入方向；未指定时沿用正轴端面默认语义。",
       "required_parameters": [
         "diameter",
         "through",
@@ -7856,7 +8534,7 @@
     },
     "pattern": {
       "status": "exact",
-      "reason": "转换为显式复制的 CATIA 操作；source 关系必须指向紧邻的前一特征。",
+      "reason": "转换为显式复制的 CATIA 操作；relations 示例：[{\"type\":\"pattern_source\",\"feature_id\":\"紧邻前一特征的 id\"}]。operation 必须与源特征相同：阵列切孔用 cut，阵列加料用 add。",
       "required_parameters": [
         "mode",
         "count"
@@ -7936,7 +8614,7 @@
     },
     "crankshaft": {
       "status": "approximate",
-      "reason": "CATIA 按 X 轴布置主轴颈、交替偏置连杆颈和哑铃形曲柄臂（主轴圆 + 连杆颈圆外公切凸包），曲柄臂外形被简化。",
+      "reason": "CATIA 按 X 轴布置主轴颈、交替偏置连杆颈和哑铃形曲柄臂(主轴圆 + 连杆颈圆外公切凸包)，曲柄臂外形被简化。",
       "required_parameters": [
         "length",
         "main_d",
@@ -8022,7 +8700,7 @@
     },
     "shell": {
       "status": "unsupported",
-      "reason": "当前 Document/CATIA 转换器没有抽壳实现。",
+      "reason": "旧 v1.0 thickness-only shell 需要确认且不可执行；1.1 的显式 planar 子集仅由桌面 Rust executor 执行。",
       "required_parameters": [
         "thickness"
       ]

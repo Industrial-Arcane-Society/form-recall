@@ -54,6 +54,7 @@ pub fn supports_native_kind(kind: &str) -> bool {
             | "loft"
             | "worm"
             | "impeller"
+            | "shell"
     )
 }
 
@@ -82,6 +83,30 @@ pub fn preflight(plan: &Value) -> Result<Value, String> {
         if !supports_native_kind(kind) {
             return Err(format!(
                 "Rust 几何执行尚不支持 {} ({kind})，未执行任何特征。",
+                feature["id"]
+            ));
+        }
+        if kind == "shell"
+            && (plan.get("schema_version").and_then(Value::as_str) != Some("1.1")
+                || ["thickness", "offset_mode", "removed_faces"]
+                    .iter()
+                    .any(|key| p.get(*key).is_none())
+                || feature.get("selection_binding").is_none()
+                || feature.get("operation").and_then(Value::as_str) != Some("cut")
+                || !feature
+                    .get("relations")
+                    .and_then(Value::as_array)
+                    .is_some_and(|rows| {
+                        rows.iter()
+                            .filter(|row| {
+                                row.get("type").and_then(Value::as_str) == Some("shell_target")
+                            })
+                            .count()
+                            == 1
+                    }))
+        {
+            return Err(format!(
+                "特征 {} 不是完整的 CADPlan 1.1 显式 shell；旧 thickness-only shell 不支持自动迁移。请重新枚举面，并提供 offset_mode、唯一 shell_target、removed_faces 与 selection_binding。",
                 feature["id"]
             ));
         }
@@ -255,7 +280,12 @@ pub fn build(plan: &Value, manifest: &Path, cancelled: &AtomicBool) -> Result<Bu
     let mut previous_feature_id: Option<String> = None;
     let mut previous_feature_tools = Vec::<Shape>::new();
     let mut previous_feature_holes = Vec::<Value>::new();
-    for feature in plan["features"].as_array().ok_or("缺少 features")? {
+    for (feature_index, feature) in plan["features"]
+        .as_array()
+        .ok_or("缺少 features")?
+        .iter()
+        .enumerate()
+    {
         check_cancel(cancelled)?;
         if feature.get("enabled").and_then(Value::as_bool) == Some(false) {
             continue;
@@ -267,6 +297,72 @@ pub fn build(plan: &Value, manifest: &Path, cancelled: &AtomicBool) -> Result<Bu
             .unwrap_or(0.);
         let bb = current.as_ref().map(Shape::bounds).transpose()?;
         let normalized = normalized_feature(feature, plan)?;
+        if normalized["kind"] == "shell" {
+            let stock = current
+                .as_ref()
+                .ok_or("shell 必须作用于当前唯一闭合实体。")?;
+            let analysis = stock.analyze()?;
+            if analysis.valid != 1 || analysis.solid_count != 1 || analysis.closed_solid_count != 1
+            {
+                return Err("shell 目标必须是当前唯一有效闭合实体。".into());
+            }
+            let prefix = plan_prefix(plan, feature_index)?;
+            let expected_fingerprint = cad_plan::geometry_fingerprint(&prefix)?;
+            let binding = feature.get("selection_binding").ok_or(
+                "显式 shell 缺少 selection_binding；旧 thickness-only shell 不会自动迁移。",
+            )?;
+            let target_feature_id = feature
+                .get("relations")
+                .and_then(Value::as_array)
+                .into_iter()
+                .flatten()
+                .find(|relation| {
+                    relation.get("type").and_then(Value::as_str) == Some("shell_target")
+                })
+                .and_then(|relation| relation.get("feature_id"))
+                .and_then(Value::as_str)
+                .ok_or("shell 必须通过唯一 shell_target relation 显式指定目标 feature。")?;
+            if previous_feature_id.as_deref() != Some(target_feature_id) {
+                return Err("shell_target 必须指向当前累计实体的 plan-head feature。".into());
+            }
+            let selectors = normalized["parameters"]["removed_faces"]
+                .as_array()
+                .ok_or("shell.removed_faces 须为opaque selector数组。")?;
+            let removed = crate::native_shell::resolve_removed_faces(
+                stock,
+                binding,
+                selectors,
+                &expected_fingerprint,
+                &kernel.version(),
+                target_feature_id,
+            )?;
+            let thickness = normalized["parameters"]["thickness"]
+                .as_f64()
+                .ok_or("shell.thickness 须为长度值。")?;
+            let offset_mode = match normalized["parameters"]["offset_mode"].as_str() {
+                Some("inward") => crate::native_occt::ShellDirection::Inward,
+                Some("outward") => crate::native_occt::ShellDirection::Outward,
+                _ => return Err("shell.offset_mode 须明确为 inward 或 outward。".into()),
+            };
+            let candidate = kernel.make_thick_solid(stock, &removed, thickness, offset_mode)?;
+            let analysis = candidate.analyze()?;
+            if analysis.valid != 1 || analysis.solid_count != 1 || analysis.closed_solid_count != 1
+            {
+                return Err("shell 未生成单一有效闭合实体；拒绝候选。".into());
+            }
+            let volume = candidate.volume()?;
+            let delta = volume - before_volume;
+            rows.push(json!({"feature_id":feature["id"],"kind":"shell","operation":"cut",
+                "state":"built","geometry_support":"exact","volume_before_mm3":before_volume,
+                "volume_after_mm3":volume,"volume_delta_mm3":delta,
+                "shell":{"offset_mode":match offset_mode {crate::native_occt::ShellDirection::Inward => "inward", crate::native_occt::ShellDirection::Outward => "outward"},"thickness_mm":thickness,
+                    "removed_face_count":removed.len(),"target_feature_id":target_feature_id}}));
+            previous_feature_id = feature["id"].as_str().map(str::to_owned);
+            previous_feature_tools.clear();
+            previous_feature_holes.clear();
+            current = Some(candidate);
+            continue;
+        }
         let (tools, mut requested_holes, standard_support) = if normalized["kind"] == "pattern" {
             let (tools, holes, support) = pattern_tools(
                 &kernel,
@@ -530,6 +626,19 @@ fn hole_measurements_complete(instances: &[Value]) -> bool {
         ) && record["final_measurement"]["accepted"] == true
             && record["final_measurement"]["full_angular_coverage"] == true
     })
+}
+
+fn plan_prefix(plan: &Value, feature_index: usize) -> Result<Value, String> {
+    let mut prefix = plan.clone();
+    let features = prefix
+        .get_mut("features")
+        .and_then(Value::as_array_mut)
+        .ok_or("CADPlan features 必须是数组。")?;
+    if feature_index > features.len() {
+        return Err("shell 前置特征索引无效。".into());
+    }
+    features.truncate(feature_index);
+    Ok(prefix)
 }
 
 fn feature_tools(
@@ -1120,72 +1229,74 @@ fn normalized_feature(feature: &Value, plan: &Value) -> Result<Value, String> {
         _ => return Err("未知角度单位。".into()),
     };
     let mut result = feature.clone();
+    let is_shell = result.get("kind").and_then(Value::as_str) == Some("shell");
     let params = result["parameters"]
         .as_object_mut()
         .ok_or("parameters 必须为对象。")?;
     for (key, value) in params.iter_mut() {
-        let factor = if [
-            "length",
-            "width",
-            "height",
-            "wall_t",
-            "radius",
-            "radius2",
-            "module",
-            "corner",
-            "margin",
-            "diameter",
-            "pitch_d",
-            "outer_d",
-            "hub_d",
-            "tip_d",
-            "blade_t",
-            "groove_depth",
-            "depth",
-            "pcd",
-            "x",
-            "y",
-            "z",
-            "center",
-            "center2",
-            "point",
-            "step",
-            "entry_point",
-            "profile",
-            "shank_d",
-            "pin_d",
-            "thread_pitch",
-            "head_d",
-            "head_h",
-            "hex_s",
-            "hex_t",
-            "outer_r",
-            "rim_w",
-            "hub_r",
-            "spoke_w",
-            "big_d",
-            "main_d",
-            "stroke",
-            "small_d",
-            "big_bore",
-            "small_bore",
-            "shank_w",
-            "thick",
-            "span",
-            "journal_d",
-            "base_d",
-            "lift",
-            "bore_d",
-            "wire_r",
-            "thread_r",
-            "height2",
-            "pitch_d",
-            "root_chord",
-            "tip_chord",
-            "sweep",
-            "translate",
-        ]
-        .contains(&key.as_str())
+        let factor = if (is_shell && key == "thickness")
+            || [
+                "length",
+                "width",
+                "height",
+                "wall_t",
+                "radius",
+                "radius2",
+                "module",
+                "corner",
+                "margin",
+                "diameter",
+                "pitch_d",
+                "outer_d",
+                "hub_d",
+                "tip_d",
+                "blade_t",
+                "groove_depth",
+                "depth",
+                "pcd",
+                "x",
+                "y",
+                "z",
+                "center",
+                "center2",
+                "point",
+                "step",
+                "entry_point",
+                "profile",
+                "shank_d",
+                "pin_d",
+                "thread_pitch",
+                "head_d",
+                "head_h",
+                "hex_s",
+                "hex_t",
+                "outer_r",
+                "rim_w",
+                "hub_r",
+                "spoke_w",
+                "big_d",
+                "main_d",
+                "stroke",
+                "small_d",
+                "big_bore",
+                "small_bore",
+                "shank_w",
+                "thick",
+                "span",
+                "journal_d",
+                "base_d",
+                "lift",
+                "bore_d",
+                "wire_r",
+                "thread_r",
+                "height2",
+                "pitch_d",
+                "root_chord",
+                "tip_chord",
+                "sweep",
+                "translate",
+            ]
+            .contains(&key.as_str())
         {
             length_factor
         } else if key == "phase"
@@ -1764,6 +1875,28 @@ mod tests {
         assert_eq!(piston["parameters"]["pin_d"], json!(0.4));
         plan["features"] = json!([piston]);
         assert_eq!(preflight(&plan).unwrap()["state"], "valid");
+    }
+
+    #[test]
+    fn shell_thickness_is_normalized_but_selector_binding_is_not_scaled() {
+        let mut plan = fixture();
+        plan["units"]["length"] = json!("cm");
+        let feature = json!({"id":"shell","kind":"shell","operation":"cut",
+            "parameters":{"thickness":0.2,"offset_mode":"inward",
+                "removed_faces":[format!("shell-face-v1:{}", "a".repeat(64))]},
+            "selection_binding":{"revision":7,"geometry_fingerprint":"a".repeat(64),
+                "kernel_version":"7.9.3","inventory_version":2,"target_feature_id":"base"}});
+        let normalized = normalized_feature(&feature, &plan).unwrap();
+        assert_eq!(normalized["parameters"]["thickness"], json!(2.0));
+        assert_eq!(normalized["parameters"]["offset_mode"], "inward");
+        assert_eq!(
+            normalized["parameters"]["removed_faces"],
+            feature["parameters"]["removed_faces"]
+        );
+        assert_eq!(
+            normalized["selection_binding"],
+            feature["selection_binding"]
+        );
     }
 
     #[test]

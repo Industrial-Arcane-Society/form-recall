@@ -50,7 +50,8 @@ CASE_PARAMETERS = {
     "cross_joint": {"span": 50, "journal_d": 12},
     "scroll_disc": {"outer_d": 60, "height": 8, "wall_t": 2, "turns": 2.5},
     "rotor": {"radius": 30, "n": 3, "height": 12, "bore_d": 8},
-    "shell": {"thickness": 2},
+    "shell": {"thickness": 2, "offset_mode": "inward",
+              "removed_faces": ["shell-face-v1:" + "a" * 64]},
     "socket_head_bolt": {"shank_d": 8, "thread_pitch": 1.25,
                          "length": 24, "head_d": 13, "head_h": 8,
                          "hex_s": 6, "hex_t": 4, "segments": 12},
@@ -118,6 +119,16 @@ def _plan(kind, parameters=None):
     item["sources"] = _source_map(item["parameters"])
     if kind == "pattern":
         item["relations"] = [{"type": "pattern_source", "feature_id": "base"}]
+    if kind == "shell":
+        item["operation"] = "cut"
+        item["relations"] = [{"type": "shell_target", "feature_id": "base"}]
+        item["selection_binding"] = {
+            "revision": 4,
+            "geometry_fingerprint": "a" * 64,
+            "kernel_version": "7.9.3",
+            "inventory_version": 2,
+            "target_feature_id": "base",
+        }
     features.append(item)
     return {
         "schema_version": CADPLAN_SCHEMA_VERSION,
@@ -130,6 +141,76 @@ def _plan(kind, parameters=None):
 
 
 class CADPlanSDKTests(unittest.TestCase):
+    def test_converter_fails_closed_on_unknown_operation(self):
+        plan = _plan("box", {"length": 20, "width": 10, "height": 8})
+        plan["features"][1]["operation"] = "modify"
+        with self.assertRaisesRegex(ValueError, "unsupported CADPlan operation"):
+            _to_document(plan)
+
+    def test_shell_schema_1_1_requires_explicit_bound_planar_face_selection(self):
+        import jsonschema
+
+        plan = _plan("shell")
+        self.assertEqual("valid", validate_plan(plan)["state"])
+        self.assertEqual([], list(jsonschema.Draft202012Validator(
+            schema_document()).iter_errors(plan)))
+        self.assertEqual("https://ai-modeler.local/schemas/cadplan-1.1.schema.json",
+                         schema_document()["$id"])
+
+        invalid_plans = []
+        missing_offset = json.loads(json.dumps(plan))
+        missing_offset["features"][1]["parameters"].pop("offset_mode")
+        invalid_plans.append(missing_offset)
+        missing_target = json.loads(json.dumps(plan))
+        missing_target["features"][1]["relations"] = []
+        invalid_plans.append(missing_target)
+        duplicate_faces = json.loads(json.dumps(plan))
+        duplicate_faces["features"][1]["parameters"]["removed_faces"].append(
+            duplicate_faces["features"][1]["parameters"]["removed_faces"][0])
+        invalid_plans.append(duplicate_faces)
+        wrong_inventory = json.loads(json.dumps(plan))
+        wrong_inventory["features"][1]["selection_binding"]["inventory_version"] = 1
+        invalid_plans.append(wrong_inventory)
+
+        validator = jsonschema.Draft202012Validator(schema_document())
+        for invalid in invalid_plans:
+            with self.subTest(invalid=invalid["features"][1]):
+                self.assertEqual("invalid", validate_plan(invalid)["state"])
+                self.assertTrue(list(validator.iter_errors(invalid)))
+
+    def test_legacy_v1_shell_is_readable_but_needs_confirmation_without_guesses(self):
+        import jsonschema
+
+        plan = _plan("shell")
+        plan["schema_version"] = "1.0"
+        feature = plan["features"][1]
+        feature["parameters"] = {"thickness": 2}
+        feature["sources"] = {"thickness": {"type": "user"}}
+        feature["operation"] = "add"
+        feature["relations"] = []
+        feature.pop("selection_binding")
+
+        result = validate_plan(plan)
+        self.assertEqual("needs_confirmation", result["state"], result)
+        self.assertEqual("1.0", result["schema_version"])
+        self.assertIn("shell_migration", {item["parameter"]
+                                           for item in result["confirmations"]})
+        shell = plan["features"][1]
+        self.assertEqual({"thickness": 2}, shell["parameters"])
+        self.assertNotIn("shell_target", str(shell))
+        self.assertEqual([], list(jsonschema.Draft202012Validator(
+            schema_document()).iter_errors(plan)))
+
+    def test_shell_thickness_uses_plan_length_units_while_selectors_remain_opaque(self):
+        plan = _plan("shell")
+        plan["units"]["length"] = "cm"
+        document, _ = _to_document(plan)
+        shell = document.features[1]
+        self.assertEqual(20.0, shell.params["thickness"])
+        self.assertEqual("inward", shell.params["offset_mode"])
+        self.assertEqual(plan["features"][1]["parameters"]["removed_faces"],
+                         shell.params["removed_faces"])
+
     def test_disabled_feature_is_schema_valid_serialized_and_ignored_by_preview(self):
         import jsonschema
 

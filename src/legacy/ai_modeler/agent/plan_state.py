@@ -21,8 +21,10 @@ def geometry_fingerprint(plan):
         features = []
     else:
         features = [
-            {key: feature.get(key) for key in
-             ("id", "kind", "operation", "parameters", "relations")}
+            {**{key: feature.get(key) for key in
+                ("id", "kind", "operation", "parameters", "relations")},
+             **({"selection_binding": feature["selection_binding"]}
+                if "selection_binding" in feature else {})}
             for feature in (plan.get("features") or [])
             if isinstance(feature, dict)
         ]

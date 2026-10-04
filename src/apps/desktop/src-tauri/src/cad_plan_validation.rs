@@ -1,5 +1,5 @@
-//! Static CADPlan v1 validation and schema, ported from
-//! `src/legacy/ai_modeler/sdk/cadplan.py` (Python source contract version 1.0).
+//! Static CADPlan validation and schema, ported from
+//! `src/legacy/ai_modeler/sdk/cadplan.py` (Python source contract version 1.1).
 //!
 //! This module validates plan data and reports static CATIA/local-backend support
 //! mappings. It does not build geometry, check a BREP, or invoke CATIA.
@@ -7,7 +7,7 @@
 use serde_json::{Map, Value, json};
 use std::collections::{BTreeSet, HashMap};
 
-pub const CADPLAN_SCHEMA_VERSION: &str = "1.0";
+pub const CADPLAN_SCHEMA_VERSION: &str = "1.1";
 
 #[derive(Clone, Copy)]
 struct Spec {
@@ -20,7 +20,7 @@ struct Spec {
     local_reason: &'static str,
 }
 
-// CADPlan v1.0 registry mirrored from cadplan.py FEATURE_SPECS and
+// CADPlan v1.1 registry mirrored from cadplan.py FEATURE_SPECS and
 // occ_kernel.GEOMETRY_SUPPORT. Parameter names are space-separated identifiers.
 const SPECS: &[Spec] = &[
     Spec {
@@ -260,11 +260,11 @@ const SPECS: &[Spec] = &[
     Spec {
         kind: "shell",
         required: "thickness",
-        params: "thickness",
+        params: "thickness offset_mode removed_faces",
         catia_status: "unsupported",
-        catia_reason: "当前 Document/CATIA 转换器没有抽壳实现。",
+        catia_reason: "旧 v1.0 thickness-only shell 需要确认；CATIA 映射仍不支持抽壳。",
         local_status: "unavailable",
-        local_reason: "CADPlan 未指定要移除的面；缺少可执行的抽壳边界",
+        local_reason: "旧 v1.0 thickness-only shell 不会自动迁移；1.1 仅原生执行显式 planar 子集。",
     },
 ];
 
@@ -402,7 +402,7 @@ fn append_confirmation(
     rows.push(confirmation(fid, parameter, question));
 }
 
-/// Return the CADPlan v1.0 JSON Schema document, generated from the same static registry.
+/// Return the current CADPlan JSON Schema document, generated from the same static registry.
 pub fn schema_document() -> Value {
     schema_document_impl()
 }
@@ -446,7 +446,7 @@ pub fn feature_spec(kind: &str) -> Option<Value> {
     )
 }
 
-/// Validate one JSON CADPlan. Result fields and state names mirror Python v1.0.
+/// Validate one JSON CADPlan. Result fields and state names mirror Python v1.1.
 pub fn validate_plan(plan: &Value) -> Value {
     let Some(data) = plan.as_object() else {
         return json!({"valid":false,"state":"invalid","errors":[item("plan_load_error","$".into(),"CADPlan 顶层必须是 JSON 对象。")],"confirmations":[],"support":[],"geometry_support":[],"warnings":[]});
@@ -476,12 +476,16 @@ pub fn validate_plan(plan: &Value) -> Value {
             );
         }
     }
-    if data.get("schema_version") != Some(&json!(CADPLAN_SCHEMA_VERSION)) {
+    let schema_version = data
+        .get("schema_version")
+        .and_then(Value::as_str)
+        .unwrap_or("");
+    if !["1.0", CADPLAN_SCHEMA_VERSION].contains(&schema_version) {
         append_error(
             &mut errors,
             "unsupported_schema_version",
             "$.schema_version".into(),
-            "只支持 schema_version=1.0。",
+            "只支持 schema_version=1.0 或 1.1。",
         );
     }
     if !data
@@ -543,6 +547,7 @@ pub fn validate_plan(plan: &Value) -> Value {
                 "relations",
                 "note",
                 "enabled",
+                "selection_binding",
             ]
             .contains(&key.as_str())
             {
@@ -677,6 +682,18 @@ pub fn validate_plan(plan: &Value) -> Value {
         validate_hole(kind, &params, &path, &mut errors);
         validate_vbelt(kind, &params, &path, &mut errors);
         validate_pattern(kind, &params, &path, &mut errors);
+        validate_shell_feature(
+            feature,
+            &params,
+            &fid,
+            &path,
+            schema_version,
+            &features,
+            index,
+            &ids,
+            &mut errors,
+            &mut confirmations,
+        );
         validate_sources(
             feature.get("sources"),
             &params,
@@ -700,8 +717,14 @@ pub fn validate_plan(plan: &Value) -> Value {
 
         let (status, reason) = catia_support(spec, &params);
         support.push(json!({"feature_id":fid,"kind":kind,"status":status,"reason":reason}));
-        let (local_status, local_reason) =
-            local_support(spec, &params, kind, feature.get("relations"));
+        let (local_status, local_reason) = local_support(
+            spec,
+            &params,
+            kind,
+            feature.get("relations"),
+            feature.get("selection_binding"),
+            schema_version,
+        );
         geometry_support.push(json!({"feature_id":fid,"kind":kind,"status":local_status,"reason":local_reason,"backend":"occt_brep"}));
         if local_status == "approximate" {
             warnings.push(json!({"code":"LOCAL_BREP_APPROXIMATION","feature_id":fid,"kind":kind,"message":local_reason}));
@@ -749,7 +772,7 @@ pub fn validate_plan(plan: &Value) -> Value {
     } else {
         "valid"
     };
-    json!({"valid":state=="valid","state":state,"errors":errors,"confirmations":confirmations,"support":support,"geometry_support":geometry_support,"warnings":warnings,"schema_version":CADPLAN_SCHEMA_VERSION})
+    json!({"valid":state=="valid","state":state,"errors":errors,"confirmations":confirmations,"support":support,"geometry_support":geometry_support,"warnings":warnings,"schema_version":schema_version})
 }
 
 /// Return preflight status for strict CATIA export. No geometry/CATIA work occurs.
@@ -1102,6 +1125,7 @@ fn enum_values(key: &str) -> Option<Vec<&'static str>> {
             "MXL", "XL", "L", "H", "XH", "XXH", "T2.5", "T5", "T10", "T20", "3M", "5M", "8M", "14M",
         ],
         "side" | "direction" => &["positive", "negative"],
+        "offset_mode" => &["inward", "outward"],
         _ => return None,
     };
     let mut sorted = values.to_vec();
@@ -1209,6 +1233,236 @@ fn validate_pattern(kind: &str, params: &Map<String, Value>, path: &str, errors:
             format!("{path}.parameters.count"),
             "阵列数量必须大于 0。",
         );
+    }
+}
+
+fn validate_shell_feature(
+    feature: &Map<String, Value>,
+    params: &Map<String, Value>,
+    feature_id: &str,
+    path: &str,
+    schema_version: &str,
+    features: &[Value],
+    index: usize,
+    ids: &HashMap<String, usize>,
+    errors: &mut Vec<Value>,
+    confirmations: &mut Vec<Value>,
+) {
+    if feature.get("kind").and_then(Value::as_str) != Some("shell") {
+        if feature.contains_key("selection_binding") {
+            append_error(
+                errors,
+                "selection_binding_only_for_shell",
+                format!("{path}.selection_binding"),
+                "selection_binding 仅允许用于 shell 特征。",
+            );
+        }
+        return;
+    }
+    if schema_version == "1.0" {
+        append_confirmation(
+            confirmations,
+            feature_id,
+            "shell_migration",
+            "CADPlan 1.0 shell 只有 thickness，不能推断开口面、方向或目标；请在 1.1 中重新枚举并显式选择。",
+        );
+        return;
+    }
+    if feature.get("operation").and_then(Value::as_str) != Some("cut") {
+        append_error(
+            errors,
+            "shell_requires_cut_operation",
+            format!("{path}.operation"),
+            "显式 shell 必须使用 operation=cut。",
+        );
+    }
+    for key in ["thickness", "offset_mode", "removed_faces"] {
+        if !params.contains_key(key) {
+            append_error(
+                errors,
+                "incomplete_explicit_shell",
+                format!("{path}.parameters.{key}"),
+                format!(
+                    "CADPlan 1.1 shell 必须显式包含 {key}；旧 thickness-only shell 不会自动迁移。"
+                ),
+            );
+        }
+    }
+    if !params
+        .get("offset_mode")
+        .and_then(Value::as_str)
+        .is_some_and(|value| ["inward", "outward"].contains(&value))
+    {
+        append_error(
+            errors,
+            "invalid_shell_offset_mode",
+            format!("{path}.parameters.offset_mode"),
+            "shell.offset_mode 必须显式为 inward 或 outward。",
+        );
+    }
+    let targets: Vec<&Value> = feature
+        .get("relations")
+        .and_then(Value::as_array)
+        .into_iter()
+        .flatten()
+        .filter(|row| row.get("type").and_then(Value::as_str) == Some("shell_target"))
+        .collect();
+    let target_id = targets
+        .first()
+        .and_then(|row| row.get("feature_id"))
+        .and_then(Value::as_str);
+    if targets.len() != 1 || target_id.is_none() {
+        append_error(
+            errors,
+            "invalid_shell_target_relation",
+            format!("{path}.relations"),
+            "shell 必须通过唯一 shell_target relation 显式指定目标 feature。",
+        );
+    } else if let Some(target_index) = ids.get(target_id.unwrap()) {
+        let current_head = features[..index]
+            .iter()
+            .rev()
+            .find(|row| row.get("enabled").and_then(Value::as_bool) != Some(false))
+            .and_then(|row| row.get("id"))
+            .and_then(Value::as_str);
+        if *target_index >= index || current_head != target_id {
+            append_error(
+                errors,
+                "stale_shell_target_relation",
+                format!("{path}.relations"),
+                "shell_target 必须指向当前累计实体末端的前序 feature。",
+            );
+        }
+    } else {
+        append_error(
+            errors,
+            "invalid_shell_target_relation",
+            format!("{path}.relations"),
+            "shell_target 必须指向此前已定义的 feature。",
+        );
+    }
+    match params.get("removed_faces").and_then(Value::as_array) {
+        Some(selectors) if !selectors.is_empty() && selectors.len() <= 256 => {
+            let mut seen = BTreeSet::new();
+            for (index, selector) in selectors.iter().enumerate() {
+                let selector = selector.as_str().unwrap_or("");
+                let hash = selector.strip_prefix("shell-face-v1:").unwrap_or("");
+                if hash.len() != 64
+                    || !hash
+                        .bytes()
+                        .all(|byte| byte.is_ascii_digit() || (b'a'..=b'f').contains(&byte))
+                {
+                    append_error(
+                        errors,
+                        "invalid_shell_face_selector",
+                        format!("{path}.parameters.removed_faces[{index}]"),
+                        "shell.removed_faces 必须使用 cad_list_shell_faces 返回的 opaque selector。",
+                    );
+                }
+                if !seen.insert(selector) {
+                    append_error(
+                        errors,
+                        "duplicate_shell_face_selector",
+                        format!("{path}.parameters.removed_faces[{index}]"),
+                        "shell.removed_faces 不允许重复 selector 或多重匹配。",
+                    );
+                }
+            }
+        }
+        _ => append_error(
+            errors,
+            "invalid_shell_removed_faces",
+            format!("{path}.parameters.removed_faces"),
+            "shell.removed_faces 须为1到256个 opaque selector。",
+        ),
+    }
+    match feature.get("selection_binding") {
+        Some(Value::Object(binding)) => {
+            if binding.keys().any(|key| {
+                ![
+                    "revision",
+                    "geometry_fingerprint",
+                    "kernel_version",
+                    "inventory_version",
+                    "target_feature_id",
+                ]
+                .contains(&key.as_str())
+            }) {
+                append_error(
+                    errors,
+                    "unknown_shell_selection_binding_field",
+                    format!("{path}.selection_binding"),
+                    "selection_binding 只接受 revision、geometry_fingerprint、kernel_version、inventory_version、target_feature_id。",
+                );
+            }
+            if binding
+                .get("revision")
+                .and_then(Value::as_i64)
+                .is_none_or(|revision| revision < 0)
+            {
+                append_error(
+                    errors,
+                    "invalid_shell_selection_revision",
+                    format!("{path}.selection_binding.revision"),
+                    "selection_binding.revision 须为非负整数。",
+                );
+            }
+            let valid_fingerprint = binding
+                .get("geometry_fingerprint")
+                .and_then(Value::as_str)
+                .is_some_and(|value| {
+                    value.len() == 64
+                        && value
+                            .bytes()
+                            .all(|byte| byte.is_ascii_digit() || (b'a'..=b'f').contains(&byte))
+                });
+            if !valid_fingerprint {
+                append_error(
+                    errors,
+                    "invalid_shell_selection_fingerprint",
+                    format!("{path}.selection_binding.geometry_fingerprint"),
+                    "selection_binding.geometry_fingerprint 须为64位小写SHA-256。",
+                );
+            }
+            if !binding
+                .get("kernel_version")
+                .and_then(Value::as_str)
+                .is_some_and(|value| !value.is_empty())
+            {
+                append_error(
+                    errors,
+                    "invalid_shell_selection_kernel_version",
+                    format!("{path}.selection_binding.kernel_version"),
+                    "selection_binding.kernel_version 须为非空字符串。",
+                );
+            }
+            if binding.get("inventory_version").and_then(Value::as_u64)
+                != Some(crate::native_shell::INVENTORY_VERSION)
+            {
+                append_error(
+                    errors,
+                    "unsupported_shell_inventory_version",
+                    format!("{path}.selection_binding.inventory_version"),
+                    "selection_binding.inventory_version 不受支持。",
+                );
+            }
+            if binding.get("target_feature_id").and_then(Value::as_str) != target_id {
+                append_error(
+                    errors,
+                    "shell_target_binding_mismatch",
+                    format!("{path}.selection_binding.target_feature_id"),
+                    "selection_binding.target_feature_id 必须与唯一 shell_target relation 一致。",
+                );
+            }
+        }
+        _ => append_error(
+            errors,
+            "missing_shell_selection_binding",
+            format!("{path}.selection_binding"),
+            format!(
+                "shell 特征 {feature_id} 必须保存 cad_list_shell_faces 返回的 selection_binding。"
+            ),
+        ),
     }
 }
 
@@ -1471,7 +1725,10 @@ fn validate_relations(
             continue;
         };
         let rtype = row.get("type").and_then(Value::as_str).unwrap_or("");
-        if rtype != "depends_on" && rtype != "pattern_source" {
+        if rtype != "depends_on"
+            && rtype != "pattern_source"
+            && !(kind == "shell" && rtype == "shell_target")
+        {
             append_error(
                 errors,
                 "invalid_relation",
@@ -1632,6 +1889,8 @@ fn local_support(
     params: &Map<String, Value>,
     kind: &str,
     relations: Option<&Value>,
+    selection_binding: Option<&Value>,
+    schema_version: &str,
 ) -> (&'static str, &'static str) {
     let mut status = spec.local_status;
     let mut reason = spec.local_reason;
@@ -1653,12 +1912,73 @@ fn local_support(
         status = "unavailable";
         reason = "CADPlan pattern 必须声明唯一 pattern_source 关系。";
     }
+    if kind == "shell" {
+        let explicit = schema_version == "1.1"
+            && ["offset_mode", "removed_faces"]
+                .iter()
+                .all(|key| params.contains_key(*key))
+            && relations.and_then(Value::as_array).is_some_and(|rows| {
+                rows.iter()
+                    .filter(|row| row.get("type").and_then(Value::as_str) == Some("shell_target"))
+                    .count()
+                    == 1
+            })
+            && selection_binding.is_some();
+        if explicit {
+            status = "exact";
+            reason = "原生 OCCT shell：仅支持显式 shell_target、当前 revision/fingerprint 绑定的平面移除面和显式 inward/outward 偏置。";
+        } else {
+            status = "unavailable";
+            reason = "旧 v1.0 thickness-only shell 不支持自动迁移；1.1 shell 须重新枚举面并显式指定 shell_target 与 offset_mode。";
+        }
+    }
     (status, reason)
 }
 fn schema_document_impl() -> Value {
     let alternatives: SVec = SPECS.iter().map(feature_schema_for).collect();
     let units = json!({"type":"object","properties":{"length":{"type":"string","enum":["mm","cm","m","in"]},"angle":{"type":"string","enum":["deg","rad"]}},"required":["length","angle"],"additionalProperties":false});
-    json!({"$schema":"https://json-schema.org/draft/2020-12/schema","$id":"https://ai-modeler.local/schemas/cadplan-1.0.schema.json","title":"AI Modeler CADPlan","description":"Provider-neutral, data-only plan for validated CATIA V5 construction.","type":"object","properties":{"schema_version":{"const":"1.0"},"name":{"type":"string","minLength":1},"source_prompt":{"type":"string"},"units":units,"coordinate_system":{"type":"object","properties":{"type":{"const":"global_cartesian"},"handedness":{"const":"right"},"axes":{"const":["X","Y","Z"]},"origin":{"const":[0,0,0]}},"required":["type","handedness","axes","origin"],"additionalProperties":false},"features":{"type":"array","minItems":1,"items":{"oneOf":alternatives}},"pending_questions":{"type":"array","items":{"type":"string"}}},"required":["schema_version","name","units","coordinate_system","features"],"additionalProperties":false,"$defs":{"source":{"type":"object","properties":{"type":{"type":"string","enum":["user","image_estimate","derived","existing_model"]},"evidence":{"type":"string"},"note":{"type":"string"}},"required":["type"],"additionalProperties":false,"allOf":[{"if":{"properties":{"type":{"const":"image_estimate"}},"required":["type"]},"then":{"required":["evidence"]}},{"if":{"properties":{"type":{"const":"existing_model"}},"required":["type"]},"then":{"required":["note"]}}]},"relation":{"type":"object","properties":{"type":{"type":"string","enum":["depends_on","pattern_source"]},"feature_id":{"type":"string","minLength":1}},"required":["type","feature_id"],"additionalProperties":false}},"x-feature-support-matrix":support_matrix()})
+    let mut schema = json!({
+        "$schema":"https://json-schema.org/draft/2020-12/schema",
+        "$id":"https://ai-modeler.local/schemas/cadplan-1.1.schema.json",
+        "title":"AI Modeler CADPlan",
+        "description":"Provider-neutral, data-only plan for validated CATIA V5 construction. CADPlan 1.0 remains readable; its thickness-only shell requires confirmation and is never migrated by guessing.",
+        "type":"object",
+        "properties":{
+            "schema_version":{"type":"string","enum":["1.0","1.1"]},
+            "name":{"type":"string","minLength":1},
+            "source_prompt":{"type":"string"},
+            "units":units,
+            "coordinate_system":{"type":"object","properties":{"type":{"const":"global_cartesian"},"handedness":{"const":"right"},"axes":{"const":["X","Y","Z"]},"origin":{"const":[0,0,0]}},"required":["type","handedness","axes","origin"],"additionalProperties":false},
+            "features":{"type":"array","minItems":1,"items":{"oneOf":alternatives}},
+            "pending_questions":{"type":"array","items":{"type":"string"}}
+        },
+        "required":["schema_version","name","units","coordinate_system","features"],
+        "additionalProperties":false,
+        "$defs":{
+            "source":{"type":"object","properties":{"type":{"type":"string","enum":["user","image_estimate","derived","existing_model"]},"evidence":{"type":"string"},"note":{"type":"string"}},"required":["type"],"additionalProperties":false,"allOf":[{"if":{"properties":{"type":{"const":"image_estimate"}},"required":["type"]},"then":{"required":["evidence"]}},{"if":{"properties":{"type":{"const":"existing_model"}},"required":["type"]},"then":{"required":["note"]}}]},
+            "relation":{"type":"object","properties":{"type":{"type":"string","enum":["depends_on","pattern_source","shell_target"]},"feature_id":{"type":"string","minLength":1}},"required":["type","feature_id"],"additionalProperties":false}
+        },
+        "x-feature-support-matrix":support_matrix()
+    });
+    schema["allOf"] = json!([{
+        "if":{"properties":{"schema_version":{"const":"1.1"}},"required":["schema_version"]},
+        "then":{"properties":{"features":{"items":{"allOf":[{
+            "if":{"properties":{"kind":{"const":"shell"}},"required":["kind"]},
+            "then":{
+                "required":["selection_binding"],
+                "properties":{
+                    "operation":{"const":"cut"},
+                    "parameters":{"required":["thickness","offset_mode","removed_faces"]},
+                    "relations":{
+                        "contains":{"type":"object","properties":{"type":{"const":"shell_target"}},"required":["type","feature_id"]},
+                        "minContains":1,
+                        "maxContains":1
+                    }
+                }
+            }
+        }]}}}}
+    }]);
+    schema
 }
 type SVec = Vec<Value>;
 fn support_matrix() -> Value {
@@ -1675,6 +1995,17 @@ fn feature_schema_for(spec: &Spec) -> Value {
         if let Some(v) = props.get(key) {
             pp.insert(key.to_owned(), v.clone());
         }
+    }
+    if spec.kind == "shell" {
+        pp.insert(
+            "offset_mode".into(),
+            json!({"type":"string","enum":["inward","outward"]}),
+        );
+        pp.insert(
+            "removed_faces".into(),
+            json!({"type":"array","minItems":1,"maxItems":256,
+            "items":{"type":"string","pattern":"^shell-face-v1:[0-9a-f]{64}$"},"uniqueItems":true}),
+        );
     }
     let mut conditional_required: Vec<&str> = words(spec.required);
     if spec.kind == "hole" {
@@ -1703,7 +2034,21 @@ fn feature_schema_for(spec: &Spec) -> Value {
     let kind_enum = vec![
         json!({"const":spec.kind,"x-catia-support-status":spec.catia_status,"x-catia-support-note":spec.catia_reason}),
     ];
-    json!({"type":"object","properties":{"id":{"type":"string","minLength":1},"kind":kind_enum[0],"operation":{"type":"string","enum":["add","cut"]},"name":{"type":"string"},"note":{"type":"string"},"enabled":{"type":"boolean","default":true},"parameters":{"type":"object","properties":pp,"required":conditional_required,"additionalProperties":false},"sources":{"type":"object","propertyNames":{"enum":words(spec.params)},"additionalProperties":{"$ref":"#/$defs/source"}},"relations":{"type":"array","items":{"$ref":"#/$defs/relation"}}},"required":["id","kind","operation","parameters","sources"],"additionalProperties":false,"allOf":all_of})
+    let mut feature_properties = json!({"id":{"type":"string","minLength":1},"kind":kind_enum[0],"operation":{"type":"string","enum":["add","cut"]},"name":{"type":"string"},"note":{"type":"string"},"enabled":{"type":"boolean","default":true},"parameters":{"type":"object","properties":pp,"required":conditional_required,"additionalProperties":false},"sources":{"type":"object","propertyNames":{"enum":words(spec.params)},"additionalProperties":{"$ref":"#/$defs/source"}},"relations":{"type":"array","items":{"$ref":"#/$defs/relation"}}});
+    if spec.kind == "shell" {
+        feature_properties["selection_binding"] = json!({"type":"object","properties":{
+            "revision":{"type":"integer","minimum":0},
+            "geometry_fingerprint":{"type":"string","pattern":"^[0-9a-f]{64}$"},
+            "kernel_version":{"type":"string","minLength":1},
+            "inventory_version":{"const":2},
+            "target_feature_id":{"type":"string","minLength":1}},
+            "required":["revision","geometry_fingerprint","kernel_version","inventory_version","target_feature_id"],"additionalProperties":false});
+        feature_properties["relations"] = json!({"type":"array","items":{"type":"object","properties":{
+            "type":{"type":"string","enum":["depends_on","pattern_source","shell_target"]},
+            "feature_id":{"type":"string","minLength":1}},
+            "required":["type","feature_id"],"additionalProperties":false}});
+    }
+    json!({"type":"object","properties":feature_properties,"required":["id","kind","operation","parameters","sources"],"additionalProperties":false,"allOf":all_of})
 }
 fn is_provenance_parameter(key: &str) -> bool {
     has(key, LENGTH_KEYS)
@@ -1962,6 +2307,14 @@ mod tests {
     #[test]
     fn schema_contains_all_27_public_feature_kinds_and_source_guards() {
         let schema = schema_document();
+        assert_eq!(
+            schema["$id"],
+            "https://ai-modeler.local/schemas/cadplan-1.1.schema.json"
+        );
+        assert_eq!(
+            schema["properties"]["schema_version"]["enum"],
+            json!(["1.0", "1.1"])
+        );
         let alternatives = schema
             .pointer("/properties/features/items/oneOf")
             .unwrap()
@@ -1972,6 +2325,85 @@ mod tests {
         assert!(feature_schema("not_public").is_none());
         assert!(schema.to_string().contains("image_estimate"));
         assert_eq!(SPECS.len(), 27);
+    }
+    #[test]
+    fn shell_v1_migration_requires_confirmation_and_v11_schema_requires_explicit_contract() {
+        let mut legacy = base(feature(
+            "shell",
+            json!({"thickness":2}),
+            json!({"thickness":{"type":"user"}}),
+        ));
+        let legacy_report = validate_plan(&legacy);
+        assert_eq!(legacy_report["state"], "needs_confirmation");
+        assert_eq!(legacy_report["schema_version"], "1.0");
+        assert!(
+            legacy_report["confirmations"]
+                .as_array()
+                .unwrap()
+                .iter()
+                .any(|item| item["parameter"] == "shell_migration")
+        );
+
+        legacy["schema_version"] = json!("1.1");
+        let mut explicit = feature(
+            "shell",
+            json!({"thickness":2,"offset_mode":"inward","removed_faces":[format!("shell-face-v1:{}", "a".repeat(64))]}),
+            json!({"thickness":{"type":"user"}}),
+        );
+        explicit["id"] = json!("shell-1");
+        explicit["operation"] = json!("cut");
+        explicit["relations"] = json!([{"type":"shell_target","feature_id":"base"}]);
+        explicit["selection_binding"] = json!({
+            "revision":4,
+            "geometry_fingerprint":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+            "kernel_version":"7.9.3",
+            "inventory_version":2,
+            "target_feature_id":"base"
+        });
+        let mut plan = base(feature(
+            "box",
+            json!({"length":100,"width":80,"height":60}),
+            json!({"length":{"type":"user"},"width":{"type":"user"},"height":{"type":"user"}}),
+        ));
+        plan["schema_version"] = json!("1.1");
+        plan["features"][0]["id"] = json!("base");
+        plan["features"]
+            .as_array_mut()
+            .unwrap()
+            .push(explicit.clone());
+        assert_eq!(validate_plan(&plan)["state"], "valid");
+        let missing_direction = {
+            let mut value = plan.clone();
+            value["features"][1]["parameters"]
+                .as_object_mut()
+                .unwrap()
+                .remove("offset_mode");
+            value
+        };
+        assert_eq!(validate_plan(&missing_direction)["state"], "invalid");
+        let stale_target = {
+            let mut value = plan.clone();
+            value["features"][1]["selection_binding"]["target_feature_id"] = json!("other");
+            value
+        };
+        assert_eq!(validate_plan(&stale_target)["state"], "invalid");
+
+        let schema = schema_document();
+        let shell_schema = schema["properties"]["features"]["items"]["oneOf"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .find(|item| item["properties"]["kind"]["const"] == "shell")
+            .unwrap();
+        assert_eq!(
+            shell_schema["properties"]["selection_binding"]["properties"]["inventory_version"]["const"],
+            2
+        );
+        assert_eq!(
+            shell_schema["properties"]["parameters"]["properties"]["removed_faces"]["uniqueItems"],
+            true
+        );
+        assert!(schema["allOf"].to_string().contains("shell_target"));
     }
     #[test]
     fn boolean_base_matches_actual_python_validation() {

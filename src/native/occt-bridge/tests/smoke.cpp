@@ -57,6 +57,39 @@ int main() {
           std::abs(bounds.zmin) < 1e-8 && std::abs(bounds.zmax - 20) < 1e-8,
           "box bounds must be [-50,-40,0]..[50,40,20]");
 
+  // Shell face inventory is exact to this B-Rep. Model-facing selectors are
+  // minted by Rust; this C ABI only exposes internal ordinals to its caller.
+  OcctFaceInfo *faces=nullptr;
+  size_t face_count=0;
+  require_ok(occt_shape_faces(box,&faces,&face_count),"box face inventory");
+  require(face_count==6,"box must enumerate six faces");
+  size_t top_face=face_count;
+  for(size_t i=0;i<face_count;++i) {
+    require(faces[i].surface_type==0,"box face inventory must classify all six as planes");
+    if(faces[i].center[2]>19.999 && faces[i].oriented_normal[2]>0.999) top_face=faces[i].ordinal;
+  }
+  require(top_face<face_count,"box inventory must identify its oriented top face");
+  occt_faces_release(faces);
+  OcctShape *shell_in=nullptr;
+  require_ok(occt_make_thick_solid(box,&top_face,1,2.0,0,&shell_in),"make inward shell");
+  require_ok(occt_shape_analyze(shell_in,&analysis),"inward shell analysis");
+  require(analysis.valid==1&&analysis.solid_count==1&&analysis.closed_solid_count==1,
+          "inward shell must remain one valid closed solid");
+  require_ok(occt_shape_volume(shell_in,&volume),"inward shell volume");
+  require(std::abs(volume-28672.0)<1e-5,"inward shell must remove the cavity volume with an open top");
+  OcctShape *shell_out=nullptr;
+  require_ok(occt_make_thick_solid(box,&top_face,1,2.0,1,&shell_out),"make outward shell");
+  require_ok(occt_shape_analyze(shell_out,&analysis),"outward shell analysis");
+  require(analysis.valid==1&&analysis.solid_count==1&&analysis.closed_solid_count==1,
+          "outward shell must remain one valid closed solid");
+  require_ok(occt_shape_bounds(shell_out,&bounds),"outward shell bounds");
+  require(std::abs(bounds.xmin+52)<1e-6&&std::abs(bounds.xmax-52)<1e-6&&
+          std::abs(bounds.ymin+42)<1e-6&&std::abs(bounds.ymax-42)<1e-6&&
+          std::abs(bounds.zmin+2)<1e-6&&std::abs(bounds.zmax-20)<1e-6,
+          "outward shell must offset remaining planar faces without direction fallback");
+  occt_shape_release(shell_in);
+  occt_shape_release(shell_out);
+
   // Analytic cone constructor.
   OcctShape *cone = nullptr;
   require_ok(occt_make_cone(10, 0, 30, 0, 0, 0, OCCT_AXIS_Z, &cone), "make analytic cone");
