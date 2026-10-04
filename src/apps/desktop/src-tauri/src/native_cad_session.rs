@@ -1209,6 +1209,7 @@ mod tests {
         let turns = turns_manifest(&dir, json!([]));
         let plan = valid_body_plan();
         let fingerprint = cad_plan::geometry_fingerprint(&plan).unwrap();
+        let observation_id = "observation-1";
         let inventory_key = format!(
             "{:x}",
             Sha256::digest(
@@ -1224,6 +1225,7 @@ mod tests {
             "reference_inventory":{},
             "reference_similarity_history":[{
                 "revision":2,"recorded_at":1,"reference_id":reference_id,
+                "observation_id":observation_id,
                 "view":"front","view_comparable":true,"geometry_signature":fingerprint,
                 "source_sha256":digest,"roi_norm":null,"covered_evidence_ids":["edge-1"],
                 "evidence":[{"evidence_id":"edge-1","status":"match","reference":"one visible plate edge","model":"one visible plate edge"}]
@@ -1234,6 +1236,7 @@ mod tests {
         state["reference_inventory"][reference_id.as_str()] = json!({
             "reference_id":reference_id,
             "source_sha256":digest,
+            "observation_id":observation_id,
             "roi_norm":null,
             "roi_cache_key":inventory_key,
             "observation_valid":true,
