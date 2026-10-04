@@ -182,7 +182,7 @@ function fixture() {
     references: { session_id: run.tool_session_id, images: [{ id: rid, sha256: image }] },
     userTurns: { session_id: run.tool_session_id, turns: [{ turn_id: run.turn_id, reference_ids: [rid] }] },
     activeTurn: { session_id: run.tool_session_id, turn_id: run.turn_id },
-    dsh: { status: 'completed', exit_code: 0 },
+    dsh: { status: 'completed', exit_code: 0, child_exited: true, failure: { method: 'unknown', error_class: 'none' } },
     registration: { phase: 'registered', registeredToolNames: ['cad_finish_model'] },
     schema: { schemaVersion: 1, tools: [{ name: 'cad_finish_model' }] },
     streamEvents: [
@@ -447,7 +447,7 @@ test('ACP terminal projection uses per-run full-update HMACs and an exact tool-n
   assert.equal(hmacA, hmacB)
   assert.notEqual(hmacA, createTerminalUpdateHmac({ a: 1, b: 2 }, randomBytes(32)))
   const projection = summarizeAcpTerminalUpdateDiagnostics(rows, { terminalUpdateHmacByEvent: digestByEvent })
-  assert.equal(projection.schema, 'acp_terminal_update_projection_v2')
+  assert.equal(projection.schema, 'acp_terminal_update_projection_v3')
   assert.deepEqual(projection.call_group_terminal_distribution, [
     { tool_name: 'cad_finish_model', terminal_category: 'repeated_same_status_identical_update', count: 1 },
     { tool_name: 'cad_inspect_references', terminal_category: 'repeated_same_status_distinct_updates', count: 1 },
@@ -462,6 +462,7 @@ test('ACP terminal projection uses per-run full-update HMACs and an exact tool-n
     { tool_name: 'unknown', terminal_status: 'none', count: 1 },
     { tool_name: 'web_search', terminal_status: 'none', count: 1 },
   ])
+  assert.deepEqual(projection.repeated_argument_fingerprint_counts, [])
   assert.equal(projection.same_terminal_event_pair_count, 1)
   assert.equal(projection.different_terminal_event_pair_count, 2)
   assert.equal(projection.missing_tool_call_id_event_count, 1)
@@ -521,6 +522,23 @@ test('Cordis binding projection uses exact ACP identities for repeated identical
   ])
 })
 
+test('ACP diagnostics count repeated tool argument fingerprints without publishing fingerprints', () => {
+  const events = [
+    { kind: 'tool_call', tool_call_id: 'a', title: 'cad_get_reference_image', arguments_sha256_24: 'a'.repeat(24) },
+    { kind: 'tool_call', tool_call_id: 'a', title: 'cad_get_reference_image', arguments_sha256_24: 'a'.repeat(24) },
+    { kind: 'tool_call', tool_call_id: 'b', title: 'cad_get_reference_image', arguments_sha256_24: 'a'.repeat(24) },
+    { kind: 'tool_call', tool_call_id: 'c', title: 'cad_get_reference_image', arguments_sha256_24: 'b'.repeat(24) },
+    { kind: 'tool_call', tool_call_id: 'd', title: 'cad_get_reference_image', arguments_sha256_24: 'b'.repeat(24) },
+    { kind: 'tool_call', tool_call_id: 'e', title: 'cad_get_reference_image', arguments_sha256_24: 'b'.repeat(24) },
+  ]
+  const projection = summarizeAcpTerminalUpdateDiagnostics(events)
+  assert.deepEqual(projection.repeated_argument_fingerprint_counts,
+    [{ tool_name: 'cad_get_reference_image', repeated_call_count: 3 }])
+  const serialized = JSON.stringify(projection)
+  assert.equal(serialized.includes('a'.repeat(24)), false)
+  assert.equal(serialized.includes('b'.repeat(24)), false)
+})
+
 test('Cordis binding reasons distinguish missing ACP/audit rows from explicit rejection', () => {
   const outcome = (projection, stage, code) => projection.counts.find(row => row.stage === stage && row.outcome === code)?.count || 0
   const noAcp = fixture()
@@ -556,6 +574,11 @@ test('published cold-start files contain only safe gates and aggregate projectio
     const events = [start, terminal]
     const acpProjection = summarizeAcpTerminalUpdateDiagnostics(events, { terminalUpdateHmacByEvent: digestByEvent })
     acpProjection.raw_trace = secrets.join('|')
+    acpProjection.repeated_argument_fingerprint_counts = [
+      { tool_name: 'cad_finish_model', repeated_call_count: 4 },
+      { tool_name: secrets[10], repeated_call_count: 99 },
+      { tool_name: 'cad_get_reference_image', repeated_call_count: secrets[8] },
+    ]
     const bindingProjection = summarizeCordisBindingDiagnostics({
       ...fixture(),
       toolEvents: events.map(event => ({ ...event, run_id: 'temporary-run-id', session_id: secrets[1], turn_id: 'temporary-turn-id' })),
@@ -573,7 +596,7 @@ test('published cold-start files contain only safe gates and aggregate projectio
     const summary = buildSafeAcceptanceSummary({ strict, transportStatus: 'completed', modelStatus: secrets[7],
       runtime: { node: secrets[7], dsh: secrets[7], directory: secrets[0] },
       source: { bytes: 72309, sha256: 'b'.repeat(64), unchanged: true, reference_id: secrets[1] },
-      scratchCleanupStatus: secrets[7] })
+      scratchCleanupStatus: secrets[7], dshDiagnostic: { method: secrets[10], error_class: secrets[8], message: secrets[0] } })
     writeSafeAcceptanceArtifacts(output, { summary, acpProjection, bindingProjection,
       buildStatus: { status: 'passed', exit_code: 0, elapsed_ms: 12, stdout_bytes: 0, stderr_bytes: 0, raw: secrets[4] } })
     const listFiles = directory => readdirSync(directory, { withFileTypes: true }).flatMap(entry => {
@@ -594,8 +617,9 @@ test('published cold-start files contain only safe gates and aggregate projectio
     assert.equal(summary.status_scope, 'scope_unverified')
     assert.equal(summary.runtime.node, 'unverified')
     assert.equal(summary.scratch_cleanup_status, 'not_created')
+    assert.deepEqual(summary.dsh_diagnostic, { stage: 'unknown', method: 'unknown', error_class: 'unknown' })
     assert.deepEqual(Object.keys(summary.strict_gates.gates), [
-      'run_scope', 'dsh', 'trace_integrity', 'original_image', 'main_image_wire', 'cordis_cad_tools',
+      'run_scope', 'dsh_session', 'dsh_process', 'trace_integrity', 'original_image', 'main_image_wire', 'cordis_cad_tools',
       'acp_cad_tool_results', 'current_geometry', 'artifacts', 'holes', 'visual', 'finish',
     ])
     const knownValues = buildSafeAcceptanceSummary({
@@ -609,6 +633,7 @@ test('published cold-start files contain only safe gates and aggregate projectio
     assert.equal(knownValues.status_scope, 'single_image_single_turn_cli_host_gates_not_independent_visual_or_CATIA_acceptance')
     assert.deepEqual(knownValues.runtime, { node: 'v22.23.3', dsh: '0.2.0-rc.2' })
     assert.equal(knownValues.model_status, 'accepted_by_strict_cli_gate')
+    assert.deepEqual(knownValues.dsh_diagnostic, { stage: 'unknown', method: 'unknown', error_class: 'none' })
     assert.equal(knownValues.scratch_cleanup_status, 'removed')
     assert.deepEqual(knownValues.scratch_recovery, { status: 'complete', scanned_count: 2, removed_count: 1,
       preserved_count: 0, rejected_count: 0, unknown_owner_count: 0, failed_count: 0 })
@@ -625,7 +650,12 @@ test('published cold-start files contain only safe gates and aggregate projectio
     assert.equal(strictPassCleanupFailure.strict_gates.status, 'passed')
     assert.equal(strictPassCleanupFailure.scratch_cleanup_status, 'failed')
     const projections = readFileSync(join(output, 'tool-result-diagnostics.jsonl'), 'utf8').trim().split('\n').map(JSON.parse)
-    assert.equal(projections[0].schema, 'acp_terminal_update_projection_v2')
+    assert.equal(projections[0].schema, 'acp_terminal_update_projection_v3')
+    assert.deepEqual(projections[0].repeated_argument_fingerprint_counts, [
+      { tool_name: 'cad_finish_model', repeated_call_count: 4 },
+      { tool_name: 'unknown', repeated_call_count: 99 },
+      { tool_name: 'cad_get_reference_image', repeated_call_count: 0 },
+    ])
     assert.deepEqual(projections[0].call_group_terminal_distribution,
       [{ tool_name: 'cad_finish_model', terminal_category: 'completed_once', count: 1 }])
     assert.equal(projections[1].schema, 'cordis_binding_projection_v1')
@@ -673,6 +703,19 @@ test('fatal failure publication rejects unknown stage and code values', () => {
   } finally {
     rmSync(root, { recursive: true, force: true })
   }
+})
+
+test('DSH diagnostic publication keeps only allowlisted RPC method and error class', () => {
+  const classified = buildSafeAcceptanceSummary({
+    dshDiagnostic: { stage: 'session_rpc', method: 'session/prompt', error_class: 'rpc_error', message: 'provider secret sentinel' },
+  })
+  assert.deepEqual(classified.dsh_diagnostic, { stage: 'session_rpc', method: 'session/prompt', error_class: 'rpc_error' })
+  const unknown = buildSafeAcceptanceSummary({
+    dshDiagnostic: { stage: 'private-stage-sentinel', method: 'private-method-sentinel', error_class: 'raw-provider-error-sentinel' },
+  })
+  assert.deepEqual(unknown.dsh_diagnostic, { stage: 'unknown', method: 'unknown', error_class: 'unknown' })
+  assert.equal(JSON.stringify(classified).includes('provider secret sentinel'), false)
+  assert.equal(JSON.stringify(unknown).includes('sentinel'), false)
 })
 
 test('offline Cargo failure publishes only safe status fields before fatal publication', () => {
@@ -844,39 +887,66 @@ const negativeFixtures = [
   ['foreign bridge session', f => { f.toolBridgeCalls[0].session_id = 'old' }, 'cad_tool_rejected_unbound_or_unaudited'],
   ['audit from unrelated UUID', f => { f.nativeAudit[0].call_id = 'other' }, 'cad_tool_rejected_unbound_or_unaudited'],
   ['direct CLI postcheck is not DSH execution', f => { f.nativeAudit[0].call_id = 'probe-0'; f.toolBridgeCalls = [] }, 'successful_cordis_cad_call_and_native_audit_missing'],
-  ['DSH nonzero exit', f => { f.dsh.exit_code = 1 }, 'dsh_not_completed_or_nonzero_exit'],
-  ['host accepted false', f => { f.domain.finish_summary.accepted = false }, 'host_finish_not_accepted'],
-  ['preview geometry stale', f => { f.domain.last_preview.geometry_fingerprint = 'd'.repeat(64) }, 'preview_geometry_finish_revision_or_fingerprint_stale'],
-  ['current plan fingerprint differs from preview', f => { f.computedState.geometry_signature = 'd'.repeat(64) }, 'preview_geometry_finish_revision_or_fingerprint_stale'],
+  ['DSH child nonzero exit', f => { f.dsh.exit_code = 1 }, 'dsh_child_exit_nonzero_or_missing'],
+  ['DSH session did not complete', f => { f.dsh.status = 'failed' }, 'dsh_session_not_completed'],
+  ['DSH RPC failure is a distinct session reason', f => { f.dsh.failure.error_class = 'rpc_error' }, 'dsh_session_rpc_failed'],
+  ['DSH child exit not observed', f => { f.dsh.child_exited = false }, 'dsh_child_exit_not_observed'],
+  ['host accepted false', f => { f.domain.finish_summary.accepted = false }, 'finish_acceptance_flag_false'],
+  ['preview geometry stale', f => { f.domain.last_preview.geometry_fingerprint = 'd'.repeat(64) }, 'preview_geometry_fingerprint_stale'],
+  ['current plan fingerprint differs from preview', f => { f.computedState.geometry_signature = 'd'.repeat(64) }, 'preview_geometry_fingerprint_stale'],
   ['geometry report stale', f => { f.artifacts.geometry_report.revision = 1 }, 'geometry_report_file_stale'],
-  ['holes incomplete', f => { f.domain.finish_summary.hole_measurement.complete = false }, 'holes_incomplete_or_unverified'],
-  ['host says holes complete but backend does not', f => { f.domain.last_preview.local_geometry_checks.hole_measurement_complete = false }, 'holes_incomplete_or_unverified'],
-  ['visual coverage incomplete', f => { f.domain.finish_summary.reference_coverage = false }, 'visual_coverage_incomplete_or_conflicting'],
-  ['stale visual summary', f => { f.computedState.visual_evidence_summary = { ...f.computedState.visual_evidence_summary, all_references_covered: false } }, 'visual_evidence_not_current_rust_summary'],
-  ['attestation invalid', f => { f.domain.finish_summary.overall_geometry_review.result.evidence.geometry.host_attestation_valid = false }, 'geometry_attestation_or_gate_binding_invalid'],
+  ['holes incomplete', f => { f.domain.finish_summary.hole_measurement.complete = false }, 'hole_finish_measurement_incomplete'],
+  ['host says holes complete but backend does not', f => { f.domain.last_preview.local_geometry_checks.hole_measurement_complete = false }, 'hole_native_measurement_incomplete'],
+  ['visual coverage incomplete', f => { f.domain.finish_summary.reference_coverage = false }, 'visual_finish_coverage_incomplete'],
+  ['stale visual summary', f => { f.computedState.visual_evidence_summary = { ...f.computedState.visual_evidence_summary, all_references_covered: false } }, 'visual_summary_stale_or_mismatched'],
+  ['attestation invalid', f => { f.domain.finish_summary.overall_geometry_review.result.evidence.geometry.host_attestation_valid = false }, 'geometry_host_attestation_invalid'],
   ['missing preview artifact', f => { f.artifacts.failures = ['artifact_preview_missing'] }, 'current_run_artifacts_missing_or_invalid'],
-  ['missing mandatory fields', f => { delete f.domain.finish_summary; delete f.computedState }, 'host_finish_not_accepted'],
+  ['missing mandatory fields', f => { delete f.domain.finish_summary; delete f.computedState }, 'finish_summary_state_not_accepted'],
 ]
 const criticalGatePredicateFlips = [
-  ['visual coverage: finish reference coverage missing', f => { f.domain.finish_summary.reference_coverage = false }, 'visual_coverage_incomplete_or_conflicting'],
-  ['visual coverage: all references covered missing', f => { f.domain.finish_summary.visual_evidence.all_references_covered = false; f.computedState.visual_evidence_summary.all_references_covered = false }, 'visual_coverage_incomplete_or_conflicting'],
-  ['visual coverage: independent review pair count zero', f => { f.domain.finish_summary.independent_review_pair_count = 0 }, 'visual_coverage_incomplete_or_conflicting'],
-  ['visual coverage: Rust complete flag missing', f => { f.domain.finish_summary.overall_geometry_review.result.evidence.references.visual_coverage_complete = false }, 'visual_coverage_incomplete_or_conflicting'],
-  ['visual coverage: reference manifest invalid', f => { f.domain.finish_summary.overall_geometry_review.result.evidence.references.manifest_valid = false }, 'visual_coverage_incomplete_or_conflicting'],
-  ['visual coverage: mismatch count nonzero', f => { f.domain.finish_summary.overall_geometry_review.result.evidence.references.mismatch_count = 1 }, 'visual_coverage_incomplete_or_conflicting'],
-  ['original binding: inventory row missing', f => { f.domain.finish_summary.overall_geometry_review.result.evidence.references.original_reference_sources = [] }, 'visual_gate_original_reference_binding_missing'],
-  ['original binding: duplicate inventory rows', f => { const refs = f.domain.finish_summary.overall_geometry_review.result.evidence.references; refs.original_reference_sources.push({ ...refs.original_reference_sources[0] }) }, 'visual_gate_original_reference_binding_missing'],
-  ['original binding: reference id wrong', f => { f.domain.finish_summary.overall_geometry_review.result.evidence.references.original_reference_sources[0].id = 'sha256:' + 'd'.repeat(64) }, 'visual_gate_original_reference_binding_missing'],
-  ['original binding: source hash wrong', f => { f.domain.finish_summary.overall_geometry_review.result.evidence.references.original_reference_sources[0].sha256 = 'd'.repeat(64) }, 'visual_gate_original_reference_binding_missing'],
-  ['original binding: coverage false', f => { f.domain.finish_summary.overall_geometry_review.result.evidence.references.original_reference_sources[0].covered = false }, 'visual_gate_original_reference_binding_missing'],
-  ['original binding: inventory invalid', f => { f.domain.finish_summary.overall_geometry_review.result.evidence.references.original_reference_sources[0].inventory_valid = false }, 'visual_gate_original_reference_binding_missing'],
-  ['host finish: domain finished false', f => { f.domain.finished = false }, 'host_finish_not_accepted'],
-  ['host finish: domain state not accepted', f => { f.domain.finish_state = 'candidate' }, 'host_finish_not_accepted'],
-  ['host finish: summary state not accepted', f => { f.domain.finish_summary.finish_state = 'candidate' }, 'host_finish_not_accepted'],
-  ['host finish: summary acceptance false', f => { f.domain.finish_summary.accepted = false }, 'host_finish_not_accepted'],
-  ['host finish: geometry review acceptance false', f => { f.domain.finish_summary.overall_geometry_review_accepted = false }, 'host_finish_not_accepted'],
-  ['host finish: review issuer wrong', f => { f.domain.finish_summary.overall_geometry_review.issuer = 'other' }, 'host_finish_not_accepted'],
-  ['host finish: review decision not accept', f => { f.domain.finish_summary.overall_geometry_review.result.decision = 'reject' }, 'host_finish_not_accepted'],
+  ['geometry postcheck revision stale', f => { f.computedState.revision = 1 }, 'rust_postcheck_revision_stale'],
+  ['geometry signature absent', f => { f.computedState.geometry_signature = null }, 'rust_postcheck_geometry_signature_missing'],
+  ['preview revision stale', f => { f.domain.preview_revision = 1 }, 'preview_revision_stale'],
+  ['native check fingerprint stale', f => { f.domain.last_preview.local_geometry_checks.geometry_fingerprint = 'd'.repeat(64) }, 'geometry_checks_fingerprint_stale'],
+  ['finish fingerprint stale', f => { f.domain.finish_summary.geometry_fingerprint = 'd'.repeat(64) }, 'finish_geometry_fingerprint_stale'],
+  ['finish review fingerprint stale', f => { f.domain.finish_summary.overall_geometry_review.geometry_fingerprint = 'd'.repeat(64) }, 'finish_review_fingerprint_stale'],
+  ['latest review fingerprint stale', f => { f.domain.latest_geometry_review.geometry_fingerprint = 'd'.repeat(64) }, 'latest_review_fingerprint_stale'],
+  ['native geometry engine absent', f => { f.domain.last_preview.execution_engine = 'other' }, 'native_geometry_engine_missing'],
+  ['native geometry state not passed', f => { f.domain.last_preview.local_geometry_checks.state = 'failed' }, 'native_geometry_check_state_not_passed'],
+  ['native geometry validity false', f => { f.domain.last_preview.local_geometry_checks.valid = false }, 'native_geometry_validity_false'],
+  ['native closed solid count invalid', f => { f.domain.last_preview.local_geometry_checks.closed_solid_count = 2 }, 'native_geometry_solid_count_invalid'],
+  ['native validation invalid', f => { f.domain.last_preview.local_geometry_checks.validation.state = 'invalid' }, 'native_geometry_validation_invalid'],
+  ['geometry binding invalid', f => { f.domain.finish_summary.overall_geometry_review.result.evidence.geometry.binding_valid = false }, 'geometry_binding_invalid'],
+  ['geometry attestation failure', f => { f.domain.finish_summary.overall_geometry_review.result.evidence.geometry.passed = false }, 'geometry_attestation_failed'],
+  ['attested geometry checks differ', f => { const geometry = f.domain.finish_summary.overall_geometry_review.result.evidence.geometry; geometry.checks = { ...geometry.checks, valid: false } }, 'geometry_attested_checks_mismatch'],
+  ['finish review differs from latest review', f => { f.domain.latest_geometry_review = structuredClone(f.domain.latest_geometry_review); f.domain.latest_geometry_review.result.decision = 'reject' }, 'finish_geometry_review_differs_from_current_gate'],
+  ['finish hole evidence incomplete', f => { f.domain.finish_summary.overall_geometry_review.result.evidence.holes.measurement_complete = false }, 'hole_evidence_measurement_incomplete'],
+  ['hole measurement unverified', f => { f.domain.last_preview.local_geometry_checks.hole_measurements_verified = false }, 'hole_native_measurement_unverified'],
+  ['visual coverage: finish reference coverage missing', f => { f.domain.finish_summary.reference_coverage = false }, 'visual_finish_coverage_incomplete'],
+  ['visual coverage: all references covered missing', f => { f.domain.finish_summary.visual_evidence.all_references_covered = false; f.computedState.visual_evidence_summary.all_references_covered = false }, 'visual_all_references_not_covered'],
+  ['visual coverage: independent review pair count zero', f => { f.domain.finish_summary.independent_review_pair_count = 0 }, 'visual_independent_review_missing'],
+  ['visual coverage: Rust complete flag missing', f => { f.domain.finish_summary.overall_geometry_review.result.evidence.references.visual_coverage_complete = false }, 'visual_gate_coverage_incomplete'],
+  ['visual coverage: reference manifest invalid', f => { f.domain.finish_summary.overall_geometry_review.result.evidence.references.manifest_valid = false }, 'visual_reference_manifest_invalid'],
+  ['visual coverage: mismatch count nonzero', f => { f.domain.finish_summary.overall_geometry_review.result.evidence.references.mismatch_count = 1 }, 'visual_reference_mismatch_detected'],
+  ['original binding: inventory row missing', f => { f.domain.finish_summary.overall_geometry_review.result.evidence.references.original_reference_sources = [] }, 'original_reference_inventory_count_invalid'],
+  ['original binding: duplicate inventory rows', f => { const refs = f.domain.finish_summary.overall_geometry_review.result.evidence.references; refs.original_reference_sources.push({ ...refs.original_reference_sources[0] }) }, 'original_reference_inventory_count_invalid'],
+  ['original binding: reference id wrong', f => { f.domain.finish_summary.overall_geometry_review.result.evidence.references.original_reference_sources[0].id = 'sha256:' + 'd'.repeat(64) }, 'original_reference_id_mismatch'],
+  ['original binding: source hash wrong', f => { f.domain.finish_summary.overall_geometry_review.result.evidence.references.original_reference_sources[0].sha256 = 'd'.repeat(64) }, 'original_reference_sha256_mismatch'],
+  ['original binding: coverage false', f => { f.domain.finish_summary.overall_geometry_review.result.evidence.references.original_reference_sources[0].covered = false }, 'original_reference_not_covered'],
+  ['original binding: inventory invalid', f => { f.domain.finish_summary.overall_geometry_review.result.evidence.references.original_reference_sources[0].inventory_valid = false }, 'original_reference_inventory_invalid'],
+  ['host finish: domain finished false', f => { f.domain.finished = false }, 'finish_host_not_finished'],
+  ['host finish: domain state not accepted', f => { f.domain.finish_state = 'candidate' }, 'finish_domain_state_not_accepted'],
+  ['host finish: summary state not accepted', f => { f.domain.finish_summary.finish_state = 'candidate' }, 'finish_summary_state_not_accepted'],
+  ['host finish: summary acceptance false', f => { f.domain.finish_summary.accepted = false }, 'finish_acceptance_flag_false'],
+  ['host finish: geometry review acceptance false', f => { f.domain.finish_summary.overall_geometry_review_accepted = false }, 'finish_geometry_review_acceptance_false'],
+  ['host finish: review issuer wrong', f => { f.domain.finish_summary.overall_geometry_review.issuer = 'other' }, 'finish_geometry_review_issuer_invalid'],
+  ['host finish: review decision not accept', f => { f.domain.finish_summary.overall_geometry_review.result.decision = 'reject' }, 'finish_geometry_review_decision_not_accept'],
+  ['finish construction incomplete', f => { f.domain.finish_summary.construction_complete = false }, 'finish_construction_incomplete'],
+  ['finish open finding count nonzero', f => { f.domain.finish_summary.open_finding_count = 1 }, 'finish_open_findings_nonzero'],
+  ['finish unresolved finding listed', f => { f.domain.finish_summary.unresolved_findings = [{ id: 'synthetic' }] }, 'finish_unresolved_findings_present'],
+  ['finish external fact failed', f => { f.domain.finish_summary.required_external_facts.failed_count = 1 }, 'finish_external_facts_failed'],
+  ['finish external fact unknown', f => { f.domain.finish_summary.required_external_facts.unknown_count = 1 }, 'finish_external_facts_unknown'],
+  ['finish external fact unverified', f => { f.domain.finish_summary.required_external_facts.required_count = 1 }, 'finish_external_facts_unverified'],
 ]
 for (const [label, modify, reason] of criticalGatePredicateFlips) test(`critical gate predicate flip: ${label}`, () => {
   const accepted = evaluateColdstartGates(fixture())
@@ -888,14 +958,20 @@ for (const [label, modify, reason] of criticalGatePredicateFlips) test(`critical
   modify(input)
   const result = evaluateColdstartGates(input)
   assert.equal(result.status, 'failed')
-  assert.equal(result.gates[reason.startsWith('host_finish') ? 'finish' : 'visual'].status, 'failed')
+  const [gateName, gateResult] = Object.entries(result.gates).find(([, gate]) => gate.status === 'failed' && gate.reasons.includes(reason)) || []
+  assert.ok(gateResult, JSON.stringify(result.failure_reasons))
   assert.ok(result.failure_reasons.includes(reason), JSON.stringify(result.failure_reasons))
+  const safe = buildSafeAcceptanceSummary({ strict: result })
+  assert.ok(safe.strict_gates.gates[gateName].reason_codes.includes(reason), `${reason} must be allowlisted for publication`)
 })
 for (const [label, modify, reason] of negativeFixtures) test(label, () => {
   const input = fixture(); modify(input)
   const result = evaluateColdstartGates(input)
   assert.equal(result.status, 'failed')
   assert.ok(result.failure_reasons.includes(reason), JSON.stringify(result.failure_reasons))
+  const gateName = Object.entries(result.gates).find(([, gate]) => gate.reasons.includes(reason))?.[0]
+  assert.ok(buildSafeAcceptanceSummary({ strict: result }).strict_gates.gates[gateName].reason_codes.includes(reason),
+    `${reason} must be allowlisted for publication`)
 })
 
 test('postcheck parses only the Rust cad_get_state result', () => {

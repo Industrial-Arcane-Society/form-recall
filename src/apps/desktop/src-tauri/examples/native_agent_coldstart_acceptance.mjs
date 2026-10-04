@@ -235,7 +235,7 @@ messages.on('line', line => {
     }
   } else if (row.id !== undefined && !row.method && pending.has(row.id)) {
     const task = pending.get(row.id); pending.delete(row.id); clearTimeout(task.timer)
-    row.error ? task.no(new Error('ACP ' + task.method + ': ' + row.error.code)) : task.yes(row.result || {})
+    row.error ? task.no(safeDshError(task.method, 'rpc_error')) : task.yes(row.result || {})
   } else if (row.method && row.id !== undefined) {
     child.stdin.write(JSON.stringify({ jsonrpc: '2.0', id: row.id,
       error: { code: -32601, message: 'Unsupported acceptance client method' } }) + '\n')
@@ -243,7 +243,7 @@ messages.on('line', line => {
 })
 child.once('exit', code => {
   dshExitCode = code
-  for (const task of pending.values()) { clearTimeout(task.timer); task.no(new Error('DSH exited')) }
+  for (const task of pending.values()) { clearTimeout(task.timer); task.no(safeDshError(task.method, 'child_exit')) }
   pending.clear()
 })
 child.once('error', () => {
@@ -254,25 +254,36 @@ child.once('error', () => {
 function rpc(method, params, ms = 45000) {
   const id = ++seq
   return new Promise((yes, no) => {
-    const timer = setTimeout(() => { pending.delete(id); no(new Error(method + ' timed out')) }, ms)
+    const timer = setTimeout(() => { pending.delete(id); no(safeDshError(method, 'timeout')) }, ms)
     pending.set(id, { yes, no, timer, method })
-    child.stdin.write(JSON.stringify({ jsonrpc: '2.0', id, method, params }) + '\n')
+    try { child.stdin.write(JSON.stringify({ jsonrpc: '2.0', id, method, params }) + '\n') }
+    catch { pending.delete(id); clearTimeout(timer); no(safeDshError(method, 'write_error')) }
   })
 }
+function safeDshError(method, errorClass, stage = 'session_rpc') {
+  const error = new Error('DSH RPC failed')
+  error.safeStage = ['session_rpc', 'capability_check', 'reasoning_selection'].includes(stage) ? stage : 'unknown'
+  error.safeMethod = ['initialize', 'session/new', 'session/set_config_option', 'session/prompt', 'session/close', 'session/cancel'].includes(method)
+    ? method : 'unknown'
+  error.safeClass = ['rpc_error', 'timeout', 'child_exit', 'write_error', 'capability_missing',
+    'invalid_response', 'config_selection_failed', 'unknown'].includes(errorClass) ? errorClass : 'unknown'
+  return error
+}
 let sessionId = null, dshStatus = 'failed', computedState = null, managedChildrenExited = true
+let dshFailure = { stage: 'unknown', method: 'unknown', error_class: 'none' }, dshChildExited = false
 let scratchCleanupStatus = 'not_created'
 try {
   failureStage = 'dsh_session'
   const initialized = await rpc('initialize', { protocolVersion: 1,
     clientInfo: { name: 'native-agent-coldstart-acceptance', version: '1' }, clientCapabilities: {} })
-  if (initialized.agentCapabilities?.promptCapabilities?.image !== true) throw new Error('DSH未声明图片输入能力。')
+  if (initialized.agentCapabilities?.promptCapabilities?.image !== true) throw safeDshError('initialize', 'capability_missing', 'capability_check')
   const session = await rpc('session/new', { cwd: workDir, mcpServers: [] })
   sessionId = session.sessionId
   const selection = spawnSync(profilePath, ['--select-reasoning'], {
     input: JSON.stringify({ provider: { ...provider, api_key: apiKey }, session_response: session }),
     encoding: 'utf8', windowsHide: true,
   })
-  if (selection.status !== 0) throw new Error('生产推理选项映射失败，未发起模型请求。')
+  if (selection.status !== 0) throw safeDshError('session/set_config_option', 'config_selection_failed', 'reasoning_selection')
   const reasoning = JSON.parse(selection.stdout)
   if (reasoning.configurable) await rpc('session/set_config_option', { sessionId, configId: reasoning.config_id, value: reasoning.value })
   const deadlineSeconds = Number(process.env.AIMODELER_ACCEPTANCE_DEADLINE_SECONDS || 1800)
@@ -284,6 +295,7 @@ try {
   await rpc('session/close', { sessionId })
   dshStatus = 'completed'
 } catch (error) {
+  dshFailure = { stage: error?.safeStage || 'unknown', method: error?.safeMethod || 'unknown', error_class: error?.safeClass || 'unknown' }
   if (sessionId && child.exitCode === null) {
     await rpc('session/cancel', { sessionId }, 15000).catch(() => {})
     await rpc('session/close', { sessionId }, 15000).catch(() => {})
@@ -291,6 +303,7 @@ try {
 } finally {
   child.stdin.end()
   const childExited = await waitThenTerminateChild(child, 5500, 1500)
+  dshChildExited = childExited
   await toolProxy.close()
   // Recompute the plan signature in Rust, without calling a provider or
   // finishing/reviewing the model. This direct probe call is not Cordis proof.
@@ -346,7 +359,7 @@ const strict = evaluateColdstartGates({
   domain, computedState, artifacts, registration, schema: schemaManifest,
   provider: { model: effectiveProfile.model, host: new URL(effectiveProfile.base_url).host },
   references: readJsonFile(refsPath), userTurns: readJsonFile(turnsPath), activeTurn: readJsonFile(activeTurnPath),
-  dsh: { status: dshStatus, exit_code: dshExitCode }, toolEvents, toolBridgeCalls: toolProxy.records,
+  dsh: { status: dshStatus, exit_code: dshExitCode, child_exited: dshChildExited, failure: dshFailure }, toolEvents, toolBridgeCalls: toolProxy.records,
   nativeAudit, streamEvents, evidenceErrors,
 })
 {
@@ -368,6 +381,7 @@ const strict = evaluateColdstartGates({
     modelStatus: strict.status === 'passed' ? 'accepted_by_strict_cli_gate' : domain.plan ? 'candidate' : 'none',
     runtime: { node: nodeVersion.stdout.trim(), dsh: dshPackage.version },
     source: { bytes: imageBytes.length, sha256: sourceSha, unchanged: hash(readFileSync(imagePath)) === sourceSha },
+    dshDiagnostic: dshFailure,
     scratchCleanupStatus: safeScratchCleanupStatus(managedChildrenExited, scratchCleanupStatus),
     scratchRecovery,
   })

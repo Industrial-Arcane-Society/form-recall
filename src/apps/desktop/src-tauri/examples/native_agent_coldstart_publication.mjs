@@ -6,7 +6,7 @@ import { sanitizeScratchRecoverySummary } from './native_agent_coldstart_scratch
 const toolNames = new Set([...COLDSTART_TOOL_NAME_ALLOWLIST, 'unknown'])
 const safeCount = value => Number.isSafeInteger(value) && value >= 0 ? value : 0
 const GATE_NAMES = Object.freeze([
-  'run_scope', 'dsh', 'trace_integrity', 'original_image', 'main_image_wire',
+  'run_scope', 'dsh_session', 'dsh_process', 'trace_integrity', 'original_image', 'main_image_wire',
   'cordis_cad_tools', 'acp_cad_tool_results', 'current_geometry', 'artifacts', 'holes', 'visual', 'finish',
 ])
 const SAFE_SCOPE = 'single_image_single_turn_cli_host_gates_not_independent_visual_or_CATIA_acceptance'
@@ -20,7 +20,8 @@ const FAILURE_CODES = new Set(['uncaught_exception', 'unhandled_rejection'])
 const GATE_REASON_CODES = Object.freeze({
   run_scope: new Set(['run_identity_missing', 'manifest_session_or_turn_mismatch',
     'original_reference_manifest_mismatch', 'user_turn_reference_binding_missing']),
-  dsh: new Set(['dsh_not_completed_or_nonzero_exit']),
+  dsh_session: new Set(['dsh_session_not_completed', 'dsh_session_rpc_failed']),
+  dsh_process: new Set(['dsh_child_exit_nonzero_or_missing', 'dsh_child_exit_not_observed']),
   trace_integrity: new Set(['evidence_trace_missing_or_malformed']),
   original_image: new Set(['original_image_changed_or_invalid']),
   main_image_wire: new Set(['main_model_original_image_wire_missing', 'same_image_request_successful_response_missing']),
@@ -31,17 +32,32 @@ const GATE_REASON_CODES = Object.freeze({
   acp_cad_tool_results: new Set(['acp_cad_tool_result_completion_missing', 'acp_cad_tool_call_id_missing',
     'acp_cad_tool_result_failed',
     'acp_cad_tool_result_terminal_status_invalid']),
-  current_geometry: new Set(['rust_postcheck_state_missing_or_stale', 'preview_geometry_finish_revision_or_fingerprint_stale',
-    'complete_valid_native_geometry_missing', 'partial_preview_not_accepted', 'geometry_attestation_or_gate_binding_invalid',
-    'finish_geometry_review_differs_from_current_gate']),
+  current_geometry: new Set(['rust_postcheck_revision_stale', 'rust_postcheck_geometry_signature_missing', 'preview_revision_stale',
+    'preview_geometry_fingerprint_stale', 'geometry_checks_fingerprint_stale', 'finish_geometry_fingerprint_stale',
+    'finish_review_fingerprint_stale', 'latest_review_fingerprint_stale', 'native_geometry_engine_missing',
+    'native_geometry_check_state_not_passed', 'native_geometry_validity_false', 'native_geometry_solid_count_invalid', 'native_geometry_validation_invalid',
+    'partial_preview_not_accepted', 'geometry_binding_invalid', 'geometry_attestation_failed',
+    'geometry_host_attestation_invalid', 'geometry_attested_checks_mismatch', 'finish_geometry_review_differs_from_current_gate']),
   artifacts: new Set(['current_run_artifacts_missing_or_invalid', 'geometry_report_file_stale',
     'published_geometry_report_differs_from_preview_checks', 'published_cadplan_differs_from_current_state',
     'preview_image_hash_mismatch']),
-  holes: new Set(['holes_incomplete_or_unverified']),
-  visual: new Set(['visual_coverage_incomplete_or_conflicting', 'visual_gate_original_reference_binding_missing',
-    'visual_evidence_not_current_rust_summary']),
-  finish: new Set(['host_finish_not_accepted', 'finish_findings_construction_or_external_facts_incomplete']),
+  holes: new Set(['hole_finish_measurement_incomplete', 'hole_evidence_measurement_incomplete',
+    'hole_native_measurement_incomplete', 'hole_native_measurement_unverified']),
+  visual: new Set(['visual_finish_coverage_incomplete', 'visual_all_references_not_covered',
+    'visual_independent_review_missing', 'visual_gate_coverage_incomplete', 'visual_reference_manifest_invalid',
+    'visual_reference_mismatch_detected', 'original_reference_inventory_count_invalid', 'original_reference_id_mismatch',
+    'original_reference_sha256_mismatch', 'original_reference_not_covered', 'original_reference_inventory_invalid',
+    'visual_summary_stale_or_mismatched']),
+  finish: new Set(['finish_host_not_finished', 'finish_domain_state_not_accepted', 'finish_summary_state_not_accepted', 'finish_acceptance_flag_false',
+    'finish_geometry_review_acceptance_false', 'finish_geometry_review_issuer_invalid', 'finish_geometry_review_decision_not_accept',
+    'finish_construction_incomplete', 'finish_open_findings_nonzero', 'finish_unresolved_findings_present',
+    'finish_external_fact_required_count_invalid', 'finish_external_facts_unverified', 'finish_external_facts_failed',
+    'finish_external_facts_unknown']),
 })
+const RPC_METHODS = new Set(['initialize', 'session/new', 'session/set_config_option', 'session/prompt', 'session/close', 'session/cancel'])
+const DSH_FAILURE_STAGES = new Set(['session_rpc', 'capability_check', 'reasoning_selection', 'unknown'])
+const RPC_ERROR_CLASSES = new Set(['none', 'rpc_error', 'timeout', 'child_exit', 'write_error', 'capability_missing',
+  'invalid_response', 'config_selection_failed', 'unknown'])
 const pickCounts = (rows, keys, enums) => Array.isArray(rows) ? rows.map(row => {
   const result = {}
   for (const key of keys) {
@@ -54,10 +70,15 @@ const pickCounts = (rows, keys, enums) => Array.isArray(rows) ? rows.map(row => 
 
 function safeAcpProjection(value) {
   return {
-    schema: 'acp_terminal_update_projection_v2',
+    schema: 'acp_terminal_update_projection_v3',
     tool_status_counts: pickCounts(value?.tool_status_counts, ['tool_name', 'kind', 'status', 'count'], {
       kind: new Set(['start', 'update']), status: new Set(['pending', 'in_progress', 'completed', 'failed', 'other']),
     }),
+    repeated_argument_fingerprint_counts: Array.isArray(value?.repeated_argument_fingerprint_counts)
+      ? value.repeated_argument_fingerprint_counts.map(row => ({
+        tool_name: toolNames.has(row?.tool_name) ? row.tool_name : 'unknown',
+        repeated_call_count: safeCount(row?.repeated_call_count),
+      })) : [],
     call_group_terminal_status_counts: pickCounts(value?.call_group_terminal_status_counts,
       ['tool_name', 'terminal_status', 'count'], { terminal_status: new Set(['none', 'mixed', 'completed', 'failed']) }),
     call_group_terminal_distribution: pickCounts(value?.call_group_terminal_distribution,
@@ -105,6 +126,15 @@ export function buildSafeFailureDiagnostic({ stage, code } = {}) {
   }
 }
 
+export function buildSafeDshDiagnostic(value = {}) {
+  return {
+    stage: DSH_FAILURE_STAGES.has(value.stage) ? value.stage : 'unknown',
+    method: RPC_METHODS.has(value.method) ? value.method : 'unknown',
+    error_class: value.error_class === undefined ? 'none'
+      : RPC_ERROR_CLASSES.has(value.error_class) ? value.error_class : 'unknown',
+  }
+}
+
 export function writeSafeFailureSummary(output, { stage, code, scratchCleanupStatus, scratchRecovery } = {}) {
   mkdirSync(output, { recursive: true })
   const summary = {
@@ -123,7 +153,7 @@ export function writeSafeFailureSummary(output, { stage, code, scratchCleanupSta
   return summary
 }
 
-export function buildSafeAcceptanceSummary({ strict, transportStatus, modelStatus, runtime, source, scratchCleanupStatus, scratchRecovery }) {
+export function buildSafeAcceptanceSummary({ strict, transportStatus, modelStatus, runtime, source, scratchCleanupStatus, scratchRecovery, dshDiagnostic }) {
   const gates = Object.fromEntries(GATE_NAMES.map(name => [name, safeGate(name, strict?.gates?.[name])]))
   const overallPassed = strict?.status === 'passed' && scratchCleanupStatus === 'removed'
   return {
@@ -134,6 +164,7 @@ export function buildSafeAcceptanceSummary({ strict, transportStatus, modelStatu
     model_status: MODEL_STATUSES.has(modelStatus) ? modelStatus : 'none',
     scratch_cleanup_status: SCRATCH_CLEANUP_STATUSES.has(scratchCleanupStatus) ? scratchCleanupStatus : 'not_created',
     scratch_recovery: sanitizeScratchRecoverySummary(scratchRecovery),
+    dsh_diagnostic: buildSafeDshDiagnostic(dshDiagnostic),
     strict_gates: {
       status: strict?.status === 'passed' ? 'passed' : 'failed',
       failure_reason_count: Array.isArray(strict?.failure_reasons) ? safeCount(strict.failure_reasons.length) : 0,

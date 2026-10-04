@@ -51,6 +51,8 @@ export function createTerminalUpdateHmac(update, key) {
 // for grouping and are never included in the returned diagnostic.
 export function summarizeAcpTerminalUpdateDiagnostics(toolEvents = [], { terminalUpdateHmacByEvent = new WeakMap() } = {}) {
   const groups = new Map()
+  const argumentFingerprints = new Map()
+  const argumentInvocationKeys = new Set()
   let missingIdentityEventCount = 0
   const statusCounts = new Map()
   for (const event of rows(toolEvents)) {
@@ -69,6 +71,14 @@ export function summarizeAcpTerminalUpdateDiagnostics(toolEvents = [], { termina
       missingIdentityEventCount += 1
       continue
     }
+    if (isStart && eventToolName.startsWith('cad_') && /^[a-f0-9]{24}$/.test(event.arguments_sha256_24 || '')) {
+      const invocationKey = `${eventToolName}\u0000${callId}\u0000${event.arguments_sha256_24}`
+      if (!argumentInvocationKeys.has(invocationKey)) {
+        argumentInvocationKeys.add(invocationKey)
+        const key = `${eventToolName}\u0000${event.arguments_sha256_24}`
+        argumentFingerprints.set(key, (argumentFingerprints.get(key) || 0) + 1)
+      }
+    }
     const currentGroup = group || { tool_name: 'unknown', terminal_summaries: [] }
     if (eventToolName !== 'unknown') currentGroup.tool_name = eventToolName
     if (terminal) currentGroup.terminal_summaries.push({ status, hmac: terminalUpdateHmacByEvent.get(event) || null })
@@ -79,6 +89,12 @@ export function summarizeAcpTerminalUpdateDiagnostics(toolEvents = [], { termina
     const [tool_name, kind, status] = key.split('\u0000')
     return { tool_name, kind, status, count }
   }).sort((a, b) => a.tool_name.localeCompare(b.tool_name) || a.kind.localeCompare(b.kind) || a.status.localeCompare(b.status))
+  const repeatedArgumentsByTool = new Map()
+  for (const [key, count] of argumentFingerprints) {
+    if (count < 2) continue
+    const toolName = key.slice(0, key.indexOf('\u0000'))
+    repeatedArgumentsByTool.set(toolName, (repeatedArgumentsByTool.get(toolName) || 0) + count - 1)
+  }
   const groupCounts = new Map(), terminalStatusCounts = new Map()
   let sameTerminalEventPairCount = 0, differentTerminalEventPairCount = 0, unavailableHmacEventCount = 0
   for (const group of groups.values()) {
@@ -118,8 +134,11 @@ export function summarizeAcpTerminalUpdateDiagnostics(toolEvents = [], { termina
     return { tool_name, terminal_status, count }
   }).sort((a, b) => a.tool_name.localeCompare(b.tool_name) || a.terminal_status.localeCompare(b.terminal_status))
   return {
-    schema: 'acp_terminal_update_projection_v2',
+    schema: 'acp_terminal_update_projection_v3',
     tool_status_counts: toolStatusCounts,
+    repeated_argument_fingerprint_counts: [...repeatedArgumentsByTool.entries()]
+      .map(([tool_name, repeated_call_count]) => ({ tool_name, repeated_call_count }))
+      .sort((a, b) => a.tool_name.localeCompare(b.tool_name)),
     call_group_terminal_status_counts: callGroupTerminalStatusCounts,
     call_group_terminal_distribution: callGroupTerminalDistribution,
     same_terminal_event_pair_count: sameTerminalEventPairCount,
@@ -365,7 +384,10 @@ export function evaluateColdstartGates(input) {
     [rows(userTurns?.turns).length === 1 && userTurns.turns[0].turn_id === run.turn_id
       && rows(userTurns.turns[0].reference_ids).includes(source.reference_id), 'user_turn_reference_binding_missing'],
   ])
-  gate('dsh', [[dsh.status === 'completed' && dsh.exit_code === 0, 'dsh_not_completed_or_nonzero_exit']])
+  gate('dsh_session', [[dsh.status === 'completed', 'dsh_session_not_completed'],
+    [dsh.failure?.error_class === undefined || dsh.failure.error_class === 'none', 'dsh_session_rpc_failed']])
+  gate('dsh_process', [[dsh.exit_code === 0, 'dsh_child_exit_nonzero_or_missing'],
+    [dsh.child_exited === true, 'dsh_child_exit_not_observed']])
   gate('trace_integrity', [[Array.isArray(evidenceErrors) && evidenceErrors.length === 0, 'evidence_trace_missing_or_malformed']])
   gate('original_image', [[digest(source.sha256) && source.sha256 === source.sha256_after && source.bytes === 72309, 'original_image_changed_or_invalid']])
   const imageRequests = rows(streamEvents).filter(row => row.kind === 'provider_wire_request'
@@ -479,15 +501,24 @@ export function evaluateColdstartGates(input) {
   const review = finish?.overall_geometry_review, evidence = review?.result?.evidence
   const { host_attestation: ignoredAttestation, ...unsignedChecks } = checks || {}
   gate('current_geometry', [
-    [computedState?.revision === domain.revision && digest(computedState?.geometry_signature), 'rust_postcheck_state_missing_or_stale'],
-    [domain.preview_revision === domain.revision && bound(preview) && bound(checks) && bound(finish)
-      && bound(review) && bound(domain.latest_geometry_review), 'preview_geometry_finish_revision_or_fingerprint_stale'],
-    [preview?.execution_engine === 'rust_c_abi_occt' && checks?.execution_engine === 'rust_c_abi_occt'
-      && checks.state === 'passed' && checks.valid === true && checks.closed_solid_count === 1
-      && checks.validation?.state === 'valid', 'complete_valid_native_geometry_missing'],
+    [computedState?.revision === domain.revision, 'rust_postcheck_revision_stale'],
+    [digest(computedState?.geometry_signature), 'rust_postcheck_geometry_signature_missing'],
+    [domain.preview_revision === domain.revision, 'preview_revision_stale'],
+    [bound(preview), 'preview_geometry_fingerprint_stale'],
+    [bound(checks), 'geometry_checks_fingerprint_stale'],
+    [bound(finish), 'finish_geometry_fingerprint_stale'],
+    [bound(review), 'finish_review_fingerprint_stale'],
+    [bound(domain.latest_geometry_review), 'latest_review_fingerprint_stale'],
+    [preview?.execution_engine === 'rust_c_abi_occt' && checks?.execution_engine === 'rust_c_abi_occt', 'native_geometry_engine_missing'],
+    [checks?.state === 'passed', 'native_geometry_check_state_not_passed'],
+    [checks?.valid === true, 'native_geometry_validity_false'],
+    [checks?.closed_solid_count === 1, 'native_geometry_solid_count_invalid'],
+    [checks?.validation?.state === 'valid', 'native_geometry_validation_invalid'],
     [domain.partial_preview?.state !== 'candidate_partial_not_accepted', 'partial_preview_not_accepted'],
-    [evidence?.geometry?.binding_valid === true && evidence.geometry.passed === true
-      && evidence.geometry.host_attestation_valid === true && isDeepStrictEqual(evidence.geometry.checks, checks), 'geometry_attestation_or_gate_binding_invalid'],
+    [evidence?.geometry?.binding_valid === true, 'geometry_binding_invalid'],
+    [evidence?.geometry?.passed === true, 'geometry_attestation_failed'],
+    [evidence?.geometry?.host_attestation_valid === true, 'geometry_host_attestation_invalid'],
+    [isDeepStrictEqual(evidence?.geometry?.checks, checks), 'geometry_attested_checks_mismatch'],
     [isDeepStrictEqual(review, domain.latest_geometry_review), 'finish_geometry_review_differs_from_current_gate'],
   ])
   gate('artifacts', [
@@ -498,26 +529,44 @@ export function evaluateColdstartGates(input) {
     [digest(preview?.preview_sha256) && preview.preview_sha256 === artifacts.preview_sha256, 'preview_image_hash_mismatch'],
   ])
   const hasHoles = rows(domain.plan?.features).some(feature => feature.kind === 'hole' && feature.enabled !== false)
-  gate('holes', [[finish?.hole_measurement?.complete === true && evidence?.holes?.measurement_complete === true
-    && (!hasHoles || (checks?.hole_measurement_complete === true && checks.hole_measurements_verified === true)), 'holes_incomplete_or_unverified']])
+  gate('holes', [
+    [finish?.hole_measurement?.complete === true, 'hole_finish_measurement_incomplete'],
+    [evidence?.holes?.measurement_complete === true, 'hole_evidence_measurement_incomplete'],
+    [!hasHoles || checks?.hole_measurement_complete === true, 'hole_native_measurement_incomplete'],
+    [!hasHoles || checks?.hole_measurements_verified === true, 'hole_native_measurement_unverified'],
+  ])
   const referenceRows = rows(evidence?.references?.original_reference_sources)
   gate('visual', [
-    [finish?.reference_coverage === true && finish?.visual_evidence?.all_references_covered === true
-      && finish.independent_review_pair_count > 0 && evidence?.references?.visual_coverage_complete === true
-      && evidence.references.manifest_valid === true && evidence.references.mismatch_count === 0, 'visual_coverage_incomplete_or_conflicting'],
-    [referenceRows.length === 1 && referenceRows[0].id === source.reference_id && referenceRows[0].sha256 === source.sha256
-      && referenceRows[0].covered === true && referenceRows[0].inventory_valid === true, 'visual_gate_original_reference_binding_missing'],
-    [isDeepStrictEqual(finish?.visual_evidence, computedState?.visual_evidence_summary), 'visual_evidence_not_current_rust_summary'],
+    [finish?.reference_coverage === true, 'visual_finish_coverage_incomplete'],
+    [finish?.visual_evidence?.all_references_covered === true, 'visual_all_references_not_covered'],
+    [Number.isFinite(finish?.independent_review_pair_count) && finish.independent_review_pair_count > 0, 'visual_independent_review_missing'],
+    [evidence?.references?.visual_coverage_complete === true, 'visual_gate_coverage_incomplete'],
+    [evidence?.references?.manifest_valid === true, 'visual_reference_manifest_invalid'],
+    [evidence?.references?.mismatch_count === 0, 'visual_reference_mismatch_detected'],
+    [referenceRows.length === 1, 'original_reference_inventory_count_invalid'],
+    [referenceRows.length !== 1 || referenceRows[0].id === source.reference_id, 'original_reference_id_mismatch'],
+    [referenceRows.length !== 1 || referenceRows[0].sha256 === source.sha256, 'original_reference_sha256_mismatch'],
+    [referenceRows.length !== 1 || referenceRows[0].covered === true, 'original_reference_not_covered'],
+    [referenceRows.length !== 1 || referenceRows[0].inventory_valid === true, 'original_reference_inventory_invalid'],
+    [isDeepStrictEqual(finish?.visual_evidence, computedState?.visual_evidence_summary), 'visual_summary_stale_or_mismatched'],
   ])
   gate('finish', [
-    [domain.finished === true && domain.finish_state === 'accepted' && finish?.finish_state === 'accepted'
-      && finish.accepted === true && finish.overall_geometry_review_accepted === true
-      && review?.issuer === 'native_review_gate' && review.result?.decision === 'accept', 'host_finish_not_accepted'],
-    [finish?.construction_complete === true && finish.open_finding_count === 0
-      && Array.isArray(finish.unresolved_findings) && finish.unresolved_findings.length === 0
-      && finish.required_external_facts?.failed_count === 0 && finish.required_external_facts?.unknown_count === 0
-      && Number.isSafeInteger(finish.required_external_facts?.required_count) && finish.required_external_facts.required_count >= 0
-      && finish.required_external_facts?.required_count === finish.required_external_facts?.verified_count, 'finish_findings_construction_or_external_facts_incomplete'],
+    [domain.finished === true, 'finish_host_not_finished'],
+    [domain.finish_state === 'accepted', 'finish_domain_state_not_accepted'],
+    [finish?.finish_state === 'accepted', 'finish_summary_state_not_accepted'],
+    [finish?.accepted === true, 'finish_acceptance_flag_false'],
+    [finish?.overall_geometry_review_accepted === true, 'finish_geometry_review_acceptance_false'],
+    [review?.issuer === 'native_review_gate', 'finish_geometry_review_issuer_invalid'],
+    [review?.result?.decision === 'accept', 'finish_geometry_review_decision_not_accept'],
+    [finish?.construction_complete === true, 'finish_construction_incomplete'],
+    [Number.isSafeInteger(finish?.open_finding_count) && finish.open_finding_count === 0, 'finish_open_findings_nonzero'],
+    [Array.isArray(finish?.unresolved_findings) && finish.unresolved_findings.length === 0, 'finish_unresolved_findings_present'],
+    [Number.isSafeInteger(finish?.required_external_facts?.required_count) && finish.required_external_facts.required_count >= 0,
+      'finish_external_fact_required_count_invalid'],
+    [finish?.required_external_facts?.required_count === finish?.required_external_facts?.verified_count,
+      'finish_external_facts_unverified'],
+    [finish?.required_external_facts?.failed_count === 0, 'finish_external_facts_failed'],
+    [finish?.required_external_facts?.unknown_count === 0, 'finish_external_facts_unknown'],
   ])
   return { schema_version: 1, status: failed.length ? 'failed' : 'passed', gates,
     failure_reasons: [...new Set(failed)], evidence_errors: evidenceErrors, successful_image_request_ids: successfulImageRequests.map(row => row.request_id),
