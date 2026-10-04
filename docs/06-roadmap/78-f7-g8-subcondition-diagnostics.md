@@ -31,10 +31,10 @@ ACP projection schema 从 `acp_terminal_update_projection_v2` 升为 `v3`，新�
 - 几何变更会使已有预览及 finish 状态失效；finish 需要当前 revision/geometry fingerprint 对应的预览。若最后工具顺序导致 stale preview，finish handler 可能拒绝该状态；这是源码允许的路径之一，不能据此断言 Run22 实际发生了这一情况。
 - Run22 的 safe projection 不含工具顺序、finish 请求是否发出或 finish 工具结果分类。现有证据只能证明 allowlist 中没有 finish terminal group，以及 DSH 未正常完成/退出码门禁失败；是模型未请求、调用失败、session 提前结束或绑定状态不匹配，仍未知。
 
-本次静态审查没有放宽 finish/geometry/visual gates，也没有读取 raw provider/DSH logs、工具 payload 或模型回答。Run23 使用本诊断提交进行单次真实 provider 冷启动，以新增的安全 subcondition 摘要区分 DSH session/process 与各几何、孔、视觉和 finish 子门禁；具体结论以 Run23 的 allowlist artifacts 为准。
+本次静态审查没有放宽 finish/geometry/visual gates，也没有读取 raw provider/DSH logs、工具 payload 或模型回答。Run23 已使用包含该诊断代码的固定 commit 完成单次真实 provider 冷启动；分开的 session/process、geometry、holes、visual 和 finish 结果及边界见 [Run23 诊断](./79-f7-g8-run-23-diagnosis.md)。
 
 ## 验证与边界
 
 `node --test src/apps/desktop/src-tauri/examples/native_agent_coldstart_gates.test.mjs`：**123/123 通过**。测试覆盖新增 reason predicate 翻转、相同/不同参数指纹计数、非法枚举降级、secret sentinel 不外泄及既有 fail-closed 和 publication 行为。
 
-这是合成 fixture 验证，不是 fresh DSH 冷启动证据。新增 reason codes 对 Run22 类诊断的实际适用仍需在新的固定 commit、全新 detached worktree/output dir 上冷启动复验，并仅审阅 allowlist projection。重复参数计数只保留总数，不能区分不同 ROI，也不能据此宣称 Agent 陷入无进展循环。
+123/123 是合成 fixture 验证；Run23 是单独的真实 provider 冷启动证据，确认新 reason codes 可应用于 DSH session/process 与各子门禁。Run23 的视觉和 finish 仍失败，见 [Run23 诊断](./79-f7-g8-run-23-diagnosis.md)。重复参数计数只保留总数，不能区分不同 ROI，也不能据此宣称 Agent 陷入无进展循环。
