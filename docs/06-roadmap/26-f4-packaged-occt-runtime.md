@@ -17,3 +17,10 @@ Rust 按显式 `AIMODELER_OCCT_MANIFEST`、安装资源、开发资源依次定�
 ## 边界
 
 这是资源组装和本机无开发 PATH 的 DLL 加载验证。尚未验证最终安装包、干净 Windows 机器、Agent 看图建模或 CATIA。F4 整体保持进行中。
+
+## 2026-10-04：当前集成提交的 MSI/NSIS 编译
+
+- 集成提交 `d41f2c62baa54f2597ff1831ee108543543b76c5` 上，`npm run tauri:build` 编译成功，生成 MSI 与 NSIS 两种安装包。
+- 本机默认的 `target/f4-occt/install/` 缺少根目录许可证文件，首次构建在资源检查时停止。随后通过 `AIMODELER_OCCT_MANIFEST` 显式使用忽略目录中的源 manifest `target/package-build-input-20261004/runtime-manifest.json`；其 SHA256 为 `39402baa4a84d3d8903e1ea97d8085e78ab047b75a568d4bb50617031a2f9649`，成功校验并打包 17 个 OCCT DLL。这个本地 build input 不在 Git 中，不能当作干净 checkout 构建证据。
+- 输出：`AI Modeler_0.1.0_x64_zh-CN.msi`（37,939,407 bytes，SHA256 `197cd2fcc092130586f5585f0dd5dbc72d353d634757df7dac8ccd61edf69111`）；`AI Modeler_0.1.0_x64-setup.exe`（30,355,340 bytes，SHA256 `673b34c44db00c80f7dcb8e8008774181f45199885ff2e5d8e141ce851b92`）。二者均为本地忽略产物，未提交到仓库。
+- 此结果只证明当前机器具备已核验 OCCT 输入时可编译两个安装包；未安装运行、未在干净 Windows 账户或机器验收，CATIA COM 与真实 Agent 建模也未由这次打包测试覆盖。
