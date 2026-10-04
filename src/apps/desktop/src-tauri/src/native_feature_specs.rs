@@ -49,6 +49,7 @@ fn native_execution_contract(kind: &str) -> Value {
             | "timing_pulley"
             | "vbelt_pulley"
             | "scroll_disc"
+            | "helix"
     );
     let (supported_variants, unsupported_variants, parameter_limits, note) = match kind {
         "rotor" => (
@@ -86,6 +87,12 @@ fn native_execution_contract(kind: &str) -> Value {
             json!(["outer_d<4 mm", "height<1 mm", "wall_t<0.5 mm", "turns<0.5", "inner spiral radius <= wall_t/2", "neighboring turns self-intersect or touch", "segments outside 24..=4096", "fewer than 24 profile samples per turn", "disjoint fusion or invalid/non-closed B-Rep"]),
             json!({"outer_d":">=4 mm", "height":">=1 mm", "wall_t":">=0.5 mm and smaller than minimum normal turn spacing", "turns":">=0.5; profile requires at least 24 samples per turn", "segments":"integer 24..=4096; defaults to 120", "center":"finite global XYZ; all dimensions are normalized to mm"}),
             "Native OCCT prism of the legacy polygonal Archimedean spiral fused with the legacy analytic cylindrical backplate. The profile is an approximation of a continuous spiral. Bounds and volume are compared against the same legacy sampled B-Rep; tessellated surface-area estimate is allowed 0.6% relative error. CATIA export omits the spiral wall.",
+        ),
+        "helix" => (
+            json!(["global X/Y/Z axis", "legacy radial-axial circular section layout", "constant-radius or tapered centerline", "one sewn valid closed faceted B-Rep"]),
+            json!(["turns below 0.25", "adjacent-turn axial pitch <= wire diameter", "wire radius reaching sampled centerline curvature radius", "tapered end centerline radius <= 0", "seg_per_turn outside 6..=512", "wire_seg outside 3..=64", "triangle face count above 100000", "sewing that does not yield one valid closed solid"]),
+            json!({"radius":">0 mm", "wire_r":">0 mm", "height":">0 mm; finite axial displacement", "turns":">=0.25", "axis":"X/Y/Z; default Z", "center":"finite global XYZ; default origin", "taper":"finite 0..=1 radius reduction fraction; final centerline radius must remain positive", "taper_start":"finite 0..=0.9 normalized path location", "seg_per_turn":"integer 6..=512; default 14", "wire_seg":"integer 3..=64; default 8", "triangle_faces":"2*wire_seg*(round(turns*seg_per_turn)+1) <= 100000", "self_intersection":"axial pitch > 2*wire_r and sampled minimum centerline curvature radius > wire_r"}),
+            "Rust preserves the legacy sampled radial/axial circle-section mesh and sews it into a single OCCT facet-BREP. This is approximate tessellated geometry, not an analytic sweep. CATIA mapping remains unsupported.",
         ),
         "timing_pulley" => (json!(["global-Z centered legacy trapezoidal tooth prisms", "MXL, XL, T2.5, T5, 3M profiles with radial tooth/blank overlap", "implicit legacy center bore or explicit bore_d", "teeth 6..=512"]), json!(["L, H, XH, XXH, T10, T20, 5M, 8M, 14M have no overlap between legacy tooth inner edge and blank root wall", "teeth above 512", "negative bore or bore reaching the effective tooth-root wall", "tooth-tip circumferential pitch smaller than tooth-tip width", "unknown tooth_type strings", "segments outside 3..=512"]), json!({"pitch_d":">0; legacy pitch radius floor=2 mm", "height":">0", "teeth":"integer 6..=512", "tooth_type":"MXL, XL, T2.5, T5, 3M (the other legacy profiles are rejected because they cannot guarantee a single solid)", "bore_d":">=0; 0 uses legacy implicit bore; explicit bore floored to 2 mm diameter", "segments":"3..=512 integer; retained for legacy baseline but ignored by analytic OCCT blank", "center":"finite global XYZ"}), "Supported legacy trapezoidal tooth prisms overlap the analytic annular revolve. Taller profiles whose legacy prism starts outside the blank root are rejected because a single closed solid cannot be guaranteed. The retained Document/CADPlan baseline is a faceted mesh; this analytic blank intentionally replaces its segmented boundary, so geometry remains approximate with a bounded blank-volume difference."),
         _ => (json!([]), json!(["all native geometry variants"]), json!({}), "No native Rust geometry builder is registered for this kind."),
@@ -156,6 +163,20 @@ mod tests {
             .as_str()
             .unwrap()
             .contains("ignored"));
+    }
+
+    #[test]
+    fn helix_is_native_approximate_but_catia_export_remains_unsupported() {
+        let spec = feature_spec("helix").unwrap();
+        assert_eq!(spec["catia_mapping"], "unsupported");
+        assert_eq!(spec["native_execution"]["status"], "implemented_approximate");
+        assert_eq!(spec["native_execution"]["geometry_support"], "approximate");
+        assert_eq!(spec["native_execution"]["scope"], "local_candidate_geometry");
+        assert!(spec["native_execution"]["parameter_limits"]["triangle_faces"]
+            .as_str().unwrap().contains("100000"));
+        assert!(spec["native_execution"]["unsupported_variants"]
+            .as_array().unwrap().iter().any(|item| item
+                .as_str().is_some_and(|text| text.contains("curvature radius"))));
     }
 
     #[test]
@@ -312,7 +333,7 @@ mod tests {
                 );
             }
         }
-        assert_eq!(supported_count, 22);
+        assert_eq!(supported_count, 23);
         assert_eq!(kinds.len(), specs.as_object().unwrap().len());
     }
 
@@ -341,8 +362,9 @@ mod tests {
             "timing_pulley",
             "vbelt_pulley",
             "scroll_disc",
+            "helix",
         ];
-        const UNSUPPORTED: &[&str] = &["helix", "loft", "impeller", "worm", "shell"];
+        const UNSUPPORTED: &[&str] = &["loft", "impeller", "worm", "shell"];
         const APPROXIMATE: &[&str] = &[
             "gear",
             "helical_gear",
@@ -355,6 +377,7 @@ mod tests {
             "timing_pulley",
             "vbelt_pulley",
             "scroll_disc",
+            "helix",
         ];
 
         let schemas = crate::native_tool_schemas::native_tool_schemas().unwrap();
@@ -376,8 +399,8 @@ mod tests {
             "the native contract must cover all 27 schema kinds"
         );
         assert_eq!(actual.len(), 27);
-        assert_eq!(IMPLEMENTED.len(), 22);
-        assert_eq!(UNSUPPORTED.len(), 5);
+        assert_eq!(IMPLEMENTED.len(), 23);
+        assert_eq!(UNSUPPORTED.len(), 4);
 
         for kind in IMPLEMENTED {
             let contract = feature_spec(kind).unwrap()["native_execution"].clone();
@@ -639,6 +662,30 @@ mod tests {
                 limit_key: "wall_t",
                 limit_text: "smaller than minimum normal turn spacing",
                 error_text: "自交或相切",
+            },
+            Probe {
+                kind: "helix",
+                valid: json!({"radius":8,"wire_r":1,"height":20,"turns":3}),
+                invalid: json!({"radius":8,"wire_r":1,"height":3,"turns":3}),
+                limit_key: "self_intersection",
+                limit_text: "axial pitch > 2*wire_r",
+                error_text: "自交或相切",
+            },
+            Probe {
+                kind: "helix",
+                valid: json!({"radius":8,"wire_r":1,"height":20,"turns":3}),
+                invalid: json!({"radius":0.5,"wire_r":1.1,"height":9.42477796076938,"turns":3}),
+                limit_key: "self_intersection",
+                limit_text: "curvature radius > wire_r",
+                error_text: "最小曲率半径",
+            },
+            Probe {
+                kind: "helix",
+                valid: json!({"radius":8,"wire_r":1,"height":20,"turns":3}),
+                invalid: json!({"radius":8,"wire_r":1,"height":200,"turns":3,"seg_per_turn":512,"wire_seg":64}),
+                limit_key: "triangle_faces",
+                limit_text: "100000",
+                error_text: "超过 OCCT 上限",
             },
         ];
 

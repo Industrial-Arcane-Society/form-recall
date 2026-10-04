@@ -47,6 +47,7 @@ pub fn supports_native_kind(kind: &str) -> bool {
             | "timing_pulley"
             | "vbelt_pulley"
             | "scroll_disc"
+            | "helix"
     )
 }
 
@@ -114,6 +115,7 @@ pub fn preflight(plan: &Value) -> Result<Value, String> {
             "crankshaft" => &["length", "main_d", "pin_d", "stroke", "throws"],
             "timing_pulley" => &["pitch_d", "teeth", "height", "tooth_type"],
             "scroll_disc" => &["outer_d", "height", "wall_t", "turns"],
+            "helix" => &["radius", "wire_r", "height", "turns"],
             _ => &[],
         };
         for key in required_native_parameters {
@@ -188,6 +190,10 @@ pub fn preflight(plan: &Value) -> Result<Value, String> {
         if kind == "scroll_disc" {
             let normalized = normalized_feature(feature, plan)?;
             crate::native_scroll_disc::preflight(&normalized["parameters"])?;
+        }
+        if kind == "helix" {
+            let normalized = normalized_feature(feature, plan)?;
+            crate::native_helix::preflight(&normalized["parameters"])?;
         }
         if kind == "pattern" {
             let count = p
@@ -273,6 +279,9 @@ pub fn build(plan: &Value, manifest: &Path, cancelled: &AtomicBool) -> Result<Bu
         } else if normalized["kind"] == "scroll_disc" {
             let (tools, support) =
                 crate::native_scroll_disc::build(&kernel, &normalized["parameters"])?;
+            (tools, vec![], Some(support))
+        } else if normalized["kind"] == "helix" {
+            let (tools, support) = crate::native_helix::build(&kernel, &normalized["parameters"])?;
             (tools, vec![], Some(support))
         } else if normalized["kind"] == "piston" {
             let (tools, support) =
@@ -1133,6 +1142,7 @@ fn normalized_feature(feature: &Value, plan: &Value) -> Result<Value, String> {
             "base_d",
             "lift",
             "bore_d",
+            "wire_r",
             "pitch_d",
         ]
         .contains(&key.as_str())
@@ -1685,6 +1695,26 @@ mod tests {
         let capability = crate::native_feature_specs::feature_spec("timing_pulley").unwrap();
         assert_eq!(capability["native_execution"]["status"], "implemented_approximate");
         assert_eq!(capability["catia_mapping"], "approximate");
+    }
+
+    #[test]
+    fn helix_is_registered_and_normalizes_wire_radius_with_plan_length_units() {
+        let mut plan = fixture();
+        plan["units"]["length"] = json!("cm");
+        plan["features"] = json!([{
+            "id":"spring","kind":"helix","operation":"add",
+            "parameters":{"radius":0.8,"wire_r":0.1,"height":2,"turns":3},
+            "sources":{"radius":{"type":"user"},"wire_r":{"type":"user"},
+                "height":{"type":"user"},"turns":{"type":"user"}}
+        }]);
+        assert_eq!(crate::cad_plan_validation::validate_plan(&plan)["state"], "valid");
+        assert!(supports_native_kind("helix"));
+        let normalized = normalized_feature(&plan["features"][0], &plan).unwrap();
+        assert_eq!(normalized["parameters"]["radius"], json!(8.0));
+        assert_eq!(normalized["parameters"]["wire_r"], json!(1.0));
+        assert_eq!(normalized["parameters"]["height"], json!(20.0));
+        assert_eq!(preflight(&plan).unwrap()["state"], "valid");
+        assert_eq!(plan["features"][0]["parameters"]["wire_r"], json!(0.1));
     }
 
     #[test]

@@ -6,6 +6,7 @@ import copy
 import importlib.metadata
 import json
 import math
+import os
 import subprocess
 import sys
 from pathlib import Path
@@ -23,7 +24,10 @@ def main():
     output = TAURI / "target/f4-occt/plan-parity"
     output.mkdir(parents=True, exist_ok=True)
     executable = TAURI / "target/debug/examples/native_plan_geometry_probe.exe"
-    manifest = TAURI / "target/f4-occt/runtime-manifest.json"
+    manifest = Path(os.environ.get(
+        "AIMODELER_OCCT_MANIFEST",
+        TAURI / "target/f4-occt/runtime-manifest.json",
+    ))
     cases = [("recess-nine-holes", base)]
 
     def add(name, kind, parameters, units=None):
@@ -37,6 +41,13 @@ def main():
 
     add("gear-native-approximation", "gear", dict(teeth=20, module=2, height=10,
         center=[0, 0, 0], axis="Z", base=False))
+    add("helix-z-baseline", "helix", dict(radius=8, wire_r=1, height=20, turns=3))
+    add("helix-y-translated", "helix", dict(radius=10, wire_r=1, height=20, turns=4,
+        axis="Y", center=[12, -7, 5]))
+    add("helix-x-tapered", "helix", dict(radius=10, wire_r=1, height=20, turns=4,
+        axis="X", center=[2, 3, 4], taper=0.15, taper_start=0.25))
+    add("helix-cm-unit-scaling", "helix", dict(radius=1, wire_r=0.1, height=2, turns=4,
+        axis="Y", center=[1.2, -0.7, 0.5]), dict(length="cm", angle="deg"))
     add("helical-gear-legacy-straight", "helical_gear", dict(teeth=20, module=2, height=10,
         helix_deg=18, bore_d=0, center=[0, 0, 0], segments=20))
     add("helical-gear-angle-ignored", "helical_gear", dict(teeth=20, module=2, height=10,
@@ -261,6 +272,13 @@ def main():
         "scroll-disc-translated": [-18, -37, 1, 42, 23, 9],
         "scroll-disc-cm-unit-scaling": [-18, -37, 1, 42, 23, 9],
     }
+    expected_helix_bounds = {
+        "helix-z-baseline": [-9, -8.774351209636414, -1, 9, 8.774351209636414, 21],
+        "helix-y-translated": [1.2757929659999374, -8, -6, 22.724207034000063, 14, 16],
+        "helix-x-tapered": [1, -8, -6.72420703400006, 23, 14, 14.724207034000061],
+        "helix-cm-unit-scaling": [1.2757929659999374, -8, -6, 22.724207034000063, 14, 16],
+    }
+    helix_native_volumes = {}
     cross_joint_native_volumes = {}
     camshaft_native_volumes = {}
     crankshaft_native_volumes = {}
@@ -380,6 +398,32 @@ def main():
                                       area_estimate, baseline_area, area_relative_error))
             scroll_disc_native_volumes[name] = native["volume_mm3"]
             scroll_disc_native_areas[name] = area_estimate
+        if name in expected_helix_bounds:
+            shape, baseline_report = occ_kernel.build_document(plan_to_document(plan))
+            baseline_bounds = occ_kernel._bbox(shape)
+            baseline_volume = occ_kernel.volume(shape)
+            bounds_error = max(abs(a - b) for a, b in zip(baseline_bounds, native["bounds_mm"]))
+            volume_error = abs(baseline_volume - native["volume_mm3"])
+            support = native["feature_results"][0]
+            details = support.get("support_details", {})
+            if (bounds_error > 1e-6
+                    or volume_error > 1e-5
+                    or max(abs(a - b) for a, b in zip(native["bounds_mm"], expected_helix_bounds[name])) > 1e-6
+                    or native.get("valid") is not True
+                    or native.get("closed_solid_count") != 1
+                    or support.get("geometry_support") != "approximate"
+                    or details.get("geometry_support") != "approximate"
+                    or details.get("builder") != "legacy_oriented_triangle_sweep_sewn_to_occt_facet_brep"
+                    or details.get("occt_validation", {}).get("valid") is not True
+                    or details.get("occt_validation", {}).get("solid_count") != 1
+                    or details.get("occt_validation", {}).get("closed_solid_count") != 1):
+                raise AssertionError((name, "helix-legacy-parity", {
+                    "native_bounds": native["bounds_mm"], "baseline_bounds": baseline_bounds,
+                    "bounds_error_mm": bounds_error, "native_volume_mm3": native["volume_mm3"],
+                    "baseline_volume_mm3": baseline_volume, "volume_error_mm3": volume_error,
+                    "support": support,
+                }))
+            helix_native_volumes[name] = native["volume_mm3"]
         if name.startswith("vbelt-pulley-"):
             support = native["feature_results"][0]
             details = support.get("support_details", {})
@@ -851,6 +895,9 @@ def main():
                    timing_pulley_positive_cases=len(timing_pulley_native_volumes),
                    vbelt_pulley_positive_cases=len(vbelt_native_volumes),
                    scroll_disc_positive_cases=len(scroll_disc_native_volumes),
+                   helix_positive_cases=len(helix_native_volumes),
+                   helix_bounds_comparison="legacy OCP; <=1e-6 mm",
+                   helix_volume_comparison="legacy OCP; <=1e-5 mm3",
                    scroll_disc_area_comparison="OCCT tessellation at 0.08 mm / 0.35 rad; <=0.6% relative to legacy exact B-Rep area",
                    scroll_disc_volume_comparison="same sampled spiral and analytic backplate; <=1e-5 mm3",
                    timing_pulley_faceted_blank_volume_boundary="analytic-minus-segmented-annulus; each positive case checked against segment formula and <=1% legacy relative delta",
