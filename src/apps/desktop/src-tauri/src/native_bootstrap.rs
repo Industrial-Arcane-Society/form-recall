@@ -1,7 +1,7 @@
 //! Desktop resource discovery and independently reported runtime readiness.
 //!
 //! Packaged native desktop features need prompt, knowledge, plugin, and DSH
-//! manifest assets. They do not need the Python module entry point to exist.
+//! manifest assets. CATIA adapter assets are optional until CATIA is invoked.
 
 use serde_json::{json, Value};
 use std::path::{Path, PathBuf};
@@ -14,13 +14,20 @@ const REQUIRED_FILES: &[&str] = &[
     "packaging/dsh-runtime/runtime-manifest.json",
     "packaging/dsh-runtime/package.json",
     "packaging/dsh-runtime/package-lock.json",
-    "ai_modeler/catia_com_adapter.py",
-    "packaging/desktop-catia-requirements-win-x64.txt",
     "kb/bolt_std.json",
     "kb/modeling_recipes.json",
     "kb/native_knowledge_enrichments.v1.json",
     "datasets/训练提示词/全部提示词.jsonl",
 ];
+
+const OPTIONAL_CATIA_FILES: &[&str] = &[
+    "ai_modeler/catia_com_adapter.py",
+    "packaging/desktop-catia-requirements-win-x64.txt",
+];
+
+fn all_files_exist(root: &Path, files: &[&str]) -> bool {
+    files.iter().all(|relative| root.join(relative).is_file())
+}
 
 pub fn validate_resource_root(root: &Path) -> Result<PathBuf, String> {
     let canonical = root
@@ -64,10 +71,10 @@ pub fn resource_status(root: &Path) -> Result<Value, String> {
     Ok(json!({
         "available": true,
         "root": root.to_string_lossy(),
-        "nativeAgentAssets": REQUIRED_FILES[..4].iter().all(|relative| root.join(relative).is_file()),
-        "dshManifest": REQUIRED_FILES[4..7].iter().all(|relative| root.join(relative).is_file()),
-        "catiaAdapterAssets": REQUIRED_FILES[7..9].iter().all(|relative| root.join(relative).is_file()),
-        "nativeKnowledgeAssets": REQUIRED_FILES[9..].iter().all(|relative| root.join(relative).is_file()),
+        "nativeAgentAssets": all_files_exist(&root, &REQUIRED_FILES[..4]),
+        "dshManifest": all_files_exist(&root, &REQUIRED_FILES[4..7]),
+        "catiaAdapterAssets": all_files_exist(&root, OPTIONAL_CATIA_FILES),
+        "nativeKnowledgeAssets": all_files_exist(&root, &REQUIRED_FILES[7..]),
         "knowledge": root.join("kb").is_dir(),
     }))
 }
@@ -131,7 +138,7 @@ mod tests {
 
         fn resource_root(&self) -> PathBuf {
             let root = self.0.join("resources");
-            for relative in REQUIRED_FILES {
+            for relative in REQUIRED_FILES.iter().chain(OPTIONAL_CATIA_FILES.iter()) {
                 let path = root.join(relative);
                 fs::create_dir_all(path.parent().unwrap()).unwrap();
                 fs::write(path, b"fixture resource").unwrap();
@@ -158,6 +165,36 @@ mod tests {
         assert_eq!(status["available"], true);
         assert_eq!(status["nativeAgentAssets"], true);
         assert_eq!(status["dshManifest"], true);
+        assert_eq!(status["catiaAdapterAssets"], true);
+    }
+
+    #[test]
+    fn missing_optional_catia_assets_do_not_block_dsh_or_quick_resources() {
+        let scratch = Scratch::new();
+        let root = scratch.resource_root();
+        for relative in OPTIONAL_CATIA_FILES {
+            fs::remove_file(root.join(relative)).unwrap();
+        }
+
+        let resolved = resolve_resource_root(None, None, Some(&root)).unwrap();
+        assert_eq!(resolved, root.canonicalize().unwrap());
+
+        let status = resource_status(&root).unwrap();
+        assert_eq!(status["available"], true);
+        assert_eq!(status["nativeAgentAssets"], true);
+        assert_eq!(status["dshManifest"], true);
+        assert_eq!(status["nativeKnowledgeAssets"], true);
+        assert_eq!(status["catiaAdapterAssets"], false);
+    }
+
+    #[test]
+    fn missing_required_dsh_assets_still_fail_closed() {
+        let scratch = Scratch::new();
+        let root = scratch.resource_root();
+        fs::remove_file(root.join("packaging/dsh-runtime/package-lock.json")).unwrap();
+
+        let error = resolve_resource_root(None, None, Some(&root)).unwrap_err();
+        assert!(error.contains("packaging/dsh-runtime/package-lock.json"));
     }
 
     #[test]
