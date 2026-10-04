@@ -5,7 +5,7 @@
   "identifier": "com.aimodeler.desktop",
   "build": {
     "frontendDist": "../dist",
-    "devUrl": "http://localhost:1420",
+    "devUrl": "http://127.0.0.1:1420",
     "beforeDevCommand": "npm run dev",
     "beforeBuildCommand": "npm run build && node ..\\..\\legacy\\scripts\\build_desktop_resources.mjs"
   },

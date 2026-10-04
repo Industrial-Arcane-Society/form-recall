@@ -12,7 +12,7 @@
 桌面目录 npm run build       → vue-tsc -b && vite build
 ~~~
 
-根目录 `npm run dev` 依次调用 `src/apps/desktop` 的 `tauri:dev`，再运行 `tauri dev --config src-tauri/tauri.dev.conf.json`；根目录 `npm run dev:web` 才只启动 Vite。Vite 默认绑定 `127.0.0.1:1420`，Tauri 的 `devUrl` 当前是 `http://localhost:1420`。这是需要保留的地址族核查项，但尚未在 Tauri/WebView 实际启动时验证为故障原因。
+根目录 `npm run dev` 依次调用 `src/apps/desktop` 的 `tauri:dev`，再运行 `tauri dev --config src-tauri/tauri.dev.conf.json`；根目录 `npm run dev:web` 才只启动 Vite。Vite 固定绑定 `127.0.0.1:1420`（`strictPort: true`），Tauri `devUrl` 已对齐为 `http://127.0.0.1:1420`。此前 `localhost` 在本机 Node DNS 查询中优先解析到 `::1`，而 Vite 只监听 IPv4；该不一致现已由配置回归锁定并修正，但本次没有实际启动 Tauri/WebView，不能确认它就是用户所报故障的唯一原因。
 
 `tauri.dev.conf.json` 覆盖开发构建的 `bundle.resources` 为空数组，避免开发编译被安装包资源 staging 阻塞；发布资源清单保持原样。
 
@@ -45,6 +45,13 @@
 
 ## 仍未验证
 
-- tauri:dev 的实际 beforeDevCommand、Rust link、devUrl 等待、WebView2 创建、Tauri IPC 初始化和窗口首屏均未执行或验证。
-- “npm run dev 完全无界面”的原报告无法由 Vite headless 验证复现；当前根目录命令会启动 Tauri。尚未验证它的实际 beforeDevCommand、devUrl 导航、WebView2 创建和桌面首屏。排查时请保留工作目录、完整命令、终端输出与退出码。
+- 变更后的配置契约已通过 Node CLI 回归；Vite/Tauri 的实际 dev 进程、`beforeDevCommand`、Rust link、`devUrl` 导航、WebView2 创建、Tauri IPC 初始化和桌面首屏仍未执行或验证。
+- “npm run dev 完全无界面”的原报告仍未由本次 headless 配置检查复现。此前隐藏 WebView CLI harness 验证的是 smoke production bundle 的首屏 mount 与 Channel→Vue handler 投递，不使用 live Vite dev server，因此不构成 `npm run dev` 实测。排查时请保留工作目录、完整命令、终端输出与退出码。
 - 后续桌面验收需明确允许启动 Tauri 窗口。当前记录不把 CLI help、Vue build 或 headless Chromium 页面当作桌面启动通过。
+
+## 2026-10-04 devUrl/Vite 地址对齐
+
+- 源码契约：`vite.config.ts` 绑定 `127.0.0.1:1420` 且启用 `strictPort`；Tauri `build.devUrl` 改为同一 IPv4 地址。配置 Node 回归会从 Vite 配置读取 host/port 并断言与 devUrl 一致。
+- `csp` 保持 `null`，default capability 只按窗口名 `main` 授权，没有按主机名列出的 allowlist，因此没有需要同步改写的 CSP/allowlist。开发配置也没有覆盖 devUrl。
+- Headless CLI：在 `src/apps/desktop` 执行 `node --test src/tauriDevConfig.test.mjs`，4/4 通过；同一新增断言在修改前以 `localhost` 对 `127.0.0.1` 失败。`npm ci --no-audit --no-fund` 后 `npm run build` 通过（Vue typecheck + Vite production build）；Vite 提示 `CadViewport` chunk 为 637.32 kB，超过 500 kB 建议阈值。`git diff --check` 通过。没有运行 `tauri dev`。
+- 未测：可见窗口、真实 Tauri dev 启动、WebView2 首屏/IPC。本修正降低了 localhost 地址族错配风险，但用户报告的根因尚未由运行时确认。

@@ -10,7 +10,7 @@
 
 | ID | Feature | 状态 | 完成条件 / 提交边界 |
 |---|---|---|---|
-| F0 | 目录重构、文档重建和路径恢复 | **进行中（目录迁移、Vite headless 与隐藏 WebView CLI 验收通过；用户报告的 `npm run dev` 无界面问题仍未复现/定位）** | 根目录 npm run dev 启动 Tauri，npm run dev:web 启动 Vite；桌面包目录 npm run dev 是 Vite，npm run tauri:dev 启动 Tauri。2026-10-04 合并前 main 的浏览器快照出现后端未连接和 favicon 404；集成分支 Vite headless 显示浏览器预览已就绪、桌面操作禁用、Console 0 error/0 warning。隐藏窗口 CLI WebView2 harness 四场景通过，确认 smoke production bundle 首屏 mount 和 Tauri Channel→Vue handler 事件投递；它不验证可见窗口、像素/WebGL，也未直接复现用户报告的 `npm run dev` 启动。见 [Tauri dev 与 Vite 启动核查](../05-operations/03-tauri-dev-cli-preflight.md) 与 [WebView harness](./62-f7-webview-driver-harness.md)。 |
+| F0 | 目录重构、文档重建和路径恢复 | **进行中（目录迁移、Vite headless 与隐藏 WebView CLI 验收通过；`devUrl`/Vite IPv4 地址契约已修正；用户报告的 `npm run dev` 无界面仍未由运行时复现）** | 根目录 npm run dev 启动 Tauri，npm run dev:web 启动 Vite；桌面包目录 npm run dev 是 Vite，npm run tauri:dev 启动 Tauri。2026-10-04 合并前 main 的浏览器快照出现后端未连接和 favicon 404；集成分支 Vite headless 显示浏览器预览已就绪、桌面操作禁用、Console 0 error/0 warning。隐藏窗口 CLI WebView2 harness 四场景通过，确认 smoke production bundle 首屏 mount 和 Tauri Channel→Vue handler 事件投递；它不验证可见窗口，也不是 `npm run dev` 实测。本次将 Tauri devUrl 固定为 `127.0.0.1:1420` 以匹配 Vite IPv4 bind，并以 Node 配置回归锁定该契约；真实 Tauri dev/WebView 启动仍待验证。见 [Tauri dev 与 Vite 启动核查](../05-operations/03-tauri-dev-cli-preflight.md) 与 [WebView harness](./62-f7-webview-driver-harness.md)。 |
 | F1 | Rust DSH ACP Host + 固定 Runtime Manifest | **已完成** | F1.1–F1.4 已分别实现、验收并单独提交；多模态识别准确率问题保留为 F7 质量验收项 |
 | F1.1 | Rust ACP stdio 进程与 JSON-RPC 基础 | **已完成** | 行分帧、并发请求响应匹配、通知订阅、错误/超时、关闭时有界回收；以假 ACP 子进程测试，不依赖真实 DSH |
 | F1.2 | 固定 DSH/Node Runtime Manifest 与安装器 | **已完成** | 固定已验收的 Node 与 DSH 包版本/校验值；下载、校验、安装、升级、失败回滚，不依赖全局 Node |
@@ -110,6 +110,8 @@ Coldstart runner 已采用默认且唯一发布 safe gate summary、ACP/Cordis a
 执行顺序：静态审查工具结果和视觉/finish 的 producer→consumer 字段绑定；逐项解释安全 projection 中的 4 个 `bridge_execution_rejected` 与 `cad_update_feature` `bridge_call_missing`，归因仅限安全证据可支持范围。若修正需要真实 provider 验收，再固定代码和 clean worktree，以同一原图、新输出目录执行一次隔离冷启动；始终只审阅 allowlist artifacts。随后继续 F4 缺失 builder、F6 干净账户冷启动/CATIA 层验收及 F7 P0/P1；协议/schema/prompt 修改须另起隔离冷启动。F7 在全部链路整改和真实验收完成前不得标记通过。
 
 ## F0 验收记录
+
+- [x] 2026-10-04：修复 Tauri devUrl `localhost` 与 Vite `127.0.0.1:1420` 的地址契约不一致；新增 Node 配置回归，修改前失败、修改后 4/4 通过；`npm run build` 通过，只有 637.32 kB `CadViewport` chunk 大小提示。CSP 为 `null`、capability 不含按 host 授权项，无需同步 host allowlist。此项没有运行 `npm run dev`、Tauri dev 或可见 WebView。
 
 - [x] 迁移前工作树干净；记录 tracked 1,654 文件基线。
 - [x] 把桌面端归入 `src/apps/desktop/`，Python 过渡工程归入 `src/legacy/`。
