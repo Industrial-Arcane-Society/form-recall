@@ -16,7 +16,7 @@
 
 ## 仍未完成的验收
 
-- F0：用户报告的空白桌面窗口仍需可见 Tauri/WebView2 级验收；Vite HTTP 200 不能替代此项。
+- F0：隐藏 WebView2 smoke 的 production Vue mount 与 Channel 四场景已通过；用户报告的空白窗口仍需普通 Tauri dev 可见窗口验收，隐藏 fixture smoke 和 Vite HTTP 200 不能替代此项。
 - F6.7：MSI/NSIS 尚未安装验证；安装后无全局 Python/Node 的 DSH 首次启动、干净账户和真实 CATIA COM 导出/推送未完成。
 - F7：真实多模态盲测尚未通过 strict gate；CLI 多模态传输及几何 mock 测试不能替代真实图像理解和复核验收。
 
