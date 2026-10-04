@@ -29,10 +29,11 @@ exceptions, STL containers, and allocation ownership never cross the ABI.
   `vcvarsall.bat x64` so MSVC standard library environment variables exist.
 - Build only the required geometry toolkits: `TKernel`, `TKMath`, `TKG2d`,
   `TKG3d`, `TKGeomBase`, `TKBRep`, `TKGeomAlgo`, `TKTopAlgo`, `TKPrim`,
-  `TKBO`, `TKBool`, `TKMesh`, `TKShHealing`, and `TKOffset`. The package
-  runtime contains 14 OCCT toolkit DLLs, the bridge DLL, and three MSVC runtime
-  DLLs. Visualization, Draw, DataExchange, ApplicationFramework, and optional
-  third-party integrations are disabled.
+  `TKBO`, `TKBool`, `TKMesh`, `TKShHealing`, and `TKOffset`. Runtime packaging
+  also includes the transitive `TKFillet.dll` dependency imported by
+  `TKOffset.dll`; the package contains 15 OCCT toolkit DLLs, the bridge DLL,
+  and three MSVC runtime DLLs. Visualization, Draw, DataExchange,
+  ApplicationFramework, and optional third-party integrations are disabled.
 
 The official archive provenance is checked with PowerShell:
 

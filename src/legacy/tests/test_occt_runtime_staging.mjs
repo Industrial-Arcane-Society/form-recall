@@ -11,7 +11,7 @@ function fixture() {
   const source = join(root, 'source');
   const bin = join(source, 'install/win64/vc14/bin');
   mkdirSync(bin, { recursive: true });
-  const names = ['TKBO', 'TKBool', 'TKBRep', 'TKernel', 'TKG2d', 'TKG3d', 'TKGeomAlgo', 'TKGeomBase', 'TKMath', 'TKMesh', 'TKOffset', 'TKPrim', 'TKShHealing', 'TKTopAlgo'];
+  const names = ['TKBO', 'TKBool', 'TKBRep', 'TKernel', 'TKFillet', 'TKG2d', 'TKG3d', 'TKGeomAlgo', 'TKGeomBase', 'TKMath', 'TKMesh', 'TKOffset', 'TKPrim', 'TKShHealing', 'TKTopAlgo'];
   const row = name => {
     const bytes = Buffer.from(name);
     writeFileSync(join(bin, name), bytes);
@@ -35,8 +35,8 @@ test('stages only runtime bytes/licenses and safely replaces a prior runtime', (
     const m = JSON.parse(bytes);
     assert.equal(m.packaged_runtime, true);
     assert.equal(m.licenses.length, 2);
-    assert.equal(m.occt_runtime_dlls.length, 14);
-    assert.equal(first.dllCount, 18);
+    assert.equal(m.occt_runtime_dlls.length, 15);
+    assert.equal(first.dllCount, 19);
     stageOcctRuntime(f.path, f.package);
     assert.deepEqual(readFileSync(target), bytes);
     assert.deepEqual(readdirSync(f.package), ['occt-runtime']);
@@ -53,7 +53,7 @@ test('packaged OCCT DLL allowlists cover every toolkit linked by the bridge', ()
 
   const toolkitBlock = cmake.match(/set\(OCCT_TOOLKITS\s+([\s\S]*?)\)/);
   assert.ok(toolkitBlock, 'CMake OCCT_TOOLKITS list exists');
-  const linked = toolkitBlock[1].trim().split(/\s+/).filter(Boolean).map(name => `${name}.dll`).sort();
+  const directLinked = toolkitBlock[1].trim().split(/\s+/).filter(Boolean).map(name => `${name}.dll`).sort();
   const builderBlock = runtimeBuilder.match(/\$toolkits\s*=\s*'([^']+)'/);
   assert.ok(builderBlock, 'PowerShell runtime build toolkit list exists');
   const built = builderBlock[1].split(';').map(name => `${name}.dll`).sort();
@@ -67,10 +67,19 @@ test('packaged OCCT DLL allowlists cover every toolkit linked by the bridge', ()
   assert.ok(stagingBlock, 'JavaScript staging OCCT list exists');
   const stagedNames = stagingBlock[1].match(/'([^']+\.dll)'/g).map(name => name.slice(1, -1)).sort();
 
-  assert.deepEqual(built, linked, 'runtime build must build every bridge-linked toolkit');
-  assert.deepEqual(writerNames, linked, 'manifest writer must include every bridge-linked toolkit');
-  assert.deepEqual(rustNames, linked, 'Rust runtime validation must require every bridge-linked toolkit');
-  assert.deepEqual(stagedNames, linked, 'package staging must include every bridge-linked toolkit');
+  assert.deepEqual(writerNames, built, 'runtime manifest must describe every built toolkit');
+  assert.deepEqual(rustNames, built, 'Rust runtime validation must require every built toolkit');
+  assert.deepEqual(stagedNames, built, 'package staging must include every built toolkit');
+  for (const name of directLinked) assert.ok(built.includes(name), `runtime build must include directly linked toolkit ${name}`);
+
+  // PE imports from the pinned OCCT 7.9.3 runtime: TKOffset.dll -> TKFillet.dll.
+  const runtimeImportRequirements = { 'TKOffset.dll': ['TKFillet.dll'] };
+  for (const [module, dependencies] of Object.entries(runtimeImportRequirements)) {
+    assert.ok(built.includes(module), `runtime must include ${module}`);
+    for (const dependency of dependencies) {
+      assert.ok(built.includes(dependency), `${module} PE import ${dependency} must be packaged`);
+    }
+  }
 });
 
 test('rejects tampering and traversal before changing a packaged runtime', () => {

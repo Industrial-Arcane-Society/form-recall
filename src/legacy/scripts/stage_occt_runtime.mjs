@@ -5,7 +5,7 @@ import { fileURLToPath } from 'node:url';
 
 const dllGroups = {
   bridge_artifacts: ['occt_bridge.dll'],
-  occt_runtime_dlls: ['TKBO.dll', 'TKBool.dll', 'TKBRep.dll', 'TKernel.dll', 'TKG2d.dll', 'TKG3d.dll', 'TKGeomAlgo.dll', 'TKGeomBase.dll', 'TKMath.dll', 'TKMesh.dll', 'TKOffset.dll', 'TKPrim.dll', 'TKShHealing.dll', 'TKTopAlgo.dll'],
+  occt_runtime_dlls: ['TKBO.dll', 'TKBool.dll', 'TKBRep.dll', 'TKernel.dll', 'TKFillet.dll', 'TKG2d.dll', 'TKG3d.dll', 'TKGeomAlgo.dll', 'TKGeomBase.dll', 'TKMath.dll', 'TKMesh.dll', 'TKOffset.dll', 'TKPrim.dll', 'TKShHealing.dll', 'TKTopAlgo.dll'],
   msvc_runtime_dlls: ['msvcp140.dll', 'vcruntime140.dll', 'vcruntime140_1.dll'],
 };
 const digest = bytes => createHash('sha256').update(bytes).digest('hex');
@@ -92,7 +92,7 @@ export function stageOcctRuntime(manifestPath, packageRoot) {
     }
     renameSync(staging, destination);
     if (movedPrevious) removeOwned(backup);
-    return { destination, dllCount: 18, sourceManifestSha256: inspected.sourceManifestSha256 };
+    return { destination, dllCount: 19, sourceManifestSha256: inspected.sourceManifestSha256 };
   } catch (error) {
     removeOwned(staging);
     if (movedPrevious && !existsSync(destination)) renameSync(backup, destination);

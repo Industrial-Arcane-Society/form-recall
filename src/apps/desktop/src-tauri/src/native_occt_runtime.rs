@@ -14,11 +14,12 @@ use std::path::{Component, Path, PathBuf};
 const REQUIRED_ABI: u64 = 1;
 const EXPECTED_OCCT_VERSION: &str = "7.9.3";
 const MAX_MANIFEST_BYTES: u64 = 2 * 1024 * 1024;
-const EXPECTED_OCCT_DLLS: [&str; 14] = [
+const EXPECTED_OCCT_DLLS: [&str; 15] = [
     "TKBO.dll",
     "TKBool.dll",
     "TKBRep.dll",
     "TKernel.dll",
+    "TKFillet.dll",
     "TKG2d.dll",
     "TKG3d.dll",
     "TKGeomAlgo.dll",

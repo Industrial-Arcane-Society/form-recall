@@ -140,7 +140,7 @@ foreach ($owned in @($occtBuildRoot, $installRoot, $bridgeBuildRoot, $bridgeInst
     Remove-OwnedDirectory $owned $runtimeRootFull
 }
 
-$toolkits = 'TKernel;TKMath;TKG2d;TKG3d;TKGeomBase;TKBRep;TKGeomAlgo;TKTopAlgo;TKPrim;TKBO;TKBool;TKMesh;TKShHealing;TKOffset'
+$toolkits = 'TKernel;TKMath;TKG2d;TKG3d;TKGeomBase;TKBRep;TKGeomAlgo;TKTopAlgo;TKPrim;TKBO;TKBool;TKMesh;TKShHealing;TKOffset;TKFillet'
 $occtArguments = @(
     '-S', $sourceRoot,
     '-B', $occtBuildRoot,

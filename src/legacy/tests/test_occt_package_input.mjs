@@ -12,7 +12,7 @@ function makeInput(root) {
   const names = [
     'occt_bridge.dll', 'TKBO.dll', 'TKBool.dll', 'TKBRep.dll', 'TKernel.dll',
     'TKG2d.dll', 'TKG3d.dll', 'TKGeomAlgo.dll', 'TKGeomBase.dll', 'TKMath.dll',
-    'TKMesh.dll', 'TKOffset.dll', 'TKPrim.dll', 'TKShHealing.dll', 'TKTopAlgo.dll',
+    'TKFillet.dll', 'TKMesh.dll', 'TKOffset.dll', 'TKPrim.dll', 'TKShHealing.dll', 'TKTopAlgo.dll',
     'msvcp140.dll', 'vcruntime140.dll', 'vcruntime140_1.dll',
   ];
   const artifacts = names.map(name => {
@@ -27,7 +27,7 @@ function makeInput(root) {
   const manifestPath = join(root, 'runtime-manifest.json');
   writeFileSync(manifestPath, JSON.stringify({
     occt_version: '7.9.3', abi_version: 1, bridge_abi_version: 1,
-    bridge_artifacts: [artifacts[0]], occt_runtime_dlls: artifacts.slice(1, 15), msvc_runtime_dlls: artifacts.slice(15),
+    bridge_artifacts: [artifacts[0]], occt_runtime_dlls: artifacts.slice(1, 16), msvc_runtime_dlls: artifacts.slice(16),
   }));
   return manifestPath;
 }
