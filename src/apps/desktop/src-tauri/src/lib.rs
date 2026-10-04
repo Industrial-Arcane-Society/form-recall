@@ -15,8 +15,8 @@ pub mod native_catia_adapter;
 pub mod native_catia_runtime;
 pub mod native_diagnostics;
 pub mod native_fastener_specs;
-pub mod native_finish_evidence;
 pub mod native_feature_specs;
+pub mod native_finish_evidence;
 pub mod native_geometry_backend;
 pub mod native_geometry_evidence;
 pub mod native_helix;
@@ -46,11 +46,11 @@ pub mod native_tool_bridge;
 pub mod native_tool_executor;
 pub mod native_tool_schemas;
 pub mod native_vbelt_pulley;
-pub mod native_worm;
 pub mod native_vision_assets;
 pub mod native_vision_domain;
 pub mod native_vision_provider;
 pub mod native_web;
+pub mod native_worm;
 #[cfg(feature = "agent-webview-smoke")]
 pub mod webview_smoke;
 
@@ -161,7 +161,14 @@ fn native_runtime_status(app: AppHandle) -> Result<Value, String> {
             status["state"] = json!(if installed { "installed" } else { "missing" });
             status
         }
-        Err(error) => json!({"available":false,"installed":false,"state":"invalid","reason":error}),
+        Err(error) => json!({
+            "available": false,
+            "installed": false,
+            "bundled": false,
+            "bundleRequired": !cfg!(debug_assertions),
+            "state": "invalid",
+            "reason": error,
+        }),
     };
     let occt = match native_occt_runtime::available_manifest(&root) {
         Ok(Some(_)) => json!({
@@ -240,15 +247,19 @@ fn native_open_help_path(app: AppHandle, relative_path: String) -> Result<Value,
 #[tauri::command(rename_all = "camelCase")]
 async fn install_dsh_runtime(app: AppHandle, on_event: Channel<Value>) -> Result<Value, String> {
     let (sender, receiver) = oneshot::channel();
-    thread::spawn(move || {
-        let result = (|| {
-            let root = resource_root(&app)?;
-            let data_dir = app_data_dir(&app)?;
-            let _ = dsh_runtime::install(&root, &data_dir, &on_event)?;
-            native_runtime_status(app)
-        })();
-        let _ = sender.send(result);
-    });
+    thread::Builder::new()
+        .name("dsh-runtime-install".into())
+        .stack_size(16 * 1024 * 1024)
+        .spawn(move || {
+            let result = (|| {
+                let root = resource_root(&app)?;
+                let data_dir = app_data_dir(&app)?;
+                let _ = dsh_runtime::install(&root, &data_dir, &on_event)?;
+                native_runtime_status(app)
+            })();
+            let _ = sender.send(result);
+        })
+        .map_err(|error| format!("无法启动 DSH Runtime 安装线程：{error}"))?;
     receiver
         .await
         .map_err(|_| "DSH Runtime 安装线程意外退出。".to_owned())?
@@ -1148,12 +1159,17 @@ async fn agent_send(
 }
 
 #[tauri::command]
-fn agent_finding_review_state(state: State<'_, agent_host::AgentHostState>) -> Result<Value, String> {
+fn agent_finding_review_state(
+    state: State<'_, agent_host::AgentHostState>,
+) -> Result<Value, String> {
     agent_host::finding_review_state(state.inner())
 }
 
 #[tauri::command]
-fn agent_adjudicate_finding(state: State<'_, agent_host::AgentHostState>, request: Value) -> Result<Value, String> {
+fn agent_adjudicate_finding(
+    state: State<'_, agent_host::AgentHostState>,
+    request: Value,
+) -> Result<Value, String> {
     agent_host::adjudicate_finding(state.inner(), &request)
 }
 

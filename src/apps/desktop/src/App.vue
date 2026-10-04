@@ -24,6 +24,7 @@ type ChatLine = { role: 'user' | 'assistant' | 'progress' | 'thought'; text: str
 const desktop = isTauri()
 const needsDependencySetup = ref(import.meta.env.DEV && new URLSearchParams(window.location.search).get('setup') === 'dependencies')
 const dependencySetupError = ref('')
+const dependencySetupKind = ref<'resources' | 'runtime' | 'startup'>('runtime')
 const rootPath = ref('')
 const backendInfo = ref('连接中')
 const statusText = ref('正在启动原生 CAD 工作区…')
@@ -282,11 +283,11 @@ function scrollChat() {
   void nextTick(() => { if (chatScroll.value) chatScroll.value.scrollTop = chatScroll.value.scrollHeight })
 }
 
-async function initialize() {
+async function initialize(initialResources?: any, initialReadiness?: any) {
   try {
-    const resources = await invoke<any>('native_resource_status')
+    const resources = initialResources || await invoke<any>('native_resource_status')
     rootPath.value = resources.root || ''
-    const readiness = await invoke<any>('native_runtime_status')
+    const readiness = initialReadiness || await invoke<any>('native_runtime_status')
     runtimeReadiness.value = readiness
     handshake.value = await invoke<any>('native_about')
     backendInfo.value = 'Rust 原生核心'
@@ -375,15 +376,22 @@ async function startApplication() {
     setStatus('浏览器预览已就绪；本地建模与文件操作请在桌面程序中使用。')
     return
   }
+  let resources: any
   try {
-    const [resources, readiness] = await Promise.all([
-      invoke<any>('native_resource_status'),
-      invoke<any>('native_runtime_status'),
-    ])
-    runtimeReadiness.value = readiness
+    resources = await invoke<any>('native_resource_status')
     if (!resources.available) throw new Error('桌面静态资源不可用。')
-    await initialize()
   } catch (error) {
+    dependencySetupKind.value = 'resources'
+    dependencySetupError.value = errorMessage(error)
+    needsDependencySetup.value = true
+    return
+  }
+  try {
+    const readiness = await invoke<any>('native_runtime_status')
+    runtimeReadiness.value = readiness
+    await initialize(resources, readiness)
+  } catch (error) {
+    dependencySetupKind.value = 'startup'
     dependencySetupError.value = errorMessage(error)
     needsDependencySetup.value = true
   }
@@ -502,7 +510,14 @@ async function submitPrompt() {
   const text = prompt.value.trim()
   if (!text && !attachments.value.length) return
   if (mode.value === 'agent' && !runtimeReadiness.value?.dsh?.installed) {
-    dependencySetupError.value = 'Agent 需要先安装应用私有的 DSH Runtime；本地 CAD 模型和 Quick 模式仍可继续使用。'
+    const dshStatus = runtimeReadiness.value?.dsh
+    if (dshStatus?.bundleRequired && !dshStatus?.bundled) {
+      dependencySetupKind.value = 'resources'
+      dependencySetupError.value = dshStatus?.reason || '发行包缺少随包提供的完整 DSH Runtime 依赖。请使用完整桌面安装包。'
+    } else {
+      dependencySetupKind.value = 'runtime'
+      dependencySetupError.value = 'Agent 需要先准备应用私有的 DSH Runtime；本地 CAD 模型和 Quick 模式仍可继续使用。'
+    }
     needsDependencySetup.value = true
     return
   }
@@ -1088,7 +1103,7 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <DependencySetup v-if="needsDependencySetup" :initial-error="dependencySetupError" @installed="onDependenciesInstalled" />
+  <DependencySetup v-if="needsDependencySetup" :initial-error="dependencySetupError" :issue-kind="dependencySetupKind" :bundled-runtime="runtimeReadiness?.dsh?.bundled === true" @installed="onDependenciesInstalled" />
   <div v-else class="app-frame" :class="{ 'theme-dark': themeDark }">
     <header class="topbar">
       <div class="brand-lockup">

@@ -2,6 +2,7 @@
 
 use serde_json::{Value, json};
 use sha2::{Digest, Sha256};
+use std::collections::HashSet;
 use std::env;
 use std::ffi::OsString;
 use std::fs::{self, File};
@@ -15,6 +16,8 @@ use zip::ZipArchive;
 const MANIFEST_RELATIVE_PATH: &str = "packaging/dsh-runtime/runtime-manifest.json";
 const PACKAGE_RELATIVE_PATH: &str = "packaging/dsh-runtime/package.json";
 const LOCK_RELATIVE_PATH: &str = "packaging/dsh-runtime/package-lock.json";
+const BUNDLE_MANIFEST_RELATIVE_PATH: &str = "packaging/dsh-runtime/runtime-bundle-manifest.json";
+const BUNDLE_FILE_NAME: &str = "dsh-runtime-win-x64.zip";
 const RUNTIME_FOLDER: &str = "dsh-runtime";
 const CACHE_FOLDER: &str = "dsh-runtime-cache";
 
@@ -42,19 +45,31 @@ struct RuntimeSpec {
     package_lock_sha256: String,
 }
 
+#[derive(Clone, Debug)]
+struct RuntimeBundle {
+    path: PathBuf,
+    sha256: String,
+    size: u64,
+    unpacked_size: u64,
+    file_count: usize,
+}
+
 pub fn status(root: &Path, data_dir: &Path) -> Result<Value, String> {
     let spec = read_spec(root)?;
+    let bundle = read_bundle(root, &spec)?;
     let runtime_root = data_dir.join(RUNTIME_FOLDER);
     recover_previous_install(&runtime_root)?;
     let current = runtime_root.join("current");
     let marker = read_json(&current.join("install-manifest.json")).ok();
     let installed = marker
         .as_ref()
-        .map(|marker| marker_matches(marker, &spec, &current))
+        .map(|marker| marker_matches(marker, &spec, &current, bundle.as_ref()))
         .unwrap_or(false);
     Ok(json!({
         "required": true,
         "installed": installed,
+        "bundled": bundle.is_some(),
+        "bundleRequired": !cfg!(debug_assertions),
         "platform": "windows-x86_64",
         "nodeVersion": spec.node_version,
         "npmVersion": spec.npm_version,
@@ -65,12 +80,13 @@ pub fn status(root: &Path, data_dir: &Path) -> Result<Value, String> {
 
 pub fn resolve(root: &Path, data_dir: &Path) -> Result<RuntimePaths, String> {
     let spec = read_spec(root)?;
+    let bundle = read_bundle(root, &spec)?;
     let runtime_root = data_dir.join(RUNTIME_FOLDER);
     recover_previous_install(&runtime_root)?;
     let current = runtime_root.join("current");
     let marker = read_json(&current.join("install-manifest.json"))
         .map_err(|_| "DSH Runtime 尚未安装。请先完成首次运行时安装。".to_owned())?;
-    if !marker_matches(&marker, &spec, &current) {
+    if !marker_matches(&marker, &spec, &current, bundle.as_ref()) {
         return Err("DSH Runtime 版本或校验状态不匹配。请重新安装运行时。".into());
     }
     Ok(RuntimePaths {
@@ -87,6 +103,7 @@ pub fn install(
     channel: &tauri::ipc::Channel<Value>,
 ) -> Result<Value, String> {
     let spec = read_spec(root)?;
+    let bundle = read_bundle(root, &spec)?;
     fs::create_dir_all(data_dir).map_err(|error| {
         format!(
             "无法创建 DSH Runtime 用户目录（{}）：{error}",
@@ -99,7 +116,7 @@ pub fn install(
 
     let current = runtime_root.join("current");
     if let Ok(marker) = read_json(&current.join("install-manifest.json")) {
-        if marker_matches(&marker, &spec, &current) {
+        if marker_matches(&marker, &spec, &current, bundle.as_ref()) {
             super::send_install_event(
                 channel,
                 "progress",
@@ -109,9 +126,13 @@ pub fn install(
         }
     }
 
-    let cache_root = data_dir.join(CACHE_FOLDER);
-    fs::create_dir_all(&cache_root).map_err(|error| error.to_string())?;
-    let archive = download_node_archive(&spec, &cache_root, channel)?;
+    let archive = if bundle.is_none() {
+        let cache_root = data_dir.join(CACHE_FOLDER);
+        fs::create_dir_all(&cache_root).map_err(|error| error.to_string())?;
+        Some(download_node_archive(&spec, &cache_root, channel)?)
+    } else {
+        None
+    };
 
     let nonce = SystemTime::now()
         .duration_since(UNIX_EPOCH)
@@ -125,11 +146,24 @@ pub fn install(
         .map_err(|error| format!("无法创建 DSH Runtime 暂存目录：{error}"))?;
 
     let prepared = (|| {
-        let node_root = staging.join("node");
-        fs::create_dir_all(&node_root).map_err(|error| error.to_string())?;
-        extract_node_runtime(&archive, &spec, &node_root)?;
-        copy_install_inputs(root, &staging.join("dsh"))?;
-        install_npm_packages(&spec, data_dir, &staging, channel)?;
+        if let Some(bundle) = bundle.as_ref() {
+            super::send_install_event(
+                channel,
+                "progress",
+                "正在从安装包解压已包含的 Node.js 与 DSH/ACP 依赖…",
+            );
+            extract_runtime_bundle(bundle, &staging, channel)?;
+        } else {
+            let node_root = staging.join("node");
+            fs::create_dir_all(&node_root).map_err(|error| error.to_string())?;
+            extract_node_runtime(
+                archive.as_ref().expect("downloaded for online install"),
+                &spec,
+                &node_root,
+            )?;
+            copy_install_inputs(root, &staging.join("dsh"))?;
+            install_npm_packages(&spec, data_dir, &staging, channel)?;
+        }
         validate_runtime(&spec, &staging)?;
 
         let marker = json!({
@@ -141,6 +175,8 @@ pub fn install(
             "acpSdkVersion": spec.acp_sdk_version,
             "packageJsonSha256": spec.package_json_sha256,
             "packageLockSha256": spec.package_lock_sha256,
+            "runtimeSource": if bundle.is_some() { "bundled" } else { "online" },
+            "bundleSha256": bundle.as_ref().map(|bundle| bundle.sha256.as_str()),
             "installedAt": SystemTime::now().duration_since(UNIX_EPOCH).unwrap_or_default().as_secs(),
         });
         fs::write(
@@ -155,7 +191,10 @@ pub fn install(
         return Err(error);
     }
 
-    activate_install(&runtime_root, &staging)?;
+    if let Err(error) = activate_install(&runtime_root, &staging) {
+        let _ = remove_owned_directory(&runtime_root, &staging);
+        return Err(error);
+    }
     let result = status(root, data_dir)?;
     if result["installed"] != true {
         return Err("DSH Runtime 安装后校验失败，当前版本未启用。".into());
@@ -163,7 +202,11 @@ pub fn install(
     super::send_install_event(
         channel,
         "progress",
-        "固定版本的 DSH ACP Runtime 已安装并通过校验。",
+        if bundle.is_some() {
+            "安装包内的 DSH ACP Runtime 已解压并通过校验。"
+        } else {
+            "固定版本的 DSH ACP Runtime 已安装并通过校验。"
+        },
     );
     Ok(result)
 }
@@ -248,6 +291,77 @@ fn read_spec(root: &Path) -> Result<RuntimeSpec, String> {
         package_json_sha256,
         package_lock_sha256,
     })
+}
+
+fn read_bundle(root: &Path, spec: &RuntimeSpec) -> Result<Option<RuntimeBundle>, String> {
+    let manifest_path = root.join(BUNDLE_MANIFEST_RELATIVE_PATH);
+    let bundle_path = root.join("packaging/dsh-runtime").join(BUNDLE_FILE_NAME);
+    let manifest_exists = manifest_path.is_file();
+    let bundle_exists = bundle_path.is_file();
+    if !manifest_exists && !bundle_exists {
+        if cfg!(debug_assertions) {
+            return Ok(None);
+        }
+        return Err("发行版缺少随包提供的完整 DSH Runtime 依赖。请使用完整桌面安装包。".into());
+    }
+    if !manifest_exists || !bundle_exists {
+        return Err("DSH Runtime 离线包或其校验清单缺失；桌面安装资源不完整。".into());
+    }
+
+    let manifest = read_json(&manifest_path).map_err(|error| {
+        format!(
+            "无法读取 DSH Runtime 离线包清单（{}）：{error}",
+            manifest_path.display()
+        )
+    })?;
+    if manifest["bundleManifestVersion"].as_u64() != Some(1)
+        || manifest["platform"].as_str() != Some("windows-x86_64")
+        || manifest["bundleFile"].as_str() != Some(BUNDLE_FILE_NAME)
+        || manifest["nodeVersion"].as_str() != Some(spec.node_version.as_str())
+        || manifest["npmVersion"].as_str() != Some(spec.npm_version.as_str())
+        || manifest["dshVersion"].as_str() != Some(spec.dsh_version.as_str())
+        || manifest["acpVersion"].as_str() != Some(spec.acp_version.as_str())
+        || manifest["acpSdkVersion"].as_str() != Some(spec.acp_sdk_version.as_str())
+        || manifest["packageJsonSha256"].as_str() != Some(spec.package_json_sha256.as_str())
+        || manifest["packageLockSha256"].as_str() != Some(spec.package_lock_sha256.as_str())
+    {
+        return Err("DSH Runtime 离线包清单与当前 Node、DSH/ACP 版本或锁文件不匹配。".into());
+    }
+    let sha256 = manifest["bundleSha256"]
+        .as_str()
+        .ok_or("DSH Runtime 离线包清单缺少 bundleSha256。")?
+        .to_ascii_lowercase();
+    if !is_sha256(&sha256) {
+        return Err("DSH Runtime 离线包清单中的 SHA-256 格式无效。".into());
+    }
+    let size = manifest["bundleSize"]
+        .as_u64()
+        .filter(|size| *size > 0)
+        .ok_or("DSH Runtime 离线包清单中的 bundleSize 无效。")?;
+    let unpacked_size = manifest["unpackedSize"]
+        .as_u64()
+        .filter(|size| *size > 0)
+        .ok_or("DSH Runtime 离线包清单中的 unpackedSize 无效。")?;
+    let file_count = manifest["fileCount"]
+        .as_u64()
+        .filter(|count| *count > 0)
+        .and_then(|count| usize::try_from(count).ok())
+        .ok_or("DSH Runtime 离线包清单中的 fileCount 无效。")?;
+    let actual_size = fs::metadata(&bundle_path)
+        .map_err(|error| format!("无法读取 DSH Runtime 离线包大小：{error}"))?
+        .len();
+    if actual_size != size {
+        return Err(format!(
+            "DSH Runtime 离线包大小与清单不符：清单 {size} 字节，实际 {actual_size} 字节。"
+        ));
+    }
+    Ok(Some(RuntimeBundle {
+        path: bundle_path,
+        sha256,
+        size,
+        unpacked_size,
+        file_count,
+    }))
 }
 
 fn required_string(value: &Value, path: &[&str]) -> Result<String, String> {
@@ -457,6 +571,134 @@ fn extract_node_runtime(
     Ok(())
 }
 
+fn extract_runtime_bundle(
+    bundle: &RuntimeBundle,
+    staging: &Path,
+    channel: &tauri::ipc::Channel<Value>,
+) -> Result<(), String> {
+    let actual_size = fs::metadata(&bundle.path)
+        .map_err(|error| format!("无法读取 DSH Runtime 离线包大小：{error}"))?
+        .len();
+    if actual_size != bundle.size {
+        return Err(format!(
+            "DSH Runtime 离线包大小已变化：清单 {} 字节，实际 {actual_size} 字节。",
+            bundle.size
+        ));
+    }
+    verify_sha256(&bundle.path, &bundle.sha256, "bundled DSH Runtime")?;
+    let archive_file = File::open(&bundle.path)
+        .map_err(|error| format!("无法打开安装包内的 DSH Runtime ZIP：{error}"))?;
+    let mut archive = ZipArchive::new(archive_file)
+        .map_err(|error| format!("安装包内的 DSH Runtime ZIP 无法读取：{error}"))?;
+    let mut seen = HashSet::with_capacity(bundle.file_count);
+    let mut extracted_files = 0usize;
+    let mut extracted_bytes = 0u64;
+    let mut last_reported_bytes = 0u64;
+
+    for index in 0..archive.len() {
+        let mut entry = archive
+            .by_index(index)
+            .map_err(|error| format!("读取 DSH Runtime ZIP 内容失败：{error}"))?;
+        let relative = entry
+            .enclosed_name()
+            .ok_or_else(|| "DSH Runtime ZIP 中发现越界路径。".to_owned())?
+            .to_path_buf();
+        if !is_safe_relative_path(&relative) {
+            return Err("DSH Runtime ZIP 中发现非相对路径。".into());
+        }
+        let mut components = relative.components();
+        let top = components
+            .next()
+            .map(|component| component.as_os_str())
+            .ok_or_else(|| "DSH Runtime ZIP 中发现空路径。".to_owned())?;
+        if top != "node" && top != "dsh" {
+            return Err(format!(
+                "DSH Runtime ZIP 包含预期之外的顶层路径：{}",
+                relative.display()
+            ));
+        }
+        let is_top_directory = entry.is_dir() && components.next().is_none();
+        if !is_top_directory && relative.components().count() < 2 {
+            return Err(format!(
+                "DSH Runtime ZIP 缺少文件目录层级：{}",
+                relative.display()
+            ));
+        }
+        if !seen.insert(relative.clone()) {
+            return Err(format!(
+                "DSH Runtime ZIP 含有重复路径：{}",
+                relative.display()
+            ));
+        }
+        if entry
+            .unix_mode()
+            .map(|mode| mode & 0o170000 == 0o120000)
+            .unwrap_or(false)
+        {
+            return Err("DSH Runtime ZIP 中不接受符号链接。".into());
+        }
+        let destination = staging.join(&relative);
+        if entry.is_dir() {
+            fs::create_dir_all(&destination)
+                .map_err(|error| format!("无法建立 Runtime 目录：{error}"))?;
+            continue;
+        }
+        let expected_size = entry.size();
+        if extracted_bytes
+            .checked_add(expected_size)
+            .filter(|total| *total <= bundle.unpacked_size)
+            .is_none()
+        {
+            return Err("DSH Runtime ZIP 解压大小超过清单上限。".into());
+        }
+        if let Some(parent) = destination.parent() {
+            fs::create_dir_all(parent)
+                .map_err(|error| format!("无法建立 Runtime 文件目录：{error}"))?;
+        }
+        let mut output = File::create(&destination).map_err(|error| {
+            format!(
+                "无法写入 Runtime 文件（{}）：{error}",
+                destination.display()
+            )
+        })?;
+        let copied = std::io::copy(&mut entry, &mut output).map_err(|error| {
+            format!(
+                "解压 Runtime 文件失败（{}）：{error}",
+                destination.display()
+            )
+        })?;
+        if copied != expected_size {
+            return Err(format!(
+                "Runtime 文件解压长度不符（{}）：清单 {expected_size} 字节，实际 {copied} 字节。",
+                destination.display()
+            ));
+        }
+        extracted_bytes += copied;
+        extracted_files += 1;
+        if extracted_bytes.saturating_sub(last_reported_bytes) >= 32 * 1024 * 1024 {
+            super::send_install_event(
+                channel,
+                "progress",
+                format!(
+                    "本地解包 DSH Runtime：{:.0}%（{:.0}/{:.0} MiB）",
+                    extracted_bytes as f64 * 100.0 / bundle.unpacked_size.max(1) as f64,
+                    extracted_bytes as f64 / 1_048_576.0,
+                    bundle.unpacked_size as f64 / 1_048_576.0
+                ),
+            );
+            last_reported_bytes = extracted_bytes;
+        }
+    }
+
+    if extracted_files != bundle.file_count || extracted_bytes != bundle.unpacked_size {
+        return Err(format!(
+            "DSH Runtime ZIP 解压校验不符：文件数 {extracted_files}/{}，数据量 {extracted_bytes}/{} 字节。",
+            bundle.file_count, bundle.unpacked_size
+        ));
+    }
+    Ok(())
+}
+
 fn copy_install_inputs(source_root: &Path, destination: &Path) -> Result<(), String> {
     fs::create_dir_all(destination).map_err(|error| error.to_string())?;
     for relative in [PACKAGE_RELATIVE_PATH, LOCK_RELATIVE_PATH] {
@@ -606,6 +848,29 @@ fn capture_node(
 fn validate_runtime(spec: &RuntimeSpec, staging: &Path) -> Result<(), String> {
     let node_root = staging.join("node");
     let dsh_root = staging.join("dsh");
+    let node = node_root.join("node.exe");
+    let npm_cli = node_root.join("node_modules/npm/bin/npm-cli.js");
+    let actual_node = capture_node(&node, &[OsString::from("--version")], &dsh_root, &node_root)?;
+    if actual_node.trim() != spec.node_version {
+        return Err(format!(
+            "Node.js 版本不匹配：要求 {}，实际 {}。",
+            spec.node_version,
+            actual_node.trim()
+        ));
+    }
+    let actual_npm = capture_node(
+        &node,
+        &[npm_cli.as_os_str().to_owned(), OsString::from("--version")],
+        &dsh_root,
+        &node_root,
+    )?;
+    if actual_npm.trim() != spec.npm_version {
+        return Err(format!(
+            "npm 版本不匹配：要求 {}，实际 {}。",
+            spec.npm_version,
+            actual_npm.trim()
+        ));
+    }
     for (package_path, expected, label) in [
         (
             "node_modules/@deepseek-ai/dsh/package.json",
@@ -643,7 +908,7 @@ fn validate_runtime(spec: &RuntimeSpec, staging: &Path) -> Result<(), String> {
         return Err(format!("DSH CLI 入口不存在：{}", cli_path.display()));
     }
     let output = capture_node(
-        &node_root.join("node.exe"),
+        &node,
         &[cli_path.as_os_str().to_owned(), OsString::from("--version")],
         &dsh_root,
         &node_root,
@@ -654,8 +919,21 @@ fn validate_runtime(spec: &RuntimeSpec, staging: &Path) -> Result<(), String> {
     Ok(())
 }
 
-fn marker_matches(marker: &Value, spec: &RuntimeSpec, current: &Path) -> bool {
-    marker["manifestVersion"].as_u64() == Some(1)
+fn marker_matches(
+    marker: &Value,
+    spec: &RuntimeSpec,
+    current: &Path,
+    bundle: Option<&RuntimeBundle>,
+) -> bool {
+    let source_matches = match bundle {
+        Some(bundle) => {
+            marker["runtimeSource"].as_str() == Some("bundled")
+                && marker["bundleSha256"].as_str() == Some(bundle.sha256.as_str())
+        }
+        None => marker["runtimeSource"].as_str() != Some("bundled"),
+    };
+    source_matches
+        && marker["manifestVersion"].as_u64() == Some(1)
         && marker["nodeVersion"].as_str() == Some(spec.node_version.as_str())
         && marker["npmVersion"].as_str() == Some(spec.npm_version.as_str())
         && marker["dshVersion"].as_str() == Some(spec.dsh_version.as_str())
@@ -688,18 +966,35 @@ fn activate_install(runtime_root: &Path, staging: &Path) -> Result<(), String> {
     }
     let had_current = current.exists();
     if had_current {
-        fs::rename(&current, &previous)
+        rename_with_retry(&current, &previous)
             .map_err(|error| format!("无法备份当前 DSH Runtime 以便回滚：{error}"))?;
     }
-    if let Err(error) = fs::rename(staging, &current) {
+    if let Err(error) = rename_with_retry(staging, &current) {
         if had_current {
-            let _ = fs::rename(&previous, &current);
+            let _ = rename_with_retry(&previous, &current);
         }
         return Err(format!(
             "无法启用新 DSH Runtime，已保留/恢复旧版本：{error}"
         ));
     }
     Ok(())
+}
+
+fn rename_with_retry(source: &Path, destination: &Path) -> std::io::Result<()> {
+    let retries = if cfg!(windows) { 6 } else { 1 };
+    for attempt in 0..retries {
+        match fs::rename(source, destination) {
+            Ok(()) => return Ok(()),
+            Err(error)
+                if attempt + 1 < retries
+                    && error.kind() == std::io::ErrorKind::PermissionDenied =>
+            {
+                std::thread::sleep(Duration::from_millis(250 * (attempt as u64 + 1)));
+            }
+            Err(error) => return Err(error),
+        }
+    }
+    fs::rename(source, destination)
 }
 
 fn remove_owned_directory(parent: &Path, target: &Path) -> Result<(), String> {

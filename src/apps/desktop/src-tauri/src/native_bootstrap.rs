@@ -3,7 +3,7 @@
 //! Packaged native desktop features need prompt, knowledge, plugin, and DSH
 //! manifest assets. CATIA adapter assets are optional until CATIA is invoked.
 
-use serde_json::{json, Value};
+use serde_json::{Value, json};
 use std::path::{Path, PathBuf};
 
 const REQUIRED_FILES: &[&str] = &[
@@ -36,10 +36,17 @@ pub fn validate_resource_root(root: &Path) -> Result<PathBuf, String> {
     if !canonical.is_dir() {
         return Err("桌面资源根路径不是目录。".into());
     }
-    for relative in REQUIRED_FILES {
-        if !canonical.join(relative).is_file() {
-            return Err(format!("桌面资源缺少必需文件：{relative}"));
-        }
+    let missing = REQUIRED_FILES
+        .iter()
+        .filter(|relative| !canonical.join(relative).is_file())
+        .copied()
+        .collect::<Vec<_>>();
+    if !missing.is_empty() {
+        return Err(format!(
+            "桌面资源缺少 {} 个必需文件：{}",
+            missing.len(),
+            missing.join("、")
+        ));
     }
     if !canonical.join("kb").is_dir() {
         return Err("桌面资源缺少原生 Agent 知识库目录。".into());
@@ -188,13 +195,18 @@ mod tests {
     }
 
     #[test]
-    fn missing_required_dsh_assets_still_fail_closed() {
+    fn missing_required_assets_are_all_reported_and_fail_closed() {
         let scratch = Scratch::new();
         let root = scratch.resource_root();
+        fs::remove_file(root.join("ai_modeler/agent/dsh_native_tools.mjs")).unwrap();
+        fs::remove_file(root.join("kb/native_knowledge_enrichments.v1.json")).unwrap();
         fs::remove_file(root.join("packaging/dsh-runtime/package-lock.json")).unwrap();
 
         let error = resolve_resource_root(None, None, Some(&root)).unwrap_err();
+        assert!(error.contains("缺少 3 个必需文件"));
+        assert!(error.contains("ai_modeler/agent/dsh_native_tools.mjs"));
         assert!(error.contains("packaging/dsh-runtime/package-lock.json"));
+        assert!(error.contains("kb/native_knowledge_enrichments.v1.json"));
     }
 
     #[test]

@@ -3,7 +3,11 @@ import { ref } from 'vue'
 import { Channel, invoke } from '@tauri-apps/api/core'
 import UiIcon from './UiIcon.vue'
 
-const props = defineProps<{ initialError?: string }>()
+const props = withDefaults(defineProps<{
+  initialError?: string
+  issueKind?: 'resources' | 'runtime' | 'startup'
+  bundledRuntime?: boolean
+}>(), { issueKind: 'runtime', bundledRuntime: false })
 const emit = defineEmits<{ installed: [] }>()
 
 type InstallEvent = { kind: 'progress' | 'complete'; message: string }
@@ -54,9 +58,9 @@ async function install() {
         </div>
         <span class="dependency-kicker">ONE-TIME SETUP</span>
         <h1>为建模工作区<br>准备运行环境</h1>
-        <p>桌面工作区使用 Rust 原生 CAD 模型。首次使用 Agent 时，需要准备应用私有的 Node.js 和 DSH Agent Runtime；Python 不作为启动 Quick、本地模型或 Agent 的前置条件。</p>
+        <p>桌面工作区使用 Rust 原生 CAD 模型。{{ props.bundledRuntime ? '安装包已带入 Node.js、DSH/ACP 和完整锁定依赖，首次使用 Agent 时只在用户目录本地解包。' : '首次使用 Agent 时会准备应用私有的 Node.js 和 DSH Agent Runtime。' }}Python 不作为启动 Quick、本地模型或 Agent 的前置条件。</p>
         <div class="setup-facts">
-          <div><span class="fact-icon"><UiIcon name="package-check" :size="16" /></span><span><strong>只需安装一次</strong><small>后续启动直接进入工作区</small></span></div>
+          <div><span class="fact-icon"><UiIcon name="package-check" :size="16" /></span><span><strong>{{ props.bundledRuntime ? '运行依赖随安装包交付' : '只需准备一次' }}</strong><small>{{ props.bundledRuntime ? '首次启动本地解包，之后直接进入工作区' : '后续启动直接进入工作区' }}</small></span></div>
           <div><span class="fact-icon"><UiIcon name="hard-drive" :size="16" /></span><span><strong>保存在当前用户目录</strong><small>不写入 Program Files 安装目录</small></span></div>
         </div>
       </aside>
@@ -64,26 +68,31 @@ async function install() {
       <section class="dependency-form">
         <div class="form-heading">
           <span class="step-label"><i>01</i> / INITIAL SETUP</span>
-          <h2>准备 DSH Agent Runtime</h2>
-          <p>DSH Runtime 从固定的官方 Node.js 与 npm 地址下载，并在安装前校验 SHA-256 和锁文件完整性。Python、OCCT 与 CATIA 状态独立检测。</p>
+          <h2>{{ props.issueKind === 'resources' ? '修复桌面安装包' : props.issueKind === 'startup' ? '桌面启动检查失败' : '准备 DSH Agent Runtime' }}</h2>
+          <p v-if="props.issueKind === 'resources'">应用包中的必需资源缺失或不完整，当前尚未开始安装 DSH。请使用完整桌面安装包修复后重新启动。</p>
+          <p v-else-if="props.issueKind === 'startup'">桌面初始化没有完成。请重启应用；此错误与 DSH Runtime 是否安装是分开的。</p>
+          <p v-else-if="props.bundledRuntime">安装包已包含固定版本的 Node.js、DSH/ACP 与锁定依赖。首次启动只在用户目录本地解包并校验，无需联网；Python、OCCT 与 CATIA 状态独立检测。</p>
+          <p v-else>开发运行会从固定的官方 Node.js 与 npm 地址准备 DSH Runtime，并校验 SHA-256 和锁文件完整性。Python、OCCT 与 CATIA 状态独立检测。</p>
         </div>
 
-        <div v-if="initialError && !logs.length" class="setup-notice"><UiIcon name="info" :size="17" /><span>{{ initialError }}</span></div>
-        <div v-if="error" class="setup-error"><UiIcon name="warning" :size="18" /><div><strong>DSH Runtime 安装失败</strong><p>{{ error }}</p><small>可重试安装。已下载的文件会留在缓存中。</small></div></div>
+        <div v-if="props.issueKind === 'resources' && initialError" class="setup-error"><UiIcon name="warning" :size="18" /><div><strong>应用资源校验失败</strong><p>{{ initialError }}</p><small>这发生在 DSH 安装之前，在线重试无法补回安装包缺失的文件。若设置过 AIMODELER_RESOURCE_ROOT 或 AIMODELER_ROOT，请清除错误覆盖或改为完整资源目录。</small></div></div>
+        <div v-else-if="initialError && !logs.length" class="setup-notice"><UiIcon name="info" :size="17" /><span>{{ initialError }}</span></div>
+        <div v-if="error" class="setup-error"><UiIcon name="warning" :size="18" /><div><strong>DSH Runtime {{ props.bundledRuntime ? '解包' : '安装' }}失败</strong><p>{{ error }}</p><small>{{ props.bundledRuntime ? '已包含在安装包中的文件会保留；可重试本地解包。' : '可重试安装。已下载的文件会留在缓存中。' }}</small></div></div>
 
         <div class="install-status" :class="{ active: installing }">
           <span class="status-indicator"><UiIcon v-if="installing" name="loading" :size="16" /><UiIcon v-else name="shield-check" :size="16" /></span>
-          <div class="status-copy"><strong>{{ installing ? '正在安装运行依赖' : '准备就绪' }}</strong><span>{{ progress }}</span></div>
+          <div class="status-copy"><strong>{{ installing ? (props.bundledRuntime ? '正在解包运行依赖' : '正在安装运行依赖') : props.issueKind === 'resources' ? '应用文件需要修复' : props.issueKind === 'startup' ? '需要重新启动应用' : '准备就绪' }}</strong><span>{{ installing ? progress : props.issueKind === 'resources' ? 'DSH 安装尚未开始' : progress }}</span></div>
           <span v-if="installing" class="status-pulse"></span>
         </div>
         <div v-if="logs.length" class="install-log" aria-live="polite"><p v-for="(line, index) in logs" :key="index">{{ line }}</p></div>
 
-        <button class="install-button" :disabled="installing" @click="install">
+        <button v-if="props.issueKind === 'runtime'" class="install-button" :disabled="installing" @click="install">
           <UiIcon v-if="installing" name="loading" :size="17" />
           <UiIcon v-else name="download" :size="17" />
-          {{ installing ? '正在安装…' : error ? '重试安装' : '安装 DSH 并启动' }}
+          {{ installing ? (props.bundledRuntime ? '正在解包…' : '正在安装…') : error ? (props.bundledRuntime ? '重试解包' : '重试安装') : (props.bundledRuntime ? '解包 DSH 并启动' : '安装 DSH 并启动') }}
           <UiIcon v-if="!installing" name="arrow-right" :size="17" />
         </button>
+        <div v-else class="repair-note"><UiIcon name="info" :size="15" />{{ props.issueKind === 'resources' ? '请退出应用并使用完整的桌面安装包修复或覆盖安装。' : '请关闭并重新启动桌面应用。' }}</div>
         <p class="privacy-note"><UiIcon name="lock-keyhole" :size="14" />DSH 运行文件保存在本机用户目录；项目文件不会上传到安装服务。</p>
       </section>
     </section>
@@ -145,6 +154,7 @@ async function install() {
 .setup-notice, .setup-error { display: flex; gap: 9px; align-items: flex-start; margin-top: 13px; padding: 11px 12px; border-radius: 9px; font-size: 12px; line-height: 1.5; }.setup-notice { color: #637886; background: #f4f7f9; }.setup-error { color: #8d4844; background: #fbf2f1; border: 1px solid #f0ddda; }.setup-error > div { min-width: 0; }.setup-error strong { font-size: 12px; }.setup-error p { margin: 4px 0; white-space: pre-wrap; overflow-wrap: anywhere; }.setup-error small { color: #a36c67; font-size: 12px; }
 .install-status { position: relative; display: flex; gap: 11px; align-items: center; margin-top: 18px; padding: 11px 13px; border: 1px solid #e5eaee; border-radius: 10px; background: #fafbfc; }.install-status.active { border-color: #d7e3eb; background: #f5f9fb; }.status-indicator { width: 29px; height: 29px; display: grid; place-items: center; color: #5c819b; border-radius: 8px; background: #eaf1f5; }.status-copy { flex: 1; min-width: 0; }.status-copy strong, .status-copy span { display: block; }.status-copy strong { font-size: 12px; }.status-copy span { max-width: 100%; margin-top: 3px; color: #7b8b96; font-size: 12px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }.status-pulse { width: 8px; height: 8px; border-radius: 50%; background: #4d8b74; box-shadow: 0 0 0 4px rgba(77,139,116,.12); }
 .install-log { max-height: 74px; margin-top: 8px; padding: 7px 10px; overflow: auto; border-radius: 8px; color: #71818c; background: #f8fafb; font: 12px/1.5 'Cascadia Code', Consolas, monospace; }.install-log p { margin: 0; overflow-wrap: anywhere; }
+.repair-note { display: flex; justify-content: center; align-items: flex-start; gap: 7px; margin-top: 17px; padding: 12px 14px; color: #7c4e3a; border: 1px solid #eddfd7; border-radius: 9px; background: #fbf6f2; font-size: 12px; line-height: 1.5; text-align: center; }.repair-note :deep(svg) { flex: 0 0 auto; margin-top: 1px; }
 .install-button { width: 100%; min-height: 48px; display: flex; align-items: center; justify-content: center; gap: 9px; margin-top: 17px; color: white; border: 0; border-radius: 10px; background: #355e7d; font-size: 14px; font-weight: 650; cursor: pointer; box-shadow: 0 7px 16px rgba(53,94,125,.19); transition: background .15s, transform .15s; }.install-button:hover:not(:disabled) { background: #2d526f; transform: translateY(-1px); }.install-button:disabled { opacity: .74; cursor: wait; }
 .privacy-note { display: flex; justify-content: center; align-items: flex-start; gap: 6px; margin: 12px 0 0; color: #8a99a3; font-size: 12px; line-height: 1.5; text-align: center; }.privacy-note :deep(svg) { flex: 0 0 auto; margin-top: 1px; }
 .dependency-footer { position: relative; z-index: 1; width: min(1080px, 100%); display: flex; justify-content: space-between; padding: 17px 2px 0; color: #8b9aa5; font-size: 12px; letter-spacing: .3px; }.dependency-footer i { margin: 0 5px; color: #bbc5cc; font-style: normal; }
