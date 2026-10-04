@@ -125,6 +125,7 @@ Coldstart runner 已采用默认且唯一发布 safe gate summary、ACP/Cordis a
 
 - [x] 2026-10-04：修复 Tauri devUrl `localhost` 与 Vite `127.0.0.1:1420` 的地址契约不一致；新增 Node 配置回归，修改前失败、修改后 4/4 通过；`npm run build` 通过，只有 637.32 kB `CadViewport` chunk 大小提示。CSP 为 `null`、capability 不含按 host 授权项，无需同步 host allowlist。此项没有运行 `npm run dev`、Tauri dev 或可见 WebView。
 - [x] 2026-10-04：隔离 F0 worktree 运行桌面包 `npm.cmd run dev`，Vite 8.3.2 于 1103 ms 就绪，监听 `127.0.0.1:1420`；`GET /` 返回 200 HTML，`GET /src/main.ts` 返回 200 JS；Ctrl-C 后确认监听端口释放。该证据不涵盖浏览器渲染、Tauri/WebView2 窗口或 IPC，用户报告的无界面表现仍未复现。详见[CLI 实测记录](./72-f0-vite-cli-verification.md)。
+- [x] 2026-10-04：在集成 worktree 用 Playwright CLI + headless Chrome 打开桌面包 `npm run dev` 的 Vite 页；snapshot 中包含建模对话、输入框、模型视口和属性栏，Console 0 error/0 warning，未见失败请求。浏览器预览会按设计禁用本地建模按钮；此结果仍不等于根目录 `npm run dev` 的可见 Tauri 窗口验收。详见[CLI 实测记录](./72-f0-vite-cli-verification.md)。
 
 - [x] 迁移前工作树干净；记录 tracked 1,654 文件基线。
 - [x] 把桌面端归入 `src/apps/desktop/`，Python 过渡工程归入 `src/legacy/`。
