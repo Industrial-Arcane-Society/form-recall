@@ -137,6 +137,11 @@ Coldstart runner 已采用默认且唯一发布 safe gate summary、ACP/Cordis a
 - [x] 为匹配到的 rejected native audit 增加固定枚举 `error_class` 聚合；仅投影 `argument_validation`、`state_conflict`、`execution`、`unknown`，未知类型统一映射 `unknown`。原始错误正文、工具参数、调用 ID 与指纹不进入 projection；Node 回归含 sentinel 泄漏断言。Run28 历史投影不含 error_class，此实现没有新增真实 DSH/Provider 运行证据。
 - [x] 修复 late-fatal summary/exit 一致性风险：本 runner 完整发布 summary 后才允许同目录临时文件 + Windows same-volume rename 原子降级为固定 failed summary；默认首次 failure summary 仍 wx 防覆盖，summary 最后发布。Node 全量 128/128；Windows rename 回归通过。Run30 单次运行 exit 1 与 safe summary failed 一致，failure diagnostic 为 publication/uncaught_exception，但逐 gate map 缺失、strict 状态不可判定；本次观察到 exit 与 summary 状态一致，但不能证明原子替换分支实际执行或确认 Run29 原因。详见[Run30](./89-f7-g8-run-30-diagnosis.md)。
 
+### F7.G1 安全诊断实现（2026-10-04）
+
+- [x] `97841e5` 为 `cad_review_reference_similarity` 增加 host-derived `review_diagnostics`：必需/映射/未映射/缺失/不支持/超范围/不匹配/未知计数，以及可比视图、覆盖类别与阶段资格布尔值。Coldstart projection 只保留这些有界计数和固定枚举，不输出 evidence ID、hash、自由文本、参数、调用身份、图像或 thought；几何和视觉 acceptance 阈值未改变。集成后复跑 Rust `native_vision_domain` 20/20、Node coldstart gates 129/129、Cargo offline lib check、三个 `node --check` 与 `git diff --check` 通过。仓库级 `cargo fmt --check` 被既有未修改 Rust 文件的格式差异阻断，未执行全仓格式化以避免无关改动。
+- [ ] 在含该诊断的当前 main 上，以默认参考图/prompt、无 seed、fresh output 做一次真实 CLI coldstart；只审阅 safe allowlist summary/build/tool diagnostics，并将 host evidence mapping 结果与独立人工图像判断分开记录。host 投影本身不证明图像理解或视觉验收通过；此项完成前 F7.G1 保持未通过。
+
 ## F0 验收记录
 
 - [x] 2026-10-04：修复 Tauri devUrl `localhost` 与 Vite `127.0.0.1:1420` 的地址契约不一致；新增 Node 配置回归，修改前失败、修改后 4/4 通过；`npm run build` 通过，只有 637.32 kB `CadViewport` chunk 大小提示。CSP 为 `null`、capability 不含按 host 授权项，无需同步 host allowlist。此项没有运行 `npm run dev`、Tauri dev 或可见 WebView。
