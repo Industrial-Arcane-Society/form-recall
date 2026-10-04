@@ -11,6 +11,7 @@ import { buildSafeAcceptanceSummary, writeSafeAcceptanceArtifacts } from './nati
 import { removeScratchDirectory, safeScratchCleanupStatus, terminateChildrenAndWait, waitThenTerminateChild } from './native_agent_coldstart_lifecycle.mjs'
 import { COLDSTART_SCRATCH_MAX_AGE_MS, COLDSTART_SCRATCH_PREFIX, createColdstartScratchDirectory,
   recoverStaleColdstartScratch } from './native_agent_coldstart_scratch.mjs'
+import { apply as applyNativeCordisTools } from '../../../../legacy/ai_modeler/agent/dsh_native_tools.mjs'
 
 class FakeChild extends EventEmitter {
   constructor({ exitAfterKillMs = null } = {}) {
@@ -193,7 +194,7 @@ function fixture() {
       { run_id: run.id, session_id: run.acp_session_id, turn_id: run.turn_id, at_ms: 2500, tool_call_id: 'acp-call', title: 'cad_finish_model', status: 'in_progress', kind: 'tool_call', arguments_sha256_24: argsFingerprint },
       { run_id: run.id, session_id: run.acp_session_id, turn_id: run.turn_id, at_ms: 2900, tool_call_id: 'acp-call', status: 'completed', kind: 'tool_call_update' },
     ],
-    toolBridgeCalls: [{ run_id: run.id, session_id: run.tool_session_id, turn_id: run.turn_id, call_id: nativeCallId, tool: 'cad_finish_model', authenticated_scope: true,
+    toolBridgeCalls: [{ run_id: run.id, session_id: run.tool_session_id, turn_id: run.turn_id, call_id: nativeCallId, acp_call_id: 'acp-call', tool: 'cad_finish_model', authenticated_scope: true,
       started_at_ms: 2600, completed_at_ms: 2800, success: true, arguments_sha256_24: argsFingerprint }],
     nativeAudit: [{ call_id: nativeCallId, tool: 'cad_finish_model', at: 2, success: true, revision_before: 2, revision_after: 2 }],
     computedState: { revision: 2, geometry_signature: fp, visual_evidence_summary: visual },
@@ -210,14 +211,14 @@ test('complete same-run evidence is passed; host acceptance alone is insufficien
   assert.deepEqual(result.matched_native_call_ids, ['11111111-1111-4111-8111-111111111111'])
 })
 
-test('missing ACP terminal update is distinguished from a failed terminal update', () => {
+test('missing ACP terminal update blocks strict pairing and is distinguished from a failed terminal update', () => {
   const input = fixture()
   input.toolEvents = [input.toolEvents[0]]
   const result = evaluateColdstartGates(input)
-  assert.equal(result.gates.cordis_cad_tools.status, 'passed')
+  assert.equal(result.gates.cordis_cad_tools.status, 'failed')
   assert.equal(result.gates.acp_cad_tool_results.status, 'failed')
   assert.deepEqual(result.gates.acp_cad_tool_results.reasons, ['acp_cad_tool_result_completion_missing'])
-  assert.deepEqual(result.matched_native_call_ids, ['11111111-1111-4111-8111-111111111111'])
+  assert.deepEqual(result.matched_native_call_ids, [])
 })
 
 test('ACP failed terminal update has its own reason and remains a hard failure', () => {
@@ -239,21 +240,20 @@ test('normalized argument fingerprints ignore object key order and reveal no arg
   assert.equal(toolArgumentsFingerprint(undefined), null)
 })
 
-test('same-status terminal snapshots are idempotent for strict completion and identity matching', () => {
+test('duplicate same-status terminal snapshots fail strict one-terminal identity pairing', () => {
   const input = fixture()
   input.toolEvents.push({ ...input.toolEvents[1], at_ms: 3000 })
   const result = evaluateColdstartGates(input)
-  assert.equal(result.status, 'passed')
-  assert.deepEqual(result.gates.acp_cad_tool_results.reasons, [])
-  assert.deepEqual(result.matched_native_call_ids, ['11111111-1111-4111-8111-111111111111'])
+  assert.equal(result.status, 'failed')
+  assert.ok(result.gates.acp_cad_tool_results.reasons.includes('acp_cad_tool_result_terminal_status_invalid'))
+  assert.deepEqual(result.matched_native_call_ids, [])
 })
 
-test('repeated identical calls pair by first terminal transition, not later snapshots', () => {
+test('repeated identical calls pair by exact ACP identity despite same arguments', () => {
   const input = fixture(), nativeCallId = '22222222-2222-4222-8222-222222222222'
   input.toolEvents.push({ ...input.toolEvents[0], at_ms: 3100, tool_call_id: 'second-acp-call' })
   input.toolEvents.push({ ...input.toolEvents[1], at_ms: 3500, tool_call_id: 'second-acp-call' })
-  input.toolEvents.push({ ...input.toolEvents[1], at_ms: 3600 })
-  input.toolBridgeCalls.push({ ...input.toolBridgeCalls[0], call_id: nativeCallId, started_at_ms: 3200, completed_at_ms: 3400 })
+  input.toolBridgeCalls.push({ ...input.toolBridgeCalls[0], call_id: nativeCallId, acp_call_id: 'second-acp-call', started_at_ms: 3200, completed_at_ms: 3400 })
   input.nativeAudit.push({ ...input.nativeAudit[0], call_id: nativeCallId })
   const result = evaluateColdstartGates(input)
   assert.equal(result.gates.cordis_cad_tools.status, 'passed')
@@ -275,6 +275,93 @@ test('overlapping repeated-call intervals stay ambiguous', () => {
   assert.ok(result.failure_reasons.includes('cordis_tool_arguments_or_identity_missing_or_unmatched'))
 })
 
+test('same-name same-argument overlapping calls pair by exact Cordis exec callId', () => {
+  const input = fixture(), nativeCallId = '22222222-2222-4222-8222-222222222222'
+  input.toolEvents[1].at_ms = 2700
+  input.toolEvents.push({ ...input.toolEvents[0], at_ms: 2500, tool_call_id: 'second-acp-call' })
+  input.toolEvents.push({ ...input.toolEvents[1], at_ms: 2700, tool_call_id: 'second-acp-call' })
+  input.toolBridgeCalls[0].started_at_ms = 2600
+  input.toolBridgeCalls[0].completed_at_ms = 2800
+  input.toolBridgeCalls.push({ ...input.toolBridgeCalls[0], call_id: nativeCallId, acp_call_id: 'second-acp-call', started_at_ms: 2600, completed_at_ms: 2800 })
+  input.nativeAudit.push({ ...input.nativeAudit[0], call_id: nativeCallId })
+  const result = evaluateColdstartGates(input)
+  assert.equal(result.gates.cordis_cad_tools.status, 'passed')
+  assert.equal(result.status, 'passed')
+})
+
+test('native Cordis execute, bridge request, ACP updates, and strict gate share one exact call identity', async () => {
+  const root = mkdtempSync(join(tmpdir(), 'cordis-acp-callid-e2e-'))
+  const nodeModules = join(root, 'node_modules')
+  mkdirSync(join(nodeModules, '@deepseek-ai', 'dsh'), { recursive: true })
+  mkdirSync(join(nodeModules, '@deepseek-ai', 'dsh-tools'), { recursive: true })
+  writeFileSync(join(nodeModules, '@deepseek-ai', 'dsh', 'package.json'), JSON.stringify({ name: '@deepseek-ai/dsh', version: 'fixture' }))
+  writeFileSync(join(nodeModules, '@deepseek-ai', 'dsh-tools', 'package.json'), JSON.stringify({ name: '@deepseek-ai/dsh-tools', version: 'fixture', main: 'index.cjs' }))
+  writeFileSync(join(nodeModules, '@deepseek-ai', 'dsh-tools', 'index.cjs'), 'exports.defineTool = value => value\n')
+  const schemasPath = join(root, 'schemas.json'), turnPath = join(root, 'turn.json')
+  writeFileSync(schemasPath, JSON.stringify({ schemaVersion: 1, tools: [{ name: 'cad_finish_model', description: 'finish', inputSchema: {
+    type: 'object', properties: { fixture: { type: 'boolean' } }, required: ['fixture'], additionalProperties: false,
+  } }] }))
+  writeFileSync(turnPath, JSON.stringify({ turn_id: 'turn-new' }))
+  const envKeys = ['AI_MODELER_NATIVE_TOOL_SCHEMAS_FILE', 'AI_MODELER_TOOL_BRIDGE_ADDR', 'AI_MODELER_TOOL_BRIDGE_TOKEN',
+    'AI_MODELER_TOOL_SESSION_ID', 'AI_MODELER_ACTIVE_TURN_FILE', 'AI_MODELER_DSH_NODE_MODULES', 'AI_MODELER_NATIVE_TOOLS_FILE']
+  const previous = Object.fromEntries(envKeys.map(key => [key, process.env[key]]))
+  const params = []
+  const upstream = createServer(socket => {
+    let data = ''
+    socket.on('data', chunk => {
+      data += chunk.toString()
+      const end = data.indexOf('\n')
+      if (end < 0) return
+      const request = JSON.parse(data.slice(0, end))
+      params.push(request.params)
+      socket.end(JSON.stringify({ jsonrpc: '2.0', id: request.id, result: { text: 'ok', payload: {
+        isError: false, execution_engine: 'rust', tool: request.params.name,
+      } } }) + '\n')
+    })
+  })
+  await new Promise((resolveListen, reject) => { upstream.once('error', reject); upstream.listen(0, '127.0.0.1', resolveListen) })
+  try {
+    process.env.AI_MODELER_NATIVE_TOOL_SCHEMAS_FILE = schemasPath
+    process.env.AI_MODELER_TOOL_BRIDGE_ADDR = `127.0.0.1:${upstream.address().port}`
+    process.env.AI_MODELER_TOOL_BRIDGE_TOKEN = 'temporary-secret'
+    process.env.AI_MODELER_TOOL_SESSION_ID = 'bridge-new'
+    process.env.AI_MODELER_ACTIVE_TURN_FILE = turnPath
+    process.env.AI_MODELER_DSH_NODE_MODULES = nodeModules
+    process.env.AI_MODELER_NATIVE_TOOLS_FILE = join(root, 'registration.json')
+    const registered = []
+    applyNativeCordisTools({ tools: { register(tool) { registered.push(tool) } }, attachments: { async saveImages() { return [] } } })
+    await registered[0].execute({ fixture: true }, { callId: 'acp-call', signal: new AbortController().signal })
+    assert.equal(params.length, 1)
+    assert.equal(params[0].acpCallId, 'acp-call')
+    const input = fixture(), nativeId = params[0].toolCallId
+    input.toolEvents.forEach(event => { event.tool_call_id = params[0].acpCallId })
+    input.toolBridgeCalls[0].call_id = nativeId
+    input.toolBridgeCalls[0].acp_call_id = params[0].acpCallId
+    input.nativeAudit[0].call_id = nativeId
+    const result = evaluateColdstartGates(input)
+    assert.equal(result.gates.cordis_cad_tools.status, 'passed')
+    assert.equal(result.status, 'passed')
+    assert.deepEqual(result.matched_native_call_ids, [nativeId])
+  } finally {
+    for (const key of envKeys) {
+      if (previous[key] === undefined) delete process.env[key]
+      else process.env[key] = previous[key]
+    }
+    await new Promise(resolveClose => upstream.close(resolveClose))
+    rmSync(root, { recursive: true, force: true })
+  }
+})
+
+test('missing or mismatched Cordis exec callId remains fail closed', () => {
+  for (const mutate of [call => { delete call.acp_call_id }, call => { call.acp_call_id = 'wrong-acp-call' }]) {
+    const input = fixture()
+    mutate(input.toolBridgeCalls[0])
+    const result = evaluateColdstartGates(input)
+    assert.equal(result.gates.cordis_cad_tools.status, 'failed')
+    assert.ok(result.failure_reasons.includes('cordis_tool_arguments_or_identity_missing_or_unmatched'))
+  }
+})
+
 test('foreign repeated-call scope cannot be paired by matching fingerprints or timestamps', () => {
   const input = fixture(), nativeCallId = '22222222-2222-4222-8222-222222222222'
   input.toolEvents.push({ ...input.toolEvents[0], at_ms: 3100, tool_call_id: 'second-acp-call' })
@@ -290,7 +377,7 @@ test('foreign repeated-call scope cannot be paired by matching fingerprints or t
 test('missing repeated-call terminal interval remains ambiguous', () => {
   const input = fixture(), nativeCallId = '22222222-2222-4222-8222-222222222222'
   input.toolEvents.push({ ...input.toolEvents[0], at_ms: 3100, tool_call_id: 'second-acp-call' })
-  input.toolBridgeCalls.push({ ...input.toolBridgeCalls[0], call_id: nativeCallId, started_at_ms: 3200, completed_at_ms: 3400 })
+  input.toolBridgeCalls.push({ ...input.toolBridgeCalls[0], call_id: nativeCallId, acp_call_id: 'second-acp-call', started_at_ms: 3200, completed_at_ms: 3400 })
   input.nativeAudit.push({ ...input.nativeAudit[0], call_id: nativeCallId })
   const result = evaluateColdstartGates(input)
   assert.equal(result.status, 'failed')
@@ -308,13 +395,15 @@ test('ACP result updates without call IDs fail identity without coalescing as du
   assert.equal(result.gates.acp_cad_tool_results.reasons.includes('acp_cad_tool_result_terminal_update_duplicated'), false)
 })
 
-test('repeated same-status failed snapshots remain a failed tool result without a duplicate-notification error', () => {
+test('repeated failed terminal snapshots remain failed and violate exactly-one-terminal binding', () => {
   const input = fixture()
   input.toolEvents[1].status = 'failed'
   input.toolEvents.push({ ...input.toolEvents[1], at_ms: 3000 })
   const result = evaluateColdstartGates(input)
   assert.equal(result.status, 'failed')
-  assert.deepEqual(result.gates.acp_cad_tool_results.reasons, ['acp_cad_tool_result_failed'])
+  assert.deepEqual(result.gates.acp_cad_tool_results.reasons, [
+    'acp_cad_tool_result_failed', 'acp_cad_tool_result_terminal_status_invalid',
+  ])
 })
 
 test('conflicting terminal ACP states remain a hard failure', () => {
@@ -408,10 +497,11 @@ test('Cordis binding projection reports exact static reason counts and never lea
   hidden.toolEvents[0].title = 'cad_private_tool_name'
   hidden.nativeAudit[0].tool = 'cad_private_tool_name'
   hidden.toolBridgeCalls[0].error = 'private-error-body-marker'
+  hidden.toolBridgeCalls[0].acp_call_id = 'sentinel-acp-call-identity'
   const hiddenProjection = summarizeCordisBindingDiagnostics(hidden)
   const serialized = JSON.stringify(hiddenProjection)
   for (const secret of ['cad_private_tool_name', 'private-error-body-marker', '11111111-1111-4111-8111-111111111111',
-    'acp-call', hidden.toolBridgeCalls[0].arguments_sha256_24]) assert.equal(serialized.includes(secret), false)
+    'acp-call', 'sentinel-acp-call-identity', hidden.toolBridgeCalls[0].arguments_sha256_24]) assert.equal(serialized.includes(secret), false)
   assert.ok(hiddenProjection.counts.every(row => ['matched', 'bridge_call_missing', 'acp_call_missing', 'tool_name_not_allowlisted',
     'correlation_fingerprint_missing', 'invocation_count_mismatch', 'identity_pairing_ambiguous', 'acp_identity_missing',
     'run_scope_mismatch', 'bridge_call_id_missing', 'bridge_scope_rejected', 'bridge_time_invalid',
@@ -419,12 +509,11 @@ test('Cordis binding projection reports exact static reason counts and never lea
     'native_audit_tool_mismatch', 'native_audit_out_of_run', 'native_audit_rejected'].includes(row.outcome)))
 })
 
-test('Cordis binding projection uses the first terminal transition for repeated identical calls', () => {
+test('Cordis binding projection uses exact ACP identities for repeated identical calls', () => {
   const input = fixture(), nativeCallId = '22222222-2222-4222-8222-222222222222'
   input.toolEvents.push({ ...input.toolEvents[0], at_ms: 3100, tool_call_id: 'second-acp-call' })
   input.toolEvents.push({ ...input.toolEvents[1], at_ms: 3500, tool_call_id: 'second-acp-call' })
-  input.toolEvents.push({ ...input.toolEvents[1], at_ms: 3600 })
-  input.toolBridgeCalls.push({ ...input.toolBridgeCalls[0], call_id: nativeCallId, started_at_ms: 3200, completed_at_ms: 3400 })
+  input.toolBridgeCalls.push({ ...input.toolBridgeCalls[0], call_id: nativeCallId, acp_call_id: 'second-acp-call', started_at_ms: 3200, completed_at_ms: 3400 })
   input.nativeAudit.push({ ...input.nativeAudit[0], call_id: nativeCallId })
   const projection = summarizeCordisBindingDiagnostics(input)
   assert.deepEqual(projection.counts.filter(row => row.stage === 'acp_to_bridge'), [
@@ -577,7 +666,7 @@ const negativeFixtures = [
   }, 'cordis_tool_arguments_or_identity_missing_or_unmatched'],
   ['unbound ACP CAD call is rejected', f => {
     f.toolEvents.push({ ...f.toolEvents[0], tool_call_id: 'extra-call|44444444-4444-4444-8444-444444444444' })
-  }, 'cad_tool_rejected_unbound_or_unaudited'],
+  }, 'cordis_tool_arguments_or_identity_missing_or_unmatched'],
   ['ACP tool name mismatch cannot prove bridge call', f => { f.toolEvents.forEach(event => { event.title = 'cad_preview_model' }) }, 'cad_tool_rejected_unbound_or_unaudited'],
   ['ACP failed update remains a hard failure after Rust success', f => { f.toolEvents[1].status = 'failed' }, 'tool_call_rejected_or_failed'],
   ['missing ACP argument fingerprint fails closed', f => { delete f.toolEvents[0].arguments_sha256_24 }, 'cordis_tool_arguments_or_identity_missing_or_unmatched'],

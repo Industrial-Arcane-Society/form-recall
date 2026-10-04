@@ -168,53 +168,31 @@ export function summarizeCordisBindingDiagnostics(input = {}) {
   const acpCalls = [...groups.values()].filter(event => safeToolName(event.tool) !== 'unknown')
   const keyFor = row => coldstartToolNames.has(row.tool) && /^[a-f0-9]{24}$/.test(row.arguments_sha256_24 || '')
     ? `${row.tool}\u0000${row.arguments_sha256_24}` : null
-  const acpByKey = new Map(), bridgeByKey = new Map()
-  for (const event of acpCalls) {
-    const key = keyFor(event)
-    if (key) acpByKey.set(key, [...(acpByKey.get(key) || []), event])
+  const acpById = new Map()
+  for (const event of acpCalls) if (nonempty(event.tool_call_id)) {
+    acpById.set(event.tool_call_id, [...(acpById.get(event.tool_call_id) || []), event])
   }
-  for (const call of rows(toolBridgeCalls)) {
-    const key = keyFor(call)
-    if (key) bridgeByKey.set(key, [...(bridgeByKey.get(key) || []), call])
-  }
-  const pairedKeys = new Set()
+  const bridgeIds = new Set()
   const validIdentity = (call, event) => event?.starts === 1 && nonempty(event.tool_call_id)
+    && call.acp_call_id === event.tool_call_id && keyFor(call) !== null && keyFor(call) === keyFor(event)
     && call.run_id === run.id && call.session_id === run.tool_session_id && call.turn_id === run.turn_id
-    && nonempty(call.call_id)
-  for (const key of new Set([...acpByKey.keys(), ...bridgeByKey.keys()])) {
-    const acp = acpByKey.get(key) || [], bridge = bridgeByKey.get(key) || []
-    if (acp.length === 1 && bridge.length === 1) {
-      if (validIdentity(bridge[0], acp[0])) pairedKeys.add(key)
-      continue
-    }
-    if (!acp.length || acp.length !== bridge.length) continue
-    const candidatesByBridge = bridge.map(call => acp.filter(event => validIdentity(call, event)
-      && hasSingleTerminalStatus(event) && Number.isFinite(event.started_at_ms) && Number.isFinite(event.terminal_at_ms)
-      && event.terminal_at_ms >= event.started_at_ms && Number.isFinite(call.started_at_ms)
-      && Number.isFinite(call.completed_at_ms) && call.completed_at_ms >= call.started_at_ms
-      && call.started_at_ms >= event.started_at_ms && call.completed_at_ms <= event.terminal_at_ms))
-    const candidatesByAcp = acp.map(event => candidatesByBridge.flatMap((candidateRows, index) => candidateRows.includes(event) ? [index] : []))
-    if (!candidatesByBridge.some(candidateRows => candidateRows.length !== 1)
-      && !candidatesByAcp.some(candidateRows => candidateRows.length !== 1)) pairedKeys.add(key)
-  }
+    && nonempty(call.call_id) && event.terminal_updates === 1 && hasSingleTerminalStatus(event)
 
   for (const call of rows(toolBridgeCalls)) {
-    const name = safeToolName(call.tool), key = keyFor(call), acp = key ? acpByKey.get(key) || [] : []
+    const name = safeToolName(call.tool), key = keyFor(call)
     let outcome
     if (name === 'unknown') outcome = 'tool_name_not_allowlisted'
     else if (!key) outcome = 'correlation_fingerprint_missing'
-    else if (!acp.length) outcome = 'acp_call_missing'
-    else if (acp.length !== (bridgeByKey.get(key) || []).length) outcome = 'invocation_count_mismatch'
+    else if (!nonempty(call.acp_call_id)) outcome = 'acp_identity_missing'
+    else if (!acpById.has(call.acp_call_id)) outcome = 'acp_call_missing'
     else if (call.run_id !== run.id || call.session_id !== run.tool_session_id || call.turn_id !== run.turn_id) outcome = 'run_scope_mismatch'
-    else if (!acp.some(event => validIdentity(call, event))) outcome = 'acp_identity_missing'
-    else if (!pairedKeys.has(key)) outcome = 'identity_pairing_ambiguous'
+    else if ((acpById.get(call.acp_call_id) || []).length !== 1 || !validIdentity(call, acpById.get(call.acp_call_id)?.[0])) outcome = 'identity_pairing_ambiguous'
+    else if (bridgeIds.has(call.acp_call_id)) outcome = 'identity_pairing_ambiguous'
     else outcome = 'matched'
+    bridgeIds.add(call.acp_call_id)
     bump(name, 'acp_to_bridge', outcome)
   }
-  for (const [key, acp] of acpByKey) {
-    const bridgeCount = (bridgeByKey.get(key) || []).length
-    if (bridgeCount < acp.length) bump(acp[0].tool, 'acp_to_bridge', 'bridge_call_missing', acp.length - bridgeCount)
-  }
+  for (const event of acpCalls) if (!rows(toolBridgeCalls).some(call => call.acp_call_id === event.tool_call_id)) bump(event.tool, 'acp_to_bridge', 'bridge_call_missing')
   for (const event of missingAcpIdentity) bump(event.title, 'acp_to_bridge', 'acp_identity_missing')
   for (const event of acpCalls) if (!keyFor(event)) bump(event.tool, 'acp_to_bridge', 'correlation_fingerprint_missing')
 
@@ -289,7 +267,7 @@ export async function createAuditedToolProxy({ address, token, sessionId, turnId
         rpcId = request.id
         if (request.method === 'tools/call') record = {
           run_id: runId, session_id: p.sessionId, turn_id: p.turnId,
-          call_id: p.toolCallId, tool: p.name, started_at_ms: Date.now(),
+          call_id: p.toolCallId, acp_call_id: p.acpCallId, tool: p.name, started_at_ms: Date.now(),
           arguments_sha256_24: toolArgumentsFingerprint(p.arguments),
           authenticated_scope: p.token === token && p.sessionId === sessionId && p.turnId === turnId,
         }
@@ -438,55 +416,27 @@ export function evaluateColdstartGates(input) {
   const acpCadIdentityMissing = acpEventsMissingIdentity.length > 0
   const correlationKey = row => nonempty(row.tool) && /^[a-f0-9]{24}$/.test(row.arguments_sha256_24 || '')
     ? `${row.tool}\u0000${row.arguments_sha256_24}` : null
-  const bridgeCallsByKey = new Map(), acpCallsByKey = new Map()
-  for (const call of calls) {
-    const key = correlationKey(call)
-    if (key) bridgeCallsByKey.set(key, [...(bridgeCallsByKey.get(key) || []), call])
-  }
-  for (const event of observedCadTools) {
-    const key = correlationKey(event)
-    if (key) acpCallsByKey.set(key, [...(acpCallsByKey.get(key) || []), event])
-  }
-  // ACP IDs and native UUIDs differ. Join invocations by exact tool name and
-  // normalized argument digest in the same run/turn; then bind each bridge UUID
-  // independently to its Rust audit row below.
+  // Carry the ACP ID separately from the native UUID. Missing or duplicate IDs
+  // fail closed; timestamps and argument-only matching are never a fallback.
   const pairedCallIds = new Map()
   const argumentsAndIdentityPresent = calls.every(call => correlationKey(call) !== null && nonempty(call.call_id)
+    && nonempty(call.acp_call_id)
     && call.run_id === run.id && call.session_id === run.tool_session_id && call.turn_id === run.turn_id)
     && observedCadTools.every(event => correlationKey(event) !== null && nonempty(event.tool_call_id) && event.starts === 1)
-  const allInvocationsPaired = [...new Set([...bridgeCallsByKey.keys(), ...acpCallsByKey.keys()])].every(key => {
-    const native = bridgeCallsByKey.get(key) || [], acp = acpCallsByKey.get(key) || []
-    if (native.length !== acp.length) return false
-    const validIdentity = (call, event) => event?.starts === 1 && nonempty(event.tool_call_id)
-      && call.run_id === run.id && call.session_id === run.tool_session_id && call.turn_id === run.turn_id
-      && nonempty(call.call_id)
-    let pairs
-    if (native.length === 1) pairs = [[native[0], acp[0]]]
-    else {
-      // Repeated identical calls have no identity in common across ACP and the
-      // native bridge. Disambiguate only when each bridge interval is wholly
-      // contained in exactly one complete ACP invocation interval, and vice
-      // versa. Missing, overlapping, or merely ordered timestamps stay ambiguous.
-      const candidatesByNative = native.map(call => acp.filter(event => validIdentity(call, event)
-        && hasSingleTerminalStatus(event) && Number.isFinite(event.started_at_ms)
-        && Number.isFinite(event.terminal_at_ms) && event.terminal_at_ms >= event.started_at_ms
-        && Number.isFinite(call.started_at_ms) && Number.isFinite(call.completed_at_ms)
-        && call.completed_at_ms >= call.started_at_ms
-        && call.started_at_ms >= event.started_at_ms && call.completed_at_ms <= event.terminal_at_ms))
-      const candidatesByAcp = acp.map(event => candidatesByNative.flatMap((candidates, nativeIndex) =>
-        candidates.includes(event) ? [nativeIndex] : []))
-      if (candidatesByNative.some(candidates => candidates.length !== 1)
-        || candidatesByAcp.some(candidates => candidates.length !== 1)) return false
-      pairs = candidatesByNative.map((candidates, nativeIndex) => [native[nativeIndex], candidates[0]])
-    }
-    const groupPairs = pairs.map(([call, event]) => {
-      if (!validIdentity(call, event)) return null
-      return [call.call_id, event]
-    })
-    if (groupPairs.some(pair => !pair)) return false
-    for (const [callId, event] of groupPairs) pairedCallIds.set(callId, event)
+  const byAcpId = new Map()
+  for (const event of observedCadTools) byAcpId.set(event.tool_call_id, [...(byAcpId.get(event.tool_call_id) || []), event])
+  const allInvocationsPaired = calls.every(call => {
+    const matches = byAcpId.get(call.acp_call_id) || []
+    const event = matches.length === 1 ? matches[0] : null
+    if (!event || correlationKey(call) !== correlationKey(event) || event.starts !== 1 || event.terminal_updates !== 1
+      || !hasSingleTerminalStatus(event) || call.run_id !== run.id
+      || call.session_id !== run.tool_session_id || call.turn_id !== run.turn_id || !nonempty(call.call_id)) return false
+    pairedCallIds.set(call.call_id, event)
     return true
   }) && argumentsAndIdentityPresent && observedCadTools.length === calls.length
+    && new Set(calls.map(call => call.acp_call_id)).size === calls.length
+    && observedCadTools.every(event => (byAcpId.get(event.tool_call_id) || []).length === 1
+      && calls.some(call => call.acp_call_id === event.tool_call_id))
   const pairedOnce = pairedCallIds.size === calls.length && new Set(calls.map(call => call.call_id)).size === calls.length
   const schemaNames = new Set(rows(schema?.tools).map(row => row.name))
   const registrationNames = new Set(rows(registration?.registeredToolNames))
@@ -521,7 +471,7 @@ export function evaluateColdstartGates(input) {
     acpResultReasons.push('acp_cad_tool_result_failed')
   }
   if (observedCadTools.some(event => event.terminal_statuses?.length > 1
-    || (event.terminal_updates > 0 && !hasSingleTerminalStatus(event)))) {
+    || (event.terminal_updates > 0 && (!hasSingleTerminalStatus(event) || event.terminal_updates !== 1)))) {
     acpResultReasons.push('acp_cad_tool_result_terminal_status_invalid')
   }
   gates.acp_cad_tool_results = { status: acpResultReasons.length ? 'failed' : 'passed', reasons: acpResultReasons }

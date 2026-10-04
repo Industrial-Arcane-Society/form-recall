@@ -380,7 +380,7 @@ export function createToolBridgeClient({
   })
 
   return {
-    async callTool(toolName, args, signal) {
+    async callTool(toolName, args, signal, acpCallId) {
       if (!/^[a-z][a-z0-9_]{0,63}$/.test(toolName)) throw new Error(`Invalid AI Modeler tool name "${toolName}".`)
       if (signal?.aborted) throw abortError(signal)
 
@@ -390,6 +390,7 @@ export function createToolBridgeClient({
         token,
         sessionId,
         toolCallId,
+        ...(typeof acpCallId === 'string' && acpCallId.trim() ? { acpCallId } : {}),
         ...(turnId ? { turnId } : {}),
         name: toolName,
         arguments: args,
@@ -475,7 +476,7 @@ export function apply(ctx) {
       },
       timeoutMs: TOOL_TIMEOUT_MS,
       async execute(args, exec) {
-        const result = await client.callTool(tool.name, args, exec.signal)
+        const result = await client.callTool(tool.name, args, exec.signal, exec?.callId)
         if (!isRecord(result)) throw new Error(`AI Modeler tool bridge returned an invalid result for ${tool.name}.`)
         const images = Array.isArray(result.images) ? result.images : []
         recordToolResultDiagnostic(diagnosticPath, {

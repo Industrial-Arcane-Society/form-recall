@@ -157,7 +157,9 @@ test('Cordis tools register from Rust schema manifest and call the local bridge 
     assert.match(registered[0].parameters.sources.description, /additionalProperties schema=/)
     assert.match(registered[0].parameters.sources.description, /CADPlan provenance value/)
 
-    const output = await registered[0].execute({ view: 'front', generation: 4 }, { signal: new AbortController().signal })
+    const output = await registered[0].execute({ view: 'front', generation: 4 }, {
+      signal: new AbortController().signal, callId: 'acp-call-fixture-42',
+    })
     assert.equal(output.text, 'front preview ready')
     assert.deepEqual(output.payload, { previewGeneration: 4 })
     assert.deepEqual(output.imageAttachments, ['attachment-preview-4'])
@@ -175,6 +177,7 @@ test('Cordis tools register from Rust schema manifest and call the local bridge 
     assert.match(request.params.toolCallId, /^[0-9a-f-]{36}$/i)
     assert.equal(request.params.turnId, 'turn-fixture-42')
     assert.equal(request.params.name, 'cad_preview_model')
+    assert.equal(request.params.acpCallId, 'acp-call-fixture-42')
     assert.deepEqual(request.params.arguments, { view: 'front', generation: 4 })
     assert.ok(request.params.deadlineMs > Date.now())
     assert.deepEqual(JSON.parse(fs.readFileSync(fixture.registrationPath, 'utf8')).registeredToolNames, ['cad_preview_model'])
