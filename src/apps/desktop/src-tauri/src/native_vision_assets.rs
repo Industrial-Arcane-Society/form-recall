@@ -95,6 +95,9 @@ pub fn reference_input(
         .get("images")
         .and_then(Value::as_array)
         .ok_or("参考图清单缺少 images 数组。")?;
+    if rows.is_empty() {
+        return Err("参考图清单不包含任何图片。".into());
+    }
     if index == Some(0) {
         return Err("reference_image_index 从 1 开始。".into());
     }
@@ -102,8 +105,12 @@ pub fn reference_input(
         rows.iter()
             .position(|row| row["id"].as_str() == Some(id))
             .ok_or("reference_id 不在当前会话原图清单中。")?
+    } else if let Some(index) = index {
+        index.checked_sub(1).ok_or("图片索引无效。")?
+    } else if rows.len() == 1 {
+        0
     } else {
-        index.unwrap_or(1).checked_sub(1).ok_or("图片索引无效。")?
+        return Err("存在多张参考图时必须指定 reference_id 或 reference_image_index。".into());
     };
     if reference_id.is_some() && index.is_some_and(|i| i != selected + 1) {
         return Err("reference_id 与 reference_image_index 指向不同原图。".into());
@@ -254,6 +261,51 @@ mod tests {
         )
         .unwrap();
         (root, manifest, bytes, id)
+    }
+    #[test]
+    fn omitted_reference_selects_only_single_image_and_rejects_ambiguous_or_empty_manifest() {
+        let (dir, manifest, first_bytes, first_id) = fixture();
+        let single = reference_input(&manifest, None, None, None).unwrap();
+        assert_eq!(single.reference_index, 1);
+        assert_eq!(single.image.reference_id.as_deref(), Some(first_id.as_str()));
+        assert_eq!(single.image.bytes, first_bytes);
+
+        let mut second_output = Cursor::new(Vec::new());
+        DynamicImage::ImageRgb8(image::RgbImage::from_pixel(
+            4,
+            3,
+            image::Rgb([200, 10, 30]),
+        ))
+        .write_to(&mut second_output, ImageFormat::Png)
+        .unwrap();
+        let second_bytes = second_output.into_inner();
+        let second_sha = digest(&second_bytes);
+        let second_id = format!("sha256:{second_sha}");
+        let second_path = dir.join("second.png");
+        fs::write(&second_path, &second_bytes).unwrap();
+        let mut manifest_value: Value =
+            serde_json::from_slice(&fs::read(&manifest).unwrap()).unwrap();
+        manifest_value["images"].as_array_mut().unwrap().push(json!({
+            "id": second_id,
+            "sha256": second_sha,
+            "path": second_path,
+            "filename": "second.png",
+            "media_type": "image/png"
+        }));
+        fs::write(&manifest, serde_json::to_vec(&manifest_value).unwrap()).unwrap();
+
+        let ambiguous = reference_input(&manifest, None, None, None)
+            .err()
+            .unwrap();
+        assert!(ambiguous.contains("存在多张参考图"), "{ambiguous}");
+        let selected = reference_input(&manifest, None, Some(2), None).unwrap();
+        assert_eq!(selected.reference_index, 2);
+        assert_eq!(selected.image.bytes, second_bytes);
+
+        fs::write(&manifest, br#"{"images":[]}"#).unwrap();
+        let empty = reference_input(&manifest, None, None, None).err().unwrap();
+        assert!(empty.contains("不包含任何图片"), "{empty}");
+        fs::remove_dir_all(dir).unwrap();
     }
     #[test]
     fn originals_preserve_bytes_and_roi_is_memory_only_with_distinct_hash() {

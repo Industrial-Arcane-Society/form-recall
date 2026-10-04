@@ -955,9 +955,6 @@ pub async fn review(
         return Err("当前预览geometry fingerprint与CADPlan不一致。".into());
     }
     let reference_index = reference_index_arg(args)?;
-    if nonempty_string(&args["reference_id"]).is_none() && reference_index.is_none() {
-        return Err("复核必须明确指定 reference_id 或 reference_image_index。".into());
-    }
     let reference = native_vision_assets::reference_input(
         &ctx.reference_manifest,
         nonempty_string(&args["reference_id"]),
@@ -2607,9 +2604,11 @@ mod tests {
                     "status":"mismatch","mismatch_severity":"major","affected_feature_ids":[affected]}]
             })]);
             let result = run(review(&session.state,
-                &json!({"view":"front","preview_generation":9,"reference_id":session.reference_id}),
+                &json!({"view":"front","preview_generation":9}),
                 &provider(base_url),&AtomicBool::new(false),&session.context)).unwrap();
             server.join().unwrap();
+            assert_eq!(result.value["reference_image_index"], 1);
+            assert_eq!(result.value["reference_id"], session.reference_id);
             assert_eq!(result.value["evidence"][0]["status"], expected_status);
             assert_eq!(result.value["covered_evidence_ids"],json!([]));
             assert_eq!(result.value["finding_lifecycle"]["binding_status"],"current");
