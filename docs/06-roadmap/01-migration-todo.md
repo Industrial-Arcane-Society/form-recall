@@ -73,6 +73,10 @@
 
 Coldstart runner 已采用默认且唯一发布 safe gate summary、ACP/Cordis allowlist projection、固定 enums/reason counts 和有界 scratch 清理；相关合成测试及安全 sentinel 回归已通过。Run16 历史结果见[独立诊断](./67-f7-g8-run-16-diagnosis.md)。Run22 证明精确 ACP↔Cordis 调用关联在真实运行中有 24 组匹配，但整轮 DSH/几何/孔/视觉/finish strict gate 仍失败。静态审查确认 finish schema/路由、提示词要求及 candidate 保存路径存在；Run22 的 safe artifacts 不含工具顺序或 finish 请求/结果，因此未 finish 的具体原因仍未知。细分诊断已通过 123 项合成 gate 测试；Run23 正使用含细分诊断的固定 commit、新 detached worktree 和全新 output dir，以默认原图与 prompt 运行，仅审阅 allowlist 输出。不得从 gate reasons 推断视觉内容或具体形状差异；F7 在真实链路 strict 通过前不得标记完成。
 
+## 2026-10-04 Main 分支合并核对
+
+已检查本地未并入分支的内容；重复实现和旧链路分支不整支合并，独有的 F0 CLI 与 F6 包抽取验收记录已合入并推送。详细范围、提交和仍待验收项见 [Main 分支合并核对](./87-main-branch-reconciliation.md)。
+
 ## F6 子任务与验收顺序
 
 | ID | 优先级 | Feature | 完成条件 / 提交边界 |
