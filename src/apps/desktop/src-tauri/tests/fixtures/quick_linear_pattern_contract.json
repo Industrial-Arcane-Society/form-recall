@@ -1,0 +1,15 @@
+{
+  "legacy_accepted": [
+    {
+      "input": "圆柱 直径30mm 长50mm，沿X方向阵列4个，间距40mm",
+      "source_kind": "cylinder",
+      "pattern": {
+        "mode": "linear",
+        "count": 4,
+        "axis": "X",
+        "step": [40.0, 0.0, 0.0]
+      },
+      "legacy_flags": {"compound": false, "stack": true}
+    }
+  ]
+}

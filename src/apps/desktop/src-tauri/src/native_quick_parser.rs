@@ -118,8 +118,8 @@ pub fn parse(text: &str) -> Value {
         ("倒角", "圆角/倒角尚未迁入 Quick 基础解析范围。"),
         ("fillet", "圆角/倒角尚未迁入 Quick 基础解析范围。"),
         ("chamfer", "圆角/倒角尚未迁入 Quick 基础解析范围。"),
-        ("array", "阵列尚未迁入 Quick 基础解析范围。"),
-        ("阵列", "阵列尚未迁入 Quick 基础解析范围。"),
+        ("array", "当前仅支持显式线性阵列；圆周及其他阵列语法尚未支持。"),
+        ("阵列", "当前仅支持显式线性阵列；圆周及其他阵列语法尚未支持。"),
         ("thread", "螺纹紧固件尚未迁入 Quick 基础解析范围。"),
         ("螺纹", "螺纹紧固件尚未迁入 Quick 基础解析范围。"),
         (
@@ -143,7 +143,12 @@ pub fn parse(text: &str) -> Value {
             "旧 Quick 可解析叶盘，但当前原生几何执行器不支持 loft；已拒绝，不生成不完整模型。",
         ),
     ] {
-        if normalized.contains(word) {
+        let explicit_linear_array = contains_any(&normalized, &["阵列", "linear array"])
+            && regex::Regex::new(r"(?:阵列|linear\s+array)\s*[0-9]+\s*(?:个|份|次)?")
+                .is_ok_and(|re| re.is_match(&normalized));
+        if normalized.contains(word)
+            && !(explicit_linear_array && (word == "array" || word == "阵列"))
+        {
             unsupported.push(issue("unsupported_feature", explanation));
         }
     }
@@ -225,6 +230,36 @@ pub fn parse(text: &str) -> Value {
         } else if let Some(feature) = build_slot(&cut_text, text, i, &mut questions, &mut warnings)
         {
             features.push(feature);
+        }
+    }
+
+    let linear_pattern_requested = contains_any(&normalized, &["阵列", "linear array"]);
+    if linear_pattern_requested {
+        let count = regex::Regex::new(r"(?:阵列|linear\s+array)\s*([0-9]+)\s*(?:个|份|次)?")
+            .ok()
+            .and_then(|re| re.captures(&normalized))
+            .and_then(|captures| captures.get(1))
+            .and_then(|value| value.as_str().parse::<u64>().ok());
+        let axis = axis_value(&normalized, &mut questions);
+        let step = scalar(&normalized, &["spacing", "间距", "步距"]);
+        match (count, axis, step) {
+            (Some(count), Some(axis), Some(step)) if count >= 2 && count <= crate::native_plan_geometry::MAX_HOLE_PATTERN_COUNT && step.is_finite() && step > 0.0 => {
+                if let Some(source) = features.last() {
+                    let source_id = source["id"].as_str().unwrap_or("").to_owned();
+                    let operation = source["operation"].as_str().unwrap_or("add").to_owned();
+                    let vector = match axis { "X" => json!([step, 0.0, 0.0]), "Y" => json!([0.0, step, 0.0]), _ => json!([0.0, 0.0, step]) };
+                    features.push(json!({
+                        "id":format!("quick-{:04}", features.len() + 1), "kind":"pattern",
+                        "operation":operation, "name":"线性阵列",
+                        "parameters":{"mode":"linear", "count":count, "axis":axis, "step":vector},
+                        "sources":{"count":user_source(text), "axis":user_source(text), "step":user_source(text)},
+                        "relations":[{"type":"pattern_source", "feature_id":source_id}]
+                    }));
+                } else {
+                    questions.push(issue("linear_pattern_source_missing", "线性阵列前必须先定义一个基础或切除特征。"));
+                }
+            }
+            _ => questions.push(issue("linear_pattern_needs_explicit_values", "线性阵列需明确阵列数量、X/Y/Z 方向和正间距。")),
         }
     }
 
@@ -1968,6 +2003,37 @@ mod tests {
             let output = parse(case["input"].as_str().unwrap());
             assert_eq!(output["status"], case["status"], "{}: {output}", case["input"]);
             assert!(output["plan"].is_null(), "rejected input must not yield a plan: {output}");
+        }
+    }
+
+    #[test]
+    fn explicit_linear_pattern_matches_python_oracle_and_rejects_incomplete_requests() {
+        let fixture: Value = serde_json::from_str(include_str!("../tests/fixtures/quick_linear_pattern_contract.json")).unwrap();
+        for case in fixture["legacy_accepted"].as_array().unwrap() {
+            let input = case["input"].as_str().unwrap();
+            let output = parse(input);
+            assert_eq!(output["status"], "ready", "{output}");
+            let plan = &output["plan"];
+            let validation = crate::cad_plan_validation::validate_plan(plan);
+            assert_eq!(validation["state"], "valid", "{validation}");
+            let features = plan["features"].as_array().unwrap();
+            assert_eq!(features[0]["kind"], case["source_kind"]);
+            let pattern = features.last().unwrap();
+            for (key, value) in case["pattern"].as_object().unwrap() {
+                assert_eq!(pattern["parameters"][key], *value, "{key}");
+            }
+            assert_eq!(pattern["kind"], "pattern");
+            assert_eq!(pattern["operation"], "add");
+            assert_eq!(pattern["relations"][0]["feature_id"], features[0]["id"]);
+        }
+        for input in [
+            "圆柱 直径30mm 长50mm，沿X方向阵列4个",
+            "圆柱 直径30mm 长50mm，阵列4个，间距40mm",
+            "圆柱 直径30mm 长50mm，沿X方向阵列1个，间距40mm",
+        ] {
+            let output = parse(input);
+            assert_eq!(output["status"], "needs_clarification", "{output}");
+            assert!(output["plan"].is_null(), "{output}");
         }
     }
 
