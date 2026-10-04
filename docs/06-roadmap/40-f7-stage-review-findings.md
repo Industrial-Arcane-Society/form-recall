@@ -15,11 +15,13 @@
 - 保存首次revision、最后mismatch revision、引用/模型证据、差异、严重性、建议和版本绑定历史；已关闭问题再次出现会重新 open并保留历史。
 - 旧缓存没有 finding_lifecycle 标记时不复用，避免迁移前未归属 review绕过新规则。
 
-## 新版关闭条件
+## 新版关闭条件与 observation 刷新
 
-必须是更新revision、更新几何fingerprint、更新preview SHA和pair fingerprint，且原图/source SHA、observation ID/fingerprint、用户目标fingerprint与视角不变；exact match须引用同一evidence ID及同一受影响feature集合。当前施工阶段完整、全部启用特征在scope内、非partial，宿主 coverage integrity且coverage verified、该evidence已covered，才可以关闭。
+必须是更新revision、更新几何fingerprint、更新preview SHA和pair fingerprint，且原图/source SHA、用户目标fingerprint与视角不变；exact match须引用同一evidence ID及同一受影响feature集合。observation 刷新后允许受控重新绑定：当前与历史 inventory 中必须各自有唯一、非空的结构化 `source_evidence_id`，且值一致；evidence ID 与 observation 版本仍分别记录，不跨版本替换历史记录。`observation-{index}-{description-hash}` 合成 ID、空 ID、重复 ID 或历史记录冲突均不能用于自动重绑，finding 保持 unresolved 并标记需人工确认。禁止用 item、reference/model 描述或 difference 等自由文本近似配对。
 
-只改几何不能关闭问题。同revision match、旧preview、新observation、未映射、范围外、空覆盖、partial、不完整阶段、目标变化或无归属 review均不能关闭。关闭记录保存closure binding，而不是仅删除问题。
+当前施工阶段完整、全部启用特征在scope内、非partial，宿主 coverage integrity且coverage verified、该evidence已covered，才可以关闭。新版 mismatch 会把旧 finding 绑定到当前 observation 并保持 open；只有之后完整、当前且匹配的几何 review 才能关闭。
+
+只改几何不能关闭问题。同revision match、旧preview、无法安全映射的新observation、未映射、范围外、空覆盖、partial、不完整阶段、SHA/目标/视角/affected feature变化或无归属 review均不能关闭。关闭记录保存 closure binding 和新旧 evidence ID，历史 binding 保留原 observation 版本。
 
 ## 两条 deterministic 验收
 
