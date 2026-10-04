@@ -53,3 +53,11 @@ Rust 按显式 `AIMODELER_OCCT_MANIFEST`、安装资源、开发资源依次定�
   - `AI Modeler_0.1.0_x64_zh-CN.msi`：39,674,013 bytes，SHA-256 `7EA365DC78E80C13C66B711DB9464C4EC45A020A6F5F23EE82E11FD1B0A8ACFC`。
   - `AI Modeler_0.1.0_x64-setup.exe`：31,605,294 bytes，SHA-256 `B2102A2413E086DDD43F627E29D5A9DC3AFD481F1E3539D763D7152830A28C44`。
 - 修复代码的 Node 定向测试 7/7、Rust runtime 定向测试 7/7、PowerShell builder/manifest AST 检查通过。安装包尚未安装运行；干净用户/机器、安装后 DSH Agent 无全局 Python/Node 冷启动、CATIA COM/B-Rep 验收仍未完成。
+
+## 2026-10-04：最终 MSI/NSIS 静态抽取与包内 Quick smoke
+
+- 对应源码提交为 `b74925d5504524be58eb673a5f241db0323fbcb2`。当前文档集成 HEAD `d11ad84af28f41180186657af87f4ba5f4007fdb` 相对该源码提交仅有 Todo/F4/F6.7 三个文档差异；MSI/NSIS 的代码版本与当前集成源码一致。
+- MSI（39,674,013 bytes，SHA-256 `7EA365DC78E80C13C66B711DB9464C4EC45A020A6F5F23EE82E11FD1B0A8ACFC`）使用 Windows Installer 管理抽取至 `%TEMP%\f6-package-admin-extract-20261004`；NSIS（31,605,294 bytes，SHA-256 `B2102A2413E086DDD43F627E29D5A9DC3AFD481F1E3539D763D7152830A28C44`）使用本机 7-Zip 26.00 静态抽取至 `%TEMP%\f6-nsis-static-extract-20261004`。两种包均含桌面 exe、headless smoke exe、Python runtime、`occt-runtime` 与 `app/packaging/dsh-runtime`；OCCT runtime 含 bridge、TKOffset、TKFillet 与 manifest。未运行安装 GUI 或安装到主机。
+- 两个抽取目录的 `ai-modeler-headless-smoke.exe` 分别以各自抽出的 `app/` 为 resource root 运行，PATH 仅含 `%SystemRoot%\System32`，并清除 `PYTHONPATH`、`PYTHONHOME`、`NODE_PATH`、`AIMODELER_PYTHON` 与 `AIMODELER_OCCT_MANIFEST`。MSI 与 NSIS smoke 均返回 `status=ok`、`native_quick → OCCT → active_model_commit`、一个闭合实体、尺寸 100×60×20 mm、`globalPythonRequired=false`、`globalNodeRequired=false`，且未启动 Python/Node 子进程；AIMODEL、GLB、OBJ、STL 输出成功。
+- 两种包均含 DSH `runtime-manifest.json`、`package.json` 与 `package-lock.json`。manifest 中 package.json SHA-256 `19b3545689e15956aaab1b760dc4c99b7736cc2f29b1640d1dd23ac0fb4f1c6d` 和 package-lock SHA-256 `15e46d8cdbc966f833527f3d3878443f03639fdf4036f1c5a5fddf90ae943ada` 与抽取文件实算值一致；清单固定 Node `v22.23.3`、npm `10.9.9`、DSH/ACP `0.2.0-rc.2`。包内没有 `node.exe` 或 `node_modules`，当前实现是在首次 DSH runtime 初始化时下载并校验 Node archive，再在用户私有目录运行 `npm ci`。
+- **验收边界：**已验证两种安装包可静态抽取、包含所声明资源，且抽出的 CLI smoke 可在 System32-only PATH 调用打包 OCCT 完成 Quick 几何。未启动 `ai-modeler.exe`、未安装 MSI/NSIS、未执行 DSH Node 下载/npm 安装或 Agent/provider 冷启动，也未验证 CATIA COM、干净 Windows 用户/机器安装。
