@@ -17,4 +17,4 @@
 
 ## 验收边界
 
-`cargo test --offline --lib native_review_findings -- --test-threads=1` 编译了库和测试 EXE。需用 `TAURI_CONFIG={"bundle":{"resources":[]}}` 绕过本 worktree 没有打包资源目录的 build-script 检查；之后测试 EXE 未启动，Windows 返回 `0xc0000139 STATUS_ENTRYPOINT_NOT_FOUND`，因此本轮没有 Rust 断言结果。`git diff --check` 通过。针对该文件的 `rustfmt --check` 仍报告基线已有 import 排序及两处未修改测试代码格式差异；没有执行全文件或全仓格式化以免引入无关改动。未运行真实 DSH/provider，也未据此宣称 G5 的端到端运行验收完成。
+直接运行 Cargo 生成的测试 EXE 曾因缺少 Common Controls v6 activation manifest 返回 `0xc0000139 STATUS_ENTRYPOINT_NOT_FOUND`。在当前 `main` 上改用仓库 Windows wrapper：`pwsh -NoProfile -File src/apps/desktop/src-tauri/scripts/test-lib.ps1 -Offline -Filter 'native_review_findings::tests'`；wrapper 为测试 EXE 生成并嵌入 manifest，定向测试 **11 passed / 0 failed**，包括本项新增的跨 observation、人工 CAS 确认、更晚 revision 验证和既有同 observation 关闭用例。`git diff --check` 通过。未运行真实 DSH/provider；因此这项通过的是本地 Rust 生命周期逻辑测试，不是 Agent/provider 端到端验收。
