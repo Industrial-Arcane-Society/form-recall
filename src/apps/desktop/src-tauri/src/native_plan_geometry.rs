@@ -19,6 +19,8 @@ pub struct BuiltPlan {
 
 const MAX_PATTERN_COUNT: u64 = 10_000;
 const MAX_PATTERN_TRANSFORMED_TOOLS: usize = 100_000;
+/// PCD hole arrays are bounded separately from feature transform patterns.
+pub const MAX_HOLE_PATTERN_COUNT: u64 = 4096;
 
 /// Native plan-builder kinds. Keep this contract aligned with the dispatch
 /// branches in `build` and `feature_tools`; registry tests enforce parity.
@@ -1211,7 +1213,7 @@ fn hole_positions(
         }
         "pcd" => {
             let count = p.get("count").and_then(Value::as_u64).unwrap_or(4);
-            if count == 0 || count > 4096 {
+            if count == 0 || count > MAX_HOLE_PATTERN_COUNT {
                 return Err("孔阵列 count 超出几何资源上限。".into());
             }
             let radius = num(p, "pcd")? / 2.;
@@ -1466,6 +1468,50 @@ mod tests {
             hole_positions(&p, [0., 0., 0., 100., 80., 20.], 2, 10.).unwrap(),
             vec![[20., 20.], [80., 20.], [80., 60.], [20., 60.]]
         );
+    }
+
+    #[test]
+    fn pcd_hole_centers_use_global_origin_count_and_degree_phase() {
+        let pcd = json!({"pos":"pcd","pcd":60.0,"count":4});
+        let points = hole_positions(&pcd, [-50., -40., 0., 50., 40., 20.], 2, 10.)
+            .unwrap();
+        let expected = [[30., 0.], [0., 30.], [-30., 0.], [0., -30.]];
+        for (actual, expected) in points.iter().zip(expected) {
+            assert!((actual[0] - expected[0]).abs() < 1e-10);
+            assert!((actual[1] - expected[1]).abs() < 1e-10);
+        }
+
+        let phased = json!({"pos":"pcd","pcd":60.0,"count":4,"phase":30.0});
+        let points = hole_positions(&phased, [-50., -40., 0., 50., 40., 20.], 2, 10.)
+            .unwrap();
+        let radius = 30.0_f64;
+        let expected = [
+            [radius * 30.0_f64.to_radians().cos(), radius * 30.0_f64.to_radians().sin()],
+            [radius * 120.0_f64.to_radians().cos(), radius * 120.0_f64.to_radians().sin()],
+            [radius * 210.0_f64.to_radians().cos(), radius * 210.0_f64.to_radians().sin()],
+            [radius * 300.0_f64.to_radians().cos(), radius * 300.0_f64.to_radians().sin()],
+        ];
+        for (actual, expected) in points.iter().zip(expected) {
+            assert!((actual[0] - expected[0]).abs() < 1e-10);
+            assert!((actual[1] - expected[1]).abs() < 1e-10);
+        }
+
+        let maximum = json!({
+            "pos":"pcd",
+            "pcd":60.0,
+            "count":MAX_HOLE_PATTERN_COUNT
+        });
+        assert_eq!(
+            hole_positions(&maximum, [0.; 6], 2, 10.).unwrap().len(),
+            MAX_HOLE_PATTERN_COUNT as usize
+        );
+
+        let over_limit = json!({
+            "pos":"pcd",
+            "pcd":60.0,
+            "count":MAX_HOLE_PATTERN_COUNT + 1
+        });
+        assert!(hole_positions(&over_limit, [0.; 6], 2, 10.).is_err());
     }
 
     #[test]

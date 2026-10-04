@@ -1,0 +1,133 @@
+{
+  "source": "src/legacy/ai_modeler/core/parsing/nlparser.py via nlparser.parse(text).doc.to_dict(), captured 2026-10-04",
+  "legacy_accepted": [
+    {
+      "input": "长方体 长100宽80高20，均布4个直径10的通孔分度圆60",
+      "warnings": [],
+      "hole_index": 1,
+      "legacy_hole": {
+        "kind": "hole",
+        "op": "cut",
+        "params": {
+          "diameter": 10.0,
+          "through": true,
+          "axis": "Z",
+          "pos": "pcd",
+          "segments": 24,
+          "count": 4,
+          "pcd": 60.0
+        },
+        "provenance": {
+          "diameter": "explicit",
+          "count": "explicit",
+          "pcd": "explicit"
+        }
+      }
+    },
+    {
+      "input": "长方体 长100宽80高20，均布4个直径10的通孔节圆60",
+      "warnings": [],
+      "hole_index": 1,
+      "legacy_hole": {
+        "kind": "hole",
+        "op": "cut",
+        "params": {
+          "diameter": 10.0,
+          "through": true,
+          "axis": "Z",
+          "pos": "pcd",
+          "segments": 24,
+          "count": 4,
+          "pcd": 60.0
+        },
+        "provenance": {
+          "diameter": "explicit",
+          "count": "explicit",
+          "pcd": "explicit"
+        }
+      }
+    },
+    {
+      "input": "长方体 长100宽80高20，均布4个直径10的通孔分布圆60",
+      "warnings": [],
+      "hole_index": 1,
+      "legacy_hole": {
+        "kind": "hole",
+        "op": "cut",
+        "params": {
+          "diameter": 10.0,
+          "through": true,
+          "axis": "Z",
+          "pos": "pcd",
+          "segments": 24,
+          "count": 4,
+          "pcd": 60.0
+        },
+        "provenance": {
+          "diameter": "explicit",
+          "count": "explicit",
+          "pcd": "explicit"
+        }
+      }
+    }
+  ],
+  "native_phase_extension": {
+    "input": "长方体 长100宽80高20，均布4个直径10的通孔分度圆60相位30度",
+    "phase": 30.0,
+    "legacy_python_behavior": "phase is not emitted by the Python parser; Rust Quick treats this as an explicit degree-valued extension"
+  },
+  "native_rejected": [
+    {
+      "input": "长方体 长100宽80高20，均布4个直径10的通孔",
+      "issue": "hole_pcd_missing"
+    },
+    {
+      "input": "长方体 长100宽80高20，直径10通孔分度圆60",
+      "issue": "hole_pattern_count_missing"
+    },
+    {
+      "input": "长方体 长100宽80高20，均布4个通孔分度圆60",
+      "issue": "hole_diameter_missing"
+    },
+    {
+      "input": "长方体 长100宽80高20，均布4个直径10的通孔分度圆60孔数6",
+      "issue": "hole_pattern_count_conflict"
+    },
+    {
+      "input": "长方体 长100宽80高20，均布4个直径10的通孔分度圆60分度圆70",
+      "issue": "hole_pcd_conflict"
+    },
+    {
+      "input": "长方体 长100宽80高20，均布1个直径10的通孔分度圆60",
+      "issue": "hole_pattern_count_invalid"
+    },
+    {
+      "input": "长方体 长100宽80高20，均布0个直径10的通孔分度圆60",
+      "issue": "hole_pattern_count_invalid"
+    },
+    {
+      "input": "长方体 长100宽80高20，均布4097个直径10的通孔分度圆60",
+      "issue": "hole_pattern_count_invalid"
+    },
+    {
+      "input": "长方体 长100宽80高20，均布4个直径10的通孔分度圆0",
+      "issue": "hole_pcd_invalid"
+    },
+    {
+      "input": "长方体 长100宽80高20，均布4个直径10的通孔分度圆-60",
+      "issue": "hole_pcd_invalid"
+    },
+    {
+      "input": "长方体 长100宽80高20，均布4个直径10的通孔分度圆60相位",
+      "issue": "hole_phase_missing"
+    },
+    {
+      "input": "长方体 长100宽80高20，均布4个直径10的通孔分度圆60相位30相位45",
+      "issue": "hole_phase_conflict"
+    },
+    {
+      "input": "长方体 长100宽80高20，均布4个直径10的通孔分度圆60相位30弧度",
+      "issue": "hole_phase_unit_unsupported"
+    }
+  ]
+}

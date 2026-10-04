@@ -100,7 +100,10 @@ pub fn parse(text: &str) -> Value {
                 "Quick 四角孔与边距语法当前仅支持长方体基础形体。",
             ));
         }
-        if contains_any(clause, &["pcd", "分度圆", "均布", "equally spaced", "孔数"]) {
+        if contains_any(
+            clause,
+            &["pcd", "分度圆", "均布", "equally spaced", "孔数", "phase", "相位"],
+        ) {
             unsupported.push(issue(
                 "corner_hole_pattern_unsupported",
                 "四角孔当前固定生成四孔；与 PCD/均布/孔数阵列语法组合尚未支持。",
@@ -654,8 +657,8 @@ fn bolt_hole_diameter(text: &str) -> Option<f64> {
         .and_then(|capture| capture.get(1).or_else(|| capture.get(2)))
         .and_then(|value| value.as_str().parse::<f64>().ok())
 }
-fn issue(code: &str, message: &str) -> Value {
-    json!({"code":code,"message":message})
+fn issue(code: &str, message: impl Into<String>) -> Value {
+    json!({"code":code,"message":message.into()})
 }
 
 fn feature(id: usize, kind: &str, operation: &str, parameters: Value, sources: Value) -> Value {
@@ -1025,6 +1028,7 @@ fn build_hole(
         }
     }
     let corners = has_corner_location(clause);
+    let center = has_center_location(clause);
     let margin = scalar(
         clause,
         &[
@@ -1038,16 +1042,124 @@ fn build_hole(
             "内缩",
         ],
     );
-    let center = has_center_location(clause);
     let coords = center_coordinates(clause);
     let named = named_xyz(clause);
-    if (center || corners) && (coords.is_some() || named.is_some()) {
+    let pcd_hint = contains_any(
+        clause,
+        &["pcd", "分度圆", "节圆", "分布圆"],
+    );
+    let count_result = hole_pattern_count(clause);
+    let count_hint = contains_any(
+        clause,
+        &["hole count", "count", "孔数", "数量", "均布", "等分"],
+    ) || matches!(count_result, Ok(Some(_)) | Err(_));
+    let phase_hint = contains_any(clause, &["phase", "相位", "起始角"]);
+    let pattern_requested = !corners && (pcd_hint || count_hint || phase_hint);
+    if (center || corners || pattern_requested) && (coords.is_some() || named.is_some()) {
         questions.push(issue(
             "hole_position_conflict",
             "孔同时描述了规则位置（中心/四角）与坐标点。",
         ));
     }
-    if corners {
+    if pattern_requested && center {
+        questions.push(issue(
+            "hole_position_conflict",
+            "同一孔不能同时指定中心位置和 PCD 孔阵列。",
+        ));
+    }
+    if pattern_requested {
+        p.insert("pos".into(), json!("pcd"));
+        s.insert("pos".into(), user_source(raw));
+        match scalar(
+            clause,
+            &[
+                "pcd",
+                "分度圆直径",
+                "分度圆",
+                "节圆直径",
+                "节圆",
+                "分布圆直径",
+                "分布圆",
+            ],
+        ) {
+            Some(v) if v.is_finite() && v > 0.0 => {
+                add_user(&mut p, &mut s, raw, "pcd", json!(v));
+            }
+            Some(v) if !v.is_finite() => questions.push(issue(
+                "hole_pcd_conflict",
+                "PCD 孔阵列描述了互相冲突的分度圆直径。",
+            )),
+            Some(_) => questions.push(issue(
+                "hole_pcd_invalid",
+                "分度圆直径必须是有限的正数。",
+            )),
+            None => questions.push(issue(
+                "hole_pcd_missing",
+                "孔阵列缺少明确的 PCD/分度圆直径。",
+            )),
+        }
+        match count_result {
+            Ok(Some(count)) => {
+                p.insert("count".into(), json!(count));
+                s.insert("count".into(), user_source(raw));
+            }
+            Ok(None) => questions.push(issue(
+                "hole_pattern_count_missing",
+                "PCD 孔阵列缺少明确孔数。",
+            )),
+            Err("hole_pattern_count_conflict") => questions.push(issue(
+                "hole_pattern_count_conflict",
+                "PCD 孔阵列描述了互相冲突的孔数。",
+            )),
+            Err(_) => questions.push(issue(
+                "hole_pattern_count_invalid",
+                format!(
+                    "PCD 孔数必须是 2 到 {} 之间的整数。",
+                    crate::native_plan_geometry::MAX_HOLE_PATTERN_COUNT
+                ),
+            )),
+        }
+        p.insert("segments".into(), json!(24));
+        s.insert(
+            "segments".into(),
+            derived_source(raw, "沿用 Python Quick 孔特征圆周分段数 24。"),
+        );
+        if let Some(axis) = axis_value(clause, questions) {
+            add_user(&mut p, &mut s, raw, "axis", json!(axis));
+        } else {
+            p.insert("axis".into(), json!("Z"));
+            s.insert(
+                "axis".into(),
+                derived_source(raw, "未指定孔阵列轴时沿用 Python Quick 默认 Z 轴。"),
+            );
+        }
+        if phase_hint {
+            if phase_uses_radians(clause) {
+                questions.push(issue(
+                    "hole_phase_unit_unsupported",
+                    "PCD 孔阵列相位按角度处理；当前只接受度（°/deg/度），不接受弧度。",
+                ));
+            } else {
+                match scalar(clause, &["phase", "相位", "起始角"]) {
+                    Some(v) if v.is_finite() => {
+                        add_user(&mut p, &mut s, raw, "phase", json!(v));
+                        warnings.push(issue(
+                            "pcd_phase_native_extension",
+                            "孔阵列相位是 Rust Quick 扩展字段；旧 Python Quick 不解析该值。",
+                        ));
+                    }
+                    Some(_) => questions.push(issue(
+                        "hole_phase_conflict",
+                        "PCD 孔阵列描述了互相冲突的相位角。",
+                    )),
+                    None => questions.push(issue(
+                        "hole_phase_missing",
+                        "已指定相位，但没有给出明确的角度值。",
+                    )),
+                }
+            }
+        }
+    } else if corners {
         p.insert("pos".into(), json!("corners"));
         s.insert("pos".into(), user_source(raw));
         p.insert("segments".into(), json!(24));
@@ -1396,6 +1508,88 @@ fn scalar(s: &str, aliases: &[&str]) -> Option<f64> {
         Some(f64::NAN)
     }
 }
+
+fn hole_pattern_count(s: &str) -> Result<Option<u64>, &'static str> {
+    let mut found = Vec::<f64>::new();
+    for alias in ["hole count", "count", "孔数", "数量", "均布", "等分"] {
+        for (index, _) in s.match_indices(alias) {
+            let mut cursor = skip_ws(s, index + alias.len());
+            if s[cursor..].starts_with('=') || s[cursor..].starts_with(':') {
+                cursor += 1;
+                cursor = skip_ws(s, cursor);
+            }
+            if let Some((number, _)) = parse_number(s, cursor) {
+                if !number.unit.is_empty() {
+                    return Err("hole_pattern_count_invalid");
+                }
+                found.push(number.value);
+            }
+        }
+    }
+
+    // Support the legacy Mandarin form “打 4 个直径 10 的通孔”, while
+    // excluding size labels so “直径 10 个” can never become ten holes.
+    for (start, ch) in s.char_indices() {
+        if !ch.is_ascii_digit() && ch != '-' && ch != '+' {
+            continue;
+        }
+        if s[..start]
+            .chars()
+            .next_back()
+            .is_some_and(|previous| previous.is_ascii_digit() || previous == '.')
+        {
+            continue;
+        }
+        let Some((number, end)) = parse_number(s, start) else {
+            continue;
+        };
+        let before = s[..start].trim_end();
+        if ["直径", "diameter", "pcd", "分度圆", "分布圆", "节圆"]
+            .iter()
+            .any(|label| before.ends_with(label))
+        {
+            continue;
+        }
+        let cursor = skip_ws(s, end);
+        if ["个", "处", "颗", "枚", "只"]
+            .iter()
+            .any(|unit| s[cursor..].starts_with(unit))
+        {
+            found.push(number.value);
+        }
+    }
+
+    if found.is_empty() {
+        return Ok(None);
+    }
+    let first = found[0];
+    if found.iter().any(|value| !close(*value, first)) {
+        return Err("hole_pattern_count_conflict");
+    }
+    if !first.is_finite()
+        || first.fract() != 0.0
+        || first < 2.0
+        || first > crate::native_plan_geometry::MAX_HOLE_PATTERN_COUNT as f64
+    {
+        return Err("hole_pattern_count_invalid");
+    }
+    Ok(Some(first as u64))
+}
+
+fn phase_uses_radians(s: &str) -> bool {
+    for alias in ["phase", "相位", "起始角"] {
+        for (index, _) in s.match_indices(alias) {
+            let cursor = skip_ws(s, index + alias.len());
+            if let Some((_, end)) = parse_number(s, cursor) {
+                let unit = skip_ws(s, end);
+                if s[unit..].starts_with("rad") || s[unit..].starts_with("弧度") {
+                    return true;
+                }
+            }
+        }
+    }
+    false
+}
 fn diameter_value(s: &str) -> Option<f64> {
     let mut found = Vec::new();
     for a in ["diameter", "dia", "直径", "外径", "内径", "⌀", "d="] {
@@ -1635,6 +1829,100 @@ mod tests {
         assert_eq!(pcd["status"], "unsupported");
         assert!(pcd["unsupported"].to_string().contains("corner_hole_pattern_unsupported"));
     }
+
+    #[test]
+    fn ordinary_pcd_holes_match_python_golden_and_keep_provenance() {
+        let fixture: Value = serde_json::from_str(include_str!(
+            "../tests/fixtures/quick_pcd_contract.json"
+        ))
+        .expect("PCD Quick oracle fixture is valid JSON");
+        for case in fixture["legacy_accepted"].as_array().unwrap() {
+            let input = case["input"].as_str().unwrap();
+            let output = parse(input);
+            assert_eq!(output["status"], "ready", "{input}: {output}");
+            let validation = crate::cad_plan_validation::validate_plan(&output["plan"]);
+            assert_eq!(validation["state"], "valid", "{input}: {validation}");
+
+            let index = case["hole_index"].as_u64().unwrap() as usize;
+            let actual = &output["plan"]["features"][index];
+            let expected = &case["legacy_hole"];
+            assert_eq!(actual["kind"], expected["kind"], "{input}");
+            assert_eq!(actual["operation"], "cut", "{input}");
+            for (key, value) in expected["params"].as_object().unwrap() {
+                assert_eq!(actual["parameters"][key], *value, "{input}: {key}");
+            }
+            for (key, legacy_source) in expected["provenance"].as_object().unwrap() {
+                assert_eq!(legacy_source, "explicit", "{input}: {key}");
+                assert_eq!(actual["sources"][key]["type"], "user", "{input}: {key}");
+                assert_eq!(actual["sources"][key]["evidence"], input, "{input}: {key}");
+            }
+        }
+    }
+
+    #[test]
+    fn pcd_phase_is_an_explicit_native_extension_with_user_provenance() {
+        let fixture: Value = serde_json::from_str(include_str!(
+            "../tests/fixtures/quick_pcd_contract.json"
+        ))
+        .unwrap();
+        let extension = &fixture["native_phase_extension"];
+        let input = extension["input"].as_str().unwrap();
+        let output = parse(input);
+        assert_eq!(output["status"], "ready", "{output}");
+        let hole = &output["plan"]["features"][1];
+        assert_eq!(hole["parameters"]["pos"], "pcd");
+        assert_eq!(hole["parameters"]["phase"], extension["phase"]);
+        assert_eq!(hole["sources"]["phase"]["type"], "user");
+        assert_eq!(hole["sources"]["phase"]["evidence"], input);
+        assert!(output["warnings"].to_string().contains("pcd_phase_native_extension"));
+        assert_eq!(
+            crate::cad_plan_validation::validate_plan(&output["plan"])["state"],
+            "valid"
+        );
+
+        let english = plan("box 100×80×20 mm, count 4 holes diameter 10mm through PCD 6cm phase 30deg");
+        let hole = &english["features"][1];
+        assert_eq!(hole["parameters"]["count"], 4);
+        assert_eq!(hole["parameters"]["pcd"], 60.0);
+        assert_eq!(hole["parameters"]["phase"], 30.0);
+    }
+
+    #[test]
+    fn pcd_hole_count_accepts_inclusive_limits() {
+        for count in [2, crate::native_plan_geometry::MAX_HOLE_PATTERN_COUNT] {
+            let input = format!(
+                "长方体 长100宽80高20，均布{count}个直径10的通孔分度圆60"
+            );
+            let output = parse(&input);
+            assert_eq!(output["status"], "ready", "{input}: {output}");
+            assert_eq!(output["plan"]["features"][1]["parameters"]["count"], count);
+            assert_eq!(
+                crate::cad_plan_validation::validate_plan(&output["plan"])["state"],
+                "valid",
+                "{input}: {}",
+                output["plan"]
+            );
+        }
+    }
+
+    #[test]
+    fn ordinary_pcd_holes_fail_closed_on_missing_conflicting_or_out_of_range_values() {
+        let fixture: Value = serde_json::from_str(include_str!(
+            "../tests/fixtures/quick_pcd_contract.json"
+        ))
+        .unwrap();
+        for case in fixture["native_rejected"].as_array().unwrap() {
+            let input = case["input"].as_str().unwrap();
+            let output = parse(input);
+            assert_eq!(output["status"], "needs_clarification", "{input}: {output}");
+            assert!(output["plan"].is_null(), "{input}: {output}");
+            assert!(
+                output["questions"].to_string().contains(case["issue"].as_str().unwrap()),
+                "{input}: {output}"
+            );
+        }
+    }
+
     #[test]
     fn contradictory_sizes_and_unsupported_operations_fail_closed() {
         assert_eq!(
