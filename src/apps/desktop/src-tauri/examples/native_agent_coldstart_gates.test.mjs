@@ -7,8 +7,8 @@ import { EventEmitter } from 'node:events'
 import { join, relative } from 'node:path'
 import { tmpdir } from 'node:os'
 import { createAuditedToolProxy, createTerminalUpdateHmac, evaluateColdstartGates, parseEvidenceJsonl, parsePostcheckState, readRunArtifacts, summarizeAcpTerminalUpdateDiagnostics, summarizeCordisBindingDiagnostics, summarizeVisualReviewDiagnostics, toolArgumentsFingerprint } from './native_agent_coldstart_gates.mjs'
-import { buildSafeAcceptanceSummary, replacePublishedSafeFailureSummary, writeSafeAcceptanceArtifacts,
-  writeSafeFailureSummary } from './native_agent_coldstart_publication.mjs'
+import { buildSafeAcceptanceSummary, buildSafeFailureDiagnostic, replacePublishedSafeFailureSummary,
+  SAFE_PUBLICATION_PHASE, writeSafeAcceptanceArtifacts, writeSafeFailureSummary } from './native_agent_coldstart_publication.mjs'
 import { runOfflineCargoBuild } from './native_agent_coldstart_build.mjs'
 import { removeScratchDirectory, safeScratchCleanupStatus, terminateChildrenAndWait, waitThenTerminateChild } from './native_agent_coldstart_lifecycle.mjs'
 import { COLDSTART_SCRATCH_MAX_AGE_MS, COLDSTART_SCRATCH_PREFIX, createColdstartScratchDirectory,
@@ -793,7 +793,7 @@ test('fatal failure publication uses only fixed stage and code enums', () => {
       exception: new Error(secrets.join('|')),
     })
     assert.deepEqual(readdirSync(output).sort(), ['summary.json'])
-    assert.deepEqual(summary.failure_diagnostic, { stage: 'dsh_session', code: 'unhandled_rejection' })
+    assert.deepEqual(summary.failure_diagnostic, { stage: 'dsh_session', phase: 'unknown', code: 'unhandled_rejection' })
     const serialized = readFileSync(join(output, 'summary.json'), 'utf8')
     for (const secret of secrets) assert.equal(serialized.includes(secret), false)
     assert.equal(serialized.includes('exception'), false)
@@ -810,6 +810,7 @@ test('publication fatal preserves evaluated gate allowlist and marks unavailable
   const root = mkdtempSync(join(tmpdir(), 'coldstart-publication-gates-'))
   const output = join(root, 'run')
   const sentinel = 'provider-tool-geometry-secret-sentinel'
+  const phases = []
   try {
     mkdirSync(output, { recursive: true })
     // Force the regular artifact publisher to fail after its first allowlisted
@@ -827,11 +828,17 @@ test('publication fatal preserves evaluated gate allowlist and marks unavailable
     assert.throws(() => writeSafeAcceptanceArtifacts(output, {
       summary: evaluatedSummary, acpProjection: {}, bindingProjection: {}, visionProjection: {},
       buildStatus: { status: 'passed', exit_code: 0 },
+      onPhase: phase => phases.push(phase),
     }), error => ['EISDIR', 'EPERM', 'EEXIST'].includes(error.code))
+    assert.deepEqual(phases, [SAFE_PUBLICATION_PHASE.WRITING_DIAGNOSTICS,
+      SAFE_PUBLICATION_PHASE.WRITING_BUILD_STATUS])
     const evaluated = evaluatedSummary.strict_gates
     const failed = writeSafeFailureSummary(output, {
-      stage: 'publication', code: 'uncaught_exception', strictGates: evaluated,
+      stage: 'publication', phase: phases.at(-1), code: 'uncaught_exception', strictGates: evaluated,
       exception: new Error(sentinel),
+    })
+    assert.deepEqual(failed.failure_diagnostic, {
+      stage: 'publication', phase: 'writing_build_status', code: 'uncaught_exception',
     })
     assert.deepEqual(Object.keys(failed.strict_gates.gates), [
       'run_scope', 'dsh_session', 'dsh_process', 'trace_integrity', 'original_image', 'main_image_wire',
@@ -852,8 +859,38 @@ test('publication fatal preserves evaluated gate allowlist and marks unavailable
     const noEvaluation = writeSafeFailureSummary(join(root, 'no-evaluation'), {
       stage: 'publication', code: 'uncaught_exception',
     })
+    assert.equal(noEvaluation.failure_diagnostic.phase, 'unknown')
     assert.ok(Object.values(noEvaluation.strict_gates.gates).every(gate => gate.status === 'unknown'))
     assert.ok(Object.values(noEvaluation.strict_gates.gates).every(gate => gate.reason_count === null))
+  } finally {
+    rmSync(root, { recursive: true, force: true })
+  }
+})
+
+test('publication phases are fixed, ordered, and distinguish runner completion', () => {
+  const root = mkdtempSync(join(tmpdir(), 'coldstart-publication-phases-'))
+  const phases = []
+  try {
+    const summary = buildSafeAcceptanceSummary({})
+    writeSafeAcceptanceArtifacts(join(root, 'run'), {
+      summary, acpProjection: {}, bindingProjection: {}, visionProjection: {},
+      buildStatus: { status: 'passed', exit_code: 0 },
+      onPhase: phase => phases.push(phase),
+    })
+    phases.push(SAFE_PUBLICATION_PHASE.RUNNER_COMPLETION)
+    assert.deepEqual(phases, [
+      'writing_diagnostics', 'writing_build_status', 'writing_summary',
+      'publication_complete', 'runner_completion',
+    ])
+    assert.deepEqual(buildSafeFailureDiagnostic({ stage: 'publication', phase: 'writing_summary',
+      code: 'uncaught_exception' }), {
+      stage: 'publication', phase: 'writing_summary', code: 'uncaught_exception',
+    })
+    const unknown = buildSafeFailureDiagnostic({
+      stage: 'publication', phase: 'provider-answer-and-stack-sentinel', code: 'raw-exception-sentinel',
+    })
+    assert.deepEqual(unknown, { stage: 'publication', phase: 'unknown', code: 'uncaught_exception' })
+    assert.equal(JSON.stringify(unknown).includes('sentinel'), false)
   } finally {
     rmSync(root, { recursive: true, force: true })
   }
@@ -867,7 +904,7 @@ test('fatal failure publication rejects unknown stage and code values', () => {
     const failed = writeSafeFailureSummary(join(root, 'run'), {
       stage: 'private-provider-response-sentinel', code: 'raw-error-message-sentinel',
     })
-    assert.deepEqual(failed.failure_diagnostic, { stage: 'unknown', code: 'uncaught_exception' })
+    assert.deepEqual(failed.failure_diagnostic, { stage: 'unknown', phase: 'unknown', code: 'uncaught_exception' })
     assert.equal(JSON.stringify(failed).includes('sentinel'), false)
   } finally {
     rmSync(root, { recursive: true, force: true })
@@ -895,11 +932,14 @@ test('Windows late fatal atomically replaces only a published passed summary wit
     assert.equal(passed.status, 'passed')
 
     const failed = replacePublishedSafeFailureSummary(output, {
-      stage: 'publication', code: 'unhandled_rejection', scratchCleanupStatus: 'failed', exception: sentinel,
+      stage: 'publication', phase: SAFE_PUBLICATION_PHASE.RUNNER_COMPLETION,
+      code: 'unhandled_rejection', scratchCleanupStatus: 'failed', exception: sentinel,
     })
     const serialized = readFileSync(join(output, 'summary.json'), 'utf8')
     assert.equal(failed.status, 'failed')
-    assert.deepEqual(failed.failure_diagnostic, { stage: 'publication', code: 'unhandled_rejection' })
+    assert.deepEqual(failed.failure_diagnostic, {
+      stage: 'publication', phase: 'runner_completion', code: 'unhandled_rejection',
+    })
     assert.equal(JSON.parse(serialized).status, 'failed')
     assert.equal(serialized.includes(sentinel), false)
     assert.equal(readdirSync(output).some(name => name.startsWith('.summary-')), false)

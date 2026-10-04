@@ -18,6 +18,16 @@ const SCRATCH_CLEANUP_STATUSES = new Set(['removed', 'failed', 'not_created'])
 const FAILURE_STAGES = new Set(['startup', 'config_validation', 'input_validation', 'runtime_validation',
   'offline_build', 'native_probe', 'dsh_launch', 'dsh_session', 'strict_gate_evaluation', 'publication', 'unknown'])
 const FAILURE_CODES = new Set(['uncaught_exception', 'unhandled_rejection'])
+export const SAFE_PUBLICATION_PHASE = Object.freeze({
+  NOT_STARTED: 'not_started',
+  PROJECTION: 'projection',
+  WRITING_DIAGNOSTICS: 'writing_diagnostics',
+  WRITING_BUILD_STATUS: 'writing_build_status',
+  WRITING_SUMMARY: 'writing_summary',
+  PUBLICATION_COMPLETE: 'publication_complete',
+  RUNNER_COMPLETION: 'runner_completion',
+})
+const FAILURE_PHASES = new Set(Object.values(SAFE_PUBLICATION_PHASE))
 const GATE_REASON_CODES = Object.freeze({
   run_scope: new Set(['run_identity_missing', 'manifest_session_or_turn_mismatch',
     'original_reference_manifest_mismatch', 'user_turn_reference_binding_missing']),
@@ -222,9 +232,10 @@ export function buildSafeVisualFinishDiagnostics(strict = {}) {
   }
 }
 
-export function buildSafeFailureDiagnostic({ stage, code } = {}) {
+export function buildSafeFailureDiagnostic({ stage, phase, code } = {}) {
   return {
     stage: FAILURE_STAGES.has(stage) ? stage : 'unknown',
+    phase: FAILURE_PHASES.has(phase) ? phase : 'unknown',
     code: FAILURE_CODES.has(code) ? code : 'uncaught_exception',
   }
 }
@@ -238,7 +249,7 @@ export function buildSafeDshDiagnostic(value = {}) {
   }
 }
 
-function createSafeFailureSummary({ stage, code, scratchCleanupStatus, scratchRecovery, strictGates } = {}) {
+function createSafeFailureSummary({ stage, phase, code, scratchCleanupStatus, scratchRecovery, strictGates } = {}) {
   return {
     schema_version: 1,
     status: 'failed',
@@ -248,7 +259,7 @@ function createSafeFailureSummary({ stage, code, scratchCleanupStatus, scratchRe
     runtime: { node: 'unverified', dsh: 'unverified' },
     scratch_cleanup_status: SCRATCH_CLEANUP_STATUSES.has(scratchCleanupStatus) ? scratchCleanupStatus : 'not_created',
     scratch_recovery: sanitizeScratchRecoverySummary(scratchRecovery),
-    failure_diagnostic: buildSafeFailureDiagnostic({ stage, code }),
+    failure_diagnostic: buildSafeFailureDiagnostic({ stage, phase, code }),
     strict_gates: strictGates ? sanitizeSafeStrictGateProjection(strictGates) : sanitizeSafeStrictGateProjection({}),
   }
 }
@@ -325,20 +336,24 @@ export function writeSafeBuildStatus(output, buildStatus) {
   return safeStatus
 }
 
-export function writeSafeAcceptanceArtifacts(output, { summary, acpProjection, bindingProjection, visionProjection, buildStatus }) {
+export function writeSafeAcceptanceArtifacts(output, {
+  summary, acpProjection, bindingProjection, visionProjection, buildStatus, onPhase,
+}) {
   mkdirSync(output, { recursive: true })
-  const artifacts = new Map([
-    ['tool-result-diagnostics.jsonl', [
+  const artifacts = [
+    ['tool-result-diagnostics.jsonl', SAFE_PUBLICATION_PHASE.WRITING_DIAGNOSTICS, [
       { stage: 'acp_terminal_update_projection', ...safeAcpProjection(acpProjection) },
       { stage: 'cordis_binding_projection', ...safeBindingProjection(bindingProjection) },
       { stage: 'vision_review_projection', ...safeVisionReviewProjection(visionProjection) },
     ].map(row => JSON.stringify(row)).join('\n') + '\n'],
-    ['build-status.json', sanitizeSafeBuildStatus(buildStatus)],
+    ['build-status.json', SAFE_PUBLICATION_PHASE.WRITING_BUILD_STATUS, sanitizeSafeBuildStatus(buildStatus)],
     // Publish the summary last so it also serves as the complete-set marker.
-    ['summary.json', summary],
-  ])
-  for (const [name, value] of artifacts) {
+    ['summary.json', SAFE_PUBLICATION_PHASE.WRITING_SUMMARY, summary],
+  ]
+  for (const [name, phase, value] of artifacts) {
+    onPhase?.(phase)
     const body = typeof value === 'string' ? value : JSON.stringify(value, null, 2)
     writeFileSync(join(output, name), body, { flag: 'wx', mode: 0o600 })
   }
+  onPhase?.(SAFE_PUBLICATION_PHASE.PUBLICATION_COMPLETE)
 }

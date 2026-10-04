@@ -6,7 +6,8 @@ import { mkdirSync, readFileSync, writeFileSync, existsSync } from 'node:fs'
 import { basename, dirname, join, resolve } from 'node:path'
 import { createInterface } from 'node:readline'
 import { createAuditedToolProxy, createTerminalUpdateHmac, evaluateColdstartGates, parseEvidenceJsonl, parsePostcheckState, readRunArtifacts, summarizeAcpTerminalUpdateDiagnostics, summarizeCordisBindingDiagnostics, summarizeVisualReviewDiagnostics, toolArgumentsFingerprint } from './native_agent_coldstart_gates.mjs'
-import { buildSafeAcceptanceSummary, buildSafeStrictGateProjection, replacePublishedSafeFailureSummary, writeSafeAcceptanceArtifacts,
+import { buildSafeAcceptanceSummary, buildSafeStrictGateProjection, replacePublishedSafeFailureSummary,
+  SAFE_PUBLICATION_PHASE, writeSafeAcceptanceArtifacts,
   writeSafeFailureSummary } from './native_agent_coldstart_publication.mjs'
 import { removeScratchDirectory, safeScratchCleanupStatus, terminateChildrenAndWait, waitThenTerminateChild } from './native_agent_coldstart_lifecycle.mjs'
 import { createColdstartScratchDirectory, recoverStaleColdstartScratch } from './native_agent_coldstart_scratch.mjs'
@@ -23,12 +24,14 @@ let fatalFailurePromise = null
 // Only a fixed stage enum is ever published. It marks the runner phase, not
 // the exception location or message; raw error/provider content is discarded.
 let failureStage = 'startup'
+let failurePhase = SAFE_PUBLICATION_PHASE.NOT_STARTED
 let safeStrictGates = null
 const stopManagedChildren = () => terminateChildrenAndWait(managedChildren, 1500)
 const archiveFailure = (scratchCleanupStatus, code) => {
   if (!archiveDir) return
   try {
-    const failure = { stage: failureStage, code, scratchCleanupStatus, scratchRecovery, strictGates: safeStrictGates }
+    const failure = { stage: failureStage, phase: failurePhase, code, scratchCleanupStatus, scratchRecovery,
+      strictGates: safeStrictGates }
     if (safeSummaryPublished) replacePublishedSafeFailureSummary(archiveDir, failure)
     else writeSafeFailureSummary(archiveDir, failure)
   } catch { /* preserve the original process failure */ }
@@ -367,9 +370,12 @@ const strict = evaluateColdstartGates({
   dsh: { status: dshStatus, exit_code: dshExitCode, child_exited: dshChildExited, failure: dshFailure }, toolEvents, toolBridgeCalls: toolProxy.records,
   nativeAudit, streamEvents, evidenceErrors,
 })
+failureStage = 'publication'
+failurePhase = SAFE_PUBLICATION_PHASE.PROJECTION
 // Cache only the fixed allowlist projection so a later artifact-publication
 // exception can preserve evaluated gate outcomes without retaining raw evidence.
 safeStrictGates = buildSafeStrictGateProjection(strict)
+let safeSummary
 {
   const inRunToolEvents = toolEvents.filter(event => event.session_id === sessionId && event.run_id === runId
     && event.turn_id === turnId && Number.isFinite(event.at_ms) && event.at_ms >= runStartedAt && event.at_ms <= runEndedAt)
@@ -383,7 +389,7 @@ safeStrictGates = buildSafeStrictGateProjection(strict)
   const successfulWireResponse = strict.successful_image_request_ids.length > 0
   const wireIdentityValid = strict.gates.main_image_wire.reasons.indexOf('main_model_original_image_wire_missing') < 0
   scratchCleanupStatus = cleanupScratch()
-  const safeSummary = buildSafeAcceptanceSummary({
+  safeSummary = buildSafeAcceptanceSummary({
     strict,
     transportStatus: dshStatus === 'completed' && wireIdentityValid && successfulWireResponse ? 'completed' : 'failed',
     modelStatus: strict.status === 'passed' ? 'accepted_by_strict_cli_gate' : domain.plan ? 'candidate' : 'none',
@@ -393,11 +399,14 @@ safeStrictGates = buildSafeStrictGateProjection(strict)
     scratchCleanupStatus: safeScratchCleanupStatus(managedChildrenExited, scratchCleanupStatus),
     scratchRecovery,
   })
-  failureStage = 'publication'
   writeSafeAcceptanceArtifacts(output, { summary: safeSummary, acpProjection: projection,
-    bindingProjection, visionProjection: summarizeVisualReviewDiagnostics(domain), buildStatus })
-  safeSummaryPublished = true
+    bindingProjection, visionProjection: summarizeVisualReviewDiagnostics(domain), buildStatus,
+    onPhase: phase => {
+      failurePhase = phase
+      if (phase === SAFE_PUBLICATION_PHASE.PUBLICATION_COMPLETE) safeSummaryPublished = true
+    } })
 }
+failurePhase = SAFE_PUBLICATION_PHASE.RUNNER_COMPLETION
 const finalStatus = safeSummary.status
 const cleanupFailed = !managedChildrenExited || scratchCleanupStatus !== 'removed'
 console.log(JSON.stringify({ status: finalStatus, scratch_cleanup_status: cleanupFailed ? 'failed' : 'removed',
