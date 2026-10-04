@@ -36,7 +36,6 @@ pub fn supports(name: &str) -> bool {
             | "cad_validate_model"
             | "cad_preview_model"
             | "cad_restore_best_candidate"
-            | "cad_restore_partial_candidate"
             | "cad_get_reference_image"
             | "cad_finish_model"
     )
@@ -59,7 +58,6 @@ pub fn run(
                 "feature_id",
                 "parameter_updates",
                 "source_updates",
-                "provenance_corrections",
                 "remove_parameters",
                 "fields",
                 "finding_ids",
@@ -88,7 +86,7 @@ pub fn run(
                 "finding_ids",
                 "holes",
             ],
-            "cad_validate_model" | "cad_restore_partial_candidate" => &[],
+            "cad_validate_model" => &[],
             "cad_preview_model" => &["view"],
             "cad_restore_best_candidate" => &["reason"],
             "cad_get_reference_image" => &[
@@ -201,6 +199,18 @@ pub fn run(
     }
     match name {
         "cad_create_model" => {
+            if let Some(units) = args.get("units") {
+                validate_units(units)?;
+            }
+            if args
+                .get("source_prompt")
+                .is_some_and(|value| !value.is_string())
+            {
+                return Err("source_prompt须为字符串。".into());
+            }
+            if args.get("replace").is_some_and(|value| !value.is_boolean()) {
+                return Err("replace须为布尔值。".into());
+            }
             commands.push(SessionCommand::Create {
                 name: string(args, "name")?,
                 first_feature: feature_with_turn_id(
@@ -212,6 +222,9 @@ pub fn run(
             });
         }
         "cad_apply_recipe" => {
+            if args.get("replace").is_some_and(|value| !value.is_boolean()) {
+                return Err("replace须为布尔值。".into());
+            }
             let (name, source_prompt, feature) = recipe_feature(args, ctx)?;
             commands.push(SessionCommand::Create {
                 name,
@@ -228,25 +241,25 @@ pub fn run(
             finding_ids: strings(args, "finding_ids")?,
         }),
         "cad_update_feature" => {
-            if args
-                .get("provenance_corrections")
-                .and_then(Value::as_array)
-                .is_some_and(|v| !v.is_empty())
-            {
-                return Err(
-                    "原生provenance_corrections尚未接入；请通过source_updates提供绑定原文来源。"
-                        .into(),
-                );
-            }
+            let feature_id = string(args, "feature_id")?;
+            let parameter_updates = optional_object(args, "parameter_updates")?;
+            let source_updates = optional_object(args, "source_updates")?;
+            let fields = optional_object(args, "fields")?;
+            let remove_parameters = strings(args, "remove_parameters")?;
+            validate_update_contract(
+                state,
+                &feature_id,
+                &parameter_updates,
+                &source_updates,
+                &remove_parameters,
+                &fields,
+            )?;
             commands.push(SessionCommand::Update {
-                feature_id: string(args, "feature_id")?,
-                parameter_updates: args["parameter_updates"].clone(),
-                source_updates: sources_with_turn_id(
-                    args["source_updates"].clone(),
-                    ctx.user_turn_id.as_deref(),
-                )?,
-                remove_parameters: strings(args, "remove_parameters")?,
-                fields: args["fields"].clone(),
+                feature_id,
+                parameter_updates,
+                source_updates: sources_with_turn_id(source_updates, ctx.user_turn_id.as_deref())?,
+                remove_parameters,
+                fields,
                 finding_ids: strings(args, "finding_ids")?,
             });
         }
@@ -258,7 +271,6 @@ pub fn run(
             let _reason = string(args, "reason")?;
             commands.push(SessionCommand::RestoreBest);
         }
-        "cad_restore_partial_candidate" => commands.push(SessionCommand::RestorePartial),
         "cad_preview_model" => commands.push(SessionCommand::RequestPreview { build: false }),
         "cad_add_face_recess" => commands.push(SessionCommand::Add {
             feature: face_recess(state, args, ctx.user_turn_id.as_deref())?,
@@ -348,6 +360,205 @@ fn check_args(value: &Value, allowed: &[&str]) -> Result<(), String> {
     }
     Ok(())
 }
+
+fn optional_object(value: &Value, key: &str) -> Result<Value, String> {
+    match value.get(key) {
+        None => Ok(Value::Null),
+        Some(Value::Object(_)) => Ok(value[key].clone()),
+        Some(_) => Err(format!("{key}须为JSON对象。")),
+    }
+}
+
+fn validate_units(units: &Value) -> Result<(), String> {
+    let object = units.as_object().ok_or("units须为JSON对象。")?;
+    if object.keys().any(|key| key != "length" && key != "angle") {
+        return Err("units只接受length和angle。".into());
+    }
+    if !object
+        .get("length")
+        .and_then(Value::as_str)
+        .is_some_and(|unit| ["mm", "cm", "m", "in"].contains(&unit))
+    {
+        return Err("units.length须为mm、cm、m或in。".into());
+    }
+    if !object
+        .get("angle")
+        .and_then(Value::as_str)
+        .is_some_and(|unit| ["deg", "rad"].contains(&unit))
+    {
+        return Err("units.angle须为deg或rad。".into());
+    }
+    Ok(())
+}
+
+fn validate_feature_relations(feature: &Value) -> Result<(), String> {
+    let Some(value) = feature.get("relations") else {
+        return Ok(());
+    };
+    let rows = value.as_array().ok_or("relations须为数组。")?;
+    for (index, row) in rows.iter().enumerate() {
+        let relation = row
+            .as_object()
+            .ok_or_else(|| format!("relations[{index}]须为对象。"))?;
+        if relation
+            .keys()
+            .any(|key| key != "type" && key != "feature_id")
+        {
+            return Err(format!("relations[{index}]只接受type和feature_id。"));
+        }
+        if !relation
+            .get("type")
+            .and_then(Value::as_str)
+            .is_some_and(|kind| ["depends_on", "pattern_source"].contains(&kind))
+        {
+            return Err(format!(
+                "relations[{index}].type须为depends_on或pattern_source。"
+            ));
+        }
+        if !relation
+            .get("feature_id")
+            .and_then(Value::as_str)
+            .is_some_and(|id| !id.trim().is_empty())
+        {
+            return Err(format!("relations[{index}].feature_id须为非空字符串。"));
+        }
+    }
+    Ok(())
+}
+
+fn validate_source_values(sources: &Value, optional: bool) -> Result<(), String> {
+    if optional && sources.is_null() {
+        return Ok(());
+    }
+    let rows = sources
+        .as_object()
+        .ok_or("sources须为参数名到来源对象的JSON对象。")?;
+    for (parameter, source) in rows {
+        let source = source
+            .as_object()
+            .ok_or_else(|| format!("sources.{parameter}须为来源对象。"))?;
+        if source
+            .keys()
+            .any(|key| !["type", "evidence", "note", "turn_id"].contains(&key.as_str()))
+        {
+            return Err(format!(
+                "sources.{parameter}只接受type、evidence、note和临时turn_id。"
+            ));
+        }
+        let source_type = source
+            .get("type")
+            .and_then(Value::as_str)
+            .filter(|kind| ["user", "image_estimate", "derived", "existing_model"].contains(kind))
+            .ok_or_else(|| format!("sources.{parameter}.type无效。"))?;
+        for key in ["evidence", "note", "turn_id"] {
+            if source.get(key).is_some_and(|value| !value.is_string()) {
+                return Err(format!("sources.{parameter}.{key}须为字符串。"));
+            }
+        }
+        if source_type == "image_estimate"
+            && !source.get("evidence").and_then(Value::as_str).is_some()
+        {
+            return Err(format!(
+                "sources.{parameter}.evidence是image_estimate必填项。"
+            ));
+        }
+        if source_type == "existing_model" && !source.get("note").and_then(Value::as_str).is_some()
+        {
+            return Err(format!("sources.{parameter}.note是existing_model必填项。"));
+        }
+        if source.contains_key("turn_id") && source_type != "user" {
+            return Err("turn_id只能绑定type=user的参数来源。".into());
+        }
+    }
+    Ok(())
+}
+
+fn validate_update_contract(
+    state: &Value,
+    feature_id: &str,
+    parameter_updates: &Value,
+    source_updates: &Value,
+    remove_parameters: &[String],
+    fields: &Value,
+) -> Result<(), String> {
+    let parameters = if parameter_updates.is_null() {
+        None
+    } else {
+        Some(
+            parameter_updates
+                .as_object()
+                .ok_or("parameter_updates须为JSON对象。")?,
+        )
+    };
+    let sources = if source_updates.is_null() {
+        None
+    } else {
+        validate_source_values(source_updates, false)?;
+        Some(
+            source_updates
+                .as_object()
+                .ok_or("source_updates须为JSON对象。")?,
+        )
+    };
+    if let Some(fields) = fields.as_object() {
+        for (key, value) in fields {
+            if !["name", "note"].contains(&key.as_str()) {
+                return Err(format!("fields只允许name和note，收到未声明字段{key}。"));
+            }
+            if !value.is_string() {
+                return Err(format!("fields.{key}须为字符串。"));
+            }
+        }
+    } else if !fields.is_null() {
+        return Err("fields须为JSON对象。".into());
+    }
+    let Some(plan) = state.get("plan").filter(|value| value.is_object()) else {
+        return Ok(());
+    };
+    let Some(feature) = plan
+        .get("features")
+        .and_then(Value::as_array)
+        .and_then(|features| {
+            features
+                .iter()
+                .find(|feature| feature.get("id").and_then(Value::as_str) == Some(feature_id))
+        })
+    else {
+        return Ok(());
+    };
+    let kind = feature
+        .get("kind")
+        .and_then(Value::as_str)
+        .unwrap_or_default();
+    let schema = cad_plan_validation::feature_schema(kind)
+        .ok_or_else(|| format!("特征类型{kind}没有CADPlan参数schema。"))?;
+    let allowed_parameters = schema
+        .pointer("/properties/parameters/properties")
+        .and_then(Value::as_object)
+        .ok_or("CADPlan特征schema缺少parameters属性。")?;
+    if let Some(updates) = parameters {
+        cad_plan_validation::validate_feature_parameter_values(kind, updates)?;
+    }
+    for key in remove_parameters {
+        if !allowed_parameters.contains_key(key) {
+            return Err(format!("特征类型{kind}不支持移除参数{key}。"));
+        }
+    }
+    if let Some(sources) = sources {
+        let current_parameters = feature.get("parameters").and_then(Value::as_object);
+        for key in sources.keys() {
+            if !current_parameters.is_some_and(|map| map.contains_key(key))
+                && !parameters.is_some_and(|map| map.contains_key(key))
+            {
+                return Err(format!(
+                    "source_updates.{key}没有对应的现有或本次更新参数。"
+                ));
+            }
+        }
+    }
+    Ok(())
+}
+
 fn string(v: &Value, key: &str) -> Result<String, String> {
     required(v, key)?
         .as_str()
@@ -377,11 +588,33 @@ fn strings(v: &Value, key: &str) -> Result<Vec<String>, String> {
 }
 
 fn feature_with_turn_id(mut feature: Value, turn_id: Option<&str>) -> Result<Value, String> {
+    if !feature.is_object() {
+        return Err("feature须为JSON对象。".into());
+    }
+    validate_feature_relations(&feature)?;
+    let kind = feature
+        .get("kind")
+        .and_then(Value::as_str)
+        .ok_or("feature.kind须为字符串。")?;
+    let parameters = feature
+        .get("parameters")
+        .and_then(Value::as_object)
+        .ok_or("feature.parameters须为JSON对象。")?;
+    cad_plan_validation::validate_feature_parameter_values(kind, parameters)?;
+    let parameter_names = parameters
+        .keys()
+        .cloned()
+        .collect::<std::collections::HashSet<_>>();
     let sources = feature
         .get_mut("sources")
-        .filter(|value| !value.is_null())
-        .and_then(Value::as_object_mut);
-    if let Some(sources) = sources {
+        .ok_or("feature.sources为必填来源对象。")?;
+    validate_source_values(sources, false)?;
+    if let Some(source_map) = sources.as_object() {
+        if source_map.keys().any(|key| !parameter_names.contains(key)) {
+            return Err("feature.sources不得引用parameters中不存在的参数。".into());
+        }
+    }
+    if let Some(sources) = sources.as_object_mut() {
         for source in sources.values_mut() {
             bind_source_turn_id(source, turn_id)?;
         }
@@ -390,6 +623,7 @@ fn feature_with_turn_id(mut feature: Value, turn_id: Option<&str>) -> Result<Val
 }
 
 fn sources_with_turn_id(mut sources: Value, turn_id: Option<&str>) -> Result<Value, String> {
+    validate_source_values(&sources, true)?;
     if let Some(sources) = sources.as_object_mut() {
         for source in sources.values_mut() {
             bind_source_turn_id(source, turn_id)?;
@@ -676,6 +910,165 @@ fn hole_array(
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    fn box_feature() -> Value {
+        json!({
+            "id":"body","kind":"box","operation":"add",
+            "parameters":{"length":10,"width":8,"height":5},
+            "sources":{
+                "length":{"type":"image_estimate","evidence":"front ratio"},
+                "width":{"type":"image_estimate","evidence":"side ratio"},
+                "height":{"type":"image_estimate","evidence":"front ratio"}
+            },
+            "relations":[]
+        })
+    }
+
+    #[test]
+    fn create_and_update_dynamic_maps_use_the_authoritative_cadplan_parameter_validator() {
+        let feature = box_feature();
+        validate_units(&json!({"length":"mm","angle":"deg"})).unwrap();
+        validate_feature_relations(&feature).unwrap();
+        let first_feature = feature_with_turn_id(feature.clone(), None).unwrap();
+        let created = native_cad_session::apply(
+            &json!({"revision":0,"plan":null,"actions":[]}),
+            SessionCommand::Create {
+                name: "fixture".into(),
+                first_feature,
+                source_prompt: "fixture".into(),
+                units: Some(json!({"length":"mm","angle":"deg"})),
+            },
+        )
+        .unwrap()
+        .state;
+        let source_updates = json!({"length":{"type":"image_estimate","evidence":"updated ratio"}});
+        validate_update_contract(
+            &created,
+            "body",
+            &json!({"length":12}),
+            &source_updates,
+            &[],
+            &Value::Null,
+        )
+        .unwrap();
+        let updated = native_cad_session::apply(
+            &created,
+            SessionCommand::Update {
+                feature_id: "body".into(),
+                parameter_updates: json!({"length":12}),
+                source_updates: source_updates.clone(),
+                remove_parameters: vec![],
+                fields: Value::Null,
+                finding_ids: vec![],
+            },
+        )
+        .unwrap()
+        .state;
+        assert_eq!(updated["plan"]["features"][0]["parameters"]["length"], 12);
+        assert_eq!(
+            updated["plan"]["features"][0]["sources"]["length"]["evidence"],
+            "updated ratio"
+        );
+        assert_eq!(
+            updated["plan"]["features"][0]["sources"]["width"]["evidence"],
+            "side ratio"
+        );
+
+        assert!(
+            validate_update_contract(
+                &created,
+                "body",
+                &json!({"unknown_dimension":12}),
+                &Value::Null,
+                &[],
+                &Value::Null,
+            )
+            .unwrap_err()
+            .contains("不支持参数")
+        );
+        assert!(
+            validate_update_contract(
+                &created,
+                "body",
+                &json!({"length":"12"}),
+                &Value::Null,
+                &[],
+                &Value::Null,
+            )
+            .unwrap_err()
+            .contains("有限数值")
+        );
+        assert!(
+            validate_update_contract(
+                &created,
+                "body",
+                &json!({"length":0}),
+                &Value::Null,
+                &[],
+                &Value::Null,
+            )
+            .unwrap_err()
+            .contains("必须大于 0")
+        );
+    }
+
+    #[test]
+    fn create_rejects_invalid_units_relations_sources_and_parameter_types() {
+        assert!(validate_units(&json!({"length":"ft","angle":"deg"})).is_err());
+
+        let mut bad_relation = box_feature();
+        bad_relation["relations"] =
+            json!([{"type":"depends_on","feature_id":"prior","extra":true}]);
+        assert!(
+            validate_feature_relations(&bad_relation)
+                .unwrap_err()
+                .contains("只接受type和feature_id")
+        );
+
+        let mut bad_parameter = box_feature();
+        bad_parameter["parameters"]["length"] = json!("wide");
+        assert!(
+            feature_with_turn_id(bad_parameter, None)
+                .unwrap_err()
+                .contains("有限数值")
+        );
+
+        let mut bad_source = box_feature();
+        bad_source["sources"]["length"] = json!({"type":"image_estimate","evidence":3});
+        assert!(
+            feature_with_turn_id(bad_source, None)
+                .unwrap_err()
+                .contains("evidence须为字符串")
+        );
+
+        let mut extra_source = box_feature();
+        extra_source["sources"]["unmodeled"] = json!({"type":"derived"});
+        assert!(
+            feature_with_turn_id(extra_source, None)
+                .unwrap_err()
+                .contains("不得引用parameters")
+        );
+    }
+
+    #[test]
+    fn partial_restore_is_not_a_public_native_executor_tool() {
+        assert!(!supports("cad_restore_partial_candidate"));
+        let error = run(
+            &json!({"revision":0,"plan":null}),
+            "cad_restore_partial_candidate",
+            &json!({"reason":"fixture"}),
+            &Context {
+                project_root: PathBuf::from("unused"),
+                session_dir: PathBuf::from("unused"),
+                runtime_manifest: None,
+                user_turn_id: None,
+            },
+            &AtomicBool::new(false),
+        )
+        .err()
+        .unwrap();
+        assert!(error.contains("未知原生 CAD 工具"));
+    }
 
     #[test]
     fn image_results_use_the_cordis_attachment_wire_contract() {

@@ -413,6 +413,29 @@ pub fn feature_schema(kind: &str) -> Option<Value> {
     Some(feature_schema_for(spec))
 }
 
+/// Validate supplied values for a feature parameter map using the same checks
+/// used by full CADPlan validation. This is intentionally partial: it validates
+/// only the provided keys and does not require the feature's required fields to
+/// be complete yet.
+pub fn validate_feature_parameter_values(
+    kind: &str,
+    values: &Map<String, Value>,
+) -> Result<(), String> {
+    let spec = spec_for(kind).ok_or_else(|| format!("未知 CADPlan 特征类型：{kind}。"))?;
+    let allowed = words(spec.params);
+    for (key, value) in values {
+        if !allowed.contains(&key.as_str()) {
+            return Err(format!("特征类型{kind}不支持参数{key}。"));
+        }
+        let mut errors = Vec::new();
+        validate_parameter(key, value, "$.parameters", &mut errors);
+        if let Some(message) = errors.first().and_then(|error| error["message"].as_str()) {
+            return Err(format!("参数{key}无效：{message}"));
+        }
+    }
+    Ok(())
+}
+
 /// Static support descriptor for a public feature kind.
 pub fn feature_spec(kind: &str) -> Option<Value> {
     let spec = spec_for(kind)?;

@@ -5,6 +5,7 @@ import net from 'node:net'
 import os from 'node:os'
 import path from 'node:path'
 import test from 'node:test'
+import { fileURLToPath } from 'node:url'
 
 import {
   apply,
@@ -24,6 +25,18 @@ const environmentKeys = [
   'AI_MODELER_PYTHON',
   'AI_MODELER_PROJECT_ROOT',
 ]
+
+const testDirectory = path.dirname(fileURLToPath(import.meta.url))
+const repositoryRoot = path.resolve(testDirectory, '../../..')
+const pinnedDshNodeModules = path.join(repositoryRoot, 'src', 'legacy', 'packaging', 'dsh-runtime', 'node_modules')
+
+function rustNativeToolManifest() {
+  const sourcePath = path.join(repositoryRoot, 'src', 'apps', 'desktop', 'src-tauri', 'src', 'native_tool_schemas.rs')
+  const source = fs.readFileSync(sourcePath, 'utf8')
+  const match = /const SCHEMAS_JSON: &str = r###"([\s\S]*?)"###;/.exec(source)
+  assert.ok(match, 'Rust native schema manifest raw string exists')
+  return { schemaVersion: 1, tools: JSON.parse(match[1]) }
+}
 
 function fixtureEnvironment(manifest = {
   schemaVersion: 1,
@@ -48,14 +61,16 @@ function fixtureEnvironment(manifest = {
       additionalProperties: false,
     },
   }],
-}) {
+}, { dshNodeModules } = {}) {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), 'ai-modeler-native-tools-rpc-'))
   const nodeModules = path.join(root, 'node_modules')
-  fs.mkdirSync(path.join(nodeModules, '@deepseek-ai', 'dsh'), { recursive: true })
-  fs.mkdirSync(path.join(nodeModules, '@deepseek-ai', 'dsh-tools'), { recursive: true })
-  fs.writeFileSync(path.join(nodeModules, '@deepseek-ai', 'dsh', 'package.json'), JSON.stringify({ name: '@deepseek-ai/dsh', version: 'test' }))
-  fs.writeFileSync(path.join(nodeModules, '@deepseek-ai', 'dsh-tools', 'package.json'), JSON.stringify({ name: '@deepseek-ai/dsh-tools', version: 'test', main: 'index.cjs' }))
-  fs.writeFileSync(path.join(nodeModules, '@deepseek-ai', 'dsh-tools', 'index.cjs'), 'exports.defineTool = value => value\n')
+  if (!dshNodeModules) {
+    fs.mkdirSync(path.join(nodeModules, '@deepseek-ai', 'dsh'), { recursive: true })
+    fs.mkdirSync(path.join(nodeModules, '@deepseek-ai', 'dsh-tools'), { recursive: true })
+    fs.writeFileSync(path.join(nodeModules, '@deepseek-ai', 'dsh', 'package.json'), JSON.stringify({ name: '@deepseek-ai/dsh', version: 'test' }))
+    fs.writeFileSync(path.join(nodeModules, '@deepseek-ai', 'dsh-tools', 'package.json'), JSON.stringify({ name: '@deepseek-ai/dsh-tools', version: 'test', main: 'index.cjs' }))
+    fs.writeFileSync(path.join(nodeModules, '@deepseek-ai', 'dsh-tools', 'index.cjs'), 'exports.defineTool = value => value\n')
+  }
 
   const schemasPath = path.join(root, 'native-tool-schemas.json')
   const activeTurnPath = path.join(root, 'active-turn.json')
@@ -66,7 +81,7 @@ function fixtureEnvironment(manifest = {
   const previous = Object.fromEntries(environmentKeys.map(key => [key, process.env[key]]))
   process.env.AI_MODELER_NATIVE_TOOL_SCHEMAS_FILE = schemasPath
   process.env.AI_MODELER_ACTIVE_TURN_FILE = activeTurnPath
-  process.env.AI_MODELER_DSH_NODE_MODULES = nodeModules
+  process.env.AI_MODELER_DSH_NODE_MODULES = dshNodeModules || nodeModules
   process.env.AI_MODELER_NATIVE_TOOLS_FILE = registrationPath
   process.env.AI_MODELER_TOOL_BRIDGE_TOKEN = 'fixture-secret-token'
   process.env.AI_MODELER_TOOL_SESSION_ID = 'session-fixture-27'
@@ -181,6 +196,108 @@ test('Cordis tools register from Rust schema manifest and call the local bridge 
     assert.deepEqual(request.params.arguments, { view: 'front', generation: 4 })
     assert.ok(request.params.deadlineMs > Date.now())
     assert.deepEqual(JSON.parse(fs.readFileSync(fixture.registrationPath, 'utf8')).registeredToolNames, ['cad_preview_model'])
+  } finally {
+    await bridge.close()
+    fixture.restore()
+  }
+})
+
+test('pinned DSH defineTool accepts native dynamic maps and rejects malformed map contracts', {
+  skip: fs.existsSync(path.join(pinnedDshNodeModules, '@deepseek-ai', 'dsh-tools', 'package.json'))
+    ? false
+    : 'run npm ci in src/legacy/packaging/dsh-runtime to enable the pinned DSH schema test',
+}, async () => {
+  const dshPackage = JSON.parse(fs.readFileSync(path.join(pinnedDshNodeModules, '@deepseek-ai', 'dsh', 'package.json'), 'utf8'))
+  const toolsPackage = JSON.parse(fs.readFileSync(path.join(pinnedDshNodeModules, '@deepseek-ai', 'dsh-tools', 'package.json'), 'utf8'))
+  assert.equal(dshPackage.version, '0.2.0-rc.2')
+  assert.equal(toolsPackage.version, '0.2.0-rc.2')
+
+  const fixture = fixtureEnvironment(rustNativeToolManifest(), { dshNodeModules: pinnedDshNodeModules })
+  const bridge = await createBridgeServer((request, socket) => respond(socket, request))
+  process.env.AI_MODELER_TOOL_BRIDGE_ADDR = bridge.address
+  try {
+    const registered = []
+    apply({ tools: { register(tool) { registered.push(tool) } } })
+    const create = registered.find(tool => tool.name === 'cad_create_model')
+    const update = registered.find(tool => tool.name === 'cad_update_feature')
+    assert.ok(create)
+    assert.ok(update)
+    assert.equal(registered.some(tool => tool.name === 'cad_restore_partial_candidate'), false)
+
+    const createProperties = create.parameters.properties.first_feature.properties
+    assert.equal(create.parameters.properties.units.additionalProperties, false)
+    assert.deepEqual(create.parameters.properties.units.required, ['length', 'angle'])
+    assert.equal(createProperties.sources.type, 'object')
+    assert.equal(typeof createProperties.sources.description, 'string')
+    assert.equal(createProperties.sources.additionalProperties, true)
+    assert.deepEqual(createProperties.relations.items.required, ['type', 'feature_id'])
+    assert.equal(createProperties.relations.items.additionalProperties, false)
+
+    const updateProperties = update.parameters.properties
+    for (const key of ['parameter_updates', 'source_updates']) {
+      assert.equal(updateProperties[key].type, 'object')
+      assert.equal(updateProperties[key].additionalProperties, true)
+    }
+    assert.deepEqual(Object.keys(updateProperties.fields.properties).sort(), ['name', 'note'])
+    assert.equal(updateProperties.fields.additionalProperties, false)
+
+    const validCreate = {
+      name: 'Fixture block',
+      units: { length: 'mm', angle: 'deg' },
+      first_feature: {
+        id: 'body', kind: 'box', operation: 'add',
+        parameters: { length: 10, width: 8, height: 5 },
+        sources: {
+          length: { type: 'image_estimate', evidence: 'front view ratio' },
+          width: { type: 'image_estimate', evidence: 'side view ratio' },
+          height: { type: 'image_estimate', evidence: 'front view ratio' },
+        },
+        relations: [],
+      },
+    }
+    await create.execute(validCreate, { signal: new AbortController().signal, callId: 'create-fixture' })
+    assert.equal(bridge.requests[0].params.name, 'cad_create_model')
+    assert.deepEqual(bridge.requests[0].params.arguments.first_feature.sources, validCreate.first_feature.sources)
+
+    const validUpdate = {
+      feature_id: 'body',
+      parameter_updates: { length: 12, center: [1, 0, 0] },
+      source_updates: {
+        length: { type: 'image_estimate', evidence: 'revised front ratio' },
+        center: { type: 'derived', evidence: 'center from bounding edges' },
+      },
+      fields: { name: 'Revised block' },
+    }
+    await update.execute(validUpdate, { signal: new AbortController().signal, callId: 'update-fixture' })
+    assert.equal(bridge.requests[1].params.name, 'cad_update_feature')
+    assert.deepEqual(bridge.requests[1].params.arguments.parameter_updates, validUpdate.parameter_updates)
+    assert.deepEqual(bridge.requests[1].params.arguments.source_updates, validUpdate.source_updates)
+
+    await assert.rejects(
+      create.execute({ ...validCreate, units: { length: 4, angle: 'deg' } }, { signal: new AbortController().signal }),
+      /invalid arguments/i,
+    )
+    await assert.rejects(
+      create.execute({ ...validCreate, first_feature: { ...validCreate.first_feature, relations: [{ type: 'depends_on', feature_id: 'prior', extra: true }] } }, { signal: new AbortController().signal }),
+      /invalid arguments/i,
+    )
+    await assert.rejects(
+      update.execute({ ...validUpdate, parameter_updates: ['length'] }, { signal: new AbortController().signal }),
+      /invalid arguments/i,
+    )
+    await assert.rejects(
+      update.execute({ ...validUpdate, source_updates: { length: { type: 'image_estimate', evidence: 4 } } }, { signal: new AbortController().signal }),
+      /source_updates\.length\.evidence must be a string/i,
+    )
+    await assert.rejects(
+      update.execute({ ...validUpdate, source_updates: { length: { type: 'image_estimate', evidence: 'quote', fabricated: true } } }, { signal: new AbortController().signal }),
+      /undeclared source field/i,
+    )
+    await assert.rejects(
+      update.execute({ ...validUpdate, fields: { field_updates: { length: 12 } } }, { signal: new AbortController().signal }),
+      /invalid arguments/i,
+    )
+    assert.equal(bridge.requests.length, 2, 'invalid contracts must be rejected before the native bridge')
   } finally {
     await bridge.close()
     fixture.restore()

@@ -1245,6 +1245,66 @@ mod tests {
         (state, refs, turns, dir)
     }
     #[test]
+    fn remove_without_findings_is_allowed_until_it_reverts_to_a_seen_geometry_signature() {
+        let base = valid_body_plan();
+        let extra = json!({
+            "id":"pocket","kind":"pocket","operation":"cut",
+            "parameters":{"length":2,"width":2,"depth":1},
+            "sources":{
+                "length":{"type":"image_estimate","evidence":"visual"},
+                "width":{"type":"image_estimate","evidence":"visual"},
+                "depth":{"type":"image_estimate","evidence":"visual"}
+            }
+        });
+        let with_extra = cad_plan::add(&base, &extra).unwrap();
+        let ordinary_state = json!({"revision":3,"plan":with_extra,"actions":[]});
+        let removed = apply(
+            &ordinary_state,
+            SessionCommand::Remove {
+                feature_id: "pocket".into(),
+                finding_ids: vec![],
+            },
+        )
+        .unwrap();
+        assert_eq!(
+            removed.state["plan"]["features"].as_array().unwrap().len(),
+            1
+        );
+
+        let base_signature = cad_plan::geometry_fingerprint(&base).unwrap();
+        let mut seen_state = ordinary_state.clone();
+        seen_state["geometry_signatures"] = json!([{"signature":base_signature}]);
+        let rejected = apply(
+            &seen_state,
+            SessionCommand::Remove {
+                feature_id: "pocket".into(),
+                finding_ids: vec![],
+            },
+        )
+        .unwrap_err();
+        assert!(rejected.contains("历史 CADPlan 状态"));
+
+        seen_state["finding_ledger"] = json!({
+            "f-pocket":{
+                "status":"open","last_mismatch_revision":3,
+                "affected_feature_ids":["pocket"]
+            }
+        });
+        let repaired = apply(
+            &seen_state,
+            SessionCommand::Remove {
+                feature_id: "pocket".into(),
+                finding_ids: vec!["f-pocket".into()],
+            },
+        )
+        .unwrap();
+        assert_eq!(
+            repaired.state["plan"]["features"].as_array().unwrap().len(),
+            1
+        );
+    }
+
+    #[test]
     fn failed_edit_rolls_back_and_numeric_noop_keeps_revision() {
         let s = state();
         let bad = apply(

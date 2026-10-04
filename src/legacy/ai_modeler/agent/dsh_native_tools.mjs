@@ -221,6 +221,58 @@ function authorSchema(schema, required = false) {
   return node
 }
 
+const SOURCE_TYPES = new Set(['user', 'image_estimate', 'derived', 'existing_model'])
+const SOURCE_FIELDS = new Set(['type', 'evidence', 'note', 'turn_id'])
+
+function validateSourceMap(value, path) {
+  if (!isRecord(value)) throw new TypeError(`${path} must be an object map.`)
+  for (const [parameter, source] of Object.entries(value)) {
+    const sourcePath = `${path}.${parameter}`
+    if (!isRecord(source)) throw new TypeError(`${sourcePath} must be a source object.`)
+    const unknown = Object.keys(source).find(key => !SOURCE_FIELDS.has(key))
+    if (unknown) throw new TypeError(`${sourcePath} has undeclared source field "${unknown}".`)
+    if (!SOURCE_TYPES.has(source.type)) {
+      throw new TypeError(`${sourcePath}.type must be user, image_estimate, derived, or existing_model.`)
+    }
+    if (Object.hasOwn(source, 'evidence') && typeof source.evidence !== 'string') {
+      throw new TypeError(`${sourcePath}.evidence must be a string.`)
+    }
+    if (Object.hasOwn(source, 'note') && typeof source.note !== 'string') {
+      throw new TypeError(`${sourcePath}.note must be a string.`)
+    }
+    if (Object.hasOwn(source, 'turn_id') && typeof source.turn_id !== 'string') {
+      throw new TypeError(`${sourcePath}.turn_id must be a string.`)
+    }
+    if (Object.hasOwn(source, 'turn_id') && source.type !== 'user') {
+      throw new TypeError(`${sourcePath}.turn_id is only valid for user sources.`)
+    }
+    if (source.type === 'image_estimate' && typeof source.evidence !== 'string') {
+      throw new TypeError(`${sourcePath}.evidence is required for image_estimate sources.`)
+    }
+    if (source.type === 'existing_model' && typeof source.note !== 'string') {
+      throw new TypeError(`${sourcePath}.note is required for existing_model sources.`)
+    }
+  }
+}
+
+function validateNativeToolArguments(toolName, args) {
+  if (!isRecord(args)) throw new TypeError(`${toolName} arguments must be an object.`)
+  if (toolName === 'cad_create_model' || toolName === 'cad_add_feature') {
+    const feature = toolName === 'cad_create_model' ? args.first_feature : args.feature
+    if (!isRecord(feature)) throw new TypeError(`${toolName} feature must be an object.`)
+    validateSourceMap(feature.sources, `${toolName}.feature.sources`)
+  } else if (toolName === 'cad_update_feature') {
+    for (const key of ['parameter_updates', 'source_updates', 'fields']) {
+      if (Object.hasOwn(args, key) && !isRecord(args[key])) {
+        throw new TypeError(`cad_update_feature.${key} must be an object.`)
+      }
+    }
+    if (Object.hasOwn(args, 'source_updates')) {
+      validateSourceMap(args.source_updates, 'cad_update_feature.source_updates')
+    }
+  }
+}
+
 function parseLoopbackAddress(address) {
   if (typeof address !== 'string') throw new Error('AI_MODELER_TOOL_BRIDGE_ADDR was not configured by the Rust host.')
   const match = /^127\.0\.0\.1:(\d{1,5})$/.exec(address.trim())
@@ -476,6 +528,7 @@ export function apply(ctx) {
       },
       timeoutMs: TOOL_TIMEOUT_MS,
       async execute(args, exec) {
+        validateNativeToolArguments(tool.name, args)
         const result = await client.callTool(tool.name, args, exec.signal, exec?.callId)
         if (!isRecord(result)) throw new Error(`AI Modeler tool bridge returned an invalid result for ${tool.name}.`)
         const images = Array.isArray(result.images) ? result.images : []
