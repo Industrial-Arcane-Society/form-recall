@@ -229,9 +229,13 @@ export function summarizeCordisBindingDiagnostics(input = {}) {
     else if (call.authenticated_scope !== true || call.run_id !== run.id || call.session_id !== run.tool_session_id || call.turn_id !== run.turn_id) outcome = 'bridge_scope_rejected'
     else if (!Number.isFinite(call.started_at_ms) || !Number.isFinite(call.completed_at_ms)
       || call.completed_at_ms < call.started_at_ms || !inRun(call.started_at_ms) || !inRun(call.completed_at_ms)) outcome = 'bridge_time_invalid'
-    else if (call.success !== true) outcome = 'bridge_execution_rejected'
     else if (!schemaNames.has(call.tool)) outcome = 'schema_missing'
     else if (!registeredNames.has(call.tool)) outcome = 'registration_missing'
+    else if (call.success !== true) {
+      const auditExplicitlyRejected = timedRows.some(row => row.success === false)
+        && !timedRows.some(row => row.success === true)
+      outcome = auditExplicitlyRejected ? 'native_audit_rejected' : 'bridge_execution_rejected'
+    }
     else if (!idRows.length) outcome = 'native_audit_missing'
     else if (!toolRows.length) outcome = 'native_audit_tool_mismatch'
     else if (!timedRows.length) outcome = 'native_audit_out_of_run'

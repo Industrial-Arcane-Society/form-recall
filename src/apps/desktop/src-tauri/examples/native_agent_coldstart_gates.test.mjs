@@ -558,6 +558,55 @@ test('Cordis binding reasons distinguish missing ACP/audit rows from explicit re
   assert.equal(JSON.stringify(scopeProjection).includes('foreign-session-marker'), false)
 })
 
+test('failed bridge call reports a matching timed native audit rejection without leaking call data', () => {
+  const input = fixture()
+  const call = input.toolBridgeCalls[0]
+  call.success = false
+  call.error = 'private-bridge-error-marker'
+  call.arguments = { diameter: 'private-argument-marker' }
+  input.nativeAudit[0].success = false
+  input.nativeAudit[0].error = 'private-native-error-marker'
+  const projection = summarizeCordisBindingDiagnostics(input)
+  const outcomeCount = code => projection.counts.find(row => row.stage === 'bridge_to_audit' && row.outcome === code)?.count || 0
+  assert.equal(outcomeCount('native_audit_rejected'), 1)
+  assert.equal(outcomeCount('bridge_execution_rejected'), 0)
+  const serialized = JSON.stringify(projection)
+  for (const secret of [call.call_id, call.acp_call_id, call.arguments_sha256_24, call.error,
+    call.arguments.diameter, input.nativeAudit[0].error]) assert.equal(serialized.includes(secret), false)
+})
+
+test('failed bridge call without a native audit row remains a bridge rejection', () => {
+  const input = fixture()
+  const call = input.toolBridgeCalls[0]
+  call.success = false
+  call.error = 'private-bridge-error-marker'
+  call.arguments = { diameter: 'private-argument-marker' }
+  input.nativeAudit = []
+  const projection = summarizeCordisBindingDiagnostics(input)
+  assert.ok(projection.counts.some(row => row.stage === 'bridge_to_audit'
+    && row.outcome === 'bridge_execution_rejected' && row.count === 1))
+  const serialized = JSON.stringify(projection)
+  for (const secret of [call.call_id, call.acp_call_id, call.arguments_sha256_24, call.error,
+    call.arguments.diameter]) assert.equal(serialized.includes(secret), false)
+})
+
+test('failed bridge call with a successful native audit remains a bridge rejection', () => {
+  const input = fixture()
+  const call = input.toolBridgeCalls[0]
+  call.success = false
+  call.error = 'private-bridge-error-marker'
+  call.arguments = { diameter: 'private-argument-marker' }
+  input.nativeAudit[0].success = true
+  input.nativeAudit[0].error = 'private-native-error-marker'
+  const projection = summarizeCordisBindingDiagnostics(input)
+  assert.ok(projection.counts.some(row => row.stage === 'bridge_to_audit'
+    && row.outcome === 'bridge_execution_rejected' && row.count === 1))
+  assert.equal(projection.counts.some(row => row.stage === 'bridge_to_audit' && row.outcome === 'native_audit_rejected'), false)
+  const serialized = JSON.stringify(projection)
+  for (const secret of [call.call_id, call.acp_call_id, call.arguments_sha256_24, call.error,
+    call.arguments.diameter, input.nativeAudit[0].error]) assert.equal(serialized.includes(secret), false)
+})
+
 test('published cold-start files contain only safe gates and aggregate projections', () => {
   const root = mkdtempSync(join(tmpdir(), 'coldstart-safe-publication-'))
   const output = join(root, 'run')
