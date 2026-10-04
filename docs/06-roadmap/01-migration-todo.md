@@ -162,4 +162,4 @@ F4.1 的真实 SDK、DLL 生命周期缺陷和几何检查记录见[固定 OCCT 
 
 F4.2.1 的坐标契约修复、实际参数对拍和测量边界见[CADPlan 基础特征原生执行](./11-f4-basic-plan-execution.md)。
 
-F7 当前观察绑定的集成测试夹具复核见[记录](./75-f7-current-observation-test-fixture.md)：图像复核 fixture 现在显式绑定 source SHA 与 observation ID；native_cad_session 定向测试 23/23 通过，全量 Rust 测试待复跑。
+F7 当前观察绑定的集成测试夹具复核见[记录](./75-f7-current-observation-test-fixture.md)：图像复核 fixture 现在显式绑定 source SHA 与 observation ID；native_cad_session 定向测试 23/23、全量 Rust 单测 326/326 通过。

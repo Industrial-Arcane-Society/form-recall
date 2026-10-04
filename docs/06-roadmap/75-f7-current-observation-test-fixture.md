@@ -9,4 +9,4 @@
 - 更新测试夹具，使 review history 与 `reference_inventory` 共享同一 `source_sha256`、`observation_id` 和 ROI 绑定。
 - 不放宽生产 acceptance gate，也不改图像覆盖规则。
 - `native_cad_session::tests::` 定向运行通过 **23/23**，包括原来失败的四个用例。
-- 全量 Rust 回归尚待再次运行；该定向结果不替代完整套件结果。
+- 更新夹具后仓库 Windows wrapper 的全量 Rust 单测通过 **326/326**（设置项目要求的 Node 与 fake ACP fixture，offline 模式）。
