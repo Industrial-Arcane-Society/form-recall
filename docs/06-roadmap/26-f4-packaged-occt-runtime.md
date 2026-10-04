@@ -61,3 +61,7 @@ Rust 按显式 `AIMODELER_OCCT_MANIFEST`、安装资源、开发资源依次定�
 - 两个抽取目录的 `ai-modeler-headless-smoke.exe` 分别以各自抽出的 `app/` 为 resource root 运行，PATH 仅含 `%SystemRoot%\System32`，并清除 `PYTHONPATH`、`PYTHONHOME`、`NODE_PATH`、`AIMODELER_PYTHON` 与 `AIMODELER_OCCT_MANIFEST`。MSI 与 NSIS smoke 均返回 `status=ok`、`native_quick → OCCT → active_model_commit`、一个闭合实体、尺寸 100×60×20 mm、`globalPythonRequired=false`、`globalNodeRequired=false`，且未启动 Python/Node 子进程；AIMODEL、GLB、OBJ、STL 输出成功。
 - 两种包均含 DSH `runtime-manifest.json`、`package.json` 与 `package-lock.json`。manifest 中 package.json SHA-256 `19b3545689e15956aaab1b760dc4c99b7736cc2f29b1640d1dd23ac0fb4f1c6d` 和 package-lock SHA-256 `15e46d8cdbc966f833527f3d3878443f03639fdf4036f1c5a5fddf90ae943ada` 与抽取文件实算值一致；清单固定 Node `v22.23.3`、npm `10.9.9`、DSH/ACP `0.2.0-rc.2`。包内没有 `node.exe` 或 `node_modules`，当前实现是在首次 DSH runtime 初始化时下载并校验 Node archive，再在用户私有目录运行 `npm ci`。
 - **验收边界：**已验证两种安装包可静态抽取、包含所声明资源，且抽出的 CLI smoke 可在 System32-only PATH 调用打包 OCCT 完成 Quick 几何。未启动 `ai-modeler.exe`、未安装 MSI/NSIS、未执行 DSH Node 下载/npm 安装或 Agent/provider 冷启动，也未验证 CATIA COM、干净 Windows 用户/机器安装。
+
+## 2026-10-05 后续完整 Runtime 包
+
+本记录中的 MSI/NSIS 是 F6.7 阶段的历史产物，包内只有 DSH manifest/package/lock，未包含 Node 或 `node_modules`。后续 F6.8 已将完整离线 DSH Runtime 加入 MSI/NSIS；最新安装包体积及抽取校验以 [F6.8 记录](./93-f6.8-dsh-runtime-offline-bundle.md) 为准。

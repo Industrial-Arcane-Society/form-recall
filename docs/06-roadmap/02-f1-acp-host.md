@@ -49,6 +49,10 @@
 - 在新建临时目录中独立下载并校验 Node 官方 Windows x64 归档，解出 Node/npm，用独立 config/cache 和私有 PATH 运行锁定 `npm ci`：538 packages installed；Node `v22.23.3`、npm `10.9.9`，DSH CLI `--version` 返回 `0.2.0-rc.2`，`dsh --profile acp --help` 可启动。该验证没有读取机器全局 DSH profile，也没有发起模型请求。
 - F1.2 没有验证真实 ACP 会话或图像/模型 route；这些属于 F1.4。真实安装器升级故障通过 filesystem 单元测试覆盖，尚未在已安装 Tauri 包上完成端到端 UI 安装演练。
 
+### F1.2 后续安装包行为变更
+
+上文记录的是 F1.2 首版：安装时下载固定 Node 并执行锁定的 `npm ci`。2026-10-05 起，Release MSI/NSIS 已改为内置完整 Node/npm/DSH/ACP 运行时及其 Windows x64 依赖，首次 Agent 使用只在用户数据目录解压校验，不需要联网下载 Node 或安装 npm 依赖。Debug 开发模式仍保留原网络安装回退。以 [F6.8 完整离线包记录](./93-f6.8-dsh-runtime-offline-bundle.md) 为当前打包行为依据。
+
 ## F1.3 实施结果
 
 - 新增 `src/apps/desktop/src-tauri/src/agent_host.rs`。Rust Host 从版本化 manifest 解析应用私有 Node/DSH 入口，生成不含密钥的 profile patch，密钥只通过 DSH 子进程环境传入；Agent 模式通过 ACP 控制 DSH，Quick 模式保留原 Python 快速建模通道。

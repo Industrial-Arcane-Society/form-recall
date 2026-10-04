@@ -19,6 +19,12 @@
 - 新增 DSH lockfile 缺失时仍拒绝核心资源根的负例。
 - 前端和 G5 Rust/Vue 定向测试另见当轮集成记录；本项尚未重新构建 MSI/NSIS，也未安装运行新包。
 
-## 后续
+## 当时待办（已由 2026-10-05 复核更新）
 
 必须运行全量资源 staging 与 Tauri 安装包构建，检查 staging 和 MSI/NSIS 中 `app/ai_modeler/catia_com_adapter.py` 的实际存在情况；再以干净用户数据验证 DSH Runtime 安装不会因该文件缺失而失败。CATIA 真实 COM 不在本次修复验证范围内。
+
+## 2026-10-05：完整安装包复核
+
+F6.8 完整 Runtime 构建后，对 staging、MSI 管理抽取和 NSIS 静态抽取进行复核。三处均包含 `app/ai_modeler/catia_com_adapter.py`（23,580 bytes，SHA-256 `121c07c325e88bc8a8d0b2629ca68d11fab588df4eb2a9a5ec22b7f247fc89a6`）和 `app/kb/native_knowledge_enrichments.v1.json`（5,321,723 bytes，SHA-256 `f7ac3ea1377f2213af456ef1716a395b5dd4349bbfc675393b7750862f25a561`）。两个安装包还均含 198,590,382-byte 的完整 DSH Runtime ZIP；版本、SHA 和用户目录离线解压验收见 [F6.8 记录](./93-f6.8-dsh-runtime-offline-bundle.md)。
+
+因此，截图中的缺文件提示不能归因于当前 MSI/NSIS 静态内容。adapter 在当前代码中是 CATIA 可选资源，缺失不应阻断应用启动；知识库文件仍是核心必需资源。截图所运行的程序版本及其实际 `resource_root` 尚未实测，旧二进制或运行时选错资源目录仍是待验证方向，不能据截图确认唯一根因。
