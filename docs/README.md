@@ -28,6 +28,11 @@
 - [F4.2.14 CADPlan V 带轮原生执行](06-roadmap/63-f4-native-vbelt-pulley.md)
 - [F4.2.20 CADPlan impeller 原生执行](06-roadmap/68-f4-native-impeller.md)
 - [F4.2.21 CADPlan shell 原生执行阻塞记录](06-roadmap/69-f4-native-shell-blocker.md)
+- [F4.4.1 精简 OCCT 资源与当前 MSI/NSIS 构建](06-roadmap/26-f4-packaged-occt-runtime.md)
+- [F6.7 Python/CATIA 资源拆分与安装包边界](06-roadmap/59-f6.7-python-resource-split.md)
+- [F7/G5 观察刷新与 finding 生命周期](06-roadmap/40-f7-stage-review-findings.md)
+- [F7/G8 Safe gate 细分诊断](06-roadmap/78-f7-g8-subcondition-diagnostics.md)
+- [F7/G8 Run23 真实 provider 冷启动诊断](06-roadmap/79-f7-g8-run-23-diagnosis.md)
 - [F6.3 Rust 原生零件目录与示例列表](06-roadmap/55-f6.3-native-parts-catalog.md)
 - [文档目录、索引与链接审查记录](06-roadmap/03-docs-index-audit.md)
 
