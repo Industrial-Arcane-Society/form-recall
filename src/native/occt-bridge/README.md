@@ -40,6 +40,48 @@ Get-FileHash src/apps/desktop/src-tauri/target/f4-occt/occt-V7_9_3-source.zip -A
 git -C src/apps/desktop/src-tauri/target/f4-occt/git-check rev-parse HEAD
 ```
 
+## Building the OCCT package input from a clean checkout
+
+On x64 Windows, the desktop resource builder uses the ignored default runtime
+root at `src/apps/desktop/src-tauri/target/f4-occt/`. If the verified
+`runtime-manifest.json` is missing or fails validation, it runs
+`Build-Runtime.ps1` to fetch and verify the pinned official source archive,
+build the required OCCT toolkits and C ABI bridge, run the CTest smoke, copy
+the license files from that verified source archive, and generate a manifest
+from the actual built DLL hashes. The package builder then stages only the
+manifest-listed files and checks their hashes.
+
+Prerequisites for that first-time OCCT build are x64 Windows, PowerShell 7
+(`pwsh`), network access to the pinned GitHub archive, Visual Studio Build Tools with
+the x64 C++ workload (`vswhere.exe` and `vcvarsall.bat`), CMake 3.24 or newer
+on PATH, and Ninja from Visual Studio or PATH. `npm run tauri:build` also
+requires the normal Tauri desktop toolchain and the checked-in npm lockfile
+dependencies. OCCT source, build, install, and manifest outputs stay in the
+ignored `target/f4-occt/` directory; no generated runtime or license file must
+be committed.
+
+From a fresh checkout, install desktop JavaScript dependencies and build with
+the default OCCT input path:
+
+```powershell
+cd src/apps/desktop
+npm ci --no-audit --no-fund
+npm run tauri:build
+```
+
+If `AIMODELER_OCCT_MANIFEST` is explicitly set, it must point to a valid
+manifest; an invalid override fails closed and is not replaced by the default
+builder. To build the runtime input by itself, from repository root run:
+
+```powershell
+pwsh -NoProfile -File src/native/occt-bridge/Build-Runtime.ps1 `
+  -RuntimeRoot src/apps/desktop/src-tauri/target/f4-occt
+```
+
+The build script replaces only its generated `source`, `occt-build`, `install`,
+`bridge-build`, and `bridge-install` subdirectories under that runtime root.
+It does not accept prebuilt DLLs or skip archive/runtime hash checks.
+
 ## ABI ownership and behavior
 
 - Every returned `OcctShape*` is a distinct owned handle; release it exactly
