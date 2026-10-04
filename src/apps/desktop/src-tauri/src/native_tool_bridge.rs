@@ -34,6 +34,14 @@ pub trait ToolExecutor: Send + Sync + 'static {
 
     fn cancel(&self, tool_call_id: &str) -> bool;
 
+    fn finding_review_state(&self) -> Result<Value, String> {
+        Err("当前原生工具执行器不支持 finding 人工确认。".into())
+    }
+
+    fn adjudicate_finding(&self, _request: &Value) -> Result<Value, String> {
+        Err("当前原生工具执行器不支持 finding 人工确认。".into())
+    }
+
     fn shutdown(&self) {}
 }
 
@@ -145,6 +153,14 @@ impl NativeToolBridge {
 
     pub fn schemas_path(&self) -> &Path {
         &self.schemas_path
+    }
+
+    pub fn finding_review_state(&self) -> Result<Value, String> {
+        self.shared.executor.finding_review_state()
+    }
+
+    pub fn adjudicate_finding(&self, request: &Value) -> Result<Value, String> {
+        self.shared.executor.adjudicate_finding(request)
     }
 
     pub fn shutdown(&self) {

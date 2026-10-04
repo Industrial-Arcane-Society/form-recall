@@ -577,6 +577,54 @@ impl NativeToolExecutor {
             Ok(json!({"plan":null,"revision":0,"actions":[],"web_search_history":[]}))
         }
     }
+
+    fn adjudication_state(&self) -> Result<(Value, Value, u64), String> {
+        let root = self.active_model_root.as_deref().ok_or("当前 Agent 会话没有活动模型 CAS 根目录。")?;
+        let state = self.load_cad_state()?;
+        let active = crate::native_active_model::load(root)?.ok_or("当前活动模型不存在；拒绝 adjudication。")?;
+        if !active_model_state_matches(&state, &active) {
+            return Err("Agent 会话与当前活动模型不一致；拒绝 adjudication。".into());
+        }
+        let generation = active.get("generation").and_then(Value::as_u64).ok_or("活动模型 generation 无效。")?;
+        Ok((state, active, generation))
+    }
+
+    fn finding_review_state_locked(&self) -> Result<Value, String> {
+        let (state, _, generation) = self.adjudication_state()?;
+        Ok(crate::native_review_findings::pending_adjudications(&state, generation))
+    }
+
+    fn adjudicate_finding_locked(&self, request: &Value) -> Result<Value, String> {
+        let allowed = ["expected_generation", "expected_revision", "finding_id", "candidate_evidence_id", "candidate_observation_id", "reference_id", "source_sha256", "user_target_fingerprint", "view", "affected_feature_ids"];
+        let object = request.as_object().ok_or("请求必须为 JSON 对象。")?;
+        if let Some(key) = object.keys().find(|key| !allowed.contains(&key.as_str())) {
+            return Err(format!("未知 adjudication 字段：{key}"));
+        }
+        let expected_generation = request["expected_generation"].as_u64().ok_or("expected_generation 必须为非负整数。")?;
+        let expected_revision = request["expected_revision"].as_i64().ok_or("expected_revision 必须为整数。")?;
+        let (mut state, active, generation) = self.adjudication_state()?;
+        if generation != expected_generation {
+            return Err(format!("活动模型 generation 已变化：期望 {expected_generation}，当前为 {generation}。"));
+        }
+        if state["revision"].as_i64() != Some(expected_revision) || active["revision"].as_i64() != Some(expected_revision) {
+            return Err("CAD revision 已变化；请刷新人工确认列表。".into());
+        }
+        let adjudication = crate::native_review_findings::adjudicate_rebind(&mut state, request)?;
+        state["finish_summary"] = Value::Null;
+        let references = read_json_object(&self.session_dir.join("reference-images.json"))?;
+        let user_turns = read_json_object(&self.session_dir.join("user-turns.json"))?;
+        let active = commit_agent_model_state(&self.session_dir, self.active_model_root.as_deref().unwrap(), generation, &mut state, &references, &user_turns)?;
+        let new_generation = active["generation"].as_u64().ok_or("adjudication 提交后的 generation 无效。")?;
+        let pending = crate::native_review_findings::pending_adjudications(&state, new_generation);
+        Ok(json!({
+            "adjudication": adjudication,
+            "generation": new_generation,
+            "revision": state["revision"],
+            "pending": pending["pending"],
+            "finding_status": state["finding_ledger"][adjudication["finding_id"].as_str().unwrap_or("")]["status"],
+            "resolved": false,
+        }))
+    }
 }
 
 fn commit_agent_model_state(
@@ -699,6 +747,16 @@ fn sync_session_preview(session_dir: &Path, state: &Value) {
 }
 
 impl ToolExecutor for NativeToolExecutor {
+    fn finding_review_state(&self) -> Result<Value, String> {
+        let _transaction = self.transaction.lock().map_err(|_| "CAD 会话事务已损坏。")?;
+        self.finding_review_state_locked()
+    }
+
+    fn adjudicate_finding(&self, request: &Value) -> Result<Value, String> {
+        let _transaction = self.transaction.lock().map_err(|_| "CAD 会话事务已损坏。")?;
+        self.adjudicate_finding_locked(request)
+    }
+
     fn execute(
         &self,
         call_id: &str,

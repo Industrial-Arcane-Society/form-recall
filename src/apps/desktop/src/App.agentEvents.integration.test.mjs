@@ -56,6 +56,30 @@ const rustModelChange = rustChannelCapture?.events?.find(row => row.message?.eve
 const expectedModelDocument = rustModelChange?.data || changedDocument
 const expectedUserText = rustChannelCapture?.events?.find(row => row.message?.event === 'agent.message')?.message?.data?.text || 'Create a bracket'
 const scenario = rustChannelCapture?.scenario || 'stale-finish'
+const uiScenario = process.env.AIMODELER_UI_SCENARIO || ''
+let adjudicationSubmitted = null
+let adjudicationConfirmed = false
+const pendingAdjudication = {
+  expected_generation: 12,
+  expected_revision: 7,
+  finding_id: 'finding-ui-1',
+  finding_status: 'awaiting_verification',
+  item: 'hole center offset',
+  severity: 'high',
+  previous_evidence_id: 'reference-hole-old',
+  previous_observation_id: 'observation-old',
+  candidate_evidence_id: 'reference-hole-new',
+  candidate_observation_id: 'observation-new',
+  affected_feature_ids: ['hole1'],
+  binding: {
+    evidence_id: 'reference-hole-new', observation_id: 'observation-new',
+    reference_id: 'reference-1', source_sha256: 'a'.repeat(64),
+    user_target_fingerprint: 'target-1', view: 'front',
+  },
+  reference_evidence: 'prior reference evidence',
+  model_evidence: 'prior model evidence',
+  candidate_reference_evidence: 'candidate reference evidence',
+}
 
 // Provide the Tauri transport expected by the real Channel/invoke implementations.
 globalThis.Document = class Document {}; globalThis.ShadowRoot = class ShadowRoot {};
@@ -80,6 +104,15 @@ window.__TAURI_INTERNALS__ = {
     if (command === 'active_model_snapshot') return null
     if (command === 'active_model_new') return { revision: 0, name: 'Part1', features: [], stats: {}, build_log: [] }
     if (command === 'agent_history') return { turns: [] }
+    if (command === 'agent_finding_review_state') {
+      if (uiScenario !== 'finding-adjudication' || adjudicationConfirmed) return { pending: [] }
+      return { pending: [pendingAdjudication] }
+    }
+    if (command === 'agent_adjudicate_finding') {
+      adjudicationSubmitted = args.request
+      adjudicationConfirmed = true
+      return { resolved: false, finding_status: 'awaiting_verification' }
+    }
     if (command === 'agent_send') {
       submittedRequestId = args.requestId
       const callback = tauriCallbacks.get(args.onEvent.id)
@@ -178,6 +211,24 @@ try {
   assert.ok(sendButton, 'production composer renders the send button')
   await sendButton.props.onClick()
   await nextTick()
+
+  if (uiScenario === 'finding-adjudication') {
+    let confirmButton = descendants(root).find(node => node.type === 'button' && hasClass(node, 'finding-adjudication-confirm'))
+    assert.ok(confirmButton, 'production Vue app exposes an explicit human confirmation button')
+    assert.match(renderedText(confirmButton.parent), /仍保持未解决/)
+    await confirmButton.props.onClick()
+    await nextTick()
+    assert.deepEqual(adjudicationSubmitted, {
+      expected_generation: 12, expected_revision: 7, finding_id: 'finding-ui-1',
+      candidate_evidence_id: 'reference-hole-new', candidate_observation_id: 'observation-new',
+      reference_id: 'reference-1', source_sha256: 'a'.repeat(64),
+      user_target_fingerprint: 'target-1', view: 'front', affected_feature_ids: ['hole1'],
+    }, 'Vue submits only the uniquely displayed finding/candidate binding and CAS versions')
+    assert.equal(adjudicationConfirmed, true)
+    assert.equal(descendants(root).some(node => hasClass(node, 'finding-adjudication-confirm')), false)
+    assert.equal(renderedText(root).includes('finding_status=resolved'), false)
+    console.log('PASS: mounted production Vue App; human finding adjudication submits the exact CAS-bound candidate and retains awaiting-verification semantics.')
+  }
 
   assert.ok(submittedRequestId, 'production submit handler calls agent_send')
   if (rustChannelCapture) {

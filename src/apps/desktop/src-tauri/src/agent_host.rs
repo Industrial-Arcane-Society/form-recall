@@ -454,6 +454,24 @@ pub fn history(app: &AppHandle) -> Result<Value, String> {
     }))
 }
 
+pub fn finding_review_state(state: &AgentHostState) -> Result<Value, String> {
+    let session = state.inner.lock().map_err(|_| "Rust Agent Host 状态锁已损坏。")?.current.clone()
+        .ok_or("当前没有已打开的 Agent 会话。")?;
+    if session.active.load(Ordering::Acquire) {
+        return Err("Agent 正在处理请求；请等待本轮结束后刷新人工确认列表。".into());
+    }
+    session.tool_bridge.finding_review_state()
+}
+
+pub fn adjudicate_finding(state: &AgentHostState, request: &Value) -> Result<Value, String> {
+    let session = state.inner.lock().map_err(|_| "Rust Agent Host 状态锁已损坏。")?.current.clone()
+        .ok_or("当前没有已打开的 Agent 会话。")?;
+    if session.active.load(Ordering::Acquire) {
+        return Err("Agent 正在处理请求；请等待本轮结束后重试。".into());
+    }
+    session.tool_bridge.adjudicate_finding(request)
+}
+
 fn get_or_create_session(
     state: &AgentHostState,
     data_dir: &Path,

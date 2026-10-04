@@ -10,6 +10,8 @@ import UiIcon from './components/UiIcon.vue'
 import { documentAcceptanceView, modelAcceptanceView, turnStatusView } from './agentStatus.mjs'
 import { diagnosticStatusRows, nativeSelftestMessage } from './diagnosticStatus.mjs'
 import type { ModelAcceptanceView } from './agentStatus.mjs'
+import { adjudicationRequest, pendingAdjudications } from './findingAdjudication.mjs'
+import type { PendingFindingAdjudication } from './findingAdjudication.mjs'
 
 const CadViewport = defineAsyncComponent(() => import('./components/CadViewport.vue'))
 
@@ -31,6 +33,8 @@ const panel = ref<'tree' | 'params' | 'stats' | 'logs' | 'parts'>('tree')
 const themeDark = ref(false)
 const documentState = ref<DocumentState>({ revision: 0, name: 'Part1', features: [], stats: {}, build_log: [] })
 const modelAcceptance = ref<ModelAcceptanceView>(modelAcceptanceView(null))
+const pendingFindingAdjudications = ref<PendingFindingAdjudication[]>([])
+const adjudicatingFindingId = ref('')
 const turnStatus = ref(turnStatusView('idle'))
 const nativeModelActive = ref(false)
 const selectedIndex = ref(-1)
@@ -299,12 +303,44 @@ async function initialize() {
       addLog('已创建 Rust 原生空活动模型')
     }
     await restoreAgentHistory()
+    await refreshFindingAdjudications()
     setStatus('原生 CAD 工作区已连接', 'success')
     addLog(`桌面已就绪 · DSH ${readiness.dsh?.state || 'unknown'} · OCCT ${readiness.occt?.state || 'unknown'} · CATIA ${readiness.catia?.state || 'unknown'}`)
   } catch (error) {
     backendInfo.value = '桌面核心未就绪'
     setStatus(errorMessage(error), 'error')
     addLog('启动 Rust 原生工作区失败：' + errorMessage(error))
+  }
+}
+
+async function refreshFindingAdjudications() {
+  if (!desktop) return
+  try {
+    const state = await invoke<any>('agent_finding_review_state')
+    pendingFindingAdjudications.value = pendingAdjudications(state)
+  } catch {
+    // No live Agent session is a normal startup state. A pending list is refreshed
+    // after the next completed Agent turn, when its native host session is available.
+    pendingFindingAdjudications.value = []
+  }
+}
+
+async function confirmFindingAdjudication(row: PendingFindingAdjudication) {
+  if (adjudicatingFindingId.value || busy.value) return
+  adjudicatingFindingId.value = row.finding_id
+  try {
+    const request = adjudicationRequest(row)
+    const result = await invoke<any>('agent_adjudicate_finding', { request })
+    if (result?.resolved !== false || result?.finding_status !== 'awaiting_verification') {
+      throw new Error('宿主未确认待复核状态，已拒绝显示为完成。')
+    }
+    await refreshFindingAdjudications()
+    setStatus('来源关联已记录；finding 仍须通过当前完整独立复核才能关闭。', 'warning')
+  } catch (error) {
+    await refreshFindingAdjudications()
+    await showMessage('人工关联确认失败', errorMessage(error), 'error')
+  } finally {
+    adjudicatingFindingId.value = ''
   }
 }
 
@@ -530,6 +566,7 @@ async function submitPrompt() {
   } finally {
     busy.value = false
     activeRequestId.value = ''
+    if (mode.value === 'agent') await refreshFindingAdjudications()
     scrollChat()
   }
 }
@@ -1129,6 +1166,27 @@ onUnmounted(() => {
             <span>视觉：{{ modelAcceptance.visual }}</span>
           </div>
         </section>
+        <section v-if="pendingFindingAdjudications.length" class="finding-adjudications" aria-label="待确认的视觉 finding 来源关联">
+          <div class="finding-adjudications__heading">
+            <div><span class="eyebrow">MANUAL REVIEW</span><strong>待确认的 finding 来源关联</strong></div>
+            <span>{{ pendingFindingAdjudications.length }}</span>
+          </div>
+          <article v-for="row in pendingFindingAdjudications" :key="row.finding_id" class="finding-adjudication-card">
+            <div class="finding-adjudication-card__title"><strong>{{ row.item || '未命名差异' }}</strong><small>{{ row.severity || 'severity 未提供' }} · {{ row.finding_status }}</small></div>
+            <dl>
+              <div><dt>既有 evidence</dt><dd>{{ row.previous_evidence_id }} · {{ row.previous_observation_id }}</dd></div>
+              <div><dt>候选 evidence</dt><dd>{{ row.candidate_evidence_id }} · {{ row.candidate_observation_id }}</dd></div>
+              <div><dt>视角 / 特征</dt><dd>{{ row.binding.view }} · {{ row.affected_feature_ids.join(', ') }}</dd></div>
+            </dl>
+            <p v-if="row.reference_evidence"><b>既有原图证据</b> {{ row.reference_evidence }}</p>
+            <p v-if="row.model_evidence"><b>既有模型证据</b> {{ row.model_evidence }}</p>
+            <p v-if="row.candidate_reference_evidence"><b>候选原图观察</b> {{ row.candidate_reference_evidence }}</p>
+            <button class="finding-adjudication-confirm" :disabled="busy || !!adjudicatingFindingId" @click="confirmFindingAdjudication(row)">
+              {{ adjudicatingFindingId === row.finding_id ? '正在提交…' : '确认这条候选与该 finding 同源' }}
+            </button>
+            <small class="finding-adjudication-note">确认只记录来源关联；finding 仍保持未解决，须由后续当前版本的完整独立复核关闭。</small>
+          </article>
+        </section>
         <div ref="chatScroll" class="chat-history">
           <div v-for="(item, index) in chat" :key="index" class="chat-message" :class="item.role">
             <div class="message-avatar"><template v-if="item.role === 'user'">你</template><UiIcon v-else-if="item.role === 'progress'" name="loading" :size="16" /><template v-else>AI</template></div>
@@ -1411,6 +1469,23 @@ onUnmounted(() => {
 .acceptance-summary__row strong[data-state="stopped"] { color: #a66b12; }
 .acceptance-summary__evidence { display: flex; flex-wrap: wrap; gap: 4px 10px; }
 .theme-dark .acceptance-summary__row strong { color: var(--text, #e0e7eb); }
+.finding-adjudications { margin: 0 16px 12px; padding: 12px; display: grid; gap: 10px; border: 1px solid #e8c783; border-radius: 12px; background: #fffaf0; color: #49391b; }
+.theme-dark .finding-adjudications { background: #332b1c; border-color: #705b31; color: #f1e1bc; }
+.finding-adjudications__heading { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+.finding-adjudications__heading > div { display: grid; gap: 2px; }
+.finding-adjudications__heading strong { font-size: 13px; }
+.finding-adjudications__heading > span { min-width: 24px; padding: 2px 7px; border-radius: 999px; text-align: center; background: #f0dfb7; font-size: 12px; }
+.finding-adjudication-card { display: grid; gap: 8px; padding: 10px; border-radius: 9px; background: var(--panel, #fff); color: var(--text, #26343c); box-shadow: 0 1px 3px #19252d12; }
+.finding-adjudication-card__title { display: flex; justify-content: space-between; gap: 8px; align-items: baseline; }
+.finding-adjudication-card__title strong { font-size: 13px; }
+.finding-adjudication-card__title small, .finding-adjudication-note { color: var(--muted, #70808a); font-size: 11px; }
+.finding-adjudication-card dl { margin: 0; display: grid; gap: 4px; }
+.finding-adjudication-card dl div { display: grid; grid-template-columns: 86px minmax(0, 1fr); gap: 6px; font-size: 11px; }
+.finding-adjudication-card dt { color: var(--muted, #70808a); }
+.finding-adjudication-card dd { margin: 0; overflow-wrap: anywhere; }
+.finding-adjudication-card p { margin: 0; font-size: 12px; line-height: 1.45; overflow-wrap: anywhere; }
+.finding-adjudication-confirm { border: 0; border-radius: 8px; padding: 8px 10px; background: #9a6810; color: white; font: inherit; font-size: 12px; cursor: pointer; }
+.finding-adjudication-confirm:disabled { opacity: .55; cursor: wait; }
 .diagnostic-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; margin: 8px 0 14px; }
 .diagnostic-row { display: grid; gap: 5px; min-width: 0; padding: 11px 12px; border: 1px solid var(--line); border-radius: 9px; background: var(--surface-muted, #f7f8fa); }
 .diagnostic-row span { color: var(--muted, #71808a); font-size: 11px; }

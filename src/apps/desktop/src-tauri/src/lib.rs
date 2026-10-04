@@ -1147,6 +1147,16 @@ async fn agent_send(
     .await
 }
 
+#[tauri::command]
+fn agent_finding_review_state(state: State<'_, agent_host::AgentHostState>) -> Result<Value, String> {
+    agent_host::finding_review_state(state.inner())
+}
+
+#[tauri::command]
+fn agent_adjudicate_finding(state: State<'_, agent_host::AgentHostState>, request: Value) -> Result<Value, String> {
+    agent_host::adjudicate_finding(state.inner(), &request)
+}
+
 #[tauri::command(rename_all = "camelCase")]
 async fn native_online_ask(query: String) -> Result<Value, String> {
     let web = native_web::NativeWeb::new(true);
@@ -1410,6 +1420,8 @@ pub fn run() {
             agent_cancel,
             agent_reset,
             agent_history,
+            agent_finding_review_state,
+            agent_adjudicate_finding,
             read_asset,
             save_input_image,
             stage_input_image

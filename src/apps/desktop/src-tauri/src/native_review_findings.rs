@@ -4,6 +4,7 @@ use crate::cad_plan;
 use serde_json::{Value, json};
 use sha2::{Digest, Sha256};
 use std::collections::{BTreeMap, BTreeSet};
+use std::time::{SystemTime, UNIX_EPOCH};
 
 fn ids(value: &Value) -> BTreeSet<String> {
     value
@@ -237,6 +238,235 @@ fn row_binding(review: &Value, evidence_id: &str, stable_identity: Option<&str>)
     value
 }
 
+fn active_finding_status(finding: &Value) -> bool {
+    matches!(
+        finding["status"].as_str(),
+        Some("open" | "awaiting_verification" | "needs_reference_check")
+    )
+}
+
+fn projected_binding(binding: &Value) -> Value {
+    let mut out = serde_json::Map::new();
+    for key in [
+        "revision",
+        "geometry_fingerprint",
+        "preview_generation",
+        "preview_sha256",
+        "pair_fingerprint",
+        "view",
+        "observation_id",
+        "observation_fingerprint",
+        "reference_id",
+        "source_sha256",
+        "user_target_fingerprint",
+        "evidence_id",
+        "stable_evidence_identity",
+    ] {
+        if let Some(value) = binding.get(key) {
+            out.insert(key.to_owned(), value.clone());
+        }
+    }
+    Value::Object(out)
+}
+
+/// Return the safe, finite subset needed for a human to adjudicate pending
+/// observation identity bindings. This intentionally omits provider payloads.
+pub fn pending_adjudications(state: &Value, generation: u64) -> Value {
+    let revision = state.get("revision").and_then(Value::as_i64).unwrap_or(0);
+    let mut pending = Vec::new();
+    if let Some(ledger) = state.get("finding_ledger").and_then(Value::as_object) {
+        for (id, finding) in ledger {
+            if !active_finding_status(&finding)
+                || finding["rebind_status"] != "confirmation_required"
+            {
+                continue;
+            }
+            let binding = &finding["rebind_attempt_binding"];
+            let candidate_id = binding["evidence_id"].as_str().unwrap_or_default();
+            let reference_id = binding["reference_id"].as_str().unwrap_or_default();
+            let inventory = state
+                .get("reference_inventory")
+                .and_then(|rows| rows.get(reference_id))
+                .filter(|row| {
+                    row["observation_valid"] == true
+                        && row["observation_id"] == binding["observation_id"]
+                        && row["source_sha256"] == binding["source_sha256"]
+                });
+            let matches: Vec<_> = inventory
+                .and_then(|row| row["visible_evidence"].as_array())
+                .into_iter()
+                .flatten()
+                .filter(|row| row["evidence_id"].as_str() == Some(candidate_id))
+                .collect();
+            if matches.len() != 1 {
+                continue;
+            }
+            let evidence = matches[0];
+            pending.push(json!({
+                "finding_id": id,
+                "finding_status": finding["status"],
+                "item": finding["item"],
+                "severity": finding["severity"],
+                "previous_evidence_id": finding["evidence_id"],
+                "previous_observation_id": finding["last_mismatch_binding"]["observation_id"],
+                "reference_evidence": finding["reference_evidence"],
+                "model_evidence": finding["model_evidence"],
+                "affected_feature_ids": finding["affected_feature_ids"],
+                "candidate_evidence_id": candidate_id,
+                "candidate_observation_id": binding["observation_id"],
+                "candidate_reference_evidence": evidence["description"],
+                "candidate_source_evidence_id": evidence["source_evidence_id"],
+                "binding": projected_binding(binding),
+                "expected_generation": generation,
+                "expected_revision": revision,
+            }));
+        }
+    }
+    json!({"available": true, "generation": generation, "revision": revision, "pending": pending})
+}
+
+/// Confirm one exact old-finding/new-evidence pairing. The decision is
+/// recorded as human provenance but never resolves the finding; a later
+/// independently produced, current complete review must still close it.
+pub fn adjudicate_rebind(state: &mut Value, request: &Value) -> Result<Value, String> {
+    let finding_id = request["finding_id"].as_str().unwrap_or_default();
+    let candidate_evidence_id = request["candidate_evidence_id"]
+        .as_str()
+        .unwrap_or_default();
+    let candidate_observation_id = request["candidate_observation_id"]
+        .as_str()
+        .unwrap_or_default();
+    let reference_id = request["reference_id"].as_str().unwrap_or_default();
+    let source_sha256 = request["source_sha256"].as_str().unwrap_or_default();
+    let user_target_fingerprint = request["user_target_fingerprint"]
+        .as_str()
+        .unwrap_or_default();
+    let view = request["view"].as_str().unwrap_or_default();
+    let Some(expected_revision) = request["expected_revision"].as_i64() else {
+        return Err("expected_revision 必须为整数。".into());
+    };
+    let Some(expected_generation) = request["expected_generation"].as_u64() else {
+        return Err("expected_generation 必须为非负整数。".into());
+    };
+    let Some(features) = request["affected_feature_ids"].as_array() else {
+        return Err("affected_feature_ids 必须为数组。".into());
+    };
+    let affected = ids(&request["affected_feature_ids"]);
+    if finding_id.is_empty()
+        || candidate_evidence_id.is_empty()
+        || candidate_observation_id.is_empty()
+        || reference_id.is_empty()
+        || source_sha256.is_empty()
+        || user_target_fingerprint.is_empty()
+        || view.is_empty()
+        || affected.is_empty()
+        || affected.len() != features.len()
+    {
+        return Err("人工确认缺少唯一、完整的 finding/evidence/观察/范围标识。".into());
+    }
+    let revision = state["revision"].as_i64().unwrap_or(-1);
+    if revision != expected_revision {
+        return Err(format!(
+            "CAD revision 已变化：期望 {expected_revision}，当前为 {revision}。"
+        ));
+    }
+    if state["active_model_generation"].as_u64() != Some(expected_generation) {
+        return Err("活动模型 generation 已变化；请刷新人工确认列表。".into());
+    }
+    let Some(finding) = state
+        .get_mut("finding_ledger")
+        .and_then(Value::as_object_mut)
+        .and_then(|ledger| ledger.get(finding_id))
+        .cloned()
+    else {
+        return Err("指定 finding 不存在。".into());
+    };
+    if !active_finding_status(&finding) {
+        return Err("finding 已关闭或不处于可 adjudicate 状态。".into());
+    }
+    if finding["rebind_status"] != "confirmation_required" {
+        return Err("finding 当前没有待人工确认的重绑候选。".into());
+    }
+    if finding["human_adjudication"].is_object() {
+        return Err("该 finding 已有人工关联确认；拒绝重复提交。".into());
+    }
+    let binding = &finding["rebind_attempt_binding"];
+    if binding["evidence_id"].as_str() != Some(candidate_evidence_id)
+        || binding["observation_id"].as_str() != Some(candidate_observation_id)
+        || binding["reference_id"].as_str() != Some(reference_id)
+        || binding["source_sha256"].as_str() != Some(source_sha256)
+        || binding["user_target_fingerprint"].as_str() != Some(user_target_fingerprint)
+        || binding["view"].as_str() != Some(view)
+        || finding["reference_id"].as_str() != Some(reference_id)
+        || ids(&finding["affected_feature_ids"]) != affected
+        || finding["last_mismatch_binding"]["source_sha256"].as_str() != Some(source_sha256)
+        || finding["last_mismatch_binding"]["user_target_fingerprint"].as_str()
+            != Some(user_target_fingerprint)
+        || finding["last_mismatch_binding"]["view"].as_str() != Some(view)
+    {
+        return Err("人工确认参数与 finding 的 pending binding 不一致。".into());
+    }
+    let inventory = state
+        .get("reference_inventory")
+        .and_then(|rows| rows.get(reference_id))
+        .filter(|row| {
+            row["observation_id"].as_str() == Some(candidate_observation_id)
+                && row["source_sha256"].as_str() == Some(source_sha256)
+                && row["observation_valid"] == true
+        })
+        .ok_or("候选不属于当前有效 observation。")?;
+    let matches: Vec<_> = inventory["visible_evidence"]
+        .as_array()
+        .into_iter()
+        .flatten()
+        .filter(|row| row["evidence_id"].as_str() == Some(candidate_evidence_id))
+        .collect();
+    if matches.len() != 1 {
+        return Err("候选 evidence 不在当前 observation，或 ID 不唯一。".into());
+    }
+    let ledger = state["finding_ledger"].as_object().unwrap();
+    if ledger.iter().any(|(other_id, other)| {
+        other_id != finding_id
+            && active_finding_status(other)
+            && other["human_adjudication"]["candidate_evidence_id"] == candidate_evidence_id
+            && other["human_adjudication"]["candidate_observation_id"] == candidate_observation_id
+    }) {
+        return Err("此候选已人工关联到另一个未解决 finding。".into());
+    }
+    let binding = projected_binding(&binding);
+    let at_ms = SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .unwrap_or_default()
+        .as_millis();
+    let finding = state["finding_ledger"].get_mut(finding_id).unwrap();
+    finding["human_adjudication"] = json!({
+        "decision":"same_source",
+        "adjudicator":"human",
+        "candidate_evidence_id":candidate_evidence_id,
+        "candidate_observation_id":candidate_observation_id,
+        "binding":binding,
+                        "adjudicated_revision":expected_revision,
+        "at_unix_ms":at_ms,
+    });
+    finding["rebind_status"] = json!("human_confirmed");
+    finding["status"] = json!("awaiting_verification");
+    let event = finding["human_adjudication"].clone();
+    append_history(finding, "human_rebind_confirmed", &event);
+    let unresolved: Vec<_> = state["finding_ledger"]
+        .as_object()
+        .into_iter()
+        .flat_map(|ledger| ledger.values())
+        .filter(|row| active_finding_status(row))
+        .cloned()
+        .collect();
+    state["unresolved_findings"] = json!(unresolved);
+    Ok(
+        json!({"finding_id":finding_id,"candidate_evidence_id":candidate_evidence_id,
+        "candidate_observation_id":candidate_observation_id,"status":"awaiting_verification",
+        "resolved":false,"adjudication":event}),
+    )
+}
+
 fn same_rebind_scope(
     state: &Value,
     finding: &Value,
@@ -426,16 +656,49 @@ pub fn reconcile(state: &mut Value, review: &Value) -> Result<Value, String> {
                     {
                         return None;
                     }
+                    let claimed_by_another_finding = ledger.iter().any(|(other_id, other)| {
+                        other_id != id
+                            && active_finding_status(other)
+                            && other["human_adjudication"]["candidate_evidence_id"] == eid
+                            && other["human_adjudication"]["candidate_observation_id"]
+                                == review["observation_id"]
+                    });
+                    if claimed_by_another_finding {
+                        return None;
+                    }
                     let old = &finding["last_mismatch_binding"];
                     let exact_observation = finding["evidence_id"] == eid
                         && old["observation_id"] == review["observation_id"]
                         && old["observation_fingerprint"] == review["observation_fingerprint"];
-                    let refreshed_observation = stable_id.as_deref().is_some_and(|identity| {
-                        finding["evidence_id"] != eid
-                            && old["observation_id"] != review["observation_id"]
-                            && same_rebind_scope(state, finding, review, &affected, identity)
-                    });
-                    if !exact_observation && !refreshed_observation {
+                    let human_authorized = finding["human_adjudication"]["decision"]
+                        == "same_source"
+                        && finding["human_adjudication"]["candidate_evidence_id"] == eid
+                        && finding["human_adjudication"]["candidate_observation_id"]
+                            == review["observation_id"]
+                        && finding["human_adjudication"]["binding"]["source_sha256"]
+                            == review["source_sha256"]
+                        && finding["human_adjudication"]["binding"]["user_target_fingerprint"]
+                            == review["user_target_fingerprint"]
+                        && finding["human_adjudication"]["binding"]["view"] == review["view"]
+                        && ids(&finding["affected_feature_ids"]) == affected;
+                    let after_human_adjudication = finding["human_adjudication"].is_null()
+                        || (revision
+                            >= finding["human_adjudication"]["adjudicated_revision"]
+                                .as_i64()
+                                .unwrap_or(i64::MAX)
+                            && review["preview_generation"].as_i64().unwrap_or(-1)
+                                > finding["human_adjudication"]["binding"]["preview_generation"]
+                                    .as_i64()
+                                    .unwrap_or(i64::MAX)
+                            && review["pair_fingerprint"]
+                                != finding["human_adjudication"]["binding"]["pair_fingerprint"]);
+                    let refreshed_observation = finding["evidence_id"] != eid
+                        && old["observation_id"] != review["observation_id"]
+                        && (human_authorized
+                            || stable_id.as_deref().is_some_and(|identity| {
+                                same_rebind_scope(state, finding, review, &affected, identity)
+                            }));
+                    if (!exact_observation && !refreshed_observation) || !after_human_adjudication {
                         return None;
                     }
                     if old["source_sha256"] != review["source_sha256"]
@@ -767,6 +1030,162 @@ mod tests {
         assert_eq!(
             state["finding_ledger"]["duplicate-old-finding"]["rebind_status"],
             "confirmation_required"
+        );
+    }
+
+    fn request_for(state: &Value, finding_id: &str, generation: u64) -> Value {
+        let rows = pending_adjudications(state, generation);
+        let row = rows["pending"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .find(|row| row["finding_id"] == finding_id)
+            .unwrap();
+        let binding = &row["binding"];
+        json!({
+            "expected_generation":generation,
+            "expected_revision":state["revision"],
+            "finding_id":finding_id,
+            "candidate_evidence_id":row["candidate_evidence_id"],
+            "candidate_observation_id":row["candidate_observation_id"],
+            "reference_id":binding["reference_id"],
+            "source_sha256":binding["source_sha256"],
+            "user_target_fingerprint":binding["user_target_fingerprint"],
+            "view":binding["view"],
+            "affected_feature_ids":row["affected_feature_ids"],
+        })
+    }
+
+    #[test]
+    fn human_adjudication_handles_zero_and_multiple_automatic_matches_without_resolving() {
+        for (candidate_identity, duplicate_finding) in
+            [(json!(""), false), (json!("hole-source"), true)]
+        {
+            let (mut state, finding) = open_refreshed_finding();
+            state["active_model_generation"] = json!(9);
+            state["reference_inventory"]["ref"]["visible_evidence"][0]["source_evidence_id"] =
+                candidate_identity;
+            if duplicate_finding {
+                let mut duplicate = state["finding_ledger"][finding.as_str()].clone();
+                duplicate["finding_id"] = json!("duplicate-old-finding");
+                state["finding_ledger"]["duplicate-old-finding"] = duplicate;
+            }
+            let current = review(&mut state, "match", json!(["hole1"]));
+            assert_eq!(
+                reconcile(&mut state, &current).unwrap()["resolved"],
+                json!([])
+            );
+            let rows = pending_adjudications(&state, 9)["pending"]
+                .as_array()
+                .unwrap()
+                .clone();
+            assert_eq!(rows.len(), if duplicate_finding { 2 } else { 1 });
+            assert!(
+                rows.iter()
+                    .all(|row| row["candidate_evidence_id"] == "hole-evidence-v2")
+            );
+
+            let request = request_for(&state, &finding, 9);
+            let mut stale_generation = request.clone();
+            stale_generation["expected_generation"] = json!(8);
+            let mut stale_revision = request.clone();
+            stale_revision["expected_revision"] = json!(state["revision"].as_i64().unwrap() + 1);
+            for stale in [stale_generation, stale_revision] {
+                let mut candidate = state.clone();
+                assert!(adjudicate_rebind(&mut candidate, &stale).is_err());
+                assert_eq!(candidate["finding_ledger"], state["finding_ledger"]);
+            }
+
+            for (key, value) in [
+                ("candidate_evidence_id", json!("not-pending")),
+                ("source_sha256", json!("different-sha")),
+                ("user_target_fingerprint", json!("different-target")),
+                ("view", json!("right")),
+                ("affected_feature_ids", json!(["body"])),
+            ] {
+                let mut invalid = request.clone();
+                invalid[key] = value;
+                let mut candidate = state.clone();
+                assert!(
+                    adjudicate_rebind(&mut candidate, &invalid).is_err(),
+                    "field {key}"
+                );
+                assert_eq!(candidate["finding_ledger"], state["finding_ledger"]);
+            }
+
+            let result = adjudicate_rebind(&mut state, &request).unwrap();
+            assert_eq!(result["resolved"], false);
+            assert_eq!(
+                state["finding_ledger"][finding.as_str()]["status"],
+                "awaiting_verification"
+            );
+            assert_eq!(
+                state["finding_ledger"][finding.as_str()]["human_adjudication"]["adjudicator"],
+                "human"
+            );
+            assert_eq!(
+                state["unresolved_findings"].as_array().unwrap().len(),
+                if duplicate_finding { 2 } else { 1 }
+            );
+            assert!(
+                state["finding_ledger"][finding.as_str()]["history"]
+                    .as_array()
+                    .unwrap()
+                    .iter()
+                    .any(|entry| entry["event"] == "human_rebind_confirmed")
+            );
+
+            let mut duplicate_request = state.clone();
+            assert!(adjudicate_rebind(&mut duplicate_request, &request).is_err());
+
+            // Replaying the pre-confirmation review cannot close it. A later
+            // preview and complete review at the same CAD revision can.
+            let mut replay = state.clone();
+            assert_eq!(
+                reconcile(&mut replay, &current).unwrap()["resolved"],
+                json!([])
+            );
+            assert_eq!(
+                replay["finding_ledger"][finding.as_str()]["status"],
+                "awaiting_verification"
+            );
+            state["revision"] = json!(state["revision"].as_i64().unwrap() + 1);
+            let later = review(&mut state, "match", json!(["hole1"]));
+            let outcome = reconcile(&mut state, &later).unwrap();
+            assert_eq!(outcome["resolved"], json!([finding]));
+            assert_eq!(
+                state["finding_ledger"][finding.as_str()]["status"],
+                "resolved"
+            );
+        }
+    }
+
+    #[test]
+    fn human_adjudication_rejects_closed_and_already_claimed_candidates() {
+        let (mut state, finding) = open_refreshed_finding();
+        state["active_model_generation"] = json!(4);
+        state["reference_inventory"]["ref"]["visible_evidence"][0]["source_evidence_id"] =
+            json!("");
+        let current = review(&mut state, "match", json!(["hole1"]));
+        reconcile(&mut state, &current).unwrap();
+        let request = request_for(&state, &finding, 4);
+
+        let mut closed = state.clone();
+        closed["finding_ledger"][finding.as_str()]["status"] = json!("resolved");
+        assert!(adjudicate_rebind(&mut closed, &request).is_err());
+
+        let mut claimed = state.clone();
+        claimed["finding_ledger"]["other"] = json!({
+            "status":"awaiting_verification",
+            "human_adjudication":{
+                "candidate_evidence_id":"hole-evidence-v2",
+                "candidate_observation_id":"obs2"
+            }
+        });
+        assert!(adjudicate_rebind(&mut claimed, &request).is_err());
+        assert_eq!(
+            claimed["finding_ledger"][finding.as_str()]["status"],
+            "awaiting_verification"
         );
     }
 
