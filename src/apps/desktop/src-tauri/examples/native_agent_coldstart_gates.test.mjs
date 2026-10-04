@@ -6,7 +6,7 @@ import { randomBytes } from 'node:crypto'
 import { EventEmitter } from 'node:events'
 import { join, relative } from 'node:path'
 import { tmpdir } from 'node:os'
-import { createAuditedToolProxy, createTerminalUpdateHmac, evaluateColdstartGates, parseEvidenceJsonl, parsePostcheckState, readRunArtifacts, summarizeAcpTerminalUpdateDiagnostics, summarizeCordisBindingDiagnostics, toolArgumentsFingerprint } from './native_agent_coldstart_gates.mjs'
+import { createAuditedToolProxy, createTerminalUpdateHmac, evaluateColdstartGates, parseEvidenceJsonl, parsePostcheckState, readRunArtifacts, summarizeAcpTerminalUpdateDiagnostics, summarizeCordisBindingDiagnostics, summarizeVisualReviewDiagnostics, toolArgumentsFingerprint } from './native_agent_coldstart_gates.mjs'
 import { buildSafeAcceptanceSummary, replacePublishedSafeFailureSummary, writeSafeAcceptanceArtifacts,
   writeSafeFailureSummary } from './native_agent_coldstart_publication.mjs'
 import { runOfflineCargoBuild } from './native_agent_coldstart_build.mjs'
@@ -659,6 +659,13 @@ test('published cold-start files contain only safe gates and aggregate projectio
       source: { bytes: 72309, sha256: 'b'.repeat(64), unchanged: true, reference_id: secrets[1] },
       scratchCleanupStatus: secrets[7], dshDiagnostic: { method: secrets[10], error_class: secrets[8], message: secrets[0] } })
     writeSafeAcceptanceArtifacts(output, { summary, acpProjection, bindingProjection,
+      visionProjection: summarizeVisualReviewDiagnostics({ reference_similarity_history: [{
+        review_diagnostics: { required_evidence_count: 2, mapped_evidence_count: 2, unmapped_evidence_count: 0,
+          missing_evidence_count: 0, unsupported_evidence_count: 0, out_of_scope_evidence_count: 0,
+          mismatch_evidence_count: 0, unknown_evidence_count: 0,
+          view_comparable: true, coverage_class: 'verified', stage_eligible: true, secret: secrets[0] },
+        summary: secrets[1], evidence: [{ evidence_id: secrets[2], reference: secrets[3] }],
+      }] }),
       buildStatus: { status: 'passed', exit_code: 0, elapsed_ms: 12, stdout_bytes: 0, stderr_bytes: 0, raw: secrets[4] } })
     const listFiles = directory => readdirSync(directory, { withFileTypes: true }).flatMap(entry => {
       const path = join(directory, entry.name)
@@ -720,8 +727,56 @@ test('published cold-start files contain only safe gates and aggregate projectio
     assert.deepEqual(projections[0].call_group_terminal_distribution,
       [{ tool_name: 'cad_finish_model', terminal_category: 'completed_once', count: 1 }])
     assert.equal(projections[1].schema, 'cordis_binding_projection_v1')
+    assert.deepEqual(projections[2], { stage: 'vision_review_projection', schema: 'vision_review_diagnostics_v1', review_count: 1,
+      reviews: [{ required_evidence_count: 2, mapped_evidence_count: 2, unmapped_evidence_count: 0,
+        missing_evidence_count: 0, unsupported_evidence_count: 0, out_of_scope_evidence_count: 0,
+        mismatch_evidence_count: 0, unknown_evidence_count: 0,
+        view_comparable: true, coverage_class: 'verified', stage_eligible: true }] })
   } finally {
     rmSync(root, { recursive: true, force: true })
+  }
+})
+
+test('visual review diagnostics retain only bounded counts and fixed status enums', () => {
+  const projection = summarizeVisualReviewDiagnostics({ reference_similarity_history: [
+    { review_diagnostics: { required_evidence_count: 3, mapped_evidence_count: 3, unmapped_evidence_count: 0,
+      missing_evidence_count: 0, unsupported_evidence_count: 0, out_of_scope_evidence_count: 0,
+      mismatch_evidence_count: 0, unknown_evidence_count: 0,
+      view_comparable: true, coverage_class: 'verified', stage_eligible: true } },
+    { review_diagnostics: { required_evidence_count: 3, mapped_evidence_count: 2, unmapped_evidence_count: 1,
+      missing_evidence_count: 1, unsupported_evidence_count: 1, out_of_scope_evidence_count: 0,
+      mismatch_evidence_count: 1, unknown_evidence_count: 0,
+      view_comparable: true, coverage_class: 'partial', stage_eligible: false, summary: 'free-text-sentinel',
+      reference_id: 'id-sentinel', source_sha256: 'hash-sentinel', response_id: 'call-sentinel' } },
+    { review_diagnostics: { required_evidence_count: 'count-sentinel', mapped_evidence_count: -1,
+      unmapped_evidence_count: 1_000_001, missing_evidence_count: null, unsupported_evidence_count: null,
+      out_of_scope_evidence_count: null, mismatch_evidence_count: null, unknown_evidence_count: null,
+      view_comparable: 'boolean-sentinel', coverage_class: 'unknown-sentinel',
+      stage_eligible: 'boolean-sentinel', evidence_id: 'evidence-sentinel' } },
+    { summary: 'missing-diagnostics-sentinel', payload: 'payload-sentinel' },
+  ] })
+  assert.equal(projection.schema, 'vision_review_diagnostics_v1')
+  assert.equal(projection.review_count, 4)
+  assert.deepEqual(projection.reviews[0], { required_evidence_count: 3, mapped_evidence_count: 3,
+    unmapped_evidence_count: 0, missing_evidence_count: 0, unsupported_evidence_count: 0,
+    out_of_scope_evidence_count: 0, mismatch_evidence_count: 0, unknown_evidence_count: 0,
+    view_comparable: true, coverage_class: 'verified', stage_eligible: true })
+  assert.deepEqual(projection.reviews[1], { required_evidence_count: 3, mapped_evidence_count: 2,
+    unmapped_evidence_count: 1, missing_evidence_count: 1, unsupported_evidence_count: 1,
+    out_of_scope_evidence_count: 0, mismatch_evidence_count: 1, unknown_evidence_count: 0,
+    view_comparable: true, coverage_class: 'partial', stage_eligible: false })
+  assert.deepEqual(projection.reviews[2], { required_evidence_count: null, mapped_evidence_count: null,
+    unmapped_evidence_count: null, missing_evidence_count: null, unsupported_evidence_count: null,
+    out_of_scope_evidence_count: null, mismatch_evidence_count: null, unknown_evidence_count: null,
+    view_comparable: null, coverage_class: 'unknown', stage_eligible: null })
+  assert.deepEqual(projection.reviews[3], { required_evidence_count: null, mapped_evidence_count: null,
+    unmapped_evidence_count: null, missing_evidence_count: null, unsupported_evidence_count: null,
+    out_of_scope_evidence_count: null, mismatch_evidence_count: null, unknown_evidence_count: null,
+    view_comparable: null, coverage_class: 'unknown', stage_eligible: null })
+  const serialized = JSON.stringify(projection)
+  for (const secret of ['free-text-sentinel', 'id-sentinel', 'hash-sentinel', 'call-sentinel', 'count-sentinel',
+    'boolean-sentinel', 'unknown-sentinel', 'evidence-sentinel', 'missing-diagnostics-sentinel', 'payload-sentinel']) {
+    assert.equal(serialized.includes(secret), false, `must omit ${secret}`)
   }
 })
 

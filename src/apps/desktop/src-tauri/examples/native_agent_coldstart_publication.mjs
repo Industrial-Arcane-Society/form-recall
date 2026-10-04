@@ -142,6 +142,28 @@ function safeBindingProjection(value) {
   }
 }
 
+function safeVisionReviewProjection(value) {
+  const coverageClasses = new Set(['verified', 'estimated', 'partial', 'unobservable', 'unverified', 'unknown'])
+  const reviewCount = value => Number.isSafeInteger(value) && value >= 0 && value <= 1_000_000 ? value : null
+  return {
+    schema: 'vision_review_diagnostics_v1',
+    review_count: reviewCount(value?.review_count),
+    reviews: Array.isArray(value?.reviews) ? value.reviews.slice(-64).map(row => ({
+      required_evidence_count: reviewCount(row?.required_evidence_count),
+      mapped_evidence_count: reviewCount(row?.mapped_evidence_count),
+      unmapped_evidence_count: reviewCount(row?.unmapped_evidence_count),
+      missing_evidence_count: reviewCount(row?.missing_evidence_count),
+      unsupported_evidence_count: reviewCount(row?.unsupported_evidence_count),
+      out_of_scope_evidence_count: reviewCount(row?.out_of_scope_evidence_count),
+      mismatch_evidence_count: reviewCount(row?.mismatch_evidence_count),
+      unknown_evidence_count: reviewCount(row?.unknown_evidence_count),
+      view_comparable: typeof row?.view_comparable === 'boolean' ? row.view_comparable : null,
+      coverage_class: coverageClasses.has(row?.coverage_class) ? row.coverage_class : 'unknown',
+      stage_eligible: typeof row?.stage_eligible === 'boolean' ? row.stage_eligible : null,
+    })) : [],
+  }
+}
+
 const safeGate = (name, gate) => ({
   status: gate?.status === 'passed' ? 'passed' : 'failed',
   reason_count: Array.isArray(gate?.reasons) ? safeCount(gate.reasons.length) : 0,
@@ -282,12 +304,13 @@ export function writeSafeBuildStatus(output, buildStatus) {
   return safeStatus
 }
 
-export function writeSafeAcceptanceArtifacts(output, { summary, acpProjection, bindingProjection, buildStatus }) {
+export function writeSafeAcceptanceArtifacts(output, { summary, acpProjection, bindingProjection, visionProjection, buildStatus }) {
   mkdirSync(output, { recursive: true })
   const artifacts = new Map([
     ['tool-result-diagnostics.jsonl', [
       { stage: 'acp_terminal_update_projection', ...safeAcpProjection(acpProjection) },
       { stage: 'cordis_binding_projection', ...safeBindingProjection(bindingProjection) },
+      { stage: 'vision_review_projection', ...safeVisionReviewProjection(visionProjection) },
     ].map(row => JSON.stringify(row)).join('\n') + '\n'],
     ['build-status.json', sanitizeSafeBuildStatus(buildStatus)],
     // Publish the summary last so it also serves as the complete-set marker.

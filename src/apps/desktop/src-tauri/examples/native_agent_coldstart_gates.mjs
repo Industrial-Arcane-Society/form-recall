@@ -252,6 +252,33 @@ export function summarizeCordisBindingDiagnostics(input = {}) {
   return { schema: 'cordis_binding_projection_v1', counts: countRows }
 }
 
+const SAFE_VISUAL_COVERAGE_CLASSES = new Set(['verified', 'estimated', 'partial', 'unobservable', 'unverified'])
+const safeEvidenceCount = value => Number.isSafeInteger(value) && value >= 0 && value <= 1_000_000 ? value : null
+const safeDiagnosticBoolean = value => typeof value === 'boolean' ? value : null
+
+// Persist only fixed enums and counts from native review diagnostics. Review
+// text, image data, hashes, evidence IDs, and tool-call identity are ignored.
+export function summarizeVisualReviewDiagnostics(domain = {}) {
+  const history = rows(domain?.reference_similarity_history).slice(-64)
+  const reviews = history.map(row => {
+    const d = row?.review_diagnostics
+    return {
+      required_evidence_count: safeEvidenceCount(d?.required_evidence_count),
+      mapped_evidence_count: safeEvidenceCount(d?.mapped_evidence_count),
+      unmapped_evidence_count: safeEvidenceCount(d?.unmapped_evidence_count),
+      missing_evidence_count: safeEvidenceCount(d?.missing_evidence_count),
+      unsupported_evidence_count: safeEvidenceCount(d?.unsupported_evidence_count),
+      out_of_scope_evidence_count: safeEvidenceCount(d?.out_of_scope_evidence_count),
+      mismatch_evidence_count: safeEvidenceCount(d?.mismatch_evidence_count),
+      unknown_evidence_count: safeEvidenceCount(d?.unknown_evidence_count),
+      view_comparable: safeDiagnosticBoolean(d?.view_comparable),
+      coverage_class: SAFE_VISUAL_COVERAGE_CLASSES.has(d?.coverage_class) ? d.coverage_class : 'unknown',
+      stage_eligible: safeDiagnosticBoolean(d?.stage_eligible),
+    }
+  })
+  return { schema: 'vision_review_diagnostics_v1', review_count: reviews.length, reviews }
+}
+
 const nativeAuditErrorClasses = new Set(['argument_validation', 'state_conflict', 'execution', 'unknown'])
 function safeNativeAuditErrorClass(value) {
   return nativeAuditErrorClasses.has(value) ? value : 'unknown'

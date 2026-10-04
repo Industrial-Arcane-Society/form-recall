@@ -1208,6 +1208,37 @@ pub async fn review(
         .get("score")
         .and_then(Value::as_f64)
         .filter(|n| n.is_finite() && *n >= 0. && *n <= 100.);
+    let mapped = evidence
+        .iter()
+        .filter(|e| e.get("evidence_mapping_status").and_then(Value::as_str) == Some("mapped"))
+        .filter_map(|e| e.get("evidence_id").and_then(Value::as_str))
+        .map(str::to_owned)
+        .collect::<BTreeSet<_>>();
+    let mismatch_count = evidence
+        .iter()
+        .filter(|e| matches!(e.get("status").and_then(Value::as_str), Some("mismatch" | "partial_mismatch")))
+        .filter_map(|e| e.get("evidence_id").and_then(Value::as_str))
+        .collect::<BTreeSet<_>>()
+        .len();
+    let unknown_count = evidence
+        .iter()
+        .filter(|e| matches!(e.get("status").and_then(Value::as_str), Some("unknown" | "unobservable")))
+        .filter_map(|e| e.get("evidence_id").and_then(Value::as_str))
+        .collect::<BTreeSet<_>>()
+        .len();
+    let review_diagnostics = json!({
+        "required_evidence_count": required.len(),
+        "mapped_evidence_count": mapped.len(),
+        "unmapped_evidence_count": unmapped.len(),
+        "missing_evidence_count": missing.len(),
+        "unsupported_evidence_count": unsupported.len(),
+        "out_of_scope_evidence_count": out_of_scope_ids.len(),
+        "mismatch_evidence_count": mismatch_count,
+        "unknown_evidence_count": unknown_count,
+        "view_comparable": comparable,
+        "coverage_class": coverage,
+        "stage_eligible": stage_eligible
+    });
     let mut result_value = json!({
         "revision": rev,
         "preview_generation": generation,
@@ -1240,6 +1271,7 @@ pub async fn review(
         "stage_complete": stage_complete,
         "full_current_geometry_in_scope": full_current_geometry_in_scope,
         "stage_diagnostic_only": !stage_eligible,
+        "review_diagnostics": review_diagnostics,
         "out_of_scope_evidence_ids": evidence.iter().filter(|e| e["status"] == "out_of_scope").filter_map(|e| e["evidence_id"].as_str()).collect::<Vec<_>>(),
         "overall_acceptance": "not_decided_by_single_view_review",
         "pair_fingerprint": pair_fp
@@ -2610,6 +2642,14 @@ mod tests {
             assert_eq!(result.value["reference_image_index"], 1);
             assert_eq!(result.value["reference_id"], session.reference_id);
             assert_eq!(result.value["evidence"][0]["status"], expected_status);
+            assert_eq!(
+                result.value["review_diagnostics"]["unknown_evidence_count"],
+                if expected_status == "unknown" { 1 } else { 0 }
+            );
+            assert_eq!(
+                result.value["review_diagnostics"]["mismatch_evidence_count"],
+                if expected_status == "mismatch" { 1 } else { 0 }
+            );
             assert_eq!(result.value["covered_evidence_ids"],json!([]));
             assert_eq!(result.value["finding_lifecycle"]["binding_status"],"current");
             assert_eq!(
@@ -2695,6 +2735,12 @@ mod tests {
             &session.context,
         ))
         .unwrap();
+        assert_eq!(result.value["review_diagnostics"]["required_evidence_count"], 1);
+        assert_eq!(result.value["review_diagnostics"]["mapped_evidence_count"], 1);
+        assert_eq!(result.value["review_diagnostics"]["missing_evidence_count"], 0);
+        assert_eq!(result.value["review_diagnostics"]["mismatch_evidence_count"], 1);
+        assert_eq!(result.value["review_diagnostics"]["coverage_class"], "partial");
+        assert_eq!(result.value["review_diagnostics"]["stage_eligible"], false);
         let (request, _) = server.join().unwrap().into_iter().next().unwrap();
         let contents = request
             .pointer("/messages/1/content")
@@ -2747,6 +2793,77 @@ mod tests {
             result.value["evidence"][0]["difference"],
             "The model outline is narrower relative to its height."
         );
+    }
+
+    #[test]
+    fn review_diagnostics_distinguish_complete_missing_unknown_and_out_of_scope() {
+        for (case, response, expected) in [
+            (
+                "complete",
+                json!({
+                    "view_comparable":true,"coverage_status":"verified","covered_evidence_ids":["__EVIDENCE__"],
+                    "evidence":[{"evidence_id":"__EVIDENCE__","item":"opening","reference":"opening present",
+                        "model":"opening present","difference":"none","assessment_basis":"reference",
+                        "status":"match","mismatch_severity":"none","affected_feature_ids":["body"]}]
+                }),
+                json!({"required_evidence_count":1,"mapped_evidence_count":1,"unmapped_evidence_count":0,
+                    "missing_evidence_count":0,"unsupported_evidence_count":0,"out_of_scope_evidence_count":0,
+                    "mismatch_evidence_count":0,"unknown_evidence_count":0,"view_comparable":true,
+                    "coverage_class":"verified","stage_eligible":true}),
+            ),
+            (
+                "missing",
+                json!({"view_comparable":true,"coverage_status":"verified","covered_evidence_ids":[],"evidence":[]}),
+                json!({"required_evidence_count":1,"mapped_evidence_count":0,"unmapped_evidence_count":0,
+                    "missing_evidence_count":1,"unsupported_evidence_count":0,"out_of_scope_evidence_count":0,
+                    "mismatch_evidence_count":0,"unknown_evidence_count":0,"view_comparable":true,
+                    "coverage_class":"partial","stage_eligible":true}),
+            ),
+            (
+                "unknown",
+                json!({"view_comparable":false,"coverage_status":"model-private-sentinel",
+                    "covered_evidence_ids":["__EVIDENCE__"],"evidence":[]}),
+                json!({"required_evidence_count":1,"mapped_evidence_count":0,"unmapped_evidence_count":0,
+                    "missing_evidence_count":1,"unsupported_evidence_count":0,"out_of_scope_evidence_count":0,
+                    "mismatch_evidence_count":0,"unknown_evidence_count":0,"view_comparable":false,
+                    "coverage_class":"unverified","stage_eligible":true}),
+            ),
+            (
+                "out_of_scope",
+                json!({
+                    "view_comparable":true,"coverage_status":"partial","covered_evidence_ids":["__EVIDENCE__"],
+                    "evidence":[{"evidence_id":"__EVIDENCE__","item":"opening","reference":"opening present",
+                        "model":"not in this stage","difference":"outside the reviewed scope",
+                        "assessment_basis":"reference","status":"out_of_scope","mismatch_severity":"none",
+                        "affected_feature_ids":[]}]
+                }),
+                json!({"required_evidence_count":1,"mapped_evidence_count":1,"unmapped_evidence_count":0,
+                    "missing_evidence_count":0,"unsupported_evidence_count":0,"out_of_scope_evidence_count":1,
+                    "mismatch_evidence_count":0,"unknown_evidence_count":0,"view_comparable":true,
+                    "coverage_class":"partial","stage_eligible":true}),
+            ),
+        ] {
+            let mut session = test_session();
+            session.state["construction_milestone"] = json!({
+                "revision":4,"completed_feature_ids":["body","hole"],"expected_feature_ids":["body","hole"]
+            });
+            let evidence_id = session.state["reference_inventory"][session.reference_id.as_str()]
+                ["visible_evidence"][0]["evidence_id"].as_str().unwrap();
+            let response = serde_json::to_string(&response).unwrap().replace("__EVIDENCE__", evidence_id);
+            let (base_url, server) = mock_chat_server(vec![serde_json::from_str(&response).unwrap()]);
+            let result = run(review(
+                &session.state,
+                &json!({"view":"front","preview_generation":9,"reference_id":session.reference_id}),
+                &provider(base_url),
+                &AtomicBool::new(false),
+                &session.context,
+            )).unwrap();
+            server.join().unwrap();
+            assert_eq!(result.value["review_diagnostics"], expected, "case={case}");
+            assert_eq!(result.value["overall_acceptance"], "not_decided_by_single_view_review");
+            assert!(!result.value["review_diagnostics"].to_string().contains(evidence_id));
+            assert!(!result.value["review_diagnostics"].to_string().contains("model-private-sentinel"));
+        }
     }
 
     #[test]
