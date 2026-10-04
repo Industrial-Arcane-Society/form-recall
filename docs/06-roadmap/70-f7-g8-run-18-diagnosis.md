@@ -68,4 +68,4 @@ Cordis binding v1 的 ACP→bridge 阶段共 `45` 个 `matched`、`1` 个 `bridg
 
 Run18 验证了固定提交下真实 DSH session 完成、原图主模型请求通过主图 wire gate、原图哈希保持不变，且摘要中的 current geometry、holes 与 artifacts gates 通过；整体 strict CLI gate 仍失败。安全 projection 显示同态 pair 为 `0`、缺失 call ID 为 `0`，但 Cordis 工具执行/身份关联、ACP tool result、视觉 coverage/original binding 和 finish 仍有失败。不能由这些枚举推断具体工具输入或模型行为，也不能声称形状、独立视觉质量或 CATIA 通过。
 
-下一步先静态审查相关 producer→consumer 字段路径；逐项分析安全摘要中 4 个 `bridge_execution_rejected` 以及 `cad_update_feature` 的 `bridge_call_missing`，不查看 raw trace 或工具 payload。`cad_review_reference_similarity` 本轮拒绝枚举中未列出，但 visual gate 仍失败；保持该项视觉验收未通过。只有代码修正需要新的真实验收时才另开隔离运行；F7 保持失败，不能标记通过。F0 的 `npm run dev` 修复提交仍在 sibling branch；如目标分支需要该修复，再单独集成和验收。
+下一步先静态审查相关 producer→consumer 字段路径；逐项分析安全摘要中 4 个 `bridge_execution_rejected` 以及 `cad_update_feature` 的 `bridge_call_missing`，不查看 raw trace 或工具 payload。`cad_review_reference_similarity` 本轮拒绝枚举中未列出，但 visual gate 仍失败；保持该项视觉验收未通过。只有代码修正需要新的真实验收时才另开隔离运行；F7 保持失败，不能标记通过。后续 F0 地址修正已通过单独提交 `52757c3` 集成到当前分支；配置回归与前端 build 通过，但真实 `npm run dev`/WebView 启动仍未验证，Run18 不覆盖该问题。
