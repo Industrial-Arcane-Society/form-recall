@@ -10,13 +10,17 @@
 ## 开发启动
 
 ```powershell
-# 在仓库根目录运行
-Set-Location .\src\apps\desktop
-npm ci
-npm run tauri:dev
+# 在仓库根目录首次安装桌面端依赖（或依赖版本更新后）
+npm ci --prefix src/apps/desktop
+
+# 启动 Tauri 桌面应用
+npm run dev
+
+# 仅启动浏览器预览
+npm run dev:web
 ```
 
-`npm run dev` 只启动 Vite 浏览器预览，没有 Tauri/Rust IPC；需要验证桌面命令时使用 `npm run tauri:dev`。
+从 `src/apps/desktop/` 目录运行时，`npm run dev` 只启动 Vite 浏览器预览，没有 Tauri/Rust IPC；需要验证桌面命令时使用 `npm run tauri:dev`。根目录脚本会将 Tauri 命令转发到该桌面包，因此依赖必须先安装在 `src/apps/desktop/node_modules/`；根目录没有独立的 npm lockfile。
 
 旧 Python 过渡入口：
 
