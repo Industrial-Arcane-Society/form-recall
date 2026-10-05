@@ -11,6 +11,7 @@ import { buildSafeAcceptanceSummary, buildSafeStrictGateProjection, replacePubli
 import { removeScratchDirectory, safeScratchCleanupStatus, terminateChildrenAndWait, waitThenTerminateChild } from './native_agent_coldstart_lifecycle.mjs'
 import { createColdstartScratchDirectory, recoverStaleColdstartScratch } from './native_agent_coldstart_scratch.mjs'
 import { runOfflineCargoBuild } from './native_agent_coldstart_build.mjs'
+import { startNativeProbe } from './native_agent_coldstart_probe.mjs'
 import { cancelAndCloseSession, createAcpRpcClient, PromptProgressTracker, resolvePromptTimeoutPolicy,
   readGeometryRevision, watchGeometryRevision } from './native_agent_coldstart_prompt.mjs'
 
@@ -29,12 +30,13 @@ let failurePhase = SAFE_PUBLICATION_PHASE.NOT_STARTED
 let safeStrictGates = null
 let promptProgressDiagnostics = null
 let currentPromptTracker = null
+let nativeProbeDiagnostic = null
 const stopManagedChildren = () => terminateChildrenAndWait(managedChildren, 1500)
 const archiveFailure = (scratchCleanupStatus, code) => {
   if (!archiveDir) return
   try {
     const failure = { stage: failureStage, phase: failurePhase, code, scratchCleanupStatus, scratchRecovery,
-      strictGates: safeStrictGates,
+      strictGates: safeStrictGates, nativeProbeDiagnostic,
       promptProgress: promptProgressDiagnostics || currentPromptTracker?.snapshot() }
     if (safeSummaryPublished) replacePublishedSafeFailureSummary(archiveDir, failure)
     else writeSafeFailureSummary(archiveDir, failure)
@@ -142,7 +144,8 @@ const occtManifest = process.env.AIMODELER_OCCT_MANIFEST || join(repo, 'src/apps
 if (!existsSync(occtManifest)) throw new Error('OCCT manifest不存在，不能执行建模验收。')
 
 failureStage = 'native_probe'
-const probe = spawn(probePath, [legacy, state, '--online', '--serve', '--vision', '--occt', occtManifest], {
+const nativeProbe = await startNativeProbe({ spawnImpl: spawn, executable: probePath,
+  args: [legacy, state, '--online', '--serve', '--vision', '--occt', occtManifest], options: {
   windowsHide: true, stdio: ['pipe', 'pipe', 'pipe'],
   env: {
     ...process.env,
@@ -153,19 +156,13 @@ const probe = spawn(probePath, [legacy, state, '--online', '--serve', '--vision'
     AI_MODELER_REVIEW_THINKING_BUDGET: provider.thinking_budget ? String(provider.thinking_budget) : '',
     AI_MODELER_REVIEW_OUTPUT_CAP: String(effectiveProfile.vision_output_cap),
   },
-})
-managedChildren.push(probe)
-const probeLines = createInterface({ input: probe.stdout })
-probe.stderr.resume()
-const bridge = await new Promise((yes, no) => {
-  const timer = setTimeout(() => no(new Error('Rust native vision probe startup timed out')), 15000)
-  probeLines.once('line', line => {
-    clearTimeout(timer)
-    try { yes(JSON.parse(line)) } catch (error) { no(error) }
-  })
-  probe.once('error', error => { clearTimeout(timer); no(error) })
-  probe.once('exit', () => { clearTimeout(timer); no(new Error('Rust native vision probe exited at startup')) })
-}).catch(error => { probe.kill(); probeLines.close(); throw error })
+}, timeoutMs: 15_000 })
+nativeProbeDiagnostic = nativeProbe.diagnostic
+const probe = nativeProbe.child
+const probeLines = nativeProbe.lines
+if (probe) managedChildren.push(probe)
+if (nativeProbe.diagnostic !== 'ready_success') throw new Error('Native vision probe failed before readiness.')
+const bridge = nativeProbe.bridge
 const toolProxy = await createAuditedToolProxy({ address: bridge.address, token: bridge.token,
   sessionId: bridge.session_id, turnId, runId }).catch(error => { probe.kill(); throw error })
 const runStartedAt = Date.now()
@@ -392,6 +389,7 @@ let safeSummary
     runtime: { node: nodeVersion.stdout.trim(), dsh: dshPackage.version },
     source: { bytes: imageBytes.length, sha256: sourceSha, unchanged: hash(readFileSync(imagePath)) === sourceSha },
     dshDiagnostic: dshFailure,
+    nativeProbeDiagnostic,
     promptProgress: promptProgressDiagnostics,
     scratchCleanupStatus: safeScratchCleanupStatus(managedChildrenExited, scratchCleanupStatus),
     scratchRecovery,

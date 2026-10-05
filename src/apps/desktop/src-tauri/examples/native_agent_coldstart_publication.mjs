@@ -4,6 +4,7 @@ import { randomUUID } from 'node:crypto'
 import { COLDSTART_TOOL_NAME_ALLOWLIST } from './native_agent_coldstart_gates.mjs'
 import { sanitizeScratchRecoverySummary } from './native_agent_coldstart_scratch.mjs'
 import { safePromptProgressSummary } from './native_agent_coldstart_prompt.mjs'
+import { NATIVE_PROBE_DIAGNOSTICS } from './native_agent_coldstart_probe.mjs'
 
 const toolNames = new Set([...COLDSTART_TOOL_NAME_ALLOWLIST, 'unknown'])
 const safeCount = value => Number.isSafeInteger(value) && value >= 0 ? value : 0
@@ -19,6 +20,7 @@ const SCRATCH_CLEANUP_STATUSES = new Set(['removed', 'failed', 'not_created'])
 const FAILURE_STAGES = new Set(['startup', 'config_validation', 'input_validation', 'runtime_validation',
   'offline_build', 'native_probe', 'dsh_launch', 'dsh_session', 'strict_gate_evaluation', 'publication', 'unknown'])
 const FAILURE_CODES = new Set(['uncaught_exception', 'unhandled_rejection'])
+const SAFE_NATIVE_PROBE_DIAGNOSTICS = new Set(NATIVE_PROBE_DIAGNOSTICS)
 export const SAFE_PUBLICATION_PHASE = Object.freeze({
   NOT_STARTED: 'not_started',
   PROJECTION: 'projection',
@@ -258,7 +260,12 @@ export function buildSafeDshDiagnostic(value = {}) {
   }
 }
 
-function createSafeFailureSummary({ stage, phase, code, scratchCleanupStatus, scratchRecovery, strictGates, promptProgress } = {}) {
+function safeNativeProbeDiagnostic(value) {
+  return SAFE_NATIVE_PROBE_DIAGNOSTICS.has(value) ? value : null
+}
+
+function createSafeFailureSummary({ stage, phase, code, scratchCleanupStatus, scratchRecovery, strictGates,
+  promptProgress, nativeProbeDiagnostic } = {}) {
   return {
     schema_version: 1,
     status: 'failed',
@@ -269,6 +276,7 @@ function createSafeFailureSummary({ stage, phase, code, scratchCleanupStatus, sc
     scratch_cleanup_status: SCRATCH_CLEANUP_STATUSES.has(scratchCleanupStatus) ? scratchCleanupStatus : 'not_created',
     scratch_recovery: sanitizeScratchRecoverySummary(scratchRecovery),
     ...(promptProgress ? { prompt_progress: safePromptProgressSummary(promptProgress) } : {}),
+    native_probe_diagnostic: safeNativeProbeDiagnostic(nativeProbeDiagnostic),
     failure_diagnostic: buildSafeFailureDiagnostic({ stage, phase, code }),
     strict_gates: strictGates ? sanitizeSafeStrictGateProjection(strictGates) : sanitizeSafeStrictGateProjection({}),
   }
@@ -299,7 +307,7 @@ export function replacePublishedSafeFailureSummary(output, failure = {}) {
 }
 
 export function buildSafeAcceptanceSummary({ strict, transportStatus, modelStatus, runtime, source, scratchCleanupStatus,
-  scratchRecovery, dshDiagnostic, promptProgress }) {
+  scratchRecovery, dshDiagnostic, promptProgress, nativeProbeDiagnostic }) {
   const strictGateProjection = buildSafeStrictGateProjection(strict)
   const overallPassed = strict?.status === 'passed' && scratchCleanupStatus === 'removed'
   return {
@@ -311,6 +319,7 @@ export function buildSafeAcceptanceSummary({ strict, transportStatus, modelStatu
     scratch_cleanup_status: SCRATCH_CLEANUP_STATUSES.has(scratchCleanupStatus) ? scratchCleanupStatus : 'not_created',
     scratch_recovery: sanitizeScratchRecoverySummary(scratchRecovery),
     ...(promptProgress ? { prompt_progress: safePromptProgressSummary(promptProgress) } : {}),
+    native_probe_diagnostic: safeNativeProbeDiagnostic(nativeProbeDiagnostic),
     dsh_diagnostic: buildSafeDshDiagnostic(dshDiagnostic),
     strict_gates: strictGateProjection,
     visual_finish_diagnostics: buildSafeVisualFinishDiagnostics(strict),

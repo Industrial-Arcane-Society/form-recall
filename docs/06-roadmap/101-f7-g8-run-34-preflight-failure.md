@@ -19,3 +19,9 @@
 
 Run34 只说明这版 runner 在 native probe 阶段异常退出，不能评价 DSH 是否启动，也不能评价模型的图像分析、建模或复核能力。下次冷启动前需修复 native probe 的可定位诊断或通过非敏感的启动自检锁定失败点，再使用新输出目录进行单次复测；不能因为 Run34 未到 provider 阶段而重复归因到模型质量。F7/G1 与 F7/G8 仍未通过。
 
+## 后续源码审计与诊断改进（2026-10-05）
+
+Run34 safe summary 只保存了粗阶段与固定异常类别，无法从历史摘要还原 native probe 内部异常。对 Run34 固定 HEAD `148f1d3` 和后续 main `b157f0a` 的 runner 源码核对发现，旧实现调用了未导入的 `createInterface` 标识符；该调用位于 `native_probe` 阶段、probe spawn 后、就绪握手监听之前。它是与本轮摘要相符的静态缺陷线索，但摘要不包含异常位置，故不把它写成已由 Run34 运行时证据确认的根因。
+
+在 `b157f0a` 基线上，probe 启动/首行握手现由独立 helper 处理，并仅发布 `spawn_error`、`exit_before_ready`、`startup_timeout`、`invalid_or_non_ready_json` 或 `ready_success` 之一。safe summary 不接收 stderr、异常正文、命令参数、凭据、bridge token 或路径。fake child 回归覆盖五类结果、无效与非 ready JSON、以及摘要字段清洗。此改动不改变模型输入、strict gate 或视觉/几何/finish acceptance thresholds；它只让下一次本地预检/运行能够区分 probe 启动结果，不会补回 Run34 历史摘要缺失的信息。本项未启动 provider 或真实 coldstart。
+
