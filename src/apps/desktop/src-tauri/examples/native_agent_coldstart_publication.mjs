@@ -141,14 +141,22 @@ function safeBindingProjection(value) {
     'run_scope_mismatch', 'bridge_call_id_missing', 'bridge_scope_rejected', 'bridge_time_invalid',
     'bridge_execution_rejected', 'schema_missing', 'registration_missing', 'native_audit_missing',
     'native_audit_tool_mismatch', 'native_audit_out_of_run', 'native_audit_rejected'])
+  const nativeAuditErrorClasses = new Set(['argument_validation', 'state_conflict', 'execution', 'unknown'])
   return {
     schema: 'cordis_binding_projection_v1',
-    counts: Array.isArray(value?.counts) ? value.counts.map(row => ({
-      tool_name: toolNames.has(row?.tool_name) ? row.tool_name : 'unknown',
-      stage: ['acp_to_bridge', 'bridge_to_audit'].includes(row?.stage) ? row.stage : 'unknown',
-      outcome: outcomes.has(row?.outcome) ? row.outcome : 'tool_name_not_allowlisted',
-      count: safeCount(row?.count),
-    })) : [],
+    counts: Array.isArray(value?.counts) ? value.counts.map(row => {
+      const stage = ['acp_to_bridge', 'bridge_to_audit'].includes(row?.stage) ? row.stage : 'unknown'
+      const outcome = outcomes.has(row?.outcome) ? row.outcome : 'tool_name_not_allowlisted'
+      return {
+        tool_name: toolNames.has(row?.tool_name) ? row.tool_name : 'unknown',
+        stage,
+        outcome,
+        ...(stage === 'bridge_to_audit' && outcome === 'native_audit_rejected'
+          ? { error_class: nativeAuditErrorClasses.has(row?.error_class) ? row.error_class : 'unknown' }
+          : {}),
+        count: safeCount(row?.count),
+      }
+    }) : [],
   }
 }
 

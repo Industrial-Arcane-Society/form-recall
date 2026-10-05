@@ -737,6 +737,82 @@ test('published cold-start files contain only safe gates and aggregate projectio
   }
 })
 
+test('published Cordis diagnostics preserve fixed native audit error classes only', () => {
+  const root = mkdtempSync(join(tmpdir(), 'coldstart-safe-native-error-class-'))
+  const output = join(root, 'run')
+  const input = fixture()
+  const errorTypes = ['argument_validation', 'state_conflict', 'execution', 'raw-native-error-class-sentinel']
+  const cases = [
+    { bridgeSuccess: true, auditSuccess: true },
+    ...errorTypes.map((errorClass, index) => ({
+      bridgeSuccess: false, auditSuccess: false, errorClass,
+    })),
+  ]
+  const secrets = []
+  input.toolEvents = []
+  input.toolBridgeCalls = []
+  input.nativeAudit = []
+
+  for (const [index, item] of cases.entries()) {
+    const acpCallId = `raw-acp-call-id-sentinel-${index}`
+    const nativeCallId = `raw-native-call-id-sentinel-${index}`
+    const argumentValue = `raw-argument-value-sentinel-${index}`
+    const bridgeError = `raw-bridge-error-sentinel-${index}`
+    const nativeError = `raw-native-error-sentinel-${index}`
+    const argumentFingerprint = toolArgumentsFingerprint({ value: argumentValue })
+    const startedAt = 2200 + index * 100
+    secrets.push(acpCallId, nativeCallId, argumentValue, bridgeError, nativeError, argumentFingerprint)
+    input.toolEvents.push(
+      { run_id: input.run.id, session_id: input.run.acp_session_id, turn_id: input.run.turn_id,
+        at_ms: startedAt, tool_call_id: acpCallId, title: 'cad_finish_model', status: 'in_progress',
+        kind: 'tool_call', arguments_sha256_24: argumentFingerprint },
+      { run_id: input.run.id, session_id: input.run.acp_session_id, turn_id: input.run.turn_id,
+        at_ms: startedAt + 40, tool_call_id: acpCallId, title: 'cad_finish_model',
+        status: item.bridgeSuccess ? 'completed' : 'failed', kind: 'tool_call_update' },
+    )
+    input.toolBridgeCalls.push({ run_id: input.run.id, session_id: input.run.tool_session_id,
+      turn_id: input.run.turn_id, call_id: nativeCallId, acp_call_id: acpCallId, tool: 'cad_finish_model',
+      authenticated_scope: true, started_at_ms: startedAt + 10, completed_at_ms: startedAt + 30,
+      success: item.bridgeSuccess, arguments_sha256_24: argumentFingerprint, arguments: { value: argumentValue },
+      error: bridgeError })
+    input.nativeAudit.push({ call_id: nativeCallId, tool: 'cad_finish_model', at: 3 + index / 10,
+      success: item.auditSuccess, ...(item.errorClass ? { error: { type: item.errorClass, message: nativeError } } : {}) })
+  }
+
+  try {
+    const bindingProjection = summarizeCordisBindingDiagnostics(input)
+    const summarizedUnknown = bindingProjection.counts.find(row => row.stage === 'bridge_to_audit'
+      && row.outcome === 'native_audit_rejected' && row.error_class === 'unknown')
+    assert.ok(summarizedUnknown, 'invalid native audit error class must first normalize to unknown')
+    // Exercise the publication boundary as well: if an upstream projection is
+    // malformed, only the fixed enum may cross into the published JSONL.
+    summarizedUnknown.error_class = 'raw-native-error-class-sentinel'
+    summarizedUnknown.call_id = secrets[1]
+    summarizedUnknown.error_message = secrets[4]
+    bindingProjection.raw_error = secrets.join('|')
+    writeSafeAcceptanceArtifacts(output, {
+      summary: buildSafeAcceptanceSummary({}), acpProjection: {}, bindingProjection, visionProjection: {},
+      buildStatus: { status: 'passed', exit_code: 0 },
+    })
+
+    const publishedText = readFileSync(join(output, 'tool-result-diagnostics.jsonl'), 'utf8')
+    const cordis = publishedText.trim().split('\n').map(JSON.parse)
+      .find(row => row.stage === 'cordis_binding_projection')
+    assert.equal(cordis.schema, 'cordis_binding_projection_v1')
+    const rejected = cordis.counts.filter(row => row.stage === 'bridge_to_audit' && row.outcome === 'native_audit_rejected')
+    assert.deepEqual(rejected.map(row => row.error_class).sort(),
+      ['argument_validation', 'execution', 'state_conflict', 'unknown'])
+    const success = cordis.counts.find(row => row.stage === 'bridge_to_audit' && row.outcome === 'matched')
+    assert.equal(success.count, 1)
+    assert.equal(Object.hasOwn(success, 'error_class'), false)
+    for (const secret of [...secrets, 'raw-native-error-class-sentinel']) {
+      assert.equal(publishedText.includes(secret), false, `published JSONL leaked ${secret}`)
+    }
+  } finally {
+    rmSync(root, { recursive: true, force: true })
+  }
+})
+
 test('visual review diagnostics retain only bounded counts and fixed status enums', () => {
   const projection = summarizeVisualReviewDiagnostics({ reference_similarity_history: [
     { review_diagnostics: { required_evidence_count: 3, mapped_evidence_count: 3, unmapped_evidence_count: 0,
