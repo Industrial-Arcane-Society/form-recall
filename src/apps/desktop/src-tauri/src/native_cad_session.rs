@@ -320,6 +320,39 @@ pub fn complete_preview(state: &Value, outcome: BackendOutcome) -> Result<Sessio
     preview["revision"] = json!(rev);
     preview["geometry_fingerprint"] = json!(sig);
     preview["output_paths"] = outcome.output_paths.clone();
+    // A partial report is useful for diagnostics only when the local kernel
+    // explicitly reports a valid solid and an ordered, successfully built
+    // feature prefix. Never infer applied IDs from the requested CADPlan.
+    if preview["local_geometry_checks"]["state"] == "partial" {
+        let checks = &mut preview["local_geometry_checks"];
+        let rows = checks.get("feature_results").and_then(Value::as_array);
+        let enabled_ids = plan["features"].as_array().map(|features| {
+            features
+                .iter()
+                .filter(|f| f["enabled"] != false)
+                .filter_map(|f| f["id"].as_str().map(str::to_owned))
+                .collect::<Vec<_>>()
+        }).unwrap_or_default();
+        let rows_ok = rows.is_some_and(|rows| {
+            !rows.is_empty()
+                && rows.len() <= enabled_ids.len()
+                && rows.iter().zip(enabled_ids.iter()).all(|(row, id)| {
+                    row["feature_id"].as_str() == Some(id.as_str()) && row["state"] == "built"
+                })
+        });
+        let prefix_ids = if checks["valid"] == true
+            && checks["closed_solid_count"] == 1
+            && rows_ok
+        {
+            rows.unwrap()
+                .iter()
+                .filter_map(|row| row["feature_id"].as_str())
+                .collect::<Vec<_>>()
+        } else {
+            Vec::new()
+        };
+        checks["applied_feature_ids"] = json!(prefix_ids);
+    }
     stamp_local_geometry_checks(&mut preview, rev, &sig)?;
     next["last_preview"] = preview.clone();
     next["preview_revision"] = json!(rev);
@@ -359,6 +392,7 @@ pub fn complete_preview(state: &Value, outcome: BackendOutcome) -> Result<Sessio
                 "revision":rev,
                 "requested_geometry_fingerprint":sig,
                 "partial_geometry_checks":checks,
+                "applied_feature_ids":checks.get("applied_feature_ids").cloned().unwrap_or(json!([])),
                 "preview_generation":preview.get("preview_generation"),
                 "output_paths":preview.get("output_paths")
             });
@@ -1731,6 +1765,34 @@ mod tests {
         .unwrap();
         assert_eq!(dispatch.finish_state, "candidate_partial_not_accepted");
         assert_eq!(dispatch.report["accepted"], false);
+    }
+
+    #[test]
+    fn partial_preview_attests_only_a_valid_ordered_brep_prefix() {
+        let s = json!({"revision":2,"has_references":false,"plan":valid_body_plan(),"actions":[]});
+        let fingerprint = cad_plan::geometry_fingerprint(&s["plan"]).unwrap();
+        let mut report = geometry_report(&s["plan"], 2, "partial");
+        report["valid"] = json!(true);
+        report["closed_solid_count"] = json!(1);
+        report["feature_results"] = json!([{"feature_id":"body","state":"built"}]);
+        let result = with_report_preview(&s, report);
+        assert_eq!(result["partial_preview"]["applied_feature_ids"], json!(["body"]));
+        assert_eq!(result["partial_preview"]["revision"], json!(2));
+        assert_eq!(
+            result["partial_preview"]["requested_geometry_fingerprint"],
+            json!(fingerprint)
+        );
+        assert_eq!(
+            result["partial_preview"]["partial_geometry_checks"]["host_attestation"]["issuer"],
+            "native_cad_session.complete_preview"
+        );
+
+        let mut invalid = geometry_report(&s["plan"], 2, "partial");
+        invalid["valid"] = json!(true);
+        invalid["closed_solid_count"] = json!(1);
+        invalid["feature_results"] = json!([{"feature_id":"invented","state":"built"}]);
+        let rejected_prefix = with_report_preview(&s, invalid);
+        assert_eq!(rejected_prefix["partial_preview"]["applied_feature_ids"], json!([]));
     }
     #[test]
     fn requested_hole_count_confidence_and_status_rows_are_not_measurements() {
