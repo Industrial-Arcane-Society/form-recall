@@ -293,4 +293,208 @@ mod tests {
         assert!(result["stats"]["triangles"].as_u64().unwrap() > 0);
         fs::remove_dir_all(root).unwrap();
     }
+
+    #[test]
+    #[ignore = "requires an explicitly staged OCCT runtime; run the documented F5.12 acceptance command"]
+    fn f5_12_quick_geometry_acceptance_builds_supported_hole_and_pattern_cases() {
+        use serde_json::Value;
+
+        let manifest = std::env::var_os("AIMODELER_TEST_OCCT_MANIFEST")
+            .map(std::path::PathBuf::from)
+            .expect("F5.12 requires AIMODELER_TEST_OCCT_MANIFEST; use the documented acceptance command");
+        assert!(
+            manifest.is_file(),
+            "F5.12 OCCT runtime manifest does not exist: {}",
+            manifest.display()
+        );
+
+        let fixture: Value = serde_json::from_str(include_str!(
+            "../tests/fixtures/quick_geometry_acceptance.json"
+        ))
+        .expect("F5.12 acceptance fixture should be valid JSON");
+        let root = std::env::temp_dir().join(format!(
+            "quick-f5-12-{}-{}",
+            std::process::id(),
+            SystemTime::now()
+                .duration_since(UNIX_EPOCH)
+                .unwrap()
+                .as_nanos()
+        ));
+        fs::create_dir_all(&root).unwrap();
+        struct RemoveOnDrop(std::path::PathBuf);
+        impl Drop for RemoveOnDrop {
+            fn drop(&mut self) {
+                let _ = std::fs::remove_dir_all(&self.0);
+            }
+        }
+        let _cleanup = RemoveOnDrop(root.clone());
+
+        let cases = fixture["cases"].as_array().expect("cases array");
+        assert_eq!(cases.len(), 5, "F5.12 must cover all five fixed scenarios");
+        let scenario_ids = cases
+            .iter()
+            .map(|case| case["id"].as_str().expect("scenario id"))
+            .collect::<Vec<_>>();
+        assert_eq!(
+            scenario_ids,
+            [
+                "corner-holes",
+                "pcd-holes",
+                "linear-feature-pattern",
+                "circular-feature-pattern",
+                "center-counterbore",
+            ],
+            "F5.12 fixture must retain all five named acceptance scenarios"
+        );
+        let mut build_failures = Vec::new();
+
+        for case in cases {
+            let id = case["id"].as_str().expect("case id");
+            let prompt = case["input"].as_str().expect("fixed Quick prompt");
+            let parsed = native_quick_parser::parse(prompt);
+            assert_eq!(parsed["status"], "ready", "{id}: parser result {parsed}");
+
+            let plan_features = parsed["plan"]["features"]
+                .as_array()
+                .unwrap_or_else(|| panic!("{id}: parsed CADPlan features missing: {parsed}"));
+            let expected_kinds = case["expected"]["feature_kinds"]
+                .as_array()
+                .expect("expected feature kinds");
+            assert_eq!(plan_features.len(), expected_kinds.len(), "{id}: parsed plan features");
+            for (feature, expected_kind) in plan_features.iter().zip(expected_kinds) {
+                assert_eq!(feature["kind"], *expected_kind, "{id}: parsed feature kind");
+            }
+            let expected_dimensions = case["expected"]["dimensions_mm"]
+                .as_array()
+                .expect("expected bbox dimensions");
+            assert_eq!(expected_dimensions.len(), 3, "{id}: expected bbox dimensions");
+            assert!(
+                expected_dimensions
+                    .iter()
+                    .all(|value| value.as_f64().is_some_and(|value| value.is_finite() && value > 0.0)),
+                "{id}: fixture bbox dimensions must be finite and positive"
+            );
+            let expected_holes = case["expected"]["hole_count"]
+                .as_u64()
+                .unwrap_or_else(|| panic!("{id}: expected hole_count missing or invalid"));
+
+            let document = match build(prompt, 1, &manifest, &root.join(id)) {
+                Ok(document) => document,
+                Err(error) => {
+                    eprintln!("F5.12 BLOCKED {id}: {error}; parsed_features={}, expected_hole_instances={expected_holes}", plan_features.len());
+                    build_failures.push(format!("{id}: {error}"));
+                    continue;
+                }
+            };
+            assert_eq!(document["state"], "complete", "{id}");
+
+            let plan_features = document["cadplan"]["features"]
+                .as_array()
+                .unwrap_or_else(|| panic!("{id}: CADPlan features missing"));
+            assert_eq!(plan_features.len(), expected_kinds.len(), "{id}: plan features");
+            for (feature, expected_kind) in plan_features.iter().zip(expected_kinds) {
+                assert_eq!(feature["kind"], *expected_kind, "{id}: feature kind");
+            }
+
+            let report = &document["geometry_report"];
+            assert_eq!(report["state"], "passed", "{id}: native geometry report");
+            assert_eq!(report["valid"], true, "{id}: OCCT valid geometry");
+            assert_eq!(report["closed_solid_count"], 1, "{id}: closed solid count");
+            let feature_results = report["feature_results"]
+                .as_array()
+                .unwrap_or_else(|| panic!("{id}: feature results missing"));
+            assert_eq!(feature_results.len(), expected_kinds.len(), "{id}: built feature count");
+            assert!(
+                feature_results.iter().all(|row| row["state"] == "built"),
+                "{id}: a requested feature was a no-op"
+            );
+
+            let holes = report["hole_instances"]
+                .as_array()
+                .unwrap_or_else(|| panic!("{id}: hole instances missing"));
+            assert_eq!(
+                holes.len(),
+                expected_holes as usize,
+                "{id}: hole instance count"
+            );
+            if expected_holes > 0 {
+                assert_eq!(report["hole_measurement_complete"], true, "{id}: every hole needs final measurement");
+                assert_eq!(report["hole_measurements_verified"], true, "{id}: final hole metrology gate");
+            }
+            let dimensions = report["dimensions_mm"]
+                .as_array()
+                .unwrap_or_else(|| panic!("{id}: bbox dimensions missing"));
+            assert_eq!(dimensions.len(), 3, "{id}: bbox dimension arity");
+            for (axis, (actual, expected)) in dimensions.iter().zip(expected_dimensions).enumerate() {
+                let actual = actual.as_f64().expect("finite bbox dimension");
+                let expected = expected.as_f64().expect("expected bbox dimension");
+                assert!(actual.is_finite(), "{id}: bbox axis {axis} is not finite");
+                assert!((actual - expected).abs() <= 1e-4, "{id}: bbox axis {axis}: {actual} != {expected}");
+            }
+            let volume = report["volume_mm3"].as_f64().expect("volume");
+            assert!(volume.is_finite() && volume > 0.0, "{id}: volume must be finite and positive");
+
+            let aimodel = Path::new(document["output_paths"]["aimodel"].as_str().expect("aimodel path"));
+            let stl = Path::new(document["output_paths"]["stl"].as_str().expect("STL path"));
+            assert!(aimodel.is_file(), "{id}: .aimodel was not exported");
+            assert!(stl.is_file(), "{id}: STL was not exported");
+            let loaded = native_model_io::load_aimodel(aimodel)
+                .unwrap_or_else(|error| panic!("{id}: .aimodel round-trip failed: {error}"));
+            assert_eq!(loaded["cadplan"]["features"], document["cadplan"]["features"], "{id}: saved plan");
+            let stl_bytes = fs::read(stl).unwrap_or_else(|error| panic!("{id}: STL read failed: {error}"));
+            assert!(stl_bytes.len() >= 84, "{id}: STL header is truncated");
+            let triangle_count = u32::from_le_bytes(stl_bytes[80..84].try_into().unwrap()) as usize;
+            assert!(triangle_count > 0, "{id}: STL is empty");
+            assert_eq!(stl_bytes.len(), 84 + triangle_count * 50, "{id}: STL length does not match triangle count");
+            eprintln!("F5.12 PASS {id}: features={}, hole_instances={}, bbox_mm={:?}, volume_mm3={volume}", plan_features.len(), holes.len(), dimensions);
+        }
+
+        // A separate non-fixture control proves ordinary blind holes still
+        // use the original centerline material check without a pilot pair.
+        let ordinary_blind = "长方体 长100宽80高20，中心盲孔直径10mm深5mm";
+        let control = build(ordinary_blind, 1, &manifest, &root.join("ordinary-blind-control"))
+            .unwrap_or_else(|error| panic!("ordinary-blind control build failed: {error}"));
+        let control_report = &control["geometry_report"];
+        assert_eq!(control_report["state"], "passed");
+        assert_eq!(control_report["valid"], true);
+        assert_eq!(control_report["hole_instances"].as_array().map(Vec::len), Some(1));
+        assert_eq!(control_report["hole_instances"][0]["through"], false);
+        assert_eq!(control_report["hole_instances"][0]["status"], "verified_blind");
+        assert_eq!(control_report["hole_measurements_verified"], true);
+        eprintln!("F5.12 CONTROL ordinary-blind: original centerline route and final B-Rep depth verification passed");
+
+        assert!(build_failures.is_empty(), "F5.12 OCCT cases did not build: {}", build_failures.join(" | "));
+    }
+
+    #[test]
+    fn f5_12_failed_stl_export_preserves_existing_target() {
+        let root = std::env::temp_dir().join(format!(
+            "quick-f5-12-export-{}-{}",
+            std::process::id(),
+            SystemTime::now()
+                .duration_since(UNIX_EPOCH)
+                .unwrap()
+                .as_nanos()
+        ));
+        fs::create_dir_all(&root).unwrap();
+        struct RemoveOnDrop(std::path::PathBuf);
+        impl Drop for RemoveOnDrop {
+            fn drop(&mut self) {
+                let _ = std::fs::remove_dir_all(&self.0);
+            }
+        }
+        let _cleanup = RemoveOnDrop(root.clone());
+
+        // Reuse the real exporter with invalid mesh input and an existing target.
+        // The failure must leave the caller's file byte-for-byte intact.
+        let protected_stl = root.join("existing-target.stl");
+        fs::write(&protected_stl, b"preserve-existing-export").unwrap();
+        let invalid_mesh = TriangleMesh {
+            positions: vec![[f64::NAN, 0.0, 0.0]; 3],
+            normals: vec![[0.0, 0.0, 1.0]; 3],
+        };
+        assert!(native_model_io::write_binary_stl(&protected_stl, &invalid_mesh, "invalid").is_err());
+        assert_eq!(fs::read(&protected_stl).unwrap(), b"preserve-existing-export");
+
+    }
 }

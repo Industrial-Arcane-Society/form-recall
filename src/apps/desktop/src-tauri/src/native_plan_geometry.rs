@@ -62,6 +62,7 @@ struct PendingBore {
     report_index: usize,
     request: HoleRequest,
     expected_blind_depth: Option<f64>,
+    counterbore_pilot_radius: Option<f64>,
 }
 
 struct PendingBoreGroup {
@@ -437,7 +438,7 @@ pub fn build(plan: &Value, manifest: &Path, cancelled: &AtomicBool) -> Result<Bu
                 native_parametric_features::build_cross_joint(&kernel, &normalized["parameters"])?;
             (tools, vec![], Some(support))
         } else {
-            let (tools, holes) = feature_tools(&kernel, &normalized, bb, current.as_ref())?;
+            let (tools, holes) = feature_tools(&kernel, &normalized, bb, current.as_ref(), &holes)?;
             (tools, holes, None)
         };
         let operation = feature["operation"].as_str().unwrap_or("add");
@@ -497,7 +498,7 @@ pub fn build(plan: &Value, manifest: &Path, cancelled: &AtomicBool) -> Result<Bu
             if operation == "cut" {
                 if let Some(pre_cut) = current.as_ref() {
                     for record in &mut requested_holes {
-                        let evidence = verify_hole_record(pre_cut, &candidate, record)?;
+                        let evidence = verify_hole_record(pre_cut, &candidate, record, &holes)?;
                         let status = evidence["status"].clone();
                         record["status"] = status;
                         record["sampled_evidence"] = evidence;
@@ -526,11 +527,13 @@ pub fn build(plan: &Value, manifest: &Path, cancelled: &AtomicBool) -> Result<Bu
         if let Some(pre_cut) = hole_pre_cut {
             let mut instances = Vec::with_capacity(requested_holes.len());
             for (offset, record) in requested_holes.iter_mut().enumerate() {
+                let counterbore_pilot_radius = matching_counterbore_pilot_radius(&holes, record);
                 match hole_request_from_record(&pre_cut, record) {
                     Ok((request, expected_blind_depth)) => instances.push(PendingBore {
                         report_index: report_start + offset,
                         request,
                         expected_blind_depth,
+                        counterbore_pilot_radius,
                     }),
                     Err(error) => {
                         record["final_measurement_status"] = json!("candidate_unverified");
@@ -553,12 +556,31 @@ pub fn build(plan: &Value, manifest: &Path, cancelled: &AtomicBool) -> Result<Bu
     for group in pending_bore_groups {
         for pending in group.instances {
             check_cancel(cancelled)?;
-            let measurement = native_bore_metrology::measure_bore(
-                &group.pre_cut,
-                &shape,
-                &pending.request,
-                pending.expected_blind_depth,
-            );
+            let later_counterbore = matching_later_counterbore(&hole_instances, pending.report_index);
+            let measurement = if let Some(pilot_radius) = pending.counterbore_pilot_radius {
+                native_bore_metrology::measure_counterbore(
+                    &group.pre_cut,
+                    &shape,
+                    &pending.request,
+                    pilot_radius,
+                    pending.expected_blind_depth.expect("counterbore is blind"),
+                )
+            } else if let Some((counterbore_radius, counterbore_depth)) = later_counterbore {
+                native_bore_metrology::measure_through_pilot_with_counterbore(
+                    &group.pre_cut,
+                    &shape,
+                    &pending.request,
+                    counterbore_radius,
+                    counterbore_depth,
+                )
+            } else {
+                native_bore_metrology::measure_bore(
+                    &group.pre_cut,
+                    &shape,
+                    &pending.request,
+                    pending.expected_blind_depth,
+                )
+            };
             let (status, payload) = match measurement {
                 Ok(value) => {
                     let angle_coverage = value["angular_coverage_radians"].as_f64().unwrap_or(0.0);
@@ -641,11 +663,171 @@ fn plan_prefix(plan: &Value, feature_index: usize) -> Result<Value, String> {
     Ok(prefix)
 }
 
+fn vector_dot(a: [f64; 3], b: [f64; 3]) -> f64 {
+    a[0] * b[0] + a[1] * b[1] + a[2] * b[2]
+}
+
+fn vector_cross(a: [f64; 3], b: [f64; 3]) -> [f64; 3] {
+    [
+        a[1] * b[2] - a[2] * b[1],
+        a[2] * b[0] - a[0] * b[2],
+        a[0] * b[1] - a[1] * b[0],
+    ]
+}
+
+fn vector_length(v: [f64; 3]) -> f64 {
+    vector_dot(v, v).sqrt()
+}
+
+fn same_directed_axis(
+    a_center: [f64; 3],
+    a_axis: [f64; 3],
+    b_center: [f64; 3],
+    b_axis: [f64; 3],
+) -> bool {
+    let Ok(a_axis) = normalize_vector(a_axis) else {
+        return false;
+    };
+    let Ok(b_axis) = normalize_vector(b_axis) else {
+        return false;
+    };
+    let delta = [
+        a_center[0] - b_center[0],
+        a_center[1] - b_center[1],
+        a_center[2] - b_center[2],
+    ];
+    vector_dot(a_axis, b_axis) >= 1.0 - 1e-8
+        && vector_length(vector_cross(delta, a_axis)) <= 1e-6
+}
+
+fn matching_through_pilot_radius(
+    prior_holes: &[Value],
+    centerline: [f64; 3],
+    axis: [f64; 3],
+    counterbore_diameter: f64,
+) -> Option<f64> {
+    prior_holes.iter().rev().find_map(|record| {
+        if record["through"].as_bool() != Some(true) {
+            return None;
+        }
+        let diameter = record["diameter_mm"].as_f64()?;
+        if !diameter.is_finite() || diameter <= 0.0 || diameter >= counterbore_diameter {
+            return None;
+        }
+        let center = point(record.get("centerline_mm"), [0.0; 3]).ok()?;
+        let record_axis = record_axis_direction(record).ok()?;
+        same_directed_axis(centerline, axis, center, record_axis).then_some(diameter / 2.0)
+    })
+}
+
+fn matching_counterbore_pilot_radius(prior_holes: &[Value], record: &Value) -> Option<f64> {
+    if record["through"].as_bool() != Some(false) {
+        return None;
+    }
+    let diameter = record["diameter_mm"].as_f64()?;
+    let centerline = point(record.get("centerline_mm"), [0.0; 3]).ok()?;
+    let axis = record_axis_direction(record).ok()?;
+    matching_through_pilot_radius(prior_holes, centerline, axis, diameter)
+}
+
+fn matching_later_counterbore(holes: &[Value], pilot_index: usize) -> Option<(f64, f64)> {
+    let pilot = holes.get(pilot_index)?;
+    if pilot["through"].as_bool() != Some(true) {
+        return None;
+    }
+    let pilot_diameter = pilot["diameter_mm"].as_f64()?;
+    let pilot_centerline = point(pilot.get("centerline_mm"), [0.0; 3]).ok()?;
+    let pilot_axis = record_axis_direction(pilot).ok()?;
+    holes.iter().skip(pilot_index + 1).find_map(|record| {
+        if record["through"].as_bool() != Some(false) {
+            return None;
+        }
+        let diameter = record["diameter_mm"].as_f64()?;
+        let depth = record["depth_mm"].as_f64()?;
+        if !diameter.is_finite()
+            || diameter <= pilot_diameter
+            || !depth.is_finite()
+            || depth <= 0.0
+        {
+            return None;
+        }
+        let centerline = point(record.get("centerline_mm"), [0.0; 3]).ok()?;
+        let axis = record_axis_direction(record).ok()?;
+        same_directed_axis(pilot_centerline, pilot_axis, centerline, axis)
+            .then_some((diameter / 2.0, depth))
+    })
+}
+
+fn annular_material_span(
+    shape: &Shape,
+    centerline: [f64; 3],
+    axis: [f64; 3],
+    inner_radius: f64,
+    outer_radius: f64,
+    tmin: f64,
+    tmax: f64,
+    tolerance: f64,
+) -> Result<[f64; 2], String> {
+    if !inner_radius.is_finite()
+        || !outer_radius.is_finite()
+        || inner_radius <= 0.0
+        || outer_radius <= inner_radius
+        || !tmin.is_finite()
+        || !tmax.is_finite()
+        || tmin >= tmax
+    {
+        return Err("沉孔环带入口核验参数无效。".into());
+    }
+    let axis = normalize_vector(axis)?;
+    let reference = if axis[0].abs() < 0.8 {
+        [1.0, 0.0, 0.0]
+    } else {
+        [0.0, 1.0, 0.0]
+    };
+    let u = normalize_vector(vector_cross(axis, reference))?;
+    let v = vector_cross(axis, u);
+    let sample_radius = (inner_radius + outer_radius) / 2.0;
+    let mut expected: Option<[f64; 2]> = None;
+    let span_tolerance = ((tmax - tmin) * 1e-8).max(tolerance * 20.0);
+    for angle_index in 0..16 {
+        let angle = std::f64::consts::TAU * angle_index as f64 / 16.0;
+        let radial = [
+            u[0] * angle.cos() + v[0] * angle.sin(),
+            u[1] * angle.cos() + v[1] * angle.sin(),
+            u[2] * angle.cos() + v[2] * angle.sin(),
+        ];
+        let sample_origin = [
+            centerline[0] + radial[0] * sample_radius,
+            centerline[1] + radial[1] * sample_radius,
+            centerline[2] + radial[2] * sample_radius,
+        ];
+        let spans = shape.line_material_intervals(sample_origin, axis, tmin, tmax, tolerance)?;
+        if spans.len() != 1 {
+            return Err(format!(
+                "沉孔环带第 {angle_index} 条样本线具有 {} 段材料，无法确认唯一入口。",
+                spans.len()
+            ));
+        }
+        let span = spans[0];
+        if let Some(reference) = expected {
+            if (span[0] - reference[0]).abs() > span_tolerance
+                || (span[1] - reference[1]).abs() > span_tolerance
+            {
+                return Err("沉孔环带样本线的材料入口/厚度不一致，拒绝按包围盒猜测。".into());
+            }
+        } else {
+            expected = Some(span);
+        }
+    }
+    expected.ok_or("沉孔环带未能取得局部材料区间。".into())
+}
+
 fn feature_tools(
     kernel: &Kernel,
     feature: &Value,
     bb: Option<Bounds>,
     pre_cut: Option<&Shape>,
+    prior_holes: &[Value],
 ) -> Result<(Vec<Shape>, Vec<Value>), String> {
     let p = &feature["parameters"];
     let axis = axis_index(p)?;
@@ -736,17 +918,36 @@ fn feature_tools(
                     let mut origin = base;
                     origin[axis] = 0.;
                     let margin = ((high - low) * 0.05).max(1.0);
-                    let spans = shape.line_material_intervals(
+                    let direction = axis_vector(axis);
+                    let counterbore_pilot = matching_through_pilot_radius(
+                        prior_holes,
                         origin,
-                        axis_vector(axis),
-                        low - margin,
-                        high + margin,
-                        1e-7,
-                    )?;
-                    let span = spans
-                        .last()
-                        .copied()
-                        .ok_or("盲孔中心线没有前置材料区间；拒绝按全局包围盒猜测入口。")?;
+                        direction,
+                        diameter,
+                    );
+                    let span = if let Some(pilot_radius) = counterbore_pilot {
+                        annular_material_span(
+                            shape,
+                            origin,
+                            direction,
+                            pilot_radius,
+                            diameter / 2.0,
+                            low - margin,
+                            high + margin,
+                            1e-7,
+                        )?
+                    } else {
+                        let spans = shape.line_material_intervals(
+                            origin,
+                            direction,
+                            low - margin,
+                            high + margin,
+                            1e-7,
+                        )?;
+                        spans.last().copied().ok_or(
+                            "盲孔中心线没有前置材料区间；拒绝按全局包围盒猜测入口。",
+                        )?
+                    };
                     let thickness = span[1] - span[0];
                     let depth_tolerance = 1e-6_f64.max(thickness * 1e-8);
                     if thickness <= d + depth_tolerance {
@@ -1094,7 +1295,12 @@ fn hole_request_from_record(
     Ok((request, expected_blind_depth))
 }
 
-fn verify_hole_record(pre_cut: &Shape, post_cut: &Shape, record: &Value) -> Result<Value, String> {
+fn verify_hole_record(
+    pre_cut: &Shape,
+    post_cut: &Shape,
+    record: &Value,
+    prior_holes: &[Value],
+) -> Result<Value, String> {
     let centerline = point(record.get("centerline_mm"), [0.; 3])?;
     let axis = record_axis_direction(record)?;
     let radius = num(record, "diameter_mm")? / 2.0;
@@ -1111,6 +1317,30 @@ fn verify_hole_record(pre_cut: &Shape, post_cut: &Shape, record: &Value) -> Resu
         tmax,
         tolerance: 1e-7,
     };
+    if let Some(pilot_radius) = matching_counterbore_pilot_radius(prior_holes, record) {
+        let expected_depth = record["depth_mm"]
+            .as_f64()
+            .ok_or("与通孔 pilot 配对的沉孔缺少显式深度。")?;
+        let evidence = native_geometry_evidence::verify_counterbore(
+            pre_cut,
+            post_cut,
+            &request,
+            pilot_radius,
+            expected_depth,
+        )?;
+        let passed = evidence["accepted"] == true;
+        return Ok(json!({
+            "status":if passed {"verified_by_sampled_rays"} else {"partial"},
+            "reason_codes":if passed {json!([])} else {json!(["counterbore_annulus_depth_or_outer_material_check_failed"])},
+            "expected_through":false,
+            "expected_depth_mm":expected_depth,
+            "counterbore_pilot_radius_mm":pilot_radius,
+            "actual_material":Value::Null,
+            "through_on_sampled_rays":false,
+            "ray_evidence":evidence,
+            "measurement_scope":"annular counterbore ray evidence plus later analytic B-Rep cylinder measurement"
+        }));
+    }
     let sampled = match native_geometry_evidence::verify_hole(pre_cut, post_cut, &request) {
         Ok(evidence) => evidence,
         Err(error) => {
@@ -1469,6 +1699,59 @@ fn bounds_array(bb: Bounds) -> [f64; 6] {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn counterbore_pairing_requires_an_earlier_smaller_coaxial_through_pilot() {
+        let pilot = json!({
+            "feature_id":"pilot","through":true,"diameter_mm":6.6,
+            "centerline_mm":[0.0,0.0,10.0],"axis":"Z","axis_vector_mm":[0.0,0.0,1.0]
+        });
+        let counterbore = json!({
+            "feature_id":"counterbore","through":false,"diameter_mm":11.0,"depth_mm":5.0,
+            "centerline_mm":[0.0,0.0,10.0],"axis":"Z","axis_vector_mm":[0.0,0.0,1.0]
+        });
+        assert_eq!(
+            matching_counterbore_pilot_radius(std::slice::from_ref(&pilot), &counterbore),
+            Some(3.3)
+        );
+        assert_eq!(matching_later_counterbore(&[pilot.clone(), counterbore], 0), Some((5.5, 5.0)));
+
+        let ordinary_blind = json!({
+            "feature_id":"ordinary-blind","through":false,"diameter_mm":11.0,"depth_mm":5.0,
+            "centerline_mm":[0.0,0.0,10.0],"axis":"Z","axis_vector_mm":[0.0,0.0,1.0]
+        });
+        assert_eq!(
+            matching_counterbore_pilot_radius(&[], &ordinary_blind),
+            None,
+            "an ordinary blind hole must continue through centerline material sampling"
+        );
+
+        let offset_pilot = json!({
+            "feature_id":"offset-pilot","through":true,"diameter_mm":6.6,
+            "centerline_mm":[1.0,0.0,10.0],"axis":"Z","axis_vector_mm":[0.0,0.0,1.0]
+        });
+        assert_eq!(
+            matching_counterbore_pilot_radius(std::slice::from_ref(&offset_pilot), &ordinary_blind),
+            None
+        );
+        let reversed_pilot = json!({
+            "feature_id":"reversed-pilot","through":true,"diameter_mm":6.6,
+            "centerline_mm":[0.0,0.0,10.0],"axis":"Z","axis_vector_mm":[0.0,0.0,-1.0]
+        });
+        assert_eq!(
+            matching_counterbore_pilot_radius(std::slice::from_ref(&reversed_pilot), &ordinary_blind),
+            None
+        );
+        let blind_pilot = json!({
+            "feature_id":"blind-pilot","through":false,"diameter_mm":6.6,"depth_mm":4.0,
+            "centerline_mm":[0.0,0.0,10.0],"axis":"Z","axis_vector_mm":[0.0,0.0,1.0]
+        });
+        assert_eq!(
+            matching_counterbore_pilot_radius(std::slice::from_ref(&blind_pilot), &ordinary_blind),
+            None
+        );
+    }
+
     fn fixture() -> Value {
         serde_json::from_str(include_str!(
             "../examples/fixtures/native_geometry_plan.json"

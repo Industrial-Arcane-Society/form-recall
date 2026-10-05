@@ -7,6 +7,13 @@ use crate::{
 };
 use serde_json::{Value, json};
 
+#[derive(Clone, Copy)]
+enum BoreEvidenceMode {
+    Ordinary,
+    Counterbore { pilot_radius: f64 },
+    ThroughPilot { counterbore_radius: f64, counterbore_depth: f64 },
+}
+
 fn dot(a: [f64; 3], b: [f64; 3]) -> f64 {
     a[0] * b[0] + a[1] * b[1] + a[2] * b[2]
 }
@@ -35,6 +42,51 @@ pub fn measure_bore(
     post: &Shape,
     request: &HoleRequest,
     expected_blind_depth: Option<f64>,
+) -> Result<Value, String> {
+    measure_bore_with_evidence(pre, post, request, expected_blind_depth, BoreEvidenceMode::Ordinary)
+}
+
+pub fn measure_counterbore(
+    pre: &Shape,
+    post: &Shape,
+    request: &HoleRequest,
+    pilot_radius: f64,
+    expected_depth: f64,
+) -> Result<Value, String> {
+    measure_bore_with_evidence(
+        pre,
+        post,
+        request,
+        Some(expected_depth),
+        BoreEvidenceMode::Counterbore { pilot_radius },
+    )
+}
+
+pub fn measure_through_pilot_with_counterbore(
+    pre: &Shape,
+    post: &Shape,
+    request: &HoleRequest,
+    counterbore_radius: f64,
+    counterbore_depth: f64,
+) -> Result<Value, String> {
+    measure_bore_with_evidence(
+        pre,
+        post,
+        request,
+        None,
+        BoreEvidenceMode::ThroughPilot {
+            counterbore_radius,
+            counterbore_depth,
+        },
+    )
+}
+
+fn measure_bore_with_evidence(
+    pre: &Shape,
+    post: &Shape,
+    request: &HoleRequest,
+    expected_blind_depth: Option<f64>,
+    evidence_mode: BoreEvidenceMode,
 ) -> Result<Value, String> {
     let axis_len = norm(request.axis);
     if !axis_len.is_finite()
@@ -122,17 +174,55 @@ pub fn measure_bore(
     if expected_blind_depth.is_some_and(|depth| !depth.is_finite() || depth <= 0.0) {
         return Err("盲孔预期深度必须为正有限数。".into());
     }
-    let sampled_material = native_geometry_evidence::verify_hole(pre, post, request)?;
+    let sampled_material = match evidence_mode {
+        BoreEvidenceMode::Ordinary => native_geometry_evidence::verify_hole(pre, post, request)?,
+        BoreEvidenceMode::Counterbore { pilot_radius } => {
+            native_geometry_evidence::verify_counterbore(
+                pre,
+                post,
+                request,
+                pilot_radius,
+                expected_blind_depth.ok_or("沉孔核验缺少预期深度。")?,
+            )?
+        }
+        BoreEvidenceMode::ThroughPilot { counterbore_radius, .. } => {
+            native_geometry_evidence::verify_through_pilot_with_counterbore(
+                pre,
+                post,
+                request,
+                counterbore_radius,
+            )?
+        }
+    };
     let measured_axial_length: f64 = merged.iter().map(|span| span[1] - span[0]).sum();
     let expected_material_axial_length = sampled_material["center_ray"]["before_material_length"]
         .as_f64()
         .unwrap_or(0.0);
     let axial_tolerance = (request.tolerance * 10.0).max(1e-5);
+    let expected_bore_axial_length = match evidence_mode {
+        BoreEvidenceMode::ThroughPilot { counterbore_depth, .. } => {
+            Some(expected_material_axial_length - counterbore_depth)
+        }
+        _ => None,
+    };
     let expectation_satisfied = match expected_blind_depth {
+        Some(depth) if matches!(evidence_mode, BoreEvidenceMode::Counterbore { .. }) => {
+            (measured_axial_length - depth).abs() <= axial_tolerance
+                && sampled_material["accepted"] == true
+                && sampled_material["summary"]["annular_cut_samples_pass"] == true
+                && sampled_material["summary"]["outside_material_retained"] == true
+        }
         Some(depth) => {
             (measured_axial_length - depth).abs() <= axial_tolerance
                 && sampled_material["summary"]["center_remaining_material"] == true
                 && sampled_material["summary"]["through_on_sampled_rays"] == false
+        }
+        None if matches!(evidence_mode, BoreEvidenceMode::ThroughPilot { .. }) => {
+            expected_bore_axial_length.is_some_and(|expected| {
+                expected > 0.0
+                    && (measured_axial_length - expected).abs() <= axial_tolerance
+            }) && sampled_material["accepted"] == true
+                && sampled_material["summary"]["through_on_sampled_rays"] == true
         }
         None => {
             sampled_material["summary"]["through_on_sampled_rays"] == true
@@ -145,8 +235,14 @@ pub fn measure_bore(
         "measurement_method": "OCCT BRepAdaptor_Surface GeomAbs_Cylinder analytic radius; axis and trimmed UV bounds from B-Rep; inward orientation checked at UV midpoint",
         "tolerance": request.tolerance,
         "requested_radius": request.radius,
+        "evidence_mode": match evidence_mode {
+            BoreEvidenceMode::Ordinary => "ordinary_bore",
+            BoreEvidenceMode::Counterbore { .. } => "coaxial_counterbore_annulus",
+            BoreEvidenceMode::ThroughPilot { .. } => "through_pilot_with_counterbore",
+        },
         "expected_blind_depth": expected_blind_depth,
         "expected_pre_cut_material_axial_length": expected_material_axial_length,
+        "expected_bore_axial_length": expected_bore_axial_length,
         "axial_length_tolerance": axial_tolerance,
         "measured_cylindrical_axial_length": measured_axial_length,
         "expectation_satisfied": expectation_satisfied,

@@ -102,6 +102,30 @@ pub fn verify_hole(
     post_cut: &Shape,
     request: &HoleRequest,
 ) -> Result<Value, String> {
+    verify_hole_with_protected_radius(pre_cut, post_cut, request, request.radius)
+}
+
+/// Verify a through pilot after a larger coaxial blind counterbore was cut.
+/// The protected rays are placed outside the counterbore diameter so that the
+/// expected top-side relief does not invalidate the pilot-bore evidence.
+pub fn verify_through_pilot_with_counterbore(
+    pre_cut: &Shape,
+    post_cut: &Shape,
+    request: &HoleRequest,
+    counterbore_radius: f64,
+) -> Result<Value, String> {
+    if !counterbore_radius.is_finite() || counterbore_radius <= request.radius {
+        return Err("沉孔半径必须大于贯穿 pilot 半径。".into());
+    }
+    verify_hole_with_protected_radius(pre_cut, post_cut, request, counterbore_radius)
+}
+
+fn verify_hole_with_protected_radius(
+    pre_cut: &Shape,
+    post_cut: &Shape,
+    request: &HoleRequest,
+    protected_radius: f64,
+) -> Result<Value, String> {
     if request
         .origin
         .iter()
@@ -158,13 +182,16 @@ pub fn verify_hole(
             )?);
         }
     }
-    let outside_margin = (request.radius * 0.05).max(request.tolerance * 8.0);
+    if !protected_radius.is_finite() || protected_radius < request.radius {
+        return Err("孔外侧保护半径必须有限且不小于孔半径。".into());
+    }
+    let outside_margin = (protected_radius * 0.05).max(request.tolerance * 8.0);
     let mut outside = Vec::new();
     for (ring_index, factor) in [1.0, 2.0].into_iter().enumerate() {
         for angle_index in 0..ANGLES {
             let angle = std::f64::consts::TAU * angle_index as f64 / ANGLES as f64;
             let radial = add(scale(u, angle.cos()), scale(v, angle.sin()));
-            let offset = scale(radial, request.radius + outside_margin * factor);
+            let offset = scale(radial, protected_radius + outside_margin * factor);
             outside.push(sample_ray(
                 pre_cut,
                 post_cut,
@@ -244,6 +271,7 @@ pub fn verify_hole(
             "origin_xyz": request.origin,
             "axis_xyz_normalized": axis,
             "nominal_radius": request.radius,
+            "outside_protected_radius": protected_radius,
             "interior_radius_fractions": [0.50, 0.80, 0.95],
             "outside_radius_offsets": [outside_margin, outside_margin * 2.0],
             "t_range": [request.tmin, request.tmax],
@@ -264,5 +292,176 @@ pub fn verify_hole(
         "center_ray": center_report,
         "interior_rays": interior_report,
         "outside_rays": outside_report,
+    }))
+}
+
+/// Verify the annular cut of a coaxial counterbore whose smaller through pilot
+/// has already removed the centerline. Radial samples stay strictly between
+/// the pilot and counterbore radii; the center ray is required to remain empty,
+/// while an outer ring beyond the counterbore must retain unchanged material.
+pub fn verify_counterbore(
+    pre_cut: &Shape,
+    post_cut: &Shape,
+    request: &HoleRequest,
+    pilot_radius: f64,
+    expected_depth: f64,
+) -> Result<Value, String> {
+    let axis_len = norm(request.axis);
+    if !axis_len.is_finite()
+        || axis_len <= 1e-12
+        || !request.radius.is_finite()
+        || request.radius <= 0.0
+        || !pilot_radius.is_finite()
+        || pilot_radius <= 0.0
+        || pilot_radius >= request.radius
+        || !expected_depth.is_finite()
+        || expected_depth <= 0.0
+        || !request.tolerance.is_finite()
+        || request.tolerance <= 0.0
+        || !request.tmin.is_finite()
+        || !request.tmax.is_finite()
+        || request.tmin >= request.tmax
+        || request.origin.iter().any(|v| !v.is_finite())
+    {
+        return Err("沉孔环带核验请求的轴、半径、深度、范围或公差无效。".into());
+    }
+    let axis = scale(request.axis, 1.0 / axis_len);
+    let reference = if axis[0].abs() < 0.8 {
+        [1.0, 0.0, 0.0]
+    } else {
+        [0.0, 1.0, 0.0]
+    };
+    let u0 = cross(axis, reference);
+    let u = scale(u0, 1.0 / norm(u0));
+    let v = cross(axis, u);
+    let normalized = HoleRequest { axis, ..request.clone() };
+    let minimum_change = request.tolerance * 8.0;
+    let depth_tolerance = (request.tolerance * 20.0).max(expected_depth * 1e-5);
+
+    let center = sample_ray(
+        pre_cut,
+        post_cut,
+        &normalized,
+        request.origin,
+        "counterbore_centerline_expected_empty".into(),
+    )?;
+    let centerline_empty = center.before_length <= minimum_change
+        && center.after_length <= minimum_change;
+
+    const ANGLES: usize = 16;
+    let annulus_width = request.radius - pilot_radius;
+    let mut annular_samples = Vec::new();
+    for (ring_index, fraction) in [0.2, 0.5, 0.8].into_iter().enumerate() {
+        let sample_radius = pilot_radius + annulus_width * fraction;
+        for angle_index in 0..ANGLES {
+            let angle = std::f64::consts::TAU * angle_index as f64 / ANGLES as f64;
+            let radial = add(scale(u, angle.cos()), scale(v, angle.sin()));
+            let sample = sample_ray(
+                pre_cut,
+                post_cut,
+                &normalized,
+                add(request.origin, scale(radial, sample_radius)),
+                format!("annulus_r{}_{:02}", ring_index + 1, angle_index),
+            )?;
+            let depth_matches = match (sample.before.as_slice(), sample.after.as_slice()) {
+                ([before], [after]) => {
+                    let retained_at_entry = (after[0] - before[0]).abs() <= depth_tolerance;
+                    let removed_at_exit = ((before[1] - after[1]) - expected_depth).abs()
+                        <= depth_tolerance;
+                    retained_at_entry
+                        && removed_at_exit
+                        && after[1] > after[0] + minimum_change
+                }
+                _ => false,
+            };
+            annular_samples.push(json!({
+                "sample": sample.label,
+                "origin": sample.origin,
+                "radius_from_axis": sample_radius,
+                "before_material_intervals": sample.before,
+                "after_material_intervals": sample.after,
+                "before_material_length": sample.before_length,
+                "after_material_length": sample.after_length,
+                "removed_material_length": (sample.before_length - sample.after_length).max(0.0),
+                "expected_depth_mm": expected_depth,
+                "depth_tolerance_mm": depth_tolerance,
+                "depth_matches_and_bottom_material_remains": depth_matches
+            }));
+        }
+    }
+    let annular_cut_samples_pass = annular_samples
+        .iter()
+        .all(|sample| sample["depth_matches_and_bottom_material_remains"] == true);
+
+    let outside_margin = (request.radius * 0.05).max(request.tolerance * 8.0);
+    let mut outside_samples = Vec::new();
+    for ring_index in 0..2 {
+        let sample_radius = request.radius + outside_margin * (ring_index as f64 + 1.0);
+        for angle_index in 0..ANGLES {
+            let angle = std::f64::consts::TAU * angle_index as f64 / ANGLES as f64;
+            let radial = add(scale(u, angle.cos()), scale(v, angle.sin()));
+            let sample = sample_ray(
+                pre_cut,
+                post_cut,
+                &normalized,
+                add(request.origin, scale(radial, sample_radius)),
+                format!("outside_counterbore_r{}_{:02}", ring_index + 1, angle_index),
+            )?;
+            let material_retained = sample.before_length > minimum_change
+                && sample.after_length > minimum_change;
+            let unchanged = material_retained
+                && sample.before.len() == sample.after.len()
+                && sample
+                    .before
+                    .iter()
+                    .zip(&sample.after)
+                    .all(|(before, after)| {
+                        (before[0] - after[0]).abs() <= depth_tolerance
+                            && (before[1] - after[1]).abs() <= depth_tolerance
+                    });
+            outside_samples.push(json!({
+                "sample": sample.label,
+                "origin": sample.origin,
+                "radius_from_axis": sample_radius,
+                "before_material_intervals": sample.before,
+                "after_material_intervals": sample.after,
+                "before_material_length": sample.before_length,
+                "after_material_length": sample.after_length,
+                "material_retained": material_retained,
+                "material_retained_unchanged": unchanged
+            }));
+        }
+    }
+    let outside_material_retained = outside_samples
+        .iter()
+        .all(|sample| sample["material_retained_unchanged"] == true);
+    let accepted = centerline_empty && annular_cut_samples_pass && outside_material_retained;
+
+    Ok(json!({
+        "status": "sampled_counterbore_annulus_evidence",
+        "accepted": accepted,
+        "measurement_scope": "sampled annular material intervals; analytic B-Rep radius is reported separately",
+        "request": {
+            "origin_xyz": request.origin,
+            "axis_xyz_normalized": axis,
+            "pilot_radius_mm": pilot_radius,
+            "counterbore_radius_mm": request.radius,
+            "expected_depth_mm": expected_depth,
+            "depth_tolerance_mm": depth_tolerance,
+            "t_range": [request.tmin, request.tmax],
+            "tolerance": request.tolerance
+        },
+        "summary": {
+            "centerline_empty_before_and_after": centerline_empty,
+            "annular_rays_total": annular_samples.len(),
+            "annular_rays_matching_depth_with_bottom_material": annular_samples.iter().filter(|sample| sample["depth_matches_and_bottom_material_remains"] == true).count(),
+            "outside_rays_total": outside_samples.len(),
+            "outside_rays_unchanged": outside_samples.iter().filter(|sample| sample["material_retained_unchanged"] == true).count(),
+            "annular_cut_samples_pass": annular_cut_samples_pass,
+            "outside_material_retained": outside_material_retained
+        },
+        "centerline": ray_json(&center, centerline_empty, "pilot centerline is already empty before and after counterbore"),
+        "annular_rays": annular_samples,
+        "outside_rays": outside_samples
     }))
 }
