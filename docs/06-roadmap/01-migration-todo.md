@@ -105,7 +105,9 @@ Coldstart runner 已采用默认且唯一发布 safe gate summary、ACP/Cordis a
 
 2026-10-03 用户确认：以下八项全部纳入 Todo，**P0 优先**。感知、建模、审查允许分别选择模型/provider，默认共用当前配置；建模优先短推理，复杂识图与审查按需增强。继续使用 DSH 原生 Cordis 插件。详细依据与验收见 [Agent 链路治理卡](./25-f7-agent-chain-governance.md)。
 
-### F7/G8 最新进度（2026-10-04）
+### F7/G8 最新进度（2026-10-05）
+
+- Run34 在固定 main `148f1d3c35c31a87c5ef3f5eda4593e256e2bf8c` 的隔离 worktree 上只运行一次，使用默认原图/prompt、无 CADPlan/尺寸 seed。Runner 约 1 分钟后 exit `1`，safe summary 定位到 `native_probe / not_started / uncaught_exception`；未启动 DSH session/prompt，也没有发出原图 provider 请求。13 个 strict gate 均为 `unknown`，summary scope unverified；不能据此评价 Agent 建模或图像能力。只读取 allowlist `summary.json`，scratch 已清理且未重试，详见[Run34](./101-f7-g8-run-34-preflight-failure.md)。
 
 - Run20 在固定集成 HEAD `2f4c57b5dcc607c189edaa76a828c40e9571e39d` 的独立 detached worktree 上单次运行，耗时 133.9 秒、runner exit code 1、HEAD 始终固定。原图运行前后为同一 SHA/字节数；但 summary 的 `original_image=null`，不能证明运行绑定。`summary.json` 发布 `failed` / `scope_unverified` / transport `failed` / model `none`，failure reason count 1、evidence error 0、gate map 为空、runtime unverified、scratch cleanup removed；安全 fatal 字段为粗阶段 `offline_build` 和 `uncaught_exception`。diagnostics 与 build status 缺失，不能报告逐 gate、reason codes、build 结果或 provider request；具体根因 unknown。安全摘要 SHA 与完整限制见[Run20诊断](./73-f7-g8-run-20-diagnosis.md)。F7 保持失败。
 - Run21 在集成基线 `8ca53d2f31984e8e441b18ad6a90594b7d379a4f` 的全新 detached worktree 上只运行一次；runner 设置完整 1800 秒 deadline、默认原图与 prompt、无 seed 参数。输出目录是全新临时路径，worktree 在运行及构建失败后保持固定 HEAD/clean。运行区间按 safe output 时间戳估算约 58.3 秒，其中 safe `build-status.json` 的 Cargo elapsed 为 57,794 ms；Cargo exit code `101`、stdout bytes `0`、stderr bytes `10,525`。只检查 stderr 字节数，未读取正文，故内部错误与根因 unknown。`summary.json` 为 failed/scope_unverified、transport failed、model none、gate map 空、original_image null、scratch cleanup removed；`tool-result-diagnostics.jsonl` 缺失。runner 在 native probe/DSH/provider 之前因 offline build failed 进入 fatal path，未发起 provider request；12 个 strict gate 均未执行，不能报告为通过或失败。输出与逐项边界见[Run21诊断](./76-f7-g8-run-21-diagnosis.md)。
@@ -226,3 +228,4 @@ F7 当前观察绑定的集成测试夹具复核见[记录](./75-f7-current-obse
 - 这不关闭真实桌面验收：新版安装包尚未覆盖安装，未验证实际 WebView/WebGL 视口；F0 可见窗口、F4 干净机器/真实 CATIA、F7/G8 真实 DSH 视觉质量仍按各自状态继续推进。近期 worktree 清理已保留活跃修改分支，归档项均为已集成提交或空的干净快照。
 - 2026-10-05 随后尝试从非提权命令行静默升级 MSI，日志返回 1603 且明确写明静默安装禁用了 UAC 提权；复核确认 Program Files 仍是修复前二进制。没有将此记录为安装成功或视觉验收。详见[F6.10安装升级记录](./F6.10-installed-glb-preview.md)。
 - 2026-10-05 16:12/16:15 从已推送 main `0e6d013` 重建完整依赖 MSI/NSIS：分别为 422.88/410.67 MiB；NSIS 完整性检查通过，MSI administrative extraction 成功；223 个 Tauri 映射资源在 MSI、NSIS 中逐项大小与 SHA-256 对拍通过，WebView2 payload hash 与构建源一致。解包后 MSI/NSIS Quick CLI smoke 均 exit 0、单闭合实体、100×60×20 mm 并生成 AIMODEL/GLB/OBJ/STL；未启动 GUI。完整哈希与证据见[F6.10报告](./F6.10-installed-glb-preview.md)。
+- F6.10 后续隐藏 WebView 验收再次通过 5/5；WebDriver 截图人工检查确认合成蓝色三角网格实际显示在视口。Program Files 仍是 10:47 的旧 exe（SHA-256 `6AA993E79C491BE2AC0DE5F086C7F26FA69FB4CED8B513851347F32F0BCDA24E`），早于 11:28 的 `e2496f6` 路径修复；因此截图里的越界拒绝来自旧版，修复版包尚未覆盖安装。静默 MSI 因未提权返回 1603；本轮未启动可见产品窗口。详见[F6.10](./F6.10-installed-glb-preview.md)。
