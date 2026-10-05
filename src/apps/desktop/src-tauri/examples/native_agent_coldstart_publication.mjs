@@ -3,6 +3,7 @@ import { join } from 'node:path'
 import { randomUUID } from 'node:crypto'
 import { COLDSTART_TOOL_NAME_ALLOWLIST } from './native_agent_coldstart_gates.mjs'
 import { sanitizeScratchRecoverySummary } from './native_agent_coldstart_scratch.mjs'
+import { safePromptProgressSummary } from './native_agent_coldstart_prompt.mjs'
 
 const toolNames = new Set([...COLDSTART_TOOL_NAME_ALLOWLIST, 'unknown'])
 const safeCount = value => Number.isSafeInteger(value) && value >= 0 ? value : 0
@@ -257,7 +258,7 @@ export function buildSafeDshDiagnostic(value = {}) {
   }
 }
 
-function createSafeFailureSummary({ stage, phase, code, scratchCleanupStatus, scratchRecovery, strictGates } = {}) {
+function createSafeFailureSummary({ stage, phase, code, scratchCleanupStatus, scratchRecovery, strictGates, promptProgress } = {}) {
   return {
     schema_version: 1,
     status: 'failed',
@@ -267,6 +268,7 @@ function createSafeFailureSummary({ stage, phase, code, scratchCleanupStatus, sc
     runtime: { node: 'unverified', dsh: 'unverified' },
     scratch_cleanup_status: SCRATCH_CLEANUP_STATUSES.has(scratchCleanupStatus) ? scratchCleanupStatus : 'not_created',
     scratch_recovery: sanitizeScratchRecoverySummary(scratchRecovery),
+    ...(promptProgress ? { prompt_progress: safePromptProgressSummary(promptProgress) } : {}),
     failure_diagnostic: buildSafeFailureDiagnostic({ stage, phase, code }),
     strict_gates: strictGates ? sanitizeSafeStrictGateProjection(strictGates) : sanitizeSafeStrictGateProjection({}),
   }
@@ -296,7 +298,8 @@ export function replacePublishedSafeFailureSummary(output, failure = {}) {
   return summary
 }
 
-export function buildSafeAcceptanceSummary({ strict, transportStatus, modelStatus, runtime, source, scratchCleanupStatus, scratchRecovery, dshDiagnostic }) {
+export function buildSafeAcceptanceSummary({ strict, transportStatus, modelStatus, runtime, source, scratchCleanupStatus,
+  scratchRecovery, dshDiagnostic, promptProgress }) {
   const strictGateProjection = buildSafeStrictGateProjection(strict)
   const overallPassed = strict?.status === 'passed' && scratchCleanupStatus === 'removed'
   return {
@@ -307,6 +310,7 @@ export function buildSafeAcceptanceSummary({ strict, transportStatus, modelStatu
     model_status: MODEL_STATUSES.has(modelStatus) ? modelStatus : 'none',
     scratch_cleanup_status: SCRATCH_CLEANUP_STATUSES.has(scratchCleanupStatus) ? scratchCleanupStatus : 'not_created',
     scratch_recovery: sanitizeScratchRecoverySummary(scratchRecovery),
+    ...(promptProgress ? { prompt_progress: safePromptProgressSummary(promptProgress) } : {}),
     dsh_diagnostic: buildSafeDshDiagnostic(dshDiagnostic),
     strict_gates: strictGateProjection,
     visual_finish_diagnostics: buildSafeVisualFinishDiagnostics(strict),

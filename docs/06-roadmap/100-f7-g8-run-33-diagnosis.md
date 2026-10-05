@@ -52,6 +52,14 @@
 
 projection 只保留固定字段和计数；timeout 的底层原因及两个 `cad_inspect_references` 调用被拒绝的具体参数仍未知。Run33 证明的是一次带默认原图的 DSH CLI host run 在该 baseline 上超时，不能外推成视觉能力结论，也不是 CATIA 验收。
 
+## 后续 runner 时限审计与本地修复（未重跑 provider）
+
+对 Run33 使用的 baseline runner 做静态代码核对，并只依据本文件上方记录的 safe allowlist 结果：当时 `session/prompt` 使用单个 `AIMODELER_ACCEPTANCE_DEADLINE_SECONDS=1080` 请求定时器。定时器既不区分无进展与总时限，也不监听有效 ACP 更新或 CAD 几何 revision 来重置无进展时限；Run33 的模型请求在 1080 秒超时与总 CLI 耗时 1167.9 秒相符（其差值包含后续清理/发布等 runner 工作，但 safe summary 不足以精确拆分）。这能确认旧 runner 的 timeout 策略，**不能**证明当次 provider 停止输出、ACP 消费器卡住，或模型思考过久；本审计未读取 raw logs、scratch、thought、图像/几何载荷，也没有发出 provider 请求。
+
+当前冷启动 runner 已改为与生产 host watchdog 一致的双时限策略：总时限默认 3600 秒、无有效进展时限默认 600 秒。`AIMODELER_ACCEPTANCE_DEADLINE_SECONDS` 兼容为总时限；新的 `AIMODELER_ACCEPTANCE_TOTAL_TIMEOUT_SECONDS` 优先，`AIMODELER_ACCEPTANCE_IDLE_TIMEOUT_SECONDS` 单独配置。仅当前 session 的非空且非重复内容片段、具有调用 ID 的工具调用/更新，以及严格递增几何 revision 可刷新 idle；噪声、其他 session、usage/config 类更新不刷新；hard total 不刷新。到时后先发送 `session/cancel` notification，再以有界 `session/close` 收尾，并沿用受管子进程有界终止。
+
+回归以本地 fake ACP fixture 覆盖 total 不重置、有效 thought 持续更新、错误 session/空片段/未知/usage 噪声、工具终态、几何 revision 和安全摘要字段清洗；不调用 provider。该修复验证的是 runner 时限/进展状态机，Run33 的模型行为、G4 真实运行时及 F7/G8/视觉验收仍需新的独立验收，不能由合成 fixture 替代。
+
 ## Safe 文件指纹
 
 | Safe file | Bytes | SHA-256 |

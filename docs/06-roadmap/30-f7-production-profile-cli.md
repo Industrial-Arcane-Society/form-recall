@@ -13,7 +13,7 @@ cargo build --manifest-path src/apps/desktop/src-tauri/Cargo.toml --example nati
 
 ## 后续：生产配置图片 runner
 
-`native_agent_coldstart_acceptance.mjs` 已替换硬编码档案与只读提示词。它读取桌面当前 provider、调用 Rust 生产 profile 与推理选项选择器、加载生产 system.md、注册原生工具并提供 OCCT runtime。要求全新输出目录，原图不可变校验；不注入尺寸或特征答案。运行时限默认 1800 秒，可由 `AIMODELER_ACCEPTANCE_DEADLINE_SECONDS` 配置。错误与输出分开归档，ACP/传输完成不等于模型验收通过。
+`native_agent_coldstart_acceptance.mjs` 已替换硬编码档案与只读提示词。它读取桌面当前 provider、调用 Rust 生产 profile 与推理选项选择器、加载生产 system.md、注册原生工具并提供 OCCT runtime。要求全新输出目录，原图不可变校验；不注入尺寸或特征答案。prompt 总时限默认 3600 秒，无有效进展时限默认 600 秒；分别由 `AIMODELER_ACCEPTANCE_TOTAL_TIMEOUT_SECONDS` 与 `AIMODELER_ACCEPTANCE_IDLE_TIMEOUT_SECONDS` 配置。既有 `AIMODELER_ACCEPTANCE_DEADLINE_SECONDS` 保留为总时限别名，若新旧变量同时设置，新变量优先。只有当前 ACP session 的有效内容片段、带调用 ID 的工具更新，以及严格递增的 CAD 几何 revision 重置无进展时限；总时限不会被进展重置。超时通过 ACP cancel 通知后进行有界 session close，再由 runner 对子进程有界回收。安全摘要仅发布固定超时类别、耗时、进展/工具计数与最后一次有效进展距超时的时间，不发布正文、会话/工具 ID 或路径。错误与输出分开归档，ACP/传输完成不等于模型验收通过。
 
 Rust profile/推理选项测试 2/2，Node 语法检查通过。2026-10-03 实际启动当前桌面选中的 SiliconFlow `moonshotai/Kimi-K2.7-Code` / low 新会话：第一个 provider wire 请求包含原始 72309 字节 PNG，source与transport SHA256 均为 `53ed87fadf8cca869da921627e6a13c845424c6906b3de517d5cca972db94553`；已接收真实 reasoning stream。证据目录 `temp/acceptance/f7-production-image-20261003-run01/`。此时会话仍运行，建模结果和审查质量尚未结论；本记录不把请求成功算为 F7 通过。
 

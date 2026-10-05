@@ -4,7 +4,6 @@ import { spawn, spawnSync } from 'node:child_process'
 import { createHash, randomBytes, randomUUID } from 'node:crypto'
 import { mkdirSync, readFileSync, writeFileSync, existsSync } from 'node:fs'
 import { basename, dirname, join, resolve } from 'node:path'
-import { createInterface } from 'node:readline'
 import { createAuditedToolProxy, createTerminalUpdateHmac, evaluateColdstartGates, parseEvidenceJsonl, parsePostcheckState, readRunArtifacts, summarizeAcpTerminalUpdateDiagnostics, summarizeCordisBindingDiagnostics, summarizeVisualReviewDiagnostics, toolArgumentsFingerprint } from './native_agent_coldstart_gates.mjs'
 import { buildSafeAcceptanceSummary, buildSafeStrictGateProjection, replacePublishedSafeFailureSummary,
   SAFE_PUBLICATION_PHASE, writeSafeAcceptanceArtifacts,
@@ -12,6 +11,8 @@ import { buildSafeAcceptanceSummary, buildSafeStrictGateProjection, replacePubli
 import { removeScratchDirectory, safeScratchCleanupStatus, terminateChildrenAndWait, waitThenTerminateChild } from './native_agent_coldstart_lifecycle.mjs'
 import { createColdstartScratchDirectory, recoverStaleColdstartScratch } from './native_agent_coldstart_scratch.mjs'
 import { runOfflineCargoBuild } from './native_agent_coldstart_build.mjs'
+import { cancelAndCloseSession, createAcpRpcClient, PromptProgressTracker, resolvePromptTimeoutPolicy,
+  readGeometryRevision, watchGeometryRevision } from './native_agent_coldstart_prompt.mjs'
 
 const [repoArg, runtimeArg, outputArg, configArg, imageArg, userTextArg] = process.argv.slice(2)
 let archiveDir = null
@@ -26,12 +27,15 @@ let fatalFailurePromise = null
 let failureStage = 'startup'
 let failurePhase = SAFE_PUBLICATION_PHASE.NOT_STARTED
 let safeStrictGates = null
+let promptProgressDiagnostics = null
+let currentPromptTracker = null
 const stopManagedChildren = () => terminateChildrenAndWait(managedChildren, 1500)
 const archiveFailure = (scratchCleanupStatus, code) => {
   if (!archiveDir) return
   try {
     const failure = { stage: failureStage, phase: failurePhase, code, scratchCleanupStatus, scratchRecovery,
-      strictGates: safeStrictGates }
+      strictGates: safeStrictGates,
+      promptProgress: promptProgressDiagnostics || currentPromptTracker?.snapshot() }
     if (safeSummaryPublished) replacePublishedSafeFailureSummary(archiveDir, failure)
     else writeSafeFailureSummary(archiveDir, failure)
   } catch { /* preserve the original process failure */ }
@@ -219,55 +223,31 @@ const child = spawn(nodePath, [join(modules, '@deepseek-ai/dsh/lib/bin.js'),
   },
 })
 managedChildren.push(child)
-let seq = 0, dshExitCode = null
-const pending = new Map(), toolEvents = [], evidenceErrors = []
+let dshExitCode = null
+const toolEvents = [], evidenceErrors = []
 // The random key and WeakMap are run-local. Digests are never attached to
 // persisted event rows and cannot be compared across process runs.
 const terminalUpdateHmacKey = randomBytes(32)
 const terminalUpdateHmacByEvent = new WeakMap()
-const messages = createInterface({ input: child.stdout })
 child.stderr.resume()
-messages.on('line', line => {
-  let row
-  try { row = JSON.parse(line) } catch { evidenceErrors.push('acp_stdout_invalid_json_record'); return }
-  if (row.method === 'session/update') {
-    const update = row.params?.update || {}, kind = update.sessionUpdate
-    if (kind === 'tool_call' || kind === 'tool_call_update') {
-      const toolEvent = { kind, title: update.title, status: update.status, tool_call_id: update.toolCallId,
-        ...(kind === 'tool_call' ? { arguments_sha256_24: toolArgumentsFingerprint(update.rawInput) } : {}),
-        session_id: row.params?.sessionId, run_id: runId, turn_id: turnId, at_ms: Date.now() }
-      if (kind === 'tool_call_update' && ['completed', 'failed'].includes(update.status) && terminalUpdateHmacKey) {
-        terminalUpdateHmacByEvent.set(toolEvent, createTerminalUpdateHmac(update, terminalUpdateHmacKey))
-      }
-      toolEvents.push(toolEvent)
-    }
-  } else if (row.id !== undefined && !row.method && pending.has(row.id)) {
-    const task = pending.get(row.id); pending.delete(row.id); clearTimeout(task.timer)
-    row.error ? task.no(safeDshError(task.method, 'rpc_error')) : task.yes(row.result || {})
-  } else if (row.method && row.id !== undefined) {
-    child.stdin.write(JSON.stringify({ jsonrpc: '2.0', id: row.id,
-      error: { code: -32601, message: 'Unsupported acceptance client method' } }) + '\n')
+const acp = createAcpRpcClient(child, { onInvalidMessage: () => evidenceErrors.push('acp_stdout_invalid_json_record'),
+  onNotification: row => {
+  const update = row.params?.update || {}, kind = update.sessionUpdate
+  if (kind !== 'tool_call' && kind !== 'tool_call_update') return
+  const toolEvent = { kind, title: update.title, status: update.status, tool_call_id: update.toolCallId,
+    ...(kind === 'tool_call' ? { arguments_sha256_24: toolArgumentsFingerprint(update.rawInput) } : {}),
+    session_id: row.params?.sessionId, run_id: runId, turn_id: turnId, at_ms: Date.now() }
+  if (kind === 'tool_call_update' && ['completed', 'failed'].includes(update.status) && terminalUpdateHmacKey) {
+    terminalUpdateHmacByEvent.set(toolEvent, createTerminalUpdateHmac(update, terminalUpdateHmacKey))
   }
-})
-child.once('exit', code => {
-  dshExitCode = code
-  for (const task of pending.values()) { clearTimeout(task.timer); task.no(safeDshError(task.method, 'child_exit')) }
-  pending.clear()
-})
-child.once('error', () => {
-  evidenceErrors.push('dsh_process_start_failed')
-  for (const task of pending.values()) { clearTimeout(task.timer); task.no(new Error('DSH process failed to start')) }
-  pending.clear()
-})
-function rpc(method, params, ms = 45000) {
-  const id = ++seq
-  return new Promise((yes, no) => {
-    const timer = setTimeout(() => { pending.delete(id); no(safeDshError(method, 'timeout')) }, ms)
-    pending.set(id, { yes, no, timer, method })
-    try { child.stdin.write(JSON.stringify({ jsonrpc: '2.0', id, method, params }) + '\n') }
-    catch { pending.delete(id); clearTimeout(timer); no(safeDshError(method, 'write_error')) }
-  })
-}
+  toolEvents.push(toolEvent)
+} })
+const rpc = acp.request
+child.once('exit', code => { dshExitCode = code })
+child.once('error', () => { evidenceErrors.push('dsh_process_start_failed') })
+let sessionId = null, dshStatus = 'failed', computedState = null, managedChildrenExited = true
+let dshFailure = { stage: 'unknown', method: 'unknown', error_class: 'none' }, dshChildExited = false
+let scratchCleanupStatus = 'not_created'
 function safeDshError(method, errorClass, stage = 'session_rpc') {
   const error = new Error('DSH RPC failed')
   error.safeStage = ['session_rpc', 'capability_check', 'reasoning_selection'].includes(stage) ? stage : 'unknown'
@@ -277,9 +257,6 @@ function safeDshError(method, errorClass, stage = 'session_rpc') {
     'invalid_response', 'config_selection_failed', 'unknown'].includes(errorClass) ? errorClass : 'unknown'
   return error
 }
-let sessionId = null, dshStatus = 'failed', computedState = null, managedChildrenExited = true
-let dshFailure = { stage: 'unknown', method: 'unknown', error_class: 'none' }, dshChildExited = false
-let scratchCleanupStatus = 'not_created'
 try {
   failureStage = 'dsh_session'
   const initialized = await rpc('initialize', { protocolVersion: 1,
@@ -294,21 +271,40 @@ try {
   if (selection.status !== 0) throw safeDshError('session/set_config_option', 'config_selection_failed', 'reasoning_selection')
   const reasoning = JSON.parse(selection.stdout)
   if (reasoning.configurable) await rpc('session/set_config_option', { sessionId, configId: reasoning.config_id, value: reasoning.value })
-  const deadlineSeconds = Number(process.env.AIMODELER_ACCEPTANCE_DEADLINE_SECONDS || 1800)
-  if (!Number.isFinite(deadlineSeconds) || deadlineSeconds < 1 || deadlineSeconds > 86400) throw new Error('验收时限须为1..86400秒。')
-  await rpc('session/prompt', { sessionId, prompt: [
-    { type: 'text', text: prompt },
-    { type: 'image', mimeType: 'image/png', data: imageBytes.toString('base64') },
-  ] }, deadlineSeconds * 1000)
+  const timeoutPolicy = resolvePromptTimeoutPolicy()
+  const promptCadStatePath = join(state, 'cad-state.json')
+  const initialGeometryRevision = readGeometryRevision(promptCadStatePath)
+  const promptProgress = new PromptProgressTracker({
+    sessionId,
+    initialRevision: initialGeometryRevision,
+  })
+  currentPromptTracker = promptProgress
+  const geometryWatcher = watchGeometryRevision(promptCadStatePath, promptProgress, 100, initialGeometryRevision)
+  try {
+    await rpc('session/prompt', { sessionId, prompt: [
+      { type: 'text', text: prompt },
+      { type: 'image', mimeType: 'image/png', data: imageBytes.toString('base64') },
+    ] }, timeoutPolicy.totalTimeoutSeconds * 1000, {
+      idleTimeoutMs: timeoutPolicy.idleTimeoutSeconds * 1000,
+      progressTracker: promptProgress,
+    })
+    promptProgressDiagnostics = promptProgress.snapshot('none')
+  } catch (error) {
+    promptProgressDiagnostics = error?.promptProgress || promptProgress.snapshot()
+    throw error
+  } finally {
+    geometryWatcher.close()
+    currentPromptTracker = null
+  }
   await rpc('session/close', { sessionId })
   dshStatus = 'completed'
 } catch (error) {
   dshFailure = { stage: error?.safeStage || 'unknown', method: error?.safeMethod || 'unknown', error_class: error?.safeClass || 'unknown' }
   if (sessionId && child.exitCode === null) {
-    await rpc('session/cancel', { sessionId }, 15000).catch(() => {})
-    await rpc('session/close', { sessionId }, 15000).catch(() => {})
+    await cancelAndCloseSession(acp, sessionId, 15_000)
   }
 } finally {
+  acp.close()
   child.stdin.end()
   const childExited = await waitThenTerminateChild(child, 5500, 1500)
   dshChildExited = childExited
@@ -396,6 +392,7 @@ let safeSummary
     runtime: { node: nodeVersion.stdout.trim(), dsh: dshPackage.version },
     source: { bytes: imageBytes.length, sha256: sourceSha, unchanged: hash(readFileSync(imagePath)) === sourceSha },
     dshDiagnostic: dshFailure,
+    promptProgress: promptProgressDiagnostics,
     scratchCleanupStatus: safeScratchCleanupStatus(managedChildrenExited, scratchCleanupStatus),
     scratchRecovery,
   })
