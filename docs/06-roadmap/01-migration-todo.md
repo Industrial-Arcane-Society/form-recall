@@ -217,6 +217,7 @@ F4.2.1 的坐标契约修复、实际参数对拍和测量边界见[CADPlan 基�
 F7 当前观察绑定的集成测试夹具复核见[记录](./75-f7-current-observation-test-fixture.md)：图像复核 fixture 现在显式绑定 source SHA 与 observation ID；native_cad_session 定向测试 23/23、全量 Rust 单测 326/326 通过。
 ## 2026-10-05 集成检查点
 
+- Run33 在固定 HEAD `8a907da` 上使用默认原图/prompt、无尺寸或 CADPlan seed，进行一次真实 CLI 冷启动；运行 19m27.9s 后 `session/prompt` timeout，模型未生成，review_count=0，strict host gates 为 5/13 通过。G4 `cad_set_construction_milestone` 本轮未调用，施工范围绑定的真实运行时行为仍未知；详见[Run33 诊断](./100-f7-g8-run-33-diagnosis.md)。本次不重试；F7/G1/G8 及独立视觉验收仍未通过。
 - G2/G3 活动模型恢复验收、G4 阶段证据与当前施工范围绑定均已分别提交并合并；生产构建来源为已推送代码提交 `fba4db5`，类型声明修复为 `fix(f7): declare active model restore module`。本段文档记录随后的安装包审计。
 - 合并后 Rust 全量测试 **369 passed / 0 failed / 1 ignored**；活动恢复 Host 1/1、Vue helper 3/3、Channel/Vue 四场景及生产 Vue startup accepted/stale/candidate 通过；生产 Vue build 通过。
 - 从已推送源码构建的完整依赖 MSI/NSIS 已生成并做资源解包核对：两个包的 222 个映射资源均 222/222 匹配；包内含完整 DSH/Node/npm/ACP、WebView2、OCCT 与 CATIA-only Python/pywin32。具体大小与 SHA 见[安装版 GLB 修复记录](./F6.10-installed-glb-preview.md)。
