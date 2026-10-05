@@ -1,6 +1,8 @@
 param(
     [string]$Filter,
     [switch]$Exact,
+    [switch]$Ignored,
+    [switch]$NoCapture,
     [switch]$Offline
 )
 
@@ -60,6 +62,12 @@ try {
         }
         if ($Exact) {
             $runnerArgs += '--exact'
+        }
+        if ($Ignored) {
+            $runnerArgs += '--ignored'
+        }
+        if ($NoCapture) {
+            $runnerArgs += '--nocapture'
         }
         & $testBinary.FullName @runnerArgs
         $testExitCode = $LASTEXITCODE

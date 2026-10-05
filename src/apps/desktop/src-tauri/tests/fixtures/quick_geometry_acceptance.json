@@ -1,0 +1,50 @@
+{
+  "scope": "F5.12 fixed Quick parser-to-OCCT-to-aimodel/STL acceptance cases",
+  "cases": [
+    {
+      "id": "corner-holes",
+      "input": "长方体 长100宽80高20，四角孔直径10通孔，边距15",
+      "expected": {
+        "feature_kinds": ["box", "hole"],
+        "hole_count": 4,
+        "dimensions_mm": [100, 80, 20]
+      }
+    },
+    {
+      "id": "pcd-holes",
+      "input": "长方体 长100宽80高20，均布4个直径10的通孔分度圆60",
+      "expected": {
+        "feature_kinds": ["box", "hole"],
+        "hole_count": 4,
+        "dimensions_mm": [100, 80, 20]
+      }
+    },
+    {
+      "id": "linear-feature-pattern",
+      "input": "圆柱 直径30mm 长50mm，沿X方向阵列4个，间距40mm",
+      "expected": {
+        "feature_kinds": ["cylinder", "pattern"],
+        "hole_count": 0,
+        "dimensions_mm": [170, 30, 30]
+      }
+    },
+    {
+      "id": "circular-feature-pattern",
+      "input": "圆柱 直径30mm 长50mm中心坐标(20,0,0)，绕Z轴圆周阵列4个角度360度",
+      "expected": {
+        "feature_kinds": ["cylinder", "pattern"],
+        "hole_count": 0,
+        "dimensions_mm": [70, 70, 50]
+      }
+    },
+    {
+      "id": "center-counterbore",
+      "input": "长方体 长100宽80高20，中心孔直径6.6mm通孔带直径11mm沉孔深5mm",
+      "expected": {
+        "feature_kinds": ["box", "hole", "hole"],
+        "hole_count": 2,
+        "dimensions_mm": [100, 80, 20]
+      }
+    }
+  ]
+}
