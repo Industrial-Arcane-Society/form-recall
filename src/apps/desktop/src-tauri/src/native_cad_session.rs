@@ -1226,13 +1226,18 @@ mod tests {
             "revision":2,
             "has_references":true,
             "plan":plan,
+            "construction_milestone":{"revision":2,"completed_feature_ids":["body"],"expected_feature_ids":["body"]},
             "reference_inventory":{},
             "reference_similarity_history":[{
                 "revision":2,"recorded_at":1,"reference_id":reference_id,
                 "observation_id":observation_id,
                 "view":"front","view_comparable":true,"geometry_signature":fingerprint,
                 "source_sha256":digest,"roi_norm":null,"covered_evidence_ids":["edge-1"],
-                "evidence":[{"evidence_id":"edge-1","status":"match","reference":"one visible plate edge","model":"one visible plate edge"}]
+                "stage_scope":{"revision":2,"features":[{"id":"body"}]},
+                "stage_complete":true,"full_current_geometry_in_scope":true,"stage_diagnostic_only":false,
+                "evidence":[{"evidence_id":"edge-1","status":"match","evidence_mapping_status":"mapped",
+                    "stage_attribution_status":"verified_ids","affected_feature_ids":["body"],
+                    "reference":"one visible plate edge","model":"one visible plate edge"}]
             }],
             "finding_ledger":{},"required_external_facts":{},"actions":[]
         });
@@ -1864,6 +1869,45 @@ mod tests {
             .expect("missing visual inventory remains a reportable candidate");
         assert_eq!(dispatch.report["reference_coverage"], false);
         assert_eq!(dispatch.report["accepted"], false);
+        std::fs::remove_dir_all(dir).unwrap();
+    }
+
+    #[test]
+    fn same_revision_milestone_shrink_invalidates_review_before_finish_acceptance() {
+        let (state, refs, turns, dir) = image_state_with_coverage(None);
+        let state = with_aggregate(&state, &refs, &turns);
+        let (_, baseline) = finish_assessment(&state, &refs, &turns).unwrap();
+        assert_eq!(baseline.report["accepted"], true);
+
+        let mut changed = state;
+        changed["construction_milestone"] = json!({
+            "revision":2,"completed_feature_ids":[],"expected_feature_ids":[]
+        });
+        let changed = with_aggregate(&changed, &refs, &turns);
+        let (_, dispatch) = finish_assessment(&changed, &refs, &turns).unwrap();
+        assert_eq!(dispatch.report["reference_coverage"], false);
+        assert_eq!(dispatch.report["accepted"], false);
+        assert_eq!(dispatch.finish_state, "candidate_review_partial");
+
+        std::fs::remove_dir_all(dir).unwrap();
+        let (state, refs, turns, dir) = image_state_with_coverage(None);
+        let extra = json!({
+            "id":"body-2","kind":"box","operation":"add",
+            "parameters":{"length":2,"width":2,"height":2},
+            "sources":{"length":{"type":"image_estimate","evidence":"visual"},
+                "width":{"type":"image_estimate","evidence":"visual"},
+                "height":{"type":"image_estimate","evidence":"visual"}}
+        });
+        let mut expanded = state;
+        expanded["plan"] = cad_plan::add(&expanded["plan"], &extra).unwrap();
+        expanded["construction_milestone"] = json!({
+            "revision":2,"completed_feature_ids":["body","body-2"],"expected_feature_ids":["body","body-2"]
+        });
+        expanded = with_preview(&expanded, "passed");
+        let expanded = with_aggregate(&expanded, &refs, &turns);
+        let (_, dispatch) = finish_assessment(&expanded, &refs, &turns).unwrap();
+        assert_eq!(dispatch.report["accepted"], false);
+        assert_eq!(dispatch.finish_state, "candidate_review_partial");
         std::fs::remove_dir_all(dir).unwrap();
     }
 

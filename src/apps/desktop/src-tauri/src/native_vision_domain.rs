@@ -1131,14 +1131,32 @@ pub async fn review(
         })
         .collect::<BTreeSet<_>>();
     let missing = required.difference(&ids).cloned().collect::<BTreeSet<_>>();
-    let claimed = norm
-        .get("covered_evidence_ids")
-        .and_then(Value::as_array)
+    let claimed_rows = norm.get("covered_evidence_ids").and_then(Value::as_array);
+    let claimed = claimed_rows
         .into_iter()
         .flatten()
         .filter_map(Value::as_str)
         .map(str::to_string)
         .collect::<BTreeSet<_>>();
+    let raw_claim_rows = response.parsed_json.get("covered_evidence_ids");
+    let raw_claim_valid = match raw_claim_rows {
+        None => true,
+        Some(Value::Array(rows)) => {
+            let mut raw_ids = BTreeSet::new();
+            rows.iter().all(|row| {
+                row.as_str().is_some_and(|id| {
+                    !id.is_empty() && id.trim() == id && raw_ids.insert(id.to_owned())
+                })
+            })
+        }
+        Some(_) => false,
+    };
+    let coverage_claim_valid = raw_claim_valid && claimed_rows.is_some_and(|rows| {
+        rows.iter().all(|row| {
+            row.as_str()
+                .is_some_and(|id| !id.is_empty() && id.trim() == id)
+        }) && rows.len() == claimed.len()
+    });
     let unsupported = claimed.difference(&ids).cloned().collect::<BTreeSet<_>>();
     let out_of_scope_ids = evidence
         .iter()
@@ -1146,15 +1164,47 @@ pub async fn review(
         .filter_map(|e| e["evidence_id"].as_str())
         .map(str::to_owned)
         .collect::<BTreeSet<_>>();
+    let stage_ids = stage_feature_ids
+        .iter()
+        .map(String::as_str)
+        .collect::<BTreeSet<_>>();
+    let attributed_ids = evidence
+        .iter()
+        .filter(|row| {
+            let Some(id) = row["evidence_id"].as_str() else {
+                return false;
+            };
+            let affected = row["affected_feature_ids"]
+                .as_array()
+                .into_iter()
+                .flatten()
+                .filter_map(Value::as_str)
+                .collect::<BTreeSet<_>>();
+            row["evidence_mapping_status"] == "mapped"
+                && row["status"] != "out_of_scope"
+                && row["stage_attribution_status"] == "verified_ids"
+                && !affected.is_empty()
+                && affected.is_subset(&stage_ids)
+                && evidence
+                    .iter()
+                    .filter(|candidate| candidate["evidence_id"] == id)
+                    .count()
+                    == 1
+        })
+        .filter_map(|row| row["evidence_id"].as_str().map(str::to_owned))
+        .collect::<BTreeSet<_>>();
     let stage_eligible = stage_complete && full_current_geometry_in_scope && !partial;
     let covered = claimed
         .intersection(&required)
-        .filter(|id| stage_eligible && ids.contains(*id) && !out_of_scope_ids.contains(*id))
+        .filter(|id| coverage_claim_valid && stage_eligible && attributed_ids.contains(*id) && !out_of_scope_ids.contains(*id))
         .cloned()
         .collect::<BTreeSet<_>>();
     let exact_matches = evidence
         .iter()
-        .filter(|e| e.get("status").and_then(Value::as_str) == Some("match"))
+        .filter(|e| {
+            e.get("status").and_then(Value::as_str) == Some("match")
+                && e["evidence_id"].as_str().is_some_and(|id| attributed_ids.contains(id))
+        })
         .filter_map(|e| {
             e.get("evidence_id")
                 .and_then(Value::as_str)
@@ -1163,7 +1213,10 @@ pub async fn review(
         .collect::<BTreeSet<_>>();
     let approximate_matches = evidence
         .iter()
-        .filter(|e| e.get("status").and_then(Value::as_str) == Some("approximate_match"))
+        .filter(|e| {
+            e.get("status").and_then(Value::as_str) == Some("approximate_match")
+                && e["evidence_id"].as_str().is_some_and(|id| attributed_ids.contains(id))
+        })
         .filter_map(|e| {
             e.get("evidence_id")
                 .and_then(Value::as_str)
@@ -1196,9 +1249,9 @@ pub async fn review(
     );
     let coverage = if !comparable {
         "unverified"
-    } else if all_exact && reported == "verified" {
+    } else if all_exact && coverage_claim_valid && reported == "verified" {
         "verified"
-    } else if all_supported && (reported == "estimated" || has_approximate_match) {
+    } else if all_supported && coverage_claim_valid && (reported == "estimated" || has_approximate_match) {
         "estimated"
     } else if required.is_disjoint(&covered) && reported == "unobservable" {
         "unobservable"
@@ -1285,7 +1338,7 @@ pub async fn review(
         "unmapped_evidence_ids": unmapped,
         "unsupported_coverage_ids": unsupported,
         "missing_required_evidence_ids": missing,
-        "coverage_integrity": unsupported.is_empty() && unmapped.is_empty(),
+        "coverage_integrity": coverage_claim_valid && unsupported.is_empty() && unmapped.is_empty(),
         "summary": norm.get("summary").cloned().unwrap_or(json!("")),
         "evidence": evidence,
         "unobservable": norm.get("unobservable").cloned().unwrap_or(json!([])),
@@ -2820,6 +2873,52 @@ mod tests {
             assert_eq!(
                 result.value["review_diagnostics"]["unmapped_evidence_count"], 1,
                 "case={case}"
+            );
+        }
+    }
+
+    #[test]
+    fn provider_match_attributed_outside_verified_stage_is_diagnostic_only() {
+        for (affected, claim_kind) in [
+            (json!(["future-hole"]), 1),
+            (json!([]), 1),
+            (json!(["body"]), 2),
+            (json!(["body"]), 3),
+        ] {
+            let mut session = test_session();
+            session.state["plan"]["features"] =
+                json!([{"id":"body","kind":"box","operation":"add"}]);
+            session.state["construction_milestone"] = json!({
+                "revision":4,"completed_feature_ids":["body"],"expected_feature_ids":["body"]
+            });
+            let fingerprint = crate::cad_plan::geometry_fingerprint(&session.state["plan"]).unwrap();
+            session.state["previews"][0]["geometry_fingerprint"] = json!(fingerprint);
+            session.state = with_host_verified_build(&session.state);
+            let evidence_id = session.state["reference_inventory"][&session.reference_id]
+                ["visible_evidence"][0]["evidence_id"].as_str().unwrap().to_owned();
+            let claimed = if claim_kind == 3 {
+                json!([evidence_id.clone(), 7])
+            } else {
+                json!(vec![evidence_id.clone(); claim_kind])
+            };
+            let (base_url, server) = mock_chat_server(vec![json!({
+                "view_comparable":true,"coverage_status":"verified","covered_evidence_ids":claimed,
+                "evidence":[{"evidence_id":evidence_id,"item":"outline","reference":"outline visible",
+                    "model":"outline visible","difference":"none","status":"match","affected_feature_ids":affected}]
+            })]);
+            let result = run(review(
+                &session.state,
+                &json!({"view":"front","preview_generation":9,"reference_id":session.reference_id}),
+                &provider(base_url),
+                &AtomicBool::new(false),
+                &session.context,
+            )).unwrap();
+            server.join().unwrap();
+            assert_eq!(result.value["coverage_status"], "partial");
+            assert_eq!(result.value["covered_evidence_ids"], json!([]));
+            assert_eq!(
+                result.value["evidence"][0]["stage_attribution_status"],
+                if claim_kind >= 2 { "verified_ids" } else { "unattributed" }
             );
         }
     }

@@ -131,7 +131,7 @@ pub fn summary(
     let latest = latest_reviews(state, &ctx.turns, &revision);
     out["independent_reference_review_pairs"] = json!(latest
         .iter()
-        .filter(|r| comparable(r, &signature, &ctx.refs)
+        .filter(|r| comparable(state, &revision, r, &signature, &ctx.refs)
             && review_matches_current_observation(state, r))
         .count());
     out["coordinate_contract"] = json!(COORDINATE_CONTRACT);
@@ -656,13 +656,105 @@ fn latest_reviews(state: &Value, turns: &[Value], revision: &Value) -> Vec<Value
     }
     latest.into_values().collect()
 }
+
+fn strict_string_ids(value: &Value) -> Option<BTreeSet<String>> {
+    let rows = value.as_array()?;
+    let mut ids = BTreeSet::new();
+    for row in rows {
+        let id = row.as_str()?;
+        if id.is_empty() || id.trim() != id || !ids.insert(id.to_owned()) {
+            return None;
+        }
+    }
+    Some(ids)
+}
+
+fn review_scope_matches_current(state: &Value, review: &Value, revision: i64) -> bool {
+    let milestone = &state["construction_milestone"];
+    if milestone["revision"].as_i64() != Some(revision)
+        || review["stage_scope"]["revision"].as_i64() != Some(revision)
+    {
+        return false;
+    }
+    let Some(completed) = strict_string_ids(&milestone["completed_feature_ids"]) else {
+        return false;
+    };
+    let Some(expected) = strict_string_ids(&milestone["expected_feature_ids"]) else {
+        return false;
+    };
+    let Some(scope_rows) = review["stage_scope"]["features"].as_array() else {
+        return false;
+    };
+    let scope_ids = scope_rows
+        .iter()
+        .filter_map(|row| row["id"].as_str().map(str::to_owned))
+        .collect::<BTreeSet<_>>();
+    if scope_ids.len() != scope_rows.len() || scope_ids != completed {
+        return false;
+    }
+    let Some(features) = state["plan"]["features"].as_array() else {
+        return false;
+    };
+    let mut enabled = BTreeSet::new();
+    for feature in features.iter().filter(|row| row["enabled"] != false) {
+        let Some(id) = feature["id"].as_str() else {
+            return false;
+        };
+        if id.is_empty() || id.trim() != id || !enabled.insert(id.to_owned()) {
+            return false;
+        }
+    }
+    if !completed.is_subset(&enabled) {
+        return false;
+    }
+    let stage_complete = expected.is_subset(&completed);
+    let full_current_geometry_in_scope = enabled.is_subset(&completed);
+    let stage_eligible = stage_complete
+        && full_current_geometry_in_scope
+        && review["partial_candidate_diagnostic_only"] != true;
+    review["stage_complete"] == stage_complete
+        && review["full_current_geometry_in_scope"] == full_current_geometry_in_scope
+        && review["stage_diagnostic_only"] == !stage_eligible
+}
+
+fn review_row_is_attributed(review: &Value, row: &Value) -> bool {
+    if row["evidence_mapping_status"] != "mapped"
+        || row["stage_attribution_status"] != "verified_ids"
+    {
+        return false;
+    }
+    let Some(evidence_id) = row["evidence_id"].as_str() else {
+        return false;
+    };
+    if review["evidence"].as_array().is_none_or(|rows| {
+        rows.iter()
+            .filter(|candidate| candidate["evidence_id"] == evidence_id)
+            .count()
+            != 1
+    }) {
+        return false;
+    }
+    let Some(affected) = strict_string_ids(&row["affected_feature_ids"]) else {
+        return false;
+    };
+    let Some(scope_rows) = review["stage_scope"]["features"].as_array() else {
+        return false;
+    };
+    let scope = scope_rows
+        .iter()
+        .filter_map(|feature| feature["id"].as_str().map(str::to_owned))
+        .collect::<BTreeSet<_>>();
+    !affected.is_empty() && affected.is_subset(&scope)
+}
+
 fn num(v: &Value) -> f64 {
     v.as_f64()
         .or_else(|| v.as_str().and_then(|s| s.parse().ok()))
         .unwrap_or(0.)
 }
-fn comparable(r: &Value, signature: &str, refs: &[Value]) -> bool {
-    if r["view_comparable"] != true
+fn comparable(state: &Value, revision: &Value, r: &Value, signature: &str, refs: &[Value]) -> bool {
+    if !review_scope_matches_current(state, r, revision.as_i64().unwrap_or(-1))
+        || r["view_comparable"] != true
         || r["partial_candidate_diagnostic_only"] == true
         || r["geometry_signature"].as_str() != Some(signature)
     {
@@ -851,7 +943,8 @@ fn visual_summary(
             );
         }
         let rec = records.get_mut(&id).unwrap();
-        if !comparable(review, geometry, refs) || !review_matches_current_observation(state, review)
+        if !comparable(state, revision, review, geometry, refs)
+            || !review_matches_current_observation(state, review)
         {
             rec["noncomparable_pairs"] =
                 json!(rec["noncomparable_pairs"].as_u64().unwrap_or(0) + 1);
@@ -882,6 +975,7 @@ fn visual_summary(
                 continue;
             }
             let st = status(&e["status"]);
+            let stage_attributed = review_row_is_attributed(review, e);
             let basis = e["assessment_basis"]
                 .as_str()
                 .unwrap_or("reference")
@@ -915,7 +1009,7 @@ fn visual_summary(
                     .is_empty()
                     && !e["model"].as_str().unwrap_or_default().trim().is_empty()
             };
-            facts.entry((id.clone(),evidence.into())).or_default().entry(view.clone()).or_default().push(json!({"status":st,"grounded":grounded,"covered":covered.contains(evidence),"reference_conflict":e["reference_conflict"]==true,"assessment_basis":basis,"reference_status":rs,"override_valid":override_valid,"target_valid":target_valid}));
+            facts.entry((id.clone(),evidence.into())).or_default().entry(view.clone()).or_default().push(json!({"status":st,"grounded":grounded,"covered":covered.contains(evidence)&&stage_attributed,"stage_attributed":stage_attributed,"reference_conflict":e["reference_conflict"]==true,"assessment_basis":basis,"reference_status":rs,"override_valid":override_valid,"target_valid":target_valid}));
         }
         for x in covered.difference(&seen) {
             push(&mut rec["unsupported_coverage_ids"], json!(x))
@@ -959,6 +1053,7 @@ fn visual_summary(
             .copied()
             .filter(|r| {
                 r["grounded"] == true
+                    && r["stage_attributed"] == true
                     && r["covered"] == true
                     && ["match", "approximate_match"]
                         .contains(&r["status"].as_str().unwrap_or_default())
@@ -1094,7 +1189,10 @@ fn visual_summary(
     let n = latest.len();
     let c = latest
         .iter()
-        .filter(|r| comparable(r, geometry, refs) && review_matches_current_observation(state, r))
+        .filter(|r| {
+            comparable(state, revision, r, geometry, refs)
+                && review_matches_current_observation(state, r)
+        })
         .count();
     json!({"revision":revision,"references":records,"latest_review_pairs":n,"comparable_review_pairs":c,"noncomparable_review_pairs":n-c,
   "all_references_covered":!records.is_empty()&&records.values().all(|r|r["covered"]==true),
@@ -1146,7 +1244,7 @@ fn facts_present(
             .map(strval)
             .as_deref()
             == Some(id)
-            && comparable(r, geometry, refs)
+            && comparable(state, &state["revision"], r, geometry, refs)
             && review_matches_current_observation(state, r)
             && r["evidence"]
                 .as_array()
@@ -1270,6 +1368,7 @@ mod tests {
    "features":[{"id":"base","kind":"box","operation":"add","parameters":{"length":20,"width":10,"height":5,"center":[0,0,0]},"relations":[]}],"pending_questions":[]});
         let state = json!({"plan":plan,"revision":3,"preview_revision":3,"preview_generation":2,"last_preview":{"dimensions":[20,10,5]},
    "previews":[{"revision":3,"preview_generation":2,"view":"iso"}],"visual_reviews":{"front":{"revision":3},"old":{"revision":2}},
+   "construction_milestone":{"revision":3,"completed_feature_ids":["base"],"expected_feature_ids":["base"]},
    "reference_similarity_history":[],"reference_similarity_attempts":[],"reference_inventory":{},
    "finding_ledger":{"f1":{"status":"open","severity":"major","evidence_id":"e1","item":"孔未闭合","affected_feature_ids":["base"],"last_revision":3},
     "f2":{"status":"resolved","evidence_id":"e2"}},"knowledge_search":{"status":"no_match"}});
@@ -1303,7 +1402,8 @@ mod tests {
         assert!(err.is_none());
         let fp = user_target_fingerprint(&turns);
         let good = json!({"revision":3,"recorded_at":10,"reference_id":rid,"view":"iso","view_comparable":true,"geometry_signature":sig,
-   "user_target_fingerprint":fp,"covered_evidence_ids":["e1"],"evidence":[{"evidence_id":"e1","status":"match","reference":"one circular hole","model":"one circular hole"}]});
+   "user_target_fingerprint":fp,"stage_scope":{"revision":3,"features":[{"id":"base"}]},"stage_complete":true,"full_current_geometry_in_scope":true,"stage_diagnostic_only":false,
+   "covered_evidence_ids":["e1"],"evidence":[{"evidence_id":"e1","status":"match","evidence_mapping_status":"mapped","stage_attribution_status":"verified_ids","affected_feature_ids":["base"],"reference":"one circular hole","model":"one circular hole"}]});
         let mut older = good.clone();
         older["revision"] = json!(2);
         older["recorded_at"] = json!(99);
@@ -1384,8 +1484,11 @@ mod tests {
             let mut review = json!({"revision":3,"recorded_at":1,"reference_id":rid,
                 "reference_image_index":1,"source_sha256":source,"observation_id":observation_id,
                 "view":"iso","view_comparable":true,"geometry_signature":sig,
-                "user_target_fingerprint":fp,"covered_evidence_ids":["e1"],
-                "evidence":[{"evidence_id":"e1","status":"match",
+                "user_target_fingerprint":fp,"stage_scope":{"revision":3,"features":[{"id":"base"}]},
+                "stage_complete":true,"full_current_geometry_in_scope":true,"stage_diagnostic_only":false,
+                "covered_evidence_ids":["e1"],
+                "evidence":[{"evidence_id":"e1","status":"match","evidence_mapping_status":"mapped",
+                    "stage_attribution_status":"verified_ids","affected_feature_ids":["base"],
                     "reference":"one circular hole","model":"one circular hole"}]});
             let mut inventory = json!({"reference_id":rid,"source_sha256":source,
                 "observation_valid":true,"observation_id":observation_id,
@@ -1429,6 +1532,67 @@ mod tests {
                 assert_eq!(reference["inventory_valid"], true, "case={missing}");
                 assert_eq!(visual["noncomparable_review_pairs"], 1, "case={missing}");
             }
+            fs::remove_dir_all(d).unwrap();
+        }
+    }
+
+    #[test]
+    fn same_revision_milestone_changes_invalidate_historical_visual_coverage() {
+        for (completed, expected, grow_plan) in [
+            (json!([]), json!([]), false),
+            (json!(["base"]), json!(["base", "future-hole"]), false),
+            (json!(["base", "future-hole"]), json!(["base", "future-hole"]), true),
+        ] {
+            let (r, t, d, mut s) = fixture();
+            if grow_plan {
+                let extra = json!({
+                    "id":"future-hole","kind":"box","operation":"add",
+                    "parameters":{"length":2,"width":2,"height":2},
+                    "sources":{"length":{"type":"image_estimate","evidence":"visual"},
+                        "width":{"type":"image_estimate","evidence":"visual"},
+                        "height":{"type":"image_estimate","evidence":"visual"}}
+                });
+                s["plan"] = cad_plan::add(&s["plan"], &extra).unwrap();
+            }
+            let manifest: Value = serde_json::from_slice(&fs::read(&r).unwrap()).unwrap();
+            let rid = manifest["images"][0]["id"].clone();
+            let source = manifest["images"][0]["sha256"].as_str().unwrap();
+            let sig = cad_plan::geometry_fingerprint(&s["plan"]).unwrap();
+            let (turns, err) = load_turns(&t);
+            assert!(err.is_none());
+            let observation_id = format!("{}:observation:v1", rid.as_str().unwrap());
+            s["reference_inventory"][rid.as_str().unwrap()] = json!({
+                "reference_id":rid,"source_sha256":source,"observation_valid":true,
+                "observation_id":observation_id,"roi_cache_key":inventory_key(source),
+                "visible_evidence":[{"evidence_id":"e1","group_id":"g","description":"edge"}]
+            });
+            s["reference_similarity_history"] = json!([{
+                "revision":3,"recorded_at":1,"reference_id":rid,"observation_id":observation_id,
+                "view":"iso","view_comparable":true,"geometry_signature":sig,
+                "source_sha256":source,"roi_norm":null,"user_target_fingerprint":user_target_fingerprint(&turns),
+                "stage_scope":{"revision":3,"features":[{"id":"base"}]},
+                "stage_complete":true,"full_current_geometry_in_scope":true,"stage_diagnostic_only":false,
+                "covered_evidence_ids":["e1"],"evidence":[{"evidence_id":"e1","status":"match",
+                    "evidence_mapping_status":"mapped","stage_attribution_status":"verified_ids",
+                    "affected_feature_ids":["base"],"reference":"visible edge","model":"visible edge"}]
+            }]);
+            s["construction_milestone"] = json!({
+                "revision":3,"completed_feature_ids":completed.clone(),"expected_feature_ids":expected.clone()
+            });
+            let out = summary(&mut s, &r, &t).unwrap();
+            assert_eq!(out["visual_evidence_summary"]["all_references_covered"], false);
+            assert_eq!(out["visual_evidence_summary"]["comparable_review_pairs"], 0);
+            assert_eq!(out["visual_evidence_summary"]["references"][rid.as_str().unwrap()]["covered"], false);
+
+            let mut malformed_scope = s.clone();
+            malformed_scope["construction_milestone"] = json!({
+                "revision":3,"completed_feature_ids":completed,"expected_feature_ids":expected
+            });
+            malformed_scope["reference_similarity_history"][0]["stage_scope"]["features"] =
+                json!([{"id":"base"},{"id":"base"}]);
+            let malformed = summary(&mut malformed_scope, &r, &t).unwrap();
+            assert_eq!(malformed["visual_evidence_summary"]["all_references_covered"], false);
+            assert_eq!(malformed["visual_evidence_summary"]["comparable_review_pairs"], 0);
             fs::remove_dir_all(d).unwrap();
         }
     }
