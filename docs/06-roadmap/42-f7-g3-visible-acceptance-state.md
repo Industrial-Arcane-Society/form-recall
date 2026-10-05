@@ -38,3 +38,11 @@ Agent 对话区固定展示两组独立状态：当前轮次（处理中、回�
 | 过期验收 | finish `accepted=true` 但 revision 过期，terminal 为 candidate/not_finished | 显示“候选模型”，不显示已验收 |
 
 `npm run test:agent-channel-vue` 通过；两个 Node 文件 `node --check` 与 `git diff --check` 通过。测试用 fake ACP 场景和 MockRuntime 注入来驱动生产前端 handler，验证消息状态契约；它没有启动真实 WebView，未连接真实 DSH 或 CAD bridge，也不是视觉建模验收。
+
+## 2026-10-05：活动模型启动恢复投影
+
+活动记录启动时不再直接把持久化 DocumentState 当作接受真值。Rust `active_model_snapshot` 按当前 CAD state 和证据 manifests 重算 Host summary，并附上非持久化 projection；Vue 仅在 generation、CAD revision、geometry fingerprint、finish revision、evidence fingerprint 及 Host acceptance 全部吻合时恢复“已验收”。缺失/损坏/陈旧投影保持 candidate/unavailable，且旧 generation 的恢复响应不能覆盖已更新的 Vue 文档。
+
+验证结果：Rust 活动模型投影负例/正例 1/1，Vue helper 3/3，`npm run test:agent-channel-vue` 覆盖 MockRuntime Channel 四场景及生产 App headless startup hydration 的 accepted、stale-projection、candidate 三场景。首轮 wrapper 的 accepted-current 失败是旧 IPC fixture 在临时空 manifests 上预先计算 fingerprint，而 Host 按真实 session manifests 重算；修正仅限测试 fixture，改由 session 文件计算绑定后四场景均通过。headless Teleport 警告是 renderer 缺少 DOM selector 的既有测试限制。
+
+测试边界：启动验证经 Tauri 命令投影与生产 Vue mount 的 headless harness；没有执行 WebView 冷启动/真实 JS 投递、真实 DSH/视觉验收或 CATIA 验收。因此 G3 的恢复状态同步有 headless 证据，完整桌面运行时仍待验收。

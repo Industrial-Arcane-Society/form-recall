@@ -8,6 +8,7 @@ import DependencySetup from './components/DependencySetup.vue'
 import ModelStats from './components/ModelStats.vue'
 import UiIcon from './components/UiIcon.vue'
 import { documentAcceptanceView, modelAcceptanceView, turnStatusView } from './agentStatus.mjs'
+import { restoreActiveModelDocument } from './activeModelRestore.mjs'
 import { diagnosticStatusRows, nativeSelftestMessage } from './diagnosticStatus.mjs'
 import type { ModelAcceptanceView } from './agentStatus.mjs'
 import { adjudicationRequest, pendingAdjudications } from './findingAdjudication.mjs'
@@ -294,9 +295,14 @@ async function initialize(initialResources?: any, initialReadiness?: any) {
     settingsDraft.value = ensureLlmDraft(structuredClone(await invoke<any>('native_settings_load')))
     const active = await invoke<any>('active_model_snapshot')
     if (active?.document) {
-      nativeModelActive.value = true
-      updateDocument(active.document, false)
-      addLog('已恢复 Rust 原生活动模型 generation ' + String(active.generation || '?'))
+      const restored = restoreActiveModelDocument(active, currentRevision)
+      if (restored) {
+        nativeModelActive.value = true
+        updateDocument(restored, false)
+        addLog('已恢复 Rust 原生活动模型 generation ' + String(active.generation || '?'))
+      } else {
+        addLog('忽略了旧代活动模型快照，保留当前较新模型。')
+      }
     } else {
       const document = await invoke<DocumentState>('active_model_new', { name: 'Part1' })
       nativeModelActive.value = true

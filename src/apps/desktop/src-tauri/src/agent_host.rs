@@ -1629,6 +1629,121 @@ fn current_model_summary(session_dir: &Path) -> Value {
         "summary_error":evidence_error})
 }
 
+/// Recompute the UI acceptance projection from the immutable active-model
+/// snapshot. This uses the same evidence verifier as a live Agent session,
+/// while keeping the temporary session files outside the persisted record.
+/// The returned projection is advisory for this active generation only; callers
+/// must bind it to the document generation/revision/fingerprint before use.
+pub(crate) fn active_model_acceptance_projection(active: &Value) -> Value {
+    let generation = active.get("generation").and_then(Value::as_u64);
+    let revision = active.get("revision").and_then(Value::as_i64);
+    let fingerprint = active.get("geometry_fingerprint").and_then(Value::as_str);
+    let state = active.get("cad_state").filter(|value| value.is_object());
+    let Some((generation, revision, fingerprint, state)) = generation
+        .zip(revision)
+        .zip(fingerprint)
+        .zip(state)
+        .map(|(((g, r), f), s)| (g, r, f, s))
+    else {
+        return unavailable_active_projection(active);
+    };
+    let Some(plan) = state.get("plan").filter(|value| value.is_object()) else {
+        return unavailable_active_projection(active);
+    };
+    let state_generation = state.get("active_model_generation").and_then(Value::as_u64);
+    let state_revision = state.get("revision").and_then(Value::as_i64);
+    let plan_fingerprint = crate::cad_plan::geometry_fingerprint(plan).ok();
+    if state_generation != Some(generation)
+        || state_revision != Some(revision)
+        || plan_fingerprint.as_deref() != Some(fingerprint)
+    {
+        return unavailable_active_projection(active);
+    }
+
+    let root = std::env::temp_dir().join(format!(
+        "ai-modeler-active-status-{}-{}",
+        std::process::id(),
+        unique_id()
+    ));
+    if let Err(error) = fs::create_dir(&root) {
+        return unavailable_active_projection_with_error(active, &error.to_string());
+    }
+    let _cleanup = ActiveProjectionTempDir(root.clone());
+    let persisted = [
+        ("cad-state.json", state),
+        ("reference-images.json", &active["reference_manifest"]),
+        ("user-turns.json", &active["user_turns_manifest"]),
+    ];
+    for (name, value) in persisted {
+        if value.is_null() {
+            continue;
+        }
+        let bytes = match serde_json::to_vec(value) {
+            Ok(bytes) => bytes,
+            Err(error) => {
+                return unavailable_active_projection_with_error(active, &error.to_string());
+            }
+        };
+        if let Err(error) = fs::write(root.join(name), bytes) {
+            return unavailable_active_projection_with_error(active, &error.to_string());
+        }
+    }
+    let mut model = current_model_summary(&root);
+    let summary_matches = model.get("exists") == Some(&Value::Bool(true))
+        && model.get("revision").and_then(Value::as_i64) == Some(revision)
+        && model.get("geometry_fingerprint").and_then(Value::as_str) == Some(fingerprint);
+    if !summary_matches {
+        model["status"] = json!("unavailable");
+        model["acceptance_confirmed"] = json!(false);
+        model["finish_status"] = json!("not_finished");
+        model["finish_summary"] = Value::Null;
+    }
+    json!({
+        "active_generation":generation,
+        "revision":revision,
+        "geometry_fingerprint":fingerprint,
+        "model":model
+    })
+}
+
+fn unavailable_active_projection(active: &Value) -> Value {
+    unavailable_active_projection_with_error(active, "活动模型身份或验收状态不可验证。")
+}
+
+fn unavailable_active_projection_with_error(active: &Value, error: &str) -> Value {
+    let generation = active.get("generation").cloned().unwrap_or(Value::Null);
+    let revision = active.get("revision").cloned().unwrap_or(Value::Null);
+    let fingerprint = active
+        .get("geometry_fingerprint")
+        .cloned()
+        .unwrap_or(Value::Null);
+    json!({
+        "active_generation":generation,
+        "revision":revision,
+        "geometry_fingerprint":fingerprint,
+        "model":{
+            "exists":true,
+            "status":"unavailable",
+            "acceptance_confirmed":false,
+            "revision":revision,
+            "geometry_fingerprint":fingerprint,
+            "finish_status":"not_finished",
+            "finish_summary":null,
+            "geometric":{"status":"unknown"},
+            "visual":{"status":"unknown"},
+            "summary_error":error
+        }
+    })
+}
+
+struct ActiveProjectionTempDir(PathBuf);
+
+impl Drop for ActiveProjectionTempDir {
+    fn drop(&mut self) {
+        let _ = fs::remove_dir_all(&self.0);
+    }
+}
+
 fn route_update(
     message: &Value,
     session_id: &str,
@@ -2623,19 +2738,86 @@ fn sha256(bytes: impl AsRef<[u8]>) -> String {
 mod tests {
     use super::{
         ActiveReset, CANCEL_NONE, CANCEL_USER, CANCEL_WATCHDOG_IDLE, Image, Provider,
-        ToolAuditTail, acknowledged_config_value, active_turn_record, classify_host_error,
-        classify_turn_status, current_model_summary, effective_output_token_cap, find_config_value,
-        normalize_terminal_result, resolve_stage_configs, route_profile, session_prompt_params,
-        terminal_event_data, termination_from_cancel, validate_image_signature,
-        vision_provider_config, write_profile_patch,
+        ToolAuditTail, acknowledged_config_value, active_model_acceptance_projection,
+        active_turn_record, classify_host_error, classify_turn_status, current_model_summary,
+        effective_output_token_cap, find_config_value, normalize_terminal_result,
+        resolve_stage_configs, route_profile, session_prompt_params, terminal_event_data,
+        termination_from_cancel, validate_image_signature, vision_provider_config,
+        write_profile_patch,
     };
     use crate::agent_model_config::{STAGE_MODELING, STAGE_PERCEPTION, STAGE_REVIEW};
     use base64::Engine as _;
     use base64::engine::general_purpose::STANDARD;
     use serde_json::{Value, json};
     use std::fs;
-    use std::path::PathBuf;
+    use std::path::{Path, PathBuf};
     use std::sync::atomic::{AtomicBool, AtomicU8, Ordering};
+
+    fn accepted_active_record_fixture(root: &Path) -> (Value, PathBuf, Vec<u8>) {
+        fs::create_dir_all(root).unwrap();
+        let original_bytes = b"active model restore reference".to_vec();
+        let image_path = root.join("original.png");
+        fs::write(&image_path, &original_bytes).unwrap();
+        let image_hash = super::sha256(&original_bytes);
+        let reference_id = format!("sha256:{image_hash}");
+        let reference_manifest = json!({"images":[{
+            "path":image_path,"id":reference_id,"sha256":image_hash,
+            "filename":"original.png","width":64,"height":48,"media_type":"image/png"
+        }]});
+        let user_turns_manifest = json!({"session_id":"restore-fixture","turns":[]});
+        let references_path = root.join("reference-images.json");
+        let turns_path = root.join("user-turns.json");
+        fs::write(
+            &references_path,
+            serde_json::to_vec(&reference_manifest).unwrap(),
+        )
+        .unwrap();
+        fs::write(
+            &turns_path,
+            serde_json::to_vec(&user_turns_manifest).unwrap(),
+        )
+        .unwrap();
+
+        let plan = crate::cad_plan::create(
+            "restore fixture",
+            json!({"id":"body","kind":"box","operation":"add","parameters":{"length":10,"width":8,"height":5},"sources":{}}),
+            "restore fixture",
+            None,
+        );
+        let revision = 7;
+        let generation = 3;
+        let geometry_fingerprint = crate::cad_plan::geometry_fingerprint(&plan).unwrap();
+        let mut state = json!({
+            "active_model_generation":generation,
+            "revision":revision,
+            "plan":plan,
+            "preview_revision":revision,
+            "last_preview":{"revision":revision,"geometry_fingerprint":geometry_fingerprint,
+                "local_geometry_checks":{"state":"passed"}},
+            "finding_ledger":{},"required_external_facts":{},
+            "construction_milestone":{"expected_feature_ids":["body"],"completed_feature_ids":["body"]},
+            "reference_inventory":{},"reference_observation_history":[],
+            "reference_similarity_history":[],"reference_similarity_reviews":{},
+            "reference_similarity_attempts":[],"visual_reviews":[]
+        });
+        let evidence =
+            crate::native_finish_evidence::current_snapshot(&state, &references_path, &turns_path)
+                .unwrap();
+        state["finish_summary"] = json!({
+            "accepted":true,"finish_state":"accepted","revision":revision,
+            "geometry_fingerprint":geometry_fingerprint,
+            "evidence_fingerprint":evidence.fingerprint
+        });
+        let active = json!({
+            "generation":generation,
+            "revision":revision,
+            "geometry_fingerprint":geometry_fingerprint,
+            "cad_state":state,
+            "reference_manifest":reference_manifest,
+            "user_turns_manifest":user_turns_manifest
+        });
+        (active, image_path, original_bytes)
+    }
 
     #[test]
     fn tool_audit_tail_reads_only_new_complete_rows() {
@@ -3257,6 +3439,63 @@ mod tests {
             "restoring the same evidence restores the original bound acceptance"
         );
         assert_eq!(restored["acceptance_confirmed"], true);
+        fs::remove_dir_all(root).unwrap();
+    }
+
+    #[test]
+    fn active_model_restore_recomputes_acceptance_and_fails_closed_on_changed_or_stale_evidence() {
+        let root = std::env::temp_dir().join(format!(
+            "agent-active-restore-projection-{}",
+            super::unique_id()
+        ));
+        let (active, image_path, image_bytes) = accepted_active_record_fixture(&root);
+
+        let restored = active_model_acceptance_projection(&active);
+        assert_eq!(restored["active_generation"], active["generation"]);
+        assert_eq!(restored["revision"], active["revision"]);
+        assert_eq!(restored["model"]["status"], "accepted");
+        assert_eq!(restored["model"]["acceptance_confirmed"], true);
+
+        let mut changed_reference = active.clone();
+        changed_reference["reference_manifest"]["images"][0]["width"] = json!(65);
+        let projection = active_model_acceptance_projection(&changed_reference);
+        assert_ne!(projection["model"]["status"], "accepted");
+        assert_eq!(projection["model"]["acceptance_confirmed"], false);
+        assert_eq!(projection["model"]["finish_summary"], Value::Null);
+
+        let mut changed_turns = active.clone();
+        changed_turns["user_turns_manifest"]["turns"] = json!([{
+            "turn_id":"turn-new","raw_user_prompt":"changed user target","reference_ids":[]
+        }]);
+        let projection = active_model_acceptance_projection(&changed_turns);
+        assert_ne!(projection["model"]["status"], "accepted");
+        assert_eq!(projection["model"]["acceptance_confirmed"], false);
+        assert_eq!(projection["model"]["finish_summary"], Value::Null);
+
+        let mut stale_finish = active.clone();
+        stale_finish["cad_state"]["finish_summary"]["revision"] = json!(6);
+        let projection = active_model_acceptance_projection(&stale_finish);
+        assert_eq!(projection["model"]["status"], "candidate");
+        assert_eq!(projection["model"]["acceptance_confirmed"], false);
+        assert_eq!(projection["model"]["finish_summary"], Value::Null);
+
+        let mut corrupt_manifest = active.clone();
+        corrupt_manifest["user_turns_manifest"]["turns"] = json!({"not":"an array"});
+        let projection = active_model_acceptance_projection(&corrupt_manifest);
+        assert_ne!(projection["model"]["status"], "accepted");
+        assert_eq!(projection["model"]["acceptance_confirmed"], false);
+
+        let mut stale_generation = active.clone();
+        stale_generation["cad_state"]["active_model_generation"] = json!(2);
+        let projection = active_model_acceptance_projection(&stale_generation);
+        assert_eq!(projection["model"]["status"], "unavailable");
+        assert_eq!(projection["model"]["acceptance_confirmed"], false);
+
+        fs::write(&image_path, b"changed original bytes").unwrap();
+        let projection = active_model_acceptance_projection(&active);
+        assert_ne!(projection["model"]["status"], "accepted");
+        assert_eq!(projection["model"]["acceptance_confirmed"], false);
+        fs::write(&image_path, image_bytes).unwrap();
         fs::remove_dir_all(root).unwrap();
     }
 

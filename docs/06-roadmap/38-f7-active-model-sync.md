@@ -26,4 +26,12 @@ Luna subagent 报告以下定向离线验证通过：
 
 2026-10-03 新增提交 `a4dfe2b` 的 production-helper 测试：从活动 generation 1 执行 Agent CAD 编辑后，共享活动记录升至 generation 2，来源为 `agent`，会话快照与共享 CAD state 相同。新 happy-path 测试和既有 stale-CAS 回同步测试各 1/1 通过，`cargo check --lib --offline` 通过。
 
+## 2026-10-05：启动恢复重新投影验收
+
+`active_model_snapshot` 现在在读取活动记录后调用 Host 投影：检查活动 generation、CAD revision 和重新计算的 geometry fingerprint，再把持久化 CAD state、原始 reference manifest 与 user-turn manifest交给现有 `current_model_summary` 路径重算 finish evidence。Vue 启动仅使用该临时 Host projection 设置 `acceptance_confirmed`；记录内的 DocumentState/finish 布尔值本身不能恢复“已验收”。缺失、损坏、改动、错绑或过期的状态投影为 candidate/unavailable，并清除 finish summary。Vue 也拒绝比当前文档 generation 更旧的异步恢复结果。
+
+验证：Host restore 重算/失效用例 1/1；`test:active-model-restore` 3/3；`test:agent-channel-vue` 的 MockRuntime 四场景与生产 Vue startup accepted、stale-projection、candidate 三场景通过。IPC 的 accepted-current fixture 现从实际 session manifests 重算 evidence fingerprint，以符合 Host 绑定契约。headless Vue Teleport 警告来自无 DOM selector 的测试 renderer，不影响断言。
+
+边界：这些测试证明命令响应投影及挂载生产 Vue 组件的 headless hydration；没有验证真实 Tauri WebView 冷启动/JS 投递、用户桌面渲染、真实 DSH/视觉质量或 CATIA。F7.G2 整体验收仍待这些运行时证据。
+
 这些验证覆盖原生状态和保存事务，不证明运行中的 DSH 真实触发了 `model.changed`、桌面视口即时接收了更新，也不证明 UI 初始化和旧工程转换在真实 Tauri 窗口中完成。F7.G2 在真实 host/Agent/桌面闭环验收完成之前保持未验收。

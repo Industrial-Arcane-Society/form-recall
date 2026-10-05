@@ -57,6 +57,37 @@ const expectedModelDocument = rustModelChange?.data || changedDocument
 const expectedUserText = rustChannelCapture?.events?.find(row => row.message?.event === 'agent.message')?.message?.data?.text || 'Create a bracket'
 const scenario = rustChannelCapture?.scenario || 'stale-finish'
 const uiScenario = process.env.AIMODELER_UI_SCENARIO || ''
+const restoreDocument = {
+  revision: 12,
+  model_generation: 12,
+  cad_revision: 7,
+  geometry_fingerprint: 'restore-fingerprint',
+  name: 'Restored accepted model',
+  features: [{ index: 0, kind: 'box', name: 'Restored body', enabled: true, params: { length: 10, width: 8, height: 5 } }],
+  stats: {},
+  build_log: [],
+  finish_summary: { accepted: true, finish_state: 'accepted', revision: 7, geometry_fingerprint: 'restore-fingerprint' },
+}
+const restoreSnapshot = {
+  generation: 12,
+  document: restoreDocument,
+  acceptance_projection: {
+    active_generation: uiScenario === 'active-model-restore-stale-projection' ? 11 : 12,
+    revision: 7,
+    geometry_fingerprint: 'restore-fingerprint',
+    model: {
+      exists: true,
+      status: uiScenario === 'active-model-restore-candidate' ? 'candidate' : 'accepted',
+      acceptance_confirmed: uiScenario !== 'active-model-restore-candidate',
+      revision: 7,
+      geometry_fingerprint: 'restore-fingerprint',
+      finish_status: 'accepted',
+      finish_summary: restoreDocument.finish_summary,
+      geometric: { status: 'passed' },
+      visual: { status: 'covered' },
+    },
+  },
+}
 let adjudicationSubmitted = null
 let adjudicationConfirmed = false
 const pendingAdjudication = {
@@ -98,13 +129,16 @@ window.__TAURI_INTERNALS__ = {
   unregisterCallback(id) { tauriCallbacks.delete(id) },
   convertFileSrc(filePath) { return filePath },
   invoke: async (command, args = {}) => {
+    seenCommands.push(command)
     if (command === 'native_resource_status') return { available: true, root: 'fixture' }
     if (command === 'native_runtime_status') return { appVersion: 'test', dsh: { installed: true, state: 'ready' }, occt: { state: 'ready' }, catia: { state: 'unknown' } }
-    if (command === 'native_settings_load') { initializationFinished = true; return { llm: { providers: [] }, online: { enabled: true }, viewer: {} } }
-    if (command === 'active_model_snapshot') return null
+    if (command === 'native_about') return { product: 'AI Modeler', version: 'test' }
+    if (command === 'native_settings_load') return { llm: { providers: [] }, online: { enabled: true }, viewer: {} }
+    if (command === 'active_model_snapshot') return uiScenario.startsWith('active-model-restore') ? restoreSnapshot : null
     if (command === 'active_model_new') return { revision: 0, name: 'Part1', features: [], stats: {}, build_log: [] }
     if (command === 'agent_history') return { turns: [] }
     if (command === 'agent_finding_review_state') {
+      initializationFinished = true
       if (uiScenario !== 'finding-adjudication' || adjudicationConfirmed) return { pending: [] }
       return { pending: [pendingAdjudication] }
     }
@@ -203,6 +237,21 @@ try {
     await new Promise(resolve => setTimeout(resolve, 0))
   }
   await nextTick()
+  if (uiScenario.startsWith('active-model-restore')) {
+    assert.ok(seenCommands.includes('active_model_snapshot'), `startup should request the active-model snapshot: ${seenCommands.join(', ')}`)
+    const summary = descendants(root).find(node => hasClass(node, 'acceptance-summary'))
+    assert.ok(summary, 'startup restore renders the production acceptance summary')
+    if (uiScenario === 'active-model-restore-accepted') {
+      assert.match(renderedText(summary), /已验收/, 'current host projection must restore the accepted status')
+    } else {
+      assert.match(renderedText(summary), /候选模型/, 'unbound or candidate projection must stay a candidate')
+      assert.doesNotMatch(renderedText(summary), /已验收/)
+    }
+    const restoredTitle = descendants(root).find(node => hasClass(node, 'document-title'))
+    assert.match(renderedText(restoredTitle), /Restored accepted model/)
+    console.log(`PASS: production Vue startup hydration rendered ${uiScenario}.`)
+    app.unmount()
+  } else {
   const textarea = descendants(root).find(node => node.type === 'textarea')
   assert.ok(textarea, 'mounted production Vue app renders the composer')
   textarea.props['onUpdate:modelValue'](expectedUserText)
@@ -236,8 +285,7 @@ try {
     assert.equal(submittedRequestId, firstEvent?.request_id, 'Rust event request id must match the production Vue turn')
     const terminalModel = rustChannelCapture.events.find(row => row.message?.event === 'agent.turn_complete')?.message?.data?.current_model
     if (scenario === 'stale-finish') {
-      assert.equal(expectedModelDocument.finish_summary?.accepted, true, 'Rust event must contain the stale accepted fixture')
-      assert.notEqual(expectedModelDocument.finish_summary?.revision, expectedModelDocument.cad_revision, 'finish summary must be stale for the current CAD revision')
+      assert.equal(expectedModelDocument.finish_summary, null, 'host must hide the stale accepted finish report during model publication')
       assert.equal(expectedModelDocument.acceptance_confirmed, false, 'Rust model.changed event must not carry stale host acceptance')
       assert.equal(terminalModel?.status, 'candidate', 'Rust terminal snapshot must not accept the stale finish summary')
       assert.equal(terminalModel?.finish_status, 'not_finished')
@@ -294,6 +342,7 @@ try {
     ? `PASS: mounted production Vue App headlessly; Rust MockRuntime Channel capture scenario=${scenario} reached its Tauri Channel callback and rendered expected model/turn state. WebView delivery remains untested.`
     : 'PASS: mounted production Vue App headlessly; mocked agent_send IPC events rendered.')
   app.unmount()
+  }
 } finally {
   await fs.rm(compiledPath, { force: true })
 }

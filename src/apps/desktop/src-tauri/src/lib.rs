@@ -310,7 +310,11 @@ pub fn headless_quick_smoke(resources: &Path, data_dir: &Path) -> Result<Value, 
 fn active_model_snapshot(app: AppHandle) -> Result<Value, String> {
     let data_dir = app_data_dir(&app)?;
     let root = native_active_model::root_from_data_dir(&data_dir);
-    Ok(native_active_model::load(&root)?.unwrap_or(Value::Null))
+    let Some(mut active) = native_active_model::load(&root)? else {
+        return Ok(Value::Null);
+    };
+    active["acceptance_projection"] = agent_host::active_model_acceptance_projection(&active);
+    Ok(active)
 }
 
 #[tauri::command(rename_all = "camelCase")]
@@ -1801,14 +1805,31 @@ mod agent_ipc_integration_tests {
         let plan_fingerprint = crate::cad_plan::geometry_fingerprint(&plan)
             .expect("calculate fixture plan fingerprint");
         let finish_revision = if scenario == "accepted-current" { 1 } else { 0 };
-        let cad_state = json!({"plan":plan,"revision":1,"actions":[],"output_paths":{},
+        let mut cad_state = json!({"plan":plan,"revision":1,"actions":[],"output_paths":{},
             "finish_summary":{"accepted":true,"finish_state":"accepted","revision":finish_revision,
                 "geometry_fingerprint":plan_fingerprint}});
+        let evidence_dir = scratch.0.join("finish-evidence");
+        fs::create_dir_all(&evidence_dir).expect("create fixture finish evidence directory");
+        let references_path = evidence_dir.join("reference-images.json");
+        let turns_path = evidence_dir.join("user-turns.json");
+        let reference_manifest = json!({"schema_version":1,"images":[]});
+        let user_turns_manifest = json!({"schema_version":1,"session_id":"ipc-fixture","turns":[]});
+        fs::write(&references_path, serde_json::to_vec(&reference_manifest).unwrap())
+            .expect("write fixture reference manifest");
+        fs::write(&turns_path, serde_json::to_vec(&user_turns_manifest).unwrap())
+            .expect("write fixture user turns");
+        let evidence = crate::native_finish_evidence::current_snapshot(
+            &cad_state,
+            &references_path,
+            &turns_path,
+        )
+        .expect("calculate current host evidence binding for finish fixture");
+        cad_state["finish_summary"]["evidence_fingerprint"] = json!(evidence.fingerprint);
         let candidate = native_active_model::candidate_from_cad_state(
             "agent",
             &cad_state,
-            &json!({"schema_version":1,"images":[]}),
-            &json!({"schema_version":1,"turns":[]}),
+            &reference_manifest,
+            &user_turns_manifest,
         )
         .expect("make isolated candidate model");
         let active_model_root = native_active_model::root_from_data_dir(&app_data);
@@ -1875,6 +1896,16 @@ mod agent_ipc_integration_tests {
                                 .as_str()
                                 .expect("session metadata has workspace path"),
                         );
+                        if scenario == "accepted-current" {
+                            let evidence = crate::native_finish_evidence::current_snapshot(
+                                &committed_cad_state,
+                                &session_dir.join("reference-images.json"),
+                                &session_dir.join("user-turns.json"),
+                            )
+                            .expect("compute finish binding from the active session evidence");
+                            committed_cad_state["finish_summary"]["evidence_fingerprint"] =
+                                json!(evidence.fingerprint);
+                        }
                         fs::write(
                             session_dir.join("cad-state.json"),
                             serde_json::to_vec(&committed_cad_state)

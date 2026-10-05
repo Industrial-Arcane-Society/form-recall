@@ -78,6 +78,7 @@ $previousTestNode = [Environment]::GetEnvironmentVariable('AIMODELER_TEST_NODE',
 $previousAcpFixture = [Environment]::GetEnvironmentVariable('AIMODELER_TEST_ACP_FIXTURE', 'Process')
 $previousScenario = [Environment]::GetEnvironmentVariable('AIMODELER_TEST_AGENT_SCENARIO', 'Process')
 $previousCapture = [Environment]::GetEnvironmentVariable('AIMODELER_AGENT_IPC_CAPTURE', 'Process')
+$previousUiScenario = [Environment]::GetEnvironmentVariable('AIMODELER_UI_SCENARIO', 'Process')
 try {
     [Environment]::SetEnvironmentVariable('AIMODELER_TEST_NODE', $nodeExecutable, 'Process')
     [Environment]::SetEnvironmentVariable('AIMODELER_TEST_ACP_FIXTURE', $acpFixture, 'Process')
@@ -116,6 +117,14 @@ try {
                 throw "Production Vue headless integration failed for scenario '$scenario' with exit code $LASTEXITCODE"
             }
         }
+        foreach ($restoreScenario in @('active-model-restore-accepted', 'active-model-restore-stale-projection', 'active-model-restore-candidate')) {
+            [Environment]::SetEnvironmentVariable('AIMODELER_UI_SCENARIO', $restoreScenario, 'Process')
+            [Environment]::SetEnvironmentVariable('AIMODELER_AGENT_IPC_CAPTURE', $null, 'Process')
+            & node 'src/App.agentEvents.integration.test.mjs'
+            if ($LASTEXITCODE -ne 0) {
+                throw "Production Vue active-model startup restore failed for scenario '$restoreScenario' with exit code $LASTEXITCODE"
+            }
+        }
     }
     finally {
         Pop-Location
@@ -126,6 +135,7 @@ finally {
     [Environment]::SetEnvironmentVariable('AIMODELER_TEST_ACP_FIXTURE', $previousAcpFixture, 'Process')
     [Environment]::SetEnvironmentVariable('AIMODELER_TEST_AGENT_SCENARIO', $previousScenario, 'Process')
     [Environment]::SetEnvironmentVariable('AIMODELER_AGENT_IPC_CAPTURE', $previousCapture, 'Process')
+    [Environment]::SetEnvironmentVariable('AIMODELER_UI_SCENARIO', $previousUiScenario, 'Process')
 }
 
 Write-Output 'BOUNDARY: MockRuntime command + Channel JSON capture → production Vue handler tested; WebView JS delivery and live DSH ACP are not tested.'
