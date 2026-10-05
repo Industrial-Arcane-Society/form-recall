@@ -1,0 +1,180 @@
+{
+  "source": "src/legacy/ai_modeler/core/parsing/nlparser.py via nlparser.parse(text).doc.to_dict(), captured 2026-10-05",
+  "legacy_accepted": [
+    {
+      "input": "长方体 长100宽80高20，中心孔直径6.6mm通孔带直径11mm沉孔深5mm",
+      "holes": [
+        {
+          "index": 1,
+          "kind": "hole",
+          "operation": "cut",
+          "parameters": {
+            "diameter": 6.6,
+            "through": true,
+            "axis": "Z",
+            "pos": "center",
+            "segments": 24
+          },
+          "legacy_provenance": {
+            "diameter": "explicit",
+            "depth": "explicit"
+          },
+          "rust_sources": {
+            "diameter": "user",
+            "through": "user",
+            "axis": "derived",
+            "pos": "user",
+            "segments": "derived"
+          }
+        },
+        {
+          "index": 2,
+          "kind": "hole",
+          "operation": "cut",
+          "parameters": {
+            "diameter": 11.0,
+            "through": false,
+            "axis": "Z",
+            "pos": "center",
+            "segments": 24,
+            "depth": 5.0
+          },
+          "legacy_provenance": {
+            "diameter": "explicit",
+            "depth": "explicit"
+          },
+          "rust_sources": {
+            "diameter": "user",
+            "through": "derived",
+            "axis": "derived",
+            "pos": "user",
+            "segments": "derived",
+            "depth": "user"
+          }
+        }
+      ]
+    }
+  ],
+  "legacy_default_not_migrated": [
+    {
+      "input": "长方体 长100宽80高20，中心孔直径6.6mm通孔带直径11mm沉孔",
+      "hole_index": 2,
+      "legacy_parameters": {
+        "diameter": 11.0,
+        "through": false,
+        "axis": "Z",
+        "pos": "center",
+        "segments": 24,
+        "depth": 5.0
+      },
+      "legacy_provenance": {
+        "diameter": "explicit"
+      },
+      "rust_status": "needs_clarification",
+      "rust_issue": "counterbore_depth_missing",
+      "reason": "旧 make_hole() 默认 depth=5.0；Rust Quick 要求明确深度，不迁移此默认。"
+    }
+  ],
+  "native_rejected": [
+    {
+      "input": "长方体 长100宽80高20，中心孔通孔带直径11mm沉孔深5mm",
+      "status": "needs_clarification",
+      "issue": "counterbore_pilot_diameter_missing"
+    },
+    {
+      "input": "长方体 长100宽80高20，中心孔直径6.6mm通孔带沉孔深5mm",
+      "status": "needs_clarification",
+      "issue": "counterbore_diameter_missing"
+    },
+    {
+      "input": "长方体 长100宽80高20，中心孔直径6.6mm通孔带直径11mm沉孔",
+      "status": "needs_clarification",
+      "issue": "counterbore_depth_missing"
+    },
+    {
+      "input": "长方体 长100宽80高20，中心孔直径6.6mm直径7mm通孔带直径11mm沉孔深5mm",
+      "status": "needs_clarification",
+      "issue": "counterbore_pilot_diameter_conflict"
+    },
+    {
+      "input": "长方体 长100宽80高20，中心孔直径6.6mm通孔带直径11mm沉孔深5mm深6mm",
+      "status": "needs_clarification",
+      "issue": "counterbore_depth_conflict_or_invalid"
+    },
+    {
+      "input": "长方体 长100宽80高20，中心孔直径6.6mm通孔盲孔带直径11mm沉孔深5mm",
+      "status": "needs_clarification",
+      "issue": "counterbore_pilot_type_conflict"
+    },
+    {
+      "input": "长方体 长100宽80高20，中心孔直径6.6mm通孔带直径11mm通孔沉孔深5mm",
+      "status": "needs_clarification",
+      "issue": "counterbore_type_conflict"
+    },
+    {
+      "input": "长方体 长100宽80高20，中心孔直径6.6mm通孔深3mm带直径11mm沉孔深5mm",
+      "status": "needs_clarification",
+      "issue": "counterbore_pilot_depth_conflict"
+    },
+    {
+      "input": "长方体 长100宽80高20，中心孔直径6.6mm通孔带直径5mm沉孔深5mm",
+      "status": "needs_clarification",
+      "issue": "counterbore_diameter_order_invalid"
+    },
+    {
+      "input": "长方体 长100宽80高20，中心孔直径6.6mm通孔直径11mm沉孔深5mm",
+      "status": "needs_clarification",
+      "issue": "counterbore_separator_missing_or_ambiguous"
+    },
+    {
+      "input": "长方体 长100宽80高20，孔直径6.6mm通孔带直径11mm沉孔深5mm",
+      "status": "unsupported",
+      "issue": "counterbore_variant_unsupported"
+    },
+    {
+      "input": "长方体 长100宽80高20，中心孔直径6.6mm通孔带直径11mm沉孔深5mm均布4孔分度圆60",
+      "status": "unsupported",
+      "issue": "counterbore_variant_unsupported"
+    },
+    {
+      "input": "长方体 长100宽80高20，中心孔直径6.6mm通孔带直径11mm沉孔深5mm坐标(0,0,0)",
+      "status": "unsupported",
+      "issue": "counterbore_variant_unsupported"
+    },
+    {
+      "input": "长方体 长100宽80高20，中心孔直径6.6mm通孔带直径11mm沉孔深5mm边距2mm",
+      "status": "unsupported",
+      "issue": "counterbore_variant_unsupported"
+    },
+    {
+      "input": "长方体 长100宽80高20，中心孔直径6.6mm通孔带直径11mm扩孔深5mm",
+      "status": "unsupported",
+      "issue": "unsupported_feature"
+    },
+    {
+      "input": "长方体 长100宽80高20，中心孔直径6.6mm通孔带直径11mm沉台深5mm",
+      "status": "unsupported",
+      "issue": "unsupported_feature"
+    },
+    {
+      "input": "长方体 长100宽80高20，中心孔直径6.6mm通孔带直径11mm沉坑深5mm",
+      "status": "unsupported",
+      "issue": "unsupported_feature"
+    },
+    {
+      "input": "长方体 长100宽80高20，中心孔直径6.6mm通孔带直径11mm锪孔深5mm",
+      "status": "unsupported",
+      "issue": "unsupported_feature"
+    },
+    {
+      "input": "长方体 长100宽80高20，中心孔直径6.6mm通孔带直径11mm埋头孔深5mm",
+      "status": "unsupported",
+      "issue": "unsupported_feature"
+    },
+    {
+      "input": "长方体 长100宽80高20，中心孔直径6.6mm通孔带直径11mm沉孔深5mm，槽20×5深2mm",
+      "status": "unsupported",
+      "issue": "counterbore_variant_unsupported"
+    }
+  ]
+}
