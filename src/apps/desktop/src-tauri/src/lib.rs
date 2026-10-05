@@ -1344,46 +1344,78 @@ fn is_packaged_local_cache_asset(
 }
 
 #[tauri::command]
-fn read_asset(path: String) -> Result<Response, String> {
+fn read_asset(app: AppHandle, path: String) -> Result<Response, String> {
     let logical_root = asset_root()?;
-    let allowed = logical_root
-        .canonicalize()
-        .map_err(|error| format!("预览资源目录尚未创建：{error}"))?;
+    let app_data_root = app
+        .path()
+        .app_local_data_dir()
+        .map_err(|error| format!("无法解析 AI Modeler 用户数据目录：{error}"))?;
+    let local_app_data = std::env::var_os("LOCALAPPDATA").map(PathBuf::from);
     let logical_requested = PathBuf::from(path);
-    let relative = logical_requested
-        .strip_prefix(&logical_root)
-        .map_err(|_| "拒绝读取预览目录之外的文件。")?;
-    let requested = logical_requested
-        .canonicalize()
-        .map_err(|error| error.to_string())?;
-
-    let mut allowed_location = requested.starts_with(&allowed);
-    #[cfg(windows)]
-    if !allowed_location {
-        if let Some(local_app_data) = std::env::var_os("LOCALAPPDATA").map(PathBuf::from) {
-            if let (Ok(canonical_local_app_data), Ok(logical_root_suffix)) = (
-                local_app_data.canonicalize(),
-                logical_root.strip_prefix(&local_app_data),
-            ) {
-                allowed_location = is_packaged_local_cache_asset(
-                    &canonical_local_app_data,
-                    logical_root_suffix,
-                    &requested,
-                    relative,
-                );
-            }
-        }
-    }
-
-    if !allowed_location || !requested.is_file() {
-        return Err("拒绝读取预览目录之外的文件。".into());
-    }
+    let requested = resolve_asset_path(
+        &logical_requested,
+        &logical_root,
+        &app_data_root,
+        local_app_data.as_deref(),
+    )?;
     let metadata = fs::metadata(&requested).map_err(|error| error.to_string())?;
     if metadata.len() > 256 * 1024 * 1024 {
         return Err("预览资源超过 256 MiB 限制。".into());
     }
     let bytes = fs::read(requested).map_err(|error| error.to_string())?;
     Ok(Response::new(bytes))
+}
+
+fn resolve_asset_path(
+    logical_requested: &Path,
+    logical_preview_root: &Path,
+    app_data_root: &Path,
+    local_app_data: Option<&Path>,
+) -> Result<PathBuf, String> {
+    let denied = || "拒绝读取预览目录之外的文件。".to_owned();
+    let requested = logical_requested.canonicalize().map_err(|_| denied())?;
+    if !requested.is_file() {
+        return Err(denied());
+    }
+
+    if let Ok(preview_root) = logical_preview_root.canonicalize() {
+        if requested.starts_with(&preview_root) {
+            return Ok(requested);
+        }
+    }
+
+    // Keep support for Windows packaged apps whose LocalAppData files are
+    // physically redirected into the package's LocalCache\Local directory.
+    #[cfg(windows)]
+    if let Some(local_app_data) = local_app_data {
+        if let (Ok(canonical_local_app_data), Ok(relative), Ok(logical_root_suffix)) = (
+            local_app_data.canonicalize(),
+            logical_requested.strip_prefix(logical_preview_root),
+            logical_preview_root.strip_prefix(local_app_data),
+        ) {
+            if is_packaged_local_cache_asset(
+                &canonical_local_app_data,
+                logical_root_suffix,
+                &requested,
+                relative,
+            ) {
+                return Ok(requested);
+            }
+        }
+    }
+    #[cfg(not(windows))]
+    let _ = local_app_data;
+
+    if logical_requested
+        .extension()
+        .is_some_and(|extension| extension.to_string_lossy().eq_ignore_ascii_case("glb"))
+    {
+        let app_data_root = app_data_root.canonicalize().map_err(|_| denied())?;
+        if requested.starts_with(&app_data_root) {
+            return Ok(requested);
+        }
+    }
+    Err(denied())
 }
 
 #[tauri::command]
@@ -1455,10 +1487,10 @@ pub fn run() {
 mod input_image_tests {
     #[cfg(windows)]
     use super::is_packaged_local_cache_asset;
-    use super::{MAX_INPUT_IMAGE_BYTES, stage_input_image_file};
+    use super::{MAX_INPUT_IMAGE_BYTES, resolve_asset_path, stage_input_image_file};
     use std::fs;
     use std::io::Write;
-    use std::path::PathBuf;
+    use std::path::{Path, PathBuf};
     use std::time::{SystemTime, UNIX_EPOCH};
 
     fn scratch_dir() -> PathBuf {
@@ -1472,6 +1504,98 @@ mod input_image_tests {
         ));
         fs::create_dir_all(&path).expect("create scratch directory");
         path
+    }
+
+    fn asset_roots(root: &Path) -> (PathBuf, PathBuf) {
+        let preview = root.join("AI Modeler").join("ui-preview");
+        let app_data = root.join("app-data");
+        fs::create_dir_all(&preview).expect("create preview root");
+        fs::create_dir_all(&app_data).expect("create app data root");
+        (preview, app_data)
+    }
+
+    #[test]
+    fn asset_path_policy_allows_preview_files_and_app_data_glb_only() {
+        let scratch = scratch_dir();
+        let (preview, app_data) = asset_roots(&scratch);
+        let preview_png = preview.join("incoming").join("reference.png");
+        fs::create_dir_all(preview_png.parent().unwrap()).unwrap();
+        fs::write(&preview_png, b"png").unwrap();
+        let model_glb = app_data.join("native-quick").join("mesh.glb");
+        fs::create_dir_all(model_glb.parent().unwrap()).unwrap();
+        fs::write(&model_glb, b"glb").unwrap();
+        let other_app_data_file = app_data.join("native-quick").join("notes.txt");
+        fs::write(&other_app_data_file, b"text").unwrap();
+        let outside_glb = scratch.join("outside.glb");
+        fs::write(&outside_glb, b"glb").unwrap();
+
+        assert_eq!(
+            resolve_asset_path(&preview_png, &preview, &app_data, None).unwrap(),
+            preview_png.canonicalize().unwrap()
+        );
+        assert_eq!(
+            resolve_asset_path(&model_glb, &preview, &app_data, None).unwrap(),
+            model_glb.canonicalize().unwrap()
+        );
+        fs::remove_dir_all(&preview).unwrap();
+        assert_eq!(
+            resolve_asset_path(&model_glb, &preview, &app_data, None).unwrap(),
+            model_glb.canonicalize().unwrap(),
+            "app data GLB remains readable before the preview cache is created"
+        );
+        assert!(resolve_asset_path(&other_app_data_file, &preview, &app_data, None).is_err());
+        assert!(resolve_asset_path(&outside_glb, &preview, &app_data, None).is_err());
+
+        fs::remove_dir_all(scratch).unwrap();
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn asset_path_policy_rejects_symlink_escape_from_app_data() {
+        use std::os::unix::fs::symlink;
+
+        let scratch = scratch_dir();
+        let (preview, app_data) = asset_roots(&scratch);
+        let outside_glb = scratch.join("outside.glb");
+        fs::write(&outside_glb, b"glb").unwrap();
+        let escaped = app_data.join("escaped.glb");
+        symlink(&outside_glb, &escaped).unwrap();
+
+        assert!(resolve_asset_path(&escaped, &preview, &app_data, None).is_err());
+
+        fs::remove_dir_all(scratch).unwrap();
+    }
+
+    #[cfg(windows)]
+    #[test]
+    fn asset_path_policy_rejects_junction_escape_from_app_data() {
+        use std::process::Command;
+
+        let scratch = scratch_dir();
+        let (preview, app_data) = asset_roots(&scratch);
+        let outside = scratch.join("outside");
+        fs::create_dir_all(&outside).unwrap();
+        let outside_glb = outside.join("external.glb");
+        fs::write(&outside_glb, b"glb").unwrap();
+        let junction = app_data.join("escaped");
+        let result = Command::new("cmd.exe")
+            .args(["/C", "mklink", "/J"])
+            .arg(&junction)
+            .arg(&outside)
+            .output()
+            .expect("create directory junction without administrator privileges");
+        assert!(
+            result.status.success(),
+            "mklink /J failed: {}",
+            String::from_utf8_lossy(&result.stderr)
+        );
+
+        assert!(
+            resolve_asset_path(&junction.join("external.glb"), &preview, &app_data, None,).is_err()
+        );
+
+        fs::remove_dir(&junction).unwrap();
+        fs::remove_dir_all(scratch).unwrap();
     }
 
     #[test]
