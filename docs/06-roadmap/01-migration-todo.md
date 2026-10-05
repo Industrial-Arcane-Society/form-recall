@@ -150,6 +150,8 @@ Coldstart runner 已采用默认且唯一发布 safe gate summary、ACP/Cordis a
 - [x] Run32 在该提交上做一次真实 CLI coldstart：Runner exit `1`，publication/uncaught_exception；scope unverified、transport failed、model none。Cargo build 通过；safe failure summary 保留 13 项 gate map，9 pass/4 fail，原因码和 count 见[Run32 诊断](./96-f7-g8-run-32-diagnosis.md)。证明 G8 gate-map fallback 可保留结果，不证明 publication exception 根因已知，也不等于视觉验收；F7/G1 保持未通过。
 - [x] 在 Run31 揭示的缺口上做安全代码修复：strict evaluation 结束即缓存只含 13 个固定 gate key、状态、reason count 和 gate-specific allowlisted reason code 的 projection；publication fatal fallback 重验 projection 后写入。未完成或缺失的状态为 `unknown`，不猜测原因。Sentinel 回归模拟 allowlist artifact 中途写入失败并验证摘要完整性/无原始正文泄漏。Node coldstart gates 130/130；未发 provider 请求，未读 raw run artifact；本次代码级验证不替代 Run32 实测。见[实现记录](./95-f7-g8-publication-gate-fallback.md)与[Run31 历史诊断](./90-f7-g8-run-31-diagnosis.md)。
 
+- [x] 修复 publication 边界丢弃 native audit `error_class`：仅在 `bridge_to_audit/native_audit_rejected` 行保留 `argument_validation`、`state_conflict`、`execution` 或 `unknown`；其他 outcome 不带该字段。集成回归经过真实 Cordis summarizer 与 safe writer 写出并读取 JSONL，验证固定类别与 sentinel 无泄漏；完整 Node 套件 132/132，`git diff --check` 通过。提交 `c5fe78c`；未运行真实 DSH/provider，因此没有生产 rejection 新证据。详见[验收记录](./99-f7-safe-native-audit-error-class-publication.md)。
+
 ### F7.G1 安全诊断实现（2026-10-04）
 
 - [x] `97841e5` 为 `cad_review_reference_similarity` 增加 host-derived `review_diagnostics`：必需/映射/未映射/缺失/不支持/超范围/不匹配/未知计数，以及可比视图、覆盖类别与阶段资格布尔值。Coldstart projection 只保留这些有界计数和固定枚举，不输出 evidence ID、hash、自由文本、参数、调用身份、图像或 thought；几何和视觉 acceptance 阈值未改变。集成后复跑 Rust `native_vision_domain` 20/20、Node coldstart gates 129/129、Cargo offline lib check、三个 `node --check` 与 `git diff --check` 通过。仓库级 `cargo fmt --check` 被既有未修改 Rust 文件的格式差异阻断，未执行全仓格式化以避免无关改动。
