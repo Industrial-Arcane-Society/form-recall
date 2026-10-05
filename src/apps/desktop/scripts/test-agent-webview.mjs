@@ -16,6 +16,7 @@ const scenarios = [
   { prompt: '__f7_webview_smoke__:cad-tool-failure', turn: '本轮已停止（tool_error）', outcome: '候选模型', reply: 'cad-tool-failure', feature: 'Fixture base', tool: '工具：cad_preview_model · failed' },
   { prompt: '__f7_webview_smoke__:accepted-current', turn: '本轮回复完成', outcome: '已验收', reply: 'accepted-current', feature: 'Fixture base' },
   { prompt: '__f7_webview_smoke__:stale-finish', turn: '本轮回复完成', outcome: '候选模型', reply: 'stale-finish', feature: 'Fixture base' },
+  { prompt: '__f7_webview_smoke__:glb-preview', turn: '本轮回复完成', outcome: '候选模型', reply: 'glb-preview', feature: 'Fixture base', preview: true },
 ]
 
 function resolveExecutable(name, environmentKey) {
@@ -106,6 +107,12 @@ async function readUiState(baseUrl, sessionId) {
   return execute(baseUrl, sessionId, `return (() => {
     const rows = [...document.querySelectorAll('.acceptance-summary__row strong')];
     const messages = [...document.querySelectorAll('.chat-message')].map(node => node.innerText || '');
+    const canvas = document.querySelector('.viewport-canvas canvas');
+    let webgl = false;
+    if (canvas) {
+      const context = canvas.getContext('webgl2') || canvas.getContext('webgl');
+      webgl = Boolean(context && !context.isContextLost());
+    }
     return {
       ready: Boolean(document.querySelector('.app-frame') && document.querySelector('textarea[aria-label="建模描述"]')),
       turn: rows[0]?.innerText || '',
@@ -114,6 +121,8 @@ async function readUiState(baseUrl, sessionId) {
       features: [...document.querySelectorAll('.feature-row')].map(node => node.innerText || ''),
       messages,
       acceptance: document.querySelector('.acceptance-summary')?.innerText || '',
+      viewportStatus: document.querySelector('.canvas-status .status-message')?.innerText || '',
+      canvasReady: Boolean(canvas && canvas.width > 0 && canvas.height > 0 && webgl),
     };
   })()`)
 }
@@ -230,7 +239,8 @@ async function main() {
         sessionId,
         current => current.turn === scenario.turn
           && current.outcome === scenario.outcome
-          && current.messages.some(message => message.includes(`WebView fixture completed: ${scenario.reply}`)),
+          && current.messages.some(message => message.includes(`WebView fixture completed: ${scenario.reply}`))
+          && (!scenario.preview || (current.viewportStatus === '三维预览已更新' && current.canvasReady)),
         `${scenario.reply} result through the production Vue handler`,
       )
       assert.equal(state.turn, scenario.turn)
@@ -240,11 +250,19 @@ async function main() {
         assert.ok(state.features.some(feature => feature.includes(scenario.feature)))
       }
       if (scenario.tool) assert.ok(state.messages.some(message => message.includes(scenario.tool)))
+      if (scenario.preview) {
+        assert.equal(state.viewportStatus, '三维预览已更新', 'the production read_asset + GLTFLoader path should report a loaded mesh')
+        assert.equal(state.canvasReady, true, 'the production CAD viewport should have an active WebGL canvas')
+      }
       if (scenario.reply === 'stale-finish') {
         assert.ok(state.acceptance.includes('候选模型'))
         assert.ok(!state.acceptance.includes('已验收'))
       }
-      console.log(`PASS: hidden Tauri WebView delivered Rust Channel events for ${scenario.reply}`)
+      if (scenario.preview) {
+        console.log('PASS: production read_asset IPC -> GLTFLoader -> CAD viewport/WebGL canvas')
+      } else {
+        console.log(`PASS: hidden Tauri WebView delivered Rust Channel events for ${scenario.reply}`)
+      }
     }
   } finally {
     await stopDriver(driver, sessionId, baseUrl)

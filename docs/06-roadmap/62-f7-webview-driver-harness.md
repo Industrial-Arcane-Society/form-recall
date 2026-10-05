@@ -16,12 +16,13 @@
 npm run test:agent-webview
 ```
 
-命令先构建生产 Vue bundle，再构建 `ai-modeler-webview-smoke`，最后启动 `tauri-driver` 建立 WebDriver session。四个 fixture 场景依次验证：
+命令先构建生产 Vue bundle，再构建 `ai-modeler-webview-smoke`，最后启动 `tauri-driver` 建立 WebDriver session。当前五个 fixture 场景依次验证：
 
 1. 纯问答完成且没有模型；
 2. CAD 工具失败后保持候选模型；
 3. finish revision 与 geometry fingerprint 都匹配时显示已验收；
 4. stale finish 保持候选，不显示已验收。
+5. 在隔离 smoke app data 写入有效 GLB，由生产 `read_asset` Tauri IPC 读取，再由生产 `CadViewport` 的 `GLTFLoader` 解析并装入 WebGL 场景。
 
 应用二进制位置是 `src/apps/desktop/src-tauri/target/debug/ai-modeler-webview-smoke.exe`。构建与启动由同一个 npm 命令完成；若只需编译、不运行 WebView，可执行：
 
@@ -73,3 +74,9 @@ Tauri 官方列出 Windows `tauri-driver` → Microsoft Edge Driver 路线；Mic
 本次运行验证了 `WebView2 JavaScript → Tauri Channel callback → 生产 Vue handler` 四场景投递及状态处理。测试不检查窗口像素、布局、3D WebGL 绘制或用户可见渲染质量。真实视觉 QA 仍需单独验收。
 
 现有 `npm run test:agent-channel-vue` 仍覆盖 MockRuntime Channel 序列化与 Vue 状态 handler 的快速回归；它与本 harness 是不同证据层，不能互相替代。
+
+### 2026-10-05：生产 GLB 读取与 WebGL 预览路径
+
+新增 `glb-preview` 隔离场景：smoke backend 只在自身 Tauri `app_local_data_dir` 下生成一个确定性的有效三角面 GLB；模型事件携带真实文件路径。smoke 命令对 `read_asset` 的调用直接委托生产 `lib.rs::read_asset`，不复制路径许可逻辑。生产 Vue `CadViewport` 随后运行同一条 `invoke('read_asset') → GLTFLoader.parse → replaceMesh → fitView` 路径。runner 等待状态变为“三维预览已更新”，并检查视口 canvas 尺寸和 WebGL 上下文。窗口销毁时仅删除这个固定 fixture 文件和空目录。
+
+通过匹配当前 WebView2 `154.0.4258.53` 的 EdgeDriver 及隔离安装的 `tauri-driver 2.1.0`，执行 `npm.cmd run test:agent-webview`：五个场景全部 PASS，包含新的生产 GLB 读取/解析/视口加载场景；Vue production build 与 smoke binary build 均通过。Rust smoke fixture 定向测试 7/7 通过，Node runner `--check` 通过。没有启动可见产品窗口，没有调用 DSH/provider/CATIA，也没有安装 MSI。该测试证明隐藏 WebView 中真实单三角 GLB 从生产 IPC 到 Three.js 场景可加载；不替代完整 MSI 安装后的用户视口复验、实际 OCCT Quick GLB 端到端几何显示或像素截图检查。

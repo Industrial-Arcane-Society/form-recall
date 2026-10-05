@@ -5,8 +5,10 @@
 //! its normal AgentHost and command handlers.
 
 use serde_json::{Value, json};
-use tauri::Manager;
-use tauri::ipc::Channel;
+use std::fs;
+use std::path::PathBuf;
+use tauri::ipc::{Channel, Response};
+use tauri::{AppHandle, Manager};
 
 const SCENARIO_PREFIX: &str = "__f7_webview_smoke__:";
 
@@ -16,6 +18,7 @@ enum Scenario {
     CadToolFailure,
     AcceptedCurrent,
     StaleFinish,
+    GlbPreview,
 }
 
 impl Scenario {
@@ -25,6 +28,7 @@ impl Scenario {
             "__f7_webview_smoke__:cad-tool-failure" => Ok(Self::CadToolFailure),
             "__f7_webview_smoke__:accepted-current" => Ok(Self::AcceptedCurrent),
             "__f7_webview_smoke__:stale-finish" => Ok(Self::StaleFinish),
+            "__f7_webview_smoke__:glb-preview" => Ok(Self::GlbPreview),
             _ => Err(format!(
                 "仅接受隔离 F7 fixture prompt，前缀为 {SCENARIO_PREFIX}"
             )),
@@ -37,6 +41,7 @@ impl Scenario {
             Self::CadToolFailure => "cad-tool-failure",
             Self::AcceptedCurrent => "accepted-current",
             Self::StaleFinish => "stale-finish",
+            Self::GlbPreview => "glb-preview",
         }
     }
 }
@@ -50,12 +55,13 @@ fn wire_event(name: &str, request_id: &str, data: Value) -> Value {
     json!({"event":name,"request_id":request_id,"data":data})
 }
 
-fn fixture_document(revision: i64, finish_revision: i64) -> Value {
+fn fixture_document(revision: i64, finish_revision: i64, mesh_path: Option<String>) -> Value {
     let fingerprint = format!("f7-webview-fixture-{revision}");
     json!({
         "revision": revision,
         "cad_revision": revision,
         "geometry_fingerprint": fingerprint,
+        "mesh_path": mesh_path,
         "name": format!("F7 WebView fixture r{revision}"),
         "source_prompt": "Isolated WebView transport fixture",
         "features": [{
@@ -106,7 +112,7 @@ fn model_snapshot(document: &Value, accepted: bool) -> Value {
     }
 }
 
-fn fixture_turn(scenario: Scenario, request_id: &str) -> FixtureTurn {
+fn fixture_turn(scenario: Scenario, request_id: &str, mesh_path: Option<String>) -> FixtureTurn {
     let reply = format!("WebView fixture completed: {}", scenario.name());
     let mut events = vec![wire_event(
         "agent.message",
@@ -128,7 +134,7 @@ fn fixture_turn(scenario: Scenario, request_id: &str) -> FixtureTurn {
             }),
         ),
         Scenario::CadToolFailure => {
-            let document = fixture_document(17, 17);
+            let document = fixture_document(17, 17, None);
             events.push(wire_event("model.changed", request_id, document.clone()));
             events.push(wire_event(
                 "agent.tool",
@@ -147,12 +153,17 @@ fn fixture_turn(scenario: Scenario, request_id: &str) -> FixtureTurn {
             )
         }
         Scenario::AcceptedCurrent => {
-            let document = fixture_document(18, 18);
+            let document = fixture_document(18, 18, None);
             events.push(wire_event("model.changed", request_id, document.clone()));
             ("completed", Value::Null, model_snapshot(&document, true))
         }
         Scenario::StaleFinish => {
-            let document = fixture_document(19, 18);
+            let document = fixture_document(19, 18, None);
+            events.push(wire_event("model.changed", request_id, document.clone()));
+            ("completed", Value::Null, model_snapshot(&document, false))
+        }
+        Scenario::GlbPreview => {
+            let document = fixture_document(20, 20, mesh_path);
             events.push(wire_event("model.changed", request_id, document.clone()));
             ("completed", Value::Null, model_snapshot(&document, false))
         }
@@ -177,6 +188,69 @@ fn fixture_turn(scenario: Scenario, request_id: &str) -> FixtureTurn {
             "current_model":current_model
         }),
     }
+}
+
+const FIXTURE_GLB_RELATIVE_PATH: &str = "native-quick/f7-webview-smoke.glb";
+
+fn fixture_glb_path(app: &AppHandle) -> Result<PathBuf, String> {
+    app.path()
+        .app_local_data_dir()
+        .map(|root| root.join(FIXTURE_GLB_RELATIVE_PATH))
+        .map_err(|error| format!("无法解析 WebView fixture 数据目录：{error}"))
+}
+
+fn fixture_glb_bytes() -> Vec<u8> {
+    let document = json!({
+        "asset":{"version":"2.0"},
+        "scene":0,
+        "scenes":[{"nodes":[0]}],
+        "nodes":[{"mesh":0}],
+        "meshes":[{"primitives":[{"attributes":{"POSITION":0},"indices":1}]}],
+        "buffers":[{"byteLength":44}],
+        "bufferViews":[
+            {"buffer":0,"byteOffset":0,"byteLength":36,"target":34962},
+            {"buffer":0,"byteOffset":36,"byteLength":6,"target":34963}
+        ],
+        "accessors":[
+            {"bufferView":0,"componentType":5126,"count":3,"type":"VEC3","min":[-40,-40,0],"max":[40,40,0]},
+            {"bufferView":1,"componentType":5123,"count":3,"type":"SCALAR"}
+        ]
+    });
+    let mut json_chunk = serde_json::to_vec(&document).expect("serialize fixture glTF");
+    while json_chunk.len() % 4 != 0 {
+        json_chunk.push(b' ');
+    }
+
+    let mut binary_chunk = Vec::with_capacity(44);
+    for value in [-40.0_f32, -40.0, 0.0, 40.0, -40.0, 0.0, 0.0, 40.0, 0.0] {
+        binary_chunk.extend_from_slice(&value.to_le_bytes());
+    }
+    for index in [0_u16, 1, 2] {
+        binary_chunk.extend_from_slice(&index.to_le_bytes());
+    }
+    binary_chunk.resize(44, 0);
+
+    let total_length = 12 + 8 + json_chunk.len() + 8 + binary_chunk.len();
+    let mut glb = Vec::with_capacity(total_length);
+    glb.extend_from_slice(b"glTF");
+    glb.extend_from_slice(&2_u32.to_le_bytes());
+    glb.extend_from_slice(&(total_length as u32).to_le_bytes());
+    glb.extend_from_slice(&(json_chunk.len() as u32).to_le_bytes());
+    glb.extend_from_slice(&0x4E4F_534A_u32.to_le_bytes());
+    glb.extend_from_slice(&json_chunk);
+    glb.extend_from_slice(&(binary_chunk.len() as u32).to_le_bytes());
+    glb.extend_from_slice(&0x004E_4942_u32.to_le_bytes());
+    glb.extend_from_slice(&binary_chunk);
+    glb
+}
+
+fn write_fixture_glb(app: &AppHandle) -> Result<String, String> {
+    let path = fixture_glb_path(app)?;
+    let parent = path.parent().ok_or("WebView fixture GLB 路径无父目录。")?;
+    fs::create_dir_all(parent).map_err(|error| format!("无法创建 GLB fixture 目录：{error}"))?;
+    fs::write(&path, fixture_glb_bytes())
+        .map_err(|error| format!("无法写入 GLB fixture：{error}"))?;
+    Ok(path.to_string_lossy().into_owned())
 }
 
 #[tauri::command]
@@ -241,18 +315,44 @@ fn agent_history() -> Value {
 
 #[tauri::command(rename_all = "camelCase")]
 async fn agent_send(
+    app: AppHandle,
     request_id: String,
     text: String,
     on_event: Channel<Value>,
 ) -> Result<Value, String> {
     let scenario = Scenario::parse(&text)?;
-    let turn = fixture_turn(scenario, &request_id);
+    let mesh_path = if scenario == Scenario::GlbPreview {
+        Some(write_fixture_glb(&app)?)
+    } else {
+        None
+    };
+    let turn = fixture_turn(scenario, &request_id, mesh_path);
     for event in turn.events {
         on_event
             .send(event)
             .map_err(|error| format!("无法发送隔离 WebView fixture 事件：{error}"))?;
     }
     Ok(turn.result)
+}
+
+/// The WebView harness uses the exact production path policy and IPC payload.
+#[tauri::command]
+fn read_asset(app: AppHandle, path: String) -> Result<Response, String> {
+    super::read_asset(app, path)
+}
+
+#[tauri::command]
+fn cleanup_fixture_glb(app: AppHandle) -> Result<(), String> {
+    let path = fixture_glb_path(&app)?;
+    match fs::remove_file(&path) {
+        Ok(()) => {}
+        Err(error) if error.kind() == std::io::ErrorKind::NotFound => return Ok(()),
+        Err(error) => return Err(format!("无法删除 GLB fixture：{error}")),
+    }
+    if let Some(parent) = path.parent() {
+        let _ = fs::remove_dir(parent);
+    }
+    Ok(())
 }
 
 /// Starts the production frontend in the separate, hidden test application.
@@ -268,7 +368,9 @@ pub fn run() {
             active_model_snapshot,
             active_model_new,
             agent_history,
-            agent_send
+            agent_send,
+            read_asset,
+            cleanup_fixture_glb
         ])
         .setup(|app| {
             if let Some(window) = app.get_webview_window("main") {
@@ -276,13 +378,18 @@ pub fn run() {
             }
             Ok(())
         })
+        .on_window_event(|window, event| {
+            if matches!(event, tauri::WindowEvent::Destroyed) {
+                let _ = cleanup_fixture_glb(window.app_handle().clone());
+            }
+        })
         .run(tauri::generate_context!("tauri.webview-smoke.conf.json"))
         .expect("F7 WebView smoke application failed");
 }
 
 #[cfg(test)]
 mod tests {
-    use super::{Scenario, fixture_document, fixture_turn};
+    use super::{Scenario, fixture_document, fixture_glb_bytes, fixture_turn};
     use serde_json::Value;
 
     #[test]
@@ -293,11 +400,39 @@ mod tests {
         );
         assert!(Scenario::parse("build a screw").is_err());
         assert!(Scenario::parse("__f7_webview_smoke__:arbitrary").is_err());
+        assert_eq!(
+            Scenario::parse("__f7_webview_smoke__:glb-preview").unwrap(),
+            Scenario::GlbPreview
+        );
+    }
+
+    #[test]
+    fn glb_preview_fixture_has_consistent_glb_header_and_mesh_payload() {
+        let bytes = fixture_glb_bytes();
+        assert_eq!(&bytes[..4], b"glTF");
+        assert_eq!(u32::from_le_bytes(bytes[4..8].try_into().unwrap()), 2);
+        assert_eq!(
+            u32::from_le_bytes(bytes[8..12].try_into().unwrap()) as usize,
+            bytes.len()
+        );
+        let json_length = u32::from_le_bytes(bytes[12..16].try_into().unwrap()) as usize;
+        assert_eq!(
+            u32::from_le_bytes(bytes[16..20].try_into().unwrap()),
+            0x4E4F_534A
+        );
+        let document: Value = serde_json::from_slice(&bytes[20..20 + json_length]).unwrap();
+        assert_eq!(
+            document["meshes"][0]["primitives"][0]["attributes"]["POSITION"],
+            0
+        );
+        assert_eq!(document["meshes"][0]["primitives"][0]["indices"], 1);
+        assert_eq!(document["accessors"][0]["count"], 3);
+        assert_eq!(document["accessors"][1]["count"], 3);
     }
 
     #[test]
     fn pure_qa_fixture_does_not_publish_a_model_change() {
-        let turn = fixture_turn(Scenario::PureQa, "request-pure-qa");
+        let turn = fixture_turn(Scenario::PureQa, "request-pure-qa", None);
         assert!(
             turn.events
                 .iter()
@@ -308,8 +443,26 @@ mod tests {
     }
 
     #[test]
+    fn glb_preview_fixture_attaches_mesh_path_to_current_model() {
+        let mesh_path = r"C:\Users\test\AppData\Local\com.aimodeler.f7-webview-smoke\native-quick\f7-webview-smoke.glb";
+        let turn = fixture_turn(
+            Scenario::GlbPreview,
+            "request-glb-preview",
+            Some(mesh_path.to_owned()),
+        );
+        let model_change = turn
+            .events
+            .iter()
+            .find(|event| event["event"] == "model.changed")
+            .expect("publish a model change");
+        assert_eq!(model_change["data"]["revision"], 20);
+        assert_eq!(model_change["data"]["mesh_path"], mesh_path);
+        assert_eq!(turn.result["current_model"]["status"], "candidate");
+    }
+
+    #[test]
     fn failed_cad_fixture_remains_a_candidate() {
-        let turn = fixture_turn(Scenario::CadToolFailure, "request-failure");
+        let turn = fixture_turn(Scenario::CadToolFailure, "request-failure", None);
         assert!(turn.events.iter().any(|event| {
             event["event"] == "agent.tool"
                 && event["data"]["status"] == "failed"
@@ -321,7 +474,7 @@ mod tests {
 
     #[test]
     fn only_current_revision_and_geometry_fixture_is_accepted() {
-        let accepted = fixture_turn(Scenario::AcceptedCurrent, "request-accepted");
+        let accepted = fixture_turn(Scenario::AcceptedCurrent, "request-accepted", None);
         assert_eq!(accepted.result["current_model"]["status"], "accepted");
         assert_eq!(
             accepted.result["current_model"]["acceptance_confirmed"],
@@ -336,7 +489,7 @@ mod tests {
             accepted.result["current_model"]["geometry_fingerprint"]
         );
 
-        let stale = fixture_turn(Scenario::StaleFinish, "request-stale");
+        let stale = fixture_turn(Scenario::StaleFinish, "request-stale", None);
         let document = stale
             .events
             .iter()
@@ -353,7 +506,7 @@ mod tests {
 
     #[test]
     fn model_fixture_document_is_self_consistent() {
-        let document = fixture_document(23, 23);
+        let document = fixture_document(23, 23, None);
         assert_eq!(document["revision"], document["cad_revision"]);
         assert_eq!(
             document["geometry_fingerprint"],
