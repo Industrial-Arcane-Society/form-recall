@@ -106,6 +106,7 @@ struct RawFaceInfo {
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum FaceSurfaceType {
     Plane,
+    Cylinder,
     Unsupported,
 }
 #[derive(Debug, Clone, Copy)]
@@ -116,6 +117,7 @@ pub struct FaceInfo {
     pub area: f64,
     pub center: [f64; 3],
     pub oriented_normal: Option<[f64; 3]>,
+    pub cylinder: Option<CylindricalFace>,
 }
 #[repr(i32)]
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -601,6 +603,7 @@ impl Shape {
             }
             let surface_type = match row.surface_type {
                 0 => FaceSurfaceType::Plane,
+                2 => FaceSurfaceType::Cylinder,
                 1 => FaceSurfaceType::Unsupported,
                 _ => return Err("OCCT 面清单返回未知表面类型。".into()),
             };
@@ -627,7 +630,27 @@ impl Shape {
                 area: row.area,
                 center: row.center,
                 oriented_normal,
+                cylinder: None,
             });
+        }
+        let cylinder_count = faces
+            .iter()
+            .filter(|face| face.surface_type == FaceSurfaceType::Cylinder)
+            .count();
+        if cylinder_count > 0 {
+            let cylinders = self.cylindrical_faces()?;
+            if cylinders.len() != cylinder_count {
+                return Err("OCCT 面清单与圆柱解析数量不一致。".into());
+            }
+            let mut cylinder_iter = cylinders.into_iter();
+            for face in &mut faces {
+                if face.surface_type == FaceSurfaceType::Cylinder {
+                    face.cylinder = cylinder_iter.next();
+                }
+            }
+            if cylinder_iter.next().is_some() {
+                return Err("OCCT 圆柱解析存在未匹配面。".into());
+            }
         }
         Ok(faces)
     }

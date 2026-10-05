@@ -2045,7 +2045,7 @@ fn feature_schema_for(spec: &Spec) -> Value {
             "revision":{"type":"integer","minimum":0},
             "geometry_fingerprint":{"type":"string","pattern":"^[0-9a-f]{64}$"},
             "kernel_version":{"type":"string","minLength":1},
-            "inventory_version":{"const":2},
+            "inventory_version":{"const":3},
             "target_feature_id":{"type":"string","minLength":1}},
             "required":["revision","geometry_fingerprint","kernel_version","inventory_version","target_feature_id"],"additionalProperties":false});
         feature_properties["relations"] = json!({"type":"array","items":{"type":"object","properties":{
@@ -2366,7 +2366,7 @@ mod tests {
             "revision":4,
             "geometry_fingerprint":"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
             "kernel_version":"7.9.3",
-            "inventory_version":2,
+            "inventory_version":3,
             "target_feature_id":"base"
         });
         let mut plan = base(feature(
@@ -2406,7 +2406,7 @@ mod tests {
             .unwrap();
         assert_eq!(
             shell_schema["properties"]["selection_binding"]["properties"]["inventory_version"]["const"],
-            2
+            3
         );
         assert_eq!(
             shell_schema["properties"]["parameters"]["properties"]["removed_faces"]["uniqueItems"],

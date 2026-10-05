@@ -20,7 +20,7 @@ pub fn native_tool_schemas() -> Result<Vec<Value>, String> {
             "revision":{"type":"integer","minimum":0},
             "geometry_fingerprint":{"type":"string","pattern":"^[0-9a-f]{64}$"},
             "kernel_version":{"type":"string","minLength":1},
-            "inventory_version":{"const":2},
+            "inventory_version":{"const":3},
             "target_feature_id":{"type":"string","minLength":1}
         },
         "required":["revision","geometry_fingerprint","kernel_version","inventory_version","target_feature_id"],
@@ -73,7 +73,7 @@ pub fn native_tool_schemas() -> Result<Vec<Value>, String> {
     }
     schemas.push(serde_json::json!({
         "name":"cad_list_shell_faces",
-        "description":"读取当前 plan-head 所代表的唯一有效闭合实体面清单。返回唯一 shell_target feature id、revision/fingerprint/kernel 绑定及每个平面面的 opaque selector；非平面只报告为不可选。创建 shell 时必须把当前 target_feature_id 写成唯一 shell_target relation，原样复制 selection_binding 与 removed_faces selector；任何几何修改后都须重新枚举。",
+        "description":"读取当前 plan-head 所代表的唯一有效闭合实体面清单。返回唯一 shell_target feature id、revision/fingerprint/kernel 绑定及每个可选面的 opaque selector；只允许平面和具有完整 360° 覆盖的单片圆柱面。每次 shell 操作只能选择一个圆柱面，且不可将它与其它面混选；部分圆柱与其它曲面不可选。创建 shell 时必须把当前 target_feature_id 写成唯一 shell_target relation，原样复制 selection_binding 与 removed_faces selector；任何几何修改后都须重新枚举。",
         "inputSchema":{"type":"object","properties":{},"additionalProperties":false}
     }));
     Ok(schemas)
