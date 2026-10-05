@@ -7,7 +7,7 @@ Scope: executable parity among the public CAD feature registry, native Rust supp
 
 The native capability contract now has an executable state for all 27 `cad_get_feature_spec` feature kinds. The test asserts the complete schema set, Rust dispatch membership, exact/approximate status, advertised variants, parameter-limit entries, and explicit unsupported status. It also runs one accepted baseline and one rejected boundary case for every registered native builder kind.
 
-Current registry: 26 implemented kinds (11 exact local B-Rep and 15 approximate local geometry) and 1 explicitly unsupported kind. CATIA mapping is a separate contract and is not inferred from native support.
+Current registry: 26 generic native builder kinds (11 exact local B-Rep and 15 approximate local geometry). `shell` remains outside that generic builder dispatch and is implemented only by a dedicated, stricter CADPlan 1.1 path described below. CATIA mapping is a separate contract and is not inferred from native support.
 
 ## Capability state for the 27 public kinds
 
@@ -15,9 +15,9 @@ Current registry: 26 implemented kinds (11 exact local B-Rep and 15 approximate 
 | --- | --- | --- |
 | Implemented, exact local geometry | `box`, `cylinder`, `sphere`, `hole`, `pocket`, `prism`, `revolve`, `pattern`, `spoked_wheel`, `piston`, `camshaft` | Listed in the native dispatch set; non-empty supported variants and parameter limits; preflight boundary probe |
 | Implemented, approximate local geometry | `gear`, `helical_gear`, `bevel_gear`, `socket_head_bolt`, `conrod`, `cross_joint`, `rotor`, `crankshaft`, `timing_pulley`, `vbelt_pulley`, `scroll_disc`, `helix`, `worm`, `loft`, `impeller` | Listed in the native dispatch set; non-empty supported variants and parameter limits; preflight or builder boundary probe |
-| Not implemented in the native Rust builder | `shell` | Schema-valid fixture. `native_execution.status` is `not_implemented`, geometry support is `unsupported`, the unsupported-variant list is non-empty, Rust dispatch excludes it, and both preflight and `build()` reject it before OCCT loading. |
+| Dedicated, exact CADPlan 1.1 shell subset | `shell` | Separate `native_plan_geometry` branch, revision/fingerprint/kernel-bound face selectors; planes and single full-turn cylindrical faces only. See [curved shell acceptance](./101-f4-curved-shell.md). Other curved surfaces and old thickness-only plans remain rejected. |
 
-The registry test asserts the total is 27, with 26 native-dispatch kinds and 1 non-dispatch kind. The expected list is explicit, so adding/removing a schema kind without updating the native support contract fails the test.
+The registry test asserts the total is 27, with 26 generic native-dispatch kinds and 1 kind implemented through the dedicated shell path. The expected list is explicit, so adding/removing a schema kind without updating the native support contract fails the test.
 
 ## Parameter-boundary probes
 
@@ -52,7 +52,7 @@ For all 26 registered builders, the test checks that the published limit text co
 | `helix` | `radius=8, wire_r=1, height=20, turns=3` | `height=3`, `seg_per_turn=512, wire_seg=64`, or radius `0.5` with wire radius `1.1` | Native preflight rejects turn self-contact, over-budget tessellation, and a wire radius that reaches the sampled centerline curvature radius. |
 | `worm` | `radius=10, height=60, thread_r=12.5, wire_r=2.5, turns=3.75`, coaxial on global Z | `thread_r=14` or `axis=X` | Native preflight rejects radial gaps and non-Z variants. Additional schema-valid probes reject off-axis `center2`, buried crown and no axial overlap; the real OCCT fuse also rejects a valid compound with two closed solids. |
 
-The remaining unsupported-kind fixture is schema-valid and includes the `shell` required parameter (`thickness=2`); it reaches the native unsupported-kind gate rather than failing earlier schema validation. `loft` and `impeller` now have approximate native builders; see [F4.2.19](./67-f4-native-loft.md) and [F4.2.20](./68-f4-native-impeller.md).
+`loft` and `impeller` now have approximate native builders; see [F4.2.19](./67-f4-native-loft.md) and [F4.2.20](./68-f4-native-impeller.md). Shell geometry is deliberately excluded from this generic per-builder matrix; its distinct revision-bound execution and geometric acceptance are tracked in [F4.2.21](./84-f4-native-explicit-planar-shell.md) and [the full-turn cylindrical extension](./101-f4-curved-shell.md).
 
 ## Real OCCT builder-boundary probes
 
@@ -75,4 +75,4 @@ Executed from the repository root with `-Offline` and the local staged OCCT mani
 | `native_loft::tests::` | 4 passed, 0 failed |
 | `cad_plan_validation::tests::` | 8 passed, 0 failed |
 
-The additions are in `src/apps/desktop/src-tauri/src/native_feature_specs.rs`. They do not prove CATIA export fidelity, visual equivalence, or Agent behavior; those remain outside G6. `shell` remains unsupported.
+The additions are in `src/apps/desktop/src-tauri/src/native_feature_specs.rs`. They do not prove CATIA export fidelity, visual equivalence, or Agent behavior; those remain outside G6. Shell behavior is limited to its dedicated documented subset and does not imply Python/OCP or CATIA support.

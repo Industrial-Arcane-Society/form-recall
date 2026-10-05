@@ -479,7 +479,7 @@ mod tests {
             "parameters":{"thickness":1,"offset_mode":"inward","removed_faces":[
                 format!("shell-face-v1:{}", "a".repeat(64))]},
             "selection_binding":{"revision":1,"geometry_fingerprint":"a".repeat(64),"kernel_version":"7.9.3",
-                "inventory_version":2,"target_feature_id":"old-shell"},
+                "inventory_version":3,"target_feature_id":"old-shell"},
             "relations":[{"type":"shell_target","feature_id":"old-shell"}]});
 
         let upgraded = add(&old, &explicit).unwrap();

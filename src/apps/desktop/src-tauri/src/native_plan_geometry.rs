@@ -331,6 +331,9 @@ pub fn build(plan: &Value, manifest: &Path, cancelled: &AtomicBool) -> Result<Bu
                 let selectors = normalized["parameters"]["removed_faces"]
                     .as_array()
                     .ok_or("shell.removed_faces 须为opaque selector数组。")?;
+                let thickness = normalized["parameters"]["thickness"]
+                    .as_f64()
+                    .ok_or("shell.thickness 须为长度值。")?;
                 let removed = crate::native_shell::resolve_removed_faces(
                     stock,
                     binding,
@@ -338,10 +341,8 @@ pub fn build(plan: &Value, manifest: &Path, cancelled: &AtomicBool) -> Result<Bu
                     &expected_fingerprint,
                     &kernel.version(),
                     target_feature_id,
+                    thickness,
                 )?;
-                let thickness = normalized["parameters"]["thickness"]
-                    .as_f64()
-                    .ok_or("shell.thickness 须为长度值。")?;
                 let offset_mode = match normalized["parameters"]["offset_mode"].as_str() {
                     Some("inward") => crate::native_occt::ShellDirection::Inward,
                     Some("outward") => crate::native_occt::ShellDirection::Outward,

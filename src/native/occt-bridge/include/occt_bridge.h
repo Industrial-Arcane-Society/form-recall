@@ -74,7 +74,8 @@ typedef struct OcctCylinderFace {
 
 /* Face inventory record. ordinal is an internal, zero-based handle that must
    never be exposed as a model-facing selector. surface_type is 0 for plane,
-   1 for every other surface. center and oriented_normal are valid for planes. */
+   1 for other surfaces, 2 for analytic cylinders. center and oriented_normal
+   are valid for planes. Cylinder geometry comes from the cylinder-face API. */
 typedef struct OcctFaceInfo {
   size_t ordinal;
   int32_t surface_type;
@@ -148,7 +149,8 @@ OCCT_BRIDGE_API void occt_cylindrical_faces_release(OcctCylinderFace *faces);
 OCCT_BRIDGE_API OcctStatus occt_shape_faces(const OcctShape *shape,
   OcctFaceInfo **out_faces, size_t *out_count);
 OCCT_BRIDGE_API void occt_faces_release(OcctFaceInfo *faces);
-/* Removes only the selected planar faces and creates one thick solid. Direction
+/* Removes selected planar faces and supported full-turn cylindrical faces, and
+   creates one thick solid. Direction
    0=inward (negative OCCT offset), 1=outward (positive OCCT offset). */
 OCCT_BRIDGE_API OcctStatus occt_make_thick_solid(const OcctShape *shape,
   const size_t *face_ordinals, size_t count, double thickness,

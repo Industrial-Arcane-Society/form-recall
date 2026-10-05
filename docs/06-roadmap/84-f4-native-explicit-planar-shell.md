@@ -6,7 +6,7 @@
 
 桌面端 Rust/OCCT 执行器现在支持 CADPlan `1.1` 的显式平面抽壳子集。`shell` 特征必须使用 `operation=cut`，并明确提供正的 `thickness`、`offset_mode`（`inward` 或 `outward`）、`removed_faces`、`selection_binding`，以及唯一指向当前 plan-head 特征的 `shell_target` relation。
 
-面选择只能来自当前几何 revision 上的 `cad_list_shell_faces`。绑定包含 revision、几何 SHA-256、kernel version、inventory version 和目标特征 ID。选择器是不透明且单次几何身份绑定的值；陈旧、重复、手工编造或来自其他目标的选择会被拒绝。面清单仅允许选择平面，曲面会明确标为不可选。
+面选择只能来自当前几何 revision 上的 `cad_list_shell_faces`。绑定包含 revision、几何 SHA-256、kernel version、inventory version 和目标特征 ID。选择器是不透明且单次几何身份绑定的值；陈旧、重复、手工编造或来自其他目标的选择会被拒绝。原始验收只覆盖平面；后续新增的受限完整圆柱面子集、selector 边界和曲面拒绝项见[圆柱面验收](./101-f4-curved-shell.md)。部分/分片圆柱及其它曲面仍明确不可选。
 
 旧 CADPlan `1.0` 的 thickness-only `shell` 不会自动迁移成开口面或方向；它会进入待确认状态。Python `Document`/OCP 几何执行器和 CATIA 导出映射仍不支持此 shell 子集；当前建模能力属于桌面 Rust/OCCT 执行通道。
 
@@ -24,4 +24,4 @@
 
 ## 未覆盖范围
 
-本记录证明显式平面抽壳路径及打包 runtime 的 CLI 几何结果，不代表 CATIA shell 导出、曲面抽壳、安装后的桌面可见窗口或干净机器安装验收通过。安装包仍需独立安装和运行验收。
+本记录证明显式平面抽壳路径及打包 runtime 的 CLI 几何结果，不代表 CATIA shell 导出、任意曲面抽壳、安装后的桌面可见窗口或干净机器安装验收通过。受限圆柱面子集有独立几何验收记录；安装包仍需独立安装和运行验收。

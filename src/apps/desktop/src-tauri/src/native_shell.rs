@@ -2,12 +2,12 @@
 //!
 //! Face ordinals are private bridge details. Model-facing CADPlan features store
 //! only opaque selector strings issued by `cad_list_shell_faces`.
-use crate::native_occt::{FaceSurfaceType, Shape};
+use crate::native_occt::{CylindricalFace, FaceSurfaceType, Shape};
 use serde_json::{Value, json};
 use sha2::{Digest, Sha256};
 use std::collections::HashSet;
 
-pub const INVENTORY_VERSION: u64 = 2;
+pub const INVENTORY_VERSION: u64 = 3;
 const SELECTOR_DOMAIN: &[u8] = b"ai-modeler-shell-face-selector-v1\0";
 
 #[derive(Debug, Clone)]
@@ -18,6 +18,18 @@ pub struct SelectorGrant {
     pub target_feature_id: String,
     pub ordinal: usize,
     pub surface_type: FaceSurfaceType,
+    pub cylinder: Option<CylindricalFace>,
+}
+
+fn selectable_cylinder(cylinder: &CylindricalFace) -> bool {
+    let angular_span = cylinder.angular_span[1] - cylinder.angular_span[0];
+    let axial_span = cylinder.axial_span[1] - cylinder.axial_span[0];
+    cylinder.radius.is_finite()
+        && cylinder.radius > 0.0
+        && angular_span.is_finite()
+        && (angular_span - std::f64::consts::TAU).abs() <= 1.0e-7
+        && axial_span.is_finite()
+        && axial_span > 1.0e-9
 }
 
 pub fn binding(
@@ -139,6 +151,8 @@ pub fn validate_request_feature(
     {
         return Err("shell.offset_mode 须明确为 inward 或 outward。".into());
     }
+    let thickness = parameters.get("thickness").and_then(Value::as_f64).unwrap();
+    let mut selected_cylinders = 0usize;
     let shell_targets: Vec<&Value> = feature
         .get("relations")
         .and_then(Value::as_array)
@@ -191,9 +205,28 @@ pub fn validate_request_feature(
         {
             return Err("shell 面选择来自过期的 revision 或几何 fingerprint。".into());
         }
-        if grant.surface_type != FaceSurfaceType::Plane {
-            return Err("shell 当前仅支持平面；已拒绝不支持的曲面 selector。".into());
+        match grant.surface_type {
+            FaceSurfaceType::Plane => {}
+            FaceSurfaceType::Cylinder => {
+                selected_cylinders += 1;
+                let cylinder = grant
+                    .cylinder
+                    .as_ref()
+                    .ok_or("shell 圆柱面选择缺少 OCCT 几何证据。")?;
+                if !selectable_cylinder(cylinder) {
+                    return Err("shell 仅支持完整 360°、具有正轴向范围的圆柱面。".into());
+                }
+                if thickness >= cylinder.radius {
+                    return Err("shell 圆柱面厚度必须小于圆柱半径。".into());
+                }
+            }
+            FaceSurfaceType::Unsupported => {
+                return Err("shell 曲面类型不受支持；仅允许平面或完整 360° 圆柱面。".into());
+            }
         }
+    }
+    if selected_cylinders > 0 && selectors.len() != 1 {
+        return Err("一个 shell 操作只能移除一个完整圆柱面；曲面选择不能与其它面混合。".into());
     }
     Ok(())
 }
@@ -219,7 +252,10 @@ pub fn inventory(
     let mut grants = Vec::new();
     let mut rows = Vec::with_capacity(faces.len());
     for face in faces {
-        let selector = if face.surface_type == FaceSurfaceType::Plane {
+        let cylinder_selectable = face.surface_type == FaceSurfaceType::Cylinder
+            && face.cylinder.as_ref().is_some_and(selectable_cylinder);
+        let selectable = face.surface_type == FaceSurfaceType::Plane || cylinder_selectable;
+        let selector = if selectable {
             let selector = selector_id(&binding, face.ordinal)?;
             grants.push((
                 selector.clone(),
@@ -230,6 +266,7 @@ pub fn inventory(
                     target_feature_id: target_feature_id.into(),
                     ordinal: face.ordinal,
                     surface_type: face.surface_type,
+                    cylinder: face.cylinder,
                 },
             ));
             Value::String(selector)
@@ -238,12 +275,23 @@ pub fn inventory(
         };
         rows.push(json!({
             "selector": selector,
-            "selectable": face.surface_type == FaceSurfaceType::Plane,
-            "surface_type": if face.surface_type == FaceSurfaceType::Plane {"planar"} else {"unsupported"},
+            "selectable": selectable,
+            "surface_type": match face.surface_type {
+                FaceSurfaceType::Plane => "planar",
+                FaceSurfaceType::Cylinder if cylinder_selectable => "cylindrical_full_turn",
+                FaceSurfaceType::Cylinder | FaceSurfaceType::Unsupported => "unsupported"
+            },
             "area_mm2": face.area,
             "center_mm": face.center,
             "oriented_normal": face.oriented_normal,
-            "unsupported_reason": if face.surface_type == FaceSurfaceType::Plane {Value::Null} else {json!("目前只允许移除平面")}
+            "cylinder": face.cylinder.map(|cylinder| json!({
+                "radius_mm":cylinder.radius,
+                "axis_origin_mm":cylinder.axis_origin,
+                "axis_direction":cylinder.axis_direction,
+                "axial_span_mm":cylinder.axial_span,
+                "angular_span_rad":cylinder.angular_span
+            })),
+            "unsupported_reason": if selectable {Value::Null} else if face.surface_type == FaceSurfaceType::Cylinder {json!("仅支持完整 360°、具有正轴向范围的圆柱面")} else if face.surface_type == FaceSurfaceType::Plane {Value::Null} else {json!("仅支持平面或完整 360° 圆柱面")}
         }));
     }
     Ok((
@@ -255,7 +303,7 @@ pub fn inventory(
             "selection_binding":binding,
             "target":"current_unique_closed_solid",
             "target_feature_id":target_feature_id,
-            "supported_surface_types":["planar"],
+            "supported_surface_types":["planar","cylindrical_full_turn"],
             "faces":rows
         }),
         grants,
@@ -287,6 +335,7 @@ pub fn resolve_removed_faces(
     expected_fingerprint: &str,
     kernel_version: &str,
     expected_target_feature_id: &str,
+    thickness: f64,
 ) -> Result<Vec<usize>, String> {
     let (_, bound_fingerprint, bound_kernel, bound_target) = binding_fields(binding)?;
     if bound_fingerprint != expected_fingerprint
@@ -300,6 +349,7 @@ pub fn resolve_removed_faces(
     let mut unique = HashSet::new();
     let faces = shape.faces()?;
     let mut ordinals = Vec::with_capacity(selectors.len());
+    let mut selected_cylinders = 0usize;
     for selector in selectors {
         let selector = selector
             .as_str()
@@ -316,13 +366,32 @@ pub fn resolve_removed_faces(
         if matches.next().is_some() {
             return Err("shell selector 与当前面清单多重匹配。".into());
         }
-        if face.surface_type != FaceSurfaceType::Plane {
-            return Err("shell 只支持平面；检测到非平面移除面。".into());
+        match face.surface_type {
+            FaceSurfaceType::Plane => {}
+            FaceSurfaceType::Cylinder => {
+                selected_cylinders += 1;
+                let cylinder = face
+                    .cylinder
+                    .as_ref()
+                    .ok_or("shell 圆柱选择缺少 OCCT 几何证据。")?;
+                if !selectable_cylinder(cylinder) {
+                    return Err("shell 仅支持完整 360°、具有正轴向范围的圆柱面。".into());
+                }
+                if !thickness.is_finite() || thickness <= 0.0 || thickness >= cylinder.radius {
+                    return Err("shell 圆柱面厚度必须为正且小于圆柱半径。".into());
+                }
+            }
+            FaceSurfaceType::Unsupported => {
+                return Err("shell 只支持平面或完整 360° 圆柱面。".into());
+            }
         }
         ordinals.push(face.ordinal);
     }
     if ordinals.is_empty() {
         return Err("shell 必须至少移除一个面。".into());
+    }
+    if selected_cylinders > 0 && ordinals.len() != 1 {
+        return Err("一个 shell 操作只能移除一个完整圆柱面；曲面选择不能与其它面混合。".into());
     }
     Ok(ordinals)
 }
@@ -330,6 +399,228 @@ pub fn resolve_removed_faces(
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::native_occt::{Kernel, ShellDirection};
+    use std::path::PathBuf;
+
+    fn cylinder(radius: f64, angular_span: [f64; 2], axial_span: [f64; 2]) -> CylindricalFace {
+        CylindricalFace {
+            radius,
+            axis_origin: [0.0, 0.0, 0.0],
+            axis_direction: [0.0, 0.0, 1.0],
+            axial_span,
+            angular_span,
+            surface_point: [radius, 0.0, 0.0],
+            oriented_normal: [1.0, 0.0, 0.0],
+        }
+    }
+
+    #[test]
+    fn curved_shell_allowlist_requires_one_full_turn_and_positive_axial_extent() {
+        assert!(selectable_cylinder(&cylinder(
+            4.0,
+            [0.0, std::f64::consts::TAU],
+            [0.0, 20.0]
+        )));
+        assert!(!selectable_cylinder(&cylinder(
+            4.0,
+            [0.0, std::f64::consts::PI],
+            [0.0, 20.0]
+        )));
+        assert!(!selectable_cylinder(&cylinder(
+            4.0,
+            [0.0, std::f64::consts::TAU],
+            [2.0, 2.0]
+        )));
+        assert!(!selectable_cylinder(&cylinder(
+            f64::NAN,
+            [0.0, std::f64::consts::TAU],
+            [0.0, 20.0]
+        )));
+    }
+
+    #[test]
+    fn current_revision_cylindrical_shell_builds_one_valid_measured_solid_when_occt_is_staged() {
+        let Some(manifest) = std::env::var_os("AIMODELER_OCCT_MANIFEST").map(PathBuf::from) else {
+            eprintln!("skipped: AIMODELER_OCCT_MANIFEST is not configured");
+            return;
+        };
+        let kernel = Kernel::load_manifest(&manifest).unwrap();
+        let stock = kernel.make_box([20.0, 20.0, 20.0], [0.0; 3]).unwrap();
+        let cutter = kernel
+            .cylinder(4.0, 30.0, [0.0, 0.0, -15.0], [0.0, 0.0, 1.0])
+            .unwrap();
+        let bored = kernel.cut(&stock, &[&cutter]).unwrap();
+        let fingerprint = "a".repeat(64);
+        let revision = 7;
+        let target = "bored";
+        let (face_inventory, grant_rows) =
+            inventory(&bored, revision, &fingerprint, &kernel.version(), target).unwrap();
+        let face_rows = face_inventory["faces"].as_array().unwrap();
+        let cylinder_rows: Vec<&Value> = face_rows
+            .iter()
+            .filter(|row| row["surface_type"] == "cylindrical_full_turn")
+            .collect();
+        assert_eq!(cylinder_rows.len(), 1);
+        assert_eq!(cylinder_rows[0]["cylinder"]["radius_mm"], 4.0);
+        assert_eq!(
+            cylinder_rows[0]["cylinder"]["angular_span_rad"][1]
+                .as_f64()
+                .unwrap()
+                - cylinder_rows[0]["cylinder"]["angular_span_rad"][0]
+                    .as_f64()
+                    .unwrap(),
+            std::f64::consts::TAU
+        );
+        let selector = cylinder_rows[0]["selector"].as_str().unwrap();
+        let grants: std::collections::HashMap<String, SelectorGrant> =
+            grant_rows.into_iter().collect();
+        let shell_binding = face_inventory["selection_binding"].clone();
+        let feature = json!({
+            "id":"shell-1", "kind":"shell", "operation":"cut",
+            "parameters":{"thickness":1.0,"offset_mode":"inward","removed_faces":[selector]},
+            "selection_binding":shell_binding,
+            "relations":[{"type":"shell_target","feature_id":target}]
+        });
+        validate_request_feature(
+            &feature,
+            revision,
+            &fingerprint,
+            &kernel.version(),
+            target,
+            &grants,
+        )
+        .unwrap();
+        let planar_selector = face_rows
+            .iter()
+            .find(|row| row["surface_type"] == "planar")
+            .unwrap()["selector"]
+            .clone();
+        let mut mixed_feature = feature.clone();
+        mixed_feature["parameters"]["removed_faces"] = json!([selector, planar_selector]);
+        let mixed_error = validate_request_feature(
+            &mixed_feature,
+            revision,
+            &fingerprint,
+            &kernel.version(),
+            target,
+            &grants,
+        )
+        .unwrap_err();
+        assert!(
+            mixed_error.contains("不能与其它面混合"),
+            "unexpected mixed-face error: {mixed_error}"
+        );
+        let ordinals = resolve_removed_faces(
+            &bored,
+            &feature["selection_binding"],
+            &feature["parameters"]["removed_faces"]
+                .as_array()
+                .unwrap()
+                .clone(),
+            &fingerprint,
+            &kernel.version(),
+            target,
+            1.0,
+        )
+        .unwrap();
+        assert_eq!(ordinals.len(), 1);
+        assert!(
+            validate_request_feature(
+                &feature,
+                revision + 1,
+                &fingerprint,
+                &kernel.version(),
+                target,
+                &grants,
+            )
+            .unwrap_err()
+            .contains("过期")
+        );
+        let slot = kernel.make_box([8.0, 2.0, 20.0], [6.0, 0.0, 0.0]).unwrap();
+        let opened_bore = kernel.cut(&bored, &[&slot]).unwrap();
+        let partial_binding = binding(revision, &"b".repeat(64), &kernel.version(), target);
+        let (partial_inventory, _) = inventory(
+            &opened_bore,
+            revision,
+            &"b".repeat(64),
+            &kernel.version(),
+            target,
+        )
+        .unwrap();
+        let partial_row = partial_inventory["faces"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .find(|row| {
+                row["cylinder"].is_object()
+                    && row["surface_type"] == "unsupported"
+                    && row["selectable"] == false
+            })
+            .expect("slot must trim at least one cylindrical face below full angular coverage");
+        assert_eq!(partial_row["selector"], Value::Null);
+        let partial_face = opened_bore
+            .faces()
+            .unwrap()
+            .into_iter()
+            .find(|face| {
+                face.cylinder
+                    .as_ref()
+                    .is_some_and(|cylinder| !selectable_cylinder(cylinder))
+            })
+            .unwrap();
+        let forged_partial_selector = selector_id(&partial_binding, partial_face.ordinal).unwrap();
+        assert!(
+            resolve_removed_faces(
+                &opened_bore,
+                &partial_binding,
+                &[Value::String(forged_partial_selector)],
+                &"b".repeat(64),
+                &kernel.version(),
+                target,
+                1.0,
+            )
+            .unwrap_err()
+            .contains("完整 360°")
+        );
+        assert!(
+            resolve_removed_faces(
+                &bored,
+                &feature["selection_binding"],
+                &feature["parameters"]["removed_faces"]
+                    .as_array()
+                    .unwrap()
+                    .clone(),
+                &fingerprint,
+                &kernel.version(),
+                target,
+                4.0,
+            )
+            .unwrap_err()
+            .contains("小于圆柱半径")
+        );
+
+        let result = kernel
+            .make_thick_solid(&bored, &ordinals, 1.0, ShellDirection::Inward)
+            .unwrap();
+        let analysis = result.analyze().unwrap();
+        assert_eq!(analysis.valid, 1);
+        assert_eq!(analysis.solid_count, 1);
+        assert_eq!(analysis.closed_solid_count, 1);
+        let input_volume = bored.volume().unwrap();
+        let output_volume = result.volume().unwrap();
+        assert!(output_volume.is_finite() && output_volume > 0.0);
+        assert!((output_volume - input_volume).abs() > 1e-6);
+        let bounds = result.bounds().unwrap();
+        assert!(bounds.xmin.is_finite() && bounds.xmax.is_finite());
+        assert!(bounds.ymin.is_finite() && bounds.ymax.is_finite());
+        assert!(bounds.zmin.is_finite() && bounds.zmax.is_finite());
+        assert!(
+            bounds.xmin < bounds.xmax && bounds.ymin < bounds.ymax && bounds.zmin < bounds.zmax
+        );
+        assert!(bounds.xmin >= -10.000001 && bounds.xmax <= 10.000001);
+        assert!(bounds.ymin >= -10.000001 && bounds.ymax <= 10.000001);
+        assert!(bounds.zmin >= -10.000001 && bounds.zmax <= 10.000001);
+    }
 
     #[test]
     fn opaque_selector_is_bound_to_revision_geometry_and_kernel() {

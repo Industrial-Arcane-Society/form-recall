@@ -35,11 +35,14 @@ pub fn feature_spec(kind: &str) -> Result<Value, String> {
             "scope":"local_candidate_geometry",
             "supported_variants":[
                 "explicit planar face selection from the current face inventory",
+                "one complete 360-degree cylindrical face from the current face inventory",
                 "one current unique closed solid",
-                "explicit inward or outward offset"
+                "explicit inward or outward offset",
+                "cylindrical shell thickness below the selected cylinder radius"
             ],
             "unsupported_variants":[
-                "curved or non-planar removed faces",
+                "partial cylindrical faces, conical faces and other curved removed faces",
+                "mixing a cylindrical face with any other removed face",
                 "stale or ambiguous selectors",
                 "offset failure or result other than one valid closed solid",
                 "legacy thickness-only shell"
@@ -48,10 +51,10 @@ pub fn feature_spec(kind: &str) -> Result<Value, String> {
                 "thickness":">0 in CADPlan length units",
                 "offset_mode":"required inward|outward; never inferred or flipped",
                 "shell_target":"one relation to the enumerated current plan-head feature",
-                "removed_faces":"1..=256 planar selectors from current cad_list_shell_faces",
+                "removed_faces":"1..=256 planar selectors; a shell with a cylindrical face requires exactly one selector",
                 "selection_binding":"current revision, target id, fingerprint, kernel and inventory version"
             },
-            "note":"Native OCCT shell is exact only for explicitly selected planar faces on the current unique closed solid. Stale, ambiguous, curved-face, or offset failures are rejected. Legacy thickness-only plans remain readable but are unsupported and never auto-migrated. CATIA export remains unsupported."
+            "note":"Native OCCT shell is exact only for explicit planar faces or one complete 360-degree cylindrical face on the current unique closed solid. Partial cylinders, other curved faces, mixed curved/planar selections, stale or ambiguous selectors, and offset failures are rejected. Legacy thickness-only plans remain readable but are unsupported and never auto-migrated. CATIA export remains unsupported."
         });
     } else {
         result["native_execution"] = native_execution_contract(kind);
@@ -162,7 +165,7 @@ mod tests {
     use super::*;
 
     #[test]
-    fn shell_advertises_only_the_explicit_planar_native_subset() {
+    fn shell_advertises_only_the_explicit_planar_and_full_cylinder_native_subset() {
         let spec = feature_spec("shell").unwrap();
         assert_eq!(
             spec["optional_parameters"],
@@ -175,7 +178,14 @@ mod tests {
                 .as_array()
                 .unwrap()
                 .iter()
-                .any(|item| item.as_str().is_some_and(|value| value.contains("curved")))
+                .any(|item| item.as_str().is_some_and(|value| value.contains("partial cylindrical")))
+        );
+        assert!(
+            spec["native_execution"]["supported_variants"]
+                .as_array()
+                .unwrap()
+                .iter()
+                .any(|item| item.as_str().is_some_and(|value| value.contains("360-degree cylindrical")))
         );
         assert_eq!(spec["catia_mapping"], "unsupported");
     }

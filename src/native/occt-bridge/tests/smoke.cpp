@@ -90,6 +90,102 @@ int main() {
   occt_shape_release(shell_in);
   occt_shape_release(shell_out);
 
+  // A single, analytic, full-turn cylindrical face is an explicit shell input.
+  OcctShape *bored_box=nullptr, *bore_tool=nullptr, *bore_cutters[1]={nullptr}, *bored=nullptr;
+  require_ok(occt_make_box(20,20,20,0,0,0,&bored_box),"make bored-box stock");
+  require_ok(occt_make_cylinder(4,30,0,0,-15,0,0,1,&bore_tool),"make bore tool");
+  bore_cutters[0]=bore_tool;
+  require_ok(occt_cut(bored_box,bore_cutters,1,&bored),"cut cylindrical bore");
+  require_ok(occt_shape_faces(bored,&faces,&face_count),"bored-box face inventory");
+  size_t cylindrical_face=face_count, top_face_bore=face_count;
+  for(size_t i=0;i<face_count;++i) {
+    if(faces[i].surface_type==2) {
+      require(cylindrical_face==face_count,"bored box must contain exactly one full-turn cylindrical face");
+      cylindrical_face=faces[i].ordinal;
+    }
+    if(faces[i].surface_type==0 && faces[i].center[2]>9.999 && faces[i].oriented_normal[2]>0.999)
+      top_face_bore=faces[i].ordinal;
+  }
+  require(cylindrical_face<face_count,"bored box inventory must classify its analytic bore wall");
+  require(top_face_bore<face_count,"bored box inventory must include a planar cap");
+  occt_faces_release(faces);
+  OcctCylinderFace *cylinder_faces=nullptr;
+  size_t cylinder_count=0;
+  require_ok(occt_shape_cylindrical_faces(bored,&cylinder_faces,&cylinder_count),"bored-box cylinder evidence");
+  require(cylinder_count==1 && std::abs(cylinder_faces[0].radius-4.0)<1e-9 &&
+      std::abs((cylinder_faces[0].u_max-cylinder_faces[0].u_min)-2*pi)<1e-7 &&
+      cylinder_faces[0].v_max-cylinder_faces[0].v_min>19.999,
+      "shell cylindrical selector evidence must prove radius, full angular coverage and axial span");
+  occt_cylindrical_faces_release(cylinder_faces);
+  OcctShape *cylindrical_shell=nullptr;
+  require_ok(occt_make_thick_solid(bored,&cylindrical_face,1,1.0,0,&cylindrical_shell),
+      "make cylindrical-face shell");
+  require_ok(occt_shape_analyze(cylindrical_shell,&analysis),"cylindrical shell analysis");
+  require(analysis.valid==1 && analysis.solid_count==1 && analysis.closed_solid_count==1,
+      "cylindrical shell must remain one valid closed solid");
+  double bored_volume=0;
+  require_ok(occt_shape_volume(bored,&bored_volume),"bored stock volume");
+  require_ok(occt_shape_volume(cylindrical_shell,&volume),"cylindrical shell volume");
+  require(std::isfinite(volume) && volume>0 && std::abs(volume-bored_volume)>1e-6,
+      "cylindrical shell must have a positive changed volume");
+  require_ok(occt_shape_bounds(cylindrical_shell,&bounds),"cylindrical shell bounds");
+  require(std::isfinite(bounds.xmin)&&std::isfinite(bounds.ymin)&&std::isfinite(bounds.zmin)&&
+      std::isfinite(bounds.xmax)&&std::isfinite(bounds.ymax)&&std::isfinite(bounds.zmax)&&
+      bounds.xmin < bounds.xmax && bounds.ymin < bounds.ymax && bounds.zmin < bounds.zmax &&
+      bounds.xmin>=-10.000001 && bounds.xmax<=10.000001 &&
+      bounds.ymin>=-10.000001 && bounds.ymax<=10.000001 &&
+      bounds.zmin>=-10.000001 && bounds.zmax<=10.000001,
+      "cylindrical shell bounds must remain finite and inside the original stock bounds");
+  std::printf("curved shell: valid=%d solids=%zu closed=%zu volume=%.9f bounds=(%.9f,%.9f,%.9f)-(%.9f,%.9f,%.9f)\n",
+      analysis.valid,analysis.solid_count,analysis.closed_solid_count,volume,
+      bounds.xmin,bounds.ymin,bounds.zmin,bounds.xmax,bounds.ymax,bounds.zmax);
+  require(occt_make_thick_solid(bored,&cylindrical_face,1,4.0,0,&shell_in)==OCCT_BRIDGE_INVALID_ARGUMENT,
+      "cylindrical shell must reject thickness at the radius");
+  size_t mixed_faces[2]={cylindrical_face,top_face_bore};
+  require(occt_make_thick_solid(bored,mixed_faces,2,1.0,0,&shell_in)==OCCT_BRIDGE_INVALID_ARGUMENT,
+      "cylindrical shell must reject mixing a curved and planar removal");
+  occt_shape_release(cylindrical_shell);
+  occt_shape_release(bored);
+  occt_shape_release(bore_tool);
+  bore_tool=nullptr;
+  occt_shape_release(bored_box);
+
+  // A boolean slot trims the cylindrical wall into less than one full turn;
+  // both the inventory and the native bridge must reject it as shell input.
+  OcctShape *slotted_box=nullptr, *slot_tool=nullptr, *slotted_bore=nullptr;
+  require_ok(occt_make_box(20,20,20,0,0,0,&slotted_box),"make slotted-box stock");
+  require_ok(occt_make_cylinder(4,30,0,0,-15,0,0,1,&bore_tool),"make slotted bore tool");
+  OcctShape *slotted_bore_cutters[1]={bore_tool};
+  require_ok(occt_cut(slotted_box,slotted_bore_cutters,1,&slotted_bore),"cut slotted bore");
+  require_ok(occt_make_box(8,2,20,6,0,0,&slot_tool),"make bore opening slot");
+  OcctShape *slotted_cutters[1]={slot_tool};
+  OcctShape *opened_bore=nullptr;
+  require_ok(occt_cut(slotted_bore,slotted_cutters,1,&opened_bore),"open a partial sector of the bore wall");
+  require_ok(occt_shape_faces(opened_bore,&faces,&face_count),"partial cylindrical face inventory");
+  std::vector<size_t> cylindrical_ordinals;
+  for(size_t i=0;i<face_count;++i)
+    if(faces[i].surface_type==2) cylindrical_ordinals.push_back(faces[i].ordinal);
+  require(!cylindrical_ordinals.empty(),"slotted bore must retain an analytic cylindrical face");
+  occt_faces_release(faces);
+  require_ok(occt_shape_cylindrical_faces(opened_bore,&cylinder_faces,&cylinder_count),"partial cylinder extent evidence");
+  require(cylinder_count==cylindrical_ordinals.size(),"partial cylindrical metadata must align with face inventory");
+  size_t partial_cylinder_face=face_count;
+  for(size_t i=0;i<cylinder_count;++i)
+    if(std::abs((cylinder_faces[i].u_max-cylinder_faces[i].u_min)-2*pi)>1e-7) {
+      partial_cylinder_face=cylindrical_ordinals[i];
+      break;
+    }
+  require(partial_cylinder_face<face_count,
+      "slot-trimmed cylindrical face must have less than full angular coverage");
+  occt_cylindrical_faces_release(cylinder_faces);
+  require(occt_make_thick_solid(opened_bore,&partial_cylinder_face,1,1.0,0,&cylindrical_shell)==OCCT_BRIDGE_INVALID_ARGUMENT,
+      "shell bridge must reject a partially trimmed cylindrical face");
+  occt_shape_release(opened_bore);
+  occt_shape_release(slot_tool);
+  occt_shape_release(slotted_bore);
+  occt_shape_release(bore_tool);
+  occt_shape_release(slotted_box);
+
   // Analytic cone constructor.
   OcctShape *cone = nullptr;
   require_ok(occt_make_cone(10, 0, 30, 0, 0, 0, OCCT_AXIS_Z, &cone), "make analytic cone");
@@ -103,6 +199,16 @@ int main() {
           std::abs(bounds.ymin + 10) < 1e-7 && std::abs(bounds.ymax - 10) < 1e-7 &&
           std::abs(bounds.zmin) < 1e-7 && std::abs(bounds.zmax - 30) < 1e-7,
           "cone bounds must be [-10,-10,0]..[10,10,30]");
+  require_ok(occt_shape_faces(cone,&faces,&face_count),"cone face inventory for shell rejection");
+  size_t conical_face=face_count;
+  for(size_t i=0;i<face_count;++i) if(faces[i].surface_type==1) {
+    conical_face=faces[i].ordinal;
+    break;
+  }
+  require(conical_face<face_count,"cone inventory must classify its lateral face as unsupported");
+  occt_faces_release(faces);
+  require(occt_make_thick_solid(cone,&conical_face,1,1.0,0,&shell_in)==OCCT_BRIDGE_INVALID_ARGUMENT,
+      "shell bridge must reject a conical face");
   occt_shape_release(cone);
 
   // Prism basis is explicit, right-handed, and tied to the positive axis.

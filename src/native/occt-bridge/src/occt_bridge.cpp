@@ -39,6 +39,7 @@
 #include <TopoDS_Compound.hxx>
 #include <TopoDS_Shape.hxx>
 #include <TopoDS_Shell.hxx>
+#include <TopoDS_Iterator.hxx>
 #include <TopoDS_Solid.hxx>
 #include <TopTools_ListOfShape.hxx>
 #include <TopLoc_Location.hxx>
@@ -565,7 +566,8 @@ OcctStatus occt_shape_faces(const OcctShape *shape, OcctFaceInfo **out_faces,
       row.area=area;
       row.center[0]=center.X(); row.center[1]=center.Y(); row.center[2]=center.Z();
       BRepAdaptor_Surface surface(face,Standard_True);
-      row.surface_type=surface.GetType()==GeomAbs_Plane ? 0 : 1;
+      row.surface_type=surface.GetType()==GeomAbs_Plane ? 0 :
+          (surface.GetType()==GeomAbs_Cylinder ? 2 : 1);
       if(row.surface_type==0) {
         gp_Dir normal=surface.Plane().Axis().Direction();
         if(face.Orientation()==TopAbs_REVERSED) normal.Reverse();
@@ -593,13 +595,25 @@ OcctStatus occt_make_thick_solid(const OcctShape *shape,
     if(!valid(shape)||!face_ordinals||count==0||count>256||!finite(thickness)||thickness<=0
        ||(direction!=0&&direction!=1))
       throw std::invalid_argument("shell requires a shape, 1..256 selected faces, positive finite thickness, and inward/outward direction");
-    if(shape->value.ShapeType()!=TopAbs_SOLID)
-      throw std::invalid_argument("shell target must be the current single closed solid");
-    const TopoDS_Solid stock=TopoDS::Solid(shape->value);
+    TopoDS_Solid stock;
+    if(shape->value.ShapeType()==TopAbs_SOLID) {
+      stock=TopoDS::Solid(shape->value);
+    } else if(shape->value.ShapeType()==TopAbs_COMPOUND) {
+      TopoDS_Iterator child(shape->value);
+      if(!child.More() || child.Value().ShapeType()!=TopAbs_SOLID)
+        throw std::invalid_argument("shell target compound must contain exactly one solid and no free shapes");
+      stock=TopoDS::Solid(child.Value());
+      child.Next();
+      if(child.More())
+        throw std::invalid_argument("shell target compound must contain exactly one solid and no free shapes");
+    } else {
+      throw std::invalid_argument("shell target must be a solid or a compound containing exactly one solid");
+    }
     if(!is_closed_solid(stock))
       throw std::invalid_argument("shell target is not a valid closed solid");
     std::vector<TopoDS_Face> faces;
     std::set<size_t> unique;
+    bool selected_cylinder=false;
     size_t ordinal=0;
     for(TopExp_Explorer ex(shape->value,TopAbs_FACE);ex.More();ex.Next(),++ordinal) {
       if(std::find(face_ordinals,face_ordinals+count,ordinal)==face_ordinals+count) continue;
@@ -607,12 +621,26 @@ OcctStatus occt_make_thick_solid(const OcctShape *shape,
         throw std::invalid_argument("shell selector matched a face more than once");
       const TopoDS_Face face=TopoDS::Face(ex.Current());
       BRepAdaptor_Surface surface(face,Standard_True);
-      if(surface.GetType()!=GeomAbs_Plane)
-        throw std::invalid_argument("shell supports only selected planar faces");
+      if(surface.GetType()==GeomAbs_Cylinder) {
+        selected_cylinder=true;
+        const gp_Cylinder cylinder=surface.Cylinder();
+        double umin,umax,vmin,vmax;
+        BRepTools::UVBounds(face,umin,umax,vmin,vmax);
+        const double full_turn=2.0*std::acos(-1.0);
+        if(!finite(cylinder.Radius()) || cylinder.Radius()<=0.0 ||
+           !finite(umin)||!finite(umax)||!finite(vmin)||!finite(vmax)||
+           std::abs((umax-umin)-full_turn)>1.0e-7 || vmax-vmin<=1.0e-9 ||
+           thickness>=cylinder.Radius())
+          throw std::invalid_argument("shell cylindrical face must have full angular coverage, positive axial span, and thickness below its radius");
+      } else if(surface.GetType()!=GeomAbs_Plane) {
+        throw std::invalid_argument("shell supports only selected planar faces or full-turn cylindrical faces");
+      }
       faces.push_back(face);
     }
     if(unique.size()!=count||faces.size()!=count)
       throw std::invalid_argument("shell selector matched zero or multiple current faces");
+    if(selected_cylinder && faces.size()!=1)
+      throw std::invalid_argument("a cylindrical shell operation must remove exactly one face and cannot mix with other removals");
     TopTools_ListOfShape removed;
     for(const auto &face:faces) removed.Append(face);
     const double offset=direction==0 ? -thickness : thickness;
