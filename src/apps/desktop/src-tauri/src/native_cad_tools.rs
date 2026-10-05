@@ -87,7 +87,7 @@ pub fn run(
                 "holes",
             ],
             "cad_validate_model" => &[],
-            "cad_preview_model" => &["view"],
+            "cad_preview_model" => &["view", "reference_id"],
             "cad_restore_best_candidate" => &["reason"],
             "cad_get_reference_image" => &[
                 "reference_id",
@@ -99,6 +99,21 @@ pub fn run(
             _ => return Err(format!("未知原生 CAD 工具：{name}")),
         },
     )?;
+    let comparison_reference = if name == "cad_preview_model" {
+        args["reference_id"]
+            .as_str()
+            .map(|reference_id| {
+                native_vision_assets::reference_input(
+                    &ctx.session_dir.join("reference-images.json"),
+                    Some(reference_id),
+                    None,
+                    None,
+                )
+            })
+            .transpose()?
+    } else {
+        None
+    };
     if name == "cad_finish_model" {
         let summary = string(args, "summary")?;
         let references = ctx.session_dir.join("reference-images.json");
@@ -318,6 +333,12 @@ pub fn run(
         next["preview_generation"] = json!(generation);
     }
     let view = args["view"].as_str().unwrap_or("iso");
+    let partial_preview = next["last_preview"]["local_geometry_checks"]["state"] == "partial";
+    let mut value = json!({"state":if partial_preview {"candidate_partial_not_accepted"} else {"candidate"},
+        "partial_candidate_diagnostic_only":partial_preview,
+        "revision":revision,"changed":changed,"geometry_fingerprint":next["last_preview"]["geometry_fingerprint"],
+        "preview_generation":next["preview_generation"],"preview":next["last_preview"],"views":next["previews"],
+        "features":next["plan"]["features"],"output_paths":next["output_paths"],"catia_executed":false});
     if name == "cad_preview_model" {
         let row = next["previews"]
             .as_array()
@@ -330,14 +351,19 @@ pub fn run(
         image["revision"] = json!(revision);
         image["preview_generation"] = next["preview_generation"].clone();
         image["preview_sha256"] = row["preview_sha256"].clone();
+        if let Some(reference) = comparison_reference.as_ref() {
+            append_comparison_reference(
+                &mut images,
+                &mut value,
+                reference,
+                view,
+                revision,
+                &next["preview_generation"],
+                &row["preview_sha256"],
+            )?;
+        }
         images.push(image);
     }
-    let partial_preview = next["last_preview"]["local_geometry_checks"]["state"] == "partial";
-    let value = json!({"state":if partial_preview {"candidate_partial_not_accepted"} else {"candidate"},
-        "partial_candidate_diagnostic_only":partial_preview,
-        "revision":revision,"changed":changed,"geometry_fingerprint":next["last_preview"]["geometry_fingerprint"],
-        "preview_generation":next["preview_generation"],"preview":next["last_preview"],"views":next["previews"],
-        "features":next["plan"]["features"],"output_paths":next["output_paths"],"catia_executed":false});
     Ok(ToolOutput {
         state: next,
         value,
@@ -354,6 +380,31 @@ fn required<'a>(v: &'a Value, key: &str) -> Result<&'a Value, String> {
 /// Serialize image results using the Cordis attachment bridge's camelCase wire contract.
 fn cordis_image_result(media_type: &str, bytes: &[u8]) -> Value {
     json!({"mediaType":media_type,"data":STANDARD.encode(bytes)})
+}
+
+fn append_comparison_reference(
+    images: &mut Vec<Value>,
+    value: &mut Value,
+    reference: &native_vision_assets::ReferenceInput,
+    view: &str,
+    revision: i64,
+    preview_generation: &Value,
+    preview_sha256: &Value,
+) -> Result<(), String> {
+    images.push(cordis_image_result(
+        &reference.image.mime,
+        &reference.image.bytes,
+    ));
+    value["comparison_attachments"] = json!({
+        "reference_id":reference.image.reference_id,
+        "reference_sha256":reference.image.source_sha256,
+        "order":["original_reference","current_model_single_view"],
+        "view":view,
+        "revision":revision,
+        "preview_generation":preview_generation,
+        "preview_sha256":preview_sha256
+    });
+    Ok(())
 }
 
 fn check_args(value: &Value, allowed: &[&str]) -> Result<(), String> {
@@ -913,6 +964,84 @@ fn hole_array(
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn preview_comparison_attaches_original_bytes_before_single_view_with_sha_binding() {
+        use image::ImageFormat;
+        use sha2::{Digest, Sha256};
+        use std::io::Cursor;
+
+        let root = std::env::temp_dir().join(format!(
+            "native-preview-paired-reference-{}-{}",
+            std::process::id(),
+            std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .unwrap()
+                .as_nanos()
+        ));
+        fs::create_dir_all(&root).unwrap();
+        let original = root.join("original.png");
+        let mut encoded = Cursor::new(Vec::new());
+        image::DynamicImage::ImageRgb8(image::RgbImage::from_pixel(2, 1, image::Rgb([7, 11, 13])))
+            .write_to(&mut encoded, ImageFormat::Png)
+            .unwrap();
+        let original_bytes = encoded.into_inner();
+        fs::write(&original, &original_bytes).unwrap();
+        let sha = format!("{:x}", Sha256::digest(&original_bytes));
+        let id = format!("sha256:{sha}");
+        fs::write(
+            root.join("reference-images.json"),
+            json!({"schema_version":1,"images":[{
+                "id":id,"sha256":sha,"path":original,"filename":"original.png",
+                "media_type":"image/png"
+            }]})
+            .to_string(),
+        )
+        .unwrap();
+
+        let mut images = Vec::new();
+        let mut value = json!({"state":"candidate"});
+        append_comparison_reference(
+            &mut images,
+            &mut value,
+            &native_vision_assets::reference_input(
+                &root.join("reference-images.json"),
+                Some(&id),
+                None,
+                None,
+            )
+            .unwrap(),
+            "front",
+            9,
+            &json!(4),
+            &json!("preview-sha"),
+        )
+        .unwrap();
+        images.push(cordis_image_result("image/png", b"current-preview"));
+
+        assert_eq!(images.len(), 2);
+        assert_eq!(images[0]["data"], STANDARD.encode(&original_bytes));
+        assert_eq!(images[0]["mediaType"], "image/png");
+        assert_eq!(images[1]["data"], STANDARD.encode(b"current-preview"));
+        assert_eq!(value["comparison_attachments"]["reference_id"], id);
+        assert_eq!(value["comparison_attachments"]["reference_sha256"], sha);
+        assert_eq!(
+            value["comparison_attachments"]["order"],
+            json!(["original_reference", "current_model_single_view"])
+        );
+        assert_eq!(value["comparison_attachments"]["view"], "front");
+        assert_eq!(value["comparison_attachments"]["preview_generation"], 4);
+        assert!(
+            native_vision_assets::reference_input(
+                &root.join("reference-images.json"),
+                Some("sha256:invented"),
+                None,
+                None,
+            )
+            .is_err()
+        );
+        fs::remove_dir_all(root).unwrap();
+    }
 
     fn box_feature() -> Value {
         json!({
