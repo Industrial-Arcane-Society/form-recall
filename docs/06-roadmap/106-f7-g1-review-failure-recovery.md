@@ -1,7 +1,8 @@
 # F7.G1 独立视觉复核失败安全诊断
 
-日期：2026-10-05  
-基线：`4fd7eec`  
+日期：2026-10-05
+
+基线：`4fd7eec`
 范围：Rust 原生 `cad_review_reference_similarity` 的失败分类与安全反馈；未调用真实 provider。
 
 ## 实现
