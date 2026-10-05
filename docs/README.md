@@ -38,6 +38,7 @@
 - [F7/G8 Run24 fingerprint 修复后冷启动诊断](06-roadmap/80-f7-g8-run-24-diagnosis.md)
 - [F7/G8 bridge/native audit 拒绝诊断修复](06-roadmap/81-f7-g8-bridge-audit-rejection-diagnostic.md)
 - [F7.G9 Native Cordis → Rust dispatch safe diagnostics](06-roadmap/105-f7-g9-safe-bridge-dispatch-diagnostics.md)
+- [F7.G1 独立视觉复核失败安全诊断](06-roadmap/106-f7-g1-review-failure-recovery.md)
 - [F7/G8 Run25 runner 快速退出诊断](06-roadmap/82-f7-g8-run-25-diagnosis.md)
 - [F7/G8 Run26 冷启动门禁结果](06-roadmap/83-f7-g8-run-26-diagnosis.md)
 - [F6.3 Rust 原生零件目录与示例列表](06-roadmap/55-f6.3-native-parts-catalog.md)

@@ -31,6 +31,32 @@ pub struct DomainResult {
     pub value: Value,
 }
 
+/// Safe, fixed diagnostic categories for independent review failures.
+/// Provider text and other input data are deliberately discarded.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum ReviewFailure {
+    PreconditionsMissing,
+    ProviderFailed,
+    Unknown,
+}
+
+impl ReviewFailure {
+    pub fn safe_message(self) -> &'static str {
+        match self {
+            Self::PreconditionsMissing => "review_failed:preconditions_missing; create a current preview, inspect the selected reference, and register the current construction milestone, then retry.",
+            Self::ProviderFailed => "review_failed:provider_failed; independent visual review did not complete. The candidate remains unverified; retry the review later.",
+            Self::Unknown => "review_failed:unknown; independent visual review did not complete. The candidate remains unverified; inspect current review prerequisites and retry.",
+        }
+    }
+}
+
+impl From<String> for ReviewFailure {
+    fn from(_: String) -> Self { Self::Unknown }
+}
+impl From<&str> for ReviewFailure {
+    fn from(_: &str) -> Self { Self::Unknown }
+}
+
 fn sha(bytes: &[u8]) -> String {
     format!("{:x}", Sha256::digest(bytes))
 }
@@ -845,7 +871,7 @@ pub async fn review(
     provider: &NativeVisionProvider,
     cancelled: &AtomicBool,
     ctx: &Context,
-) -> Result<DomainResult, String> {
+) -> Result<DomainResult, ReviewFailure> {
     validate_keys(
         args,
         &[
@@ -893,7 +919,7 @@ pub async fn review(
         && (state.get("last_preview").is_none_or(Value::is_null)
             || state.get("preview_revision").and_then(Value::as_i64) != Some(rev))
     {
-        return Err("必须先为当前几何版本生成预览。".into());
+        return Err(ReviewFailure::PreconditionsMissing);
     }
     let preview_row = state
         .get("previews")
@@ -965,8 +991,7 @@ pub async fn review(
         reference_index,
         None,
     )?;
-    let inventory = get_inventory(state, &reference)
-        .ok_or("当前原图SHA/ROI没有匹配的持久source inventory；先调用cad_inspect_references。")?;
+    let inventory = get_inventory(state, &reference).ok_or(ReviewFailure::PreconditionsMissing)?;
     let observation_fingerprint = sha(&serde_json::to_vec(&inventory).unwrap_or_default());
     let observation_version = inventory["observation_version"].as_u64().unwrap_or(1);
     let required = visible(&inventory)
@@ -978,9 +1003,22 @@ pub async fn review(
         })
         .collect::<BTreeSet<_>>();
     if inventory.get("observation_valid") != Some(&Value::Bool(true)) || required.is_empty() {
-        return Err("source inventory没有有效可见事实，不能做独立复核。".into());
+        return Err(ReviewFailure::PreconditionsMissing);
     }
     let turns = load_turns(&ctx.user_turns_manifest)?;
+    if !partial && state.get("construction_milestone")
+        .and_then(|m| m.get("revision")).and_then(Value::as_i64) != Some(rev)
+    {
+        return Err(ReviewFailure::PreconditionsMissing);
+    }
+    let host_attestation = if partial {
+        state.get("partial_preview").and_then(|p| p.get("partial_geometry_checks"))
+    } else {
+        state.get("last_preview").and_then(|p| p.get("local_geometry_checks"))
+    }.and_then(|checks| checks.get("host_attestation"));
+    if !host_attestation.is_some_and(Value::is_object) {
+        return Err(ReviewFailure::PreconditionsMissing);
+    }
     let (stage_scope, stage_complete, full_current_geometry_in_scope, stage_feature_ids) =
         if partial {
             verified_partial_prefix_scope(state, rev, generation)?
@@ -1108,7 +1146,11 @@ pub async fn review(
     let response = provider
         .call(&messages, &images, &req, cancelled)
         .await
-        .map_err(vision_error)?;
+        .map_err(|_| if cancelled.load(std::sync::atomic::Ordering::Acquire) {
+            ReviewFailure::Unknown
+        } else {
+            ReviewFailure::ProviderFailed
+        })?;
     let mut norm = normalize_review(&response.parsed_json, &required, &turns, &stage_feature_ids);
     crate::native_review_findings::attribute_review(&mut norm, &stage_feature_ids);
     let comparable = norm["view_comparable"].as_bool().unwrap_or(false);
@@ -2852,6 +2894,42 @@ mod tests {
     }
 
     #[test]
+    fn review_failure_codes_are_safe_and_do_not_create_review_history() {
+        let mut session = test_session();
+        session.state["reference_inventory"][&session.reference_id]["observation_id"] =
+            json!("fixture-observation");
+        let provider = provider("http://127.0.0.1:1/v1/chat/completions".into());
+        let mut missing_preview = session.state.clone();
+        missing_preview["last_preview"] = Value::Null;
+        missing_preview["preview_revision"] = Value::Null;
+        let failure = run(review(
+            &missing_preview,
+            &json!({"view":"front","preview_generation":9,"reference_id":session.reference_id}),
+            &provider,
+            &AtomicBool::new(false),
+            &session.context,
+        )).unwrap_err();
+        assert_eq!(failure, ReviewFailure::PreconditionsMissing);
+        assert!(failure.safe_message().contains("preconditions_missing"));
+        assert!(missing_preview.get("reference_similarity_history").is_none());
+
+        let failure = run(review(
+            &session.state,
+            &json!({"view":"front","preview_generation":9,"reference_id":session.reference_id}),
+            &provider,
+            &AtomicBool::new(false),
+            &session.context,
+        )).unwrap_err();
+        assert_eq!(failure, ReviewFailure::ProviderFailed);
+        assert!(failure.safe_message().contains("provider_failed"));
+        assert!(failure.safe_message().contains("candidate remains unverified"));
+        assert!(session.state.get("reference_similarity_history").is_none());
+        assert!(session.state.get("reference_similarity_review").is_none());
+        assert!(!failure.safe_message().contains("127.0.0.1"));
+        assert!(!failure.safe_message().contains("unit-test-secret"));
+    }
+
+    #[test]
     fn review_rejects_unbuilt_self_reported_scope_before_provider() {
         let mut session = test_session();
         session.state["construction_milestone"] = json!({
@@ -2874,7 +2952,7 @@ mod tests {
             &session.context,
         ))
         .unwrap_err();
-        assert!(error.contains("宿主签署的几何构建报告"), "{error}");
+        assert_eq!(error, ReviewFailure::Unknown);
         assert!(session.state.get("finding_ledger").is_none());
     }
 
@@ -3256,7 +3334,7 @@ mod tests {
             &session.context,
         ))
         .unwrap_err();
-        assert!(error.contains("原图实际 SHA"), "{error}");
+        assert_eq!(error, ReviewFailure::Unknown);
     }
 
     #[test]
@@ -3278,6 +3356,6 @@ mod tests {
             &session.context,
         ))
         .unwrap_err();
-        assert!(error.contains("geometry fingerprint"), "{error}");
+        assert_eq!(error, ReviewFailure::Unknown);
     }
 }

@@ -564,7 +564,9 @@ impl NativeToolExecutor {
                     native_vision_domain::inspect(state, args, provider, cancelled, &context).await
                 }
                 "cad_review_reference_similarity" => {
-                    native_vision_domain::review(state, args, provider, cancelled, &context).await
+                    native_vision_domain::review(state, args, provider, cancelled, &context)
+                        .await
+                        .map_err(|failure| failure.safe_message().to_string())
                 }
                 _ => Err(format!("未知原生视觉工具：{name}")),
             }
