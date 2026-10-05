@@ -23,4 +23,10 @@ Run36 已知的 `error_class=execution` 不能据此映射为上述某一具体�
 
 新增离线 Rust 回归覆盖缺少当前预览的固定前置错误、模拟 provider 连接失败时的固定 provider 类别与候选未验证不变；既有 mock provider 成功复核回归覆盖成功结果仍可被记录。其它未分类错误安全降级为 `unknown`。
 
-本次尝试执行 Cargo 测试时，Rust 代码和测试目标编译完成；Windows 测试进程启动失败，返回 `0xc0000139 (STATUS_ENTRYPOINT_NOT_FOUND)`，因此未获得 Rust 测试通过结果。测试进程运行限制尚未定位。本改动未运行真实 DSH/provider、GUI 或 Run36 数据；真实 Agent 是否会依据失败枚举补齐前置并再次主动调用复核，仍需后续运行时验收。F7.G1 视觉验收保持未通过。
+初次直接运行 Cargo 生成的测试执行器时，Windows loader 返回 `0xc0000139 (STATUS_ENTRYPOINT_NOT_FOUND)`。2026-10-06 使用仓库 wrapper 在当前 main 源码上重跑聚焦测试，成功通过：
+
+```powershell
+pwsh -NoProfile -File src/apps/desktop/src-tauri/scripts/test-lib.ps1 -Offline -Filter 'native_vision_domain::tests::review_failure_codes_are_safe_and_do_not_create_review_history' -Exact -NoCapture
+```
+
+结果为 `1 passed; 0 failed`。该 wrapper 为测试执行器添加 Common Controls v6 manifest；Cargo 构建和测试进程均成功。此结果覆盖固定前置失败、模拟 provider 连接失败、候选仍未验证及失败不写入 review history，不构成真实 DSH/provider、GUI 或 Run36 数据验收。真实 Agent 是否会依据失败枚举补齐前置并再次主动调用复核，仍需后续运行时验收。F7.G1 视觉验收保持未通过。
