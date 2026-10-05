@@ -35,3 +35,6 @@ Luna subagent 报告以下定向离线验证通过：
 边界：这些测试证明命令响应投影及挂载生产 Vue 组件的 headless hydration；没有验证真实 Tauri WebView 冷启动/JS 投递、用户桌面渲染、真实 DSH/视觉质量或 CATIA。F7.G2 整体验收仍待这些运行时证据。
 
 这些验证覆盖原生状态和保存事务，不证明运行中的 DSH 真实触发了 `model.changed`、桌面视口即时接收了更新，也不证明 UI 初始化和旧工程转换在真实 Tauri 窗口中完成。F7.G2 在真实 host/Agent/桌面闭环验收完成之前保持未验收。
+## 2026-10-05：合并后生产构建回归
+
+将 G2/G3 与 G4 合并后，完整 installer 首次构建在 `vue-tsc` 阶段发现 `activeModelRestore.mjs` 缺少 TypeScript 声明。补充 `activeModelRestore.d.mts` 并推送 `fba4db5` 后，`npm run build` 与从该 main 提交运行的 Tauri Release/MSI/NSIS 构建均通过。`.d.mts` 只补静态类型声明，不改变运行时代码。合并后的 Rust 全量 wrapper 为 369 passed、0 failed、1 ignored。真实用户桌面 WebView / GLB 可见性仍未验收。

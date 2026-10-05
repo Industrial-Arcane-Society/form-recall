@@ -215,3 +215,9 @@ F4.1 的真实 SDK、DLL 生命周期缺陷和几何检查记录见[固定 OCCT 
 F4.2.1 的坐标契约修复、实际参数对拍和测量边界见[CADPlan 基础特征原生执行](./11-f4-basic-plan-execution.md)。
 
 F7 当前观察绑定的集成测试夹具复核见[记录](./75-f7-current-observation-test-fixture.md)：图像复核 fixture 现在显式绑定 source SHA 与 observation ID；native_cad_session 定向测试 23/23、全量 Rust 单测 326/326 通过。
+## 2026-10-05 集成检查点
+
+- G2/G3 活动模型恢复验收、G4 阶段证据与当前施工范围绑定均已分别提交并合并；生产构建来源为已推送代码提交 `fba4db5`，类型声明修复为 `fix(f7): declare active model restore module`。本段文档记录随后的安装包审计。
+- 合并后 Rust 全量测试 **369 passed / 0 failed / 1 ignored**；活动恢复 Host 1/1、Vue helper 3/3、Channel/Vue 四场景及生产 Vue startup accepted/stale/candidate 通过；生产 Vue build 通过。
+- 从已推送源码构建的完整依赖 MSI/NSIS 已生成并做资源解包核对：两个包的 222 个映射资源均 222/222 匹配；包内含完整 DSH/Node/npm/ACP、WebView2、OCCT 与 CATIA-only Python/pywin32。具体大小与 SHA 见[安装版 GLB 修复记录](./F6.10-installed-glb-preview.md)。
+- 这不关闭真实桌面验收：新版安装包尚未覆盖安装，未验证实际 WebView/WebGL 视口；F0 可见窗口、F4 干净机器/真实 CATIA、F7/G8 真实 DSH 视觉质量仍按各自状态继续推进。近期 worktree 清理已保留活跃修改分支，归档项均为已集成提交或空的干净快照。
