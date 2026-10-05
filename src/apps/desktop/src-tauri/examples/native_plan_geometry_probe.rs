@@ -17,6 +17,9 @@ fn main() -> Result<(), String> {
     let plan: Value = serde_json::from_slice(&bytes).map_err(|e| e.to_string())?;
     let built =
         native_plan_geometry::build(&plan, &PathBuf::from(&args[1]), &AtomicBool::new(false))?;
+    if built.report["state"] != "built" {
+        return Err("partial geometry probe is diagnostic only; no complete build was produced".into());
+    }
     // Actual triangle generation is exercised separately from B-Rep checks.
     let mesh = built.shape.tessellate(0.1, 0.5)?;
     let mut report = built.report;

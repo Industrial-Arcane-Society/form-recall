@@ -43,6 +43,9 @@ pub fn build(
     }
     let cancelled = AtomicBool::new(false);
     let built = native_plan_geometry::build(&plan, manifest, &cancelled)?;
+    if built.report["state"] != "built" {
+        return Err("Quick 导出要求完整 build；部分几何仅可用于只读诊断预览。".into());
+    }
     let mesh = built.shape.tessellate(0.08, 0.35)?;
     if mesh.positions.is_empty() || mesh.positions.len() % 3 != 0 {
         return Err("OCCT 返回空或无效三角网格。".into());

@@ -332,7 +332,10 @@ pub fn run(
         image["preview_sha256"] = row["preview_sha256"].clone();
         images.push(image);
     }
-    let value = json!({"state":"candidate","revision":revision,"changed":changed,"geometry_fingerprint":next["last_preview"]["geometry_fingerprint"],
+    let partial_preview = next["last_preview"]["local_geometry_checks"]["state"] == "partial";
+    let value = json!({"state":if partial_preview {"candidate_partial_not_accepted"} else {"candidate"},
+        "partial_candidate_diagnostic_only":partial_preview,
+        "revision":revision,"changed":changed,"geometry_fingerprint":next["last_preview"]["geometry_fingerprint"],
         "preview_generation":next["preview_generation"],"preview":next["last_preview"],"views":next["previews"],
         "features":next["plan"]["features"],"output_paths":next["output_paths"],"catia_executed":false});
     Ok(ToolOutput {
@@ -1156,5 +1159,155 @@ mod tests {
         .unwrap();
         assert!(error.contains("只支持"));
         assert!(!root.exists());
+    }
+
+    #[test]
+    fn cad_preview_model_publishes_only_host_attested_partial_multiview_diagnostics() {
+        let Some(manifest) = std::env::var_os("AIMODELER_OCCT_MANIFEST").map(PathBuf::from) else {
+            eprintln!("skipped: AIMODELER_OCCT_MANIFEST is not configured");
+            return;
+        };
+        let mut plan: Value = serde_json::from_str(include_str!(
+            "../examples/fixtures/native_geometry_plan.json"
+        ))
+        .unwrap();
+        let features = plan["features"].as_array().unwrap().clone();
+        let mut body = features[0].clone();
+        let mut failed_hole = features[2].clone();
+        failed_hole["id"] = json!("failed-hole");
+        failed_hole["name"] = json!("failed-hole");
+        failed_hole["parameters"]["point"] = json!([10000, 10000, 10000]);
+        for feature in [&mut body, &mut failed_hole] {
+            if let Some(sources) = feature.get_mut("sources").and_then(Value::as_object_mut) {
+                for source in sources.values_mut() {
+                    let evidence = source
+                        .get("note")
+                        .and_then(Value::as_str)
+                        .unwrap_or("synthetic OCCT integration fixture")
+                        .to_owned();
+                    source["type"] = json!("image_estimate");
+                    source["evidence"] = json!(evidence);
+                }
+            }
+        }
+        plan["features"] = json!([body, failed_hole]);
+        let mut first_failure = plan.clone();
+        let mut first_cut = first_failure["features"][1].clone();
+        first_cut["operation"] = json!("cut");
+        first_failure["features"] = json!([first_cut]);
+        assert!(crate::native_plan_geometry::build(
+            &first_failure,
+            &manifest,
+            &AtomicBool::new(false)
+        )
+        .is_err(), "a first-feature failure has no accumulated solid to preview");
+        let first_failure_dir = std::env::temp_dir().join(format!(
+            "native-cad-first-feature-failure-{}",
+            std::process::id()
+        ));
+        let first_failure_state = json!({"plan":first_failure,"revision":7,
+            "preview_generation":12,"actions":[],"output_paths":{}});
+        assert!(run(
+            &first_failure_state,
+            "cad_preview_model",
+            &json!({"view":"front"}),
+            &Context {
+                project_root: PathBuf::from("unused"),
+                session_dir: first_failure_dir.clone(),
+                runtime_manifest: Some(manifest.clone()),
+                user_turn_id: None,
+            },
+            &AtomicBool::new(false),
+        )
+        .is_err());
+        assert!(!first_failure_dir.join("native-output").exists());
+
+        let mut disjoint_add = plan["features"][0].clone();
+        disjoint_add["id"] = json!("disjoint-add");
+        disjoint_add["operation"] = json!("add");
+        disjoint_add["parameters"]["center"] = json!([500, 500, 500]);
+        let mut invalid_candidate = plan.clone();
+        invalid_candidate["features"] = json!([plan["features"][0].clone(), disjoint_add]);
+        let safe_prefix = crate::native_plan_geometry::build(
+            &invalid_candidate,
+            &manifest,
+            &AtomicBool::new(false),
+        )
+        .unwrap();
+        assert_eq!(safe_prefix.report["state"], "partial");
+        assert_eq!(safe_prefix.report["failed_feature_id"], "disjoint-add");
+        assert_eq!(safe_prefix.report["applied_feature_ids"], json!(["stock"]));
+        assert_eq!(safe_prefix.report["valid"], true);
+        assert_eq!(safe_prefix.report["solid_count"], 1);
+        assert_eq!(safe_prefix.report["closed_solid_count"], 1);
+        let fingerprint = crate::cad_plan::geometry_fingerprint(&plan).unwrap();
+        let session_dir = std::env::temp_dir().join(format!(
+            "native-cad-partial-preview-{}-{}",
+            std::process::id(),
+            std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .unwrap()
+                .as_nanos()
+        ));
+        let state = json!({"plan":plan,"revision":7,"preview_generation":12,"actions":[],
+            "output_paths":{},"partial_preview":null});
+        let result = run(
+            &state,
+            "cad_preview_model",
+            &json!({"view":"front"}),
+            &Context {
+                project_root: PathBuf::from("unused"),
+                session_dir: session_dir.clone(),
+                runtime_manifest: Some(manifest),
+                user_turn_id: None,
+            },
+            &AtomicBool::new(false),
+        )
+        .unwrap();
+
+        assert_eq!(result.state["revision"], 7);
+        assert_eq!(result.state["preview_generation"], 13);
+        assert_eq!(result.value["state"], "candidate_partial_not_accepted");
+        assert_eq!(result.value["partial_candidate_diagnostic_only"], true);
+        assert_eq!(result.state["partial_preview"]["revision"], 7);
+        assert_eq!(result.state["partial_preview"]["preview_generation"], 13);
+        assert_eq!(
+            result.state["partial_preview"]["requested_geometry_fingerprint"],
+            json!(fingerprint)
+        );
+        assert_eq!(result.state["partial_preview"]["applied_feature_ids"], json!(["stock"]));
+        assert_eq!(result.state["partial_preview"]["failed_feature_id"], "failed-hole");
+        assert_eq!(result.state["partial_preview"]["accepted"], false);
+        assert_eq!(result.state["partial_preview"]["partial_geometry_checks"]["host_attestation"]["issuer"], "native_cad_session.complete_preview");
+        let views = result.state["previews"].as_array().unwrap();
+        assert_eq!(views.len(), 7);
+        assert!(views.iter().all(|row| row["revision"] == 7
+            && row["preview_generation"] == 13
+            && row["geometry_fingerprint"] == fingerprint
+            && row["partial"] == true
+            && row["partial_candidate_diagnostic_only"] == true));
+        assert!(views.iter().all(|row| {
+            let path = PathBuf::from(row["preview_image_path"].as_str().unwrap());
+            fs::metadata(path).is_ok_and(|meta| meta.len() > 0)
+        }));
+        assert!(result.state["output_paths"].get("stl").is_none());
+        assert!(result.state["output_paths"].get("glb").is_none());
+        assert!(result.state["output_paths"].get("aimodel").is_none());
+        fs::create_dir_all(&session_dir).unwrap();
+        let references = session_dir.join("reference-images.json");
+        let turns = session_dir.join("user-turns.json");
+        fs::write(&references, json!({"schema_version":1,"images":[]}).to_string()).unwrap();
+        fs::write(&turns, json!({"schema_version":1,"turns":[]}).to_string()).unwrap();
+        let (aggregated, _) = crate::native_review_gate::aggregate(
+            &result.state,
+            &references,
+            &turns,
+        )
+        .unwrap();
+        let (_, dispatch) = native_cad_session::finish_assessment(&aggregated, &references, &turns)
+            .unwrap();
+        assert_eq!(dispatch.finish_state, "candidate_partial_not_accepted");
+        assert_eq!(dispatch.report["accepted"], false);
+        fs::remove_dir_all(session_dir).unwrap();
     }
 }

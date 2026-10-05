@@ -23,16 +23,17 @@ summary 消费端重新验证 milestone 和 review 的 revision 一致，并要�
 
 本分支新增入口契约定向验证：`pwsh -NoProfile -File src/apps/desktop/src-tauri/scripts/test-lib.ps1 -Offline -Filter native_cad_metadata::tests::milestone_` 为 4 passed / 0 failed；`pwsh -NoProfile -File src/apps/desktop/src-tauri/scripts/test-lib.ps1 -Offline -Filter native_tool_schemas::tests::construction_milestone_schema_requires_explicit_scope_arrays -Exact` 为 1 passed / 0 failed。两项均为本地离线 Rust CLI 单元测试，不调用 provider 或 DSH。
 
-## 未解决的 partial-preview 路径
+## Partial-preview producer 与诊断 review
 
-本次补上了 G4 消费端的安全契约：Rust `complete_preview` 只从宿主 OCCT 报告中的有序 `feature_results` 派生 `applied_feature_ids`，并且要求 partial B-Rep 明确为 valid 单闭合实体；G4 对 partial review 再校验 revision、preview generation、完整 plan fingerprint、签章 report hash、连续启用特征前缀以及前缀后的首个失败 ID。通过后只把该前缀用于诊断归属，stage 完成/全几何覆盖恒为 false，coverage 的 `covered_evidence_ids` 为空，finding lifecycle 不调用，因此不能新建、更新或关闭 finding。partial finish 仍走 `candidate_partial_not_accepted`。
+本次补齐了 G4 partial producer 到 consumer 的本地路径。`native_plan_geometry::build` 将每个 feature 作为事务处理；feature 失败时，仅当累计 Shape 可分析为 valid、单个、闭合实体，且报告 rows 与启用 plan features 完全对应一个非空连续 `built` 前缀，才返回 partial `BuiltPlan`。报告绑定完整请求 plan fingerprint，包含前缀结果与首个失败 feature ID。首 feature 失败、前缀无效、前缀行不是连续 `built`、或失败项不紧随前缀时仍返回错误。
 
-**端到端生产可达性仍未完成。** 当前 `native_geometry_backend::build_preview` 调用 `native_plan_geometry::build(...)?`；build 任一特征失败会直接返回 `Err`，尚不渲染或返回累计前缀、失败特征 ID 与 partial 报告。因此上面消费端只对具备完整宿主报告契约的 partial 输入开放；当前 OCCT 构建生产者仍不能生成这类输入，partial review 仍不能从正常真实构建失败路径抵达。下一步要把 feature build 改为逐项失败结果，并在失败时验证累计 Shape 为单一有效闭合 B-Rep、用累计 Shape 渲染各视图、保存 report/preview rows，再穿过 native tool state；需给这条完整状态路径补 mock backend 回归。没有用 Python 产生的 `partial_geometry_checks` 或 requested plan ID 冒充宿主签章/applied IDs。
+`native_geometry_backend::build_preview` 用累计 Shape 渲染七视角，并给每行添加 revision、generation、完整 plan fingerprint、preview SHA 和 diagnostic-only 标记；partial 只写 preview 与 geometry report，不生成完整 plan 对应的 `.aimodel`、STL、OBJ、GLB。`cad_preview_model` 再经 `native_cad_session::complete_preview` 对 checks 加宿主签章并保存 applied IDs、失败 ID、revision 和 generation。generation 必须等于当前值 + 1，旧 revision/fingerprint/generation 会拒绝。Quick 导出、shell 面选择器和 geometry probe 显式拒绝 partial，避免局部 Shape 被误用为完整 CADPlan 结果。
 
-本次定向回归锁定 prefix 派生、report 签章、错误 ID 拒绝与 revision/generation 绑定；未声称真实 provider 视觉判断或真实 OCCT 失败路径已验收。
+G4 消费端重新核对 signed report hash、revision、generation、完整 plan fingerprint、单闭合 B-Rep、最长连续前缀和紧随前缀的失败 ID。通过后只用前缀做 diagnostic attribution；stage complete/full scope 恒 false，`covered_evidence_ids=[]`，finding lifecycle 不调用，因而不创建/更新/关闭 finding。finish 仍返回 `candidate_partial_not_accepted`。测试使用合成 CADPlan 和本地 Rust/OCCT；不调用 DSH/provider/CATIA，也不证明真实模型视觉判断质量。
 
-本次离线定向验证：`pwsh -NoProfile -File scripts/test-lib.ps1 -Offline -Filter native_vision_domain::tests` 为 24 passed / 0 failed；`-Filter native_cad_session::tests::partial_preview` 为 2 passed / 0 failed。两个命令均只跑本地 Rust 单元测试。
+定向回归覆盖 first-feature failure 无 preview、中途切除失败生成有效前缀、几何 Boolean 得到双实体候选时保留前一个有效 Shape、valid-prefix eligibility、有效闭合体 gate、过期 generation 拒绝、签章/ID/前缀验证、七视角行绑定、partial 不导出完整文件和 finish 不接受。
 
+本次离线验证：`native_vision_domain::tests` 24/24、`native_plan_geometry::tests::partial_builder` 2/2、`native_cad_session::tests::partial_preview` 2/2、`native_cad_session::tests::complete_preview_discards_stale_generation` 1/1、`native_cad_session::tests::finish_` 4/4。OCCT 集成回归需设置 `AIMODELER_OCCT_MANIFEST` 指向本机 OCCT runtime manifest，再运行 `pwsh -NoProfile -File src/apps/desktop/src-tauri/scripts/test-lib.ps1 -Offline -Filter cad_preview_model_publishes_only_host_attested_partial_multiview_diagnostics`；该用例通过本地 OCCT 检查 build → 七视角 → native tool state → finish。
 ## 验收边界
 
 mock provider 与本地 Rust 回归只证明数据归属、scope invalidation、summary projection 和 host finish 的代码行为。它们不证明真实 provider 对原图或 CAD 预览的视觉理解、真实 DSH 会话行为或 CATIA 导出结果。本次不启动 DSH/provider/CATIA，也不打开 GUI。
