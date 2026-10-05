@@ -66,7 +66,14 @@ test('no desktop node_modules fails fast with the exact clean-install command', 
   assert.match(result.reason, /未安装/)
   assert.ok(formatInstallHelp(result.reason).includes(installCommand))
 
-  const run = spawnSync(process.execPath, [scriptPath, '--version'], {
+  // Execute a copy inside the isolated fixture. Running the repository script
+  // would resolve its real repo root and accidentally use the host's installed
+  // desktop node_modules, making this missing-install case environment-dependent.
+  const fixtureScripts = path.join(root, 'scripts')
+  mkdirSync(fixtureScripts, { recursive: true })
+  const fixtureScript = path.join(fixtureScripts, 'tauri-dev.mjs')
+  writeFileSync(fixtureScript, readFileSync(scriptPath, 'utf8'))
+  const run = spawnSync(process.execPath, [fixtureScript, '--version'], {
     cwd: root,
     encoding: 'utf8',
   })

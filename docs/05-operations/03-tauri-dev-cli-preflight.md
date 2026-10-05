@@ -56,6 +56,7 @@
 - 根目录 `dev` 脚本改为调用 `scripts/tauri-dev.mjs`。它从 desktop lockfile 读取 Tauri CLI 与当前平台 binding 的固定版本，分别核对安装版本及入口文件；不完整时给出 `npm ci --prefix src/apps/desktop` 和重试命令。
 - 真实 CLI 通过 Node `spawn`、desktop 工作目录和原配置启动；`npm run dev -- <参数>` 会追加转发给 `tauri dev`，子进程退出码返回给 npm。实现没有 shell 拼接，也不依赖某一平台的 `.cmd` shim。
 - `npm run test:dev-cli` 运行 5 个纯 Node fixture tests：无安装、CLI 入口缺失、Windows 原生绑定缺失、锁定版本过期和 CLI 参数/非零退出码透传，5/5 通过。此项不启动 Tauri、WebView 或真实 GUI。
+- “无安装”用例会将 launcher 拷贝到隔离 fixture 仓库内执行，避免真实工作区已有 `src/apps/desktop/node_modules` 时污染测试结果。
 - 此修复让无依赖开发错误可操作，但不验证 `npm run dev` 的窗口渲染。普通可见 Tauri dev 首屏和此前空白窗口现象仍待实际桌面验收。
 
 ## 2026-10-04 devUrl/Vite 地址对齐
