@@ -144,13 +144,29 @@ function respond(socket, request, body = { result: { text: 'ok' } }) {
   socket.end(JSON.stringify({ jsonrpc: '2.0', id: request.id, ...body }) + '\n')
 }
 
-test('Cordis tools register from Rust schema manifest and render bridge images as image content blocks', async () => {
-  const fixture = fixtureEnvironment()
+test('Cordis preserves the ordered original-reference and current-preview image pair', async () => {
+  const manifest = rustNativeToolManifest()
+  manifest.tools = manifest.tools.filter(tool => tool.name === 'cad_preview_model')
+  const fixture = fixtureEnvironment(manifest)
+  const originalBytes = Buffer.from('original reference bytes')
+  const previewBytes = Buffer.from('current front preview bytes')
+  const comparisonAttachments = {
+    reference_id: 'sha256:reference-fixture',
+    reference_sha256: 'reference-fixture',
+    order: ['original_reference', 'current_model_single_view'],
+    view: 'front',
+    revision: 9,
+    preview_generation: 4,
+    preview_sha256: 'preview-fixture',
+  }
   const bridge = await createBridgeServer((request, socket) => {
     respond(socket, request, { result: {
       text: 'front preview ready',
-      payload: { previewGeneration: 4 },
-      images: [{ mediaType: 'image/png', data: Buffer.from('preview image bytes').toString('base64') }],
+      payload: { comparison_attachments: comparisonAttachments },
+      images: [originalBytes, previewBytes].map(data => ({
+        mediaType: 'image/png',
+        data: data.toString('base64'),
+      })),
     } })
   })
   process.env.AI_MODELER_TOOL_BRIDGE_ADDR = bridge.address
@@ -159,32 +175,33 @@ test('Cordis tools register from Rust schema manifest and render bridge images a
     const saved = []
     apply({
       tools: { register(tool) { registered.push(tool) } },
-      attachments: { async saveImages(images) { saved.push(...images); return ['attachment-preview-4'] } },
+      attachments: { async saveImages(images) {
+        saved.push(...images)
+        return images.map((_image, index) => `attachment-image-${index + 1}`)
+      } },
     })
 
     assert.equal(registered.length, 1)
     assert.equal(registered[0].name, 'cad_preview_model')
-    assert.equal(registered[0].parameters.view.required, true)
-    assert.deepEqual(registered[0].parameters.view.enum, ['front', 'iso'])
-    assert.equal(registered[0].parameters.generation.type, 'integer')
-    assert.equal(registered[0].parameters.generation.description.includes('minimum=1'), true)
-    assert.equal(registered[0].parameters.sources.additionalProperties, true)
-    assert.match(registered[0].parameters.sources.description, /additionalProperties schema=/)
-    assert.match(registered[0].parameters.sources.description, /CADPlan provenance value/)
+    assert.deepEqual(registered[0].parameters.view.enum, ['iso', 'front', 'right', 'top', 'back', 'left', 'bottom'])
+    assert.equal(registered[0].parameters.reference_id.type, 'string')
+    assert.notEqual(registered[0].parameters.reference_id.required, true)
 
-    const output = await registered[0].execute({ view: 'front', generation: 4 }, {
+    const toolArguments = { view: 'front', reference_id: comparisonAttachments.reference_id }
+    const output = await registered[0].execute(toolArguments, {
       signal: new AbortController().signal, callId: 'acp-call-fixture-42',
     })
     assert.equal(output.text, 'front preview ready')
-    assert.deepEqual(output.payload, { previewGeneration: 4 })
-    assert.deepEqual(output.imageAttachments, ['attachment-preview-4'])
-    assert.deepEqual(registered[0].output.render({ view: 'front', generation: 4 }, output), [
+    assert.deepEqual(output.payload, { comparison_attachments: comparisonAttachments })
+    assert.deepEqual(output.imageAttachments, ['attachment-image-1', 'attachment-image-2'])
+    assert.deepEqual(registered[0].output.render(toolArguments, output), [
       { type: 'text', text: 'front preview ready' },
-      { type: 'image', attachment: 'attachment-preview-4' },
+      { type: 'image', attachment: 'attachment-image-1' },
+      { type: 'image', attachment: 'attachment-image-2' },
     ])
-    assert.equal(saved.length, 1)
-    assert.equal(saved[0].mediaType, 'image/png')
-    assert.equal(saved[0].data.toString(), 'preview image bytes')
+    assert.equal(saved.length, 2)
+    assert.deepEqual(saved.map(image => image.mediaType), ['image/png', 'image/png'])
+    assert.deepEqual(saved.map(image => image.data), [originalBytes, previewBytes])
 
     assert.equal(bridge.requests.length, 1)
     const request = bridge.requests[0]
@@ -197,7 +214,7 @@ test('Cordis tools register from Rust schema manifest and render bridge images a
     assert.equal(request.params.turnId, 'turn-fixture-42')
     assert.equal(request.params.name, 'cad_preview_model')
     assert.equal(request.params.acpCallId, 'acp-call-fixture-42')
-    assert.deepEqual(request.params.arguments, { view: 'front', generation: 4 })
+    assert.deepEqual(request.params.arguments, toolArguments)
     assert.ok(request.params.deadlineMs > Date.now())
     assert.deepEqual(JSON.parse(fs.readFileSync(fixture.registrationPath, 'utf8')).registeredToolNames, ['cad_preview_model'])
   } finally {
