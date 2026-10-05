@@ -12,9 +12,9 @@ const appPath = path.join(targetRoot, 'debug', process.platform === 'win32'
   ? 'ai-modeler-webview-smoke.exe'
   : 'ai-modeler-webview-smoke')
 const scenarios = [
-  // The real active-model generation may be lower than the synthetic revisions
-  // used below, so exercise it before those Channel-only model.changed fixtures.
-  { prompt: '__f7_webview_smoke__:production-quick-preview', turn: '本轮回复完成', outcome: '候选模型', reply: 'WebView production Quick model completed', preview: true, production: true },
+  // Build production geometry first, then exercise the nested Agent output path
+  // before the synthetic revisions used by the remaining channel fixtures.
+  { prompt: '__f7_webview_smoke__:agent-workspace-preview-path', turn: '本轮回复完成', outcome: '候选模型', reply: 'WebView Agent workspace GLB path completed', preview: true, production: true, agentWorkspacePath: true },
   { prompt: '__f7_webview_smoke__:pure-qa', turn: '本轮回复完成', outcome: '尚无 CADPlan 模型', reply: 'pure-qa' },
   { prompt: '__f7_webview_smoke__:cad-tool-failure', turn: '本轮已停止（tool_error）', outcome: '候选模型', reply: 'cad-tool-failure', feature: 'Fixture base', tool: '工具：cad_preview_model · failed' },
   { prompt: '__f7_webview_smoke__:accepted-current', turn: '本轮回复完成', outcome: '已验收', reply: 'accepted-current', feature: 'Fixture base' },
@@ -281,9 +281,11 @@ async function main() {
         assert.ok(!state.acceptance.includes('已验收'))
       }
       if (scenario.preview) {
-        console.log(scenario.production
-          ? 'PASS: production Quick parser -> OCCT -> committed active model -> model.changed -> read_asset IPC -> GLTFLoader -> CAD viewport/WebGL canvas'
-          : 'PASS: production read_asset IPC -> GLTFLoader -> CAD viewport/WebGL canvas')
+        console.log(scenario.agentWorkspacePath
+          ? 'PASS: production OCCT GLB copied to nested Agent workspace -> read_asset IPC -> GLTFLoader -> CAD viewport/WebGL canvas'
+          : scenario.production
+            ? 'PASS: production Quick parser -> OCCT -> committed active model -> model.changed -> read_asset IPC -> GLTFLoader -> CAD viewport/WebGL canvas'
+            : 'PASS: production read_asset IPC -> GLTFLoader -> CAD viewport/WebGL canvas')
       } else {
         console.log(`PASS: hidden Tauri WebView delivered Rust Channel events for ${scenario.reply}`)
       }

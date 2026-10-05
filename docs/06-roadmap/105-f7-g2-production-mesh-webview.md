@@ -24,3 +24,10 @@
 ## 边界
 
 该用例可证明生产 Quick→OCCT→活动模型文档/GLB→Channel `model.changed`→生产 IPC `read_asset`→Three.js `GLTFLoader`→隐藏 WebView canvas 路径。它不证明实际 DSH/provider 请求、可见界面像素质量、MSI 安装后的状态或 CATIA 互操作。若环境缺 OCCT DLL、WebDriver、WebView2 或前端依赖，分别作为环境阻塞报告，不将旧 GLB fixture 的结果记作生产几何通过。
+
+## 2026-10-06：Agent workspace GLB 路径复核
+
+- 为直接覆盖 Agent 的实际产物目录层级，隐藏 WebView 首个生产场景现在将 OCCT 实建生成的 GLB 复制到该隔离 smoke app 的 `agent-host/workspaces/session-f7-webview-smoke/native-output/generation-f7-webview-smoke/candidate.glb`，并把此路径放进 `model.changed` 文档；生产 `read_asset` 必须读取它，Vue/GLTFLoader 必须完成加载并留下可用 WebGL canvas。没有调用真实 DSH/provider；几何由生产 Quick→OCCT smoke 生成，路径模拟 Agent workspace。
+- 将这个生产场景排在四个较高合成 revision 状态 fixture 前，以免真实 generation 被生产 Vue 的 stale-revision guard 忽略。隐藏 WebView 共 5 个场景全部通过：Agent 深层 GLB 路径 1 个，纯问答、工具失败、accepted-current、stale-finish 4 个。
+- 第一次运行因 Rust smoke 固定回复仍为旧 Quick 文案、runner 已改等 Agent workspace 文案，造成期待文本不一致的 timeout；检查时模型事件已经到达且 canvas status 为“预览已更新”。统一 fixture 回复后重新构建 smoke binary，完整复跑 exit 0。测试删除本次复制的 `candidate.glb` 文件；不清理其上层目录或用户数据。
+- 这比单元测试白名单更进一步，但仍是隔离隐藏 WebView；不证明 MSI/NSIS 安装版或用户原始 Agent 工件的可见窗口结果。完整过程见[F6.10 GLB 安装与路径报告](./F6.10-installed-glb-preview.md)。

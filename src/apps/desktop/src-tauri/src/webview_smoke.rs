@@ -17,7 +17,7 @@ enum Scenario {
     CadToolFailure,
     AcceptedCurrent,
     StaleFinish,
-    ProductionQuickPreview,
+    AgentWorkspacePreview,
 }
 
 impl Scenario {
@@ -27,7 +27,7 @@ impl Scenario {
             "__f7_webview_smoke__:cad-tool-failure" => Ok(Self::CadToolFailure),
             "__f7_webview_smoke__:accepted-current" => Ok(Self::AcceptedCurrent),
             "__f7_webview_smoke__:stale-finish" => Ok(Self::StaleFinish),
-            "__f7_webview_smoke__:production-quick-preview" => Ok(Self::ProductionQuickPreview),
+            "__f7_webview_smoke__:agent-workspace-preview-path" => Ok(Self::AgentWorkspacePreview),
             _ => Err(format!(
                 "仅接受隔离 F7 fixture prompt，前缀为 {SCENARIO_PREFIX}"
             )),
@@ -40,7 +40,7 @@ impl Scenario {
             Self::CadToolFailure => "cad-tool-failure",
             Self::AcceptedCurrent => "accepted-current",
             Self::StaleFinish => "stale-finish",
-            Self::ProductionQuickPreview => "production-quick-preview",
+            Self::AgentWorkspacePreview => "agent-workspace-preview-path",
         }
     }
 }
@@ -161,8 +161,8 @@ fn fixture_turn(scenario: Scenario, request_id: &str) -> FixtureTurn {
             events.push(wire_event("model.changed", request_id, document.clone()));
             ("completed", Value::Null, model_snapshot(&document, false))
         }
-        Scenario::ProductionQuickPreview => {
-            unreachable!("production Quick uses production_quick_turn")
+        Scenario::AgentWorkspacePreview => {
+            unreachable!("production OCCT generation uses production_quick_turn")
         }
     };
 
@@ -187,8 +187,7 @@ fn fixture_turn(scenario: Scenario, request_id: &str) -> FixtureTurn {
     }
 }
 
-fn production_quick_turn(request_id: &str, mut document: Value) -> FixtureTurn {
-    let reply = "WebView production Quick model completed";
+fn production_quick_turn(request_id: &str, mut document: Value, reply: &str) -> FixtureTurn {
     let revision = document["revision"].as_i64().unwrap_or(1);
     document["cad_revision"] = json!(revision);
     let fingerprint = document["geometry_report"]["geometry_fingerprint"]
@@ -286,20 +285,33 @@ async fn agent_send(
     on_event: Channel<Value>,
 ) -> Result<Value, String> {
     let scenario = Scenario::parse(&text)?;
-    let turn = if scenario == Scenario::ProductionQuickPreview {
+    let turn = if scenario == Scenario::AgentWorkspacePreview {
         let resources = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../../../legacy");
         let data_dir = app
             .path()
             .app_local_data_dir()
             .map_err(|error| format!("无法解析隔离 WebView app-data：{error}"))?;
-        let document = super::headless_quick_smoke(&resources, &data_dir)?;
+        let mut document = super::headless_quick_smoke(&resources, &data_dir)?;
         if document["geometry_report"]["state"] != "passed"
             || document["geometry_report"]["execution_engine"] != "rust_c_abi_occt"
             || document["mesh_path"].as_str().is_none()
         {
             return Err("生产 Quick 构建没有返回完整的 OCCT 几何报告与 GLB 路径。".into());
         }
-        production_quick_turn(&request_id, document)
+        let source = PathBuf::from(
+            document["mesh_path"]
+                .as_str()
+                .ok_or("生产几何结果没有 GLB 路径。")?,
+        );
+        let target = agent_workspace_fixture_path(&app)?;
+        let parent = target
+            .parent()
+            .ok_or("Agent workspace fixture 路径缺少父目录。")?;
+        std::fs::create_dir_all(parent).map_err(|error| error.to_string())?;
+        std::fs::copy(&source, &target).map_err(|error| error.to_string())?;
+        document["mesh_path"] = json!(target.to_string_lossy());
+        let reply = "WebView Agent workspace GLB path completed";
+        production_quick_turn(&request_id, document, reply)
     } else {
         fixture_turn(scenario, &request_id)
     };
@@ -314,7 +326,28 @@ async fn agent_send(
 /// The WebView harness uses the exact production path policy and IPC payload.
 #[tauri::command]
 fn read_asset(app: AppHandle, path: String) -> Result<Response, String> {
-    super::read_asset(app, path)
+    let response = super::read_asset(app.clone(), path.clone())?;
+    if let Ok(fixture_path) = agent_workspace_fixture_path(&app) {
+        if PathBuf::from(&path) == fixture_path {
+            // The nested Agent-path scenario only needs this copied GLB once.
+            // Remove the test artifact after the production reader has served it.
+            let _ = std::fs::remove_file(fixture_path);
+        }
+    }
+    Ok(response)
+}
+
+fn agent_workspace_fixture_path(app: &AppHandle) -> Result<PathBuf, String> {
+    Ok(app
+        .path()
+        .app_local_data_dir()
+        .map_err(|error| format!("无法解析隔离 WebView app-data：{error}"))?
+        .join("agent-host")
+        .join("workspaces")
+        .join("session-f7-webview-smoke")
+        .join("native-output")
+        .join("generation-f7-webview-smoke")
+        .join("candidate.glb"))
 }
 
 /// Starts the production frontend in the separate, hidden test application.
@@ -357,8 +390,8 @@ mod tests {
         assert!(Scenario::parse("build a screw").is_err());
         assert!(Scenario::parse("__f7_webview_smoke__:arbitrary").is_err());
         assert_eq!(
-            Scenario::parse("__f7_webview_smoke__:production-quick-preview").unwrap(),
-            Scenario::ProductionQuickPreview
+            Scenario::parse("__f7_webview_smoke__:agent-workspace-preview-path").unwrap(),
+            Scenario::AgentWorkspacePreview
         );
     }
 
@@ -378,7 +411,11 @@ mod tests {
     fn production_quick_turn_publishes_built_document_and_mesh_path() {
         let mesh_path = r"C:\Users\test\AppData\Local\com.aimodeler.f7-webview-smoke\native-quick\quick\r1\mesh.glb";
         let document = json!({"revision":1,"mesh_path":mesh_path,"geometry_report":{"state":"passed","execution_engine":"rust_c_abi_occt"},"features":[{"name":"Cuboid"}]});
-        let turn = production_quick_turn("request-production", document);
+        let turn = production_quick_turn(
+            "request-production",
+            document,
+            "WebView production Quick model completed",
+        );
         let model_change = turn
             .events
             .iter()

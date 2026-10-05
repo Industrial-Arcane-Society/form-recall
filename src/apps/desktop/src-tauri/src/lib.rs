@@ -1362,11 +1362,11 @@ fn read_asset(app: AppHandle, path: String) -> Result<Response, String> {
         &app_data_root,
         local_app_data.as_deref(),
     )?;
-    let metadata = fs::metadata(&requested).map_err(|error| error.to_string())?;
+    let metadata = fs::metadata(&requested).map_err(|error| asset_path_io_error(error.kind()))?;
     if metadata.len() > 256 * 1024 * 1024 {
-        return Err("预览资源超过 256 MiB 限制。".into());
+        return Err("预览资源超过 256 MiB 限制（asset_too_large）。".into());
     }
-    let bytes = fs::read(requested).map_err(|error| error.to_string())?;
+    let bytes = fs::read(requested).map_err(|error| asset_path_io_error(error.kind()))?;
     Ok(Response::new(bytes))
 }
 
@@ -1376,10 +1376,12 @@ fn resolve_asset_path(
     app_data_root: &Path,
     local_app_data: Option<&Path>,
 ) -> Result<PathBuf, String> {
-    let denied = || "拒绝读取预览目录之外的文件。".to_owned();
-    let requested = logical_requested.canonicalize().map_err(|_| denied())?;
+    let denied = || "拒绝读取预览目录之外的文件（asset_outside_allowed_roots）。".to_owned();
+    let requested = logical_requested
+        .canonicalize()
+        .map_err(|error| asset_path_io_error(error.kind()))?;
     if !requested.is_file() {
-        return Err(denied());
+        return Err("模型预览路径不是文件（asset_not_file）。".into());
     }
 
     if let Ok(preview_root) = logical_preview_root.canonicalize() {
@@ -1414,12 +1416,23 @@ fn resolve_asset_path(
         .extension()
         .is_some_and(|extension| extension.to_string_lossy().eq_ignore_ascii_case("glb"))
     {
-        let app_data_root = app_data_root.canonicalize().map_err(|_| denied())?;
+        let app_data_root = app_data_root
+            .canonicalize()
+            .map_err(|error| asset_path_io_error(error.kind()))?;
         if requested.starts_with(&app_data_root) {
             return Ok(requested);
         }
     }
     Err(denied())
+}
+
+fn asset_path_io_error(kind: std::io::ErrorKind) -> String {
+    let code = match kind {
+        std::io::ErrorKind::NotFound => "asset_missing",
+        std::io::ErrorKind::PermissionDenied => "asset_permission_denied",
+        _ => "asset_unavailable",
+    };
+    format!("模型预览资源不可用（{code}）。")
 }
 
 #[tauri::command]
@@ -1541,6 +1554,7 @@ mod input_image_tests {
         fs::write(&other_app_data_file, b"text").unwrap();
         let outside_glb = scratch.join("outside.glb");
         fs::write(&outside_glb, b"glb").unwrap();
+        let missing_glb = app_data.join("native-quick").join("missing.glb");
 
         assert_eq!(
             resolve_asset_path(&preview_png, &preview, &app_data, None).unwrap(),
@@ -1567,7 +1581,16 @@ mod input_image_tests {
             "Agent workspace GLB remains readable before the preview cache is created"
         );
         assert!(resolve_asset_path(&other_app_data_file, &preview, &app_data, None).is_err());
-        assert!(resolve_asset_path(&outside_glb, &preview, &app_data, None).is_err());
+        assert!(
+            resolve_asset_path(&outside_glb, &preview, &app_data, None)
+                .unwrap_err()
+                .contains("asset_outside_allowed_roots")
+        );
+        assert!(
+            resolve_asset_path(&missing_glb, &preview, &app_data, None)
+                .unwrap_err()
+                .contains("asset_missing")
+        );
 
         fs::remove_dir_all(scratch).unwrap();
     }
