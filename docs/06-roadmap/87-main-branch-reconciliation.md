@@ -21,3 +21,12 @@
 - F7：真实多模态盲测尚未通过 strict gate；CLI 多模态传输及几何 mock 测试不能替代真实图像理解和复核验收。
 
 这些验收项继续保留在 [迁移 Todo](./01-migration-todo.md)，本次只完成已具备证据的文档和分支核对。
+
+## 2026-10-06 本地分支复核
+
+- 核对基线：`main` / `origin/main` `a099b4ca3b0f1f372c9e9dbf3235a56ecf6a9235`，主工作区干净。
+- `git branch --no-merged main` 列出 61 个本地分支 ref；`git cherry` 报告 21 行非等价 patch、20 个唯一提交 SHA。逐组核对 F4/F5/F6/F7 相关代码路径、测试、验收记录与 Todo 后，未发现需要补摘的有效 feature：对应构建器、Quick 解析、CATIA adapter、native tool bridge、coldstart gate/publication 与启动配置均已在 main 有当前实现或明确的验收限制。
+- 不将 branch ref 未并入视为功能缺失。未合并 ref 中 `agentloop-refactor-v2` 的两项唯一改动仍属于旧 Python AgentLoop/prompt，且分支远落后于 main；与当前 Rust DSH ACP 主链冲突，不移植。
+- worktree 清理按保守规则执行：F7.G9 已合入并推送后，其 clean worktree 仅剩可再生成的 ignored Cargo/Tauri schema 缓存，已用 Codex recoverable archive 归档；其他 worktree 当时仍有未提交改动、ignored 数据、独有提交或活跃验收，未归档。每周清理 heartbeat 保持启用，已删除重复的同类 heartbeat；分支 ref 不删除。
+
+本次为只读源码/文档与 Git 元数据复核；没有运行真实 provider、读取历史 raw run、安装包或 ignored 数据。下一次清理必须按当时的活跃任务、提交可达性、tracked/untracked/ignored 状态重新核验，不能照本报告批量删 worktree。
