@@ -32,8 +32,8 @@ const requiredRuntimeFiles = [
   "src/legacy/kb/modeling_recipes.json",
   "src/legacy/kb/native_knowledge_enrichments.v1.json",
   "src/legacy/datasets/训练提示词/全部提示词.jsonl",
-];
-const optionalRuntimeFiles = [
+  // Release packages must carry CATIA support even though the app can start
+  // without CATIA assets and only activates this runtime on demand.
   "src/legacy/ai_modeler/catia_com_adapter.py",
 ];
 const requiredPackageInputs = [
@@ -401,7 +401,7 @@ async function buildDshBundle(info) {
 
 function stageSources() {
   const legacyPrefix = "src/legacy/";
-  const runtimeFiles = new Set([...requiredPackageInputs, ...optionalRuntimeFiles]);
+  const runtimeFiles = new Set(requiredPackageInputs);
   assertRequiredPackageInputs();
 
   const fileList = runCapture("git", ["ls-files", "-co", "--exclude-standard", "-z"], { cwd: repoRoot });
@@ -424,10 +424,6 @@ function stageSources() {
   });
   if (missingStaged.length) {
     throw new Error(`Required desktop resources were not staged:\n${missingStaged.join("\n")}`);
-  }
-  const missingOptional = optionalRuntimeFiles.filter((path) => !existsSync(join(repoRoot, path)));
-  if (missingOptional.length) {
-    console.warn(`Optional CATIA-only resources are unavailable:\n${missingOptional.join("\n")}`);
   }
 }
 
