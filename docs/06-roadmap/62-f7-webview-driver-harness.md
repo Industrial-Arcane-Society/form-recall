@@ -22,7 +22,7 @@ npm run test:agent-webview
 2. CAD 工具失败后保持候选模型；
 3. finish revision 与 geometry fingerprint 都匹配时显示已验收；
 4. stale finish 保持候选，不显示已验收。
-5. 在隔离 smoke app data 写入有效 GLB，由生产 `read_asset` Tauri IPC 读取，再由生产 `CadViewport` 的 `GLTFLoader` 解析并装入 WebGL 场景。
+5. 通过生产 Quick parser 与 Rust/OCCT builder 生成确定性长方体、提交隔离 active model、发送其真实 `model.changed` 文档，再由生产 `read_asset` IPC 和 `CadViewport` 的 `GLTFLoader` 装入 WebGL 场景。该场景需要本机 OCCT 7.9.3 runtime manifest；没有时必须报环境限制，不能用合成 GLB 代替。
 
 应用二进制位置是 `src/apps/desktop/src-tauri/target/debug/ai-modeler-webview-smoke.exe`。构建与启动由同一个 npm 命令完成；若只需编译、不运行 WebView，可执行：
 
@@ -35,6 +35,7 @@ cargo build --manifest-path src-tauri/Cargo.toml --bin ai-modeler-webview-smoke 
 
 - Windows WebView2 Runtime；Microsoft Edge WebDriver (`msedgedriver.exe`) 版本需匹配本机 WebView2 Runtime。
 - `tauri-driver` 与 `msedgedriver.exe` 必须可在 `PATH` 中找到。也可用 `AIMODELER_TAURI_DRIVER` 和 `AIMODELER_EDGE_DRIVER` 指定完整路径。
+- 生产 Quick/OCCT 场景需要 OCCT 7.9.3 manifest；标准位置是 `src-tauri/target/f4-occt/runtime-manifest.json` 或 `src-tauri/target/package-resources/occt-runtime/runtime-manifest.json`，也可设置 `AIMODELER_OCCT_MANIFEST`。
 - 已安装 Node.js/npm、Rust/Cargo；项目 Rust 依赖在离线缓存内时构建可使用 `--offline`，npm build 仍需已安装项目依赖。
 
 Tauri 官方列出 Windows `tauri-driver` → Microsoft Edge Driver 路线；Microsoft 文档说明 EdgeDriver 可启动并自动连接单实例 WebView2。参见 [Tauri WebDriver 指南](https://v2.tauri.app/develop/tests/webdriver/) 与 [Microsoft WebView2 WebDriver 指南](https://learn.microsoft.com/en-us/microsoft-edge/webview2/how-to/webdriver)。这说明该路径受支持，不代表本项目当前隐藏窗口配置已经实机稳定。
@@ -75,8 +76,12 @@ Tauri 官方列出 Windows `tauri-driver` → Microsoft Edge Driver 路线；Mic
 
 现有 `npm run test:agent-channel-vue` 仍覆盖 MockRuntime Channel 序列化与 Vue 状态 handler 的快速回归；它与本 harness 是不同证据层，不能互相替代。
 
-### 2026-10-05：生产 GLB 读取与 WebGL 预览路径
+### 2026-10-05：此前的合成 GLB smoke 基线
 
-新增 `glb-preview` 隔离场景：smoke backend 只在自身 Tauri `app_local_data_dir` 下生成一个确定性的有效三角面 GLB；模型事件携带真实文件路径。smoke 命令对 `read_asset` 的调用直接委托生产 `lib.rs::read_asset`，不复制路径许可逻辑。生产 Vue `CadViewport` 随后运行同一条 `invoke('read_asset') → GLTFLoader.parse → replaceMesh → fitView` 路径。runner 等待状态变为“三维预览已更新”，并检查视口 canvas 尺寸和 WebGL 上下文。窗口销毁时仅删除这个固定 fixture 文件和空目录。
+先前 `glb-preview` 场景只在 smoke app data 生成单三角 GLB，用来验证生产 `read_asset`、`GLTFLoader.parse` 和 WebGL canvas 路径。该旧结果没有经过 Quick parser、OCCT、活动模型提交，不算生产几何端到端验收；本次把该场景替换为下面的生产 Quick 场景。
 
-通过匹配当前 WebView2 `154.0.4258.53` 的 EdgeDriver 及隔离安装的 `tauri-driver 2.1.0`，执行 `npm.cmd run test:agent-webview`：五个场景全部 PASS，包含新的生产 GLB 读取/解析/视口加载场景；Vue production build 与 smoke binary build 均通过。Rust smoke fixture 定向测试 7/7 通过，Node runner `--check` 通过。没有启动可见产品窗口，没有调用 DSH/provider/CATIA，也没有安装 MSI。该测试证明隐藏 WebView 中真实单三角 GLB 从生产 IPC 到 Three.js 场景可加载；不替代完整 MSI 安装后的用户视口复验、实际 OCCT Quick GLB 端到端几何显示或像素截图检查。
+### 2026-10-05：生产 Quick/OCCT GLB 到隐藏 WebView
+
+`production-quick-preview` 调用与生产 `quick_build` 共用的 `build_quick_active_model`（经 `headless_quick_smoke`），使用固定明确尺寸的长方体提示词，通过 Quick parser、CADPlan 校验、Rust/C ABI OCCT 建模、生产 GLB/AIMODEL/STL/OBJ 写出及活动模型 generation commit。随后 fixture transport 只发送该生产返回文档为 `model.changed`。`read_asset` command 委托生产 `lib.rs::read_asset`；Vue 生产 `CadViewport` 继续执行 `GLTFLoader.parse → replaceMesh → fitView`，runner 检查生产模型非 fixture、特征存在、状态为“三维预览已更新”且 canvas/WebGL context 有效。生产 runtime manifest 缺失时明确 fail closed，不回退手工 mesh。
+
+本次目标 worktree 使用本地 npm cache 执行 `npm.cmd ci --offline --no-audit --no-fund`；`npm.cmd run build` 通过（只有既有 CadViewport >500kB warning）。`agent-webview-smoke` feature 定向 Rust 测试 7/7 通过，包含实际 OCCT Quick→active model→GLB 单测；smoke binary 离线 Cargo build 成功。使用 WebView2 `154.0.4258.53` 的匹配 EdgeDriver、隔离 `tauri-driver` 与 OCCT 7.9.3 manifest 运行 `npm.cmd run test:agent-webview`，五个场景全部 PASS。生产模型场景须在 revision fixture 前运行，避免合成更高 revision 触发 Vue stale-revision 防护。精确命令和边界见[生产几何隐藏 WebView 验收](./105-f7-g2-production-mesh-webview.md)。

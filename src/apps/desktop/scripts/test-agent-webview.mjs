@@ -12,11 +12,13 @@ const appPath = path.join(targetRoot, 'debug', process.platform === 'win32'
   ? 'ai-modeler-webview-smoke.exe'
   : 'ai-modeler-webview-smoke')
 const scenarios = [
+  // The real active-model generation may be lower than the synthetic revisions
+  // used below, so exercise it before those Channel-only model.changed fixtures.
+  { prompt: '__f7_webview_smoke__:production-quick-preview', turn: '本轮回复完成', outcome: '候选模型', reply: 'WebView production Quick model completed', preview: true, production: true },
   { prompt: '__f7_webview_smoke__:pure-qa', turn: '本轮回复完成', outcome: '尚无 CADPlan 模型', reply: 'pure-qa' },
   { prompt: '__f7_webview_smoke__:cad-tool-failure', turn: '本轮已停止（tool_error）', outcome: '候选模型', reply: 'cad-tool-failure', feature: 'Fixture base', tool: '工具：cad_preview_model · failed' },
   { prompt: '__f7_webview_smoke__:accepted-current', turn: '本轮回复完成', outcome: '已验收', reply: 'accepted-current', feature: 'Fixture base' },
   { prompt: '__f7_webview_smoke__:stale-finish', turn: '本轮回复完成', outcome: '候选模型', reply: 'stale-finish', feature: 'Fixture base' },
-  { prompt: '__f7_webview_smoke__:glb-preview', turn: '本轮回复完成', outcome: '候选模型', reply: 'glb-preview', feature: 'Fixture base', preview: true },
 ]
 
 function resolveExecutable(name, environmentKey) {
@@ -41,8 +43,8 @@ function isFile(candidate) {
   }
 }
 
-function run(command, args, cwd) {
-  const result = spawnSync(command, args, { cwd, stdio: 'inherit', windowsHide: true })
+function run(command, args, cwd, env = process.env) {
+  const result = spawnSync(command, args, { cwd, stdio: 'inherit', windowsHide: true, env })
   if (result.error) throw result.error
   if (result.status !== 0) throw new Error(`${command} exited with status ${result.status ?? 'unknown'}`)
 }
@@ -135,7 +137,7 @@ async function waitFor(baseUrl, sessionId, predicate, label, timeoutMs = 30000) 
     if (predicate(state)) return state
     await sleep(150)
   }
-  throw new Error(`Timed out waiting for ${label}`)
+  throw new Error(`Timed out waiting for ${label}; last state=${JSON.stringify({ turn: state?.turn, outcome: state?.outcome, modelName: state?.modelName, features: state?.features, viewportStatus: state?.viewportStatus, messages: state?.messages?.slice(-3) })}`)
 }
 
 function startDriver(driverPath, edgeDriverPath, port, nativePort) {
@@ -194,6 +196,16 @@ async function main() {
     throw new Error('Missing WebDriver prerequisites. Install tauri-driver and the Microsoft Edge WebDriver matching the installed WebView2 Runtime; set AIMODELER_TAURI_DRIVER / AIMODELER_EDGE_DRIVER if they are outside PATH.')
   }
 
+  const occtManifest = process.env.AIMODELER_OCCT_MANIFEST
+    || [
+      path.join(tauriRoot, 'target', 'f4-occt', 'runtime-manifest.json'),
+      path.join(tauriRoot, 'target', 'package-resources', 'occt-runtime', 'runtime-manifest.json'),
+    ].find(isFile)
+  if (!occtManifest || !isFile(occtManifest)) {
+    throw new Error('Missing verified OCCT runtime manifest. Set AIMODELER_OCCT_MANIFEST to an existing OCCT 7.9.3 runtime-manifest.json; the production geometry scenario will not substitute a synthetic GLB.')
+  }
+  process.env.AIMODELER_OCCT_MANIFEST = path.resolve(occtManifest)
+
   if (process.env.npm_execpath) {
     run(process.execPath, [process.env.npm_execpath, 'run', 'build'], desktopRoot)
   } else {
@@ -208,7 +220,7 @@ async function main() {
     '--manifest-path', path.join(tauriRoot, 'Cargo.toml'),
     '--bin', 'ai-modeler-webview-smoke',
     '--features', 'agent-webview-smoke,tauri/custom-protocol',
-  ], desktopRoot)
+  ], desktopRoot, { ...process.env, TAURI_CONFIG: JSON.stringify({ bundle: { resources: [] } }) })
   assert.ok(isFile(appPath), `Smoke application was not built at ${appPath}`)
 
   const port = await reservePort()
@@ -237,12 +249,18 @@ async function main() {
       const state = await waitFor(
         baseUrl,
         sessionId,
-        current => current.turn === scenario.turn
-          && current.outcome === scenario.outcome
-          && current.messages.some(message => message.includes(`WebView fixture completed: ${scenario.reply}`))
-          && (!scenario.preview || (current.viewportStatus === '三维预览已更新' && current.canvasReady)),
+        current => current.messages.some(message => message.includes('处理失败：'))
+          || (current.turn === scenario.turn
+            && current.outcome === scenario.outcome
+            && current.messages.some(message => message.includes(scenario.production
+              ? scenario.reply
+              : `WebView fixture completed: ${scenario.reply}`))
+            && (!scenario.preview || (current.viewportStatus === '三维预览已更新' && current.canvasReady))),
         `${scenario.reply} result through the production Vue handler`,
+        scenario.production ? 90000 : 30000,
       )
+      const failure = state.messages.find(message => message.includes('处理失败：'))
+      assert.equal(failure, undefined, `production scenario failed before model.changed: ${failure || ''}`)
       assert.equal(state.turn, scenario.turn)
       assert.equal(state.outcome, scenario.outcome)
       if (scenario.feature) {
@@ -251,6 +269,10 @@ async function main() {
       }
       if (scenario.tool) assert.ok(state.messages.some(message => message.includes(scenario.tool)))
       if (scenario.preview) {
+        if (scenario.production) {
+          assert.ok(state.modelName && !state.modelName.includes('F7 WebView fixture'), 'the production Quick builder should publish its committed active model')
+          assert.ok(state.features.length > 0, 'the OCCT-generated model should publish production CAD features')
+        }
         assert.equal(state.viewportStatus, '三维预览已更新', 'the production read_asset + GLTFLoader path should report a loaded mesh')
         assert.equal(state.canvasReady, true, 'the production CAD viewport should have an active WebGL canvas')
       }
@@ -259,7 +281,9 @@ async function main() {
         assert.ok(!state.acceptance.includes('已验收'))
       }
       if (scenario.preview) {
-        console.log('PASS: production read_asset IPC -> GLTFLoader -> CAD viewport/WebGL canvas')
+        console.log(scenario.production
+          ? 'PASS: production Quick parser -> OCCT -> committed active model -> model.changed -> read_asset IPC -> GLTFLoader -> CAD viewport/WebGL canvas'
+          : 'PASS: production read_asset IPC -> GLTFLoader -> CAD viewport/WebGL canvas')
       } else {
         console.log(`PASS: hidden Tauri WebView delivered Rust Channel events for ${scenario.reply}`)
       }
