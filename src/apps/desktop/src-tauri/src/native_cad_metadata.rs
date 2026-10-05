@@ -1,6 +1,6 @@
 //! Host metadata tools; model self reports never become independent acceptance.
 use crate::{cad_plan, native_web::NativeWeb};
-use serde_json::{Value, json};
+use serde_json::{json, Value};
 
 pub fn supports(name: &str) -> bool {
     matches!(
@@ -25,6 +25,9 @@ pub fn run(
             let actual = state["plan"]["features"]
                 .as_array()
                 .ok_or("里程碑需要已有计划。")?;
+            if completed.is_empty() {
+                return Err("已有CADPlan时completed_feature_ids不能为空。".into());
+            }
             for id in &completed {
                 if !actual
                     .iter()
@@ -125,6 +128,9 @@ fn list(args: &Value, key: &str) -> Result<Vec<String>, String> {
     }
 }
 fn validated_id_list(args: &Value, key: &str) -> Result<Vec<String>, String> {
+    if args.get(key).is_none() {
+        return Err(format!("必须提供{key}数组。"));
+    }
     let values = list(args, key)?;
     let mut seen = std::collections::BTreeSet::new();
     for id in &values {
@@ -149,15 +155,17 @@ mod tests {
     fn milestone_cannot_invent_completed_features() {
         let s = json!({"revision":2,"plan":{"features":[{"id":"body"}]}});
         let w = NativeWeb::new(false);
-        assert!(
-            run(
-                &s,
-                "cad_set_construction_milestone",
-                &json!({"milestone":"done","completed_feature_ids":["missing"]}),
-                &w
-            )
-            .is_err()
-        );
+        assert!(run(
+            &s,
+            "cad_set_construction_milestone",
+            &json!({
+                "milestone": "done",
+                "completed_feature_ids": ["missing"],
+                "expected_feature_ids": ["missing"]
+            }),
+            &w
+        )
+        .is_err());
         assert!(s.get("construction_milestone").is_none());
     }
     #[test]
@@ -169,17 +177,87 @@ mod tests {
             json!([" body"]),
             json!(["bad\nID"]),
         ] {
-            assert!(
-                run(
-                    &s,
-                    "cad_set_construction_milestone",
-                    &json!({"milestone":"partial","completed_feature_ids":ids}),
-                    &w
-                )
-                .is_err()
-            );
+            assert!(run(
+                &s,
+                "cad_set_construction_milestone",
+                &json!({
+                    "milestone": "partial",
+                    "completed_feature_ids": ids,
+                    "expected_feature_ids": []
+                }),
+                &w
+            )
+            .is_err());
         }
         assert!(run(&s, "cad_set_construction_milestone", &json!({"milestone":"partial","completed_feature_ids":["body"],"expected_feature_ids":["future-hole"]}), &w).is_ok());
+    }
+
+    #[test]
+    fn milestone_requires_both_scope_arrays_and_rejects_empty_completed_scope() {
+        let s = json!({"revision":2,"plan":{"features":[{"id":"body"}]}});
+        let w = NativeWeb::new(false);
+
+        for args in [
+            json!({
+                "milestone": "partial",
+                "expected_feature_ids": ["body"]
+            }),
+            json!({
+                "milestone": "partial",
+                "completed_feature_ids": ["body"]
+            }),
+            json!({
+                "milestone": "partial",
+                "completed_feature_ids": [],
+                "expected_feature_ids": ["body"]
+            }),
+        ] {
+            assert!(
+                run(&s, "cad_set_construction_milestone", &args, &w).is_err(),
+                "accepted {args}"
+            );
+        }
+        assert!(s.get("construction_milestone").is_none());
+    }
+
+    #[test]
+    fn milestone_accepts_nonempty_partial_and_full_scopes() {
+        let w = NativeWeb::new(false);
+        let partial_state = json!({
+            "revision": 2,
+            "plan": {"features": [{"id": "body"}]}
+        });
+        let (partial_next, partial) = run(
+            &partial_state,
+            "cad_set_construction_milestone",
+            &json!({
+                "milestone": "body",
+                "completed_feature_ids": ["body"],
+                "expected_feature_ids": ["body", "holes"]
+            }),
+            &w,
+        )
+        .expect("nonempty partial scope should be accepted");
+        assert_eq!(partial["completed_feature_ids"], json!(["body"]));
+        assert_eq!(partial["expected_feature_ids"], json!(["body", "holes"]));
+        assert_eq!(partial_next["construction_milestone"], partial);
+
+        let full_state = json!({
+            "revision": 3,
+            "plan": {"features": [{"id": "body"}, {"id": "holes"}]}
+        });
+        let (_, full) = run(
+            &full_state,
+            "cad_set_construction_milestone",
+            &json!({
+                "milestone": "complete",
+                "completed_feature_ids": ["body", "holes"],
+                "expected_feature_ids": ["body", "holes"]
+            }),
+            &w,
+        )
+        .expect("full scope should be accepted");
+        assert_eq!(full["completed_feature_ids"], json!(["body", "holes"]));
     }
     #[test]
     fn invented_page_quote_cannot_verify_fact() {
