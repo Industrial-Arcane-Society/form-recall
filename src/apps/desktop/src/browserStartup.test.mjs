@@ -2,19 +2,22 @@ import test from 'node:test'
 import assert from 'node:assert/strict'
 import { readFileSync } from 'node:fs'
 import { runInNewContext } from 'node:vm'
+import ts from 'typescript'
 
 // Execute the production startup function with isolated ref / IPC dependencies.
 // This does not create a Tauri window, load settings or call a provider.
 const source = readFileSync(new URL('./App.vue', import.meta.url), 'utf8').replaceAll('\r\n', '\n')
-const startup = source.match(/async function startApplication\(\) \{[\s\S]*?\n\}\n\nfunction onDependenciesInstalled/)[0]
-  .replace(/\n\nfunction onDependenciesInstalled$/, '')
-  .replaceAll('invoke<any>', 'invoke')
+const startupMatch = source.match(/async function startApplication\(\) \{[\s\S]*?\n\}\n\nfunction onDependenciesInstalled/)
+assert.ok(startupMatch, 'production startApplication function should remain present')
+const startup = ts.transpileModule(startupMatch[0].replace(/\n\nfunction onDependenciesInstalled$/, ''), {
+  compilerOptions: { target: ts.ScriptTarget.ES2022, module: ts.ModuleKind.None },
+}).outputText + '\nstartApplication'
 function context(desktop) {
   const calls = [], statuses = []
   return {
     desktop, calls, statuses,
     backendInfo: { value: '' }, settingsDraft: { value: null }, runtimeReadiness: { value: null },
-    dependencySetupError: { value: '' }, needsDependencySetup: { value: false },
+    dependencySetupError: { value: '' }, dependencySetupKind: { value: '' }, needsDependencySetup: { value: false },
     ensureLlmDraft: value => value,
     setStatus: value => statuses.push(value),
     initialize: async () => calls.push('initialize'),
@@ -24,7 +27,7 @@ function context(desktop) {
 }
 test('browser startup never touches native resources, runtime, settings or CAD initialization', async () => {
   const state = context(false)
-  await runInNewContext(`(${startup})`, state)()
+  await runInNewContext(startup, state)()
   assert.deepEqual(state.calls, [])
   assert.equal(state.backendInfo.value, '浏览器预览')
   assert.match(state.statuses[0], /浏览器预览已就绪/)
@@ -34,15 +37,16 @@ test('browser startup never touches native resources, runtime, settings or CAD i
 })
 test('desktop startup continues through native resources, runtime and initialization', async () => {
   const state = context(true)
-  await runInNewContext(`(${startup})`, state)()
+  await runInNewContext(startup, state)()
   assert.deepEqual(state.calls, ['native_resource_status', 'native_runtime_status', 'initialize'])
   assert.equal(state.backendInfo.value, '')
 })
 test('desktop startup failure still opens the dependency error flow', async () => {
   const state = context(true)
   state.invoke = async () => { throw new Error('fixture runtime unavailable') }
-  await runInNewContext(`(${startup})`, state)()
+  await runInNewContext(startup, state)()
   assert.equal(state.needsDependencySetup.value, true)
+  assert.equal(state.dependencySetupKind.value, 'resources')
   assert.equal(state.dependencySetupError.value, 'fixture runtime unavailable')
 })
 test('browser submit guard returns before runtime setup, busy state or model calls', async () => {
