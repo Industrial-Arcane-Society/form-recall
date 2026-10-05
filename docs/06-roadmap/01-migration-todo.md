@@ -221,3 +221,4 @@ F7 当前观察绑定的集成测试夹具复核见[记录](./75-f7-current-obse
 - 合并后 Rust 全量测试 **369 passed / 0 failed / 1 ignored**；活动恢复 Host 1/1、Vue helper 3/3、Channel/Vue 四场景及生产 Vue startup accepted/stale/candidate 通过；生产 Vue build 通过。
 - 从已推送源码构建的完整依赖 MSI/NSIS 已生成并做资源解包核对：两个包的 222 个映射资源均 222/222 匹配；包内含完整 DSH/Node/npm/ACP、WebView2、OCCT 与 CATIA-only Python/pywin32。具体大小与 SHA 见[安装版 GLB 修复记录](./F6.10-installed-glb-preview.md)。
 - 这不关闭真实桌面验收：新版安装包尚未覆盖安装，未验证实际 WebView/WebGL 视口；F0 可见窗口、F4 干净机器/真实 CATIA、F7/G8 真实 DSH 视觉质量仍按各自状态继续推进。近期 worktree 清理已保留活跃修改分支，归档项均为已集成提交或空的干净快照。
+- 2026-10-05 随后尝试从非提权命令行静默升级 MSI，日志返回 1603 且明确写明静默安装禁用了 UAC 提权；复核确认 Program Files 仍是修复前二进制。没有将此记录为安装成功或视觉验收。详见[F6.10安装升级记录](./F6.10-installed-glb-preview.md)。
