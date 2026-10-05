@@ -44,20 +44,29 @@ pub fn build_preview(
         return Err("预览 generation 输出目录已存在；不能覆盖旧证据。".into());
     }
     fs::create_dir_all(directory.join("views")).map_err(|e| e.to_string())?;
-    let project = native_model_io::cadplan_to_project(plan)?;
-    let project_path = directory.join("candidate.aimodel");
-    let stl_path = directory.join("candidate.stl");
-    let obj_path = directory.join("candidate.obj");
-    let glb_path = directory.join("candidate.glb");
-    native_model_io::save_aimodel(&project_path, &project)?;
-    native_model_io::write_binary_stl(&stl_path, &mesh, "native CADPlan")?;
-    native_model_io::write_wavefront_obj(&obj_path, &mesh)?;
-    crate::native_quick::write_glb(&mesh, &glb_path)?;
-    let plan_path = directory.join("cadplan.json");
-    native_model_io::atomic_write(
-        &plan_path,
-        &serde_json::to_vec_pretty(plan).map_err(|e| e.to_string())?,
-    )?;
+    let partial = built.report["state"] == "partial";
+    let mut output_paths = serde_json::Map::new();
+    if !partial {
+        let project = native_model_io::cadplan_to_project(plan)?;
+        let project_path = directory.join("candidate.aimodel");
+        let stl_path = directory.join("candidate.stl");
+        let obj_path = directory.join("candidate.obj");
+        let glb_path = directory.join("candidate.glb");
+        native_model_io::save_aimodel(&project_path, &project)?;
+        native_model_io::write_binary_stl(&stl_path, &mesh, "native CADPlan")?;
+        native_model_io::write_wavefront_obj(&obj_path, &mesh)?;
+        crate::native_quick::write_glb(&mesh, &glb_path)?;
+        let plan_path = directory.join("cadplan.json");
+        native_model_io::atomic_write(
+            &plan_path,
+            &serde_json::to_vec_pretty(plan).map_err(|e| e.to_string())?,
+        )?;
+        output_paths.insert("aimodel".into(), json!(project_path));
+        output_paths.insert("stl".into(), json!(stl_path));
+        output_paths.insert("obj".into(), json!(obj_path));
+        output_paths.insert("glb".into(), json!(glb_path));
+        output_paths.insert("cadplan".into(), json!(plan_path));
+    }
     let mut views = Vec::new();
     for name in ["iso", "front", "right", "top", "back", "left", "bottom"] {
         check_cancel(cancelled)?;
@@ -73,6 +82,7 @@ pub fn build_preview(
         let metadata = rendered.metadata;
         views.push(json!({"revision":revision,"preview_generation":generation,"view":name,
             "geometry_fingerprint":signature,"preview_sha256":format!("{:x}",Sha256::digest(&rendered.png)),
+            "partial":partial,"partial_candidate_diagnostic_only":partial,
             "preview_image_path":path,"render_options":{"projection":metadata.projection,
             "width":metadata.width,"height":metadata.height,"framing_center":metadata.framing_center,
             "units_per_pixel":metadata.units_per_pixel,"shading":metadata.shading,"depth_test":metadata.depth_test}}));
@@ -83,23 +93,25 @@ pub fn build_preview(
     report["revision"] = json!(revision);
     report["preview_generation"] = json!(generation);
     report["triangle_count"] = json!(mesh.positions.len() / 3);
-    report["state"] = json!("passed");
+    if !partial {
+        report["state"] = json!("passed");
+    }
     native_model_io::atomic_write(
         &report_path,
         &serde_json::to_vec_pretty(&report).map_err(|e| e.to_string())?,
     )?;
-    let preview = json!({"state":"candidate","execution_engine":"rust_c_abi_occt","revision":revision,
+    let preview = json!({"state":if partial {"partial"} else {"candidate"},"execution_engine":"rust_c_abi_occt","revision":revision,
         "geometry_fingerprint":signature,"preview_generation":generation,"dimensions":report["dimensions_mm"],
         "local_geometry_checks":report,"preview_image_path":views[0]["preview_image_path"],
         "preview_sha256":views[0]["preview_sha256"],"triangle_count":mesh.positions.len()/3,
-        "catia_executed":false});
-    let output_paths = json!({"aimodel":project_path,"stl":stl_path,"obj":obj_path,"glb":glb_path,"cadplan":plan_path,
-        "geometry_report":report_path,"preview":views[0]["preview_image_path"]});
+        "partial_candidate_diagnostic_only":partial,"catia_executed":false});
+    output_paths.insert("geometry_report".into(), json!(report_path));
+    output_paths.insert("preview".into(), views[0]["preview_image_path"].clone());
     Ok(PreviewOutput {
         outcome: BackendOutcome {
             revision,
             geometry_fingerprint: signature,
-            output_paths,
+            output_paths: Value::Object(output_paths),
             preview,
         },
         views,

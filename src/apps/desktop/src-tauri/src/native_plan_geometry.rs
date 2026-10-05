@@ -291,265 +291,284 @@ pub fn build(plan: &Value, manifest: &Path, cancelled: &AtomicBool) -> Result<Bu
         if feature.get("enabled").and_then(Value::as_bool) == Some(false) {
             continue;
         }
-        let before_volume = current
-            .as_ref()
-            .map(Shape::volume)
-            .transpose()?
-            .unwrap_or(0.);
-        let bb = current.as_ref().map(Shape::bounds).transpose()?;
-        let normalized = normalized_feature(feature, plan)?;
-        if normalized["kind"] == "shell" {
-            let stock = current
+        let feature_id = feature["id"].as_str().unwrap_or("").to_owned();
+        let feature_result = (|| -> Result<(), String> {
+            let before_volume = current
                 .as_ref()
-                .ok_or("shell 必须作用于当前唯一闭合实体。")?;
-            let analysis = stock.analyze()?;
-            if analysis.valid != 1 || analysis.solid_count != 1 || analysis.closed_solid_count != 1
-            {
-                return Err("shell 目标必须是当前唯一有效闭合实体。".into());
+                .map(Shape::volume)
+                .transpose()?
+                .unwrap_or(0.);
+            let bb = current.as_ref().map(Shape::bounds).transpose()?;
+            let normalized = normalized_feature(feature, plan)?;
+            if normalized["kind"] == "shell" {
+                let stock = current
+                    .as_ref()
+                    .ok_or("shell 必须作用于当前唯一闭合实体。")?;
+                let analysis = stock.analyze()?;
+                if analysis.valid != 1 || analysis.solid_count != 1 || analysis.closed_solid_count != 1
+                {
+                    return Err("shell 目标必须是当前唯一有效闭合实体。".into());
+                }
+                let prefix = plan_prefix(plan, feature_index)?;
+                let expected_fingerprint = cad_plan::geometry_fingerprint(&prefix)?;
+                let binding = feature.get("selection_binding").ok_or(
+                    "显式 shell 缺少 selection_binding；旧 thickness-only shell 不会自动迁移。",
+                )?;
+                let target_feature_id = feature
+                    .get("relations")
+                    .and_then(Value::as_array)
+                    .into_iter()
+                    .flatten()
+                    .find(|relation| {
+                        relation.get("type").and_then(Value::as_str) == Some("shell_target")
+                    })
+                    .and_then(|relation| relation.get("feature_id"))
+                    .and_then(Value::as_str)
+                    .ok_or("shell 必须通过唯一 shell_target relation 显式指定目标 feature。")?;
+                if previous_feature_id.as_deref() != Some(target_feature_id) {
+                    return Err("shell_target 必须指向当前累计实体的 plan-head feature。".into());
+                }
+                let selectors = normalized["parameters"]["removed_faces"]
+                    .as_array()
+                    .ok_or("shell.removed_faces 须为opaque selector数组。")?;
+                let removed = crate::native_shell::resolve_removed_faces(
+                    stock,
+                    binding,
+                    selectors,
+                    &expected_fingerprint,
+                    &kernel.version(),
+                    target_feature_id,
+                )?;
+                let thickness = normalized["parameters"]["thickness"]
+                    .as_f64()
+                    .ok_or("shell.thickness 须为长度值。")?;
+                let offset_mode = match normalized["parameters"]["offset_mode"].as_str() {
+                    Some("inward") => crate::native_occt::ShellDirection::Inward,
+                    Some("outward") => crate::native_occt::ShellDirection::Outward,
+                    _ => return Err("shell.offset_mode 须明确为 inward 或 outward。".into()),
+                };
+                let candidate = kernel.make_thick_solid(stock, &removed, thickness, offset_mode)?;
+                let analysis = candidate.analyze()?;
+                if analysis.valid != 1 || analysis.solid_count != 1 || analysis.closed_solid_count != 1
+                {
+                    return Err("shell 未生成单一有效闭合实体；拒绝候选。".into());
+                }
+                let volume = candidate.volume()?;
+                let delta = volume - before_volume;
+                rows.push(json!({"feature_id":feature["id"],"kind":"shell","operation":"cut",
+                    "state":"built","geometry_support":"exact","volume_before_mm3":before_volume,
+                    "volume_after_mm3":volume,"volume_delta_mm3":delta,
+                    "shell":{"offset_mode":match offset_mode {crate::native_occt::ShellDirection::Inward => "inward", crate::native_occt::ShellDirection::Outward => "outward"},"thickness_mm":thickness,
+                        "removed_face_count":removed.len(),"target_feature_id":target_feature_id}}));
+                previous_feature_id = feature["id"].as_str().map(str::to_owned);
+                previous_feature_tools.clear();
+                previous_feature_holes.clear();
+                current = Some(candidate);
+                return Ok(());
             }
-            let prefix = plan_prefix(plan, feature_index)?;
-            let expected_fingerprint = cad_plan::geometry_fingerprint(&prefix)?;
-            let binding = feature.get("selection_binding").ok_or(
-                "显式 shell 缺少 selection_binding；旧 thickness-only shell 不会自动迁移。",
-            )?;
-            let target_feature_id = feature
-                .get("relations")
-                .and_then(Value::as_array)
-                .into_iter()
-                .flatten()
-                .find(|relation| {
-                    relation.get("type").and_then(Value::as_str) == Some("shell_target")
-                })
-                .and_then(|relation| relation.get("feature_id"))
-                .and_then(Value::as_str)
-                .ok_or("shell 必须通过唯一 shell_target relation 显式指定目标 feature。")?;
-            if previous_feature_id.as_deref() != Some(target_feature_id) {
-                return Err("shell_target 必须指向当前累计实体的 plan-head feature。".into());
-            }
-            let selectors = normalized["parameters"]["removed_faces"]
-                .as_array()
-                .ok_or("shell.removed_faces 须为opaque selector数组。")?;
-            let removed = crate::native_shell::resolve_removed_faces(
-                stock,
-                binding,
-                selectors,
-                &expected_fingerprint,
-                &kernel.version(),
-                target_feature_id,
-            )?;
-            let thickness = normalized["parameters"]["thickness"]
-                .as_f64()
-                .ok_or("shell.thickness 须为长度值。")?;
-            let offset_mode = match normalized["parameters"]["offset_mode"].as_str() {
-                Some("inward") => crate::native_occt::ShellDirection::Inward,
-                Some("outward") => crate::native_occt::ShellDirection::Outward,
-                _ => return Err("shell.offset_mode 须明确为 inward 或 outward。".into()),
+            let (tools, mut requested_holes, standard_support) = if normalized["kind"] == "pattern" {
+                let (tools, holes, support) = pattern_tools(
+                    &kernel,
+                    &normalized,
+                    previous_feature_id.as_deref(),
+                    &previous_feature_tools,
+                    &previous_feature_holes,
+                    cancelled,
+                )?;
+                (tools, holes, Some(support))
+            } else if matches!(
+                normalized["kind"].as_str(),
+                Some("gear" | "helical_gear" | "socket_head_bolt")
+            ) {
+                let (tools, support) = native_standard_features::tools(
+                    &kernel,
+                    normalized["kind"].as_str().unwrap_or(""),
+                    &normalized["parameters"],
+                )?;
+                (tools, vec![], Some(support))
+            } else if normalized["kind"] == "bevel_gear" {
+                let (tools, support) = native_bevel_gear::build(&kernel, &normalized["parameters"])?;
+                (tools, vec![], Some(support))
+            } else if normalized["kind"] == "rotor" {
+                let (tools, support) = crate::native_rotor::build(&kernel, &normalized["parameters"])?;
+                (tools, vec![], Some(support))
+            } else if normalized["kind"] == "vbelt_pulley" {
+                let (tools, support) =
+                    crate::native_vbelt_pulley::build(&kernel, &normalized["parameters"])?;
+                (tools, vec![], Some(support))
+            } else if normalized["kind"] == "scroll_disc" {
+                let (tools, support) =
+                    crate::native_scroll_disc::build(&kernel, &normalized["parameters"])?;
+                (tools, vec![], Some(support))
+            } else if normalized["kind"] == "helix" {
+                let (tools, support) = crate::native_helix::build(&kernel, &normalized["parameters"])?;
+                (tools, vec![], Some(support))
+            } else if normalized["kind"] == "worm" {
+                let (tools, support) = crate::native_worm::build(&kernel, &normalized["parameters"])?;
+                (tools, vec![], Some(support))
+            } else if normalized["kind"] == "loft" {
+                let (tools, support) = native_loft::build(&kernel, &normalized["parameters"])?;
+                (tools, vec![], Some(support))
+            } else if normalized["kind"] == "impeller" {
+                let (tools, support) = native_impeller::build(&kernel, &normalized["parameters"])?;
+                (tools, vec![], Some(support))
+            } else if normalized["kind"] == "piston" {
+                let (tools, support) =
+                    native_parametric_features::build_piston(&kernel, &normalized["parameters"])?;
+                (tools, vec![], Some(support))
+            } else if normalized["kind"] == "camshaft" {
+                let (tools, support) =
+                    native_parametric_features::build_camshaft(&kernel, &normalized["parameters"])?;
+                (tools, vec![], Some(support))
+            } else if normalized["kind"] == "crankshaft" {
+                let (tools, support) =
+                    native_parametric_features::build_crankshaft(&kernel, &normalized["parameters"])?;
+                (tools, vec![], Some(support))
+            } else if normalized["kind"] == "timing_pulley" {
+                let (tools, support) = native_timing_pulley::build(&kernel, &normalized["parameters"])?;
+                (tools, vec![], Some(support))
+            } else if normalized["kind"] == "spoked_wheel" {
+                let (tools, support) =
+                    native_parametric_features::build_spoked_wheel(&kernel, &normalized["parameters"])?;
+                (tools, vec![], Some(support))
+            } else if normalized["kind"] == "conrod" {
+                let (tools, support) =
+                    native_parametric_features::build_conrod(&kernel, &normalized["parameters"])?;
+                (tools, vec![], Some(support))
+            } else if normalized["kind"] == "cross_joint" {
+                let (tools, support) =
+                    native_parametric_features::build_cross_joint(&kernel, &normalized["parameters"])?;
+                (tools, vec![], Some(support))
+            } else {
+                let (tools, holes) = feature_tools(&kernel, &normalized, bb, current.as_ref(), &holes)?;
+                (tools, holes, None)
             };
-            let candidate = kernel.make_thick_solid(stock, &removed, thickness, offset_mode)?;
+            let operation = feature["operation"].as_str().unwrap_or("add");
+            let mut no_op_pattern = normalized["kind"] == "pattern" && tools.is_empty();
+            let hole_pre_cut = if !requested_holes.is_empty() && operation == "cut" {
+                current
+                    .as_ref()
+                    .map(|shape| kernel.transform(shape, identity_matrix()))
+                    .transpose()?
+            } else {
+                None
+            };
+            let tool_refs: Vec<_> = tools.iter().collect();
+            let candidate = if no_op_pattern {
+                let stock = current.as_ref().ok_or("空阵列不能作为首个实体特征。")?;
+                kernel.transform(stock, identity_matrix())?
+            } else {
+                match (&current, operation) {
+                    (None, "add") => kernel.fuse(&tool_refs)?,
+                    (Some(stock), "cut") => kernel.cut(stock, &tool_refs)?,
+                    (Some(stock), "add") => {
+                        let mut refs = vec![stock];
+                        refs.extend(tool_refs);
+                        kernel.fuse(&refs)?
+                    }
+                    (None, "cut") => return Err("首特征不能切除；未提交候选。".into()),
+                    _ => return Err("operation 必须是 add 或 cut。".into()),
+                }
+            };
+            check_cancel(cancelled)?;
             let analysis = candidate.analyze()?;
-            if analysis.valid != 1 || analysis.solid_count != 1 || analysis.closed_solid_count != 1
-            {
-                return Err("shell 未生成单一有效闭合实体；拒绝候选。".into());
+            if analysis.valid != 1 || analysis.solid_count != 1 || analysis.closed_solid_count != 1 {
+                return Err(format!(
+                    "特征 {} 未生成单一有效封闭实体；未提交候选。",
+                    feature["id"]
+                ));
             }
             let volume = candidate.volume()?;
             let delta = volume - before_volume;
-            rows.push(json!({"feature_id":feature["id"],"kind":"shell","operation":"cut",
-                "state":"built","geometry_support":"exact","volume_before_mm3":before_volume,
-                "volume_after_mm3":volume,"volume_delta_mm3":delta,
-                "shell":{"offset_mode":match offset_mode {crate::native_occt::ShellDirection::Inward => "inward", crate::native_occt::ShellDirection::Outward => "outward"},"thickness_mm":thickness,
-                    "removed_face_count":removed.len(),"target_feature_id":target_feature_id}}));
-            previous_feature_id = feature["id"].as_str().map(str::to_owned);
-            previous_feature_tools.clear();
-            previous_feature_holes.clear();
-            current = Some(candidate);
-            continue;
-        }
-        let (tools, mut requested_holes, standard_support) = if normalized["kind"] == "pattern" {
-            let (tools, holes, support) = pattern_tools(
-                &kernel,
-                &normalized,
-                previous_feature_id.as_deref(),
-                &previous_feature_tools,
-                &previous_feature_holes,
-                cancelled,
-            )?;
-            (tools, holes, Some(support))
-        } else if matches!(
-            normalized["kind"].as_str(),
-            Some("gear" | "helical_gear" | "socket_head_bolt")
-        ) {
-            let (tools, support) = native_standard_features::tools(
-                &kernel,
-                normalized["kind"].as_str().unwrap_or(""),
-                &normalized["parameters"],
-            )?;
-            (tools, vec![], Some(support))
-        } else if normalized["kind"] == "bevel_gear" {
-            let (tools, support) = native_bevel_gear::build(&kernel, &normalized["parameters"])?;
-            (tools, vec![], Some(support))
-        } else if normalized["kind"] == "rotor" {
-            let (tools, support) = crate::native_rotor::build(&kernel, &normalized["parameters"])?;
-            (tools, vec![], Some(support))
-        } else if normalized["kind"] == "vbelt_pulley" {
-            let (tools, support) =
-                crate::native_vbelt_pulley::build(&kernel, &normalized["parameters"])?;
-            (tools, vec![], Some(support))
-        } else if normalized["kind"] == "scroll_disc" {
-            let (tools, support) =
-                crate::native_scroll_disc::build(&kernel, &normalized["parameters"])?;
-            (tools, vec![], Some(support))
-        } else if normalized["kind"] == "helix" {
-            let (tools, support) = crate::native_helix::build(&kernel, &normalized["parameters"])?;
-            (tools, vec![], Some(support))
-        } else if normalized["kind"] == "worm" {
-            let (tools, support) = crate::native_worm::build(&kernel, &normalized["parameters"])?;
-            (tools, vec![], Some(support))
-        } else if normalized["kind"] == "loft" {
-            let (tools, support) = native_loft::build(&kernel, &normalized["parameters"])?;
-            (tools, vec![], Some(support))
-        } else if normalized["kind"] == "impeller" {
-            let (tools, support) = native_impeller::build(&kernel, &normalized["parameters"])?;
-            (tools, vec![], Some(support))
-        } else if normalized["kind"] == "piston" {
-            let (tools, support) =
-                native_parametric_features::build_piston(&kernel, &normalized["parameters"])?;
-            (tools, vec![], Some(support))
-        } else if normalized["kind"] == "camshaft" {
-            let (tools, support) =
-                native_parametric_features::build_camshaft(&kernel, &normalized["parameters"])?;
-            (tools, vec![], Some(support))
-        } else if normalized["kind"] == "crankshaft" {
-            let (tools, support) =
-                native_parametric_features::build_crankshaft(&kernel, &normalized["parameters"])?;
-            (tools, vec![], Some(support))
-        } else if normalized["kind"] == "timing_pulley" {
-            let (tools, support) = native_timing_pulley::build(&kernel, &normalized["parameters"])?;
-            (tools, vec![], Some(support))
-        } else if normalized["kind"] == "spoked_wheel" {
-            let (tools, support) =
-                native_parametric_features::build_spoked_wheel(&kernel, &normalized["parameters"])?;
-            (tools, vec![], Some(support))
-        } else if normalized["kind"] == "conrod" {
-            let (tools, support) =
-                native_parametric_features::build_conrod(&kernel, &normalized["parameters"])?;
-            (tools, vec![], Some(support))
-        } else if normalized["kind"] == "cross_joint" {
-            let (tools, support) =
-                native_parametric_features::build_cross_joint(&kernel, &normalized["parameters"])?;
-            (tools, vec![], Some(support))
-        } else {
-            let (tools, holes) = feature_tools(&kernel, &normalized, bb, current.as_ref(), &holes)?;
-            (tools, holes, None)
-        };
-        let operation = feature["operation"].as_str().unwrap_or("add");
-        let mut no_op_pattern = normalized["kind"] == "pattern" && tools.is_empty();
-        let hole_pre_cut = if !requested_holes.is_empty() && operation == "cut" {
-            current
-                .as_ref()
-                .map(|shape| kernel.transform(shape, identity_matrix()))
-                .transpose()?
-        } else {
-            None
-        };
-        let tool_refs: Vec<_> = tools.iter().collect();
-        let candidate = if no_op_pattern {
-            let stock = current.as_ref().ok_or("空阵列不能作为首个实体特征。")?;
-            kernel.transform(stock, identity_matrix())?
-        } else {
-            match (&current, operation) {
-                (None, "add") => kernel.fuse(&tool_refs)?,
-                (Some(stock), "cut") => kernel.cut(stock, &tool_refs)?,
-                (Some(stock), "add") => {
-                    let mut refs = vec![stock];
-                    refs.extend(tool_refs);
-                    kernel.fuse(&refs)?
-                }
-                (None, "cut") => return Err("首特征不能切除；未提交候选。".into()),
-                _ => return Err("operation 必须是 add 或 cut。".into()),
+            if normalized["kind"] == "pattern"
+                && operation == "cut"
+                && delta >= -1e-7_f64.max(before_volume * 1e-10)
+            {
+                // A patterned cutter can land entirely in existing void. Keep the
+                // valid stock and report the pattern as a no-op, matching the
+                // legacy OCCT builder instead of failing the whole candidate.
+                no_op_pattern = true;
+                requested_holes.clear();
             }
-        };
-        check_cancel(cancelled)?;
-        let analysis = candidate.analyze()?;
-        if analysis.valid != 1 || analysis.solid_count != 1 || analysis.closed_solid_count != 1 {
-            return Err(format!(
-                "特征 {} 未生成单一有效封闭实体；未提交候选。",
-                feature["id"]
-            ));
-        }
-        let volume = candidate.volume()?;
-        let delta = volume - before_volume;
-        if normalized["kind"] == "pattern"
-            && operation == "cut"
-            && delta >= -1e-7_f64.max(before_volume * 1e-10)
-        {
-            // A patterned cutter can land entirely in existing void. Keep the
-            // valid stock and report the pattern as a no-op, matching the
-            // legacy OCCT builder instead of failing the whole candidate.
-            no_op_pattern = true;
-            requested_holes.clear();
-        }
-        if operation == "cut" && !no_op_pattern && delta >= -1e-7_f64.max(before_volume * 1e-10) {
-            return Err(format!(
-                "特征 {} 切除没有实际减少材料；请检查孔位、方向或重复切除。",
-                feature["id"]
-            ));
-        }
-        if !requested_holes.is_empty() {
-            if operation == "cut" {
-                if let Some(pre_cut) = current.as_ref() {
-                    for record in &mut requested_holes {
-                        let evidence = verify_hole_record(pre_cut, &candidate, record, &holes)?;
-                        let status = evidence["status"].clone();
-                        record["status"] = status;
-                        record["sampled_evidence"] = evidence;
+            if operation == "cut" && !no_op_pattern && delta >= -1e-7_f64.max(before_volume * 1e-10) {
+                return Err(format!(
+                    "特征 {} 切除没有实际减少材料；请检查孔位、方向或重复切除。",
+                    feature["id"]
+                ));
+            }
+            if !requested_holes.is_empty() {
+                if operation == "cut" {
+                    if let Some(pre_cut) = current.as_ref() {
+                        for record in &mut requested_holes {
+                            let evidence = verify_hole_record(pre_cut, &candidate, record, &holes)?;
+                            let status = evidence["status"].clone();
+                            record["status"] = status;
+                            record["sampled_evidence"] = evidence;
+                        }
+                    } else {
+                        for record in &mut requested_holes {
+                            record["status"] = json!("unverified");
+                            record["sampling_reason"] = json!("no_pre_cut_shape");
+                        }
                     }
                 } else {
                     for record in &mut requested_holes {
                         record["status"] = json!("unverified");
-                        record["sampling_reason"] = json!("no_pre_cut_shape");
-                    }
-                }
-            } else {
-                for record in &mut requested_holes {
-                    record["status"] = json!("unverified");
-                    record["sampling_reason"] = json!("hole_feature_operation_not_cut");
-                }
-            }
-        }
-        rows.push(
-            json!({"feature_id":feature["id"],"kind":feature["kind"],"operation":operation,
-            "state":if no_op_pattern {"no_op"} else {"built"},"geometry_support":standard_support.as_ref().and_then(|v|v.get("status")).cloned().unwrap_or(json!("exact")),
-            "support_details":standard_support,"volume_before_mm3":before_volume,
-            "volume_after_mm3":volume,"volume_delta_mm3":delta,
-            "warning":if no_op_pattern {Some("阵列没有新增几何；可能数量为 1，或所有切除实例都落在已有空腔中。") } else {None}}),
-        );
-        let report_start = holes.len();
-        if let Some(pre_cut) = hole_pre_cut {
-            let mut instances = Vec::with_capacity(requested_holes.len());
-            for (offset, record) in requested_holes.iter_mut().enumerate() {
-                let counterbore_pilot_radius = matching_counterbore_pilot_radius(&holes, record);
-                match hole_request_from_record(&pre_cut, record) {
-                    Ok((request, expected_blind_depth)) => instances.push(PendingBore {
-                        report_index: report_start + offset,
-                        request,
-                        expected_blind_depth,
-                        counterbore_pilot_radius,
-                    }),
-                    Err(error) => {
-                        record["final_measurement_status"] = json!("candidate_unverified");
-                        record["final_measurement_reason"] = json!(error);
+                        record["sampling_reason"] = json!("hole_feature_operation_not_cut");
                     }
                 }
             }
-            if !instances.is_empty() {
-                pending_bore_groups.push(PendingBoreGroup { pre_cut, instances });
+            rows.push(
+                json!({"feature_id":feature["id"],"kind":feature["kind"],"operation":operation,
+                "state":if no_op_pattern {"no_op"} else {"built"},"geometry_support":standard_support.as_ref().and_then(|v|v.get("status")).cloned().unwrap_or(json!("exact")),
+                "support_details":standard_support,"volume_before_mm3":before_volume,
+                "volume_after_mm3":volume,"volume_delta_mm3":delta,
+                "warning":if no_op_pattern {Some("阵列没有新增几何；可能数量为 1，或所有切除实例都落在已有空腔中。") } else {None}}),
+            );
+            let report_start = holes.len();
+            if let Some(pre_cut) = hole_pre_cut {
+                let mut instances = Vec::with_capacity(requested_holes.len());
+                for (offset, record) in requested_holes.iter_mut().enumerate() {
+                    let counterbore_pilot_radius = matching_counterbore_pilot_radius(&holes, record);
+                    match hole_request_from_record(&pre_cut, record) {
+                        Ok((request, expected_blind_depth)) => instances.push(PendingBore {
+                            report_index: report_start + offset,
+                            request,
+                            expected_blind_depth,
+                            counterbore_pilot_radius,
+                        }),
+                        Err(error) => {
+                            record["final_measurement_status"] = json!("candidate_unverified");
+                            record["final_measurement_reason"] = json!(error);
+                        }
+                    }
+                }
+                if !instances.is_empty() {
+                    pending_bore_groups.push(PendingBoreGroup { pre_cut, instances });
+                }
             }
+            previous_feature_id = feature["id"].as_str().map(str::to_owned);
+            previous_feature_tools = tools;
+            previous_feature_holes = requested_holes.clone();
+            holes.extend(requested_holes);
+            current = Some(candidate);
+            Ok(())
+            })();
+        if let Err(error) = feature_result {
+            check_cancel(cancelled)?;
+            let Some(prefix_shape) = current.take() else {
+                return Err(error);
+            };
+            return partial_build_result(
+                plan,
+                &validation,
+                &kernel,
+                prefix_shape,
+                &rows,
+                &feature_id,
+                &error,
+            );
         }
-        previous_feature_id = feature["id"].as_str().map(str::to_owned);
-        previous_feature_tools = tools;
-        previous_feature_holes = requested_holes.clone();
-        holes.extend(requested_holes);
-        current = Some(candidate);
     }
     let shape = current.ok_or("没有启用的实体特征。")?;
     let mut hole_instances = holes.clone();
@@ -635,6 +654,86 @@ pub fn build(plan: &Value, manifest: &Path, cancelled: &AtomicBool) -> Result<Bu
         "hole_measurements_verified":hole_measurements_verified,
         "catia_executed":false,"image_acceptance":"not_performed"});
     Ok(BuiltPlan { shape, report })
+}
+
+fn partial_build_result(
+    plan: &Value,
+    validation: &Value,
+    kernel: &Kernel,
+    shape: Shape,
+    rows: &[Value],
+    failed_feature_id: &str,
+    failure: &str,
+) -> Result<BuiltPlan, String> {
+    let applied = longest_built_prefix(plan, rows, failed_feature_id)
+        .ok_or_else(|| failure.to_owned())?;
+
+    let analysis = shape.analyze()?;
+    if !is_valid_single_closed_solid(
+        analysis.valid,
+        analysis.solid_count,
+        analysis.closed_solid_count,
+    ) {
+        return Err(failure.to_owned());
+    }
+    let bounds = shape.bounds()?;
+    let volume = shape.volume()?;
+    let fingerprint = cad_plan::geometry_fingerprint(plan)?;
+    let report = json!({
+        "state":"partial",
+        "execution_engine":"rust_c_abi_occt",
+        "occt_version":kernel.version(),
+        "geometry_fingerprint":fingerprint,
+        "validation":validation,
+        "feature_results":rows,
+        "applied_feature_ids":applied,
+        "failed_feature_id":failed_feature_id,
+        "failure_code":"feature_build_failed",
+        "failure_summary":failure.chars().take(500).collect::<String>(),
+        "bounds_mm":[bounds.xmin,bounds.ymin,bounds.zmin,bounds.xmax,bounds.ymax,bounds.zmax],
+        "dimensions_mm":[bounds.xmax-bounds.xmin,bounds.ymax-bounds.ymin,bounds.zmax-bounds.zmin],
+        "volume_mm3":volume,
+        "valid":true,
+        "solid_count":1,
+        "closed_solid_count":1,
+        "catia_executed":false,
+        "image_acceptance":"not_performed"
+    });
+    Ok(BuiltPlan {
+        shape,
+        report,
+    })
+}
+
+fn longest_built_prefix(
+    plan: &Value,
+    rows: &[Value],
+    failed_feature_id: &str,
+) -> Option<Vec<String>> {
+    let enabled = plan["features"]
+        .as_array()?
+        .iter()
+        .filter(|feature| feature["enabled"] != false)
+        .map(|feature| feature["id"].as_str())
+        .collect::<Option<Vec<_>>>()?;
+    let applied = rows
+        .iter()
+        .map(|row| row["feature_id"].as_str())
+        .collect::<Option<Vec<_>>>()?;
+    let prefix_len = applied.len();
+    if prefix_len == 0
+        || prefix_len >= enabled.len()
+        || rows.iter().any(|row| row["state"] != "built")
+        || applied != enabled.iter().take(prefix_len).copied().collect::<Vec<_>>()
+        || enabled.get(prefix_len).copied() != Some(failed_feature_id)
+    {
+        return None;
+    }
+    Some(applied.into_iter().map(str::to_owned).collect())
+}
+
+fn is_valid_single_closed_solid(valid: i32, solid_count: usize, closed_solid_count: usize) -> bool {
+    valid == 1 && solid_count == 1 && closed_solid_count == 1
 }
 
 fn hole_measurements_complete(instances: &[Value]) -> bool {
@@ -1758,6 +1857,51 @@ mod tests {
         ))
         .unwrap()
     }
+    #[test]
+    fn partial_builder_keeps_only_a_nonempty_longest_built_prefix() {
+        let plan = json!({"features":[
+            {"id":"body","enabled":true},
+            {"id":"hole-1","enabled":true},
+            {"id":"hole-2","enabled":true}
+        ]});
+        assert_eq!(longest_built_prefix(&plan, &[], "body"), None,
+            "first-feature failure has no partial solid to publish");
+        assert_eq!(
+            longest_built_prefix(
+                &plan,
+                &[json!({"feature_id":"body","state":"built"})],
+                "hole-1"
+            ),
+            Some(vec!["body".to_string()])
+        );
+        assert_eq!(
+            longest_built_prefix(
+                &plan,
+                &[json!({"feature_id":"body","state":"no_op"})],
+                "hole-1"
+            ),
+            None,
+            "no-op feature is not evidence that geometry was applied"
+        );
+        assert_eq!(
+            longest_built_prefix(
+                &plan,
+                &[json!({"feature_id":"hole-1","state":"built"})],
+                "hole-2"
+            ),
+            None,
+            "a non-prefix applied ID list is rejected"
+        );
+    }
+
+    #[test]
+    fn partial_builder_rejects_invalid_multi_or_open_brep() {
+        assert!(is_valid_single_closed_solid(1, 1, 1));
+        assert!(!is_valid_single_closed_solid(0, 1, 1));
+        assert!(!is_valid_single_closed_solid(1, 2, 2));
+        assert!(!is_valid_single_closed_solid(1, 1, 0));
+    }
+
     #[test]
     fn fixture_passes_preflight_but_unimplemented_variants_do_not() {
         let original = fixture();

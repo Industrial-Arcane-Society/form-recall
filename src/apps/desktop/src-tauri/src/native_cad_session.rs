@@ -302,6 +302,18 @@ pub fn complete_preview(state: &Value, outcome: BackendOutcome) -> Result<Sessio
     if outcome.revision != rev || outcome.geometry_fingerprint != sig {
         return Err("后端结果对应旧 revision 或不同 geometry fingerprint。".into());
     }
+    if let Some(generation) = outcome.preview.get("preview_generation").and_then(Value::as_u64) {
+        let expected = next
+            .get("preview_generation")
+            .and_then(Value::as_u64)
+            .unwrap_or(0)
+            .checked_add(1)
+            .ok_or("预览 generation 已溢出。")?;
+        if generation != expected {
+            return Err("后端结果对应旧 preview generation；拒绝提交预览。".into());
+        }
+        next["preview_generation"] = json!(generation);
+    }
     if !outcome.output_paths.is_object()
         || outcome
             .output_paths
@@ -389,10 +401,12 @@ pub fn complete_preview(state: &Value, outcome: BackendOutcome) -> Result<Sessio
                 .unwrap_or_else(|| json!({"state":"partial"}));
             next["partial_preview"] = json!({
                 "state":"candidate_partial_not_accepted",
+                "accepted":false,
                 "revision":rev,
                 "requested_geometry_fingerprint":sig,
                 "partial_geometry_checks":checks,
                 "applied_feature_ids":checks.get("applied_feature_ids").cloned().unwrap_or(json!([])),
+                "failed_feature_id":checks.get("failed_feature_id"),
                 "preview_generation":preview.get("preview_generation"),
                 "output_paths":preview.get("output_paths")
             });
@@ -1215,11 +1229,17 @@ mod tests {
         let plan = state.get("plan").expect("fixture has a CADPlan");
         let revision = super::revision(state);
         let fingerprint = cad_plan::geometry_fingerprint(plan).unwrap();
+        let generation = state
+            .get("preview_generation")
+            .and_then(Value::as_u64)
+            .unwrap_or(0)
+            + 1;
         complete_preview(state, BackendOutcome {
             revision,
             geometry_fingerprint:fingerprint,
             output_paths:json!({"preview":"fixture-preview.png","geometry_report":"fixture-geometry.json"}),
             preview:json!({
+                "preview_generation":generation,
                 "execution_engine":"rust_c_abi_occt",
                 "local_geometry_checks":report
             }),
@@ -1765,6 +1785,24 @@ mod tests {
         .unwrap();
         assert_eq!(dispatch.finish_state, "candidate_partial_not_accepted");
         assert_eq!(dispatch.report["accepted"], false);
+    }
+
+    #[test]
+    fn complete_preview_discards_stale_generation() {
+        let mut s = json!({"revision":2,"has_references":false,"plan":valid_body_plan(),"actions":[]});
+        s["preview_generation"] = json!(8);
+        let fingerprint = cad_plan::geometry_fingerprint(&s["plan"]).unwrap();
+        let error = complete_preview(
+            &s,
+            BackendOutcome {
+                revision: 2,
+                geometry_fingerprint: fingerprint,
+                output_paths: json!({"preview":"stale.png"}),
+                preview: json!({"preview_generation":8,"execution_engine":"rust_c_abi_occt",
+                    "local_geometry_checks":geometry_report(&s["plan"],2,"partial")}),
+            },
+        ).unwrap_err();
+        assert!(error.contains("旧 preview generation"), "{error}");
     }
 
     #[test]

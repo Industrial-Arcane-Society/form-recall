@@ -260,6 +260,9 @@ impl NativeToolExecutor {
                     .as_deref()
                     .ok_or("原生OCCT runtime尚未配置；拒绝调用Python几何fallback。")?;
                 let built = crate::native_plan_geometry::build(plan, manifest, cancelled)?;
+                if built.report["state"] != "built" {
+                    return Err("当前 CADPlan 只有部分几何，不能生成 shell 面选择器。".into());
+                }
                 let fingerprint = crate::cad_plan::geometry_fingerprint(plan)?;
                 let kernel_version = built.report["occt_version"]
                     .as_str()
