@@ -1528,6 +1528,15 @@ mod input_image_tests {
         let model_glb = app_data.join("native-quick").join("mesh.glb");
         fs::create_dir_all(model_glb.parent().unwrap()).unwrap();
         fs::write(&model_glb, b"glb").unwrap();
+        let agent_glb = app_data
+            .join("agent-host")
+            .join("workspaces")
+            .join("session-test")
+            .join("native-output")
+            .join("r9-g4-signature-nonce")
+            .join("candidate.glb");
+        fs::create_dir_all(agent_glb.parent().unwrap()).unwrap();
+        fs::write(&agent_glb, b"agent glb").unwrap();
         let other_app_data_file = app_data.join("native-quick").join("notes.txt");
         fs::write(&other_app_data_file, b"text").unwrap();
         let outside_glb = scratch.join("outside.glb");
@@ -1541,11 +1550,21 @@ mod input_image_tests {
             resolve_asset_path(&model_glb, &preview, &app_data, None).unwrap(),
             model_glb.canonicalize().unwrap()
         );
+        assert_eq!(
+            resolve_asset_path(&agent_glb, &preview, &app_data, None).unwrap(),
+            agent_glb.canonicalize().unwrap(),
+            "Agent-generated previews are stored in app-data workspaces too"
+        );
         fs::remove_dir_all(&preview).unwrap();
         assert_eq!(
             resolve_asset_path(&model_glb, &preview, &app_data, None).unwrap(),
             model_glb.canonicalize().unwrap(),
             "app data GLB remains readable before the preview cache is created"
+        );
+        assert_eq!(
+            resolve_asset_path(&agent_glb, &preview, &app_data, None).unwrap(),
+            agent_glb.canonicalize().unwrap(),
+            "Agent workspace GLB remains readable before the preview cache is created"
         );
         assert!(resolve_asset_path(&other_app_data_file, &preview, &app_data, None).is_err());
         assert!(resolve_asset_path(&outside_glb, &preview, &app_data, None).is_err());
