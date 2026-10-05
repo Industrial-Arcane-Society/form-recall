@@ -884,7 +884,11 @@ pub async fn review(
         && state["partial_preview"]
             .get("preview_generation")
             .and_then(Value::as_u64)
-            == Some(generation);
+            == Some(generation)
+        && state["partial_preview"]
+            .get("requested_geometry_fingerprint")
+            .and_then(Value::as_str)
+            == crate::cad_plan::geometry_fingerprint(&state["plan"]).ok().as_deref();
     if !partial
         && (state.get("last_preview").is_none_or(Value::is_null)
             || state.get("preview_revision").and_then(Value::as_i64) != Some(rev))
@@ -978,7 +982,11 @@ pub async fn review(
     }
     let turns = load_turns(&ctx.user_turns_manifest)?;
     let (stage_scope, stage_complete, full_current_geometry_in_scope, stage_feature_ids) =
-        verified_stage_scope(state, rev)?;
+        if partial {
+            verified_partial_prefix_scope(state, rev, generation)?
+        } else {
+            verified_stage_scope(state, rev)?
+        };
     let review_scope = "verified_construction_stage";
     let target_fp = crate::native_state_summary::user_target_fingerprint(&turns);
     let geom_view = preview_row
@@ -1364,8 +1372,11 @@ pub async fn review(
                     .clone(),
             );
     }
-    result_value["finding_lifecycle"] =
-        crate::native_review_findings::reconcile(&mut next, &result_value)?;
+    result_value["finding_lifecycle"] = if partial {
+        json!({"state":"diagnostic_only","created":[],"closed":[],"updated":[]})
+    } else {
+        crate::native_review_findings::reconcile(&mut next, &result_value)?
+    };
     next["reference_similarity_review"] = result_value.clone();
     if !next
         .get("reference_similarity_reviews")
@@ -1496,6 +1507,94 @@ fn verified_stage_scope(
         json!({"revision":revision,"features":rows}),
         complete,
         full_current_geometry_in_scope,
+        ids,
+    ))
+}
+
+/// A failed build can support diagnostics only when the native host signed a
+/// valid solid and an explicit successful feature prefix for this exact plan.
+/// The prefix is checked against the ordered enabled plan features; it is not
+/// taken from a milestone declaration or a model-authored list.
+fn verified_partial_prefix_scope(
+    state: &Value,
+    revision: i64,
+    generation: u64,
+) -> Result<(Value, bool, bool, BTreeSet<String>), String> {
+    let partial = state
+        .get("partial_preview")
+        .filter(|v| v.is_object())
+        .ok_or("当前没有宿主记录的部分几何预览。")?;
+    let fingerprint = crate::cad_plan::geometry_fingerprint(&state["plan"])?;
+    let checks = partial
+        .get("partial_geometry_checks")
+        .filter(|v| v.is_object())
+        .ok_or("部分预览缺少宿主几何报告。")?;
+    let attestation = checks
+        .get("host_attestation")
+        .filter(|v| v.is_object())
+        .ok_or("部分预览缺少宿主签章。")?;
+    let mut unsigned = checks.clone();
+    unsigned.as_object_mut().unwrap().remove("host_attestation");
+    let report_sha = sha(&serde_json::to_vec(&unsigned).map_err(|e| e.to_string())?);
+    if partial["revision"].as_i64() != Some(revision)
+        || partial["preview_generation"].as_u64() != Some(generation)
+        || partial["requested_geometry_fingerprint"].as_str() != Some(fingerprint.as_str())
+        || checks["state"] != "partial"
+        || checks["execution_engine"] != "rust_c_abi_occt"
+        || checks["revision"].as_i64() != Some(revision)
+        || checks["geometry_fingerprint"].as_str() != Some(fingerprint.as_str())
+        || checks["valid"] != true
+        || checks["closed_solid_count"] != 1
+        || attestation["schema_version"].as_u64() != Some(1)
+        || attestation["issuer"] != "native_cad_session.complete_preview"
+        || attestation["revision"].as_i64() != Some(revision)
+        || attestation["geometry_fingerprint"].as_str() != Some(fingerprint.as_str())
+        || attestation["report_sha256"].as_str() != Some(report_sha.as_str())
+    {
+        return Err(
+            "部分几何报告未绑定当前 revision、plan fingerprint 且有效的宿主 B-Rep 签章。"
+                .into(),
+        );
+    }
+    let features = state["plan"]["features"]
+        .as_array()
+        .ok_or("当前CADPlan缺少features。")?;
+    let enabled = features
+        .iter()
+        .filter(|f| f["enabled"] != false)
+        .collect::<Vec<_>>();
+    let applied =
+        validated_scope_ids(checks.get("applied_feature_ids"), "applied_feature_ids")?;
+    let expected_prefix = enabled
+        .iter()
+        .take(applied.len())
+        .filter_map(|f| f["id"].as_str().map(str::to_owned))
+        .collect::<BTreeSet<_>>();
+    let ordered_prefix = expected_prefix.len() == applied.len() && expected_prefix == applied;
+    let rows = checks
+        .get("feature_results")
+        .and_then(Value::as_array)
+        .ok_or("部分报告缺少逐特征结果。")?;
+    let rows_match = rows.len() == applied.len()
+        && rows.iter().zip(enabled.iter()).all(|(row, feature)| {
+            row["feature_id"] == feature["id"] && row["state"] == "built"
+        });
+    let next_failed = enabled.get(applied.len()).and_then(|f| f["id"].as_str());
+    if applied.is_empty() || !ordered_prefix || !rows_match
+        || checks["failed_feature_id"].as_str() != next_failed
+    {
+        return Err("部分预览没有宿主证明的最长连续成功特征前缀。".into());
+    }
+    let ids = applied.clone();
+    let scope_rows = enabled
+        .iter()
+        .take(applied.len())
+        .map(|f| json!({"id":f["id"],"kind":f.get("kind"),"operation":f.get("operation")}))
+        .collect::<Vec<_>>();
+    Ok((
+        json!({"revision":revision,"features":scope_rows,"diagnostic_only":true}),
+        false,
+        false,
         ids,
     ))
 }
@@ -2377,6 +2476,39 @@ mod tests {
         let (_, complete, full_scope, _) = verified_stage_scope(&partial_scope, 7).unwrap();
         assert!(complete);
         assert!(!full_scope);
+    }
+
+    #[test]
+    fn partial_review_scope_requires_signed_longest_valid_prefix_and_is_diagnostic() {
+        let plan = json!({"features":[
+            {"id":"body","kind":"box","operation":"add"},
+            {"id":"hole-1","kind":"hole","operation":"cut"}
+        ]});
+        let fingerprint = crate::cad_plan::geometry_fingerprint(&plan).unwrap();
+        let mut checks = json!({
+            "state":"partial","execution_engine":"rust_c_abi_occt","revision":7,
+            "geometry_fingerprint":fingerprint,"valid":true,"closed_solid_count":1,
+            "applied_feature_ids":["body"],"failed_feature_id":"hole-1",
+            "feature_results":[{"feature_id":"body","state":"built"}]
+        });
+        let digest = sha(&serde_json::to_vec(&checks).unwrap());
+        checks["host_attestation"] = json!({"schema_version":1,
+            "issuer":"native_cad_session.complete_preview","revision":7,
+            "geometry_fingerprint":fingerprint,"report_sha256":digest});
+        let state = json!({"revision":7,"plan":plan,"partial_preview":{
+            "state":"candidate_partial_not_accepted","revision":7,"preview_generation":3,
+            "requested_geometry_fingerprint":fingerprint,"partial_geometry_checks":checks
+        }});
+        let (scope, complete, full, ids) = verified_partial_prefix_scope(&state, 7, 3).unwrap();
+        assert_eq!(ids, BTreeSet::from(["body".to_string()]));
+        assert_eq!(scope["diagnostic_only"], true);
+        assert!(!complete && !full);
+        assert!(verified_partial_prefix_scope(&state, 7, 4).is_err());
+
+        let mut forged = state.clone();
+        forged["partial_preview"]["partial_geometry_checks"]["applied_feature_ids"] = json!(["hole-1"]);
+        // Any report edit invalidates the host signature.
+        assert!(verified_partial_prefix_scope(&forged, 7, 3).is_err());
     }
 
     #[test]

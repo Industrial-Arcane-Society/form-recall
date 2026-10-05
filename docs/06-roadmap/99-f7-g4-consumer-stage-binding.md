@@ -19,13 +19,19 @@ summary 消费端重新验证 milestone 和 review 的 revision 一致，并要�
 - `native_cad_session::tests::same_revision_milestone_shrink_invalidates_review_before_finish_acceptance` 和新增的扩展分支先建立 accepted baseline，再同 revision 改 milestone 并重算 finish，确认 accepted 变为 false 且为 candidate。
 - `native_cad_metadata::tests::milestone_requires_both_scope_arrays_and_rejects_empty_completed_scope` 覆盖任一字段缺失以及已有 CADPlan 下空 completed scope；`milestone_accepts_nonempty_partial_and_full_scopes` 覆盖非空 partial/full scope；`native_tool_schemas::tests::construction_milestone_schema_requires_explicit_scope_arrays` 锁定 embedded schema 的 required 字段。
 
-当前验证：`native_vision_domain::tests` 23/23、`native_state_summary::tests` 8/8、`native_review_findings::tests` 11/11、`native_cad_session::tests::finish_` 4/4、两个 `same_revision_milestone` 集成回归 2/2。每组使用仓库 `scripts/test-lib.ps1 -Offline` wrapper，设置了所需 `AIMODELER_TEST_NODE` 与 `AIMODELER_TEST_ACP_FIXTURE`。没有运行全套件；完整套件先前存在并发/环境失败迹象，不将其归因于本次修复。
+此前 G4 消费端验证：`native_vision_domain::tests` 23/23、`native_state_summary::tests` 8/8、`native_review_findings::tests` 11/11、`native_cad_session::tests::finish_` 4/4、两个 `same_revision_milestone` 集成回归 2/2。每组使用仓库 `scripts/test-lib.ps1 -Offline` wrapper，设置了所需 `AIMODELER_TEST_NODE` 与 `AIMODELER_TEST_ACP_FIXTURE`。没有运行全套件；完整套件先前存在并发/环境失败迹象，不将其归因于此前修复。
 
 本分支新增入口契约定向验证：`pwsh -NoProfile -File src/apps/desktop/src-tauri/scripts/test-lib.ps1 -Offline -Filter native_cad_metadata::tests::milestone_` 为 4 passed / 0 failed；`pwsh -NoProfile -File src/apps/desktop/src-tauri/scripts/test-lib.ps1 -Offline -Filter native_tool_schemas::tests::construction_milestone_schema_requires_explicit_scope_arrays -Exact` 为 1 passed / 0 failed。两项均为本地离线 Rust CLI 单元测试，不调用 provider 或 DSH。
 
 ## 未解决的 partial-preview 路径
 
-`review` 仍可识别 partial preview 并设置 partial-candidate diagnostic，但随后 `verified_stage_scope` 要求当前 revision 有成功完整构建和 host geometry attestation。由此 partial review 在进入 provider 前被拒绝；现有生产路径契约与 partial diagnostic 分支不一致。本次 P0 保留此路径，避免把 partial review 提升为 coverage 或改变 finding 生命周期。应在单独变更中确定 partial review 的诊断输入契约，并证明其零 coverage、不会创建/关闭 finding 后再修复。
+本次补上了 G4 消费端的安全契约：Rust `complete_preview` 只从宿主 OCCT 报告中的有序 `feature_results` 派生 `applied_feature_ids`，并且要求 partial B-Rep 明确为 valid 单闭合实体；G4 对 partial review 再校验 revision、preview generation、完整 plan fingerprint、签章 report hash、连续启用特征前缀以及前缀后的首个失败 ID。通过后只把该前缀用于诊断归属，stage 完成/全几何覆盖恒为 false，coverage 的 `covered_evidence_ids` 为空，finding lifecycle 不调用，因此不能新建、更新或关闭 finding。partial finish 仍走 `candidate_partial_not_accepted`。
+
+**端到端生产可达性仍未完成。** 当前 `native_geometry_backend::build_preview` 调用 `native_plan_geometry::build(...)?`；build 任一特征失败会直接返回 `Err`，尚不渲染或返回累计前缀、失败特征 ID 与 partial 报告。因此上面消费端只对具备完整宿主报告契约的 partial 输入开放；当前 OCCT 构建生产者仍不能生成这类输入，partial review 仍不能从正常真实构建失败路径抵达。下一步要把 feature build 改为逐项失败结果，并在失败时验证累计 Shape 为单一有效闭合 B-Rep、用累计 Shape 渲染各视图、保存 report/preview rows，再穿过 native tool state；需给这条完整状态路径补 mock backend 回归。没有用 Python 产生的 `partial_geometry_checks` 或 requested plan ID 冒充宿主签章/applied IDs。
+
+本次定向回归锁定 prefix 派生、report 签章、错误 ID 拒绝与 revision/generation 绑定；未声称真实 provider 视觉判断或真实 OCCT 失败路径已验收。
+
+本次离线定向验证：`pwsh -NoProfile -File scripts/test-lib.ps1 -Offline -Filter native_vision_domain::tests` 为 24 passed / 0 failed；`-Filter native_cad_session::tests::partial_preview` 为 2 passed / 0 failed。两个命令均只跑本地 Rust 单元测试。
 
 ## 验收边界
 
