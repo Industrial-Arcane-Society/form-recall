@@ -508,7 +508,29 @@ test('Cordis binding projection reports exact static reason counts and never lea
     'correlation_fingerprint_missing', 'invocation_count_mismatch', 'identity_pairing_ambiguous', 'acp_identity_missing',
     'run_scope_mismatch', 'bridge_call_id_missing', 'bridge_scope_rejected', 'bridge_time_invalid',
     'bridge_execution_rejected', 'schema_missing', 'registration_missing', 'native_audit_missing',
-    'native_audit_tool_mismatch', 'native_audit_out_of_run', 'native_audit_rejected'].includes(row.outcome)))
+    'native_audit_tool_mismatch', 'native_audit_out_of_run', 'native_audit_rejected', 'bridge_dispatch_failed'].includes(row.outcome)))
+})
+
+test('bridge dispatch diagnostics retain fixed failure stage and code only', () => {
+  const input = fixture()
+  const call = input.toolBridgeCalls[0]
+  call.success = false
+  call.dispatch_stage = 'pre_executor_deadline'
+  call.dispatch_failure_code = 'deadline_exceeded'
+  call.call_id = 'private-call-id-sentinel'
+  call.arguments_sha256_24 = 'a'.repeat(24)
+  call.error = 'private-error-body-sentinel'
+  const projection = summarizeCordisBindingDiagnostics(input)
+  const row = projection.counts.find(item => item.stage === 'bridge_dispatch')
+  assert.deepEqual(row, { tool_name: 'cad_finish_model', stage: 'bridge_dispatch', outcome: 'bridge_dispatch_failed',
+    dispatch_stage: 'pre_executor_deadline', failure_code: 'deadline_exceeded', count: 1 })
+  call.dispatch_stage = 'raw-stage-sentinel'
+  call.dispatch_failure_code = 'raw-error-code-sentinel'
+  const sanitized = summarizeCordisBindingDiagnostics(input).counts.find(item => item.stage === 'bridge_dispatch')
+  assert.equal(sanitized.dispatch_stage, 'unknown')
+  assert.equal(sanitized.failure_code, 'unknown')
+  const serialized = JSON.stringify(projection)
+  for (const secret of ['private-call-id-sentinel', 'private-error-body-sentinel', 'a'.repeat(24)]) assert.equal(serialized.includes(secret), false)
 })
 
 test('Cordis binding projection uses exact ACP identities for repeated identical calls', () => {
@@ -805,6 +827,24 @@ test('published Cordis diagnostics preserve fixed native audit error classes onl
     const success = cordis.counts.find(row => row.stage === 'bridge_to_audit' && row.outcome === 'matched')
     assert.equal(success.count, 1)
     assert.equal(Object.hasOwn(success, 'error_class'), false)
+    const dispatchProjection = summarizeCordisBindingDiagnostics({ ...fixture(), toolBridgeCalls: [{
+      tool: 'cad_finish_model', success: false, dispatch_stage: 'executor_return', dispatch_failure_code: 'executor_failed',
+    }] })
+    const dispatchRow = dispatchProjection.counts.find(row => row.stage === 'bridge_dispatch')
+    dispatchRow.dispatch_stage = 'raw-stage-sentinel'
+    dispatchRow.failure_code = 'raw-failure-sentinel'
+    writeSafeAcceptanceArtifacts(join(root, 'dispatch-run'), {
+      summary: buildSafeAcceptanceSummary({}), acpProjection: {}, bindingProjection: dispatchProjection, visionProjection: {},
+      buildStatus: { status: 'passed', exit_code: 0 },
+    })
+    const dispatchText = readFileSync(join(root, 'dispatch-run', 'tool-result-diagnostics.jsonl'), 'utf8')
+    const dispatchRecord = dispatchText.trim().split('\n').map(JSON.parse)
+      .find(row => row.stage === 'cordis_binding_projection')
+    const publishedDispatch = dispatchRecord.counts.find(row => row.stage === 'bridge_dispatch')
+    assert.equal(publishedDispatch.dispatch_stage, 'unknown')
+    assert.equal(publishedDispatch.failure_code, 'unknown')
+    assert.equal(dispatchText.includes('raw-stage-sentinel'), false)
+    assert.equal(dispatchText.includes('raw-failure-sentinel'), false)
     for (const secret of [...secrets, 'raw-native-error-class-sentinel']) {
       assert.equal(publishedText.includes(secret), false, `published JSONL leaked ${secret}`)
     }
@@ -1433,5 +1473,43 @@ test('loopback bridge records exact native UUID and scope without token or bodie
     assert.equal(proxy.records[0].arguments_sha256_24, toolArgumentsFingerprint({ private: 'private-argument-marker' }))
     const serialized = JSON.stringify(proxy.records)
     for (const secret of ['fixture-token-marker', 'private-argument-marker', 'private-result-marker']) assert.equal(serialized.includes(secret), false)
+  } finally { await proxy.close(); await new Promise(done => native.close(done)) }
+})
+
+test('loopback bridge proxy reduces native error data to fixed dispatch enums', async () => {
+  const native = createServer(socket => {
+    let text = ''
+    socket.on('data', chunk => {
+      text += chunk
+      if (!text.includes('\n')) return
+      const request = JSON.parse(text.slice(0, text.indexOf('\n')))
+      socket.end(JSON.stringify({ jsonrpc: '2.0', id: request.id, error: { code: -32020,
+        message: 'private-error-body-sentinel', data: { code: 'DEADLINE_EXCEEDED', dispatch_stage: 'pre_executor_deadline',
+          detail: 'private-arguments-sentinel' } } }) + '\n')
+    })
+  })
+  await new Promise(done => native.listen(0, '127.0.0.1', done))
+  const proxy = await createAuditedToolProxy({ address: `127.0.0.1:${native.address().port}`, token: 'fixture-token-marker',
+    sessionId: 'native-session', turnId: 'turn', runId: 'run' })
+  try {
+    const port = Number(proxy.address.split(':')[1])
+    await new Promise((yes, no) => {
+      const socket = createConnection({ host: '127.0.0.1', port })
+      socket.on('error', no); socket.on('data', () => {}); socket.on('end', yes)
+      socket.on('connect', () => socket.write(JSON.stringify({ id: 'rpc', method: 'tools/call', params: {
+        token: 'fixture-token-marker', sessionId: 'native-session', turnId: 'turn', toolCallId: 'private-call-id',
+        name: 'cad_finish_model', arguments: { secret: 'private-arguments-sentinel' } } }) + '\n'))
+    })
+    assert.equal(proxy.records.length, 1)
+    assert.equal(proxy.records[0].dispatch_stage, 'pre_executor_deadline')
+    assert.equal(proxy.records[0].dispatch_failure_code, 'deadline_exceeded')
+    const projected = fixture()
+    projected.toolBridgeCalls[0].success = false
+    projected.toolBridgeCalls[0].dispatch_stage = proxy.records[0].dispatch_stage
+    projected.toolBridgeCalls[0].dispatch_failure_code = proxy.records[0].dispatch_failure_code
+    const serialized = JSON.stringify(summarizeCordisBindingDiagnostics(projected))
+    for (const secret of ['private-error-body-sentinel', 'private-arguments-sentinel', 'private-call-id', 'fixture-token-marker']) {
+      assert.equal(serialized.includes(secret), false)
+    }
   } finally { await proxy.close(); await new Promise(done => native.close(done)) }
 })

@@ -32,7 +32,11 @@ const bindingOutcomes = Object.freeze({
     'bridge_scope_rejected', 'bridge_time_invalid', 'bridge_execution_rejected', 'schema_missing',
     'registration_missing', 'native_audit_missing', 'native_audit_tool_mismatch', 'native_audit_out_of_run',
     'native_audit_rejected']),
+  bridge_dispatch: Object.freeze(['bridge_dispatch_failed']),
 })
+const dispatchStages = new Set(['pre_executor_validation', 'pre_executor_deadline', 'executor_return', 'response_writeback', 'unknown'])
+const dispatchFailureCodes = new Set(['invalid_params', 'unknown_tool', 'call_conflict', 'deadline_exceeded',
+  'executor_failed', 'response_missing', 'response_invalid', 'unknown'])
 
 const stableJson = value => {
   if (value === null || typeof value !== 'object') return JSON.stringify(value) ?? 'null'
@@ -156,7 +160,8 @@ export function summarizeCordisBindingDiagnostics(input = {}) {
   const bump = (toolName, stage, outcome, count = 1, errorClass = null) => {
     const name = safeToolName(toolName)
     const code = bindingOutcomes[stage].includes(outcome) ? outcome : 'tool_name_not_allowlisted'
-    const safeClass = code === 'native_audit_rejected' ? safeNativeAuditErrorClass(errorClass) : ''
+    const safeClass = code === 'native_audit_rejected' ? safeNativeAuditErrorClass(errorClass)
+      : stage === 'bridge_dispatch' && typeof errorClass === 'string' ? errorClass : ''
     const key = `${name}\u0000${stage}\u0000${code}\u0000${safeClass}`
     counts.set(key, (counts.get(key) || 0) + count)
   }
@@ -243,9 +248,18 @@ export function summarizeCordisBindingDiagnostics(input = {}) {
     else if (!timedRows.some(row => row.success === true)) outcome = 'native_audit_rejected'
     const rejectedAudit = outcome === 'native_audit_rejected' ? timedRows.find(row => row.success === false) : null
     bump(name, 'bridge_to_audit', outcome, 1, rejectedAudit?.error?.type)
+    if (call.success !== true) {
+      const dispatchStage = dispatchStages.has(call.dispatch_stage) ? call.dispatch_stage : 'unknown'
+      const failureCode = dispatchFailureCodes.has(call.dispatch_failure_code) ? call.dispatch_failure_code : 'unknown'
+      bump(name, 'bridge_dispatch', 'bridge_dispatch_failed', 1, `${dispatchStage}:${failureCode}`)
+    }
   }
   const countRows = [...counts.entries()].map(([key, count]) => {
     const [tool_name, stage, outcome, error_class] = key.split('\u0000')
+    if (stage === 'bridge_dispatch') {
+      const [dispatch_stage, failure_code] = error_class.split(':')
+      return { tool_name, stage, outcome, dispatch_stage, failure_code, count }
+    }
     return { tool_name, stage, outcome, ...(error_class ? { error_class } : {}), count }
   }).sort((left, right) => left.tool_name.localeCompare(right.tool_name)
     || left.stage.localeCompare(right.stage) || left.outcome.localeCompare(right.outcome))
@@ -280,6 +294,14 @@ export function summarizeVisualReviewDiagnostics(domain = {}) {
 }
 
 const nativeAuditErrorClasses = new Set(['argument_validation', 'state_conflict', 'execution', 'unknown'])
+const safeDispatchStages = new Set(['pre_executor_validation', 'pre_executor_deadline', 'executor_return', 'response_writeback', 'unknown'])
+const safeDispatchFailureCodes = new Set(['invalid_params', 'unknown_tool', 'call_conflict', 'deadline_exceeded',
+  'executor_failed', 'response_missing', 'response_invalid', 'unknown'])
+const safeDispatchCode = value => ({
+  INVALID_PARAMS: 'invalid_params', UNKNOWN_TOOL: 'unknown_tool', CALL_ID_REUSED: 'call_conflict',
+  CALL_IN_PROGRESS: 'call_conflict', DEADLINE_EXCEEDED: 'deadline_exceeded', TOOL_FAILED: 'executor_failed',
+  RESPONSE_TOO_LARGE: 'response_invalid',
+})[value] || 'unknown'
 function safeNativeAuditErrorClass(value) {
   return nativeAuditErrorClasses.has(value) ? value : 'unknown'
 }
@@ -310,6 +332,10 @@ export async function createAuditedToolProxy({ address, token, sessionId, turnId
     const finish = () => {
       if (record && !settled) {
         settled = true
+        if (record.success !== true) {
+          if (!safeDispatchStages.has(record.dispatch_stage)) record.dispatch_stage = 'response_writeback'
+          if (!safeDispatchFailureCodes.has(record.dispatch_failure_code)) record.dispatch_failure_code = 'response_missing'
+        }
         records.push({ ...record, completed_at_ms: Date.now(), success: record.success === true })
       }
     }
@@ -341,7 +367,24 @@ export async function createAuditedToolProxy({ address, token, sessionId, turnId
         const response = JSON.parse(responseBuffer.slice(0, end)), payload = response.result?.payload
         record.success = response.id === rpcId && !response.error && payload?.isError === false
           && payload.execution_engine === 'rust' && payload.tool === record.tool
-      } catch { record.success = false }
+        if (record.success !== true) {
+          const dispatch = response.error?.data
+          if (response.error) {
+            record.dispatch_stage = safeDispatchStages.has(dispatch?.dispatch_stage) ? dispatch.dispatch_stage : 'unknown'
+            record.dispatch_failure_code = safeDispatchCode(dispatch?.code)
+          } else if (response.id === rpcId && payload?.isError === true) {
+            record.dispatch_stage = 'executor_return'
+            record.dispatch_failure_code = 'executor_failed'
+          } else {
+            record.dispatch_stage = 'response_writeback'
+            record.dispatch_failure_code = 'response_invalid'
+          }
+        }
+      } catch {
+        record.success = false
+        record.dispatch_stage = 'response_writeback'
+        record.dispatch_failure_code = 'response_invalid'
+      }
       responseBuffer = ''; finish()
     })
     const failed = () => { finish(); client.destroy(); upstream.destroy() }

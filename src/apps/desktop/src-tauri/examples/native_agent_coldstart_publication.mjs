@@ -143,12 +143,15 @@ function safeBindingProjection(value) {
     'correlation_fingerprint_missing', 'invocation_count_mismatch', 'identity_pairing_ambiguous', 'acp_identity_missing',
     'run_scope_mismatch', 'bridge_call_id_missing', 'bridge_scope_rejected', 'bridge_time_invalid',
     'bridge_execution_rejected', 'schema_missing', 'registration_missing', 'native_audit_missing',
-    'native_audit_tool_mismatch', 'native_audit_out_of_run', 'native_audit_rejected'])
+    'native_audit_tool_mismatch', 'native_audit_out_of_run', 'native_audit_rejected', 'bridge_dispatch_failed'])
+  const dispatchStages = new Set(['pre_executor_validation', 'pre_executor_deadline', 'executor_return', 'response_writeback', 'unknown'])
+  const dispatchFailureCodes = new Set(['invalid_params', 'unknown_tool', 'call_conflict', 'deadline_exceeded',
+    'executor_failed', 'response_missing', 'response_invalid', 'unknown'])
   const nativeAuditErrorClasses = new Set(['argument_validation', 'state_conflict', 'execution', 'unknown'])
   return {
     schema: 'cordis_binding_projection_v1',
     counts: Array.isArray(value?.counts) ? value.counts.map(row => {
-      const stage = ['acp_to_bridge', 'bridge_to_audit'].includes(row?.stage) ? row.stage : 'unknown'
+      const stage = ['acp_to_bridge', 'bridge_to_audit', 'bridge_dispatch'].includes(row?.stage) ? row.stage : 'unknown'
       const outcome = outcomes.has(row?.outcome) ? row.outcome : 'tool_name_not_allowlisted'
       return {
         tool_name: toolNames.has(row?.tool_name) ? row.tool_name : 'unknown',
@@ -157,6 +160,10 @@ function safeBindingProjection(value) {
         ...(stage === 'bridge_to_audit' && outcome === 'native_audit_rejected'
           ? { error_class: nativeAuditErrorClasses.has(row?.error_class) ? row.error_class : 'unknown' }
           : {}),
+        ...(stage === 'bridge_dispatch' && outcome === 'bridge_dispatch_failed' ? {
+          dispatch_stage: dispatchStages.has(row?.dispatch_stage) ? row.dispatch_stage : 'unknown',
+          failure_code: dispatchFailureCodes.has(row?.failure_code) ? row.failure_code : 'unknown',
+        } : {}),
         count: safeCount(row?.count),
       }
     }) : [],

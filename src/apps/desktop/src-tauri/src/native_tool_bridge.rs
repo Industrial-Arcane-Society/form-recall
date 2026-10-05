@@ -4,7 +4,7 @@
 //! transport carries tool requests to Rust without ACP tool translation, MCP,
 //! or the Python tool worker.
 
-use serde_json::{Value, json};
+use serde_json::{json, Value};
 use sha2::{Digest, Sha256};
 use std::collections::{HashMap, HashSet, VecDeque};
 use std::fs;
@@ -282,7 +282,7 @@ fn handle_client(mut stream: TcpStream, shared: Arc<Shared>) {
             let _ = write_response(&mut stream, json!({"jsonrpc":"2.0","id":id,"result":value}));
         }
         Err(error) => {
-            let _ = write_error(&mut stream, id, -32020, &error.message, &error.code);
+            let _ = write_dispatch_error(&mut stream, id, -32020, &error);
         }
     }
 }
@@ -290,13 +290,24 @@ fn handle_client(mut stream: TcpStream, shared: Arc<Shared>) {
 struct BridgeError {
     code: String,
     message: String,
+    dispatch_stage: &'static str,
 }
 
 impl BridgeError {
     fn new(code: &str, message: impl Into<String>) -> Self {
+        let dispatch_stage = match code {
+            "INVALID_PARAMS" | "UNKNOWN_TOOL" | "CALL_ID_REUSED" | "CALL_IN_PROGRESS" => {
+                "pre_executor_validation"
+            }
+            "DEADLINE_EXCEEDED" => "pre_executor_deadline",
+            "TOOL_FAILED" => "executor_return",
+            "RESPONSE_TOO_LARGE" => "response_writeback",
+            _ => "unknown",
+        };
         Self {
             code: code.to_owned(),
             message: message.into(),
+            dispatch_stage,
         }
     }
 }
@@ -525,12 +536,35 @@ fn write_error(
 ) -> io::Result<()> {
     let mut response = json!({
         "jsonrpc":"2.0", "id":id,
-        "error":{"code":code,"message":message,"data":{"code":detail_code}}
+        "error":{"code":code,"message":message,"data":{"code":detail_code,
+            "dispatch_stage": if detail_code == "RESPONSE_TOO_LARGE" { "response_writeback" } else { "unknown" }}}
     });
     let mut bytes = serde_json::to_vec(&response)?;
     if bytes.len() > MAX_RESPONSE_BYTES {
         response["error"]["message"] = json!("工具桥响应错误。");
         bytes = serde_json::to_vec(&response)?;
+    }
+    stream.write_all(&bytes)?;
+    stream.write_all(b"\n")?;
+    stream.flush()
+}
+
+fn write_dispatch_error(
+    stream: &mut TcpStream,
+    id: Value,
+    code: i64,
+    error: &BridgeError,
+) -> io::Result<()> {
+    let response = json!({
+        "jsonrpc":"2.0", "id":id,
+        "error":{"code":code,"message":error.message,"data":{
+            "code":error.code,
+            "dispatch_stage":error.dispatch_stage,
+        }}
+    });
+    let bytes = serde_json::to_vec(&response)?;
+    if bytes.len() > MAX_RESPONSE_BYTES {
+        return write_error(stream, id, -32030, "工具桥响应错误。", "RESPONSE_TOO_LARGE");
     }
     stream.write_all(&bytes)?;
     stream.write_all(b"\n")?;
@@ -564,7 +598,7 @@ impl Drop for ConnectionCountGuard {
 #[cfg(test)]
 mod tests {
     use super::{NativeToolBridge, ToolExecutor};
-    use serde_json::{Value, json};
+    use serde_json::{json, Value};
     use std::collections::HashSet;
     use std::io::{BufRead, BufReader, Write};
     use std::net::TcpStream;
@@ -711,6 +745,10 @@ mod tests {
             json!({"toolCallId":"call-1","name":"cad_get_state","arguments":{"includeMeasurements":false}}),
         );
         assert_eq!(reused["error"]["data"]["code"], "CALL_ID_REUSED");
+        assert_eq!(
+            reused["error"]["data"]["dispatch_stage"],
+            "pre_executor_validation"
+        );
 
         let bad_tool = rpc(
             &bridge,
@@ -719,6 +757,10 @@ mod tests {
             json!({"toolCallId":"call-2","name":"not_registered","arguments":{}}),
         );
         assert_eq!(bad_tool["error"]["data"]["code"], "UNKNOWN_TOOL");
+        assert_eq!(
+            bad_tool["error"]["data"]["dispatch_stage"],
+            "pre_executor_validation"
+        );
 
         bridge.shutdown();
         let _ = std::fs::remove_dir_all(schemas_path.parent().unwrap());
@@ -752,6 +794,10 @@ mod tests {
             }),
         );
         assert_eq!(expired["error"]["data"]["code"], "DEADLINE_EXCEEDED");
+        assert_eq!(
+            expired["error"]["data"]["dispatch_stage"],
+            "pre_executor_deadline"
+        );
         let future_deadline = SystemTime::now()
             .duration_since(UNIX_EPOCH)
             .unwrap()
@@ -826,6 +872,10 @@ mod tests {
         assert_eq!(cancelled["result"]["cancelled"], true);
         let tool_result = call.join().unwrap();
         assert_eq!(tool_result["error"]["data"]["code"], "TOOL_FAILED");
+        assert_eq!(
+            tool_result["error"]["data"]["dispatch_stage"],
+            "executor_return"
+        );
 
         bridge.shutdown();
         let _ = std::fs::remove_dir_all(schemas_path.parent().unwrap());
