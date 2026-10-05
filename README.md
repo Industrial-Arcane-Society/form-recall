@@ -4,10 +4,11 @@
 
 ## 开发入口
 
-- 桌面应用：先在 `src/apps/desktop/` 运行一次 `npm ci`，之后可从仓库根目录运行 `npm run dev` 启动 Tauri 桌面开发版；也可进入 `src/apps/desktop/` 运行 `npm run tauri:dev`。
+- 桌面应用：先在仓库根目录运行 `npm ci --prefix src/apps/desktop`，之后运行 `npm run dev` 启动 Tauri 桌面开发版。根脚本会检查本地 Tauri CLI 和平台原生绑定；缺失或安装不完整时会打印修复命令。可用 `npm run dev -- --help` 向 Tauri CLI 传递参数。也可进入 `src/apps/desktop/` 运行 `npm run tauri:dev`。
 - 仅启动无桌面窗口的 Vite 前端服务：从仓库根目录运行 `npm run dev:web`，再访问终端显示的本地地址。
 - 现有 Python CLI：进入 `src/legacy/`，运行 `python -m ai_modeler --selftest`；输入 `python -m ai_modeler --help` 查看选项。
 - 当前迁移状态、研究记录、设计规范和复现方法：从 [`docs/README.md`](docs/README.md) 进入。
+- 根目录开发启动检查的 Node 回归：`npm run test:dev-cli`（不启动桌面窗口）。
 
 `temp/` 保存迁移前的文档和实验产物归档；新的 Agent 运行日志与本地生成记录也写入这里。该目录中的历史结果不是当前版本的自动验收结论。
 

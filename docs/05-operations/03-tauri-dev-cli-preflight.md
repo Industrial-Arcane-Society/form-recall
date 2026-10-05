@@ -12,7 +12,9 @@
 桌面目录 npm run build       → vue-tsc -b && vite build
 ~~~
 
-根目录 `npm run dev` 依次调用 `src/apps/desktop` 的 `tauri:dev`，再运行 `tauri dev --config src-tauri/tauri.dev.conf.json`；根目录 `npm run dev:web` 才只启动 Vite。Vite 固定绑定 `127.0.0.1:1420`（`strictPort: true`），Tauri `devUrl` 已对齐为 `http://127.0.0.1:1420`。此前 `localhost` 在本机 Node DNS 查询中优先解析到 `::1`，而 Vite 只监听 IPv4；该不一致现已由配置回归锁定并修正，但本次没有实际启动 Tauri/WebView，不能确认它就是用户所报故障的唯一原因。
+根目录 `npm run dev` 运行 Node 启动包装器，检查 `src/apps/desktop` 中锁定版本的 `@tauri-apps/cli`、CLI 入口和当前平台原生绑定，再启动 `tauri dev --config src-tauri/tauri.dev.conf.json`。参数通过 `npm run dev -- <tauri 参数>` 转发；包装器在无 shell 的 Node 子进程中运行 CLI，并保留退出码。若本地依赖缺失、版本不符或安装不完整，会提示从仓库根目录执行 `npm ci --prefix src/apps/desktop`。桌面目录 `npm run tauri:dev` 仍直接调用本地 Tauri CLI；根目录 `npm run dev:web` 才只启动 Vite。Vite 固定绑定 `127.0.0.1:1420`（`strictPort: true`），Tauri `devUrl` 已对齐为 `http://127.0.0.1:1420`。此前 `localhost` 在本机 Node DNS 查询中优先解析到 `::1`，而 Vite 只监听 IPv4；该不一致现已由配置回归锁定并修正，但本次没有实际启动 Tauri/WebView，不能确认它就是用户所报故障的唯一原因。
+
+纯 Node 启动前检查回归可从仓库根目录运行 `npm run test:dev-cli`。测试通过临时依赖树覆盖未安装、CLI 文件缺失、平台绑定缺失、已安装版本与 lockfile 不符，以及参数/退出码透传；不需要 `node_modules`，不启动 GUI/WebView。
 
 `tauri.dev.conf.json` 覆盖开发构建的 `bundle.resources` 为空数组，避免开发编译被安装包资源 staging 阻塞；发布资源清单保持原样。
 
@@ -48,6 +50,13 @@
 - 变更后的配置契约已通过 Node CLI 回归；Vite/Tauri 的实际 dev 进程、`beforeDevCommand`、Rust link、`devUrl` 导航、WebView2 创建、Tauri IPC 初始化和桌面首屏仍未执行或验证。
 - “npm run dev 完全无界面”的原报告仍未由本次 headless 配置检查复现。此前隐藏 WebView CLI harness 验证的是 smoke production bundle 的首屏 mount 与 Channel→Vue handler 投递，不使用 live Vite dev server，因此不构成 `npm run dev` 实测。排查时请保留工作目录、完整命令、终端输出与退出码。
 - 后续桌面验收需明确允许启动 Tauri 窗口。当前记录不把 CLI help、Vue build 或 headless Chromium 页面当作桌面启动通过。
+
+## 2026-10-05 根目录 Tauri CLI 启动前检查
+
+- 根目录 `dev` 脚本改为调用 `scripts/tauri-dev.mjs`。它从 desktop lockfile 读取 Tauri CLI 与当前平台 binding 的固定版本，分别核对安装版本及入口文件；不完整时给出 `npm ci --prefix src/apps/desktop` 和重试命令。
+- 真实 CLI 通过 Node `spawn`、desktop 工作目录和原配置启动；`npm run dev -- <参数>` 会追加转发给 `tauri dev`，子进程退出码返回给 npm。实现没有 shell 拼接，也不依赖某一平台的 `.cmd` shim。
+- `npm run test:dev-cli` 运行 5 个纯 Node fixture tests：无安装、CLI 入口缺失、Windows 原生绑定缺失、锁定版本过期和 CLI 参数/非零退出码透传，5/5 通过。此项不启动 Tauri、WebView 或真实 GUI。
+- 此修复让无依赖开发错误可操作，但不验证 `npm run dev` 的窗口渲染。普通可见 Tauri dev 首屏和此前空白窗口现象仍待实际桌面验收。
 
 ## 2026-10-04 devUrl/Vite 地址对齐
 
