@@ -1181,6 +1181,71 @@ mod tests {
     }
 
     #[test]
+    #[ignore = "requires the staged OCCT runtime; run the documented F5.22 acceptance command"]
+    fn f5_22_legacy_pcd_counterbores_build_measure_and_export() {
+        use serde_json::Value;
+
+        let manifest = std::env::var_os("AIMODELER_TEST_OCCT_MANIFEST")
+            .map(std::path::PathBuf::from)
+            .expect("F5.22 requires AIMODELER_TEST_OCCT_MANIFEST");
+        assert!(manifest.is_file(), "F5.22 OCCT runtime manifest is missing: {}", manifest.display());
+        let fixture: Value = serde_json::from_str(include_str!(
+            "../tests/fixtures/quick_pcd_counterbore_contract.json"
+        ))
+        .expect("F5.22 PCD counterbore acceptance fixture is valid JSON");
+        let root = std::env::temp_dir().join(format!(
+            "quick-f5-22-{}-{}",
+            std::process::id(),
+            SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_nanos()
+        ));
+        fs::create_dir_all(&root).unwrap();
+        struct RemoveOnDrop(std::path::PathBuf);
+        impl Drop for RemoveOnDrop {
+            fn drop(&mut self) {
+                let _ = std::fs::remove_dir_all(&self.0);
+            }
+        }
+        let _cleanup = RemoveOnDrop(root.clone());
+
+        for (index, case) in fixture["legacy_accepted"].as_array().unwrap().iter().enumerate() {
+            let prompt = case["input"].as_str().unwrap();
+            let result = build(prompt, index as i64 + 1, &manifest, &root)
+                .unwrap_or_else(|error| panic!("F5.22 Quick build failed for {prompt}: {error}"));
+            assert_eq!(result["state"], "complete", "{prompt}");
+            let report = &result["geometry_report"];
+            assert_eq!(report["state"], "passed", "{prompt}");
+            assert_eq!(report["valid"], true, "{prompt}");
+            assert_eq!(report["closed_solid_count"], 1, "{prompt}");
+            assert_eq!(report["dimensions_mm"], fixture["expected_geometry"]["dimensions_mm"]);
+            let expected_volume = fixture["expected_geometry"]["volume_mm3"].as_f64().unwrap();
+            let actual_volume = report["volume_mm3"].as_f64().unwrap();
+            assert!((actual_volume - expected_volume).abs() <= 1e-4, "{prompt}: expected volume {expected_volume}, got {actual_volume}");
+
+            let features = result["cadplan"]["features"].as_array().unwrap();
+            assert_eq!(features.len(), 3, "{prompt}");
+            assert_eq!(features[1]["parameters"]["through"], true, "{prompt}");
+            assert_eq!(features[2]["parameters"]["through"], false, "{prompt}");
+            for key in ["pos", "axis", "count", "pcd", "phase"] {
+                assert_eq!(features[1]["parameters"][key], features[2]["parameters"][key], "{prompt}: counterbore must share pilot {key}");
+            }
+            let holes = report["hole_instances"].as_array().unwrap();
+            assert_eq!(holes.len(), 8, "{prompt}: expected four pilots and four counterbores");
+            assert_eq!(report["hole_measurements_verified"], true, "{prompt}: all 8 B-Rep hole measurements must pass");
+            assert_eq!(holes.iter().filter(|hole| hole["through"] == true).count(), 4);
+            assert_eq!(holes.iter().filter(|hole| hole["through"] == false).count(), 4);
+
+            let aimodel = Path::new(result["output_paths"]["aimodel"].as_str().unwrap());
+            let stl = Path::new(result["output_paths"]["stl"].as_str().unwrap());
+            assert!(aimodel.is_file(), "{prompt}: missing AIMODEL export");
+            assert!(stl.is_file(), "{prompt}: missing STL export");
+            let loaded = native_model_io::load_aimodel(aimodel)
+                .unwrap_or_else(|error| panic!("F5.22 AIMODEL round-trip failed for {prompt}: {error}"));
+            assert_eq!(loaded["cadplan"]["features"], result["cadplan"]["features"], "{prompt}");
+            eprintln!("F5.22 PASS: {prompt} -> 4 coaxial PCD counterbores, volume={actual_volume} mm³");
+        }
+    }
+
+    #[test]
     fn f5_12_failed_stl_export_preserves_existing_target() {
         let root = std::env::temp_dir().join(format!(
             "quick-f5-12-export-{}-{}",

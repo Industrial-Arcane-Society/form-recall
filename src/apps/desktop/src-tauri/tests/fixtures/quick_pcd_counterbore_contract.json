@@ -1,0 +1,62 @@
+{
+  "source": "src/legacy/ai_modeler/core/parsing/nlparser.py via nlparser.parse(text).doc, captured 2026-10-06",
+  "legacy_accepted": [
+    {
+      "input": "长方体 长120宽80高20，均布4个直径6通孔分度圆60带直径12沉孔深4",
+      "warnings": [],
+      "holes": [
+        {
+          "kind": "hole",
+          "operation": "cut",
+          "parameters": {
+            "diameter": 6.0,
+            "through": true,
+            "axis": "Z",
+            "pos": "pcd",
+            "segments": 24,
+            "count": 4,
+            "pcd": 60.0
+          }
+        },
+        {
+          "kind": "hole",
+          "operation": "cut",
+          "parameters": {
+            "diameter": 12.0,
+            "through": false,
+            "axis": "Z",
+            "pos": "pcd",
+            "segments": 24,
+            "depth": 4.0,
+            "count": 4,
+            "pcd": 60.0
+          }
+        }
+      ]
+    }
+  ],
+  "native_rejected": [
+    {
+      "input": "长方体 长120宽80高20，均布4个直径6通孔分度圆60带直径12沉孔",
+      "rust_status": "needs_clarification",
+      "issue": "counterbore_depth_missing"
+    },
+    {
+      "input": "长方体 长120宽80高20，均布4个直径12通孔分度圆60带直径8沉孔深4",
+      "rust_status": "needs_clarification",
+      "issue": "counterbore_diameter_order_invalid"
+    },
+    {
+      "input": "长方体 长120宽80高20，均布4个直径6盲孔分度圆60带直径12沉孔深4",
+      "rust_status": "needs_clarification",
+      "issue": "counterbore_pilot_type_missing_or_conflicting"
+    }
+  ],
+  "expected_geometry": {
+    "dimensions_mm": [120.0, 80.0, 20.0],
+    "through_hole_instances": 4,
+    "counterbore_instances": 4,
+    "counterbore_depth_mm": 4.0,
+    "volume_mm3": 188380.88526306496
+  }
+}

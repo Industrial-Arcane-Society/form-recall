@@ -285,50 +285,56 @@ pub fn parse(text: &str) -> Value {
         }
         if is_hole {
             if clause.contains("沉孔") {
-                let unsupported_location_or_combination =
-                    !contains_any(clause, &["中心孔", "中心通孔"])
-                        || has_corner_location(clause)
-                        || contains_any(
-                            clause,
-                            &[
-                                "pcd",
-                                "分度圆",
-                                "节圆",
-                                "分布圆",
-                                "均布",
-                                "孔数",
-                                "phase",
-                                "相位",
-                                "坐标",
-                                "coordinate",
-                                "position",
-                                "位置",
-                                "边距",
-                                "距边",
-                                "离边",
-                                "留边",
-                                "内缩",
-                            ],
-                        )
-                        || center_coordinates(clause).is_some()
-                        || named_xyz(clause).is_some()
-                        || clause.contains('(')
-                        || clause.contains('[')
-                        || modifier_clauses.len() != 1;
+                let center_requested = contains_any(clause, &["中心孔", "中心通孔"]);
+                let pcd_marker = contains_any(clause, &["pcd", "分度圆", "节圆", "分布圆"]);
+                let pattern_modifier = contains_any(clause, &["均布", "孔数", "phase", "相位"]);
+                let pcd_counterbore = pcd_marker && !center_requested;
+                let center_counterbore = center_requested && !pcd_marker && !pattern_modifier;
+                let unsupported_location_or_combination = !(center_counterbore || pcd_counterbore)
+                    || has_corner_location(clause)
+                    || contains_any(
+                        clause,
+                        &[
+                            "坐标",
+                            "coordinate",
+                            "position",
+                            "位置",
+                            "边距",
+                            "距边",
+                            "离边",
+                            "留边",
+                            "内缩",
+                        ],
+                    )
+                    || center_coordinates(clause).is_some()
+                    || named_xyz(clause).is_some()
+                    || clause.contains('(')
+                    || clause.contains('[')
+                    || modifier_clauses.len() != 1;
                 if unsupported_location_or_combination {
                     unsupported.push(issue(
                         "counterbore_variant_unsupported",
-                        "F5.11 只支持单个修饰子句中的显式中心通孔带沉孔；阵列、坐标、四角位置及多修饰组合尚未支持。",
+                        "Quick 沉孔只支持单个修饰子句中的中心孔或 PCD 均布通孔；坐标、四角位置及多修饰组合尚未支持。",
                     ));
                     continue;
                 }
-                features.extend(build_center_counterbore(
-                    &cut_text,
-                    text,
-                    feature_index,
-                    &mut questions,
-                    &mut warnings,
-                ));
+                if pcd_counterbore {
+                    features.extend(build_pcd_counterbore(
+                        &cut_text,
+                        text,
+                        feature_index,
+                        &mut questions,
+                        &mut warnings,
+                    ));
+                } else {
+                    features.extend(build_center_counterbore(
+                        &cut_text,
+                        text,
+                        feature_index,
+                        &mut questions,
+                        &mut warnings,
+                    ));
+                }
                 continue;
             }
             if let Some(feature) = build_hole(
@@ -510,7 +516,7 @@ fn result(
     unsupported: Vec<Value>,
 ) -> Value {
     json!({"status":status,"source_text":text,"plan":plan,"warnings":warnings,"questions":questions,"unsupported":unsupported,
-        "compatibility":{"scope":"common explicit primitives/cuts, migrated standalone primitive defaults and legacy extrusion/revolve constructors, rectangular slots, straight-gear construction, and executable flange/stepped-shaft/sleeve templates","legacy_typical_defaults":"restored only for migrated Quick constructors/templates, straight gears, and rectangular slots; defaults and raw-dimension mappings are reported as warnings"}})
+        "compatibility":{"scope":"common explicit primitives/cuts, migrated standalone primitive defaults and legacy extrusion/revolve constructors, rectangular slots, straight-gear construction, PCD counterbores, and executable flange/stepped-shaft/sleeve templates","legacy_typical_defaults":"restored only for migrated Quick constructors/templates, straight gears, and rectangular slots; defaults and raw-dimension mappings are reported as warnings"}})
 }
 
 fn parse_legacy_template(raw: &str, normalized: &str) -> Option<Value> {
@@ -2601,6 +2607,149 @@ fn build_center_counterbore(
     ]
 }
 
+fn build_pcd_counterbore(
+    clause: &str,
+    raw: &str,
+    index: usize,
+    questions: &mut Vec<Value>,
+    warnings: &mut Vec<Value>,
+) -> Vec<Value> {
+    if clause.match_indices('带').count() != 1 {
+        questions.push(issue(
+            "counterbore_separator_missing_or_ambiguous",
+            "PCD 沉孔语法需在同一句明确使用一次“带”，分隔通孔与沉孔尺寸。",
+        ));
+        return Vec::new();
+    }
+    let Some((pilot_clause, counterbore_clause)) = clause.split_once('带') else {
+        questions.push(issue(
+            "counterbore_separator_missing_or_ambiguous",
+            "PCD 沉孔语法需明确使用“带”分隔通孔与沉孔尺寸。",
+        ));
+        return Vec::new();
+    };
+    if contains_any(pilot_clause, &["盲孔", "blind"])
+        || !contains_any(pilot_clause, &["通孔", "through", "贯穿"])
+    {
+        questions.push(issue(
+            "counterbore_pilot_type_missing_or_conflicting",
+            "PCD 沉孔的先导孔必须明确为通孔，不能描述为盲孔。",
+        ));
+        return Vec::new();
+    }
+    if !counterbore_clause.contains("沉孔")
+        || contains_any(counterbore_clause, &["通孔", "through", "贯穿", "盲孔", "blind"])
+    {
+        questions.push(issue(
+            "counterbore_type_conflict",
+            "沉孔子句必须只描述盲切沉孔，不能同时描述为通孔。",
+        ));
+        return Vec::new();
+    }
+
+    let questions_before_pilot = questions.len();
+    let pilot = build_hole(pilot_clause, raw, index, questions, warnings);
+    if questions.len() != questions_before_pilot {
+        return Vec::new();
+    }
+    let Some(pilot) = pilot else {
+        questions.push(issue(
+            "counterbore_pcd_pilot_missing",
+            "PCD 沉孔前必须能解析一个完整的分度圆贯穿孔阵列。",
+        ));
+        return Vec::new();
+    };
+    if pilot["parameters"]["pos"] != "pcd"
+        || pilot["parameters"]["through"] != true
+        || pilot["parameters"].get("pcd").is_none()
+        || pilot["parameters"].get("count").is_none()
+    {
+        questions.push(issue(
+            "counterbore_pcd_pilot_missing",
+            "PCD 沉孔前必须明确分度圆直径、孔数和贯穿孔直径。",
+        ));
+        return Vec::new();
+    }
+
+    let pilot_diameter = pilot["parameters"]["diameter"].as_f64();
+    let counterbore_diameter = diameter_value(counterbore_clause);
+    let depth = hole_depth_value(counterbore_clause);
+    let mut valid = true;
+    for (code, value, label) in [
+        ("counterbore_diameter_missing", counterbore_diameter, "沉孔直径"),
+        ("counterbore_depth_missing", depth, "沉孔深度"),
+    ] {
+        match value {
+            Some(value) if value.is_finite() && value > 0.0 => {}
+            Some(_) => {
+                valid = false;
+                questions.push(issue(
+                    if code == "counterbore_diameter_missing" {
+                        "counterbore_diameter_conflict"
+                    } else {
+                        "counterbore_depth_conflict_or_invalid"
+                    },
+                    format!("{label}必须是唯一、有限且为正数。"),
+                ));
+            }
+            None => {
+                valid = false;
+                questions.push(issue(code, format!("PCD 沉孔缺少明确的正{label}。")));
+            }
+        }
+    }
+    if let (Some(pilot_diameter), Some(counterbore_diameter)) =
+        (pilot_diameter, counterbore_diameter)
+    {
+        if counterbore_diameter.is_finite()
+            && pilot_diameter.is_finite()
+            && counterbore_diameter <= pilot_diameter
+        {
+            valid = false;
+            questions.push(issue(
+                "counterbore_diameter_order_invalid",
+                "沉孔直径必须大于 PCD 通孔直径。",
+            ));
+        }
+    }
+    if !valid {
+        return Vec::new();
+    }
+
+    let mut parameters = pilot["parameters"].clone();
+    parameters["diameter"] = json!(counterbore_diameter.unwrap());
+    parameters["through"] = json!(false);
+    parameters["depth"] = json!(depth.unwrap());
+    let mut sources = pilot["sources"].as_object().cloned().unwrap_or_default();
+    sources.insert("diameter".into(), user_source(raw));
+    sources.insert(
+        "through".into(),
+        derived_source(raw, "显式沉孔按旧 Python Quick 语义生成盲切，并继承先导孔的完整 PCD 阵列。"),
+    );
+    sources.insert("depth".into(), user_source(raw));
+    if !has_unit(clause) {
+        warnings.push(issue(
+            "unit_interpreted_as_mm",
+            "未写长度单位的数值按 CADPlan 默认单位 mm 解释。",
+        ));
+    }
+    warnings.push(issue(
+        "pcd_counterbore_inherits_pilot_pattern",
+        "沉孔沿用同一子句中先导通孔的 PCD、孔数、轴向和相位。",
+    ));
+
+    vec![
+        pilot,
+        feature(
+            index + 3,
+            "hole",
+            "cut",
+            parameters,
+            Value::Object(sources),
+        ),
+    ]
+}
+
 fn build_slot(
     clause: &str,
     raw: &str,
@@ -3763,6 +3912,49 @@ mod tests {
                 output["questions"].to_string().contains(case["rust_issue"].as_str().unwrap()),
                 "{input}: {output}"
             );
+        }
+    }
+
+    #[test]
+    fn legacy_pcd_counterbore_inherits_the_pilot_array_and_requires_explicit_depth() {
+        let fixture: Value = serde_json::from_str(include_str!(
+            "../tests/fixtures/quick_pcd_counterbore_contract.json"
+        ))
+        .expect("PCD counterbore Quick oracle fixture is valid JSON");
+        for case in fixture["legacy_accepted"].as_array().unwrap() {
+            let input = case["input"].as_str().unwrap();
+            let output = parse(input);
+            assert_eq!(output["status"], "ready", "{input}: {output}");
+            let plan = &output["plan"];
+            assert_eq!(crate::cad_plan_validation::validate_plan(plan)["state"], "valid", "{input}");
+            let features = plan["features"].as_array().unwrap();
+            assert_eq!(features.len(), 3, "{input}: {features:?}");
+            for (offset, expected) in case["holes"].as_array().unwrap().iter().enumerate() {
+                let actual = &features[offset + 1];
+                assert_eq!(actual["kind"], expected["kind"], "{input}");
+                assert_eq!(actual["operation"], expected["operation"], "{input}");
+                for (key, value) in expected["parameters"].as_object().unwrap() {
+                    assert_eq!(actual["parameters"][key], *value, "{input}: {key}");
+                }
+                assert_eq!(actual["sources"]["diameter"]["type"], "user", "{input}: diameter");
+                assert_eq!(actual["sources"]["diameter"]["evidence"], input, "{input}: diameter evidence");
+                for key in ["axis", "pos", "count", "pcd", "segments"] {
+                    assert_eq!(actual["sources"][key]["evidence"], input, "{input}: inherited {key}");
+                }
+            }
+            assert_eq!(features[1]["sources"]["through"]["type"], "user");
+            assert_eq!(features[2]["sources"]["through"]["type"], "derived");
+            assert_eq!(features[2]["sources"]["depth"]["type"], "user");
+            assert_eq!(features[2]["sources"]["depth"]["evidence"], input);
+            assert!(output["warnings"].to_string().contains("pcd_counterbore_inherits_pilot_pattern"));
+        }
+
+        for case in fixture["native_rejected"].as_array().unwrap() {
+            let input = case["input"].as_str().unwrap();
+            let output = parse(input);
+            assert_eq!(output["status"], case["rust_status"], "{input}: {output}");
+            assert!(output["plan"].is_null(), "{input}: {output}");
+            assert!(output["questions"].to_string().contains(case["issue"].as_str().unwrap()), "{input}: {output}");
         }
     }
 
