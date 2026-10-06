@@ -1,0 +1,244 @@
+{
+  "schema_version": "1.0",
+  "legacy_entrypoint": "src/legacy/ai_modeler/core/parsing/nlparser.py::Parser.parse",
+  "legacy_geometry": "src/legacy/ai_modeler/parts/library/partlib.py::_ring",
+  "legacy_accepted": [
+    {
+      "input": "深沟球轴承 内径20 外径47 宽度14",
+      "family": "深沟球轴承",
+      "inner_diameter": 20.0,
+      "outer_diameter": 47.0,
+      "height": 14.0,
+      "inner_source": "user",
+      "height_source": "user",
+      "dimensions_mm": [47.0, 47.0, 14.0],
+      "legacy_mesh_volume_mm3": 19864.544596062315
+    },
+    {
+      "input": "深沟球轴承 轴承代号6204",
+      "family": "深沟球轴承",
+      "standard_code": "6204",
+      "inner_diameter": 20.0,
+      "outer_diameter": 47.0,
+      "height": 14.0,
+      "inner_source": "derived",
+      "height_source": "derived",
+      "dimensions_mm": [47.0, 47.0, 14.0],
+      "legacy_mesh_volume_mm3": 19864.544596062315
+    },
+    {
+      "input": "深沟球轴承 6204 外径50",
+      "family": "深沟球轴承",
+      "standard_code": "6204",
+      "inner_diameter": 20.0,
+      "outer_diameter": 47.0,
+      "height": 14.0,
+      "inner_source": "derived",
+      "height_source": "derived",
+      "warning_code": "legacy_bearing_code_overrode_dimensions",
+      "dimensions_mm": [47.0, 47.0, 14.0],
+      "legacy_mesh_volume_mm3": 19864.544596062315
+    },
+    {
+      "input": "圆锥滚子轴承 内径20 外径40 总宽12",
+      "family": "圆锥滚子轴承",
+      "inner_diameter": 20.0,
+      "outer_diameter": 40.0,
+      "height": 12.0,
+      "inner_source": "user",
+      "height_source": "user",
+      "dimensions_mm": [40.0, 40.0, 12.0],
+      "legacy_mesh_volume_mm3": 11296.27841868307
+    },
+    {
+      "input": "推力球轴承 内径10 外径30 高度8",
+      "family": "推力球轴承",
+      "inner_diameter": 10.0,
+      "outer_diameter": 30.0,
+      "height": 8.0,
+      "inner_source": "user",
+      "height_source": "user",
+      "dimensions_mm": [30.0, 30.0, 8.0],
+      "legacy_mesh_volume_mm3": 5019.261560326499
+    },
+    {
+      "input": "深沟球轴承 内径20 外径40",
+      "family": "深沟球轴承",
+      "inner_diameter": 20.0,
+      "outer_diameter": 40.0,
+      "height": 14.0,
+      "inner_source": "user",
+      "height_source": "derived",
+      "warning_code": "legacy_bearing_width_defaulted",
+      "dimensions_mm": [40.0, 40.0, 14.0],
+      "legacy_mesh_volume_mm3": 13178.991488463653
+    },
+    {
+      "input": "圆锥滚子轴承 内径20 外径40",
+      "family": "圆锥滚子轴承",
+      "inner_diameter": 20.0,
+      "outer_diameter": 40.0,
+      "height": 16.25,
+      "inner_source": "user",
+      "height_source": "derived",
+      "warning_code": "legacy_bearing_width_defaulted",
+      "dimensions_mm": [40.0, 40.0, 16.25],
+      "legacy_mesh_volume_mm3": 15297.043691966563
+    },
+    {
+      "input": "推力球轴承 内径10 外径30",
+      "family": "推力球轴承",
+      "inner_diameter": 10.0,
+      "outer_diameter": 30.0,
+      "height": 3.0,
+      "inner_source": "user",
+      "height_source": "derived",
+      "warning_code": "legacy_bearing_width_defaulted",
+      "dimensions_mm": [30.0, 30.0, 3.0],
+      "legacy_mesh_volume_mm3": 1882.223085122409
+    }
+  ],
+  "known_legacy_discrepancies": [
+    {
+      "input": "深沟球轴承 内径20 外径40 宽12",
+      "legacy_actual": {
+        "kind": "sphere",
+        "radius": 20.0
+      },
+      "migration_behavior": {
+        "status": "ready",
+        "kind_sequence": ["cylinder", "hole"],
+        "dimensions_mm": [40.0, 40.0, 12.0]
+      },
+      "reason": "旧 Parser 的分句路径把这个有效宽度别名落入球体回退；Rust 将宽度绑定到轴承圆环。"
+    },
+    {
+      "input": "深沟球轴承 内径20",
+      "legacy_actual": {
+        "kind": "sphere",
+        "radius": 10.0
+      },
+      "migration_behavior": {
+        "status": "needs_clarification",
+        "issue": "legacy_bearing_outer_diameter"
+      },
+      "reason": "旧 Parser 把轴承内径当作通用球体半径；Rust 要求补齐外径。"
+    },
+    {
+      "input": "深沟球轴承 6204 外径50",
+      "legacy_actual": {
+        "kind": "annular_ring",
+        "outer_diameter": 47.0,
+        "inner_diameter": 20.0,
+        "height": 14.0
+      },
+      "migration_behavior": {
+        "status": "ready",
+        "standard_code_overrides_explicit_dimension": true,
+        "warning": "legacy_bearing_code_overrode_dimensions"
+      },
+      "reason": "Python 以标准代号覆盖同句显式外径且不告警；Rust 保持相同几何并显式提示代号优先级。"
+    }
+  ],
+  "native_rust_expected": [
+    {
+      "input": "深沟球轴承 内径20 外径47 宽度14",
+      "inner_diameter": 20.0,
+      "outer_diameter": 47.0,
+      "height": 14.0,
+      "inner_source": "user",
+      "height_source": "user",
+      "dimensions_mm": [47.0, 47.0, 14.0],
+      "legacy_mesh_volume_mm3": 19864.544596062315,
+      "max_relative_volume_delta": 0.003
+    },
+    {
+      "input": "深沟球轴承 轴承代号6204",
+      "inner_diameter": 20.0,
+      "outer_diameter": 47.0,
+      "height": 14.0,
+      "inner_source": "derived",
+      "height_source": "derived",
+      "dimensions_mm": [47.0, 47.0, 14.0],
+      "legacy_mesh_volume_mm3": 19864.544596062315,
+      "max_relative_volume_delta": 0.003
+    },
+    {
+      "input": "圆锥滚子轴承 内径20 外径40 总宽12",
+      "inner_diameter": 20.0,
+      "outer_diameter": 40.0,
+      "height": 12.0,
+      "inner_source": "user",
+      "height_source": "user",
+      "dimensions_mm": [40.0, 40.0, 12.0],
+      "legacy_mesh_volume_mm3": 11296.27841868307,
+      "max_relative_volume_delta": 0.003
+    },
+    {
+      "input": "推力球轴承 内径10 外径30 高度8",
+      "inner_diameter": 10.0,
+      "outer_diameter": 30.0,
+      "height": 8.0,
+      "inner_source": "user",
+      "height_source": "user",
+      "dimensions_mm": [30.0, 30.0, 8.0],
+      "legacy_mesh_volume_mm3": 5019.261560326499,
+      "max_relative_volume_delta": 0.003
+    },
+    {
+      "input": "深沟球轴承 内径20 外径40",
+      "inner_diameter": 20.0,
+      "outer_diameter": 40.0,
+      "height": 14.0,
+      "inner_source": "user",
+      "height_source": "derived",
+      "dimensions_mm": [40.0, 40.0, 14.0],
+      "legacy_mesh_volume_mm3": 13178.991488463653,
+      "max_relative_volume_delta": 0.003
+    },
+    {
+      "input": "圆锥滚子轴承 内径20 外径40",
+      "inner_diameter": 20.0,
+      "outer_diameter": 40.0,
+      "height": 16.25,
+      "inner_source": "user",
+      "height_source": "derived",
+      "dimensions_mm": [40.0, 40.0, 16.25],
+      "legacy_mesh_volume_mm3": 15297.043691966563,
+      "max_relative_volume_delta": 0.003
+    },
+    {
+      "input": "推力球轴承 内径10 外径30",
+      "inner_diameter": 10.0,
+      "outer_diameter": 30.0,
+      "height": 3.0,
+      "inner_source": "user",
+      "height_source": "derived",
+      "dimensions_mm": [30.0, 30.0, 3.0],
+      "legacy_mesh_volume_mm3": 1882.223085122409,
+      "max_relative_volume_delta": 0.003
+    }
+  ],
+  "not_ready": [
+    {
+      "input": "深沟球轴承 内径20",
+      "status": "needs_clarification",
+      "issue": "legacy_bearing_outer_diameter"
+    },
+    {
+      "input": "深沟球轴承 9999",
+      "status": "needs_clarification",
+      "issue": "legacy_bearing_code_invalid"
+    },
+    {
+      "input": "圆柱滚子轴承 内径20 外径40",
+      "status": "unsupported",
+      "issue": "legacy_bearing_subtype_not_migrated"
+    },
+    {
+      "input": "深沟球轴承 内径20 外径47 宽度14 密封圈",
+      "status": "unsupported",
+      "issue": "legacy_bearing_modifier_not_migrated"
+    }
+  ]
+}

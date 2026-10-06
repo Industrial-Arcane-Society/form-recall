@@ -2,6 +2,9 @@
 //! executable legacy templates, and cuts. Legacy template defaults are kept
 //! only for the explicitly ported templates and are returned as warnings.
 use serde_json::{Value, json};
+use std::sync::OnceLock;
+
+const BEARING_STANDARDS: &str = include_str!("../../../../legacy/kb/bearing_std.json");
 
 #[derive(Clone, Debug)]
 struct Number {
@@ -46,6 +49,9 @@ pub fn parse(text: &str) -> Value {
         return parsed;
     }
 
+    if let Some(parsed) = parse_legacy_bearing(text, &normalized) {
+        return parsed;
+    }
     if let Some(parsed) = parse_legacy_washer(text, &normalized) {
         return parsed;
     }
@@ -955,6 +961,364 @@ fn parse_legacy_washer(raw: &str, text: &str) -> Option<Value> {
         }),
     ];
     Some(plan_result(raw, "垫圈", features, warnings))
+}
+
+/// Port the legacy Python bearing recipes that produce a plain annular ring.
+/// The legacy part library does not model rolling elements, seals, or cages;
+/// this route preserves the same cylinder-plus-through-hole feature sequence.
+fn parse_legacy_bearing(raw: &str, text: &str) -> Option<Value> {
+    if contains_any(text, &["轴承座", "轴承支座", "轴承盖"]) {
+        return None;
+    }
+
+    let unsupported_subtypes = [
+        "圆柱滚子轴承",
+        "圆柱滚子",
+        "圆柱轴承",
+        "圆锥滚子轴承",
+        "调心滚子轴承",
+        "调心球轴承",
+        "角接触球轴承",
+        "滚针轴承",
+        "推力滚子轴承",
+    ];
+    let conical = contains_any(text, &["圆锥滚子轴承", "锥轴承"]);
+    let thrust_ball = contains_any(text, &["推力球轴承", "平面轴承"]);
+    if !conical
+        && contains_any(text, &unsupported_subtypes)
+        && !thrust_ball
+    {
+        return Some(result(
+            "unsupported",
+            raw,
+            None,
+            vec![],
+            vec![],
+            vec![issue(
+                "legacy_bearing_subtype_not_migrated",
+                "当前只迁移旧 Quick 的深沟球、圆锥滚子和推力球轴承简化圆环；该轴承类型尚未迁移。",
+            )],
+        ));
+    }
+
+    // The old `推力轴承` alias was not reliably dispatched by Parser.parse;
+    // do not let the generic `轴承` alias silently turn it into a deep-groove ring.
+    if text.contains("推力轴承") && !text.contains("推力球轴承") {
+        return None;
+    }
+
+    let deep_groove = !conical
+        && !thrust_ball
+        && contains_any(text, &["深沟球轴承", "球轴承", "深沟球", "轴承"]);
+    if !conical && !thrust_ball && !deep_groove {
+        return None;
+    }
+
+    if contains_any(
+        text,
+        &[
+            "滚珠",
+            "钢球",
+            "滚动体",
+            "保持架",
+            "防尘盖",
+            "密封圈",
+            "滚道",
+            "卡簧",
+            "止动槽",
+            "键槽",
+            "通孔",
+            "盲孔",
+            "沉孔",
+            "开槽",
+            "倒角",
+            "圆角",
+            "螺纹",
+            "并加",
+            "同时",
+            "再加",
+        ],
+    ) {
+        return Some(result(
+            "unsupported",
+            raw,
+            None,
+            vec![],
+            vec![],
+            vec![issue(
+                "legacy_bearing_modifier_not_migrated",
+                "旧 Quick 轴承配方只生成圆环简化体；滚动体、保持架、密封件以及附加孔槽/修饰特征尚未迁移。",
+            )],
+        ));
+    }
+
+    let (family, height_labels, short_height_labels, default_height) = if conical {
+        ("圆锥滚子轴承", &["装配高", "总宽"][..], &["T", "t"][..], 16.25)
+    } else if thrust_ball {
+        // `_ring` falls back to 3 mm when H is absent. Its TYPICAL table has
+        // H=10, but the old parser does not actually pass that optional value.
+        ("推力球轴承", &["高度", "厚"][..], &["H", "h"][..], 3.0)
+    } else {
+        ("深沟球轴承", &["宽度", "厚", "宽"][..], &["B", "b"][..], 14.0)
+    };
+
+    let standard = match if deep_groove {
+        bearing_standard_dimensions(text)
+    } else {
+        Ok(None)
+    } {
+        Ok(standard) => standard,
+        Err(message) => {
+            return Some(result(
+                "needs_clarification",
+                raw,
+                None,
+                vec![],
+                vec![issue("legacy_bearing_code_invalid", message)],
+                vec![],
+            ));
+        }
+    };
+
+    let inner_explicit = pulley_scalar(raw, text, &["内径", "轴径", "孔径"], &["d"]);
+    let outer_explicit = pulley_scalar(raw, text, &["外径"], &["D"]);
+    let height_explicit = pulley_scalar(raw, text, height_labels, short_height_labels);
+
+    let (inner, outer, height, standard_code) = if let Some((code, d, diameter, width)) = standard {
+        (Some(d), Some(diameter), Some(width), Some(code))
+    } else {
+        let height = match height_explicit {
+            Some(value) => Some(value),
+            None => Some(default_height),
+        };
+        (inner_explicit, outer_explicit, height, None)
+    };
+
+    let mut questions = Vec::new();
+    for (value, code, label) in [
+        (inner, "legacy_bearing_inner_diameter", "轴承内径"),
+        (outer, "legacy_bearing_outer_diameter", "轴承外径"),
+        (height, "legacy_bearing_width", "轴承宽度/装配高"),
+    ] {
+        match value {
+            Some(value) if value.is_finite() && value > 0.0 => {}
+            Some(_) => questions.push(issue(
+                code,
+                format!("{label}必须是有限的正数，且同一参数不能出现冲突数值。"),
+            )),
+            None => questions.push(issue(
+                code,
+                format!("请明确{label}，或提供有效的轴承代号。"),
+            )),
+        }
+    }
+    if let (Some(inner), Some(outer)) = (inner, outer) {
+        if inner.is_finite() && outer.is_finite() && inner >= outer {
+            questions.push(issue(
+                "legacy_bearing_diameter_order",
+                "轴承外径必须大于内径。",
+            ));
+        }
+    }
+    if !questions.is_empty() {
+        return Some(result("needs_clarification", raw, None, vec![], questions, vec![]));
+    }
+
+    let inner = inner.expect("bearing inner diameter validated above");
+    let outer = outer.expect("bearing outer diameter validated above");
+    let height = height.expect("bearing width validated above");
+    let standard_code = standard_code;
+    let mut warnings = vec![issue(
+        "legacy_bearing_migrated",
+        "已按旧 Python Quick 轴承配方生成外圆柱与中心贯穿孔；该历史配方是圆环简化体，不包含滚动体、保持架或密封件。",
+    )];
+
+    let standard_source_note = standard_code.as_ref().map(|code| {
+        format!("按本地 GB/T 276—2013 深沟球轴承表中的代号 {code} 读取内径、外径和宽度。")
+    });
+    let (inner_source, height_source) = if let Some(note) = standard_source_note.as_deref() {
+        if inner_explicit.is_some_and(|value| !close(value, inner))
+            || outer_explicit.is_some_and(|value| !close(value, outer))
+            || height_explicit.is_some_and(|value| !close(value, height))
+        {
+            warnings.push(issue(
+                "legacy_bearing_code_overrode_dimensions",
+                format!("旧 Python Quick 在识别到轴承代号时以标准表尺寸覆盖同句尺寸；本次按代号建立模型。{note}"),
+            ));
+        } else {
+            warnings.push(issue(
+                "legacy_bearing_standard_dimensions",
+                note,
+            ));
+        }
+        (
+            derived_source(raw, note),
+            derived_source(raw, note),
+        )
+    } else {
+        let height_defaulted = height_explicit.is_none();
+        if height_defaulted {
+            let default_reason = if thrust_ball {
+                "旧 Python Quick `_ring` 在未绑定 H 时回退到 3 mm；其 TYPICAL 表中的 H=10 并未实际传入建模器。"
+            } else {
+                "沿用旧 Python Quick 零件库典型宽度。"
+            };
+            warnings.push(issue(
+                "legacy_bearing_width_defaulted",
+                format!("沿用旧 Python Quick {family}的默认宽度 {height} mm；这是规则默认值，不是用户提供的尺寸。{default_reason}"),
+            ));
+        }
+        let height_source = if height_defaulted && thrust_ball {
+            derived_source(
+                raw,
+                "旧 Python Quick `_ring` 在 H 缺失时使用实际构造器回退值 3 mm；TYPICAL 表 H=10 未被采用。",
+            )
+        } else if height_defaulted {
+            derived_source(raw, &format!("沿用旧 Python Quick {family}典型宽度 {height} mm。"))
+        } else {
+            user_source(raw)
+        };
+        (user_source(raw), height_source)
+    };
+
+    if !has_unit(text) {
+        warnings.push(issue(
+            "unit_interpreted_as_mm",
+            "未写长度单位的轴承尺寸按旧 Quick 默认单位 mm 解释。",
+        ));
+    }
+
+    let features = vec![
+        json!({
+            "id":"quick-0001",
+            "kind":"cylinder",
+            "operation":"add",
+            "name":"轴承圆环简化体",
+            "parameters":{
+                "radius":outer / 2.0,
+                "height":height,
+                "center":[0.0, 0.0, 0.0],
+                "base":false,
+                "axis":"Z",
+                "segments":64
+            },
+            "sources":{
+                "radius":derived_source(raw, standard_source_note.as_deref().unwrap_or("由用户给定的轴承外径除以 2 得到外圆柱半径。")),
+                "height":height_source,
+                "center":derived_source(raw, "沿用旧 Python Quick 轴承圆环中心位于原点的放置方式。"),
+                "base":derived_source(raw, "沿用旧 Python Quick 居中圆柱语义。"),
+                "axis":derived_source(raw, "沿用旧 Python Quick 轴承圆环沿全局 Z 轴放置。"),
+                "segments":derived_source(raw, "沿用旧 Python Quick 轴承圆柱分段数 64。")
+            },
+            "relations":[]
+        }),
+        json!({
+            "id":"quick-0002",
+            "kind":"hole",
+            "operation":"cut",
+            "name":"轴承内孔",
+            "parameters":{
+                "diameter":inner,
+                "through":true,
+                "pos":"center",
+                "axis":"Z",
+                "segments":48
+            },
+            "sources":{
+                "diameter":inner_source,
+                "through":derived_source(raw, "沿用旧 Python Quick 轴承中心贯穿孔。"),
+                "pos":derived_source(raw, "沿用旧 Python Quick 中心孔位置。"),
+                "axis":derived_source(raw, "沿用旧 Python Quick 轴承内孔沿全局 Z 轴贯穿。"),
+                "segments":derived_source(raw, "沿用旧 Python Quick 轴承内孔分段数 48。")
+            },
+            "relations":[]
+        }),
+    ];
+    Some(plan_result(raw, family, features, warnings))
+}
+
+fn bearing_standard_dimensions(text: &str) -> Result<Option<(String, f64, f64, f64)>, String> {
+    static DATABASE: OnceLock<Value> = OnceLock::new();
+    let database = DATABASE.get_or_init(|| {
+        serde_json::from_str(BEARING_STANDARDS)
+            .expect("embedded GB/T bearing standard table must be valid JSON")
+    });
+    let bearings = database["bearings"]
+        .as_object()
+        .expect("embedded bearing table must contain a bearings object");
+    let mut matched = bearings
+        .iter()
+        .filter_map(|(code, dimensions)| {
+            bearing_code_occurs(text, code).then(|| (code.clone(), dimensions))
+        })
+        .collect::<Vec<_>>();
+
+    let labeled_code = regex::Regex::new(r"(?i)(?:代号|型号|code)\s*[:：]?\s*([0-9]{4,5})")
+        .expect("constant bearing-code regex is valid")
+        .captures(text)
+        .and_then(|capture| capture.get(1).map(|value| value.as_str().to_owned()));
+    let had_labeled_code = labeled_code.is_some();
+    if let Some(code) = labeled_code {
+        if !bearings.contains_key(&code) {
+            return Err(format!("本地 GB/T 276—2013 轴承表中没有代号 {code}；请核对代号或直接给出内径、外径和宽度。"));
+        }
+        if !matched.iter().any(|(matched_code, _)| matched_code == &code) {
+            let dimensions = &bearings[&code];
+            matched.push((code, dimensions));
+        }
+    }
+
+    let has_dimension_label = contains_any(
+        text,
+        &[
+            "内径", "轴径", "孔径", "外径", "宽度", "装配高", "总宽", "高度", "厚", "宽",
+        ],
+    );
+    if matched.is_empty() && !had_labeled_code && !has_dimension_label {
+        let code_candidates = regex::Regex::new(r"[0-9]{4,5}")
+            .expect("constant bearing-code candidate regex is valid")
+            .find_iter(text)
+            .filter(|capture| {
+                let previous = text[..capture.start()].chars().next_back();
+                let next = text[capture.end()..].chars().next();
+                !previous.is_some_and(|ch| ch.is_ascii_digit())
+                    && !next.is_some_and(|ch| ch.is_ascii_digit())
+            })
+            .map(|capture| capture.as_str().to_owned())
+            .collect::<Vec<_>>();
+        if code_candidates.len() == 1 {
+            return Err(format!(
+                "本地 GB/T 276—2013 轴承表中没有代号 {}；请核对代号或直接给出内径、外径和宽度。",
+                code_candidates[0]
+            ));
+        }
+    }
+
+    matched.sort_by(|left, right| left.0.cmp(&right.0));
+    matched.dedup_by(|left, right| left.0 == right.0);
+    if matched.len() > 1 {
+        return Err(format!(
+            "描述中出现多个不同的轴承代号（{}）；请只保留一个代号。",
+            matched.iter().map(|(code, _)| code.as_str()).collect::<Vec<_>>().join("、")
+        ));
+    }
+    let Some((code, dimensions)) = matched.pop() else {
+        return Ok(None);
+    };
+    let d = dimensions["d"].as_f64().ok_or_else(|| format!("轴承代号 {code} 的标准表缺少内径 d。"))?;
+    let outer = dimensions["D"].as_f64().ok_or_else(|| format!("轴承代号 {code} 的标准表缺少外径 D。"))?;
+    let width = dimensions["B"].as_f64().ok_or_else(|| format!("轴承代号 {code} 的标准表缺少宽度 B。"))?;
+    Ok(Some((code, d, outer, width)))
+}
+
+fn bearing_code_occurs(text: &str, code: &str) -> bool {
+    text.match_indices(code).any(|(start, matched)| {
+        let end = start + matched.len();
+        let previous = text[..start].chars().next_back();
+        let next = text[end..].chars().next();
+        !previous.is_some_and(|ch| ch.is_ascii_digit())
+            && !next.is_some_and(|ch| ch.is_ascii_digit())
+    })
 }
 
 /// Migrate the legacy Python Quick helical-spring recipe. The original
@@ -7648,6 +8012,106 @@ mod tests {
                     .contains(case["issue"].as_str().unwrap()),
                 "{input}: {output}"
             );
+        }
+    }
+
+    #[test]
+    fn legacy_bearing_ring_recipes_match_python_oracle_and_provenance() {
+        let fixture: Value = serde_json::from_str(include_str!(
+            "../tests/fixtures/quick_legacy_bearing_rings_contract.json"
+        ))
+        .expect("bearing-ring Python oracle fixture is valid JSON");
+
+        for case in fixture["legacy_accepted"].as_array().unwrap() {
+            let input = case["input"].as_str().unwrap();
+            let output = parse(input);
+            assert_eq!(output["status"], "ready", "{input}: {output}");
+            assert_eq!(output["plan"]["name"], case["family"], "{input}");
+            let features = output["plan"]["features"].as_array().unwrap();
+            assert_eq!(features.len(), 2, "{input}: {output}");
+
+            let outer = case["outer_diameter"].as_f64().unwrap();
+            let inner = case["inner_diameter"].as_f64().unwrap();
+            let height = case["height"].as_f64().unwrap();
+            let cylinder = &features[0];
+            assert_eq!(cylinder["kind"], "cylinder", "{input}");
+            assert_eq!(cylinder["operation"], "add", "{input}");
+            assert!((cylinder["parameters"]["radius"].as_f64().unwrap() - outer / 2.0).abs() < 1e-10, "{input}");
+            assert_eq!(cylinder["parameters"]["height"], height, "{input}");
+            assert_eq!(cylinder["parameters"]["center"], json!([0.0, 0.0, 0.0]), "{input}");
+            assert_eq!(cylinder["parameters"]["base"], false, "{input}");
+            assert_eq!(cylinder["parameters"]["axis"], "Z", "{input}");
+            assert_eq!(cylinder["parameters"]["segments"], 64, "{input}");
+            assert_eq!(cylinder["sources"]["radius"]["type"], "derived", "{input}");
+            assert_eq!(cylinder["sources"]["height"]["type"], case["height_source"], "{input}");
+
+            let hole = &features[1];
+            assert_eq!(hole["kind"], "hole", "{input}");
+            assert_eq!(hole["operation"], "cut", "{input}");
+            assert_eq!(hole["parameters"]["diameter"], inner, "{input}");
+            assert_eq!(hole["parameters"]["through"], true, "{input}");
+            assert_eq!(hole["parameters"]["pos"], "center", "{input}");
+            assert_eq!(hole["parameters"]["axis"], "Z", "{input}");
+            assert_eq!(hole["parameters"]["segments"], 48, "{input}");
+            assert_eq!(hole["sources"]["diameter"]["type"], case["inner_source"], "{input}");
+
+            for (axis, actual) in [outer, outer, height].into_iter().enumerate() {
+                let expected = case["dimensions_mm"][axis].as_f64().unwrap();
+                assert!((actual - expected).abs() < 1e-10, "{input}: fixture dimensions");
+            }
+            if let Some(code) = case["warning_code"].as_str() {
+                assert!(output["warnings"].to_string().contains(code), "{input}: {output}");
+            }
+            if let Some(code) = case["standard_code"].as_str() {
+                assert!(output["warnings"].to_string().contains(code), "{input}: {output}");
+            }
+            assert_eq!(
+                crate::cad_plan_validation::validate_plan(&output["plan"])["state"],
+                "valid",
+                "{input}: {}",
+                crate::cad_plan_validation::validate_plan(&output["plan"])
+            );
+            assert_eq!(
+                crate::native_plan_geometry::preflight(&output["plan"])
+                    .unwrap()["state"],
+                "valid",
+                "{input}"
+            );
+        }
+
+        for case in fixture["not_ready"].as_array().unwrap() {
+            let input = case["input"].as_str().unwrap();
+            let output = parse(input);
+            assert_eq!(output["status"], case["status"], "{input}: {output}");
+            assert!(output["plan"].is_null(), "{input}: {output}");
+            let issues = format!("{} {}", output["questions"], output["unsupported"]);
+            assert!(issues.contains(case["issue"].as_str().unwrap()), "{input}: {output}");
+        }
+
+        for case in fixture["known_legacy_discrepancies"].as_array().unwrap() {
+            let input = case["input"].as_str().unwrap();
+            let expected = &case["migration_behavior"];
+            let output = parse(input);
+            assert_eq!(output["status"], expected["status"], "{input}: {output}");
+            if output["status"] == "ready" {
+                assert_eq!(output["plan"]["features"].as_array().unwrap().len(), 2, "{input}");
+                if expected["warning"].is_string() {
+                    assert!(output["warnings"].to_string().contains(expected["warning"].as_str().unwrap()), "{input}: {output}");
+                }
+                if let Some(dimensions) = expected["dimensions_mm"].as_array() {
+                    let features = output["plan"]["features"].as_array().unwrap();
+                    let actual = [
+                        features[0]["parameters"]["radius"].as_f64().unwrap() * 2.0,
+                        features[0]["parameters"]["radius"].as_f64().unwrap() * 2.0,
+                        features[0]["parameters"]["height"].as_f64().unwrap(),
+                    ];
+                    for (axis, expected) in dimensions.iter().enumerate() {
+                        assert!((actual[axis] - expected.as_f64().unwrap()).abs() < 1e-10, "{input}");
+                    }
+                }
+            } else if let Some(issue) = expected["issue"].as_str() {
+                assert!(output.to_string().contains(issue), "{input}: {output}");
+            }
         }
     }
 }
