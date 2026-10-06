@@ -1,0 +1,246 @@
+{
+  "schema_version": "1.0",
+  "legacy_entrypoint": "src/legacy/ai_modeler/core/parsing/nlparser.py::Parser.parse",
+  "legacy_builders": {
+    "链轮": "src/legacy/ai_modeler/parts/library/partlib.py::_ring",
+    "油封": "src/legacy/ai_modeler/parts/library/partlib.py::_ring",
+    "碟形弹簧": "src/legacy/ai_modeler/parts/library/partlib.py::_ring",
+    "离合器摩擦片": "src/legacy/ai_modeler/parts/library/partlib.py::_washer"
+  },
+  "legacy_accepted": [
+    {
+      "input": "链轮 外径100 内径20 宽度10",
+      "name": "链轮",
+      "outer_diameter": 100.0,
+      "inner_diameter": 20.0,
+      "height": 10.0,
+      "inner_source": "user",
+      "height_source": "user",
+      "dimensions_mm": [100.0, 100.0, 10.0],
+      "legacy_mesh_volume_mm3": 75281.08365036693,
+      "feature_count": 2
+    },
+    {
+      "input": "骨架油封 外径50 内径20 宽度8",
+      "name": "油封",
+      "outer_diameter": 50.0,
+      "inner_diameter": 20.0,
+      "height": 8.0,
+      "inner_source": "user",
+      "height_source": "user",
+      "dimensions_mm": [50.0, 50.0, 8.0],
+      "legacy_mesh_volume_mm3": 13176.639562104687,
+      "feature_count": 2
+    },
+    {
+      "input": "蝶形弹簧 外径40 内径20 厚度2",
+      "name": "碟形弹簧",
+      "outer_diameter": 40.0,
+      "inner_diameter": 20.0,
+      "height": 2.0,
+      "inner_source": "user",
+      "height_source": "user",
+      "dimensions_mm": [40.0, 40.0, 2.0],
+      "legacy_mesh_volume_mm3": 1882.7130697804992,
+      "feature_count": 2
+    },
+    {
+      "input": "摩擦片 外径180 内径100 厚度4",
+      "name": "离合器摩擦片",
+      "outer_diameter": 180.0,
+      "inner_diameter": 100.0,
+      "height": 4.0,
+      "inner_source": "user",
+      "height_source": "user",
+      "dimensions_mm": [180.0, 180.0, 4.0],
+      "legacy_mesh_volume_mm3": 70297.88496087602,
+      "feature_count": 2
+    },
+    {
+      "input": "链轮 外径100",
+      "name": "链轮",
+      "outer_diameter": 100.0,
+      "inner_diameter": 20.0,
+      "height": 20.0,
+      "inner_source": "derived",
+      "height_source": "derived",
+      "dimensions_mm": [100.0, 100.0, 20.0],
+      "legacy_mesh_volume_mm3": 150562.16730073388,
+      "feature_count": 2,
+      "warning_code": "legacy_flat_annular_defaults"
+    },
+    {
+      "input": "油封 外径50",
+      "name": "油封",
+      "outer_diameter": 50.0,
+      "inner_diameter": 30.0,
+      "height": 7.0,
+      "inner_source": "derived",
+      "height_source": "derived",
+      "dimensions_mm": [50.0, 50.0, 7.0],
+      "legacy_mesh_volume_mm3": 8788.50958022063,
+      "feature_count": 2,
+      "warning_code": "legacy_flat_annular_defaults"
+    },
+    {
+      "input": "碟形弹簧 外径40",
+      "name": "碟形弹簧",
+      "outer_diameter": 40.0,
+      "inner_diameter": 20.0,
+      "height": 3.0,
+      "inner_source": "derived",
+      "height_source": "derived",
+      "dimensions_mm": [40.0, 40.0, 3.0],
+      "legacy_mesh_volume_mm3": 2824.0696046707676,
+      "feature_count": 2,
+      "warning_code": "legacy_flat_annular_defaults"
+    },
+    {
+      "input": "离合器摩擦片 外径180",
+      "name": "离合器摩擦片",
+      "outer_diameter": 180.0,
+      "inner_diameter": 120.0,
+      "height": 2.0,
+      "inner_source": "derived",
+      "height_source": "derived",
+      "dimensions_mm": [180.0, 180.0, 2.0],
+      "legacy_mesh_volume_mm3": 28257.159531219215,
+      "feature_count": 2,
+      "warning_code": "legacy_flat_annular_defaults"
+    }
+  ],
+  "not_ready": [
+    {
+      "input": "链轮 内径20",
+      "issue": "legacy_flat_annular_outer_diameter"
+    },
+    {
+      "input": "油封 外径10",
+      "issue": "legacy_flat_annular_inner_not_smaller_than_outer"
+    },
+    {
+      "input": "碟形弹簧 外径40 内径20 厚度0",
+      "issue": "legacy_flat_annular_height_invalid"
+    },
+    {
+      "input": "离合器摩擦片 外径180 内径180 厚度4",
+      "issue": "legacy_flat_annular_inner_not_smaller_than_outer"
+    }
+  ],
+  "known_legacy_discrepancies": [
+    {
+      "input": "链轮 外径100 内径20 宽度10 齿数30",
+      "legacy_actual": "齿数被静默忽略，仍生成不带链齿的平环。",
+      "migration_behavior": {
+        "status": "unsupported",
+        "issue": "legacy_flat_annular_modifier_not_migrated"
+      }
+    },
+    {
+      "input": "油封 外径50 内径20 宽度8 油封唇口",
+      "legacy_actual": "油封唇口被静默忽略，仍生成简单平环。",
+      "migration_behavior": {
+        "status": "unsupported",
+        "issue": "legacy_flat_annular_modifier_not_migrated"
+      }
+    },
+    {
+      "input": "碟形弹簧 外径40 内径20 厚度2 曲面",
+      "legacy_actual": "曲面描述被静默忽略，仍生成平面圆环。",
+      "migration_behavior": {
+        "status": "unsupported",
+        "issue": "legacy_flat_annular_modifier_not_migrated"
+      }
+    },
+    {
+      "input": "离合器摩擦片 外径180 内径100 厚度4 孔数6",
+      "legacy_actual": "Parser 额外生成一个位于中心、直径为孔数值的孔特征；该切除落在中心孔空腔内，摩擦片仍是简单圆环。",
+      "migration_behavior": {
+        "status": "unsupported",
+        "issue": "legacy_flat_annular_modifier_not_migrated"
+      }
+    },
+    {
+      "input": "链轮 外径100 内径100 宽度10",
+      "legacy_actual": "中心孔切除无效后，旧 Quick 最终只剩实心圆柱。",
+      "migration_behavior": {
+        "status": "needs_clarification",
+        "issue": "legacy_flat_annular_inner_not_smaller_than_outer"
+      }
+    }
+  ],
+  "native_expected_cases": [
+    {
+      "input": "链轮 外径100 内径20 宽度10",
+      "dimensions_mm": [100.0, 100.0, 10.0],
+      "analytic_volume_mm3": 75398.22368615503,
+      "legacy_mesh_volume_mm3": 75281.08365036693,
+      "hole_diameters_mm": [20.0],
+      "hole_centers_xy_mm": [[0.0, 0.0]],
+      "max_relative_legacy_volume_delta": 0.003
+    },
+    {
+      "input": "骨架油封 外径50 内径20 宽度8",
+      "dimensions_mm": [50.0, 50.0, 8.0],
+      "analytic_volume_mm3": 13194.68914507713,
+      "legacy_mesh_volume_mm3": 13176.639562104687,
+      "hole_diameters_mm": [20.0],
+      "hole_centers_xy_mm": [[0.0, 0.0]],
+      "max_relative_legacy_volume_delta": 0.003
+    },
+    {
+      "input": "蝶形弹簧 外径40 内径20 厚度2",
+      "dimensions_mm": [40.0, 40.0, 2.0],
+      "analytic_volume_mm3": 1884.9555921538758,
+      "legacy_mesh_volume_mm3": 1882.7130697804992,
+      "hole_diameters_mm": [20.0],
+      "hole_centers_xy_mm": [[0.0, 0.0]],
+      "max_relative_legacy_volume_delta": 0.003
+    },
+    {
+      "input": "摩擦片 外径180 内径100 厚度4",
+      "dimensions_mm": [180.0, 180.0, 4.0],
+      "analytic_volume_mm3": 70371.67544041136,
+      "legacy_mesh_volume_mm3": 70297.88496087602,
+      "hole_diameters_mm": [100.0],
+      "hole_centers_xy_mm": [[0.0, 0.0]],
+      "max_relative_legacy_volume_delta": 0.003
+    },
+    {
+      "input": "链轮 外径100",
+      "dimensions_mm": [100.0, 100.0, 20.0],
+      "analytic_volume_mm3": 150796.44737231007,
+      "legacy_mesh_volume_mm3": 150562.16730073388,
+      "hole_diameters_mm": [20.0],
+      "hole_centers_xy_mm": [[0.0, 0.0]],
+      "max_relative_legacy_volume_delta": 0.003
+    },
+    {
+      "input": "油封 外径50",
+      "dimensions_mm": [50.0, 50.0, 7.0],
+      "analytic_volume_mm3": 8796.459430051422,
+      "legacy_mesh_volume_mm3": 8788.50958022063,
+      "hole_diameters_mm": [30.0],
+      "hole_centers_xy_mm": [[0.0, 0.0]],
+      "max_relative_legacy_volume_delta": 0.003
+    },
+    {
+      "input": "碟形弹簧 外径40",
+      "dimensions_mm": [40.0, 40.0, 3.0],
+      "analytic_volume_mm3": 2827.4333882308138,
+      "legacy_mesh_volume_mm3": 2824.0696046707676,
+      "hole_diameters_mm": [20.0],
+      "hole_centers_xy_mm": [[0.0, 0.0]],
+      "max_relative_legacy_volume_delta": 0.003
+    },
+    {
+      "input": "离合器摩擦片 外径180",
+      "dimensions_mm": [180.0, 180.0, 2.0],
+      "analytic_volume_mm3": 28274.33388230814,
+      "legacy_mesh_volume_mm3": 28257.159531219215,
+      "hole_diameters_mm": [120.0],
+      "hole_centers_xy_mm": [[0.0, 0.0]],
+      "max_relative_legacy_volume_delta": 0.003
+    }
+  ]
+}

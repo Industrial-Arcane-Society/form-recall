@@ -64,6 +64,9 @@ pub fn parse(text: &str) -> Value {
     if let Some(parsed) = parse_legacy_coupling(text, &normalized) {
         return parsed;
     }
+    if let Some(parsed) = parse_legacy_flat_annular_parts(text, &normalized) {
+        return parsed;
+    }
     if let Some(parsed) = parse_legacy_simple_ring(text, &normalized) {
         return parsed;
     }
@@ -562,7 +565,7 @@ fn result(
     unsupported: Vec<Value>,
 ) -> Value {
     json!({"status":status,"source_text":text,"plan":plan,"warnings":warnings,"questions":questions,"unsupported":unsupported,
-        "compatibility":{"scope":"common explicit primitives/cuts, migrated standalone primitive defaults and legacy extrusion/revolve constructors, centered solid-shaft aliases, rectangular slots, flat-washer rings, cylindrical/conical spring helices, measured socket-head screws with optional washers, V-belt pulleys, timing pulleys, straight-gear construction, PCD counterbores, migrated legacy washer/spring/shaft/bearing/seal-ring/coupling/brake-disc/brake-drum/flywheel recipes, and executable flange/stepped-shaft/sleeve/blade/blisk templates","legacy_typical_defaults":"restored only for migrated Quick constructors/templates, centered solid shafts (Ø30 mm when diameter is absent), straight gears, timing pulleys, V-belt pulleys, socket-head screw catalog recipes, rectangular slots, flat-washer thickness, spring wire/turn values, brake-disc thickness/bore values, brake-drum bore values, and flywheel center-bore/PCD-hole values; defaults and raw-dimension mappings are reported as warnings","loft_geometry":"blade and blisk lofts are locally approximate faceted B-Reps","timing_pulley_geometry":"native timing pulley teeth are approximate trapezoidal prisms fused to an analytic annular blank","vbelt_pulley_geometry":"standard V-groove pulley is an approximate axisymmetric revolve; legacy spoke variants and CATIA-native groove features are not included","helix_geometry":"spring helices are locally approximate faceted B-Reps and are not native CATIA features","socket_head_bolt_geometry":"measured catalog dimensions and washers are preserved; native Rust adds visible faceted threads where the legacy Python Quick recipe reconstructed a smooth shank","solid_shaft_geometry":"the old mesh kernel used a 48-sided cylinder; Rust/OCCT uses an analytic cylinder, so bounding boxes agree while volume differs by the expected polygonal approximation"}})
+        "compatibility":{"scope":"common explicit primitives/cuts, migrated standalone primitive defaults and legacy extrusion/revolve constructors, centered solid-shaft aliases, rectangular slots, flat-washer rings, cylindrical/conical spring helices, measured socket-head screws with optional washers, V-belt pulleys, timing pulleys, straight-gear construction, PCD counterbores, migrated legacy washer/spring/shaft/bearing/seal-ring/coupling/brake-disc/brake-drum/flywheel/flat-annular-part recipes, and executable flange/stepped-shaft/sleeve/blade/blisk templates","legacy_typical_defaults":"restored only for migrated Quick constructors/templates, centered solid shafts (Ø30 mm when diameter is absent), straight gears, timing pulleys, V-belt pulleys, socket-head screw catalog recipes, rectangular slots, flat-washer thickness, spring wire/turn values, brake-disc thickness/bore values, brake-drum bore values, and flywheel center-bore/PCD-hole values, and flat-annular-part bore/thickness values; defaults and raw-dimension mappings are reported as warnings","loft_geometry":"blade and blisk lofts are locally approximate faceted B-Reps","timing_pulley_geometry":"native timing pulley teeth are approximate trapezoidal prisms fused to an analytic annular blank","vbelt_pulley_geometry":"standard V-groove pulley is an approximate axisymmetric revolve; legacy spoke variants and CATIA-native groove features are not included","helix_geometry":"spring helices are locally approximate faceted B-Reps and are not native CATIA features","socket_head_bolt_geometry":"measured catalog dimensions and washers are preserved; native Rust adds visible faceted threads where the legacy Python Quick recipe reconstructed a smooth shank","solid_shaft_geometry":"the old mesh kernel used a 48-sided cylinder; Rust/OCCT uses an analytic cylinder, so bounding boxes agree while volume differs by the expected polygonal approximation"}})
 }
 
 fn parse_legacy_template(raw: &str, normalized: &str) -> Option<Value> {
@@ -1555,6 +1558,254 @@ fn parse_legacy_simple_ring(raw: &str, text: &str) -> Option<Value> {
             },
             "relations":[]
         }),
+    ];
+    Some(plan_result(raw, name, features, warnings))
+}
+
+/// Migrate four legacy part-library constructors that all emit a flat annulus:
+/// chain wheel, oil seal, Belleville spring, and clutch friction plate. Their
+/// historical names overstate the shape; this parser keeps those limits
+/// visible instead of implying teeth, sealing lips, a conical spring, or
+/// friction segments.
+fn parse_legacy_flat_annular_parts(raw: &str, text: &str) -> Option<Value> {
+    let matches = [
+        contains_any(text, &["链轮", "chain sprocket"]),
+        contains_any(text, &["油封", "骨架油封", "oil seal"]),
+        contains_any(text, &["碟形弹簧", "蝶形弹簧", "belleville spring"]),
+        contains_any(text, &["离合器摩擦片", "离合器片", "摩擦片", "clutch friction disc"]),
+    ];
+    if !matches.iter().any(|matched| *matched) {
+        return None;
+    }
+    if matches.iter().filter(|matched| **matched).count() > 1 {
+        return Some(result(
+            "unsupported",
+            raw,
+            None,
+            vec![],
+            vec![],
+            vec![issue(
+                "legacy_flat_annular_part_ambiguous",
+                "描述同时包含多个环形零件类型；请一次只创建链轮、油封、碟形弹簧或离合器摩擦片中的一种。",
+            )],
+        ));
+    }
+
+    let (name, family_code, default_bore, default_height, bore_labels, height_labels, height_symbols, shape_note, extra_terms) =
+        if matches[0] {
+            (
+                "链轮",
+                "chain_wheel",
+                20.0,
+                20.0,
+                &["内径", "轴径", "inner diameter"][..],
+                &["宽度", "宽", "厚"][..],
+                &["B", "b"][..],
+                "旧 Python Quick 链轮配方只是完整平环，不含链齿或链条啮合轮廓。",
+                &["齿数", "链齿", "齿形", "链条"] as &[&str],
+            )
+        } else if matches[1] {
+            (
+                "油封",
+                "oil_seal",
+                30.0,
+                7.0,
+                &["内径", "inner diameter"][..],
+                &["宽度", "厚度", "厚"][..],
+                &["b", "B"][..],
+                "旧 Python Quick 油封配方只是完整平环，不含密封唇口、弹簧圈或骨架结构。",
+                &["唇口", "密封唇", "防尘唇", "副唇", "弹簧圈"] as &[&str],
+            )
+        } else if matches[2] {
+            (
+                "碟形弹簧",
+                "belleville_spring",
+                20.0,
+                3.0,
+                &["内径", "inner diameter"][..],
+                &["厚度", "厚"][..],
+                &["h", "H"][..],
+                "旧 Python Quick 碟形弹簧配方只是平面圆环，不含锥面、弹性预紧或载荷变形。",
+                &["曲面", "锥面", "预紧", "载荷", "弹性变形", "波形"] as &[&str],
+            )
+        } else {
+            (
+                "离合器摩擦片",
+                "clutch_friction_plate",
+                120.0,
+                2.0,
+                &["内径", "inner diameter"][..],
+                &["厚度", "厚"][..],
+                &["h", "H"][..],
+                "旧 Python Quick 离合器摩擦片配方只是平面圆环，不含摩擦材料、分段槽或花键结构。",
+                &["摩擦材料", "摩擦块", "分段", "花键"] as &[&str],
+            )
+        };
+
+    let mut unsupported_terms = vec![
+        "长方体",
+        "圆柱体",
+        "法兰",
+        "轴承",
+        "轴套",
+        "挡圈",
+        "垫圈",
+        "O形圈",
+        "O型圈",
+        "通孔",
+        "盲孔",
+        "沉孔",
+        "螺栓孔",
+        "孔数",
+        "开槽",
+        "键槽",
+        "倒角",
+        "圆角",
+        "螺纹",
+        "组合",
+        "同时",
+        "并加",
+        "再加",
+    ];
+    unsupported_terms.extend(extra_terms);
+    if contains_any(text, &unsupported_terms) {
+        return Some(result(
+            "unsupported",
+            raw,
+            None,
+            vec![],
+            vec![],
+            vec![issue(
+                "legacy_flat_annular_modifier_not_migrated",
+                format!("{name}当前只迁移旧 Quick 的平环配方。{shape_note}附加孔槽、齿形或零件专属结构尚未迁移。"),
+            )],
+        ));
+    }
+
+    let outer = merge_optional_scalar(
+        pulley_scalar(raw, text, &["外径", "外圆直径", "outside diameter"], &["D"]),
+        scalar_excluding_suffix(text, "直径", &["孔"]),
+    );
+    let bore_explicit = pulley_scalar(raw, text, bore_labels, &["d"]);
+    let height_explicit = pulley_scalar(raw, text, height_labels, height_symbols);
+    let mut questions = Vec::new();
+    match outer {
+        Some(value) if value.is_finite() && value > 0.0 => {}
+        Some(_) => questions.push(issue(
+            "legacy_flat_annular_outer_diameter_invalid",
+            format!("{name}外径必须是有限正数，且不同写法不能互相冲突。"),
+        )),
+        None => questions.push(issue(
+            "legacy_flat_annular_outer_diameter",
+            format!("请明确{name}外径；旧 Python Quick 没有外径时不能生成有效的环形零件。"),
+        )),
+    }
+    if bore_explicit.is_some_and(|value| !value.is_finite() || value <= 0.0) {
+        questions.push(issue(
+            "legacy_flat_annular_inner_diameter_invalid",
+            format!("{name}内径必须是有限正数，且不同写法不能互相冲突。"),
+        ));
+    }
+    if height_explicit.is_some_and(|value| !value.is_finite() || value <= 0.0) {
+        questions.push(issue(
+            "legacy_flat_annular_height_invalid",
+            format!("{name}轴向厚度/宽度必须是有限正数，且不同写法不能互相冲突。"),
+        ));
+    }
+    if let (Some(outer), Some(bore)) = (outer, bore_explicit) {
+        if outer.is_finite() && bore.is_finite() && bore >= outer {
+            questions.push(issue(
+                "legacy_flat_annular_inner_not_smaller_than_outer",
+                format!("{name}内径必须小于外径；旧 Python Quick 在该尺寸下会丢失中心孔并输出实心圆柱。"),
+            ));
+        }
+    }
+    if !questions.is_empty() {
+        return Some(result("needs_clarification", raw, None, vec![], questions, vec![]));
+    }
+
+    let outer = outer.expect("validated flat-annular-part outer diameter");
+    let bore_defaulted = bore_explicit.is_none();
+    let bore = bore_explicit.unwrap_or(default_bore);
+    if bore >= outer {
+        return Some(parse_result_with_issue(
+            "needs_clarification",
+            raw,
+            "legacy_flat_annular_inner_not_smaller_than_outer",
+            &format!("旧 Quick {name}默认内径 ⌀{bore} mm 不小于外径 ⌀{outer} mm；请显式给出有效内径。"),
+        ));
+    }
+    let height_defaulted = height_explicit.is_none();
+    let height = height_explicit.unwrap_or(default_height);
+    let unit_warning = !has_unit(text);
+
+    let mut warnings = vec![issue(
+        match family_code {
+            "chain_wheel" => "legacy_chain_wheel_flat_ring",
+            "oil_seal" => "legacy_oil_seal_flat_ring",
+            "belleville_spring" => "legacy_belleville_spring_flat_ring",
+            _ => "legacy_clutch_friction_plate_flat_ring",
+        },
+        shape_note,
+    )];
+    let mut default_descriptions = Vec::new();
+    if bore_defaulted {
+        default_descriptions.push(format!("内径 ⌀{default_bore} mm"));
+    }
+    if height_defaulted {
+        default_descriptions.push(format!("轴向厚度/宽度 {default_height} mm"));
+    }
+    if !default_descriptions.is_empty() {
+        warnings.push(issue(
+            "legacy_flat_annular_defaults",
+            format!("沿用旧 Python Quick {name}默认值：{}。", default_descriptions.join("、")),
+        ));
+    }
+    if unit_warning {
+        warnings.push(issue(
+            "unit_interpreted_as_mm",
+            format!("未写长度单位的{name}尺寸按旧 Quick 默认单位 mm 解释。"),
+        ));
+    }
+    if family_code == "chain_wheel" && contains_any(text, &["轴径"]) && !contains_any(text, &["内径"]) {
+        warnings.push(issue(
+            "legacy_chain_wheel_shaft_diameter_alias",
+            "链轮轴径按旧零件库 d 参数解释为中心通孔直径。",
+        ));
+    }
+
+    let features = vec![
+        json!({
+            "id":"quick-0001",
+            "kind":"cylinder",
+            "operation":"add",
+            "name":format!("{name}平环外体"),
+            "parameters":{"radius":outer/2.0,"height":height,"center":[0.0,0.0,0.0],"base":false,"axis":"Z","segments":64},
+            "sources":{
+                "radius":derived_source(raw, "由用户给定的外径除以 2 得到圆柱半径。"),
+                "height":if height_defaulted { derived_source(raw, &format!("沿用旧 Python Quick {name}构造器/参数表默认轴向厚度或宽度 {default_height} mm。")) } else { user_source(raw) },
+                "center":derived_source(raw, "沿用旧 Python Quick 将环形零件中心放在原点。"),
+                "base":derived_source(raw, "沿用旧 Python Quick 的居中圆柱语义。"),
+                "axis":derived_source(raw, "沿用旧 Python Quick 环形零件沿全局 Z 轴放置。"),
+                "segments":derived_source(raw, "沿用旧 Python Quick 圆柱分段数 64。")
+            },
+            "relations":[]
+        }),
+        json!({
+            "id":"quick-0002",
+            "kind":"hole",
+            "operation":"cut",
+            "name":format!("{name}中心通孔"),
+            "parameters":{"diameter":bore,"through":true,"pos":"center","axis":"Z","segments":48},
+            "sources":{
+                "diameter":if bore_defaulted { derived_source(raw, &format!("沿用旧 Python Quick {name}典型内径 ⌀{default_bore} mm。")) } else { user_source(raw) },
+                "through":derived_source(raw, "沿用旧 Python Quick 环形零件的中心孔贯穿。"),
+                "pos":derived_source(raw, "沿用旧 Python Quick 中心孔位置。"),
+                "axis":derived_source(raw, "沿用旧 Python Quick 中心孔沿全局 Z 轴贯穿。"),
+                "segments":derived_source(raw, "沿用旧 Python Quick 中心孔分段数 48。")
+            },
+            "relations":[]
+        })
     ];
     Some(plan_result(raw, name, features, warnings))
 }
@@ -9698,6 +9949,76 @@ mod tests {
             } else if let Some(issue) = expected["issue"].as_str() {
                 assert!(output.to_string().contains(issue), "{input}: {output}");
             }
+        }
+    }
+
+    #[test]
+    fn legacy_flat_annular_parts_match_python_oracle_and_provenance() {
+        let fixture: Value = serde_json::from_str(include_str!(
+            "../tests/fixtures/quick_legacy_flat_annular_parts_contract.json"
+        ))
+        .expect("flat annular Python oracle fixture is valid JSON");
+
+        for case in fixture["legacy_accepted"].as_array().unwrap() {
+            let input = case["input"].as_str().unwrap();
+            let output = parse(input);
+            assert_eq!(output["status"], "ready", "{input}: {output}");
+            assert_eq!(output["plan"]["name"], case["name"], "{input}: {output}");
+            let features = output["plan"]["features"].as_array().unwrap();
+            assert_eq!(features.len(), case["feature_count"].as_u64().unwrap() as usize, "{input}");
+
+            let outer = case["outer_diameter"].as_f64().unwrap();
+            let inner = case["inner_diameter"].as_f64().unwrap();
+            let height = case["height"].as_f64().unwrap();
+            assert_eq!(features[0]["kind"], "cylinder", "{input}");
+            assert_eq!(features[0]["operation"], "add", "{input}");
+            assert!((features[0]["parameters"]["radius"].as_f64().unwrap() - outer / 2.0).abs() < 1e-10, "{input}");
+            assert_eq!(features[0]["parameters"]["height"], height, "{input}");
+            assert_eq!(features[0]["parameters"]["center"], json!([0.0, 0.0, 0.0]), "{input}");
+            assert_eq!(features[0]["parameters"]["base"], false, "{input}");
+            assert_eq!(features[0]["parameters"]["axis"], "Z", "{input}");
+            assert_eq!(features[0]["parameters"]["segments"], 64, "{input}");
+            assert_eq!(features[0]["sources"]["height"]["type"], case["height_source"], "{input}");
+
+            assert_eq!(features[1]["kind"], "hole", "{input}");
+            assert_eq!(features[1]["operation"], "cut", "{input}");
+            assert_eq!(features[1]["parameters"]["diameter"], inner, "{input}");
+            assert_eq!(features[1]["parameters"]["through"], true, "{input}");
+            assert_eq!(features[1]["parameters"]["pos"], "center", "{input}");
+            assert_eq!(features[1]["parameters"]["axis"], "Z", "{input}");
+            assert_eq!(features[1]["parameters"]["segments"], 48, "{input}");
+            assert_eq!(features[1]["sources"]["diameter"]["type"], case["inner_source"], "{input}");
+            if let Some(code) = case["warning_code"].as_str() {
+                assert!(output["warnings"].to_string().contains(code), "{input}: {output}");
+            }
+            assert_eq!(
+                crate::cad_plan_validation::validate_plan(&output["plan"])["state"],
+                "valid",
+                "{input}: {}",
+                crate::cad_plan_validation::validate_plan(&output["plan"])
+            );
+            assert_eq!(
+                crate::native_plan_geometry::preflight(&output["plan"])
+                    .unwrap()["state"],
+                "valid",
+                "{input}"
+            );
+        }
+
+        for case in fixture["not_ready"].as_array().unwrap() {
+            let input = case["input"].as_str().unwrap();
+            let output = parse(input);
+            assert_eq!(output["status"], "needs_clarification", "{input}: {output}");
+            assert!(output["plan"].is_null(), "{input}: {output}");
+            assert!(output.to_string().contains(case["issue"].as_str().unwrap()), "{input}: {output}");
+        }
+
+        for case in fixture["known_legacy_discrepancies"].as_array().unwrap() {
+            let input = case["input"].as_str().unwrap();
+            let expected = &case["migration_behavior"];
+            let output = parse(input);
+            assert_eq!(output["status"], expected["status"], "{input}: {output}");
+            assert!(output.to_string().contains(expected["issue"].as_str().unwrap()), "{input}: {output}");
         }
     }
 }
