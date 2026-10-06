@@ -1121,6 +1121,66 @@ test('DSH diagnostic publication keeps only allowlisted RPC method and error cla
   assert.equal(JSON.stringify(unknown).includes('sentinel'), false)
 })
 
+test('visual review artifact publication status is a path-free projection outside acceptance and cleanup gates', () => {
+  const strict = { status: 'passed', scope: 'single_image_single_turn_cli_host_gates_not_independent_visual_or_CATIA_acceptance',
+    gates: { run_scope: { status: 'passed', reasons: [] } } }
+  const baseInput = { strict, transportStatus: 'completed', modelStatus: 'accepted_by_strict_cli_gate',
+    runtime: { node: 'v22.23.3', dsh: '0.2.0-rc.2' }, scratchCleanupStatus: 'removed' }
+  const baseline = buildSafeAcceptanceSummary(baseInput)
+  assert.deepEqual(baseline.visual_review_artifact_status, { status: 'not_attempted', code: 'not_attempted' })
+
+  const published = buildSafeAcceptanceSummary({ ...baseInput,
+    visualReviewArtifactStatus: { status: 'published', code: 'ok', path: 'private-path-sentinel',
+      sha256: 'private-hash-sentinel', fingerprint: 'private-fingerprint-sentinel' } })
+  assert.deepEqual(published.visual_review_artifact_status, { status: 'published', code: 'published' })
+  assert.equal(published.status, baseline.status)
+  assert.deepEqual(published.strict_gates, baseline.strict_gates)
+  assert.equal(published.scratch_cleanup_status, baseline.scratch_cleanup_status)
+
+  const rejected = buildSafeAcceptanceSummary({ ...baseInput,
+    visualReviewArtifactStatus: { status: 'rejected', code: 'invalid_output_root', path: 'private-path-sentinel' } })
+  assert.deepEqual(rejected.visual_review_artifact_status, { status: 'rejected', code: 'artifact_invalid' })
+  assert.equal(rejected.status, baseline.status)
+  assert.deepEqual(rejected.strict_gates, baseline.strict_gates)
+  assert.equal(rejected.scratch_cleanup_status, baseline.scratch_cleanup_status)
+
+  const unavailable = buildSafeAcceptanceSummary({ ...baseInput,
+    visualReviewArtifactStatus: { status: 'unavailable', code: 'preview_missing', detail: 'private-detail-sentinel' } })
+  assert.deepEqual(unavailable.visual_review_artifact_status, { status: 'unavailable', code: 'preview_missing' })
+  const invalid = buildSafeAcceptanceSummary({ ...baseInput,
+    visualReviewArtifactStatus: { status: 'private-status-sentinel', code: 'private-code-sentinel',
+      detail: 'private-detail-sentinel' } })
+  assert.deepEqual(invalid.visual_review_artifact_status, { status: 'unavailable', code: 'not_attempted' })
+  for (const summary of [published, rejected, unavailable, invalid]) {
+    assert.equal(summary.status, baseline.status)
+    assert.deepEqual(summary.strict_gates, baseline.strict_gates)
+    assert.equal(summary.scratch_cleanup_status, baseline.scratch_cleanup_status)
+  }
+  const serialized = JSON.stringify([published, rejected, unavailable, invalid])
+  for (const sentinel of ['private-path-sentinel', 'private-hash-sentinel', 'private-fingerprint-sentinel',
+    'private-status-sentinel', 'private-code-sentinel', 'private-detail-sentinel']) {
+    assert.equal(serialized.includes(sentinel), false, `must omit ${sentinel}`)
+  }
+
+  const failureRoot = mkdtempSync(join(tmpdir(), 'coldstart-visual-status-'))
+  try {
+    const failureInput = { stage: 'publication', code: 'uncaught_exception', scratchCleanupStatus: 'removed',
+      strictGates: baseline.strict_gates }
+    const failureBaseline = writeSafeFailureSummary(join(failureRoot, 'baseline'), failureInput)
+    const failure = writeSafeFailureSummary(join(failureRoot, 'with-visual-status'), {
+      ...failureInput, visualReviewArtifactStatus: { status: 'published', code: 'ok', path: 'private-path-sentinel' },
+    })
+    assert.deepEqual(failure.visual_review_artifact_status, { status: 'published', code: 'published' })
+    assert.equal(failure.status, 'failed')
+    assert.deepEqual(failure.strict_gates, failureBaseline.strict_gates)
+    assert.equal(failure.scratch_cleanup_status, 'removed')
+    assert.equal(failure.scratch_cleanup_status, failureBaseline.scratch_cleanup_status)
+    assert.equal(JSON.stringify(failure).includes('private-path-sentinel'), false)
+  } finally {
+    rmSync(failureRoot, { recursive: true, force: true })
+  }
+})
+
 test('visual and finish subcondition projection exposes fixed booleans and strips private fields', () => {
   const strict = {
     status: 'failed',

@@ -14,6 +14,7 @@ import { runOfflineCargoBuild } from './native_agent_coldstart_build.mjs'
 import { startNativeProbe } from './native_agent_coldstart_probe.mjs'
 import { cancelAndCloseSession, createAcpRpcClient, PromptProgressTracker, resolvePromptTimeoutPolicy,
   readGeometryRevision, watchGeometryRevision } from './native_agent_coldstart_prompt.mjs'
+import { isCurrentVisualPreview, publishVisualReviewArtifacts } from './native_agent_coldstart_visual_review.mjs'
 
 const [repoArg, runtimeArg, outputArg, configArg, imageArg, userTextArg] = process.argv.slice(2)
 let archiveDir = null
@@ -28,6 +29,7 @@ let fatalFailurePromise = null
 let failureStage = 'startup'
 let failurePhase = SAFE_PUBLICATION_PHASE.NOT_STARTED
 let safeStrictGates = null
+let visualReviewArtifactStatus = { status: 'not_attempted', code: 'not_attempted' }
 let promptProgressDiagnostics = null
 let currentPromptTracker = null
 let nativeProbeDiagnostic = null
@@ -36,7 +38,7 @@ const archiveFailure = (scratchCleanupStatus, code) => {
   if (!archiveDir) return
   try {
     const failure = { stage: failureStage, phase: failurePhase, code, scratchCleanupStatus, scratchRecovery,
-      strictGates: safeStrictGates, nativeProbeDiagnostic,
+      strictGates: safeStrictGates, nativeProbeDiagnostic, visualReviewArtifactStatus,
       promptProgress: promptProgressDiagnostics || currentPromptTracker?.snapshot() }
     if (safeSummaryPublished) replacePublishedSafeFailureSummary(archiveDir, failure)
     else writeSafeFailureSummary(archiveDir, failure)
@@ -365,6 +367,42 @@ const strict = evaluateColdstartGates({
 })
 failureStage = 'publication'
 failurePhase = SAFE_PUBLICATION_PHASE.PROJECTION
+// Preserve only the already validated source image and the current ISO view,
+// before the private run scratch is removed. This does not alter host gates.
+try {
+  const lastPreview = domain.last_preview
+  const revision = domain.revision
+  const generation = domain.preview_generation
+  const fingerprint = computedState?.geometry_signature
+  const isoView = Array.isArray(domain.previews)
+    ? domain.previews.find(view => view?.view === 'iso') : null
+  const previewArtifact = artifacts.files?.preview
+  const currentCandidate = isCurrentVisualPreview({ lastPreview, revision, generation, fingerprint, isoView, previewArtifact })
+  if (!currentCandidate) {
+    visualReviewArtifactStatus = { status: 'unavailable', code: previewArtifact ? 'candidate_incomplete' : 'preview_missing' }
+  } else {
+    const visualReview = publishVisualReviewArtifacts({
+      outputRoot: output,
+      referenceRoot: repo,
+      referencePath: imagePath,
+      referenceSha256: sourceSha,
+      referenceBytes: imageBytes.length,
+      scratchRoot: workDir,
+      modelPath: isoView.preview_image_path,
+      modelSha256: previewArtifact.sha256,
+      revision: String(revision),
+      previewGeneration: String(generation),
+      geometryFingerprint: fingerprint,
+      candidateStatus: lastPreview.state,
+    })
+    visualReviewArtifactStatus = visualReview.status === 'published'
+      ? { status: 'published', code: 'published' }
+      : { status: 'rejected', code: visualReview.code }
+  }
+} catch {
+  // Keep the CLI gate result independent from optional visual packet export.
+  visualReviewArtifactStatus = { status: 'unavailable', code: 'publication_failed' }
+}
 // Cache only the fixed allowlist projection so a later artifact-publication
 // exception can preserve evaluated gate outcomes without retaining raw evidence.
 safeStrictGates = buildSafeStrictGateProjection(strict)
@@ -391,6 +429,7 @@ let safeSummary
     dshDiagnostic: dshFailure,
     nativeProbeDiagnostic,
     promptProgress: promptProgressDiagnostics,
+    visualReviewArtifactStatus,
     scratchCleanupStatus: safeScratchCleanupStatus(managedChildrenExited, scratchCleanupStatus),
     scratchRecovery,
   })

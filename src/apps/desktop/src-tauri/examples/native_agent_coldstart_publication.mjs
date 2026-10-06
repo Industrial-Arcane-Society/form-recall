@@ -22,6 +22,9 @@ const SAFE_NODE_VERSIONS = new Set(['v22.23.3'])
 const SAFE_DSH_VERSIONS = new Set(['0.2.0-rc.2'])
 const MODEL_STATUSES = new Set(['accepted_by_strict_cli_gate', 'candidate', 'none'])
 const SCRATCH_CLEANUP_STATUSES = new Set(['removed', 'failed', 'not_created'])
+const VISUAL_REVIEW_ARTIFACT_UNAVAILABLE_CODES = new Set([
+  'not_attempted', 'candidate_incomplete', 'preview_missing', 'publication_failed',
+])
 const FAILURE_STAGES = new Set(['startup', 'config_validation', 'input_validation', 'runtime_validation',
   'offline_build', 'native_probe', 'dsh_launch', 'dsh_session', 'strict_gate_evaluation', 'publication', 'unknown'])
 const FAILURE_CODES = new Set(['uncaught_exception', 'unhandled_rejection'])
@@ -282,8 +285,39 @@ function safeNativeProbeDiagnostic(value) {
   return SAFE_NATIVE_PROBE_DIAGNOSTICS.has(value) ? value : null
 }
 
+/** Publish only fixed, path-free status for optional visual review artifacts. */
+export function sanitizeVisualReviewArtifactStatus(value) {
+  try {
+    if (value === undefined) return { status: 'not_attempted', code: 'not_attempted' }
+    const status = value?.status
+    const code = value?.code
+    if (status === 'not_attempted' && code === 'not_attempted') {
+      return { status: 'not_attempted', code: 'not_attempted' }
+    }
+    // The artifact publisher uses `ok` for success; normalize it at this boundary.
+    if (status === 'published' && (code === 'ok' || code === 'published')) {
+      return { status: 'published', code: 'published' }
+    }
+    if (status === 'unavailable' && VISUAL_REVIEW_ARTIFACT_UNAVAILABLE_CODES.has(code)) {
+      return { status: 'unavailable', code }
+    }
+    if (status === 'rejected' && code === 'not_a_candidate') {
+      return { status: 'unavailable', code: 'candidate_incomplete' }
+    }
+    if (status === 'rejected' && code === 'publication_failed') {
+      return { status: 'unavailable', code: 'publication_failed' }
+    }
+    if (status === 'rejected' && typeof code === 'string' && code.length > 0) {
+      return { status: 'rejected', code: 'artifact_invalid' }
+    }
+  } catch {
+    // Untrusted getters/proxies must not affect publication or leak details.
+  }
+  return { status: 'unavailable', code: 'not_attempted' }
+}
+
 function createSafeFailureSummary({ stage, phase, code, scratchCleanupStatus, scratchRecovery, strictGates,
-  promptProgress, nativeProbeDiagnostic } = {}) {
+  promptProgress, nativeProbeDiagnostic, visualReviewArtifactStatus } = {}) {
   return {
     schema_version: 1,
     status: 'failed',
@@ -295,6 +329,7 @@ function createSafeFailureSummary({ stage, phase, code, scratchCleanupStatus, sc
     scratch_recovery: sanitizeScratchRecoverySummary(scratchRecovery),
     ...(promptProgress ? { prompt_progress: safePromptProgressSummary(promptProgress) } : {}),
     native_probe_diagnostic: safeNativeProbeDiagnostic(nativeProbeDiagnostic),
+    visual_review_artifact_status: sanitizeVisualReviewArtifactStatus(visualReviewArtifactStatus),
     failure_diagnostic: buildSafeFailureDiagnostic({ stage, phase, code }),
     strict_gates: strictGates ? sanitizeSafeStrictGateProjection(strictGates) : sanitizeSafeStrictGateProjection({}),
   }
@@ -325,7 +360,7 @@ export function replacePublishedSafeFailureSummary(output, failure = {}) {
 }
 
 export function buildSafeAcceptanceSummary({ strict, transportStatus, modelStatus, runtime, source, scratchCleanupStatus,
-  scratchRecovery, dshDiagnostic, promptProgress, nativeProbeDiagnostic }) {
+  scratchRecovery, dshDiagnostic, promptProgress, nativeProbeDiagnostic, visualReviewArtifactStatus }) {
   const strictGateProjection = buildSafeStrictGateProjection(strict)
   const overallPassed = strict?.status === 'passed' && scratchCleanupStatus === 'removed'
   return {
@@ -338,6 +373,7 @@ export function buildSafeAcceptanceSummary({ strict, transportStatus, modelStatu
     scratch_recovery: sanitizeScratchRecoverySummary(scratchRecovery),
     ...(promptProgress ? { prompt_progress: safePromptProgressSummary(promptProgress) } : {}),
     native_probe_diagnostic: safeNativeProbeDiagnostic(nativeProbeDiagnostic),
+    visual_review_artifact_status: sanitizeVisualReviewArtifactStatus(visualReviewArtifactStatus),
     dsh_diagnostic: buildSafeDshDiagnostic(dshDiagnostic),
     strict_gates: strictGateProjection,
     visual_finish_diagnostics: buildSafeVisualFinishDiagnostics(strict),
