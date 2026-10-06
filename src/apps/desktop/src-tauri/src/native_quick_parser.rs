@@ -16,6 +16,8 @@ enum BaseKind {
     Cone,
     Frustum,
     Sphere,
+    Prism,
+    Revolve,
 }
 
 /// Parse a deliberately narrow Quick grammar and return a structured result.
@@ -27,7 +29,7 @@ pub fn parse(text: &str) -> Value {
     let mut unsupported = Vec::<Value>::new();
     let mut warnings = vec![json!({
         "code":"legacy_implicit_dimensions_removed",
-        "message":"仅已迁移的模板和无切除修饰的基础体/矩形槽沿用旧典型尺寸，并逐项说明；其余缺少必需尺寸或孔位时返回澄清。"
+        "message":"仅已迁移的旧 Quick 基础体、拉伸/回转、模板和矩形槽规则沿用默认值，并逐项说明；其余缺少必需尺寸或孔位时返回澄清。"
     })];
     if text.trim().is_empty() {
         return result(
@@ -89,15 +91,24 @@ pub fn parse(text: &str) -> Value {
         }
     }
     let mut base_kinds = Vec::new();
-    for kind in [
-        BaseKind::Box,
-        BaseKind::Cylinder,
-        BaseKind::Cone,
-        BaseKind::Frustum,
-        BaseKind::Sphere,
-    ] {
-        if contains_base(&normalized, kind) {
-            base_kinds.push(kind);
+    if legacy_revolve_requested(&normalized) {
+        base_kinds.push(BaseKind::Revolve);
+    } else if extrusion_requested(&normalized) {
+        base_kinds.push(BaseKind::Prism);
+    } else {
+        for kind in [
+            BaseKind::Box,
+            BaseKind::Cylinder,
+            BaseKind::Cone,
+            BaseKind::Frustum,
+            BaseKind::Sphere,
+        ] {
+            if contains_base(&normalized, kind) {
+                base_kinds.push(kind);
+            }
+        }
+        if base_kinds.is_empty() && legacy_plain_cylinder_requested(&normalized) {
+            base_kinds.push(BaseKind::Cylinder);
         }
     }
     let base_kind = if base_kinds.len() == 1 {
@@ -485,7 +496,7 @@ fn result(
     unsupported: Vec<Value>,
 ) -> Value {
     json!({"status":status,"source_text":text,"plan":plan,"warnings":warnings,"questions":questions,"unsupported":unsupported,
-        "compatibility":{"scope":"common explicit primitives/cuts, standalone migrated primitive defaults, rectangular slots, and executable flange/stepped-shaft/sleeve templates","legacy_typical_defaults":"restored only for migrated standalone bases/templates and rectangular slots; defaults and raw-dimension mappings are reported as warnings"}})
+        "compatibility":{"scope":"common explicit primitives/cuts, migrated standalone primitive defaults and legacy extrusion/revolve constructors, rectangular slots, and executable flange/stepped-shaft/sleeve templates","legacy_typical_defaults":"restored only for migrated Quick constructors/templates and rectangular slots; defaults and raw-dimension mappings are reported as warnings"}})
 }
 
 fn parse_legacy_template(raw: &str, normalized: &str) -> Option<Value> {
@@ -1253,6 +1264,319 @@ fn build_base(
                 add_user(&mut parameters, &mut sources, raw, "axis", json!(axis));
             }
         }
+        BaseKind::Prism => {
+            let raw_values = dimension_values(clause);
+            let pair = find_dimension_pair(clause);
+            let triple = find_dimension_triplet(clause);
+            let profile_cue = contains_any(
+                clause,
+                &["草图", "轮廓", "截面", "剖面", "sketch", "profile"],
+            );
+            let circular = clause.contains('圆') || contains_any(clause, &["circle", "circular"]);
+            let mut defaulted = Vec::<String>::new();
+            let mut raw_mapped = Vec::<String>::new();
+            let profile = if circular {
+                let radius = scalar(clause, &["radius", "半径"]);
+                let diameter = diameter_value(clause);
+                let explicit_radius = radius.or_else(|| diameter.map(|value| value * 0.5));
+                let mapped_radius = if explicit_radius.is_none() {
+                    raw_values.first().copied().map(|value| value * 0.5)
+                } else {
+                    None
+                };
+                let chosen = explicit_radius.or(mapped_radius).unwrap_or(25.0);
+                if !chosen.is_finite() || chosen <= 0.0 {
+                    questions.push(issue(
+                        "extrusion_profile_radius_invalid",
+                        "圆形拉伸轮廓半径/直径必须为有限正数。",
+                    ));
+                }
+                if explicit_radius.is_none() {
+                    if let Some(value) = mapped_radius {
+                        raw_mapped.push(format!("profile radius={value} mm"));
+                    } else {
+                        defaulted.push("profile radius=25 mm".into());
+                    }
+                }
+                circle_profile(chosen, 48)
+            } else {
+                let length = pair
+                    .map(|values| values[0])
+                    .or_else(|| triple.map(|values| values[0]))
+                    .or_else(|| scalar(clause, &["length", "长度", "长"]))
+                    .or_else(|| {
+                        (profile_cue && raw_values.len() >= 2)
+                            .then(|| raw_values[0])
+                    })
+                    .unwrap_or(100.0);
+                let width = pair
+                    .map(|values| values[1])
+                    .or_else(|| triple.map(|values| values[1]))
+                    .or_else(|| scalar(clause, &["width", "宽度", "宽"]))
+                    .or_else(|| {
+                        (profile_cue && raw_values.len() >= 2)
+                            .then(|| raw_values[1])
+                    })
+                    .unwrap_or(60.0);
+                if !length.is_finite() || length <= 0.0 || !width.is_finite() || width <= 0.0 {
+                    questions.push(issue(
+                        "extrusion_profile_dimensions_invalid",
+                        "矩形拉伸轮廓长和宽必须为有限正数。",
+                    ));
+                }
+                let length_defaulted = pair.is_none()
+                    && triple.is_none()
+                    && scalar(clause, &["length", "长度", "长"]).is_none()
+                    && !(profile_cue && raw_values.len() >= 2);
+                let width_defaulted = pair.is_none()
+                    && triple.is_none()
+                    && scalar(clause, &["width", "宽度", "宽"]).is_none()
+                    && !(profile_cue && raw_values.len() >= 2);
+                if length_defaulted {
+                    defaulted.push("profile length=100 mm".into());
+                } else if pair.is_none()
+                    && triple.is_none()
+                    && scalar(clause, &["length", "长度", "长"]).is_none()
+                    && profile_cue
+                    && raw_values.len() >= 2
+                {
+                    raw_mapped.push(format!("profile length={length} mm"));
+                }
+                if width_defaulted {
+                    defaulted.push("profile width=60 mm".into());
+                } else if pair.is_none()
+                    && triple.is_none()
+                    && scalar(clause, &["width", "宽度", "宽"]).is_none()
+                    && profile_cue
+                    && raw_values.len() >= 2
+                {
+                    raw_mapped.push(format!("profile width={width} mm"));
+                }
+                vec![
+                    [-length * 0.5, -width * 0.5],
+                    [length * 0.5, -width * 0.5],
+                    [length * 0.5, width * 0.5],
+                    [-length * 0.5, width * 0.5],
+                ]
+            };
+            let explicit_height = scalar(clause, &["height", "高度", "高"])
+                .or_else(|| triple.map(|values| values[2]));
+            let raw_height = if explicit_height.is_none()
+                && (!profile_cue || raw_values.len() >= 3)
+            {
+                raw_values.last().copied()
+            } else {
+                None
+            };
+            let profile_radius = if circular {
+                profile
+                    .first()
+                    .map(|point| point[0])
+                    .unwrap_or(25.0)
+            } else {
+                0.0
+            };
+            let rect_size = if circular {
+                [0.0, 0.0]
+            } else {
+                [
+                    profile[1][0] - profile[0][0],
+                    profile[2][1] - profile[1][1],
+                ]
+            };
+            let legacy_height = raw_height.or_else(|| {
+                if profile_cue {
+                    Some(if circular {
+                        profile_radius * 2.0
+                    } else {
+                        rect_size[0].min(rect_size[1])
+                    })
+                } else {
+                    Some(if circular { 50.0 } else { 20.0 })
+                }
+            });
+            let height = explicit_height.or(legacy_height).unwrap_or(20.0);
+            if !height.is_finite() || height <= 0.0 {
+                questions.push(issue(
+                    "extrusion_height_invalid",
+                    "拉伸高度必须为有限正数。",
+                ));
+            }
+            if explicit_height.is_none() {
+                if let Some(value) = raw_height {
+                    raw_mapped.push(format!("extrusion height={value} mm"));
+                } else {
+                    defaulted.push(format!("extrusion height={height} mm"));
+                }
+            }
+            parameters.insert("profile".into(), json!(profile));
+            sources.insert(
+                "profile".into(),
+                derived_source(raw, "按旧 Python Quick 拉伸规则从尺寸生成闭合二维轮廓。"),
+            );
+            if explicit_height.is_some() {
+                add_user(&mut parameters, &mut sources, raw, "height", json!(height));
+            } else {
+                parameters.insert("height".into(), json!(height));
+                sources.insert(
+                    "height".into(),
+                    derived_source(raw, "沿用旧 Python Quick 拉伸高度回退规则。"),
+                );
+            }
+            let explicit_axis = axis_value(clause, questions);
+            let axis = explicit_axis.unwrap_or("Z");
+            parameters.insert("center".into(), json!([0.0, 0.0, 0.0]));
+            sources.insert(
+                "center".into(),
+                derived_source(raw, "沿用旧 Python Quick 的全局原点拉伸中心。"),
+            );
+            parameters.insert("axis".into(), json!(axis));
+            if explicit_axis.is_some() {
+                sources.insert("axis".into(), user_source(raw));
+            } else {
+                sources.insert(
+                    "axis".into(),
+                    derived_source(raw, "未指定方向时沿用旧 Python Quick 默认 Z 轴。"),
+                );
+            }
+            if !defaulted.is_empty() {
+                warnings.push(issue(
+                    "legacy_extrusion_dimensions_defaulted",
+                    &format!(
+                        "沿用旧 Python Quick 拉伸默认值（{}）；这些值不是用户标注尺寸。",
+                        defaulted.join("、")
+                    ),
+                ));
+            }
+            if !raw_mapped.is_empty() {
+                warnings.push(issue(
+                    "legacy_extrusion_raw_dimensions_mapped",
+                    &format!(
+                        "沿用旧 Python Quick 对未标注尺寸的映射：{}；请核对这些尺寸的含义。",
+                        raw_mapped.join("、")
+                    ),
+                ));
+            }
+        }
+        BaseKind::Revolve => {
+            let radius = scalar(clause, &["radius", "半径"]);
+            let diameter = diameter_value(clause);
+            let has_radius_or_diameter = radius.is_some() || diameter.is_some();
+            let raw_values = dimension_values(clause);
+            let mapped_radius = if !has_radius_or_diameter {
+                raw_values.first().copied().map(|value| value * 0.5)
+            } else {
+                None
+            };
+            let explicit_radius = radius.or_else(|| diameter.map(|value| value * 0.5));
+            let radius = explicit_radius.or(mapped_radius).unwrap_or(20.0);
+            let explicit_height = scalar(clause, &["height", "高度", "高"]);
+            let height = explicit_height.unwrap_or(if has_radius_or_diameter {
+                20.0
+            } else {
+                40.0
+            });
+            if !radius.is_finite() || radius <= 0.0 || !height.is_finite() || height <= 0.0 {
+                questions.push(issue(
+                    "revolve_dimensions_invalid",
+                    "回转轮廓半径与高度必须为有限正数。",
+                ));
+            }
+            let angle = match circular_pattern_angle(clause) {
+                Ok(Some(value)) if value.is_finite() && value > 0.0 && value <= 360.0 => value,
+                Ok(Some(_)) => {
+                    questions.push(issue(
+                        "revolve_angle_invalid",
+                        "回转角度必须大于 0 且不超过 360 度。",
+                    ));
+                    360.0
+                }
+                Ok(None) => 360.0,
+                Err("radians") => {
+                    questions.push(issue(
+                        "revolve_angle_unit_unsupported",
+                        "旧 Quick 回转角度只接受度（°/deg/度），不接受弧度。",
+                    ));
+                    360.0
+                }
+                Err(_) => {
+                    questions.push(issue(
+                        "revolve_angle_conflict",
+                        "回转描述了互相冲突的角度值。",
+                    ));
+                    360.0
+                }
+            };
+            if axis_value(clause, questions).is_some_and(|axis| axis != "Z") {
+                questions.push(issue(
+                    "revolve_axis_fixed_to_z",
+                    "旧 Python Quick 回转特征固定绕 Z 轴；请移除冲突轴向或改用其他建模方式。",
+                ));
+            }
+            let profile = vec![[0.0, 0.0], [radius, 0.0], [radius, height], [0.0, height]];
+            parameters.insert("profile".into(), json!(profile));
+            sources.insert(
+                "profile".into(),
+                derived_source(raw, "按旧 Python Quick 回转规则从半径和高度生成矩形母线。"),
+            );
+            parameters.insert("angle".into(), json!(angle));
+            if circular_pattern_angle(clause).ok().flatten().is_some() {
+                sources.insert("angle".into(), user_source(raw));
+            } else {
+                sources.insert(
+                    "angle".into(),
+                    derived_source(raw, "沿用旧 Python Quick 的 360 度默认回转角。"),
+                );
+            }
+            parameters.insert("center".into(), json!([0.0, 0.0, 0.0]));
+            sources.insert(
+                "center".into(),
+                derived_source(raw, "沿用旧 Python Quick 的全局原点回转中心。"),
+            );
+            parameters.insert("axis".into(), json!("Z"));
+            sources.insert(
+                "axis".into(),
+                derived_source(raw, "旧 Python Quick 回转始终绕 Z 轴。"),
+            );
+            parameters.insert("segments".into(), json!(48));
+            sources.insert(
+                "segments".into(),
+                derived_source(raw, "沿用旧 Python Quick 回转特征的 48 段设置。"),
+            );
+            let mut defaulted = Vec::<String>::new();
+            let mut raw_mapped = Vec::<String>::new();
+            if explicit_radius.is_none() {
+                if let Some(value) = mapped_radius {
+                    raw_mapped.push(format!("profile radius={value} mm"));
+                } else {
+                    defaulted.push("profile radius=20 mm".into());
+                }
+            }
+            if explicit_height.is_none() {
+                defaulted.push(format!("profile height={height} mm"));
+            }
+            if circular_pattern_angle(clause).ok().flatten().is_none() {
+                defaulted.push("angle=360 deg".into());
+            }
+            if !defaulted.is_empty() {
+                warnings.push(issue(
+                    "legacy_revolve_dimensions_defaulted",
+                    &format!(
+                        "沿用旧 Python Quick 回转默认值（{}）；这些值不是用户标注尺寸。",
+                        defaulted.join("、")
+                    ),
+                ));
+            }
+            if !raw_mapped.is_empty() {
+                warnings.push(issue(
+                    "legacy_revolve_raw_dimensions_mapped",
+                    &format!(
+                        "沿用旧 Python Quick 对未标注尺寸的映射：{}；请核对这些尺寸的含义。",
+                        raw_mapped.join("、")
+                    ),
+                ));
+            }
+        }
         BaseKind::Sphere => {
             let r = scalar(clause, &["radius", "半径"]);
             let d = diameter_value(clause);
@@ -1408,12 +1732,12 @@ fn build_base(
         ));
     }
     let id = 1;
-    let feature_kind = if kind == BaseKind::Box {
-        "box"
-    } else if kind == BaseKind::Sphere {
-        "sphere"
-    } else {
-        "cylinder"
+    let feature_kind = match kind {
+        BaseKind::Box => "box",
+        BaseKind::Sphere => "sphere",
+        BaseKind::Prism => "prism",
+        BaseKind::Revolve => "revolve",
+        _ => "cylinder",
     };
     Some(feature(
         id,
@@ -2193,7 +2517,35 @@ fn contains_base(s: &str, k: BaseKind) -> bool {
         BaseKind::Cone => contains_any(s, &["圆锥", "cone"]),
         BaseKind::Frustum => contains_any(s, &["圆台", "锥台", "frustum"]),
         BaseKind::Sphere => contains_any(s, &["球体", "圆球", "sphere", "ball"]),
+        BaseKind::Prism => extrusion_requested(s),
+        BaseKind::Revolve => legacy_revolve_requested(s),
     }
+}
+fn extrusion_requested(s: &str) -> bool {
+    contains_any(s, &["拉伸", "挤出", "拉出", "拉伸体", "extrude", "pad"])
+}
+fn legacy_plain_cylinder_requested(s: &str) -> bool {
+    let has_diameter_or_radius = diameter_value(s)
+        .or_else(|| scalar(s, &["radius", "半径"]))
+        .is_some_and(|value| value.is_finite() && value > 0.0);
+    let has_height = scalar(s, &["height", "高度", "高", "length", "长度", "长"])
+        .is_some_and(|value| value.is_finite() && value > 0.0);
+    if !has_diameter_or_radius || !has_height {
+        return false;
+    }
+    if contains_any(
+        s,
+        &["轮廓", "草图", "截面", "剖面", "圆弧", "母线", "扫掠", "旋成", "绕", "轴心线"],
+    ) {
+        return false;
+    }
+    !regex::Regex::new(r"(回转体|旋转体|车削|回转成|回转\s*[0-9.]+)")
+        .expect("fixed legacy revolve regex")
+        .is_match(s)
+}
+fn legacy_revolve_requested(s: &str) -> bool {
+    contains_any(s, &["回转", "旋转体", "车削", "旋转成型", "旋成", "revolve", "lathe"])
+        && !legacy_plain_cylinder_requested(s)
 }
 fn has_hole(s: &str) -> bool {
     contains_any(s, &["孔", "bore", "hole", "drill"])
@@ -2270,6 +2622,14 @@ fn read_unit(s: &str, mut i: usize) -> (String, usize) {
         }
     }
     (String::new(), i)
+}
+fn circle_profile(radius: f64, segments: usize) -> Vec<[f64; 2]> {
+    (0..segments)
+        .map(|index| {
+            let angle = std::f64::consts::TAU * index as f64 / segments as f64;
+            [radius * angle.cos(), radius * angle.sin()]
+        })
+        .collect()
 }
 fn scale(u: &str) -> f64 {
     match u {
@@ -3393,6 +3753,69 @@ mod tests {
                 .to_string()
                 .contains("cylinder_radius_missing")
         );
+    }
+
+    #[test]
+    fn legacy_extrusion_revolve_and_plain_cylinder_match_python_contract() {
+        use serde_json::Value;
+
+        fn assert_json_matches(actual: &Value, expected: &Value, path: &str) {
+            if let (Some(actual), Some(expected)) = (actual.as_f64(), expected.as_f64()) {
+                assert!(
+                    (actual - expected).abs() <= 1e-8,
+                    "{path}: actual={actual}, expected={expected}"
+                );
+                return;
+            }
+            match (actual, expected) {
+                (Value::Array(actual), Value::Array(expected)) => {
+                    assert_eq!(actual.len(), expected.len(), "{path}: array length");
+                    for (index, (actual, expected)) in actual.iter().zip(expected).enumerate() {
+                        assert_json_matches(actual, expected, &format!("{path}[{index}]"));
+                    }
+                }
+                (Value::Object(actual), Value::Object(expected)) => {
+                    for (key, expected) in expected {
+                        assert_json_matches(
+                            actual.get(key).unwrap_or(&Value::Null),
+                            expected,
+                            &format!("{path}.{key}"),
+                        );
+                    }
+                }
+                _ => assert_eq!(actual, expected, "{path}"),
+            }
+        }
+
+        let fixture: Value = serde_json::from_str(include_str!(
+            "../tests/fixtures/quick_legacy_extrusion_revolve_contract.json"
+        ))
+        .expect("legacy extrusion/revolve fixture is valid JSON");
+        for case in fixture["legacy_accepted"].as_array().unwrap() {
+            let input = case["input"].as_str().unwrap();
+            let output = parse(input);
+            assert_eq!(output["status"], "ready", "{input}: {output}");
+            let features = output["plan"]["features"].as_array().unwrap();
+            assert_eq!(features.len(), 1, "{input}: {output}");
+            assert_eq!(features[0]["kind"], case["feature_kind"], "{input}");
+            assert_json_matches(
+                &features[0]["parameters"],
+                &case["parameters"],
+                input,
+            );
+            let validation = crate::cad_plan_validation::validate_plan(&output["plan"]);
+            assert_eq!(validation["state"], "valid", "{input}: {validation}");
+        }
+
+        let unsupported_axis = parse("回转体 半径20 高30 回转180度 绕X轴");
+        assert_eq!(unsupported_axis["status"], "needs_clarification");
+        assert!(unsupported_axis["questions"].to_string().contains("revolve_axis_fixed_to_z"));
+        let invalid_prism = parse("拉伸 长0宽20高10");
+        assert_eq!(invalid_prism["status"], "needs_clarification");
+        assert!(invalid_prism["questions"].to_string().contains("extrusion_profile_dimensions_invalid"));
+        let invalid_angle = parse("回转体 半径20 高30 回转0度");
+        assert_eq!(invalid_angle["status"], "needs_clarification");
+        assert!(invalid_angle["questions"].to_string().contains("revolve_angle_invalid"));
     }
 
     #[test]
