@@ -8,6 +8,11 @@ import { NATIVE_PROBE_DIAGNOSTICS } from './native_agent_coldstart_probe.mjs'
 
 const toolNames = new Set([...COLDSTART_TOOL_NAME_ALLOWLIST, 'unknown'])
 const safeCount = value => Number.isSafeInteger(value) && value >= 0 ? value : 0
+const ACP_STATUS_SEQUENCES = new Set([
+  'no_terminal_status', 'progress_then_completed', 'progress_then_failed',
+  'completed_without_progress', 'failed_without_progress', 'update_after_terminal',
+  'repeated_same_terminal_status', 'conflicting_terminal_statuses',
+])
 const GATE_NAMES = Object.freeze([
   'run_scope', 'dsh_session', 'dsh_process', 'trace_integrity', 'original_image', 'main_image_wire',
   'cordis_cad_tools', 'acp_cad_tool_results', 'current_geometry', 'artifacts', 'holes', 'visual', 'finish',
@@ -114,7 +119,7 @@ const pickCounts = (rows, keys, enums) => Array.isArray(rows) ? rows.map(row => 
 
 function safeAcpProjection(value) {
   return {
-    schema: 'acp_terminal_update_projection_v3',
+    schema: 'acp_terminal_update_projection_v4',
     tool_status_counts: pickCounts(value?.tool_status_counts, ['tool_name', 'kind', 'status', 'count'], {
       kind: new Set(['start', 'update']), status: new Set(['pending', 'in_progress', 'completed', 'failed', 'other']),
     }),
@@ -131,6 +136,12 @@ function safeAcpProjection(value) {
         'repeated_same_status_digest_unavailable', 'repeated_same_status_identical_update',
         'repeated_same_status_distinct_updates',
       ]) }),
+    call_group_status_sequences: Array.isArray(value?.call_group_status_sequences)
+      ? value.call_group_status_sequences.flatMap(row => {
+        if (!toolNames.has(row?.tool_name) || !ACP_STATUS_SEQUENCES.has(row?.sequence)
+          || !Number.isSafeInteger(row?.count) || row.count < 0) return []
+        return [{ tool_name: row.tool_name, sequence: row.sequence, count: row.count }]
+      }) : [],
     same_terminal_event_pair_count: safeCount(value?.same_terminal_event_pair_count),
     different_terminal_event_pair_count: safeCount(value?.different_terminal_event_pair_count),
     terminal_update_hmac_unavailable_event_count: safeCount(value?.terminal_update_hmac_unavailable_event_count),

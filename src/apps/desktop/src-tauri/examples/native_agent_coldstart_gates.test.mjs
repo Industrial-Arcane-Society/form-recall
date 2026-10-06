@@ -448,7 +448,7 @@ test('ACP terminal projection uses per-run full-update HMACs and an exact tool-n
   assert.equal(hmacA, hmacB)
   assert.notEqual(hmacA, createTerminalUpdateHmac({ a: 1, b: 2 }, randomBytes(32)))
   const projection = summarizeAcpTerminalUpdateDiagnostics(rows, { terminalUpdateHmacByEvent: digestByEvent })
-  assert.equal(projection.schema, 'acp_terminal_update_projection_v3')
+  assert.equal(projection.schema, 'acp_terminal_update_projection_v4')
   assert.deepEqual(projection.call_group_terminal_distribution, [
     { tool_name: 'cad_finish_model', terminal_category: 'repeated_same_status_identical_update', count: 1 },
     { tool_name: 'cad_inspect_references', terminal_category: 'repeated_same_status_distinct_updates', count: 1 },
@@ -475,6 +475,42 @@ test('ACP terminal projection uses per-run full-update HMACs and an exact tool-n
   for (const secret of [marker, 'different-private-payload', repeatedId, distinctId, mixedId,
     'private-web-id', 'private-unknown-id', 'cad_private_tool_name', 'private-image-payload-marker',
     'private-acp-error-marker', 'private-title-marker', hmacA, key.toString('hex')]) {
+    assert.equal(serialized.includes(secret), false)
+  }
+})
+
+test('ACP lifecycle sequence diagnostics classify ordered call status without publishing identities or payloads', () => {
+  const id = name => `private-acp-call-id-${name}`
+  const start = (name, tool, status = 'in_progress') => ({ kind: 'tool_call', tool_call_id: id(name), title: tool,
+    status, arguments_sha256_24: 'a'.repeat(24), arguments: { secret: `private-argument-${name}` } })
+  const update = (name, status, extra = {}) => ({ kind: 'tool_call_update', tool_call_id: id(name), status,
+    content: `private-content-${name}`, error: `private-error-${name}`, at_ms: 1700000000000, ...extra })
+  const events = [
+    start('complete', 'cad_add_feature'), update('complete', 'completed'),
+    start('failed', 'cad_update_feature'), update('failed', 'failed'),
+    start('open', 'cad_get_state'),
+    start('complete-no-progress', 'cad_finish_model', 'other'), update('complete-no-progress', 'completed'),
+    start('failed-no-progress', 'cad_validate_model', 'other'), update('failed-no-progress', 'failed'),
+    start('after-terminal', 'cad_preview_model'), update('after-terminal', 'completed'), update('after-terminal', 'in_progress'),
+    start('repeat', 'cad_add_hole_array'), update('repeat', 'completed'), update('repeat', 'completed'),
+    start('conflict', 'cad_remove_feature'), update('conflict', 'completed'), update('conflict', 'failed'),
+    start('unknown-title', 'cad_private_tool_name'), update('unknown-title', 'completed'),
+  ]
+  const projection = summarizeAcpTerminalUpdateDiagnostics(events)
+  assert.deepEqual(projection.call_group_status_sequences, [
+    { tool_name: 'cad_add_feature', sequence: 'progress_then_completed', count: 1 },
+    { tool_name: 'cad_add_hole_array', sequence: 'repeated_same_terminal_status', count: 1 },
+    { tool_name: 'cad_finish_model', sequence: 'completed_without_progress', count: 1 },
+    { tool_name: 'cad_get_state', sequence: 'no_terminal_status', count: 1 },
+    { tool_name: 'cad_preview_model', sequence: 'update_after_terminal', count: 1 },
+    { tool_name: 'cad_remove_feature', sequence: 'conflicting_terminal_statuses', count: 1 },
+    { tool_name: 'cad_update_feature', sequence: 'progress_then_failed', count: 1 },
+    { tool_name: 'cad_validate_model', sequence: 'failed_without_progress', count: 1 },
+    { tool_name: 'unknown', sequence: 'progress_then_completed', count: 1 },
+  ])
+  const serialized = JSON.stringify(projection)
+  for (const secret of ['private-acp-call-id-', 'private-argument-', 'private-content-', 'private-error-',
+    'cad_private_tool_name', '1700000000000', 'a'.repeat(24)]) {
     assert.equal(serialized.includes(secret), false)
   }
 })
@@ -657,6 +693,11 @@ test('published cold-start files contain only safe gates and aggregate projectio
     const events = [start, terminal]
     const acpProjection = summarizeAcpTerminalUpdateDiagnostics(events, { terminalUpdateHmacByEvent: digestByEvent })
     acpProjection.raw_trace = secrets.join('|')
+    acpProjection.call_group_status_sequences.push(
+      { tool_name: secrets[10], sequence: 'progress_then_completed', count: 42 },
+      { tool_name: 'cad_finish_model', sequence: secrets[9], count: 42 },
+      { tool_name: 'cad_finish_model', sequence: 'progress_then_completed', count: secrets[8] },
+    )
     acpProjection.repeated_argument_fingerprint_counts = [
       { tool_name: 'cad_finish_model', repeated_call_count: 4 },
       { tool_name: secrets[10], repeated_call_count: 99 },
@@ -740,7 +781,9 @@ test('published cold-start files contain only safe gates and aggregate projectio
     assert.equal(strictPassCleanupFailure.strict_gates.status, 'passed')
     assert.equal(strictPassCleanupFailure.scratch_cleanup_status, 'failed')
     const projections = readFileSync(join(output, 'tool-result-diagnostics.jsonl'), 'utf8').trim().split('\n').map(JSON.parse)
-    assert.equal(projections[0].schema, 'acp_terminal_update_projection_v3')
+    assert.equal(projections[0].schema, 'acp_terminal_update_projection_v4')
+    assert.deepEqual(projections[0].call_group_status_sequences,
+      [{ tool_name: 'cad_finish_model', sequence: 'progress_then_completed', count: 1 }])
     assert.deepEqual(projections[0].repeated_argument_fingerprint_counts, [
       { tool_name: 'cad_finish_model', repeated_call_count: 4 },
       { tool_name: 'unknown', repeated_call_count: 99 },

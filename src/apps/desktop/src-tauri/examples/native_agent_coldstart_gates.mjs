@@ -85,6 +85,8 @@ export function summarizeAcpTerminalUpdateDiagnostics(toolEvents = [], { termina
     }
     const currentGroup = group || { tool_name: 'unknown', terminal_summaries: [] }
     if (eventToolName !== 'unknown') currentGroup.tool_name = eventToolName
+    currentGroup.status_sequence ||= []
+    currentGroup.status_sequence.push({ kind: isStart ? 'start' : 'update', status })
     if (terminal) currentGroup.terminal_summaries.push({ status, hmac: terminalUpdateHmacByEvent.get(event) || null })
     groups.set(callId, currentGroup)
   }
@@ -99,11 +101,33 @@ export function summarizeAcpTerminalUpdateDiagnostics(toolEvents = [], { termina
     const toolName = key.slice(0, key.indexOf('\u0000'))
     repeatedArgumentsByTool.set(toolName, (repeatedArgumentsByTool.get(toolName) || 0) + count - 1)
   }
-  const groupCounts = new Map(), terminalStatusCounts = new Map()
+  const groupCounts = new Map(), terminalStatusCounts = new Map(), sequenceCounts = new Map()
   let sameTerminalEventPairCount = 0, differentTerminalEventPairCount = 0, unavailableHmacEventCount = 0
   for (const group of groups.values()) {
     const terminal = group.terminal_summaries
     const statuses = terminal.map(item => item.status)
+    const terminalIndexes = group.status_sequence.flatMap((item, index) =>
+      item.kind === 'update' && ['completed', 'failed'].includes(item.status) ? [index] : [])
+    let statusSequence = 'no_terminal_status'
+    if (terminalIndexes.length > 0) {
+      const terminalStatuses = new Set(statuses)
+      if (terminalStatuses.size > 1) statusSequence = 'conflicting_terminal_statuses'
+      else if (terminalIndexes.length > 1) statusSequence = 'repeated_same_terminal_status'
+      else {
+        const terminalIndex = terminalIndexes[0]
+        const terminalStatus = group.status_sequence[terminalIndex].status
+        const hasLaterUpdate = group.status_sequence.slice(terminalIndex + 1).some(item => item.kind === 'update')
+        const hasPriorProgress = group.status_sequence.slice(0, terminalIndex)
+          .some(item => ['pending', 'in_progress'].includes(item.status))
+        if (hasLaterUpdate) statusSequence = 'update_after_terminal'
+        else if (hasPriorProgress) statusSequence = terminalStatus === 'completed'
+          ? 'progress_then_completed' : 'progress_then_failed'
+        else statusSequence = terminalStatus === 'completed'
+          ? 'completed_without_progress' : 'failed_without_progress'
+      }
+    }
+    const sequenceKey = `${group.tool_name}\u0000${statusSequence}`
+    sequenceCounts.set(sequenceKey, (sequenceCounts.get(sequenceKey) || 0) + 1)
     const terminal_status = terminal.length === 0 ? 'none'
       : new Set(statuses).size > 1 ? 'mixed' : statuses[0]
     const statusKey = `${group.tool_name}\u0000${terminal_status}`
@@ -137,14 +161,19 @@ export function summarizeAcpTerminalUpdateDiagnostics(toolEvents = [], { termina
     const [tool_name, terminal_status] = key.split('\u0000')
     return { tool_name, terminal_status, count }
   }).sort((a, b) => a.tool_name.localeCompare(b.tool_name) || a.terminal_status.localeCompare(b.terminal_status))
+  const callGroupStatusSequences = [...sequenceCounts.entries()].map(([key, count]) => {
+    const [tool_name, sequence] = key.split('\u0000')
+    return { tool_name, sequence, count }
+  }).sort((a, b) => a.tool_name.localeCompare(b.tool_name) || a.sequence.localeCompare(b.sequence))
   return {
-    schema: 'acp_terminal_update_projection_v3',
+    schema: 'acp_terminal_update_projection_v4',
     tool_status_counts: toolStatusCounts,
     repeated_argument_fingerprint_counts: [...repeatedArgumentsByTool.entries()]
       .map(([tool_name, repeated_call_count]) => ({ tool_name, repeated_call_count }))
       .sort((a, b) => a.tool_name.localeCompare(b.tool_name)),
     call_group_terminal_status_counts: callGroupTerminalStatusCounts,
     call_group_terminal_distribution: callGroupTerminalDistribution,
+    call_group_status_sequences: callGroupStatusSequences,
     same_terminal_event_pair_count: sameTerminalEventPairCount,
     different_terminal_event_pair_count: differentTerminalEventPairCount,
     terminal_update_hmac_unavailable_event_count: unavailableHmacEventCount,
