@@ -237,3 +237,10 @@ F7 当前观察绑定的集成测试夹具复核见[记录](./75-f7-current-obse
 - F6.10 后续隐藏 WebView 验收再次通过 5/5；一次性将 fixture 加蓝材质后的 WebDriver 截图人工检查可见三角网格。`readPixels` 计数误为 0，未纳入验收代码；临时材质与截图均已清理。Program Files 仍是 10:47 的旧 exe（SHA-256 `6AA993E79C491BE2AC0DE5F086C7F26FA69FB4CED8B513851347F32F0BCDA24E`），早于 11:28 的 `e2496f6` 路径修复；因此截图里的越界拒绝来自旧版，修复版包尚未覆盖安装。静默 MSI 因未提权返回 1603；本轮未启动可见产品窗口。详见[F6.10](./F6.10-installed-glb-preview.md)。
 - 2026-10-05 17:48/17:51：从已推送 main `e775b97` 重建完整依赖 MSI/NSIS。包分别 422.87/410.67 MiB；NSIS 7-Zip 完整性与 MSI administrative extraction 通过，224 个映射资源两包均 224/224 哈希匹配；两包解包 Quick/OCCT CLI smoke 均 exit 0；最终 main 的隐藏 WebView GLB 流程 5/5 通过。Program Files 仍为修复前 exe，未安装/未打开可见 GUI，安装后真实视口验收待做；详细哈希与限制见 [F6.10](./F6.10-installed-glb-preview.md)。
 - 2026-10-05 18:37/18:40：从已推送 main `591f533` 重建完整依赖安装器；MSI/NSIS 为 422.90/410.66 MiB，7-Zip 检查通过，MSI administrative extraction 成功，226 个映射文件两包均逐项大小和 SHA-256 匹配；从 MSI 解包资源根运行 Rust/OCCT Quick CLI smoke 通过并生成 GLB。截图所示 Program Files 仍是修复前 exe；本次因当前 shell 缺 `tauri-driver`/EdgeDriver 未重跑隐藏 WebView harness，安装包未提权安装，真实安装后视口仍待验收。完整依赖 ZIP 与安装器哈希见 [F6.10](./F6.10-installed-glb-preview.md)。
+
+### 2026-10-06：F7 ACP 诊断、分支复核与安装版预览
+
+- F7 增加 ACP 工具调用生命周期安全投影，提交 `862f5f8` 已推送到 main；135/135 Node 测试通过。它只提升阶段诊断，不替代真实 Agent/视觉验收；详见 [F7.G10 生命周期诊断](./107-f7-g10-acp-lifecycle-sequences.md)。
+- 对本轮选定的 F0/F4/F7 候选 worktree 完成提交复核：可合并实现的 patch 已在 main 中，未重复 cherry-pick；ACP 生命周期诊断是唯一新增有效实现。新的 ACP worktree 已提交后归档，带重要验收数据或未合并差异的 worktree 保持原样。
+- 安装版 GLB 报错的安全策略用例在当前源码 2/2 通过。截图关联的是旧 Agent 会话；`Program Files` 中当前 EXE 的时间为 00:13，早于 07:35 的深层 Agent GLB 诊断修复。07:37/07:40 的完整依赖安装包包含该修复；本次未打开可见应用。复跑隐藏 WebView CLI 因当前环境缺 `tauri-driver`/EdgeDriver 未启动，真实安装版窗口显示仍未验收。
+- Run37 单次冷启动约 17 分钟仍处于 `session/prompt`，安全 evidence 尚未产生；不重试，也不读取 raw provider 数据。结束后再记录其最终门禁结果。
