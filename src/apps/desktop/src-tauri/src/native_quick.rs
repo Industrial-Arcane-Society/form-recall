@@ -1531,6 +1531,106 @@ mod acceptance_tests {
 
     #[test]
     #[ignore = "requires the staged local OCCT runtime manifest"]
+    fn legacy_timing_pulleys_build_reopen_and_export_through_native_quick() {
+        let manifest = std::env::var_os("AIMODELER_OCCT_MANIFEST")
+            .map(std::path::PathBuf::from)
+            .expect("set AIMODELER_OCCT_MANIFEST to the staged OCCT runtime-manifest.json");
+        let root = std::env::temp_dir().join(format!(
+            "native-quick-timing-pulley-{}-{}",
+            std::process::id(),
+            SystemTime::now()
+                .duration_since(UNIX_EPOCH)
+                .expect("system clock")
+                .as_nanos()
+        ));
+        fs::create_dir_all(&root).expect("create native Quick output root");
+        struct RemoveOnDrop(std::path::PathBuf);
+        impl Drop for RemoveOnDrop {
+            fn drop(&mut self) {
+                let _ = std::fs::remove_dir_all(&self.0);
+            }
+        }
+        let _cleanup = RemoveOnDrop(root.clone());
+
+        for (index, (input, expected_diameter, expected_width)) in [
+            (
+                "同步带轮 XL型 节圆直径48.5104 齿数30 宽度10 内径12",
+                48.5104,
+                10.0,
+            ),
+            ("同步轮 T5 节圆直径50 齿数30 宽度12 内径10", 50.0, 12.0),
+            ("同步带轮 MXL型 节圆直径80 齿数120 宽度10 内径8", 80.0, 10.0),
+            ("同步带轮 T2.5型 节圆直径50 齿数63 宽度10 内径8", 50.0, 10.0),
+            ("同步带轮 3M型 节圆直径60 齿数63 宽度10 内径8", 60.0, 10.0),
+            ("同步带轮", 80.0, 30.0),
+        ]
+        .into_iter()
+        .enumerate()
+        {
+            let output = build(input, index as i64 + 1, &manifest, &root)
+                .unwrap_or_else(|error| panic!("{input}: {error}"));
+            assert_eq!(output["state"], "complete", "{input}: {output}");
+            let report = &output["geometry_report"];
+            assert_eq!(report["state"], "passed", "{input}: {report}");
+            assert_eq!(report["valid"], true, "{input}: {report}");
+            assert_eq!(report["closed_solid_count"], 1, "{input}: {report}");
+            assert!(
+                report["volume_mm3"].as_f64().unwrap_or_default() > 0.0,
+                "{input}: {report}"
+            );
+
+            let dimensions = output["stats"]["size"]
+                .as_array()
+                .unwrap_or_else(|| panic!("{input}: missing size summary: {output}"));
+            assert_eq!(dimensions.len(), 3, "{input}: {output}");
+            let x = dimensions[0].as_f64().unwrap_or_default();
+            let y = dimensions[1].as_f64().unwrap_or_default();
+            let z = dimensions[2].as_f64().unwrap_or_default();
+            assert!(
+                x > expected_diameter && x < expected_diameter + 5.0,
+                "{input}: {dimensions:?}"
+            );
+            assert!(
+                y > expected_diameter && y < expected_diameter + 5.0,
+                "{input}: {dimensions:?}"
+            );
+            assert!(
+                (z - expected_width).abs() <= 1e-5,
+                "{input}: {dimensions:?}"
+            );
+            assert_eq!(
+                output["features"].as_array().map(Vec::len),
+                Some(1),
+                "{input}"
+            );
+            assert_eq!(output["features"][0]["kind"], "timing_pulley", "{input}");
+
+            let paths = output["output_paths"].as_object().unwrap();
+            for name in ["glb", "aimodel", "stl", "obj"] {
+                assert!(
+                    Path::new(paths[name].as_str().unwrap()).is_file(),
+                    "{input}: missing {name}"
+                );
+            }
+            let loaded =
+                native_model_io::load_aimodel(Path::new(paths["aimodel"].as_str().unwrap()))
+                    .unwrap_or_else(|error| panic!("{input}: AIMODEL reload failed: {error}"));
+            assert_eq!(
+                loaded["features"].as_array().map(Vec::len),
+                Some(1),
+                "{input}: AIMODEL round-trip"
+            );
+            println!(
+                "F5.28 native acceptance: input={input}; dimensions_mm={}; volume_mm3={}; triangles={}",
+                serde_json::to_string(&output["stats"]["size"]).unwrap(),
+                output["stats"]["volume"],
+                output["stats"]["triangles"]
+            );
+        }
+    }
+
+    #[test]
+    #[ignore = "requires the staged local OCCT runtime manifest"]
     fn legacy_blade_and_blisk_build_reopen_and_export_through_native_quick() {
         let manifest = std::env::var_os("AIMODELER_OCCT_MANIFEST")
             .map(std::path::PathBuf::from)

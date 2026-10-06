@@ -48,6 +48,9 @@ pub fn parse(text: &str) -> Value {
     if let Some(parsed) = parse_legacy_spring(text, &normalized) {
         return parsed;
     }
+    if let Some(parsed) = parse_legacy_timing_pulley(text, &normalized) {
+        return parsed;
+    }
     if let Some(parsed) = parse_legacy_gear(text, &normalized) {
         return parsed;
     }
@@ -528,7 +531,7 @@ fn result(
     unsupported: Vec<Value>,
 ) -> Value {
     json!({"status":status,"source_text":text,"plan":plan,"warnings":warnings,"questions":questions,"unsupported":unsupported,
-        "compatibility":{"scope":"common explicit primitives/cuts, migrated standalone primitive defaults and legacy extrusion/revolve constructors, rectangular slots, flat-washer rings, cylindrical/conical spring helices, straight-gear construction, PCD counterbores, and executable flange/stepped-shaft/sleeve/blade/blisk templates","legacy_typical_defaults":"restored only for migrated Quick constructors/templates, straight gears, rectangular slots, flat-washer thickness, and spring wire/turn defaults; defaults and raw-dimension mappings are reported as warnings","loft_geometry":"blade and blisk lofts are locally approximate faceted B-Reps","helix_geometry":"spring helices are locally approximate faceted B-Reps and are not native CATIA features"}})
+        "compatibility":{"scope":"common explicit primitives/cuts, migrated standalone primitive defaults and legacy extrusion/revolve constructors, rectangular slots, flat-washer rings, cylindrical/conical spring helices, timing pulleys, straight-gear construction, PCD counterbores, and executable flange/stepped-shaft/sleeve/blade/blisk templates","legacy_typical_defaults":"restored only for migrated Quick constructors/templates, straight gears, timing pulleys, rectangular slots, flat-washer thickness, and spring wire/turn defaults; defaults and raw-dimension mappings are reported as warnings","loft_geometry":"blade and blisk lofts are locally approximate faceted B-Reps","timing_pulley_geometry":"native timing pulley teeth are approximate trapezoidal prisms fused to an analytic annular blank","helix_geometry":"spring helices are locally approximate faceted B-Reps and are not native CATIA features"}})
 }
 
 fn parse_legacy_template(raw: &str, normalized: &str) -> Option<Value> {
@@ -1441,6 +1444,334 @@ fn loft_approximation_warning() -> Value {
         "legacy_loft_geometry_approximation",
         "旧 Quick 翼型截面已复用，但本地 OCCT 结果是三角面缝合的 facet-BREP 近似，不是解析放样曲面；当前 CATIA 映射也不是原生多截面 loft。",
     )
+}
+
+/// Preserve the old Python Quick timing-pulley route, while limiting ready
+/// plans to pulley profiles the native OCCT builder can actually construct.
+/// The old parser silently defaulted missing D/B/bore/type values; Rust keeps
+/// those dimensions for compatibility and annotates each as derived.
+fn parse_legacy_timing_pulley(raw: &str, text: &str) -> Option<Value> {
+    if !contains_any(
+        text,
+        &["同步带轮", "同步轮", "圆弧齿带轮", "周节制带轮", "带轮"],
+    ) {
+        return None;
+    }
+
+    if contains_any(
+        text,
+        &[
+            "v带",
+            "v型",
+            "v-belt",
+            "槽数",
+            "槽型",
+            "多槽",
+            "多楔",
+            "皮带轮",
+        ],
+    ) {
+        return Some(result(
+            "unsupported",
+            raw,
+            None,
+            vec![],
+            vec![],
+            vec![issue(
+                "legacy_vbelt_pulley_not_migrated",
+                "已识别为 V 带轮或多槽带轮；该 Python Quick 配方尚未迁入 Rust Quick。",
+            )],
+        ));
+    }
+
+    if contains_any(
+        text,
+        &[
+            "通孔",
+            "盲孔",
+            "钻孔",
+            "中心打",
+            "再打",
+            "再开孔",
+            "另开孔",
+            "键槽",
+            "切槽",
+            "倒角",
+            "圆角",
+            "沉孔",
+            "沉台",
+            "阵列",
+            "螺纹",
+        ],
+    ) {
+        return Some(result(
+            "unsupported",
+            raw,
+            None,
+            vec![],
+            vec![],
+            vec![issue(
+                "legacy_timing_pulley_compound_request_unsupported",
+                "同步带轮目前只迁移单件主体；额外孔、键槽、修饰和阵列尚未迁入。",
+            )],
+        ));
+    }
+
+    let model_regex =
+        regex::Regex::new(r"(?i)(xxh|mxl|xh|xl|14m|8m|5m|3m|t\s*20|t\s*10|t\s*2\.5|t\s*5|h|l)")
+            .expect("fixed timing-pulley type regex");
+    let mut model_types = Vec::<String>::new();
+    for captures in model_regex.captures_iter(text) {
+        let found = captures.get(1).expect("type capture exists");
+        let before = text[..found.start()].chars().next_back();
+        let after = text[found.end()..].chars().next();
+        let marker_prefix = text[..found.start()].trim_end();
+        let follows_type_marker = ["型号", "齿型", "齿形"]
+            .iter()
+            .any(|marker| marker_prefix.ends_with(marker));
+        let has_type_suffix = after == Some('型');
+        let left_boundary = before.is_none_or(|ch| !ch.is_ascii_alphanumeric());
+        let right_boundary = after.is_none_or(|ch| !ch.is_ascii_alphanumeric());
+        if !(follows_type_marker || has_type_suffix || (left_boundary && right_boundary)) {
+            continue;
+        }
+        let canonical = found
+            .as_str()
+            .chars()
+            .filter(|ch| !ch.is_whitespace())
+            .collect::<String>()
+            .to_ascii_uppercase();
+        if !model_types.contains(&canonical) {
+            model_types.push(canonical);
+        }
+    }
+
+    let explicit_unknown_type = regex::Regex::new(
+        r"(?i)(?:型号|齿型)\s*[:：=为]?\s*([a-z]+(?:\s*[0-9]+(?:\.[0-9]+)?)?|[0-9]+[a-z]+(?:\.[0-9]+)?|[0-9]+(?:\.[0-9]+)?)|([a-z]+(?:\s*[0-9]+(?:\.[0-9]+)?)?|[0-9]+[a-z]+(?:\.[0-9]+)?|[0-9]+(?:\.[0-9]+)?)\s*型",
+    )
+    .expect("fixed explicit timing-pulley type label regex")
+    .captures_iter(text)
+    .filter_map(|captures| captures.get(1).or_else(|| captures.get(2)))
+    .map(|value| {
+        value
+            .as_str()
+            .chars()
+            .filter(|ch| !ch.is_whitespace())
+            .collect::<String>()
+            .to_ascii_uppercase()
+    })
+    .find(|candidate| !model_types.contains(candidate));
+    if let Some(unknown) = explicit_unknown_type.as_ref() {
+        return Some(parse_result_with_issue(
+            "needs_clarification",
+            raw,
+            "legacy_timing_pulley_type_unknown",
+            &format!("未识别同步带轮齿型 {unknown:?}；请明确使用支持的标准型号。"),
+        ));
+    }
+    if model_types.len() > 1 {
+        return Some(parse_result_with_issue(
+            "needs_clarification",
+            raw,
+            "legacy_timing_pulley_type_conflict",
+            &format!(
+                "输入包含相互冲突的同步带轮齿型：{}。",
+                model_types.join("、")
+            ),
+        ));
+    }
+    let tooth_type_explicit = !model_types.is_empty();
+    let tooth_type = model_types
+        .first()
+        .cloned()
+        .unwrap_or_else(|| "XL".to_owned());
+    let supported_native_types = ["MXL", "XL", "T2.5", "T5", "3M"];
+    if ![
+        "MXL", "XL", "L", "H", "XH", "XXH", "T2.5", "T5", "T10", "T20", "3M", "5M", "8M", "14M",
+    ]
+    .contains(&tooth_type.as_str())
+    {
+        return Some(parse_result_with_issue(
+            "needs_clarification",
+            raw,
+            "legacy_timing_pulley_type_unknown",
+            &format!("无法识别同步带轮齿型 {tooth_type:?}；请提供标准齿型代号。"),
+        ));
+    }
+    if !supported_native_types.contains(&tooth_type.as_str()) {
+        return Some(result(
+            "unsupported",
+            raw,
+            None,
+            vec![],
+            vec![],
+            vec![issue(
+                "legacy_timing_pulley_type_not_supported_natively",
+                format!(
+                    "旧 Quick 齿型 {tooth_type} 尚无受支持的 Rust 原生几何映射；当前仅支持 MXL、XL、T2.5、T5、3M。"
+                ),
+            )],
+        ));
+    }
+
+    let without_inner_diameter = text
+        .replace("内孔直径", " ")
+        .replace("中心孔直径", " ")
+        .replace("孔直径", " ");
+    let explicit_pitch_d = scalar(
+        &without_inner_diameter,
+        &["节圆直径", "节径", "外径", "直径"],
+    );
+    let pitch_d_defaulted = explicit_pitch_d.is_none();
+    let pitch_d = explicit_pitch_d.unwrap_or(80.0);
+
+    let explicit_height = scalar(text, &["宽度", "轮宽", "厚度", "厚"]);
+    let height_defaulted = explicit_height.is_none();
+    let height = explicit_height.unwrap_or(30.0);
+
+    let explicit_bore_d = scalar(text, &["内孔直径", "内孔", "内径", "轴径", "孔径"]);
+    let bore_d_defaulted = explicit_bore_d.is_none();
+    let bore_d = explicit_bore_d.unwrap_or(20.0);
+
+    let explicit_teeth = scalar(text, &["齿数", "teeth"]).or_else(|| {
+        regex::Regex::new(r"([0-9]+)\s*(?:个\s*)?齿")
+            .ok()?
+            .captures(text)?
+            .get(1)?
+            .as_str()
+            .parse::<f64>()
+            .ok()
+    });
+    let pitch = legacy_timing_pitch(&tooth_type).expect("supported type has legacy pitch");
+    let teeth_defaulted = explicit_teeth.is_none();
+    let teeth_value = explicit_teeth.unwrap_or_else(|| {
+        (pitch_d * 3.14159 / pitch).round_ties_even().max(10.0)
+    });
+
+    let mut questions = Vec::new();
+    for (value, label, code) in [
+        (pitch_d, "节圆直径", "legacy_timing_pulley_pitch_d_invalid"),
+        (height, "轮宽", "legacy_timing_pulley_width_invalid"),
+        (bore_d, "内孔直径", "legacy_timing_pulley_bore_invalid"),
+    ] {
+        if !value.is_finite()
+            || (label == "内孔直径" && value < 0.0)
+            || (label != "内孔直径" && value <= 0.0)
+        {
+            questions.push(issue(
+                code,
+                format!("同步带轮{label}必须是有效的正数；内孔直径也可为 0 表示不建孔。"),
+            ));
+        }
+    }
+    if !teeth_value.is_finite()
+        || teeth_value.fract() != 0.0
+        || !(6.0..=512.0).contains(&teeth_value)
+    {
+        questions.push(issue(
+            "legacy_timing_pulley_teeth_invalid",
+            format!("同步带轮齿数必须为 6 到 512 的整数；收到 {teeth_value}。"),
+        ));
+    }
+    if !questions.is_empty() {
+        return Some(result(
+            "needs_clarification",
+            raw,
+            None,
+            vec![],
+            questions,
+            vec![],
+        ));
+    }
+
+    let teeth = teeth_value as u64;
+    let parameters = json!({
+        "pitch_d":pitch_d,
+        "teeth":teeth,
+        "height":height,
+        "tooth_type":tooth_type,
+        "bore_d":bore_d,
+        "center":[0,0,0]
+    });
+    if let Err(error) = crate::native_timing_pulley::preflight(&parameters) {
+        return Some(result(
+            "needs_clarification",
+            raw,
+            None,
+            vec![],
+            vec![issue(
+                "legacy_timing_pulley_native_preflight_failed",
+                format!("同步带轮参数无法生成有效的单一原生实体：{error}"),
+            )],
+            vec![],
+        ));
+    }
+
+    let mut defaults = Vec::new();
+    if pitch_d_defaulted {
+        defaults.push("节圆直径 80 mm");
+    }
+    if height_defaulted {
+        defaults.push("轮宽 30 mm");
+    }
+    if bore_d_defaulted {
+        defaults.push("内孔直径 20 mm");
+    }
+    if !tooth_type_explicit {
+        defaults.push("齿型 XL");
+    }
+    let mut warnings = vec![issue(
+        "native_timing_pulley_geometry_approximate",
+        "本地原生齿形使用梯形齿柱与解析环形盘体融合，属于旧 Quick 齿形近似；未生成真实齿形曲面。",
+    )];
+    if !defaults.is_empty() {
+        warnings.push(issue(
+            "legacy_timing_pulley_defaults",
+            format!(
+                "兼容旧 Python Quick 默认值：{}；这些尺寸不是用户明确提供的。",
+                defaults.join("、")
+            ),
+        ));
+    }
+
+    let sources = json!({
+        "pitch_d":if pitch_d_defaulted { derived_source(raw, "未提供节圆直径，沿用旧 Python Quick 同步带轮默认 D=80 mm。") } else { user_source(raw) },
+        "teeth":if teeth_defaulted { derived_source(raw, "未提供齿数，沿用旧 Python Quick 公式 round(D × 3.14159 / 齿距)，并至少取 10 齿。") } else { user_source(raw) },
+        "height":if height_defaulted { derived_source(raw, "未提供轮宽，沿用旧 Python Quick 零件库默认 B=30 mm。") } else { user_source(raw) },
+        "tooth_type":if tooth_type_explicit { user_source(raw) } else { derived_source(raw, "未指定齿型，沿用旧 Python Quick 默认 XL 型。") },
+        "bore_d":if bore_d_defaulted { derived_source(raw, "未提供内孔，沿用旧 Python Quick 零件库默认 d=20 mm。") } else { user_source(raw) },
+        "center":derived_source(raw, "沿用旧 Python Quick 将同步带轮中心放在全局原点。")
+    });
+    let features = vec![json!({
+        "id":"quick-0001",
+        "kind":"timing_pulley",
+        "operation":"add",
+        "name":format!("{tooth_type}型同步带轮 {teeth}齿"),
+        "parameters":parameters,
+        "sources":sources,
+        "relations":[]
+    })];
+    Some(plan_result(raw, "同步带轮", features, warnings))
+}
+
+fn legacy_timing_pitch(tooth_type: &str) -> Option<f64> {
+    match tooth_type {
+        "MXL" => Some(2.032),
+        "XL" => Some(5.080),
+        "L" => Some(9.525),
+        "H" => Some(12.700),
+        "XH" => Some(22.225),
+        "XXH" => Some(31.750),
+        "T2.5" => Some(2.500),
+        "T5" => Some(5.000),
+        "T10" => Some(10.000),
+        "T20" => Some(20.000),
+        "3M" => Some(3.000),
+        "5M" => Some(5.000),
+        "8M" => Some(8.000),
+        "14M" => Some(14.000),
+        _ => None,
+    }
 }
 
 /// Retain the old Quick `make_gear` constructor. Its tooth profile is a
@@ -4998,6 +5329,85 @@ mod tests {
         assert_eq!(out["status"], "ready", "{out}");
         out["plan"].clone()
     }
+    #[test]
+    fn legacy_timing_pulley_matches_python_oracle_and_native_scope() {
+        let fixture: Value = serde_json::from_str(include_str!(
+            "../tests/fixtures/quick_legacy_timing_pulley_contract.json"
+        ))
+        .expect("timing-pulley Quick oracle fixture is valid JSON");
+
+        for case in fixture["legacy_python_accepted"].as_array().unwrap() {
+            let input = case["input"].as_str().unwrap();
+            let output = parse(input);
+            assert_eq!(output["status"], "ready", "{input}: {output}");
+            let plan = &output["plan"];
+            assert_eq!(
+                crate::cad_plan_validation::validate_plan(plan)["state"],
+                "valid",
+                "{input}: {plan}"
+            );
+            let features = plan["features"].as_array().unwrap();
+            assert_eq!(
+                features.len(),
+                1,
+                "{input}: compound modifications must not be silently added"
+            );
+            let feature = &features[0];
+            assert_eq!(feature["kind"], "timing_pulley", "{input}");
+            assert_eq!(feature["operation"], "add", "{input}");
+            assert_eq!(
+                feature["parameters"], case["expected_parameters"],
+                "{input}"
+            );
+            crate::native_timing_pulley::preflight(&feature["parameters"])
+                .unwrap_or_else(|error| panic!("{input}: native preflight failed: {error}"));
+            for (key, source_type) in case["sources"].as_object().unwrap() {
+                assert_eq!(
+                    feature["sources"][key]["type"], *source_type,
+                    "{input}: {key}"
+                );
+                assert_eq!(feature["sources"][key]["evidence"], input, "{input}: {key}");
+                if source_type == "derived" {
+                    assert!(
+                        feature["sources"][key]["note"]
+                            .as_str()
+                            .is_some_and(|note| !note.is_empty()),
+                        "{input}: derived {key} source must explain its origin"
+                    );
+                }
+            }
+            if let Some(warning) = case["warning"].as_str() {
+                assert!(
+                    output["warnings"].to_string().contains(warning),
+                    "{input}: {output}"
+                );
+            }
+        }
+
+        for bucket in ["native_rejected", "needs_clarification"] {
+            for case in fixture[bucket].as_array().unwrap() {
+                let input = case["input"].as_str().unwrap();
+                let output = parse(input);
+                assert_eq!(
+                    output["status"],
+                    case["status"].as_str().unwrap_or("needs_clarification"),
+                    "{input}: {output}"
+                );
+                assert!(output["plan"].is_null(), "{input}: {output}");
+                let issue_code = case["issue"].as_str().unwrap();
+                let issue_bucket = if output["status"] == "unsupported" {
+                    &output["unsupported"]
+                } else {
+                    &output["questions"]
+                };
+                assert!(
+                    issue_bucket.to_string().contains(issue_code),
+                    "{input}: {output}"
+                );
+            }
+        }
+    }
+
     #[test]
     fn legacy_straight_gear_defaults_and_center_bore_match_quick_constructor() {
         let defaulted = parse("齿轮");
