@@ -2237,6 +2237,128 @@ mod acceptance_tests {
 
     #[test]
     #[ignore = "requires the staged local OCCT runtime manifest"]
+    fn f5_36_legacy_brake_drums_build_measure_reopen_and_export() {
+        let manifest = std::env::var_os("AIMODELER_OCCT_MANIFEST")
+            .map(std::path::PathBuf::from)
+            .expect("set AIMODELER_OCCT_MANIFEST to the staged OCCT runtime-manifest.json");
+        assert!(manifest.is_file(), "missing OCCT manifest: {}", manifest.display());
+        let fixture: Value = serde_json::from_str(include_str!(
+            "../tests/fixtures/quick_legacy_brake_drum_contract.json"
+        ))
+        .expect("brake-drum Python oracle fixture is valid JSON");
+        let root = std::env::temp_dir().join(format!(
+            "native-quick-brake-drum-{}-{}",
+            std::process::id(),
+            SystemTime::now()
+                .duration_since(UNIX_EPOCH)
+                .expect("system clock")
+                .as_nanos()
+        ));
+        fs::create_dir_all(&root).expect("create native Quick output root");
+        struct RemoveOnDrop(std::path::PathBuf);
+        impl Drop for RemoveOnDrop {
+            fn drop(&mut self) {
+                let _ = fs::remove_dir_all(&self.0);
+            }
+        }
+        let _cleanup = RemoveOnDrop(root.clone());
+
+        for (index, case) in fixture["native_expected_cases"].as_array().unwrap().iter().enumerate() {
+            let input = case["input"].as_str().unwrap();
+            let output = build(input, index as i64 + 1, &manifest, &root)
+                .unwrap_or_else(|error| panic!("{input}: native Quick build failed: {error}"));
+            assert_eq!(output["state"], "complete", "{input}: {output}");
+            let report = &output["geometry_report"];
+            assert_eq!(report["state"], "passed", "{input}: {report}");
+            assert_eq!(report["valid"], true, "{input}: {report}");
+            assert_eq!(report["closed_solid_count"], 1, "{input}: {report}");
+
+            let dimensions = report["dimensions_mm"].as_array().expect("measured dimensions");
+            let expected_dimensions = case["dimensions_mm"].as_array().unwrap();
+            assert_eq!(dimensions.len(), 3, "{input}: {report}");
+            for (axis, (actual, expected)) in dimensions.iter().zip(expected_dimensions).enumerate() {
+                let actual = actual.as_f64().unwrap_or_default();
+                let expected = expected.as_f64().unwrap();
+                assert!(
+                    (actual - expected).abs() <= 1e-5,
+                    "{input}: bbox axis {axis} = {actual}, expected {expected}; {report}"
+                );
+            }
+
+            let actual_volume = report["volume_mm3"].as_f64().expect("measured volume");
+            let legacy_volume = case["legacy_mesh_volume_mm3"].as_f64().unwrap();
+            let relative_delta = (actual_volume - legacy_volume).abs() / legacy_volume;
+            assert!(
+                relative_delta <= case["max_relative_legacy_volume_delta"].as_f64().unwrap(),
+                "{input}: old mesh volume delta {relative_delta}; {report}"
+            );
+            if let Some(analytic_volume) = case["analytic_volume_mm3"].as_f64() {
+                assert!(
+                    (actual_volume - analytic_volume).abs() <= analytic_volume * 1e-10,
+                    "{input}: expected no effective PCD cuts, analytic ring volume {analytic_volume}, measured {actual_volume}"
+                );
+            }
+
+            let features = output["cadplan"]["features"].as_array().expect("CADPlan features");
+            assert_eq!(features.len(), 3, "{input}: {output}");
+            assert_eq!(features[0]["kind"], "cylinder", "{input}");
+            assert_eq!(features[0]["parameters"]["segments"], 64, "{input}");
+            assert_eq!(features[1]["kind"], "hole", "{input}");
+            assert_eq!(features[1]["parameters"]["pos"], "center", "{input}");
+            assert_eq!(features[1]["parameters"]["segments"], 48, "{input}");
+            assert_eq!(features[2]["kind"], "hole", "{input}");
+            assert_eq!(features[2]["operation"], "cut", "{input}");
+            assert_eq!(features[2]["parameters"]["pos"], "pcd", "{input}");
+            assert_eq!(features[2]["parameters"]["count"], 5, "{input}");
+            assert_eq!(features[2]["parameters"]["segments"], 24, "{input}");
+
+            let expected_diameters = case["hole_diameters_mm"].as_array().unwrap();
+            let expected_centers = case["hole_centers_xy_mm"].as_array().unwrap();
+            let holes = report["hole_instances"].as_array().expect("measured hole instances");
+            let pcd_no_op = case["pcd_no_op"] == true;
+            assert_eq!(report["feature_results"][2]["state"], if pcd_no_op { "no_op" } else { "built" }, "{input}: {report}");
+            assert_eq!(
+                holes.len(),
+                if pcd_no_op { 1 } else { expected_diameters.len() },
+                "{input}: {report}"
+            );
+            if pcd_no_op {
+                assert_eq!(report["hole_measurements_verified"], true, "{input}: the center bore is measured; the no-op PCD feature is reported separately");
+            } else {
+                assert_eq!(expected_centers.len(), expected_diameters.len(), "{input}: fixture hole evidence");
+                assert_eq!(report["hole_measurements_verified"], false, "{input}: PCD cuts merge into the center bore and cannot be certified as five independent cylinders");
+                for (hole_index, hole) in holes.iter().enumerate().skip(1) {
+                    assert_eq!(hole["status"], "candidate_unverified", "{input}: overlapping PCD hole {hole_index}: {hole}");
+                }
+            }
+            for (hole_index, (hole, (diameter, center))) in holes
+                .iter()
+                .zip(expected_diameters.iter().zip(expected_centers))
+                .enumerate()
+            {
+                assert_eq!(hole["through"], true, "{input}: hole {hole_index}");
+                assert!((hole["diameter_mm"].as_f64().unwrap() - diameter.as_f64().unwrap()).abs() < 1e-8, "{input}: hole {hole_index}");
+                for axis in 0..2 {
+                    assert!((hole["centerline_mm"][axis].as_f64().unwrap() - center[axis].as_f64().unwrap()).abs() < 1e-6, "{input}: hole {hole_index}, axis {axis}");
+                }
+            }
+
+            let paths = output["output_paths"].as_object().unwrap();
+            for name in ["glb", "aimodel", "stl", "obj"] {
+                assert!(Path::new(paths[name].as_str().unwrap()).is_file(), "{input}: missing {name}");
+            }
+            let loaded = native_model_io::load_aimodel(Path::new(paths["aimodel"].as_str().unwrap()))
+                .unwrap_or_else(|error| panic!("{input}: AIMODEL reload failed: {error}"));
+            assert_eq!(loaded["cadplan"]["features"], output["cadplan"]["features"], "{input}: AIMODEL round-trip");
+            println!(
+                "F5.36 native acceptance: input={input}; dimensions_mm={}; hole_instances={}; legacy_volume_mm3={legacy_volume}; native_volume_mm3={actual_volume}; relative_delta={relative_delta}; hole_measurements_verified={}",
+                serde_json::to_string(&report["dimensions_mm"]).unwrap(), holes.len(), report["hole_measurements_verified"]
+            );
+        }
+    }
+
+    #[test]
+    #[ignore = "requires the staged local OCCT runtime manifest"]
     fn legacy_blade_and_blisk_build_reopen_and_export_through_native_quick() {
         let manifest = std::env::var_os("AIMODELER_OCCT_MANIFEST")
             .map(std::path::PathBuf::from)

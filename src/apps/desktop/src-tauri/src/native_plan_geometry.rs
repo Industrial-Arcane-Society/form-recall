@@ -445,7 +445,9 @@ pub fn build(plan: &Value, manifest: &Path, cancelled: &AtomicBool) -> Result<Bu
                 (tools, holes, None)
             };
             let operation = feature["operation"].as_str().unwrap_or("add");
-            let mut no_op_pattern = normalized["kind"] == "pattern" && tools.is_empty();
+            let repeated_hole_array = normalized["kind"] == "hole"
+                && normalized["parameters"]["pos"] == "pcd";
+            let mut no_op_cut = normalized["kind"] == "pattern" && tools.is_empty();
             let hole_pre_cut = if !requested_holes.is_empty() && operation == "cut" {
                 current
                     .as_ref()
@@ -455,7 +457,7 @@ pub fn build(plan: &Value, manifest: &Path, cancelled: &AtomicBool) -> Result<Bu
                 None
             };
             let tool_refs: Vec<_> = tools.iter().collect();
-            let candidate = if no_op_pattern {
+            let candidate = if no_op_cut {
                 let stock = current.as_ref().ok_or("空阵列不能作为首个实体特征。")?;
                 kernel.transform(stock, identity_matrix())?
             } else {
@@ -481,17 +483,17 @@ pub fn build(plan: &Value, manifest: &Path, cancelled: &AtomicBool) -> Result<Bu
             }
             let volume = candidate.volume()?;
             let delta = volume - before_volume;
-            if normalized["kind"] == "pattern"
+            if (normalized["kind"] == "pattern" || repeated_hole_array)
                 && operation == "cut"
                 && delta >= -1e-7_f64.max(before_volume * 1e-10)
             {
-                // A patterned cutter can land entirely in existing void. Keep the
-                // valid stock and report the pattern as a no-op, matching the
-                // legacy OCCT builder instead of failing the whole candidate.
-                no_op_pattern = true;
+                // A repeated cutter can land entirely in existing void. Keep the
+                // valid stock and report it as a no-op, matching the legacy mesh
+                // builder instead of failing the entire Quick candidate.
+                no_op_cut = true;
                 requested_holes.clear();
             }
-            if operation == "cut" && !no_op_pattern && delta >= -1e-7_f64.max(before_volume * 1e-10) {
+            if operation == "cut" && !no_op_cut && delta >= -1e-7_f64.max(before_volume * 1e-10) {
                 return Err(format!(
                     "特征 {} 切除没有实际减少材料；请检查孔位、方向或重复切除。",
                     feature["id"]
@@ -521,10 +523,10 @@ pub fn build(plan: &Value, manifest: &Path, cancelled: &AtomicBool) -> Result<Bu
             }
             rows.push(
                 json!({"feature_id":feature["id"],"kind":feature["kind"],"operation":operation,
-                "state":if no_op_pattern {"no_op"} else {"built"},"geometry_support":standard_support.as_ref().and_then(|v|v.get("status")).cloned().unwrap_or(json!("exact")),
+                "state":if no_op_cut {"no_op"} else {"built"},"geometry_support":standard_support.as_ref().and_then(|v|v.get("status")).cloned().unwrap_or(json!("exact")),
                 "support_details":standard_support,"volume_before_mm3":before_volume,
                 "volume_after_mm3":volume,"volume_delta_mm3":delta,
-                "warning":if no_op_pattern {Some("阵列没有新增几何；可能数量为 1，或所有切除实例都落在已有空腔中。") } else {None}}),
+                "warning":if no_op_cut {Some("重复切除没有新增几何；阵列实例可能落在已有空腔中，或没有与实体相交。") } else {None}}),
             );
             let report_start = holes.len();
             if let Some(pre_cut) = hole_pre_cut {

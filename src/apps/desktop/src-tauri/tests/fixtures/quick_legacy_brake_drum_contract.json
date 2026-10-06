@@ -1,0 +1,218 @@
+{
+  "schema_version": "1.0",
+  "legacy_entrypoint": "src/legacy/ai_modeler/core/parsing/nlparser.py::Parser.parse",
+  "legacy_geometry": "src/legacy/ai_modeler/parts/library/partlib.py::_brake_drum",
+  "legacy_accepted": [
+    {
+      "input": "制动鼓 外径300 内径260 高度80",
+      "outer_diameter": 300.0,
+      "center_bore": 260.0,
+      "height": 80.0,
+      "bore_source": "user",
+      "bolt_hole_diameter": 10.0,
+      "pcd": 238.0,
+      "hole_count": 5,
+      "feature_count": 3,
+      "dimensions_mm": [300.0, 300.0, 80.0],
+      "analytic_volume_mm3": 1407433.5088082273,
+      "legacy_mesh_volume_mm3": 1410473.3978264737,
+      "hole_centers_xy_mm": [
+        [119.0, 0.0],
+        [36.773022330618744, 113.17572543912327],
+        [-96.27302233061873, 69.94644502280431],
+        [-96.27302233061874, -69.94644502280428],
+        [36.77302233061872, -113.17572543912328]
+      ],
+      "holes_inside_bore": true
+    },
+    {
+      "input": "制动鼓 外径352 内径230 高度52",
+      "outer_diameter": 352.0,
+      "center_bore": 230.0,
+      "height": 52.0,
+      "bore_source": "user",
+      "bolt_hole_diameter": 30.5,
+      "pcd": 247.35,
+      "hole_count": 5,
+      "feature_count": 3,
+      "dimensions_mm": [352.0, 352.0, 52.0],
+      "legacy_mesh_volume_mm3": 2737143.740899455,
+      "hole_centers_xy_mm": [
+        [123.675, 0.0],
+        [38.21767677932163, 117.62191465280311],
+        [-100.05517677932161, 72.69434107727163],
+        [-100.05517677932163, -72.6943410772716],
+        [38.2176767793216, -117.62191465280313]
+      ],
+      "holes_inside_bore": false,
+      "hole_array_overlaps_bore": true
+    },
+    {
+      "input": "刹车鼓 D300 d260 H80",
+      "outer_diameter": 300.0,
+      "center_bore": 260.0,
+      "height": 80.0,
+      "bore_source": "user",
+      "bolt_hole_diameter": 10.0,
+      "pcd": 238.0,
+      "hole_count": 5,
+      "feature_count": 3,
+      "dimensions_mm": [300.0, 300.0, 80.0],
+      "legacy_mesh_volume_mm3": 1410473.3978264737,
+      "hole_centers_xy_mm": [
+        [119.0, 0.0],
+        [36.773022330618744, 113.17572543912327],
+        [-96.27302233061873, 69.94644502280431],
+        [-96.27302233061874, -69.94644502280428],
+        [36.77302233061872, -113.17572543912328]
+      ],
+      "holes_inside_bore": true
+    },
+    {
+      "input": "制动鼓 外径300 高度80",
+      "outer_diameter": 300.0,
+      "center_bore": 260.0,
+      "height": 80.0,
+      "bore_source": "derived",
+      "bolt_hole_diameter": 10.0,
+      "pcd": 238.0,
+      "hole_count": 5,
+      "feature_count": 3,
+      "dimensions_mm": [300.0, 300.0, 80.0],
+      "legacy_mesh_volume_mm3": 1410473.3978264737,
+      "warning_code": "legacy_brake_drum_default_bore",
+      "hole_centers_xy_mm": [
+        [119.0, 0.0],
+        [36.773022330618744, 113.17572543912327],
+        [-96.27302233061873, 69.94644502280431],
+        [-96.27302233061874, -69.94644502280428],
+        [36.77302233061872, -113.17572543912328]
+      ],
+      "holes_inside_bore": true
+    }
+  ],
+  "not_ready": [
+    {
+      "input": "制动鼓 外径300 内径260",
+      "issue": "legacy_brake_drum_height"
+    },
+    {
+      "input": "制动鼓 内径260 高度80",
+      "issue": "legacy_brake_drum_outer_diameter"
+    },
+    {
+      "input": "制动鼓",
+      "issue": "legacy_brake_drum_outer_diameter"
+    }
+  ],
+  "known_legacy_discrepancies": [
+    {
+      "input": "制动鼓 外径300 内径260 高度80",
+      "legacy_actual": {
+        "feature_tree_contains_five_pcd_holes": true,
+        "all_five_holes_inside_center_bore": true,
+        "mesh_volume_mm3": 1410473.3978264737,
+        "resulting_solid": "same_as_center_bored_cylinder"
+      },
+      "migration_behavior": {
+        "status": "ready",
+        "warning": "legacy_brake_drum_bolt_holes_inside_bore",
+        "note": "保留旧特征树中的五孔；它们完全落在中心孔空腔内，不改变最终实体。"
+      }
+    },
+    {
+      "input": "制动鼓 外径352 内径230 高度52",
+      "legacy_actual": {
+        "bolt_hole_array_intersects_center_bore": true,
+        "bolt_holes_are_independent_cylinders": false
+      },
+      "migration_behavior": {
+        "status": "ready",
+        "warning": "legacy_brake_drum_bolt_holes_overlap_bore",
+        "note": "按旧特征保留与中心孔相交的五孔切除，不将其误报为五个完整独立圆孔。"
+      }
+    },
+    {
+      "input": "制动鼓 外径300 高度80",
+      "legacy_actual": {
+        "center_bore_default_mm": 260.0,
+        "default_warning": "这些参数没写，已按零件库典型值代入：d（可在右侧「参数」页改）"
+      },
+      "migration_behavior": {
+        "status": "ready",
+        "center_bore_default_mm": 260.0,
+        "warning": "legacy_brake_drum_default_bore"
+      }
+    },
+    {
+      "input": "制动鼓 外径300 内径300 高度80",
+      "legacy_actual": {
+        "part_library_match": false,
+        "generic_fallback": "cylinder",
+        "reason": "内外径相同使零件库匹配失败，后续通用规则误建为圆柱。"
+      },
+      "migration_behavior": {
+        "status": "needs_clarification",
+        "issue": "legacy_brake_drum_bore_not_smaller_than_outer"
+      }
+    },
+    {
+      "input": "制动鼓 外径300 内径260 高度80 通风",
+      "legacy_actual": {
+        "part_library_match": true,
+        "modifier_effect": "silently_ignored"
+      },
+      "migration_behavior": {
+        "status": "unsupported",
+        "issue": "legacy_brake_drum_modifier_not_migrated"
+      }
+    },
+    {
+      "input": "制动鼓 外径300 内径260 高度80 PCD200",
+      "legacy_actual": {
+        "part_library_match": true,
+        "custom_pcd_effect": "silently_ignored",
+        "pcd_mm": 238.0
+      },
+      "migration_behavior": {
+        "status": "unsupported",
+        "issue": "legacy_brake_drum_modifier_not_migrated"
+      }
+    }
+  ],
+  "native_expected_cases": [
+    {
+      "input": "制动鼓 外径300 内径260 高度80",
+      "dimensions_mm": [300.0, 300.0, 80.0],
+      "analytic_volume_mm3": 1407433.5088082273,
+      "legacy_mesh_volume_mm3": 1410473.3978264737,
+      "hole_diameters_mm": [260.0, 10.0, 10.0, 10.0, 10.0, 10.0],
+      "hole_centers_xy_mm": [
+        [0.0, 0.0],
+        [119.0, 0.0],
+        [36.773022330618744, 113.17572543912327],
+        [-96.27302233061873, 69.94644502280431],
+        [-96.27302233061874, -69.94644502280428],
+        [36.77302233061872, -113.17572543912328]
+      ],
+      "pcd_no_op": true,
+      "max_relative_legacy_volume_delta": 0.005
+    },
+    {
+      "input": "制动鼓 外径352 内径230 高度52",
+      "dimensions_mm": [352.0, 352.0, 52.0],
+      "legacy_mesh_volume_mm3": 2737143.740899455,
+      "hole_diameters_mm": [230.0, 30.5, 30.5, 30.5, 30.5, 30.5],
+      "hole_centers_xy_mm": [
+        [0.0, 0.0],
+        [123.675, 0.0],
+        [38.21767677932163, 117.62191465280311],
+        [-100.05517677932161, 72.69434107727163],
+        [-100.05517677932163, -72.6943410772716],
+        [38.2176767793216, -117.62191465280313]
+      ],
+      "pcd_no_op": false,
+      "max_relative_legacy_volume_delta": 0.01
+    }
+  ]
+}

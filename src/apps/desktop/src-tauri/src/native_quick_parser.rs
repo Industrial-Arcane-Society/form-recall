@@ -52,6 +52,9 @@ pub fn parse(text: &str) -> Value {
     if let Some(parsed) = parse_legacy_bearing(text, &normalized) {
         return parsed;
     }
+    if let Some(parsed) = parse_legacy_brake_drum(text, &normalized) {
+        return parsed;
+    }
     if let Some(parsed) = parse_legacy_brake_disc(text, &normalized) {
         return parsed;
     }
@@ -556,7 +559,7 @@ fn result(
     unsupported: Vec<Value>,
 ) -> Value {
     json!({"status":status,"source_text":text,"plan":plan,"warnings":warnings,"questions":questions,"unsupported":unsupported,
-        "compatibility":{"scope":"common explicit primitives/cuts, migrated standalone primitive defaults and legacy extrusion/revolve constructors, centered solid-shaft aliases, rectangular slots, flat-washer rings, cylindrical/conical spring helices, measured socket-head screws with optional washers, V-belt pulleys, timing pulleys, straight-gear construction, PCD counterbores, and executable flange/stepped-shaft/sleeve/blade/blisk templates","legacy_typical_defaults":"restored only for migrated Quick constructors/templates, centered solid shafts (Ø30 mm when diameter is absent), straight gears, timing pulleys, V-belt pulleys, socket-head screw catalog recipes, rectangular slots, flat-washer thickness, and spring wire/turn defaults; defaults and raw-dimension mappings are reported as warnings","loft_geometry":"blade and blisk lofts are locally approximate faceted B-Reps","timing_pulley_geometry":"native timing pulley teeth are approximate trapezoidal prisms fused to an analytic annular blank","vbelt_pulley_geometry":"standard V-groove pulley is an approximate axisymmetric revolve; legacy spoke variants and CATIA-native groove features are not included","helix_geometry":"spring helices are locally approximate faceted B-Reps and are not native CATIA features","socket_head_bolt_geometry":"measured catalog dimensions and washers are preserved; native Rust adds visible faceted threads where the legacy Python Quick recipe reconstructed a smooth shank","solid_shaft_geometry":"the old mesh kernel used a 48-sided cylinder; Rust/OCCT uses an analytic cylinder, so bounding boxes agree while volume differs by the expected polygonal approximation"}})
+        "compatibility":{"scope":"common explicit primitives/cuts, migrated standalone primitive defaults and legacy extrusion/revolve constructors, centered solid-shaft aliases, rectangular slots, flat-washer rings, cylindrical/conical spring helices, measured socket-head screws with optional washers, V-belt pulleys, timing pulleys, straight-gear construction, PCD counterbores, migrated legacy washer/spring/shaft/bearing/seal-ring/coupling/brake-disc/brake-drum recipes, and executable flange/stepped-shaft/sleeve/blade/blisk templates","legacy_typical_defaults":"restored only for migrated Quick constructors/templates, centered solid shafts (Ø30 mm when diameter is absent), straight gears, timing pulleys, V-belt pulleys, socket-head screw catalog recipes, rectangular slots, flat-washer thickness, spring wire/turn values, brake-disc thickness/bore values, and brake-drum bore values; defaults and raw-dimension mappings are reported as warnings","loft_geometry":"blade and blisk lofts are locally approximate faceted B-Reps","timing_pulley_geometry":"native timing pulley teeth are approximate trapezoidal prisms fused to an analytic annular blank","vbelt_pulley_geometry":"standard V-groove pulley is an approximate axisymmetric revolve; legacy spoke variants and CATIA-native groove features are not included","helix_geometry":"spring helices are locally approximate faceted B-Reps and are not native CATIA features","socket_head_bolt_geometry":"measured catalog dimensions and washers are preserved; native Rust adds visible faceted threads where the legacy Python Quick recipe reconstructed a smooth shank","solid_shaft_geometry":"the old mesh kernel used a 48-sided cylinder; Rust/OCCT uses an analytic cylinder, so bounding boxes agree while volume differs by the expected polygonal approximation"}})
 }
 
 fn parse_legacy_template(raw: &str, normalized: &str) -> Option<Value> {
@@ -1551,6 +1554,195 @@ fn parse_legacy_simple_ring(raw: &str, text: &str) -> Option<Value> {
         }),
     ];
     Some(plan_result(raw, name, features, warnings))
+}
+
+/// Migrate the legacy Python Quick brake-drum recipe. The historical builder
+/// is a centered cylinder plus a center bore and five formula-derived holes;
+/// these are not a ventilated or hollow brake-drum shell.
+fn parse_legacy_brake_drum(raw: &str, text: &str) -> Option<Value> {
+    if !contains_any(text, &["制动鼓", "刹车鼓"]) {
+        return None;
+    }
+    if contains_any(
+        text,
+        &[
+            "通风",
+            "散热",
+            "制动蹄",
+            "刹车蹄",
+            "摩擦片",
+            "法兰",
+            "沉孔",
+            "盲孔",
+            "键槽",
+            "凹槽",
+            "安装孔",
+            "再加",
+            "同时",
+        ],
+    ) || contains_any(text, &["孔数", "螺栓孔径", "螺栓孔数", "分度圆", "pcd"])
+    {
+        return Some(result(
+            "unsupported",
+            raw,
+            None,
+            vec![],
+            vec![],
+            vec![issue(
+                "legacy_brake_drum_modifier_not_migrated",
+                "旧 Quick 制动鼓只包含盘体、中心孔及固定五孔公式；通风、摩擦结构和自定义螺栓孔参数尚未迁移。",
+            )],
+        ));
+    }
+
+    let outer_label = pulley_scalar(raw, text, &["外径", "outside diameter"], &["D"]);
+    let outer_generic = scalar_excluding_suffix(text, "直径", &["孔"]);
+    let outer = merge_optional_scalar(outer_label, outer_generic);
+    let bore = pulley_scalar(raw, text, &["内径", "inner diameter", "bore diameter"], &["d"]);
+    let height = pulley_scalar(
+        raw,
+        text,
+        &["高度", "height", "宽度", "width", "厚度", "厚"],
+        &["H"],
+    );
+
+    let mut questions = Vec::new();
+    match outer {
+        Some(value) if value.is_finite() && value > 0.0 => {}
+        Some(_) => questions.push(issue(
+            "legacy_brake_drum_outer_diameter_invalid",
+            "制动鼓外径必须是有限正数，且不同写法不能互相冲突。",
+        )),
+        None => questions.push(issue(
+            "legacy_brake_drum_outer_diameter",
+            "请给出制动鼓外径；旧 Python Quick 缺少外径时不能生成有效制动鼓。",
+        )),
+    }
+    match height {
+        Some(value) if value.is_finite() && value > 0.0 => {}
+        Some(_) => questions.push(issue(
+            "legacy_brake_drum_height_invalid",
+            "制动鼓高度必须是有限正数，且不同写法不能互相冲突。",
+        )),
+        None => questions.push(issue(
+            "legacy_brake_drum_height",
+            "请给出制动鼓高度；旧 Python Quick 缺少高度时不能生成有效制动鼓。",
+        )),
+    }
+    if bore.is_some_and(|value| !value.is_finite() || value <= 0.0) {
+        questions.push(issue(
+            "legacy_brake_drum_bore_invalid",
+            "制动鼓中心孔直径必须是有限正数，且不同写法不能互相冲突。",
+        ));
+    }
+    if !questions.is_empty() {
+        return Some(result("needs_clarification", raw, None, vec![], questions, vec![]));
+    }
+
+    let outer = outer.expect("validated brake-drum outer diameter");
+    let height = height.expect("validated brake-drum height");
+    let bore_defaulted = bore.is_none();
+    // The old parameter table defaults only this bore when D and H are given.
+    let bore = bore.unwrap_or(260.0);
+    if bore >= outer {
+        return Some(parse_result_with_issue(
+            "needs_clarification",
+            raw,
+            "legacy_brake_drum_bore_not_smaller_than_outer",
+            "中心孔必须小于制动鼓外径；旧网格内核会钳位过大的切除孔，Rust 要求提供有效环壁尺寸。",
+        ));
+    }
+
+    let bolt_diameter = ((outer - bore) / 4.0).max(2.0);
+    let pcd = (outer + bore) * 0.425;
+    let outer_clearance = outer - pcd - bolt_diameter;
+    let neighbor_clearance = pcd * (std::f64::consts::PI / 5.0).sin() - bolt_diameter;
+    if outer_clearance <= 1e-6 || neighbor_clearance <= 1e-6 {
+        return Some(parse_result_with_issue(
+            "needs_clarification",
+            raw,
+            "legacy_brake_drum_pattern_interference",
+            "旧 Quick 固定五孔公式与外缘或相邻孔发生相交/相切，无法形成可核验的闭合实体。",
+        ));
+    }
+
+    let mut features = vec![json!({
+        "id":"quick-0001",
+        "kind":"cylinder",
+        "operation":"add",
+        "name":"制动鼓盘体",
+        "parameters":{"radius":outer/2.0,"height":height,"center":[0.0,0.0,0.0],"base":false,"axis":"Z","segments":64},
+        "sources":{
+            "radius":derived_source(raw, "由制动鼓外径除以 2 得到半径。"),
+            "height":user_source(raw),
+            "center":derived_source(raw, "沿用旧 Python Quick 将制动鼓盘体中心置于原点。"),
+            "base":derived_source(raw, "沿用旧 Python Quick 的居中圆柱语义。"),
+            "axis":derived_source(raw, "沿用旧 Python Quick 沿全局 Z 轴放置。"),
+            "segments":derived_source(raw, "沿用旧 Python Quick 圆柱分段数 64。")
+        },
+        "relations":[]
+    })];
+    features.push(json!({
+        "id":"quick-0002",
+        "kind":"hole",
+        "operation":"cut",
+        "name":"制动鼓中心孔",
+        "parameters":{"diameter":bore,"through":true,"pos":"center","axis":"Z","segments":48},
+        "sources":{
+            "diameter":if bore_defaulted { derived_source(raw, "沿用旧 Python Quick 制动鼓典型中心孔 ⌀260 mm。") } else { user_source(raw) },
+            "through":derived_source(raw, "沿用旧 Python Quick 制动鼓中心贯穿孔。"),
+            "pos":derived_source(raw, "沿用旧 Python Quick 制动鼓中心孔位置。"),
+            "axis":derived_source(raw, "沿用旧 Python Quick 中心孔沿全局 Z 轴贯穿。"),
+            "segments":derived_source(raw, "沿用旧 Python Quick 中心孔分段数 48。")
+        },
+        "relations":[]
+    }));
+    features.push(json!({
+        "id":"quick-0003",
+        "kind":"hole",
+        "operation":"cut",
+        "name":"制动鼓固定五孔",
+        "parameters":{"diameter":bolt_diameter,"through":true,"pos":"pcd","count":5,"pcd":pcd,"axis":"Z","segments":24},
+        "sources":{
+            "diameter":derived_source(raw, "沿用旧 Python Quick 制动鼓孔径 max(2, (D-d)/4)。"),
+            "through":derived_source(raw, "沿用旧 Python Quick 制动鼓螺栓孔为贯穿孔。"),
+            "pos":derived_source(raw, "沿用旧 Python Quick 制动鼓固定五孔按 PCD 均布。"),
+            "count":derived_source(raw, "沿用旧 Python Quick 制动鼓固定 5 孔。"),
+            "pcd":derived_source(raw, "沿用旧 Python Quick 制动鼓孔阵列按 0.85×(D/2+d/2) 推导。"),
+            "axis":derived_source(raw, "沿用旧 Python Quick 制动鼓螺栓孔沿全局 Z 轴贯穿。"),
+            "segments":derived_source(raw, "沿用旧 Python Quick 制动鼓孔分段数 24。")
+        },
+        "relations":[]
+    }));
+
+    let mut warnings = vec![issue(
+        "legacy_brake_drum_migrated",
+        "已迁移旧 Python Quick 的圆柱盘体、中心孔和固定五孔；旧配方不是通风、薄壁或带法兰的真实制动鼓结构。",
+    )];
+    if bore_defaulted {
+        warnings.push(issue(
+            "legacy_brake_drum_default_bore",
+            "未指定内径；沿用旧 Python Quick 参数表的中心孔默认值 ⌀260 mm。",
+        ));
+    }
+    if bore >= pcd + bolt_diameter {
+        warnings.push(issue(
+            "legacy_brake_drum_bolt_holes_inside_bore",
+            "旧 Python Quick 的固定五孔公式使孔完全落在中心孔空腔内；保留其特征参数，但这些孔不会改变最终实体。",
+        ));
+    } else if bore + bolt_diameter > pcd {
+        warnings.push(issue(
+            "legacy_brake_drum_bolt_holes_overlap_bore",
+            "旧 Python Quick 的固定五孔与中心孔空腔相交，生成的是内缘开口的切除，不是五个彼此独立的圆孔。",
+        ));
+    }
+    if !has_unit(text) {
+        warnings.push(issue(
+            "unit_interpreted_as_mm",
+            "未写长度单位的制动鼓尺寸按旧 Quick 默认单位 mm 解释。",
+        ));
+    }
+    Some(plan_result(raw, "制动鼓", features, warnings))
 }
 
 /// Migrate the Python Quick brake-disc part-library recipe: a centered disc,
@@ -8936,6 +9128,100 @@ mod tests {
                 assert_eq!(features[1]["parameters"]["diameter"], expected["inner_diameter"], "{input}");
             } else {
                 assert!(output.to_string().contains(expected["issue"].as_str().unwrap()), "{input}: {output}");
+            }
+        }
+    }
+
+    #[test]
+    fn legacy_brake_drum_recipes_match_python_oracle_and_provenance() {
+        let fixture: Value = serde_json::from_str(include_str!(
+            "../tests/fixtures/quick_legacy_brake_drum_contract.json"
+        ))
+        .expect("brake-drum Python oracle fixture is valid JSON");
+
+        for case in fixture["legacy_accepted"].as_array().unwrap() {
+            let input = case["input"].as_str().unwrap();
+            let output = parse(input);
+            assert_eq!(output["status"], "ready", "{input}: {output}");
+            assert_eq!(output["plan"]["name"], "制动鼓", "{input}: {output}");
+            let features = output["plan"]["features"].as_array().unwrap();
+            assert_eq!(features.len(), case["feature_count"].as_u64().unwrap() as usize, "{input}");
+
+            let outer = case["outer_diameter"].as_f64().unwrap();
+            let bore = case["center_bore"].as_f64().unwrap();
+            let height = case["height"].as_f64().unwrap();
+            let bolt_diameter = case["bolt_hole_diameter"].as_f64().unwrap();
+            let pcd = case["pcd"].as_f64().unwrap();
+            assert_eq!(features[0]["kind"], "cylinder", "{input}");
+            assert_eq!(features[0]["operation"], "add", "{input}");
+            assert!((features[0]["parameters"]["radius"].as_f64().unwrap() - outer / 2.0).abs() < 1e-10, "{input}");
+            assert_eq!(features[0]["parameters"]["height"], height, "{input}");
+            assert_eq!(features[0]["parameters"]["center"], json!([0.0, 0.0, 0.0]), "{input}");
+            assert_eq!(features[0]["parameters"]["base"], false, "{input}");
+            assert_eq!(features[0]["parameters"]["segments"], 64, "{input}");
+            assert_eq!(features[0]["sources"]["height"]["type"], "user", "{input}");
+
+            assert_eq!(features[1]["kind"], "hole", "{input}");
+            assert_eq!(features[1]["operation"], "cut", "{input}");
+            assert_eq!(features[1]["parameters"]["diameter"], bore, "{input}");
+            assert_eq!(features[1]["parameters"]["through"], true, "{input}");
+            assert_eq!(features[1]["parameters"]["pos"], "center", "{input}");
+            assert_eq!(features[1]["parameters"]["segments"], 48, "{input}");
+            assert_eq!(features[1]["sources"]["diameter"]["type"], case["bore_source"], "{input}");
+
+            assert_eq!(features[2]["kind"], "hole", "{input}");
+            assert_eq!(features[2]["operation"], "cut", "{input}");
+            assert_eq!(features[2]["parameters"]["diameter"], bolt_diameter, "{input}");
+            assert_eq!(features[2]["parameters"]["through"], true, "{input}");
+            assert_eq!(features[2]["parameters"]["pos"], "pcd", "{input}");
+            assert_eq!(features[2]["parameters"]["count"], case["hole_count"], "{input}");
+            assert_eq!(features[2]["parameters"]["pcd"], pcd, "{input}");
+            assert_eq!(features[2]["parameters"]["segments"], 24, "{input}");
+            assert_eq!(features[2]["sources"]["count"]["type"], "derived", "{input}");
+            assert_eq!(features[2]["sources"]["pcd"]["type"], "derived", "{input}");
+            assert_eq!(features[2]["sources"]["diameter"]["type"], "derived", "{input}");
+
+            if let Some(code) = case["warning_code"].as_str() {
+                assert!(output["warnings"].to_string().contains(code), "{input}: {output}");
+            }
+            if case["holes_inside_bore"] == true {
+                assert!(output["warnings"].to_string().contains("legacy_brake_drum_bolt_holes_inside_bore"), "{input}: {output}");
+            }
+            if case["hole_array_overlaps_bore"] == true {
+                assert!(output["warnings"].to_string().contains("legacy_brake_drum_bolt_holes_overlap_bore"), "{input}: {output}");
+            }
+            assert_eq!(
+                crate::cad_plan_validation::validate_plan(&output["plan"])["state"],
+                "valid",
+                "{input}: {}",
+                crate::cad_plan_validation::validate_plan(&output["plan"])
+            );
+            assert_eq!(
+                crate::native_plan_geometry::preflight(&output["plan"])
+                    .unwrap()["state"],
+                "valid",
+                "{input}"
+            );
+        }
+
+        for case in fixture["not_ready"].as_array().unwrap() {
+            let input = case["input"].as_str().unwrap();
+            let output = parse(input);
+            assert_eq!(output["status"], "needs_clarification", "{input}: {output}");
+            assert!(output["plan"].is_null(), "{input}: {output}");
+            assert!(output.to_string().contains(case["issue"].as_str().unwrap()), "{input}: {output}");
+        }
+
+        for case in fixture["known_legacy_discrepancies"].as_array().unwrap() {
+            let input = case["input"].as_str().unwrap();
+            let expected = &case["migration_behavior"];
+            let output = parse(input);
+            assert_eq!(output["status"], expected["status"], "{input}: {output}");
+            if let Some(issue_code) = expected["issue"].as_str() {
+                assert!(output.to_string().contains(issue_code), "{input}: {output}");
+            }
+            if let Some(warning_code) = expected["warning"].as_str() {
+                assert!(output["warnings"].to_string().contains(warning_code), "{input}: {output}");
             }
         }
     }
