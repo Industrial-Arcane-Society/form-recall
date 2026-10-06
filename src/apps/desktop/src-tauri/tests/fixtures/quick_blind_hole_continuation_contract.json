@@ -1,0 +1,42 @@
+{
+  "source": "src/legacy/ai_modeler/core/parsing/nlparser.py via nlparser.parse(text).doc.to_dict(), captured 2026-10-06",
+  "legacy_accepted": [
+    {
+      "input": "长方体 长100宽80高20，中心盲孔直径10，10mm深",
+      "warnings": [],
+      "hole_index": 1,
+      "rust_parameter_keys": [
+        "diameter",
+        "through",
+        "pos",
+        "depth"
+      ],
+      "legacy_hole": {
+        "kind": "hole",
+        "op": "cut",
+        "params": {
+          "diameter": 10.0,
+          "through": false,
+          "axis": "Z",
+          "pos": "center",
+          "segments": 24,
+          "depth": 10.0
+        },
+        "provenance": {
+          "diameter": "explicit",
+          "depth": "explicit"
+        }
+      }
+    }
+  ],
+  "rust_rejected": [
+    {
+      "input": "长方体 长100宽80高20，中心通孔直径10，10mm深",
+      "issue": "hole_depth_continuation_unbound"
+    },
+    {
+      "input": "长方体 长100宽80高20，中心盲孔直径10，中心通孔直径5，10mm深",
+      "issue": "hole_depth_continuation_unbound"
+    }
+  ]
+}

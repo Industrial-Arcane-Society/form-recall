@@ -470,6 +470,76 @@ mod tests {
     }
 
     #[test]
+    #[ignore = "requires an explicitly staged OCCT runtime; run the documented F5.14 acceptance command"]
+    fn f5_14_blind_hole_depth_continuation_builds_verified_geometry() {
+        let manifest = std::env::var_os("AIMODELER_TEST_OCCT_MANIFEST")
+            .map(std::path::PathBuf::from)
+            .expect("F5.14 requires AIMODELER_TEST_OCCT_MANIFEST");
+        assert!(
+            manifest.is_file(),
+            "F5.14 OCCT runtime manifest is missing: {}",
+            manifest.display()
+        );
+
+        let prompt = "长方体 长100宽80高20，中心盲孔直径10，10mm深";
+        let parsed = native_quick_parser::parse(prompt);
+        assert_eq!(parsed["status"], "ready", "F5.14 parser result: {parsed}");
+        assert_eq!(parsed["plan"]["features"][1]["parameters"]["depth"], 10.0);
+        assert_eq!(parsed["plan"]["features"][1]["parameters"]["through"], false);
+
+        let root = std::env::temp_dir().join(format!(
+            "quick-f5-14-{}-{}",
+            std::process::id(),
+            SystemTime::now()
+                .duration_since(UNIX_EPOCH)
+                .unwrap()
+                .as_nanos()
+        ));
+        fs::create_dir_all(&root).unwrap();
+        struct RemoveOnDrop(std::path::PathBuf);
+        impl Drop for RemoveOnDrop {
+            fn drop(&mut self) {
+                let _ = std::fs::remove_dir_all(&self.0);
+            }
+        }
+        let _cleanup = RemoveOnDrop(root.clone());
+
+        let result = build(prompt, 1, &manifest, &root)
+            .unwrap_or_else(|error| panic!("F5.14 Quick build failed: {error}"));
+        assert_eq!(result["state"], "complete");
+        let report = &result["geometry_report"];
+        assert_eq!(report["state"], "passed");
+        assert_eq!(report["valid"], true);
+        assert_eq!(report["closed_solid_count"], 1);
+        assert_eq!(report["dimensions_mm"], json!([100.0, 80.0, 20.0]));
+        assert_eq!(report["hole_measurements_verified"], true);
+        let holes = report["hole_instances"].as_array().expect("hole instances");
+        assert_eq!(holes.len(), 1);
+        assert_eq!(holes[0]["through"], false);
+        assert_eq!(holes[0]["depth_mm"], 10.0);
+        assert_eq!(holes[0]["status"], "verified_blind");
+        assert_eq!(holes[0]["final_measurement"]["accepted"], true);
+        assert_eq!(holes[0]["final_measurement"]["expected_blind_depth"], 10.0);
+        assert_eq!(
+            holes[0]["final_measurement"]["measured_cylindrical_axial_length"],
+            10.0
+        );
+
+        let aimodel = Path::new(
+            result["output_paths"]["aimodel"]
+                .as_str()
+                .expect("AIMODEL path"),
+        );
+        let stl = Path::new(result["output_paths"]["stl"].as_str().expect("STL path"));
+        assert!(aimodel.is_file(), "F5.14 AIMODEL export missing");
+        assert!(stl.is_file(), "F5.14 STL export missing");
+        let loaded = native_model_io::load_aimodel(aimodel)
+            .unwrap_or_else(|error| panic!("F5.14 AIMODEL round-trip failed: {error}"));
+        assert_eq!(loaded["cadplan"]["features"], result["cadplan"]["features"]);
+        eprintln!("F5.14 PASS: centered blind hole depth continuation, B-Rep measurement, AIMODEL/STL export and reload");
+    }
+
+    #[test]
     fn f5_12_failed_stl_export_preserves_existing_target() {
         let root = std::env::temp_dir().join(format!(
             "quick-f5-12-export-{}-{}",

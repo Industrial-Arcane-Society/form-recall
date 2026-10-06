@@ -47,6 +47,25 @@ pub fn parse(text: &str) -> Value {
     let mut clauses = split_clauses(&normalized);
     let mut clause_index = 1;
     while clause_index < clauses.len() {
+        let previous = &clauses[clause_index - 1];
+        let current = &clauses[clause_index];
+        if has_hole(previous)
+            && contains_any(previous, &["blind", "盲孔"])
+            && !contains_any(previous, &["through", "通孔", "贯穿"])
+            && hole_depth_value(previous).is_none()
+            && is_standalone_depth_clause(current)
+        {
+            let continuation = clauses.remove(clause_index);
+            clauses[clause_index - 1].push(' ');
+            clauses[clause_index - 1].push_str(&continuation);
+            continue;
+        }
+        if has_hole(previous) && is_standalone_depth_clause(current) {
+            questions.push(issue(
+                "hole_depth_continuation_unbound",
+                "深度片段只有紧跟一个未标深度的盲孔时才会接入该孔；当前片段无法安全绑定，请合并重述孔型和深度。",
+            ));
+        }
         if has_hole(&clauses[clause_index - 1])
             && contains_any(
                 &clauses[clause_index],
@@ -1153,7 +1172,7 @@ fn build_hole(
     }
     let through_word = contains_any(clause, &["through", "thru", "通孔", "贯穿"]);
     let blind_word = contains_any(clause, &["blind", "盲孔"]);
-    let depth = scalar(clause, &["depth", "hole depth", "深度", "孔深", "深"]);
+    let depth = hole_depth_value(clause);
     if through_word && blind_word {
         questions.push(issue("hole_type_conflict", "同一孔同时描述为通孔和盲孔。"));
     }
@@ -1881,6 +1900,93 @@ fn scalar(s: &str, aliases: &[&str]) -> Option<f64> {
     }
 }
 
+fn hole_depth_value(s: &str) -> Option<f64> {
+    let aliases = ["depth", "hole depth", "深度", "孔深", "深"];
+    let after_label = scalar(s, &aliases);
+    let before_label = scalar_before_alias(s, &aliases);
+    match (after_label, before_label) {
+        (Some(after), Some(before)) if close(after, before) => Some(after),
+        (Some(_), Some(_)) => Some(f64::NAN),
+        (Some(value), None) | (None, Some(value)) => Some(value),
+        (None, None) => None,
+    }
+}
+
+fn scalar_before_alias(s: &str, aliases: &[&str]) -> Option<f64> {
+    let mut found = Vec::<f64>::new();
+    for (start, ch) in s.char_indices() {
+        if !ch.is_ascii_digit() && ch != '-' && ch != '+' {
+            continue;
+        }
+        if s[..start]
+            .chars()
+            .next_back()
+            .is_some_and(|previous| previous.is_ascii_digit() || previous == '.')
+        {
+            continue;
+        }
+        let Some((number, end)) = parse_number(s, start) else {
+            continue;
+        };
+        let preceding = s[..start]
+            .trim_end_matches(|ch: char| ch.is_whitespace() || matches!(ch, ':' | '：' | '='))
+            .to_lowercase();
+        if [
+            "hole depth",
+            "diameter",
+            "radius",
+            "length",
+            "width",
+            "height",
+            "depth",
+            "直径",
+            "孔径",
+            "半径",
+            "长",
+            "宽",
+            "高",
+            "厚",
+            "孔深",
+            "深度",
+            "分度圆",
+            "边距",
+        ]
+        .iter()
+        .any(|label| preceding.ends_with(label))
+        {
+            // A value introduced by another dimension label (for example
+            // "diameter 4 mm depth 3 mm") belongs to that label, even though
+            // the next token also happens to be a postfixed depth alias.
+            continue;
+        }
+        let suffix = skip_ws(s, end);
+        if aliases.iter().any(|alias| s[suffix..].starts_with(alias)) {
+            found.push(number.value * scale(&number.unit));
+        }
+    }
+    if found.is_empty() {
+        None
+    } else if found.iter().all(|value| close(*value, found[0])) {
+        Some(found[0])
+    } else {
+        Some(f64::NAN)
+    }
+}
+
+fn is_standalone_depth_clause(s: &str) -> bool {
+    contains_any(s, &["depth", "hole depth", "深度", "孔深", "深"])
+        && !has_hole(s)
+        && !has_slot(s)
+        && !contains_any(
+            s,
+            &[
+                "长方体", "长方块", "矩形块", "圆柱", "圆锥", "圆台", "锥台", "球体", "圆球",
+                "box", "block", "cylinder", "cone", "frustum", "sphere",
+            ],
+        )
+        && hole_depth_value(s).is_some()
+}
+
 fn circular_pattern_angle(s: &str) -> Result<Option<f64>, &'static str> {
     let mut found = Vec::<f64>::new();
     for (start, ch) in s.char_indices() {
@@ -2473,6 +2579,60 @@ mod tests {
             let output = parse(case["input"].as_str().unwrap());
             assert_eq!(output["status"], case["status"], "{}: {output}", case["input"]);
             assert!(output["plan"].is_null(), "rejected input must not yield a plan: {output}");
+        }
+    }
+
+    #[test]
+    fn blind_hole_depth_fragment_continues_only_to_the_adjacent_blind_hole() {
+        let fixture: Value = serde_json::from_str(include_str!(
+            "../tests/fixtures/quick_blind_hole_continuation_contract.json"
+        ))
+        .expect("blind-hole continuation oracle fixture is valid JSON");
+
+        for case in fixture["legacy_accepted"].as_array().unwrap() {
+            let input = case["input"].as_str().unwrap();
+            let output = parse(input);
+            assert_eq!(output["status"], "ready", "{input}: {output}");
+            let warnings = output["warnings"]
+                .as_array()
+                .unwrap_or_else(|| panic!("{input}: warnings must be an array: {output}"));
+            assert!(
+                warnings
+                    .iter()
+                    .any(|warning| warning["code"] == "unit_interpreted_as_mm"),
+                "{input}: Rust Quick should keep its existing default-mm warning: {output}"
+            );
+            let validation = crate::cad_plan_validation::validate_plan(&output["plan"]);
+            assert_eq!(validation["state"], "valid", "{input}: {validation}");
+
+            let index = case["hole_index"].as_u64().unwrap() as usize;
+            let actual = &output["plan"]["features"][index];
+            let expected = &case["legacy_hole"];
+            assert_eq!(actual["kind"], expected["kind"], "{input}");
+            assert_eq!(actual["operation"], expected["op"], "{input}");
+            for key in case["rust_parameter_keys"].as_array().unwrap() {
+                let key = key.as_str().unwrap();
+                assert_eq!(
+                    actual["parameters"][key], expected["params"][key],
+                    "{input}: {key}"
+                );
+            }
+            for (key, value) in expected["provenance"].as_object().unwrap() {
+                assert_eq!(value, "explicit", "{input}: {key}");
+                assert_eq!(actual["sources"][key]["type"], "user", "{input}: {key}");
+                assert_eq!(actual["sources"][key]["evidence"], input, "{input}: {key}");
+            }
+        }
+
+        for case in fixture["rust_rejected"].as_array().unwrap() {
+            let input = case["input"].as_str().unwrap();
+            let output = parse(input);
+            assert_eq!(output["status"], "needs_clarification", "{input}: {output}");
+            assert!(output["plan"].is_null(), "{input}: {output}");
+            assert!(
+                output["questions"].to_string().contains(case["issue"].as_str().unwrap()),
+                "{input}: {output}"
+            );
         }
     }
 
