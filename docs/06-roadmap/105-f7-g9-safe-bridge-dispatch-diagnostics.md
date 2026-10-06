@@ -13,9 +13,13 @@ Run36 的安全 Cordis binding projection 可指出 `bridge_execution_rejected`�
 
 ## 验证
 
-- `node --test src/apps/desktop/src-tauri/examples/native_agent_coldstart_gates.test.mjs`：134/134 通过；覆盖 mock bridge error stage/code 解析、固定 projection、publication 边界与 sentinel 不泄漏。
+- `node --test src/apps/desktop/src-tauri/examples/native_agent_coldstart_gates.test.mjs`：135/135 通过；覆盖 mock bridge error stage/code 解析、固定 projection、publication 边界与 sentinel 不泄漏。
 - `pwsh -NoProfile -File src/apps/desktop/src-tauri/scripts/test-lib.ps1 -Offline -Filter 'native_tool_bridge::tests' -NoCapture`：3/3 通过；验证参数重用/未知工具为 executor 前校验、deadline 在 executor 前超时、executor error 标为 executor return。
 - 直接 `cargo test` 的 test executable 在 Windows loader 阶段遇到 `0xc0000139 STATUS_ENTRYPOINT_NOT_FOUND`；使用仓库 test-lib wrapper 后，带 Common Controls manifest 的实际测试运行通过。
 - `rustfmt --edition 2021 --check src/apps/desktop/src-tauri/src/native_tool_bridge.rs` 与 `git diff --check` 通过。
 
 本项只证明安全诊断契约；不重跑真实 DSH/provider，不读取 raw run logs、scratch 或几何载荷，不解释 Run36 某一具体失败的 root cause，也不代表 F7/G8 或视觉验收通过。
+
+## 后续核对：鉴权拒绝阶段
+
+2026-10-06 对照 Run37 与当前 producer/consumer 后发现，`tools/call` 在 executor 前因 token/session 鉴权失败会返回 `UNAUTHORIZED`，但通用 Rust 错误写入器原先将该响应的 `dispatch_stage` 标为 `unknown`。这样 proxy 与 allowlist 虽能保留失败结果，却无法确认这是 executor 前拒绝。现将 `UNAUTHORIZED` 固定标为 `pre_executor_validation`；错误码仍经 safe mapper 投影为 `unknown`，不增加敏感或可枚举的鉴权细节。Rust 回归直接发出带无效 token 的 `tools/call` 并检查固定阶段。更新后 `native_tool_bridge::tests` 3/3、Node coldstart suite 135/135、rustfmt 与 `git diff --check` 通过。此修复只补齐诊断分类，不改变鉴权行为，也不回溯 Run37。

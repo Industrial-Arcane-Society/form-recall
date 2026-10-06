@@ -537,7 +537,11 @@ fn write_error(
     let mut response = json!({
         "jsonrpc":"2.0", "id":id,
         "error":{"code":code,"message":message,"data":{"code":detail_code,
-            "dispatch_stage": if detail_code == "RESPONSE_TOO_LARGE" { "response_writeback" } else { "unknown" }}}
+            "dispatch_stage": match detail_code {
+                "UNAUTHORIZED" => "pre_executor_validation",
+                "RESPONSE_TOO_LARGE" => "response_writeback",
+                _ => "unknown",
+            }}}
     });
     let mut bytes = serde_json::to_vec(&response)?;
     if bytes.len() > MAX_RESPONSE_BYTES {
@@ -775,8 +779,15 @@ mod tests {
                 .unwrap();
 
         let mut bad_auth = json!({"token":"wrong","sessionId":"session-test"});
-        let unauthorized = raw_rpc(&bridge, "auth", "tools/list", &mut bad_auth);
+        bad_auth["toolCallId"] = json!("auth-rejected-call");
+        bad_auth["name"] = json!("cad_get_state");
+        bad_auth["arguments"] = json!({});
+        let unauthorized = raw_rpc(&bridge, "auth", "tools/call", &mut bad_auth);
         assert_eq!(unauthorized["error"]["data"]["code"], "UNAUTHORIZED");
+        assert_eq!(
+            unauthorized["error"]["data"]["dispatch_stage"],
+            "pre_executor_validation"
+        );
 
         let wrong_session =
             rpc_with_session(&bridge, "session-other", "session", "tools/list", json!({}));
