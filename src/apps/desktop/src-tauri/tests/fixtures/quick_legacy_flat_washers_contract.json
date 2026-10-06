@@ -1,0 +1,78 @@
+{
+  "legacy_accepted": [
+    {
+      "input": "平垫圈 外径20 内径8 厚度2",
+      "outer_radius": 10.0,
+      "thickness": 2.0,
+      "inner_diameter": 8.0,
+      "cylinder_segments": 64,
+      "hole_segments": 48,
+      "thickness_source": "user"
+    },
+    {
+      "input": "平垫 外径20 内径8 厚度2",
+      "outer_radius": 10.0,
+      "thickness": 2.0,
+      "inner_diameter": 8.0,
+      "cylinder_segments": 64,
+      "hole_segments": 48,
+      "thickness_source": "user"
+    },
+    {
+      "input": "垫圈 外径20 内径8 厚度2",
+      "outer_radius": 10.0,
+      "thickness": 2.0,
+      "inner_diameter": 8.0,
+      "cylinder_segments": 64,
+      "hole_segments": 48,
+      "thickness_source": "user"
+    },
+    {
+      "input": "垫片 外径20 内径8",
+      "outer_radius": 10.0,
+      "thickness": 2.0,
+      "inner_diameter": 8.0,
+      "cylinder_segments": 64,
+      "hole_segments": 48,
+      "thickness_source": "derived",
+      "warning_contains": "legacy_washer_thickness_defaulted"
+    }
+  ],
+  "not_ready": [
+    {
+      "input": "平垫圈",
+      "status": "needs_clarification",
+      "issue": "washer_outer_diameter_required"
+    },
+    {
+      "input": "平垫圈 外径20",
+      "status": "needs_clarification",
+      "issue": "washer_inner_diameter_required"
+    },
+    {
+      "input": "平垫圈 外径8 内径20 厚度2",
+      "status": "needs_clarification",
+      "issue": "washer_diameter_order_invalid"
+    },
+    {
+      "input": "平垫圈 外径20 内径8 厚度0",
+      "status": "needs_clarification",
+      "issue": "washer_thickness_invalid"
+    },
+    {
+      "input": "弹簧垫圈 外径16 内径10 厚度2",
+      "status": "unsupported",
+      "issue": "legacy_spring_washer_not_migrated"
+    },
+    {
+      "input": "平垫圈 外径20 内径8 厚度2 并加一个长方体20x20x5",
+      "status": "unsupported",
+      "issue": "legacy_washer_compound_request_unsupported"
+    },
+    {
+      "input": "垫片",
+      "status": "needs_clarification",
+      "issue": "legacy_shim_kind_ambiguous"
+    }
+  ]
+}

@@ -5875,6 +5875,64 @@ mod tests {
     }
 
     #[test]
+    fn legacy_flat_washer_recipe_matches_python_contract() {
+        let fixture: Value = serde_json::from_str(include_str!(
+            "../tests/fixtures/quick_legacy_flat_washers_contract.json"
+        ))
+        .expect("flat-washer Python oracle fixture is valid JSON");
+
+        for case in fixture["legacy_accepted"].as_array().unwrap() {
+            let input = case["input"].as_str().unwrap();
+            let output = parse(input);
+            assert_eq!(output["status"], "ready", "{input}: {output}");
+            let features = output["plan"]["features"].as_array().unwrap();
+            assert_eq!(features.len(), 2, "{input}: {output}");
+            assert_eq!(features[0]["kind"], "cylinder", "{input}");
+            assert_eq!(features[0]["operation"], "add", "{input}");
+            assert_eq!(features[0]["parameters"]["center"], json!([0.0, 0.0, 0.0]));
+            assert_eq!(features[0]["parameters"]["base"], false);
+            assert_eq!(features[1]["kind"], "hole", "{input}");
+            assert_eq!(features[1]["operation"], "cut", "{input}");
+            assert_eq!(features[1]["parameters"]["through"], true);
+            assert_eq!(features[1]["parameters"]["pos"], "center");
+
+            for (actual, expected) in [
+                (&features[0]["parameters"]["radius"], &case["outer_radius"]),
+                (&features[0]["parameters"]["height"], &case["thickness"]),
+                (&features[1]["parameters"]["diameter"], &case["inner_diameter"]),
+                (&features[0]["parameters"]["segments"], &case["cylinder_segments"]),
+                (&features[1]["parameters"]["segments"], &case["hole_segments"]),
+            ] {
+                assert_eq!(actual, expected, "{input}: parameter mismatch");
+            }
+            assert_eq!(features[0]["sources"]["height"]["type"], case["thickness_source"]);
+            assert_eq!(features[1]["sources"]["diameter"]["type"], "user");
+            if let Some(warning) = case["warning_contains"].as_str() {
+                assert!(output["warnings"].to_string().contains(warning), "{input}: {output}");
+            }
+            assert_eq!(
+                crate::cad_plan_validation::validate_plan(&output["plan"])["state"],
+                "valid",
+                "{input}"
+            );
+            assert_eq!(
+                crate::native_plan_geometry::preflight(&output["plan"]).unwrap()["state"],
+                "valid",
+                "{input}"
+            );
+        }
+
+        for case in fixture["not_ready"].as_array().unwrap() {
+            let input = case["input"].as_str().unwrap();
+            let output = parse(input);
+            assert_eq!(output["status"], case["status"], "{input}: {output}");
+            assert!(output["plan"].is_null(), "{input}: {output}");
+            let issues = format!("{} {}", output["questions"], output["unsupported"]);
+            assert!(issues.contains(case["issue"].as_str().unwrap()), "{input}: {output}");
+        }
+    }
+
+    #[test]
     fn disabled_native_unsupported_feature_is_retained_but_skipped_by_preflight() {
         let mut candidate = parse("box 20×10×8 mm")["plan"].clone();
         let mut disabled = candidate["features"][0].clone();

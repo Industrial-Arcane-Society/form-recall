@@ -1376,6 +1376,92 @@ mod acceptance_tests {
 
     #[test]
     #[ignore = "requires the staged local OCCT runtime manifest"]
+    fn legacy_flat_washer_build_reopens_and_exports_through_native_quick() {
+        let manifest = std::env::var_os("AIMODELER_OCCT_MANIFEST")
+            .map(std::path::PathBuf::from)
+            .expect("set AIMODELER_OCCT_MANIFEST to the staged OCCT runtime-manifest.json");
+        let root = std::env::temp_dir().join(format!(
+            "native-quick-washer-{}-{}",
+            std::process::id(),
+            SystemTime::now()
+                .duration_since(UNIX_EPOCH)
+                .expect("system clock")
+                .as_nanos()
+        ));
+        fs::create_dir_all(&root).expect("create native Quick output root");
+        struct RemoveOnDrop(std::path::PathBuf);
+        impl Drop for RemoveOnDrop {
+            fn drop(&mut self) {
+                let _ = std::fs::remove_dir_all(&self.0);
+            }
+        }
+        let _cleanup = RemoveOnDrop(root.clone());
+
+        for (index, input) in ["平垫圈 外径20 内径8 厚度2", "平垫圈 外径20 内径8"]
+            .into_iter()
+            .enumerate()
+        {
+            let output = build(input, index as i64 + 1, &manifest, &root)
+                .unwrap_or_else(|error| panic!("{input}: {error}"));
+            assert_eq!(output["state"], "complete", "{input}: {output}");
+            let report = &output["geometry_report"];
+            assert_eq!(report["state"], "passed", "{input}: {report}");
+            assert_eq!(report["valid"], true, "{input}: {report}");
+            assert_eq!(report["closed_solid_count"], 1, "{input}: {report}");
+
+            let dimensions = output["stats"]["size"]
+                .as_array()
+                .unwrap_or_else(|| panic!("{input}: missing size summary: {output}"));
+            assert_eq!(dimensions.len(), 3, "{input}: {output}");
+            for (actual, expected) in dimensions.iter().zip([20.0, 20.0, 2.0]) {
+                assert!(
+                    (actual.as_f64().unwrap() - expected).abs() < 1e-6,
+                    "{input}: dimensions {dimensions:?}"
+                );
+            }
+            let expected_volume =
+                std::f64::consts::PI * (10.0_f64.powi(2) - 4.0_f64.powi(2)) * 2.0;
+            let actual_volume = report["volume_mm3"].as_f64().unwrap();
+            assert!(
+                (actual_volume - expected_volume).abs() < 1e-5,
+                "{input}: expected volume {expected_volume}, got {actual_volume}"
+            );
+
+            let holes = report["hole_instances"]
+                .as_array()
+                .unwrap_or_else(|| panic!("{input}: hole measurements missing: {report}"));
+            assert_eq!(holes.len(), 1, "{input}: {report}");
+            assert_eq!(report["hole_measurement_complete"], true, "{input}: {report}");
+            assert_eq!(report["hole_measurements_verified"], true, "{input}: {report}");
+
+            let outputs = output["output_paths"].as_object().unwrap();
+            for name in ["glb", "aimodel", "stl", "obj"] {
+                assert!(
+                    Path::new(outputs[name].as_str().unwrap()).is_file(),
+                    "{input}: {name}"
+                );
+            }
+            let loaded = native_model_io::load_aimodel(Path::new(
+                outputs["aimodel"].as_str().unwrap(),
+            ))
+            .unwrap_or_else(|error| panic!("{input}: AIMODEL reload failed: {error}"));
+            assert_eq!(loaded["features"].as_array().map(Vec::len), Some(2), "{input}");
+            if index == 1 {
+                assert!(
+                    output["warnings"].to_string().contains("legacy_washer_thickness_defaulted"),
+                    "{input}: expected the legacy thickness default warning"
+                );
+            }
+            println!(
+                "F5.26 native acceptance: input={input}; dimensions_mm={}; volume_mm3={actual_volume}; triangles={}",
+                serde_json::to_string(&output["stats"]["size"]).unwrap(),
+                output["stats"]["triangles"]
+            );
+        }
+    }
+
+    #[test]
+    #[ignore = "requires the staged local OCCT runtime manifest"]
     fn legacy_blade_and_blisk_build_reopen_and_export_through_native_quick() {
         let manifest = std::env::var_os("AIMODELER_OCCT_MANIFEST")
             .map(std::path::PathBuf::from)
