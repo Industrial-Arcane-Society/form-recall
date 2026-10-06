@@ -229,7 +229,14 @@ pub fn parse(text: &str) -> Value {
 
     let mut features = Vec::<Value>::new();
     if let Some(kind) = base_kind {
-        if let Some(base) = build_base(kind, &base_text, text, &mut questions, &mut warnings) {
+        if let Some(base) = build_base(
+            kind,
+            &base_text,
+            text,
+            &mut questions,
+            &mut warnings,
+            modifier_clauses.is_empty(),
+        ) {
             features.push(base);
         }
     }
@@ -887,6 +894,7 @@ fn build_base(
     raw: &str,
     questions: &mut Vec<Value>,
     warnings: &mut Vec<Value>,
+    allow_legacy_box_defaults: bool,
 ) -> Option<Value> {
     let mut parameters = serde_json::Map::new();
     let mut sources = serde_json::Map::new();
@@ -894,25 +902,82 @@ fn build_base(
     match kind {
         BaseKind::Box => {
             let triple = find_dimension_triplet(clause);
+            let pair = find_dimension_pair(clause);
             let l = scalar(
                 clause,
                 &["length", "overall length", "长", "长度", "总长", "全长"],
             );
             let w = scalar(clause, &["width", "宽度", "宽"]);
             let h = scalar(clause, &["height", "高度", "高", "thickness", "厚度", "厚"]);
-            let vals = [
-                l.or_else(|| triple.as_ref().map(|t| t[0])),
-                w.or_else(|| triple.as_ref().map(|t| t[1])),
+            let mut vals = [
+                l.or_else(|| triple.as_ref().map(|t| t[0]))
+                    .or_else(|| pair.as_ref().map(|v| v[0])),
+                w.or_else(|| triple.as_ref().map(|t| t[1]))
+                    .or_else(|| pair.as_ref().map(|v| v[1])),
                 h.or_else(|| triple.as_ref().map(|t| t[2])),
             ];
+            let mut remaining_raw = if allow_legacy_box_defaults {
+                dimension_values(clause)
+            } else {
+                Vec::new()
+            };
+            let explicit_values = vals.iter().flatten().copied().collect::<Vec<_>>();
+            remaining_raw.retain(|candidate| {
+                !explicit_values
+                    .iter()
+                    .any(|explicit| close(*candidate, *explicit))
+            });
+            let mut raw_iter = remaining_raw.into_iter();
+            let defaults = [100.0, 60.0, 20.0];
+            let mut used_default = Vec::new();
+            for (index, value) in vals.iter_mut().enumerate() {
+                if value.is_none() && allow_legacy_box_defaults {
+                    if let Some(raw_value) = raw_iter.next() {
+                        *value = Some(raw_value);
+                    } else {
+                        *value = Some(defaults[index]);
+                        used_default.push((
+                            ["length", "width", "height"][index],
+                            defaults[index],
+                        ));
+                    }
+                }
+            }
             for (key, value) in ["length", "width", "height"].into_iter().zip(vals) {
                 match value.filter(|v| v.is_finite() && *v > 0.0) {
-                    Some(v) => add_user(&mut parameters, &mut sources, raw, key, json!(v)),
+                    Some(v) => {
+                        let was_default = used_default.iter().any(|(default_key, _)| *default_key == key);
+                        parameters.insert(key.into(), json!(v));
+                        sources.insert(
+                            key.into(),
+                            if was_default {
+                                derived_source(
+                                    raw,
+                                    &format!(
+                                        "旧 Python Quick 长方体默认尺寸：{key}={v} mm。"
+                                    ),
+                                )
+                            } else {
+                                user_source(raw)
+                            },
+                        );
+                    }
                     None => questions.push(issue(
                         "box_dimension_missing_or_invalid",
                         &format!("长方体缺少明确的正数 {key}；请给出长度、宽度、高度或 L×W×H。"),
                     )),
                 }
+            }
+            if !used_default.is_empty() {
+                let description = used_default
+                    .iter()
+                    .map(|(key, value)| format!("{key}={value} mm"))
+                    .collect::<Vec<_>>()
+                    .join("、");
+                warnings.push(issue(
+                    "legacy_box_dimensions_defaulted",
+                    &format!("沿用旧 Python Quick 长方体默认尺寸：{description}。"),
+                ));
             }
         }
         BaseKind::Cylinder => {
@@ -2037,6 +2102,25 @@ fn find_dimension_pair(s: &str) -> Option<[f64; 2]> {
     }
     None
 }
+fn dimension_values(s: &str) -> Vec<f64> {
+    let mut values = Vec::new();
+    for (start, ch) in s.char_indices() {
+        if !ch.is_ascii_digit() && ch != '-' && ch != '+' {
+            continue;
+        }
+        if s[..start]
+            .chars()
+            .next_back()
+            .is_some_and(|previous| previous.is_ascii_digit() || previous == '.')
+        {
+            continue;
+        }
+        if let Some((number, _)) = parse_number(s, start) {
+            values.push(number.value * scale(&number.unit));
+        }
+    }
+    values
+}
 fn scalar(s: &str, aliases: &[&str]) -> Option<f64> {
     let mut found = Vec::<f64>::new();
     for alias in aliases {
@@ -2497,8 +2581,21 @@ mod tests {
         assert_eq!(p["features"][3]["kind"], "pocket");
     }
     #[test]
-    fn absent_dimensions_and_ambiguous_hole_location_request_clarification() {
-        assert_eq!(parse("make a box")["status"], "needs_clarification");
+    fn standalone_box_uses_legacy_defaults_and_unpositioned_holes_request_clarification() {
+        let legacy_box = parse("make a box");
+        assert_eq!(legacy_box["status"], "ready", "{legacy_box}");
+        assert_eq!(
+            legacy_box["plan"]["features"][0]["parameters"]["length"],
+            100.0
+        );
+        assert_eq!(
+            legacy_box["plan"]["features"][0]["parameters"]["width"],
+            60.0
+        );
+        assert_eq!(
+            legacy_box["plan"]["features"][0]["parameters"]["height"],
+            20.0
+        );
         assert_eq!(
             parse("box 100×60×20 mm, through hole diameter 10 mm")["status"],
             "needs_clarification"
@@ -2853,6 +2950,48 @@ mod tests {
             assert!(
                 output["questions"].to_string().contains(case["issue"].as_str().unwrap()),
                 "{input}: {output}"
+            );
+        }
+    }
+
+    #[test]
+    fn standalone_legacy_boxes_fill_missing_dimensions_from_python_defaults() {
+        let fixture: Value = serde_json::from_str(include_str!(
+            "../tests/fixtures/quick_legacy_box_defaults_contract.json"
+        ))
+        .expect("legacy box defaults fixture is valid JSON");
+
+        for case in fixture["legacy_accepted"].as_array().unwrap() {
+            let input = case["input"].as_str().unwrap();
+            let output = parse(input);
+            assert_eq!(output["status"], "ready", "{input}: {output}");
+            let validation = crate::cad_plan_validation::validate_plan(&output["plan"]);
+            assert_eq!(validation["state"], "valid", "{input}: {validation}");
+            let features = output["plan"]["features"].as_array().unwrap();
+            assert_eq!(features.len(), 1, "{input}: {output}");
+            let feature = &features[0];
+            assert_eq!(feature["kind"], "box", "{input}");
+            for (key, expected) in ["length", "width", "height"]
+                .into_iter()
+                .zip(case["dimensions_mm"].as_array().unwrap())
+            {
+                assert_eq!(feature["parameters"][key], *expected, "{input}: {key}");
+                let defaulted = case["defaulted_fields"]
+                    .as_array()
+                    .unwrap()
+                    .iter()
+                    .any(|value| value == key);
+                assert_eq!(
+                    feature["sources"][key]["type"],
+                    if defaulted { "derived" } else { "user" },
+                    "{input}: {key} source"
+                );
+            }
+            assert!(
+                output["warnings"]
+                    .to_string()
+                    .contains("legacy_box_dimensions_defaulted"),
+                "{input}: missing visibility warning for legacy defaults: {output}"
             );
         }
     }

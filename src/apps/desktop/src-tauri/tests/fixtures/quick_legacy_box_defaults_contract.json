@@ -1,0 +1,29 @@
+{
+  "source": "src/legacy/ai_modeler/core/parsing/nlparser.py via nlparser.parse(text).doc.to_dict(), captured 2026-10-06",
+  "legacy_accepted": [
+    {
+      "input": "长方体",
+      "dimensions_mm": [100.0, 60.0, 20.0],
+      "volume_mm3": 120000.0,
+      "defaulted_fields": ["length", "width", "height"]
+    },
+    {
+      "input": "长方体 长40",
+      "dimensions_mm": [40.0, 60.0, 20.0],
+      "volume_mm3": 48000.0,
+      "defaulted_fields": ["width", "height"]
+    },
+    {
+      "input": "长方体 40×30",
+      "dimensions_mm": [40.0, 30.0, 20.0],
+      "volume_mm3": 24000.0,
+      "defaulted_fields": ["height"]
+    },
+    {
+      "input": "长方体 40mm",
+      "dimensions_mm": [40.0, 60.0, 20.0],
+      "volume_mm3": 48000.0,
+      "defaulted_fields": ["width", "height"]
+    }
+  ]
+}
