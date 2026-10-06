@@ -50,11 +50,12 @@ function prompt(client, sessionId, tracker, { totalMs = 300, idleMs = 70 } = {})
 
 
 test('JSON-RPC errors retain only standard code buckets and request-local sequence', async () => {
-  assert.equal(safeRpcErrorCodeBucket(-32700), 'parse_error')
-  assert.equal(safeRpcErrorCodeBucket(-32602), 'invalid_params')
-  assert.equal(safeRpcErrorCodeBucket(-32042), 'server_error')
-  assert.equal(safeRpcErrorCodeBucket(-31999), 'unknown')
-  assert.equal(safeRpcErrorCodeBucket('secret'), 'unknown')
+  for (const [code, bucket] of [[-32700, 'parse_error'], [-32600, 'invalid_request'],
+    [-32601, 'method_not_found'], [-32602, 'invalid_params'], [-32603, 'internal_error'],
+    [-32099, 'server_error'], [-32000, 'server_error'], [-31999, 'unknown'], [42, 'unknown'],
+    [Number.MAX_SAFE_INTEGER + 1, 'unknown'], ['secret', 'unknown']]) {
+    assert.equal(safeRpcErrorCodeBucket(code), bucket, `JSON-RPC code ${String(code)} maps to ${bucket}`)
+  }
   const run = startFixture('rpc_error')
   const sessionId = await initialize(run.client)
   try {
@@ -62,12 +63,17 @@ test('JSON-RPC errors retain only standard code buckets and request-local sequen
       assert.equal(error.safeClass, 'rpc_error')
       assert.equal(error.safeRequestSequence, 3)
       assert.equal(error.safeRpcErrorCode, 'invalid_params')
-      const diagnostic = buildSafeAcceptanceSummary({ dshDiagnostic: { stage: error.safeStage, method: error.safeMethod,
+      assert.equal(error.message, 'DSH RPC failed')
+      assert.deepEqual(Object.keys(error).sort(), ['promptProgress', 'safeClass', 'safeMethod', 'safeRequestSequence',
+        'safeRpcErrorCode', 'safeStage'].sort())
+      const summary = buildSafeAcceptanceSummary({ dshDiagnostic: { stage: error.safeStage, method: error.safeMethod,
         error_class: error.safeClass, request_sequence: error.safeRequestSequence, rpc_error_code: error.safeRpcErrorCode,
-        message: 'provider secret sentinel', data: { prompt: 'private prompt sentinel' } } }).dsh_diagnostic
-      assert.deepEqual(diagnostic, { schema: 'dsh_rpc_failure_diagnostic_v1', stage: 'session_rpc', method: 'session/prompt', error_class: 'rpc_error',
+        message: 'rpc message sentinel', data: { prompt: 'private prompt sentinel', provider: 'provider payload sentinel',
+          tool: 'tool payload sentinel' } } })
+      assert.deepEqual(summary.dsh_diagnostic, { schema: 'dsh_rpc_failure_diagnostic_v1', stage: 'session_rpc', method: 'session/prompt', error_class: 'rpc_error',
         request_sequence: 3, rpc_error_code: 'invalid_params' })
-      assert.doesNotMatch(JSON.stringify(diagnostic), /secret|private prompt|message|data/)
+      assert.doesNotMatch(JSON.stringify(summary), /rpc message sentinel|private prompt sentinel|provider payload sentinel|tool payload sentinel/)
+      assert.doesNotMatch(JSON.stringify(error), /rpc message sentinel|private prompt sentinel|provider payload sentinel|tool payload sentinel/)
       return true
     })
   } finally {

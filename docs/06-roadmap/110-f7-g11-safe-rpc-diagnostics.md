@@ -8,6 +8,8 @@
 
 ## 验证
 
-定向 fake ACP 回归返回 `-32602`，并在响应携带秘密 message/data sentinel；断言客户端只暴露 `invalid_params` 和请求序号，safe summary 只保留枚举/数值且不含 sentinel。覆盖标准 code、server 范围和非标准值归桶。
+定向 fake ACP 回归固定返回数字错误码 `-32602`，request id 来自 ACP client 的本地递增序号；在 JSON-RPC error 的 `message` 与 `data` 中放入 prompt、provider 和 tool payload sentinel。断言 initialize 与 session/new 后的失败 `session/prompt` 关联本地 `request_sequence=3`、错误桶为 `invalid_params`，异常只有安全字段且使用固定通用 message，完整 safe acceptance summary 不含任何 sentinel。
 
-本次没有执行 DSH 或长时间 coldstart。因而代码路径与合成隐私边界已验证，真实 runner 的冷启动产物留存尚待后续受控运行确认；此实现不解释 Run39 的根因。
+同一 Node 回归逐项覆盖标准 code `-32700` 至 `-32603`、server 范围边界 `-32099`/`-32000`，以及范围外、非安全整数和非数字输入的 `unknown` 归桶。Windows 的仓库测试入口为 `src/apps/desktop/src-tauri/scripts/test-lib.ps1 -Offline`；G11 Node 定向回归另用 `node --test src/apps/desktop/src-tauri/examples/native_agent_coldstart_prompt.test.mjs`，均为本地合成测试，不启动 DSH/provider。
+
+本次回归没有执行 DSH 或长时间 coldstart。故障分支的本地分类、request sequence 关联与 summary 脱敏已通过确定性注入验证；真实 runner 冷启动是否产生并留存该 failure row 仍待后续受控运行确认。此实现不解释 Run39 的根因，也不改变 Run40 的结果。

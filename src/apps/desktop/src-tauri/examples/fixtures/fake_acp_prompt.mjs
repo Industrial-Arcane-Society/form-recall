@@ -43,7 +43,10 @@ createInterface({ input: process.stdin }).on('line', line => {
     stopActivity()
   } else if (request.method === 'session/prompt') {
     if (mode === 'rpc_error') {
-      send({ jsonrpc: '2.0', id: request.id, error: { code: -32602, message: 'provider secret sentinel', data: { prompt: 'private prompt sentinel' } } })
+      send({ jsonrpc: '2.0', id: request.id, error: { code: -32602,
+        message: 'rpc message sentinel', data: {
+          prompt: 'private prompt sentinel', provider: 'provider payload sentinel', tool: 'tool payload sentinel',
+        } } })
       return
     }
     if (mode === 'total') {
