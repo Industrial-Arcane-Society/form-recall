@@ -1,0 +1,5 @@
+{
+  "schema_version": "g12-calibration-v1",
+  "labeling_protocol": "PENDING: freeze and version silhouette boundary, crop, occlusion, and reviewer adjudication rules before labeling",
+  "pairs": []
+}

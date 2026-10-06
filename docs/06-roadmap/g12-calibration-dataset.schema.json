@@ -1,0 +1,63 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ai-modeler.local/schemas/g12-calibration-v1.json",
+  "title": "G12 manually annotated proportion calibration dataset",
+  "type": "object",
+  "required": ["schema_version", "labeling_protocol", "pairs"],
+  "properties": {
+    "schema_version": {"const": "g12-calibration-v1"},
+    "labeling_protocol": {"type": "string", "minLength": 1},
+    "pairs": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["pair_id", "object_id", "split", "view", "projection", "criterion_version", "reviewers", "adjudication_status", "pair_label", "reference", "preview", "gate_measurement"],
+        "properties": {
+          "pair_id": {"type": "string", "minLength": 1},
+          "object_id": {"type": "string", "minLength": 1},
+          "split": {"enum": ["calibration", "holdout"]},
+          "view": {"enum": ["front", "right", "top", "back", "left", "bottom", "iso"]},
+          "projection": {"enum": ["orthographic", "perspective"]},
+          "criterion_version": {"type": "string", "minLength": 1},
+          "reviewers": {"type": "array", "minItems": 2, "uniqueItems": true, "items": {"type": "string", "minLength": 1}},
+          "adjudication_status": {"const": "adjudicated"},
+          "pair_label": {"enum": ["acceptable", "unacceptable", "indeterminate"]},
+          "reference": {"$ref": "#/$defs/annotatedImage"},
+          "preview": {"$ref": "#/$defs/annotatedImage"},
+          "gate_measurement": {
+            "type": "object",
+            "required": ["metric", "gate_revision", "reference_interval", "preview_interval"],
+            "properties": {
+              "metric": {"const": "projected_body_width_over_height"},
+              "gate_revision": {"type": "string", "minLength": 7},
+              "reference_interval": {"$ref": "#/$defs/interval"},
+              "preview_interval": {"$ref": "#/$defs/interval"}
+            }, "additionalProperties": false
+          }
+        }, "additionalProperties": false
+      }
+    }
+  },
+  "$defs": {
+    "interval": {"type": "array", "minItems": 2, "maxItems": 2, "items": {"type": "number", "exclusiveMinimum": 0}},
+    "annotatedImage": {
+      "type": "object",
+      "required": ["path", "sha256", "annotation"],
+      "properties": {
+        "path": {"type": "string", "minLength": 1},
+        "sha256": {"type": "string", "pattern": "^[a-fA-F0-9]{64}$"},
+        "annotation": {
+          "type": "object",
+          "required": ["method", "annotator", "evidence_note", "bbox_norm"],
+          "properties": {
+            "method": {"const": "manual_bbox"},
+            "annotator": {"type": "string", "minLength": 1},
+            "evidence_note": {"type": "string", "minLength": 1},
+            "bbox_norm": {"type": "array", "minItems": 4, "maxItems": 4, "items": {"type": "number", "minimum": 0, "maximum": 1}}
+          }, "additionalProperties": false
+        }
+      }, "additionalProperties": false
+    }
+  },
+  "additionalProperties": false
+}
