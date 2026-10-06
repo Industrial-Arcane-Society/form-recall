@@ -69,6 +69,75 @@
           "pcd": "explicit"
         }
       }
+    },
+    {
+      "input": "长方体 长100宽80高20，均布四个直径10的通孔分度圆60",
+      "warnings": [],
+      "hole_index": 1,
+      "legacy_hole": {
+        "kind": "hole",
+        "op": "cut",
+        "params": {
+          "diameter": 10.0,
+          "through": true,
+          "axis": "Z",
+          "pos": "pcd",
+          "segments": 24,
+          "count": 4,
+          "pcd": 60.0
+        },
+        "provenance": {
+          "diameter": "explicit",
+          "count": "explicit",
+          "pcd": "explicit"
+        }
+      }
+    },
+    {
+      "input": "长方体 长100宽80高20，均布十个直径10的通孔分度圆60",
+      "warnings": [],
+      "hole_index": 1,
+      "legacy_hole": {
+        "kind": "hole",
+        "op": "cut",
+        "params": {
+          "diameter": 10.0,
+          "through": true,
+          "axis": "Z",
+          "pos": "pcd",
+          "segments": 24,
+          "count": 10,
+          "pcd": 60.0
+        },
+        "provenance": {
+          "diameter": "explicit",
+          "count": "explicit",
+          "pcd": "explicit"
+        }
+      }
+    },
+    {
+      "input": "长方体 长100宽80高20，均布两处直径10的通孔分度圆60",
+      "warnings": [],
+      "hole_index": 1,
+      "legacy_hole": {
+        "kind": "hole",
+        "op": "cut",
+        "params": {
+          "diameter": 10.0,
+          "through": true,
+          "axis": "Z",
+          "pos": "pcd",
+          "segments": 24,
+          "count": 2,
+          "pcd": 60.0
+        },
+        "provenance": {
+          "diameter": "explicit",
+          "count": "explicit",
+          "pcd": "explicit"
+        }
+      }
     }
   ],
   "native_phase_extension": {

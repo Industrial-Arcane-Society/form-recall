@@ -12,7 +12,7 @@
     },
     {
       "id": "pcd-holes",
-      "input": "长方体 长100宽80高20，均布4个直径10的通孔分度圆60",
+      "input": "长方体 长100宽80高20，均布四个直径10的通孔分度圆60",
       "expected": {
         "feature_kinds": ["box", "hole"],
         "hole_count": 4,

@@ -1968,6 +1968,23 @@ fn hole_pattern_count(s: &str) -> Result<Option<u64>, &'static str> {
         }
     }
 
+    // Match the Python Quick count extraction for one Mandarin numeral token
+    // (一二两三四五六七八九十) followed by a count unit. This mirrors its
+    // single-character regex; it is not a general Chinese integer parser, and
+    // multi-character numerals can therefore retain legacy suffix-matching quirks.
+    for (start, ch) in s.char_indices() {
+        let Some(value) = mandarin_count(ch) else {
+            continue;
+        };
+        let cursor = skip_ws(s, start + ch.len_utf8());
+        if ["个", "条", "处", "颗", "枚", "只", "组"]
+            .iter()
+            .any(|unit| s[cursor..].starts_with(unit))
+        {
+            found.push(value as f64);
+        }
+    }
+
     if found.is_empty() {
         return Ok(None);
     }
@@ -1983,6 +2000,22 @@ fn hole_pattern_count(s: &str) -> Result<Option<u64>, &'static str> {
         return Err("hole_pattern_count_invalid");
     }
     Ok(Some(first as u64))
+}
+
+fn mandarin_count(ch: char) -> Option<u64> {
+    match ch {
+        '一' => Some(1),
+        '二' | '两' => Some(2),
+        '三' => Some(3),
+        '四' => Some(4),
+        '五' => Some(5),
+        '六' => Some(6),
+        '七' => Some(7),
+        '八' => Some(8),
+        '九' => Some(9),
+        '十' => Some(10),
+        _ => None,
+    }
 }
 
 fn phase_uses_radians(s: &str) -> bool {
