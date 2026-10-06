@@ -6,6 +6,55 @@ use serde_json::Value;
 
 const MAX_GROOVES: u64 = 64;
 
+const SERIES_Z: &[(f64, f64)] = &[
+    (20., 23.2),
+    (22.4, 25.6),
+    (25., 28.2),
+    (28., 31.2),
+    (31.5, 34.7),
+    (35.5, 38.7),
+    (40., 43.2),
+    (45., 48.2),
+    (50., 54.),
+    (56., 60.),
+    (63., 67.),
+    (71., 75.),
+    (75., 79.),
+    (80., 84.),
+    (90., 94.),
+    (100., 104.),
+    (112., 116.),
+    (125., 129.),
+];
+const SERIES_A: &[(f64, f64)] = &[
+    (50., 54.),
+    (56., 60.),
+    (63., 67.),
+    (71., 75.),
+    (75., 80.5),
+    (80., 85.5),
+    (85., 90.5),
+    (90., 95.5),
+    (95., 100.5),
+    (100., 105.5),
+    (106., 111.5),
+    (112., 117.5),
+    (118., 123.5),
+    (125., 130.5),
+];
+const SERIES_B: &[(f64, f64)] = &[
+    (75., 80.5),
+    (80., 85.5),
+    (85., 90.5),
+    (90., 95.5),
+    (95., 100.5),
+    (100., 105.5),
+    (106., 111.5),
+    (112., 117.5),
+    (118., 123.5),
+    (125., 132.),
+];
+
 #[derive(Clone, Copy)]
 struct Groove {
     bd: f64,
@@ -118,6 +167,78 @@ fn angle(pitch_d: f64) -> f64 {
     }
 }
 
+/// Return the legacy standard rim width and the larger native-safe width.
+/// The legacy parser only reserves the groove-root width plus catalog pitch
+/// spacing; that can make adjacent groove roots overlap. Native geometry
+/// keeps at least 0.5 mm between roots and requires a 0.5 mm end margin.
+pub fn width_requirements(
+    pitch_d: f64,
+    grooves: u64,
+    groove_type: &str,
+) -> Result<(f64, f64), String> {
+    if !pitch_d.is_finite() || pitch_d <= 0. || grooves == 0 || grooves > MAX_GROOVES {
+        return Err(format!(
+            "V 带轮基准直径必须为正，槽数范围为 1..={MAX_GROOVES}。"
+        ));
+    }
+    let kind = standard_type(&serde_json::json!({"groove_type":groove_type}))?;
+    let g = groove(&kind).expect("validated standard groove type");
+    let half_angle = angle(pitch_d).to_radians() / 2.;
+    let tip_w = (g.bd - 2. * g.ha * half_angle.tan()).max(1.);
+    let root_w = g.bd + 2. * g.hf * half_angle.tan();
+    let legacy = (grooves - 1) as f64 * g.e + tip_w.max(root_w);
+    let safe_pitch = g.e.max(root_w + 0.5);
+    let native = (grooves - 1) as f64 * safe_pitch + root_w + 0.5;
+    Ok((legacy, native))
+}
+
+pub fn standard_outer_diameter(pitch_d: f64, groove_type: &str) -> Result<f64, String> {
+    if !pitch_d.is_finite() || pitch_d <= 0.0 {
+        return Err("V 带轮基准直径必须为有限正数。".into());
+    }
+    let kind = standard_type(&serde_json::json!({"groove_type":groove_type}))?;
+    if let Some((_, outer_d)) = diameter_series(&kind)
+        .iter()
+        .find(|(standard_d, _)| (standard_d - pitch_d).abs() <= 1e-8)
+    {
+        return Ok(*outer_d);
+    }
+    let g = groove(&kind).expect("validated standard groove type");
+    Ok(pitch_d + 2.0 * g.ha)
+}
+
+pub fn snap_standard_diameter(
+    requested: f64,
+    groove_type: &str,
+) -> Result<(f64, Option<f64>, bool), String> {
+    if !requested.is_finite() || requested <= 0.0 {
+        return Err("V 带轮基准直径必须为有限正数。".into());
+    }
+    let kind = standard_type(&serde_json::json!({"groove_type":groove_type}))?;
+    let series = diameter_series(&kind);
+    let Some((pitch_d, outer_d)) = series
+        .iter()
+        .copied()
+        .min_by(|a, b| (a.0 - requested).abs().total_cmp(&(b.0 - requested).abs()))
+    else {
+        return Ok((requested, None, false));
+    };
+    if (pitch_d - requested).abs() <= 2.0_f64.max(0.08 * requested) {
+        Ok((pitch_d, Some(outer_d), (pitch_d - requested).abs() > 1e-9))
+    } else {
+        Ok((requested, None, false))
+    }
+}
+
+fn diameter_series(kind: &str) -> &'static [(f64, f64)] {
+    match kind {
+        "Z" => SERIES_Z,
+        "A" => SERIES_A,
+        "B" => SERIES_B,
+        _ => &[],
+    }
+}
+
 fn standard_profile(parameters: &Value) -> Result<Vec<[f64; 2]>, String> {
     let pitch_d = numeric(parameters, "pitch_d", None)?;
     let width = numeric(parameters, "height", None)?;
@@ -138,13 +259,14 @@ fn standard_profile(parameters: &Value) -> Result<Vec<[f64; 2]>, String> {
         return Err("native 只支持标准槽型；standard=false 的旧圆柱开槽近似未迁移。".into());
     }
     let g = groove(&kind).unwrap();
+    let outer_d = standard_outer_diameter(pitch_d, &kind)?;
     let phi = angle(pitch_d).to_radians();
     let tip_w = (g.bd - 2. * g.ha * (phi / 2.).tan()).max(1.);
     let root_w = g.bd + 2. * g.hf * (phi / 2.).tan();
     // The retained OCC B-Rep route raises the standard pitch spacing before
     // profile creation so neighboring groove roots cannot overlap.
+    let (_, min_width) = width_requirements(pitch_d, grooves, &kind)?;
     let pitch_e = g.e.max(root_w + 0.5);
-    let min_width = (grooves - 1) as f64 * pitch_e + root_w + 0.5;
     if width + 1e-8 < min_width {
         return Err(format!(
             "输入轮宽 {width:.6} mm 无法容纳 {grooves} 个标准 V 槽；无自交剖面的最小轮宽为 {min_width:.6} mm。"
@@ -160,11 +282,10 @@ fn standard_profile(parameters: &Value) -> Result<Vec<[f64; 2]>, String> {
             "V 带轮中心孔必须为正且小于基准直径的 92%；native 执行不会静默缩小孔径。".into(),
         );
     }
-    let hub_d = (1.95 * bore).min((bore + 6.).max((pitch_d + 2. * g.ha) * 0.55));
+    let hub_d = (1.95 * bore).min((bore + 6.).max(outer_d * 0.55));
     let hub_len = (1.8 * bore).min(width);
     let web_s = (0.6 * g.e).max(4.);
     let depth = g.ha + g.hf;
-    let outer_d = pitch_d + 2. * g.ha;
     let mut rim_id = outer_d - 2. * depth - 2. * 3f64.max(0.25 * depth);
     rim_id = rim_id.max(hub_d + 6.);
     if (outer_d - rim_id) / 2. > 0.35 * outer_d {
@@ -186,7 +307,7 @@ fn standard_profile(parameters: &Value) -> Result<Vec<[f64; 2]>, String> {
         }
         if (requested_outer - outer_d).abs() > 1e-8 {
             return Err(format!(
-                "outer_d 与标准槽型推导外径不一致：请求 {requested_outer:.6} mm，标准结果 {outer_d:.6} mm。"
+                "outer_d 外径与标准槽型或直径系列推导值不一致：请求 {requested_outer:.6} mm，标准结果 {outer_d:.6} mm。"
             ));
         }
     }

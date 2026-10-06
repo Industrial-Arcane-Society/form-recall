@@ -1631,6 +1631,102 @@ mod acceptance_tests {
 
     #[test]
     #[ignore = "requires the staged local OCCT runtime manifest"]
+    fn legacy_vbelt_pulleys_build_reopen_and_export_through_native_quick() {
+        use serde_json::Value;
+
+        let manifest = std::env::var_os("AIMODELER_OCCT_MANIFEST")
+            .map(std::path::PathBuf::from)
+            .expect("set AIMODELER_OCCT_MANIFEST to the staged OCCT runtime-manifest.json");
+        let fixture: Value = serde_json::from_str(include_str!(
+            "../tests/fixtures/quick_legacy_vbelt_pulley_contract.json"
+        ))
+        .expect("V-belt Quick acceptance fixture is valid JSON");
+        let cases = fixture["native_geometry_cases"].as_array().unwrap();
+        assert_eq!(cases.len(), 4, "explicit A/B/Y, plus legacy-default pulley");
+        let root = std::env::temp_dir().join(format!(
+            "native-quick-vbelt-pulley-{}-{}",
+            std::process::id(),
+            SystemTime::now()
+                .duration_since(UNIX_EPOCH)
+                .expect("system clock")
+                .as_nanos()
+        ));
+        fs::create_dir_all(&root).expect("create native Quick output root");
+        struct RemoveOnDrop(std::path::PathBuf);
+        impl Drop for RemoveOnDrop {
+            fn drop(&mut self) {
+                let _ = fs::remove_dir_all(&self.0);
+            }
+        }
+        let _cleanup = RemoveOnDrop(root.clone());
+
+        for (index, case) in cases.iter().enumerate() {
+            let input = case["input"].as_str().unwrap();
+            let output = build(input, index as i64 + 1, &manifest, &root)
+                .unwrap_or_else(|error| panic!("{input}: native Quick build failed: {error}"));
+            assert_eq!(output["state"], "complete", "{input}: {output}");
+            let report = &output["geometry_report"];
+            assert_eq!(report["state"], "passed", "{input}: {report}");
+            assert_eq!(report["valid"], true, "{input}: {report}");
+            assert_eq!(report["closed_solid_count"], 1, "{input}: {report}");
+            let actual_volume = report["volume_mm3"].as_f64().unwrap_or_default();
+            assert!(
+                actual_volume.is_finite() && actual_volume > 0.0,
+                "{input}: {report}"
+            );
+            let actual_dimensions = output["stats"]["size"]
+                .as_array()
+                .unwrap_or_else(|| panic!("{input}: missing size summary: {output}"));
+            let expected_dimensions = case["expected_dimensions_mm"].as_array().unwrap();
+            assert_eq!(actual_dimensions.len(), 3, "{input}: {output}");
+            for (axis, (actual, expected)) in actual_dimensions
+                .iter()
+                .zip(expected_dimensions)
+                .enumerate()
+            {
+                let actual = actual.as_f64().unwrap_or_default();
+                let expected = expected.as_f64().unwrap();
+                assert!(
+                    (actual - expected).abs() <= 1e-5,
+                    "{input}: bbox axis {axis} = {actual}, expected {expected}; {output}"
+                );
+            }
+            assert_eq!(
+                output["features"].as_array().map(Vec::len),
+                Some(1),
+                "{input}"
+            );
+            assert_eq!(output["features"][0]["kind"], "vbelt_pulley", "{input}");
+            assert_eq!(
+                output["cadplan"]["features"].as_array().unwrap().len(),
+                1,
+                "{input}"
+            );
+
+            let paths = output["output_paths"].as_object().unwrap();
+            for name in ["glb", "aimodel", "stl", "obj"] {
+                assert!(
+                    Path::new(paths[name].as_str().unwrap()).is_file(),
+                    "{input}: missing {name}"
+                );
+            }
+            let loaded =
+                native_model_io::load_aimodel(Path::new(paths["aimodel"].as_str().unwrap()))
+                    .unwrap_or_else(|error| panic!("{input}: AIMODEL reload failed: {error}"));
+            assert_eq!(
+                loaded["cadplan"]["features"], output["cadplan"]["features"],
+                "{input}: AIMODEL round-trip"
+            );
+            println!(
+                "F5.29 native acceptance: input={input}; dimensions_mm={}; volume_mm3={actual_volume}; triangles={}",
+                serde_json::to_string(&output["stats"]["size"]).unwrap(),
+                output["stats"]["triangles"]
+            );
+        }
+    }
+
+    #[test]
+    #[ignore = "requires the staged local OCCT runtime manifest"]
     fn legacy_blade_and_blisk_build_reopen_and_export_through_native_quick() {
         let manifest = std::env::var_os("AIMODELER_OCCT_MANIFEST")
             .map(std::path::PathBuf::from)

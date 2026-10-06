@@ -48,6 +48,9 @@ pub fn parse(text: &str) -> Value {
     if let Some(parsed) = parse_legacy_spring(text, &normalized) {
         return parsed;
     }
+    if let Some(parsed) = parse_legacy_vbelt_pulley(text, &normalized) {
+        return parsed;
+    }
     if let Some(parsed) = parse_legacy_timing_pulley(text, &normalized) {
         return parsed;
     }
@@ -531,7 +534,7 @@ fn result(
     unsupported: Vec<Value>,
 ) -> Value {
     json!({"status":status,"source_text":text,"plan":plan,"warnings":warnings,"questions":questions,"unsupported":unsupported,
-        "compatibility":{"scope":"common explicit primitives/cuts, migrated standalone primitive defaults and legacy extrusion/revolve constructors, rectangular slots, flat-washer rings, cylindrical/conical spring helices, timing pulleys, straight-gear construction, PCD counterbores, and executable flange/stepped-shaft/sleeve/blade/blisk templates","legacy_typical_defaults":"restored only for migrated Quick constructors/templates, straight gears, timing pulleys, rectangular slots, flat-washer thickness, and spring wire/turn defaults; defaults and raw-dimension mappings are reported as warnings","loft_geometry":"blade and blisk lofts are locally approximate faceted B-Reps","timing_pulley_geometry":"native timing pulley teeth are approximate trapezoidal prisms fused to an analytic annular blank","helix_geometry":"spring helices are locally approximate faceted B-Reps and are not native CATIA features"}})
+        "compatibility":{"scope":"common explicit primitives/cuts, migrated standalone primitive defaults and legacy extrusion/revolve constructors, rectangular slots, flat-washer rings, cylindrical/conical spring helices, V-belt pulleys, timing pulleys, straight-gear construction, PCD counterbores, and executable flange/stepped-shaft/sleeve/blade/blisk templates","legacy_typical_defaults":"restored only for migrated Quick constructors/templates, straight gears, timing pulleys, V-belt pulleys, rectangular slots, flat-washer thickness, and spring wire/turn defaults; defaults and raw-dimension mappings are reported as warnings","loft_geometry":"blade and blisk lofts are locally approximate faceted B-Reps","timing_pulley_geometry":"native timing pulley teeth are approximate trapezoidal prisms fused to an analytic annular blank","vbelt_pulley_geometry":"standard V-groove pulley is an approximate axisymmetric revolve; legacy spoke variants and CATIA-native groove features are not included","helix_geometry":"spring helices are locally approximate faceted B-Reps and are not native CATIA features"}})
 }
 
 fn parse_legacy_template(raw: &str, normalized: &str) -> Option<Value> {
@@ -1444,6 +1447,537 @@ fn loft_approximation_warning() -> Value {
         "legacy_loft_geometry_approximation",
         "旧 Quick 翼型截面已复用，但本地 OCCT 结果是三角面缝合的 facet-BREP 近似，不是解析放样曲面；当前 CATIA 映射也不是原生多截面 loft。",
     )
+}
+
+/// Migrate the legacy Python Quick V-belt pulley recipe to the native OCCT
+/// builder. The fallback groove dimensions and diameter-series snapping follow
+/// the legacy standard table; insufficient widths are made explicit and
+/// raised only as far as the native simple-profile geometry requires.
+fn parse_legacy_vbelt_pulley(raw: &str, text: &str) -> Option<Value> {
+    let direct_name = contains_any(
+        text,
+        &[
+            "多槽带轮",
+            "多楔带轮",
+            "v带轮",
+            "v型带轮",
+            "v带",
+            "皮带轮",
+            "槽轮",
+            "塔轮",
+            "窄v带轮",
+        ],
+    );
+    let generic_name = contains_any(text, &["带轮"])
+        && contains_any(text, &["槽数", "槽型", "槽数量"])
+        && !contains_any(text, &["同步带轮", "同步轮"]);
+    if !direct_name && !generic_name {
+        return None;
+    }
+
+    let extra_check = text.replace("中心通孔", " ").replace("中心贯穿孔", " ");
+    if contains_any(
+        &extra_check,
+        &[
+            "通孔",
+            "盲孔",
+            "中心打",
+            "另打",
+            "再打",
+            "钻孔",
+            "打孔",
+            "键槽",
+            "倒角",
+            "圆角",
+            "沉孔",
+            "沉台",
+            "螺纹",
+            "阵列",
+            "切槽",
+        ],
+    ) {
+        return Some(result(
+            "unsupported",
+            raw,
+            None,
+            vec![],
+            vec![],
+            vec![issue(
+                "legacy_vbelt_pulley_compound_request_unsupported",
+                "Rust Quick 本项只迁移 V 带轮主体；额外孔、键槽、修饰或阵列尚未迁入。",
+            )],
+        ));
+    }
+    if contains_any(text, &["非标槽", "自定义槽", "非标准槽型"]) {
+        return Some(result(
+            "unsupported",
+            raw,
+            None,
+            vec![],
+            vec![],
+            vec![issue(
+                "legacy_vbelt_pulley_custom_profile_unsupported",
+                "当前 Rust Quick 只支持 GB/T fallback 标准 V 槽 Y/Z/A/B/C/D/E；自定义槽剖面尚未迁入。",
+            )],
+        ));
+    }
+
+    let without_bore = text
+        .replace("内孔直径", " ")
+        .replace("中心孔直径", " ")
+        .replace("内孔", " ")
+        .replace("内径", " ")
+        .replace("轴径", " ")
+        .replace("孔径", " ");
+    let pitch_d_input = pulley_scalar(
+        raw,
+        &without_bore,
+        &["基准直径", "节圆直径", "节径", "外径", "直径"],
+        &["D", "dd", "dp"],
+    );
+    let pitch_d_was_explicit = pitch_d_input.is_some();
+    let requested_pitch_d = pitch_d_input.unwrap_or(100.0);
+    if !requested_pitch_d.is_finite() || requested_pitch_d <= 0.0 {
+        return Some(parse_result_with_issue(
+            "needs_clarification",
+            raw,
+            "legacy_vbelt_pulley_pitch_d_invalid",
+            "V 带轮基准直径必须是唯一且大于 0 的数值。",
+        ));
+    }
+
+    let grooves_input = match vbelt_groove_count(raw, text) {
+        Ok(value) => value,
+        Err(message) => {
+            return Some(parse_result_with_issue(
+                "needs_clarification",
+                raw,
+                "legacy_vbelt_pulley_grooves_invalid",
+                &message,
+            ));
+        }
+    };
+    let grooves_was_explicit = grooves_input.is_some();
+    let grooves = grooves_input.unwrap_or(3);
+    if grooves == 0 {
+        return Some(parse_result_with_issue(
+            "needs_clarification",
+            raw,
+            "legacy_vbelt_pulley_grooves_invalid",
+            "V 带轮槽数必须是大于 0 的整数。",
+        ));
+    }
+    if grooves > 64 {
+        return Some(result(
+            "unsupported",
+            raw,
+            None,
+            vec![],
+            vec![],
+            vec![issue(
+                "legacy_vbelt_pulley_native_groove_limit",
+                "旧 Python Quick 可表达该槽数，但 Rust 原生回转剖面当前限制为最多 64 槽。",
+            )],
+        ));
+    }
+
+    let explicit_type = match vbelt_groove_type(raw, text) {
+        Ok(value) => value,
+        Err(message) => {
+            return Some(parse_result_with_issue(
+                "needs_clarification",
+                raw,
+                "legacy_vbelt_pulley_type_unknown_or_conflict",
+                &message,
+            ));
+        }
+    };
+    let groove_type_was_explicit = explicit_type.is_some();
+    let groove_type = explicit_type.unwrap_or_else(|| inferred_vbelt_type(requested_pitch_d));
+
+    let (pitch_d, series_outer_d, pitch_d_snapped) =
+        snap_vbelt_diameter(requested_pitch_d, &groove_type);
+    let outer_d = series_outer_d.unwrap_or_else(|| {
+        crate::native_vbelt_pulley::standard_outer_diameter(pitch_d, &groove_type)
+            .expect("known V-belt groove type")
+    });
+
+    let without_groove_width = text.replace("槽宽", " ");
+    let explicit_width = pulley_scalar(
+        raw,
+        &without_groove_width,
+        &["轮缘宽度", "带轮宽度", "轮宽", "宽度", "宽", "厚度", "厚"],
+        &["B", "b"],
+    );
+    let width_was_explicit = explicit_width.is_some();
+    let requested_width = explicit_width.unwrap_or(30.0);
+    if !requested_width.is_finite() || requested_width <= 0.0 {
+        return Some(parse_result_with_issue(
+            "needs_clarification",
+            raw,
+            "legacy_vbelt_pulley_width_invalid",
+            "V 带轮轮缘宽度必须是唯一且大于 0 的数值。",
+        ));
+    }
+
+    let legacy_min_width = match crate::native_vbelt_pulley::width_requirements(
+        requested_pitch_d,
+        grooves,
+        &groove_type,
+    ) {
+        Ok((legacy, _)) => legacy,
+        Err(error) => {
+            return Some(parse_result_with_issue(
+                "needs_clarification",
+                raw,
+                "legacy_vbelt_pulley_native_parameters_invalid",
+                &error,
+            ));
+        }
+    };
+    let native_min_width =
+        match crate::native_vbelt_pulley::width_requirements(pitch_d, grooves, &groove_type) {
+            Ok((_, native)) => native,
+            Err(error) => {
+                return Some(parse_result_with_issue(
+                    "needs_clarification",
+                    raw,
+                    "legacy_vbelt_pulley_native_parameters_invalid",
+                    &error,
+                ));
+            }
+        };
+    let legacy_width = requested_width.max(legacy_min_width);
+    let width = legacy_width.max(native_min_width);
+
+    let explicit_bore = pulley_scalar(
+        raw,
+        text,
+        &["内孔直径", "中心孔直径", "内孔", "内径", "轴径", "孔径"],
+        &["d"],
+    );
+    let bore_was_explicit = explicit_bore.is_some();
+    let bore_d = explicit_bore.unwrap_or(25.0);
+    if !bore_d.is_finite() || bore_d <= 0.0 || bore_d >= pitch_d * 0.92 {
+        return Some(parse_result_with_issue(
+            "needs_clarification",
+            raw,
+            "legacy_vbelt_pulley_bore_invalid",
+            "V 带轮中心孔必须是唯一的正数且小于基准直径的 92%；Rust Quick 不会复刻旧 parser 静默缩小过大孔径的行为。",
+        ));
+    }
+
+    let parameters = json!({
+        "pitch_d":pitch_d,
+        "grooves":grooves,
+        "height":width,
+        "groove_type":groove_type,
+        "outer_d":outer_d,
+        "bore_d":bore_d,
+        "center":[0,0,0]
+    });
+    if let Err(error) = crate::native_vbelt_pulley::preflight(&parameters) {
+        if error.contains("辐条") {
+            return Some(result(
+                "unsupported",
+                raw,
+                None,
+                vec![],
+                vec![],
+                vec![issue(
+                    "legacy_vbelt_pulley_spoked_variant_unsupported",
+                    format!("该尺寸的旧配方需要辐条结构，Rust 原生仅支持标准无辐条回转体：{error}"),
+                )],
+            ));
+        }
+        return Some(parse_result_with_issue(
+            "needs_clarification",
+            raw,
+            "legacy_vbelt_pulley_native_preflight_failed",
+            &format!("V 带轮参数无法生成有效的原生实体：{error}"),
+        ));
+    }
+
+    let mut warnings = vec![issue(
+        "native_vbelt_pulley_geometry_approximate",
+        "本地几何按 GB/T fallback 轮槽剖面回转；工程标准细节、知识库数据和 CATIA 原生槽特征不在本项覆盖范围。",
+    )];
+    if !pitch_d_was_explicit {
+        warnings.push(issue(
+            "legacy_vbelt_pulley_default_pitch_d",
+            "未给出基准直径，沿用旧 Python Quick 典型值 100 mm；这是规则默认值，不是用户标注。",
+        ));
+    }
+    if !grooves_was_explicit {
+        warnings.push(issue(
+            "legacy_vbelt_pulley_default_grooves",
+            "未给出槽数，沿用旧 Python Quick 典型值 3 槽。",
+        ));
+    }
+    if !groove_type_was_explicit {
+        warnings.push(issue(
+            "legacy_vbelt_pulley_inferred_groove_type",
+            format!("未指定槽型，按基准直径 ⌀{pitch_d} mm 的旧规则推荐 {groove_type} 型。"),
+        ));
+    }
+    if pitch_d_snapped {
+        warnings.push(issue(
+            "legacy_vbelt_pulley_standard_diameter_snap",
+            format!("基准直径 ⌀{requested_pitch_d} mm 不在 {groove_type} 型标准系列中，已吸附到 ⌀{pitch_d} mm。"),
+        ));
+    }
+    if !bore_was_explicit {
+        warnings.push(issue(
+            "legacy_vbelt_pulley_default_bore",
+            "未给出内孔，沿用旧 Python Quick 零件库典型值 ⌀25 mm。",
+        ));
+    }
+    if !width_was_explicit {
+        warnings.push(issue(
+            "legacy_vbelt_pulley_default_width",
+            "未给出轮缘宽度，旧 Python Quick 典型值为 30 mm；后续宽度调整已单独说明。",
+        ));
+    }
+    if requested_width + 1e-8 < legacy_min_width {
+        warnings.push(issue(
+            "legacy_vbelt_pulley_legacy_width_adjustment",
+            format!("轮缘宽度 {requested_width:.4} mm 小于旧 Python Quick 标准最小值 {legacy_min_width:.4} mm；兼容规则会先调整到该标准下限。"),
+        ));
+    }
+    if legacy_width + 1e-8 < native_min_width {
+        warnings.push(issue(
+            "native_vbelt_pulley_root_clearance_width_adjustment",
+            format!("为避免相邻槽根重叠并保留端部余量，Rust 原生几何将轮缘宽度从 {legacy_width:.4} mm 提高到 {native_min_width:.4} mm；旧 Python parser 不做这一步。"),
+        ));
+    }
+
+    let pitch_source = if !pitch_d_was_explicit {
+        derived_source(raw, "沿用旧 Python Quick V 带轮典型基准直径 100 mm。")
+    } else if pitch_d_snapped {
+        derived_source(
+            raw,
+            "用户尺寸按旧 Python Quick 标准直径系列吸附；源文本保留原始请求值。",
+        )
+    } else {
+        user_source(raw)
+    };
+    let width_source = if width_was_explicit && width <= requested_width + 1e-8 {
+        user_source(raw)
+    } else {
+        derived_source(
+            raw,
+            "轮缘宽度来自旧 Python Quick 典型值或标准干涉/槽根净距校正；详见警告。",
+        )
+    };
+    let features = vec![json!({
+        "id":"quick-0001",
+        "kind":"vbelt_pulley",
+        "operation":"add",
+        "name":format!("{groove_type}型V带轮 {grooves}槽"),
+        "parameters":parameters,
+        "sources":{
+            "pitch_d":pitch_source,
+            "grooves":if grooves_was_explicit { user_source(raw) } else { derived_source(raw, "沿用旧 Python Quick V 带轮典型槽数 3。") },
+            "height":width_source,
+            "groove_type":if groove_type_was_explicit { user_source(raw) } else { derived_source(raw, "未指定槽型，按旧 Python Quick 标准规则由基准直径推荐。") },
+            "outer_d":derived_source(raw, "由标准系列外径表或 pitch_d + 2×ha 推导。"),
+            "bore_d":if bore_was_explicit { user_source(raw) } else { derived_source(raw, "沿用旧 Python Quick 零件库典型中心孔 ⌀25 mm。") },
+            "center":derived_source(raw, "沿用旧 Python Quick 将 V 带轮中心置于全局原点。")
+        },
+        "relations":[]
+    })];
+    Some(plan_result(raw, "V 带轮", features, warnings))
+}
+
+fn pulley_scalar(raw: &str, text: &str, labels: &[&str], short_labels: &[&str]) -> Option<f64> {
+    let mut values = Vec::new();
+    if let Some(value) = scalar(text, labels) {
+        values.push(value);
+    }
+    for label in short_labels {
+        if let Some(value) = short_scalar(raw, label) {
+            values.push(value);
+        }
+    }
+    if values.is_empty() {
+        None
+    } else if values
+        .iter()
+        .all(|value| value.is_finite() && close(*value, values[0]))
+    {
+        Some(values[0])
+    } else {
+        Some(f64::NAN)
+    }
+}
+
+fn short_scalar(raw: &str, label: &str) -> Option<f64> {
+    let pattern = format!(r"(?:^|[^A-Za-z0-9]){}\s*[:：=]?\s*", regex::escape(label));
+    let re = regex::Regex::new(&pattern).ok()?;
+    let mut values = Vec::new();
+    for capture in re.captures_iter(raw) {
+        let start = capture.get(0)?.end();
+        if let Some((number, _)) = parse_number(raw, start) {
+            values.push(number.value * scale(&number.unit));
+        }
+    }
+    if values.is_empty() {
+        None
+    } else if values
+        .iter()
+        .all(|value| value.is_finite() && close(*value, values[0]))
+    {
+        Some(values[0])
+    } else {
+        Some(f64::NAN)
+    }
+}
+
+fn vbelt_groove_count(raw: &str, text: &str) -> Result<Option<u64>, String> {
+    let mut values = Vec::<f64>::new();
+    if let Some(value) = scalar(text, &["槽数", "槽数量"]) {
+        values.push(value);
+    }
+    let arabic = regex::Regex::new(r"([+-]?(?:\d+(?:\.\d*)?|\.\d+))\s*(?:个)?\s*槽(数|型)?")
+        .expect("fixed V-belt groove count regex");
+    for capture in arabic.captures_iter(text) {
+        if capture.get(2).is_some() {
+            continue;
+        }
+        if let Some(value) = capture
+            .get(1)
+            .and_then(|value| value.as_str().parse::<f64>().ok())
+        {
+            values.push(value);
+        }
+    }
+    let chinese = regex::Regex::new(r"([一二两双三四五六七八九十])\s*(?:个)?\s*槽")
+        .expect("fixed Chinese V-belt groove count regex");
+    for capture in chinese.captures_iter(text) {
+        if let Some(value) = capture.get(1).and_then(|value| match value.as_str() {
+            "一" => Some(1.0),
+            "两" | "二" | "双" => Some(2.0),
+            "三" => Some(3.0),
+            "四" => Some(4.0),
+            "五" => Some(5.0),
+            "六" => Some(6.0),
+            "七" => Some(7.0),
+            "八" => Some(8.0),
+            "九" => Some(9.0),
+            "十" => Some(10.0),
+            _ => None,
+        }) {
+            values.push(value);
+        }
+    }
+    if let Some(value) = short_scalar(raw, "n").or_else(|| short_scalar(raw, "z")) {
+        values.push(value);
+    }
+    if values.is_empty() {
+        return Ok(None);
+    }
+    if !values
+        .iter()
+        .all(|value| value.is_finite() && close(*value, values[0]))
+    {
+        return Err("V 带轮槽数存在冲突或不是有效数字；请只指定一个正整数槽数。".into());
+    }
+    let value = values[0];
+    if value.fract() != 0.0 || value < 0.0 || value > u64::MAX as f64 {
+        return Err(format!("V 带轮槽数必须为非负整数；收到 {value}。"));
+    }
+    Ok(Some(value as u64))
+}
+
+fn vbelt_groove_type(raw: &str, text: &str) -> Result<Option<String>, String> {
+    let marker = regex::Regex::new(
+        r"(?:槽型|带型|型号)(?:代号)?\s*[:：=为]?\s*(窄v|spz|spa|spb|spc|[a-z]+)",
+    )
+    .expect("fixed V-belt explicit type marker regex");
+    let suffix = regex::Regex::new(r"(窄v|spz|spa|spb|spc|[a-z]+)\s*型")
+        .expect("fixed V-belt type suffix regex");
+    let after_count =
+        regex::Regex::new(r"槽数\s*[:：=]?\s*\d+\s*(窄v|spz|spa|spb|spc|[a-z])(?:\s|$|宽|内|,|;)")
+            .expect("fixed V-belt type-after-count regex");
+    let short_t = regex::Regex::new(r"(?:^|[^A-Za-z0-9])t\s*[:：=]\s*([A-Za-z]+)")
+        .expect("fixed V-belt short type parameter regex");
+    let mut raw_types = Vec::<String>::new();
+    let mut explicit_marker_seen = false;
+    for capture in marker.captures_iter(text) {
+        explicit_marker_seen = true;
+        raw_types.push(capture[1].to_owned());
+    }
+    raw_types.extend(
+        suffix
+            .captures_iter(text)
+            .map(|capture| capture[1].to_owned()),
+    );
+    raw_types.extend(
+        after_count
+            .captures_iter(text)
+            .map(|capture| capture[1].to_owned()),
+    );
+    raw_types.extend(
+        short_t
+            .captures_iter(raw)
+            .map(|capture| capture[1].to_ascii_lowercase()),
+    );
+    if explicit_marker_seen && raw_types.is_empty() {
+        return Err("检测到槽型/带型标记但没有可读的标准代号；请明确指定 Y/Z/A/B/C/D/E 或 SPZ/SPA/SPB/SPC。".into());
+    }
+
+    let mut canonical = Vec::<String>::new();
+    for value in raw_types {
+        let value = value.trim().to_ascii_lowercase();
+        let normalized = match value.as_str() {
+            "spz" | "z" | "z型" | "窄v" => Some("Z"),
+            "spa" | "a" | "a型" => Some("A"),
+            "spb" | "b" | "b型" => Some("B"),
+            "spc" | "c" | "c型" => Some("C"),
+            "y" | "y型" => Some("Y"),
+            "d" | "d型" => Some("D"),
+            "e" | "e型" => Some("E"),
+            // V 型带轮名称不是槽型标记。
+            "v" => None,
+            _ => {
+                return Err(format!(
+                    "无法识别显式 V 带轮槽型 {value:?}；请指定 Y/Z/A/B/C/D/E。"
+                ));
+            }
+        };
+        if let Some(normalized) = normalized {
+            if !canonical.iter().any(|prior| prior == normalized) {
+                canonical.push(normalized.to_owned());
+            }
+        }
+    }
+    if canonical.len() > 1 {
+        return Err(format!(
+            "输入包含相互冲突的 V 带轮槽型：{}。",
+            canonical.join("、")
+        ));
+    }
+    Ok(canonical.into_iter().next())
+}
+
+fn inferred_vbelt_type(pitch_d: f64) -> String {
+    (if pitch_d < 60.0 {
+        "Y"
+    } else if pitch_d < 100.0 {
+        "Z"
+    } else if pitch_d < 200.0 {
+        "A"
+    } else if pitch_d < 320.0 {
+        "B"
+    } else {
+        "C"
+    })
+    .to_owned()
+}
+
+fn snap_vbelt_diameter(requested: f64, groove_type: &str) -> (f64, Option<f64>, bool) {
+    crate::native_vbelt_pulley::snap_standard_diameter(requested, groove_type)
+        .expect("validated V-belt groove type and diameter")
 }
 
 /// Preserve the old Python Quick timing-pulley route, while limiting ready
@@ -5405,6 +5939,132 @@ mod tests {
                     "{input}: {output}"
                 );
             }
+        }
+    }
+
+    #[test]
+    fn legacy_vbelt_pulley_matches_python_oracle_and_native_scope() {
+        fn assert_json_match(actual: &Value, expected: &Value, context: &str) {
+            match expected {
+                Value::Number(number) => {
+                    let expected = number.as_f64().expect("fixture number is finite");
+                    let actual = actual
+                        .as_f64()
+                        .unwrap_or_else(|| panic!("{context}: {actual}"));
+                    assert!(
+                        (actual - expected).abs() <= 1e-6,
+                        "{context}: expected {expected}, got {actual}"
+                    );
+                }
+                Value::Array(expected) => {
+                    let actual = actual
+                        .as_array()
+                        .unwrap_or_else(|| panic!("{context}: {actual}"));
+                    assert_eq!(actual.len(), expected.len(), "{context}");
+                    for (index, (actual, expected)) in actual.iter().zip(expected).enumerate() {
+                        assert_json_match(actual, expected, &format!("{context}[{index}]"));
+                    }
+                }
+                Value::Object(expected) => {
+                    for (key, expected) in expected {
+                        assert_json_match(&actual[key], expected, &format!("{context}.{key}"));
+                    }
+                }
+                _ => assert_eq!(actual, expected, "{context}"),
+            }
+        }
+
+        let fixture: Value = serde_json::from_str(include_str!(
+            "../tests/fixtures/quick_legacy_vbelt_pulley_contract.json"
+        ))
+        .expect("V-belt Quick oracle fixture is valid JSON");
+
+        for bucket in ["legacy_python_accepted", "native_adjusted"] {
+            for case in fixture[bucket].as_array().unwrap() {
+                let input = case["input"].as_str().unwrap();
+                let output = parse(input);
+                assert_eq!(output["status"], "ready", "{input}: {output}");
+                let plan = &output["plan"];
+                assert_eq!(
+                    crate::cad_plan_validation::validate_plan(plan)["state"],
+                    "valid",
+                    "{input}: {plan}"
+                );
+                let features = plan["features"].as_array().unwrap();
+                assert_eq!(features.len(), 1, "{input}: {features:?}");
+                let feature = &features[0];
+                assert_eq!(feature["kind"], "vbelt_pulley", "{input}");
+                assert_eq!(feature["operation"], "add", "{input}");
+                assert_json_match(&feature["parameters"], &case["expected_parameters"], input);
+                crate::native_vbelt_pulley::preflight(&feature["parameters"])
+                    .unwrap_or_else(|error| panic!("{input}: native preflight failed: {error}"));
+                if let Some(sources) = case["sources"].as_object() {
+                    for (parameter, source_type) in sources {
+                        assert_eq!(
+                            feature["sources"][parameter]["type"], *source_type,
+                            "{input}: {parameter}"
+                        );
+                        assert_eq!(
+                            feature["sources"][parameter]["evidence"], input,
+                            "{input}: {parameter}"
+                        );
+                        if source_type == "derived" {
+                            assert!(
+                                feature["sources"][parameter]["note"]
+                                    .as_str()
+                                    .is_some_and(|note| !note.is_empty()),
+                                "{input}: {parameter} derived source requires an explanation"
+                            );
+                        }
+                    }
+                }
+                if let Some(code) = case["warning_code"].as_str() {
+                    assert!(
+                        output["warnings"].to_string().contains(code),
+                        "{input}: {output}"
+                    );
+                }
+                for code in case["warning_codes"].as_array().into_iter().flatten() {
+                    let code = code.as_str().unwrap();
+                    assert!(
+                        output["warnings"].to_string().contains(code),
+                        "{input}: {output}"
+                    );
+                }
+                if let Some(legacy) = case.get("legacy_python_parameters") {
+                    let old_width = legacy["height"].as_f64().unwrap();
+                    let native_width = feature["parameters"]["height"].as_f64().unwrap();
+                    assert!(
+                        native_width + 1e-6 >= old_width,
+                        "{input}: {native_width} < old {old_width}"
+                    );
+                }
+            }
+        }
+
+        for case in fixture["unsupported"].as_array().unwrap() {
+            let input = case["input"].as_str().unwrap();
+            let output = parse(input);
+            assert_eq!(output["status"], "unsupported", "{input}: {output}");
+            assert!(output["plan"].is_null(), "{input}: {output}");
+            assert!(
+                output["unsupported"]
+                    .to_string()
+                    .contains(case["issue"].as_str().unwrap()),
+                "{input}: {output}"
+            );
+        }
+        for case in fixture["needs_clarification"].as_array().unwrap() {
+            let input = case["input"].as_str().unwrap();
+            let output = parse(input);
+            assert_eq!(output["status"], "needs_clarification", "{input}: {output}");
+            assert!(output["plan"].is_null(), "{input}: {output}");
+            assert!(
+                output["questions"]
+                    .to_string()
+                    .contains(case["issue"].as_str().unwrap()),
+                "{input}: {output}"
+            );
         }
     }
 
