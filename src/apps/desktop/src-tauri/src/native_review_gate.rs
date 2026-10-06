@@ -53,7 +53,8 @@ pub(crate) fn evaluate(
     let checks = geometry.get("checks").cloned().unwrap_or(Value::Null);
     let holes = summarize_holes(plan, &checks);
     let references = summarize_references(&normalized_state, &summary);
-    let findings = summary
+    let proportions = crate::native_proportion_gate::evaluate(&normalized_state, reference_manifest_path, revision);
+    let mut findings = summary
         .get("unresolved_findings")
         .and_then(Value::as_array)
         .cloned()
@@ -62,7 +63,6 @@ pub(crate) fn evaluate(
     let geometry_passed = geometry["binding_valid"] == true && geometry["passed"] == true;
     let holes_complete = holes["measurement_complete"] == true;
     let visual_complete = references["visual_coverage_complete"] == true;
-    let findings_clear = findings.is_empty();
     let active_reference_mismatch = references["mismatch_count"].as_u64().unwrap_or(0) > 0;
     let hard_geometry_failure =
         geometry["binding_valid"] == true && matches!(geometry["state"].as_str(), Some("failed"));
@@ -107,12 +107,33 @@ pub(crate) fn evaluate(
             has_partial_evidence = true;
         }
     }
+    let proportion_mismatch = proportions["status"] == "mismatch";
+    if proportion_mismatch {
+        for comparison in proportions["comparisons"].as_array().into_iter().flatten()
+            .filter(|row| row["status"] == "mismatch")
+        {
+            findings.push(json!({
+                "finding_id":format!("host:body_envelope_proportion:{}", comparison["reference_id"].as_str().unwrap_or("unknown")),
+                "status":"open","severity":"major","kind":"body_envelope_proportion_mismatch",
+                "evidence":comparison
+            }));
+        }
+    }
+    let findings_clear = findings.is_empty();
     if !findings_clear {
         reasons.push("unresolved_findings_remain");
         needs_repair = true;
     }
+    if proportion_mismatch {
+        reasons.push("body_envelope_proportion_mismatch");
+        needs_repair = true;
+    } else if proportions["status"] == "unknown" {
+        // Reference manifests currently do not carry view/projection annotation. Keep the
+        // result explicitly unknown and diagnostic-only until a host-owned annotation flow exists.
+        reasons.push("body_envelope_proportion_unknown_diagnostic_only");
+    }
 
-    let accept = geometry_passed && holes_complete && visual_complete && findings_clear;
+    let accept = geometry_passed && holes_complete && visual_complete && findings_clear && !proportion_mismatch;
     let decision = if accept {
         "accept"
     } else if needs_repair {
@@ -127,6 +148,7 @@ pub(crate) fn evaluate(
         "geometry":geometry,
         "holes":holes,
         "references":references,
+        "body_envelope_proportions":proportions,
         "unresolved_findings":findings,
         "acceptance_uses_score_or_match":false
     });
@@ -674,6 +696,8 @@ mod tests {
             review["result"]["evidence"]["references"]["visual_coverage_complete"],
             false
         );
+        assert_eq!(review["result"]["evidence"]["body_envelope_proportions"]["status"], "unknown");
+        assert!(review["result"]["reasons"].as_array().unwrap().contains(&json!("body_envelope_proportion_unknown_diagnostic_only")));
         assert_eq!(review["issuer"], ISSUER);
         fs::remove_dir_all(dir).unwrap();
     }

@@ -30,6 +30,7 @@ pub mod native_online_lookup;
 pub mod native_parametric_features;
 pub mod native_parts_catalog;
 pub mod native_plan_geometry;
+pub mod native_proportion_gate;
 pub mod native_quick;
 pub mod native_quick_parser;
 pub mod native_render;
