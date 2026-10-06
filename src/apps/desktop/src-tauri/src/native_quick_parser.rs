@@ -42,6 +42,9 @@ pub fn parse(text: &str) -> Value {
         );
     }
 
+    if let Some(parsed) = parse_legacy_washer(text, &normalized) {
+        return parsed;
+    }
     if let Some(parsed) = parse_legacy_gear(text, &normalized) {
         return parsed;
     }
@@ -522,7 +525,7 @@ fn result(
     unsupported: Vec<Value>,
 ) -> Value {
     json!({"status":status,"source_text":text,"plan":plan,"warnings":warnings,"questions":questions,"unsupported":unsupported,
-        "compatibility":{"scope":"common explicit primitives/cuts, migrated standalone primitive defaults and legacy extrusion/revolve constructors, rectangular slots, straight-gear construction, PCD counterbores, and executable flange/stepped-shaft/sleeve/blade/blisk templates","legacy_typical_defaults":"restored only for migrated Quick constructors/templates, straight gears, and rectangular slots; defaults and raw-dimension mappings are reported as warnings","loft_geometry":"blade and blisk lofts are locally approximate faceted B-Reps"}})
+        "compatibility":{"scope":"common explicit primitives/cuts, migrated standalone primitive defaults and legacy extrusion/revolve constructors, rectangular slots, flat-washer rings, straight-gear construction, PCD counterbores, and executable flange/stepped-shaft/sleeve/blade/blisk templates","legacy_typical_defaults":"restored only for migrated Quick constructors/templates, straight gears, rectangular slots, and flat-washer thickness; defaults and raw-dimension mappings are reported as warnings","loft_geometry":"blade and blisk lofts are locally approximate faceted B-Reps"}})
 }
 
 fn parse_legacy_template(raw: &str, normalized: &str) -> Option<Value> {
@@ -542,6 +545,208 @@ fn parse_legacy_template(raw: &str, normalized: &str) -> Option<Value> {
         return Some(parse_tube(raw, normalized));
     }
     None
+}
+
+/// Retain the legacy Quick thin flat-washer recipe: a centered cylinder and a
+/// centered through-hole. The old Python recipe defaults thickness to 2 mm,
+/// so the Rust result records that assumption instead of hiding it.
+fn parse_legacy_washer(raw: &str, text: &str) -> Option<Value> {
+    if contains_any(text, &["弹簧垫圈", "弹性垫圈", "弹垫", "弹簧垫片"]) {
+        return Some(result(
+            "unsupported",
+            raw,
+            None,
+            vec![],
+            vec![],
+            vec![issue(
+                "legacy_spring_washer_not_migrated",
+                "旧 Quick 弹簧垫圈配方尚未迁入；当前只支持平垫圈的圆环简化形状。",
+            )],
+        ));
+    }
+    if contains_any(text, &["垫片垫块", "垫片垫板"]) {
+        return None;
+    }
+
+    let plain_washer = contains_any(text, &["平垫圈", "平垫", "垫圈"]);
+    let shim = text.contains("垫片");
+    if !plain_washer && !shim {
+        return None;
+    }
+
+    let outer_diameter = scalar(text, &["外径", "外圆直径"]);
+    let inner_diameter = scalar(text, &["内径", "内孔直径"]);
+    if shim && !plain_washer && (outer_diameter.is_none() || inner_diameter.is_none()) {
+        return Some(result(
+            "needs_clarification",
+            raw,
+            None,
+            vec![],
+            vec![issue(
+                "legacy_shim_kind_ambiguous",
+                "“垫片”可能指圆环垫片或矩形垫片垫块；请明确写平垫圈，或提供外径和内径。",
+            )],
+            vec![],
+        ));
+    }
+
+    if contains_any(
+        text,
+        &[
+            "长方体",
+            "矩形垫片",
+            "圆柱",
+            "圆锥",
+            "圆台",
+            "球体",
+            "齿轮",
+            "法兰",
+            "螺钉",
+            "螺栓",
+            "螺母",
+            "轴承",
+            "轴套",
+            "槽",
+            "沉孔",
+            "沉台",
+            "阵列",
+            "回转",
+            "拉伸",
+            "倒角",
+            "圆角",
+        ],
+    ) {
+        return Some(result(
+            "unsupported",
+            raw,
+            None,
+            vec![],
+            vec![],
+            vec![issue(
+                "legacy_washer_compound_request_unsupported",
+                "当前平垫圈迁移只接受单个圆环零件；组合其它主体或加工特征的描述尚未迁入。",
+            )],
+        ));
+    }
+
+    let mut questions = Vec::new();
+    let outer_diameter = match outer_diameter {
+        Some(value) if value.is_finite() && value > 0.0 => Some(value),
+        Some(_) => {
+            questions.push(issue(
+                "washer_outer_diameter_invalid",
+                "平垫圈外径必须是有限的正数。",
+            ));
+            None
+        }
+        None => {
+            questions.push(issue(
+                "washer_outer_diameter_required",
+                "请明确平垫圈外径，例如“外径20”。",
+            ));
+            None
+        }
+    };
+    let inner_diameter = match inner_diameter {
+        Some(value) if value.is_finite() && value > 0.0 => Some(value),
+        Some(_) => {
+            questions.push(issue(
+                "washer_inner_diameter_invalid",
+                "平垫圈内径必须是有限的正数。",
+            ));
+            None
+        }
+        None => {
+            questions.push(issue(
+                "washer_inner_diameter_required",
+                "请明确平垫圈内径，例如“内径8”。",
+            ));
+            None
+        }
+    };
+    let thickness_value = scalar(text, &["厚度", "厚"]);
+    let thickness = match thickness_value {
+        Some(value) if value.is_finite() && value > 0.0 => Some(value),
+        Some(_) => {
+            questions.push(issue(
+                "washer_thickness_invalid",
+                "平垫圈厚度必须是有限的正数。",
+            ));
+            None
+        }
+        None => Some(2.0),
+    };
+    if let (Some(outer), Some(inner)) = (outer_diameter, inner_diameter) {
+        if outer <= inner {
+            questions.push(issue(
+                "washer_diameter_order_invalid",
+                "平垫圈外径必须大于内径。",
+            ));
+        }
+    }
+    if !questions.is_empty() {
+        return Some(result("needs_clarification", raw, None, vec![], questions, vec![]));
+    }
+
+    let outer_diameter = outer_diameter.expect("validated above");
+    let inner_diameter = inner_diameter.expect("validated above");
+    let thickness = thickness.expect("validated above");
+    let thickness_defaulted = thickness_value.is_none();
+    let mut warnings = Vec::new();
+    if thickness_defaulted {
+        warnings.push(issue(
+            "legacy_washer_thickness_defaulted",
+            "沿用旧 Python Quick 平垫圈默认厚度 2 mm；该值不是用户提供的尺寸。",
+        ));
+    }
+
+    let features = vec![
+        json!({
+            "id":"quick-0001",
+            "kind":"cylinder",
+            "operation":"add",
+            "name":"圆柱/圆台",
+            "parameters":{
+                "radius":outer_diameter / 2.0,
+                "height":thickness,
+                "center":[0.0, 0.0, 0.0],
+                "base":false,
+                "segments":64
+            },
+            "sources":{
+                "radius":derived_source(raw, "由用户给定的外径除以 2 得到。"),
+                "height":if thickness_defaulted {
+                    derived_source(raw, "沿用旧 Python Quick 平垫圈默认厚度 2 mm。")
+                } else {
+                    user_source(raw)
+                },
+                "center":derived_source(raw, "沿用旧 Python Quick 圆环中心位于原点的放置方式。"),
+                "base":derived_source(raw, "沿用旧 Python Quick 居中圆柱语义。"),
+                "segments":derived_source(raw, "沿用旧 Python Quick 平垫圈圆柱分段数 64。")
+            },
+            "relations":[]
+        }),
+        json!({
+            "id":"quick-0002",
+            "kind":"hole",
+            "operation":"cut",
+            "name":"孔",
+            "parameters":{
+                "diameter":inner_diameter,
+                "through":true,
+                "pos":"center",
+                "segments":48
+            },
+            "sources":{
+                "diameter":user_source(raw),
+                "through":derived_source(raw, "沿用旧 Python Quick 平垫圈中心贯穿孔。"),
+                "pos":derived_source(raw, "沿用旧 Python Quick 中心孔位置。"),
+                "segments":derived_source(raw, "沿用旧 Python Quick 中心孔分段数 48。")
+            },
+            "relations":[]
+        }),
+    ];
+    Some(plan_result(raw, "垫圈", features, warnings))
 }
 
 fn parse_blade_template(raw: &str, text: &str) -> Value {
