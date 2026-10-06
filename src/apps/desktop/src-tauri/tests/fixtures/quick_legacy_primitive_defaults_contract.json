@@ -1,0 +1,125 @@
+{
+  "source": "src/legacy/ai_modeler/core/parsing/nlparser.py via nlparser.parse(text).doc.to_dict(), captured 2026-10-06",
+  "legacy_accepted": [
+    {
+      "input": "圆柱",
+      "feature_kind": "cylinder",
+      "dimensions_mm": [50.0, 50.0, 50.0],
+      "volume_mm3": 98174.77042468103,
+      "defaulted_fields": ["radius", "height"],
+      "raw_mapped_fields": [],
+      "legacy_warnings": [],
+      "parameters": {"radius": 25.0, "height": 50.0, "center": [0.0, 0.0, 0.0], "base": true, "axis": "Z", "segments": 48}
+    },
+    {
+      "input": "圆柱 直径40",
+      "feature_kind": "cylinder",
+      "dimensions_mm": [40.0, 40.0, 50.0],
+      "volume_mm3": 62831.85307179586,
+      "defaulted_fields": ["height"],
+      "raw_mapped_fields": [],
+      "legacy_warnings": [],
+      "parameters": {"radius": 20.0, "height": 50.0, "center": [0.0, 0.0, 0.0], "base": true, "axis": "Z", "segments": 48}
+    },
+    {
+      "input": "圆柱 高80",
+      "feature_kind": "cylinder",
+      "dimensions_mm": [80.0, 80.0, 80.0],
+      "volume_mm3": 402123.8596594936,
+      "defaulted_fields": [],
+      "raw_mapped_fields": ["radius"],
+      "legacy_warnings": [],
+      "parameters": {"radius": 40.0, "height": 80.0, "center": [0.0, 0.0, 0.0], "base": true, "axis": "Z", "segments": 48}
+    },
+    {
+      "input": "圆柱 40×80mm",
+      "feature_kind": "cylinder",
+      "dimensions_mm": [40.0, 40.0, 80.0],
+      "volume_mm3": 100530.9649148734,
+      "defaulted_fields": [],
+      "raw_mapped_fields": [],
+      "legacy_warnings": [],
+      "parameters": {"radius": 20.0, "height": 80.0, "center": [0.0, 0.0, 0.0], "base": true, "axis": "Z", "segments": 48}
+    },
+    {
+      "input": "圆锥",
+      "feature_kind": "cylinder",
+      "dimensions_mm": [50.0, 50.0, 50.0],
+      "volume_mm3": 32724.92347489368,
+      "defaulted_fields": ["radius", "height"],
+      "raw_mapped_fields": [],
+      "legacy_warnings": [],
+      "parameters": {"radius": 25.0, "radius2": 0.0, "height": 50.0, "center": [0.0, 0.0, 0.0], "base": true, "axis": "Z", "segments": 48}
+    },
+    {
+      "input": "圆锥 直径40",
+      "feature_kind": "cylinder",
+      "dimensions_mm": [40.0, 40.0, 40.0],
+      "volume_mm3": 16755.16081914556,
+      "defaulted_fields": [],
+      "raw_mapped_fields": ["height"],
+      "legacy_warnings": [],
+      "parameters": {"radius": 20.0, "radius2": 0.0, "height": 40.0, "center": [0.0, 0.0, 0.0], "base": true, "axis": "Z", "segments": 48}
+    },
+    {
+      "input": "圆锥 高80",
+      "feature_kind": "cylinder",
+      "dimensions_mm": [50.0, 50.0, 80.0],
+      "volume_mm3": 52359.87755982989,
+      "defaulted_fields": ["radius"],
+      "raw_mapped_fields": [],
+      "legacy_warnings": [],
+      "parameters": {"radius": 25.0, "radius2": 0.0, "height": 80.0, "center": [0.0, 0.0, 0.0], "base": true, "axis": "Z", "segments": 48}
+    },
+    {
+      "input": "圆锥 30×60mm",
+      "feature_kind": "cylinder",
+      "dimensions_mm": [50.0, 50.0, 60.0],
+      "volume_mm3": 39269.908169872415,
+      "defaulted_fields": ["radius"],
+      "raw_mapped_fields": ["height"],
+      "legacy_warnings": [],
+      "parameters": {"radius": 25.0, "radius2": 0.0, "height": 60.0, "center": [0.0, 0.0, 0.0], "base": true, "axis": "Z", "segments": 48}
+    },
+    {
+      "input": "球体",
+      "feature_kind": "sphere",
+      "dimensions_mm": [50.0, 50.0, 50.0],
+      "volume_mm3": 65449.84694978735,
+      "defaulted_fields": ["radius"],
+      "raw_mapped_fields": [],
+      "legacy_warnings": [],
+      "parameters": {"radius": 25.0, "center": [0.0, 0.0, 0.0], "segments": 32, "rings": 16}
+    },
+    {
+      "input": "球体 直径40",
+      "feature_kind": "sphere",
+      "dimensions_mm": [40.0, 40.0, 40.0],
+      "volume_mm3": 33510.32163829113,
+      "defaulted_fields": [],
+      "raw_mapped_fields": [],
+      "legacy_warnings": [],
+      "parameters": {"radius": 20.0, "center": [0.0, 0.0, 0.0], "segments": 32, "rings": 16}
+    },
+    {
+      "input": "球体 半径15",
+      "feature_kind": "sphere",
+      "dimensions_mm": [30.0, 30.0, 30.0],
+      "volume_mm3": 14137.16694115407,
+      "defaulted_fields": [],
+      "raw_mapped_fields": [],
+      "legacy_warnings": [],
+      "parameters": {"radius": 15.0, "center": [0.0, 0.0, 0.0], "segments": 32, "rings": 16}
+    },
+    {
+      "input": "球体 40mm",
+      "feature_kind": "sphere",
+      "dimensions_mm": [40.0, 40.0, 40.0],
+      "volume_mm3": 33510.32163829113,
+      "defaulted_fields": [],
+      "raw_mapped_fields": ["radius"],
+      "legacy_warnings": [],
+      "parameters": {"radius": 20.0, "center": [0.0, 0.0, 0.0], "segments": 32, "rings": 16}
+    }
+  ]
+}

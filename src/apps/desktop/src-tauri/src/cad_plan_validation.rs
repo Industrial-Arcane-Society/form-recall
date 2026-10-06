@@ -344,7 +344,15 @@ const ANGLE_KEYS: &[&str] = &[
     "lobe_deg",
 ];
 const DIMENSIONLESS_KEYS: &[&str] = &["turns", "taper", "taper_start", "camber", "camber_pos"];
-const NONNEGATIVE_KEYS: &[&str] = &["corner", "margin", "bore_d", "groove_depth", "sweep", "lift"];
+const NONNEGATIVE_KEYS: &[&str] = &[
+    "corner",
+    "margin",
+    "bore_d",
+    "groove_depth",
+    "sweep",
+    "lift",
+    "radius2",
+];
 const INTEGER_KEYS: &[&str] = &[
     "teeth",
     "count",
@@ -2427,5 +2435,27 @@ mod tests {
                 case["name"]
             );
         }
+    }
+
+    #[test]
+    fn cylinder_zero_radius2_is_valid_for_a_pointed_cone() {
+        let cone = base(feature(
+            "cylinder",
+            json!({"radius":25,"radius2":0,"height":50,"center":[0,0,0],"base":true,"axis":"Z","segments":48}),
+            json!({"radius":{"type":"derived"},"radius2":{"type":"derived"},"height":{"type":"derived"},"center":{"type":"derived"},"segments":{"type":"derived"}}),
+        ));
+        assert_eq!(validate_plan(&cone)["state"], "valid");
+
+        let mut invalid = cone.clone();
+        invalid["features"][0]["parameters"]["radius2"] = json!(-0.1);
+        let report = validate_plan(&invalid);
+        assert_eq!(report["state"], "invalid");
+        assert!(report["errors"].to_string().contains("negative_dimension"));
+
+        let schema = feature_schema("cylinder").unwrap();
+        assert_eq!(
+            schema["properties"]["parameters"]["properties"]["radius2"]["minimum"],
+            0
+        );
     }
 }

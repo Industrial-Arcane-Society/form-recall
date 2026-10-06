@@ -27,7 +27,7 @@ pub fn parse(text: &str) -> Value {
     let mut unsupported = Vec::<Value>::new();
     let mut warnings = vec![json!({
         "code":"legacy_implicit_dimensions_removed",
-        "message":"仅已迁移的模板/兼容项沿用旧典型尺寸（如独立长方体和矩形槽），并在警告中说明；其余缺少必需尺寸或孔位时返回澄清。"
+        "message":"仅已迁移的模板和无切除修饰的基础体/矩形槽沿用旧典型尺寸，并逐项说明；其余缺少必需尺寸或孔位时返回澄清。"
     })];
     if text.trim().is_empty() {
         return result(
@@ -485,7 +485,7 @@ fn result(
     unsupported: Vec<Value>,
 ) -> Value {
     json!({"status":status,"source_text":text,"plan":plan,"warnings":warnings,"questions":questions,"unsupported":unsupported,
-        "compatibility":{"scope":"common explicit primitives/cuts plus executable flange, stepped-shaft, and sleeve/tube legacy templates","legacy_typical_defaults":"kept only for migrated templates and reported as warnings; other missing required values need clarification"}})
+        "compatibility":{"scope":"common explicit primitives/cuts, standalone migrated primitive defaults, rectangular slots, and executable flange/stepped-shaft/sleeve templates","legacy_typical_defaults":"restored only for migrated standalone bases/templates and rectangular slots; defaults and raw-dimension mappings are reported as warnings"}})
 }
 
 fn parse_legacy_template(raw: &str, normalized: &str) -> Option<Value> {
@@ -894,10 +894,12 @@ fn build_base(
     raw: &str,
     questions: &mut Vec<Value>,
     warnings: &mut Vec<Value>,
-    allow_legacy_box_defaults: bool,
+    allow_legacy_defaults: bool,
 ) -> Option<Value> {
     let mut parameters = serde_json::Map::new();
     let mut sources = serde_json::Map::new();
+    let mut legacy_defaulted = Vec::<(&str, f64)>::new();
+    let mut legacy_raw_mappings = Vec::<String>::new();
     let units_explicit = has_unit(clause);
     match kind {
         BaseKind::Box => {
@@ -916,7 +918,7 @@ fn build_base(
                     .or_else(|| pair.as_ref().map(|v| v[1])),
                 h.or_else(|| triple.as_ref().map(|t| t[2])),
             ];
-            let mut remaining_raw = if allow_legacy_box_defaults {
+            let mut remaining_raw = if allow_legacy_defaults {
                 dimension_values(clause)
             } else {
                 Vec::new()
@@ -931,7 +933,7 @@ fn build_base(
             let defaults = [100.0, 60.0, 20.0];
             let mut used_default = Vec::new();
             for (index, value) in vals.iter_mut().enumerate() {
-                if value.is_none() && allow_legacy_box_defaults {
+                if value.is_none() && allow_legacy_defaults {
                     if let Some(raw_value) = raw_iter.next() {
                         *value = Some(raw_value);
                     } else {
@@ -983,6 +985,9 @@ fn build_base(
         BaseKind::Cylinder => {
             let radius = scalar(clause, &["radius", "半径"]);
             let diameter = diameter_value(clause);
+            let pair = find_dimension_pair(clause);
+            let triple = find_dimension_triplet(clause);
+            let raw_values = dimension_values(clause);
             let r = match (radius, diameter) {
                 (Some(r), Some(d)) if !close(r * 2.0, d) => {
                     questions.push(issue(
@@ -991,27 +996,108 @@ fn build_base(
                     ));
                     None
                 }
-                (Some(r), _) => Some((r, false)),
-                (None, Some(d)) => Some((d * 0.5, true)),
+                (Some(r), _) => Some((r, "user", false, "")),
+                (None, Some(d)) => Some((
+                    d * 0.5,
+                    "derived",
+                    false,
+                    "旧 Python Quick 按直径的一半作为半径。",
+                )),
+                (None, None) if allow_legacy_defaults => {
+                    let paired = triple
+                        .map(|values| values[0])
+                        .or_else(|| pair.map(|values| values[0]));
+                    if let Some(diameter) = paired {
+                        Some((
+                            diameter * 0.5,
+                            "derived",
+                            false,
+                            "旧 Python Quick 从尺寸组首值的一半推导圆柱半径。",
+                        ))
+                    } else if let Some(raw) = raw_values.first().copied() {
+                        legacy_raw_mappings.push(format!("radius={} mm", raw * 0.5));
+                        Some((
+                            raw * 0.5,
+                            "derived",
+                            false,
+                            "旧 Python Quick 将首个未标注尺寸的一半用作圆柱半径。",
+                        ))
+                    } else {
+                        legacy_defaulted.push(("radius", 25.0));
+                        Some((
+                            25.0,
+                            "derived",
+                            true,
+                            "旧 Python Quick 圆柱默认半径为 25 mm。",
+                        ))
+                    }
+                }
                 _ => None,
             };
-            match r.filter(|(v, _)| v.is_finite() && *v > 0.0) {
-                Some((v, true)) => {
+            match r.filter(|(v, _, _, _)| v.is_finite() && *v > 0.0) {
+                Some((v, "derived", _, note)) => {
                     parameters.insert("radius".into(), json!(v));
-                    sources.insert("radius".into(),derived_source(raw,"radius = explicit diameter / 2; the original diameter evidence is preserved."));
+                    sources.insert("radius".into(), derived_source(raw, note));
                 }
-                Some((v, false)) => {
-                    add_user(&mut parameters, &mut sources, raw, "radius", json!(v))
+                Some((v, _, _, _)) => {
+                    add_user(&mut parameters, &mut sources, raw, "radius", json!(v));
                 }
                 None => questions.push(issue(
                     "cylinder_radius_missing",
                     "圆柱缺少明确的正半径或直径。",
                 )),
             }
-            match scalar(clause, &["height", "高度", "高", "length", "长度", "长"])
-                .filter(|v| v.is_finite() && *v > 0.0)
-            {
-                Some(v) => add_user(&mut parameters, &mut sources, raw, "height", json!(v)),
+            let height = scalar(clause, &["height", "高度", "高", "length", "长度", "长"]);
+            let h = match height {
+                Some(v) => Some((v, "user", false, "")),
+                None if allow_legacy_defaults => {
+                    if let Some(v) = triple
+                        .map(|values| values[2])
+                        .or_else(|| pair.map(|values| values[1]))
+                    {
+                        Some((v, "user", false, ""))
+                    } else if let Some(radius) = r.map(|value| value.0) {
+                        let remaining = raw_values
+                            .iter()
+                            .copied()
+                            .find(|value| !close(*value, radius) && !close(*value, radius * 2.0));
+                        if let Some(v) = remaining {
+                            legacy_raw_mappings.push(format!("height={v} mm"));
+                            Some((
+                                v,
+                                "derived",
+                                false,
+                                "旧 Python Quick 将未被半径消耗的尺寸用作圆柱高度。",
+                            ))
+                        } else {
+                            legacy_defaulted.push(("height", 50.0));
+                            Some((
+                                50.0,
+                                "derived",
+                                true,
+                                "旧 Python Quick 圆柱默认高度为 50 mm。",
+                            ))
+                        }
+                    } else {
+                        legacy_defaulted.push(("height", 50.0));
+                        Some((
+                            50.0,
+                            "derived",
+                            true,
+                            "旧 Python Quick 圆柱默认高度为 50 mm。",
+                        ))
+                    }
+                }
+                None => None,
+            };
+            match h.filter(|(v, _, _, _)| v.is_finite() && *v > 0.0) {
+                Some((v, "derived", _, note)) => {
+                    parameters.insert("height".into(), json!(v));
+                    sources.insert("height".into(), derived_source(raw, note));
+                }
+                Some((v, _, _, _)) => {
+                    add_user(&mut parameters, &mut sources, raw, "height", json!(v))
+                }
                 None => questions.push(issue(
                     "cylinder_height_missing",
                     "圆柱缺少明确的正高度/长度。",
@@ -1046,6 +1132,7 @@ fn build_base(
                     "大端半径",
                 ],
             );
+            let mut base_defaulted = false;
             let (r, derived) = match (base_r, base_d) {
                 (Some(r), Some(d)) if !close(r * 2.0, d) => {
                     questions.push(issue(
@@ -1056,6 +1143,11 @@ fn build_base(
                 }
                 (Some(r), _) => (Some(r), false),
                 (None, Some(d)) => (Some(d * 0.5), true),
+                (None, None) if kind == BaseKind::Cone && allow_legacy_defaults => {
+                    legacy_defaulted.push(("radius", 25.0));
+                    base_defaulted = true;
+                    (Some(25.0), true)
+                }
                 _ => (None, false),
             };
             match r.filter(|v| v.is_finite() && *v > 0.0) {
@@ -1063,7 +1155,14 @@ fn build_base(
                     parameters.insert("radius".into(), json!(v));
                     sources.insert(
                         "radius".into(),
-                        derived_source(raw, "radius = explicit base diameter / 2."),
+                        derived_source(
+                            raw,
+                            if base_defaulted {
+                                "旧 Python Quick 圆锥默认底半径为 25 mm。"
+                            } else {
+                                "radius = explicit base diameter / 2."
+                            },
+                        ),
                     );
                 }
                 Some(v) => add_user(&mut parameters, &mut sources, raw, "radius", json!(v)),
@@ -1122,10 +1221,32 @@ fn build_base(
                     ),
                 );
             }
-            match scalar(clause, &["height", "高度", "高", "length", "长度", "长"])
-                .filter(|v| v.is_finite() && *v > 0.0)
-            {
-                Some(v) => add_user(&mut parameters, &mut sources, raw, "height", json!(v)),
+            let height = scalar(clause, &["height", "高度", "高", "length", "长度", "长"]);
+            let h = match height {
+                Some(v) => Some((v, "user", "")),
+                None if kind == BaseKind::Cone && allow_legacy_defaults => {
+                    if let Some(v) = dimension_values(clause).last().copied() {
+                        legacy_raw_mappings.push(format!("height={v} mm"));
+                        Some((
+                            v,
+                            "derived",
+                            "旧 Python Quick 将最后一个未标注尺寸用作圆锥高度。",
+                        ))
+                    } else {
+                        legacy_defaulted.push(("height", 50.0));
+                        Some((50.0, "derived", "旧 Python Quick 圆锥默认高度为 50 mm。"))
+                    }
+                }
+                None => None,
+            };
+            match h.filter(|(value, _, _)| value.is_finite() && *value > 0.0) {
+                Some((value, "derived", note)) => {
+                    parameters.insert("height".into(), json!(value));
+                    sources.insert("height".into(), derived_source(raw, note));
+                }
+                Some((value, _, _)) => {
+                    add_user(&mut parameters, &mut sources, raw, "height", json!(value));
+                }
                 None => questions.push(issue("cone_height_missing", "圆锥/圆台缺少明确的正高度。")),
             }
             if let Some(axis) = axis_value(clause, questions) {
@@ -1135,6 +1256,7 @@ fn build_base(
         BaseKind::Sphere => {
             let r = scalar(clause, &["radius", "半径"]);
             let d = diameter_value(clause);
+            let raw_values = dimension_values(clause);
             let chosen = match (r, d) {
                 (Some(r), Some(d)) if !close(r * 2., d) => {
                     questions.push(issue(
@@ -1145,6 +1267,16 @@ fn build_base(
                 }
                 (Some(r), _) => Some((r, false)),
                 (None, Some(d)) => Some((d * 0.5, true)),
+                (None, None) if allow_legacy_defaults => {
+                    if let Some(raw) = raw_values.first().copied() {
+                        let value = raw * 0.5;
+                        legacy_raw_mappings.push(format!("radius={value} mm"));
+                        Some((value, true))
+                    } else {
+                        legacy_defaulted.push(("radius", 25.0));
+                        Some((25.0, true))
+                    }
+                }
                 _ => None,
             };
             match chosen.filter(|(v, _)| v.is_finite() && *v > 0.) {
@@ -1152,7 +1284,19 @@ fn build_base(
                     parameters.insert("radius".into(), json!(v));
                     sources.insert(
                         "radius".into(),
-                        derived_source(raw, "radius = explicit diameter / 2."),
+                        derived_source(
+                            raw,
+                            if legacy_defaulted.iter().any(|(key, _)| *key == "radius") {
+                                "旧 Python Quick 球体默认半径为 25 mm。"
+                            } else if legacy_raw_mappings
+                                .iter()
+                                .any(|mapping| mapping.starts_with("radius="))
+                            {
+                                "旧 Python Quick 将首个裸尺寸的一半用作球体半径。"
+                            } else {
+                                "radius = explicit diameter / 2."
+                            },
+                        ),
                     );
                 }
                 Some((v, false)) => {
@@ -1164,6 +1308,76 @@ fn build_base(
                 )),
             }
         }
+    }
+    if allow_legacy_defaults {
+        match kind {
+            BaseKind::Cylinder | BaseKind::Cone => {
+                for (key, value, note) in [
+                    (
+                        "center",
+                        json!([0.0, 0.0, 0.0]),
+                        "沿用 Python Quick 的全局原点轴向底面中心。",
+                    ),
+                    ("base", json!(true), "沿用 Python Quick 的 base=true。"),
+                    (
+                        "axis",
+                        json!("Z"),
+                        "未指定轴向时沿用 Python Quick 默认 Z 轴。",
+                    ),
+                    (
+                        "segments",
+                        json!(48),
+                        "沿用 Python Quick 圆柱/圆锥模板的 48 段设置。",
+                    ),
+                ] {
+                    if !parameters.contains_key(key) {
+                        parameters.insert(key.into(), value);
+                        sources.insert(key.into(), derived_source(raw, note));
+                    }
+                }
+            }
+            BaseKind::Sphere => {
+                for (key, value, note) in [
+                    (
+                        "center",
+                        json!([0.0, 0.0, 0.0]),
+                        "沿用 Python Quick 的全局原点球心。",
+                    ),
+                    (
+                        "segments",
+                        json!(32),
+                        "沿用 Python Quick 球体的 32 段设置。",
+                    ),
+                    ("rings", json!(16), "沿用 Python Quick 球体的 16 环设置。"),
+                ] {
+                    if !parameters.contains_key(key) {
+                        parameters.insert(key.into(), value);
+                        sources.insert(key.into(), derived_source(raw, note));
+                    }
+                }
+            }
+            _ => {}
+        }
+    }
+    if !legacy_defaulted.is_empty() {
+        let fields = legacy_defaulted
+            .iter()
+            .map(|(key, value)| format!("{key}={value} mm"))
+            .collect::<Vec<_>>()
+            .join("、");
+        warnings.push(issue(
+            "legacy_primitive_dimensions_defaulted",
+            &format!("沿用旧 Python Quick 基础体默认尺寸（{fields}）；这些值不是用户标注尺寸。"),
+        ));
+    }
+    if !legacy_raw_mappings.is_empty() {
+        warnings.push(issue(
+            "legacy_primitive_raw_dimensions_mapped",
+            &format!(
+                "沿用旧 Python Quick 对未标注尺寸的映射：{}；请核对这些尺寸的含义。",
+                legacy_raw_mappings.join("、")
+            ),
+        ));
     }
     if !units_explicit {
         warnings.push(issue(
@@ -3108,6 +3322,77 @@ mod tests {
         assert!(invalid["questions"]
             .to_string()
             .contains("slot_dimension_missing_or_invalid"));
+    }
+
+    #[test]
+    fn standalone_legacy_cylinders_cones_and_spheres_match_python_defaults() {
+        let fixture: Value = serde_json::from_str(include_str!(
+            "../tests/fixtures/quick_legacy_primitive_defaults_contract.json"
+        ))
+        .expect("legacy primitive defaults fixture is valid JSON");
+
+        for case in fixture["legacy_accepted"].as_array().unwrap() {
+            let input = case["input"].as_str().unwrap();
+            let output = parse(input);
+            assert_eq!(output["status"], "ready", "{input}: {output}");
+            let validation = crate::cad_plan_validation::validate_plan(&output["plan"]);
+            assert_eq!(validation["state"], "valid", "{input}: {validation}");
+            let features = output["plan"]["features"].as_array().unwrap();
+            assert_eq!(features.len(), 1, "{input}: {output}");
+            let feature = &features[0];
+            assert_eq!(feature["kind"], case["feature_kind"], "{input}");
+            for (key, expected) in case["parameters"].as_object().unwrap() {
+                assert_eq!(feature["parameters"][key], *expected, "{input}: {key}");
+            }
+            for field in case["defaulted_fields"].as_array().unwrap() {
+                let field = field.as_str().unwrap();
+                assert_eq!(
+                    feature["sources"][field]["type"], "derived",
+                    "{input}: {field}"
+                );
+                assert!(
+                    feature["sources"][field]["note"]
+                        .as_str()
+                        .is_some_and(|note| !note.is_empty()),
+                    "{input}: default source needs an explanation"
+                );
+            }
+            for field in case["raw_mapped_fields"].as_array().unwrap() {
+                let field = field.as_str().unwrap();
+                assert_eq!(
+                    feature["sources"][field]["type"], "derived",
+                    "{input}: {field}"
+                );
+            }
+            let warnings = output["warnings"].to_string();
+            if !case["defaulted_fields"].as_array().unwrap().is_empty() {
+                assert!(
+                    warnings.contains("legacy_primitive_dimensions_defaulted"),
+                    "{input}: missing default warning: {output}"
+                );
+            }
+            if !case["raw_mapped_fields"].as_array().unwrap().is_empty() {
+                assert!(
+                    warnings.contains("legacy_primitive_raw_dimensions_mapped"),
+                    "{input}: missing raw mapping warning: {output}"
+                );
+            }
+        }
+
+        let invalid = parse("圆柱 直径0 高10");
+        assert_eq!(invalid["status"], "needs_clarification", "{invalid}");
+        assert!(
+            invalid["questions"]
+                .to_string()
+                .contains("cylinder_radius_missing")
+        );
+        let modified = parse("圆柱 高50，中心通孔直径10");
+        assert_eq!(modified["status"], "needs_clarification", "{modified}");
+        assert!(
+            modified["questions"]
+                .to_string()
+                .contains("cylinder_radius_missing")
+        );
     }
 
     #[test]
