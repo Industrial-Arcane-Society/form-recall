@@ -26,3 +26,9 @@ pwsh -NoProfile -File src/apps/desktop/src-tauri/scripts/test-lib.ps1 -Offline -
 ```powershell
 pwsh -NoProfile -File src/apps/desktop/src-tauri/scripts/test-lib.ps1 -Offline -Filter native_cad_session::tests::partial_preview_is_revision_bound_and_never_accepted
 ```
+
+## 2026-10-06 main 实际 OCCT fixture 复跑
+
+- 本报告代码随 commit `2612963` 集成到 main。主工作区提供了已校验的 OCCT runtime manifest：`src/apps/desktop/src-tauri/target/bundle-audit-20261004/dsh-install-harness/target/debug/occt-runtime/runtime-manifest.json`。
+- 设置 `AIMODELER_OCCT_MANIFEST` 指向该 manifest 后，使用仓库 Windows runner 执行 `cad_preview_model_publishes_only_host_attested_partial_multiview_diagnostics`，实际结果 1 passed / 0 failed / 0 ignored，耗时 1.73 s；该次运行执行了 partial producer、真实本地 OCCT 预览和新增 stale-revision finish 拒绝断言。
+- 未调用真实 DSH/provider、CATIA 或可见 GUI；此项仅关闭施工范围与 revision binding 的本地几何集成证据，不代表视觉质量通过。
