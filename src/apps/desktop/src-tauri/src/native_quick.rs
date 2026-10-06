@@ -1369,3 +1369,75 @@ mod tests {
 
     }
 }
+
+#[cfg(test)]
+mod acceptance_tests {
+    use super::*;
+
+    #[test]
+    #[ignore = "requires the staged local OCCT runtime manifest"]
+    fn legacy_blade_and_blisk_build_reopen_and_export_through_native_quick() {
+        let manifest = std::env::var_os("AIMODELER_OCCT_MANIFEST")
+            .map(std::path::PathBuf::from)
+            .expect("set AIMODELER_OCCT_MANIFEST to the staged OCCT runtime-manifest.json");
+        let root = std::env::temp_dir().join(format!(
+            "native-quick-blade-blisk-{}-{}",
+            std::process::id(),
+            SystemTime::now()
+                .duration_since(UNIX_EPOCH)
+                .expect("system clock")
+                .as_nanos()
+        ));
+        fs::create_dir_all(&root).expect("create native Quick output root");
+
+        for (index, input) in ["叶片 长100 宽60", "叶盘 外径200 厚30 叶片数24 叶展40"]
+            .into_iter()
+            .enumerate()
+        {
+            let output = build(input, index as i64 + 1, &manifest, &root)
+                .unwrap_or_else(|error| panic!("{input}: {error}"));
+            assert_eq!(output["state"], "complete", "{input}: {output}");
+            let report = &output["geometry_report"];
+            assert_eq!(report["state"], "passed", "{input}: {report}");
+            assert!(
+                report["volume_mm3"].as_f64().unwrap_or_default() > 0.0,
+                "{input}: {report}"
+            );
+            let dimensions = output["stats"]["size"]
+                .as_array()
+                .unwrap_or_else(|| panic!("{input}: missing size summary: {output}"));
+            assert_eq!(dimensions.len(), 3, "{input}: {output}");
+            assert!(
+                dimensions
+                    .iter()
+                    .all(|value| value.as_f64().unwrap_or_default() > 0.0)
+            );
+
+            let outputs = output["output_paths"].as_object().unwrap();
+            for name in ["glb", "aimodel", "stl", "obj"] {
+                let path = Path::new(outputs[name].as_str().unwrap());
+                assert!(
+                    path.is_file(),
+                    "{input}: expected {name} at {}",
+                    path.display()
+                );
+            }
+            let loaded =
+                native_model_io::load_aimodel(Path::new(outputs["aimodel"].as_str().unwrap()))
+                    .unwrap_or_else(|error| panic!("{input}: AIMODEL reload failed: {error}"));
+            assert_eq!(
+                loaded["features"].as_array().map(Vec::len),
+                output["features"].as_array().map(Vec::len),
+                "{input}: AIMODEL feature round-trip"
+            );
+            println!(
+                "F5.24 native acceptance: input={input}; dimensions_mm={}; volume_mm3={}; triangles={}; files={:?}",
+                serde_json::to_string(&output["stats"]["size"]).unwrap(),
+                output["stats"]["volume"],
+                output["stats"]["triangles"],
+                output["output_paths"]
+            );
+        }
+        fs::remove_dir_all(root).expect("remove native Quick acceptance outputs");
+    }
+}

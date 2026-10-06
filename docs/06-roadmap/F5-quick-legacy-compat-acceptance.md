@@ -17,8 +17,10 @@ Accepted examples:
 
 Refused examples:
 
-- `叶片`: Python parses a `loft`, but native geometry does not currently execute it; Quick returns `unsupported` and no plan rather than silently producing an empty/incomplete candidate.
+- `叶片 长80 通孔直径8`: the standalone legacy blade loft is migrated, but blade modifiers are not; Quick returns `unsupported` and no plan rather than silently dropping the requested hole.
 - An unrelated natural-language part description with no supported primitive/template returns `unsupported` and no plan.
+
+`叶片`、`叶片 长100 宽60` and the Python Quick `叶盘` template are migrated in [F5.24](./F5.24-quick-legacy-blade-blisk.md). The local loft remains approximate and does not claim a native CATIA multi-section loft.
 
 ## Disabled-feature behavior
 
@@ -31,6 +33,7 @@ Refused examples:
 
 - Rust test filter `native_quick_parser::tests`: parser tests.
 - Rust golden parity filter `migrated_legacy_templates_match_python_parser_golden_contract`.
+- Blade/blisk parameter, default, provenance, and fail-closed modifier contract: `legacy_blade_and_blisk_templates_match_python_parameter_and_default_contracts`; real local OCCT and AIMODEL reload results are in F5.24.
 - Python CADPlan tests for disabled state round-trip, preview omission, and invalid boolean rejection.
 - Frontend build attempted with `npm run build` from `src/apps/desktop`; blocked before TypeScript compilation because `vue-tsc` is absent (`'vue-tsc' is not recognized`). No package installation was attempted in this offline feature task.
 

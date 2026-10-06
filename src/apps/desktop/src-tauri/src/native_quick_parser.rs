@@ -158,26 +158,6 @@ pub fn parse(text: &str) -> Value {
         ("沉坑", "Quick 沉坑语法尚未迁入。"),
         ("锪孔", "Quick 锪孔语法尚未迁入。"),
         ("埋头孔", "Quick 埋头孔语法尚未迁入。"),
-        (
-            "叶片",
-            "旧 Quick 可解析叶片放样，但当前原生几何执行器不支持 loft；已拒绝，不生成空模型。",
-        ),
-        (
-            "blade",
-            "旧 Quick 可解析叶片放样，但当前原生几何执行器不支持 loft；已拒绝，不生成空模型。",
-        ),
-        (
-            "叶盘",
-            "旧 Quick 可解析叶盘，但当前原生几何执行器不支持 loft；已拒绝，不生成不完整模型。",
-        ),
-        (
-            "叶轮",
-            "叶轮模板当前依赖未迁入的叶片/放样几何；Quick 已拒绝，不生成不完整模型。",
-        ),
-        (
-            "blisk",
-            "旧 Quick 可解析叶盘，但当前原生几何执行器不支持 loft；已拒绝，不生成不完整模型。",
-        ),
     ] {
         let explicit_linear_array = contains_any(&normalized, &["阵列", "linear array"])
             && regex::Regex::new(r"(?:阵列|linear\s+array)\s*[0-9]+\s*(?:个|份|次)?")
@@ -542,10 +522,16 @@ fn result(
     unsupported: Vec<Value>,
 ) -> Value {
     json!({"status":status,"source_text":text,"plan":plan,"warnings":warnings,"questions":questions,"unsupported":unsupported,
-        "compatibility":{"scope":"common explicit primitives/cuts, migrated standalone primitive defaults and legacy extrusion/revolve constructors, rectangular slots, straight-gear construction, PCD counterbores, and executable flange/stepped-shaft/sleeve templates","legacy_typical_defaults":"restored only for migrated Quick constructors/templates, straight gears, and rectangular slots; defaults and raw-dimension mappings are reported as warnings"}})
+        "compatibility":{"scope":"common explicit primitives/cuts, migrated standalone primitive defaults and legacy extrusion/revolve constructors, rectangular slots, straight-gear construction, PCD counterbores, and executable flange/stepped-shaft/sleeve/blade/blisk templates","legacy_typical_defaults":"restored only for migrated Quick constructors/templates, straight gears, and rectangular slots; defaults and raw-dimension mappings are reported as warnings","loft_geometry":"blade and blisk lofts are locally approximate faceted B-Reps"}})
 }
 
 fn parse_legacy_template(raw: &str, normalized: &str) -> Option<Value> {
+    if contains_any(normalized, &["整体叶盘", "叶盘", "叶轮", "blisk"]) {
+        return Some(parse_blisk_template(raw, normalized));
+    }
+    if contains_any(normalized, &["叶片", "blade"]) {
+        return Some(parse_blade_template(raw, normalized));
+    }
     if contains_any(normalized, &["阶梯轴", "台阶轴", "stepped shaft"]) {
         return Some(parse_stepped_shaft(raw, normalized));
     }
@@ -556,6 +542,409 @@ fn parse_legacy_template(raw: &str, normalized: &str) -> Option<Value> {
         return Some(parse_tube(raw, normalized));
     }
     None
+}
+
+fn parse_blade_template(raw: &str, text: &str) -> Value {
+    if has_unmigrated_blade_modifier(text) {
+        return result(
+            "unsupported",
+            raw,
+            None,
+            vec![],
+            vec![],
+            vec![issue(
+                "legacy_blade_modifier_unsupported",
+                "旧 Quick 叶片模板只迁移单个 loft 主体；孔、槽、螺纹、圆角/倒角或额外阵列不能被忽略，请拆成受支持的明确特征。",
+            )],
+        );
+    }
+
+    // Match the legacy `tpl_blade` precedence: height, length, final raw
+    // dimension, then 80 mm. The pair is the old root→tip chord shorthand.
+    let span_from_height = scalar(text, &["height", "高度", "thickness", "厚度", "厚", "高"]);
+    let span_from_length = scalar(text, &["length", "长度", "长边", "总长", "全长", "长"]);
+    let raw_dimensions = dimension_values(text);
+    let span_from_trailing_dimension = raw_dimensions.last().copied();
+    let span = span_from_height
+        .or(span_from_length)
+        .or(span_from_trailing_dimension)
+        .unwrap_or(80.0);
+    let pair = find_dimension_pair(text);
+    let chord_from_width = scalar(text, &["width", "宽度", "宽边", "宽"]);
+    let root_chord = pair
+        .map(|values| values[0])
+        .or(chord_from_width)
+        .unwrap_or(40.0);
+    let tip_chord = pair.map(|values| values[1]).unwrap_or(root_chord * 0.5);
+    if !span.is_finite()
+        || span <= 0.0
+        || !root_chord.is_finite()
+        || root_chord <= 0.0
+        || !tip_chord.is_finite()
+        || tip_chord <= 0.0
+    {
+        return parse_result_with_issue(
+            "needs_clarification",
+            raw,
+            "legacy_blade_invalid_dimensions",
+            "叶片展长、根弦长和梢弦长必须是有限正数。",
+        );
+    }
+
+    let mut parameters = serde_json::Map::new();
+    let mut sources = serde_json::Map::new();
+    parameters.insert("span".into(), json!(span));
+    let span_was_labeled = span_from_height.is_some() || span_from_length.is_some();
+    sources.insert(
+        "span".into(),
+        if span_was_labeled {
+            user_source(raw)
+        } else if span_from_trailing_dimension.is_some() {
+            derived_source(
+                raw,
+                "沿用旧 Python Quick 叶片模板：没有高度/长度标签时取最后一个原始尺寸。",
+            )
+        } else {
+            derived_source(raw, "沿用旧 Python Quick 叶片模板默认展长 80 mm。")
+        },
+    );
+    parameters.insert("root_chord".into(), json!(root_chord));
+    sources.insert(
+        "root_chord".into(),
+        if pair.is_some() || chord_from_width.is_some() {
+            user_source(raw)
+        } else {
+            derived_source(raw, "沿用旧 Python Quick 叶片模板默认根弦长 40 mm。")
+        },
+    );
+    parameters.insert("tip_chord".into(), json!(tip_chord));
+    sources.insert(
+        "tip_chord".into(),
+        if pair.is_some() {
+            user_source(raw)
+        } else {
+            derived_source(raw, "未提供尺寸对时，梢弦长取根弦长的一半。")
+        },
+    );
+    for (key, value, note) in [
+        ("thickness", 0.12, "沿用旧 Python Quick 叶片厚度比 0.12。"),
+        ("camber", 0.05, "沿用旧 Python Quick 叶片弯度比 0.05。"),
+        ("twist", 18.0, "沿用旧 Python Quick 叶片扭转角 18°。"),
+        ("sweep", 0.0, "沿用旧 Python Quick 叶片后掠量 0 mm。"),
+        ("sections", 8.0, "沿用旧 Python Quick 叶片截面数 8。"),
+        ("points", 26.0, "沿用旧 Python Quick 叶片翼型点数 26。"),
+    ] {
+        let value = if key == "sections" || key == "points" {
+            json!(value as u64)
+        } else {
+            json!(value)
+        };
+        parameters.insert(key.into(), value);
+        sources.insert(key.into(), derived_source(raw, note));
+    }
+    let feature = named_feature(
+        1,
+        "loft",
+        "add",
+        "叶片放样",
+        Value::Object(parameters),
+        Value::Object(sources),
+    );
+    let mut warnings = vec![
+        issue(
+            "legacy_template_migrated",
+            "已按旧 Python Quick 叶片模板建立单个 loft 特征；单位为 mm。",
+        ),
+        loft_approximation_warning(),
+    ];
+    if span_from_height.is_none() && span_from_length.is_none() {
+        warnings.push(issue(
+            "legacy_blade_span_fallback",
+            if span_from_trailing_dimension.is_some() {
+                "展长采用旧模板的末尾裸尺寸回退规则；该尺寸标签未明确说明为展长。"
+            } else {
+                "未提供尺寸，沿用旧模板默认值：展长 80 mm、根弦长 40 mm、梢弦长 20 mm。"
+            },
+        ));
+    }
+    plan_result(raw, "叶片", vec![feature], warnings)
+}
+
+fn parse_blisk_template(raw: &str, text: &str) -> Value {
+    if has_unmigrated_blade_modifier(text) {
+        return result(
+            "unsupported",
+            raw,
+            None,
+            vec![],
+            vec![],
+            vec![issue(
+                "legacy_blisk_modifier_unsupported",
+                "旧 Quick 叶盘模板只迁移圆盘、单个叶片 loft 和圆周阵列；额外孔、槽、螺纹、圆角/倒角或阵列修饰尚未迁移。",
+            )],
+        );
+    }
+
+    let diameter = scalar(
+        text,
+        &["outer diameter", "diameter", "外径", "直径", "大径"],
+    )
+    .unwrap_or(200.0);
+    let thickness =
+        scalar(text, &["height", "thickness", "高度", "厚度", "厚", "高"]).unwrap_or(30.0);
+    let blade_count_value = scalar(text, &["叶片数量", "叶片数", "叶数", "片数"])
+        .or_else(|| scalar(text, &["齿数", "teeth", "tooth count"]))
+        .or_else(|| scalar(text, &["count", "数量"]));
+    let blade_count = blade_count_value.unwrap_or(20.0);
+    if !diameter.is_finite() || diameter <= 0.0 || !thickness.is_finite() || thickness <= 0.0 {
+        return parse_result_with_issue(
+            "needs_clarification",
+            raw,
+            "legacy_blisk_invalid_dimensions",
+            "叶盘外径和盘厚必须是有限正数。",
+        );
+    }
+    if !blade_count.is_finite()
+        || blade_count.fract() != 0.0
+        || !(1.0..=10_000.0).contains(&blade_count)
+    {
+        return parse_result_with_issue(
+            "needs_clarification",
+            raw,
+            "legacy_blisk_invalid_blade_count",
+            "叶片数必须是 1 到 10000 之间的整数。",
+        );
+    }
+
+    let radius = diameter / 2.0;
+    let span_from_label = scalar(text, &["叶展", "展长", "叶高", "叶片长度", "叶片高度"]);
+    let span_from_length = scalar(text, &["length", "长度", "长边", "总长", "全长", "长"]);
+    let default_span = span_from_label.is_none() && span_from_length.is_none();
+    let mut span = span_from_label
+        .or(span_from_length)
+        .unwrap_or(radius * 0.35);
+    let span_clamped = span > radius;
+    if span_clamped {
+        span = radius * 0.35;
+    }
+    let root_chord = (thickness * 0.85).max(4.0);
+    let tip_chord = (thickness * 0.5).max(2.0);
+
+    let mut features = Vec::with_capacity(3);
+    let mut cylinder_sources = serde_json::Map::new();
+    cylinder_sources.insert(
+        "radius".into(),
+        derived_source(
+            raw,
+            "radius = 明确外径 / 2；未给外径时沿用旧模板默认外径 200 mm。",
+        ),
+    );
+    cylinder_sources.insert(
+        "height".into(),
+        if has_labeled_value(text, &["height", "thickness", "高度", "厚度", "厚", "高"]) {
+            user_source(raw)
+        } else {
+            derived_source(raw, "沿用旧 Python Quick 叶盘默认盘厚 30 mm。")
+        },
+    );
+    for (key, note) in [
+        ("center", "旧 Python Quick 叶盘盘体中心位于全局原点。"),
+        (
+            "base",
+            "旧 Python Quick 叶盘盘体 base=false，沿 Z 轴以原点为几何中心。",
+        ),
+        ("axis", "旧 Python Quick 叶盘盘体沿全局 Z 轴。"),
+        ("segments", "沿用旧 Python Quick 叶盘圆盘分段数 48。"),
+    ] {
+        cylinder_sources.insert(key.into(), derived_source(raw, note));
+    }
+    features.push(named_feature(
+        1,
+        "cylinder",
+        "add",
+        "叶盘轮毂",
+        json!({"radius":radius,"height":thickness,"center":[0.0,0.0,0.0],"base":false,"axis":"Z","segments":48}),
+        Value::Object(cylinder_sources),
+    ));
+
+    let mut loft_sources = serde_json::Map::new();
+    let loft_dimensions = [
+        (
+            "span",
+            span,
+            "叶展按旧 Python Quick 的显式尺寸或 0.35R 默认规则生成。",
+        ),
+        (
+            "root_chord",
+            root_chord,
+            "根弦长 = max(4 mm, 盘厚 × 0.85)。",
+        ),
+        ("tip_chord", tip_chord, "梢弦长 = max(2 mm, 盘厚 × 0.5)。"),
+    ];
+    for (key, _, note) in loft_dimensions {
+        loft_sources.insert(
+            key.into(),
+            if key == "span" && !default_span && !span_clamped {
+                user_source(raw)
+            } else {
+                derived_source(raw, note)
+            },
+        );
+    }
+    for (key, _value, note) in [
+        (
+            "thickness",
+            0.10,
+            "沿用旧 Python Quick 叶盘叶片厚度比 0.10。",
+        ),
+        ("camber", 0.06, "沿用旧 Python Quick 叶盘叶片弯度比 0.06。"),
+        ("twist", 22.0, "沿用旧 Python Quick 叶盘叶片扭转角 22°。"),
+        ("sweep", 3.0, "沿用旧 Python Quick 叶盘叶片后掠量 3 mm。"),
+        ("sections", 6.0, "沿用旧 Python Quick 叶盘叶片截面数 6。"),
+        ("points", 22.0, "沿用旧 Python Quick 叶盘叶片翼型点数 22。"),
+    ] {
+        loft_sources.insert(key.into(), derived_source(raw, note));
+    }
+    // Keep only parameters accepted by the versioned CADPlan schema. Legacy
+    // `compound`/`stack` flags were Python builder hints, not dimensions.
+    let loft_parameters = json!({
+        "span":span,"root_chord":root_chord,"tip_chord":tip_chord,
+        "thickness":0.10,"camber":0.06,"twist":22.0,"sweep":3.0,
+        "sections":6,"points":22,"rotate":["Y",90.0],"translate":[radius*0.90,0.0,0.0]
+    });
+    loft_sources.insert(
+        "rotate".into(),
+        derived_source(raw, "旧 Python Quick 将叶片绕 Y 轴旋转 90°。"),
+    );
+    loft_sources.insert(
+        "translate".into(),
+        derived_source(raw, "旧 Python Quick 将叶片沿 X 平移到盘半径的 90%。"),
+    );
+    features.push(named_feature(
+        2,
+        "loft",
+        "add",
+        "叶盘单片叶片放样",
+        loft_parameters,
+        Value::Object(loft_sources),
+    ));
+
+    let mut pattern_sources = serde_json::Map::new();
+    pattern_sources.insert(
+        "count".into(),
+        if blade_count_value.is_some() {
+            user_source(raw)
+        } else {
+            derived_source(raw, "沿用旧 Python Quick 叶盘默认叶片数 20。")
+        },
+    );
+    for (key, note) in [
+        ("mode", "叶盘模板使用圆周阵列。"),
+        ("axis", "叶盘模板沿全局 Z 轴阵列。"),
+        ("angle", "叶盘模板阵列角度为完整 360°。"),
+        ("full", "叶盘模板使用完整圆周等分。"),
+        ("center", "叶盘模板绕全局原点阵列。"),
+    ] {
+        pattern_sources.insert(key.into(), derived_source(raw, note));
+    }
+    let mut pattern = named_feature(
+        3,
+        "pattern",
+        "add",
+        "叶片圆周阵列",
+        json!({"mode":"circular","count":blade_count as u64,"axis":"Z","angle":360.0,"full":true,"center":[0.0,0.0,0.0]}),
+        Value::Object(pattern_sources),
+    );
+    pattern["relations"] = json!([{"type":"pattern_source","feature_id":"quick-0002"}]);
+    features.push(pattern);
+
+    let mut warnings = vec![
+        issue(
+            "legacy_template_migrated",
+            "已按旧 Python Quick 叶盘顺序生成轮毂圆柱、单片叶片 loft 与叶片圆周阵列。",
+        ),
+        loft_approximation_warning(),
+        issue(
+            "legacy_blisk_builder_hints_mapped",
+            "旧 Python 的 compound/stack 构建器提示未写入 CADPlan；Rust/OCCT 通过 pattern_source 和实体并集完成阵列。",
+        ),
+    ];
+    let mut defaults = Vec::new();
+    if !has_labeled_value(
+        text,
+        &["outer diameter", "diameter", "外径", "直径", "大径"],
+    ) {
+        defaults.push("外径 200 mm");
+    }
+    if !has_labeled_value(text, &["height", "thickness", "高度", "厚度", "厚", "高"]) {
+        defaults.push("盘厚 30 mm");
+    }
+    if blade_count_value.is_none() {
+        defaults.push("叶片数 20");
+    }
+    if default_span {
+        defaults.push("叶展 = 0.35 × 轮毂半径");
+    }
+    if !defaults.is_empty() {
+        warnings.push(issue(
+            "legacy_template_defaults",
+            format!(
+                "沿用旧 Python Quick 叶盘模板默认值：{}。",
+                defaults.join("、")
+            ),
+        ));
+    }
+    if span_clamped {
+        warnings.push(issue(
+            "legacy_blisk_span_clamped",
+            "输入叶展超过轮毂半径；沿用旧 Python Quick 行为，将叶展重置为 0.35 × 轮毂半径。",
+        ));
+    }
+    plan_result(raw, "叶盘", features, warnings)
+}
+
+fn has_unmigrated_blade_modifier(text: &str) -> bool {
+    contains_any(
+        text,
+        &[
+            "hole",
+            "孔",
+            "钻",
+            "槽",
+            "slot",
+            "groove",
+            "螺纹",
+            "thread",
+            "倒角",
+            "chamfer",
+            "圆角",
+            "fillet",
+            "圆周阵列",
+            "linear array",
+            "线性阵列",
+            "切除",
+        ],
+    )
+}
+
+fn named_feature(
+    id: usize,
+    kind: &str,
+    operation: &str,
+    name: &str,
+    parameters: Value,
+    sources: Value,
+) -> Value {
+    let mut feature = feature(id, kind, operation, parameters, sources);
+    feature["name"] = json!(name);
+    feature
+}
+
+fn loft_approximation_warning() -> Value {
+    issue(
+        "legacy_loft_geometry_approximation",
+        "旧 Quick 翼型截面已复用，但本地 OCCT 结果是三角面缝合的 facet-BREP 近似，不是解析放样曲面；当前 CATIA 映射也不是原生多截面 loft。",
+    )
 }
 
 /// Retain the old Quick `make_gear` constructor. Its tooth profile is a
@@ -4437,6 +4826,90 @@ mod tests {
             let output = parse(case["input"].as_str().unwrap());
             assert_eq!(output["status"], case["status"], "{}: {output}", case["input"]);
             assert!(output["plan"].is_null(), "rejected input must not yield a plan: {output}");
+        }
+    }
+
+    #[test]
+    fn legacy_blade_and_blisk_templates_match_python_parameter_and_default_contracts() {
+        let fixture: Value = serde_json::from_str(include_str!(
+            "../tests/fixtures/quick_legacy_blade_blisk_contract.json"
+        ))
+        .expect("blade/blisk Quick oracle fixture is valid JSON");
+
+        for case in fixture["accepted"].as_array().unwrap() {
+            let input = case["input"].as_str().unwrap();
+            let output = parse(input);
+            assert_eq!(output["status"], "ready", "{input}: {output}");
+            let plan = &output["plan"];
+            assert_eq!(
+                crate::cad_plan_validation::validate_plan(plan)["state"],
+                "valid",
+                "{input}: {}",
+                crate::cad_plan_validation::validate_plan(plan)
+            );
+            let features = plan["features"].as_array().unwrap();
+            let expected_features = case["features"].as_array().unwrap();
+            assert_eq!(features.len(), expected_features.len(), "{input}: {output}");
+            for (index, (actual, expected)) in
+                features.iter().zip(expected_features.iter()).enumerate()
+            {
+                assert_eq!(actual["id"], format!("quick-{:04}", index + 1), "{input}");
+                assert_eq!(actual["kind"], expected["kind"], "{input}: feature {index}");
+                assert_eq!(
+                    actual["operation"], expected["operation"],
+                    "{input}: feature {index}"
+                );
+                for (key, value) in expected["parameters"].as_object().unwrap() {
+                    assert_eq!(
+                        actual["parameters"][key], *value,
+                        "{input}: feature {index} parameter {key}"
+                    );
+                }
+                if let Some(source_id) = expected["pattern_source"].as_str() {
+                    assert_eq!(
+                        actual["relations"][0]["type"], "pattern_source",
+                        "{input}: pattern relation"
+                    );
+                    assert_eq!(
+                        actual["relations"][0]["feature_id"], source_id,
+                        "{input}: pattern source id"
+                    );
+                }
+            }
+            for (key, source_type) in case["source_types"].as_object().unwrap() {
+                let feature = features
+                    .iter()
+                    .find(|feature| feature["sources"].get(key).is_some())
+                    .unwrap_or_else(|| panic!("{input}: missing provenance for {key}"));
+                assert_eq!(
+                    feature["sources"][key]["type"], *source_type,
+                    "{input}: provenance for {key}"
+                );
+                assert_eq!(feature["sources"][key]["evidence"], input, "{input}: {key}");
+            }
+            assert!(
+                output["warnings"]
+                    .to_string()
+                    .contains("legacy_loft_geometry_approximation"),
+                "{input}: approximate geometry boundary must be visible: {output}"
+            );
+            assert!(
+                !plan.to_string().contains("\"compound\"")
+                    && !plan.to_string().contains("\"stack\""),
+                "{input}: Python-only builder hints must not violate the CADPlan schema"
+            );
+        }
+
+        for case in fixture["rejected"].as_array().unwrap() {
+            let input = case["input"].as_str().unwrap();
+            let output = parse(input);
+            assert_eq!(output["status"], case["status"], "{input}: {output}");
+            assert!(output["plan"].is_null(), "{input}: {output}");
+            assert!(
+                output.to_string().contains(case["issue"].as_str().unwrap()),
+                "{input}: expected explicit rejection {}: {output}",
+                case["issue"]
+            );
         }
     }
 

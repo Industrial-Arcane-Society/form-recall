@@ -303,8 +303,36 @@ fn build_quick_active_model(
 /// Headless production-path smoke entry used to prove that native Quick CAD
 /// starts and builds without invoking either Python or Node from PATH.
 pub fn headless_quick_smoke(resources: &Path, data_dir: &Path) -> Result<Value, String> {
+    headless_quick_smoke_with_text(resources, data_dir, "创建 100×60×20 毫米长方体")
+}
+
+/// Run arbitrary native Quick input through the same resource validation,
+/// OCCT build, file export, and active-model commit path without opening UI.
+pub fn headless_quick_smoke_with_text(
+    resources: &Path,
+    data_dir: &Path,
+    text: &str,
+) -> Result<Value, String> {
     native_bootstrap::validate_resource_root(resources)?;
-    build_quick_active_model(resources, data_dir, "创建 100×60×20 毫米长方体", 1)
+    let mut document = build_quick_active_model(resources, data_dir, text, 1)?;
+    if document["state"] == "complete" {
+        let aimodel_path = document["output_paths"]["aimodel"]
+            .as_str()
+            .ok_or("headless Quick output is missing the AIMODEL path")?;
+        let reloaded = native_model_io::load_aimodel(Path::new(aimodel_path))?;
+        let saved_count = reloaded["features"].as_array().map(Vec::len);
+        let built_count = document["features"].as_array().map(Vec::len);
+        if saved_count != built_count {
+            return Err(format!(
+                "headless Quick AIMODEL round-trip changed the feature count: built={built_count:?}, reloaded={saved_count:?}"
+            ));
+        }
+        document["headless_smoke"] = json!({
+            "aimodel_roundtrip": "passed",
+            "reloaded_feature_count": saved_count.unwrap_or_default()
+        });
+    }
+    Ok(document)
 }
 
 #[tauri::command]

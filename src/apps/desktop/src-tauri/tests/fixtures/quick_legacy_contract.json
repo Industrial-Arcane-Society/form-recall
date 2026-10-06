@@ -62,7 +62,6 @@
     }
   ],
   "rejected": [
-    {"input": "叶片", "status": "unsupported"},
     {"input": "制造一个符合标准的特殊零件", "status": "unsupported"}
   ]
 }
