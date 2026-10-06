@@ -1,0 +1,123 @@
+{
+  "schema_version": "1.0",
+  "legacy_entrypoint": "src/legacy/ai_modeler/core/parsing/nlparser.py::Parser.parse",
+  "legacy_accepted": [
+    {
+      "input": "轴 直径20 长度100",
+      "recognized": 1,
+      "warnings": [],
+      "feature": {
+        "kind": "cylinder",
+        "operation": "add",
+        "parameters": {
+          "radius": 10.0,
+          "height": 100.0,
+          "center": [0.0, 0.0, 0.0],
+          "base": false
+        }
+      },
+      "bbox_mm": [20.0, 20.0, 100.0],
+      "mesh_volume_mm3": 31326.286132812376
+    },
+    {
+      "input": "实心轴 d20 L100",
+      "recognized": 1,
+      "warnings": [],
+      "feature": {
+        "kind": "cylinder",
+        "operation": "add",
+        "parameters": {
+          "radius": 10.0,
+          "height": 100.0,
+          "center": [0.0, 0.0, 0.0],
+          "base": false
+        }
+      },
+      "bbox_mm": [20.0, 20.0, 100.0],
+      "mesh_volume_mm3": 31326.286132812376
+    },
+    {
+      "input": "轴 长度100",
+      "recognized": 1,
+      "warning_contains": "d",
+      "feature": {
+        "kind": "cylinder",
+        "operation": "add",
+        "parameters": {
+          "radius": 15.0,
+          "height": 100.0,
+          "center": [0.0, 0.0, 0.0],
+          "base": false
+        }
+      },
+      "bbox_mm": [30.0, 30.0, 100.0],
+      "mesh_volume_mm3": 70484.14379882792
+    }
+  ],
+  "known_legacy_discrepancies": [
+    {
+      "input": "光轴 直径20 长100",
+      "legacy_actual": {
+        "kind": "cylinder",
+        "radius": 15.0,
+        "height": 100.0,
+        "warning_contains": "d"
+      },
+      "migration_behavior": {
+        "kind": "cylinder",
+        "radius": 10.0,
+        "height": 100.0,
+        "status": "ready"
+      },
+      "reason": "旧 Python part-library 参数绑定没有把“直径20”绑定到 d，随后静默使用 Ø30 默认值；Rust 保留明确的用户尺寸并记录这项差异。"
+    },
+    {
+      "input": "轴 直径20",
+      "legacy_actual": {
+        "kind": "box",
+        "bbox_mm": [20.0, 60.0, 20.0]
+      },
+      "migration_behavior": {
+        "status": "needs_clarification",
+        "issue": "legacy_shaft_length_missing"
+      },
+      "reason": "旧解析器缺少轴长时会将孤立数值回退成长方体；Rust 要求补齐轴长，不把错误形体称为轴。"
+    }
+  ],
+  "native_rust_expected": [
+    {
+      "input": "轴 直径20 长度100",
+      "parameters": {"radius": 10.0, "height": 100.0, "base": false},
+      "dimensions_mm": [20.0, 20.0, 100.0],
+      "legacy_mesh_volume_mm3": 31326.286132812376,
+      "max_relative_volume_delta": 0.003
+    },
+    {
+      "input": "实心轴 d20 L100",
+      "parameters": {"radius": 10.0, "height": 100.0, "base": false},
+      "dimensions_mm": [20.0, 20.0, 100.0],
+      "legacy_mesh_volume_mm3": 31326.286132812376,
+      "max_relative_volume_delta": 0.003
+    },
+    {
+      "input": "轴 长度100",
+      "parameters": {"radius": 15.0, "height": 100.0, "base": false},
+      "dimensions_mm": [30.0, 30.0, 100.0],
+      "legacy_mesh_volume_mm3": 70484.14379882792,
+      "max_relative_volume_delta": 0.003,
+      "warning_code": "legacy_shaft_diameter_defaulted"
+    }
+  ],
+  "not_ready": [
+    {
+      "input": "轴 直径20",
+      "status": "needs_clarification",
+      "issue": "legacy_shaft_length_missing"
+    },
+    {
+      "input": "轴 直径20 长度100 通孔6",
+      "status": "unsupported",
+      "issue": "legacy_shaft_modifier_not_migrated"
+    }
+  ]
+}

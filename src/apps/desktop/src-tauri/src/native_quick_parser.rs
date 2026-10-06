@@ -29,7 +29,7 @@ pub fn parse(text: &str) -> Value {
     let mut unsupported = Vec::<Value>::new();
     let mut warnings = vec![json!({
         "code":"legacy_implicit_dimensions_removed",
-        "message":"仅已迁移的旧 Quick 基础体、拉伸/回转、模板和矩形槽规则沿用默认值，并逐项说明；其余缺少必需尺寸或孔位时返回澄清。"
+        "message":"仅已迁移的旧 Quick 基础体、单段实心轴、拉伸/回转、模板和矩形槽规则沿用默认值，并逐项说明；其余缺少必需尺寸或孔位时返回澄清。"
     })];
     if text.trim().is_empty() {
         return result(
@@ -62,6 +62,9 @@ pub fn parse(text: &str) -> Value {
         return parsed;
     }
     if let Some(parsed) = parse_legacy_template(text, &normalized) {
+        return parsed;
+    }
+    if let Some(parsed) = parse_legacy_shaft(text, &normalized) {
         return parsed;
     }
 
@@ -538,7 +541,7 @@ fn result(
     unsupported: Vec<Value>,
 ) -> Value {
     json!({"status":status,"source_text":text,"plan":plan,"warnings":warnings,"questions":questions,"unsupported":unsupported,
-        "compatibility":{"scope":"common explicit primitives/cuts, migrated standalone primitive defaults and legacy extrusion/revolve constructors, rectangular slots, flat-washer rings, cylindrical/conical spring helices, measured socket-head screws with optional washers, V-belt pulleys, timing pulleys, straight-gear construction, PCD counterbores, and executable flange/stepped-shaft/sleeve/blade/blisk templates","legacy_typical_defaults":"restored only for migrated Quick constructors/templates, straight gears, timing pulleys, V-belt pulleys, socket-head screw catalog recipes, rectangular slots, flat-washer thickness, and spring wire/turn defaults; defaults and raw-dimension mappings are reported as warnings","loft_geometry":"blade and blisk lofts are locally approximate faceted B-Reps","timing_pulley_geometry":"native timing pulley teeth are approximate trapezoidal prisms fused to an analytic annular blank","vbelt_pulley_geometry":"standard V-groove pulley is an approximate axisymmetric revolve; legacy spoke variants and CATIA-native groove features are not included","helix_geometry":"spring helices are locally approximate faceted B-Reps and are not native CATIA features","socket_head_bolt_geometry":"measured catalog dimensions and washers are preserved; native Rust adds visible faceted threads where the legacy Python Quick recipe reconstructed a smooth shank"}})
+        "compatibility":{"scope":"common explicit primitives/cuts, migrated standalone primitive defaults and legacy extrusion/revolve constructors, centered solid-shaft aliases, rectangular slots, flat-washer rings, cylindrical/conical spring helices, measured socket-head screws with optional washers, V-belt pulleys, timing pulleys, straight-gear construction, PCD counterbores, and executable flange/stepped-shaft/sleeve/blade/blisk templates","legacy_typical_defaults":"restored only for migrated Quick constructors/templates, centered solid shafts (Ø30 mm when diameter is absent), straight gears, timing pulleys, V-belt pulleys, socket-head screw catalog recipes, rectangular slots, flat-washer thickness, and spring wire/turn defaults; defaults and raw-dimension mappings are reported as warnings","loft_geometry":"blade and blisk lofts are locally approximate faceted B-Reps","timing_pulley_geometry":"native timing pulley teeth are approximate trapezoidal prisms fused to an analytic annular blank","vbelt_pulley_geometry":"standard V-groove pulley is an approximate axisymmetric revolve; legacy spoke variants and CATIA-native groove features are not included","helix_geometry":"spring helices are locally approximate faceted B-Reps and are not native CATIA features","socket_head_bolt_geometry":"measured catalog dimensions and washers are preserved; native Rust adds visible faceted threads where the legacy Python Quick recipe reconstructed a smooth shank","solid_shaft_geometry":"the old mesh kernel used a 48-sided cylinder; Rust/OCCT uses an analytic cylinder, so bounding boxes agree while volume differs by the expected polygonal approximation"}})
 }
 
 fn parse_legacy_template(raw: &str, normalized: &str) -> Option<Value> {
@@ -558,6 +561,198 @@ fn parse_legacy_template(raw: &str, normalized: &str) -> Option<Value> {
         return Some(parse_tube(raw, normalized));
     }
     None
+}
+
+/// Migrate the legacy part-library solid-shaft recipe. The old `_shaft`
+/// builder emits a centered cylinder; its missing-diameter default is 30 mm.
+/// This route deliberately excludes compound shafts and refuses to silently
+/// keep the old parser's box fallback when shaft length is missing.
+fn parse_legacy_shaft(raw: &str, text: &str) -> Option<Value> {
+    let compound_names = [
+        "轴承",
+        "轴套",
+        "轴向",
+        "轴线",
+        "轴孔",
+        "轴颈",
+        "阶梯轴",
+        "台阶轴",
+        "齿轮轴",
+        "曲轴",
+        "凸轮轴",
+        "花键轴",
+        "空心轴",
+        "主轴",
+        "转轴",
+        "传动轴",
+        "驱动轴",
+        "电机轴",
+        "蜗杆",
+        "万向节",
+    ];
+    if contains_any(text, &compound_names) {
+        return None;
+    }
+    let named_shaft = contains_any(text, &["光轴", "实心轴", "圆柱轴"]);
+    let bare_shaft_noun = text.trim_start().starts_with("轴") || text.contains("的轴");
+    if !named_shaft && !bare_shaft_noun {
+        return None;
+    }
+
+    if contains_any(
+        text,
+        &[
+            "通孔", "盲孔", "孔", "键槽", "凹槽", "槽", "倒角", "圆角", "螺纹", "thread",
+        ],
+    ) {
+        return Some(result(
+            "unsupported",
+            raw,
+            None,
+            vec![],
+            vec![],
+            vec![issue(
+                "legacy_shaft_modifier_not_migrated",
+                "当前仅迁移旧 Quick 的单段实心轴圆柱配方；附加孔、槽、倒角和螺纹要求尚未迁移。",
+            )],
+        ));
+    }
+
+    let diameter = match shaft_dimension(text, &["diameter", "轴径", "直径", "外径"], "d") {
+        Ok(value) => value,
+        Err(()) => {
+            return Some(parse_result_with_issue(
+                "needs_clarification",
+                raw,
+                "legacy_shaft_diameter_conflict",
+                "轴径出现冲突或无效数值；请给出唯一的正轴径。",
+            ));
+        }
+    };
+    let length = match shaft_dimension(text, &["length", "轴长", "长度", "长"], "l") {
+        Ok(value) => value,
+        Err(()) => {
+            return Some(parse_result_with_issue(
+                "needs_clarification",
+                raw,
+                "legacy_shaft_length_conflict",
+                "轴长出现冲突或无效数值；请给出唯一的正长度。",
+            ));
+        }
+    };
+    let Some(length) = length else {
+        return Some(parse_result_with_issue(
+            "needs_clarification",
+            raw,
+            "legacy_shaft_length_missing",
+            "实心轴需要明确轴长；旧解析器在缺少轴长时可能误退化成长方体，Rust 不会沿用该误判。",
+        ));
+    };
+    if !length.is_finite() || length <= 0.0 {
+        return Some(parse_result_with_issue(
+            "needs_clarification",
+            raw,
+            "legacy_shaft_length_invalid",
+            "轴长必须是有限正数。",
+        ));
+    }
+    let (diameter, diameter_defaulted) = match diameter {
+        Some(diameter) if diameter.is_finite() && diameter > 0.0 => (diameter, false),
+        Some(_) => {
+            return Some(parse_result_with_issue(
+                "needs_clarification",
+                raw,
+                "legacy_shaft_diameter_invalid",
+                "轴径必须是有限正数。",
+            ));
+        }
+        None => (30.0, true),
+    };
+
+    let radius = diameter / 2.0;
+    let mut parameters = serde_json::Map::new();
+    parameters.insert("radius".into(), json!(radius));
+    parameters.insert("height".into(), json!(length));
+    parameters.insert("center".into(), json!([0.0, 0.0, 0.0]));
+    parameters.insert("base".into(), json!(false));
+    parameters.insert("axis".into(), json!("Z"));
+    parameters.insert("segments".into(), json!(48));
+
+    let mut sources = serde_json::Map::new();
+    sources.insert(
+        "radius".into(),
+        if diameter_defaulted {
+            derived_source(
+                raw,
+                "旧 Python Quick 轴配方未提供轴径时默认 Ø30 mm，再除以 2 得到半径。",
+            )
+        } else {
+            derived_source(raw, "按用户给出的轴径除以 2 换算为圆柱半径。")
+        },
+    );
+    sources.insert("height".into(), user_source(raw));
+    sources.insert(
+        "center".into(),
+        derived_source(raw, "沿用旧 Python Quick 单段轴以几何中心放在全局原点。"),
+    );
+    sources.insert(
+        "base".into(),
+        derived_source(raw, "旧轴特征使用 base=false，轴向范围以中心对称。"),
+    );
+    sources.insert(
+        "axis".into(),
+        derived_source(raw, "旧 Python Quick 单段轴沿全局 Z 轴。"),
+    );
+    sources.insert(
+        "segments".into(),
+        derived_source(raw, "旧多边形几何内核的圆柱默认 48 段。"),
+    );
+
+    let mut warnings = vec![issue(
+        "legacy_shaft_migrated",
+        "已按旧 Python Quick 实心轴配方建立居中圆柱；旧网格使用 48 边近似圆柱，Rust/OCCT 以解析圆柱建模。",
+    )];
+    if diameter_defaulted {
+        warnings.push(issue(
+            "legacy_shaft_diameter_defaulted",
+            "沿用旧 Python Quick 轴径默认值 Ø30 mm；输入没有提供轴径，请核对模型。",
+        ));
+    }
+    if !has_unit(text) {
+        warnings.push(issue(
+            "unit_interpreted_as_mm",
+            "未写长度单位的轴尺寸按旧 Quick 默认单位 mm 解释。",
+        ));
+    }
+
+    let feature = feature(
+        1,
+        "cylinder",
+        "add",
+        Value::Object(parameters),
+        Value::Object(sources),
+    );
+    Some(plan_result(
+        raw,
+        &format!("实心轴 Ø{diameter}×{length} mm"),
+        vec![feature],
+        warnings,
+    ))
+}
+
+fn shaft_dimension(text: &str, labels: &[&str], symbol: &str) -> Result<Option<f64>, ()> {
+    let labeled = scalar(text, labels);
+    let symbolic = short_scalar(text, symbol);
+    if labeled.is_some_and(|value| !value.is_finite())
+        || symbolic.is_some_and(|value| !value.is_finite())
+    {
+        return Err(());
+    }
+    match (labeled, symbolic) {
+        (Some(a), Some(b)) if !close(a, b) => Err(()),
+        (Some(value), _) | (_, Some(value)) => Ok(Some(value)),
+        (None, None) => Ok(None),
+    }
 }
 
 /// Retain the legacy Quick thin flat-washer recipe: a centered cylinder and a
@@ -7386,5 +7581,73 @@ mod tests {
         );
         assert_eq!(candidate["features"][1]["enabled"], false);
         assert_eq!(candidate["features"][1]["parameters"]["corner"], 4.0);
+    }
+
+    #[test]
+    fn legacy_single_solid_shaft_recipes_match_python_oracle_and_provenance() {
+        let fixture: Value = serde_json::from_str(include_str!(
+            "../tests/fixtures/quick_legacy_solid_shaft_contract.json"
+        ))
+        .expect("solid-shaft Python oracle fixture is valid JSON");
+
+        for case in fixture["native_rust_expected"].as_array().unwrap() {
+            let input = case["input"].as_str().unwrap();
+            let output = parse(input);
+            assert_eq!(output["status"], "ready", "{input}: {output}");
+            let features = output["plan"]["features"].as_array().unwrap();
+            assert_eq!(features.len(), 1, "{input}: {output}");
+            let shaft = &features[0];
+            assert_eq!(shaft["kind"], "cylinder", "{input}");
+            assert_eq!(shaft["operation"], "add", "{input}");
+            for key in ["radius", "height", "base"] {
+                assert_eq!(
+                    shaft["parameters"][key], case["parameters"][key],
+                    "{input}: {key}"
+                );
+            }
+            assert_eq!(shaft["parameters"]["center"], json!([0.0, 0.0, 0.0]));
+            assert_eq!(shaft["parameters"]["axis"], "Z");
+            assert_eq!(shaft["parameters"]["segments"], 48);
+            assert_eq!(
+                shaft["sources"]["radius"]["type"], "derived",
+                "{input}"
+            );
+            assert_eq!(shaft["sources"]["height"]["type"], "user", "{input}");
+            if let Some(code) = case["warning_code"].as_str() {
+                assert!(output["warnings"].to_string().contains(code), "{input}: {output}");
+            }
+            assert_eq!(
+                crate::cad_plan_validation::validate_plan(&output["plan"])["state"],
+                "valid",
+                "{input}"
+            );
+            assert_eq!(
+                crate::native_plan_geometry::preflight(&output["plan"])
+                    .unwrap()["state"],
+                "valid",
+                "{input}"
+            );
+        }
+
+        for case in fixture["known_legacy_discrepancies"].as_array().unwrap() {
+            if case["input"] == "光轴 直径20 长100" {
+                let output = parse(case["input"].as_str().unwrap());
+                assert_eq!(output["status"], "ready", "{output}");
+                assert_eq!(output["plan"]["features"][0]["parameters"]["radius"], 10.0);
+                assert!(output["warnings"].to_string().contains("legacy_shaft_migrated"));
+            }
+        }
+
+        for case in fixture["not_ready"].as_array().unwrap() {
+            let input = case["input"].as_str().unwrap();
+            let output = parse(input);
+            assert_eq!(output["status"], case["status"], "{input}: {output}");
+            assert!(output["plan"].is_null(), "{input}: {output}");
+            assert!(
+                format!("{} {}", output["questions"], output["unsupported"])
+                    .contains(case["issue"].as_str().unwrap()),
+                "{input}: {output}"
+            );
+        }
     }
 }
