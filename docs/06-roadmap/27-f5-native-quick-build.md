@@ -1,5 +1,7 @@
 # F5.3：Quick 原生建模首个闭环
 
+旧版 Python Quick 的真实入口、解析行为及本轮 Rust 覆盖对照见 [F5.0 能力基线](./F5.0-legacy-quick-capability-baseline.md)。
+
 ## 范围
 
 Quick 页的明确尺寸描述直接调用 Rust `quick_build`：原生解析、CADPlan 校验、OCCT 建模、GLB 交互网格、AIMODEL、binary STL 和 Wavefront OBJ 输出，返回桌面 DocumentState。耗时建模在阻塞工作线程运行。
