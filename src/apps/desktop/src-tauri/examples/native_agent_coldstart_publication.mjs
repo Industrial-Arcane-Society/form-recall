@@ -188,7 +188,16 @@ function safeBindingProjection(value) {
 
 function safeVisionReviewProjection(value) {
   const coverageClasses = new Set(['verified', 'estimated', 'partial', 'unobservable', 'unverified', 'unknown'])
+  const views = new Set(['iso', 'front', 'right', 'top', 'back', 'left', 'bottom'])
+  const evidenceStatuses = new Set(['match', 'approximate_match', 'mismatch', 'partial_mismatch', 'unobservable', 'unknown', 'out_of_scope'])
+  const bindingReasons = new Set(['bound', 'duplicate_evidence_id', 'missing_evidence_id', 'unsupported_assessment_basis',
+    'target_context_unverified', 'reference_or_model_text_missing', 'item_text_missing', 'difference_text_missing', 'assessment_unknown'])
+  const mappingStatuses = new Set(['mapped', 'unmapped', 'duplicate'])
+  const attributionStatuses = new Set(['verified_ids', 'unattributed', 'out_of_scope'])
+  const coverageReasons = new Set(['claimed_covered', 'mapping_not_mapped', 'out_of_scope', 'assessment_unknown',
+    'stage_unattributed', 'not_claimed_covered'])
   const reviewCount = value => Number.isSafeInteger(value) && value >= 0 && value <= 1_000_000 ? value : null
+  const enumValue = (value, allowed) => allowed.has(value) ? value : 'unknown'
   return {
     schema: 'vision_review_diagnostics_v1',
     review_count: reviewCount(value?.review_count),
@@ -204,6 +213,20 @@ function safeVisionReviewProjection(value) {
       view_comparable: typeof row?.view_comparable === 'boolean' ? row.view_comparable : null,
       coverage_class: coverageClasses.has(row?.coverage_class) ? row.coverage_class : 'unknown',
       stage_eligible: typeof row?.stage_eligible === 'boolean' ? row.stage_eligible : null,
+      selector: {
+        reference_index: reviewCount(row?.selector?.reference_index),
+        view: enumValue(row?.selector?.view, views),
+        status: row?.selector?.status === 'selected' ? 'selected' : 'unknown',
+      },
+      evidence: Array.isArray(row?.evidence) ? row.evidence.slice(0, 100).map((item, evidence_index) => ({
+        evidence_index,
+        status: enumValue(item?.status, evidenceStatuses),
+        mapping_status: enumValue(item?.mapping_status, mappingStatuses),
+        attribution_status: enumValue(item?.attribution_status, attributionStatuses),
+        binding_reason: enumValue(item?.binding_reason, bindingReasons),
+        coverage_reason: enumValue(item?.coverage_reason, coverageReasons),
+        target_context_validated: typeof item?.target_context_validated === 'boolean' ? item.target_context_validated : null,
+      })) : [],
     })) : [],
   }
 }

@@ -25,7 +25,11 @@
 
 Run40 的 safe summary 记录 `independent_review_present=true`、`manifest_valid=true`、单张参考图的 `reference_id_bound=true` 和 `reference_sha_bound=true`，但 `original_reference_covered=false`、`host_coverage_complete=false`、`all_references_covered=false`；所以 visual gate 拒绝通过是符合当前证据的结果。`vision_review_projection` 的唯一 review row 为 `required=7`、`mapped=7`、`unknown=1`、`coverage_class=partial`、`stage_eligible=true`。该投影不包含已选择的 reference selector，也不包含逐条 evidence 的固定状态，因此无法把这条 unknown 追溯到具体 producer/consumer 分支。
 
-本轮没有发现可复现的代码缺陷；不能放宽 coverage gate，也不能把“存在 independent review”当成审查已覆盖原图。若要继续定位，需要在 safe allowlist 中增加不含 prompt/provider 文本或几何载荷的 per-call selector 与 per-evidence binding/coverage reason code，然后用定向 fixture 覆盖 unknown 来源。Run40 的候选仍不通过视觉验收；该诊断不替代原图与候选的独立视觉比较。
+Run40 本身没有足够字段将 unknown 追溯到具体 producer 分支；这不等于发现 coverage gate 缺陷，不能放宽 gate，也不能把“存在 independent review”当成审查已覆盖原图。后续本地诊断投影已补充 per-call selector 的安全视图枚举/reference index，以及按原 evidence 顺序生成的 ordinal、固定 evidence status/mapping/attribution、binding reason 与 coverage reason。producer 的 binding reason 只从固定检查结果枚举得出；publication consumer 再次执行 allowlist。投影不输出 raw evidence/reference ID、图像路径、SHA、prompt/provider 文本或几何载荷。合成 fixture 锁定单条 unknown 的 binding reason 可追溯、selector 可见且 sentinel 不外泄。
+
+这只增强未来安全诊断的可定位性，不回填 Run40 缺少的字段，也不改变 `required=7` / `mapped=7` / `unknown=1` / `partial` 的历史摘要、coverage 计算或验收 gate。尚未证明哪个字段缺失是 Run40 的实际根因；不能放宽 coverage gate，不能把“存在 independent review”当成审查已覆盖原图。Run40 的候选仍不通过视觉验收；本地投影回归不替代原图与候选的独立视觉比较。
+
+验证：`node --test src/apps/desktop/src-tauri/examples/native_agent_coldstart_gates.test.mjs`（137 passed）；离线 Rust 定向回归 `pwsh -NoProfile -File scripts/test-lib.ps1 -Offline -Filter native_vision_domain::tests::user_override_requires_exact_host_turn_quote_and_score_stays_advisory -Exact -NoCapture`（1 passed）；两个修改过的 `.mjs` `node --check` 及 `git diff --check` 通过。全 crate `cargo fmt --check` 不适合作为本次通过项：仓库多处既有 Rust 源文件本就与当前 rustfmt 输出不同，本次未格式化无关代码。没有调用 DSH/provider 或 GUI。
 
 ## 安全产物身份
 

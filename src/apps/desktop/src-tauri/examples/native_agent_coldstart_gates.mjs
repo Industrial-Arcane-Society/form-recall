@@ -296,8 +296,16 @@ export function summarizeCordisBindingDiagnostics(input = {}) {
 }
 
 const SAFE_VISUAL_COVERAGE_CLASSES = new Set(['verified', 'estimated', 'partial', 'unobservable', 'unverified'])
+const SAFE_REVIEW_VIEWS = new Set(['iso', 'front', 'right', 'top', 'back', 'left', 'bottom'])
+const SAFE_EVIDENCE_STATUSES = new Set(['match', 'approximate_match', 'mismatch', 'partial_mismatch', 'unobservable', 'unknown', 'out_of_scope'])
+const SAFE_EVIDENCE_BINDING_REASONS = new Set(['bound', 'duplicate_evidence_id', 'missing_evidence_id',
+  'unsupported_assessment_basis', 'target_context_unverified', 'reference_or_model_text_missing',
+  'item_text_missing', 'difference_text_missing', 'assessment_unknown'])
+const SAFE_EVIDENCE_MAPPING = new Set(['mapped', 'unmapped', 'duplicate'])
+const SAFE_STAGE_ATTRIBUTION = new Set(['verified_ids', 'unattributed', 'out_of_scope'])
 const safeEvidenceCount = value => Number.isSafeInteger(value) && value >= 0 && value <= 1_000_000 ? value : null
 const safeDiagnosticBoolean = value => typeof value === 'boolean' ? value : null
+const safeEnum = (value, allowed) => allowed.has(value) ? value : 'unknown'
 
 // Persist only fixed enums and counts from native review diagnostics. Review
 // text, image data, hashes, evidence IDs, and tool-call identity are ignored.
@@ -305,6 +313,24 @@ export function summarizeVisualReviewDiagnostics(domain = {}) {
   const history = rows(domain?.reference_similarity_history).slice(-64)
   const reviews = history.map(row => {
     const d = row?.review_diagnostics
+    const view = SAFE_REVIEW_VIEWS.has(row?.view) ? row.view : 'unknown'
+    const referenceIndex = Number.isSafeInteger(row?.reference_image_index) && row.reference_image_index >= 0
+      && row.reference_image_index <= 1_000_000 ? row.reference_image_index : null
+    const claimedCoverage = new Set(rows(row?.covered_evidence_ids).filter(id => typeof id === 'string'))
+    const evidence = rows(row?.evidence).slice(0, 100).map((item, evidence_index) => {
+      const status = safeEnum(item?.status, SAFE_EVIDENCE_STATUSES)
+      const mapping_status = safeEnum(item?.evidence_mapping_status, SAFE_EVIDENCE_MAPPING)
+      const attribution_status = safeEnum(item?.stage_attribution_status, SAFE_STAGE_ATTRIBUTION)
+      const binding_reason = safeEnum(item?.binding_reason, SAFE_EVIDENCE_BINDING_REASONS)
+      let coverage_reason = 'claimed_covered'
+      if (mapping_status !== 'mapped') coverage_reason = 'mapping_not_mapped'
+      else if (status === 'out_of_scope') coverage_reason = 'out_of_scope'
+      else if (status === 'unknown' || status === 'unobservable') coverage_reason = 'assessment_unknown'
+      else if (attribution_status !== 'verified_ids') coverage_reason = 'stage_unattributed'
+      else if (typeof item?.evidence_id !== 'string' || !claimedCoverage.has(item.evidence_id)) coverage_reason = 'not_claimed_covered'
+      return { evidence_index, status, mapping_status, attribution_status, binding_reason, coverage_reason,
+        target_context_validated: safeDiagnosticBoolean(item?.target_context_validated) }
+    })
     return {
       required_evidence_count: safeEvidenceCount(d?.required_evidence_count),
       mapped_evidence_count: safeEvidenceCount(d?.mapped_evidence_count),
@@ -317,6 +343,9 @@ export function summarizeVisualReviewDiagnostics(domain = {}) {
       view_comparable: safeDiagnosticBoolean(d?.view_comparable),
       coverage_class: SAFE_VISUAL_COVERAGE_CLASSES.has(d?.coverage_class) ? d.coverage_class : 'unknown',
       stage_eligible: safeDiagnosticBoolean(d?.stage_eligible),
+      selector: { reference_index: referenceIndex, view,
+        status: referenceIndex !== null && view !== 'unknown' ? 'selected' : 'unknown' },
+      evidence,
     }
   })
   return { schema: 'vision_review_diagnostics_v1', review_count: reviews.length, reviews }

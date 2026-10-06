@@ -682,7 +682,7 @@ test('published cold-start files contain only safe gates and aggregate projectio
   const output = join(root, 'run')
   const secrets = ['sentinel-acp-call-id', 'sentinel-native-uuid', 'sentinel-answer-body',
     'sentinel-thought-body', 'sentinel-tool-payload', 'sentinel-argument-value', 'sentinel-scope',
-    'sentinel-runtime', 'sentinel-reason', 'sentinel-evidence-error', 'sentinel-gate-name']
+    'sentinel-runtime', 'sentinel-reason', 'sentinel-evidence-error', 'sentinel-gate-name', 'raw-binding-reason-sentinel']
   try {
     const key = randomBytes(32), digestByEvent = new WeakMap()
     const start = { kind: 'tool_call', tool_call_id: secrets[0], title: 'cad_finish_model', status: 'in_progress', at_ms: 1 }
@@ -727,7 +727,11 @@ test('published cold-start files contain only safe gates and aggregate projectio
           missing_evidence_count: 0, unsupported_evidence_count: 0, out_of_scope_evidence_count: 0,
           mismatch_evidence_count: 0, unknown_evidence_count: 0,
           view_comparable: true, coverage_class: 'verified', stage_eligible: true, secret: secrets[0] },
-        summary: secrets[1], evidence: [{ evidence_id: secrets[2], reference: secrets[3] }],
+        summary: secrets[1],
+        reference_image_index: 2, view: 'iso', covered_evidence_ids: [],
+        evidence: [{ evidence_id: secrets[2], status: 'unknown', evidence_mapping_status: 'mapped',
+          stage_attribution_status: 'unattributed', binding_reason: 'raw-binding-reason-sentinel',
+          reference: secrets[3], prompt: secrets[3], geometry: secrets[4] }],
       }] }),
       buildStatus: { status: 'passed', exit_code: 0, elapsed_ms: 12, stdout_bytes: 0, stderr_bytes: 0, raw: secrets[4] } })
     const listFiles = directory => readdirSync(directory, { withFileTypes: true }).flatMap(entry => {
@@ -796,7 +800,11 @@ test('published cold-start files contain only safe gates and aggregate projectio
       reviews: [{ required_evidence_count: 2, mapped_evidence_count: 2, unmapped_evidence_count: 0,
         missing_evidence_count: 0, unsupported_evidence_count: 0, out_of_scope_evidence_count: 0,
         mismatch_evidence_count: 0, unknown_evidence_count: 0,
-        view_comparable: true, coverage_class: 'verified', stage_eligible: true }] })
+        view_comparable: true, coverage_class: 'verified', stage_eligible: true,
+        selector: { reference_index: 2, view: 'iso', status: 'selected' }, evidence: [
+          { evidence_index: 0, status: 'unknown', mapping_status: 'mapped', attribution_status: 'unattributed',
+            binding_reason: 'unknown', coverage_reason: 'assessment_unknown', target_context_validated: null },
+        ] }] })
   } finally {
     rmSync(root, { recursive: true, force: true })
   }
@@ -919,22 +927,55 @@ test('visual review diagnostics retain only bounded counts and fixed status enum
   assert.deepEqual(projection.reviews[0], { required_evidence_count: 3, mapped_evidence_count: 3,
     unmapped_evidence_count: 0, missing_evidence_count: 0, unsupported_evidence_count: 0,
     out_of_scope_evidence_count: 0, mismatch_evidence_count: 0, unknown_evidence_count: 0,
-    view_comparable: true, coverage_class: 'verified', stage_eligible: true })
+    view_comparable: true, coverage_class: 'verified', stage_eligible: true,
+    selector: { reference_index: null, view: 'unknown', status: 'unknown' }, evidence: [] })
   assert.deepEqual(projection.reviews[1], { required_evidence_count: 3, mapped_evidence_count: 2,
     unmapped_evidence_count: 1, missing_evidence_count: 1, unsupported_evidence_count: 1,
     out_of_scope_evidence_count: 0, mismatch_evidence_count: 1, unknown_evidence_count: 0,
-    view_comparable: true, coverage_class: 'partial', stage_eligible: false })
+    view_comparable: true, coverage_class: 'partial', stage_eligible: false,
+    selector: { reference_index: null, view: 'unknown', status: 'unknown' }, evidence: [] })
   assert.deepEqual(projection.reviews[2], { required_evidence_count: null, mapped_evidence_count: null,
     unmapped_evidence_count: null, missing_evidence_count: null, unsupported_evidence_count: null,
     out_of_scope_evidence_count: null, mismatch_evidence_count: null, unknown_evidence_count: null,
-    view_comparable: null, coverage_class: 'unknown', stage_eligible: null })
+    view_comparable: null, coverage_class: 'unknown', stage_eligible: null,
+    selector: { reference_index: null, view: 'unknown', status: 'unknown' }, evidence: [] })
   assert.deepEqual(projection.reviews[3], { required_evidence_count: null, mapped_evidence_count: null,
     unmapped_evidence_count: null, missing_evidence_count: null, unsupported_evidence_count: null,
     out_of_scope_evidence_count: null, mismatch_evidence_count: null, unknown_evidence_count: null,
-    view_comparable: null, coverage_class: 'unknown', stage_eligible: null })
+    view_comparable: null, coverage_class: 'unknown', stage_eligible: null,
+    selector: { reference_index: null, view: 'unknown', status: 'unknown' }, evidence: [] })
   const serialized = JSON.stringify(projection)
   for (const secret of ['free-text-sentinel', 'id-sentinel', 'hash-sentinel', 'call-sentinel', 'count-sentinel',
     'boolean-sentinel', 'unknown-sentinel', 'evidence-sentinel', 'missing-diagnostics-sentinel', 'payload-sentinel']) {
+    assert.equal(serialized.includes(secret), false, `must omit ${secret}`)
+  }
+})
+
+test('visual review projection attributes unknown evidence with safe selector and binding reasons', () => {
+  const projection = summarizeVisualReviewDiagnostics({ reference_similarity_history: [{
+    reference_image_index: 0, reference_id: 'reference-id-sentinel', source_sha256: 'reference-sha-sentinel',
+    view: 'iso', prompt: 'prompt-sentinel', provider_text: 'provider-text-sentinel', geometry: { marker: 'geometry-sentinel' },
+    review_diagnostics: { required_evidence_count: 7, mapped_evidence_count: 7, unknown_evidence_count: 1,
+      view_comparable: true, coverage_class: 'partial', stage_eligible: true },
+    covered_evidence_ids: ['known-id-sentinel'],
+    evidence: [
+      { evidence_id: 'known-id-sentinel', status: 'match', evidence_mapping_status: 'mapped',
+        stage_attribution_status: 'verified_ids', binding_reason: 'bound', target_context_validated: true },
+      { evidence_id: 'unknown-id-sentinel', status: 'unknown', evidence_mapping_status: 'mapped',
+        stage_attribution_status: 'verified_ids', binding_reason: 'reference_or_model_text_missing',
+        target_context_validated: false, reference: 'private-reference-sentinel', model: 'private-model-sentinel' },
+    ],
+  }] })
+  assert.deepEqual(projection.reviews[0].selector, { reference_index: 0, view: 'iso', status: 'selected' })
+  assert.deepEqual(projection.reviews[0].evidence, [
+    { evidence_index: 0, status: 'match', mapping_status: 'mapped', attribution_status: 'verified_ids',
+      binding_reason: 'bound', coverage_reason: 'claimed_covered', target_context_validated: true },
+    { evidence_index: 1, status: 'unknown', mapping_status: 'mapped', attribution_status: 'verified_ids',
+      binding_reason: 'reference_or_model_text_missing', coverage_reason: 'assessment_unknown', target_context_validated: false },
+  ])
+  const serialized = JSON.stringify(projection)
+  for (const secret of ['reference-id-sentinel', 'reference-sha-sentinel', 'prompt-sentinel', 'provider-text-sentinel',
+    'geometry-sentinel', 'known-id-sentinel', 'unknown-id-sentinel', 'private-reference-sentinel', 'private-model-sentinel']) {
     assert.equal(serialized.includes(secret), false, `must omit ${secret}`)
   }
 })

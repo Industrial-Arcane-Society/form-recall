@@ -1793,6 +1793,25 @@ fn normalize_review(
             .map(str::trim)
             .unwrap_or("");
         let difference_required = matches!(status.as_str(), "mismatch" | "partial_mismatch");
+        let binding_reason = if duplicate_ids.contains(&id) {
+            "duplicate_evidence_id"
+        } else if id.is_empty() {
+            "missing_evidence_id"
+        } else if basis == "unknown" {
+            "unsupported_assessment_basis"
+        } else if !target_ok || !target_ok_fields {
+            "target_context_unverified"
+        } else if status != "out_of_scope" && (!reference_ok || !model_ok) {
+            "reference_or_model_text_missing"
+        } else if !item_ok {
+            "item_text_missing"
+        } else if difference_required && difference.is_empty() {
+            "difference_text_missing"
+        } else if status == "unknown" {
+            "assessment_unknown"
+        } else {
+            "bound"
+        };
         if !target_ok
             || basis == "unknown"
             || (status != "out_of_scope" && (!reference_ok || !model_ok))
@@ -1816,6 +1835,7 @@ fn normalize_review(
         evidence.push(json!({
             "evidence_id": id,
             "evidence_mapping_status": mapping_status,
+            "binding_reason": binding_reason,
             "item": short(item.get("item"), 1000),
             "reference": short(item.get("reference"), 1200),
             "target": short(item.get("target"), 1200),
@@ -2481,6 +2501,7 @@ mod tests {
             &BTreeSet::from(["body".to_string()]),
         );
         assert_eq!(invalid["evidence"][0]["status"], "unknown");
+        assert_eq!(invalid["evidence"][0]["binding_reason"], "target_context_unverified");
         assert_eq!(
             invalid["evidence"][0]["evidence_mapping_status"],
             "unmapped"
