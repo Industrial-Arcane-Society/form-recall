@@ -52,6 +52,9 @@ pub fn parse(text: &str) -> Value {
     if let Some(parsed) = parse_legacy_bearing(text, &normalized) {
         return parsed;
     }
+    if let Some(parsed) = parse_legacy_coupling(text, &normalized) {
+        return parsed;
+    }
     if let Some(parsed) = parse_legacy_simple_ring(text, &normalized) {
         return parsed;
     }
@@ -1545,6 +1548,162 @@ fn parse_legacy_simple_ring(raw: &str, text: &str) -> Option<Value> {
         }),
     ];
     Some(plan_result(raw, name, features, warnings))
+}
+
+/// Migrate the Python Quick one-piece coupling recipe: a centered cylinder and
+/// a through-bore. It does not represent jaw, diaphragm, gear, or other
+/// multi-part coupling constructions.
+fn parse_legacy_coupling(raw: &str, text: &str) -> Option<Value> {
+    if !text.contains("联轴器") {
+        return None;
+    }
+    if contains_any(
+        text,
+        &[
+            "梅花",
+            "膜片",
+            "齿式",
+            "爪式",
+            "蛇形弹簧",
+            "鼓形齿",
+            "键槽",
+            "花键",
+            "螺栓孔",
+            "定位孔",
+            "通孔",
+            "盲孔",
+            "倒角",
+            "圆角",
+            "再加",
+            "并加",
+            "同时",
+        ],
+    ) {
+        return Some(result(
+            "unsupported",
+            raw,
+            None,
+            vec![],
+            vec![],
+            vec![issue(
+                "legacy_coupling_modifier_not_migrated",
+                "当前仅迁移旧 Quick 联轴器的单圆柱加中心孔配方；爪式、膜片式、齿式结构及附加孔槽/修饰尚未迁移。",
+            )],
+        ));
+    }
+
+    let outer = pulley_scalar(raw, text, &["外径"], &["D"]);
+    let inner_explicit = pulley_scalar(raw, text, &["内径", "孔径"], &["d"]);
+    let length = pulley_scalar(raw, text, &["长度", "长"], &["L", "l"]);
+    let inner = inner_explicit.or(Some(25.0));
+
+    let mut questions = Vec::new();
+    for (value, code, label) in [
+        (outer, "legacy_coupling_outer_diameter", "外径"),
+        (length, "legacy_coupling_length", "长度"),
+        (inner, "legacy_coupling_bore_diameter", "中心孔内径"),
+    ] {
+        match value {
+            Some(value) if value.is_finite() && value > 0.0 => {}
+            Some(_) => questions.push(issue(
+                code,
+                format!("联轴器{label}必须是有限的正数，且同一参数不能出现冲突数值。"),
+            )),
+            None => questions.push(issue(
+                code,
+                format!("请明确联轴器{label}。"),
+            )),
+        }
+    }
+    if let (Some(inner), Some(outer)) = (inner, outer) {
+        if inner.is_finite() && outer.is_finite() && inner >= outer {
+            questions.push(issue(
+                "legacy_coupling_bore_not_smaller_than_outer",
+                "联轴器外径必须大于中心孔内径。",
+            ));
+        }
+    }
+    if !questions.is_empty() {
+        return Some(result("needs_clarification", raw, None, vec![], questions, vec![]));
+    }
+
+    let outer = outer.expect("coupling outer diameter validated above");
+    let inner = inner.expect("coupling bore diameter validated above");
+    let length = length.expect("coupling length validated above");
+    let bore_defaulted = inner_explicit.is_none();
+    let mut warnings = vec![issue(
+        "legacy_coupling_migrated",
+        "已按旧 Python Quick 联轴器配方生成居中圆柱与中心贯穿孔；不包含联轴器爪、膜片、齿形或螺栓连接细节。",
+    )];
+    if bore_defaulted {
+        warnings.push(issue(
+            "legacy_coupling_bore_defaulted",
+            "未提供中心孔内径，沿用旧 Python Quick 联轴器典型值 ⌀25 mm；这是规则默认值，不是用户尺寸。",
+        ));
+    } else if contains_any(text, &["孔径"]) && !contains_any(text, &["内径"]) {
+        warnings.push(issue(
+            "legacy_coupling_bore_alias_repaired",
+            "旧 Python Quick 联轴器参数表未将“孔径”绑定到内径，Rust 按明确的孔径尺寸建模并保留中心孔。",
+        ));
+    }
+    if !has_unit(text) {
+        warnings.push(issue(
+            "unit_interpreted_as_mm",
+            "未写长度单位的联轴器尺寸按旧 Quick 默认单位 mm 解释。",
+        ));
+    }
+
+    let features = vec![
+        json!({
+            "id":"quick-0001",
+            "kind":"cylinder",
+            "operation":"add",
+            "name":"联轴器圆柱主体",
+            "parameters":{
+                "radius":outer / 2.0,
+                "height":length,
+                "center":[0.0, 0.0, 0.0],
+                "base":false,
+                "axis":"Z",
+                "segments":48
+            },
+            "sources":{
+                "radius":derived_source(raw, "由用户给定的联轴器外径除以 2 得到圆柱半径。"),
+                "height":user_source(raw),
+                "center":derived_source(raw, "沿用旧 Python Quick 联轴器主体中心位于原点的放置方式。"),
+                "base":derived_source(raw, "沿用旧 Python Quick 居中圆柱语义。"),
+                "axis":derived_source(raw, "沿用旧 Python Quick 联轴器沿全局 Z 轴放置。"),
+                "segments":derived_source(raw, "沿用旧 Python Quick 联轴器圆柱分段数 48。")
+            },
+            "relations":[]
+        }),
+        json!({
+            "id":"quick-0002",
+            "kind":"hole",
+            "operation":"cut",
+            "name":"联轴器中心孔",
+            "parameters":{
+                "diameter":inner,
+                "through":true,
+                "pos":"center",
+                "axis":"Z",
+                "segments":32
+            },
+            "sources":{
+                "diameter":if bore_defaulted {
+                    derived_source(raw, "沿用旧 Python Quick 联轴器中心孔典型值 ⌀25 mm。")
+                } else {
+                    user_source(raw)
+                },
+                "through":derived_source(raw, "沿用旧 Python Quick 联轴器中心贯穿孔。"),
+                "pos":derived_source(raw, "沿用旧 Python Quick 中心孔位置。"),
+                "axis":derived_source(raw, "沿用旧 Python Quick 中心孔沿全局 Z 轴贯穿。"),
+                "segments":derived_source(raw, "沿用旧 Python Quick 联轴器中心孔分段数 32。")
+            },
+            "relations":[]
+        }),
+    ];
+    Some(plan_result(raw, "联轴器", features, warnings))
 }
 
 /// Migrate the legacy Python Quick helical-spring recipe. The original
@@ -8415,6 +8574,84 @@ mod tests {
                 assert_eq!(output["plan"]["features"][0]["parameters"]["height"], expected["dimensions_mm"][2], "{input}");
             } else if let Some(issue) = expected["issue"].as_str() {
                 assert!(output.to_string().contains(issue), "{input}: {output}");
+            }
+        }
+    }
+
+    #[test]
+    fn legacy_coupling_recipes_match_python_oracle_and_provenance() {
+        let fixture: Value = serde_json::from_str(include_str!(
+            "../tests/fixtures/quick_legacy_coupling_contract.json"
+        ))
+        .expect("coupling Python oracle fixture is valid JSON");
+
+        for case in fixture["legacy_accepted"].as_array().unwrap() {
+            let input = case["input"].as_str().unwrap();
+            let output = parse(input);
+            assert_eq!(output["status"], "ready", "{input}: {output}");
+            assert_eq!(output["plan"]["name"], "联轴器", "{input}: {output}");
+            let features = output["plan"]["features"].as_array().unwrap();
+            assert_eq!(features.len(), 2, "{input}: {output}");
+
+            let outer = case["outer_diameter"].as_f64().unwrap();
+            let inner = case["inner_diameter"].as_f64().unwrap();
+            let length = case["length"].as_f64().unwrap();
+            assert_eq!(features[0]["kind"], "cylinder", "{input}");
+            assert_eq!(features[0]["operation"], "add", "{input}");
+            assert!((features[0]["parameters"]["radius"].as_f64().unwrap() - outer / 2.0).abs() < 1e-10, "{input}");
+            assert_eq!(features[0]["parameters"]["height"], length, "{input}");
+            assert_eq!(features[0]["parameters"]["center"], json!([0.0, 0.0, 0.0]), "{input}");
+            assert_eq!(features[0]["parameters"]["base"], false, "{input}");
+            assert_eq!(features[0]["parameters"]["axis"], "Z", "{input}");
+            assert_eq!(features[0]["parameters"]["segments"], 48, "{input}");
+            assert_eq!(features[0]["sources"]["height"]["type"], "user", "{input}");
+            assert_eq!(features[1]["kind"], "hole", "{input}");
+            assert_eq!(features[1]["operation"], "cut", "{input}");
+            assert_eq!(features[1]["parameters"]["diameter"], inner, "{input}");
+            assert_eq!(features[1]["parameters"]["through"], true, "{input}");
+            assert_eq!(features[1]["parameters"]["pos"], "center", "{input}");
+            assert_eq!(features[1]["parameters"]["axis"], "Z", "{input}");
+            assert_eq!(features[1]["parameters"]["segments"], 32, "{input}");
+            assert_eq!(features[1]["sources"]["diameter"]["type"], case["inner_source"], "{input}");
+            if let Some(code) = case["warning_code"].as_str() {
+                assert!(output["warnings"].to_string().contains(code), "{input}: {output}");
+            }
+            assert_eq!(
+                crate::cad_plan_validation::validate_plan(&output["plan"])["state"],
+                "valid",
+                "{input}: {}",
+                crate::cad_plan_validation::validate_plan(&output["plan"])
+            );
+            assert_eq!(
+                crate::native_plan_geometry::preflight(&output["plan"])
+                    .unwrap()["state"],
+                "valid",
+                "{input}"
+            );
+        }
+
+        for case in fixture["not_ready"].as_array().unwrap() {
+            let input = case["input"].as_str().unwrap();
+            let output = parse(input);
+            assert_eq!(output["status"], case["status"], "{input}: {output}");
+            assert!(output["plan"].is_null(), "{input}: {output}");
+            assert!(output.to_string().contains(case["issue"].as_str().unwrap()), "{input}: {output}");
+        }
+
+        for case in fixture["known_legacy_discrepancies"].as_array().unwrap() {
+            let input = case["input"].as_str().unwrap();
+            let expected = &case["migration_behavior"];
+            let output = parse(input);
+            assert_eq!(output["status"], expected["status"], "{input}: {output}");
+            if let Some(warning) = expected["warning"].as_str() {
+                assert!(output["warnings"].to_string().contains(warning), "{input}: {output}");
+            }
+            if output["status"] == "ready" {
+                let features = output["plan"]["features"].as_array().unwrap();
+                assert_eq!(features.len(), 2, "{input}: {output}");
+                assert_eq!(features[1]["parameters"]["diameter"], expected["inner_diameter"], "{input}");
+            } else {
+                assert!(output.to_string().contains(expected["issue"].as_str().unwrap()), "{input}: {output}");
             }
         }
     }

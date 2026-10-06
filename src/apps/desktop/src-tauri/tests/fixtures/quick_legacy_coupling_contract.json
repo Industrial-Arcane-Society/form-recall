@@ -1,0 +1,128 @@
+{
+  "schema_version": "1.0",
+  "legacy_entrypoint": "src/legacy/ai_modeler/core/parsing/nlparser.py::Parser.parse",
+  "legacy_geometry": "src/legacy/ai_modeler/parts/library/partlib.py::_coupling",
+  "legacy_accepted": [
+    {
+      "input": "联轴器 外径30 内径10 长度50",
+      "outer_diameter": 30.0,
+      "inner_diameter": 10.0,
+      "length": 50.0,
+      "inner_source": "user",
+      "dimensions_mm": [30.0, 30.0, 50.0],
+      "legacy_mesh_volume_mm3": 31340.265459091243
+    },
+    {
+      "input": "联轴器 d10 D30 L50",
+      "outer_diameter": 30.0,
+      "inner_diameter": 10.0,
+      "length": 50.0,
+      "inner_source": "user",
+      "dimensions_mm": [30.0, 30.0, 50.0],
+      "legacy_mesh_volume_mm3": 31340.265459091243
+    },
+    {
+      "input": "联轴器 外径30 长度50",
+      "outer_diameter": 30.0,
+      "inner_diameter": 25.0,
+      "length": 50.0,
+      "inner_source": "derived",
+      "warning_code": "legacy_coupling_bore_defaulted",
+      "dimensions_mm": [30.0, 30.0, 50.0],
+      "legacy_mesh_volume_mm3": 10855.78164739789
+    }
+  ],
+  "known_legacy_discrepancies": [
+    {
+      "input": "联轴器 外径30 孔径10 长度50",
+      "legacy_actual": {
+        "inner_diameter": 25.0,
+        "reason": "旧零件库参数表只把“内径/轴孔直径”绑定到 d，Parser 未将“孔径”传入联轴器模板。"
+      },
+      "migration_behavior": {
+        "status": "ready",
+        "inner_diameter": 10.0,
+        "dimensions_mm": [30.0, 30.0, 50.0],
+        "warning": "legacy_coupling_bore_alias_repaired"
+      }
+    },
+    {
+      "input": "联轴器 直径30 孔径10 长度50",
+      "legacy_actual": {
+        "kind": "cylinder",
+        "radius": 15.0,
+        "height": 10.0,
+        "has_center_hole": false
+      },
+      "migration_behavior": {
+        "status": "needs_clarification",
+        "issue": "legacy_coupling_outer_diameter"
+      }
+    },
+    {
+      "input": "联轴器 外径20 内径25 长度50",
+      "legacy_actual": {
+        "has_center_hole": false,
+        "reason": "旧零件库在孔径不小于外径时不切孔，静默输出实心圆柱。"
+      },
+      "migration_behavior": {
+        "status": "needs_clarification",
+        "issue": "legacy_coupling_bore_not_smaller_than_outer"
+      }
+    }
+  ],
+  "native_rust_expected": [
+    {
+      "input": "联轴器 外径30 内径10 长度50",
+      "outer_diameter": 30.0,
+      "inner_diameter": 10.0,
+      "length": 50.0,
+      "inner_source": "user",
+      "dimensions_mm": [30.0, 30.0, 50.0],
+      "legacy_mesh_volume_mm3": 31340.265459091243,
+      "max_relative_volume_delta": 0.02
+    },
+    {
+      "input": "联轴器 d10 D30 L50",
+      "outer_diameter": 30.0,
+      "inner_diameter": 10.0,
+      "length": 50.0,
+      "inner_source": "user",
+      "dimensions_mm": [30.0, 30.0, 50.0],
+      "legacy_mesh_volume_mm3": 31340.265459091243,
+      "max_relative_volume_delta": 0.02
+    },
+    {
+      "input": "联轴器 外径30 长度50",
+      "outer_diameter": 30.0,
+      "inner_diameter": 25.0,
+      "length": 50.0,
+      "inner_source": "derived",
+      "dimensions_mm": [30.0, 30.0, 50.0],
+      "legacy_mesh_volume_mm3": 10855.78164739789,
+      "max_relative_volume_delta": 0.02
+    }
+  ],
+  "not_ready": [
+    {
+      "input": "联轴器 内径10 长度50",
+      "status": "needs_clarification",
+      "issue": "legacy_coupling_outer_diameter"
+    },
+    {
+      "input": "联轴器 外径30 内径10",
+      "status": "needs_clarification",
+      "issue": "legacy_coupling_length"
+    },
+    {
+      "input": "联轴器 外径30 内径30 长度50",
+      "status": "needs_clarification",
+      "issue": "legacy_coupling_bore_not_smaller_than_outer"
+    },
+    {
+      "input": "梅花联轴器 外径30 内径10 长度50",
+      "status": "unsupported",
+      "issue": "legacy_coupling_modifier_not_migrated"
+    }
+  ]
+}
