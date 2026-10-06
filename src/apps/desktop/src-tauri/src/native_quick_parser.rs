@@ -42,10 +42,10 @@ pub fn parse(text: &str) -> Value {
         );
     }
 
-    if let Some(parsed) = parse_legacy_template(text, &normalized) {
+    if let Some(parsed) = parse_legacy_gear(text, &normalized) {
         return parsed;
     }
-    if let Some(parsed) = parse_legacy_gear(text, &normalized) {
+    if let Some(parsed) = parse_legacy_template(text, &normalized) {
         return parsed;
     }
 
@@ -953,9 +953,12 @@ fn parse_legacy_gear(raw: &str, normalized: &str) -> Option<Value> {
     if !contains_any(normalized, &["齿轮", "齿坯", "gear"]) {
         return None;
     }
-    // Mixed base requests stay in the generic fail-closed parser.
+    // Mixed base requests stay in the generic fail-closed parser. `圆柱` is
+    // part of the legacy helical-gear alias `斜齿圆柱齿轮`, so remove that
+    // designation before checking for a second, actual cylinder base shape.
+    let mixed_shape_text = normalized.replace("斜齿圆柱齿轮", "");
     if contains_any(
-        normalized,
+        &mixed_shape_text,
         &[
             "长方体", "长方块", "矩形块", "cuboid", "box", "block", "圆柱", "圆棒", "圆轴",
             "cylinder", "圆锥", "cone", "圆台", "锥台", "frustum", "球体", "圆球", "sphere",
@@ -965,12 +968,24 @@ fn parse_legacy_gear(raw: &str, normalized: &str) -> Option<Value> {
         return None;
     }
 
-    if contains_any(
+    let helical_gear = contains_any(
+        normalized,
+        &["斜齿圆柱齿轮", "斜齿轮", "螺旋齿轮", "helical gear"],
+    );
+    let bevel_gear = contains_any(normalized, &["锥齿轮", "伞齿轮", "bevel gear"]);
+    let special_gear_parameters = contains_any(
         normalized,
         &[
-            "锥齿轮", "伞齿轮", "蜗轮", "蜗杆", "斜齿轮", "螺旋齿轮", "内齿轮", "bevel gear",
-            "worm gear", "helical gear", "internal gear",
+            "模数", "module", "齿数", "teeth", "齿宽", "宽度", "厚度", "height", "中心孔",
+            "孔径", "螺旋角", "helix angle", "锥角", "cone angle",
         ],
+    );
+    if (helical_gear || bevel_gear) && special_gear_parameters {
+        return Some(parse_legacy_special_gear(raw, normalized, helical_gear));
+    }
+    if contains_any(
+        normalized,
+        &["蜗轮", "蜗杆", "内齿轮", "worm gear", "internal gear"],
     ) {
         return Some(result(
             "unsupported",
@@ -980,7 +995,7 @@ fn parse_legacy_gear(raw: &str, normalized: &str) -> Option<Value> {
             vec![],
             vec![issue(
                 "special_gear_type_unsupported",
-                "当前 Quick 只迁入旧版直齿轮构造器；锥齿轮、斜齿轮、内齿轮和蜗轮/蜗杆需要各自的几何定义。",
+                "当前 Quick 尚未迁入蜗轮、蜗杆和内齿轮构造器。",
             )],
         ));
     }
@@ -1240,6 +1255,156 @@ fn parse_legacy_gear(raw: &str, normalized: &str) -> Option<Value> {
         "pending_questions":[]
     });
     Some(result("ready", raw, Some(plan), warnings, vec![], vec![]))
+}
+
+fn parse_legacy_special_gear(raw: &str, text: &str, helical: bool) -> Value {
+    if contains_any(
+        text,
+        &[
+            "圆角", "倒角", "fillet", "chamfer", "键槽", "凹槽", "切槽", "螺纹", "thread",
+            "pcd", "分度圆孔", "螺栓孔", "圆周阵列", "环形阵列", "linear array", "线性阵列",
+        ],
+    ) {
+        return result(
+            "unsupported",
+            raw,
+            None,
+            vec![],
+            vec![],
+            vec![issue(
+                "gear_modifier_unsupported",
+                "本次只迁入旧 Quick 斜齿/锥齿轮主体和内置中心孔；其他齿轮修饰尚未迁入。",
+            )],
+        );
+    }
+
+    let (kind, catalog_name, feature_name, default_module, default_teeth, default_height, default_angle, angle_key, angle_labels, segments) =
+        if helical {
+            (
+                "helical_gear",
+                "斜齿圆柱齿轮",
+                "斜齿轮",
+                3.0,
+                24.0,
+                25.0,
+                18.0,
+                "helix_deg",
+                &["螺旋角", "helix angle", "beta"][..],
+                20_u64,
+            )
+        } else {
+            (
+                "bevel_gear",
+                "直齿锥齿轮",
+                "锥齿轮",
+                4.0,
+                20.0,
+                22.0,
+                45.0,
+                "cone_deg",
+                &["锥角", "锥角度", "cone angle", "delta"][..],
+                12_u64,
+            )
+        };
+    let module_value = scalar(text, &["模数", "module"]);
+    let teeth_value = scalar(text, &["齿数", "teeth", "tooth count"]).or_else(|| {
+        regex::Regex::new(r"([0-9]+)\s*(?:个\s*)?齿")
+            .ok()?
+            .captures(text)?
+            .get(1)?
+            .as_str()
+            .parse::<f64>()
+            .ok()
+    });
+    let height_value = scalar(text, &["齿宽", "宽度", "厚度", "厚", "height", "face width"]);
+    let angle_value = scalar(text, angle_labels);
+    let bore_value = scalar(
+        text,
+        &[
+            "中心孔直径", "中心孔", "中心通孔直径", "内孔直径", "轴孔直径", "孔径", "bore diameter",
+            "bore_d", "bore",
+        ],
+    );
+    let module = module_value.unwrap_or(default_module);
+    let teeth = teeth_value.unwrap_or(default_teeth);
+    let height = height_value.unwrap_or(default_height);
+    let angle = angle_value.unwrap_or(default_angle);
+    let bore_d = bore_value.unwrap_or(0.0);
+
+    if module_value.is_some_and(|value| !value.is_finite() || value <= 0.0) {
+        return parse_result_with_issue("needs_clarification", raw, "legacy_special_gear_invalid_module", "齿轮模数必须是有限正数。");
+    }
+    if teeth_value.is_some_and(|value| {
+        !value.is_finite() || value.fract() != 0.0 || !(6.0..=10_000.0).contains(&value)
+    }) {
+        return parse_result_with_issue("needs_clarification", raw, "legacy_special_gear_invalid_teeth", "齿数必须是 6 到 10000 之间的整数。");
+    }
+    if height_value.is_some_and(|value| !value.is_finite() || value <= 0.0) {
+        return parse_result_with_issue("needs_clarification", raw, "legacy_special_gear_invalid_width", "齿轮齿宽必须是有限正数。");
+    }
+    if angle_value.is_some_and(|value| !value.is_finite()) {
+        return parse_result_with_issue("needs_clarification", raw, "legacy_special_gear_invalid_angle", "齿轮角度必须是有限数值。");
+    }
+    if bore_value.is_some_and(|value| !value.is_finite() || value < 0.0) {
+        return parse_result_with_issue("needs_clarification", raw, "legacy_special_gear_invalid_bore", "中心孔直径必须是有限非负数。");
+    }
+
+    let mut warnings = vec![issue(
+        "legacy_special_gear_migrated",
+        format!("已按旧 Python Quick 的 {catalog_name} partlib 特征参数与默认值建立 Rust 特征。"),
+    )];
+    if helical {
+        warnings.push(issue(
+            "legacy_helical_gear_geometry_limit",
+            "旧 Python Quick 与当前 Rust 几何执行器都将斜齿轮螺旋角作为参数记录，但本地齿廓仍按直齿梯形齿形挤出；该实体不是可啮合的螺旋齿面。",
+        ));
+    } else {
+        warnings.push(issue(
+            "legacy_bevel_gear_approximation",
+            "锥齿轮本地离散几何为近似齿形；模型报告会单独给出有效实体与尺寸核验结果。",
+        ));
+    }
+    let mut defaulted = Vec::new();
+    if module_value.is_none() {
+        defaulted.push(format!("模数 {default_module} mm"));
+    }
+    if teeth_value.is_none() {
+        defaulted.push(format!("齿数 {}", default_teeth as u64));
+    }
+    if height_value.is_none() {
+        defaulted.push(format!("齿宽 {default_height} mm"));
+    }
+    if !defaulted.is_empty() {
+        warnings.push(issue(
+            "legacy_special_gear_defaults",
+            format!("沿用旧 Python Quick 零件库默认值：{}。", defaulted.join("、")),
+        ));
+    }
+
+    let mut parameters = serde_json::Map::new();
+    let mut sources = serde_json::Map::new();
+    for (key, value, explicit, note) in [
+        ("module", module, module_value.is_some(), format!("沿用旧 Python Quick {catalog_name} 默认模数 {default_module}。")),
+        ("teeth", teeth, teeth_value.is_some(), format!("沿用旧 Python Quick {catalog_name} 默认齿数 {}。", default_teeth as u64)),
+        ("height", height, height_value.is_some(), format!("沿用旧 Python Quick {catalog_name} 默认齿宽 {default_height} mm。")),
+        (angle_key, angle, angle_value.is_some(), format!("沿用旧 Python Quick {catalog_name} 默认角度 {default_angle}°。")),
+        ("bore_d", bore_d, bore_value.is_some(), "未指定中心孔时沿用旧 Python Quick 特征默认 bore_d=0，不添加中心孔。".to_owned()),
+    ] {
+        parameters.insert(
+            key.into(),
+            if key == "teeth" { json!(value as u64) } else { json!(value) },
+        );
+        sources.insert(
+            key.into(),
+            if explicit { user_source(raw) } else { derived_source(raw, &note) },
+        );
+    }
+    parameters.insert("center".into(), json!([0.0, 0.0, 0.0]));
+    parameters.insert("segments".into(), json!(segments));
+    sources.insert("center".into(), derived_source(raw, "沿用旧 Python Quick 标准齿轮全局原点中心。"));
+    sources.insert("segments".into(), derived_source(raw, &format!("沿用旧 Python Quick {catalog_name} 离散分段数 {segments}。")));
+    let feature = named_feature(1, kind, "add", feature_name, Value::Object(parameters), Value::Object(sources));
+    plan_result(raw, catalog_name, vec![feature], warnings)
 }
 
 fn parse_stepped_shaft(raw: &str, text: &str) -> Value {
@@ -4402,12 +4567,12 @@ mod tests {
         assert!(missing_bore_size["questions"].to_string().contains("gear_bore_diameter_missing"));
 
         let special = parse("锥齿轮 模数2 齿数30 厚10");
-        assert_eq!(special["status"], "unsupported", "{special}");
-        assert!(special["unsupported"].to_string().contains("special_gear_type_unsupported"));
+        assert_eq!(special["status"], "ready", "{special}");
+        assert_eq!(special["plan"]["features"][0]["kind"], "bevel_gear");
 
         let helical = parse("斜齿轮 模数2 齿数30 齿宽10");
-        assert_eq!(helical["status"], "unsupported", "{helical}");
-        assert!(helical["unsupported"].to_string().contains("special_gear_type_unsupported"));
+        assert_eq!(helical["status"], "ready", "{helical}");
+        assert_eq!(helical["plan"]["features"][0]["kind"], "helical_gear");
 
         let unsupported_axis = parse("齿轮 模数2 齿数30 厚10 沿X轴");
         assert_eq!(unsupported_axis["status"], "unsupported", "{unsupported_axis}");
@@ -4826,6 +4991,57 @@ mod tests {
             let output = parse(case["input"].as_str().unwrap());
             assert_eq!(output["status"], case["status"], "{}: {output}", case["input"]);
             assert!(output["plan"].is_null(), "rejected input must not yield a plan: {output}");
+        }
+    }
+
+    #[test]
+    fn legacy_special_gears_match_python_parameters_defaults_and_fallbacks() {
+        let fixture: Value = serde_json::from_str(include_str!(
+            "../tests/fixtures/quick_legacy_special_gears_contract.json"
+        ))
+        .expect("special gear Quick oracle fixture is valid JSON");
+
+        for case in fixture["accepted"].as_array().unwrap() {
+            let input = case["input"].as_str().unwrap();
+            let output = parse(input);
+            assert_eq!(output["status"], "ready", "{input}: {output}");
+            let plan = &output["plan"];
+            assert_eq!(
+                crate::cad_plan_validation::validate_plan(plan)["state"],
+                "valid",
+                "{input}: {}",
+                crate::cad_plan_validation::validate_plan(plan)
+            );
+            let actual = &plan["features"][0];
+            assert_eq!(actual["kind"], case["kind"], "{input}: {actual}");
+            if let Some(expected_name) = case["feature_name"].as_str() {
+                assert_eq!(actual["name"], expected_name, "{input}: {actual}");
+            }
+            for (key, value) in case["parameters"].as_object().unwrap() {
+                assert_eq!(actual["parameters"][key], *value, "{input}: {key}");
+            }
+            if case["kind"] == "helical_gear" {
+                assert!(
+                    output["warnings"]
+                        .to_string()
+                        .contains("legacy_helical_gear_geometry_limit"),
+                    "{input}: the omitted helical tooth geometry must be disclosed"
+                );
+            }
+        }
+
+        for case in fixture["rejected"].as_array().unwrap() {
+            let input = case["input"].as_str().unwrap();
+            let output = parse(input);
+            assert_eq!(output["status"], case["status"], "{input}: {output}");
+            assert!(output["plan"].is_null(), "{input}: {output}");
+            assert!(
+                output
+                    .to_string()
+                    .contains(case["issue"].as_str().unwrap()),
+                "{input}: expected explicit boundary {}: {output}",
+                case["issue"]
+            );
         }
     }
 

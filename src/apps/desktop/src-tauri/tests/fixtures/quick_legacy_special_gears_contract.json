@@ -1,0 +1,48 @@
+{
+  "source": "src/legacy/ai_modeler/core/parsing/nlparser.py -> partlib.build_features_ex / nlparser.parse; Document.build() and Document.build_brep(); run 2026-10-07",
+  "migration_notes": [
+    "The legacy Python feature kinds are helical_gear and bevel_gear, with the listed module, teeth, width, angle, bore, center, and segment parameters.",
+    "A bare '斜齿轮' without parameter cues falls through the old Quick generic gear branch and builds an ordinary gear with module=2, teeth=20, height=10.",
+    "The old helical_gear geometry builder records helix_deg but builds a straight trapezoidal tooth prism; this is not a true helical tooth surface.",
+    "legacy_mesh_geometry.volume_mm3 is the legacy polygon-kernel K.volume_of metric. legacy_occt_brep is measured separately through Document.build_brep(); only BREP volume is compared with Rust OCCT BREP volume."
+  ],
+  "accepted": [
+    {
+      "input": "斜齿圆柱齿轮 模数3 齿数24 齿宽25 螺旋角18 中心孔20",
+      "kind": "helical_gear",
+      "feature_name": "斜齿轮",
+      "parameters": {"module": 3.0, "teeth": 24, "height": 25.0, "helix_deg": 18.0, "bore_d": 20.0, "center": [0, 0, 0], "segments": 20},
+      "legacy_mesh_geometry": {"triangles": 9744, "size_mm": [77.96151170852707, 77.96151170852707, 25.0], "volume_mm3": 30188.318069408942},
+      "legacy_occt_brep": {"valid": true, "closed_solid_count": 1, "face_count": 9744, "size_mm": [77.96151170852707, 77.96151170852707, 25.0], "volume_mm3": 90564.95420822094}
+    },
+    {
+      "input": "直齿锥齿轮 模数4 齿数20 齿宽22 锥角45 中心孔15",
+      "kind": "bevel_gear",
+      "feature_name": "锥齿轮",
+      "parameters": {"module": 4.0, "teeth": 20, "height": 22.0, "cone_deg": 45.0, "bore_d": 15.0, "center": [0, 0, 0], "segments": 12},
+      "legacy_mesh_geometry": {"triangles": 4400, "size_mm": [87.93747359237184, 87.93747359237184, 22.0], "volume_mm3": 15375.435252619041},
+      "legacy_occt_brep": {"valid": true, "closed_solid_count": 1, "face_count": 4400, "size_mm": [87.93747359237184, 87.93747359237184, 22.0], "volume_mm3": 56462.015011005606}
+    },
+    {
+      "input": "斜齿轮 模数3 齿数24",
+      "kind": "helical_gear",
+      "feature_name": "斜齿轮",
+      "parameters": {"module": 3.0, "teeth": 24, "height": 25.0, "helix_deg": 18.0, "bore_d": 0.0, "center": [0, 0, 0], "segments": 20}
+    },
+    {
+      "input": "锥齿轮 模数4 齿数20",
+      "kind": "bevel_gear",
+      "feature_name": "锥齿轮",
+      "parameters": {"module": 4.0, "teeth": 20, "height": 22.0, "cone_deg": 45.0, "bore_d": 0.0, "center": [0, 0, 0], "segments": 12}
+    },
+    {
+      "input": "斜齿轮",
+      "kind": "gear",
+      "parameters": {"module": 2.0, "teeth": 20, "height": 10.0, "center": [0, 0, 0], "axis": "Z", "base": true}
+    }
+  ],
+  "rejected": [
+    {"input": "斜齿轮 模数0 齿数24 齿宽25", "status": "needs_clarification", "issue": "legacy_special_gear_invalid_module"},
+    {"input": "锥齿轮 模数4 齿数20 齿宽22 键槽宽6", "status": "unsupported", "issue": "gear_modifier_unsupported"}
+  ]
+}

@@ -20,7 +20,7 @@ Refused examples:
 - `叶片 长80 通孔直径8`: the standalone legacy blade loft is migrated, but blade modifiers are not; Quick returns `unsupported` and no plan rather than silently dropping the requested hole.
 - An unrelated natural-language part description with no supported primitive/template returns `unsupported` and no plan.
 
-`叶片`、`叶片 长100 宽60` and the Python Quick `叶盘` template are migrated in [F5.24](./F5.24-quick-legacy-blade-blisk.md). The local loft remains approximate and does not claim a native CATIA multi-section loft.
+`叶片`、`叶片 长100 宽60` and the Python Quick `叶盘` template are migrated in [F5.24](./F5.24-quick-legacy-blade-blisk.md). The local loft remains approximate and does not claim a native CATIA multi-section loft. Special helical and bevel gear recipes are migrated in [F5.25](./F5.25-quick-legacy-special-gears.md); worm, worm-wheel, and internal-gear recipes remain outside the port.
 
 ## Disabled-feature behavior
 
@@ -39,4 +39,4 @@ Refused examples:
 
 ## Boundaries
 
-This is not a full port of every historical `nlparser` alias or part-library recipe. The port covers flange, stepped shaft, sleeve/tube, and existing native primitive/cut grammar. Legacy blade/blisk templates are explicitly rejected until native `loft` geometry is supported. CATIA and GUI paths are outside this acceptance.
+This is not a full port of every historical `nlparser` alias or part-library recipe. The port covers flange, stepped shaft, sleeve/tube, selected blade/blisk and special gear templates, plus the existing native primitive/cut grammar. CATIA and GUI paths are outside this acceptance.
