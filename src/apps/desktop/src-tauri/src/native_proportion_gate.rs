@@ -3,13 +3,19 @@
 //! Measurements are dimensionless projected silhouette ratios. They are never interpreted
 //! as absolute dimensions. A comparison is made only for an exact, current reference/preview
 //! pair whose persisted vision observation marks the pair comparable.
-use image::{DynamicImage, ImageDecoder, ImageReader, Limits};
-use serde_json::{Value, json};
+use image::{DynamicImage, ImageDecoder, ImageReader, Limits, RgbaImage};
+use serde_json::{json, Value};
 use sha2::Digest;
-use std::{collections::BTreeMap, io::Cursor, path::Path};
+use std::{
+    collections::{BTreeMap, BTreeSet},
+    io::Cursor,
+    path::Path,
+};
 
 const MAX_IMAGE_BYTES: usize = 20 * 1024 * 1024;
 const MAX_PIXELS: u64 = 16_777_216;
+const BACKGROUND_COLOR_BINS: usize = 32 * 32 * 32;
+const MAX_BACKGROUND_PALETTE: usize = 1024;
 
 #[derive(Clone, Copy, Debug)]
 struct Interval {
@@ -251,68 +257,240 @@ fn measure(bytes: &[u8]) -> Result<Interval, &'static str> {
         .orientation()
         .map_err(|_| "image_orientation_invalid")?;
     let mut decoded = DynamicImage::from_decoder(decoder).map_err(|_| "image_decode_failed")?;
-    if decoded.color().has_alpha() {
-        return Err("silhouette_alpha_background_ambiguous");
-    }
     decoded.apply_orientation(orientation);
-    let image = decoded.to_rgb8();
-    if image.width() < 8 || image.height() < 8 {
+    let rgba = decoded.to_rgba8();
+    drop(decoded);
+    let alpha = rgba.as_raw().chunks_exact(4).map(|p| p[3]);
+    let mut min_alpha = u8::MAX;
+    for value in alpha {
+        min_alpha = min_alpha.min(value);
+    }
+    if rgba.width() < 8 || rgba.height() < 8 {
         return Err("image_too_small");
     }
-    // Estimate a flat background from the four corners; reject textured/ambiguous scenes.
-    let corners = [
-        (0, 0),
-        (image.width() - 1, 0),
-        (0, image.height() - 1),
-        (image.width() - 1, image.height() - 1),
-    ];
-    let bg = corners.map(|(x, y)| image.get_pixel(x, y).0.map(f64::from));
-    let spread = (0..3)
-        .map(|c| {
-            bg.iter().map(|p| p[c]).fold(f64::NEG_INFINITY, f64::max)
-                - bg.iter().map(|p| p[c]).fold(f64::INFINITY, f64::min)
-        })
-        .fold(0.0, f64::max);
-    if spread > 40.0 {
-        return Err("silhouette_background_ambiguous");
+    // An opaque RGBA image is equivalent to RGB. Real transparency is usable only when
+    // it forms a near-continuous frame around a substantially opaque subject.
+    let alpha_intervals = if min_alpha < 250 {
+        transparent_alpha_intervals(&rgba)?
+    } else {
+        None
+    };
+    if let Some(intervals) = alpha_intervals {
+        return Ok(intervals);
     }
-    let background = std::array::from_fn::<_, 3, _>(|c| bg.iter().map(|p| p[c]).sum::<f64>() / 4.0);
+    let background_lut = background_distance_lut(&rgba)?;
     let mut ratios = Vec::new();
     for threshold in [24.0, 38.0, 54.0] {
-        let mut min_x = image.width();
-        let mut min_y = image.height();
-        let mut max_x = 0;
-        let mut max_y = 0;
-        let mut count = 0u32;
-        for (x, y, p) in image.enumerate_pixels() {
-            let delta = (0..3)
-                .map(|c| (f64::from(p[c]) - background[c]).powi(2))
-                .sum::<f64>()
-                .sqrt();
-            if delta >= threshold {
-                min_x = min_x.min(x);
-                min_y = min_y.min(y);
-                max_x = max_x.max(x);
-                max_y = max_y.max(y);
-                count += 1;
-            }
-        }
-        if count < image.width().saturating_mul(image.height()) / 200
-            || max_x <= min_x
-            || max_y <= min_y
-        {
-            return Err("silhouette_segmentation_ambiguous");
-        }
-        let w = (max_x - min_x + 1) as f64;
-        let h = (max_y - min_y + 1) as f64;
-        if w >= image.width() as f64 * 0.98 || h >= image.height() as f64 * 0.98 {
-            return Err("silhouette_crop_ambiguous");
-        }
-        ratios.push(w / h);
+        ratios.push(segment_body_ratio(&rgba, &background_lut, threshold as u8)?);
     }
     let low = ratios.iter().copied().fold(f64::INFINITY, f64::min) * 0.92;
     let high = ratios.iter().copied().fold(f64::NEG_INFINITY, f64::max) * 1.08;
     Ok(Interval { low, high })
+}
+
+fn transparent_alpha_intervals(image: &image::RgbaImage) -> Result<Option<Interval>, &'static str> {
+    let (width, height) = image.dimensions();
+    let alpha_at = |x: u32, y: u32| image.get_pixel(x, y)[3];
+    let edge_is_transparent = (0..width)
+        .all(|x| alpha_at(x, 0) <= 16 && alpha_at(x, height - 1) <= 16)
+        && (0..height).all(|y| alpha_at(0, y) <= 16 && alpha_at(width - 1, y) <= 16);
+    if !edge_is_transparent {
+        return Err("silhouette_alpha_background_ambiguous");
+    }
+    let opaque = image.pixels().filter(|p| p[3] >= 240).count();
+    if opaque < (u64::from(width) * u64::from(height) / 200) as usize {
+        return Err("silhouette_alpha_foreground_ambiguous");
+    }
+    let thresholds = [16, 64, 128];
+    let mut ratios = Vec::new();
+    for threshold in thresholds {
+        let mut mask = vec![0u8; (width * height) as usize];
+        for (index, pixel) in image.pixels().enumerate() {
+            mask[index] = u8::from(pixel[3] >= threshold);
+        }
+        ratios.push(component_body_ratio(&mut mask, width, height)?);
+    }
+    let low = ratios.iter().copied().fold(f64::INFINITY, f64::min) * 0.92;
+    let high = ratios.iter().copied().fold(f64::NEG_INFINITY, f64::max) * 1.08;
+    Ok(Some(Interval { low, high }))
+}
+
+/// Build a small RGB5 lookup table from all sampled border colors. Unlike four-corner
+/// sampling, this models gradients and repeated CAD viewport colors such as grid lines.
+fn background_distance_lut(image: &RgbaImage) -> Result<Vec<u8>, &'static str> {
+    let (width, height) = image.dimensions();
+    let inset_x = 2;
+    let inset_y = 2;
+    let mut edge_colors = BTreeMap::<u16, u8>::new();
+    for x in 0..width {
+        for (y, edge) in [(inset_y, 1), (height - 1 - inset_y, 2)] {
+            let p = image.get_pixel(x, y);
+            let key = ((p[0] >> 3) as u16) << 10 | ((p[1] >> 3) as u16) << 5 | (p[2] >> 3) as u16;
+            *edge_colors.entry(key).or_default() |= edge;
+        }
+    }
+    for y in inset_y + 1..height.saturating_sub(inset_y + 1) {
+        for (x, edge) in [(inset_x, 4), (width - 1 - inset_x, 8)] {
+            let p = image.get_pixel(x, y);
+            let key = ((p[0] >> 3) as u16) << 10 | ((p[1] >> 3) as u16) << 5 | (p[2] >> 3) as u16;
+            *edge_colors.entry(key).or_default() |= edge;
+        }
+    }
+    // A color confined to a single edge is likely a cropped object entering the frame;
+    // requiring cross-edge support keeps it out of the background palette so the later
+    // edge-connected component test can report crop ambiguity.
+    let palette: BTreeSet<u16> = edge_colors
+        .into_iter()
+        .filter_map(|(color, edges)| (edges.count_ones() >= 2).then_some(color))
+        .collect();
+    if palette.is_empty() || palette.len() > MAX_BACKGROUND_PALETTE {
+        return Err("silhouette_background_palette_ambiguous");
+    }
+    let mut lut = vec![u8::MAX; BACKGROUND_COLOR_BINS];
+    for color in 0..BACKGROUND_COLOR_BINS {
+        let rgb = [
+            ((color >> 10) & 31) as i32 * 8 + 4,
+            ((color >> 5) & 31) as i32 * 8 + 4,
+            (color & 31) as i32 * 8 + 4,
+        ];
+        let mut best = 255.0f64;
+        for &bg in &palette {
+            let bg_rgb = [
+                ((bg >> 10) & 31) as i32 * 8 + 4,
+                ((bg >> 5) & 31) as i32 * 8 + 4,
+                (bg & 31) as i32 * 8 + 4,
+            ];
+            let d2 = (0..3)
+                .map(|c| (rgb[c] - bg_rgb[c]).pow(2) as f64)
+                .sum::<f64>();
+            best = best.min(d2.sqrt());
+        }
+        lut[color] = best.min(255.0) as u8;
+    }
+    Ok(lut)
+}
+
+fn segment_body_ratio(
+    image: &RgbaImage,
+    background_lut: &[u8],
+    threshold: u8,
+) -> Result<f64, &'static str> {
+    let (width, height) = image.dimensions();
+    let mut mask = Vec::with_capacity((width * height) as usize);
+    for p in image.pixels() {
+        let key = ((p[0] >> 3) as usize) << 10 | ((p[1] >> 3) as usize) << 5 | (p[2] >> 3) as usize;
+        mask.push(u8::from(background_lut[key] > threshold));
+    }
+    component_body_ratio(&mut mask, width, height)
+}
+
+/// Remove border-connected residual background, reject substantial subject contact with
+/// the frame, and measure the largest body component plus nearby substantial components.
+fn component_body_ratio(mask: &mut [u8], width: u32, height: u32) -> Result<f64, &'static str> {
+    let n = mask.len();
+    let mut queue: Vec<u32> = Vec::new();
+    let mut components = Vec::new();
+    for start in 0..n {
+        if mask[start] != 1 {
+            continue;
+        }
+        mask[start] = 2;
+        queue.clear();
+        queue.push(start as u32);
+        let mut min_x = width;
+        let mut min_y = height;
+        let mut max_x = 0;
+        let mut max_y = 0;
+        let mut touches_edge = false;
+        let mut head = 0;
+        while head < queue.len() {
+            let idx = queue[head] as usize;
+            head += 1;
+            let x = (idx as u32) % width;
+            let y = (idx as u32) / width;
+            min_x = min_x.min(x);
+            min_y = min_y.min(y);
+            max_x = max_x.max(x);
+            max_y = max_y.max(y);
+            touches_edge |= x == 0 || y == 0 || x + 1 == width || y + 1 == height;
+            let neighbors = [
+                if x > 0 { Some(idx - 1) } else { None },
+                if x + 1 < width { Some(idx + 1) } else { None },
+                if y > 0 {
+                    Some(idx - width as usize)
+                } else {
+                    None
+                },
+                if y + 1 < height {
+                    Some(idx + width as usize)
+                } else {
+                    None
+                },
+            ];
+            for next in neighbors.into_iter().flatten() {
+                if mask[next] == 1 {
+                    mask[next] = 2;
+                    queue.push(next as u32);
+                }
+            }
+        }
+        if touches_edge && queue.len() >= n / 500 {
+            return Err("silhouette_crop_ambiguous");
+        }
+        if !touches_edge {
+            components.push((queue.len(), min_x, min_y, max_x, max_y));
+        }
+    }
+    let Some(largest) = components.iter().map(|c| c.0).max() else {
+        return Err("silhouette_segmentation_ambiguous");
+    };
+    if largest < n / 200 {
+        return Err("silhouette_segmentation_ambiguous");
+    }
+    let primary_index = components
+        .iter()
+        .enumerate()
+        .max_by_key(|(_, c)| c.0)
+        .map(|(index, _)| index)
+        .unwrap();
+    let primary = &components[primary_index];
+    let (mut min_x, mut min_y, mut max_x, mut max_y) = (primary.1, primary.2, primary.3, primary.4);
+    let primary_width = max_x - min_x + 1;
+    let primary_height = max_y - min_y + 1;
+    let gap_limit = (primary_width.max(primary_height) as f64 * 0.08).max(2.0) as u32;
+    for (index, c) in components.iter().enumerate() {
+        if index == primary_index || c.0 < (largest as f64 * 0.03) as usize {
+            continue;
+        }
+        let dx = if c.3 < min_x {
+            min_x - c.3
+        } else if c.1 > max_x {
+            c.1 - max_x
+        } else {
+            0
+        };
+        let dy = if c.4 < min_y {
+            min_y - c.4
+        } else if c.2 > max_y {
+            c.2 - max_y
+        } else {
+            0
+        };
+        if dx.max(dy) <= gap_limit {
+            min_x = min_x.min(c.1);
+            min_y = min_y.min(c.2);
+            max_x = max_x.max(c.3);
+            max_y = max_y.max(c.4);
+        } else {
+            return Err("silhouette_components_ambiguous");
+        }
+    }
+    let w = max_x - min_x + 1;
+    let h = max_y - min_y + 1;
+    if w >= width * 98 / 100 || h >= height * 98 / 100 {
+        return Err("silhouette_crop_ambiguous");
+    }
+    Ok(w as f64 / h as f64)
 }
 
 #[cfg(test)]
@@ -405,5 +583,112 @@ mod tests {
             .unwrap();
         assert_eq!(read_image_bytes(&oversized), Err("image_over_byte_limit"));
         std::fs::remove_dir_all(root).unwrap();
+    }
+
+    fn png_bytes(image: DynamicImage) -> Vec<u8> {
+        let mut bytes = Cursor::new(Vec::new());
+        image.write_to(&mut bytes, image::ImageFormat::Png).unwrap();
+        bytes.into_inner()
+    }
+
+    fn assert_body_ratio(bytes: &[u8], expected: f64) {
+        let interval = measure(bytes).expect("synthetic body should be measurable");
+        let center = (interval.low + interval.high) / 2.0;
+        assert!(
+            (center - expected).abs() < expected * 0.14,
+            "interval={interval:?}, expected={expected}"
+        );
+    }
+
+    #[test]
+    fn segmented_background_handles_gradient_grid_alpha_crop_and_small_marker() {
+        // A CAD-style vertical gradient with grid lines that touch every image edge.
+        // The opaque body occludes the grid as a CAD renderer would.
+        let (w, h) = (160, 140);
+        let mut grid = RgbImage::new(w, h);
+        for y in 0..h {
+            let shade = (210i32 - y as i32 / 2) as u8;
+            for x in 0..w {
+                let line = x % 20 <= 1 || y % 18 <= 1;
+                grid.put_pixel(
+                    x,
+                    y,
+                    if line {
+                        Rgb([235, 235, 242])
+                    } else {
+                        Rgb([shade, shade, shade])
+                    },
+                );
+            }
+        }
+        for y in 30..110 {
+            for x in 50..110 {
+                grid.put_pixel(x, y, Rgb([30, 35, 45]));
+            }
+        }
+        assert_body_ratio(&png_bytes(DynamicImage::ImageRgb8(grid)), 0.75);
+
+        // Smooth gradient without texture must also leave the central envelope intact.
+        let mut gradient = RgbImage::new(w, h);
+        for y in 0..h {
+            for x in 0..w {
+                let shade = (220 - (y * 80 / h) as u8).saturating_add((x / 12) as u8);
+                gradient.put_pixel(x, y, Rgb([shade, shade, shade]));
+            }
+        }
+        for y in 30..110 {
+            for x in 50..110 {
+                gradient.put_pixel(x, y, Rgb([25, 30, 40]));
+            }
+        }
+        assert_body_ratio(&png_bytes(DynamicImage::ImageRgb8(gradient)), 0.75);
+
+        // RGBA with an all-opaque channel is ordinary RGB, not ambiguous transparency.
+        let mut opaque = image::RgbaImage::from_pixel(w, h, image::Rgba([200, 200, 200, 255]));
+        for y in 30..110 {
+            for x in 50..110 {
+                opaque.put_pixel(x, y, image::Rgba([25, 30, 40, 255]));
+            }
+        }
+        assert_body_ratio(&png_bytes(DynamicImage::ImageRgba8(opaque)), 0.75);
+
+        // Genuine transparency provides a direct silhouette. Include antialiased alpha
+        // around the subject so the threshold sweep expresses its edge uncertainty.
+        let mut transparent = image::RgbaImage::from_pixel(w, h, image::Rgba([80, 90, 100, 0]));
+        for y in 30..110 {
+            for x in 50..110 {
+                transparent.put_pixel(x, y, image::Rgba([25, 30, 40, 255]));
+            }
+        }
+        for x in 50..110 {
+            transparent.put_pixel(x, 29, image::Rgba([25, 30, 40, 96]));
+        }
+        assert_body_ratio(&png_bytes(DynamicImage::ImageRgba8(transparent)), 0.75);
+
+        // A body that continues into the frame is not a valid complete envelope.
+        let mut cropped = RgbImage::from_pixel(w, h, Rgb([200, 200, 200]));
+        for y in 25..115 {
+            for x in 0..75 {
+                cropped.put_pixel(x, y, Rgb([20, 25, 35]));
+            }
+        }
+        assert!(matches!(
+            measure(&png_bytes(DynamicImage::ImageRgb8(cropped))),
+            Err("silhouette_crop_ambiguous")
+        ));
+
+        // A disconnected small axis marker must not expand the body bounding box.
+        let mut marker = RgbImage::from_pixel(w, h, Rgb([200, 200, 200]));
+        for y in 30..110 {
+            for x in 50..110 {
+                marker.put_pixel(x, y, Rgb([20, 25, 35]));
+            }
+        }
+        for y in 120..130 {
+            for x in 8..18 {
+                marker.put_pixel(x, y, Rgb([10, 20, 240]));
+            }
+        }
+        assert_body_ratio(&png_bytes(DynamicImage::ImageRgb8(marker)), 0.75);
     }
 }
