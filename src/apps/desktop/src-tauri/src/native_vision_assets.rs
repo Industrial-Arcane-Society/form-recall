@@ -182,6 +182,22 @@ pub fn reference_input(
     })
 }
 
+/// Select the only registered source image for a direct preview comparison.
+/// Ambiguous multi-image sessions stay unpaired unless the caller names an ID.
+pub fn single_reference_input(manifest: &Path) -> Result<Option<ReferenceInput>, String> {
+    let value: Value = serde_json::from_slice(&read_bounded(manifest, MAX_MANIFEST_BYTES)?)
+        .map_err(|e| format!("参考图清单损坏：{e}"))?;
+    let rows = value
+        .get("images")
+        .and_then(Value::as_array)
+        .ok_or("参考图清单缺少 images 数组。")?;
+    if rows.len() != 1 {
+        return Ok(None);
+    }
+    let id = rows[0]["id"].as_str().ok_or("参考图清单缺少稳定 ID。")?;
+    reference_input(manifest, Some(id), None, None).map(Some)
+}
+
 fn normalize_roi(value: Option<&Value>) -> Result<Option<[f64; 4]>, String> {
     let Some(value) = value.filter(|v| !v.is_null()) else {
         return Ok(None);

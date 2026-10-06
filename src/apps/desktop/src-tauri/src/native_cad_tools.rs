@@ -100,17 +100,21 @@ pub fn run(
         },
     )?;
     let comparison_reference = if name == "cad_preview_model" {
-        args["reference_id"]
-            .as_str()
-            .map(|reference_id| {
+        let manifest = ctx.session_dir.join("reference-images.json");
+        if let Some(reference_id) = args["reference_id"].as_str() {
+            Some(
                 native_vision_assets::reference_input(
-                    &ctx.session_dir.join("reference-images.json"),
+                    &manifest,
                     Some(reference_id),
                     None,
                     None,
-                )
-            })
-            .transpose()?
+                )?,
+            )
+        } else if manifest.is_file() {
+            native_vision_assets::single_reference_input(&manifest)?
+        } else {
+            None
+        }
     } else {
         None
     };
@@ -989,6 +993,37 @@ mod tests {
         fs::write(&original, &original_bytes).unwrap();
         let sha = format!("{:x}", Sha256::digest(&original_bytes));
         let id = format!("sha256:{sha}");
+        fs::write(
+            root.join("reference-images.json"),
+            json!({"schema_version":1,"images":[{
+                "id":id,"sha256":sha,"path":original,"filename":"original.png",
+                "media_type":"image/png"
+            }]})
+            .to_string(),
+        )
+        .unwrap();
+
+        let automatically_selected = native_vision_assets::single_reference_input(
+            &root.join("reference-images.json"),
+        )
+        .unwrap()
+        .unwrap();
+        assert_eq!(automatically_selected.image.reference_id.as_deref(), Some(id.as_str()));
+        assert_eq!(automatically_selected.image.bytes, original_bytes);
+        fs::write(
+            root.join("reference-images.json"),
+            json!({"schema_version":1,"images":[
+                {"id":id,"sha256":sha,"path":original,"filename":"original.png","media_type":"image/png"},
+                {"id":"sha256:second","sha256":"second","path":"unused","filename":"second.png","media_type":"image/png"}
+            ]})
+            .to_string(),
+        )
+        .unwrap();
+        assert!(native_vision_assets::single_reference_input(
+            &root.join("reference-images.json"),
+        )
+        .unwrap()
+        .is_none());
         fs::write(
             root.join("reference-images.json"),
             json!({"schema_version":1,"images":[{
