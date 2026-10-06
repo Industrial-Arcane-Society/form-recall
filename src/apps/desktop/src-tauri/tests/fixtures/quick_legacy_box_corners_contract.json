@@ -1,0 +1,92 @@
+{
+  "source": "src/legacy/ai_modeler/core/parsing/nlparser.py and core/geometry/occ_kernel.py, captured 2026-10-06",
+  "legacy_accepted": [
+    {
+      "input": "长方体 长100 宽60 高20，四角圆角R5",
+      "feature_kind": "box",
+      "parameters": {
+        "length": 100.0,
+        "width": 60.0,
+        "height": 20.0,
+        "corner": 5.0,
+        "corner_mode": "fillet",
+        "center": [0.0, 0.0, 0.0],
+        "base": true,
+        "axis": "Z"
+      },
+      "rust_corner_source": "user",
+      "dimensions_mm": [100.0, 60.0, 20.0],
+      "volume_mm3": 119560.72257612903
+    },
+    {
+      "input": "长方体 长80 宽40 高12，四角倒角C3",
+      "feature_kind": "box",
+      "parameters": {
+        "length": 80.0,
+        "width": 40.0,
+        "height": 12.0,
+        "corner": 3.0,
+        "corner_mode": "chamfer",
+        "center": [0.0, 0.0, 0.0],
+        "base": true,
+        "axis": "Z"
+      },
+      "rust_corner_source": "user",
+      "dimensions_mm": [80.0, 40.0, 12.0],
+      "volume_mm3": 38184.0
+    },
+    {
+      "input": "长方体 长80 宽40 高12，倒角C25",
+      "feature_kind": "box",
+      "parameters": {
+        "length": 80.0,
+        "width": 40.0,
+        "height": 12.0,
+        "corner": 25.0,
+        "corner_mode": "chamfer",
+        "center": [0.0, 0.0, 0.0],
+        "base": true,
+        "axis": "Z"
+      },
+      "rust_corner_source": "user",
+      "dimensions_mm": [80.0, 40.0, 12.0],
+      "volume_mm3": 28800.000959999976
+    },
+    {
+      "input": "长方体 长80 宽40 高12，圆角",
+      "feature_kind": "box",
+      "parameters": {
+        "length": 80.0,
+        "width": 40.0,
+        "height": 12.0,
+        "corner": 0.0,
+        "corner_mode": "fillet",
+        "center": [0.0, 0.0, 0.0],
+        "base": true,
+        "axis": "Z"
+      },
+      "rust_corner_source": "derived",
+      "dimensions_mm": [80.0, 40.0, 12.0],
+      "volume_mm3": 38400.0,
+      "warning_contains": "legacy_box_corner_value_missing"
+    }
+  ],
+  "native_rejected": [
+    {
+      "input": "圆柱 直径40 高60 圆角R2",
+      "status": "unsupported",
+      "issue": "corner_modifier_requires_box"
+    },
+    {
+      "input": "长方体 长80 宽40 高12 圆角R2 倒角C3",
+      "status": "needs_clarification",
+      "issue": "box_corner_mode_conflict"
+    }
+  ],
+  "legacy_geometry_contract": {
+    "profile_algorithm": "src/legacy/ai_modeler/core/geometry/kernel.py::profile_rect",
+    "fillet_segments_per_quarter": 8,
+    "corner_clamp_mm": "max(0, min(corner, min(length/2, width/2) - 1e-6))",
+    "edge_scope": "XY profile corners extruded along Z; not top/bottom perimeter edge rounds"
+  }
+}

@@ -111,8 +111,8 @@ pub fn preflight(plan: &Value) -> Result<Value, String> {
                 feature["id"]
             ));
         }
-        if matches!(kind, "box" | "pocket") && optional_num(p, "corner", 0.)? != 0. {
-            return Err("Rust 圆角矩形尚未接入；不能静默忽略 corner。".into());
+        if kind == "pocket" && optional_num(p, "corner", 0.)? != 0. {
+            return Err("Rust 圆角矩形槽轮廓尚未接入；不能静默忽略 pocket.corner。".into());
         }
         if kind == "hole" && p.get("entry_point").is_some_and(|v| !v.is_null()) {
             return Err("Rust 显式盲孔入口局部材料核验尚未接入。".into());
@@ -922,6 +922,43 @@ fn annular_material_span(
     expected.ok_or("沉孔环带未能取得局部材料区间。".into())
 }
 
+fn rounded_rectangle_profile(
+    length: f64,
+    width: f64,
+    corner: f64,
+    mode: &str,
+) -> Vec<[f64; 2]> {
+    let half_length = length / 2.0;
+    let half_width = width / 2.0;
+    let radius = corner
+        .max(0.0)
+        .min((half_length.min(half_width) - 1e-6).max(0.0));
+    if radius <= 1e-9 {
+        return vec![
+            [-half_length, -half_width],
+            [half_length, -half_width],
+            [half_length, half_width],
+            [-half_length, half_width],
+        ];
+    }
+
+    let corners = [
+        (half_length - radius, -half_width + radius, -90.0),
+        (half_length - radius, half_width - radius, 0.0),
+        (-half_length + radius, half_width - radius, 90.0),
+        (-half_length + radius, -half_width + radius, 180.0),
+    ];
+    let mut points = Vec::with_capacity(if mode == "chamfer" { 8 } else { 36 });
+    for (cx, cy, start_angle) in corners {
+        let steps = if mode == "chamfer" { 1 } else { 8 };
+        for step in 0..=steps {
+            let angle = (start_angle + 90.0 * step as f64 / steps as f64).to_radians();
+            points.push([cx + radius * angle.cos(), cy + radius * angle.sin()]);
+        }
+    }
+    points
+}
+
 fn feature_tools(
     kernel: &Kernel,
     feature: &Value,
@@ -949,7 +986,30 @@ fn feature_tools(
             {
                 center[axis] += dimensions[2] / 2.;
             }
-            Ok((vec![kernel.make_box(size, center)?], vec![]))
+            let corner = optional_num(p, "corner", 0.)?;
+            if corner <= 1e-9 {
+                Ok((vec![kernel.make_box(size, center)?], vec![]))
+            } else {
+                let profile = rounded_rectangle_profile(
+                    dimensions[0],
+                    dimensions[1],
+                    corner,
+                    p.get("corner_mode")
+                        .and_then(Value::as_str)
+                        .unwrap_or("fillet"),
+                );
+                let mut origin = center;
+                origin[axis] -= dimensions[2] / 2.;
+                Ok((
+                    vec![kernel.prism(
+                        &profile,
+                        dimensions[2],
+                        origin,
+                        Axis::from_index(axis)?,
+                    )?],
+                    vec![],
+                ))
+            }
         }
         "cylinder" => {
             let height = num(p, "height")?;
@@ -1904,14 +1964,33 @@ mod tests {
     }
 
     #[test]
-    fn fixture_passes_preflight_but_unimplemented_variants_do_not() {
+    fn fixture_passes_preflight_and_box_corner_profiles_are_native() {
         let original = fixture();
         assert_eq!(preflight(&original).unwrap()["state"], "valid");
         let mut rounded = original.clone();
         rounded["features"][0]["parameters"]["corner"] = json!(2);
         rounded["features"][0]["sources"]["corner"] = json!({"type":"user"});
-        assert!(preflight(&rounded).unwrap_err().contains("corner"));
+        rounded["features"][0]["parameters"]["corner_mode"] = json!("fillet");
+        rounded["features"][0]["sources"]["corner_mode"] = json!({"type":"user"});
+        assert_eq!(preflight(&rounded).unwrap()["state"], "valid");
+        let mut rounded_pocket = original.clone();
+        rounded_pocket["features"][1]["parameters"]["corner"] = json!(1);
+        rounded_pocket["features"][1]["sources"]["corner"] = json!({"type":"user"});
+        let unsupported_pocket_corner = preflight(&rounded_pocket).unwrap_err();
+        assert!(unsupported_pocket_corner.contains("pocket.corner"), "{unsupported_pocket_corner}");
         assert_eq!(original["features"].as_array().unwrap().len(), 11);
+    }
+
+    #[test]
+    fn legacy_box_corner_profile_matches_polygon_contract_and_clamps_radius() {
+        let fillet = rounded_rectangle_profile(100.0, 60.0, 5.0, "fillet");
+        assert_eq!(fillet.len(), 36);
+        let chamfer = rounded_rectangle_profile(80.0, 40.0, 3.0, "chamfer");
+        assert_eq!(chamfer.len(), 8);
+        let oversized = rounded_rectangle_profile(80.0, 40.0, 25.0, "chamfer");
+        let clamped = rounded_rectangle_profile(80.0, 40.0, 19.999999, "chamfer");
+        assert_eq!(oversized, clamped);
+        assert_eq!(rounded_rectangle_profile(80.0, 40.0, 0.0, "fillet").len(), 4);
     }
 
     #[test]

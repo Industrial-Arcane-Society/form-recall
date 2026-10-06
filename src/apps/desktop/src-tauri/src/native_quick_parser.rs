@@ -146,10 +146,6 @@ pub fn parse(text: &str) -> Value {
     for (word, explanation) in [
         ("gear", "齿轮配方不在 Quick 基础形体范围内。"),
         ("齿轮", "齿轮配方不在 Quick 基础形体范围内。"),
-        ("圆角", "圆角/倒角尚未迁入 Quick 基础解析范围。"),
-        ("倒角", "圆角/倒角尚未迁入 Quick 基础解析范围。"),
-        ("fillet", "圆角/倒角尚未迁入 Quick 基础解析范围。"),
-        ("chamfer", "圆角/倒角尚未迁入 Quick 基础解析范围。"),
         ("array", "当前仅支持显式线性阵列；圆周及其他阵列语法尚未支持。"),
         ("阵列", "当前仅支持显式线性阵列；圆周及其他阵列语法尚未支持。"),
         ("thread", "螺纹紧固件尚未迁入 Quick 基础解析范围。"),
@@ -236,6 +232,21 @@ pub fn parse(text: &str) -> Value {
             let marker = first_modifier_index(&normalized).unwrap_or(normalized.len());
             base_text = normalized[..marker].to_owned();
         }
+    }
+
+    let fillet_requested = contains_any(&base_text, &["圆角", "倒圆", "圆滑", "fillet"]);
+    let chamfer_requested = contains_any(&base_text, &["倒角", "切角", "chamfer"]);
+    if (fillet_requested || chamfer_requested) && base_kind != Some(BaseKind::Box) {
+        unsupported.push(issue(
+            "corner_modifier_requires_box",
+            "旧 Python Quick 圆角/倒角轮廓目前仅迁入长方体基础形体；当前特征未生成。",
+        ));
+    }
+    if fillet_requested && chamfer_requested {
+        questions.push(issue(
+            "box_corner_mode_conflict",
+            "同一长方体不能同时指定圆角和倒角；请保留一种轮廓方式。",
+        ));
     }
 
     let mut features = Vec::<Value>::new();
@@ -992,6 +1003,49 @@ fn build_base(
                     &format!("沿用旧 Python Quick 长方体默认尺寸：{description}。"),
                 ));
             }
+            let fillet_requested = contains_any(clause, &["圆角", "倒圆", "圆滑", "fillet"]);
+            let chamfer_requested = contains_any(clause, &["倒角", "切角", "chamfer"]);
+            let corner = if chamfer_requested {
+                scalar(clause, &["倒角c", "切角c", "chamfer c", "倒角", "切角", "chamfer"])
+            } else {
+                scalar(
+                    clause,
+                    &["圆角半径", "圆角", "倒圆角", "倒圆", "圆滑", "fillet"],
+                )
+            };
+            let mode = if chamfer_requested { "chamfer" } else { "fillet" };
+            match corner {
+                Some(value) if value.is_finite() && value >= 0.0 => {
+                    parameters.insert("corner".into(), json!(value));
+                    sources.insert("corner".into(), user_source(raw));
+                }
+                Some(_) => questions.push(issue(
+                    "box_corner_invalid",
+                    "长方体圆角半径或倒角边长必须是有限的非负数。",
+                )),
+                None => {
+                    parameters.insert("corner".into(), json!(0.0));
+                    sources.insert(
+                        "corner".into(),
+                        derived_source(raw, "旧 Python Quick 长方体轮廓未给尺寸时沿用 corner=0。"),
+                    );
+                    if fillet_requested || chamfer_requested {
+                        warnings.push(issue(
+                            "legacy_box_corner_value_missing",
+                            "未取得圆角/倒角尺寸，沿用旧 Python Quick 行为忽略修饰并生成直角长方体。",
+                        ));
+                    }
+                }
+            }
+            parameters.insert("corner_mode".into(), json!(mode));
+            sources.insert(
+                "corner_mode".into(),
+                if fillet_requested || chamfer_requested {
+                    user_source(raw)
+                } else {
+                    derived_source(raw, "旧 Python Quick 长方体默认轮廓模式为 fillet。")
+                },
+            );
         }
         BaseKind::Cylinder => {
             let radius = scalar(clause, &["radius", "半径"]);
@@ -1681,6 +1735,26 @@ fn build_base(
                 }
             }
             _ => {}
+        }
+    }
+    if kind == BaseKind::Box {
+        for (key, value, note) in [
+            (
+                "center",
+                json!([0.0, 0.0, 0.0]),
+                "沿用旧 Python Quick 长方体默认原点底面中心。",
+            ),
+            ("base", json!(true), "沿用旧 Python Quick 长方体默认 base=true。"),
+            (
+                "axis",
+                json!("Z"),
+                "未指定轴向时沿用旧 Python Quick 长方体默认 Z 轴。",
+            ),
+        ] {
+            if !parameters.contains_key(key) {
+                parameters.insert(key.into(), value);
+                sources.insert(key.into(), derived_source(raw, note));
+            }
         }
     }
     if !legacy_defaulted.is_empty() {
@@ -3816,6 +3890,77 @@ mod tests {
         let invalid_angle = parse("回转体 半径20 高30 回转0度");
         assert_eq!(invalid_angle["status"], "needs_clarification");
         assert!(invalid_angle["questions"].to_string().contains("revolve_angle_invalid"));
+    }
+
+    #[test]
+    fn legacy_box_corner_profiles_match_python_contract() {
+        use serde_json::Value;
+
+        fn assert_json_matches(actual: &Value, expected: &Value, path: &str) {
+            if let (Some(actual), Some(expected)) = (actual.as_f64(), expected.as_f64()) {
+                assert!(
+                    (actual - expected).abs() <= 1e-8,
+                    "{path}: actual={actual}, expected={expected}"
+                );
+                return;
+            }
+            match (actual, expected) {
+                (Value::Array(actual), Value::Array(expected)) => {
+                    assert_eq!(actual.len(), expected.len(), "{path}: array length");
+                    for (index, (actual, expected)) in actual.iter().zip(expected).enumerate() {
+                        assert_json_matches(actual, expected, &format!("{path}[{index}]"));
+                    }
+                }
+                (Value::Object(actual), Value::Object(expected)) => {
+                    for (key, expected) in expected {
+                        assert_json_matches(
+                            actual.get(key).unwrap_or(&Value::Null),
+                            expected,
+                            &format!("{path}.{key}"),
+                        );
+                    }
+                }
+                _ => assert_eq!(actual, expected, "{path}"),
+            }
+        }
+
+        let fixture: Value = serde_json::from_str(include_str!(
+            "../tests/fixtures/quick_legacy_box_corners_contract.json"
+        ))
+        .expect("legacy box corner fixture is valid JSON");
+        for case in fixture["legacy_accepted"].as_array().unwrap() {
+            let input = case["input"].as_str().unwrap();
+            let output = parse(input);
+            assert_eq!(output["status"], "ready", "{input}: {output}");
+            let features = output["plan"]["features"].as_array().unwrap();
+            assert_eq!(features.len(), 1, "{input}: {output}");
+            let feature = &features[0];
+            assert_eq!(feature["kind"], case["feature_kind"], "{input}");
+            assert_json_matches(&feature["parameters"], &case["parameters"], input);
+            assert_eq!(
+                feature["sources"]["corner"]["type"],
+                case["rust_corner_source"],
+                "{input}: explicit corner evidence must not inherit the legacy provenance bug"
+            );
+            if let Some(warning) = case["warning_contains"].as_str() {
+                assert!(output["warnings"].to_string().contains(warning), "{input}: {output}");
+            }
+            let validation = crate::cad_plan_validation::validate_plan(&output["plan"]);
+            assert_eq!(validation["state"], "valid", "{input}: {validation}");
+        }
+
+        for case in fixture["native_rejected"].as_array().unwrap() {
+            let input = case["input"].as_str().unwrap();
+            let output = parse(input);
+            assert_eq!(output["status"], case["status"], "{input}: {output}");
+            assert!(output["plan"].is_null(), "{input}: {output}");
+            let issue_bucket = if output["status"] == "unsupported" {
+                &output["unsupported"]
+            } else {
+                &output["questions"]
+            };
+            assert!(issue_bucket.to_string().contains(case["issue"].as_str().unwrap()), "{output}");
+        }
     }
 
     #[test]
