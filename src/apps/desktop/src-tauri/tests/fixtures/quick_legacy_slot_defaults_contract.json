@@ -1,0 +1,59 @@
+{
+  "source": "src/legacy/ai_modeler/core/parsing/nlparser.py via nlparser.parse(text).doc.to_dict(), captured 2026-10-06",
+  "legacy_accepted": [
+    {
+      "input": "长方体 长100宽60高20，矩形槽",
+      "dimensions_mm": [100.0, 60.0, 20.0],
+      "volume_mm3": 118000.0,
+      "defaulted_fields": ["length", "width", "depth"],
+      "legacy_warnings": [],
+      "slots": [
+        {"feature_index": 1, "params": {"length": 20.0, "width": 20.0, "depth": 5.0, "corner": 0.0, "axis": "Z"}}
+      ]
+    },
+    {
+      "input": "长方体 长100宽60高20，矩形槽 长30",
+      "dimensions_mm": [100.0, 60.0, 20.0],
+      "volume_mm3": 117000.0,
+      "defaulted_fields": ["width", "depth"],
+      "legacy_warnings": [],
+      "slots": [
+        {"feature_index": 1, "params": {"length": 30.0, "width": 20.0, "depth": 5.0, "corner": 0.0, "axis": "Z"}}
+      ]
+    },
+    {
+      "input": "长方体 长100宽60高20，矩形槽 20×8",
+      "dimensions_mm": [100.0, 60.0, 20.0],
+      "volume_mm3": 119200.0,
+      "defaulted_fields": ["depth"],
+      "legacy_warnings": [],
+      "slots": [
+        {"feature_index": 1, "params": {"length": 20.0, "width": 8.0, "depth": 5.0, "corner": 0.0, "axis": "Z"}}
+      ]
+    },
+    {
+      "input": "长方体 长100宽60高20，矩形槽 深2",
+      "dimensions_mm": [100.0, 60.0, 20.0],
+      "volume_mm3": 119200.0,
+      "defaulted_fields": ["length", "width"],
+      "legacy_warnings": [],
+      "slots": [
+        {"feature_index": 1, "params": {"length": 20.0, "width": 20.0, "depth": 2.0, "corner": 0.0, "axis": "Z"}}
+      ]
+    },
+    {
+      "input": "长方体 长100宽60高20，铣两个槽",
+      "dimensions_mm": [100.0, 60.0, 20.0],
+      "volume_mm3": 116000.0,
+      "defaulted_fields": ["length", "width", "depth"],
+      "legacy_warnings": ["「铣两个槽」没写槽间距, 已按\"沿长度等距、间距 1.5×槽长、整体居中\"排布(间距 30 mm)，如需精确位置请在描述里给间距或坐标。"],
+      "slots": [
+        {"feature_index": 1, "params": {"length": 20.0, "width": 20.0, "depth": 5.0, "corner": 0.0, "x": -15.0, "axis": "Z"}},
+        {"feature_index": 2, "params": {"length": 20.0, "width": 20.0, "depth": 5.0, "corner": 0.0, "x": 15.0, "axis": "Z"}}
+      ]
+    }
+  ],
+  "native_rejected": [
+    {"input": "长方体 长100宽60高20，圆形槽", "status": "needs_clarification", "issue": "unsupported_slot_profile"}
+  ]
+}

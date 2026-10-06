@@ -27,7 +27,7 @@ pub fn parse(text: &str) -> Value {
     let mut unsupported = Vec::<Value>::new();
     let mut warnings = vec![json!({
         "code":"legacy_implicit_dimensions_removed",
-        "message":"Quick 不再沿用 legacy 的长方体/圆柱/圆锥/球体/孔/槽典型尺寸；缺少必需尺寸或孔位时返回澄清。"
+        "message":"仅已迁移的模板/兼容项沿用旧典型尺寸（如独立长方体和矩形槽），并在警告中说明；其余缺少必需尺寸或孔位时返回澄清。"
     })];
     if text.trim().is_empty() {
         return result(
@@ -1718,16 +1718,36 @@ fn build_slot(
             .or_else(|| pair.as_ref().map(|v| v[1])),
         scalar(clause, &["depth", "槽深", "深度", "深"]).or_else(|| triple.as_ref().map(|v| v[2])),
     ];
-    for (key, value) in ["length", "width", "depth"].into_iter().zip(vals) {
-        match value.filter(|v| v.is_finite() && *v > 0.) {
-            Some(v) => {
+    let defaults = [20.0, 20.0, 5.0];
+    let mut defaulted = Vec::new();
+    for (index, (key, value)) in ["length", "width", "depth"]
+        .into_iter()
+        .zip(vals)
+        .enumerate()
+    {
+        match value {
+            Some(v) if v.is_finite() && v > 0.0 => {
                 p.insert(key.into(), json!(v));
                 s.insert(key.into(), user_source(raw));
             }
-            None => questions.push(issue(
+            Some(_) => questions.push(issue(
                 "slot_dimension_missing_or_invalid",
-                &format!("矩形槽缺少明确的正数 {key}；请给出长、宽、深或 L×W×D。"),
+                &format!("矩形槽的 {key} 必须是正数；请给出长、宽、深或 L×W×D。"),
             )),
+            None => {
+                p.insert(key.into(), json!(defaults[index]));
+                s.insert(
+                    key.into(),
+                    derived_source(
+                        raw,
+                        &format!(
+                            "旧 Python Quick 矩形槽缺少 {key} 时默认使用 {} mm。",
+                            defaults[index]
+                        ),
+                    ),
+                );
+                defaulted.push((key, defaults[index]));
+            }
         }
     }
     let slot_count = match slot_array_count(clause) {
@@ -1773,6 +1793,19 @@ fn build_slot(
         warnings.push(issue(
             "unit_interpreted_as_mm",
             "未写长度单位的数值按 CADPlan 默认单位 mm 解释。",
+        ));
+    }
+    if !defaulted.is_empty() {
+        let summary = defaulted
+            .iter()
+            .map(|(key, value)| format!("{key}={value} mm"))
+            .collect::<Vec<_>>()
+            .join("、");
+        warnings.push(issue(
+            "legacy_slot_dimensions_defaulted",
+            &format!(
+                "沿用旧 Python Quick 矩形槽默认尺寸（{summary}）；输入未提供这些尺寸，请按需核对。"
+            ),
         ));
     }
     if slot_count == 1 {
@@ -2994,6 +3027,87 @@ mod tests {
                 "{input}: missing visibility warning for legacy defaults: {output}"
             );
         }
+    }
+
+    #[test]
+    fn rectangular_slots_fill_missing_dimensions_from_python_defaults() {
+        let fixture: Value = serde_json::from_str(include_str!(
+            "../tests/fixtures/quick_legacy_slot_defaults_contract.json"
+        ))
+        .expect("legacy slot defaults fixture is valid JSON");
+
+        for case in fixture["legacy_accepted"].as_array().unwrap() {
+            let input = case["input"].as_str().unwrap();
+            let output = parse(input);
+            assert_eq!(output["status"], "ready", "{input}: {output}");
+            let validation = crate::cad_plan_validation::validate_plan(&output["plan"]);
+            assert_eq!(validation["state"], "valid", "{input}: {validation}");
+
+            let features = output["plan"]["features"].as_array().unwrap();
+            let expected_slots = case["slots"].as_array().unwrap();
+            assert_eq!(features.len(), expected_slots.len() + 1, "{input}: {output}");
+            let defaulted_fields = case["defaulted_fields"].as_array().unwrap();
+            for expected in expected_slots {
+                let index = expected["feature_index"].as_u64().unwrap() as usize;
+                let actual = &features[index];
+                assert_eq!(actual["kind"], "pocket", "{input}: slot {index}");
+                assert_eq!(actual["operation"], "cut", "{input}: slot {index}");
+                for (key, value) in expected["params"].as_object().unwrap() {
+                    assert_eq!(
+                        actual["parameters"][key], *value,
+                        "{input}: slot {index} {key}"
+                    );
+                    if ["length", "width", "depth"].contains(&key.as_str()) {
+                        let was_defaulted = defaulted_fields
+                            .iter()
+                            .any(|field| field.as_str() == Some(key.as_str()));
+                        assert_eq!(
+                            actual["sources"][key]["type"],
+                            if was_defaulted { "derived" } else { "user" },
+                            "{input}: slot {index} {key} source"
+                        );
+                    }
+                }
+            }
+
+            let warnings = output["warnings"].to_string();
+            if !defaulted_fields.is_empty() {
+                assert!(
+                    warnings.contains("legacy_slot_dimensions_defaulted"),
+                    "{input}: defaults must be visible: {output}"
+                );
+            }
+            if expected_slots.len() > 1 {
+                assert!(
+                    warnings.contains("slot_array_legacy_spacing"),
+                    "{input}: {output}"
+                );
+            }
+        }
+
+        for case in fixture["native_rejected"].as_array().unwrap() {
+            let input = case["input"].as_str().unwrap();
+            let output = parse(input);
+            assert_eq!(output["status"], case["status"], "{input}: {output}");
+            assert!(output["plan"].is_null(), "{input}: {output}");
+            let issue_bucket = if output["status"] == "unsupported" {
+                &output["unsupported"]
+            } else {
+                &output["questions"]
+            };
+            assert!(
+                issue_bucket
+                    .to_string()
+                    .contains(case["issue"].as_str().unwrap()),
+                "{input}: {output}"
+            );
+        }
+
+        let invalid = parse("长方体 长100宽60高20，矩形槽 长0宽8深2");
+        assert_eq!(invalid["status"], "needs_clarification", "{invalid}");
+        assert!(invalid["questions"]
+            .to_string()
+            .contains("slot_dimension_missing_or_invalid"));
     }
 
     #[test]
