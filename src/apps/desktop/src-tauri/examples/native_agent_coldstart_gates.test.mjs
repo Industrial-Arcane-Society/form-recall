@@ -748,7 +748,7 @@ test('published cold-start files contain only safe gates and aggregate projectio
     assert.equal(summary.status_scope, 'scope_unverified')
     assert.equal(summary.runtime.node, 'unverified')
     assert.equal(summary.scratch_cleanup_status, 'not_created')
-    assert.deepEqual(summary.dsh_diagnostic, { stage: 'unknown', method: 'unknown', error_class: 'unknown' })
+    assert.deepEqual(summary.dsh_diagnostic, { schema: 'dsh_rpc_failure_diagnostic_v1', stage: 'unknown', method: 'unknown', error_class: 'unknown', request_sequence: null, rpc_error_code: 'unknown' })
     assert.deepEqual(Object.keys(summary.strict_gates.gates), [
       'run_scope', 'dsh_session', 'dsh_process', 'trace_integrity', 'original_image', 'main_image_wire', 'cordis_cad_tools',
       'acp_cad_tool_results', 'current_geometry', 'artifacts', 'holes', 'visual', 'finish',
@@ -764,7 +764,7 @@ test('published cold-start files contain only safe gates and aggregate projectio
     assert.equal(knownValues.status_scope, 'single_image_single_turn_cli_host_gates_not_independent_visual_or_CATIA_acceptance')
     assert.deepEqual(knownValues.runtime, { node: 'v22.23.3', dsh: '0.2.0-rc.2' })
     assert.equal(knownValues.model_status, 'accepted_by_strict_cli_gate')
-    assert.deepEqual(knownValues.dsh_diagnostic, { stage: 'unknown', method: 'unknown', error_class: 'none' })
+    assert.deepEqual(knownValues.dsh_diagnostic, { schema: 'dsh_rpc_failure_diagnostic_v1', stage: 'unknown', method: 'unknown', error_class: 'none', request_sequence: null, rpc_error_code: 'unknown' })
     assert.equal(knownValues.scratch_cleanup_status, 'removed')
     assert.deepEqual(knownValues.scratch_recovery, { status: 'complete', scanned_count: 2, removed_count: 1,
       preserved_count: 0, rejected_count: 0, unknown_owner_count: 0, failed_count: 0 })
@@ -1112,11 +1112,11 @@ test('DSH diagnostic publication keeps only allowlisted RPC method and error cla
   const classified = buildSafeAcceptanceSummary({
     dshDiagnostic: { stage: 'session_rpc', method: 'session/prompt', error_class: 'rpc_error', message: 'provider secret sentinel' },
   })
-  assert.deepEqual(classified.dsh_diagnostic, { stage: 'session_rpc', method: 'session/prompt', error_class: 'rpc_error' })
+  assert.deepEqual(classified.dsh_diagnostic, { schema: 'dsh_rpc_failure_diagnostic_v1', stage: 'session_rpc', method: 'session/prompt', error_class: 'rpc_error', request_sequence: null, rpc_error_code: 'unknown' })
   const unknown = buildSafeAcceptanceSummary({
     dshDiagnostic: { stage: 'private-stage-sentinel', method: 'private-method-sentinel', error_class: 'raw-provider-error-sentinel' },
   })
-  assert.deepEqual(unknown.dsh_diagnostic, { stage: 'unknown', method: 'unknown', error_class: 'unknown' })
+  assert.deepEqual(unknown.dsh_diagnostic, { schema: 'dsh_rpc_failure_diagnostic_v1', stage: 'unknown', method: 'unknown', error_class: 'unknown', request_sequence: null, rpc_error_code: 'unknown' })
   assert.equal(JSON.stringify(classified).includes('provider secret sentinel'), false)
   assert.equal(JSON.stringify(unknown).includes('sentinel'), false)
 })

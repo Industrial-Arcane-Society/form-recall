@@ -245,7 +245,7 @@ const rpc = acp.request
 child.once('exit', code => { dshExitCode = code })
 child.once('error', () => { evidenceErrors.push('dsh_process_start_failed') })
 let sessionId = null, dshStatus = 'failed', computedState = null, managedChildrenExited = true
-let dshFailure = { stage: 'unknown', method: 'unknown', error_class: 'none' }, dshChildExited = false
+let dshFailure = { stage: 'unknown', method: 'unknown', error_class: 'none', request_sequence: null, rpc_error_code: 'unknown' }, dshChildExited = false
 let scratchCleanupStatus = 'not_created'
 function safeDshError(method, errorClass, stage = 'session_rpc') {
   const error = new Error('DSH RPC failed')
@@ -298,7 +298,8 @@ try {
   await rpc('session/close', { sessionId })
   dshStatus = 'completed'
 } catch (error) {
-  dshFailure = { stage: error?.safeStage || 'unknown', method: error?.safeMethod || 'unknown', error_class: error?.safeClass || 'unknown' }
+  dshFailure = { stage: error?.safeStage || 'unknown', method: error?.safeMethod || 'unknown', error_class: error?.safeClass || 'unknown',
+    request_sequence: error?.safeRequestSequence ?? null, rpc_error_code: error?.safeRpcErrorCode || 'unknown' }
   if (sessionId && child.exitCode === null) {
     await cancelAndCloseSession(acp, sessionId, 15_000)
   }

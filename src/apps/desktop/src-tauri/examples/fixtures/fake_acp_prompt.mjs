@@ -42,6 +42,10 @@ createInterface({ input: process.stdin }).on('line', line => {
     cancelReceived = true
     stopActivity()
   } else if (request.method === 'session/prompt') {
+    if (mode === 'rpc_error') {
+      send({ jsonrpc: '2.0', id: request.id, error: { code: -32602, message: 'provider secret sentinel', data: { prompt: 'private prompt sentinel' } } })
+      return
+    }
     if (mode === 'total') {
       interval = setInterval(() => update(sessionId, {
         sessionUpdate: 'agent_thought_chunk', content: { type: 'text', text: `thought-${++sequence}` },

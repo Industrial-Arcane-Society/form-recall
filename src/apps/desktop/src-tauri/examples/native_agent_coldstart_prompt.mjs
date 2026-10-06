@@ -8,6 +8,13 @@ const MAX_TIMEOUT_SECONDS = 24 * 60 * 60
 const PROMPT_DEADLINE_KINDS = new Set(['none', 'idle', 'total'])
 const SAFE_RPC_METHODS = new Set(['initialize', 'session/new', 'session/set_config_option', 'session/prompt',
   'session/close', 'session/cancel'])
+const RPC_ERROR_CODE_BUCKETS = new Map([[-32700, 'parse_error'], [-32600, 'invalid_request'],
+  [-32601, 'method_not_found'], [-32602, 'invalid_params'], [-32603, 'internal_error']])
+
+export function safeRpcErrorCodeBucket(code) {
+  if (!Number.isSafeInteger(code)) return 'unknown'
+  return RPC_ERROR_CODE_BUCKETS.get(code) || (code >= -32099 && code <= -32000 ? 'server_error' : 'unknown')
+}
 
 function timeoutSeconds(value, fallback, label) {
   const seconds = value === undefined ? fallback : Number(value)
@@ -148,12 +155,14 @@ export class PromptProgressTracker {
   }
 }
 
-function safeRpcError(method, errorClass, deadlineKind = 'none', progress = null) {
+function safeRpcError(method, errorClass, deadlineKind = 'none', progress = null, requestSequence = null, rpcErrorCode = null) {
   const error = new Error('DSH RPC failed')
   error.safeStage = 'session_rpc'
   error.safeMethod = SAFE_RPC_METHODS.has(method) ? method : 'unknown'
   error.safeClass = ['rpc_error', 'timeout', 'child_exit', 'write_error', 'invalid_response'].includes(errorClass)
     ? errorClass : 'unknown'
+  error.safeRequestSequence = Number.isSafeInteger(requestSequence) && requestSequence > 0 ? requestSequence : null
+  error.safeRpcErrorCode = safeRpcErrorCodeBucket(rpcErrorCode)
   error.promptProgress = progress
     ? safePromptProgressSummary({ ...progress, deadline_kind: deadlineKind })
     : null
@@ -174,7 +183,7 @@ export function createAcpRpcClient(child, { onNotification = () => {}, onInvalid
     for (const [id, task] of pending) {
       pending.delete(id)
       clearTimers(task)
-      task.reject(safeRpcError(task.method, errorClass, 'none', task.progressTracker?.snapshot()))
+      task.reject(safeRpcError(task.method, errorClass, 'none', task.progressTracker?.snapshot(), task.requestSequence))
     }
   }
 
@@ -197,9 +206,9 @@ export function createAcpRpcClient(child, { onNotification = () => {}, onInvalid
       if (!task) return
       pending.delete(row.id)
       clearTimers(task)
-      if (row.error) task.reject(safeRpcError(task.method, 'rpc_error', 'none', task.progressTracker?.snapshot()))
+      if (row.error) task.reject(safeRpcError(task.method, 'rpc_error', 'none', task.progressTracker?.snapshot(), task.requestSequence, row.error.code))
       else if (Object.prototype.hasOwnProperty.call(row, 'result')) task.resolve(row.result || {})
-      else task.reject(safeRpcError(task.method, 'invalid_response', 'none', task.progressTracker?.snapshot()))
+      else task.reject(safeRpcError(task.method, 'invalid_response', 'none', task.progressTracker?.snapshot(), task.requestSequence))
       return
     }
     if (row?.method && row.id !== undefined) {
@@ -217,7 +226,7 @@ export function createAcpRpcClient(child, { onNotification = () => {}, onInvalid
     if (exited) return Promise.reject(safeRpcError(method, 'child_exit'))
     const id = ++sequence
     return new Promise((resolve, reject) => {
-      const task = { method, resolve, reject, progressTracker: options.progressTracker || null,
+      const task = { method, requestSequence: id, resolve, reject, progressTracker: options.progressTracker || null,
         totalTimer: null, idleTimer: null, unsubscribe: null, resetIdle: null }
       pending.set(id, task)
       const timeoutTask = kind => {
@@ -225,7 +234,7 @@ export function createAcpRpcClient(child, { onNotification = () => {}, onInvalid
         pending.delete(id)
         clearTimers(task)
         const progress = task.progressTracker?.snapshot(kind) || null
-        reject(safeRpcError(method, 'timeout', kind, progress))
+        reject(safeRpcError(method, 'timeout', kind, progress, id))
       }
       if (task.progressTracker && method === 'session/prompt') {
         const idleTimeoutMs = options.idleTimeoutMs
@@ -255,7 +264,7 @@ export function createAcpRpcClient(child, { onNotification = () => {}, onInvalid
       } catch {
         pending.delete(id)
         clearTimers(task)
-        reject(safeRpcError(method, 'write_error', 'none', task.progressTracker?.snapshot()))
+        reject(safeRpcError(method, 'write_error', 'none', task.progressTracker?.snapshot(), id))
       }
     })
   }

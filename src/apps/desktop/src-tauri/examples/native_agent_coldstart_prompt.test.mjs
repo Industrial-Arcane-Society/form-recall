@@ -7,7 +7,7 @@ import { fileURLToPath } from 'node:url'
 import { test } from 'node:test'
 import { buildSafeAcceptanceSummary, writeSafeFailureSummary } from './native_agent_coldstart_publication.mjs'
 import { cancelAndCloseSession, createAcpRpcClient, PromptProgressTracker, resolvePromptTimeoutPolicy,
-  safePromptProgressSummary, watchGeometryRevision } from './native_agent_coldstart_prompt.mjs'
+  safePromptProgressSummary, safeRpcErrorCodeBucket, watchGeometryRevision } from './native_agent_coldstart_prompt.mjs'
 
 const fixture = fileURLToPath(new URL('./fixtures/fake_acp_prompt.mjs', import.meta.url))
 
@@ -47,6 +47,34 @@ function prompt(client, sessionId, tracker, { totalMs = 300, idleMs = 70 } = {})
     progressTracker: tracker,
   })
 }
+
+
+test('JSON-RPC errors retain only standard code buckets and request-local sequence', async () => {
+  assert.equal(safeRpcErrorCodeBucket(-32700), 'parse_error')
+  assert.equal(safeRpcErrorCodeBucket(-32602), 'invalid_params')
+  assert.equal(safeRpcErrorCodeBucket(-32042), 'server_error')
+  assert.equal(safeRpcErrorCodeBucket(-31999), 'unknown')
+  assert.equal(safeRpcErrorCodeBucket('secret'), 'unknown')
+  const run = startFixture('rpc_error')
+  const sessionId = await initialize(run.client)
+  try {
+    await assert.rejects(prompt(run.client, sessionId, new PromptProgressTracker({ sessionId })), error => {
+      assert.equal(error.safeClass, 'rpc_error')
+      assert.equal(error.safeRequestSequence, 3)
+      assert.equal(error.safeRpcErrorCode, 'invalid_params')
+      const diagnostic = buildSafeAcceptanceSummary({ dshDiagnostic: { stage: error.safeStage, method: error.safeMethod,
+        error_class: error.safeClass, request_sequence: error.safeRequestSequence, rpc_error_code: error.safeRpcErrorCode,
+        message: 'provider secret sentinel', data: { prompt: 'private prompt sentinel' } } }).dsh_diagnostic
+      assert.deepEqual(diagnostic, { schema: 'dsh_rpc_failure_diagnostic_v1', stage: 'session_rpc', method: 'session/prompt', error_class: 'rpc_error',
+        request_sequence: 3, rpc_error_code: 'invalid_params' })
+      assert.doesNotMatch(JSON.stringify(diagnostic), /secret|private prompt|message|data/)
+      return true
+    })
+  } finally {
+    run.client.close()
+    run.child.kill()
+  }
+})
 
 test('coldstart prompt timeout policy defaults to production watchdog and supports the legacy alias', () => {
   assert.deepEqual(resolvePromptTimeoutPolicy({}), { totalTimeoutSeconds: 3600, idleTimeoutSeconds: 600 })

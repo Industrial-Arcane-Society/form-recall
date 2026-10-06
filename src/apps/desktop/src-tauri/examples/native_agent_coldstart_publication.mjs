@@ -110,6 +110,8 @@ const RPC_METHODS = new Set(['initialize', 'session/new', 'session/set_config_op
 const DSH_FAILURE_STAGES = new Set(['session_rpc', 'capability_check', 'reasoning_selection', 'unknown'])
 const RPC_ERROR_CLASSES = new Set(['none', 'rpc_error', 'timeout', 'child_exit', 'write_error', 'capability_missing',
   'invalid_response', 'config_selection_failed', 'unknown'])
+const RPC_ERROR_CODE_BUCKETS = new Set(['parse_error', 'invalid_request', 'method_not_found', 'invalid_params',
+  'internal_error', 'server_error', 'unknown'])
 const pickCounts = (rows, keys, enums) => Array.isArray(rows) ? rows.map(row => {
   const result = {}
   for (const key of keys) {
@@ -274,10 +276,14 @@ export function buildSafeFailureDiagnostic({ stage, phase, code } = {}) {
 
 export function buildSafeDshDiagnostic(value = {}) {
   return {
+    schema: 'dsh_rpc_failure_diagnostic_v1',
     stage: DSH_FAILURE_STAGES.has(value.stage) ? value.stage : 'unknown',
     method: RPC_METHODS.has(value.method) ? value.method : 'unknown',
     error_class: value.error_class === undefined ? 'none'
       : RPC_ERROR_CLASSES.has(value.error_class) ? value.error_class : 'unknown',
+    request_sequence: Number.isSafeInteger(value.request_sequence) && value.request_sequence > 0
+      ? Math.min(value.request_sequence, 1_000_000_000) : null,
+    rpc_error_code: RPC_ERROR_CODE_BUCKETS.has(value.rpc_error_code) ? value.rpc_error_code : 'unknown',
   }
 }
 
