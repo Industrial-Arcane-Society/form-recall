@@ -21,6 +21,12 @@
 
 下一次针对 G11 的验证需要在隔离 harness 中制造单一可控的 JSON-RPC 数字错误码，并核对固定分类桶、请求序号及敏感字段不外泄。不要为了触发诊断而重复长时间真实建模冷启动。
 
+## F7.G1 / G1.2 视觉复核投影
+
+Run40 的 safe summary 记录 `independent_review_present=true`、`manifest_valid=true`、单张参考图的 `reference_id_bound=true` 和 `reference_sha_bound=true`，但 `original_reference_covered=false`、`host_coverage_complete=false`、`all_references_covered=false`；所以 visual gate 拒绝通过是符合当前证据的结果。`vision_review_projection` 的唯一 review row 为 `required=7`、`mapped=7`、`unknown=1`、`coverage_class=partial`、`stage_eligible=true`。该投影不包含已选择的 reference selector，也不包含逐条 evidence 的固定状态，因此无法把这条 unknown 追溯到具体 producer/consumer 分支。
+
+本轮没有发现可复现的代码缺陷；不能放宽 coverage gate，也不能把“存在 independent review”当成审查已覆盖原图。若要继续定位，需要在 safe allowlist 中增加不含 prompt/provider 文本或几何载荷的 per-call selector 与 per-evidence binding/coverage reason code，然后用定向 fixture 覆盖 unknown 来源。Run40 的候选仍不通过视觉验收；该诊断不替代原图与候选的独立视觉比较。
+
 ## 安全产物身份
 
 | 文件 | SHA-256 |
@@ -31,4 +37,4 @@
 | reference PNG | `53ed87fadf8cca869da921627e6a13c845424c6906b3de517d5cca972db94553` |
 | ISO preview PNG | `e0a4e04e0a83e20ebb343ca0ba0b2fd0c72b004f61c0f6b82e2969226e702a22` |
 
-结论：Run40 证明原图传输、DSH transport、工具终态和候选预览导出链路本轮可运行；它没有通过孔、视觉与 finish 验收，也没有覆盖 G11 的 RPC 错误分支。F7.G8 与 F7.G11 均保持未完成。
+结论：Run40 证明原图传输、DSH transport、工具终态和候选预览导出链路本轮可运行；它没有通过孔、视觉与 finish 验收，也没有覆盖 G11 的 RPC 错误分支。F7.G8 与 F7.G1 真实视觉验收仍未完成；G11 的错误分支现由独立 JSON-RPC 故障注入回归覆盖，真实 runner failure row 留存仍待确认。
