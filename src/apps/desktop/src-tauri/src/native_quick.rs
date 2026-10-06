@@ -1727,6 +1727,81 @@ mod acceptance_tests {
 
     #[test]
     #[ignore = "requires the staged local OCCT runtime manifest"]
+    fn f5_30_measured_socket_head_bolts_build_reopen_and_export() {
+        let manifest = std::env::var_os("AIMODELER_OCCT_MANIFEST")
+            .map(std::path::PathBuf::from)
+            .expect("set AIMODELER_OCCT_MANIFEST to the staged OCCT runtime-manifest.json");
+        assert!(manifest.is_file(), "missing OCCT manifest: {}", manifest.display());
+        let fixture: Value = serde_json::from_str(include_str!(
+            "../tests/fixtures/quick_legacy_socket_head_bolt_contract.json"
+        ))
+        .expect("socket-head screw acceptance fixture is valid JSON");
+        let root = std::env::temp_dir().join(format!(
+            "native-quick-socket-bolt-{}-{}",
+            std::process::id(),
+            SystemTime::now()
+                .duration_since(UNIX_EPOCH)
+                .expect("system clock")
+                .as_nanos()
+        ));
+        fs::create_dir_all(&root).expect("create native Quick output root");
+        struct RemoveOnDrop(std::path::PathBuf);
+        impl Drop for RemoveOnDrop {
+            fn drop(&mut self) {
+                let _ = fs::remove_dir_all(&self.0);
+            }
+        }
+        let _cleanup = RemoveOnDrop(root.clone());
+
+        for (index, case) in fixture["native_rust_expected"].as_array().unwrap().iter().enumerate() {
+            let input = case["input"].as_str().unwrap();
+            let output = build(input, index as i64 + 1, &manifest, &root)
+                .unwrap_or_else(|error| panic!("{input}: native Quick build failed: {error}"));
+            assert_eq!(output["state"], "complete", "{input}: {output}");
+            let report = &output["geometry_report"];
+            assert_eq!(report["state"], "passed", "{input}: {report}");
+            assert_eq!(report["valid"], true, "{input}: {report}");
+            assert_eq!(report["closed_solid_count"], 1, "{input}: {report}");
+            assert!(report["volume_mm3"].as_f64().unwrap_or_default() > 0.0, "{input}: {report}");
+
+            let dimensions = output["stats"]["size"].as_array().expect("size summary");
+            let expected = case["dimensions_mm"].as_array().unwrap();
+            assert_eq!(dimensions.len(), expected.len(), "{input}");
+            for (axis, (actual, expected)) in dimensions.iter().zip(expected).enumerate() {
+                let actual = actual.as_f64().unwrap_or_default();
+                let expected = expected.as_f64().unwrap();
+                assert!((actual - expected).abs() <= 1e-5, "{input}: axis {axis} = {actual}, expected {expected}; {output}");
+            }
+
+            let kinds = case["feature_kinds"].as_array().unwrap();
+            let features = output["cadplan"]["features"].as_array().expect("CADPlan feature list");
+            assert_eq!(features.len(), kinds.len(), "{input}");
+            for (feature, expected_kind) in features.iter().zip(kinds) {
+                assert_eq!(feature["kind"], *expected_kind, "{input}");
+            }
+            let bolt_row = report["feature_results"].as_array().unwrap().last().unwrap();
+            assert_eq!(bolt_row["state"], "built", "{input}: {bolt_row}");
+            assert_eq!(bolt_row["support_details"]["thread"]["visible_geometry"], true, "{input}: {bolt_row}");
+
+            let paths = output["output_paths"].as_object().unwrap();
+            for name in ["glb", "aimodel", "stl", "obj"] {
+                assert!(Path::new(paths[name].as_str().unwrap()).is_file(), "{input}: missing {name}");
+            }
+            let loaded = native_model_io::load_aimodel(Path::new(paths["aimodel"].as_str().unwrap()))
+                .unwrap_or_else(|error| panic!("{input}: AIMODEL reload failed: {error}"));
+            assert_eq!(loaded["cadplan"]["features"], output["cadplan"]["features"], "{input}: AIMODEL round-trip");
+            let stl = fs::read(paths["stl"].as_str().unwrap()).unwrap();
+            assert!(stl.len() >= 84, "{input}: STL header is truncated");
+            let triangles = u32::from_le_bytes(stl[80..84].try_into().unwrap()) as usize;
+            assert!(triangles > 0, "{input}: STL contains no triangles");
+            assert_eq!(stl.len(), 84 + triangles * 50, "{input}: STL byte count is inconsistent");
+            println!("F5.30 native acceptance: input={input}; dimensions_mm={}; volume_mm3={}; triangles={triangles}",
+                serde_json::to_string(&output["stats"]["size"]).unwrap(), report["volume_mm3"]);
+        }
+    }
+
+    #[test]
+    #[ignore = "requires the staged local OCCT runtime manifest"]
     fn legacy_blade_and_blisk_build_reopen_and_export_through_native_quick() {
         let manifest = std::env::var_os("AIMODELER_OCCT_MANIFEST")
             .map(std::path::PathBuf::from)

@@ -1,0 +1,63 @@
+{
+  "source": "src/legacy/ai_modeler/core/parsing/nlparser.py::Parser.parse -> partlib.build_features_ex -> parts.measured.realparts.build_socket_bolt_real; src/legacy/kb/bolt_library.json; src/legacy/kb/bolt_std.json",
+  "updated": "2026-10-07",
+  "legacy_python_accepted": [
+    {
+      "input": "帮我建 M5x8 内六角螺钉",
+      "ok": true,
+      "recognized": 1,
+      "steps": ["零件库识别: 内六角螺钉 (来自机械设计手册)"],
+      "feature_count": 7,
+      "features": [
+        {"kind": "cylinder", "operation": "add", "name": "弹性垫圈 ⌀8.8×1.2", "radius": 4.4, "height": 1.2, "center": [0, 0, -0.6]},
+        {"kind": "hole", "operation": "cut", "name": "弹性垫圈内孔 ⌀5.1", "diameter": 5.1, "through": true, "pos": "center"},
+        {"kind": "cylinder", "operation": "add", "name": "平垫圈 ⌀10×1", "radius": 5.0, "height": 1.0, "center": [0, 0, -1.7]},
+        {"kind": "hole", "operation": "cut", "name": "平垫圈内孔 ⌀5.3", "diameter": 5.3, "through": true, "pos": "center"},
+        {"kind": "cylinder", "operation": "add", "name": "螺杆 ⌀5×8", "radius": 2.5, "height": 8.0, "center": [0, 0, -4.0]},
+        {"kind": "cylinder", "operation": "add", "name": "螺钉头 ⌀8.5×5", "radius": 4.25, "height": 5.0, "center": [0, 0, 2.5]},
+        {"kind": "prism", "operation": "cut", "name": "内六角孔 对边4×深2.5", "across_flats": 4.0, "depth": 2.5}
+      ],
+      "measured_catalog": {
+        "model": "M5x8",
+        "shank_d": 5.0,
+        "length": 8.0,
+        "head_d": 8.5,
+        "head_h": 5.0,
+        "hex_s": 4.0,
+        "spring_washer": {"d_in": 5.1, "d_out": 8.8, "t": 1.2},
+        "flat_washer": {"d_in": 5.3, "d_out": 10.0, "t": 1.0},
+        "measured_envelope_mm": [10.0, 10.0, 13.0],
+        "source": "实测 STEP M5x8.stp"
+      },
+      "thread": "legacy measured realparts reconstructs the shank as a smooth cylinder"
+    }
+  ],
+  "native_rust_expected": [
+    {
+      "input": "帮我建 M5x8 内六角螺钉",
+      "feature_kinds": ["revolve", "revolve", "socket_head_bolt"],
+      "feature_names": ["弹簧垫圈", "平垫圈", "内六角圆柱头螺钉"],
+      "dimensions_mm": [10.0, 10.0, 13.0],
+      "thread_visible_geometry": true,
+      "thread_status": "faceted_approximation",
+      "intentional_legacy_difference": "native Rust uses visible faceted thread geometry; legacy Python Quick used a smooth shank"
+    },
+    {
+      "input": "M5x8 内六角螺钉 不带垫圈",
+      "feature_kinds": ["socket_head_bolt"],
+      "dimensions_mm": [8.5, 8.5, 13.0],
+      "thread_visible_geometry": true
+    }
+  ],
+  "needs_clarification": [
+    {"input": "内六角螺钉", "issue": "legacy_socket_bolt_size_missing"},
+    {"input": "M5x8 螺钉", "issue": "legacy_socket_bolt_head_type_missing"},
+    {"input": "M5x8 内六角螺钉 螺距1.0", "issue": "legacy_socket_bolt_pitch_conflict"}
+  ],
+  "unsupported": [
+    {"input": "M5x8 沉头螺钉", "issue": "legacy_socket_bolt_head_type_unsupported"},
+    {"input": "M5x9 内六角螺钉", "issue": "legacy_socket_bolt_model_not_measured"},
+    {"input": "M5x8 内六角螺钉 头部开孔", "issue": "legacy_socket_bolt_compound_geometry_unsupported"},
+    {"input": "M5x8 内六角螺钉 光杆", "issue": "legacy_socket_bolt_thread_mode_unsupported"}
+  ]
+}

@@ -54,17 +54,23 @@ fn build_socket_head_bolt(
             [hex_r * angle.cos(), hex_r * angle.sin()]
         })
         .collect();
+    // The head occupies center.z..center.z+head_h and the shank attaches at
+    // the +Z face. The socket belongs on the opposite, exposed end face and
+    // cuts inward along +Z; placing it at the shank junction lets the shank
+    // cover the opening.
     let socket = kernel.prism(
         &socket_profile,
         hex_t + 0.02,
-        [center[0], center[1], center[2] + head_h - hex_t - 0.01],
+        [center[0], center[1], center[2] - 0.01],
         Axis::Z,
     )?;
     let head = kernel.cut(&head, &[&socket])?;
+    // Overlap the shank into the head by 0.01 mm for a robust fuse while
+    // keeping its far end at the requested nominal length.
     let mesh = threaded_cylinder(
         d,
         pitch,
-        length + 0.02,
+        length + 0.01,
         [center[0], center[1], center[2] + head_h - 0.01],
         segments,
     )?;
