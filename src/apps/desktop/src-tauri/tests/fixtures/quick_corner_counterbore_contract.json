@@ -1,0 +1,57 @@
+{
+  "source": "legacy oracle captured from src/legacy/ai_modeler/core/parsing/nlparser.py via nlparser.parse(text).doc on 2026-10-06",
+  "legacy_python_cases": [
+    {
+      "input": "长方体 长120宽80高20，四角各打直径6通孔带直径12沉孔深4",
+      "holes": [
+        {"kind": "hole", "operation": "cut", "parameters": {"diameter": 6.0, "through": true, "axis": "Z", "pos": "corners", "segments": 24, "margin": 0.0}},
+        {"kind": "hole", "operation": "cut", "parameters": {"diameter": 12.0, "through": false, "axis": "Z", "pos": "corners", "segments": 24, "depth": 4.0, "margin": 0.0}}
+      ],
+      "geometry_issue": "legacy duplicates the same clearance margin across diameters; hole centers differ by sqrt(18) mm"
+    },
+    {
+      "input": "长方体 长120宽80高20，四角各打直径6通孔边距10带直径12沉孔深4",
+      "holes": [
+        {"kind": "hole", "operation": "cut", "parameters": {"diameter": 6.0, "through": true, "axis": "Z", "pos": "corners", "segments": 24, "margin": 10.0}},
+        {"kind": "hole", "operation": "cut", "parameters": {"diameter": 12.0, "through": false, "axis": "Z", "pos": "corners", "segments": 24, "depth": 4.0, "margin": 10.0}}
+      ],
+      "geometry_issue": "legacy duplicates the same clearance margin across diameters; hole centers differ by sqrt(18) mm"
+    },
+    {
+      "input": "长方体 长120宽80高20，四角各打直径6通孔边距10，沉孔直径12深4",
+      "holes": [
+        {"kind": "hole", "operation": "cut", "parameters": {"diameter": 6.0, "through": true, "axis": "Z", "pos": "corners", "segments": 24, "margin": 10.0}},
+        {"kind": "hole", "operation": "cut", "parameters": {"diameter": 12.0, "through": false, "axis": "Z", "pos": "corners", "segments": 24, "depth": 4.0, "margin": 0.0}}
+      ],
+      "geometry_issue": "legacy separate-clause defaults place pilot and counterbore centers 7 mm apart on both X and Y"
+    }
+  ],
+  "native_expected_cases": [
+    {
+      "input": "长方体 长120宽80高20，四角各打直径6通孔带直径12沉孔深4",
+      "pilot_margin_mm": 3.0,
+      "counterbore_margin_mm": 0.0,
+      "counterbore_margin_source": "derived",
+      "expected_geometry": {"dimensions_mm": [120.0, 80.0, 20.0], "pilot_holes": 4, "counterbores": 4, "center_offset_mm": 0.0, "volume_mm3": 188380.88526306496}
+    },
+    {
+      "input": "长方体 长120宽80高20，四角各打直径6通孔边距10带直径12沉孔深4",
+      "pilot_margin_mm": 13.0,
+      "counterbore_margin_mm": 10.0,
+      "counterbore_margin_source": "user",
+      "expected_geometry": {"dimensions_mm": [120.0, 80.0, 20.0], "pilot_holes": 4, "counterbores": 4, "center_offset_mm": 0.0, "volume_mm3": 188380.88526306496}
+    },
+    {
+      "input": "长方体 长120宽80高20，四角各打直径6通孔边距10，沉孔直径12深4",
+      "pilot_margin_mm": 13.0,
+      "counterbore_margin_mm": 10.0,
+      "counterbore_margin_source": "derived",
+      "expected_geometry": {"dimensions_mm": [120.0, 80.0, 20.0], "pilot_holes": 4, "counterbores": 4, "center_offset_mm": 0.0, "volume_mm3": 188380.88526306496}
+    }
+  ],
+  "native_rejected": [
+    {"input": "长方体 长120宽80高20，四角各打直径6通孔带直径12沉孔", "status": "needs_clarification", "issue": "counterbore_depth_missing"},
+    {"input": "长方体 长120宽80高20，四角各打直径12通孔带直径8沉孔深4", "status": "needs_clarification", "issue": "counterbore_diameter_order_invalid"},
+    {"input": "长方体 长120宽80高20，四角沉孔直径12深4", "status": "needs_clarification", "issue": "counterbore_corner_pilot_missing"}
+  ]
+}

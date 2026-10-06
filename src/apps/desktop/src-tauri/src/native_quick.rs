@@ -1246,6 +1246,98 @@ mod tests {
     }
 
     #[test]
+    #[ignore = "requires the staged OCCT runtime; run the documented F5.23 acceptance command"]
+    fn f5_23_legacy_corner_counterbores_build_measure_and_export() {
+        use serde_json::Value;
+
+        let manifest = std::env::var_os("AIMODELER_TEST_OCCT_MANIFEST")
+            .map(std::path::PathBuf::from)
+            .expect("F5.23 requires AIMODELER_TEST_OCCT_MANIFEST");
+        assert!(
+            manifest.is_file(),
+            "F5.23 OCCT runtime manifest is missing: {}",
+            manifest.display()
+        );
+        let fixture: Value = serde_json::from_str(include_str!(
+            "../tests/fixtures/quick_corner_counterbore_contract.json"
+        ))
+        .expect("F5.23 corner counterbore acceptance fixture is valid JSON");
+        let cases = fixture["native_expected_cases"].as_array().unwrap();
+        assert_eq!(
+            cases.len(),
+            3,
+            "F5.23 covers inline, inherited, and separate-clause margins"
+        );
+        struct RemoveOnDrop(std::path::PathBuf);
+        impl Drop for RemoveOnDrop {
+            fn drop(&mut self) {
+                let _ = std::fs::remove_dir_all(&self.0);
+            }
+        }
+        for (case_index, case) in cases.iter().enumerate() {
+            let prompt = case["input"].as_str().unwrap();
+            let root = std::env::temp_dir().join(format!(
+                "quick-f5-23-{}-{case_index}-{}",
+                std::process::id(),
+                SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_nanos()
+            ));
+            fs::create_dir_all(&root).unwrap();
+            let _cleanup = RemoveOnDrop(root.clone());
+
+            let result = build(prompt, 1, &manifest, &root)
+                .unwrap_or_else(|error| panic!("F5.23 Quick build failed for {prompt}: {error}"));
+            assert_eq!(result["state"], "complete", "{prompt}");
+            let report = &result["geometry_report"];
+            assert_eq!(report["state"], "passed", "{prompt}");
+            assert_eq!(report["valid"], true, "{prompt}");
+            assert_eq!(report["closed_solid_count"], 1, "{prompt}");
+            let expected = &case["expected_geometry"];
+            assert_eq!(report["dimensions_mm"], expected["dimensions_mm"]);
+            let expected_volume = expected["volume_mm3"].as_f64().unwrap();
+            let actual_volume = report["volume_mm3"].as_f64().unwrap();
+            assert!(
+                (actual_volume - expected_volume).abs() <= 1e-4,
+                "{prompt}: expected volume {expected_volume}, got {actual_volume}"
+            );
+
+            let holes = report["hole_instances"].as_array().unwrap();
+            assert_eq!(holes.len(), 8, "{prompt}: expected four pilots and four counterbores");
+            assert_eq!(report["hole_measurements_verified"], true, "{prompt}: all B-Rep hole measurements must pass");
+            assert_eq!(
+                holes.iter().filter(|hole| hole["through"] == true).count(),
+                expected["pilot_holes"]
+            );
+            assert_eq!(
+                holes.iter().filter(|hole| hole["through"] == false).count(),
+                expected["counterbores"]
+            );
+
+            let features = result["cadplan"]["features"].as_array().unwrap();
+            assert_eq!(features.len(), 3, "{prompt}");
+            assert_eq!(
+                features[1]["parameters"]["margin"],
+                case["pilot_margin_mm"]
+            );
+            assert_eq!(
+                features[2]["parameters"]["margin"],
+                case["counterbore_margin_mm"]
+            );
+            let aimodel = Path::new(result["output_paths"]["aimodel"].as_str().unwrap());
+            let stl = Path::new(result["output_paths"]["stl"].as_str().unwrap());
+            assert!(aimodel.is_file(), "{prompt}: missing AIMODEL export");
+            assert!(stl.is_file(), "{prompt}: missing STL export");
+            let loaded = native_model_io::load_aimodel(aimodel)
+                .unwrap_or_else(|error| panic!("F5.23 AIMODEL round-trip failed for {prompt}: {error}"));
+            assert_eq!(
+                loaded["cadplan"]["features"],
+                result["cadplan"]["features"],
+                "{prompt}"
+            );
+            eprintln!("F5.23 PASS: {prompt} -> concentric four-corner pilot/counterbore pairs, volume={actual_volume} mm³");
+        }
+    }
+
+    #[test]
     fn f5_12_failed_stl_export_preserves_existing_target() {
         let root = std::env::temp_dir().join(format!(
             "quick-f5-12-export-{}-{}",

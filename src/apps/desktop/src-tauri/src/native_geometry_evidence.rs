@@ -220,6 +220,13 @@ fn verify_hole_with_protected_radius(
                 && (s.before_length - s.after_length).abs() <= min_change
         })
         .count();
+    let minimum_outside_samples = outside.len().div_ceil(2);
+    // Corner holes can be tangent to the part boundary, so some radial probes
+    // legitimately start outside the stock. Require coverage from at least
+    // half of the probes, then require every probe that intersects stock to
+    // retain that material unchanged.
+    let outside_checks_pass = outside_pre_count >= minimum_outside_samples
+        && outside_retained_count == outside_pre_count;
     let center_remaining_material = center.after_length > min_change;
     let through = center_pre_present
         && center.after_length <= min_change
@@ -228,8 +235,7 @@ fn verify_hole_with_protected_radius(
         && center_removed
         && interior_pre_count == interior.len()
         && interior_removed_count == interior.len()
-        && outside_pre_count == outside.len()
-        && outside_retained_count == outside.len();
+        && outside_checks_pass;
 
     let center_report = ray_json(
         &center,
@@ -254,7 +260,7 @@ fn verify_hole_with_protected_radius(
                 material_present(s)
                     && s.after_length > min_change
                     && (s.before_length - s.after_length).abs() <= min_change,
-                "outside-radius sample retains its pre-cut material span",
+                "outside-radius sample retains its pre-cut material span when stock exists at that sample",
             )
         })
         .collect();
@@ -286,8 +292,10 @@ fn verify_hole_with_protected_radius(
             "interior_rays_with_pre_material": interior_pre_count,
             "interior_rays_with_material_removed": interior_removed_count,
             "outside_rays_total": outside.len(),
+            "outside_rays_minimum_required": minimum_outside_samples,
             "outside_rays_with_pre_material": outside_pre_count,
             "outside_rays_retaining_material": outside_retained_count,
+            "outside_material_coverage_passed": outside_checks_pass,
         },
         "center_ray": center_report,
         "interior_rays": interior_report,
@@ -298,7 +306,9 @@ fn verify_hole_with_protected_radius(
 /// Verify the annular cut of a coaxial counterbore whose smaller through pilot
 /// has already removed the centerline. Radial samples stay strictly between
 /// the pilot and counterbore radii; the center ray is required to remain empty,
-/// while an outer ring beyond the counterbore must retain unchanged material.
+/// while an outer ring beyond the counterbore must retain unchanged material
+/// wherever the pre-cut shape contains stock. Boundary-tangent holes may have
+/// some probes outside the part; at least half the probes must still verify stock.
 pub fn verify_counterbore(
     pre_cut: &Shape,
     post_cut: &Shape,
@@ -432,9 +442,17 @@ pub fn verify_counterbore(
             }));
         }
     }
-    let outside_material_retained = outside_samples
+    let outside_pre_count = outside_samples
         .iter()
-        .all(|sample| sample["material_retained_unchanged"] == true);
+        .filter(|sample| sample["before_material_length"].as_f64().unwrap_or(0.0) > minimum_change)
+        .count();
+    let outside_unchanged_count = outside_samples
+        .iter()
+        .filter(|sample| sample["material_retained_unchanged"] == true)
+        .count();
+    let minimum_outside_samples = outside_samples.len().div_ceil(2);
+    let outside_material_retained = outside_pre_count >= minimum_outside_samples
+        && outside_unchanged_count == outside_pre_count;
     let accepted = centerline_empty && annular_cut_samples_pass && outside_material_retained;
 
     Ok(json!({
@@ -456,7 +474,9 @@ pub fn verify_counterbore(
             "annular_rays_total": annular_samples.len(),
             "annular_rays_matching_depth_with_bottom_material": annular_samples.iter().filter(|sample| sample["depth_matches_and_bottom_material_remains"] == true).count(),
             "outside_rays_total": outside_samples.len(),
-            "outside_rays_unchanged": outside_samples.iter().filter(|sample| sample["material_retained_unchanged"] == true).count(),
+            "outside_rays_unchanged": outside_unchanged_count,
+            "outside_rays_with_pre_material": outside_pre_count,
+            "outside_rays_minimum_required": minimum_outside_samples,
             "annular_cut_samples_pass": annular_cut_samples_pass,
             "outside_material_retained": outside_material_retained
         },

@@ -290,8 +290,18 @@ pub fn parse(text: &str) -> Value {
                 let pattern_modifier = contains_any(clause, &["均布", "孔数", "phase", "相位"]);
                 let pcd_counterbore = pcd_marker && !center_requested;
                 let center_counterbore = center_requested && !pcd_marker && !pattern_modifier;
-                let unsupported_location_or_combination = !(center_counterbore || pcd_counterbore)
-                    || has_corner_location(clause)
+                let prior_corner_pilot = features.last().is_some_and(|feature| {
+                    feature["kind"] == "hole"
+                        && feature["operation"] == "cut"
+                        && feature["parameters"]["pos"] == "corners"
+                        && feature["parameters"]["through"] == true
+                });
+                let corner_counterbore = has_corner_location(clause) || prior_corner_pilot;
+                let unsupported_location_or_combination = !(center_counterbore
+                    || pcd_counterbore
+                    || corner_counterbore)
+                    || (corner_counterbore
+                        && (center_requested || pcd_marker || pattern_modifier))
                     || contains_any(
                         clause,
                         &[
@@ -299,26 +309,42 @@ pub fn parse(text: &str) -> Value {
                             "coordinate",
                             "position",
                             "位置",
-                            "边距",
-                            "距边",
-                            "离边",
-                            "留边",
-                            "内缩",
                         ],
                     )
+                    || (!corner_counterbore
+                        && contains_any(
+                            clause,
+                            &[
+                                "边距",
+                                "距边",
+                                "离边",
+                                "留边",
+                                "内缩",
+                            ],
+                        ))
                     || center_coordinates(clause).is_some()
                     || named_xyz(clause).is_some()
                     || clause.contains('(')
                     || clause.contains('[')
-                    || modifier_clauses.len() != 1;
+                    || (!corner_counterbore && modifier_clauses.len() != 1);
                 if unsupported_location_or_combination {
                     unsupported.push(issue(
                         "counterbore_variant_unsupported",
-                        "Quick 沉孔只支持单个修饰子句中的中心孔或 PCD 均布通孔；坐标、四角位置及多修饰组合尚未支持。",
+                        "Quick 沉孔当前只支持中心孔、PCD 均布孔和继承的四角孔；坐标及混合位置尚未支持。",
                     ));
                     continue;
                 }
-                if pcd_counterbore {
+                if corner_counterbore {
+                    let counterbore_features = build_corner_counterbore(
+                        &cut_text,
+                        text,
+                        feature_index,
+                        &mut features,
+                        &mut questions,
+                        &mut warnings,
+                    );
+                    features.extend(counterbore_features);
+                } else if pcd_counterbore {
                     features.extend(build_pcd_counterbore(
                         &cut_text,
                         text,
@@ -2750,6 +2776,259 @@ fn build_pcd_counterbore(
     ]
 }
 
+fn build_corner_counterbore(
+    clause: &str,
+    raw: &str,
+    index: usize,
+    existing_features: &mut Vec<Value>,
+    questions: &mut Vec<Value>,
+    warnings: &mut Vec<Value>,
+) -> Vec<Value> {
+    let separator_count = clause.match_indices('带').count();
+    if separator_count > 1 {
+        questions.push(issue(
+            "counterbore_separator_missing_or_ambiguous",
+            "四角沉孔子句最多只能有一个“带”分隔符。",
+        ));
+        return Vec::new();
+    }
+
+    let split = if separator_count == 1 {
+        clause.split_once('带')
+    } else {
+        clause.find("沉孔").map(|at| (&clause[..at], &clause[at..]))
+    };
+    let (pilot_clause, counterbore_clause) = split.unwrap_or(("", clause));
+    if !counterbore_clause.contains("沉孔")
+        || contains_any(counterbore_clause, &["通孔", "through", "贯穿"])
+    {
+        questions.push(issue(
+            "counterbore_type_conflict",
+            "沉孔子句必须描述盲切沉孔，不能同时描述为通孔。",
+        ));
+        return Vec::new();
+    }
+
+    let inline_pilot = has_corner_location(pilot_clause)
+        && contains_any(pilot_clause, &["通孔", "through", "贯穿"])
+        && !contains_any(pilot_clause, &["盲孔", "blind"]);
+    let pilot = if inline_pilot {
+        let questions_before_pilot = questions.len();
+        let pilot = build_hole(pilot_clause, raw, index, questions, warnings);
+        if questions.len() != questions_before_pilot {
+            return Vec::new();
+        }
+        pilot
+    } else {
+        existing_features
+            .last()
+            .filter(|feature| {
+                feature["kind"] == "hole"
+                    && feature["operation"] == "cut"
+                    && feature["parameters"]["pos"] == "corners"
+                    && feature["parameters"]["through"] == true
+            })
+            .cloned()
+    };
+    let Some(mut pilot) = pilot else {
+        questions.push(issue(
+            "counterbore_corner_pilot_missing",
+            "四角沉孔前必须先有明确的四角贯穿孔；请在同一子句中描述先导孔和沉孔。",
+        ));
+        return Vec::new();
+    };
+
+    let Some(pilot_diameter) = pilot["parameters"]["diameter"].as_f64() else {
+        questions.push(issue(
+            "counterbore_corner_pilot_missing",
+            "四角沉孔先导孔缺少有效直径。",
+        ));
+        return Vec::new();
+    };
+    if pilot["parameters"]["pos"] != "corners" || pilot["parameters"]["through"] != true {
+        questions.push(issue(
+            "counterbore_corner_pilot_missing",
+            "四角沉孔必须继承四角贯穿先导孔。",
+        ));
+        return Vec::new();
+    }
+
+    let counterbore_diameter = diameter_value(counterbore_clause);
+    let depth = hole_depth_value(counterbore_clause);
+    let mut valid = true;
+    for (code, value, label) in [
+        ("counterbore_diameter_missing", counterbore_diameter, "沉孔直径"),
+        ("counterbore_depth_missing", depth, "沉孔深度"),
+    ] {
+        match value {
+            Some(value) if value.is_finite() && value > 0.0 => {}
+            Some(_) => {
+                valid = false;
+                questions.push(issue(
+                    if code == "counterbore_diameter_missing" {
+                        "counterbore_diameter_conflict"
+                    } else {
+                        "counterbore_depth_conflict_or_invalid"
+                    },
+                    format!("{label}必须是唯一、有限且为正数。"),
+                ));
+            }
+            None => {
+                valid = false;
+                questions.push(issue(code, format!("四角沉孔缺少明确的正{label}。")));
+            }
+        }
+    }
+    if let Some(counterbore_diameter) = counterbore_diameter
+        && counterbore_diameter.is_finite()
+        && counterbore_diameter <= pilot_diameter
+    {
+        valid = false;
+        questions.push(issue(
+            "counterbore_diameter_order_invalid",
+            "沉孔直径必须大于四角先导通孔直径。",
+        ));
+    }
+
+    let margin_aliases = [
+        "edge margin",
+        "edge distance",
+        "margin",
+        "边距",
+        "距边",
+        "离边",
+        "留边",
+        "内缩",
+    ];
+    let pilot_margin = scalar(pilot_clause, &margin_aliases).or_else(|| {
+        (!inline_pilot && pilot["sources"]["margin"]["type"] == "user")
+            .then(|| pilot["parameters"]["margin"].as_f64())
+            .flatten()
+    });
+    let counterbore_margin = scalar(counterbore_clause, &margin_aliases);
+    let explicit_axis = axis_value(clause, questions);
+    for margin in [pilot_margin, counterbore_margin].into_iter().flatten() {
+        if !margin.is_finite() || margin < 0.0 {
+            valid = false;
+            questions.push(issue(
+                "hole_margin_invalid",
+                "四角沉孔边距必须是有限的非负数。",
+            ));
+        }
+    }
+    if let (Some(pilot_margin), Some(counterbore_margin)) = (pilot_margin, counterbore_margin)
+        && (pilot_margin - counterbore_margin).abs() > 1e-9
+    {
+        valid = false;
+        questions.push(issue(
+            "corner_counterbore_margin_conflict",
+            "先导孔和沉孔给出了不同的四角边距；请统一边距，或只指定一个外缘边距。",
+        ));
+    }
+    if !valid || !questions.is_empty() {
+        return Vec::new();
+    }
+
+    let counterbore_diameter = counterbore_diameter.unwrap();
+    let depth = depth.unwrap();
+    let outer_margin = counterbore_margin
+        .or(pilot_margin)
+        .or_else(|| (!inline_pilot).then(|| pilot["parameters"]["margin"].as_f64()).flatten())
+        .unwrap_or(0.0);
+    let concentric_pilot_margin = outer_margin + (counterbore_diameter - pilot_diameter) / 2.0;
+    let mut parameters = if inline_pilot {
+        pilot["parameters"].clone()
+    } else {
+        json!({
+            "axis": explicit_axis.unwrap_or("Z"),
+            "pos": "corners",
+            "segments": 24,
+            "margin": outer_margin
+        })
+    };
+    let mut sources = if inline_pilot {
+        pilot["sources"].as_object().cloned().unwrap_or_default()
+    } else {
+        let mut sources = serde_json::Map::new();
+        sources.insert(
+            "axis".into(),
+            explicit_axis.map_or_else(
+                || derived_source(raw, "沉孔子句未指定轴向时沿用旧 Python Quick 默认 Z 轴。"),
+                |_| user_source(raw),
+            ),
+        );
+        sources.insert(
+            "pos".into(),
+            derived_source(raw, "沉孔子句继承前一个四角贯穿孔的位置类型。"),
+        );
+        sources.insert(
+            "segments".into(),
+            derived_source(raw, "沿用旧 Python Quick 孔特征圆周分段数 24。"),
+        );
+        sources.insert(
+            "margin".into(),
+            if counterbore_margin.is_some() || (inline_pilot && pilot_margin.is_some()) {
+                user_source(raw)
+            } else if pilot_margin.is_some() {
+                derived_source(raw, "沉孔沿用同一工件先导孔指定的边距作为沉孔外缘间隙。")
+            } else {
+                derived_source(raw, "四角沉孔未指定边距时沿用 Python Quick 默认值 0 mm。")
+            },
+        );
+        sources
+    };
+
+    if let Some(axis) = explicit_axis {
+        parameters["axis"] = json!(axis);
+        sources.insert("axis".into(), user_source(raw));
+        pilot["parameters"]["axis"] = json!(axis);
+        pilot["sources"]["axis"] = user_source(raw);
+    }
+    pilot["parameters"]["margin"] = json!(concentric_pilot_margin);
+    pilot["sources"]["margin"] = derived_source(
+        raw,
+        "为保证先导孔与沉孔同心，按两孔直径差和沉孔外缘间隙推导先导孔边距。",
+    );
+
+    parameters["diameter"] = json!(counterbore_diameter);
+    parameters["through"] = json!(false);
+    parameters["depth"] = json!(depth);
+    parameters["margin"] = json!(outer_margin);
+    sources.insert("diameter".into(), user_source(raw));
+    sources.insert(
+        "through".into(),
+        derived_source(raw, "显式沉孔按旧 Python Quick 语义生成盲切。"),
+    );
+    sources.insert("depth".into(), user_source(raw));
+
+    if !has_unit(clause) {
+        warnings.push(issue(
+            "unit_interpreted_as_mm",
+            "未写长度单位的数值按 CADPlan 默认单位 mm 解释。",
+        ));
+    }
+    warnings.push(issue(
+        "corner_counterbore_concentric_margin_adjustment",
+        "四角边距按沉孔外缘间隙解释；为保证先导孔和沉孔同心，系统会推导先导孔边距。旧 Python Quick 对不同直径重复使用同一边距会造成偏心。",
+    ));
+
+    let counterbore = feature(
+        if inline_pilot { index + 3 } else { index + 2 },
+        "hole",
+        "cut",
+        parameters,
+        Value::Object(sources),
+    );
+    if inline_pilot {
+        vec![pilot, counterbore]
+    } else {
+        if let Some(existing_pilot) = existing_features.last_mut() {
+            *existing_pilot = pilot;
+        }
+        vec![counterbore]
+    }
+}
+
 fn build_slot(
     clause: &str,
     raw: &str,
@@ -3953,6 +4232,68 @@ mod tests {
             let input = case["input"].as_str().unwrap();
             let output = parse(input);
             assert_eq!(output["status"], case["rust_status"], "{input}: {output}");
+            assert!(output["plan"].is_null(), "{input}: {output}");
+            assert!(output["questions"].to_string().contains(case["issue"].as_str().unwrap()), "{input}: {output}");
+        }
+    }
+
+    #[test]
+    fn corner_counterbores_preserve_legacy_inputs_and_correct_centering() {
+        let fixture: Value = serde_json::from_str(include_str!(
+            "../tests/fixtures/quick_corner_counterbore_contract.json"
+        ))
+        .expect("corner counterbore Quick oracle fixture is valid JSON");
+        assert_eq!(fixture["legacy_python_cases"].as_array().unwrap().len(), 3);
+        for case in fixture["native_expected_cases"].as_array().unwrap() {
+            let input = case["input"].as_str().unwrap();
+            let output = parse(input);
+            assert_eq!(output["status"], "ready", "{input}: {output}");
+            assert_eq!(
+                crate::cad_plan_validation::validate_plan(&output["plan"])["state"],
+                "valid",
+                "{input}: {output}"
+            );
+            let features = output["plan"]["features"].as_array().unwrap();
+            assert_eq!(features.len(), 3, "{input}");
+            assert_eq!(features[1]["kind"], "hole", "{input}");
+            assert_eq!(features[1]["operation"], "cut", "{input}");
+            assert_eq!(features[1]["parameters"]["diameter"], 6.0, "{input}");
+            assert_eq!(features[1]["parameters"]["through"], true, "{input}");
+            assert_eq!(
+                features[1]["parameters"]["margin"],
+                case["pilot_margin_mm"],
+                "{input}"
+            );
+            assert_eq!(features[2]["kind"], "hole", "{input}");
+            assert_eq!(features[2]["operation"], "cut", "{input}");
+            assert_eq!(features[2]["parameters"]["diameter"], 12.0, "{input}");
+            assert_eq!(features[2]["parameters"]["through"], false, "{input}");
+            assert_eq!(features[2]["parameters"]["depth"], 4.0, "{input}");
+            assert_eq!(
+                features[2]["parameters"]["margin"],
+                case["counterbore_margin_mm"],
+                "{input}"
+            );
+            assert_eq!(features[1]["sources"]["diameter"]["type"], "user", "{input}");
+            assert_eq!(features[2]["sources"]["diameter"]["type"], "user", "{input}");
+            assert_eq!(features[1]["sources"]["through"]["type"], "user", "{input}");
+            assert_eq!(features[2]["sources"]["through"]["type"], "derived", "{input}");
+            assert_eq!(features[2]["sources"]["depth"]["type"], "user", "{input}");
+            assert_eq!(features[1]["sources"]["margin"]["type"], "derived", "{input}");
+            assert_eq!(
+                features[2]["sources"]["margin"]["type"],
+                case["counterbore_margin_source"],
+                "{input}"
+            );
+            assert!(output["warnings"]
+                .to_string()
+                .contains("corner_counterbore_concentric_margin_adjustment"));
+        }
+
+        for case in fixture["native_rejected"].as_array().unwrap() {
+            let input = case["input"].as_str().unwrap();
+            let output = parse(input);
+            assert_eq!(output["status"], case["status"], "{input}: {output}");
             assert!(output["plan"].is_null(), "{input}: {output}");
             assert!(output["questions"].to_string().contains(case["issue"].as_str().unwrap()), "{input}: {output}");
         }
