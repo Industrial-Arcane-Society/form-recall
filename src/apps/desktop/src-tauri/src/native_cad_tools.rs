@@ -1437,6 +1437,19 @@ mod tests {
             .unwrap();
         assert_eq!(dispatch.finish_state, "candidate_partial_not_accepted");
         assert_eq!(dispatch.report["accepted"], false);
+        // A later geometry revision must invalidate both partial diagnostic
+        // attribution and finish evidence, even if old preview rows remain.
+        let mut stale_revision = result.state.clone();
+        stale_revision["revision"] = json!(8);
+        let (_, stale_review) =
+            crate::native_review_gate::aggregate(&stale_revision, &references, &turns).unwrap();
+        assert_eq!(
+            stale_review["result"]["evidence"]["geometry"]["binding_valid"],
+            false
+        );
+        assert!(
+            native_cad_session::finish_assessment(&stale_revision, &references, &turns).is_err()
+        );
         fs::remove_dir_all(session_dir).unwrap();
     }
 }
