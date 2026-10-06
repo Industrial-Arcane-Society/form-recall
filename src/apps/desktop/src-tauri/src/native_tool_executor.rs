@@ -1450,6 +1450,7 @@ mod tests {
         let preview_sha = format!("{:x}", Sha256::digest(&preview_bytes));
         let state = json!({
             "revision": 4,
+            "preview_generation": 8,
             "plan": plan,
             "last_preview": preview,
             "preview_revision": 4,
@@ -1572,7 +1573,7 @@ mod tests {
             ("review", "cad_review_reference_similarity", json!({"view":"front","preview_generation":9,"reference_id":reference_id})),
         ] {
             let result = executor.execute(call, tool, &args, Duration::from_secs(10)).unwrap();
-            assert_eq!(result["payload"]["execution_engine"], "rust");
+            assert_eq!(result["payload"]["execution_engine"], "rust", "call={call}, result={result:#}");
         }
         let result = executor.execute("state", "cad_get_state", &json!({}), Duration::from_secs(3)).unwrap();
         let summary: Value = serde_json::from_str(result["text"].as_str().unwrap().split_once('\n').unwrap().1).unwrap();
@@ -1642,7 +1643,10 @@ mod tests {
             &json!({"view":"front","preview_generation":8,"reference_id":reference_id}),
             Duration::from_secs(3),
         ).unwrap_err();
-        assert!(stale.contains("preview_generation") || stale.contains("预览"), "{stale}");
+        assert!(
+            stale.contains("review_failed:") && stale.contains("candidate remains unverified"),
+            "stale review should be rejected with the safe public failure message: {stale}"
+        );
         fs::remove_dir_all(dir).unwrap();
     }
 
@@ -1942,8 +1946,12 @@ mod tests {
                 )
                 .unwrap_err();
             assert!(
-                error.contains("source inventory") || error.contains("原图SHA/ROI"),
+                error.starts_with("review_failed:preconditions_missing;"),
                 "case={case}, error={error}"
+            );
+            assert!(
+                !error.contains("source inventory") && !error.contains("原图SHA/ROI"),
+                "case={case} must not expose private inventory-validation details: {error}"
             );
             assert!(
                 read_json_object(&dir.join("cad-state.json")).unwrap()["reference_similarity_history"]

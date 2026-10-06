@@ -2952,7 +2952,7 @@ mod tests {
             &session.context,
         ))
         .unwrap_err();
-        assert_eq!(error, ReviewFailure::Unknown);
+        assert_eq!(error, ReviewFailure::PreconditionsMissing);
         assert!(session.state.get("finding_ledger").is_none());
     }
 

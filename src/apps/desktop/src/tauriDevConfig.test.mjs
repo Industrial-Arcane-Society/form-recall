@@ -10,7 +10,7 @@ const dev = load('../src-tauri/tauri.dev.conf.json')
 const viteConfig = readFileSync(new URL('../vite.config.ts', import.meta.url), 'utf8')
 
 test('root desktop and browser commands remain distinct', () => {
-  assert.equal(root.scripts.dev, 'npm --prefix src/apps/desktop run tauri:dev')
+  assert.equal(root.scripts.dev, 'node scripts/tauri-dev.mjs')
   assert.equal(root.scripts['dev:web'], 'npm --prefix src/apps/desktop run dev')
   assert.equal(desktop.scripts.dev, 'vite')
   assert.equal(desktop.scripts['tauri:dev'], 'tauri dev --config src-tauri/tauri.dev.conf.json')

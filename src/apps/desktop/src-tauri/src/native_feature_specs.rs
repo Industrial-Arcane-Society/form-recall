@@ -983,14 +983,22 @@ mod tests {
             crate::native_plan_geometry::preflight(&plan).unwrap()["state"],
             "valid"
         );
-        let error = crate::native_plan_geometry::build(
+        let partial = crate::native_plan_geometry::build(
             &plan,
             &manifest,
             &std::sync::atomic::AtomicBool::new(false),
         )
-        .err()
-        .unwrap();
-        assert!(error.contains("盲槽深度必须小于实体轴向厚度"), "{error}");
+        .expect("a valid stock prefix should remain available as a partial candidate");
+        assert_eq!(partial.report["state"], "partial", "{:#}", partial.report);
+        assert_eq!(partial.report["applied_feature_ids"], json!(["stock"]));
+        assert_eq!(partial.report["failed_feature_id"], "pocket-1");
+        assert!(
+            partial.report["failure_summary"]
+                .as_str()
+                .is_some_and(|summary| summary.contains("盲槽深度必须小于实体轴向厚度")),
+            "{:#}",
+            partial.report
+        );
     }
 
     fn contains_number(value: &Value) -> bool {
