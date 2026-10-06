@@ -31,3 +31,10 @@
 - 将这个生产场景排在四个较高合成 revision 状态 fixture 前，以免真实 generation 被生产 Vue 的 stale-revision guard 忽略。隐藏 WebView 共 5 个场景全部通过：Agent 深层 GLB 路径 1 个，纯问答、工具失败、accepted-current、stale-finish 4 个。
 - 第一次运行因 Rust smoke 固定回复仍为旧 Quick 文案、runner 已改等 Agent workspace 文案，造成期待文本不一致的 timeout；检查时模型事件已经到达且 canvas status 为“预览已更新”。统一 fixture 回复后重新构建 smoke binary，完整复跑 exit 0。测试删除本次复制的 `candidate.glb` 文件；不清理其上层目录或用户数据。
 - 这比单元测试白名单更进一步，但仍是隔离隐藏 WebView；不证明 MSI/NSIS 安装版或用户原始 Agent 工件的可见窗口结果。完整过程见[F6.10 GLB 安装与路径报告](./F6.10-installed-glb-preview.md)。
+
+## 2026-10-06：活动模型冷启动恢复到 WebGL 的 CLI 覆盖核对
+
+- 本轮在最新 `origin/main` (`575652f`) 上离线安装前端依赖后，活动模型恢复 helper **3/3**、Rust `asset_path_policy` **2/2**、`test:agent-channel-vue` 的四个 MockRuntime→Vue Channel 场景和三个 production-App startup hydration 场景（**7/7**），以及 `test-agent-webview.mjs` 的 Node 语法检查均通过。Channel/Vue 测试边界仍不包含 WebView delivery。
+- 检查发现 smoke Host 的 `active_model_snapshot()` 固定返回 `null`。5 场景 WebView harness 的几何场景会在页面已启动后生成 Quick 模型并发布 `model.changed`，测试 `read_asset → GLTFLoader → WebGL`；生产冷启动恢复路径没有进入该场景。单独的 active-model-restore hydration 测试使用模拟 IPC，不检查网格绘制。
+- 本轮 `test:agent-webview` 受环境阻塞，在启动前报告缺少 `tauri-driver` 和与当前 WebView2 Runtime `154.0.4258.53` 匹配的 `msedgedriver`。隔离工作树也没有 OCCT runtime manifest；若补齐 drivers，需再设置 `AIMODELER_OCCT_MANIFEST` 到已验证 OCCT 7.9.3 runtime。没有启动可见 GUI、完整打包/安装版或 provider。
+- 因此先前的 5/5 仍只证明新建 Quick/Agent-workspace 模型事件经过生产读取与绘制链路；它不证明 active-model 冷启动恢复后显示，也不证明 MSI/NSIS 安装版。当前未找到生产缺陷，本轮结果是覆盖缺口与精确前置条件记录。
