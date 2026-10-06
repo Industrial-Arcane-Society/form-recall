@@ -1,0 +1,148 @@
+{
+  "legacy_accepted": [
+    {
+      "input": "螺旋弹簧 外径20 线径2 高度30 圈数8",
+      "name": "螺旋弹簧",
+      "wire_radius_source": "derived",
+      "turns_source": "user",
+      "expected": {
+        "radius": 8.991371039419848,
+        "wire_r": 1.0086289605801528,
+        "height": 27.982742078839696,
+        "turns": 8.0,
+        "center_z": -13.991371039419848,
+        "taper": 0.0,
+        "taper_start": 0.0
+      }
+    },
+    {
+      "input": "圆柱螺旋压缩弹簧 外径20 线径2 高度30 圈数8",
+      "name": "螺旋弹簧",
+      "wire_radius_source": "derived",
+      "turns_source": "user",
+      "expected": {
+        "radius": 8.991371039419848,
+        "wire_r": 1.0086289605801528,
+        "height": 27.982742078839696,
+        "turns": 8.0,
+        "center_z": -13.991371039419848,
+        "taper": 0.0,
+        "taper_start": 0.0
+      }
+    },
+    {
+      "input": "压缩弹簧 外径20 线径2 高度30 8圈",
+      "name": "螺旋弹簧",
+      "wire_radius_source": "derived",
+      "turns_source": "user",
+      "expected": {
+        "radius": 8.991371039419848,
+        "wire_r": 1.0086289605801528,
+        "height": 27.982742078839696,
+        "turns": 8.0,
+        "center_z": -13.991371039419848,
+        "taper": 0.0,
+        "taper_start": 0.0
+      }
+    },
+    {
+      "input": "锥形弹簧 外径24 线径2 高度40 圈数6",
+      "name": "锥形弹簧",
+      "wire_radius_source": "derived",
+      "turns_source": "user",
+      "expected": {
+        "radius": 10.991371039419848,
+        "wire_r": 1.0086289605801528,
+        "height": 37.98274207883969,
+        "turns": 6.0,
+        "center_z": -18.991371039419846,
+        "taper": 0.5,
+        "taper_start": 0.16666666666666666
+      }
+    },
+    {
+      "input": "圆锥螺旋弹簧 外径24 线径2 高度40 圈数6",
+      "name": "锥形弹簧",
+      "wire_radius_source": "derived",
+      "turns_source": "user",
+      "expected": {
+        "radius": 10.991371039419848,
+        "wire_r": 1.0086289605801528,
+        "height": 37.98274207883969,
+        "turns": 6.0,
+        "center_z": -18.991371039419846,
+        "taper": 0.5,
+        "taper_start": 0.16666666666666666
+      }
+    },
+    {
+      "input": "螺旋弹簧 外径20 高度30",
+      "name": "螺旋弹簧",
+      "wire_radius_source": "derived",
+      "turns_source": "derived",
+      "warning_contains": "legacy_spring_wire_diameter_defaulted",
+      "expected": {
+        "radius": 8.991371039419848,
+        "wire_r": 1.0086289605801528,
+        "height": 27.982742078839696,
+        "turns": 8.0,
+        "center_z": -13.991371039419848,
+        "taper": 0.0,
+        "taper_start": 0.0
+      }
+    },
+    {
+      "input": "锥形弹簧 外径24 线径2 高度40 6圈",
+      "name": "锥形弹簧",
+      "wire_radius_source": "derived",
+      "turns_source": "derived",
+      "warning_contains": "legacy_conical_spring_bare_turns_ignored",
+      "expected": {
+        "radius": 10.991371039419848,
+        "wire_r": 1.0086289605801528,
+        "height": 37.98274207883969,
+        "turns": 8.0,
+        "center_z": -18.991371039419846,
+        "taper": 0.5,
+        "taper_start": 0.125
+      }
+    }
+  ],
+  "not_ready": [
+    {
+      "input": "螺旋弹簧 线径2 高度30",
+      "status": "needs_clarification",
+      "issue": "legacy_spring_outer_diameter_required"
+    },
+    {
+      "input": "螺旋弹簧 外径20 线径2",
+      "status": "needs_clarification",
+      "issue": "legacy_spring_height_required"
+    },
+    {
+      "input": "螺旋弹簧 外径20 线径0 高度30",
+      "status": "needs_clarification",
+      "issue": "legacy_spring_wire_diameter_invalid"
+    },
+    {
+      "input": "螺旋弹簧 外径20 线径2 高度30 圈数6 8圈",
+      "status": "needs_clarification",
+      "issue": "legacy_spring_turns_conflict"
+    },
+    {
+      "input": "螺旋弹簧 外径5 线径4 高度30",
+      "status": "needs_clarification",
+      "issue": "legacy_spring_wire_does_not_fit"
+    },
+    {
+      "input": "扭簧 外径20 线径2 高度30 圈数8",
+      "status": "unsupported",
+      "issue": "legacy_spring_form_not_migrated"
+    },
+    {
+      "input": "螺旋弹簧 外径20 线径2 高度30 并加通孔8",
+      "status": "unsupported",
+      "issue": "legacy_spring_compound_request_unsupported"
+    }
+  ]
+}

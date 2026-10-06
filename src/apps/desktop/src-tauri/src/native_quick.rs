@@ -1462,6 +1462,75 @@ mod acceptance_tests {
 
     #[test]
     #[ignore = "requires the staged local OCCT runtime manifest"]
+    fn legacy_helical_springs_build_reopen_and_export_through_native_quick() {
+        let manifest = std::env::var_os("AIMODELER_OCCT_MANIFEST")
+            .map(std::path::PathBuf::from)
+            .expect("set AIMODELER_OCCT_MANIFEST to the staged OCCT runtime-manifest.json");
+        let root = std::env::temp_dir().join(format!(
+            "native-quick-spring-{}-{}",
+            std::process::id(),
+            SystemTime::now()
+                .duration_since(UNIX_EPOCH)
+                .expect("system clock")
+                .as_nanos()
+        ));
+        fs::create_dir_all(&root).expect("create native Quick output root");
+        struct RemoveOnDrop(std::path::PathBuf);
+        impl Drop for RemoveOnDrop {
+            fn drop(&mut self) {
+                let _ = std::fs::remove_dir_all(&self.0);
+            }
+        }
+        let _cleanup = RemoveOnDrop(root.clone());
+
+        for (index, (input, expected_bounds)) in [
+            ("螺旋弹簧 外径20 线径2 高度30 圈数8", [20.0, 20.0, 30.0]),
+            ("锥形弹簧 外径24 线径2 高度40 圈数6", [24.0, 24.0, 40.0]),
+        ]
+        .into_iter()
+        .enumerate()
+        {
+            let output = build(input, index as i64 + 1, &manifest, &root)
+                .unwrap_or_else(|error| panic!("{input}: {error}"));
+            assert_eq!(output["state"], "complete", "{input}: {output}");
+            let report = &output["geometry_report"];
+            assert_eq!(report["state"], "passed", "{input}: {report}");
+            assert_eq!(report["valid"], true, "{input}: {report}");
+            assert_eq!(report["closed_solid_count"], 1, "{input}: {report}");
+            let volume = report["volume_mm3"].as_f64().unwrap_or_default();
+            assert!(volume.is_finite() && volume > 0.0, "{input}: {report}");
+
+            let dimensions = output["stats"]["size"]
+                .as_array()
+                .unwrap_or_else(|| panic!("{input}: missing size summary: {output}"));
+            assert_eq!(dimensions.len(), 3, "{input}: {output}");
+            for (axis, (actual, expected)) in dimensions.iter().zip(expected_bounds).enumerate() {
+                let actual = actual.as_f64().unwrap_or_default();
+                assert!(
+                    (actual - expected).abs() <= 1e-5,
+                    "{input}: bbox axis {axis} = {actual}, expected {expected}; {output}"
+                );
+            }
+            assert_eq!(output["features"].as_array().map(Vec::len), Some(1), "{input}");
+            assert_eq!(output["features"][0]["kind"], "helix", "{input}: {:?}", output["features"]);
+
+            let paths = output["output_paths"].as_object().unwrap();
+            for name in ["glb", "aimodel", "stl", "obj"] {
+                assert!(Path::new(paths[name].as_str().unwrap()).is_file(), "{input}: missing {name}");
+            }
+            let loaded = native_model_io::load_aimodel(Path::new(paths["aimodel"].as_str().unwrap()))
+                .unwrap_or_else(|error| panic!("{input}: AIMODEL reload failed: {error}"));
+            assert_eq!(loaded["features"].as_array().map(Vec::len), Some(1), "{input}");
+            println!(
+                "F5.27 native acceptance: input={input}; dimensions_mm={}; volume_mm3={volume}; triangles={}",
+                serde_json::to_string(&output["stats"]["size"]).unwrap(),
+                output["stats"]["triangles"]
+            );
+        }
+    }
+
+    #[test]
+    #[ignore = "requires the staged local OCCT runtime manifest"]
     fn legacy_blade_and_blisk_build_reopen_and_export_through_native_quick() {
         let manifest = std::env::var_os("AIMODELER_OCCT_MANIFEST")
             .map(std::path::PathBuf::from)

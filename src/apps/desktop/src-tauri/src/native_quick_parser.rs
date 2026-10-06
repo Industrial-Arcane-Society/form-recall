@@ -45,6 +45,9 @@ pub fn parse(text: &str) -> Value {
     if let Some(parsed) = parse_legacy_washer(text, &normalized) {
         return parsed;
     }
+    if let Some(parsed) = parse_legacy_spring(text, &normalized) {
+        return parsed;
+    }
     if let Some(parsed) = parse_legacy_gear(text, &normalized) {
         return parsed;
     }
@@ -525,7 +528,7 @@ fn result(
     unsupported: Vec<Value>,
 ) -> Value {
     json!({"status":status,"source_text":text,"plan":plan,"warnings":warnings,"questions":questions,"unsupported":unsupported,
-        "compatibility":{"scope":"common explicit primitives/cuts, migrated standalone primitive defaults and legacy extrusion/revolve constructors, rectangular slots, flat-washer rings, straight-gear construction, PCD counterbores, and executable flange/stepped-shaft/sleeve/blade/blisk templates","legacy_typical_defaults":"restored only for migrated Quick constructors/templates, straight gears, rectangular slots, and flat-washer thickness; defaults and raw-dimension mappings are reported as warnings","loft_geometry":"blade and blisk lofts are locally approximate faceted B-Reps"}})
+        "compatibility":{"scope":"common explicit primitives/cuts, migrated standalone primitive defaults and legacy extrusion/revolve constructors, rectangular slots, flat-washer rings, cylindrical/conical spring helices, straight-gear construction, PCD counterbores, and executable flange/stepped-shaft/sleeve/blade/blisk templates","legacy_typical_defaults":"restored only for migrated Quick constructors/templates, straight gears, rectangular slots, flat-washer thickness, and spring wire/turn defaults; defaults and raw-dimension mappings are reported as warnings","loft_geometry":"blade and blisk lofts are locally approximate faceted B-Reps","helix_geometry":"spring helices are locally approximate faceted B-Reps and are not native CATIA features"}})
 }
 
 fn parse_legacy_template(raw: &str, normalized: &str) -> Option<Value> {
@@ -747,6 +750,294 @@ fn parse_legacy_washer(raw: &str, text: &str) -> Option<Value> {
         }),
     ];
     Some(plan_result(raw, "垫圈", features, warnings))
+}
+
+/// Migrate the legacy Python Quick helical-spring recipe. The original
+/// constructor stored a sampled helix with a 24-sided wire section and 16
+/// path segments per turn; native OCCT currently represents it as a sewn
+/// faceted B-Rep rather than an analytic sweep or CATIA feature.
+fn parse_legacy_spring(raw: &str, text: &str) -> Option<Value> {
+    if !contains_any(
+        text,
+        &[
+            "螺旋弹簧",
+            "圆柱螺旋压缩弹簧",
+            "压缩弹簧",
+            "锥形弹簧",
+            "圆锥螺旋弹簧",
+            "弹簧",
+            "扭簧",
+            "板簧",
+            "碟簧",
+            "蝶簧",
+            "弹簧片",
+        ],
+    ) {
+        return None;
+    }
+
+    if contains_any(
+        text,
+        &[
+            "碟形弹簧",
+            "蝶形弹簧",
+            "碟簧",
+            "蝶簧",
+            "板簧",
+            "扭簧",
+            "弹簧片",
+        ],
+    ) {
+        return Some(result(
+            "unsupported",
+            raw,
+            None,
+            vec![],
+            vec![],
+            vec![issue(
+                "legacy_spring_form_not_migrated",
+                "当前迁移只支持圆柱螺旋和锥形螺旋弹簧；碟簧、板簧、扭簧和弹簧片配方尚未迁入。",
+            )],
+        ));
+    }
+    if contains_any(
+        text,
+        &[
+            "长方体",
+            "圆柱体",
+            "圆锥体",
+            "圆台",
+            "球体",
+            "齿轮",
+            "法兰",
+            "螺钉",
+            "螺栓",
+            "螺母",
+            "垫圈",
+            "垫片",
+            "通孔",
+            "盲孔",
+            "钻孔",
+            "打孔",
+            "开槽",
+            "凹槽",
+            "倒角",
+            "圆角",
+            "阵列",
+            "底座",
+            "支架",
+            "并加",
+            "同时",
+            "再做",
+            "再加",
+        ],
+    ) {
+        return Some(result(
+            "unsupported",
+            raw,
+            None,
+            vec![],
+            vec![],
+            vec![issue(
+                "legacy_spring_compound_request_unsupported",
+                "当前弹簧迁移只接受一个独立弹簧；额外主体、孔槽或修饰特征尚未迁入。",
+            )],
+        ));
+    }
+
+    let conical = contains_any(text, &["锥形弹簧", "圆锥螺旋弹簧"]);
+    let outer_labels = ["弹簧外径", "外径"];
+    let wire_labels = ["材料直径", "线径", "丝径"];
+    let height_labels = ["自由高度", "高度", "长"];
+    let turn_labels = ["有效圈数", "圈数"];
+    let outer = scalar(text, &outer_labels);
+    let wire_diameter = scalar(text, &wire_labels);
+    let free_height = scalar(text, &height_labels);
+    let labeled_turns = scalar(text, &turn_labels);
+    let bare_turns = bare_spring_turns(text);
+
+    let mut questions = Vec::new();
+    match outer {
+        Some(value) if value.is_finite() && value > 0.0 => {}
+        Some(_) => questions.push(issue(
+            "legacy_spring_outer_diameter_invalid",
+            "弹簧外径必须是有限的正数，且只能有一个明确值。",
+        )),
+        None if contains_any(text, &outer_labels) => questions.push(issue(
+            "legacy_spring_outer_diameter_invalid",
+            "检测到了外径标注，但没有可用的正数；请明确写“外径20”。",
+        )),
+        None => questions.push(issue(
+            "legacy_spring_outer_diameter_required",
+            "请给出弹簧外径，例如“螺旋弹簧 外径20 线径2 高度30 圈数8”。",
+        )),
+    }
+    match free_height {
+        Some(value) if value.is_finite() && value > 0.0 => {}
+        Some(_) => questions.push(issue(
+            "legacy_spring_height_invalid",
+            "弹簧自由高度必须是有限的正数，且只能有一个明确值。",
+        )),
+        None if contains_any(text, &height_labels) => questions.push(issue(
+            "legacy_spring_height_invalid",
+            "检测到了高度标注，但没有可用的正数；请明确写“高度30”。",
+        )),
+        None => questions.push(issue(
+            "legacy_spring_height_required",
+            "请给出弹簧自由高度，例如“高度30”。",
+        )),
+    }
+    match wire_diameter {
+        Some(value) if value.is_finite() && value > 0.0 => {}
+        Some(_) => questions.push(issue(
+            "legacy_spring_wire_diameter_invalid",
+            "弹簧线径必须是有限的正数，且只能有一个明确值。",
+        )),
+        None if contains_any(text, &wire_labels) => questions.push(issue(
+            "legacy_spring_wire_diameter_invalid",
+            "检测到了线径标注，但没有可用的正数；请明确写“线径2”。",
+        )),
+        None => {}
+    }
+    if let (Some(labeled), Some(bare)) = (labeled_turns, bare_turns) {
+        if !labeled.is_finite() || !close(labeled, bare) {
+            questions.push(issue(
+                "legacy_spring_turns_conflict",
+                "弹簧圈数标注互相冲突；请只保留一个圈数。",
+            ));
+        }
+    }
+    let turns = if let Some(value) = labeled_turns {
+        Some(value)
+    } else if !conical {
+        bare_turns
+    } else {
+        // Python Quick's conical-part alias omitted bare `N圈`, so it kept
+        // the builder's 8-turn fallback. Preserve the generated geometry but
+        // make the old parser limitation visible in the migrated result.
+        None
+    };
+    if let Some(value) = turns {
+        if !value.is_finite() || value < 0.25 {
+            questions.push(issue(
+                "legacy_spring_turns_invalid",
+                "螺旋弹簧圈数必须是有限数值且不少于 0.25 圈。",
+            ));
+        }
+        if conical && value < 1.0 {
+            questions.push(issue(
+                "legacy_conical_spring_turns_too_small",
+                "锥形弹簧至少需要 1 圈，才能按旧版规则确定锥度起点。",
+            ));
+        }
+    }
+    if !questions.is_empty() {
+        return Some(result("needs_clarification", raw, None, vec![], questions, vec![]));
+    }
+
+    let outer = outer.expect("required and validated above");
+    let free_height = free_height.expect("required and validated above");
+    let wire_defaulted = wire_diameter.is_none();
+    let wire_diameter = wire_diameter.unwrap_or(2.0);
+    let turns_defaulted = turns.is_none();
+    let turns = turns.unwrap_or(8.0);
+    let wire_r = (wire_diameter / 2.0).max(0.2) / (std::f64::consts::PI / 24.0).cos();
+    let radius = (outer / 2.0 - wire_r).max(0.5);
+    let helix_height = (free_height - 2.0 * wire_r).max(1.0);
+    if outer / 2.0 - wire_r < 0.5 || free_height - 2.0 * wire_r < 1.0 {
+        return Some(parse_result_with_issue(
+            "needs_clarification",
+            raw,
+            "legacy_spring_wire_does_not_fit",
+            "线径相对于外径或自由高度过大；旧版会钳制半径/高度并改变给定外形，请减小线径或增大弹簧尺寸。",
+        ));
+    }
+    let taper = if conical { 0.5 } else { 0.0 };
+    let taper_start = if conical { 1.0 / turns.max(1.0) } else { 0.0 };
+    let conical_bare_turns_ignored = conical && labeled_turns.is_none() && bare_turns.is_some();
+
+    let parameters = json!({
+        "radius":radius,
+        "wire_r":wire_r,
+        "height":helix_height,
+        "turns":turns,
+        "center":[0.0, 0.0, -free_height / 2.0 + wire_r],
+        "axis":"Z",
+        "seg_per_turn":16,
+        "wire_seg":24,
+        "taper":taper,
+        "taper_start":taper_start
+    });
+    let mut sources = serde_json::Map::new();
+    sources.insert("radius".into(), derived_source(raw, "中心线半径 = 外径 / 2 - 线材半径；与旧 Python Quick 配方一致。"));
+    sources.insert("wire_r".into(), if wire_defaulted {
+        derived_source(raw, "缺少线径，沿用旧 Python Quick 默认线径 2 mm，再按 24 边线材截面外接圆换算。")
+    } else {
+        derived_source(raw, "用户给定线径 / 2 / cos(pi/24)；沿用旧 Python Quick 的 24 边线材截面外接圆换算。")
+    });
+    sources.insert("height".into(), derived_source(raw, "螺旋中心线高度 = 自由高度 - 2 * 线材半径；沿用旧 Python Quick 的轴向尺寸补偿。"));
+    sources.insert("turns".into(), if turns_defaulted {
+        derived_source(raw, "未给出可识别圈数，沿用旧 Python Quick 螺旋构造的 8 圈默认值。")
+    } else {
+        user_source(raw)
+    });
+    sources.insert("center".into(), derived_source(raw, "中心 Z = -自由高度 / 2 + 线材半径；沿用旧 Python Quick 的居中放置。"));
+    sources.insert("axis".into(), derived_source(raw, "旧 Python Quick 弹簧螺旋沿 Z 轴放置。"));
+    sources.insert("seg_per_turn".into(), derived_source(raw, "沿用旧 Python Quick 每圈 16 段的路径采样。"));
+    sources.insert("wire_seg".into(), derived_source(raw, "沿用旧 Python Quick 24 边的线材截面采样。"));
+    sources.insert("taper".into(), derived_source(raw, if conical { "锥形弹簧沿用旧 Python Quick 的 50% 半径收缩比例。" } else { "圆柱弹簧不收缩。" }));
+    sources.insert("taper_start".into(), derived_source(raw, if conical { "锥形弹簧第一圈保持完整外径，之后按 1 / 圈数开始线性收缩。" } else { "圆柱弹簧无锥度起点。" }));
+    let feature_name = if conical { "锥形弹簧" } else { "螺旋弹簧" };
+    let mut spring_feature = feature(1, "helix", "add", parameters, Value::Object(sources));
+    spring_feature["name"] = json!(feature_name);
+
+    let mut warnings = vec![issue(
+        "legacy_spring_faceted_brep",
+        "弹簧沿用旧 Python Quick 的采样构造，并由本地 OCCT 缝合为近似 facet-BREP；它不是解析扫掠曲面，也不是 CATIA 原生螺旋特征。",
+    )];
+    if wire_defaulted {
+        warnings.push(issue(
+            "legacy_spring_wire_diameter_defaulted",
+            "缺少线径时沿用旧 Python Quick 默认线径 2 mm；该值不是用户提供的尺寸。",
+        ));
+    }
+    if turns_defaulted {
+        warnings.push(issue(
+            "legacy_spring_turns_defaulted",
+            "缺少可识别圈数时沿用旧 Python Quick 螺旋构造默认值 8 圈。",
+        ));
+    }
+    if conical_bare_turns_ignored {
+        warnings.push(issue(
+            "legacy_conical_spring_bare_turns_ignored",
+            "兼容旧 Python Quick：锥形弹簧的“N圈”写法未被旧解析器绑定为圈数，仍按 8 圈生成；请写“圈数N”以明确设定。",
+        ));
+    }
+    Some(plan_result(raw, feature_name, vec![spring_feature], warnings))
+}
+
+fn bare_spring_turns(text: &str) -> Option<f64> {
+    let regex = regex::Regex::new(r"([+-]?(?:[0-9]+(?:\.[0-9]*)?|\.[0-9]+))\s*圈").ok()?;
+    let mut values = Vec::new();
+    for capture in regex.captures_iter(text) {
+        let Some(full_match) = capture.get(0) else { continue; };
+        // Rust's regex engine intentionally lacks look-around. Exclude the
+        // `N圈数` prefix explicitly so a height such as `高度30圈数8` is not
+        // mistaken for a 30-turn spring.
+        if text[full_match.end()..].starts_with('数') {
+            continue;
+        }
+        if let Some(value) = capture.get(1).and_then(|value| value.as_str().parse::<f64>().ok()) {
+            values.push(value);
+        }
+    }
+    if values.is_empty() {
+        None
+    } else if values.iter().all(|value| close(*value, values[0])) {
+        Some(values[0])
+    } else {
+        Some(f64::NAN)
+    }
 }
 
 fn parse_blade_template(raw: &str, text: &str) -> Value {
@@ -5917,6 +6208,78 @@ mod tests {
             );
             assert_eq!(
                 crate::native_plan_geometry::preflight(&output["plan"]).unwrap()["state"],
+                "valid",
+                "{input}"
+            );
+        }
+
+        for case in fixture["not_ready"].as_array().unwrap() {
+            let input = case["input"].as_str().unwrap();
+            let output = parse(input);
+            assert_eq!(output["status"], case["status"], "{input}: {output}");
+            assert!(output["plan"].is_null(), "{input}: {output}");
+            let issues = format!("{} {}", output["questions"], output["unsupported"]);
+            assert!(issues.contains(case["issue"].as_str().unwrap()), "{input}: {output}");
+        }
+    }
+
+    #[test]
+    fn legacy_helical_spring_recipes_match_python_contract() {
+        let fixture: Value = serde_json::from_str(include_str!(
+            "../tests/fixtures/quick_legacy_helical_springs_contract.json"
+        ))
+        .expect("helical-spring Python oracle fixture is valid JSON");
+
+        for case in fixture["legacy_accepted"].as_array().unwrap() {
+            let input = case["input"].as_str().unwrap();
+            let output = parse(input);
+            assert_eq!(output["status"], "ready", "{input}: {output}");
+            let plan = &output["plan"];
+            let features = plan["features"].as_array().unwrap();
+            assert_eq!(features.len(), 1, "{input}: {output}");
+            let spring = &features[0];
+            assert_eq!(spring["kind"], "helix", "{input}");
+            assert_eq!(spring["operation"], "add", "{input}");
+            assert_eq!(spring["name"], case["name"], "{input}");
+
+            for key in [
+                "radius",
+                "wire_r",
+                "height",
+                "turns",
+                "taper",
+                "taper_start",
+            ] {
+                let actual = spring["parameters"][key]
+                    .as_f64()
+                    .unwrap_or_else(|| panic!("{input}: missing parameter {key}: {spring}"));
+                let expected = case["expected"][key]
+                    .as_f64()
+                    .unwrap_or_else(|| panic!("{input}: missing expected parameter {key}"));
+                assert!((actual - expected).abs() <= 1e-12, "{input}: {key} {actual} != {expected}");
+            }
+            assert_eq!(spring["parameters"]["center"][0], 0.0, "{input}");
+            assert_eq!(spring["parameters"]["center"][1], 0.0, "{input}");
+            let center_z = spring["parameters"]["center"][2].as_f64().unwrap();
+            let expected_center_z = case["expected"]["center_z"].as_f64().unwrap();
+            assert!((center_z - expected_center_z).abs() <= 1e-12, "{input}");
+            assert_eq!(spring["parameters"]["axis"], "Z", "{input}");
+            assert_eq!(spring["parameters"]["seg_per_turn"], 16, "{input}");
+            assert_eq!(spring["parameters"]["wire_seg"], 24, "{input}");
+            assert_eq!(spring["sources"]["radius"]["type"], "derived", "{input}");
+            assert_eq!(spring["sources"]["wire_r"]["type"], case["wire_radius_source"], "{input}");
+            assert_eq!(spring["sources"]["height"]["type"], "derived", "{input}");
+            assert_eq!(spring["sources"]["turns"]["type"], case["turns_source"], "{input}");
+            if let Some(warning) = case["warning_contains"].as_str() {
+                assert!(output["warnings"].to_string().contains(warning), "{input}: {output}");
+            }
+            assert_eq!(
+                crate::cad_plan_validation::validate_plan(plan)["state"],
+                "valid",
+                "{input}"
+            );
+            assert_eq!(
+                crate::native_plan_geometry::preflight(plan).unwrap()["state"],
                 "valid",
                 "{input}"
             );
