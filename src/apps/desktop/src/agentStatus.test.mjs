@@ -25,7 +25,7 @@ test('only an accepted current model summary is shown as accepted', () => {
     revision: 7,
     geometry_fingerprint: 'fp-current',
     finish_status: 'accepted',
-    finish_summary: { accepted: true, revision: 7, geometry_fingerprint: 'fp-current' },
+    finish_summary: { accepted: true, finish_state: 'accepted', revision: 7, geometry_fingerprint: 'fp-current' },
     geometric: { status: 'passed' },
     visual: { status: 'covered' },
   })
@@ -76,6 +76,21 @@ test('host accepted status is rejected when its finish binding is stale', () => 
   assert.equal(view.finish, '已过期')
 })
 
+test('accepted boolean cannot override a candidate finish-state enum', () => {
+  const view = modelAcceptanceView({
+    exists: true,
+    status: 'accepted',
+    acceptance_confirmed: true,
+    revision: 7,
+    geometry_fingerprint: 'fp-current',
+    finish_status: 'accepted',
+    finish_summary: { accepted: true, finish_state: 'candidate_needs_repair', revision: 7, geometry_fingerprint: 'fp-current' },
+    geometric: { status: 'passed' },
+    visual: { status: 'covered' },
+  })
+  assert.equal(view.outcome, 'candidate')
+  assert.equal(view.outcomeLabel, '候选模型')
+})
 test('an accepted-looking summary requires host terminal confirmation', () => {
   const model = modelAcceptanceView({
     exists: true,

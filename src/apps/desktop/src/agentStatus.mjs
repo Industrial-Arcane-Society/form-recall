@@ -34,6 +34,7 @@ export function modelAcceptanceView(model) {
     && finishCurrent
     && model.status === 'accepted'
     && model.finish_status === 'accepted'
+    && finishSummary?.finish_state === 'accepted'
     && finishSummary?.accepted === true
   const geometry = label(model.geometric?.status)
   const visual = label(model.visual?.status)
