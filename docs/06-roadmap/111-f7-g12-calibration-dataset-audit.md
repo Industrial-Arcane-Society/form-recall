@@ -2,9 +2,9 @@
 
 ## Result
 
-The repository does not currently contain a usable independent labeled set for calibrating the projected body-envelope ratio gate or its 8% interval margin. The audit found five unique reference images and six candidate reference/preview pairings, but zero pairs satisfy both the current image-measurement assumptions and the independent-label requirement.
+The repository still does not contain a usable independent labeled set for calibrating the projected body-envelope ratio gate or its 8% interval margin. The original audit below records the pre-segmentation baseline. After the G12 segmentation change, a separate read-only robustness probe measured intervals for all five archived reference images, but it did not create labels or calibration pairs; the calibrated-pair count remains zero.
 
-The gate currently estimates the image background from four corner pixels, rejects alpha-channel images, uses three foreground-distance thresholds, and rejects silhouettes reaching 98% of an image edge. Applying those rules to the archived reference images gives:
+The pre-segmentation baseline estimated the image background from four corner pixels, rejected alpha-channel images, used three foreground-distance thresholds, and rejected silhouettes reaching 98% of an image edge. Applying those baseline rules to the archived reference images gave:
 
 | Reference → candidate preview | Reference SHA-256 | Candidate preview SHA-256 | Current measurement result | Calibration use |
 |---|---|---|---|---|
@@ -16,6 +16,12 @@ The gate currently estimates the image background from four corner pixels, rejec
 | Same U-block reference → `temp/evidence-archive/artifacts/agent-quality-rebuild/finish-gate/cli-finish-visual-gate-20261002-a41e67/previews/r6-g2-front.png` | `53ed87fadf8cca869da921627e6a13c845424c6906b3de517d5cca972db94553` | `4e5b23f84429916faf0d3ef17de0240343e259add4a16229cf58ff504841c64b` | Reference is RGBA; the recorded observation for this reference is incomparable | No |
 
 The pin reference report associates the four images with iso/front/top/bottom previews. Its similarity scores and visual summaries are runtime model judgments, not independent proportion truth. Its `manual_visual_status` is one qualitative sentence and contains no per-view measurements, threshold, annotator, or adjudication. Generated candidate previews are also not ground truth. In the pin preview images, the current thresholding gives a ratio for iso/front but a ratio of exactly 1.0 for top/bottom at every threshold, consistent with grid/background contamination rather than a verified silhouette.
+
+## Post-segmentation robustness probe (2026-10-06)
+
+The G12 RGB5 perimeter-palette segmentation change was evaluated separately against the same five references. All five produced a projected body-ratio interval in this robustness probe. The four pin-image intervals were: image 1 `[0.3260, 0.3827]`, image 2 `[0.2792, 0.3277]`, and images 3 and 4 `[0.9688, 1.1373]`. The U-block interval was `[0.7011, 0.8231]`. These are algorithm outputs, not hand-labeled truth; in particular, the near-square image-3/image-4 estimates do not establish that the object silhouette was isolated correctly.
+
+For the generated pin previews, front produced `[0.1996, 0.3075]`, top and bottom each produced `[0.9200, 1.0800]`, and ISO remained `silhouette_components_ambiguous`. These candidates are not independent references and do not establish visual-gate acceptance. No annotator masks, adjudicated labels, or object-isolated holdout set were added. Therefore there are still zero independent calibration pairs, and the 8% margin remains heuristic. See [G12 implementation](./110-f7-g12-proportion-gate.md) for the algorithm and its limits.
 
 ## Calibration data still needed
 
