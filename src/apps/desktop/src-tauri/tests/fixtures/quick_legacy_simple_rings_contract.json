@@ -1,0 +1,154 @@
+{
+  "schema_version": "1.0",
+  "legacy_entrypoint": "src/legacy/ai_modeler/core/parsing/nlparser.py::Parser.parse",
+  "legacy_geometry": "src/legacy/ai_modeler/parts/library/partlib.py::_oring and _washer",
+  "legacy_accepted": [
+    {
+      "input": "O形圈 内径20 外径26 线径3",
+      "family": "O形圈",
+      "inner_diameter": 20.0,
+      "outer_diameter": 26.0,
+      "height": 3.0,
+      "height_source": "user",
+      "dimensions_mm": [26.0, 26.0, 3.0],
+      "legacy_mesh_volume_mm3": 650.4415007224227
+    },
+    {
+      "input": "密封圈 内径20 外径26 线径3",
+      "family": "O形圈",
+      "inner_diameter": 20.0,
+      "outer_diameter": 26.0,
+      "height": 3.0,
+      "height_source": "user",
+      "dimensions_mm": [26.0, 26.0, 3.0],
+      "legacy_mesh_volume_mm3": 650.4415007224227
+    },
+    {
+      "input": "O型圈 内径20 外径26",
+      "family": "O形圈",
+      "inner_diameter": 20.0,
+      "outer_diameter": 26.0,
+      "height": 2.0,
+      "height_source": "derived",
+      "warning_code": "legacy_simple_ring_height_defaulted",
+      "dimensions_mm": [26.0, 26.0, 2.0],
+      "legacy_mesh_volume_mm3": 433.62766714828035
+    },
+    {
+      "input": "孔用弹性挡圈 内径20 外径25 厚度1",
+      "family": "挡圈",
+      "inner_diameter": 20.0,
+      "outer_diameter": 25.0,
+      "height": 1.0,
+      "height_source": "user",
+      "dimensions_mm": [25.0, 25.0, 1.0],
+      "legacy_mesh_volume_mm3": 176.82284031967782
+    },
+    {
+      "input": "孔用弹性挡圈 内径20 外径25",
+      "family": "挡圈",
+      "inner_diameter": 20.0,
+      "outer_diameter": 25.0,
+      "height": 2.0,
+      "height_source": "derived",
+      "warning_code": "legacy_simple_ring_height_defaulted",
+      "dimensions_mm": [25.0, 25.0, 2.0],
+      "legacy_mesh_volume_mm3": 353.64568063935553
+    }
+  ],
+  "known_legacy_discrepancies": [
+    {
+      "input": "O形圈 内径20 外径26 厚3",
+      "legacy_actual": {
+        "kind": "cylinder",
+        "base": true,
+        "has_center_hole": false,
+        "height": 3.0
+      },
+      "migration_behavior": {
+        "status": "ready",
+        "kind_sequence": ["cylinder", "hole"],
+        "dimensions_mm": [26.0, 26.0, 3.0],
+        "warning": "legacy_oring_thickness_alias_repaired"
+      },
+      "reason": "旧 Parser 未把 O 形圈厚度别名绑定到零件库，丢掉中心孔；Rust 保留已给尺寸并建成简化圆环。"
+    },
+    {
+      "input": "O形圈 内径20 外径26 截面直径3",
+      "legacy_actual": {
+        "kind": "annular_ring",
+        "height": 2.0,
+        "ignored_dimension": "截面直径3"
+      },
+      "migration_behavior": {
+        "status": "unsupported",
+        "issue": "legacy_oring_toroidal_profile_not_migrated"
+      },
+      "reason": "旧 Quick 静默忽略圆截面尺寸并生成平环；Rust 不把圆截面直径误当作环面或轴向厚度。"
+    }
+  ],
+  "native_rust_expected": [
+    {
+      "input": "O形圈 内径20 外径26 线径3",
+      "inner_diameter": 20.0,
+      "outer_diameter": 26.0,
+      "height": 3.0,
+      "height_source": "user",
+      "dimensions_mm": [26.0, 26.0, 3.0],
+      "legacy_mesh_volume_mm3": 650.4415007224227,
+      "max_relative_volume_delta": 0.003
+    },
+    {
+      "input": "O型圈 内径20 外径26",
+      "inner_diameter": 20.0,
+      "outer_diameter": 26.0,
+      "height": 2.0,
+      "height_source": "derived",
+      "dimensions_mm": [26.0, 26.0, 2.0],
+      "legacy_mesh_volume_mm3": 433.62766714828035,
+      "max_relative_volume_delta": 0.003
+    },
+    {
+      "input": "孔用弹性挡圈 内径20 外径25 厚度1",
+      "inner_diameter": 20.0,
+      "outer_diameter": 25.0,
+      "height": 1.0,
+      "height_source": "user",
+      "dimensions_mm": [25.0, 25.0, 1.0],
+      "legacy_mesh_volume_mm3": 176.82284031967782,
+      "max_relative_volume_delta": 0.003
+    },
+    {
+      "input": "孔用弹性挡圈 内径20 外径25",
+      "inner_diameter": 20.0,
+      "outer_diameter": 25.0,
+      "height": 2.0,
+      "height_source": "derived",
+      "dimensions_mm": [25.0, 25.0, 2.0],
+      "legacy_mesh_volume_mm3": 353.64568063935553,
+      "max_relative_volume_delta": 0.003
+    }
+  ],
+  "not_ready": [
+    {
+      "input": "O形圈 内径20",
+      "status": "needs_clarification",
+      "issue": "legacy_simple_ring_outer_diameter"
+    },
+    {
+      "input": "孔用弹性挡圈 外径25",
+      "status": "needs_clarification",
+      "issue": "legacy_simple_ring_inner_diameter"
+    },
+    {
+      "input": "O形圈 内径20 外径26 截面直径3",
+      "status": "unsupported",
+      "issue": "legacy_oring_toroidal_profile_not_migrated"
+    },
+    {
+      "input": "孔用弹性挡圈 内径20 外径25 开口",
+      "status": "unsupported",
+      "issue": "legacy_simple_ring_modifier_not_migrated"
+    }
+  ]
+}

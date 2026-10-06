@@ -52,6 +52,9 @@ pub fn parse(text: &str) -> Value {
     if let Some(parsed) = parse_legacy_bearing(text, &normalized) {
         return parsed;
     }
+    if let Some(parsed) = parse_legacy_simple_ring(text, &normalized) {
+        return parsed;
+    }
     if let Some(parsed) = parse_legacy_washer(text, &normalized) {
         return parsed;
     }
@@ -1319,6 +1322,229 @@ fn bearing_code_occurs(text: &str, code: &str) -> bool {
         !previous.is_some_and(|ch| ch.is_ascii_digit())
             && !next.is_some_and(|ch| ch.is_ascii_digit())
     })
+}
+
+/// Migrate the legacy O-ring and retaining-ring constructors. Both old recipes
+/// create a closed flat annulus; neither creates a toroidal O-ring section or
+/// the split opening of a real elastic retaining ring.
+fn parse_legacy_simple_ring(raw: &str, text: &str) -> Option<Value> {
+    let o_ring = contains_any(text, &["o形圈", "o型圈", "密封圈"]);
+    let retaining_ring = contains_any(text, &["孔用弹性挡圈", "轴用弹性挡圈", "挡圈", "卡簧"]);
+    if !o_ring && !retaining_ring {
+        return None;
+    }
+    if o_ring && retaining_ring {
+        return Some(result(
+            "unsupported",
+            raw,
+            None,
+            vec![],
+            vec![],
+            vec![issue(
+                "legacy_simple_ring_type_ambiguous",
+                "描述同时包含 O 形圈和挡圈；请一次只创建一种环形零件。",
+            )],
+        ));
+    }
+
+    if o_ring && contains_any(text, &["截面直径", "圆截面", "截面尺寸"]) {
+        return Some(result(
+            "unsupported",
+            raw,
+            None,
+            vec![],
+            vec![],
+            vec![issue(
+                "legacy_oring_toroidal_profile_not_migrated",
+                "当前只迁移旧 Quick 的平面圆环近似，尚不能生成 O 形圈的圆截面环面；不能把截面直径当作轴向厚度。",
+            )],
+        ));
+    }
+
+    if contains_any(
+        text,
+        &[
+            "油封",
+            "长方体",
+            "圆柱",
+            "法兰",
+            "轴承",
+            "轴套",
+            "垫圈",
+            "滚珠",
+            "保持架",
+            "密封槽",
+            "开口",
+            "缺口",
+            "耳孔",
+            "通孔",
+            "盲孔",
+            "钻孔",
+            "打孔",
+            "开槽",
+            "凹槽",
+            "倒角",
+            "圆角",
+            "螺纹",
+            "并加",
+            "同时",
+            "再加",
+        ],
+    ) {
+        return Some(result(
+            "unsupported",
+            raw,
+            None,
+            vec![],
+            vec![],
+            vec![issue(
+                "legacy_simple_ring_modifier_not_migrated",
+                "当前只迁移旧 Quick 独立环形配方；额外密封结构、开口、孔槽和边缘修饰尚未迁入。",
+            )],
+        ));
+    }
+
+    let (name, height_labels, short_height_labels) = if o_ring {
+        ("O形圈", &["线径", "厚度", "厚"][..], &["W", "w"][..])
+    } else {
+        ("挡圈", &["厚度", "厚"][..], &["S", "s"][..])
+    };
+    let inner = pulley_scalar(raw, text, &["内径", "孔径"], &["d"]);
+    let outer = pulley_scalar(raw, text, &["外径"], &["D"]);
+    let explicit_height = pulley_scalar(raw, text, height_labels, short_height_labels);
+    let height = explicit_height.unwrap_or(2.0);
+
+    let mut questions = Vec::new();
+    for (value, code, label) in [
+        (inner, "legacy_simple_ring_inner_diameter", "内径"),
+        (outer, "legacy_simple_ring_outer_diameter", "外径"),
+        (Some(height), "legacy_simple_ring_height", "环形零件轴向厚度"),
+    ] {
+        match value {
+            Some(value) if value.is_finite() && value > 0.0 => {}
+            Some(_) => questions.push(issue(
+                code,
+                format!("{label}必须是有限的正数，且同一参数不能出现冲突数值。"),
+            )),
+            None => questions.push(issue(
+                code,
+                format!("请明确{label}，例如“内径20 外径26”。"),
+            )),
+        }
+    }
+    if let (Some(inner), Some(outer)) = (inner, outer) {
+        if inner.is_finite() && outer.is_finite() && inner >= outer {
+            questions.push(issue(
+                "legacy_simple_ring_diameter_order",
+                "环形零件外径必须大于内径。",
+            ));
+        }
+    }
+    if !questions.is_empty() {
+        return Some(result("needs_clarification", raw, None, vec![], questions, vec![]));
+    }
+
+    let inner = inner.expect("ring inner diameter validated above");
+    let outer = outer.expect("ring outer diameter validated above");
+    let height = height;
+    let defaulted = explicit_height.is_none();
+    let mut warnings = vec![if o_ring {
+        issue(
+            "legacy_oring_flat_annulus_approximation",
+            "旧 Python Quick 将 O 形圈建成平面圆环，不是具有圆截面的环面；当前 Rust 继续复现该简化形状。",
+        )
+    } else {
+        issue(
+            "legacy_retaining_ring_closed_annulus_approximation",
+            "旧 Python Quick 将弹性挡圈的开口圆环简化成完整闭合圆环；当前 Rust 继续复现该简化形状。",
+        )
+    }];
+    if o_ring
+        && explicit_height.is_some()
+        && !contains_any(text, &["线径", "w"])
+    {
+        warnings.push(issue(
+            "legacy_oring_thickness_alias_repaired",
+            "旧 Parser 对 O 形圈“厚/厚度”分句未稳定绑定，会退化成无中心孔圆柱；Rust 将其绑定为简化圆环的轴向厚度。",
+        ));
+    }
+    if defaulted {
+        let default_description = if o_ring {
+            "旧 Python Quick O 形圈构造器默认轴向厚度 2 mm。"
+        } else {
+            "旧 Python Quick 挡圈构造器默认轴向厚度 2 mm。"
+        };
+        warnings.push(issue(
+            "legacy_simple_ring_height_defaulted",
+            format!("沿用{default_description}输入未提供该尺寸，已明确标记为程序默认。"),
+        ));
+    }
+    if !has_unit(text) {
+        warnings.push(issue(
+            "unit_interpreted_as_mm",
+            "未写长度单位的圆环尺寸按旧 Quick 默认单位 mm 解释。",
+        ));
+    }
+
+    let height_source = if defaulted {
+        derived_source(
+            raw,
+            if o_ring {
+                "沿用旧 Python Quick O 形圈构造器默认轴向厚度 2 mm。"
+            } else {
+                "沿用旧 Python Quick 挡圈构造器默认轴向厚度 2 mm。"
+            },
+        )
+    } else {
+        user_source(raw)
+    };
+    let features = vec![
+        json!({
+            "id":"quick-0001",
+            "kind":"cylinder",
+            "operation":"add",
+            "name":format!("{name}简化圆环外体"),
+            "parameters":{
+                "radius":outer / 2.0,
+                "height":height,
+                "center":[0.0, 0.0, 0.0],
+                "base":false,
+                "axis":"Z",
+                "segments":64
+            },
+            "sources":{
+                "radius":derived_source(raw, "由用户给定的外径除以 2 得到圆柱半径。"),
+                "height":height_source,
+                "center":derived_source(raw, "沿用旧 Python Quick 环形特征中心位于原点的放置方式。"),
+                "base":derived_source(raw, "沿用旧 Python Quick 居中圆柱语义。"),
+                "axis":derived_source(raw, "沿用旧 Python Quick 环形零件沿全局 Z 轴放置。"),
+                "segments":derived_source(raw, "沿用旧 Python Quick 圆柱分段数 64。")
+            },
+            "relations":[]
+        }),
+        json!({
+            "id":"quick-0002",
+            "kind":"hole",
+            "operation":"cut",
+            "name":"中心贯穿孔",
+            "parameters":{
+                "diameter":inner,
+                "through":true,
+                "pos":"center",
+                "axis":"Z",
+                "segments":48
+            },
+            "sources":{
+                "diameter":user_source(raw),
+                "through":derived_source(raw, "沿用旧 Python Quick 环形零件中心贯穿孔。"),
+                "pos":derived_source(raw, "沿用旧 Python Quick 中心孔位置。"),
+                "axis":derived_source(raw, "沿用旧 Python Quick 中心孔沿全局 Z 轴贯穿。"),
+                "segments":derived_source(raw, "沿用旧 Python Quick 中心孔分段数 48。")
+            },
+            "relations":[]
+        }),
+    ];
+    Some(plan_result(raw, name, features, warnings))
 }
 
 /// Migrate the legacy Python Quick helical-spring recipe. The original
@@ -8109,6 +8335,84 @@ mod tests {
                         assert!((actual[axis] - expected.as_f64().unwrap()).abs() < 1e-10, "{input}");
                     }
                 }
+            } else if let Some(issue) = expected["issue"].as_str() {
+                assert!(output.to_string().contains(issue), "{input}: {output}");
+            }
+        }
+    }
+
+    #[test]
+    fn legacy_simple_seal_ring_recipes_match_python_oracle_and_provenance() {
+        let fixture: Value = serde_json::from_str(include_str!(
+            "../tests/fixtures/quick_legacy_simple_rings_contract.json"
+        ))
+        .expect("simple-ring Python oracle fixture is valid JSON");
+
+        for case in fixture["legacy_accepted"].as_array().unwrap() {
+            let input = case["input"].as_str().unwrap();
+            let output = parse(input);
+            assert_eq!(output["status"], "ready", "{input}: {output}");
+            assert_eq!(output["plan"]["name"], case["family"], "{input}");
+            let features = output["plan"]["features"].as_array().unwrap();
+            assert_eq!(features.len(), 2, "{input}: {output}");
+
+            let outer = case["outer_diameter"].as_f64().unwrap();
+            let inner = case["inner_diameter"].as_f64().unwrap();
+            let height = case["height"].as_f64().unwrap();
+            assert_eq!(features[0]["kind"], "cylinder", "{input}");
+            assert_eq!(features[0]["operation"], "add", "{input}");
+            assert!((features[0]["parameters"]["radius"].as_f64().unwrap() - outer / 2.0).abs() < 1e-10, "{input}");
+            assert_eq!(features[0]["parameters"]["height"], height, "{input}");
+            assert_eq!(features[0]["parameters"]["center"], json!([0.0, 0.0, 0.0]), "{input}");
+            assert_eq!(features[0]["parameters"]["base"], false, "{input}");
+            assert_eq!(features[0]["parameters"]["axis"], "Z", "{input}");
+            assert_eq!(features[0]["parameters"]["segments"], 64, "{input}");
+            assert_eq!(features[0]["sources"]["height"]["type"], case["height_source"], "{input}");
+            assert_eq!(features[1]["kind"], "hole", "{input}");
+            assert_eq!(features[1]["operation"], "cut", "{input}");
+            assert_eq!(features[1]["parameters"]["diameter"], inner, "{input}");
+            assert_eq!(features[1]["parameters"]["through"], true, "{input}");
+            assert_eq!(features[1]["parameters"]["pos"], "center", "{input}");
+            assert_eq!(features[1]["parameters"]["axis"], "Z", "{input}");
+            assert_eq!(features[1]["parameters"]["segments"], 48, "{input}");
+            assert_eq!(features[1]["sources"]["diameter"]["type"], "user", "{input}");
+            if let Some(code) = case["warning_code"].as_str() {
+                assert!(output["warnings"].to_string().contains(code), "{input}: {output}");
+            }
+            assert_eq!(
+                crate::cad_plan_validation::validate_plan(&output["plan"])["state"],
+                "valid",
+                "{input}: {}",
+                crate::cad_plan_validation::validate_plan(&output["plan"])
+            );
+            assert_eq!(
+                crate::native_plan_geometry::preflight(&output["plan"])
+                    .unwrap()["state"],
+                "valid",
+                "{input}"
+            );
+        }
+
+        for case in fixture["not_ready"].as_array().unwrap() {
+            let input = case["input"].as_str().unwrap();
+            let output = parse(input);
+            assert_eq!(output["status"], case["status"], "{input}: {output}");
+            assert!(output["plan"].is_null(), "{input}: {output}");
+            let issues = format!("{} {}", output["questions"], output["unsupported"]);
+            assert!(issues.contains(case["issue"].as_str().unwrap()), "{input}: {output}");
+        }
+
+        for case in fixture["known_legacy_discrepancies"].as_array().unwrap() {
+            let input = case["input"].as_str().unwrap();
+            let expected = &case["migration_behavior"];
+            let output = parse(input);
+            assert_eq!(output["status"], expected["status"], "{input}: {output}");
+            if let Some(warning) = expected["warning"].as_str() {
+                assert!(output["warnings"].to_string().contains(warning), "{input}: {output}");
+            }
+            if output["status"] == "ready" {
+                assert_eq!(output["plan"]["features"].as_array().unwrap().len(), 2, "{input}");
+                assert_eq!(output["plan"]["features"][0]["parameters"]["height"], expected["dimensions_mm"][2], "{input}");
             } else if let Some(issue) = expected["issue"].as_str() {
                 assert!(output.to_string().contains(issue), "{input}: {output}");
             }
