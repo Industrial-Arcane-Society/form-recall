@@ -58,6 +58,9 @@ pub fn parse(text: &str) -> Value {
     if let Some(parsed) = parse_legacy_brake_disc(text, &normalized) {
         return parsed;
     }
+    if let Some(parsed) = parse_legacy_flywheel(text, &normalized) {
+        return parsed;
+    }
     if let Some(parsed) = parse_legacy_coupling(text, &normalized) {
         return parsed;
     }
@@ -559,7 +562,7 @@ fn result(
     unsupported: Vec<Value>,
 ) -> Value {
     json!({"status":status,"source_text":text,"plan":plan,"warnings":warnings,"questions":questions,"unsupported":unsupported,
-        "compatibility":{"scope":"common explicit primitives/cuts, migrated standalone primitive defaults and legacy extrusion/revolve constructors, centered solid-shaft aliases, rectangular slots, flat-washer rings, cylindrical/conical spring helices, measured socket-head screws with optional washers, V-belt pulleys, timing pulleys, straight-gear construction, PCD counterbores, migrated legacy washer/spring/shaft/bearing/seal-ring/coupling/brake-disc/brake-drum recipes, and executable flange/stepped-shaft/sleeve/blade/blisk templates","legacy_typical_defaults":"restored only for migrated Quick constructors/templates, centered solid shafts (Ø30 mm when diameter is absent), straight gears, timing pulleys, V-belt pulleys, socket-head screw catalog recipes, rectangular slots, flat-washer thickness, spring wire/turn values, brake-disc thickness/bore values, and brake-drum bore values; defaults and raw-dimension mappings are reported as warnings","loft_geometry":"blade and blisk lofts are locally approximate faceted B-Reps","timing_pulley_geometry":"native timing pulley teeth are approximate trapezoidal prisms fused to an analytic annular blank","vbelt_pulley_geometry":"standard V-groove pulley is an approximate axisymmetric revolve; legacy spoke variants and CATIA-native groove features are not included","helix_geometry":"spring helices are locally approximate faceted B-Reps and are not native CATIA features","socket_head_bolt_geometry":"measured catalog dimensions and washers are preserved; native Rust adds visible faceted threads where the legacy Python Quick recipe reconstructed a smooth shank","solid_shaft_geometry":"the old mesh kernel used a 48-sided cylinder; Rust/OCCT uses an analytic cylinder, so bounding boxes agree while volume differs by the expected polygonal approximation"}})
+        "compatibility":{"scope":"common explicit primitives/cuts, migrated standalone primitive defaults and legacy extrusion/revolve constructors, centered solid-shaft aliases, rectangular slots, flat-washer rings, cylindrical/conical spring helices, measured socket-head screws with optional washers, V-belt pulleys, timing pulleys, straight-gear construction, PCD counterbores, migrated legacy washer/spring/shaft/bearing/seal-ring/coupling/brake-disc/brake-drum/flywheel recipes, and executable flange/stepped-shaft/sleeve/blade/blisk templates","legacy_typical_defaults":"restored only for migrated Quick constructors/templates, centered solid shafts (Ø30 mm when diameter is absent), straight gears, timing pulleys, V-belt pulleys, socket-head screw catalog recipes, rectangular slots, flat-washer thickness, spring wire/turn values, brake-disc thickness/bore values, brake-drum bore values, and flywheel center-bore/PCD-hole values; defaults and raw-dimension mappings are reported as warnings","loft_geometry":"blade and blisk lofts are locally approximate faceted B-Reps","timing_pulley_geometry":"native timing pulley teeth are approximate trapezoidal prisms fused to an analytic annular blank","vbelt_pulley_geometry":"standard V-groove pulley is an approximate axisymmetric revolve; legacy spoke variants and CATIA-native groove features are not included","helix_geometry":"spring helices are locally approximate faceted B-Reps and are not native CATIA features","socket_head_bolt_geometry":"measured catalog dimensions and washers are preserved; native Rust adds visible faceted threads where the legacy Python Quick recipe reconstructed a smooth shank","solid_shaft_geometry":"the old mesh kernel used a 48-sided cylinder; Rust/OCCT uses an analytic cylinder, so bounding boxes agree while volume differs by the expected polygonal approximation"}})
 }
 
 fn parse_legacy_template(raw: &str, normalized: &str) -> Option<Value> {
@@ -1989,6 +1992,298 @@ fn parse_legacy_brake_disc(raw: &str, text: &str) -> Option<Value> {
         ));
     }
     Some(plan_result(raw, "制动盘", features, warnings))
+}
+
+/// Migrate the legacy Python Quick flywheel recipe: a centered disc, an
+/// optional center bore, and an optional PCD hole pattern. The historical
+/// recipe silently ignored explicit bolt-hole diameters and incomplete PCD
+/// descriptions; Rust makes those inputs explicit and actionable.
+fn parse_legacy_flywheel(raw: &str, text: &str) -> Option<Value> {
+    if !contains_any(text, &["飞轮", "flywheel"]) {
+        return None;
+    }
+    if contains_any(
+        text,
+        &[
+            "齿圈",
+            "齿数",
+            "模数",
+            "齿轮",
+            "动平衡",
+            "平衡等级",
+            "压装",
+            "离合器",
+            "摩擦片",
+            "沉孔",
+            "盲孔",
+            "键槽",
+            "倒角",
+            "圆角",
+            "螺纹",
+            "再加",
+            "同时",
+            "并且",
+        ],
+    ) {
+        return Some(result(
+            "unsupported",
+            raw,
+            None,
+            vec![],
+            vec![],
+            vec![issue(
+                "legacy_flywheel_modifier_not_migrated",
+                "当前仅迁移旧 Quick 飞轮的圆盘、中心孔和 PCD 螺栓孔；齿圈、齿形、动平衡及其它附加结构尚未迁移。",
+            )],
+        ));
+    }
+
+    let outer = merge_optional_scalar(
+        pulley_scalar(raw, text, &["外径", "outside diameter"], &["D"]),
+        scalar_excluding_suffix(text, "直径", &["孔"]),
+    );
+    let center_bore = pulley_scalar(
+        raw,
+        text,
+        &["中心孔直径", "中心孔", "内径", "内孔直径", "inner diameter", "bore diameter"],
+        &["d"],
+    );
+    let thickness = pulley_scalar(
+        raw,
+        text,
+        &["厚度", "厚", "高度", "height", "thickness"],
+        &["H", "h"],
+    );
+    let pcd = pulley_scalar(raw, text, &["分度圆", "节圆", "pcd", "pitch circle"], &["K"]);
+    let count_text = match hole_pattern_count(text) {
+        Ok(value) => value.map(|value| value as f64),
+        Err(code) => {
+            return Some(parse_result_with_issue(
+                "needs_clarification",
+                raw,
+                code,
+                "飞轮 PCD 螺栓孔数存在冲突或超出几何上限，请给出唯一有效孔数。",
+            ));
+        }
+    };
+    let count = merge_optional_scalar(count_text, short_scalar(raw, "n"));
+    let bolt_hole_diameter = pulley_scalar(
+        raw,
+        text,
+        &["螺栓孔直径", "螺栓孔径", "bolt hole diameter", "孔径"],
+        &["dh"],
+    );
+
+    let mut questions = Vec::new();
+    match outer {
+        Some(value) if value.is_finite() && value > 0.0 => {}
+        Some(_) => questions.push(issue(
+            "legacy_flywheel_outer_diameter_invalid",
+            "飞轮外径必须是有限正数，且不同写法不能互相冲突。",
+        )),
+        None => questions.push(issue(
+            "legacy_flywheel_outer_diameter",
+            "请明确飞轮外径；旧 Python Quick 缺少外径时不能生成有效飞轮。",
+        )),
+    }
+    match thickness {
+        Some(value) if value.is_finite() && value > 0.0 => {}
+        Some(_) => questions.push(issue(
+            "legacy_flywheel_thickness_invalid",
+            "飞轮厚度必须是有限正数，且不同写法不能互相冲突。",
+        )),
+        None => questions.push(issue(
+            "legacy_flywheel_thickness",
+            "请明确飞轮厚度；旧 Python Quick 缺少厚度时不能生成有效飞轮。",
+        )),
+    }
+    if center_bore.is_some_and(|value| !value.is_finite() || value <= 0.0) {
+        questions.push(issue(
+            "legacy_flywheel_center_bore_invalid",
+            "飞轮中心孔直径必须是有限正数，且不同写法不能互相冲突。",
+        ));
+    }
+    if pcd.is_some_and(|value| !value.is_finite() || value <= 0.0) {
+        questions.push(issue(
+            "legacy_flywheel_pcd_invalid",
+            "飞轮螺栓孔分度圆直径必须是有限正数，且不同写法不能互相冲突。",
+        ));
+    }
+    if bolt_hole_diameter.is_some_and(|value| !value.is_finite() || value <= 0.0) {
+        questions.push(issue(
+            "legacy_flywheel_bolt_hole_invalid",
+            "飞轮螺栓孔直径必须是有限正数，且不同写法不能互相冲突。",
+        ));
+    }
+    if count.is_some_and(|value| {
+        !value.is_finite()
+            || value.fract() != 0.0
+            || value < 2.0
+            || value > crate::native_plan_geometry::MAX_HOLE_PATTERN_COUNT as f64
+    }) {
+        questions.push(issue(
+            "legacy_flywheel_hole_count_invalid",
+            "飞轮螺栓孔数必须是 2 到几何资源上限之间的整数。",
+        ));
+    }
+
+    let pattern_requested = pcd.is_some()
+        || count.is_some()
+        || bolt_hole_diameter.is_some()
+        || contains_any(text, &["螺栓孔", "bolt hole"]);
+    if pattern_requested {
+        if pcd.is_none() {
+            questions.push(issue(
+                "legacy_flywheel_pcd_missing",
+                "螺栓孔阵列需要明确分度圆直径；旧 Python Quick 曾静默忽略缺少 PCD 的阵列请求。",
+            ));
+        }
+        if count.is_none() {
+            questions.push(issue(
+                "legacy_flywheel_hole_count_missing",
+                "螺栓孔阵列需要明确孔数；旧 Python Quick 曾静默忽略缺少孔数的 PCD 请求。",
+            ));
+        }
+    }
+    if let (Some(inner), Some(outer)) = (center_bore, outer) {
+        if inner.is_finite() && outer.is_finite() && inner >= outer {
+            questions.push(issue(
+                "legacy_flywheel_bore_not_smaller_than_outer",
+                "飞轮中心孔直径必须小于外径。",
+            ));
+        }
+    }
+    if let (Some(pcd), Some(count), Some(outer)) = (pcd, count, outer) {
+        let diameter = bolt_hole_diameter.unwrap_or(10.0);
+        let rim_clearance = outer - pcd - diameter;
+        let neighbor_clearance = pcd * (std::f64::consts::PI / count).sin() - diameter;
+        if rim_clearance <= 1e-6 || neighbor_clearance <= 1e-6 {
+            questions.push(issue(
+                "legacy_flywheel_bolt_pattern_interference",
+                "飞轮 PCD 螺栓孔与外缘或相邻孔发生相交/相切；请调整外径、PCD、孔径或孔数。",
+            ));
+        }
+    }
+    if !questions.is_empty() {
+        return Some(result("needs_clarification", raw, None, vec![], questions, vec![]));
+    }
+
+    let outer = outer.expect("validated flywheel outer diameter");
+    let thickness = thickness.expect("validated flywheel thickness");
+    let center_bore_defaulted = center_bore.is_none();
+    let center_bore = center_bore.unwrap_or(40.0);
+    let pattern = pattern_requested.then(|| {
+        (
+            pcd.expect("PCD validated for requested flywheel pattern"),
+            count.expect("count validated for requested flywheel pattern") as u64,
+            bolt_hole_diameter.unwrap_or(10.0),
+        )
+    });
+    let bolt_diameter_defaulted = pattern.is_some() && bolt_hole_diameter.is_none();
+
+    let mut features = vec![json!({
+        "id":"quick-0001",
+        "kind":"cylinder",
+        "operation":"add",
+        "name":"飞轮盘体",
+        "parameters":{"radius":outer/2.0,"height":thickness,"center":[0.0,0.0,0.0],"base":false,"axis":"Z","segments":64},
+        "sources":{
+            "radius":derived_source(raw, "由飞轮外径除以 2 得到半径。"),
+            "height":user_source(raw),
+            "center":derived_source(raw, "沿用旧 Python Quick 将飞轮盘体中心置于原点。"),
+            "base":derived_source(raw, "沿用旧 Python Quick 的居中圆柱语义。"),
+            "axis":derived_source(raw, "沿用旧 Python Quick 沿全局 Z 轴放置。"),
+            "segments":derived_source(raw, "沿用旧 Python Quick 圆柱分段数 64。")
+        },
+        "relations":[]
+    })];
+    features.push(json!({
+        "id":"quick-0002",
+        "kind":"hole",
+        "operation":"cut",
+        "name":"飞轮中心孔",
+        "parameters":{"diameter":center_bore,"through":true,"pos":"center","axis":"Z","segments":48},
+        "sources":{
+            "diameter":if center_bore_defaulted { derived_source(raw, "沿用旧 Python Quick 飞轮典型中心孔 ⌀40 mm。") } else { user_source(raw) },
+            "through":derived_source(raw, "沿用旧 Python Quick 飞轮中心贯穿孔。"),
+            "pos":derived_source(raw, "沿用旧 Python Quick 飞轮中心孔位置。"),
+            "axis":derived_source(raw, "沿用旧 Python Quick 中心孔沿全局 Z 轴贯穿。"),
+            "segments":derived_source(raw, "沿用旧 Python Quick 中心孔分段数 48。")
+        },
+        "relations":[]
+    }));
+    if let Some((pcd, count, diameter)) = pattern {
+        features.push(json!({
+            "id":"quick-0003",
+            "kind":"hole",
+            "operation":"cut",
+            "name":"飞轮 PCD 螺栓孔",
+            "parameters":{"diameter":diameter,"through":true,"pos":"pcd","count":count,"pcd":pcd,"axis":"Z","segments":24},
+            "sources":{
+                "diameter":if bolt_diameter_defaulted { derived_source(raw, "沿用旧 Python Quick 飞轮 PCD 螺栓孔默认直径 ⌀10 mm。") } else { user_source(raw) },
+                "through":derived_source(raw, "沿用旧 Python Quick 飞轮螺栓孔为贯穿孔。"),
+                "pos":derived_source(raw, "沿用旧 Python Quick 飞轮螺栓孔按 PCD 均布。"),
+                "count":user_source(raw),
+                "pcd":user_source(raw),
+                "axis":derived_source(raw, "沿用旧 Python Quick 飞轮螺栓孔沿全局 Z 轴贯穿。"),
+                "segments":derived_source(raw, "沿用旧 Python Quick 飞轮螺栓孔分段数 24。")
+            },
+            "relations":[]
+        }));
+    }
+
+    let mut warnings = vec![issue(
+        "legacy_flywheel_migrated",
+        "已按旧 Python Quick 飞轮配方建立居中圆盘、中心孔及可选 PCD 螺栓孔；不包含齿圈齿形或动平衡结构。",
+    )];
+    let mut defaults = Vec::new();
+    if center_bore_defaulted {
+        defaults.push("中心孔 ⌀40 mm");
+        warnings.push(issue(
+            "legacy_flywheel_default_center_bore",
+            "未指定中心孔；沿用旧 Python Quick 飞轮典型中心孔 ⌀40 mm。",
+        ));
+    }
+    if bolt_diameter_defaulted {
+        defaults.push("PCD 螺栓孔 ⌀10 mm");
+    }
+    if !defaults.is_empty() && !center_bore_defaulted {
+        warnings.push(issue(
+            "legacy_flywheel_defaults",
+            format!("沿用旧 Python Quick 飞轮默认值：{}。", defaults.join("、")),
+        ));
+    } else if bolt_diameter_defaulted {
+        warnings.push(issue(
+            "legacy_flywheel_default_bolt_hole",
+            "未指定 PCD 螺栓孔径；沿用旧 Python Quick 默认值 ⌀10 mm。",
+        ));
+    }
+    if !has_unit(text) {
+        warnings.push(issue(
+            "unit_interpreted_as_mm",
+            "未写长度单位的飞轮尺寸按旧 Quick 默认单位 mm 解释。",
+        ));
+    }
+    if bolt_hole_diameter.is_some() {
+        warnings.push(issue(
+            "legacy_flywheel_bolt_hole_diameter_repaired",
+            "旧 Python Quick 飞轮配方未声明孔径参数，会静默使用 ⌀10 mm；Rust 按明确提供的螺栓孔径建模。",
+        ));
+    }
+    if let Some((pcd, _count, diameter)) = pattern {
+        if center_bore >= pcd + diameter {
+            warnings.push(issue(
+                "legacy_flywheel_bolt_holes_inside_bore",
+                "PCD 螺栓孔完全落在中心孔空腔内；保留旧特征参数，但不会改变最终实体。",
+            ));
+        } else if center_bore + diameter > pcd {
+            warnings.push(issue(
+                "legacy_flywheel_bolt_holes_overlap_bore",
+                "PCD 螺栓孔与中心孔相交，切除会连成内缘开口，不能作为彼此独立的完整圆孔验收。",
+            ));
+        }
+    }
+    Some(plan_result(raw, "飞轮", features, warnings))
 }
 
 fn scalar_excluding_suffix(text: &str, alias: &str, excluded_suffixes: &[&str]) -> Option<f64> {
@@ -9313,6 +9608,95 @@ mod tests {
                 assert_eq!(output["plan"]["features"][2]["parameters"]["diameter"], expected["bolt_hole_diameter"], "{input}");
             } else {
                 assert!(output.to_string().contains(expected["issue"].as_str().unwrap()), "{input}: {output}");
+            }
+        }
+    }
+
+    #[test]
+    fn legacy_flywheel_recipes_match_python_oracle_and_provenance() {
+        let fixture: Value = serde_json::from_str(include_str!(
+            "../tests/fixtures/quick_legacy_flywheel_contract.json"
+        ))
+        .expect("flywheel Python oracle fixture is valid JSON");
+
+        for case in fixture["legacy_accepted"].as_array().unwrap() {
+            let input = case["input"].as_str().unwrap();
+            let output = parse(input);
+            assert_eq!(output["status"], "ready", "{input}: {output}");
+            assert_eq!(output["plan"]["name"], "飞轮", "{input}: {output}");
+            let features = output["plan"]["features"].as_array().unwrap();
+            assert_eq!(features.len(), case["feature_count"].as_u64().unwrap() as usize, "{input}");
+
+            let outer = case["outer_diameter"].as_f64().unwrap();
+            let bore = case["center_bore"].as_f64().unwrap();
+            let thickness = case["thickness"].as_f64().unwrap();
+            assert_eq!(features[0]["kind"], "cylinder", "{input}");
+            assert_eq!(features[0]["operation"], "add", "{input}");
+            assert!((features[0]["parameters"]["radius"].as_f64().unwrap() - outer / 2.0).abs() < 1e-10, "{input}");
+            assert_eq!(features[0]["parameters"]["height"], thickness, "{input}");
+            assert_eq!(features[0]["parameters"]["center"], json!([0.0, 0.0, 0.0]), "{input}");
+            assert_eq!(features[0]["parameters"]["base"], false, "{input}");
+            assert_eq!(features[0]["parameters"]["axis"], "Z", "{input}");
+            assert_eq!(features[0]["parameters"]["segments"], 64, "{input}");
+            assert_eq!(features[0]["sources"]["height"]["type"], "user", "{input}");
+
+            assert_eq!(features[1]["kind"], "hole", "{input}");
+            assert_eq!(features[1]["operation"], "cut", "{input}");
+            assert_eq!(features[1]["parameters"]["diameter"], bore, "{input}");
+            assert_eq!(features[1]["parameters"]["through"], true, "{input}");
+            assert_eq!(features[1]["parameters"]["pos"], "center", "{input}");
+            assert_eq!(features[1]["parameters"]["axis"], "Z", "{input}");
+            assert_eq!(features[1]["parameters"]["segments"], 48, "{input}");
+            assert_eq!(features[1]["sources"]["diameter"]["type"], case["center_bore_source"], "{input}");
+
+            if let Some(pcd) = case["pcd"].as_f64() {
+                let pattern = &features[2];
+                assert_eq!(pattern["kind"], "hole", "{input}");
+                assert_eq!(pattern["operation"], "cut", "{input}");
+                assert_eq!(pattern["parameters"]["pos"], "pcd", "{input}");
+                assert_eq!(pattern["parameters"]["pcd"], pcd, "{input}");
+                assert_eq!(pattern["parameters"]["count"], case["hole_count"], "{input}");
+                assert_eq!(pattern["parameters"]["diameter"], case["bolt_hole_diameter"], "{input}");
+                assert_eq!(pattern["parameters"]["segments"], 24, "{input}");
+                assert_eq!(pattern["sources"]["diameter"]["type"], case["bolt_hole_source"], "{input}");
+            }
+            if let Some(code) = case["warning_code"].as_str() {
+                assert!(output["warnings"].to_string().contains(code), "{input}: {output}");
+            }
+            assert_eq!(
+                crate::cad_plan_validation::validate_plan(&output["plan"])["state"],
+                "valid",
+                "{input}: {}",
+                crate::cad_plan_validation::validate_plan(&output["plan"])
+            );
+            assert_eq!(
+                crate::native_plan_geometry::preflight(&output["plan"])
+                    .unwrap()["state"],
+                "valid",
+                "{input}"
+            );
+        }
+
+        for case in fixture["not_ready"].as_array().unwrap() {
+            let input = case["input"].as_str().unwrap();
+            let output = parse(input);
+            assert_eq!(output["status"], "needs_clarification", "{input}: {output}");
+            assert!(output["plan"].is_null(), "{input}: {output}");
+            assert!(output.to_string().contains(case["issue"].as_str().unwrap()), "{input}: {output}");
+        }
+
+        for case in fixture["known_legacy_discrepancies"].as_array().unwrap() {
+            let input = case["input"].as_str().unwrap();
+            let expected = &case["migration_behavior"];
+            let output = parse(input);
+            assert_eq!(output["status"], expected["status"], "{input}: {output}");
+            if let Some(warning) = expected["warning"].as_str() {
+                assert!(output["warnings"].to_string().contains(warning), "{input}: {output}");
+            }
+            if output["status"] == "ready" {
+                assert_eq!(output["plan"]["features"][2]["parameters"]["diameter"], expected["bolt_hole_diameter"], "{input}");
+            } else if let Some(issue) = expected["issue"].as_str() {
+                assert!(output.to_string().contains(issue), "{input}: {output}");
             }
         }
     }

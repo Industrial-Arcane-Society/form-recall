@@ -1,0 +1,221 @@
+{
+  "schema_version": "1.0",
+  "legacy_entrypoint": "src/legacy/ai_modeler/core/parsing/nlparser.py::Parser.parse",
+  "legacy_geometry": "src/legacy/ai_modeler/parts/library/partlib.py::_flywheel",
+  "legacy_accepted": [
+    {
+      "input": "飞轮 外径300 内径40 厚度30 分度圆250 孔数6",
+      "outer_diameter": 300.0,
+      "center_bore": 40.0,
+      "thickness": 30.0,
+      "pcd": 250.0,
+      "hole_count": 6,
+      "bolt_hole_diameter": 10.0,
+      "center_bore_source": "user",
+      "bolt_hole_source": "derived",
+      "feature_count": 3,
+      "dimensions_mm": [300.0, 300.0, 30.0],
+      "legacy_mesh_volume_mm3": 2065602.4593236041
+    },
+    {
+      "input": "发动机飞轮 D300 d40 h30 K250 n6",
+      "outer_diameter": 300.0,
+      "center_bore": 40.0,
+      "thickness": 30.0,
+      "pcd": 250.0,
+      "hole_count": 6,
+      "bolt_hole_diameter": 10.0,
+      "center_bore_source": "user",
+      "bolt_hole_source": "derived",
+      "feature_count": 3,
+      "dimensions_mm": [300.0, 300.0, 30.0],
+      "legacy_mesh_volume_mm3": 2065602.4593236041
+    },
+    {
+      "input": "飞轮 外径300 厚度30 分度圆250 孔数6",
+      "outer_diameter": 300.0,
+      "center_bore": 40.0,
+      "thickness": 30.0,
+      "pcd": 250.0,
+      "hole_count": 6,
+      "bolt_hole_diameter": 10.0,
+      "center_bore_source": "derived",
+      "bolt_hole_source": "derived",
+      "feature_count": 3,
+      "dimensions_mm": [300.0, 300.0, 30.0],
+      "legacy_mesh_volume_mm3": 2065602.4593236041,
+      "warning_code": "legacy_flywheel_default_center_bore"
+    },
+    {
+      "input": "飞轮 外径300 内径40 厚度30",
+      "outer_diameter": 300.0,
+      "center_bore": 40.0,
+      "thickness": 30.0,
+      "center_bore_source": "user",
+      "feature_count": 2,
+      "dimensions_mm": [300.0, 300.0, 30.0],
+      "legacy_mesh_volume_mm3": 2079578.6877591256
+    },
+    {
+      "input": "飞轮 外径300 内径280 厚度30 分度圆250 孔数6",
+      "outer_diameter": 300.0,
+      "center_bore": 280.0,
+      "thickness": 30.0,
+      "pcd": 250.0,
+      "hole_count": 6,
+      "bolt_hole_diameter": 10.0,
+      "center_bore_source": "user",
+      "bolt_hole_source": "derived",
+      "feature_count": 3,
+      "dimensions_mm": [300.0, 300.0, 30.0],
+      "legacy_mesh_volume_mm3": 275184.6065091449
+    }
+  ],
+  "not_ready": [
+    {
+      "input": "飞轮 外径300 内径40",
+      "issue": "legacy_flywheel_thickness"
+    },
+    {
+      "input": "飞轮 内径40 厚度30",
+      "issue": "legacy_flywheel_outer_diameter"
+    },
+    {
+      "input": "飞轮 外径300 内径300 厚度30",
+      "issue": "legacy_flywheel_bore_not_smaller_than_outer"
+    },
+    {
+      "input": "飞轮 外径300 内径40 厚度30 分度圆250",
+      "issue": "legacy_flywheel_hole_count_missing"
+    },
+    {
+      "input": "飞轮 外径300 内径40 厚度30 孔数6",
+      "issue": "legacy_flywheel_pcd_missing"
+    },
+    {
+      "input": "飞轮 外径300 内径40 厚度30 分度圆250 孔数6 螺栓孔径60",
+      "issue": "legacy_flywheel_bolt_pattern_interference"
+    },
+    {
+      "input": "飞轮",
+      "issue": "legacy_flywheel_outer_diameter"
+    }
+  ],
+  "known_legacy_discrepancies": [
+    {
+      "input": "飞轮 外径300 内径40 厚度30 分度圆250 孔数6 孔径12",
+      "legacy_actual": {
+        "bolt_hole_diameter": 10.0,
+        "reason": "旧 _flywheel 配方未声明 dh 参数，显式孔径被静默忽略。"
+      },
+      "migration_behavior": {
+        "status": "ready",
+        "bolt_hole_diameter": 12.0,
+        "warning": "legacy_flywheel_bolt_hole_diameter_repaired"
+      }
+    },
+    {
+      "input": "飞轮 外径300 内径40 厚度30 分度圆250",
+      "legacy_actual": {
+        "pcd_hole_array": "silently_omitted",
+        "reason": "旧 _flywheel 配方只有 PCD 与孔数同时存在时才建立孔阵列。"
+      },
+      "migration_behavior": {
+        "status": "needs_clarification",
+        "issue": "legacy_flywheel_hole_count_missing"
+      }
+    },
+    {
+      "input": "飞轮 外径300 内径40 厚度30 孔数6",
+      "legacy_actual": {
+        "pcd_hole_array": "silently_omitted",
+        "reason": "孔数存在但缺少 PCD 时旧 _flywheel 配方不建立孔阵列。"
+      },
+      "migration_behavior": {
+        "status": "needs_clarification",
+        "issue": "legacy_flywheel_pcd_missing"
+      }
+    },
+    {
+      "input": "飞轮 外径300 内径300 厚度30",
+      "legacy_actual": {
+        "part_library_match": false,
+        "generic_fallback": "cylinder",
+        "reason": "内外径相同导致零件库匹配失败，旧通用规则误建为实心圆柱。"
+      },
+      "migration_behavior": {
+        "status": "needs_clarification",
+        "issue": "legacy_flywheel_bore_not_smaller_than_outer"
+      }
+    },
+    {
+      "input": "发动机飞轮 外径420 中心孔60 厚度35 分度圆360 孔数6 齿圈齿数110 模数3.5",
+      "legacy_actual": {
+        "gear_ring": "silently_ignored",
+        "reason": "旧 _flywheel 配方不支持齿圈及齿形参数。"
+      },
+      "migration_behavior": {
+        "status": "unsupported",
+        "issue": "legacy_flywheel_modifier_not_migrated"
+      }
+    }
+  ],
+  "native_expected_cases": [
+    {
+      "input": "飞轮 外径300 内径40 厚度30 分度圆250 孔数6",
+      "dimensions_mm": [300.0, 300.0, 30.0],
+      "analytic_volume_mm3": 2068738.7623888787,
+      "legacy_mesh_volume_mm3": 2065602.4593236041,
+      "hole_diameters_mm": [40.0, 10.0, 10.0, 10.0, 10.0, 10.0, 10.0],
+      "hole_centers_xy_mm": [
+        [0.0, 0.0],
+        [125.0, 0.0],
+        [62.5, 108.25317547305482],
+        [-62.5, 108.25317547305482],
+        [-125.0, 0.0],
+        [-62.5, -108.25317547305482],
+        [62.5, -108.25317547305482]
+      ],
+      "pcd_no_op": false,
+      "max_relative_legacy_volume_delta": 0.005
+    },
+    {
+      "input": "飞轮 外径300 内径40 厚度30 分度圆250 孔数6 孔径12",
+      "dimensions_mm": [300.0, 300.0, 30.0],
+      "analytic_volume_mm3": 2062518.408934771,
+      "legacy_mesh_volume_mm3": 2065602.4593236041,
+      "hole_diameters_mm": [40.0, 12.0, 12.0, 12.0, 12.0, 12.0, 12.0],
+      "hole_centers_xy_mm": [
+        [0.0, 0.0],
+        [125.0, 0.0],
+        [62.5, 108.25317547305482],
+        [-62.5, 108.25317547305482],
+        [-125.0, 0.0],
+        [-62.5, -108.25317547305482],
+        [62.5, -108.25317547305482]
+      ],
+      "pcd_no_op": false,
+      "max_relative_legacy_volume_delta": 0.005
+    },
+    {
+      "input": "飞轮 外径300 内径280 厚度30 分度圆250 孔数6",
+      "dimensions_mm": [300.0, 300.0, 30.0],
+      "analytic_volume_mm3": 273318.560862312,
+      "legacy_mesh_volume_mm3": 275184.6065091449,
+      "hole_diameters_mm": [280.0],
+      "hole_centers_xy_mm": [[0.0, 0.0]],
+      "pcd_no_op": true,
+      "max_relative_legacy_volume_delta": 0.01
+    },
+    {
+      "input": "飞轮 外径300 内径40 厚度30",
+      "dimensions_mm": [300.0, 300.0, 30.0],
+      "analytic_volume_mm3": 2082875.9293300328,
+      "legacy_mesh_volume_mm3": 2079578.6877591256,
+      "hole_diameters_mm": [40.0],
+      "hole_centers_xy_mm": [[0.0, 0.0]],
+      "pcd_no_op": false,
+      "max_relative_legacy_volume_delta": 0.005
+    }
+  ]
+}
