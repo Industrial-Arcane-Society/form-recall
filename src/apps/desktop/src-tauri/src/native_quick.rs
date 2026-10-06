@@ -540,6 +540,79 @@ mod tests {
     }
 
     #[test]
+    #[ignore = "requires an explicitly staged OCCT runtime; run the documented F5.15 acceptance command"]
+    fn f5_15_multiple_slots_build_legacy_centered_pitch_geometry() {
+        use serde_json::Value;
+
+        let manifest = std::env::var_os("AIMODELER_TEST_OCCT_MANIFEST")
+            .map(std::path::PathBuf::from)
+            .expect("F5.15 requires AIMODELER_TEST_OCCT_MANIFEST");
+        assert!(
+            manifest.is_file(),
+            "F5.15 OCCT runtime manifest is missing: {}",
+            manifest.display()
+        );
+        let fixture: Value = serde_json::from_str(include_str!(
+            "../tests/fixtures/quick_multiple_slot_contract.json"
+        ))
+        .expect("F5.15 acceptance fixture should be valid JSON");
+        let case = &fixture["legacy_accepted"][0];
+        let prompt = case["input"].as_str().expect("fixed Quick prompt");
+        let parsed = native_quick_parser::parse(prompt);
+        assert_eq!(parsed["status"], "ready", "F5.15 parser result: {parsed}");
+        assert_eq!(parsed["plan"]["features"].as_array().map(Vec::len), Some(3));
+
+        let root = std::env::temp_dir().join(format!(
+            "quick-f5-15-{}-{}",
+            std::process::id(),
+            SystemTime::now()
+                .duration_since(UNIX_EPOCH)
+                .unwrap()
+                .as_nanos()
+        ));
+        fs::create_dir_all(&root).unwrap();
+        struct RemoveOnDrop(std::path::PathBuf);
+        impl Drop for RemoveOnDrop {
+            fn drop(&mut self) {
+                let _ = std::fs::remove_dir_all(&self.0);
+            }
+        }
+        let _cleanup = RemoveOnDrop(root.clone());
+
+        let result = build(prompt, 1, &manifest, &root)
+            .unwrap_or_else(|error| panic!("F5.15 Quick build failed: {error}"));
+        assert_eq!(result["state"], "complete");
+        assert_eq!(result["cadplan"]["features"].as_array().map(Vec::len), Some(3));
+        let report = &result["geometry_report"];
+        assert_eq!(report["state"], "passed");
+        assert_eq!(report["valid"], true);
+        assert_eq!(report["closed_solid_count"], 1);
+        assert_eq!(report["dimensions_mm"], case["dimensions_mm"]);
+        let expected_volume = case["volume_mm3"].as_f64().expect("expected volume");
+        let actual_volume = report["volume_mm3"].as_f64().expect("measured volume");
+        assert!((actual_volume - expected_volume).abs() <= 1e-4);
+        let feature_results = report["feature_results"].as_array().expect("feature results");
+        assert_eq!(feature_results.len(), 3);
+        assert!(feature_results.iter().all(|feature| feature["state"] == "built"));
+        for expected in case["slots"].as_array().unwrap() {
+            let index = expected["feature_index"].as_u64().unwrap() as usize;
+            let actual = &result["cadplan"]["features"][index];
+            for (key, value) in expected["params"].as_object().unwrap() {
+                assert_eq!(actual["parameters"][key], *value, "F5.15 slot {index} {key}");
+            }
+        }
+
+        let aimodel = Path::new(result["output_paths"]["aimodel"].as_str().expect("AIMODEL path"));
+        let stl = Path::new(result["output_paths"]["stl"].as_str().expect("STL path"));
+        assert!(aimodel.is_file(), "F5.15 AIMODEL export missing");
+        assert!(stl.is_file(), "F5.15 STL export missing");
+        let loaded = native_model_io::load_aimodel(aimodel)
+            .unwrap_or_else(|error| panic!("F5.15 AIMODEL round-trip failed: {error}"));
+        assert_eq!(loaded["cadplan"]["features"], result["cadplan"]["features"]);
+        eprintln!("F5.15 PASS: two legacy-positioned rectangular slots, valid B-Rep, volume={actual_volume} mm³, AIMODEL/STL export and reload");
+    }
+
+    #[test]
     fn f5_12_failed_stl_export_preserves_existing_target() {
         let root = std::env::temp_dir().join(format!(
             "quick-f5-12-export-{}-{}",

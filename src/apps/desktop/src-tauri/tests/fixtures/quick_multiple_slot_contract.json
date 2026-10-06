@@ -1,0 +1,48 @@
+{
+  "source": "src/legacy/ai_modeler/core/parsing/nlparser.py via nlparser.parse(text).doc.to_dict(), captured 2026-10-06",
+  "legacy_accepted": [
+    {
+      "input": "长方体 长100宽60高20，铣两个 20×8 深2 的槽",
+      "warning": "「铣两个20x8深2的槽」没写槽间距, 已按\"沿长度等距、间距 1.5×槽长、整体居中\"排布(间距 30 mm)，如需精确位置请在描述里给间距或坐标。",
+      "feature_kinds": ["box", "pocket", "pocket"],
+      "slots": [
+        {
+          "feature_index": 1,
+          "op": "cut",
+          "params": {
+            "length": 20.0,
+            "width": 8.0,
+            "depth": 2.0,
+            "corner": 0.0,
+            "x": -15.0,
+            "axis": "Z"
+          }
+        },
+        {
+          "feature_index": 2,
+          "op": "cut",
+          "params": {
+            "length": 20.0,
+            "width": 8.0,
+            "depth": 2.0,
+            "corner": 0.0,
+            "x": 15.0,
+            "axis": "Z"
+          }
+        }
+      ],
+      "dimensions_mm": [100.0, 60.0, 20.0],
+      "volume_mm3": 119360.0
+    }
+  ],
+  "rust_rejected": [
+    {
+      "input": "长方体 长100宽60高20，铣0个 20×8 深2 的槽",
+      "issue": "slot_array_count_invalid"
+    },
+    {
+      "input": "长方体 长100宽60高20，铣两个或三个20×8深2的槽",
+      "issue": "slot_array_count_conflict"
+    }
+  ]
+}

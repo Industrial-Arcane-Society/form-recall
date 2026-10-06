@@ -234,7 +234,8 @@ pub fn parse(text: &str) -> Value {
         }
     }
 
-    for (i, clause) in modifier_clauses.iter().enumerate() {
+    for clause in &modifier_clauses {
+        let feature_index = features.len().saturating_sub(1);
         let is_hole = has_hole(clause);
         let is_slot = has_slot(clause);
         if is_hole && is_slot {
@@ -292,18 +293,29 @@ pub fn parse(text: &str) -> Value {
                 features.extend(build_center_counterbore(
                     &cut_text,
                     text,
-                    i,
+                    feature_index,
                     &mut questions,
                     &mut warnings,
                 ));
                 continue;
             }
-            if let Some(feature) = build_hole(&cut_text, text, i, &mut questions, &mut warnings) {
+            if let Some(feature) = build_hole(
+                &cut_text,
+                text,
+                feature_index,
+                &mut questions,
+                &mut warnings,
+            ) {
                 features.push(feature);
             }
-        } else if let Some(feature) = build_slot(&cut_text, text, i, &mut questions, &mut warnings)
-        {
-            features.push(feature);
+        } else if let Some(slot_features) = build_slot(
+            &cut_text,
+            text,
+            feature_index,
+            &mut questions,
+            &mut warnings,
+        ) {
+            features.extend(slot_features);
         }
     }
 
@@ -1620,7 +1632,7 @@ fn build_slot(
     index: usize,
     questions: &mut Vec<Value>,
     warnings: &mut Vec<Value>,
-) -> Option<Value> {
+) -> Option<Vec<Value>> {
     if contains_any(clause, &["圆槽", "圆形槽", "circular slot"]) {
         questions.push(issue(
             "unsupported_slot_profile",
@@ -1631,9 +1643,14 @@ fn build_slot(
     let mut p = serde_json::Map::new();
     let mut s = serde_json::Map::new();
     let triple = find_dimension_triplet(clause);
+    let pair = find_dimension_pair(clause);
     let vals = [
-        scalar(clause, &["length", "长度", "长"]).or_else(|| triple.as_ref().map(|v| v[0])),
-        scalar(clause, &["width", "宽度", "宽"]).or_else(|| triple.as_ref().map(|v| v[1])),
+        scalar(clause, &["length", "长度", "长"])
+            .or_else(|| triple.as_ref().map(|v| v[0]))
+            .or_else(|| pair.as_ref().map(|v| v[0])),
+        scalar(clause, &["width", "宽度", "宽"])
+            .or_else(|| triple.as_ref().map(|v| v[1]))
+            .or_else(|| pair.as_ref().map(|v| v[1])),
         scalar(clause, &["depth", "槽深", "深度", "深"]).or_else(|| triple.as_ref().map(|v| v[2])),
     ];
     for (key, value) in ["length", "width", "depth"].into_iter().zip(vals) {
@@ -1648,9 +1665,38 @@ fn build_slot(
             )),
         }
     }
-    if let Some(axis) = axis_value(clause, questions) {
-        p.insert("axis".into(), json!(axis));
-        s.insert("axis".into(), user_source(raw));
+    let slot_count = match slot_array_count(clause) {
+        Ok(Some(count)) => count,
+        Ok(None) => 1,
+        Err("slot_array_count_conflict") => {
+            questions.push(issue(
+                "slot_array_count_conflict",
+                "矩形槽描述了互相冲突的槽数；请只保留一个数量。",
+            ));
+            return None;
+        }
+        Err(_) => {
+            questions.push(issue(
+                "slot_array_count_invalid",
+                "槽数必须是 1 到 4096 之间的整数。",
+            ));
+            return None;
+        }
+    };
+    p.insert("corner".into(), json!(0.0));
+    s.insert(
+        "corner".into(),
+        derived_source(raw, "旧 Python Quick 矩形槽默认直角轮廓（corner=0）。"),
+    );
+    match axis_value(clause, questions) {
+        Some(axis) => add_user(&mut p, &mut s, raw, "axis", json!(axis)),
+        None => {
+            p.insert("axis".into(), json!("Z"));
+            s.insert(
+                "axis".into(),
+                derived_source(raw, "未指定槽切入轴时沿用 Python Quick 默认 Z 轴。"),
+            );
+        }
     }
     if let Some((point, _)) = center_coordinates(clause).or_else(|| named_xyz(clause)) {
         p.insert("x".into(), json!(point[0]));
@@ -1664,13 +1710,111 @@ fn build_slot(
             "未写长度单位的数值按 CADPlan 默认单位 mm 解释。",
         ));
     }
-    Some(feature(
-        index + 2,
-        "pocket",
-        "cut",
-        Value::Object(p),
-        Value::Object(s),
-    ))
+    if slot_count == 1 {
+        return Some(vec![feature(
+            index + 2,
+            "pocket",
+            "cut",
+            Value::Object(p),
+            Value::Object(s),
+        )]);
+    }
+
+    if ["length", "width", "depth"]
+        .iter()
+        .any(|key| !p.get(*key).and_then(Value::as_f64).is_some_and(|value| value > 0.0))
+    {
+        // The dimension questions above already prevent a plan from being
+        // returned. Without length, the legacy spacing rule cannot be applied.
+        return Some(Vec::new());
+    }
+
+    let length = p["length"].as_f64().expect("validated slot length");
+    let pitch = length * 1.5;
+    let first_x = -pitch * (slot_count as f64 - 1.0) / 2.0;
+    let mut result = Vec::with_capacity(slot_count as usize);
+    for slot_index in 0..slot_count {
+        let mut parameters = p.clone();
+        let mut sources = s.clone();
+        parameters.insert("x".into(), json!(first_x + slot_index as f64 * pitch));
+        parameters.remove("y");
+        sources.remove("y");
+        sources.insert(
+            "x".into(),
+            derived_source(
+                raw,
+                &format!(
+                    "旧 Python Quick 将多个槽沿 X 居中排列，间距为槽长的 1.5 倍（{pitch} mm）。"
+                ),
+            ),
+        );
+        result.push(feature(
+            index + 2 + slot_index as usize,
+            "pocket",
+            "cut",
+            Value::Object(parameters),
+            Value::Object(sources),
+        ));
+    }
+    warnings.push(issue(
+        "slot_array_legacy_spacing",
+        &format!(
+            "多个矩形槽按旧 Quick 规则沿 X 轴居中排列，间距为槽长的 1.5 倍（{pitch} mm）；旧 parser 不使用显式间距或 XY 位置。"
+        ),
+    ));
+    Some(result)
+}
+
+fn slot_array_count(s: &str) -> Result<Option<u64>, &'static str> {
+    let count_units = ["个", "条", "处", "颗", "枚", "只", "组", "道"];
+    let mut found = Vec::<u64>::new();
+
+    for (start, ch) in s.char_indices() {
+        if !ch.is_ascii_digit() && ch != '-' && ch != '+' {
+            continue;
+        }
+        if s[..start]
+            .chars()
+            .next_back()
+            .is_some_and(|previous| previous.is_ascii_digit() || previous == '.')
+        {
+            continue;
+        }
+        let Some((number, end)) = parse_number(s, start) else {
+            continue;
+        };
+        if !number.unit.is_empty() {
+            continue;
+        }
+        let cursor = skip_ws(s, end);
+        if count_units.iter().any(|unit| s[cursor..].starts_with(unit)) {
+            if !number.value.is_finite() || number.value.fract() != 0.0 || number.value < 1.0 {
+                return Err("slot_array_count_invalid");
+            }
+            found.push(number.value as u64);
+        }
+    }
+
+    for (start, ch) in s.char_indices() {
+        let Some(count) = mandarin_count(ch) else {
+            continue;
+        };
+        let cursor = skip_ws(s, start + ch.len_utf8());
+        if count_units.iter().any(|unit| s[cursor..].starts_with(unit)) {
+            found.push(count);
+        }
+    }
+
+    if found.is_empty() {
+        return Ok(None);
+    }
+    if found.iter().any(|count| *count != found[0]) {
+        return Err("slot_array_count_conflict");
+    }
+    if found[0] > crate::native_plan_geometry::MAX_HOLE_PATTERN_COUNT {
+        return Err("slot_array_count_invalid");
+    }
+    Ok(Some(found[0]))
 }
 
 fn normalize(text: &str) -> String {
@@ -1862,6 +2006,34 @@ fn find_dimension_triplet(s: &str) -> Option<[f64; 3]> {
         }
         let _ = e3;
         return Some(vals);
+    }
+    None
+}
+fn find_dimension_pair(s: &str) -> Option<[f64; 2]> {
+    for (start, c) in s.char_indices() {
+        if !c.is_ascii_digit() && c != '-' && c != '+' {
+            continue;
+        }
+        let Some((a, e1)) = parse_number(s, start) else {
+            continue;
+        };
+        let mut j = skip_ws(s, e1);
+        if !s[j..].starts_with('x') {
+            continue;
+        }
+        j += 1;
+        let Some((b, _)) = parse_number(s, j) else {
+            continue;
+        };
+        let shared_unit = if b.unit.is_empty() {
+            &a.unit
+        } else {
+            &b.unit
+        };
+        return Some([
+            a.value * scale(if a.unit.is_empty() { shared_unit } else { &a.unit }),
+            b.value * scale(if b.unit.is_empty() { shared_unit } else { &b.unit }),
+        ]);
     }
     None
 }
@@ -2622,6 +2794,55 @@ mod tests {
                 assert_eq!(actual["sources"][key]["type"], "user", "{input}: {key}");
                 assert_eq!(actual["sources"][key]["evidence"], input, "{input}: {key}");
             }
+        }
+
+        for case in fixture["rust_rejected"].as_array().unwrap() {
+            let input = case["input"].as_str().unwrap();
+            let output = parse(input);
+            assert_eq!(output["status"], "needs_clarification", "{input}: {output}");
+            assert!(output["plan"].is_null(), "{input}: {output}");
+            assert!(
+                output["questions"].to_string().contains(case["issue"].as_str().unwrap()),
+                "{input}: {output}"
+            );
+        }
+    }
+
+    #[test]
+    fn multiple_rectangular_slots_match_legacy_default_pitch_and_reject_ambiguous_counts() {
+        let fixture: Value = serde_json::from_str(include_str!(
+            "../tests/fixtures/quick_multiple_slot_contract.json"
+        ))
+        .expect("multiple-slot oracle fixture is valid JSON");
+
+        for case in fixture["legacy_accepted"].as_array().unwrap() {
+            let input = case["input"].as_str().unwrap();
+            let output = parse(input);
+            assert_eq!(output["status"], "ready", "{input}: {output}");
+            let validation = crate::cad_plan_validation::validate_plan(&output["plan"]);
+            assert_eq!(validation["state"], "valid", "{input}: {validation}");
+
+            let features = output["plan"]["features"].as_array().unwrap();
+            assert_eq!(features.len(), 3, "{input}: {output}");
+            for (actual, expected) in features.iter().zip(case["feature_kinds"].as_array().unwrap()) {
+                assert_eq!(actual["kind"], *expected, "{input}");
+            }
+            for expected in case["slots"].as_array().unwrap() {
+                let index = expected["feature_index"].as_u64().unwrap() as usize;
+                let actual = &features[index];
+                assert_eq!(actual["operation"], expected["op"], "{input}: slot {index}");
+                for (key, value) in expected["params"].as_object().unwrap() {
+                    assert_eq!(actual["parameters"][key], *value, "{input}: slot {index} {key}");
+                }
+                assert_eq!(actual["sources"]["x"]["type"], "derived", "{input}: slot {index}");
+                assert_eq!(actual["sources"]["length"]["type"], "user", "{input}: slot {index}");
+                assert_eq!(actual["sources"]["width"]["type"], "user", "{input}: slot {index}");
+                assert_eq!(actual["sources"]["depth"]["type"], "user", "{input}: slot {index}");
+            }
+            assert!(
+                output["warnings"].to_string().contains("slot_array_legacy_spacing"),
+                "{input}: missing fallback-spacing warning: {output}"
+            );
         }
 
         for case in fixture["rust_rejected"].as_array().unwrap() {
