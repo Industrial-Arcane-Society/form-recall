@@ -125,6 +125,7 @@ async function readUiState(baseUrl, sessionId) {
       acceptance: document.querySelector('.acceptance-summary')?.innerText || '',
       viewportStatus: document.querySelector('.canvas-status .status-message')?.innerText || '',
       canvasReady: Boolean(canvas && canvas.width > 0 && canvas.height > 0 && webgl),
+      logs: [...document.querySelectorAll('.event-log p')].map(node => node.innerText || ''),
     };
   })()`)
 }
@@ -137,11 +138,11 @@ async function waitFor(baseUrl, sessionId, predicate, label, timeoutMs = 30000) 
     if (predicate(state)) return state
     await sleep(150)
   }
-  throw new Error(`Timed out waiting for ${label}; last state=${JSON.stringify({ turn: state?.turn, outcome: state?.outcome, modelName: state?.modelName, features: state?.features, viewportStatus: state?.viewportStatus, messages: state?.messages?.slice(-3) })}`)
+  throw new Error(`Timed out waiting for ${label}; last state=${JSON.stringify({ turn: state?.turn, outcome: state?.outcome, modelName: state?.modelName, features: state?.features, viewportStatus: state?.viewportStatus, canvasReady: state?.canvasReady, logs: state?.logs?.slice(0, 8), messages: state?.messages?.slice(-3) })}`)
 }
 
-function startDriver(driverPath, edgeDriverPath, port, nativePort) {
-  const env = { ...process.env }
+function startDriver(driverPath, edgeDriverPath, port, nativePort, overrides = {}) {
+  const env = { ...process.env, ...overrides }
   if (edgeDriverPath) {
     env.PATH = `${path.dirname(edgeDriverPath)}${path.delimiter}${env.PATH || ''}`
   }
@@ -183,6 +184,47 @@ async function stopDriver(driver, sessionId, baseUrl) {
     sleep(5000),
   ])
   if (driver.exitCode === null) driver.kill('SIGKILL')
+}
+
+async function runRestoredMeshStartup(tauriDriver, edgeDriver) {
+  const port = await reservePort()
+  let nativePort = await reservePort()
+  while (nativePort === port) nativePort = await reservePort()
+  const baseUrl = `http://127.0.0.1:${port}`
+  const driver = startDriver(tauriDriver, edgeDriver, port, nativePort, {
+    AIMODELER_WEBVIEW_SMOKE_RESTORE_MESH: '1',
+  })
+  let sessionId = ''
+  try {
+    await waitForDriver(driver, baseUrl)
+    const session = await requestJson(baseUrl, 'POST', '/session', {
+      capabilities: {
+        alwaysMatch: {
+          browserName: 'wry',
+          'tauri:options': { application: appPath },
+        },
+      },
+    }, 120000)
+    sessionId = session?.sessionId || ''
+    assert.ok(sessionId, 'tauri-driver did not return a startup-restore WebDriver session')
+    await execute(baseUrl, sessionId, `const button = [...document.querySelectorAll('button')].find(node => (node.innerText || '').trim() === '日志'); button?.click(); return Boolean(button);`)
+    const state = await waitFor(
+      baseUrl,
+      sessionId,
+      current => current.ready
+        && current.modelName
+        && current.features.length > 0
+        && (current.viewportStatus === '三维预览加载失败'
+          || (current.viewportStatus === '三维预览已更新' && current.canvasReady)),
+      'a cold-start restored active-model GLB in the production viewport',
+      120000,
+    )
+    assert.equal(state.viewportStatus, '三维预览已更新', `The restored active-model mesh did not load: ${JSON.stringify(state.logs)}`)
+    assert.ok(!state.modelName.includes('F7 WebView fixture'), 'startup should hydrate the seeded native active model')
+    console.log('PASS: production OCCT active-model snapshot restored at cold start -> read_asset -> GLTFLoader -> CAD viewport/WebGL canvas')
+  } finally {
+    await stopDriver(driver, sessionId, baseUrl)
+  }
 }
 
 async function main() {
@@ -293,6 +335,7 @@ async function main() {
   } finally {
     await stopDriver(driver, sessionId, baseUrl)
   }
+  await runRestoredMeshStartup(tauriDriver, edgeDriver)
   console.log('PASS: real Windows WebView2 + Tauri Channel + production Vue handler; no DSH/provider/CATIA used.')
 }
 

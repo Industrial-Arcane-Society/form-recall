@@ -311,7 +311,10 @@ async function initialize(initialResources?: any, initialReadiness?: any) {
     }
     await restoreAgentHistory()
     await refreshFindingAdjudications()
-    setStatus('原生 CAD 工作区已连接', 'success')
+    // When startup restored a persisted mesh, let CadViewport report the
+    // read_asset/GLTF result. A later workspace-ready status can otherwise
+    // overwrite a fast preview failure or successful load during hydration.
+    if (!documentState.value.mesh_path) setStatus('原生 CAD 工作区已连接', 'success')
     addLog(`桌面已就绪 · DSH ${readiness.dsh?.state || 'unknown'} · OCCT ${readiness.occt?.state || 'unknown'} · CATIA ${readiness.catia?.state || 'unknown'}`)
   } catch (error) {
     backendInfo.value = '桌面核心未就绪'

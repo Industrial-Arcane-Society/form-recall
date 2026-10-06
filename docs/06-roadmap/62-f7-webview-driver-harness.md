@@ -16,13 +16,14 @@
 npm run test:agent-webview
 ```
 
-命令先构建生产 Vue bundle，再构建 `ai-modeler-webview-smoke`，最后启动 `tauri-driver` 建立 WebDriver session。当前五个 fixture 场景依次验证：
+命令先构建生产 Vue bundle，再构建 `ai-modeler-webview-smoke`，最后启动隐藏 `tauri-driver` WebDriver sessions。当前覆盖六个场景：
 
 1. 纯问答完成且没有模型；
 2. CAD 工具失败后保持候选模型；
 3. finish revision 与 geometry fingerprint 都匹配时显示已验收；
 4. stale finish 保持候选，不显示已验收。
 5. 通过生产 Quick parser 与 Rust/OCCT builder 生成确定性长方体、提交隔离 active model、发送其真实 `model.changed` 文档，再由生产 `read_asset` IPC 和 `CadViewport` 的 `GLTFLoader` 装入 WebGL 场景。该场景需要本机 OCCT 7.9.3 runtime manifest；没有时必须报环境限制，不能用合成 GLB 代替。
+6. 关闭首个 smoke session 后，在第二个隐藏 WebView 进程启动前通过相同生产 Quick→OCCT 路径向隔离 smoke app-data 提交活动模型；冷启动调用与正式 app 共用的 `active_model_snapshot_value`，Vue 恢复该 document 后必须由 viewport 发出 loaded 并有有效 WebGL canvas。该场景同样需要 OCCT manifest，不使用手工/合成 GLB。
 
 应用二进制位置是 `src/apps/desktop/src-tauri/target/debug/ai-modeler-webview-smoke.exe`。构建与启动由同一个 npm 命令完成；若只需编译、不运行 WebView，可执行：
 
@@ -85,3 +86,10 @@ Tauri 官方列出 Windows `tauri-driver` → Microsoft Edge Driver 路线；Mic
 `production-quick-preview` 调用与生产 `quick_build` 共用的 `build_quick_active_model`（经 `headless_quick_smoke`），使用固定明确尺寸的长方体提示词，通过 Quick parser、CADPlan 校验、Rust/C ABI OCCT 建模、生产 GLB/AIMODEL/STL/OBJ 写出及活动模型 generation commit。随后 fixture transport 只发送该生产返回文档为 `model.changed`。`read_asset` command 委托生产 `lib.rs::read_asset`；Vue 生产 `CadViewport` 继续执行 `GLTFLoader.parse → replaceMesh → fitView`，runner 检查生产模型非 fixture、特征存在、状态为“三维预览已更新”且 canvas/WebGL context 有效。生产 runtime manifest 缺失时明确 fail closed，不回退手工 mesh。
 
 本次目标 worktree 使用本地 npm cache 执行 `npm.cmd ci --offline --no-audit --no-fund`；`npm.cmd run build` 通过（只有既有 CadViewport >500kB warning）。`agent-webview-smoke` feature 定向 Rust 测试 7/7 通过，包含实际 OCCT Quick→active model→GLB 单测；smoke binary 离线 Cargo build 成功。使用 WebView2 `154.0.4258.53` 的匹配 EdgeDriver、隔离 `tauri-driver` 与 OCCT 7.9.3 manifest 运行 `npm.cmd run test:agent-webview`，五个场景全部 PASS。生产模型场景须在 revision fixture 前运行，避免合成更高 revision 触发 Vue stale-revision 防护。精确命令和边界见[生产几何隐藏 WebView 验收](./105-f7-g2-production-mesh-webview.md)。
+
+### 2026-10-06：生产活动模型冷启动恢复回归
+
+- 将正式 app 的 `active_model_snapshot` 拆出共用 `active_model_snapshot_value`；smoke 的恢复模式 setup 先通过 `headless_quick_smoke` 运行生产 Quick parser→OCCT→GLB→active-model commit，再由新的隐藏 WebView 进程的 Vue startup hydration 调用同一 snapshot helper。它不是 `model.changed` 运行时替代，也不使用模拟 snapshot IPC。
+- 使用本机临时 `tauri-driver 2.1.0` 与匹配 WebView2 `154.0.4258.53` 的 EdgeDriver；OCCT manifest 从既有包审计目录只读复用。运行 `npm.cmd run test:agent-webview`：六项全通过，包含五个已有场景和 active-model cold-start→production `read_asset`→`GLTFLoader`→WebGL viewport 新场景。窗口隐藏、跳过任务栏；未调用 DSH/provider/CATIA，也未安装或启动正式可见 app。
+- 初次实跑发现恢复 mesh 的 loaded 状态会被 App 初始化结尾的 workspace-ready 状态覆盖；有持久 `mesh_path` 时改由 viewport 保留真实成功/失败结果后，冷启动场景通过。这项状态显示修复不改资产白名单。
+- 恢复 fixture 的 mesh 存在 smoke app-local-data，当前 production `read_asset` 明确允许该根下 `.glb`，所以受支持路径通过。历史附件时间为 `2026-10-05 10:55:05 +08:00`，早于 `e2496f6`（11:28）路径修复；本测试没有读取那份 5-feature 用户 GLB，不能推断它或用户现装 0.1.2 的可见窗口已通过。详见 [F7.G2 生产几何与恢复 WebView 验收](./105-f7-g2-production-mesh-webview.md) 与 [F6.10 报告](./F6.10-installed-glb-preview.md)。

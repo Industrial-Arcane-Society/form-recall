@@ -252,8 +252,14 @@ fn native_settings_load() -> Value {
 }
 
 #[tauri::command]
-fn active_model_snapshot() -> Value {
-    Value::Null
+fn active_model_snapshot(app: AppHandle) -> Result<Value, String> {
+    // The normal transport fixtures intentionally start without a persisted
+    // model. The dedicated cold-start regression opts in to the exact
+    // production snapshot loader after setup seeds a real native record.
+    if std::env::var("AIMODELER_WEBVIEW_SMOKE_RESTORE_MESH").as_deref() != Ok("1") {
+        return Ok(Value::Null);
+    }
+    crate::active_model_snapshot_value(&app)
 }
 
 #[tauri::command(rename_all = "camelCase")]
@@ -369,6 +375,24 @@ pub fn run() {
         .setup(|app| {
             if let Some(window) = app.get_webview_window("main") {
                 window.hide()?;
+            }
+            if std::env::var("AIMODELER_WEBVIEW_SMOKE_RESTORE_MESH").as_deref() == Ok("1") {
+                let resources = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../../../legacy");
+                let data_dir = app
+                    .path()
+                    .app_local_data_dir()
+                    .map_err(std::io::Error::other)?;
+                let document = crate::headless_quick_smoke(&resources, &data_dir)
+                    .map_err(std::io::Error::other)?;
+                if document["geometry_report"]["state"] != "passed"
+                    || document["geometry_report"]["execution_engine"] != "rust_c_abi_occt"
+                    || document["mesh_path"].as_str().is_none()
+                {
+                    return Err(std::io::Error::other(
+                        "启动恢复 fixture 没有生成完整的生产 OCCT 几何与 GLB。",
+                    )
+                    .into());
+                }
             }
             Ok(())
         })

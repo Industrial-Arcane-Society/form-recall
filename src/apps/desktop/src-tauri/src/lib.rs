@@ -309,7 +309,14 @@ pub fn headless_quick_smoke(resources: &Path, data_dir: &Path) -> Result<Value, 
 
 #[tauri::command]
 fn active_model_snapshot(app: AppHandle) -> Result<Value, String> {
-    let data_dir = app_data_dir(&app)?;
+    active_model_snapshot_value(&app)
+}
+
+/// Load the committed production active-model record and recompute its
+/// non-persistent acceptance projection. Shared with the isolated WebView
+/// smoke so startup restoration exercises the same snapshot path.
+pub fn active_model_snapshot_value(app: &AppHandle) -> Result<Value, String> {
+    let data_dir = app_data_dir(app)?;
     let root = native_active_model::root_from_data_dir(&data_dir);
     let Some(mut active) = native_active_model::load(&root)? else {
         return Ok(Value::Null);
