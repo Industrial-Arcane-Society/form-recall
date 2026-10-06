@@ -1,0 +1,21 @@
+{
+  "oracle": "src/legacy/ai_modeler/core/parsing/nlparser.py::make_gear + core/geometry/kernel.py::profile_gear + core/geometry/occ_kernel.py::gear and hole builders",
+  "occt_version": "7.9.3",
+  "legacy_accepted": [
+    {
+      "input": "齿轮",
+      "dimensions_mm": [43.96873679618592, 43.96873679618592, 10.0],
+      "volume_mm3": 12088.028942485375,
+      "gear": {"teeth": 20, "module": 2.0, "height": 10.0, "base": true, "axis": "Z"},
+      "feature_count": 1
+    },
+    {
+      "input": "直齿轮 齿数30 齿顶圆直径64 齿宽20 中心孔直径12",
+      "dimensions_mm": [63.979788114131196, 63.79741599742783, 20.0],
+      "volume_mm3": 52686.05280644304,
+      "gear": {"teeth": 30, "module": 2.0, "height": 20.0, "base": true, "axis": "Z"},
+      "bore_diameter": 12.0,
+      "feature_count": 2
+    }
+  ]
+}

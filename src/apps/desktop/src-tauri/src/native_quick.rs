@@ -1078,6 +1078,109 @@ mod tests {
     }
 
     #[test]
+    #[ignore = "requires the staged OCCT runtime; run the documented F5.21 acceptance command"]
+    fn f5_21_legacy_gears_build_with_optional_center_bore_and_export() {
+        use serde_json::Value;
+
+        let manifest = std::env::var_os("AIMODELER_TEST_OCCT_MANIFEST")
+            .map(std::path::PathBuf::from)
+            .expect("F5.21 requires AIMODELER_TEST_OCCT_MANIFEST");
+        assert!(
+            manifest.is_file(),
+            "F5.21 OCCT runtime manifest is missing: {}",
+            manifest.display()
+        );
+        let fixture: Value = serde_json::from_str(include_str!(
+            "../tests/fixtures/quick_legacy_gears_contract.json"
+        ))
+        .expect("F5.21 acceptance fixture should be valid JSON");
+        let root = std::env::temp_dir().join(format!(
+            "quick-f5-21-{}-{}",
+            std::process::id(),
+            SystemTime::now()
+                .duration_since(UNIX_EPOCH)
+                .unwrap()
+                .as_nanos()
+        ));
+        fs::create_dir_all(&root).unwrap();
+        struct RemoveOnDrop(std::path::PathBuf);
+        impl Drop for RemoveOnDrop {
+            fn drop(&mut self) {
+                let _ = std::fs::remove_dir_all(&self.0);
+            }
+        }
+        let _cleanup = RemoveOnDrop(root.clone());
+
+        for (index, case) in fixture["legacy_accepted"]
+            .as_array()
+            .expect("legacy gears")
+            .iter()
+            .enumerate()
+        {
+            let prompt = case["input"].as_str().expect("fixed Quick prompt");
+            let result = build(prompt, index as i64 + 1, &manifest, &root)
+                .unwrap_or_else(|error| panic!("F5.21 Quick build failed for {prompt}: {error}"));
+            assert_eq!(result["state"], "complete", "{prompt}");
+            let report = &result["geometry_report"];
+            assert_eq!(report["state"], "passed", "{prompt}");
+            assert_eq!(report["valid"], true, "{prompt}");
+            assert_eq!(report["closed_solid_count"], 1, "{prompt}");
+            let actual_dimensions = report["dimensions_mm"]
+                .as_array()
+                .expect("measured bounding box");
+            for (actual, expected) in actual_dimensions
+                .iter()
+                .zip(case["dimensions_mm"].as_array().unwrap())
+            {
+                let actual = actual.as_f64().expect("numeric measured dimension");
+                let expected = expected.as_f64().expect("numeric expected dimension");
+                assert!(
+                    (actual - expected).abs() <= 1e-8,
+                    "{prompt}: dimensions {actual_dimensions:?}"
+                );
+            }
+            let expected_volume = case["volume_mm3"].as_f64().expect("expected volume");
+            let actual_volume = report["volume_mm3"].as_f64().expect("measured volume");
+            assert!(
+                (actual_volume - expected_volume).abs() <= 1e-4,
+                "{prompt}: expected={expected_volume}, actual={actual_volume}"
+            );
+
+            let features = result["cadplan"]["features"]
+                .as_array()
+                .expect("CADPlan features");
+            assert_eq!(features.len(), case["feature_count"].as_u64().unwrap() as usize);
+            assert_eq!(features[0]["kind"], "gear", "{prompt}");
+            for key in ["teeth", "module", "height", "base", "axis"] {
+                assert_eq!(features[0]["parameters"][key], case["gear"][key], "{prompt}: {key}");
+            }
+            if let Some(bore_diameter) = case["bore_diameter"].as_f64() {
+                assert_eq!(features[1]["kind"], "hole", "{prompt}");
+                assert_eq!(features[1]["operation"], "cut", "{prompt}");
+                assert_eq!(features[1]["parameters"]["diameter"], bore_diameter, "{prompt}");
+                assert_eq!(features[1]["parameters"]["pos"], "center", "{prompt}");
+                assert_eq!(features[1]["parameters"]["through"], true, "{prompt}");
+            }
+
+            let aimodel = Path::new(
+                result["output_paths"]["aimodel"]
+                    .as_str()
+                    .expect("AIMODEL path"),
+            );
+            let stl = Path::new(result["output_paths"]["stl"].as_str().expect("STL path"));
+            assert!(aimodel.is_file(), "F5.21 AIMODEL export missing: {prompt}");
+            assert!(stl.is_file(), "F5.21 STL export missing: {prompt}");
+            let loaded = native_model_io::load_aimodel(aimodel)
+                .unwrap_or_else(|error| panic!("F5.21 AIMODEL round-trip failed for {prompt}: {error}"));
+            assert_eq!(loaded["cadplan"]["features"], result["cadplan"]["features"], "{prompt}");
+            eprintln!(
+                "F5.21 PASS: {prompt} -> {:?} mm, volume={actual_volume} mm³",
+                case["dimensions_mm"]
+            );
+        }
+    }
+
+    #[test]
     fn f5_12_failed_stl_export_preserves_existing_target() {
         let root = std::env::temp_dir().join(format!(
             "quick-f5-12-export-{}-{}",

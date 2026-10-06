@@ -45,6 +45,9 @@ pub fn parse(text: &str) -> Value {
     if let Some(parsed) = parse_legacy_template(text, &normalized) {
         return parsed;
     }
+    if let Some(parsed) = parse_legacy_gear(text, &normalized) {
+        return parsed;
+    }
 
     let mut clauses = split_clauses(&normalized);
     let mut clause_index = 1;
@@ -507,7 +510,7 @@ fn result(
     unsupported: Vec<Value>,
 ) -> Value {
     json!({"status":status,"source_text":text,"plan":plan,"warnings":warnings,"questions":questions,"unsupported":unsupported,
-        "compatibility":{"scope":"common explicit primitives/cuts, migrated standalone primitive defaults and legacy extrusion/revolve constructors, rectangular slots, and executable flange/stepped-shaft/sleeve templates","legacy_typical_defaults":"restored only for migrated Quick constructors/templates and rectangular slots; defaults and raw-dimension mappings are reported as warnings"}})
+        "compatibility":{"scope":"common explicit primitives/cuts, migrated standalone primitive defaults and legacy extrusion/revolve constructors, rectangular slots, straight-gear construction, and executable flange/stepped-shaft/sleeve templates","legacy_typical_defaults":"restored only for migrated Quick constructors/templates, straight gears, and rectangular slots; defaults and raw-dimension mappings are reported as warnings"}})
 }
 
 fn parse_legacy_template(raw: &str, normalized: &str) -> Option<Value> {
@@ -521,6 +524,301 @@ fn parse_legacy_template(raw: &str, normalized: &str) -> Option<Value> {
         return Some(parse_tube(raw, normalized));
     }
     None
+}
+
+/// Retain the old Quick `make_gear` constructor. Its tooth profile is a
+/// straight trapezoidal approximation, not an involute gear.
+fn parse_legacy_gear(raw: &str, normalized: &str) -> Option<Value> {
+    if !contains_any(normalized, &["齿轮", "齿坯", "gear"]) {
+        return None;
+    }
+    // Mixed base requests stay in the generic fail-closed parser.
+    if contains_any(
+        normalized,
+        &[
+            "长方体", "长方块", "矩形块", "cuboid", "box", "block", "圆柱", "圆棒", "圆轴",
+            "cylinder", "圆锥", "cone", "圆台", "锥台", "frustum", "球体", "圆球", "sphere",
+            "ball", "拉伸", "挤出", "extrude", "pad", "回转", "旋转体", "revolve",
+        ],
+    ) {
+        return None;
+    }
+
+    if contains_any(
+        normalized,
+        &[
+            "锥齿轮", "伞齿轮", "蜗轮", "蜗杆", "斜齿轮", "螺旋齿轮", "内齿轮", "bevel gear",
+            "worm gear", "helical gear", "internal gear",
+        ],
+    ) {
+        return Some(result(
+            "unsupported",
+            raw,
+            None,
+            vec![],
+            vec![],
+            vec![issue(
+                "special_gear_type_unsupported",
+                "当前 Quick 只迁入旧版直齿轮构造器；锥齿轮、斜齿轮、内齿轮和蜗轮/蜗杆需要各自的几何定义。",
+            )],
+        ));
+    }
+    if contains_any(
+        normalized,
+        &[
+            "圆角", "倒角", "fillet", "chamfer", "键槽", "凹槽", "切槽", "螺纹", "thread",
+            "pcd", "分度圆孔", "螺栓孔", "圆周阵列", "环形阵列", "linear array", "线性阵列",
+        ],
+    ) {
+        return Some(result(
+            "unsupported",
+            raw,
+            None,
+            vec![],
+            vec![],
+            vec![issue(
+                "gear_modifier_unsupported",
+                "本次只迁入旧 Quick 齿轮主体与中心通孔；齿轮上的其他修饰/阵列尚未迁入。",
+            )],
+        ));
+    }
+
+    let mut warnings = vec![issue(
+        "legacy_gear_profile_approximation",
+        "沿用旧 Quick 的梯形离散齿廓；它不是渐开线齿形，当前本地几何为近似。",
+    )];
+
+    let mut questions = Vec::new();
+    let mut features = Vec::new();
+    let teeth_value = scalar(normalized, &["齿数", "teeth", "tooth count"])
+        .or_else(|| scalar(normalized, &["count"]))
+        .or_else(|| {
+            regex::Regex::new(r"([0-9]+)\s*(?:个\s*)?齿")
+                .ok()?
+                .captures(normalized)?
+                .get(1)?
+                .as_str()
+                .parse::<f64>()
+                .ok()
+        });
+    let teeth = match teeth_value {
+        Some(value)
+            if value.is_finite() && value.fract() == 0.0 && (6.0..=10_000.0).contains(&value) =>
+        {
+            value as u64
+        }
+        Some(value) => {
+            questions.push(issue(
+                "gear_teeth_invalid",
+                format!("齿数必须是 6 到 10000 之间的整数；收到 {value}。"),
+            ));
+            20
+        }
+        None => {
+            warnings.push(issue(
+                "legacy_gear_default_teeth",
+                "未指定齿数，沿用旧 Python Quick 默认值 20 齿。",
+            ));
+            20
+        }
+    };
+
+    let mut outer_diameter = scalar(
+        normalized,
+        &[
+            "齿顶圆直径", "齿顶圆", "轮缘外径", "外径", "外圆直径", "头径", "outer diameter",
+            "gear diameter",
+        ],
+    );
+    let bore_marked = contains_any(
+        normalized,
+        &["中心孔", "中心通孔", "内孔", "轴孔", "内径", "孔径", "bore", "shaft hole"],
+    );
+    if outer_diameter.is_none() && !bore_marked {
+        outer_diameter = scalar(normalized, &["直径", "diameter"]);
+    }
+    if outer_diameter.is_some_and(|value| !value.is_finite() || value <= 0.0) {
+        questions.push(issue(
+            "gear_outer_diameter_invalid",
+            "齿轮齿顶圆/外径必须是有限正数。",
+        ));
+    }
+
+    let module_value = scalar(normalized, &["模数", "module"]);
+    let module = match module_value {
+        Some(value) if value.is_finite() && value > 0.0 => value,
+        Some(value) => {
+            questions.push(issue(
+                "gear_module_invalid",
+                format!("齿轮模数必须是有限正数；收到 {value}。"),
+            ));
+            2.0
+        }
+        None => match outer_diameter {
+            Some(diameter)
+                if diameter.is_finite()
+                    && diameter > 0.0
+                    && teeth_value.map_or(true, |v| {
+                        v.is_finite() && v.fract() == 0.0 && (6.0..=10_000.0).contains(&v)
+                    }) =>
+            {
+                let derived = diameter / (teeth as f64 + 2.0);
+                warnings.push(issue(
+                    "legacy_gear_module_derived",
+                    format!("未指定模数，沿用旧 Python Quick 公式：模数 = 齿顶圆直径 / (齿数 + 2) = {derived} mm。"),
+                ));
+                derived
+            }
+            Some(_) => 2.0,
+            None => {
+                warnings.push(issue(
+                    "legacy_gear_default_module",
+                    "未指定模数或齿顶圆直径，沿用旧 Python Quick 默认值 2 mm。",
+                ));
+                2.0
+            }
+        },
+    };
+
+    let height_value = scalar(
+        normalized,
+        &["height", "高度", "厚度", "厚", "高", "齿宽", "face width"],
+    );
+    let height = match height_value {
+        Some(value) if value.is_finite() && value > 0.0 => value,
+        Some(value) => {
+            questions.push(issue(
+                "gear_height_invalid",
+                format!("齿轮厚度必须是有限正数；收到 {value}。"),
+            ));
+            10.0
+        }
+        None => {
+            warnings.push(issue(
+                "legacy_gear_default_height",
+                "未指定厚度，沿用旧 Python Quick 默认值 10 mm。",
+            ));
+            10.0
+        }
+    };
+    if height_value.is_some() && !has_unit(normalized) {
+        warnings.push(issue(
+            "unit_interpreted_as_mm",
+            "未写长度单位的齿轮厚度按 CADPlan 默认单位 mm 解释。",
+        ));
+    }
+
+    let mut axis_questions = Vec::new();
+    let explicit_axis = axis_value(normalized, &mut axis_questions);
+    let axis = explicit_axis.unwrap_or("Z");
+    questions.extend(axis_questions);
+    if axis != "Z" {
+        return Some(result(
+            "unsupported",
+            raw,
+            None,
+            warnings,
+            questions,
+            vec![issue(
+                "gear_axis_unsupported",
+                "当前 Quick 齿轮 CADPlan 仅支持全局 Z 轴；请移除 X/Y 轴向要求。",
+            )],
+        ));
+    }
+
+    let mut parameters = serde_json::Map::new();
+    let mut sources = serde_json::Map::new();
+    parameters.insert("teeth".into(), json!(teeth));
+    sources.insert(
+        "teeth".into(),
+        teeth_value.map_or_else(
+            || derived_source(raw, "沿用旧 Python Quick 默认值 20 齿。"),
+            |_| user_source(raw),
+        ),
+    );
+    parameters.insert("module".into(), json!(module));
+    sources.insert(
+        "module".into(),
+        if module_value.is_some() {
+            user_source(raw)
+        } else if outer_diameter.is_some()
+            && !questions
+                .iter()
+                .any(|question| question["code"] == "gear_outer_diameter_invalid")
+        {
+            derived_source(raw, "未给模数时沿用旧 Python Quick：module = outer_diameter / (teeth + 2)。")
+        } else {
+            derived_source(raw, "沿用旧 Python Quick 默认值 2 mm。")
+        },
+    );
+    parameters.insert("height".into(), json!(height));
+    sources.insert(
+        "height".into(),
+        height_value.map_or_else(
+            || derived_source(raw, "沿用旧 Python Quick 默认值 10 mm。"),
+            |_| user_source(raw),
+        ),
+    );
+    parameters.insert("center".into(), json!([0.0, 0.0, 0.0]));
+    sources.insert("center".into(), derived_source(raw, "沿用旧 Python Quick 齿轮全局原点中心。"));
+    parameters.insert("axis".into(), json!("Z"));
+    sources.insert(
+        "axis".into(),
+        explicit_axis.map_or_else(
+            || derived_source(raw, "未指定轴向时沿用旧 Python Quick 默认 Z 轴。"),
+            |_| user_source(raw),
+        ),
+    );
+    parameters.insert("base".into(), json!(true));
+    sources.insert(
+        "base".into(),
+        derived_source(raw, "沿用旧 Python Quick base=true，齿轮从中心平面沿轴向正向拉伸。"),
+    );
+    features.push(feature(1, "gear", "add", Value::Object(parameters), Value::Object(sources)));
+
+    let bore_value = if bore_marked {
+        scalar(
+            normalized,
+            &[
+                "中心孔直径", "中心通孔直径", "内孔直径", "轴孔直径", "通孔直径", "孔径", "内径",
+                "bore diameter", "shaft hole diameter", "bore",
+            ],
+        )
+    } else {
+        None
+    };
+    if bore_marked {
+        match bore_value {
+            Some(value) if value.is_finite() && value > 0.0 => {
+                let clause = format!("中心孔 通孔 直径 {value}");
+                if let Some(mut hole) = build_hole(&clause, raw, features.len(), &mut questions, &mut warnings) {
+                    if let Some(sources) = hole["sources"].as_object_mut() {
+                        sources.insert(
+                            "through".into(),
+                            derived_source(raw, "旧 Python Quick 将齿轮中心孔尺寸构造成贯穿孔。"),
+                        );
+                    }
+                    features.push(hole);
+                }
+            }
+            Some(_) => questions.push(issue("gear_bore_diameter_invalid", "齿轮中心孔直径必须是有限正数。")),
+            None => questions.push(issue("gear_bore_diameter_missing", "已提到齿轮中心孔，但没有识别到孔径；请补充中心孔直径。")),
+        }
+    }
+    if !questions.is_empty() {
+        return Some(result("needs_clarification", raw, None, warnings, questions, vec![]));
+    }
+
+    let plan = json!({
+        "schema_version":"1.0",
+        "name":"Quick Gear",
+        "source_prompt":raw,
+        "units":{"length":"mm","angle":"deg"},
+        "coordinate_system":{"type":"global_cartesian","handedness":"right","axes":["X","Y","Z"],"origin":[0,0,0]},
+        "features":features,
+        "pending_questions":[]
+    });
+    Some(result("ready", raw, Some(plan), warnings, vec![], vec![]))
 }
 
 fn parse_stepped_shaft(raw: &str, text: &str) -> Value {
@@ -3222,6 +3520,83 @@ mod tests {
         assert_eq!(out["status"], "ready", "{out}");
         out["plan"].clone()
     }
+    #[test]
+    fn legacy_straight_gear_defaults_and_center_bore_match_quick_constructor() {
+        let defaulted = parse("齿轮");
+        assert_eq!(defaulted["status"], "ready", "{defaulted}");
+        let feature = &defaulted["plan"]["features"][0];
+        assert_eq!(feature["kind"], "gear");
+        assert_eq!(feature["parameters"]["teeth"], 20);
+        assert_eq!(feature["parameters"]["module"], 2.0);
+        assert_eq!(feature["parameters"]["height"], 10.0);
+        assert_eq!(feature["parameters"]["center"], json!([0.0, 0.0, 0.0]));
+        assert_eq!(feature["parameters"]["axis"], "Z");
+        assert_eq!(feature["parameters"]["base"], true);
+        assert_eq!(feature["sources"]["teeth"]["type"], "derived");
+        assert_eq!(feature["sources"]["module"]["type"], "derived");
+        assert_eq!(feature["sources"]["height"]["type"], "derived");
+        assert!(defaulted["warnings"].to_string().contains("梯形离散齿廓"));
+        assert_eq!(
+            crate::cad_plan_validation::validate_plan(&defaulted["plan"])["state"],
+            "valid"
+        );
+        assert_eq!(
+            crate::native_plan_geometry::preflight(&defaulted["plan"]).unwrap()["state"],
+            "valid"
+        );
+
+        let explicit = parse("直齿轮 齿数30 齿顶圆直径64 齿宽20 中心孔直径12");
+        assert_eq!(explicit["status"], "ready", "{explicit}");
+        assert_eq!(explicit["plan"]["features"].as_array().unwrap().len(), 2);
+        let gear = &explicit["plan"]["features"][0];
+        assert_eq!(gear["parameters"]["teeth"], 30);
+        assert_eq!(gear["parameters"]["module"], 2.0);
+        assert_eq!(gear["parameters"]["height"], 20.0);
+        assert_eq!(gear["sources"]["teeth"]["type"], "user");
+        assert_eq!(gear["sources"]["module"]["type"], "derived");
+        let bore = &explicit["plan"]["features"][1];
+        assert_eq!(bore["kind"], "hole");
+        assert_eq!(bore["operation"], "cut");
+        assert_eq!(bore["parameters"]["diameter"], 12.0);
+        assert_eq!(bore["parameters"]["pos"], "center");
+        assert_eq!(bore["parameters"]["through"], true);
+        assert_eq!(bore["sources"]["diameter"]["type"], "user");
+        assert_eq!(bore["sources"]["pos"]["type"], "user");
+        assert_eq!(bore["sources"]["through"]["type"], "derived");
+        assert_eq!(
+            crate::cad_plan_validation::validate_plan(&explicit["plan"])["state"],
+            "valid"
+        );
+        assert_eq!(
+            crate::native_plan_geometry::preflight(&explicit["plan"]).unwrap()["state"],
+            "valid"
+        );
+    }
+
+    #[test]
+    fn legacy_gear_rejects_ambiguous_or_unmigrated_requests() {
+        let invalid = parse("齿轮 齿数5 模数2");
+        assert_eq!(invalid["status"], "needs_clarification", "{invalid}");
+        assert!(invalid["questions"].to_string().contains("gear_teeth_invalid"));
+        assert!(invalid["plan"].is_null());
+
+        let missing_bore_size = parse("齿轮 中心孔");
+        assert_eq!(missing_bore_size["status"], "needs_clarification", "{missing_bore_size}");
+        assert!(missing_bore_size["questions"].to_string().contains("gear_bore_diameter_missing"));
+
+        let special = parse("锥齿轮 模数2 齿数30 厚10");
+        assert_eq!(special["status"], "unsupported", "{special}");
+        assert!(special["unsupported"].to_string().contains("special_gear_type_unsupported"));
+
+        let helical = parse("斜齿轮 模数2 齿数30 齿宽10");
+        assert_eq!(helical["status"], "unsupported", "{helical}");
+        assert!(helical["unsupported"].to_string().contains("special_gear_type_unsupported"));
+
+        let unsupported_axis = parse("齿轮 模数2 齿数30 厚10 沿X轴");
+        assert_eq!(unsupported_axis["status"], "unsupported", "{unsupported_axis}");
+        assert!(unsupported_axis["unsupported"].to_string().contains("gear_axis_unsupported"));
+    }
+
     #[test]
     fn fullwidth_dimensions_and_units_are_normalized_without_losing_prompt() {
         let out = parse("创建 100×60×20毫米 长方体");
