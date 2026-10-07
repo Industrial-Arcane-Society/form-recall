@@ -433,6 +433,38 @@ pub fn build_cross_joint(
     Ok((vec![result], details))
 }
 
+fn legacy_quick_faceted_annular_prism(
+    kernel: &Kernel,
+    inner_radius: f64,
+    outer_radius: f64,
+    thickness: f64,
+    center: [f64; 3],
+) -> Result<Shape, String> {
+    const SEGMENTS: usize = 32;
+    let mut sectors = Vec::with_capacity(SEGMENTS);
+    for index in 0..SEGMENTS {
+        let a0 = std::f64::consts::TAU * index as f64 / SEGMENTS as f64;
+        let a1 = std::f64::consts::TAU * (index + 1) as f64 / SEGMENTS as f64;
+        let point = |radius: f64, angle: f64| [radius * angle.cos(), radius * angle.sin()];
+        // Match legacy Python Quick's phase-zero annulus: the first outer
+        // vertex lies on +X and each adjacent pair advances counter-clockwise.
+        let profile = [
+            point(inner_radius, a0),
+            point(outer_radius, a0),
+            point(outer_radius, a1),
+            point(inner_radius, a1),
+        ];
+        sectors.push(kernel.prism(
+            &profile,
+            thickness,
+            [center[0], center[1], center[2] - thickness / 2.0],
+            Axis::Z,
+        )?);
+    }
+    let refs: Vec<&Shape> = sectors.iter().collect();
+    kernel.fuse(&refs)
+}
+
 pub fn preflight_conrod(parameters: &Value) -> Result<(), String> {
     let length = number(parameters, "length")?;
     let big_d = number(parameters, "big_d")?;
@@ -501,30 +533,51 @@ pub fn build_conrod_with_geometry_variant(
     let small_x = length / 2.0;
     let half_thick = thick / 2.0;
 
-    let big_ring = kernel.revolve(
-        &[
-            [big_bore_r, -half_thick],
-            [big_r, -half_thick],
-            [big_r, half_thick],
-            [big_bore_r, half_thick],
-        ],
-        360.0,
-        [center[0] + big_x, center[1], center[2]],
-        Axis::Z,
-    )?;
-    let small_ring = kernel.revolve(
-        &[
-            [small_bore_r, -half_thick],
-            [small_r, -half_thick],
-            [small_r, half_thick],
-            [small_bore_r, half_thick],
-        ],
-        360.0,
-        [center[0] + small_x, center[1], center[2]],
-        Axis::Z,
-    )?;
-
     let rectangular_quick_shank = geometry_variant == Some("legacy_quick_rectangular_shank");
+    let (big_ring, small_ring) = if rectangular_quick_shank {
+        (
+            legacy_quick_faceted_annular_prism(
+                kernel,
+                big_bore_r,
+                big_r,
+                thick,
+                [center[0] + big_x, center[1], center[2]],
+            )?,
+            legacy_quick_faceted_annular_prism(
+                kernel,
+                small_bore_r,
+                small_r,
+                thick,
+                [center[0] + small_x, center[1], center[2]],
+            )?,
+        )
+    } else {
+        (
+            kernel.revolve(
+                &[
+                    [big_bore_r, -half_thick],
+                    [big_r, -half_thick],
+                    [big_r, half_thick],
+                    [big_bore_r, half_thick],
+                ],
+                360.0,
+                [center[0] + big_x, center[1], center[2]],
+                Axis::Z,
+            )?,
+            kernel.revolve(
+                &[
+                    [small_bore_r, -half_thick],
+                    [small_r, -half_thick],
+                    [small_r, half_thick],
+                    [small_bore_r, half_thick],
+                ],
+                360.0,
+                [center[0] + small_x, center[1], center[2]],
+                Axis::Z,
+            )?,
+        )
+    };
+
     let web_profile = if rectangular_quick_shank {
         // The legacy Quick recipe used a full center-distance rectangular bar.
         // Keep this opt-in so Agent and ordinary CADPlan retain the tangent web.

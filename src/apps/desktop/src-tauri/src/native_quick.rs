@@ -3600,6 +3600,67 @@ mod acceptance_tests {
         assert!((quick_mid_web[0][1] - quick_mid_web[0][0] - 19.2).abs() <= 1e-5,
             "Quick full-length rectangle width should equal legacy shank_w=19.2 mm: {quick_mid_web:?}");
 
+        // Both end rings must retain the legacy Python Quick phase-zero
+        // 32-sided annular profile. Probe outward, away from the web, at a
+        // vertex and at the middle of the first polygon edge. This measures
+        // both the bore and outside wall from the actual fused B-Rep.
+        let segment_mid_angle = std::f64::consts::PI / 32.0;
+        for (label, origin, outward) in [
+            ("big", [-60.0, 0.0, 0.0], [-1.0, 0.0, 0.0]),
+            ("small", [60.0, 0.0, 0.0], [1.0, 0.0, 0.0]),
+        ] {
+            let vertex_interval = quick
+                .shape
+                .line_material_intervals(origin, outward, 0.0, 40.0, 1e-7)
+                .expect("measure faceted ring along phase-zero vertex");
+            assert_eq!(
+                vertex_interval.len(),
+                1,
+                "{label} phase-zero ring: {vertex_interval:?}"
+            );
+            let (bore_radius, outer_radius) = if label == "big" {
+                (17.28, 24.0)
+            } else {
+                (8.64, 12.0)
+            };
+            assert!(
+                (vertex_interval[0][0] - bore_radius).abs() <= 1e-5,
+                "{label} bore phase-zero radius: {vertex_interval:?}"
+            );
+            assert!(
+                (vertex_interval[0][1] - outer_radius).abs() <= 1e-5,
+                "{label} outer phase-zero radius: {vertex_interval:?}"
+            );
+
+            let (cosine, sine) = (segment_mid_angle.cos(), segment_mid_angle.sin());
+            let mid_direction = if label == "big" {
+                [-cosine, -sine, 0.0]
+            } else {
+                [cosine, sine, 0.0]
+            };
+            let mid_interval = quick
+                .shape
+                .line_material_intervals(origin, mid_direction, 0.0, 40.0, 1e-7)
+                .expect("measure faceted ring at segment midpoint");
+            assert_eq!(
+                mid_interval.len(),
+                1,
+                "{label} segment-midpoint ring: {mid_interval:?}"
+            );
+            let apothem_scale = segment_mid_angle.cos();
+            assert!(
+                (mid_interval[0][0] - bore_radius * apothem_scale).abs() <= 1e-5,
+                "{label} 32-edge bore apothem: {mid_interval:?}"
+            );
+            assert!(
+                (mid_interval[0][1] - outer_radius * apothem_scale).abs() <= 1e-5,
+                "{label} 32-edge outer apothem: {mid_interval:?}"
+            );
+        }
+        assert!(
+            quick.shape.cylindrical_faces().unwrap().is_empty(),
+            "Quick annular rings must be faceted planes, not analytic cylinders"
+        );
         // Removing the optional marker must keep the ordinary CADPlan/Agent
         // construction path on its existing external-tangent trapezoidal web.
         let mut generic_plan = plan;
@@ -3608,6 +3669,15 @@ mod acceptance_tests {
         let generic = native_plan_geometry::build(&generic_plan, &manifest, &AtomicBool::new(false))
             .expect("build default shared CADPlan conrod");
         assert_eq!(generic.report["state"], "built", "{}", generic.report);
+        let generic_ring_faces = generic.shape.cylindrical_faces().unwrap();
+        for expected_radius in [8.64, 12.0, 17.28, 24.0] {
+            assert!(
+                generic_ring_faces
+                    .iter()
+                    .any(|face| (face.radius - expected_radius).abs() <= 1e-5),
+                "unmarked CADPlan must retain analytic ring radius {expected_radius}; faces={generic_ring_faces:?}"
+            );
+        }
         assert_eq!(generic.report["feature_results"][0]["support_details"]["builder"], "analytic_annular_ends_with_external_tangent_web");
         for (axis, (actual, expected)) in generic.report["dimensions_mm"]
             .as_array().unwrap().iter().zip([156.0, 48.0, 14.4]).enumerate()
