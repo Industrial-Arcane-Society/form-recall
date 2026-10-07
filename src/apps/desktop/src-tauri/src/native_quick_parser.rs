@@ -5887,10 +5887,30 @@ fn piston_groove_count(raw: &str, text: &str) -> Option<f64> {
     ) {
         values.push(value);
     }
-    let before = regex::Regex::new(r"(?i)([+-]?(?:\d+(?:\.\d*)?|\.\d+))\s*(?:道|个)?\s*(?:环槽|ring grooves?)")
-        .expect("fixed piston groove-count regex");
+    // Do not read a preceding parameter value (for example pin_d in
+    // `销孔22 环槽数3`) as the groove count. When the phrase is the
+    // label-first form `环槽数 3` / `ring groove count 3`, the value before
+    // the label is unrelated and must not be collected here.
+    let before = regex::Regex::new(
+        r"(?i)([+-]?(?:\d+(?:\.\d*)?|\.\d+))\s*(?:道|个)?\s*(?:环槽|ring grooves?)",
+    )
+    .expect("fixed piston groove-count regex");
     for capture in before.captures_iter(text) {
-        if let Some(value) = capture.get(1).and_then(|value| value.as_str().parse::<f64>().ok()) {
+        let Some(matched) = capture.get(0) else {
+            continue;
+        };
+        let suffix = text[matched.end()..].trim_start();
+        if suffix.starts_with('数')
+            || suffix
+                .get(..5)
+                .is_some_and(|word| word.eq_ignore_ascii_case("count"))
+        {
+            continue;
+        }
+        if let Some(value) = capture
+            .get(1)
+            .and_then(|value| value.as_str().parse::<f64>().ok())
+        {
             values.push(value);
         }
     }
