@@ -487,6 +487,62 @@ mod tests {
     }
 
     #[test]
+    #[ignore = "requires AIMODELER_TEST_OCCT_MANIFEST for an installed OCCT runtime"]
+    fn f5_87_bare_dimension_triplets_build_and_roundtrip_through_occt() {
+        let manifest = std::env::var_os("AIMODELER_TEST_OCCT_MANIFEST")
+            .map(std::path::PathBuf::from)
+            .expect("F5.87 requires AIMODELER_TEST_OCCT_MANIFEST");
+        assert!(
+            manifest.is_file(),
+            "F5.87 OCCT runtime manifest is missing: {}",
+            manifest.display()
+        );
+
+        struct RemoveOnDrop(std::path::PathBuf);
+        impl Drop for RemoveOnDrop {
+            fn drop(&mut self) {
+                let _ = fs::remove_dir_all(&self.0);
+            }
+        }
+
+        for (index, prompt) in ["100 60 20", "100x60x20"].into_iter().enumerate() {
+            let root = std::env::temp_dir().join(format!(
+                "quick-f5-87-{}-{index}-{}",
+                std::process::id(),
+                SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_nanos()
+            ));
+            fs::create_dir_all(&root).unwrap();
+            let _cleanup = RemoveOnDrop(root.clone());
+
+            let output = build(prompt, index as i64 + 1, &manifest, &root)
+                .unwrap_or_else(|error| panic!("F5.87 Quick build failed for {prompt}: {error}"));
+            assert_eq!(output["state"], "complete", "{prompt}: {output}");
+            let features = output["cadplan"]["features"].as_array().unwrap();
+            assert_eq!(features.len(), 1, "{prompt}: {output}");
+            assert_eq!(features[0]["kind"], "box", "{prompt}: {output}");
+            for (key, value) in [("length", 100.0), ("width", 60.0), ("height", 20.0)] {
+                assert_eq!(features[0]["parameters"][key], value, "{prompt}: {output}");
+            }
+
+            let report = &output["geometry_report"];
+            assert_eq!(report["state"], "passed", "{prompt}: {report}");
+            assert_eq!(report["valid"], true, "{prompt}: {report}");
+            assert_eq!(report["closed_solid_count"], 1, "{prompt}: {report}");
+            assert_eq!(report["dimensions_mm"], json!([100.0, 60.0, 20.0]), "{prompt}: {report}");
+
+            for kind in ["aimodel", "stl", "obj"] {
+                let path = Path::new(output["output_paths"][kind].as_str().unwrap());
+                assert!(path.is_file(), "{prompt}: missing {kind} output at {}", path.display());
+            }
+            let aimodel = Path::new(output["output_paths"]["aimodel"].as_str().unwrap());
+            let loaded = native_model_io::load_aimodel(aimodel)
+                .unwrap_or_else(|error| panic!("F5.87 AIMODEL round-trip failed for {prompt}: {error}"));
+            assert_eq!(loaded["cadplan"]["features"], output["cadplan"]["features"], "{prompt}: round-trip");
+            eprintln!("F5.87 PASS: {prompt} -> valid closed OCCT box, bbox {:?}", report["dimensions_mm"]);
+        }
+    }
+
+    #[test]
     #[ignore = "requires an explicitly staged OCCT runtime; run the documented F5.12 acceptance command"]
     fn f5_12_quick_geometry_acceptance_builds_supported_hole_and_pattern_cases() {
         use serde_json::Value;

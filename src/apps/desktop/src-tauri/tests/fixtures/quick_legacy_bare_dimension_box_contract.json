@@ -1,0 +1,59 @@
+{
+  "source": "src/legacy/ai_modeler/core/parsing/nlparser.py::Parser.parse/Parser.handle, captured 2026-10-08",
+  "purpose": "F5.87 legacy shorthand for an otherwise bare LxWxH dimension expression",
+  "legacy_successes": [
+    {
+      "input": "100x60x20",
+      "ok": true,
+      "recognized": 1,
+      "steps": ["长方体 100×60×20 mm"],
+      "dimensions_mm": [100.0, 60.0, 20.0],
+      "parameters": {
+        "length": 100.0,
+        "width": 60.0,
+        "height": 20.0,
+        "corner": 0.0,
+        "corner_mode": "fillet",
+        "center": [0.0, 0.0, 0.0],
+        "base": true,
+        "axis": "Z"
+      }
+    },
+    {
+      "input": "100×60×20 mm",
+      "ok": true,
+      "recognized": 1,
+      "steps": ["长方体 100×60×20 mm"],
+      "dimensions_mm": [100.0, 60.0, 20.0]
+    },
+    {
+      "input": "100 60 20",
+      "ok": true,
+      "recognized": 1,
+      "steps": ["长方体 100×60×20 mm"],
+      "dimensions_mm": [100.0, 60.0, 20.0],
+      "parameters": {
+        "length": 100.0,
+        "width": 60.0,
+        "height": 20.0
+      }
+    }
+  ],
+  "legacy_non_box_boundary": [
+    {
+      "input": "孔距100，数量60，深20",
+      "ok": true,
+      "recognized": 1,
+      "feature_kinds": ["hole"],
+      "reason": "三个数字各有语义标签；旧 parser 识别为孔特征，不应因数字数目而补成长方体。"
+    },
+    {
+      "input": "100x60x20 M8内六角螺栓",
+      "ok": true,
+      "recognized": 1,
+      "feature_kinds": ["cylinder", "cylinder", "prism"],
+      "reason": "旧零件库识别为内六角螺钉；LxWxH 子串嵌入语义文本时不能先行触发隐式盒体。"
+    }
+  ],
+  "compatibility_rule": "仅当规范化后的整段完整匹配正数三元尺寸，并由 x/× 或空格明确分隔（可带末尾单位）时，且没有其他正文，才将基础体推断为长方体。三个语义化数字或正文中的尺寸子串不触发此规则。"
+}

@@ -368,6 +368,16 @@ pub fn parse(text: &str) -> Value {
             base_kinds.push(BaseKind::Cylinder);
         }
     }
+    // The old Python Quick treated a dimension-only three-number clause as a
+    // box. Restore only a complete triplet with explicit separators; values
+    // embedded in prose still need an explicit base shape.
+    if base_kinds.is_empty() && is_bare_dimension_triplet(&normalized) {
+        base_kinds.push(BaseKind::Box);
+        warnings.push(issue(
+            "legacy_bare_dimension_box_inferred",
+            "尺寸-only 的 L×W×H 按旧 Python Quick 规则解释为长方体。",
+        ));
+    }
     let base_kind = if base_kinds.len() == 1 {
         Some(base_kinds[0])
     } else if base_kinds.len() > 1 {
@@ -3056,6 +3066,36 @@ fn shaft_dimension(text: &str, labels: &[&str], symbol: &str) -> Result<Option<f
         (Some(a), Some(b)) if !close(a, b) => Err(()),
         (Some(value), _) | (_, Some(value)) => Ok(Some(value)),
         (None, None) => Ok(None),
+    }
+}
+
+#[cfg(test)]
+mod f5_87_bare_dimension_box_tests {
+    use super::parse;
+
+    #[test]
+    fn dimension_only_triplet_infers_box_without_claiming_ambiguous_numbers() {
+        for input in ["100x60x20", "100×60×20 mm", "100 60 20"] {
+            let output = parse(input);
+            assert_eq!(output["status"], "ready", "{input}: {output}");
+            let feature = &output["plan"]["features"][0];
+            assert_eq!(feature["kind"], "box", "{input}: {output}");
+            assert_eq!(feature["parameters"]["length"], 100.0, "{input}: {output}");
+            assert_eq!(feature["parameters"]["width"], 60.0, "{input}: {output}");
+            assert_eq!(feature["parameters"]["height"], 20.0, "{input}: {output}");
+            assert!(output["warnings"].to_string().contains("legacy_bare_dimension_box_inferred"));
+        }
+
+        for input in ["孔距100，数量60，深20"] {
+            let output = parse(input);
+            assert_ne!(output["status"], "ready", "{input}: {output}");
+            assert!(output["plan"].is_null(), "{input}: {output}");
+        }
+
+        let screw = parse("100x60x20 M8内六角螺栓");
+        if screw["status"] == "ready" {
+            assert_ne!(screw["plan"]["features"][0]["kind"], "box", "{screw}");
+        }
     }
 }
 
@@ -13307,6 +13347,16 @@ fn contains_base(s: &str, k: BaseKind) -> bool {
         BaseKind::Prism => extrusion_requested(s),
         BaseKind::Revolve => legacy_revolve_requested(s),
     }
+}
+fn is_bare_dimension_triplet(s: &str) -> bool {
+    // `normalize` has already converted ×/Ｘ to x. Requiring the whole clause
+    // to match prevents a dimension-looking substring in prose from silently
+    // selecting a box. Whitespace is a legacy separator for inputs such as
+    // `100 60 20`; bare concatenated numbers do not match.
+    regex::Regex::new(
+        r"^\s*\+?\d+(?:\.\d+)?(?:\s*x\s*|\s+)\+?\d+(?:\.\d+)?(?:\s*x\s*|\s+)\+?\d+(?:\.\d+)?\s*(?:毫米|厘米|分米|英寸|mm|cm|dm|in|米|m)?\s*$",
+    )
+    .is_ok_and(|re| re.is_match(s))
 }
 fn extrusion_requested(s: &str) -> bool {
     contains_any(s, &["拉伸", "挤出", "拉出", "拉伸体", "extrude", "pad"])
