@@ -553,6 +553,13 @@ pub fn parse(text: &str) -> Value {
     }
 
     let mut features = Vec::<Value>::new();
+    let legacy_box_hole_defaults = legacy_box_dimensions_with_center_through_hole_allowed(
+        text,
+        &base_text,
+        &clauses,
+        &modifier_clauses,
+        base_kind,
+    );
     if let Some(kind) = base_kind {
         if let Some(base) = build_base(
             kind,
@@ -560,7 +567,7 @@ pub fn parse(text: &str) -> Value {
             text,
             &mut questions,
             &mut warnings,
-            modifier_clauses.is_empty() || legacy_round_groove_only,
+            modifier_clauses.is_empty() || legacy_round_groove_only || legacy_box_hole_defaults,
         ) {
             features.push(base);
         }
@@ -729,6 +736,23 @@ pub fn parse(text: &str) -> Value {
                 &mut questions,
                 &mut warnings,
             ) {
+                let mut feature = feature;
+                if legacy_box_hole_defaults {
+                    if feature["parameters"].get("axis").is_none() {
+                        feature["parameters"]["axis"] = json!("Z");
+                        feature["sources"]["axis"] =
+                            derived_source(text, "旧 Python Quick 中心通孔未指定轴向时默认 Z 轴。");
+                    }
+                    if feature["parameters"].get("segments").is_none() {
+                        feature["parameters"]["segments"] = json!(24);
+                        feature["sources"]["segments"] =
+                            derived_source(text, "沿用旧 Python Quick 普通孔默认圆周分段数 24。");
+                    }
+                    warnings.push(issue(
+                        "legacy_box_center_through_hole_defaults",
+                        "旧 Python Quick 长方体中心通孔的缺省轴向为 Z，圆周分段数为 24。",
+                    ));
+                }
                 features.push(feature);
             }
         } else if let Some(slot_features) = build_slot(
@@ -11336,6 +11360,87 @@ fn has_labeled_value(text: &str, labels: &[&str]) -> bool {
         .any(|label| scalar(text, &[*label]).is_some_and(f64::is_finite))
 }
 
+fn legacy_box_dimensions_with_center_through_hole_allowed(
+    raw: &str,
+    base_clause: &str,
+    clauses: &[String],
+    modifier_clauses: &[String],
+    base_kind: Option<BaseKind>,
+) -> bool {
+    if base_kind != Some(BaseKind::Box) || clauses.len() != 2 || modifier_clauses.len() != 1 {
+        return false;
+    }
+    let base_kinds = [
+        BaseKind::Box,
+        BaseKind::Cylinder,
+        BaseKind::Cone,
+        BaseKind::Frustum,
+        BaseKind::Sphere,
+    ];
+    if base_kinds
+        .iter()
+        .filter(|kind| contains_base(&normalize(raw), **kind))
+        .count()
+        != 1
+        || !contains_base(base_clause, BaseKind::Box)
+        || has_hole(base_clause)
+        || has_slot(base_clause)
+    {
+        return false;
+    }
+
+    let length = scalar(base_clause, &["length", "overall length", "长", "长度", "总长", "全长"]);
+    if !length.is_some_and(|value| value.is_finite() && value > 0.0)
+        || scalar(base_clause, &["width", "宽度", "宽"]).is_some()
+        || scalar(base_clause, &["height", "高度", "高", "thickness", "厚度", "厚"]).is_some()
+        || find_dimension_triplet(base_clause).is_some()
+        || find_dimension_pair(base_clause).is_some()
+        || contains_any(base_clause, &["宽", "width", "高", "height", "厚", "thickness"])
+    {
+        return false;
+    }
+    let mut remaining_raw = dimension_values(base_clause);
+    remaining_raw.retain(|value| !close(*value, length.unwrap()));
+    if !remaining_raw.is_empty() {
+        return false;
+    }
+
+    let hole_clause = &modifier_clauses[0];
+    let diameter = diameter_value(hole_clause);
+    let radius = scalar(hole_clause, &["radius", "半径"]);
+    let depth = hole_depth_value(hole_clause);
+    let hole_count = ["孔", "hole", "bore", "drill"]
+        .iter()
+        .map(|marker| hole_clause.matches(marker).count())
+        .sum::<usize>();
+    let forbidden = [
+        "盲孔", "blind", "侧面", "侧孔", "侧向", "径向", "radial", "side hole", "side face",
+        "pcd", "分度圆", "节圆", "分布圆", "均布", "孔数", "数量", "等分", "阵列", "array",
+        "phase", "相位", "起始角", "四角", "corner", "槽", "slot", "pocket", "keyway",
+        "沉孔", "沉台", "沉坑", "扩孔", "倒角", "圆角", "螺纹", "thread", "凸台", "凸起",
+        "拉伸", "extrude", "回转", "revolve",
+    ];
+    let size_marker_count = ["diameter", "dia", "直径", "⌀", "ø"]
+        .iter()
+        .map(|marker| hole_clause.matches(marker).count())
+        .sum::<usize>();
+    diameter.is_some_and(|value| value.is_finite() && value > 0.0)
+        && radius.is_none()
+        && depth.is_none()
+        && size_marker_count == 1
+        && hole_count == 1
+        && has_hole(hole_clause)
+        && !has_slot(hole_clause)
+        && has_center_location(hole_clause)
+        && contains_any(hole_clause, &["through", "thru", "通孔", "贯穿"])
+        && !contains_any(hole_clause, &forbidden)
+        && !explicitly_multiple_holes(hole_clause)
+        && center_coordinates(hole_clause).is_none()
+        && named_xyz(hole_clause).is_none()
+        && !contains_any(raw, &forbidden)
+        && !contains_any(raw, &["槽", "slot", "pocket", "keyway", "倒角", "圆角", "螺纹", "thread"])
+}
+
 fn bolt_hole_diameter(text: &str) -> Option<f64> {
     let regex = regex::Regex::new(r"(?:螺栓孔|bolt\s*hole).{0,16}(?:直径|diameter|⌀)\s*([0-9]+(?:\.[0-9]+)?)|(?:直径|diameter|⌀)\s*([0-9]+(?:\.[0-9]+)?).{0,16}(?:螺栓孔|bolt\s*hole)").ok()?;
     regex
@@ -15981,6 +16086,61 @@ mod tests {
 
     #[test]
     #[ignore = "requires the staged local OCCT runtime manifest"]
+    fn f5_94_box_missing_width_height_with_center_through_hole_builds_verified_aimodel() {
+        use std::{fs, path::Path, time::{SystemTime, UNIX_EPOCH}};
+
+        let manifest = std::env::var_os("AIMODELER_OCCT_MANIFEST")
+            .map(std::path::PathBuf::from)
+            .expect("set AIMODELER_OCCT_MANIFEST to the staged runtime-manifest.json");
+        assert!(manifest.is_file(), "missing OCCT manifest: {}", manifest.display());
+        let input = "长方体长100，然后中心通孔直径8";
+        let root = std::env::temp_dir().join(format!(
+            "f5-94-box-hole-{}-{}",
+            std::process::id(),
+            SystemTime::now().duration_since(UNIX_EPOCH).expect("system clock").as_nanos(),
+        ));
+        fs::create_dir_all(&root).expect("create temporary output root");
+        struct RemoveOnDrop(std::path::PathBuf);
+        impl Drop for RemoveOnDrop { fn drop(&mut self) { let _ = fs::remove_dir_all(&self.0); } }
+        let _cleanup = RemoveOnDrop(root.clone());
+
+        let output = crate::native_quick::build(input, 1, &manifest, &root)
+            .unwrap_or_else(|error| panic!("native Quick build failed: {error}"));
+        assert_eq!(output["state"], "complete", "{output}");
+        let report = &output["geometry_report"];
+        assert_eq!(report["state"], "passed", "{report}");
+        assert_eq!(report["valid"], true, "{report}");
+        assert_eq!(report["closed_solid_count"], 1, "{report}");
+        assert_eq!(report["dimensions_mm"], json!([100.0, 60.0, 20.0]));
+        assert_eq!(report["bounds_mm"], json!([-50.0, -30.0, 0.0, 50.0, 30.0, 20.0]));
+        assert_eq!(report["hole_measurements_verified"], true, "{report}");
+        let holes = report["hole_instances"].as_array().expect("measured hole instances");
+        assert_eq!(holes.len(), 1, "{report}");
+        assert_eq!(holes[0]["axis"], "Z", "{}", holes[0]);
+        assert_eq!(holes[0]["through"], true, "{}", holes[0]);
+        assert_eq!(holes[0]["status"], "verified_open", "{}", holes[0]);
+        assert!((holes[0]["diameter_mm"].as_f64().unwrap() - 8.0).abs() < 1e-8, "{}", holes[0]);
+        for axis in 0..2 { assert!(holes[0]["centerline_mm"][axis].as_f64().unwrap().abs() < 1e-6); }
+        let analytic_volume = 100.0 * 60.0 * 20.0 - std::f64::consts::PI * 4.0_f64.powi(2) * 20.0;
+        let actual_volume = report["volume_mm3"].as_f64().expect("B-Rep volume");
+        assert!((actual_volume - analytic_volume).abs() <= 1e-3, "{report}");
+
+        let aimodel = Path::new(output["output_paths"]["aimodel"].as_str().unwrap());
+        assert!(aimodel.is_file(), "missing AIMODEL output");
+        let loaded = crate::native_model_io::load_aimodel(aimodel).expect("AIMODEL reload");
+        let loaded_features = loaded["cadplan"]["features"].as_array().expect("reloaded features");
+        assert_eq!(loaded_features[0]["parameters"]["length"], 100.0);
+        assert_eq!(loaded_features[0]["parameters"]["width"], 60.0);
+        assert_eq!(loaded_features[0]["parameters"]["height"], 20.0);
+        assert_eq!(loaded_features[0]["sources"]["length"]["type"], "user");
+        assert_eq!(loaded_features[0]["sources"]["width"]["type"], "derived");
+        assert_eq!(loaded_features[0]["sources"]["height"]["type"], "derived");
+        assert_eq!(loaded_features[1]["parameters"]["diameter"], 8.0);
+        assert_eq!(loaded_features[1]["sources"]["diameter"]["type"], "user");
+    }
+
+    #[test]
+    #[ignore = "requires the staged local OCCT runtime manifest"]
     fn f5_91_legacy_default_center_hole_builds_verified_aimodel_round_trip() {
         use std::{fs, path::Path, time::{SystemTime, UNIX_EPOCH}};
 
@@ -16736,6 +16896,61 @@ mod tests {
                     .contains("legacy_box_dimensions_defaulted"),
                 "{input}: missing visibility warning for legacy defaults: {output}"
             );
+        }
+    }
+
+    #[test]
+    fn f5_94_only_defaults_box_width_height_for_one_center_through_hole_modifier() {
+        let input = "长方体长100，然后中心通孔直径8";
+        let output = parse(input);
+        assert_eq!(output["status"], "ready", "{output}");
+        assert!(output["questions"].as_array().unwrap().is_empty(), "{output}");
+        let plan = output["plan"].clone();
+        assert_eq!(crate::cad_plan_validation::validate_plan(&plan)["state"], "valid");
+        let features = plan["features"].as_array().unwrap();
+        assert_eq!(features.len(), 2, "{output}");
+        let base = &features[0];
+        assert_eq!(base["kind"], "box");
+        assert_eq!(base["parameters"]["length"], 100.0);
+        assert_eq!(base["parameters"]["width"], 60.0);
+        assert_eq!(base["parameters"]["height"], 20.0);
+        assert_eq!(base["sources"]["length"]["type"], "user");
+        assert_eq!(base["sources"]["length"]["evidence"], input);
+        for key in ["width", "height"] {
+            assert_eq!(base["sources"][key]["type"], "derived", "{key}: {base}");
+            assert_eq!(base["sources"][key]["evidence"], input);
+        }
+        assert!(output["warnings"].to_string().contains("legacy_box_dimensions_defaulted"));
+        assert!(output["warnings"].to_string().contains("width=60 mm"));
+        assert!(output["warnings"].to_string().contains("height=20 mm"));
+        assert!(output["warnings"].to_string().contains("legacy_box_center_through_hole_defaults"), "{output}");
+
+        let hole = &features[1];
+        assert_eq!(hole["kind"], "hole");
+        assert_eq!(hole["parameters"]["diameter"], 8.0);
+        assert_eq!(hole["parameters"]["through"], true);
+        assert_eq!(hole["parameters"]["pos"], "center");
+        assert_eq!(hole["parameters"]["axis"], "Z");
+        assert_eq!(hole["parameters"]["segments"], 24);
+        assert_eq!(hole["sources"]["diameter"]["type"], "user");
+        assert_eq!(hole["sources"]["pos"]["type"], "user");
+        for key in ["axis", "segments"] {
+            assert_eq!(hole["sources"][key]["type"], "derived", "{key}: {hole}");
+        }
+
+        for rejected_input in [
+            "长方体长100，然后通孔直径8",
+            "长方体长100，然后侧面中心通孔直径8",
+            "长方体长100，然后中心均布四个通孔直径8",
+            "长方体长100，然后中心盲孔直径8深5",
+            "长方体长100，然后中心通孔直径8，再做矩形槽20x10",
+            "长方体，然后中心通孔直径8",
+            "长方体长0，然后中心通孔直径8",
+        ] {
+            let rejected = parse(rejected_input);
+            assert_ne!(rejected["status"], "ready", "{rejected_input}: {rejected}");
+            assert!(rejected["plan"].is_null(), "{rejected_input}: {rejected}");
+            assert!(!rejected["warnings"].to_string().contains("legacy_box_dimensions_defaulted"), "{rejected_input}: {rejected}");
         }
     }
 
