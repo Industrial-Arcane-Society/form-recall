@@ -489,10 +489,26 @@ pub fn build(plan: &Value, manifest: &Path, cancelled: &AtomicBool) -> Result<Bu
             };
             check_cancel(cancelled)?;
             let analysis = candidate.analyze()?;
-            if analysis.valid != 1 || analysis.solid_count != 1 || analysis.closed_solid_count != 1 {
+            let single_closed_solid = analysis.valid == 1
+                && analysis.solid_count == 1
+                && analysis.closed_solid_count == 1;
+            let expected_pattern_solids = normalized["parameters"]["count"].as_u64()
+                .and_then(|count| usize::try_from(count).ok());
+            let valid_additive_pattern_compound = normalized["kind"] == "pattern"
+                && operation == "add"
+                && expected_pattern_solids.is_some_and(|expected| {
+                    expected > 1
+                        && analysis.valid == 1
+                        && analysis.solid_count == expected
+                        && analysis.closed_solid_count == expected
+                });
+            if !single_closed_solid && !valid_additive_pattern_compound {
                 return Err(format!(
-                    "特征 {} 未生成单一有效封闭实体；未提交候选。",
-                    feature["id"]
+                    "特征 {} 未生成可接受的封闭实体集合（valid={}, solids={}, closed={}）；未提交候选。",
+                    feature["id"],
+                    analysis.valid,
+                    analysis.solid_count,
+                    analysis.closed_solid_count
                 ));
             }
             let volume = candidate.volume()?;
@@ -658,12 +674,16 @@ pub fn build(plan: &Value, manifest: &Path, cancelled: &AtomicBool) -> Result<Bu
     let hole_measurement_complete = hole_measurements_complete(&hole_instances);
     let hole_measurements_verified = !hole_instances.is_empty() && hole_measurement_complete;
     let bb = shape.bounds()?;
+    let final_analysis = shape.analyze()?;
     let fingerprint = cad_plan::geometry_fingerprint(plan)?;
     let report = json!({"state":"built","execution_engine":"rust_c_abi_occt","occt_version":kernel.version(),
         "geometry_fingerprint":fingerprint,"validation":validation,"feature_results":rows,
         "bounds_mm":[bb.xmin,bb.ymin,bb.zmin,bb.xmax,bb.ymax,bb.zmax],
         "dimensions_mm":[bb.xmax-bb.xmin,bb.ymax-bb.ymin,bb.zmax-bb.zmin],
-        "volume_mm3":shape.volume()?,"valid":true,"closed_solid_count":1,
+        "volume_mm3":shape.volume()?,
+        "valid":final_analysis.valid == 1,
+        "solid_count":final_analysis.solid_count,
+        "closed_solid_count":final_analysis.closed_solid_count,
         "requested_holes":holes.clone(),"sampled_hole_evidence":holes,
         "hole_instances":hole_instances,
         "hole_measurement_complete":hole_measurement_complete,

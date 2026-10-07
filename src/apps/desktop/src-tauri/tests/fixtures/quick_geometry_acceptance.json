@@ -25,7 +25,9 @@
       "expected": {
         "feature_kinds": ["cylinder", "pattern"],
         "hole_count": 0,
-        "dimensions_mm": [170, 30, 30]
+        "dimensions_mm": [150, 30, 50],
+        "solid_count": 4,
+        "closed_solid_count": 4
       }
     },
     {

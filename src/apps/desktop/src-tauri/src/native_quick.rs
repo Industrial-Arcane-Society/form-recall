@@ -647,7 +647,16 @@ mod tests {
             let report = &document["geometry_report"];
             assert_eq!(report["state"], "passed", "{id}: native geometry report");
             assert_eq!(report["valid"], true, "{id}: OCCT valid geometry");
-            assert_eq!(report["closed_solid_count"], 1, "{id}: closed solid count");
+            let expected_solids = case["expected"]["solid_count"].as_u64().unwrap_or(1);
+            let expected_closed_solids = case["expected"]["closed_solid_count"]
+                .as_u64()
+                .unwrap_or(expected_solids);
+            assert_eq!(report["solid_count"], expected_solids, "{id}: solid count");
+            assert_eq!(
+                report["closed_solid_count"],
+                expected_closed_solids,
+                "{id}: closed solid count"
+            );
             let feature_results = report["feature_results"]
                 .as_array()
                 .unwrap_or_else(|| panic!("{id}: feature results missing"));
