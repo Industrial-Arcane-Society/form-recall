@@ -10,6 +10,7 @@ mod legacy_catalog_cylinder_defaults;
 mod legacy_catalog_egt_profile;
 mod legacy_catalog_lifting_eye;
 mod legacy_catalog_socket_screw;
+mod legacy_round_aliases;
 
 const BEARING_STANDARDS: &str = include_str!("../../../../legacy/kb/bearing_std.json");
 const LEGACY_LOCATOR_PIN_CATALOG: &str = include_str!("native_quick_locator_pin_catalog.json");
@@ -193,6 +194,8 @@ pub fn parse(text: &str) -> Value {
     }
 
     let normalized = legacy_box_aliases::canonicalize_box_alias(&normalized).unwrap_or(normalized);
+    let normalized =
+        legacy_round_aliases::canonicalize_round_alias(&normalized).unwrap_or(normalized);
 
     let mut clauses = split_clauses(&normalized);
     let mut clause_index = 1;
@@ -14646,6 +14649,29 @@ mod tests {
                 .into_iter()
                 .zip(case["dimensions_mm"].as_array().unwrap())
             {
+                assert_eq!(feature["parameters"][key], *expected, "{input}: {key}");
+            }
+        }
+    }
+
+    #[test]
+    fn legacy_round_name_aliases_match_python_quick_dimensions() {
+        let fixture: Value = serde_json::from_str(include_str!(
+            "../tests/fixtures/quick_legacy_round_aliases_contract.json"
+        ))
+        .expect("legacy round alias fixture is valid JSON");
+
+        for case in fixture["legacy_accepted"].as_array().unwrap() {
+            let input = case["input"].as_str().unwrap();
+            let output = parse(input);
+            assert_eq!(output["status"], "ready", "{input}: {output}");
+            let validation = crate::cad_plan_validation::validate_plan(&output["plan"]);
+            assert_eq!(validation["state"], "valid", "{input}: {validation}");
+            let features = output["plan"]["features"].as_array().unwrap();
+            assert_eq!(features.len(), 1, "{input}: {output}");
+            let feature = &features[0];
+            assert_eq!(feature["kind"], case["kind"], "{input}");
+            for (key, expected) in case["parameters"].as_object().unwrap() {
                 assert_eq!(feature["parameters"][key], *expected, "{input}: {key}");
             }
         }

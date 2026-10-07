@@ -1,0 +1,47 @@
+{
+  "source": "src/legacy/ai_modeler/core/parsing/nlparser.py via nlparser.parse(text).doc.to_dict(), captured 2026-10-07",
+  "legacy_accepted": [
+    {
+      "input": "柱体 直径20高50",
+      "kind": "cylinder",
+      "dimensions_mm": [20.0, 20.0, 50.0],
+      "parameters": {"radius": 10.0, "height": 50.0, "center": [0.0, 0.0, 0.0], "base": true, "axis": "Z", "segments": 48}
+    },
+    {
+      "input": "圆钢 直径20长度50",
+      "kind": "cylinder",
+      "dimensions_mm": [20.0, 20.0, 50.0],
+      "parameters": {"radius": 10.0, "height": 50.0, "center": [0.0, 0.0, 0.0], "base": true, "axis": "Z", "segments": 48}
+    },
+    {
+      "input": "凸台 直径20高10",
+      "kind": "cylinder",
+      "dimensions_mm": [20.0, 20.0, 10.0],
+      "parameters": {"radius": 10.0, "height": 10.0, "center": [0.0, 0.0, 0.0], "base": true, "axis": "Z", "segments": 48}
+    },
+    {
+      "input": "圆盘 直径50厚10",
+      "kind": "cylinder",
+      "dimensions_mm": [50.0, 50.0, 10.0],
+      "parameters": {"radius": 25.0, "height": 10.0, "center": [0.0, 0.0, 0.0], "base": true, "axis": "Z", "segments": 48}
+    },
+    {
+      "input": "盘体 直径50厚10",
+      "kind": "cylinder",
+      "dimensions_mm": [50.0, 50.0, 10.0],
+      "parameters": {"radius": 25.0, "height": 10.0, "center": [0.0, 0.0, 0.0], "base": true, "axis": "Z", "segments": 48}
+    },
+    {
+      "input": "球 半径10",
+      "kind": "sphere",
+      "dimensions_mm": [20.0, 20.0, 20.0],
+      "parameters": {"radius": 10.0, "center": [0.0, 0.0, 0.0], "segments": 32, "rings": 16}
+    },
+    {
+      "input": "锥体 底径20高30",
+      "kind": "cylinder",
+      "dimensions_mm": [20.0, 20.0, 30.0],
+      "parameters": {"radius": 10.0, "height": 30.0, "center": [0.0, 0.0, 0.0], "base": true, "axis": "Z", "segments": 48}
+    }
+  ]
+}
