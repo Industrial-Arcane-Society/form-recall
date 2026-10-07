@@ -67,6 +67,9 @@ pub fn parse(text: &str) -> Value {
     if let Some(parsed) = parse_legacy_flat_annular_parts(text, &normalized) {
         return parsed;
     }
+    if let Some(parsed) = parse_legacy_flat_key(text, &normalized) {
+        return parsed;
+    }
     if let Some(parsed) = parse_legacy_simple_ring(text, &normalized) {
         return parsed;
     }
@@ -1808,6 +1811,160 @@ fn parse_legacy_flat_annular_parts(raw: &str, text: &str) -> Option<Value> {
         })
     ];
     Some(plan_result(raw, name, features, warnings))
+}
+
+/// Migrate the legacy Python Quick flat-key recipe. Its box axes are part
+/// parameters rather than the generic box convention: b -> X, h -> Y, L -> Z.
+fn parse_legacy_flat_key(raw: &str, text: &str) -> Option<Value> {
+    let named_flat_key = contains_any(text, &["平键"]);
+    let symbol_width = ["b", "B"]
+        .iter()
+        .any(|symbol| short_scalar(raw, symbol).is_some());
+    let symbol_height = ["h", "H"]
+        .iter()
+        .any(|symbol| short_scalar(raw, symbol).is_some());
+    let symbol_length = ["L", "l"]
+        .iter()
+        .any(|symbol| short_scalar(raw, symbol).is_some());
+    let symbol_key = contains_any(text, &["键"])
+        && (symbol_width || (symbol_height && symbol_length));
+    if !named_flat_key && !symbol_key {
+        return None;
+    }
+
+    if contains_any(
+        text,
+        &[
+            "键槽", "花键", "螺纹", "孔", "槽", "齿形", "阵列", "组合", "并加", "再加",
+            "还要", "多个", "两个", "数量", "圆柱", "圆锥", "球体", "长方体", "法兰", "轴套",
+            "坐标", "位置", "偏移", "旋转", "沿x轴", "沿y轴", "沿z轴", "keyway", "spline",
+            "thread", "hole", "slot", "pattern", "assembly", "cylinder", "cone", "sphere", "rotate",
+        ],
+    ) {
+        return Some(parse_result_with_issue(
+            "unsupported",
+            raw,
+            "legacy_flat_key_modifier_not_migrated",
+            "旧 Python Quick 平键配方只生成一个居中长方体；键槽、孔槽、数量、放置或组合结构尚未迁移。",
+        ));
+    }
+
+    let b_explicit = pulley_scalar(raw, text, &["宽度", "宽"], &["b", "B"]);
+    let h_explicit = pulley_scalar(raw, text, &["高度", "高", "厚度", "厚"], &["h", "H"]);
+    let length_explicit = pulley_scalar(raw, text, &["长度", "长"], &["L", "l"]);
+    let b_defaulted = b_explicit.is_none()
+        && h_explicit.is_some_and(|value| value.is_finite() && value > 0.0)
+        && length_explicit.is_some_and(|value| value.is_finite() && value > 0.0);
+    let b = if b_defaulted { Some(8.0) } else { b_explicit };
+
+    let mut questions = Vec::new();
+    for (value, missing_code, invalid_code, label) in [
+        (b, "legacy_flat_key_width", "legacy_flat_key_width_invalid", "宽度 b"),
+        (h_explicit, "legacy_flat_key_height", "legacy_flat_key_height_invalid", "高度 h"),
+        (length_explicit, "legacy_flat_key_length", "legacy_flat_key_length_invalid", "长度 L"),
+    ] {
+        match value {
+            Some(value) if value.is_finite() && value > 0.0 => {}
+            Some(_) => questions.push(issue(
+                invalid_code,
+                format!("平键{label}必须是有限正数，且不同写法不能互相冲突。"),
+            )),
+            None => questions.push(issue(
+                missing_code,
+                format!("请明确平键{label}。旧 Quick 仅在高度 h 与长度 L 都给出时，才沿用 b=8 mm 典型宽度。"),
+            )),
+        }
+    }
+
+    let fillet_requested = contains_any(text, &["圆角", "倒圆", "圆滑", "fillet"]);
+    let chamfer_requested = contains_any(text, &["倒角", "切角", "chamfer"]);
+    if fillet_requested && chamfer_requested {
+        questions.push(issue(
+            "legacy_flat_key_corner_mode_conflict",
+            "平键不能同时指定圆角和倒角；请保留一种轮廓方式。",
+        ));
+    }
+    let corner = if chamfer_requested {
+        scalar(text, &["倒角c", "切角c", "chamfer c", "倒角", "切角", "chamfer"])
+    } else {
+        scalar(text, &["圆角半径", "圆角", "倒圆角", "倒圆", "圆滑", "fillet"])
+    };
+    if corner.is_some_and(|value| !value.is_finite() || value < 0.0) {
+        questions.push(issue(
+            "legacy_flat_key_corner_invalid",
+            "平键圆角半径或倒角边长必须是有限的非负数。",
+        ));
+    }
+    if !questions.is_empty() {
+        return Some(result("needs_clarification", raw, None, vec![], questions, vec![]));
+    }
+
+    let b = b.expect("validated flat-key width");
+    let h = h_explicit.expect("validated flat-key height");
+    let length = length_explicit.expect("validated flat-key length");
+    let mut warnings = Vec::new();
+    if b_defaulted {
+        warnings.push(issue(
+            "legacy_flat_key_default_width",
+            "沿用旧 Python Quick 平键典型宽度 b=8 mm。",
+        ));
+    }
+    if !has_unit(text) {
+        warnings.push(issue(
+            "unit_interpreted_as_mm",
+            "未写长度单位的平键尺寸按旧 Quick 默认单位 mm 解释。",
+        ));
+    }
+    if (fillet_requested || chamfer_requested) && corner.is_none() {
+        warnings.push(issue(
+            "legacy_flat_key_corner_value_missing",
+            "未取得圆角/倒角尺寸，沿用旧 Python Quick 行为忽略修饰并生成直角平键。",
+        ));
+    }
+
+    let mut parameters = serde_json::Map::new();
+    let mut sources = serde_json::Map::new();
+    parameters.insert("length".into(), json!(b));
+    sources.insert(
+        "length".into(),
+        if b_defaulted {
+            derived_source(raw, "沿用旧 Python Quick 平键典型宽度 b=8 mm，并映射到 box.length/X。")
+        } else {
+            user_source(raw)
+        },
+    );
+    parameters.insert("width".into(), json!(h));
+    sources.insert("width".into(), user_source(raw));
+    parameters.insert("height".into(), json!(length));
+    sources.insert("height".into(), user_source(raw));
+    parameters.insert("center".into(), json!([0.0, 0.0, 0.0]));
+    sources.insert(
+        "center".into(),
+        derived_source(raw, "沿用旧 Python Quick 平键以原点为中心放置。"),
+    );
+    parameters.insert("base".into(), json!(false));
+    sources.insert(
+        "base".into(),
+        derived_source(raw, "沿用旧 Python Quick 平键的居中长方体语义。"),
+    );
+    if let Some(corner) = corner {
+        parameters.insert("corner".into(), json!(corner));
+        sources.insert("corner".into(), user_source(raw));
+        let mode = if chamfer_requested { "chamfer" } else { "fillet" };
+        parameters.insert("corner_mode".into(), json!(mode));
+        sources.insert("corner_mode".into(), user_source(raw));
+    }
+
+    let feature = json!({
+        "id":"quick-0001",
+        "kind":"box",
+        "operation":"add",
+        "name":"平键主体",
+        "parameters":parameters,
+        "sources":sources,
+        "relations":[]
+    });
+    Some(plan_result(raw, "平键", vec![feature], warnings))
 }
 
 /// Migrate the legacy Python Quick brake-drum recipe. The historical builder
@@ -10020,5 +10177,98 @@ mod tests {
             assert_eq!(output["status"], expected["status"], "{input}: {output}");
             assert!(output.to_string().contains(expected["issue"].as_str().unwrap()), "{input}: {output}");
         }
+    }
+
+    #[test]
+    fn legacy_flat_keys_match_python_oracle_axis_mapping_and_provenance() {
+        let fixture: Value = serde_json::from_str(include_str!(
+            "../tests/fixtures/quick_legacy_flat_key_contract.json"
+        ))
+        .expect("flat-key Python oracle fixture is valid JSON");
+
+        for case in fixture["legacy_accepted"].as_array().unwrap() {
+            let input = case["input"].as_str().unwrap();
+            let output = parse(input);
+            assert_eq!(output["status"], "ready", "{input}: {output}");
+            assert_eq!(output["plan"]["name"], "平键", "{input}: {output}");
+            let features = output["plan"]["features"].as_array().unwrap();
+            assert_eq!(features.len(), 1, "{input}: {output}");
+            let feature = &features[0];
+            assert_eq!(feature["kind"], "box", "{input}");
+            assert_eq!(feature["operation"], "add", "{input}");
+            for field in ["length", "width", "height", "center", "base", "corner", "corner_mode"] {
+                if let Some(expected) = case["box_parameters"].get(field) {
+                    if field == "center" {
+                        for (axis, (actual, expected)) in feature["parameters"][field]
+                            .as_array()
+                            .unwrap()
+                            .iter()
+                            .zip(expected.as_array().unwrap())
+                            .enumerate()
+                        {
+                            assert!(
+                                (actual.as_f64().unwrap() - expected.as_f64().unwrap()).abs() < 1e-10,
+                                "{input}: center axis {axis}"
+                            );
+                        }
+                    } else if expected.is_number() {
+                        assert!(
+                            (feature["parameters"][field].as_f64().unwrap() - expected.as_f64().unwrap()).abs() < 1e-10,
+                            "{input}: {field}"
+                        );
+                    } else {
+                        assert_eq!(feature["parameters"][field], *expected, "{input}: {field}");
+                    }
+                }
+            }
+            for (field, source_type) in case["source_types"].as_object().unwrap() {
+                assert_eq!(feature["sources"][field]["type"], *source_type, "{input}: {field}");
+            }
+            if let Some(code) = case["warning_code"].as_str() {
+                assert!(output["warnings"].to_string().contains(code), "{input}: {output}");
+            }
+            assert_eq!(
+                crate::cad_plan_validation::validate_plan(&output["plan"])["state"],
+                "valid",
+                "{input}: {}",
+                crate::cad_plan_validation::validate_plan(&output["plan"])
+            );
+            assert_eq!(
+                crate::native_plan_geometry::preflight(&output["plan"])
+                    .unwrap()["state"],
+                "valid",
+                "{input}"
+            );
+        }
+
+        for case in fixture["not_ready"].as_array().unwrap() {
+            let input = case["input"].as_str().unwrap();
+            let output = parse(input);
+            assert_eq!(output["status"], "needs_clarification", "{input}: {output}");
+            assert!(output["plan"].is_null(), "{input}: {output}");
+            assert!(output.to_string().contains(case["issue"].as_str().unwrap()), "{input}: {output}");
+        }
+
+        for case in fixture["unsupported"].as_array().unwrap() {
+            let input = case["input"].as_str().unwrap();
+            let output = parse(input);
+            assert_eq!(output["status"], "unsupported", "{input}: {output}");
+            assert!(output["plan"].is_null(), "{input}: {output}");
+            assert!(output.to_string().contains(case["issue"].as_str().unwrap()), "{input}: {output}");
+        }
+
+        for case in fixture["known_legacy_discrepancies"].as_array().unwrap() {
+            let input = case["input"].as_str().unwrap();
+            if input == "键 宽10 高8 长40" {
+                let output = parse(input);
+                assert_ne!(output["plan"]["name"], "平键", "do not steal the legacy generic-box alias: {output}");
+            }
+        }
+
+        let short_labels = parse("平键 宽8 高7 长40");
+        assert_eq!(short_labels["status"], "ready", "{short_labels}");
+        assert_eq!(short_labels["plan"]["features"][0]["parameters"]["length"], 8.0);
+        assert_eq!(short_labels["plan"]["features"][0]["parameters"]["width"], 7.0);
+        assert_eq!(short_labels["plan"]["features"][0]["parameters"]["height"], 40.0);
     }
 }

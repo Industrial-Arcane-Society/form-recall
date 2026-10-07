@@ -1,0 +1,175 @@
+{
+  "schema_version": "1.0",
+  "legacy_entrypoint": "src/legacy/ai_modeler/core/parsing/nlparser.py::Parser.parse",
+  "legacy_builder": "src/legacy/ai_modeler/parts/library/partlib.py::_key",
+  "axis_mapping": {
+    "box.length": "key width b along X",
+    "box.width": "key height h along Y",
+    "box.height": "key length L along Z",
+    "center": [0.0, 0.0, 0.0],
+    "base": false
+  },
+  "legacy_accepted": [
+    {
+      "input": "平键 宽度8 高度7 长度40",
+      "dimensions_mm": [8.0, 7.0, 40.0],
+      "box_parameters": {
+        "length": 8.0,
+        "width": 7.0,
+        "height": 40.0,
+        "center": [0, 0, 0],
+        "base": false
+      },
+      "legacy_mesh_volume_mm3": 2240.0,
+      "source_types": {
+        "length": "user",
+        "width": "user",
+        "height": "user"
+      }
+    },
+    {
+      "input": "键 b8 h7 L40",
+      "dimensions_mm": [8.0, 7.0, 40.0],
+      "box_parameters": {
+        "length": 8.0,
+        "width": 7.0,
+        "height": 40.0,
+        "center": [0, 0, 0],
+        "base": false
+      },
+      "legacy_mesh_volume_mm3": 2240.0,
+      "source_types": {
+        "length": "user",
+        "width": "user",
+        "height": "user"
+      }
+    },
+    {
+      "input": "平键 高度7 长度40",
+      "dimensions_mm": [8.0, 7.0, 40.0],
+      "box_parameters": {
+        "length": 8.0,
+        "width": 7.0,
+        "height": 40.0,
+        "center": [0, 0, 0],
+        "base": false
+      },
+      "legacy_mesh_volume_mm3": 2240.0,
+      "source_types": {
+        "length": "derived",
+        "width": "user",
+        "height": "user"
+      },
+      "warning_code": "legacy_flat_key_default_width"
+    },
+    {
+      "input": "平键 宽度8 高度7 长度40 倒角1",
+      "dimensions_mm": [8.0, 7.0, 40.0],
+      "box_parameters": {
+        "length": 8.0,
+        "width": 7.0,
+        "height": 40.0,
+        "center": [0, 0, 0],
+        "base": false,
+        "corner": 1.0,
+        "corner_mode": "chamfer"
+      },
+      "legacy_mesh_volume_mm3": 2160.0,
+      "source_types": {
+        "length": "user",
+        "width": "user",
+        "height": "user",
+        "corner": "user",
+        "corner_mode": "user"
+      }
+    },
+    {
+      "input": "平键 宽度8 高度7 长度40 圆角R1",
+      "dimensions_mm": [8.0, 7.0, 40.0],
+      "box_parameters": {
+        "length": 8.0,
+        "width": 7.0,
+        "height": 40.0,
+        "center": [0, 0, 0],
+        "base": false,
+        "corner": 1.0,
+        "corner_mode": "fillet"
+      },
+      "legacy_mesh_volume_mm3": 2204.8578060903224,
+      "source_types": {
+        "length": "user",
+        "width": "user",
+        "height": "user",
+        "corner": "user",
+        "corner_mode": "user"
+      }
+    }
+  ],
+  "not_ready": [
+    {
+      "input": "平键 长度40",
+      "issue": "legacy_flat_key_height"
+    },
+    {
+      "input": "平键 宽度8 高度7",
+      "issue": "legacy_flat_key_length"
+    },
+    {
+      "input": "平键 宽度0 高度7 长度40",
+      "issue": "legacy_flat_key_width_invalid"
+    },
+    {
+      "input": "平键 宽度8 高度7 长度40 倒角-1",
+      "issue": "legacy_flat_key_corner_invalid"
+    },
+    {
+      "input": "平键 宽度8 高度7 长度40 圆角1 倒角1",
+      "issue": "legacy_flat_key_corner_mode_conflict"
+    }
+  ],
+  "unsupported": [
+    {
+      "input": "平键 宽度8 高度7 长度40 键槽宽4深2",
+      "issue": "legacy_flat_key_modifier_not_migrated"
+    },
+    {
+      "input": "平键 宽度8 高度7 长度40 两个",
+      "issue": "legacy_flat_key_modifier_not_migrated"
+    }
+  ],
+  "known_legacy_discrepancies": [
+    {
+      "input": "键 宽10 高8 长40",
+      "legacy_actual": "The legacy Parser does not select the flat-key recipe for these short Chinese labels; it creates a generic base-at-zero box with dimensions 40×10×8 mm.",
+      "migration_behavior": "Do not claim bare 键 plus short Chinese labels as a flat key; retain the existing generic Quick route."
+    },
+    {
+      "input": "平键 宽8 高7 长40",
+      "legacy_actual": "The legacy Parser does not recognize the short Chinese aliases and creates no model.",
+      "migration_behavior": "Rust accepts these explicit short labels as a documented input extension and maps them to 8×7×40 mm."
+    }
+  ],
+  "native_expected_cases": [
+    {
+      "input": "平键 宽度8 高度7 长度40",
+      "dimensions_mm": [8.0, 7.0, 40.0],
+      "volume_mm3": 2240.0,
+      "legacy_mesh_volume_mm3": 2240.0,
+      "max_relative_legacy_volume_delta": 0.000001
+    },
+    {
+      "input": "平键 宽度8 高度7 长度40 倒角1",
+      "dimensions_mm": [8.0, 7.0, 40.0],
+      "volume_mm3": 2160.0,
+      "legacy_mesh_volume_mm3": 2160.0,
+      "max_relative_legacy_volume_delta": 0.000001
+    },
+    {
+      "input": "平键 宽度8 高度7 长度40 圆角R1",
+      "dimensions_mm": [8.0, 7.0, 40.0],
+      "volume_mm3": 2204.8578060903224,
+      "legacy_mesh_volume_mm3": 2204.8578060903224,
+      "max_relative_legacy_volume_delta": 0.000001
+    }
+  ]
+}
