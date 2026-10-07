@@ -3695,6 +3695,147 @@ mod acceptance_tests {
         assert!(generic_width > 19.2 + 1e-3,
             "default tangent web should differ from legacy rectangular width; width={generic_width}, intervals={generic_mid_web:?}");
         assert!((quick.shape.volume().unwrap() - generic.shape.volume().unwrap()).abs() > 1e-6);
+        // F5.98's exact original phrase carries explicit 40/18 mm bores.
+        // Keep this alongside the default-ratio case above: otherwise a
+        // passing ring test can silently compare against different geometry.
+        let exact_input = "连杆 中心距120 大头外径48 大头孔径40 小头外径24 小头孔径18";
+        let exact_output = build(exact_input, 2, &manifest, &root)
+            .unwrap_or_else(|error| panic!("F5.98 exact Quick build failed: {error}"));
+        assert_eq!(exact_output["state"], "complete", "{exact_output}");
+        let exact_plan = exact_output["cadplan"].clone();
+        let exact_feature = &exact_plan["features"][0];
+        assert_eq!(
+            exact_feature["parameters"]["big_bore"], 40.0,
+            "{exact_input}: {exact_feature}"
+        );
+        assert_eq!(
+            exact_feature["parameters"]["small_bore"], 18.0,
+            "{exact_input}: {exact_feature}"
+        );
+        assert_eq!(
+            exact_feature["geometry_variant"],
+            "legacy_quick_rectangular_shank"
+        );
+        let exact_report = &exact_output["geometry_report"];
+        assert_eq!(
+            exact_report["state"], "passed",
+            "{exact_input}: {exact_report}"
+        );
+        assert_eq!(
+            exact_report["closed_solid_count"], 1,
+            "{exact_input}: {exact_report}"
+        );
+        for (axis, (actual, expected)) in exact_report["dimensions_mm"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .zip([156.0, 48.0, 14.4])
+            .enumerate()
+        {
+            assert!(
+                (actual.as_f64().unwrap() - expected).abs() <= 1e-5,
+                "{exact_input}: bbox axis {axis}: {exact_report}"
+            );
+        }
+        let exact_paths = exact_output["output_paths"].as_object().unwrap();
+        let exact_stl = Path::new(exact_paths["stl"].as_str().unwrap());
+        assert!(exact_stl.is_file(), "{exact_input}: missing candidate STL");
+        println!("F5.98 exact candidate STL: {}", exact_stl.display());
+        let exact_quick =
+            native_plan_geometry::build(&exact_plan, &manifest, &AtomicBool::new(false))
+                .expect("build exact F5.98 Quick plan for ring evidence");
+        for (label, origin, outward, bore_radius, outer_radius) in [
+            ("big", [-60.0, 0.0, 0.0], [-1.0, 0.0, 0.0], 20.0, 24.0),
+            ("small", [60.0, 0.0, 0.0], [1.0, 0.0, 0.0], 9.0, 12.0),
+        ] {
+            let vertex = exact_quick
+                .shape
+                .line_material_intervals(origin, outward, 0.0, 40.0, 1e-7)
+                .expect("measure exact F5.98 phase-zero vertex");
+            assert_eq!(vertex.len(), 1, "{label} exact ring vertex: {vertex:?}");
+            assert!(
+                (vertex[0][0] - bore_radius).abs() <= 1e-5,
+                "{label} explicit bore at phase-zero vertex: {vertex:?}"
+            );
+            assert!(
+                (vertex[0][1] - outer_radius).abs() <= 1e-5,
+                "{label} explicit outer radius at phase-zero vertex: {vertex:?}"
+            );
+
+            let mid_angle = std::f64::consts::PI / 32.0;
+            let mid_direction = if label == "big" {
+                [-mid_angle.cos(), -mid_angle.sin(), 0.0]
+            } else {
+                [mid_angle.cos(), mid_angle.sin(), 0.0]
+            };
+            let mid = exact_quick
+                .shape
+                .line_material_intervals(origin, mid_direction, 0.0, 40.0, 1e-7)
+                .expect("measure exact F5.98 segment midpoint");
+            assert_eq!(mid.len(), 1, "{label} exact ring segment midpoint: {mid:?}");
+            let apothem = mid_angle.cos();
+            assert!(
+                (mid[0][0] - bore_radius * apothem).abs() <= 1e-5,
+                "{label} explicit-bore 32-edge apothem: {mid:?}"
+            );
+            assert!(
+                (mid[0][1] - outer_radius * apothem).abs() <= 1e-5,
+                "{label} outer 32-edge apothem: {mid:?}"
+            );
+        }
+        // Probe the through-thickness bore direction too. The legacy full-length
+        // rectangular web overlaps the nominal bores: only the outward crescent
+        // remains open. These samples make that Quick recipe behavior explicit.
+        for (label, blocked_x, open_x) in [("big", -59.0, -70.0), ("small", 59.0, 65.0)] {
+            let blocked = exact_quick
+                .shape
+                .line_material_intervals([blocked_x, 0.0, -10.0], [0.0, 0.0, 1.0], 0.0, 20.0, 1e-7)
+                .expect("measure web-overlapped F5.98 hole path");
+            assert_eq!(
+                blocked.len(),
+                1,
+                "{label} bore axis intersects the legacy web: {blocked:?}"
+            );
+            assert!(
+                (blocked[0][0] - 2.8).abs() <= 1e-5 && (blocked[0][1] - 17.2).abs() <= 1e-5,
+                "{label} web occupies the full 14.4 mm thickness: {blocked:?}"
+            );
+            let open = exact_quick
+                .shape
+                .line_material_intervals([open_x, 0.0, -10.0], [0.0, 0.0, 1.0], 0.0, 20.0, 1e-7)
+                .expect("measure outward open part of F5.98 hole path");
+            assert!(
+                open.is_empty(),
+                "{label} outward bore crescent should be clear: {open:?}"
+            );
+        }
+        assert!(
+            exact_quick.shape.cylindrical_faces().unwrap().is_empty(),
+            "F5.98 Quick rings should have faceted, not analytic, radial faces"
+        );
+        let mut exact_generic_plan = exact_plan;
+        exact_generic_plan["features"][0]
+            .as_object_mut()
+            .unwrap()
+            .remove("geometry_variant");
+        let exact_generic =
+            native_plan_geometry::build(&exact_generic_plan, &manifest, &AtomicBool::new(false))
+                .expect("build unmarked F5.98 CADPlan with analytic rings");
+        let analytic_radii: Vec<f64> = exact_generic
+            .shape
+            .cylindrical_faces()
+            .unwrap()
+            .into_iter()
+            .map(|face| face.radius)
+            .collect();
+        for expected in [9.0, 12.0, 20.0, 24.0] {
+            assert!(
+                analytic_radii
+                    .iter()
+                    .any(|radius| (radius - expected).abs() <= 1e-5),
+                "unmarked plan must retain analytic radius {expected}; faces={analytic_radii:?}"
+            );
+        }
     }
 
     #[test]

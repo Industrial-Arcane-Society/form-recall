@@ -5923,7 +5923,7 @@ fn parse_legacy_conrod(raw: &str, text: &str) -> Option<Value> {
             "shank_w":if default_shank_w || !close(effective_shank_w, requested_shank_w) { derived_source(raw, "沿用旧 Python Quick 杆身宽度默认值或几何内核上限。") } else { user_source(raw) },
             "thick":if default_thickness || !close(effective_thickness, requested_thickness) { derived_source(raw, "沿用旧 Python 几何内核杆厚默认值或下限。") } else { user_source(raw) },
             "center":derived_source(raw, "旧 Python Quick 将大小头中心放在 X 轴、以全局原点为中心。"),
-            "segments":derived_source(raw, "旧 Python Quick 的圆环分段数为 32；本地 B-Rep 使用解析回转。")
+            "segments":derived_source(raw, "旧 Python Quick 使用相位 0 的 32 段圆环；标记 Quick B-Rep 保留分段环，未标记 CADPlan 仍使用解析回转。")
         },
         "relations":[]
     });
