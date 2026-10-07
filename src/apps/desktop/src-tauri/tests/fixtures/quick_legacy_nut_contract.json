@@ -1,0 +1,115 @@
+{
+  "source": {
+    "quick_entry": "src/legacy/ai_modeler/core/parsing/nlparser.py::Parser.parse/Parser.handle",
+    "part_library": "src/legacy/ai_modeler/parts/library/partlib.py::PARTS['螺母'] and _nut",
+    "mesh_build": "src/legacy/ai_modeler/core/model/docmodel.py::Feature.build and Document.stats",
+    "units": "mm"
+  },
+  "legacy_accepted": [
+    {
+      "input": "螺母 M10",
+      "recognized": 1,
+      "features": [
+        {
+          "kind": "cylinder",
+          "operation": "add",
+          "parameters": {
+            "radius": 5.0,
+            "height": 8.0,
+            "center": [0.0, 0.0, 0.0],
+            "base": false,
+            "segments": 6
+          }
+        },
+        {
+          "kind": "hole",
+          "operation": "cut",
+          "parameters": {
+            "diameter": 9.6,
+            "through": true,
+            "pos": "center",
+            "segments": 32
+          }
+        }
+      ],
+      "legacy_mesh": {
+        "dimensions_mm": [10.0, 10.0, 8.0],
+        "volume_mm3": 8.108395077428696,
+        "faces": 100,
+        "triangles": 168
+      },
+      "known_issue": "The partlib fallback makes the outer diameter equal to the nominal M diameter. The mesh kernel raises 6 cylinder segments to 8, and the 9.6 mm bore leaves disconnected thin corner material."
+    },
+    {
+      "input": "螺母 D10 s17 m8",
+      "recognized": 1,
+      "features": [
+        {
+          "kind": "cylinder",
+          "operation": "add",
+          "parameters": {
+            "radius": 8.5,
+            "height": 8.0,
+            "center": [0.0, 0.0, 0.0],
+            "base": false,
+            "segments": 6
+          }
+        },
+        {
+          "kind": "hole",
+          "operation": "cut",
+          "parameters": {
+            "diameter": 10.0,
+            "through": true,
+            "pos": "center",
+            "segments": 32
+          }
+        }
+      ],
+      "legacy_mesh": {
+        "dimensions_mm": [17.0, 17.0, 8.0],
+        "volume_mm3": 1010.5418476516859,
+        "faces": 104,
+        "triangles": 160
+      }
+    }
+  ],
+  "native_expectations": [
+    {
+      "input": "螺母 M10",
+      "dimensions_mm": [10.0, 10.0, 8.0],
+      "volume_mm3": 71.4282002040651,
+      "hole_diameter_mm": 8.86924351210835,
+      "closed_solid_count": 1,
+      "expected_warnings": [
+        "legacy_nut_outer_size_defaulted",
+        "legacy_nut_height_defaulted",
+        "legacy_nut_hole_clamped",
+        "legacy_nut_hole_clamped_for_single_solid"
+      ]
+    },
+    {
+      "input": "螺母 D10 s17 m8",
+      "dimensions_mm": [17.0, 17.0, 8.0],
+      "volume_mm3": 1006.51234738534,
+      "hole_diameter_mm": 10.0,
+      "closed_solid_count": 1,
+      "expected_warnings": []
+    }
+  ],
+  "needs_clarification": [
+    { "input": "螺母", "issue": "legacy_nut_nominal_diameter_required" },
+    { "input": "螺母 M10 厚度0", "issue": "legacy_nut_height_invalid" },
+    { "input": "螺母 D10 D12", "issue": "legacy_nut_nominal_diameter_invalid" }
+  ],
+  "unsupported": [
+    { "input": "螺母 M10 加沉孔", "issue": "legacy_nut_modifier_not_migrated" }
+  ],
+  "expanded_aliases": [
+    {
+      "input": "螺母 直径10 对边17 厚8",
+      "dimensions_mm": [17.0, 17.0, 8.0],
+      "hole_diameter_mm": 10.0
+    }
+  ]
+}

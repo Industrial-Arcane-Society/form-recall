@@ -49,6 +49,10 @@ pub fn parse(text: &str) -> Value {
         return parsed;
     }
 
+    if let Some(parsed) = parse_legacy_nut(text, &normalized) {
+        return parsed;
+    }
+
     if let Some(parsed) = parse_legacy_spoked_handwheel(text, &normalized) {
         return parsed;
     }
@@ -638,8 +642,8 @@ fn result(
         "questions":questions,
         "unsupported":unsupported,
         "compatibility":{
-            "scope":"common explicit primitives/cuts, migrated standalone primitive defaults and legacy extrusion/revolve constructors, centered solid-shaft aliases, rectangular slots, flat-washer rings, cylindrical/conical spring helices, measured socket-head screws with optional washers, V-belt pulleys, timing pulleys, straight-gear construction, PCD counterbores, base plates, support legs, connection blocks and pieces, migrated legacy washer/spring/shaft/bearing/seal-ring/coupling/brake-disc/brake-drum/flywheel/flat-annular-part/disc-cam/spline-shaft/crankshaft/camshaft/piston/worm/triangular-rotor/valve recipes, and executable flange/stepped-shaft/sleeve/blade/blisk templates",
-            "legacy_typical_defaults":"restored only for migrated Quick constructors/templates, centered solid shafts (Ø30 mm when diameter is absent), straight gears, timing pulleys, V-belt pulleys, socket-head screw catalog recipes, rectangular slots, flat-washer thickness, spring wire/turn values, brake-disc thickness/bore values, brake-drum bore values, flywheel center-bore/PCD-hole values, flat-annular-part bore/thickness values, disc-cam base diameter/thickness, spline-shaft minor diameter/tooth count, crankshaft main/pin journal diameters and stroke/throw count, camshaft lobe count/journal diameter, piston pin diameter/ring groove count, worm pitch diameter, triangular-rotor R=60 mm and center bore ⌀24 mm when omitted, valve stem diameter d=8 mm when omitted, base-plate thickness, connection-block height and default center-hole values, and connection-piece thickness; defaults and raw-dimension mappings are reported as warnings",
+            "scope":"common explicit primitives/cuts, migrated standalone primitive defaults and legacy extrusion/revolve constructors, centered solid-shaft aliases, rectangular slots, flat-washer rings, cylindrical/conical spring helices, measured socket-head screws with optional washers, V-belt pulleys, timing pulleys, straight-gear construction, PCD counterbores, base plates, support legs, connection blocks and pieces, legacy smooth-bore nut recipe, migrated legacy washer/spring/shaft/bearing/seal-ring/coupling/brake-disc/brake-drum/flywheel/flat-annular-part/disc-cam/spline-shaft/crankshaft/camshaft/piston/worm/triangular-rotor/valve recipes, and executable flange/stepped-shaft/sleeve/blade/blisk templates",
+            "legacy_typical_defaults":"restored only for migrated Quick constructors/templates, centered solid shafts (Ø30 mm when diameter is absent), straight gears, timing pulleys, V-belt pulleys, socket-head screw catalog recipes, rectangular slots, nut thickness 8 mm when absent, flat-washer thickness, spring wire/turn values, brake-disc thickness/bore values, brake-drum bore values, flywheel center-bore/PCD-hole values, flat-annular-part bore/thickness values, disc-cam base diameter/thickness, spline-shaft minor diameter/tooth count, crankshaft main/pin journal diameters and stroke/throw count, camshaft lobe count/journal diameter, piston pin diameter/ring groove count, worm pitch diameter, triangular-rotor R=60 mm and center bore ⌀24 mm when omitted, valve stem diameter d=8 mm when omitted, base-plate thickness, connection-block height and default center-hole values, and connection-piece thickness; defaults and raw-dimension mappings are reported as warnings",
             "loft_geometry":"blade and blisk lofts are locally approximate faceted B-Reps",
             "timing_pulley_geometry":"native timing pulley teeth are approximate trapezoidal prisms fused to an analytic annular blank",
             "vbelt_pulley_geometry":"standard V-groove pulley is an approximate axisymmetric revolve; legacy spoke variants and CATIA-native groove features are not included",
@@ -1146,6 +1150,191 @@ fn parse_legacy_support_leg(raw: &str, text: &str) -> Option<Value> {
         }));
     }
     Some(plan_result(raw, "支腿", features, warnings))
+}
+
+/// Migrate the legacy Python `_nut` recipe. Although that recipe requests a
+/// six-segment cylinder, the old mesh kernel clamps cylinders to at least 8
+/// segments, so its actual outer mesh is an octagonal prism. Preserve that
+/// measured envelope and smooth center bore; explicitly report the internal
+/// thread omission and clamp an oversized bore enough to keep one valid solid.
+fn parse_legacy_nut(raw: &str, text: &str) -> Option<Value> {
+    if !contains_any(text, &["螺母", "螺帽", "nut"]) || contains_any(text, &["螺母座", "螺母支座"]) {
+        return None;
+    }
+
+    if contains_any(
+        text,
+        &["圆角", "倒角", "倒圆", "沉孔", "沉头", "盲孔", "键槽", "开槽", "环槽", "并加", "同时", "再加", "还要"],
+    ) {
+        return Some(parse_result_with_issue(
+            "unsupported",
+            raw,
+            "legacy_nut_modifier_not_migrated",
+            "旧 Python Quick 螺母配方只生成外形与中心通孔；额外孔槽、沉头、圆角和倒角尚未迁入。",
+        ));
+    }
+
+    let nominal_diameter = nut_scalar(
+        raw,
+        text,
+        &["螺纹规格", "公称直径", "螺纹直径", "直径", "diameter"],
+        &["D", "d", "M"],
+    );
+    let explicit_outer_size = nut_scalar(raw, text, &["对边宽度", "对边"], &["s", "S"]);
+    let explicit_height = nut_scalar(raw, text, &["厚度", "高度", "厚", "height"], &["m", "h"]);
+
+    let mut questions = Vec::new();
+    for (value, required, invalid, label) in [
+        (
+            nominal_diameter,
+            "legacy_nut_nominal_diameter_required",
+            "legacy_nut_nominal_diameter_invalid",
+            "螺纹公称直径 D",
+        ),
+        (
+            explicit_outer_size,
+            "legacy_nut_outer_size_required",
+            "legacy_nut_outer_size_invalid",
+            "外形尺寸 s",
+        ),
+        (
+            explicit_height,
+            "legacy_nut_height_required",
+            "legacy_nut_height_invalid",
+            "厚度 m",
+        ),
+    ] {
+        if value.is_some_and(|value| !value.is_finite() || value <= 0.0) {
+            questions.push(issue(
+                invalid,
+                format!("螺母{label}必须是有限正数，重复尺寸不能冲突。"),
+            ));
+        } else if value.is_none() && required == "legacy_nut_nominal_diameter_required" {
+            questions.push(issue(
+                required,
+                "请提供螺母螺纹公称直径，例如 M10 或 D10。".to_owned(),
+            ));
+        }
+    }
+    if !questions.is_empty() {
+        return Some(result("needs_clarification", raw, None, vec![], questions, vec![]));
+    }
+
+    let nominal_diameter = nominal_diameter.expect("validated nut nominal diameter");
+    let outer_size_defaulted = explicit_outer_size.is_none();
+    let outer_size = explicit_outer_size.unwrap_or(nominal_diameter);
+    let height_defaulted = explicit_height.is_none();
+    let height = explicit_height.unwrap_or(8.0);
+
+    // The Python mesh kernel clamps its cylinder segments to 8, regardless of
+    // the legacy `_nut` request for 6. Use the same eight vertices and phase.
+    let radius = outer_size / 2.0;
+    let diagonal = radius / std::f64::consts::SQRT_2;
+    let profile = json!([
+        [radius, 0.0],
+        [diagonal, diagonal],
+        [0.0, radius],
+        [-diagonal, diagonal],
+        [-radius, 0.0],
+        [-diagonal, -diagonal],
+        [0.0, -radius],
+        [diagonal, -diagonal]
+    ]);
+
+    // First reproduce `_clamp_cuts` (96% of the circumscribed diameter). A
+    // faceted cylinder has a smaller inscribed diameter; if the old clamp
+    // disconnects the remaining corners, reduce it to a 96% inscribed limit
+    // so the native CAD B-Rep remains one closed solid.
+    let legacy_hole_limit = outer_size * 0.96;
+    let legacy_hole_clamped = nominal_diameter >= legacy_hole_limit;
+    let mut hole_diameter = if legacy_hole_clamped {
+        legacy_hole_limit
+    } else {
+        nominal_diameter
+    };
+    let inscribed_hole_limit = outer_size * (std::f64::consts::PI / 8.0).cos() * 0.96;
+    let solid_safety_clamped = hole_diameter >= inscribed_hole_limit;
+    if solid_safety_clamped {
+        hole_diameter = inscribed_hole_limit;
+    }
+
+    let mut warnings = vec![issue(
+        "legacy_nut_smooth_bore_and_octagonal_mesh",
+        "沿用旧 Python Quick `_nut` 的外形与光孔语义：该配方不生成内螺纹；其 `segments=6` 被旧网格内核最低分段数规则提升到 8，因此这里使用八边形外形。",
+    )];
+    if outer_size_defaulted {
+        warnings.push(issue(
+            "legacy_nut_outer_size_defaulted",
+            "未给对边尺寸 s，沿用旧 `_nut` 构造器实际回退值 s=D；零件库 TYPICAL 中更大的对边值没有传给该构造器。",
+        ));
+    }
+    if height_defaulted {
+        warnings.push(issue(
+            "legacy_nut_height_defaulted",
+            "未给螺母厚度，沿用旧 `_nut` 构造器回退值 8 mm。",
+        ));
+    }
+    if legacy_hole_clamped {
+        warnings.push(issue(
+            "legacy_nut_hole_clamped",
+            format!("沿用旧 Quick 的中心切除上限 96%×外形直径，将通孔从 {nominal_diameter} mm 限制为 {legacy_hole_limit} mm。"),
+        ));
+    }
+    if solid_safety_clamped {
+        warnings.push(issue(
+            "legacy_nut_hole_clamped_for_single_solid",
+            format!("旧网格规则的圆形外径限值会切断八边形螺母的薄壁，无法形成单一闭合 B-Rep；为保持有效实体，将通孔进一步限制为八边形内切直径的 96%（{hole_diameter} mm）。"),
+        ));
+    }
+    if !has_unit(raw) && contains_any(text, &["公称直径", "直径", "对边", "厚度", "厚"]) {
+        warnings.push(issue(
+            "unit_interpreted_as_mm",
+            "未写单位的螺母尺寸按 mm 解释。",
+        ));
+    }
+
+    let height_source = if height_defaulted {
+        derived_source(raw, "沿用旧 `_nut` 构造器默认厚度 8 mm。")
+    } else {
+        user_source(raw)
+    };
+    let center_z = -height / 2.0;
+    let mut hole_source = user_source(raw);
+    if legacy_hole_clamped || solid_safety_clamped {
+        hole_source = derived_source(raw, "按旧中心切除限值及单一闭合实体约束计算通孔直径。" );
+    }
+    let features = vec![
+        json!({
+            "id":"quick-0001",
+            "kind":"prism",
+            "operation":"add",
+            "name":"螺母外形（旧八边形网格近似）",
+            "parameters":{"profile":profile,"height":height,"center":[0.0,0.0,center_z],"axis":"Z"},
+            "sources":{
+                "profile":derived_source(raw, "按旧半径 s/2 与 8 段圆周采样生成外形轮廓。"),
+                "height":height_source,
+                "center":derived_source(raw, "旧 Python Quick 将螺母沿 Z 居中；棱柱特征的 center 表示拉伸起点，因此 z=-m/2。"),
+                "axis":derived_source(raw, "旧 Python Quick 螺母沿 Z 轴放置。")
+            },
+            "relations":[]
+        }),
+        json!({
+            "id":"quick-0002",
+            "kind":"hole",
+            "operation":"cut",
+            "name":"中心通孔（无内螺纹）",
+            "parameters":{"diameter":hole_diameter,"through":true,"pos":"center","axis":"Z","segments":32},
+            "sources":{
+                "diameter":hole_source,
+                "through":derived_source(raw, "沿用旧 Python Quick 中心孔贯穿螺母。"),
+                "pos":derived_source(raw, "沿用旧 Python Quick 将孔置于中心。"),
+                "axis":derived_source(raw, "沿用旧 Python Quick 中心孔沿 Z 轴贯穿。"),
+                "segments":derived_source(raw, "沿用旧 Python Quick 中心孔分段数 32。")
+            },
+            "relations":[]
+        })
+    ];
+    Some(plan_result(raw, "螺母", features, warnings))
 }
 
 /// Migrate the Python Quick connection-block recipe: a centered rectangular
@@ -8581,6 +8770,62 @@ fn pulley_scalar(raw: &str, text: &str, labels: &[&str], short_labels: &[&str]) 
             values.push(value);
         }
     }
+    if values.is_empty() {
+        None
+    } else if values
+        .iter()
+        .all(|value| value.is_finite() && close(*value, values[0]))
+    {
+        Some(values[0])
+    } else {
+        Some(f64::NAN)
+    }
+}
+
+fn nut_scalar(raw: &str, text: &str, labels: &[&str], short_labels: &[&str]) -> Option<f64> {
+    let mut values = Vec::new();
+    if let Some(value) = scalar(text, labels) {
+        values.push(value);
+    }
+    for label in short_labels {
+        if let Some(value) = nut_short_scalar(raw, label) {
+            values.push(value);
+        }
+    }
+    if values.is_empty() {
+        None
+    } else if values
+        .iter()
+        .all(|value| value.is_finite() && close(*value, values[0]))
+    {
+        Some(values[0])
+    } else {
+        Some(f64::NAN)
+    }
+}
+
+/// Parse compact nut labels without consuming the next parameter as a unit.
+/// For example, `s17 m8` means s=17 and m=8, not s=17 metres.
+fn nut_short_scalar(raw: &str, label: &str) -> Option<f64> {
+    let pattern = format!(
+        r"(?:^|[^A-Za-z0-9]){}\s*[:：=]?\s*([+-]?(?:\d+(?:\.\d*)?|\.\d+))\s*(毫米|厘米|分米|英寸|mm|cm|dm|in|米|m)?",
+        regex::escape(label)
+    );
+    let regex = regex::Regex::new(&pattern).ok()?;
+    let values = regex
+        .captures_iter(raw)
+        .filter_map(|capture| {
+            let value = capture.get(1)?.as_str().parse::<f64>().ok()?;
+            let unit = capture.get(2).filter(|unit| {
+                raw[unit.end()..]
+                    .chars()
+                    .next()
+                    .is_none_or(|next| !next.is_ascii_alphanumeric())
+            });
+            let unit = unit.map_or("", |unit| unit.as_str());
+            Some(value * scale(unit))
+        })
+        .collect::<Vec<_>>();
     if values.is_empty() {
         None
     } else if values
@@ -16817,6 +17062,85 @@ mod f5_60_legacy_connection_block_contract_tests {
                 output.to_string().contains(case["issue"].as_str().unwrap()),
                 "{input}: {output}"
             );
+        }
+    }
+}
+
+#[cfg(test)]
+mod f5_61_legacy_nut_parser_tests {
+    use super::parse;
+    use serde_json::Value;
+
+    #[test]
+    fn nuts_preserve_legacy_dimensions_and_report_geometry_corrections() {
+        let fixture: Value = serde_json::from_str(include_str!(
+            "../tests/fixtures/quick_legacy_nut_contract.json"
+        ))
+        .expect("nut compatibility fixture is valid JSON");
+
+        for case in fixture["legacy_accepted"].as_array().unwrap() {
+            let input = case["input"].as_str().unwrap();
+            let output = parse(input);
+            assert_eq!(output["status"], "ready", "{input}: {output}");
+            let features = output["plan"]["features"].as_array().unwrap();
+            assert_eq!(features.len(), 2, "{input}: {output}");
+            assert_eq!(features[0]["kind"], "prism", "{input}: outer feature");
+            assert_eq!(features[1]["kind"], "hole", "{input}: bore feature");
+            assert_eq!(features[0]["parameters"]["profile"].as_array().unwrap().len(), 8);
+
+            let old_outer = &case["features"][0]["parameters"];
+            let expected_radius = old_outer["radius"].as_f64().unwrap();
+            let actual_profile = features[0]["parameters"]["profile"].as_array().unwrap();
+            assert!(
+                (actual_profile[0][0].as_f64().unwrap() - expected_radius).abs() <= 1e-9,
+                "{input}: outer radius changed"
+            );
+            assert_eq!(
+                features[0]["parameters"]["height"], old_outer["height"],
+                "{input}: height changed"
+            );
+
+            let native_case = fixture["native_expectations"]
+                .as_array()
+                .unwrap()
+                .iter()
+                .find(|expected| expected["input"] == input)
+                .expect("each legacy input has native expectations");
+            assert_eq!(
+                features[1]["parameters"]["diameter"], native_case["hole_diameter_mm"],
+                "{input}: bore size"
+            );
+            for code in native_case["expected_warnings"].as_array().unwrap() {
+                assert!(
+                    output["warnings"].to_string().contains(code.as_str().unwrap()),
+                    "{input}: missing warning {code}: {output}"
+                );
+            }
+            let validation = crate::cad_plan_validation::validate_plan(&output["plan"]);
+            assert_eq!(validation["valid"], true, "{input}: {validation}");
+        }
+
+        for case in fixture["expanded_aliases"].as_array().unwrap() {
+            let input = case["input"].as_str().unwrap();
+            let output = parse(input);
+            assert_eq!(output["status"], "ready", "{input}: {output}");
+            let features = output["plan"]["features"].as_array().unwrap();
+            assert_eq!(features[1]["parameters"]["diameter"], case["hole_diameter_mm"]);
+            assert_eq!(features[0]["parameters"]["profile"][0][0], 8.5);
+        }
+
+        for case in fixture["needs_clarification"].as_array().unwrap() {
+            let input = case["input"].as_str().unwrap();
+            let output = parse(input);
+            assert_eq!(output["status"], "needs_clarification", "{input}: {output}");
+            assert!(output.to_string().contains(case["issue"].as_str().unwrap()));
+        }
+
+        for case in fixture["unsupported"].as_array().unwrap() {
+            let input = case["input"].as_str().unwrap();
+            let output = parse(input);
+            assert_eq!(output["status"], "unsupported", "{input}: {output}");
+            assert!(output.to_string().contains(case["issue"].as_str().unwrap()));
         }
     }
 }
