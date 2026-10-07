@@ -7,6 +7,7 @@ use std::sync::OnceLock;
 mod legacy_catalog_box_defaults;
 mod legacy_catalog_cylinder_defaults;
 mod legacy_catalog_egt_profile;
+mod legacy_catalog_socket_screw;
 
 const BEARING_STANDARDS: &str = include_str!("../../../../legacy/kb/bearing_std.json");
 const LEGACY_LOCATOR_PIN_CATALOG: &str = include_str!("native_quick_locator_pin_catalog.json");
@@ -51,6 +52,10 @@ pub fn parse(text: &str) -> Value {
     }
 
     if let Some(parsed) = parse_legacy_hex_bolt(text, &normalized) {
+        return parsed;
+    }
+
+    if let Some(parsed) = legacy_catalog_socket_screw::parse(text, &normalized) {
         return parsed;
     }
 
