@@ -4,6 +4,10 @@
 use serde_json::{Value, json};
 use std::sync::OnceLock;
 
+mod legacy_catalog_box_defaults;
+mod legacy_catalog_cylinder_defaults;
+mod legacy_catalog_egt_profile;
+
 const BEARING_STANDARDS: &str = include_str!("../../../../legacy/kb/bearing_std.json");
 const LEGACY_LOCATOR_PIN_CATALOG: &str = include_str!("native_quick_locator_pin_catalog.json");
 
@@ -152,6 +156,9 @@ pub fn parse(text: &str) -> Value {
     if let Some(parsed) = parse_legacy_support_leg(text, &normalized) {
         return parsed;
     }
+    if let Some(parsed) = legacy_catalog_box_defaults::parse(text, &normalized) {
+        return parsed;
+    }
     if let Some(parsed) = parse_legacy_connection_block(text, &normalized) {
         return parsed;
     }
@@ -168,6 +175,9 @@ pub fn parse(text: &str) -> Value {
         return parsed;
     }
     if let Some(parsed) = parse_legacy_shaft(text, &normalized) {
+        return parsed;
+    }
+    if let Some(parsed) = legacy_catalog_cylinder_defaults::parse(text, &normalized) {
         return parsed;
     }
 
@@ -675,6 +685,9 @@ fn result(
 }
 
 fn parse_legacy_template(raw: &str, normalized: &str) -> Option<Value> {
+    if let Some(parsed) = legacy_catalog_egt_profile::parse(raw, normalized) {
+        return Some(parsed);
+    }
     if contains_any(normalized, &["整体叶盘", "叶盘", "叶轮", "blisk"]) {
         return Some(parse_blisk_template(raw, normalized));
     }
