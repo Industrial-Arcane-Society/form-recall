@@ -1,0 +1,566 @@
+{
+  "schema_version": 1,
+  "units": "mm",
+  "thresholds": {
+    "surface_tolerance_mm": 0.08,
+    "weld_tolerance_mm": 1e-05,
+    "weld_tolerance_basis": "10 µm is larger than binary STL float32 ulp at these 20–40 mm extents, and much smaller than the 0.08 mm surface tolerance"
+  },
+  "inputs": {
+    "legacy_document_build_raw": {
+      "path": "C:\\Users\\lycohana\\.codex\\worktrees\\f5-95-surface-compare\\AI-_-\\artifacts\\f5.95\\oracle\\cylindrical\\legacy_document_build_raw.stl",
+      "sha256": "30565206c5d0af6dcba95c6323206dae8a8124d5b8e84d7cad50c37ecfc18e84",
+      "triangle_count": 6192,
+      "bounds_mm": {
+        "minimum": [
+          -10.0,
+          -10.0,
+          -15.0
+        ],
+        "maximum": [
+          10.0,
+          10.0,
+          15.0
+        ]
+      },
+      "signed_volume_mm3": 7078.287341357884,
+      "surface_area_mm2": 2819.6328516972044,
+      "topology": {
+        "weld_tolerance_mm": 1e-05,
+        "welded_vertex_count": 3098,
+        "edge_count": 9288,
+        "boundary_edge_count": 0,
+        "nonmanifold_edge_count": 0,
+        "orientation_conflict_edge_count": 296,
+        "degenerate_triangle_count": 0,
+        "duplicate_triangle_count": 0,
+        "connected_triangle_components": 1,
+        "closed_manifold": true,
+        "closed_oriented_manifold": false
+      }
+    },
+    "legacy_document_build_brep_mesh": {
+      "path": "C:\\Users\\lycohana\\.codex\\worktrees\\f5-95-surface-compare\\AI-_-\\artifacts\\f5.95\\oracle\\cylindrical\\legacy_document_build_brep_mesh.stl",
+      "sha256": "7eabe4efdbed81f09169e48bfc1a47a68c38bbb053c0ccdaf08561b2f7716d29",
+      "triangle_count": 6192,
+      "bounds_mm": {
+        "minimum": [
+          -10.0,
+          -10.0,
+          -15.0
+        ],
+        "maximum": [
+          10.0,
+          10.0,
+          15.0
+        ]
+      },
+      "signed_volume_mm3": 1391.5434496870662,
+      "surface_area_mm2": 2819.632851697213,
+      "topology": {
+        "weld_tolerance_mm": 1e-05,
+        "welded_vertex_count": 3098,
+        "edge_count": 9288,
+        "boundary_edge_count": 0,
+        "nonmanifold_edge_count": 0,
+        "orientation_conflict_edge_count": 0,
+        "degenerate_triangle_count": 0,
+        "duplicate_triangle_count": 0,
+        "connected_triangle_components": 1,
+        "closed_manifold": true,
+        "closed_oriented_manifold": true
+      }
+    },
+    "rust_headless_quick": {
+      "path": "C:\\Users\\lycohana\\.codex\\worktrees\\f5-95-surface-compare\\AI-_-\\artifacts\\f5.95\\rust\\cylindrical\\rust_headless_quick.stl",
+      "sha256": "250af837cbbae4847d6cbd194e2217d666d50792fd16f2c889a8a5065481cc41",
+      "triangle_count": 6192,
+      "bounds_mm": {
+        "minimum": [
+          -10.0,
+          -10.0,
+          -15.0
+        ],
+        "maximum": [
+          10.0,
+          10.0,
+          15.0
+        ]
+      },
+      "signed_volume_mm3": 1391.5434496870662,
+      "surface_area_mm2": 2819.632851697213,
+      "topology": {
+        "weld_tolerance_mm": 1e-05,
+        "welded_vertex_count": 3098,
+        "edge_count": 9288,
+        "boundary_edge_count": 0,
+        "nonmanifold_edge_count": 0,
+        "orientation_conflict_edge_count": 0,
+        "degenerate_triangle_count": 0,
+        "duplicate_triangle_count": 0,
+        "connected_triangle_components": 1,
+        "closed_manifold": true,
+        "closed_oriented_manifold": true
+      }
+    }
+  },
+  "comparisons": {
+    "legacy_raw_vs_rust": {
+      "left": "legacy_document_build_raw",
+      "right": "rust_headless_quick",
+      "coordinate_policy": "shared world coordinates in millimetres; no per-mesh normalization or alignment",
+      "surface_sampling": {
+        "method": "four deterministic barycentric interior samples per non-degenerate triangle, weighted by triangle area",
+        "distance": "exact point-to-triangle distance queried against a triangle AABB BVH",
+        "limitation": "sampled approximation to continuous surface distance; not an exact continuous Hausdorff bound",
+        "left_to_right": {
+          "sample_count": 24768,
+          "sampled_surface_area_mm2": 2819.632851697313,
+          "weighted_mean_mm": 2.190440274225089e-15,
+          "weighted_rms_mm": 4.535993817907835e-15,
+          "weighted_p50_mm": 9.930136612989092e-16,
+          "weighted_p95_mm": 1.0658141036401503e-14,
+          "weighted_p99_mm": 2.161031364628563e-14,
+          "sampled_max_mm": 4.38817669384961e-14
+        },
+        "right_to_left": {
+          "sample_count": 24768,
+          "sampled_surface_area_mm2": 2819.6328516971794,
+          "weighted_mean_mm": 2.2094091088457473e-15,
+          "weighted_rms_mm": 4.553182320436966e-15,
+          "weighted_p50_mm": 9.930136612989092e-16,
+          "weighted_p95_mm": 1.0695084443661336e-14,
+          "weighted_p99_mm": 2.1573778854906178e-14,
+          "sampled_max_mm": 4.38817669384961e-14
+        },
+        "symmetric_sampled_max_mm": 4.38817669384961e-14
+      },
+      "surface_equivalence_passed": true,
+      "topology": {
+        "left": {
+          "weld_tolerance_mm": 1e-05,
+          "welded_vertex_count": 3098,
+          "edge_count": 9288,
+          "boundary_edge_count": 0,
+          "nonmanifold_edge_count": 0,
+          "orientation_conflict_edge_count": 296,
+          "degenerate_triangle_count": 0,
+          "duplicate_triangle_count": 0,
+          "connected_triangle_components": 1,
+          "closed_manifold": true,
+          "closed_oriented_manifold": false
+        },
+        "right": {
+          "weld_tolerance_mm": 1e-05,
+          "welded_vertex_count": 3098,
+          "edge_count": 9288,
+          "boundary_edge_count": 0,
+          "nonmanifold_edge_count": 0,
+          "orientation_conflict_edge_count": 0,
+          "degenerate_triangle_count": 0,
+          "duplicate_triangle_count": 0,
+          "connected_triangle_components": 1,
+          "closed_manifold": true,
+          "closed_oriented_manifold": true
+        },
+        "compatible_closed_components": true
+      },
+      "bounds_max_abs_delta_mm": 0.0,
+      "signed_volume_mm3": {
+        "left": 7078.287341357884,
+        "right": 1391.5434496870662,
+        "absolute_delta": 5686.743891670818,
+        "reported_allowance": 225.57062813577704,
+        "allowance_basis": "surface_tolerance_mm × larger triangulated surface area",
+        "comparable_as_oriented_solid": false,
+        "within_allowance": false,
+        "raw_mesh_volume_invalid": true,
+        "status": "not_comparable_due_to_orientation"
+      },
+      "tolerance_mm": 0.08,
+      "tolerance_basis": "default 0.08 mm equals the linear deflection passed to the Rust native Quick and legacy BREP tessellators; override explicitly for other meshing settings",
+      "common_frame_orthographic_projections": {
+        "world_frame_union_bounds_mm": [
+          [
+            -10.0,
+            -10.0,
+            -15.0
+          ],
+          [
+            10.0,
+            10.0,
+            15.0
+          ]
+        ],
+        "by_plane": {
+          "XY": {
+            "64": {
+              "legacy_covered_pixels": 1126,
+              "candidate_covered_pixels": 1126,
+              "xor_pixels": 0,
+              "iou": 1.0
+            },
+            "128": {
+              "legacy_covered_pixels": 4465,
+              "candidate_covered_pixels": 4465,
+              "xor_pixels": 0,
+              "iou": 1.0
+            },
+            "256": {
+              "legacy_covered_pixels": 18037,
+              "candidate_covered_pixels": 18037,
+              "xor_pixels": 0,
+              "iou": 1.0
+            }
+          },
+          "XZ": {
+            "64": {
+              "legacy_covered_pixels": 3178,
+              "candidate_covered_pixels": 3178,
+              "xor_pixels": 0,
+              "iou": 1.0
+            },
+            "128": {
+              "legacy_covered_pixels": 12911,
+              "candidate_covered_pixels": 12911,
+              "xor_pixels": 0,
+              "iou": 1.0
+            },
+            "256": {
+              "legacy_covered_pixels": 52058,
+              "candidate_covered_pixels": 52058,
+              "xor_pixels": 0,
+              "iou": 1.0
+            }
+          },
+          "YZ": {
+            "64": {
+              "legacy_covered_pixels": 3116,
+              "candidate_covered_pixels": 3116,
+              "xor_pixels": 0,
+              "iou": 1.0
+            },
+            "128": {
+              "legacy_covered_pixels": 12660,
+              "candidate_covered_pixels": 12660,
+              "xor_pixels": 0,
+              "iou": 1.0
+            },
+            "256": {
+              "legacy_covered_pixels": 51023,
+              "candidate_covered_pixels": 51023,
+              "xor_pixels": 0,
+              "iou": 1.0
+            }
+          }
+        }
+      },
+      "passed": true
+    },
+    "legacy_brep_oracle_vs_rust": {
+      "left": "legacy_document_build_brep_mesh",
+      "right": "rust_headless_quick",
+      "coordinate_policy": "shared world coordinates in millimetres; no per-mesh normalization or alignment",
+      "surface_sampling": {
+        "method": "four deterministic barycentric interior samples per non-degenerate triangle, weighted by triangle area",
+        "distance": "exact point-to-triangle distance queried against a triangle AABB BVH",
+        "limitation": "sampled approximation to continuous surface distance; not an exact continuous Hausdorff bound",
+        "left_to_right": {
+          "sample_count": 24768,
+          "sampled_surface_area_mm2": 2819.6328516971794,
+          "weighted_mean_mm": 2.1814335545650605e-15,
+          "weighted_rms_mm": 4.521669328860958e-15,
+          "weighted_p50_mm": 9.930136612989092e-16,
+          "weighted_p95_mm": 1.0395861869767154e-14,
+          "weighted_p99_mm": 2.161031364628563e-14,
+          "sampled_max_mm": 4.38817669384961e-14
+        },
+        "right_to_left": {
+          "sample_count": 24768,
+          "sampled_surface_area_mm2": 2819.6328516971794,
+          "weighted_mean_mm": 2.1814335545650605e-15,
+          "weighted_rms_mm": 4.521669328860958e-15,
+          "weighted_p50_mm": 9.930136612989092e-16,
+          "weighted_p95_mm": 1.0395861869767154e-14,
+          "weighted_p99_mm": 2.161031364628563e-14,
+          "sampled_max_mm": 4.38817669384961e-14
+        },
+        "symmetric_sampled_max_mm": 4.38817669384961e-14
+      },
+      "surface_equivalence_passed": true,
+      "topology": {
+        "left": {
+          "weld_tolerance_mm": 1e-05,
+          "welded_vertex_count": 3098,
+          "edge_count": 9288,
+          "boundary_edge_count": 0,
+          "nonmanifold_edge_count": 0,
+          "orientation_conflict_edge_count": 0,
+          "degenerate_triangle_count": 0,
+          "duplicate_triangle_count": 0,
+          "connected_triangle_components": 1,
+          "closed_manifold": true,
+          "closed_oriented_manifold": true
+        },
+        "right": {
+          "weld_tolerance_mm": 1e-05,
+          "welded_vertex_count": 3098,
+          "edge_count": 9288,
+          "boundary_edge_count": 0,
+          "nonmanifold_edge_count": 0,
+          "orientation_conflict_edge_count": 0,
+          "degenerate_triangle_count": 0,
+          "duplicate_triangle_count": 0,
+          "connected_triangle_components": 1,
+          "closed_manifold": true,
+          "closed_oriented_manifold": true
+        },
+        "compatible_closed_components": true
+      },
+      "bounds_max_abs_delta_mm": 0.0,
+      "signed_volume_mm3": {
+        "left": 1391.5434496870662,
+        "right": 1391.5434496870662,
+        "absolute_delta": 0.0,
+        "reported_allowance": 225.57062813577704,
+        "allowance_basis": "surface_tolerance_mm × larger triangulated surface area",
+        "comparable_as_oriented_solid": true,
+        "within_allowance": true,
+        "raw_mesh_volume_invalid": false,
+        "status": "within_allowance"
+      },
+      "tolerance_mm": 0.08,
+      "tolerance_basis": "default 0.08 mm equals the linear deflection passed to the Rust native Quick and legacy BREP tessellators; override explicitly for other meshing settings",
+      "common_frame_orthographic_projections": {
+        "world_frame_union_bounds_mm": [
+          [
+            -10.0,
+            -10.0,
+            -15.0
+          ],
+          [
+            10.0,
+            10.0,
+            15.0
+          ]
+        ],
+        "by_plane": {
+          "XY": {
+            "64": {
+              "legacy_covered_pixels": 1126,
+              "candidate_covered_pixels": 1126,
+              "xor_pixels": 0,
+              "iou": 1.0
+            },
+            "128": {
+              "legacy_covered_pixels": 4465,
+              "candidate_covered_pixels": 4465,
+              "xor_pixels": 0,
+              "iou": 1.0
+            },
+            "256": {
+              "legacy_covered_pixels": 18037,
+              "candidate_covered_pixels": 18037,
+              "xor_pixels": 0,
+              "iou": 1.0
+            }
+          },
+          "XZ": {
+            "64": {
+              "legacy_covered_pixels": 3178,
+              "candidate_covered_pixels": 3178,
+              "xor_pixels": 0,
+              "iou": 1.0
+            },
+            "128": {
+              "legacy_covered_pixels": 12911,
+              "candidate_covered_pixels": 12911,
+              "xor_pixels": 0,
+              "iou": 1.0
+            },
+            "256": {
+              "legacy_covered_pixels": 52058,
+              "candidate_covered_pixels": 52058,
+              "xor_pixels": 0,
+              "iou": 1.0
+            }
+          },
+          "YZ": {
+            "64": {
+              "legacy_covered_pixels": 3116,
+              "candidate_covered_pixels": 3116,
+              "xor_pixels": 0,
+              "iou": 1.0
+            },
+            "128": {
+              "legacy_covered_pixels": 12660,
+              "candidate_covered_pixels": 12660,
+              "xor_pixels": 0,
+              "iou": 1.0
+            },
+            "256": {
+              "legacy_covered_pixels": 51023,
+              "candidate_covered_pixels": 51023,
+              "xor_pixels": 0,
+              "iou": 1.0
+            }
+          }
+        }
+      },
+      "passed": true
+    },
+    "legacy_raw_vs_legacy_brep_oracle": {
+      "left": "legacy_document_build_raw",
+      "right": "legacy_document_build_brep_mesh",
+      "coordinate_policy": "shared world coordinates in millimetres; no per-mesh normalization or alignment",
+      "surface_sampling": {
+        "method": "four deterministic barycentric interior samples per non-degenerate triangle, weighted by triangle area",
+        "distance": "exact point-to-triangle distance queried against a triangle AABB BVH",
+        "limitation": "sampled approximation to continuous surface distance; not an exact continuous Hausdorff bound",
+        "left_to_right": {
+          "sample_count": 24768,
+          "sampled_surface_area_mm2": 2819.632851697313,
+          "weighted_mean_mm": 2.190440274225089e-15,
+          "weighted_rms_mm": 4.535993817907835e-15,
+          "weighted_p50_mm": 9.930136612989092e-16,
+          "weighted_p95_mm": 1.0658141036401503e-14,
+          "weighted_p99_mm": 2.161031364628563e-14,
+          "sampled_max_mm": 4.38817669384961e-14
+        },
+        "right_to_left": {
+          "sample_count": 24768,
+          "sampled_surface_area_mm2": 2819.6328516971794,
+          "weighted_mean_mm": 2.2094091088457473e-15,
+          "weighted_rms_mm": 4.553182320436966e-15,
+          "weighted_p50_mm": 9.930136612989092e-16,
+          "weighted_p95_mm": 1.0695084443661336e-14,
+          "weighted_p99_mm": 2.1573778854906178e-14,
+          "sampled_max_mm": 4.38817669384961e-14
+        },
+        "symmetric_sampled_max_mm": 4.38817669384961e-14
+      },
+      "surface_equivalence_passed": true,
+      "topology": {
+        "left": {
+          "weld_tolerance_mm": 1e-05,
+          "welded_vertex_count": 3098,
+          "edge_count": 9288,
+          "boundary_edge_count": 0,
+          "nonmanifold_edge_count": 0,
+          "orientation_conflict_edge_count": 296,
+          "degenerate_triangle_count": 0,
+          "duplicate_triangle_count": 0,
+          "connected_triangle_components": 1,
+          "closed_manifold": true,
+          "closed_oriented_manifold": false
+        },
+        "right": {
+          "weld_tolerance_mm": 1e-05,
+          "welded_vertex_count": 3098,
+          "edge_count": 9288,
+          "boundary_edge_count": 0,
+          "nonmanifold_edge_count": 0,
+          "orientation_conflict_edge_count": 0,
+          "degenerate_triangle_count": 0,
+          "duplicate_triangle_count": 0,
+          "connected_triangle_components": 1,
+          "closed_manifold": true,
+          "closed_oriented_manifold": true
+        },
+        "compatible_closed_components": true
+      },
+      "bounds_max_abs_delta_mm": 0.0,
+      "signed_volume_mm3": {
+        "left": 7078.287341357884,
+        "right": 1391.5434496870662,
+        "absolute_delta": 5686.743891670818,
+        "reported_allowance": 225.57062813577704,
+        "allowance_basis": "surface_tolerance_mm × larger triangulated surface area",
+        "comparable_as_oriented_solid": false,
+        "within_allowance": false,
+        "raw_mesh_volume_invalid": true,
+        "status": "not_comparable_due_to_orientation"
+      },
+      "tolerance_mm": 0.08,
+      "tolerance_basis": "default 0.08 mm equals the linear deflection passed to the Rust native Quick and legacy BREP tessellators; override explicitly for other meshing settings",
+      "common_frame_orthographic_projections": {
+        "world_frame_union_bounds_mm": [
+          [
+            -10.0,
+            -10.0,
+            -15.0
+          ],
+          [
+            10.0,
+            10.0,
+            15.0
+          ]
+        ],
+        "by_plane": {
+          "XY": {
+            "64": {
+              "legacy_covered_pixels": 1126,
+              "candidate_covered_pixels": 1126,
+              "xor_pixels": 0,
+              "iou": 1.0
+            },
+            "128": {
+              "legacy_covered_pixels": 4465,
+              "candidate_covered_pixels": 4465,
+              "xor_pixels": 0,
+              "iou": 1.0
+            },
+            "256": {
+              "legacy_covered_pixels": 18037,
+              "candidate_covered_pixels": 18037,
+              "xor_pixels": 0,
+              "iou": 1.0
+            }
+          },
+          "XZ": {
+            "64": {
+              "legacy_covered_pixels": 3178,
+              "candidate_covered_pixels": 3178,
+              "xor_pixels": 0,
+              "iou": 1.0
+            },
+            "128": {
+              "legacy_covered_pixels": 12911,
+              "candidate_covered_pixels": 12911,
+              "xor_pixels": 0,
+              "iou": 1.0
+            },
+            "256": {
+              "legacy_covered_pixels": 52058,
+              "candidate_covered_pixels": 52058,
+              "xor_pixels": 0,
+              "iou": 1.0
+            }
+          },
+          "YZ": {
+            "64": {
+              "legacy_covered_pixels": 3116,
+              "candidate_covered_pixels": 3116,
+              "xor_pixels": 0,
+              "iou": 1.0
+            },
+            "128": {
+              "legacy_covered_pixels": 12660,
+              "candidate_covered_pixels": 12660,
+              "xor_pixels": 0,
+              "iou": 1.0
+            },
+            "256": {
+              "legacy_covered_pixels": 51023,
+              "candidate_covered_pixels": 51023,
+              "xor_pixels": 0,
+              "iou": 1.0
+            }
+          }
+        }
+      },
+      "passed": true
+    }
+  },
+  "passed": true
+}

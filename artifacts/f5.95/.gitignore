@@ -1,0 +1,5 @@
+oracle/**/*.step
+oracle/**/legacy_document_build_brep_mesh_0p08_0p35.stl
+rust/**/scratch/
+rust/**/headless_report.json
+rust/**/surface_comparison_stdout.json

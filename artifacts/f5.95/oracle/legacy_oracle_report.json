@@ -1,0 +1,296 @@
+{
+  "schema_version": 1,
+  "source": "legacy Python Quick Parser.parse -> Document.build and Document.build_brep",
+  "python": "3.11.9 (tags/v3.11.9:de54cf5, Apr  2 2024, 10:12:12) [MSC v.1938 64 bit (AMD64)]",
+  "ocp": "7.9.3.1",
+  "cases": [
+    {
+      "name": "cylindrical",
+      "input": "螺旋弹簧 外径20 线径2 高度30 圈数8",
+      "parser": {
+        "ok": true,
+        "summary": "识别到 1 条建模指令",
+        "warnings": [],
+        "assumed": [],
+        "questions": []
+      },
+      "features": [
+        {
+          "kind": "helix",
+          "operation": "add",
+          "name": "螺旋体",
+          "parameters": {
+            "radius": 8.991371039419848,
+            "wire_r": 1.0086289605801528,
+            "height": 27.982742078839696,
+            "turns": 8.0,
+            "center": [
+              0,
+              0,
+              -13.991371039419848
+            ],
+            "seg_per_turn": 16,
+            "wire_seg": 24,
+            "taper": 0.0,
+            "taper_start": 0.0
+          }
+        }
+      ],
+      "raw_document_build_stats": {
+        "faces": 3120,
+        "triangles": 6192,
+        "bbox": [
+          -10.0,
+          -10.0,
+          -15.0,
+          10.0,
+          10.0,
+          15.0
+        ],
+        "size": [
+          20.0,
+          20.0,
+          30.0
+        ],
+        "volume": 7078.287680443186,
+        "area": 2819.632912716889
+      },
+      "brep_report": {
+        "backend": "occt_brep",
+        "kernel": "可用：OCCT 7.9.3.1 / cadquery-ocp-novtk 7.9.3.1.1",
+        "self_intersection_face_limit": 15000,
+        "geometry_state": "passed",
+        "state": "passed",
+        "brep_valid": true,
+        "shape_type": "TopAbs_SOLID",
+        "solid_count": 1,
+        "connected_component_count": 1,
+        "shell_count": 1,
+        "closed_shell_count": 1,
+        "closed": true,
+        "edge_count": 18576,
+        "face_count": 6192,
+        "free_edge_count": 0,
+        "volume_mm3": 1391.543508413009,
+        "bbox_mm": [
+          -10.0,
+          -10.0,
+          -15.0,
+          10.0,
+          10.0,
+          15.0
+        ],
+        "self_intersection": {
+          "status": "checked_no_intersection",
+          "face_count": 6192,
+          "face_limit": 15000,
+          "check_result_count": 0,
+          "check_statuses": [],
+          "method": "BOPAlgo_ArgumentAnalyzer(SelfInterMode=True, UseOBB=True)"
+        },
+        "validity_method": "BRepCheck_Analyzer",
+        "geometry_scope": "native_OCCT_BREP_only_visual_comparison_not_performed",
+        "feature_results": [
+          {
+            "feature_id": "0",
+            "kind": "helix",
+            "operation": "add",
+            "geometry_support": "approximate",
+            "builder": "faceted_brep_approximation",
+            "state": "applied",
+            "source_feature_id": null,
+            "source_resolution": null,
+            "solid_count": 1,
+            "brep_valid": true,
+            "before_volume_mm3": 0.0,
+            "after_volume_mm3": 1391.543508413009,
+            "volume_delta_mm3": 1391.543508413009,
+            "cylindrical_cut_intents": [],
+            "depth_measurement": null,
+            "facet_count": 6192
+          }
+        ],
+        "hole_instances": [],
+        "unverified_cut_intents": [],
+        "hole_feature_count": 0,
+        "measured_hole_source_feature_count": 0,
+        "unverified_cut_intent_count": 0,
+        "planned_hole_instance_count": 0,
+        "active_hole_instance_count": 0,
+        "superseded_hole_instance_count": 0,
+        "active_through_hole_count": 0,
+        "through_hole_count": 0,
+        "all_declared_holes_verified": true,
+        "visual_validation": "not_performed",
+        "catia_executed": false,
+        "build_transaction": "每个特征验证成功后才提交；失败保留上一有效实体"
+      },
+      "brep_tessellation": {
+        "linear_deflection_mm": 0.08,
+        "angular_deflection_rad": 0.35,
+        "relative": false
+      },
+      "files": {
+        "legacy_raw_stl": {
+          "path": "oracle\\cylindrical\\legacy_document_build_raw.stl",
+          "size_bytes": 309684,
+          "sha256": "30565206c5d0af6dcba95c6323206dae8a8124d5b8e84d7cad50c37ecfc18e84"
+        },
+        "legacy_brep": {
+          "path": "oracle\\cylindrical\\legacy_document_build_brep.brep",
+          "size_bytes": 6655405,
+          "sha256": "82bc27e486adbaf9d8e70728789818f6c8cf342b247f5eae8f64047de232e272"
+        },
+        "legacy_brep_tessellated_stl": {
+          "path": "oracle\\cylindrical\\legacy_document_build_brep_mesh.stl",
+          "size_bytes": 309684,
+          "sha256": "7eabe4efdbed81f09169e48bfc1a47a68c38bbb053c0ccdaf08561b2f7716d29"
+        }
+      }
+    },
+    {
+      "name": "conical",
+      "input": "锥形弹簧 外径24 线径2 高度40 圈数6",
+      "parser": {
+        "ok": true,
+        "summary": "识别到 1 条建模指令",
+        "warnings": [],
+        "assumed": [],
+        "questions": []
+      },
+      "features": [
+        {
+          "kind": "helix",
+          "operation": "add",
+          "name": "螺旋体",
+          "parameters": {
+            "radius": 10.991371039419848,
+            "wire_r": 1.0086289605801528,
+            "height": 37.98274207883969,
+            "turns": 6.0,
+            "center": [
+              0,
+              0,
+              -18.991371039419846
+            ],
+            "seg_per_turn": 16,
+            "wire_seg": 24,
+            "taper": 0.5,
+            "taper_start": 0.16666666666666666
+          }
+        }
+      ],
+      "raw_document_build_stats": {
+        "faces": 2352,
+        "triangles": 4656,
+        "bbox": [
+          -12.0,
+          -12.0,
+          -20.0,
+          12.0,
+          12.0,
+          20.0
+        ],
+        "size": [
+          24.0,
+          24.0,
+          40.0
+        ],
+        "volume": 5923.570669162395,
+        "area": 2053.817794281784
+      },
+      "brep_report": {
+        "backend": "occt_brep",
+        "kernel": "可用：OCCT 7.9.3.1 / cadquery-ocp-novtk 7.9.3.1.1",
+        "self_intersection_face_limit": 15000,
+        "geometry_state": "passed",
+        "state": "passed",
+        "brep_valid": true,
+        "shape_type": "TopAbs_SOLID",
+        "solid_count": 1,
+        "connected_component_count": 1,
+        "shell_count": 1,
+        "closed_shell_count": 1,
+        "closed": true,
+        "edge_count": 13968,
+        "face_count": 4656,
+        "free_edge_count": 0,
+        "volume_mm3": 1009.9939760458617,
+        "bbox_mm": [
+          -12.0,
+          -12.0,
+          -20.0,
+          12.0,
+          12.0,
+          20.0
+        ],
+        "self_intersection": {
+          "status": "checked_no_intersection",
+          "face_count": 4656,
+          "face_limit": 15000,
+          "check_result_count": 0,
+          "check_statuses": [],
+          "method": "BOPAlgo_ArgumentAnalyzer(SelfInterMode=True, UseOBB=True)"
+        },
+        "validity_method": "BRepCheck_Analyzer",
+        "geometry_scope": "native_OCCT_BREP_only_visual_comparison_not_performed",
+        "feature_results": [
+          {
+            "feature_id": "0",
+            "kind": "helix",
+            "operation": "add",
+            "geometry_support": "approximate",
+            "builder": "faceted_brep_approximation",
+            "state": "applied",
+            "source_feature_id": null,
+            "source_resolution": null,
+            "solid_count": 1,
+            "brep_valid": true,
+            "before_volume_mm3": 0.0,
+            "after_volume_mm3": 1009.9939760458617,
+            "volume_delta_mm3": 1009.9939760458617,
+            "cylindrical_cut_intents": [],
+            "depth_measurement": null,
+            "facet_count": 4656
+          }
+        ],
+        "hole_instances": [],
+        "unverified_cut_intents": [],
+        "hole_feature_count": 0,
+        "measured_hole_source_feature_count": 0,
+        "unverified_cut_intent_count": 0,
+        "planned_hole_instance_count": 0,
+        "active_hole_instance_count": 0,
+        "superseded_hole_instance_count": 0,
+        "active_through_hole_count": 0,
+        "through_hole_count": 0,
+        "all_declared_holes_verified": true,
+        "visual_validation": "not_performed",
+        "catia_executed": false,
+        "build_transaction": "每个特征验证成功后才提交；失败保留上一有效实体"
+      },
+      "brep_tessellation": {
+        "linear_deflection_mm": 0.08,
+        "angular_deflection_rad": 0.35,
+        "relative": false
+      },
+      "files": {
+        "legacy_raw_stl": {
+          "path": "oracle\\conical\\legacy_document_build_raw.stl",
+          "size_bytes": 232884,
+          "sha256": "d5733656827224341fe52d5d5952fe9f35df2de4e0e8c76a0205dd53a8d0b7ec"
+        },
+        "legacy_brep": {
+          "path": "oracle\\conical\\legacy_document_build_brep.brep",
+          "size_bytes": 4990758,
+          "sha256": "5c32b5e91d236c4c2a37195fd6d25b251ffc0d03b3c5b1df1ad6a19600ec4c9b"
+        },
+        "legacy_brep_tessellated_stl": {
+          "path": "oracle\\conical\\legacy_document_build_brep_mesh.stl",
+          "size_bytes": 232884,
+          "sha256": "3c751c2ac228a3a94361997191a91edf29b39ca39e7c5ee4d7967efa6ddccc50"
+        }
+      }
+    }
+  ]
+}
