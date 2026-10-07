@@ -3725,7 +3725,7 @@ fn parse_legacy_bearing(raw: &str, text: &str) -> Option<Value> {
         "推力滚子轴承",
     ];
     let conical = contains_any(text, &["圆锥滚子轴承", "锥轴承"]);
-    let thrust_ball = contains_any(text, &["推力球轴承", "平面轴承"]);
+    let thrust_ball = contains_any(text, &["推力球轴承", "推力轴承", "平面轴承"]);
     if !conical
         && contains_any(text, &unsupported_subtypes)
         && !thrust_ball
@@ -3741,12 +3741,6 @@ fn parse_legacy_bearing(raw: &str, text: &str) -> Option<Value> {
                 "当前只迁移旧 Quick 的深沟球、圆锥滚子和推力球轴承简化圆环；该轴承类型尚未迁移。",
             )],
         ));
-    }
-
-    // The old `推力轴承` alias was not reliably dispatched by Parser.parse;
-    // do not let the generic `轴承` alias silently turn it into a deep-groove ring.
-    if text.contains("推力轴承") && !text.contains("推力球轴承") {
-        return None;
     }
 
     let deep_groove = !conical

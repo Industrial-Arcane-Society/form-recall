@@ -2132,6 +2132,12 @@ mod acceptance_tests {
             assert_eq!(report["closed_solid_count"], 1, "{input}: {report}");
             let native_volume = report["volume_mm3"].as_f64().unwrap_or_default();
             assert!(native_volume > 0.0, "{input}: {report}");
+            if let Some(expected_volume) = case["analytic_volume_mm3"].as_f64() {
+                assert!(
+                    (native_volume - expected_volume).abs() <= 1e-4,
+                    "{input}: analytic B-Rep volume {expected_volume}, measured {native_volume}; {report}"
+                );
+            }
 
             let dimensions = output["stats"]["size"].as_array().expect("size summary");
             let expected = case["dimensions_mm"].as_array().unwrap();
@@ -2158,6 +2164,19 @@ mod acceptance_tests {
             assert_eq!(features[0]["kind"], "cylinder", "{input}");
             assert_eq!(features[1]["kind"], "hole", "{input}");
             assert_eq!(features[1]["operation"], "cut", "{input}");
+
+            if let Some(expected_diameter) = case["hole_diameter_mm"].as_f64() {
+                let holes = report["hole_instances"].as_array().expect("measured center hole");
+                assert_eq!(holes.len(), 1, "{input}: {report}");
+                assert_eq!(report["hole_measurements_verified"], true, "{input}: {report}");
+                assert_eq!(holes[0]["through"], true, "{input}: {}", holes[0]);
+                assert_eq!(holes[0]["status"], "verified_open", "{input}: {}", holes[0]);
+                assert!(
+                    (holes[0]["diameter_mm"].as_f64().unwrap() - expected_diameter).abs() < 1e-8,
+                    "{input}: measured bore does not match fixture: {}",
+                    holes[0]
+                );
+            }
 
             let paths = output["output_paths"].as_object().unwrap();
             for name in ["glb", "aimodel", "stl", "obj"] {
