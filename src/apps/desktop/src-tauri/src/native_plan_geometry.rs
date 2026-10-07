@@ -420,8 +420,10 @@ pub fn build(plan: &Value, manifest: &Path, cancelled: &AtomicBool) -> Result<Bu
                     native_parametric_features::build_piston(&kernel, &normalized["parameters"])?;
                 (tools, vec![], Some(support))
             } else if normalized["kind"] == "camshaft" {
-                let (tools, support) =
-                    native_parametric_features::build_camshaft(&kernel, &normalized["parameters"])?;
+                let variant = normalized["geometry_variant"].as_str();
+                let (tools, support) = native_parametric_features::build_camshaft_with_geometry_variant(
+                    &kernel, &normalized["parameters"], variant,
+                )?;
                 (tools, vec![], Some(support))
             } else if normalized["kind"] == "crankshaft" {
                 let variant = normalized["geometry_variant"].as_str();

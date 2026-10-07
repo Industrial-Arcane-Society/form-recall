@@ -632,12 +632,13 @@ pub fn validate_plan(plan: &Value) -> Value {
             continue;
         };
         if let Some(variant) = feature.get("geometry_variant") {
-            let valid_variant = (kind == "conrod" && variant.as_str() == Some("legacy_quick_rectangular_shank"))
+            let valid_variant = (kind == "camshaft" && variant.as_str() == Some("legacy_quick_24_segment_journal"))
+                || (kind == "conrod" && variant.as_str() == Some("legacy_quick_rectangular_shank"))
                 || (kind == "crankshaft" && variant.as_str() == Some("legacy_quick_dumbbell_cheeks"));
             if !valid_variant {
                 append_error(&mut errors, "invalid_geometry_variant",
                     format!("{path}.geometry_variant"),
-                    "geometry_variant 仅允许 conrod/legacy_quick_rectangular_shank 或 crankshaft/legacy_quick_dumbbell_cheeks。",
+                    "geometry_variant 仅允许 camshaft/legacy_quick_24_segment_journal、conrod/legacy_quick_rectangular_shank 或 crankshaft/legacy_quick_dumbbell_cheeks。",
                 );
             }
         }
@@ -1933,6 +1934,9 @@ fn local_support(
     if kind == "conrod" && geometry_variant == Some("legacy_quick_rectangular_shank") {
         reason = "解析大小头环与旧 Quick 全长矩形杆身并集；工字截面和锻造过渡仍为近似";
     }
+    if kind == "camshaft" && geometry_variant == Some("legacy_quick_24_segment_journal") {
+        reason = "旧 Quick 凸轮轴使用 24 边轴颈棱柱；凸轮轮廓仍按相同解析多边形构造";
+    }
     if kind == "crankshaft" && geometry_variant == Some("legacy_quick_dumbbell_cheeks") {
         reason = "解析主轴颈与偏心连杆颈，并以旧 Quick 哑铃形曲柄颊截面沿 X 棱柱化；倒角和锻造过渡仍为近似";
     }
@@ -2079,6 +2083,9 @@ fn feature_schema_for(spec: &Spec) -> Value {
     let mut feature_properties = json!({"id":{"type":"string","minLength":1},"kind":kind_enum[0],"operation":{"type":"string","enum":["add","cut"]},"name":{"type":"string"},"note":{"type":"string"},"enabled":{"type":"boolean","default":true},"parameters":{"type":"object","properties":pp,"required":conditional_required,"additionalProperties":false},"sources":{"type":"object","propertyNames":{"enum":words(spec.params)},"additionalProperties":{"$ref":"#/$defs/source"}},"relations":{"type":"array","items":{"$ref":"#/$defs/relation"}}});
     if spec.kind == "conrod" {
         feature_properties["geometry_variant"] = json!({"type":"string","const":"legacy_quick_rectangular_shank"});
+    }
+    if spec.kind == "camshaft" {
+        feature_properties["geometry_variant"] = json!({"type":"string","const":"legacy_quick_24_segment_journal"});
     }
     if spec.kind == "crankshaft" {
         feature_properties["geometry_variant"] = json!({"type":"string","const":"legacy_quick_dumbbell_cheeks"});
@@ -2374,6 +2381,22 @@ mod tests {
         ));
         wrong_kind["features"][0]["geometry_variant"] = json!("legacy_quick_dumbbell_cheeks");
         assert_eq!(validate_plan(&wrong_kind)["state"], json!("invalid"));
+    }
+
+    #[test]
+    fn quick_camshaft_faceted_journal_variant_is_scoped_and_schema_declared() {
+        let mut plan = base(feature(
+            "camshaft",
+            json!({"length":320,"journal_d":26,"base_d":30,"lift":8,"lobes":4,"center":[0,0,0]}),
+            json!({"length":{"type":"user"},"journal_d":{"type":"user"},"base_d":{"type":"user"},"lift":{"type":"user"},"lobes":{"type":"user"},"center":{"type":"derived"}}),
+        ));
+        plan["features"][0]["geometry_variant"] = json!("legacy_quick_24_segment_journal");
+        assert_eq!(validate_plan(&plan)["valid"], json!(true));
+        assert_eq!(feature_schema("camshaft").unwrap()["properties"]["geometry_variant"]["const"], json!("legacy_quick_24_segment_journal"));
+        plan["features"][0]["geometry_variant"] = json!("unexpected");
+        assert_eq!(validate_plan(&plan)["state"], json!("invalid"));
+        plan["features"][0]["kind"] = json!("box");
+        assert_eq!(validate_plan(&plan)["state"], json!("invalid"));
     }
 
     #[test]

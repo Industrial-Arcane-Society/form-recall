@@ -3339,6 +3339,8 @@ mod acceptance_tests {
             assert_eq!(report["state"], "passed", "{input}: {report}");
             assert_eq!(report["valid"], true, "{input}: {report}");
             assert_eq!(report["closed_solid_count"], 1, "{input}: {report}");
+            assert_eq!(report["feature_results"][0]["support_details"]["shaft_builder"], "legacy_quick_24_segment_prism", "{input}: {report}");
+            assert_eq!(report["feature_results"][0]["support_details"]["shaft_profile_segments"], 24, "{input}: {report}");
 
             let dimensions = report["dimensions_mm"].as_array().expect("measured dimensions");
             let expected_dimensions = case["dimensions_mm"].as_array().unwrap();
@@ -3360,7 +3362,7 @@ mod acceptance_tests {
                 actual_volume > 0.0 && actual_volume < bbox_volume,
                 "{input}: invalid volume {actual_volume}; {report}"
             );
-            if let Some(expected_volume) = case["brep_volume_mm3"].as_f64() {
+            if let Some(expected_volume) = case["legacy_brep_volume_mm3"].as_f64() {
                 assert!(
                     (actual_volume - expected_volume).abs() <= 0.01,
                     "{input}: B-Rep volume {actual_volume}, expected {expected_volume}; {report}"
@@ -3370,6 +3372,7 @@ mod acceptance_tests {
             let features = output["cadplan"]["features"].as_array().expect("CADPlan features");
             assert_eq!(features.len(), 1, "{input}: {output}");
             assert_eq!(features[0]["kind"], "camshaft", "{input}");
+            assert_eq!(features[0]["geometry_variant"], "legacy_quick_24_segment_journal", "{input}");
             let expected = case["native_expected"].as_object().unwrap();
             for (name, value) in expected {
                 assert_eq!(features[0]["parameters"][name], *value, "{input}: {name}");

@@ -1099,7 +1099,7 @@ fn result(
             "connection_piece_geometry":"legacy part-library output is a centered rectangular box with an optional 32-segment PCD through-hole pattern; the old _joint_piece docstring says stepped plate but its implementation creates no step, so explicit step requests are rejected rather than silently flattened",
             "locator_pin_geometry":"full KMS-M01 codes use the legacy public Parser.parse measured cylinder diameters and normalized Z intervals for all 22 catalog entries; generic or unrecognized codes retain the old Ø22/Ø10 equal-length fallback, which ignores a supplied pin diameter",
             "disc_cam_geometry":"72-point faceted polar profile extruded along Z; only the legacy fixed 120-degree rise angle is supported",
-            "camshaft_geometry":"48-point cam profiles and 120-degree harmonic rise are fused with an analytic X-axis shaft into one closed B-Rep; this differs from the legacy unfused faceted mesh",
+            "camshaft_geometry":"48-point cam profiles and 120-degree harmonic rise are fused with a 24-segment X-axis journal for legacy Quick; other CADPlan builders keep an analytic shaft",
             "crankshaft_geometry":"analytic journals with rectangular webs form one closed B-Rep; the legacy polygon mesh uses dumbbell-shaped cheek profiles, so the local Rust result is an explicitly approximate shape",
             "spline_shaft_geometry":"7-point-per-tooth faceted spline profile; the legacy involute-spline alias is not an involute profile",
             "piston_geometry":"closed legacy piston profile, ring grooves, and X-axis pin bore are rebuilt as an analytic OCCT revolve/cut; the old 48-segment outer mesh becomes analytic, with envelope preserved and mesh volume/facets changed",
@@ -7698,6 +7698,7 @@ fn parse_legacy_camshaft(raw: &str, text: &str) -> Option<Value> {
     parameters.insert("center".into(), json!([0.0, 0.0, 0.0]));
     sources.insert("center".into(), derived_source(raw, "旧 Python Quick 将凸轮轴轴线置于全局原点。"));
     let feature = json!({"id":"quick-0001","kind":"camshaft","operation":"add",
+        "geometry_variant":"legacy_quick_24_segment_journal",
         "name":"凸轮轴","parameters":parameters,"sources":sources,"relations":[]});
     Some(plan_result(raw, "凸轮轴", vec![feature], warnings))
 }
@@ -19144,6 +19145,7 @@ mod f5_44_legacy_camshaft_contract_tests {
             let camshaft = &features[0];
             assert_eq!(camshaft["kind"], "camshaft", "{input}");
             assert_eq!(camshaft["operation"], "add", "{input}");
+            assert_eq!(camshaft["geometry_variant"], "legacy_quick_24_segment_journal", "{input}");
             assert_eq!(camshaft["parameters"]["lobe_deg"], 0.0, "{input}");
             assert!(camshaft["sources"]["lobe_deg"].is_object(), "{input}: {camshaft}");
             for (name, expected) in case["native_expected"].as_object().unwrap() {

@@ -229,6 +229,14 @@ pub fn preflight_camshaft(parameters: &Value) -> Result<(), String> {
 }
 
 pub fn build_camshaft(kernel: &Kernel, parameters: &Value) -> Result<(Vec<Shape>, Value), String> {
+    build_camshaft_with_geometry_variant(kernel, parameters, None)
+}
+
+pub fn build_camshaft_with_geometry_variant(
+    kernel: &Kernel,
+    parameters: &Value,
+    geometry_variant: Option<&str>,
+) -> Result<(Vec<Shape>, Value), String> {
     preflight_camshaft(parameters)?;
     let length = number(parameters, "length")?;
     let journal_d = number(parameters, "journal_d")?;
@@ -241,8 +249,19 @@ pub fn build_camshaft(kernel: &Kernel, parameters: &Value) -> Result<(Vec<Shape>
     if lobe_width > length {
         return Err("凸轮轴凸轮宽度超过轴长。".into());
     }
-    let shaft = kernel.cylinder(journal_d / 2.0, length,
-        [center[0] - length / 2.0, center[1], center[2]], [1.0, 0.0, 0.0])?;
+    let shaft_start = [center[0] - length / 2.0, center[1], center[2]];
+    let shaft = if geometry_variant == Some("legacy_quick_24_segment_journal") {
+        let radius = journal_d / 2.0;
+        let profile: Vec<[f64; 2]> = (0..24)
+            .map(|index| {
+                let angle = std::f64::consts::TAU * index as f64 / 24.0;
+                [radius * angle.cos(), radius * angle.sin()]
+            })
+            .collect();
+        kernel.prism(&profile, length, shaft_start, Axis::X)?
+    } else {
+        kernel.cylinder(journal_d / 2.0, length, shaft_start, [1.0, 0.0, 0.0])?
+    };
     let mut shapes = vec![shaft];
     for i in 0..lobes {
         let theta = phase + std::f64::consts::TAU * i as f64 / lobes as f64;
@@ -271,7 +290,10 @@ pub fn build_camshaft(kernel: &Kernel, parameters: &Value) -> Result<(Vec<Shape>
         return Err("凸轮轴必须构成单一有效闭合实体。".into());
     }
     Ok((vec![result], json!({"geometry_support":"exact", "lobes_built":lobes,
-        "profile_samples":48, "shaft_axis":"global X", "legacy_cam_profile_angle_deg":120.0})))
+        "profile_samples":48, "shaft_axis":"global X", "legacy_cam_profile_angle_deg":120.0,
+        "shaft_builder": if geometry_variant == Some("legacy_quick_24_segment_journal") { "legacy_quick_24_segment_prism" } else { "analytic_cylinder" },
+        "shaft_profile_segments": if geometry_variant == Some("legacy_quick_24_segment_journal") { 24 } else { 0 },
+        "geometry_variant": geometry_variant})))
 }
 
 pub fn preflight_cross_joint(parameters: &Value) -> Result<(), String> {
