@@ -1,0 +1,323 @@
+{
+  "source": "Legacy public Parser.parse + Document.stats; face/triangle mesh baseline from src/legacy/ai_modeler/core/model/docmodel.py",
+  "catalog_source": "All 22 full KMS-M01 code outputs are sampled from the old public parser; segment diameters and normalized Z intervals are copied to native_quick_locator_pin_catalog.json.",
+  "native_acceptance": {
+    "relative_volume_tolerance": 0.02,
+    "dimension_tolerance_mm": 0.001,
+    "closed_solid_count": 1
+  },
+  "legacy_cases": [
+    {
+      "input": "定位销",
+      "legacy_feature_count": 2,
+      "dimensions_mm": [
+        22.0,
+        22.0,
+        60.0
+      ],
+      "legacy_mesh_volume_mm3": 13720.913326171787,
+      "legacy_faces": 227,
+      "legacy_triangles": 542
+    },
+    {
+      "input": "定位销 直径10 长40",
+      "legacy_feature_count": 2,
+      "dimensions_mm": [
+        22.0,
+        22.0,
+        40.0
+      ],
+      "legacy_mesh_volume_mm3": 9147.275550781229,
+      "legacy_faces": 227,
+      "legacy_triangles": 542
+    },
+    {
+      "input": "定位销 D18 h4 直径10 长40",
+      "legacy_feature_count": 2,
+      "dimensions_mm": [
+        22.0,
+        22.0,
+        40.0
+      ],
+      "legacy_mesh_volume_mm3": 9147.275550781229,
+      "legacy_faces": 227,
+      "legacy_triangles": 542
+    },
+    {
+      "input": "定位销 P097-A20",
+      "legacy_feature_count": 2,
+      "dimensions_mm": [
+        22.0,
+        22.0,
+        60.0
+      ],
+      "legacy_mesh_volume_mm3": 13720.913326171787,
+      "legacy_faces": 227,
+      "legacy_triangles": 542
+    },
+    {
+      "input": "定位销 KMS-M01-D159-A20",
+      "legacy_feature_count": 4,
+      "dimensions_mm": [
+        22.0,
+        22.0,
+        72.095
+      ],
+      "legacy_mesh_volume_mm3": 10174.059914485448,
+      "legacy_faces": 1141,
+      "legacy_triangles": 2458
+    },
+    {
+      "input": "定位销 KMS-M01-P077-A20",
+      "legacy_feature_count": 4,
+      "dimensions_mm": [
+        22.0,
+        22.0,
+        60.09
+      ],
+      "legacy_mesh_volume_mm3": 5633.963804682967,
+      "legacy_faces": 1755,
+      "legacy_triangles": 3686
+    },
+    {
+      "input": "定位销 KMS-M01-P079-A20",
+      "legacy_feature_count": 4,
+      "dimensions_mm": [
+        22.0,
+        22.0,
+        60.269
+      ],
+      "legacy_mesh_volume_mm3": 5696.766718485208,
+      "legacy_faces": 1753,
+      "legacy_triangles": 3682
+    },
+    {
+      "input": "定位销 KMS-M01-P079-A30",
+      "legacy_feature_count": 4,
+      "dimensions_mm": [
+        22.0,
+        22.0,
+        70.269
+      ],
+      "legacy_mesh_volume_mm3": 6088.9791278874445,
+      "legacy_faces": 1753,
+      "legacy_triangles": 3682
+    },
+    {
+      "input": "定位销 KMS-M01-P097-A15",
+      "legacy_feature_count": 4,
+      "dimensions_mm": [
+        22.0,
+        22.0,
+        57.308
+      ],
+      "legacy_mesh_volume_mm3": 6051.714357123456,
+      "legacy_faces": 1720,
+      "legacy_triangles": 3616
+    },
+    {
+      "input": "定位销 KMS-M01-P097-A20",
+      "legacy_feature_count": 4,
+      "dimensions_mm": [
+        22.0,
+        22.0,
+        62.30799999999999
+      ],
+      "legacy_mesh_volume_mm3": 6372.587626784106,
+      "legacy_faces": 1720,
+      "legacy_triangles": 3616
+    },
+    {
+      "input": "定位销 KMS-M01-P097-A30",
+      "legacy_feature_count": 4,
+      "dimensions_mm": [
+        22.0,
+        22.0,
+        72.308
+      ],
+      "legacy_mesh_volume_mm3": 7038.935724615242,
+      "legacy_faces": 1720,
+      "legacy_triangles": 3616
+    },
+    {
+      "input": "定位销 KMS-M01-P099-A15",
+      "legacy_feature_count": 4,
+      "dimensions_mm": [
+        22.0,
+        22.0,
+        57.50999999999999
+      ],
+      "legacy_mesh_volume_mm3": 6114.104664993057,
+      "legacy_faces": 1636,
+      "legacy_triangles": 3448
+    },
+    {
+      "input": "定位销 KMS-M01-P099-A20",
+      "legacy_feature_count": 4,
+      "dimensions_mm": [
+        22.0,
+        22.0,
+        62.51
+      ],
+      "legacy_mesh_volume_mm3": 6453.217359725488,
+      "legacy_faces": 1636,
+      "legacy_triangles": 3448
+    },
+    {
+      "input": "定位销 KMS-M01-P099-A30",
+      "legacy_feature_count": 4,
+      "dimensions_mm": [
+        22.0,
+        22.0,
+        72.51
+      ],
+      "legacy_mesh_volume_mm3": 7154.54971552762,
+      "legacy_faces": 1636,
+      "legacy_triangles": 3448
+    },
+    {
+      "input": "定位销 KMS-M01-P117-A15",
+      "legacy_feature_count": 4,
+      "dimensions_mm": [
+        22.0,
+        22.0,
+        60.715999999999994
+      ],
+      "legacy_mesh_volume_mm3": 6884.888597514048,
+      "legacy_faces": 1237,
+      "legacy_triangles": 2650
+    },
+    {
+      "input": "定位销 KMS-M01-P117-A20",
+      "legacy_feature_count": 4,
+      "dimensions_mm": [
+        22.0,
+        22.0,
+        65.716
+      ],
+      "legacy_mesh_volume_mm3": 7409.500001179114,
+      "legacy_faces": 1237,
+      "legacy_triangles": 2650
+    },
+    {
+      "input": "定位销 KMS-M01-P117-A30",
+      "legacy_feature_count": 4,
+      "dimensions_mm": [
+        22.0,
+        22.0,
+        75.716
+      ],
+      "legacy_mesh_volume_mm3": 8464.629968815269,
+      "legacy_faces": 1237,
+      "legacy_triangles": 2650
+    },
+    {
+      "input": "定位销 KMS-M01-P119-A20",
+      "legacy_feature_count": 4,
+      "dimensions_mm": [
+        22.0,
+        22.0,
+        65.906
+      ],
+      "legacy_mesh_volume_mm3": 7507.054326034752,
+      "legacy_faces": 1235,
+      "legacy_triangles": 2646
+    },
+    {
+      "input": "定位销 KMS-M01-P119-A30",
+      "legacy_feature_count": 4,
+      "dimensions_mm": [
+        22.0,
+        22.0,
+        75.906
+      ],
+      "legacy_mesh_volume_mm3": 8606.813444910413,
+      "legacy_faces": 1235,
+      "legacy_triangles": 2646
+    },
+    {
+      "input": "定位销 KMS-M01-P157-A20",
+      "legacy_feature_count": 4,
+      "dimensions_mm": [
+        22.0,
+        22.0,
+        71.922
+      ],
+      "legacy_mesh_volume_mm3": 10038.401820213216,
+      "legacy_faces": 1143,
+      "legacy_triangles": 2462
+    },
+    {
+      "input": "定位销 KMS-M01-P157-A30",
+      "legacy_feature_count": 4,
+      "dimensions_mm": [
+        22.0,
+        22.0,
+        81.922
+      ],
+      "legacy_mesh_volume_mm3": 12189.329420025362,
+      "legacy_faces": 1143,
+      "legacy_triangles": 2462
+    },
+    {
+      "input": "定位销 KMS-M01-P159-A15",
+      "legacy_feature_count": 4,
+      "dimensions_mm": [
+        22.0,
+        22.0,
+        72.095
+      ],
+      "legacy_mesh_volume_mm3": 10174.059914485448,
+      "legacy_faces": 1141,
+      "legacy_triangles": 2458
+    },
+    {
+      "input": "定位销 KMS-M01-P159-A20",
+      "legacy_feature_count": 4,
+      "dimensions_mm": [
+        22.0,
+        22.0,
+        72.095
+      ],
+      "legacy_mesh_volume_mm3": 10174.059914485448,
+      "legacy_faces": 1141,
+      "legacy_triangles": 2458
+    },
+    {
+      "input": "定位销 KMS-M01-P159-A30",
+      "legacy_feature_count": 4,
+      "dimensions_mm": [
+        22.0,
+        22.0,
+        82.095
+      ],
+      "legacy_mesh_volume_mm3": 12390.214197903933,
+      "legacy_faces": 1141,
+      "legacy_triangles": 2458
+    },
+    {
+      "input": "定位销 KMS-M01-P189-A30",
+      "legacy_feature_count": 4,
+      "dimensions_mm": [
+        22.0,
+        22.0,
+        84.312
+      ],
+      "legacy_mesh_volume_mm3": 14648.77998874724,
+      "legacy_faces": 1124,
+      "legacy_triangles": 2424
+    },
+    {
+      "input": "定位销 KMS-M01-P299-A20",
+      "legacy_feature_count": 3,
+      "dimensions_mm": [
+        29.9,
+        29.9,
+        82.795
+      ],
+      "legacy_mesh_volume_mm3": 32814.05921116337,
+      "legacy_faces": 278,
+      "legacy_triangles": 732
+    }
+  ]
+}

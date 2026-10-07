@@ -5,6 +5,7 @@ use serde_json::{Value, json};
 use std::sync::OnceLock;
 
 const BEARING_STANDARDS: &str = include_str!("../../../../legacy/kb/bearing_std.json");
+const LEGACY_LOCATOR_PIN_CATALOG: &str = include_str!("native_quick_locator_pin_catalog.json");
 
 #[derive(Clone, Debug)]
 struct Number {
@@ -46,6 +47,10 @@ pub fn parse(text: &str) -> Value {
     }
 
     if let Some(parsed) = crate::native_quick_socket_bolt::parse(text) {
+        return parsed;
+    }
+
+    if let Some(parsed) = parse_legacy_locator_pin(text, &normalized) {
         return parsed;
     }
 
@@ -642,8 +647,8 @@ fn result(
         "questions":questions,
         "unsupported":unsupported,
         "compatibility":{
-            "scope":"common explicit primitives/cuts, migrated standalone primitive defaults and legacy extrusion/revolve constructors, centered solid-shaft aliases, rectangular slots, flat-washer rings, cylindrical/conical spring helices, measured socket-head screws with optional washers, V-belt pulleys, timing pulleys, straight-gear construction, PCD counterbores, base plates, support legs, connection blocks and pieces, legacy smooth-bore nut recipe, migrated legacy washer/spring/shaft/bearing/seal-ring/coupling/brake-disc/brake-drum/flywheel/flat-annular-part/disc-cam/spline-shaft/crankshaft/camshaft/piston/worm/triangular-rotor/valve recipes, and executable flange/stepped-shaft/sleeve/blade/blisk templates",
-            "legacy_typical_defaults":"restored only for migrated Quick constructors/templates, centered solid shafts (Ø30 mm when diameter is absent), straight gears, timing pulleys, V-belt pulleys, socket-head screw catalog recipes, rectangular slots, nut thickness 8 mm when absent, flat-washer thickness, spring wire/turn values, brake-disc thickness/bore values, brake-drum bore values, flywheel center-bore/PCD-hole values, flat-annular-part bore/thickness values, disc-cam base diameter/thickness, spline-shaft minor diameter/tooth count, crankshaft main/pin journal diameters and stroke/throw count, camshaft lobe count/journal diameter, piston pin diameter/ring groove count, worm pitch diameter, triangular-rotor R=60 mm and center bore ⌀24 mm when omitted, valve stem diameter d=8 mm when omitted, base-plate thickness, connection-block height and default center-hole values, and connection-piece thickness; defaults and raw-dimension mappings are reported as warnings",
+            "scope":"common explicit primitives/cuts, migrated standalone primitive defaults and legacy extrusion/revolve constructors, centered solid-shaft aliases, rectangular slots, flat-washer rings, cylindrical/conical spring helices, measured socket-head screws with optional washers, V-belt pulleys, timing pulleys, straight-gear construction, PCD counterbores, base plates, support legs, connection blocks and pieces, legacy smooth-bore nut recipe, measured and fallback locator-pin recipes, migrated legacy washer/spring/shaft/bearing/seal-ring/coupling/brake-disc/brake-drum/flywheel/flat-annular-part/disc-cam/spline-shaft/crankshaft/camshaft/piston/worm/triangular-rotor/valve recipes, and executable flange/stepped-shaft/sleeve/blade/blisk templates",
+            "legacy_typical_defaults":"restored only for migrated Quick constructors/templates, centered solid shafts (Ø30 mm when diameter is absent), straight gears, timing pulleys, V-belt pulleys, socket-head screw catalog recipes, rectangular slots, nut thickness 8 mm when absent, flat-washer thickness, spring wire/turn values, brake-disc thickness/bore values, brake-drum bore values, flywheel center-bore/PCD-hole values, flat-annular-part bore/thickness values, disc-cam base diameter/thickness, spline-shaft minor diameter/tooth count, crankshaft main/pin journal diameters and stroke/throw count, camshaft lobe count/journal diameter, piston pin diameter/ring groove count, worm pitch diameter, triangular-rotor R=60 mm and center bore ⌀24 mm when omitted, valve stem diameter d=8 mm when omitted, base-plate thickness, connection-block height and default center-hole values, connection-piece thickness, locator-pin fallback diameters Ø22/Ø10 and 60 mm total length, and 22 exact KMS-M01 measured codes; defaults and raw-dimension mappings are reported as warnings",
             "loft_geometry":"blade and blisk lofts are locally approximate faceted B-Reps",
             "timing_pulley_geometry":"native timing pulley teeth are approximate trapezoidal prisms fused to an analytic annular blank",
             "vbelt_pulley_geometry":"standard V-groove pulley is an approximate axisymmetric revolve; legacy spoke variants and CATIA-native groove features are not included",
@@ -653,6 +658,7 @@ fn result(
             "support_leg_geometry":"legacy part-library forms build a centered analytic Z cylinder or a regular polygon prism from Z=0, with an optional centered Z through-hole; bare-高 inputs stay on the separate bottom-based generic-cylinder route",
             "connection_block_geometry":"legacy part-library output is a centered rectangular block; absent height defaults to max(10 mm, min(length,width) × 0.4), and an optional center through-hole uses 32 segments with diameter clamped to 96% of the smaller footprint side. Generic legacy tails support default Ø10 through/blind holes and rectangular pockets; side/corner/thread wording historically resolves to a smooth center bore, and step wording is ignored",
             "connection_piece_geometry":"legacy part-library output is a centered rectangular box with an optional 32-segment PCD through-hole pattern; the old _joint_piece docstring says stepped plate but its implementation creates no step, so explicit step requests are rejected rather than silently flattened",
+            "locator_pin_geometry":"full KMS-M01 codes use the legacy public Parser.parse measured cylinder diameters and normalized Z intervals for all 22 catalog entries; generic or unrecognized codes retain the old Ø22/Ø10 equal-length fallback, which ignores a supplied pin diameter",
             "disc_cam_geometry":"72-point faceted polar profile extruded along Z; only the legacy fixed 120-degree rise angle is supported",
             "camshaft_geometry":"48-point cam profiles and 120-degree harmonic rise are fused with an analytic X-axis shaft into one closed B-Rep; this differs from the legacy unfused faceted mesh",
             "crankshaft_geometry":"analytic journals with rectangular webs form one closed B-Rep; the legacy polygon mesh uses dumbbell-shaped cheek profiles, so the local Rust result is an explicitly approximate shape",
@@ -1150,6 +1156,330 @@ fn parse_legacy_support_leg(raw: &str, text: &str) -> Option<Value> {
         }));
     }
     Some(plan_result(raw, "支腿", features, warnings))
+}
+
+/// Migrate the legacy Python Quick locating-pin route.
+///
+/// The public Python parser does not call the generic `_locating_pin` builder
+/// for these requests. It calls `build_locator_pin_real`: bare and unrecognized
+/// codes fall back to the measured Ø22/Ø10 diameter fingerprint split evenly
+/// across the requested total length, while full KMS-M01 codes use the 22
+/// measured catalog entries and their normalized axial intervals.
+fn parse_legacy_locator_pin(raw: &str, text: &str) -> Option<Value> {
+    if !contains_any(
+        text,
+        &[
+            "定位销",
+            "销钉",
+            "圆柱销",
+            "locating pin",
+            "dowel pin",
+        ],
+    ) {
+        return None;
+    }
+
+    let catalog = legacy_locator_pin_catalog();
+    let pins = catalog["pins"].as_object()?;
+    let compact_input = raw
+        .chars()
+        .filter(|ch| ch.is_ascii_alphanumeric())
+        .collect::<String>()
+        .to_ascii_uppercase();
+    let measured_code = pins.keys().find(|code| {
+        let compact_code = code
+            .chars()
+            .filter(|ch| ch.is_ascii_alphanumeric())
+            .collect::<String>();
+        compact_input.contains(&compact_code)
+    });
+
+    if let Some(code) = measured_code {
+        let entry = &pins[code];
+        let segments = entry["segments"].as_array()?;
+        if segments.is_empty() {
+            return Some(parse_result_with_issue(
+                "needs_clarification",
+                raw,
+                "legacy_locator_pin_catalog_empty",
+                "定位销型号命中了空的实测台阶记录；请检查随包的定位销实测目录。",
+            ));
+        }
+        let mut features = Vec::with_capacity(segments.len() + 2);
+        let mut axial_coverage: Option<(f64, f64)> = None;
+        let mut gap_bridges = 0usize;
+        for segment in segments {
+            let diameter = segment["diameter_mm"].as_f64()?;
+            let z_min = segment["z_min_mm"].as_f64()?;
+            let z_max = segment["z_max_mm"].as_f64()?;
+            let height = z_max - z_min;
+            if !diameter.is_finite()
+                || diameter <= 0.0
+                || !z_min.is_finite()
+                || !z_max.is_finite()
+                || height <= 0.0
+            {
+                return Some(parse_result_with_issue(
+                    "needs_clarification",
+                    raw,
+                    "legacy_locator_pin_catalog_invalid",
+                "定位销实测目录中的分段尺寸无效；请检查随包的型号记录。",
+                ));
+            }
+            if let Some((covered_end, covered_diameter)) = axial_coverage
+                && z_min > covered_end + 1e-6
+            {
+                // The legacy measurements can leave millimetre-scale axial
+                // gaps between coaxial cylinders. Quick's native geometry
+                // acceptance requires one closed solid, so add an inner
+                // spine only across those gaps. It stays inside both measured
+                // outer diameters and changes no silhouette or envelope.
+                let gap = z_min - covered_end;
+                let overlap = (gap * 0.1).min(0.05).max(0.001);
+                let bridge_diameter = (diameter.min(covered_diameter) * 0.5).max(0.5);
+                let bridge_z_min = covered_end - overlap;
+                let bridge_z_max = z_min + overlap;
+                let bridge_height = bridge_z_max - bridge_z_min;
+                let mut bridge = feature(
+                    features.len() + 1,
+                    "cylinder",
+                    "add",
+                    json!({
+                        "radius":bridge_diameter / 2.0,
+                        "height":bridge_height,
+                        "center":[0.0, 0.0, (bridge_z_min + bridge_z_max) / 2.0],
+                        "base":false,
+                        "axis":"Z",
+                        "segments":48
+                    }),
+                    json!({
+                        "radius":derived_source(raw, "为满足原生单一闭合实体构建，在相邻实测圆柱之间补入不超过相邻最小直径一半的内接连接芯；它位于外包络内部。"),
+                        "height":derived_source(raw, "按实测相邻 Z 区间的空隙加两端 0.001–0.05 mm 搭接量计算。"),
+                        "center":derived_source(raw, "连接芯同轴位于全局 Z 轴。"),
+                        "base":derived_source(raw, "定位销连接芯使用 center 对称圆柱。"),
+                        "axis":derived_source(raw, "定位销连接芯沿全局 Z 轴。"),
+                        "segments":derived_source(raw, "定位销连接芯圆柱网格分段数为 48。")
+                    }),
+                );
+                bridge["name"] = json!(format!(
+                    "内接闭合连接芯 ⌀{}×{}",
+                    legacy_compact_number(bridge_diameter),
+                    legacy_compact_number(bridge_height)
+                ));
+                features.push(bridge);
+                gap_bridges += 1;
+            }
+            let measured_note = format!(
+                "沿用旧 Python public Parser.parse 的 KMS-M01 实测记录 {code}：⌀{diameter} mm，Z={z_min}..{z_max} mm。"
+            );
+            let mut planned = feature(
+                features.len() + 1,
+                "cylinder",
+                "add",
+                json!({
+                    "radius":diameter / 2.0,
+                    "height":height,
+                    "center":[0.0, 0.0, (z_min + z_max) / 2.0],
+                    "base":false,
+                    "axis":"Z",
+                    "segments":48
+                }),
+                json!({
+                    "radius":derived_source(raw, &measured_note),
+                    "height":derived_source(raw, &measured_note),
+                    "center":derived_source(raw, &measured_note),
+                    "base":derived_source(raw, "旧 Python Quick 定位销特征使用 center 对称圆柱。"),
+                    "axis":derived_source(raw, "旧 Python Quick 定位销沿全局 Z 轴。"),
+                    "segments":derived_source(raw, "旧 Python Quick 定位销圆柱网格分段数为 48。")
+                }),
+            );
+            if let Some(name) = segment["legacy_name"].as_str() {
+                planned["name"] = json!(name);
+            }
+            features.push(planned);
+            match axial_coverage {
+                Some((covered_end, covered_diameter)) if z_max <= covered_end => {
+                    axial_coverage = Some((covered_end, covered_diameter.min(diameter)));
+                }
+                _ => axial_coverage = Some((z_max, diameter)),
+            }
+        }
+
+        let mut warnings = vec![issue(
+            "legacy_locator_pin_measured_catalog",
+            format!("已按旧 Python Quick 实测目录重建 {code} 的 {} 段圆柱；轴向间距和直径保留实测记录。", segments.len()),
+        )];
+        if gap_bridges > 0 {
+            warnings.push(issue(
+                "legacy_locator_pin_native_gap_bridge",
+                format!("{} 个相邻实测 Z 区间存在间隙；为满足当前 Quick 单一闭合 B-Rep 要求，已在外包络内部补入同轴连接芯。连接芯不改变外形轮廓，内部体积与旧网格会略有差异。", gap_bridges),
+            ));
+        }
+        let entered_diameter = pulley_scalar(
+            raw,
+            text,
+            &["直径", "销径", "定位直径", "diameter"],
+            &["d"],
+        );
+        let entered_length = pulley_scalar(
+            raw,
+            text,
+            &["总长", "长度", "长", "length"],
+            &["L", "l"],
+        );
+        if entered_diameter.is_some() || entered_length.is_some() {
+            warnings.push(issue(
+                "legacy_locator_pin_dimensions_ignored_for_code",
+                "旧 Python public parser 对完整 KMS-M01 型号以实测型号表为准，附加的直径或长度文本不会覆盖型号尺寸；此处保留该行为。",
+            ));
+        }
+        if !has_unit(raw) && (entered_diameter.is_some() || entered_length.is_some()) {
+            warnings.push(issue(
+                "unit_interpreted_as_mm",
+                "定位销附加尺寸按旧 Quick 默认单位 mm 解释；完整实测型号仍以型号表数值为准。",
+            ));
+        }
+        return Some(plan_result(raw, "定位销", features, warnings));
+    }
+
+    let pin_diameter = pulley_scalar(
+        raw,
+        text,
+        &["直径", "销径", "定位直径", "diameter"],
+        &["d"],
+    );
+    let total_length = pulley_scalar(
+        raw,
+        text,
+        &["总长", "长度", "长", "length"],
+        &["L", "l"],
+    );
+    let mut questions = Vec::new();
+    if pin_diameter.is_some_and(|value| !value.is_finite() || value <= 0.0) {
+        questions.push(issue(
+            "legacy_locator_pin_diameter_invalid",
+            "定位销直径必须是有限正数，重复直径不能冲突。",
+        ));
+    }
+    if total_length.is_some_and(|value| !value.is_finite() || value <= 0.0) {
+        questions.push(issue(
+            "legacy_locator_pin_length_invalid",
+            "定位销总长必须是有限正数，重复长度不能冲突。",
+        ));
+    }
+    if !questions.is_empty() {
+        return Some(result("needs_clarification", raw, None, vec![], questions, vec![]));
+    }
+
+    // This matches the public legacy parser, not the lower-level library
+    // helper: its measured fallback always supplies two cylinder diameters
+    // (22 and 10 mm), regardless of the entered `d`, and bisects the envelope.
+    let length_defaulted = total_length.is_none();
+    let length = total_length.unwrap_or(60.0);
+    let half = length / 2.0;
+    let mut warnings = vec![issue(
+        "legacy_locator_pin_equal_split_fallback",
+        "旧 Python public Quick 在未命中完整实测型号时使用固定 Ø22/Ø10 实测直径指纹，并把总长平均分成两段；它不会按通用 _locating_pin 公式使用输入的台径或台阶高度。",
+    )];
+    if length_defaulted {
+        warnings.push(issue(
+            "legacy_locator_pin_length_defaulted",
+            "未给定位销总长，沿用旧 public Quick 实测回退外形的 60 mm 总长。",
+        ));
+    }
+    if pin_diameter.is_some() {
+        warnings.push(issue(
+            "legacy_locator_pin_diameter_ignored",
+            "旧 public Quick 定位销回退路径仍输出 Ø22 和 Ø10 两段；输入的销径被解析但没有改变实际几何。",
+        ));
+    }
+    if contains_any(
+        text,
+        &["台径", "台阶直径", "台高", "台阶高度", "step diameter", "step height"],
+    ) || short_scalar(raw, "D").is_some()
+        || short_scalar(raw, "h").is_some()
+    {
+        warnings.push(issue(
+            "legacy_locator_pin_step_dimensions_ignored",
+            "旧 Python public Quick 的均分回退路径不使用台阶直径 D 或台阶高度 h；保留旧输出并明确标记该限制。",
+        ));
+    }
+    if contains_any(text, &["KMS", "型号", "代号", "P097-A20", "P999-A20"]) {
+        warnings.push(issue(
+            "legacy_locator_pin_measured_code_not_matched",
+            "仅完整的 22 个 KMS-M01 实测型号可进入实测分段；其他代号沿用旧 public Quick 的 Ø22/Ø10 均分回退。",
+        ));
+    }
+    if !has_unit(raw) && (pin_diameter.is_some() || total_length.is_some()) {
+        warnings.push(issue(
+            "unit_interpreted_as_mm",
+            "定位销输入尺寸按旧 Quick 默认单位 mm 解释。",
+        ));
+    }
+
+    let length_source = if length_defaulted {
+        derived_source(raw, "旧 Python public Quick 定位销实测回退总长默认为 60 mm，再将两段均分。")
+    } else {
+        derived_source(raw, "以用户给定的定位销总长除以二，沿用旧 Python public Quick 的均分分段。")
+    };
+    let features = [
+        (22.0, 1.5 * half, "台阶"),
+        (10.0, 0.5 * half, "台阶"),
+    ]
+    .into_iter()
+    .enumerate()
+    .map(|(index, (diameter, center_z, label))| {
+        let name = format!(
+            "{label} ⌀{}×{}（段位未取到，按均分）",
+            legacy_compact_number(diameter),
+            legacy_compact_number(half)
+        );
+        let mut planned = feature(
+            index + 1,
+            "cylinder",
+            "add",
+            json!({
+                "radius":diameter / 2.0,
+                "height":half,
+                "center":[0.0, 0.0, center_z],
+                "base":false,
+                "axis":"Z",
+                "segments":48
+            }),
+            json!({
+                "radius":derived_source(raw, "沿用旧 Python public Quick 的实测回退直径指纹（上段 Ø22 mm、下段 Ø10 mm）。"),
+                "height":length_source.clone(),
+                "center":derived_source(raw, "旧 Python public Quick 将两段按总长均分；下段从 Z=0 开始，上段接续至总长端面。"),
+                "base":derived_source(raw, "旧 Python Quick 定位销特征使用 center 对称圆柱。"),
+                "axis":derived_source(raw, "旧 Python Quick 定位销沿全局 Z 轴。"),
+                "segments":derived_source(raw, "旧 Python Quick 定位销圆柱网格分段数为 48。")
+            }),
+        );
+        planned["name"] = json!(name);
+        planned
+    })
+    .collect();
+
+    Some(plan_result(raw, "定位销", features, warnings))
+}
+
+fn legacy_locator_pin_catalog() -> &'static Value {
+    static CATALOG: OnceLock<Value> = OnceLock::new();
+    CATALOG.get_or_init(|| {
+        serde_json::from_str(LEGACY_LOCATOR_PIN_CATALOG)
+            .expect("embedded legacy locator-pin catalog must be valid JSON")
+    })
+}
+
+fn legacy_compact_number(value: f64) -> String {
+    let mut value = format!("{value:.6}");
+    while value.contains('.') && value.ends_with('0') {
+        value.pop();
+    }
+    if value.ends_with('.') {
+        value.pop();
+    }
+    value
 }
 
 /// Migrate the legacy Python `_nut` recipe. Although that recipe requests a
