@@ -1,0 +1,108 @@
+{
+  "schema_version": "1.0",
+  "legacy_entrypoint": "src/legacy/ai_modeler/core/parsing/nlparser.py::Parser.parse",
+  "legacy_recipe": "src/legacy/ai_modeler/parts/library/partlib.py::_piston",
+  "legacy_geometry": "src/legacy/ai_modeler/core/geometry/kernel.py::make_piston",
+  "legacy_defaults": {
+    "pin_d_mm": 22,
+    "grooves": 3,
+    "outer_segments": 48,
+    "inner_radius_formula": "max(1 mm, 0.55 * outer_radius)",
+    "groove_depth_formula": "max(0.4 mm, 0.06 * outer_radius)",
+    "groove_width_formula": "max(0.6 mm, 0.035 * height)",
+    "groove_band_formula": "0.34 * height",
+    "pin_bore_axis": "X",
+    "pin_bore_radius_limit": "min(pin_d/2, 0.75 * outer_radius, 0.45 * height)"
+  },
+  "legacy_accepted": [
+    {
+      "input": "活塞 外径80 高度60",
+      "feature_count": 1,
+      "native_expected": {
+        "diameter": 80,
+        "height": 60,
+        "pin_d": 22,
+        "grooves": 3,
+        "center": [0, 0, 0],
+        "segments": 48
+      },
+      "source_user": ["diameter", "height"],
+      "source_derived": ["pin_d", "grooves", "center", "segments"],
+      "warnings": ["legacy_piston_default_pin_d", "legacy_piston_default_grooves"],
+      "dimensions_mm": [80, 80, 60],
+      "pin_d_mm": 22,
+      "grooves": 3,
+      "legacy_mesh_volume_mm3": 414560.5008221946
+    },
+    {
+      "input": "活塞 外径80 高度60 销孔24 环槽数2",
+      "feature_count": 1,
+      "native_expected": {
+        "diameter": 80,
+        "height": 60,
+        "pin_d": 24,
+        "grooves": 2,
+        "center": [0, 0, 0],
+        "segments": 48
+      },
+      "source_user": ["diameter", "height", "pin_d", "grooves"],
+      "source_derived": ["center", "segments"],
+      "warnings": [],
+      "dimensions_mm": [80, 80, 60],
+      "pin_d_mm": 24,
+      "grooves": 2,
+      "legacy_mesh_volume_mm3": 407913.29379823606
+    },
+    {
+      "input": "活塞 D80 H70 d22 n3",
+      "feature_count": 1,
+      "native_expected": {
+        "diameter": 80,
+        "height": 70,
+        "pin_d": 22,
+        "grooves": 3,
+        "center": [0, 0, 0],
+        "segments": 48
+      },
+      "source_user": ["diameter", "height", "pin_d", "grooves"],
+      "source_derived": ["center", "segments"],
+      "warnings": [],
+      "dimensions_mm": [80, 80, 70],
+      "pin_d_mm": 22,
+      "grooves": 3,
+      "legacy_mesh_volume_mm3": 489433.0026522152
+    }
+  ],
+  "legacy_divergences": [
+    {
+      "input": "活塞 外径80 高60 销孔22 环槽数2",
+      "legacy_features": ["cylinder"],
+      "legacy_dimensions_mm": [80, 80, 60],
+      "rust_kind": "piston",
+      "warning": "legacy_piston_bare_height_repaired",
+      "reason": "The old parser falls through to a generic cylinder for bare 高, silently dropping the piston pin bore and ring grooves."
+    },
+    {
+      "input": "活塞 外径8cm 高度6cm 销孔2.2cm 环槽数3",
+      "legacy_features": ["cylinder", "hole", "pocket"],
+      "legacy_dimensions_mm": [80, 80, 60],
+      "rust_kind": "piston",
+      "warning": "legacy_piston_unit_conversion",
+      "reason": "The old parser does not route this unit-bearing sentence to _piston; Rust converts dimensions and constructs the named piston."
+    }
+  ],
+  "needs_clarification": [
+    {"input": "活塞", "issue": "legacy_piston_diameter_missing"},
+    {"input": "活塞 外径80 高度60 销孔22 销孔24", "issue": "legacy_piston_pin_d_conflict"},
+    {"input": "活塞 外径2 高度60", "issue": "legacy_piston_geometry_parameters_invalid"}
+  ],
+  "unsupported": [
+    {"input": "活塞环 M8", "issue": "legacy_piston_ring_is_not_a_piston"},
+    {"input": "活塞 外径80 高度60 顶部凹坑5", "issue": "legacy_piston_modifier_not_migrated"}
+  ],
+  "geometry_acceptance": [
+    {"input": "活塞 外径80 高度60", "dimensions_mm": [80, 80, 60], "pin_d_mm": 22, "grooves": 3},
+    {"input": "活塞 外径80 高度60 销孔24 环槽数2", "dimensions_mm": [80, 80, 60], "pin_d_mm": 24, "grooves": 2},
+    {"input": "活塞 D80 H70 d22 n3", "dimensions_mm": [80, 80, 70], "pin_d_mm": 22, "grooves": 3}
+  ]
+}

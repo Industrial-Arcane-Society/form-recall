@@ -61,6 +61,9 @@ pub fn parse(text: &str) -> Value {
     if let Some(parsed) = parse_legacy_cross_joint(text, &normalized) {
         return parsed;
     }
+    if let Some(parsed) = parse_legacy_piston(text, &normalized) {
+        return parsed;
+    }
     if let Some(parsed) = parse_legacy_camshaft(text, &normalized) {
         return parsed;
     }
@@ -599,8 +602,8 @@ fn result(
         "questions":questions,
         "unsupported":unsupported,
         "compatibility":{
-            "scope":"common explicit primitives/cuts, migrated standalone primitive defaults and legacy extrusion/revolve constructors, centered solid-shaft aliases, rectangular slots, flat-washer rings, cylindrical/conical spring helices, measured socket-head screws with optional washers, V-belt pulleys, timing pulleys, straight-gear construction, PCD counterbores, migrated legacy washer/spring/shaft/bearing/seal-ring/coupling/brake-disc/brake-drum/flywheel/flat-annular-part/disc-cam/spline-shaft/crankshaft/camshaft recipes, and executable flange/stepped-shaft/sleeve/blade/blisk templates",
-            "legacy_typical_defaults":"restored only for migrated Quick constructors/templates, centered solid shafts (Ø30 mm when diameter is absent), straight gears, timing pulleys, V-belt pulleys, socket-head screw catalog recipes, rectangular slots, flat-washer thickness, spring wire/turn values, brake-disc thickness/bore values, brake-drum bore values, flywheel center-bore/PCD-hole values, flat-annular-part bore/thickness values, disc-cam base diameter/thickness, spline-shaft minor diameter/tooth count, crankshaft main/pin journal diameters and stroke/throw count, and camshaft lobe count/journal diameter; defaults and raw-dimension mappings are reported as warnings",
+            "scope":"common explicit primitives/cuts, migrated standalone primitive defaults and legacy extrusion/revolve constructors, centered solid-shaft aliases, rectangular slots, flat-washer rings, cylindrical/conical spring helices, measured socket-head screws with optional washers, V-belt pulleys, timing pulleys, straight-gear construction, PCD counterbores, migrated legacy washer/spring/shaft/bearing/seal-ring/coupling/brake-disc/brake-drum/flywheel/flat-annular-part/disc-cam/spline-shaft/crankshaft/camshaft/piston recipes, and executable flange/stepped-shaft/sleeve/blade/blisk templates",
+            "legacy_typical_defaults":"restored only for migrated Quick constructors/templates, centered solid shafts (Ø30 mm when diameter is absent), straight gears, timing pulleys, V-belt pulleys, socket-head screw catalog recipes, rectangular slots, flat-washer thickness, spring wire/turn values, brake-disc thickness/bore values, brake-drum bore values, flywheel center-bore/PCD-hole values, flat-annular-part bore/thickness values, disc-cam base diameter/thickness, spline-shaft minor diameter/tooth count, crankshaft main/pin journal diameters and stroke/throw count, camshaft lobe count/journal diameter, and piston pin diameter/ring groove count; defaults and raw-dimension mappings are reported as warnings",
             "loft_geometry":"blade and blisk lofts are locally approximate faceted B-Reps",
             "timing_pulley_geometry":"native timing pulley teeth are approximate trapezoidal prisms fused to an analytic annular blank",
             "vbelt_pulley_geometry":"standard V-groove pulley is an approximate axisymmetric revolve; legacy spoke variants and CATIA-native groove features are not included",
@@ -610,7 +613,8 @@ fn result(
             "disc_cam_geometry":"72-point faceted polar profile extruded along Z; only the legacy fixed 120-degree rise angle is supported",
             "camshaft_geometry":"48-point cam profiles and 120-degree harmonic rise are fused with an analytic X-axis shaft into one closed B-Rep; this differs from the legacy unfused faceted mesh",
             "crankshaft_geometry":"analytic journals with rectangular webs form one closed B-Rep; the legacy polygon mesh uses dumbbell-shaped cheek profiles, so the local Rust result is an explicitly approximate shape",
-            "spline_shaft_geometry":"7-point-per-tooth faceted spline profile; the legacy involute-spline alias is not an involute profile"
+            "spline_shaft_geometry":"7-point-per-tooth faceted spline profile; the legacy involute-spline alias is not an involute profile",
+            "piston_geometry":"closed legacy piston profile, ring grooves, and X-axis pin bore are rebuilt as an analytic OCCT revolve/cut; the old 48-segment outer mesh becomes analytic, with envelope preserved and mesh volume/facets changed"
         }
     })
 }
@@ -3332,6 +3336,251 @@ fn parse_legacy_cross_joint(raw: &str, text: &str) -> Option<Value> {
         }));
     }
     Some(plan_result(raw, "万向节十字轴", features, warnings))
+}
+
+/// Migrate the old Python Quick piston recipe to its already implemented
+/// native analytic B-Rep feature. The old recipe requires outer diameter and
+/// height, defaults the pin bore to 22 mm, and defaults ring grooves to 3.
+fn parse_legacy_piston(raw: &str, text: &str) -> Option<Value> {
+    if !contains_any(text, &["活塞", "piston"]) {
+        return None;
+    }
+    let outer_diameter_text = text
+        .replace("活塞销孔直径", " ")
+        .replace("销孔直径", " ")
+        .replace("pin diameter", " ")
+        .replace("pin bore", " ");
+    let diameter = pulley_scalar(
+        raw,
+        &outer_diameter_text,
+        &["活塞外径", "外径", "直径", "outer diameter", "diameter"],
+        &["D"],
+    );
+    let height = pulley_scalar(
+        raw,
+        text,
+        &["活塞高度", "高度", "高", "height"],
+        &["H"],
+    );
+    let pin_d = pulley_scalar(
+        raw,
+        text,
+        &[
+            "活塞销孔直径",
+            "销孔直径",
+            "活塞销孔",
+            "销孔",
+            "pin diameter",
+            "pin bore",
+        ],
+        &["d"],
+    );
+    let grooves = piston_groove_count(raw, text);
+
+    if contains_any(text, &["活塞环", "piston ring"])
+        && diameter.is_none()
+        && height.is_none()
+    {
+        return Some(parse_result_with_issue(
+            "unsupported",
+            raw,
+            "legacy_piston_ring_is_not_a_piston",
+            "当前迁移项只覆盖带销孔和环槽的活塞主体；独立活塞环尚未迁移。",
+        ));
+    }
+
+    if contains_any(
+        text,
+        &[
+            "燃烧室",
+            "顶坑",
+            "凹坑",
+            "阀坑",
+            "冷却油道",
+            "喷油冷却",
+            "键槽",
+            "倒角",
+            "圆角",
+            "螺纹",
+            "thread",
+            "销槽",
+            "多个",
+            "一对",
+            "pair",
+        ],
+    ) || (contains_any(text, &["孔", "hole", "bore"]) && pin_d.is_none())
+    {
+        return Some(parse_result_with_issue(
+            "unsupported",
+            raw,
+            "legacy_piston_modifier_not_migrated",
+            "当前仅迁移旧 Quick 的活塞外圆、环槽和横向销孔；燃烧室顶坑、油道、键槽、修边和其它附加孔尚未迁移。",
+        ));
+    }
+
+    let mut questions = Vec::new();
+    match diameter {
+        Some(value) if value.is_finite() && value > 0.0 => {}
+        Some(value) if !value.is_finite() => questions.push(issue(
+            "legacy_piston_diameter_conflict",
+            "活塞外径存在重复且互相冲突的数值；请只给出一个外径。",
+        )),
+        Some(_) => questions.push(issue(
+            "legacy_piston_diameter_invalid",
+            "活塞外径必须是有限正数。",
+        )),
+        None => questions.push(issue(
+            "legacy_piston_diameter_missing",
+            "请明确活塞外径 D。",
+        )),
+    }
+    match height {
+        Some(value) if value.is_finite() && value > 0.0 => {}
+        Some(value) if !value.is_finite() => questions.push(issue(
+            "legacy_piston_height_conflict",
+            "活塞高度存在重复且互相冲突的数值；请只给出一个高度。",
+        )),
+        Some(_) => questions.push(issue(
+            "legacy_piston_height_invalid",
+            "活塞高度必须是有限正数。",
+        )),
+        None => questions.push(issue(
+            "legacy_piston_height_missing",
+            "请明确活塞高度 H。",
+        )),
+    }
+    if pin_d.is_some_and(|value| !value.is_finite()) {
+        questions.push(issue(
+            "legacy_piston_pin_d_conflict",
+            "活塞销孔直径存在重复且互相冲突的数值；请只给出一个孔径。",
+        ));
+    }
+    if pin_d.is_some_and(|value| value < 0.0) {
+        questions.push(issue(
+            "legacy_piston_pin_d_invalid",
+            "活塞销孔直径不能为负数；用 0 表示不建销孔。",
+        ));
+    }
+    if grooves.is_some_and(|value| !value.is_finite()) {
+        questions.push(issue(
+            "legacy_piston_groove_count_conflict",
+            "活塞环槽数存在重复且互相冲突的数值；请只给出一个槽数。",
+        ));
+    }
+    if !questions.is_empty() {
+        return Some(result("needs_clarification", raw, None, vec![], questions, vec![]));
+    }
+
+    let requested_diameter = diameter.expect("validated piston diameter");
+    let requested_height = height.expect("validated piston height");
+    let requested_pin_d = pin_d.unwrap_or(22.0);
+    let requested_grooves = grooves.unwrap_or(3.0);
+    let groove_count = requested_grooves.trunc().max(0.0);
+    let parameters = json!({
+        "diameter":requested_diameter,
+        "height":requested_height,
+        "pin_d":requested_pin_d,
+        "grooves":groove_count as u64,
+        "center":[0.0,0.0,0.0],
+        "segments":48
+    });
+    if let Err(error) = crate::native_parametric_features::preflight_piston(&parameters) {
+        return Some(result(
+            "needs_clarification",
+            raw,
+            None,
+            vec![],
+            vec![issue(
+                "legacy_piston_geometry_parameters_invalid",
+                format!("当前活塞参数无法形成有效几何：{error}"),
+            )],
+            vec![],
+        ));
+    }
+
+    let pin_defaulted = pin_d.is_none();
+    let grooves_defaulted = grooves.is_none();
+    let grooves_truncated = !close(requested_grooves, groove_count);
+    let mut warnings = vec![issue(
+        "legacy_piston_migrated",
+        "已按旧 Python Quick 活塞剖面建立回转主体、环槽和 X 向活塞销孔；本地 OCCT 使用解析回转面，旧网格的 48 段圆周离散不会保留。",
+    )];
+    if pin_defaulted {
+        warnings.push(issue(
+            "legacy_piston_default_pin_d",
+            "未指定销孔直径；沿用旧 Python Quick 活塞典型值 22 mm。",
+        ));
+    }
+    if grooves_defaulted {
+        warnings.push(issue(
+            "legacy_piston_default_grooves",
+            "未指定环槽数；沿用旧 Python 活塞构造器默认值 3。",
+        ));
+    }
+    if grooves_truncated || requested_grooves < 0.0 {
+        warnings.push(issue(
+            "legacy_piston_grooves_normalized",
+            "旧 Python Quick 将环槽数转为整数并把负数按 0 处理；Rust 已按相同规则规范化。",
+        ));
+    }
+    if contains_any(text, &["高"]) && !contains_any(text, &["高度", "活塞高度"]) {
+        warnings.push(issue(
+            "legacy_piston_bare_height_repaired",
+            "旧 Python Quick 在只写“高”时会退回普通圆柱并漏掉活塞销孔/环槽；Rust 按活塞语义将该值解释为 H。",
+        ));
+    }
+    if contains_any(text, &["厘米", "分米", "英寸"])
+        || regex::Regex::new(r"\d\s*(?:cm|dm|in|m)\b")
+            .expect("fixed piston non-mm-unit regex")
+            .is_match(text)
+    {
+        warnings.push(issue(
+            "legacy_piston_unit_conversion",
+            "Rust 将显式标注的非毫米尺寸换算为 mm；旧 Python Quick 对这类写法可能退回普通基础体，未形成活塞特征。",
+        ));
+    }
+
+    let features = vec![feature(
+        1,
+        "piston",
+        "add",
+        parameters,
+        json!({
+            "diameter":user_source(raw),
+            "height":user_source(raw),
+            "pin_d":if pin_defaulted { derived_source(raw, "沿用旧 Python Quick 活塞典型销孔直径 22 mm。") } else { user_source(raw) },
+            "grooves":if grooves_defaulted || grooves_truncated || requested_grooves < 0.0 { derived_source(raw, "沿用旧 Python 活塞构造器默认值及 int()/max(0, ...) 槽数处理。") } else { user_source(raw) },
+            "center":derived_source(raw, "旧 Python Quick 将活塞中心置于全局原点。"),
+            "segments":derived_source(raw, "旧 Python Quick 活塞网格圆周分段为 48；本地 OCCT 使用解析回转面。")
+        }),
+    )];
+    Some(plan_result(raw, "活塞", features, warnings))
+}
+
+fn piston_groove_count(raw: &str, text: &str) -> Option<f64> {
+    let mut values = Vec::new();
+    if let Some(value) = pulley_scalar(
+        raw,
+        text,
+        &["环槽数", "环槽", "ring groove count", "groove count", "grooves"],
+        &["n"],
+    ) {
+        values.push(value);
+    }
+    let before = regex::Regex::new(r"(?i)([+-]?(?:\d+(?:\.\d*)?|\.\d+))\s*(?:道|个)?\s*(?:环槽|ring grooves?)")
+        .expect("fixed piston groove-count regex");
+    for capture in before.captures_iter(text) {
+        if let Some(value) = capture.get(1).and_then(|value| value.as_str().parse::<f64>().ok()) {
+            values.push(value);
+        }
+    }
+    if values.is_empty() {
+        None
+    } else if values.iter().all(|value| value.is_finite() && close(*value, values[0])) {
+        Some(values[0])
+    } else {
+        Some(f64::NAN)
+    }
 }
 
 fn parse_legacy_camshaft(raw: &str, text: &str) -> Option<Value> {
@@ -12733,6 +12982,102 @@ mod f5_47_legacy_cross_joint_contract_tests {
             if case.get("unit_conversion_improves_legacy").is_some() {
                 assert!(output.to_string().contains("legacy_cross_joint_unit_conversion"), "{input}: {output}");
             }
+        }
+
+        for case in fixture["needs_clarification"].as_array().unwrap() {
+            let input = case["input"].as_str().unwrap();
+            let output = parse(input);
+            assert_eq!(output["status"], "needs_clarification", "{input}: {output}");
+            assert!(output["plan"].is_null(), "{input}: {output}");
+            assert!(output.to_string().contains(case["issue"].as_str().unwrap()), "{input}: {output}");
+        }
+
+        for case in fixture["unsupported"].as_array().unwrap() {
+            let input = case["input"].as_str().unwrap();
+            let output = parse(input);
+            assert_eq!(output["status"], "unsupported", "{input}: {output}");
+            assert!(output["plan"].is_null(), "{input}: {output}");
+            assert!(output.to_string().contains(case["issue"].as_str().unwrap()), "{input}: {output}");
+        }
+    }
+}
+
+#[cfg(test)]
+mod f5_48_legacy_piston_contract_tests {
+    use super::parse;
+    use serde_json::Value;
+
+    #[test]
+    fn legacy_pistons_match_python_defaults_and_record_parser_corrections() {
+        let fixture: Value = serde_json::from_str(include_str!(
+            "../tests/fixtures/quick_legacy_piston_contract.json"
+        ))
+        .expect("piston Python oracle fixture is valid JSON");
+
+        for case in fixture["legacy_accepted"].as_array().unwrap() {
+            let input = case["input"].as_str().unwrap();
+            let output = parse(input);
+            assert_eq!(output["status"], "ready", "{input}: {output}");
+            assert_eq!(output["plan"]["name"], "活塞", "{input}: {output}");
+            let features = output["plan"]["features"].as_array().unwrap();
+            assert_eq!(features.len(), 1, "{input}: {output}");
+            assert_eq!(features[0]["kind"], "piston", "{input}: {output}");
+            assert_eq!(features[0]["operation"], "add", "{input}: {output}");
+            for (name, expected) in case["native_expected"].as_object().unwrap() {
+                if let Some(expected_values) = expected.as_array() {
+                    let actual_values = features[0]["parameters"][name].as_array().unwrap();
+                    assert_eq!(actual_values.len(), expected_values.len(), "{input}: {name}");
+                    for (actual, expected) in actual_values.iter().zip(expected_values) {
+                        assert!(
+                            (actual.as_f64().unwrap() - expected.as_f64().unwrap()).abs() <= 1e-9,
+                            "{input}: {name}={actual}, expected {expected}"
+                        );
+                    }
+                } else {
+                    assert_eq!(features[0]["parameters"][name], *expected, "{input}: {name}");
+                }
+            }
+            for name in case["source_user"].as_array().unwrap() {
+                assert_eq!(
+                    features[0]["sources"][name.as_str().unwrap()]["type"],
+                    "user",
+                    "{input}: {name} source"
+                );
+            }
+            for name in case["source_derived"].as_array().unwrap() {
+                assert_eq!(
+                    features[0]["sources"][name.as_str().unwrap()]["type"],
+                    "derived",
+                    "{input}: {name} source"
+                );
+            }
+            for warning in case["warnings"].as_array().into_iter().flatten() {
+                assert!(output.to_string().contains(warning.as_str().unwrap()), "{input}: {output}");
+            }
+            let validation = crate::cad_plan_validation::validate_plan(&output["plan"]);
+            assert_eq!(validation["state"], "valid", "{input}: {validation}");
+            assert!(validation["confirmations"].as_array().unwrap().is_empty(), "{input}: {validation}");
+            assert!(validation["geometry_support"].to_string().contains("exact"), "{input}: {validation}");
+            assert_eq!(
+                crate::native_plan_geometry::preflight(&output["plan"]).unwrap()["state"],
+                "valid",
+                "{input}"
+            );
+        }
+
+        for case in fixture["legacy_divergences"].as_array().unwrap() {
+            let input = case["input"].as_str().unwrap();
+            let output = parse(input);
+            assert_eq!(output["status"], "ready", "{input}: {output}");
+            assert_eq!(
+                output["plan"]["features"][0]["kind"],
+                case["rust_kind"],
+                "{input}: {output}"
+            );
+            assert!(
+                output.to_string().contains(case["warning"].as_str().unwrap()),
+                "{input}: {output}"
+            );
         }
 
         for case in fixture["needs_clarification"].as_array().unwrap() {
