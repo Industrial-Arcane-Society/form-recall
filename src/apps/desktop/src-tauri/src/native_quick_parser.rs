@@ -67,6 +67,9 @@ pub fn parse(text: &str) -> Value {
     if let Some(parsed) = parse_legacy_worm(text, &normalized) {
         return parsed;
     }
+    if let Some(parsed) = parse_legacy_scroll_disc(text, &normalized) {
+        return parsed;
+    }
     if let Some(parsed) = parse_legacy_camshaft(text, &normalized) {
         return parsed;
     }
@@ -3853,6 +3856,159 @@ fn parse_legacy_worm(raw: &str, text: &str) -> Option<Value> {
     }
 
     Some(plan_result(raw, "蜗杆", features, warnings))
+}
+
+/// Migrate the legacy Python Quick scroll-disc recipe. The old part library
+/// emits one sampled Archimedean spiral wall, an overlapping backplate, and
+/// fixed 120-point profile resolution. Rust fuses those pieces into the
+/// existing native closed-solid builder.
+fn parse_legacy_scroll_disc(raw: &str, text: &str) -> Option<Value> {
+    if !contains_any(text, &["涡旋盘", "涡旋压缩机"]) {
+        return None;
+    }
+
+    if contains_any(
+        text,
+        &[
+            "动盘", "静盘", "双涡旋", "双盘", "偏心", "中心孔", "中心通孔", "打孔", "钻孔", "开槽",
+            "螺距", "导程", "渐开线", "密封槽", "端板分离", "两件", "成对", "hole", "bore",
+            "slot", "pitch", "eccentric", "moving scroll", "fixed scroll",
+        ],
+    ) {
+        return Some(parse_result_with_issue(
+            "unsupported",
+            raw,
+            "legacy_scroll_disc_modifier_not_migrated",
+            "当前只迁移旧 Quick 的单体涡旋盘：一条固定圈数的阿基米德螺旋壁与底盘；动静盘配对、偏心/孔槽、密封槽和自定义螺距尚未迁移。",
+        ));
+    }
+
+    let outer_d = pulley_scalar(raw, text, &["外径", "outer diameter"], &["D"]);
+    let height = merge_optional_scalar(
+        pulley_scalar(raw, text, &["高度", "高", "height"], &["H", "h"]),
+        scalar_excluding_suffix(text, "厚", &["壁"]),
+    );
+    let wall_t = pulley_scalar(raw, text, &["壁厚", "wall thickness"], &["t"]);
+    let turns = pulley_scalar(raw, text, &["圈数", "turns"], &["n"]);
+
+    let mut questions = Vec::new();
+    for (value, code, label) in [
+        (outer_d, "legacy_scroll_disc_outer_d_invalid", "外径"),
+        (height, "legacy_scroll_disc_height_invalid", "总高"),
+        (wall_t, "legacy_scroll_disc_wall_t_invalid", "壁厚"),
+        (turns, "legacy_scroll_disc_turns_invalid", "圈数"),
+    ] {
+        if value.is_some_and(|number| !number.is_finite()) {
+            questions.push(issue(
+                code,
+                format!("涡旋盘{label}出现重复或冲突的数值；请只保留一个明确尺寸。"),
+            ));
+        }
+    }
+    if outer_d.is_none() {
+        questions.push(issue(
+            "legacy_scroll_disc_outer_d_missing",
+            "请明确涡旋盘外径 D。",
+        ));
+    }
+    if height.is_none() {
+        questions.push(issue(
+            "legacy_scroll_disc_height_missing",
+            "请明确涡旋盘总高 H。",
+        ));
+    }
+    if wall_t.is_none() {
+        questions.push(issue(
+            "legacy_scroll_disc_wall_t_missing",
+            "请明确螺旋壁厚 t；旧 Python 配方直接读取 t，缺省时会抛 KeyError，因此不能可靠复现。",
+        ));
+    }
+    if !questions.is_empty() {
+        return Some(result("needs_clarification", raw, None, vec![], questions, vec![]));
+    }
+
+    let raw_outer_d = outer_d.expect("validated scroll-disc outer diameter");
+    let raw_height = height.expect("validated scroll-disc height");
+    let raw_wall_t = wall_t.expect("validated scroll-disc wall thickness");
+    let turns_defaulted = turns.is_none();
+    let raw_turns = turns.unwrap_or(2.5);
+
+    // Keep the lower clamps in legacy make_scroll_disc, but report them so
+    // that a malformed input is never silently presented as its requested size.
+    let outer_d = raw_outer_d.max(4.0);
+    let height = raw_height.max(1.0);
+    let wall_t = raw_wall_t.max(0.5);
+    let turns = raw_turns.max(0.5);
+    let clamped = !close(outer_d, raw_outer_d)
+        || !close(height, raw_height)
+        || !close(wall_t, raw_wall_t)
+        || !close(turns, raw_turns);
+
+    let parameters = json!({
+        "outer_d":outer_d,
+        "height":height,
+        "wall_t":wall_t,
+        "turns":turns,
+        "center":[0.0,0.0,0.0],
+        "segments":120
+    });
+    if let Err(error) = crate::native_scroll_disc::preflight(&parameters) {
+        return Some(result(
+            "needs_clarification",
+            raw,
+            None,
+            vec![],
+            vec![issue(
+                "legacy_scroll_disc_geometry_invalid",
+                format!("当前涡旋盘尺寸不能形成可校验的单体螺旋结构：{error}"),
+            )],
+            vec![],
+        ));
+    }
+
+    let mut warnings = vec![issue(
+        "legacy_scroll_disc_migrated",
+        "已按旧 Python Quick 配方生成 120 段阿基米德螺旋壁与后盘；Rust 在 OCCT 中融合为单一闭合实体，几何边界按旧公式核对。",
+    )];
+    if turns_defaulted {
+        warnings.push(issue(
+            "legacy_scroll_disc_default_turns",
+            "未指定圈数；沿用旧构造器默认值 2.5 圈。",
+        ));
+    }
+    if !has_unit(text) {
+        warnings.push(issue(
+            "unit_interpreted_as_mm",
+            "未写长度单位的涡旋盘尺寸按 Quick 默认单位 mm 解释。",
+        ));
+    } else if crankshaft_has_non_mm_unit(text) {
+        warnings.push(issue(
+            "legacy_scroll_disc_unit_conversion",
+            "Rust 将显式标注的非毫米尺寸换算为 mm；旧 Python Quick 曾保留 cm 等单位后的原始数值。",
+        ));
+    }
+    if clamped {
+        warnings.push(issue(
+            "legacy_scroll_disc_lower_clamp",
+            "旧 Python 配方会把外径、总高、壁厚和圈数分别钳制到至少 4 mm、1 mm、0.5 mm、0.5 圈；本次采用钳制值并保留提示。",
+        ));
+    }
+
+    let features = vec![feature(
+        1,
+        "scroll_disc",
+        "add",
+        parameters,
+        json!({
+            "outer_d":user_source(raw),
+            "height":user_source(raw),
+            "wall_t":user_source(raw),
+            "turns":if turns_defaulted { derived_source(raw, "旧 Python make_scroll_disc 的默认圈数为 2.5。") } else { user_source(raw) },
+            "center":derived_source(raw, "旧 Python Quick 将涡旋盘中心放在全局原点。"),
+            "segments":derived_source(raw, "旧 Python Quick 固定使用 120 段螺旋轮廓采样。")
+        }),
+    )];
+    Some(plan_result(raw, "涡旋盘", features, warnings))
 }
 
 fn parse_legacy_camshaft(raw: &str, text: &str) -> Option<Value> {
@@ -13441,6 +13597,97 @@ mod f5_49_legacy_worm_contract_tests {
             let output = parse(input);
             assert_eq!(output["status"], case["rust_status"], "{input}: {output}");
             assert!(output.to_string().contains(case["issue"].as_str().unwrap()), "{input}: {output}");
+        }
+
+        for case in fixture["needs_clarification"].as_array().unwrap() {
+            let input = case["input"].as_str().unwrap();
+            let output = parse(input);
+            assert_eq!(output["status"], "needs_clarification", "{input}: {output}");
+            assert!(output["plan"].is_null(), "{input}: {output}");
+            assert!(output.to_string().contains(case["issue"].as_str().unwrap()), "{input}: {output}");
+        }
+
+        for case in fixture["unsupported"].as_array().unwrap() {
+            let input = case["input"].as_str().unwrap();
+            let output = parse(input);
+            assert_eq!(output["status"], "unsupported", "{input}: {output}");
+            assert!(output["plan"].is_null(), "{input}: {output}");
+            assert!(output.to_string().contains(case["issue"].as_str().unwrap()), "{input}: {output}");
+        }
+    }
+}
+
+#[cfg(test)]
+mod f5_50_legacy_scroll_disc_contract_tests {
+    use super::parse;
+    use serde_json::Value;
+
+    #[test]
+    fn legacy_scroll_discs_match_python_recipe_parameters_and_boundaries() {
+        let fixture: Value = serde_json::from_str(include_str!(
+            "../tests/fixtures/quick_legacy_scroll_disc_contract.json"
+        ))
+        .expect("scroll-disc Python oracle fixture is valid JSON");
+
+        for case in fixture["legacy_accepted"].as_array().unwrap() {
+            let input = case["input"].as_str().unwrap();
+            let output = parse(input);
+            assert_eq!(output["status"], "ready", "{input}: {output}");
+            let features = output["plan"]["features"].as_array().unwrap();
+            assert_eq!(features.len(), case["feature_count"].as_u64().unwrap() as usize, "{input}");
+            assert_eq!(features[0]["kind"], "scroll_disc", "{input}: {output}");
+            assert_eq!(features[0]["operation"], "add", "{input}: {output}");
+            for (name, expected) in case["native_expected"].as_object().unwrap() {
+                if let Some(expected_values) = expected.as_array() {
+                    let actual_values = features[0]["parameters"][name].as_array().unwrap();
+                    assert_eq!(actual_values.len(), expected_values.len(), "{input}: {name}");
+                    for (actual, expected) in actual_values.iter().zip(expected_values) {
+                        assert!(
+                            (actual.as_f64().unwrap() - expected.as_f64().unwrap()).abs() <= 1e-9,
+                            "{input}: {name}={actual}, expected {expected}"
+                        );
+                    }
+                } else {
+                    assert_eq!(features[0]["parameters"][name], *expected, "{input}: {name}");
+                }
+            }
+            for name in case["source_user"].as_array().into_iter().flatten() {
+                assert_eq!(
+                    features[0]["sources"][name.as_str().unwrap()]["type"],
+                    "user",
+                    "{input}: {name} source"
+                );
+            }
+            for name in case["source_derived"].as_array().into_iter().flatten() {
+                assert_eq!(
+                    features[0]["sources"][name.as_str().unwrap()]["type"],
+                    "derived",
+                    "{input}: {name} source"
+                );
+            }
+            for warning in case["warnings"].as_array().into_iter().flatten() {
+                assert!(output.to_string().contains(warning.as_str().unwrap()), "{input}: {output}");
+            }
+            let validation = crate::cad_plan_validation::validate_plan(&output["plan"]);
+            assert_eq!(validation["state"], "valid", "{input}: {validation}");
+            assert!(validation["confirmations"].as_array().unwrap().is_empty(), "{input}: {validation}");
+            let support = crate::native_scroll_disc::preflight(&features[0]["parameters"])
+                .unwrap_or_else(|error| panic!("{input}: {error}"));
+            assert_eq!(support["profile_segments"], 120, "{input}: {support}");
+            assert_eq!(support["profile_points"], 242, "{input}: {support}");
+            assert_eq!(support["curve_model"], "sampled_archimedean_polyline");
+            assert!(crate::native_plan_geometry::preflight(&output["plan"]).is_ok(), "{input}");
+        }
+
+        for case in fixture["legacy_divergences"].as_array().unwrap() {
+            let input = case["input"].as_str().unwrap();
+            let output = parse(input);
+            assert_eq!(output["status"], case["rust_status"], "{input}: {output}");
+            assert!(output.to_string().contains(case["issue"].as_str().unwrap()), "{input}: {output}");
+            let dimensions = &output["plan"]["features"][0]["parameters"];
+            assert_eq!(dimensions["outer_d"], case["rust_dimensions_mm"][0], "{input}");
+            assert_eq!(dimensions["height"], case["rust_dimensions_mm"][1], "{input}");
+            assert_eq!(dimensions["wall_t"], case["rust_dimensions_mm"][2], "{input}");
         }
 
         for case in fixture["needs_clarification"].as_array().unwrap() {

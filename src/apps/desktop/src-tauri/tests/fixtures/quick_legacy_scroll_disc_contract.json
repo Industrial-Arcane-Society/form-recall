@@ -1,0 +1,61 @@
+{
+  "source": {
+    "partlib": "src/legacy/ai_modeler/parts/library/partlib.py::HARD_PARTS['涡旋盘'] and _scroll",
+    "geometry": "src/legacy/ai_modeler/core/geometry/kernel.py::make_scroll_disc/profile_scroll",
+    "python_oracle": "src/legacy/ai_modeler/parts/library/partlib.py::build_features_ex plus direct make_scroll_disc polygon sampling"
+  },
+  "legacy_accepted": [
+    {
+      "input": "涡旋盘 外径100 高度30 壁厚4 圈数2.5",
+      "feature_count": 1,
+      "native_expected": {"outer_d": 100.0, "height": 30.0, "wall_t": 4.0, "turns": 2.5, "center": [0.0, 0.0, 0.0], "segments": 120},
+      "source_user": ["outer_d", "height", "wall_t", "turns"],
+      "source_derived": ["center", "segments"],
+      "warnings": ["legacy_scroll_disc_migrated"],
+      "legacy_python": {"category": "涡旋盘", "bbox_mm": [100.0, 100.0, 30.0], "polygon_count": 1030, "triangle_count": 1688, "mesh_volume_mm3": 533930.4910486691, "feature_provenance_keys": ["outer_d", "height", "turns"]}
+    },
+    {
+      "input": "给我做个外径150 高度40 壁厚5 圈数3 的涡旋盘",
+      "feature_count": 1,
+      "native_expected": {"outer_d": 150.0, "height": 40.0, "wall_t": 5.0, "turns": 3.0, "center": [0.0, 0.0, 0.0], "segments": 120},
+      "source_user": ["outer_d", "height", "wall_t", "turns"],
+      "source_derived": ["center", "segments"],
+      "warnings": ["legacy_scroll_disc_migrated"],
+      "legacy_python": {"category": "涡旋盘", "bbox_mm": [150.0, 150.0, 40.0], "polygon_count": 1030, "triangle_count": 1688, "mesh_volume_mm3": 1893596.962680473}
+    },
+    {
+      "input": "涡旋压缩机 外径160 高度45 壁厚6 圈数3",
+      "feature_count": 1,
+      "native_expected": {"outer_d": 160.0, "height": 45.0, "wall_t": 6.0, "turns": 3.0, "center": [0.0, 0.0, 0.0], "segments": 120},
+      "source_user": ["outer_d", "height", "wall_t", "turns"],
+      "source_derived": ["center", "segments"],
+      "warnings": ["legacy_scroll_disc_migrated"],
+      "legacy_python": {"category": "涡旋盘", "bbox_mm": [160.0, 160.0, 45.0], "polygon_count": 1030, "triangle_count": 1688, "mesh_volume_mm3": 2409475.68227753}
+    },
+    {
+      "input": "涡旋盘 外径100 高度30 壁厚4",
+      "feature_count": 1,
+      "native_expected": {"outer_d": 100.0, "height": 30.0, "wall_t": 4.0, "turns": 2.5, "center": [0.0, 0.0, 0.0], "segments": 120},
+      "source_user": ["outer_d", "height", "wall_t"],
+      "source_derived": ["turns", "center", "segments"],
+      "warnings": ["legacy_scroll_disc_default_turns", "legacy_scroll_disc_migrated"],
+      "legacy_python": {"turns_default": 2.5, "bbox_mm": [100.0, 100.0, 30.0], "polygon_count": 1030, "triangle_count": 1688}
+    }
+  ],
+  "legacy_divergences": [
+    {"input": "涡旋盘 外径10cm 高度3cm 壁厚4mm 圈数2.5", "rust_status": "ready", "issue": "legacy_scroll_disc_unit_conversion", "legacy_python_dimensions": [10.0, 3.0, 4.0], "rust_dimensions_mm": [100.0, 30.0, 4.0]}
+  ],
+  "needs_clarification": [
+    {"input": "涡旋盘 外径100 高度30", "issue": "legacy_scroll_disc_wall_t_missing"},
+    {"input": "涡旋盘 高度30 壁厚4", "issue": "legacy_scroll_disc_outer_d_missing"},
+    {"input": "涡旋盘 外径100 高度30 壁厚4 圈数2 圈数3", "issue": "legacy_scroll_disc_turns_invalid"}
+  ],
+  "unsupported": [
+    {"input": "涡旋盘 外径100 高度30 壁厚4 圈数2 中心孔10", "issue": "legacy_scroll_disc_modifier_not_migrated"},
+    {"input": "涡旋压缩机 外径160 高度45 壁厚6 圈数3 动盘和静盘配对", "issue": "legacy_scroll_disc_modifier_not_migrated"}
+  ],
+  "geometry_acceptance": [
+    {"input": "涡旋盘 外径100 高度30 壁厚4 圈数2.5", "dimensions_mm": [100.0, 100.0, 30.0], "outer_d": 100.0, "height": 30.0, "wall_t": 4.0, "turns": 2.5, "segments": 120},
+    {"input": "涡旋盘 外径150 高度40 壁厚5 圈数3", "dimensions_mm": [150.0, 150.0, 40.0], "outer_d": 150.0, "height": 40.0, "wall_t": 5.0, "turns": 3.0, "segments": 120}
+  ]
+}
