@@ -112,6 +112,9 @@ pub fn parse(text: &str) -> Value {
     if let Some(parsed) = parse_legacy_spacer_pad(text, &normalized) {
         return parsed;
     }
+    if let Some(parsed) = parse_legacy_spring_washer(text, &normalized) {
+        return parsed;
+    }
     if let Some(parsed) = parse_legacy_washer(text, &normalized) {
         return parsed;
     }
@@ -853,7 +856,7 @@ fn shaft_dimension(text: &str, labels: &[&str], symbol: &str) -> Result<Option<f
 /// centered through-hole. The old Python recipe defaults thickness to 2 mm,
 /// so the Rust result records that assumption instead of hiding it.
 fn parse_legacy_washer(raw: &str, text: &str) -> Option<Value> {
-    if contains_any(text, &["弹簧垫圈", "弹性垫圈", "弹垫", "弹簧垫片"]) {
+    if text.contains("弹簧垫片") {
         return Some(result(
             "unsupported",
             raw,
@@ -1049,6 +1052,159 @@ fn parse_legacy_washer(raw: &str, text: &str) -> Option<Value> {
         }),
     ];
     Some(plan_result(raw, "垫圈", features, warnings))
+}
+
+/// Migrate the old `弹垫`/spring-washer part-library recipe. Despite the
+/// product name, the legacy builder creates a flat annulus: a centered
+/// 48-segment cylinder plus a centered through-bore. Explicit inner and outer
+/// diameters are required; an omitted thickness follows the old radial-gap
+/// formula and is reported as a derived value.
+fn parse_legacy_spring_washer(raw: &str, text: &str) -> Option<Value> {
+    if !contains_any(text, &["弹簧垫圈", "弹性垫圈", "弹垫"]) {
+        return None;
+    }
+
+    if contains_any(
+        text,
+        &[
+            "开口", "开缝", "切口", "缺口", "波形", "波纹", "螺旋", "真实弹簧", "螺纹", "阵列",
+            "组合", "并加", "再加", "安装孔", "螺栓孔", "偏心孔", "附加孔", "额外孔", "第二个孔",
+            "沉孔", "沉台", "盲孔", "倒角", "圆角", "helix", "split", "corrugated",
+        ],
+    ) {
+        return Some(parse_result_with_issue(
+            "unsupported",
+            raw,
+            "legacy_spring_washer_modifier_not_migrated",
+            "旧 Python Quick 弹垫配方只生成完整平环；开口、波形、真实弹簧及附加孔槽/边缘加工尚未迁入。",
+        ));
+    }
+
+    let outer = pulley_scalar(raw, text, &["外径", "外圆直径"], &["D"]);
+    let inner = pulley_scalar(raw, text, &["内径", "内孔直径", "孔径"], &["d"]);
+    let explicit_height = pulley_scalar(raw, text, &["厚度", "厚", "height", "高度"], &["h", "H"]);
+    let mut questions = Vec::new();
+    for (value, missing_code, invalid_code, label) in [
+        (
+            outer,
+            "legacy_spring_washer_outer_diameter_required",
+            "legacy_spring_washer_outer_diameter_invalid",
+            "外径 D",
+        ),
+        (
+            inner,
+            "legacy_spring_washer_inner_diameter_required",
+            "legacy_spring_washer_inner_diameter_invalid",
+            "内径 d",
+        ),
+    ] {
+        match value {
+            Some(value) if value.is_finite() && value > 0.0 => {}
+            Some(_) => questions.push(issue(
+                invalid_code,
+                format!("弹簧垫圈{label}必须是有限正数，且不同写法不能互相冲突。"),
+            )),
+            None => questions.push(issue(
+                missing_code,
+                format!("请明确弹簧垫圈{label}。旧 Python Quick 不会仅凭零件名建立弹垫。"),
+            )),
+        }
+    }
+    if explicit_height.is_some_and(|value| !value.is_finite() || value <= 0.0) {
+        questions.push(issue(
+            "legacy_spring_washer_thickness_invalid",
+            "弹簧垫圈厚度必须是有限正数，且不同写法不能互相冲突。",
+        ));
+    }
+    if let (Some(outer), Some(inner)) = (outer, inner) {
+        if outer.is_finite() && inner.is_finite() && outer <= inner {
+            questions.push(issue(
+                "legacy_spring_washer_inner_not_smaller_than_outer",
+                "弹簧垫圈外径必须大于内径，才能形成有效圆环。",
+            ));
+        }
+    }
+    if !questions.is_empty() {
+        return Some(result("needs_clarification", raw, None, vec![], questions, vec![]));
+    }
+
+    let outer = outer.expect("validated spring-washer outer diameter");
+    let inner = inner.expect("validated spring-washer inner diameter");
+    let height_defaulted = explicit_height.is_none();
+    let height = explicit_height.unwrap_or_else(|| ((outer - inner) * 0.35).max(0.5));
+    let mut warnings = vec![issue(
+        "legacy_spring_washer_flat_ring_only",
+        "旧 Python Quick 的弹簧垫圈配方实际是完整平环，不含开口、波形、斜面或弹性结构。",
+    )];
+    if height_defaulted {
+        warnings.push(issue(
+            "legacy_spring_washer_default_thickness",
+            "未指定厚度；沿用旧 Python Quick 公式 max(0.5, (外径−内径)×0.35) mm。",
+        ));
+    }
+    if crankshaft_has_non_mm_unit(text) {
+        warnings.push(issue(
+            "legacy_spring_washer_unit_conversion",
+            "已将输入中的 cm、dm、m 或英寸换算为 mm；旧 Python Quick 会把这些数值直接当作 mm。",
+        ));
+    } else if !has_unit(text) {
+        warnings.push(issue(
+            "unit_interpreted_as_mm",
+            "未写单位的弹簧垫圈尺寸按 mm 解释。",
+        ));
+    }
+
+    let features = vec![
+        json!({
+            "id":"quick-0001",
+            "kind":"cylinder",
+            "operation":"add",
+            "name":"弹簧垫圈环体",
+            "parameters":{
+                "radius":outer / 2.0,
+                "height":height,
+                "center":[0.0, 0.0, 0.0],
+                "base":false,
+                "axis":"Z",
+                "segments":48
+            },
+            "sources":{
+                "radius":derived_source(raw, "圆柱半径 = 用户给定的外径 D / 2。"),
+                "height":if height_defaulted {
+                    derived_source(raw, "沿用旧 Python Quick 的 max(0.5, (D-d)×0.35) 默认厚度公式。")
+                } else {
+                    user_source(raw)
+                },
+                "center":derived_source(raw, "沿用旧 Python Quick 将垫圈置于原点。"),
+                "base":derived_source(raw, "沿用旧 Python Quick 的居中圆柱语义。"),
+                "axis":derived_source(raw, "沿用旧 Python Quick 沿全局 Z 轴建立垫圈。"),
+                "segments":derived_source(raw, "沿用旧 Python Quick 圆柱分段数 48。")
+            },
+            "relations":[]
+        }),
+        json!({
+            "id":"quick-0002",
+            "kind":"hole",
+            "operation":"cut",
+            "name":"弹簧垫圈中心贯穿孔",
+            "parameters":{
+                "diameter":inner,
+                "through":true,
+                "pos":"center",
+                "axis":"Z",
+                "segments":48
+            },
+            "sources":{
+                "diameter":user_source(raw),
+                "through":derived_source(raw, "沿用旧 Python Quick 中心孔为贯穿孔。"),
+                "pos":derived_source(raw, "沿用旧 Python Quick 中心孔位置。"),
+                "axis":derived_source(raw, "沿用旧 Python Quick 中心孔沿全局 Z 轴贯穿。"),
+                "segments":derived_source(raw, "沿用旧 Python Quick 中心孔分段数 48。")
+            },
+            "relations":[]
+        }),
+    ];
+    Some(plan_result(raw, "弹簧垫圈", features, warnings))
 }
 
 /// Migrate the legacy Python Quick spacer-pad recipe. The old part-library
@@ -14875,6 +15031,117 @@ mod f5_54_legacy_spacer_pad_contract_tests {
                 output.to_string().contains(case["issue"].as_str().unwrap()),
                 "{input}: {output}"
             );
+        }
+    }
+}
+
+#[cfg(test)]
+mod f5_55_legacy_spring_washer_contract_tests {
+    use super::parse;
+    use serde_json::Value;
+
+    fn assert_spring_washer(output: &Value, case: &Value, input: &str) {
+        assert_eq!(output["status"], "ready", "{input}: {output}");
+        assert_eq!(output["plan"]["name"], "弹簧垫圈", "{input}: {output}");
+        let features = output["plan"]["features"].as_array().unwrap();
+        assert_eq!(features.len(), 2, "{input}: {output}");
+        let ring = &features[0];
+        assert_eq!(ring["kind"], "cylinder", "{input}: {output}");
+        assert_eq!(ring["operation"], "add", "{input}: {output}");
+        assert_eq!(
+            ring["parameters"]["radius"].as_f64().unwrap() * 2.0,
+            case["outer_diameter_mm"].as_f64().unwrap(),
+            "{input}: outer diameter"
+        );
+        assert_eq!(
+            ring["parameters"]["height"],
+            case["thickness_mm"],
+            "{input}: thickness"
+        );
+        assert_eq!(ring["parameters"]["center"], serde_json::json!([0.0, 0.0, 0.0]), "{input}");
+        assert_eq!(ring["parameters"]["base"], false, "{input}");
+        assert_eq!(ring["parameters"]["axis"], "Z", "{input}");
+        assert_eq!(ring["parameters"]["segments"], 48, "{input}");
+        assert_eq!(ring["sources"]["height"]["type"], case["height_source"], "{input}");
+
+        let bore = &features[1];
+        assert_eq!(bore["kind"], "hole", "{input}: {output}");
+        assert_eq!(bore["operation"], "cut", "{input}: {output}");
+        assert_eq!(
+            bore["parameters"]["diameter"],
+            case["inner_diameter_mm"],
+            "{input}: inner diameter"
+        );
+        assert_eq!(bore["parameters"]["through"], true, "{input}");
+        assert_eq!(bore["parameters"]["pos"], "center", "{input}");
+        assert_eq!(bore["parameters"]["axis"], "Z", "{input}");
+        assert_eq!(bore["parameters"]["segments"], 48, "{input}");
+        assert_eq!(bore["sources"]["diameter"]["type"], "user", "{input}");
+    }
+
+    #[test]
+    fn legacy_spring_washers_match_flat_ring_recipe_and_report_fallbacks() {
+        let fixture: Value = serde_json::from_str(include_str!(
+            "../tests/fixtures/quick_legacy_spring_washer_contract.json"
+        ))
+        .expect("spring-washer Python oracle fixture is valid JSON");
+
+        for case in fixture["legacy_accepted"].as_array().unwrap() {
+            let input = case["input"].as_str().unwrap();
+            let output = parse(input);
+            assert_spring_washer(&output, case, input);
+            let validation = crate::cad_plan_validation::validate_plan(&output["plan"]);
+            assert_eq!(validation["valid"], true, "{input}: {validation}");
+            assert!(crate::native_plan_geometry::preflight(&output["plan"]).is_ok(), "{input}");
+            for warning in case["warnings"].as_array().into_iter().flatten() {
+                assert!(output.to_string().contains(warning.as_str().unwrap()), "{input}: {output}");
+            }
+        }
+
+        for case in fixture["rust_supported_phrasings"].as_array().unwrap() {
+            let input = case["input"].as_str().unwrap();
+            let output = parse(input);
+            assert_spring_washer(&output, case, input);
+            assert!(crate::native_plan_geometry::preflight(&output["plan"]).is_ok(), "{input}");
+        }
+
+        for case in fixture["legacy_divergences"].as_array().unwrap() {
+            let input = case["input"].as_str().unwrap();
+            let output = parse(input);
+            assert!(output.to_string().contains(case["warning"].as_str().unwrap()), "{input}: {output}");
+            assert_spring_washer(&output, case, input);
+            for (axis, dimension) in ["radius", "height"].iter().enumerate() {
+                let expected = if axis == 0 {
+                    case["rust_dimensions_mm"][0].as_f64().unwrap() / 2.0
+                } else {
+                    case["rust_dimensions_mm"][2].as_f64().unwrap()
+                };
+                assert!(
+                    (output["plan"]["features"][0]["parameters"][dimension]
+                        .as_f64()
+                        .unwrap()
+                        - expected)
+                        .abs()
+                        <= 1e-9,
+                    "{input}: {dimension}"
+                );
+            }
+        }
+
+        for case in fixture["needs_clarification"].as_array().unwrap() {
+            let input = case["input"].as_str().unwrap();
+            let output = parse(input);
+            assert_eq!(output["status"], "needs_clarification", "{input}: {output}");
+            assert!(output["plan"].is_null(), "{input}: {output}");
+            assert!(output.to_string().contains(case["issue"].as_str().unwrap()), "{input}: {output}");
+        }
+
+        for case in fixture["unsupported"].as_array().unwrap() {
+            let input = case["input"].as_str().unwrap();
+            let output = parse(input);
+            assert_eq!(output["status"], "unsupported", "{input}: {output}");
+            assert!(output["plan"].is_null(), "{input}: {output}");
+            assert!(output.to_string().contains(case["issue"].as_str().unwrap()), "{input}: {output}");
         }
     }
 }

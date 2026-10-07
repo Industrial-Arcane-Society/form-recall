@@ -1,0 +1,159 @@
+{
+  "source": {
+    "part_library": "src/legacy/ai_modeler/parts/library/partlib.py::BOLT_PARTS['弹垫'] and _washer_thin",
+    "quick_entry": "src/legacy/ai_modeler/core/parsing/nlparser.py::Parser.handle and partlib.build_features_ex",
+    "geometry": "src/legacy/ai_modeler/core/geometry/kernel.py::cylinder and centered through-hole cut"
+  },
+  "legacy_accepted": [
+    {
+      "input": "弹簧垫圈 内径6 外径12 厚度2",
+      "dimensions_mm": [12.0, 12.0, 2.0],
+      "outer_diameter_mm": 12.0,
+      "inner_diameter_mm": 6.0,
+      "thickness_mm": 2.0,
+      "height_source": "user",
+      "legacy_mesh": {
+        "bbox_mm": [-6.0, -6.0, -1.0, 6.0, 6.0, 1.0],
+        "faces": 192,
+        "triangles": 382,
+        "volume_mm3": 169.16194511718712,
+        "area_mm2": 282.17855242687483
+      },
+      "native_features": [
+        {
+          "kind": "cylinder",
+          "operation": "add",
+          "parameters": {
+            "radius": 6.0,
+            "height": 2.0,
+            "center": [0.0, 0.0, 0.0],
+            "base": false,
+            "axis": "Z",
+            "segments": 48
+          },
+          "sources": {
+            "radius": "derived",
+            "height": "user"
+          }
+        },
+        {
+          "kind": "hole",
+          "operation": "cut",
+          "parameters": {
+            "diameter": 6.0,
+            "through": true,
+            "pos": "center",
+            "axis": "Z",
+            "segments": 48
+          },
+          "sources": {
+            "diameter": "user"
+          }
+        }
+      ]
+    },
+    {
+      "input": "弹簧垫圈 内径6 外径12",
+      "dimensions_mm": [12.0, 12.0, 2.1],
+      "outer_diameter_mm": 12.0,
+      "inner_diameter_mm": 6.0,
+      "thickness_mm": 2.1,
+      "height_source": "derived",
+      "legacy_default_thickness_mm": 2.1,
+      "warnings": ["legacy_spring_washer_default_thickness"]
+    },
+    {
+      "input": "弹簧垫圈 d6 D12 h2",
+      "dimensions_mm": [12.0, 12.0, 2.0],
+      "outer_diameter_mm": 12.0,
+      "inner_diameter_mm": 6.0,
+      "thickness_mm": 2.0,
+      "height_source": "user"
+    }
+  ],
+  "legacy_divergences": [
+    {
+      "input": "弹簧垫圈 内径0.6cm 外径1.2cm 厚度2mm",
+      "legacy_parser_bbox_mm": [1.2, 1.2, 2.0],
+      "legacy_parser_parameters_mm": {
+        "outer_diameter": 1.2,
+        "inner_diameter": 0.6,
+        "thickness": 2.0
+      },
+      "legacy_issue": "旧 Python Quick 忽略 cm，将外径和内径数值直接当作 mm。",
+      "rust_dimensions_mm": [12.0, 12.0, 2.0],
+      "outer_diameter_mm": 12.0,
+      "inner_diameter_mm": 6.0,
+      "thickness_mm": 2.0,
+      "warning": "legacy_spring_washer_unit_conversion"
+    },
+    {
+      "input": "弹垫 内径6 外径12 厚2",
+      "legacy_parser_features": ["cylinder/add"],
+      "legacy_issue": "旧 Python Quick 的该写法落入普通圆柱分支，漏掉中心贯穿孔；Rust 按明确弹垫意图保留内径并建成平环。",
+      "rust_dimensions_mm": [12.0, 12.0, 2.0],
+      "outer_diameter_mm": 12.0,
+      "inner_diameter_mm": 6.0,
+      "thickness_mm": 2.0,
+      "warning": "legacy_spring_washer_flat_ring_only"
+    }
+  ],
+  "rust_supported_phrasings": [
+    {
+      "input": "弹簧垫圈 内径6 外径12 厚度2 中心通孔",
+      "outer_diameter_mm": 12.0,
+      "inner_diameter_mm": 6.0,
+      "thickness_mm": 2.0,
+      "height_source": "user"
+    }
+  ],
+  "needs_clarification": [
+    {
+      "input": "弹簧垫圈",
+      "issue": "legacy_spring_washer_outer_diameter_required"
+    },
+    {
+      "input": "弹簧垫圈 外径12",
+      "issue": "legacy_spring_washer_inner_diameter_required"
+    },
+    {
+      "input": "弹簧垫圈 外径6 内径12 厚2",
+      "issue": "legacy_spring_washer_inner_not_smaller_than_outer"
+    },
+    {
+      "input": "弹簧垫圈 外径12 外径14 内径6 厚2",
+      "issue": "legacy_spring_washer_outer_diameter_invalid"
+    }
+  ],
+  "unsupported": [
+    {
+      "input": "弹簧垫圈 外径12 内径6 厚2 开口",
+      "issue": "legacy_spring_washer_modifier_not_migrated"
+    },
+    {
+      "input": "弹簧垫圈 外径12 内径6 厚2 波形",
+      "issue": "legacy_spring_washer_modifier_not_migrated"
+    },
+    {
+      "input": "弹簧垫片 外径12 内径6 厚2",
+      "issue": "legacy_spring_washer_not_migrated"
+    }
+  ],
+  "geometry_acceptance": [
+    {
+      "input": "弹簧垫圈 内径6 外径12 厚度2",
+      "dimensions_mm": [12.0, 12.0, 2.0],
+      "feature_count": 2
+    },
+    {
+      "input": "弹簧垫圈 内径6 外径12",
+      "dimensions_mm": [12.0, 12.0, 2.1],
+      "feature_count": 2
+    },
+    {
+      "input": "弹簧垫圈 内径0.6cm 外径1.2cm 厚度2mm",
+      "dimensions_mm": [12.0, 12.0, 2.0],
+      "feature_count": 2
+    }
+  ]
+}
