@@ -347,6 +347,10 @@ pub fn parse(text: &str) -> Value {
             clause_index += 1;
         }
     }
+    if let Some(stacked) = parse_legacy_sequential_base_stack(text, &normalized, &warnings) {
+        return stacked;
+    }
+
     let mut base_kinds = Vec::new();
     if legacy_revolve_requested(&normalized) {
         base_kinds.push(BaseKind::Revolve);
@@ -13300,6 +13304,363 @@ fn normalize(text: &str) -> String {
         })
         .collect()
 }
+fn sequential_base_stack_failure(
+    text: &str,
+    warnings: Vec<Value>,
+    status: &str,
+    code: &str,
+    message: &str,
+) -> Value {
+    let issue = issue(code, message);
+    if status == "unsupported" {
+        result(status, text, None, warnings, Vec::new(), vec![issue])
+    } else {
+        result(status, text, None, warnings, vec![issue], Vec::new())
+    }
+}
+
+/// Migrate only an explicit two-body, mixed box/cylinder vertical stack.
+/// The second body's base plane is derived as Zmax(first); private `stack`
+/// flags are deliberately never emitted into CADPlan.
+fn parse_legacy_sequential_base_stack(
+    text: &str,
+    normalized: &str,
+    inherited_warnings: &[Value],
+) -> Option<Value> {
+    let connector = regex::Regex::new(r"再\s*做|然后\s*做").expect("fixed stack connector regex");
+    let matches = connector.find_iter(normalized).collect::<Vec<_>>();
+    if matches.is_empty() {
+        return None;
+    }
+
+    let all_parts = connector.split(normalized).collect::<Vec<_>>();
+    if matches.len() > 1 {
+        if !all_parts.iter().all(|part| sequential_stack_has_base_marker(part)) {
+            return None;
+        }
+        return Some(sequential_base_stack_failure(
+            text,
+            inherited_warnings.to_vec(),
+            "unsupported",
+            "sequential_base_stack_scope_unsupported",
+            "顺序堆叠当前只支持恰好两个异种基础体；三个及以上基础体需分步建模。",
+        ));
+    }
+
+    let matched = matches[0];
+    let first_clause = trim_stack_clause(&normalized[..matched.start()]);
+    let second_clause = trim_stack_clause(&normalized[matched.end()..]);
+    if !sequential_stack_has_base_marker(first_clause)
+        || !sequential_stack_has_base_marker(second_clause)
+    {
+        // Keep normal Quick behavior for a primitive followed by an ordinary
+        // cut/modifier clause such as “然后做一个孔”.
+        return None;
+    }
+    if split_clauses(first_clause).len() != 1 || split_clauses(second_clause).len() != 1 {
+        return Some(sequential_base_stack_failure(
+            text,
+            inherited_warnings.to_vec(),
+            "needs_clarification",
+            "sequential_base_stack_scope_ambiguous",
+            "顺序堆叠只处理两个各自完整的基础体片段；请移除额外子句或拆分请求。",
+        ));
+    }
+
+    let base_kinds = [
+        BaseKind::Box,
+        BaseKind::Cylinder,
+        BaseKind::Cone,
+        BaseKind::Frustum,
+        BaseKind::Sphere,
+    ];
+    let first_kinds = base_kinds
+        .iter()
+        .copied()
+        .filter(|kind| contains_base(first_clause, *kind))
+        .collect::<Vec<_>>();
+    let second_kinds = base_kinds
+        .iter()
+        .copied()
+        .filter(|kind| contains_base(second_clause, *kind))
+        .collect::<Vec<_>>();
+    if first_kinds.len() != 1
+        || second_kinds.len() != 1
+        || sequential_base_marker_count(first_clause, first_kinds.first().copied().unwrap_or(BaseKind::Box)) != 1
+        || sequential_base_marker_count(second_clause, second_kinds.first().copied().unwrap_or(BaseKind::Box)) != 1
+    {
+        return Some(sequential_base_stack_failure(
+            text,
+            inherited_warnings.to_vec(),
+            "unsupported",
+            "sequential_base_stack_type_ambiguous",
+            "顺序堆叠要求每个片段只描述一个基础体类型。",
+        ));
+    }
+    let first_kind = first_kinds[0];
+    let second_kind = second_kinds[0];
+    if !matches!(first_kind, BaseKind::Box | BaseKind::Cylinder)
+        || !matches!(second_kind, BaseKind::Box | BaseKind::Cylinder)
+    {
+        return Some(sequential_base_stack_failure(
+            text,
+            inherited_warnings.to_vec(),
+            "unsupported",
+            "sequential_base_stack_type_unsupported",
+            "顺序堆叠当前只支持长方体和圆柱体；圆锥、圆台、球体、拉伸体和回转体需使用单独建模流程。",
+        ));
+    }
+    if first_kind == second_kind {
+        return Some(sequential_base_stack_failure(
+            text,
+            inherited_warnings.to_vec(),
+            "unsupported",
+            "sequential_base_stack_requires_mixed_types",
+            "此兼容规则只迁移旧 Python 中顺序添加的异种基础体；同类型多实体需要明确的装配/阵列语义。",
+        ));
+    }
+    if first_kind != BaseKind::Cylinder || second_kind != BaseKind::Box {
+        // Only migrate the legacy-successful cylinder-to-box stack. Other
+        // orders fall through to the existing generic Quick behavior.
+        return None;
+    }
+
+    let overlap_or_join_cue = contains_any(
+        normalized,
+        &[
+            "重叠", "重合", "相交", "穿插", "套接", "套入", "嵌套", "嵌入", "同轴", "同心", "压入", "插入", "overlap",
+            "intersect", "coaxial", "concentric", "interference fit", "press fit",
+        ],
+    );
+    let coordinate_or_position_cue = [first_clause, second_clause].iter().any(|clause| {
+        center_coordinates(clause).is_some()
+            || named_xyz(clause).is_some()
+            || contains_any(
+                clause,
+                &["坐标", "coordinate", "position", "位置", "center", "centre", "origin", "原点"],
+            )
+            || regex::Regex::new(r"(?:^|\s)[xyz]\s*[:=]\s*[-+]?[0-9]")
+                .expect("fixed explicit coordinate regex")
+                .is_match(clause)
+    });
+    let unsupported_modifier = contains_any(
+        normalized,
+        &[
+            "孔", "hole", "bore", "drill", "槽", "slot", "pocket", "螺纹", "thread", "阵列",
+            "array", "圆角", "fillet", "倒角", "chamfer", "齿轮", "gear", "圆形凹槽",
+        ],
+    );
+    let explicit_non_z_axis = [first_clause, second_clause].iter().any(|clause| {
+        let mut axis_issues = Vec::new();
+        axis_value(clause, &mut axis_issues).is_some_and(|axis| axis != "Z")
+            || !axis_issues.is_empty()
+    });
+    if overlap_or_join_cue
+        || coordinate_or_position_cue
+        || unsupported_modifier
+        || explicit_non_z_axis
+    {
+        return Some(sequential_base_stack_failure(
+            text,
+            inherited_warnings.to_vec(),
+            "needs_clarification",
+            "sequential_base_stack_ambiguous",
+            "顺序堆叠只按前一实体的全局 Z 顶面放置第二实体；检测到重叠/连接语义、显式坐标、额外特征或非 Z 轴时不会猜测，请分别说明。",
+        ));
+    }
+
+    if !explicit_sequential_base_dimensions_valid(first_kind, first_clause)
+        || !explicit_sequential_base_dimensions_valid(second_kind, second_clause)
+    {
+        return Some(sequential_base_stack_failure(
+            text,
+            inherited_warnings.to_vec(),
+            "needs_clarification",
+            "sequential_base_stack_dimensions_missing",
+            "两个基础体都必须有明确的正尺寸；长方体需长宽高，圆柱需直径/半径和高度。",
+        ));
+    }
+
+    let mut questions = Vec::new();
+    let mut warnings = inherited_warnings.to_vec();
+    let Some(first) = build_base(
+        first_kind,
+        first_clause,
+        text,
+        &mut questions,
+        &mut warnings,
+        true,
+    ) else {
+        return Some(sequential_base_stack_failure(
+            text,
+            warnings,
+            "needs_clarification",
+            "sequential_base_stack_first_body_invalid",
+            "第一个基础体的完整尺寸无法安全解析。",
+        ));
+    };
+    let Some(mut second) = build_base(
+        second_kind,
+        second_clause,
+        text,
+        &mut questions,
+        &mut warnings,
+        true,
+    ) else {
+        return Some(sequential_base_stack_failure(
+            text,
+            warnings,
+            "needs_clarification",
+            "sequential_base_stack_second_body_invalid",
+            "第二个基础体的完整尺寸无法安全解析。",
+        ));
+    };
+    if !questions.is_empty() {
+        return Some(result(
+            "needs_clarification",
+            text,
+            None,
+            warnings,
+            questions,
+            Vec::new(),
+        ));
+    }
+
+    let Some(top_z) = sequential_base_top_z(&first) else {
+        return Some(sequential_base_stack_failure(
+            text,
+            warnings,
+            "needs_clarification",
+            "sequential_base_stack_top_unknown",
+            "第一个实体的 Z 包围盒顶面不可由明确尺寸与底面坐标确定。",
+        ));
+    };
+    let first_id = first["id"].as_str().unwrap_or("quick-0001").to_owned();
+    second["id"] = json!("quick-0002");
+    second["parameters"]["center"] = json!([0.0, 0.0, top_z]);
+    second["sources"]["center"] = derived_source(
+        text,
+        &format!(
+            "第二基体按前一基体 {first_id} 的显式底面与高度推导 Z 顶面 {top_z} mm；以该平面作为自身底面，未使用 stack 私有标记。"
+        ),
+    );
+    second["relations"] = json!([{"type":"depends_on","feature_id":first_id}]);
+    warnings.push(issue(
+        "sequential_base_stack_position_derived",
+        &format!("第二基础体的 Z 底面由第一基础体顶面推导为 {top_z} mm；该放置不是用户单独标注的坐标。"),
+    ));
+    let features = vec![first, second];
+    let plan = json!({
+        "schema_version":"1.0",
+        "name":"Quick Part",
+        "source_prompt":text,
+        "units":{"length":"mm","angle":"deg"},
+        "coordinate_system":{"type":"global_cartesian","handedness":"right","axes":["X","Y","Z"],"origin":[0,0,0]},
+        "features":features,
+        "pending_questions":[]
+    });
+    Some(result("ready", text, Some(plan), warnings, Vec::new(), Vec::new()))
+}
+
+fn trim_stack_clause(clause: &str) -> &str {
+    clause.trim_matches(|ch: char| {
+        ch.is_whitespace() || matches!(ch, ',' | '，' | ';' | '；' | '。')
+    })
+}
+
+fn sequential_stack_has_base_marker(clause: &str) -> bool {
+    [
+        BaseKind::Box,
+        BaseKind::Cylinder,
+        BaseKind::Cone,
+        BaseKind::Frustum,
+        BaseKind::Sphere,
+    ]
+    .iter()
+    .any(|kind| contains_base(clause, *kind))
+        || extrusion_requested(clause)
+        || legacy_revolve_requested(clause)
+}
+
+fn sequential_base_marker_count(clause: &str, kind: BaseKind) -> usize {
+    let pattern = match kind {
+        BaseKind::Box => r"长方体|长方块|矩形块|cuboid|box|block",
+        BaseKind::Cylinder => r"圆柱体|圆柱|圆棒|圆轴|cylinder",
+        _ => return 0,
+    };
+    regex::Regex::new(pattern)
+        .expect("fixed supported base marker regex")
+        .find_iter(clause)
+        .count()
+}
+
+fn explicit_sequential_base_dimensions_valid(kind: BaseKind, clause: &str) -> bool {
+    match kind {
+        BaseKind::Box => {
+            let triplet = find_dimension_triplet(clause);
+            let labels = [
+                scalar(clause, &["length", "overall length", "长", "长度", "总长", "全长"]),
+                scalar(clause, &["width", "宽度", "宽"]),
+                scalar(clause, &["height", "高度", "高", "thickness", "厚度", "厚"]),
+            ];
+            if let Some(values) = triplet {
+                values.iter().all(|value| value.is_finite() && *value > 0.0)
+                    && labels.iter().zip(values).all(|(label, value)| {
+                        label.as_ref().map_or(true, |label| label.is_finite() && close(*label, value))
+                    })
+            } else {
+                labels
+                    .iter()
+                    .all(|value| value.is_some_and(|value| value.is_finite() && value > 0.0))
+            }
+        }
+        BaseKind::Cylinder => {
+            let diameter = diameter_value(clause);
+            let radius = scalar(clause, &["radius", "半径"]);
+            let height = scalar(clause, &["height", "高度", "高", "length", "长度", "长"]);
+            let radius_valid = match (radius, diameter) {
+                (Some(radius), Some(diameter)) => {
+                    radius.is_finite()
+                        && radius > 0.0
+                        && diameter.is_finite()
+                        && diameter > 0.0
+                        && close(radius * 2.0, diameter)
+                }
+                (Some(radius), None) => radius.is_finite() && radius > 0.0,
+                (None, Some(diameter)) => diameter.is_finite() && diameter > 0.0,
+                (None, None) => false,
+            };
+            radius_valid && height.is_some_and(|value| value.is_finite() && value > 0.0)
+        }
+        _ => false,
+    }
+}
+
+fn sequential_base_top_z(feature: &Value) -> Option<f64> {
+    let parameters = feature.get("parameters")?;
+    if parameters.get("base").and_then(Value::as_bool) != Some(true)
+        || parameters.get("axis").and_then(Value::as_str) != Some("Z")
+    {
+        return None;
+    }
+    let center = parameters.get("center")?.as_array()?;
+    if center.len() != 3 {
+        return None;
+    }
+    let x = center[0].as_f64()?;
+    let y = center[1].as_f64()?;
+    let z = center[2].as_f64()?;
+    let height = parameters.get("height")?.as_f64()?;
+    if !x.is_finite() || !y.is_finite() || !z.is_finite() || !height.is_finite() || height <= 0.0 {
+        return None;
+    }
+    if x.abs() > 1e-9 || y.abs() > 1e-9 {
+        return None;
+    }
+    let top = z + height;
+    top.is_finite().then_some(top)
+}
+
 fn split_clauses(s: &str) -> Vec<String> {
     let mut prepared = s
         .replace("然后", ";")
@@ -13985,6 +14346,103 @@ mod tests {
         assert_eq!(out["status"], "ready", "{out}");
         out["plan"].clone()
     }
+    #[test]
+    fn f5_88_legacy_sequential_mixed_base_stack_derives_second_bottom_from_first_top() {
+        let cases = [(
+            "圆柱直径20高30，再做一个长方体长100宽60高20",
+            "cylinder",
+            "box",
+            30.0,
+        )];
+        for (input, first_kind, second_kind, expected_z) in cases {
+            let output = parse(input);
+            assert_eq!(output["status"], "ready", "{input}: {output}");
+            let plan = &output["plan"];
+            assert_eq!(crate::cad_plan_validation::validate_plan(plan)["state"], "valid", "{input}: {plan}");
+            assert_eq!(crate::native_plan_geometry::preflight(plan).unwrap()["state"], "valid", "{input}: {plan}");
+            let features = plan["features"].as_array().unwrap();
+            assert_eq!(features.len(), 2, "{input}: {features:?}");
+            assert_eq!(features[0]["kind"], first_kind, "{input}");
+            assert_eq!(features[1]["kind"], second_kind, "{input}");
+            assert_eq!(features[0]["parameters"]["center"], json!([0.0, 0.0, 0.0]));
+            assert_eq!(features[0]["parameters"]["base"], true);
+            assert_eq!(features[0]["parameters"]["axis"], "Z");
+            assert_eq!(features[1]["parameters"]["center"], json!([0.0, 0.0, expected_z]));
+            assert_eq!(features[1]["parameters"]["base"], true);
+            assert_eq!(features[1]["parameters"]["axis"], "Z");
+            assert!(features[1]["parameters"].get("stack").is_none(), "{input}: {}", features[1]);
+            assert_eq!(features[1]["sources"]["center"]["type"], "derived", "{input}");
+            assert_eq!(features[1]["sources"]["center"]["evidence"], input, "{input}");
+            assert!(features[1]["sources"]["center"]["note"].as_str().is_some_and(|note| note.contains("Z 顶面")), "{input}: {}", features[1]);
+            assert_eq!(features[1]["relations"], json!([{"type":"depends_on","feature_id":"quick-0001"}]));
+        }
+    }
+
+    #[test]
+    fn f5_88_legacy_sequential_stack_rejects_ambiguous_or_out_of_scope_requests() {
+        let cases = [
+            ("圆柱直径20高30，长方体长100宽60高20", "unsupported", "multiple_base_shapes"),
+            ("圆柱直径20高30，再做一个长方体长100宽60高20并重叠", "needs_clarification", "sequential_base_stack_scope_ambiguous"),
+            ("圆柱直径20高30，再做一个长方体长100宽60高20中心坐标(0,0,30)", "needs_clarification", "sequential_base_stack_ambiguous"),
+            ("长方体长100宽60高20，再做一个长方体长50宽30高10", "unsupported", "sequential_base_stack_requires_mixed_types"),
+            ("圆柱直径20高30，再做一个圆锥底径10高20", "unsupported", "sequential_base_stack_type_ambiguous"),
+            ("圆柱直径20高30和另一个圆柱直径10高5，再做一个长方体长100宽60高20", "unsupported", "sequential_base_stack_type_ambiguous"),
+            ("圆柱直径20高30，再做一个长方体长100宽60", "needs_clarification", "sequential_base_stack_dimensions_missing"),
+        ];
+        for (input, expected_status, expected_issue) in cases {
+            let output = parse(input);
+            assert_eq!(output["status"], expected_status, "{input}: {output}");
+            assert!(output["plan"].is_null(), "{input}: {output}");
+            assert!(output.to_string().contains(expected_issue), "{input}: {output}");
+        }
+        let third_body = parse("圆柱直径20高30，再做一个长方体长100宽60高20，再做一个圆柱直径10高5");
+        assert_eq!(third_body["status"], "unsupported", "{third_body}");
+        assert!(third_body.to_string().contains("sequential_base_stack_scope_unsupported"), "{third_body}");
+    }
+
+    #[test]
+    #[ignore = "requires the staged local OCCT runtime manifest"]
+    fn f5_88_legacy_sequential_mixed_base_stack_builds_one_closed_solid_with_bbox_and_volume() {
+        use std::{fs, path::Path, time::{SystemTime, UNIX_EPOCH}};
+
+        let manifest = std::env::var_os("AIMODELER_TEST_OCCT_MANIFEST")
+            .map(std::path::PathBuf::from)
+            .expect("set AIMODELER_TEST_OCCT_MANIFEST to the staged runtime-manifest.json");
+        assert!(manifest.is_file(), "missing OCCT manifest: {}", manifest.display());
+        let input = "圆柱直径20高30，再做一个长方体长100宽60高20";
+        let root = std::env::temp_dir().join(format!(
+            "f5-88-sequential-base-stack-{}-{}",
+            std::process::id(),
+            SystemTime::now().duration_since(UNIX_EPOCH).expect("system clock").as_nanos(),
+        ));
+        fs::create_dir_all(&root).expect("create temporary output root");
+        struct RemoveOnDrop(std::path::PathBuf);
+        impl Drop for RemoveOnDrop { fn drop(&mut self) { let _ = fs::remove_dir_all(&self.0); } }
+        let _cleanup = RemoveOnDrop(root.clone());
+
+        let output = crate::native_quick::build(input, 1, &manifest, &root)
+            .unwrap_or_else(|error| panic!("native Quick build failed: {error}"));
+        assert_eq!(output["state"], "complete", "{output}");
+        let report = &output["geometry_report"];
+        assert_eq!(report["state"], "passed", "{report}");
+        assert_eq!(report["valid"], true, "{report}");
+        assert_eq!(report["closed_solid_count"], 1, "{report}");
+        assert_eq!(report["dimensions_mm"], json!([100.0, 60.0, 50.0]));
+        assert_eq!(report["bounds_mm"], json!([-50.0, -30.0, 0.0, 50.0, 30.0, 50.0]));
+        let analytic_volume = 100.0 * 60.0 * 20.0 + std::f64::consts::PI * 10.0_f64.powi(2) * 30.0;
+        let actual_volume = report["volume_mm3"].as_f64().expect("B-Rep volume");
+        assert!((actual_volume - analytic_volume).abs() <= 1e-3, "{report}");
+        let legacy_mesh_volume = 129397.88583984367_f64;
+        assert!(
+            (actual_volume - legacy_mesh_volume).abs() / legacy_mesh_volume < 3e-4,
+            "analytic B-Rep and 48-sided legacy mesh volumes differ beyond expected tessellation tolerance: {report}"
+        );
+        let aimodel = Path::new(output["output_paths"]["aimodel"].as_str().unwrap());
+        assert!(aimodel.is_file(), "missing AIMODEL output");
+        let loaded = crate::native_model_io::load_aimodel(aimodel).expect("AIMODEL reload");
+        assert_eq!(loaded["cadplan"]["features"], output["cadplan"]["features"]);
+    }
+
     #[test]
     fn legacy_timing_pulley_matches_python_oracle_and_native_scope() {
         let fixture: Value = serde_json::from_str(include_str!(
