@@ -4540,3 +4540,62 @@ mod f5_61_legacy_nut_native_acceptance {
         }
     }
 }
+
+#[cfg(test)]
+mod f5_76_legacy_egt_pocket_collision_acceptance {
+    use super::build;
+    use crate::native_quick_parser;
+    use serde_json::Value;
+    use std::{fs, path::Path, time::SystemTime};
+
+    #[test]
+    #[ignore = "requires the staged local OCCT runtime; run the F5.76 headless acceptance command"]
+    fn egt_pocket_alias_collision_recreates_python_stacked_box_geometry() {
+        let manifest = std::env::var_os("AIMODELER_TEST_OCCT_MANIFEST")
+            .map(std::path::PathBuf::from)
+            .expect("set AIMODELER_TEST_OCCT_MANIFEST to the staged runtime-manifest.json");
+        assert!(manifest.is_file(), "missing OCCT manifest: {}", manifest.display());
+
+        let prompt = "长方体 长100宽80高20，然后型材内腔长30宽20深5";
+        let parsed = native_quick_parser::parse(prompt);
+        assert_eq!(parsed["status"], "ready", "{parsed}");
+        let features = parsed["plan"]["features"].as_array().unwrap();
+        assert_eq!(features.len(), 2, "{parsed}");
+        assert_eq!(features[0]["kind"], "box");
+        assert_eq!(features[1]["kind"], "box");
+        assert_eq!(features[1]["parameters"]["stack"], true);
+        assert!(features.iter().all(|feature| feature["kind"] != "pocket"));
+
+        let root = std::env::temp_dir().join(format!(
+            "native-quick-f5-76-egt-{}-{}",
+            std::process::id(),
+            SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .unwrap()
+                .as_nanos()
+        ));
+        fs::create_dir_all(&root).expect("create F5.76 output root");
+        struct RemoveOnDrop(std::path::PathBuf);
+        impl Drop for RemoveOnDrop {
+            fn drop(&mut self) {
+                let _ = fs::remove_dir_all(&self.0);
+            }
+        }
+        let _cleanup = RemoveOnDrop(root.clone());
+
+        let output = build(prompt, 1, &manifest, &root)
+            .unwrap_or_else(|error| panic!("F5.76 native Quick build failed: {error}"));
+        assert_eq!(output["state"], "complete", "{output}");
+        let report: &Value = &output["geometry_report"];
+        assert_eq!(report["state"], "passed", "{report}");
+        assert_eq!(report["valid"], true, "{report}");
+        assert_eq!(report["closed_solid_count"], 1, "{report}");
+        assert_eq!(report["dimensions_mm"], serde_json::json!([100., 80., 108.]));
+        assert_eq!(report["bounds_mm"], serde_json::json!([-50., -40., 0., 50., 40., 108.]));
+        assert_eq!(report["volume_mm3"], 723200.0);
+        for name in ["glb", "aimodel", "stl", "obj"] {
+            let path = Path::new(output["output_paths"][name].as_str().unwrap());
+            assert!(path.is_file(), "F5.76 {name} output missing: {}", path.display());
+        }
+    }
+}

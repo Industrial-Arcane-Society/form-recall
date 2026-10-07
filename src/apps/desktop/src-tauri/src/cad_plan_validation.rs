@@ -26,7 +26,7 @@ const SPECS: &[Spec] = &[
     Spec {
         kind: "box",
         required: "length width height",
-        params: "length width height center axis base corner corner_mode",
+        params: "length width height center axis base corner corner_mode stack",
         catia_status: "exact",
         catia_reason: "矩形草图加凸台；当前 CATIA 映射仅支持 Z 轴拉伸。",
         local_status: "exact",
@@ -379,7 +379,7 @@ const INTEGER_KEYS: &[&str] = &[
     "seg_per_turn",
     "wire_seg",
 ];
-const BOOLEAN_KEYS: &[&str] = &["base", "through", "full"];
+const BOOLEAN_KEYS: &[&str] = &["base", "through", "full", "stack"];
 const STRING_KEYS: &[&str] = &[
     "axis",
     "corner_mode",

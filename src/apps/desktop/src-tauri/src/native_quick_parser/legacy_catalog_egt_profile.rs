@@ -1,7 +1,7 @@
 //! Compatibility port of the legacy Python Quick `EGT型材` directory sample.
 //! The old parser emitted a plain cube; this is not the real extrusion profile.
 
-use serde_json::{json, Value};
+use serde_json::{Value, json};
 
 pub(super) fn parse(raw: &str, normalized: &str) -> Option<Value> {
     // This catalog entry had no parameterized grammar. Keep it deliberately
@@ -59,6 +59,30 @@ pub(super) fn parse(raw: &str, normalized: &str) -> Option<Value> {
         vec![],
         vec![],
     ))
+}
+
+/// Return the feature that the Python Quick part-library collision appended
+/// for `型材内腔...`; its `stack=true` placement is applied by native geometry.
+pub(super) fn stacked_feature(evidence: &str, feature_index: usize) -> Value {
+    let template = parse("EGT型材", "EGT型材").expect("exact EGT template remains available");
+    let mut feature = template["plan"]["features"][0].clone();
+    feature["id"] = json!(format!("quick-{:04}", feature_index));
+    feature["parameters"]["stack"] = json!(true);
+    feature["sources"]["stack"] = super::derived_source(
+        evidence,
+        "旧 Python Quick 的型材目录碰撞会将简化方盒堆叠到当前模型顶面。",
+    );
+    if let Some(sources) = feature["sources"].as_object_mut() {
+        for source in sources.values_mut() {
+            source["evidence"] = json!(evidence);
+        }
+    }
+    feature
+}
+
+pub(super) fn simplified_box_warning() -> Value {
+    parse("EGT型材", "EGT型材").expect("exact EGT template remains available")["warnings"][0]
+        .clone()
 }
 
 #[cfg(test)]

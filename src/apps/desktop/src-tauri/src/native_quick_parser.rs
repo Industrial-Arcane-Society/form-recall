@@ -11,6 +11,7 @@ mod legacy_catalog_egt_profile;
 mod legacy_catalog_lifting_eye;
 mod legacy_catalog_socket_screw;
 mod legacy_linear_pattern_aliases;
+mod legacy_pocket_aliases;
 mod legacy_round_aliases;
 
 const BEARING_STANDARDS: &str = include_str!("../../../../legacy/kb/bearing_std.json");
@@ -53,6 +54,10 @@ pub fn parse(text: &str) -> Value {
             vec![issue("empty_input", "请描述一个基础形体及其尺寸。")],
             unsupported,
         );
+    }
+
+    if let Some(parsed) = parse_legacy_egt_pocket_collision(text, &normalized) {
+        return parsed;
     }
 
     if let Some(parsed) = parse_legacy_hex_bolt(text, &normalized) {
@@ -229,6 +234,19 @@ pub fn parse(text: &str) -> Value {
         contains_any(&normalized, &["阵列", "linear array"]) && !circular_pattern_requested;
 
     let mut clauses = split_clauses(&normalized);
+    for clause in &mut clauses {
+        if !contains_any(clause, &["内腔", "型腔", "开口"]) || has_slot(clause) {
+            continue;
+        }
+        if let Some(canonical) = legacy_pocket_aliases::canonicalize_legacy_pocket_alias(clause) {
+            *clause = canonical;
+        } else if !contains_any(clause, &["型材", "材质", "材料", "铝", "钢", "铁", "铜", "塑料", "尼龙", "树脂", "pvc", "abs"]) {
+            unsupported.push(issue(
+                "legacy_pocket_alias_clause_ambiguous",
+                "内腔/型腔/开口片段包含多个操作或不能安全定位为单个槽；请将各特征用逗号或‘然后’分开描述。",
+            ));
+        }
+    }
     let mut clause_index = 1;
     while clause_index < clauses.len() {
         let previous = &clauses[clause_index - 1];
@@ -767,6 +785,50 @@ fn parse_legacy_template(raw: &str, normalized: &str) -> Option<Value> {
         return Some(parse_tube(raw, normalized));
     }
     None
+}
+
+/// Preserve a measured legacy parser collision without letting the ordinary
+/// pocket alias path consume it: Python Quick routes this exact two-clause
+/// `型材 + cavity alias` form through its EGT catalog and stacks the catalog's
+/// simplified 80×80×88 mm box after the explicitly sized base box.
+fn parse_legacy_egt_pocket_collision(raw: &str, normalized: &str) -> Option<Value> {
+    let clauses = split_clauses(normalized);
+    if clauses.len() != 2
+        || !contains_any(&clauses[1], &["型材"])
+        || !contains_any(&clauses[1], &["内腔", "型腔", "开口"])
+        || has_hole(&clauses[1])
+    {
+        return None;
+    }
+
+    // Parse the base in isolation so profile/cavity numbers cannot be borrowed
+    // as base dimensions. Only append the catalog fallback to a complete box.
+    let mut base = parse(&clauses[0]);
+    if base["status"] != "ready" {
+        return None;
+    }
+    let features = base["plan"]["features"].as_array()?;
+    if features.len() != 1 || features[0]["kind"] != "box" {
+        return None;
+    }
+
+    let feature_index = features.len() + 1;
+    base["plan"]["features"]
+        .as_array_mut()?
+        .push(legacy_catalog_egt_profile::stacked_feature(raw, feature_index));
+    base["plan"]["source_prompt"] = json!(raw);
+    base["source_text"] = json!(raw);
+    if let Some(features) = base["plan"]["features"].as_array_mut() {
+        if let Some(sources) = features[0]["sources"].as_object_mut() {
+            for source in sources.values_mut() {
+                source["evidence"] = json!(raw);
+            }
+        }
+    }
+    base["warnings"]
+        .as_array_mut()?
+        .push(legacy_catalog_egt_profile::simplified_box_warning());
+    Some(base)
 }
 
 /// Migrate the legacy Quick base-plate recipe. Labeled part-library input is
@@ -14766,6 +14828,89 @@ mod tests {
                 );
             }
         }
+    }
+
+    #[test]
+    fn legacy_pocket_aliases_match_python_defaults_and_boundaries() {
+        let fixture: Value = serde_json::from_str(include_str!(
+            "../tests/fixtures/quick_legacy_pocket_aliases_audit.json"
+        ))
+        .expect("legacy pocket alias fixture is valid JSON");
+
+        for case in fixture["rust_migration_contract"].as_array().unwrap() {
+            let input = case["input"].as_str().unwrap();
+            let output = parse(input);
+            if let Some(status) = case["status"].as_str() {
+                assert_eq!(output["status"], status, "{input}: {output}");
+                assert!(output["plan"].is_null(), "{input}: {output}");
+                assert!(
+                    output["unsupported"].to_string().contains(
+                        case["issue"].as_str().unwrap()
+                    ),
+                    "{input}: {output}"
+                );
+                continue;
+            }
+
+            assert_eq!(output["status"], "ready", "{input}: {output}");
+            let validation = crate::cad_plan_validation::validate_plan(&output["plan"]);
+            assert_eq!(validation["state"], "valid", "{input}: {validation}");
+            let features = output["plan"]["features"].as_array().unwrap();
+            if case["route"] == "egt_profile_stack" {
+                let expected = case["features"].as_array().unwrap();
+                assert_eq!(features.len(), expected.len(), "{input}: {output}");
+                assert!(features.iter().all(|feature| feature["kind"] == "box"));
+                assert!(!features.iter().any(|feature| feature["kind"] == "pocket"));
+                for (actual, expected) in features.iter().zip(expected) {
+                    assert_eq!(actual["kind"], expected["kind"], "{input}");
+                    assert_eq!(actual["operation"], expected["operation"], "{input}");
+                    for (key, value) in expected["parameters"].as_object().unwrap() {
+                        assert_eq!(actual["parameters"][key], *value, "{input}: {key}");
+                    }
+                    if expected["parameters"]["stack"] == true {
+                        assert_eq!(actual["sources"]["stack"]["type"], "derived");
+                    }
+                }
+                assert!(
+                    output["warnings"]
+                        .to_string()
+                        .contains("legacy_egt_profile_simplified_box"),
+                    "{input}: {output}"
+                );
+                continue;
+            }
+            let pocket = features
+                .iter()
+                .find(|feature| feature["kind"] == "pocket")
+                .unwrap_or_else(|| panic!("expected pocket for {input}: {output}"));
+            assert_eq!(pocket["operation"], "cut", "{input}");
+            for (key, expected) in ["length", "width", "depth"]
+                .into_iter()
+                .zip(case["pocket_mm"].as_array().unwrap())
+            {
+                assert_eq!(pocket["parameters"][key], *expected, "{input}: {key}");
+                let defaulted = case["defaulted"]
+                    .as_array()
+                    .is_some_and(|fields| fields.iter().any(|field| field == key));
+                assert_eq!(
+                    pocket["sources"][key]["type"],
+                    if defaulted { "derived" } else { "user" },
+                    "{input}: {key} provenance"
+                );
+            }
+            if case["defaulted"].as_array().is_some_and(|fields| !fields.is_empty()) {
+                assert!(
+                    output["warnings"]
+                        .to_string()
+                        .contains("legacy_slot_dimensions_defaulted"),
+                    "{input}: {output}"
+                );
+            }
+            if case["extra_feature"] == "hole" {
+                assert!(features.iter().any(|feature| feature["kind"] == "hole"), "{input}: {output}");
+            }
+        }
+
     }
 
     #[test]

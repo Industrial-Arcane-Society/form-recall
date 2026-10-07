@@ -2565,3 +2565,13 @@ mod tests {
         assert!(check_cancel(&AtomicBool::new(true)).is_err());
     }
 }
+            let stacked = p.get("stack").and_then(Value::as_bool) == Some(true);
+            if stacked {
+                let bounds = bb.ok_or("stack=true 的长方体需要已有实体作为堆叠目标。")?;
+                let top = match axis {
+                    0 => bounds.xmax,
+                    1 => bounds.ymax,
+                    _ => bounds.zmax,
+                };
+                center[axis] += top;
+            }
