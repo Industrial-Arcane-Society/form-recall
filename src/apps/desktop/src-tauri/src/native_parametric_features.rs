@@ -9,6 +9,56 @@ pub const MAX_SPOKED_WHEEL_SPOKES: u64 = 512;
 pub const MAX_CAMSHAFT_LOBES: u64 = 512;
 pub const MAX_CRANKSHAFT_THROWS: u64 = 128;
 
+fn crank_cheek_outline(
+    main_r: f64,
+    pin_r: f64,
+    offset: f64,
+    segments: usize,
+) -> Result<Vec<[f64; 2]>, String> {
+    if !main_r.is_finite() || !pin_r.is_finite() || !offset.is_finite()
+        || main_r <= 0.0 || pin_r <= 0.0 || offset.abs() <= 1e-9 || segments < 8
+    {
+        return Err("曲柄颊轮廓要求正半径、非零偏心且分段数至少为 8。".into());
+    }
+    let normal_u = (main_r - pin_r) / offset;
+    if normal_u.abs() >= 1.0 {
+        return Err("曲柄颊主轴颈与连杆颈不存在外公切线。".into());
+    }
+    let normal_v = (1.0 - normal_u * normal_u).sqrt();
+    let top_main = [main_r * normal_u, main_r * normal_v];
+    let bottom_main = [main_r * normal_u, -main_r * normal_v];
+    let top_pin = [offset + pin_r * normal_u, pin_r * normal_v];
+    let bottom_pin = [offset + pin_r * normal_u, -pin_r * normal_v];
+    let to_pin = if offset > 0.0 { 0.0 } else { std::f64::consts::PI };
+    let away_pin = to_pin + std::f64::consts::PI;
+    let angle = |center: [f64; 2], point: [f64; 2]| {
+        (point[1] - center[1]).atan2(point[0] - center[0])
+    };
+    let arc = |center: [f64; 2], radius: f64, start: f64, end: f64, through: f64| {
+        let tau = std::f64::consts::TAU;
+        let mut sweep = (end - start).rem_euclid(tau);
+        if (through - start).rem_euclid(tau) > sweep {
+            sweep -= tau;
+        }
+        let count = ((segments as f64) * sweep.abs() / tau).round().max(2.0) as usize;
+        (0..=count).map(|index| {
+            let theta = start + sweep * index as f64 / count as f64;
+            [center[0] + radius * theta.cos(), center[1] + radius * theta.sin()]
+        }).collect::<Vec<_>>()
+    };
+    let main_far = arc([0.0, 0.0], main_r, angle([0.0, 0.0], top_main),
+        angle([0.0, 0.0], bottom_main), away_pin);
+    let pin_far = arc([offset, 0.0], pin_r, angle([offset, 0.0], bottom_pin),
+        angle([offset, 0.0], top_pin), to_pin);
+    let mut outline = main_far;
+    outline.push(bottom_pin);
+    outline.extend(pin_far.into_iter().skip(1));
+    if outline.len() < 6 || outline.iter().flatten().any(|value| !value.is_finite()) {
+        return Err("曲柄颊外公切轮廓生成失败。".into());
+    }
+    Ok(outline)
+}
+
 pub fn preflight_crankshaft(parameters: &Value) -> Result<(), String> {
     let length = number(parameters, "length")?;
     let main_d = number(parameters, "main_d")?;
@@ -29,7 +79,18 @@ pub fn preflight_crankshaft(parameters: &Value) -> Result<(), String> {
 /// alternating eccentric pin journals, and two overlapping rectangular webs
 /// per throw. The more detailed polygon-only cheek mesh remains a separate
 /// legacy compatibility path and is not claimed as this exact B-Rep contract.
-pub fn build_crankshaft(kernel: &Kernel, parameters: &Value) -> Result<(Vec<Shape>, Value), String> {
+pub fn build_crankshaft(
+    kernel: &Kernel,
+    parameters: &Value,
+) -> Result<(Vec<Shape>, Value), String> {
+    build_crankshaft_with_geometry_variant(kernel, parameters, None)
+}
+
+pub fn build_crankshaft_with_geometry_variant(
+    kernel: &Kernel,
+    parameters: &Value,
+    geometry_variant: Option<&str>,
+) -> Result<(Vec<Shape>, Value), String> {
     preflight_crankshaft(parameters)?;
     let length = number(parameters, "length")?;
     let main_r = number(parameters, "main_d")? / 2.0;
@@ -46,9 +107,19 @@ pub fn build_crankshaft(kernel: &Kernel, parameters: &Value) -> Result<(Vec<Shap
     let mut web_count = 0usize;
     for index in 0..throws {
         let x0 = center[0] - length / 2.0 + spacing * (index as f64 + 0.5);
-        let dy = if index % 2 == 0 { stroke / 2.0 } else { -stroke / 2.0 };
-        shapes.push(kernel.cylinder(pin_r, pin_length,
-            [x0 - pin_length / 2.0, center[1] + dy, center[2]], [1.0, 0.0, 0.0])?);
+        let dy = if index % 2 == 0 {
+            stroke / 2.0
+        } else {
+            -stroke / 2.0
+        };
+        let pin_left = x0 - pin_length / 2.0;
+        let pin_right = x0 + pin_length / 2.0;
+        shapes.push(kernel.cylinder(
+            pin_r,
+            pin_length,
+            [pin_left, center[1] + dy, center[2]],
+            [1.0, 0.0, 0.0],
+        )?);
         let y0 = (center[1] - main_r).min(center[1] + dy - pin_r);
         let y1 = (center[1] + dy - pin_r).max(center[1] - main_r);
         let y2 = (center[1] + main_r).min(center[1] + dy + pin_r);
@@ -56,10 +127,30 @@ pub fn build_crankshaft(kernel: &Kernel, parameters: &Value) -> Result<(Vec<Shap
         let ylo = y0.min(y2);
         let yhi = y1.max(y3);
         let zhalf = main_r.max(pin_r);
-        for xmid in [x0 - pin_length / 2.0 - web_width / 2.0,
-                     x0 + pin_length / 2.0 + web_width / 2.0] {
-            shapes.push(kernel.make_box([web_width, yhi - ylo, 2.0 * zhalf],
-                [xmid, (ylo + yhi) / 2.0, center[2]])?);
+        let cheek_profile = if geometry_variant == Some("legacy_quick_dumbbell_cheeks") {
+            Some(crank_cheek_outline(main_r, pin_r, dy, 32)?)
+        } else {
+            None
+        };
+        for (x_start, x_end) in [
+            (pin_left - web_width, pin_left),
+            (pin_right, pin_right + web_width),
+        ] {
+            if let Some(profile) = cheek_profile.as_ref() {
+                // The profile is the old Quick YZ cheek contour, relative to
+                // the main-journal center; extrude it axially into a closed B-Rep cheek.
+                shapes.push(kernel.prism(
+                    profile,
+                    x_end - x_start,
+                    [x_start, center[1], center[2]],
+                    Axis::X,
+                )?);
+            } else {
+                shapes.push(kernel.make_box(
+                    [web_width, yhi - ylo, 2.0 * zhalf],
+                    [x_start + web_width / 2.0, (ylo + yhi) / 2.0, center[2]],
+                )?);
+            }
             web_count += 1;
         }
     }
@@ -70,8 +161,15 @@ pub fn build_crankshaft(kernel: &Kernel, parameters: &Value) -> Result<(Vec<Shap
         return Err(format!("曲轴必须构成单一有效闭合实体；当前 valid={}, solids={}, closed={}",
             analysis.valid, analysis.solid_count, analysis.closed_solid_count));
     }
-    Ok((vec![result], json!({"status":"approximate", "geometry_support":"approximate", "builder":"analytic_journals_with_rectangular_webs",
-        "throws_built":throws, "webs_built":web_count, "axis":"global X", "segments_ignored_by_analytic_brep":true})))
+    Ok((
+        vec![result],
+        json!({"status":"approximate", "geometry_support":"approximate",
+        "builder":if geometry_variant == Some("legacy_quick_dumbbell_cheeks") { "analytic_journals_with_legacy_quick_polygon_cheeks" } else { "analytic_journals_with_rectangular_webs" },
+        "geometry_variant":geometry_variant,
+        "throws_built":throws, "webs_built":web_count, "axis":"global X",
+        "cheek_profile":"two-circle external-tangent convex hull in YZ, 32 legacy Quick segments",
+        "segments_ignored_by_analytic_brep":false}),
+    ))
 }
 
 pub fn preflight_camshaft(parameters: &Value) -> Result<(), String> {

@@ -1,0 +1,172 @@
+{
+  "schema_version": "1.0",
+  "oracle": {
+    "route": "Parser.parse -> Document.build -> kernel.make_crankshaft -> legacy binary STL",
+    "input": "曲轴 主轴颈50 连杆颈42 行程86 拐数4",
+    "stl_sha256": "b76934eca0b4e3b6e70099554397e8d3bfde3fc4526ca8352601f78ea30c424d",
+    "triangle_count": 1692,
+    "bbox_dimensions_mm": [
+      619.2,
+      128.0,
+      50.0
+    ],
+    "notes": "Legacy polygonal cheek contour from the Python Quick mesh; analytic OCCT journals may differ from faceted circles by up to the measured sampling tolerance."
+  },
+  "native_variant": "legacy_quick_dumbbell_cheeks",
+  "section_samples": [
+    {
+      "throw_index": 0,
+      "stroke_offset_mm": 43.0,
+      "z_mm": -24,
+      "legacy_y_intervals_mm": [
+        [
+          -6.834556113,
+          11.868704457
+        ]
+      ]
+    },
+    {
+      "throw_index": 0,
+      "stroke_offset_mm": 43.0,
+      "z_mm": -20,
+      "legacy_y_intervals_mm": [
+        [
+          -14.844966265,
+          49.306607473
+        ]
+      ]
+    },
+    {
+      "throw_index": 0,
+      "stroke_offset_mm": 43.0,
+      "z_mm": -10,
+      "legacy_y_intervals_mm": [
+        [
+          -22.788831036,
+          61.45698406
+        ]
+      ]
+    },
+    {
+      "throw_index": 0,
+      "stroke_offset_mm": 43.0,
+      "z_mm": 0,
+      "legacy_y_intervals_mm": [
+        [
+          -24.880340224,
+          63.898189662
+        ]
+      ]
+    },
+    {
+      "throw_index": 0,
+      "stroke_offset_mm": 43.0,
+      "z_mm": 10,
+      "legacy_y_intervals_mm": [
+        [
+          -22.788831036,
+          61.45698406
+        ]
+      ]
+    },
+    {
+      "throw_index": 0,
+      "stroke_offset_mm": 43.0,
+      "z_mm": 20,
+      "legacy_y_intervals_mm": [
+        [
+          -14.844966265,
+          49.306607473
+        ]
+      ]
+    },
+    {
+      "throw_index": 0,
+      "stroke_offset_mm": 43.0,
+      "z_mm": 24,
+      "legacy_y_intervals_mm": [
+        [
+          -6.834556113,
+          11.868704457
+        ]
+      ]
+    },
+    {
+      "throw_index": 1,
+      "stroke_offset_mm": -43.0,
+      "z_mm": -24,
+      "legacy_y_intervals_mm": [
+        [
+          -11.868704457,
+          6.834556113
+        ]
+      ]
+    },
+    {
+      "throw_index": 1,
+      "stroke_offset_mm": -43.0,
+      "z_mm": -20,
+      "legacy_y_intervals_mm": [
+        [
+          -49.306607473,
+          14.844966265
+        ]
+      ]
+    },
+    {
+      "throw_index": 1,
+      "stroke_offset_mm": -43.0,
+      "z_mm": -10,
+      "legacy_y_intervals_mm": [
+        [
+          -61.45698406,
+          22.788831036
+        ]
+      ]
+    },
+    {
+      "throw_index": 1,
+      "stroke_offset_mm": -43.0,
+      "z_mm": 0,
+      "legacy_y_intervals_mm": [
+        [
+          -63.898189662,
+          24.880340224
+        ]
+      ]
+    },
+    {
+      "throw_index": 1,
+      "stroke_offset_mm": -43.0,
+      "z_mm": 10,
+      "legacy_y_intervals_mm": [
+        [
+          -61.45698406,
+          22.788831036
+        ]
+      ]
+    },
+    {
+      "throw_index": 1,
+      "stroke_offset_mm": -43.0,
+      "z_mm": 20,
+      "legacy_y_intervals_mm": [
+        [
+          -49.306607473,
+          14.844966265
+        ]
+      ]
+    },
+    {
+      "throw_index": 1,
+      "stroke_offset_mm": -43.0,
+      "z_mm": 24,
+      "legacy_y_intervals_mm": [
+        [
+          -11.868704457,
+          6.834556113
+        ]
+      ]
+    }
+  ]
+}

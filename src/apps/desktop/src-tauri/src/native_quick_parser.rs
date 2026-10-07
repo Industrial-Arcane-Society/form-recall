@@ -5151,8 +5151,8 @@ fn legacy_spline_profile(root_radius: f64, tooth_height: f64, teeth: usize) -> V
 /// Migrate the legacy Python Quick crankshaft recipe. The old part library
 /// supplies typical journal/stroke values, defaults to four throws, and lets
 /// the geometry kernel derive axial length when no positive total length is
-/// supplied. The native OCCT builder is approximate because its webs are
-/// rectangular rather than dumbbell-shaped.
+/// supplied. The native OCCT builder keeps analytic journal cylinders and
+/// recreates the legacy dumbbell-shaped cheek outline as a polygonal prism.
 fn parse_legacy_crankshaft(raw: &str, text: &str) -> Option<Value> {
     if !contains_any(text, &["曲轴", "crankshaft"]) || contains_any(text, &["曲轴箱", "crankcase"]) {
         return None;
@@ -5368,6 +5368,7 @@ fn parse_legacy_crankshaft(raw: &str, text: &str) -> Option<Value> {
         "kind":"crankshaft",
         "operation":"add",
         "name":"曲轴",
+        "geometry_variant":"legacy_quick_dumbbell_cheeks",
         "parameters":{
             "length":length,
             "main_d":main_d,
@@ -5384,7 +5385,7 @@ fn parse_legacy_crankshaft(raw: &str, text: &str) -> Option<Value> {
             "stroke":if stroke_defaulted { derived_source(raw, "沿用旧 Python Quick 曲轴典型行程 86 mm。") } else { user_source(raw) },
             "throws":if throws_defaulted || throws_truncated { derived_source(raw, "沿用旧 Python Quick 默认拐数或整数截断规则。") } else { user_source(raw) },
             "center":derived_source(raw, "旧 Python Quick 将曲轴中心置于全局原点，主轴线沿 X 轴。"),
-            "segments":derived_source(raw, "旧 Python Quick 曲轴多边形分段数为 32；本地 B-Rep 使用解析圆柱。")
+            "segments":derived_source(raw, "轴颈使用解析圆柱；曲柄颊轮廓沿用 32 段 Quick 多边形。")
         },
         "relations":[]
     });
@@ -17167,6 +17168,7 @@ mod f5_45_legacy_crankshaft_contract_tests {
             let crankshaft = &features[0];
             assert_eq!(crankshaft["kind"], "crankshaft", "{input}");
             assert_eq!(crankshaft["operation"], "add", "{input}");
+            assert_eq!(crankshaft["geometry_variant"], "legacy_quick_dumbbell_cheeks", "{input}: Quick cheek geometry variant");
             for (name, expected) in case["native_expected"].as_object().unwrap() {
                 if let Some(expected_values) = expected.as_array() {
                     let actual_values = crankshaft["parameters"][name].as_array().unwrap();

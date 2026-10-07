@@ -632,10 +632,12 @@ pub fn validate_plan(plan: &Value) -> Value {
             continue;
         };
         if let Some(variant) = feature.get("geometry_variant") {
-            if kind != "conrod" || variant.as_str() != Some("legacy_quick_rectangular_shank") {
+            let valid_variant = (kind == "conrod" && variant.as_str() == Some("legacy_quick_rectangular_shank"))
+                || (kind == "crankshaft" && variant.as_str() == Some("legacy_quick_dumbbell_cheeks"));
+            if !valid_variant {
                 append_error(&mut errors, "invalid_geometry_variant",
                     format!("{path}.geometry_variant"),
-                    "geometry_variant 仅允许 conrod 使用 legacy_quick_rectangular_shank。",
+                    "geometry_variant 仅允许 conrod/legacy_quick_rectangular_shank 或 crankshaft/legacy_quick_dumbbell_cheeks。",
                 );
             }
         }
@@ -1931,6 +1933,9 @@ fn local_support(
     if kind == "conrod" && geometry_variant == Some("legacy_quick_rectangular_shank") {
         reason = "解析大小头环与旧 Quick 全长矩形杆身并集；工字截面和锻造过渡仍为近似";
     }
+    if kind == "crankshaft" && geometry_variant == Some("legacy_quick_dumbbell_cheeks") {
+        reason = "解析主轴颈与偏心连杆颈，并以旧 Quick 哑铃形曲柄颊截面沿 X 棱柱化；倒角和锻造过渡仍为近似";
+    }
     if ["box", "pocket"].contains(&kind)
         && number(params.get("corner").unwrap_or(&Value::Null)).is_some_and(|v| v > 0.0)
     {
@@ -2074,6 +2079,9 @@ fn feature_schema_for(spec: &Spec) -> Value {
     let mut feature_properties = json!({"id":{"type":"string","minLength":1},"kind":kind_enum[0],"operation":{"type":"string","enum":["add","cut"]},"name":{"type":"string"},"note":{"type":"string"},"enabled":{"type":"boolean","default":true},"parameters":{"type":"object","properties":pp,"required":conditional_required,"additionalProperties":false},"sources":{"type":"object","propertyNames":{"enum":words(spec.params)},"additionalProperties":{"$ref":"#/$defs/source"}},"relations":{"type":"array","items":{"$ref":"#/$defs/relation"}}});
     if spec.kind == "conrod" {
         feature_properties["geometry_variant"] = json!({"type":"string","const":"legacy_quick_rectangular_shank"});
+    }
+    if spec.kind == "crankshaft" {
+        feature_properties["geometry_variant"] = json!({"type":"string","const":"legacy_quick_dumbbell_cheeks"});
     }
     if spec.kind == "shell" {
         feature_properties["selection_binding"] = json!({"type":"object","properties":{
@@ -2348,6 +2356,26 @@ mod tests {
             );
         }
     }
+    #[test]
+    fn quick_crankshaft_dumbbell_geometry_variant_is_scoped_and_schema_declared() {
+        let mut plan = base(feature(
+            "crankshaft",
+            json!({"length":200,"main_d":50,"pin_d":42,"stroke":86,"throws":2,"center":[0,0,0],"segments":32}),
+            json!({"length":{"type":"user"},"main_d":{"type":"user"},"pin_d":{"type":"user"},"stroke":{"type":"user"},"throws":{"type":"user"},"center":{"type":"derived"},"segments":{"type":"derived"}}),
+        ));
+        plan["features"][0]["geometry_variant"] = json!("legacy_quick_dumbbell_cheeks");
+        assert_eq!(validate_plan(&plan)["valid"], json!(true));
+        assert_eq!(feature_schema("crankshaft").unwrap()["properties"]["geometry_variant"]["const"], json!("legacy_quick_dumbbell_cheeks"));
+        plan["features"][0]["geometry_variant"] = json!("unexpected");
+        assert_eq!(validate_plan(&plan)["state"], json!("invalid"));
+        let mut wrong_kind = base(feature("box",
+            json!({"length":100,"width":60,"height":20}),
+            json!({"length":{"type":"user"},"width":{"type":"user"},"height":{"type":"user"}}),
+        ));
+        wrong_kind["features"][0]["geometry_variant"] = json!("legacy_quick_dumbbell_cheeks");
+        assert_eq!(validate_plan(&wrong_kind)["state"], json!("invalid"));
+    }
+
     #[test]
     fn quick_conrod_geometry_variant_is_scoped_and_schema_declared() {
         let mut plan = base(feature(

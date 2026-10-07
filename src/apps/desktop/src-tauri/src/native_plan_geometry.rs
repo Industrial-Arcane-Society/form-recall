@@ -424,8 +424,12 @@ pub fn build(plan: &Value, manifest: &Path, cancelled: &AtomicBool) -> Result<Bu
                     native_parametric_features::build_camshaft(&kernel, &normalized["parameters"])?;
                 (tools, vec![], Some(support))
             } else if normalized["kind"] == "crankshaft" {
-                let (tools, support) =
-                    native_parametric_features::build_crankshaft(&kernel, &normalized["parameters"])?;
+                let variant = normalized["geometry_variant"].as_str();
+                let (tools, support) = native_parametric_features::build_crankshaft_with_geometry_variant(
+                    &kernel,
+                    &normalized["parameters"],
+                    variant,
+                )?;
                 (tools, vec![], Some(support))
             } else if normalized["kind"] == "timing_pulley" {
                 let (tools, support) = native_timing_pulley::build(&kernel, &normalized["parameters"])?;

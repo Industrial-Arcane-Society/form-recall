@@ -3542,6 +3542,102 @@ mod acceptance_tests {
 
     #[test]
     #[ignore = "requires the staged local OCCT runtime manifest"]
+    fn f5_83_quick_crankshaft_matches_legacy_dumbbell_cheek_sections() {
+        let manifest = std::env::var_os("AIMODELER_OCCT_MANIFEST")
+            .map(std::path::PathBuf::from)
+            .expect("set AIMODELER_OCCT_MANIFEST to the staged OCCT runtime-manifest.json");
+        let input = "曲轴 主轴颈50 连杆颈42 行程86 拐数4";
+        let root = std::env::temp_dir().join(format!(
+            "native-quick-crankshaft-dumbbell-{}-{}",
+            std::process::id(),
+            SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_nanos()
+        ));
+        fs::create_dir_all(&root).expect("create F5.83 output root");
+        struct RemoveOnDrop(std::path::PathBuf);
+        impl Drop for RemoveOnDrop { fn drop(&mut self) { let _ = fs::remove_dir_all(&self.0); } }
+        let _cleanup = RemoveOnDrop(root.clone());
+
+        let output = build(input, 1, &manifest, &root)
+            .unwrap_or_else(|error| panic!("Quick crankshaft build failed: {error}"));
+        assert_eq!(output["state"], "complete", "{output}");
+        let plan = output["cadplan"].clone();
+        assert_eq!(plan["features"][0]["geometry_variant"], "legacy_quick_dumbbell_cheeks");
+        let paths = output["output_paths"].as_object().expect("generated output paths");
+        for name in ["glb", "aimodel", "stl", "obj"] {
+            assert!(Path::new(paths[name].as_str().unwrap()).is_file(), "missing {name}: {paths:?}");
+        }
+        let loaded = crate::native_model_io::load_aimodel(Path::new(paths["aimodel"].as_str().unwrap()))
+            .unwrap_or_else(|error| panic!("AIMODEL reload failed: {error}"));
+        assert_eq!(loaded["cadplan"]["features"], plan["features"], "AIMODEL feature round-trip");
+        assert_eq!(loaded["cadplan"]["features"][0]["geometry_variant"], "legacy_quick_dumbbell_cheeks",
+            "Quick geometry variant must persist in AIMODEL");
+        let report = &output["geometry_report"];
+        assert_eq!(report["state"], "passed", "{report}");
+        assert_eq!(report["valid"], true, "{report}");
+        assert_eq!(report["closed_solid_count"], 1, "{report}");
+        for (axis, (actual, expected)) in report["dimensions_mm"].as_array().unwrap()
+            .iter().zip([619.2,128.0,50.0]).enumerate() {
+            assert!((actual.as_f64().unwrap()-expected).abs() <= 1e-5,
+                "bbox axis {axis}: {report}");
+        }
+        assert!(report["validation"]["geometry_support"][0]["reason"]
+            .as_str().unwrap().contains("哑铃形"), "support evidence: {report}");
+
+        // Compare actual OCCT material sections with the Python Quick STL contour.
+        // Each row is a Y ray at fixed Z through the middle of a cheek prism.
+        let rebuilt = native_plan_geometry::build(&plan, &manifest, &AtomicBool::new(false))
+            .expect("rebuild Quick plan for cheek section measurement");
+        let fixture: Value = serde_json::from_str(include_str!(
+            "../tests/fixtures/quick_legacy_crankshaft_geometry_contract.json"
+        )).expect("legacy contour fixture is valid JSON");
+        let p = &plan["features"][0]["parameters"];
+        let length = p["length"].as_f64().unwrap();
+        let throws = p["throws"].as_u64().unwrap() as usize;
+        let spacing = length / throws as f64;
+        let pin_length = spacing * 0.42;
+        let web_width = (p["main_d"].as_f64().unwrap() * 0.28).max(2.0).min(spacing*0.25);
+        for row in fixture["section_samples"].as_array().unwrap() {
+            let i = row["throw_index"].as_u64().unwrap() as usize;
+            let x0 = -length/2.0 + spacing*(i as f64 + 0.5);
+            let x = x0 - pin_length/2.0 - web_width/2.0;
+            let z = row["z_mm"].as_f64().unwrap();
+            let intervals = rebuilt.shape.line_material_intervals(
+                [x,0.0,z], [0.0,1.0,0.0], -100.0, 100.0, 1e-7
+            ).unwrap_or_else(|error| panic!("legacy cheek Y-ray z={z}: {error}"));
+            let expected = &row["legacy_y_intervals_mm"][0];
+            assert_eq!(intervals.len(), 1, "throw={i}, z={z}: {intervals:?}");
+            for end in 0..2 {
+                assert!((intervals[0][end]-expected[end].as_f64().unwrap()).abs() <= 0.25,
+                    "throw={i}, z={z}, endpoint {end}: actual {:?}, legacy {:?}", intervals[0], expected);
+            }
+        }
+
+        // Without the Quick marker, generic CADPlan keeps the existing rectangular web.
+        let mut generic_plan = plan;
+        generic_plan["features"][0].as_object_mut().unwrap().remove("geometry_variant");
+        assert_eq!(cad_plan_validation::validate_plan(&generic_plan)["valid"], true);
+        let generic = native_plan_geometry::build(&generic_plan, &manifest, &AtomicBool::new(false))
+            .expect("build generic crankshaft CADPlan");
+        let x0 = -length/2.0 + spacing*0.5;
+        let x = x0 - pin_length/2.0 - web_width/2.0;
+        let generic_mid = generic.shape.line_material_intervals(
+            [x,0.0,20.0], [0.0,1.0,0.0], -100.0, 100.0, 1e-7
+        ).expect("sample generic rectangular crankshaft cheek");
+        assert_eq!(generic_mid.len(),1,"generic rectangle section: {generic_mid:?}");
+        assert!((generic_mid[0][0]+25.0).abs() <= 1e-5 && (generic_mid[0][1]-64.0).abs() <= 1e-5,
+            "unmarked CADPlan must keep rectangular web section: {generic_mid:?}");
+        let quick_mid = rebuilt.shape.line_material_intervals(
+            [x,0.0,20.0], [0.0,1.0,0.0], -100.0, 100.0, 1e-7
+        ).expect("sample Quick dumbbell cheek");
+        assert!((quick_mid[0][0]-generic_mid[0][0]).abs() > 1.0
+            || (quick_mid[0][1]-generic_mid[0][1]).abs() > 1.0,
+            "Quick contour must differ from the legacy rectangle: {quick_mid:?} vs {generic_mid:?}");
+        println!("F5.83 legacy STL sha256={}; facets={}; B-Rep report={}",
+            fixture["oracle"]["stl_sha256"], fixture["oracle"]["triangle_count"], report);
+    }
+
+    #[test]
+    #[ignore = "requires the staged local OCCT runtime manifest"]
     fn f5_47_legacy_cross_joints_build_measure_reopen_and_export() {
         let manifest = std::env::var_os("AIMODELER_OCCT_MANIFEST")
             .map(std::path::PathBuf::from)

@@ -81,5 +81,6 @@
     {"input": "曲轴 主轴颈50 连杆颈42 行程86 总长320 拐数4", "dimensions_mm": [320, 128, 50]},
     {"input": "曲轴", "dimensions_mm": [619.2, 128, 50]},
     {"input": "曲轴 主轴颈50 连杆颈42 行程86 拐数2.7", "dimensions_mm": [309.6, 128, 50]}
-  ]
+  ],
+  "rust_quick_geometry_variant": "legacy_quick_dumbbell_cheeks"
 }
