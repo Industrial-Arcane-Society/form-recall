@@ -256,6 +256,8 @@ pub fn parse(text: &str) -> Value {
         return parsed;
     }
 
+    let ambiguous_legacy_pattern_alias =
+        legacy_linear_pattern_aliases::has_ambiguous_legacy_linear_alias(&normalized);
     let normalized = legacy_box_aliases::canonicalize_box_alias(&normalized).unwrap_or(normalized);
     let normalized =
         legacy_round_aliases::canonicalize_round_alias(&normalized).unwrap_or(normalized);
@@ -276,6 +278,10 @@ pub fn parse(text: &str) -> Value {
             }
         }
         alias_clauses.join(";")
+    } else if let Some(canonical) =
+        legacy_linear_pattern_aliases::canonicalize_legacy_linear_alias(&normalized)
+    {
+        canonical
     } else {
         normalized
     };
@@ -285,12 +291,51 @@ pub fn parse(text: &str) -> Value {
             "message":"线性阵列未指定轴向；为兼容旧 Python Quick，按 Z 轴生成。"
         }));
     }
-    let circular_pattern_requested =
-        contains_any(&normalized, &["圆周阵列", "环形阵列"]);
-    let linear_pattern_requested =
-        contains_any(&normalized, &["阵列", "linear array"]) && !circular_pattern_requested;
-
+    if ambiguous_legacy_pattern_alias {
+        unsupported.push(issue(
+            "legacy_linear_pattern_alias_ambiguous",
+            "旧式排列/复制语句包含多个操作或方向不明确；请拆分操作并明确线性方向，避免静默遗漏阵列。",
+        ));
+    }
     let mut clauses = split_clauses(&normalized);
+    let has_array_marker = |clause: &str| {
+        contains_any(
+            clause,
+            &["阵列", "array", "pattern", "复制", "拷贝", "排列", "分布"],
+        )
+    };
+    let has_circular_marker = |clause: &str| {
+        contains_any(clause, &["圆周", "环形", "一圈", "围绕", "绕"])
+    };
+    let circular_clause_count = clauses
+        .iter()
+        .filter(|clause| has_array_marker(clause) && has_circular_marker(clause))
+        .count();
+    let linear_clause_count = clauses
+        .iter()
+        .filter(|clause| has_array_marker(clause) && !has_circular_marker(clause))
+        .count();
+    let circular_pattern_requested = circular_clause_count > 0;
+    let linear_pattern_requested = linear_clause_count > 0;
+    if circular_pattern_requested && linear_pattern_requested {
+        questions.push(issue(
+            "array_pattern_mode_conflict",
+            "同一输入包含线性和圆周阵列请求；请拆分为独立建模请求，避免将两种变换混为一个特征。",
+        ));
+    }
+    if linear_clause_count > 1 {
+        questions.push(issue(
+            "linear_pattern_multiple_requests",
+            "输入包含多个线性阵列操作；请逐次确认源特征后分开描述。",
+        ));
+    }
+    if circular_clause_count > 1 {
+        questions.push(issue(
+            "circular_pattern_multiple_requests",
+            "输入包含多个圆周阵列操作；请逐次确认源特征后分开描述。",
+        ));
+    }
+
     for clause in &mut clauses {
         if !contains_any(clause, &["内腔", "型腔", "开口"]) || has_slot(clause) {
             continue;
@@ -429,7 +474,7 @@ pub fn parse(text: &str) -> Value {
             && regex::Regex::new(r"(?:阵列|linear\s+array)\s*[0-9]+\s*(?:个|份|次)?")
                 .is_ok_and(|re| re.is_match(&normalized));
         if normalized.contains(word)
-            && !((explicit_linear_array || circular_pattern_requested)
+            && !((explicit_linear_array || linear_pattern_requested || circular_pattern_requested)
                 && (word == "array" || word == "阵列"))
         {
             unsupported.push(issue("unsupported_feature", explanation));
@@ -666,16 +711,88 @@ pub fn parse(text: &str) -> Value {
     }
 
     if linear_pattern_requested {
-        let count = regex::Regex::new(r"(?:阵列|linear\s+array)\s*([0-9]+)\s*(?:个|份|次)?")
-            .ok()
-            .and_then(|re| re.captures(&normalized))
-            .and_then(|captures| captures.get(1))
-            .and_then(|value| value.as_str().parse::<u64>().ok());
-        let pattern_clause = clauses
-            .iter()
-            .find(|clause| contains_any(clause, &["阵列", "linear array"]));
-        let axis = pattern_clause.and_then(|clause| axis_value(clause, &mut questions));
-        let step = scalar(&normalized, &["spacing", "间距", "步距"]);
+        let mut count_defaulted = false;
+        // Pattern arguments may be split from the operation by a comma (the
+        // legacy Quick parser still binds them across the full request).
+        let count = match feature_pattern_count(&normalized) {
+            Ok(Some(count)) => Some(count),
+            Ok(None)
+                if !contains_any(&normalized, &["个", "份", "次", "数量", "个数", "count"]) =>
+            {
+                count_defaulted = true;
+                warnings.push(issue(
+                    "legacy_linear_pattern_default_count",
+                    "线性阵列未指定数量；为兼容旧 Python Quick，按 4 个处理，来源标为 derived。",
+                ));
+                Some(4)
+            }
+            Ok(None) => {
+                questions.push(issue(
+                    "linear_pattern_count_invalid",
+                    "线性阵列数量已显式提及但无法解析；请给出 2 到原生上限之间的整数。",
+                ));
+                None
+            }
+            Err("pattern_count_conflict") => {
+                questions.push(issue(
+                    "linear_pattern_count_conflict",
+                    "线性阵列包含相互冲突的数量；请只给出一个阵列数量。",
+                ));
+                None
+            }
+            Err(_) => {
+                questions.push(issue(
+                    "linear_pattern_count_invalid",
+                    "线性阵列数量必须是 2 到原生上限之间的整数。",
+                ));
+                None
+            }
+        };
+        let question_count_before_axis = questions.len();
+        let explicit_axis = axis_value(&normalized, &mut questions);
+        let axis_conflicted = questions.len() > question_count_before_axis;
+        let axis_defaulted = explicit_axis.is_none() && !axis_conflicted;
+        let axis = explicit_axis.or_else(|| axis_defaulted.then_some("Z"));
+        if axis_defaulted {
+            warnings.push(issue(
+                "legacy_linear_pattern_default_axis",
+                "线性阵列未指定轴向；为兼容旧 Python Quick，按 Z 轴生成，来源标为 derived。",
+            ));
+        }
+        let explicit_step = scalar(&normalized, &["spacing", "间距", "间隔", "步距"]);
+        let step_defaulted = explicit_step.is_none()
+            && !contains_any(&normalized, &["spacing", "间距", "间隔", "步距"]);
+        let step = match explicit_step {
+            Some(value) if !value.is_finite() => {
+                questions.push(issue(
+                    "linear_pattern_step_conflict",
+                    "线性阵列包含相互冲突的步距；请只给出一个正间距。",
+                ));
+                Some(value)
+            }
+            Some(value) if value <= 0.0 => {
+                questions.push(issue(
+                    "linear_pattern_step_invalid",
+                    "线性阵列步距必须是有限正数。",
+                ));
+                Some(value)
+            }
+            Some(value) => Some(value),
+            None if step_defaulted => {
+                warnings.push(issue(
+                    "legacy_linear_pattern_default_step",
+                    "线性阵列未指定步距；为兼容旧 Python Quick，按 20 mm 处理，来源标为 derived。",
+                ));
+                Some(20.0)
+            }
+            None => {
+                questions.push(issue(
+                    "linear_pattern_step_invalid",
+                    "线性阵列步距已显式提及但无法解析；请给出有限正数。",
+                ));
+                None
+            }
+        };
         match (count, axis, step) {
             (Some(count), Some(axis), Some(step)) if count >= 2 && count <= crate::native_plan_geometry::MAX_HOLE_PATTERN_COUNT && step.is_finite() && step > 0.0 => {
                 if let Some(source) = features.last() {
@@ -687,13 +804,17 @@ pub fn parse(text: &str) -> Value {
                         "operation":operation, "name":"线性阵列",
                         "parameters":{"mode":"linear", "count":count, "axis":axis, "step":vector},
                         "sources":{
-                            "count":user_source(text),
-                            "axis":if legacy_pattern_default_axis {
+                            "count":if count_defaulted {
+                                derived_source(text, "旧 Python Quick 阵列数量缺省为 4。")
+                            } else { user_source(text) },
+                            "axis":if axis_defaulted || legacy_pattern_default_axis {
                                 derived_source(text, "旧 Python Quick 未指定轴向时默认沿 Z 轴阵列。")
                             } else {
                                 user_source(text)
                             },
-                            "step":user_source(text)
+                            "step":if step_defaulted {
+                                derived_source(text, "旧 Python Quick 线性阵列步距缺省为 20 mm。")
+                            } else { user_source(text) }
                         },
                         "relations":[{"type":"pattern_source", "feature_id":source_id}]
                     }));
@@ -706,13 +827,75 @@ pub fn parse(text: &str) -> Value {
     }
 
     if circular_pattern_requested {
-        let count = regex::Regex::new(r"(?:圆周阵列|环形阵列)\s*([0-9]+)\s*(?:个|份|次)?")
-            .ok()
-            .and_then(|re| re.captures(&normalized))
-            .and_then(|captures| captures.get(1))
-            .and_then(|value| value.as_str().parse::<u64>().ok());
-        let axis = axis_value(&normalized, &mut questions);
-        let angle = circular_pattern_angle(&normalized);
+        let mut count_defaulted = false;
+        // Circular count, axis, and angle qualifiers may follow the operation
+        // in a comma-separated clause, as they do in old Quick requests.
+        let count = match feature_pattern_count(&normalized) {
+            Ok(Some(count)) => Some(count),
+            Ok(None)
+                if !contains_any(&normalized, &["个", "份", "次", "数量", "个数", "count"]) =>
+            {
+                count_defaulted = true;
+                warnings.push(issue(
+                    "legacy_circular_pattern_default_count",
+                    "圆周阵列未指定数量；为兼容旧 Python Quick，按 4 个处理，来源标为 derived。",
+                ));
+                Some(4)
+            }
+            Ok(None) => {
+                questions.push(issue(
+                    "circular_pattern_count_invalid",
+                    "圆周阵列数量已显式提及但无法解析；请给出 2 到原生上限之间的整数。",
+                ));
+                None
+            }
+            Err("pattern_count_conflict") => {
+                questions.push(issue(
+                    "circular_pattern_count_conflict",
+                    "圆周阵列包含相互冲突的数量；请只给出一个阵列数量。",
+                ));
+                None
+            }
+            Err(_) => {
+                questions.push(issue(
+                    "circular_pattern_count_invalid",
+                    "圆周阵列数量必须是 2 到原生上限之间的整数。",
+                ));
+                None
+            }
+        };
+        let question_count_before_axis = questions.len();
+        let explicit_axis = axis_value(&normalized, &mut questions);
+        let axis_conflicted = questions.len() > question_count_before_axis;
+        let axis_defaulted = explicit_axis.is_none() && !axis_conflicted;
+        let axis = explicit_axis.or_else(|| axis_defaulted.then_some("Z"));
+        if axis_defaulted {
+            warnings.push(issue(
+                "legacy_circular_pattern_default_axis",
+                "圆周阵列未指定旋转轴；为兼容旧 Python Quick，按 Z 轴生成，来源标为 derived。",
+            ));
+        }
+        let explicit_angle = circular_pattern_angle(&normalized);
+        let angle_defaulted = matches!(explicit_angle, Ok(None))
+            && !contains_any(&normalized, &["角度", "angle"]);
+        let angle = match explicit_angle {
+            Ok(Some(angle)) => Ok(Some(angle)),
+            Ok(None) if angle_defaulted => {
+                warnings.push(issue(
+                    "legacy_circular_pattern_default_angle",
+                    "圆周阵列未指定角度；为兼容旧 Python Quick，按完整 360° 处理，来源标为 derived。",
+                ));
+                Ok(Some(360.0))
+            }
+            Ok(None) => {
+                questions.push(issue(
+                    "circular_pattern_angle_invalid",
+                    "圆周阵列角度已显式提及但无法解析；请给出有限正角度。",
+                ));
+                Ok(None)
+            }
+            Err(error) => Err(error),
+        };
         match (count, axis, angle) {
             (Some(count), Some(axis), Ok(Some(angle)))
                 if (2..=crate::native_plan_geometry::MAX_HOLE_PATTERN_COUNT).contains(&count)
@@ -736,9 +919,15 @@ pub fn parse(text: &str) -> Value {
                             "center":[0.0, 0.0, 0.0]
                         },
                         "sources":{
-                            "count":user_source(text),
-                            "axis":user_source(text),
-                            "angle":user_source(text),
+                            "count":if count_defaulted {
+                                derived_source(text, "旧 Python Quick 阵列数量缺省为 4。")
+                            } else { user_source(text) },
+                            "axis":if axis_defaulted {
+                                derived_source(text, "旧 Python Quick 未指定旋转轴时默认沿 Z 轴阵列。")
+                            } else { user_source(text) },
+                            "angle":if angle_defaulted {
+                                derived_source(text, "旧 Python Quick 圆周阵列角度缺省为完整 360°。")
+                            } else { user_source(text) },
                             "full":derived_source(text, "根据圆周阵列角度推导是否为完整圆周。"),
                             "center":derived_source(text, "沿用 Python Quick 圆周阵列的全局原点旋转中心。")
                         },
@@ -14085,6 +14274,93 @@ fn circular_pattern_angle(s: &str) -> Result<Option<f64>, &'static str> {
     }
 }
 
+fn feature_pattern_count(s: &str) -> Result<Option<u64>, &'static str> {
+    let mut found = Vec::<f64>::new();
+
+    // Keep feature-array count units local to feature patterns. In particular,
+    // preserve the older “阵列4份/4次” spellings without broadening hole-count
+    // parsing to those unrelated units.
+    let direct = regex::Regex::new(
+        r"(?:阵列|linear\s+array)\s*([0-9]+(?:\.[0-9]+)?)\s*(?:个|份|次)?",
+    )
+    .expect("fixed feature-array count regex");
+    for captures in direct.captures_iter(s) {
+        if let Some(value) = captures.get(1).and_then(|value| value.as_str().parse::<f64>().ok()) {
+            found.push(value);
+        }
+    }
+
+    for alias in ["数量", "个数", "count"] {
+        for (index, _) in s.match_indices(alias) {
+            let mut cursor = skip_ws(s, index + alias.len());
+            if s[cursor..].starts_with('=') || s[cursor..].starts_with(':') || s[cursor..].starts_with('：') {
+                cursor += s[cursor..].chars().next().expect("count marker suffix").len_utf8();
+                cursor = skip_ws(s, cursor);
+            }
+            if let Some((number, _)) = parse_number(s, cursor) {
+                if !number.unit.is_empty() {
+                    return Err("pattern_count_invalid");
+                }
+                found.push(number.value);
+            }
+        }
+    }
+
+    for (start, ch) in s.char_indices() {
+        if !ch.is_ascii_digit() && ch != '-' && ch != '+' {
+            continue;
+        }
+        if s[..start]
+            .chars()
+            .next_back()
+            .is_some_and(|previous| previous.is_ascii_digit() || previous == '.')
+        {
+            continue;
+        }
+        let Some((number, end)) = parse_number(s, start) else {
+            continue;
+        };
+        let cursor = skip_ws(s, end);
+        if ["个", "份", "次", "处", "颗", "枚", "只"]
+            .iter()
+            .any(|unit| s[cursor..].starts_with(unit))
+        {
+            if !number.unit.is_empty() {
+                return Err("pattern_count_invalid");
+            }
+            found.push(number.value);
+        }
+    }
+
+    for (start, ch) in s.char_indices() {
+        let Some(value) = mandarin_count(ch) else {
+            continue;
+        };
+        let cursor = skip_ws(s, start + ch.len_utf8());
+        if ["个", "份", "次", "条", "处", "颗", "枚", "只"]
+            .iter()
+            .any(|unit| s[cursor..].starts_with(unit))
+        {
+            found.push(value as f64);
+        }
+    }
+
+    if found.is_empty() {
+        return Ok(None);
+    }
+    if found.iter().any(|value| !close(*value, found[0])) {
+        return Err("pattern_count_conflict");
+    }
+    if !found[0].is_finite()
+        || found[0].fract() != 0.0
+        || found[0] < 2.0
+        || found[0] > crate::native_plan_geometry::MAX_HOLE_PATTERN_COUNT as f64
+    {
+        return Err("pattern_count_invalid");
+    }
+    Ok(Some(found[0] as u64))
+}
+
 fn hole_pattern_count(s: &str) -> Result<Option<u64>, &'static str> {
     let mut found = Vec::<f64>::new();
     for alias in ["hole count", "count", "孔数", "数量", "均布", "等分"] {
@@ -16307,6 +16583,80 @@ mod tests {
             assert_eq!(output["status"], "needs_clarification", "{input}: {output}");
             assert!(output["plan"].is_null(), "{input}: {output}");
             assert!(output["questions"].to_string().contains(issue_id), "{input}: {output}");
+        }
+    }
+
+    #[test]
+    fn legacy_pattern_defaults_match_python_and_reject_explicit_conflicts() {
+        let fixture: Value = serde_json::from_str(include_str!(
+            "../tests/fixtures/quick_legacy_pattern_defaults_contract.json"
+        ))
+        .expect("legacy pattern-default fixture is valid JSON");
+
+        for case in fixture["legacy_accepted"].as_array().unwrap() {
+            let input = case["input"].as_str().unwrap();
+            let output = parse(input);
+            assert_eq!(output["status"], "ready", "{input}: {output}");
+            let plan = &output["plan"];
+            assert_eq!(crate::cad_plan_validation::validate_plan(plan)["state"], "valid", "{input}: {plan}");
+            assert_eq!(crate::native_plan_geometry::preflight(plan).unwrap()["state"], "valid", "{input}");
+            let features = plan["features"].as_array().unwrap();
+            assert_eq!(features.len(), 2, "{input}: {output}");
+            assert_eq!(features[0]["kind"], case["base_kind"], "{input}");
+
+            let pattern = &features[1];
+            assert_eq!(pattern["kind"], "pattern", "{input}");
+            assert_eq!(pattern["parameters"]["mode"], case["mode"], "{input}");
+            assert_eq!(pattern["parameters"]["count"], case["count"], "{input}");
+            assert_eq!(pattern["parameters"]["axis"], case["axis"], "{input}");
+            assert_eq!(pattern["operation"], features[0]["operation"], "{input}");
+            assert_eq!(pattern["relations"][0]["type"], "pattern_source", "{input}");
+            assert_eq!(pattern["relations"][0]["feature_id"], features[0]["id"], "{input}");
+            if case["mode"] == "linear" {
+                assert_eq!(pattern["parameters"]["step"], case["step"], "{input}");
+                let step_defaulted = case["defaults"].to_string().contains("step");
+                assert_eq!(pattern["sources"]["step"]["type"], if step_defaulted { "derived" } else { "user" }, "{input}");
+                if step_defaulted {
+                    assert!(pattern["sources"]["step"]["note"].as_str().is_some_and(|note| !note.is_empty()), "{input}: step derived-source note");
+                }
+            } else {
+                assert_eq!(pattern["parameters"]["angle"], case["angle"], "{input}");
+                assert_eq!(pattern["parameters"]["full"], case["full"], "{input}");
+                let angle_defaulted = case["defaults"].to_string().contains("angle");
+                assert_eq!(pattern["sources"]["angle"]["type"], if angle_defaulted { "derived" } else { "user" }, "{input}");
+                if angle_defaulted {
+                    assert!(pattern["sources"]["angle"]["note"].as_str().is_some_and(|note| !note.is_empty()), "{input}: angle derived-source note");
+                }
+            }
+
+            for field in ["count", "axis"] {
+                let defaulted = case["defaults"].to_string().contains(field);
+                assert_eq!(pattern["sources"][field]["type"], if defaulted { "derived" } else { "user" }, "{input}: {field} provenance");
+                if defaulted {
+                    assert!(pattern["sources"][field]["note"].as_str().is_some_and(|note| !note.is_empty()), "{input}: {field} derived-source note");
+                    let code = format!("legacy_{}_pattern_default_{}", case["mode"].as_str().unwrap(), field);
+                    assert!(output["warnings"].to_string().contains(&code), "{input}: expected {code}; {output}");
+                }
+            }
+            if case["mode"] == "circular" && case["defaults"].to_string().contains("angle") {
+                assert!(output["warnings"].to_string().contains("legacy_circular_pattern_default_angle"), "{input}: {output}");
+            }
+            if case["mode"] == "linear" && case["defaults"].to_string().contains("step") {
+                assert!(output["warnings"].to_string().contains("legacy_linear_pattern_default_step"), "{input}: {output}");
+            }
+        }
+
+        for case in fixture["must_reject"].as_array().unwrap() {
+            let input = case["input"].as_str().unwrap();
+            let output = parse(input);
+            let expected_status = case["status"].as_str().unwrap_or("needs_clarification");
+            assert_eq!(output["status"], expected_status, "{input}: {output}");
+            assert!(output["plan"].is_null(), "{input}: {output}");
+            assert!(
+                format!("{} {}", output["questions"], output["unsupported"])
+                    .contains(case["issue"].as_str().unwrap()),
+                "{input}: {output}"
+            );
         }
     }
 

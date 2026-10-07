@@ -93,13 +93,88 @@ pub(super) fn canonicalize_explicit_linear_alias(text: &str) -> Option<String> {
     Some(output)
 }
 
+/// Canonicalize a single old Quick linear-pattern verb when some or all
+/// transform values are omitted. The parent parser supplies the legacy
+/// count/axis/step defaults and records their derived provenance.
+pub(super) fn canonicalize_legacy_linear_alias(text: &str) -> Option<String> {
+    let lower = text.to_lowercase();
+    if contains_any(
+        &lower,
+        &[
+            "阵列", "linear array", "pcd", "分度圆", "节圆", "分布圆", "圆周", "环形",
+            "绕圆", "均布", "等角", "角度", "相位",
+        ],
+    ) {
+        return None;
+    }
+    let aliases = Regex::new(r"复制|拷贝|排列|分布").ok()?;
+    let matches: Vec<_> = aliases.find_iter(text).collect();
+    if matches.len() != 1 {
+        return None;
+    }
+    let found = matches[0];
+    if found.as_str() == "分布" {
+        let clause = super::split_clauses(text)
+            .into_iter()
+            .find(|clause| clause.contains(found.as_str()))?;
+        if !contains_any(
+            &clause.to_lowercase(),
+            &["沿x", "沿y", "沿z", "x方向", "y方向", "z方向", "方向"],
+        ) {
+            return None;
+        }
+    }
+    let mut output = String::with_capacity(text.len() + 2);
+    output.push_str(&text[..found.start()]);
+    output.push_str("阵列");
+    output.push_str(&text[found.end()..]);
+    Some(output)
+}
+
+/// Report legacy verbs that look like a linear operation but were declined
+/// because they are ambiguous (for example multiple copy verbs or directionless
+/// “分布”). The parser turns these into an explicit unsupported result rather
+/// than silently dropping the requested operation.
+pub(super) fn has_ambiguous_legacy_linear_alias(text: &str) -> bool {
+    let lower = text.to_lowercase();
+    if contains_any(&lower, &["pcd", "分度圆", "节圆", "分布圆", "圆周", "环形", "绕圆", "均布", "等角", "相位"]) {
+        return false;
+    }
+    let Ok(aliases) = Regex::new(r"复制|拷贝|排列|分布") else {
+        return false;
+    };
+    let matches: Vec<_> = aliases.find_iter(text).collect();
+    if matches.len() > 1 {
+        return true;
+    }
+    let Some(found) = matches.first() else {
+        return false;
+    };
+    if found.as_str() != "分布" {
+        return false;
+    }
+    let Some(clause) = super::split_clauses(text)
+        .into_iter()
+        .find(|clause| clause.contains(found.as_str()))
+    else {
+        return true;
+    };
+    !contains_any(
+        &clause.to_lowercase(),
+        &["沿x", "沿y", "沿z", "x方向", "y方向", "z方向", "方向"],
+    )
+}
+
 fn contains_any(text: &str, needles: &[&str]) -> bool {
     needles.iter().any(|needle| text.contains(needle))
 }
 
 #[cfg(test)]
 mod tests {
-    use super::canonicalize_explicit_linear_alias;
+    use super::{
+        canonicalize_explicit_linear_alias, canonicalize_legacy_linear_alias,
+        has_ambiguous_legacy_linear_alias,
+    };
 
     #[test]
     fn canonicalizes_explicit_copy_with_spacing_in_reference_request() {
@@ -139,5 +214,33 @@ mod tests {
         ] {
             assert_eq!(canonicalize_explicit_linear_alias(input), None, "{input}");
         }
+    }
+
+    #[test]
+    fn canonicalizes_legacy_linear_verbs_with_omitted_values() {
+        for (input, expected) in [
+            ("长方体，然后复制", "长方体，然后阵列"),
+            ("长方体，然后复制4个", "长方体，然后阵列4个"),
+            ("长方体，然后排列", "长方体，然后阵列"),
+            ("长方体，然后沿Z方向分布", "长方体，然后沿Z方向阵列"),
+        ] {
+            assert_eq!(canonicalize_legacy_linear_alias(input).as_deref(), Some(expected));
+        }
+        for input in [
+            "长方体，然后分布4个", // Directionless distribution is ambiguous.
+            "长方体，然后复制，再拷贝", // Multiple pattern operations.
+            "长方体，然后圆周复制4个", // Circular wording must not become linear.
+        ] {
+            assert_eq!(canonicalize_legacy_linear_alias(input), None, "{input}");
+        }
+    }
+
+    #[test]
+    fn flags_declined_ambiguous_linear_verbs() {
+        assert!(has_ambiguous_legacy_linear_alias("长方体，然后分布4个"));
+        assert!(has_ambiguous_legacy_linear_alias("长方体沿X轴，然后分布4个"));
+        assert!(has_ambiguous_legacy_linear_alias("长方体，然后复制，再拷贝"));
+        assert!(!has_ambiguous_legacy_linear_alias("长方体，然后复制"));
+        assert!(!has_ambiguous_legacy_linear_alias("长方体，圆周阵列4个"));
     }
 }

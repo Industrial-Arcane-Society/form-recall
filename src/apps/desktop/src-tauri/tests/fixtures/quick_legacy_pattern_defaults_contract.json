@@ -1,0 +1,127 @@
+{
+  "source": "src/legacy/ai_modeler/core/parsing/nlparser.py::Parser.parse, measured 2026-10-08",
+  "legacy_accepted": [
+    {
+      "input": "长方体 长100宽80高20，然后复制",
+      "mode": "linear",
+      "count": 4,
+      "axis": "Z",
+      "step": [
+        0.0,
+        0.0,
+        20.0
+      ],
+      "defaults": [
+        "count",
+        "axis",
+        "step"
+      ],
+      "base_kind": "box",
+      "legacy_steps": [
+        "长方体 100×80×20 mm",
+        "线性阵列 ×4, 沿 Z 方向间距 20 mm"
+      ]
+    },
+    {
+      "input": "长方体 长100宽80高20，然后复制4个，间距12",
+      "mode": "linear",
+      "count": 4,
+      "axis": "Z",
+      "step": [
+        0.0,
+        0.0,
+        12.0
+      ],
+      "defaults": [
+        "axis"
+      ],
+      "base_kind": "box",
+      "legacy_steps": [
+        "长方体 100×80×20 mm",
+        "线性阵列 ×4, 沿 Z 方向间距 12 mm"
+      ]
+    },
+    {
+      "input": "圆柱 直径30mm 高50mm，然后圆周阵列",
+      "mode": "circular",
+      "count": 4,
+      "axis": "Z",
+      "angle": 360.0,
+      "full": true,
+      "defaults": [
+        "count",
+        "axis",
+        "angle"
+      ],
+      "base_kind": "cylinder",
+      "legacy_steps": [
+        "圆柱 ⌀30 × 50 mm",
+        "圆周阵列 ×4"
+      ]
+    },
+    {
+      "input": "圆柱 直径30mm 高50mm，然后绕X轴圆周阵列5个",
+      "mode": "circular",
+      "count": 5,
+      "axis": "X",
+      "angle": 360.0,
+      "full": true,
+      "defaults": [
+        "angle"
+      ],
+      "base_kind": "cylinder",
+      "legacy_steps": [
+        "圆柱 ⌀30 × 50 mm",
+        "圆周阵列 ×5"
+      ]
+    },
+    {
+      "input": "圆柱 直径30mm 高50mm，然后绕Z轴复制5个",
+      "mode": "circular",
+      "count": 5,
+      "axis": "Z",
+      "angle": 360.0,
+      "full": true,
+      "defaults": [
+        "angle"
+      ],
+      "base_kind": "cylinder",
+      "legacy_steps": [
+        "圆柱 ⌀30 × 50 mm",
+        "圆周阵列 ×5"
+      ]
+    }
+  ],
+  "must_reject": [
+    {
+      "input": "长方体 长100宽80高20，然后沿X轴阵列1个，间距20",
+      "issue": "linear_pattern_count_invalid"
+    },
+    {
+      "input": "长方体 长100宽80高20，然后沿X轴阵列4个，间距0",
+      "issue": "linear_pattern_step_invalid"
+    },
+    {
+      "input": "长方体 长100宽80高20，然后阵列4个数量5个，间距20",
+      "issue": "linear_pattern_count_conflict"
+    },
+    {
+      "input": "长方体 长100宽80高20，然后沿X轴沿Y轴阵列",
+      "issue": "axis_conflict"
+    },
+    {
+      "input": "圆柱 直径30mm 高50mm，然后圆周阵列4个角度180度角度360度",
+      "issue": "circular_pattern_angle_conflict"
+    },
+    {
+      "input": "长方体 长100宽80高20，然后复制，再拷贝",
+      "issue": "legacy_linear_pattern_alias_ambiguous",
+      "status": "unsupported"
+    },
+    {
+      "input": "长方体 长100宽80高20，然后分布4个",
+      "issue": "legacy_linear_pattern_alias_ambiguous",
+      "status": "unsupported"
+    }
+  ]
+}
