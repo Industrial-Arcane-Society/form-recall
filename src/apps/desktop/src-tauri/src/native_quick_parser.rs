@@ -7,6 +7,7 @@ use std::sync::OnceLock;
 mod legacy_catalog_box_defaults;
 mod legacy_catalog_cylinder_defaults;
 mod legacy_catalog_egt_profile;
+mod legacy_catalog_lifting_eye;
 mod legacy_catalog_socket_screw;
 
 const BEARING_STANDARDS: &str = include_str!("../../../../legacy/kb/bearing_std.json");
@@ -60,6 +61,10 @@ pub fn parse(text: &str) -> Value {
     }
 
     if let Some(parsed) = crate::native_quick_socket_bolt::parse(text) {
+        return parsed;
+    }
+
+    if let Some(parsed) = legacy_catalog_lifting_eye::parse(text, &normalized) {
         return parsed;
     }
 
