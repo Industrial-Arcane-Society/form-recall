@@ -49,6 +49,9 @@ pub fn parse(text: &str) -> Value {
         return parsed;
     }
 
+    if let Some(parsed) = parse_legacy_spoked_handwheel(text, &normalized) {
+        return parsed;
+    }
     if let Some(parsed) = parse_legacy_bearing_seat(text, &normalized) {
         return parsed;
     }
@@ -2102,6 +2105,269 @@ fn parse_legacy_flat_key(raw: &str, text: &str) -> Option<Value> {
         "relations":[]
     });
     Some(plan_result(raw, "平键", vec![feature], warnings))
+}
+
+/// Migrate the old Python Quick handwheel recipe. In the legacy parameter
+/// table, `d` is used as the outside radius of the hub (not its bore); the
+/// center bore is then fixed at 35% of that radius by the geometry builder.
+fn parse_legacy_spoked_handwheel(raw: &str, text: &str) -> Option<Value> {
+    let named = contains_any(text, &["辐条手轮", "辐条轮", "方向盘", "手轮"]);
+    if !named {
+        return None;
+    }
+
+    let center_hole_requested = contains_any(text, &["中心孔", "中心通孔"]);
+    if contains_any(
+        text,
+        &[
+            "键槽", "槽", "螺纹", "倒角", "圆角", "沉孔", "盲孔", "钻孔", "螺栓孔",
+            "孔阵列", "阵列", "切除", "并加", "同时", "再加", "还要", "偏心孔",
+            "手柄", "轮辐外形", "自定义辐条", "keyway", "thread", "chamfer", "fillet",
+            "pattern", "slot", "drill",
+        ],
+    ) || (contains_any(text, &["通孔", "through hole"]) && !center_hole_requested)
+    {
+        return Some(parse_result_with_issue(
+            "unsupported",
+            raw,
+            "legacy_spoked_handwheel_modifier_not_migrated",
+            "本项只迁移旧 Python Quick 的辐条手轮主体和同轴中心通孔；键槽、边缘修饰、偏心孔及其他组合特征尚未迁入。",
+        ));
+    }
+
+    let outer_diameter = pulley_scalar(raw, text, &["外径"], &["D"]);
+    let hub_diameter = pulley_scalar(raw, text, &["内径", "孔径"], &["d"]);
+    let thickness = pulley_scalar(raw, text, &["厚度", "厚"], &["H"]);
+    let spoke_count = pulley_scalar(raw, text, &["辐条数", "轮辐数"], &["z"]);
+    let explicit_height = scalar(text, &["height", "高度", "高"]);
+    let height_instead_of_thickness = thickness.is_none() && explicit_height.is_some();
+
+    let mut questions = Vec::new();
+    match outer_diameter {
+        Some(value) if value.is_finite() && value > 0.0 => {}
+        Some(_) => questions.push(issue(
+            "legacy_spoked_handwheel_outer_diameter_invalid",
+            "辐条手轮外径必须是唯一且有限的正数。",
+        )),
+        None => questions.push(issue(
+            "legacy_spoked_handwheel_outer_diameter_missing",
+            "请明确辐条手轮外径 D。",
+        )),
+    }
+    match thickness {
+        Some(value) if value.is_finite() && value > 0.0 => {}
+        Some(_) => questions.push(issue(
+            "legacy_spoked_handwheel_thickness_invalid",
+            "辐条手轮厚度必须是唯一且有限的正数。",
+        )),
+        None if height_instead_of_thickness => questions.push(issue(
+            "legacy_spoked_handwheel_height_alias_not_legacy",
+            "旧 Python Quick 手轮配方使用“厚度/厚”或 H 读取轴向尺寸；“高度”会退回普通圆柱。请明确手轮厚度。",
+        )),
+        None => questions.push(issue(
+            "legacy_spoked_handwheel_thickness_missing",
+            "请明确辐条手轮厚度 H。",
+        )),
+    }
+    if let (Some(thickness), Some(height)) = (thickness, explicit_height) {
+        if height.is_finite() && thickness.is_finite() && !close(height, thickness) {
+            questions.push(issue(
+                "legacy_spoked_handwheel_height_thickness_conflict",
+                "同一手轮同时给出了不同的“高度”和“厚度”；旧配方只读取厚度 H，请确认应采用哪个轴向尺寸。",
+            ));
+        }
+    }
+    for (value, code, label) in [
+        (hub_diameter, "legacy_spoked_handwheel_hub_diameter_invalid", "轮毂参数 d"),
+        (spoke_count, "legacy_spoked_handwheel_spoke_count_invalid", "辐条数 z"),
+    ] {
+        if value.is_some_and(|value| !value.is_finite()) {
+            questions.push(issue(
+                code,
+                format!("辐条手轮{label}必须唯一且是有限数值。"),
+            ));
+        }
+    }
+    if hub_diameter.is_some_and(|value| value.is_finite() && value <= 0.0) {
+        questions.push(issue(
+            "legacy_spoked_handwheel_hub_diameter_invalid",
+            "轮毂尺寸参数 d 必须为正数。",
+        ));
+    }
+    if spoke_count.is_some_and(|value| value.is_finite() && (value - value.trunc()).abs() > 1e-9) {
+        questions.push(issue(
+            "legacy_spoked_handwheel_spoke_count_not_integer",
+            "辐条数必须为整数；旧 Python 会静默截断小数，Rust 要求给出明确整数。",
+        ));
+    }
+
+    let center_hole = if center_hole_requested {
+        pulley_scalar(
+            raw,
+            text,
+            &[
+                "中心孔直径", "中心孔 直径", "中心孔径", "中心通孔直径", "中心通孔 直径",
+                "中心孔", "中心通孔",
+            ],
+            &[],
+        )
+    } else {
+        None
+    };
+    match center_hole {
+        Some(value) if value.is_finite() && value > 0.0 => {}
+        Some(_) => questions.push(issue(
+            "legacy_spoked_handwheel_center_hole_invalid",
+            "中心通孔直径必须是唯一且有限的正数。",
+        )),
+        None if center_hole_requested => questions.push(issue(
+            "legacy_spoked_handwheel_center_hole_missing",
+            "请明确中心通孔直径，例如“中心孔直径 20 mm”。",
+        )),
+        None => {}
+    }
+    if !questions.is_empty() {
+        return Some(result("needs_clarification", raw, None, vec![], questions, vec![]));
+    }
+
+    let outer_diameter = outer_diameter.expect("validated handwheel outer diameter");
+    if center_hole.is_some_and(|diameter| diameter >= outer_diameter) {
+        return Some(parse_result_with_issue(
+            "needs_clarification",
+            raw,
+            "legacy_spoked_handwheel_center_hole_exceeds_outer_diameter",
+            "手轮中心孔必须小于外径；当前孔径会移除全部或几乎全部轮体，请核对尺寸。",
+        ));
+    }
+    let outer_r = outer_diameter / 2.0;
+    let rim_w = (outer_diameter * 0.06).max(3.0);
+    let hub_defaulted = hub_diameter.is_none();
+    let hub_diameter = hub_diameter.unwrap_or(20.0);
+    let hub_r = (hub_diameter / 2.0).max(5.0);
+    let thickness = thickness.expect("validated handwheel thickness");
+    let spokes_defaulted = spoke_count.is_none();
+    let requested_spokes = spoke_count.unwrap_or(5.0).trunc();
+    if requested_spokes > crate::native_parametric_features::MAX_SPOKED_WHEEL_SPOKES as f64 {
+        return Some(result(
+            "unsupported",
+            raw,
+            None,
+            vec![],
+            vec![],
+            vec![issue(
+                "legacy_spoked_handwheel_native_spoke_limit",
+                "旧网格可尝试更多辐条；Rust Quick 为保持几何响应速度将辐条数限制为 512。",
+            )],
+        ));
+    }
+    let spokes = requested_spokes.max(2.0) as u64;
+    let spoke_w = ((outer_r - hub_r) * 0.22).max(4.0);
+    let inner_r = outer_r - rim_w;
+    if !inner_r.is_finite() || inner_r <= hub_r || spoke_w >= 2.0 * hub_r {
+        return Some(parse_result_with_issue(
+            "needs_clarification",
+            raw,
+            "legacy_spoked_handwheel_invalid_profile",
+            "该外径、轮毂和辐条尺寸组合无法形成 Rust Quick 要求的分离轮缘与可融合辐条；请调整外径或内径。",
+        ));
+    }
+
+    let mut warnings = vec![issue(
+        "legacy_spoked_handwheel_d_semantics",
+        "沿用旧 Python Quick 参数含义：d/“内径”决定轮毂外半径 max(5,d/2)，中心孔由轮毂半径的 35% 固定推导；如需更大的孔，请另写中心孔尺寸。",
+    )];
+    let mut defaults = Vec::new();
+    if hub_defaulted {
+        defaults.push("d=20 mm".to_string());
+    }
+    if spokes_defaulted {
+        defaults.push("z=5".to_string());
+    }
+    if !defaults.is_empty() {
+        warnings.push(issue(
+            "legacy_spoked_handwheel_defaults",
+            format!("沿用旧 Python Quick 辐条手轮典型值：{}。", defaults.join("、")),
+        ));
+    }
+    if spokes as f64 != requested_spokes {
+        warnings.push(issue(
+            "legacy_spoked_handwheel_spoke_count_clamped",
+            format!("旧 Python Quick 将辐条数向零截断并至少钳制为 2；本模型按实际生成的 {spokes} 根辐条构建。"),
+        ));
+    }
+    if !has_unit(text) {
+        warnings.push(issue(
+            "unit_interpreted_as_mm",
+            "未写长度单位的辐条手轮尺寸按旧 Quick 默认单位 mm 解释。",
+        ));
+    }
+
+    let mut parameters = serde_json::Map::new();
+    let mut sources = serde_json::Map::new();
+    parameters.insert("outer_r".into(), json!(outer_r));
+    sources.insert("outer_r".into(), derived_source(raw, "由旧 Python Quick 外径 D 除以 2 得到。"));
+    parameters.insert("rim_w".into(), json!(rim_w));
+    sources.insert("rim_w".into(), derived_source(raw, "沿用旧 Python Quick 轮缘宽度 max(3 mm, 0.06×D)。"));
+    parameters.insert("hub_r".into(), json!(hub_r));
+    sources.insert(
+        "hub_r".into(),
+        if hub_defaulted {
+            derived_source(raw, "沿用旧 Python Quick d=20 mm 典型值，再按 max(5 mm,d/2) 得到轮毂外半径。")
+        } else {
+            derived_source(raw, "沿用旧 Python Quick 将 d/“内径”作为轮毂尺寸输入，并按 max(5 mm,d/2) 得到轮毂外半径；它不是中心孔直径。")
+        },
+    );
+    parameters.insert("height".into(), json!(thickness));
+    sources.insert("height".into(), user_source(raw));
+    parameters.insert("spokes".into(), json!(spokes));
+    sources.insert(
+        "spokes".into(),
+        if spokes_defaulted {
+            derived_source(raw, "沿用旧 Python Quick 典型辐条数 z=5。")
+        } else if spokes as f64 != requested_spokes {
+            derived_source(raw, "沿用旧 Python Quick 对辐条数截断并至少钳制为 2 后的有效几何数量。")
+        } else {
+            user_source(raw)
+        },
+    );
+    parameters.insert("spoke_w".into(), json!(spoke_w));
+    sources.insert(
+        "spoke_w".into(),
+        derived_source(
+            raw,
+            "沿用旧 Python Quick 默认辐条宽度 max(4 mm, 0.22×(outer_r-hub_r))。",
+        ),
+    );
+    parameters.insert("center".into(), json!([0.0, 0.0, 0.0]));
+    sources.insert("center".into(), derived_source(raw, "沿用旧 Python Quick 将手轮中心置于全局原点。"));
+
+    let mut features = vec![json!({
+        "id":"quick-0001",
+        "kind":"spoked_wheel",
+        "operation":"add",
+        "name":"辐条手轮主体",
+        "parameters":parameters,
+        "sources":sources,
+        "relations":[]
+    })];
+    if let Some(diameter) = center_hole {
+        features.push(json!({
+            "id":"quick-0002",
+            "kind":"hole",
+            "operation":"cut",
+            "name":"手轮中心通孔",
+            "parameters":{"diameter":diameter,"through":true,"axis":"Z","pos":"center","segments":24},
+            "sources":{
+                "diameter":user_source(raw),
+                "through":derived_source(raw,"沿用旧 Python Quick 将中心孔贯穿。"),
+                "axis":derived_source(raw,"沿用旧 Python Quick 中心孔沿全局 Z 轴贯穿。"),
+                "pos":derived_source(raw,"沿用旧 Python Quick 将中心孔置于手轮中心。"),
+                "segments":derived_source(raw,"沿用旧 Python Quick 中心孔分段数 24。")
+            },
+            "relations":[]
+        }));
+    }
+    Some(plan_result(raw, "辐条手轮", features, warnings))
 }
 
 /// Migrate the old Quick spline-shaft constructor. It emits one Z-axis prism
@@ -10967,5 +11233,155 @@ mod tests {
             assert!(output["plan"].is_null(), "{input}: {output}");
             assert!(output.to_string().contains(case["issue"].as_str().unwrap()), "{input}: {output}");
         }
+    }
+
+    #[test]
+    fn legacy_spoked_handwheels_match_python_oracle_and_native_boundaries() {
+        let fixture: Value = serde_json::from_str(include_str!(
+            "../tests/fixtures/quick_legacy_spoked_handwheel_contract.json"
+        ))
+        .expect("spoked-handwheel Python oracle fixture is valid JSON");
+
+        for case in fixture["legacy_accepted"].as_array().unwrap() {
+            let input = case["input"].as_str().unwrap();
+            let output = parse(input);
+            assert_eq!(output["status"], "ready", "{input}: {output}");
+            assert_eq!(output["plan"]["name"], "辐条手轮", "{input}: {output}");
+
+            let legacy = &case["features"];
+            let features = output["plan"]["features"].as_array().unwrap();
+            assert_eq!(features.len(), case["features"].as_array().unwrap().len(), "{input}: {output}");
+            let wheel = &features[0];
+            let old_wheel = &legacy[0];
+            assert_eq!(wheel["kind"], old_wheel["kind"], "{input}");
+            assert_eq!(wheel["operation"], old_wheel["operation"], "{input}");
+            for key in ["outer_r", "rim_w", "hub_r", "height", "spokes", "center"] {
+                let expected = &old_wheel["parameters"][key];
+                let actual = &wheel["parameters"][key];
+                if key == "spokes" {
+                    let old_count = expected.as_u64().unwrap();
+                    assert_eq!(actual.as_u64().unwrap(), old_count.max(2), "{input}: effective spoke count");
+                    if old_count < 2 {
+                        assert!(
+                            output["warnings"]
+                                .to_string()
+                                .contains("legacy_spoked_handwheel_spoke_count_clamped"),
+                            "{input}: {output}"
+                        );
+                    }
+                    continue;
+                }
+                if key == "center" {
+                    let actual = actual.as_array().unwrap();
+                    let expected = expected.as_array().unwrap();
+                    assert_eq!(actual.len(), expected.len(), "{input}: center coordinates");
+                    for (actual, expected) in actual.iter().zip(expected) {
+                        assert!(
+                            (actual.as_f64().unwrap() - expected.as_f64().unwrap()).abs() < 1e-9,
+                            "{input}: center"
+                        );
+                    }
+                    continue;
+                }
+                if let (Some(actual), Some(expected)) = (actual.as_f64(), expected.as_f64()) {
+                    assert!((actual - expected).abs() < 1e-9, "{input}: {key}={actual}, expected {expected}");
+                } else {
+                    assert_eq!(actual, expected, "{input}: {key}");
+                }
+            }
+            let outer_r = old_wheel["parameters"]["outer_r"].as_f64().unwrap();
+            let hub_r = old_wheel["parameters"]["hub_r"].as_f64().unwrap();
+            assert!(
+                (wheel["parameters"]["spoke_w"].as_f64().unwrap()
+                    - (4.0_f64).max((outer_r - hub_r) * 0.22))
+                    .abs()
+                    < 1e-9,
+                "{input}: spoke width"
+            );
+            assert_eq!(wheel["sources"]["height"]["type"], "user", "{input}");
+            assert_eq!(wheel["sources"]["hub_r"]["type"], "derived", "{input}");
+            assert_eq!(wheel["sources"]["spoke_w"]["type"], "derived", "{input}");
+            let spoke_count_source = if input.contains("辐条数") || input.contains("轮辐数") || input.contains("z=") {
+                "user"
+            } else {
+                "derived"
+            };
+            if old_wheel["parameters"]["spokes"].as_u64().unwrap() < 2 {
+                assert_eq!(wheel["sources"]["spokes"]["type"], "derived", "{input}");
+            } else {
+                assert_eq!(wheel["sources"]["spokes"]["type"], spoke_count_source, "{input}");
+            }
+            assert!(
+                output["warnings"]
+                    .to_string()
+                    .contains("legacy_spoked_handwheel_d_semantics"),
+                "{input}: {output}"
+            );
+            if case["warnings"].as_array().unwrap().iter().any(|warning| warning.to_string().contains("典型值")) {
+                assert!(
+                    output["warnings"]
+                        .to_string()
+                        .contains("legacy_spoked_handwheel_defaults"),
+                    "{input}: {output}"
+                );
+            }
+            if case["legacy_mesh_volume_mm3"].is_number() {
+                assert!(case["legacy_mesh_poly_count"].as_u64().unwrap() > 0, "{input}: fixture mesh statistics");
+            }
+            assert_eq!(
+                crate::cad_plan_validation::validate_plan(&output["plan"])["state"],
+                "valid",
+                "{input}: {}",
+                crate::cad_plan_validation::validate_plan(&output["plan"])
+            );
+            assert_eq!(
+                crate::native_plan_geometry::preflight(&output["plan"]).unwrap()["state"],
+                "valid",
+                "{input}"
+            );
+        }
+
+        let center_hole_input = fixture["legacy_modifier_cases"][0]["input"].as_str().unwrap();
+        let center_hole = parse(center_hole_input);
+        assert_eq!(center_hole["status"], "ready", "{center_hole_input}: {center_hole}");
+        assert_eq!(center_hole["plan"]["features"].as_array().unwrap().len(), 2, "{center_hole_input}");
+        assert_eq!(center_hole["plan"]["features"][1]["kind"], "hole", "{center_hole_input}");
+        assert_eq!(center_hole["plan"]["features"][1]["parameters"]["diameter"], 20.0, "{center_hole_input}");
+        assert_eq!(
+            crate::cad_plan_validation::validate_plan(&center_hole["plan"])["state"],
+            "valid",
+            "{center_hole_input}: {}",
+            crate::cad_plan_validation::validate_plan(&center_hole["plan"])
+        );
+        assert_eq!(
+            crate::native_plan_geometry::preflight(&center_hole["plan"]).unwrap()["state"],
+            "valid",
+            "{center_hole_input}"
+        );
+        let spaced_center_hole = parse("辐条手轮 外径100 厚度10 中心孔 直径20");
+        assert_eq!(spaced_center_hole["status"], "ready", "{spaced_center_hole}");
+        assert_eq!(spaced_center_hole["plan"]["features"][1]["parameters"]["diameter"], 20.0);
+
+        for case in fixture["not_ready"].as_array().unwrap() {
+            let input = case["input"].as_str().unwrap();
+            let output = parse(input);
+            assert_eq!(output["status"], "needs_clarification", "{input}: {output}");
+            assert!(output["plan"].is_null(), "{input}: {output}");
+            assert!(output.to_string().contains(case["issue"].as_str().unwrap()), "{input}: {output}");
+        }
+
+        for case in fixture["unsupported"].as_array().unwrap() {
+            let input = case["input"].as_str().unwrap();
+            let output = parse(input);
+            assert_eq!(output["status"], "unsupported", "{input}: {output}");
+            assert!(output["plan"].is_null(), "{input}: {output}");
+            assert!(output.to_string().contains(case["issue"].as_str().unwrap()), "{input}: {output}");
+        }
+
+        let legacy_height_fallback = &fixture["legacy_other_outcomes"][1];
+        assert_eq!(legacy_height_fallback["features"][0]["kind"], "cylinder");
+        let safer_height_result = parse(legacy_height_fallback["input"].as_str().unwrap());
+        assert_eq!(safer_height_result["status"], "needs_clarification");
+        assert!(safer_height_result.to_string().contains("legacy_spoked_handwheel_height_alias_not_legacy"));
     }
 }

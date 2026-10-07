@@ -1,0 +1,656 @@
+{
+  "schema_version": "1.0",
+  "legacy_entrypoint": "src/legacy/ai_modeler/core/parsing/nlparser.py::Parser.parse",
+  "legacy_recipe": "src/legacy/ai_modeler/parts/library/partlib.py::_handwheel",
+  "legacy_geometry": "src/legacy/ai_modeler/core/geometry/kernel.py::make_spoked_wheel",
+  "legacy_accepted": [
+    {
+      "input": "辐条手轮 外径100 内径20 厚度10 辐条数5",
+      "ok": true,
+      "features": [
+        {
+          "kind": "spoked_wheel",
+          "operation": "add",
+          "parameters": {
+            "outer_r": 50.0,
+            "rim_w": 6.0,
+            "hub_r": 10.0,
+            "height": 10.0,
+            "spokes": 5,
+            "center": [
+              0,
+              0,
+              0
+            ]
+          }
+        }
+      ],
+      "warnings": [],
+      "questions": [],
+      "steps": [
+        "零件库识别: 辐条手轮 (来自机械设计手册)"
+      ],
+      "legacy_mesh_poly_count": 328,
+      "legacy_mesh_volume_mm3": 119279.71430166933,
+      "partlib_expected_bbox_mm": [
+        100.0,
+        100.0,
+        10.0
+      ],
+      "partlib_expected_warnings": []
+    },
+    {
+      "input": "方向盘 外径120 内径24 厚度12 辐条数6",
+      "ok": true,
+      "features": [
+        {
+          "kind": "spoked_wheel",
+          "operation": "add",
+          "parameters": {
+            "outer_r": 60.0,
+            "rim_w": 7.199999999999999,
+            "hub_r": 12.0,
+            "height": 12.0,
+            "spokes": 6,
+            "center": [
+              0,
+              0,
+              0
+            ]
+          }
+        }
+      ],
+      "warnings": [],
+      "questions": [],
+      "steps": [
+        "零件库识别: 辐条手轮 (来自机械设计手册)"
+      ],
+      "legacy_mesh_poly_count": 336,
+      "legacy_mesh_volume_mm3": 212197.90631328546,
+      "partlib_expected_bbox_mm": [
+        120.0,
+        120.0,
+        12.0
+      ],
+      "partlib_expected_warnings": []
+    },
+    {
+      "input": "辐条手轮 外径100 厚度10",
+      "ok": true,
+      "features": [
+        {
+          "kind": "spoked_wheel",
+          "operation": "add",
+          "parameters": {
+            "outer_r": 50.0,
+            "rim_w": 6.0,
+            "hub_r": 10.0,
+            "height": 10.0,
+            "spokes": 5,
+            "center": [
+              0,
+              0,
+              0
+            ]
+          }
+        }
+      ],
+      "warnings": [
+        "这些参数没写，已按零件库典型值代入：d（可在右侧「参数」页改）"
+      ],
+      "questions": [],
+      "steps": [
+        "零件库识别: 辐条手轮 (来自机械设计手册)"
+      ],
+      "legacy_mesh_poly_count": 328,
+      "legacy_mesh_volume_mm3": 119279.71430166933,
+      "partlib_expected_bbox_mm": [
+        100.0,
+        100.0,
+        10.0
+      ],
+      "partlib_expected_warnings": [
+        "这些参数没写，已按零件库典型值代入：d（可在右侧「参数」页改）"
+      ]
+    },
+    {
+      "input": "辐条轮 外径100 厚度10",
+      "ok": true,
+      "features": [
+        {
+          "kind": "spoked_wheel",
+          "operation": "add",
+          "parameters": {
+            "outer_r": 50.0,
+            "rim_w": 6.0,
+            "hub_r": 10.0,
+            "height": 10.0,
+            "spokes": 5,
+            "center": [
+              0,
+              0,
+              0
+            ]
+          }
+        }
+      ],
+      "warnings": [
+        "这些参数没写，已按零件库典型值代入：d（可在右侧「参数」页改）"
+      ],
+      "questions": [],
+      "steps": [
+        "零件库识别: 辐条手轮 (来自机械设计手册)"
+      ],
+      "legacy_mesh_poly_count": 328,
+      "legacy_mesh_volume_mm3": 119279.71430166933,
+      "partlib_expected_bbox_mm": [
+        100.0,
+        100.0,
+        10.0
+      ],
+      "partlib_expected_warnings": [
+        "这些参数没写，已按零件库典型值代入：d（可在右侧「参数」页改）"
+      ]
+    },
+    {
+      "input": "辐条手轮 外径100 内径20 厚度10 辐条数1",
+      "ok": true,
+      "features": [
+        {
+          "kind": "spoked_wheel",
+          "operation": "add",
+          "parameters": {
+            "outer_r": 50.0,
+            "rim_w": 6.0,
+            "hub_r": 10.0,
+            "height": 10.0,
+            "spokes": 1,
+            "center": [
+              0,
+              0,
+              0
+            ]
+          }
+        }
+      ],
+      "warnings": [],
+      "questions": [],
+      "steps": [
+        "零件库识别: 辐条手轮 (来自机械设计手册)"
+      ],
+      "legacy_mesh_poly_count": 304,
+      "legacy_mesh_volume_mm3": 108719.7143016695,
+      "partlib_expected_bbox_mm": [
+        100.0,
+        100.0,
+        10.0
+      ],
+      "partlib_expected_warnings": []
+    }
+  ],
+  "legacy_modifier_cases": [
+    {
+      "input": "辐条手轮 外径100 厚度10 中心孔20",
+      "ok": true,
+      "features": [
+        {
+          "kind": "spoked_wheel",
+          "operation": "add",
+          "parameters": {
+            "outer_r": 50.0,
+            "rim_w": 6.0,
+            "hub_r": 10.0,
+            "height": 10.0,
+            "spokes": 5,
+            "center": [
+              0,
+              0,
+              0
+            ]
+          }
+        },
+        {
+          "kind": "hole",
+          "operation": "cut",
+          "parameters": {
+            "diameter": 20.0,
+            "through": true,
+            "axis": "Z",
+            "pos": "center",
+            "segments": 24
+          }
+        }
+      ],
+      "warnings": [
+        "这些参数没写，已按零件库典型值代入：d（可在右侧「参数」页改）"
+      ],
+      "questions": [],
+      "steps": [
+        "零件库识别: 辐条手轮 (来自机械设计手册)",
+        "同句附加要求: 中心孔20",
+        "孔 ⌀20 @中心"
+      ],
+      "legacy_mesh_poly_count": 328,
+      "legacy_mesh_volume_mm3": 119279.71430166933
+    },
+    {
+      "input": "辐条手轮 外径100 厚度10 键槽",
+      "ok": true,
+      "features": [
+        {
+          "kind": "spoked_wheel",
+          "operation": "add",
+          "parameters": {
+            "outer_r": 50.0,
+            "rim_w": 6.0,
+            "hub_r": 10.0,
+            "height": 10.0,
+            "spokes": 5,
+            "center": [
+              0,
+              0,
+              0
+            ]
+          }
+        },
+        {
+          "kind": "pocket",
+          "operation": "cut",
+          "parameters": {
+            "length": 20.0,
+            "width": 20.0,
+            "depth": 5.0,
+            "corner": 0.0,
+            "axis": "Z"
+          }
+        }
+      ],
+      "warnings": [
+        "这些参数没写，已按零件库典型值代入：d（可在右侧「参数」页改）"
+      ],
+      "questions": [],
+      "steps": [
+        "零件库识别: 辐条手轮 (来自机械设计手册)",
+        "同句附加要求: 键槽",
+        "凹槽 20×20 深 5 mm"
+      ],
+      "legacy_mesh_poly_count": 328,
+      "legacy_mesh_volume_mm3": 119279.71430166933
+    }
+  ],
+  "legacy_other_outcomes": [
+    {
+      "input": "辐条手轮",
+      "ok": false,
+      "features": [],
+      "warnings": [
+        "未能识别片段: 辐条手轮"
+      ],
+      "questions": [],
+      "steps": []
+    },
+    {
+      "input": "辐条手轮 外径100 高度10 辐条数5",
+      "ok": true,
+      "features": [
+        {
+          "kind": "cylinder",
+          "operation": "add",
+          "parameters": {
+            "radius": 50.0,
+            "height": 10.0,
+            "radius2": null,
+            "center": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "base": true,
+            "axis": "Z",
+            "segments": 48
+          }
+        }
+      ],
+      "warnings": [],
+      "questions": [],
+      "steps": [
+        "圆柱 ⌀100 × 10 mm"
+      ]
+    },
+    {
+      "input": "辐条手轮 外径100 内径20 厚度10 辐条数1.5",
+      "ok": true,
+      "features": [
+        {
+          "kind": "spoked_wheel",
+          "operation": "add",
+          "parameters": {
+            "outer_r": 50.0,
+            "rim_w": 6.0,
+            "hub_r": 10.0,
+            "height": 10.0,
+            "spokes": 1,
+            "center": [
+              0,
+              0,
+              0
+            ]
+          }
+        }
+      ],
+      "warnings": [],
+      "questions": [],
+      "steps": [
+        "零件库识别: 辐条手轮 (来自机械设计手册)"
+      ],
+      "legacy_mesh_poly_count": 304,
+      "legacy_mesh_volume_mm3": 108719.7143016695
+    }
+  ],
+  "native_expected_cases": [
+    {
+      "input": "辐条手轮 外径100 内径20 厚度10 辐条数5",
+      "dimensions_mm": [
+        100.0,
+        100.0,
+        10.0
+      ],
+      "feature_count": 1,
+      "spokes": 5,
+      "legacy_mesh_volume_mm3": 119279.71430166933,
+      "legacy_mesh_poly_count": 328,
+      "brep_volume_mm3": 35504.31488898279
+    },
+    {
+      "input": "方向盘 外径120 内径24 厚度12 辐条数6",
+      "dimensions_mm": [
+        120.0,
+        120.0,
+        12.0
+      ],
+      "feature_count": 1,
+      "spokes": 6,
+      "legacy_mesh_volume_mm3": 212197.90631328546,
+      "legacy_mesh_poly_count": 336,
+      "brep_volume_mm3": 66525.84163028654
+    },
+    {
+      "input": "辐条手轮 外径100 厚度10",
+      "dimensions_mm": [
+        100.0,
+        100.0,
+        10.0
+      ],
+      "feature_count": 1,
+      "spokes": 5,
+      "legacy_mesh_volume_mm3": 119279.71430166933,
+      "legacy_mesh_poly_count": 328,
+      "brep_volume_mm3": 35504.31488898279
+    },
+    {
+      "input": "辐条手轮 外径100 内径20 厚度10 辐条数1",
+      "dimensions_mm": [
+        100.0,
+        100.0,
+        10.0
+      ],
+      "feature_count": 1,
+      "spokes": 2,
+      "legacy_mesh_volume_mm3": 108719.7143016695,
+      "legacy_mesh_poly_count": 304,
+      "brep_volume_mm3": 26486.92402745602
+    },
+    {
+      "input": "辐条手轮 外径100 厚度10 中心孔20",
+      "dimensions_mm": [
+        100.0,
+        100.0,
+        10.0
+      ],
+      "feature_count": 2,
+      "spokes": 5,
+      "legacy_mesh_volume_mm3": null,
+      "legacy_mesh_poly_count": null,
+      "brep_volume_mm3": 32747.567335457763
+    }
+  ],
+  "contract_notes": [
+    "旧 d/内径不是中心孔直径，而是轮毂半径的输入：hub_r=max(5,d/2)。",
+    "旧中心孔固定为 max(1,hub_r*0.35)；另写中心孔直径时旧 Parser 会追加一个贯穿孔特征。",
+    "旧 spoked_wheel 网格以轮缘、轮毂和辐条多边形直接拼接，没有布尔融合；legacy_mesh_volume_mm3 不是 B-Rep 联集体积验收值。",
+    "缺少外径时旧 Parser 不识别手轮；用“高度”代替“厚度”时旧 Parser 退回普通圆柱。Rust 会用澄清状态避免把这类错误圆柱当手轮。",
+    "旧 make_spoked_wheel 将辐条数截断为整数并至少使用 2 根；Rust 保存几何实际使用的有效整数数目并显示警告。"
+  ],
+  "not_ready": [
+    {
+      "input": "辐条手轮",
+      "issue": "legacy_spoked_handwheel_outer_diameter_missing",
+      "legacy": {
+        "ok": false,
+        "features": [],
+        "warnings": [
+          "未能识别片段: 辐条手轮"
+        ],
+        "questions": [],
+        "steps": []
+      }
+    },
+    {
+      "input": "辐条手轮 外径100 高度10 辐条数5",
+      "issue": "legacy_spoked_handwheel_height_alias_not_legacy",
+      "legacy": {
+        "ok": true,
+        "features": [
+          {
+            "kind": "cylinder",
+            "operation": "add",
+            "parameters": {
+              "radius": 50.0,
+              "height": 10.0,
+              "radius2": null,
+              "center": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "base": true,
+              "axis": "Z",
+              "segments": 48
+            }
+          }
+        ],
+        "warnings": [],
+        "questions": [],
+        "steps": [
+          "圆柱 ⌀100 × 10 mm"
+        ]
+      }
+    },
+    {
+      "input": "辐条手轮 外径100 内径20 厚度10 辐条数1.5",
+      "issue": "legacy_spoked_handwheel_spoke_count_not_integer",
+      "legacy": {
+        "ok": true,
+        "features": [
+          {
+            "kind": "spoked_wheel",
+            "operation": "add",
+            "parameters": {
+              "outer_r": 50.0,
+              "rim_w": 6.0,
+              "hub_r": 10.0,
+              "height": 10.0,
+              "spokes": 1,
+              "center": [
+                0,
+                0,
+                0
+              ]
+            }
+          }
+        ],
+        "warnings": [],
+        "questions": [],
+        "steps": [
+          "零件库识别: 辐条手轮 (来自机械设计手册)"
+        ]
+      }
+    },
+    {
+      "input": "辐条手轮 外径100 厚度10 中心孔120",
+      "issue": "legacy_spoked_handwheel_center_hole_exceeds_outer_diameter",
+      "legacy": {
+        "ok": true,
+        "features": [
+          {
+            "kind": "spoked_wheel",
+            "operation": "add",
+            "parameters": {
+              "outer_r": 50.0,
+              "rim_w": 6.0,
+              "hub_r": 10.0,
+              "height": 10.0,
+              "spokes": 5,
+              "center": [
+                0,
+                0,
+                0
+              ]
+            }
+          },
+          {
+            "kind": "hole",
+            "operation": "cut",
+            "parameters": {
+              "diameter": 120.0,
+              "through": true,
+              "axis": "Z",
+              "pos": "center",
+              "segments": 24
+            }
+          }
+        ],
+        "warnings": [
+          "这些参数没写，已按零件库典型值代入：d（可在右侧「参数」页改）"
+        ],
+        "questions": [],
+        "steps": [
+          "零件库识别: 辐条手轮 (来自机械设计手册)",
+          "同句附加要求: 中心孔120",
+          "孔 ⌀120 @中心"
+        ]
+      }
+    },
+    {
+      "input": "辐条手轮 外径100 厚度10 高度20",
+      "issue": "legacy_spoked_handwheel_height_thickness_conflict",
+      "legacy": {
+        "ok": true,
+        "features": [
+          {
+            "kind": "spoked_wheel",
+            "operation": "add",
+            "parameters": {
+              "outer_r": 50.0,
+              "rim_w": 6.0,
+              "hub_r": 10.0,
+              "height": 10.0,
+              "spokes": 5,
+              "center": [
+                0,
+                0,
+                0
+              ]
+            }
+          }
+        ],
+        "warnings": [
+          "这些参数没写，已按零件库典型值代入：d（可在右侧「参数」页改）"
+        ],
+        "questions": [],
+        "steps": [
+          "零件库识别: 辐条手轮 (来自机械设计手册)"
+        ]
+      }
+    }
+  ],
+  "unsupported": [
+    {
+      "input": "辐条手轮 外径100 厚度10 键槽",
+      "issue": "legacy_spoked_handwheel_modifier_not_migrated",
+      "legacy": {
+        "ok": true,
+        "features": [
+          {
+            "kind": "spoked_wheel",
+            "operation": "add",
+            "parameters": {
+              "outer_r": 50.0,
+              "rim_w": 6.0,
+              "hub_r": 10.0,
+              "height": 10.0,
+              "spokes": 5,
+              "center": [
+                0,
+                0,
+                0
+              ]
+            }
+          },
+          {
+            "kind": "pocket",
+            "operation": "cut",
+            "parameters": {
+              "length": 20.0,
+              "width": 20.0,
+              "depth": 5.0,
+              "corner": 0.0,
+              "axis": "Z"
+            }
+          }
+        ],
+        "warnings": [
+          "这些参数没写，已按零件库典型值代入：d（可在右侧「参数」页改）"
+        ],
+        "questions": [],
+        "steps": [
+          "零件库识别: 辐条手轮 (来自机械设计手册)",
+          "同句附加要求: 键槽",
+          "凹槽 20×20 深 5 mm"
+        ]
+      }
+    },
+    {
+      "input": "辐条手轮 外径100 厚度10 辐条数513",
+      "issue": "legacy_spoked_handwheel_native_spoke_limit",
+      "legacy": {
+        "ok": true,
+        "features": [
+          {
+            "kind": "spoked_wheel",
+            "operation": "add",
+            "parameters": {
+              "outer_r": 50.0,
+              "rim_w": 6.0,
+              "hub_r": 10.0,
+              "height": 10.0,
+              "spokes": 513,
+              "center": [
+                0,
+                0,
+                0
+              ]
+            }
+          }
+        ],
+        "warnings": [
+          "这些参数没写，已按零件库典型值代入：d（可在右侧「参数」页改）"
+        ],
+        "questions": [],
+        "steps": [
+          "零件库识别: 辐条手轮 (来自机械设计手册)"
+        ]
+      }
+    }
+  ]
+}
