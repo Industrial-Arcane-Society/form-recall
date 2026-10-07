@@ -1,0 +1,253 @@
+{
+  "schema_version": "1.0",
+  "legacy_entrypoint": "src/legacy/ai_modeler/core/parsing/nlparser.py::Parser.parse",
+  "legacy_recipe": "src/legacy/ai_modeler/parts/library/partlib.py::_camshaft",
+  "legacy_geometry": "src/legacy/ai_modeler/core/geometry/kernel.py::make_camshaft",
+  "legacy_accepted": [
+    {
+      "input": "凸轮轴 基圆直径30 升程8 长度320 凸轮数4 轴颈26",
+      "legacy_feature": {
+        "kind": "camshaft",
+        "parameters": {
+          "base_d": 30.0,
+          "lift": 8.0,
+          "lobes": 4,
+          "length": 320.0,
+          "journal_d": 26.0,
+          "center": [0, 0, 0],
+          "segments": 24
+        }
+      },
+      "native_expected": {
+        "base_d": 30.0,
+        "lift": 8.0,
+        "lobes": 4,
+        "length": 320.0,
+        "journal_d": 26.0,
+        "center": [0.0, 0.0, 0.0]
+      },
+      "dimensions_mm": [320.0, 46.0, 46.0],
+      "brep_volume_mm3": 292828.6254429548,
+      "legacy_mesh_poly_count": 602,
+      "legacy_mesh_volume_mm3": 385281.9081944033
+    },
+    {
+      "input": "凸轮轴 基圆30 升程8 长度320",
+      "legacy_feature": {
+        "kind": "camshaft",
+        "parameters": {
+          "base_d": 30.0,
+          "lift": 8.0,
+          "lobes": 4,
+          "length": 320.0,
+          "journal_d": null,
+          "center": [0, 0, 0],
+          "segments": 24
+        }
+      },
+      "native_expected": {
+        "base_d": 30.0,
+        "lift": 8.0,
+        "lobes": 4,
+        "length": 320.0,
+        "journal_d": 16.5,
+        "center": [0.0, 0.0, 0.0]
+      },
+      "dimensions_mm": [320.0, 46.0, 46.0],
+      "brep_volume_mm3": 247729.3175714212,
+      "legacy_mesh_poly_count": 602,
+      "legacy_mesh_volume_mm3": 284963.6463126672,
+      "defaults": ["lobes=4", "journal_d=max(2, 0.55*base_d)"]
+    },
+    {
+      "input": "凸轮轴 基圆30 升程8 长度320 凸轮数0",
+      "legacy_feature": {
+        "kind": "camshaft",
+        "parameters": {
+          "base_d": 30.0,
+          "lift": 8.0,
+          "lobes": 4,
+          "length": 320.0,
+          "journal_d": null,
+          "center": [0, 0, 0],
+          "segments": 24
+        }
+      },
+      "native_expected": {
+        "base_d": 30.0,
+        "lift": 8.0,
+        "lobes": 4,
+        "length": 320.0,
+        "journal_d": 16.5,
+        "lobe_deg": 0.0,
+        "center": [0.0, 0.0, 0.0]
+      },
+      "dimensions_mm": [320.0, 46.0, 46.0],
+      "brep_volume_mm3": 247729.3175714212,
+      "legacy_mesh_poly_count": 602,
+      "legacy_mesh_volume_mm3": 284963.6463126672,
+      "defaults": ["explicit zero count is discarded by legacy Quick and defaults to four"]
+    },
+    {
+      "input": "凸轮轴 d30 h8 L320 n4",
+      "legacy_feature": {
+        "kind": "camshaft",
+        "parameters": {
+          "base_d": 30.0,
+          "lift": 8.0,
+          "lobes": 4,
+          "length": 320.0,
+          "journal_d": null,
+          "center": [0, 0, 0],
+          "segments": 24
+        }
+      },
+      "native_expected": {
+        "base_d": 30.0,
+        "lift": 8.0,
+        "lobes": 4,
+        "length": 320.0,
+        "journal_d": 16.5,
+        "center": [0.0, 0.0, 0.0]
+      },
+      "dimensions_mm": [320.0, 46.0, 46.0],
+      "brep_volume_mm3": 247729.3175714212,
+      "legacy_mesh_poly_count": 602,
+      "legacy_mesh_volume_mm3": 284963.6463126672,
+      "defaults": ["journal_d=max(2, 0.55*base_d)"]
+    },
+    {
+      "input": "凸轮轴 基圆3厘米 升程8毫米 长度32厘米 凸轮数4 轴颈2.6厘米",
+      "legacy_feature": {
+        "kind": "camshaft",
+        "parameters": {
+          "base_d": 3.0,
+          "lift": 8.0,
+          "lobes": 4,
+          "length": 32.0,
+          "journal_d": 2.6,
+          "center": [0, 0, 0],
+          "segments": 24
+        }
+      },
+      "legacy_dimensions_mm": [32.0, 19.0, 19.0],
+      "native_expected": {
+        "base_d": 30.0,
+        "lift": 8.0,
+        "lobes": 4,
+        "length": 320.0,
+        "journal_d": 26.0,
+        "lobe_deg": 0.0,
+        "center": [0.0, 0.0, 0.0]
+      },
+      "dimensions_mm": [320.0, 46.0, 46.0],
+      "brep_volume_mm3": 292828.6254429548,
+      "legacy_mesh_poly_count": 602,
+      "legacy_mesh_volume_mm3": 385281.9081944033,
+      "unit_conversion_differs_from_legacy": true
+    },
+    {
+      "input": "凸轮轴 基圆30 升程8 长度320 凸轮数4 轴颈60",
+      "legacy_feature": {
+        "kind": "camshaft",
+        "parameters": {
+          "base_d": 30.0,
+          "lift": 8.0,
+          "lobes": 4,
+          "length": 320.0,
+          "journal_d": 60.0,
+          "center": [0, 0, 0],
+          "segments": 24
+        }
+      },
+      "native_expected": {
+        "base_d": 30.0,
+        "lift": 8.0,
+        "lobes": 4,
+        "length": 320.0,
+        "journal_d": 46.0,
+        "center": [0.0, 0.0, 0.0]
+      },
+      "dimensions_mm": [320.0, 46.0, 46.0],
+      "brep_volume_mm3": 531808.8043996801,
+      "legacy_mesh_poly_count": 602,
+      "legacy_mesh_volume_mm3": 743073.3561441335,
+      "clamped": "journal_d=46 mm"
+    },
+    {
+      "input": "凸轮轴 基圆30 升程8 长度320 凸轮数4 轴颈0.5",
+      "legacy_feature": {
+        "kind": "camshaft",
+        "parameters": {
+          "base_d": 30.0,
+          "lift": 8.0,
+          "lobes": 4,
+          "length": 320.0,
+          "journal_d": 0.5,
+          "center": [0, 0, 0],
+          "segments": 24
+        }
+      },
+      "native_expected": {
+        "base_d": 30.0,
+        "lift": 8.0,
+        "lobes": 4,
+        "length": 320.0,
+        "journal_d": 0.5,
+        "lobe_deg": 0.0,
+        "center": [0.0, 0.0, 0.0]
+      },
+      "dimensions_mm": [320.0, 46.0, 46.0],
+      "brep_volume_mm3": 217346.6259527041,
+      "legacy_mesh_poly_count": 602,
+      "legacy_mesh_volume_mm3": 217380.817255497
+    }
+  ],
+  "needs_clarification": [
+    {
+      "input": "凸轮轴",
+      "issue": "legacy_camshaft_base_d_missing"
+    },
+    {
+      "input": "凸轮轴 基圆30 升程8",
+      "issue": "legacy_camshaft_length_missing"
+    },
+    {
+      "input": "凸轮轴 基圆30 高度8 长度320",
+      "issue": "legacy_camshaft_height_is_not_lift"
+    },
+    {
+      "input": "凸轮轴 基圆30 升程8 长度320 凸轮数4 凸轮数5",
+      "issue": "legacy_camshaft_lobe_count_invalid"
+    }
+  ],
+  "unsupported": [
+    {
+      "input": "凸轮轴 基圆30 升程8 长度320 中心孔10",
+      "issue": "legacy_camshaft_modifier_not_migrated"
+    },
+    {
+      "input": "凸轮轴 基圆30 升程8 长度320 凸轮数513",
+      "issue": "legacy_camshaft_native_lobe_limit"
+    }
+  ],
+  "known_legacy_discrepancies": [
+    {
+      "input": "凸轮轴 基圆3厘米 升程8毫米 长度32厘米 凸轮数4 轴颈2.6厘米",
+      "legacy_parameters": {
+        "base_d": 3.0,
+        "lift": 8.0,
+        "length": 32.0,
+        "journal_d": 2.6
+      },
+      "migration_behavior": "Rust Quick performs unit conversion to millimeters; the legacy part-library parser kept the numeric values unchanged despite the cm labels."
+    },
+    {
+      "input": "凸轮轴 基圆30 升程8 长度320 凸轮数4 轴颈60",
+      "legacy_parameters": {
+        "journal_d": 60.0
+      },
+      "migration_behavior": "The old feature tree retains the requested journal diameter, then make_camshaft clamps it to the cam maximum diameter of 46 mm. Rust stores the effective value and reports the clamp."
+    }
+  ]
+}

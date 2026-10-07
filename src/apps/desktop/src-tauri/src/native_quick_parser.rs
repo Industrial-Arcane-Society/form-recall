@@ -52,6 +52,9 @@ pub fn parse(text: &str) -> Value {
     if let Some(parsed) = parse_legacy_spoked_handwheel(text, &normalized) {
         return parsed;
     }
+    if let Some(parsed) = parse_legacy_camshaft(text, &normalized) {
+        return parsed;
+    }
     if let Some(parsed) = parse_legacy_bearing_seat(text, &normalized) {
         return parsed;
     }
@@ -579,8 +582,27 @@ fn result(
     questions: Vec<Value>,
     unsupported: Vec<Value>,
 ) -> Value {
-    json!({"status":status,"source_text":text,"plan":plan,"warnings":warnings,"questions":questions,"unsupported":unsupported,
-        "compatibility":{"scope":"common explicit primitives/cuts, migrated standalone primitive defaults and legacy extrusion/revolve constructors, centered solid-shaft aliases, rectangular slots, flat-washer rings, cylindrical/conical spring helices, measured socket-head screws with optional washers, V-belt pulleys, timing pulleys, straight-gear construction, PCD counterbores, migrated legacy washer/spring/shaft/bearing/seal-ring/coupling/brake-disc/brake-drum/flywheel/flat-annular-part/disc-cam/spline-shaft recipes, and executable flange/stepped-shaft/sleeve/blade/blisk templates","legacy_typical_defaults":"restored only for migrated Quick constructors/templates, centered solid shafts (Ø30 mm when diameter is absent), straight gears, timing pulleys, V-belt pulleys, socket-head screw catalog recipes, rectangular slots, flat-washer thickness, spring wire/turn values, brake-disc thickness/bore values, brake-drum bore values, flywheel center-bore/PCD-hole values, flat-annular-part bore/thickness values, disc-cam base diameter/thickness, and spline-shaft minor diameter/tooth count; defaults and raw-dimension mappings are reported as warnings","loft_geometry":"blade and blisk lofts are locally approximate faceted B-Reps","timing_pulley_geometry":"native timing pulley teeth are approximate trapezoidal prisms fused to an analytic annular blank","vbelt_pulley_geometry":"standard V-groove pulley is an approximate axisymmetric revolve; legacy spoke variants and CATIA-native groove features are not included","helix_geometry":"spring helices are locally approximate faceted B-Reps and are not native CATIA features","socket_head_bolt_geometry":"measured catalog dimensions and washers are preserved; native Rust adds visible faceted threads where the legacy Python Quick recipe reconstructed a smooth shank","solid_shaft_geometry":"the old mesh kernel used a 48-sided cylinder; Rust/OCCT uses an analytic cylinder, so bounding boxes agree while volume differs by the expected polygonal approximation","disc_cam_geometry":"72-point faceted polar profile extruded along Z; only the legacy fixed 120-degree rise angle is supported","spline_shaft_geometry":"7-point-per-tooth faceted spline profile; the legacy involute-spline alias is not an involute profile"}})
+    json!({
+        "status":status,
+        "source_text":text,
+        "plan":plan,
+        "warnings":warnings,
+        "questions":questions,
+        "unsupported":unsupported,
+        "compatibility":{
+            "scope":"common explicit primitives/cuts, migrated standalone primitive defaults and legacy extrusion/revolve constructors, centered solid-shaft aliases, rectangular slots, flat-washer rings, cylindrical/conical spring helices, measured socket-head screws with optional washers, V-belt pulleys, timing pulleys, straight-gear construction, PCD counterbores, migrated legacy washer/spring/shaft/bearing/seal-ring/coupling/brake-disc/brake-drum/flywheel/flat-annular-part/disc-cam/spline-shaft/camshaft recipes, and executable flange/stepped-shaft/sleeve/blade/blisk templates",
+            "legacy_typical_defaults":"restored only for migrated Quick constructors/templates, centered solid shafts (Ø30 mm when diameter is absent), straight gears, timing pulleys, V-belt pulleys, socket-head screw catalog recipes, rectangular slots, flat-washer thickness, spring wire/turn values, brake-disc thickness/bore values, brake-drum bore values, flywheel center-bore/PCD-hole values, flat-annular-part bore/thickness values, disc-cam base diameter/thickness, spline-shaft minor diameter/tooth count, and camshaft lobe count/journal diameter; defaults and raw-dimension mappings are reported as warnings",
+            "loft_geometry":"blade and blisk lofts are locally approximate faceted B-Reps",
+            "timing_pulley_geometry":"native timing pulley teeth are approximate trapezoidal prisms fused to an analytic annular blank",
+            "vbelt_pulley_geometry":"standard V-groove pulley is an approximate axisymmetric revolve; legacy spoke variants and CATIA-native groove features are not included",
+            "helix_geometry":"spring helices are locally approximate faceted B-Reps and are not native CATIA features",
+            "socket_head_bolt_geometry":"measured catalog dimensions and washers are preserved; native Rust adds visible faceted threads where the legacy Python Quick recipe reconstructed a smooth shank",
+            "solid_shaft_geometry":"the old mesh kernel used a 48-sided cylinder; Rust/OCCT uses an analytic cylinder, so bounding boxes agree while volume differs by the expected polygonal approximation",
+            "disc_cam_geometry":"72-point faceted polar profile extruded along Z; only the legacy fixed 120-degree rise angle is supported",
+            "camshaft_geometry":"48-point cam profiles and 120-degree harmonic rise are fused with an analytic X-axis shaft into one closed B-Rep; this differs from the legacy unfused faceted mesh",
+            "spline_shaft_geometry":"7-point-per-tooth faceted spline profile; the legacy involute-spline alias is not an involute profile"
+        }
+    })
 }
 
 fn parse_legacy_template(raw: &str, normalized: &str) -> Option<Value> {
@@ -2565,6 +2587,245 @@ fn legacy_spline_profile(root_radius: f64, tooth_height: f64, teeth: usize) -> V
         }
     }
     profile
+}
+
+/// Migrate the old Python Quick camshaft recipe. Its required base diameter,
+/// lift and length must be explicit; the old feature constructor defaults the
+/// lobe count to four and the kernel derives the journal diameter when absent.
+fn parse_legacy_camshaft(raw: &str, text: &str) -> Option<Value> {
+    if !contains_any(text, &["凸轮轴", "camshaft"]) {
+        return None;
+    }
+
+    if contains_any(
+        text,
+        &[
+            "中心孔", "通孔", "盲孔", "孔", "钻", "打孔", "槽", "键槽", "螺纹", "倒角",
+            "圆角", "沉孔", "螺栓孔", "阵列", "切除", "并加", "同时", "再加", "还要",
+            "hole", "bore", "drill", "slot", "keyway", "thread", "chamfer", "fillet",
+            "pattern", "cut", "相位", "凸轮角", "phase",
+        ],
+    ) {
+        return Some(parse_result_with_issue(
+            "unsupported",
+            raw,
+            "legacy_camshaft_modifier_not_migrated",
+            "本项只迁移旧 Python Quick 凸轮轴主体及固定 0° 相位；孔槽、键槽、螺纹、相位修改、边缘修饰和其他组合特征尚未迁入。",
+        ));
+    }
+
+    let base_d = pulley_scalar(raw, text, &["基圆直径", "基圆", "base diameter"], &["d"]);
+    let lift = pulley_scalar(raw, text, &["升程", "lift"], &["h"]);
+    let length = pulley_scalar(raw, text, &["总长", "全长", "长度", "长", "length"], &["L"]);
+    let lobe_count = pulley_scalar(raw, text, &["凸轮数", "lobes"], &["n"]);
+    let journal_d = pulley_scalar(raw, text, &["轴颈直径", "轴颈", "journal diameter"], &[]);
+
+    let mut questions = Vec::new();
+    for (value, missing_code, invalid_code, missing_message, invalid_message) in [
+        (
+            base_d,
+            "legacy_camshaft_base_d_missing",
+            "legacy_camshaft_base_d_invalid",
+            "请明确凸轮轴基圆直径 d。",
+            "基圆直径必须是唯一且有限的数值。",
+        ),
+        (
+            lift,
+            "legacy_camshaft_lift_missing",
+            "legacy_camshaft_lift_invalid",
+            "请明确凸轮轴升程 h。",
+            "凸轮升程必须是唯一且有限的数值。",
+        ),
+        (
+            length,
+            "legacy_camshaft_length_missing",
+            "legacy_camshaft_length_invalid",
+            "请明确凸轮轴总长 L。",
+            "凸轮轴总长必须是唯一且有限的数值。",
+        ),
+    ] {
+        match value {
+            Some(value) if value.is_finite() => {}
+            Some(_) => questions.push(issue(invalid_code, invalid_message)),
+            None => questions.push(issue(missing_code, missing_message)),
+        }
+    }
+    if lift.is_none() && contains_any(text, &["高度", "height"]) {
+        questions.push(issue(
+            "legacy_camshaft_height_is_not_lift",
+            "凸轮轴配方需要凸轮升程；“高度”不能代替升程，请明确升程 h。",
+        ));
+    }
+    if lobe_count.is_some_and(|value| !value.is_finite()) {
+        questions.push(issue(
+            "legacy_camshaft_lobe_count_invalid",
+            "凸轮数必须唯一且为有限数值。",
+        ));
+    }
+    if journal_d.is_some_and(|value| !value.is_finite()) {
+        questions.push(issue(
+            "legacy_camshaft_journal_d_invalid",
+            "轴颈直径必须唯一且为有限数值。",
+        ));
+    }
+    if journal_d.is_some_and(|value| value.is_finite() && value < 0.0) {
+        questions.push(issue(
+            "legacy_camshaft_journal_d_invalid",
+            "轴颈直径不能为负数。",
+        ));
+    }
+    if !questions.is_empty() {
+        return Some(result("needs_clarification", raw, None, vec![], questions, vec![]));
+    }
+
+    let requested_base_d = base_d.expect("validated camshaft base diameter");
+    let requested_lift = lift.expect("validated camshaft lift");
+    let requested_length = length.expect("validated camshaft length");
+    let base_d = requested_base_d.max(2.0);
+    let lift = requested_lift.max(0.0);
+    let length = requested_length.max(2.0);
+
+    let count_defaulted = lobe_count.is_none() || lobe_count == Some(0.0);
+    let requested_lobes = if count_defaulted {
+        4.0
+    } else {
+        lobe_count.unwrap_or(4.0)
+    };
+    let truncated_lobes = requested_lobes.trunc();
+    if truncated_lobes > crate::native_parametric_features::MAX_CAMSHAFT_LOBES as f64 {
+        return Some(result(
+            "unsupported",
+            raw,
+            None,
+            vec![],
+            vec![],
+            vec![issue(
+                "legacy_camshaft_native_lobe_limit",
+                "旧网格可尝试更多凸轮；Rust Quick 为控制几何开销将凸轮数限制为 512。",
+            )],
+        ));
+    }
+    let lobes = (truncated_lobes as i64).max(1) as u64;
+    let lobes_clamped = lobes as f64 != requested_lobes;
+
+    let journal_defaulted = journal_d.is_none() || journal_d == Some(0.0);
+    let requested_journal_d = journal_d
+        .filter(|value| *value != 0.0)
+        .unwrap_or_else(|| (base_d / 2.0 * 1.1).max(2.0));
+    let max_journal_d = base_d + 2.0 * lift;
+    let effective_journal_d = requested_journal_d.min(max_journal_d);
+    let journal_clamped = !close(effective_journal_d, requested_journal_d);
+
+    let mut warnings = Vec::new();
+    let mut dimension_clamps = Vec::new();
+    if !close(base_d, requested_base_d) {
+        dimension_clamps.push("基圆直径至少取 2 mm");
+    }
+    if !close(lift, requested_lift) {
+        dimension_clamps.push("负升程按 0 mm 构建");
+    }
+    if !close(length, requested_length) {
+        dimension_clamps.push("轴长至少取 2 mm");
+    }
+    if !dimension_clamps.is_empty() {
+        warnings.push(issue(
+            "legacy_camshaft_dimension_clamped",
+            format!("沿用旧 Python 几何内核的尺寸下限：{}。", dimension_clamps.join("、")),
+        ));
+    }
+    if count_defaulted || journal_defaulted {
+        let mut defaults = Vec::new();
+        if count_defaulted {
+            defaults.push("凸轮数 n=4".to_string());
+        }
+        if journal_defaulted {
+            defaults.push("轴颈直径按旧公式 max(2 mm, 0.55×基圆直径) 推导".to_string());
+        }
+        warnings.push(issue(
+            "legacy_camshaft_defaults",
+            format!("沿用旧 Python Quick 凸轮轴默认值：{}。", defaults.join("；")),
+        ));
+    }
+    warnings.push(issue(
+        "legacy_camshaft_phase_default",
+        "旧 Python Quick 凸轮轴配方固定使用相位角 0°；相位参数未开放给零件库解析。",
+    ));
+    if lobes_clamped {
+        warnings.push(issue(
+            "legacy_camshaft_lobe_count_clamped",
+            format!("旧 Python 几何内核将凸轮数向零截断并至少取 1；本模型按 {lobes} 个凸轮构建。"),
+        ));
+    }
+    if journal_clamped {
+        warnings.push(issue(
+            "legacy_camshaft_journal_d_clamped",
+            format!("沿用旧 Python 几何内核的轴颈上限，将轴颈直径从 {requested_journal_d} mm 调整为 {effective_journal_d} mm。"),
+        ));
+    }
+    if !has_unit(text) {
+        warnings.push(issue(
+            "unit_interpreted_as_mm",
+            "未写长度单位的凸轮轴尺寸按旧 Quick 默认单位 mm 解释。",
+        ));
+    }
+
+    let mut parameters = serde_json::Map::new();
+    let mut sources = serde_json::Map::new();
+    parameters.insert("base_d".into(), json!(base_d));
+    sources.insert(
+        "base_d".into(),
+        if close(base_d, requested_base_d) {
+            user_source(raw)
+        } else {
+            derived_source(raw, "沿用旧 Python 几何内核将基圆半径至少取 1 mm。")
+        },
+    );
+    parameters.insert("lift".into(), json!(lift));
+    sources.insert(
+        "lift".into(),
+        if close(lift, requested_lift) {
+            user_source(raw)
+        } else {
+            derived_source(raw, "沿用旧 Python 几何内核将升程下限钳制为 0 mm。")
+        },
+    );
+    parameters.insert("length".into(), json!(length));
+    sources.insert(
+        "length".into(),
+        if close(length, requested_length) {
+            user_source(raw)
+        } else {
+            derived_source(raw, "沿用旧 Python 几何内核将轴长至少取 2 mm。")
+        },
+    );
+    parameters.insert("lobes".into(), json!(lobes));
+    sources.insert(
+        "lobes".into(),
+        if count_defaulted || lobes_clamped {
+            derived_source(raw, "沿用旧 Python Quick 默认凸轮数或几何内核的整数/下限规则。")
+        } else {
+            user_source(raw)
+        },
+    );
+    parameters.insert("journal_d".into(), json!(effective_journal_d));
+    sources.insert(
+        "journal_d".into(),
+        if journal_defaulted || journal_clamped {
+            derived_source(raw, "沿用旧 Python 几何内核的轴颈默认值与凸轮外径上限。")
+        } else {
+            user_source(raw)
+        },
+    );
+    parameters.insert("lobe_deg".into(), json!(0.0));
+    sources.insert(
+        "lobe_deg".into(),
+        derived_source(raw, "旧 Python Quick 凸轮轴配方固定使用 0° 相位。"),
+    );
+    parameters.insert("center".into(), json!([0.0, 0.0, 0.0]));
+    sources.insert("center".into(), derived_source(raw, "旧 Python Quick 将凸轮轴轴线置于全局原点。"));
+    let feature = json!({"id":"quick-0001","kind":"camshaft","operation":"add",
+        "name":"凸轮轴","parameters":parameters,"sources":sources,"relations":[]});
+    Some(plan_result(raw, "凸轮轴", vec![feature], warnings))
 }
 
 /// Migrate the old Python Quick disc-cam recipe. The legacy profile is a
@@ -11383,5 +11644,91 @@ mod tests {
         let safer_height_result = parse(legacy_height_fallback["input"].as_str().unwrap());
         assert_eq!(safer_height_result["status"], "needs_clarification");
         assert!(safer_height_result.to_string().contains("legacy_spoked_handwheel_height_alias_not_legacy"));
+    }
+}
+
+#[cfg(test)]
+mod f5_44_legacy_camshaft_contract_tests {
+    use super::parse;
+    use serde_json::Value;
+
+    #[test]
+    fn legacy_camshafts_match_python_oracle_defaults_and_boundaries() {
+        let fixture: Value = serde_json::from_str(include_str!(
+            "../tests/fixtures/quick_legacy_camshaft_contract.json"
+        ))
+        .expect("camshaft Python oracle fixture is valid JSON");
+
+        for case in fixture["legacy_accepted"].as_array().unwrap() {
+            let input = case["input"].as_str().unwrap();
+            let output = parse(input);
+            assert_eq!(output["status"], "ready", "{input}: {output}");
+            assert_eq!(output["plan"]["name"], "凸轮轴", "{input}: {output}");
+            let features = output["plan"]["features"].as_array().unwrap();
+            assert_eq!(features.len(), 1, "{input}: {output}");
+            let camshaft = &features[0];
+            assert_eq!(camshaft["kind"], "camshaft", "{input}");
+            assert_eq!(camshaft["operation"], "add", "{input}");
+            assert_eq!(camshaft["parameters"]["lobe_deg"], 0.0, "{input}");
+            assert!(camshaft["sources"]["lobe_deg"].is_object(), "{input}: {camshaft}");
+            for (name, expected) in case["native_expected"].as_object().unwrap() {
+                if let Some(expected_values) = expected.as_array() {
+                    let actual_values = camshaft["parameters"][name].as_array().unwrap();
+                    assert_eq!(actual_values.len(), expected_values.len(), "{input}: {name}");
+                    for (actual, expected) in actual_values.iter().zip(expected_values) {
+                        assert!(
+                            (actual.as_f64().unwrap() - expected.as_f64().unwrap()).abs() <= 1e-9,
+                            "{input}: {name}={actual}, expected {expected}"
+                        );
+                    }
+                } else {
+                    let actual = camshaft["parameters"][name].as_f64().unwrap();
+                    let expected = expected.as_f64().unwrap();
+                    assert!(
+                        (actual - expected).abs() <= 1e-9,
+                        "{input}: {name}={actual}, expected {expected}"
+                    );
+                }
+                assert!(
+                    camshaft["sources"][name].is_object(),
+                    "{input}: missing provenance for {name}: {camshaft}"
+                );
+            }
+            let warnings = output["warnings"].to_string();
+            if case.get("defaults").is_some() {
+                assert!(warnings.contains("legacy_camshaft_defaults"), "{input}: {output}");
+            }
+            if case.get("clamped").is_some() {
+                assert!(
+                    warnings.contains("legacy_camshaft_journal_d_clamped"),
+                    "{input}: {output}"
+                );
+            }
+            let validation = crate::cad_plan_validation::validate_plan(&output["plan"]);
+            assert_eq!(validation["state"], "valid", "{input}: {validation}");
+            assert!(validation["confirmations"].as_array().unwrap().is_empty(), "{input}: {validation}");
+            assert!(validation["geometry_support"].to_string().contains("approximate"), "{input}: {validation}");
+            assert_eq!(
+                crate::native_plan_geometry::preflight(&output["plan"]).unwrap()["state"],
+                "valid",
+                "{input}"
+            );
+        }
+
+        for case in fixture["needs_clarification"].as_array().unwrap() {
+            let input = case["input"].as_str().unwrap();
+            let output = parse(input);
+            assert_eq!(output["status"], "needs_clarification", "{input}: {output}");
+            assert!(output["plan"].is_null(), "{input}: {output}");
+            assert!(output.to_string().contains(case["issue"].as_str().unwrap()), "{input}: {output}");
+        }
+
+        for case in fixture["unsupported"].as_array().unwrap() {
+            let input = case["input"].as_str().unwrap();
+            let output = parse(input);
+            assert_eq!(output["status"], "unsupported", "{input}: {output}");
+            assert!(output["plan"].is_null(), "{input}: {output}");
+            assert!(output.to_string().contains(case["issue"].as_str().unwrap()), "{input}: {output}");
+        }
     }
 }

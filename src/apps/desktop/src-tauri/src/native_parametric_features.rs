@@ -6,7 +6,7 @@ use serde_json::{Value, json};
 const MAX_PISTON_GROOVES: usize = 256;
 const MAX_PISTON_PROFILE_POINTS: usize = 4 * MAX_PISTON_GROOVES + 4;
 pub const MAX_SPOKED_WHEEL_SPOKES: u64 = 512;
-const MAX_CAMSHAFT_LOBES: u64 = 512;
+pub const MAX_CAMSHAFT_LOBES: u64 = 512;
 const MAX_CRANKSHAFT_THROWS: u64 = 128;
 
 pub fn preflight_crankshaft(parameters: &Value) -> Result<(), String> {
@@ -82,12 +82,12 @@ pub fn preflight_camshaft(parameters: &Value) -> Result<(), String> {
     let lobes = integer(parameters, "lobes")?;
     let angle = optional_number(parameters, "lobe_deg", 0.0)?;
     let center = point3(parameters.get("center"))?;
-    if !length.is_finite() || length < 2.0 || !journal_d.is_finite() || journal_d < 2.0
+    if !length.is_finite() || length < 2.0 || !journal_d.is_finite() || journal_d <= 0.0
         || !base_d.is_finite() || base_d < 2.0 || !lift.is_finite() || lift < 0.0
         || lobes == 0 || lobes > MAX_CAMSHAFT_LOBES || !angle.is_finite()
         || center.iter().any(|v| !v.is_finite())
     {
-        return Err("凸轮轴要求 length>=2、journal_d/base_d>=2、lift>=0、lobes 为 1..=512，且角度与中心有限。".into());
+        return Err("凸轮轴要求 length/base_d>=2、journal_d>0、lift>=0、lobes 为 1..=512，且角度与中心有限。".into());
     }
     Ok(())
 }
@@ -775,6 +775,7 @@ mod tests {
     #[test]
     fn camshaft_preflight_accepts_buildable_variants_and_rejects_invalid_dimensions() {
         assert!(preflight_camshaft(&json!({"length":80,"journal_d":12,"base_d":20,"lift":4,"lobes":4,"lobe_deg":15,"center":[2,-3,4]})).is_ok());
+        assert!(preflight_camshaft(&json!({"length":80,"journal_d":0.5,"base_d":20,"lift":4,"lobes":4})).is_ok());
         for invalid in [
             json!({"length":1,"journal_d":12,"base_d":20,"lift":4,"lobes":4}),
             json!({"length":80,"journal_d":0,"base_d":20,"lift":4,"lobes":4}),
