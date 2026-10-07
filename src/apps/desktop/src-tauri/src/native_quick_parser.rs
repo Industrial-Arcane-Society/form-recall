@@ -70,6 +70,9 @@ pub fn parse(text: &str) -> Value {
     if let Some(parsed) = parse_legacy_scroll_disc(text, &normalized) {
         return parsed;
     }
+    if let Some(parsed) = parse_legacy_valve(text, &normalized) {
+        return parsed;
+    }
     if let Some(parsed) = parse_legacy_camshaft(text, &normalized) {
         return parsed;
     }
@@ -614,8 +617,8 @@ fn result(
         "questions":questions,
         "unsupported":unsupported,
         "compatibility":{
-            "scope":"common explicit primitives/cuts, migrated standalone primitive defaults and legacy extrusion/revolve constructors, centered solid-shaft aliases, rectangular slots, flat-washer rings, cylindrical/conical spring helices, measured socket-head screws with optional washers, V-belt pulleys, timing pulleys, straight-gear construction, PCD counterbores, migrated legacy washer/spring/shaft/bearing/seal-ring/coupling/brake-disc/brake-drum/flywheel/flat-annular-part/disc-cam/spline-shaft/crankshaft/camshaft/piston/worm/triangular-rotor recipes, and executable flange/stepped-shaft/sleeve/blade/blisk templates",
-            "legacy_typical_defaults":"restored only for migrated Quick constructors/templates, centered solid shafts (Ø30 mm when diameter is absent), straight gears, timing pulleys, V-belt pulleys, socket-head screw catalog recipes, rectangular slots, flat-washer thickness, spring wire/turn values, brake-disc thickness/bore values, brake-drum bore values, flywheel center-bore/PCD-hole values, flat-annular-part bore/thickness values, disc-cam base diameter/thickness, spline-shaft minor diameter/tooth count, crankshaft main/pin journal diameters and stroke/throw count, camshaft lobe count/journal diameter, piston pin diameter/ring groove count, worm pitch diameter, and triangular-rotor R=60 mm and center bore ⌀24 mm when omitted; defaults and raw-dimension mappings are reported as warnings",
+            "scope":"common explicit primitives/cuts, migrated standalone primitive defaults and legacy extrusion/revolve constructors, centered solid-shaft aliases, rectangular slots, flat-washer rings, cylindrical/conical spring helices, measured socket-head screws with optional washers, V-belt pulleys, timing pulleys, straight-gear construction, PCD counterbores, migrated legacy washer/spring/shaft/bearing/seal-ring/coupling/brake-disc/brake-drum/flywheel/flat-annular-part/disc-cam/spline-shaft/crankshaft/camshaft/piston/worm/triangular-rotor/valve recipes, and executable flange/stepped-shaft/sleeve/blade/blisk templates",
+            "legacy_typical_defaults":"restored only for migrated Quick constructors/templates, centered solid shafts (Ø30 mm when diameter is absent), straight gears, timing pulleys, V-belt pulleys, socket-head screw catalog recipes, rectangular slots, flat-washer thickness, spring wire/turn values, brake-disc thickness/bore values, brake-drum bore values, flywheel center-bore/PCD-hole values, flat-annular-part bore/thickness values, disc-cam base diameter/thickness, spline-shaft minor diameter/tooth count, crankshaft main/pin journal diameters and stroke/throw count, camshaft lobe count/journal diameter, piston pin diameter/ring groove count, worm pitch diameter, triangular-rotor R=60 mm and center bore ⌀24 mm when omitted, and valve stem diameter d=8 mm when omitted; defaults and raw-dimension mappings are reported as warnings",
             "loft_geometry":"blade and blisk lofts are locally approximate faceted B-Reps",
             "timing_pulley_geometry":"native timing pulley teeth are approximate trapezoidal prisms fused to an analytic annular blank",
             "vbelt_pulley_geometry":"standard V-groove pulley is an approximate axisymmetric revolve; legacy spoke variants and CATIA-native groove features are not included",
@@ -4463,6 +4466,170 @@ fn parse_legacy_rotor(raw: &str, text: &str) -> Option<Value> {
         }),
     )];
     Some(plan_result(raw, "三角转子", features, warnings))
+}
+
+/// Migrate the old Python valve recipe: a long centered stem cylinder fused
+/// with a shorter, wider cylinder at the same center. This intentionally
+/// preserves the legacy mid-stem head placement instead of guessing a more
+/// conventional end-mounted valve head.
+fn parse_legacy_valve(raw: &str, text: &str) -> Option<Value> {
+    if !contains_any(text, &["发动机气门", "气门"]) {
+        return None;
+    }
+
+    if contains_any(
+        text,
+        &[
+            "气门座", "气门弹簧", "阀座", "气门锥面", "锥形阀面", "密封面", "阀面", "弹簧",
+            "进气口", "排气口", "孔", "槽", "螺纹", "倒角", "圆角", "切除", "凹面",
+            "球面", "valve seat", "valve spring", "seat face", "stem hole", "hole", "bore",
+            "groove", "thread", "chamfer", "fillet", "cone", "recess",
+        ],
+    ) {
+        return Some(parse_result_with_issue(
+            "unsupported",
+            raw,
+            "legacy_valve_modifier_not_migrated",
+            "当前只迁移旧 Quick 的气门杆与阀头双圆柱主体；气门座、锥面密封、弹簧、孔槽及边缘修饰尚未迁移。",
+        ));
+    }
+
+    let rod_d = pulley_scalar(
+        raw,
+        text,
+        &["杆部直径", "阀杆直径", "杆径", "stem diameter"],
+        &["d"],
+    );
+    let head_d = pulley_scalar(
+        raw,
+        text,
+        &["头部直径", "阀头直径", "盘径", "头径", "head diameter", "valve head diameter"],
+        &["D"],
+    );
+    let length = pulley_scalar(
+        raw,
+        text,
+        &["总长", "全长", "总长度", "长度", "长", "overall length", "length"],
+        &["L", "l"],
+    );
+
+    for (value, code, label) in [
+        (rod_d, "legacy_valve_rod_d_invalid", "气门杆直径"),
+        (head_d, "legacy_valve_head_d_invalid", "阀头直径"),
+        (length, "legacy_valve_length_invalid", "气门总长"),
+    ] {
+        if value.is_some_and(|number| !number.is_finite()) {
+            return Some(result(
+                "needs_clarification",
+                raw,
+                None,
+                vec![],
+                vec![issue(
+                    code,
+                    format!("{label}出现重复或冲突的数值；请只保留一个明确尺寸。"),
+                )],
+                vec![],
+            ));
+        }
+    }
+
+    let Some(head_d) = head_d else {
+        return Some(parse_result_with_issue(
+            "needs_clarification",
+            raw,
+            "legacy_valve_head_d_required",
+            "旧 Python Quick 需要明确阀头直径 D；零件库典型值没有被该入口自动补入。",
+        ));
+    };
+    let Some(length) = length else {
+        return Some(parse_result_with_issue(
+            "needs_clarification",
+            raw,
+            "legacy_valve_length_required",
+            "旧 Python Quick 需要明确气门总长 L；不能仅凭气门名称生成。",
+        ));
+    };
+    let rod_d_defaulted = rod_d.is_none();
+    let rod_d = rod_d.unwrap_or(8.0);
+    if rod_d <= 0.0 || head_d <= 0.0 || length <= 0.0 {
+        return Some(parse_result_with_issue(
+            "needs_clarification",
+            raw,
+            "legacy_valve_dimensions_invalid",
+            "气门杆径、阀头直径和总长都必须是有限正数。",
+        ));
+    }
+    let head_height = (length * 0.12).max(1.0);
+    if !head_height.is_finite() {
+        return Some(parse_result_with_issue(
+            "needs_clarification",
+            raw,
+            "legacy_valve_dimensions_invalid",
+            "总长过大，无法按旧 Quick 的 12% 比例推导有限阀头高度。",
+        ));
+    }
+
+    let features = vec![
+        feature(
+            1,
+            "cylinder",
+            "add",
+            json!({"radius":rod_d/2.0,"height":length,"center":[0.0,0.0,0.0],"base":false,"segments":32}),
+            json!({
+                "radius":if rod_d_defaulted { derived_source(raw, "沿用旧 Python Quick 气门典型杆径 d=8 mm，圆柱半径取 d/2。") } else { user_source(raw) },
+                "height":user_source(raw),
+                "center":derived_source(raw, "旧 Python Quick 将气门杆圆柱中心放在原点。"),
+                "base":derived_source(raw, "旧 Python Quick 将圆柱作为以中心为中面的实体。"),
+                "segments":derived_source(raw, "旧 Python Quick 气门杆网格固定使用 32 个圆周分段。")
+            }),
+        ),
+        feature(
+            2,
+            "cylinder",
+            "add",
+            json!({"radius":head_d/2.0,"height":head_height,"center":[0.0,0.0,0.0],"base":false,"segments":48}),
+            json!({
+                "radius":user_source(raw),
+                "height":derived_source(raw, "沿用旧 Python Quick 阀头高度 max(1 mm, 0.12×总长)。"),
+                "center":derived_source(raw, "旧 Python Quick 将短阀头圆柱也放在原点，与阀杆同心重叠。"),
+                "base":derived_source(raw, "旧 Python Quick 将阀头圆柱作为以中心为中面的实体。"),
+                "segments":derived_source(raw, "旧 Python Quick 阀头网格固定使用 48 个圆周分段。")
+            }),
+        ),
+    ];
+
+    let mut warnings = vec![issue(
+        "legacy_valve_recipe_migrated",
+        "已按旧 Quick 的两圆柱并集生成：阀杆长圆柱与较短阀头圆柱同轴同中心，因此旧模型的阀头位于杆中段。",
+    )];
+    if rod_d_defaulted {
+        warnings.push(issue(
+            "legacy_valve_default_rod_d",
+            "未指定气门杆径；旧 Python Quick 实际代入典型值 d=8 mm。",
+        ));
+    }
+    if !has_unit(text) {
+        warnings.push(issue(
+            "unit_interpreted_as_mm",
+            "未写长度单位的气门尺寸按 Quick 默认单位 mm 解释。",
+        ));
+    } else if crankshaft_has_non_mm_unit(text) {
+        warnings.push(issue(
+            "legacy_valve_unit_conversion",
+            "Rust 将显式标注的非毫米尺寸换算为 mm；旧 Python Quick 将 cm 等单位后的原始数字直接当作 mm。",
+        ));
+    }
+
+    let plan = plan_result(raw, "气门", features, warnings);
+    if let Err(error) = crate::native_plan_geometry::preflight(&plan["plan"]) {
+        return Some(parse_result_with_issue(
+            "needs_clarification",
+            raw,
+            "legacy_valve_geometry_invalid",
+            &format!("当前尺寸无法构建有效气门主体：{error}"),
+        ));
+    }
+    Some(plan)
 }
 
 fn parse_legacy_camshaft(raw: &str, text: &str) -> Option<Value> {
@@ -14350,6 +14517,89 @@ mod f5_52_legacy_rotor_contract_tests {
             assert!(output.to_string().contains(case["warning"].as_str().unwrap()), "{input}: {output}");
             for (name, expected) in case["rust_expected"].as_object().unwrap() {
                 assert_eq!(output["plan"]["features"][0]["parameters"][name], *expected, "{input}: {name}");
+            }
+        }
+
+        for case in fixture["needs_clarification"].as_array().unwrap() {
+            let input = case["input"].as_str().unwrap();
+            let output = parse(input);
+            assert_eq!(output["status"], "needs_clarification", "{input}: {output}");
+            assert!(output["plan"].is_null(), "{input}: {output}");
+            assert!(output.to_string().contains(case["issue"].as_str().unwrap()), "{input}: {output}");
+        }
+
+        for case in fixture["unsupported"].as_array().unwrap() {
+            let input = case["input"].as_str().unwrap();
+            let output = parse(input);
+            assert_eq!(output["status"], "unsupported", "{input}: {output}");
+            assert!(output["plan"].is_null(), "{input}: {output}");
+            assert!(output.to_string().contains(case["issue"].as_str().unwrap()), "{input}: {output}");
+        }
+    }
+}
+
+#[cfg(test)]
+mod f5_53_legacy_valve_contract_tests {
+    use super::parse;
+    use serde_json::Value;
+
+    #[test]
+    fn legacy_valves_match_python_two_centered_cylinders_and_defaults() {
+        let fixture: Value = serde_json::from_str(include_str!(
+            "../tests/fixtures/quick_legacy_valve_contract.json"
+        ))
+        .expect("valve Python oracle fixture is valid JSON");
+
+        for case in fixture["legacy_accepted"].as_array().unwrap() {
+            let input = case["input"].as_str().unwrap();
+            let output = parse(input);
+            assert_eq!(output["status"], "ready", "{input}: {output}");
+            assert_eq!(output["plan"]["name"], "气门", "{input}: {output}");
+            let features = output["plan"]["features"].as_array().unwrap();
+            assert_eq!(features.len(), 2, "{input}: {output}");
+            for (index, expected_feature) in case["native_features"].as_array().unwrap().iter().enumerate() {
+                assert_eq!(features[index]["kind"], "cylinder", "{input}: {output}");
+                assert_eq!(features[index]["operation"], "add", "{input}: {output}");
+                for (name, expected) in expected_feature.as_object().unwrap() {
+                    if let Some(expected_values) = expected.as_array() {
+                        let actual_values = features[index]["parameters"][name].as_array().unwrap();
+                        for (actual, expected) in actual_values.iter().zip(expected_values) {
+                            assert!(
+                                (actual.as_f64().unwrap() - expected.as_f64().unwrap()).abs() <= 1e-9,
+                                "{input}: feature {index} {name}={actual}, expected {expected}"
+                            );
+                        }
+                    } else if let Some(expected) = expected.as_f64() {
+                        let actual = features[index]["parameters"][name].as_f64().unwrap();
+                        assert!(
+                            (actual - expected).abs() <= 1e-9,
+                            "{input}: feature {index} {name}={actual}, expected {expected}"
+                        );
+                    } else {
+                        assert_eq!(features[index]["parameters"][name], *expected, "{input}: feature {index} {name}");
+                    }
+                }
+                for (name, source_type) in case["source_types"][index].as_object().unwrap() {
+                    assert_eq!(features[index]["sources"][name]["type"], *source_type, "{input}: source {index}.{name}");
+                }
+            }
+            for warning in case["warnings"].as_array().into_iter().flatten() {
+                assert!(output.to_string().contains(warning.as_str().unwrap()), "{input}: {output}");
+            }
+            let validation = crate::cad_plan_validation::validate_plan(&output["plan"]);
+            assert_eq!(validation["valid"], true, "{input}: {validation}");
+            assert!(crate::native_plan_geometry::preflight(&output["plan"]).is_ok(), "{input}");
+        }
+
+        for case in fixture["legacy_divergences"].as_array().unwrap() {
+            let input = case["input"].as_str().unwrap();
+            let output = parse(input);
+            assert_eq!(output["status"], "ready", "{input}: {output}");
+            assert!(output.to_string().contains(case["warning"].as_str().unwrap()), "{input}: {output}");
+            for (index, expected) in case["rust_features"].as_array().unwrap().iter().enumerate() {
+                for (name, value) in expected.as_object().unwrap() {
+                    assert_eq!(output["plan"]["features"][index]["parameters"][name], *value, "{input}: {index}.{name}");
+                }
             }
         }
 

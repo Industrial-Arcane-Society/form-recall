@@ -1,0 +1,100 @@
+{
+  "source": {
+    "partlib": "src/legacy/ai_modeler/parts/library/partlib.py::HARD_PARTS['气门'] and _valve",
+    "geometry": "src/legacy/ai_modeler/core/geometry/kernel.py::cylinder and Document union",
+    "routing": "src/legacy/ai_modeler/core/parsing/nlparser.py::Parser.handle and partlib.build_features_ex"
+  },
+  "legacy_accepted": [
+    {
+      "input": "气门 杆径8 盘径34 总长105",
+      "native_features": [
+        {"radius": 4.0, "height": 105.0, "center": [0.0, 0.0, 0.0], "base": false, "segments": 32},
+        {"radius": 17.0, "height": 12.6, "center": [0.0, 0.0, 0.0], "base": false, "segments": 48}
+      ],
+      "source_types": [
+        {"radius": "user", "height": "user", "center": "derived", "base": "derived", "segments": "derived"},
+        {"radius": "user", "height": "derived", "center": "derived", "base": "derived", "segments": "derived"}
+      ],
+      "legacy_python": {"bbox_mm": [34.0, 34.0, 105.0], "faces": 198, "triangles": 484, "mesh_volume_mm3": 16021.898345500582}
+    },
+    {
+      "input": "气门 盘径34 总长105",
+      "native_features": [
+        {"radius": 4.0, "height": 105.0, "segments": 32},
+        {"radius": 17.0, "height": 12.6, "segments": 48}
+      ],
+      "source_types": [
+        {"radius": "derived", "height": "user"},
+        {"radius": "user", "height": "derived"}
+      ],
+      "warnings": ["legacy_valve_default_rod_d"]
+    },
+    {
+      "input": "气门 d8 D34 L105",
+      "native_features": [
+        {"radius": 4.0, "height": 105.0, "segments": 32},
+        {"radius": 17.0, "height": 12.6, "segments": 48}
+      ],
+      "source_types": [
+        {"radius": "user", "height": "user"},
+        {"radius": "user", "height": "derived"}
+      ]
+    },
+    {
+      "input": "发动机气门 杆部直径0.8cm 头部直径3.4cm 长度10.5cm",
+      "native_features": [
+        {"radius": 4.0, "height": 105.0, "segments": 32},
+        {"radius": 17.0, "height": 12.6, "segments": 48}
+      ],
+      "source_types": [
+        {"radius": "user", "height": "user"},
+        {"radius": "user", "height": "derived"}
+      ],
+      "warnings": ["legacy_valve_unit_conversion"]
+    },
+    {
+      "input": "气门 杆径8 盘径34 总长5",
+      "native_features": [
+        {"radius": 4.0, "height": 5.0, "segments": 32},
+        {"radius": 17.0, "height": 1.0, "segments": 48}
+      ],
+      "source_types": [
+        {"radius": "user", "height": "user"},
+        {"radius": "user", "height": "derived"}
+      ]
+    }
+  ],
+  "legacy_divergences": [
+    {
+      "input": "发动机气门 杆部直径0.8cm 头部直径3.4cm 长度10.5cm",
+      "legacy_python_interpreted_mm": {"rod_d": 0.8, "head_d": 3.4, "length": 10.5},
+      "rust_features": [
+        {"radius": 4.0, "height": 105.0},
+        {"radius": 17.0, "height": 12.6}
+      ],
+      "warning": "legacy_valve_unit_conversion"
+    }
+  ],
+  "legacy_rejections": [
+    {"input": "气门", "python_parser_ok": false, "python_reason": "d was defaulted, but _valve raised KeyError for missing D"},
+    {"input": "气门 杆径8 总长105", "python_parser_ok": false, "python_reason": "missing head diameter D"},
+    {"input": "气门 杆径8 盘径34", "python_parser_ok": false, "python_reason": "missing overall length L"}
+  ],
+  "needs_clarification": [
+    {"input": "气门", "issue": "legacy_valve_head_d_required"},
+    {"input": "气门 杆径8 总长105", "issue": "legacy_valve_head_d_required"},
+    {"input": "气门 杆径8 盘径34", "issue": "legacy_valve_length_required"},
+    {"input": "气门 杆径8 杆径9 盘径34 总长105", "issue": "legacy_valve_rod_d_invalid"}
+  ],
+  "unsupported": [
+    {"input": "气门 杆径8 盘径34 总长105 阀座锥面", "issue": "legacy_valve_modifier_not_migrated"},
+    {"input": "气门 杆径8 盘径34 总长105 中心孔6", "issue": "legacy_valve_modifier_not_migrated"},
+    {"input": "气门 杆径8 盘径34 总长105 气门弹簧", "issue": "legacy_valve_modifier_not_migrated"}
+  ],
+  "geometry_acceptance": [
+    {"input": "气门 杆径8 盘径34 总长105", "dimensions_mm": [34.0, 34.0, 105.0], "rod_d": 8.0, "head_d": 34.0, "length": 105.0, "head_height": 12.6, "feature_count": 2},
+    {"input": "气门 盘径34 总长105", "dimensions_mm": [34.0, 34.0, 105.0], "rod_d": 8.0, "head_d": 34.0, "length": 105.0, "head_height": 12.6, "feature_count": 2},
+    {"input": "发动机气门 杆部直径0.8cm 头部直径3.4cm 长度10.5cm", "dimensions_mm": [34.0, 34.0, 105.0], "rod_d": 8.0, "head_d": 34.0, "length": 105.0, "head_height": 12.6, "feature_count": 2},
+    {"input": "气门 杆径8 盘径34 总长5", "dimensions_mm": [34.0, 34.0, 5.0], "rod_d": 8.0, "head_d": 34.0, "length": 5.0, "head_height": 1.0, "feature_count": 2}
+  ]
+}
