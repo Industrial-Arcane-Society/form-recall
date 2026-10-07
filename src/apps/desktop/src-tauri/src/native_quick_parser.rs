@@ -139,6 +139,9 @@ pub fn parse(text: &str) -> Value {
     if let Some(parsed) = parse_legacy_support_leg(text, &normalized) {
         return parsed;
     }
+    if let Some(parsed) = parse_legacy_connection_piece(text, &normalized) {
+        return parsed;
+    }
     if let Some(parsed) = parse_legacy_template(text, &normalized) {
         return parsed;
     }
@@ -632,8 +635,8 @@ fn result(
         "questions":questions,
         "unsupported":unsupported,
         "compatibility":{
-            "scope":"common explicit primitives/cuts, migrated standalone primitive defaults and legacy extrusion/revolve constructors, centered solid-shaft aliases, rectangular slots, flat-washer rings, cylindrical/conical spring helices, measured socket-head screws with optional washers, V-belt pulleys, timing pulleys, straight-gear construction, PCD counterbores, base plates, support legs, migrated legacy washer/spring/shaft/bearing/seal-ring/coupling/brake-disc/brake-drum/flywheel/flat-annular-part/disc-cam/spline-shaft/crankshaft/camshaft/piston/worm/triangular-rotor/valve recipes, and executable flange/stepped-shaft/sleeve/blade/blisk templates",
-            "legacy_typical_defaults":"restored only for migrated Quick constructors/templates, centered solid shafts (Ø30 mm when diameter is absent), straight gears, timing pulleys, V-belt pulleys, socket-head screw catalog recipes, rectangular slots, flat-washer thickness, spring wire/turn values, brake-disc thickness/bore values, brake-drum bore values, flywheel center-bore/PCD-hole values, flat-annular-part bore/thickness values, disc-cam base diameter/thickness, spline-shaft minor diameter/tooth count, crankshaft main/pin journal diameters and stroke/throw count, camshaft lobe count/journal diameter, piston pin diameter/ring groove count, worm pitch diameter, triangular-rotor R=60 mm and center bore ⌀24 mm when omitted, valve stem diameter d=8 mm when omitted, and base-plate thickness; defaults and raw-dimension mappings are reported as warnings",
+            "scope":"common explicit primitives/cuts, migrated standalone primitive defaults and legacy extrusion/revolve constructors, centered solid-shaft aliases, rectangular slots, flat-washer rings, cylindrical/conical spring helices, measured socket-head screws with optional washers, V-belt pulleys, timing pulleys, straight-gear construction, PCD counterbores, base plates, support legs, connection pieces, migrated legacy washer/spring/shaft/bearing/seal-ring/coupling/brake-disc/brake-drum/flywheel/flat-annular-part/disc-cam/spline-shaft/crankshaft/camshaft/piston/worm/triangular-rotor/valve recipes, and executable flange/stepped-shaft/sleeve/blade/blisk templates",
+            "legacy_typical_defaults":"restored only for migrated Quick constructors/templates, centered solid shafts (Ø30 mm when diameter is absent), straight gears, timing pulleys, V-belt pulleys, socket-head screw catalog recipes, rectangular slots, flat-washer thickness, spring wire/turn values, brake-disc thickness/bore values, brake-drum bore values, flywheel center-bore/PCD-hole values, flat-annular-part bore/thickness values, disc-cam base diameter/thickness, spline-shaft minor diameter/tooth count, crankshaft main/pin journal diameters and stroke/throw count, camshaft lobe count/journal diameter, piston pin diameter/ring groove count, worm pitch diameter, triangular-rotor R=60 mm and center bore ⌀24 mm when omitted, valve stem diameter d=8 mm when omitted, base-plate thickness, and connection-piece thickness; defaults and raw-dimension mappings are reported as warnings",
             "loft_geometry":"blade and blisk lofts are locally approximate faceted B-Reps",
             "timing_pulley_geometry":"native timing pulley teeth are approximate trapezoidal prisms fused to an analytic annular blank",
             "vbelt_pulley_geometry":"standard V-groove pulley is an approximate axisymmetric revolve; legacy spoke variants and CATIA-native groove features are not included",
@@ -641,6 +644,7 @@ fn result(
             "socket_head_bolt_geometry":"measured catalog dimensions and washers are preserved; native Rust adds visible faceted threads where the legacy Python Quick recipe reconstructed a smooth shank",
             "solid_shaft_geometry":"the old mesh kernel used a 48-sided cylinder; Rust/OCCT uses an analytic cylinder, so bounding boxes agree while volume differs by the expected polygonal approximation",
             "support_leg_geometry":"legacy part-library forms build a centered analytic Z cylinder or a regular polygon prism from Z=0, with an optional centered Z through-hole; bare-高 inputs stay on the separate bottom-based generic-cylinder route",
+            "connection_piece_geometry":"legacy part-library output is a centered rectangular box with an optional 32-segment PCD through-hole pattern; the old _joint_piece docstring says stepped plate but its implementation creates no step, so explicit step requests are rejected rather than silently flattened",
             "disc_cam_geometry":"72-point faceted polar profile extruded along Z; only the legacy fixed 120-degree rise angle is supported",
             "camshaft_geometry":"48-point cam profiles and 120-degree harmonic rise are fused with an analytic X-axis shaft into one closed B-Rep; this differs from the legacy unfused faceted mesh",
             "crankshaft_geometry":"analytic journals with rectangular webs form one closed B-Rep; the legacy polygon mesh uses dumbbell-shaped cheek profiles, so the local Rust result is an explicitly approximate shape",
@@ -1138,6 +1142,223 @@ fn parse_legacy_support_leg(raw: &str, text: &str) -> Option<Value> {
         }));
     }
     Some(plan_result(raw, "支腿", features, warnings))
+}
+
+/// Migrate the Python Quick connection-piece recipe: a centered rectangular
+/// block, with an optional evenly spaced PCD hole pattern when the legacy
+/// parser has both a hole diameter and at least two holes.
+fn parse_legacy_connection_piece(raw: &str, text: &str) -> Option<Value> {
+    if !contains_any(text, &["连接件", "连件"]) {
+        return None;
+    }
+
+    if contains_any(
+        text,
+        &[
+            "台阶", "凸台", "凹槽", "槽", "键槽", "侧孔", "边孔", "中心孔", "四角",
+            "盲孔", "沉孔", "沉头", "沉台", "倒角", "圆角", "螺纹", "焊缝",
+        ],
+    ) {
+        return Some(parse_result_with_issue(
+            "unsupported",
+            raw,
+            "legacy_connection_piece_modifier_not_migrated",
+            "旧 Python Quick 连接件配方实际只生成矩形块和可选 PCD 通孔；台阶、凸台、槽、侧孔及边缘加工尚未迁入。",
+        ));
+    }
+
+    let length = pulley_scalar(raw, text, &["长度"], &["L", "l"]);
+    let width = pulley_scalar(raw, text, &["宽度"], &["W", "w"]);
+    let explicit_thickness = pulley_scalar(raw, text, &["厚度"], &["t", "T"]);
+    let mut questions = Vec::new();
+    for (value, missing_code, invalid_code, label) in [
+        (length, "legacy_connection_piece_length_required", "legacy_connection_piece_length_invalid", "长度 L"),
+        (width, "legacy_connection_piece_width_required", "legacy_connection_piece_width_invalid", "宽度 W"),
+    ] {
+        match value {
+            Some(value) if value.is_finite() && value > 0.0 => {}
+            Some(_) => questions.push(issue(
+                invalid_code,
+                format!("连接件{label}必须是有限正数，且重复尺寸写法不能冲突。"),
+            )),
+            None => questions.push(issue(
+                missing_code,
+                format!("请明确连接件{label}。"),
+            )),
+        }
+    }
+    if explicit_thickness.is_some_and(|value| !value.is_finite() || value <= 0.0) {
+        questions.push(issue(
+            "legacy_connection_piece_thickness_invalid",
+            "连接件厚度必须是有限正数，且重复尺寸写法不能冲突。",
+        ));
+    }
+    if !questions.is_empty() {
+        return Some(result("needs_clarification", raw, None, vec![], questions, vec![]));
+    }
+
+    let length = length.expect("validated connection-piece length");
+    let width = width.expect("validated connection-piece width");
+    let thickness_defaulted = explicit_thickness.is_none();
+    let thickness = explicit_thickness
+        .unwrap_or_else(|| (length.min(width) * 0.12).max(5.0));
+
+    let hole_diameter = pulley_scalar(raw, text, &["孔径", "孔直径"], &[]);
+    let hole_count = pulley_scalar(raw, text, &["孔数"], &[]);
+    let explicit_pcd = pulley_scalar(raw, text, &["分度圆", "节圆", "孔距"], &[]);
+    if hole_diameter.is_some_and(|value| !value.is_finite() || value <= 0.0) {
+        return Some(parse_result_with_issue(
+            "needs_clarification",
+            raw,
+            "legacy_connection_piece_hole_diameter_invalid",
+            "连接件孔径必须是有限正数，且重复写法不能冲突。",
+        ));
+    }
+    if hole_count.is_some_and(|value| !value.is_finite()) {
+        return Some(parse_result_with_issue(
+            "needs_clarification",
+            raw,
+            "legacy_connection_piece_hole_count_invalid",
+            "连接件孔数写法冲突或不是有效数值。",
+        ));
+    }
+    if explicit_pcd.is_some_and(|value| !value.is_finite()) {
+        return Some(parse_result_with_issue(
+            "needs_clarification",
+            raw,
+            "legacy_connection_piece_pcd_invalid",
+            "连接件分度圆写法冲突或不是有效数值。",
+        ));
+    }
+
+    let hole_requested = contains_any(text, &["孔", "hole", "bore"])
+        || hole_diameter.is_some()
+        || hole_count.is_some()
+        || explicit_pcd.is_some();
+    let legacy_count = hole_count.unwrap_or(0.0).trunc();
+    let add_holes = hole_diameter.is_some() && legacy_count >= 2.0;
+    let mut warnings = Vec::new();
+    if !has_unit(raw) {
+        warnings.push(issue(
+            "unit_interpreted_as_mm",
+            "未写单位的连接件尺寸按 mm 解释。",
+        ));
+    }
+    if hole_requested && !add_holes {
+        warnings.push(issue(
+            "legacy_connection_piece_holes_omitted",
+            "旧 Python Quick 仅在同时提供孔径和至少 2 个孔时生成孔阵列；沿用旧结果未添加孔。",
+        ));
+    }
+    if hole_count.is_some_and(|count| count.fract() != 0.0) && legacy_count >= 2.0 {
+        warnings.push(issue(
+            "legacy_connection_piece_hole_count_truncated",
+            "旧 Python Quick 对孔数直接取 int；当前沿用向零截断后的值。",
+        ));
+    }
+    if hole_count.is_some() && legacy_count > crate::native_plan_geometry::MAX_HOLE_PATTERN_COUNT as f64 {
+        return Some(parse_result_with_issue(
+            "needs_clarification",
+            raw,
+            "legacy_connection_piece_hole_count_too_large",
+            format!(
+                "连接件孔数超出本地几何上限 {}。",
+                crate::native_plan_geometry::MAX_HOLE_PATTERN_COUNT
+            ).as_str(),
+        ));
+    }
+
+    let mut features = vec![json!({
+        "id":"quick-0001",
+        "kind":"box",
+        "operation":"add",
+        "name":"连接件",
+        "parameters":{
+            "length":length,
+            "width":width,
+            "height":thickness,
+            "center":[0.0,0.0,0.0],
+            "base":false,
+            "axis":"Z"
+        },
+        "sources":{
+            "length":user_source(raw),
+            "width":user_source(raw),
+            "height":if thickness_defaulted {
+                derived_source(raw, "沿用旧 Python Quick 连接件默认厚度：max(5 mm, min(长度, 宽度) × 0.12)。")
+            } else {
+                user_source(raw)
+            },
+            "center":derived_source(raw, "旧 Python Quick 连接件矩形块以全局原点为中心。"),
+            "base":derived_source(raw, "旧 Python Quick 连接件沿 Z 轴居中。"),
+            "axis":derived_source(raw, "旧 Python Quick 连接件沿 Z 轴放置。")
+        },
+        "relations":[]
+    })];
+
+    if add_holes {
+        let diameter = hole_diameter.expect("hole diameter required by legacy recipe");
+        let count = legacy_count as u64;
+        let default_pcd = length.max(width) * 0.6;
+        let pcd = explicit_pcd.filter(|value| *value != 0.0).unwrap_or(default_pcd);
+        if !pcd.is_finite() || pcd <= 0.0 {
+            return Some(parse_result_with_issue(
+                "needs_clarification",
+                raw,
+                "legacy_connection_piece_pcd_invalid",
+                "连接件孔阵列分度圆必须是有限正数。",
+            ));
+        }
+        let radius = pcd / 2.0;
+        let hole_radius = diameter / 2.0;
+        let fits = (0..count).all(|index| {
+            let angle = std::f64::consts::TAU * index as f64 / count as f64;
+            let x = radius * angle.cos();
+            let y = radius * angle.sin();
+            x.abs() + hole_radius <= length / 2.0 + 1e-9
+                && y.abs() + hole_radius <= width / 2.0 + 1e-9
+        });
+        if !fits {
+            return Some(parse_result_with_issue(
+                "needs_clarification",
+                raw,
+                "legacy_connection_piece_holes_out_of_bounds",
+                "连接件 PCD 孔阵列有孔位超出矩形边界；请减小分度圆或孔径，避免生成缺边孔。",
+            ));
+        }
+
+        features.push(json!({
+            "id":"quick-0002",
+            "kind":"hole",
+            "operation":"cut",
+            "name":"PCD 贯穿孔",
+            "parameters":{
+                "diameter":diameter,
+                "through":true,
+                "pos":"pcd",
+                "axis":"Z",
+                "segments":32,
+                "pcd":pcd,
+                "count":count
+            },
+            "sources":{
+                "diameter":user_source(raw),
+                "through":derived_source(raw, "旧 Python Quick 连接件 PCD 孔沿 Z 轴贯穿。"),
+                "pos":derived_source(raw, "旧 Python Quick 连接件孔位均布于 PCD 圆周。"),
+                "axis":derived_source(raw, "旧 Python Quick 连接件孔沿 Z 轴切除。"),
+                "segments":derived_source(raw, "沿用旧连接件部件库圆孔分段数 32。"),
+                "pcd":if explicit_pcd.is_some_and(|value| value != 0.0) {
+                    user_source(raw)
+                } else {
+                    derived_source(raw, "沿用旧 Python Quick 默认分度圆：max(长度, 宽度) × 0.6。")
+                },
+                "count":user_source(raw)
+            },
+            "relations":[]
+        }));
+    }
+
+    Some(plan_result(raw, "连接件", features, warnings))
 }
 
 /// Migrate the old Quick L-section extrusion used for fixture bent plates.
@@ -16091,5 +16312,57 @@ mod f5_58_legacy_support_leg_contract_tests {
         assert_eq!(shorthand["status"], "ready", "{shorthand}");
         assert_eq!(shorthand["plan"]["features"].as_array().unwrap().len(), 1, "{shorthand}");
         assert!(shorthand.to_string().contains("legacy_support_leg_dh_shorthand_ignored"), "{shorthand}");
+    }
+}
+
+#[cfg(test)]
+mod f5_59_legacy_connection_piece_contract_tests {
+    use super::parse;
+    use serde_json::Value;
+
+    #[test]
+    fn connection_piece_recipe_matches_python_quick_fixture() {
+        let fixture: Value = serde_json::from_str(include_str!(
+            "../tests/fixtures/quick_legacy_connection_piece_contract.json"
+        ))
+        .expect("connection-piece Python oracle fixture is valid JSON");
+
+        for case in fixture["legacy_accepted"].as_array().unwrap() {
+            let input = case["input"].as_str().unwrap();
+            let output = parse(input);
+            assert_eq!(output["status"], "ready", "{input}: {output}");
+            let features = output["plan"]["features"].as_array().unwrap();
+            assert_eq!(features.len(), case["feature_count"].as_u64().unwrap() as usize, "{input}: {output}");
+            for (index, expected) in case["features"].as_array().unwrap().iter().enumerate() {
+                let actual = &features[index];
+                assert_eq!(actual["kind"], expected["kind"], "{input}: {actual}");
+                assert_eq!(actual["operation"], expected["operation"], "{input}: {actual}");
+                for (key, value) in expected["parameters"].as_object().unwrap() {
+                    assert_eq!(actual["parameters"][key], *value, "{input}: parameter {key}");
+                }
+            }
+            if case["expected_warning"].is_string() {
+                assert!(output.to_string().contains(case["expected_warning"].as_str().unwrap()), "{input}: {output}");
+            }
+            let validation = crate::cad_plan_validation::validate_plan(&output["plan"]);
+            assert_eq!(validation["valid"], true, "{input}: {validation}");
+            assert!(crate::native_plan_geometry::preflight(&output["plan"]).is_ok(), "{input}");
+        }
+
+        for case in fixture["needs_clarification"].as_array().unwrap() {
+            let input = case["input"].as_str().unwrap();
+            let output = parse(input);
+            assert_eq!(output["status"], "needs_clarification", "{input}: {output}");
+            assert!(output["plan"].is_null(), "{input}: {output}");
+            assert!(output.to_string().contains(case["issue"].as_str().unwrap()), "{input}: {output}");
+        }
+
+        for case in fixture["unsupported"].as_array().unwrap() {
+            let input = case["input"].as_str().unwrap();
+            let output = parse(input);
+            assert_eq!(output["status"], "unsupported", "{input}: {output}");
+            assert!(output["plan"].is_null(), "{input}: {output}");
+            assert!(output.to_string().contains(case["issue"].as_str().unwrap()), "{input}: {output}");
+        }
     }
 }

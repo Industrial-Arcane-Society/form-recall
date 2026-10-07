@@ -1,0 +1,240 @@
+{
+  "source": {
+    "quick_entry": "src/legacy/ai_modeler/core/parsing/nlparser.py::Parser.parse/Parser.handle",
+    "part_library": "src/legacy/ai_modeler/parts/library/partlib.py::WELDMENT_PARTS['连接件'] and _joint_piece",
+    "mesh_build": "src/legacy/ai_modeler/core/model/docmodel.py::Document.build/Feature._build_holes",
+    "units": "mm"
+  },
+  "legacy_accepted": [
+    {
+      "input": "连接件 长度100 宽度80",
+      "feature_count": 1,
+      "features": [
+        {
+          "kind": "box",
+          "operation": "add",
+          "parameters": {
+            "length": 100.0,
+            "width": 80.0,
+            "height": 9.6,
+            "center": [0, 0, 0],
+            "base": false,
+            "axis": "Z"
+          }
+        }
+      ],
+      "legacy_mesh": {
+        "bounds_mm": [-50.0, -40.0, -4.8, 50.0, 40.0, 4.8],
+        "dimensions_mm": [100.0, 80.0, 9.6],
+        "volume_mm3": 76800.0,
+        "faces": 8,
+        "triangles": 12
+      },
+      "native_brep": {
+        "dimensions_mm": [100.0, 80.0, 9.6],
+        "volume_mm3": 76800.0
+      }
+    },
+    {
+      "input": "连接件 长度100 宽度80 厚度10",
+      "feature_count": 1,
+      "features": [
+        {
+          "kind": "box",
+          "operation": "add",
+          "parameters": {
+            "length": 100.0,
+            "width": 80.0,
+            "height": 10.0,
+            "center": [0, 0, 0],
+            "base": false,
+            "axis": "Z"
+          }
+        }
+      ],
+      "legacy_mesh": {
+        "bounds_mm": [-50.0, -40.0, -5.0, 50.0, 40.0, 5.0],
+        "dimensions_mm": [100.0, 80.0, 10.0],
+        "volume_mm3": 80000.0,
+        "faces": 8,
+        "triangles": 12
+      },
+      "native_brep": {
+        "dimensions_mm": [100.0, 80.0, 10.0],
+        "volume_mm3": 80000.0
+      }
+    },
+    {
+      "input": "连接件 L100 W80 t10",
+      "feature_count": 1,
+      "features": [
+        {
+          "kind": "box",
+          "operation": "add",
+          "parameters": {
+            "length": 100.0,
+            "width": 80.0,
+            "height": 10.0,
+            "center": [0, 0, 0],
+            "base": false,
+            "axis": "Z"
+          }
+        }
+      ],
+      "legacy_mesh": {
+        "bounds_mm": [-50.0, -40.0, -5.0, 50.0, 40.0, 5.0],
+        "dimensions_mm": [100.0, 80.0, 10.0],
+        "volume_mm3": 80000.0,
+        "faces": 8,
+        "triangles": 12
+      },
+      "native_brep": {
+        "dimensions_mm": [100.0, 80.0, 10.0],
+        "volume_mm3": 80000.0
+      }
+    },
+    {
+      "input": "连接件 长度100 宽度80 厚度10 孔径8 孔数4",
+      "feature_count": 2,
+      "features": [
+        {
+          "kind": "box",
+          "operation": "add",
+          "parameters": {
+            "length": 100.0,
+            "width": 80.0,
+            "height": 10.0,
+            "center": [0, 0, 0],
+            "base": false,
+            "axis": "Z"
+          }
+        },
+        {
+          "kind": "hole",
+          "operation": "cut",
+          "parameters": {
+            "diameter": 8.0,
+            "through": true,
+            "pos": "pcd",
+            "axis": "Z",
+            "segments": 32,
+            "pcd": 60.0,
+            "count": 4
+          }
+        }
+      ],
+      "legacy_mesh": {
+        "bounds_mm": [-50.0, -40.0, -5.0, 50.0, 40.0, 5.0],
+        "dimensions_mm": [100.0, 80.0, 10.0],
+        "volume_mm3": 78002.27510255539,
+        "faces": 554,
+        "triangles": 880
+      },
+      "native_brep": {
+        "dimensions_mm": [100.0, 80.0, 10.0],
+        "volume_mm3": 77989.38070170254
+      }
+    },
+    {
+      "input": "连件 长度100 宽度80 厚度8 孔径8 孔数3 分度圆64",
+      "feature_count": 2,
+      "features": [
+        {
+          "kind": "box",
+          "operation": "add",
+          "parameters": {
+            "length": 100.0,
+            "width": 80.0,
+            "height": 8.0,
+            "center": [0, 0, 0],
+            "base": false,
+            "axis": "Z"
+          }
+        },
+        {
+          "kind": "hole",
+          "operation": "cut",
+          "parameters": {
+            "diameter": 8.0,
+            "through": true,
+            "pos": "pcd",
+            "axis": "Z",
+            "segments": 32,
+            "pcd": 64.0,
+            "count": 3
+          }
+        }
+      ],
+      "legacy_mesh": {
+        "bounds_mm": [-50.0, -40.0, -4.0, 50.0, 40.0, 4.0],
+        "dimensions_mm": [100.0, 80.0, 8.0],
+        "volume_mm3": 62801.365061532946,
+        "faces": 390,
+        "triangles": 608
+      },
+      "native_brep": {
+        "dimensions_mm": [100.0, 80.0, 8.0],
+        "volume_mm3": 62793.628421021516
+      }
+    },
+    {
+      "input": "连接件 长度100 宽度80 厚度10 孔径8 孔数1",
+      "feature_count": 1,
+      "expected_warning": "legacy_connection_piece_holes_omitted",
+      "features": [
+        {
+          "kind": "box",
+          "operation": "add",
+          "parameters": {
+            "length": 100.0,
+            "width": 80.0,
+            "height": 10.0,
+            "center": [0, 0, 0],
+            "base": false,
+            "axis": "Z"
+          }
+        }
+      ],
+      "legacy_mesh": {
+        "bounds_mm": [-50.0, -40.0, -5.0, 50.0, 40.0, 5.0],
+        "dimensions_mm": [100.0, 80.0, 10.0],
+        "volume_mm3": 80000.0,
+        "faces": 8,
+        "triangles": 12
+      },
+      "native_brep": {
+        "dimensions_mm": [100.0, 80.0, 10.0],
+        "volume_mm3": 80000.0
+      }
+    }
+  ],
+  "needs_clarification": [
+    {
+      "input": "连接件 长度100",
+      "issue": "legacy_connection_piece_width_required"
+    },
+    {
+      "input": "连接件 长度100 宽度80 厚度10 孔径8 孔数4 分度圆90",
+      "issue": "legacy_connection_piece_holes_out_of_bounds"
+    }
+  ],
+  "unsupported": [
+    {
+      "input": "连接件 长度100 宽度80 厚度10 台阶",
+      "issue": "legacy_connection_piece_modifier_not_migrated",
+      "legacy_behavior": "The Python Quick builder ignored the requested step and emitted only a plain box; Rust refuses to silently claim the step exists."
+    }
+  ],
+  "known_legacy_limitations": [
+    {
+      "input": "连接件 长100 宽80",
+      "legacy_behavior": "The Python Parser did not recognize the abbreviated Chinese labels and emitted no features. Rust returns a clarification for missing full dimensions."
+    },
+    {
+      "behavior": "A PCD of 90 mm on a 100 x 80 mm plate puts two hole centers beyond the 80 mm side. Python still creates partial edge cuts and reports no warning; Rust asks for a smaller PCD or hole diameter."
+    },
+    {
+      "behavior": "The _joint_piece docstring mentions a stepped plate, but the implementation creates one centered box. No step geometry exists in the legacy recipe."
+    }
+  ]
+}
