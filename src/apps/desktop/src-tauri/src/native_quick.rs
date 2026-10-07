@@ -3626,7 +3626,7 @@ mod acceptance_tests {
 
     #[test]
     #[ignore = "requires the staged local OCCT runtime manifest"]
-    fn f5_83_quick_crankshaft_matches_legacy_dumbbell_cheek_sections() {
+    fn f5_99_quick_crankshaft_matches_legacy_journal_segments_and_cheek_sections() {
         let manifest = std::env::var_os("AIMODELER_OCCT_MANIFEST")
             .map(std::path::PathBuf::from)
             .expect("set AIMODELER_OCCT_MANIFEST to the staged OCCT runtime-manifest.json");
@@ -3680,6 +3680,36 @@ mod acceptance_tests {
         let spacing = length / throws as f64;
         let pin_length = spacing * 0.42;
         let web_width = (p["main_d"].as_f64().unwrap() * 0.28).max(2.0).min(spacing*0.25);
+        let main_r = p["main_d"].as_f64().unwrap() / 2.0;
+        let pin_r = p["pin_d"].as_f64().unwrap() / 2.0;
+        let stroke = p["stroke"].as_f64().unwrap();
+        // Legacy Python Quick emits main journals only before the first cheek,
+        // between successive cheeks, and after the last cheek. It has no main
+        // shaft through any eccentric pin's axial span.
+        for i in 0..throws {
+            let x0 = -length / 2.0 + spacing * (i as f64 + 0.5);
+            let dy = if i % 2 == 0 { stroke / 2.0 } else { -stroke / 2.0 };
+            let intervals = rebuilt.shape.line_material_intervals(
+                [x0, 0.0, 0.0], [0.0, 1.0, 0.0], -100.0, 100.0, 1e-7
+            ).unwrap_or_else(|error| panic!("Quick pin-span Y ray throw={i}: {error}"));
+            assert_eq!(intervals.len(), 1, "throw={i} must contain only the eccentric pin, got {intervals:?}");
+            assert!((intervals[0][0] - (dy - pin_r)).abs() <= 1e-5
+                && (intervals[0][1] - (dy + pin_r)).abs() <= 1e-5,
+                "throw={i} pin span must not contain the full-length main shaft: {intervals:?}");
+        }
+        let first_x0 = -length / 2.0 + spacing * 0.5;
+        let first_pin_right = first_x0 + pin_length / 2.0;
+        let first_web_right = first_pin_right + web_width;
+        let second_x0 = -length / 2.0 + spacing * 1.5;
+        let second_web_left = second_x0 - pin_length / 2.0 - web_width;
+        let journal_x = (first_web_right + second_web_left) / 2.0;
+        let journal = rebuilt.shape.line_material_intervals(
+            [journal_x, 0.0, 0.0], [0.0, 1.0, 0.0], -100.0, 100.0, 1e-7
+        ).expect("sample main-journal interval between throws");
+        assert_eq!(journal.len(), 1, "main journal between throws: {journal:?}");
+        assert!((journal[0][0] + main_r).abs() <= 1e-5
+            && (journal[0][1] - main_r).abs() <= 1e-5,
+            "legacy main journal must remain between throws: {journal:?}");
         for row in fixture["section_samples"].as_array().unwrap() {
             let i = row["throw_index"].as_u64().unwrap() as usize;
             let x0 = -length/2.0 + spacing*(i as f64 + 0.5);
@@ -3702,6 +3732,13 @@ mod acceptance_tests {
         assert_eq!(cad_plan_validation::validate_plan(&generic_plan)["valid"], true);
         let generic = native_plan_geometry::build(&generic_plan, &manifest, &AtomicBool::new(false))
             .expect("build generic crankshaft CADPlan");
+        let generic_pin_span = generic.shape.line_material_intervals(
+            [first_x0, 0.0, 0.0], [0.0, 1.0, 0.0], -100.0, 100.0, 1e-7
+        ).expect("sample generic continuous shaft at pin span");
+        assert_eq!(generic_pin_span.len(), 1, "generic continuous shaft should overlap the pin: {generic_pin_span:?}");
+        assert!((generic_pin_span[0][0] + main_r).abs() <= 1e-5
+            && (generic_pin_span[0][1] - (stroke / 2.0 + pin_r)).abs() <= 1e-5,
+            "unmarked CADPlan must retain its full-length main shaft: {generic_pin_span:?}");
         let x0 = -length/2.0 + spacing*0.5;
         let x = x0 - pin_length/2.0 - web_width/2.0;
         let generic_mid = generic.shape.line_material_intervals(

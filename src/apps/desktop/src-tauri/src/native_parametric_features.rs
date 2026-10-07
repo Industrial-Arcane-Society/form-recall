@@ -101,10 +101,15 @@ pub fn build_crankshaft_with_geometry_variant(
     let spacing = length / throws as f64;
     let pin_length = spacing * 0.42;
     let web_width = (number(parameters, "main_d")? * 0.28).max(2.0).min(spacing * 0.25);
-    let shaft = kernel.cylinder(main_r, length,
-        [center[0] - length / 2.0, center[1], center[2]], [1.0, 0.0, 0.0])?;
-    let mut shapes = vec![shaft];
+    let legacy_quick = geometry_variant == Some("legacy_quick_dumbbell_cheeks");
+    let mut shapes = Vec::new();
+    if !legacy_quick {
+        // The generic CADPlan / legacy B-Rep path retains its continuous shaft.
+        shapes.push(kernel.cylinder(main_r, length,
+            [center[0] - length / 2.0, center[1], center[2]], [1.0, 0.0, 0.0])?);
+    }
     let mut web_count = 0usize;
+    let mut journal_cursor = center[0] - length / 2.0;
     for index in 0..throws {
         let x0 = center[0] - length / 2.0 + spacing * (index as f64 + 0.5);
         let dy = if index % 2 == 0 {
@@ -114,6 +119,12 @@ pub fn build_crankshaft_with_geometry_variant(
         };
         let pin_left = x0 - pin_length / 2.0;
         let pin_right = x0 + pin_length / 2.0;
+        let cheek_left = pin_left - web_width;
+        let cheek_right = pin_right + web_width;
+        if legacy_quick && cheek_left > journal_cursor + 1e-9 {
+            shapes.push(kernel.cylinder(main_r, cheek_left - journal_cursor,
+                [journal_cursor, center[1], center[2]], [1.0, 0.0, 0.0])?);
+        }
         shapes.push(kernel.cylinder(
             pin_r,
             pin_length,
@@ -127,14 +138,14 @@ pub fn build_crankshaft_with_geometry_variant(
         let ylo = y0.min(y2);
         let yhi = y1.max(y3);
         let zhalf = main_r.max(pin_r);
-        let cheek_profile = if geometry_variant == Some("legacy_quick_dumbbell_cheeks") {
+        let cheek_profile = if legacy_quick {
             Some(crank_cheek_outline(main_r, pin_r, dy, 32)?)
         } else {
             None
         };
         for (x_start, x_end) in [
-            (pin_left - web_width, pin_left),
-            (pin_right, pin_right + web_width),
+            (cheek_left, pin_left),
+            (pin_right, cheek_right),
         ] {
             if let Some(profile) = cheek_profile.as_ref() {
                 // The profile is the old Quick YZ cheek contour, relative to
@@ -152,6 +163,14 @@ pub fn build_crankshaft_with_geometry_variant(
                 )?);
             }
             web_count += 1;
+        }
+        journal_cursor = cheek_right;
+    }
+    if legacy_quick {
+        let right_end = center[0] + length / 2.0;
+        if right_end > journal_cursor + 1e-9 {
+            shapes.push(kernel.cylinder(main_r, right_end - journal_cursor,
+                [journal_cursor, center[1], center[2]], [1.0, 0.0, 0.0])?);
         }
     }
     let refs: Vec<_> = shapes.iter().collect();
