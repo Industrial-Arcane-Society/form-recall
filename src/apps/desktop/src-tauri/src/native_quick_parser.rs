@@ -139,6 +139,9 @@ pub fn parse(text: &str) -> Value {
     if let Some(parsed) = parse_legacy_template(text, &normalized) {
         return parsed;
     }
+    if let Some(parsed) = parse_legacy_bent_part(text, &normalized) {
+        return parsed;
+    }
     if let Some(parsed) = parse_legacy_shaft(text, &normalized) {
         return parsed;
     }
@@ -658,6 +661,231 @@ fn parse_legacy_template(raw: &str, normalized: &str) -> Option<Value> {
         return Some(parse_tube(raw, normalized));
     }
     None
+}
+
+/// Migrate the old Quick L-section extrusion used for fixture bent plates.
+/// The legacy constructor builds a six-point, fixed 90-degree profile from
+/// two legs and wall thickness, then extrudes it along +Z from the origin.
+fn parse_legacy_bent_part(raw: &str, text: &str) -> Option<Value> {
+    if !contains_any(text, &["折弯件", "弯板", "角板"]) {
+        return None;
+    }
+
+    let angle_re = regex::Regex::new(r"([0-9]+(?:\.[0-9]+)?)\s*(?:度|°)")
+        .expect("fixed bent-part angle regex");
+    if angle_re.captures(text).is_some_and(|capture| {
+        capture[1]
+            .parse::<f64>()
+            .is_ok_and(|angle| angle.is_finite() && !close(angle, 90.0))
+    }) {
+        return Some(parse_result_with_issue(
+            "unsupported",
+            raw,
+            "legacy_bent_part_custom_angle_not_migrated",
+            "当前迁移复现旧 Python Quick 固定 90° 的 L 形截面；非 90° 折弯角尚未迁入。",
+        ));
+    }
+
+    let hole_requested = contains_any(text, &["孔", "hole", "bore"]);
+    if contains_any(
+        text,
+        &[
+            "槽", "盲孔", "沉孔", "沉台", "螺栓孔", "安装孔", "偏心孔", "孔阵列", "多孔",
+            "倒角", "圆角", "螺纹", "阵列", "开口", "加强筋", "焊接", "弯曲半径",
+            "自定义角度", "弯折角",
+        ],
+    ) {
+        return Some(parse_result_with_issue(
+            "unsupported",
+            raw,
+            "legacy_bent_part_modifier_not_migrated",
+            "旧 Python Quick 折弯件只生成固定 90° 的 L 形拉伸体；孔槽、边缘加工、加强筋及自定义折弯角尚未迁入。",
+        ));
+    }
+
+    let long_leg = pulley_scalar(raw, text, &["长边", "长"], &["L1", "l1"]);
+    let short_leg = pulley_scalar(raw, text, &["短边", "另一边"], &["L2", "l2"]);
+    let explicit_thickness = pulley_scalar(raw, text, &["板厚", "厚度", "厚"], &["t", "T"]);
+    let explicit_height = pulley_scalar(raw, text, &["拉伸长度", "高度", "高"], &["H", "h"]);
+    let explicit_hole_diameter = pulley_scalar(
+        raw,
+        text,
+        &["中心通孔直径", "中心孔直径", "通孔直径", "孔直径", "孔径"],
+        &["dh"],
+    );
+
+    let mut questions = Vec::new();
+    for (value, missing_code, invalid_code, label) in [
+        (
+            long_leg,
+            "legacy_bent_part_long_leg_required",
+            "legacy_bent_part_long_leg_invalid",
+            "长边 L1",
+        ),
+        (
+            short_leg,
+            "legacy_bent_part_short_leg_required",
+            "legacy_bent_part_short_leg_invalid",
+            "短边 L2",
+        ),
+    ] {
+        match value {
+            Some(value) if value.is_finite() && value > 0.0 => {}
+            Some(_) => questions.push(issue(
+                invalid_code,
+                format!("折弯件{label}必须是有限正数，且重复写法不能互相冲突。"),
+            )),
+            None => questions.push(issue(
+                missing_code,
+                format!("请明确折弯件{label}。旧 Python Quick 仅凭零件名称不会生成模型。"),
+            )),
+        }
+    }
+    if explicit_thickness.is_some_and(|value| !value.is_finite() || value <= 0.0) {
+        questions.push(issue(
+            "legacy_bent_part_thickness_invalid",
+            "折弯件板厚必须是有限正数。",
+        ));
+    }
+    if explicit_height.is_some_and(|value| !value.is_finite() || value <= 0.0) {
+        questions.push(issue(
+            "legacy_bent_part_extrusion_height_invalid",
+            "折弯件拉伸长度必须是有限正数。",
+        ));
+    }
+    if hole_requested
+        && explicit_hole_diameter.is_some_and(|value| !value.is_finite() || value <= 0.0)
+    {
+        questions.push(issue(
+            "legacy_bent_part_hole_diameter_invalid",
+            "折弯件通孔直径必须是有限正数。",
+        ));
+    }
+    if !questions.is_empty() {
+        return Some(result("needs_clarification", raw, None, vec![], questions, vec![]));
+    }
+
+    let long_leg = long_leg.expect("validated bent-part long leg");
+    let short_leg = short_leg.expect("validated bent-part short leg");
+    if long_leg <= 0.0 || short_leg <= 0.0 {
+        unreachable!("positive bent-part legs validated above");
+    }
+    let thickness_defaulted = explicit_thickness.is_none();
+    let thickness = explicit_thickness
+        .unwrap_or_else(|| (long_leg.min(short_leg) * 0.1).max(2.0));
+    let height_defaulted = explicit_height.is_none();
+    let height = explicit_height.unwrap_or(long_leg);
+    let hole_defaulted = hole_requested && explicit_hole_diameter.is_none();
+    let hole_diameter = explicit_hole_diameter.unwrap_or(10.0);
+    if thickness >= long_leg.min(short_leg) {
+        return Some(parse_result_with_issue(
+            "needs_clarification",
+            raw,
+            "legacy_bent_part_thickness_exceeds_leg",
+            "板厚必须小于长边和短边，否则无法形成有效的 L 形截面。",
+        ));
+    }
+
+    let mut warnings = vec![issue(
+        "legacy_bent_part_fixed_l_profile",
+        "旧 Python Quick 折弯件是固定 90° 的六点直角 L 形截面，不是带圆角/折弯半径的钣金展开模型。",
+    )];
+    if thickness_defaulted {
+        warnings.push(issue(
+            "legacy_bent_part_default_thickness",
+            "未指定板厚；沿用旧 Python Quick 公式 max(2, min(L1,L2)×0.1)。",
+        ));
+    }
+    if height_defaulted {
+        warnings.push(issue(
+            "legacy_bent_part_default_extrusion_height",
+            "未指定拉伸长度；沿用旧 Python Quick 默认值 H=L1。",
+        ));
+    }
+    if hole_defaulted {
+        warnings.push(issue(
+            "legacy_bent_part_default_hole_diameter",
+            "通孔未标直径；沿用旧 Python Quick 通用孔默认直径 10 mm。",
+        ));
+    }
+    if hole_requested && long_leg / 2.0 > thickness && short_leg / 2.0 > thickness {
+        warnings.push(issue(
+            "legacy_bent_part_center_hole_is_noop",
+            "沿用旧 Python Quick 将未定位通孔放在外包框中心；该点位于 L 形截面的内凹空区，孔特征不会移除材料。",
+        ));
+    }
+    if crankshaft_has_non_mm_unit(text) {
+        warnings.push(issue(
+            "legacy_bent_part_unit_conversion",
+            "已将 cm、dm、m 或英寸换算为 mm；旧 Python Quick 对折弯件单位混用的解析会产生错误附加特征。",
+        ));
+    } else if !has_unit(text) {
+        warnings.push(issue(
+            "unit_interpreted_as_mm",
+            "未写单位的折弯件尺寸按 mm 解释。",
+        ));
+    }
+
+    let profile = vec![
+        [0.0, 0.0],
+        [long_leg, 0.0],
+        [long_leg, thickness],
+        [thickness, thickness],
+        [thickness, short_leg],
+        [0.0, short_leg],
+    ];
+    let feature = json!({
+        "id":"quick-0001",
+        "kind":"prism",
+        "operation":"add",
+        "name":"折弯件 L 形截面",
+        "parameters":{
+            "profile":profile,
+            "height":height,
+            "axis":"Z",
+            "center":[0.0, 0.0, 0.0]
+        },
+        "sources":{
+            "profile":derived_source(raw, "由用户给定的 L1、L2、t 构造旧 Python Quick 六点 L 形截面。"),
+            "height":if height_defaulted {
+                derived_source(raw, "沿用旧 Python Quick 折弯件默认拉伸长度 H=L1。")
+            } else {
+                user_source(raw)
+            },
+            "axis":derived_source(raw, "沿用旧 Python Quick 沿全局 +Z 方向拉伸。"),
+            "center":derived_source(raw, "沿用旧 Python Quick 截面原点 (0,0,0)；尺寸范围沿 X/Y 正向展开。")
+        },
+        "relations":[]
+    });
+    let mut features = vec![feature];
+    if hole_requested {
+        features.push(json!({
+            "id":"quick-0002",
+            "kind":"hole",
+            "operation":"cut",
+            "name":"通孔",
+            "parameters":{
+                "diameter":hole_diameter,
+                "through":true,
+                "pos":"center",
+                "axis":"Z",
+                "segments":24
+            },
+            "sources":{
+                "diameter":if hole_defaulted {
+                    derived_source(raw, "沿用旧 Python Quick 通用孔默认直径 10 mm。")
+                } else {
+                    user_source(raw)
+                },
+                "through":derived_source(raw, "旧 Python Quick 折弯件通孔沿 Z 贯穿。"),
+                "pos":derived_source(raw, "沿用旧 Python Quick 未定位孔按当前外包框中心放置。"),
+                "axis":derived_source(raw, "沿用旧 Python Quick 沿全局 Z 轴放置孔。"),
+                "segments":derived_source(raw, "旧 Python Quick 通用孔默认圆周分段数 24。")
+            },
+            "relations":[]
+        }));
+    }
+    Some(plan_result(raw, "折弯件", features, warnings))
 }
 
 /// Migrate the legacy part-library solid-shaft recipe. The old `_shaft`
@@ -15126,6 +15354,92 @@ mod f5_55_legacy_spring_washer_contract_tests {
                     "{input}: {dimension}"
                 );
             }
+        }
+
+        for case in fixture["needs_clarification"].as_array().unwrap() {
+            let input = case["input"].as_str().unwrap();
+            let output = parse(input);
+            assert_eq!(output["status"], "needs_clarification", "{input}: {output}");
+            assert!(output["plan"].is_null(), "{input}: {output}");
+            assert!(output.to_string().contains(case["issue"].as_str().unwrap()), "{input}: {output}");
+        }
+
+        for case in fixture["unsupported"].as_array().unwrap() {
+            let input = case["input"].as_str().unwrap();
+            let output = parse(input);
+            assert_eq!(output["status"], "unsupported", "{input}: {output}");
+            assert!(output["plan"].is_null(), "{input}: {output}");
+            assert!(output.to_string().contains(case["issue"].as_str().unwrap()), "{input}: {output}");
+        }
+    }
+}
+
+#[cfg(test)]
+mod f5_56_legacy_bent_part_contract_tests {
+    use super::parse;
+    use serde_json::Value;
+
+    fn assert_bent_part(output: &Value, case: &Value, input: &str) {
+        assert_eq!(output["status"], "ready", "{input}: {output}");
+        assert_eq!(output["plan"]["name"], "折弯件", "{input}: {output}");
+        let features = output["plan"]["features"].as_array().unwrap();
+        let expected_feature_count = if case["hole_diameter_mm"].is_number() { 2 } else { 1 };
+        assert_eq!(features.len(), expected_feature_count, "{input}: {output}");
+        let prism = &features[0];
+        assert_eq!(prism["kind"], "prism", "{input}: {output}");
+        assert_eq!(prism["operation"], "add", "{input}: {output}");
+        assert_eq!(prism["parameters"]["profile"], case["profile"], "{input}: profile");
+        assert_eq!(prism["parameters"]["height"], case["height_mm"], "{input}: height");
+        assert_eq!(prism["parameters"]["axis"], "Z", "{input}");
+        assert_eq!(prism["parameters"]["center"], serde_json::json!([0.0, 0.0, 0.0]), "{input}");
+        assert_eq!(prism["sources"]["height"]["type"], case["height_source"], "{input}");
+        if case["hole_diameter_mm"].is_number() {
+            let hole = &features[1];
+            assert_eq!(hole["kind"], "hole", "{input}: {output}");
+            assert_eq!(hole["operation"], "cut", "{input}: {output}");
+            assert_eq!(hole["parameters"]["diameter"], case["hole_diameter_mm"], "{input}");
+            assert_eq!(hole["parameters"]["through"], true, "{input}");
+            assert_eq!(hole["parameters"]["pos"], "center", "{input}");
+            assert_eq!(hole["parameters"]["axis"], "Z", "{input}");
+            assert_eq!(hole["parameters"]["segments"], 24, "{input}");
+        }
+    }
+
+    #[test]
+    fn legacy_bent_parts_match_l_profile_recipe_and_report_differences() {
+        let fixture: Value = serde_json::from_str(include_str!(
+            "../tests/fixtures/quick_legacy_bent_part_contract.json"
+        ))
+        .expect("bent-part Python oracle fixture is valid JSON");
+
+        for case in fixture["legacy_accepted"].as_array().unwrap() {
+            let input = case["input"].as_str().unwrap();
+            let output = parse(input);
+            assert_bent_part(&output, case, input);
+            let validation = crate::cad_plan_validation::validate_plan(&output["plan"]);
+            assert_eq!(validation["valid"], true, "{input}: {validation}");
+            assert!(crate::native_plan_geometry::preflight(&output["plan"]).is_ok(), "{input}");
+            for warning in case["warnings"].as_array().into_iter().flatten() {
+                assert!(output.to_string().contains(warning.as_str().unwrap()), "{input}: {output}");
+            }
+        }
+
+        for case in fixture["legacy_divergences"].as_array().unwrap() {
+            let input = case["input"].as_str().unwrap();
+            let output = parse(input);
+            assert_eq!(output["status"], "ready", "{input}: {output}");
+            assert!(output.to_string().contains(case["issue"].as_str().unwrap()), "{input}: {output}");
+            assert_eq!(output["plan"]["features"].as_array().unwrap().len(), 1, "{input}: {output}");
+            let dimensions = [
+                case["rust_dimensions_mm"][0].as_f64().unwrap(),
+                case["rust_dimensions_mm"][1].as_f64().unwrap(),
+                case["rust_dimensions_mm"][2].as_f64().unwrap(),
+            ];
+            assert_eq!(
+                output["plan"]["features"][0]["parameters"]["height"],
+                serde_json::json!(dimensions[2]),
+                "{input}"
+            );
         }
 
         for case in fixture["needs_clarification"].as_array().unwrap() {

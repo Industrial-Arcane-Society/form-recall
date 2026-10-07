@@ -447,6 +447,12 @@ pub fn build(plan: &Value, manifest: &Path, cancelled: &AtomicBool) -> Result<Bu
             let operation = feature["operation"].as_str().unwrap_or("add");
             let repeated_hole_array = normalized["kind"] == "hole"
                 && normalized["parameters"]["pos"] == "pcd";
+            // The legacy Quick bent-part recipe accepts an unlocated center
+            // bore, even when the bounding-box center falls in the L-profile's
+            // open notch. Keep that requested feature visible as a no-op while
+            // still rejecting other ordinary holes that fail to cut material.
+            let legacy_center_hole = normalized["kind"] == "hole"
+                && normalized["parameters"]["pos"] == "center";
             let mut no_op_cut = normalized["kind"] == "pattern" && tools.is_empty();
             let hole_pre_cut = if !requested_holes.is_empty() && operation == "cut" {
                 current
@@ -483,13 +489,12 @@ pub fn build(plan: &Value, manifest: &Path, cancelled: &AtomicBool) -> Result<Bu
             }
             let volume = candidate.volume()?;
             let delta = volume - before_volume;
-            if (normalized["kind"] == "pattern" || repeated_hole_array)
+            if (normalized["kind"] == "pattern" || repeated_hole_array || legacy_center_hole)
                 && operation == "cut"
                 && delta >= -1e-7_f64.max(before_volume * 1e-10)
             {
-                // A repeated cutter can land entirely in existing void. Keep the
-                // valid stock and report it as a no-op, matching the legacy mesh
-                // builder instead of failing the entire Quick candidate.
+                // Keep the valid stock and report a no-op instead of claiming
+                // that a requested cut changed the geometry.
                 no_op_cut = true;
                 requested_holes.clear();
             }
@@ -526,7 +531,7 @@ pub fn build(plan: &Value, manifest: &Path, cancelled: &AtomicBool) -> Result<Bu
                 "state":if no_op_cut {"no_op"} else {"built"},"geometry_support":standard_support.as_ref().and_then(|v|v.get("status")).cloned().unwrap_or(json!("exact")),
                 "support_details":standard_support,"volume_before_mm3":before_volume,
                 "volume_after_mm3":volume,"volume_delta_mm3":delta,
-                "warning":if no_op_cut {Some("重复切除没有新增几何；阵列实例可能落在已有空腔中，或没有与实体相交。") } else {None}}),
+                "warning":if no_op_cut {Some("切除没有移除材料；刀具体可能落在已有空腔中，或没有与实体相交。") } else {None}}),
             );
             let report_start = holes.len();
             if let Some(pre_cut) = hole_pre_cut {
