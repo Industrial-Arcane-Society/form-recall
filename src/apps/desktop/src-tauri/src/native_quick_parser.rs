@@ -10728,13 +10728,16 @@ fn parse_flange(raw: &str, text: &str) -> Value {
     let count = scalar(text, &["count", "均布", "等分", "孔数"])
         .filter(|value| value.is_finite() && *value >= 2.0)
         .map(|value| value.floor() as u64);
+    let explicit_bolt_diameter = bolt_hole_diameter(text);
     if let Some(count) = count {
-        let bolt_diameter = bolt_hole_diameter(text).unwrap_or((diameter * 0.08).max(6.0));
+        // The active legacy part-library route (`_disc`) defaults `dh` to 10 mm.
+        // `tpl_flange` has a separate D*0.08 fallback but is not this public path.
+        let bolt_diameter = explicit_bolt_diameter.unwrap_or(10.0);
         let pcd = scalar(text, &["pcd", "分度圆"])
             .filter(|value| value.is_finite() && *value > 0.0)
             .or_else(|| Some((diameter + inner.unwrap_or(diameter * 0.3)) / 2.0))
             .unwrap_or(0.0);
-        features.push(hole_template_feature(
+        let mut bolt_hole = hole_template_feature(
             raw,
             features.len() + 1,
             "螺栓孔",
@@ -10743,7 +10746,16 @@ fn parse_flange(raw: &str, text: &str) -> Value {
             Some(count),
             Some(pcd),
             defaults,
-        ));
+        );
+        bolt_hole["sources"]["diameter"] = if explicit_bolt_diameter.is_some() {
+            user_source(raw)
+        } else {
+            derived_source(
+                raw,
+                "沿用旧 Python Quick 法兰零件库 _disc：未提供 dh 时螺栓孔默认 ⌀10 mm。",
+            )
+        };
+        features.push(bolt_hole);
     }
     let mut warnings = vec![issue(
         "legacy_template_migrated",
@@ -10753,6 +10765,12 @@ fn parse_flange(raw: &str, text: &str) -> Value {
         warnings.push(issue(
             "legacy_template_defaults",
             "缺少外径或厚度时沿用旧法兰模板默认值：外径 120 mm、厚度 20 mm。",
+        ));
+    }
+    if count.is_some() && explicit_bolt_diameter.is_none() {
+        warnings.push(issue(
+            "legacy_flange_default_bolt_hole_diameter",
+            "未明确螺栓孔径；沿用旧 Python Quick 法兰零件库默认值 ⌀10 mm。",
         ));
     }
     plan_result(raw, "法兰", features, warnings)
@@ -15129,7 +15147,7 @@ mod tests {
     }
 
     #[test]
-    fn f5_78_legacy_round_blind_groove_matches_python_contract_and_guards() {
+    fn f5_80_legacy_round_blind_groove_matches_python_contract_and_guards() {
         let fixture: Value = serde_json::from_str(include_str!(
             "../tests/fixtures/quick_legacy_round_blind_groove_contract.json"
         ))
@@ -15189,11 +15207,11 @@ mod tests {
     }
 
     #[test]
-    #[ignore = "requires an explicitly staged OCCT runtime; run the documented F5.78 acceptance command"]
-    fn f5_78_round_blind_groove_builds_and_exports_occt() {
+    #[ignore = "requires an explicitly staged OCCT runtime; run the documented F5.80 acceptance command"]
+    fn f5_80_round_blind_groove_builds_and_exports_occt() {
         let manifest = std::env::var_os("AIMODELER_TEST_OCCT_MANIFEST")
             .map(std::path::PathBuf::from)
-            .expect("F5.78 requires AIMODELER_TEST_OCCT_MANIFEST");
+            .expect("F5.80 requires AIMODELER_TEST_OCCT_MANIFEST");
         assert!(manifest.is_file(), "OCCT manifest missing: {}", manifest.display());
         let fixture: Value = serde_json::from_str(include_str!(
             "../tests/fixtures/quick_legacy_round_blind_groove_contract.json"
@@ -15223,7 +15241,7 @@ mod tests {
         let _cleanup = RemoveOnDrop(root.clone());
 
         let result = crate::native_quick::build(prompt, 1, &manifest, &root)
-            .unwrap_or_else(|error| panic!("F5.78 OCCT build failed for {prompt}: {error}"));
+            .unwrap_or_else(|error| panic!("F5.80 OCCT build failed for {prompt}: {error}"));
         assert_eq!(result["state"], "complete", "{prompt}: {result}");
         let report = &result["geometry_report"];
         assert_eq!(report["state"], "passed", "{prompt}: {report}");
@@ -15250,7 +15268,7 @@ mod tests {
         }
         let aimodel_path = std::path::Path::new(result["output_paths"]["aimodel"].as_str().unwrap());
         let reloaded = crate::native_model_io::load_aimodel(aimodel_path)
-            .unwrap_or_else(|error| panic!("F5.78 AIMODEL reload failed: {error}"));
+            .unwrap_or_else(|error| panic!("F5.80 AIMODEL reload failed: {error}"));
         let groove = &reloaded["cadplan"]["features"][1];
         assert_eq!(groove["kind"], "hole");
         assert_eq!(groove["operation"], "cut");
@@ -15258,7 +15276,7 @@ mod tests {
         assert_eq!(groove["parameters"]["depth"], 5.0);
         assert_eq!(groove["parameters"]["diameter"], 20.0);
         eprintln!(
-            "F5.78 PASS: bbox=50×50×40 mm, OCCT={volume:.6} mm³, legacy mesh={legacy_volume:.6} mm³, delta={:.6} mm³",
+            "F5.80 PASS: bbox=50×50×40 mm, OCCT={volume:.6} mm³, legacy mesh={legacy_volume:.6} mm³, delta={:.6} mm³",
             volume - legacy_volume
         );
     }
@@ -18640,6 +18658,180 @@ mod f5_60_legacy_connection_block_contract_tests {
                 "{input}: {output}"
             );
         }
+    }
+}
+
+#[cfg(test)]
+mod f5_flange_default_hole_compat_tests {
+    use super::parse;
+
+    #[test]
+    fn restores_legacy_flange_bolt_hole_default_and_source() {
+        let input = "法兰 外径160 内径60 厚度20 分度圆120 孔数6";
+        let output = parse(input);
+        assert_eq!(output["status"], "ready", "{output}");
+        let features = output["plan"]["features"].as_array().unwrap();
+        assert_eq!(features.len(), 3, "{output}");
+        assert_eq!(features[1]["parameters"]["diameter"], 60.0);
+        let bolt_holes = &features[2];
+        assert_eq!(bolt_holes["parameters"]["diameter"], 10.0);
+        assert_eq!(bolt_holes["parameters"]["count"], 6);
+        assert_eq!(bolt_holes["parameters"]["pcd"], 120.0);
+        assert_eq!(bolt_holes["sources"]["diameter"]["type"], "derived");
+        assert_eq!(bolt_holes["sources"]["diameter"]["evidence"], input);
+        assert!(bolt_holes["sources"]["diameter"]["note"]
+            .as_str().unwrap().contains("_disc"));
+        assert!(output["warnings"].to_string()
+            .contains("legacy_flange_default_bolt_hole_diameter"));
+
+        let explicit = "法兰 外径160 内径60 厚度20 分度圆120 孔数6 螺栓孔直径12";
+        let explicit_output = parse(explicit);
+        let explicit_bolt = &explicit_output["plan"]["features"][2];
+        assert_eq!(explicit_bolt["parameters"]["diameter"], 12.0);
+        assert_eq!(explicit_bolt["sources"]["diameter"]["type"], "user");
+        assert!(!explicit_output["warnings"].to_string()
+            .contains("legacy_flange_default_bolt_hole_diameter"));
+
+        let without_count = parse("法兰 外径160 内径60 厚度20 分度圆120");
+        assert_eq!(without_count["status"], "ready", "{without_count}");
+        assert_eq!(without_count["plan"]["features"].as_array().unwrap().len(), 2);
+    }
+
+    #[test]
+    #[ignore = "requires the staged OCCT runtime; run the F5.81 flange geometry acceptance command"]
+    fn f5_81_legacy_flange_default_bolt_holes_build_measure_and_reload() {
+        let manifest = std::env::var_os("AIMODELER_TEST_OCCT_MANIFEST")
+            .map(std::path::PathBuf::from)
+            .expect("F5.81 requires AIMODELER_TEST_OCCT_MANIFEST");
+        assert!(
+            manifest.is_file(),
+            "OCCT manifest missing: {}",
+            manifest.display()
+        );
+
+        let prompt = "法兰 外径160 内径60 厚度20 分度圆120 孔数6";
+        let root = std::env::temp_dir().join(format!(
+            "quick-f5-81-flange-{}-{}",
+            std::process::id(),
+            std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .unwrap()
+                .as_nanos()
+        ));
+        std::fs::create_dir_all(&root).unwrap();
+        struct RemoveOnDrop(std::path::PathBuf);
+        impl Drop for RemoveOnDrop {
+            fn drop(&mut self) {
+                let _ = std::fs::remove_dir_all(&self.0);
+            }
+        }
+        let _cleanup = RemoveOnDrop(root.clone());
+
+        let result = crate::native_quick::build(prompt, 1, &manifest, &root)
+            .unwrap_or_else(|error| panic!("F5.81 flange OCCT build failed: {error}"));
+        assert_eq!(result["state"], "complete", "{result}");
+        let report = &result["geometry_report"];
+        assert_eq!(report["execution_engine"], "rust_c_abi_occt");
+        assert_eq!(report["state"], "passed", "{report}");
+        assert_eq!(report["valid"], true, "{report}");
+        assert_eq!(report["closed_solid_count"], 1, "{report}");
+        for (actual, expected) in report["dimensions_mm"]
+            .as_array()
+            .expect("measured bounding-box dimensions")
+            .iter()
+            .zip([160.0, 160.0, 20.0])
+        {
+            let actual = actual.as_f64().expect("numeric measured dimension");
+            assert!(
+                (actual - expected).abs() <= 1e-8,
+                "bbox {actual} != {expected}: {report}"
+            );
+        }
+        assert_eq!(report["hole_measurement_complete"], true, "{report}");
+        assert_eq!(report["hole_measurements_verified"], true, "{report}");
+
+        let holes = report["hole_instances"]
+            .as_array()
+            .expect("measured B-Rep holes");
+        assert_eq!(
+            holes.len(),
+            7,
+            "one center bore plus six PCD holes: {holes:?}"
+        );
+        let assert_measured_radius = |hole: &serde_json::Value, expected: f64| {
+            assert_eq!(hole["through"], true, "{hole}");
+            assert_eq!(hole["status"], "verified_open", "{hole}");
+            let measurement = &hole["final_measurement"];
+            assert_eq!(measurement["accepted"], true, "{measurement}");
+            let coverage = measurement["angular_coverage_radians"]
+                .as_f64()
+                .expect("measured cylindrical-face angular coverage");
+            assert!(
+                (coverage - std::f64::consts::TAU).abs() <= 1e-5,
+                "{measurement}"
+            );
+            let radii = measurement["actual_radius_measurements"]
+                .as_array()
+                .expect("analytic OCCT cylindrical radii");
+            assert!(!radii.is_empty(), "{measurement}");
+            for radius in radii {
+                let radius = radius.as_f64().expect("numeric measured radius");
+                assert!((radius - expected).abs() <= 1e-6, "{measurement}");
+            }
+        };
+
+        assert_eq!(holes[0]["diameter_mm"], 60.0, "center bore: {}", holes[0]);
+        assert_eq!(
+            holes[0]["centerline_mm"],
+            serde_json::json!([0.0, 0.0, 0.0])
+        );
+        assert_measured_radius(&holes[0], 30.0);
+        for hole in holes.iter().skip(1) {
+            assert_eq!(hole["diameter_mm"], 10.0, "PCD hole: {hole}");
+            assert_eq!(hole["axis"], "Z", "PCD hole: {hole}");
+            let center = hole["centerline_mm"].as_array().expect("hole centerline");
+            let x = center[0].as_f64().expect("x center");
+            let y = center[1].as_f64().expect("y center");
+            assert!(
+                (x.hypot(y) - 60.0).abs() <= 1e-8,
+                "PCD radius must be 60 mm: {hole}"
+            );
+            assert_measured_radius(hole, 5.0);
+        }
+
+        let aimodel = std::path::Path::new(
+            result["output_paths"]["aimodel"]
+                .as_str()
+                .expect("AIMODEL output path"),
+        );
+        assert!(
+            aimodel.is_file(),
+            "AIMODEL export missing: {}",
+            aimodel.display()
+        );
+        let reloaded = crate::native_model_io::load_aimodel(aimodel)
+            .unwrap_or_else(|error| panic!("F5.81 AIMODEL reload failed: {error}"));
+        assert_eq!(
+            reloaded["cadplan"]["features"], result["cadplan"]["features"],
+            "reloaded CADPlan must preserve the center bore and PCD holes"
+        );
+        assert_eq!(
+            reloaded["cadplan"]["features"][1]["parameters"]["diameter"],
+            60.0
+        );
+        assert_eq!(
+            reloaded["cadplan"]["features"][2]["parameters"]["diameter"],
+            10.0
+        );
+        assert_eq!(reloaded["cadplan"]["features"][2]["parameters"]["count"], 6);
+        assert_eq!(
+            reloaded["cadplan"]["features"][2]["parameters"]["pcd"],
+            120.0
+        );
+
+        eprintln!(
+            "F5.81 PASS: bbox=160×160×20 mm; closed solids=1; center bore Ø60 measured; 6 through PCD Ø10 holes at 120 mm measured; AIMODEL reload preserved CADPlan"
+        );
     }
 }
 
