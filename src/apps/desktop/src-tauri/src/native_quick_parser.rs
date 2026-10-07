@@ -687,6 +687,9 @@ fn parse_legacy_template(raw: &str, normalized: &str) -> Option<Value> {
     if contains_any(normalized, &["法兰", "flange"]) {
         return Some(parse_flange(raw, normalized));
     }
+    if normalized.contains("轴套") {
+        return Some(parse_legacy_bushing(raw, normalized));
+    }
     if contains_any(normalized, &["套筒", "圆管", "钢管", "sleeve", "tube"]) {
         return Some(parse_tube(raw, normalized));
     }
@@ -10567,6 +10570,96 @@ fn parse_tube(raw: &str, text: &str) -> Value {
         ));
     }
     plan_result(raw, "套筒/圆管", features, warnings)
+}
+
+/// Migrate the catalog's legacy `轴套` recipe. This is intentionally separate
+/// from the generic tube route: Python Quick's part-library bushing preserves
+/// the input bore diameter and emits a 48-segment through-hole.
+fn parse_legacy_bushing(raw: &str, text: &str) -> Value {
+    if contains_any(
+        text,
+        &[
+            "径向孔", "侧孔", "安装孔", "螺栓孔", "盲孔", "沉孔", "键槽", "开槽", "环槽",
+            "倒角", "圆角", "螺纹", "法兰", "多个", "同时", "并加", "再加",
+        ],
+    ) {
+        return parse_result_with_issue(
+            "unsupported",
+            raw,
+            "legacy_bushing_modifier_not_migrated",
+            "当前迁移的是旧 Python Quick 轴套的外圆柱与中心贯穿孔；侧孔、槽、倒角、螺纹和附加结构尚未迁移。",
+        );
+    }
+
+    let inner_diameter = scalar(
+        text,
+        &[
+            "inner diameter", "内孔直径", "轴孔直径", "内径", "内孔", "轴径", "孔径",
+        ],
+    );
+    let outer_diameter = scalar(text, &["outer diameter", "外圆直径", "外径"]);
+    let length = scalar(
+        text,
+        &["length", "总长", "全长", "长度", "长", "height", "高度", "高"],
+    );
+    let (Some(inner_diameter), Some(outer_diameter), Some(length)) =
+        (inner_diameter, outer_diameter, length)
+    else {
+        return parse_result_with_issue(
+            "needs_clarification",
+            raw,
+            "legacy_bushing_dimensions_missing",
+            "轴套需要明确内径、外径和长度。",
+        );
+    };
+    if !inner_diameter.is_finite()
+        || !outer_diameter.is_finite()
+        || !length.is_finite()
+        || inner_diameter <= 0.0
+        || outer_diameter <= 0.0
+        || length <= 0.0
+        || inner_diameter >= outer_diameter
+    {
+        return parse_result_with_issue(
+            "needs_clarification",
+            raw,
+            "legacy_bushing_dimensions_invalid",
+            "轴套的内径、外径和长度必须为有限正数，且内径小于外径。",
+        );
+    }
+
+    let mut features = vec![
+        cylinder_template_feature(
+            raw,
+            1,
+            "轴套外圆",
+            outer_diameter / 2.0,
+            length,
+            false,
+            64,
+            false,
+        ),
+        hole_template_feature(
+            raw,
+            2,
+            "轴套内孔",
+            inner_diameter,
+            "center",
+            None,
+            None,
+            false,
+        ),
+    ];
+    features[1]["parameters"]["segments"] = json!(48);
+    plan_result(
+        raw,
+        "轴套",
+        features,
+        vec![issue(
+            "legacy_partlib_bushing_migrated",
+            "已按旧 Python Quick 轴套配方建立外圆柱与中心贯穿孔；内径按输入值使用，孔分段数为 48。",
+        )],
+    )
 }
 
 fn ordered_labels(text: &str, groups: &[&[&str]]) -> bool {

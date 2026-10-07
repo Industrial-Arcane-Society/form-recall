@@ -53,6 +53,13 @@
       ]
     },
     {
+      "input": "轴套 内径25 外径35 长度40",
+      "features": [
+        {"index": 0, "kind": "cylinder", "operation": "add", "parameters": {"radius": 17.5, "height": 40.0, "base": false, "segments": 64}},
+        {"index": 1, "kind": "hole", "operation": "cut", "parameters": {"diameter": 25.0, "through": true, "pos": "center", "segments": 48}}
+      ]
+    },
+    {
       "input": "阶梯轴",
       "features": [
         {"index": 0, "kind": "cylinder", "operation": "add", "parameters": {"radius": 15.0, "height": 50.0, "center": [0.0, 0.0, 0.0], "base": true, "segments": 48}},
@@ -62,6 +69,9 @@
     }
   ],
   "rejected": [
-    {"input": "制造一个符合标准的特殊零件", "status": "unsupported"}
+    {"input": "制造一个符合标准的特殊零件", "status": "unsupported"},
+    {"input": "轴套", "status": "needs_clarification"},
+    {"input": "轴套 内径40 外径35 长度40", "status": "needs_clarification"},
+    {"input": "轴套 内径25 外径35 长度40 径向孔10", "status": "unsupported"}
   ]
 }
