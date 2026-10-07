@@ -150,7 +150,7 @@ pub fn preflight(plan: &Value) -> Result<Value, String> {
             "helix" => &["radius", "wire_r", "height", "turns"],
             "loft" => &["root_chord", "tip_chord", "span", "thickness"],
             "worm" => &["radius", "height", "thread_r", "wire_r", "turns"],
-            "impeller" => &["hub_d", "tip_d", "height", "blades", "blade_t", "twist_deg"],
+            "impeller" => &["hub_d", "tip_d", "height", "blades", "twist_deg"],
             _ => &[],
         };
         for key in required_native_parameters {

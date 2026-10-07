@@ -121,6 +121,9 @@ pub fn parse(text: &str) -> Value {
     if let Some(parsed) = parse_legacy_gear(text, &normalized) {
         return parsed;
     }
+    if let Some(parsed) = parse_legacy_impeller(text, &normalized) {
+        return parsed;
+    }
     if let Some(parsed) = parse_legacy_template(text, &normalized) {
         return parsed;
     }
@@ -4009,6 +4012,272 @@ fn parse_legacy_scroll_disc(raw: &str, text: &str) -> Option<Value> {
         }),
     )];
     Some(plan_result(raw, "涡旋盘", features, warnings))
+}
+
+/// Migrate the old part-library impeller route. The Python Quick parser tries
+/// partlib before its generic `叶轮` -> blisk template, but that route only
+/// succeeds when both tip diameter and height are present; otherwise it falls
+/// through to the legacy 20-blade template. Keep that routing boundary.
+fn parse_legacy_impeller(raw: &str, text: &str) -> Option<Value> {
+    if !contains_any(
+        text,
+        &["涡轮叶轮", "压气机叶轮", "离心叶轮", "水泵叶轮", "叶轮"],
+    ) {
+        return None;
+    }
+
+    let tip_d = pulley_scalar(
+        raw,
+        text,
+        &["外径", "tip diameter", "outer diameter", "outside diameter"],
+        &["D"],
+    );
+    let height = merge_optional_scalar(
+        pulley_scalar(raw, text, &["高度", "高", "height"], &["H", "h"]),
+        scalar_excluding_suffix(text, "厚", &["叶片"]),
+    );
+
+    // In the actual legacy entrypoint, a missing D or H makes partlib fail
+    // before template dispatch. Returning None preserves that downstream
+    // `parse_blisk_template` behavior instead of manufacturing an impeller.
+    if tip_d.is_none() || height.is_none() {
+        return None;
+    }
+
+    if contains_any(
+        text,
+        &[
+            "动叶", "叶片厚", "叶片弦", "叶片曲面", "进口角", "出口角", "子午流道", "分流叶片",
+            "键槽", "螺纹", "倒角", "圆角", "螺栓孔", "阵列", "切除", "slot",
+            "thread", "chamfer", "fillet", "splitter blade", "meridional passage",
+        ],
+    ) {
+        return Some(parse_result_with_issue(
+            "unsupported",
+            raw,
+            "legacy_impeller_modifier_not_migrated",
+            "当前只迁移旧 Quick 的固定公式整体叶轮主体和明确的 Z 轴中心通孔；叶片厚度/曲面、流道、分流叶片、键槽、螺纹及边缘修饰尚未迁移。",
+        ));
+    }
+
+    let center_hole_d = pulley_scalar(
+        raw,
+        text,
+        &[
+            "中心通孔直径",
+            "中心通孔",
+            "中心孔直径",
+            "中心孔",
+            "center bore",
+            "center hole diameter",
+            "center hole",
+        ],
+        &[],
+    );
+    if contains_any(text, &["孔", "hole", "bore"]) && center_hole_d.is_none() {
+        return Some(parse_result_with_issue(
+            "unsupported",
+            raw,
+            "legacy_impeller_hole_location_not_migrated",
+            "当前仅支持明确尺寸的轴向中心通孔；叶轮偏置孔、叶片孔和其他孔位尚未迁移。",
+        ));
+    }
+
+    let hub_d = pulley_scalar(raw, text, &["轮毂直径", "轮毂", "hub diameter"], &["d"]);
+    let blades = pulley_scalar(raw, text, &["叶片数", "blade count"], &["n"]);
+    let twist_deg = pulley_scalar(raw, text, &["扭转角", "扭转度", "twist angle"], &["beta"]);
+
+    let mut questions = Vec::new();
+    for (value, code, label) in [
+        (tip_d, "legacy_impeller_tip_d_invalid", "叶轮外径"),
+        (height, "legacy_impeller_height_invalid", "叶轮高度"),
+        (hub_d, "legacy_impeller_hub_d_invalid", "轮毂直径"),
+        (blades, "legacy_impeller_blades_invalid", "叶片数"),
+        (twist_deg, "legacy_impeller_twist_invalid", "扭转角"),
+        (center_hole_d, "legacy_impeller_center_bore_invalid", "中心通孔直径"),
+    ] {
+        if value.is_some_and(|number| !number.is_finite()) {
+            questions.push(issue(
+                code,
+                format!("{label}出现重复或冲突的数值；请只保留一个明确尺寸。"),
+            ));
+        }
+    }
+    if !questions.is_empty() {
+        return Some(result("needs_clarification", raw, None, vec![], questions, vec![]));
+    }
+
+    let tip_d_raw = tip_d.expect("validated impeller tip diameter");
+    let height_raw = height.expect("validated impeller height");
+    let hub_d_defaulted = hub_d.is_none();
+    let hub_d_raw = hub_d.unwrap_or(30.0);
+    let blades_defaulted = blades.is_none();
+    let blades_raw = blades.unwrap_or(9.0);
+    let twist_defaulted = twist_deg.is_none();
+    let twist_raw = twist_deg.unwrap_or(55.0);
+
+    // Preserve the legacy make_impeller clamps. The Python constructor also
+    // computed `th` from blade_t, but never used it in the section profile;
+    // the real legacy result has full-height blades, so CADPlan omits blade_t
+    // and the native builder supplies that exact axial default.
+    let hub_d = hub_d_raw.max(2.0);
+    let tip_d = tip_d_raw.max(hub_d * 1.05);
+    let height = height_raw.max(1.0);
+    let requested_blades = blades_raw.trunc();
+    let blades = requested_blades.max(3.0);
+    if blades > 128.0 {
+        return Some(parse_result_with_issue(
+            "unsupported",
+            raw,
+            "legacy_impeller_blade_count_over_budget",
+            "旧 Python 允许任意叶片数，但本地 OCCT 叶轮构造器限制为最多 128 片；当前输入超出原生建模预算。",
+        ));
+    }
+    if twist_raw.abs() > 720.0 {
+        return Some(parse_result_with_issue(
+            "needs_clarification",
+            raw,
+            "legacy_impeller_twist_over_budget",
+            "当前本地叶轮构造器只接受绝对值不超过 720° 的扭转角；旧 Python 对更大角度没有可靠几何保证。",
+        ));
+    }
+    let blades = blades as i64;
+    let clamped = !close(hub_d, hub_d_raw)
+        || !close(tip_d, tip_d_raw)
+        || !close(height, height_raw)
+        || !close(blades as f64, blades_raw);
+
+    let parameters = json!({
+        "hub_d":hub_d,
+        "tip_d":tip_d,
+        "height":height,
+        "blades":blades,
+        "twist_deg":twist_raw,
+        "center":[0.0,0.0,0.0],
+        "segments":12
+    });
+    if let Err(error) = crate::native_impeller::preflight(&parameters) {
+        return Some(result(
+            "needs_clarification",
+            raw,
+            None,
+            vec![],
+            vec![issue(
+                "legacy_impeller_geometry_invalid",
+                format!("当前叶轮参数不能形成有效扭转叶片结构：{error}"),
+            )],
+            vec![],
+        ));
+    }
+
+    let mut warnings = vec![issue(
+        "legacy_impeller_migrated",
+        "已按旧 Python Quick 叶轮配方生成锥形轮毂、后盘和扭转矩形叶片；叶片轴向范围按旧网格的实际全高行为处理。",
+    )];
+    if hub_d_defaulted {
+        warnings.push(issue(
+            "legacy_impeller_default_hub_d",
+            "未指定轮毂直径；沿用旧零件库典型值 30 mm。",
+        ));
+    }
+    if blades_defaulted {
+        warnings.push(issue(
+            "legacy_impeller_default_blades",
+            "未指定叶片数；沿用旧 _impeller 构造器默认值 9。",
+        ));
+    }
+    if twist_defaulted {
+        warnings.push(issue(
+            "legacy_impeller_default_twist",
+            "未指定扭转角；沿用旧 _impeller 构造器默认值 55°。",
+        ));
+    }
+    if !has_unit(text) {
+        warnings.push(issue(
+            "unit_interpreted_as_mm",
+            "未写长度单位的叶轮尺寸按 Quick 默认单位 mm 解释。",
+        ));
+    } else if crankshaft_has_non_mm_unit(text) {
+        warnings.push(issue(
+            "legacy_impeller_unit_conversion",
+            "Rust 将显式标注的非毫米尺寸换算为 mm；旧 Python Quick 曾把 cm 等单位后的原始数字直接当作 mm。",
+        ));
+    }
+    if clamped {
+        warnings.push(issue(
+            "legacy_impeller_lower_clamp",
+            "旧构造器会把轮毂半径钳到至少 1 mm、尖端半径钳到轮毂半径的 1.05 倍、高度钳到至少 1 mm、叶片数钳到至少 3 并取整数；本次使用钳制后的参数。",
+        ));
+    }
+
+    let hub_d_source = if hub_d_defaulted || !close(hub_d, hub_d_raw) {
+        derived_source(raw, "沿用旧零件库 hub_d=30 mm 典型值或 make_impeller 的半径下限。")
+    } else {
+        user_source(raw)
+    };
+    let tip_d_source = if !close(tip_d, tip_d_raw) {
+        derived_source(raw, "按旧 make_impeller 的 rt=max(hub_d/2×1.05, tip_d/2) 扩展尖端半径。")
+    } else {
+        user_source(raw)
+    };
+    let height_source = if !close(height, height_raw) {
+        derived_source(raw, "按旧 make_impeller 的高度下限 1 mm 钳制。")
+    } else {
+        user_source(raw)
+    };
+    let blade_source = if blades_defaulted || !close(blades as f64, blades_raw) {
+        derived_source(raw, "沿用旧 _impeller 默认值 9，或按 int()/max(3, ...) 规则取整并钳制。")
+    } else {
+        user_source(raw)
+    };
+    let twist_source = if twist_defaulted {
+        derived_source(raw, "沿用旧 _impeller 默认扭转角 55°。")
+    } else {
+        user_source(raw)
+    };
+    let features = vec![
+        feature(
+            1,
+            "impeller",
+            "add",
+            parameters,
+            json!({
+                "hub_d":hub_d_source,
+                "tip_d":tip_d_source,
+                "height":height_source,
+                "blades":blade_source,
+                "twist_deg":twist_source,
+                "center":derived_source(raw, "旧 Python Quick 将叶轮中心放在全局原点。"),
+                "segments":derived_source(raw, "旧 Python Quick 使用 12 个扭转截面间隔。")
+            }),
+        ),
+    ];
+    let mut features = features;
+    if let Some(bore) = center_hole_d {
+        if !bore.is_finite() || bore <= 0.0 {
+            return Some(parse_result_with_issue(
+                "needs_clarification",
+                raw,
+                "legacy_impeller_center_bore_invalid",
+                "中心通孔直径必须是有限正数。",
+            ));
+        }
+        features.push(feature(
+            2,
+            "hole",
+            "cut",
+            json!({"diameter":bore,"through":true,"axis":"Z","pos":"center","segments":24}),
+            json!({
+                "diameter":user_source(raw),
+                "through":derived_source(raw, "旧 Python Quick 中心孔按轴向贯穿切除。"),
+                "axis":derived_source(raw, "旧叶轮主轴沿全局 Z 轴，中心孔同轴。"),
+                "pos":derived_source(raw, "旧 Python Quick 中心孔位于全局原点。"),
+                "segments":derived_source(raw, "旧 Python Quick 通用圆孔圆周分段为 24。")
+            }),
+        ));
+    }
+
+    Some(plan_result(raw, "叶轮", features, warnings))
 }
 
 fn parse_legacy_camshaft(raw: &str, text: &str) -> Option<Value> {
@@ -13688,6 +13957,126 @@ mod f5_50_legacy_scroll_disc_contract_tests {
             assert_eq!(dimensions["outer_d"], case["rust_dimensions_mm"][0], "{input}");
             assert_eq!(dimensions["height"], case["rust_dimensions_mm"][1], "{input}");
             assert_eq!(dimensions["wall_t"], case["rust_dimensions_mm"][2], "{input}");
+        }
+
+        for case in fixture["needs_clarification"].as_array().unwrap() {
+            let input = case["input"].as_str().unwrap();
+            let output = parse(input);
+            assert_eq!(output["status"], "needs_clarification", "{input}: {output}");
+            assert!(output["plan"].is_null(), "{input}: {output}");
+            assert!(output.to_string().contains(case["issue"].as_str().unwrap()), "{input}: {output}");
+        }
+
+        for case in fixture["unsupported"].as_array().unwrap() {
+            let input = case["input"].as_str().unwrap();
+            let output = parse(input);
+            assert_eq!(output["status"], "unsupported", "{input}: {output}");
+            assert!(output["plan"].is_null(), "{input}: {output}");
+            assert!(output.to_string().contains(case["issue"].as_str().unwrap()), "{input}: {output}");
+        }
+    }
+}
+
+#[cfg(test)]
+mod f5_51_legacy_impeller_contract_tests {
+    use super::parse;
+    use serde_json::Value;
+
+    #[test]
+    fn legacy_impellers_match_python_recipe_defaults_holes_and_boundaries() {
+        let fixture: Value = serde_json::from_str(include_str!(
+            "../tests/fixtures/quick_legacy_impeller_contract.json"
+        ))
+        .expect("impeller Python oracle fixture is valid JSON");
+
+        for case in fixture["legacy_accepted"].as_array().unwrap() {
+            let input = case["input"].as_str().unwrap();
+            let output = parse(input);
+            assert_eq!(output["status"], "ready", "{input}: {output}");
+            let features = output["plan"]["features"].as_array().unwrap();
+            assert_eq!(features.len(), case["feature_count"].as_u64().unwrap_or(1) as usize, "{input}");
+            assert_eq!(features[0]["kind"], "impeller", "{input}: {output}");
+            assert_eq!(features[0]["operation"], "add", "{input}: {output}");
+            for (name, expected) in case["native_expected"].as_object().unwrap() {
+                if let Some(expected_values) = expected.as_array() {
+                    let actual_values = features[0]["parameters"][name].as_array().unwrap();
+                    assert_eq!(actual_values.len(), expected_values.len(), "{input}: {name}");
+                    for (actual, expected) in actual_values.iter().zip(expected_values) {
+                        assert!(
+                            (actual.as_f64().unwrap() - expected.as_f64().unwrap()).abs() <= 1e-9,
+                            "{input}: {name}={actual}, expected {expected}"
+                        );
+                    }
+                } else {
+                    assert_eq!(features[0]["parameters"][name], *expected, "{input}: {name}");
+                }
+            }
+            for name in case["source_user"].as_array().into_iter().flatten() {
+                assert_eq!(
+                    features[0]["sources"][name.as_str().unwrap()]["type"],
+                    "user",
+                    "{input}: {} source",
+                    name
+                );
+            }
+            for name in case["source_derived"].as_array().into_iter().flatten() {
+                assert_eq!(
+                    features[0]["sources"][name.as_str().unwrap()]["type"],
+                    "derived",
+                    "{input}: {} source",
+                    name
+                );
+            }
+            for warning in case["warnings"].as_array().into_iter().flatten() {
+                assert!(output.to_string().contains(warning.as_str().unwrap()), "{input}: {output}");
+            }
+            if case["feature_count"] == 2 {
+                let hole = &features[1];
+                assert_eq!(hole["kind"], case["second_feature"]["kind"], "{input}: {output}");
+                assert_eq!(hole["operation"], case["second_feature"]["operation"], "{input}: {output}");
+                for (name, expected) in case["second_feature"].as_object().unwrap() {
+                    if name == "kind" || name == "operation" {
+                        continue;
+                    }
+                    assert_eq!(hole["parameters"][name], *expected, "{input}: hole {name}");
+                }
+            }
+
+            let validation = crate::cad_plan_validation::validate_plan(&output["plan"]);
+            assert_eq!(validation["valid"], true, "{input}: {validation}");
+            assert!(crate::native_plan_geometry::preflight(&output["plan"]).is_ok(), "{input}");
+            let support = crate::native_impeller::preflight(&features[0]["parameters"])
+                .unwrap_or_else(|error| panic!("{input}: {error}"));
+            assert_eq!(
+                support["builder"],
+                "legacy_twisted_rectangular_sections_faceted_and_fused_with_analytic_hub_backplate",
+                "{input}: {support}"
+            );
+            assert_eq!(support["blade_t_defaulted"], true, "{input}: {support}");
+            assert_eq!(support["blade_axial_span_mm"], features[0]["parameters"]["height"]);
+            let spec = crate::native_feature_specs::feature_spec("impeller").unwrap();
+            assert!(!spec["required_parameters"].as_array().unwrap().iter().any(|v| v == "blade_t"));
+            assert!(spec["optional_parameters"].as_array().unwrap().iter().any(|v| v == "blade_t"));
+        }
+
+        for case in fixture["legacy_divergences"].as_array().unwrap() {
+            let input = case["input"].as_str().unwrap();
+            let output = parse(input);
+            assert_eq!(output["status"], "ready", "{input}: {output}");
+            assert!(output.to_string().contains(case["issue"].as_str().unwrap()), "{input}: {output}");
+            let parameters = &output["plan"]["features"][0]["parameters"];
+            for (name, expected) in case["rust_expected_mm"].as_object().unwrap() {
+                assert_eq!(parameters[name], *expected, "{input}: {name}");
+            }
+        }
+
+        for case in fixture["fallbacks"].as_array().unwrap() {
+            let input = case["input"].as_str().unwrap();
+            let output = parse(input);
+            assert!(
+                !output.to_string().contains("\"kind\":\"impeller\""),
+                "{input} must retain the old generic blisk-template route: {output}"
+            );
         }
 
         for case in fixture["needs_clarification"].as_array().unwrap() {

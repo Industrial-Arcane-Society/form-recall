@@ -205,7 +205,7 @@ const SPECS: &[Spec] = &[
     },
     Spec {
         kind: "impeller",
-        required: "hub_d tip_d height blades blade_t twist_deg",
+        required: "hub_d tip_d height blades twist_deg",
         params: "hub_d tip_d height blades blade_t twist_deg center segments",
         catia_status: "approximate",
         catia_reason: "CATIA 仅生成轮毂和轮盘，扭转叶片需要补建。",

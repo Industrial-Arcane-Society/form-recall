@@ -1,0 +1,58 @@
+{
+  "source": {
+    "partlib": "src/legacy/ai_modeler/parts/library/partlib.py::build_features_ex and _impeller",
+    "geometry": "src/legacy/ai_modeler/core/geometry/kernel.py::make_impeller",
+    "routing": "src/legacy/ai_modeler/core/parsing/nlparser.py::Parser.handle and try_template"
+  },
+  "legacy_accepted": [
+    {
+      "input": "涡轮叶轮 轮毂直径30 外径120 高度40 叶片数9 扭转角55",
+      "native_expected": {"hub_d": 30.0, "tip_d": 120.0, "height": 40.0, "blades": 9, "twist_deg": 55.0, "center": [0.0, 0.0, 0.0], "segments": 12},
+      "source_user": ["hub_d", "tip_d", "height", "blades", "twist_deg"],
+      "legacy_python": {"bbox_mm": [120.0, 120.0, 40.0], "faces": 698, "triangles": 1316, "mesh_volume_mm3": 419247.9323192049}
+    },
+    {
+      "input": "压气机叶轮 轮毂直径20 外径80 高度26 叶片数7 扭转角60",
+      "native_expected": {"hub_d": 20.0, "tip_d": 80.0, "height": 26.0, "blades": 7, "twist_deg": 60.0, "center": [0.0, 0.0, 0.0], "segments": 12},
+      "source_user": ["hub_d", "tip_d", "height", "blades", "twist_deg"],
+      "legacy_python": {"bbox_mm": [80.0, 80.0, 26.0], "faces": 586, "triangles": 1108, "mesh_volume_mm3": 102919.45333429617}
+    },
+    {
+      "input": "涡轮叶轮 外径120 高度40",
+      "native_expected": {"hub_d": 30.0, "tip_d": 120.0, "height": 40.0, "blades": 9, "twist_deg": 55.0, "center": [0.0, 0.0, 0.0], "segments": 12},
+      "source_derived": ["hub_d", "blades", "twist_deg", "center", "segments"],
+      "warnings": ["legacy_impeller_default_hub_d", "legacy_impeller_default_blades", "legacy_impeller_default_twist"]
+    },
+    {
+      "input": "涡轮叶轮 外径120 高度40 中心孔10",
+      "native_expected": {"hub_d": 30.0, "tip_d": 120.0, "height": 40.0, "blades": 9, "twist_deg": 55.0},
+      "feature_count": 2,
+      "second_feature": {"kind": "hole", "operation": "cut", "diameter": 10.0, "through": true, "axis": "Z", "pos": "center"},
+      "legacy_python": {"feature_count": 2, "hole_kind": "hole", "hole_operation": "cut"}
+    }
+  ],
+  "legacy_divergences": [
+    {
+      "input": "涡轮叶轮 外径12cm 高度4cm 轮毂直径3cm",
+      "rust_expected_mm": {"hub_d": 30.0, "tip_d": 120.0, "height": 40.0},
+      "legacy_python_interpreted_as_mm": {"hub_d": 3.0, "tip_d": 12.0, "height": 4.0},
+      "issue": "legacy_impeller_unit_conversion"
+    }
+  ],
+  "fallbacks": [
+    {"input": "涡轮叶轮", "reason": "legacy partlib requires explicit tip diameter and height; nlparser then selects generic 20-blade blisk template"},
+    {"input": "涡轮叶轮 外径120", "reason": "legacy partlib requires explicit height; nlparser then selects generic 20-blade blisk template"}
+  ],
+  "needs_clarification": [
+    {"input": "涡轮叶轮 外径120 外径140 高度40", "issue": "legacy_impeller_tip_d_invalid"}
+  ],
+  "unsupported": [
+    {"input": "涡轮叶轮 外径120 高度40 叶片厚5", "issue": "legacy_impeller_modifier_not_migrated"},
+    {"input": "涡轮叶轮 外径120 高度40 偏置孔10", "issue": "legacy_impeller_hole_location_not_migrated"}
+  ],
+  "geometry_acceptance": [
+    {"input": "涡轮叶轮 轮毂直径30 外径120 高度40 叶片数9 扭转角55", "dimensions_mm": [120.0, 120.0, 40.0], "hub_d": 30.0, "tip_d": 120.0, "height": 40.0, "blade_count": 9, "twist_deg": 55.0, "feature_count": 1},
+    {"input": "压气机叶轮 轮毂直径20 外径80 高度26 叶片数7 扭转角60", "dimensions_mm": [80.0, 80.0, 26.0], "hub_d": 20.0, "tip_d": 80.0, "height": 26.0, "blade_count": 7, "twist_deg": 60.0, "feature_count": 1},
+    {"input": "涡轮叶轮 外径120 高度40 中心孔10", "dimensions_mm": [120.0, 120.0, 40.0], "hub_d": 30.0, "tip_d": 120.0, "height": 40.0, "blade_count": 9, "twist_deg": 55.0, "feature_count": 2, "hole_diameter": 10.0, "hole_count": 1}
+  ]
+}

@@ -6,7 +6,7 @@
 //! facet B-Rep before fusing it with the analytic solids.
 
 use crate::native_occt::{Analysis, Axis, Kernel, Shape, TriangleMesh};
-use serde_json::{json, Value};
+use serde_json::{Value, json};
 
 const MAX_BLADES: i64 = 128;
 const MIN_SEGMENTS: i64 = 4;
@@ -21,6 +21,7 @@ struct Impeller {
     height: f64,
     blades: usize,
     blade_t: f64,
+    blade_t_defaulted: bool,
     twist_deg: f64,
     center: [f64; 3],
     segments: usize,
@@ -41,6 +42,7 @@ pub fn preflight(parameters: &Value) -> Result<Value, String> {
         "height_mm": p.height,
         "blade_count": p.blades,
         "blade_t_mm": p.blade_t,
+        "blade_t_defaulted": p.blade_t_defaulted,
         "blade_axial_span_mm": p.blade_axial,
         "blade_chord_mm": p.chord,
         "twist_deg": p.twist_deg,
@@ -101,6 +103,7 @@ pub fn build(kernel: &Kernel, parameters: &Value) -> Result<(Vec<Shape>, Value),
         "height_mm": p.height,
         "blade_count": p.blades,
         "blade_t_mm": p.blade_t,
+        "blade_t_defaulted": p.blade_t_defaulted,
         "blade_axial_span_mm": p.blade_axial,
         "blade_chord_mm": p.chord,
         "twist_deg": p.twist_deg,
@@ -119,7 +122,7 @@ pub fn build(kernel: &Kernel, parameters: &Value) -> Result<(Vec<Shape>, Value),
 }
 
 fn checked_parameters(parameters: &Value) -> Result<Impeller, String> {
-    for key in ["hub_d", "tip_d", "height", "blades", "blade_t", "twist_deg"] {
+    for key in ["hub_d", "tip_d", "height", "blades", "twist_deg"] {
         if parameters.get(key).is_none_or(Value::is_null) {
             return Err(format!(
                 "impeller 缺少必填几何参数 {key}；拒绝用默认值猜测。"
@@ -129,7 +132,15 @@ fn checked_parameters(parameters: &Value) -> Result<Impeller, String> {
     let hub_d = number(parameters, "hub_d")?;
     let tip_d = number(parameters, "tip_d")?;
     let height = number(parameters, "height")?;
-    let blade_t = number(parameters, "blade_t")?;
+    // The legacy Quick impeller did not pass blade_t. Its polygon recipe
+    // computed an unused local thickness and still built each blade through
+    // the full impeller height. Preserve that behavior when CADPlan omits it.
+    let blade_t_defaulted = parameters.get("blade_t").is_none_or(Value::is_null);
+    let blade_t = if blade_t_defaulted {
+        height
+    } else {
+        number(parameters, "blade_t")?
+    };
     let twist_deg = number(parameters, "twist_deg")?;
     let blades = integer(parameters, "blades")?;
     if hub_d < 2.0 || tip_d < hub_d * 1.05 || height < 1.0 || blade_t <= 0.0 {
@@ -197,6 +208,7 @@ fn checked_parameters(parameters: &Value) -> Result<Impeller, String> {
         height,
         blades: blades as usize,
         blade_t,
+        blade_t_defaulted,
         twist_deg,
         center,
         segments: segments as usize,
@@ -354,6 +366,17 @@ mod tests {
         .unwrap();
         assert_eq!(result["blade_count"], 6);
         assert_eq!(result["blade_axial_span_mm"], 2.0);
+        assert_eq!(result["blade_t_defaulted"], false);
         assert_eq!(result["section_intervals_per_blade"], 12);
+    }
+
+    #[test]
+    fn impeller_omitted_blade_t_preserves_legacy_full_height_blades() {
+        let result =
+            preflight(&json!({"hub_d":30,"tip_d":120,"height":40,"blades":9,"twist_deg":55}))
+                .unwrap();
+        assert_eq!(result["blade_t_defaulted"], true);
+        assert_eq!(result["blade_t_mm"], 40.0);
+        assert_eq!(result["blade_axial_span_mm"], 40.0);
     }
 }
