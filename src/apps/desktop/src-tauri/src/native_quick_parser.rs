@@ -109,6 +109,9 @@ pub fn parse(text: &str) -> Value {
     if let Some(parsed) = parse_legacy_simple_ring(text, &normalized) {
         return parsed;
     }
+    if let Some(parsed) = parse_legacy_spacer_pad(text, &normalized) {
+        return parsed;
+    }
     if let Some(parsed) = parse_legacy_washer(text, &normalized) {
         return parsed;
     }
@@ -1046,6 +1049,169 @@ fn parse_legacy_washer(raw: &str, text: &str) -> Option<Value> {
         }),
     ];
     Some(plan_result(raw, "垫圈", features, warnings))
+}
+
+/// Migrate the legacy Python Quick spacer-pad recipe. The old part-library
+/// constructor emits one centered rectangular box and defaults to the
+/// measured 50 x 20 x 5 mm pad when a dimension is omitted. Explicit input
+/// dimensions take precedence over the old retrieval fallback, which could
+/// otherwise replace a stated length or width with that catalog default.
+fn parse_legacy_spacer_pad(raw: &str, text: &str) -> Option<Value> {
+    if !contains_any(text, &["垫片垫块", "垫块"]) {
+        return None;
+    }
+
+    if contains_any(
+        text,
+        &[
+            "孔", "通孔", "盲孔", "沉孔", "槽", "倒角", "圆角", "螺纹", "阵列", "组合", "并加",
+            "再加", "还要", "多个", "两个", "三孔", "四孔",
+        ],
+    ) {
+        return Some(parse_result_with_issue(
+            "unsupported",
+            raw,
+            "legacy_spacer_pad_modifier_not_migrated",
+            "旧 Python Quick 垫片垫块配方只生成一个矩形垫块；孔槽、倒角、阵列或组合加工尚未迁入。",
+        ));
+    }
+
+    let triplet = find_dimension_triplet(text);
+    let pair = find_dimension_pair(text);
+    let length = merge_optional_scalar(
+        pulley_scalar(raw, text, &["length", "长度", "长"], &["L", "l"]),
+        triplet
+            .map(|values| values[0])
+            .or_else(|| pair.map(|values| values[0])),
+    );
+    let width = merge_optional_scalar(
+        pulley_scalar(raw, text, &["width", "宽度", "宽"], &["W", "w"]),
+        triplet
+            .map(|values| values[1])
+            .or_else(|| pair.map(|values| values[1])),
+    );
+    let height = merge_optional_scalar(
+        pulley_scalar(
+            raw,
+            text,
+            &["thickness", "厚度", "厚", "height", "高度", "高"],
+            &["t", "h", "H"],
+        ),
+        triplet.map(|values| values[2]),
+    );
+
+    let mut questions = Vec::new();
+    for (value, code, label) in [
+        (length, "legacy_spacer_pad_length_invalid", "长度"),
+        (width, "legacy_spacer_pad_width_invalid", "宽度"),
+        (height, "legacy_spacer_pad_thickness_invalid", "厚度"),
+    ] {
+        if value.is_some_and(|value| !value.is_finite() || value <= 0.0) {
+            questions.push(issue(
+                code,
+                format!("垫片垫块{label}必须是有限正数，且不同写法不能互相冲突。"),
+            ));
+        }
+    }
+    if !questions.is_empty() {
+        return Some(result(
+            "needs_clarification",
+            raw,
+            None,
+            vec![],
+            questions,
+            vec![],
+        ));
+    }
+
+    let length_was_explicit = length.is_some();
+    let width_was_explicit = width.is_some();
+    let height_was_explicit = height.is_some();
+    let length = length.unwrap_or(50.0);
+    let width = width.unwrap_or(20.0);
+    let height = height.unwrap_or(5.0);
+    let mut warnings = Vec::new();
+    if !length_was_explicit || !width_was_explicit || !height_was_explicit {
+        warnings.push(issue(
+            "legacy_spacer_pad_defaults",
+            "未给出的垫块尺寸沿用旧 Python Quick 的零件库默认值 50×20×5 mm；可在特征参数中修改。",
+        ));
+    }
+    if triplet.is_some() {
+        warnings.push(issue(
+            "legacy_spacer_pad_triplet_interpretation",
+            "按长×宽×厚解释紧凑三维尺寸；旧 Python Quick 未识别该写法时会错误回退到默认尺寸。",
+        ));
+    }
+    if crankshaft_has_non_mm_unit(text) {
+        warnings.push(issue(
+            "legacy_spacer_pad_unit_conversion",
+            "已将垫块输入中的 cm、dm、m 或英寸换算为 mm；旧 Python Quick 对该配方会把数值当作 mm。",
+        ));
+    } else if (length_was_explicit || width_was_explicit || height_was_explicit) && !has_unit(text)
+    {
+        warnings.push(issue(
+            "unit_interpreted_as_mm",
+            "未写单位的垫块尺寸按 mm 解释。",
+        ));
+    }
+
+    let mut parameters = serde_json::Map::new();
+    let mut sources = serde_json::Map::new();
+    for (key, value, explicit, label) in [
+        ("length", length, length_was_explicit, "长度 L"),
+        ("width", width, width_was_explicit, "宽度 W"),
+        ("height", height, height_was_explicit, "厚度 t"),
+    ] {
+        parameters.insert(key.into(), json!(value));
+        sources.insert(
+            key.into(),
+            if explicit {
+                user_source(raw)
+            } else {
+                derived_source(raw, &format!("沿用旧 Python Quick 垫片垫块默认{label}。"))
+            },
+        );
+    }
+    parameters.insert("corner".into(), json!(0.0));
+    sources.insert(
+        "corner".into(),
+        derived_source(raw, "旧 Python Quick 垫片垫块不生成圆角，保持直角外形。"),
+    );
+    parameters.insert("corner_mode".into(), json!("fillet"));
+    sources.insert(
+        "corner_mode".into(),
+        derived_source(
+            raw,
+            "沿用旧 Python Quick 长方体默认轮廓模式；corner=0，因此无圆角。",
+        ),
+    );
+    parameters.insert("center".into(), json!([0.0, 0.0, 0.0]));
+    sources.insert(
+        "center".into(),
+        derived_source(raw, "沿用旧 Python Quick 将垫块置于全局原点。"),
+    );
+    parameters.insert("base".into(), json!(false));
+    sources.insert(
+        "base".into(),
+        derived_source(raw, "沿用旧 Python Quick 以原点为中心放置垫块。"),
+    );
+    parameters.insert("axis".into(), json!("Z"));
+    sources.insert(
+        "axis".into(),
+        derived_source(raw, "沿用旧 Python Quick 垫块沿全局 Z 轴挤出。"),
+    );
+
+    let feature = json!({
+        "id":"quick-0001",
+        "kind":"box",
+        "operation":"add",
+        "name":"垫片垫块主体",
+        "parameters":parameters,
+        "sources":sources,
+        "relations":[]
+    });
+    Some(plan_result(raw, "垫片垫块", vec![feature], warnings))
 }
 
 /// Migrate the legacy bearing-seat recipe: one cylinder and an optional
@@ -14617,6 +14783,98 @@ mod f5_53_legacy_valve_contract_tests {
             assert_eq!(output["status"], "unsupported", "{input}: {output}");
             assert!(output["plan"].is_null(), "{input}: {output}");
             assert!(output.to_string().contains(case["issue"].as_str().unwrap()), "{input}: {output}");
+        }
+    }
+}
+
+#[cfg(test)]
+mod f5_54_legacy_spacer_pad_contract_tests {
+    use super::parse;
+    use serde_json::Value;
+
+    #[test]
+    fn legacy_spacer_pads_preserve_defaults_and_fix_explicit_dimension_loss() {
+        let fixture: Value = serde_json::from_str(include_str!(
+            "../tests/fixtures/quick_legacy_spacer_pad_contract.json"
+        ))
+        .expect("spacer-pad Python oracle fixture is valid JSON");
+
+        for case in fixture["legacy_accepted"].as_array().unwrap() {
+            let input = case["input"].as_str().unwrap();
+            let output = parse(input);
+            assert_eq!(output["status"], "ready", "{input}: {output}");
+            assert_eq!(output["plan"]["name"], "垫片垫块", "{input}: {output}");
+            let features = output["plan"]["features"].as_array().unwrap();
+            assert_eq!(features.len(), 1, "{input}: {output}");
+            let pad = &features[0];
+            assert_eq!(pad["kind"], "box", "{input}: {output}");
+            assert_eq!(pad["operation"], "add", "{input}: {output}");
+            assert_eq!(
+                pad["parameters"]["center"],
+                serde_json::json!([0.0, 0.0, 0.0]),
+                "{input}"
+            );
+            assert_eq!(pad["parameters"]["base"], false, "{input}");
+            for (axis, dimension) in ["length", "width", "height"].iter().enumerate() {
+                assert_eq!(
+                    pad["parameters"][dimension], case["legacy_dimensions_mm"][axis],
+                    "{input}: {dimension}"
+                );
+                assert_eq!(
+                    pad["sources"][dimension]["type"], case["rust_sources"][dimension],
+                    "{input}: {dimension} source"
+                );
+            }
+            assert_eq!(
+                crate::cad_plan_validation::validate_plan(&output["plan"])["valid"],
+                true,
+                "{input}: {output}"
+            );
+            assert!(
+                crate::native_plan_geometry::preflight(&output["plan"]).is_ok(),
+                "{input}"
+            );
+        }
+
+        for case in fixture["legacy_divergences"].as_array().unwrap() {
+            let input = case["input"].as_str().unwrap();
+            let output = parse(input);
+            assert_eq!(output["status"], "ready", "{input}: {output}");
+            assert!(
+                output
+                    .to_string()
+                    .contains(case["warning"].as_str().unwrap()),
+                "{input}: {output}"
+            );
+            for (axis, dimension) in ["length", "width", "height"].iter().enumerate() {
+                assert_eq!(
+                    output["plan"]["features"][0]["parameters"][dimension],
+                    case["rust_dimensions_mm"][axis],
+                    "{input}: {dimension}"
+                );
+            }
+        }
+
+        for case in fixture["needs_clarification"].as_array().unwrap() {
+            let input = case["input"].as_str().unwrap();
+            let output = parse(input);
+            assert_eq!(output["status"], "needs_clarification", "{input}: {output}");
+            assert!(output["plan"].is_null(), "{input}: {output}");
+            assert!(
+                output.to_string().contains(case["issue"].as_str().unwrap()),
+                "{input}: {output}"
+            );
+        }
+
+        for case in fixture["unsupported"].as_array().unwrap() {
+            let input = case["input"].as_str().unwrap();
+            let output = parse(input);
+            assert_eq!(output["status"], "unsupported", "{input}: {output}");
+            assert!(output["plan"].is_null(), "{input}: {output}");
+            assert!(
+                output.to_string().contains(case["issue"].as_str().unwrap()),
+                "{input}: {output}"
+            );
         }
     }
 }

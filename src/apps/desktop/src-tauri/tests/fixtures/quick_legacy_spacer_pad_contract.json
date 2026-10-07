@@ -1,0 +1,133 @@
+{
+  "source": {
+    "part_library": "src/legacy/ai_modeler/parts/library/partlib.py::PROFILE_PARTS['垫片垫块'] and _spacer_pad",
+    "quick_entry": "src/legacy/ai_modeler/core/parsing/nlparser.py::Parser.handle and partlib.build_features_ex",
+    "geometry": "src/legacy/ai_modeler/core/model/docmodel.py::Feature.build(box)"
+  },
+  "legacy_accepted": [
+    {
+      "input": "垫片垫块 长50 宽20 厚5",
+      "legacy_dimensions_mm": [50.0, 20.0, 5.0],
+      "legacy_mesh": {
+        "bbox_mm": [-25.0, -10.0, -2.5, 25.0, 10.0, 2.5],
+        "faces": 8,
+        "triangles": 12,
+        "volume_mm3": 5000.0,
+        "area_mm2": 2700.0
+      },
+      "rust_sources": {
+        "length": "user",
+        "width": "user",
+        "height": "user"
+      },
+      "legacy_feature": {
+        "kind": "box",
+        "operation": "add",
+        "name": "垫片垫块 实测 50×20×5",
+        "parameters": {
+          "length": 50.0,
+          "width": 20.0,
+          "height": 5.0,
+          "corner": 0.0,
+          "corner_mode": "fillet",
+          "center": [0.0, 0.0, 0.0],
+          "base": false,
+          "axis": "Z"
+        }
+      }
+    },
+    {
+      "input": "垫块",
+      "legacy_dimensions_mm": [50.0, 20.0, 5.0],
+      "legacy_mesh": {
+        "bbox_mm": [-25.0, -10.0, -2.5, 25.0, 10.0, 2.5],
+        "faces": 8,
+        "triangles": 12,
+        "volume_mm3": 5000.0,
+        "area_mm2": 2700.0
+      },
+      "rust_sources": {
+        "length": "derived",
+        "width": "derived",
+        "height": "derived"
+      },
+      "legacy_defaults": {
+        "length": 50.0,
+        "width": 20.0,
+        "height": 5.0
+      }
+    },
+    {
+      "input": "垫块 长50 宽20",
+      "legacy_dimensions_mm": [50.0, 20.0, 5.0],
+      "rust_sources": {
+        "length": "user",
+        "width": "user",
+        "height": "derived"
+      },
+      "legacy_default_height_mm": 5.0
+    }
+  ],
+  "legacy_divergences": [
+    {
+      "input": "垫片垫块 50x50x5",
+      "legacy_parser_dimensions_mm": [50.0, 20.0, 5.0],
+      "legacy_issue": "旧 Quick 未解析紧凑三维尺寸，悄悄回退到零件库典型尺寸。Rust 按输入顺序解释为长×宽×厚。",
+      "rust_dimensions_mm": [50.0, 50.0, 5.0],
+      "warning": "legacy_spacer_pad_triplet_interpretation"
+    },
+    {
+      "input": "垫片垫块 长30cm 宽10cm 厚4mm",
+      "legacy_parser_dimensions_mm": [30.0, 10.0, 4.0],
+      "legacy_issue": "旧 Quick 忽略显式 cm 单位；Rust 统一换算到 mm。",
+      "rust_dimensions_mm": [300.0, 100.0, 4.0],
+      "warning": "legacy_spacer_pad_unit_conversion"
+    }
+  ],
+  "needs_clarification": [
+    {
+      "input": "垫块 长0 宽20 厚5",
+      "issue": "legacy_spacer_pad_length_invalid"
+    },
+    {
+      "input": "垫块 长50 长60 宽20 厚5",
+      "issue": "legacy_spacer_pad_length_invalid"
+    },
+    {
+      "input": "垫块 长50 宽20 厚5 50x20x6",
+      "issue": "legacy_spacer_pad_thickness_invalid"
+    }
+  ],
+  "unsupported": [
+    {
+      "input": "垫块 长50 宽20 厚5 中心通孔6",
+      "issue": "legacy_spacer_pad_modifier_not_migrated"
+    },
+    {
+      "input": "垫片垫块 50x20x5 倒角2",
+      "issue": "legacy_spacer_pad_modifier_not_migrated"
+    }
+  ],
+  "geometry_acceptance": [
+    {
+      "input": "垫片垫块 长50 宽20 厚5",
+      "dimensions_mm": [50.0, 20.0, 5.0],
+      "feature_count": 1
+    },
+    {
+      "input": "垫片垫块 50x50x5",
+      "dimensions_mm": [50.0, 50.0, 5.0],
+      "feature_count": 1
+    },
+    {
+      "input": "垫块",
+      "dimensions_mm": [50.0, 20.0, 5.0],
+      "feature_count": 1
+    },
+    {
+      "input": "垫块 长5cm 宽2cm 厚5mm",
+      "dimensions_mm": [50.0, 20.0, 5.0],
+      "feature_count": 1
+    }
+  ]
+}
