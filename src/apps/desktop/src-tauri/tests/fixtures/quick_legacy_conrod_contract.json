@@ -1,0 +1,84 @@
+{
+  "schema_version": "1.0",
+  "legacy_entrypoint": "src/legacy/ai_modeler/core/parsing/nlparser.py::Parser.parse",
+  "legacy_recipe": "src/legacy/ai_modeler/parts/library/partlib.py::_conrod",
+  "legacy_geometry": "src/legacy/ai_modeler/core/geometry/kernel.py::make_conrod",
+  "legacy_defaults": {
+    "big_bore_factor": 0.72,
+    "small_bore_factor": 0.72,
+    "shank_width_factor": 0.8,
+    "thickness_formula": "max(2, 0.6 * min(big_d, small_d))",
+    "legacy_python_cm_behavior": "cm suffix is stripped without conversion"
+  },
+  "legacy_accepted": [
+    {
+      "input": "连杆 L120 D48 d24",
+      "native_expected": {
+        "length": 120,
+        "big_d": 48,
+        "big_bore": 34.56,
+        "small_d": 24,
+        "small_bore": 17.28,
+        "shank_w": 19.2,
+        "thick": 14.4,
+        "center": [0, 0, 0],
+        "segments": 32
+      },
+      "sources": {
+        "user": ["length", "big_d", "small_d"],
+        "derived": ["big_bore", "small_bore", "shank_w", "thick", "center", "segments"]
+      },
+      "dimensions_mm": [156, 48, 14.4],
+      "legacy_report_bbox_mm": [138, 48]
+    },
+    {
+      "input": "连杆 中心距120 大头外径48 大头孔径40 小头外径24 小头孔径18 杆厚20",
+      "native_expected": {
+        "length": 120,
+        "big_d": 48,
+        "big_bore": 40,
+        "small_d": 24,
+        "small_bore": 18,
+        "shank_w": 20,
+        "thick": 20,
+        "center": [0, 0, 0],
+        "segments": 32
+      },
+      "sources": {
+        "user": ["length", "big_d", "big_bore", "small_d", "small_bore", "shank_w", "thick"],
+        "derived": ["center", "segments"]
+      },
+      "dimensions_mm": [156, 48, 20]
+    },
+    {
+      "input": "连杆 中心距12cm 大头外径48mm 小头外径24mm",
+      "native_expected": {
+        "length": 120,
+        "big_d": 48,
+        "big_bore": 34.56,
+        "small_d": 24,
+        "small_bore": 17.28,
+        "shank_w": 19.2,
+        "thick": 14.4,
+        "center": [0, 0, 0],
+        "segments": 32
+      },
+      "unit_conversion_improves_legacy": true,
+      "legacy_center_distance_mm": 12,
+      "dimensions_mm": [156, 48, 14.4]
+    }
+  ],
+  "needs_clarification": [
+    {"input": "连杆", "issue": "legacy_conrod_center_distance_missing"},
+    {"input": "连杆 中心距120 大头外径48", "issue": "legacy_conrod_small_d_missing"},
+    {"input": "连杆 中心距120 中心距125 大头外径48 小头外径24", "issue": "legacy_conrod_parameter_conflict"}
+  ],
+  "unsupported": [
+    {"input": "连杆 中心距120 大头外径48 小头外径24 油孔10", "issue": "legacy_conrod_modifier_not_migrated"}
+  ],
+  "geometry_acceptance": [
+    {"input": "连杆 L120 D48 d24", "dimensions_mm": [156, 48, 14.4]},
+    {"input": "连杆 中心距120 大头外径48 大头孔径40 小头外径24 小头孔径18 杆厚20", "dimensions_mm": [156, 48, 20]},
+    {"input": "连杆 中心距12cm 大头外径48mm 小头外径24mm", "dimensions_mm": [156, 48, 14.4]}
+  ]
+}

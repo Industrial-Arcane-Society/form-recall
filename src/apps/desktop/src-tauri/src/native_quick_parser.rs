@@ -55,6 +55,9 @@ pub fn parse(text: &str) -> Value {
     if let Some(parsed) = parse_legacy_crankshaft(text, &normalized) {
         return parsed;
     }
+    if let Some(parsed) = parse_legacy_conrod(text, &normalized) {
+        return parsed;
+    }
     if let Some(parsed) = parse_legacy_camshaft(text, &normalized) {
         return parsed;
     }
@@ -2870,6 +2873,237 @@ fn crankshaft_has_non_mm_unit(text: &str) -> bool {
         || regex::Regex::new(r"\d\s*(?:cm|dm|in|m)\b")
             .expect("fixed crankshaft non-mm unit regex")
             .is_match(text)
+}
+
+/// Migrate the old Python Quick connecting-rod recipe. The legacy feature is
+/// centered on the two bore centers along X. Bore diameters and rod thickness
+/// have geometry-kernel defaults; center distance and both end diameters must
+/// be stated because the old parser does not reliably fill them from its
+/// general-purpose typical-value table.
+fn parse_legacy_conrod(raw: &str, text: &str) -> Option<Value> {
+    if contains_any(text, &["曲轴", "crankshaft"]) {
+        return None;
+    }
+    if !contains_any(text, &["发动机连杆", "连杆", "connecting rod", "conrod"]) {
+        return None;
+    }
+    // A crankshaft description often contains "连杆颈"; the crankshaft
+    // handler runs first, but this guard also keeps standalone mentions from
+    // becoming a complete connecting rod.
+    if contains_any(text, &["连杆颈", "连杆轴颈"]) && !contains_any(text, &["发动机连杆", "connecting rod", "conrod"]) {
+        return None;
+    }
+
+    let mut modifier_text = text.to_owned();
+    for label in [
+        "大头孔径", "大头孔", "小头孔径", "小头孔", "big end bore", "small end bore", "big bore", "small bore",
+    ] {
+        modifier_text = modifier_text.replace(label, "");
+    }
+    if contains_any(
+        &modifier_text,
+        &[
+            "通孔", "盲孔", "油孔", "润滑孔", "螺栓孔", "孔", "hole", "bore", "drill",
+            "槽", "slot", "pocket", "keyway", "螺纹", "thread", "倒角", "chamfer",
+            "圆角", "fillet", "焊接", "镜像", "阵列", "再加", "同时", "另外", "并加",
+            "一对", "两个", "多个", "pair",
+        ],
+    ) {
+        return Some(parse_result_with_issue(
+            "unsupported",
+            raw,
+            "legacy_conrod_modifier_not_migrated",
+            "当前只迁移旧 Python Quick 连杆主体及大小头孔；油孔、槽、螺纹、边缘修饰、阵列和多个连杆尚未迁入。",
+        ));
+    }
+
+    let center_distance = pulley_scalar(
+        raw,
+        text,
+        &["两孔中心距", "中心距离", "中心距", "长度", "长", "center distance", "length"],
+        &["L"],
+    );
+    let big_d = pulley_scalar(
+        raw,
+        text,
+        &["大头外径", "大头直径", "大端外径", "big end diameter"],
+        &["D"],
+    );
+    let small_d = pulley_scalar(
+        raw,
+        text,
+        &["小头外径", "小头直径", "小端外径", "small end diameter"],
+        &["d"],
+    );
+    let big_bore = pulley_scalar(
+        raw,
+        text,
+        &["大头孔径", "大头孔", "big end bore", "big bore"],
+        &["dh"],
+    );
+    let small_bore = pulley_scalar(
+        raw,
+        text,
+        &["小头孔径", "小头孔", "small end bore", "small bore"],
+        &["dh2", "d_h2"],
+    );
+    let thickness = pulley_scalar(
+        raw,
+        text,
+        &["杆身厚度", "杆厚", "杆身宽度", "厚度", "厚", "宽度", "宽", "thickness"],
+        &["thick"],
+    );
+
+    let mut questions = Vec::new();
+    for (value, missing_code, invalid_code, label) in [
+        (center_distance, "legacy_conrod_center_distance_missing", "legacy_conrod_parameter_conflict", "连杆两端孔中心距"),
+        (big_d, "legacy_conrod_big_d_missing", "legacy_conrod_parameter_conflict", "大头外径"),
+        (small_d, "legacy_conrod_small_d_missing", "legacy_conrod_parameter_conflict", "小头外径"),
+    ] {
+        match value {
+            Some(value) if value.is_finite() => {}
+            Some(_) => questions.push(issue(
+                invalid_code,
+                format!("{label}存在重复且互相冲突的数值；请为每项只给一个值。"),
+            )),
+            None => questions.push(issue(
+                missing_code,
+                format!("请明确连杆的{label}。"),
+            )),
+        }
+    }
+    for (value, label) in [
+        (big_bore, "大头孔径"),
+        (small_bore, "小头孔径"),
+        (thickness, "杆厚"),
+    ] {
+        if value.is_some_and(|value| !value.is_finite()) {
+            questions.push(issue(
+                "legacy_conrod_parameter_conflict",
+                format!("连杆{label}存在重复且互相冲突的数值；请为每项只给一个值。"),
+            ));
+        }
+    }
+    if !questions.is_empty() {
+        return Some(result("needs_clarification", raw, None, vec![], questions, vec![]));
+    }
+
+    let requested_length = center_distance.expect("validated conrod center distance");
+    let requested_big_d = big_d.expect("validated conrod big-end diameter");
+    let requested_small_d = small_d.expect("validated conrod small-end diameter");
+    let length = requested_length.max(2.0);
+    let big_d = requested_big_d.max(2.0);
+    let small_d = requested_small_d.max(1.5);
+    let default_big_bore = big_bore.is_none();
+    let default_small_bore = small_bore.is_none();
+    let requested_big_bore = big_bore.unwrap_or(big_d * 0.72);
+    let requested_small_bore = small_bore.unwrap_or(small_d * 0.72);
+    // Keep the legacy mesh-kernel limits, but expose every adjusted value as
+    // derived so a caller can distinguish it from the user's dimension.
+    let effective_big_bore = requested_big_bore.max(0.5).min(big_d * 0.90);
+    let effective_small_bore = requested_small_bore.max(0.4).min(small_d * 0.90);
+    let default_thickness = thickness.is_none();
+    let requested_thickness = thickness.unwrap_or_else(|| (big_d.min(small_d) * 0.6).max(2.0));
+    let effective_thickness = requested_thickness.max(0.8);
+    let default_shank_w = thickness.is_none();
+    let requested_shank_w = thickness.unwrap_or(small_d * 0.8);
+    let effective_shank_w = requested_shank_w.min(big_d * 0.85).min(small_d * 0.85);
+
+    let mut warnings = Vec::new();
+    let mut defaults = Vec::new();
+    if !close(length, requested_length) {
+        defaults.push("中心距下限 2 mm".to_string());
+    }
+    if !close(big_d, requested_big_d) {
+        defaults.push("大头外径下限 2 mm".to_string());
+    }
+    if !close(small_d, requested_small_d) {
+        defaults.push("小头外径下限 1.5 mm".to_string());
+    }
+    if default_big_bore {
+        defaults.push("大头孔径按 0.72×大头外径推导".to_string());
+    }
+    if default_small_bore {
+        defaults.push("小头孔径按 0.72×小头外径推导".to_string());
+    }
+    if default_thickness {
+        defaults.push("杆厚按 max(2 mm, 0.6×较小头外径) 推导".to_string());
+    }
+    if default_shank_w {
+        defaults.push("杆身宽度按 0.8×小头外径推导".to_string());
+    }
+    if !defaults.is_empty() {
+        warnings.push(issue(
+            "legacy_conrod_defaults",
+            format!("沿用旧 Python Quick 连杆配方的几何默认或下限：{}。", defaults.join("；")),
+        ));
+    }
+    if !close(effective_big_bore, requested_big_bore)
+        || !close(effective_small_bore, requested_small_bore)
+        || !close(effective_thickness, requested_thickness)
+        || !close(effective_shank_w, requested_shank_w)
+    {
+        warnings.push(issue(
+            "legacy_conrod_geometry_clamped",
+            "旧 Python 几何内核会限制孔径、杆厚或杆身宽度；Rust 已将调整后的值写入 CADPlan。",
+        ));
+    }
+    if !crankshaft_has_unit(text) {
+        warnings.push(issue(
+            "unit_interpreted_as_mm",
+            "未写长度单位的连杆尺寸按旧 Quick 默认单位 mm 解释。",
+        ));
+    } else if crankshaft_has_non_mm_unit(text) {
+        warnings.push(issue(
+            "legacy_conrod_unit_conversion",
+            "Rust 将明确标注的非毫米单位换算为 mm；旧 Python 零件库曾保留原始数值。",
+        ));
+    }
+
+    let parameters = json!({
+        "length":length,
+        "big_d":big_d,
+        "big_bore":effective_big_bore,
+        "small_d":small_d,
+        "small_bore":effective_small_bore,
+        "shank_w":effective_shank_w,
+        "thick":effective_thickness,
+        "center":[0.0,0.0,0.0],
+        "segments":32
+    });
+    let feature = json!({
+        "id":"quick-0001",
+        "kind":"conrod",
+        "operation":"add",
+        "name":"连杆",
+        "parameters":parameters,
+        "sources":{
+            "length":if close(length, requested_length) { user_source(raw) } else { derived_source(raw, "沿用旧 Python 几何内核将中心距至少取 2 mm。") },
+            "big_d":if close(big_d, requested_big_d) { user_source(raw) } else { derived_source(raw, "沿用旧 Python 几何内核将大头外径至少取 2 mm。") },
+            "big_bore":if default_big_bore || !close(effective_big_bore, requested_big_bore) { derived_source(raw, "沿用旧 Python Quick 大头孔径默认值或几何内核上下限。") } else { user_source(raw) },
+            "small_d":if close(small_d, requested_small_d) { user_source(raw) } else { derived_source(raw, "沿用旧 Python 几何内核将小头外径至少取 1.5 mm。") },
+            "small_bore":if default_small_bore || !close(effective_small_bore, requested_small_bore) { derived_source(raw, "沿用旧 Python Quick 小头孔径默认值或几何内核上下限。") } else { user_source(raw) },
+            "shank_w":if default_shank_w || !close(effective_shank_w, requested_shank_w) { derived_source(raw, "沿用旧 Python Quick 杆身宽度默认值或几何内核上限。") } else { user_source(raw) },
+            "thick":if default_thickness || !close(effective_thickness, requested_thickness) { derived_source(raw, "沿用旧 Python 几何内核杆厚默认值或下限。") } else { user_source(raw) },
+            "center":derived_source(raw, "旧 Python Quick 将大小头中心放在 X 轴、以全局原点为中心。"),
+            "segments":derived_source(raw, "旧 Python Quick 的圆环分段数为 32；本地 B-Rep 使用解析回转。")
+        },
+        "relations":[]
+    });
+    if let Err(error) = crate::native_parametric_features::preflight_conrod(&parameters) {
+        return Some(result(
+            "needs_clarification",
+            raw,
+            None,
+            vec![],
+            vec![issue(
+                "legacy_conrod_geometry_parameters_invalid",
+                format!("当前连杆参数无法构成有效的单体几何：{error}"),
+            )],
+            vec![],
+        ));
+    }
+    Some(plan_result(raw, "连杆", vec![feature], warnings))
 }
 
 /// Migrate the old Python Quick camshaft recipe. Its required base diameter,
@@ -12083,6 +12317,98 @@ mod f5_45_legacy_crankshaft_contract_tests {
                 "valid",
                 "{input}"
             );
+        }
+
+        for case in fixture["needs_clarification"].as_array().unwrap() {
+            let input = case["input"].as_str().unwrap();
+            let output = parse(input);
+            assert_eq!(output["status"], "needs_clarification", "{input}: {output}");
+            assert!(output["plan"].is_null(), "{input}: {output}");
+            assert!(output.to_string().contains(case["issue"].as_str().unwrap()), "{input}: {output}");
+        }
+
+        for case in fixture["unsupported"].as_array().unwrap() {
+            let input = case["input"].as_str().unwrap();
+            let output = parse(input);
+            assert_eq!(output["status"], "unsupported", "{input}: {output}");
+            assert!(output["plan"].is_null(), "{input}: {output}");
+            assert!(output.to_string().contains(case["issue"].as_str().unwrap()), "{input}: {output}");
+        }
+    }
+}
+
+#[cfg(test)]
+mod f5_46_legacy_conrod_contract_tests {
+    use super::parse;
+    use serde_json::Value;
+
+    #[test]
+    fn legacy_conrods_match_python_oracle_defaults_units_and_boundaries() {
+        let fixture: Value = serde_json::from_str(include_str!(
+            "../tests/fixtures/quick_legacy_conrod_contract.json"
+        ))
+        .expect("conrod Python oracle fixture is valid JSON");
+
+        for case in fixture["legacy_accepted"].as_array().unwrap() {
+            let input = case["input"].as_str().unwrap();
+            let output = parse(input);
+            assert_eq!(output["status"], "ready", "{input}: {output}");
+            assert_eq!(output["plan"]["name"], "连杆", "{input}: {output}");
+            let features = output["plan"]["features"].as_array().unwrap();
+            assert_eq!(features.len(), 1, "{input}: {output}");
+            let conrod = &features[0];
+            assert_eq!(conrod["kind"], "conrod", "{input}: {output}");
+            assert_eq!(conrod["operation"], "add", "{input}: {output}");
+            for (name, expected) in case["native_expected"].as_object().unwrap() {
+                if let Some(expected_values) = expected.as_array() {
+                    let actual_values = conrod["parameters"][name].as_array().unwrap();
+                    assert_eq!(actual_values.len(), expected_values.len(), "{input}: {name}");
+                    for (actual, expected) in actual_values.iter().zip(expected_values) {
+                        assert!(
+                            (actual.as_f64().unwrap() - expected.as_f64().unwrap()).abs() <= 1e-9,
+                            "{input}: {name}={actual}, expected {expected}"
+                        );
+                    }
+                } else {
+                    let actual = conrod["parameters"][name].as_f64().unwrap();
+                    let expected = expected.as_f64().unwrap();
+                    assert!(
+                        (actual - expected).abs() <= 1e-9,
+                        "{input}: {name}={actual}, expected {expected}"
+                    );
+                }
+                assert!(
+                    conrod["sources"][name].is_object(),
+                    "{input}: missing provenance for {name}: {conrod}"
+                );
+            }
+            for name in case["sources"]["user"].as_array().unwrap() {
+                assert_eq!(
+                    conrod["sources"][name.as_str().unwrap()]["type"],
+                    "user",
+                    "{input}: expected user provenance for {name}: {conrod}"
+                );
+            }
+            for name in case["sources"]["derived"].as_array().unwrap() {
+                assert_eq!(
+                    conrod["sources"][name.as_str().unwrap()]["type"],
+                    "derived",
+                    "{input}: expected derived provenance for {name}: {conrod}"
+                );
+            }
+
+            let validation = crate::cad_plan_validation::validate_plan(&output["plan"]);
+            assert_eq!(validation["state"], "valid", "{input}: {validation}");
+            assert!(validation["confirmations"].as_array().unwrap().is_empty(), "{input}: {validation}");
+            assert!(validation["geometry_support"].to_string().contains("approximate"), "{input}: {validation}");
+            assert_eq!(
+                crate::native_plan_geometry::preflight(&output["plan"]).unwrap()["state"],
+                "valid",
+                "{input}"
+            );
+            if case.get("unit_conversion_improves_legacy").is_some() {
+                assert!(output.to_string().contains("legacy_conrod_unit_conversion"), "{input}: {output}");
+            }
         }
 
         for case in fixture["needs_clarification"].as_array().unwrap() {
