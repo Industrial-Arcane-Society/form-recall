@@ -52,6 +52,9 @@ pub fn parse(text: &str) -> Value {
     if let Some(parsed) = parse_legacy_spoked_handwheel(text, &normalized) {
         return parsed;
     }
+    if let Some(parsed) = parse_legacy_crankshaft(text, &normalized) {
+        return parsed;
+    }
     if let Some(parsed) = parse_legacy_camshaft(text, &normalized) {
         return parsed;
     }
@@ -590,8 +593,8 @@ fn result(
         "questions":questions,
         "unsupported":unsupported,
         "compatibility":{
-            "scope":"common explicit primitives/cuts, migrated standalone primitive defaults and legacy extrusion/revolve constructors, centered solid-shaft aliases, rectangular slots, flat-washer rings, cylindrical/conical spring helices, measured socket-head screws with optional washers, V-belt pulleys, timing pulleys, straight-gear construction, PCD counterbores, migrated legacy washer/spring/shaft/bearing/seal-ring/coupling/brake-disc/brake-drum/flywheel/flat-annular-part/disc-cam/spline-shaft/camshaft recipes, and executable flange/stepped-shaft/sleeve/blade/blisk templates",
-            "legacy_typical_defaults":"restored only for migrated Quick constructors/templates, centered solid shafts (Ø30 mm when diameter is absent), straight gears, timing pulleys, V-belt pulleys, socket-head screw catalog recipes, rectangular slots, flat-washer thickness, spring wire/turn values, brake-disc thickness/bore values, brake-drum bore values, flywheel center-bore/PCD-hole values, flat-annular-part bore/thickness values, disc-cam base diameter/thickness, spline-shaft minor diameter/tooth count, and camshaft lobe count/journal diameter; defaults and raw-dimension mappings are reported as warnings",
+            "scope":"common explicit primitives/cuts, migrated standalone primitive defaults and legacy extrusion/revolve constructors, centered solid-shaft aliases, rectangular slots, flat-washer rings, cylindrical/conical spring helices, measured socket-head screws with optional washers, V-belt pulleys, timing pulleys, straight-gear construction, PCD counterbores, migrated legacy washer/spring/shaft/bearing/seal-ring/coupling/brake-disc/brake-drum/flywheel/flat-annular-part/disc-cam/spline-shaft/crankshaft/camshaft recipes, and executable flange/stepped-shaft/sleeve/blade/blisk templates",
+            "legacy_typical_defaults":"restored only for migrated Quick constructors/templates, centered solid shafts (Ø30 mm when diameter is absent), straight gears, timing pulleys, V-belt pulleys, socket-head screw catalog recipes, rectangular slots, flat-washer thickness, spring wire/turn values, brake-disc thickness/bore values, brake-drum bore values, flywheel center-bore/PCD-hole values, flat-annular-part bore/thickness values, disc-cam base diameter/thickness, spline-shaft minor diameter/tooth count, crankshaft main/pin journal diameters and stroke/throw count, and camshaft lobe count/journal diameter; defaults and raw-dimension mappings are reported as warnings",
             "loft_geometry":"blade and blisk lofts are locally approximate faceted B-Reps",
             "timing_pulley_geometry":"native timing pulley teeth are approximate trapezoidal prisms fused to an analytic annular blank",
             "vbelt_pulley_geometry":"standard V-groove pulley is an approximate axisymmetric revolve; legacy spoke variants and CATIA-native groove features are not included",
@@ -600,6 +603,7 @@ fn result(
             "solid_shaft_geometry":"the old mesh kernel used a 48-sided cylinder; Rust/OCCT uses an analytic cylinder, so bounding boxes agree while volume differs by the expected polygonal approximation",
             "disc_cam_geometry":"72-point faceted polar profile extruded along Z; only the legacy fixed 120-degree rise angle is supported",
             "camshaft_geometry":"48-point cam profiles and 120-degree harmonic rise are fused with an analytic X-axis shaft into one closed B-Rep; this differs from the legacy unfused faceted mesh",
+            "crankshaft_geometry":"analytic journals with rectangular webs form one closed B-Rep; the legacy polygon mesh uses dumbbell-shaped cheek profiles, so the local Rust result is an explicitly approximate shape",
             "spline_shaft_geometry":"7-point-per-tooth faceted spline profile; the legacy involute-spline alias is not an involute profile"
         }
     })
@@ -2587,6 +2591,285 @@ fn legacy_spline_profile(root_radius: f64, tooth_height: f64, teeth: usize) -> V
         }
     }
     profile
+}
+
+/// Migrate the legacy Python Quick crankshaft recipe. The old part library
+/// supplies typical journal/stroke values, defaults to four throws, and lets
+/// the geometry kernel derive axial length when no positive total length is
+/// supplied. The native OCCT builder is approximate because its webs are
+/// rectangular rather than dumbbell-shaped.
+fn parse_legacy_crankshaft(raw: &str, text: &str) -> Option<Value> {
+    if !contains_any(text, &["曲轴", "crankshaft"]) || contains_any(text, &["曲轴箱", "crankcase"]) {
+        return None;
+    }
+
+    if contains_any(
+        text,
+        &[
+            "孔", "钻", "打孔", "油道", "槽", "键槽", "螺纹", "倒角", "圆角", "平衡块",
+            "螺栓", "阵列", "切除", "并加", "同时", "再加", "还要", "hole", "bore",
+            "drill", "oil passage", "slot", "keyway", "thread", "chamfer", "fillet",
+            "balance weight", "pattern", "cut",
+        ],
+    ) {
+        return Some(parse_result_with_issue(
+            "unsupported",
+            raw,
+            "legacy_crankshaft_modifier_not_migrated",
+            "本项只迁移旧 Python Quick 曲轴主体；油孔、油道、配重、键槽、螺纹和边缘修饰尚未迁入。",
+        ));
+    }
+
+    let mut main_d = pulley_scalar(
+        raw,
+        text,
+        &["主轴颈直径", "主轴颈", "main journal diameter", "main journal"],
+        &["d", "D"],
+    );
+    let mut pin_d = pulley_scalar(
+        raw,
+        text,
+        &[
+            "连杆轴颈直径", "连杆轴颈", "连杆颈直径", "连杆颈", "pin journal diameter",
+            "connecting rod journal diameter", "pin journal",
+        ],
+        &["dp", "d_p"],
+    );
+    let mut stroke = pulley_scalar(raw, text, &["活塞行程", "行程", "stroke"], &["S", "s"]);
+    if [main_d, pin_d, stroke]
+        .into_iter()
+        .any(|value| value.is_some_and(|value| !value.is_finite()))
+    {
+        return Some(parse_result_with_issue(
+            "needs_clarification",
+            raw,
+            "legacy_crankshaft_parameter_conflict",
+            "曲轴参数存在重复且数值冲突的标注；请分别给出唯一的主轴颈直径、连杆颈直径和行程。",
+        ));
+    }
+
+    // Preserve the old parser's narrow positional form: three bare dimensions
+    // after the part name, only when they exactly fill missing d/dp/S slots.
+    let missing = [main_d, pin_d, stroke]
+        .iter()
+        .filter(|value| value.is_none())
+        .count();
+    if missing > 0 {
+        if let Some(values) = legacy_crankshaft_positionals(text, missing) {
+            let mut values = values.into_iter();
+            if main_d.is_none() {
+                main_d = values.next();
+            }
+            if pin_d.is_none() {
+                pin_d = values.next();
+            }
+            if stroke.is_none() {
+                stroke = values.next();
+            }
+        }
+    }
+
+    let throws_value = pulley_scalar(
+        raw,
+        text,
+        &["曲拐数", "拐数", "缸数", "throw count", "throws"],
+        &["n", "N"],
+    );
+    let length_value = pulley_scalar(
+        raw,
+        text,
+        &["总长度", "总长", "全长", "长度", "overall length", "length"],
+        &["L", "l"],
+    );
+    if throws_value.is_some_and(|value| !value.is_finite())
+        || length_value.is_some_and(|value| !value.is_finite())
+    {
+        return Some(parse_result_with_issue(
+            "needs_clarification",
+            raw,
+            "legacy_crankshaft_parameter_conflict",
+            "曲轴拐数或总长存在重复且数值冲突的标注；请为每项只给出一个值。",
+        ));
+    }
+
+    // The old alias parser drops nonpositive dimensions before applying its
+    // typical table. Preserve that effective result but expose the fallback.
+    let nonpositive_dimension_ignored = main_d.is_some_and(|value| value <= 0.0)
+        || pin_d.is_some_and(|value| value <= 0.0)
+        || stroke.is_some_and(|value| value <= 0.0);
+    let main_d_value = main_d.filter(|value| *value > 0.0);
+    let pin_d_value = pin_d.filter(|value| *value > 0.0);
+    let stroke_value = stroke.filter(|value| *value > 0.0);
+    let main_d_defaulted = main_d_value.is_none();
+    let pin_d_defaulted = pin_d_value.is_none();
+    let stroke_defaulted = stroke_value.is_none();
+    let main_d = main_d_value.unwrap_or(50.0);
+    let pin_d = pin_d_value.unwrap_or(42.0);
+    let stroke = stroke_value.unwrap_or(86.0);
+
+    // The legacy alias parser also drops nonpositive n; a positive fractional
+    // n is truncated by int() in the Python feature builder.
+    let throws_defaulted = throws_value.is_none_or(|value| value <= 0.0);
+    let requested_throws = if throws_defaulted {
+        4.0
+    } else {
+        throws_value.expect("checked crankshaft throw count").trunc().max(1.0)
+    };
+    if requested_throws > crate::native_parametric_features::MAX_CRANKSHAFT_THROWS as f64 {
+        return Some(result(
+            "unsupported",
+            raw,
+            None,
+            vec![],
+            vec![],
+            vec![issue(
+                "legacy_crankshaft_native_throw_limit",
+                "旧网格可尝试更多曲拐；Rust Quick 为控制几何融合成本将拐数限制为 128。",
+            )],
+        ));
+    }
+    let throws = requested_throws as u64;
+    let throws_truncated = throws_value.is_some_and(|value| value > 0.0 && value.fract() != 0.0);
+
+    let explicit_length = length_value.filter(|value| *value > 0.0);
+    let length_defaulted = explicit_length.is_none();
+    let derived_length = (stroke * 1.8).max(main_d * 2.2) * throws as f64;
+    let length = explicit_length.unwrap_or(derived_length);
+    let dimensions = [length, stroke + pin_d, main_d.max(pin_d)];
+    if ![main_d, pin_d, stroke, length]
+        .into_iter()
+        .chain(dimensions)
+        .all(f64::is_finite)
+    {
+        return Some(parse_result_with_issue(
+            "unsupported",
+            raw,
+            "legacy_crankshaft_dimensions_out_of_range",
+            "曲轴尺寸超出本地几何内核的有限计算范围。",
+        ));
+    }
+
+    let mut warnings = Vec::new();
+    let mut defaults = Vec::new();
+    for (was_defaulted, label, value) in [
+        (main_d_defaulted, "主轴颈直径 d", 50.0),
+        (pin_d_defaulted, "连杆颈直径 dp", 42.0),
+        (stroke_defaulted, "行程 S", 86.0),
+    ] {
+        if was_defaulted {
+            defaults.push(format!("{label}={value} mm"));
+        }
+    }
+    if throws_defaulted {
+        defaults.push("拐数 n=4".into());
+    }
+    if length_defaulted {
+        defaults.push("总长按旧公式推导".into());
+    }
+    if !defaults.is_empty() {
+        warnings.push(issue(
+            "legacy_crankshaft_defaults",
+            format!("沿用旧 Python Quick 曲轴典型值或默认公式：{}。", defaults.join("；")),
+        ));
+    }
+    if nonpositive_dimension_ignored {
+        warnings.push(issue(
+            "legacy_crankshaft_nonpositive_dimension_ignored",
+            "旧解析器会忽略非正的主轴颈、连杆颈或行程输入并套用典型值；Rust 已将实际采用的数值标记为推导值。",
+        ));
+    }
+    if length_value.is_some_and(|value| value <= 0.0) {
+        warnings.push(issue(
+            "legacy_crankshaft_length_fallback",
+            "旧解析器不会把非正总长传给几何内核；已按旧自动长度公式推导总长。",
+        ));
+    }
+    if throws_value.is_some_and(|value| value <= 0.0) {
+        warnings.push(issue(
+            "legacy_crankshaft_throw_count_fallback",
+            "旧解析器会忽略非正拐数并沿用默认值 4。",
+        ));
+    }
+    if throws_truncated {
+        warnings.push(issue(
+            "legacy_crankshaft_throw_count_truncated",
+            format!("沿用旧 Python Quick 将小数拐数向零截断；本模型按 {throws} 拐构建。"),
+        ));
+    }
+    if !crankshaft_has_unit(text) {
+        warnings.push(issue(
+            "unit_interpreted_as_mm",
+            "未写长度单位的曲轴尺寸按旧 Quick 默认单位 mm 解释。",
+        ));
+    } else if crankshaft_has_non_mm_unit(text) {
+        warnings.push(issue(
+            "legacy_crankshaft_unit_conversion",
+            "Rust 将明确标注的非毫米单位换算为 mm；旧 Python 零件库曾只保留数值部分，结果可能不同。",
+        ));
+    }
+
+    let feature = json!({
+        "id":"quick-0001",
+        "kind":"crankshaft",
+        "operation":"add",
+        "name":"曲轴",
+        "parameters":{
+            "length":length,
+            "main_d":main_d,
+            "pin_d":pin_d,
+            "stroke":stroke,
+            "throws":throws,
+            "center":[0.0,0.0,0.0],
+            "segments":32
+        },
+        "sources":{
+            "length":if length_defaulted { derived_source(raw, "沿用旧 Python 曲轴自动长度公式 max(1.8×行程, 2.2×主轴颈直径)×拐数。") } else { user_source(raw) },
+            "main_d":if main_d_defaulted { derived_source(raw, "沿用旧 Python Quick 曲轴典型主轴颈直径 50 mm。") } else { user_source(raw) },
+            "pin_d":if pin_d_defaulted { derived_source(raw, "沿用旧 Python Quick 曲轴典型连杆颈直径 42 mm。") } else { user_source(raw) },
+            "stroke":if stroke_defaulted { derived_source(raw, "沿用旧 Python Quick 曲轴典型行程 86 mm。") } else { user_source(raw) },
+            "throws":if throws_defaulted || throws_truncated { derived_source(raw, "沿用旧 Python Quick 默认拐数或整数截断规则。") } else { user_source(raw) },
+            "center":derived_source(raw, "旧 Python Quick 将曲轴中心置于全局原点，主轴线沿 X 轴。"),
+            "segments":derived_source(raw, "旧 Python Quick 曲轴多边形分段数为 32；本地 B-Rep 使用解析圆柱。")
+        },
+        "relations":[]
+    });
+    Some(plan_result(raw, "曲轴", vec![feature], warnings))
+}
+
+fn legacy_crankshaft_positionals(text: &str, required_count: usize) -> Option<Vec<f64>> {
+    let aliases = ["发动机曲轴", "engine crankshaft", "crankshaft", "曲轴"];
+    let (part_start, alias) = aliases
+        .iter()
+        .filter_map(|alias| text.find(alias).map(|index| (index, *alias)))
+        .min_by_key(|(index, alias)| (*index, std::cmp::Reverse(alias.len())))?;
+    if part_start > 6 {
+        return None;
+    }
+    let tail = text.get(part_start + alias.len()..)?.trim();
+    let number = r"[+-]?(?:\d+(?:\.\d*)?|\.\d+)";
+    let unit = r"(?:毫米|厘米|分米|英寸|mm|cm|dm|in|米|m)";
+    let pattern = format!(
+        r"^[\s,，、/]*{number}(?:\s*{unit})?(?:[\s,，、/]+{number}(?:\s*{unit})?)*[\s,，、/]*$"
+    );
+    if !regex::Regex::new(&pattern).ok()?.is_match(tail) {
+        return None;
+    }
+    let values = dimension_values(tail);
+    (values.len() == required_count).then_some(values)
+}
+
+fn crankshaft_has_unit(text: &str) -> bool {
+    contains_any(text, &["毫米", "厘米", "分米", "英寸", "米"])
+        || regex::Regex::new(r"\d\s*(?:mm|cm|dm|in|m)\b")
+            .expect("fixed crankshaft length-unit regex")
+            .is_match(text)
+}
+
+fn crankshaft_has_non_mm_unit(text: &str) -> bool {
+    contains_any(text, &["厘米", "分米", "英寸"])
+        || regex::Regex::new(r"\d\s*(?:cm|dm|in|m)\b")
+            .expect("fixed crankshaft non-mm unit regex")
+            .is_match(text)
 }
 
 /// Migrate the old Python Quick camshaft recipe. Its required base diameter,
@@ -11703,6 +11986,93 @@ mod f5_44_legacy_camshaft_contract_tests {
                     warnings.contains("legacy_camshaft_journal_d_clamped"),
                     "{input}: {output}"
                 );
+            }
+            let validation = crate::cad_plan_validation::validate_plan(&output["plan"]);
+            assert_eq!(validation["state"], "valid", "{input}: {validation}");
+            assert!(validation["confirmations"].as_array().unwrap().is_empty(), "{input}: {validation}");
+            assert!(validation["geometry_support"].to_string().contains("approximate"), "{input}: {validation}");
+            assert_eq!(
+                crate::native_plan_geometry::preflight(&output["plan"]).unwrap()["state"],
+                "valid",
+                "{input}"
+            );
+        }
+
+        for case in fixture["needs_clarification"].as_array().unwrap() {
+            let input = case["input"].as_str().unwrap();
+            let output = parse(input);
+            assert_eq!(output["status"], "needs_clarification", "{input}: {output}");
+            assert!(output["plan"].is_null(), "{input}: {output}");
+            assert!(output.to_string().contains(case["issue"].as_str().unwrap()), "{input}: {output}");
+        }
+
+        for case in fixture["unsupported"].as_array().unwrap() {
+            let input = case["input"].as_str().unwrap();
+            let output = parse(input);
+            assert_eq!(output["status"], "unsupported", "{input}: {output}");
+            assert!(output["plan"].is_null(), "{input}: {output}");
+            assert!(output.to_string().contains(case["issue"].as_str().unwrap()), "{input}: {output}");
+        }
+    }
+}
+
+#[cfg(test)]
+mod f5_45_legacy_crankshaft_contract_tests {
+    use super::parse;
+    use serde_json::Value;
+
+    #[test]
+    fn legacy_crankshafts_match_python_oracle_defaults_aliases_and_boundaries() {
+        let fixture: Value = serde_json::from_str(include_str!(
+            "../tests/fixtures/quick_legacy_crankshaft_contract.json"
+        ))
+        .expect("crankshaft Python oracle fixture is valid JSON");
+
+        for case in fixture["legacy_accepted"].as_array().unwrap() {
+            let input = case["input"].as_str().unwrap();
+            let output = parse(input);
+            assert_eq!(output["status"], "ready", "{input}: {output}");
+            assert_eq!(output["plan"]["name"], "曲轴", "{input}: {output}");
+            let features = output["plan"]["features"].as_array().unwrap();
+            assert_eq!(features.len(), 1, "{input}: {output}");
+            let crankshaft = &features[0];
+            assert_eq!(crankshaft["kind"], "crankshaft", "{input}");
+            assert_eq!(crankshaft["operation"], "add", "{input}");
+            for (name, expected) in case["native_expected"].as_object().unwrap() {
+                if let Some(expected_values) = expected.as_array() {
+                    let actual_values = crankshaft["parameters"][name].as_array().unwrap();
+                    assert_eq!(actual_values.len(), expected_values.len(), "{input}: {name}");
+                    for (actual, expected) in actual_values.iter().zip(expected_values) {
+                        assert!(
+                            (actual.as_f64().unwrap() - expected.as_f64().unwrap()).abs() <= 1e-9,
+                            "{input}: {name}={actual}, expected {expected}"
+                        );
+                    }
+                } else {
+                    let actual = crankshaft["parameters"][name].as_f64().unwrap();
+                    let expected = expected.as_f64().unwrap();
+                    assert!(
+                        (actual - expected).abs() <= 1e-9,
+                        "{input}: {name}={actual}, expected {expected}"
+                    );
+                }
+                assert!(
+                    crankshaft["sources"][name].is_object(),
+                    "{input}: missing provenance for {name}: {crankshaft}"
+                );
+            }
+            let warnings = output["warnings"].to_string();
+            if case.get("defaults").is_some() {
+                assert!(warnings.contains("legacy_crankshaft_defaults"), "{input}: {output}");
+            }
+            if case.get("legacy_integer_truncation").is_some() {
+                assert!(warnings.contains("legacy_crankshaft_throw_count_truncated"), "{input}: {output}");
+            }
+            if case.get("unit_conversion_improves_legacy").is_some() {
+                assert!(warnings.contains("legacy_crankshaft_unit_conversion"), "{input}: {output}");
+            }
+            if case.get("legacy_nonpositive_values_fall_back").is_some() {
+                assert!(warnings.contains("legacy_crankshaft_nonpositive_dimension_ignored"), "{input}: {output}");
             }
             let validation = crate::cad_plan_validation::validate_plan(&output["plan"]);
             assert_eq!(validation["state"], "valid", "{input}: {validation}");

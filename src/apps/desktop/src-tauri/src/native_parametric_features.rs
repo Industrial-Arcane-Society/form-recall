@@ -7,7 +7,7 @@ const MAX_PISTON_GROOVES: usize = 256;
 const MAX_PISTON_PROFILE_POINTS: usize = 4 * MAX_PISTON_GROOVES + 4;
 pub const MAX_SPOKED_WHEEL_SPOKES: u64 = 512;
 pub const MAX_CAMSHAFT_LOBES: u64 = 512;
-const MAX_CRANKSHAFT_THROWS: u64 = 128;
+pub const MAX_CRANKSHAFT_THROWS: u64 = 128;
 
 pub fn preflight_crankshaft(parameters: &Value) -> Result<(), String> {
     let length = number(parameters, "length")?;

@@ -3108,4 +3108,74 @@ mod acceptance_tests {
             );
         }
     }
+
+    #[test]
+    #[ignore = "requires the staged local OCCT runtime manifest"]
+    fn f5_45_legacy_crankshafts_build_measure_reopen_and_export() {
+        let manifest = std::env::var_os("AIMODELER_OCCT_MANIFEST")
+            .map(std::path::PathBuf::from)
+            .expect("set AIMODELER_OCCT_MANIFEST to the staged OCCT runtime-manifest.json");
+        assert!(manifest.is_file(), "missing OCCT manifest: {}", manifest.display());
+        let fixture: Value = serde_json::from_str(include_str!(
+            "../tests/fixtures/quick_legacy_crankshaft_contract.json"
+        ))
+        .expect("crankshaft Python oracle fixture is valid JSON");
+        let root = std::env::temp_dir().join(format!(
+            "native-quick-crankshaft-{}-{}",
+            std::process::id(),
+            SystemTime::now()
+                .duration_since(UNIX_EPOCH)
+                .expect("system clock")
+                .as_nanos()
+        ));
+        fs::create_dir_all(&root).expect("create native Quick output root");
+        struct RemoveOnDrop(std::path::PathBuf);
+        impl Drop for RemoveOnDrop {
+            fn drop(&mut self) {
+                let _ = fs::remove_dir_all(&self.0);
+            }
+        }
+        let _cleanup = RemoveOnDrop(root.clone());
+
+        for (index, case) in fixture["geometry_acceptance"].as_array().unwrap().iter().enumerate() {
+            let input = case["input"].as_str().unwrap();
+            let output = build(input, index as i64 + 1, &manifest, &root)
+                .unwrap_or_else(|error| panic!("{input}: native Quick build failed: {error}"));
+            assert_eq!(output["state"], "complete", "{input}: {output}");
+            let report = &output["geometry_report"];
+            assert_eq!(report["state"], "passed", "{input}: {report}");
+            assert_eq!(report["valid"], true, "{input}: {report}");
+            assert_eq!(report["closed_solid_count"], 1, "{input}: {report}");
+            let dimensions = report["dimensions_mm"].as_array().expect("measured dimensions");
+            let expected_dimensions = case["dimensions_mm"].as_array().unwrap();
+            assert_eq!(dimensions.len(), 3, "{input}: {report}");
+            for (axis, (actual, expected)) in dimensions.iter().zip(expected_dimensions).enumerate() {
+                let actual = actual.as_f64().unwrap_or_default();
+                let expected = expected.as_f64().unwrap();
+                assert!(
+                    (actual - expected).abs() <= 1e-5,
+                    "{input}: bbox axis {axis} = {actual}, expected {expected}; {report}"
+                );
+            }
+            let actual_volume = report["volume_mm3"].as_f64().expect("measured B-Rep volume");
+            let bbox_volume = dimensions.iter().map(|value| value.as_f64().unwrap()).product::<f64>();
+            assert!(actual_volume > 0.0 && actual_volume < bbox_volume, "{input}: {report}");
+
+            let features = output["cadplan"]["features"].as_array().expect("CADPlan features");
+            assert_eq!(features.len(), 1, "{input}: {output}");
+            assert_eq!(features[0]["kind"], "crankshaft", "{input}: {output}");
+            let paths = output["output_paths"].as_object().unwrap();
+            for name in ["glb", "aimodel", "stl", "obj"] {
+                assert!(Path::new(paths[name].as_str().unwrap()).is_file(), "{input}: missing {name}");
+            }
+            let loaded = native_model_io::load_aimodel(Path::new(paths["aimodel"].as_str().unwrap()))
+                .unwrap_or_else(|error| panic!("{input}: AIMODEL reload failed: {error}"));
+            assert_eq!(loaded["cadplan"]["features"], output["cadplan"]["features"], "{input}: AIMODEL round-trip");
+            println!(
+                "F5.45 native acceptance: input={input}; dimensions_mm={}; native_brep_volume_mm3={actual_volume}; files={:?}",
+                serde_json::to_string(&report["dimensions_mm"]).unwrap(),
+                output["output_paths"]
+            );
+        }
+    }
 }

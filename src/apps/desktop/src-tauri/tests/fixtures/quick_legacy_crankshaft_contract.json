@@ -1,0 +1,85 @@
+{
+  "schema_version": "1.0",
+  "legacy_entrypoint": "src/legacy/ai_modeler/core/parsing/nlparser.py::Parser.parse",
+  "legacy_recipe": "src/legacy/ai_modeler/parts/library/partlib.py::_crankshaft",
+  "legacy_geometry": "src/legacy/ai_modeler/core/geometry/kernel.py::make_crankshaft",
+  "legacy_defaults": {
+    "main_d_mm": 50,
+    "pin_d_mm": 42,
+    "stroke_mm": 86,
+    "throws": 4,
+    "derived_length_formula": "max(stroke * 1.8, main_d * 2.2) * throws",
+    "bbox_formula_mm": ["length", "stroke + pin_d", "max(main_d, pin_d)"]
+  },
+  "legacy_accepted": [
+    {
+      "input": "曲轴 主轴颈直径50 连杆颈直径42 行程86 总长320 拐数4",
+      "native_expected": {"length": 320, "main_d": 50, "pin_d": 42, "stroke": 86, "throws": 4, "center": [0, 0, 0], "segments": 32},
+      "dimensions_mm": [320, 128, 50]
+    },
+    {
+      "input": "曲轴",
+      "native_expected": {"length": 619.2, "main_d": 50, "pin_d": 42, "stroke": 86, "throws": 4, "center": [0, 0, 0], "segments": 32},
+      "dimensions_mm": [619.2, 128, 50],
+      "defaults": ["main_d=50", "pin_d=42", "stroke=86", "throws=4", "derived length"]
+    },
+    {
+      "input": "曲轴 主轴颈50 连杆颈42 行程86",
+      "native_expected": {"length": 619.2, "main_d": 50, "pin_d": 42, "stroke": 86, "throws": 4, "center": [0, 0, 0], "segments": 32},
+      "dimensions_mm": [619.2, 128, 50],
+      "defaults": ["throws=4", "derived length"]
+    },
+    {
+      "input": "曲轴 d50 dp42 S86 n4 L320",
+      "native_expected": {"length": 320, "main_d": 50, "pin_d": 42, "stroke": 86, "throws": 4, "center": [0, 0, 0], "segments": 32},
+      "dimensions_mm": [320, 128, 50]
+    },
+    {
+      "input": "曲轴 50 42 86",
+      "native_expected": {"length": 619.2, "main_d": 50, "pin_d": 42, "stroke": 86, "throws": 4, "center": [0, 0, 0], "segments": 32},
+      "dimensions_mm": [619.2, 128, 50],
+      "defaults": ["throws=4", "derived length"]
+    },
+    {
+      "input": "曲轴 主轴颈50 连杆颈42 行程86 拐数2.7",
+      "native_expected": {"length": 309.6, "main_d": 50, "pin_d": 42, "stroke": 86, "throws": 2, "center": [0, 0, 0], "segments": 32},
+      "dimensions_mm": [309.6, 128, 50],
+      "defaults": ["derived length"],
+      "legacy_integer_truncation": true
+    },
+    {
+      "input": "曲轴 主轴颈5厘米 连杆颈4.2厘米 行程8.6厘米 总长32厘米 拐数4",
+      "native_expected": {"length": 320, "main_d": 50, "pin_d": 42, "stroke": 86, "throws": 4, "center": [0, 0, 0], "segments": 32},
+      "dimensions_mm": [320, 128, 50],
+      "legacy_dimensions_mm": [32, 12.8, 5],
+      "unit_conversion_improves_legacy": true
+    },
+    {
+      "input": "曲轴 主轴颈0 连杆颈0 行程0 拐数0 总长0",
+      "native_expected": {"length": 619.2, "main_d": 50, "pin_d": 42, "stroke": 86, "throws": 4, "center": [0, 0, 0], "segments": 32},
+      "dimensions_mm": [619.2, 128, 50],
+      "defaults": ["main_d=50", "pin_d=42", "stroke=86", "throws=4", "derived length"],
+      "legacy_nonpositive_values_fall_back": true
+    },
+    {
+      "input": "曲轴 主轴颈-10 连杆颈42 行程86",
+      "native_expected": {"length": 619.2, "main_d": 50, "pin_d": 42, "stroke": 86, "throws": 4, "center": [0, 0, 0], "segments": 32},
+      "dimensions_mm": [619.2, 128, 50],
+      "defaults": ["main_d=50", "throws=4", "derived length"],
+      "legacy_nonpositive_values_fall_back": true
+    }
+  ],
+  "needs_clarification": [
+    {"input": "曲轴 主轴颈50 主轴颈55", "issue": "legacy_crankshaft_parameter_conflict"},
+    {"input": "曲轴 主轴颈50 连杆颈42 行程86 总长320 长度300", "issue": "legacy_crankshaft_parameter_conflict"}
+  ],
+  "unsupported": [
+    {"input": "曲轴 主轴颈50 连杆颈42 行程86 通孔直径10", "issue": "legacy_crankshaft_modifier_not_migrated"},
+    {"input": "曲轴 主轴颈50 连杆颈42 行程86 拐数129", "issue": "legacy_crankshaft_native_throw_limit"}
+  ],
+  "geometry_acceptance": [
+    {"input": "曲轴 主轴颈50 连杆颈42 行程86 总长320 拐数4", "dimensions_mm": [320, 128, 50]},
+    {"input": "曲轴", "dimensions_mm": [619.2, 128, 50]},
+    {"input": "曲轴 主轴颈50 连杆颈42 行程86 拐数2.7", "dimensions_mm": [309.6, 128, 50]}
+  ]
+}
