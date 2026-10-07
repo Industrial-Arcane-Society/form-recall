@@ -10,6 +10,7 @@ mod legacy_catalog_cylinder_defaults;
 mod legacy_catalog_egt_profile;
 mod legacy_catalog_lifting_eye;
 mod legacy_catalog_socket_screw;
+mod legacy_linear_pattern_aliases;
 mod legacy_round_aliases;
 
 const BEARING_STANDARDS: &str = include_str!("../../../../legacy/kb/bearing_std.json");
@@ -196,6 +197,36 @@ pub fn parse(text: &str) -> Value {
     let normalized = legacy_box_aliases::canonicalize_box_alias(&normalized).unwrap_or(normalized);
     let normalized =
         legacy_round_aliases::canonicalize_round_alias(&normalized).unwrap_or(normalized);
+    let mut legacy_pattern_default_axis = false;
+    let normalized = if let Some(canonical) =
+        legacy_linear_pattern_aliases::canonicalize_explicit_linear_alias(&normalized)
+    {
+        let mut alias_clauses = split_clauses(&canonical);
+        let pattern_clause_index = alias_clauses
+            .iter()
+            .position(|clause| contains_any(clause, &["阵列", "linear array"]));
+        if let Some(index) = pattern_clause_index {
+            let mut axis_issues = Vec::new();
+            let explicit_pattern_axis = axis_value(&alias_clauses[index], &mut axis_issues);
+            if explicit_pattern_axis.is_none() && axis_issues.is_empty() {
+                alias_clauses[index].push_str(" 沿z方向");
+                legacy_pattern_default_axis = true;
+            }
+        }
+        alias_clauses.join(";")
+    } else {
+        normalized
+    };
+    if legacy_pattern_default_axis {
+        warnings.push(json!({
+            "code":"legacy_linear_pattern_default_axis",
+            "message":"线性阵列未指定轴向；为兼容旧 Python Quick，按 Z 轴生成。"
+        }));
+    }
+    let circular_pattern_requested =
+        contains_any(&normalized, &["圆周阵列", "环形阵列"]);
+    let linear_pattern_requested =
+        contains_any(&normalized, &["阵列", "linear array"]) && !circular_pattern_requested;
 
     let mut clauses = split_clauses(&normalized);
     let mut clause_index = 1;
@@ -292,8 +323,6 @@ pub fn parse(text: &str) -> Value {
         }
     }
 
-    let circular_pattern_requested =
-        contains_any(&normalized, &["圆周阵列", "环形阵列"]);
     for (word, explanation) in [
         ("gear", "齿轮配方不在 Quick 基础形体范围内。"),
         ("齿轮", "齿轮配方不在 Quick 基础形体范围内。"),
@@ -344,7 +373,13 @@ pub fn parse(text: &str) -> Value {
         .collect();
     let mut base_text = clauses
         .iter()
-        .filter(|c| !has_hole(c) && !has_slot(c))
+        .filter(|c| {
+            !has_hole(c)
+                && !has_slot(c)
+                && !contains_any(c, &["阵列", "linear array"])
+                && (!(linear_pattern_requested || circular_pattern_requested)
+                    || !contains_any(c, &["间距", "间隔", "步距", "pitch"]))
+        })
         .cloned()
         .collect::<Vec<_>>()
         .join(" ");
@@ -511,15 +546,16 @@ pub fn parse(text: &str) -> Value {
         }
     }
 
-    let linear_pattern_requested = contains_any(&normalized, &["阵列", "linear array"])
-        && !circular_pattern_requested;
     if linear_pattern_requested {
         let count = regex::Regex::new(r"(?:阵列|linear\s+array)\s*([0-9]+)\s*(?:个|份|次)?")
             .ok()
             .and_then(|re| re.captures(&normalized))
             .and_then(|captures| captures.get(1))
             .and_then(|value| value.as_str().parse::<u64>().ok());
-        let axis = axis_value(&normalized, &mut questions);
+        let pattern_clause = clauses
+            .iter()
+            .find(|clause| contains_any(clause, &["阵列", "linear array"]));
+        let axis = pattern_clause.and_then(|clause| axis_value(clause, &mut questions));
         let step = scalar(&normalized, &["spacing", "间距", "步距"]);
         match (count, axis, step) {
             (Some(count), Some(axis), Some(step)) if count >= 2 && count <= crate::native_plan_geometry::MAX_HOLE_PATTERN_COUNT && step.is_finite() && step > 0.0 => {
@@ -531,7 +567,15 @@ pub fn parse(text: &str) -> Value {
                         "id":format!("quick-{:04}", features.len() + 1), "kind":"pattern",
                         "operation":operation, "name":"线性阵列",
                         "parameters":{"mode":"linear", "count":count, "axis":axis, "step":vector},
-                        "sources":{"count":user_source(text), "axis":user_source(text), "step":user_source(text)},
+                        "sources":{
+                            "count":user_source(text),
+                            "axis":if legacy_pattern_default_axis {
+                                derived_source(text, "旧 Python Quick 未指定轴向时默认沿 Z 轴阵列。")
+                            } else {
+                                user_source(text)
+                            },
+                            "step":user_source(text)
+                        },
                         "relations":[{"type":"pattern_source", "feature_id":source_id}]
                     }));
                 } else {
@@ -14673,6 +14717,53 @@ mod tests {
             assert_eq!(feature["kind"], case["kind"], "{input}");
             for (key, expected) in case["parameters"].as_object().unwrap() {
                 assert_eq!(feature["parameters"][key], *expected, "{input}: {key}");
+            }
+        }
+    }
+
+    #[test]
+    fn legacy_linear_pattern_aliases_match_python_quick_contract() {
+        let fixture: Value = serde_json::from_str(include_str!(
+            "../tests/fixtures/quick_legacy_linear_pattern_aliases_contract.json"
+        ))
+        .expect("legacy linear pattern alias fixture is valid JSON");
+
+        for case in fixture["legacy_accepted"].as_array().unwrap() {
+            let input = case["input"].as_str().unwrap();
+            let output = parse(input);
+            assert_eq!(output["status"], "ready", "{input}: {output}");
+            let validation = crate::cad_plan_validation::validate_plan(&output["plan"]);
+            assert_eq!(validation["state"], "valid", "{input}: {validation}");
+            let features = output["plan"]["features"].as_array().unwrap();
+            assert_eq!(features.len(), 3, "{input}: {output}");
+            let base = &features[0];
+            for (key, expected) in ["length", "width", "height"]
+                .into_iter()
+                .zip(case["dimensions_mm"].as_array().unwrap())
+            {
+                assert_eq!(base["parameters"][key], *expected, "{input}: base {key}");
+            }
+            let pattern = &features[2];
+            assert_eq!(pattern["kind"], "pattern", "{input}");
+            assert_eq!(pattern["operation"], "cut", "{input}");
+            assert_eq!(pattern["parameters"]["mode"], "linear", "{input}");
+            for (key, expected) in case["pattern"].as_object().unwrap() {
+                assert_eq!(pattern["parameters"][key], *expected, "{input}: {key}");
+            }
+            assert_eq!(pattern["relations"][0]["type"], "pattern_source", "{input}");
+            assert_eq!(pattern["relations"][0]["feature_id"], features[1]["id"], "{input}");
+            assert_eq!(
+                pattern["sources"]["axis"]["type"],
+                case["axis_source_type"],
+                "{input}: axis provenance"
+            );
+            if case["axis_source_type"] == "derived" {
+                assert!(
+                    output["warnings"]
+                        .to_string()
+                        .contains("legacy_linear_pattern_default_axis"),
+                    "{input}: {output}"
+                );
             }
         }
     }

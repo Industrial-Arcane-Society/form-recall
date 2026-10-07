@@ -1,0 +1,23 @@
+{
+  "source": "src/legacy/ai_modeler/core/parsing/nlparser.py via nlparser.parse(text).doc.to_dict(), captured 2026-10-07",
+  "legacy_accepted": [
+    {
+      "input": "长方体 长100宽80高20，然后沿X轴中心通孔直径6，然后复制4个，间距2",
+      "dimensions_mm": [100.0, 80.0, 20.0],
+      "pattern": {"count": 4, "axis": "Z", "step": [0.0, 0.0, 2.0]},
+      "axis_source_type": "derived"
+    },
+    {
+      "input": "长方体 长100宽80高20，然后中心孔直径6通孔，然后沿X方向排列4个，间距10mm",
+      "dimensions_mm": [100.0, 80.0, 20.0],
+      "pattern": {"count": 4, "axis": "X", "step": [10.0, 0.0, 0.0]},
+      "axis_source_type": "user"
+    },
+    {
+      "input": "长方体 长100宽80高20，然后沿X轴中心通孔直径6，然后沿Z方向分布4个，步距2",
+      "dimensions_mm": [100.0, 80.0, 20.0],
+      "pattern": {"count": 4, "axis": "Z", "step": [0.0, 0.0, 2.0]},
+      "axis_source_type": "user"
+    }
+  ]
+}
