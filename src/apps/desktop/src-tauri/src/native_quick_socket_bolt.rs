@@ -9,6 +9,26 @@ use serde_json::{Value, json};
 const BOLT_LIBRARY: &str = include_str!("../../../../legacy/kb/bolt_library.json");
 const BOLT_STANDARDS: &str = include_str!("../../../../legacy/kb/bolt_std.json");
 
+/// Return the standard coarse metric pitch recorded for a nominal diameter.
+/// The table is shared with the legacy Quick fastener recipes; an unknown
+/// diameter stays unknown instead of receiving an invented default pitch.
+pub fn standard_metric_pitch(diameter: f64) -> Option<f64> {
+    if !diameter.is_finite() || diameter <= 0.0 {
+        return None;
+    }
+    let rounded = diameter.round();
+    if (diameter - rounded).abs() > 1e-9 {
+        return None;
+    }
+    let standards: Value = serde_json::from_str(BOLT_STANDARDS).ok()?;
+    standards
+        .get("bolts")?
+        .get(format!("M{}", rounded as i64))?
+        .get("p")?
+        .as_f64()
+        .filter(|pitch| pitch.is_finite() && *pitch > 0.0)
+}
+
 /// Return `None` for unrelated descriptions, otherwise return a complete
 /// Quick parse result (including explicit clarification/unsupported states).
 pub fn parse(raw: &str) -> Option<Value> {

@@ -84,6 +84,11 @@ FEATURE_SPECS = {
         "不会创建原生或装饰螺纹。",
         ("shank_d", "thread_pitch", "length", "head_d", "head_h", "hex_s", "hex_t",
          "center", "segments")),
+    "hex_bolt": _spec(
+        ("shank_d", "length", "across_flats", "head_h", "thread_pitch"), "approximate",
+        "本地网格按 thread_pitch 生成可见的近似 ISO 公制外螺纹；六角头采用解析棱柱。"
+        "CATIA 映射为六角头 Pad 与圆杆 Pad，螺纹只按装饰表示，不是实体牙型。",
+        ("shank_d", "length", "across_flats", "head_h", "thread_pitch", "center", "segments")),
     "sphere": _spec(("radius",), "approximate",
                     "CATIA 导出器以多层圆盘近似球体。",
                     ("radius", "center", "segments", "rings")),
@@ -187,7 +192,7 @@ _LENGTH_KEYS = {
     "hub_r", "pitch_d", "bore_d", "thread_r", "height2", "pin_d", "stroke",
     "main_d", "journal_d", "base_d", "lift", "hub_d", "tip_d", "big_d",
     "small_d", "big_bore", "small_bore", "shank_w", "thick", "span",
-    "shank_d", "thread_pitch", "head_d", "head_h", "hex_s", "hex_t",
+    "shank_d", "thread_pitch", "head_d", "head_h", "across_flats", "hex_s", "hex_t",
     "root_chord", "tip_chord", "sweep", "groove_depth", "outer_d", "wall_t", "thickness",
     "module", "spoke_w", "blade_t", "x", "y", "z",
 }

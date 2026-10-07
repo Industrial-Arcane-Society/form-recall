@@ -2,12 +2,13 @@
   "fixture_format": "cadplan-validation-golden-v1",
   "python_source": {
     "path": "src/legacy/ai_modeler/sdk/cadplan.py",
-    "sha256": "bb526c3b2e22f359f3b644107e7889ec2ce0db99099a1089c164dc7363a6a1db"
+    "sha256": "2060c94854ee4004cbc8b92bdaa3c62e811071e586e081d8f2f1ddae985e12bd"
   },
   "feature_kinds": [
     "box",
     "cylinder",
     "socket_head_bolt",
+    "hex_bolt",
     "sphere",
     "prism",
     "revolve",
@@ -35,7 +36,7 @@
   ],
   "cases": [
     {
-      "name": "all_27",
+      "name": "all_28",
       "plan": {
         "schema_version": "1.0",
         "name": "oracle",
@@ -862,6 +863,63 @@
               }
             },
             "relations": []
+          },
+          {
+            "id": "f27-hex_bolt",
+            "kind": "hex_bolt",
+            "operation": "add",
+            "name": "M12x50",
+            "parameters": {
+              "shank_d": 12,
+              "length": 50,
+              "across_flats": 18,
+              "head_h": 8.4,
+              "thread_pitch": 1.75,
+              "center": [
+                0,
+                0,
+                0
+              ],
+              "segments": 48
+            },
+            "sources": {
+              "shank_d": {
+                "type": "derived",
+                "evidence": "golden schema fixture",
+                "note": "legacy quick hex bolt contract"
+              },
+              "length": {
+                "type": "derived",
+                "evidence": "golden schema fixture",
+                "note": "legacy quick hex bolt contract"
+              },
+              "across_flats": {
+                "type": "derived",
+                "evidence": "golden schema fixture",
+                "note": "legacy quick hex bolt contract"
+              },
+              "head_h": {
+                "type": "derived",
+                "evidence": "golden schema fixture",
+                "note": "legacy quick hex bolt contract"
+              },
+              "thread_pitch": {
+                "type": "derived",
+                "evidence": "golden schema fixture",
+                "note": "legacy quick hex bolt contract"
+              },
+              "center": {
+                "type": "derived",
+                "evidence": "golden schema fixture",
+                "note": "legacy quick hex bolt contract"
+              },
+              "segments": {
+                "type": "derived",
+                "evidence": "golden schema fixture",
+                "note": "legacy quick hex bolt contract"
+              }
+            },
+            "relations": []
           }
         ]
       },
@@ -1038,6 +1096,12 @@
             "kind": "shell",
             "status": "unsupported",
             "reason": "当前 Document/CATIA 转换器没有抽壳实现。"
+          },
+          {
+            "feature_id": "f27-hex_bolt",
+            "kind": "hex_bolt",
+            "status": "approximate",
+            "reason": "本地网格按 thread_pitch 生成可见的近似 ISO 公制外螺纹；六角头采用解析棱柱。CATIA 映射为六角头 Pad 与圆杆 Pad，螺纹只按装饰表示，不是实体牙型。"
           }
         ],
         "geometry_support": [
@@ -1228,6 +1292,13 @@
             "kind": "shell",
             "status": "unavailable",
             "reason": "旧 v1.0 thickness-only shell 不支持自动迁移；CADPlan 1.1 shell 须重新枚举面并显式指定 shell_target 与 offset_mode。",
+            "backend": "occt_brep"
+          },
+          {
+            "feature_id": "f27-hex_bolt",
+            "kind": "hex_bolt",
+            "status": "approximate",
+            "reason": "现有螺栓网格配方转封闭 facet-BREP",
             "backend": "occt_brep"
           }
         ],
@@ -1447,6 +1518,18 @@
             "feature_id": "f26-shell",
             "kind": "shell",
             "message": "当前 Document/CATIA 转换器没有抽壳实现。"
+          },
+          {
+            "code": "LOCAL_BREP_APPROXIMATION",
+            "feature_id": "f27-hex_bolt",
+            "kind": "hex_bolt",
+            "message": "现有螺栓网格配方转封闭 facet-BREP"
+          },
+          {
+            "code": "CATIA_APPROXIMATION",
+            "feature_id": "f27-hex_bolt",
+            "kind": "hex_bolt",
+            "message": "本地网格按 thread_pitch 生成可见的近似 ISO 公制外螺纹；六角头采用解析棱柱。CATIA 映射为六角头 Pad 与圆杆 Pad，螺纹只按装饰表示，不是实体牙型。"
           }
         ],
         "schema_version": "1.0"

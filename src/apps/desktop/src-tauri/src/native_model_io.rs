@@ -549,6 +549,7 @@ fn kind_label(k: &str) -> &str {
         "box" => "长方体",
         "cylinder" => "圆柱/圆台",
         "socket_head_bolt" => "内六角圆柱头螺钉",
+        "hex_bolt" => "六角头螺栓",
         "sphere" => "球体",
         "prism" => "轮廓拉伸",
         "revolve" => "回转体",

@@ -40,6 +40,7 @@ pub fn supports_native_kind(kind: &str) -> bool {
             | "helical_gear"
             | "bevel_gear"
             | "socket_head_bolt"
+            | "hex_bolt"
             | "spoked_wheel"
             | "piston"
             | "conrod"
@@ -129,6 +130,7 @@ pub fn preflight(plan: &Value) -> Result<Value, String> {
                 "hex_s",
                 "hex_t",
             ],
+            "hex_bolt" => &["shank_d", "length", "across_flats", "head_h", "thread_pitch"],
             "piston" => &["diameter", "height", "pin_d", "grooves"],
             "spoked_wheel" => &["outer_r", "rim_w", "hub_r", "height", "spokes", "spoke_w"],
             "conrod" => &[
@@ -379,7 +381,7 @@ pub fn build(plan: &Value, manifest: &Path, cancelled: &AtomicBool) -> Result<Bu
                 (tools, holes, Some(support))
             } else if matches!(
                 normalized["kind"].as_str(),
-                Some("gear" | "helical_gear" | "socket_head_bolt")
+                Some("gear" | "helical_gear" | "socket_head_bolt" | "hex_bolt")
             ) {
                 let (tools, support) = native_standard_features::tools(
                     &kernel,
@@ -1667,6 +1669,7 @@ fn normalized_feature(feature: &Value, plan: &Value) -> Result<Value, String> {
                 "head_h",
                 "hex_s",
                 "hex_t",
+                "across_flats",
                 "outer_r",
                 "rim_w",
                 "hub_r",

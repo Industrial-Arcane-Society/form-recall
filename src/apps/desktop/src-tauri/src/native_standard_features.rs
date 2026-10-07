@@ -20,10 +20,65 @@ pub fn tools(
         "gear" => build_gear(kernel, p),
         "helical_gear" => build_helical_gear(kernel, p),
         "socket_head_bolt" => build_socket_head_bolt(kernel, p),
+        "hex_bolt" => build_hex_bolt(kernel, p),
         _ => Err(format!(
             "native standard feature is not implemented: {kind}"
         )),
     }
+}
+
+fn build_hex_bolt(
+    kernel: &Kernel,
+    p: &serde_json::Map<String, Value>,
+) -> Result<(Vec<Shape>, Value), String> {
+    let d = number(p, "shank_d", 0.0)?;
+    let pitch = number(p, "thread_pitch", 0.0)?;
+    let length = number(p, "length", 0.0)?;
+    let across_flats = number(p, "across_flats", 0.0)?;
+    let head_h = number(p, "head_h", 0.0)?;
+    if [d, pitch, length, across_flats, head_h]
+        .iter()
+        .any(|value| !value.is_finite() || *value <= 0.0)
+    {
+        return Err("hex_bolt dimensions and thread_pitch must be finite and positive".into());
+    }
+    let center = point3(p.get("center"))?;
+    let segments = integer(p, "segments", 48)?.clamp(32, 48) as usize;
+    let outer_r = across_flats / 3.0_f64.sqrt();
+    let head_profile: Vec<[f64; 2]> = (0..6)
+        .map(|index| {
+            let angle = (60.0 * index as f64).to_radians();
+            [outer_r * angle.cos(), outer_r * angle.sin()]
+        })
+        .collect();
+    let head = kernel.prism(&head_profile, head_h, center, Axis::Z)?;
+    // Keep the legacy head-at-bottom / shank-up convention. A 0.01 mm
+    // overlap makes the face-faceted threaded mesh fuse into one solid while
+    // keeping the requested distal length and overall envelope unchanged.
+    let mesh = threaded_cylinder(
+        d,
+        pitch,
+        length + 0.01,
+        [center[0], center[1], center[2] + head_h - 0.01],
+        segments,
+    )?;
+    let triangle_count = mesh.positions.len() / 3;
+    let shank = kernel.triangle_mesh_to_solid(&mesh, 1e-5)?;
+    let solid = kernel.fuse(&[&head, &shank])?;
+    let analysis = solid.analyze()?;
+    if analysis.valid == 0 || analysis.solid_count != 1 || analysis.closed_solid_count != 1 {
+        return Err(format!(
+            "hex_bolt must be one valid closed solid; got valid={}, solids={}, closed={}",
+            analysis.valid, analysis.solid_count, analysis.closed_solid_count
+        ));
+    }
+    Ok((
+        vec![solid],
+        json!({"kind":"hex_bolt","status":"approximate","builder":"analytic_hex_head_with_faceted_thread_brep",
+            "thread":{"type":"ISO_metric_external_helical_facets","major_diameter_mm":d,"pitch_mm":pitch,"length_mm":length,
+                "circumferential_segments":segments,"triangle_count":triangle_count,"visible_geometry":true},
+            "warnings":["helical thread is a faceted approximation, not an exact analytic helix"]}),
+    ))
 }
 
 fn build_socket_head_bolt(

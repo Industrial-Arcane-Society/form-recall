@@ -51,6 +51,15 @@ const SPECS: &[Spec] = &[
         local_reason: "当前参数化网格转封闭 facet-BREP",
     },
     Spec {
+        kind: "hex_bolt",
+        required: "shank_d length across_flats head_h thread_pitch",
+        params: "shank_d length across_flats head_h thread_pitch center segments",
+        catia_status: "approximate",
+        catia_reason: "CATIA 映射为六角头草图 Pad 与圆杆 Pad；螺纹只按装饰表示，不是可见几何或 CATIA 原生螺纹。",
+        local_status: "approximate",
+        local_reason: "六角头为解析棱柱；螺杆可见外螺纹由离散网格转封闭 facet-BREP。",
+    },
+    Spec {
         kind: "sphere",
         required: "radius",
         params: "radius center segments rings",
@@ -309,6 +318,7 @@ const LENGTH_KEYS: &[&str] = &[
     "thread_pitch",
     "head_d",
     "head_h",
+    "across_flats",
     "hex_s",
     "hex_t",
     "root_chord",
@@ -2322,7 +2332,7 @@ mod tests {
         }
     }
     #[test]
-    fn schema_contains_all_27_public_feature_kinds_and_source_guards() {
+    fn schema_contains_all_28_public_feature_kinds_and_source_guards() {
         let schema = schema_document();
         assert_eq!(
             schema["$id"],
@@ -2337,11 +2347,11 @@ mod tests {
             .unwrap()
             .as_array()
             .unwrap();
-        assert_eq!(alternatives.len(), 27);
+        assert_eq!(alternatives.len(), 28);
         assert!(feature_schema("shell").is_some());
         assert!(feature_schema("not_public").is_none());
         assert!(schema.to_string().contains("image_estimate"));
-        assert_eq!(SPECS.len(), 27);
+        assert_eq!(SPECS.len(), 28);
     }
     #[test]
     fn shell_v1_migration_requires_confirmation_and_v11_schema_requires_explicit_contract() {

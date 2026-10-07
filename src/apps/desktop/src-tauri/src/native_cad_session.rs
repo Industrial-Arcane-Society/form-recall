@@ -740,7 +740,7 @@ fn user_turn_supports_value(
     } else {
         target
     };
-    if str_field(feature, "kind") == "socket_head_bolt"
+    if matches!(str_field(feature, "kind").as_str(), "socket_head_bolt" | "hex_bolt")
         && let Some(spec_value) = crate::native_fastener_specs::user_size_value(quote, parameter)
     {
         return (spec_value - target_value).abs() <= 1e-6;
@@ -809,6 +809,7 @@ fn is_length_parameter(parameter: &str) -> bool {
         "thickness",
         "depth",
         "diameter",
+        "across_flats",
         "radius",
         "pitch",
         "margin",

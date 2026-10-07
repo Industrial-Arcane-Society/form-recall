@@ -46,6 +46,10 @@ pub fn parse(text: &str) -> Value {
         );
     }
 
+    if let Some(parsed) = parse_legacy_hex_bolt(text, &normalized) {
+        return parsed;
+    }
+
     if let Some(parsed) = crate::native_quick_socket_bolt::parse(text) {
         return parsed;
     }
@@ -647,13 +651,14 @@ fn result(
         "questions":questions,
         "unsupported":unsupported,
         "compatibility":{
-            "scope":"common explicit primitives/cuts, migrated standalone primitive defaults and legacy extrusion/revolve constructors, centered solid-shaft aliases, rectangular slots, flat-washer rings, cylindrical/conical spring helices, measured socket-head screws with optional washers, V-belt pulleys, timing pulleys, straight-gear construction, PCD counterbores, base plates, support legs, connection blocks and pieces, legacy smooth-bore nut recipe, measured and fallback locator-pin recipes, migrated legacy washer/spring/shaft/bearing/seal-ring/coupling/brake-disc/brake-drum/flywheel/flat-annular-part/disc-cam/spline-shaft/crankshaft/camshaft/piston/worm/triangular-rotor/valve recipes, and executable flange/stepped-shaft/sleeve/blade/blisk templates",
+            "scope":"common explicit primitives/cuts, migrated standalone primitive defaults and legacy extrusion/revolve constructors, centered solid-shaft aliases, rectangular slots, flat-washer rings, cylindrical/conical spring helices, measured socket-head screws with optional washers, ratio-based plain hex-head bolts with standard coarse thread pitch, V-belt pulleys, timing pulleys, straight-gear construction, PCD counterbores, base plates, support legs, connection blocks and pieces, legacy smooth-bore nut recipe, measured and fallback locator-pin recipes, migrated legacy washer/spring/shaft/bearing/seal-ring/coupling/brake-disc/brake-drum/flywheel/flat-annular-part/disc-cam/spline-shaft/crankshaft/camshaft/piston/worm/triangular-rotor/valve recipes, and executable flange/stepped-shaft/sleeve/blade/blisk templates",
             "legacy_typical_defaults":"restored only for migrated Quick constructors/templates, centered solid shafts (Ø30 mm when diameter is absent), straight gears, timing pulleys, V-belt pulleys, socket-head screw catalog recipes, rectangular slots, nut thickness 8 mm when absent, flat-washer thickness, spring wire/turn values, brake-disc thickness/bore values, brake-drum bore values, flywheel center-bore/PCD-hole values, flat-annular-part bore/thickness values, disc-cam base diameter/thickness, spline-shaft minor diameter/tooth count, crankshaft main/pin journal diameters and stroke/throw count, camshaft lobe count/journal diameter, piston pin diameter/ring groove count, worm pitch diameter, triangular-rotor R=60 mm and center bore ⌀24 mm when omitted, valve stem diameter d=8 mm when omitted, base-plate thickness, connection-block height and default center-hole values, connection-piece thickness, locator-pin fallback diameters Ø22/Ø10 and 60 mm total length, and 22 exact KMS-M01 measured codes; defaults and raw-dimension mappings are reported as warnings",
             "loft_geometry":"blade and blisk lofts are locally approximate faceted B-Reps",
             "timing_pulley_geometry":"native timing pulley teeth are approximate trapezoidal prisms fused to an analytic annular blank",
             "vbelt_pulley_geometry":"standard V-groove pulley is an approximate axisymmetric revolve; legacy spoke variants and CATIA-native groove features are not included",
             "helix_geometry":"spring helices are locally approximate faceted B-Reps and are not native CATIA features",
             "socket_head_bolt_geometry":"measured catalog dimensions and washers are preserved; native Rust adds visible faceted threads where the legacy Python Quick recipe reconstructed a smooth shank",
+            "hex_bolt_geometry":"legacy ratio-derived across-flats/head-height and standard coarse pitch are preserved; local Rust fuses an analytic hex head with a visible faceted threaded shank; CATIA exports the hex head and smooth shank only",
             "solid_shaft_geometry":"the old mesh kernel used a 48-sided cylinder; Rust/OCCT uses an analytic cylinder, so bounding boxes agree while volume differs by the expected polygonal approximation",
             "support_leg_geometry":"legacy part-library forms build a centered analytic Z cylinder or a regular polygon prism from Z=0, with an optional centered Z through-hole; bare-高 inputs stay on the separate bottom-based generic-cylinder route",
             "connection_block_geometry":"legacy part-library output is a centered rectangular block; absent height defaults to max(10 mm, min(length,width) × 0.4), and an optional center through-hole uses 32 segments with diameter clamped to 96% of the smaller footprint side. Generic legacy tails support default Ø10 through/blind holes and rectangular pockets; side/corner/thread wording historically resolves to a smooth center bore, and step wording is ignored",
@@ -1665,6 +1670,204 @@ fn parse_legacy_nut(raw: &str, text: &str) -> Option<Value> {
         })
     ];
     Some(plan_result(raw, "螺母", features, warnings))
+}
+
+/// Migrate the legacy Python `_bolt` rule: plain bolt wording means a hex-head
+/// bolt, explicit head dimensions win, and otherwise the old d-based ratios
+/// and standard coarse pitch table are used with provenance attached.
+fn parse_legacy_hex_bolt(raw: &str, text: &str) -> Option<Value> {
+    if !contains_any(text, &["螺栓", "六角头螺栓", "六角螺栓", "hex bolt", "hexagon bolt"])
+        || contains_any(text, &["内六角", "螺栓孔", "bolt hole", "螺母"])
+        || contains_any(
+            text,
+            &["沉头", "盘头", "圆头", "socket head", "countersunk", "pan head"],
+        )
+    {
+        return None;
+    }
+
+    if contains_any(text, &["打孔", "开孔", "钻孔", "通孔", "盲孔", "键槽", "倒角", "圆角", "环槽"]) {
+        return Some(parse_result_with_issue(
+            "unsupported",
+            raw,
+            "legacy_hex_bolt_modifier_not_migrated",
+            "旧 Quick 六角螺栓只生成六角头、螺纹杆和其可见螺纹；额外孔槽、倒角和圆角尚未迁移。",
+        ));
+    }
+
+    let metric_size = regex::Regex::new(
+        r"(?i)(?:^|[^a-z0-9])m\s*(\d+(?:\.\d+)?)\s*x\s*(\d+(?:\.\d+)?)(?:$|[^a-z0-9])",
+    )
+    .expect("fixed metric bolt designation regex")
+    .captures(text)
+    .and_then(|capture| {
+        Some((capture[1].parse::<f64>().ok()?, capture[2].parse::<f64>().ok()?))
+    });
+    let labeled_d = pulley_scalar(
+        raw,
+        text,
+        &["螺纹规格", "公称直径", "螺栓直径", "螺纹直径", "直径", "diameter"],
+        &["d", "D", "M", "m"],
+    );
+    let labeled_length = pulley_scalar(
+        raw,
+        text,
+        &["螺栓长度", "长度", "bolt length", "length", "长"],
+        &["L", "l"],
+    );
+    let labeled_flats = pulley_scalar(
+        raw,
+        text,
+        &["对边宽度", "对边尺寸", "对边", "across flats"],
+        &["s", "S"],
+    );
+    let labeled_head_height = pulley_scalar(
+        raw,
+        text,
+        &["头部高度", "头高", "head height"],
+        &["k", "K"],
+    );
+    let labeled_pitch = pulley_scalar(
+        raw,
+        text,
+        &["螺距", "thread pitch", "thread_pitch", "pitch"],
+        &["p", "P"],
+    );
+
+    let mut questions = Vec::new();
+    for (value, label) in [
+        (labeled_d, "螺纹公称直径"),
+        (labeled_length, "螺栓长度"),
+        (labeled_flats, "六角头对边宽度"),
+        (labeled_head_height, "六角头高度"),
+        (labeled_pitch, "螺距"),
+    ] {
+        if value.is_some_and(|number| !number.is_finite() || number <= 0.0) {
+            questions.push(issue(
+                "legacy_hex_bolt_dimension_conflict",
+                format!("{label}必须是唯一、有限的正数。"),
+            ));
+        }
+    }
+
+    let metric_d = metric_size.map(|size| size.0);
+    let metric_length = metric_size.map(|size| size.1);
+    if let (Some(label), Some(metric)) = (labeled_d, metric_d)
+        && label.is_finite()
+        && !close(label, metric)
+    {
+        questions.push(issue(
+            "legacy_hex_bolt_metric_size_conflict",
+            format!("标注直径 {label} mm 与规格写法中的 M{metric} 不一致，请确认。"),
+        ));
+    }
+    if let (Some(label), Some(metric)) = (labeled_length, metric_length)
+        && label.is_finite()
+        && !close(label, metric)
+    {
+        questions.push(issue(
+            "legacy_hex_bolt_metric_size_conflict",
+            format!("标注长度 {label} mm 与规格写法中的长度 {metric} mm 不一致，请确认。"),
+        ));
+    }
+    if !questions.is_empty() {
+        return Some(result("needs_clarification", raw, None, vec![], questions, vec![]));
+    }
+
+    let diameter = labeled_d.or(metric_d);
+    let length = labeled_length.or(metric_length);
+    let (Some(diameter), Some(length)) = (diameter, length) else {
+        let mut missing = Vec::new();
+        if diameter.is_none() {
+            missing.push(issue(
+                "legacy_hex_bolt_diameter_required",
+                "请给出螺纹公称直径，例如 M12 或“螺纹规格12”。未知规格还需明确给出螺距。",
+            ));
+        }
+        if length.is_none() {
+            missing.push(issue(
+                "legacy_hex_bolt_length_required",
+                "请给出螺栓长度，例如“长度50”或规格写法 M12×50。",
+            ));
+        }
+        return Some(result("needs_clarification", raw, None, vec![], missing, vec![]));
+    };
+    if !diameter.is_finite() || diameter <= 0.0 || !length.is_finite() || length <= 0.0 {
+        return Some(parse_result_with_issue(
+            "needs_clarification",
+            raw,
+            "legacy_hex_bolt_size_invalid",
+            "螺纹公称直径和螺栓长度必须为有限正数。",
+        ));
+    }
+
+    let standard_pitch = crate::native_quick_socket_bolt::standard_metric_pitch(diameter);
+    let Some(thread_pitch) = labeled_pitch.or(standard_pitch) else {
+        return Some(result(
+            "needs_clarification",
+            raw,
+            None,
+            vec![],
+            vec![issue(
+                "legacy_hex_bolt_pitch_required",
+                format!("M{} 不在当前粗牙标准表中；请明确给出 thread_pitch/螺距，不会把螺栓静默建成光杆。", legacy_compact_number(diameter)),
+            )],
+            vec![],
+        ));
+    };
+    if !thread_pitch.is_finite() || thread_pitch <= 0.0 {
+        return Some(parse_result_with_issue(
+            "needs_clarification",
+            raw,
+            "legacy_hex_bolt_pitch_invalid",
+            "螺距必须是有限正数。",
+        ));
+    }
+
+    let across_flats = labeled_flats.unwrap_or_else(|| (1.5 * diameter * 10.0).round() / 10.0);
+    let head_h = labeled_head_height.unwrap_or_else(|| (0.7 * diameter * 10.0).round() / 10.0);
+    let user_dimensions = [
+        ("shank_d", json!(diameter), true),
+        ("length", json!(length), true),
+        (
+            "across_flats",
+            json!(across_flats),
+            labeled_flats.is_some(),
+        ),
+        ("head_h", json!(head_h), labeled_head_height.is_some()),
+        (
+            "thread_pitch",
+            json!(thread_pitch),
+            labeled_pitch.is_some(),
+        ),
+        ("center", json!([0.0, 0.0, 0.0]), false),
+        ("segments", json!(48), false),
+    ];
+    let mut parameters = serde_json::Map::new();
+    let mut sources = serde_json::Map::new();
+    for (key, value, from_user) in user_dimensions {
+        parameters.insert(key.into(), value);
+        let source = if from_user {
+            user_source(raw)
+        } else if key == "thread_pitch" {
+            derived_source(raw, "按 bolt_std.json 中对应 M 规格的粗牙螺距取值。")
+        } else if key == "across_flats" {
+            derived_source(raw, "沿用旧 Python Quick `_bolt` 规则：对边宽度 = round(1.5 × d, 1) mm。")
+        } else if key == "head_h" {
+            derived_source(raw, "沿用旧 Python Quick `_bolt` 规则：头高 = round(0.7 × d, 1) mm。")
+        } else {
+            derived_source(raw, "沿用旧 Python Quick 六角头螺栓配方默认值。")
+        };
+        sources.insert(key.into(), source);
+    }
+
+    let mut bolt = feature(1, "hex_bolt", "add", Value::Object(parameters), Value::Object(sources));
+    bolt["name"] = json!(format!(
+        "六角头螺栓 M{}×{}",
+        legacy_compact_number(diameter),
+        legacy_compact_number(length)
+    ));
+    Some(plan_result(raw, "六角头螺栓", vec![bolt], vec![]))
 }
 
 /// Migrate the Python Quick connection-block recipe: a centered rectangular
@@ -17221,6 +17424,57 @@ mod f5_58_legacy_support_leg_contract_tests {
         assert_eq!(shorthand["status"], "ready", "{shorthand}");
         assert_eq!(shorthand["plan"]["features"].as_array().unwrap().len(), 1, "{shorthand}");
         assert!(shorthand.to_string().contains("legacy_support_leg_dh_shorthand_ignored"), "{shorthand}");
+    }
+}
+
+#[cfg(test)]
+mod f5_63_legacy_hex_bolt_tests {
+    use super::parse;
+
+    #[test]
+    fn legacy_bare_hex_bolt_sample_preserves_ratio_dimensions_and_standard_pitch() {
+        let parsed = parse("螺栓 螺纹规格12 长度50");
+        assert_eq!(parsed["status"], "ready", "{parsed}");
+        let plan = &parsed["plan"];
+        let validation = crate::cad_plan_validation::validate_plan(plan);
+        assert_eq!(validation["state"], "valid", "{validation}");
+        let bolt = &plan["features"][0];
+        assert_eq!(bolt["kind"], "hex_bolt");
+        assert_eq!(bolt["parameters"]["shank_d"], 12.0);
+        assert_eq!(bolt["parameters"]["length"], 50.0);
+        assert_eq!(bolt["parameters"]["across_flats"], 18.0);
+        assert_eq!(bolt["parameters"]["head_h"], 8.4);
+        assert_eq!(bolt["parameters"]["thread_pitch"], 1.75);
+        assert_eq!(bolt["sources"]["across_flats"]["type"], "derived");
+        assert_eq!(bolt["sources"]["head_h"]["type"], "derived");
+        assert_eq!(bolt["sources"]["thread_pitch"]["type"], "derived");
+    }
+
+    #[test]
+    fn explicit_hex_dimensions_and_pitch_override_legacy_ratios() {
+        let parsed = parse("六角螺栓 M12×50 对边20 头高10 螺距1.5");
+        assert_eq!(parsed["status"], "ready", "{parsed}");
+        let bolt = &parsed["plan"]["features"][0];
+        assert_eq!(bolt["parameters"]["across_flats"], 20.0);
+        assert_eq!(bolt["parameters"]["head_h"], 10.0);
+        assert_eq!(bolt["parameters"]["thread_pitch"], 1.5);
+        assert_eq!(bolt["sources"]["across_flats"]["type"], "user");
+        assert_eq!(bolt["sources"]["head_h"]["type"], "user");
+        assert_eq!(bolt["sources"]["thread_pitch"]["type"], "user");
+    }
+
+    #[test]
+    fn unknown_metric_diameter_requires_explicit_pitch_and_socket_head_does_not_route_as_hex() {
+        let unknown = parse("六角螺栓 螺纹规格22 长度50");
+        assert_eq!(unknown["status"], "needs_clarification", "{unknown}");
+        assert!(unknown.to_string().contains("legacy_hex_bolt_pitch_required"));
+
+        let explicit = parse("六角螺栓 螺纹规格22 长度50 螺距2.5");
+        assert_eq!(explicit["status"], "ready", "{explicit}");
+        assert_eq!(explicit["plan"]["features"][0]["parameters"]["thread_pitch"], 2.5);
+
+        let socket = parse("内六角螺栓 M12×50");
+        assert_ne!(socket["plan"]["features"][0]["kind"], "hex_bolt");
     }
 }
 
