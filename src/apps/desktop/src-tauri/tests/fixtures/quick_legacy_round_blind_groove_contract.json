@@ -1,0 +1,156 @@
+{
+  "source": "src/legacy/ai_modeler/core/parsing/nlparser.py via nlparser.parse(text).doc.to_dict()/stats(), replayed 2026-10-08",
+  "scope": "Only the accepted row is a strict old-Python parity fixture. Guard cases are known intentional Rust divergences: for ambiguity, missing required values, or compound scope, Rust returns clarification instead of silently defaulting or treating a circular recess as a rectangular pocket.",
+  "accepted": [
+    {
+      "input": "圆柱直径50高40，然后圆形凹槽直径20深5",
+      "legacy_result": {
+        "ok": true,
+        "recognized": 2,
+        "steps": [
+          "圆柱 ⌀50 × 40 mm",
+          "圆形凹槽 ⌀20 深 5 mm"
+        ],
+        "features": [
+          {
+            "kind": "cylinder",
+            "op": "add",
+            "parameters": {
+              "radius": 25.0,
+              "height": 40.0,
+              "radius2": null,
+              "center": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "base": true,
+              "axis": "Z",
+              "segments": 48
+            },
+            "provenance": {
+              "radius": "explicit",
+              "height": "explicit"
+            }
+          },
+          {
+            "kind": "hole",
+            "op": "cut",
+            "parameters": {
+              "diameter": 20.0,
+              "through": false,
+              "depth": 5.0,
+              "axis": "Z",
+              "pos": "center",
+              "segments": 48
+            },
+            "provenance": {}
+          }
+        ],
+        "stats": {
+          "faces": 146,
+          "triangles": 380,
+          "bbox": [
+            -25.0,
+            -25.0,
+            0.0,
+            25.0,
+            25.0,
+            40.0
+          ],
+          "size": [
+            50.0,
+            50.0,
+            40.0
+          ],
+          "volume": 76749.40102539085,
+          "area": 10508.42119299997
+        }
+      },
+      "expected_rust": {
+        "features": [
+          {
+            "kind": "cylinder",
+            "operation": "add",
+            "parameters": {
+              "radius": 25.0,
+              "height": 40.0,
+              "radius2": null,
+              "center": [
+                0.0,
+                0.0,
+                0.0
+              ],
+              "base": true,
+              "axis": "Z",
+              "segments": 48
+            },
+            "user_sources": [
+              "height"
+            ],
+            "derived_sources": [
+              "radius",
+              "center",
+              "base",
+              "axis",
+              "segments"
+            ]
+          },
+          {
+            "kind": "hole",
+            "operation": "cut",
+            "parameters": {
+              "diameter": 20.0,
+              "through": false,
+              "depth": 5.0,
+              "axis": "Z",
+              "pos": "center",
+              "segments": 48
+            },
+            "user_sources": [
+              "diameter",
+              "depth"
+            ],
+            "derived_sources": [
+              "through",
+              "axis",
+              "pos",
+              "segments"
+            ]
+          }
+        ],
+        "warning_code": "legacy_round_blind_groove_defaults"
+      }
+    }
+  ],
+  "guard_cases": [
+    {
+      "input": "圆柱直径50高40，然后圆形凹槽深5",
+      "expected_status": "needs_clarification",
+      "expected_issue": "legacy_round_groove_diameter_missing",
+      "legacy_observed": "old parser falls back to 20×20×5 rectangular pocket",
+      "classification": "intentional_rust_guard_not_parity"
+    },
+    {
+      "input": "圆柱直径50高40，然后圆形凹槽直径20",
+      "classification": "intentional_rust_guard_not_parity",
+      "expected_status": "needs_clarification",
+      "expected_issue": "legacy_round_groove_depth_missing",
+      "legacy_observed": "old Python Quick defaults missing circular-groove depth to 5 mm"
+    },
+    {
+      "input": "圆柱直径50高40，然后圆形凹槽直径20直径25深5",
+      "expected_status": "needs_clarification",
+      "expected_issue": "legacy_round_groove_diameter_conflict",
+      "legacy_observed": "old parser silently uses first diameter 20 mm",
+      "classification": "intentional_rust_guard_not_parity"
+    },
+    {
+      "input": "圆柱直径50高40，然后圆形凹槽直径20深5，然后在中心钻通孔直径6",
+      "expected_status": "needs_clarification",
+      "expected_issue": "legacy_round_groove_scope_ambiguous",
+      "legacy_observed": "old parser creates the circular recess and a separate centered through hole",
+      "classification": "intentional_rust_guard_not_parity"
+    }
+  ]
+}

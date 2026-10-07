@@ -446,6 +446,9 @@ pub fn parse(text: &str) -> Value {
         .filter(|c| has_hole(c) || has_slot(c))
         .cloned()
         .collect();
+    let legacy_round_groove_only = clauses.len() == 2
+        && modifier_clauses.len() == 1
+        && modifier_clauses[0].contains("圆形凹槽");
     let mut base_text = clauses
         .iter()
         .filter(|c| {
@@ -498,7 +501,7 @@ pub fn parse(text: &str) -> Value {
             text,
             &mut questions,
             &mut warnings,
-            modifier_clauses.is_empty(),
+            modifier_clauses.is_empty() || legacy_round_groove_only,
         ) {
             features.push(base);
         }
@@ -520,6 +523,33 @@ pub fn parse(text: &str) -> Value {
             if let Some(start) = first_modifier_index(&normalized) {
                 cut_text = normalized[start..].to_owned();
             }
+        }
+        if cut_text.contains("圆形凹槽") {
+            let supported_base = base_kind == Some(BaseKind::Box)
+                || base_kind == Some(BaseKind::Cylinder);
+            if clauses.len() != 2
+                || modifier_clauses.len() != 1
+                || !supported_base
+                || features.len() != 1
+                || !questions.is_empty()
+                || !unsupported.is_empty()
+            {
+                questions.push(issue(
+                    "legacy_round_groove_scope_ambiguous",
+                    "圆形凹槽兼容只处理一个完整长方体/圆柱基础体加一个独立凹槽；复合特征或不完整主体需拆开说明。",
+                ));
+                continue;
+            }
+            if let Some(feature) = build_legacy_round_blind_groove(
+                &cut_text,
+                text,
+                feature_index,
+                &mut questions,
+                &mut warnings,
+            ) {
+                features.push(feature);
+            }
+            continue;
         }
         if is_hole {
             if clause.contains("沉孔") {
@@ -11970,6 +12000,131 @@ fn build_base(
     ))
 }
 
+/// Reproduce the legacy Python route for an explicitly sized circular blind
+/// recess. This intentionally handles only the exact `圆形凹槽` wording; other
+/// slots remain on the existing rectangular-slot path.
+fn build_legacy_round_blind_groove(
+    clause: &str,
+    raw: &str,
+    index: usize,
+    questions: &mut Vec<Value>,
+    warnings: &mut Vec<Value>,
+) -> Option<Value> {
+    if contains_any(clause, &["通孔", "贯穿", "through", "thru"]) {
+        questions.push(issue(
+            "legacy_round_groove_through_conflict",
+            "圆形凹槽是盲切，不能同时要求贯穿；请拆开或改正孔型。",
+        ));
+        return None;
+    }
+    if contains_any(
+        clause,
+        &[
+            "四角", "边孔", "坐标", "位置", "分度圆", "节圆", "分布圆", "均布", "阵列", "槽宽",
+        ],
+    ) || center_coordinates(clause).is_some()
+        || named_xyz(clause).is_some()
+    {
+        questions.push(issue(
+            "legacy_round_groove_location_unsupported",
+            "此圆形凹槽兼容只支持旧 Quick 的中心位置；四角、阵列或坐标定位需单独描述。",
+        ));
+        return None;
+    }
+
+    let Some(diameter) = diameter_value(clause) else {
+        questions.push(issue(
+            "legacy_round_groove_diameter_missing",
+            "圆形凹槽需要一个明确直径；不会退回生成矩形槽。",
+        ));
+        return None;
+    };
+    if !diameter.is_finite() || diameter <= 0.0 {
+        questions.push(issue(
+            "legacy_round_groove_diameter_conflict",
+            "圆形凹槽直径必须是唯一且为正数的尺寸。",
+        ));
+        return None;
+    }
+    if let Some(radius) = scalar(clause, &["radius", "半径"]) {
+        if !radius.is_finite() || radius <= 0.0 || !close(diameter, radius * 2.0) {
+            questions.push(issue(
+                "legacy_round_groove_radius_diameter_conflict",
+                "圆形凹槽的半径与直径冲突或非法；请只保留一组一致尺寸。",
+            ));
+            return None;
+        }
+    }
+
+    let Some(depth) = hole_depth_value(clause) else {
+        questions.push(issue(
+            "legacy_round_groove_depth_missing",
+            "圆形凹槽需要明确正深度；不会静默沿用旧矩形槽默认值。",
+        ));
+        return None;
+    };
+    if !depth.is_finite() || depth <= 0.0 {
+        questions.push(issue(
+            "legacy_round_groove_depth_conflict",
+            "圆形凹槽深度必须是唯一且为正数的尺寸。",
+        ));
+        return None;
+    }
+
+    let prior_question_count = questions.len();
+    let explicit_axis = axis_value(clause, questions);
+    if questions.len() != prior_question_count {
+        return None;
+    }
+    let axis = explicit_axis.unwrap_or("Z");
+    let blind_explicit = contains_any(clause, &["盲孔", "盲切", "blind"]);
+    let center_explicit = has_center_location(clause);
+    if !has_unit(clause) {
+        warnings.push(issue(
+            "unit_interpreted_as_mm",
+            "圆形凹槽未写长度单位，直径和深度按 mm 解释。",
+        ));
+    }
+    warnings.push(issue(
+        "legacy_round_blind_groove_defaults",
+        "按旧 Python Quick 圆形凹槽规则生成中心盲切；未指定位置时取中心、轴向默认 Z，圆周分段为 48。",
+    ));
+
+    Some(feature(
+        index + 2,
+        "hole",
+        "cut",
+        json!({
+            "diameter":diameter,
+            "through":false,
+            "depth":depth,
+            "axis":axis,
+            "pos":"center",
+            "segments":48
+        }),
+        json!({
+            "diameter":user_source(raw),
+            "through":if blind_explicit {
+                user_source(raw)
+            } else {
+                derived_source(raw, "圆形凹槽有明确盲切深度；因此 through=false。")
+            },
+            "depth":user_source(raw),
+            "axis":if explicit_axis.is_some() {
+                user_source(raw)
+            } else {
+                derived_source(raw, "未指定圆形凹槽轴向时沿用旧 Python Quick 默认 Z 轴。")
+            },
+            "pos":if center_explicit {
+                user_source(raw)
+            } else {
+                derived_source(raw, "旧 Python Quick 圆形凹槽默认位于当前零件中心。")
+            },
+            "segments":derived_source(raw, "沿用旧 Python Quick 圆形凹槽 48 段圆周离散。")
+        }),
+    ))
+}
+
 fn build_hole(
     clause: &str,
     raw: &str,
@@ -14971,6 +15126,141 @@ mod tests {
             }
             eprintln!("F5.77 PASS: {prompt} -> {:?} mm", dimensions);
         }
+    }
+
+    #[test]
+    fn f5_78_legacy_round_blind_groove_matches_python_contract_and_guards() {
+        let fixture: Value = serde_json::from_str(include_str!(
+            "../tests/fixtures/quick_legacy_round_blind_groove_contract.json"
+        ))
+        .expect("legacy round blind-groove fixture is valid JSON");
+
+        for case in fixture["accepted"].as_array().unwrap() {
+            let input = case["input"].as_str().unwrap();
+            let output = parse(input);
+            assert_eq!(output["status"], "ready", "{input}: {output}");
+            assert_eq!(
+                crate::cad_plan_validation::validate_plan(&output["plan"])["state"],
+                "valid",
+                "{input}: {}",
+                crate::cad_plan_validation::validate_plan(&output["plan"])
+            );
+            let features = output["plan"]["features"].as_array().unwrap();
+            let expected = case["expected_rust"]["features"].as_array().unwrap();
+            assert_eq!(features.len(), expected.len(), "{input}: {output}");
+            for (actual, expected) in features.iter().zip(expected) {
+                assert_eq!(actual["kind"], expected["kind"], "{input}");
+                assert_eq!(actual["operation"], expected["operation"], "{input}");
+                for (key, value) in expected["parameters"].as_object().unwrap() {
+                    assert_eq!(actual["parameters"][key], *value, "{input}: {key}");
+                }
+                for key in expected["user_sources"].as_array().unwrap() {
+                    let key = key.as_str().unwrap();
+                    assert_eq!(actual["sources"][key]["type"], "user", "{input}: {key}");
+                }
+                for key in expected["derived_sources"].as_array().unwrap() {
+                    let key = key.as_str().unwrap();
+                    assert_eq!(actual["sources"][key]["type"], "derived", "{input}: {key}");
+                }
+                for source in actual["sources"].as_object().unwrap().values() {
+                    assert_eq!(source["evidence"], input, "{input}: source evidence");
+                }
+            }
+            assert!(
+                output["warnings"]
+                    .to_string()
+                    .contains(case["expected_rust"]["warning_code"].as_str().unwrap()),
+                "{input}: missing legacy groove warning: {output}"
+            );
+        }
+
+        for case in fixture["guard_cases"].as_array().unwrap() {
+            let input = case["input"].as_str().unwrap();
+            let output = parse(input);
+            assert_eq!(output["status"], case["expected_status"], "{input}: {output}");
+            assert!(output["plan"].is_null(), "{input}: unsafe partial plan: {output}");
+            assert!(
+                output["questions"]
+                    .to_string()
+                    .contains(case["expected_issue"].as_str().unwrap()),
+                "{input}: expected explicit guard issue: {output}"
+            );
+        }
+    }
+
+    #[test]
+    #[ignore = "requires an explicitly staged OCCT runtime; run the documented F5.78 acceptance command"]
+    fn f5_78_round_blind_groove_builds_and_exports_occt() {
+        let manifest = std::env::var_os("AIMODELER_TEST_OCCT_MANIFEST")
+            .map(std::path::PathBuf::from)
+            .expect("F5.78 requires AIMODELER_TEST_OCCT_MANIFEST");
+        assert!(manifest.is_file(), "OCCT manifest missing: {}", manifest.display());
+        let fixture: Value = serde_json::from_str(include_str!(
+            "../tests/fixtures/quick_legacy_round_blind_groove_contract.json"
+        ))
+        .expect("legacy round blind-groove fixture is valid JSON");
+        let case = &fixture["accepted"][0];
+        let prompt = case["input"].as_str().unwrap();
+        let legacy_volume = case["legacy_result"]["stats"]["volume"]
+            .as_f64()
+            .expect("legacy mesh volume");
+
+        let root = std::env::temp_dir().join(format!(
+            "quick-f5-78-{}-{}",
+            std::process::id(),
+            std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .unwrap()
+                .as_nanos()
+        ));
+        std::fs::create_dir_all(&root).unwrap();
+        struct RemoveOnDrop(std::path::PathBuf);
+        impl Drop for RemoveOnDrop {
+            fn drop(&mut self) {
+                let _ = std::fs::remove_dir_all(&self.0);
+            }
+        }
+        let _cleanup = RemoveOnDrop(root.clone());
+
+        let result = crate::native_quick::build(prompt, 1, &manifest, &root)
+            .unwrap_or_else(|error| panic!("F5.78 OCCT build failed for {prompt}: {error}"));
+        assert_eq!(result["state"], "complete", "{prompt}: {result}");
+        let report = &result["geometry_report"];
+        assert_eq!(report["state"], "passed", "{prompt}: {report}");
+        assert_eq!(report["valid"], true, "{prompt}: {report}");
+        assert_eq!(report["closed_solid_count"], 1, "{prompt}: {report}");
+        for (actual, expected) in report["dimensions_mm"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .zip([50.0, 50.0, 40.0])
+        {
+            let actual = actual.as_f64().expect("numeric measured dimension");
+            assert!((actual - expected).abs() <= 1e-8, "{prompt}: {report}");
+        }
+        let volume = report["volume_mm3"].as_f64().expect("measured volume");
+        let analytic_volume = 24_500.0 * std::f64::consts::PI;
+        assert!((volume - analytic_volume).abs() <= 1e-3, "{prompt}: {report}");
+        assert!((volume - legacy_volume).abs() < 300.0, "legacy={legacy_volume}, B-Rep={volume}");
+        for key in ["aimodel", "stl", "obj", "glb"] {
+            let path = result["output_paths"][key]
+                .as_str()
+                .unwrap_or_else(|| panic!("{prompt}: missing {key} output path"));
+            assert!(std::path::Path::new(path).is_file(), "{prompt}: missing {key}: {path}");
+        }
+        let aimodel_path = std::path::Path::new(result["output_paths"]["aimodel"].as_str().unwrap());
+        let reloaded = crate::native_model_io::load_aimodel(aimodel_path)
+            .unwrap_or_else(|error| panic!("F5.78 AIMODEL reload failed: {error}"));
+        let groove = &reloaded["cadplan"]["features"][1];
+        assert_eq!(groove["kind"], "hole");
+        assert_eq!(groove["operation"], "cut");
+        assert_eq!(groove["parameters"]["through"], false);
+        assert_eq!(groove["parameters"]["depth"], 5.0);
+        assert_eq!(groove["parameters"]["diameter"], 20.0);
+        eprintln!(
+            "F5.78 PASS: bbox=50×50×40 mm, OCCT={volume:.6} mm³, legacy mesh={legacy_volume:.6} mm³, delta={:.6} mm³",
+            volume - legacy_volume
+        );
     }
 
     #[test]
