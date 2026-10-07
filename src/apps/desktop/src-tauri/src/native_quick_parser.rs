@@ -4,6 +4,7 @@
 use serde_json::{Value, json};
 use std::sync::OnceLock;
 
+mod legacy_box_aliases;
 mod legacy_catalog_box_defaults;
 mod legacy_catalog_cylinder_defaults;
 mod legacy_catalog_egt_profile;
@@ -190,6 +191,8 @@ pub fn parse(text: &str) -> Value {
     if let Some(parsed) = legacy_catalog_cylinder_defaults::parse(text, &normalized) {
         return parsed;
     }
+
+    let normalized = legacy_box_aliases::canonicalize_box_alias(&normalized).unwrap_or(normalized);
 
     let mut clauses = split_clauses(&normalized);
     let mut clause_index = 1;
@@ -14619,6 +14622,32 @@ mod tests {
                     .contains("legacy_box_dimensions_defaulted"),
                 "{input}: missing visibility warning for legacy defaults: {output}"
             );
+        }
+    }
+
+    #[test]
+    fn legacy_box_name_aliases_match_python_quick_dimensions() {
+        let fixture: Value = serde_json::from_str(include_str!(
+            "../tests/fixtures/quick_legacy_box_aliases_contract.json"
+        ))
+        .expect("legacy box alias fixture is valid JSON");
+
+        for case in fixture["legacy_accepted"].as_array().unwrap() {
+            let input = case["input"].as_str().unwrap();
+            let output = parse(input);
+            assert_eq!(output["status"], "ready", "{input}: {output}");
+            let validation = crate::cad_plan_validation::validate_plan(&output["plan"]);
+            assert_eq!(validation["state"], "valid", "{input}: {validation}");
+            let features = output["plan"]["features"].as_array().unwrap();
+            assert_eq!(features.len(), 1, "{input}: {output}");
+            let feature = &features[0];
+            assert_eq!(feature["kind"], "box", "{input}");
+            for (key, expected) in ["length", "width", "height"]
+                .into_iter()
+                .zip(case["dimensions_mm"].as_array().unwrap())
+            {
+                assert_eq!(feature["parameters"][key], *expected, "{input}: {key}");
+            }
         }
     }
 

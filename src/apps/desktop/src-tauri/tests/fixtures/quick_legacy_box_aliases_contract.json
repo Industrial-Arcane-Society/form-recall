@@ -1,0 +1,15 @@
+{
+  "source": "src/legacy/ai_modeler/core/parsing/nlparser.py via nlparser.parse(text).doc.to_dict(), captured 2026-10-07",
+  "legacy_accepted": [
+    {"input": "立方体 长20宽20高20", "dimensions_mm": [20.0, 20.0, 20.0]},
+    {"input": "正方体 边长20", "dimensions_mm": [20.0, 60.0, 20.0]},
+    {"input": "方块 20×20×20", "dimensions_mm": [20.0, 20.0, 20.0]},
+    {"input": "矩形体 长20宽10高5", "dimensions_mm": [20.0, 10.0, 5.0]},
+    {"input": "方形块 长20宽10高5", "dimensions_mm": [20.0, 10.0, 5.0]},
+    {"input": "铝板 100×50×3", "dimensions_mm": [100.0, 50.0, 3.0]},
+    {"input": "钢板 100×50×3", "dimensions_mm": [100.0, 50.0, 3.0]},
+    {"input": "箱体 100×50×30", "dimensions_mm": [100.0, 50.0, 30.0]},
+    {"input": "机座 100×50×30", "dimensions_mm": [100.0, 50.0, 30.0]},
+    {"input": "基座 100×50×30", "dimensions_mm": [100.0, 50.0, 30.0]}
+  ]
+}
