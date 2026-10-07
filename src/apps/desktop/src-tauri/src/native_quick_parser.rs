@@ -121,6 +121,9 @@ pub fn parse(text: &str) -> Value {
     if let Some(parsed) = parse_legacy_gear(text, &normalized) {
         return parsed;
     }
+    if let Some(parsed) = parse_legacy_rotor(text, &normalized) {
+        return parsed;
+    }
     if let Some(parsed) = parse_legacy_impeller(text, &normalized) {
         return parsed;
     }
@@ -611,8 +614,8 @@ fn result(
         "questions":questions,
         "unsupported":unsupported,
         "compatibility":{
-            "scope":"common explicit primitives/cuts, migrated standalone primitive defaults and legacy extrusion/revolve constructors, centered solid-shaft aliases, rectangular slots, flat-washer rings, cylindrical/conical spring helices, measured socket-head screws with optional washers, V-belt pulleys, timing pulleys, straight-gear construction, PCD counterbores, migrated legacy washer/spring/shaft/bearing/seal-ring/coupling/brake-disc/brake-drum/flywheel/flat-annular-part/disc-cam/spline-shaft/crankshaft/camshaft/piston/worm recipes, and executable flange/stepped-shaft/sleeve/blade/blisk templates",
-            "legacy_typical_defaults":"restored only for migrated Quick constructors/templates, centered solid shafts (Ø30 mm when diameter is absent), straight gears, timing pulleys, V-belt pulleys, socket-head screw catalog recipes, rectangular slots, flat-washer thickness, spring wire/turn values, brake-disc thickness/bore values, brake-drum bore values, flywheel center-bore/PCD-hole values, flat-annular-part bore/thickness values, disc-cam base diameter/thickness, spline-shaft minor diameter/tooth count, crankshaft main/pin journal diameters and stroke/throw count, camshaft lobe count/journal diameter, piston pin diameter/ring groove count, and worm pitch diameter; defaults and raw-dimension mappings are reported as warnings",
+            "scope":"common explicit primitives/cuts, migrated standalone primitive defaults and legacy extrusion/revolve constructors, centered solid-shaft aliases, rectangular slots, flat-washer rings, cylindrical/conical spring helices, measured socket-head screws with optional washers, V-belt pulleys, timing pulleys, straight-gear construction, PCD counterbores, migrated legacy washer/spring/shaft/bearing/seal-ring/coupling/brake-disc/brake-drum/flywheel/flat-annular-part/disc-cam/spline-shaft/crankshaft/camshaft/piston/worm/triangular-rotor recipes, and executable flange/stepped-shaft/sleeve/blade/blisk templates",
+            "legacy_typical_defaults":"restored only for migrated Quick constructors/templates, centered solid shafts (Ø30 mm when diameter is absent), straight gears, timing pulleys, V-belt pulleys, socket-head screw catalog recipes, rectangular slots, flat-washer thickness, spring wire/turn values, brake-disc thickness/bore values, brake-drum bore values, flywheel center-bore/PCD-hole values, flat-annular-part bore/thickness values, disc-cam base diameter/thickness, spline-shaft minor diameter/tooth count, crankshaft main/pin journal diameters and stroke/throw count, camshaft lobe count/journal diameter, piston pin diameter/ring groove count, worm pitch diameter, and triangular-rotor R=60 mm and center bore ⌀24 mm when omitted; defaults and raw-dimension mappings are reported as warnings",
             "loft_geometry":"blade and blisk lofts are locally approximate faceted B-Reps",
             "timing_pulley_geometry":"native timing pulley teeth are approximate trapezoidal prisms fused to an analytic annular blank",
             "vbelt_pulley_geometry":"standard V-groove pulley is an approximate axisymmetric revolve; legacy spoke variants and CATIA-native groove features are not included",
@@ -4278,6 +4281,188 @@ fn parse_legacy_impeller(raw: &str, text: &str) -> Option<Value> {
     }
 
     Some(plan_result(raw, "叶轮", features, warnings))
+}
+
+/// Migrate the old part-library triangular-rotor Quick recipe. The legacy
+/// constructor has a typical radius and bore, but height is required before
+/// it can create a feature. Units are normalized here; old Python partlib
+/// treated explicit cm values as millimetres and could add a second generic
+/// hole feature instead of incorporating the center bore.
+fn parse_legacy_rotor(raw: &str, text: &str) -> Option<Value> {
+    if !contains_any(
+        text,
+        &["三角转子", "转子发动机转子", "wankel rotor", "rotary engine rotor"],
+    ) {
+        return None;
+    }
+
+    if contains_any(
+        text,
+        &[
+            "偏置孔", "偏心孔", "侧孔", "偏心轴", "偏心", "密封槽", "气封槽", "顶点密封",
+            "键槽", "螺纹", "倒角", "圆角", "切除", "壳体", "缸体", "进气口", "排气口",
+            "燃烧室", "冷却水道", "槽", "凹槽", "沟槽", "side hole", "eccentric shaft",
+            "housing", "seal", "groove", "apex seal", "keyway", "thread", "chamfer", "fillet",
+            "pocket", "slot",
+        ],
+    ) {
+        return Some(parse_result_with_issue(
+            "unsupported",
+            raw,
+            "legacy_rotor_modifier_not_migrated",
+            "当前只迁移三角转子主体和同轴中心孔；偏置/侧孔、偏心轴、密封槽、键槽、螺纹及边缘修饰尚未迁移。",
+        ));
+    }
+
+    let radius = pulley_scalar(
+        raw,
+        text,
+        &["外接圆半径", "半径", "circumradius", "radius"],
+        &["R"],
+    );
+    let height = pulley_scalar(
+        raw,
+        text,
+        &["厚度", "厚", "高度", "高", "height"],
+        &["H", "h"],
+    );
+    let center_bore_labels = [
+        "中心孔直径", "中心孔", "中心通孔", "中心贯穿孔", "center bore", "center hole",
+        "bore diameter",
+    ];
+    let center_bore_label_present = contains_any(text, &center_bore_labels);
+    let bore_d = pulley_scalar(raw, text, &center_bore_labels, &["d"]);
+
+    if contains_any(text, &["孔", "hole", "bore"])
+        && !center_bore_label_present
+        && bore_d.is_none()
+    {
+        return Some(parse_result_with_issue(
+            "unsupported",
+            raw,
+            "legacy_rotor_hole_location_not_migrated",
+            "当前只支持三角转子轴线上的同轴中心孔；其他孔位尚未迁移。",
+        ));
+    }
+    if center_bore_label_present && bore_d.is_none() {
+        return Some(parse_result_with_issue(
+            "needs_clarification",
+            raw,
+            "legacy_rotor_center_bore_size_required",
+            "检测到中心孔描述但没有明确孔径；请给出中心孔直径，或明确写中心孔0表示无孔。",
+        ));
+    }
+
+    for (value, code, label) in [
+        (radius, "legacy_rotor_radius_invalid", "转子外接圆半径"),
+        (height, "legacy_rotor_height_invalid", "转子厚度"),
+        (bore_d, "legacy_rotor_center_bore_invalid", "中心孔直径"),
+    ] {
+        if value.is_some_and(|number| !number.is_finite()) {
+            return Some(result(
+                "needs_clarification",
+                raw,
+                None,
+                vec![],
+                vec![issue(
+                    code,
+                    format!("{label}出现重复或冲突的数值；请只保留一个明确尺寸。"),
+                )],
+                vec![],
+            ));
+        }
+    }
+
+    let Some(height_raw) = height else {
+        return Some(parse_result_with_issue(
+            "needs_clarification",
+            raw,
+            "legacy_rotor_height_required",
+            "三角转子必须明确给出厚度/高度；旧零件库不提供可安全代入的高度。",
+        ));
+    };
+    let radius_defaulted = radius.is_none();
+    let radius = radius.unwrap_or(60.0);
+    let bore_defaulted = bore_d.is_none();
+    let bore_d = bore_d.unwrap_or(24.0);
+    if radius <= 0.0 || height_raw <= 0.0 || bore_d < 0.0 {
+        return Some(parse_result_with_issue(
+            "needs_clarification",
+            raw,
+            "legacy_rotor_dimensions_invalid",
+            "三角转子半径和厚度必须为正数，中心孔直径必须为非负数。",
+        ));
+    }
+
+    let parameters = json!({
+        "radius":radius,
+        "height":height_raw,
+        "bore_d":bore_d,
+        "center":[0.0,0.0,0.0],
+        "n":48
+    });
+    if let Err(error) = crate::native_rotor::preflight(&parameters) {
+        return Some(result(
+            "needs_clarification",
+            raw,
+            None,
+            vec![],
+            vec![issue(
+                "legacy_rotor_geometry_invalid",
+                format!("当前转子参数不能形成有效主体或保留中心孔壁：{error}"),
+            )],
+            vec![],
+        ));
+    }
+
+    let mut warnings = vec![issue(
+        "legacy_rotor_migrated",
+        "已按旧 Python Quick 的固定 48 点圆角三角轮廓生成转子主体；本地 B-Rep 仍是轮廓近似，不是精确 Reuleaux/Wankel 曲线。",
+    )];
+    if radius_defaulted {
+        warnings.push(issue(
+            "legacy_rotor_default_radius",
+            "未指定外接圆半径；沿用旧三角转子零件库典型值 60 mm。",
+        ));
+    }
+    if bore_defaulted {
+        warnings.push(issue(
+            "legacy_rotor_default_center_bore",
+            "未指定中心孔；沿用旧三角转子零件库典型值 ⌀24 mm。",
+        ));
+    }
+    if bore_d == 0.0 && center_bore_label_present {
+        warnings.push(issue(
+            "legacy_rotor_zero_bore_honored",
+            "已按明确输入中心孔0生成无孔转子；修正旧 Python 的 truthiness 默认问题，旧逻辑会把0当作未填写并代入⌀24 mm。",
+        ));
+    }
+    if !has_unit(text) {
+        warnings.push(issue(
+            "unit_interpreted_as_mm",
+            "未写长度单位的三角转子尺寸按 Quick 默认单位 mm 解释。",
+        ));
+    } else if crankshaft_has_non_mm_unit(text) {
+        warnings.push(issue(
+            "legacy_rotor_unit_conversion",
+            "Rust 将显式标注的非毫米尺寸换算为 mm；旧 Python Quick 曾把 cm 等单位后的原始数字直接当作 mm，且可能把中心孔拆成另一条切除。",
+        ));
+    }
+
+    let features = vec![feature(
+        1,
+        "rotor",
+        "add",
+        parameters,
+        json!({
+            "radius":if radius_defaulted { derived_source(raw, "沿用旧零件库三角转子典型外接圆半径 R=60 mm。") } else { user_source(raw) },
+            "height":user_source(raw),
+            "bore_d":if bore_defaulted { derived_source(raw, "沿用旧零件库三角转子典型中心孔 d=24 mm。") } else { user_source(raw) },
+            "center":derived_source(raw, "旧 Python Quick 将转子几何中心放在全局原点。"),
+            "n":derived_source(raw, "旧 Python Quick 的圆角三角转子轮廓固定采样 48 点。")
+        }),
+    )];
+    Some(plan_result(raw, "三角转子", features, warnings))
 }
 
 fn parse_legacy_camshaft(raw: &str, text: &str) -> Option<Value> {
@@ -14077,6 +14262,95 @@ mod f5_51_legacy_impeller_contract_tests {
                 !output.to_string().contains("\"kind\":\"impeller\""),
                 "{input} must retain the old generic blisk-template route: {output}"
             );
+        }
+
+        for case in fixture["needs_clarification"].as_array().unwrap() {
+            let input = case["input"].as_str().unwrap();
+            let output = parse(input);
+            assert_eq!(output["status"], "needs_clarification", "{input}: {output}");
+            assert!(output["plan"].is_null(), "{input}: {output}");
+            assert!(output.to_string().contains(case["issue"].as_str().unwrap()), "{input}: {output}");
+        }
+
+        for case in fixture["unsupported"].as_array().unwrap() {
+            let input = case["input"].as_str().unwrap();
+            let output = parse(input);
+            assert_eq!(output["status"], "unsupported", "{input}: {output}");
+            assert!(output["plan"].is_null(), "{input}: {output}");
+            assert!(output.to_string().contains(case["issue"].as_str().unwrap()), "{input}: {output}");
+        }
+    }
+}
+
+#[cfg(test)]
+mod f5_52_legacy_rotor_contract_tests {
+    use super::parse;
+    use serde_json::Value;
+
+    #[test]
+    fn legacy_rotors_match_python_recipe_defaults_units_and_boundaries() {
+        let fixture: Value = serde_json::from_str(include_str!(
+            "../tests/fixtures/quick_legacy_rotor_contract.json"
+        ))
+        .expect("rotor Python oracle fixture is valid JSON");
+
+        for case in fixture["legacy_accepted"].as_array().unwrap() {
+            let input = case["input"].as_str().unwrap();
+            let output = parse(input);
+            assert_eq!(output["status"], "ready", "{input}: {output}");
+            assert_eq!(output["plan"]["name"], "三角转子", "{input}: {output}");
+            let features = output["plan"]["features"].as_array().unwrap();
+            assert_eq!(features.len(), 1, "{input}: {output}");
+            let rotor = &features[0];
+            assert_eq!(rotor["kind"], "rotor", "{input}: {output}");
+            assert_eq!(rotor["operation"], "add", "{input}: {output}");
+            for (name, expected) in case["native_expected"].as_object().unwrap() {
+                if let Some(expected_values) = expected.as_array() {
+                    let actual_values = rotor["parameters"][name].as_array().unwrap();
+                    assert_eq!(actual_values.len(), expected_values.len(), "{input}: {name}");
+                    for (actual, expected) in actual_values.iter().zip(expected_values) {
+                        assert!(
+                            (actual.as_f64().unwrap() - expected.as_f64().unwrap()).abs() <= 1e-9,
+                            "{input}: {name}={actual}, expected {expected}"
+                        );
+                    }
+                } else {
+                    assert_eq!(rotor["parameters"][name], *expected, "{input}: {name}");
+                }
+            }
+            for name in case["source_user"].as_array().into_iter().flatten() {
+                assert_eq!(
+                    rotor["sources"][name.as_str().unwrap()]["type"],
+                    "user",
+                    "{input}: {name} source"
+                );
+            }
+            for name in case["source_derived"].as_array().into_iter().flatten() {
+                assert_eq!(
+                    rotor["sources"][name.as_str().unwrap()]["type"],
+                    "derived",
+                    "{input}: {name} source"
+                );
+            }
+            for warning in case["warnings"].as_array().into_iter().flatten() {
+                assert!(output.to_string().contains(warning.as_str().unwrap()), "{input}: {output}");
+            }
+            let validation = crate::cad_plan_validation::validate_plan(&output["plan"]);
+            assert_eq!(validation["valid"], true, "{input}: {validation}");
+            assert!(crate::native_plan_geometry::preflight(&output["plan"]).is_ok(), "{input}");
+            crate::native_rotor::preflight(&rotor["parameters"])
+                .unwrap_or_else(|error| panic!("{input}: {error}"));
+            assert_eq!(rotor["parameters"]["n"], 48, "{input}");
+        }
+
+        for case in fixture["legacy_divergences"].as_array().unwrap() {
+            let input = case["input"].as_str().unwrap();
+            let output = parse(input);
+            assert_eq!(output["status"], "ready", "{input}: {output}");
+            assert!(output.to_string().contains(case["warning"].as_str().unwrap()), "{input}: {output}");
+            for (name, expected) in case["rust_expected"].as_object().unwrap() {
+                assert_eq!(output["plan"]["features"][0]["parameters"][name], *expected, "{input}: {name}");
+            }
         }
 
         for case in fixture["needs_clarification"].as_array().unwrap() {

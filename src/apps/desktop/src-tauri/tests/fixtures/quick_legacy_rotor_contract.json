@@ -1,0 +1,65 @@
+{
+  "source": {
+    "partlib": "src/legacy/ai_modeler/parts/library/partlib.py::HARD_PARTS['三角转子'] and _wankel",
+    "geometry": "src/legacy/ai_modeler/core/geometry/kernel.py::profile_rotor",
+    "routing": "src/legacy/ai_modeler/core/parsing/nlparser.py::Parser.handle and partlib.build_features_ex"
+  },
+  "legacy_accepted": [
+    {
+      "input": "三角转子 外接圆半径60 厚度40 中心孔24",
+      "native_expected": {"radius": 60.0, "height": 40.0, "bore_d": 24.0, "center": [0.0, 0.0, 0.0], "n": 48},
+      "source_user": ["radius", "height", "bore_d"],
+      "source_derived": ["center", "n"],
+      "legacy_python": {"bbox_mm": [111.9928280078762, 109.36875, 40.0], "faces": 806, "triangles": 1542, "mesh_volume_mm3": 352381.1506677451, "brep_volume_mm3": 352265.1010600722}
+    },
+    {
+      "input": "转子发动机转子 半径45 厚度25 中心孔10",
+      "native_expected": {"radius": 45.0, "height": 25.0, "bore_d": 10.0, "center": [0.0, 0.0, 0.0], "n": 48},
+      "source_user": ["radius", "height", "bore_d"],
+      "source_derived": ["center", "n"]
+    },
+    {
+      "input": "三角转子 厚度40",
+      "native_expected": {"radius": 60.0, "height": 40.0, "bore_d": 24.0, "center": [0.0, 0.0, 0.0], "n": 48},
+      "source_user": ["height"],
+      "source_derived": ["radius", "bore_d", "center", "n"],
+      "warnings": ["legacy_rotor_default_radius", "legacy_rotor_default_center_bore"]
+    },
+    {
+      "input": "三角转子 R60 H40 d24",
+      "native_expected": {"radius": 60.0, "height": 40.0, "bore_d": 24.0},
+      "source_user": ["radius", "height", "bore_d"]
+    }
+  ],
+  "legacy_divergences": [
+    {
+      "input": "三角转子 外接圆半径6cm 厚度4cm 中心孔1cm",
+      "legacy_python_interpreted_mm": {"radius": 6.0, "height": 4.0, "bore_d": 24.0, "extra_generic_hole_d": 10.0, "feature_count": 2},
+      "rust_expected": {"radius": 60.0, "height": 40.0, "bore_d": 10.0},
+      "warning": "legacy_rotor_unit_conversion"
+    },
+    {
+      "input": "三角转子 厚度40 中心孔0",
+      "legacy_python_interpreted_mm": {"radius": 60.0, "height": 40.0, "bore_d": 24.0},
+      "rust_expected": {"radius": 60.0, "height": 40.0, "bore_d": 0.0},
+      "warning": "legacy_rotor_zero_bore_honored"
+    }
+  ],
+  "needs_clarification": [
+    {"input": "三角转子", "issue": "legacy_rotor_height_required"},
+    {"input": "三角转子 外接圆半径60", "issue": "legacy_rotor_height_required"},
+    {"input": "三角转子 厚度40 中心孔", "issue": "legacy_rotor_center_bore_size_required"},
+    {"input": "三角转子 半径50 半径60 厚度40", "issue": "legacy_rotor_radius_invalid"}
+  ],
+  "unsupported": [
+    {"input": "三角转子 R60 H40 偏置孔8", "issue": "legacy_rotor_modifier_not_migrated"},
+    {"input": "三角转子 R60 H40 打孔8", "issue": "legacy_rotor_hole_location_not_migrated"},
+    {"input": "三角转子 R60 H40 顶点密封槽", "issue": "legacy_rotor_modifier_not_migrated"}
+  ],
+  "geometry_acceptance": [
+    {"input": "三角转子 外接圆半径60 厚度40 中心孔24", "dimensions_mm": [111.9928280078762, 109.36875, 40.0], "radius": 60.0, "height": 40.0, "bore_d": 24.0, "feature_count": 1},
+    {"input": "三角转子 厚度40", "dimensions_mm": [111.9928280078762, 109.36875, 40.0], "radius": 60.0, "height": 40.0, "bore_d": 24.0, "feature_count": 1},
+    {"input": "三角转子 外接圆半径6cm 厚度4cm 中心孔1cm", "dimensions_mm": [111.9928280078762, 109.36875, 40.0], "radius": 60.0, "height": 40.0, "bore_d": 10.0, "feature_count": 1},
+    {"input": "三角转子 外接圆半径60 厚度40 中心孔0", "dimensions_mm": [111.9928280078762, 109.36875, 40.0], "radius": 60.0, "height": 40.0, "bore_d": 0.0, "feature_count": 1}
+  ]
+}
