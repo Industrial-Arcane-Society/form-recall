@@ -12404,6 +12404,138 @@ fn build_legacy_round_blind_groove(
     ))
 }
 
+/// Match only the narrow legacy Python default: one supported base and one
+/// explicitly sized through-hole with no location, pattern, or side-face cue.
+/// Keep ambiguous and compound requests on the explicit-position path.
+fn explicitly_multiple_holes(clause: &str) -> bool {
+    if contains_any(
+        clause,
+        &["多个", "多处", "若干", "数个", "双孔", "两孔", "二孔"],
+    ) {
+        return true;
+    }
+    let classified_count = regex::Regex::new(
+        r"(?P<count>[0-9]+|[一二两三四五六七八九十百千]+)\s*(?:个|只|处|枚)\s*[^，,;；。]{0,24}(?:通孔|盲孔|孔|holes?|bores?)",
+    )
+    .expect("fixed hole-count regex");
+    if classified_count.captures_iter(clause).any(|capture| {
+        let count = capture.name("count").map(|value| value.as_str()).unwrap_or("");
+        count
+            .parse::<u64>()
+            .map(|value| value > 1)
+            .unwrap_or_else(|_| {
+                count != "一"
+                    && count.chars().any(|value| {
+                        mandarin_count(value).is_some_and(|number| number > 1)
+                            || matches!(value, '十' | '百' | '千')
+                    })
+            })
+    }) {
+        return true;
+    }
+    if regex::Regex::new(
+        r"(?:两|二|三|四|五|六|七|八|九|十)\s*(?:通孔|盲孔|孔)|\b(?:two|three|four|five|six|seven|eight|nine|ten|multiple|several|many)\b[^,;。]{0,24}\bholes?\b",
+    )
+    .expect("fixed word-count multi-hole regex")
+    .is_match(clause)
+    {
+        return true;
+    }
+
+    let numeric_hole_count = regex::Regex::new(
+        r"(?P<count>[2-9][0-9]*)\s*(?:通孔|盲孔|孔)|\b(?P<english_count>[2-9][0-9]*)\s+(?:(?:through|blind)\s+)?holes?\b",
+    )
+    .expect("fixed numeric multi-hole regex");
+    let size_marker_before_number = regex::Regex::new(
+        r"(?:diameter|dia|radius|直径|半径|孔径|⌀|ø)\s*$",
+    )
+    .expect("fixed hole-size prefix regex");
+    numeric_hole_count.captures_iter(clause).any(|capture| {
+        let number_start = capture
+            .name("count")
+            .or_else(|| capture.name("english_count"))
+            .map(|number| number.start());
+        let Some(number_start) = number_start else {
+            return false;
+        };
+        let prefix = &clause[..number_start];
+        let local_prefix = prefix
+            .rsplit(|character| matches!(character, '，' | ',' | ';' | '；' | '。'))
+            .next()
+            .unwrap_or(prefix);
+        !size_marker_before_number.is_match(local_prefix)
+    })
+}
+
+fn legacy_unpositioned_center_through_hole_allowed(
+    clause: &str,
+    raw: &str,
+    through: Option<bool>,
+) -> bool {
+    if through != Some(true)
+        || !has_hole(clause)
+        || has_slot(clause)
+        || has_center_location(clause)
+        || has_corner_location(clause)
+        || center_coordinates(clause).is_some()
+        || named_xyz(clause).is_some()
+        || contains_any(
+            clause,
+            &[
+                "pcd", "分度圆", "节圆", "分布圆", "均布", "孔数", "数量", "等分",
+                "左右各", "两边各", "上下各", "两侧各", "左右分别", "两边分别",
+                "array", "阵列", "phase", "相位", "起始角", "侧面", "侧孔", "侧向",
+                "径向", "radial", "side hole", "side face", "along x", "along y",
+                "x direction", "y direction", "x axis", "y axis", "沿x", "沿y", "x方向",
+                "y方向", "x轴", "y轴",
+            ],
+        )
+    {
+        return false;
+    }
+
+    let size_markers = ["diameter", "直径", "⌀", "radius", "半径"]
+        .iter()
+        .map(|marker| clause.matches(marker).count())
+        .sum::<usize>();
+    let hole_markers = ["孔", "hole", "bore", "drill"]
+        .iter()
+        .map(|marker| clause.matches(marker).count())
+        .sum::<usize>();
+    if size_markers != 1 || hole_markers != 1 || explicitly_multiple_holes(clause) {
+        return false;
+    }
+    let diameter = diameter_value(clause)
+        .or_else(|| scalar(clause, &["radius", "半径"]).map(|radius| radius * 2.0));
+    if !diameter.is_some_and(|value| value.is_finite() && value > 0.0) {
+        return false;
+    }
+
+    let normalized = normalize(raw);
+    let clauses = split_clauses(&normalized);
+    let base_kinds = [
+        BaseKind::Box,
+        BaseKind::Cylinder,
+        BaseKind::Cone,
+        BaseKind::Frustum,
+        BaseKind::Sphere,
+    ];
+    let base_kind_count = base_kinds
+        .iter()
+        .filter(|kind| contains_base(&normalized, **kind))
+        .count();
+    let base_clause_count = clauses
+        .iter()
+        .filter(|part| base_kinds.iter().any(|kind| contains_base(part, *kind)))
+        .count();
+    let modifier_clause_count = clauses
+        .iter()
+        .filter(|part| has_hole(part) || has_slot(part))
+        .count();
+
+    base_kind_count == 1 && base_clause_count == 1 && modifier_clause_count == 1
+}
+
 fn build_hole(
     clause: &str,
     raw: &str,
@@ -12487,7 +12619,9 @@ fn build_hole(
         }
     }
     let corners = has_corner_location(clause);
-    let center = has_center_location(clause);
+    let center_explicit = has_center_location(clause);
+    let legacy_default_center = legacy_unpositioned_center_through_hole_allowed(clause, raw, through);
+    let center = center_explicit || legacy_default_center;
     let margin = scalar(
         clause,
         &[
@@ -12511,7 +12645,11 @@ fn build_hole(
     let count_hint = contains_any(
         clause,
         &["hole count", "count", "孔数", "数量", "均布", "等分"],
-    ) || matches!(count_result, Ok(Some(_)) | Err(_));
+    ) || match count_result {
+        Ok(Some(count)) => count > 1,
+        Ok(None) => false,
+        Err(_) => explicitly_multiple_holes(clause),
+    };
     let phase_hint = contains_any(clause, &["phase", "相位", "起始角"]);
     let pattern_requested = !corners && (pcd_hint || count_hint || phase_hint);
     if (center || corners || pattern_requested) && (coords.is_some() || named.is_some()) {
@@ -12645,7 +12783,21 @@ fn build_hole(
         }
     } else if center {
         p.insert("pos".into(), json!("center"));
-        s.insert("pos".into(), user_source(raw));
+        s.insert(
+            "pos".into(),
+            if center_explicit {
+                user_source(raw)
+            } else {
+                derived_source(raw, "未标孔位时沿用旧 Python Quick：单一主体上的单个通孔默认位于中心。")
+            },
+        );
+        if legacy_default_center {
+            p.insert("segments".into(), json!(24));
+            s.insert(
+                "segments".into(),
+                derived_source(raw, "沿用旧 Python Quick 普通孔特征默认圆周分段数 24。"),
+            );
+        }
     } else if let Some((point, _)) = coords.or(named) {
         p.insert("pos".into(), json!("point"));
         p.insert("point".into(), json!(point));
@@ -12660,11 +12812,18 @@ fn build_hole(
     if let Some(axis) = axis_value(clause, questions) {
         p.insert("axis".into(), json!(axis));
         s.insert("axis".into(), user_source(raw));
-    } else if corners {
+    } else if corners || legacy_default_center {
         p.insert("axis".into(), json!("Z"));
         s.insert(
             "axis".into(),
-            derived_source(raw, "四角孔未指定切入轴时沿用 Python Quick 默认 Z 轴。"),
+            derived_source(
+                raw,
+                if legacy_default_center {
+                    "未标切入轴时沿用旧 Python Quick 普通孔默认 Z 轴。"
+                } else {
+                    "四角孔未指定切入轴时沿用 Python Quick 默认 Z 轴。"
+                },
+            ),
         );
     }
     if !has_unit(clause) {
@@ -15404,7 +15563,7 @@ mod tests {
         assert_eq!(p["features"][3]["kind"], "pocket");
     }
     #[test]
-    fn standalone_box_uses_legacy_defaults_and_unpositioned_holes_request_clarification() {
+    fn standalone_box_and_safe_unpositioned_through_hole_match_legacy_defaults() {
         let legacy_box = parse("make a box");
         assert_eq!(legacy_box["status"], "ready", "{legacy_box}");
         assert_eq!(
@@ -15419,10 +15578,144 @@ mod tests {
             legacy_box["plan"]["features"][0]["parameters"]["height"],
             20.0
         );
-        assert_eq!(
-            parse("box 100×60×20 mm, through hole diameter 10 mm")["status"],
-            "needs_clarification"
+
+        let input = "长方体100x60x20，然后打直径8通孔";
+        let output = parse(input);
+        assert_eq!(output["status"], "ready", "{output}");
+        assert!(output["questions"].as_array().unwrap().is_empty(), "{output}");
+        let plan = output["plan"].clone();
+        assert_eq!(crate::cad_plan_validation::validate_plan(&plan)["state"], "valid");
+        let features = plan["features"].as_array().unwrap();
+        assert_eq!(features.len(), 2, "{output}");
+        let hole = &features[1];
+        assert_eq!(hole["kind"], "hole");
+        assert_eq!(hole["operation"], "cut");
+        assert_eq!(hole["parameters"]["diameter"], 8.0);
+        assert_eq!(hole["parameters"]["through"], true);
+        assert_eq!(hole["parameters"]["pos"], "center");
+        assert_eq!(hole["parameters"]["axis"], "Z");
+        assert_eq!(hole["parameters"]["segments"], 24);
+        for key in ["pos", "axis", "segments"] {
+            assert_eq!(hole["sources"][key]["type"], "derived", "{key}: {hole}");
+            assert_eq!(hole["sources"][key]["evidence"], input, "{key}: {hole}");
+            assert!(
+                hole["sources"][key]["note"].as_str().is_some_and(|note| !note.is_empty()),
+                "{key}: derived source requires an explanation"
+            );
+        }
+        // F5.84 must only inherit from an explicitly positioned pilot. A
+        // F5.90 compatibility default is derived and cannot masquerade as one.
+        assert_eq!(explicit_center_through_pilot(hole), None);
+
+        let english = parse("box 100×60×20 mm, through hole diameter 10 mm");
+        assert_eq!(english["status"], "ready", "{english}");
+        assert_eq!(english["plan"]["features"][1]["parameters"]["pos"], "center");
+        assert_eq!(english["plan"]["features"][1]["sources"]["pos"]["type"], "derived");
+
+        let singular = parse("长方体100x60x20，然后打一个直径8通孔");
+        assert_eq!(singular["status"], "ready", "{singular}");
+        assert_eq!(singular["plan"]["features"][1]["parameters"]["diameter"], 8.0);
+        assert_eq!(singular["plan"]["features"][1]["parameters"]["pos"], "center");
+
+        let radius = parse("长方体100x60x20，然后打半径4的通孔");
+        assert_eq!(radius["status"], "ready", "{radius}");
+        assert_eq!(radius["plan"]["features"][1]["parameters"]["diameter"], 8.0);
+        assert_eq!(radius["plan"]["features"][1]["sources"]["diameter"]["type"], "derived");
+        assert_eq!(radius["plan"]["features"][1]["parameters"]["pos"], "center");
+    }
+
+    #[test]
+    fn legacy_center_default_does_not_guess_side_or_multiple_holes() {
+        let side = parse("长方体100x60x20，然后在侧面打直径8通孔");
+        assert_eq!(side["status"], "needs_clarification", "{side}");
+        assert!(side["questions"].to_string().contains("hole_position_missing"));
+
+        let multiple_clauses = parse(
+            "长方体100x60x20，然后打直径8通孔，再打直径6通孔",
         );
+        assert_eq!(multiple_clauses["status"], "needs_clarification", "{multiple_clauses}");
+        assert!(multiple_clauses["questions"].to_string().contains("hole_position_missing"));
+
+        let multiple_count = parse("长方体100x60x20，然后打两个直径8通孔");
+        assert_eq!(multiple_count["status"], "needs_clarification", "{multiple_count}");
+        assert!(multiple_count["plan"].is_null(), "{multiple_count}");
+        assert!(!explicitly_multiple_holes("直径8通孔"));
+        assert!(!explicitly_multiple_holes("diameter 8 through hole"));
+        assert!(explicitly_multiple_holes("2 through holes diameter 8"));
+
+        let invalid_radius = parse("长方体100x60x20，然后打半径的通孔");
+        assert_eq!(invalid_radius["status"], "needs_clarification", "{invalid_radius}");
+        assert!(invalid_radius["questions"].to_string().contains("hole_diameter_missing"));
+        assert!(invalid_radius["plan"].is_null(), "{invalid_radius}");
+
+        for input in [
+            "长方体100x60x20，左右各打一个直径8通孔",
+            "长方体100x60x20，两边各一个直径8通孔",
+            "长方体100x60x20，上下各一个直径8通孔",
+        ] {
+            let distributed = parse(input);
+            assert_eq!(distributed["status"], "needs_clarification", "{input}: {distributed}");
+            assert!(
+                distributed["questions"].to_string().contains("hole_position_missing"),
+                "{input}: {distributed}"
+            );
+            assert!(distributed["plan"].is_null(), "{input}: {distributed}");
+        }
+    }
+
+    #[test]
+    #[ignore = "requires the staged local OCCT runtime manifest"]
+    fn legacy_unpositioned_through_hole_builds_and_measures_as_centered_brep() {
+        use std::{fs, path::Path, time::{SystemTime, UNIX_EPOCH}};
+
+        let manifest = std::env::var_os("AIMODELER_OCCT_MANIFEST")
+            .map(std::path::PathBuf::from)
+            .expect("set AIMODELER_OCCT_MANIFEST to the staged runtime-manifest.json");
+        assert!(manifest.is_file(), "missing OCCT manifest: {}", manifest.display());
+        let input = "长方体100x60x20，然后打直径8通孔";
+        let root = std::env::temp_dir().join(format!(
+            "legacy-center-hole-{}-{}",
+            std::process::id(),
+            SystemTime::now().duration_since(UNIX_EPOCH).expect("system clock").as_nanos(),
+        ));
+        fs::create_dir_all(&root).expect("create temporary output root");
+        struct RemoveOnDrop(std::path::PathBuf);
+        impl Drop for RemoveOnDrop {
+            fn drop(&mut self) { let _ = fs::remove_dir_all(&self.0); }
+        }
+        let _cleanup = RemoveOnDrop(root.clone());
+
+        let output = crate::native_quick::build(input, 1, &manifest, &root)
+            .unwrap_or_else(|error| panic!("native Quick build failed: {error}"));
+        assert_eq!(output["state"], "complete", "{output}");
+        let report = &output["geometry_report"];
+        assert_eq!(report["state"], "passed", "{report}");
+        assert_eq!(report["valid"], true, "{report}");
+        assert_eq!(report["closed_solid_count"], 1, "{report}");
+        assert_eq!(report["dimensions_mm"], json!([100.0, 60.0, 20.0]));
+        assert_eq!(report["bounds_mm"], json!([-50.0, -30.0, 0.0, 50.0, 30.0, 20.0]));
+        assert_eq!(report["hole_measurements_verified"], true, "{report}");
+        let holes = report["hole_instances"].as_array().expect("measured hole instances");
+        assert_eq!(holes.len(), 1, "{report}");
+        assert_eq!(holes[0]["through"], true, "{}", holes[0]);
+        assert_eq!(holes[0]["status"], "verified_open", "{}", holes[0]);
+        assert!((holes[0]["diameter_mm"].as_f64().unwrap() - 8.0).abs() < 1e-8);
+        for axis in 0..2 {
+            assert!(holes[0]["centerline_mm"][axis].as_f64().unwrap().abs() < 1e-6);
+        }
+        let analytic_volume = 100.0 * 60.0 * 20.0
+            - std::f64::consts::PI * 4.0_f64.powi(2) * 20.0;
+        let actual_volume = report["volume_mm3"].as_f64().expect("B-Rep volume");
+        assert!((actual_volume - analytic_volume).abs() <= 1e-3, "{report}");
+        let legacy_mesh_volume = 119006.13486680611_f64;
+        assert!(
+            (actual_volume - legacy_mesh_volume).abs() / legacy_mesh_volume < 2e-4,
+            "B-Rep analytic volume and legacy polygon mesh volume differ by more than tessellation tolerance: {report}"
+        );
+        let aimodel = Path::new(output["output_paths"]["aimodel"].as_str().unwrap());
+        assert!(aimodel.is_file(), "missing AIMODEL output");
+        let loaded = crate::native_model_io::load_aimodel(aimodel).expect("AIMODEL reload");
+        assert_eq!(loaded["cadplan"]["features"], output["cadplan"]["features"]);
     }
 
     #[test]
