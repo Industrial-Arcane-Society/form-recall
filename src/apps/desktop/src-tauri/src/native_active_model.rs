@@ -288,7 +288,16 @@ pub fn candidate_from_cad_state(
         .cloned()
         .unwrap_or_else(|| json!({}));
     let (mut document, fingerprint) = if let Some(plan) = plan.as_ref() {
-        let mut document = crate::native_model_io::cadplan_to_project(plan)?;
+        let mesh_only_vbelt = origin == "quick"
+            && state
+                .pointer("/last_preview/local_geometry_checks/mesh_only")
+                .and_then(Value::as_bool)
+                == Some(true);
+        let mut document = if mesh_only_vbelt {
+            crate::native_model_io::cadplan_to_project_mesh_only_vbelt(plan)?
+        } else {
+            crate::native_model_io::cadplan_to_project(plan)?
+        };
         if let Some(features) = document["features"].as_array_mut() {
             for (index, feature) in features.iter_mut().enumerate() {
                 feature["index"] = json!(index);
@@ -445,7 +454,32 @@ fn validate_candidate_with_staged(
         return validate_artifacts(candidate, staged_output);
     };
     let validation = crate::cad_plan_validation::validate_plan(plan);
-    if validation.get("valid").and_then(Value::as_bool) != Some(true) {
+    let mesh_only_vbelt = candidate["origin"].as_str() == Some("quick")
+        && document
+            .pointer("/geometry_report/mesh_only")
+            .and_then(Value::as_bool)
+            == Some(true)
+        && document
+            .pointer("/geometry_report/state")
+            .and_then(Value::as_str)
+            == Some("mesh_only")
+        && document
+            .pointer("/geometry_report/execution_engine")
+            .and_then(Value::as_str)
+            == Some("rust_legacy_quick_triangle_mesh")
+        && document
+            .pointer("/geometry_report/brep_available")
+            .and_then(Value::as_bool)
+            == Some(false)
+        && document
+            .pointer("/geometry_report/catpart_available")
+            .and_then(Value::as_bool)
+            == Some(false)
+        && document
+            .pointer("/geometry_report/closed_solid_count")
+            .is_some_and(Value::is_null)
+        && crate::native_vbelt_pulley::is_mesh_only_legacy_quick_plan(plan);
+    if validation.get("valid").and_then(Value::as_bool) != Some(true) && !mesh_only_vbelt {
         return Err(format!("活动模型 CADPlan 无效：{validation}"));
     }
     let fingerprint = crate::cad_plan::geometry_fingerprint(plan)?;
@@ -570,6 +604,31 @@ mod tests {
         assert!(commit(&root, 1, &invalid).is_err());
         assert_eq!(load(&root).unwrap().unwrap(), first);
         fs::remove_dir_all(root).unwrap();
+    }
+
+    #[test]
+    fn mesh_only_vbelt_conversion_is_restricted_to_quick_origin() {
+        let parsed = crate::native_quick_parser::parse(
+            "V带轮 基准直径100 槽数3 槽型A 内孔25 宽度30",
+        );
+        let plan = parsed["plan"].clone();
+        assert!(crate::native_vbelt_pulley::is_mesh_only_legacy_quick_plan(&plan));
+        let state = json!({
+            "plan": plan,
+            "revision": 1,
+            "last_preview": {
+                "revision": 1,
+                "local_geometry_checks": {"mesh_only": true}
+            }
+        });
+
+        let agent_result = candidate_from_cad_state("agent", &state, &json!({}), &json!({}));
+        assert!(
+            agent_result
+                .unwrap_err()
+                .contains("CADPlan validation failed")
+        );
+        assert!(candidate_from_cad_state("quick", &state, &json!({}), &json!({})).is_ok());
     }
 
     #[test]

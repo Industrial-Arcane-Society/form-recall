@@ -1,7 +1,7 @@
 //! Native approximation of the legacy GB/T standard V-belt pulley revolve.
 //! The groove dimensions use the retained std_pulley fallback table. This is
 //! a single analytic OCCT revolve; spoke-style pulleys are rejected.
-use crate::native_occt::{Axis, Kernel};
+use crate::native_occt::{Axis, Kernel, TriangleMesh};
 use serde_json::Value;
 
 const MAX_GROOVES: u64 = 64;
@@ -167,10 +167,11 @@ fn angle(pitch_d: f64) -> f64 {
     }
 }
 
-/// Return the legacy standard rim width and the larger native-safe width.
-/// The legacy parser only reserves the groove-root width plus catalog pitch
-/// spacing; that can make adjacent groove roots overlap. Native geometry
-/// keeps at least 0.5 mm between roots and requires a 0.5 mm end margin.
+/// Return the legacy standard rim width and the width used by Quick geometry.
+/// Quick compatibility intentionally follows the old Python profile layout:
+/// its slot centers use the catalog spacing, compressed only enough to keep
+/// the widest root inside the requested rim. This can make adjacent root
+/// sections overlap; changing that spacing changes the legacy Quick shape.
 pub fn width_requirements(
     pitch_d: f64,
     grooves: u64,
@@ -187,9 +188,11 @@ pub fn width_requirements(
     let tip_w = (g.bd - 2. * g.ha * half_angle.tan()).max(1.);
     let root_w = g.bd + 2. * g.hf * half_angle.tan();
     let legacy = (grooves - 1) as f64 * g.e + tip_w.max(root_w);
-    let safe_pitch = g.e.max(root_w + 0.5);
-    let native = (grooves - 1) as f64 * safe_pitch + root_w + 0.5;
-    Ok((legacy, native))
+    // There is no second native-only width adjustment in Quick. Keep the
+    // tuple for existing parser callers, but both values now identify the
+    // same legacy-compatible minimum. CADPlan may still reject a profile if
+    // OCCT cannot represent its overlapping legacy groove roots as one solid.
+    Ok((legacy, legacy))
 }
 
 pub fn standard_outer_diameter(pitch_d: f64, groove_type: &str) -> Result<f64, String> {
@@ -263,10 +266,12 @@ fn standard_profile(parameters: &Value) -> Result<Vec<[f64; 2]>, String> {
     let phi = angle(pitch_d).to_radians();
     let tip_w = (g.bd - 2. * g.ha * (phi / 2.).tan()).max(1.);
     let root_w = g.bd + 2. * g.hf * (phi / 2.).tan();
-    // The retained OCC B-Rep route raises the standard pitch spacing before
-    // profile creation so neighboring groove roots cannot overlap.
+    // Preserve the old Python Quick groove spacing and width clamp. When the
+    // root width is larger than the catalog pitch, the old profile can overlap
+    // adjacent root sections; the OCCT result must be checked instead of
+    // silently widening/re-spacing the Quick geometry.
     let (_, min_width) = width_requirements(pitch_d, grooves, &kind)?;
-    let pitch_e = g.e.max(root_w + 0.5);
+    let pitch_e = g.e;
     if width + 1e-8 < min_width {
         return Err(format!(
             "输入轮宽 {width:.6} mm 无法容纳 {grooves} 个标准 V 槽；无自交剖面的最小轮宽为 {min_width:.6} mm。"
@@ -384,6 +389,142 @@ fn standard_profile(parameters: &Value) -> Result<Vec<[f64; 2]>, String> {
     Ok(profile)
 }
 
+/// Generate the legacy Quick surface mesh without trying to sew the
+/// self-intersecting axial profile into a B-Rep. This intentionally mirrors
+/// `kernel.make_revolve(..., seg=64)`: each profile edge is swept separately,
+/// oriented around the same interior reference point, and a quad is fan
+/// triangulated for export. It is only appropriate for Quick mesh-only output;
+/// callers must not report a closed solid or CATPart.
+pub fn legacy_quick_mesh(parameters: &Value, segments: usize) -> Result<TriangleMesh, String> {
+    if !(3..=1024).contains(&segments) {
+        return Err("legacy V 带轮网格分段必须在 3..=1024 范围内。".into());
+    }
+    let profile = standard_profile(parameters)?;
+    preflight(parameters)?;
+    let center = parameters
+        .get("center")
+        .and_then(Value::as_array)
+        .map(|values| {
+            [
+                values[0].as_f64().unwrap_or(f64::NAN),
+                values[1].as_f64().unwrap_or(f64::NAN),
+                values[2].as_f64().unwrap_or(f64::NAN),
+            ]
+        })
+        .unwrap_or([0.0; 3]);
+    let z_min = profile
+        .iter()
+        .map(|point| point[1])
+        .fold(f64::INFINITY, f64::min);
+    let z_max = profile
+        .iter()
+        .map(|point| point[1])
+        .fold(f64::NEG_INFINITY, f64::max);
+    let r_max = profile
+        .iter()
+        .map(|point| point[0])
+        .fold(f64::NEG_INFINITY, f64::max);
+    let interior = [
+        center[0] + r_max * 0.4,
+        center[1],
+        center[2] + (z_min + z_max) * 0.5,
+    ];
+    let point_at = |radius: f64, z: f64, angle: f64| {
+        [
+            center[0] + radius * angle.cos(),
+            center[1] + radius * angle.sin(),
+            center[2] + z,
+        ]
+    };
+    let mut mesh = TriangleMesh {
+        positions: Vec::new(),
+        normals: Vec::new(),
+    };
+    let expected_triangles = profile
+        .len()
+        .checked_mul(segments)
+        .and_then(|quads| quads.checked_mul(2))
+        .ok_or("legacy V 带轮三角面数量溢出。")?;
+    if expected_triangles > 2_000_000 {
+        return Err("legacy V 带轮三角面超过 200 万面限制。".into());
+    }
+    mesh.positions.reserve(expected_triangles * 3);
+    mesh.normals.reserve(expected_triangles * 3);
+    let two_pi = std::f64::consts::TAU;
+    for segment in 0..segments {
+        let angle0 = two_pi * segment as f64 / segments as f64;
+        let angle1 = two_pi * (segment + 1) as f64 / segments as f64;
+        for edge in 0..profile.len() {
+            let [r0, z0] = profile[edge];
+            let [r1, z1] = profile[(edge + 1) % profile.len()];
+            let mut quad = [
+                point_at(r0, z0, angle0),
+                point_at(r1, z1, angle0),
+                point_at(r1, z1, angle1),
+                point_at(r0, z0, angle1),
+            ];
+            let mut normal = normalize(cross(sub(quad[1], quad[0]), sub(quad[2], quad[0])));
+            if length(normal) < 1e-9 {
+                continue;
+            }
+            let centroid = [
+                quad.iter().map(|point| point[0]).sum::<f64>() * 0.25,
+                quad.iter().map(|point| point[1]).sum::<f64>() * 0.25,
+                quad.iter().map(|point| point[2]).sum::<f64>() * 0.25,
+            ];
+            if dot(normal, sub(centroid, interior)) < 0.0 {
+                quad.reverse();
+                normal = normal.map(|value| -value);
+            }
+            for indices in [[0usize, 1, 2], [0, 2, 3]] {
+                let triangle = indices.map(|index| quad[index]);
+                if length(cross(
+                    sub(triangle[1], triangle[0]),
+                    sub(triangle[2], triangle[0]),
+                )) < 1e-12
+                {
+                    continue;
+                }
+                mesh.positions.extend(triangle);
+                mesh.normals.extend([normal; 3]);
+            }
+        }
+    }
+    if mesh.positions.is_empty() {
+        return Err("legacy V 带轮回转网格没有有效三角面。".into());
+    }
+    Ok(mesh)
+}
+
+fn sub(a: [f64; 3], b: [f64; 3]) -> [f64; 3] {
+    [a[0] - b[0], a[1] - b[1], a[2] - b[2]]
+}
+
+fn cross(a: [f64; 3], b: [f64; 3]) -> [f64; 3] {
+    [
+        a[1] * b[2] - a[2] * b[1],
+        a[2] * b[0] - a[0] * b[2],
+        a[0] * b[1] - a[1] * b[0],
+    ]
+}
+
+fn dot(a: [f64; 3], b: [f64; 3]) -> f64 {
+    a[0] * b[0] + a[1] * b[1] + a[2] * b[2]
+}
+
+fn length(value: [f64; 3]) -> f64 {
+    dot(value, value).sqrt()
+}
+
+fn normalize(value: [f64; 3]) -> [f64; 3] {
+    let magnitude = length(value);
+    if magnitude <= f64::MIN_POSITIVE {
+        [0.0; 3]
+    } else {
+        value.map(|component| component / magnitude)
+    }
+}
+
 pub fn preflight(parameters: &Value) -> Result<(), String> {
     let profile = standard_profile(parameters)?;
     if profile.len() < 8 {
@@ -415,6 +556,81 @@ pub fn preflight(parameters: &Value) -> Result<(), String> {
         }
     }
     Ok(())
+}
+
+/// Narrow eligibility gate for the Quick-only mesh fallback. The shared
+/// CADPlan validator remains authoritative for every other plan and for every
+/// other validation error.
+pub fn is_mesh_only_legacy_quick_plan(plan: &Value) -> bool {
+    if !matches!(
+        plan.get("schema_version").and_then(Value::as_str),
+        Some("1.0" | "1.1")
+    ) || plan.pointer("/units/length").and_then(Value::as_str) != Some("mm")
+        || plan.pointer("/units/angle").and_then(Value::as_str) != Some("deg")
+    {
+        return false;
+    }
+    let Some(features) = plan.get("features").and_then(Value::as_array) else {
+        return false;
+    };
+    if features.len() != 1 {
+        return false;
+    }
+    let feature = &features[0];
+    if feature.get("kind").and_then(Value::as_str) != Some("vbelt_pulley")
+        || feature.get("operation").and_then(Value::as_str) != Some("add")
+        || feature.get("enabled").and_then(Value::as_bool) == Some(false)
+        || feature
+            .get("relations")
+            .and_then(Value::as_array)
+            .is_some_and(|relations| !relations.is_empty())
+        || feature
+            .pointer("/parameters/standard")
+            .is_some_and(|standard| standard != &Value::Bool(true))
+    {
+        return false;
+    }
+    let validation = crate::cad_plan_validation::validate_plan(plan);
+    let validation_is_expected = validation.get("valid").and_then(Value::as_bool) == Some(true)
+        || validation
+            .get("errors")
+            .and_then(Value::as_array)
+            .is_some_and(|errors| {
+                validation.get("valid").and_then(Value::as_bool) == Some(false)
+                    && errors.len() == 1
+                    && errors[0].get("code").and_then(Value::as_str)
+                        == Some("vbelt_width_below_profile_minimum")
+            });
+    if !validation_is_expected || standard_profile(&feature["parameters"]).is_err() {
+        return false;
+    }
+    let parameters = &feature["parameters"];
+    let Some(grooves) = parameters.get("grooves").and_then(Value::as_u64) else {
+        return false;
+    };
+    if grooves < 2 {
+        return false;
+    }
+    let Some(pitch_d) = parameters.get("pitch_d").and_then(Value::as_f64) else {
+        return false;
+    };
+    let Some(height) = parameters.get("height").and_then(Value::as_f64) else {
+        return false;
+    };
+    let Ok(kind) = standard_type(parameters) else {
+        return false;
+    };
+    let Some(groove) = groove(&kind) else {
+        return false;
+    };
+    let root_width = groove.bd + 2.0 * groove.hf * (angle(pitch_d).to_radians() / 2.0).tan();
+    let max_half = height / 2.0 - root_width / 2.0 - 0.2;
+    let effective_pitch = if (grooves - 1) as f64 * groove.e * 0.5 > max_half {
+        (2.0 * max_half / (grooves - 1) as f64).max(0.0)
+    } else {
+        groove.e
+    };
+    effective_pitch + 1e-8 < root_width
 }
 
 pub fn build(
@@ -466,6 +682,67 @@ mod tests {
         assert!((p[2][1] + 6.3).abs() < 1e-12);
         assert!(p.iter().all(|point| point.iter().all(|v| v.is_finite())));
     }
+
+    #[test]
+    fn quick_compatibility_keeps_legacy_three_groove_width_and_effective_centers() {
+        let (legacy_width, quick_width) = width_requirements(100.0, 3, "A").unwrap();
+        let expected_width = 46.319_713_857_380_69;
+        assert!((legacy_width - expected_width).abs() < 1e-10);
+        assert!((quick_width - expected_width).abs() < 1e-10);
+
+        let plan = serde_json::json!({
+            "pitch_d": 100.0,
+            "grooves": 3,
+            "height": expected_width,
+            "groove_type": "A",
+            "outer_d": 105.5,
+            "bore_d": 25.0,
+            "center": [0.0, 0.0, 0.0]
+        });
+        let profile = standard_profile(&plan).unwrap();
+        // These root endpoints are taken from the legacy Python std_pulley.profile
+        // for the same input. Their midpoints are the effective groove centers
+        // after its 0.2 mm end-margin clamp (e=14.7998569 mm).
+        let root_centers = [
+            (profile[7][1] + profile[8][1]) * 0.5,
+            (profile[11][1] + profile[12][1]) * 0.5,
+            (profile[15][1] + profile[16][1]) * 0.5,
+        ];
+        let expected_centers = [-14.799_856_928_690_346, 0.0, 14.799_856_928_690_346];
+        for (actual, expected) in root_centers.into_iter().zip(expected_centers) {
+            assert!((actual - expected).abs() < 1e-10);
+        }
+    }
+
+    #[test]
+    fn legacy_mesh_only_revolve_matches_old_quick_face_count() {
+        let plan = serde_json::json!({
+            "schema_version":"1.1",
+            "units":{"length":"mm","angle":"deg"},
+            "features":[{
+                "id":"quick-0001",
+                "kind":"vbelt_pulley",
+                "operation":"add",
+                "enabled":true,
+                "relations":[],
+                "parameters":{
+                    "pitch_d":100.0,"grooves":3,"height":46.31971385738069,
+                    "groove_type":"A","outer_d":105.5,"bore_d":25.0,"center":[0,0,0]
+                }
+            }]
+        });
+        let mesh = legacy_quick_mesh(&plan["features"][0]["parameters"], 64).unwrap();
+        let profile = standard_profile(&plan["features"][0]["parameters"]).unwrap();
+        assert_eq!(mesh.positions.len() / 3, profile.len() * 64 * 2);
+        assert_eq!(mesh.positions.len(), mesh.normals.len());
+        assert!(
+            mesh.positions
+                .iter()
+                .flatten()
+                .all(|value| value.is_finite())
+        );
+    }
+
     #[test]
     fn rejects_width_bore_and_spoked_variant_instead_of_changing_requested_geometry() {
         let mut p = sample();

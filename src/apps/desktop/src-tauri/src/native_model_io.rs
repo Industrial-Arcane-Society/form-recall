@@ -88,8 +88,29 @@ pub fn save_aimodel(path: &Path, project: &Value) -> Result<(), String> {
 /// Feature serialization rules as `cadplan._to_document`, retaining the full
 /// source plan and per-feature source maps beside the executable Document.
 pub fn cadplan_to_project(plan: &Value) -> Result<Value, String> {
+    cadplan_to_project_with_policy(plan, false)
+}
+
+/// Convert the single-feature Quick legacy mesh fallback while retaining its
+/// original CADPlan. This does not certify the plan as geometrically valid;
+/// it only allows the exact self-intersecting V-belt profile that is emitted
+/// as mesh-only output by Quick.
+pub(crate) fn cadplan_to_project_mesh_only_vbelt(plan: &Value) -> Result<Value, String> {
+    if !crate::native_vbelt_pulley::is_mesh_only_legacy_quick_plan(plan) {
+        return Err("仅允许已识别的单特征 Quick V 带轮使用 mesh-only AIMODEL 转换。".into());
+    }
+    cadplan_to_project_with_policy(plan, true)
+}
+
+fn cadplan_to_project_with_policy(
+    plan: &Value,
+    allow_legacy_mesh_only_vbelt: bool,
+) -> Result<Value, String> {
     let validation = cad_plan_validation::validate_plan(plan);
-    if validation.get("valid").and_then(Value::as_bool) != Some(true) {
+    if validation.get("valid").and_then(Value::as_bool) != Some(true)
+        && !(allow_legacy_mesh_only_vbelt
+            && crate::native_vbelt_pulley::is_mesh_only_legacy_quick_plan(plan))
+    {
         return Err(format!("CADPlan validation failed: {validation}"));
     }
     let length = match plan["units"]["length"].as_str().unwrap_or("") {

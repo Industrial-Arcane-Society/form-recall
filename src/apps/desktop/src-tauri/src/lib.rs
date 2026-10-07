@@ -591,6 +591,11 @@ fn active_model_push_catia(app: AppHandle) -> Result<Value, String> {
     let data_dir = app_data_dir(&app)?;
     let root = native_active_model::root_from_data_dir(&data_dir);
     let record = native_active_model::load(&root)?.ok_or("当前没有原生活动模型可推送。")?;
+    if record.pointer("/document/geometry_report/mesh_only").and_then(Value::as_bool)
+        == Some(true)
+    {
+        return Err("当前带轮是 legacy mesh-only 兼容网格；没有可编辑 B-Rep，不能推送或导出 CATPart。".into());
+    }
     let generation = record["generation"]
         .as_u64()
         .ok_or("活动模型 generation 无效。")?;
@@ -645,6 +650,11 @@ fn active_model_export(app: AppHandle, kind: String, path: String) -> Result<(),
             );
         }
         "catia" => {
+            if record.pointer("/document/geometry_report/mesh_only").and_then(Value::as_bool)
+                == Some(true)
+            {
+                return Err("当前模型是 legacy mesh-only 兼容网格；没有可编辑 B-Rep，不能导出 CATPart。".into());
+            }
             run_active_catia_adapter(&app, &record, Path::new(&path), false)?;
             return Ok(());
         }

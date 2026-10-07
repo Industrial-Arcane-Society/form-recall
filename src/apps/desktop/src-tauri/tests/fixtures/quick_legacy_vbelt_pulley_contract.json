@@ -1,65 +1,352 @@
 {
   "source": "src/legacy/ai_modeler/core/parsing/nlparser.py::Parser.parse -> Document features; src/legacy/ai_modeler/parts/library/partlib.py::_vbelt; src/legacy/ai_modeler/parts/standard/std_pulley.py::spec",
-  "updated": "2026-10-07",
+  "updated": "2026-10-08",
   "legacy_python_accepted": [
     {
       "input": "V带轮 基准直径100 槽数3 槽型A 内孔25 宽度60",
-      "expected_parameters": {"pitch_d": 100.0, "grooves": 3, "height": 60.0, "groove_type": "A", "outer_d": 105.5, "bore_d": 25.0, "center": [0, 0, 0]},
-      "sources": {"pitch_d": "user", "grooves": "user", "height": "user", "groove_type": "user", "outer_d": "derived", "bore_d": "user", "center": "derived"}
+      "expected_parameters": {
+        "pitch_d": 100.0,
+        "grooves": 3,
+        "height": 60.0,
+        "groove_type": "A",
+        "outer_d": 105.5,
+        "bore_d": 25.0,
+        "center": [
+          0,
+          0,
+          0
+        ]
+      },
+      "sources": {
+        "pitch_d": "user",
+        "grooves": "user",
+        "height": "user",
+        "groove_type": "user",
+        "outer_d": "derived",
+        "bore_d": "user",
+        "center": "derived"
+      }
     },
     {
       "input": "皮带轮 基准直径120 槽数2 槽型B 宽度50 内径20",
-      "expected_parameters": {"pitch_d": 118.0, "grooves": 2, "height": 50.0, "groove_type": "B", "outer_d": 123.5, "bore_d": 20.0, "center": [0, 0, 0]},
-      "sources": {"pitch_d": "derived", "grooves": "user", "height": "user", "groove_type": "user", "outer_d": "derived", "bore_d": "user", "center": "derived"},
+      "expected_parameters": {
+        "pitch_d": 118.0,
+        "grooves": 2,
+        "height": 50.0,
+        "groove_type": "B",
+        "outer_d": 123.5,
+        "bore_d": 20.0,
+        "center": [
+          0,
+          0,
+          0
+        ]
+      },
+      "sources": {
+        "pitch_d": "derived",
+        "grooves": "user",
+        "height": "user",
+        "groove_type": "user",
+        "outer_d": "derived",
+        "bore_d": "user",
+        "center": "derived"
+      },
       "warning_code": "legacy_vbelt_pulley_standard_diameter_snap"
     },
     {
       "input": "槽数3的带轮 基准直径80 槽型Y 宽度45 内孔16",
-      "expected_parameters": {"pitch_d": 80.0, "grooves": 3, "height": 45.0, "groove_type": "Y", "outer_d": 83.2, "bore_d": 16.0, "center": [0, 0, 0]},
-      "sources": {"pitch_d": "user", "grooves": "user", "height": "user", "groove_type": "user", "outer_d": "derived", "bore_d": "user", "center": "derived"}
+      "expected_parameters": {
+        "pitch_d": 80.0,
+        "grooves": 3,
+        "height": 45.0,
+        "groove_type": "Y",
+        "outer_d": 83.2,
+        "bore_d": 16.0,
+        "center": [
+          0,
+          0,
+          0
+        ]
+      },
+      "sources": {
+        "pitch_d": "user",
+        "grooves": "user",
+        "height": "user",
+        "groove_type": "user",
+        "outer_d": "derived",
+        "bore_d": "user",
+        "center": "derived"
+      }
     },
     {
       "input": "V带轮 D=100 n=3 t=A d=25 B=60",
-      "expected_parameters": {"pitch_d": 100.0, "grooves": 3, "height": 60.0, "groove_type": "A", "outer_d": 105.5, "bore_d": 25.0, "center": [0, 0, 0]},
-      "sources": {"pitch_d": "user", "grooves": "user", "height": "user", "groove_type": "user", "outer_d": "derived", "bore_d": "user", "center": "derived"}
+      "expected_parameters": {
+        "pitch_d": 100.0,
+        "grooves": 3,
+        "height": 60.0,
+        "groove_type": "A",
+        "outer_d": 105.5,
+        "bore_d": 25.0,
+        "center": [
+          0,
+          0,
+          0
+        ]
+      },
+      "sources": {
+        "pitch_d": "user",
+        "grooves": "user",
+        "height": "user",
+        "groove_type": "user",
+        "outer_d": "derived",
+        "bore_d": "user",
+        "center": "derived"
+      }
     }
   ],
   "native_adjusted": [
     {
       "input": "V带轮 基准直径100 槽数3 槽型A 内孔25 宽度30",
-      "legacy_python_parameters": {"pitch_d": 100.0, "grooves": 3, "height": 46.31971385738069, "groove_type": "A", "outer_d": 105.5, "bore_d": 25.0, "center": [0, 0, 0]},
-      "expected_parameters": {"pitch_d": 100.0, "grooves": 3, "height": 50.45914157214207, "groove_type": "A", "outer_d": 105.5, "bore_d": 25.0, "center": [0, 0, 0]},
-      "warning_codes": ["legacy_vbelt_pulley_legacy_width_adjustment", "native_vbelt_pulley_root_clearance_width_adjustment"]
+      "legacy_python_parameters": {
+        "pitch_d": 100.0,
+        "grooves": 3,
+        "height": 46.31971385738069,
+        "groove_type": "A",
+        "outer_d": 105.5,
+        "bore_d": 25.0,
+        "center": [
+          0,
+          0,
+          0
+        ]
+      },
+      "expected_parameters": {
+        "pitch_d": 100.0,
+        "grooves": 3,
+        "height": 46.31971385738069,
+        "groove_type": "A",
+        "outer_d": 105.5,
+        "bore_d": 25.0,
+        "center": [
+          0,
+          0,
+          0
+        ]
+      },
+      "warning_codes": [
+        "legacy_vbelt_pulley_legacy_width_adjustment"
+      ]
     },
     {
       "input": "皮带轮 基准直径120 槽数2 槽型B 宽度40 内径20",
-      "legacy_python_parameters": {"pitch_d": 118.0, "grooves": 2, "height": 40.01826543863078, "groove_type": "B", "outer_d": 123.5, "bore_d": 20.0, "center": [0, 0, 0]},
-      "expected_parameters": {"pitch_d": 118.0, "grooves": 2, "height": 42.20756543901413, "groove_type": "B", "outer_d": 123.5, "bore_d": 20.0, "center": [0, 0, 0]},
-      "warning_codes": ["legacy_vbelt_pulley_legacy_width_adjustment", "native_vbelt_pulley_root_clearance_width_adjustment"]
+      "legacy_python_parameters": {
+        "pitch_d": 118.0,
+        "grooves": 2,
+        "height": 40.01826543863078,
+        "groove_type": "B",
+        "outer_d": 123.5,
+        "bore_d": 20.0,
+        "center": [
+          0,
+          0,
+          0
+        ]
+      },
+      "expected_parameters": {
+        "pitch_d": 118.0,
+        "grooves": 2,
+        "height": 40.01826543863078,
+        "groove_type": "B",
+        "outer_d": 123.5,
+        "bore_d": 20.0,
+        "center": [
+          0,
+          0,
+          0
+        ]
+      },
+      "warning_codes": [
+        "legacy_vbelt_pulley_legacy_width_adjustment"
+      ]
     },
     {
       "input": "V带轮",
-      "legacy_python_parameters": {"pitch_d": 100.0, "grooves": 3, "height": 46.31971385738069, "groove_type": "A", "outer_d": 105.5, "bore_d": 25.0, "center": [0, 0, 0]},
-      "expected_parameters": {"pitch_d": 100.0, "grooves": 3, "height": 50.45914157214207, "groove_type": "A", "outer_d": 105.5, "bore_d": 25.0, "center": [0, 0, 0]},
-      "warning_codes": ["legacy_vbelt_pulley_default_width", "native_vbelt_pulley_root_clearance_width_adjustment"]
+      "legacy_python_parameters": {
+        "pitch_d": 100.0,
+        "grooves": 3,
+        "height": 46.31971385738069,
+        "groove_type": "A",
+        "outer_d": 105.5,
+        "bore_d": 25.0,
+        "center": [
+          0,
+          0,
+          0
+        ]
+      },
+      "expected_parameters": {
+        "pitch_d": 100.0,
+        "grooves": 3,
+        "height": 46.31971385738069,
+        "groove_type": "A",
+        "outer_d": 105.5,
+        "bore_d": 25.0,
+        "center": [
+          0,
+          0,
+          0
+        ]
+      },
+      "warning_codes": [
+        "legacy_vbelt_pulley_default_width"
+      ]
     }
   ],
   "native_geometry_cases": [
-    {"input": "V带轮 基准直径100 槽数3 槽型A 内孔25 宽度60", "expected_dimensions_mm": [105.5, 105.5, 60.0]},
-    {"input": "皮带轮 基准直径120 槽数2 槽型B 宽度50 内径20", "expected_dimensions_mm": [123.5, 123.5, 50.0]},
-    {"input": "槽数3的带轮 基准直径80 槽型Y 宽度45 内孔16", "expected_dimensions_mm": [83.2, 83.2, 45.0]},
-    {"input": "V带轮", "expected_dimensions_mm": [105.5, 105.5, 50.45914157214207]}
+    {
+      "input": "V带轮 基准直径100 槽数3 槽型A 内孔25 宽度60",
+      "expected_dimensions_mm": [
+        105.5,
+        105.5,
+        60.0
+      ]
+    },
+    {
+      "input": "皮带轮 基准直径120 槽数2 槽型B 宽度50 内径20",
+      "expected_dimensions_mm": [
+        123.5,
+        123.5,
+        50.0
+      ]
+    },
+    {
+      "input": "槽数3的带轮 基准直径80 槽型Y 宽度45 内孔16",
+      "expected_dimensions_mm": [
+        83.2,
+        83.2,
+        45.0
+      ]
+    },
+    {
+      "input": "V带轮",
+      "expected_dimensions_mm": [
+        105.5,
+        105.5,
+        46.31971385738069
+      ]
+    }
   ],
   "unsupported": [
-    {"input": "V带轮 基准直径300 槽数3 槽型C 内孔20 宽度180", "issue": "legacy_vbelt_pulley_spoked_variant_unsupported"},
-    {"input": "V带轮 基准直径100 槽数3 槽型A 内孔25 宽度60 中心打直径6通孔", "issue": "legacy_vbelt_pulley_compound_request_unsupported"},
-    {"input": "V带轮 槽数65 槽型A", "issue": "legacy_vbelt_pulley_native_groove_limit"}
+    {
+      "input": "V带轮 基准直径300 槽数3 槽型C 内孔20 宽度180",
+      "issue": "legacy_vbelt_pulley_spoked_variant_unsupported"
+    },
+    {
+      "input": "V带轮 基准直径100 槽数3 槽型A 内孔25 宽度60 中心打直径6通孔",
+      "issue": "legacy_vbelt_pulley_compound_request_unsupported"
+    },
+    {
+      "input": "V带轮 槽数65 槽型A",
+      "issue": "legacy_vbelt_pulley_native_groove_limit"
+    }
   ],
   "needs_clarification": [
-    {"input": "V带轮 槽数0", "issue": "legacy_vbelt_pulley_grooves_invalid"},
-    {"input": "V带轮 基准直径80 槽数3 槽型X 宽度60 内孔16", "issue": "legacy_vbelt_pulley_type_unknown_or_conflict"},
-    {"input": "V带轮 基准直径80 槽数3 槽型A 槽型B 宽度60 内孔16", "issue": "legacy_vbelt_pulley_type_unknown_or_conflict"},
-    {"input": "V带轮 基准直径80 槽数3 槽型A 宽度60 内孔120", "issue": "legacy_vbelt_pulley_bore_invalid"},
-    {"input": "V带轮 基准直径80 槽数3 槽型A 宽度0 内孔16", "issue": "legacy_vbelt_pulley_width_invalid"}
+    {
+      "input": "V带轮 槽数0",
+      "issue": "legacy_vbelt_pulley_grooves_invalid"
+    },
+    {
+      "input": "V带轮 基准直径80 槽数3 槽型X 宽度60 内孔16",
+      "issue": "legacy_vbelt_pulley_type_unknown_or_conflict"
+    },
+    {
+      "input": "V带轮 基准直径80 槽数3 槽型A 槽型B 宽度60 内孔16",
+      "issue": "legacy_vbelt_pulley_type_unknown_or_conflict"
+    },
+    {
+      "input": "V带轮 基准直径80 槽数3 槽型A 宽度60 内孔120",
+      "issue": "legacy_vbelt_pulley_bore_invalid"
+    },
+    {
+      "input": "V带轮 基准直径80 槽数3 槽型A 宽度0 内孔16",
+      "issue": "legacy_vbelt_pulley_width_invalid"
+    }
+  ],
+  "quick_geometry_compatibility": [
+    {
+      "input": "V带轮 基准直径100 槽数3 槽型A 内孔25 宽度30",
+      "legacy_and_rust_parameters": {
+        "pitch_d": 100.0,
+        "grooves": 3,
+        "height": 46.31971385738069,
+        "groove_type": "A",
+        "outer_d": 105.5,
+        "bore_d": 25.0,
+        "center": [
+          0,
+          0,
+          0
+        ]
+      },
+      "legacy_effective_slot_centers_mm": [
+        -14.799856928690346,
+        0.0,
+        14.799856928690346
+      ],
+      "legacy_effective_pitch_mm": 14.799856928690346,
+      "nominal_standard_pitch_mm": 15.0,
+      "expected_dimensions_mm": [
+        105.5,
+        105.5,
+        46.31971385738069
+      ],
+      "native_occt_acceptance": {
+        "status": "rejected_self_intersecting_profile",
+        "evidence": "native_plan_geometry_probe returned OCCT error 1: profile is self-intersecting",
+        "mesh_only_fallback": "implemented_quick_only",
+        "note": "The Quick-only fallback exactly reproduces the legacy triangle mesh and explicitly reports mesh_only. CADPlan validation still rejects the legacy width; B-Rep/solid/CATPart and CATIA are unavailable and are never reported as passed.",
+        "mesh_evidence": {
+          "legacy_stl": "%TEMP%\\f5_79_legacy_vbelt.stl",
+          "rust_stl": "%TEMP%\\f5_79_rust_quick\\quick\\r1-1791398560928536100\\quick.stl",
+          "triangle_count": {
+            "legacy": 3072,
+            "rust": 3072
+          },
+          "bounds_mm": {
+            "legacy": [
+              105.5,
+              105.5,
+              46.3197135925293
+            ],
+            "rust": [
+              105.5,
+              105.5,
+              46.3197135925293
+            ]
+          },
+          "signed_mesh_volume_mm3": {
+            "legacy": 584036.1737594228,
+            "rust": 584036.1737594228
+          },
+          "surface_triangle_multiset_exact": true,
+          "orthographic_projection_masks_128": {
+            "XY": {
+              "xor_pixels": 0,
+              "iou": 1.0
+            },
+            "XZ": {
+              "xor_pixels": 0,
+              "iou": 1.0
+            },
+            "YZ": {
+              "xor_pixels": 0,
+              "iou": 1.0
+            }
+          },
+          "comparator": "python tools/compare_legacy_quick_stl.py <legacy.stl> <rust.stl> --projection-size 128"
+        }
+      },
+      "note": "The legacy axial profile overlaps adjacent groove-root intervals at this constrained width. Rust Quick preserves the same profile and spacing. OCCT single-solid acceptance is reported separately; the contract must not silently enlarge width or move grooves."
+    }
   ]
 }

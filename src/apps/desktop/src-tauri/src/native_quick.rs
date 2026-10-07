@@ -28,6 +28,15 @@ pub fn build(
     }
     let plan = parsed["plan"].clone();
     let validation = cad_plan_validation::validate_plan(&plan);
+    if crate::native_vbelt_pulley::is_mesh_only_legacy_quick_plan(&plan) {
+        return build_mesh_only_legacy_vbelt(
+            &plan,
+            &parsed["warnings"],
+            text,
+            revision,
+            session_dir,
+        );
+    }
     if validation["valid"] != true {
         return Err(format!(
             "Quick CADPlan 校验失败：{}",
@@ -103,6 +112,112 @@ pub fn build(
     Ok(document)
 }
 
+fn build_mesh_only_legacy_vbelt(
+    plan: &Value,
+    parse_warnings: &Value,
+    text: &str,
+    revision: i64,
+    session_dir: &Path,
+) -> Result<Value, String> {
+    let feature = plan
+        .pointer("/features/0")
+        .ok_or("mesh-only Quick CADPlan 缺少特征。")?;
+    let parameters = feature
+        .get("parameters")
+        .ok_or("mesh-only Quick V 带轮缺少参数。")?;
+    let mesh = crate::native_vbelt_pulley::legacy_quick_mesh(parameters, 64)?;
+    fs::create_dir_all(session_dir).map_err(|e| format!("无法创建 Quick 输出目录：{e}"))?;
+    let stamp = SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .map_err(|e| e.to_string())?
+        .as_nanos();
+    let dir = session_dir
+        .join("quick")
+        .join(format!("r{revision}-{stamp}"));
+    fs::create_dir_all(&dir).map_err(|e| format!("无法创建 Quick 模型目录：{e}"))?;
+    let aimodel = dir.join("quick.aimodel");
+    let stl = dir.join("quick.stl");
+    let obj = dir.join("quick.obj");
+    let glb = dir.join("mesh.glb");
+    let geometry_report = dir.join("geometry-report.json");
+    let project = native_model_io::cadplan_to_project_mesh_only_vbelt(plan)?;
+    native_model_io::save_aimodel(&aimodel, &project)?;
+    let stl_stats = native_model_io::write_binary_stl(&stl, &mesh, "legacy Quick V-belt pulley")?;
+    native_model_io::write_wavefront_obj(&obj, &mesh)?;
+    write_glb(&mesh, &glb)?;
+    let dimensions = stl_stats.bounds.map(|axis| (axis[1] - axis[0]) as f64);
+    let triangle_count = stl_stats.triangle_count as usize;
+    let report = json!({
+        "state":"mesh_only",
+        "mesh_only":true,
+        "valid":null,
+        "geometry_support":"legacy_mesh_only",
+        "execution_engine":"rust_legacy_quick_triangle_mesh",
+        "builder":"legacy_make_revolve_profile_edges_swept_64_segments",
+        "legacy_polygon_count":mesh.positions.len() / 6,
+        "triangle_count":triangle_count,
+        "dimensions_mm":dimensions,
+        "signed_mesh_volume_mm3":stl_stats.signed_volume,
+        "volume_basis":"signed_triangle_mesh_after_binary_stl_float32_quantization",
+        "solid_count":null,
+        "closed_solid_count":null,
+        "brep_available":false,
+        "catpart_available":false,
+        "legacy_profile_was_self_intersecting":true,
+        "warnings":[
+            "该 Quick 结果沿用旧 Python 的自交轮廓三角网格；未构建或验证 B-Rep/闭合实体。",
+            "AIMODEL 保存 CADPlan 与参数；此 mesh-only 结果不可据此推送或导出 CATPart。"
+        ]
+    });
+    native_model_io::atomic_write(
+        &geometry_report,
+        &serde_json::to_vec_pretty(&report).map_err(|error| error.to_string())?,
+    )?;
+    let mut warnings = parse_warnings.as_array().cloned().unwrap_or_default();
+    warnings.push(json!(
+        "该带轮使用旧 Quick 网格兼容结果：可预览和导出网格，不能生成 CATPart。"
+    ));
+    let output_paths = json!({
+        "glb":glb,
+        "aimodel":aimodel,
+        "stl":stl,
+        "obj":obj,
+        "geometry_report":geometry_report
+    });
+    let mut document = project;
+    if let Some(features) = document["features"].as_array_mut() {
+        for (index, feature) in features.iter_mut().enumerate() {
+            feature["index"] = json!(index);
+            feature["description"] = json!(format!(
+                "Quick {}",
+                feature["kind"].as_str().unwrap_or("特征")
+            ));
+        }
+    }
+    document["revision"] = json!(revision);
+    document["name"] = json!(
+        plan.get("name")
+            .and_then(Value::as_str)
+            .unwrap_or("Quick Model")
+    );
+    document["source_prompt"] = json!(text);
+    document["mesh_path"] = output_paths["glb"].clone();
+    document["build_log"] = json!([
+        "Quick parser → CADPlan 参数校验 → legacy-compatible mesh-only → GLB、AIMODEL、STL、OBJ"
+    ]);
+    document["warnings"] = Value::Array(warnings);
+    document["output_paths"] = output_paths;
+    document["stats"] = json!({
+        "faces":mesh.positions.len() / 6,
+        "triangles":triangle_count,
+        "volume":stl_stats.signed_volume,
+        "size":dimensions
+    });
+    document["geometry_report"] = report;
+    document["state"] = json!("complete");
+    Ok(document)
+}
+
 pub fn active_model_candidate(text: &str, document: &Value) -> Result<Value, String> {
     let plan = document
         .get("cadplan")
@@ -124,11 +239,20 @@ pub fn active_model_candidate(text: &str, document: &Value) -> Result<Value, Str
             }
         }
     }
+    let mesh_only = document
+        .pointer("/geometry_report/mesh_only")
+        .and_then(Value::as_bool)
+        == Some(true);
+    let execution_engine = if mesh_only {
+        "rust_legacy_quick_triangle_mesh"
+    } else {
+        "rust_c_abi_occt"
+    };
     let state = json!({"plan":plan,"revision":revision,"preview_revision":revision,
         "preview_generation":1,"output_paths":document["output_paths"],"finish_summary":null,
         "last_preview":{"revision":revision,"geometry_fingerprint":crate::cad_plan::geometry_fingerprint(&document["cadplan"])? ,
-            "preview_generation":1,"execution_engine":"rust_c_abi_occt","local_geometry_checks":document["geometry_report"]},
-        "actions":[{"kind":"model","tool":"quick_build","revision":revision,"execution_engine":"rust",
+            "preview_generation":1,"execution_engine":execution_engine,"local_geometry_checks":document["geometry_report"]},
+        "actions":[{"kind":"model","tool":"quick_build","revision":revision,"execution_engine":execution_engine,
             "user_source_provenance":provenance}],"geometry_signatures":[],"previews":[]});
     let references = json!({"schema_version":1,"session_id":"quick","images":[]});
     let turns = json!({"schema_version":1,"session_id":"quick","turns":[
@@ -143,6 +267,9 @@ pub fn active_model_candidate(text: &str, document: &Value) -> Result<Value, Str
         .get("geometry_report")
         .cloned()
         .unwrap_or(Value::Null);
+    if mesh_only {
+        candidate["document"]["stats"] = document["stats"].clone();
+    }
     candidate["document"]["state"] = json!("complete");
     Ok(candidate)
 }
@@ -224,6 +351,60 @@ pub(crate) fn write_glb(mesh: &TriangleMesh, path: &Path) -> Result<(), String> 
 mod tests {
     use super::*;
     use std::time::{SystemTime, UNIX_EPOCH};
+
+    #[test]
+    fn legacy_self_intersecting_vbelt_uses_quick_mesh_only_and_commits_honestly() {
+        let root = std::env::temp_dir().join(format!(
+            "quick-mesh-only-vbelt-{}-{}",
+            std::process::id(),
+            SystemTime::now()
+                .duration_since(UNIX_EPOCH)
+                .unwrap()
+                .as_nanos()
+        ));
+        fs::create_dir_all(&root).unwrap();
+        let prompt = "V带轮 基准直径100 槽数3 槽型A 内孔25 宽度30";
+        let document = build(prompt, 1, Path::new("unused-occt-manifest.json"), &root).unwrap();
+        assert_eq!(document["state"], "complete");
+        assert_eq!(document["geometry_report"]["state"], "mesh_only");
+        assert_eq!(document["geometry_report"]["mesh_only"], true);
+        assert_eq!(document["geometry_report"]["brep_available"], false);
+        assert_eq!(document["geometry_report"]["catpart_available"], false);
+        assert_eq!(
+            document["geometry_report"]["closed_solid_count"],
+            Value::Null
+        );
+        assert_eq!(document["geometry_report"]["triangle_count"], 3072);
+        assert_eq!(
+            document["stats"]["size"],
+            json!([105.5, 105.5, 46.3197135925293])
+        );
+        let stl = Path::new(document["output_paths"]["stl"].as_str().unwrap());
+        if let Some(path) = std::env::var_os("F5_79_RUST_STL") {
+            fs::copy(stl, path).unwrap();
+        }
+        let loaded = native_model_io::load_aimodel(Path::new(
+            document["output_paths"]["aimodel"].as_str().unwrap(),
+        ))
+        .unwrap();
+        assert_eq!(
+            loaded["cadplan"]["features"],
+            document["cadplan"]["features"]
+        );
+
+        let active_root = root.join("active-model");
+        let candidate = active_model_candidate(prompt, &document).unwrap();
+        let committed = crate::native_active_model::commit(&active_root, 0, &candidate).unwrap();
+        assert_eq!(committed["geometric_status"], "mesh_only");
+        let reloaded = crate::native_active_model::load(&active_root)
+            .unwrap()
+            .unwrap();
+        assert_eq!(
+            reloaded["document"]["geometry_report"]["state"],
+            "mesh_only"
+        );
+        fs::remove_dir_all(root).unwrap();
+    }
 
     #[test]
     fn missing_explicit_dimensions_returns_clarification_without_kernel() {
@@ -1674,10 +1855,24 @@ mod acceptance_tests {
                 .unwrap_or_else(|error| panic!("{input}: native Quick build failed: {error}"));
             assert_eq!(output["state"], "complete", "{input}: {output}");
             let report = &output["geometry_report"];
-            assert_eq!(report["state"], "passed", "{input}: {report}");
-            assert_eq!(report["valid"], true, "{input}: {report}");
-            assert_eq!(report["closed_solid_count"], 1, "{input}: {report}");
-            let actual_volume = report["volume_mm3"].as_f64().unwrap_or_default();
+            let mesh_only = report["mesh_only"] == true;
+            if mesh_only {
+                assert_eq!(report["state"], "mesh_only", "{input}: {report}");
+                assert_eq!(report["brep_available"], false, "{input}: {report}");
+                assert_eq!(report["catpart_available"], false, "{input}: {report}");
+                assert!(report["closed_solid_count"].is_null(), "{input}: {report}");
+            } else {
+                assert_eq!(report["state"], "passed", "{input}: {report}");
+                assert_eq!(report["valid"], true, "{input}: {report}");
+                assert_eq!(report["closed_solid_count"], 1, "{input}: {report}");
+            }
+            let actual_volume = if mesh_only {
+                report["signed_mesh_volume_mm3"]
+                    .as_f64()
+                    .unwrap_or_default()
+            } else {
+                report["volume_mm3"].as_f64().unwrap_or_default()
+            };
             assert!(
                 actual_volume.is_finite() && actual_volume > 0.0,
                 "{input}: {report}"
