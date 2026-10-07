@@ -1,0 +1,434 @@
+{
+  "source": {
+    "quick_entry": "src/legacy/ai_modeler/core/parsing/nlparser.py::Parser.parse/Parser.handle",
+    "part_library": "src/legacy/ai_modeler/parts/library/partlib.py::WELDMENT_PARTS['连接块'] and _connect_block",
+    "generic_cuts": "src/legacy/ai_modeler/core/parsing/nlparser.py::Parser.make_hole/Parser.make_pocket/Parser.try_corner",
+    "mesh_build": "src/legacy/ai_modeler/core/model/docmodel.py::Document.build/Feature._build_holes",
+    "units": "mm"
+  },
+  "legacy_accepted": [
+    {
+      "input": "连接块 长度80 宽度50 高度30",
+      "feature_count": 1,
+      "features": [
+        {
+          "kind": "box",
+          "operation": "add",
+          "parameters": {
+            "length": 80.0,
+            "width": 50.0,
+            "height": 30.0,
+            "center": [0, 0, 0],
+            "base": false,
+            "axis": "Z"
+          }
+        }
+      ],
+      "legacy_mesh": {
+        "dimensions_mm": [80.0, 50.0, 30.0],
+        "volume_mm3": 120000.0,
+        "faces": 8,
+        "triangles": 12
+      }
+    },
+    {
+      "input": "连接块 长度80 宽度50",
+      "feature_count": 1,
+      "features": [
+        {
+          "kind": "box",
+          "operation": "add",
+          "parameters": {
+            "length": 80.0,
+            "width": 50.0,
+            "height": 20.0,
+            "center": [0, 0, 0],
+            "base": false,
+            "axis": "Z"
+          }
+        }
+      ],
+      "legacy_mesh": {
+        "dimensions_mm": [80.0, 50.0, 20.0],
+        "volume_mm3": 80000.0,
+        "faces": 8,
+        "triangles": 12
+      }
+    },
+    {
+      "input": "连接块 L80 W50 H30",
+      "feature_count": 1,
+      "features": [
+        {
+          "kind": "box",
+          "operation": "add",
+          "parameters": {
+            "length": 80.0,
+            "width": 50.0,
+            "height": 30.0,
+            "center": [0, 0, 0],
+            "base": false,
+            "axis": "Z"
+          }
+        }
+      ],
+      "legacy_mesh": {
+        "dimensions_mm": [80.0, 50.0, 30.0],
+        "volume_mm3": 120000.0,
+        "faces": 8,
+        "triangles": 12
+      }
+    },
+    {
+      "input": "连接块 长度80 宽度50 高度30 孔径10",
+      "feature_count": 2,
+      "features": [
+        {
+          "kind": "box",
+          "operation": "add",
+          "parameters": {
+            "length": 80.0,
+            "width": 50.0,
+            "height": 30.0,
+            "center": [0, 0, 0],
+            "base": false,
+            "axis": "Z"
+          }
+        },
+        {
+          "kind": "hole",
+          "operation": "cut",
+          "parameters": {
+            "diameter": 10.0,
+            "through": true,
+            "pos": "center",
+            "axis": "Z",
+            "segments": 32
+          }
+        }
+      ],
+      "legacy_mesh": {
+        "dimensions_mm": [80.0, 50.0, 30.0],
+        "volume_mm3": 117658.91613580615,
+        "faces": 126,
+        "triangles": 192
+      }
+    },
+    {
+      "input": "连接块 长度80 宽度50 高度30 孔径60",
+      "feature_count": 2,
+      "features": [
+        {
+          "kind": "box",
+          "operation": "add",
+          "parameters": {
+            "length": 80.0,
+            "width": 50.0,
+            "height": 30.0,
+            "center": [0, 0, 0],
+            "base": false,
+            "axis": "Z"
+          }
+        },
+        {
+          "kind": "hole",
+          "operation": "cut",
+          "parameters": {
+            "diameter": 48.0,
+            "through": true,
+            "pos": "center",
+            "axis": "Z",
+            "segments": 32
+          }
+        }
+      ],
+      "expected_warning": "legacy_connection_block_hole_clamped",
+      "legacy_mesh": {
+        "dimensions_mm": [80.0, 50.0, 30.0],
+        "volume_mm3": 66061.42776898082,
+        "faces": 122,
+        "triangles": 184
+      }
+    },
+    {
+      "input": "连接块 长度80 宽度50 高度30 孔径10 孔数4",
+      "feature_count": 2,
+      "features": [
+        {
+          "kind": "box",
+          "operation": "add",
+          "parameters": {
+            "length": 80.0,
+            "width": 50.0,
+            "height": 30.0,
+            "center": [0, 0, 0],
+            "base": false,
+            "axis": "Z"
+          }
+        },
+        {
+          "kind": "hole",
+          "operation": "cut",
+          "parameters": {
+            "diameter": 10.0,
+            "through": true,
+            "pos": "center",
+            "axis": "Z",
+            "segments": 32
+          }
+        }
+      ],
+      "expected_warning": "legacy_connection_block_hole_count_ignored",
+      "legacy_mesh": {
+        "dimensions_mm": [80.0, 50.0, 30.0],
+        "volume_mm3": 117658.91613580615,
+        "faces": 126,
+        "triangles": 192
+      }
+    },
+    {
+      "input": "连接块 长度80 宽度50 高度30 中心孔",
+      "feature_count": 2,
+      "features": [
+        {
+          "kind": "box",
+          "operation": "add",
+          "parameters": {
+            "length": 80.0,
+            "width": 50.0,
+            "height": 30.0,
+            "center": [0, 0, 0],
+            "base": false,
+            "axis": "Z"
+          }
+        },
+        {
+          "kind": "hole",
+          "operation": "cut",
+          "parameters": {
+            "diameter": 10.0,
+            "through": true,
+            "pos": "center",
+            "axis": "Z",
+            "segments": 24
+          }
+        }
+      ],
+      "legacy_mesh": {
+        "dimensions_mm": [80.0, 50.0, 30.0],
+        "volume_mm3": 117670.62859407703,
+        "faces": 96,
+        "triangles": 148
+      }
+    },
+    {
+      "input": "连接块 长度80 宽度50 高度30 槽宽8",
+      "feature_count": 2,
+      "features": [
+        {
+          "kind": "box",
+          "operation": "add",
+          "parameters": {
+            "length": 80.0,
+            "width": 50.0,
+            "height": 30.0,
+            "center": [0, 0, 0],
+            "base": false,
+            "axis": "Z"
+          }
+        },
+        {
+          "kind": "pocket",
+          "operation": "cut",
+          "parameters": {
+            "length": 20.0,
+            "width": 8.0,
+            "depth": 5.0,
+            "corner": 0.0,
+            "axis": "Z"
+          }
+        }
+      ],
+      "legacy_mesh": {
+        "dimensions_mm": [80.0, 50.0, 30.00001],
+        "volume_mm3": 119199.99893333329,
+        "faces": 18,
+        "triangles": 30
+      }
+    },
+    {
+      "input": "连接块 长度80 宽度50 高度30 台阶",
+      "feature_count": 1,
+      "features": [
+        {
+          "kind": "box",
+          "operation": "add",
+          "parameters": {
+            "length": 80.0,
+            "width": 50.0,
+            "height": 30.0,
+            "center": [0, 0, 0],
+            "base": false,
+            "axis": "Z"
+          }
+        }
+      ],
+      "expected_warning": "legacy_connection_block_step_ignored",
+      "legacy_mesh": {
+        "dimensions_mm": [80.0, 50.0, 30.0],
+        "volume_mm3": 120000.0,
+        "faces": 8,
+        "triangles": 12
+      }
+    },
+    {
+      "input": "连接块 长度80 宽度50 高度30 盲孔直径10 深度5",
+      "feature_count": 2,
+      "features": [
+        {
+          "kind": "box",
+          "operation": "add",
+          "parameters": {
+            "length": 80.0,
+            "width": 50.0,
+            "height": 30.0,
+            "center": [0, 0, 0],
+            "base": false,
+            "axis": "Z"
+          }
+        },
+        {
+          "kind": "hole",
+          "operation": "cut",
+          "parameters": {
+            "diameter": 10.0,
+            "through": false,
+            "pos": "center",
+            "axis": "Z",
+            "segments": 24,
+            "depth": 5.0
+          }
+        }
+      ],
+      "legacy_mesh": {
+        "dimensions_mm": [80.0, 50.0, 30.0],
+        "volume_mm3": 119611.77143234624,
+        "faces": 65,
+        "triangles": 126
+      }
+    },
+    {
+      "input": "连接块 长度80 宽度50 高度30 圆角R2",
+      "feature_count": 1,
+      "features": [
+        {
+          "kind": "box",
+          "operation": "add",
+          "parameters": {
+            "length": 80.0,
+            "width": 50.0,
+            "height": 30.0,
+            "center": [0, 0, 0],
+            "base": false,
+            "axis": "Z",
+            "corner": 2.0,
+            "corner_mode": "fillet"
+          }
+        }
+      ],
+      "legacy_mesh": {
+        "dimensions_mm": [80.0, 50.0, 30.0],
+        "volume_mm3": 119894.57341827096,
+        "faces": 104,
+        "triangles": 140
+      }
+    },
+    {
+      "input": "连接块 长度80 宽度50 高度30 倒角R2",
+      "feature_count": 1,
+      "features": [
+        {
+          "kind": "box",
+          "operation": "add",
+          "name": "连接块",
+          "parameters": {
+            "length": 80.0,
+            "width": 50.0,
+            "height": 30.0,
+            "center": [0, 0, 0],
+            "base": false,
+            "axis": "Z",
+            "corner": 2.0,
+            "corner_mode": "chamfer"
+          }
+        }
+      ],
+      "legacy_mesh": {
+        "dimensions_mm": [80.0, 50.0, 30.0],
+        "volume_mm3": 119760.0,
+        "faces": 20,
+        "triangles": 28
+      }
+    },
+    {
+      "input": "连接块 长度80 宽度50 高度30 孔数4",
+      "feature_count": 1,
+      "features": [
+        {
+          "kind": "box",
+          "operation": "add",
+          "parameters": {
+            "length": 80.0,
+            "width": 50.0,
+            "height": 30.0,
+            "center": [0, 0, 0],
+            "base": false,
+            "axis": "Z"
+          }
+        }
+      ],
+      "expected_warning": "legacy_connection_block_hole_count_ignored",
+      "legacy_mesh": {
+        "dimensions_mm": [80.0, 50.0, 30.0],
+        "volume_mm3": 120000.0,
+        "faces": 8,
+        "triangles": 12
+      }
+    }
+  ],
+  "native_expectations": [
+    { "input": "连接块 长度80 宽度50 高度30", "dimensions_mm": [80.0, 50.0, 30.0], "volume_mm3": 120000.0 },
+    { "input": "连接块 长度80 宽度50", "dimensions_mm": [80.0, 50.0, 20.0], "volume_mm3": 80000.0 },
+    { "input": "连接块 L80 W50 H30", "dimensions_mm": [80.0, 50.0, 30.0], "volume_mm3": 120000.0 },
+    { "input": "连接块 长度80 宽度50 高度30 孔径10", "dimensions_mm": [80.0, 50.0, 30.0], "volume_mm3": 117643.80550980766 },
+    { "input": "连接块 长度80 宽度50 高度30 孔径60", "dimensions_mm": [80.0, 50.0, 30.0], "volume_mm3": 65713.27894596837 },
+    { "input": "连接块 长度80 宽度50 高度30 孔径10 孔数4", "dimensions_mm": [80.0, 50.0, 30.0], "volume_mm3": 117643.80550980766 },
+    { "input": "连接块 长度80 宽度50 高度30 中心孔", "dimensions_mm": [80.0, 50.0, 30.0], "volume_mm3": 117643.80550980766 },
+    { "input": "连接块 长度80 宽度50 高度30 槽宽8", "dimensions_mm": [80.0, 50.0, 30.0], "volume_mm3": 119200.0 },
+    { "input": "连接块 长度80 宽度50 高度30 台阶", "dimensions_mm": [80.0, 50.0, 30.0], "volume_mm3": 120000.0 },
+    { "input": "连接块 长度80 宽度50 高度30 盲孔直径10 深度5", "dimensions_mm": [80.0, 50.0, 30.0], "volume_mm3": 119607.30091830126 },
+    { "input": "连接块 长度80 宽度50 高度30 圆角R2", "dimensions_mm": [80.0, 50.0, 30.0], "volume_mm3": 119894.57341827097 },
+    { "input": "连接块 长度80 宽度50 高度30 倒角R2", "dimensions_mm": [80.0, 50.0, 30.0], "volume_mm3": 119760.0 },
+    { "input": "连接块 长度80 宽度50 高度30 孔数4", "dimensions_mm": [80.0, 50.0, 30.0], "volume_mm3": 120000.0 }
+  ],
+  "needs_clarification": [
+    {
+      "input": "连接块 长100 宽50 高30",
+      "issue": "legacy_connection_block_length_required"
+    },
+    {
+      "input": "连接块 长度80 宽度0",
+      "issue": "legacy_connection_block_width_invalid"
+    },
+    {
+      "input": "连接块 长度80 宽度50 高度0",
+      "issue": "legacy_connection_block_height_invalid"
+    }
+  ],
+  "unsupported": [
+    {
+      "input": "连接块 长度80 宽度50 高度30 孔径8 分度圆60 均布4个",
+      "issue": "legacy_connection_block_pcd_not_migrated"
+    }
+  ]
+}
