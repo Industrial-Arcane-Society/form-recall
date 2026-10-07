@@ -8,6 +8,16 @@ const MAX_PISTON_PROFILE_POINTS: usize = 4 * MAX_PISTON_GROOVES + 4;
 pub const MAX_SPOKED_WHEEL_SPOKES: u64 = 512;
 pub const MAX_CAMSHAFT_LOBES: u64 = 512;
 pub const MAX_CRANKSHAFT_THROWS: u64 = 128;
+const QUICK_CRANKSHAFT_SEGMENTS: usize = 32;
+
+fn crankshaft_quick_circle_profile(radius: f64) -> Vec<[f64; 2]> {
+    (0..QUICK_CRANKSHAFT_SEGMENTS)
+        .map(|index| {
+            let angle = std::f64::consts::TAU * index as f64 / QUICK_CRANKSHAFT_SEGMENTS as f64;
+            [radius * angle.cos(), radius * angle.sin()]
+        })
+        .collect()
+}
 
 fn crank_cheek_outline(
     main_r: f64,
@@ -122,15 +132,22 @@ pub fn build_crankshaft_with_geometry_variant(
         let cheek_left = pin_left - web_width;
         let cheek_right = pin_right + web_width;
         if legacy_quick && cheek_left > journal_cursor + 1e-9 {
-            shapes.push(kernel.cylinder(main_r, cheek_left - journal_cursor,
-                [journal_cursor, center[1], center[2]], [1.0, 0.0, 0.0])?);
+            let profile = crankshaft_quick_circle_profile(main_r);
+            shapes.push(kernel.prism(&profile, cheek_left - journal_cursor,
+                [journal_cursor, center[1], center[2]], Axis::X)?);
         }
-        shapes.push(kernel.cylinder(
-            pin_r,
-            pin_length,
-            [pin_left, center[1] + dy, center[2]],
-            [1.0, 0.0, 0.0],
-        )?);
+        if legacy_quick {
+            let profile = crankshaft_quick_circle_profile(pin_r);
+            shapes.push(kernel.prism(&profile, pin_length,
+                [pin_left, center[1] + dy, center[2]], Axis::X)?);
+        } else {
+            shapes.push(kernel.cylinder(
+                pin_r,
+                pin_length,
+                [pin_left, center[1] + dy, center[2]],
+                [1.0, 0.0, 0.0],
+            )?);
+        }
         let y0 = (center[1] - main_r).min(center[1] + dy - pin_r);
         let y1 = (center[1] + dy - pin_r).max(center[1] - main_r);
         let y2 = (center[1] + main_r).min(center[1] + dy + pin_r);
@@ -139,7 +156,7 @@ pub fn build_crankshaft_with_geometry_variant(
         let yhi = y1.max(y3);
         let zhalf = main_r.max(pin_r);
         let cheek_profile = if legacy_quick {
-            Some(crank_cheek_outline(main_r, pin_r, dy, 32)?)
+            Some(crank_cheek_outline(main_r, pin_r, dy, QUICK_CRANKSHAFT_SEGMENTS)?)
         } else {
             None
         };
@@ -169,8 +186,9 @@ pub fn build_crankshaft_with_geometry_variant(
     if legacy_quick {
         let right_end = center[0] + length / 2.0;
         if right_end > journal_cursor + 1e-9 {
-            shapes.push(kernel.cylinder(main_r, right_end - journal_cursor,
-                [journal_cursor, center[1], center[2]], [1.0, 0.0, 0.0])?);
+            let profile = crankshaft_quick_circle_profile(main_r);
+            shapes.push(kernel.prism(&profile, right_end - journal_cursor,
+                [journal_cursor, center[1], center[2]], Axis::X)?);
         }
     }
     let refs: Vec<_> = shapes.iter().collect();
@@ -183,11 +201,12 @@ pub fn build_crankshaft_with_geometry_variant(
     Ok((
         vec![result],
         json!({"status":"approximate", "geometry_support":"approximate",
-        "builder":if geometry_variant == Some("legacy_quick_dumbbell_cheeks") { "analytic_journals_with_legacy_quick_polygon_cheeks" } else { "analytic_journals_with_rectangular_webs" },
+        "builder":if legacy_quick { "legacy_quick_32_segment_journals_pins_and_polygon_cheeks" } else { "analytic_journals_with_rectangular_webs" },
         "geometry_variant":geometry_variant,
         "throws_built":throws, "webs_built":web_count, "axis":"global X",
         "cheek_profile":"two-circle external-tangent convex hull in YZ, 32 legacy Quick segments",
-        "segments_ignored_by_analytic_brep":false}),
+        "journal_and_pin_profile":if legacy_quick { "32-sided YZ polygon matching legacy Quick segments=32 phase" } else { "analytic OCCT cylinders" },
+        "segments_ignored_by_analytic_brep":!legacy_quick}),
     ))
 }
 

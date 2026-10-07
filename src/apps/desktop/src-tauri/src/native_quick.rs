@@ -3650,6 +3650,10 @@ mod acceptance_tests {
         for name in ["glb", "aimodel", "stl", "obj"] {
             assert!(Path::new(paths[name].as_str().unwrap()).is_file(), "missing {name}: {paths:?}");
         }
+        if let Some(capture) = std::env::var_os("F5_99_CAPTURE_STL") {
+            fs::copy(paths["stl"].as_str().unwrap(), capture)
+                .expect("capture generated F5.99 STL for legacy parity comparison");
+        }
         let loaded = crate::native_model_io::load_aimodel(Path::new(paths["aimodel"].as_str().unwrap()))
             .unwrap_or_else(|error| panic!("AIMODEL reload failed: {error}"));
         assert_eq!(loaded["cadplan"]["features"], plan["features"], "AIMODEL feature round-trip");
@@ -3698,6 +3702,16 @@ mod acceptance_tests {
                 "throw={i} pin span must not contain the full-length main shaft: {intervals:?}");
         }
         let first_x0 = -length / 2.0 + spacing * 0.5;
+        let polygon_step = std::f64::consts::TAU / 32.0;
+        let pin_facet_z = pin_r * polygon_step.sin() / 2.0;
+        let pin_facet_halfwidth = pin_r * (1.0 + polygon_step.cos()) / 2.0;
+        let first_pin_facet = rebuilt.shape.line_material_intervals(
+            [first_x0, 0.0, pin_facet_z], [0.0, 1.0, 0.0], -100.0, 100.0, 1e-7
+        ).expect("sample 32-sided pin facet");
+        assert_eq!(first_pin_facet.len(), 1, "32-sided pin facet section: {first_pin_facet:?}");
+        assert!((first_pin_facet[0][0] - (stroke / 2.0 - pin_facet_halfwidth)).abs() <= 1e-5
+            && (first_pin_facet[0][1] - (stroke / 2.0 + pin_facet_halfwidth)).abs() <= 1e-5,
+            "Quick pin must use the legacy 32-edge YZ contour: {first_pin_facet:?}");
         let first_pin_right = first_x0 + pin_length / 2.0;
         let first_web_right = first_pin_right + web_width;
         let second_x0 = -length / 2.0 + spacing * 1.5;
@@ -3710,6 +3724,15 @@ mod acceptance_tests {
         assert!((journal[0][0] + main_r).abs() <= 1e-5
             && (journal[0][1] - main_r).abs() <= 1e-5,
             "legacy main journal must remain between throws: {journal:?}");
+        let journal_facet_z = main_r * polygon_step.sin() / 2.0;
+        let journal_facet_halfwidth = main_r * (1.0 + polygon_step.cos()) / 2.0;
+        let journal_facet = rebuilt.shape.line_material_intervals(
+            [journal_x, 0.0, journal_facet_z], [0.0, 1.0, 0.0], -100.0, 100.0, 1e-7
+        ).expect("sample 32-sided main-journal facet");
+        assert_eq!(journal_facet.len(), 1, "32-sided journal facet section: {journal_facet:?}");
+        assert!((journal_facet[0][0] + journal_facet_halfwidth).abs() <= 1e-5
+            && (journal_facet[0][1] - journal_facet_halfwidth).abs() <= 1e-5,
+            "Quick main journals must use the legacy 32-edge YZ contour: {journal_facet:?}");
         for row in fixture["section_samples"].as_array().unwrap() {
             let i = row["throw_index"].as_u64().unwrap() as usize;
             let x0 = -length/2.0 + spacing*(i as f64 + 0.5);
