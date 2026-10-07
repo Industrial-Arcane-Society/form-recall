@@ -8614,7 +8614,15 @@ fn parse_blade_template(raw: &str, text: &str) -> Value {
     // Match the legacy `tpl_blade` precedence: height, length, final raw
     // dimension, then 80 mm. The pair is the old root→tip chord shorthand.
     let span_from_height = scalar(text, &["height", "高度", "thickness", "厚度", "厚", "高"]);
-    let span_from_length = scalar(text, &["length", "长度", "长边", "总长", "全长", "长"]);
+    // Keep `长` out of unrestricted substring matching: 展长 and 弦长 are
+    // separate blade dimensions and must not conflict with the generic span.
+    let span_from_length = scalar(
+        text,
+        &[
+            "叶展", "展长", "叶高", "叶片长度", "叶片高度", "length", "长度", "长边", "总长", "全长",
+        ],
+    )
+    .or_else(|| scalar_excluding_suffix(text, "长", &["展", "弦"]));
     let raw_dimensions = dimension_values(text);
     let span_from_trailing_dimension = raw_dimensions.last().copied();
     let span = span_from_height
@@ -8622,12 +8630,18 @@ fn parse_blade_template(raw: &str, text: &str) -> Value {
         .or(span_from_trailing_dimension)
         .unwrap_or(80.0);
     let pair = find_dimension_pair(text);
+    let root_chord_explicit = scalar(text, &["root chord", "根弦长", "根弦"]);
+    let tip_chord_explicit = scalar(text, &["tip chord", "梢弦长", "梢弦"]);
+    let chord_from_label = scalar_excluding_suffix(text, "弦长", &["根", "梢"]);
     let chord_from_width = scalar(text, &["width", "宽度", "宽边", "宽"]);
-    let root_chord = pair
-        .map(|values| values[0])
+    let root_chord = root_chord_explicit
+        .or_else(|| pair.map(|values| values[0]))
+        .or(chord_from_label)
         .or(chord_from_width)
         .unwrap_or(40.0);
-    let tip_chord = pair.map(|values| values[1]).unwrap_or(root_chord * 0.5);
+    let tip_chord = tip_chord_explicit
+        .or_else(|| pair.map(|values| values[1]))
+        .unwrap_or(root_chord * 0.5);
     if !span.is_finite()
         || span <= 0.0
         || !root_chord.is_finite()
@@ -8663,7 +8677,11 @@ fn parse_blade_template(raw: &str, text: &str) -> Value {
     parameters.insert("root_chord".into(), json!(root_chord));
     sources.insert(
         "root_chord".into(),
-        if pair.is_some() || chord_from_width.is_some() {
+        if root_chord_explicit.is_some()
+            || pair.is_some()
+            || chord_from_label.is_some()
+            || chord_from_width.is_some()
+        {
             user_source(raw)
         } else {
             derived_source(raw, "沿用旧 Python Quick 叶片模板默认根弦长 40 mm。")
@@ -8672,7 +8690,7 @@ fn parse_blade_template(raw: &str, text: &str) -> Value {
     parameters.insert("tip_chord".into(), json!(tip_chord));
     sources.insert(
         "tip_chord".into(),
-        if pair.is_some() {
+        if tip_chord_explicit.is_some() || pair.is_some() {
             user_source(raw)
         } else {
             derived_source(raw, "未提供尺寸对时，梢弦长取根弦长的一半。")
@@ -14431,6 +14449,31 @@ mod tests {
                 "{input}: expected explicit rejection {}: {output}",
                 case["issue"]
             );
+        }
+    }
+
+    #[test]
+    fn legacy_blade_chord_labels_do_not_pollute_span_or_each_other() {
+        let cases = [
+            ("叶片 展长80 弦长40", 80.0, 40.0, 20.0),
+            ("叶片 展长80 根弦长40 梢弦长25", 80.0, 40.0, 25.0),
+        ];
+
+        for (input, span, root_chord, tip_chord) in cases {
+            let output = parse(input);
+            assert_eq!(output["status"], "ready", "{input}: {output}");
+            let feature = &output["plan"]["features"][0];
+            assert_eq!(feature["kind"], "loft", "{input}: {output}");
+            assert_eq!(feature["parameters"]["span"], span, "{input}: {output}");
+            assert_eq!(feature["parameters"]["root_chord"], root_chord, "{input}: {output}");
+            assert_eq!(feature["parameters"]["tip_chord"], tip_chord, "{input}: {output}");
+            assert_eq!(feature["sources"]["span"]["type"], "user", "{input}: {output}");
+            assert_eq!(feature["sources"]["root_chord"]["type"], "user", "{input}: {output}");
+            if input.contains("梢弦长") {
+                assert_eq!(feature["sources"]["tip_chord"]["type"], "user", "{input}: {output}");
+            } else {
+                assert_eq!(feature["sources"]["tip_chord"]["type"], "derived", "{input}: {output}");
+            }
         }
     }
 
