@@ -1,0 +1,139 @@
+{
+  "schema_version": "1.0",
+  "legacy_entrypoint": "src/legacy/ai_modeler/core/parsing/nlparser.py::Parser.parse",
+  "legacy_recipe": "src/legacy/ai_modeler/parts/library/partlib.py::_worm",
+  "legacy_geometry": "src/legacy/ai_modeler/core/model/docmodel.py::Feature.build(kind='worm')",
+  "legacy_defaults": {
+    "pitch_d_mm": 32,
+    "outer_d_mm": 40,
+    "length_mm": 60,
+    "shaft_segments": 48,
+    "segments_per_turn": 16,
+    "wire_segments": 8,
+    "wire_radius_formula": "max(0.5 mm, min((D-d)/4, L/6))",
+    "thread_centerline_radius_formula": "D/2-wire_r",
+    "shaft_radius_formula": "min(d/2, thread_r-wire_r)",
+    "turns_formula": "max(2, min(20, L/max(1, d*0.8)))",
+    "helix_height_formula": "max(1 mm, L-4*wire_r)",
+    "axis": "Z",
+    "handedness": "right-hand by positive turns"
+  },
+  "legacy_accepted": [
+    {
+      "input": "蜗杆 分度圆直径40 外径50 长度80",
+      "feature_count": 1,
+      "native_expected": {
+        "radius": 20.0,
+        "height": 80.0,
+        "thread_r": 22.5,
+        "wire_r": 2.5,
+        "height2": 70.0,
+        "turns": 2.5,
+        "segments": 48,
+        "seg_per_turn": 16,
+        "wire_seg": 8,
+        "center": [0.0, 0.0, -40.0],
+        "center2": [0.0, 0.0, -35.0]
+      },
+      "source_user": ["height"],
+      "source_derived": ["radius", "thread_r", "wire_r", "height2", "turns", "segments", "seg_per_turn", "wire_seg", "center", "center2"],
+      "warnings": ["unit_interpreted_as_mm"],
+      "dimensions_mm": [50.0, 50.0, 80.0],
+      "legacy_mesh_poly_count": 386,
+      "legacy_mesh_triangle_count": 844,
+      "legacy_mesh_signed_volume_mm3": 133951.33454752664
+    },
+    {
+      "input": "蜗杆 外径50 长度80",
+      "feature_count": 1,
+      "native_expected": {
+        "radius": 16.0,
+        "height": 80.0,
+        "thread_r": 20.5,
+        "wire_r": 4.5,
+        "height2": 62.0,
+        "turns": 3.125,
+        "segments": 48,
+        "seg_per_turn": 16,
+        "wire_seg": 8,
+        "center": [0.0, 0.0, -40.0],
+        "center2": [0.0, 0.0, -31.0]
+      },
+      "source_user": ["height"],
+      "source_derived": ["radius", "thread_r", "wire_r", "height2", "turns", "segments", "seg_per_turn", "wire_seg", "center", "center2"],
+      "warnings": ["legacy_worm_default_pitch_d", "unit_interpreted_as_mm"],
+      "dimensions_mm": [50.0, 50.0, 80.0]
+    },
+    {
+      "input": "蜗杆 分度圆直径40 外径50 长度80 中心孔10",
+      "feature_count": 2,
+      "native_expected": {
+        "radius": 20.0,
+        "height": 80.0,
+        "thread_r": 22.5,
+        "wire_r": 2.5,
+        "height2": 70.0,
+        "turns": 2.5,
+        "segments": 48,
+        "seg_per_turn": 16,
+        "wire_seg": 8,
+        "center": [0.0, 0.0, -40.0],
+        "center2": [0.0, 0.0, -35.0]
+      },
+      "source_user": ["height"],
+      "source_derived": ["radius", "thread_r", "wire_r", "height2", "turns", "segments", "seg_per_turn", "wire_seg", "center", "center2"],
+      "warnings": ["unit_interpreted_as_mm"],
+      "hole_d_mm": 10.0,
+      "dimensions_mm": [50.0, 50.0, 80.0]
+    }
+  ],
+  "legacy_divergences": [
+    {
+      "input": "蜗杆 分度圆直径4cm 外径5cm 长度8cm",
+      "rust_status": "ready",
+      "issue": "legacy_worm_unit_conversion",
+      "legacy_dimensions_mm": [5.0, 5.0, 8.0],
+      "rust_dimensions_mm": [50.0, 50.0, 80.0],
+      "reason": "Python 旧 parser 保留 4/5/8 的原始数字并当作 mm；Rust 将 4/5/8 cm 正确换算为 40/50/80 mm。"
+    },
+    {
+      "input": "蜗杆 分度圆直径40 长度80",
+      "rust_status": "needs_clarification",
+      "issue": "legacy_worm_outer_d_missing",
+      "reason": "Python 旧 parser 会退回普通 Ø40×80 mm 圆柱并漏掉蜗杆齿；Rust 要求补充外径，不把圆柱冒充蜗杆。"
+    },
+    {
+      "input": "蜗杆",
+      "rust_status": "needs_clarification",
+      "issue": "legacy_worm_outer_d_missing",
+      "reason": "Python 旧 Quick 没有生成特征；Rust 保留工件意图并明确要求外径和长度。"
+    },
+    {
+      "input": "蜗杆 外径50 长度80 左旋",
+      "rust_status": "unsupported",
+      "issue": "legacy_worm_modifier_not_migrated",
+      "reason": "Python 旧配方忽略左旋要求而仍生成固定方向的螺旋；Rust 不静默生成错误旋向。"
+    }
+  ],
+  "needs_clarification": [
+    {"input": "蜗杆 D50 d55 L80", "issue": "legacy_worm_pitch_d_not_smaller_than_outer"},
+    {"input": "蜗杆 外径50 长度80 中心孔", "issue": "legacy_worm_center_hole_invalid"},
+    {"input": "蜗杆 外径50 长度80 中心孔33", "issue": "legacy_worm_center_hole_not_smaller_than_shaft"}
+  ],
+  "unsupported": [
+    {"input": "蜗杆 外径50 长度80 指定导程20", "issue": "legacy_worm_modifier_not_migrated"},
+    {"input": "蜗轮 外径50 长度80", "issue": "legacy_worm_pair_not_migrated"},
+    {"input": "蜗杆 外径50 长度80 偏置孔6", "issue": "legacy_worm_hole_location_not_migrated"}
+  ],
+  "geometry_acceptance": [
+    {"input": "蜗杆 分度圆直径40 外径50 长度80", "dimensions_mm": [50.0, 50.0, 80.0], "feature_count": 1},
+    {"input": "蜗杆 外径50 长度80", "dimensions_mm": [50.0, 50.0, 80.0], "feature_count": 1},
+    {"input": "蜗杆 分度圆直径4cm 外径5cm 长度8cm", "dimensions_mm": [50.0, 50.0, 80.0], "feature_count": 1},
+    {"input": "蜗杆 分度圆直径40 外径50 长度80 中心孔10", "dimensions_mm": [50.0, 50.0, 80.0], "feature_count": 2}
+  ],
+  "geometry_notes": {
+    "legacy_mesh_builder": "Feature.build(kind='worm') concatenates the shaft polygons and helix polygons into one mesh; it does not boolean-union the intersecting surfaces.",
+    "rust_builder": "native_worm fuses the faceted shaft and sewn helix into one valid closed OCCT B-Rep; mesh face/volume equality is not expected.",
+    "catia": "CATIA currently does not create the local helical worm feature."
+  }
+}

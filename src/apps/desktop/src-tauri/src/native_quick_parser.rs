@@ -64,6 +64,9 @@ pub fn parse(text: &str) -> Value {
     if let Some(parsed) = parse_legacy_piston(text, &normalized) {
         return parsed;
     }
+    if let Some(parsed) = parse_legacy_worm(text, &normalized) {
+        return parsed;
+    }
     if let Some(parsed) = parse_legacy_camshaft(text, &normalized) {
         return parsed;
     }
@@ -602,8 +605,8 @@ fn result(
         "questions":questions,
         "unsupported":unsupported,
         "compatibility":{
-            "scope":"common explicit primitives/cuts, migrated standalone primitive defaults and legacy extrusion/revolve constructors, centered solid-shaft aliases, rectangular slots, flat-washer rings, cylindrical/conical spring helices, measured socket-head screws with optional washers, V-belt pulleys, timing pulleys, straight-gear construction, PCD counterbores, migrated legacy washer/spring/shaft/bearing/seal-ring/coupling/brake-disc/brake-drum/flywheel/flat-annular-part/disc-cam/spline-shaft/crankshaft/camshaft/piston recipes, and executable flange/stepped-shaft/sleeve/blade/blisk templates",
-            "legacy_typical_defaults":"restored only for migrated Quick constructors/templates, centered solid shafts (Ø30 mm when diameter is absent), straight gears, timing pulleys, V-belt pulleys, socket-head screw catalog recipes, rectangular slots, flat-washer thickness, spring wire/turn values, brake-disc thickness/bore values, brake-drum bore values, flywheel center-bore/PCD-hole values, flat-annular-part bore/thickness values, disc-cam base diameter/thickness, spline-shaft minor diameter/tooth count, crankshaft main/pin journal diameters and stroke/throw count, camshaft lobe count/journal diameter, and piston pin diameter/ring groove count; defaults and raw-dimension mappings are reported as warnings",
+            "scope":"common explicit primitives/cuts, migrated standalone primitive defaults and legacy extrusion/revolve constructors, centered solid-shaft aliases, rectangular slots, flat-washer rings, cylindrical/conical spring helices, measured socket-head screws with optional washers, V-belt pulleys, timing pulleys, straight-gear construction, PCD counterbores, migrated legacy washer/spring/shaft/bearing/seal-ring/coupling/brake-disc/brake-drum/flywheel/flat-annular-part/disc-cam/spline-shaft/crankshaft/camshaft/piston/worm recipes, and executable flange/stepped-shaft/sleeve/blade/blisk templates",
+            "legacy_typical_defaults":"restored only for migrated Quick constructors/templates, centered solid shafts (Ø30 mm when diameter is absent), straight gears, timing pulleys, V-belt pulleys, socket-head screw catalog recipes, rectangular slots, flat-washer thickness, spring wire/turn values, brake-disc thickness/bore values, brake-drum bore values, flywheel center-bore/PCD-hole values, flat-annular-part bore/thickness values, disc-cam base diameter/thickness, spline-shaft minor diameter/tooth count, crankshaft main/pin journal diameters and stroke/throw count, camshaft lobe count/journal diameter, piston pin diameter/ring groove count, and worm pitch diameter; defaults and raw-dimension mappings are reported as warnings",
             "loft_geometry":"blade and blisk lofts are locally approximate faceted B-Reps",
             "timing_pulley_geometry":"native timing pulley teeth are approximate trapezoidal prisms fused to an analytic annular blank",
             "vbelt_pulley_geometry":"standard V-groove pulley is an approximate axisymmetric revolve; legacy spoke variants and CATIA-native groove features are not included",
@@ -614,7 +617,8 @@ fn result(
             "camshaft_geometry":"48-point cam profiles and 120-degree harmonic rise are fused with an analytic X-axis shaft into one closed B-Rep; this differs from the legacy unfused faceted mesh",
             "crankshaft_geometry":"analytic journals with rectangular webs form one closed B-Rep; the legacy polygon mesh uses dumbbell-shaped cheek profiles, so the local Rust result is an explicitly approximate shape",
             "spline_shaft_geometry":"7-point-per-tooth faceted spline profile; the legacy involute-spline alias is not an involute profile",
-            "piston_geometry":"closed legacy piston profile, ring grooves, and X-axis pin bore are rebuilt as an analytic OCCT revolve/cut; the old 48-segment outer mesh becomes analytic, with envelope preserved and mesh volume/facets changed"
+            "piston_geometry":"closed legacy piston profile, ring grooves, and X-axis pin bore are rebuilt as an analytic OCCT revolve/cut; the old 48-segment outer mesh becomes analytic, with envelope preserved and mesh volume/facets changed",
+            "worm_geometry":"legacy faceted shaft plus sampled helix are fused into one validated local OCCT solid; the old Python mesh concatenated intersecting surfaces, and CATIA mapping remains unsupported for the helical feature"
         }
     })
 }
@@ -3581,6 +3585,274 @@ fn piston_groove_count(raw: &str, text: &str) -> Option<f64> {
     } else {
         Some(f64::NAN)
     }
+}
+
+/// Migrate the legacy Python Quick worm recipe to the native helical B-Rep
+/// builder. The old recipe uses the pitch diameter, tooth-tip diameter and
+/// length to derive one faceted shaft plus a sampled helix. The Python mesh
+/// simply concatenates the intersecting meshes; Rust validates and fuses
+/// them into one closed local solid.
+fn parse_legacy_worm(raw: &str, text: &str) -> Option<Value> {
+    let worm_mentioned = contains_any(text, &["蜗杆", "worm shaft", "worm gear", "worm wheel", "蜗轮"]);
+    if !worm_mentioned {
+        return None;
+    }
+    if contains_any(text, &["蜗轮", "worm gear", "worm wheel", "蜗杆副"]) {
+        return Some(parse_result_with_issue(
+            "unsupported",
+            raw,
+            "legacy_worm_pair_not_migrated",
+            "当前只迁移单根蜗杆；蜗轮或蜗轮蜗杆副尚未迁移。",
+        ));
+    }
+    if contains_any(
+        text,
+        &[
+            "左旋",
+            "左手",
+            "left hand",
+            "left-hand",
+            "螺距",
+            "导程",
+            "头数",
+            "多头",
+            "齿数",
+            "模数",
+            "渐开线",
+            "键槽",
+            "油槽",
+            "油孔",
+            "倒角",
+            "圆角",
+            "沉孔",
+            "盲孔",
+            "再加",
+            "同时",
+        ],
+    ) {
+        return Some(parse_result_with_issue(
+            "unsupported",
+            raw,
+            "legacy_worm_modifier_not_migrated",
+            "当前仅迁移旧 Quick 固定公式的右旋螺旋齿蜗杆和可选中心通孔；左旋、指定导程/螺距/头数及其他修饰尚未迁移。",
+        ));
+    }
+
+    let center_hole_requested = contains_any(
+        text,
+        &["中心通孔", "中心孔", "中心内孔", "center bore"],
+    );
+    if contains_any(text, &["孔", "hole", "bore"]) && !center_hole_requested {
+        return Some(parse_result_with_issue(
+            "unsupported",
+            raw,
+            "legacy_worm_hole_location_not_migrated",
+            "蜗杆目前只支持明确的轴向中心通孔；偏置孔或其他孔位尚未迁移。",
+        ));
+    }
+
+    let pitch_d = pulley_scalar(
+        raw,
+        text,
+        &[
+            "分度圆直径",
+            "分度圆",
+            "中径",
+            "内径",
+            "内孔",
+            "pitch diameter",
+        ],
+        &["d"],
+    );
+    let outer_d_label = pulley_scalar(
+        raw,
+        text,
+        &[
+            "齿顶圆直径",
+            "齿顶圆",
+            "外径",
+            "outer diameter",
+            "outside diameter",
+        ],
+        &["D"],
+    );
+    let outer_d_generic = scalar_excluding_suffix(
+        text,
+        "直径",
+        &["分度圆", "中心孔", "内孔", "齿顶圆"],
+    );
+    let outer_d = merge_optional_scalar(outer_d_label, outer_d_generic);
+    let length = pulley_scalar(raw, text, &["长度", "长", "length"], &["L"]);
+    let center_hole_d = pulley_scalar(
+        raw,
+        text,
+        &[
+            "中心通孔直径",
+            "中心通孔",
+            "中心孔直径",
+            "中心孔",
+            "中心内孔",
+            "center bore",
+        ],
+        &[],
+    );
+
+    let mut questions = Vec::new();
+    if pitch_d.is_some_and(|value| !value.is_finite() || value <= 0.0) {
+        questions.push(issue(
+            "legacy_worm_pitch_d_invalid",
+            "蜗杆分度圆直径必须是有限正数，重复写法也不能冲突。",
+        ));
+    }
+    match outer_d {
+        Some(value) if value.is_finite() && value > 0.0 => {}
+        Some(_) => questions.push(issue(
+            "legacy_worm_outer_d_invalid",
+            "蜗杆外径必须是有限正数，重复写法也不能冲突。",
+        )),
+        None => questions.push(issue(
+            "legacy_worm_outer_d_missing",
+            "请明确蜗杆齿顶外径 D；旧解析器在缺外径时会退成普通圆柱，Rust 不会把它冒充为蜗杆。",
+        )),
+    }
+    match length {
+        Some(value) if value.is_finite() && value > 0.0 => {}
+        Some(_) => questions.push(issue(
+            "legacy_worm_length_invalid",
+            "蜗杆长度必须是有限正数，重复写法也不能冲突。",
+        )),
+        None => questions.push(issue(
+            "legacy_worm_length_missing",
+            "请明确蜗杆长度 L。",
+        )),
+    }
+    if center_hole_d.is_some_and(|value| !value.is_finite() || value <= 0.0) {
+        questions.push(issue(
+            "legacy_worm_center_hole_invalid",
+            "蜗杆中心通孔直径必须是有限正数，重复写法也不能冲突。",
+        ));
+    }
+    if !questions.is_empty() {
+        return Some(result("needs_clarification", raw, None, vec![], questions, vec![]));
+    }
+
+    let outer_d = outer_d.expect("validated worm outer diameter");
+    let length = length.expect("validated worm length");
+    let pitch_d_defaulted = pitch_d.is_none();
+    let pitch_d = pitch_d.unwrap_or(32.0);
+    if pitch_d >= outer_d {
+        return Some(parse_result_with_issue(
+            "needs_clarification",
+            raw,
+            "legacy_worm_pitch_d_not_smaller_than_outer",
+            "蜗杆分度圆直径必须小于齿顶外径；请核对 d 与 D。",
+        ));
+    }
+
+    // These formulas and tessellation settings are copied from the old
+    // partlib._worm recipe. The local builder then fuses the sampled helix
+    // to the shaft and rejects disconnected, open, or invalid results.
+    let wire_r = 0.5_f64.max(((outer_d - pitch_d) / 4.0).min(length / 6.0));
+    let thread_r = outer_d / 2.0 - wire_r;
+    let radius = (pitch_d / 2.0).min(thread_r - wire_r);
+    let turns = 2.0_f64.max((length / (pitch_d * 0.8).max(1.0)).min(20.0));
+    let height2 = 1.0_f64.max(length - 4.0 * wire_r);
+    let parameters = json!({
+        "radius":radius,
+        "height":length,
+        "thread_r":thread_r,
+        "wire_r":wire_r,
+        "height2":height2,
+        "turns":turns,
+        "segments":48,
+        "seg_per_turn":16,
+        "wire_seg":8,
+        "center":[0.0,0.0,-length / 2.0],
+        "center2":[0.0,0.0,2.0 * wire_r - length / 2.0]
+    });
+    if let Err(error) = crate::native_worm::preflight(&parameters) {
+        return Some(result(
+            "needs_clarification",
+            raw,
+            None,
+            vec![],
+            vec![issue(
+                "legacy_worm_geometry_parameters_invalid",
+                format!("当前蜗杆参数不能形成有效的连续螺旋齿几何：{error}"),
+            )],
+            vec![],
+        ));
+    }
+    if let Some(bore) = center_hole_d {
+        if bore >= radius * 2.0 {
+            return Some(parse_result_with_issue(
+                "needs_clarification",
+                raw,
+                "legacy_worm_center_hole_not_smaller_than_shaft",
+                "中心通孔必须小于蜗杆轴身直径，否则会切穿或削除整个轴身。",
+            ));
+        }
+    }
+
+    let mut warnings = vec![issue(
+        "legacy_worm_migrated",
+        "已按旧 Python Quick 的蜗杆公式生成 Z 轴轴身和右旋螺旋齿；本地 OCCT 将旧网格拼接改为融合的闭合 facet-BREP，CATIA 原生螺旋齿仍不支持。",
+    )];
+    if pitch_d_defaulted {
+        warnings.push(issue(
+            "legacy_worm_default_pitch_d",
+            "未指定分度圆直径；沿用旧 Python 零件库典型值 d=32 mm。",
+        ));
+    }
+    if !has_unit(text) {
+        warnings.push(issue(
+            "unit_interpreted_as_mm",
+            "未写长度单位的蜗杆尺寸按旧 Quick 默认单位 mm 解释。",
+        ));
+    } else if crankshaft_has_non_mm_unit(text) {
+        warnings.push(issue(
+            "legacy_worm_unit_conversion",
+            "Rust 将显式标注的非毫米单位换算为 mm；旧 Python Quick 曾保留厘米等单位后的原始数值。",
+        ));
+    }
+
+    let mut sources = json!({
+        "radius":derived_source(raw, "旧 Python Quick 按 pitch_d/2 与螺旋齿内缘共同确定轴身半径。"),
+        "height":user_source(raw),
+        "thread_r":derived_source(raw, "旧 Python Quick 按 D/2-wire_r 推导螺旋中心线半径。"),
+        "wire_r":derived_source(raw, "旧 Python Quick 按 max(0.5, min((D-d)/4, L/6)) 推导齿高半径。"),
+        "height2":derived_source(raw, "旧 Python Quick 按 max(1, L-4×wire_r) 修正螺旋轴向长度。"),
+        "turns":derived_source(raw, "旧 Python Quick 按 max(2, min(20, L/max(1, 0.8×d))) 推导圈数。"),
+        "segments":derived_source(raw, "旧 Python Quick 的轴身圆周分段为 48。"),
+        "seg_per_turn":derived_source(raw, "旧 Python Quick 每圈螺旋路径采样为 16 段。"),
+        "wire_seg":derived_source(raw, "旧 Python Quick 螺旋截面采样为 8 段。"),
+        "center":derived_source(raw, "旧 Python Quick 将轴身中心放在全局 Z 轴且居中于原点。"),
+        "center2":derived_source(raw, "旧 Python Quick 将螺旋起点按线径半径修正到轴身范围内。")
+    });
+    if pitch_d_defaulted {
+        sources["radius"] = derived_source(
+            raw,
+            "pitch_d 缺失时沿用旧 Python 零件库默认 32 mm，再按蜗杆公式推导轴身半径。",
+        );
+    }
+    let mut features = vec![feature(1, "worm", "add", parameters, sources)];
+    if let Some(bore) = center_hole_d {
+        features.push(feature(
+            2,
+            "hole",
+            "cut",
+            json!({"diameter":bore,"through":true,"pos":"center","axis":"Z","segments":24}),
+            json!({
+                "diameter":user_source(raw),
+                "through":derived_source(raw, "旧 Python Quick 将中心孔按轴向贯穿切除。"),
+                "pos":derived_source(raw, "旧 Python Quick 中心孔位于 Z 轴中心。"),
+                "axis":derived_source(raw, "蜗杆轴身沿 Z 轴，中心孔沿同一轴线贯穿。"),
+                "segments":derived_source(raw, "旧 Python Quick 通用孔特征圆周分段为 24。")
+            }),
+        ));
+    }
+
+    Some(plan_result(raw, "蜗杆", features, warnings))
 }
 
 fn parse_legacy_camshaft(raw: &str, text: &str) -> Option<Value> {
@@ -13078,6 +13350,97 @@ mod f5_48_legacy_piston_contract_tests {
                 output.to_string().contains(case["warning"].as_str().unwrap()),
                 "{input}: {output}"
             );
+        }
+
+        for case in fixture["needs_clarification"].as_array().unwrap() {
+            let input = case["input"].as_str().unwrap();
+            let output = parse(input);
+            assert_eq!(output["status"], "needs_clarification", "{input}: {output}");
+            assert!(output["plan"].is_null(), "{input}: {output}");
+            assert!(output.to_string().contains(case["issue"].as_str().unwrap()), "{input}: {output}");
+        }
+
+        for case in fixture["unsupported"].as_array().unwrap() {
+            let input = case["input"].as_str().unwrap();
+            let output = parse(input);
+            assert_eq!(output["status"], "unsupported", "{input}: {output}");
+            assert!(output["plan"].is_null(), "{input}: {output}");
+            assert!(output.to_string().contains(case["issue"].as_str().unwrap()), "{input}: {output}");
+        }
+    }
+}
+
+#[cfg(test)]
+mod f5_49_legacy_worm_contract_tests {
+    use super::parse;
+    use serde_json::Value;
+
+    #[test]
+    fn legacy_worms_match_python_formula_defaults_sources_and_explicit_boundaries() {
+        let fixture: Value = serde_json::from_str(include_str!(
+            "../tests/fixtures/quick_legacy_worm_contract.json"
+        ))
+        .expect("worm Python oracle fixture is valid JSON");
+
+        for case in fixture["legacy_accepted"].as_array().unwrap() {
+            let input = case["input"].as_str().unwrap();
+            let output = parse(input);
+            assert_eq!(output["status"], "ready", "{input}: {output}");
+            let features = output["plan"]["features"].as_array().unwrap();
+            assert_eq!(features.len(), case["feature_count"].as_u64().unwrap() as usize, "{input}");
+            assert_eq!(features[0]["kind"], "worm", "{input}: {output}");
+            assert_eq!(features[0]["operation"], "add", "{input}: {output}");
+            for (name, expected) in case["native_expected"].as_object().unwrap() {
+                if let Some(expected_values) = expected.as_array() {
+                    let actual_values = features[0]["parameters"][name].as_array().unwrap();
+                    assert_eq!(actual_values.len(), expected_values.len(), "{input}: {name}");
+                    for (actual, expected) in actual_values.iter().zip(expected_values) {
+                        assert!(
+                            (actual.as_f64().unwrap() - expected.as_f64().unwrap()).abs() <= 1e-9,
+                            "{input}: {name}={actual}, expected {expected}"
+                        );
+                    }
+                } else {
+                    assert_eq!(features[0]["parameters"][name], *expected, "{input}: {name}");
+                }
+            }
+            for name in case["source_user"].as_array().into_iter().flatten() {
+                assert_eq!(
+                    features[0]["sources"][name.as_str().unwrap()]["type"],
+                    "user",
+                    "{input}: {name} source"
+                );
+            }
+            for name in case["source_derived"].as_array().into_iter().flatten() {
+                assert_eq!(
+                    features[0]["sources"][name.as_str().unwrap()]["type"],
+                    "derived",
+                    "{input}: {name} source"
+                );
+            }
+            for warning in case["warnings"].as_array().into_iter().flatten() {
+                assert!(output.to_string().contains(warning.as_str().unwrap()), "{input}: {output}");
+            }
+            if case["feature_count"] == 2 {
+                assert_eq!(features[1]["kind"], "hole", "{input}: {output}");
+                assert_eq!(features[1]["operation"], "cut", "{input}: {output}");
+                assert_eq!(features[1]["parameters"]["pos"], "center", "{input}: {output}");
+            }
+            let validation = crate::cad_plan_validation::validate_plan(&output["plan"]);
+            assert_eq!(validation["state"], "valid", "{input}: {validation}");
+            assert!(validation["confirmations"].as_array().unwrap().is_empty(), "{input}: {validation}");
+            let worm_support = crate::native_worm::preflight(&features[0]["parameters"])
+                .unwrap_or_else(|error| panic!("{input}: {error}"));
+            assert_eq!(worm_support["shaft_profile_points"], 48, "{input}: {worm_support}");
+            assert_eq!(worm_support["builder"], "legacy_faceted_cylinder_plus_native_helix_brep_fuse");
+            assert!(crate::native_plan_geometry::preflight(&output["plan"]).is_ok(), "{input}");
+        }
+
+        for case in fixture["legacy_divergences"].as_array().unwrap() {
+            let input = case["input"].as_str().unwrap();
+            let output = parse(input);
+            assert_eq!(output["status"], case["rust_status"], "{input}: {output}");
+            assert!(output.to_string().contains(case["issue"].as_str().unwrap()), "{input}: {output}");
         }
 
         for case in fixture["needs_clarification"].as_array().unwrap() {
