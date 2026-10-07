@@ -44,7 +44,15 @@ pub fn build(
     let cancelled = AtomicBool::new(false);
     let built = native_plan_geometry::build(&plan, manifest, &cancelled)?;
     if built.report["state"] != "built" {
-        return Err("Quick 导出要求完整 build；部分几何仅可用于只读诊断预览。".into());
+        let failed_feature = built.report["failed_feature_id"]
+            .as_str()
+            .unwrap_or("unknown");
+        let failure = built.report["failure_summary"]
+            .as_str()
+            .unwrap_or("未提供失败原因");
+        return Err(format!(
+            "Quick 导出要求完整 build；特征 {failed_feature} 失败：{failure}。部分几何仅可用于只读诊断预览。"
+        ));
     }
     let mesh = built.shape.tessellate(0.08, 0.35)?;
     if mesh.positions.is_empty() || mesh.positions.len() % 3 != 0 {
@@ -4095,6 +4103,92 @@ mod f5_56_legacy_bent_part_native_acceptance {
             assert_eq!(loaded["cadplan"]["features"], output["cadplan"]["features"], "{input}: AIMODEL round-trip");
             println!(
                 "F5.56 native acceptance: input={input}; dimensions_mm={}; volume_mm3={}; files={:?}",
+                serde_json::to_string(&report["dimensions_mm"]).unwrap(),
+                report["volume_mm3"],
+                output["output_paths"]
+            );
+        }
+    }
+}
+
+#[cfg(test)]
+mod f5_57_legacy_base_plate_native_acceptance {
+    use super::build;
+    use serde_json::Value;
+    use std::{fs, path::Path, time::SystemTime};
+
+    #[test]
+    #[ignore = "requires the staged local OCCT runtime manifest"]
+    fn f5_57_legacy_base_plates_build_measure_reopen_and_export() {
+        let manifest = std::env::var_os("AIMODELER_OCCT_MANIFEST")
+            .map(std::path::PathBuf::from)
+            .expect("set AIMODELER_OCCT_MANIFEST to the staged OCCT runtime-manifest.json");
+        assert!(manifest.is_file(), "missing OCCT manifest: {}", manifest.display());
+        let fixture: Value = serde_json::from_str(include_str!(
+            "../tests/fixtures/quick_legacy_base_plate_contract.json"
+        ))
+        .expect("base-plate Python oracle fixture is valid JSON");
+        let root = std::env::temp_dir().join(format!(
+            "native-quick-base-plate-{}-{}",
+            std::process::id(),
+            SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .expect("system clock")
+                .as_nanos()
+        ));
+        fs::create_dir_all(&root).expect("create native Quick output root");
+        struct RemoveOnDrop(std::path::PathBuf);
+        impl Drop for RemoveOnDrop {
+            fn drop(&mut self) {
+                let _ = fs::remove_dir_all(&self.0);
+            }
+        }
+        let _cleanup = RemoveOnDrop(root.clone());
+
+        for (index, case) in fixture["geometry_acceptance"].as_array().unwrap().iter().enumerate() {
+            let input = case["input"].as_str().unwrap();
+            let output = build(input, index as i64 + 1, &manifest, &root)
+                .unwrap_or_else(|error| panic!("{input}: native Quick build failed: {error}"));
+            assert_eq!(output["state"], "complete", "{input}: {output}");
+            let report = &output["geometry_report"];
+            assert_eq!(report["state"], "passed", "{input}: {report}");
+            assert_eq!(report["valid"], true, "{input}: {report}");
+            assert_eq!(report["closed_solid_count"], 1, "{input}: {report}");
+            for (axis, (actual, expected)) in report["dimensions_mm"]
+                .as_array()
+                .unwrap()
+                .iter()
+                .zip(case["dimensions_mm"].as_array().unwrap())
+                .enumerate()
+            {
+                assert!(
+                    (actual.as_f64().unwrap() - expected.as_f64().unwrap()).abs() <= 1e-5,
+                    "{input}: bbox axis {axis} differs: {report}"
+                );
+            }
+            assert!(
+                (report["volume_mm3"].as_f64().unwrap() - case["volume_mm3"].as_f64().unwrap()).abs()
+                    <= 1e-3,
+                "{input}: volume differs: {report}"
+            );
+            let features = output["cadplan"]["features"].as_array().unwrap();
+            assert_eq!(features.len(), case["feature_count"].as_u64().unwrap() as usize, "{input}: {output}");
+            assert_eq!(features[0]["kind"], "box", "{input}: {output}");
+            assert_eq!(features[0]["parameters"]["base"], case["base"], "{input}: {output}");
+            if features.len() == 2 {
+                assert_eq!(features[1]["kind"], "hole", "{input}: {output}");
+                assert_eq!(features[1]["operation"], "cut", "{input}: {output}");
+                assert_eq!(report["feature_results"][1]["state"], "built", "{input}: {report}");
+            }
+            let paths = output["output_paths"].as_object().expect("generated output paths");
+            for name in ["glb", "aimodel", "stl", "obj"] {
+                assert!(Path::new(paths[name].as_str().unwrap()).is_file(), "{input}: missing {name}");
+            }
+            let loaded = crate::native_model_io::load_aimodel(Path::new(paths["aimodel"].as_str().unwrap()))
+                .unwrap_or_else(|error| panic!("{input}: AIMODEL reload failed: {error}"));
+            assert_eq!(loaded["cadplan"]["features"], output["cadplan"]["features"], "{input}: AIMODEL round-trip");
+            println!(
+                "F5.57 native acceptance: input={input}; dimensions_mm={}; volume_mm3={}; files={:?}",
                 serde_json::to_string(&report["dimensions_mm"]).unwrap(),
                 report["volume_mm3"],
                 output["output_paths"]

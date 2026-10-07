@@ -139,6 +139,9 @@ pub fn parse(text: &str) -> Value {
     if let Some(parsed) = parse_legacy_template(text, &normalized) {
         return parsed;
     }
+    if let Some(parsed) = parse_legacy_base_plate(text, &normalized) {
+        return parsed;
+    }
     if let Some(parsed) = parse_legacy_bent_part(text, &normalized) {
         return parsed;
     }
@@ -626,8 +629,8 @@ fn result(
         "questions":questions,
         "unsupported":unsupported,
         "compatibility":{
-            "scope":"common explicit primitives/cuts, migrated standalone primitive defaults and legacy extrusion/revolve constructors, centered solid-shaft aliases, rectangular slots, flat-washer rings, cylindrical/conical spring helices, measured socket-head screws with optional washers, V-belt pulleys, timing pulleys, straight-gear construction, PCD counterbores, migrated legacy washer/spring/shaft/bearing/seal-ring/coupling/brake-disc/brake-drum/flywheel/flat-annular-part/disc-cam/spline-shaft/crankshaft/camshaft/piston/worm/triangular-rotor/valve recipes, and executable flange/stepped-shaft/sleeve/blade/blisk templates",
-            "legacy_typical_defaults":"restored only for migrated Quick constructors/templates, centered solid shafts (Ø30 mm when diameter is absent), straight gears, timing pulleys, V-belt pulleys, socket-head screw catalog recipes, rectangular slots, flat-washer thickness, spring wire/turn values, brake-disc thickness/bore values, brake-drum bore values, flywheel center-bore/PCD-hole values, flat-annular-part bore/thickness values, disc-cam base diameter/thickness, spline-shaft minor diameter/tooth count, crankshaft main/pin journal diameters and stroke/throw count, camshaft lobe count/journal diameter, piston pin diameter/ring groove count, worm pitch diameter, triangular-rotor R=60 mm and center bore ⌀24 mm when omitted, and valve stem diameter d=8 mm when omitted; defaults and raw-dimension mappings are reported as warnings",
+            "scope":"common explicit primitives/cuts, migrated standalone primitive defaults and legacy extrusion/revolve constructors, centered solid-shaft aliases, rectangular slots, flat-washer rings, cylindrical/conical spring helices, measured socket-head screws with optional washers, V-belt pulleys, timing pulleys, straight-gear construction, PCD counterbores, base plates, migrated legacy washer/spring/shaft/bearing/seal-ring/coupling/brake-disc/brake-drum/flywheel/flat-annular-part/disc-cam/spline-shaft/crankshaft/camshaft/piston/worm/triangular-rotor/valve recipes, and executable flange/stepped-shaft/sleeve/blade/blisk templates",
+            "legacy_typical_defaults":"restored only for migrated Quick constructors/templates, centered solid shafts (Ø30 mm when diameter is absent), straight gears, timing pulleys, V-belt pulleys, socket-head screw catalog recipes, rectangular slots, flat-washer thickness, spring wire/turn values, brake-disc thickness/bore values, brake-drum bore values, flywheel center-bore/PCD-hole values, flat-annular-part bore/thickness values, disc-cam base diameter/thickness, spline-shaft minor diameter/tooth count, crankshaft main/pin journal diameters and stroke/throw count, camshaft lobe count/journal diameter, piston pin diameter/ring groove count, worm pitch diameter, triangular-rotor R=60 mm and center bore ⌀24 mm when omitted, valve stem diameter d=8 mm when omitted, and base-plate thickness; defaults and raw-dimension mappings are reported as warnings",
             "loft_geometry":"blade and blisk lofts are locally approximate faceted B-Reps",
             "timing_pulley_geometry":"native timing pulley teeth are approximate trapezoidal prisms fused to an analytic annular blank",
             "vbelt_pulley_geometry":"standard V-groove pulley is an approximate axisymmetric revolve; legacy spoke variants and CATIA-native groove features are not included",
@@ -661,6 +664,299 @@ fn parse_legacy_template(raw: &str, normalized: &str) -> Option<Value> {
         return Some(parse_tube(raw, normalized));
     }
     None
+}
+
+/// Migrate the legacy Quick base-plate recipe. Labeled part-library input is
+/// centered at the origin and defaults thickness from the smaller plate side.
+/// Compact dimensions and a name-only request historically fell through to the
+/// generic box parser, which is bottom-based and uses generic box dimensions.
+fn parse_legacy_base_plate(raw: &str, text: &str) -> Option<Value> {
+    if !contains_any(text, &["基板", "底板", "配焊板条", "垫板"]) {
+        return None;
+    }
+
+    if contains_any(
+        text,
+        &[
+            "盲孔", "沉孔", "沉头", "沉台", "槽", "倒角", "圆角", "螺纹", "阵列", "分度圆",
+            "pcd", "键槽", "焊缝", "侧孔", "非圆孔",
+        ],
+    ) {
+        return Some(parse_result_with_issue(
+            "unsupported",
+            raw,
+            "legacy_base_plate_modifier_not_migrated",
+            "旧 Python Quick 基板配方只覆盖矩形平板和 Z 向圆形贯穿孔；槽、沉孔、倒角及阵列尚未迁入。",
+        ));
+    }
+
+    let labeled_length = pulley_scalar(raw, text, &["长度", "长"], &["L", "l"]);
+    let labeled_width = pulley_scalar(raw, text, &["宽度", "宽"], &["W", "w"]);
+    let labeled_thickness = pulley_scalar(raw, text, &["板厚", "厚度", "厚"], &["t", "T"]);
+    let compact = find_dimension_triplet(text);
+    let labeled_partlib = labeled_length.is_some() && labeled_width.is_some();
+
+    let (length, width, thickness, base_from_origin, generic_fallback, thickness_defaulted) =
+        if labeled_partlib {
+            let length = merge_optional_scalar(labeled_length, compact.map(|values| values[0]));
+            let width = merge_optional_scalar(labeled_width, compact.map(|values| values[1]));
+            let thickness = merge_optional_scalar(labeled_thickness, compact.map(|values| values[2]));
+            let (Some(length), Some(width)) = (length, width) else {
+                return Some(parse_result_with_issue(
+                    "needs_clarification",
+                    raw,
+                    "legacy_base_plate_dimensions_conflict",
+                    "基板长度、宽度和紧凑尺寸中的重复值冲突；请只保留一组一致尺寸。",
+                ));
+            };
+            let thickness_defaulted = thickness.is_none();
+            let thickness = thickness.unwrap_or_else(|| (length.min(width) * 0.06).max(6.0));
+            (length, width, thickness, false, false, thickness_defaulted)
+        } else if let Some([length, width, thickness]) = compact {
+            (length, width, thickness, true, true, false)
+        } else if labeled_length.is_none()
+            && labeled_width.is_none()
+            && labeled_thickness.is_none()
+            && !contains_any(text, &["孔", "hole", "bore", "内缩", "边距"])
+        {
+            (100.0, 60.0, 20.0, true, true, true)
+        } else {
+            return Some(parse_result_with_issue(
+                "needs_clarification",
+                raw,
+                "legacy_base_plate_dimensions_required",
+                "基板至少需要长、宽；若使用 `基板 300×200×12` 写法，请完整给出三个紧凑尺寸。",
+            ));
+        };
+
+    if !length.is_finite()
+        || !width.is_finite()
+        || !thickness.is_finite()
+        || length <= 0.0
+        || width <= 0.0
+        || thickness <= 0.0
+        || thickness >= length.min(width)
+    {
+        return Some(parse_result_with_issue(
+            "needs_clarification",
+            raw,
+            "legacy_base_plate_dimensions_invalid",
+            "基板长、宽、厚必须是有限正数，且板厚小于长和宽。",
+        ));
+    }
+
+    let explicit_diameter = pulley_scalar(
+        raw,
+        text,
+        &["安装孔径", "孔直径", "孔径", "diameter", "直径"],
+        &["dh"],
+    );
+    let hole_count = pulley_scalar(raw, text, &["孔数", "孔数量", "hole count"], &["n"]);
+    let margin = pulley_scalar(raw, text, &["内缩", "边距", "距边", "离边", "margin"], &["margin"]);
+    let hole_requested = contains_any(text, &["孔", "hole", "bore"])
+        || hole_count.is_some()
+        || margin.is_some();
+    if explicit_diameter.is_some_and(|value| !value.is_finite() || value <= 0.0) {
+        return Some(parse_result_with_issue(
+            "needs_clarification",
+            raw,
+            "legacy_base_plate_hole_diameter_invalid",
+            "基板安装孔直径必须是有限正数。",
+        ));
+    }
+    if hole_count.is_some_and(|value| {
+        !value.is_finite() || value < 1.0 || (value - value.round()).abs() > 1e-9
+    }) {
+        return Some(parse_result_with_issue(
+            "needs_clarification",
+            raw,
+            "legacy_base_plate_hole_count_invalid",
+            "基板孔数必须是正整数。",
+        ));
+    }
+    if margin.is_some_and(|value| !value.is_finite() || value < 0.0) {
+        return Some(parse_result_with_issue(
+            "needs_clarification",
+            raw,
+            "legacy_base_plate_hole_margin_invalid",
+            "基板四角孔内缩必须是有限非负数。",
+        ));
+    }
+    if hole_requested && explicit_diameter.is_none() {
+        return Some(parse_result_with_issue(
+            "needs_clarification",
+            raw,
+            "legacy_base_plate_hole_diameter_required",
+            "已检测到基板孔位要求，请明确贯穿孔直径。",
+        ));
+    }
+
+    let corner_holes = hole_requested
+        && (hole_count.is_some_and(|count| count >= 2.0) || has_corner_location(text));
+    let hole_diameter = explicit_diameter.unwrap_or(0.0);
+    let hole_margin = margin.unwrap_or(0.0);
+    if corner_holes && margin.is_none() {
+        return Some(parse_result_with_issue(
+            "needs_clarification",
+            raw,
+            "legacy_base_plate_corner_hole_margin_required",
+            "旧 Python Quick 将未注明内缩的四角孔放在与板边相切的位置；Rust/OCCT 无法稳定生成有效闭合实体。请明确四角孔中心到板边的内缩距离。",
+        ));
+    }
+    if corner_holes
+        && hole_diameter > 0.0
+        && hole_margin + hole_diameter / 2.0 > length.min(width) / 2.0
+    {
+        return Some(parse_result_with_issue(
+            "needs_clarification",
+            raw,
+            "legacy_base_plate_corner_holes_out_of_bounds",
+            "四角孔直径和内缩值超出基板边界，请减小孔径或内缩。",
+        ));
+    }
+    if hole_requested && !corner_holes && margin.is_some_and(|value| value > 0.0) {
+        return Some(parse_result_with_issue(
+            "needs_clarification",
+            raw,
+            "legacy_base_plate_center_hole_margin_unused",
+            "内缩只适用于四角孔；请明确四角孔位置或去掉内缩。",
+        ));
+    }
+    if hole_requested && !corner_holes && hole_diameter >= length.min(width) {
+        return Some(parse_result_with_issue(
+            "needs_clarification",
+            raw,
+            "legacy_base_plate_center_hole_out_of_bounds",
+            "中心孔直径必须小于基板长、宽。",
+        ));
+    }
+
+    let mut warnings = Vec::new();
+    if generic_fallback {
+        warnings.push(issue(
+            "legacy_base_plate_generic_box_fallback",
+            if compact.is_some() {
+                "旧 Python Quick 对紧凑三维尺寸没有命中基板部件库，实际回退为底面起算的通用长方体。"
+            } else {
+                "旧 Python Quick 对只有零件名的输入实际回退为 100×60×20 mm 通用长方体。"
+            },
+        ));
+    }
+    if thickness_defaulted && labeled_partlib {
+        warnings.push(issue(
+            "legacy_base_plate_default_thickness",
+            "未指定板厚；沿用旧 Python Quick 基板公式 max(6, min(L,W)×0.06) mm。",
+        ));
+    }
+    if corner_holes && hole_count.is_some_and(|count| count >= 2.0 && count != 4.0) {
+        warnings.push(issue(
+            "legacy_base_plate_hole_count_threshold",
+            "旧 Python Quick 基板将孔数仅作为四角孔开关，实际固定生成四个角孔；此输入沿用旧几何并记录该差异。",
+        ));
+    }
+    if corner_holes && has_corner_location(text) && hole_count.is_none() {
+        warnings.push(issue(
+            "legacy_base_plate_corner_phrase_mapped",
+            "按“四角”明确位置生成四个角孔；旧 Python Quick 对部分仅写“角孔径”的简写会误落为中心孔。",
+        ));
+    }
+    if crankshaft_has_non_mm_unit(text) {
+        warnings.push(issue(
+            "legacy_base_plate_unit_conversion",
+            "已将基板长、宽、厚及孔位尺寸统一换算为 mm。",
+        ));
+    } else if !generic_fallback && !has_unit(text) {
+        warnings.push(issue(
+            "unit_interpreted_as_mm",
+            "未写单位的基板尺寸按 mm 解释。",
+        ));
+    }
+
+    let plate_name = if generic_fallback { "长方体" } else { "基板" };
+    let feature = json!({
+        "id":"quick-0001",
+        "kind":"box",
+        "operation":"add",
+        "name":plate_name,
+        "parameters":{
+            "length":length,
+            "width":width,
+            "height":thickness,
+            "corner":0.0,
+            "corner_mode":"fillet",
+            "center":[0.0, 0.0, 0.0],
+            "base":base_from_origin,
+            "axis":"Z"
+        },
+        "sources":{
+            "length":if generic_fallback && compact.is_none() { derived_source(raw, "沿用旧 Python Quick 通用长方体尺寸回退。") } else { user_source(raw) },
+            "width":if generic_fallback && compact.is_none() { derived_source(raw, "沿用旧 Python Quick 通用长方体尺寸回退。") } else { user_source(raw) },
+            "height":if thickness_defaulted { derived_source(raw, "沿用旧 Python Quick 基板/通用长方体默认厚度。") } else { user_source(raw) },
+            "corner":derived_source(raw, "旧 Python Quick 基板配方不生成圆角，保持直角外形。"),
+            "corner_mode":derived_source(raw, "沿用旧 Python Quick 长方体轮廓模式；corner=0，因此无圆角。"),
+            "center":derived_source(raw, "沿用旧 Python Quick 全局原点放置规则。"),
+            "base":derived_source(raw, if base_from_origin { "旧 Python Quick 通用长方体从 Z=0 起算。" } else { "旧 Python Quick 基板部件库以原点为中心放置。" }),
+            "axis":derived_source(raw, "旧 Python Quick 基板沿 Z 轴放置。")
+        },
+        "relations":[]
+    });
+    let mut features = vec![feature];
+    if hole_requested {
+        let partlib_hole = contains_any(text, &["安装孔径", "孔径", "孔数", "hole count"])
+            || short_scalar(raw, "dh").is_some()
+            || short_scalar(raw, "n").is_some();
+        let segments = if partlib_hole { 32 } else { 24 };
+        let mut parameters = serde_json::Map::new();
+        let mut sources = serde_json::Map::new();
+        for (key, value) in [
+            ("diameter", json!(hole_diameter)),
+            ("through", json!(true)),
+            ("pos", json!(if corner_holes { "corners" } else { "center" })),
+            ("axis", json!("Z")),
+            ("segments", json!(segments)),
+        ] {
+            parameters.insert(key.into(), value);
+        }
+        sources.insert("diameter".into(), user_source(raw));
+        sources.insert(
+            "through".into(),
+            derived_source(raw, "旧 Python Quick 基板安装孔为 Z 向贯穿孔。"),
+        );
+        sources.insert(
+            "pos".into(),
+            if corner_holes {
+                user_source(raw)
+            } else {
+                derived_source(raw, "旧 Python Quick 基板只给孔径时默认在板中心开孔。")
+            },
+        );
+        sources.insert("axis".into(), derived_source(raw, "旧 Python Quick 基板孔沿 Z 轴切除。"));
+        sources.insert(
+            "segments".into(),
+            derived_source(raw, if partlib_hole { "沿用旧基板部件库圆孔分段数 32。" } else { "沿用旧通用孔圆周分段数 24。" }),
+        );
+        if corner_holes {
+            parameters.insert("margin".into(), json!(hole_margin));
+            sources.insert(
+                "margin".into(),
+                if margin.is_some() {
+                    user_source(raw)
+                } else {
+                    derived_source(raw, "旧 Python Quick 四角孔未给内缩时默认 margin=0 mm。")
+                },
+            );
+        }
+        features.push(json!({
+            "id":"quick-0002",
+            "kind":"hole",
+            "operation":"cut",
+            "name":if corner_holes { "四角安装孔" } else { "中心安装孔" },
+            "parameters":parameters,
+            "sources":sources,
+            "relations":[]
+        }));
+    }
+    Some(plan_result(raw, plate_name, features, warnings))
 }
 
 /// Migrate the old Quick L-section extrusion used for fixture bent plates.
@@ -15440,6 +15736,97 @@ mod f5_56_legacy_bent_part_contract_tests {
                 serde_json::json!(dimensions[2]),
                 "{input}"
             );
+        }
+
+        for case in fixture["needs_clarification"].as_array().unwrap() {
+            let input = case["input"].as_str().unwrap();
+            let output = parse(input);
+            assert_eq!(output["status"], "needs_clarification", "{input}: {output}");
+            assert!(output["plan"].is_null(), "{input}: {output}");
+            assert!(output.to_string().contains(case["issue"].as_str().unwrap()), "{input}: {output}");
+        }
+
+        for case in fixture["unsupported"].as_array().unwrap() {
+            let input = case["input"].as_str().unwrap();
+            let output = parse(input);
+            assert_eq!(output["status"], "unsupported", "{input}: {output}");
+            assert!(output["plan"].is_null(), "{input}: {output}");
+            assert!(output.to_string().contains(case["issue"].as_str().unwrap()), "{input}: {output}");
+        }
+    }
+}
+
+#[cfg(test)]
+mod f5_57_legacy_base_plate_contract_tests {
+    use super::parse;
+    use serde_json::Value;
+
+    fn assert_plate(output: &Value, case: &Value, input: &str) {
+        assert_eq!(output["status"], "ready", "{input}: {output}");
+        let plan = &output["plan"];
+        let features = plan["features"].as_array().unwrap();
+        assert_eq!(features.len(), case["feature_count"].as_u64().unwrap() as usize, "{input}: {output}");
+        let plate = &features[0];
+        assert_eq!(plate["kind"], "box", "{input}: {output}");
+        assert_eq!(plate["parameters"]["length"], case["dimensions_mm"][0], "{input}");
+        assert_eq!(plate["parameters"]["width"], case["dimensions_mm"][1], "{input}");
+        assert_eq!(plate["parameters"]["height"], case["dimensions_mm"][2], "{input}");
+        assert_eq!(plate["parameters"]["base"], case["base"], "{input}: base placement");
+        if case["thickness_source"].is_string() {
+            assert_eq!(plate["sources"]["height"]["type"], case["thickness_source"], "{input}");
+        }
+        if case["hole_diameter_mm"].is_number() {
+            let hole = &features[1];
+            assert_eq!(hole["kind"], "hole", "{input}: {output}");
+            assert_eq!(hole["operation"], "cut", "{input}: {output}");
+            assert_eq!(hole["parameters"]["diameter"], case["hole_diameter_mm"], "{input}");
+            assert_eq!(hole["parameters"]["pos"], case["hole_pos"], "{input}");
+            assert_eq!(hole["parameters"]["segments"], case["hole_segments"], "{input}");
+            if case["hole_margin_mm"].is_number() {
+                assert_eq!(hole["parameters"]["margin"], case["hole_margin_mm"], "{input}");
+            }
+        }
+    }
+
+    #[test]
+    fn legacy_base_plate_inputs_match_parser_contract_and_fallback_boundaries() {
+        let fixture: Value = serde_json::from_str(include_str!(
+            "../tests/fixtures/quick_legacy_base_plate_contract.json"
+        ))
+        .expect("base-plate Python oracle fixture is valid JSON");
+
+        for case in fixture["legacy_accepted"].as_array().unwrap() {
+            let input = case["input"].as_str().unwrap();
+            let output = parse(input);
+            assert_plate(&output, case, input);
+            let validation = crate::cad_plan_validation::validate_plan(&output["plan"]);
+            assert_eq!(validation["valid"], true, "{input}: {validation}");
+            assert!(crate::native_plan_geometry::preflight(&output["plan"]).is_ok(), "{input}");
+        }
+
+        for case in fixture["legacy_fallbacks"].as_array().unwrap() {
+            let input = case["input"].as_str().unwrap();
+            let output = parse(input);
+            assert_eq!(output["status"], "ready", "{input}: {output}");
+            assert_eq!(output["plan"]["features"][0]["kind"], "box", "{input}");
+            assert_eq!(output["plan"]["features"][0]["parameters"]["length"], case["dimensions_mm"][0], "{input}");
+            assert_eq!(output["plan"]["features"][0]["parameters"]["width"], case["dimensions_mm"][1], "{input}");
+            assert_eq!(output["plan"]["features"][0]["parameters"]["height"], case["dimensions_mm"][2], "{input}");
+            assert_eq!(output["plan"]["features"][0]["parameters"]["base"], case["base"], "{input}");
+            if case["profile"] == "generic_box" {
+                assert!(output.to_string().contains("legacy_base_plate_generic_box_fallback"), "{input}: {output}");
+            }
+        }
+
+        for case in fixture["legacy_divergences"].as_array().unwrap() {
+            let input = case["input"].as_str().unwrap();
+            let output = parse(input);
+            assert_eq!(output["status"], "ready", "{input}: {output}");
+            assert!(output.to_string().contains(case["issue"].as_str().unwrap()), "{input}: {output}");
+            assert_eq!(output["plan"]["features"].as_array().unwrap().len(), 1, "{input}: {output}");
+            assert_eq!(output["plan"]["features"][0]["parameters"]["length"], case["rust_dimensions_mm"][0], "{input}");
+            assert_eq!(output["plan"]["features"][0]["parameters"]["width"], case["rust_dimensions_mm"][1], "{input}");
+            assert_eq!(output["plan"]["features"][0]["parameters"]["height"], case["rust_dimensions_mm"][2], "{input}");
         }
 
         for case in fixture["needs_clarification"].as_array().unwrap() {

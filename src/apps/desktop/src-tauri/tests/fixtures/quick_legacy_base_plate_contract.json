@@ -1,0 +1,161 @@
+{
+  "source": {
+    "quick_entry": "src/legacy/ai_modeler/core/parsing/nlparser.py::Parser.parse/Parser.handle",
+    "part_library": "src/legacy/ai_modeler/parts/library/partlib.py::WELDMENT_PARTS['基板'] and _base_plate",
+    "hole_geometry": "src/legacy/ai_modeler/core/model/docmodel.py::Feature._build_holes"
+  },
+  "legacy_accepted": [
+    {
+      "input": "基板 长度100 宽度80 厚度10",
+      "dimensions_mm": [100.0, 80.0, 10.0],
+      "volume_mm3": 80000.0,
+      "feature_count": 1,
+      "base": false,
+      "thickness_source": "user"
+    },
+    {
+      "input": "基板 长度100 宽度80",
+      "dimensions_mm": [100.0, 80.0, 6.0],
+      "volume_mm3": 48000.0,
+      "feature_count": 1,
+      "base": false,
+      "thickness_source": "derived",
+      "hole_diameter_mm": null
+    },
+    {
+      "input": "底板 长度100 宽度80 厚度10 孔径12",
+      "dimensions_mm": [100.0, 80.0, 10.0],
+      "volume_mm3": 78869.02664470767,
+      "feature_count": 2,
+      "base": false,
+      "thickness_source": "user",
+      "hole_diameter_mm": 12.0,
+      "hole_pos": "center",
+      "hole_segments": 32
+    },
+    {
+      "input": "基板 长度300 宽度200 厚度12 孔径10 孔数4 内缩15",
+      "dimensions_mm": [300.0, 200.0, 12.0],
+      "volume_mm3": 716230.0888156922,
+      "feature_count": 2,
+      "base": false,
+      "thickness_source": "user",
+      "hole_diameter_mm": 10.0,
+      "hole_pos": "corners",
+      "hole_margin_mm": 15.0,
+      "hole_segments": 32,
+      "legacy_mesh_volume_mm3": 716254.2658172918
+    },
+    {
+      "input": "基板 长度300 宽度200 厚度12 四角通孔直径10内缩15",
+      "dimensions_mm": [300.0, 200.0, 12.0],
+      "volume_mm3": 716230.0888156922,
+      "feature_count": 2,
+      "base": false,
+      "thickness_source": "user",
+      "hole_diameter_mm": 10.0,
+      "hole_pos": "corners",
+      "hole_margin_mm": 15.0,
+      "hole_segments": 24
+    }
+  ],
+  "legacy_fallbacks": [
+    {
+      "input": "基板 300×200×12",
+      "dimensions_mm": [300.0, 200.0, 12.0],
+      "volume_mm3": 720000.0,
+      "feature_count": 1,
+      "base": true,
+      "profile": "generic_box"
+    },
+    {
+      "input": "基板",
+      "dimensions_mm": [100.0, 60.0, 20.0],
+      "volume_mm3": 120000.0,
+      "feature_count": 1,
+      "base": true,
+      "profile": "generic_box"
+    }
+  ],
+  "legacy_divergences": [
+    {
+      "input": "基板 长度30cm 宽度20cm 厚度12mm",
+      "legacy_dimensions_mm": [30.0, 20.0, 12.0],
+      "legacy_volume_mm3": 7200.0,
+      "rust_dimensions_mm": [300.0, 200.0, 12.0],
+      "rust_volume_mm3": 720000.0,
+      "issue": "legacy_base_plate_unit_conversion"
+    }
+  ],
+  "needs_clarification": [
+    {
+      "input": "基板 长度300",
+      "issue": "legacy_base_plate_dimensions_required"
+    },
+    {
+      "input": "基板 长度300 宽度200 孔数4",
+      "issue": "legacy_base_plate_hole_diameter_required"
+    },
+    {
+      "input": "基板 长度300 宽度200 厚度12 孔径10 孔数2",
+      "issue": "legacy_base_plate_corner_hole_margin_required"
+    }
+  ],
+  "unsupported": [
+    {
+      "input": "基板 长度300 宽度200 厚度12 沉孔直径10",
+      "issue": "legacy_base_plate_modifier_not_migrated"
+    }
+  ],
+  "geometry_acceptance": [
+    {
+      "input": "基板 长度100 宽度80 厚度10",
+      "dimensions_mm": [100.0, 80.0, 10.0],
+      "volume_mm3": 80000.0,
+      "feature_count": 1,
+      "base": false
+    },
+    {
+      "input": "基板 长度100 宽度80",
+      "dimensions_mm": [100.0, 80.0, 6.0],
+      "volume_mm3": 48000.0,
+      "feature_count": 1,
+      "base": false
+    },
+    {
+      "input": "底板 长度100 宽度80 厚度10 孔径12",
+      "dimensions_mm": [100.0, 80.0, 10.0],
+      "volume_mm3": 78869.02664470767,
+      "feature_count": 2,
+      "base": false
+    },
+    {
+      "input": "基板 长度300 宽度200 厚度12 孔径10 孔数4 内缩15",
+      "dimensions_mm": [300.0, 200.0, 12.0],
+      "volume_mm3": 716230.0888156922,
+      "feature_count": 2,
+      "base": false
+    },
+    {
+      "input": "基板 300×200×12",
+      "dimensions_mm": [300.0, 200.0, 12.0],
+      "volume_mm3": 720000.0,
+      "feature_count": 1,
+      "base": true
+    },
+    {
+      "input": "基板",
+      "dimensions_mm": [100.0, 60.0, 20.0],
+      "volume_mm3": 120000.0,
+      "feature_count": 1,
+      "base": true
+    },
+    {
+      "input": "基板 长度30cm 宽度20cm 厚度12mm",
+      "dimensions_mm": [300.0, 200.0, 12.0],
+      "volume_mm3": 720000.0,
+      "feature_count": 1,
+      "base": false
+    }
+  ]
+}
