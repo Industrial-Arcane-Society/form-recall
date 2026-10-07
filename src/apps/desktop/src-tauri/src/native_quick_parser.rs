@@ -616,7 +616,35 @@ pub fn parse(text: &str) -> Value {
                 let pcd_marker = contains_any(clause, &["pcd", "分度圆", "节圆", "分布圆"]);
                 let pattern_modifier = contains_any(clause, &["均布", "孔数", "phase", "相位"]);
                 let pcd_counterbore = pcd_marker && !center_requested;
-                let center_counterbore = center_requested && !pcd_marker && !pattern_modifier;
+                let previous_center_pilot = if modifier_clauses.len() > 1 {
+                    features.last().and_then(explicit_center_through_pilot)
+                } else {
+                    None
+                };
+                if previous_center_pilot.is_some()
+                    && (linear_pattern_requested
+                        || circular_pattern_requested
+                        || ambiguous_legacy_pattern_alias)
+                {
+                    questions.push(issue(
+                        "cross_clause_center_counterbore_pattern_ambiguous",
+                        "分句中心沉孔与同一请求中的阵列操作会使阵列源特征不明确；请先单独完成中心沉孔，再单独描述阵列。",
+                    ));
+                    return result("needs_clarification", text, None, warnings, questions, unsupported);
+                }
+                let cross_clause_location_conflict = previous_center_pilot.is_some()
+                    && counterbore_has_conflicting_location(clause);
+                if cross_clause_location_conflict {
+                    unsupported.push(issue(
+                        "counterbore_position_conflict_with_center_pilot",
+                        "沉孔位置与前一明确中心通孔冲突或包含未支持的位置表达；请单独说明同心中心沉孔，或给出完整孔组。",
+                    ));
+                    continue;
+                }
+                let inherited_center_counterbore = previous_center_pilot.is_some();
+                let center_counterbore = (center_requested || inherited_center_counterbore)
+                    && !pcd_marker
+                    && !pattern_modifier;
                 let prior_corner_pilot = features.last().is_some_and(|feature| {
                     feature["kind"] == "hole"
                         && feature["operation"] == "cut"
@@ -629,15 +657,9 @@ pub fn parse(text: &str) -> Value {
                     || corner_counterbore)
                     || (corner_counterbore
                         && (center_requested || pcd_marker || pattern_modifier))
-                    || contains_any(
-                        clause,
-                        &[
-                            "坐标",
-                            "coordinate",
-                            "position",
-                            "位置",
-                        ],
-                    )
+                    || contains_any(clause, &["坐标", "coordinate"])
+                    || (contains_any(clause, &["position", "位置"])
+                        && !(inherited_center_counterbore && has_center_location(clause)))
                     || (!corner_counterbore
                         && contains_any(
                             clause,
@@ -653,7 +675,7 @@ pub fn parse(text: &str) -> Value {
                     || named_xyz(clause).is_some()
                     || clause.contains('(')
                     || clause.contains('[')
-                    || (!corner_counterbore && modifier_clauses.len() != 1);
+                    || (!corner_counterbore && modifier_clauses.len() != 1 && !inherited_center_counterbore);
                 if unsupported_location_or_combination {
                     unsupported.push(issue(
                         "counterbore_variant_unsupported",
@@ -676,6 +698,16 @@ pub fn parse(text: &str) -> Value {
                         &cut_text,
                         text,
                         feature_index,
+                        &mut questions,
+                        &mut warnings,
+                    ));
+                } else if let Some((pilot_diameter, pilot_axis)) = previous_center_pilot {
+                    features.extend(build_cross_clause_center_counterbore(
+                        &cut_text,
+                        text,
+                        feature_index,
+                        pilot_diameter,
+                        pilot_axis,
                         &mut questions,
                         &mut warnings,
                     ));
@@ -12853,6 +12885,192 @@ fn build_center_counterbore(
     ]
 }
 
+
+fn explicit_center_through_pilot(feature: &Value) -> Option<(f64, &'static str)> {
+    if feature["kind"] != "hole"
+        || feature["operation"] != "cut"
+        || feature["parameters"]["pos"] != "center"
+        || feature["parameters"]["through"] != true
+        || feature["sources"]["pos"]["type"] != "user"
+    {
+        return None;
+    }
+    let diameter = feature["parameters"]["diameter"]
+        .as_f64()
+        .filter(|value| value.is_finite() && *value > 0.0)?;
+    let axis = match feature["parameters"]["axis"].as_str().unwrap_or("Z") {
+        "X" => "X",
+        "Y" => "Y",
+        "Z" => "Z",
+        _ => return None,
+    };
+    Some((diameter, axis))
+}
+
+fn counterbore_has_conflicting_location(clause: &str) -> bool {
+    has_corner_location(clause)
+        || contains_any(
+            clause,
+            &[
+                "pcd", "分度圆", "节圆", "分布圆", "均布", "孔数", "数量", "阵列",
+                "phase", "相位", "起始角", "坐标", "coordinate", "偏心", "偏移", "偏置",
+                "靠边", "边缘", "边距", "距边", "离边", "留边", "内缩", "正面", "前面",
+                "后面", "背面", "侧面", "侧壁", "顶面", "底面", "上表面", "下表面",
+            ],
+        )
+        || (contains_any(clause, &["position", "位置"]) && !has_center_location(clause))
+        || center_coordinates(clause).is_some()
+        || named_xyz(clause).is_some()
+        || clause.contains('(')
+        || clause.contains('[')
+}
+
+fn build_cross_clause_center_counterbore(
+    clause: &str,
+    raw: &str,
+    index: usize,
+    pilot_diameter: f64,
+    pilot_axis: &'static str,
+    questions: &mut Vec<Value>,
+    warnings: &mut Vec<Value>,
+) -> Vec<Value> {
+    let mut valid = true;
+    if contains_any(clause, &["through", "thru", "通孔", "贯穿"]) {
+        valid = false;
+        questions.push(issue(
+            "counterbore_type_conflict",
+            "沉孔子句只能描述盲切沉孔，不能同时描述为通孔。",
+        ));
+    } else if !clause.contains("沉孔") {
+        valid = false;
+        questions.push(issue(
+            "counterbore_type_missing",
+            "后续特征必须明确描述沉孔。",
+        ));
+    }
+
+    let counterbore_diameter = diameter_value(clause);
+    match counterbore_diameter {
+        Some(value) if value.is_finite() && value > 0.0 => {}
+        Some(_) => {
+            valid = false;
+            questions.push(issue(
+                "counterbore_diameter_conflict",
+                "沉孔子句存在互相冲突或非法的直径值。",
+            ));
+        }
+        None => {
+            valid = false;
+            questions.push(issue(
+                "counterbore_diameter_missing",
+                "沉孔子句缺少明确的正直径。",
+            ));
+        }
+    }
+
+    let depth = scalar(clause, &["depth", "hole depth", "深度", "孔深", "深"]);
+    match depth {
+        Some(value) if value.is_finite() && value > 0.0 => {}
+        Some(_) => {
+            valid = false;
+            questions.push(issue(
+                "counterbore_depth_conflict_or_invalid",
+                "沉孔深度必须唯一、有限且为正数。",
+            ));
+        }
+        None => {
+            valid = false;
+            questions.push(issue(
+                "counterbore_depth_missing",
+                "请明确沉孔深度；Quick 不会使用默认深度。",
+            ));
+        }
+    }
+
+    if let Some(counterbore) = counterbore_diameter {
+        if counterbore.is_finite() && counterbore <= pilot_diameter {
+            valid = false;
+            questions.push(issue(
+                "counterbore_diameter_order_invalid",
+                "沉孔直径必须大于前一中心通孔直径。",
+            ));
+        }
+    }
+
+    let prior_question_count = questions.len();
+    let explicit_axis = axis_value(clause, questions);
+    if questions[prior_question_count..]
+        .iter()
+        .any(|question| question["code"] == "axis_conflict")
+    {
+        valid = false;
+    }
+    if let Some(axis) = explicit_axis {
+        if axis != pilot_axis {
+            valid = false;
+            questions.push(issue(
+                "counterbore_axis_conflict_with_center_pilot",
+                format!("沉孔轴向 {axis} 与前一中心通孔轴向 {pilot_axis} 不一致。"),
+            ));
+        }
+    }
+
+    if !valid {
+        return Vec::new();
+    }
+    let counterbore = counterbore_diameter.expect("validated counterbore diameter");
+    let depth = depth.expect("validated counterbore depth");
+    let axis = explicit_axis.unwrap_or(pilot_axis);
+    let axis_source = if explicit_axis.is_some() {
+        user_source(raw)
+    } else {
+        derived_source(raw, "沉孔子句未指定轴向；沿用前一明确中心通孔的轴向。")
+    };
+    let position_source = if has_center_location(clause) {
+        user_source(raw)
+    } else {
+        derived_source(raw, "沉孔子句未指定位置；沿用前一明确中心通孔的中心位置。")
+    };
+    let mut sources = serde_json::Map::new();
+    sources.insert("diameter".into(), user_source(raw));
+    sources.insert(
+        "through".into(),
+        derived_source(raw, "沉孔按其显式沉孔类型生成盲切。"),
+    );
+    sources.insert("axis".into(), axis_source);
+    sources.insert("pos".into(), position_source);
+    sources.insert(
+        "segments".into(),
+        derived_source(raw, "沿用旧 Python Quick 孔特征固定的 24 个圆周分段。"),
+    );
+    sources.insert("depth".into(), user_source(raw));
+
+    if !has_unit(clause) {
+        warnings.push(issue(
+            "unit_interpreted_as_mm",
+            "未写长度单位的数值按 CADPlan 默认单位 mm 解释。",
+        ));
+    }
+    warnings.push(issue(
+        "cross_clause_center_counterbore_inherited",
+        "独立沉孔子句继承了前一明确中心通孔的位置和轴向。",
+    ));
+    vec![feature(
+        index + 2,
+        "hole",
+        "cut",
+        json!({
+            "diameter":counterbore,
+            "through":false,
+            "axis":axis,
+            "pos":"center",
+            "segments":24,
+            "depth":depth
+        }),
+        Value::Object(sources),
+    )]
+}
+
 fn build_pcd_counterbore(
     clause: &str,
     raw: &str,
@@ -14622,6 +14840,128 @@ mod tests {
         assert_eq!(out["status"], "ready", "{out}");
         out["plan"].clone()
     }
+
+    #[test]
+    fn f5_84_cross_clause_center_counterbore_matches_legacy_and_rejects_ambiguity() {
+        let fixture: Value = serde_json::from_str(include_str!(
+            "../tests/fixtures/quick_cross_clause_center_counterbore_contract.json"
+        ))
+        .expect("F5.84 parser contract fixture is valid JSON");
+        let accepted = &fixture["legacy_python_accepted"][0];
+        let input = accepted["input"].as_str().unwrap();
+        let output = parse(input);
+        assert_eq!(output["status"], "ready", "{input}: {output}");
+        let features = output["plan"]["features"].as_array().expect("features");
+        assert_eq!(features.len(), 3, "{input}: {features:?}");
+        assert_eq!(features[1]["parameters"]["diameter"], 6.0);
+        assert_eq!(features[1]["parameters"]["through"], true);
+        assert_eq!(features[1]["parameters"]["pos"], "center");
+        assert_eq!(features[1]["sources"]["pos"]["type"], "user");
+        assert_eq!(features[2]["kind"], "hole");
+        assert_eq!(features[2]["operation"], "cut");
+        assert_eq!(features[2]["parameters"]["diameter"], 11.0);
+        assert_eq!(features[2]["parameters"]["through"], false);
+        assert_eq!(features[2]["parameters"]["depth"], 5.0);
+        assert_eq!(features[2]["parameters"]["axis"], "Z");
+        assert_eq!(features[2]["parameters"]["pos"], "center");
+        assert_eq!(features[2]["sources"]["diameter"]["type"], "user");
+        assert_eq!(features[2]["sources"]["depth"]["type"], "user");
+        assert_eq!(features[2]["sources"]["pos"]["type"], "derived");
+        assert_eq!(features[2]["sources"]["axis"]["type"], "derived");
+        assert!(features[2]["sources"]["pos"]["note"].as_str().is_some_and(|s| !s.is_empty()));
+        assert!(output["warnings"].to_string().contains("cross_clause_center_counterbore_inherited"));
+        assert_eq!(
+            crate::cad_plan_validation::validate_plan(&output["plan"])["state"],
+            "valid",
+            "{input}: {}",
+            output["plan"]
+        );
+
+        for case in fixture["native_rejected"].as_array().unwrap() {
+            let input = case["input"].as_str().unwrap();
+            let output = parse(input);
+            assert_eq!(output["status"], case["status"], "{input}: {output}");
+            assert!(output["plan"].is_null(), "{input}: {output}");
+            let code = case["issue"].as_str().unwrap();
+            let bucket = if output["status"] == "unsupported" {
+                &output["unsupported"]
+            } else {
+                &output["questions"]
+            };
+            assert!(bucket.to_string().contains(code), "{input}: {output}");
+        }
+
+        for case in fixture["needs_clarification"].as_array().unwrap() {
+            let input = case["input"].as_str().unwrap();
+            let output = parse(input);
+            assert_eq!(output["status"], "needs_clarification", "{input}: {output}");
+            assert!(output["plan"].is_null(), "{input}: {output}");
+            assert!(output["questions"].to_string().contains(case["issue"].as_str().unwrap()), "{input}: {output}");
+        }
+    }
+
+    #[test]
+    fn f5_84_f5_86_pattern_interaction_contracts_preserve_or_refuse_source_binding() {
+        // Pure F5.84 remains valid: its counterbore is the last cut feature and
+        // carries derived center/axis provenance from the explicit pilot hole.
+        let counterbore = parse(
+            "长方体长100宽80高20，中心通孔直径6，然后加直径11沉孔深5",
+        );
+        assert_eq!(counterbore["status"], "ready", "{counterbore}");
+        let counterbore_features = counterbore["plan"]["features"].as_array().unwrap();
+        assert_eq!(counterbore_features.len(), 3);
+        assert_eq!(counterbore_features[1]["parameters"]["pos"], "center");
+        assert_eq!(counterbore_features[2]["parameters"]["pos"], "center");
+        assert_eq!(counterbore_features[2]["sources"]["pos"]["type"], "derived");
+
+        // Pure F5.86 linear aliases still resolve their source to the intended
+        // pilot hole; circular defaults still resolve to the sole base feature.
+        let linear = parse(
+            "长方体 长100宽80高20，然后中心孔直径6通孔，然后沿X方向排列4个，间距10mm",
+        );
+        assert_eq!(linear["status"], "ready", "{linear}");
+        let linear_features = linear["plan"]["features"].as_array().unwrap();
+        let linear_pattern = linear_features.last().unwrap();
+        assert_eq!(linear_pattern["kind"], "pattern");
+        assert_eq!(linear_pattern["parameters"]["mode"], "linear");
+        assert_eq!(
+            linear_pattern["relations"][0]["feature_id"],
+            linear_features[1]["id"],
+            "linear array must source the explicit pilot hole: {linear}"
+        );
+
+        let circular = parse("圆柱 直径30mm 高50mm，然后圆周阵列4个");
+        assert_eq!(circular["status"], "ready", "{circular}");
+        let circular_features = circular["plan"]["features"].as_array().unwrap();
+        let circular_pattern = circular_features.last().unwrap();
+        assert_eq!(circular_pattern["kind"], "pattern");
+        assert_eq!(circular_pattern["parameters"]["mode"], "circular");
+        assert_eq!(
+            circular_pattern["relations"][0]["feature_id"],
+            circular_features[0]["id"],
+            "circular array must source the sole base feature: {circular}"
+        );
+
+        // The combined case is intentionally not guessed. The parser returns
+        // before F5.86 appends a pattern, so no plan can contain a misbound source.
+        let fixture: Value = serde_json::from_str(include_str!(
+            "../tests/fixtures/quick_cross_clause_center_counterbore_contract.json"
+        ))
+        .expect("F5.84/F5.86 interaction fixture is valid JSON");
+        for case in fixture["pattern_combination_rejected"].as_array().unwrap() {
+            let input = case["input"].as_str().unwrap();
+            let output = parse(input);
+            assert_eq!(output["status"], case["status"], "{input}: {output}");
+            assert!(output["plan"].is_null(), "{input}: {output}");
+            assert!(
+                output["questions"]
+                    .to_string()
+                    .contains(case["issue"].as_str().unwrap()),
+                "{input}: {output}"
+            );
+        }
+    }
+
     #[test]
     fn f5_88_legacy_sequential_mixed_base_stack_derives_second_bottom_from_first_top() {
         let cases = [(

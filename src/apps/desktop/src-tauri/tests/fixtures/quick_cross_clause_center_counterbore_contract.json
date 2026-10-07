@@ -1,0 +1,149 @@
+{
+  "scope": "F5.84 Quick-only cross-clause center counterbore compatibility; no coordinate, PCD, or default-size inference",
+  "legacy_python_accepted": [
+    {
+      "input": "长方体长100宽80高20，中心通孔直径6，然后加直径11沉孔深5",
+      "expected": {
+        "dimensions_mm": [
+          100,
+          80,
+          20
+        ],
+        "features": [
+          {
+            "kind": "box",
+            "operation": "add"
+          },
+          {
+            "kind": "hole",
+            "operation": "cut",
+            "parameters": {
+              "diameter": 6,
+              "through": true,
+              "pos": "center"
+            }
+          },
+          {
+            "kind": "hole",
+            "operation": "cut",
+            "parameters": {
+              "diameter": 11,
+              "through": false,
+              "axis": "Z",
+              "pos": "center",
+              "segments": 24,
+              "depth": 5
+            }
+          }
+        ],
+        "hole_count": 2,
+        "bounds_mm": [
+          -50,
+          -40,
+          0,
+          50,
+          40,
+          20
+        ],
+        "legacy_build": {
+          "faces": 238,
+          "triangles": 432,
+          "volume_mm3": 159110.9565800724,
+          "area_mm2": 23598.326235183573
+        },
+        "source_types": {
+          "pilot.pos": "user",
+          "counterbore.diameter": "user",
+          "counterbore.depth": "user",
+          "counterbore.pos": "derived",
+          "counterbore.axis": "derived"
+        }
+      },
+      "warning_code": "cross_clause_center_counterbore_inherited"
+    }
+  ],
+  "native_rejected": [
+    {
+      "input": "长方体长100宽80高20，中心通孔直径6，然后加四角沉孔直径11深5",
+      "status": "unsupported",
+      "issue": "counterbore_position_conflict_with_center_pilot"
+    },
+    {
+      "input": "长方体长100宽80高20，中心通孔直径6，然后加坐标(20,0,0)处直径11沉孔深5",
+      "status": "unsupported",
+      "issue": "counterbore_position_conflict_with_center_pilot"
+    },
+    {
+      "input": "长方体长100宽80高20，然后加直径11沉孔深5",
+      "status": "unsupported",
+      "issue": "counterbore_variant_unsupported"
+    },
+    {
+      "input": "长方体长100宽80高20，中心盲孔直径6深10，然后加直径11沉孔深5",
+      "status": "unsupported",
+      "issue": "counterbore_variant_unsupported"
+    }
+  ],
+  "needs_clarification": [
+    {
+      "input": "长方体长100宽80高20，中心通孔直径6，然后加直径11沉孔深5沿X方向",
+      "issue": "counterbore_axis_conflict_with_center_pilot"
+    },
+    {
+      "input": "长方体长100宽80高20，中心通孔直径6，然后加直径5沉孔深5",
+      "issue": "counterbore_diameter_order_invalid"
+    },
+    {
+      "input": "长方体长100宽80高20，中心通孔直径6，然后加直径11沉孔",
+      "issue": "counterbore_depth_missing"
+    }
+  ],
+  "pattern_combination_rejected": [
+    {
+      "input": "长方体长100宽80高20，中心通孔直径6，然后加直径11沉孔深5，然后复制4个，间距10mm",
+      "status": "needs_clarification",
+      "issue": "cross_clause_center_counterbore_pattern_ambiguous",
+      "reason": "linear F5.86 alias must not bind its source to the appended counterbore"
+    },
+    {
+      "input": "长方体长100宽80高20，中心通孔直径6，然后加直径11沉孔深5，然后圆周阵列4个",
+      "status": "needs_clarification",
+      "issue": "cross_clause_center_counterbore_pattern_ambiguous",
+      "reason": "circular F5.86 request is refused before a pattern source can be assigned"
+    }
+  ],
+  "geometry_acceptance": {
+    "same_input_as_legacy_python_accepted_0": true,
+    "one_valid_closed_solid": true,
+    "dimensions_mm": [
+      100,
+      80,
+      20
+    ],
+    "built_feature_count": 3,
+    "hole_instances": [
+      {
+        "diameter_mm": 6,
+        "through": true,
+        "status": "verified_open",
+        "centerline_xy_mm": [
+          0,
+          0
+        ]
+      },
+      {
+        "diameter_mm": 11,
+        "through": false,
+        "depth_mm": 5,
+        "status": "verified_blind",
+        "centerline_xy_mm": [
+          0,
+          0
+        ]
+      }
+    ],
+    "hole_measurement_complete": true,
+    "hole_measurements_verified": true,
+    "aimodel_round_trip_preserves_plan": true
+  }
+}

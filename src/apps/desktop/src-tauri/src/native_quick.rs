@@ -5053,3 +5053,81 @@ mod f5_76_legacy_egt_pocket_collision_acceptance {
         }
     }
 }
+
+#[cfg(test)]
+mod f5_84_cross_clause_center_counterbore_geometry_acceptance {
+    #[test]
+    #[ignore = "requires an explicitly staged OCCT runtime; run the documented F5.84 acceptance command"]
+    fn f5_84_separate_center_counterbore_builds_and_measures_one_solid() {
+        use serde_json::Value;
+        use std::path::Path;
+
+        let manifest = std::env::var_os("AIMODELER_TEST_OCCT_MANIFEST")
+            .map(std::path::PathBuf::from)
+            .expect("F5.84 requires AIMODELER_TEST_OCCT_MANIFEST");
+        assert!(manifest.is_file(), "F5.84 OCCT manifest missing: {}", manifest.display());
+        let fixture: Value = serde_json::from_str(include_str!(
+            "../tests/fixtures/quick_cross_clause_center_counterbore_contract.json"
+        ))
+        .expect("F5.84 fixture is valid JSON");
+        let prompt = fixture["legacy_python_accepted"][0]["input"]
+            .as_str()
+            .expect("accepted input");
+        let parsed = crate::native_quick_parser::parse(prompt);
+        assert_eq!(parsed["status"], "ready", "F5.84 parser: {parsed}");
+
+        let root = std::env::temp_dir().join(format!(
+            "quick-f5-84-{}-{}",
+            std::process::id(),
+            std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .unwrap()
+                .as_nanos()
+        ));
+        std::fs::create_dir_all(&root).unwrap();
+        struct RemoveOnDrop(std::path::PathBuf);
+        impl Drop for RemoveOnDrop {
+            fn drop(&mut self) {
+                let _ = std::fs::remove_dir_all(&self.0);
+            }
+        }
+        let _cleanup = RemoveOnDrop(root.clone());
+
+        let output = super::build(prompt, 1, &manifest, &root)
+            .unwrap_or_else(|error| panic!("F5.84 Quick build failed: {error}"));
+        assert_eq!(output["state"], "complete", "{output}");
+        let plan_features = output["cadplan"]["features"].as_array().expect("CADPlan features");
+        assert_eq!(plan_features.len(), 3);
+        let report = &output["geometry_report"];
+        assert_eq!(report["state"], "passed", "{report}");
+        assert_eq!(report["valid"], true, "{report}");
+        assert_eq!(report["closed_solid_count"], 1, "{report}");
+        assert_eq!(report["dimensions_mm"], serde_json::json!([100., 80., 20.]));
+        assert_eq!(report["feature_results"].as_array().map(Vec::len), Some(3));
+        assert!(report["feature_results"].as_array().unwrap().iter().all(|row| row["state"] == "built"));
+        assert_eq!(report["hole_measurement_complete"], true, "{report}");
+        assert_eq!(report["hole_measurements_verified"], true, "{report}");
+        let holes = report["hole_instances"].as_array().expect("hole instances");
+        assert_eq!(holes.len(), 2, "{report}");
+        let through = holes.iter().find(|hole| hole["through"] == true).expect("through pilot");
+        assert_eq!(through["status"], "verified_open", "{through}");
+        assert!((through["diameter_mm"].as_f64().unwrap() - 6.0).abs() < 1e-8, "{through}");
+        assert_eq!(through["final_measurement"]["accepted"], true, "{through}");
+        let seat = holes.iter().find(|hole| hole["through"] == false).expect("blind seat");
+        assert_eq!(seat["status"], "verified_blind", "{seat}");
+        assert!((seat["diameter_mm"].as_f64().unwrap() - 11.0).abs() < 1e-8, "{seat}");
+        assert!((seat["depth_mm"].as_f64().unwrap() - 5.0).abs() < 1e-8, "{seat}");
+        assert_eq!(seat["final_measurement"]["accepted"], true, "{seat}");
+        assert_eq!(seat["final_measurement"]["expected_blind_depth"], 5.0, "{seat}");
+        for hole in [through, seat] {
+            for axis in 0..2 {
+                assert!(hole["centerline_mm"][axis].as_f64().unwrap().abs() < 1e-6, "{hole}");
+            }
+        }
+        let aimodel = Path::new(output["output_paths"]["aimodel"].as_str().expect("AIMODEL path"));
+        assert!(aimodel.is_file(), "F5.84 AIMODEL missing");
+        let loaded = crate::native_model_io::load_aimodel(aimodel)
+            .unwrap_or_else(|error| panic!("F5.84 AIMODEL round-trip failed: {error}"));
+        assert_eq!(loaded["cadplan"]["features"], output["cadplan"]["features"]);
+    }
+}
