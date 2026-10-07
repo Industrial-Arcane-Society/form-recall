@@ -12536,6 +12536,69 @@ fn legacy_unpositioned_center_through_hole_allowed(
     base_kind_count == 1 && base_clause_count == 1 && modifier_clause_count == 1
 }
 
+fn legacy_center_through_hole_default_diameter_allowed(
+    clause: &str,
+    raw: &str,
+    through: Option<bool>,
+) -> bool {
+    if through != Some(true)
+        || !has_center_location(clause)
+        || has_corner_location(clause)
+        || explicitly_multiple_holes(clause)
+        || hole_depth_value(clause).is_some()
+        || contains_any(
+            clause,
+            &[
+                "pcd", "分度圆", "节圆", "分布圆", "均布", "孔数", "数量", "等分",
+                "左右各", "两边各", "上下各", "两侧各", "左右分别", "两边分别",
+                "array", "阵列", "phase", "相位", "起始角", "侧面", "侧孔", "侧向",
+                "径向", "radial", "side hole", "side face", "along x", "along y",
+                "x direction", "y direction", "x axis", "y axis", "沿x", "沿y", "x方向",
+                "y方向", "x轴", "y轴", "盲孔", "blind",
+            ],
+        )
+        || center_coordinates(clause).is_some()
+        || named_xyz(clause).is_some()
+    {
+        return false;
+    }
+
+    let size_markers = ["diameter", "直径", "⌀", "radius", "半径"]
+        .iter()
+        .map(|marker| clause.matches(marker).count())
+        .sum::<usize>();
+    let hole_markers = ["孔", "hole", "bore", "drill"]
+        .iter()
+        .map(|marker| clause.matches(marker).count())
+        .sum::<usize>();
+    if size_markers != 0 || hole_markers != 1 {
+        return false;
+    }
+
+    let normalized = normalize(raw);
+    let clauses = split_clauses(&normalized);
+    let base_kinds = [
+        BaseKind::Box,
+        BaseKind::Cylinder,
+        BaseKind::Cone,
+        BaseKind::Frustum,
+        BaseKind::Sphere,
+    ];
+    let base_kind_count = base_kinds
+        .iter()
+        .filter(|kind| contains_base(&normalized, **kind))
+        .count();
+    let base_clause_count = clauses
+        .iter()
+        .filter(|part| base_kinds.iter().any(|kind| contains_base(part, *kind)))
+        .count();
+    let modifier_clause_count = clauses
+        .iter()
+        .filter(|part| has_hole(part) || has_slot(part))
+        .count();
+    base_kind_count == 1 && base_clause_count == 1 && modifier_clause_count == 1
+}
+
 fn build_hole(
     clause: &str,
     raw: &str,
@@ -12571,7 +12634,7 @@ fn build_hole(
                 },
             );
         }
-        None => questions.push(issue("hole_diameter_missing", "孔缺少明确的正直径或半径。")),
+        None => {}
     }
     let through_word = contains_any(clause, &["through", "thru", "通孔", "贯穿"]);
     let blind_word = contains_any(clause, &["blind", "盲孔"]);
@@ -12596,6 +12659,21 @@ fn build_hole(
         ));
         None
     };
+    let legacy_default_diameter =
+        dia.is_none() && legacy_center_through_hole_default_diameter_allowed(clause, raw, through);
+    if legacy_default_diameter {
+        p.insert("diameter".into(), json!(10.0));
+        s.insert(
+            "diameter".into(),
+            derived_source(raw, "旧 Python Quick 对明确中心单个贯穿孔缺省直径为 Ø10 mm。"),
+        );
+        warnings.push(issue(
+            "legacy_center_through_hole_default_diameter",
+            "历史兼容：未给直径的明确中心单个贯穿孔沿用旧 Python Quick 默认 Ø10 mm。",
+        ));
+    } else if dia.is_none() {
+        questions.push(issue("hole_diameter_missing", "孔缺少明确的正直径或半径。"));
+    }
     if let Some(v) = through {
         p.insert("through".into(), json!(v));
         s.insert(
@@ -12791,7 +12869,7 @@ fn build_hole(
                 derived_source(raw, "未标孔位时沿用旧 Python Quick：单一主体上的单个通孔默认位于中心。")
             },
         );
-        if legacy_default_center {
+        if legacy_default_center || legacy_default_diameter {
             p.insert("segments".into(), json!(24));
             s.insert(
                 "segments".into(),
@@ -12812,13 +12890,13 @@ fn build_hole(
     if let Some(axis) = axis_value(clause, questions) {
         p.insert("axis".into(), json!(axis));
         s.insert("axis".into(), user_source(raw));
-    } else if corners || legacy_default_center {
+    } else if corners || legacy_default_center || legacy_default_diameter {
         p.insert("axis".into(), json!("Z"));
         s.insert(
             "axis".into(),
             derived_source(
                 raw,
-                if legacy_default_center {
+                if legacy_default_center || legacy_default_diameter {
                     "未标切入轴时沿用旧 Python Quick 普通孔默认 Z 轴。"
                 } else {
                     "四角孔未指定切入轴时沿用 Python Quick 默认 Z 轴。"
@@ -15664,6 +15742,50 @@ mod tests {
     }
 
     #[test]
+    fn f5_91_defaults_only_explicit_center_single_through_hole_to_legacy_diameter() {
+        let input = "长方体100x60x20，然后中心打通孔";
+        let output = parse(input);
+        assert_eq!(output["status"], "ready", "{output}");
+        assert!(output["questions"].as_array().unwrap().is_empty(), "{output}");
+        let plan = output["plan"].clone();
+        assert_eq!(crate::cad_plan_validation::validate_plan(&plan)["state"], "valid");
+        let hole = &plan["features"][1];
+        assert_eq!(hole["kind"], "hole");
+        assert_eq!(hole["parameters"]["diameter"], 10.0);
+        assert_eq!(hole["parameters"]["through"], true);
+        assert_eq!(hole["parameters"]["pos"], "center");
+        assert_eq!(hole["parameters"]["axis"], "Z");
+        assert_eq!(hole["parameters"]["segments"], 24);
+        assert_eq!(hole["sources"]["diameter"]["type"], "derived");
+        assert_eq!(hole["sources"]["diameter"]["evidence"], input);
+        assert!(hole["sources"]["diameter"]["note"]
+            .as_str().unwrap().contains("旧 Python Quick"));
+        for key in ["axis", "segments"] {
+            assert_eq!(hole["sources"][key]["type"], "derived", "{key}: {hole}");
+        }
+        assert!(output["warnings"].to_string().contains("legacy_center_through_hole_default_diameter"));
+        assert!(output["warnings"].to_string().contains("Ø10 mm"));
+
+        for input in [
+            "长方体100x60x20，然后打通孔",
+            "长方体100x60x20，然后中心打盲孔",
+            "长方体100x60x20，然后侧面中心打通孔",
+            "长方体100x60x20，然后中心均布四个通孔",
+            "长方体100x60x20，然后中心打通孔深5",
+        ] {
+            let rejected = parse(input);
+            assert_eq!(rejected["status"], "needs_clarification", "{input}: {rejected}");
+            assert!(rejected["plan"].is_null(), "{input}: {rejected}");
+            assert!(rejected["questions"].to_string().contains("hole_diameter_missing"), "{input}: {rejected}");
+        }
+
+        let explicit = parse("长方体100x60x20，然后中心打直径8通孔");
+        assert_eq!(explicit["status"], "ready", "{explicit}");
+        assert_eq!(explicit["plan"]["features"][1]["parameters"]["diameter"], 8.0);
+        assert_eq!(explicit["plan"]["features"][1]["sources"]["diameter"]["type"], "user");
+    }
+
+    #[test]
     #[ignore = "requires the staged local OCCT runtime manifest"]
     fn legacy_unpositioned_through_hole_builds_and_measures_as_centered_brep() {
         use std::{fs, path::Path, time::{SystemTime, UNIX_EPOCH}};
@@ -15716,6 +15838,54 @@ mod tests {
         assert!(aimodel.is_file(), "missing AIMODEL output");
         let loaded = crate::native_model_io::load_aimodel(aimodel).expect("AIMODEL reload");
         assert_eq!(loaded["cadplan"]["features"], output["cadplan"]["features"]);
+    }
+
+    #[test]
+    #[ignore = "requires the staged local OCCT runtime manifest"]
+    fn f5_91_legacy_default_center_hole_builds_verified_aimodel_round_trip() {
+        use std::{fs, path::Path, time::{SystemTime, UNIX_EPOCH}};
+
+        let manifest = std::env::var_os("AIMODELER_OCCT_MANIFEST")
+            .map(std::path::PathBuf::from)
+            .expect("set AIMODELER_OCCT_MANIFEST to the staged runtime-manifest.json");
+        assert!(manifest.is_file(), "missing OCCT manifest: {}", manifest.display());
+        let input = "长方体100x60x20，然后中心打通孔";
+        let root = std::env::temp_dir().join(format!(
+            "f5-91-center-hole-{}-{}",
+            std::process::id(),
+            SystemTime::now().duration_since(UNIX_EPOCH).expect("system clock").as_nanos(),
+        ));
+        fs::create_dir_all(&root).expect("create temporary output root");
+        struct RemoveOnDrop(std::path::PathBuf);
+        impl Drop for RemoveOnDrop { fn drop(&mut self) { let _ = fs::remove_dir_all(&self.0); } }
+        let _cleanup = RemoveOnDrop(root.clone());
+
+        let output = crate::native_quick::build(input, 1, &manifest, &root)
+            .unwrap_or_else(|error| panic!("native Quick build failed: {error}"));
+        assert_eq!(output["state"], "complete", "{output}");
+        let report = &output["geometry_report"];
+        assert_eq!(report["state"], "passed", "{report}");
+        assert_eq!(report["valid"], true, "{report}");
+        assert_eq!(report["closed_solid_count"], 1, "{report}");
+        assert_eq!(report["dimensions_mm"], json!([100.0, 60.0, 20.0]));
+        assert_eq!(report["bounds_mm"], json!([-50.0, -30.0, 0.0, 50.0, 30.0, 20.0]));
+        assert_eq!(report["hole_measurements_verified"], true, "{report}");
+        let holes = report["hole_instances"].as_array().expect("measured hole instances");
+        assert_eq!(holes.len(), 1, "{report}");
+        assert_eq!(holes[0]["through"], true, "{}", holes[0]);
+        assert_eq!(holes[0]["status"], "verified_open", "{}", holes[0]);
+        assert!((holes[0]["diameter_mm"].as_f64().unwrap() - 10.0).abs() < 1e-8, "{}", holes[0]);
+        for axis in 0..2 { assert!(holes[0]["centerline_mm"][axis].as_f64().unwrap().abs() < 1e-6); }
+        let analytic_volume = 100.0 * 60.0 * 20.0 - std::f64::consts::PI * 5.0_f64.powi(2) * 20.0;
+        let actual_volume = report["volume_mm3"].as_f64().expect("B-Rep volume");
+        assert!((actual_volume - analytic_volume).abs() <= 1e-3, "{report}");
+
+        let aimodel = Path::new(output["output_paths"]["aimodel"].as_str().unwrap());
+        assert!(aimodel.is_file(), "missing AIMODEL output");
+        let loaded = crate::native_model_io::load_aimodel(aimodel).expect("AIMODEL reload");
+        assert_eq!(loaded["cadplan"]["features"], output["cadplan"]["features"]);
+        assert_eq!(loaded["cadplan"]["features"][1]["sources"]["diameter"]["type"], "derived");
+        assert_eq!(loaded["cadplan"]["features"][1]["parameters"]["diameter"], 10.0);
     }
 
     #[test]
