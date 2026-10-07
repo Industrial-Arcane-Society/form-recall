@@ -49,6 +49,9 @@ pub fn parse(text: &str) -> Value {
         return parsed;
     }
 
+    if let Some(parsed) = parse_legacy_bearing_seat(text, &normalized) {
+        return parsed;
+    }
     if let Some(parsed) = parse_legacy_bearing(text, &normalized) {
         return parsed;
     }
@@ -982,6 +985,134 @@ fn parse_legacy_washer(raw: &str, text: &str) -> Option<Value> {
         }),
     ];
     Some(plan_result(raw, "垫圈", features, warnings))
+}
+
+/// Migrate the legacy bearing-seat recipe: one cylinder and an optional
+/// centered through-bore. It is a plain sleeve in the old builder, not a
+/// bearing support with a flange or mounting features.
+fn parse_legacy_bearing_seat(raw: &str, text: &str) -> Option<Value> {
+    if !contains_any(text, &["轴承座", "轴承套"]) {
+        return None;
+    }
+
+    if contains_any(
+        text,
+        &[
+            "法兰", "凸缘", "螺栓孔", "通孔", "盲孔", "沉孔", "键槽", "开槽", "凹槽",
+            "圆角", "倒角", "螺纹", "滚珠", "滚道", "保持架", "密封圈", "阵列", "组合",
+            "并加", "同时", "再加",
+        ],
+    ) {
+        return Some(parse_result_with_issue(
+            "unsupported",
+            raw,
+            "legacy_bearing_seat_modifier_not_migrated",
+            "旧 Python Quick 轴承座配方只生成圆柱套和中心通孔；法兰、安装孔、滚动体及其它附加结构尚未迁移。",
+        ));
+    }
+
+    let outer = pulley_scalar(raw, text, &["外径"], &["D"]);
+    let bore_explicit = pulley_scalar(raw, text, &["内径", "孔径"], &["d"]);
+    let height = pulley_scalar(raw, text, &["高度", "长度", "长"], &["H", "h"]);
+    let bore_defaulted = bore_explicit.is_none();
+    let bore = if bore_defaulted {
+        Some(30.0)
+    } else {
+        bore_explicit
+    };
+
+    let mut questions = Vec::new();
+    for (value, missing_code, invalid_code, label) in [
+        (outer, "legacy_bearing_seat_outer_diameter", "legacy_bearing_seat_outer_diameter_invalid", "外径 D"),
+        (height, "legacy_bearing_seat_height", "legacy_bearing_seat_height_invalid", "高度 H"),
+        (bore, "legacy_bearing_seat_bore_diameter", "legacy_bearing_seat_bore_diameter_invalid", "内径 d"),
+    ] {
+        match value {
+            Some(value) if value.is_finite() && value > 0.0 => {}
+            Some(_) => questions.push(issue(
+                invalid_code,
+                format!("轴承座{label}必须是有限正数，且不同写法不能互相冲突。"),
+            )),
+            None => questions.push(issue(
+                missing_code,
+                format!("请明确轴承座{label}。"),
+            )),
+        }
+    }
+    if let (Some(outer), Some(bore)) = (outer, bore) {
+        if outer.is_finite() && bore.is_finite() && bore >= outer {
+            questions.push(issue(
+                "legacy_bearing_seat_bore_not_smaller_than_outer",
+                "轴承座中心孔内径必须小于外径；当前尺寸无法形成有效套筒。",
+            ));
+        }
+    }
+    if !questions.is_empty() {
+        return Some(result(
+            "needs_clarification",
+            raw,
+            None,
+            vec![],
+            questions,
+            vec![],
+        ));
+    }
+
+    let outer = outer.expect("validated bearing-seat outer diameter");
+    let bore = bore.expect("validated bearing-seat bore diameter");
+    let height = height.expect("validated bearing-seat height");
+    let unit_warning = !has_unit(text);
+    let mut warnings = vec![issue(
+        "legacy_bearing_seat_sleeve_only",
+        "旧 Python Quick 的“轴承座/轴承套”实际只是圆柱套筒，不含底座、凸缘、固定孔或滚动轴承。",
+    )];
+    if bore_defaulted {
+        warnings.push(issue(
+            "legacy_bearing_seat_default_bore",
+            "沿用旧 Python Quick 轴承座典型中心孔 ⌀30 mm。",
+        ));
+    }
+    if unit_warning {
+        warnings.push(issue(
+            "unit_interpreted_as_mm",
+            "未写长度单位的轴承座尺寸按旧 Quick 默认单位 mm 解释。",
+        ));
+    }
+
+    let features = vec![
+        json!({
+            "id":"quick-0001",
+            "kind":"cylinder",
+            "operation":"add",
+            "name":"轴承座简化套筒",
+            "parameters":{"radius":outer/2.0,"height":height,"center":[0.0,0.0,0.0],"base":false,"axis":"Z","segments":64},
+            "sources":{
+                "radius":derived_source(raw, "由用户给定外径 D 除以 2 得到圆柱半径。"),
+                "height":user_source(raw),
+                "center":derived_source(raw, "沿用旧 Python Quick 将轴承座中心放在原点。"),
+                "base":derived_source(raw, "沿用旧 Python Quick 的居中圆柱语义。"),
+                "axis":derived_source(raw, "沿用旧 Python Quick 轴承座沿全局 Z 轴放置。"),
+                "segments":derived_source(raw, "沿用旧 Python Quick 轴承座外圆分段数 64。")
+            },
+            "relations":[]
+        }),
+        json!({
+            "id":"quick-0002",
+            "kind":"hole",
+            "operation":"cut",
+            "name":"轴承座中心通孔",
+            "parameters":{"diameter":bore,"through":true,"pos":"center","axis":"Z","segments":48},
+            "sources":{
+                "diameter":if bore_defaulted { derived_source(raw, "沿用旧 Python Quick 轴承座典型内径 ⌀30 mm。") } else { user_source(raw) },
+                "through":derived_source(raw, "沿用旧 Python Quick 轴承座中心孔全厚度贯穿。"),
+                "pos":derived_source(raw, "沿用旧 Python Quick 中心孔位于原点。"),
+                "axis":derived_source(raw, "沿用旧 Python Quick 中心孔沿全局 Z 轴贯穿。"),
+                "segments":derived_source(raw, "沿用旧 Python Quick 中心孔分段数 48。")
+            },
+            "relations":[]
+        })
+    ];
+    Some(plan_result(raw, "轴承座简化套筒", features, warnings))
 }
 
 /// Port the legacy Python bearing recipes that produce a plain annular ring.
@@ -10270,5 +10401,75 @@ mod tests {
         assert_eq!(short_labels["plan"]["features"][0]["parameters"]["length"], 8.0);
         assert_eq!(short_labels["plan"]["features"][0]["parameters"]["width"], 7.0);
         assert_eq!(short_labels["plan"]["features"][0]["parameters"]["height"], 40.0);
+    }
+
+    #[test]
+    fn legacy_bearing_seats_match_python_oracle_and_default_provenance() {
+        let fixture: Value = serde_json::from_str(include_str!(
+            "../tests/fixtures/quick_legacy_bearing_seat_contract.json"
+        ))
+        .expect("bearing-seat Python oracle fixture is valid JSON");
+
+        for case in fixture["legacy_accepted"].as_array().unwrap() {
+            let input = case["input"].as_str().unwrap();
+            let output = parse(input);
+            assert_eq!(output["status"], "ready", "{input}: {output}");
+            assert_eq!(output["plan"]["name"], case["name"], "{input}: {output}");
+            let features = output["plan"]["features"].as_array().unwrap();
+            assert_eq!(features.len(), case["feature_count"].as_u64().unwrap() as usize, "{input}");
+
+            let outer = case["outer_diameter"].as_f64().unwrap();
+            let inner = case["inner_diameter"].as_f64().unwrap();
+            let height = case["height"].as_f64().unwrap();
+            assert_eq!(features[0]["kind"], "cylinder", "{input}");
+            assert_eq!(features[0]["operation"], "add", "{input}");
+            assert!((features[0]["parameters"]["radius"].as_f64().unwrap() - outer / 2.0).abs() < 1e-10, "{input}");
+            assert_eq!(features[0]["parameters"]["height"], height, "{input}");
+            assert_eq!(features[0]["parameters"]["center"], json!([0.0, 0.0, 0.0]), "{input}");
+            assert_eq!(features[0]["parameters"]["base"], false, "{input}");
+            assert_eq!(features[0]["parameters"]["axis"], "Z", "{input}");
+            assert_eq!(features[0]["parameters"]["segments"], 64, "{input}");
+            assert_eq!(features[0]["sources"]["height"]["type"], "user", "{input}");
+
+            assert_eq!(features[1]["kind"], "hole", "{input}");
+            assert_eq!(features[1]["operation"], "cut", "{input}");
+            assert_eq!(features[1]["parameters"]["diameter"], inner, "{input}");
+            assert_eq!(features[1]["parameters"]["through"], true, "{input}");
+            assert_eq!(features[1]["parameters"]["pos"], "center", "{input}");
+            assert_eq!(features[1]["parameters"]["axis"], "Z", "{input}");
+            assert_eq!(features[1]["parameters"]["segments"], 48, "{input}");
+            assert_eq!(features[1]["sources"]["diameter"]["type"], case["inner_source"], "{input}");
+            if let Some(code) = case["warning_code"].as_str() {
+                assert!(output["warnings"].to_string().contains(code), "{input}: {output}");
+            }
+            assert_eq!(
+                crate::cad_plan_validation::validate_plan(&output["plan"])["state"],
+                "valid",
+                "{input}: {}",
+                crate::cad_plan_validation::validate_plan(&output["plan"])
+            );
+            assert_eq!(
+                crate::native_plan_geometry::preflight(&output["plan"])
+                    .unwrap()["state"],
+                "valid",
+                "{input}"
+            );
+        }
+
+        for case in fixture["not_ready"].as_array().unwrap() {
+            let input = case["input"].as_str().unwrap();
+            let output = parse(input);
+            assert_eq!(output["status"], "needs_clarification", "{input}: {output}");
+            assert!(output["plan"].is_null(), "{input}: {output}");
+            assert!(output.to_string().contains(case["issue"].as_str().unwrap()), "{input}: {output}");
+        }
+
+        for case in fixture["unsupported"].as_array().unwrap() {
+            let input = case["input"].as_str().unwrap();
+            let output = parse(input);
+            assert_eq!(output["status"], "unsupported", "{input}: {output}");
+            assert!(output["plan"].is_null(), "{input}: {output}");
+            assert!(output.to_string().contains(case["issue"].as_str().unwrap()), "{input}: {output}");
+        }
     }
 }

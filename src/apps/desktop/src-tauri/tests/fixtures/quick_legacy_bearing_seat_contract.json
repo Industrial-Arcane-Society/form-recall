@@ -1,0 +1,88 @@
+{
+  "schema_version": "1.0",
+  "legacy_entrypoint": "src/legacy/ai_modeler/core/parsing/nlparser.py::Parser.parse",
+  "legacy_builder": "src/legacy/ai_modeler/parts/library/partlib.py::_bearing_seat",
+  "legacy_accepted": [
+    {
+      "input": "轴承座 内径20 外径50 高度30",
+      "name": "轴承座简化套筒",
+      "outer_diameter": 50.0,
+      "inner_diameter": 20.0,
+      "height": 30.0,
+      "inner_source": "user",
+      "feature_count": 2,
+      "dimensions_mm": [50.0, 50.0, 30.0],
+      "legacy_mesh_volume_mm3": 49412.39835789279
+    },
+    {
+      "input": "轴承套 孔径20 外径50 长度30",
+      "name": "轴承座简化套筒",
+      "outer_diameter": 50.0,
+      "inner_diameter": 20.0,
+      "height": 30.0,
+      "inner_source": "user",
+      "feature_count": 2,
+      "dimensions_mm": [50.0, 50.0, 30.0],
+      "legacy_mesh_volume_mm3": 49412.39835789279
+    },
+    {
+      "input": "轴承座 外径50 高度30",
+      "name": "轴承座简化套筒",
+      "outer_diameter": 50.0,
+      "inner_diameter": 30.0,
+      "height": 30.0,
+      "inner_source": "derived",
+      "feature_count": 2,
+      "dimensions_mm": [50.0, 50.0, 30.0],
+      "legacy_mesh_volume_mm3": 37665.041058088005,
+      "warning_code": "legacy_bearing_seat_default_bore"
+    }
+  ],
+  "not_ready": [
+    {
+      "input": "轴承座 内径20 外径50",
+      "issue": "legacy_bearing_seat_height"
+    },
+    {
+      "input": "轴承座 高度30",
+      "issue": "legacy_bearing_seat_outer_diameter"
+    },
+    {
+      "input": "轴承座 外径20 高度30 内径30",
+      "issue": "legacy_bearing_seat_bore_not_smaller_than_outer"
+    },
+    {
+      "input": "轴承座 外径50 内径0 高度30",
+      "issue": "legacy_bearing_seat_bore_diameter_invalid"
+    }
+  ],
+  "unsupported": [
+    {
+      "input": "轴承座 内径20 外径50 高度30 通孔",
+      "issue": "legacy_bearing_seat_modifier_not_migrated",
+      "legacy_note": "The old generic Parser adds a second centered 10 mm through-hole feature; it is a no-op because the recipe already cut a 20 mm bore."
+    },
+    {
+      "input": "轴承座 内径20 外径50 高度30 法兰",
+      "issue": "legacy_bearing_seat_modifier_not_migrated"
+    }
+  ],
+  "native_expected_cases": [
+    {
+      "input": "轴承座 内径20 外径50 高度30",
+      "dimensions_mm": [50.0, 50.0, 30.0],
+      "inner_diameter_mm": 20.0,
+      "volume_mm3": 49480.0784142406,
+      "legacy_mesh_volume_mm3": 49412.39835789279,
+      "max_relative_legacy_volume_delta": 0.003
+    },
+    {
+      "input": "轴承座 外径50 高度30",
+      "dimensions_mm": [50.0, 50.0, 30.0],
+      "inner_diameter_mm": 30.0,
+      "volume_mm3": 37699.11184307752,
+      "legacy_mesh_volume_mm3": 37665.041058088005,
+      "max_relative_legacy_volume_delta": 0.003
+    }
+  ]
+}
