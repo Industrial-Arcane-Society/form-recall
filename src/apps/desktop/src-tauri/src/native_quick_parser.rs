@@ -136,6 +136,9 @@ pub fn parse(text: &str) -> Value {
     if let Some(parsed) = parse_legacy_impeller(text, &normalized) {
         return parsed;
     }
+    if let Some(parsed) = parse_legacy_support_leg(text, &normalized) {
+        return parsed;
+    }
     if let Some(parsed) = parse_legacy_template(text, &normalized) {
         return parsed;
     }
@@ -629,7 +632,7 @@ fn result(
         "questions":questions,
         "unsupported":unsupported,
         "compatibility":{
-            "scope":"common explicit primitives/cuts, migrated standalone primitive defaults and legacy extrusion/revolve constructors, centered solid-shaft aliases, rectangular slots, flat-washer rings, cylindrical/conical spring helices, measured socket-head screws with optional washers, V-belt pulleys, timing pulleys, straight-gear construction, PCD counterbores, base plates, migrated legacy washer/spring/shaft/bearing/seal-ring/coupling/brake-disc/brake-drum/flywheel/flat-annular-part/disc-cam/spline-shaft/crankshaft/camshaft/piston/worm/triangular-rotor/valve recipes, and executable flange/stepped-shaft/sleeve/blade/blisk templates",
+            "scope":"common explicit primitives/cuts, migrated standalone primitive defaults and legacy extrusion/revolve constructors, centered solid-shaft aliases, rectangular slots, flat-washer rings, cylindrical/conical spring helices, measured socket-head screws with optional washers, V-belt pulleys, timing pulleys, straight-gear construction, PCD counterbores, base plates, support legs, migrated legacy washer/spring/shaft/bearing/seal-ring/coupling/brake-disc/brake-drum/flywheel/flat-annular-part/disc-cam/spline-shaft/crankshaft/camshaft/piston/worm/triangular-rotor/valve recipes, and executable flange/stepped-shaft/sleeve/blade/blisk templates",
             "legacy_typical_defaults":"restored only for migrated Quick constructors/templates, centered solid shafts (Ø30 mm when diameter is absent), straight gears, timing pulleys, V-belt pulleys, socket-head screw catalog recipes, rectangular slots, flat-washer thickness, spring wire/turn values, brake-disc thickness/bore values, brake-drum bore values, flywheel center-bore/PCD-hole values, flat-annular-part bore/thickness values, disc-cam base diameter/thickness, spline-shaft minor diameter/tooth count, crankshaft main/pin journal diameters and stroke/throw count, camshaft lobe count/journal diameter, piston pin diameter/ring groove count, worm pitch diameter, triangular-rotor R=60 mm and center bore ⌀24 mm when omitted, valve stem diameter d=8 mm when omitted, and base-plate thickness; defaults and raw-dimension mappings are reported as warnings",
             "loft_geometry":"blade and blisk lofts are locally approximate faceted B-Reps",
             "timing_pulley_geometry":"native timing pulley teeth are approximate trapezoidal prisms fused to an analytic annular blank",
@@ -637,6 +640,7 @@ fn result(
             "helix_geometry":"spring helices are locally approximate faceted B-Reps and are not native CATIA features",
             "socket_head_bolt_geometry":"measured catalog dimensions and washers are preserved; native Rust adds visible faceted threads where the legacy Python Quick recipe reconstructed a smooth shank",
             "solid_shaft_geometry":"the old mesh kernel used a 48-sided cylinder; Rust/OCCT uses an analytic cylinder, so bounding boxes agree while volume differs by the expected polygonal approximation",
+            "support_leg_geometry":"legacy part-library forms build a centered analytic Z cylinder or a regular polygon prism from Z=0, with an optional centered Z through-hole; bare-高 inputs stay on the separate bottom-based generic-cylinder route",
             "disc_cam_geometry":"72-point faceted polar profile extruded along Z; only the legacy fixed 120-degree rise angle is supported",
             "camshaft_geometry":"48-point cam profiles and 120-degree harmonic rise are fused with an analytic X-axis shaft into one closed B-Rep; this differs from the legacy unfused faceted mesh",
             "crankshaft_geometry":"analytic journals with rectangular webs form one closed B-Rep; the legacy polygon mesh uses dumbbell-shaped cheek profiles, so the local Rust result is an explicitly approximate shape",
@@ -957,6 +961,183 @@ fn parse_legacy_base_plate(raw: &str, text: &str) -> Option<Value> {
         }));
     }
     Some(plan_result(raw, plate_name, features, warnings))
+}
+
+/// Migrate the old Quick `WELDMENT_PARTS['支腿']` recipe when the text uses
+/// parameter forms that the legacy part-library path actually recognizes.
+/// The old parser routes bare “高” descriptions through its generic cylinder
+/// rule instead, so those remain on the existing generic path.
+fn parse_legacy_support_leg(raw: &str, text: &str) -> Option<Value> {
+    if !contains_any(text, &["支腿", "支撑腿", "立柱"]) {
+        return None;
+    }
+
+    let diameter = pulley_scalar(raw, text, &["外径", "直径"], &["D", "d"]);
+    let height = pulley_scalar(raw, text, &["高度", "长度"], &["H", "h"]);
+    // The legacy Python entry sends “直径 50 高 100” to its generic cylinder
+    // parser; only continue when the part-library route would have both fields.
+    let (Some(diameter), Some(height)) = (diameter, height) else {
+        return None;
+    };
+    if contains_any(
+        text,
+        &[
+            "盲孔", "沉孔", "沉头", "槽", "侧孔", "边孔", "螺纹", "阵列", "分度圆", "pcd",
+            "倒角", "圆角", "安装孔", "焊缝",
+        ],
+    ) {
+        return Some(parse_result_with_issue(
+            "unsupported",
+            raw,
+            "legacy_support_leg_modifier_not_migrated",
+            "旧 Python Quick 支腿配方只支持实心圆柱或正多边形棱柱及可选中心贯穿孔；当前修改要求尚未迁入。",
+        ));
+    }
+    if !diameter.is_finite() || diameter <= 0.0 || !height.is_finite() || height <= 0.0 {
+        return Some(parse_result_with_issue(
+            "needs_clarification",
+            raw,
+            "legacy_support_leg_dimensions_invalid",
+            "支腿外径和高度必须是有限正数。",
+        ));
+    }
+
+    let sides = pulley_scalar(raw, text, &["边数"], &["sides"]);
+    if sides.is_some_and(|value| !value.is_finite() || value < 0.0 || value > 512.0) {
+        return Some(parse_result_with_issue(
+            "needs_clarification",
+            raw,
+            "legacy_support_leg_side_count_invalid",
+            "支腿边数必须是 0 到 512 之间的有限数值。",
+        ));
+    }
+    let side_count = sides.unwrap_or(0.0).trunc() as usize;
+    let polygonal = side_count >= 3;
+    let hole_diameter = pulley_scalar(raw, text, &["孔径", "孔直径"], &[]);
+    let hole_requested = contains_any(text, &["孔", "hole", "bore"]);
+    if hole_requested && hole_diameter.is_none() {
+        return Some(parse_result_with_issue(
+            "needs_clarification",
+            raw,
+            "legacy_support_leg_hole_diameter_required",
+            "支腿已描述中心孔，请明确孔径。",
+        ));
+    }
+    if hole_diameter.is_some_and(|value| !value.is_finite() || value <= 0.0) {
+        return Some(parse_result_with_issue(
+            "needs_clarification",
+            raw,
+            "legacy_support_leg_hole_diameter_invalid",
+            "支腿中心孔直径必须是有限正数。",
+        ));
+    }
+    let hole_diameter = hole_diameter.unwrap_or(0.0);
+    let available_bore_diameter = if polygonal {
+        diameter * (std::f64::consts::PI / side_count as f64).cos()
+    } else {
+        diameter
+    };
+    if hole_diameter >= available_bore_diameter {
+        return Some(parse_result_with_issue(
+            "needs_clarification",
+            raw,
+            "legacy_support_leg_hole_breakout",
+            "支腿中心孔必须小于圆柱直径或多边形截面的对边尺寸，避免孔切穿侧壁。",
+        ));
+    }
+
+    let mut warnings = Vec::new();
+    if let Some(requested) = sides {
+        if requested.fract() != 0.0 {
+            warnings.push(issue(
+                "legacy_support_leg_side_count_truncated",
+                "旧 Python Quick 对边数直接取 int；当前沿用向零截断后的值。",
+            ));
+        }
+        if side_count < 3 {
+            warnings.push(issue(
+                "legacy_support_leg_side_count_threshold",
+                "旧 Python Quick 只有边数不少于 3 才生成多边形；当前沿用圆柱回退。",
+            ));
+        }
+    }
+    if contains_any(text, &["dh"]) && !hole_requested {
+        warnings.push(issue(
+            "legacy_support_leg_dh_shorthand_ignored",
+            "旧 Python Quick 支腿参数表不识别 dh 紧写值；未据此添加孔。",
+        ));
+    }
+    if crankshaft_has_non_mm_unit(text) {
+        warnings.push(issue(
+            "legacy_support_leg_unit_conversion",
+            "已将支腿外径、高度和孔径统一换算为 mm。",
+        ));
+    } else if !has_unit(text) {
+        warnings.push(issue(
+            "unit_interpreted_as_mm",
+            "未写单位的支腿尺寸按 mm 解释。",
+        ));
+    }
+
+    let mut features = Vec::new();
+    if polygonal {
+        let radius = diameter / 2.0;
+        let profile: Vec<[f64; 2]> = (0..side_count)
+            .map(|index| {
+                let angle = std::f64::consts::TAU * index as f64 / side_count as f64;
+                [radius * angle.cos(), radius * angle.sin()]
+            })
+            .collect();
+        features.push(json!({
+            "id":"quick-0001",
+            "kind":"prism",
+            "operation":"add",
+            "name":"支腿",
+            "parameters":{"profile":profile,"height":height,"axis":"Z","center":[0.0,0.0,0.0]},
+            "sources":{
+                "profile":derived_source(raw, "沿用旧 Python Quick 支腿配方：以外径/2 为外接圆半径按边数生成正多边形截面；边数由轮廓点数表达。"),
+                "height":user_source(raw),
+                "axis":derived_source(raw, "旧 Python Quick 支腿沿 Z 轴拉伸。"),
+                "center":derived_source(raw, "旧 Python Quick 支腿正多边形截面以全局原点为中心，从 Z=0 拉伸。")
+            },
+            "relations":[]
+        }));
+    } else {
+        features.push(json!({
+            "id":"quick-0001",
+            "kind":"cylinder",
+            "operation":"add",
+            "name":"支腿",
+            "parameters":{"radius":diameter/2.0,"height":height,"center":[0.0,0.0,0.0],"base":false,"axis":"Z","segments":48},
+            "sources":{
+                "radius":derived_source(raw, "旧 Python Quick 半径由外径/2 得到。"),
+                "height":user_source(raw),
+                "center":derived_source(raw, "旧 Python Quick 圆柱支腿以全局原点为中心。"),
+                "base":derived_source(raw, "旧 Python Quick 圆柱支腿沿 Z 轴居中。"),
+                "axis":derived_source(raw, "旧 Python Quick 支腿沿 Z 轴放置。"),
+                "segments":derived_source(raw, "沿用旧 Python Quick 支腿圆柱分段数 48。")
+            },
+            "relations":[]
+        }));
+    }
+    if hole_requested {
+        features.push(json!({
+            "id":"quick-0002",
+            "kind":"hole",
+            "operation":"cut",
+            "name":"中心贯穿孔",
+            "parameters":{"diameter":hole_diameter,"through":true,"pos":"center","axis":"Z","segments":32},
+            "sources":{
+                "diameter":user_source(raw),
+                "through":derived_source(raw, "旧 Python Quick 支腿孔沿 Z 轴贯穿。"),
+                "pos":derived_source(raw, "旧 Python Quick 支腿孔位于截面中心。"),
+                "axis":derived_source(raw, "旧 Python Quick 支腿孔沿 Z 轴切除。"),
+                "segments":derived_source(raw, "沿用旧 Python Quick 支腿孔圆周分段数 32。")
+            },
+            "relations":[]
+        }));
+    }
+    Some(plan_result(raw, "支腿", features, warnings))
 }
 
 /// Migrate the old Quick L-section extrusion used for fixture bent plates.
@@ -15844,5 +16025,71 @@ mod f5_57_legacy_base_plate_contract_tests {
             assert!(output["plan"].is_null(), "{input}: {output}");
             assert!(output.to_string().contains(case["issue"].as_str().unwrap()), "{input}: {output}");
         }
+    }
+}
+
+#[cfg(test)]
+mod f5_58_legacy_support_leg_contract_tests {
+    use super::parse;
+    use serde_json::Value;
+
+    #[test]
+    fn support_leg_library_route_and_generic_high_fallback_match_python_entry() {
+        let fixture: Value = serde_json::from_str(include_str!(
+            "../tests/fixtures/quick_legacy_support_leg_contract.json"
+        ))
+        .expect("support-leg Python oracle fixture is valid JSON");
+
+        for case in fixture["legacy_accepted"].as_array().unwrap() {
+            let input = case["input"].as_str().unwrap();
+            let output = parse(input);
+            assert_eq!(output["status"], "ready", "{input}: {output}");
+            let plan = &output["plan"];
+            let features = plan["features"].as_array().unwrap();
+            assert_eq!(features.len(), case["feature_count"].as_u64().unwrap() as usize, "{input}: {output}");
+            for (index, expected) in case["features"].as_array().unwrap().iter().enumerate() {
+                let actual = &features[index];
+                assert_eq!(actual["kind"], expected["kind"], "{input}: {actual}");
+                assert_eq!(actual["operation"], expected["operation"], "{input}: {actual}");
+                for (key, value) in expected["parameters"].as_object().unwrap() {
+                    assert_eq!(actual["parameters"][key], *value, "{input}: parameter {key}");
+                }
+            }
+            if case["profile"].is_array() {
+                assert_eq!(features[0]["parameters"]["profile"], case["profile"], "{input}: regular polygon profile");
+            }
+            let validation = crate::cad_plan_validation::validate_plan(plan);
+            assert_eq!(validation["valid"], true, "{input}: {validation}");
+            assert!(crate::native_plan_geometry::preflight(plan).is_ok(), "{input}");
+        }
+
+        for case in fixture["legacy_generic_fallbacks"].as_array().unwrap() {
+            let input = case["input"].as_str().unwrap();
+            let output = parse(input);
+            assert_eq!(output["status"], "ready", "{input}: {output}");
+            let feature = &output["plan"]["features"][0];
+            assert_eq!(feature["kind"], case["feature_kind"], "{input}: {output}");
+            assert_eq!(feature["parameters"]["base"], case["base"], "{input}: origin semantics");
+        }
+
+        for case in fixture["needs_clarification"].as_array().unwrap() {
+            let input = case["input"].as_str().unwrap();
+            let output = parse(input);
+            assert_eq!(output["status"], "needs_clarification", "{input}: {output}");
+            assert!(output["plan"].is_null(), "{input}: {output}");
+            assert!(output.to_string().contains(case["issue"].as_str().unwrap()), "{input}: {output}");
+        }
+        for case in fixture["unsupported"].as_array().unwrap() {
+            let input = case["input"].as_str().unwrap();
+            let output = parse(input);
+            assert_eq!(output["status"], "unsupported", "{input}: {output}");
+            assert!(output["plan"].is_null(), "{input}: {output}");
+            assert!(output.to_string().contains(case["issue"].as_str().unwrap()), "{input}: {output}");
+        }
+
+        let shorthand = parse("支腿 D50 H100 dh12");
+        assert_eq!(shorthand["status"], "ready", "{shorthand}");
+        assert_eq!(shorthand["plan"]["features"].as_array().unwrap().len(), 1, "{shorthand}");
+        assert!(shorthand.to_string().contains("legacy_support_leg_dh_shorthand_ignored"), "{shorthand}");
     }
 }

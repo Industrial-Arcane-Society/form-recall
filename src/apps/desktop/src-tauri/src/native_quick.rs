@@ -4196,3 +4196,85 @@ mod f5_57_legacy_base_plate_native_acceptance {
         }
     }
 }
+
+#[cfg(test)]
+mod f5_58_legacy_support_leg_native_acceptance {
+    use super::build;
+    use serde_json::Value;
+    use std::{fs, path::Path, time::SystemTime};
+
+    #[test]
+    #[ignore = "requires the staged local OCCT runtime manifest"]
+    fn f5_58_legacy_support_legs_build_measure_reopen_and_export() {
+        let manifest = std::env::var_os("AIMODELER_OCCT_MANIFEST")
+            .map(std::path::PathBuf::from)
+            .expect("set AIMODELER_OCCT_MANIFEST to the staged OCCT runtime-manifest.json");
+        assert!(manifest.is_file(), "missing OCCT manifest: {}", manifest.display());
+        let fixture: Value = serde_json::from_str(include_str!(
+            "../tests/fixtures/quick_legacy_support_leg_contract.json"
+        ))
+        .expect("support-leg Python oracle fixture is valid JSON");
+        let root = std::env::temp_dir().join(format!(
+            "native-quick-support-leg-{}-{}",
+            std::process::id(),
+            SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .expect("system clock")
+                .as_nanos()
+        ));
+        fs::create_dir_all(&root).expect("create native Quick output root");
+        struct RemoveOnDrop(std::path::PathBuf);
+        impl Drop for RemoveOnDrop {
+            fn drop(&mut self) {
+                let _ = fs::remove_dir_all(&self.0);
+            }
+        }
+        let _cleanup = RemoveOnDrop(root.clone());
+
+        for (index, case) in fixture["legacy_accepted"].as_array().unwrap().iter().enumerate() {
+            let input = case["input"].as_str().unwrap();
+            let output = build(input, index as i64 + 1, &manifest, &root)
+                .unwrap_or_else(|error| panic!("{input}: native Quick build failed: {error}"));
+            assert_eq!(output["state"], "complete", "{input}: {output}");
+            let report = &output["geometry_report"];
+            let expected = &case["native_brep"];
+            assert_eq!(report["state"], "passed", "{input}: {report}");
+            assert_eq!(report["valid"], true, "{input}: {report}");
+            assert_eq!(report["closed_solid_count"], 1, "{input}: {report}");
+            for (axis, (actual, expected)) in report["dimensions_mm"]
+                .as_array()
+                .unwrap()
+                .iter()
+                .zip(expected["dimensions_mm"].as_array().unwrap())
+                .enumerate()
+            {
+                assert!(
+                    (actual.as_f64().unwrap() - expected.as_f64().unwrap()).abs() <= 1e-5,
+                    "{input}: bbox axis {axis} differs: {report}"
+                );
+            }
+            assert!(
+                (report["volume_mm3"].as_f64().unwrap() - expected["volume_mm3"].as_f64().unwrap()).abs() <= 1e-3,
+                "{input}: native B-Rep volume differs: {report}"
+            );
+            if output["cadplan"]["features"].as_array().unwrap().len() == 2 {
+                assert_eq!(report["feature_results"][1]["state"], "built", "{input}: {report}");
+                assert_eq!(report["hole_measurement_complete"], true, "{input}: {report}");
+            }
+            let paths = output["output_paths"].as_object().expect("generated output paths");
+            for name in ["glb", "aimodel", "stl", "obj"] {
+                assert!(Path::new(paths[name].as_str().unwrap()).is_file(), "{input}: missing {name}");
+            }
+            let loaded = crate::native_model_io::load_aimodel(Path::new(paths["aimodel"].as_str().unwrap()))
+                .unwrap_or_else(|error| panic!("{input}: AIMODEL reload failed: {error}"));
+            assert_eq!(loaded["cadplan"]["features"], output["cadplan"]["features"], "{input}: AIMODEL round-trip");
+            println!(
+                "F5.58 native acceptance: input={input}; dimensions_mm={}; B-Rep volume_mm3={}; legacy mesh volume_mm3={}; files={:?}",
+                serde_json::to_string(&report["dimensions_mm"]).unwrap(),
+                report["volume_mm3"],
+                case["legacy_mesh"]["volume_mm3"],
+                output["output_paths"]
+            );
+        }
+    }
+}

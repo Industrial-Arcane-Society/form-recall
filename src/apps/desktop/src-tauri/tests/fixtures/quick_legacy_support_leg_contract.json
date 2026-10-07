@@ -1,0 +1,180 @@
+{
+  "source": {
+    "quick_entry": "src/legacy/ai_modeler/core/parsing/nlparser.py::Parser.parse/Parser.handle",
+    "part_library": "src/legacy/ai_modeler/parts/library/partlib.py::WELDMENT_PARTS['支腿'] and _support_leg",
+    "mesh_build": "src/legacy/ai_modeler/core/model/docmodel.py::Document.build/Feature.build",
+    "mesh_kernel": "src/legacy/ai_modeler/core/geometry/kernel.py::make_cylinder/extrude_profile"
+  },
+  "legacy_accepted": [
+    {
+      "input": "支腿 D50 H100",
+      "feature_count": 1,
+      "features": [
+        {
+          "kind": "cylinder",
+          "operation": "add",
+          "parameters": {
+            "radius": 25.0,
+            "height": 100.0,
+            "center": [0, 0, 0],
+            "base": false,
+            "axis": "Z",
+            "segments": 48
+          }
+        }
+      ],
+      "legacy_mesh": {
+        "bounds_mm": [-25.0, -25.0, -50.0, 25.0, 25.0, 50.0],
+        "dimensions_mm": [50.0, 50.0, 100.0],
+        "volume_mm3": 195789.28833007743,
+        "faces": 50,
+        "triangles": 188
+      },
+      "native_brep": {
+        "dimensions_mm": [50.0, 50.0, 100.0],
+        "volume_mm3": 196349.54084936206
+      }
+    },
+    {
+      "input": "支腿 外径50 长度100 边数6",
+      "feature_count": 1,
+      "features": [
+        {
+          "kind": "prism",
+          "operation": "add",
+          "parameters": {
+            "height": 100.0,
+            "axis": "Z",
+            "center": [0, 0, 0]
+          }
+        }
+      ],
+      "profile": [
+        [25.0, 0.0],
+        [12.500000000000004, 21.650635094610966],
+        [-12.499999999999995, 21.65063509461097],
+        [-25.0, 3.061616997868383e-15],
+        [-12.50000000000001, -21.650635094610962],
+        [12.500000000000004, -21.650635094610966]
+      ],
+      "legacy_mesh": {
+        "bounds_mm": [-25.0, -21.650635094610966, 0.0, 25.0, 21.65063509461097, 100.0],
+        "dimensions_mm": [50.0, 43.30127018922194, 100.0],
+        "volume_mm3": 162379.76320958228,
+        "faces": 14,
+        "triangles": 20
+      },
+      "native_brep": {
+        "dimensions_mm": [50.0, 43.30127018922194, 100.0],
+        "volume_mm3": 162379.76320958228
+      }
+    },
+    {
+      "input": "支撑腿 外径50 长度100 孔径12",
+      "feature_count": 2,
+      "features": [
+        {
+          "kind": "cylinder",
+          "operation": "add",
+          "parameters": {
+            "radius": 25.0,
+            "height": 100.0,
+            "center": [0, 0, 0],
+            "base": false,
+            "axis": "Z",
+            "segments": 48
+          }
+        },
+        {
+          "kind": "hole",
+          "operation": "cut",
+          "parameters": {
+            "diameter": 12.0,
+            "through": true,
+            "pos": "center",
+            "axis": "Z",
+            "segments": 32
+          }
+        }
+      ],
+      "legacy_mesh": {
+        "bounds_mm": [-25.0, -25.0, -50.0, 25.0, 25.0, 50.0],
+        "dimensions_mm": [50.0, 50.0, 100.0],
+        "volume_mm3": 184552.085781948,
+        "faces": 144,
+        "triangles": 320
+      },
+      "native_brep": {
+        "dimensions_mm": [50.0, 50.0, 100.0],
+        "volume_mm3": 185039.80729639764
+      }
+    },
+    {
+      "input": "支腿 外径50 长度100 边数6 孔径12",
+      "feature_count": 2,
+      "features": [
+        {
+          "kind": "prism",
+          "operation": "add",
+          "parameters": {
+            "height": 100.0,
+            "axis": "Z",
+            "center": [0, 0, 0]
+          }
+        },
+        {
+          "kind": "hole",
+          "operation": "cut",
+          "parameters": {
+            "diameter": 12.0,
+            "through": true,
+            "pos": "center",
+            "axis": "Z",
+            "segments": 32
+          }
+        }
+      ],
+      "profile": [
+        [25.0, 0.0],
+        [12.500000000000004, 21.650635094610966],
+        [-12.499999999999995, 21.65063509461097],
+        [-25.0, 3.061616997868383e-15],
+        [-12.50000000000001, -21.650635094610962],
+        [12.500000000000004, -21.650635094610966]
+      ],
+      "legacy_mesh": {
+        "bounds_mm": [-25.0, -21.650635094610966, 0.0, 25.0, 21.65063509461097, 100.0],
+        "dimensions_mm": [50.0, 43.30127018922194, 100.0],
+        "volume_mm3": 151142.5606614528,
+        "faces": 158,
+        "triangles": 252
+      },
+      "native_brep": {
+        "dimensions_mm": [50.0, 43.30127018922194, 100.0],
+        "volume_mm3": 151070.02965613063
+      }
+    }
+  ],
+  "legacy_generic_fallbacks": [
+    {
+      "input": "支腿 直径50 高100",
+      "feature_kind": "cylinder",
+      "base": true,
+      "dimensions_mm": [50.0, 50.0, 100.0],
+      "bounds_mm": [-25.0, -25.0, 0.0, 25.0, 25.0, 100.0],
+      "volume_mm3": 195789.28833007743
+    }
+  ],
+  "needs_clarification": [
+    {
+      "input": "支腿 D50 H100 孔径50",
+      "issue": "legacy_support_leg_hole_breakout"
+    }
+  ],
+  "unsupported": [
+    {
+      "input": "支腿 D50 H100 侧孔直径8",
+      "issue": "legacy_support_leg_modifier_not_migrated"
+    }
+  ]
+}
