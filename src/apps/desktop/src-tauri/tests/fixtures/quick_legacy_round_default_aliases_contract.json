@@ -1,0 +1,147 @@
+{
+  "source": "src/legacy/ai_modeler/core/parsing/nlparser.py via nlparser.parse(text).doc.to_dict(), replayed 2026-10-08",
+  "scope": "Legacy behavior contract for the isolated Rust canonicalizer in native_quick_parser/legacy_round_default_aliases.rs. This fixture does not assert Rust integration or runtime parity.",
+  "accepted": [
+    {
+      "input": "圆钢",
+      "canonical_text": "圆柱体 直径50 高50",
+      "inferred_fields": ["diameter=50 mm", "height=50 mm"],
+      "legacy_step": "圆柱 ⌀50 × 50 mm",
+      "legacy_feature": {"kind":"cylinder","op":"add","parameters":{"radius":25.0,"height":50.0,"radius2":null,"center":[0.0,0.0,0.0],"base":true,"axis":"Z","segments":48},"provenance":{}},
+      "required_derived_fields": ["radius", "height", "center", "base", "axis", "segments"]
+    },
+    {
+      "input": "圆钢 直径20",
+      "canonical_text": "圆柱体 直径20 高50",
+      "inferred_fields": ["height=50 mm"],
+      "legacy_step": "圆柱 ⌀20 × 50 mm",
+      "legacy_feature": {"kind":"cylinder","op":"add","parameters":{"radius":10.0,"height":50.0,"radius2":null,"center":[0.0,0.0,0.0],"base":true,"axis":"Z","segments":48},"provenance":{"radius":"explicit"}},
+      "required_derived_fields": ["radius", "height", "center", "base", "axis", "segments"],
+      "user_dimension": "diameter=20 mm"
+    },
+    {
+      "input": "圆凸台 直径20",
+      "canonical_text": "圆柱体 直径20 高50",
+      "inferred_fields": ["height=50 mm"],
+      "legacy_step": "圆柱 ⌀20 × 50 mm",
+      "legacy_feature": {"kind":"cylinder","op":"add","parameters":{"radius":10.0,"height":50.0,"radius2":null,"center":[0.0,0.0,0.0],"base":true,"axis":"Z","segments":48},"provenance":{"radius":"explicit"}},
+      "required_derived_fields": ["radius", "height", "center", "base", "axis", "segments"],
+      "user_dimension": "diameter=20 mm"
+    },
+    {
+      "input": "凸台",
+      "canonical_text": "圆柱体 直径50 高50",
+      "inferred_fields": ["diameter=50 mm", "height=50 mm"],
+      "legacy_step": "圆柱 ⌀50 × 50 mm",
+      "legacy_feature": {"kind":"cylinder","op":"add","parameters":{"radius":25.0,"height":50.0,"radius2":null,"center":[0.0,0.0,0.0],"base":true,"axis":"Z","segments":48},"provenance":{}},
+      "required_derived_fields": ["radius", "height", "center", "base", "axis", "segments"]
+    },
+    {
+      "input": "凸台直径20",
+      "canonical_text": "圆柱体 直径20 高50",
+      "inferred_fields": ["height=50 mm"],
+      "legacy_step": "圆柱 ⌀20 × 50 mm",
+      "legacy_feature": {"kind":"cylinder","op":"add","parameters":{"radius":10.0,"height":50.0,"radius2":null,"center":[0.0,0.0,0.0],"base":true,"axis":"Z","segments":48},"provenance":{"radius":"explicit"}},
+      "required_derived_fields": ["radius", "height", "center", "base", "axis", "segments"],
+      "user_dimension": "diameter=20 mm"
+    },
+    {
+      "input": "请帮我做一个凸台直径20",
+      "canonical_text": "请帮我做一个圆柱体 直径20 高50",
+      "inferred_fields": ["height=50 mm"],
+      "legacy_step": "圆柱 ⌀20 × 50 mm",
+      "legacy_feature": {"kind":"cylinder","op":"add","parameters":{"radius":10.0,"height":50.0,"radius2":null,"center":[0.0,0.0,0.0],"base":true,"axis":"Z","segments":48},"provenance":{"radius":"explicit"}},
+      "required_derived_fields": ["radius", "height", "center", "base", "axis", "segments"],
+      "user_dimension": "diameter=20 mm"
+    },
+    {
+      "input": "凸缘 直径20",
+      "canonical_text": "圆柱体 直径20 高50",
+      "inferred_fields": ["height=50 mm"],
+      "legacy_step": "圆柱 ⌀20 × 50 mm",
+      "legacy_feature": {"kind":"cylinder","op":"add","parameters":{"radius":10.0,"height":50.0,"radius2":null,"center":[0.0,0.0,0.0],"base":true,"axis":"Z","segments":48},"provenance":{"radius":"explicit"}},
+      "required_derived_fields": ["radius", "height", "center", "base", "axis", "segments"],
+      "user_dimension": "diameter=20 mm"
+    },
+    {
+      "input": "球",
+      "canonical_text": "球体 半径25",
+      "inferred_fields": ["radius=25 mm"],
+      "legacy_step": "球体 R25 mm",
+      "legacy_feature": {"kind":"sphere","op":"add","parameters":{"radius":25.0,"center":[0.0,0.0,0.0],"segments":32,"rings":16},"provenance":{}},
+      "required_derived_fields": ["radius", "center", "segments", "rings"]
+    },
+    {
+      "input": "帮我画一个圆钢直径20",
+      "canonical_text": "帮我画一个圆柱体 直径20 高50",
+      "inferred_fields": ["height=50 mm"],
+      "legacy_step": "圆柱 ⌀20 × 50 mm",
+      "legacy_feature": {"kind":"cylinder","op":"add","parameters":{"radius":10.0,"height":50.0,"radius2":null,"center":[0.0,0.0,0.0],"base":true,"axis":"Z","segments":48},"provenance":{"radius":"explicit"}},
+      "required_derived_fields": ["radius", "height", "center", "base", "axis", "segments"],
+      "user_dimension": "diameter=20 mm"
+    },
+    {
+      "input": "帮我做一个球",
+      "canonical_text": "帮我做一个球体 半径25",
+      "inferred_fields": ["radius=25 mm"],
+      "legacy_step": "球体 R25 mm",
+      "legacy_feature": {"kind":"sphere","op":"add","parameters":{"radius":25.0,"center":[0.0,0.0,0.0],"segments":32,"rings":16},"provenance":{}},
+      "required_derived_fields": ["radius", "center", "segments", "rings"]
+    },
+    {
+      "input": "锥体",
+      "canonical_text": "圆锥 底径50",
+      "inferred_fields": ["base_diameter=50 mm", "height=50 mm"],
+      "legacy_step": "圆台 R25→R0 × 50 mm",
+      "legacy_feature": {"kind":"cylinder","op":"add","parameters":{"radius":25.0,"radius2":0.0,"height":50.0,"center":[0.0,0.0,0.0],"base":true,"axis":"Z","segments":48},"provenance":{}},
+      "required_derived_fields": ["radius", "radius2", "height", "center", "base", "axis", "segments"]
+    },
+    {
+      "input": "锥形 直径20",
+      "canonical_text": "圆锥 底径20",
+      "inferred_fields": ["height=diameter value (legacy raw-dimension rule)"],
+      "legacy_step": "圆台 R10→R0 × 20 mm",
+      "legacy_feature": {"kind":"cylinder","op":"add","parameters":{"radius":10.0,"radius2":0.0,"height":20.0,"center":[0.0,0.0,0.0],"base":true,"axis":"Z","segments":48},"provenance":{}},
+      "required_derived_fields": ["radius", "radius2", "height", "center", "base", "axis", "segments"],
+      "user_dimension": "diameter=20 mm"
+    }
+  ],
+  "not_rewritten": [
+    {
+      "input": "底板上做一个圆凸台直径20",
+      "reason": "Compound body/secondary-feature description; never rewrite an infix boss name.",
+      "legacy_result": {"recognized":1,"steps":["长方体 20×60×20 mm"],"feature_kinds":["box"],"note":"Old Python parser did not create a boss; keep this legacy failure visible rather than inserting an invented standalone cylinder."}
+    },
+    {
+      "input": "底板上做一个凸台直径20",
+      "reason": "Compound body/secondary-feature context. The old Parser does not build a boss here; it falls back to a box and the standalone alias must not rewrite an infix noun.",
+      "legacy_result": {"recognized":1,"steps":["长方体 20×60×20 mm"],"feature_kinds":["box"],"parameters":{"length":20.0,"width":60.0,"height":20.0,"corner":0.0,"corner_mode":"fillet","center":[0.0,0.0,0.0],"base":true,"axis":"Z"},"dimensions_mm":[20.0,60.0,20.0],"volume_mm3":24000.0}
+    },
+    {
+      "input": "圆钢管直径20",
+      "reason": "Longer pipe alias must go to the existing tube recipe, not a solid-cylinder alias.",
+      "legacy_result": {"recognized":2,"steps":["管体: 圆柱 ⌀20 × 80 mm","内孔 ⌀12"],"feature_kinds":["cylinder","hole"]}
+    },
+    {
+      "input": "圆钢直径20高30",
+      "reason": "Two explicit dimensions; defer to full-dimension round alias parsing.",
+      "legacy_result": {"recognized":1,"steps":["圆柱 ⌀20 × 30 mm"],"feature_kinds":["cylinder"],"parameters":{"radius":10.0,"height":30.0,"radius2":null,"center":[0.0,0.0,0.0],"base":true,"axis":"Z","segments":48}}
+    },
+    {
+      "input": "锥体底径20高30",
+      "reason": "Two explicit dimensions; preserve old diameter+height plain-cylinder shortcut precedence.",
+      "legacy_result": {"recognized":1,"steps":["圆柱 ⌀20 × 30 mm"],"feature_kinds":["cylinder"],"parameters":{"radius":10.0,"height":30.0,"radius2":null,"center":[0.0,0.0,0.0],"base":true,"axis":"Z","segments":48}}
+    },
+    {
+      "input": "锥形直径20高30",
+      "reason": "Two explicit dimensions; preserve the same historical shortcut rather than applying the one-dimension cone rewrite.",
+      "legacy_result": {"recognized":1,"steps":["圆柱 ⌀20 × 30 mm"],"feature_kinds":["cylinder"],"parameters":{"radius":10.0,"height":30.0,"radius2":null,"center":[0.0,0.0,0.0],"base":true,"axis":"Z","segments":48}}
+    },
+    {
+      "input": "圆钢直径",
+      "reason": "Malformed numeric field; the new canonicalizer rejects it instead of converting malformed input into a silent default. Legacy Python itself fell back to its full defaults.",
+      "legacy_result": {"recognized":1,"steps":["圆柱 ⌀50 × 50 mm"],"feature_kinds":["cylinder"],"parameters":{"radius":25.0,"height":50.0,"radius2":null,"center":[0.0,0.0,0.0],"base":true,"axis":"Z","segments":48}}
+    }
+  ],
+  "legacy_priority_note": "The old Python `_looks_like_plain_cylinder` path takes precedence when diameter/radius and height are both present. Thus `锥体底径20高30` is a cylinder with radius2=null, but `锥体` is a pointed cone with radius2=0; `锥形直径20` is a pointed cone whose fallback height is 20 mm. The one-dimension canonicalizer must not append a synthetic height to a cone input."
+}

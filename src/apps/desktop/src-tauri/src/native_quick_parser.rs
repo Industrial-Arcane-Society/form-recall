@@ -13,6 +13,7 @@ mod legacy_catalog_socket_screw;
 mod legacy_linear_pattern_aliases;
 mod legacy_pocket_aliases;
 mod legacy_round_aliases;
+mod legacy_round_default_aliases;
 
 const BEARING_STANDARDS: &str = include_str!("../../../../legacy/kb/bearing_std.json");
 const LEGACY_LOCATOR_PIN_CATALOG: &str = include_str!("native_quick_locator_pin_catalog.json");
@@ -196,6 +197,62 @@ pub fn parse(text: &str) -> Value {
         return parsed;
     }
     if let Some(parsed) = legacy_catalog_cylinder_defaults::parse(text, &normalized) {
+        return parsed;
+    }
+
+    // Keep full-dimension round aliases on their historical route below. This
+    // compatibility path handles only standalone names with zero or one size.
+    if let Some(alias) = legacy_round_default_aliases::canonicalize_round_default_alias(text) {
+        let mut parsed = parse(&alias.canonical_text);
+        if parsed["status"] == "ready" {
+            parsed["source_text"] = json!(text);
+            parsed["plan"]["source_prompt"] = json!(text);
+            if let Some(features) = parsed["plan"]["features"].as_array_mut() {
+                for feature in features.iter_mut() {
+                    if let Some(sources) = feature["sources"].as_object_mut() {
+                        for source in sources.values_mut() {
+                            source["evidence"] = json!(text);
+                        }
+                    }
+                }
+                if let Some(feature) = features.first_mut() {
+                    for inferred in &alias.inferred_fields {
+                        let key = if inferred.starts_with("diameter=")
+                            || inferred.starts_with("base_diameter=")
+                            || inferred.starts_with("base_radius=")
+                            || inferred.starts_with("radius=")
+                        {
+                            Some("radius")
+                        } else if inferred.starts_with("height=") {
+                            Some("height")
+                        } else {
+                            None
+                        };
+                        if let Some(key) = key {
+                            feature["sources"][key] = derived_source(
+                                text,
+                                &format!(
+                                    "旧 Python Quick 单尺寸/默认映射：{inferred}；这是推导值，不是用户给定尺寸。"
+                                ),
+                            );
+                        }
+                    }
+                }
+            }
+            if let Some(warnings) = parsed["warnings"].as_array_mut() {
+                warnings.push(issue(
+                    "legacy_round_default_alias_applied",
+                    &format!(
+                        "按旧 Python Quick 的独立圆形基础体规则补全尺寸：{}；补入参数已标为 derived。",
+                        alias.inferred_fields.join("、")
+                    ),
+                ));
+                warnings.push(issue(
+                    "legacy_round_default_alias_geometry_defaults",
+                    "未给出的定位和离散参数沿用旧 Quick 默认值：圆柱/圆锥中心为全局原点、底面沿 +Z，48 段；球心为原点，32 段、16 环。",
+                ));
+            }
+        }
         return parsed;
     }
 
@@ -14780,6 +14837,139 @@ mod tests {
             for (key, expected) in case["parameters"].as_object().unwrap() {
                 assert_eq!(feature["parameters"][key], *expected, "{input}: {key}");
             }
+        }
+    }
+
+    #[test]
+    fn legacy_round_default_aliases_match_python_contract_and_derived_sources() {
+        let fixture: Value = serde_json::from_str(include_str!(
+            "../tests/fixtures/quick_legacy_round_default_aliases_contract.json"
+        ))
+        .expect("legacy round default alias fixture is valid JSON");
+
+        for case in fixture["accepted"].as_array().unwrap() {
+            let input = case["input"].as_str().unwrap();
+            let output = parse(input);
+            assert_eq!(output["status"], "ready", "{input}: {output}");
+            let validation = crate::cad_plan_validation::validate_plan(&output["plan"]);
+            assert_eq!(validation["state"], "valid", "{input}: {validation}");
+            assert_eq!(output["source_text"], input, "{input}");
+            assert_eq!(output["plan"]["source_prompt"], input, "{input}");
+
+            let features = output["plan"]["features"].as_array().unwrap();
+            assert_eq!(features.len(), 1, "{input}: {output}");
+            let feature = &features[0];
+            assert_eq!(feature["kind"], case["legacy_feature"]["kind"], "{input}");
+            assert_eq!(feature["operation"], case["legacy_feature"]["op"], "{input}");
+            for (key, expected) in case["legacy_feature"]["parameters"].as_object().unwrap() {
+                assert_eq!(feature["parameters"][key], *expected, "{input}: {key}");
+            }
+            for key in case["required_derived_fields"].as_array().unwrap() {
+                let key = key.as_str().unwrap();
+                assert_eq!(feature["sources"][key]["type"], "derived", "{input}: {key}");
+                assert_eq!(feature["sources"][key]["evidence"], input, "{input}: {key} evidence");
+            }
+            assert!(
+                output["warnings"]
+                    .to_string()
+                    .contains("legacy_round_default_alias_applied"),
+                "{input}: missing inferred-dimension warning: {output}"
+            );
+            assert!(
+                output["warnings"]
+                    .to_string()
+                    .contains("legacy_round_default_alias_geometry_defaults"),
+                "{input}: missing geometry-default warning: {output}"
+            );
+        }
+
+        // A user-specified sphere diameter is evidence, while the CADPlan
+        // radius converted from it remains derived.
+        let input = "球直径20";
+        let output = parse(input);
+        let feature = &output["plan"]["features"][0];
+        assert_eq!(feature["parameters"]["radius"], 10.0, "{input}");
+        assert_eq!(feature["sources"]["radius"]["type"], "derived", "{input}");
+        assert_eq!(feature["sources"]["radius"]["evidence"], input, "{input}");
+    }
+
+    #[test]
+    fn round_default_alias_does_not_change_full_dimension_shortcut_precedence() {
+        for input in ["圆钢直径20高30", "锥体底径20高30", "锥形直径20高30"] {
+            assert_eq!(
+                legacy_round_default_aliases::canonicalize_round_default_alias(input),
+                None,
+                "full-dimension alias must stay on the existing parser path: {input}"
+            );
+            let output = parse(input);
+            assert_eq!(output["status"], "ready", "{input}: {output}");
+            let feature = &output["plan"]["features"][0];
+            assert_eq!(feature["kind"], "cylinder", "{input}");
+            assert_eq!(feature["parameters"]["radius"], 10.0, "{input}");
+            assert_eq!(feature["parameters"]["height"], 30.0, "{input}");
+            assert!(feature["parameters"]["radius2"].is_null(), "{input}");
+        }
+
+        for input in ["底板上做一个凸台直径20", "底板上做一个圆凸台直径20"] {
+            assert_eq!(
+                legacy_round_default_aliases::canonicalize_round_default_alias(input),
+                None,
+                "compound input must not become a standalone cylinder: {input}"
+            );
+        }
+    }
+
+    #[test]
+    #[ignore = "requires an explicitly staged OCCT runtime; run the documented F5.77 acceptance command"]
+    fn f5_77_round_default_aliases_build_and_export_occt() {
+        let manifest = std::env::var_os("AIMODELER_TEST_OCCT_MANIFEST")
+            .map(std::path::PathBuf::from)
+            .expect("F5.77 requires AIMODELER_TEST_OCCT_MANIFEST");
+        assert!(manifest.is_file(), "OCCT manifest missing: {}", manifest.display());
+
+        let root = std::env::temp_dir().join(format!(
+            "quick-f5-77-{}-{}",
+            std::process::id(),
+            std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .unwrap()
+                .as_nanos()
+        ));
+        std::fs::create_dir_all(&root).unwrap();
+        struct RemoveOnDrop(std::path::PathBuf);
+        impl Drop for RemoveOnDrop {
+            fn drop(&mut self) {
+                let _ = std::fs::remove_dir_all(&self.0);
+            }
+        }
+        let _cleanup = RemoveOnDrop(root.clone());
+
+        for (index, (prompt, dimensions)) in [
+            ("凸台", [50.0, 50.0, 50.0]),
+            ("球", [50.0, 50.0, 50.0]),
+            ("锥体", [50.0, 50.0, 50.0]),
+        ]
+        .into_iter()
+        .enumerate()
+        {
+            let result = crate::native_quick::build(prompt, index as i64 + 1, &manifest, &root)
+                .unwrap_or_else(|error| panic!("F5.77 OCCT build failed for {prompt}: {error}"));
+            assert_eq!(result["state"], "complete", "{prompt}: {result}");
+            let report = &result["geometry_report"];
+            assert_eq!(report["state"], "passed", "{prompt}: {report}");
+            assert_eq!(report["valid"], true, "{prompt}: {report}");
+            assert_eq!(report["closed_solid_count"], 1, "{prompt}: {report}");
+            for (actual, expected) in report["dimensions_mm"].as_array().unwrap().iter().zip(dimensions) {
+                let actual = actual.as_f64().expect("numeric measured dimension");
+                assert!((actual - expected).abs() <= 1e-8, "{prompt}: {report}");
+            }
+            for key in ["aimodel", "stl", "obj", "glb"] {
+                let path = result["output_paths"][key]
+                    .as_str()
+                    .unwrap_or_else(|| panic!("{prompt}: missing {key} output path"));
+                assert!(std::path::Path::new(path).is_file(), "{prompt}: missing {key}: {path}");
+            }
+            eprintln!("F5.77 PASS: {prompt} -> {:?} mm", dimensions);
         }
     }
 
