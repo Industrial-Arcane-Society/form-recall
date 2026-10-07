@@ -1,0 +1,446 @@
+{
+  "schema_version": "1.0",
+  "legacy_entrypoint": "src/legacy/ai_modeler/core/parsing/nlparser.py::Parser.parse",
+  "legacy_builder": "src/legacy/ai_modeler/parts/library/partlib.py::_cam",
+  "legacy_profile": "src/legacy/ai_modeler/core/geometry/kernel.py::profile_cam",
+  "profile_contract": {
+    "angle_deg": 120.0,
+    "sample_count": 72,
+    "coordinate_rounding_decimals": 4,
+    "points": [
+      [
+        20.0,
+        0.0
+      ],
+      [
+        20.0183,
+        1.7514
+      ],
+      [
+        20.0652,
+        3.538
+      ],
+      [
+        20.1169,
+        5.3903
+      ],
+      [
+        20.1365,
+        7.3291
+      ],
+      [
+        20.0774,
+        9.3623
+      ],
+      [
+        19.888,
+        11.4824
+      ],
+      [
+        19.5167,
+        13.6658
+      ],
+      [
+        18.9172,
+        15.8734
+      ],
+      [
+        18.053,
+        18.053
+      ],
+      [
+        16.9017,
+        20.1426
+      ],
+      [
+        15.4574,
+        22.0754
+      ],
+      [
+        13.7321,
+        23.7846
+      ],
+      [
+        11.7551,
+        25.2088
+      ],
+      [
+        9.5714,
+        26.2971
+      ],
+      [
+        7.2469,
+        27.0459
+      ],
+      [
+        4.8621,
+        27.5746
+      ],
+      [
+        2.4404,
+        27.8935
+      ],
+      [
+        0.0,
+        28.0
+      ],
+      [
+        -2.4404,
+        27.8935
+      ],
+      [
+        -4.8621,
+        27.5746
+      ],
+      [
+        -7.2469,
+        27.0459
+      ],
+      [
+        -9.5766,
+        26.3114
+      ],
+      [
+        -11.8333,
+        25.3766
+      ],
+      [
+        -14.0,
+        24.2487
+      ],
+      [
+        -16.0552,
+        22.9292
+      ],
+      [
+        -17.9761,
+        21.423
+      ],
+      [
+        -19.7446,
+        19.7446
+      ],
+      [
+        -21.3448,
+        17.9104
+      ],
+      [
+        -22.7624,
+        15.9384
+      ],
+      [
+        -23.985,
+        13.8478
+      ],
+      [
+        -25.0028,
+        11.659
+      ],
+      [
+        -25.8078,
+        9.3933
+      ],
+      [
+        -26.3948,
+        7.0725
+      ],
+      [
+        -26.7606,
+        4.7186
+      ],
+      [
+        -26.9046,
+        2.3538
+      ],
+      [
+        -26.8284,
+        0.0
+      ],
+      [
+        -26.536,
+        -2.3216
+      ],
+      [
+        -26.0334,
+        -4.5904
+      ],
+      [
+        -25.3288,
+        -6.7868
+      ],
+      [
+        -24.432,
+        -8.8925
+      ],
+      [
+        -23.3548,
+        -10.8905
+      ],
+      [
+        -22.1103,
+        -12.7654
+      ],
+      [
+        -20.7129,
+        -14.5033
+      ],
+      [
+        -19.1781,
+        -16.0924
+      ],
+      [
+        -17.5224,
+        -17.5224
+      ],
+      [
+        -15.7625,
+        -18.785
+      ],
+      [
+        -13.9159,
+        -19.8739
+      ],
+      [
+        -12.0,
+        -20.7846
+      ],
+      [
+        -10.0323,
+        -21.5143
+      ],
+      [
+        -8.0299,
+        -22.062
+      ],
+      [
+        -6.0097,
+        -22.4284
+      ],
+      [
+        -3.9878,
+        -22.6158
+      ],
+      [
+        -1.9797,
+        -22.6278
+      ],
+      [
+        -0.0,
+        -22.4693
+      ],
+      [
+        1.9375,
+        -22.1463
+      ],
+      [
+        3.8203,
+        -21.6658
+      ],
+      [
+        5.6365,
+        -21.0357
+      ],
+      [
+        7.3756,
+        -20.2644
+      ],
+      [
+        9.0282,
+        -19.3611
+      ],
+      [
+        10.5858,
+        -18.3351
+      ],
+      [
+        12.0409,
+        -17.1962
+      ],
+      [
+        13.3871,
+        -15.9541
+      ],
+      [
+        14.6188,
+        -14.6188
+      ],
+      [
+        15.7314,
+        -13.2002
+      ],
+      [
+        16.7209,
+        -11.7081
+      ],
+      [
+        17.5842,
+        -10.1522
+      ],
+      [
+        18.3185,
+        -8.5421
+      ],
+      [
+        18.9219,
+        -6.887
+      ],
+      [
+        19.3928,
+        -5.1963
+      ],
+      [
+        19.7299,
+        -3.4789
+      ],
+      [
+        19.9324,
+        -1.7439
+      ]
+    ]
+  },
+  "legacy_accepted": [
+    {
+      "input": "盘形凸轮 基圆直径40 外径56 厚度10",
+      "sources": {
+        "d": "user",
+        "D": "user",
+        "b": "user"
+      },
+      "expected": {
+        "kind": "prism",
+        "height": 10.0,
+        "dimensions_mm": [
+          47.0411,
+          50.6278,
+          10.0
+        ],
+        "legacy_mesh_volume_mm3": 19158.78553895,
+        "warning_contains": []
+      }
+    },
+    {
+      "input": "盘形凸轮 外径56 厚度10",
+      "sources": {
+        "d": "default",
+        "D": "user",
+        "b": "user"
+      },
+      "expected": {
+        "kind": "prism",
+        "height": 10.0,
+        "dimensions_mm": [
+          47.0411,
+          50.6278,
+          10.0
+        ],
+        "legacy_mesh_volume_mm3": 19158.78553895,
+        "warning_contains": [
+          "这些参数没写，已按零件库典型值代入：d（可在右侧「参数」页改）"
+        ]
+      }
+    },
+    {
+      "input": "盘形凸轮 基圆直径40 外径56",
+      "sources": {
+        "d": "user",
+        "D": "user",
+        "b": "default"
+      },
+      "expected": {
+        "kind": "prism",
+        "height": 10,
+        "dimensions_mm": [
+          47.0411,
+          50.6278,
+          10.0
+        ],
+        "legacy_mesh_volume_mm3": 19158.78553895,
+        "warning_contains": [
+          "这些参数没写，已按零件库典型值代入：b（可在右侧「参数」页改）"
+        ]
+      }
+    },
+    {
+      "input": "盘形凸轮 外径56",
+      "sources": {
+        "d": "default",
+        "D": "user",
+        "b": "default"
+      },
+      "expected": {
+        "kind": "prism",
+        "height": 10,
+        "dimensions_mm": [
+          47.0411,
+          50.6278,
+          10.0
+        ],
+        "legacy_mesh_volume_mm3": 19158.78553895,
+        "warning_contains": [
+          "这些参数没写，已按零件库典型值代入：d、b（可在右侧「参数」页改）"
+        ]
+      }
+    },
+    {
+      "input": "盘形凸轮 d40 D56 b10",
+      "sources": {
+        "d": "user",
+        "D": "user",
+        "b": "user"
+      },
+      "expected": {
+        "kind": "prism",
+        "height": 10.0,
+        "dimensions_mm": [
+          47.0411,
+          50.6278,
+          10.0
+        ],
+        "legacy_mesh_volume_mm3": 19158.78553895,
+        "warning_contains": []
+      }
+    }
+  ],
+  "not_ready": [
+    {
+      "input": "盘形凸轮 基圆直径40 厚度10",
+      "issue": "legacy_disc_cam_outer_diameter_missing",
+      "legacy_behavior": "Parser.parse falls back to a generic cylinder; Rust asks for the missing cam outer diameter."
+    },
+    {
+      "input": "盘形凸轮 基圆直径73 外径60 厚度17",
+      "issue": "legacy_disc_cam_base_not_smaller_than_outer",
+      "legacy_behavior": "Parser.parse falls back to a generic cylinder; Rust rejects contradictory cam diameters."
+    },
+    {
+      "input": "盘形凸轮 外径56 厚度0",
+      "issue": "legacy_disc_cam_thickness_invalid"
+    }
+  ],
+  "unsupported": [
+    {
+      "input": "盘形凸轮 基圆直径40 外径56 厚度10 中心孔8",
+      "issue": "legacy_disc_cam_modifier_not_migrated"
+    },
+    {
+      "input": "盘形凸轮 基圆直径40 外径56 厚度10 升程角90度",
+      "issue": "legacy_disc_cam_custom_rise_angle_not_migrated"
+    }
+  ],
+  "native_expected_cases": [
+    {
+      "input": "盘形凸轮 基圆直径40 外径56 厚度10",
+      "dimensions_mm": [
+        47.0411,
+        50.6278,
+        10.0
+      ],
+      "volume_mm3": 19158.78553895,
+      "legacy_mesh_volume_mm3": 19158.78553895,
+      "max_relative_legacy_volume_delta": 0.001,
+      "closed_solid_count": 1,
+      "feature_count": 1,
+      "profile_point_count": 72
+    }
+  ]
+}

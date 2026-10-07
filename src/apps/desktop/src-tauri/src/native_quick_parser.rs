@@ -32,7 +32,7 @@ pub fn parse(text: &str) -> Value {
     let mut unsupported = Vec::<Value>::new();
     let mut warnings = vec![json!({
         "code":"legacy_implicit_dimensions_removed",
-        "message":"仅已迁移的旧 Quick 基础体、单段实心轴、拉伸/回转、模板和矩形槽规则沿用默认值，并逐项说明；其余缺少必需尺寸或孔位时返回澄清。"
+        "message":"仅已迁移的旧 Quick 基础体、单段实心轴、盘形凸轮、拉伸/回转、模板和矩形槽规则沿用默认值，并逐项说明；其余缺少必需尺寸或孔位时返回澄清。"
     })];
     if text.trim().is_empty() {
         return result(
@@ -71,6 +71,9 @@ pub fn parse(text: &str) -> Value {
         return parsed;
     }
     if let Some(parsed) = parse_legacy_flat_key(text, &normalized) {
+        return parsed;
+    }
+    if let Some(parsed) = parse_legacy_disc_cam(text, &normalized) {
         return parsed;
     }
     if let Some(parsed) = parse_legacy_simple_ring(text, &normalized) {
@@ -571,7 +574,7 @@ fn result(
     unsupported: Vec<Value>,
 ) -> Value {
     json!({"status":status,"source_text":text,"plan":plan,"warnings":warnings,"questions":questions,"unsupported":unsupported,
-        "compatibility":{"scope":"common explicit primitives/cuts, migrated standalone primitive defaults and legacy extrusion/revolve constructors, centered solid-shaft aliases, rectangular slots, flat-washer rings, cylindrical/conical spring helices, measured socket-head screws with optional washers, V-belt pulleys, timing pulleys, straight-gear construction, PCD counterbores, migrated legacy washer/spring/shaft/bearing/seal-ring/coupling/brake-disc/brake-drum/flywheel/flat-annular-part recipes, and executable flange/stepped-shaft/sleeve/blade/blisk templates","legacy_typical_defaults":"restored only for migrated Quick constructors/templates, centered solid shafts (Ø30 mm when diameter is absent), straight gears, timing pulleys, V-belt pulleys, socket-head screw catalog recipes, rectangular slots, flat-washer thickness, spring wire/turn values, brake-disc thickness/bore values, brake-drum bore values, and flywheel center-bore/PCD-hole values, and flat-annular-part bore/thickness values; defaults and raw-dimension mappings are reported as warnings","loft_geometry":"blade and blisk lofts are locally approximate faceted B-Reps","timing_pulley_geometry":"native timing pulley teeth are approximate trapezoidal prisms fused to an analytic annular blank","vbelt_pulley_geometry":"standard V-groove pulley is an approximate axisymmetric revolve; legacy spoke variants and CATIA-native groove features are not included","helix_geometry":"spring helices are locally approximate faceted B-Reps and are not native CATIA features","socket_head_bolt_geometry":"measured catalog dimensions and washers are preserved; native Rust adds visible faceted threads where the legacy Python Quick recipe reconstructed a smooth shank","solid_shaft_geometry":"the old mesh kernel used a 48-sided cylinder; Rust/OCCT uses an analytic cylinder, so bounding boxes agree while volume differs by the expected polygonal approximation"}})
+        "compatibility":{"scope":"common explicit primitives/cuts, migrated standalone primitive defaults and legacy extrusion/revolve constructors, centered solid-shaft aliases, rectangular slots, flat-washer rings, cylindrical/conical spring helices, measured socket-head screws with optional washers, V-belt pulleys, timing pulleys, straight-gear construction, PCD counterbores, migrated legacy washer/spring/shaft/bearing/seal-ring/coupling/brake-disc/brake-drum/flywheel/flat-annular-part/disc-cam recipes, and executable flange/stepped-shaft/sleeve/blade/blisk templates","legacy_typical_defaults":"restored only for migrated Quick constructors/templates, centered solid shafts (Ø30 mm when diameter is absent), straight gears, timing pulleys, V-belt pulleys, socket-head screw catalog recipes, rectangular slots, flat-washer thickness, spring wire/turn values, brake-disc thickness/bore values, brake-drum bore values, flywheel center-bore/PCD-hole values, flat-annular-part bore/thickness values, and disc-cam base diameter/thickness; defaults and raw-dimension mappings are reported as warnings","loft_geometry":"blade and blisk lofts are locally approximate faceted B-Reps","timing_pulley_geometry":"native timing pulley teeth are approximate trapezoidal prisms fused to an analytic annular blank","vbelt_pulley_geometry":"standard V-groove pulley is an approximate axisymmetric revolve; legacy spoke variants and CATIA-native groove features are not included","helix_geometry":"spring helices are locally approximate faceted B-Reps and are not native CATIA features","socket_head_bolt_geometry":"measured catalog dimensions and washers are preserved; native Rust adds visible faceted threads where the legacy Python Quick recipe reconstructed a smooth shank","solid_shaft_geometry":"the old mesh kernel used a 48-sided cylinder; Rust/OCCT uses an analytic cylinder, so bounding boxes agree while volume differs by the expected polygonal approximation","disc_cam_geometry":"72-point faceted polar profile extruded along Z; only the legacy fixed 120-degree rise angle is supported"}})
 }
 
 fn parse_legacy_template(raw: &str, normalized: &str) -> Option<Value> {
@@ -2096,6 +2099,178 @@ fn parse_legacy_flat_key(raw: &str, text: &str) -> Option<Value> {
         "relations":[]
     });
     Some(plan_result(raw, "平键", vec![feature], warnings))
+}
+
+/// Migrate the old Python Quick disc-cam recipe. The legacy profile is a
+/// 72-point polar polygon with a 120-degree simple-harmonic rise/dwell/return,
+/// rounded to four decimal places before it is extruded along Z.
+fn parse_legacy_disc_cam(raw: &str, text: &str) -> Option<Value> {
+    // Do not capture camshafts as disc cams. The legacy library has a separate
+    // camshaft recipe and its geometry is outside this migration.
+    if contains_any(text, &["凸轮轴", "camshaft"]) {
+        return None;
+    }
+    if !contains_any(text, &["盘形凸轮"]) {
+        return None;
+    }
+
+    if contains_any(
+        text,
+        &[
+            "孔", "钻", "打孔", "槽", "键槽", "螺纹", "倒角", "圆角", "阵列", "切除",
+            "安装", "并加", "同时", "再加", "还要", "hole", "slot", "thread", "chamfer",
+            "fillet", "pattern", "cut",
+        ],
+    ) {
+        return Some(parse_result_with_issue(
+            "unsupported",
+            raw,
+            "legacy_disc_cam_modifier_not_migrated",
+            "本项只迁移旧 Python Quick 的盘形凸轮主体；孔槽、边缘修饰、阵列及附加结构尚未迁入。",
+        ));
+    }
+    if contains_any(
+        text,
+        &["升程角", "升角", "轮廓角", "角度", "profile angle", "angle"],
+    ) {
+        return Some(parse_result_with_issue(
+            "unsupported",
+            raw,
+            "legacy_disc_cam_custom_rise_angle_not_migrated",
+            "旧 Python Quick 参数表没有暴露升程角；当前只复现其固定 120° 轮廓。",
+        ));
+    }
+
+    let base_diameter = pulley_scalar(raw, text, &["基圆直径", "基圆"], &["d"]);
+    let outer_diameter = pulley_scalar(
+        raw,
+        text,
+        &["最大直径", "外径"],
+        &["D"],
+    );
+    let thickness = pulley_scalar(raw, text, &["厚度", "宽度", "厚"], &["b"]);
+
+    let mut questions = Vec::new();
+    match outer_diameter {
+        Some(value) if value.is_finite() && value > 0.0 => {}
+        Some(_) => questions.push(issue(
+            "legacy_disc_cam_outer_diameter_invalid",
+            "盘形凸轮外径必须是唯一且有限的正数。",
+        )),
+        None => questions.push(issue(
+            "legacy_disc_cam_outer_diameter_missing",
+            "请明确盘形凸轮外径；缺少外径时旧解析器会退化成圆柱，不能据此认定为凸轮。",
+        )),
+    }
+    for (value, code, label) in [
+        (base_diameter, "legacy_disc_cam_base_diameter_invalid", "基圆直径"),
+        (thickness, "legacy_disc_cam_thickness_invalid", "厚度"),
+    ] {
+        if value.is_some_and(|value| !value.is_finite() || value <= 0.0) {
+            questions.push(issue(
+                code,
+                format!("盘形凸轮{label}必须是有限的正数，且同一参数不能出现冲突数值。"),
+            ));
+        }
+    }
+    if !questions.is_empty() {
+        return Some(result("needs_clarification", raw, None, vec![], questions, vec![]));
+    }
+
+    let outer_diameter = outer_diameter.expect("validated disc-cam outer diameter");
+    let base_defaulted = base_diameter.is_none();
+    let thickness_defaulted = thickness.is_none();
+    let base_diameter = base_diameter.unwrap_or(40.0);
+    let thickness = thickness.unwrap_or(10.0);
+    if base_diameter >= outer_diameter {
+        return Some(parse_result_with_issue(
+            "needs_clarification",
+            raw,
+            "legacy_disc_cam_base_not_smaller_than_outer",
+            "基圆直径必须小于凸轮外径；请核对这两个尺寸。",
+        ));
+    }
+
+    let lift = ((outer_diameter - base_diameter) / 2.0).max(0.5);
+    let minimum_lift_applied = (outer_diameter - base_diameter) / 2.0 < 0.5;
+    let profile = legacy_disc_cam_profile(base_diameter / 2.0, lift);
+    let mut warnings = Vec::new();
+    let mut defaulted = Vec::new();
+    if base_defaulted {
+        defaulted.push("基圆直径 d=40 mm");
+    }
+    if thickness_defaulted {
+        defaulted.push("厚度 b=10 mm");
+    }
+    if !defaulted.is_empty() {
+        warnings.push(issue(
+            "legacy_disc_cam_defaults",
+            format!("沿用旧 Python Quick 盘形凸轮典型值：{}。", defaulted.join("、")),
+        ));
+    }
+    if minimum_lift_applied {
+        warnings.push(issue(
+            "legacy_disc_cam_minimum_lift",
+            "沿用旧 Python Quick 最小凸轮升程 0.5 mm；实际最大轮廓会比给定基圆直径大 1 mm。",
+        ));
+    }
+    if !has_unit(text) {
+        warnings.push(issue(
+            "unit_interpreted_as_mm",
+            "未写长度单位的盘形凸轮尺寸按旧 Quick 默认单位 mm 解释。",
+        ));
+    }
+    warnings.push(issue(
+        "legacy_disc_cam_polygon_profile",
+        "按旧 Python Quick 的 72 个极坐标点和固定 120° 简谐升程轮廓生成直线段凸轮；不是解析曲线或工程级共轭凸轮。",
+    ));
+
+    let profile_source = derived_source(
+        raw,
+        "旧 Python Quick profile_cam：基圆半径 d/2、升程 max(0.5,(D-d)/2)、固定 120° 简谐上升/保持/下降，72 点并四舍五入至 0.0001 mm。",
+    );
+    let feature = json!({
+        "id":"quick-0001",
+        "kind":"prism",
+        "operation":"add",
+        "name":"盘形凸轮主体",
+        "parameters":{
+            "profile":profile,
+            "height":thickness,
+            "center":[0.0,0.0,0.0],
+            "axis":"Z"
+        },
+        "sources":{
+            "profile":profile_source,
+            "height":if thickness_defaulted { derived_source(raw, "沿用旧 Python Quick 盘形凸轮典型厚度 b=10 mm。") } else { user_source(raw) },
+            "center":derived_source(raw, "沿用旧 Python Quick 盘形凸轮以原点为轮廓中心，并从 Z=0 沿正 Z 拉伸。"),
+            "axis":derived_source(raw, "沿用旧 Python Quick 盘形凸轮沿全局 Z 轴拉伸。")
+        },
+        "relations":[]
+    });
+    Some(plan_result(raw, "盘形凸轮", vec![feature], warnings))
+}
+
+fn legacy_disc_cam_profile(base_radius: f64, lift: f64) -> Vec<[f64; 2]> {
+    (0..72)
+        .map(|index| {
+            let angle = std::f64::consts::TAU * index as f64 / 72.0;
+            let degrees = angle.to_degrees();
+            let radius = if degrees < 72.0 {
+                let t = degrees / 72.0;
+                base_radius + lift * 0.5 * (1.0 - (std::f64::consts::PI * t).cos())
+            } else if degrees < 120.0 {
+                base_radius + lift
+            } else {
+                let t = (degrees - 120.0) / 240.0;
+                base_radius + lift * 0.5 * (1.0 + (std::f64::consts::PI * t).cos())
+            };
+            [
+                ((radius * angle.cos()) * 10_000.0).round() / 10_000.0,
+                ((radius * angle.sin()) * 10_000.0).round() / 10_000.0,
+            ]
+        })
+        .collect()
 }
 
 /// Migrate the legacy Python Quick brake-drum recipe. The historical builder
@@ -10451,6 +10626,68 @@ mod tests {
             assert_eq!(
                 crate::native_plan_geometry::preflight(&output["plan"])
                     .unwrap()["state"],
+                "valid",
+                "{input}"
+            );
+        }
+
+        for case in fixture["not_ready"].as_array().unwrap() {
+            let input = case["input"].as_str().unwrap();
+            let output = parse(input);
+            assert_eq!(output["status"], "needs_clarification", "{input}: {output}");
+            assert!(output["plan"].is_null(), "{input}: {output}");
+            assert!(output.to_string().contains(case["issue"].as_str().unwrap()), "{input}: {output}");
+        }
+
+        for case in fixture["unsupported"].as_array().unwrap() {
+            let input = case["input"].as_str().unwrap();
+            let output = parse(input);
+            assert_eq!(output["status"], "unsupported", "{input}: {output}");
+            assert!(output["plan"].is_null(), "{input}: {output}");
+            assert!(output.to_string().contains(case["issue"].as_str().unwrap()), "{input}: {output}");
+        }
+    }
+
+    #[test]
+    fn legacy_disc_cam_profile_matches_python_oracle_and_default_provenance() {
+        let fixture: Value = serde_json::from_str(include_str!(
+            "../tests/fixtures/quick_legacy_disc_cam_contract.json"
+        ))
+        .expect("disc-cam Python oracle fixture is valid JSON");
+        let expected_profile = &fixture["profile_contract"]["points"];
+
+        for case in fixture["legacy_accepted"].as_array().unwrap() {
+            let input = case["input"].as_str().unwrap();
+            let output = parse(input);
+            assert_eq!(output["status"], "ready", "{input}: {output}");
+            assert_eq!(output["plan"]["name"], "盘形凸轮", "{input}: {output}");
+            let features = output["plan"]["features"].as_array().unwrap();
+            assert_eq!(features.len(), 1, "{input}: {output}");
+            let cam = &features[0];
+            assert_eq!(cam["kind"], "prism", "{input}: {cam}");
+            assert_eq!(cam["operation"], "add", "{input}: {cam}");
+            assert_eq!(cam["parameters"]["profile"], *expected_profile, "{input}: profile differs from Python Quick");
+            assert!((cam["parameters"]["height"].as_f64().unwrap() - case["expected"]["height"].as_f64().unwrap()).abs() < 1e-10, "{input}: thickness");
+            assert_eq!(cam["parameters"]["center"], json!([0.0, 0.0, 0.0]), "{input}");
+            assert_eq!(cam["parameters"]["axis"], "Z", "{input}");
+            assert_eq!(cam["sources"]["profile"]["type"], "derived", "{input}");
+            for key in ["d", "D", "b"] {
+                let expected_source = case["sources"][key].as_str().unwrap();
+                if expected_source == "default" {
+                    assert!(output["warnings"].to_string().contains("legacy_disc_cam_defaults"), "{input}: {output}");
+                    if key == "b" {
+                        assert_eq!(cam["sources"]["height"]["type"], "derived", "{input}: default thickness source");
+                    }
+                }
+            }
+            assert_eq!(
+                crate::cad_plan_validation::validate_plan(&output["plan"])["state"],
+                "valid",
+                "{input}: {}",
+                crate::cad_plan_validation::validate_plan(&output["plan"])
+            );
+            assert_eq!(
+                crate::native_plan_geometry::preflight(&output["plan"]).unwrap()["state"],
                 "valid",
                 "{input}"
             );
