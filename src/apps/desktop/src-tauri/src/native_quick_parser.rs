@@ -9894,10 +9894,15 @@ fn parse_legacy_gear(raw: &str, normalized: &str) -> Option<Value> {
     if !contains_any(normalized, &["齿轮", "齿坯", "gear"]) {
         return None;
     }
-    // Mixed base requests stay in the generic fail-closed parser. `圆柱` is
-    // part of the legacy helical-gear alias `斜齿圆柱齿轮`, so remove that
-    // designation before checking for a second, actual cylinder base shape.
-    let mixed_shape_text = normalized.replace("斜齿圆柱齿轮", "");
+    // Mixed base requests stay in the generic fail-closed parser. The old
+    // `直齿圆柱齿轮`/`圆柱齿轮` part-library names and the helical designation
+    // contain `圆柱`, which describes the gear family rather than another
+    // requested base primitive. Remove those complete names before checking
+    // for a second, actual cylinder base shape.
+    let mixed_shape_text = normalized
+        .replace("斜齿圆柱齿轮", "")
+        .replace("直齿圆柱齿轮", "")
+        .replace("圆柱齿轮", "");
     if contains_any(
         &mixed_shape_text,
         &[
@@ -9909,6 +9914,8 @@ fn parse_legacy_gear(raw: &str, normalized: &str) -> Option<Value> {
         return None;
     }
 
+    let partlib_centered_gear = contains_any(normalized, &["直齿圆柱齿轮", "圆柱齿轮"])
+        && !normalized.contains("斜齿圆柱齿轮");
     let helical_gear = contains_any(
         normalized,
         &["斜齿圆柱齿轮", "斜齿轮", "螺旋齿轮", "helical gear"],
@@ -10146,11 +10153,24 @@ fn parse_legacy_gear(raw: &str, normalized: &str) -> Option<Value> {
             |_| user_source(raw),
         ),
     );
-    parameters.insert("base".into(), json!(true));
+    parameters.insert("base".into(), json!(!partlib_centered_gear));
     sources.insert(
         "base".into(),
-        derived_source(raw, "沿用旧 Python Quick base=true，齿轮从中心平面沿轴向正向拉伸。"),
+        derived_source(
+            raw,
+            if partlib_centered_gear {
+                "沿用旧 Python Quick 零件库 _gear 的 base=false，对称于中心平面拉伸。"
+            } else {
+                "沿用旧 Python Quick base=true，齿轮从中心平面沿轴向正向拉伸。"
+            },
+        ),
     );
+    if partlib_centered_gear {
+        warnings.push(issue(
+            "legacy_partlib_gear_centered_extrusion",
+            "该圆柱齿轮名称走旧 Python partlib 零件库配方，沿 Z 轴关于中心平面对称拉伸。",
+        ));
+    }
     features.push(feature(1, "gear", "add", Value::Object(parameters), Value::Object(sources)));
 
     let bore_value = if bore_marked {
@@ -13697,6 +13717,29 @@ mod tests {
         );
         assert_eq!(
             crate::native_plan_geometry::preflight(&explicit["plan"]).unwrap()["state"],
+            "valid"
+        );
+
+        let legacy_partlib = parse("直齿圆柱齿轮 模数3 齿数24 齿宽20");
+        assert_eq!(legacy_partlib["status"], "ready", "{legacy_partlib}");
+        assert_eq!(legacy_partlib["plan"]["features"].as_array().unwrap().len(), 1);
+        let gear = &legacy_partlib["plan"]["features"][0];
+        assert_eq!(gear["kind"], "gear");
+        assert_eq!(gear["parameters"]["teeth"], 24);
+        assert_eq!(gear["parameters"]["module"], 3.0);
+        assert_eq!(gear["parameters"]["height"], 20.0);
+        assert_eq!(gear["parameters"]["base"], false);
+        assert_eq!(gear["parameters"]["axis"], "Z");
+        assert_eq!(gear["sources"]["base"]["type"], "derived");
+        assert!(legacy_partlib["warnings"]
+            .to_string()
+            .contains("legacy_partlib_gear_centered_extrusion"));
+        assert_eq!(
+            crate::cad_plan_validation::validate_plan(&legacy_partlib["plan"])["state"],
+            "valid"
+        );
+        assert_eq!(
+            crate::native_plan_geometry::preflight(&legacy_partlib["plan"]).unwrap()["state"],
             "valid"
         );
     }

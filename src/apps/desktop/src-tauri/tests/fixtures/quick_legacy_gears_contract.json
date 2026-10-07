@@ -16,6 +16,13 @@
       "gear": {"teeth": 30, "module": 2.0, "height": 20.0, "base": true, "axis": "Z"},
       "bore_diameter": 12.0,
       "feature_count": 2
+    },
+    {
+      "input": "直齿圆柱齿轮 模数3 齿数24 齿宽20",
+      "dimensions_mm": [77.96151170852707, 77.96151170852707, 20.0],
+      "volume_mm3": 78709.34196818559,
+      "gear": {"teeth": 24, "module": 3.0, "height": 20.0, "base": false, "axis": "Z"},
+      "feature_count": 1
     }
   ]
 }
