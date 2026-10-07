@@ -32,7 +32,7 @@ pub fn parse(text: &str) -> Value {
     let mut unsupported = Vec::<Value>::new();
     let mut warnings = vec![json!({
         "code":"legacy_implicit_dimensions_removed",
-        "message":"仅已迁移的旧 Quick 基础体、单段实心轴、盘形凸轮、拉伸/回转、模板和矩形槽规则沿用默认值，并逐项说明；其余缺少必需尺寸或孔位时返回澄清。"
+        "message":"仅已迁移的旧 Quick 基础体、单段实心轴、花键轴、盘形凸轮、拉伸/回转、模板和矩形槽规则沿用默认值，并逐项说明；其余缺少必需尺寸或孔位时返回澄清。"
     })];
     if text.trim().is_empty() {
         return result(
@@ -68,6 +68,9 @@ pub fn parse(text: &str) -> Value {
         return parsed;
     }
     if let Some(parsed) = parse_legacy_flat_annular_parts(text, &normalized) {
+        return parsed;
+    }
+    if let Some(parsed) = parse_legacy_spline_shaft(text, &normalized) {
         return parsed;
     }
     if let Some(parsed) = parse_legacy_flat_key(text, &normalized) {
@@ -574,7 +577,7 @@ fn result(
     unsupported: Vec<Value>,
 ) -> Value {
     json!({"status":status,"source_text":text,"plan":plan,"warnings":warnings,"questions":questions,"unsupported":unsupported,
-        "compatibility":{"scope":"common explicit primitives/cuts, migrated standalone primitive defaults and legacy extrusion/revolve constructors, centered solid-shaft aliases, rectangular slots, flat-washer rings, cylindrical/conical spring helices, measured socket-head screws with optional washers, V-belt pulleys, timing pulleys, straight-gear construction, PCD counterbores, migrated legacy washer/spring/shaft/bearing/seal-ring/coupling/brake-disc/brake-drum/flywheel/flat-annular-part/disc-cam recipes, and executable flange/stepped-shaft/sleeve/blade/blisk templates","legacy_typical_defaults":"restored only for migrated Quick constructors/templates, centered solid shafts (Ø30 mm when diameter is absent), straight gears, timing pulleys, V-belt pulleys, socket-head screw catalog recipes, rectangular slots, flat-washer thickness, spring wire/turn values, brake-disc thickness/bore values, brake-drum bore values, flywheel center-bore/PCD-hole values, flat-annular-part bore/thickness values, and disc-cam base diameter/thickness; defaults and raw-dimension mappings are reported as warnings","loft_geometry":"blade and blisk lofts are locally approximate faceted B-Reps","timing_pulley_geometry":"native timing pulley teeth are approximate trapezoidal prisms fused to an analytic annular blank","vbelt_pulley_geometry":"standard V-groove pulley is an approximate axisymmetric revolve; legacy spoke variants and CATIA-native groove features are not included","helix_geometry":"spring helices are locally approximate faceted B-Reps and are not native CATIA features","socket_head_bolt_geometry":"measured catalog dimensions and washers are preserved; native Rust adds visible faceted threads where the legacy Python Quick recipe reconstructed a smooth shank","solid_shaft_geometry":"the old mesh kernel used a 48-sided cylinder; Rust/OCCT uses an analytic cylinder, so bounding boxes agree while volume differs by the expected polygonal approximation","disc_cam_geometry":"72-point faceted polar profile extruded along Z; only the legacy fixed 120-degree rise angle is supported"}})
+        "compatibility":{"scope":"common explicit primitives/cuts, migrated standalone primitive defaults and legacy extrusion/revolve constructors, centered solid-shaft aliases, rectangular slots, flat-washer rings, cylindrical/conical spring helices, measured socket-head screws with optional washers, V-belt pulleys, timing pulleys, straight-gear construction, PCD counterbores, migrated legacy washer/spring/shaft/bearing/seal-ring/coupling/brake-disc/brake-drum/flywheel/flat-annular-part/disc-cam/spline-shaft recipes, and executable flange/stepped-shaft/sleeve/blade/blisk templates","legacy_typical_defaults":"restored only for migrated Quick constructors/templates, centered solid shafts (Ø30 mm when diameter is absent), straight gears, timing pulleys, V-belt pulleys, socket-head screw catalog recipes, rectangular slots, flat-washer thickness, spring wire/turn values, brake-disc thickness/bore values, brake-drum bore values, flywheel center-bore/PCD-hole values, flat-annular-part bore/thickness values, disc-cam base diameter/thickness, and spline-shaft minor diameter/tooth count; defaults and raw-dimension mappings are reported as warnings","loft_geometry":"blade and blisk lofts are locally approximate faceted B-Reps","timing_pulley_geometry":"native timing pulley teeth are approximate trapezoidal prisms fused to an analytic annular blank","vbelt_pulley_geometry":"standard V-groove pulley is an approximate axisymmetric revolve; legacy spoke variants and CATIA-native groove features are not included","helix_geometry":"spring helices are locally approximate faceted B-Reps and are not native CATIA features","socket_head_bolt_geometry":"measured catalog dimensions and washers are preserved; native Rust adds visible faceted threads where the legacy Python Quick recipe reconstructed a smooth shank","solid_shaft_geometry":"the old mesh kernel used a 48-sided cylinder; Rust/OCCT uses an analytic cylinder, so bounding boxes agree while volume differs by the expected polygonal approximation","disc_cam_geometry":"72-point faceted polar profile extruded along Z; only the legacy fixed 120-degree rise angle is supported","spline_shaft_geometry":"7-point-per-tooth faceted spline profile; the legacy involute-spline alias is not an involute profile"}})
 }
 
 fn parse_legacy_template(raw: &str, normalized: &str) -> Option<Value> {
@@ -2099,6 +2102,203 @@ fn parse_legacy_flat_key(raw: &str, text: &str) -> Option<Value> {
         "relations":[]
     });
     Some(plan_result(raw, "平键", vec![feature], warnings))
+}
+
+/// Migrate the old Quick spline-shaft constructor. It emits one Z-axis prism
+/// whose 2D profile is a faceted rectangular spline, including for the legacy
+/// alias "渐开线花键" (which is not an involute profile in the old builder).
+fn parse_legacy_spline_shaft(raw: &str, text: &str) -> Option<Value> {
+    let involute_alias = contains_any(text, &["渐开线花键"]);
+    let named = contains_any(text, &["花键轴", "矩形花键", "渐开线花键"]);
+    if !named || contains_any(text, &["花键联轴器", "花键套", "花键轮毂"]) {
+        return None;
+    }
+
+    if contains_any(
+        text,
+        &[
+            "键槽", "孔", "钻", "螺纹", "倒角", "圆角", "阵列", "切除", "安装", "并加",
+            "同时", "再加", "还要", "齿顶宽", "齿根圆角", "齿形参数", "花键标准", "keyway",
+            "hole", "thread", "chamfer", "fillet", "pattern", "cut",
+        ],
+    ) {
+        return Some(parse_result_with_issue(
+            "unsupported",
+            raw,
+            "legacy_spline_shaft_modifier_not_migrated",
+            "本项只迁移旧 Python Quick 的花键轴主体；键槽、孔槽、边缘修饰、阵列和自定义齿形尚未迁入。",
+        ));
+    }
+
+    let minor_diameter = pulley_scalar(raw, text, &["小径", "内径"], &["d"]);
+    let major_diameter = pulley_scalar(raw, text, &["大径", "外径"], &["D"]);
+    let length = pulley_scalar(raw, text, &["长度", "长"], &["L", "l"]);
+    let teeth = pulley_scalar(raw, text, &["齿数"], &["z", "Z"]);
+
+    let mut questions = Vec::new();
+    match major_diameter {
+        Some(value) if value.is_finite() && value > 0.0 => {}
+        Some(_) => questions.push(issue(
+            "legacy_spline_shaft_major_diameter_invalid",
+            "花键轴大径必须是唯一且有限的正数。",
+        )),
+        None => questions.push(issue(
+            "legacy_spline_shaft_major_diameter_missing",
+            "请明确花键轴大径；缺少大径时旧解析器可能退回普通圆柱，不能据此确认花键外形。",
+        )),
+    }
+    match length {
+        Some(value) if value.is_finite() && value > 0.0 => {}
+        Some(_) => questions.push(issue(
+            "legacy_spline_shaft_length_invalid",
+            "花键轴长度必须是唯一且有限的正数。",
+        )),
+        None => questions.push(issue(
+            "legacy_spline_shaft_length_missing",
+            "请明确花键轴长度。",
+        )),
+    }
+    for (value, code, label) in [
+        (minor_diameter, "legacy_spline_shaft_minor_diameter_invalid", "小径"),
+        (teeth, "legacy_spline_shaft_tooth_count_invalid", "齿数"),
+    ] {
+        if value.is_some_and(|value| !value.is_finite() || value <= 0.0) {
+            questions.push(issue(
+                code,
+                format!("花键轴{label}必须是唯一且有限的正数。"),
+            ));
+        }
+    }
+    if teeth.is_some_and(|value| value.is_finite() && (value - value.round()).abs() > 1e-9) {
+        questions.push(issue(
+            "legacy_spline_shaft_tooth_count_not_integer",
+            "花键齿数必须为整数；旧实现会静默截断小数，Rust 要求给出明确整数。",
+        ));
+    }
+    if !questions.is_empty() {
+        return Some(result("needs_clarification", raw, None, vec![], questions, vec![]));
+    }
+
+    let major_diameter = major_diameter.expect("validated spline major diameter");
+    let length = length.expect("validated spline length");
+    let minor_defaulted = minor_diameter.is_none();
+    let teeth_defaulted = teeth.is_none();
+    let minor_diameter = minor_diameter.unwrap_or(20.0);
+    let requested_teeth = teeth.unwrap_or(8.0) as u64;
+    if minor_diameter >= major_diameter {
+        return Some(parse_result_with_issue(
+            "needs_clarification",
+            raw,
+            "legacy_spline_shaft_diameter_order",
+            "花键轴大径必须大于小径；请核对两者尺寸。",
+        ));
+    }
+    if requested_teeth > 128 {
+        return Some(result(
+            "unsupported",
+            raw,
+            None,
+            vec![],
+            vec![],
+            vec![issue(
+                "legacy_spline_shaft_native_tooth_limit",
+                "旧配方可按更高齿数生成网格，但 Rust Quick 为保持响应速度将花键齿数限制为 128。",
+            )],
+        ));
+    }
+
+    let teeth = requested_teeth.max(4);
+    let mut warnings = Vec::new();
+    let mut defaulted = Vec::new();
+    if minor_defaulted {
+        defaulted.push("小径 d=20 mm");
+    }
+    if teeth_defaulted {
+        defaulted.push("齿数 z=8");
+    }
+    if !defaulted.is_empty() {
+        warnings.push(issue(
+            "legacy_spline_shaft_defaults",
+            format!("沿用旧 Python Quick 花键轴典型值：{}。", defaulted.join("、")),
+        ));
+    }
+    if requested_teeth < 4 {
+        warnings.push(issue(
+            "legacy_spline_shaft_minimum_tooth_count",
+            "沿用旧 Python Quick 的最少 4 齿下限；已将请求齿数提升为 4。",
+        ));
+    }
+    if !has_unit(text) {
+        warnings.push(issue(
+            "unit_interpreted_as_mm",
+            "未写长度单位的花键轴尺寸按旧 Quick 默认单位 mm 解释。",
+        ));
+    }
+    warnings.push(issue(
+        "legacy_spline_shaft_faceted_profile",
+        if involute_alias {
+            "旧 Python Quick 即使使用“渐开线花键”名称，也生成简化矩形齿轮廓；当前逐点复现该多边形，不是渐开线齿形。"
+        } else {
+            "旧 Python Quick 花键是每齿 7 个点的多边形简化截面，不包含公差、齿侧修形或标准渐开线。"
+        },
+    ));
+
+    let outer_radius = major_diameter / 2.0;
+    let root_radius = (minor_diameter / 2.0).min(outer_radius * 0.92);
+    let tooth_height = (outer_radius - root_radius).max(0.5);
+    let profile = legacy_spline_profile(root_radius, tooth_height, teeth as usize);
+    let feature = json!({
+        "id":"quick-0001",
+        "kind":"prism",
+        "operation":"add",
+        "name":"花键轴主体",
+        "parameters":{
+            "profile":profile,
+            "height":length,
+            "center":[0.0,0.0,0.0],
+            "axis":"Z"
+        },
+        "sources":{
+            "profile":derived_source(raw, "旧 Python Quick profile_spline：齿顶半径 D/2，齿根半径 min(d/2,0.92×D/2)，每齿 7 点并四舍五入到 0.0001 mm。"),
+            "height":user_source(raw),
+            "center":derived_source(raw, "沿用旧 Python Quick 花键轴棱柱以原点为截面原点，从 Z=0 沿正 Z 拉伸。"),
+            "axis":derived_source(raw, "沿用旧 Python Quick 花键轴沿全局 Z 轴拉伸。")
+        },
+        "relations":[]
+    });
+    Some(plan_result(raw, "花键轴", vec![feature], warnings))
+}
+
+fn legacy_spline_profile(root_radius: f64, tooth_height: f64, teeth: usize) -> Vec<[f64; 2]> {
+    let teeth = teeth.max(4);
+    let outer_radius = root_radius + tooth_height;
+    let step = std::f64::consts::TAU / teeth as f64;
+    let half = step * 0.5 * 0.5;
+    let tip = half * 0.85;
+    let phase = step / 4.0;
+    let mut profile = Vec::with_capacity(teeth * 7);
+    for index in 0..teeth {
+        let center = index as f64 * step + phase;
+        let root_start = center - step / 2.0 + 1e-4;
+        let root_end = center - half;
+        let tip_start = center - tip;
+        let tip_end = center + tip;
+        for (radius, angle) in [
+            (root_radius, root_start),
+            (root_radius, root_end),
+            (outer_radius, tip_start),
+            (outer_radius, tip_start + 2.0 * tip / 3.0),
+            (outer_radius, tip_start + 4.0 * tip / 3.0),
+            (outer_radius, tip_end),
+            (root_radius, center + half),
+        ] {
+            profile.push([
+                ((radius * angle.cos()) * 10_000.0).round() / 10_000.0,
+                ((radius * angle.sin()) * 10_000.0).round() / 10_000.0,
+            ]);
+        }
+    }
+    profile
 }
 
 /// Migrate the old Python Quick disc-cam recipe. The legacy profile is a
@@ -10679,6 +10879,65 @@ mod tests {
                         assert_eq!(cam["sources"]["height"]["type"], "derived", "{input}: default thickness source");
                     }
                 }
+            }
+            assert_eq!(
+                crate::cad_plan_validation::validate_plan(&output["plan"])["state"],
+                "valid",
+                "{input}: {}",
+                crate::cad_plan_validation::validate_plan(&output["plan"])
+            );
+            assert_eq!(
+                crate::native_plan_geometry::preflight(&output["plan"]).unwrap()["state"],
+                "valid",
+                "{input}"
+            );
+        }
+
+        for case in fixture["not_ready"].as_array().unwrap() {
+            let input = case["input"].as_str().unwrap();
+            let output = parse(input);
+            assert_eq!(output["status"], "needs_clarification", "{input}: {output}");
+            assert!(output["plan"].is_null(), "{input}: {output}");
+            assert!(output.to_string().contains(case["issue"].as_str().unwrap()), "{input}: {output}");
+        }
+
+        for case in fixture["unsupported"].as_array().unwrap() {
+            let input = case["input"].as_str().unwrap();
+            let output = parse(input);
+            assert_eq!(output["status"], "unsupported", "{input}: {output}");
+            assert!(output["plan"].is_null(), "{input}: {output}");
+            assert!(output.to_string().contains(case["issue"].as_str().unwrap()), "{input}: {output}");
+        }
+    }
+
+    #[test]
+    fn legacy_spline_shafts_match_python_oracle_and_default_provenance() {
+        let fixture: Value = serde_json::from_str(include_str!(
+            "../tests/fixtures/quick_legacy_spline_shaft_contract.json"
+        ))
+        .expect("spline-shaft Python oracle fixture is valid JSON");
+
+        for case in fixture["legacy_accepted"].as_array().unwrap() {
+            let input = case["input"].as_str().unwrap();
+            let output = parse(input);
+            assert_eq!(output["status"], "ready", "{input}: {output}");
+            assert_eq!(output["plan"]["name"], "花键轴", "{input}: {output}");
+            let features = output["plan"]["features"].as_array().unwrap();
+            assert_eq!(features.len(), 1, "{input}: {output}");
+            let spline = &features[0];
+            assert_eq!(spline["kind"], "prism", "{input}: {spline}");
+            assert_eq!(spline["operation"], "add", "{input}: {spline}");
+            let tooth_count = case["profile_teeth"].as_u64().unwrap().to_string();
+            let profile_contract = &fixture["profile_contracts"]["tooth_count"][&tooth_count];
+            assert_eq!(spline["parameters"]["profile"], profile_contract["points"], "{input}: profile differs from Python Quick");
+            assert_eq!(spline["parameters"]["profile"].as_array().map(Vec::len), Some(case["expected"]["profile_point_count"].as_u64().unwrap() as usize), "{input}");
+            assert!((spline["parameters"]["height"].as_f64().unwrap() - case["expected"]["height"].as_f64().unwrap()).abs() < 1e-10, "{input}: length");
+            assert_eq!(spline["parameters"]["center"], json!([0.0, 0.0, 0.0]), "{input}");
+            assert_eq!(spline["parameters"]["axis"], "Z", "{input}");
+            assert_eq!(spline["sources"]["profile"]["type"], "derived", "{input}");
+            assert_eq!(spline["sources"]["height"]["type"], "user", "{input}");
+            if case["sources"].as_object().unwrap().values().any(|value| value == "default") || case["profile_teeth"] == 4 {
+                assert!(output["warnings"].to_string().contains("legacy_spline_shaft_defaults") || output["warnings"].to_string().contains("legacy_spline_shaft_minimum_tooth_count"), "{input}: {output}");
             }
             assert_eq!(
                 crate::cad_plan_validation::validate_plan(&output["plan"])["state"],
