@@ -1,0 +1,75 @@
+{
+  "schema_version": "1.0",
+  "legacy_entrypoint": "src/legacy/ai_modeler/core/parsing/nlparser.py::Parser.parse",
+  "legacy_recipe": "src/legacy/ai_modeler/parts/library/partlib.py::_cross_joint",
+  "legacy_geometry": "src/legacy/ai_modeler/core/geometry/kernel.py::make_cross_joint",
+  "legacy_defaults": {
+    "journal_d_mm": 20,
+    "span_min_mm": 2,
+    "journal_d_min_mm": 1,
+    "hub_formula": "min(0.30 * span, 0.90 * journal_d)",
+    "journal_segments": 24
+  },
+  "legacy_accepted": [
+    {
+      "input": "万向节十字轴 跨距80 轴颈直径20",
+      "feature_count": 1,
+      "native_expected": {"span": 80, "journal_d": 20, "center": [0, 0, 0], "segments": 24},
+      "source_user": ["span", "journal_d"],
+      "source_derived": ["center", "segments"],
+      "dimensions_mm": [80, 80, 20]
+    },
+    {
+      "input": "十字轴 跨距80 轴颈20",
+      "feature_count": 1,
+      "native_expected": {"span": 80, "journal_d": 20, "center": [0, 0, 0], "segments": 24},
+      "source_user": ["span", "journal_d"],
+      "source_derived": ["center", "segments"],
+      "dimensions_mm": [80, 80, 20]
+    },
+    {
+      "input": "万向节 跨距80",
+      "feature_count": 1,
+      "native_expected": {"span": 80, "journal_d": 20, "center": [0, 0, 0], "segments": 24},
+      "source_user": ["span"],
+      "source_derived": ["journal_d", "center", "segments"],
+      "warnings": ["legacy_cross_joint_default_journal_d"],
+      "dimensions_mm": [80, 80, 20]
+    },
+    {
+      "input": "万向节 跨距80 轴颈直径2cm",
+      "feature_count": 1,
+      "native_expected": {"span": 80, "journal_d": 20, "center": [0, 0, 0], "segments": 24},
+      "legacy_native_expected": {"span": 80, "journal_d": 2},
+      "source_user": ["span", "journal_d"],
+      "source_derived": ["center", "segments"],
+      "unit_conversion_improves_legacy": true,
+      "legacy_dimensions_mm": [80, 80, 2],
+      "dimensions_mm": [80, 80, 20]
+    },
+    {
+      "input": "万向节十字轴 跨距80 轴颈20 通孔5",
+      "feature_count": 2,
+      "native_expected": {"span": 80, "journal_d": 20, "center": [0, 0, 0], "segments": 24},
+      "hole_expected": {"kind": "hole", "operation": "cut", "diameter": 5, "through": true, "axis": "Z", "pos": "center"},
+      "source_user": ["span", "journal_d"],
+      "source_derived": ["center", "segments"],
+      "dimensions_mm": [80, 80, 20],
+      "hole_d_mm": 5
+    }
+  ],
+  "needs_clarification": [
+    {"input": "万向节", "issue": "legacy_cross_joint_span_missing"},
+    {"input": "万向节 跨距80 跨距90 轴颈20", "issue": "legacy_cross_joint_span_conflict"},
+    {"input": "万向节十字轴 跨距80 中心孔", "issue": "legacy_cross_joint_hole_d_missing"}
+  ],
+  "unsupported": [
+    {"input": "万向节十字轴 跨距80 轴颈20 孔径5", "issue": "legacy_cross_joint_modifier_not_migrated"},
+    {"input": "万向节十字轴 跨距80 轴颈20 键槽5", "issue": "legacy_cross_joint_modifier_not_migrated"}
+  ],
+  "geometry_acceptance": [
+    {"input": "万向节 跨距80", "dimensions_mm": [80, 80, 20]},
+    {"input": "万向节十字轴 跨距80 轴颈20 通孔5", "dimensions_mm": [80, 80, 20], "hole_d_mm": 5},
+    {"input": "万向节 跨距80 轴颈直径2cm", "dimensions_mm": [80, 80, 20]}
+  ]
+}

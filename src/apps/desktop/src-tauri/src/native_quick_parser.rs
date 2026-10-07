@@ -58,6 +58,9 @@ pub fn parse(text: &str) -> Value {
     if let Some(parsed) = parse_legacy_conrod(text, &normalized) {
         return parsed;
     }
+    if let Some(parsed) = parse_legacy_cross_joint(text, &normalized) {
+        return parsed;
+    }
     if let Some(parsed) = parse_legacy_camshaft(text, &normalized) {
         return parsed;
     }
@@ -3109,6 +3112,228 @@ fn parse_legacy_conrod(raw: &str, text: &str) -> Option<Value> {
 /// Migrate the old Python Quick camshaft recipe. Its required base diameter,
 /// lift and length must be explicit; the old feature constructor defaults the
 /// lobe count to four and the kernel derives the journal diameter when absent.
+/// Migrate the old Python Quick universal-joint cross shaft. The legacy
+/// parser requires a span, defaults the journal diameter to the part-library
+/// typical value, and permits one center through-hole as a separate cut.
+fn parse_legacy_cross_joint(raw: &str, text: &str) -> Option<Value> {
+    if contains_any(text, &["轴承", "bearing"]) {
+        return None;
+    }
+    if !contains_any(
+        text,
+        &[
+            "万向节十字轴",
+            "十字轴",
+            "万向节",
+            "cross_joint",
+            "cross joint",
+            "universal joint",
+        ],
+    ) {
+        return None;
+    }
+
+    let span = pulley_scalar(
+        raw,
+        text,
+        &["总跨距", "跨距", "中心距", "长度", "长", "span"],
+        &["L", "l"],
+    );
+    let journal_d = pulley_scalar(
+        raw,
+        text,
+        &["轴颈直径", "轴颈", "journal diameter", "journal"],
+        &["d"],
+    );
+    let hole_requested = contains_any(text, &["孔", "hole", "bore", "drill"]);
+    let center_hole_requested = contains_any(
+        text,
+        &["通孔", "中心孔", "中心通孔", "through hole", "center hole", "center bore"],
+    );
+    let hole_d = pulley_scalar(
+        raw,
+        text,
+        &[
+            "通孔直径",
+            "中心孔直径",
+            "孔径",
+            "中心通孔",
+            "中心孔",
+            "通孔",
+            "through hole",
+            "center hole",
+            "center bore",
+        ],
+        &["dh"],
+    );
+
+    if contains_any(
+        text,
+        &[
+            "盲孔", "沉孔", "油孔", "润滑孔", "螺栓孔", "槽", "slot", "pocket", "keyway",
+            "螺纹", "thread", "倒角", "chamfer", "圆角", "fillet", "阵列", "镜像",
+            "再加", "同时", "另外", "并加", "多个", "一对", "pair", "cut",
+        ],
+    ) || (hole_requested && !center_hole_requested)
+    {
+        return Some(parse_result_with_issue(
+            "unsupported",
+            raw,
+            "legacy_cross_joint_modifier_not_migrated",
+            "当前只迁移旧 Python Quick 万向节十字轴主体和单个中心通孔；盲孔、沉孔、油孔、槽、螺纹、边缘修饰、阵列及多个附加孔尚未迁入。",
+        ));
+    }
+
+    let mut questions = Vec::new();
+    match span {
+        Some(value) if value.is_finite() && value > 0.0 => {}
+        Some(value) if !value.is_finite() => questions.push(issue(
+            "legacy_cross_joint_span_conflict",
+            "十字轴跨距存在重复且互相冲突的数值；请只给出一个跨距。",
+        )),
+        Some(_) => questions.push(issue(
+            "legacy_cross_joint_span_invalid",
+            "十字轴跨距必须是有限正数。",
+        )),
+        None => questions.push(issue(
+            "legacy_cross_joint_span_missing",
+            "请明确万向节十字轴的总跨距 L。",
+        )),
+    }
+    if journal_d.is_some_and(|value| !value.is_finite()) {
+        questions.push(issue(
+            "legacy_cross_joint_journal_d_conflict",
+            "十字轴轴颈直径存在重复且互相冲突的数值；请只给出一个轴颈直径。",
+        ));
+    }
+    if hole_d.is_some_and(|value| !value.is_finite()) {
+        questions.push(issue(
+            "legacy_cross_joint_hole_d_conflict",
+            "十字轴中心通孔直径存在重复且互相冲突的数值；请只给出一个孔径。",
+        ));
+    }
+    if center_hole_requested && hole_d.is_none() {
+        questions.push(issue(
+            "legacy_cross_joint_hole_d_missing",
+            "请明确十字轴中心通孔直径；旧 Quick 会按贯穿切除处理。",
+        ));
+    }
+    if hole_d.is_some() && !center_hole_requested {
+        questions.push(issue(
+            "legacy_cross_joint_hole_location_missing",
+            "十字轴孔径需要配合明确的中心通孔位置；其他孔位尚未迁移。",
+        ));
+    }
+    if !questions.is_empty() {
+        return Some(result("needs_clarification", raw, None, vec![], questions, vec![]));
+    }
+
+    let requested_span = span.expect("validated cross-joint span");
+    let requested_journal_d = journal_d.filter(|value| *value > 0.0).unwrap_or(20.0);
+    let span = requested_span.max(2.0);
+    let journal_defaulted = journal_d.is_none_or(|value| value <= 0.0);
+    let journal_d = requested_journal_d.max(1.0);
+    let span_clamped = !close(span, requested_span);
+    let journal_clamped = !journal_defaulted && !close(journal_d, requested_journal_d);
+
+    let mut warnings = vec![issue(
+        "legacy_cross_joint_migrated",
+        "已按旧 Python Quick 万向节十字轴配方建立中心块和四个互相垂直的轴颈。",
+    )];
+    if journal_defaulted {
+        warnings.push(issue(
+            "legacy_cross_joint_default_journal_d",
+            "沿用旧 Python Quick 万向节十字轴典型轴颈直径 20 mm。",
+        ));
+    }
+    if span_clamped || journal_clamped {
+        let mut clamped = Vec::new();
+        if span_clamped {
+            clamped.push("跨距下限 2 mm");
+        }
+        if journal_clamped {
+            clamped.push("轴颈直径下限 1 mm");
+        }
+        warnings.push(issue(
+            "legacy_cross_joint_geometry_clamped",
+            format!("沿用旧 Python 几何内核的尺寸下限：{}。", clamped.join("、")),
+        ));
+    }
+    if !crankshaft_has_unit(text) {
+        warnings.push(issue(
+            "unit_interpreted_as_mm",
+            "未写长度单位的十字轴尺寸按旧 Quick 默认单位 mm 解释。",
+        ));
+    } else if crankshaft_has_non_mm_unit(text) {
+        warnings.push(issue(
+            "legacy_cross_joint_unit_conversion",
+            "Rust 将明确标注的非毫米单位换算为 mm；旧 Python 零件库曾保留原始数值。",
+        ));
+    }
+
+    let parameters = json!({
+        "span":span,
+        "journal_d":journal_d,
+        "center":[0.0,0.0,0.0],
+        "segments":24
+    });
+    if let Err(error) = crate::native_parametric_features::preflight_cross_joint(&parameters) {
+        return Some(result(
+            "needs_clarification",
+            raw,
+            None,
+            vec![],
+            vec![issue(
+                "legacy_cross_joint_geometry_parameters_invalid",
+                format!("当前十字轴参数无法形成有效几何：{error}"),
+            )],
+            vec![],
+        ));
+    }
+
+    let mut features = vec![json!({
+        "id":"quick-0001",
+        "kind":"cross_joint",
+        "operation":"add",
+        "name":"万向节十字轴",
+        "parameters":parameters,
+        "sources":{
+            "span":if span_clamped { derived_source(raw, "沿用旧 Python 几何内核将十字轴跨距至少取 2 mm。") } else { user_source(raw) },
+            "journal_d":if journal_defaulted { derived_source(raw, "沿用旧 Python Quick 万向节十字轴典型轴颈直径 20 mm。") } else if journal_clamped { derived_source(raw, "沿用旧 Python 几何内核将轴颈直径至少取 1 mm。") } else { user_source(raw) },
+            "center":derived_source(raw, "旧 Python Quick 将十字轴中心块置于全局原点。"),
+            "segments":derived_source(raw, "旧 Python Quick 的轴颈圆柱为 24 段；本地 OCCT 使用解析圆柱。")
+        },
+        "relations":[]
+    })];
+    if center_hole_requested {
+        let diameter = hole_d.expect("validated center through-hole diameter");
+        if diameter <= 0.0 {
+            return Some(parse_result_with_issue(
+                "needs_clarification",
+                raw,
+                "legacy_cross_joint_hole_d_invalid",
+                "十字轴中心通孔直径必须为正数。",
+            ));
+        }
+        features.push(json!({
+            "id":"quick-0002",
+            "kind":"hole",
+            "operation":"cut",
+            "name":"十字轴中心通孔",
+            "parameters":{"diameter":diameter,"through":true,"axis":"Z","pos":"center","segments":24},
+            "sources":{
+                "diameter":user_source(raw),
+                "through":derived_source(raw, "沿用旧 Python Quick 中心通孔的贯穿切除语义。"),
+                "axis":derived_source(raw, "旧 Python Quick 对未指定方向的中心通孔沿全局 Z 轴切除。"),
+                "pos":derived_source(raw, "旧 Python Quick 将未指定位置的通孔置于零件中心。"),
+                "segments":derived_source(raw, "旧 Python Quick 圆孔分段数为 24。")
+            },
+            "relations":[]
+        }));
+    }
+    Some(plan_result(raw, "万向节十字轴", features, warnings))
+}
+
 fn parse_legacy_camshaft(raw: &str, text: &str) -> Option<Value> {
     if !contains_any(text, &["凸轮轴", "camshaft"]) {
         return None;
@@ -12408,6 +12633,105 @@ mod f5_46_legacy_conrod_contract_tests {
             );
             if case.get("unit_conversion_improves_legacy").is_some() {
                 assert!(output.to_string().contains("legacy_conrod_unit_conversion"), "{input}: {output}");
+            }
+        }
+
+        for case in fixture["needs_clarification"].as_array().unwrap() {
+            let input = case["input"].as_str().unwrap();
+            let output = parse(input);
+            assert_eq!(output["status"], "needs_clarification", "{input}: {output}");
+            assert!(output["plan"].is_null(), "{input}: {output}");
+            assert!(output.to_string().contains(case["issue"].as_str().unwrap()), "{input}: {output}");
+        }
+
+        for case in fixture["unsupported"].as_array().unwrap() {
+            let input = case["input"].as_str().unwrap();
+            let output = parse(input);
+            assert_eq!(output["status"], "unsupported", "{input}: {output}");
+            assert!(output["plan"].is_null(), "{input}: {output}");
+            assert!(output.to_string().contains(case["issue"].as_str().unwrap()), "{input}: {output}");
+        }
+    }
+}
+
+#[cfg(test)]
+mod f5_47_legacy_cross_joint_contract_tests {
+    use super::parse;
+    use serde_json::Value;
+
+    #[test]
+    fn legacy_cross_joints_match_python_oracle_defaults_holes_units_and_boundaries() {
+        let fixture: Value = serde_json::from_str(include_str!(
+            "../tests/fixtures/quick_legacy_cross_joint_contract.json"
+        ))
+        .expect("cross-joint Python oracle fixture is valid JSON");
+
+        for case in fixture["legacy_accepted"].as_array().unwrap() {
+            let input = case["input"].as_str().unwrap();
+            let output = parse(input);
+            assert_eq!(output["status"], "ready", "{input}: {output}");
+            assert_eq!(output["plan"]["name"], "万向节十字轴", "{input}: {output}");
+            let features = output["plan"]["features"].as_array().unwrap();
+            assert_eq!(
+                features.len(),
+                case["feature_count"].as_u64().unwrap() as usize,
+                "{input}: {output}"
+            );
+            let cross_joint = &features[0];
+            assert_eq!(cross_joint["kind"], "cross_joint", "{input}: {output}");
+            assert_eq!(cross_joint["operation"], "add", "{input}: {output}");
+            for (name, expected) in case["native_expected"].as_object().unwrap() {
+                if let Some(expected_values) = expected.as_array() {
+                    let actual_values = cross_joint["parameters"][name].as_array().unwrap();
+                    assert_eq!(actual_values.len(), expected_values.len(), "{input}: {name}");
+                    for (actual, expected) in actual_values.iter().zip(expected_values) {
+                        assert!(
+                            (actual.as_f64().unwrap() - expected.as_f64().unwrap()).abs() <= 1e-9,
+                            "{input}: {name}={actual}, expected {expected}"
+                        );
+                    }
+                } else {
+                    assert_eq!(cross_joint["parameters"][name], *expected, "{input}: {name}");
+                }
+            }
+            for name in case["source_user"].as_array().unwrap() {
+                assert_eq!(
+                    cross_joint["sources"][name.as_str().unwrap()]["type"],
+                    "user",
+                    "{input}: {name} source"
+                );
+            }
+            for name in case["source_derived"].as_array().unwrap() {
+                assert_eq!(
+                    cross_joint["sources"][name.as_str().unwrap()]["type"],
+                    "derived",
+                    "{input}: {name} source"
+                );
+            }
+            if let Some(expected_hole) = case.get("hole_expected") {
+                let hole = &features[1];
+                for (name, expected) in expected_hole.as_object().unwrap() {
+                    if name == "kind" || name == "operation" {
+                        assert_eq!(hole[name], *expected, "{input}: {name}");
+                    } else {
+                        assert_eq!(hole["parameters"][name], *expected, "{input}: {name}");
+                    }
+                }
+            }
+            for warning in case["warnings"].as_array().into_iter().flatten() {
+                assert!(output.to_string().contains(warning.as_str().unwrap()), "{input}: {output}");
+            }
+            let validation = crate::cad_plan_validation::validate_plan(&output["plan"]);
+            assert_eq!(validation["state"], "valid", "{input}: {validation}");
+            assert!(validation["confirmations"].as_array().unwrap().is_empty(), "{input}: {validation}");
+            assert!(validation["geometry_support"].to_string().contains("approximate"), "{input}: {validation}");
+            assert_eq!(
+                crate::native_plan_geometry::preflight(&output["plan"]).unwrap()["state"],
+                "valid",
+                "{input}"
+            );
+            if case.get("unit_conversion_improves_legacy").is_some() {
+                assert!(output.to_string().contains("legacy_cross_joint_unit_conversion"), "{input}: {output}");
             }
         }
 
