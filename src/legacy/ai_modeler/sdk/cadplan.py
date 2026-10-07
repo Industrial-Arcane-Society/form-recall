@@ -577,7 +577,8 @@ def validate_plan(plan: Any) -> Dict[str, Any]:
             continue
         for key in feature:
             if key not in {"id", "kind", "operation", "name", "parameters", "sources",
-                           "relations", "note", "enabled", "selection_binding"}:
+                           "relations", "note", "enabled", "selection_binding",
+                           "geometry_variant"}:
                 errors.append({"code": "unknown_field", "path": path + "." + str(key),
                                "message": "特征不支持此字段。"})
         if "enabled" in feature and not isinstance(feature["enabled"], bool):
@@ -595,6 +596,11 @@ def validate_plan(plan: Any) -> Dict[str, Any]:
             ids[fid] = index
 
         kind = feature.get("kind")
+        if "geometry_variant" in feature and (kind != "conrod" or
+                feature.get("geometry_variant") != "legacy_quick_rectangular_shank"):
+            errors.append({"code": "invalid_geometry_variant",
+                           "path": path + ".geometry_variant",
+                           "message": "geometry_variant 仅允许 conrod 使用 legacy_quick_rectangular_shank。"})
         if kind not in FEATURE_SPECS:
             errors.append({"code": "unsupported_feature_kind", "path": path + ".kind",
                            "message": "未知或非公开特征类型；支持类型见 CADPlan Schema。"})
@@ -1768,6 +1774,9 @@ def schema_document() -> Dict[str, Any]:
                         "additionalProperties": {"$ref": "#/$defs/source"}},
             "relations": {"type": "array", "items": {"$ref": "#/$defs/relation"}},
         }
+        if kind == "conrod":
+            feature_properties["geometry_variant"] = {
+                "type": "string", "const": "legacy_quick_rectangular_shank"}
         if kind == "shell":
             feature_properties["selection_binding"] = {
                 "type": "object",

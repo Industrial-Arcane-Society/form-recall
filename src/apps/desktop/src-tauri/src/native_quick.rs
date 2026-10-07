@@ -3454,6 +3454,94 @@ mod acceptance_tests {
 
     #[test]
     #[ignore = "requires the staged local OCCT runtime manifest"]
+    fn f5_82_quick_conrod_uses_legacy_rectangle_without_changing_shared_default() {
+        let manifest = std::env::var_os("AIMODELER_OCCT_MANIFEST")
+            .map(std::path::PathBuf::from)
+            .expect("set AIMODELER_OCCT_MANIFEST to the staged OCCT runtime-manifest.json");
+        let input = "连杆 L120 D48 d24";
+        let root = std::env::temp_dir().join(format!(
+            "native-quick-conrod-rectangle-{}-{}",
+            std::process::id(),
+            SystemTime::now()
+                .duration_since(UNIX_EPOCH)
+                .expect("system clock")
+                .as_nanos()
+        ));
+        fs::create_dir_all(&root).expect("create native Quick output root");
+        struct RemoveOnDrop(std::path::PathBuf);
+        impl Drop for RemoveOnDrop {
+            fn drop(&mut self) {
+                let _ = fs::remove_dir_all(&self.0);
+            }
+        }
+        let _cleanup = RemoveOnDrop(root.clone());
+
+        let quick_output = build(input, 1, &manifest, &root)
+            .unwrap_or_else(|error| panic!("Quick build failed: {error}"));
+        assert_eq!(quick_output["state"], "complete", "{quick_output}");
+        let plan = quick_output["cadplan"].clone();
+        assert_eq!(plan["features"][0]["geometry_variant"], "legacy_quick_rectangular_shank");
+        let report = &quick_output["geometry_report"];
+        assert_eq!(report["state"], "passed", "{report}");
+        for (axis, (actual, expected)) in report["dimensions_mm"]
+            .as_array().unwrap().iter().zip([156.0, 48.0, 14.4]).enumerate()
+        {
+            assert!((actual.as_f64().unwrap() - expected).abs() <= 1e-5,
+                "Quick bbox axis {axis}: {report}");
+        }
+        assert_eq!(report["closed_solid_count"], 1);
+        assert_eq!(report["feature_results"][0]["support_details"]["builder"], "legacy_quick_rectangular_full_length_web");
+        assert!(report["validation"]["geometry_support"][0]["reason"]
+            .as_str().unwrap().contains("矩形杆身"), "variant support reason: {report}");
+        let paths = quick_output["output_paths"].as_object().unwrap();
+        for name in ["glb", "aimodel", "stl", "obj"] {
+            assert!(Path::new(paths[name].as_str().unwrap()).is_file(), "missing {name}: {quick_output}");
+        }
+        let loaded = native_model_io::load_aimodel(Path::new(paths["aimodel"].as_str().unwrap()))
+            .unwrap_or_else(|error| panic!("AIMODEL reload failed: {error}"));
+        assert_eq!(loaded["cadplan"]["features"], plan["features"], "AIMODEL round-trip");
+
+        // Measure the actual Quick B-Rep section at the web midpoint: the legacy
+        // full-length rectangular bar must be exactly shank_w=19.2 mm wide.
+        let quick = native_plan_geometry::build(&plan, &manifest, &AtomicBool::new(false))
+            .expect("rebuild Quick plan for section measurement");
+        let quick_mid_web = quick
+            .shape
+            .line_material_intervals([0.0, -30.0, 0.0], [0.0, 1.0, 0.0], 0.0, 60.0, 1e-7)
+            .expect("sample exact Quick mid-web material interval");
+        assert_eq!(quick_mid_web.len(), 1, "Quick mid-web intervals: {quick_mid_web:?}");
+        assert!((quick_mid_web[0][1] - quick_mid_web[0][0] - 19.2).abs() <= 1e-5,
+            "Quick full-length rectangle width should equal legacy shank_w=19.2 mm: {quick_mid_web:?}");
+
+        // Removing the optional marker must keep the ordinary CADPlan/Agent
+        // construction path on its existing external-tangent trapezoidal web.
+        let mut generic_plan = plan;
+        generic_plan["features"][0].as_object_mut().unwrap().remove("geometry_variant");
+        assert_eq!(cad_plan_validation::validate_plan(&generic_plan)["valid"], true);
+        let generic = native_plan_geometry::build(&generic_plan, &manifest, &AtomicBool::new(false))
+            .expect("build default shared CADPlan conrod");
+        assert_eq!(generic.report["state"], "built", "{}", generic.report);
+        assert_eq!(generic.report["feature_results"][0]["support_details"]["builder"], "analytic_annular_ends_with_external_tangent_web");
+        for (axis, (actual, expected)) in generic.report["dimensions_mm"]
+            .as_array().unwrap().iter().zip([156.0, 48.0, 14.4]).enumerate()
+        {
+            assert!((actual.as_f64().unwrap() - expected).abs() <= 1e-5,
+                "default bbox axis {axis}: {}", generic.report);
+        }
+        assert_eq!(generic.report["closed_solid_count"], 1);
+        let generic_mid_web = generic
+            .shape
+            .line_material_intervals([0.0, -30.0, 0.0], [0.0, 1.0, 0.0], 0.0, 60.0, 1e-7)
+            .expect("sample default CADPlan mid-web material interval");
+        assert_eq!(generic_mid_web.len(), 1, "default mid-web intervals: {generic_mid_web:?}");
+        let generic_width = generic_mid_web[0][1] - generic_mid_web[0][0];
+        assert!(generic_width > 19.2 + 1e-3,
+            "default tangent web should differ from legacy rectangular width; width={generic_width}, intervals={generic_mid_web:?}");
+        assert!((quick.shape.volume().unwrap() - generic.shape.volume().unwrap()).abs() > 1e-6);
+    }
+
+    #[test]
+    #[ignore = "requires the staged local OCCT runtime manifest"]
     fn f5_47_legacy_cross_joints_build_measure_reopen_and_export() {
         let manifest = std::env::var_os("AIMODELER_OCCT_MANIFEST")
             .map(std::path::PathBuf::from)

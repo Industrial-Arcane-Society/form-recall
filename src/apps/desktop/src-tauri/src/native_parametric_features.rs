@@ -318,6 +318,14 @@ pub fn preflight_conrod(parameters: &Value) -> Result<(), String> {
 }
 
 pub fn build_conrod(kernel: &Kernel, parameters: &Value) -> Result<(Vec<Shape>, Value), String> {
+    build_conrod_with_geometry_variant(kernel, parameters, None)
+}
+
+pub fn build_conrod_with_geometry_variant(
+    kernel: &Kernel,
+    parameters: &Value,
+    geometry_variant: Option<&str>,
+) -> Result<(Vec<Shape>, Value), String> {
     preflight_conrod(parameters)?;
     let length = number(parameters, "length")?;
     let big_d = number(parameters, "big_d")?;
@@ -358,29 +366,29 @@ pub fn build_conrod(kernel: &Kernel, parameters: &Value) -> Result<(Vec<Shape>, 
         Axis::Z,
     )?;
 
-    let delta_ratio = (big_r - small_r) / length;
-    let tangent_y = (1.0 - delta_ratio * delta_ratio).sqrt();
-    let radial_big = big_r - (shank_w / 2.0).min((big_r - big_bore_r) * 0.8);
-    let radial_small = small_r - (shank_w / 2.0).min((small_r - small_bore_r) * 0.8);
-    let inset = 0.25;
-    let web_profile = [
+    let rectangular_quick_shank = geometry_variant == Some("legacy_quick_rectangular_shank");
+    let web_profile = if rectangular_quick_shank {
+        // The legacy Quick recipe used a full center-distance rectangular bar.
+        // Keep this opt-in so Agent and ordinary CADPlan retain the tangent web.
         [
-            big_x + (radial_big - inset) * delta_ratio,
-            (radial_big - inset) * tangent_y,
-        ],
+            [big_x, -shank_w / 2.0],
+            [small_x, -shank_w / 2.0],
+            [small_x, shank_w / 2.0],
+            [big_x, shank_w / 2.0],
+        ]
+    } else {
+        let delta_ratio = (big_r - small_r) / length;
+        let tangent_y = (1.0 - delta_ratio * delta_ratio).sqrt();
+        let radial_big = big_r - (shank_w / 2.0).min((big_r - big_bore_r) * 0.8);
+        let radial_small = small_r - (shank_w / 2.0).min((small_r - small_bore_r) * 0.8);
+        let inset = 0.25;
         [
-            small_x + (radial_small - inset) * delta_ratio,
-            (radial_small - inset) * tangent_y,
-        ],
-        [
-            small_x + (radial_small - inset) * delta_ratio,
-            -(radial_small - inset) * tangent_y,
-        ],
-        [
-            big_x + (radial_big - inset) * delta_ratio,
-            -(radial_big - inset) * tangent_y,
-        ],
-    ];
+            [big_x + (radial_big - inset) * delta_ratio, (radial_big - inset) * tangent_y],
+            [small_x + (radial_small - inset) * delta_ratio, (radial_small - inset) * tangent_y],
+            [small_x + (radial_small - inset) * delta_ratio, -(radial_small - inset) * tangent_y],
+            [big_x + (radial_big - inset) * delta_ratio, -(radial_big - inset) * tangent_y],
+        ]
+    };
     // Keep web coordinates local to center; unlike the legacy implementation,
     // do not pre-translate the profile and then translate it again as a prism.
     let web = kernel.prism(
@@ -401,7 +409,8 @@ pub fn build_conrod(kernel: &Kernel, parameters: &Value) -> Result<(Vec<Shape>, 
         "kind":"conrod",
         "status":"approximate",
         "geometry_support":"approximate",
-        "builder":"analytic_annular_ends_with_external_tangent_web",
+        "builder":if rectangular_quick_shank { "legacy_quick_rectangular_full_length_web" } else { "analytic_annular_ends_with_external_tangent_web" },
+        "geometry_variant":geometry_variant,
         "center_mm":center,
         "big_end_center_mm":[center[0] + big_x, center[1], center[2]],
         "small_end_center_mm":[center[0] + small_x, center[1], center[2]],
@@ -411,7 +420,7 @@ pub fn build_conrod(kernel: &Kernel, parameters: &Value) -> Result<(Vec<Shape>, 
         "small_bore_mm":small_bore,
         "shank_width_mm":shank_w,
         "thickness_mm":thick,
-        "warnings":["杆身采用外公切梯形棱柱近似；未表达工字截面、锻造过渡及倒角。"]
+        "warnings":if rectangular_quick_shank { vec!["兼容旧 Quick 的全长矩形杆身简化；未表达工字截面、锻造过渡及倒角。"] } else { vec!["杆身采用外公切梯形棱柱近似；未表达工字截面、锻造过渡及倒角。"] }
     });
     Ok((vec![result], details))
 }

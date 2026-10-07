@@ -147,6 +147,23 @@ class CADPlanSDKTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "unsupported CADPlan operation"):
             _to_document(plan)
 
+    def test_quick_conrod_geometry_variant_is_schema_scoped(self):
+        import jsonschema
+
+        plan = _plan("conrod")
+        conrod = plan["features"][1]
+        conrod["geometry_variant"] = "legacy_quick_rectangular_shank"
+        self.assertEqual("valid", validate_plan(plan)["state"])
+        validator = jsonschema.Draft202012Validator(schema_document())
+        self.assertEqual([], list(validator.iter_errors(plan)))
+        conrod["geometry_variant"] = "unexpected"
+        self.assertEqual("invalid", validate_plan(plan)["state"])
+        self.assertTrue(list(validator.iter_errors(plan)))
+        conrod["geometry_variant"] = "legacy_quick_rectangular_shank"
+        conrod["kind"] = "box"
+        self.assertEqual("invalid", validate_plan(plan)["state"])
+        self.assertTrue(list(validator.iter_errors(plan)))
+
     def test_shell_schema_1_1_requires_explicit_bound_planar_face_selection(self):
         import jsonschema
 

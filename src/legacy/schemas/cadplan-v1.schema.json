@@ -7148,6 +7148,10 @@
                 "items": {
                   "$ref": "#/$defs/relation"
                 }
+              },
+              "geometry_variant": {
+                "type": "string",
+                "const": "legacy_quick_rectangular_shank"
               }
             },
             "required": [

@@ -1,5 +1,6 @@
 {
   "schema_version": "1.0",
+  "rust_quick_geometry_variant": "legacy_quick_rectangular_shank",
   "legacy_entrypoint": "src/legacy/ai_modeler/core/parsing/nlparser.py::Parser.parse",
   "legacy_recipe": "src/legacy/ai_modeler/parts/library/partlib.py::_conrod",
   "legacy_geometry": "src/legacy/ai_modeler/core/geometry/kernel.py::make_conrod",

@@ -566,6 +566,7 @@ pub fn validate_plan(plan: &Value) -> Value {
                 "note",
                 "enabled",
                 "selection_binding",
+                "geometry_variant",
             ]
             .contains(&key.as_str())
             {
@@ -630,6 +631,14 @@ pub fn validate_plan(plan: &Value) -> Value {
             );
             continue;
         };
+        if let Some(variant) = feature.get("geometry_variant") {
+            if kind != "conrod" || variant.as_str() != Some("legacy_quick_rectangular_shank") {
+                append_error(&mut errors, "invalid_geometry_variant",
+                    format!("{path}.geometry_variant"),
+                    "geometry_variant 仅允许 conrod 使用 legacy_quick_rectangular_shank。",
+                );
+            }
+        }
         let operation = feature
             .get("operation")
             .and_then(Value::as_str)
@@ -741,6 +750,7 @@ pub fn validate_plan(plan: &Value) -> Value {
             kind,
             feature.get("relations"),
             feature.get("selection_binding"),
+            feature.get("geometry_variant").and_then(Value::as_str),
             schema_version,
         );
         geometry_support.push(json!({"feature_id":fid,"kind":kind,"status":local_status,"reason":local_reason,"backend":"occt_brep"}));
@@ -1913,10 +1923,14 @@ fn local_support(
     kind: &str,
     relations: Option<&Value>,
     selection_binding: Option<&Value>,
+    geometry_variant: Option<&str>,
     schema_version: &str,
 ) -> (&'static str, &'static str) {
     let mut status = spec.local_status;
     let mut reason = spec.local_reason;
+    if kind == "conrod" && geometry_variant == Some("legacy_quick_rectangular_shank") {
+        reason = "解析大小头环与旧 Quick 全长矩形杆身并集；工字截面和锻造过渡仍为近似";
+    }
     if ["box", "pocket"].contains(&kind)
         && number(params.get("corner").unwrap_or(&Value::Null)).is_some_and(|v| v > 0.0)
     {
@@ -2058,6 +2072,9 @@ fn feature_schema_for(spec: &Spec) -> Value {
         json!({"const":spec.kind,"x-catia-support-status":spec.catia_status,"x-catia-support-note":spec.catia_reason}),
     ];
     let mut feature_properties = json!({"id":{"type":"string","minLength":1},"kind":kind_enum[0],"operation":{"type":"string","enum":["add","cut"]},"name":{"type":"string"},"note":{"type":"string"},"enabled":{"type":"boolean","default":true},"parameters":{"type":"object","properties":pp,"required":conditional_required,"additionalProperties":false},"sources":{"type":"object","propertyNames":{"enum":words(spec.params)},"additionalProperties":{"$ref":"#/$defs/source"}},"relations":{"type":"array","items":{"$ref":"#/$defs/relation"}}});
+    if spec.kind == "conrod" {
+        feature_properties["geometry_variant"] = json!({"type":"string","const":"legacy_quick_rectangular_shank"});
+    }
     if spec.kind == "shell" {
         feature_properties["selection_binding"] = json!({"type":"object","properties":{
             "revision":{"type":"integer","minimum":0},
@@ -2331,6 +2348,22 @@ mod tests {
             );
         }
     }
+    #[test]
+    fn quick_conrod_geometry_variant_is_scoped_and_schema_declared() {
+        let mut plan = base(feature(
+            "conrod",
+            json!({"length":80,"big_d":30,"small_d":18,"big_bore":20,"small_bore":10,"shank_w":10,"thick":8,"center":[0,0,0],"segments":32}),
+            json!({"length":{"type":"user"},"big_d":{"type":"user"},"small_d":{"type":"user"},"big_bore":{"type":"user"},"small_bore":{"type":"user"},"shank_w":{"type":"user"},"thick":{"type":"user"},"center":{"type":"derived"},"segments":{"type":"derived"}}),
+        ));
+        plan["features"][0]["geometry_variant"] = json!("legacy_quick_rectangular_shank");
+        assert_eq!(validate_plan(&plan)["valid"], json!(true));
+        assert_eq!(feature_schema("conrod").unwrap()["properties"]["geometry_variant"]["const"], json!("legacy_quick_rectangular_shank"));
+        plan["features"][0]["geometry_variant"] = json!("unexpected");
+        assert_eq!(validate_plan(&plan)["state"], json!("invalid"));
+        plan["features"][0]["kind"] = json!("box");
+        assert_eq!(validate_plan(&plan)["state"], json!("invalid"));
+    }
+
     #[test]
     fn schema_contains_all_28_public_feature_kinds_and_source_guards() {
         let schema = schema_document();

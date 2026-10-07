@@ -5628,6 +5628,7 @@ fn parse_legacy_conrod(raw: &str, text: &str) -> Option<Value> {
         "kind":"conrod",
         "operation":"add",
         "name":"连杆",
+        "geometry_variant":"legacy_quick_rectangular_shank",
         "parameters":parameters,
         "sources":{
             "length":if close(length, requested_length) { user_source(raw) } else { derived_source(raw, "沿用旧 Python 几何内核将中心距至少取 2 mm。") },
@@ -17253,6 +17254,7 @@ mod f5_46_legacy_conrod_contract_tests {
             let conrod = &features[0];
             assert_eq!(conrod["kind"], "conrod", "{input}: {output}");
             assert_eq!(conrod["operation"], "add", "{input}: {output}");
+            assert_eq!(conrod["geometry_variant"], fixture["rust_quick_geometry_variant"], "{input}: {output}");
             for (name, expected) in case["native_expected"].as_object().unwrap() {
                 if let Some(expected_values) = expected.as_array() {
                     let actual_values = conrod["parameters"][name].as_array().unwrap();

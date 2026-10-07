@@ -435,8 +435,10 @@ pub fn build(plan: &Value, manifest: &Path, cancelled: &AtomicBool) -> Result<Bu
                     native_parametric_features::build_spoked_wheel(&kernel, &normalized["parameters"])?;
                 (tools, vec![], Some(support))
             } else if normalized["kind"] == "conrod" {
-                let (tools, support) =
-                    native_parametric_features::build_conrod(&kernel, &normalized["parameters"])?;
+                let variant = normalized["geometry_variant"].as_str();
+                let (tools, support) = native_parametric_features::build_conrod_with_geometry_variant(
+                    &kernel, &normalized["parameters"], variant,
+                )?;
                 (tools, vec![], Some(support))
             } else if normalized["kind"] == "cross_joint" {
                 let (tools, support) =
