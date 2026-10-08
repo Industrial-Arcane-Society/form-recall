@@ -37,4 +37,6 @@ The Rust runner emits one JSONL row per nonblank input with dataset ID, input ha
 
 ## Current status
 
-The files here define the independent batch/comparison harness only. Cargo has not been run and there is no Rust-versus-Python corpus result yet. The largest old-parser category is `EGT型材` (1,156 prompts; 1,068 old `extrude_holes:add` outputs). Current source inspection shows the Rust exact-name EGT catalog branch only accepts the bare name `EGT型材`; for example, `EGT型材 EGT001 SW80x088` does not enter that exact-name branch. This makes the category a high-priority first triage target, but its actual Rust status and differences remain unmeasured until the batch runs.
+The batch completed for all 1,828 aligned rows. The status matrix is: legacy accepted / Rust ready 228; legacy accepted / Rust not ready 1,594; legacy rejected / Rust ready 0; both not ready 6. Rust acceptance recall on the 1,822 legacy-success rows is 12.5%. This is a parse-only result, not geometry parity. The literal raw feature-signature mismatch count is 1,821; because no semantic mapping has been approved, that count is only a triage signal.
+
+The largest parser gap is `EGT型材`: all 1,156 rows are legacy-success / Rust-not-ready, including 1,068 old `extrude_holes:add` outputs. `EGT连接件` is also legacy-success / Rust-not-ready for all 146 rows. The complete category, variant, and row-level detail is in `comparison.md` and `comparison.json`.
