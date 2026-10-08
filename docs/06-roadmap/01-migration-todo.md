@@ -1,6 +1,6 @@
 # Rust + DSH 重构总 Todo
 
-更新时间：2026-10-06。每一项 feature 按边界实现、验收并单独提交。首个“目录重构”feature 完成后直接提交到 `main`；后续 feature 使用独立提交，不把未验收工作合并。
+更新时间：2026-10-08。每一项 feature 按边界实现、验收并单独提交。首个“目录重构”feature 完成后直接提交到 `main`；后续 feature 使用独立提交，不把未验收工作合并。
 
 ## 总目标
 
@@ -73,6 +73,9 @@
 | F5.11 | Quick 中心通孔与沉孔 | **已完成（限定语法）** | 同一 modifier 子句需显式中心通孔、`带`、大径沉孔及正深度，依旧 Python 顺序生成小径 through cut 后接大径 blind cut；Python oracle golden 同时记录旧省深度时默认 5 mm 的行为，而 Rust 对省深度/缺参/冲突澄清。阵列、坐标、非中心、多 modifier 和扩孔/沉台/沉坑等不同变体拒绝。`test-lib.ps1 -Filter native_quick_parser::tests` 18/18、Python oracle fixture 2/2、`git diff --check` 通过；不覆盖 OCCT、CATIA、GUI 或 Quick/Agent 端到端。详见[F5.11 记录](./F5.11-quick-center-counterbore.md)。 |
 | F5.12 | Quick 固定描述到 OCCT/AIMODEL/STL 几何验收 | **已完成（本分支独立提交）** | 五条固定描述覆盖四角孔、PCD、线性/圆周特征阵列和同轴中心沉孔；真实 OCCT 单闭合实体、特征状态、孔数/最终 B-Rep 半径/轴/360° 覆盖、bbox/体积、AIMODEL roundtrip、STL 二进制及失败导出不覆盖目标均通过。沉孔用 pilot 外环带确定入口并检查 48 个环带与 32 个外侧样本；普通盲孔独立控制仍通过原中心线与最终深度核验。集成测试默认标记 ignored；须设置 `AIMODELER_TEST_OCCT_MANIFEST` 并用 `test-lib.ps1 -Filter native_quick::tests::f5_12_quick_geometry_acceptance_builds_supported_hole_and_pattern_cases -Exact -Ignored -NoCapture` 显式执行，缺失 manifest 会失败。无 CATIA/安装后验收；实测和复跑命令见[F5.12 记录](./F5.12-quick-geometry-acceptance.md)。 |
 | F5.102 | 直齿锥齿轮旧 Quick 与 Rust Quick 表面对拍 | **已完成（固定输入）** | 固定输入 20 齿样例的 Rust Quick 与旧 `Document.build()` raw、旧有效 BREP tessellation 三方表面采样、bbox、拓扑与三平面投影通过；确认 22 mm 厚度、20 齿、15→6.75 mm 孔径与 88→39.6 mm 外径端面锥缩。旧 raw 有 400 条绕向冲突边，signed volume 不作为验收。采样不构成连续 Hausdorff 上界；CATIA 未验。详见[F5.102 报告](./F5.102-quick-bevel-gear-surface-comparison.md)。 |
+| F5.103 | Quick 花键轴端面槽旧实现复现 | **已并入 main** | 固定旧 Quick 输入已按旧 Parser/几何证据复现并单独提交；后续迁移继续保持固定输入和证据范围。 |
+| F5.31 | Quick 实心轴中心贯穿孔 | **已完成（限定固定输入）** | `轴 直径20 长度100 通孔6` 保留有序 `cylinder/add` 与 `hole/cut`；旧有效 B-Rep 与 Rust 同坐标核对，bbox、体积一致，表面确定性采样最大偏差约 `4.54e-11 mm`。轴赋值、孔位、孔型、额外修饰的 fail-closed 负例纳入 fixture；parser 窄测试 1/1 通过。采样不是连续 Hausdorff 上界；未验 CATIA。旧孔 provenance 为空，Rust 派生来源不声称继承旧值。详见[F5.31 记录](./F5.31-quick-legacy-solid-shafts.md)。 |
+| F5.106 | T10 同步带轮旧 Quick 基线 | **基线已采集，Rust 实现待开始** | 旧 parser/raw 网格基线及 mesh-only 路由可行性已记录于未提交 artifact；旧 `Document.build_brep()` 不是可用实体 oracle。Rust 尚不支持该固定 T10 输入，不能将基线记录视为功能迁移完成。 |
 | F6 | Python 缩减到 CATIA COM | **进行中（0.1.2 已安装；当前活动 GLB 存在且位于允许目录；可见视口和真实 CATIA 几何仍待）** |Agent Python tool worker 和桌面 UI backend bridge 已移除；CATIA COM Python 仅按需启动。完整依赖 MSI/NSIS 已完成 242 项资源哈希对照、包内 Quick/OCCT CLI smoke 与此前隐藏 WebView 6/6。2026-10-06 复核当前 Program Files 0.1.2、活动记录 generation 18 的 GLB 文件及 app-local-data 路径；Rust `asset_path_policy` 2/2 通过。复跑隐藏 WebView 因缺少 `tauri-driver` 与匹配的 Edge WebDriver 未能启动；未打开可见窗口，故当前安装版模型是否实际显示仍未验。用户截图的越界读取日志属于 2026-10-05、早于 `e2496f6` 路径修复，不能作为当前故障复现。详见 [F6.10 报告](./F6.10-installed-glb-preview.md)。 |
 | F7 | 多模态盲测与科学验收基线 | **进行中（Run40 exit=1、10/13 strict gates；holes、visual、finish 未通过；CATIA 未验）** |Run40 冷启动候选未达到验收：holes、visual、finish 门禁失败；工具/transport 通过只证明对应链路，不证明几何正确。Run39 曾独立发现中段凹腔过宽、3×3 孔布局不符；Run38 的 13/13 仅限 host gates。G1、G8 仍未通过，CATIA 几何未验。Run40 详见 F7.G8 与 [Run40 安全诊断](./112-f7-g11-run-40-diagnosis.md)。 |
 

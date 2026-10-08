@@ -1,0 +1,4161 @@
+{
+  "bounds_mm": [
+    -10.0,
+    -10.0,
+    -50.0,
+    10.0,
+    10.0,
+    50.0
+  ],
+  "catia_executed": false,
+  "closed_solid_count": 1,
+  "dimensions_mm": [
+    20.0,
+    20.0,
+    100.0
+  ],
+  "execution_engine": "rust_c_abi_occt",
+  "feature_results": [
+    {
+      "feature_id": "quick-0001",
+      "geometry_support": "exact",
+      "kind": "cylinder",
+      "operation": "add",
+      "state": "built",
+      "support_details": null,
+      "volume_after_mm3": 31415.926535897932,
+      "volume_before_mm3": 0.0,
+      "volume_delta_mm3": 31415.926535897932,
+      "warning": null
+    },
+    {
+      "feature_id": "quick-0002",
+      "geometry_support": "exact",
+      "kind": "hole",
+      "operation": "cut",
+      "state": "built",
+      "support_details": null,
+      "volume_after_mm3": 28588.49314766712,
+      "volume_before_mm3": 31415.926535897932,
+      "volume_delta_mm3": -2827.433388230813,
+      "warning": null
+    }
+  ],
+  "geometry_fingerprint": "0b04ce2fca25f786a75555ee09d83340c0975ca66491a152501a50387327407c",
+  "hole_instances": [
+    {
+      "axis": "Z",
+      "axis_vector_mm": [
+        0.0,
+        0.0,
+        1.0
+      ],
+      "centerline_mm": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "depth_mm": null,
+      "diameter_mm": 6.0,
+      "feature_id": "quick-0002",
+      "final_measurement": {
+        "accepted": true,
+        "actual_radius_measurements": [
+          3.0
+        ],
+        "angular_coverage_radians": 6.283185307179586,
+        "axial_length_tolerance": 0.00001,
+        "evidence_mode": "ordinary_bore",
+        "expectation_satisfied": true,
+        "expected_blind_depth": null,
+        "expected_bore_axial_length": null,
+        "expected_pre_cut_material_axial_length": 100.0,
+        "full_angular_coverage": true,
+        "limits": [
+          "trimmed face spans may be split by seams or booleans and are merged by projected axial overlap",
+          "partial angular coverage is reported per face; this routine does not prove a complete 360-degree bore",
+          "pre/post ray evidence is separate from analytic radius measurement"
+        ],
+        "matched_cylindrical_face_count": 1,
+        "matched_cylindrical_faces": [
+          {
+            "accepted_as_requested_bore_face": true,
+            "actual_radius": 3.0,
+            "angular_parameter_span_radians": [
+              0.0,
+              6.283185307179586
+            ],
+            "axial_parameter_span": [
+              10.0,
+              110.0
+            ],
+            "axis_alignment_abs_cosine": 1.0,
+            "axis_direction": [
+              0.0,
+              0.0,
+              1.0
+            ],
+            "axis_offset": 0.0,
+            "axis_origin": [
+              0.0,
+              0.0,
+              -60.0
+            ],
+            "inward_facing": true,
+            "oriented_normal": [
+              1.0,
+              -1.2246467991473532e-16,
+              -0.0
+            ],
+            "radius_error": 0.0,
+            "surface_point": [
+              -3.0,
+              3.6739403974420594e-16,
+              0.0
+            ]
+          }
+        ],
+        "measured_cylindrical_axial_length": 100.0,
+        "measurement_method": "OCCT BRepAdaptor_Surface GeomAbs_Cylinder analytic radius; axis and trimmed UV bounds from B-Rep; inward orientation checked at UV midpoint",
+        "merged_angular_parameter_spans_radians": [
+          [
+            0.0,
+            6.283185307179586
+          ]
+        ],
+        "merged_axial_span_count": 1,
+        "merged_axial_spans": [
+          [
+            -50.0,
+            50.0
+          ]
+        ],
+        "pre_post_material_evidence": {
+          "accepted": true,
+          "center_ray": {
+            "after_material_intervals": [],
+            "after_material_length": -0.0,
+            "before_material_intervals": [
+              [
+                -50.0,
+                50.0
+              ]
+            ],
+            "before_material_length": 100.0,
+            "condition": "pre-cut material exists and post-cut material length decreases",
+            "origin": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "passed": true,
+            "removed_material_length": 100.0,
+            "sample": "center"
+          },
+          "interior_rays": [
+            {
+              "after_material_intervals": [],
+              "after_material_length": -0.0,
+              "before_material_intervals": [
+                [
+                  -50.0,
+                  50.0
+                ]
+              ],
+              "before_material_length": 100.0,
+              "condition": "interior radial sample loses material",
+              "origin": [
+                0.0,
+                1.5,
+                0.0
+              ],
+              "passed": true,
+              "removed_material_length": 100.0,
+              "sample": "interior_r1_00"
+            },
+            {
+              "after_material_intervals": [],
+              "after_material_length": -0.0,
+              "before_material_intervals": [
+                [
+                  -50.0,
+                  50.0
+                ]
+              ],
+              "before_material_length": 100.0,
+              "condition": "interior radial sample loses material",
+              "origin": [
+                -1.0606601717798214,
+                1.0606601717798214,
+                0.0
+              ],
+              "passed": true,
+              "removed_material_length": 100.0,
+              "sample": "interior_r1_01"
+            },
+            {
+              "after_material_intervals": [],
+              "after_material_length": -0.0,
+              "before_material_intervals": [
+                [
+                  -50.0,
+                  50.0
+                ]
+              ],
+              "before_material_length": 100.0,
+              "condition": "interior radial sample loses material",
+              "origin": [
+                -1.5,
+                9.184850993605148e-17,
+                0.0
+              ],
+              "passed": true,
+              "removed_material_length": 100.0,
+              "sample": "interior_r1_02"
+            },
+            {
+              "after_material_intervals": [],
+              "after_material_length": -0.0,
+              "before_material_intervals": [
+                [
+                  -50.0,
+                  50.0
+                ]
+              ],
+              "before_material_length": 100.0,
+              "condition": "interior radial sample loses material",
+              "origin": [
+                -1.0606601717798214,
+                -1.0606601717798212,
+                0.0
+              ],
+              "passed": true,
+              "removed_material_length": 100.0,
+              "sample": "interior_r1_03"
+            },
+            {
+              "after_material_intervals": [],
+              "after_material_length": -0.0,
+              "before_material_intervals": [
+                [
+                  -50.0,
+                  50.0
+                ]
+              ],
+              "before_material_length": 100.0,
+              "condition": "interior radial sample loses material",
+              "origin": [
+                -1.8369701987210297e-16,
+                -1.5,
+                0.0
+              ],
+              "passed": true,
+              "removed_material_length": 100.0,
+              "sample": "interior_r1_04"
+            },
+            {
+              "after_material_intervals": [],
+              "after_material_length": -0.0,
+              "before_material_intervals": [
+                [
+                  -50.0,
+                  50.0
+                ]
+              ],
+              "before_material_length": 100.0,
+              "condition": "interior radial sample loses material",
+              "origin": [
+                1.0606601717798212,
+                -1.0606601717798214,
+                0.0
+              ],
+              "passed": true,
+              "removed_material_length": 100.0,
+              "sample": "interior_r1_05"
+            },
+            {
+              "after_material_intervals": [],
+              "after_material_length": -0.0,
+              "before_material_intervals": [
+                [
+                  -50.0,
+                  50.0
+                ]
+              ],
+              "before_material_length": 100.0,
+              "condition": "interior radial sample loses material",
+              "origin": [
+                1.5,
+                -2.755455298081545e-16,
+                0.0
+              ],
+              "passed": true,
+              "removed_material_length": 100.0,
+              "sample": "interior_r1_06"
+            },
+            {
+              "after_material_intervals": [],
+              "after_material_length": -0.0,
+              "before_material_intervals": [
+                [
+                  -50.0,
+                  50.0
+                ]
+              ],
+              "before_material_length": 100.0,
+              "condition": "interior radial sample loses material",
+              "origin": [
+                1.0606601717798214,
+                1.060660171779821,
+                0.0
+              ],
+              "passed": true,
+              "removed_material_length": 100.0,
+              "sample": "interior_r1_07"
+            },
+            {
+              "after_material_intervals": [],
+              "after_material_length": -0.0,
+              "before_material_intervals": [
+                [
+                  -50.0,
+                  50.0
+                ]
+              ],
+              "before_material_length": 100.0,
+              "condition": "interior radial sample loses material",
+              "origin": [
+                0.0,
+                2.4000000000000004,
+                0.0
+              ],
+              "passed": true,
+              "removed_material_length": 100.0,
+              "sample": "interior_r2_00"
+            },
+            {
+              "after_material_intervals": [],
+              "after_material_length": -0.0,
+              "before_material_intervals": [
+                [
+                  -50.0,
+                  50.0
+                ]
+              ],
+              "before_material_length": 100.0,
+              "condition": "interior radial sample loses material",
+              "origin": [
+                -1.6970562748477145,
+                1.6970562748477145,
+                0.0
+              ],
+              "passed": true,
+              "removed_material_length": 100.0,
+              "sample": "interior_r2_01"
+            },
+            {
+              "after_material_intervals": [],
+              "after_material_length": -0.0,
+              "before_material_intervals": [
+                [
+                  -50.0,
+                  50.0
+                ]
+              ],
+              "before_material_length": 100.0,
+              "condition": "interior radial sample loses material",
+              "origin": [
+                -2.4000000000000004,
+                1.469576158976824e-16,
+                0.0
+              ],
+              "passed": true,
+              "removed_material_length": 100.0,
+              "sample": "interior_r2_02"
+            },
+            {
+              "after_material_intervals": [],
+              "after_material_length": -0.0,
+              "before_material_intervals": [
+                [
+                  -50.0,
+                  50.0
+                ]
+              ],
+              "before_material_length": 100.0,
+              "condition": "interior radial sample loses material",
+              "origin": [
+                -1.6970562748477145,
+                -1.6970562748477143,
+                0.0
+              ],
+              "passed": true,
+              "removed_material_length": 100.0,
+              "sample": "interior_r2_03"
+            },
+            {
+              "after_material_intervals": [],
+              "after_material_length": -0.0,
+              "before_material_intervals": [
+                [
+                  -50.0,
+                  50.0
+                ]
+              ],
+              "before_material_length": 100.0,
+              "condition": "interior radial sample loses material",
+              "origin": [
+                -2.939152317953648e-16,
+                -2.4000000000000004,
+                0.0
+              ],
+              "passed": true,
+              "removed_material_length": 100.0,
+              "sample": "interior_r2_04"
+            },
+            {
+              "after_material_intervals": [],
+              "after_material_length": -0.0,
+              "before_material_intervals": [
+                [
+                  -50.0,
+                  50.0
+                ]
+              ],
+              "before_material_length": 100.0,
+              "condition": "interior radial sample loses material",
+              "origin": [
+                1.6970562748477143,
+                -1.6970562748477147,
+                0.0
+              ],
+              "passed": true,
+              "removed_material_length": 100.0,
+              "sample": "interior_r2_05"
+            },
+            {
+              "after_material_intervals": [],
+              "after_material_length": -0.0,
+              "before_material_intervals": [
+                [
+                  -50.0,
+                  50.0
+                ]
+              ],
+              "before_material_length": 100.0,
+              "condition": "interior radial sample loses material",
+              "origin": [
+                2.4000000000000004,
+                -4.408728476930472e-16,
+                0.0
+              ],
+              "passed": true,
+              "removed_material_length": 100.0,
+              "sample": "interior_r2_06"
+            },
+            {
+              "after_material_intervals": [],
+              "after_material_length": -0.0,
+              "before_material_intervals": [
+                [
+                  -50.0,
+                  50.0
+                ]
+              ],
+              "before_material_length": 100.0,
+              "condition": "interior radial sample loses material",
+              "origin": [
+                1.6970562748477147,
+                1.6970562748477138,
+                0.0
+              ],
+              "passed": true,
+              "removed_material_length": 100.0,
+              "sample": "interior_r2_07"
+            },
+            {
+              "after_material_intervals": [],
+              "after_material_length": -0.0,
+              "before_material_intervals": [
+                [
+                  -50.0,
+                  50.0
+                ]
+              ],
+              "before_material_length": 100.0,
+              "condition": "interior radial sample loses material",
+              "origin": [
+                0.0,
+                2.8499999999999996,
+                0.0
+              ],
+              "passed": true,
+              "removed_material_length": 100.0,
+              "sample": "interior_r3_00"
+            },
+            {
+              "after_material_intervals": [],
+              "after_material_length": -0.0,
+              "before_material_intervals": [
+                [
+                  -50.0,
+                  50.0
+                ]
+              ],
+              "before_material_length": 100.0,
+              "condition": "interior radial sample loses material",
+              "origin": [
+                -2.0152543263816605,
+                2.0152543263816605,
+                0.0
+              ],
+              "passed": true,
+              "removed_material_length": 100.0,
+              "sample": "interior_r3_01"
+            },
+            {
+              "after_material_intervals": [],
+              "after_material_length": -0.0,
+              "before_material_intervals": [
+                [
+                  -50.0,
+                  50.0
+                ]
+              ],
+              "before_material_length": 100.0,
+              "condition": "interior radial sample loses material",
+              "origin": [
+                -2.8499999999999996,
+                1.745121688784978e-16,
+                0.0
+              ],
+              "passed": true,
+              "removed_material_length": 100.0,
+              "sample": "interior_r3_02"
+            },
+            {
+              "after_material_intervals": [],
+              "after_material_length": -0.0,
+              "before_material_intervals": [
+                [
+                  -50.0,
+                  50.0
+                ]
+              ],
+              "before_material_length": 100.0,
+              "condition": "interior radial sample loses material",
+              "origin": [
+                -2.0152543263816605,
+                -2.01525432638166,
+                0.0
+              ],
+              "passed": true,
+              "removed_material_length": 100.0,
+              "sample": "interior_r3_03"
+            },
+            {
+              "after_material_intervals": [],
+              "after_material_length": -0.0,
+              "before_material_intervals": [
+                [
+                  -50.0,
+                  50.0
+                ]
+              ],
+              "before_material_length": 100.0,
+              "condition": "interior radial sample loses material",
+              "origin": [
+                -3.490243377569956e-16,
+                -2.8499999999999996,
+                0.0
+              ],
+              "passed": true,
+              "removed_material_length": 100.0,
+              "sample": "interior_r3_04"
+            },
+            {
+              "after_material_intervals": [],
+              "after_material_length": -0.0,
+              "before_material_intervals": [
+                [
+                  -50.0,
+                  50.0
+                ]
+              ],
+              "before_material_length": 100.0,
+              "condition": "interior radial sample loses material",
+              "origin": [
+                2.01525432638166,
+                -2.0152543263816605,
+                0.0
+              ],
+              "passed": true,
+              "removed_material_length": 100.0,
+              "sample": "interior_r3_05"
+            },
+            {
+              "after_material_intervals": [],
+              "after_material_length": -0.0,
+              "before_material_intervals": [
+                [
+                  -50.0,
+                  50.0
+                ]
+              ],
+              "before_material_length": 100.0,
+              "condition": "interior radial sample loses material",
+              "origin": [
+                2.8499999999999996,
+                -5.235365066354934e-16,
+                0.0
+              ],
+              "passed": true,
+              "removed_material_length": 100.0,
+              "sample": "interior_r3_06"
+            },
+            {
+              "after_material_intervals": [],
+              "after_material_length": -0.0,
+              "before_material_intervals": [
+                [
+                  -50.0,
+                  50.0
+                ]
+              ],
+              "before_material_length": 100.0,
+              "condition": "interior radial sample loses material",
+              "origin": [
+                2.0152543263816605,
+                2.0152543263816596,
+                0.0
+              ],
+              "passed": true,
+              "removed_material_length": 100.0,
+              "sample": "interior_r3_07"
+            }
+          ],
+          "judgement": "through_material_removed_on_sampled_rays",
+          "measurement_scope": "sampled line material intervals; not a fitted or independent diameter measurement",
+          "outside_rays": [
+            {
+              "after_material_intervals": [
+                [
+                  -50.0,
+                  50.0
+                ]
+              ],
+              "after_material_length": 100.0,
+              "before_material_intervals": [
+                [
+                  -50.0,
+                  50.0
+                ]
+              ],
+              "before_material_length": 100.0,
+              "condition": "outside-radius sample retains its pre-cut material span when stock exists at that sample",
+              "origin": [
+                0.0,
+                3.15,
+                0.0
+              ],
+              "passed": true,
+              "removed_material_length": 0.0,
+              "sample": "outside_r1_00"
+            },
+            {
+              "after_material_intervals": [
+                [
+                  -50.0,
+                  50.0
+                ]
+              ],
+              "after_material_length": 100.0,
+              "before_material_intervals": [
+                [
+                  -50.0,
+                  50.0
+                ]
+              ],
+              "before_material_length": 100.0,
+              "condition": "outside-radius sample retains its pre-cut material span when stock exists at that sample",
+              "origin": [
+                -2.2273863607376247,
+                2.2273863607376247,
+                0.0
+              ],
+              "passed": true,
+              "removed_material_length": 0.0,
+              "sample": "outside_r1_01"
+            },
+            {
+              "after_material_intervals": [
+                [
+                  -50.0,
+                  50.0
+                ]
+              ],
+              "after_material_length": 100.0,
+              "before_material_intervals": [
+                [
+                  -50.0,
+                  50.0
+                ]
+              ],
+              "before_material_length": 100.0,
+              "condition": "outside-radius sample retains its pre-cut material span when stock exists at that sample",
+              "origin": [
+                -3.15,
+                1.9288187086570813e-16,
+                0.0
+              ],
+              "passed": true,
+              "removed_material_length": 0.0,
+              "sample": "outside_r1_02"
+            },
+            {
+              "after_material_intervals": [
+                [
+                  -50.0,
+                  50.0
+                ]
+              ],
+              "after_material_length": 100.0,
+              "before_material_intervals": [
+                [
+                  -50.0,
+                  50.0
+                ]
+              ],
+              "before_material_length": 100.0,
+              "condition": "outside-radius sample retains its pre-cut material span when stock exists at that sample",
+              "origin": [
+                -2.2273863607376247,
+                -2.2273863607376243,
+                0.0
+              ],
+              "passed": true,
+              "removed_material_length": 0.0,
+              "sample": "outside_r1_03"
+            },
+            {
+              "after_material_intervals": [
+                [
+                  -50.0,
+                  50.0
+                ]
+              ],
+              "after_material_length": 100.0,
+              "before_material_intervals": [
+                [
+                  -50.0,
+                  50.0
+                ]
+              ],
+              "before_material_length": 100.0,
+              "condition": "outside-radius sample retains its pre-cut material span when stock exists at that sample",
+              "origin": [
+                -3.8576374173141627e-16,
+                -3.15,
+                0.0
+              ],
+              "passed": true,
+              "removed_material_length": 0.0,
+              "sample": "outside_r1_04"
+            },
+            {
+              "after_material_intervals": [
+                [
+                  -50.0,
+                  50.0
+                ]
+              ],
+              "after_material_length": 100.0,
+              "before_material_intervals": [
+                [
+                  -50.0,
+                  50.0
+                ]
+              ],
+              "before_material_length": 100.0,
+              "condition": "outside-radius sample retains its pre-cut material span when stock exists at that sample",
+              "origin": [
+                2.2273863607376243,
+                -2.227386360737625,
+                0.0
+              ],
+              "passed": true,
+              "removed_material_length": 0.0,
+              "sample": "outside_r1_05"
+            },
+            {
+              "after_material_intervals": [
+                [
+                  -50.0,
+                  50.0
+                ]
+              ],
+              "after_material_length": 100.0,
+              "before_material_intervals": [
+                [
+                  -50.0,
+                  50.0
+                ]
+              ],
+              "before_material_length": 100.0,
+              "condition": "outside-radius sample retains its pre-cut material span when stock exists at that sample",
+              "origin": [
+                3.15,
+                -5.786456125971243e-16,
+                0.0
+              ],
+              "passed": true,
+              "removed_material_length": 0.0,
+              "sample": "outside_r1_06"
+            },
+            {
+              "after_material_intervals": [
+                [
+                  -50.0,
+                  50.0
+                ]
+              ],
+              "after_material_length": 100.0,
+              "before_material_intervals": [
+                [
+                  -50.0,
+                  50.0
+                ]
+              ],
+              "before_material_length": 100.0,
+              "condition": "outside-radius sample retains its pre-cut material span when stock exists at that sample",
+              "origin": [
+                2.227386360737625,
+                2.2273863607376243,
+                0.0
+              ],
+              "passed": true,
+              "removed_material_length": 0.0,
+              "sample": "outside_r1_07"
+            },
+            {
+              "after_material_intervals": [
+                [
+                  -50.0,
+                  50.0
+                ]
+              ],
+              "after_material_length": 100.0,
+              "before_material_intervals": [
+                [
+                  -50.0,
+                  50.0
+                ]
+              ],
+              "before_material_length": 100.0,
+              "condition": "outside-radius sample retains its pre-cut material span when stock exists at that sample",
+              "origin": [
+                0.0,
+                3.3,
+                0.0
+              ],
+              "passed": true,
+              "removed_material_length": 0.0,
+              "sample": "outside_r2_00"
+            },
+            {
+              "after_material_intervals": [
+                [
+                  -50.0,
+                  50.0
+                ]
+              ],
+              "after_material_length": 100.0,
+              "before_material_intervals": [
+                [
+                  -50.0,
+                  50.0
+                ]
+              ],
+              "before_material_length": 100.0,
+              "condition": "outside-radius sample retains its pre-cut material span when stock exists at that sample",
+              "origin": [
+                -2.3334523779156067,
+                2.3334523779156067,
+                0.0
+              ],
+              "passed": true,
+              "removed_material_length": 0.0,
+              "sample": "outside_r2_01"
+            },
+            {
+              "after_material_intervals": [
+                [
+                  -50.0,
+                  50.0
+                ]
+              ],
+              "after_material_length": 100.0,
+              "before_material_intervals": [
+                [
+                  -50.0,
+                  50.0
+                ]
+              ],
+              "before_material_length": 100.0,
+              "condition": "outside-radius sample retains its pre-cut material span when stock exists at that sample",
+              "origin": [
+                -3.3,
+                2.0206672185931328e-16,
+                0.0
+              ],
+              "passed": true,
+              "removed_material_length": 0.0,
+              "sample": "outside_r2_02"
+            },
+            {
+              "after_material_intervals": [
+                [
+                  -50.0,
+                  50.0
+                ]
+              ],
+              "after_material_length": 100.0,
+              "before_material_intervals": [
+                [
+                  -50.0,
+                  50.0
+                ]
+              ],
+              "before_material_length": 100.0,
+              "condition": "outside-radius sample retains its pre-cut material span when stock exists at that sample",
+              "origin": [
+                -2.3334523779156067,
+                -2.3334523779156067,
+                0.0
+              ],
+              "passed": true,
+              "removed_material_length": 0.0,
+              "sample": "outside_r2_03"
+            },
+            {
+              "after_material_intervals": [
+                [
+                  -50.0,
+                  50.0
+                ]
+              ],
+              "after_material_length": 100.0,
+              "before_material_intervals": [
+                [
+                  -50.0,
+                  50.0
+                ]
+              ],
+              "before_material_length": 100.0,
+              "condition": "outside-radius sample retains its pre-cut material span when stock exists at that sample",
+              "origin": [
+                -4.0413344371862655e-16,
+                -3.3,
+                0.0
+              ],
+              "passed": true,
+              "removed_material_length": 0.0,
+              "sample": "outside_r2_04"
+            },
+            {
+              "after_material_intervals": [
+                [
+                  -50.0,
+                  50.0
+                ]
+              ],
+              "after_material_length": 100.0,
+              "before_material_intervals": [
+                [
+                  -50.0,
+                  50.0
+                ]
+              ],
+              "before_material_length": 100.0,
+              "condition": "outside-radius sample retains its pre-cut material span when stock exists at that sample",
+              "origin": [
+                2.3334523779156067,
+                -2.333452377915607,
+                0.0
+              ],
+              "passed": true,
+              "removed_material_length": 0.0,
+              "sample": "outside_r2_05"
+            },
+            {
+              "after_material_intervals": [
+                [
+                  -50.0,
+                  50.0
+                ]
+              ],
+              "after_material_length": 100.0,
+              "before_material_intervals": [
+                [
+                  -50.0,
+                  50.0
+                ]
+              ],
+              "before_material_length": 100.0,
+              "condition": "outside-radius sample retains its pre-cut material span when stock exists at that sample",
+              "origin": [
+                3.3,
+                -6.062001655779398e-16,
+                0.0
+              ],
+              "passed": true,
+              "removed_material_length": 0.0,
+              "sample": "outside_r2_06"
+            },
+            {
+              "after_material_intervals": [
+                [
+                  -50.0,
+                  50.0
+                ]
+              ],
+              "after_material_length": 100.0,
+              "before_material_intervals": [
+                [
+                  -50.0,
+                  50.0
+                ]
+              ],
+              "before_material_length": 100.0,
+              "condition": "outside-radius sample retains its pre-cut material span when stock exists at that sample",
+              "origin": [
+                2.333452377915607,
+                2.3334523779156062,
+                0.0
+              ],
+              "passed": true,
+              "removed_material_length": 0.0,
+              "sample": "outside_r2_07"
+            }
+          ],
+          "request": {
+            "axis_xyz_normalized": [
+              0.0,
+              0.0,
+              1.0
+            ],
+            "interior_radius_fractions": [
+              0.5,
+              0.8,
+              0.95
+            ],
+            "nominal_radius": 3.0,
+            "origin_xyz": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "outside_protected_radius": 3.0,
+            "outside_radius_offsets": [
+              0.15000000000000002,
+              0.30000000000000004
+            ],
+            "t_range": [
+              -55.0,
+              55.0
+            ],
+            "tolerance": 1e-6
+          },
+          "status": "sampled_geometry_evidence",
+          "summary": {
+            "center_material_removed": true,
+            "center_pre_material_present": true,
+            "center_remaining_material": false,
+            "interior_rays_total": 24,
+            "interior_rays_with_material_removed": 24,
+            "interior_rays_with_pre_material": 24,
+            "outside_material_coverage_passed": true,
+            "outside_rays_minimum_required": 8,
+            "outside_rays_retaining_material": 16,
+            "outside_rays_total": 16,
+            "outside_rays_with_pre_material": 16,
+            "through_on_sampled_rays": true
+          }
+        },
+        "requested_radius": 3.0,
+        "status": "verified_open",
+        "tolerance": 1e-6,
+        "unmatched_cylindrical_faces": [
+          {
+            "accepted_as_requested_bore_face": false,
+            "actual_radius": 10.0,
+            "angular_parameter_span_radians": [
+              0.0,
+              6.283185307179586
+            ],
+            "axial_parameter_span": [
+              0.0,
+              100.0
+            ],
+            "axis_alignment_abs_cosine": 1.0,
+            "axis_direction": [
+              0.0,
+              0.0,
+              1.0
+            ],
+            "axis_offset": 0.0,
+            "axis_origin": [
+              0.0,
+              0.0,
+              -50.0
+            ],
+            "inward_facing": false,
+            "oriented_normal": [
+              -1.0,
+              1.2246467991473532e-16,
+              0.0
+            ],
+            "radius_error": 7.0,
+            "surface_point": [
+              -10.0,
+              1.2246467991473533e-15,
+              0.0
+            ]
+          }
+        ]
+      },
+      "instance_index": 1,
+      "local_positive_material_span_mm": null,
+      "sampled_evidence": {
+        "actual_material": {
+          "center_after_intervals": [],
+          "center_after_length_mm": -0.0,
+          "center_before_intervals": [
+            [
+              -50.0,
+              50.0
+            ]
+          ],
+          "center_before_length_mm": 100.0,
+          "center_remaining_material": false,
+          "interior_rays_total": 24,
+          "interior_rays_with_removal": 24,
+          "outside_rays_retaining_material": 16,
+          "outside_rays_total": 16
+        },
+        "center_removed_material_mm": 100.0,
+        "depth_matches_sampled_center_change": null,
+        "depth_tolerance_mm": null,
+        "expected_depth_mm": null,
+        "expected_through": true,
+        "measurement_scope": "sampled material intervals; not fitted diameter metrology",
+        "ray_evidence": {
+          "accepted": true,
+          "center_ray": {
+            "after_material_intervals": [],
+            "after_material_length": -0.0,
+            "before_material_intervals": [
+              [
+                -50.0,
+                50.0
+              ]
+            ],
+            "before_material_length": 100.0,
+            "condition": "pre-cut material exists and post-cut material length decreases",
+            "origin": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "passed": true,
+            "removed_material_length": 100.0,
+            "sample": "center"
+          },
+          "interior_rays": [
+            {
+              "after_material_intervals": [],
+              "after_material_length": -0.0,
+              "before_material_intervals": [
+                [
+                  -50.0,
+                  50.0
+                ]
+              ],
+              "before_material_length": 100.0,
+              "condition": "interior radial sample loses material",
+              "origin": [
+                0.0,
+                1.5,
+                0.0
+              ],
+              "passed": true,
+              "removed_material_length": 100.0,
+              "sample": "interior_r1_00"
+            },
+            {
+              "after_material_intervals": [],
+              "after_material_length": -0.0,
+              "before_material_intervals": [
+                [
+                  -50.0,
+                  50.0
+                ]
+              ],
+              "before_material_length": 100.0,
+              "condition": "interior radial sample loses material",
+              "origin": [
+                -1.0606601717798214,
+                1.0606601717798214,
+                0.0
+              ],
+              "passed": true,
+              "removed_material_length": 100.0,
+              "sample": "interior_r1_01"
+            },
+            {
+              "after_material_intervals": [],
+              "after_material_length": -0.0,
+              "before_material_intervals": [
+                [
+                  -50.0,
+                  50.0
+                ]
+              ],
+              "before_material_length": 100.0,
+              "condition": "interior radial sample loses material",
+              "origin": [
+                -1.5,
+                9.184850993605148e-17,
+                0.0
+              ],
+              "passed": true,
+              "removed_material_length": 100.0,
+              "sample": "interior_r1_02"
+            },
+            {
+              "after_material_intervals": [],
+              "after_material_length": -0.0,
+              "before_material_intervals": [
+                [
+                  -50.0,
+                  50.0
+                ]
+              ],
+              "before_material_length": 100.0,
+              "condition": "interior radial sample loses material",
+              "origin": [
+                -1.0606601717798214,
+                -1.0606601717798212,
+                0.0
+              ],
+              "passed": true,
+              "removed_material_length": 100.0,
+              "sample": "interior_r1_03"
+            },
+            {
+              "after_material_intervals": [],
+              "after_material_length": -0.0,
+              "before_material_intervals": [
+                [
+                  -50.0,
+                  50.0
+                ]
+              ],
+              "before_material_length": 100.0,
+              "condition": "interior radial sample loses material",
+              "origin": [
+                -1.8369701987210297e-16,
+                -1.5,
+                0.0
+              ],
+              "passed": true,
+              "removed_material_length": 100.0,
+              "sample": "interior_r1_04"
+            },
+            {
+              "after_material_intervals": [],
+              "after_material_length": -0.0,
+              "before_material_intervals": [
+                [
+                  -50.0,
+                  50.0
+                ]
+              ],
+              "before_material_length": 100.0,
+              "condition": "interior radial sample loses material",
+              "origin": [
+                1.0606601717798212,
+                -1.0606601717798214,
+                0.0
+              ],
+              "passed": true,
+              "removed_material_length": 100.0,
+              "sample": "interior_r1_05"
+            },
+            {
+              "after_material_intervals": [],
+              "after_material_length": -0.0,
+              "before_material_intervals": [
+                [
+                  -50.0,
+                  50.0
+                ]
+              ],
+              "before_material_length": 100.0,
+              "condition": "interior radial sample loses material",
+              "origin": [
+                1.5,
+                -2.755455298081545e-16,
+                0.0
+              ],
+              "passed": true,
+              "removed_material_length": 100.0,
+              "sample": "interior_r1_06"
+            },
+            {
+              "after_material_intervals": [],
+              "after_material_length": -0.0,
+              "before_material_intervals": [
+                [
+                  -50.0,
+                  50.0
+                ]
+              ],
+              "before_material_length": 100.0,
+              "condition": "interior radial sample loses material",
+              "origin": [
+                1.0606601717798214,
+                1.060660171779821,
+                0.0
+              ],
+              "passed": true,
+              "removed_material_length": 100.0,
+              "sample": "interior_r1_07"
+            },
+            {
+              "after_material_intervals": [],
+              "after_material_length": -0.0,
+              "before_material_intervals": [
+                [
+                  -50.0,
+                  50.0
+                ]
+              ],
+              "before_material_length": 100.0,
+              "condition": "interior radial sample loses material",
+              "origin": [
+                0.0,
+                2.4000000000000004,
+                0.0
+              ],
+              "passed": true,
+              "removed_material_length": 100.0,
+              "sample": "interior_r2_00"
+            },
+            {
+              "after_material_intervals": [],
+              "after_material_length": -0.0,
+              "before_material_intervals": [
+                [
+                  -50.0,
+                  50.0
+                ]
+              ],
+              "before_material_length": 100.0,
+              "condition": "interior radial sample loses material",
+              "origin": [
+                -1.6970562748477145,
+                1.6970562748477145,
+                0.0
+              ],
+              "passed": true,
+              "removed_material_length": 100.0,
+              "sample": "interior_r2_01"
+            },
+            {
+              "after_material_intervals": [],
+              "after_material_length": -0.0,
+              "before_material_intervals": [
+                [
+                  -50.0,
+                  50.0
+                ]
+              ],
+              "before_material_length": 100.0,
+              "condition": "interior radial sample loses material",
+              "origin": [
+                -2.4000000000000004,
+                1.469576158976824e-16,
+                0.0
+              ],
+              "passed": true,
+              "removed_material_length": 100.0,
+              "sample": "interior_r2_02"
+            },
+            {
+              "after_material_intervals": [],
+              "after_material_length": -0.0,
+              "before_material_intervals": [
+                [
+                  -50.0,
+                  50.0
+                ]
+              ],
+              "before_material_length": 100.0,
+              "condition": "interior radial sample loses material",
+              "origin": [
+                -1.6970562748477145,
+                -1.6970562748477143,
+                0.0
+              ],
+              "passed": true,
+              "removed_material_length": 100.0,
+              "sample": "interior_r2_03"
+            },
+            {
+              "after_material_intervals": [],
+              "after_material_length": -0.0,
+              "before_material_intervals": [
+                [
+                  -50.0,
+                  50.0
+                ]
+              ],
+              "before_material_length": 100.0,
+              "condition": "interior radial sample loses material",
+              "origin": [
+                -2.939152317953648e-16,
+                -2.4000000000000004,
+                0.0
+              ],
+              "passed": true,
+              "removed_material_length": 100.0,
+              "sample": "interior_r2_04"
+            },
+            {
+              "after_material_intervals": [],
+              "after_material_length": -0.0,
+              "before_material_intervals": [
+                [
+                  -50.0,
+                  50.0
+                ]
+              ],
+              "before_material_length": 100.0,
+              "condition": "interior radial sample loses material",
+              "origin": [
+                1.6970562748477143,
+                -1.6970562748477147,
+                0.0
+              ],
+              "passed": true,
+              "removed_material_length": 100.0,
+              "sample": "interior_r2_05"
+            },
+            {
+              "after_material_intervals": [],
+              "after_material_length": -0.0,
+              "before_material_intervals": [
+                [
+                  -50.0,
+                  50.0
+                ]
+              ],
+              "before_material_length": 100.0,
+              "condition": "interior radial sample loses material",
+              "origin": [
+                2.4000000000000004,
+                -4.408728476930472e-16,
+                0.0
+              ],
+              "passed": true,
+              "removed_material_length": 100.0,
+              "sample": "interior_r2_06"
+            },
+            {
+              "after_material_intervals": [],
+              "after_material_length": -0.0,
+              "before_material_intervals": [
+                [
+                  -50.0,
+                  50.0
+                ]
+              ],
+              "before_material_length": 100.0,
+              "condition": "interior radial sample loses material",
+              "origin": [
+                1.6970562748477147,
+                1.6970562748477138,
+                0.0
+              ],
+              "passed": true,
+              "removed_material_length": 100.0,
+              "sample": "interior_r2_07"
+            },
+            {
+              "after_material_intervals": [],
+              "after_material_length": -0.0,
+              "before_material_intervals": [
+                [
+                  -50.0,
+                  50.0
+                ]
+              ],
+              "before_material_length": 100.0,
+              "condition": "interior radial sample loses material",
+              "origin": [
+                0.0,
+                2.8499999999999996,
+                0.0
+              ],
+              "passed": true,
+              "removed_material_length": 100.0,
+              "sample": "interior_r3_00"
+            },
+            {
+              "after_material_intervals": [],
+              "after_material_length": -0.0,
+              "before_material_intervals": [
+                [
+                  -50.0,
+                  50.0
+                ]
+              ],
+              "before_material_length": 100.0,
+              "condition": "interior radial sample loses material",
+              "origin": [
+                -2.0152543263816605,
+                2.0152543263816605,
+                0.0
+              ],
+              "passed": true,
+              "removed_material_length": 100.0,
+              "sample": "interior_r3_01"
+            },
+            {
+              "after_material_intervals": [],
+              "after_material_length": -0.0,
+              "before_material_intervals": [
+                [
+                  -50.0,
+                  50.0
+                ]
+              ],
+              "before_material_length": 100.0,
+              "condition": "interior radial sample loses material",
+              "origin": [
+                -2.8499999999999996,
+                1.745121688784978e-16,
+                0.0
+              ],
+              "passed": true,
+              "removed_material_length": 100.0,
+              "sample": "interior_r3_02"
+            },
+            {
+              "after_material_intervals": [],
+              "after_material_length": -0.0,
+              "before_material_intervals": [
+                [
+                  -50.0,
+                  50.0
+                ]
+              ],
+              "before_material_length": 100.0,
+              "condition": "interior radial sample loses material",
+              "origin": [
+                -2.0152543263816605,
+                -2.01525432638166,
+                0.0
+              ],
+              "passed": true,
+              "removed_material_length": 100.0,
+              "sample": "interior_r3_03"
+            },
+            {
+              "after_material_intervals": [],
+              "after_material_length": -0.0,
+              "before_material_intervals": [
+                [
+                  -50.0,
+                  50.0
+                ]
+              ],
+              "before_material_length": 100.0,
+              "condition": "interior radial sample loses material",
+              "origin": [
+                -3.490243377569956e-16,
+                -2.8499999999999996,
+                0.0
+              ],
+              "passed": true,
+              "removed_material_length": 100.0,
+              "sample": "interior_r3_04"
+            },
+            {
+              "after_material_intervals": [],
+              "after_material_length": -0.0,
+              "before_material_intervals": [
+                [
+                  -50.0,
+                  50.0
+                ]
+              ],
+              "before_material_length": 100.0,
+              "condition": "interior radial sample loses material",
+              "origin": [
+                2.01525432638166,
+                -2.0152543263816605,
+                0.0
+              ],
+              "passed": true,
+              "removed_material_length": 100.0,
+              "sample": "interior_r3_05"
+            },
+            {
+              "after_material_intervals": [],
+              "after_material_length": -0.0,
+              "before_material_intervals": [
+                [
+                  -50.0,
+                  50.0
+                ]
+              ],
+              "before_material_length": 100.0,
+              "condition": "interior radial sample loses material",
+              "origin": [
+                2.8499999999999996,
+                -5.235365066354934e-16,
+                0.0
+              ],
+              "passed": true,
+              "removed_material_length": 100.0,
+              "sample": "interior_r3_06"
+            },
+            {
+              "after_material_intervals": [],
+              "after_material_length": -0.0,
+              "before_material_intervals": [
+                [
+                  -50.0,
+                  50.0
+                ]
+              ],
+              "before_material_length": 100.0,
+              "condition": "interior radial sample loses material",
+              "origin": [
+                2.0152543263816605,
+                2.0152543263816596,
+                0.0
+              ],
+              "passed": true,
+              "removed_material_length": 100.0,
+              "sample": "interior_r3_07"
+            }
+          ],
+          "judgement": "through_material_removed_on_sampled_rays",
+          "measurement_scope": "sampled line material intervals; not a fitted or independent diameter measurement",
+          "outside_rays": [
+            {
+              "after_material_intervals": [
+                [
+                  -50.0,
+                  50.0
+                ]
+              ],
+              "after_material_length": 100.0,
+              "before_material_intervals": [
+                [
+                  -50.0,
+                  50.0
+                ]
+              ],
+              "before_material_length": 100.0,
+              "condition": "outside-radius sample retains its pre-cut material span when stock exists at that sample",
+              "origin": [
+                0.0,
+                3.15,
+                0.0
+              ],
+              "passed": true,
+              "removed_material_length": 0.0,
+              "sample": "outside_r1_00"
+            },
+            {
+              "after_material_intervals": [
+                [
+                  -50.0,
+                  50.0
+                ]
+              ],
+              "after_material_length": 100.0,
+              "before_material_intervals": [
+                [
+                  -50.0,
+                  50.0
+                ]
+              ],
+              "before_material_length": 100.0,
+              "condition": "outside-radius sample retains its pre-cut material span when stock exists at that sample",
+              "origin": [
+                -2.2273863607376247,
+                2.2273863607376247,
+                0.0
+              ],
+              "passed": true,
+              "removed_material_length": 0.0,
+              "sample": "outside_r1_01"
+            },
+            {
+              "after_material_intervals": [
+                [
+                  -50.0,
+                  50.0
+                ]
+              ],
+              "after_material_length": 100.0,
+              "before_material_intervals": [
+                [
+                  -50.0,
+                  50.0
+                ]
+              ],
+              "before_material_length": 100.0,
+              "condition": "outside-radius sample retains its pre-cut material span when stock exists at that sample",
+              "origin": [
+                -3.15,
+                1.9288187086570813e-16,
+                0.0
+              ],
+              "passed": true,
+              "removed_material_length": 0.0,
+              "sample": "outside_r1_02"
+            },
+            {
+              "after_material_intervals": [
+                [
+                  -50.0,
+                  50.0
+                ]
+              ],
+              "after_material_length": 100.0,
+              "before_material_intervals": [
+                [
+                  -50.0,
+                  50.0
+                ]
+              ],
+              "before_material_length": 100.0,
+              "condition": "outside-radius sample retains its pre-cut material span when stock exists at that sample",
+              "origin": [
+                -2.2273863607376247,
+                -2.2273863607376243,
+                0.0
+              ],
+              "passed": true,
+              "removed_material_length": 0.0,
+              "sample": "outside_r1_03"
+            },
+            {
+              "after_material_intervals": [
+                [
+                  -50.0,
+                  50.0
+                ]
+              ],
+              "after_material_length": 100.0,
+              "before_material_intervals": [
+                [
+                  -50.0,
+                  50.0
+                ]
+              ],
+              "before_material_length": 100.0,
+              "condition": "outside-radius sample retains its pre-cut material span when stock exists at that sample",
+              "origin": [
+                -3.8576374173141627e-16,
+                -3.15,
+                0.0
+              ],
+              "passed": true,
+              "removed_material_length": 0.0,
+              "sample": "outside_r1_04"
+            },
+            {
+              "after_material_intervals": [
+                [
+                  -50.0,
+                  50.0
+                ]
+              ],
+              "after_material_length": 100.0,
+              "before_material_intervals": [
+                [
+                  -50.0,
+                  50.0
+                ]
+              ],
+              "before_material_length": 100.0,
+              "condition": "outside-radius sample retains its pre-cut material span when stock exists at that sample",
+              "origin": [
+                2.2273863607376243,
+                -2.227386360737625,
+                0.0
+              ],
+              "passed": true,
+              "removed_material_length": 0.0,
+              "sample": "outside_r1_05"
+            },
+            {
+              "after_material_intervals": [
+                [
+                  -50.0,
+                  50.0
+                ]
+              ],
+              "after_material_length": 100.0,
+              "before_material_intervals": [
+                [
+                  -50.0,
+                  50.0
+                ]
+              ],
+              "before_material_length": 100.0,
+              "condition": "outside-radius sample retains its pre-cut material span when stock exists at that sample",
+              "origin": [
+                3.15,
+                -5.786456125971243e-16,
+                0.0
+              ],
+              "passed": true,
+              "removed_material_length": 0.0,
+              "sample": "outside_r1_06"
+            },
+            {
+              "after_material_intervals": [
+                [
+                  -50.0,
+                  50.0
+                ]
+              ],
+              "after_material_length": 100.0,
+              "before_material_intervals": [
+                [
+                  -50.0,
+                  50.0
+                ]
+              ],
+              "before_material_length": 100.0,
+              "condition": "outside-radius sample retains its pre-cut material span when stock exists at that sample",
+              "origin": [
+                2.227386360737625,
+                2.2273863607376243,
+                0.0
+              ],
+              "passed": true,
+              "removed_material_length": 0.0,
+              "sample": "outside_r1_07"
+            },
+            {
+              "after_material_intervals": [
+                [
+                  -50.0,
+                  50.0
+                ]
+              ],
+              "after_material_length": 100.0,
+              "before_material_intervals": [
+                [
+                  -50.0,
+                  50.0
+                ]
+              ],
+              "before_material_length": 100.0,
+              "condition": "outside-radius sample retains its pre-cut material span when stock exists at that sample",
+              "origin": [
+                0.0,
+                3.3,
+                0.0
+              ],
+              "passed": true,
+              "removed_material_length": 0.0,
+              "sample": "outside_r2_00"
+            },
+            {
+              "after_material_intervals": [
+                [
+                  -50.0,
+                  50.0
+                ]
+              ],
+              "after_material_length": 100.0,
+              "before_material_intervals": [
+                [
+                  -50.0,
+                  50.0
+                ]
+              ],
+              "before_material_length": 100.0,
+              "condition": "outside-radius sample retains its pre-cut material span when stock exists at that sample",
+              "origin": [
+                -2.3334523779156067,
+                2.3334523779156067,
+                0.0
+              ],
+              "passed": true,
+              "removed_material_length": 0.0,
+              "sample": "outside_r2_01"
+            },
+            {
+              "after_material_intervals": [
+                [
+                  -50.0,
+                  50.0
+                ]
+              ],
+              "after_material_length": 100.0,
+              "before_material_intervals": [
+                [
+                  -50.0,
+                  50.0
+                ]
+              ],
+              "before_material_length": 100.0,
+              "condition": "outside-radius sample retains its pre-cut material span when stock exists at that sample",
+              "origin": [
+                -3.3,
+                2.0206672185931328e-16,
+                0.0
+              ],
+              "passed": true,
+              "removed_material_length": 0.0,
+              "sample": "outside_r2_02"
+            },
+            {
+              "after_material_intervals": [
+                [
+                  -50.0,
+                  50.0
+                ]
+              ],
+              "after_material_length": 100.0,
+              "before_material_intervals": [
+                [
+                  -50.0,
+                  50.0
+                ]
+              ],
+              "before_material_length": 100.0,
+              "condition": "outside-radius sample retains its pre-cut material span when stock exists at that sample",
+              "origin": [
+                -2.3334523779156067,
+                -2.3334523779156067,
+                0.0
+              ],
+              "passed": true,
+              "removed_material_length": 0.0,
+              "sample": "outside_r2_03"
+            },
+            {
+              "after_material_intervals": [
+                [
+                  -50.0,
+                  50.0
+                ]
+              ],
+              "after_material_length": 100.0,
+              "before_material_intervals": [
+                [
+                  -50.0,
+                  50.0
+                ]
+              ],
+              "before_material_length": 100.0,
+              "condition": "outside-radius sample retains its pre-cut material span when stock exists at that sample",
+              "origin": [
+                -4.0413344371862655e-16,
+                -3.3,
+                0.0
+              ],
+              "passed": true,
+              "removed_material_length": 0.0,
+              "sample": "outside_r2_04"
+            },
+            {
+              "after_material_intervals": [
+                [
+                  -50.0,
+                  50.0
+                ]
+              ],
+              "after_material_length": 100.0,
+              "before_material_intervals": [
+                [
+                  -50.0,
+                  50.0
+                ]
+              ],
+              "before_material_length": 100.0,
+              "condition": "outside-radius sample retains its pre-cut material span when stock exists at that sample",
+              "origin": [
+                2.3334523779156067,
+                -2.333452377915607,
+                0.0
+              ],
+              "passed": true,
+              "removed_material_length": 0.0,
+              "sample": "outside_r2_05"
+            },
+            {
+              "after_material_intervals": [
+                [
+                  -50.0,
+                  50.0
+                ]
+              ],
+              "after_material_length": 100.0,
+              "before_material_intervals": [
+                [
+                  -50.0,
+                  50.0
+                ]
+              ],
+              "before_material_length": 100.0,
+              "condition": "outside-radius sample retains its pre-cut material span when stock exists at that sample",
+              "origin": [
+                3.3,
+                -6.062001655779398e-16,
+                0.0
+              ],
+              "passed": true,
+              "removed_material_length": 0.0,
+              "sample": "outside_r2_06"
+            },
+            {
+              "after_material_intervals": [
+                [
+                  -50.0,
+                  50.0
+                ]
+              ],
+              "after_material_length": 100.0,
+              "before_material_intervals": [
+                [
+                  -50.0,
+                  50.0
+                ]
+              ],
+              "before_material_length": 100.0,
+              "condition": "outside-radius sample retains its pre-cut material span when stock exists at that sample",
+              "origin": [
+                2.333452377915607,
+                2.3334523779156062,
+                0.0
+              ],
+              "passed": true,
+              "removed_material_length": 0.0,
+              "sample": "outside_r2_07"
+            }
+          ],
+          "request": {
+            "axis_xyz_normalized": [
+              0.0,
+              0.0,
+              1.0
+            ],
+            "interior_radius_fractions": [
+              0.5,
+              0.8,
+              0.95
+            ],
+            "nominal_radius": 3.0,
+            "origin_xyz": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "outside_protected_radius": 3.0,
+            "outside_radius_offsets": [
+              0.15000000000000002,
+              0.30000000000000004
+            ],
+            "t_range": [
+              -55.0,
+              55.0
+            ],
+            "tolerance": 1e-7
+          },
+          "status": "sampled_geometry_evidence",
+          "summary": {
+            "center_material_removed": true,
+            "center_pre_material_present": true,
+            "center_remaining_material": false,
+            "interior_rays_total": 24,
+            "interior_rays_with_material_removed": 24,
+            "interior_rays_with_pre_material": 24,
+            "outside_material_coverage_passed": true,
+            "outside_rays_minimum_required": 8,
+            "outside_rays_retaining_material": 16,
+            "outside_rays_total": 16,
+            "outside_rays_with_pre_material": 16,
+            "through_on_sampled_rays": true
+          }
+        },
+        "reason_codes": [],
+        "status": "verified_by_sampled_rays",
+        "through_on_sampled_rays": true
+      },
+      "status": "verified_open",
+      "through": true
+    }
+  ],
+  "hole_measurement_complete": true,
+  "hole_measurements_verified": true,
+  "image_acceptance": "not_performed",
+  "occt_version": "7.9.3",
+  "requested_holes": [
+    {
+      "axis": "Z",
+      "axis_vector_mm": [
+        0.0,
+        0.0,
+        1.0
+      ],
+      "centerline_mm": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "depth_mm": null,
+      "diameter_mm": 6.0,
+      "feature_id": "quick-0002",
+      "instance_index": 1,
+      "local_positive_material_span_mm": null,
+      "sampled_evidence": {
+        "actual_material": {
+          "center_after_intervals": [],
+          "center_after_length_mm": -0.0,
+          "center_before_intervals": [
+            [
+              -50.0,
+              50.0
+            ]
+          ],
+          "center_before_length_mm": 100.0,
+          "center_remaining_material": false,
+          "interior_rays_total": 24,
+          "interior_rays_with_removal": 24,
+          "outside_rays_retaining_material": 16,
+          "outside_rays_total": 16
+        },
+        "center_removed_material_mm": 100.0,
+        "depth_matches_sampled_center_change": null,
+        "depth_tolerance_mm": null,
+        "expected_depth_mm": null,
+        "expected_through": true,
+        "measurement_scope": "sampled material intervals; not fitted diameter metrology",
+        "ray_evidence": {
+          "accepted": true,
+          "center_ray": {
+            "after_material_intervals": [],
+            "after_material_length": -0.0,
+            "before_material_intervals": [
+              [
+                -50.0,
+                50.0
+              ]
+            ],
+            "before_material_length": 100.0,
+            "condition": "pre-cut material exists and post-cut material length decreases",
+            "origin": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "passed": true,
+            "removed_material_length": 100.0,
+            "sample": "center"
+          },
+          "interior_rays": [
+            {
+              "after_material_intervals": [],
+              "after_material_length": -0.0,
+              "before_material_intervals": [
+                [
+                  -50.0,
+                  50.0
+                ]
+              ],
+              "before_material_length": 100.0,
+              "condition": "interior radial sample loses material",
+              "origin": [
+                0.0,
+                1.5,
+                0.0
+              ],
+              "passed": true,
+              "removed_material_length": 100.0,
+              "sample": "interior_r1_00"
+            },
+            {
+              "after_material_intervals": [],
+              "after_material_length": -0.0,
+              "before_material_intervals": [
+                [
+                  -50.0,
+                  50.0
+                ]
+              ],
+              "before_material_length": 100.0,
+              "condition": "interior radial sample loses material",
+              "origin": [
+                -1.0606601717798214,
+                1.0606601717798214,
+                0.0
+              ],
+              "passed": true,
+              "removed_material_length": 100.0,
+              "sample": "interior_r1_01"
+            },
+            {
+              "after_material_intervals": [],
+              "after_material_length": -0.0,
+              "before_material_intervals": [
+                [
+                  -50.0,
+                  50.0
+                ]
+              ],
+              "before_material_length": 100.0,
+              "condition": "interior radial sample loses material",
+              "origin": [
+                -1.5,
+                9.184850993605148e-17,
+                0.0
+              ],
+              "passed": true,
+              "removed_material_length": 100.0,
+              "sample": "interior_r1_02"
+            },
+            {
+              "after_material_intervals": [],
+              "after_material_length": -0.0,
+              "before_material_intervals": [
+                [
+                  -50.0,
+                  50.0
+                ]
+              ],
+              "before_material_length": 100.0,
+              "condition": "interior radial sample loses material",
+              "origin": [
+                -1.0606601717798214,
+                -1.0606601717798212,
+                0.0
+              ],
+              "passed": true,
+              "removed_material_length": 100.0,
+              "sample": "interior_r1_03"
+            },
+            {
+              "after_material_intervals": [],
+              "after_material_length": -0.0,
+              "before_material_intervals": [
+                [
+                  -50.0,
+                  50.0
+                ]
+              ],
+              "before_material_length": 100.0,
+              "condition": "interior radial sample loses material",
+              "origin": [
+                -1.8369701987210297e-16,
+                -1.5,
+                0.0
+              ],
+              "passed": true,
+              "removed_material_length": 100.0,
+              "sample": "interior_r1_04"
+            },
+            {
+              "after_material_intervals": [],
+              "after_material_length": -0.0,
+              "before_material_intervals": [
+                [
+                  -50.0,
+                  50.0
+                ]
+              ],
+              "before_material_length": 100.0,
+              "condition": "interior radial sample loses material",
+              "origin": [
+                1.0606601717798212,
+                -1.0606601717798214,
+                0.0
+              ],
+              "passed": true,
+              "removed_material_length": 100.0,
+              "sample": "interior_r1_05"
+            },
+            {
+              "after_material_intervals": [],
+              "after_material_length": -0.0,
+              "before_material_intervals": [
+                [
+                  -50.0,
+                  50.0
+                ]
+              ],
+              "before_material_length": 100.0,
+              "condition": "interior radial sample loses material",
+              "origin": [
+                1.5,
+                -2.755455298081545e-16,
+                0.0
+              ],
+              "passed": true,
+              "removed_material_length": 100.0,
+              "sample": "interior_r1_06"
+            },
+            {
+              "after_material_intervals": [],
+              "after_material_length": -0.0,
+              "before_material_intervals": [
+                [
+                  -50.0,
+                  50.0
+                ]
+              ],
+              "before_material_length": 100.0,
+              "condition": "interior radial sample loses material",
+              "origin": [
+                1.0606601717798214,
+                1.060660171779821,
+                0.0
+              ],
+              "passed": true,
+              "removed_material_length": 100.0,
+              "sample": "interior_r1_07"
+            },
+            {
+              "after_material_intervals": [],
+              "after_material_length": -0.0,
+              "before_material_intervals": [
+                [
+                  -50.0,
+                  50.0
+                ]
+              ],
+              "before_material_length": 100.0,
+              "condition": "interior radial sample loses material",
+              "origin": [
+                0.0,
+                2.4000000000000004,
+                0.0
+              ],
+              "passed": true,
+              "removed_material_length": 100.0,
+              "sample": "interior_r2_00"
+            },
+            {
+              "after_material_intervals": [],
+              "after_material_length": -0.0,
+              "before_material_intervals": [
+                [
+                  -50.0,
+                  50.0
+                ]
+              ],
+              "before_material_length": 100.0,
+              "condition": "interior radial sample loses material",
+              "origin": [
+                -1.6970562748477145,
+                1.6970562748477145,
+                0.0
+              ],
+              "passed": true,
+              "removed_material_length": 100.0,
+              "sample": "interior_r2_01"
+            },
+            {
+              "after_material_intervals": [],
+              "after_material_length": -0.0,
+              "before_material_intervals": [
+                [
+                  -50.0,
+                  50.0
+                ]
+              ],
+              "before_material_length": 100.0,
+              "condition": "interior radial sample loses material",
+              "origin": [
+                -2.4000000000000004,
+                1.469576158976824e-16,
+                0.0
+              ],
+              "passed": true,
+              "removed_material_length": 100.0,
+              "sample": "interior_r2_02"
+            },
+            {
+              "after_material_intervals": [],
+              "after_material_length": -0.0,
+              "before_material_intervals": [
+                [
+                  -50.0,
+                  50.0
+                ]
+              ],
+              "before_material_length": 100.0,
+              "condition": "interior radial sample loses material",
+              "origin": [
+                -1.6970562748477145,
+                -1.6970562748477143,
+                0.0
+              ],
+              "passed": true,
+              "removed_material_length": 100.0,
+              "sample": "interior_r2_03"
+            },
+            {
+              "after_material_intervals": [],
+              "after_material_length": -0.0,
+              "before_material_intervals": [
+                [
+                  -50.0,
+                  50.0
+                ]
+              ],
+              "before_material_length": 100.0,
+              "condition": "interior radial sample loses material",
+              "origin": [
+                -2.939152317953648e-16,
+                -2.4000000000000004,
+                0.0
+              ],
+              "passed": true,
+              "removed_material_length": 100.0,
+              "sample": "interior_r2_04"
+            },
+            {
+              "after_material_intervals": [],
+              "after_material_length": -0.0,
+              "before_material_intervals": [
+                [
+                  -50.0,
+                  50.0
+                ]
+              ],
+              "before_material_length": 100.0,
+              "condition": "interior radial sample loses material",
+              "origin": [
+                1.6970562748477143,
+                -1.6970562748477147,
+                0.0
+              ],
+              "passed": true,
+              "removed_material_length": 100.0,
+              "sample": "interior_r2_05"
+            },
+            {
+              "after_material_intervals": [],
+              "after_material_length": -0.0,
+              "before_material_intervals": [
+                [
+                  -50.0,
+                  50.0
+                ]
+              ],
+              "before_material_length": 100.0,
+              "condition": "interior radial sample loses material",
+              "origin": [
+                2.4000000000000004,
+                -4.408728476930472e-16,
+                0.0
+              ],
+              "passed": true,
+              "removed_material_length": 100.0,
+              "sample": "interior_r2_06"
+            },
+            {
+              "after_material_intervals": [],
+              "after_material_length": -0.0,
+              "before_material_intervals": [
+                [
+                  -50.0,
+                  50.0
+                ]
+              ],
+              "before_material_length": 100.0,
+              "condition": "interior radial sample loses material",
+              "origin": [
+                1.6970562748477147,
+                1.6970562748477138,
+                0.0
+              ],
+              "passed": true,
+              "removed_material_length": 100.0,
+              "sample": "interior_r2_07"
+            },
+            {
+              "after_material_intervals": [],
+              "after_material_length": -0.0,
+              "before_material_intervals": [
+                [
+                  -50.0,
+                  50.0
+                ]
+              ],
+              "before_material_length": 100.0,
+              "condition": "interior radial sample loses material",
+              "origin": [
+                0.0,
+                2.8499999999999996,
+                0.0
+              ],
+              "passed": true,
+              "removed_material_length": 100.0,
+              "sample": "interior_r3_00"
+            },
+            {
+              "after_material_intervals": [],
+              "after_material_length": -0.0,
+              "before_material_intervals": [
+                [
+                  -50.0,
+                  50.0
+                ]
+              ],
+              "before_material_length": 100.0,
+              "condition": "interior radial sample loses material",
+              "origin": [
+                -2.0152543263816605,
+                2.0152543263816605,
+                0.0
+              ],
+              "passed": true,
+              "removed_material_length": 100.0,
+              "sample": "interior_r3_01"
+            },
+            {
+              "after_material_intervals": [],
+              "after_material_length": -0.0,
+              "before_material_intervals": [
+                [
+                  -50.0,
+                  50.0
+                ]
+              ],
+              "before_material_length": 100.0,
+              "condition": "interior radial sample loses material",
+              "origin": [
+                -2.8499999999999996,
+                1.745121688784978e-16,
+                0.0
+              ],
+              "passed": true,
+              "removed_material_length": 100.0,
+              "sample": "interior_r3_02"
+            },
+            {
+              "after_material_intervals": [],
+              "after_material_length": -0.0,
+              "before_material_intervals": [
+                [
+                  -50.0,
+                  50.0
+                ]
+              ],
+              "before_material_length": 100.0,
+              "condition": "interior radial sample loses material",
+              "origin": [
+                -2.0152543263816605,
+                -2.01525432638166,
+                0.0
+              ],
+              "passed": true,
+              "removed_material_length": 100.0,
+              "sample": "interior_r3_03"
+            },
+            {
+              "after_material_intervals": [],
+              "after_material_length": -0.0,
+              "before_material_intervals": [
+                [
+                  -50.0,
+                  50.0
+                ]
+              ],
+              "before_material_length": 100.0,
+              "condition": "interior radial sample loses material",
+              "origin": [
+                -3.490243377569956e-16,
+                -2.8499999999999996,
+                0.0
+              ],
+              "passed": true,
+              "removed_material_length": 100.0,
+              "sample": "interior_r3_04"
+            },
+            {
+              "after_material_intervals": [],
+              "after_material_length": -0.0,
+              "before_material_intervals": [
+                [
+                  -50.0,
+                  50.0
+                ]
+              ],
+              "before_material_length": 100.0,
+              "condition": "interior radial sample loses material",
+              "origin": [
+                2.01525432638166,
+                -2.0152543263816605,
+                0.0
+              ],
+              "passed": true,
+              "removed_material_length": 100.0,
+              "sample": "interior_r3_05"
+            },
+            {
+              "after_material_intervals": [],
+              "after_material_length": -0.0,
+              "before_material_intervals": [
+                [
+                  -50.0,
+                  50.0
+                ]
+              ],
+              "before_material_length": 100.0,
+              "condition": "interior radial sample loses material",
+              "origin": [
+                2.8499999999999996,
+                -5.235365066354934e-16,
+                0.0
+              ],
+              "passed": true,
+              "removed_material_length": 100.0,
+              "sample": "interior_r3_06"
+            },
+            {
+              "after_material_intervals": [],
+              "after_material_length": -0.0,
+              "before_material_intervals": [
+                [
+                  -50.0,
+                  50.0
+                ]
+              ],
+              "before_material_length": 100.0,
+              "condition": "interior radial sample loses material",
+              "origin": [
+                2.0152543263816605,
+                2.0152543263816596,
+                0.0
+              ],
+              "passed": true,
+              "removed_material_length": 100.0,
+              "sample": "interior_r3_07"
+            }
+          ],
+          "judgement": "through_material_removed_on_sampled_rays",
+          "measurement_scope": "sampled line material intervals; not a fitted or independent diameter measurement",
+          "outside_rays": [
+            {
+              "after_material_intervals": [
+                [
+                  -50.0,
+                  50.0
+                ]
+              ],
+              "after_material_length": 100.0,
+              "before_material_intervals": [
+                [
+                  -50.0,
+                  50.0
+                ]
+              ],
+              "before_material_length": 100.0,
+              "condition": "outside-radius sample retains its pre-cut material span when stock exists at that sample",
+              "origin": [
+                0.0,
+                3.15,
+                0.0
+              ],
+              "passed": true,
+              "removed_material_length": 0.0,
+              "sample": "outside_r1_00"
+            },
+            {
+              "after_material_intervals": [
+                [
+                  -50.0,
+                  50.0
+                ]
+              ],
+              "after_material_length": 100.0,
+              "before_material_intervals": [
+                [
+                  -50.0,
+                  50.0
+                ]
+              ],
+              "before_material_length": 100.0,
+              "condition": "outside-radius sample retains its pre-cut material span when stock exists at that sample",
+              "origin": [
+                -2.2273863607376247,
+                2.2273863607376247,
+                0.0
+              ],
+              "passed": true,
+              "removed_material_length": 0.0,
+              "sample": "outside_r1_01"
+            },
+            {
+              "after_material_intervals": [
+                [
+                  -50.0,
+                  50.0
+                ]
+              ],
+              "after_material_length": 100.0,
+              "before_material_intervals": [
+                [
+                  -50.0,
+                  50.0
+                ]
+              ],
+              "before_material_length": 100.0,
+              "condition": "outside-radius sample retains its pre-cut material span when stock exists at that sample",
+              "origin": [
+                -3.15,
+                1.9288187086570813e-16,
+                0.0
+              ],
+              "passed": true,
+              "removed_material_length": 0.0,
+              "sample": "outside_r1_02"
+            },
+            {
+              "after_material_intervals": [
+                [
+                  -50.0,
+                  50.0
+                ]
+              ],
+              "after_material_length": 100.0,
+              "before_material_intervals": [
+                [
+                  -50.0,
+                  50.0
+                ]
+              ],
+              "before_material_length": 100.0,
+              "condition": "outside-radius sample retains its pre-cut material span when stock exists at that sample",
+              "origin": [
+                -2.2273863607376247,
+                -2.2273863607376243,
+                0.0
+              ],
+              "passed": true,
+              "removed_material_length": 0.0,
+              "sample": "outside_r1_03"
+            },
+            {
+              "after_material_intervals": [
+                [
+                  -50.0,
+                  50.0
+                ]
+              ],
+              "after_material_length": 100.0,
+              "before_material_intervals": [
+                [
+                  -50.0,
+                  50.0
+                ]
+              ],
+              "before_material_length": 100.0,
+              "condition": "outside-radius sample retains its pre-cut material span when stock exists at that sample",
+              "origin": [
+                -3.8576374173141627e-16,
+                -3.15,
+                0.0
+              ],
+              "passed": true,
+              "removed_material_length": 0.0,
+              "sample": "outside_r1_04"
+            },
+            {
+              "after_material_intervals": [
+                [
+                  -50.0,
+                  50.0
+                ]
+              ],
+              "after_material_length": 100.0,
+              "before_material_intervals": [
+                [
+                  -50.0,
+                  50.0
+                ]
+              ],
+              "before_material_length": 100.0,
+              "condition": "outside-radius sample retains its pre-cut material span when stock exists at that sample",
+              "origin": [
+                2.2273863607376243,
+                -2.227386360737625,
+                0.0
+              ],
+              "passed": true,
+              "removed_material_length": 0.0,
+              "sample": "outside_r1_05"
+            },
+            {
+              "after_material_intervals": [
+                [
+                  -50.0,
+                  50.0
+                ]
+              ],
+              "after_material_length": 100.0,
+              "before_material_intervals": [
+                [
+                  -50.0,
+                  50.0
+                ]
+              ],
+              "before_material_length": 100.0,
+              "condition": "outside-radius sample retains its pre-cut material span when stock exists at that sample",
+              "origin": [
+                3.15,
+                -5.786456125971243e-16,
+                0.0
+              ],
+              "passed": true,
+              "removed_material_length": 0.0,
+              "sample": "outside_r1_06"
+            },
+            {
+              "after_material_intervals": [
+                [
+                  -50.0,
+                  50.0
+                ]
+              ],
+              "after_material_length": 100.0,
+              "before_material_intervals": [
+                [
+                  -50.0,
+                  50.0
+                ]
+              ],
+              "before_material_length": 100.0,
+              "condition": "outside-radius sample retains its pre-cut material span when stock exists at that sample",
+              "origin": [
+                2.227386360737625,
+                2.2273863607376243,
+                0.0
+              ],
+              "passed": true,
+              "removed_material_length": 0.0,
+              "sample": "outside_r1_07"
+            },
+            {
+              "after_material_intervals": [
+                [
+                  -50.0,
+                  50.0
+                ]
+              ],
+              "after_material_length": 100.0,
+              "before_material_intervals": [
+                [
+                  -50.0,
+                  50.0
+                ]
+              ],
+              "before_material_length": 100.0,
+              "condition": "outside-radius sample retains its pre-cut material span when stock exists at that sample",
+              "origin": [
+                0.0,
+                3.3,
+                0.0
+              ],
+              "passed": true,
+              "removed_material_length": 0.0,
+              "sample": "outside_r2_00"
+            },
+            {
+              "after_material_intervals": [
+                [
+                  -50.0,
+                  50.0
+                ]
+              ],
+              "after_material_length": 100.0,
+              "before_material_intervals": [
+                [
+                  -50.0,
+                  50.0
+                ]
+              ],
+              "before_material_length": 100.0,
+              "condition": "outside-radius sample retains its pre-cut material span when stock exists at that sample",
+              "origin": [
+                -2.3334523779156067,
+                2.3334523779156067,
+                0.0
+              ],
+              "passed": true,
+              "removed_material_length": 0.0,
+              "sample": "outside_r2_01"
+            },
+            {
+              "after_material_intervals": [
+                [
+                  -50.0,
+                  50.0
+                ]
+              ],
+              "after_material_length": 100.0,
+              "before_material_intervals": [
+                [
+                  -50.0,
+                  50.0
+                ]
+              ],
+              "before_material_length": 100.0,
+              "condition": "outside-radius sample retains its pre-cut material span when stock exists at that sample",
+              "origin": [
+                -3.3,
+                2.0206672185931328e-16,
+                0.0
+              ],
+              "passed": true,
+              "removed_material_length": 0.0,
+              "sample": "outside_r2_02"
+            },
+            {
+              "after_material_intervals": [
+                [
+                  -50.0,
+                  50.0
+                ]
+              ],
+              "after_material_length": 100.0,
+              "before_material_intervals": [
+                [
+                  -50.0,
+                  50.0
+                ]
+              ],
+              "before_material_length": 100.0,
+              "condition": "outside-radius sample retains its pre-cut material span when stock exists at that sample",
+              "origin": [
+                -2.3334523779156067,
+                -2.3334523779156067,
+                0.0
+              ],
+              "passed": true,
+              "removed_material_length": 0.0,
+              "sample": "outside_r2_03"
+            },
+            {
+              "after_material_intervals": [
+                [
+                  -50.0,
+                  50.0
+                ]
+              ],
+              "after_material_length": 100.0,
+              "before_material_intervals": [
+                [
+                  -50.0,
+                  50.0
+                ]
+              ],
+              "before_material_length": 100.0,
+              "condition": "outside-radius sample retains its pre-cut material span when stock exists at that sample",
+              "origin": [
+                -4.0413344371862655e-16,
+                -3.3,
+                0.0
+              ],
+              "passed": true,
+              "removed_material_length": 0.0,
+              "sample": "outside_r2_04"
+            },
+            {
+              "after_material_intervals": [
+                [
+                  -50.0,
+                  50.0
+                ]
+              ],
+              "after_material_length": 100.0,
+              "before_material_intervals": [
+                [
+                  -50.0,
+                  50.0
+                ]
+              ],
+              "before_material_length": 100.0,
+              "condition": "outside-radius sample retains its pre-cut material span when stock exists at that sample",
+              "origin": [
+                2.3334523779156067,
+                -2.333452377915607,
+                0.0
+              ],
+              "passed": true,
+              "removed_material_length": 0.0,
+              "sample": "outside_r2_05"
+            },
+            {
+              "after_material_intervals": [
+                [
+                  -50.0,
+                  50.0
+                ]
+              ],
+              "after_material_length": 100.0,
+              "before_material_intervals": [
+                [
+                  -50.0,
+                  50.0
+                ]
+              ],
+              "before_material_length": 100.0,
+              "condition": "outside-radius sample retains its pre-cut material span when stock exists at that sample",
+              "origin": [
+                3.3,
+                -6.062001655779398e-16,
+                0.0
+              ],
+              "passed": true,
+              "removed_material_length": 0.0,
+              "sample": "outside_r2_06"
+            },
+            {
+              "after_material_intervals": [
+                [
+                  -50.0,
+                  50.0
+                ]
+              ],
+              "after_material_length": 100.0,
+              "before_material_intervals": [
+                [
+                  -50.0,
+                  50.0
+                ]
+              ],
+              "before_material_length": 100.0,
+              "condition": "outside-radius sample retains its pre-cut material span when stock exists at that sample",
+              "origin": [
+                2.333452377915607,
+                2.3334523779156062,
+                0.0
+              ],
+              "passed": true,
+              "removed_material_length": 0.0,
+              "sample": "outside_r2_07"
+            }
+          ],
+          "request": {
+            "axis_xyz_normalized": [
+              0.0,
+              0.0,
+              1.0
+            ],
+            "interior_radius_fractions": [
+              0.5,
+              0.8,
+              0.95
+            ],
+            "nominal_radius": 3.0,
+            "origin_xyz": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "outside_protected_radius": 3.0,
+            "outside_radius_offsets": [
+              0.15000000000000002,
+              0.30000000000000004
+            ],
+            "t_range": [
+              -55.0,
+              55.0
+            ],
+            "tolerance": 1e-7
+          },
+          "status": "sampled_geometry_evidence",
+          "summary": {
+            "center_material_removed": true,
+            "center_pre_material_present": true,
+            "center_remaining_material": false,
+            "interior_rays_total": 24,
+            "interior_rays_with_material_removed": 24,
+            "interior_rays_with_pre_material": 24,
+            "outside_material_coverage_passed": true,
+            "outside_rays_minimum_required": 8,
+            "outside_rays_retaining_material": 16,
+            "outside_rays_total": 16,
+            "outside_rays_with_pre_material": 16,
+            "through_on_sampled_rays": true
+          }
+        },
+        "reason_codes": [],
+        "status": "verified_by_sampled_rays",
+        "through_on_sampled_rays": true
+      },
+      "status": "verified_by_sampled_rays",
+      "through": true
+    }
+  ],
+  "sampled_hole_evidence": [
+    {
+      "axis": "Z",
+      "axis_vector_mm": [
+        0.0,
+        0.0,
+        1.0
+      ],
+      "centerline_mm": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "depth_mm": null,
+      "diameter_mm": 6.0,
+      "feature_id": "quick-0002",
+      "instance_index": 1,
+      "local_positive_material_span_mm": null,
+      "sampled_evidence": {
+        "actual_material": {
+          "center_after_intervals": [],
+          "center_after_length_mm": -0.0,
+          "center_before_intervals": [
+            [
+              -50.0,
+              50.0
+            ]
+          ],
+          "center_before_length_mm": 100.0,
+          "center_remaining_material": false,
+          "interior_rays_total": 24,
+          "interior_rays_with_removal": 24,
+          "outside_rays_retaining_material": 16,
+          "outside_rays_total": 16
+        },
+        "center_removed_material_mm": 100.0,
+        "depth_matches_sampled_center_change": null,
+        "depth_tolerance_mm": null,
+        "expected_depth_mm": null,
+        "expected_through": true,
+        "measurement_scope": "sampled material intervals; not fitted diameter metrology",
+        "ray_evidence": {
+          "accepted": true,
+          "center_ray": {
+            "after_material_intervals": [],
+            "after_material_length": -0.0,
+            "before_material_intervals": [
+              [
+                -50.0,
+                50.0
+              ]
+            ],
+            "before_material_length": 100.0,
+            "condition": "pre-cut material exists and post-cut material length decreases",
+            "origin": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "passed": true,
+            "removed_material_length": 100.0,
+            "sample": "center"
+          },
+          "interior_rays": [
+            {
+              "after_material_intervals": [],
+              "after_material_length": -0.0,
+              "before_material_intervals": [
+                [
+                  -50.0,
+                  50.0
+                ]
+              ],
+              "before_material_length": 100.0,
+              "condition": "interior radial sample loses material",
+              "origin": [
+                0.0,
+                1.5,
+                0.0
+              ],
+              "passed": true,
+              "removed_material_length": 100.0,
+              "sample": "interior_r1_00"
+            },
+            {
+              "after_material_intervals": [],
+              "after_material_length": -0.0,
+              "before_material_intervals": [
+                [
+                  -50.0,
+                  50.0
+                ]
+              ],
+              "before_material_length": 100.0,
+              "condition": "interior radial sample loses material",
+              "origin": [
+                -1.0606601717798214,
+                1.0606601717798214,
+                0.0
+              ],
+              "passed": true,
+              "removed_material_length": 100.0,
+              "sample": "interior_r1_01"
+            },
+            {
+              "after_material_intervals": [],
+              "after_material_length": -0.0,
+              "before_material_intervals": [
+                [
+                  -50.0,
+                  50.0
+                ]
+              ],
+              "before_material_length": 100.0,
+              "condition": "interior radial sample loses material",
+              "origin": [
+                -1.5,
+                9.184850993605148e-17,
+                0.0
+              ],
+              "passed": true,
+              "removed_material_length": 100.0,
+              "sample": "interior_r1_02"
+            },
+            {
+              "after_material_intervals": [],
+              "after_material_length": -0.0,
+              "before_material_intervals": [
+                [
+                  -50.0,
+                  50.0
+                ]
+              ],
+              "before_material_length": 100.0,
+              "condition": "interior radial sample loses material",
+              "origin": [
+                -1.0606601717798214,
+                -1.0606601717798212,
+                0.0
+              ],
+              "passed": true,
+              "removed_material_length": 100.0,
+              "sample": "interior_r1_03"
+            },
+            {
+              "after_material_intervals": [],
+              "after_material_length": -0.0,
+              "before_material_intervals": [
+                [
+                  -50.0,
+                  50.0
+                ]
+              ],
+              "before_material_length": 100.0,
+              "condition": "interior radial sample loses material",
+              "origin": [
+                -1.8369701987210297e-16,
+                -1.5,
+                0.0
+              ],
+              "passed": true,
+              "removed_material_length": 100.0,
+              "sample": "interior_r1_04"
+            },
+            {
+              "after_material_intervals": [],
+              "after_material_length": -0.0,
+              "before_material_intervals": [
+                [
+                  -50.0,
+                  50.0
+                ]
+              ],
+              "before_material_length": 100.0,
+              "condition": "interior radial sample loses material",
+              "origin": [
+                1.0606601717798212,
+                -1.0606601717798214,
+                0.0
+              ],
+              "passed": true,
+              "removed_material_length": 100.0,
+              "sample": "interior_r1_05"
+            },
+            {
+              "after_material_intervals": [],
+              "after_material_length": -0.0,
+              "before_material_intervals": [
+                [
+                  -50.0,
+                  50.0
+                ]
+              ],
+              "before_material_length": 100.0,
+              "condition": "interior radial sample loses material",
+              "origin": [
+                1.5,
+                -2.755455298081545e-16,
+                0.0
+              ],
+              "passed": true,
+              "removed_material_length": 100.0,
+              "sample": "interior_r1_06"
+            },
+            {
+              "after_material_intervals": [],
+              "after_material_length": -0.0,
+              "before_material_intervals": [
+                [
+                  -50.0,
+                  50.0
+                ]
+              ],
+              "before_material_length": 100.0,
+              "condition": "interior radial sample loses material",
+              "origin": [
+                1.0606601717798214,
+                1.060660171779821,
+                0.0
+              ],
+              "passed": true,
+              "removed_material_length": 100.0,
+              "sample": "interior_r1_07"
+            },
+            {
+              "after_material_intervals": [],
+              "after_material_length": -0.0,
+              "before_material_intervals": [
+                [
+                  -50.0,
+                  50.0
+                ]
+              ],
+              "before_material_length": 100.0,
+              "condition": "interior radial sample loses material",
+              "origin": [
+                0.0,
+                2.4000000000000004,
+                0.0
+              ],
+              "passed": true,
+              "removed_material_length": 100.0,
+              "sample": "interior_r2_00"
+            },
+            {
+              "after_material_intervals": [],
+              "after_material_length": -0.0,
+              "before_material_intervals": [
+                [
+                  -50.0,
+                  50.0
+                ]
+              ],
+              "before_material_length": 100.0,
+              "condition": "interior radial sample loses material",
+              "origin": [
+                -1.6970562748477145,
+                1.6970562748477145,
+                0.0
+              ],
+              "passed": true,
+              "removed_material_length": 100.0,
+              "sample": "interior_r2_01"
+            },
+            {
+              "after_material_intervals": [],
+              "after_material_length": -0.0,
+              "before_material_intervals": [
+                [
+                  -50.0,
+                  50.0
+                ]
+              ],
+              "before_material_length": 100.0,
+              "condition": "interior radial sample loses material",
+              "origin": [
+                -2.4000000000000004,
+                1.469576158976824e-16,
+                0.0
+              ],
+              "passed": true,
+              "removed_material_length": 100.0,
+              "sample": "interior_r2_02"
+            },
+            {
+              "after_material_intervals": [],
+              "after_material_length": -0.0,
+              "before_material_intervals": [
+                [
+                  -50.0,
+                  50.0
+                ]
+              ],
+              "before_material_length": 100.0,
+              "condition": "interior radial sample loses material",
+              "origin": [
+                -1.6970562748477145,
+                -1.6970562748477143,
+                0.0
+              ],
+              "passed": true,
+              "removed_material_length": 100.0,
+              "sample": "interior_r2_03"
+            },
+            {
+              "after_material_intervals": [],
+              "after_material_length": -0.0,
+              "before_material_intervals": [
+                [
+                  -50.0,
+                  50.0
+                ]
+              ],
+              "before_material_length": 100.0,
+              "condition": "interior radial sample loses material",
+              "origin": [
+                -2.939152317953648e-16,
+                -2.4000000000000004,
+                0.0
+              ],
+              "passed": true,
+              "removed_material_length": 100.0,
+              "sample": "interior_r2_04"
+            },
+            {
+              "after_material_intervals": [],
+              "after_material_length": -0.0,
+              "before_material_intervals": [
+                [
+                  -50.0,
+                  50.0
+                ]
+              ],
+              "before_material_length": 100.0,
+              "condition": "interior radial sample loses material",
+              "origin": [
+                1.6970562748477143,
+                -1.6970562748477147,
+                0.0
+              ],
+              "passed": true,
+              "removed_material_length": 100.0,
+              "sample": "interior_r2_05"
+            },
+            {
+              "after_material_intervals": [],
+              "after_material_length": -0.0,
+              "before_material_intervals": [
+                [
+                  -50.0,
+                  50.0
+                ]
+              ],
+              "before_material_length": 100.0,
+              "condition": "interior radial sample loses material",
+              "origin": [
+                2.4000000000000004,
+                -4.408728476930472e-16,
+                0.0
+              ],
+              "passed": true,
+              "removed_material_length": 100.0,
+              "sample": "interior_r2_06"
+            },
+            {
+              "after_material_intervals": [],
+              "after_material_length": -0.0,
+              "before_material_intervals": [
+                [
+                  -50.0,
+                  50.0
+                ]
+              ],
+              "before_material_length": 100.0,
+              "condition": "interior radial sample loses material",
+              "origin": [
+                1.6970562748477147,
+                1.6970562748477138,
+                0.0
+              ],
+              "passed": true,
+              "removed_material_length": 100.0,
+              "sample": "interior_r2_07"
+            },
+            {
+              "after_material_intervals": [],
+              "after_material_length": -0.0,
+              "before_material_intervals": [
+                [
+                  -50.0,
+                  50.0
+                ]
+              ],
+              "before_material_length": 100.0,
+              "condition": "interior radial sample loses material",
+              "origin": [
+                0.0,
+                2.8499999999999996,
+                0.0
+              ],
+              "passed": true,
+              "removed_material_length": 100.0,
+              "sample": "interior_r3_00"
+            },
+            {
+              "after_material_intervals": [],
+              "after_material_length": -0.0,
+              "before_material_intervals": [
+                [
+                  -50.0,
+                  50.0
+                ]
+              ],
+              "before_material_length": 100.0,
+              "condition": "interior radial sample loses material",
+              "origin": [
+                -2.0152543263816605,
+                2.0152543263816605,
+                0.0
+              ],
+              "passed": true,
+              "removed_material_length": 100.0,
+              "sample": "interior_r3_01"
+            },
+            {
+              "after_material_intervals": [],
+              "after_material_length": -0.0,
+              "before_material_intervals": [
+                [
+                  -50.0,
+                  50.0
+                ]
+              ],
+              "before_material_length": 100.0,
+              "condition": "interior radial sample loses material",
+              "origin": [
+                -2.8499999999999996,
+                1.745121688784978e-16,
+                0.0
+              ],
+              "passed": true,
+              "removed_material_length": 100.0,
+              "sample": "interior_r3_02"
+            },
+            {
+              "after_material_intervals": [],
+              "after_material_length": -0.0,
+              "before_material_intervals": [
+                [
+                  -50.0,
+                  50.0
+                ]
+              ],
+              "before_material_length": 100.0,
+              "condition": "interior radial sample loses material",
+              "origin": [
+                -2.0152543263816605,
+                -2.01525432638166,
+                0.0
+              ],
+              "passed": true,
+              "removed_material_length": 100.0,
+              "sample": "interior_r3_03"
+            },
+            {
+              "after_material_intervals": [],
+              "after_material_length": -0.0,
+              "before_material_intervals": [
+                [
+                  -50.0,
+                  50.0
+                ]
+              ],
+              "before_material_length": 100.0,
+              "condition": "interior radial sample loses material",
+              "origin": [
+                -3.490243377569956e-16,
+                -2.8499999999999996,
+                0.0
+              ],
+              "passed": true,
+              "removed_material_length": 100.0,
+              "sample": "interior_r3_04"
+            },
+            {
+              "after_material_intervals": [],
+              "after_material_length": -0.0,
+              "before_material_intervals": [
+                [
+                  -50.0,
+                  50.0
+                ]
+              ],
+              "before_material_length": 100.0,
+              "condition": "interior radial sample loses material",
+              "origin": [
+                2.01525432638166,
+                -2.0152543263816605,
+                0.0
+              ],
+              "passed": true,
+              "removed_material_length": 100.0,
+              "sample": "interior_r3_05"
+            },
+            {
+              "after_material_intervals": [],
+              "after_material_length": -0.0,
+              "before_material_intervals": [
+                [
+                  -50.0,
+                  50.0
+                ]
+              ],
+              "before_material_length": 100.0,
+              "condition": "interior radial sample loses material",
+              "origin": [
+                2.8499999999999996,
+                -5.235365066354934e-16,
+                0.0
+              ],
+              "passed": true,
+              "removed_material_length": 100.0,
+              "sample": "interior_r3_06"
+            },
+            {
+              "after_material_intervals": [],
+              "after_material_length": -0.0,
+              "before_material_intervals": [
+                [
+                  -50.0,
+                  50.0
+                ]
+              ],
+              "before_material_length": 100.0,
+              "condition": "interior radial sample loses material",
+              "origin": [
+                2.0152543263816605,
+                2.0152543263816596,
+                0.0
+              ],
+              "passed": true,
+              "removed_material_length": 100.0,
+              "sample": "interior_r3_07"
+            }
+          ],
+          "judgement": "through_material_removed_on_sampled_rays",
+          "measurement_scope": "sampled line material intervals; not a fitted or independent diameter measurement",
+          "outside_rays": [
+            {
+              "after_material_intervals": [
+                [
+                  -50.0,
+                  50.0
+                ]
+              ],
+              "after_material_length": 100.0,
+              "before_material_intervals": [
+                [
+                  -50.0,
+                  50.0
+                ]
+              ],
+              "before_material_length": 100.0,
+              "condition": "outside-radius sample retains its pre-cut material span when stock exists at that sample",
+              "origin": [
+                0.0,
+                3.15,
+                0.0
+              ],
+              "passed": true,
+              "removed_material_length": 0.0,
+              "sample": "outside_r1_00"
+            },
+            {
+              "after_material_intervals": [
+                [
+                  -50.0,
+                  50.0
+                ]
+              ],
+              "after_material_length": 100.0,
+              "before_material_intervals": [
+                [
+                  -50.0,
+                  50.0
+                ]
+              ],
+              "before_material_length": 100.0,
+              "condition": "outside-radius sample retains its pre-cut material span when stock exists at that sample",
+              "origin": [
+                -2.2273863607376247,
+                2.2273863607376247,
+                0.0
+              ],
+              "passed": true,
+              "removed_material_length": 0.0,
+              "sample": "outside_r1_01"
+            },
+            {
+              "after_material_intervals": [
+                [
+                  -50.0,
+                  50.0
+                ]
+              ],
+              "after_material_length": 100.0,
+              "before_material_intervals": [
+                [
+                  -50.0,
+                  50.0
+                ]
+              ],
+              "before_material_length": 100.0,
+              "condition": "outside-radius sample retains its pre-cut material span when stock exists at that sample",
+              "origin": [
+                -3.15,
+                1.9288187086570813e-16,
+                0.0
+              ],
+              "passed": true,
+              "removed_material_length": 0.0,
+              "sample": "outside_r1_02"
+            },
+            {
+              "after_material_intervals": [
+                [
+                  -50.0,
+                  50.0
+                ]
+              ],
+              "after_material_length": 100.0,
+              "before_material_intervals": [
+                [
+                  -50.0,
+                  50.0
+                ]
+              ],
+              "before_material_length": 100.0,
+              "condition": "outside-radius sample retains its pre-cut material span when stock exists at that sample",
+              "origin": [
+                -2.2273863607376247,
+                -2.2273863607376243,
+                0.0
+              ],
+              "passed": true,
+              "removed_material_length": 0.0,
+              "sample": "outside_r1_03"
+            },
+            {
+              "after_material_intervals": [
+                [
+                  -50.0,
+                  50.0
+                ]
+              ],
+              "after_material_length": 100.0,
+              "before_material_intervals": [
+                [
+                  -50.0,
+                  50.0
+                ]
+              ],
+              "before_material_length": 100.0,
+              "condition": "outside-radius sample retains its pre-cut material span when stock exists at that sample",
+              "origin": [
+                -3.8576374173141627e-16,
+                -3.15,
+                0.0
+              ],
+              "passed": true,
+              "removed_material_length": 0.0,
+              "sample": "outside_r1_04"
+            },
+            {
+              "after_material_intervals": [
+                [
+                  -50.0,
+                  50.0
+                ]
+              ],
+              "after_material_length": 100.0,
+              "before_material_intervals": [
+                [
+                  -50.0,
+                  50.0
+                ]
+              ],
+              "before_material_length": 100.0,
+              "condition": "outside-radius sample retains its pre-cut material span when stock exists at that sample",
+              "origin": [
+                2.2273863607376243,
+                -2.227386360737625,
+                0.0
+              ],
+              "passed": true,
+              "removed_material_length": 0.0,
+              "sample": "outside_r1_05"
+            },
+            {
+              "after_material_intervals": [
+                [
+                  -50.0,
+                  50.0
+                ]
+              ],
+              "after_material_length": 100.0,
+              "before_material_intervals": [
+                [
+                  -50.0,
+                  50.0
+                ]
+              ],
+              "before_material_length": 100.0,
+              "condition": "outside-radius sample retains its pre-cut material span when stock exists at that sample",
+              "origin": [
+                3.15,
+                -5.786456125971243e-16,
+                0.0
+              ],
+              "passed": true,
+              "removed_material_length": 0.0,
+              "sample": "outside_r1_06"
+            },
+            {
+              "after_material_intervals": [
+                [
+                  -50.0,
+                  50.0
+                ]
+              ],
+              "after_material_length": 100.0,
+              "before_material_intervals": [
+                [
+                  -50.0,
+                  50.0
+                ]
+              ],
+              "before_material_length": 100.0,
+              "condition": "outside-radius sample retains its pre-cut material span when stock exists at that sample",
+              "origin": [
+                2.227386360737625,
+                2.2273863607376243,
+                0.0
+              ],
+              "passed": true,
+              "removed_material_length": 0.0,
+              "sample": "outside_r1_07"
+            },
+            {
+              "after_material_intervals": [
+                [
+                  -50.0,
+                  50.0
+                ]
+              ],
+              "after_material_length": 100.0,
+              "before_material_intervals": [
+                [
+                  -50.0,
+                  50.0
+                ]
+              ],
+              "before_material_length": 100.0,
+              "condition": "outside-radius sample retains its pre-cut material span when stock exists at that sample",
+              "origin": [
+                0.0,
+                3.3,
+                0.0
+              ],
+              "passed": true,
+              "removed_material_length": 0.0,
+              "sample": "outside_r2_00"
+            },
+            {
+              "after_material_intervals": [
+                [
+                  -50.0,
+                  50.0
+                ]
+              ],
+              "after_material_length": 100.0,
+              "before_material_intervals": [
+                [
+                  -50.0,
+                  50.0
+                ]
+              ],
+              "before_material_length": 100.0,
+              "condition": "outside-radius sample retains its pre-cut material span when stock exists at that sample",
+              "origin": [
+                -2.3334523779156067,
+                2.3334523779156067,
+                0.0
+              ],
+              "passed": true,
+              "removed_material_length": 0.0,
+              "sample": "outside_r2_01"
+            },
+            {
+              "after_material_intervals": [
+                [
+                  -50.0,
+                  50.0
+                ]
+              ],
+              "after_material_length": 100.0,
+              "before_material_intervals": [
+                [
+                  -50.0,
+                  50.0
+                ]
+              ],
+              "before_material_length": 100.0,
+              "condition": "outside-radius sample retains its pre-cut material span when stock exists at that sample",
+              "origin": [
+                -3.3,
+                2.0206672185931328e-16,
+                0.0
+              ],
+              "passed": true,
+              "removed_material_length": 0.0,
+              "sample": "outside_r2_02"
+            },
+            {
+              "after_material_intervals": [
+                [
+                  -50.0,
+                  50.0
+                ]
+              ],
+              "after_material_length": 100.0,
+              "before_material_intervals": [
+                [
+                  -50.0,
+                  50.0
+                ]
+              ],
+              "before_material_length": 100.0,
+              "condition": "outside-radius sample retains its pre-cut material span when stock exists at that sample",
+              "origin": [
+                -2.3334523779156067,
+                -2.3334523779156067,
+                0.0
+              ],
+              "passed": true,
+              "removed_material_length": 0.0,
+              "sample": "outside_r2_03"
+            },
+            {
+              "after_material_intervals": [
+                [
+                  -50.0,
+                  50.0
+                ]
+              ],
+              "after_material_length": 100.0,
+              "before_material_intervals": [
+                [
+                  -50.0,
+                  50.0
+                ]
+              ],
+              "before_material_length": 100.0,
+              "condition": "outside-radius sample retains its pre-cut material span when stock exists at that sample",
+              "origin": [
+                -4.0413344371862655e-16,
+                -3.3,
+                0.0
+              ],
+              "passed": true,
+              "removed_material_length": 0.0,
+              "sample": "outside_r2_04"
+            },
+            {
+              "after_material_intervals": [
+                [
+                  -50.0,
+                  50.0
+                ]
+              ],
+              "after_material_length": 100.0,
+              "before_material_intervals": [
+                [
+                  -50.0,
+                  50.0
+                ]
+              ],
+              "before_material_length": 100.0,
+              "condition": "outside-radius sample retains its pre-cut material span when stock exists at that sample",
+              "origin": [
+                2.3334523779156067,
+                -2.333452377915607,
+                0.0
+              ],
+              "passed": true,
+              "removed_material_length": 0.0,
+              "sample": "outside_r2_05"
+            },
+            {
+              "after_material_intervals": [
+                [
+                  -50.0,
+                  50.0
+                ]
+              ],
+              "after_material_length": 100.0,
+              "before_material_intervals": [
+                [
+                  -50.0,
+                  50.0
+                ]
+              ],
+              "before_material_length": 100.0,
+              "condition": "outside-radius sample retains its pre-cut material span when stock exists at that sample",
+              "origin": [
+                3.3,
+                -6.062001655779398e-16,
+                0.0
+              ],
+              "passed": true,
+              "removed_material_length": 0.0,
+              "sample": "outside_r2_06"
+            },
+            {
+              "after_material_intervals": [
+                [
+                  -50.0,
+                  50.0
+                ]
+              ],
+              "after_material_length": 100.0,
+              "before_material_intervals": [
+                [
+                  -50.0,
+                  50.0
+                ]
+              ],
+              "before_material_length": 100.0,
+              "condition": "outside-radius sample retains its pre-cut material span when stock exists at that sample",
+              "origin": [
+                2.333452377915607,
+                2.3334523779156062,
+                0.0
+              ],
+              "passed": true,
+              "removed_material_length": 0.0,
+              "sample": "outside_r2_07"
+            }
+          ],
+          "request": {
+            "axis_xyz_normalized": [
+              0.0,
+              0.0,
+              1.0
+            ],
+            "interior_radius_fractions": [
+              0.5,
+              0.8,
+              0.95
+            ],
+            "nominal_radius": 3.0,
+            "origin_xyz": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "outside_protected_radius": 3.0,
+            "outside_radius_offsets": [
+              0.15000000000000002,
+              0.30000000000000004
+            ],
+            "t_range": [
+              -55.0,
+              55.0
+            ],
+            "tolerance": 1e-7
+          },
+          "status": "sampled_geometry_evidence",
+          "summary": {
+            "center_material_removed": true,
+            "center_pre_material_present": true,
+            "center_remaining_material": false,
+            "interior_rays_total": 24,
+            "interior_rays_with_material_removed": 24,
+            "interior_rays_with_pre_material": 24,
+            "outside_material_coverage_passed": true,
+            "outside_rays_minimum_required": 8,
+            "outside_rays_retaining_material": 16,
+            "outside_rays_total": 16,
+            "outside_rays_with_pre_material": 16,
+            "through_on_sampled_rays": true
+          }
+        },
+        "reason_codes": [],
+        "status": "verified_by_sampled_rays",
+        "through_on_sampled_rays": true
+      },
+      "status": "verified_by_sampled_rays",
+      "through": true
+    }
+  ],
+  "solid_count": 1,
+  "state": "passed",
+  "triangle_count": 288,
+  "valid": true,
+  "validation": {
+    "confirmations": [],
+    "errors": [],
+    "geometry_support": [
+      {
+        "backend": "occt_brep",
+        "feature_id": "quick-0001",
+        "kind": "cylinder",
+        "reason": "解析圆柱或圆锥面",
+        "status": "exact"
+      },
+      {
+        "backend": "occt_brep",
+        "feature_id": "quick-0002",
+        "kind": "hole",
+        "reason": "圆柱刀具体与 BREP 布尔切除",
+        "status": "exact"
+      }
+    ],
+    "schema_version": "1.0",
+    "state": "valid",
+    "support": [
+      {
+        "feature_id": "quick-0001",
+        "kind": "cylinder",
+        "reason": "center 默认表示轴向底面中心(base=true)，height 沿 axis 正向拉伸；base=false 时 center 表示几何中点。等半径时为圆草图加凸台；圆锥台会近似，非 Z 轴圆锥台暂不支持。",
+        "status": "exact"
+      },
+      {
+        "feature_id": "quick-0002",
+        "kind": "hole",
+        "reason": "圆形切除；through=true 时按当前零件包围盒生成贯穿深度。盲孔可用 entry_point 与 direction 显式指定入口点和沿全局轴的切入方向；未指定时沿用正轴端面默认语义。",
+        "status": "exact"
+      }
+    ],
+    "valid": true,
+    "warnings": []
+  },
+  "volume_mm3": 28588.49314766712
+}

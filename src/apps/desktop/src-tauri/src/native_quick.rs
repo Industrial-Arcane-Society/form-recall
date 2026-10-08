@@ -2309,6 +2309,58 @@ mod acceptance_tests {
                 serde_json::to_string(&output["stats"]["size"]).unwrap()
             );
         }
+
+        for (index, case) in fixture["native_modifier_expected"].as_array().unwrap().iter().enumerate() {
+            let input = case["input"].as_str().unwrap();
+            let output = build(input, index as i64 + 100, &manifest, &root)
+                .unwrap_or_else(|error| panic!("{input}: native Quick build failed: {error}"));
+            assert_eq!(output["state"], "complete", "{input}: {output}");
+            let report = &output["geometry_report"];
+            assert_eq!(report["state"], "passed", "{input}: {report}");
+            assert_eq!(report["valid"], true, "{input}: {report}");
+            assert_eq!(report["closed_solid_count"], 1, "{input}: {report}");
+            assert_eq!(report["hole_measurements_verified"], true, "{input}: {report}");
+            let dimensions = output["stats"]["size"].as_array().expect("size summary");
+            for (axis, (actual, expected)) in dimensions.iter().zip(case["dimensions_mm"].as_array().unwrap()).enumerate() {
+                assert!((actual.as_f64().unwrap() - expected.as_f64().unwrap()).abs() <= 1e-5,
+                    "{input}: bbox axis {axis}: actual={actual}, expected={expected}; {output}");
+            }
+            let features = output["cadplan"]["features"].as_array().expect("ordered CADPlan features");
+            assert_eq!(features.len(), 2, "{input}: {output}");
+            assert_eq!(features[0]["kind"], "cylinder", "{input}");
+            assert_eq!(features[0]["operation"], "add", "{input}");
+            assert_eq!(features[1]["kind"], "hole", "{input}");
+            assert_eq!(features[1]["operation"], "cut", "{input}");
+            let holes = report["hole_instances"].as_array().expect("measured center through-hole");
+            assert_eq!(holes.len(), 1, "{input}: {report}");
+            assert_eq!(holes[0]["axis"], "Z", "{input}: {}", holes[0]);
+            assert_eq!(holes[0]["centerline_mm"], json!([0.0, 0.0, 0.0]), "{input}: {}", holes[0]);
+            assert_eq!(holes[0]["through"], true, "{input}: {}", holes[0]);
+            assert_eq!(holes[0]["status"], "verified_open", "{input}: {}", holes[0]);
+            let measured_radii = holes[0]["final_measurement"]["actual_radius_measurements"]
+                .as_array().expect("analytic B-Rep bore radii");
+            assert!(!measured_radii.is_empty(), "{input}: {}", holes[0]);
+            for measured_radius in measured_radii {
+                assert!((measured_radius.as_f64().unwrap() * 2.0 - case["hole_diameter_mm"].as_f64().unwrap()).abs() < 1e-8,
+                    "{input}: {}", holes[0]);
+            }
+            let brep_volume = report["volume_mm3"].as_f64().expect("B-Rep volume");
+            let legacy_volume = case["brep_volume_mm3"].as_f64().unwrap();
+            assert!((brep_volume - legacy_volume).abs() <= 1e-3,
+                "{input}: Rust B-Rep volume={brep_volume}, legacy B-Rep volume={legacy_volume}; {report}");
+
+            let artifact_root = Path::new(env!("CARGO_MANIFEST_DIR"))
+                .join("../../../../")
+                .join("artifacts/f5.31-shaft-center-through-hole");
+            let paths = output["output_paths"].as_object().expect("native Quick output paths");
+            fs::copy(Path::new(paths["stl"].as_str().unwrap()), artifact_root.join("rust_native_quick.stl"))
+                .expect("save Rust Native Quick STL for fixed-world comparison");
+            fs::write(artifact_root.join("rust_native_quick_geometry_report.json"),
+                serde_json::to_vec_pretty(report).expect("serialize Rust geometry report"))
+                .expect("save Rust Native Quick geometry report");
+            println!("F5.31 center through-hole acceptance: input={input}; bbox_mm={}; native_volume_mm3={brep_volume}; legacy_brep_volume_mm3={legacy_volume}; artifact={}",
+                serde_json::to_string(&output["stats"]["size"]).unwrap(), artifact_root.display());
+        }
     }
 
     #[test]

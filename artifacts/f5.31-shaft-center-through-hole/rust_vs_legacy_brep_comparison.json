@@ -1,0 +1,197 @@
+{
+  "schema_version": 1,
+  "input": "轴 直径20 长度100 通孔6",
+  "coordinate_frame": "shared world coordinates, mm; meshes are not translated, rotated, scaled, or normalized",
+  "geometry_report_comparison": {
+    "bbox_expected_mm": [
+      20.0,
+      20.0,
+      100.0
+    ],
+    "bbox_actual_mm": [
+      20.0,
+      20.0,
+      100.0
+    ],
+    "bbox_max_abs_delta_mm": 0.0,
+    "legacy_brep_volume_mm3": 28588.49314766712,
+    "rust_volume_mm3": 28588.49314766712,
+    "volume_abs_delta_mm3": 0.0,
+    "closed_solid_count": 1,
+    "valid": true,
+    "hole": {
+      "feature_id": "quick-0002",
+      "axis": "Z",
+      "centerline_mm": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "diameter_mm": 6.0,
+      "through": true,
+      "status": "verified_open",
+      "actual_radius_measurements_mm": [
+        3.0
+      ],
+      "analytic_measurement_accepted": true,
+      "full_angular_coverage": true
+    }
+  },
+  "surface_comparison": {
+    "left": "legacy_document_build_brep_mesh",
+    "right": "rust_headless_quick",
+    "coordinate_policy": "shared world coordinates in millimetres; no per-mesh normalization or alignment",
+    "surface_sampling": {
+      "method": "four deterministic barycentric interior samples per non-degenerate triangle, weighted by triangle area",
+      "distance": "exact point-to-triangle distance queried against a triangle AABB BVH",
+      "limitation": "sampled approximation to continuous surface distance; not an exact continuous Hausdorff bound",
+      "left_to_right": {
+        "sample_count": 1152,
+        "sampled_surface_area_mm2": 8726.648983825362,
+        "weighted_mean_mm": 5.338371367594232e-13,
+        "weighted_rms_mm": 3.6224567097495247e-12,
+        "weighted_p50_mm": 1.7763568394002505e-15,
+        "weighted_p95_mm": 2.984518211637046e-12,
+        "weighted_p99_mm": 5.107354026736891e-12,
+        "sampled_max_mm": 4.541140734369303e-11
+      },
+      "right_to_left": {
+        "sample_count": 1152,
+        "sampled_surface_area_mm2": 8726.648983825362,
+        "weighted_mean_mm": 5.338371367594232e-13,
+        "weighted_rms_mm": 3.6224567097495247e-12,
+        "weighted_p50_mm": 1.7763568394002505e-15,
+        "weighted_p95_mm": 2.984518211637046e-12,
+        "weighted_p99_mm": 5.107354026736891e-12,
+        "sampled_max_mm": 4.541140734369303e-11
+      },
+      "symmetric_sampled_max_mm": 4.541140734369303e-11
+    },
+    "surface_equivalence_passed": true,
+    "topology": {
+      "left": {
+        "weld_tolerance_mm": 1e-05,
+        "welded_vertex_count": 144,
+        "edge_count": 432,
+        "boundary_edge_count": 0,
+        "nonmanifold_edge_count": 0,
+        "orientation_conflict_edge_count": 0,
+        "degenerate_triangle_count": 0,
+        "duplicate_triangle_count": 0,
+        "connected_triangle_components": 1,
+        "closed_manifold": true,
+        "closed_oriented_manifold": true
+      },
+      "right": {
+        "weld_tolerance_mm": 1e-05,
+        "welded_vertex_count": 144,
+        "edge_count": 432,
+        "boundary_edge_count": 0,
+        "nonmanifold_edge_count": 0,
+        "orientation_conflict_edge_count": 0,
+        "degenerate_triangle_count": 0,
+        "duplicate_triangle_count": 0,
+        "connected_triangle_components": 1,
+        "closed_manifold": true,
+        "closed_oriented_manifold": true
+      },
+      "compatible_closed_components": true
+    },
+    "bounds_max_abs_delta_mm": 0.0,
+    "signed_volume_mm3": {
+      "left": 28443.571779928716,
+      "right": 28443.571779928716,
+      "absolute_delta": 0.0,
+      "reported_allowance": 698.1319187060321,
+      "allowance_basis": "surface_tolerance_mm × larger triangulated surface area",
+      "comparable_as_oriented_solid": true,
+      "within_allowance": true,
+      "raw_mesh_volume_invalid": false,
+      "status": "within_allowance"
+    },
+    "tolerance_mm": 0.08,
+    "tolerance_basis": "default 0.08 mm equals the linear deflection passed to the Rust native Quick and legacy BREP tessellators; override explicitly for other meshing settings",
+    "common_frame_orthographic_projections": {
+      "world_frame_union_bounds_mm": [
+        [
+          -10.0,
+          -10.0,
+          -50.0
+        ],
+        [
+          10.0,
+          10.0,
+          50.0
+        ]
+      ],
+      "by_plane": {
+        "XY": {
+          "64": {
+            "legacy_covered_pixels": 2848,
+            "candidate_covered_pixels": 2848,
+            "xor_pixels": 0,
+            "iou": 1.0
+          },
+          "128": {
+            "legacy_covered_pixels": 11484,
+            "candidate_covered_pixels": 11484,
+            "xor_pixels": 0,
+            "iou": 1.0
+          },
+          "256": {
+            "legacy_covered_pixels": 46240,
+            "candidate_covered_pixels": 46240,
+            "xor_pixels": 0,
+            "iou": 1.0
+          }
+        },
+        "XZ": {
+          "64": {
+            "legacy_covered_pixels": 3969,
+            "candidate_covered_pixels": 3969,
+            "xor_pixels": 0,
+            "iou": 1.0
+          },
+          "128": {
+            "legacy_covered_pixels": 16129,
+            "candidate_covered_pixels": 16129,
+            "xor_pixels": 0,
+            "iou": 1.0
+          },
+          "256": {
+            "legacy_covered_pixels": 65025,
+            "candidate_covered_pixels": 65025,
+            "xor_pixels": 0,
+            "iou": 1.0
+          }
+        },
+        "YZ": {
+          "64": {
+            "legacy_covered_pixels": 3969,
+            "candidate_covered_pixels": 3969,
+            "xor_pixels": 0,
+            "iou": 1.0
+          },
+          "128": {
+            "legacy_covered_pixels": 16129,
+            "candidate_covered_pixels": 16129,
+            "xor_pixels": 0,
+            "iou": 1.0
+          },
+          "256": {
+            "legacy_covered_pixels": 65025,
+            "candidate_covered_pixels": 65025,
+            "xor_pixels": 0,
+            "iou": 1.0
+          }
+        }
+      }
+    },
+    "passed": true
+  },
+  "limitations": [
+    "Sampled surface distances are a deterministic approximation, not a continuous Hausdorff proof.",
+    "The raw Document.build mesh has open boundaries and is diagnostic only; the valid old Document.build_brep solid is the volume authority."
+  ],
+  "passed": true
+}

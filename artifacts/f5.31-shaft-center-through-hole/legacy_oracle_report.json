@@ -1,0 +1,387 @@
+{
+  "schema_version": "1.0",
+  "captured_by": "capture_legacy_oracle.py",
+  "input": "轴 直径20 长度100 通孔6",
+  "legacy_pipeline": "Parser().parse -> Document.build raw STL; separately Document.build_brep -> BREP + tessellated STL",
+  "runtime": {
+    "python": "3.11.9",
+    "occt": "可用：OCCT 7.9.3.1 / cadquery-ocp-novtk 7.9.3.1.1",
+    "cwd": "C:\\Users\\lycohana\\.codex\\worktrees\\f5-main-integration\\AI-_-"
+  },
+  "parser": {
+    "ok": true,
+    "recognized": 2,
+    "message": "",
+    "warnings": [],
+    "assumed": [],
+    "questions": [],
+    "summary": "识别到 2 条建模指令"
+  },
+  "ordered_features": [
+    {
+      "order": 0,
+      "kind": "cylinder",
+      "operation": "add",
+      "name": "圆柱/圆台",
+      "parameters": {
+        "radius": 10.0,
+        "height": 100.0,
+        "center": [
+          0,
+          0,
+          0
+        ],
+        "base": false
+      },
+      "provenance": {
+        "radius": "explicit",
+        "height": "explicit"
+      }
+    },
+    {
+      "order": 1,
+      "kind": "hole",
+      "operation": "cut",
+      "name": "孔",
+      "parameters": {
+        "diameter": 6.0,
+        "through": true,
+        "axis": "Z",
+        "pos": "center",
+        "segments": 24
+      },
+      "provenance": {}
+    }
+  ],
+  "source_limits": {
+    "shaft": "Old cylinder radius/height provenance marks both values explicit.",
+    "hole": "Old generic hole feature provenance is empty; although the prompt states a through-hole, the old feature does not record an explicit/derived source marker."
+  },
+  "document_build_raw": {
+    "stats": {
+      "faces": 120,
+      "triangles": 288,
+      "bbox": [
+        -10.0,
+        -10.0,
+        -50.0,
+        10.0,
+        10.0,
+        50.0
+      ],
+      "size": [
+        20.0,
+        20.0,
+        100.0
+      ],
+      "volume": 28531.04044570511,
+      "area": 8728.898382976595
+    },
+    "topology_weld_tolerance_mm": 1E-05,
+    "topology": {
+      "weld_tolerance_mm": 1E-05,
+      "welded_vertex_count": 192,
+      "edge_count": 558,
+      "boundary_edge_count": 252,
+      "nonmanifold_edge_count": 0,
+      "orientation_conflict_edge_count": 0,
+      "degenerate_triangle_count": 0,
+      "duplicate_triangle_count": 0,
+      "connected_triangle_components": 18,
+      "closed_manifold": false,
+      "closed_oriented_manifold": false
+    },
+    "interpretation": "Raw mesh diagnostics are separate from the valid B-Rep solid report and are not used as an authoritative solid-volume claim."
+  },
+  "document_build_brep": {
+    "report": {
+      "backend": "occt_brep",
+      "kernel": "可用：OCCT 7.9.3.1 / cadquery-ocp-novtk 7.9.3.1.1",
+      "self_intersection_face_limit": 15000,
+      "geometry_state": "passed",
+      "state": "passed",
+      "brep_valid": true,
+      "shape_type": "TopAbs_COMPOUND",
+      "solid_count": 1,
+      "connected_component_count": 1,
+      "shell_count": 1,
+      "closed_shell_count": 1,
+      "closed": true,
+      "edge_count": 12,
+      "face_count": 4,
+      "free_edge_count": 0,
+      "volume_mm3": 28588.49314766712,
+      "bbox_mm": [
+        -10.0,
+        -10.0,
+        -50.0,
+        10.0,
+        10.0,
+        50.0
+      ],
+      "self_intersection": {
+        "status": "checked_no_intersection",
+        "face_count": 4,
+        "face_limit": 15000,
+        "check_result_count": 0,
+        "check_statuses": [],
+        "method": "BOPAlgo_ArgumentAnalyzer(SelfInterMode=True, UseOBB=True)"
+      },
+      "validity_method": "BRepCheck_Analyzer",
+      "geometry_scope": "native_OCCT_BREP_only_visual_comparison_not_performed",
+      "feature_results": [
+        {
+          "feature_id": "0",
+          "kind": "cylinder",
+          "operation": "add",
+          "geometry_support": "exact",
+          "builder": "analytic_cylinder_or_cone",
+          "state": "applied",
+          "source_feature_id": null,
+          "source_resolution": null,
+          "solid_count": 1,
+          "brep_valid": true,
+          "before_volume_mm3": 0.0,
+          "after_volume_mm3": 31415.926535897932,
+          "volume_delta_mm3": 31415.926535897932,
+          "cylindrical_cut_intents": [],
+          "depth_measurement": null,
+          "facet_count": null
+        },
+        {
+          "feature_id": "1",
+          "kind": "hole",
+          "operation": "cut",
+          "geometry_support": "exact",
+          "builder": "analytic_cylindrical_bores",
+          "state": "applied",
+          "source_feature_id": null,
+          "source_resolution": null,
+          "solid_count": 1,
+          "brep_valid": true,
+          "before_volume_mm3": 31415.926535897932,
+          "after_volume_mm3": 28588.49314766712,
+          "volume_delta_mm3": -2827.433388230813,
+          "cylindrical_cut_intents": [],
+          "depth_measurement": null,
+          "facet_count": null
+        }
+      ],
+      "hole_instances": [
+        {
+          "feature_id": "孔",
+          "instance_index": 1,
+          "axis": "Z",
+          "centerline_mm": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "diameter_mm": 6.0,
+          "depth_mm": null,
+          "through": true,
+          "planned_status": "pending",
+          "status": "verified_open",
+          "reason": "全包围盒轴跨度无实体区间；同轴解析圆柱面实测直径匹配，且孔壁截面有完整环形材料。",
+          "axis_surface_crossings": 0,
+          "centerline_material_segments": [],
+          "ring_supported": [
+            true
+          ],
+          "measured_diameter_mm": 6.0,
+          "diameter_candidates_mm": [
+            6.0,
+            20.0
+          ],
+          "measured_depth_mm": null,
+          "matching_cylindrical_faces": [
+            {
+              "radius_mm": 3.0,
+              "diameter_mm": 6.0,
+              "axis_line_distance_mm": 0.0,
+              "axis_parallel_dot": 1.0,
+              "axis_interval_mm": [
+                -50.0,
+                50.0
+              ],
+              "surface_type": "analytic_cylinder"
+            }
+          ],
+          "centerline_proof": {
+            "method": "IntCurvesFace_ShapeIntersector exact line/trimmed-face events + BRepClass3d interval classification",
+            "intersection_count": 0,
+            "segments": [
+              {
+                "axis_interval_mm": [
+                  -50.001,
+                  50.001
+                ],
+                "midpoint_mm": 0.0,
+                "inside_solid": false
+              }
+            ],
+            "material_segments": []
+          },
+          "wall_support": {
+            "supported": true,
+            "ring_supported": [
+              true
+            ],
+            "sampled_axis_stations_mm": [
+              0.0
+            ],
+            "supported_axis_stations_mm": [
+              0.0
+            ],
+            "sample_count_per_section": 24,
+            "method": "BRepClass3d 24-point ring at 1.25 x measured radius, on measured cylinder-wall spans"
+          },
+          "method": "OCCT trimmed-face line intersections + BRepClass3d interval/ring classification + analytic cylindrical-face radius/axis measurement"
+        }
+      ],
+      "unverified_cut_intents": [],
+      "hole_feature_count": 1,
+      "measured_hole_source_feature_count": 1,
+      "unverified_cut_intent_count": 0,
+      "planned_hole_instance_count": 1,
+      "active_hole_instance_count": 1,
+      "superseded_hole_instance_count": 0,
+      "active_through_hole_count": 1,
+      "through_hole_count": 1,
+      "all_declared_holes_verified": true,
+      "visual_validation": "not_performed",
+      "catia_executed": false,
+      "build_transaction": "每个特征验证成功后才提交；失败保留上一有效实体"
+    },
+    "valid": true,
+    "solid_count": 1,
+    "closed": true,
+    "hole_measurements": [
+      {
+        "feature_id": "孔",
+        "instance_index": 1,
+        "axis": "Z",
+        "centerline_mm": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "diameter_mm": 6.0,
+        "depth_mm": null,
+        "through": true,
+        "planned_status": "pending",
+        "status": "verified_open",
+        "reason": "全包围盒轴跨度无实体区间；同轴解析圆柱面实测直径匹配，且孔壁截面有完整环形材料。",
+        "axis_surface_crossings": 0,
+        "centerline_material_segments": [],
+        "ring_supported": [
+          true
+        ],
+        "measured_diameter_mm": 6.0,
+        "diameter_candidates_mm": [
+          6.0,
+          20.0
+        ],
+        "measured_depth_mm": null,
+        "matching_cylindrical_faces": [
+          {
+            "radius_mm": 3.0,
+            "diameter_mm": 6.0,
+            "axis_line_distance_mm": 0.0,
+            "axis_parallel_dot": 1.0,
+            "axis_interval_mm": [
+              -50.0,
+              50.0
+            ],
+            "surface_type": "analytic_cylinder"
+          }
+        ],
+        "centerline_proof": {
+          "method": "IntCurvesFace_ShapeIntersector exact line/trimmed-face events + BRepClass3d interval classification",
+          "intersection_count": 0,
+          "segments": [
+            {
+              "axis_interval_mm": [
+                -50.001,
+                50.001
+              ],
+              "midpoint_mm": 0.0,
+              "inside_solid": false
+            }
+          ],
+          "material_segments": []
+        },
+        "wall_support": {
+          "supported": true,
+          "ring_supported": [
+            true
+          ],
+          "sampled_axis_stations_mm": [
+            0.0
+          ],
+          "supported_axis_stations_mm": [
+            0.0
+          ],
+          "sample_count_per_section": 24,
+          "method": "BRepClass3d 24-point ring at 1.25 x measured radius, on measured cylinder-wall spans"
+        },
+        "method": "OCCT trimmed-face line intersections + BRepClass3d interval/ring classification + analytic cylindrical-face radius/axis measurement"
+      }
+    ],
+    "tessellation": {
+      "linear_deflection_mm": 0.08,
+      "angular_deflection_rad": 0.35,
+      "relative": false
+    },
+    "tessellated_stl_topology_weld_tolerance_mm": 1E-05,
+    "tessellated_stl_topology": {
+      "weld_tolerance_mm": 1E-05,
+      "welded_vertex_count": 144,
+      "edge_count": 432,
+      "boundary_edge_count": 0,
+      "nonmanifold_edge_count": 0,
+      "orientation_conflict_edge_count": 0,
+      "degenerate_triangle_count": 0,
+      "duplicate_triangle_count": 0,
+      "connected_triangle_components": 1,
+      "closed_manifold": true,
+      "closed_oriented_manifold": true
+    }
+  },
+  "rust_static_observation": {
+    "status": "source_only_not_executed",
+    "repository_revision": "0d8987a",
+    "file": "src/apps/desktop/src-tauri/src/native_quick_parser.rs",
+    "entry_symbol": "parse_legacy_shaft",
+    "entry_line_observed": 3186,
+    "issue": "legacy_shaft_modifier_not_migrated",
+    "issue_line_observed": 3231,
+    "observation": "The legacy shaft parser branch rejects hole/through-hole modifiers before producing a plan."
+  },
+  "files": {
+    "legacy_raw_stl": {
+      "path": "artifacts/f5.31-shaft-center-through-hole/legacy_document_build_raw.stl",
+      "size_bytes": 14484,
+      "sha256": "5294051097223a03b931e77fd98ed31e3bdf08828ff30f5cc7791e86aabe588b"
+    },
+    "legacy_brep": {
+      "path": "artifacts/f5.31-shaft-center-through-hole/legacy_document_build_brep.brep",
+      "size_bytes": 1959,
+      "sha256": "565f0dc34d93eb746c3b251e53dec4c1d8dfe598e875835ccfc404d99e465b0d"
+    },
+    "legacy_brep_tessellated_stl": {
+      "path": "artifacts/f5.31-shaft-center-through-hole/legacy_document_build_brep_mesh.stl",
+      "size_bytes": 14484,
+      "sha256": "7b128a6293ff5d56442aa7ebc9eb7e8ab9c71466cc32ac3fcb5b84fbf35ef38c"
+    },
+    "capture_script": {
+      "path": "artifacts/f5.31-shaft-center-through-hole/capture_legacy_oracle.py",
+      "size_bytes": 7475,
+      "sha256": "ebcf395b2a56aca0e68b1aea90ec6c7661a63289218365f22bf0b1ac7b05bdf5"
+    }
+  },
+  "replay": {
+    "command": "$env:PYTHONPATH='src/legacy'; $env:PYTHONDONTWRITEBYTECODE='1'; python -B artifacts/f5.31-shaft-center-through-hole/capture_legacy_oracle.py --output-dir <empty-directory>",
+    "note": "The script refuses to overwrite a non-empty destination. Use a fresh empty destination for a replay."
+  }
+}

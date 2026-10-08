@@ -108,6 +108,17 @@
       "warning_code": "legacy_shaft_diameter_defaulted"
     }
   ],
+  "native_modifier_expected": [
+    {
+      "input": "轴 直径20 长度100 通孔6",
+      "ordered_features": ["cylinder:add", "hole:cut"],
+      "dimensions_mm": [20.0, 20.0, 100.0],
+      "hole_diameter_mm": 6.0,
+      "brep_volume_mm3": 28588.49314766712,
+      "legacy_brep_stl": "artifacts/f5.31-shaft-center-through-hole/legacy_document_build_brep_mesh.stl",
+      "rust_stl_artifact": "artifacts/f5.31-shaft-center-through-hole/rust_native_quick.stl"
+    }
+  ],
   "not_ready": [
     {
       "input": "轴 直径20",
@@ -115,7 +126,97 @@
       "issue": "legacy_shaft_length_missing"
     },
     {
-      "input": "轴 直径20 长度100 通孔6",
+      "input": "轴 直径20 长度100 偏心通孔6",
+      "status": "unsupported",
+      "issue": "legacy_shaft_modifier_not_migrated"
+    },
+    {
+      "input": "轴 直径20 长度100 侧向通孔6",
+      "status": "unsupported",
+      "issue": "legacy_shaft_modifier_not_migrated"
+    },
+    {
+      "input": "轴 直径20 长度100 沿X轴通孔6",
+      "status": "unsupported",
+      "issue": "legacy_shaft_modifier_not_migrated"
+    },
+    {
+      "input": "轴 直径20 长度100 axis=X 通孔6",
+      "status": "unsupported",
+      "issue": "legacy_shaft_modifier_not_migrated"
+    },
+    {
+      "input": "轴 直径20 长度100 axis=Y 通孔6",
+      "status": "unsupported",
+      "issue": "legacy_shaft_modifier_not_migrated"
+    },
+    {
+      "input": "轴 直径20 长度100 axis = x 通孔6",
+      "status": "unsupported",
+      "issue": "legacy_shaft_modifier_not_migrated"
+    },
+    {
+      "input": "轴 直径20 长度100 通孔6 x=5",
+      "status": "unsupported",
+      "issue": "legacy_shaft_modifier_not_migrated"
+    },
+    {
+      "input": "轴 直径20 长度100 通孔6 y=0",
+      "status": "unsupported",
+      "issue": "legacy_shaft_modifier_not_migrated"
+    },
+    {
+      "input": "轴 直径20 长度100 通孔6 z=4",
+      "status": "unsupported",
+      "issue": "legacy_shaft_modifier_not_migrated"
+    },
+    {
+      "input": "轴 直径20 长度100 位置x=5 通孔6",
+      "status": "unsupported",
+      "issue": "legacy_shaft_modifier_not_migrated"
+    },
+    {
+      "input": "轴 直径20 长度100 孔中心偏移5 通孔6",
+      "status": "unsupported",
+      "issue": "legacy_shaft_modifier_not_migrated"
+    },
+    {
+      "input": "轴 直径20 长度100 盲孔6",
+      "status": "unsupported",
+      "issue": "legacy_shaft_modifier_not_migrated"
+    },
+    {
+      "input": "轴 直径20 长度100 通孔",
+      "status": "unsupported",
+      "issue": "legacy_shaft_modifier_not_migrated"
+    },
+    {
+      "input": "轴 直径20 长度100 through hole6",
+      "status": "unsupported",
+      "issue": "legacy_shaft_modifier_not_migrated"
+    },
+    {
+      "input": "轴 直径20 长度100 通孔6 通孔4",
+      "status": "unsupported",
+      "issue": "legacy_shaft_modifier_not_migrated"
+    },
+    {
+      "input": "轴 直径20 长度100 通孔6 键槽",
+      "status": "unsupported",
+      "issue": "legacy_shaft_modifier_not_migrated"
+    },
+    {
+      "input": "轴 直径20 长度100 通孔6 螺纹",
+      "status": "unsupported",
+      "issue": "legacy_shaft_modifier_not_migrated"
+    },
+    {
+      "input": "轴 直径20 长度100 通孔6 倒角",
+      "status": "unsupported",
+      "issue": "legacy_shaft_modifier_not_migrated"
+    },
+    {
+      "input": "轴 直径20 长度100 通孔6 slot",
       "status": "unsupported",
       "issue": "legacy_shaft_modifier_not_migrated"
     }

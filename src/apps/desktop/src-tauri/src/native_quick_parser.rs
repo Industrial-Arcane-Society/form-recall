@@ -3215,12 +3215,48 @@ fn parse_legacy_shaft(raw: &str, text: &str) -> Option<Value> {
         return None;
     }
 
-    if contains_any(
-        text,
+    let through_markers = text.matches("通孔").count();
+    let center_through_hole = if through_markers == 1 {
+        text.find("通孔").and_then(|marker| {
+            let tail = text[marker..].trim();
+            regex::Regex::new(r"^通孔\s*(?:(?:直径|ø|⌀)\s*)?([0-9]+(?:\.[0-9]+)?)\s*(?:mm)?$")
+                .ok()?
+                .captures(tail)
+                .and_then(|capture| capture.get(1))
+                .and_then(|number| number.as_str().parse::<f64>().ok())
+                .filter(|diameter| diameter.is_finite() && *diameter > 0.0)
+                .map(|diameter| (marker, diameter))
+        })
+    } else {
+        None
+    };
+    let shaft_text = center_through_hole
+        .map(|(marker, _)| text[..marker].trim())
+        .unwrap_or(text);
+    let modifier_text = text.replace("通孔", "");
+    let explicit_axis_coordinate = regex::Regex::new(
+        r"(?i)(?:^|[\s,，;；])(?:x|y|z)\s*[:=]\s*[-+]?[0-9]",
+    )
+    .is_ok_and(|pattern| pattern.is_match(&modifier_text));
+    let explicit_axis_assignment = regex::Regex::new(r"(?i)\baxis\s*[:=]\s*[xyz]\b")
+        .is_ok_and(|pattern| pattern.is_match(&modifier_text));
+    let other_modifier = contains_any(
+        &modifier_text,
         &[
-            "通孔", "盲孔", "孔", "键槽", "凹槽", "槽", "倒角", "圆角", "螺纹", "thread",
+            "盲孔", "孔", "hole", "bore", "drill", "through", "thru", "贯穿",
+            "键槽", "凹槽", "槽", "倒角", "圆角", "螺纹", "thread",
+            "slot", "chamfer", "fillet", "偏心", "eccentric", "off-center", "offset",
+            "侧向", "侧孔", "side hole", "side face", "径向", "radial", "沿x", "沿y",
+            "沿 x", "沿 y", "x轴", "y轴", "x 轴", "y 轴", "x方向", "y方向",
+            "x direction", "y direction", "x axis", "y axis", "axis=x", "axis=x ",
+            "axis=y", "axis=y ", "位置", "孔中心", "中心线偏移", "孔中心偏移", "偏移",
+            "坐标", "多个", "孔数", "阵列",
         ],
-    ) {
+    ) || explicitly_multiple_holes(text)
+        || explicit_axis_coordinate
+        || explicit_axis_assignment
+        || through_markers != usize::from(center_through_hole.is_some());
+    if other_modifier {
         return Some(result(
             "unsupported",
             raw,
@@ -3229,12 +3265,12 @@ fn parse_legacy_shaft(raw: &str, text: &str) -> Option<Value> {
             vec![],
             vec![issue(
                 "legacy_shaft_modifier_not_migrated",
-                "当前仅迁移旧 Quick 的单段实心轴圆柱配方；附加孔、槽、倒角和螺纹要求尚未迁移。",
+                "当前仅迁移旧 Quick 的单段实心轴圆柱，以及唯一显式直径的中心 Z 轴贯穿孔；其它孔位/孔型、槽、倒角和螺纹要求尚未迁移。",
             )],
         ));
     }
 
-    let diameter = match shaft_dimension(text, &["diameter", "轴径", "直径", "外径"], "d") {
+    let diameter = match shaft_dimension(shaft_text, &["diameter", "轴径", "直径", "外径"], "d") {
         Ok(value) => value,
         Err(()) => {
             return Some(parse_result_with_issue(
@@ -3245,7 +3281,7 @@ fn parse_legacy_shaft(raw: &str, text: &str) -> Option<Value> {
             ));
         }
     };
-    let length = match shaft_dimension(text, &["length", "轴长", "长度", "长"], "l") {
+    let length = match shaft_dimension(shaft_text, &["length", "轴长", "长度", "长"], "l") {
         Ok(value) => value,
         Err(()) => {
             return Some(parse_result_with_issue(
@@ -3341,17 +3377,35 @@ fn parse_legacy_shaft(raw: &str, text: &str) -> Option<Value> {
         ));
     }
 
-    let feature = feature(
+    let shaft_feature = feature(
         1,
         "cylinder",
         "add",
         Value::Object(parameters),
         Value::Object(sources),
     );
+    let mut features = vec![shaft_feature];
+    if let Some((_, hole_diameter)) = center_through_hole {
+        let hole_parameters = json!({
+            "diameter":hole_diameter,
+            "through":true,
+            "pos":"center",
+            "axis":"Z",
+            "segments":24
+        });
+        let hole_sources = json!({
+            "diameter":user_source(raw),
+            "through":user_source(raw),
+            "pos":derived_source(raw, "旧 Python Quick 未定位的单孔按中心位置解释；旧孔 provenance 为空，Rust 来源不继承该空 provenance。"),
+            "axis":derived_source(raw, "本迁移仅接受该固定旧 Quick 轴类中心 Z 轴贯穿孔子集；旧孔 provenance 为空。"),
+            "segments":derived_source(raw, "按旧 Quick 通孔特征记录的 24 段参数保留；旧孔 provenance 为空。")
+        });
+        features.push(feature(2, "hole", "cut", hole_parameters, hole_sources));
+    }
     Some(plan_result(
         raw,
         &format!("实心轴 Ø{diameter}×{length} mm"),
-        vec![feature],
+        features,
         warnings,
     ))
 }
@@ -18291,6 +18345,40 @@ mod tests {
                     .unwrap()["state"],
                 "valid",
                 "{input}"
+            );
+        }
+
+        for case in fixture["native_modifier_expected"].as_array().unwrap() {
+            let input = case["input"].as_str().unwrap();
+            let output = parse(input);
+            assert_eq!(output["status"], "ready", "{input}: {output}");
+            let features = output["plan"]["features"].as_array().unwrap();
+            assert_eq!(features.len(), 2, "{input}: {output}");
+            assert_eq!(features[0]["kind"], "cylinder", "{input}");
+            assert_eq!(features[0]["operation"], "add", "{input}");
+            assert_eq!(features[1]["kind"], "hole", "{input}");
+            assert_eq!(features[1]["operation"], "cut", "{input}");
+            assert_eq!(features[1]["parameters"]["diameter"], case["hole_diameter_mm"]);
+            assert_eq!(features[1]["parameters"]["through"], true);
+            assert_eq!(features[1]["parameters"]["pos"], "center");
+            assert_eq!(features[1]["parameters"]["axis"], "Z");
+            assert_eq!(features[1]["parameters"]["segments"], 24);
+            assert_eq!(features[1]["sources"]["diameter"]["type"], "user");
+            assert_eq!(features[1]["sources"]["through"]["type"], "user");
+            for key in ["pos", "axis", "segments"] {
+                assert_eq!(features[1]["sources"][key]["type"], "derived", "{input}: {key}");
+                assert!(features[1]["sources"][key]["note"].as_str().unwrap().contains("旧孔 provenance 为空"));
+            }
+            assert_eq!(
+                crate::cad_plan_validation::validate_plan(&output["plan"])["state"],
+                "valid",
+                "{input}: {output}"
+            );
+            assert_eq!(
+                crate::native_plan_geometry::preflight(&output["plan"])
+                    .unwrap()["state"],
+                "valid",
+                "{input}: {output}"
             );
         }
 
