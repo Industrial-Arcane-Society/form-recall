@@ -1,0 +1,38 @@
+{
+  "schema_version": 1,
+  "probe_scope": "two-row lifecycle diagnostic only; not mixed into independent-prompt Parser.parse counts",
+  "rows": [
+    {
+      "id": "bolt:M5x8:1",
+      "category": "内六角螺钉",
+      "group": "内六角螺钉"
+    },
+    {
+      "id": "bolt:M5x8:2",
+      "category": "内六角螺钉",
+      "group": "内六角螺钉"
+    }
+  ],
+  "independent_mode": {
+    "entry": "ai_modeler.core.nlparser.parse(text) -> Parser().parse(text, doc=None)",
+    "first_ok": true,
+    "first_feature_count": 7,
+    "second_fresh_ok": true,
+    "second_fresh_feature_count": 7
+  },
+  "append_mode": {
+    "entry": "ui/bridge.py model.quick_build with new_model=false -> NLP.parse(text, self.doc)",
+    "second_ok": true,
+    "document_feature_count_before_second_call": 7,
+    "document_feature_count_after_second_call": 14,
+    "features_added_by_second_call": 7,
+    "note": "The module helper creates a fresh Parser per call, but passing the existing Document intentionally preserves/appends prior document features."
+  },
+  "source_refs": {
+    "parser_class": "src/legacy/ai_modeler/core/parsing/nlparser.py:668-680",
+    "module_helper": "src/legacy/ai_modeler/core/parsing/nlparser.py:1886-1887",
+    "quick_build_lifecycle": "src/legacy/ai_modeler/ui/bridge.py:334-341",
+    "f589_harness": "tools/audit_quick_legacy_samples.py:40-43"
+  },
+  "raw_prompt_text_persisted": false
+}

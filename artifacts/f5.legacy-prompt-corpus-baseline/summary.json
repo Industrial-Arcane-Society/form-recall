@@ -1,0 +1,587 @@
+{
+  "schema_version": 1,
+  "method": {
+    "parser_entrypoint": "src/legacy/ai_modeler/core/parsing/nlparser.py::Parser.parse",
+    "invocation": "create a fresh Parser for each distinct prompt, call Parser.parse(prompt), inspect ParseResult.ok and ParseResult.doc.features only",
+    "parser_instance_policy": "fresh Parser instance per prompt; confirmed necessary because Parser reuses/accumulates Document.features when the instance is reused",
+    "geometry_builds": 0,
+    "document_stats_calls": 0,
+    "deduplication": "exact Unicode prompt string; duplicate rows counted once for parser statistics",
+    "raw_prompt_text_persisted": false,
+    "current_f589_comparison": "exact prompt string set comparison against rows[].input in the saved F5.89 66-row audit fixture",
+    "parser_success_definition": "ParseResult.ok is true and doc.features is non-empty; counts are also reported separately to expose false/empty combinations"
+  },
+  "input": {
+    "path": "src/legacy/datasets/训练提示词/全部提示词.jsonl",
+    "sha256": "fa2b839aaddd0d55821e0e2ca34f37f43a5e5d25b0a0f25dbd9de5e9ba477c26",
+    "byte_length": 531068,
+    "physical_lines": 1828,
+    "nonblank_jsonl_rows": 1828,
+    "malformed_rows": [],
+    "rows_with_nonblank_prompt": 1828,
+    "unique_exact_prompts": 1828,
+    "duplicate_prompt_rows_removed": 0,
+    "missing_or_blank_prompt_rows": 0
+  },
+  "parser_counts": {
+    "parse_ok": 1822,
+    "feature_producing": 1822,
+    "successful_feature_producing": 1822,
+    "parse_ok_without_features": 0,
+    "parse_not_ok_with_features": 0,
+    "exceptions": 0,
+    "total_feature_instances": 14975,
+    "feature_count_per_prompt": {
+      "minimum": 0,
+      "median": 1.0,
+      "p95_nearest_rank": 58,
+      "maximum": 122
+    }
+  },
+  "feature_type_groups": {
+    "prompts_by_kind": {
+      "box": 340,
+      "cylinder": 428,
+      "extrude_holes": 1068,
+      "hole": 634,
+      "prism": 221
+    },
+    "feature_instances_by_kind": {
+      "box": 346,
+      "cylinder": 1315,
+      "extrude_holes": 1068,
+      "hole": 12025,
+      "prism": 221
+    }
+  },
+  "ordered_feature_combinations": {
+    "n=1;mix=extrude_holes:addx1;first=extrude_holes:add;last=extrude_holes:add;seq=b80d1691d76fe3ee": 1068,
+    "n=7;mix=cylinder:addx4,hole:cutx2,prism:cutx1;first=cylinder:add>hole:cut>cylinder:add>hole:cut>cylinder:add>cylinder:add;last=hole:cut>cylinder:add>cylinder:add>prism:cut;seq=5a164b960e945889": 220,
+    "n=13;mix=box:addx1,hole:cutx12;first=box:add>hole:cut>hole:cut>hole:cut>hole:cut>hole:cut;last=hole:cut>hole:cut>hole:cut>hole:cut;seq=adc6e5bc8843bcd1": 64,
+    "n=4;mix=cylinder:addx4;first=cylinder:add>cylinder:add>cylinder:add>cylinder:add;last=cylinder:add>cylinder:add>cylinder:add>cylinder:add;seq=472c25470c32c7b0": 63,
+    "n=6;mix=box:addx1,hole:cutx5;first=box:add>hole:cut>hole:cut>hole:cut>hole:cut>hole:cut;last=hole:cut>hole:cut>hole:cut>hole:cut;seq=9aeaafc428071c37": 38,
+    "n=11;mix=box:addx1,hole:cutx10;first=box:add>hole:cut>hole:cut>hole:cut>hole:cut>hole:cut;last=hole:cut>hole:cut>hole:cut>hole:cut;seq=9bbef98ce77137ef": 35,
+    "n=5;mix=box:addx1,hole:cutx4;first=box:add>hole:cut>hole:cut>hole:cut>hole:cut;last=hole:cut>hole:cut>hole:cut>hole:cut;seq=8b7d3c0706e5aac4": 25,
+    "n=1;mix=cylinder:addx1;first=cylinder:add;last=cylinder:add;seq=7163e45e2bbb95b7": 24,
+    "n=9;mix=box:addx1,hole:cutx8;first=box:add>hole:cut>hole:cut>hole:cut>hole:cut>hole:cut;last=hole:cut>hole:cut>hole:cut>hole:cut;seq=62da059ae7795add": 18,
+    "n=69;mix=box:addx1,hole:cutx68;first=box:add>hole:cut>hole:cut>hole:cut>hole:cut>hole:cut;last=hole:cut>hole:cut>hole:cut>hole:cut;seq=e6c0195e2f157880": 15,
+    "n=12;mix=box:addx1,hole:cutx11;first=box:add>hole:cut>hole:cut>hole:cut>hole:cut>hole:cut;last=hole:cut>hole:cut>hole:cut>hole:cut;seq=c36b28480800de71": 14,
+    "n=4;mix=box:addx1,hole:cutx3;first=box:add>hole:cut>hole:cut>hole:cut;last=box:add>hole:cut>hole:cut>hole:cut;seq=b1352bbcadb2a384": 14,
+    "n=7;mix=box:addx1,hole:cutx6;first=box:add>hole:cut>hole:cut>hole:cut>hole:cut>hole:cut;last=hole:cut>hole:cut>hole:cut>hole:cut;seq=8b4da592ca0b2598": 14,
+    "n=1;mix=box:addx1;first=box:add;last=box:add;seq=3eff99d9759e98a6": 13,
+    "n=3;mix=box:addx1,hole:cutx2;first=box:add>hole:cut>hole:cut;last=box:add>hole:cut>hole:cut;seq=e53570fd1a1b149e": 11,
+    "n=3;mix=cylinder:addx2,hole:cutx1;first=cylinder:add>hole:cut>cylinder:add;last=cylinder:add>hole:cut>cylinder:add;seq=23167c240fbb5cd8": 9,
+    "n=97;mix=box:addx1,hole:cutx96;first=box:add>hole:cut>hole:cut>hole:cut>hole:cut>hole:cut;last=hole:cut>hole:cut>hole:cut>hole:cut;seq=0e9eb9a65d228bd0": 9,
+    "n=10;mix=box:addx1,hole:cutx9;first=box:add>hole:cut>hole:cut>hole:cut>hole:cut>hole:cut;last=hole:cut>hole:cut>hole:cut>hole:cut;seq=74c1f4fc99c65cec": 8,
+    "n=2;mix=cylinder:addx2;first=cylinder:add>cylinder:add;last=cylinder:add>cylinder:add;seq=6151a48508f0f991": 7,
+    "n=0;mix=none;first=none;last=none;seq=e3b0c44298fc1c14": 6,
+    "n=4;mix=box:addx1,cylinder:addx3;first=box:add>cylinder:add>cylinder:add>cylinder:add;last=box:add>cylinder:add>cylinder:add>cylinder:add;seq=a4ad2967d8065e89": 6,
+    "n=98;mix=box:addx2,hole:cutx96;first=box:add>hole:cut>hole:cut>hole:cut>hole:cut>hole:cut;last=hole:cut>hole:cut>hole:cut>box:add;seq=60486e7e8204ad04": 6,
+    "n=19;mix=box:addx1,hole:cutx18;first=box:add>hole:cut>hole:cut>hole:cut>hole:cut>hole:cut;last=hole:cut>hole:cut>hole:cut>hole:cut;seq=cd9a9b2f5cdecdb2": 5,
+    "n=103;mix=cylinder:addx1,hole:cutx102;first=cylinder:add>hole:cut>hole:cut>hole:cut>hole:cut>hole:cut;last=hole:cut>hole:cut>hole:cut>hole:cut;seq=229fb1b2b452a6b4": 4,
+    "n=122;mix=box:addx1,cylinder:addx1,hole:cutx120;first=cylinder:add>hole:cut>hole:cut>hole:cut>hole:cut>hole:cut;last=hole:cut>hole:cut>hole:cut>box:add;seq=8a1e14dc9269845b": 4,
+    "n=23;mix=cylinder:addx1,hole:cutx22;first=cylinder:add>hole:cut>hole:cut>hole:cut>hole:cut>hole:cut;last=hole:cut>hole:cut>hole:cut>hole:cut;seq=042c1861c73e7313": 4,
+    "n=26;mix=box:addx1,hole:cutx25;first=box:add>hole:cut>hole:cut>hole:cut>hole:cut>hole:cut;last=hole:cut>hole:cut>hole:cut>hole:cut;seq=fb90416cfe47d95b": 4,
+    "n=27;mix=cylinder:addx1,hole:cutx26;first=cylinder:add>hole:cut>hole:cut>hole:cut>hole:cut>hole:cut;last=hole:cut>hole:cut>hole:cut>hole:cut;seq=70ef4a3c7127bda5": 4,
+    "n=31;mix=cylinder:addx1,hole:cutx30;first=cylinder:add>hole:cut>hole:cut>hole:cut>hole:cut>hole:cut;last=hole:cut>hole:cut>hole:cut>hole:cut;seq=5ec32000a2013d31": 4,
+    "n=35;mix=cylinder:addx1,hole:cutx34;first=cylinder:add>hole:cut>hole:cut>hole:cut>hole:cut>hole:cut;last=hole:cut>hole:cut>hole:cut>hole:cut;seq=55e4c065920fc959": 4,
+    "n=39;mix=cylinder:addx1,hole:cutx38;first=cylinder:add>hole:cut>hole:cut>hole:cut>hole:cut>hole:cut;last=hole:cut>hole:cut>hole:cut>hole:cut;seq=202ce92a3fddad93": 4,
+    "n=43;mix=cylinder:addx1,hole:cutx42;first=cylinder:add>hole:cut>hole:cut>hole:cut>hole:cut>hole:cut;last=hole:cut>hole:cut>hole:cut>hole:cut;seq=6865fe56267c93b7": 4,
+    "n=47;mix=cylinder:addx1,hole:cutx46;first=cylinder:add>hole:cut>hole:cut>hole:cut>hole:cut>hole:cut;last=hole:cut>hole:cut>hole:cut>hole:cut;seq=6312e4845994062f": 4,
+    "n=51;mix=cylinder:addx1,hole:cutx50;first=cylinder:add>hole:cut>hole:cut>hole:cut>hole:cut>hole:cut;last=hole:cut>hole:cut>hole:cut>hole:cut;seq=cdc5e8260f2c8333": 4,
+    "n=55;mix=cylinder:addx1,hole:cutx54;first=cylinder:add>hole:cut>hole:cut>hole:cut>hole:cut>hole:cut;last=hole:cut>hole:cut>hole:cut>hole:cut;seq=13c3eea8cc902cb1": 4,
+    "n=59;mix=cylinder:addx1,hole:cutx58;first=cylinder:add>hole:cut>hole:cut>hole:cut>hole:cut>hole:cut;last=hole:cut>hole:cut>hole:cut>hole:cut;seq=8903043e17f12c13": 4,
+    "n=63;mix=cylinder:addx1,hole:cutx62;first=cylinder:add>hole:cut>hole:cut>hole:cut>hole:cut>hole:cut;last=hole:cut>hole:cut>hole:cut>hole:cut;seq=489b47db4842241f": 4,
+    "n=67;mix=cylinder:addx1,hole:cutx66;first=cylinder:add>hole:cut>hole:cut>hole:cut>hole:cut>hole:cut;last=hole:cut>hole:cut>hole:cut>hole:cut;seq=f778d4589380a87d": 4,
+    "n=71;mix=cylinder:addx1,hole:cutx70;first=cylinder:add>hole:cut>hole:cut>hole:cut>hole:cut>hole:cut;last=hole:cut>hole:cut>hole:cut>hole:cut;seq=dff3160dfa2e7532": 4,
+    "n=75;mix=cylinder:addx1,hole:cutx74;first=cylinder:add>hole:cut>hole:cut>hole:cut>hole:cut>hole:cut;last=hole:cut>hole:cut>hole:cut>hole:cut;seq=85047b3e7f9a4210": 4,
+    "n=79;mix=cylinder:addx1,hole:cutx78;first=cylinder:add>hole:cut>hole:cut>hole:cut>hole:cut>hole:cut;last=hole:cut>hole:cut>hole:cut>hole:cut;seq=6520d6f22c5504a8": 4,
+    "n=83;mix=cylinder:addx1,hole:cutx82;first=cylinder:add>hole:cut>hole:cut>hole:cut>hole:cut>hole:cut;last=hole:cut>hole:cut>hole:cut>hole:cut;seq=15c50f46c25e82de": 4,
+    "n=87;mix=cylinder:addx1,hole:cutx86;first=cylinder:add>hole:cut>hole:cut>hole:cut>hole:cut>hole:cut;last=hole:cut>hole:cut>hole:cut>hole:cut;seq=02773a7ef2e9ec7e": 4,
+    "n=91;mix=cylinder:addx1,hole:cutx90;first=cylinder:add>hole:cut>hole:cut>hole:cut>hole:cut>hole:cut;last=hole:cut>hole:cut>hole:cut>hole:cut;seq=78aab48cee3257a6": 4,
+    "n=95;mix=cylinder:addx1,hole:cutx94;first=cylinder:add>hole:cut>hole:cut>hole:cut>hole:cut>hole:cut;last=hole:cut>hole:cut>hole:cut>hole:cut;seq=0b5c92067145eeeb": 4,
+    "n=99;mix=cylinder:addx1,hole:cutx98;first=cylinder:add>hole:cut>hole:cut>hole:cut>hole:cut>hole:cut;last=hole:cut>hole:cut>hole:cut>hole:cut;seq=bd4a9236e50faa96": 4,
+    "n=15;mix=box:addx1,hole:cutx14;first=box:add>hole:cut>hole:cut>hole:cut>hole:cut>hole:cut;last=hole:cut>hole:cut>hole:cut>hole:cut;seq=55b3fa2a11f88f09": 3,
+    "n=17;mix=box:addx1,hole:cutx16;first=box:add>hole:cut>hole:cut>hole:cut>hole:cut>hole:cut;last=hole:cut>hole:cut>hole:cut>hole:cut;seq=224e917dfa28adc7": 3,
+    "n=23;mix=box:addx1,hole:cutx22;first=box:add>hole:cut>hole:cut>hole:cut>hole:cut>hole:cut;last=hole:cut>hole:cut>hole:cut>hole:cut;seq=e022c66caf2ca86f": 3,
+    "n=3;mix=box:addx1,cylinder:addx2;first=box:add>cylinder:add>cylinder:add;last=box:add>cylinder:add>cylinder:add;seq=7c5366363d230768": 3,
+    "n=3;mix=cylinder:addx1,hole:cutx2;first=cylinder:add>hole:cut>hole:cut;last=cylinder:add>hole:cut>hole:cut;seq=7f090cbd9402e3c3": 3,
+    "n=3;mix=cylinder:addx3;first=cylinder:add>cylinder:add>cylinder:add;last=cylinder:add>cylinder:add>cylinder:add;seq=c9aa4112c164cf14": 3,
+    "n=90;mix=box:addx1,hole:cutx89;first=box:add>hole:cut>hole:cut>hole:cut>hole:cut>hole:cut;last=hole:cut>hole:cut>hole:cut>hole:cut;seq=41bbf25ddc77e2b5": 3,
+    "n=95;mix=box:addx1,hole:cutx94;first=box:add>hole:cut>hole:cut>hole:cut>hole:cut>hole:cut;last=hole:cut>hole:cut>hole:cut>hole:cut;seq=b172c4e073316511": 3,
+    "n=14;mix=box:addx1,hole:cutx13;first=box:add>hole:cut>hole:cut>hole:cut>hole:cut>hole:cut;last=hole:cut>hole:cut>hole:cut>hole:cut;seq=51d46c1c93f5a06d": 2,
+    "n=21;mix=box:addx1,hole:cutx20;first=box:add>hole:cut>hole:cut>hole:cut>hole:cut>hole:cut;last=hole:cut>hole:cut>hole:cut>hole:cut;seq=ae27875357400604": 2,
+    "n=22;mix=box:addx1,hole:cutx21;first=box:add>hole:cut>hole:cut>hole:cut>hole:cut>hole:cut;last=hole:cut>hole:cut>hole:cut>hole:cut;seq=8d2467acc52b7032": 2,
+    "n=27;mix=box:addx1,hole:cutx26;first=box:add>hole:cut>hole:cut>hole:cut>hole:cut>hole:cut;last=hole:cut>hole:cut>hole:cut>hole:cut;seq=c1322ce1d1a5b923": 2,
+    "n=28;mix=box:addx1,hole:cutx27;first=box:add>hole:cut>hole:cut>hole:cut>hole:cut>hole:cut;last=hole:cut>hole:cut>hole:cut>hole:cut;seq=eeae0bb8a020538f": 2,
+    "n=31;mix=box:addx1,hole:cutx30;first=box:add>hole:cut>hole:cut>hole:cut>hole:cut>hole:cut;last=hole:cut>hole:cut>hole:cut>hole:cut;seq=4d4202d7b0444dc7": 2,
+    "n=37;mix=box:addx1,hole:cutx36;first=box:add>hole:cut>hole:cut>hole:cut>hole:cut>hole:cut;last=hole:cut>hole:cut>hole:cut>hole:cut;seq=4dd686aed16c3bf7": 2,
+    "n=58;mix=box:addx1,hole:cutx57;first=box:add>hole:cut>hole:cut>hole:cut>hole:cut>hole:cut;last=hole:cut>hole:cut>hole:cut>hole:cut;seq=c61bb32b3299b6bc": 2,
+    "n=70;mix=box:addx1,hole:cutx69;first=box:add>hole:cut>hole:cut>hole:cut>hole:cut>hole:cut;last=hole:cut>hole:cut>hole:cut>hole:cut;seq=eaee128fc8272f85": 2,
+    "n=3;mix=cylinder:addx2,prism:cutx1;first=cylinder:add>cylinder:add>prism:cut;last=cylinder:add>cylinder:add>prism:cut;seq=b5a2e7bc9eb42e59": 1,
+    "n=5;mix=box:addx1,cylinder:addx1,hole:cutx3;first=cylinder:add>box:add>hole:cut>hole:cut>hole:cut;last=box:add>hole:cut>hole:cut>hole:cut;seq=646ae085084b1848": 1
+  },
+  "largest_feature_prompts_without_prompt_text": [
+    {
+      "id": "egt:EGT006 D30:1000:1",
+      "category": "EGT型材",
+      "group": "EGT型材",
+      "variant": "带类别词",
+      "feature_count": 122,
+      "composition": "box:addx1,cylinder:addx1,hole:cutx120",
+      "sequence_sha256": "8a1e14dc9269845b98b158b5fe10c6c4aadfd84332a5c551fa3bfd7d2b973b5d"
+    },
+    {
+      "id": "egt:EGT006 D30:1000:2",
+      "category": "EGT型材",
+      "group": "EGT型材",
+      "variant": "裸型号",
+      "feature_count": 122,
+      "composition": "box:addx1,cylinder:addx1,hole:cutx120",
+      "sequence_sha256": "8a1e14dc9269845b98b158b5fe10c6c4aadfd84332a5c551fa3bfd7d2b973b5d"
+    },
+    {
+      "id": "egt:EGT006 D30:1000:3",
+      "category": "EGT型材",
+      "group": "EGT型材",
+      "variant": "简写",
+      "feature_count": 122,
+      "composition": "box:addx1,cylinder:addx1,hole:cutx120",
+      "sequence_sha256": "8a1e14dc9269845b98b158b5fe10c6c4aadfd84332a5c551fa3bfd7d2b973b5d"
+    },
+    {
+      "id": "egt:EGT006 D30:1000:4",
+      "category": "EGT型材",
+      "group": "EGT型材",
+      "variant": "自然语言",
+      "feature_count": 122,
+      "composition": "box:addx1,cylinder:addx1,hole:cutx120",
+      "sequence_sha256": "8a1e14dc9269845b98b158b5fe10c6c4aadfd84332a5c551fa3bfd7d2b973b5d"
+    },
+    {
+      "id": "egt:EGT006 D30:373:1",
+      "category": "EGT型材",
+      "group": "EGT型材",
+      "variant": "带类别词",
+      "feature_count": 103,
+      "composition": "cylinder:addx1,hole:cutx102",
+      "sequence_sha256": "229fb1b2b452a6b487515ee998ab2dc04b5f244a469b414107b3b7a3a4ba106b"
+    },
+    {
+      "id": "egt:EGT006 D30:373:2",
+      "category": "EGT型材",
+      "group": "EGT型材",
+      "variant": "裸型号",
+      "feature_count": 103,
+      "composition": "cylinder:addx1,hole:cutx102",
+      "sequence_sha256": "229fb1b2b452a6b487515ee998ab2dc04b5f244a469b414107b3b7a3a4ba106b"
+    },
+    {
+      "id": "egt:EGT006 D30:373:3",
+      "category": "EGT型材",
+      "group": "EGT型材",
+      "variant": "简写",
+      "feature_count": 103,
+      "composition": "cylinder:addx1,hole:cutx102",
+      "sequence_sha256": "229fb1b2b452a6b487515ee998ab2dc04b5f244a469b414107b3b7a3a4ba106b"
+    },
+    {
+      "id": "egt:EGT006 D30:373:4",
+      "category": "EGT型材",
+      "group": "EGT型材",
+      "variant": "自然语言",
+      "feature_count": 103,
+      "composition": "cylinder:addx1,hole:cutx102",
+      "sequence_sha256": "229fb1b2b452a6b487515ee998ab2dc04b5f244a469b414107b3b7a3a4ba106b"
+    },
+    {
+      "id": "egt:EGT006 D30:358:1",
+      "category": "EGT型材",
+      "group": "EGT型材",
+      "variant": "带类别词",
+      "feature_count": 99,
+      "composition": "cylinder:addx1,hole:cutx98",
+      "sequence_sha256": "bd4a9236e50faa96420d192a81e4e9a2d98017d8f15d05c758b6a2d789d695a5"
+    },
+    {
+      "id": "egt:EGT006 D30:358:2",
+      "category": "EGT型材",
+      "group": "EGT型材",
+      "variant": "裸型号",
+      "feature_count": 99,
+      "composition": "cylinder:addx1,hole:cutx98",
+      "sequence_sha256": "bd4a9236e50faa96420d192a81e4e9a2d98017d8f15d05c758b6a2d789d695a5"
+    }
+  ],
+  "category_groups": {
+    "<missing>": {
+      "unique_prompts": 12,
+      "feature_producing_prompts": 6,
+      "ordered_combinations": {
+        "n=0;mix=none;first=none;last=none;seq=e3b0c44298fc1c14": 6,
+        "n=1;mix=box:addx1;first=box:add;last=box:add;seq=3eff99d9759e98a6": 4,
+        "n=2;mix=cylinder:addx2;first=cylinder:add>cylinder:add;last=cylinder:add>cylinder:add;seq=6151a48508f0f991": 1,
+        "n=3;mix=cylinder:addx2,prism:cutx1;first=cylinder:add>cylinder:add>prism:cut;last=cylinder:add>cylinder:add>prism:cut;seq=b5a2e7bc9eb42e59": 1
+      }
+    },
+    "EGT型材": {
+      "unique_prompts": 1156,
+      "feature_producing_prompts": 1156,
+      "ordered_combinations": {
+        "n=1;mix=extrude_holes:addx1;first=extrude_holes:add;last=extrude_holes:add;seq=b80d1691d76fe3ee": 1068,
+        "n=103;mix=cylinder:addx1,hole:cutx102;first=cylinder:add>hole:cut>hole:cut>hole:cut>hole:cut>hole:cut;last=hole:cut>hole:cut>hole:cut>hole:cut;seq=229fb1b2b452a6b4": 4,
+        "n=122;mix=box:addx1,cylinder:addx1,hole:cutx120;first=cylinder:add>hole:cut>hole:cut>hole:cut>hole:cut>hole:cut;last=hole:cut>hole:cut>hole:cut>box:add;seq=8a1e14dc9269845b": 4,
+        "n=23;mix=cylinder:addx1,hole:cutx22;first=cylinder:add>hole:cut>hole:cut>hole:cut>hole:cut>hole:cut;last=hole:cut>hole:cut>hole:cut>hole:cut;seq=042c1861c73e7313": 4,
+        "n=27;mix=cylinder:addx1,hole:cutx26;first=cylinder:add>hole:cut>hole:cut>hole:cut>hole:cut>hole:cut;last=hole:cut>hole:cut>hole:cut>hole:cut;seq=70ef4a3c7127bda5": 4,
+        "n=31;mix=cylinder:addx1,hole:cutx30;first=cylinder:add>hole:cut>hole:cut>hole:cut>hole:cut>hole:cut;last=hole:cut>hole:cut>hole:cut>hole:cut;seq=5ec32000a2013d31": 4,
+        "n=35;mix=cylinder:addx1,hole:cutx34;first=cylinder:add>hole:cut>hole:cut>hole:cut>hole:cut>hole:cut;last=hole:cut>hole:cut>hole:cut>hole:cut;seq=55e4c065920fc959": 4,
+        "n=39;mix=cylinder:addx1,hole:cutx38;first=cylinder:add>hole:cut>hole:cut>hole:cut>hole:cut>hole:cut;last=hole:cut>hole:cut>hole:cut>hole:cut;seq=202ce92a3fddad93": 4,
+        "n=43;mix=cylinder:addx1,hole:cutx42;first=cylinder:add>hole:cut>hole:cut>hole:cut>hole:cut>hole:cut;last=hole:cut>hole:cut>hole:cut>hole:cut;seq=6865fe56267c93b7": 4,
+        "n=47;mix=cylinder:addx1,hole:cutx46;first=cylinder:add>hole:cut>hole:cut>hole:cut>hole:cut>hole:cut;last=hole:cut>hole:cut>hole:cut>hole:cut;seq=6312e4845994062f": 4,
+        "n=51;mix=cylinder:addx1,hole:cutx50;first=cylinder:add>hole:cut>hole:cut>hole:cut>hole:cut>hole:cut;last=hole:cut>hole:cut>hole:cut>hole:cut;seq=cdc5e8260f2c8333": 4,
+        "n=55;mix=cylinder:addx1,hole:cutx54;first=cylinder:add>hole:cut>hole:cut>hole:cut>hole:cut>hole:cut;last=hole:cut>hole:cut>hole:cut>hole:cut;seq=13c3eea8cc902cb1": 4,
+        "n=59;mix=cylinder:addx1,hole:cutx58;first=cylinder:add>hole:cut>hole:cut>hole:cut>hole:cut>hole:cut;last=hole:cut>hole:cut>hole:cut>hole:cut;seq=8903043e17f12c13": 4,
+        "n=63;mix=cylinder:addx1,hole:cutx62;first=cylinder:add>hole:cut>hole:cut>hole:cut>hole:cut>hole:cut;last=hole:cut>hole:cut>hole:cut>hole:cut;seq=489b47db4842241f": 4,
+        "n=67;mix=cylinder:addx1,hole:cutx66;first=cylinder:add>hole:cut>hole:cut>hole:cut>hole:cut>hole:cut;last=hole:cut>hole:cut>hole:cut>hole:cut;seq=f778d4589380a87d": 4,
+        "n=71;mix=cylinder:addx1,hole:cutx70;first=cylinder:add>hole:cut>hole:cut>hole:cut>hole:cut>hole:cut;last=hole:cut>hole:cut>hole:cut>hole:cut;seq=dff3160dfa2e7532": 4,
+        "n=75;mix=cylinder:addx1,hole:cutx74;first=cylinder:add>hole:cut>hole:cut>hole:cut>hole:cut>hole:cut;last=hole:cut>hole:cut>hole:cut>hole:cut;seq=85047b3e7f9a4210": 4,
+        "n=79;mix=cylinder:addx1,hole:cutx78;first=cylinder:add>hole:cut>hole:cut>hole:cut>hole:cut>hole:cut;last=hole:cut>hole:cut>hole:cut>hole:cut;seq=6520d6f22c5504a8": 4,
+        "n=83;mix=cylinder:addx1,hole:cutx82;first=cylinder:add>hole:cut>hole:cut>hole:cut>hole:cut>hole:cut;last=hole:cut>hole:cut>hole:cut>hole:cut;seq=15c50f46c25e82de": 4,
+        "n=87;mix=cylinder:addx1,hole:cutx86;first=cylinder:add>hole:cut>hole:cut>hole:cut>hole:cut>hole:cut;last=hole:cut>hole:cut>hole:cut>hole:cut;seq=02773a7ef2e9ec7e": 4,
+        "n=91;mix=cylinder:addx1,hole:cutx90;first=cylinder:add>hole:cut>hole:cut>hole:cut>hole:cut>hole:cut;last=hole:cut>hole:cut>hole:cut>hole:cut;seq=78aab48cee3257a6": 4,
+        "n=95;mix=cylinder:addx1,hole:cutx94;first=cylinder:add>hole:cut>hole:cut>hole:cut>hole:cut>hole:cut;last=hole:cut>hole:cut>hole:cut>hole:cut;seq=0b5c92067145eeeb": 4,
+        "n=99;mix=cylinder:addx1,hole:cutx98;first=cylinder:add>hole:cut>hole:cut>hole:cut>hole:cut>hole:cut;last=hole:cut>hole:cut>hole:cut>hole:cut;seq=bd4a9236e50faa96": 4
+      }
+    },
+    "EGT连接件": {
+      "unique_prompts": 146,
+      "feature_producing_prompts": 146,
+      "ordered_combinations": {
+        "n=13;mix=box:addx1,hole:cutx12;first=box:add>hole:cut>hole:cut>hole:cut>hole:cut>hole:cut;last=hole:cut>hole:cut>hole:cut>hole:cut;seq=adc6e5bc8843bcd1": 34,
+        "n=11;mix=box:addx1,hole:cutx10;first=box:add>hole:cut>hole:cut>hole:cut>hole:cut>hole:cut;last=hole:cut>hole:cut>hole:cut>hole:cut;seq=9bbef98ce77137ef": 32,
+        "n=9;mix=box:addx1,hole:cutx8;first=box:add>hole:cut>hole:cut>hole:cut>hole:cut>hole:cut;last=hole:cut>hole:cut>hole:cut>hole:cut;seq=62da059ae7795add": 18,
+        "n=1;mix=box:addx1;first=box:add;last=box:add;seq=3eff99d9759e98a6": 9,
+        "n=12;mix=box:addx1,hole:cutx11;first=box:add>hole:cut>hole:cut>hole:cut>hole:cut>hole:cut;last=hole:cut>hole:cut>hole:cut>hole:cut;seq=c36b28480800de71": 8,
+        "n=7;mix=box:addx1,hole:cutx6;first=box:add>hole:cut>hole:cut>hole:cut>hole:cut>hole:cut;last=hole:cut>hole:cut>hole:cut>hole:cut;seq=8b4da592ca0b2598": 6,
+        "n=98;mix=box:addx2,hole:cutx96;first=box:add>hole:cut>hole:cut>hole:cut>hole:cut>hole:cut;last=hole:cut>hole:cut>hole:cut>box:add;seq=60486e7e8204ad04": 6,
+        "n=10;mix=box:addx1,hole:cutx9;first=box:add>hole:cut>hole:cut>hole:cut>hole:cut>hole:cut;last=hole:cut>hole:cut>hole:cut>hole:cut;seq=74c1f4fc99c65cec": 5,
+        "n=26;mix=box:addx1,hole:cutx25;first=box:add>hole:cut>hole:cut>hole:cut>hole:cut>hole:cut;last=hole:cut>hole:cut>hole:cut>hole:cut;seq=fb90416cfe47d95b": 4,
+        "n=14;mix=box:addx1,hole:cutx13;first=box:add>hole:cut>hole:cut>hole:cut>hole:cut>hole:cut;last=hole:cut>hole:cut>hole:cut>hole:cut;seq=51d46c1c93f5a06d": 2,
+        "n=19;mix=box:addx1,hole:cutx18;first=box:add>hole:cut>hole:cut>hole:cut>hole:cut>hole:cut;last=hole:cut>hole:cut>hole:cut>hole:cut;seq=cd9a9b2f5cdecdb2": 2,
+        "n=21;mix=box:addx1,hole:cutx20;first=box:add>hole:cut>hole:cut>hole:cut>hole:cut>hole:cut;last=hole:cut>hole:cut>hole:cut>hole:cut;seq=ae27875357400604": 2,
+        "n=22;mix=box:addx1,hole:cutx21;first=box:add>hole:cut>hole:cut>hole:cut>hole:cut>hole:cut;last=hole:cut>hole:cut>hole:cut>hole:cut;seq=8d2467acc52b7032": 2,
+        "n=27;mix=box:addx1,hole:cutx26;first=box:add>hole:cut>hole:cut>hole:cut>hole:cut>hole:cut;last=hole:cut>hole:cut>hole:cut>hole:cut;seq=c1322ce1d1a5b923": 2,
+        "n=28;mix=box:addx1,hole:cutx27;first=box:add>hole:cut>hole:cut>hole:cut>hole:cut>hole:cut;last=hole:cut>hole:cut>hole:cut>hole:cut;seq=eeae0bb8a020538f": 2,
+        "n=31;mix=box:addx1,hole:cutx30;first=box:add>hole:cut>hole:cut>hole:cut>hole:cut>hole:cut;last=hole:cut>hole:cut>hole:cut>hole:cut;seq=4d4202d7b0444dc7": 2,
+        "n=37;mix=box:addx1,hole:cutx36;first=box:add>hole:cut>hole:cut>hole:cut>hole:cut>hole:cut;last=hole:cut>hole:cut>hole:cut>hole:cut;seq=4dd686aed16c3bf7": 2,
+        "n=4;mix=box:addx1,hole:cutx3;first=box:add>hole:cut>hole:cut>hole:cut;last=box:add>hole:cut>hole:cut>hole:cut;seq=b1352bbcadb2a384": 2,
+        "n=58;mix=box:addx1,hole:cutx57;first=box:add>hole:cut>hole:cut>hole:cut>hole:cut>hole:cut;last=hole:cut>hole:cut>hole:cut>hole:cut;seq=c61bb32b3299b6bc": 2,
+        "n=6;mix=box:addx1,hole:cutx5;first=box:add>hole:cut>hole:cut>hole:cut>hole:cut>hole:cut;last=hole:cut>hole:cut>hole:cut>hole:cut;seq=9aeaafc428071c37": 2,
+        "n=70;mix=box:addx1,hole:cutx69;first=box:add>hole:cut>hole:cut>hole:cut>hole:cut>hole:cut;last=hole:cut>hole:cut>hole:cut>hole:cut;seq=eaee128fc8272f85": 2
+      }
+    },
+    "内六角螺钉": {
+      "unique_prompts": 220,
+      "feature_producing_prompts": 220,
+      "ordered_combinations": {
+        "n=7;mix=cylinder:addx4,hole:cutx2,prism:cutx1;first=cylinder:add>hole:cut>cylinder:add>hole:cut>cylinder:add>cylinder:add;last=hole:cut>cylinder:add>cylinder:add>prism:cut;seq=5a164b960e945889": 220
+      }
+    },
+    "分气块": {
+      "unique_prompts": 15,
+      "feature_producing_prompts": 15,
+      "ordered_combinations": {
+        "n=11;mix=box:addx1,hole:cutx10;first=box:add>hole:cut>hole:cut>hole:cut>hole:cut>hole:cut;last=hole:cut>hole:cut>hole:cut>hole:cut;seq=9bbef98ce77137ef": 3,
+        "n=13;mix=box:addx1,hole:cutx12;first=box:add>hole:cut>hole:cut>hole:cut>hole:cut>hole:cut;last=hole:cut>hole:cut>hole:cut>hole:cut;seq=adc6e5bc8843bcd1": 3,
+        "n=15;mix=box:addx1,hole:cutx14;first=box:add>hole:cut>hole:cut>hole:cut>hole:cut>hole:cut;last=hole:cut>hole:cut>hole:cut>hole:cut;seq=55b3fa2a11f88f09": 3,
+        "n=17;mix=box:addx1,hole:cutx16;first=box:add>hole:cut>hole:cut>hole:cut>hole:cut>hole:cut;last=hole:cut>hole:cut>hole:cut>hole:cut;seq=224e917dfa28adc7": 3,
+        "n=19;mix=box:addx1,hole:cutx18;first=box:add>hole:cut>hole:cut>hole:cut>hole:cut>hole:cut;last=hole:cut>hole:cut>hole:cut>hole:cut;seq=cd9a9b2f5cdecdb2": 3
+      }
+    },
+    "双导杆气缸": {
+      "unique_prompts": 15,
+      "feature_producing_prompts": 15,
+      "ordered_combinations": {
+        "n=1;mix=cylinder:addx1;first=cylinder:add;last=cylinder:add;seq=7163e45e2bbb95b7": 6,
+        "n=2;mix=cylinder:addx2;first=cylinder:add>cylinder:add;last=cylinder:add>cylinder:add;seq=6151a48508f0f991": 6,
+        "n=4;mix=box:addx1,cylinder:addx3;first=box:add>cylinder:add>cylinder:add>cylinder:add;last=box:add>cylinder:add>cylinder:add>cylinder:add;seq=a4ad2967d8065e89": 3
+      }
+    },
+    "吊环": {
+      "unique_prompts": 9,
+      "feature_producing_prompts": 9,
+      "ordered_combinations": {
+        "n=3;mix=cylinder:addx2,hole:cutx1;first=cylinder:add>hole:cut>cylinder:add;last=cylinder:add>hole:cut>cylinder:add;seq=23167c240fbb5cd8": 9
+      }
+    },
+    "垫片垫块": {
+      "unique_prompts": 30,
+      "feature_producing_prompts": 30,
+      "ordered_combinations": {
+        "n=4;mix=box:addx1,hole:cutx3;first=box:add>hole:cut>hole:cut>hole:cut;last=box:add>hole:cut>hole:cut>hole:cut;seq=b1352bbcadb2a384": 10,
+        "n=5;mix=box:addx1,hole:cutx4;first=box:add>hole:cut>hole:cut>hole:cut>hole:cut;last=hole:cut>hole:cut>hole:cut>hole:cut;seq=8b7d3c0706e5aac4": 10,
+        "n=3;mix=box:addx1,hole:cutx2;first=box:add>hole:cut>hole:cut;last=box:add>hole:cut>hole:cut;seq=e53570fd1a1b149e": 8,
+        "n=7;mix=box:addx1,hole:cutx6;first=box:add>hole:cut>hole:cut>hole:cut>hole:cut>hole:cut;last=hole:cut>hole:cut>hole:cut>hole:cut;seq=8b4da592ca0b2598": 2
+      }
+    },
+    "夹紧气缸": {
+      "unique_prompts": 12,
+      "feature_producing_prompts": 12,
+      "ordered_combinations": {
+        "n=1;mix=cylinder:addx1;first=cylinder:add;last=cylinder:add;seq=7163e45e2bbb95b7": 12
+      }
+    },
+    "定位销": {
+      "unique_prompts": 66,
+      "feature_producing_prompts": 66,
+      "ordered_combinations": {
+        "n=4;mix=cylinder:addx4;first=cylinder:add>cylinder:add>cylinder:add>cylinder:add;last=cylinder:add>cylinder:add>cylinder:add>cylinder:add;seq=472c25470c32c7b0": 63,
+        "n=3;mix=cylinder:addx3;first=cylinder:add>cylinder:add>cylinder:add;last=cylinder:add>cylinder:add>cylinder:add;seq=c9aa4112c164cf14": 3
+      }
+    },
+    "手动夹紧气缸": {
+      "unique_prompts": 6,
+      "feature_producing_prompts": 6,
+      "ordered_combinations": {
+        "n=1;mix=cylinder:addx1;first=cylinder:add;last=cylinder:add;seq=7163e45e2bbb95b7": 6
+      }
+    },
+    "接近开关": {
+      "unique_prompts": 9,
+      "feature_producing_prompts": 9,
+      "ordered_combinations": {
+        "n=3;mix=box:addx1,cylinder:addx2;first=box:add>cylinder:add>cylinder:add;last=box:add>cylinder:add>cylinder:add;seq=7c5366363d230768": 3,
+        "n=4;mix=box:addx1,cylinder:addx3;first=box:add>cylinder:add>cylinder:add>cylinder:add;last=box:add>cylinder:add>cylinder:add>cylinder:add;seq=a4ad2967d8065e89": 3,
+        "n=4;mix=box:addx1,hole:cutx3;first=box:add>hole:cut>hole:cut>hole:cut;last=box:add>hole:cut>hole:cut>hole:cut;seq=b1352bbcadb2a384": 2,
+        "n=5;mix=box:addx1,cylinder:addx1,hole:cutx3;first=cylinder:add>box:add>hole:cut>hole:cut>hole:cut;last=box:add>hole:cut>hole:cut>hole:cut;seq=646ae085084b1848": 1
+      }
+    },
+    "支座": {
+      "unique_prompts": 21,
+      "feature_producing_prompts": 21,
+      "ordered_combinations": {
+        "n=13;mix=box:addx1,hole:cutx12;first=box:add>hole:cut>hole:cut>hole:cut>hole:cut>hole:cut;last=hole:cut>hole:cut>hole:cut>hole:cut;seq=adc6e5bc8843bcd1": 21
+      }
+    },
+    "支座(铝)": {
+      "unique_prompts": 15,
+      "feature_producing_prompts": 15,
+      "ordered_combinations": {
+        "n=97;mix=box:addx1,hole:cutx96;first=box:add>hole:cut>hole:cut>hole:cut>hole:cut>hole:cut;last=hole:cut>hole:cut>hole:cut>hole:cut;seq=0e9eb9a65d228bd0": 9,
+        "n=90;mix=box:addx1,hole:cutx89;first=box:add>hole:cut>hole:cut>hole:cut>hole:cut>hole:cut;last=hole:cut>hole:cut>hole:cut>hole:cut;seq=41bbf25ddc77e2b5": 3,
+        "n=95;mix=box:addx1,hole:cutx94;first=box:add>hole:cut>hole:cut>hole:cut>hole:cut>hole:cut;last=hole:cut>hole:cut>hole:cut>hole:cut;seq=b172c4e073316511": 3
+      }
+    },
+    "标牌": {
+      "unique_prompts": 9,
+      "feature_producing_prompts": 9,
+      "ordered_combinations": {
+        "n=23;mix=box:addx1,hole:cutx22;first=box:add>hole:cut>hole:cut>hole:cut>hole:cut>hole:cut;last=hole:cut>hole:cut>hole:cut>hole:cut;seq=e022c66caf2ca86f": 3,
+        "n=3;mix=box:addx1,hole:cutx2;first=box:add>hole:cut>hole:cut;last=box:add>hole:cut>hole:cut;seq=e53570fd1a1b149e": 3,
+        "n=3;mix=cylinder:addx1,hole:cutx2;first=cylinder:add>hole:cut>hole:cut;last=cylinder:add>hole:cut>hole:cut;seq=7f090cbd9402e3c3": 3
+      }
+    },
+    "止块": {
+      "unique_prompts": 18,
+      "feature_producing_prompts": 18,
+      "ordered_combinations": {
+        "n=5;mix=box:addx1,hole:cutx4;first=box:add>hole:cut>hole:cut>hole:cut>hole:cut;last=hole:cut>hole:cut>hole:cut>hole:cut;seq=8b7d3c0706e5aac4": 9,
+        "n=7;mix=box:addx1,hole:cutx6;first=box:add>hole:cut>hole:cut>hole:cut>hole:cut>hole:cut;last=hole:cut>hole:cut>hole:cut>hole:cut;seq=8b4da592ca0b2598": 6,
+        "n=6;mix=box:addx1,hole:cutx5;first=box:add>hole:cut>hole:cut>hole:cut>hole:cut>hole:cut;last=hole:cut>hole:cut>hole:cut>hole:cut;seq=9aeaafc428071c37": 3
+      }
+    },
+    "气缸连接块": {
+      "unique_prompts": 9,
+      "feature_producing_prompts": 9,
+      "ordered_combinations": {
+        "n=12;mix=box:addx1,hole:cutx11;first=box:add>hole:cut>hole:cut>hole:cut>hole:cut>hole:cut;last=hole:cut>hole:cut>hole:cut>hole:cut;seq=c36b28480800de71": 6,
+        "n=10;mix=box:addx1,hole:cutx9;first=box:add>hole:cut>hole:cut>hole:cut>hole:cut>hole:cut;last=hole:cut>hole:cut>hole:cut>hole:cut;seq=74c1f4fc99c65cec": 3
+      }
+    },
+    "补高台": {
+      "unique_prompts": 6,
+      "feature_producing_prompts": 6,
+      "ordered_combinations": {
+        "n=13;mix=box:addx1,hole:cutx12;first=box:add>hole:cut>hole:cut>hole:cut>hole:cut>hole:cut;last=hole:cut>hole:cut>hole:cut>hole:cut;seq=adc6e5bc8843bcd1": 6
+      }
+    },
+    "销座": {
+      "unique_prompts": 39,
+      "feature_producing_prompts": 39,
+      "ordered_combinations": {
+        "n=6;mix=box:addx1,hole:cutx5;first=box:add>hole:cut>hole:cut>hole:cut>hole:cut>hole:cut;last=hole:cut>hole:cut>hole:cut>hole:cut;seq=9aeaafc428071c37": 33,
+        "n=5;mix=box:addx1,hole:cutx4;first=box:add>hole:cut>hole:cut>hole:cut>hole:cut;last=hole:cut>hole:cut>hole:cut>hole:cut;seq=8b7d3c0706e5aac4": 6
+      }
+    },
+    "阀岛": {
+      "unique_prompts": 15,
+      "feature_producing_prompts": 15,
+      "ordered_combinations": {
+        "n=69;mix=box:addx1,hole:cutx68;first=box:add>hole:cut>hole:cut>hole:cut>hole:cut>hole:cut;last=hole:cut>hole:cut>hole:cut>hole:cut;seq=e6c0195e2f157880": 15
+      }
+    }
+  },
+  "f589_fixed_catalog_difference": {
+    "catalog_rows": 66,
+    "catalog_unique_inputs": 66,
+    "exactly_present_in_training_corpus": 0,
+    "present_and_old_parser_feature_success": 0,
+    "catalog_inputs_absent_from_training_corpus": 66,
+    "absent_catalog_categories": {
+      "EGT型材": 1,
+      "EGT连接件": 1,
+      "O形圈": 1,
+      "万向节十字轴": 1,
+      "三角转子": 1,
+      "内六角螺钉": 1,
+      "凸轮轴": 1,
+      "分气块": 1,
+      "制动盘": 1,
+      "制动鼓": 1,
+      "双导杆气缸": 1,
+      "吊环": 1,
+      "同步带轮": 1,
+      "圆锥滚子轴承": 1,
+      "垫圈": 1,
+      "垫片垫块": 1,
+      "基板": 1,
+      "多槽带轮": 1,
+      "夹紧气缸": 1,
+      "定位销": 1,
+      "平键": 1,
+      "弹垫": 1,
+      "手动夹紧气缸": 1,
+      "折弯件": 1,
+      "挡圈": 1,
+      "接近开关": 1,
+      "推力球轴承": 1,
+      "支座": 1,
+      "支座(铝)": 1,
+      "支腿": 1,
+      "斜齿圆柱齿轮": 1,
+      "曲轴": 1,
+      "标牌": 1,
+      "止块": 1,
+      "气缸连接块": 1,
+      "气门": 1,
+      "油封": 1,
+      "法兰": 1,
+      "活塞": 1,
+      "涡旋盘": 1,
+      "涡轮叶轮": 1,
+      "深沟球轴承": 1,
+      "盘形凸轮": 1,
+      "直齿圆柱齿轮": 1,
+      "直齿锥齿轮": 1,
+      "碟形弹簧": 1,
+      "离合器摩擦片": 1,
+      "联轴器": 1,
+      "花键轴": 1,
+      "蜗杆": 1,
+      "螺旋弹簧": 1,
+      "螺栓": 1,
+      "螺母": 1,
+      "补高台": 1,
+      "轴": 1,
+      "轴套": 1,
+      "轴承座": 1,
+      "辐条手轮": 1,
+      "连接件": 1,
+      "连接块": 1,
+      "连杆": 1,
+      "链轮": 1,
+      "销座": 1,
+      "锥形弹簧": 1,
+      "阀岛": 1,
+      "飞轮": 1
+    },
+    "training_prompts_outside_fixed_catalog": 1828,
+    "outside_catalog_old_parser_feature_success": 1822,
+    "outside_catalog_feature_success_by_category": {
+      "<missing>": 6,
+      "EGT型材": 1156,
+      "EGT连接件": 146,
+      "内六角螺钉": 220,
+      "分气块": 15,
+      "双导杆气缸": 15,
+      "吊环": 9,
+      "垫片垫块": 30,
+      "夹紧气缸": 12,
+      "定位销": 66,
+      "手动夹紧气缸": 6,
+      "接近开关": 9,
+      "支座": 21,
+      "支座(铝)": 15,
+      "标牌": 9,
+      "止块": 18,
+      "气缸连接块": 9,
+      "补高台": 6,
+      "销座": 39,
+      "阀岛": 15
+    }
+  },
+  "failed_or_empty_items_without_prompt_text": [
+    {
+      "id": "neg:01",
+      "category": "<missing>",
+      "group": "负例",
+      "variant": "库外型号",
+      "parser_ok": false,
+      "feature_count": 0,
+      "signature": "n=0;mix=none;first=none;last=none;seq=e3b0c44298fc1c14",
+      "message": "没有从描述中识别出建模指令。\n可试试: 「画一个 100×60×20 的长方体, 中心打直径 10 的通孔」"
+    },
+    {
+      "id": "neg:04",
+      "category": "<missing>",
+      "group": "负例",
+      "variant": "库外型号",
+      "parser_ok": false,
+      "feature_count": 0,
+      "signature": "n=0;mix=none;first=none;last=none;seq=e3b0c44298fc1c14",
+      "message": "没有从描述中识别出建模指令。\n可试试: 「画一个 100×60×20 的长方体, 中心打直径 10 的通孔」"
+    },
+    {
+      "id": "neg:05",
+      "category": "<missing>",
+      "group": "负例",
+      "variant": "库外型号",
+      "parser_ok": false,
+      "feature_count": 0,
+      "signature": "n=0;mix=none;first=none;last=none;seq=e3b0c44298fc1c14",
+      "message": "没有从描述中识别出建模指令。\n可试试: 「画一个 100×60×20 的长方体, 中心打直径 10 的通孔」"
+    },
+    {
+      "id": "neg:06",
+      "category": "<missing>",
+      "group": "负例",
+      "variant": "库外型号",
+      "parser_ok": false,
+      "feature_count": 0,
+      "signature": "n=0;mix=none;first=none;last=none;seq=e3b0c44298fc1c14",
+      "message": "没有从描述中识别出建模指令。\n可试试: 「画一个 100×60×20 的长方体, 中心打直径 10 的通孔」"
+    },
+    {
+      "id": "neg:08",
+      "category": "<missing>",
+      "group": "负例",
+      "variant": "库外型号",
+      "parser_ok": false,
+      "feature_count": 0,
+      "signature": "n=0;mix=none;first=none;last=none;seq=e3b0c44298fc1c14",
+      "message": "没有从描述中识别出建模指令。\n可试试: 「画一个 100×60×20 的长方体, 中心打直径 10 的通孔」"
+    },
+    {
+      "id": "neg:10",
+      "category": "<missing>",
+      "group": "负例",
+      "variant": "库外型号",
+      "parser_ok": false,
+      "feature_count": 0,
+      "signature": "n=0;mix=none;first=none;last=none;seq=e3b0c44298fc1c14",
+      "message": "没有从描述中识别出建模指令。\n可试试: 「画一个 100×60×20 的长方体, 中心打直径 10 的通孔」"
+    }
+  ],
+  "malformed_jsonl_items": [],
+  "run_seconds": 172.438
+}
