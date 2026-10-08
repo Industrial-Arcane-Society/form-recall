@@ -3,6 +3,58 @@
   "updated": "2026-10-08",
   "legacy_python_accepted": [
     {
+      "input": "V带轮 基准直径300 槽数3 槽型C 内孔20 宽度180",
+      "expected_parameters": {
+        "pitch_d": 300.0,
+        "grooves": 3,
+        "height": 180.0,
+        "groove_type": "C",
+        "outer_d": 309.6,
+        "bore_d": 20.0,
+        "center": [
+          0,
+          0,
+          0
+        ]
+      },
+      "sources": {
+        "pitch_d": "user",
+        "grooves": "user",
+        "height": "user",
+        "groove_type": "user",
+        "outer_d": "derived",
+        "bore_d": "user",
+        "center": "derived"
+      },
+      "warning_code": "legacy_vbelt_pulley_spoked_geometry_mapping"
+    },
+    {
+      "input": "V带轮 基准直径300 槽数1 槽型C 内孔20 宽度180",
+      "expected_parameters": {
+        "pitch_d": 300.0,
+        "grooves": 1,
+        "height": 180.0,
+        "groove_type": "C",
+        "outer_d": 309.6,
+        "bore_d": 20.0,
+        "center": [
+          0,
+          0,
+          0
+        ]
+      },
+      "sources": {
+        "pitch_d": "user",
+        "grooves": "user",
+        "height": "user",
+        "groove_type": "user",
+        "outer_d": "derived",
+        "bore_d": "user",
+        "center": "derived"
+      },
+      "warning_code": "legacy_vbelt_pulley_spoked_geometry_mapping"
+    },
+    {
       "input": "V带轮 基准直径100 槽数3 槽型A 内孔25 宽度60",
       "expected_parameters": {
         "pitch_d": 100.0,
@@ -120,6 +172,15 @@
           0
         ]
       },
+      "sources": {
+        "pitch_d": "user",
+        "grooves": "user",
+        "height": "derived",
+        "groove_type": "user",
+        "outer_d": "derived",
+        "bore_d": "user",
+        "center": "derived"
+      },
       "expected_parameters": {
         "pitch_d": 100.0,
         "grooves": 3,
@@ -135,7 +196,8 @@
       },
       "warning_codes": [
         "legacy_vbelt_pulley_legacy_width_adjustment"
-      ]
+      ],
+      "quick_mesh_only_width_overlap": true
     },
     {
       "input": "皮带轮 基准直径120 槽数2 槽型B 宽度40 内径20",
@@ -167,7 +229,17 @@
       },
       "warning_codes": [
         "legacy_vbelt_pulley_legacy_width_adjustment"
-      ]
+      ],
+      "quick_mesh_only_width_overlap": true,
+      "sources": {
+        "pitch_d": "derived",
+        "grooves": "user",
+        "height": "derived",
+        "groove_type": "user",
+        "outer_d": "derived",
+        "bore_d": "user",
+        "center": "derived"
+      }
     },
     {
       "input": "V带轮",
@@ -199,7 +271,8 @@
       },
       "warning_codes": [
         "legacy_vbelt_pulley_default_width"
-      ]
+      ],
+      "quick_mesh_only_width_overlap": true
     }
   ],
   "native_geometry_cases": [
@@ -234,13 +307,104 @@
         105.5,
         46.31971385738069
       ]
+    },
+    {
+      "input": "V带轮 基准直径300 槽数3 槽型C 内孔20 宽度180",
+      "expected_dimensions_mm": [
+        309.6,
+        309.6,
+        180.0
+      ],
+      "expected_triangles": 3132,
+      "expected_builder": "legacy_make_revolve_profile_edges_and_rotated_box_spokes_64_segments",
+      "expected_state": "mesh_only",
+      "rust_stl_artifact_env": "F5_29_RUST_STL",
+      "expected_spokes": {
+        "count": 5,
+        "box_size_mm": [
+          135.3,
+          37.884,
+          15.3
+        ],
+        "radial_start_mm": 19.5,
+        "radial_end_mm": 154.8,
+        "z_start_mm": 67.05,
+        "z_end_mm": 82.35,
+        "angles_deg": [
+          0.0,
+          72.0,
+          144.0,
+          216.0,
+          288.0
+        ]
+      },
+      "expected_groove_root_overlap_mm": 3.347769740084427,
+      "expected_self_intersecting": true
+    },
+    {
+      "input": "V带轮 基准直径100 槽数3 槽型A 内孔25 宽度30",
+      "expected_dimensions_mm": [
+        105.5,
+        105.5,
+        46.31971385738069
+      ],
+      "expected_triangles": 3072,
+      "expected_builder": "legacy_make_revolve_profile_edges_swept_64_segments",
+      "expected_state": "mesh_only",
+      "expected_spokes": null,
+      "expected_root_width_mm": 16.31971385738069,
+      "expected_effective_pitch_mm": 14.8,
+      "expected_groove_root_overlap_mm": 1.5197138573806903,
+      "expected_self_intersecting": true,
+      "rust_stl_artifact_env": "F5_105_RUST_STL",
+      "rust_report_artifact_env": "F5_105_RUST_REPORT"
+    },
+    {
+      "input": "V带轮 基准直径300 槽数1 槽型C 内孔20 宽度180",
+      "expected_dimensions_mm": [
+        309.6,
+        309.6,
+        180.0
+      ],
+      "expected_builder": "legacy_axial_blank_fused_v_groove_cutters_and_rotated_boxes",
+      "expected_state": "passed",
+      "expected_spokes": {
+        "count": 5,
+        "box_size_mm": [
+          135.3,
+          37.884,
+          15.3
+        ],
+        "radial_start_mm": 19.5,
+        "radial_end_mm": 154.8,
+        "z_start_mm": 67.05,
+        "z_end_mm": 82.35,
+        "angles_deg": [
+          0.0,
+          72.0,
+          144.0,
+          216.0,
+          288.0
+        ]
+      },
+      "expected_groove_root_overlap_mm": 0.0,
+      "expected_profile_points": 16,
+      "expected_root_width_mm": 28.847769740084427,
+      "expected_effective_pitch_mm": 25.5,
+      "expected_hub_diameter_mm": 39.0,
+      "expected_hub_length_mm": 36.0,
+      "expected_rim_inner_diameter_mm": 261.85,
+      "expected_web_thickness_mm": 15.3,
+      "expected_self_intersecting": false,
+      "expected_valid": true,
+      "expected_brep_available": true,
+      "expected_legacy_raw_parity": false,
+      "expected_geometry_support": "restricted_legacy_geometry_mapping",
+      "rust_stl_artifact_env": "F5_29_SINGLE_SLOT_RUST_STL",
+      "rust_report_artifact_env": "F5_29_SINGLE_SLOT_REPORT"
     }
   ],
   "unsupported": [
-    {
-      "input": "V带轮 基准直径300 槽数3 槽型C 内孔20 宽度180",
-      "issue": "legacy_vbelt_pulley_spoked_variant_unsupported"
-    },
     {
       "input": "V带轮 基准直径100 槽数3 槽型A 内孔25 宽度60 中心打直径6通孔",
       "issue": "legacy_vbelt_pulley_compound_request_unsupported"
@@ -289,11 +453,11 @@
         ]
       },
       "legacy_effective_slot_centers_mm": [
-        -14.799856928690346,
+        -14.8,
         0.0,
-        14.799856928690346
+        14.8
       ],
-      "legacy_effective_pitch_mm": 14.799856928690346,
+      "legacy_effective_pitch_mm": 14.8,
       "nominal_standard_pitch_mm": 15.0,
       "expected_dimensions_mm": [
         105.5,
@@ -301,13 +465,13 @@
         46.31971385738069
       ],
       "native_occt_acceptance": {
-        "status": "rejected_self_intersecting_profile",
-        "evidence": "native_plan_geometry_probe returned OCCT error 1: profile is self-intersecting",
-        "mesh_only_fallback": "implemented_quick_only",
-        "note": "The Quick-only fallback exactly reproduces the legacy triangle mesh and explicitly reports mesh_only. CADPlan validation still rejects the legacy width; B-Rep/solid/CATPart and CATIA are unavailable and are never reported as passed.",
+        "status": "historical_brep_rejected_then_current_quick_mesh_only",
+        "evidence": "F5.105 fixed legacy parser/document baseline plus current native Quick acceptance",
+        "mesh_only_fallback": "legacy_quick_width_overlap_only_when_validator_reports_one_width_error",
+        "note": "The legacy B-Rep path rejects this profile and the shared CADPlan validator continues to report its width error. Quick preserves the 46.3197138574 mm plan value and routes only the one-feature/one-width-error/actual-overlap case to mesh_only; it does not alter validator output or widen the model.",
         "mesh_evidence": {
-          "legacy_stl": "%TEMP%\\f5_79_legacy_vbelt.stl",
-          "rust_stl": "%TEMP%\\f5_79_rust_quick\\quick\\r1-1791398560928536100\\quick.stl",
+          "legacy_stl": "artifacts/f5.105-vbelt-a100-overlap/legacy_document_build_raw.stl",
+          "rust_stl": "artifacts/f5.105-vbelt-a100-overlap/rust_native_quick.stl",
           "triangle_count": {
             "legacy": 3072,
             "rust": 3072
@@ -343,7 +507,7 @@
               "iou": 1.0
             }
           },
-          "comparator": "python tools/compare_legacy_quick_stl.py <legacy.stl> <rust.stl> --projection-size 128"
+          "comparator": "python -B tools/compare_legacy_quick_stl.py artifacts/f5.105-vbelt-a100-overlap/legacy_document_build_raw.stl artifacts/f5.105-vbelt-a100-overlap/rust_native_quick.stl --projection-size 128"
         }
       },
       "note": "The legacy axial profile overlaps adjacent groove-root intervals at this constrained width. Rust Quick preserves the same profile and spacing. OCCT single-solid acceptance is reported separately; the contract must not silently enlarge width or move grooves."

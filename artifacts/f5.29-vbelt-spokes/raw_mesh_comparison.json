@@ -1,0 +1,74 @@
+{
+  "legacy_stl": {
+    "path": "artifacts\\f5.29-vbelt-spokes\\legacy_document_build_raw.stl",
+    "sha256": "0dfb2636da37eb4c8cc0dc6c1704a7c4974efede610ab6f2678359fd4d10f574"
+  },
+  "rust_stl": {
+    "path": "artifacts\\f5.29-vbelt-spokes\\rust_native_quick.stl",
+    "sha256": "b513e81ab7eaa1837c687f3c26f69830527ebe7d91a6f309fb70910c8c7fcf7d"
+  },
+  "triangle_count": {
+    "legacy": 3132,
+    "rust": 3132,
+    "equal": true
+  },
+  "bounds_mm": {
+    "legacy": [
+      [
+        -154.8000030517578,
+        154.8000030517578
+      ],
+      [
+        -154.8000030517578,
+        154.8000030517578
+      ],
+      [
+        -90.0,
+        90.0
+      ]
+    ],
+    "rust": [
+      [
+        -154.8000030517578,
+        154.8000030517578
+      ],
+      [
+        -154.8000030517578,
+        154.8000030517578
+      ],
+      [
+        -90.0,
+        90.0
+      ]
+    ],
+    "max_abs_delta": 0.0
+  },
+  "signed_mesh_volume_mm3": {
+    "legacy": 19883124.633007642,
+    "rust": 19883124.633007642,
+    "abs_delta": 0.0,
+    "tolerance": 0.19884124633007644
+  },
+  "surface_triangle_multiset_exact": true,
+  "orthographic_projection_masks": {
+    "XY": {
+      "legacy_covered_pixels": 12606,
+      "rust_covered_pixels": 12606,
+      "xor_pixels": 0,
+      "iou": 1.0
+    },
+    "XZ": {
+      "legacy_covered_pixels": 15601,
+      "rust_covered_pixels": 15601,
+      "xor_pixels": 0,
+      "iou": 1.0
+    },
+    "YZ": {
+      "legacy_covered_pixels": 15601,
+      "rust_covered_pixels": 15601,
+      "xor_pixels": 0,
+      "iou": 1.0
+    }
+  },
+  "passed": true
+}

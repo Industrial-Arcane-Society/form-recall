@@ -1,0 +1,31 @@
+{
+  "brep_available": false,
+  "builder": "legacy_make_revolve_profile_edges_swept_64_segments",
+  "catpart_available": false,
+  "closed_solid_count": null,
+  "dimensions_mm": [
+    105.5,
+    105.5,
+    46.3197135925293
+  ],
+  "execution_engine": "rust_legacy_quick_triangle_mesh",
+  "geometry_support": "legacy_mesh_only",
+  "groove_effective_pitch_mm": 14.8,
+  "groove_root_overlap_mm": 1.5197138573806903,
+  "groove_root_width_mm": 16.31971385738069,
+  "legacy_polygon_count": 1536,
+  "legacy_profile_was_self_intersecting": true,
+  "mesh_only": true,
+  "profile_points": 24,
+  "signed_mesh_volume_mm3": 584036.1737594228,
+  "solid_count": null,
+  "spokes": null,
+  "state": "mesh_only",
+  "triangle_count": 3072,
+  "valid": null,
+  "volume_basis": "signed_triangle_mesh_after_binary_stl_float32_quantization",
+  "warnings": [
+    "该 Quick 结果逐面复刻旧 Python 的自交轮廓三角网格；未构建或验证 B-Rep/闭合实体。",
+    "AIMODEL 保存 CADPlan 与参数；此 mesh-only 结果不可据此推送或导出 CATPart。"
+  ]
+}

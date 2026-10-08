@@ -1,7 +1,8 @@
 //! Native approximation of the legacy GB/T standard V-belt pulley revolve.
 //! The groove dimensions use the retained std_pulley fallback table. This is
-//! a single analytic OCCT revolve; spoke-style pulleys are rejected.
-use crate::native_occt::{Axis, Kernel, TriangleMesh};
+//! an analytic OCCT revolve; large legacy spoke layouts use a dedicated
+//! blank/cutter/fusion path that keeps their original box placement.
+use crate::native_occt::{Axis, Kernel, Shape, TriangleMesh};
 use serde_json::Value;
 
 const MAX_GROOVES: u64 = 64;
@@ -61,6 +62,16 @@ struct Groove {
     ha: f64,
     hf: f64,
     e: f64,
+}
+
+#[derive(Debug, Clone, Copy)]
+struct SpokeLayout {
+    count: u64,
+    radial_length: f64,
+    width: f64,
+    thickness: f64,
+    radial_midpoint: f64,
+    z_start: f64,
 }
 
 fn groove(kind: &str) -> Option<Groove> {
@@ -242,7 +253,16 @@ fn diameter_series(kind: &str) -> &'static [(f64, f64)] {
     }
 }
 
-fn standard_profile(parameters: &Value) -> Result<Vec<[f64; 2]>, String> {
+fn standard_profile_and_spokes(
+    parameters: &Value,
+) -> Result<(Vec<[f64; 2]>, Option<SpokeLayout>), String> {
+    standard_profile_and_spokes_with_width_policy(parameters, false)
+}
+
+fn standard_profile_and_spokes_with_width_policy(
+    parameters: &Value,
+    preserve_overlapping_legacy_profile: bool,
+) -> Result<(Vec<[f64; 2]>, Option<SpokeLayout>), String> {
     let pitch_d = numeric(parameters, "pitch_d", None)?;
     let width = numeric(parameters, "height", None)?;
     let grooves = parameters
@@ -272,7 +292,10 @@ fn standard_profile(parameters: &Value) -> Result<Vec<[f64; 2]>, String> {
     // silently widening/re-spacing the Quick geometry.
     let (_, min_width) = width_requirements(pitch_d, grooves, &kind)?;
     let pitch_e = g.e;
-    if width + 1e-8 < min_width {
+    let legacy_overlap_allows_requested_width = preserve_overlapping_legacy_profile
+        && grooves > 1
+        && groove_root_overlap(parameters)?.2 > 1e-8;
+    if width + 1e-8 < min_width && !legacy_overlap_allows_requested_width {
         return Err(format!(
             "输入轮宽 {width:.6} mm 无法容纳 {grooves} 个标准 V 槽；无自交剖面的最小轮宽为 {min_width:.6} mm。"
         ));
@@ -301,9 +324,6 @@ fn standard_profile(parameters: &Value) -> Result<Vec<[f64; 2]>, String> {
     } else {
         0
     };
-    if spokes > 0 {
-        return Err("该直径/轮缘结构在 legacy 中需要独立辐条；native 仅支持无辐条回转体。".into());
-    }
 
     if let Some(value) = parameters.get("outer_d").filter(|value| !value.is_null()) {
         let requested_outer = value.as_f64().ok_or("vbelt_pulley.outer_d 必须是数值。")?;
@@ -386,7 +406,81 @@ fn standard_profile(parameters: &Value) -> Result<Vec<[f64; 2]>, String> {
         profile.pop();
     }
     let _ = web_half; // documents the legacy web thickness relationship
-    Ok(profile)
+    let spoke_layout = (spokes > 0).then(|| {
+        let hub_r = hub_d / 2.0;
+        let rim_r = outer_d / 2.0;
+        let radial_length = rim_r - hub_r;
+        SpokeLayout {
+            count: spokes,
+            radial_length,
+            width: (radial_length * 0.28).max(6.0),
+            thickness: web_s,
+            radial_midpoint: (hub_r + rim_r) / 2.0,
+            z_start: (width / 2.0 - web_s).max(0.0).min(width / 2.0) - web_s / 2.0,
+        }
+    });
+    Ok((profile, spoke_layout))
+}
+
+fn standard_profile(parameters: &Value) -> Result<Vec<[f64; 2]>, String> {
+    standard_profile_and_spokes(parameters).map(|(profile, _)| profile)
+}
+
+pub fn spokes_required(parameters: &Value) -> Result<bool, String> {
+    standard_profile_and_spokes(parameters).map(|(_, spokes)| spokes.is_some())
+}
+
+fn groove_root_overlap(parameters: &Value) -> Result<(f64, f64, f64), String> {
+    let pitch_d = numeric(parameters, "pitch_d", None)?;
+    let height = numeric(parameters, "height", None)?;
+    let grooves = parameters["grooves"]
+        .as_u64()
+        .ok_or("vbelt_pulley.grooves 必须是正整数。")?;
+    let kind = standard_type(parameters)?;
+    let groove = groove(&kind).ok_or("不支持 V 带槽型。")?;
+    let root_width = groove.bd + 2.0 * groove.hf * (angle(pitch_d).to_radians() / 2.0).tan();
+    if grooves == 1 {
+        return Ok((root_width, groove.e, 0.0));
+    }
+    let max_half = height / 2.0 - root_width / 2.0 - 0.2;
+    let need_half = (grooves - 1) as f64 * groove.e * 0.5;
+    let effective_pitch = if need_half > max_half && need_half > 1e-9 {
+        (2.0 * max_half / (grooves - 1) as f64).max(0.0)
+    } else {
+        groove.e
+    };
+    Ok((
+        root_width,
+        effective_pitch,
+        (root_width - effective_pitch).max(0.0),
+    ))
+}
+
+pub fn legacy_mesh_geometry_details(parameters: &Value) -> Result<Value, String> {
+    let (profile, layout) = standard_profile_and_spokes_with_width_policy(parameters, true)?;
+    let (root_width, effective_pitch, overlap) = groove_root_overlap(parameters)?;
+    let spokes = layout.map(|layout| {
+        let angles = (0..layout.count)
+            .map(|index| 360.0 * index as f64 / layout.count as f64)
+            .collect::<Vec<_>>();
+        serde_json::json!({
+            "count":layout.count,
+            "box_size_mm":[layout.radial_length,layout.width,layout.thickness],
+            "radial_start_mm":layout.radial_midpoint-layout.radial_length/2.0,
+            "radial_end_mm":layout.radial_midpoint+layout.radial_length/2.0,
+            "z_start_mm":layout.z_start,
+            "z_end_mm":layout.z_start+layout.thickness,
+            "angles_deg":angles
+        })
+    });
+    Ok(serde_json::json!({
+        "profile_points":profile.len(),
+        "groove_root_width_mm":root_width,
+        "groove_effective_pitch_mm":effective_pitch,
+        "groove_root_overlap_mm":overlap,
+        "legacy_profile_self_intersecting":overlap > 1e-8,
+        "spokes":spokes
+    }))
 }
 
 /// Generate the legacy Quick surface mesh without trying to sew the
@@ -399,8 +493,8 @@ pub fn legacy_quick_mesh(parameters: &Value, segments: usize) -> Result<Triangle
     if !(3..=1024).contains(&segments) {
         return Err("legacy V 带轮网格分段必须在 3..=1024 范围内。".into());
     }
-    let profile = standard_profile(parameters)?;
-    preflight(parameters)?;
+    let (profile, spokes) = standard_profile_and_spokes_with_width_policy(parameters, true)?;
+    preflight_with_width_policy(parameters, true)?;
     let center = parameters
         .get("center")
         .and_then(Value::as_array)
@@ -493,7 +587,114 @@ pub fn legacy_quick_mesh(parameters: &Value, segments: usize) -> Result<Triangle
     if mesh.positions.is_empty() {
         return Err("legacy V 带轮回转网格没有有效三角面。".into());
     }
+    if let Some(layout) = spokes {
+        append_legacy_box_spokes(&mut mesh, center, layout);
+    }
     Ok(mesh)
+}
+
+fn append_legacy_box_spokes(mesh: &mut TriangleMesh, center: [f64; 3], layout: SpokeLayout) {
+    let half_length = layout.radial_length / 2.0;
+    let half_width = layout.width / 2.0;
+    let z0 = layout.z_start;
+    let z1 = z0 + layout.thickness;
+    let box_center = [
+        layout.radial_midpoint,
+        0.0,
+        z0 + layout.thickness / 2.0,
+    ];
+    let profile = [
+        [-half_length, -half_width],
+        [half_length, -half_width],
+        [half_length, half_width],
+        [-half_length, half_width],
+    ];
+    for spoke in 0..layout.count {
+        let degrees = 360.0 * spoke as f64 / layout.count as f64;
+        let angle = degrees.to_radians();
+        let (sin, cos) = angle.sin_cos();
+        let point = |x: f64, y: f64, z: f64| {
+            [layout.radial_midpoint + x, y, z]
+        };
+        let bottom = profile.map(|[x, y]| point(x, y, z0));
+        let top = profile.map(|[x, y]| point(x, y, z1));
+
+        // Match `extrude_profile`: four side quads, then the two ear-clipped
+        // end faces from `triangulate_2d` for the CCW rectangle.
+        for edge in 0..4 {
+            let next = (edge + 1) % 4;
+            append_legacy_box_face(
+                mesh,
+                vec![bottom[edge], bottom[next], top[next], top[edge]],
+                box_center,
+                sin,
+                cos,
+                center,
+            );
+        }
+        for indices in [[3usize, 0, 1], [1, 2, 3]] {
+            append_legacy_box_face(
+                mesh,
+                indices.iter().map(|index| top[*index]).collect(),
+                box_center,
+                sin,
+                cos,
+                center,
+            );
+            append_legacy_box_face(
+                mesh,
+                indices.iter().map(|index| bottom[*index]).collect(),
+                box_center,
+                sin,
+                cos,
+                center,
+            );
+        }
+    }
+}
+
+fn append_legacy_box_face(
+    mesh: &mut TriangleMesh,
+    mut points: Vec<[f64; 3]>,
+    box_center: [f64; 3],
+    sin: f64,
+    cos: f64,
+    center: [f64; 3],
+) {
+    if points.len() < 3 {
+        return;
+    }
+    let normal = normalize(cross(sub(points[1], points[0]), sub(points[2], points[0])));
+    if length(normal) < 1e-9 {
+        return;
+    }
+    let centroid = [
+        points.iter().map(|point| point[0]).sum::<f64>() / points.len() as f64,
+        points.iter().map(|point| point[1]).sum::<f64>() / points.len() as f64,
+        points.iter().map(|point| point[2]).sum::<f64>() / points.len() as f64,
+    ];
+    if dot(normal, sub(centroid, box_center)) < 0.0 {
+        points.reverse();
+    }
+    let transform = |point: [f64; 3]| {
+        [
+            cos * point[0] - sin * point[1] + center[0],
+            sin * point[0] + cos * point[1] + center[1],
+            point[2] + center[2],
+        ]
+    };
+    let origin = transform(points[0]);
+    for index in 1..points.len() - 1 {
+        let a = origin;
+        let b = transform(points[index]);
+        let c = transform(points[index + 1]);
+        let triangle_normal = normalize(cross(sub(b, a), sub(c, a)));
+        if length(triangle_normal) < 1e-12 {
+            continue;
+        }
+        mesh.positions.extend([a, b, c]);
+        mesh.normals.extend([triangle_normal; 3]);
+    }
 }
 
 fn sub(a: [f64; 3], b: [f64; 3]) -> [f64; 3] {
@@ -526,7 +727,17 @@ fn normalize(value: [f64; 3]) -> [f64; 3] {
 }
 
 pub fn preflight(parameters: &Value) -> Result<(), String> {
-    let profile = standard_profile(parameters)?;
+    preflight_with_width_policy(parameters, false)
+}
+
+fn preflight_with_width_policy(
+    parameters: &Value,
+    preserve_overlapping_legacy_profile: bool,
+) -> Result<(), String> {
+    let (profile, _) = standard_profile_and_spokes_with_width_policy(
+        parameters,
+        preserve_overlapping_legacy_profile,
+    )?;
     if profile.len() < 8 {
         return Err("V 带轮标准剖面点数不足。".into());
     }
@@ -591,53 +802,37 @@ pub fn is_mesh_only_legacy_quick_plan(plan: &Value) -> bool {
         return false;
     }
     let validation = crate::cad_plan_validation::validate_plan(plan);
-    let validation_is_expected = validation.get("valid").and_then(Value::as_bool) == Some(true)
-        || validation
+    // Mesh-only remains the compatibility path for self-intersecting legacy
+    // profiles. The exact Quick triangle builder also appends old box spokes;
+    // non-overlapping spoked variants can use the dedicated B-Rep builder.
+    let legacy_width_failure = validation.get("valid").and_then(Value::as_bool) == Some(false)
+        && validation
             .get("errors")
             .and_then(Value::as_array)
             .is_some_and(|errors| {
-                validation.get("valid").and_then(Value::as_bool) == Some(false)
-                    && errors.len() == 1
+                errors.len() == 1
                     && errors[0].get("code").and_then(Value::as_str)
                         == Some("vbelt_width_below_profile_minimum")
             });
-    if !validation_is_expected || standard_profile(&feature["parameters"]).is_err() {
+    let valid_or_legacy_width = validation.get("valid").and_then(Value::as_bool) == Some(true)
+        || legacy_width_failure;
+    if !valid_or_legacy_width
+        || preflight_with_width_policy(&feature["parameters"], legacy_width_failure).is_err()
+    {
         return false;
     }
     let parameters = &feature["parameters"];
-    let Some(grooves) = parameters.get("grooves").and_then(Value::as_u64) else {
+    let Ok((_, _, overlap)) = groove_root_overlap(parameters) else {
         return false;
     };
-    if grooves < 2 {
-        return false;
-    }
-    let Some(pitch_d) = parameters.get("pitch_d").and_then(Value::as_f64) else {
-        return false;
-    };
-    let Some(height) = parameters.get("height").and_then(Value::as_f64) else {
-        return false;
-    };
-    let Ok(kind) = standard_type(parameters) else {
-        return false;
-    };
-    let Some(groove) = groove(&kind) else {
-        return false;
-    };
-    let root_width = groove.bd + 2.0 * groove.hf * (angle(pitch_d).to_radians() / 2.0).tan();
-    let max_half = height / 2.0 - root_width / 2.0 - 0.2;
-    let effective_pitch = if (grooves - 1) as f64 * groove.e * 0.5 > max_half {
-        (2.0 * max_half / (grooves - 1) as f64).max(0.0)
-    } else {
-        groove.e
-    };
-    effective_pitch + 1e-8 < root_width
+    overlap > 1e-8
 }
 
 pub fn build(
     kernel: &Kernel,
     parameters: &Value,
 ) -> Result<(Vec<crate::native_occt::Shape>, Value), String> {
-    let profile = standard_profile(parameters)?;
+    let (profile, spokes) = standard_profile_and_spokes(parameters)?;
     preflight(parameters)?;
     let center = parameters
         .get("center")
@@ -650,6 +845,10 @@ pub fn build(
             ]
         })
         .unwrap_or([0., 0., 0.]);
+    if let Some(layout) = spokes {
+        let (shape, details) = build_spoked_vbelt(kernel, parameters, &profile, center, layout)?;
+        return Ok((vec![shape], details));
+    }
     let shape = kernel.revolve(&profile, 360., center, Axis::Z)?;
     Ok((
         vec![shape],
@@ -661,9 +860,160 @@ pub fn build(
             "center_mm":center,
             "profile_points":profile.len(),
             "baseline_comparison":"Reproduces the retained std_pulley fallback-table profile; the engineering design and CATIA mapping remain approximate.",
-            "warnings":["Fallback standard groove table only; no KB diameter-series snapping.","Spoke-style construction is unsupported and rejected before OCCT."]
+            "warnings":["Fallback standard groove table only; no KB diameter-series snapping."]
         }),
     ))
+}
+
+fn build_spoked_vbelt(
+    kernel: &Kernel,
+    parameters: &Value,
+    profile: &[[f64; 2]],
+    center: [f64; 3],
+    layout: SpokeLayout,
+) -> Result<(Shape, Value), String> {
+    let grooves = parameters["grooves"]
+        .as_u64()
+        .ok_or("vbelt_pulley.grooves 必须是正整数。")? as usize;
+    let groove_start = 6usize;
+    let groove_end = groove_start
+        .checked_add(grooves.checked_mul(4).ok_or("V 带轮槽数量溢出。")?)
+        .ok_or("V 带轮槽剖面索引溢出。")?;
+    if groove_end >= profile.len() || groove_start >= profile.len() {
+        return Err("V 带轮旧剖面槽边界与槽数不匹配。".into());
+    }
+
+    // Remove the intersecting groove edges from the axial outline and create a
+    // simple blank. Each old V groove is then represented by a revolved cutter;
+    // the cutters are fused as a union before cutting the blank. This preserves
+    // the old overlapping groove-root spacing without silently moving or
+    // widening grooves merely to make the original self-intersecting wire valid.
+    let mut blank_profile = profile[..groove_start].to_vec();
+    blank_profile.extend_from_slice(&profile[groove_end..]);
+    let blank = kernel.revolve(&blank_profile, 360.0, center, Axis::Z)?;
+    let blank_analysis = blank.analyze()?;
+
+    let outer_r = profile[groove_start][0];
+    let extension = 1.0;
+    let mut groove_tools = Vec::with_capacity(grooves);
+    for index in 0..grooves {
+        let point = groove_start + index * 4;
+        let [[_, z0], [root_r0, z1], [root_r1, z2], [_, z3]] = [
+            profile[point],
+            profile[point + 1],
+            profile[point + 2],
+            profile[point + 3],
+        ];
+        if (root_r0 - root_r1).abs() > 1e-9 || root_r0 <= 0.0 {
+            return Err("V 带轮槽根剖面不是可构造的正半径平底槽。".into());
+        }
+        let cutter_profile = [
+            [outer_r + extension, z0],
+            [root_r0, z1],
+            [root_r1, z2],
+            [outer_r + extension, z3],
+        ];
+        groove_tools.push(kernel.revolve(&cutter_profile, 360.0, center, Axis::Z)?);
+    }
+    let cutter_refs = groove_tools.iter().collect::<Vec<_>>();
+    let groove_union = kernel.fuse(&cutter_refs)?;
+    let cutter_analysis = groove_union.analyze()?;
+    let cut_body = kernel.cut(&blank, &[&groove_union])?;
+    let cut_analysis = cut_body.analyze()?;
+
+    let angles = (0..layout.count)
+        .map(|index| 360.0 * index as f64 / layout.count as f64)
+        .collect::<Vec<_>>();
+    let mut result = cut_body;
+    let mut fuse_stages = Vec::with_capacity(layout.count as usize);
+    for angle in &angles {
+        let bar = kernel.make_box(
+            [layout.radial_length, layout.width, layout.thickness],
+            [
+                center[0] + layout.radial_midpoint,
+                center[1],
+                center[2] + layout.z_start + layout.thickness / 2.0,
+            ],
+        )?;
+        let matrix = rotation_about_z(center, *angle)?;
+        let rotated = kernel.transform(&bar, matrix)?;
+        result = kernel.fuse(&[&result, &rotated])?;
+        let stage = result.analyze()?;
+        fuse_stages.push(serde_json::json!({
+            "angle_deg":angle,
+            "valid":stage.valid == 1,
+            "solid_count":stage.solid_count,
+            "closed_solid_count":stage.closed_solid_count
+        }));
+    }
+    let analysis = result.analyze()?;
+    if analysis.valid != 1 || analysis.solid_count != 1 || analysis.closed_solid_count != 1 {
+        return Err(format!(
+            "V 带轮槽根并集及 {} 根旧布局辐条未形成单一有效闭合实体；母体 valid={}, solids={}, closed={}；刀具并集 valid={}, solids={}, closed={}；切槽后 valid={}, solids={}, closed={}；最终 valid={}, solids={}, closed={}，逐根融合={fuse_stages:?}",
+            layout.count,
+            blank_analysis.valid, blank_analysis.solid_count, blank_analysis.closed_solid_count,
+            cutter_analysis.valid, cutter_analysis.solid_count, cutter_analysis.closed_solid_count,
+            cut_analysis.valid, cut_analysis.solid_count, cut_analysis.closed_solid_count,
+            analysis.valid, analysis.solid_count, analysis.closed_solid_count
+        ));
+    }
+
+    let (root_width, effective_pitch, overlap) = groove_root_overlap(parameters)?;
+    let root_warning = if overlap > 1e-8 {
+        "旧 V 带轮的相邻槽根区间重叠；本地闭合实体以槽刀具体积并集处理重叠，不等同于旧逐边网格拼接。".to_string()
+    } else {
+        "该槽数没有相邻槽根重叠；本地几何按旧轴向布局构建，不等同于旧逐边网格拼接。".to_string()
+    };
+    let spoke_warning = format!(
+        "轮缘内环形辐板和旧布局的 {} 根箱体辐条轴向位置按旧配方保留；此项为受限几何映射，不宣称原始网格逐面 parity。",
+        layout.count
+    );
+    Ok((
+        result,
+        serde_json::json!({
+            "status":"approximate",
+            "geometry_support":"restricted_legacy_geometry_mapping",
+            "legacy_raw_parity":false,
+            "builder":"legacy_axial_blank_fused_v_groove_cutters_and_rotated_boxes",
+            "axis":"Z",
+            "center_mm":center,
+            "profile_points":profile.len(),
+            "groove_root_width_mm":root_width,
+            "groove_effective_pitch_mm":effective_pitch,
+            "hub_diameter_mm":profile[1][0] * 2.0,
+            "hub_length_mm":profile[1][1].abs() * 2.0,
+            "rim_inner_diameter_mm":profile[3][0] * 2.0,
+            "web_thickness_mm":layout.thickness,
+            "spokes":{
+                "count":layout.count,
+                "box_size_mm":[layout.radial_length,layout.width,layout.thickness],
+                "radial_start_mm":layout.radial_midpoint-layout.radial_length/2.0,
+                "radial_end_mm":layout.radial_midpoint+layout.radial_length/2.0,
+                "z_start_mm":layout.z_start,
+                "z_end_mm":layout.z_start+layout.thickness,
+                "angles_deg":angles
+            },
+            "groove_root_overlap_mm":overlap,
+            "legacy_profile_self_intersecting":overlap > 1e-8,
+            "solid_count":analysis.solid_count,
+            "closed_solid_count":analysis.closed_solid_count,
+            "valid":analysis.valid == 1,
+            "brep_available":true,
+            "warnings":[root_warning, spoke_warning]
+        }),
+    ))
+}
+
+fn rotation_about_z(center: [f64; 3], angle_degrees: f64) -> Result<[f64; 16], String> {
+    if !angle_degrees.is_finite() || center.iter().any(|value| !value.is_finite()) {
+        return Err("V 带轮辐条旋转参数必须为有限数值。".into());
+    }
+    let (sin, cos) = angle_degrees.to_radians().sin_cos();
+    let tx = center[0] - cos * center[0] + sin * center[1];
+    let ty = center[1] - sin * center[0] - cos * center[1];
+    Ok([
+        cos, -sin, 0.0, tx, sin, cos, 0.0, ty, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0,
+    ])
 }
 
 #[cfg(test)]
@@ -702,13 +1052,13 @@ mod tests {
         let profile = standard_profile(&plan).unwrap();
         // These root endpoints are taken from the legacy Python std_pulley.profile
         // for the same input. Their midpoints are the effective groove centers
-        // after its 0.2 mm end-margin clamp (e=14.7998569 mm).
+        // after its 0.2 mm end-margin clamp (effective pitch e=14.8 mm).
         let root_centers = [
             (profile[7][1] + profile[8][1]) * 0.5,
             (profile[11][1] + profile[12][1]) * 0.5,
             (profile[15][1] + profile[16][1]) * 0.5,
         ];
-        let expected_centers = [-14.799_856_928_690_346, 0.0, 14.799_856_928_690_346];
+        let expected_centers = [-14.8, 0.0, 14.8];
         for (actual, expected) in root_centers.into_iter().zip(expected_centers) {
             assert!((actual - expected).abs() < 1e-10);
         }
@@ -744,7 +1094,7 @@ mod tests {
     }
 
     #[test]
-    fn rejects_width_bore_and_spoked_variant_instead_of_changing_requested_geometry() {
+    fn rejects_width_and_bore_instead_of_changing_requested_geometry() {
         let mut p = sample();
         p["height"] = json!(40.);
         assert!(standard_profile(&p).unwrap_err().contains("最小轮宽"));
@@ -756,7 +1106,77 @@ mod tests {
         p["groove_type"] = json!("C");
         p["bore_d"] = json!(8.);
         p["height"] = json!(180.);
-        assert!(standard_profile(&p).unwrap_err().contains("辐条"));
+        assert!(spokes_required(&p).unwrap());
+        assert!(standard_profile(&p).is_ok());
+    }
+
+    #[test]
+    fn c300_spoked_layout_preserves_legacy_profile_and_positions() {
+        let parameters = serde_json::json!({
+            "pitch_d":300.0,"grooves":3,"height":180.0,"groove_type":"C",
+            "outer_d":309.6,"bore_d":20.0,"center":[0.0,0.0,0.0]
+        });
+        let (profile, layout) = standard_profile_and_spokes(&parameters).unwrap();
+        let layout = layout.expect("C300 legacy recipe requires five spokes");
+        assert_eq!(profile.len(), 24);
+        assert_eq!(layout.count, 5);
+        assert!((layout.radial_length - 135.3).abs() < 1e-10);
+        assert!((layout.width - 37.884).abs() < 1e-10);
+        assert!((layout.thickness - 15.3).abs() < 1e-10);
+        assert!((layout.radial_midpoint - 87.15).abs() < 1e-10);
+        assert!((layout.z_start - 67.05).abs() < 1e-10);
+        assert!((profile[2][0] - 19.5).abs() < 1e-10);
+        assert!((profile[2][1] + 10.35).abs() < 1e-10);
+        assert!((profile[3][0] - 130.925).abs() < 1e-10);
+        assert!((profile[3][1] + 10.35).abs() < 1e-10);
+        let root_width = 19.0 + 2.0 * 14.3 * (angle(300.0).to_radians() / 2.0).tan();
+        assert!((root_width - 28.847769740084427).abs() < 1e-10);
+        assert!((root_width - 25.5 - 3.347769740084427).abs() < 1e-10);
+    }
+
+    #[test]
+    fn c300_single_groove_reports_no_neighbor_root_overlap() {
+        let parameters = serde_json::json!({
+            "pitch_d":300.0,"grooves":1,"height":180.0,"groove_type":"C",
+            "outer_d":309.6,"bore_d":20.0,"center":[0.0,0.0,0.0]
+        });
+        let details = legacy_mesh_geometry_details(&parameters).unwrap();
+        assert_eq!(details["profile_points"], 16);
+        assert_eq!(details["groove_root_overlap_mm"], 0.0);
+        assert_eq!(details["legacy_profile_self_intersecting"], false);
+        assert_eq!(details["spokes"]["count"], 5);
+    }
+
+    #[test]
+    fn legacy_width_overlap_mesh_gate_rejects_non_width_or_non_single_feature_plans() {
+        let output = crate::native_quick_parser::parse(
+            "V带轮 基准直径100 槽数3 槽型A 内孔25 宽度30",
+        );
+        let plan = output["plan"].clone();
+        assert_eq!(output["status"], "ready");
+        assert!(is_mesh_only_legacy_quick_plan(&plan));
+
+        let mut extra_feature = plan.clone();
+        extra_feature["features"]
+            .as_array_mut()
+            .unwrap()
+            .push(serde_json::json!({
+                "id":"extra","kind":"box","operation":"add",
+                "parameters":{"width":1.0,"depth":1.0,"height":1.0}
+            }));
+        assert!(!is_mesh_only_legacy_quick_plan(&extra_feature));
+
+        let mut invalid_axis = plan.clone();
+        invalid_axis["features"][0]["parameters"]["axis"] = serde_json::json!("X");
+        assert!(!is_mesh_only_legacy_quick_plan(&invalid_axis));
+
+        let mut invalid_bore = plan.clone();
+        invalid_bore["features"][0]["parameters"]["bore_d"] = serde_json::json!(200.0);
+        assert!(!is_mesh_only_legacy_quick_plan(&invalid_bore));
+
+        let mut no_neighbor_overlap = plan;
+        no_neighbor_overlap["features"][0]["parameters"]["grooves"] = serde_json::json!(1);
+        assert!(!is_mesh_only_legacy_quick_plan(&no_neighbor_overlap));
     }
     #[test]
     fn rejects_unknown_type_and_mismatched_overrides() {

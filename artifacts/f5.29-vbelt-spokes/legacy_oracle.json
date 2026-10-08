@@ -1,0 +1,120 @@
+{
+  "input": "V带轮 基准直径300 槽数3 槽型C 内孔20 宽度180",
+  "parser": {
+    "ok": true,
+    "summary": "识别到 1 条建模指令",
+    "warnings": [],
+    "assumed": [],
+    "questions": []
+  },
+  "document": {
+    "format": "ai-modeler",
+    "version": 1,
+    "name": "Part1",
+    "source_prompt": "V带轮 基准直径300 槽数3 槽型C 内孔20 宽度180",
+    "features": [
+      {
+        "kind": "vbelt_pulley",
+        "params": {
+          "pitch_d": 300.0,
+          "grooves": 3,
+          "height": 180.0,
+          "groove_type": "C",
+          "outer_d": 309.6,
+          "bore_d": 20.0,
+          "center": [
+            0,
+            0,
+            0
+          ],
+          "explain": [
+            [
+              "“C 型”",
+              "C 型轮槽 3 条",
+              "GB/T 10412-2002（基准宽度制）/ GB/T 10413-2002（有效宽度制）"
+            ],
+            [
+              "“槽数 3”",
+              "轮缘上开 3 条 V 形槽，基准线间距 e=25.5 mm",
+              "槽间距 e 取自 GB/T 10412—2002 轮槽截面尺寸表"
+            ],
+            [
+              "基准直径 ⌀300",
+              "基准线所在圆柱面；外径 da = dd + 2·ha = ⌀309.6",
+              "da = dd + 2·ha（ha 为槽顶高，标准表列值）"
+            ],
+            [
+              "槽剖面",
+              "槽顶宽 15.69、槽底宽 28.85、全槽深 19.1（ha=4.8 + hf=14.3）",
+              "槽角 φ=38° 由基准直径分档决定（32/34/36/38°）"
+            ],
+            [
+              "轮缘宽度 180",
+              "轮缘最小宽度 = (n-1)·e + 2f = 79.85",
+              "f 为槽顶半宽，保证槽不开口在端面上"
+            ],
+            [
+              "内孔 ⌀20",
+              "中心通孔",
+              "由输入给定；未给则按 dd 的 0.22 倍取"
+            ],
+            [
+              "实心盘",
+              "整轮做成实心盘体（直径小、孔径大，不需要辐板）",
+              "手册带轮结构型式：小直径带轮用实心结构"
+            ],
+            [
+              "辐条",
+              "5 根辐条（大直径带轮减轻重量）",
+              "手册带轮结构型式：大直径用辐条式"
+            ]
+          ],
+          "std_warnings": []
+        },
+        "op": "add",
+        "name": "C型V带轮 3槽",
+        "note": "",
+        "feature_id": null,
+        "relations": [],
+        "enabled": true,
+        "provenance": {
+          "pitch_d": "explicit",
+          "grooves": "explicit",
+          "height": "explicit",
+          "groove_type": "explicit",
+          "outer_d": "derived",
+          "bore_d": "explicit"
+        }
+      }
+    ]
+  },
+  "document_build_stats": {
+    "faces": 1576,
+    "triangles": 3132,
+    "bbox": [
+      -154.8,
+      -154.8,
+      -90.0,
+      154.8,
+      154.8,
+      90.0
+    ],
+    "size": [
+      309.6,
+      309.6,
+      180.0
+    ],
+    "volume": 19883124.542014126,
+    "area": 676013.9664323987
+  },
+  "raw_mesh": {
+    "path": "artifacts/f5.29-vbelt-spokes/legacy_document_build_raw.stl",
+    "size_bytes": 156684,
+    "sha256": "0dfb2636da37eb4c8cc0dc6c1704a7c4974efede610ab6f2678359fd4d10f574",
+    "face_count": 1576
+  },
+  "source": {
+    "git_head": "6ca3a7196687304c2eea96059fbb122ba236e61d",
+    "python": "3.11.9"
+  }
+}

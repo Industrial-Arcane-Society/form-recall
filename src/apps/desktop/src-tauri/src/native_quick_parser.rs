@@ -1089,7 +1089,7 @@ fn result(
             "legacy_typical_defaults":"restored only for migrated Quick constructors/templates, centered solid shafts (Ø30 mm when diameter is absent), straight gears, timing pulleys, V-belt pulleys, socket-head screw catalog recipes, rectangular slots, nut thickness 8 mm when absent, flat-washer thickness, spring wire/turn values, brake-disc thickness/bore values, brake-drum bore values, flywheel center-bore/PCD-hole values, flat-annular-part bore/thickness values, disc-cam base diameter/thickness, spline-shaft minor diameter/tooth count, crankshaft main/pin journal diameters and stroke/throw count, camshaft lobe count/journal diameter, piston pin diameter/ring groove count, worm pitch diameter, triangular-rotor R=60 mm and center bore ⌀24 mm when omitted, valve stem diameter d=8 mm when omitted, base-plate thickness, connection-block height and default center-hole values, connection-piece thickness, locator-pin fallback diameters Ø22/Ø10 and 60 mm total length, and 22 exact KMS-M01 measured codes; defaults and raw-dimension mappings are reported as warnings",
             "loft_geometry":"blade and blisk lofts are locally approximate faceted B-Reps",
             "timing_pulley_geometry":"native timing pulley teeth are approximate trapezoidal prisms fused to an analytic annular blank",
-            "vbelt_pulley_geometry":"standard V-groove pulley is an approximate axisymmetric revolve; legacy spoke variants and CATIA-native groove features are not included",
+            "vbelt_pulley_geometry":"standard V-groove pulley is a local OCCT approximation; large legacy spoke layouts preserve annular webs and rotated box positions through a restricted groove-cutter mapping, while CATIA-native groove/spoke export is not included",
             "helix_geometry":"spring helices are locally approximate faceted B-Reps and are not native CATIA features",
             "socket_head_bolt_geometry":"measured catalog dimensions and washers are preserved; native Rust adds visible faceted threads where the legacy Python Quick recipe reconstructed a smooth shank",
             "hex_bolt_geometry":"legacy ratio-derived across-flats/head-height and standard coarse pitch are preserved; local Rust fuses an analytic hex head with a visible faceted threaded shank; CATIA exports the hex head and smooth shank only",
@@ -9730,19 +9730,6 @@ fn parse_legacy_vbelt_pulley(raw: &str, text: &str) -> Option<Value> {
         "center":[0,0,0]
     });
     if let Err(error) = crate::native_vbelt_pulley::preflight(&parameters) {
-        if error.contains("辐条") {
-            return Some(result(
-                "unsupported",
-                raw,
-                None,
-                vec![],
-                vec![],
-                vec![issue(
-                    "legacy_vbelt_pulley_spoked_variant_unsupported",
-                    format!("该尺寸的旧配方需要辐条结构，Rust 原生仅支持标准无辐条回转体：{error}"),
-                )],
-            ));
-        }
         return Some(parse_result_with_issue(
             "needs_clarification",
             raw,
@@ -9755,6 +9742,12 @@ fn parse_legacy_vbelt_pulley(raw: &str, text: &str) -> Option<Value> {
         "native_vbelt_pulley_geometry_approximate",
         "本地几何按 GB/T fallback 轮槽剖面回转；工程标准细节、知识库数据和 CATIA 原生槽特征不在本项覆盖范围。",
     )];
+    if crate::native_vbelt_pulley::spokes_required(&parameters).unwrap_or(false) {
+        warnings.push(issue(
+            "legacy_vbelt_pulley_spoked_geometry_mapping",
+            "该尺寸沿用旧配方的环形辐板与独立箱体辐条。若槽根重叠导致旧剖面自交，Quick 保留旧三角网格并标记 mesh_only，不声明闭合实体或 CATIA 支持。",
+        ));
+    }
     if !pitch_d_was_explicit {
         warnings.push(issue(
             "legacy_vbelt_pulley_default_pitch_d",
@@ -15611,19 +15604,43 @@ mod tests {
                 let output = parse(input);
                 assert_eq!(output["status"], "ready", "{input}: {output}");
                 let plan = &output["plan"];
-                assert_eq!(
-                    crate::cad_plan_validation::validate_plan(plan)["state"],
-                    "valid",
-                    "{input}: {plan}"
-                );
+                let validation = crate::cad_plan_validation::validate_plan(plan);
+                let mesh_only_width_overlap = case["quick_mesh_only_width_overlap"] == true;
+                if mesh_only_width_overlap {
+                    assert_eq!(validation["valid"], false, "{input}: {validation}");
+                    let errors = validation["errors"].as_array().unwrap();
+                    assert_eq!(errors.len(), 1, "{input}: {validation}");
+                    assert_eq!(
+                        errors[0]["code"],
+                        "vbelt_width_below_profile_minimum",
+                        "{input}: {validation}"
+                    );
+                } else {
+                    assert_eq!(validation["state"], "valid", "{input}: {plan}");
+                }
                 let features = plan["features"].as_array().unwrap();
                 assert_eq!(features.len(), 1, "{input}: {features:?}");
                 let feature = &features[0];
                 assert_eq!(feature["kind"], "vbelt_pulley", "{input}");
                 assert_eq!(feature["operation"], "add", "{input}");
                 assert_json_match(&feature["parameters"], &case["expected_parameters"], input);
-                crate::native_vbelt_pulley::preflight(&feature["parameters"])
-                    .unwrap_or_else(|error| panic!("{input}: native preflight failed: {error}"));
+                if mesh_only_width_overlap {
+                    assert!(crate::native_vbelt_pulley::is_mesh_only_legacy_quick_plan(plan));
+                    crate::native_vbelt_pulley::preflight(&feature["parameters"])
+                        .unwrap_or_else(|error| panic!("{input}: non-width native preflight failed: {error}"));
+                    let details =
+                        crate::native_vbelt_pulley::legacy_mesh_geometry_details(
+                            &feature["parameters"],
+                        )
+                        .unwrap();
+                    assert!(
+                        details["groove_root_overlap_mm"].as_f64().unwrap() > 1e-8,
+                        "{input}: expected actual root overlap: {details}"
+                    );
+                } else {
+                    crate::native_vbelt_pulley::preflight(&feature["parameters"])
+                        .unwrap_or_else(|error| panic!("{input}: native preflight failed: {error}"));
+                }
                 if let Some(sources) = case["sources"].as_object() {
                     for (parameter, source_type) in sources {
                         assert_eq!(
@@ -15692,6 +15709,40 @@ mod tests {
                 "{input}: {output}"
             );
         }
+    }
+
+    #[test]
+    fn c300_spoked_vbelt_legacy_input_is_ready_with_locked_provenance() {
+        let input = "V带轮 基准直径300 槽数3 槽型C 内孔20 宽度180";
+        let output = parse(input);
+        assert_eq!(output["status"], "ready", "{output}");
+        let plan = &output["plan"];
+        assert_eq!(
+            crate::cad_plan_validation::validate_plan(plan)["state"],
+            "valid",
+            "{plan}"
+        );
+        let feature = &plan["features"][0];
+        assert_eq!(feature["kind"], "vbelt_pulley");
+        assert_eq!(feature["parameters"]["pitch_d"], 300.0);
+        assert_eq!(feature["parameters"]["grooves"], 3);
+        assert_eq!(feature["parameters"]["groove_type"], "C");
+        assert_eq!(feature["parameters"]["bore_d"], 20.0);
+        assert_eq!(feature["parameters"]["height"], 180.0);
+        for parameter in ["pitch_d", "grooves", "groove_type", "bore_d", "height"] {
+            assert_eq!(feature["sources"][parameter]["type"], "user", "{parameter}");
+            assert_eq!(
+                feature["sources"][parameter]["evidence"], input,
+                "{parameter}"
+            );
+        }
+        assert_eq!(feature["parameters"]["outer_d"], 309.6);
+        assert_eq!(feature["sources"]["outer_d"]["type"], "derived");
+        assert!(output["warnings"]
+            .to_string()
+            .contains("legacy_vbelt_pulley_spoked_geometry_mapping"));
+        crate::native_vbelt_pulley::preflight(&feature["parameters"])
+            .expect("the fixed legacy C300 profile passes native preflight");
     }
 
     #[test]

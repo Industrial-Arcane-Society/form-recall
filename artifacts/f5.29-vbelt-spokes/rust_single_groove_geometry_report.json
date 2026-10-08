@@ -1,0 +1,130 @@
+{
+  "bounds_mm": [
+    -154.8,
+    -154.8,
+    -90.0,
+    154.8,
+    154.8,
+    90.0
+  ],
+  "catia_executed": false,
+  "closed_solid_count": 1,
+  "dimensions_mm": [
+    309.6,
+    309.6,
+    180.0
+  ],
+  "execution_engine": "rust_c_abi_occt",
+  "feature_results": [
+    {
+      "feature_id": "quick-0001",
+      "geometry_support": "approximate",
+      "kind": "vbelt_pulley",
+      "operation": "add",
+      "state": "built",
+      "support_details": {
+        "axis": "Z",
+        "brep_available": true,
+        "builder": "legacy_axial_blank_fused_v_groove_cutters_and_rotated_boxes",
+        "center_mm": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "closed_solid_count": 1,
+        "geometry_support": "restricted_legacy_geometry_mapping",
+        "groove_effective_pitch_mm": 25.5,
+        "groove_root_overlap_mm": 0.0,
+        "groove_root_width_mm": 28.847769740084427,
+        "hub_diameter_mm": 39.0,
+        "hub_length_mm": 36.0,
+        "legacy_profile_self_intersecting": false,
+        "legacy_raw_parity": false,
+        "profile_points": 16,
+        "rim_inner_diameter_mm": 261.85,
+        "solid_count": 1,
+        "spokes": {
+          "angles_deg": [
+            0.0,
+            72.0,
+            144.0,
+            216.0,
+            288.0
+          ],
+          "box_size_mm": [
+            135.3,
+            37.88400000000001,
+            15.299999999999999
+          ],
+          "count": 5,
+          "radial_end_mm": 154.8,
+          "radial_start_mm": 19.5,
+          "z_end_mm": 82.35,
+          "z_start_mm": 67.05
+        },
+        "status": "approximate",
+        "valid": true,
+        "warnings": [
+          "该槽数没有相邻槽根重叠；本地几何按旧轴向布局构建，不等同于旧逐边网格拼接。",
+          "轮缘内环形辐板和旧布局的 5 根箱体辐条轴向位置按旧配方保留；此项为受限几何映射，不宣称原始网格逐面 parity。"
+        ],
+        "web_thickness_mm": 15.299999999999999
+      },
+      "volume_after_mm3": 4908045.712445868,
+      "volume_before_mm3": 0.0,
+      "volume_delta_mm3": 4908045.712445868,
+      "warning": null
+    }
+  ],
+  "geometry_fingerprint": "2b615af8aaf58773ea8d916ff8b755dc1fdcd9b109caefa9fb4086ec78062fa5",
+  "hole_instances": [],
+  "hole_measurement_complete": true,
+  "hole_measurements_verified": false,
+  "image_acceptance": "not_performed",
+  "occt_version": "7.9.3",
+  "requested_holes": [],
+  "sampled_hole_evidence": [],
+  "solid_count": 1,
+  "state": "passed",
+  "triangle_count": 4404,
+  "valid": true,
+  "validation": {
+    "confirmations": [],
+    "errors": [],
+    "geometry_support": [
+      {
+        "backend": "occt_brep",
+        "feature_id": "quick-0001",
+        "kind": "vbelt_pulley",
+        "reason": "标准槽轴向截面原生 OCCT 回转；槽根间距为保证剖面简单可能近似调整，输入轮宽不足时明确拒绝",
+        "status": "approximate"
+      }
+    ],
+    "schema_version": "1.0",
+    "state": "valid",
+    "support": [
+      {
+        "feature_id": "quick-0001",
+        "kind": "vbelt_pulley",
+        "reason": "CATIA 生成光轮盘体；V 形回转槽需要在 CATIA 中补建。",
+        "status": "approximate"
+      }
+    ],
+    "valid": true,
+    "warnings": [
+      {
+        "code": "LOCAL_BREP_APPROXIMATION",
+        "feature_id": "quick-0001",
+        "kind": "vbelt_pulley",
+        "message": "标准槽轴向截面原生 OCCT 回转；槽根间距为保证剖面简单可能近似调整，输入轮宽不足时明确拒绝"
+      },
+      {
+        "code": "CATIA_APPROXIMATION",
+        "feature_id": "quick-0001",
+        "kind": "vbelt_pulley",
+        "message": "CATIA 生成光轮盘体；V 形回转槽需要在 CATIA 中补建。"
+      }
+    ]
+  },
+  "volume_mm3": 4908045.712445868
+}

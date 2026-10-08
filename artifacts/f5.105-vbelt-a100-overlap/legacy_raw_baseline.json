@@ -1,0 +1,365 @@
+{
+  "evidence_kind": "old_python_quick_vbelt_a100_overlap_baseline",
+  "oracle_scope": "legacy Parser.parse -> Document.build -> binary STL; separate Document.build_brep attempt",
+  "prompt": "V带轮 基准直径100 槽数3 槽型A 内孔25 宽度30",
+  "prompt_sha256_utf8": "b221f141dc9cabfebb4cddb7acc9978195a9faf5798a791dfbf91fd3519dc847",
+  "parser_result": {
+    "class": "ParseResult",
+    "ok": true,
+    "recognized": 1,
+    "message": "",
+    "steps": [
+      "零件参数跨段合并: V带轮基准直径100槽数3槽型A ｜ 内孔25宽度30",
+      "零件库识别: 多槽带轮 (来自机械设计手册)",
+      "—— 提示词 → 生成特征 ——",
+      "  “A 型”  →  A 型轮槽 3 条（依据：GB/T 10412-2002（基准宽度制）/ GB/T 10413-2002（有效宽度制））",
+      "  “槽数 3”  →  轮缘上开 3 条 V 形槽，基准线间距 e=15 mm（依据：槽间距 e 取自 GB/T 10412—2002 轮槽截面尺寸表）",
+      "  基准直径 ⌀100  →  基准线所在圆柱面；外径 da = dd + 2·ha = ⌀105.5（依据：da = dd + 2·ha（ha 为槽顶高，标准表列值））",
+      "  槽剖面  →  槽顶宽 9.32、槽底宽 16.32、全槽深 11.45（ha=2.75 + hf=8.7）（依据：槽角 φ=34° 由基准直径分档决定（32/34/36/38°））",
+      "  轮缘宽度 46.32  →  轮缘最小宽度 = (n-1)·e + 2f = 46.32（依据：f 为槽顶半宽，保证槽不开口在端面上）",
+      "  内孔 ⌀25  →  中心通孔（依据：由输入给定；未给则按 dd 的 0.22 倍取）",
+      "  轮毂/辐板  →  轮毂 ⌀48.75 × 45 长、辐板厚 9，轮缘内径 ⌀76.6（依据：手册带轮结构公式：d1=(1.8~2)d、L=(1.5~2)d、S≈(0.6~1)e、轮缘内径 d2=da−2(ha+hf+δ)）",
+      "—— 对照表结束 ——"
+    ],
+    "warnings": [
+      "3 个 A 型槽的标准槽间距 e=15 mm，轮缘宽度至少需 46.3197 mm；已按标准取 46.3197 mm（原输入的 30 mm 不足，强行压缩会使相邻槽干涉）"
+    ],
+    "questions": [],
+    "assumed": []
+  },
+  "document_feature": {
+    "kind": "vbelt_pulley",
+    "params": {
+      "pitch_d": 100.0,
+      "grooves": 3,
+      "height": 46.31971385738069,
+      "groove_type": "A",
+      "outer_d": 105.5,
+      "bore_d": 25.0,
+      "center": [
+        0,
+        0,
+        0
+      ],
+      "explain": [
+        [
+          "“A 型”",
+          "A 型轮槽 3 条",
+          "GB/T 10412-2002（基准宽度制）/ GB/T 10413-2002（有效宽度制）"
+        ],
+        [
+          "“槽数 3”",
+          "轮缘上开 3 条 V 形槽，基准线间距 e=15 mm",
+          "槽间距 e 取自 GB/T 10412—2002 轮槽截面尺寸表"
+        ],
+        [
+          "基准直径 ⌀100",
+          "基准线所在圆柱面；外径 da = dd + 2·ha = ⌀105.5",
+          "da = dd + 2·ha（ha 为槽顶高，标准表列值）"
+        ],
+        [
+          "槽剖面",
+          "槽顶宽 9.32、槽底宽 16.32、全槽深 11.45（ha=2.75 + hf=8.7）",
+          "槽角 φ=34° 由基准直径分档决定（32/34/36/38°）"
+        ],
+        [
+          "轮缘宽度 46.32",
+          "轮缘最小宽度 = (n-1)·e + 2f = 46.32",
+          "f 为槽顶半宽，保证槽不开口在端面上"
+        ],
+        [
+          "内孔 ⌀25",
+          "中心通孔",
+          "由输入给定；未给则按 dd 的 0.22 倍取"
+        ],
+        [
+          "轮毂/辐板",
+          "轮毂 ⌀48.75 × 45 长、辐板厚 9，轮缘内径 ⌀76.6",
+          "手册带轮结构公式：d1=(1.8~2)d、L=(1.5~2)d、S≈(0.6~1)e、轮缘内径 d2=da−2(ha+hf+δ)"
+        ]
+      ],
+      "std_warnings": [
+        "3 个 A 型槽的标准槽间距 e=15 mm，轮缘宽度至少需 46.3197 mm；已按标准取 46.3197 mm（原输入的 30 mm 不足，强行压缩会使相邻槽干涉）"
+      ]
+    },
+    "op": "add",
+    "name": "A型V带轮 3槽",
+    "note": "",
+    "feature_id": null,
+    "relations": [],
+    "enabled": true,
+    "provenance": {
+      "pitch_d": "explicit",
+      "grooves": "explicit",
+      "height": "derived",
+      "groove_type": "explicit",
+      "outer_d": "standard",
+      "bore_d": "explicit"
+    }
+  },
+  "standard_profile_reconstructed_from_actual_feature_parameters": {
+    "spec": {
+      "gtype": "A",
+      "narrow": "SPA",
+      "grooves": 3,
+      "pitch_d": 100.0,
+      "outer_d": 105.5,
+      "base_width": 11.0,
+      "ha": 2.75,
+      "hf": 8.7,
+      "depth": 11.45,
+      "pitch_e": 15.0,
+      "angle": 34.0,
+      "tip_w": 9.318481251977367,
+      "root_w": 16.31971385738069,
+      "width": 46.31971385738069,
+      "rim_w_min": 46.31971385738069,
+      "bore_d": 25.0,
+      "hub_d": 48.75,
+      "hub_len": 45.0,
+      "web_s": 9.0,
+      "rim_id": 76.6,
+      "web": true,
+      "spokes": 0,
+      "web_z": 9.659856928690346,
+      "standard": "GB/T 10412-2002（基准宽度制）/ GB/T 10413-2002（有效宽度制）",
+      "warnings": []
+    },
+    "profile_points_radius_axis_mm": [
+      [
+        12.5,
+        -22.5
+      ],
+      [
+        24.375,
+        -22.5
+      ],
+      [
+        24.375,
+        -18.0
+      ],
+      [
+        38.3,
+        -18.0
+      ],
+      [
+        38.3,
+        -23.159856928690346
+      ],
+      [
+        52.75,
+        -23.159856928690346
+      ],
+      [
+        52.75,
+        -19.459240625988684
+      ],
+      [
+        41.3,
+        -22.959856928690346
+      ],
+      [
+        41.3,
+        -6.640143071309655
+      ],
+      [
+        52.75,
+        -10.140759374011317
+      ],
+      [
+        52.75,
+        -4.659240625988684
+      ],
+      [
+        41.3,
+        -8.159856928690346
+      ],
+      [
+        41.3,
+        8.159856928690346
+      ],
+      [
+        52.75,
+        4.659240625988684
+      ],
+      [
+        52.75,
+        10.140759374011317
+      ],
+      [
+        41.3,
+        6.640143071309655
+      ],
+      [
+        41.3,
+        22.959856928690346
+      ],
+      [
+        52.75,
+        19.459240625988684
+      ],
+      [
+        52.75,
+        23.159856928690346
+      ],
+      [
+        38.3,
+        23.159856928690346
+      ],
+      [
+        38.3,
+        18.0
+      ],
+      [
+        24.375,
+        18.0
+      ],
+      [
+        24.375,
+        22.5
+      ],
+      [
+        12.5,
+        22.5
+      ]
+    ],
+    "root_radius_mm": 41.3,
+    "actual_slot_root_points_and_centers": [
+      {
+        "profile_point_indices": [
+          7,
+          8
+        ],
+        "root_interval_mm": [
+          -22.959856928690346,
+          -6.640143071309655
+        ],
+        "center_mm": -14.8
+      },
+      {
+        "profile_point_indices": [
+          11,
+          12
+        ],
+        "root_interval_mm": [
+          -8.159856928690346,
+          8.159856928690346
+        ],
+        "center_mm": 0.0
+      },
+      {
+        "profile_point_indices": [
+          15,
+          16
+        ],
+        "root_interval_mm": [
+          6.640143071309655,
+          22.959856928690346
+        ],
+        "center_mm": 14.8
+      }
+    ],
+    "minimum_adjacent_root_center_pitch_mm": 14.8,
+    "root_interval_overlap_mm": 1.5197138573806903,
+    "self_intersection_pairs": [
+      {
+        "segment_indices": [
+          7,
+          11
+        ],
+        "kind": "collinear_overlap",
+        "overlap_length_mm": 1.5197138573806903
+      },
+      {
+        "segment_indices": [
+          8,
+          10
+        ],
+        "kind": "proper_crossing",
+        "point_mm": [
+          43.785380024880126,
+          -7.400000000000001
+        ]
+      },
+      {
+        "segment_indices": [
+          11,
+          15
+        ],
+        "kind": "collinear_overlap",
+        "overlap_length_mm": 1.5197138573806903
+      },
+      {
+        "segment_indices": [
+          12,
+          14
+        ],
+        "kind": "proper_crossing",
+        "point_mm": [
+          43.785380024880126,
+          7.400000000000001
+        ]
+      }
+    ],
+    "self_intersection_pair_count": 4,
+    "method": "Runtime std_pulley.profile(spec) called with the actual parsed Feature parameters, matching the legacy Document.build() vbelt_pulley branch; cyclic 2D segment pairs checked for proper crossings and collinear overlap while adjacent segments are excluded."
+  },
+  "document_build_stats": {
+    "faces": 1536,
+    "triangles": 3072,
+    "bbox": [
+      -52.75,
+      -52.75,
+      -23.159856928690346,
+      52.75,
+      52.75,
+      23.159856928690346
+    ],
+    "size": [
+      105.5,
+      105.5,
+      46.31971385738069
+    ],
+    "volume": 584036.1790703516,
+    "area": 63846.108698164004
+  },
+  "raw_mesh": {
+    "path": "legacy_document_build_raw.stl",
+    "format": "binary STL from legacy Document.build polygons",
+    "sha256": "647265494fa488adb771449472689d230027a88ac906a03711009287570826bb",
+    "bytes": 153684,
+    "topology": {
+      "weld_tolerance_mm": 1e-05,
+      "triangle_count": 3072,
+      "unique_welded_vertices": 1536,
+      "undirected_edge_count": 4608,
+      "boundary_edge_count": 0,
+      "nonmanifold_edge_count": 0,
+      "winding_conflict_edge_count": 1086,
+      "connected_triangle_components": 1,
+      "closed_by_welded_triangle_edge_incidence": true,
+      "method_limit": "Raw mesh edge-incidence diagnostic only; it does not test all triangle-triangle intersections or B-Rep validity."
+    },
+    "self_intersection_assessment": "The raw mesh is produced by revolving the self-intersecting axial profile edge-by-edge; profile crossings/overlaps are recorded above. No complete 3D triangle-triangle collision count is claimed.",
+    "volume_semantics": "Document.stats().volume is the legacy polygon-mesh signed-volume scalar, not a valid-solid volume."
+  },
+  "brep": {
+    "attempted": true,
+    "available": false,
+    "error": {
+      "type": "GeometryBuildError",
+      "message": "特征 0 (vbelt_pulley) 建模失败：输入轮宽 46.3197 mm 无法容纳 3 个标准 V 槽；无自交剖面的最小轮宽为 50.4591 mm。"
+    },
+    "report": null
+  },
+  "runtime": {
+    "python": "3.11.9",
+    "implementation": "CPython"
+  },
+  "limitations": [
+    "Parser, Document.build mesh, profile and B-Rep attempt are runtime-observed on the old Python path.",
+    "Raw mesh volume and B-Rep volume are separate metrics and must not be conflated.",
+    "Profile intersection counting is a 2D axial-profile segment test; it does not enumerate all 3D triangle intersections.",
+    "No Rust parser, CADPlan validator, Cargo, CATIA, or UI was run or validated."
+  ]
+}

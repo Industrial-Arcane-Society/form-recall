@@ -1,0 +1,260 @@
+{
+  "evidence_kind": "legacy_python_quick_vbelt_c300_single_groove_oracle",
+  "oracle_scope": "Parser.parse -> Document.build -> binary STL; separate Document.build_brep attempt",
+  "prompt": "V带轮 基准直径300 槽数1 槽型C 内孔20 宽度180",
+  "prompt_sha256_utf8": "bd1b2c58fb637559b9aaa56e017a60c6a11a2be7aee6c30c3e298d58f9eb4dee",
+  "parser_result": {
+    "ok": true,
+    "recognized": 1,
+    "message": "",
+    "steps": [
+      "零件参数跨段合并: V带轮基准直径300槽数1槽型C ｜ 内孔20宽度180",
+      "零件库识别: 多槽带轮 (来自机械设计手册)",
+      "—— 提示词 → 生成特征 ——",
+      "  “C 型”  →  C 型轮槽 1 条（依据：GB/T 10412-2002（基准宽度制）/ GB/T 10413-2002（有效宽度制））",
+      "  “槽数 1”  →  轮缘上开 1 条 V 形槽，基准线间距 e=25.5 mm（依据：槽间距 e 取自 GB/T 10412—2002 轮槽截面尺寸表）",
+      "  基准直径 ⌀300  →  基准线所在圆柱面；外径 da = dd + 2·ha = ⌀309.6（依据：da = dd + 2·ha（ha 为槽顶高，标准表列值））",
+      "  槽剖面  →  槽顶宽 15.69、槽底宽 28.85、全槽深 19.1（ha=4.8 + hf=14.3）（依据：槽角 φ=38° 由基准直径分档决定（32/34/36/38°））",
+      "  轮缘宽度 180  →  轮缘最小宽度 = (n-1)·e + 2f = 28.85（依据：f 为槽顶半宽，保证槽不开口在端面上）",
+      "  内孔 ⌀20  →  中心通孔（依据：由输入给定；未给则按 dd 的 0.22 倍取）",
+      "  实心盘  →  整轮做成实心盘体（直径小、孔径大，不需要辐板）（依据：手册带轮结构型式：小直径带轮用实心结构）",
+      "  辐条  →  5 根辐条（大直径带轮减轻重量）（依据：手册带轮结构型式：大直径用辐条式）",
+      "—— 对照表结束 ——"
+    ],
+    "warnings": [],
+    "questions": [],
+    "assumed": []
+  },
+  "document_feature": {
+    "kind": "vbelt_pulley",
+    "params": {
+      "pitch_d": 300.0,
+      "grooves": 1,
+      "height": 180.0,
+      "groove_type": "C",
+      "outer_d": 309.6,
+      "bore_d": 20.0,
+      "center": [
+        0,
+        0,
+        0
+      ],
+      "explain": [
+        [
+          "“C 型”",
+          "C 型轮槽 1 条",
+          "GB/T 10412-2002（基准宽度制）/ GB/T 10413-2002（有效宽度制）"
+        ],
+        [
+          "“槽数 1”",
+          "轮缘上开 1 条 V 形槽，基准线间距 e=25.5 mm",
+          "槽间距 e 取自 GB/T 10412—2002 轮槽截面尺寸表"
+        ],
+        [
+          "基准直径 ⌀300",
+          "基准线所在圆柱面；外径 da = dd + 2·ha = ⌀309.6",
+          "da = dd + 2·ha（ha 为槽顶高，标准表列值）"
+        ],
+        [
+          "槽剖面",
+          "槽顶宽 15.69、槽底宽 28.85、全槽深 19.1（ha=4.8 + hf=14.3）",
+          "槽角 φ=38° 由基准直径分档决定（32/34/36/38°）"
+        ],
+        [
+          "轮缘宽度 180",
+          "轮缘最小宽度 = (n-1)·e + 2f = 28.85",
+          "f 为槽顶半宽，保证槽不开口在端面上"
+        ],
+        [
+          "内孔 ⌀20",
+          "中心通孔",
+          "由输入给定；未给则按 dd 的 0.22 倍取"
+        ],
+        [
+          "实心盘",
+          "整轮做成实心盘体（直径小、孔径大，不需要辐板）",
+          "手册带轮结构型式：小直径带轮用实心结构"
+        ],
+        [
+          "辐条",
+          "5 根辐条（大直径带轮减轻重量）",
+          "手册带轮结构型式：大直径用辐条式"
+        ]
+      ],
+      "std_warnings": []
+    },
+    "op": "add",
+    "name": "C型V带轮 1槽",
+    "note": "",
+    "feature_id": null,
+    "relations": [],
+    "enabled": true,
+    "provenance": {
+      "pitch_d": "explicit",
+      "grooves": "explicit",
+      "height": "explicit",
+      "groove_type": "explicit",
+      "outer_d": "derived",
+      "bore_d": "explicit"
+    }
+  },
+  "standard_profile_from_actual_feature_parameters": {
+    "spec": {
+      "gtype": "C",
+      "narrow": "SPC",
+      "grooves": 1,
+      "pitch_d": 300.0,
+      "outer_d": 309.6,
+      "base_width": 19.0,
+      "ha": 4.8,
+      "hf": 14.3,
+      "depth": 19.1,
+      "pitch_e": 25.5,
+      "angle": 38.0,
+      "tip_w": 15.694454912419214,
+      "root_w": 28.847769740084427,
+      "width": 180.0,
+      "rim_w_min": 28.847769740084427,
+      "bore_d": 20.0,
+      "hub_d": 39.0,
+      "hub_len": 36.0,
+      "web_s": 15.299999999999999,
+      "rim_id": 261.85,
+      "web": false,
+      "spokes": 5,
+      "web_z": 67.05,
+      "standard": "GB/T 10412-2002（基准宽度制）/ GB/T 10413-2002（有效宽度制）",
+      "warnings": []
+    },
+    "profile_points_radius_axis_mm": [
+      [
+        10.0,
+        -18.0
+      ],
+      [
+        19.5,
+        -18.0
+      ],
+      [
+        19.5,
+        -10.350000000000001
+      ],
+      [
+        130.925,
+        -10.350000000000001
+      ],
+      [
+        130.925,
+        -90.0
+      ],
+      [
+        154.8,
+        -90.0
+      ],
+      [
+        154.8,
+        -7.847227456209607
+      ],
+      [
+        135.7,
+        -14.423884870042214
+      ],
+      [
+        135.7,
+        14.423884870042214
+      ],
+      [
+        154.8,
+        7.847227456209607
+      ],
+      [
+        154.8,
+        90.0
+      ],
+      [
+        130.925,
+        90.0
+      ],
+      [
+        130.925,
+        10.350000000000001
+      ],
+      [
+        19.5,
+        10.350000000000001
+      ],
+      [
+        19.5,
+        18.0
+      ],
+      [
+        10.0,
+        18.0
+      ]
+    ]
+  },
+  "document_build_stats": {
+    "faces": 1064,
+    "triangles": 2108,
+    "bbox": [
+      -154.8,
+      -154.8,
+      -90.0,
+      154.8,
+      154.8,
+      90.0
+    ],
+    "size": [
+      309.6,
+      309.6,
+      180.0
+    ],
+    "volume": 17815431.530065857,
+    "area": 583724.8715342532
+  },
+  "raw_mesh": {
+    "path": "legacy_document_build_raw_single_groove.stl",
+    "format": "binary STL from legacy Document.build polygons",
+    "triangle_count": 2108,
+    "face_count": 1064,
+    "bbox": [
+      -154.8,
+      -154.8,
+      -90.0,
+      154.8,
+      154.8,
+      90.0
+    ],
+    "size": [
+      309.6,
+      309.6,
+      180.0
+    ],
+    "legacy_mesh_volume_scalar_mm3": 17815431.530065857,
+    "volume_semantics": "Legacy Document.stats polygon mesh scalar; separate from B-Rep volume.",
+    "bytes": 105484,
+    "sha256": "5e2b86ed6fa986151fbcd32d95faead914d6655b0419047602194d0826156b12"
+  },
+  "brep": {
+    "attempted": true,
+    "available": false,
+    "written": false,
+    "error": {
+      "type": "GeometryBuildError",
+      "message": "特征 0 (vbelt_pulley) 建模失败：大直径辐条式 V 带轮尚未有原生 BREP 辐条并体实现。"
+    },
+    "report": null,
+    "path": null,
+    "bytes": null,
+    "sha256": null
+  },
+  "runtime": {
+    "python": "3.11.9",
+    "implementation": "CPython"
+  },
+  "limitations": [
+    "Old Parser/Document outputs are runtime-observed.",
+    "Raw mesh and B-Rep are distinct geometry paths; their volumes are reported separately.",
+    "No Rust Quick, CADPlan validator, Cargo, CATIA, or UI was run or validated."
+  ]
+}

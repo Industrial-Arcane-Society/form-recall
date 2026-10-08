@@ -126,6 +126,8 @@ fn build_mesh_only_legacy_vbelt(
         .get("parameters")
         .ok_or("mesh-only Quick V 带轮缺少参数。")?;
     let mesh = crate::native_vbelt_pulley::legacy_quick_mesh(parameters, 64)?;
+    let compatibility_details =
+        crate::native_vbelt_pulley::legacy_mesh_geometry_details(parameters)?;
     fs::create_dir_all(session_dir).map_err(|e| format!("无法创建 Quick 输出目录：{e}"))?;
     let stamp = SystemTime::now()
         .duration_since(UNIX_EPOCH)
@@ -147,13 +149,30 @@ fn build_mesh_only_legacy_vbelt(
     write_glb(&mesh, &glb)?;
     let dimensions = stl_stats.bounds.map(|axis| (axis[1] - axis[0]) as f64);
     let triangle_count = stl_stats.triangle_count as usize;
+    let builder = if compatibility_details["spokes"].is_null() {
+        "legacy_make_revolve_profile_edges_swept_64_segments"
+    } else {
+        "legacy_make_revolve_profile_edges_and_rotated_box_spokes_64_segments"
+    };
+    let mut report_warnings = vec![
+        "该 Quick 结果逐面复刻旧 Python 的自交轮廓三角网格；未构建或验证 B-Rep/闭合实体。".to_string(),
+        "AIMODEL 保存 CADPlan 与参数；此 mesh-only 结果不可据此推送或导出 CATPart。".to_string(),
+    ];
+    if let Some(spoke_count) = compatibility_details
+        .pointer("/spokes/count")
+        .and_then(Value::as_u64)
+    {
+        report_warnings.push(format!(
+            "{spoke_count} 根箱体辐条按旧 Quick 64 段回转配方逐面复刻，轴向范围及旋向已写入报告；不宣称闭合实体或 CATIA 支持。"
+        ));
+    }
     let report = json!({
         "state":"mesh_only",
         "mesh_only":true,
         "valid":null,
         "geometry_support":"legacy_mesh_only",
         "execution_engine":"rust_legacy_quick_triangle_mesh",
-        "builder":"legacy_make_revolve_profile_edges_swept_64_segments",
+        "builder":builder,
         "legacy_polygon_count":mesh.positions.len() / 6,
         "triangle_count":triangle_count,
         "dimensions_mm":dimensions,
@@ -163,11 +182,13 @@ fn build_mesh_only_legacy_vbelt(
         "closed_solid_count":null,
         "brep_available":false,
         "catpart_available":false,
-        "legacy_profile_was_self_intersecting":true,
-        "warnings":[
-            "该 Quick 结果沿用旧 Python 的自交轮廓三角网格；未构建或验证 B-Rep/闭合实体。",
-            "AIMODEL 保存 CADPlan 与参数；此 mesh-only 结果不可据此推送或导出 CATPart。"
-        ]
+        "legacy_profile_was_self_intersecting":compatibility_details["legacy_profile_self_intersecting"],
+        "profile_points":compatibility_details["profile_points"],
+        "groove_root_width_mm":compatibility_details["groove_root_width_mm"],
+        "groove_effective_pitch_mm":compatibility_details["groove_effective_pitch_mm"],
+        "groove_root_overlap_mm":compatibility_details["groove_root_overlap_mm"],
+        "spokes":compatibility_details["spokes"],
+        "warnings":report_warnings
     });
     native_model_io::atomic_write(
         &geometry_report,
@@ -1896,7 +1917,11 @@ mod acceptance_tests {
         ))
         .expect("V-belt Quick acceptance fixture is valid JSON");
         let cases = fixture["native_geometry_cases"].as_array().unwrap();
-        assert_eq!(cases.len(), 4, "explicit A/B/Y, plus legacy-default pulley");
+        assert_eq!(
+            cases.len(),
+            7,
+            "A/B/Y, legacy-default, C300 multi-slot mesh, A100 overlap mesh, and C300 single-slot B-Rep"
+        );
         let root = std::env::temp_dir().join(format!(
             "native-quick-vbelt-pulley-{}-{}",
             std::process::id(),
@@ -1921,6 +1946,14 @@ mod acceptance_tests {
             assert_eq!(output["state"], "complete", "{input}: {output}");
             let report = &output["geometry_report"];
             let mesh_only = report["mesh_only"] == true;
+            let compatibility_report = if mesh_only {
+                report
+            } else {
+                &report["feature_results"][0]["support_details"]
+            };
+            if let Some(expected) = case["expected_triangles"].as_u64() {
+                assert_eq!(report["triangle_count"].as_u64(), Some(expected), "{input}: {report}");
+            }
             if mesh_only {
                 assert_eq!(report["state"], "mesh_only", "{input}: {report}");
                 assert_eq!(report["brep_available"], false, "{input}: {report}");
@@ -1929,7 +1962,113 @@ mod acceptance_tests {
             } else {
                 assert_eq!(report["state"], "passed", "{input}: {report}");
                 assert_eq!(report["valid"], true, "{input}: {report}");
+                assert_eq!(report["solid_count"], 1, "{input}: {report}");
                 assert_eq!(report["closed_solid_count"], 1, "{input}: {report}");
+            }
+            if let Some(builder) = case["expected_builder"].as_str() {
+                assert_eq!(compatibility_report["builder"], builder, "{input}: {report}");
+                assert_eq!(report["state"], case["expected_state"], "{input}: {report}");
+                if case["expected_state"] == "mesh_only" {
+                    assert_eq!(compatibility_report["geometry_support"], "legacy_mesh_only");
+                    assert_eq!(report["mesh_only"], true);
+                } else {
+                    assert_eq!(
+                        compatibility_report["geometry_support"],
+                        "restricted_legacy_geometry_mapping"
+                    );
+                }
+                if case["expected_spokes"].is_object() {
+                    let actual_spokes = &compatibility_report["spokes"];
+                    let expected_spokes = &case["expected_spokes"];
+                    assert_eq!(actual_spokes["count"], expected_spokes["count"]);
+                    for key in ["box_size_mm", "angles_deg"] {
+                        let actual = actual_spokes[key].as_array().unwrap();
+                        let expected = expected_spokes[key].as_array().unwrap();
+                        assert_eq!(actual.len(), expected.len(), "{input}: {report}");
+                        for (actual, expected) in actual.iter().zip(expected) {
+                            if let (Some(actual), Some(expected)) = (actual.as_f64(), expected.as_f64()) {
+                                assert!((actual - expected).abs() < 1e-8, "{input}: {report}");
+                            } else if let (Some(actual), Some(expected)) =
+                                (actual.as_array(), expected.as_array())
+                            {
+                                for (actual, expected) in actual.iter().zip(expected) {
+                                    assert!(
+                                        (actual.as_f64().unwrap() - expected.as_f64().unwrap()).abs()
+                                            < 1e-8,
+                                        "{input}: {report}"
+                                    );
+                                }
+                            } else {
+                                panic!("unexpected spoke detail shape: {input}: {report}");
+                            }
+                        }
+                    }
+                    for key in ["radial_start_mm", "radial_end_mm", "z_start_mm", "z_end_mm"] {
+                        assert!(
+                            (actual_spokes[key].as_f64().unwrap()
+                                - expected_spokes[key].as_f64().unwrap())
+                            .abs()
+                                < 1e-8,
+                            "{input}: {report}"
+                        );
+                    }
+                } else {
+                    assert!(compatibility_report["spokes"].is_null(), "{input}: {report}");
+                }
+                assert!(
+                    (compatibility_report["groove_root_overlap_mm"].as_f64().unwrap()
+                        - case["expected_groove_root_overlap_mm"].as_f64().unwrap())
+                    .abs()
+                        < 1e-8,
+                    "{input}: {report}"
+                );
+                if let Some(expected) = case["expected_self_intersecting"].as_bool() {
+                    let report_key = if mesh_only {
+                        "legacy_profile_was_self_intersecting"
+                    } else {
+                        "legacy_profile_self_intersecting"
+                    };
+                    assert_eq!(
+                        compatibility_report[report_key], expected,
+                        "{input}: {report}"
+                    );
+                }
+                if let Some(expected) = case["expected_valid"].as_bool() {
+                    assert_eq!(compatibility_report["valid"], expected, "{input}: {report}");
+                }
+                if let Some(expected) = case["expected_brep_available"].as_bool() {
+                    assert_eq!(compatibility_report["brep_available"], expected, "{input}: {report}");
+                }
+                if let Some(expected) = case["expected_legacy_raw_parity"].as_bool() {
+                    assert_eq!(compatibility_report["legacy_raw_parity"], expected, "{input}: {report}");
+                }
+                if let Some(expected) = case["expected_geometry_support"].as_str() {
+                    assert_eq!(compatibility_report["geometry_support"], expected, "{input}: {report}");
+                }
+                if let Some(expected) = case["expected_profile_points"].as_u64() {
+                    assert_eq!(compatibility_report["profile_points"], expected, "{input}: {report}");
+                }
+                for (fixture_key, report_key) in [
+                    ("expected_root_width_mm", "groove_root_width_mm"),
+                    ("expected_effective_pitch_mm", "groove_effective_pitch_mm"),
+                    ("expected_hub_diameter_mm", "hub_diameter_mm"),
+                    ("expected_hub_length_mm", "hub_length_mm"),
+                    ("expected_rim_inner_diameter_mm", "rim_inner_diameter_mm"),
+                    ("expected_web_thickness_mm", "web_thickness_mm"),
+                ] {
+                    if let Some(expected) = case[fixture_key].as_f64() {
+                        assert!(
+                            (compatibility_report[report_key].as_f64().unwrap() - expected).abs() < 1e-8,
+                            "{input}: {report_key} in {report}"
+                        );
+                    }
+                }
+                let warning = if case["expected_state"] == "mesh_only" {
+                    "逐面复刻"
+                } else {
+                    "不等同于旧逐边网格"
+                };
+                assert!(compatibility_report["warnings"].to_string().contains(warning));
             }
             let actual_volume = if mesh_only {
                 report["signed_mesh_volume_mm3"]
@@ -1977,6 +2116,20 @@ mod acceptance_tests {
                     Path::new(paths[name].as_str().unwrap()).is_file(),
                     "{input}: missing {name}"
                 );
+            }
+            if let Some(env_name) = case["rust_stl_artifact_env"].as_str() {
+                if let Some(path) = std::env::var_os(env_name) {
+                    fs::copy(Path::new(paths["stl"].as_str().unwrap()), path).unwrap();
+                }
+            }
+            if let Some(env_name) = case["rust_report_artifact_env"].as_str() {
+                if let Some(path) = std::env::var_os(env_name) {
+                    fs::write(
+                        path,
+                        serde_json::to_vec_pretty(report).expect("serialize native geometry report"),
+                    )
+                    .expect("save native geometry report artifact");
+                }
             }
             let loaded =
                 native_model_io::load_aimodel(Path::new(paths["aimodel"].as_str().unwrap()))
