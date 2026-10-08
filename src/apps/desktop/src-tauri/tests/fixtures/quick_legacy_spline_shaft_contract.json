@@ -662,6 +662,96 @@
         "legacy_mesh_volume_mm3": 15576.527125599998,
         "legacy_warnings": []
       }
+    },
+    {
+      "input": "花键轴 小径20 大径25 长度40 齿数8 键槽宽5",
+      "sources": {
+        "d": "user",
+        "D": "user",
+        "L": "user",
+        "z": "user"
+      },
+      "profile_teeth": 8,
+      "feature_count": 2,
+      "expected": {
+        "kind": "prism",
+        "height": 40.0,
+        "profile_point_count": 56,
+        "dimensions_mm": [
+          24.9892,
+          24.9892,
+          40.0
+        ]
+      },
+      "pocket": {
+        "dimensions_mm": [20.0, 5.0, 5.0],
+        "parameters": {
+          "length": 20.0,
+          "width": 5.0,
+          "depth": 5.0,
+          "corner": 0.0,
+          "axis": "Z",
+          "x": 0.0,
+          "y": 0.0,
+          "side": "positive"
+        },
+        "source_types": {
+          "length": "derived",
+          "width": "user",
+          "depth": "derived",
+          "corner": "derived",
+          "axis": "derived",
+          "x": "derived",
+          "y": "derived",
+          "side": "derived"
+        },
+        "warning": "legacy_spline_shaft_keyway_mapped_to_end_face_pocket"
+      }
+    },
+    {
+      "input": "花键轴 小径20 大径25 长度40 齿数8个 键槽宽5",
+      "sources": {
+        "d": "user",
+        "D": "user",
+        "L": "user",
+        "z": "user"
+      },
+      "profile_teeth": 8,
+      "feature_count": 2,
+      "expected": {
+        "kind": "prism",
+        "height": 40.0,
+        "profile_point_count": 56,
+        "dimensions_mm": [
+          24.9892,
+          24.9892,
+          40.0
+        ]
+      },
+      "pocket": {
+        "dimensions_mm": [20.0, 5.0, 5.0],
+        "parameters": {
+          "length": 20.0,
+          "width": 5.0,
+          "depth": 5.0,
+          "corner": 0.0,
+          "axis": "Z",
+          "x": 0.0,
+          "y": 0.0,
+          "side": "positive"
+        },
+        "source_types": {
+          "length": "derived",
+          "width": "user",
+          "depth": "derived",
+          "corner": "derived",
+          "axis": "derived",
+          "x": "derived",
+          "y": "derived",
+          "side": "derived"
+        },
+        "warning": "legacy_spline_shaft_keyway_mapped_to_end_face_pocket"
+      }
     }
   ],
   "not_ready": [
@@ -681,6 +771,11 @@
       "legacy_behavior": "Parser.parse falls back to a generic cylinder."
     },
     {
+      "input": "花键轴 小径20 大径25 长度40 齿数8 键槽",
+      "issue": "legacy_spline_shaft_keyway_width_required",
+      "legacy_behavior": "The generic pocket requires an explicit width for this narrow migration."
+    },
+    {
       "input": "花键轴 小径20 大径25 长度40 齿数8.5",
       "issue": "legacy_spline_shaft_tooth_count_not_integer",
       "legacy_behavior": "The old builder truncates fractional tooth counts."
@@ -688,12 +783,60 @@
   ],
   "unsupported": [
     {
-      "input": "花键轴 小径20 大径25 长度40 齿数8 键槽宽5",
+      "input": "花键轴 小径20 大径25 长度40 齿数129",
+      "issue": "legacy_spline_shaft_native_tooth_limit"
+    },
+    {
+      "input": "花键轴 小径20 大径25 长度40 齿数8 键槽宽5 再开槽宽3",
       "issue": "legacy_spline_shaft_modifier_not_migrated"
     },
     {
-      "input": "花键轴 小径20 大径25 长度40 齿数129",
-      "issue": "legacy_spline_shaft_native_tooth_limit"
+      "input": "花键轴 小径20 大径25 长度40 齿数8 键槽宽5 侧面",
+      "issue": "legacy_spline_shaft_modifier_not_migrated"
+    },
+    {
+      "input": "花键轴 小径20 大径25 长度40 齿数8 键槽宽5 2个",
+      "issue": "legacy_spline_shaft_modifier_not_migrated"
+    },
+    {
+      "input": "花键轴 小径20 大径25 长度40 齿数8 一对键槽宽5",
+      "issue": "legacy_spline_shaft_modifier_not_migrated"
+    },
+    {
+      "input": "花键轴 小径20 大径25 长度40 齿数8 成对键槽宽5",
+      "issue": "legacy_spline_shaft_modifier_not_migrated"
+    },
+    {
+      "input": "花键轴 小径20 大径25 长度40 齿数8 侧面开键槽宽5",
+      "issue": "legacy_spline_shaft_modifier_not_migrated"
+    },
+    {
+      "input": "花键轴 小径20 大径25 长度40 齿数8 两个键槽宽5",
+      "issue": "legacy_spline_shaft_modifier_not_migrated"
+    },
+    {
+      "input": "花键轴 小径20 大径25 长度40 齿数8 2个键槽宽5",
+      "issue": "legacy_spline_shaft_modifier_not_migrated"
+    },
+    {
+      "input": "花键轴 小径20 大径25 长度40 齿数8 两个 键槽宽5",
+      "issue": "legacy_spline_shaft_modifier_not_migrated"
+    },
+    {
+      "input": "花键轴 小径20 大径25 长度40 齿数8 2个 键槽宽5",
+      "issue": "legacy_spline_shaft_modifier_not_migrated"
+    },
+    {
+      "input": "花键轴 小径20 大径25 长度40 齿数8 两处键槽宽5",
+      "issue": "legacy_spline_shaft_modifier_not_migrated"
+    },
+    {
+      "input": "花键轴 小径20 大径25 长度40 齿数8 轴侧键槽宽5",
+      "issue": "legacy_spline_shaft_modifier_not_migrated"
+    },
+    {
+      "input": "花键轴 小径20 大径25 长度40 齿数8 轴身侧键槽宽5",
+      "issue": "legacy_spline_shaft_modifier_not_migrated"
     }
   ],
   "native_expected_cases": [

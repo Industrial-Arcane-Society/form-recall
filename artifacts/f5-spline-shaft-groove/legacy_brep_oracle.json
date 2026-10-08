@@ -1,0 +1,316 @@
+{
+  "evidence_kind": "legacy_python_quick_brep_oracle",
+  "prompt": "花键轴 小径20 大径25 长度40 齿数8 键槽宽5",
+  "oracle_scope": "Parser.parse -> Document.build_brep -> legacy shape_to_polys OCCT triangulation at deflection 0.08 mm / default angle 0.5 rad -> binary STL",
+  "report": {
+    "backend": "occt_brep",
+    "kernel": "可用：OCCT 7.9.3.1 / cadquery-ocp-novtk 7.9.3.1.1",
+    "self_intersection_face_limit": 15000,
+    "geometry_state": "passed",
+    "state": "passed",
+    "brep_valid": true,
+    "shape_type": "TopAbs_COMPOUND",
+    "solid_count": 1,
+    "connected_component_count": 1,
+    "shell_count": 1,
+    "closed_shell_count": 1,
+    "closed": true,
+    "edge_count": 368,
+    "face_count": 64,
+    "free_edge_count": 0,
+    "volume_mm3": 15251.808174272413,
+    "bbox_mm": [
+      -12.4946,
+      -12.4946,
+      0.0,
+      12.4946,
+      12.4946,
+      40.0
+    ],
+    "self_intersection": {
+      "status": "checked_no_intersection",
+      "face_count": 64,
+      "face_limit": 15000,
+      "check_result_count": 0,
+      "check_statuses": [],
+      "method": "BOPAlgo_ArgumentAnalyzer(SelfInterMode=True, UseOBB=True)"
+    },
+    "validity_method": "BRepCheck_Analyzer",
+    "geometry_scope": "native_OCCT_BREP_only_visual_comparison_not_performed",
+    "feature_results": [
+      {
+        "feature_id": "0",
+        "kind": "prism",
+        "operation": "add",
+        "geometry_support": "exact",
+        "builder": "analytic_extrusion_of_polygon",
+        "state": "applied",
+        "source_feature_id": null,
+        "source_resolution": null,
+        "solid_count": 1,
+        "brep_valid": true,
+        "before_volume_mm3": 0.0,
+        "after_volume_mm3": 15748.421221600001,
+        "volume_delta_mm3": 15748.421221600001,
+        "cylindrical_cut_intents": [],
+        "depth_measurement": null,
+        "facet_count": null
+      },
+      {
+        "feature_id": "1",
+        "kind": "pocket",
+        "operation": "cut",
+        "geometry_support": "exact",
+        "builder": "polygonal_prismatic_pocket_tool",
+        "state": "applied",
+        "source_feature_id": null,
+        "source_resolution": null,
+        "solid_count": 1,
+        "brep_valid": true,
+        "before_volume_mm3": 15748.421221600001,
+        "after_volume_mm3": 15251.808174272413,
+        "volume_delta_mm3": -496.613047327588,
+        "cylindrical_cut_intents": [],
+        "depth_measurement": {
+          "state": "measured",
+          "requested_depth_mm": 5.0,
+          "measured_depth_mm": 5.0,
+          "signed_error_mm": 0.0,
+          "tolerance_mm": 0.001,
+          "side": "positive",
+          "axis": "Z",
+          "source_face_coordinate_mm": 40.0,
+          "floor_coordinate_mm": 35.0,
+          "selected_probe_point_mm": [
+            0.0,
+            0.0,
+            20.0
+          ],
+          "candidate_probe_count": 9,
+          "candidate_measurements": [
+            {
+              "probe_point_mm": [
+                0.0,
+                0.0,
+                20.0
+              ],
+              "measured_depth_mm": 5.0,
+              "floor_coordinate_mm": 35.0,
+              "material_axis_segments": [
+                {
+                  "axis_interval_mm": [
+                    -0.0,
+                    35.0
+                  ],
+                  "midpoint_mm": 17.5,
+                  "inside_solid": true
+                }
+              ],
+              "line_intersections": 2,
+              "line_method": "IntCurvesFace_ShapeIntersector exact line/trimmed-face events + BRepClass3d interval classification"
+            },
+            {
+              "probe_point_mm": [
+                0.0,
+                -0.875,
+                20.0
+              ],
+              "measured_depth_mm": 5.0,
+              "floor_coordinate_mm": 35.0,
+              "material_axis_segments": [
+                {
+                  "axis_interval_mm": [
+                    -0.0,
+                    35.0
+                  ],
+                  "midpoint_mm": 17.5,
+                  "inside_solid": true
+                }
+              ],
+              "line_intersections": 2,
+              "line_method": "IntCurvesFace_ShapeIntersector exact line/trimmed-face events + BRepClass3d interval classification"
+            },
+            {
+              "probe_point_mm": [
+                0.0,
+                0.875,
+                20.0
+              ],
+              "measured_depth_mm": 5.0,
+              "floor_coordinate_mm": 35.0,
+              "material_axis_segments": [
+                {
+                  "axis_interval_mm": [
+                    -0.0,
+                    35.0
+                  ],
+                  "midpoint_mm": 17.5,
+                  "inside_solid": true
+                }
+              ],
+              "line_intersections": 2,
+              "line_method": "IntCurvesFace_ShapeIntersector exact line/trimmed-face events + BRepClass3d interval classification"
+            },
+            {
+              "probe_point_mm": [
+                -3.5,
+                0.0,
+                20.0
+              ],
+              "measured_depth_mm": 5.0,
+              "floor_coordinate_mm": 35.0,
+              "material_axis_segments": [
+                {
+                  "axis_interval_mm": [
+                    -0.0,
+                    35.0
+                  ],
+                  "midpoint_mm": 17.5,
+                  "inside_solid": true
+                }
+              ],
+              "line_intersections": 2,
+              "line_method": "IntCurvesFace_ShapeIntersector exact line/trimmed-face events + BRepClass3d interval classification"
+            },
+            {
+              "probe_point_mm": [
+                -3.5,
+                -0.875,
+                20.0
+              ],
+              "measured_depth_mm": 5.0,
+              "floor_coordinate_mm": 35.0,
+              "material_axis_segments": [
+                {
+                  "axis_interval_mm": [
+                    -0.0,
+                    35.0
+                  ],
+                  "midpoint_mm": 17.5,
+                  "inside_solid": true
+                }
+              ],
+              "line_intersections": 2,
+              "line_method": "IntCurvesFace_ShapeIntersector exact line/trimmed-face events + BRepClass3d interval classification"
+            },
+            {
+              "probe_point_mm": [
+                -3.5,
+                0.875,
+                20.0
+              ],
+              "measured_depth_mm": 5.0,
+              "floor_coordinate_mm": 35.0,
+              "material_axis_segments": [
+                {
+                  "axis_interval_mm": [
+                    -0.0,
+                    35.0
+                  ],
+                  "midpoint_mm": 17.5,
+                  "inside_solid": true
+                }
+              ],
+              "line_intersections": 2,
+              "line_method": "IntCurvesFace_ShapeIntersector exact line/trimmed-face events + BRepClass3d interval classification"
+            },
+            {
+              "probe_point_mm": [
+                3.5,
+                0.0,
+                20.0
+              ],
+              "measured_depth_mm": 5.0,
+              "floor_coordinate_mm": 35.0,
+              "material_axis_segments": [
+                {
+                  "axis_interval_mm": [
+                    -0.0,
+                    35.0
+                  ],
+                  "midpoint_mm": 17.5,
+                  "inside_solid": true
+                }
+              ],
+              "line_intersections": 2,
+              "line_method": "IntCurvesFace_ShapeIntersector exact line/trimmed-face events + BRepClass3d interval classification"
+            },
+            {
+              "probe_point_mm": [
+                3.5,
+                -0.875,
+                20.0
+              ],
+              "measured_depth_mm": 5.0,
+              "floor_coordinate_mm": 35.0,
+              "material_axis_segments": [
+                {
+                  "axis_interval_mm": [
+                    -0.0,
+                    35.0
+                  ],
+                  "midpoint_mm": 17.5,
+                  "inside_solid": true
+                }
+              ],
+              "line_intersections": 2,
+              "line_method": "IntCurvesFace_ShapeIntersector exact line/trimmed-face events + BRepClass3d interval classification"
+            },
+            {
+              "probe_point_mm": [
+                3.5,
+                0.875,
+                20.0
+              ],
+              "measured_depth_mm": 5.0,
+              "floor_coordinate_mm": 35.0,
+              "material_axis_segments": [
+                {
+                  "axis_interval_mm": [
+                    -0.0,
+                    35.0
+                  ],
+                  "midpoint_mm": 17.5,
+                  "inside_solid": true
+                }
+              ],
+              "line_intersections": 2,
+              "line_method": "IntCurvesFace_ShapeIntersector exact line/trimmed-face events + BRepClass3d interval classification"
+            }
+          ],
+          "method": "IntCurvesFace_ShapeIntersector face event intervals + BRepClass3d solid interval classification"
+        },
+        "facet_count": null
+      }
+    ],
+    "hole_instances": [],
+    "unverified_cut_intents": [],
+    "hole_feature_count": 0,
+    "measured_hole_source_feature_count": 0,
+    "unverified_cut_intent_count": 0,
+    "planned_hole_instance_count": 0,
+    "active_hole_instance_count": 0,
+    "superseded_hole_instance_count": 0,
+    "active_through_hole_count": 0,
+    "through_hole_count": 0,
+    "all_declared_holes_verified": true,
+    "visual_validation": "not_performed",
+    "catia_executed": false,
+    "build_transaction": "每个特征验证成功后才提交；失败保留上一有效实体"
+  },
+  "tessellation": {
+    "linear_deflection_mm": 0.08,
+    "angular_deflection_rad": 0.5,
+    "triangle_count": 240
+  },
+  "stl": {
+    "path": "legacy_document_build_brep.stl",
+    "bytes": 12084,
+    "sha256": "10d430fdb8d8c440a769fccc1d6a3c09f124a3d1320712eb303647cc208ba143"
+  },
+  "limitations": [
+    "This is a local legacy OCCT B-Rep result, not CATIA/UI validation.",
+    "Tessellated surface comparisons are finite samples and not a continuous Hausdorff bound.",
+    "The separate old Document.build raw STL remains open and its mesh volume is not used as a solid-volume oracle."
+  ]
+}

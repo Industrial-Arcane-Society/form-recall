@@ -5297,19 +5297,58 @@ fn parse_legacy_spline_shaft(raw: &str, text: &str) -> Option<Value> {
         return None;
     }
 
-    if contains_any(
+    let keyway_requested = contains_any(text, &["键槽"]);
+    let keyway_clause = raw.find("键槽").and_then(|start| raw.get(start..));
+    let compact_text: String = raw.chars().filter(|ch| !ch.is_whitespace()).collect();
+    let compact_keyway_clause = keyway_clause.map(|clause| {
+        clause.chars().filter(|ch| !ch.is_whitespace()).collect::<String>()
+    });
+    let multiple_keyway_prefix = contains_any(
+        &compact_text,
+        &[
+            "一对键槽", "成对键槽", "双键槽", "两个键槽", "2个键槽", "两处键槽", "三个键槽",
+            "3个键槽",
+        ],
+    );
+    let multiple_keyway_suffix = compact_keyway_clause.as_deref().is_some_and(|clause| {
+        contains_any(clause, &["一对", "成对", "双", "两个", "2个", "两处", "三个", "3个"])
+    });
+    let unsupported_modifier = contains_any(
         text,
         &[
-            "键槽", "孔", "钻", "螺纹", "倒角", "圆角", "阵列", "切除", "安装", "并加",
-            "同时", "再加", "还要", "齿顶宽", "齿根圆角", "齿形参数", "花键标准", "keyway",
-            "hole", "thread", "chamfer", "fillet", "pattern", "cut",
+            "孔", "钻", "螺纹", "倒角", "圆角", "阵列", "切除", "安装", "并加", "同时",
+            "再加", "还要", "齿顶宽", "齿根圆角", "齿形参数", "花键标准", "slot", "pocket",
+            "keyway", "hole", "thread", "chamfer", "fillet", "pattern", "cut",
         ],
-    ) {
+    ) || (keyway_requested
+        && (text.matches("键槽").count() != 1
+            || text.matches("槽").count() != 1
+            || multiple_keyway_prefix
+            || multiple_keyway_suffix
+            || keyway_clause.is_none()
+            || contains_any(
+                text,
+                &[
+                    "侧面", "侧向", "轴侧键槽", "轴身侧键槽", "偏心", "边缘", "沿x", "x轴",
+                    "x方向", "沿y", "y轴", "y方向",
+                ],
+            )
+            || keyway_clause.is_some_and(|clause| {
+                contains_any(
+                    clause,
+                    &[
+                        "孔", "钻", "螺纹", "倒角", "圆角", "阵列", "并", "同时", "再", "以及",
+                    ],
+                ) || center_coordinates(clause).is_some()
+                    || named_xyz(clause).is_some()
+            })))
+        || (contains_any(text, &["槽"]) && !keyway_requested);
+    if unsupported_modifier {
         return Some(parse_result_with_issue(
             "unsupported",
             raw,
             "legacy_spline_shaft_modifier_not_migrated",
-            "本项只迁移旧 Python Quick 的花键轴主体；键槽、孔槽、边缘修饰、阵列和自定义齿形尚未迁入。",
+            "本项只迁移旧 Python Quick 的花键轴主体和一个指定旧通用凹槽；多个键槽、孔槽、边缘修饰、阵列和自定义齿形尚未迁入。",
         ));
     }
 
@@ -5449,7 +5488,63 @@ fn parse_legacy_spline_shaft(raw: &str, text: &str) -> Option<Value> {
         },
         "relations":[]
     });
-    Some(plan_result(raw, "花键轴", vec![feature], warnings))
+    let mut features = vec![feature];
+    if keyway_requested {
+        let clause = keyway_clause.expect("supported keyway clause");
+        if scalar(clause, &["width", "宽度", "宽"]).is_none() {
+            return Some(parse_result_with_issue(
+                "needs_clarification",
+                raw,
+                "legacy_spline_shaft_keyway_width_required",
+                "旧 Quick 键槽短语需要显式槽宽；当前只迁移花键轴主体后接一个通用凹槽。",
+            ));
+        }
+        let mut pocket_questions = Vec::new();
+        let mut pocket_warnings = Vec::new();
+        let Some(mut pockets) = build_slot(clause, raw, 0, &mut pocket_questions, &mut pocket_warnings) else {
+            return Some(result(
+                "needs_clarification",
+                raw,
+                None,
+                pocket_warnings,
+                pocket_questions,
+                vec![],
+            ));
+        };
+        if !pocket_questions.is_empty() {
+            return Some(result(
+                "needs_clarification",
+                raw,
+                None,
+                pocket_warnings,
+                pocket_questions,
+                vec![],
+            ));
+        }
+        if pockets.len() != 1 {
+            return Some(parse_result_with_issue(
+                "unsupported",
+                raw,
+                "legacy_spline_shaft_modifier_not_migrated",
+                "花键轴当前只迁移一个旧通用凹槽；多槽与阵列保持拒绝。",
+            ));
+        }
+        let mut pocket = pockets.pop().expect("one pocket was checked");
+        pocket["name"] = json!("旧通用凹槽");
+        pocket["parameters"]["x"] = json!(0.0);
+        pocket["parameters"]["y"] = json!(0.0);
+        pocket["parameters"]["side"] = json!("positive");
+        pocket["sources"]["x"] = derived_source(raw, "旧 Python Quick 通用凹槽默认位于当前主体 XY 包围盒中心；本花键截面中心为原点。");
+        pocket["sources"]["y"] = derived_source(raw, "旧 Python Quick 通用凹槽默认位于当前主体 XY 包围盒中心；本花键截面中心为原点。");
+        pocket["sources"]["side"] = derived_source(raw, "旧 Python Quick 通用矩形凹槽默认从正 Z 端面切入。");
+        warnings.extend(pocket_warnings);
+        warnings.push(issue(
+            "legacy_spline_shaft_keyway_mapped_to_end_face_pocket",
+            "旧 Python Quick 将“键槽宽”交给通用凹槽规则：此处保留 +Z 端面中心矩形 pocket（槽长20、深5默认），不是轴身侧键槽或制造键槽定义。",
+        ));
+        features.push(pocket);
+    }
+    Some(plan_result(raw, "花键轴", features, warnings))
 }
 
 fn legacy_spline_profile(root_radius: f64, tooth_height: f64, teeth: usize) -> Vec<[f64; 2]> {
@@ -19059,7 +19154,11 @@ mod tests {
             assert_eq!(output["status"], "ready", "{input}: {output}");
             assert_eq!(output["plan"]["name"], "花键轴", "{input}: {output}");
             let features = output["plan"]["features"].as_array().unwrap();
-            assert_eq!(features.len(), 1, "{input}: {output}");
+            assert_eq!(
+                features.len(),
+                case["feature_count"].as_u64().unwrap_or(1) as usize,
+                "{input}: {output}"
+            );
             let spline = &features[0];
             assert_eq!(spline["kind"], "prism", "{input}: {spline}");
             assert_eq!(spline["operation"], "add", "{input}: {spline}");
@@ -19086,6 +19185,20 @@ mod tests {
                 "valid",
                 "{input}"
             );
+            if case["pocket"].is_object() {
+                let pocket = &features[1];
+                assert_eq!(pocket["kind"], "pocket", "{input}: {pocket}");
+                assert_eq!(pocket["operation"], "cut", "{input}: {pocket}");
+                for (key, expected) in case["pocket"]["parameters"].as_object().unwrap() {
+                    assert_eq!(pocket["parameters"][key], *expected, "{input}: {key}");
+                }
+                for (key, expected) in case["pocket"]["source_types"].as_object().unwrap() {
+                    assert_eq!(pocket["sources"][key]["type"], *expected, "{input}: {key} provenance");
+                    assert_eq!(pocket["sources"][key]["evidence"], input, "{input}: {key} evidence");
+                }
+                assert!(output["warnings"].to_string().contains(case["pocket"]["warning"].as_str().unwrap()), "{input}: {output}");
+                assert!(output["warnings"].to_string().contains("legacy_slot_dimensions_defaulted"), "{input}: {output}");
+            }
         }
 
         for case in fixture["not_ready"].as_array().unwrap() {
@@ -19339,6 +19452,59 @@ mod f5_44_legacy_camshaft_contract_tests {
             assert_eq!(output["status"], "unsupported", "{input}: {output}");
             assert!(output["plan"].is_null(), "{input}: {output}");
             assert!(output.to_string().contains(case["issue"].as_str().unwrap()), "{input}: {output}");
+        }
+    }
+
+    #[test]
+    #[ignore = "requires the staged local OCCT runtime manifest"]
+    fn f5_103_spline_shaft_legacy_generic_pocket_builds_closed_brep_and_exports_stl() {
+        use std::{fs, path::PathBuf, time::{SystemTime, UNIX_EPOCH}};
+
+        let manifest = std::env::var_os("AIMODELER_TEST_OCCT_MANIFEST")
+            .map(PathBuf::from)
+            .expect("set AIMODELER_TEST_OCCT_MANIFEST to the staged runtime-manifest.json");
+        assert!(manifest.is_file(), "missing OCCT manifest: {}", manifest.display());
+        let input = "花键轴 小径20 大径25 长度40 齿数8 键槽宽5";
+        let root = std::env::temp_dir().join(format!(
+            "f5-103-spline-shaft-pocket-{}-{}",
+            std::process::id(),
+            SystemTime::now().duration_since(UNIX_EPOCH).expect("system clock").as_nanos(),
+        ));
+        fs::create_dir_all(&root).expect("create temporary output root");
+        struct RemoveOnDrop(PathBuf);
+        impl Drop for RemoveOnDrop { fn drop(&mut self) { let _ = fs::remove_dir_all(&self.0); } }
+        let _cleanup = RemoveOnDrop(root.clone());
+
+        let output = crate::native_quick::build(input, 1, &manifest, &root)
+            .unwrap_or_else(|error| panic!("native Quick build failed: {error}"));
+        assert_eq!(output["state"], "complete", "{output}");
+        let report = &output["geometry_report"];
+        assert_eq!(report["state"], "passed", "{report}");
+        assert_eq!(report["valid"], true, "{report}");
+        assert_eq!(report["closed_solid_count"], 1, "{report}");
+        assert_eq!(report["bounds_mm"], serde_json::json!([-12.4946, -12.4946, 0.0, 12.4946, 12.4946, 40.0]));
+        assert!(report["volume_mm3"].as_f64().is_some_and(|value| value > 0.0), "{report}");
+        let rows = report["feature_results"].as_array().expect("native feature build results");
+        assert_eq!(rows.len(), 2, "{report}");
+        assert_eq!(rows[0]["kind"], "prism", "{report}");
+        assert_eq!(rows[0]["state"], "built", "{report}");
+        assert_eq!(rows[1]["kind"], "pocket", "{report}");
+        assert_eq!(rows[1]["operation"], "cut", "{report}");
+        assert_eq!(rows[1]["state"], "built", "{report}");
+        assert!(rows[1]["volume_delta_mm3"].as_f64().is_some_and(|delta| delta < 0.0), "{report}");
+        assert!((rows[1]["volume_delta_mm3"].as_f64().unwrap() - (-496.613047327588)).abs() < 1e-6, "{report}");
+        assert!((report["volume_mm3"].as_f64().unwrap() - 15251.808174272413).abs() < 1e-6, "{report}");
+        assert_eq!(report["catia_executed"], false, "{report}");
+        if let Some(path) = std::env::var_os("AIMODELER_F5_103_RUST_STL_OUT") {
+            let path = PathBuf::from(path);
+            if let Some(parent) = path.parent() {
+                fs::create_dir_all(parent).expect("create Rust STL evidence directory");
+            }
+            fs::copy(
+                output["output_paths"]["stl"].as_str().expect("Rust Quick STL path"),
+                &path,
+            )
+            .unwrap_or_else(|error| panic!("copy Rust Quick STL evidence: {error}"));
         }
     }
 }
