@@ -8,6 +8,7 @@
     "document_stats_calls": 0,
     "deduplication": "exact Unicode prompt string; duplicate rows counted once for parser statistics",
     "raw_prompt_text_persisted": false,
+    "detailed_result_snapshot": "one JSONL record per exact unique prompt, in input order; prompt itself omitted; fields include dataset_id, UTF-8 prompt_sha256, ParseResult fields, and full ordered Feature.to_dict-compatible data",
     "current_f589_comparison": "exact prompt string set comparison against rows[].input in the saved F5.89 66-row audit fixture",
     "parser_success_definition": "ParseResult.ok is true and doc.features is non-empty; counts are also reported separately to expose false/empty combinations"
   },
@@ -22,6 +23,50 @@
     "unique_exact_prompts": 1828,
     "duplicate_prompt_rows_removed": 0,
     "missing_or_blank_prompt_rows": 0
+  },
+  "feature_snapshot": {
+    "path": "legacy_parser_results.jsonl.gz",
+    "schema_version": 1,
+    "rows": 1828,
+    "sha256": "3b4d3518c8e8fdfb3804647fdd51f1b6198e0a12065e4758c575cc699e968632",
+    "byte_length": 310668,
+    "raw_prompt_text_persisted": false,
+    "row_fields": [
+      "schema_version",
+      "dataset_id",
+      "prompt_sha256",
+      "parse_ok",
+      "feature_count",
+      "features",
+      "warnings",
+      "steps",
+      "recognized",
+      "message",
+      "questions",
+      "assumed",
+      "used_templates"
+    ],
+    "feature_fields": [
+      "kind",
+      "op",
+      "params",
+      "name",
+      "feature_id",
+      "relations",
+      "enabled",
+      "provenance",
+      "warnings",
+      "note"
+    ],
+    "compression": {
+      "format": "gzip",
+      "mtime": 0,
+      "uncompressed_sha256": "a64e0d2c8b459be0ec8a77bd4a763dbde8c1af96598d53818a3f45913edf2dae",
+      "uncompressed_byte_length": 22149210,
+      "compressed_sha256": "3b4d3518c8e8fdfb3804647fdd51f1b6198e0a12065e4758c575cc699e968632",
+      "compressed_byte_length": 310668,
+      "size_reduction_percent": 98.6
+    }
   },
   "parser_counts": {
     "parse_ok": 1822,
@@ -583,5 +628,5 @@
     }
   ],
   "malformed_jsonl_items": [],
-  "run_seconds": 172.438
+  "run_seconds": 189.299
 }

@@ -3,8 +3,12 @@
 from __future__ import annotations
 
 import hashlib
+import gzip
+import io
 import json
+import os
 import sys
+import tempfile
 import time
 from collections import Counter, defaultdict, deque
 from pathlib import Path
@@ -15,8 +19,39 @@ ROOT = Path(__file__).resolve().parents[2]
 DATASET = ROOT / "src/legacy/datasets/训练提示词/全部提示词.jsonl"
 F589 = ROOT / "src/apps/desktop/src-tauri/tests/fixtures/quick_legacy_catalog_audit_after_f5_90.json"
 OUT = Path(__file__).resolve().parent
+RESULTS_JSONL = OUT / "legacy_parser_results.jsonl.gz"
 sys.path.insert(0, str(ROOT / "src/legacy"))
 from ai_modeler.core.parsing.nlparser import Parser  # noqa: E402
+
+
+def json_safe(value: Any) -> Any:
+    """Convert legacy parser values to deterministic JSON-compatible values."""
+    if value is None or isinstance(value, (str, int, float, bool)):
+        return value
+    if isinstance(value, dict):
+        return {str(key): json_safe(item) for key, item in value.items()}
+    if isinstance(value, (list, tuple)):
+        return [json_safe(item) for item in value]
+    return str(value)
+
+
+def feature_snapshot(feature: Any) -> dict[str, Any]:
+    """Preserve Feature.to_dict fields, with an explicit stable contract."""
+    serialized = feature.to_dict() if callable(getattr(feature, "to_dict", None)) else {}
+    result = {
+        "kind": getattr(feature, "kind", None),
+        "op": getattr(feature, "op", None),
+        "params": getattr(feature, "params", {}),
+        "name": getattr(feature, "name", None),
+        "feature_id": getattr(feature, "feature_id", None),
+        "relations": getattr(feature, "relations", []),
+        "enabled": getattr(feature, "enabled", None),
+        "provenance": getattr(feature, "provenance", {}),
+        "warnings": getattr(feature, "warnings", []),
+    }
+    result.update(serialized)
+    result["warnings"] = getattr(feature, "warnings", result.get("warnings", []))
+    return json_safe(result)
 
 
 def main() -> int:
@@ -54,102 +89,168 @@ def main() -> int:
     largest_feature_prompts: list[dict[str, Any]] = []
     ok_count = nonempty_count = ok_empty_count = false_with_features = exception_count = 0
     started = time.monotonic()
+    result_fd, result_temp_name = tempfile.mkstemp(prefix="legacy_parser_results.", suffix=".gz.tmp", dir=OUT)
+    result_rows = 0
+    raw_result_file = os.fdopen(result_fd, "wb")
+    compressed_result_file = gzip.GzipFile(filename="", mode="wb", fileobj=raw_result_file, mtime=0)
+    result_file = io.TextIOWrapper(compressed_result_file, encoding="utf-8", newline="\n", write_through=True)
 
-    for index, (prompt, source_rows) in enumerate(by_prompt.items(), 1):
-        meta = source_rows[0]
-        category = str(meta.get("category") or "<missing>")
-        category_counts[category] += 1
-        try:
-            # Parser is stateful: reusing one instance accumulates prior
-            # Document.features and corrupts per-prompt counts.
-            parsed = Parser().parse(prompt)
-            features = getattr(getattr(parsed, "doc", None), "features", []) or []
-            ok = bool(getattr(parsed, "ok", False))
-            message = str(getattr(parsed, "message", "") or "")
-            signature_counts: Counter[str] = Counter()
-            signature_hash = hashlib.sha256()
-            sequence_prefix: list[str] = []
-            sequence_suffix: deque[str] = deque(maxlen=4)
-            unique_kinds: set[str] = set()
-            for feature in features:
-                kind = str(getattr(feature, "kind", "<missing>"))
-                operation = str(getattr(feature, "op", "<missing>"))
-                token = f"{kind}:{operation}"
-                signature_counts[token] += 1
-                unique_kinds.add(kind)
-                if len(sequence_prefix) < 6:
-                    sequence_prefix.append(token)
-                sequence_suffix.append(token)
-                signature_hash.update(token.encode("utf-8"))
-                signature_hash.update(b"\0")
-                feature_type_instance_counts[kind] += 1
-            feature_count = len(features)
-            composition = ",".join(f"{token}x{count}" for token, count in sorted(signature_counts.items())) or "none"
-            prefix = ">".join(sequence_prefix) or "none"
-            suffix = ">".join(sequence_suffix) or "none"
-            signature = f"n={feature_count};mix={composition};first={prefix};last={suffix};seq={signature_hash.hexdigest()[:16]}"
-            has_features = bool(features)
-            all_feature_counts.append(feature_count)
-            ok_count += int(ok)
-            nonempty_count += int(has_features)
-            ok_empty_count += int(ok and not has_features)
-            false_with_features += int((not ok) and has_features)
-            combination_counts[signature] += 1
-            category_signatures[category][signature] += 1
-            if has_features:
-                success_category_counts[category] += 1
-                feature_type_prompt_counts.update(unique_kinds)
-            if not ok or not has_features:
-                failures.append({
-                    "id": str(meta.get("id", "")),
+    try:
+        for index, (prompt, source_rows) in enumerate(by_prompt.items(), 1):
+            meta = source_rows[0]
+            result_written = False
+            category = str(meta.get("category") or "<missing>")
+            category_counts[category] += 1
+            try:
+                # Parser is stateful: reusing one instance accumulates prior
+                # Document.features and corrupts per-prompt counts.
+                parsed = Parser().parse(prompt)
+                features = getattr(getattr(parsed, "doc", None), "features", []) or []
+                ok = bool(getattr(parsed, "ok", False))
+                message = str(getattr(parsed, "message", "") or "")
+                snapshot = {
+                    "schema_version": 1,
+                    "dataset_id": str(meta.get("id", "")),
+                    "prompt_sha256": hashlib.sha256(prompt.encode("utf-8")).hexdigest(),
+                    "parse_ok": ok,
+                    "feature_count": len(features),
+                    "features": [feature_snapshot(feature) for feature in features],
+                    "warnings": json_safe(getattr(parsed, "warnings", [])),
+                    "steps": json_safe(getattr(parsed, "steps", [])),
+                    "recognized": json_safe(getattr(parsed, "recognized", None)),
+                    "message": message,
+                    "questions": json_safe(getattr(parsed, "questions", [])),
+                    "assumed": json_safe(getattr(parsed, "assumed", [])),
+                    "used_templates": json_safe(getattr(parsed, "used_templates", [])),
+                }
+                result_file.write(json.dumps(snapshot, ensure_ascii=False, sort_keys=True, separators=(",", ":")) + "\n")
+                result_rows += 1
+                result_written = True
+                signature_counts: Counter[str] = Counter()
+                signature_hash = hashlib.sha256()
+                sequence_prefix: list[str] = []
+                sequence_suffix: deque[str] = deque(maxlen=4)
+                unique_kinds: set[str] = set()
+                for feature in features:
+                    kind = str(getattr(feature, "kind", "<missing>"))
+                    operation = str(getattr(feature, "op", "<missing>"))
+                    token = f"{kind}:{operation}"
+                    signature_counts[token] += 1
+                    unique_kinds.add(kind)
+                    if len(sequence_prefix) < 6:
+                        sequence_prefix.append(token)
+                    sequence_suffix.append(token)
+                    signature_hash.update(token.encode("utf-8"))
+                    signature_hash.update(b"\0")
+                    feature_type_instance_counts[kind] += 1
+                feature_count = len(features)
+                composition = ",".join(f"{token}x{count}" for token, count in sorted(signature_counts.items())) or "none"
+                prefix = ">".join(sequence_prefix) or "none"
+                suffix = ">".join(sequence_suffix) or "none"
+                signature = f"n={feature_count};mix={composition};first={prefix};last={suffix};seq={signature_hash.hexdigest()[:16]}"
+                has_features = bool(features)
+                all_feature_counts.append(feature_count)
+                ok_count += int(ok)
+                nonempty_count += int(has_features)
+                ok_empty_count += int(ok and not has_features)
+                false_with_features += int((not ok) and has_features)
+                combination_counts[signature] += 1
+                category_signatures[category][signature] += 1
+                if has_features:
+                    success_category_counts[category] += 1
+                    feature_type_prompt_counts.update(unique_kinds)
+                if not ok or not has_features:
+                    failures.append({
+                        "id": str(meta.get("id", "")),
+                        "category": category,
+                        "group": str(meta.get("group", "")),
+                        "variant": str(meta.get("variant", "")),
+                        "parser_ok": ok,
+                        "feature_count": feature_count,
+                        "signature": signature,
+                        "message": message[:240],
+                    })
+                per_prompt[prompt] = {
                     "category": category,
                     "group": str(meta.get("group", "")),
                     "variant": str(meta.get("variant", "")),
                     "parser_ok": ok,
                     "feature_count": feature_count,
                     "signature": signature,
-                    "message": message[:240],
+                }
+                largest_feature_prompts.append({
+                    "id": str(meta.get("id", "")),
+                    "category": category,
+                    "group": str(meta.get("group", "")),
+                    "variant": str(meta.get("variant", "")),
+                    "feature_count": feature_count,
+                    "composition": composition,
+                    "sequence_sha256": signature_hash.hexdigest(),
                 })
-            per_prompt[prompt] = {
-                "category": category,
-                "group": str(meta.get("group", "")),
-                "variant": str(meta.get("variant", "")),
-                "parser_ok": ok,
-                "feature_count": feature_count,
-                "signature": signature,
-            }
-            largest_feature_prompts.append({
-                "id": str(meta.get("id", "")),
-                "category": category,
-                "group": str(meta.get("group", "")),
-                "variant": str(meta.get("variant", "")),
-                "feature_count": feature_count,
-                "composition": composition,
-                "sequence_sha256": signature_hash.hexdigest(),
-            })
-        except Exception as exc:
-            exception_count += 1
-            failures.append({
-                "id": str(meta.get("id", "")),
-                "category": category,
-                "group": str(meta.get("group", "")),
-                "variant": str(meta.get("variant", "")),
-                "parser_ok": False,
-                "feature_count": 0,
-                "signature": "<exception>",
-                "message": f"{type(exc).__name__}: {exc}"[:240],
-            })
-            per_prompt[prompt] = {
-                "category": category,
-                "group": str(meta.get("group", "")),
-                "variant": str(meta.get("variant", "")),
-                "parser_ok": False,
-                "feature_count": 0,
-                "signature": "<exception>",
-            }
-        if index % 100 == 0 or index == len(by_prompt):
-            elapsed = time.monotonic() - started
-            print(f"Parser.parse progress: {index}/{len(by_prompt)} unique prompts; {elapsed:.1f}s", flush=True)
+            except Exception as exc:
+                exception_count += 1
+                error_message = f"{type(exc).__name__}: {exc}"
+                snapshot = {
+                    "schema_version": 1,
+                    "dataset_id": str(meta.get("id", "")),
+                    "prompt_sha256": hashlib.sha256(prompt.encode("utf-8")).hexdigest(),
+                    "parse_ok": False,
+                    "feature_count": 0,
+                    "features": [],
+                    "warnings": [],
+                    "steps": [],
+                    "recognized": None,
+                    "message": error_message,
+                    "questions": [],
+                    "assumed": [],
+                    "used_templates": [],
+                    "exception": error_message,
+                }
+                if not result_written:
+                    result_file.write(json.dumps(snapshot, ensure_ascii=False, sort_keys=True, separators=(",", ":")) + "\n")
+                    result_rows += 1
+                failures.append({
+                    "id": str(meta.get("id", "")),
+                    "category": category,
+                    "group": str(meta.get("group", "")),
+                    "variant": str(meta.get("variant", "")),
+                    "parser_ok": False,
+                    "feature_count": 0,
+                    "signature": "<exception>",
+                    "message": error_message[:240],
+                })
+                per_prompt[prompt] = {
+                    "category": category,
+                    "group": str(meta.get("group", "")),
+                    "variant": str(meta.get("variant", "")),
+                    "parser_ok": False,
+                    "feature_count": 0,
+                    "signature": "<exception>",
+                }
+            if index % 100 == 0 or index == len(by_prompt):
+                elapsed = time.monotonic() - started
+                print(f"Parser.parse progress: {index}/{len(by_prompt)} unique prompts; {elapsed:.1f}s", flush=True)
+        result_file.flush()
+        result_file.detach()
+        compressed_result_file.close()
+        raw_result_file.flush()
+        os.fsync(raw_result_file.fileno())
+        raw_result_file.close()
+        os.replace(result_temp_name, RESULTS_JSONL)
+    except BaseException:
+      try:
+        result_file.close()
+      except Exception:
+        pass
+      try:
+        raw_result_file.close()
+      except Exception:
+        pass
+      try:
+        os.unlink(result_temp_name)
+      except FileNotFoundError:
+        pass
+      raise
 
     dataset_prompts = set(by_prompt)
     in_catalog = dataset_prompts & catalog_prompts
@@ -170,6 +271,8 @@ def main() -> int:
     sorted_feature_counts = sorted(all_feature_counts)
     p95_index = max(0, min(len(sorted_feature_counts) - 1, int(0.95 * len(sorted_feature_counts) + 0.999999) - 1))
     largest_feature_prompts.sort(key=lambda item: (-item["feature_count"], item["id"]))
+    compressed_snapshot = RESULTS_JSONL.read_bytes()
+    uncompressed_snapshot = gzip.decompress(compressed_snapshot)
 
     summary = {
         "schema_version": 1,
@@ -181,6 +284,7 @@ def main() -> int:
             "document_stats_calls": 0,
             "deduplication": "exact Unicode prompt string; duplicate rows counted once for parser statistics",
             "raw_prompt_text_persisted": False,
+            "detailed_result_snapshot": "one JSONL record per exact unique prompt, in input order; prompt itself omitted; fields include dataset_id, UTF-8 prompt_sha256, ParseResult fields, and full ordered Feature.to_dict-compatible data",
             "current_f589_comparison": "exact prompt string set comparison against rows[].input in the saved F5.89 66-row audit fixture",
             "parser_success_definition": "ParseResult.ok is true and doc.features is non-empty; counts are also reported separately to expose false/empty combinations",
         },
@@ -195,6 +299,25 @@ def main() -> int:
             "unique_exact_prompts": len(by_prompt),
             "duplicate_prompt_rows_removed": len(prompt_rows) - len(by_prompt),
             "missing_or_blank_prompt_rows": len(rows) - len(prompt_rows),
+        },
+        "feature_snapshot": {
+            "path": RESULTS_JSONL.name,
+            "schema_version": 1,
+            "rows": result_rows,
+            "sha256": hashlib.sha256(compressed_snapshot).hexdigest(),
+            "byte_length": len(compressed_snapshot),
+            "compression": {
+                "format": "gzip",
+                "mtime": 0,
+                "uncompressed_sha256": hashlib.sha256(uncompressed_snapshot).hexdigest(),
+                "uncompressed_byte_length": len(uncompressed_snapshot),
+                "compressed_sha256": hashlib.sha256(compressed_snapshot).hexdigest(),
+                "compressed_byte_length": len(compressed_snapshot),
+                "size_reduction_percent": round((1 - len(compressed_snapshot) / len(uncompressed_snapshot)) * 100, 2) if uncompressed_snapshot else 0,
+            },
+            "raw_prompt_text_persisted": False,
+            "row_fields": ["schema_version", "dataset_id", "prompt_sha256", "parse_ok", "feature_count", "features", "warnings", "steps", "recognized", "message", "questions", "assumed", "used_templates"],
+            "feature_fields": ["kind", "op", "params", "name", "feature_id", "relations", "enabled", "provenance", "warnings", "note"],
         },
         "parser_counts": {
             "parse_ok": ok_count,
