@@ -1,0 +1,330 @@
+{
+  "evidence_kind": "old_python_quick_raw_mesh_baseline",
+  "oracle_scope": "Parser.parse -> Document.build -> binary STL",
+  "explicitly_not_used": [
+    "Document.build_brep",
+    "Rust Quick",
+    "Cargo",
+    "CATIA"
+  ],
+  "prompt": "花键轴 小径20 大径25 长度40 齿数8 键槽宽5",
+  "prompt_sha256_utf8": "b536bef2bf0afc03206af91f155b5db5727ceddf67b5c922e7fb4768da845966",
+  "parser_result": {
+    "class": "ParseResult",
+    "ok": true,
+    "recognized": 2,
+    "message": "",
+    "steps": [
+      "零件库识别: 花键轴 (来自机械设计手册)",
+      "同句附加要求: 键槽宽5",
+      "凹槽 20×5 深 5 mm"
+    ],
+    "warnings": [],
+    "questions": [],
+    "assumed": []
+  },
+  "document": {
+    "name": "Part1",
+    "source_prompt": "花键轴 小径20 大径25 长度40 齿数8 键槽宽5",
+    "features": [
+      {
+        "kind": "prism",
+        "params": {
+          "profile": [
+            [
+              9.808,
+              -1.9499
+            ],
+            [
+              10.0,
+              0.0
+            ],
+            [
+              12.4946,
+              0.3681
+            ],
+            [
+              12.3764,
+              1.7532
+            ],
+            [
+              12.1053,
+              3.1165
+            ],
+            [
+              11.6844,
+              4.4414
+            ],
+            [
+              9.2388,
+              3.8268
+            ],
+            [
+              8.3141,
+              5.5565
+            ],
+            [
+              7.0711,
+              7.0711
+            ],
+            [
+              8.5747,
+              9.0953
+            ],
+            [
+              7.5118,
+              9.9911
+            ],
+            [
+              6.356,
+              10.7634
+            ],
+            [
+              5.1216,
+              11.4026
+            ],
+            [
+              3.8268,
+              9.2388
+            ],
+            [
+              1.9499,
+              9.808
+            ],
+            [
+              0.0,
+              10.0
+            ],
+            [
+              -0.3681,
+              12.4946
+            ],
+            [
+              -1.7532,
+              12.3764
+            ],
+            [
+              -3.1165,
+              12.1053
+            ],
+            [
+              -4.4414,
+              11.6844
+            ],
+            [
+              -3.8268,
+              9.2388
+            ],
+            [
+              -5.5565,
+              8.3141
+            ],
+            [
+              -7.0711,
+              7.0711
+            ],
+            [
+              -9.0953,
+              8.5747
+            ],
+            [
+              -9.9911,
+              7.5118
+            ],
+            [
+              -10.7634,
+              6.356
+            ],
+            [
+              -11.4026,
+              5.1216
+            ],
+            [
+              -9.2388,
+              3.8268
+            ],
+            [
+              -9.808,
+              1.9499
+            ],
+            [
+              -10.0,
+              0.0
+            ],
+            [
+              -12.4946,
+              -0.3681
+            ],
+            [
+              -12.3764,
+              -1.7532
+            ],
+            [
+              -12.1053,
+              -3.1165
+            ],
+            [
+              -11.6844,
+              -4.4414
+            ],
+            [
+              -9.2388,
+              -3.8268
+            ],
+            [
+              -8.3141,
+              -5.5565
+            ],
+            [
+              -7.0711,
+              -7.0711
+            ],
+            [
+              -8.5747,
+              -9.0953
+            ],
+            [
+              -7.5118,
+              -9.9911
+            ],
+            [
+              -6.356,
+              -10.7634
+            ],
+            [
+              -5.1216,
+              -11.4026
+            ],
+            [
+              -3.8268,
+              -9.2388
+            ],
+            [
+              -1.9499,
+              -9.808
+            ],
+            [
+              -0.0,
+              -10.0
+            ],
+            [
+              0.3681,
+              -12.4946
+            ],
+            [
+              1.7532,
+              -12.3764
+            ],
+            [
+              3.1165,
+              -12.1053
+            ],
+            [
+              4.4414,
+              -11.6844
+            ],
+            [
+              3.8268,
+              -9.2388
+            ],
+            [
+              5.5565,
+              -8.3141
+            ],
+            [
+              7.0711,
+              -7.0711
+            ],
+            [
+              9.0953,
+              -8.5747
+            ],
+            [
+              9.9911,
+              -7.5118
+            ],
+            [
+              10.7634,
+              -6.356
+            ],
+            [
+              11.4026,
+              -5.1216
+            ],
+            [
+              9.2388,
+              -3.8268
+            ]
+          ],
+          "height": 40.0,
+          "center": [
+            0,
+            0,
+            0
+          ],
+          "axis": "Z"
+        },
+        "op": "add",
+        "name": "轮廓拉伸",
+        "note": "",
+        "feature_id": null,
+        "relations": [],
+        "enabled": true,
+        "provenance": {
+          "height": "explicit"
+        }
+      },
+      {
+        "kind": "pocket",
+        "params": {
+          "length": 20.0,
+          "width": 5.0,
+          "depth": 5.0,
+          "corner": 0.0,
+          "axis": "Z"
+        },
+        "op": "cut",
+        "name": "凹槽",
+        "note": "",
+        "feature_id": null,
+        "relations": [],
+        "enabled": true,
+        "provenance": {}
+      }
+    ]
+  },
+  "raw_mesh": {
+    "path": "legacy_document_build_raw.stl",
+    "format": "binary STL from legacy core.export.exporters.export_stl",
+    "sha256": "ce07dde16ba6426420bc04209eb07864499fc6cbce05c3f17002506fb4887266",
+    "bytes": 40584,
+    "stats": {
+      "faces": 474,
+      "triangles": 810,
+      "bbox": [
+        -12.4946,
+        -12.4946,
+        0.0,
+        12.4946,
+        12.4946,
+        40.0
+      ],
+      "size": [
+        24.9892,
+        24.9892,
+        40.0
+      ],
+      "volume": 15251.808174272426,
+      "area": 5186.4108790391365
+    }
+  },
+  "runtime": {
+    "python": "3.11.9",
+    "implementation": "CPython"
+  },
+  "limitations": [
+    "This is the legacy Quick tessellated mesh output, not a B-Rep/CATIA result.",
+    "The old parser applies its generic pocket defaults to the keyway phrase: length 20, width 5, depth 5 mm; it does not infer an engineering keyway location or fit.",
+    "This baseline does not establish Rust parity, manufacturing suitability, or continuous Hausdorff distance."
+  ]
+}
