@@ -14,6 +14,19 @@
       "thickness_source": "user"
     },
     {
+      "input": "基板 长度100 宽度80 厚度10 中心盲孔直径12深5",
+      "dimensions_mm": [100.0, 80.0, 10.0],
+      "feature_count": 2,
+      "base": false,
+      "thickness_source": "user",
+      "hole_diameter_mm": 12.0,
+      "hole_pos": "center",
+      "hole_segments": 24,
+      "hole_through": false,
+      "hole_depth_mm": 5.0,
+      "hole_axis": "Z"
+    },
+    {
       "input": "基板 长度100 宽度80",
       "dimensions_mm": [100.0, 80.0, 6.0],
       "volume_mm3": 48000.0,
@@ -99,11 +112,63 @@
     {
       "input": "基板 长度300 宽度200 厚度12 孔径10 孔数2",
       "issue": "legacy_base_plate_corner_hole_margin_required"
+    },
+    {
+      "input": "基板 长度100 宽度80 厚度10 中心盲孔直径12",
+      "issue": "legacy_base_plate_blind_hole_depth_required"
+    },
+    {
+      "input": "基板 长度100 宽度80 厚度10 中心盲孔深5",
+      "issue": "legacy_base_plate_hole_diameter_required"
+    },
+    {
+      "input": "基板 长度100 宽度80 厚度10 中心盲孔直径12深10",
+      "issue": "legacy_base_plate_blind_hole_depth_out_of_bounds"
+    },
+    {
+      "input": "基板 长度100 宽度80 厚度10 中心盲孔直径12深-1",
+      "issue": "legacy_base_plate_blind_hole_depth_invalid"
     }
   ],
   "unsupported": [
     {
       "input": "基板 长度300 宽度200 厚度12 沉孔直径10",
+      "issue": "legacy_base_plate_modifier_not_migrated"
+    },
+    {
+      "input": "基板 长度100 宽度80 厚度10 中心盲孔直径12深5 孔数2",
+      "issue": "legacy_base_plate_modifier_not_migrated"
+    },
+    {
+      "input": "基板 长度100 宽度80 厚度10 侧面中心盲孔直径12深5",
+      "issue": "legacy_base_plate_modifier_not_migrated"
+    },
+    {
+      "input": "基板 长度100 宽度80 厚度10 2个中心盲孔直径12深5",
+      "issue": "legacy_base_plate_modifier_not_migrated"
+    },
+    {
+      "input": "基板 长度100 宽度80 厚度10 中心盲孔直径12深5 2个",
+      "issue": "legacy_base_plate_modifier_not_migrated"
+    },
+    {
+      "input": "基板 长度100 宽度80 厚度10 中心盲孔直径12深5沿X轴",
+      "issue": "legacy_base_plate_modifier_not_migrated"
+    },
+    {
+      "input": "基板 长度100 宽度80 厚度10 中心盲孔直径12深5沿Y轴",
+      "issue": "legacy_base_plate_modifier_not_migrated"
+    },
+    {
+      "input": "基板 长度100 宽度80 厚度10 中心盲孔直径12深5底面入口",
+      "issue": "legacy_base_plate_modifier_not_migrated"
+    },
+    {
+      "input": "基板 长度100 宽度80 厚度10 中心盲孔直径12深5底面开孔",
+      "issue": "legacy_base_plate_modifier_not_migrated"
+    },
+    {
+      "input": "基板 长度100 宽度80 厚度10 中心盲孔直径12深5沿-Z轴",
       "issue": "legacy_base_plate_modifier_not_migrated"
     }
   ],

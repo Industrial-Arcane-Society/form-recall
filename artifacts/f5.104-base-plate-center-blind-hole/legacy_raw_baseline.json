@@ -1,0 +1,308 @@
+{
+  "evidence_kind": "old_python_quick_base_plate_center_blind_hole_baseline",
+  "oracle_scope": "legacy Parser.parse -> Document.build -> binary STL; separate Document.build_brep attempt",
+  "prompt": "基板 长度100 宽度80 厚度10 中心盲孔直径12深5",
+  "prompt_sha256_utf8": "e4eba5506228636a08f25c962de5b3e780590c6df0379afeca1186ae3564709c",
+  "parser_result": {
+    "class": "ParseResult",
+    "ok": true,
+    "recognized": 2,
+    "message": "",
+    "steps": [
+      "零件库识别: 基板 (来自机械设计手册)",
+      "同句附加要求: 中心盲孔直径12深5",
+      "孔 ⌀12 @中心 盲孔深5"
+    ],
+    "warnings": [],
+    "questions": [],
+    "assumed": []
+  },
+  "document": {
+    "name": "Part1",
+    "source_prompt": "基板 长度100 宽度80 厚度10 中心盲孔直径12深5",
+    "features": [
+      {
+        "kind": "box",
+        "params": {
+          "length": 100.0,
+          "width": 80.0,
+          "height": 10.0,
+          "corner": 0.0,
+          "corner_mode": "fillet",
+          "center": [
+            0,
+            0,
+            0
+          ],
+          "base": false,
+          "axis": "Z"
+        },
+        "op": "add",
+        "name": "基板",
+        "note": "",
+        "feature_id": null,
+        "relations": [],
+        "enabled": true,
+        "provenance": {
+          "length": "explicit",
+          "width": "explicit",
+          "height": "explicit"
+        }
+      },
+      {
+        "kind": "hole",
+        "params": {
+          "diameter": 12.0,
+          "through": false,
+          "axis": "Z",
+          "pos": "center",
+          "segments": 24,
+          "depth": 5.0
+        },
+        "op": "cut",
+        "name": "孔",
+        "note": "",
+        "feature_id": null,
+        "relations": [],
+        "enabled": true,
+        "provenance": {
+          "diameter": "explicit",
+          "depth": "explicit"
+        }
+      }
+    ],
+    "feature_provenance_summary": [
+      {
+        "index": 0,
+        "kind": "box",
+        "provenance": {
+          "length": "explicit",
+          "width": "explicit",
+          "height": "explicit"
+        }
+      },
+      {
+        "index": 1,
+        "kind": "hole",
+        "provenance": {
+          "diameter": "explicit",
+          "depth": "explicit"
+        }
+      }
+    ]
+  },
+  "raw_mesh": {
+    "path": "legacy_document_build_raw.stl",
+    "format": "binary STL exported from legacy Document.build polygons",
+    "sha256": "5dda2478cff852f63fbb45ad0f00119c971c4dc35481ebe4f7a4f4489657eafa",
+    "bytes": 6484,
+    "stats": {
+      "faces": 66,
+      "triangles": 128,
+      "bbox": [
+        -50.0,
+        -40.0,
+        -5.0,
+        50.0,
+        40.0,
+        5.0
+      ],
+      "size": [
+        100.0,
+        80.0,
+        10.0
+      ],
+      "volume": 79440.95086257835,
+      "area": 19787.95771679696
+    },
+    "topology": {
+      "weld_tolerance_mm": 1e-05,
+      "triangle_count": 128,
+      "unique_welded_vertices": 91,
+      "undirected_edge_count": 244,
+      "boundary_edge_count": 104,
+      "nonmanifold_edge_count": 0,
+      "winding_conflict_edge_count": 0,
+      "connected_triangle_components": 16,
+      "closed_by_welded_triangle_edge_incidence": false,
+      "method_limit": "Triangle vertices are quantized to the stated weld tolerance; this is a raw mesh diagnostic, not a B-Rep validity result."
+    },
+    "volume_semantics": "Document.stats().volume is a legacy polygon-mesh scalar only; it is not a B-Rep volume."
+  },
+  "brep": {
+    "attempted": true,
+    "available": true,
+    "report": {
+      "backend": "occt_brep",
+      "kernel": "可用：OCCT 7.9.3.1 / cadquery-ocp-novtk 7.9.3.1.1",
+      "self_intersection_face_limit": 15000,
+      "geometry_state": "passed",
+      "state": "passed",
+      "brep_valid": true,
+      "shape_type": "TopAbs_COMPOUND",
+      "solid_count": 1,
+      "connected_component_count": 1,
+      "shell_count": 1,
+      "closed_shell_count": 1,
+      "closed": true,
+      "edge_count": 30,
+      "face_count": 8,
+      "free_edge_count": 0,
+      "volume_mm3": 79434.51332235384,
+      "bbox_mm": [
+        -50.0,
+        -40.0,
+        -5.0,
+        50.0,
+        40.0,
+        5.0
+      ],
+      "self_intersection": {
+        "status": "checked_no_intersection",
+        "face_count": 8,
+        "face_limit": 15000,
+        "check_result_count": 0,
+        "check_statuses": [],
+        "method": "BOPAlgo_ArgumentAnalyzer(SelfInterMode=True, UseOBB=True)"
+      },
+      "validity_method": "BRepCheck_Analyzer",
+      "geometry_scope": "native_OCCT_BREP_only_visual_comparison_not_performed",
+      "feature_results": [
+        {
+          "feature_id": "0",
+          "kind": "box",
+          "operation": "add",
+          "geometry_support": "exact",
+          "builder": "analytic_prism",
+          "state": "applied",
+          "source_feature_id": null,
+          "source_resolution": null,
+          "solid_count": 1,
+          "brep_valid": true,
+          "before_volume_mm3": 0.0,
+          "after_volume_mm3": 79999.99999999999,
+          "volume_delta_mm3": 79999.99999999999,
+          "cylindrical_cut_intents": [],
+          "depth_measurement": null,
+          "facet_count": null
+        },
+        {
+          "feature_id": "1",
+          "kind": "hole",
+          "operation": "cut",
+          "geometry_support": "exact",
+          "builder": "analytic_cylindrical_bores",
+          "state": "applied",
+          "source_feature_id": null,
+          "source_resolution": null,
+          "solid_count": 1,
+          "brep_valid": true,
+          "before_volume_mm3": 79999.99999999999,
+          "after_volume_mm3": 79434.51332235384,
+          "volume_delta_mm3": -565.4866776461422,
+          "cylindrical_cut_intents": [],
+          "depth_measurement": null,
+          "facet_count": null
+        }
+      ],
+      "hole_instances": [
+        {
+          "feature_id": "孔",
+          "instance_index": 1,
+          "axis": "Z",
+          "centerline_mm": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "diameter_mm": 12.0,
+          "depth_mm": 5.0,
+          "through": false,
+          "planned_status": "pending",
+          "status": "verified_blind",
+          "reason": "计划深度内轴线无实体，孔底后仍有实体，且解析圆柱壁面的孔径与环形支撑均匹配。",
+          "axis_surface_crossings": 0,
+          "centerline_material_segments": [],
+          "ring_supported": [
+            true
+          ],
+          "measured_diameter_mm": 12.0,
+          "diameter_candidates_mm": [
+            12.0
+          ],
+          "measured_depth_mm": 5.0,
+          "matching_cylindrical_faces": [
+            {
+              "radius_mm": 6.0,
+              "diameter_mm": 12.0,
+              "axis_line_distance_mm": 0.0,
+              "axis_parallel_dot": 1.0,
+              "axis_interval_mm": [
+                0.0,
+                5.0
+              ],
+              "surface_type": "analytic_cylinder"
+            }
+          ],
+          "centerline_proof": {
+            "method": "IntCurvesFace_ShapeIntersector exact line/trimmed-face events + BRepClass3d interval classification",
+            "intersection_count": 0,
+            "segments": [
+              {
+                "axis_interval_mm": [
+                  1e-05,
+                  5.001
+                ],
+                "midpoint_mm": 2.500505,
+                "inside_solid": false
+              }
+            ],
+            "material_segments": []
+          },
+          "wall_support": {
+            "supported": true,
+            "ring_supported": [
+              true
+            ],
+            "sampled_axis_stations_mm": [
+              2.5
+            ],
+            "supported_axis_stations_mm": [
+              2.5
+            ],
+            "sample_count_per_section": 24,
+            "method": "BRepClass3d 24-point ring at 1.25 x measured radius, on measured cylinder-wall spans"
+          },
+          "method": "OCCT trimmed-face line intersections + BRepClass3d interval/ring classification + analytic cylindrical-face radius/axis measurement"
+        }
+      ],
+      "unverified_cut_intents": [],
+      "hole_feature_count": 1,
+      "measured_hole_source_feature_count": 1,
+      "unverified_cut_intent_count": 0,
+      "planned_hole_instance_count": 1,
+      "active_hole_instance_count": 1,
+      "superseded_hole_instance_count": 0,
+      "active_through_hole_count": 0,
+      "through_hole_count": 0,
+      "all_declared_holes_verified": true,
+      "visual_validation": "not_performed",
+      "catia_executed": false,
+      "build_transaction": "每个特征验证成功后才提交；失败保留上一有效实体"
+    },
+    "path": "legacy_document_build_brep.brep",
+    "sha256": "21d6069b5b77336d6ab26c15eb86c754b63a4a05ec4746603194970e5d5f7681",
+    "bytes": 2726,
+    "written": true
+  },
+  "runtime": {
+    "python": "3.11.9",
+    "implementation": "CPython"
+  },
+  "limitations": [
+    "Parser and raw mesh values above are runtime-observed from the old Python Quick entrypoint.",
+    "Raw triangle edge closure is assessed by vertex welding at 1e-5 mm and is separate from OCCT B-Rep validity.",
+    "Legacy mesh volume must not be presented as B-Rep volume.",
+    "No Rust Quick, Cargo, CATIA, or desktop UI was invoked or validated."
+  ]
+}

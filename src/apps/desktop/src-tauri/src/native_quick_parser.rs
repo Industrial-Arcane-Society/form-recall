@@ -1186,18 +1186,34 @@ fn parse_legacy_base_plate(raw: &str, text: &str) -> Option<Value> {
         return None;
     }
 
-    if contains_any(
+    let center_blind_hole = contains_any(text, &["中心盲孔"]);
+    let unsupported_modifier = contains_any(
         text,
         &[
-            "盲孔", "沉孔", "沉头", "沉台", "槽", "倒角", "圆角", "螺纹", "阵列", "分度圆",
-            "pcd", "键槽", "焊缝", "侧孔", "非圆孔",
+            "沉孔", "沉头", "沉台", "槽", "倒角", "圆角", "螺纹", "阵列", "分度圆", "pcd",
+            "键槽", "焊缝", "侧孔", "边孔", "非圆孔",
         ],
-    ) {
+    ) || (contains_any(text, &["盲孔"]) && !center_blind_hole)
+        || (center_blind_hole
+            && (text.matches("盲孔").count() != 1
+                || explicitly_multiple_holes(text)
+                || contains_any(text, &[
+                    "贯穿", "通孔", "偏心", "左侧", "右侧", "侧面", "边缘", "沿x", "x方向",
+                    "x轴", "x-axis", "along x", "horizontal", "沿y", "y方向", "y轴",
+                    "y-axis", "along y", "底面入口", "底部入口", "底面开孔", "底部开孔", "从底面",
+                    "从底部", "下表面", "从下表面", "沿-z轴", "-z", "负z",
+                ])
+                || has_corner_location(text)
+                || center_coordinates(text).is_some()
+                || named_xyz(text).is_some()
+                || contains_any(text, &["孔数", "孔数量", "hole count", "阵列", "均布", "等分"])
+                || pulley_scalar(raw, text, &["孔数", "孔数量", "hole count"], &["n"]).is_some()));
+    if unsupported_modifier {
         return Some(parse_result_with_issue(
             "unsupported",
             raw,
             "legacy_base_plate_modifier_not_migrated",
-            "旧 Python Quick 基板配方只覆盖矩形平板和 Z 向圆形贯穿孔；槽、沉孔、倒角及阵列尚未迁入。",
+            "旧 Python Quick 基板配方仅迁入矩形平板、Z 向圆形贯穿孔及单个明确中心盲孔；其他修改、位置或多孔要求尚未迁入。",
         ));
     }
 
@@ -1267,6 +1283,25 @@ fn parse_legacy_base_plate(raw: &str, text: &str) -> Option<Value> {
     let hole_requested = contains_any(text, &["孔", "hole", "bore"])
         || hole_count.is_some()
         || margin.is_some();
+    let blind_depth = center_blind_hole.then(|| hole_depth_value(text)).flatten();
+    if center_blind_hole && blind_depth.is_none() {
+        return Some(parse_result_with_issue(
+            "needs_clarification",
+            raw,
+            "legacy_base_plate_blind_hole_depth_required",
+            "中心盲孔缺少明确深度；请给出小于板厚的正深度。",
+        ));
+    }
+    if center_blind_hole
+        && blind_depth.is_some_and(|depth| !depth.is_finite() || depth <= 0.0)
+    {
+        return Some(parse_result_with_issue(
+            "needs_clarification",
+            raw,
+            "legacy_base_plate_blind_hole_depth_invalid",
+            "中心盲孔深度必须是有限正数。",
+        ));
+    }
     if explicit_diameter.is_some_and(|value| !value.is_finite() || value <= 0.0) {
         return Some(parse_result_with_issue(
             "needs_clarification",
@@ -1339,6 +1374,14 @@ fn parse_legacy_base_plate(raw: &str, text: &str) -> Option<Value> {
             raw,
             "legacy_base_plate_center_hole_out_of_bounds",
             "中心孔直径必须小于基板长、宽。",
+        ));
+    }
+    if center_blind_hole && blind_depth.is_some_and(|depth| depth >= thickness) {
+        return Some(parse_result_with_issue(
+            "needs_clarification",
+            raw,
+            "legacy_base_plate_blind_hole_depth_out_of_bounds",
+            "中心盲孔深度必须小于基板厚度，避免退化为贯穿孔。",
         ));
     }
 
@@ -1421,7 +1464,7 @@ fn parse_legacy_base_plate(raw: &str, text: &str) -> Option<Value> {
         let mut sources = serde_json::Map::new();
         for (key, value) in [
             ("diameter", json!(hole_diameter)),
-            ("through", json!(true)),
+            ("through", json!(!center_blind_hole)),
             ("pos", json!(if corner_holes { "corners" } else { "center" })),
             ("axis", json!("Z")),
             ("segments", json!(segments)),
@@ -1431,17 +1474,27 @@ fn parse_legacy_base_plate(raw: &str, text: &str) -> Option<Value> {
         sources.insert("diameter".into(), user_source(raw));
         sources.insert(
             "through".into(),
-            derived_source(raw, "旧 Python Quick 基板安装孔为 Z 向贯穿孔。"),
+            if center_blind_hole {
+                user_source(raw)
+            } else {
+                derived_source(raw, "旧 Python Quick 基板安装孔为 Z 向贯穿孔。")
+            },
         );
         sources.insert(
             "pos".into(),
             if corner_holes {
+                user_source(raw)
+            } else if center_blind_hole {
                 user_source(raw)
             } else {
                 derived_source(raw, "旧 Python Quick 基板只给孔径时默认在板中心开孔。")
             },
         );
         sources.insert("axis".into(), derived_source(raw, "旧 Python Quick 基板孔沿 Z 轴切除。"));
+        if let Some(depth) = blind_depth {
+            parameters.insert("depth".into(), json!(depth));
+            sources.insert("depth".into(), user_source(raw));
+        }
         sources.insert(
             "segments".into(),
             derived_source(raw, if partlib_hole { "沿用旧基板部件库圆孔分段数 32。" } else { "沿用旧通用孔圆周分段数 24。" }),
@@ -1461,7 +1514,7 @@ fn parse_legacy_base_plate(raw: &str, text: &str) -> Option<Value> {
             "id":"quick-0002",
             "kind":"hole",
             "operation":"cut",
-            "name":if corner_holes { "四角安装孔" } else { "中心安装孔" },
+            "name":if center_blind_hole { "中心盲孔" } else if corner_holes { "四角安装孔" } else { "中心安装孔" },
             "parameters":parameters,
             "sources":sources,
             "relations":[]
@@ -12541,6 +12594,26 @@ fn explicitly_multiple_holes(clause: &str) -> bool {
         return true;
     }
 
+    let trailing_count = regex::Regex::new(
+        r"(?:通孔|盲孔|孔|holes?|bores?)[^，,;；。]{0,24}(?P<count>[0-9]+|[一二两三四五六七八九十百千]+)\s*(?:个|只|处|枚)",
+    )
+    .expect("fixed trailing hole-count regex");
+    if trailing_count.captures_iter(clause).any(|capture| {
+        let count = capture.name("count").map(|value| value.as_str()).unwrap_or("");
+        count
+            .parse::<u64>()
+            .map(|value| value > 1)
+            .unwrap_or_else(|_| {
+                count != "一"
+                    && count.chars().any(|value| {
+                        mandarin_count(value).is_some_and(|number| number > 1)
+                            || matches!(value, '十' | '百' | '千')
+                    })
+            })
+    }) {
+        return true;
+    }
+
     let numeric_hole_count = regex::Regex::new(
         r"(?P<count>[2-9][0-9]*)\s*(?:通孔|盲孔|孔)|\b(?P<english_count>[2-9][0-9]*)\s+(?:(?:through|blind)\s+)?holes?\b",
     )
@@ -20435,6 +20508,24 @@ mod f5_57_legacy_base_plate_contract_tests {
             assert_eq!(hole["parameters"]["diameter"], case["hole_diameter_mm"], "{input}");
             assert_eq!(hole["parameters"]["pos"], case["hole_pos"], "{input}");
             assert_eq!(hole["parameters"]["segments"], case["hole_segments"], "{input}");
+            if case["hole_through"].is_boolean() {
+                assert_eq!(hole["parameters"]["through"], case["hole_through"], "{input}");
+            }
+            if case["hole_depth_mm"].is_number() {
+                assert_eq!(hole["parameters"]["depth"], case["hole_depth_mm"], "{input}");
+                assert_eq!(hole["parameters"]["axis"], case["hole_axis"], "{input}");
+                assert_eq!(hole["sources"]["diameter"]["type"], "user", "{input}");
+                assert_eq!(hole["sources"]["depth"]["type"], "user", "{input}");
+                assert_eq!(hole["sources"]["through"]["type"], "user", "{input}");
+                assert_eq!(hole["sources"]["pos"]["type"], "user", "{input}");
+                assert_eq!(hole["sources"]["axis"]["type"], "derived", "{input}");
+                for key in ["diameter", "depth", "through", "pos"] {
+                    assert_eq!(hole["sources"][key]["evidence"], input, "{input}: {key} provenance");
+                }
+                assert_eq!(hole["sources"]["axis"]["evidence"], input, "{input}: axis provenance");
+                assert!(hole["sources"]["axis"]["note"].as_str().unwrap_or("")
+                    .contains("旧 Python Quick 基板孔沿 Z 轴切除"), "{input}: {}", hole["sources"]["axis"]);
+            }
             if case["hole_margin_mm"].is_number() {
                 assert_eq!(hole["parameters"]["margin"], case["hole_margin_mm"], "{input}");
             }
@@ -20496,6 +20587,73 @@ mod f5_57_legacy_base_plate_contract_tests {
             assert_eq!(output["status"], "unsupported", "{input}: {output}");
             assert!(output["plan"].is_null(), "{input}: {output}");
             assert!(output.to_string().contains(case["issue"].as_str().unwrap()), "{input}: {output}");
+        }
+    }
+
+    #[test]
+    #[ignore = "requires the staged local OCCT runtime manifest"]
+    fn f5_104_center_blind_base_plate_builds_verified_brep_matching_legacy_oracle() {
+        use serde_json::json;
+        use std::{fs, path::PathBuf, time::{SystemTime, UNIX_EPOCH}};
+
+        let manifest = std::env::var_os("AIMODELER_TEST_OCCT_MANIFEST")
+            .map(PathBuf::from)
+            .expect("set AIMODELER_TEST_OCCT_MANIFEST to the staged runtime-manifest.json");
+        assert!(manifest.is_file(), "missing OCCT manifest: {}", manifest.display());
+        let input = "基板 长度100 宽度80 厚度10 中心盲孔直径12深5";
+        let root = std::env::temp_dir().join(format!(
+            "f5-104-base-plate-blind-hole-{}-{}",
+            std::process::id(),
+            SystemTime::now().duration_since(UNIX_EPOCH).expect("system clock").as_nanos(),
+        ));
+        fs::create_dir_all(&root).expect("create temporary output root");
+        struct RemoveOnDrop(PathBuf);
+        impl Drop for RemoveOnDrop { fn drop(&mut self) { let _ = fs::remove_dir_all(&self.0); } }
+        let _cleanup = RemoveOnDrop(root.clone());
+
+        let output = crate::native_quick::build(input, 1, &manifest, &root)
+            .unwrap_or_else(|error| panic!("native Quick build failed: {error}"));
+        assert_eq!(output["state"], "complete", "{output}");
+        let report = &output["geometry_report"];
+        assert_eq!(report["state"], "passed", "{report}");
+        assert_eq!(report["valid"], true, "{report}");
+        assert_eq!(report["closed_solid_count"], 1, "{report}");
+        assert_eq!(report["bounds_mm"], json!([-50.0, -40.0, -5.0, 50.0, 40.0, 5.0]));
+        assert_eq!(report["hole_measurements_verified"], true, "{report}");
+        let holes = report["hole_instances"].as_array().expect("measured hole instances");
+        assert_eq!(holes.len(), 1, "{report}");
+        let hole = &holes[0];
+        assert_eq!(hole["status"], "verified_blind", "{hole}");
+        assert_eq!(hole["through"], false, "{hole}");
+        assert!((hole["diameter_mm"].as_f64().unwrap() - 12.0).abs() < 1e-8, "{hole}");
+        assert!((hole["depth_mm"].as_f64().unwrap() - 5.0).abs() < 1e-8, "{hole}");
+        assert!(hole["centerline_mm"][0].as_f64().unwrap().abs() < 1e-6, "{hole}");
+        assert!(hole["centerline_mm"][1].as_f64().unwrap().abs() < 1e-6, "{hole}");
+        let measurement = &hole["final_measurement"];
+        assert_eq!(measurement["accepted"], true, "{hole}");
+        let walls = measurement["matched_cylindrical_faces"].as_array().unwrap();
+        assert!(walls.iter().any(|face| {
+            let origin = face["axis_origin"].as_array();
+            let span = face["axial_parameter_span"].as_array();
+            origin.is_some_and(|v| v.len() == 3 && v[2].as_f64().unwrap_or(f64::NAN).abs() < 1e-5)
+                && span.is_some_and(|v| v.len() == 2
+                    && (v[0].as_f64().unwrap_or(f64::NAN)).abs() < 1e-5
+                    && (v[1].as_f64().unwrap_or(f64::NAN) - 5.0).abs() < 1e-5)
+        }), "blind wall must span from z=0 floor to z=5 opening: {measurement}");
+        let analytic_volume = 100.0 * 80.0 * 10.0 - std::f64::consts::PI * 6.0_f64.powi(2) * 5.0;
+        let volume = report["volume_mm3"].as_f64().expect("OCCT B-Rep volume");
+        assert!((volume - analytic_volume).abs() < 1e-3, "{report}");
+        assert!((volume - 79434.51332235384).abs() < 1e-3, "legacy B-Rep oracle mismatch: {report}");
+        if let Some(path) = std::env::var_os("AIMODELER_F5_104_RUST_STL_OUT") {
+            let path = PathBuf::from(path);
+            if let Some(parent) = path.parent() {
+                fs::create_dir_all(parent).expect("create Rust STL evidence directory");
+            }
+            fs::copy(
+                output["output_paths"]["stl"].as_str().expect("Rust Quick STL path"),
+                &path,
+            )
+                .unwrap_or_else(|error| panic!("copy Rust Quick STL evidence: {error}"));
         }
     }
 }
