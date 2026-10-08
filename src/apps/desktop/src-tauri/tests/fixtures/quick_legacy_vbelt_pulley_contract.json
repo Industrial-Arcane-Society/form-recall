@@ -80,6 +80,28 @@
       }
     },
     {
+      "input": "V带轮 基准直径100 槽数3 槽型A 内孔25 宽度50",
+      "expected_parameters": {
+        "pitch_d": 100.0,
+        "grooves": 3,
+        "height": 50.0,
+        "groove_type": "A",
+        "outer_d": 105.5,
+        "bore_d": 25.0,
+        "center": [0, 0, 0]
+      },
+      "sources": {
+        "pitch_d": "user",
+        "grooves": "user",
+        "height": "user",
+        "groove_type": "user",
+        "outer_d": "derived",
+        "bore_d": "user",
+        "center": "derived"
+      },
+      "quick_mesh_only_width_overlap": true
+    },
+    {
       "input": "皮带轮 基准直径120 槽数2 槽型B 宽度50 内径20",
       "expected_parameters": {
         "pitch_d": 118.0,

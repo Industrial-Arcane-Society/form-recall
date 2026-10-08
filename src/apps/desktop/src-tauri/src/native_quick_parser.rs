@@ -10436,7 +10436,7 @@ fn parse_legacy_timing_pulley(raw: &str, text: &str) -> Option<Value> {
             &format!("无法识别同步带轮齿型 {tooth_type:?}；请提供标准齿型代号。"),
         ));
     }
-    if !supported_native_types.contains(&tooth_type.as_str()) {
+    if !supported_native_types.contains(&tooth_type.as_str()) && tooth_type != "T10" {
         return Some(result(
             "unsupported",
             raw,
@@ -10531,7 +10531,25 @@ fn parse_legacy_timing_pulley(raw: &str, text: &str) -> Option<Value> {
         "bore_d":bore_d,
         "center":[0,0,0]
     });
-    if let Err(error) = crate::native_timing_pulley::preflight(&parameters) {
+    let legacy_t10_mesh_only = tooth_type == "T10";
+    if legacy_t10_mesh_only
+        && !crate::native_timing_pulley::legacy_quick_t10_parameters_supported(&parameters)
+    {
+        return Some(result(
+            "needs_clarification",
+            raw,
+            None,
+            vec![],
+            vec![issue(
+                "legacy_timing_pulley_mesh_scope_unsupported",
+                "该 T10 参数不在旧 Quick 网格兼容范围内，或已可走原生实体路径；请调整齿数、节径、轮宽或内孔。",
+            )],
+            vec![],
+        ));
+    }
+    if !legacy_t10_mesh_only
+        && let Err(error) = crate::native_timing_pulley::preflight(&parameters)
+    {
         return Some(result(
             "needs_clarification",
             raw,
@@ -10558,10 +10576,25 @@ fn parse_legacy_timing_pulley(raw: &str, text: &str) -> Option<Value> {
     if !tooth_type_explicit {
         defaults.push("齿型 XL");
     }
-    let mut warnings = vec![issue(
-        "native_timing_pulley_geometry_approximate",
-        "本地原生齿形使用梯形齿柱与解析环形盘体融合，属于旧 Quick 齿形近似；未生成真实齿形曲面。",
-    )];
+    let mut warnings = if legacy_t10_mesh_only {
+        vec![issue(
+            "legacy_timing_pulley_mesh_only",
+            "T10 沿用旧 Quick 原始三角网格兼容路径；不构建有效 B-Rep 实体，不能导出 CATPart。",
+        )]
+    } else {
+        vec![issue(
+            "native_timing_pulley_geometry_approximate",
+            "本地原生齿形使用梯形齿柱与解析环形盘体融合，属于旧 Quick 齿形近似；未生成真实齿形曲面。",
+        )]
+    };
+    if let Some(message) =
+        crate::native_timing_pulley::legacy_t10_tooth_spacing_warning(&parameters)
+    {
+        warnings.push(issue(
+            "legacy_timing_pulley_tooth_tip_overlap",
+            message,
+        ));
+    }
     if !defaults.is_empty() {
         warnings.push(issue(
             "legacy_timing_pulley_defaults",
@@ -15734,8 +15767,20 @@ mod tests {
                 feature["parameters"], case["expected_parameters"],
                 "{input}"
             );
-            crate::native_timing_pulley::preflight(&feature["parameters"])
-                .unwrap_or_else(|error| panic!("{input}: native preflight failed: {error}"));
+            if case["mesh_only"] == true {
+                assert!(crate::native_timing_pulley::is_mesh_only_legacy_quick_plan(plan));
+                assert!(crate::native_timing_pulley::legacy_quick_t10_parameters_supported(
+                    &feature["parameters"]
+                ));
+                assert!(
+                    output["warnings"]
+                        .to_string()
+                        .contains("legacy_timing_pulley_mesh_only")
+                );
+            } else {
+                crate::native_timing_pulley::preflight(&feature["parameters"])
+                    .unwrap_or_else(|error| panic!("{input}: native preflight failed: {error}"));
+            }
             for (key, source_type) in case["sources"].as_object().unwrap() {
                 assert_eq!(
                     feature["sources"][key]["type"], *source_type,
@@ -15755,6 +15800,14 @@ mod tests {
                 assert!(
                     output["warnings"].to_string().contains(warning),
                     "{input}: {output}"
+                );
+            }
+            if case["no_tooth_overlap_warning"] == true {
+                assert!(
+                    !output["warnings"]
+                        .to_string()
+                        .contains("legacy_timing_pulley_tooth_tip_overlap"),
+                    "{input}: unexpected tooth overlap warning: {output}"
                 );
             }
         }
@@ -15781,6 +15834,78 @@ mod tests {
                 );
             }
         }
+    }
+
+    #[test]
+    fn f5_106_t10_legacy_quick_parser_and_mesh_only_contract() {
+        let input = "同步带轮 T10 节圆直径95.493 齿数30 宽度16 内孔10";
+        let fixture: Value = serde_json::from_str(include_str!(
+            "../tests/fixtures/quick_legacy_timing_pulley_contract.json"
+        ))
+        .expect("timing pulley fixture is valid JSON");
+        for case in fixture["legacy_python_accepted"].as_array().unwrap() {
+            if case["expected_parameters"]["tooth_type"] != "T10" {
+                continue;
+            }
+            let case_input = case["input"].as_str().unwrap();
+            let case_output = parse(case_input);
+            assert_eq!(case_output["status"], "ready", "{case_input}: {case_output}");
+            if let Some(warning) = case["warning"].as_str() {
+                assert!(case_output["warnings"].to_string().contains(warning), "{case_input}: {case_output}");
+            }
+            if case["no_tooth_overlap_warning"] == true {
+                assert!(!case_output["warnings"].to_string().contains("legacy_timing_pulley_tooth_tip_overlap"), "{case_input}: {case_output}");
+            }
+            let case_plan = &case_output["plan"];
+            assert_eq!(
+                case_plan["features"][0]["parameters"],
+                case["expected_parameters"],
+                "{case_input}"
+            );
+            assert!(crate::native_timing_pulley::is_mesh_only_legacy_quick_plan(case_plan));
+            assert!(crate::native_timing_pulley::preflight(
+                &case_plan["features"][0]["parameters"]
+            ).is_err(), "{case_input}");
+        }
+        let fixture_case = fixture["legacy_python_accepted"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .find(|case| case["input"] == input)
+            .expect("T10 prompt is captured as a legacy accepted mesh-only case");
+        assert_eq!(fixture_case["mesh_only"], true);
+        let output = parse(input);
+        assert_eq!(output["status"], "ready", "{output}");
+        assert!(
+            output["warnings"]
+                .to_string()
+                .contains("legacy_timing_pulley_mesh_only")
+        );
+        let plan = &output["plan"];
+        assert_eq!(plan["features"][0]["parameters"], fixture_case["expected_parameters"]);
+        assert_eq!(
+            crate::cad_plan_validation::validate_plan(plan)["state"],
+            "valid"
+        );
+        assert!(
+            crate::native_timing_pulley::preflight(&plan["features"][0]["parameters"]).is_err()
+        );
+        assert!(crate::native_timing_pulley::is_mesh_only_legacy_quick_plan(plan));
+        assert_eq!(plan["features"][0]["kind"], "timing_pulley");
+        assert_eq!(plan["features"][0]["parameters"]["tooth_type"], "T10");
+        for key in ["pitch_d", "teeth", "height", "tooth_type", "bore_d"] {
+            assert_eq!(
+                plan["features"][0]["sources"][key]["type"],
+                "user",
+                "{key}"
+            );
+            assert_eq!(
+                plan["features"][0]["sources"][key]["evidence"],
+                input,
+                "{key}"
+            );
+        }
+        assert_eq!(plan["features"][0]["sources"]["center"]["type"], "derived");
     }
 
     #[test]

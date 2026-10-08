@@ -102,6 +102,62 @@ pub(crate) fn cadplan_to_project_mesh_only_vbelt(plan: &Value) -> Result<Value, 
     cadplan_to_project_with_policy(plan, true)
 }
 
+pub(crate) fn cadplan_to_project_mesh_only_timing(plan: &Value) -> Result<Value, String> {
+    if !crate::native_timing_pulley::is_mesh_only_legacy_quick_plan(plan) {
+        return Err("仅允许已识别的单特征 Quick T10 使用 mesh-only AIMODEL 转换。".into());
+    }
+    let mut project = cadplan_to_project_with_policy(plan, false)?;
+    project["compatibility_marker"] = json!({
+        "version":1,
+        "kind":"legacy_timing_pulley_mesh_only",
+        "plan_fingerprint":crate::cad_plan::geometry_fingerprint(plan)?
+    });
+    Ok(project)
+}
+
+/// Resolve and verify the versioned mesh-only AIMODEL marker. A markerless T10
+/// project is rejected explicitly because routing it through OCCT would not
+/// reproduce its saved legacy mesh-only Quick result.
+pub(crate) fn timing_mesh_only_plan_from_project(project: &Value) -> Result<Option<Value>, String> {
+    let marker = project.get("compatibility_marker");
+    if marker.is_none() {
+        if project.pointer("/cadplan/features/0/kind").and_then(Value::as_str)
+            == Some("timing_pulley")
+            && project.pointer("/cadplan/features/0/parameters/tooth_type").and_then(Value::as_str)
+                == Some("T10")
+        {
+            return Err("T10 mesh-only AIMODEL 缺少 compatibility_marker；拒绝回退到 OCCT 改变几何。".into());
+        }
+        return Ok(None);
+    }
+    if marker.and_then(|v| v["version"].as_u64()) != Some(1)
+        || marker.and_then(|v| v["kind"].as_str()) != Some("legacy_timing_pulley_mesh_only")
+    {
+        return Err("AIMODEL compatibility_marker 版本或 kind 不受支持。".into());
+    }
+    let plan = project.get("cadplan").filter(|v| v.is_object())
+        .ok_or("mesh-only AIMODEL 缺少 CADPlan。")?;
+    let fingerprint = crate::cad_plan::geometry_fingerprint(plan)?;
+    if marker.and_then(|v| v["plan_fingerprint"].as_str()) != Some(fingerprint.as_str()) {
+        return Err("AIMODEL compatibility_marker plan fingerprint 不匹配。".into());
+    }
+    if !crate::native_timing_pulley::is_mesh_only_legacy_quick_plan(plan) {
+        return Err("AIMODEL marker 对应的 CADPlan 不符合单特征 T10 mesh-only 合同。".into());
+    }
+    let regenerated = cadplan_to_project_mesh_only_timing(plan)?;
+    let old_features = project.get("features").and_then(Value::as_array)
+        .ok_or("mesh-only AIMODEL 缺少 features 数组。")?;
+    let new_features = regenerated.get("features").and_then(Value::as_array)
+        .ok_or("CADPlan marker 校验缺少重建 features。")?;
+    if old_features.len() != new_features.len()
+        || old_features.iter().zip(new_features).any(|(old, new)|
+            ["kind", "op", "params", "enabled"].iter().any(|key| old.get(*key) != new.get(*key)))
+    {
+        return Err("mesh-only AIMODEL feature rows 与标记 CADPlan 不一致。".into());
+    }
+    Ok(Some(plan.clone()))
+}
+
 fn cadplan_to_project_with_policy(
     plan: &Value,
     allow_legacy_mesh_only_vbelt: bool,

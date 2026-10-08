@@ -1,0 +1,309 @@
+{
+  "evidence_kind": "f5_106_t10_legacy_raw_mesh_parameter_matrix",
+  "oracle_scope": "Parser.parse -> mutate only center for the offset case -> Document.build -> raw STL",
+  "legacy_source": "src/legacy/ai_modeler/core/geometry/kernel.py::make_timing_pulley",
+  "weld_tolerance_mm": 1e-05,
+  "cases": [
+    {
+      "case": "d80-z24-w12-bore8-origin",
+      "prompt": "同步带轮 T10 节圆直径80 齿数24 宽度12 内孔8",
+      "legacy_parser": {
+        "ok": true,
+        "recognized": 1,
+        "warnings": [],
+        "questions": [],
+        "ordered_feature": {
+          "kind": "timing_pulley",
+          "params": {
+            "pitch_d": 80.0,
+            "teeth": 24,
+            "height": 12.0,
+            "tooth_type": "T10",
+            "bore_d": 8.0,
+            "center": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "explain": [
+              [
+                "“T10 型”",
+                "T10 型轮齿，节距 p=10 mm",
+                "节距取自周节制 GB/T 11361—1989 / 圆弧齿 JB/T 7512.2—1994 规格表"
+              ],
+              [
+                "“齿数 24”",
+                "圆周均布 24 个轮齿；节圆直径 ⌀80 = p·z/π",
+                "dd = p·z/π（同步带轮节圆直径的定义）"
+              ],
+              [
+                "齿形",
+                "齿高 2.5、齿顶宽 5.3、齿根宽 4.7",
+                "标准梯形齿近似（圆弧齿按同一节距与齿高生成）"
+              ],
+              [
+                "轮宽",
+                "未给宽度时按该型号常用带宽取 16 mm",
+                "GB/T 11361 带轮宽度系列"
+              ]
+            ]
+          },
+          "op": "add",
+          "name": "T10型同步带轮 24齿",
+          "note": "",
+          "feature_id": null,
+          "relations": [],
+          "enabled": true,
+          "provenance": {
+            "pitch_d": "explicit",
+            "teeth": "explicit",
+            "height": "explicit",
+            "tooth_type": "explicit",
+            "bore_d": "explicit"
+          }
+        },
+        "center_before_geometry_override": [
+          0,
+          0,
+          0
+        ],
+        "center_used_by_document_build": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "center_override_reason": null
+      },
+      "raw_document_build": {
+        "stl": "legacy_raw_d80-z24-w12-bore8-origin.stl",
+        "bytes": 68884,
+        "sha256": "fddd0756b22a491fa48b80cee0999c72ff6ac293365634b76c3bbea192abb0e7",
+        "triangle_count": 1376,
+        "bbox_mm": [
+          -41.125,
+          -41.125,
+          -6.0,
+          41.125,
+          41.125,
+          6.0
+        ],
+        "topology": {
+          "weld_tolerance_mm": 1e-05,
+          "welded_vertex_count": 736,
+          "edge_count": 2064,
+          "boundary_edge_count": 0,
+          "nonmanifold_edge_count": 0,
+          "orientation_conflict_edge_count": 462,
+          "degenerate_triangle_count": 0,
+          "duplicate_triangle_count": 0,
+          "connected_triangle_components": 25,
+          "closed_manifold": true,
+          "closed_oriented_manifold": false
+        },
+        "mesh_volume_semantics": "legacy raw triangle mesh diagnostic only, not a B-Rep volume"
+      }
+    },
+    {
+      "case": "d127_324-z40-w25-bore18-origin",
+      "prompt": "同步带轮 T10 节圆直径127.324 齿数40 宽度25 内孔18",
+      "legacy_parser": {
+        "ok": true,
+        "recognized": 1,
+        "warnings": [],
+        "questions": [],
+        "ordered_feature": {
+          "kind": "timing_pulley",
+          "params": {
+            "pitch_d": 127.324,
+            "teeth": 40,
+            "height": 25.0,
+            "tooth_type": "T10",
+            "bore_d": 18.0,
+            "center": [
+              0.0,
+              0.0,
+              0.0
+            ],
+            "explain": [
+              [
+                "“T10 型”",
+                "T10 型轮齿，节距 p=10 mm",
+                "节距取自周节制 GB/T 11361—1989 / 圆弧齿 JB/T 7512.2—1994 规格表"
+              ],
+              [
+                "“齿数 40”",
+                "圆周均布 40 个轮齿；节圆直径 ⌀127.324 = p·z/π",
+                "dd = p·z/π（同步带轮节圆直径的定义）"
+              ],
+              [
+                "齿形",
+                "齿高 2.5、齿顶宽 5.3、齿根宽 4.7",
+                "标准梯形齿近似（圆弧齿按同一节距与齿高生成）"
+              ],
+              [
+                "轮宽",
+                "未给宽度时按该型号常用带宽取 16 mm",
+                "GB/T 11361 带轮宽度系列"
+              ]
+            ]
+          },
+          "op": "add",
+          "name": "T10型同步带轮 40齿",
+          "note": "",
+          "feature_id": null,
+          "relations": [],
+          "enabled": true,
+          "provenance": {
+            "pitch_d": "explicit",
+            "teeth": "explicit",
+            "height": "explicit",
+            "tooth_type": "explicit",
+            "bore_d": "explicit"
+          }
+        },
+        "center_before_geometry_override": [
+          0,
+          0,
+          0
+        ],
+        "center_used_by_document_build": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "center_override_reason": null
+      },
+      "raw_document_build": {
+        "stl": "legacy_raw_d127_324-z40-w25-bore18-origin.stl",
+        "bytes": 97684,
+        "sha256": "3108b31c9bedfa87e1b8a0a9af272ac60ef4a858573efb3978e87fa27b206b30",
+        "triangle_count": 1952,
+        "bbox_mm": [
+          -64.78700256347656,
+          -64.78700256347656,
+          -12.5,
+          64.78700256347656,
+          64.78700256347656,
+          12.5
+        ],
+        "topology": {
+          "weld_tolerance_mm": 1e-05,
+          "welded_vertex_count": 1056,
+          "edge_count": 2928,
+          "boundary_edge_count": 0,
+          "nonmanifold_edge_count": 0,
+          "orientation_conflict_edge_count": 722,
+          "degenerate_triangle_count": 0,
+          "duplicate_triangle_count": 0,
+          "connected_triangle_components": 41,
+          "closed_manifold": true,
+          "closed_oriented_manifold": false
+        },
+        "mesh_volume_semantics": "legacy raw triangle mesh diagnostic only, not a B-Rep volume"
+      }
+    },
+    {
+      "case": "baseline-nonzero-center",
+      "prompt": "同步带轮 T10 节圆直径95.493 齿数30 宽度16 内孔10",
+      "legacy_parser": {
+        "ok": true,
+        "recognized": 1,
+        "warnings": [],
+        "questions": [],
+        "ordered_feature": {
+          "kind": "timing_pulley",
+          "params": {
+            "pitch_d": 95.493,
+            "teeth": 30,
+            "height": 16.0,
+            "tooth_type": "T10",
+            "bore_d": 10.0,
+            "center": [
+              12.0,
+              -4.0,
+              7.0
+            ],
+            "explain": [
+              [
+                "“T10 型”",
+                "T10 型轮齿，节距 p=10 mm",
+                "节距取自周节制 GB/T 11361—1989 / 圆弧齿 JB/T 7512.2—1994 规格表"
+              ],
+              [
+                "“齿数 30”",
+                "圆周均布 30 个轮齿；节圆直径 ⌀95.493 = p·z/π",
+                "dd = p·z/π（同步带轮节圆直径的定义）"
+              ],
+              [
+                "齿形",
+                "齿高 2.5、齿顶宽 5.3、齿根宽 4.7",
+                "标准梯形齿近似（圆弧齿按同一节距与齿高生成）"
+              ],
+              [
+                "轮宽",
+                "未给宽度时按该型号常用带宽取 16 mm",
+                "GB/T 11361 带轮宽度系列"
+              ]
+            ]
+          },
+          "op": "add",
+          "name": "T10型同步带轮 30齿",
+          "note": "",
+          "feature_id": null,
+          "relations": [],
+          "enabled": true,
+          "provenance": {
+            "pitch_d": "explicit",
+            "teeth": "explicit",
+            "height": "explicit",
+            "tooth_type": "explicit",
+            "bore_d": "explicit"
+          }
+        },
+        "center_before_geometry_override": [
+          0,
+          0,
+          0
+        ],
+        "center_used_by_document_build": [
+          12.0,
+          -4.0,
+          7.0
+        ],
+        "center_override_reason": "legacy parser fixes center at global origin; this case isolates the old geometry constructor translation"
+      },
+      "raw_document_build": {
+        "stl": "legacy_raw_baseline-nonzero-center.stl",
+        "bytes": 79684,
+        "sha256": "934e32fe10bea102c1ef1186a49da01c982866ea15065571122c9aaeb8a3c02e",
+        "triangle_count": 1592,
+        "bbox_mm": [
+          -36.871498107910156,
+          -52.880775451660156,
+          -1.0,
+          60.871498107910156,
+          44.880775451660156,
+          15.0
+        ],
+        "topology": {
+          "weld_tolerance_mm": 1e-05,
+          "welded_vertex_count": 856,
+          "edge_count": 2388,
+          "boundary_edge_count": 0,
+          "nonmanifold_edge_count": 0,
+          "orientation_conflict_edge_count": 558,
+          "degenerate_triangle_count": 0,
+          "duplicate_triangle_count": 0,
+          "connected_triangle_components": 31,
+          "closed_manifold": true,
+          "closed_oriented_manifold": false
+        },
+        "mesh_volume_semantics": "legacy raw triangle mesh diagnostic only, not a B-Rep volume"
+      }
+    }
+  ],
+  "limitations": [
+    "The origin-centered cases use old Parser output unchanged. The nonzero-center case changes only Feature.params.center after parsing because this legacy parser always defaults the center to the global origin and exposes no position syntax.",
+    "These are raw mesh geometry oracles; no B-Rep or CATIA validation is implied."
+  ]
+}

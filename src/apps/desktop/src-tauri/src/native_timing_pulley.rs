@@ -3,7 +3,7 @@
 //! Tooth flanks preserve the existing standard trapezoid approximation. The
 //! analytic annular blank intentionally replaces the legacy 64-segment
 //! revolved mesh; capability remains approximate and reports this boundary.
-use crate::native_occt::{Axis, Kernel, Shape};
+use crate::native_occt::{Axis, Kernel, Shape, TriangleMesh};
 use serde_json::{Value, json};
 
 const MAX_TEETH: u64 = 512;
@@ -124,6 +124,263 @@ pub fn preflight(parameters: &Value) -> Result<Value, String> {
     )
 }
 
+/// Exact old-Quick T10 surface mesh compatibility path. It deliberately does
+/// not create OCCT solids: the legacy raw mesh is a 64-segment blank plus
+/// independently appended tooth lofts.
+pub fn legacy_quick_t10_mesh(parameters: &Value) -> Result<TriangleMesh, String> {
+    if parameters.get("tooth_type").and_then(Value::as_str) != Some("T10") {
+        return Err("legacy timing mesh-only path is restricted to T10".into());
+    }
+    let pitch_d = number(parameters, "pitch_d")?;
+    let height = number(parameters, "height")?;
+    let teeth = parameters["teeth"]
+        .as_u64()
+        .filter(|count| (6..=MAX_TEETH).contains(count))
+        .ok_or("legacy T10 teeth must be in 6..=512")? as usize;
+    let bore_d = optional_number(parameters, "bore_d", 0.0)?;
+    let center = point3(parameters.get("center"))?;
+    if pitch_d <= 0.0 || height <= 0.0 || bore_d < 0.0 {
+        return Err(
+            "legacy T10 requires positive pitch diameter/width and nonnegative bore".into(),
+        );
+    }
+    let (_, spec) = timing_type("T10");
+    let pitch_radius = (pitch_d / 2.0).max(2.0);
+    let root_radius = pitch_radius - spec.tooth_height * 0.55;
+    let tip_radius = pitch_radius + spec.tooth_height * 0.45;
+    let inner_radius = if bore_d > 0.0 {
+        (bore_d / 2.0).max(1.0)
+    } else {
+        (root_radius * 0.35).max(2.0)
+    };
+    if root_radius <= 0.0 || inner_radius >= root_radius {
+        return Err("legacy T10 bore must remain inside the tooth-root radius".into());
+    }
+    let half_tip = spec.tooth_tip / 2.0;
+    let half_root = (spec.pitch / 2.0 - half_tip).max(half_tip + 0.2);
+    let expected_triangles = 4usize
+        .checked_mul(64)
+        .and_then(|count| count.checked_mul(2))
+        .and_then(|count| teeth.checked_mul(36).and_then(|n| count.checked_add(n)))
+        .ok_or("legacy T10 triangle count overflow")?;
+    if expected_triangles > 200_000 {
+        return Err("legacy T10 mesh exceeds 200,000 triangles".into());
+    }
+    let mut mesh = TriangleMesh {
+        positions: Vec::with_capacity(expected_triangles * 3),
+        normals: Vec::with_capacity(expected_triangles * 3),
+    };
+    let body = [
+        [inner_radius, -height / 2.0],
+        [root_radius, -height / 2.0],
+        [root_radius, height / 2.0],
+        [inner_radius, height / 2.0],
+    ];
+    let body_interior = [center[0] + root_radius * 0.4, center[1], center[2]];
+    for segment in 0..64 {
+        let a0 = std::f64::consts::TAU * segment as f64 / 64.0;
+        let a1 = std::f64::consts::TAU * (segment + 1) as f64 / 64.0;
+        for edge in 0..body.len() {
+            let [r0, z0] = body[edge];
+            let [r1, z1] = body[(edge + 1) % body.len()];
+            append_legacy_polygon(
+                &mut mesh,
+                vec![
+                    timing_point(center, r0, z0, a0),
+                    timing_point(center, r1, z1, a0),
+                    timing_point(center, r1, z1, a1),
+                    timing_point(center, r0, z0, a1),
+                ],
+                body_interior,
+            );
+        }
+    }
+    let local = [
+        [pitch_radius - 1.0, -half_root],
+        [root_radius, -half_root],
+        [tip_radius, -half_tip],
+        [tip_radius, half_tip],
+        [root_radius, half_root],
+        [pitch_radius - 1.0, half_root],
+    ];
+    let z_sections = [
+        center[2] - height / 2.0,
+        center[2],
+        center[2] + height / 2.0,
+    ];
+    for tooth in 0..teeth {
+        let angle = std::f64::consts::TAU * tooth as f64 / teeth as f64;
+        let (sin, cos) = angle.sin_cos();
+        let profile = local.map(|[radius, tangent]| {
+            [
+                center[0] + radius * cos - tangent * sin,
+                center[1] + radius * sin + tangent * cos,
+            ]
+        });
+        let sections = z_sections.map(|z| profile.map(|[x, y]| [x, y, z]));
+        let all = sections.iter().flatten();
+        let mut interior = [0.0; 3];
+        for point in all {
+            for axis in 0..3 {
+                interior[axis] += point[axis] / 18.0;
+            }
+        }
+        for span in 0..2 {
+            for edge in 0..6 {
+                let next = (edge + 1) % 6;
+                append_legacy_polygon(
+                    &mut mesh,
+                    vec![
+                        sections[span][edge],
+                        sections[span][next],
+                        sections[span + 1][next],
+                        sections[span + 1][edge],
+                    ],
+                    interior,
+                );
+            }
+        }
+        for section_index in [0usize, 2usize] {
+            let section = sections[section_index];
+            let mut centroid = [0.0; 3];
+            for point in section {
+                for axis in 0..3 {
+                    centroid[axis] += point[axis] / 6.0;
+                }
+            }
+            for edge in 0..6 {
+                append_legacy_polygon(
+                    &mut mesh,
+                    vec![centroid, section[edge], section[(edge + 1) % 6]],
+                    interior,
+                );
+            }
+        }
+    }
+    if mesh.positions.len() / 3 != expected_triangles {
+        return Err(format!(
+            "legacy T10 produced {} triangles; expected {expected_triangles}",
+            mesh.positions.len() / 3
+        ));
+    }
+    Ok(mesh)
+}
+
+fn timing_point(center: [f64; 3], radius: f64, z: f64, angle: f64) -> [f64; 3] {
+    [
+        center[0] + radius * angle.cos(),
+        center[1] + radius * angle.sin(),
+        center[2] + z,
+    ]
+}
+
+fn append_legacy_polygon(mesh: &mut TriangleMesh, mut points: Vec<[f64; 3]>, interior: [f64; 3]) {
+    if points.len() < 3 {
+        return;
+    }
+    let mut normal = [0.0; 3];
+    for index in 1..points.len() - 1 {
+        normal = normalize(cross(
+            sub(points[index], points[0]),
+            sub(points[index + 1], points[0]),
+        ));
+        if length(normal) > 1e-9 {
+            break;
+        }
+    }
+    if length(normal) <= 1e-9 {
+        return;
+    }
+    let mut centroid = [0.0; 3];
+    for point in &points {
+        for axis in 0..3 {
+            centroid[axis] += point[axis] / points.len() as f64;
+        }
+    }
+    if dot(normal, sub(centroid, interior)) < 0.0 {
+        points.reverse();
+        normal = normal.map(|value| -value);
+    }
+    for index in 1..points.len() - 1 {
+        mesh.positions
+            .extend([points[0], points[index], points[index + 1]]);
+        mesh.normals.extend([normal; 3]);
+    }
+}
+
+/// Admit only single-feature T10 plans that the B-Rep builder rejects.
+pub fn is_mesh_only_legacy_quick_plan(plan: &Value) -> bool {
+    if !matches!(
+        plan.get("schema_version").and_then(Value::as_str),
+        Some("1.0" | "1.1")
+    ) || plan.pointer("/units/length").and_then(Value::as_str) != Some("mm")
+        || plan.pointer("/units/angle").and_then(Value::as_str) != Some("deg")
+    {
+        return false;
+    }
+    let Some(features) = plan.get("features").and_then(Value::as_array) else {
+        return false;
+    };
+    if features.len() != 1 {
+        return false;
+    }
+    let feature = &features[0];
+    if feature.get("kind").and_then(Value::as_str) != Some("timing_pulley")
+        || feature.get("operation").and_then(Value::as_str) != Some("add")
+        || feature.get("enabled").and_then(Value::as_bool) == Some(false)
+        || feature
+            .get("relations")
+            .and_then(Value::as_array)
+            .is_some_and(|v| !v.is_empty())
+        || feature
+            .pointer("/parameters/tooth_type")
+            .and_then(Value::as_str)
+            != Some("T10")
+        || feature.pointer("/parameters/standard").is_some()
+    {
+        return false;
+    }
+    legacy_quick_t10_mesh(&feature["parameters"]).is_ok()
+        && crate::cad_plan_validation::validate_plan(plan)["valid"] == true
+}
+
+/// Returns true when a parameter set is within the legacy T10 mesh builder's
+/// bounded compatibility scope, without implying an editable B-Rep exists.
+pub fn legacy_quick_t10_parameters_supported(parameters: &Value) -> bool {
+    parameters.get("tooth_type").and_then(Value::as_str) == Some("T10")
+        && legacy_quick_t10_mesh(parameters).is_ok()
+}
+
+/// Mirror the legacy part-library warning for T10 teeth whose tangential
+/// pitch at the tooth-tip radius is narrower than the standard tooth tip.
+pub fn legacy_t10_tooth_spacing_warning(parameters: &Value) -> Option<String> {
+    if parameters.get("tooth_type").and_then(Value::as_str) != Some("T10") {
+        return None;
+    }
+    let pitch_d = parameters.get("pitch_d")?.as_f64()?;
+    let teeth = parameters.get("teeth")?.as_u64()?;
+    if !pitch_d.is_finite() || pitch_d <= 0.0 || teeth == 0 {
+        return None;
+    }
+    let (_, spec) = timing_type("T10");
+    let effective_teeth = teeth.max(6);
+    let tip_radius = pitch_d / 2.0 + spec.tooth_height * 0.45;
+    let tip_spacing = std::f64::consts::TAU * tip_radius / effective_teeth as f64;
+    if tip_spacing >= spec.tooth_tip {
+        return None;
+    }
+    let minimum_pitch_diameter = effective_teeth as f64 * spec.tooth_tip / std::f64::consts::PI
+        - 2.0 * spec.tooth_height * 0.45;
+    let recommended_teeth = ((std::f64::consts::TAU * tip_radius / spec.tooth_tip).floor() as u64)
+        .max(6);
+    Some(format!(
+        "{teeth} 齿 T10 型同步带轮：齿顶处的切向齿距 {tip_spacing:.2} mm 小于齿顶宽 {:.2} mm，相邻齿会互相重叠（输入自相矛盾，齿形不可用）。按 {teeth} 齿算节圆直径至少需 ⌀{:.2} mm；或按 ⌀{} mm 改用 {recommended_teeth} 齿。",
+        spec.tooth_tip,
+        pitch_d.max(minimum_pitch_diameter),
+        pitch_d
+    ))
+}
+
 pub fn build(kernel: &Kernel, parameters: &Value) -> Result<(Vec<Shape>, Value), String> {
     let checked = preflight(parameters)?;
     let pitch_d = number(parameters, "pitch_d")?;
@@ -233,6 +490,31 @@ fn point3(value: Option<&Value>) -> Result<[f64; 3], String> {
             .ok_or("timing_pulley.center 必须包含三个有限XYZ数值。")?;
     }
     Ok(point)
+}
+
+fn sub(a: [f64; 3], b: [f64; 3]) -> [f64; 3] {
+    [a[0] - b[0], a[1] - b[1], a[2] - b[2]]
+}
+fn cross(a: [f64; 3], b: [f64; 3]) -> [f64; 3] {
+    [
+        a[1] * b[2] - a[2] * b[1],
+        a[2] * b[0] - a[0] * b[2],
+        a[0] * b[1] - a[1] * b[0],
+    ]
+}
+fn dot(a: [f64; 3], b: [f64; 3]) -> f64 {
+    a[0] * b[0] + a[1] * b[1] + a[2] * b[2]
+}
+fn length(value: [f64; 3]) -> f64 {
+    dot(value, value).sqrt()
+}
+fn normalize(value: [f64; 3]) -> [f64; 3] {
+    let magnitude = length(value);
+    if magnitude <= f64::MIN_POSITIVE {
+        [0.0; 3]
+    } else {
+        value.map(|component| component / magnitude)
+    }
 }
 
 #[cfg(test)]

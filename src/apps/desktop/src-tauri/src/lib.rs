@@ -591,11 +591,7 @@ fn active_model_push_catia(app: AppHandle) -> Result<Value, String> {
     let data_dir = app_data_dir(&app)?;
     let root = native_active_model::root_from_data_dir(&data_dir);
     let record = native_active_model::load(&root)?.ok_or("当前没有原生活动模型可推送。")?;
-    if record.pointer("/document/geometry_report/mesh_only").and_then(Value::as_bool)
-        == Some(true)
-    {
-        return Err("当前带轮是 legacy mesh-only 兼容网格；没有可编辑 B-Rep，不能推送或导出 CATPart。".into());
-    }
+    native_active_model::ensure_catpart_exportable(&record["document"])?;
     let generation = record["generation"]
         .as_u64()
         .ok_or("活动模型 generation 无效。")?;
@@ -650,11 +646,7 @@ fn active_model_export(app: AppHandle, kind: String, path: String) -> Result<(),
             );
         }
         "catia" => {
-            if record.pointer("/document/geometry_report/mesh_only").and_then(Value::as_bool)
-                == Some(true)
-            {
-                return Err("当前模型是 legacy mesh-only 兼容网格；没有可编辑 B-Rep，不能导出 CATPart。".into());
-            }
+            native_active_model::ensure_catpart_exportable(&record["document"])?;
             run_active_catia_adapter(&app, &record, Path::new(&path), false)?;
             return Ok(());
         }
@@ -790,6 +782,32 @@ async fn active_model_import_project(
         return Err("旧工程超过 60 MiB，无法在活动记录中无损保留原始 JSON。".into());
     }
     let source_document = native_model_io::load_document(&source_path)?;
+    if native_model_io::timing_mesh_only_plan_from_project(&source_document)?.is_some() {
+        let data_dir = app_data_dir(&app)?;
+        let active_root = native_active_model::root_from_data_dir(&data_dir);
+        let expected_generation = native_active_model::generation(&active_root)?;
+        let current_revision = native_active_model::load(&active_root)?
+            .and_then(|row| row["revision"].as_i64())
+            .unwrap_or(0);
+        let revision = current_revision
+            .checked_add(1)
+            .ok_or("CAD revision 已溢出。")?
+            .max(1);
+        let session_dir = data_dir.join("native-active-model-import");
+        let import_root = active_root.clone();
+        let imported = tokio::task::spawn_blocking(move || {
+            native_quick::import_mesh_only_timing_aimodel(
+                &source_document,
+                &import_root,
+                expected_generation,
+                revision,
+                &session_dir,
+            )
+        })
+        .await
+        .map_err(|error| format!("T10 mesh-only 工程重建线程失败：{error}"))??;
+        return Ok(imported);
+    }
     let mut plan = if source_document.get("cadplan").is_some() {
         let plan = source_document
             .get("cadplan")

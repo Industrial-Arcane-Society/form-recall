@@ -11,7 +11,7 @@ const metrics = computed(() => [
   { label: '特征', value: props.features.length, unit: '', icon: 'boxes' as const },
   { label: '面片', value: Number(props.stats.faces || 0).toLocaleString(), unit: '', icon: 'grid' as const },
   { label: '三角面', value: Number(props.stats.triangles || 0).toLocaleString(), unit: '', icon: 'chart' as const },
-  { label: '体积', value: Number(props.stats.volume || 0).toLocaleString(undefined, { maximumFractionDigits: 2 }), unit: 'mm³', icon: 'box' as const },
+  { label: '体积', value: props.stats.volume == null ? '—' : Number(props.stats.volume).toLocaleString(undefined, { maximumFractionDigits: 2 }), unit: props.stats.volume == null ? '' : 'mm³', icon: 'box' as const },
   { label: '表面积', value: Number(props.stats.area || 0).toLocaleString(undefined, { maximumFractionDigits: 2 }), unit: 'mm²', icon: 'scan' as const },
 ])
 

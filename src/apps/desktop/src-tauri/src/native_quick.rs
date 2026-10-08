@@ -28,14 +28,17 @@ pub fn build(
     }
     let plan = parsed["plan"].clone();
     let validation = cad_plan_validation::validate_plan(&plan);
-    if crate::native_vbelt_pulley::is_mesh_only_legacy_quick_plan(&plan) {
-        return build_mesh_only_legacy_vbelt(
-            &plan,
-            &parsed["warnings"],
-            text,
-            revision,
-            session_dir,
-        );
+    let legacy_vbelt = crate::native_vbelt_pulley::is_mesh_only_legacy_quick_plan(&plan);
+    let legacy_timing = crate::native_timing_pulley::is_mesh_only_legacy_quick_plan(&plan);
+    if legacy_vbelt || legacy_timing {
+        if legacy_timing {
+            let mut document = build_mesh_only_legacy_plan(&plan, text, revision, session_dir)?;
+            let mut warnings = parsed["warnings"].as_array().cloned().unwrap_or_default();
+            warnings.extend(document["warnings"].as_array().cloned().unwrap_or_default());
+            document["warnings"] = Value::Array(warnings);
+            return Ok(document);
+        }
+        return build_mesh_only_legacy(&plan, &parsed["warnings"], text, revision, session_dir, true);
     }
     if validation["valid"] != true {
         return Err(format!(
@@ -112,22 +115,30 @@ pub fn build(
     Ok(document)
 }
 
-fn build_mesh_only_legacy_vbelt(
+fn build_mesh_only_legacy(
     plan: &Value,
     parse_warnings: &Value,
     text: &str,
     revision: i64,
     session_dir: &Path,
+    legacy_vbelt: bool,
 ) -> Result<Value, String> {
     let feature = plan
         .pointer("/features/0")
         .ok_or("mesh-only Quick CADPlan 缺少特征。")?;
     let parameters = feature
         .get("parameters")
-        .ok_or("mesh-only Quick V 带轮缺少参数。")?;
-    let mesh = crate::native_vbelt_pulley::legacy_quick_mesh(parameters, 64)?;
-    let compatibility_details =
-        crate::native_vbelt_pulley::legacy_mesh_geometry_details(parameters)?;
+        .ok_or("mesh-only Quick 特征缺少参数。")?;
+    let mesh = if legacy_vbelt {
+        crate::native_vbelt_pulley::legacy_quick_mesh(parameters, 64)?
+    } else {
+        crate::native_timing_pulley::legacy_quick_t10_mesh(parameters)?
+    };
+    let compatibility_details = if legacy_vbelt {
+        crate::native_vbelt_pulley::legacy_mesh_geometry_details(parameters)?
+    } else {
+        json!({})
+    };
     fs::create_dir_all(session_dir).map_err(|e| format!("无法创建 Quick 输出目录：{e}"))?;
     let stamp = SystemTime::now()
         .duration_since(UNIX_EPOCH)
@@ -142,20 +153,32 @@ fn build_mesh_only_legacy_vbelt(
     let obj = dir.join("quick.obj");
     let glb = dir.join("mesh.glb");
     let geometry_report = dir.join("geometry-report.json");
-    let project = native_model_io::cadplan_to_project_mesh_only_vbelt(plan)?;
+    let project = if legacy_vbelt {
+        native_model_io::cadplan_to_project_mesh_only_vbelt(plan)?
+    } else {
+        native_model_io::cadplan_to_project_mesh_only_timing(plan)?
+    };
     native_model_io::save_aimodel(&aimodel, &project)?;
-    let stl_stats = native_model_io::write_binary_stl(&stl, &mesh, "legacy Quick V-belt pulley")?;
+    let stl_stats = native_model_io::write_binary_stl(&stl, &mesh, "legacy Quick pulley")?;
     native_model_io::write_wavefront_obj(&obj, &mesh)?;
     write_glb(&mesh, &glb)?;
     let dimensions = stl_stats.bounds.map(|axis| (axis[1] - axis[0]) as f64);
     let triangle_count = stl_stats.triangle_count as usize;
-    let builder = if compatibility_details["spokes"].is_null() {
+    let builder = if !legacy_vbelt {
+        "legacy_make_timing_pulley_64_segment_blank_and_tooth_lofts"
+    } else if compatibility_details["spokes"].is_null() {
         "legacy_make_revolve_profile_edges_swept_64_segments"
     } else {
         "legacy_make_revolve_profile_edges_and_rotated_box_spokes_64_segments"
     };
     let mut report_warnings = vec![
-        "该 Quick 结果逐面复刻旧 Python 的自交轮廓三角网格；未构建或验证 B-Rep/闭合实体。".to_string(),
+        if legacy_vbelt {
+            "该 Quick 结果逐面复刻旧 Python V 带轮三角网格；未构建或验证 B-Rep/闭合实体。"
+                .to_string()
+        } else {
+            "该 Quick 结果逐面复刻旧 Python T10 同步带轮 raw 三角网格；未构建或验证 B-Rep 单实体。"
+                .to_string()
+        },
         "AIMODEL 保存 CADPlan 与参数；此 mesh-only 结果不可据此推送或导出 CATPart。".to_string(),
     ];
     if let Some(spoke_count) = compatibility_details
@@ -178,11 +201,17 @@ fn build_mesh_only_legacy_vbelt(
         "dimensions_mm":dimensions,
         "signed_mesh_volume_mm3":stl_stats.signed_volume,
         "volume_basis":"signed_triangle_mesh_after_binary_stl_float32_quantization",
+        "volume_status":"not_comparable_raw_mesh",
+        "volume_comparable_as_oriented_solid":false,
         "solid_count":null,
         "closed_solid_count":null,
         "brep_available":false,
         "catpart_available":false,
-        "legacy_profile_was_self_intersecting":compatibility_details["legacy_profile_self_intersecting"],
+        "legacy_profile_was_self_intersecting":if legacy_vbelt {
+            compatibility_details["legacy_profile_self_intersecting"].clone()
+        } else {
+            Value::Null
+        },
         "profile_points":compatibility_details["profile_points"],
         "groove_root_width_mm":compatibility_details["groove_root_width_mm"],
         "groove_effective_pitch_mm":compatibility_details["groove_effective_pitch_mm"],
@@ -231,12 +260,43 @@ fn build_mesh_only_legacy_vbelt(
     document["stats"] = json!({
         "faces":mesh.positions.len() / 6,
         "triangles":triangle_count,
-        "volume":stl_stats.signed_volume,
+        "volume":Value::Null,
+        "mesh_signed_volume_diagnostic_mm3":stl_stats.signed_volume,
         "size":dimensions
     });
     document["geometry_report"] = report;
     document["state"] = json!("complete");
     Ok(document)
+}
+
+/// Rebuild a T10 mesh-only AIMODEL without initializing OCCT, then publish it
+/// as the active record using the same Quick mesh generator and output files.
+pub(crate) fn import_mesh_only_timing_aimodel(
+    source_document: &Value,
+    active_root: &Path,
+    expected_generation: u64,
+    revision: i64,
+    session_dir: &Path,
+) -> Result<Value, String> {
+    let plan = crate::native_model_io::timing_mesh_only_plan_from_project(source_document)?
+        .ok_or("AIMODEL 没有受支持的 T10 mesh-only 标记。")?;
+    let prompt = source_document["source_prompt"].as_str().unwrap_or("");
+    let rebuilt = build_mesh_only_legacy_plan(&plan, prompt, revision, session_dir)?;
+    let candidate = active_model_candidate(prompt, &rebuilt)?;
+    let active = crate::native_active_model::commit(active_root, expected_generation, &candidate)?;
+    Ok(active["document"].clone())
+}
+
+pub(crate) fn build_mesh_only_legacy_plan(
+    plan: &Value,
+    source_prompt: &str,
+    revision: i64,
+    session_dir: &Path,
+) -> Result<Value, String> {
+    if !crate::native_timing_pulley::is_mesh_only_legacy_quick_plan(plan) {
+        return Err("仅接受单特征 T10 legacy mesh-only CADPlan。".into());
+    }
+    build_mesh_only_legacy(plan, &json!([]), source_prompt, revision, session_dir, false)
 }
 
 pub fn active_model_candidate(text: &str, document: &Value) -> Result<Value, String> {
@@ -396,6 +456,8 @@ mod tests {
             Value::Null
         );
         assert_eq!(document["geometry_report"]["triangle_count"], 3072);
+        assert_eq!(document["stats"]["volume"], Value::Null);
+        assert!(document["stats"]["mesh_signed_volume_diagnostic_mm3"].is_number());
         assert_eq!(
             document["stats"]["size"],
             json!([105.5, 105.5, 46.3197135925293])
@@ -424,6 +486,259 @@ mod tests {
             reloaded["document"]["geometry_report"]["state"],
             "mesh_only"
         );
+        fs::remove_dir_all(root).unwrap();
+    }
+
+    #[test]
+    fn legacy_t10_quick_raw_mesh_is_mesh_only_and_roundtrips_exports() {
+        let root = std::env::temp_dir().join(format!(
+            "quick-mesh-only-timing-t10-{}-{}",
+            std::process::id(),
+            SystemTime::now()
+                .duration_since(UNIX_EPOCH)
+                .unwrap()
+                .as_nanos()
+        ));
+        fs::create_dir_all(&root).unwrap();
+        let prompt = "同步带轮 T10 节圆直径95.493 齿数30 宽度16 内孔10";
+        let document = build(prompt, 1, Path::new("unused-occt-manifest.json"), &root).unwrap();
+        assert_eq!(document["state"], "complete");
+        let report = &document["geometry_report"];
+        assert_eq!(report["state"], "mesh_only");
+        assert_eq!(report["mesh_only"], true);
+        assert_eq!(report["valid"], Value::Null);
+        assert_eq!(report["triangle_count"], 1592);
+        assert_eq!(report["brep_available"], false);
+        assert_eq!(report["catpart_available"], false);
+        assert_eq!(report["solid_count"], Value::Null);
+        assert_eq!(report["closed_solid_count"], Value::Null);
+        assert_eq!(report["volume_status"], "not_comparable_raw_mesh");
+        assert_eq!(report["volume_comparable_as_oriented_solid"], false);
+        assert_eq!(document["stats"]["volume"], Value::Null);
+        assert!(document["stats"]["mesh_signed_volume_diagnostic_mm3"].is_number());
+        assert!(document["output_paths"]["catpart"].is_null());
+        assert!(crate::native_active_model::is_mesh_only_document(&document));
+        assert_eq!(document["features"][0]["kind"], "timing_pulley");
+
+        let paths = document["output_paths"].as_object().unwrap();
+        for name in ["glb", "aimodel", "stl", "obj", "geometry_report"] {
+            assert!(
+                Path::new(paths[name].as_str().unwrap()).is_file(),
+                "missing {name}"
+            );
+        }
+        let stl_bytes = fs::read(paths["stl"].as_str().unwrap()).unwrap();
+        assert_eq!(
+            u32::from_le_bytes(stl_bytes[80..84].try_into().unwrap()),
+            1592
+        );
+        assert_eq!(stl_bytes.len(), 84 + 1592 * 50);
+        let obj = fs::read_to_string(paths["obj"].as_str().unwrap()).unwrap();
+        assert_eq!(
+            obj.lines().filter(|line| line.starts_with("v ")).count(),
+            1592 * 3
+        );
+        assert_eq!(
+            obj.lines().filter(|line| line.starts_with("vn ")).count(),
+            1592 * 3
+        );
+        assert_eq!(
+            obj.lines().filter(|line| line.starts_with("f ")).count(),
+            1592
+        );
+        let obj_vertices = obj
+            .lines()
+            .filter(|line| line.starts_with("v "))
+            .map(|line| {
+                let values = line
+                    .split_whitespace()
+                    .skip(1)
+                    .map(|value| value.parse::<f64>().unwrap())
+                    .collect::<Vec<_>>();
+                [values[0], values[1], values[2]]
+            })
+            .collect::<Vec<_>>();
+        let obj_min = [0, 1, 2].map(|axis| {
+            obj_vertices
+                .iter()
+                .map(|point| point[axis])
+                .fold(f64::INFINITY, f64::min)
+        });
+        let obj_max = [0, 1, 2].map(|axis| {
+            obj_vertices
+                .iter()
+                .map(|point| point[axis])
+                .fold(f64::NEG_INFINITY, f64::max)
+        });
+        for (actual, expected) in obj_min
+            .into_iter()
+            .zip([-48.8715, -48.88077723714985, -8.0])
+        {
+            assert!(
+                (actual - expected).abs() < 1e-4,
+                "OBJ min bbox: {obj_min:?}"
+            );
+        }
+        for (actual, expected) in obj_max
+            .into_iter()
+            .zip([48.8715, 48.88077723714985, 8.0])
+        {
+            assert!(
+                (actual - expected).abs() < 1e-4,
+                "OBJ max bbox: {obj_max:?}"
+            );
+        }
+        let glb = fs::read(paths["glb"].as_str().unwrap()).unwrap();
+        assert_eq!(&glb[..4], b"glTF");
+        assert_eq!(u32::from_le_bytes(glb[4..8].try_into().unwrap()), 2);
+        assert_eq!(
+            u32::from_le_bytes(glb[8..12].try_into().unwrap()) as usize,
+            glb.len()
+        );
+        let json_len = u32::from_le_bytes(glb[12..16].try_into().unwrap()) as usize;
+        assert_eq!(u32::from_le_bytes(glb[16..20].try_into().unwrap()), 0x4E4F534A);
+        let glb_json: Value = serde_json::from_slice(&glb[20..20 + json_len]).unwrap();
+        assert_eq!(glb_json["accessors"][0]["count"], 1592 * 3);
+        assert_eq!(glb_json["meshes"][0]["primitives"][0]["mode"], 4);
+        for (axis, expected_min, expected_max) in [
+            (0, -48.8715, 48.8715),
+            (1, -48.88077723714985, 48.88077723714985),
+            (2, -8.0, 8.0),
+        ] {
+            assert!(
+                (glb_json["accessors"][0]["min"][axis].as_f64().unwrap() - expected_min).abs()
+                    < 1e-4
+            );
+            assert!(
+                (glb_json["accessors"][0]["max"][axis].as_f64().unwrap() - expected_max).abs()
+                    < 1e-4
+            );
+        }
+        let loaded = native_model_io::load_aimodel(Path::new(paths["aimodel"].as_str().unwrap()))
+            .expect("AIMODEL reload");
+        assert_eq!(loaded["cadplan"]["features"], document["cadplan"]["features"]);
+        assert_eq!(loaded["features"][0]["kind"], "timing_pulley");
+        if let Some(path) = std::env::var_os("F5_106_RUST_STL") {
+            fs::copy(paths["stl"].as_str().unwrap(), path).unwrap();
+        }
+
+        let active_root = root.join("active-model");
+        let candidate = active_model_candidate(prompt, &document).unwrap();
+        let committed = crate::native_active_model::commit(&active_root, 0, &candidate).unwrap();
+        assert_eq!(committed["geometric_status"], "mesh_only");
+        let active = crate::native_active_model::load(&active_root).unwrap().unwrap();
+        assert_eq!(active["document"]["geometry_report"]["state"], "mesh_only");
+        assert_eq!(active["document"]["geometry_report"]["catpart_available"], false);
+        assert!(crate::native_active_model::is_mesh_only_document(&active["document"]));
+        assert_eq!(active["document"]["features"][0]["kind"], "timing_pulley");
+        fs::remove_dir_all(root).unwrap();
+    }
+
+    #[test]
+    fn f5_106_t10_parameterized_raw_mesh_cases_export_for_parity() {
+        let cases = [
+            (
+                "d80-z24-w12-bore8-origin",
+                json!({"pitch_d":80.0,"teeth":24,"height":12.0,"tooth_type":"T10","bore_d":8.0,"center":[0.0,0.0,0.0]}),
+                1376usize,
+            ),
+            (
+                "d127_324-z40-w25-bore18-origin",
+                json!({"pitch_d":127.324,"teeth":40,"height":25.0,"tooth_type":"T10","bore_d":18.0,"center":[0.0,0.0,0.0]}),
+                1952usize,
+            ),
+            (
+                "baseline-nonzero-center",
+                json!({"pitch_d":95.493,"teeth":30,"height":16.0,"tooth_type":"T10","bore_d":10.0,"center":[12.0,-4.0,7.0]}),
+                1592usize,
+            ),
+        ];
+        let output_root = std::env::var_os("F5_106_RUST_MATRIX_DIR").map(std::path::PathBuf::from);
+        for (name, parameters, expected_triangles) in cases {
+            let mesh = crate::native_timing_pulley::legacy_quick_t10_mesh(&parameters).unwrap();
+            assert_eq!(mesh.positions.len() / 3, expected_triangles, "{name}");
+            if let Some(root) = output_root.as_ref() {
+                fs::create_dir_all(root).unwrap();
+                let path = root.join(format!("rust_raw_{name}.stl"));
+                native_model_io::write_binary_stl(&path, &mesh, "F5.106 parameter matrix").unwrap();
+            }
+        }
+    }
+
+    #[test]
+    fn legacy_t10_aimodel_import_rebuilds_visible_mesh_and_active_record_without_occt() {
+        let root = std::env::temp_dir().join(format!(
+            "quick-t10-import-{}-{}",
+            std::process::id(),
+            SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_nanos()
+        ));
+        let session_dir = root.join("import-output");
+        let active_root = root.join("active");
+        let source = build(
+            "同步带轮 T10 节圆直径95.493 齿数30 宽度16 内孔10",
+            1,
+            Path::new("unused-occt-manifest.json"),
+            &root,
+        )
+        .unwrap();
+        assert!(!source["warnings"]
+            .to_string()
+            .contains("legacy_timing_pulley_tooth_tip_overlap"));
+        let project_path = Path::new(source["output_paths"]["aimodel"].as_str().unwrap());
+        let mut project = native_model_io::load_aimodel(project_path).unwrap();
+        assert_eq!(
+            native_model_io::timing_mesh_only_plan_from_project(&project)
+                .unwrap()
+                .unwrap(),
+            project["cadplan"]
+        );
+
+        let imported = import_mesh_only_timing_aimodel(&project, &active_root, 0, 2, &session_dir)
+            .expect("mesh-only AIMODEL import must not require an OCCT manifest");
+        assert_eq!(imported["geometry_report"]["state"], "mesh_only");
+        assert_eq!(imported["geometry_report"]["triangle_count"], 1592);
+        assert_eq!(imported["geometry_report"]["catpart_available"], false);
+        assert_eq!(imported["stats"]["volume"], Value::Null);
+        assert!(Path::new(imported["mesh_path"].as_str().unwrap()).is_file());
+        assert!(crate::native_active_model::ensure_catpart_exportable(&imported).is_err());
+        let active = crate::native_active_model::load(&active_root).unwrap().unwrap();
+        assert_eq!(active["document"]["geometry_report"]["state"], "mesh_only");
+        assert_eq!(active["document"]["geometry_report"]["catpart_available"], false);
+
+        project["compatibility_marker"]["plan_fingerprint"] = json!("tampered");
+        assert!(native_model_io::timing_mesh_only_plan_from_project(&project).is_err());
+        project["compatibility_marker"]["version"] = json!(2);
+        assert!(native_model_io::timing_mesh_only_plan_from_project(&project).is_err());
+        project["compatibility_marker"]["plan_fingerprint"] = json!(
+            crate::cad_plan::geometry_fingerprint(&project["cadplan"]).unwrap()
+        );
+        project["compatibility_marker"]["version"] = json!(1);
+        project["features"][0]["params"]["teeth"] = json!(29);
+        assert!(native_model_io::timing_mesh_only_plan_from_project(&project).is_err());
+        project["features"][0]["params"]["teeth"] = json!(30);
+        project.as_object_mut().unwrap().remove("compatibility_marker");
+        assert!(native_model_io::timing_mesh_only_plan_from_project(&project).is_err());
+        let project_path = Path::new(source["output_paths"]["aimodel"].as_str().unwrap());
+        let mut multiple = native_model_io::load_aimodel(project_path).unwrap();
+        multiple["cadplan"]["features"].as_array_mut().unwrap().push(json!({
+            "id":"extra","kind":"box","operation":"add",
+            "parameters":{"length":1,"width":1,"height":1},"sources":{},"relations":[]
+        }));
+        multiple["compatibility_marker"]["plan_fingerprint"] = json!(
+            crate::cad_plan::geometry_fingerprint(&multiple["cadplan"]).unwrap()
+        );
+        assert!(native_model_io::timing_mesh_only_plan_from_project(&multiple).is_err());
+        assert!(native_model_io::timing_mesh_only_plan_from_project(&json!({
+            "cadplan":{"features":[{"kind":"box"}]}
+        })).unwrap().is_none());
+
+        let overlap_prompt = "同步带轮 T10 节圆直径95.493 齿数80 宽度16 内孔10";
+        let overlap = build(overlap_prompt, 3, Path::new("unused-occt-manifest.json"), &root)
+            .unwrap();
+        assert!(overlap["warnings"]
+            .to_string()
+            .contains("legacy_timing_pulley_tooth_tip_overlap"));
+        assert!(overlap["warnings"].to_string().contains("相邻齿会互相重叠"));
         fs::remove_dir_all(root).unwrap();
     }
 

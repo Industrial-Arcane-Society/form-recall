@@ -1,6 +1,109 @@
 {
   "legacy_python_accepted": [
     {
+      "input": "同步带轮 T10 节圆直径80 齿数24 宽度12 内孔8",
+      "expected_parameters": {
+        "pitch_d": 80.0,
+        "teeth": 24,
+        "height": 12.0,
+        "tooth_type": "T10",
+        "bore_d": 8.0,
+        "center": [0, 0, 0]
+      },
+      "sources": {
+        "pitch_d": "user",
+        "teeth": "user",
+        "height": "user",
+        "tooth_type": "user",
+        "bore_d": "user",
+        "center": "derived"
+      },
+      "mesh_only": true,
+      "no_tooth_overlap_warning": true
+    },
+    {
+      "input": "同步带轮 T10 节圆直径127.324 齿数40 宽度25 内孔18",
+      "expected_parameters": {
+        "pitch_d": 127.324,
+        "teeth": 40,
+        "height": 25.0,
+        "tooth_type": "T10",
+        "bore_d": 18.0,
+        "center": [0, 0, 0]
+      },
+      "sources": {
+        "pitch_d": "user",
+        "teeth": "user",
+        "height": "user",
+        "tooth_type": "user",
+        "bore_d": "user",
+        "center": "derived"
+      },
+      "mesh_only": true
+    },
+    {
+      "input": "同步带轮 T10 节圆直径95.493 齿数30 宽度16 内孔10",
+      "expected_parameters": {
+        "pitch_d": 95.493,
+        "teeth": 30,
+        "height": 16.0,
+        "tooth_type": "T10",
+        "bore_d": 10.0,
+        "center": [0, 0, 0]
+      },
+      "sources": {
+        "pitch_d": "user",
+        "teeth": "user",
+        "height": "user",
+        "tooth_type": "user",
+        "bore_d": "user",
+        "center": "derived"
+      },
+      "mesh_only": true
+    },
+    {
+      "input": "同步带轮 T10 节圆直径200 齿数6 宽度10 内孔10",
+      "expected_parameters": {
+        "pitch_d": 200.0,
+        "teeth": 6,
+        "height": 10.0,
+        "tooth_type": "T10",
+        "bore_d": 10.0,
+        "center": [0, 0, 0]
+      },
+      "sources": {
+        "pitch_d": "user",
+        "teeth": "user",
+        "height": "user",
+        "tooth_type": "user",
+        "bore_d": "user",
+        "center": "derived"
+      },
+      "mesh_only": true,
+      "native_preflight": "rejected by the unconditional T10 tooth-height limitation"
+    },
+    {
+      "input": "同步带轮 T10 节圆直径95.493 齿数80 宽度16 内孔10",
+      "expected_parameters": {
+        "pitch_d": 95.493,
+        "teeth": 80,
+        "height": 16.0,
+        "tooth_type": "T10",
+        "bore_d": 10.0,
+        "center": [0, 0, 0]
+      },
+      "sources": {
+        "pitch_d": "user",
+        "teeth": "user",
+        "height": "user",
+        "tooth_type": "user",
+        "bore_d": "user",
+        "center": "derived"
+      },
+      "mesh_only": true,
+      "warning": "legacy_timing_pulley_tooth_tip_overlap"
+    },
+    {
       "input": "同步带轮 XL型 节圆直径48.5104 齿数30 宽度10 内径12",
       "expected_parameters": {
         "pitch_d": 48.5104,
@@ -176,11 +279,6 @@
   ],
   "native_rejected": [
     {
-      "input": "V带轮 基准直径100 槽数3 槽型A 内孔25 宽度50",
-      "status": "unsupported",
-      "issue": "legacy_vbelt_pulley_not_migrated"
-    },
-    {
       "input": "同步带轮 XL 节圆直径50 齿数20 中心打直径6通孔",
       "status": "unsupported",
       "issue": "legacy_timing_pulley_compound_request_unsupported"
@@ -192,6 +290,10 @@
     }
   ],
   "needs_clarification": [
+    {
+      "input": "同步带轮 T10 节圆直径20 齿数6 宽度10 内孔20",
+      "issue": "legacy_timing_pulley_mesh_scope_unsupported"
+    },
     {
       "input": "同步带轮 型号X 节圆直径50 齿数20",
       "issue": "legacy_timing_pulley_type_unknown"

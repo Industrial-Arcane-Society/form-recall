@@ -272,6 +272,24 @@ pub fn root_from_data_dir(data_dir: &Path) -> PathBuf {
     data_dir.join("native-active-model")
 }
 
+/// Mesh-only Quick documents have no editable B-Rep and must never reach a
+/// CATIA/CATPart adapter.
+pub fn is_mesh_only_document(document: &Value) -> bool {
+    document
+        .pointer("/geometry_report/mesh_only")
+        .and_then(Value::as_bool)
+        == Some(true)
+}
+
+/// Shared pre-adapter guard for every CATPart/CATIA export entry point.
+pub fn ensure_catpart_exportable(document: &Value) -> Result<(), String> {
+    if is_mesh_only_document(document) {
+        Err("当前模型是 legacy mesh-only 兼容网格；没有可编辑 B-Rep，不能推送或导出 CATPart。".into())
+    } else {
+        Ok(())
+    }
+}
+
 /// Adapt a committed native CAD state into the DocumentState contract consumed
 /// by the Vue tree and viewport. The active generation replaces the
 /// session-local CAD revision in `document.revision` during commit.
@@ -288,13 +306,19 @@ pub fn candidate_from_cad_state(
         .cloned()
         .unwrap_or_else(|| json!({}));
     let (mut document, fingerprint) = if let Some(plan) = plan.as_ref() {
-        let mesh_only_vbelt = origin == "quick"
+        let mesh_only_legacy = origin == "quick"
             && state
                 .pointer("/last_preview/local_geometry_checks/mesh_only")
                 .and_then(Value::as_bool)
                 == Some(true);
-        let mut document = if mesh_only_vbelt {
+        let mut document = if mesh_only_legacy
+            && crate::native_vbelt_pulley::is_mesh_only_legacy_quick_plan(plan)
+        {
             crate::native_model_io::cadplan_to_project_mesh_only_vbelt(plan)?
+        } else if mesh_only_legacy
+            && crate::native_timing_pulley::is_mesh_only_legacy_quick_plan(plan)
+        {
+            crate::native_model_io::cadplan_to_project_mesh_only_timing(plan)?
         } else {
             crate::native_model_io::cadplan_to_project(plan)?
         };
@@ -454,7 +478,7 @@ fn validate_candidate_with_staged(
         return validate_artifacts(candidate, staged_output);
     };
     let validation = crate::cad_plan_validation::validate_plan(plan);
-    let mesh_only_vbelt = candidate["origin"].as_str() == Some("quick")
+    let mesh_only_legacy_common = candidate["origin"].as_str() == Some("quick")
         && document
             .pointer("/geometry_report/mesh_only")
             .and_then(Value::as_bool)
@@ -477,9 +501,11 @@ fn validate_candidate_with_staged(
             == Some(false)
         && document
             .pointer("/geometry_report/closed_solid_count")
-            .is_some_and(Value::is_null)
-        && crate::native_vbelt_pulley::is_mesh_only_legacy_quick_plan(plan);
-    if validation.get("valid").and_then(Value::as_bool) != Some(true) && !mesh_only_vbelt {
+            .is_some_and(Value::is_null);
+    let mesh_only_legacy = mesh_only_legacy_common
+        && (crate::native_vbelt_pulley::is_mesh_only_legacy_quick_plan(plan)
+            || crate::native_timing_pulley::is_mesh_only_legacy_quick_plan(plan));
+    if validation.get("valid").and_then(Value::as_bool) != Some(true) && !mesh_only_legacy {
         return Err(format!("活动模型 CADPlan 无效：{validation}"));
     }
     let fingerprint = crate::cad_plan::geometry_fingerprint(plan)?;
@@ -629,6 +655,14 @@ mod tests {
                 .contains("CADPlan validation failed")
         );
         assert!(candidate_from_cad_state("quick", &state, &json!({}), &json!({})).is_ok());
+    }
+
+    #[test]
+    fn mesh_only_documents_are_rejected_by_catpart_guard() {
+        let document = json!({"geometry_report":{"mesh_only":true,"catpart_available":false}});
+        let error = ensure_catpart_exportable(&document).unwrap_err();
+        assert!(error.contains("不能推送或导出 CATPart"));
+        assert!(ensure_catpart_exportable(&json!({"geometry_report":{"mesh_only":false}})).is_ok());
     }
 
     #[test]
