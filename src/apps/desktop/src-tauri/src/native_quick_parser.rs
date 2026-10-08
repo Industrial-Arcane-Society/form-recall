@@ -14155,7 +14155,7 @@ fn parse_legacy_sequential_base_stack(
     normalized: &str,
     inherited_warnings: &[Value],
 ) -> Option<Value> {
-    let connector = regex::Regex::new(r"再\s*做|然后\s*做").expect("fixed stack connector regex");
+    let connector = regex::Regex::new(r"再\s*做|然后\s*做|同时\s*做").expect("fixed stack connector regex");
     let matches = connector.find_iter(normalized).collect::<Vec<_>>();
     if matches.is_empty() {
         return None;
@@ -15385,12 +15385,20 @@ mod tests {
 
     #[test]
     fn f5_88_legacy_sequential_mixed_base_stack_derives_second_bottom_from_first_top() {
-        let cases = [(
-            "圆柱直径20高30，再做一个长方体长100宽60高20",
-            "cylinder",
-            "box",
-            30.0,
-        )];
+        let cases = [
+            (
+                "圆柱直径20高30，再做一个长方体长100宽60高20",
+                "cylinder",
+                "box",
+                30.0,
+            ),
+            (
+                "圆柱直径20高30，同时做一个长方体长100宽60高20",
+                "cylinder",
+                "box",
+                30.0,
+            ),
+        ];
         for (input, first_kind, second_kind, expected_z) in cases {
             let output = parse(input);
             assert_eq!(output["status"], "ready", "{input}: {output}");
@@ -15425,6 +15433,7 @@ mod tests {
             ("圆柱直径20高30，再做一个圆锥底径10高20", "unsupported", "sequential_base_stack_type_ambiguous"),
             ("圆柱直径20高30和另一个圆柱直径10高5，再做一个长方体长100宽60高20", "unsupported", "sequential_base_stack_type_ambiguous"),
             ("圆柱直径20高30，再做一个长方体长100宽60", "needs_clarification", "sequential_base_stack_dimensions_missing"),
+            ("圆柱直径20高30，同时做一个长方体长100宽60", "needs_clarification", "sequential_base_stack_dimensions_missing"),
         ];
         for (input, expected_status, expected_issue) in cases {
             let output = parse(input);
