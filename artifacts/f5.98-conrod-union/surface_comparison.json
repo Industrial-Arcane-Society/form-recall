@@ -1,0 +1,676 @@
+{
+  "schema_version": 1,
+  "case": {
+    "id": "F5.98-conrod-legacy-quick-union",
+    "prompt": "连杆 中心距120 大头外径48 大头孔径40 小头外径24 小头孔径18",
+    "parameters": {
+      "length_mm": 120.0,
+      "big_center_x_mm": -60.0,
+      "big_outer_radius_mm": 24.0,
+      "big_inner_radius_mm": 20.0,
+      "small_center_x_mm": 60.0,
+      "small_outer_radius_mm": 12.0,
+      "small_inner_radius_mm": 9.0,
+      "segments": 32,
+      "web_x_mm": [
+        -60.0,
+        60.0
+      ],
+      "web_y_mm": [
+        -9.6,
+        9.6
+      ],
+      "web_z_mm": [
+        -7.2,
+        7.2
+      ]
+    },
+    "oracle_definition": "independent source-recipe construction; not Document.build_brep()",
+    "raw_sha256": "44d1f05ee473e174b5430008443cf4475577ccfe604c36064ed556cc671e3d7b",
+    "candidate_rust_sha256": "b885ee55f77a9e31127069faa05c220f9e18340dc3e9e35fe28cc76041637c60"
+  },
+  "inputs": {
+    "legacy_document_build_raw": {
+      "path": "artifacts/f5.98-conrod-union/legacy_document_build_raw.stl",
+      "sha256": "44d1f05ee473e174b5430008443cf4475577ccfe604c36064ed556cc671e3d7b"
+    },
+    "rust_quick_candidate": {
+      "path": "artifacts/f5.98-conrod-union/rust_quick_candidate.stl",
+      "sha256": "b885ee55f77a9e31127069faa05c220f9e18340dc3e9e35fe28cc76041637c60"
+    }
+  },
+  "thresholds": {
+    "surface_tolerance_mm": 0.08,
+    "weld_tolerance_mm": 1e-05,
+    "oracle_mesh_deflection_mm": 0.005,
+    "oracle_mesh_angular_deflection_rad": 0.1
+  },
+  "geometry_runtime": {
+    "python_ocp_version": "7.9.3.1",
+    "construction": "Python OCP annular planar faces + prisms + box + sequential fuzzy Boolean fuse (1e-7 mm)"
+  },
+  "limitations": [
+    "All surface maxima are finite sampled values, not a continuous Hausdorff bound.",
+    "The independent oracle is reconstructed from the legacy source dimensions and phase using OCP polygon/prism solids; it is not the failed legacy Document.build_brep() path.",
+    "Probe points and sampled triangle subdivisions do not prove full semantic or all-input equivalence.",
+    "CATIA and visible UI behavior were not tested."
+  ],
+  "source_union": {
+    "valid": true,
+    "solid_count": 1,
+    "volume_mm3": 41692.8346619712
+  },
+  "source_union_stl": {
+    "path": "legacy_quick_source_union.stl",
+    "sha256": "9f6dc9c45d4997f32f77ea71853f21dfde3b620dfbd51c31ffba273f7627f68b",
+    "size_bytes": 27884
+  },
+  "meshes": {
+    "source_union": {
+      "triangle_count": 556,
+      "topology": {
+        "weld_tolerance_mm": 1e-05,
+        "welded_vertex_count": 276,
+        "edge_count": 834,
+        "boundary_edge_count": 0,
+        "nonmanifold_edge_count": 0,
+        "orientation_conflict_edge_count": 0,
+        "degenerate_triangle_count": 0,
+        "duplicate_triangle_count": 0,
+        "connected_triangle_components": 1,
+        "closed_manifold": true,
+        "closed_oriented_manifold": true
+      }
+    },
+    "rust_candidate": {
+      "triangle_count": 580,
+      "topology": {
+        "weld_tolerance_mm": 1e-05,
+        "welded_vertex_count": 288,
+        "edge_count": 870,
+        "boundary_edge_count": 0,
+        "nonmanifold_edge_count": 0,
+        "orientation_conflict_edge_count": 0,
+        "degenerate_triangle_count": 0,
+        "duplicate_triangle_count": 0,
+        "connected_triangle_components": 1,
+        "closed_manifold": true,
+        "closed_oriented_manifold": true
+      }
+    }
+  },
+  "surface_comparison": {
+    "coordinate_policy": "shared world millimetres; no alignment or normalization",
+    "sampled_bidirectional": {
+      "source_union_to_rust_candidate": {
+        "method": "16 deterministic area-weighted barycentric samples per source triangle (four per each of four midpoint subtriangles); exact point-to-triangle distance via AABB BVH",
+        "sample_count": 8896,
+        "sampled_surface_area_mm2": 14016.657545891412,
+        "weighted_mean_mm": 1.3730474067536943e-13,
+        "weighted_rms_mm": 2.555569589781784e-12,
+        "weighted_p95_mm": 1.522831048763522e-13,
+        "weighted_p99_mm": 8.312691677007563e-13,
+        "sampled_max_mm": 8.455247663719284e-11
+      },
+      "rust_candidate_to_source_union": {
+        "method": "16 deterministic area-weighted barycentric samples per source triangle (four per each of four midpoint subtriangles); exact point-to-triangle distance via AABB BVH",
+        "sample_count": 9280,
+        "sampled_surface_area_mm2": 14016.657545891743,
+        "weighted_mean_mm": 1.375249510395613e-13,
+        "weighted_rms_mm": 2.555613370022934e-12,
+        "weighted_p95_mm": 1.522831048763522e-13,
+        "weighted_p99_mm": 8.312691677007563e-13,
+        "sampled_max_mm": 8.455247663719284e-11
+      }
+    },
+    "sampled_symmetric_max_mm": 8.455247663719284e-11,
+    "vertex_and_edge_midpoint_probes": {
+      "source_union_to_rust_candidate": {
+        "probe_count": 3336,
+        "sampled_max_mm": 2.0095036745715333e-14,
+        "method": "all triangle vertices and edge midpoints; finite probes, not a continuous bound"
+      },
+      "rust_candidate_to_source_union": {
+        "probe_count": 3480,
+        "sampled_max_mm": 1.6687357476335705e-14,
+        "method": "all triangle vertices and edge midpoints; finite probes, not a continuous bound"
+      }
+    },
+    "vertex_edge_symmetric_max_mm": 2.0095036745715333e-14,
+    "bounds_max_abs_delta_mm": 0.0,
+    "passed": true
+  },
+  "signed_volume_diagnostic_mm3": {
+    "source_union_brep": 41692.8346619712,
+    "source_union_mesh": 41692.83531164742,
+    "rust_candidate_mesh": 41692.83531164742,
+    "note": "Diagnostic only; both exported meshes are closed and oriented, but surface acceptance uses distance/probes separately."
+  },
+  "semantic_probes": {
+    "method": "OCP solid point classifier vs three-direction parity ray tests on closed candidate STL; points are deliberately away from surfaces",
+    "probes": [
+      {
+        "name": "web_midplane_material",
+        "point_mm": [
+          0.0,
+          0.0,
+          0.0
+        ],
+        "source_union": "in",
+        "expected": "in",
+        "candidate_mesh": "in",
+        "candidate_ray_parity": [
+          1,
+          1,
+          1
+        ],
+        "passed": true
+      },
+      {
+        "name": "web_near_top_endface_material",
+        "point_mm": [
+          0.0,
+          0.0,
+          7.19
+        ],
+        "source_union": "in",
+        "expected": "in",
+        "candidate_mesh": "in",
+        "candidate_ray_parity": [
+          1,
+          1,
+          1
+        ],
+        "passed": true
+      },
+      {
+        "name": "above_web_top_endface_void",
+        "point_mm": [
+          0.0,
+          0.0,
+          7.21
+        ],
+        "source_union": "out",
+        "expected": "out",
+        "candidate_mesh": "out",
+        "candidate_ray_parity": [
+          0,
+          0,
+          0
+        ],
+        "passed": true
+      },
+      {
+        "name": "big_ring_inner_wall_material",
+        "point_mm": [
+          -60.0,
+          21.0,
+          0.0
+        ],
+        "source_union": "in",
+        "expected": "in",
+        "candidate_mesh": "in",
+        "candidate_ray_parity": [
+          1,
+          1,
+          1
+        ],
+        "passed": true
+      },
+      {
+        "name": "big_ring_bore_away_from_web_void",
+        "point_mm": [
+          -60.0,
+          15.0,
+          0.0
+        ],
+        "source_union": "out",
+        "expected": "out",
+        "candidate_mesh": "out",
+        "candidate_ray_parity": [
+          0,
+          0,
+          0
+        ],
+        "passed": true
+      },
+      {
+        "name": "big_ring_outer_clearance_void",
+        "point_mm": [
+          -60.0,
+          24.2,
+          0.0
+        ],
+        "source_union": "out",
+        "expected": "out",
+        "candidate_mesh": "out",
+        "candidate_ray_parity": [
+          0,
+          0,
+          0
+        ],
+        "passed": true
+      },
+      {
+        "name": "big_end_bore_after_web_termination_void",
+        "point_mm": [
+          -70.0,
+          0.0,
+          0.0
+        ],
+        "source_union": "out",
+        "expected": "out",
+        "candidate_mesh": "out",
+        "candidate_ray_parity": [
+          0,
+          0,
+          0
+        ],
+        "passed": true
+      },
+      {
+        "name": "big_ring_inner_wall_thinwall_material",
+        "point_mm": [
+          -60.0,
+          20.5,
+          0.0
+        ],
+        "source_union": "in",
+        "expected": "in",
+        "candidate_mesh": "in",
+        "candidate_ray_parity": [
+          1,
+          1,
+          1
+        ],
+        "passed": true
+      },
+      {
+        "name": "big_ring_inner_wall_near_bore_material",
+        "point_mm": [
+          -60.0,
+          20.2,
+          0.0
+        ],
+        "source_union": "in",
+        "expected": "in",
+        "candidate_mesh": "in",
+        "candidate_ray_parity": [
+          1,
+          1,
+          1
+        ],
+        "passed": true
+      },
+      {
+        "name": "big_ring_outer_wall_near_exterior_material",
+        "point_mm": [
+          -60.0,
+          23.8,
+          0.0
+        ],
+        "source_union": "in",
+        "expected": "in",
+        "candidate_mesh": "in",
+        "candidate_ray_parity": [
+          1,
+          1,
+          1
+        ],
+        "passed": true
+      },
+      {
+        "name": "web_occludes_big_nominal_bore",
+        "point_mm": [
+          -59.0,
+          0.0,
+          0.0
+        ],
+        "source_union": "in",
+        "expected": "in",
+        "candidate_mesh": "in",
+        "candidate_ray_parity": [
+          1,
+          1,
+          1
+        ],
+        "passed": true
+      },
+      {
+        "name": "big_web_ring_intersection_material_side",
+        "point_mm": [
+          -42.7,
+          9.4,
+          0.0
+        ],
+        "source_union": "in",
+        "expected": "in",
+        "candidate_mesh": "in",
+        "candidate_ray_parity": [
+          1,
+          1,
+          1
+        ],
+        "passed": true
+      },
+      {
+        "name": "big_web_inner_ring_intersection_void_side",
+        "point_mm": [
+          -42.7,
+          9.8,
+          0.0
+        ],
+        "source_union": "out",
+        "expected": "out",
+        "candidate_mesh": "out",
+        "candidate_ray_parity": [
+          0,
+          0,
+          0
+        ],
+        "passed": true
+      },
+      {
+        "name": "big_web_outer_ring_intersection_material_side",
+        "point_mm": [
+          -40.0,
+          13.0,
+          0.0
+        ],
+        "source_union": "in",
+        "expected": "in",
+        "candidate_mesh": "in",
+        "candidate_ray_parity": [
+          1,
+          1,
+          1
+        ],
+        "passed": true
+      },
+      {
+        "name": "big_web_outer_ring_intersection_void_side",
+        "point_mm": [
+          -40.0,
+          13.6,
+          0.0
+        ],
+        "source_union": "out",
+        "expected": "out",
+        "candidate_mesh": "out",
+        "candidate_ray_parity": [
+          0,
+          0,
+          0
+        ],
+        "passed": true
+      },
+      {
+        "name": "web_occludes_small_nominal_bore",
+        "point_mm": [
+          59.0,
+          0.0,
+          0.0
+        ],
+        "source_union": "in",
+        "expected": "in",
+        "candidate_mesh": "in",
+        "candidate_ray_parity": [
+          1,
+          1,
+          1
+        ],
+        "passed": true
+      },
+      {
+        "name": "small_web_ring_intersection_material_side",
+        "point_mm": [
+          53.0,
+          9.4,
+          0.0
+        ],
+        "source_union": "in",
+        "expected": "in",
+        "candidate_mesh": "in",
+        "candidate_ray_parity": [
+          1,
+          1,
+          1
+        ],
+        "passed": true
+      },
+      {
+        "name": "small_web_ring_intersection_void_side",
+        "point_mm": [
+          53.0,
+          9.8,
+          0.0
+        ],
+        "source_union": "out",
+        "expected": "out",
+        "candidate_mesh": "out",
+        "candidate_ray_parity": [
+          0,
+          0,
+          0
+        ],
+        "passed": true
+      },
+      {
+        "name": "small_ring_inner_wall_material",
+        "point_mm": [
+          60.0,
+          10.5,
+          0.0
+        ],
+        "source_union": "in",
+        "expected": "in",
+        "candidate_mesh": "in",
+        "candidate_ray_parity": [
+          1,
+          1,
+          1
+        ],
+        "passed": true
+      },
+      {
+        "name": "small_ring_inner_wall_thinwall_material",
+        "point_mm": [
+          60.0,
+          11.5,
+          0.0
+        ],
+        "source_union": "in",
+        "expected": "in",
+        "candidate_mesh": "in",
+        "candidate_ray_parity": [
+          1,
+          1,
+          1
+        ],
+        "passed": true
+      },
+      {
+        "name": "small_end_bore_after_web_termination_void",
+        "point_mm": [
+          65.0,
+          0.0,
+          0.0
+        ],
+        "source_union": "out",
+        "expected": "out",
+        "candidate_mesh": "out",
+        "candidate_ray_parity": [
+          0,
+          0,
+          0
+        ],
+        "passed": true
+      },
+      {
+        "name": "small_end_bore_near_wall_void",
+        "point_mm": [
+          65.0,
+          6.5,
+          0.0
+        ],
+        "source_union": "out",
+        "expected": "out",
+        "candidate_mesh": "out",
+        "candidate_ray_parity": [
+          0,
+          0,
+          0
+        ],
+        "passed": true
+      },
+      {
+        "name": "small_ring_inner_wall_after_web_material",
+        "point_mm": [
+          65.0,
+          7.6,
+          0.0
+        ],
+        "source_union": "in",
+        "expected": "in",
+        "candidate_mesh": "in",
+        "candidate_ray_parity": [
+          1,
+          1,
+          1
+        ],
+        "passed": true
+      },
+      {
+        "name": "small_ring_outer_wall_after_web_material",
+        "point_mm": [
+          65.0,
+          10.8,
+          0.0
+        ],
+        "source_union": "in",
+        "expected": "in",
+        "candidate_mesh": "in",
+        "candidate_ray_parity": [
+          1,
+          1,
+          1
+        ],
+        "passed": true
+      },
+      {
+        "name": "small_ring_outer_clearance_void",
+        "point_mm": [
+          60.0,
+          12.2,
+          0.0
+        ],
+        "source_union": "out",
+        "expected": "out",
+        "candidate_mesh": "out",
+        "candidate_ray_parity": [
+          0,
+          0,
+          0
+        ],
+        "passed": true
+      }
+    ],
+    "passed": true
+  },
+  "legacy_raw_occupancy_classification": {
+    "raw_triangles": 524,
+    "samples": 2096,
+    "total_area_mm2": 15980.629557031643,
+    "inputs": {
+      "legacy_raw_stl_sha256": "44d1f05ee473e174b5430008443cf4475577ccfe604c36064ed556cc671e3d7b",
+      "rust_candidate_stl_sha256": "b885ee55f77a9e31127069faa05c220f9e18340dc3e9e35fe28cc76041637c60",
+      "sampling": "compare_mesh_surfaces._surface_samples: 4 fixed barycentric samples per triangle, area/4 weights",
+      "source_union": "phase-zero 32-gon rings at x=-60/+60, radii 24/20 and 12/9, z=+-7.2; web x[-60,60], y[-9.6,9.6], z[-7.2,7.2]",
+      "distance": "compare_mesh_surfaces._TriangleBvh exact point-to-triangle distance",
+      "tolerance_mm": 0.08
+    },
+    "classification": {
+      "0.0001": {
+        "buried": {
+          "samples": 278,
+          "sample_area_mm2": 1306.999732850692,
+          "max_to_candidate_mm": 4.799999872843425,
+          "over_0_08_samples": 274,
+          "over_0_08_area_mm2": 1273.1250081352796
+        },
+        "exposed": {
+          "samples": 1818,
+          "sample_area_mm2": 14673.62982418093,
+          "max_to_candidate_mm": 9.143676785217801e-07,
+          "over_0_08_samples": 0,
+          "over_0_08_area_mm2": 0
+        },
+        "outside_both": {
+          "samples": 0,
+          "sample_area_mm2": 0,
+          "max_to_candidate_mm": 0.0,
+          "over_0_08_samples": 0,
+          "over_0_08_area_mm2": 0
+        }
+      },
+      "0.001": {
+        "buried": {
+          "samples": 278,
+          "sample_area_mm2": 1306.999732850692,
+          "max_to_candidate_mm": 4.799999872843425,
+          "over_0_08_samples": 274,
+          "over_0_08_area_mm2": 1273.1250081352796
+        },
+        "exposed": {
+          "samples": 1818,
+          "sample_area_mm2": 14673.62982418093,
+          "max_to_candidate_mm": 9.143676785217801e-07,
+          "over_0_08_samples": 0,
+          "over_0_08_area_mm2": 0
+        },
+        "outside_both": {
+          "samples": 0,
+          "sample_area_mm2": 0,
+          "max_to_candidate_mm": 0.0,
+          "over_0_08_samples": 0,
+          "over_0_08_area_mm2": 0
+        },
+        "exposed_eps_1e-3_p95": 1.034537245166155e-13
+      },
+      "0.01": {
+        "buried": {
+          "samples": 274,
+          "sample_area_mm2": 1273.1250081352796,
+          "max_to_candidate_mm": 4.799999872843425,
+          "over_0_08_samples": 274,
+          "over_0_08_area_mm2": 1273.1250081352796
+        },
+        "exposed": {
+          "samples": 1822,
+          "sample_area_mm2": 14707.50454889634,
+          "max_to_candidate_mm": 0.0006695747375484729,
+          "over_0_08_samples": 0,
+          "over_0_08_area_mm2": 0
+        },
+        "outside_both": {
+          "samples": 0,
+          "sample_area_mm2": 0,
+          "max_to_candidate_mm": 0.0,
+          "over_0_08_samples": 0,
+          "over_0_08_area_mm2": 0
+        }
+      }
+    },
+    "limitation": "Finite surface samples and epsilon-offset point-in-source occupancy; not a Boolean union and not a continuous Hausdorff bound."
+  },
+  "legacy_raw_occupancy_classification_passed": true,
+  "status": "pass",
+  "pass_contract": [
+    "OCP source recipe union validates as exactly one solid and meshes as one closed oriented component",
+    "Rust candidate is one closed oriented mesh component",
+    "Both directions have 16 area-weighted samples per triangle plus every vertex and edge midpoint within 0.08 mm",
+    "Shared-frame bounding-box maximum absolute delta is within 0.08 mm",
+    "All named ring, bore, web, end-face, thin-wall and web-termination occupancy probes match the independent source union",
+    "Legacy raw occupancy classifier has no outside-both samples and no exposed sample beyond 0.08 mm at epsilon 0.0001, 0.001 and 0.01 mm"
+  ]
+}
