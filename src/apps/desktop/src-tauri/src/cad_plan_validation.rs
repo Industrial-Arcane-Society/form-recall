@@ -24,6 +24,15 @@ struct Spec {
 // occ_kernel.GEOMETRY_SUPPORT. Parameter names are space-separated identifiers.
 const SPECS: &[Spec] = &[
     Spec {
+        kind: "extrude_holes",
+        required: "sec_a sec_b length axis base holes segments ref_min ref_size",
+        params: "sec_a sec_b length axis base holes segments ref_min ref_size",
+        catia_status: "unsupported",
+        catia_reason: "EGT SW50/SW80 使用参数化 Quick 网格兼容特征；没有 B-Rep/CATPart 映射。",
+        local_status: "exact",
+        local_reason: "按实测截面、坐标框架和通孔参数重建封闭网格；不生成 B-Rep。",
+    },
+    Spec {
         kind: "box",
         required: "length width height",
         params: "length width height center axis base corner corner_mode stack",
@@ -343,6 +352,8 @@ const LENGTH_ARRAY_KEYS: &[&str] = &[
     "point",
     "entry_point",
     "profile",
+    "ref_min",
+    "ref_size",
 ];
 const ANGLE_KEYS: &[&str] = &[
     "angle",
@@ -756,7 +767,8 @@ pub fn validate_plan(plan: &Value) -> Value {
             feature.get("geometry_variant").and_then(Value::as_str),
             schema_version,
         );
-        geometry_support.push(json!({"feature_id":fid,"kind":kind,"status":local_status,"reason":local_reason,"backend":"occt_brep"}));
+        let local_backend = if kind == "extrude_holes" { "rust_quick_triangle_mesh" } else { "occt_brep" };
+        geometry_support.push(json!({"feature_id":fid,"kind":kind,"status":local_status,"reason":local_reason,"backend":local_backend}));
         if local_status == "approximate" {
             warnings.push(json!({"code":"LOCAL_BREP_APPROXIMATION","feature_id":fid,"kind":kind,"message":local_reason}));
         } else if local_status == "unavailable" {
@@ -2073,7 +2085,7 @@ fn feature_schema_for(spec: &Spec) -> Value {
         all_of.extend([json!({"if":{"properties":{"parameters":{"properties":{"mode":{"const":"linear"}},"required":["mode"]}}},"then":{"properties":{"parameters":{"required":["step"]}}}}),json!({"if":{"properties":{"parameters":{"properties":{"mode":{"const":"circular"}},"required":["mode"]}}},"then":{"properties":{"parameters":{"required":["axis","angle","center"]}}}})]);
     }
     for key in words(spec.params) {
-        if is_provenance_parameter(key) {
+        if is_provenance_parameter(key) || key == "holes" {
             all_of.push(json!({"if":{"required":["parameters"],"properties":{"parameters":{"required":[key]}}},"then":{"required":["sources"],"properties":{"sources":{"required":[key]}}}}));
         }
     }
@@ -2155,9 +2167,19 @@ fn parameter_property_map() -> Map<String, Value> {
         "step",
         "point",
         "entry_point",
+        "ref_min",
+        "ref_size",
     ] {
         out.insert(key.into(),json!({"type":"array","prefixItems":[{"type":"number"},{"type":"number"},{"type":"number"}],"minItems":3,"maxItems":3,"items":false}));
     }
+    out.insert("holes".into(), json!({"type":"array","minItems":1,"maxItems":545,
+        "items":{"type":"object","properties":{
+            "d":{"type":"number","exclusiveMinimum":0},
+            "axis":{"type":"string","enum":["X","Y","Z"]},
+            "u":{"type":"number"},"v":{"type":"number"},
+            "through":{"type":"boolean"}},
+            "required":["d","axis","u","v","through"],"additionalProperties":false}}));
+    out.insert("segments".into(), json!({"type":"integer","const":24}));
     out.insert("profile".into(),json!({"type":"array","minItems":3,"items":{"type":"array","prefixItems":[{"type":"number"},{"type":"number"}],"minItems":2,"maxItems":2,"items":false}}));
     out.insert("rotate".into(),json!({"type":"array","prefixItems":[{"type":"string","enum":["X","Y","Z"]},{"type":"number"}],"minItems":2,"maxItems":2,"items":false}));
     for (key, vals) in [
@@ -2416,7 +2438,7 @@ mod tests {
     }
 
     #[test]
-    fn schema_contains_all_28_public_feature_kinds_and_source_guards() {
+    fn schema_contains_all_29_public_feature_kinds_and_source_guards() {
         let schema = schema_document();
         assert_eq!(
             schema["$id"],
@@ -2431,11 +2453,11 @@ mod tests {
             .unwrap()
             .as_array()
             .unwrap();
-        assert_eq!(alternatives.len(), 28);
+        assert_eq!(alternatives.len(), 29);
         assert!(feature_schema("shell").is_some());
         assert!(feature_schema("not_public").is_none());
         assert!(schema.to_string().contains("image_estimate"));
-        assert_eq!(SPECS.len(), 28);
+        assert_eq!(SPECS.len(), 29);
     }
     #[test]
     fn shell_v1_migration_requires_confirmation_and_v11_schema_requires_explicit_contract() {

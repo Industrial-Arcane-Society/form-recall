@@ -30,15 +30,19 @@ pub fn build(
     let validation = cad_plan_validation::validate_plan(&plan);
     let legacy_vbelt = crate::native_vbelt_pulley::is_mesh_only_legacy_quick_plan(&plan);
     let legacy_timing = crate::native_timing_pulley::is_mesh_only_legacy_quick_plan(&plan);
-    if legacy_vbelt || legacy_timing {
+    let legacy_egt_sw = crate::native_quick_egt_sw::is_mesh_only_plan(&plan);
+    if legacy_vbelt || legacy_timing || legacy_egt_sw {
+        if legacy_egt_sw {
+            return build_mesh_only_legacy(&plan, &parsed["warnings"], text, revision, session_dir, false, true);
+        }
         if legacy_timing {
-            let mut document = build_mesh_only_legacy_plan(&plan, text, revision, session_dir)?;
+            let mut document = build_mesh_only_legacy_plan_timing(&plan, text, revision, session_dir)?;
             let mut warnings = parsed["warnings"].as_array().cloned().unwrap_or_default();
             warnings.extend(document["warnings"].as_array().cloned().unwrap_or_default());
             document["warnings"] = Value::Array(warnings);
             return Ok(document);
         }
-        return build_mesh_only_legacy(&plan, &parsed["warnings"], text, revision, session_dir, true);
+        return build_mesh_only_legacy(&plan, &parsed["warnings"], text, revision, session_dir, true, false);
     }
     if validation["valid"] != true {
         return Err(format!(
@@ -122,6 +126,7 @@ fn build_mesh_only_legacy(
     revision: i64,
     session_dir: &Path,
     legacy_vbelt: bool,
+    legacy_egt_sw: bool,
 ) -> Result<Value, String> {
     let feature = plan
         .pointer("/features/0")
@@ -129,13 +134,17 @@ fn build_mesh_only_legacy(
     let parameters = feature
         .get("parameters")
         .ok_or("mesh-only Quick 特征缺少参数。")?;
-    let mesh = if legacy_vbelt {
+    let mesh = if legacy_egt_sw {
+        crate::native_quick_egt_sw::build(parameters)?
+    } else if legacy_vbelt {
         crate::native_vbelt_pulley::legacy_quick_mesh(parameters, 64)?
     } else {
         crate::native_timing_pulley::legacy_quick_t10_mesh(parameters)?
     };
     let compatibility_details = if legacy_vbelt {
         crate::native_vbelt_pulley::legacy_mesh_geometry_details(parameters)?
+    } else if legacy_egt_sw {
+        crate::native_quick_egt_sw::geometry_diagnostics(parameters, &mesh)?
     } else {
         json!({})
     };
@@ -153,7 +162,9 @@ fn build_mesh_only_legacy(
     let obj = dir.join("quick.obj");
     let glb = dir.join("mesh.glb");
     let geometry_report = dir.join("geometry-report.json");
-    let project = if legacy_vbelt {
+    let project = if legacy_egt_sw {
+        native_model_io::cadplan_to_project_mesh_only_egt_sw(plan)?
+    } else if legacy_vbelt {
         native_model_io::cadplan_to_project_mesh_only_vbelt(plan)?
     } else {
         native_model_io::cadplan_to_project_mesh_only_timing(plan)?
@@ -164,7 +175,9 @@ fn build_mesh_only_legacy(
     write_glb(&mesh, &glb)?;
     let dimensions = stl_stats.bounds.map(|axis| (axis[1] - axis[0]) as f64);
     let triangle_count = stl_stats.triangle_count as usize;
-    let builder = if !legacy_vbelt {
+    let builder = if legacy_egt_sw {
+        "legacy_quick_rectangular_envelope_with_measured_through_holes_mesh_only"
+    } else if !legacy_vbelt {
         "legacy_make_timing_pulley_64_segment_blank_and_tooth_lofts"
     } else if compatibility_details["spokes"].is_null() {
         "legacy_make_revolve_profile_edges_swept_64_segments"
@@ -172,7 +185,10 @@ fn build_mesh_only_legacy(
         "legacy_make_revolve_profile_edges_and_rotated_box_spokes_64_segments"
     };
     let mut report_warnings = vec![
-        if legacy_vbelt {
+        if legacy_egt_sw {
+            "该 SW50/SW80 结果复刻旧 Quick 的矩形包络+目录孔位三角网格；这不是型材真实内截面，也不提供 B-Rep/CATPart。"
+                .to_string()
+        } else if legacy_vbelt {
             "该 Quick 结果逐面复刻旧 Python V 带轮三角网格；未构建或验证 B-Rep/闭合实体。"
                 .to_string()
         } else {
@@ -181,6 +197,12 @@ fn build_mesh_only_legacy(
         },
         "AIMODEL 保存 CADPlan 与参数；此 mesh-only 结果不可据此推送或导出 CATPart。".to_string(),
     ];
+    if legacy_egt_sw && compatibility_details["self_intersection_risk"] == true {
+        report_warnings.push(format!(
+            "实测目录中有 {} 对贯穿孔轴线相交；按旧 Quick 保留原始相交圆柱壁网格。该结果不是可制造的闭合 B-Rep。",
+            compatibility_details["intersecting_hole_pairs"].as_u64().unwrap_or(0)
+        ));
+    }
     if let Some(spoke_count) = compatibility_details
         .pointer("/spokes/count")
         .and_then(Value::as_u64)
@@ -209,9 +231,13 @@ fn build_mesh_only_legacy(
         "catpart_available":false,
         "legacy_profile_was_self_intersecting":if legacy_vbelt {
             compatibility_details["legacy_profile_self_intersecting"].clone()
+        } else if legacy_egt_sw {
+            compatibility_details["self_intersection_risk"].clone()
         } else {
             Value::Null
         },
+        "intersecting_hole_pairs":compatibility_details["intersecting_hole_pairs"],
+        "mesh_edges":compatibility_details["mesh_edges"],
         "profile_points":compatibility_details["profile_points"],
         "groove_root_width_mm":compatibility_details["groove_root_width_mm"],
         "groove_effective_pitch_mm":compatibility_details["groove_effective_pitch_mm"],
@@ -225,7 +251,7 @@ fn build_mesh_only_legacy(
     )?;
     let mut warnings = parse_warnings.as_array().cloned().unwrap_or_default();
     warnings.push(json!(
-        "该带轮使用旧 Quick 网格兼容结果：可预览和导出网格，不能生成 CATPart。"
+        if legacy_egt_sw { "该 EGT SW 结果为 legacy Quick mesh-only：可预览、重开 AIMODEL 和导出网格，不能生成 CATPart。" } else { "该带轮使用旧 Quick 网格兼容结果：可预览和导出网格，不能生成 CATPart。" }
     ));
     let output_paths = json!({
         "glb":glb,
@@ -281,13 +307,30 @@ pub(crate) fn import_mesh_only_timing_aimodel(
     let plan = crate::native_model_io::timing_mesh_only_plan_from_project(source_document)?
         .ok_or("AIMODEL 没有受支持的 T10 mesh-only 标记。")?;
     let prompt = source_document["source_prompt"].as_str().unwrap_or("");
-    let rebuilt = build_mesh_only_legacy_plan(&plan, prompt, revision, session_dir)?;
+    let rebuilt = build_mesh_only_legacy_plan_timing(&plan, prompt, revision, session_dir)?;
     let candidate = active_model_candidate(prompt, &rebuilt)?;
     let active = crate::native_active_model::commit(active_root, expected_generation, &candidate)?;
     Ok(active["document"].clone())
 }
 
-pub(crate) fn build_mesh_only_legacy_plan(
+/// Rebuild the measured SW50/SW80 legacy Quick mesh without invoking OCCT.
+pub(crate) fn import_mesh_only_egt_sw_aimodel(
+    source_document: &Value,
+    active_root: &Path,
+    expected_generation: u64,
+    revision: i64,
+    session_dir: &Path,
+) -> Result<Value, String> {
+    let plan = crate::native_model_io::egt_sw_mesh_only_plan_from_project(source_document)?
+        .ok_or("AIMODEL 没有受支持的 EGT SW mesh-only 标记。")?;
+    let prompt = source_document["source_prompt"].as_str().unwrap_or("");
+    let rebuilt = build_mesh_only_legacy_plan(&plan, prompt, revision, session_dir, true)?;
+    let candidate = active_model_candidate(prompt, &rebuilt)?;
+    let active = crate::native_active_model::commit(active_root, expected_generation, &candidate)?;
+    Ok(active["document"].clone())
+}
+
+pub(crate) fn build_mesh_only_legacy_plan_timing(
     plan: &Value,
     source_prompt: &str,
     revision: i64,
@@ -296,7 +339,24 @@ pub(crate) fn build_mesh_only_legacy_plan(
     if !crate::native_timing_pulley::is_mesh_only_legacy_quick_plan(plan) {
         return Err("仅接受单特征 T10 legacy mesh-only CADPlan。".into());
     }
-    build_mesh_only_legacy(plan, &json!([]), source_prompt, revision, session_dir, false)
+    build_mesh_only_legacy(plan, &json!([]), source_prompt, revision, session_dir, false, false)
+}
+
+pub(crate) fn build_mesh_only_legacy_plan(
+    plan: &Value,
+    source_prompt: &str,
+    revision: i64,
+    session_dir: &Path,
+    legacy_egt_sw: bool,
+) -> Result<Value, String> {
+    if legacy_egt_sw {
+        if !crate::native_quick_egt_sw::is_mesh_only_plan(plan) {
+            return Err("仅接受单特征 measured SW50/SW80 legacy mesh-only CADPlan。".into());
+        }
+        build_mesh_only_legacy(plan, &json!([]), source_prompt, revision, session_dir, false, true)
+    } else {
+        build_mesh_only_legacy_plan_timing(plan, source_prompt, revision, session_dir)
+    }
 }
 
 pub fn active_model_candidate(text: &str, document: &Value) -> Result<Value, String> {

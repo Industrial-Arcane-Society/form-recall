@@ -451,6 +451,25 @@ def _compare_pair(left_name: str, left: Sequence[Triangle], right_name: str, rig
     }
 
 
+def compare_two_stls(left_path: Path, right_path: Path,
+                     left_name: str = "left", right_name: str = "right",
+                     tolerance_mm: float = 0.08, weld_tolerance_mm: float = 1e-8,
+                     projection_resolutions: Sequence[int] = (64, 128)) -> dict[str, object]:
+    """Public two-mesh API sharing the same BVH, topology and projection checks."""
+    left, right = read_binary_stl(left_path), read_binary_stl(right_path)
+    return {
+        "schema_version": 1,
+        "units": "mm",
+        "thresholds": {"surface_tolerance_mm": tolerance_mm, "weld_tolerance_mm": weld_tolerance_mm},
+        "inputs": {
+            left_name: _mesh_summary(left_path, left, weld_tolerance_mm),
+            right_name: _mesh_summary(right_path, right, weld_tolerance_mm),
+        },
+        "comparison": _compare_pair(left_name, left, right_name, right,
+                                     tolerance_mm, weld_tolerance_mm, projection_resolutions),
+    }
+
+
 def compare_three(raw_path: Path, brep_stl_path: Path, rust_path: Path,
                   tolerance_mm: float = 0.08, weld_tolerance_mm: float = 1e-5,
                   projection_resolutions: Sequence[int] = (64, 128, 256)) -> dict[str, object]:

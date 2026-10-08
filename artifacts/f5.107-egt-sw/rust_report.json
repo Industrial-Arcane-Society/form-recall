@@ -1,0 +1,36 @@
+{
+  "bounds_mm": [
+    [
+      -40.0,
+      40.0
+    ],
+    [
+      -44.0,
+      44.0
+    ],
+    [
+      -40.0,
+      40.0
+    ]
+  ],
+  "brep_available": false,
+  "catpart_available": false,
+  "diagnostics": {
+    "hole_count": 13,
+    "intersecting_hole_pairs": 15,
+    "mesh_edges": {
+      "boundary_edges": 0,
+      "edge_manifold": true,
+      "nonmanifold_edges": 0,
+      "unique_edges": 2196
+    },
+    "self_intersection_risk": true
+  },
+  "legacy_semantics": "rectangular envelope + measured through-hole triangle mesh; not a real extrusion cross-section",
+  "mesh_only": true,
+  "profile_id": "EGT001:SW80:88",
+  "rust_parameters": "artifacts/f5.107-egt-sw\\rust_parameters.json",
+  "rust_stl": "artifacts/f5.107-egt-sw\\rust_mesh.stl",
+  "signed_mesh_volume_mm3": 426816.86212980736,
+  "triangle_count": 1464
+}

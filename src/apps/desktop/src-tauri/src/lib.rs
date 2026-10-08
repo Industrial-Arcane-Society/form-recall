@@ -33,6 +33,7 @@ pub mod native_plan_geometry;
 pub mod native_proportion_gate;
 pub mod native_quick;
 pub mod native_quick_parser;
+pub mod native_quick_egt_sw;
 pub mod native_quick_socket_bolt;
 pub mod native_render;
 pub mod native_review_findings;
@@ -782,6 +783,32 @@ async fn active_model_import_project(
         return Err("旧工程超过 60 MiB，无法在活动记录中无损保留原始 JSON。".into());
     }
     let source_document = native_model_io::load_document(&source_path)?;
+    if native_model_io::egt_sw_mesh_only_plan_from_project(&source_document)?.is_some() {
+        let data_dir = app_data_dir(&app)?;
+        let active_root = native_active_model::root_from_data_dir(&data_dir);
+        let expected_generation = native_active_model::generation(&active_root)?;
+        let current_revision = native_active_model::load(&active_root)?
+            .and_then(|row| row["revision"].as_i64())
+            .unwrap_or(0);
+        let revision = current_revision
+            .checked_add(1)
+            .ok_or("CAD revision 已溢出。")?
+            .max(1);
+        let session_dir = data_dir.join("native-active-model-import");
+        let import_root = active_root.clone();
+        let imported = tokio::task::spawn_blocking(move || {
+            native_quick::import_mesh_only_egt_sw_aimodel(
+                &source_document,
+                &import_root,
+                expected_generation,
+                revision,
+                &session_dir,
+            )
+        })
+        .await
+        .map_err(|error| format!("EGT SW mesh-only 工程重建线程失败：{error}"))??;
+        return Ok(imported);
+    }
     if native_model_io::timing_mesh_only_plan_from_project(&source_document)?.is_some() {
         let data_dir = app_data_dir(&app)?;
         let active_root = native_active_model::root_from_data_dir(&data_dir);

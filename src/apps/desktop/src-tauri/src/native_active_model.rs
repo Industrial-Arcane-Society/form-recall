@@ -319,6 +319,8 @@ pub fn candidate_from_cad_state(
             && crate::native_timing_pulley::is_mesh_only_legacy_quick_plan(plan)
         {
             crate::native_model_io::cadplan_to_project_mesh_only_timing(plan)?
+        } else if mesh_only_legacy && crate::native_quick_egt_sw::is_mesh_only_plan(plan) {
+            crate::native_model_io::cadplan_to_project_mesh_only_egt_sw(plan)?
         } else {
             crate::native_model_io::cadplan_to_project(plan)?
         };
@@ -504,7 +506,8 @@ fn validate_candidate_with_staged(
             .is_some_and(Value::is_null);
     let mesh_only_legacy = mesh_only_legacy_common
         && (crate::native_vbelt_pulley::is_mesh_only_legacy_quick_plan(plan)
-            || crate::native_timing_pulley::is_mesh_only_legacy_quick_plan(plan));
+            || crate::native_timing_pulley::is_mesh_only_legacy_quick_plan(plan)
+            || crate::native_quick_egt_sw::is_mesh_only_plan(plan));
     if validation.get("valid").and_then(Value::as_bool) != Some(true) && !mesh_only_legacy {
         return Err(format!("活动模型 CADPlan 无效：{validation}"));
     }

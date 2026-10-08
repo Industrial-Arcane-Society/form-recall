@@ -1,0 +1,289 @@
+{
+  "scope": "SW80x088 legacy Quick raw mesh parity only; mesh-only, not a real internal extrusion profile or B-Rep",
+  "legacy_parser": {
+    "ok": true,
+    "features": 1,
+    "kind": "extrude_holes",
+    "hole_count": 13
+  },
+  "parameters_exact_match": true,
+  "crossing_hole_pairs_from_rust_report": 15,
+  "rust_geometric_diagnostics": {
+    "hole_count": 13,
+    "intersecting_hole_pairs": 15,
+    "mesh_edges": {
+      "boundary_edges": 0,
+      "edge_manifold": true,
+      "nonmanifold_edges": 0,
+      "unique_edges": 2196
+    },
+    "self_intersection_risk": true
+  },
+  "legacy_mesh_stages": {
+    "document_build_polygons": {
+      "polygon_count": 1152,
+      "unique_boundary_edges": 0,
+      "nonmanifold_edges": 0,
+      "edge_weld_tolerance_mm": 1e-08
+    },
+    "exporter_safe_triangulation_before_float32": {
+      "triangle_count": 1464,
+      "topology_at_1e_8_mm": {
+        "weld_tolerance_mm": 1e-08,
+        "welded_vertex_count": 708,
+        "edge_count": 2196,
+        "boundary_edge_count": 0,
+        "nonmanifold_edge_count": 0,
+        "orientation_conflict_edge_count": 0,
+        "degenerate_triangle_count": 0,
+        "duplicate_triangle_count": 0,
+        "connected_triangle_components": 1,
+        "closed_manifold": true,
+        "closed_oriented_manifold": true
+      }
+    },
+    "exported_binary_stl_after_float32": {
+      "topology_at_1e_8_mm": {
+        "weld_tolerance_mm": 1e-08,
+        "welded_vertex_count": 708,
+        "edge_count": 2196,
+        "boundary_edge_count": 0,
+        "nonmanifold_edge_count": 0,
+        "orientation_conflict_edge_count": 0,
+        "degenerate_triangle_count": 0,
+        "duplicate_triangle_count": 0,
+        "connected_triangle_components": 1,
+        "closed_manifold": true,
+        "closed_oriented_manifold": true
+      },
+      "topology_at_1e_6_mm": {
+        "weld_tolerance_mm": 1e-06,
+        "welded_vertex_count": 708,
+        "edge_count": 2196,
+        "boundary_edge_count": 0,
+        "nonmanifold_edge_count": 0,
+        "orientation_conflict_edge_count": 0,
+        "degenerate_triangle_count": 0,
+        "duplicate_triangle_count": 0,
+        "connected_triangle_components": 1,
+        "closed_manifold": true,
+        "closed_oriented_manifold": true
+      },
+      "interpretation": "float32 STL quantization introduces no boundary edges at either tolerance; the previously cited 352 count is not reproduced by polygon, pre-export triangle, or exported STL incidence counting"
+    }
+  },
+  "comparison": {
+    "schema_version": 1,
+    "units": "mm",
+    "thresholds": {
+      "surface_tolerance_mm": 0.08,
+      "weld_tolerance_mm": 1e-08
+    },
+    "inputs": {
+      "legacy_document_build_raw": {
+        "path": "C:\\Users\\lycohana\\.codex\\worktrees\\f5-main-integration\\AI-_-\\artifacts\\f5.107-egt-sw\\legacy_sw80x088.stl",
+        "sha256": "651a688a046bae6ca0c1dbf13a112bff912fbf765275f6b60159dfcfee813475",
+        "triangle_count": 1464,
+        "bounds_mm": {
+          "minimum": [
+            -40.0,
+            -44.0,
+            -40.0
+          ],
+          "maximum": [
+            40.0,
+            44.0,
+            40.0
+          ]
+        },
+        "signed_volume_mm3": 426816.8621298078,
+        "surface_area_mm2": 77903.4100398464,
+        "topology": {
+          "weld_tolerance_mm": 1e-08,
+          "welded_vertex_count": 708,
+          "edge_count": 2196,
+          "boundary_edge_count": 0,
+          "nonmanifold_edge_count": 0,
+          "orientation_conflict_edge_count": 0,
+          "degenerate_triangle_count": 0,
+          "duplicate_triangle_count": 0,
+          "connected_triangle_components": 1,
+          "closed_manifold": true,
+          "closed_oriented_manifold": true
+        }
+      },
+      "rust_legacy_quick_mesh": {
+        "path": "C:\\Users\\lycohana\\.codex\\worktrees\\f5-main-integration\\AI-_-\\artifacts\\f5.107-egt-sw\\rust_mesh.stl",
+        "sha256": "d0043a5fe08d53ebd612c5a39755887022a3f15ba542fbda0231073b5a2d310e",
+        "triangle_count": 1464,
+        "bounds_mm": {
+          "minimum": [
+            -40.0,
+            -44.0,
+            -40.0
+          ],
+          "maximum": [
+            40.0,
+            44.0,
+            40.0
+          ]
+        },
+        "signed_volume_mm3": 426816.86212980736,
+        "surface_area_mm2": 77903.41003984638,
+        "topology": {
+          "weld_tolerance_mm": 1e-08,
+          "welded_vertex_count": 708,
+          "edge_count": 2196,
+          "boundary_edge_count": 0,
+          "nonmanifold_edge_count": 0,
+          "orientation_conflict_edge_count": 0,
+          "degenerate_triangle_count": 0,
+          "duplicate_triangle_count": 0,
+          "connected_triangle_components": 1,
+          "closed_manifold": true,
+          "closed_oriented_manifold": true
+        }
+      }
+    },
+    "comparison": {
+      "left": "legacy_document_build_raw",
+      "right": "rust_legacy_quick_mesh",
+      "coordinate_policy": "shared world coordinates in millimetres; no per-mesh normalization or alignment",
+      "surface_sampling": {
+        "method": "four deterministic barycentric interior samples per non-degenerate triangle, weighted by triangle area",
+        "distance": "exact point-to-triangle distance queried against a triangle AABB BVH",
+        "limitation": "sampled approximation to continuous surface distance; not an exact continuous Hausdorff bound",
+        "left_to_right": {
+          "sample_count": 5856,
+          "sampled_surface_area_mm2": 77903.41003984542,
+          "weighted_mean_mm": 4.5225659748024876e-14,
+          "weighted_rms_mm": 2.526322710967876e-13,
+          "weighted_p50_mm": 1.7763568394002505e-15,
+          "weighted_p95_mm": 1.2777736167005202e-13,
+          "weighted_p99_mm": 1.4651024650126703e-12,
+          "sampled_max_mm": 3.762480887252576e-12
+        },
+        "right_to_left": {
+          "sample_count": 5856,
+          "sampled_surface_area_mm2": 77903.41003984533,
+          "weighted_mean_mm": 4.535128045450002e-14,
+          "weighted_rms_mm": 2.5270327950597217e-13,
+          "weighted_p50_mm": 1.7763568394002505e-15,
+          "weighted_p95_mm": 1.2777736167005202e-13,
+          "weighted_p99_mm": 1.4651024650126703e-12,
+          "sampled_max_mm": 3.762480887252576e-12
+        },
+        "symmetric_sampled_max_mm": 3.762480887252576e-12
+      },
+      "surface_equivalence_passed": true,
+      "topology": {
+        "left": {
+          "weld_tolerance_mm": 1e-08,
+          "welded_vertex_count": 708,
+          "edge_count": 2196,
+          "boundary_edge_count": 0,
+          "nonmanifold_edge_count": 0,
+          "orientation_conflict_edge_count": 0,
+          "degenerate_triangle_count": 0,
+          "duplicate_triangle_count": 0,
+          "connected_triangle_components": 1,
+          "closed_manifold": true,
+          "closed_oriented_manifold": true
+        },
+        "right": {
+          "weld_tolerance_mm": 1e-08,
+          "welded_vertex_count": 708,
+          "edge_count": 2196,
+          "boundary_edge_count": 0,
+          "nonmanifold_edge_count": 0,
+          "orientation_conflict_edge_count": 0,
+          "degenerate_triangle_count": 0,
+          "duplicate_triangle_count": 0,
+          "connected_triangle_components": 1,
+          "closed_manifold": true,
+          "closed_oriented_manifold": true
+        },
+        "compatible_closed_components": true
+      },
+      "bounds_max_abs_delta_mm": 0.0,
+      "signed_volume_mm3": {
+        "left": 426816.8621298078,
+        "right": 426816.86212980736,
+        "absolute_delta": 4.656612873077393e-10,
+        "reported_allowance": 6232.272803187712,
+        "allowance_basis": "surface_tolerance_mm × larger triangulated surface area",
+        "comparable_as_oriented_solid": true,
+        "within_allowance": true,
+        "raw_mesh_volume_invalid": false,
+        "status": "within_allowance"
+      },
+      "tolerance_mm": 0.08,
+      "tolerance_basis": "default 0.08 mm equals the linear deflection passed to the Rust native Quick and legacy BREP tessellators; override explicitly for other meshing settings",
+      "common_frame_orthographic_projections": {
+        "world_frame_union_bounds_mm": [
+          [
+            -40.0,
+            -44.0,
+            -40.0
+          ],
+          [
+            40.0,
+            44.0,
+            40.0
+          ]
+        ],
+        "by_plane": {
+          "XY": {
+            "64": {
+              "legacy_covered_pixels": 3969,
+              "candidate_covered_pixels": 3969,
+              "xor_pixels": 0,
+              "iou": 1.0
+            },
+            "128": {
+              "legacy_covered_pixels": 16129,
+              "candidate_covered_pixels": 16129,
+              "xor_pixels": 0,
+              "iou": 1.0
+            }
+          },
+          "XZ": {
+            "64": {
+              "legacy_covered_pixels": 3917,
+              "candidate_covered_pixels": 3917,
+              "xor_pixels": 0,
+              "iou": 1.0
+            },
+            "128": {
+              "legacy_covered_pixels": 15865,
+              "candidate_covered_pixels": 15865,
+              "xor_pixels": 0,
+              "iou": 1.0
+            }
+          },
+          "YZ": {
+            "64": {
+              "legacy_covered_pixels": 3969,
+              "candidate_covered_pixels": 3969,
+              "xor_pixels": 0,
+              "iou": 1.0
+            },
+            "128": {
+              "legacy_covered_pixels": 16129,
+              "candidate_covered_pixels": 16129,
+              "xor_pixels": 0,
+              "iou": 1.0
+            }
+          }
+        }
+      },
+      "passed": true
+    }
+  },
+  "interpretation": {
+    "surface_metric": "four area-weighted barycentric interior samples per triangle, exact point-to-triangle distance through repository BVH",
+    "sampled_metric_is_continuous_hausdorff": false,
+    "geometric_self_intersection": "measured hole axes intersect; matching raw mesh and combinatorial edge closure do not establish a non-self-intersecting solid",
+    "brep_or_catpart": "not produced or verified"
+  }
+}

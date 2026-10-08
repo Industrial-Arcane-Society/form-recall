@@ -102,6 +102,19 @@ pub(crate) fn cadplan_to_project_mesh_only_vbelt(plan: &Value) -> Result<Value, 
     cadplan_to_project_with_policy(plan, true)
 }
 
+pub(crate) fn cadplan_to_project_mesh_only_egt_sw(plan: &Value) -> Result<Value, String> {
+    if !crate::native_quick_egt_sw::is_mesh_only_plan(plan) {
+        return Err("仅允许目录精确匹配的 Quick EGT SW50/SW80 参数计划使用 mesh-only AIMODEL 转换。".into());
+    }
+    let mut project = cadplan_to_project_with_policy(plan, false)?;
+    project["compatibility_marker"] = json!({
+        "version":1,
+        "kind":"egt_sw_quick_mesh_only",
+        "plan_fingerprint":crate::cad_plan::geometry_fingerprint(plan)?
+    });
+    Ok(project)
+}
+
 pub(crate) fn cadplan_to_project_mesh_only_timing(plan: &Value) -> Result<Value, String> {
     if !crate::native_timing_pulley::is_mesh_only_legacy_quick_plan(plan) {
         return Err("仅允许已识别的单特征 Quick T10 使用 mesh-only AIMODEL 转换。".into());
@@ -158,6 +171,38 @@ pub(crate) fn timing_mesh_only_plan_from_project(project: &Value) -> Result<Opti
     Ok(Some(plan.clone()))
 }
 
+pub(crate) fn egt_sw_mesh_only_plan_from_project(project: &Value) -> Result<Option<Value>, String> {
+    let marker = project.get("compatibility_marker");
+    if marker.is_none() {
+        if project.pointer("/cadplan/features/0/kind").and_then(Value::as_str) == Some("extrude_holes") {
+            return Err("EGT SW mesh-only AIMODEL 缺少 compatibility_marker；拒绝回退到 OCCT 改变几何。".into());
+        }
+        return Ok(None);
+    }
+    if marker.and_then(|v| v["version"].as_u64()) != Some(1)
+        || marker.and_then(|v| v["kind"].as_str()) != Some("egt_sw_quick_mesh_only")
+    {
+        return Err("AIMODEL compatibility_marker 版本或 kind 不受支持。".into());
+    }
+    let plan = project.get("cadplan").filter(|v| v.is_object()).ok_or("mesh-only AIMODEL 缺少 CADPlan。")?;
+    let fingerprint = crate::cad_plan::geometry_fingerprint(plan)?;
+    if marker.and_then(|v| v["plan_fingerprint"].as_str()) != Some(fingerprint.as_str()) {
+        return Err("EGT SW AIMODEL compatibility_marker plan fingerprint 不匹配。".into());
+    }
+    if !crate::native_quick_egt_sw::is_mesh_only_plan(plan) {
+        return Err("EGT SW AIMODEL marker 对应的 CADPlan 不在精确实测 SW50/SW80 目录范围内。".into());
+    }
+    let regenerated = cadplan_to_project_mesh_only_egt_sw(plan)?;
+    let old_features = project.get("features").and_then(Value::as_array).ok_or("mesh-only AIMODEL 缺少 features 数组。")?;
+    let new_features = regenerated.get("features").and_then(Value::as_array).ok_or("CADPlan marker 校验缺少重建 features。")?;
+    if old_features.len() != new_features.len()
+        || old_features.iter().zip(new_features).any(|(old, new)| ["kind", "op", "params", "enabled"].iter().any(|key| old.get(*key) != new.get(*key)))
+    {
+        return Err("EGT SW mesh-only AIMODEL feature rows 与标记 CADPlan 不一致。".into());
+    }
+    Ok(Some(plan.clone()))
+}
+
 fn cadplan_to_project_with_policy(
     plan: &Value,
     allow_legacy_mesh_only_vbelt: bool,
@@ -198,6 +243,8 @@ fn cadplan_to_project_with_policy(
         for (key, value) in source_params {
             let converted = if key == "rotate" {
                 scale_rotate(value, angle)?
+            } else if key == "holes" && kind == "extrude_holes" {
+                scale_egt_holes(value, length)?
             } else if key == "thickness" && kind == "loft" {
                 value.clone()
             } else if key == "thickness" && kind == "shell"
@@ -517,6 +564,21 @@ pub(crate) fn atomic_write(path: &Path, bytes: &[u8]) -> Result<(), String> {
     }
     result
 }
+fn scale_egt_holes(value: &Value, factor: f64) -> Result<Value, String> {
+    let rows = value.as_array().ok_or("extrude_holes.holes must be an array")?;
+    let mut output = Vec::with_capacity(rows.len());
+    for row in rows {
+        let mut hole = row.as_object().cloned().ok_or("extrude_holes hole must be an object")?;
+        for key in ["d", "u", "v"] {
+            if let Some(number) = hole.get(key) {
+                hole.insert(key.into(), scaled_number(number, factor)?);
+            }
+        }
+        output.push(Value::Object(hole));
+    }
+    Ok(Value::Array(output))
+}
+
 fn scale_rotate(v: &Value, factor: f64) -> Result<Value, String> {
     if let Some(a) = v.as_array() {
         if a.len() == 2 && a[0].is_string() {
@@ -826,5 +888,37 @@ mod tests {
         assert_eq!(doc["features"][0]["provenance"], json!({}));
         assert_eq!(doc["cadplan"]["schema_version"], "1.0");
         let _ = fs::remove_file(path);
+    }
+
+    #[test]
+    fn f5_107_egt_sw_aimodel_marker_reopen_and_catpart_guard_fail_closed() {
+        let parsed = crate::native_quick_egt_sw::parse("EGT001 SW80x088").unwrap();
+        let plan = parsed["plan"].clone();
+        assert!(crate::native_quick_egt_sw::is_mesh_only_plan(&plan));
+        let project = cadplan_to_project_mesh_only_egt_sw(&plan).unwrap();
+        assert_eq!(project["compatibility_marker"]["kind"], "egt_sw_quick_mesh_only");
+        assert_eq!(egt_sw_mesh_only_plan_from_project(&project).unwrap(), Some(plan.clone()));
+        let path = std::env::temp_dir().join(format!(
+            "aimodeler-egt-sw-{}.aimodel",
+            TEMP_ID.fetch_add(1, Ordering::Relaxed)
+        ));
+        save_aimodel(&path, &project).unwrap();
+        let loaded = load_aimodel(&path).unwrap();
+        assert_eq!(egt_sw_mesh_only_plan_from_project(&loaded).unwrap(), Some(plan.clone()));
+        let _ = fs::remove_file(path);
+
+        let mut bad_fingerprint = project.clone();
+        bad_fingerprint["compatibility_marker"]["plan_fingerprint"] = json!("tampered");
+        assert!(egt_sw_mesh_only_plan_from_project(&bad_fingerprint).is_err());
+        let mut bad_feature = project.clone();
+        bad_feature["features"][0]["params"]["length"] = json!(89.0);
+        assert!(egt_sw_mesh_only_plan_from_project(&bad_feature).is_err());
+        let mut markerless = project.clone();
+        markerless.as_object_mut().unwrap().remove("compatibility_marker");
+        assert!(egt_sw_mesh_only_plan_from_project(&markerless).is_err());
+
+        let mut mesh_only_document = project;
+        mesh_only_document["geometry_report"] = json!({"mesh_only":true,"brep_available":false,"catpart_available":false});
+        assert!(crate::native_active_model::ensure_catpart_exportable(&mesh_only_document).is_err());
     }
 }

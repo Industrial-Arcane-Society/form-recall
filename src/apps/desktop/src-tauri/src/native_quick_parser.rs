@@ -61,6 +61,10 @@ pub fn parse(text: &str) -> Value {
         return parsed;
     }
 
+    if let Some(parsed) = crate::native_quick_egt_sw::parse(text) {
+        return parsed;
+    }
+
     if let Some(parsed) = parse_legacy_hex_bolt(text, &normalized) {
         return parsed;
     }
