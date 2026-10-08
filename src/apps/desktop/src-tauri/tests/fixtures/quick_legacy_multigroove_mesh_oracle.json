@@ -1,0 +1,196 @@
+{
+  "schema_version": 1,
+  "fixture_kind": "actual_legacy_python_quick_document_build_binary_stl",
+  "source": {
+    "input": "多槽带轮 内径25 基准直径100 宽度30 槽数3",
+    "entrypoint": "Parser().parse(input) -> ParseResult.doc.build() -> ai_modeler.core.export.exporters.export_stl(binary=True)",
+    "code_baseline": "8c40d669377b8004162cc6642e477d786bc22466",
+    "python_version": "3.11.9",
+    "parser_ok": true,
+    "recognized": 1,
+    "warnings": [
+      "3 个 A 型槽的标准槽间距 e=15 mm，轮缘宽度至少需 46.3197 mm；已按标准取 46.3197 mm（原输入的 30 mm 不足，强行压缩会使相邻槽干涉）"
+    ],
+    "steps": [
+      "零件库识别: 多槽带轮 (来自机械设计手册)",
+      "—— 提示词 → 生成特征 ——",
+      "  “A 型”  →  A 型轮槽 3 条（依据：GB/T 10412-2002（基准宽度制）/ GB/T 10413-2002（有效宽度制））",
+      "  “槽数 3”  →  轮缘上开 3 条 V 形槽，基准线间距 e=15 mm（依据：槽间距 e 取自 GB/T 10412—2002 轮槽截面尺寸表）",
+      "  基准直径 ⌀100  →  基准线所在圆柱面；外径 da = dd + 2·ha = ⌀105.5（依据：da = dd + 2·ha（ha 为槽顶高，标准表列值））",
+      "  槽剖面  →  槽顶宽 9.32、槽底宽 16.32、全槽深 11.45（ha=2.75 + hf=8.7）（依据：槽角 φ=34° 由基准直径分档决定（32/34/36/38°））",
+      "  轮缘宽度 46.32  →  轮缘最小宽度 = (n-1)·e + 2f = 46.32（依据：f 为槽顶半宽，保证槽不开口在端面上）",
+      "  内孔 ⌀25  →  中心通孔（依据：由输入给定；未给则按 dd 的 0.22 倍取）",
+      "  轮毂/辐板  →  轮毂 ⌀48.75 × 45 长、辐板厚 9，轮缘内径 ⌀76.6（依据：手册带轮结构公式：d1=(1.8~2)d、L=(1.5~2)d、S≈(0.6~1)e、轮缘内径 d2=da−2(ha+hf+δ)）",
+      "—— 对照表结束 ——"
+    ],
+    "document": {
+      "format": "ai-modeler",
+      "version": 1,
+      "name": "Part1",
+      "source_prompt": "多槽带轮 内径25 基准直径100 宽度30 槽数3",
+      "features": [
+        {
+          "kind": "vbelt_pulley",
+          "params": {
+            "pitch_d": 100.0,
+            "grooves": 3,
+            "height": 46.31971385738069,
+            "groove_type": "A",
+            "outer_d": 105.5,
+            "bore_d": 25.0,
+            "center": [
+              0,
+              0,
+              0
+            ],
+            "explain": [
+              [
+                "“A 型”",
+                "A 型轮槽 3 条",
+                "GB/T 10412-2002（基准宽度制）/ GB/T 10413-2002（有效宽度制）"
+              ],
+              [
+                "“槽数 3”",
+                "轮缘上开 3 条 V 形槽，基准线间距 e=15 mm",
+                "槽间距 e 取自 GB/T 10412—2002 轮槽截面尺寸表"
+              ],
+              [
+                "基准直径 ⌀100",
+                "基准线所在圆柱面；外径 da = dd + 2·ha = ⌀105.5",
+                "da = dd + 2·ha（ha 为槽顶高，标准表列值）"
+              ],
+              [
+                "槽剖面",
+                "槽顶宽 9.32、槽底宽 16.32、全槽深 11.45（ha=2.75 + hf=8.7）",
+                "槽角 φ=34° 由基准直径分档决定（32/34/36/38°）"
+              ],
+              [
+                "轮缘宽度 46.32",
+                "轮缘最小宽度 = (n-1)·e + 2f = 46.32",
+                "f 为槽顶半宽，保证槽不开口在端面上"
+              ],
+              [
+                "内孔 ⌀25",
+                "中心通孔",
+                "由输入给定；未给则按 dd 的 0.22 倍取"
+              ],
+              [
+                "轮毂/辐板",
+                "轮毂 ⌀48.75 × 45 长、辐板厚 9，轮缘内径 ⌀76.6",
+                "手册带轮结构公式：d1=(1.8~2)d、L=(1.5~2)d、S≈(0.6~1)e、轮缘内径 d2=da−2(ha+hf+δ)"
+              ]
+            ],
+            "std_warnings": [
+              "3 个 A 型槽的标准槽间距 e=15 mm，轮缘宽度至少需 46.3197 mm；已按标准取 46.3197 mm（原输入的 30 mm 不足，强行压缩会使相邻槽干涉）"
+            ]
+          },
+          "op": "add",
+          "name": "A型V带轮 3槽",
+          "note": "",
+          "feature_id": null,
+          "relations": [],
+          "enabled": true,
+          "provenance": {
+            "pitch_d": "explicit",
+            "grooves": "explicit",
+            "height": "derived",
+            "groove_type": "standard",
+            "outer_d": "standard",
+            "bore_d": "explicit"
+          }
+        }
+      ]
+    }
+  },
+  "build": {
+    "polygon_count": 1536,
+    "triangles_from_kernel": 3072,
+    "triangles_in_binary_stl": 3072,
+    "bbox_min_mm": [
+      -52.75,
+      -52.75,
+      -23.159856928690346
+    ],
+    "bbox_max_mm": [
+      52.75,
+      52.75,
+      23.159856928690346
+    ],
+    "bbox_size_mm": [
+      105.5,
+      105.5,
+      46.31971385738069
+    ],
+    "signed_polygon_mesh_volume_mm3": 584036.1790703516,
+    "semantics": "Raw legacy Quick surface triangulation. Legacy parser adjusts undersized 30 mm rim width to its standard minimum. This input has self-intersecting groove-root intervals; STL is not a closed-solid/BREP claim.",
+    "section_curve_contract": {
+      "plane_y_mm": 0.137,
+      "coordinates_mm": ["x", "z"],
+      "samples_per_segment": 5,
+      "observed_legacy_intersection_segments": 96,
+      "distance_tolerance_mm": 0.08,
+      "coverage": "Complete triangulated mesh intersection with the fixed radial/axial plane; includes inner bore, hub/web transitions, rim sides and all three V-groove flanks and roots.",
+      "sampling_note": "Each intersecting triangle contributes a section segment; parity samples both endpoints, quarter points, and midpoint of each segment in both directions against the other section polyline."
+    },
+    "surface_section_contract": {
+      "revolve_axis": "Z",
+      "observed_root_radius_mm": 41.3,
+      "observed_root_axial_levels_mm": [
+        -22.959856,
+        -8.159857,
+        -6.640143,
+        6.640143,
+        8.159857,
+        22.959856
+      ],
+      "observed_root_intervals": [
+        {
+          "z_min_mm": -22.959856,
+          "z_max_mm": -6.640143,
+          "center_z_mm": -14.799999
+        },
+        {
+          "z_min_mm": -8.159857,
+          "z_max_mm": 8.159857,
+          "center_z_mm": 0.0
+        },
+        {
+          "z_min_mm": 6.640143,
+          "z_max_mm": 22.959856,
+          "center_z_mm": 14.799999
+        }
+      ],
+      "section_probe_points_mm": [
+        [
+          12.5,
+          0,
+          0
+        ],
+        [
+          41.3,
+          0,
+          -14.799999
+        ],
+        [
+          41.3,
+          0,
+          0.0
+        ],
+        [
+          41.3,
+          0,
+          14.799999
+        ]
+      ],
+      "derivation": "Root radius is read from the actual Document.build STL vertex rings for the parser-produced pitch diameter and legacy A-groove hf; root intervals are paired from measured axial STL rings at that radius using std_pulley.spec root width. Probe coordinates lie on the legacy axial cross-section at theta=0; the Rust regression also measures point-to-triangle distance on both actual binary STL surfaces.",
+      "sampling_note": "This fixed section contract is local evidence for the center bore and three groove roots, not a full analytic B-Rep or watertightness claim."
+    }
+  },
+  "stl": {
+    "file": "quick_legacy_multigroove_raw.stl",
+    "format": "binary STL, 80-byte header + uint32 count + 50-byte facets",
+    "size_bytes": 153684,
+    "triangles_in_binary_stl": 3072,
+    "sha256": "674607d555816d450f589e182ab61d2ba45b11951403dc7563304c183df8448d"
+  }
+}

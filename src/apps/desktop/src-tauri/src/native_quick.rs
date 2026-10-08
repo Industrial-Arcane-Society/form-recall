@@ -5414,3 +5414,7 @@ mod f5_84_cross_clause_center_counterbore_geometry_acceptance {
         assert_eq!(loaded["cadplan"]["features"], output["cadplan"]["features"]);
     }
 }
+
+#[cfg(test)]
+#[path = "native_quick_multigroove_parity_tests.rs"]
+mod multigroove_parity_tests;
