@@ -292,6 +292,8 @@ class App(tk.Tk):
                        command=self.open_fixture_workflow)
         tm.add_command(label='元增量学习面板（族记忆 / 遗忘评测）…',
                        command=self.open_meta_panel)
+        tm.add_command(label='元增量学习观察面板（浏览器打开）…',
+                       command=self.open_learning_dashboard)
         tm.add_separator()
         tm.add_command(label='MCP 服务配置…', command=self.show_mcp_config)
         tm.add_command(label='推送到 CATIA V5…', command=self.push_catia)
@@ -334,6 +336,9 @@ class App(tk.Tk):
         # 向导负责「一个有输入约束、可追溯记录的单元设计任务」。
         ttk.Button(bar, text='▣  夹具单元协同设计', style='Ghost.TButton',
                    command=self.open_fixture_workflow).pack(side='left', padx=(10, 0))
+        # 学习进度是最常被问「它到底学到什么了」的入口，放工具栏比塞进菜单好找。
+        ttk.Button(bar, text='📊 学习进度', style='Ghost.TButton',
+                   command=self.open_learning_dashboard).pack(side='left', padx=(6, 0))
 
         self._tool_sep(bar)
         tk.Label(bar, text='视角', bg=TH.PANEL, fg=TH.TEXT_MUTE,
@@ -3166,6 +3171,27 @@ class App(tk.Tk):
             self.status('已打开 CATIA 模型库')
         except Exception as e:
             messagebox.showerror('打开失败', '无法打开 CATIA 模型库：%s' % e)
+
+    def open_learning_dashboard(self):
+        """生成并打开元增量学习观察面板（自包含 HTML）。
+
+        为什么不直接在程序里画：这个面板要能发给老师、发给企业，也要能在
+        没装本程序的机器上打开，所以做成单文件网页最实用。程序这边只负责
+        「一键生成 + 打开」；生成逻辑在 tools/export_learning_report.py，
+        与命令行调用共用同一份数据源，不搞两套。
+        """
+        script = os.path.join(ROOT_DIR, 'tools', 'export_learning_report.py')
+        if not os.path.isfile(script):
+            messagebox.showerror('元增量学习', '找不到生成脚本：\n%s' % script)
+            return
+        try:
+            # CREATE_NO_WINDOW：脚本会自己拉起浏览器，不需要在界面上再弹一个黑框
+            subprocess.Popen([sys.executable, script], cwd=ROOT_DIR,
+                             creationflags=0x08000000)
+            self.status('正在生成学习进度面板，稍后会在浏览器打开…', TH.ACCENT)
+            self.log('已调用 tools/export_learning_report.py')
+        except Exception as exc:
+            messagebox.showerror('元增量学习', '启动生成脚本失败：\n%s' % exc)
 
     def open_fixture_workflow(self):
         """打开「夹具单元协同设计」五步向导。
