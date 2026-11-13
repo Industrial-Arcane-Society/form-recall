@@ -1242,6 +1242,63 @@ class FixtureWorkflowWindow(tk.Toplevel):
             return
         self._goto(self.current_stage - 1)
 
+    # ---- 工序记忆：把每次提交的结局自动学进去 -----------------------------
+
+    def _process_store(self):
+        """惰性加载工序记忆，并把工序库灌进去（只刷新向量，不动历史统计）。
+
+        必须先 learn_steps：ProcessMemory.record 对未知工序号会直接拒绝，
+        不先导入工序库，第一笔记录就会失败。
+        """
+        if getattr(self, '_proc_mem', None) is None:
+            try:
+                import os
+                from ai_modeler.meta import ProcessMemory
+                from ai_modeler.workflow import load_process
+                from ai_modeler.paths import PROJECT_ROOT
+                mem = ProcessMemory(os.path.join(
+                    str(PROJECT_ROOT), 'kb', 'process_memory.json'))
+                lib = load_process()
+                mem.learn_steps([
+                    {'step_id': s.step_id, 'stage': s.stage,
+                     'text': s.search_text(), 'status': s.status}
+                    for s in lib.steps])
+                self._proc_mem = mem
+                self._proc_steps = {no: [s.step_id for s in steps]
+                                    for no, steps in lib.by_stage().items()}
+            except Exception:
+                self._proc_mem = False
+        return self._proc_mem or None
+
+    def _process_learn(self, stage, ok, reason=''):
+        """把这一阶段的提交结局写进工序记忆。
+
+        三条分寸：
+        1. 成功记 success、被拦记 fail——被拦也是数据，而且是**最有用**的那种，
+           它直接回答「这道工序常栽在哪」；
+        2. 一个阶段对应几道工序就记几条，不合并成一条，否则成功率没法用；
+        3. 任何异常都吞掉：学习是增强，不能让记忆的问题卡住流程。
+        """
+        try:
+            mem = self._process_store()
+            if mem is None:
+                return
+            step_ids = (getattr(self, '_proc_steps', None) or {}).get(stage) or []
+            if not step_ids:
+                return
+            note = '' if ok else (reason or '前置条件未满足')
+            recorded = 0
+            for sid in step_ids:
+                try:
+                    mem.record(sid, 'success' if ok else 'fail', note)
+                    recorded += 1
+                except Exception:
+                    continue
+            if recorded:
+                mem.save()
+        except Exception:
+            pass
+
     @_guarded
     def _on_commit(self):
         stage = self.current_stage
@@ -1250,6 +1307,8 @@ class FixtureWorkflowWindow(tk.Toplevel):
             # 前置不满足就不许完成——按钮也已禁用，这里再挡一次（键盘/脚本触发）。
             self._status('第 %d 阶段还不能完成，缺 %d 项：%s'
                          % (stage, len(missing), '；'.join(missing)), 'err')
+            # 被门禁拦下也是经验：记一笔失败，下次查这道工序就知道它常缺什么。
+            self._process_learn(stage, False, '；'.join(missing))
             self.refresh()
             return
 
@@ -1258,8 +1317,12 @@ class FixtureWorkflowWindow(tk.Toplevel):
         except WorkflowError as exc:
             detail = getattr(exc, 'missing', None) or [str(exc)]
             self._status('提交被拒：%s' % '；'.join(str(item) for item in detail), 'err')
+            self._process_learn(stage, False, '；'.join(str(item) for item in detail))
             self.refresh()
             return
+
+        # 提交成功：这一阶段的工序算过了一遍，自动写进工序记忆。
+        self._process_learn(stage, True)
 
         nxt = stage + 1
         if nxt > self._last_stage():

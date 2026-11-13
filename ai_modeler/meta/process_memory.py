@@ -29,7 +29,7 @@ from pathlib import Path
 
 import numpy as np
 
-from .features import build_vocab, embed, normalize
+from .features import build_vocab, embed
 
 #: 失败原因最多记这么多条，防止备注无限膨胀把记忆库撑爆
 MAX_FAIL_NOTES = 16
@@ -226,7 +226,10 @@ class ProcessMemory:
             if kind == "success":
                 rec.success += 1
         if kind == "fail" and note:
-            cleaned = normalize(note)[:80]
+            # 这里**不能**用 features.normalize：那是给向量化做的大小写/标点归一，
+            # 会把「检查未通过：压臂最小间距（L=65 mm…）」压成小写去标点的一串，
+            # 人看不懂。失败原因是要展示给人看的，只做轻清洗（折叠空白 + 限长）。
+            cleaned = " ".join(str(note).split())[:120]
             if cleaned and cleaned not in rec.fail_notes:
                 rec.fail_notes.append(cleaned)
                 rec.fail_notes = rec.fail_notes[-MAX_FAIL_NOTES:]
