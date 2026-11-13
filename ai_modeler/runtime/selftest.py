@@ -298,6 +298,35 @@ def run_selftest(verbose: bool = True) -> int:
     except Exception as e:
         check('界面: 元增量面板可加载', False, str(e))
 
+    # 12. 企业工序记忆
+    # 守的是「流程能被检索、执行结局能被记住」这两件事。
+    try:
+        from ai_modeler.workflow import load_process
+        from ai_modeler.meta import ProcessMemory
+        _lib = load_process()
+        check('工序库: 企业流程表可读', len(_lib.steps) >= 10,
+              '%d 道工序 / %d 个阶段' % (len(_lib.steps), len(_lib.by_stage())))
+
+        _pm = ProcessMemory(None)
+        _pm.learn_steps([{'step_id': s.step_id, 'stage': s.stage,
+                          'text': s.search_text(), 'status': s.status}
+                         for s in _lib.steps])
+        _hit = _pm.suggest('建立一个支撑座，底部与基板连接', k=1)
+        _top = (_hit.get('matches') or [{}])[0]
+        check('工序记忆: 任务描述能命中工序', bool(_top.get('step_id')),
+              '命中最像的工序：%s' % _top.get('step_id', '无'))
+
+        _pm.record('S08', 'success')
+        _pm.record('S08', 'fail', '底面与基板不平行')
+        _adv = _pm.advice('S08')
+        check('工序记忆: 执行结局会被记住',
+              _adv.get('trials') == 2 and _adv.get('success_rate') == 0.5,
+              '累计 %s 次，成功率 %s，失败提示 %d 条'
+              % (_adv.get('trials'), _adv.get('success_rate'),
+                 len(_adv.get('fail_hints') or [])))
+    except Exception as e:
+        check('工序记忆: 核心模块', False, str(e))
+
     print('-' * 62)
     print('通过 %d / %d' % (ok[0], ok[1]))
     print('临时导出目录: %s' % tmp)

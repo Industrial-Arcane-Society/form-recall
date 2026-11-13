@@ -143,6 +143,32 @@ TOOLS = [
         }, "required": ["query"], "additionalProperties": False},
     },
     {
+        "name": "process_recall",
+        "description": (
+            "查企业夹具设计的工序库：给一段任务描述，返回最可能对应的工序（工序号、所属阶段、"
+            "判据、输出），并带上这道工序的历史成功率与常见失败原因。"
+            "工序库来自企业实际设计录屏整理出的流程表，共 16 道工序、五个阶段。"
+            "注意确认状态：标「待企业确认」的工序，其判据数值尚未经企业核准，只能当参考。"
+        ),
+        "inputSchema": {"type": "object", "properties": {
+            "description": {"type": "string", "description": "任务或操作的中文描述，例如「建立支撑座」「开安装孔阵列」。"},
+            "limit": {"type": "integer", "minimum": 1, "maximum": 6},
+        }, "required": ["description"], "additionalProperties": False},
+    },
+    {
+        "name": "process_record",
+        "description": (
+            "记录一次工序执行结局，用于让工序记忆越用越准。"
+            "outcome=success 表示该工序顺利做完；fail 表示没做成（note 写清失败原因，会归并进该工序的常见失败）；"
+            "skipped 表示这一步没做（不参与、不适用），不计入成功率。"
+        ),
+        "inputSchema": {"type": "object", "properties": {
+            "step_id": {"type": "string", "description": "工序号，例如 S08。"},
+            "outcome": {"type": "string", "enum": ["success", "fail", "skipped"]},
+            "note": {"type": "string", "description": "失败时写原因；成功可留空。"},
+        }, "required": ["step_id", "outcome"], "additionalProperties": False},
+    },
+    {
         "name": "cad_search_recipes",
         "description": "搜索本地常用建模配方库，返回螺纹、孔、沉孔和标准件的推荐特征顺序、适用条件与当前能力边界。",
         "inputSchema": {"type": "object", "properties": {
@@ -1165,10 +1191,82 @@ def _meta_observe_tool_result(name: str, args: dict[str, Any],
             pass
 
 
+# ---- 工序记忆（企业流程） -------------------------------------------------
+#
+# 与上面的族记忆是两层：族记忆管「这个零件是哪一族」，工序记忆管「这类任务该走
+# 哪一步、这一步历史上栽在哪」。工序表来自 datasets 下的企业流程 CSV。
+
+_PROCESS_MEMORY: Any = None
+
+
+def _process_memory():
+    """惰性加载工序记忆；每次启动把工序表重灌一遍（只刷新向量，保留 trial 统计）。"""
+    global _PROCESS_MEMORY
+    if _PROCESS_MEMORY is not None:
+        return _PROCESS_MEMORY if _PROCESS_MEMORY is not False else None
+    try:
+        from ai_modeler.meta import ProcessMemory
+        from ai_modeler.workflow import load_process
+        path = Path(PROJECT_ROOT) / "kb" / "process_memory.json"
+        mem = ProcessMemory(str(path))
+        lib = load_process()
+        mem.learn_steps([
+            {"step_id": s.step_id, "stage": s.stage,
+             "text": s.search_text(), "status": s.status}
+            for s in lib.steps
+        ])
+        _PROCESS_MEMORY = mem
+    except Exception as exc:
+        print("工序记忆不可用：%s" % exc, file=sys.stderr, flush=True)
+        _PROCESS_MEMORY = False
+    return _PROCESS_MEMORY or None
+
+
+def _process_recall(args: dict[str, Any]) -> dict[str, Any]:
+    description = str(args.get("description") or "").strip()
+    if not description:
+        raise ValueError("description 不能为空。")
+    limit = max(1, min(6, int(args.get("limit") or 3)))
+    mem = _process_memory()
+    if mem is None:
+        return _tool_result({"description": description, "matches": [],
+                             "note": "工序记忆不可用，按常规流程推进。"},
+                            "工序记忆不可用。")
+    result = mem.suggest(description, k=limit)
+    if not result.get("matches"):
+        result["note"] = "没有匹配到工序；如果这是新做法，做完后建议补进企业流程表。"
+    progress = ("工序命中：%s（%s）" % (result["matches"][0]["step_id"],
+                                    result["matches"][0]["stage"])
+                if result.get("matches") else "工序未命中。")
+    return _tool_result(result, progress)
+
+
+def _process_record(args: dict[str, Any]) -> dict[str, Any]:
+    mem = _process_memory()
+    if mem is None:
+        raise ValueError("工序记忆不可用。")
+    out = mem.record(str(args.get("step_id") or ""),
+                     str(args.get("outcome") or ""),
+                     str(args.get("note") or ""))
+    try:
+        mem.save()
+    except Exception as exc:
+        print("工序记忆落盘失败：%s" % exc, file=sys.stderr, flush=True)
+    rate = out.get("success_rate")
+    progress = ("已记录 %s：%s（累计 %d 次%s）"
+                % (out["step_id"], out["outcome"], out["trials"],
+                   "" if rate is None else "，成功率 %.0f%%" % (rate * 100)))
+    return _tool_result(out, progress)
+
+
 def _handle_tool(name: str, args: dict[str, Any]) -> dict[str, Any]:
     state = _load()
     if name == "meta_recall":
         return _meta_recall(args)
+    if name == "process_recall":
+        return _process_recall(args)
+    if name == "process_record":
+        return _process_record(args)
     if name == "cad_search_recipes":
         rows = modeling_recipes.list_recipes(
             str(args.get("query") or ""), limit=args.get("limit", 8))

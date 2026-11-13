@@ -49,11 +49,15 @@ from .memory import (
     NEW_FAMILY_MIN_VERIFIED,
     MetaMemory,
 )
+from .process_memory import DEFAULT_PROCESS_STORE, ProcessMemory, StepRecord
 
 __all__ = [
     # 记忆
     "MetaMemory",
+    "ProcessMemory",
+    "StepRecord",
     "DEFAULT_STORE",
+    "DEFAULT_PROCESS_STORE",
     "NEW_FAMILY_MIN_VERIFIED",
     "EXEMPLAR_CAP",
     "ALPHA_FLOOR",

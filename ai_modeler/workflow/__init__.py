@@ -30,6 +30,15 @@ from .models import (
     now_iso,
     positive_dim,
 )
+from .process_library import (
+    DEFAULT_PROCESS_CSV,
+    STATUS_INFERRED,
+    STATUS_PENDING,
+    STATUS_VERIFIED,
+    ProcessLibrary,
+    ProcessStep,
+    load_process,
+)
 from .report import (
     SCHEMA,
     export_summary,
@@ -73,4 +82,7 @@ __all__ = [
     # 校核输出
     'SCHEMA', 'unit_record', 'summary_markdown', 'export_unit_record',
     'export_summary',
+    # 企业工序库（做法层，与骨架分离）
+    'DEFAULT_PROCESS_CSV', 'ProcessLibrary', 'ProcessStep', 'load_process',
+    'STATUS_VERIFIED', 'STATUS_INFERRED', 'STATUS_PENDING',
 ]
