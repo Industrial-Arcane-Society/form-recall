@@ -286,6 +286,9 @@ class App(tk.Tk):
         m.add_cascade(label='视图', menu=vm)
 
         tm = tk.Menu(m, tearoff=0)
+        tm.add_command(label='夹具单元协同设计（五步 Workflow）…',
+                       command=self.open_fixture_workflow)
+        tm.add_separator()
         tm.add_command(label='MCP 服务配置…', command=self.show_mcp_config)
         tm.add_command(label='推送到 CATIA V5…', command=self.push_catia)
         tm.add_command(label='一键连接 CATIA（写配置 / 装插件）…', command=self.connect_catia)
@@ -323,6 +326,10 @@ class App(tk.Tk):
                    command=self.generate).pack(side='left')
         tk.Label(bar, text='Ctrl+Enter', bg=TH.PANEL, fg=TH.TEXT_MUTE,
                  font=TH.F['tiny']).pack(side='left', padx=(8, 0))
+        # 五步工作流是并行的第二条入口：对话区负责「一句话出零件」，
+        # 向导负责「一个有输入约束、可追溯记录的单元设计任务」。
+        ttk.Button(bar, text='▣  夹具单元协同设计', style='Ghost.TButton',
+                   command=self.open_fixture_workflow).pack(side='left', padx=(10, 0))
 
         self._tool_sep(bar)
         tk.Label(bar, text='视角', bg=TH.PANEL, fg=TH.TEXT_MUTE,
@@ -3138,6 +3145,76 @@ class App(tk.Tk):
             self.status('已打开 CATIA 模型库')
         except Exception as e:
             messagebox.showerror('打开失败', '无法打开 CATIA 模型库：%s' % e)
+
+    def open_fixture_workflow(self):
+        """打开「夹具单元协同设计」五步向导。
+
+        定位：与左侧对话区**并存**的第二条入口。对话区解决「一句话出一个零件」，
+        向导解决「一个有输入约束、要人工复核、结论必须可追溯的单元设计任务」。
+        因此向导自己不实现任何建模逻辑——定完参数后只把提示词交回对话区，
+        真正落到 CATIA 的路径始终只有一条。
+        """
+        try:
+            from ai_modeler.ui.fixture_workflow import FixtureWorkflowWindow
+            from ai_modeler.workflow import build_demo_project
+        except Exception as e:
+            messagebox.showerror(
+                '夹具单元协同设计',
+                '五步工作流模块加载失败：\n%s' % e)
+            return
+
+        win = getattr(self, '_fixture_win', None)
+        try:
+            if win is not None and win.winfo_exists():
+                win.deiconify()
+                win.lift()
+                win.focus_set()
+                return
+        except Exception:
+            pass
+
+        try:
+            self._fixture_win = FixtureWorkflowWindow(
+                self,
+                project=build_demo_project(),
+                on_push_model=self._on_fixture_model_request)
+            self.status('已打开夹具单元协同设计（五步 Workflow）', TH.ACCENT)
+        except Exception as e:
+            messagebox.showerror(
+                '夹具单元协同设计',
+                '向导窗口打开失败：\n%s\n\n%s' % (e, traceback.format_exc(limit=3)))
+
+    def _on_fixture_model_request(self, project):
+        """把工作流里确认过的参数翻译成一条建模提示，填进对话输入框。
+
+        只填、不自动发送：工程师先看一眼再决定。向导负责流程和记录，
+        不该绕过人工确认直接改模型。
+        """
+        prompt = '气动夹紧单元'
+        try:
+            parts = {p.key: p for p in project.parts}
+            bits = ['气动夹紧单元']
+            base = parts.get('base_plate')
+            if base is not None:
+                bp = base.params or {}
+                if all(k in bp for k in ('length', 'width', 'thickness')):
+                    bits.append('基板 %gx%gx%g' % (
+                        float(bp['length']), float(bp['width']),
+                        float(bp['thickness'])))
+            arm = parts.get('clamp_arm')
+            if arm is not None and 'length' in (arm.params or {}):
+                bits.append('压臂长 %g' % float(arm.params['length']))
+            cyl = parts.get('cylinder')
+            if cyl is not None:
+                cp = cyl.params or {}
+                if 'stroke_deg' in cp:
+                    bits.append('开合角度 %g 度' % float(cp['stroke_deg']))
+            prompt = ' '.join(bits)
+        except Exception:
+            prompt = '气动夹紧单元'
+        self._set_prompt_text(prompt)
+        self.log('工作流参数已填入建模对话：%s' % prompt)
+        self.status('工作流参数已填入，确认后按 Ctrl+Enter 发送', TH.ACCENT)
 
     def show_about(self):
         messagebox.showinfo('关于', '%s\n\n自然语言驱动的参数化三维建模工具\n'

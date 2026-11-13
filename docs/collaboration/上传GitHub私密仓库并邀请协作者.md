@@ -137,7 +137,7 @@ git commit -m "chore: 用 LFS 管理大数据"
 git clone https://github.com/你的用户名/ai-modeler.git
 cd ai-modeler
 
-python -m ai_modeler --selftest        # 先自检：应 35/35
+python -m ai_modeler --selftest        # 先自检：应 42/42
 python tools\bench_detail_fidelity.py  # 几何判据：应 ≈99.8%
 ```
 

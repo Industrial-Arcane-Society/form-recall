@@ -209,6 +209,62 @@ def run_selftest(verbose: bool = True) -> int:
     except Exception as e:
         check('界面: 模块可加载', False, str(e))
 
+    # 10. 夹具单元协同设计五步工作流
+    # 这一组检查守的是研制报告里那几条红线：前置不满足不能进下一步、
+    # 固定基准不能动、参数一变下游结论作废、未实现的检查不许报通过。
+    try:
+        from ai_modeler.workflow import (
+            STAGES, WorkflowEngine, build_demo_project, evaluate)
+        _proj = build_demo_project()
+        check('工作流: 五阶段定义', len(STAGES) == 5, '%d 阶段' % len(STAGES))
+
+        _checks = evaluate(_proj)
+        _pass = sum(1 for c in _checks if c.status == 'pass')
+        _fail = sum(1 for c in _checks if c.status == 'fail')
+        check('工作流: 规则校验可运行', len(_checks) >= 7,
+              '%d 项 (%d 通过 / %d 未通过)' % (len(_checks), _pass, _fail))
+
+        # 四分法要在任何作废动作**之前**取样：invalidate_from 是原地改对象，
+        # 先作废再统计就只剩 not_run，等于什么都没验到。
+        _st = {c.status for c in _checks}
+        check('工作流: 检查结论四分法', _st <= {'pass', 'fail', 'not_run', 'not_applicable'},
+              ' / '.join(sorted(_st)))
+
+        # 默认案例的压臂间距故意不足。走到第 4 阶段后再看第 5 阶段的门禁，
+        # 报出的必须是「检查未通过」而不是「资料没填」——这正是研制报告
+        # 5.2「禁止进入复核」那条要求落到代码上的样子。
+        # 用独立实例跑：commit 会写 history、改 stage，别污染后面要用的 _proj。
+        _gate = WorkflowEngine(build_demo_project())
+        for _stage in (1, 2, 3, 4):
+            _gate.commit(_stage)
+        _enter, _miss = _gate.can_enter(5)
+        check('工作流: 检查未通过禁止进复核',
+              (not _enter) and any('检查未通过' in str(m) for m in _miss),
+              (str(_miss[0])[:46] if _miss else '没有被拦下'))
+
+        # 结论必须真正挂在项目上才能谈"失效"：先把检查结果落到 project.checks，
+        # 再改参数，看下游是不是真的被作废——否则这条检查只是空跑。
+        _eng = WorkflowEngine(_proj)
+        _proj.checks = list(_checks)
+        _voided = _eng.invalidate_from(1)
+        check('工作流: 参数变更使下游失效', _voided >= 1,
+              '%d 项检查被作废' % _voided)
+
+        # 报告里的「默认失败 → 接受修正后通过」分支必须真的复现得出来
+        _eng.set_param('clamp_arm', 'length', 75.0)
+        _fixed = [c for c in evaluate(_proj) if c.check_id == 'W-ARM-01']
+        check('工作流: 修正后压臂间距转通过',
+              bool(_fixed) and _fixed[0].status == 'pass',
+              _fixed[0].detail[:40] if _fixed else '未产生 W-ARM-01')
+    except Exception as e:
+        check('工作流: 五步引擎', False, str(e))
+
+    try:
+        from ai_modeler.ui import fixture_workflow as _fw  # noqa: F401
+        check('界面: 五步向导可加载', True)
+    except Exception as e:
+        check('界面: 五步向导可加载', False, str(e))
+
     print('-' * 62)
     print('通过 %d / %d' % (ok[0], ok[1]))
     print('临时导出目录: %s' % tmp)

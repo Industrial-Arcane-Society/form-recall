@@ -9,7 +9,7 @@
 | 界面 | tkinter 桌面程序（`python -m ai_modeler`） |
 | CATIA 通道 | V5 宏 + cscript/COM 推送；也可导出 STEP 让 CATIA 导入 |
 | 当前判据 | **几何相似度 99.8%（≥95% 498/502）**；**图像相似度 84.5%**（AI 渲染图 vs 真实照片） |
-| 自检 | `python -m ai_modeler --selftest` → 35/35 |
+| 自检 | `python -m ai_modeler --selftest` → 42/42 |
 
 ---
 
@@ -105,7 +105,7 @@ powershell -ExecutionPolicy Bypass -File scripts/01_安装依赖.ps1
 | 打包完整性 | `tools\check_share_pack.py` | 意外漏掉 0 / 关键文件缺失 0 / .gitignore 误伤 0 / 脚本编码不对 0 | 逐文件比对原项目与协作包，防"改完 .gitignore 忘了文件被静默忽略" |
 | 打包规范 | `tools\make_share_zip.py` | 599 文件 / 27.3 MB，条目全是正斜杠 | 用 Python `zipfile` 打包（`Compress-Archive` 会写反斜杠，队友在 macOS/Linux 解压会丢目录），并回读抽查关键文件 |
 | 脚本编码 | `tools\fix_script_encoding.py` | 5 个 `.ps1` 带 BOM、7 个 `.bat/.vbs` 是 GBK | `.ps1` 缺 BOM 会让 Windows PowerShell 5.1 直接解析失败（队友双击一闪而过）；`.bat/.vbs` 非 GBK 则中文路径读坏 |
-| 自检 | `python -m ai_modeler --selftest` | 35/35 | 内核/解析/MCP/CATIA/界面 |
+| 自检 | `python -m ai_modeler --selftest` | 42/42 | 内核/解析/MCP/CATIA/界面/工作流 |
 
 **规矩**：任何一次改动都必须跑全量回归，**出现绿变红立即回滚**。
 
@@ -135,6 +135,42 @@ CADPlan 并重建。预览图来自本地网格内核，不能替代 CATIA B-Rep
 运行 `python -m ai_modeler` 打开对话界面。输入框支持 **Ctrl+V 直接粘贴剪贴板图片**，也可以选择多张参考图。Agent 由 DeepSeek Harness Python SDK 驱动，按需要调用 CADPlan MCP 工具、网页搜索和多模态视觉复核；安装 SDK 请运行 `scripts/01_安装依赖.ps1`。MCP 工具不开放 shell。模型预览实时显示在右侧；本地候选不会自动同步到 CATIA。
 
 详细说明见 [docs/architecture/AgentLoop.md](docs/architecture/AgentLoop.md)。
+
+### 夹具单元协同设计（五步 Workflow）
+
+工具栏「▣ 夹具单元协同设计」或「工具」菜单打开。它是与对话区**并存**的第二条入口：
+对话区解决「一句话出一个零件」，向导解决「一个有输入约束、要人工复核、结论必须可追溯的
+单元设计任务」。向导自己不实现建模逻辑——定完参数后把提示词交回对话区，落到 CATIA 的
+路径始终只有一条。
+
+| 阶段 | 做什么 | 产物 |
+|---|---|---|
+| 1 工程输入 | 接收工件数模、PRP 定位夹紧点、项目规则 | 统一坐标系、P01/P02 点位、资料清单 |
+| 2 单元规划 | 围绕 PRP 规划基板/托块/压臂/气缸，区分自制件/外购件/标准件 | 单元结构方案 |
+| 3 参数建模 | 参数化立板、托块、压臂、连接座及安装孔/铰接孔/减重槽 | 部件参数表 |
+| 4 关联装配 | 配置气缸、定位销、铰轴、紧固件，建立固定/转动/连接关系 | 装配关系 + 机构行程 |
+| 5 校核输出 | 汇总装配范围、名义间隙、机构姿态、参数版本 | 单元记录 JSON + 复核摘要 |
+
+**四条红线**（`ai_modeler/workflow/` 里写死的，别为了好看绕过去）：
+
+1. 前置不满足不进下一步——`can_enter()` 返回具体缺项；
+2. P01 固定点偏移锁死为 0，任何阶段都改不动；
+3. 参数一改，下游检查全部作废，`revision` 递增；
+4. **有未通过的检查就不能进复核**（研制报告 5.2）——默认案例压臂间距 d=3<5，
+   所以第 5 阶段会被拦下并列出「检查未通过：压臂最小间距…」，改到 L=75 才放行。
+
+**检查结论四分法**：`pass / fail / not_run / not_applicable` 分开记，不合并成一句「通过」。
+其中完整运动轨迹恒为 `not_run`、制造与强度恒为 `not_applicable`——**没有的能力不许报绿灯**。
+
+默认案例（UN200 气动夹紧单元）故意让压臂间距检查失败：`d = L − 62 + 4s`，L=65 时 d=3 < 5，
+要接受修正（L→75，d=13）才能推进。这条路径在自检和单测里都锁着。
+
+导出的单元记录带四个事实字段（`simulated / cad_connected / model_api_called /
+real_cad_files_created`），人工勾选改不动它们。规则条目的 `confirmed=false` 表示
+「示例约定」，不是企业标准。
+
+接口细节见 [docs/planning/夹具工作流_接口契约.md](docs/planning/夹具工作流_接口契约.md)。
+
 ## 五、协作方式
 
 * 分支：`main` 保持可发布；功能走 `feat/xxx`，修复走 `fix/xxx`；
@@ -150,7 +186,7 @@ CADPlan 并重建。预览图来自本地网格内核，不能替代 CATIA B-Rep
 
 ```powershell
 git pull
-python -m ai_modeler --selftest      # 应 35/35，再动手
+python -m ai_modeler --selftest      # 应 42/42，再动手
 ```
 
 **情况二："仓库 + 另一个带大数据的工作目录"**（本项目作者的用法：
