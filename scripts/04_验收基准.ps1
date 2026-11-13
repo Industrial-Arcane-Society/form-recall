@@ -17,7 +17,7 @@ function Step($name, $cmd) {
     }
 }
 
-Step "自检（应 42/42）"            { python -m ai_modeler --selftest }
+Step "自检（应 47/47）"            { python -m ai_modeler --selftest }
 Step "几何相似度（对实测 STEP）"    { python tools\bench_detail_fidelity.py }
 Step "真实几何命中"                { python tools\bench_real_geometry.py }
 Step "CATIA 通道"                  { python tools\check_catia_export_real.py }

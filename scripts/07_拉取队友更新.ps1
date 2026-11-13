@@ -52,6 +52,6 @@ switch ($Mode) {
 }
 
 Write-Host ""
-Write-Host "（上面若显示 '自检 通过 42 / 42' 就说明这次更新是好的，可以直接用。）" -ForegroundColor Green
+Write-Host "（上面若显示 '自检 通过 47 / 47' 就说明这次更新是好的，可以直接用。）" -ForegroundColor Green
 Write-Host "（若自检没过：python tools\git_sync.py rollback 可以退回更新前。）" -ForegroundColor Yellow
 Read-Host "按回车关闭窗口"

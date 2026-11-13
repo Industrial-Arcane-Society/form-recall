@@ -265,6 +265,39 @@ def run_selftest(verbose: bool = True) -> int:
     except Exception as e:
         check('界面: 五步向导可加载', False, str(e))
 
+    # 11. 元增量学习
+    # 守的是这套设计的命门：空库不能炸、学完要能召回、没验证的样本不许进原型。
+    try:
+        from ai_modeler.meta import MetaMemory, load_dataset
+        _mem = MetaMemory(None)                      # 内存模式，不碰磁盘
+        _cold = _mem.suggest('内六角螺栓 M5x8')
+        check('元增量: 冷启动不炸', _cold.get('family') is None,
+              '空库返回 None 而不是抛异常')
+
+        _rows = load_dataset()
+        check('元增量: 训练集可读', len(_rows) >= 1400,
+              '%d 条（已排除无族标签的负例）' % len(_rows))
+
+        _mem.observe_batch(_rows[:200], verified=True)
+        _hit = _mem.suggest('内六角螺栓 M5x8')
+        check('元增量: 学习后能召回', bool(_hit.get('family')),
+              '预测=%s 置信度=%.2f' % (_hit.get('family'),
+                                      float(_hit.get('confidence') or 0)))
+
+        _before = int(_mem.stats().get('samples') or 0)
+        _mem.observe('这是一条没验证过的样本 XX-99', '内六角螺钉', 'M9x99',
+                     None, verified=False)
+        check('元增量: 写入门禁', int(_mem.stats().get('samples') or 0) == _before,
+              '未验证样本不进原型、不涨计数')
+    except Exception as e:
+        check('元增量: 核心模块', False, str(e))
+
+    try:
+        from ai_modeler.ui import meta_panel as _mp  # noqa: F401
+        check('界面: 元增量面板可加载', True)
+    except Exception as e:
+        check('界面: 元增量面板可加载', False, str(e))
+
     print('-' * 62)
     print('通过 %d / %d' % (ok[0], ok[1]))
     print('临时导出目录: %s' % tmp)

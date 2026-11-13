@@ -3,7 +3,7 @@
 ## 一、跑起来
 
 ```powershell
-python -m ai_modeler --selftest            # 自检（必须 42/42）
+python -m ai_modeler --selftest            # 自检（必须 47/47）
 python -m ai_modeler                       # 打开界面
 ```
 
@@ -26,7 +26,7 @@ powershell -ExecutionPolicy Bypass -File scripts\04_验收基准.ps1
 
 | 关卡 | 命令 | 底线 |
 |---|---|---|
-| 自检 | `python -m ai_modeler --selftest` | 42/42 |
+| 自检 | `python -m ai_modeler --selftest` | 47/47 |
 | 几何相似度 | `python tools\bench_detail_fidelity.py` | 不低于改动前（现 99.8%） |
 | 真实几何 | `python tools\bench_real_geometry.py` | 不低于改动前（现 591/593） |
 | CATIA 通道 | `python tools\check_catia_export_real.py` | 必须 523/523 |
@@ -57,7 +57,7 @@ fix/xxx        修复
 
 ```
 feat(族名): 一句话说清改了什么
-  判据：几何 99.8→99.9，图像 84.5→86.1，自检 42/42
+  判据：几何 99.8→99.9，图像 84.5→86.1，自检 47/47
 ```
 
 ## 六、提 PR 时请贴

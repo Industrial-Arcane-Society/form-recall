@@ -166,6 +166,8 @@ class App(tk.Tk):
         self._q = None
         self._busy = False
         self._cancel = None
+        self._meta_mem = None          # 元增量记忆，第一次用到才加载
+        self._meta_bootstrapped = False
         self._budget_s = 30.0
         self._pending_prompt = None
         self._pending_images = []
@@ -288,6 +290,8 @@ class App(tk.Tk):
         tm = tk.Menu(m, tearoff=0)
         tm.add_command(label='夹具单元协同设计（五步 Workflow）…',
                        command=self.open_fixture_workflow)
+        tm.add_command(label='元增量学习面板（族记忆 / 遗忘评测）…',
+                       command=self.open_meta_panel)
         tm.add_separator()
         tm.add_command(label='MCP 服务配置…', command=self.show_mcp_config)
         tm.add_command(label='推送到 CATIA V5…', command=self.push_catia)
@@ -1414,6 +1418,17 @@ class App(tk.Tk):
                                            float(agent_cfg.get('total_timeout_sec', 1800))))
         except (TypeError, ValueError):
             self._budget_s = 1800.0
+        # 元增量记忆：把历史经验拼进本轮输入，但**不改用户的原始文本**——
+        # request 里存的仍是 raw text，否则 source_prompt 和对话记录都会被污染。
+        agent_text = text
+        try:
+            _hint = self._meta_hint(text)
+            if _hint:
+                agent_text = text + _hint
+                self.log('元记忆已介入本轮规划')
+        except Exception as exc:
+            self.log('元记忆注入跳过：%s' % exc)
+
         self._cancel = threading.Event()
         self.lbl_busy.configure(text='AgentLoop 运行中…')
         try:
@@ -1472,7 +1487,7 @@ class App(tk.Tk):
         def work():
             try:
                 result = dsh_agent.run_dsh_agent(
-                    text, image_paths=images, cfg=cfg_snapshot,
+                    agent_text, image_paths=images, cfg=cfg_snapshot,
                     session_id=self._dsh_session_id,
                     progress=lambda message: q.put(('agent_progress', message, None)),
                     cancel_event=cancel, current_plan=current_plan,
@@ -1631,6 +1646,12 @@ class App(tk.Tk):
                 text = request['text']
                 if kind == 'agent_ok':
                     result = value
+                    # 本轮结果写进元记忆。写不进去也不许影响主流程——
+                    # 学习是增强，不是建模的前置条件。
+                    try:
+                        self._meta_observe(text, result)
+                    except Exception as exc:
+                        self.log('元记忆写入跳过：%s' % exc)
                     self._agent_context_summary = result.get(
                         'conversation_summary', self._agent_context_summary)
                     self._agent_summary_through = result.get(
@@ -3215,6 +3236,169 @@ class App(tk.Tk):
         self._set_prompt_text(prompt)
         self.log('工作流参数已填入建模对话：%s' % prompt)
         self.status('工作流参数已填入，确认后按 Ctrl+Enter 发送', TH.ACCENT)
+
+    # ---- 元增量学习 ---------------------------------------------------------
+
+    def meta_memory(self):
+        """惰性加载元增量记忆。
+
+        第一次用到才读盘：程序启动不该被 1828 条历史拖慢，不用这个功能的
+        用户也就不该付这份开销。加载失败要退回「没有记忆」而不是崩掉——
+        建模本身不依赖记忆，记忆只是让重复的活变快。
+        """
+        mem = getattr(self, '_meta_mem', None)
+        if mem is not None:
+            return mem
+        try:
+            from ai_modeler.meta import MetaMemory
+            mem = MetaMemory(os.path.join(ROOT_DIR, 'kb', 'meta_memory.json'))
+            try:
+                mem.load()
+            except Exception as exc:
+                self.log('元记忆读盘失败，从空库开始：%s' % exc)
+        except Exception as exc:
+            self.log('元增量模块不可用：%s' % exc)
+            mem = None
+        self._meta_mem = mem
+        return mem
+
+    def _meta_family_of(self, text):
+        """用本地规则解析器判族。
+
+        不复用 LLM 的判断：元记忆必须独立于模型存在，否则换个模型、
+        换次会话，攒下来的经验就对不上号了。规则判错了也只是少一条记忆。
+        """
+        try:
+            from ai_modeler.parts.library import partlib
+            return str(partlib.find_part(str(text)) or '').strip()
+        except Exception:
+            return ''
+
+    def _meta_hint(self, text):
+        """把元记忆的预测拼成一段提示，附给模型。
+
+        三条分寸：
+        1. 置信度低于 0.55 就什么都不加——宁可不说，也别把模型往错族上带；
+        2. 写成「历史归纳」不是「标准答案」，末尾明确以用户为准；
+        3. 只拼进 agent_text，不改 request['text']，
+           否则 source_prompt 和对话历史都会被污染。
+        """
+        if not text or not str(text).strip():
+            return ''
+        mem = self.meta_memory()
+        if mem is None:
+            return ''
+        try:
+            info = mem.suggest(str(text), k=3)
+        except Exception as exc:
+            self.log('元记忆检索失败：%s' % exc)
+            return ''
+        family = info.get('family')
+        confidence = float(info.get('confidence') or 0.0)
+        if not family or confidence < 0.55:
+            return ''
+        lines = ['', '', '【元增量记忆 · 历史经验，仅供参考】']
+        lines.append('预测零件族：%s（置信度 %.2f）' % (family, confidence))
+        env = info.get('envelope_hint')
+        if env and len(env) >= 3:
+            try:
+                lines.append('该族经验包络：%.0f × %.0f × %.0f mm' % (
+                    float(env[0]), float(env[1]), float(env[2])))
+            except (TypeError, ValueError):
+                pass
+        similar = info.get('similar') or []
+        if similar:
+            lines.append('相似历史案例：')
+            for item in similar[:3]:
+                lines.append('  - %s → %s %s' % (
+                    item.get('prompt', ''), item.get('model', ''),
+                    item.get('envelope_str', '') or ''))
+        lines.append('以上是历史归纳；若与本轮用户明确要求冲突，一律以用户为准。')
+        return '\n'.join(lines)
+
+    def _meta_observe(self, text, result):
+        """把本轮结果写进元记忆。
+
+        写入门禁是整套设计里最要紧的一条：只有 plan 通过校验
+        （validation.state == 'valid'）才算 verified，原型才会被更新；
+        候选和失败只进候选池。把错的学进去，比不学更糟。
+        """
+        mem = self.meta_memory()
+        if mem is None or not text:
+            return
+        plan = result.get('plan') if isinstance(result, dict) else None
+        if not isinstance(plan, dict):
+            return
+        validation = result.get('validation') if isinstance(result, dict) else None
+        verified = bool(isinstance(validation, dict)
+                        and str(validation.get('state') or '') == 'valid')
+        family = self._meta_family_of(text)
+        if not family:
+            return
+        model = str(plan.get('name') or '').strip()
+        out = mem.observe(str(text), family, model, None, verified=verified)
+        if out.get('accepted'):
+            self.log('元记忆：已学入「%s」，该族累计 %s 条' % (
+                family, out.get('n_samples')))
+        elif verified:
+            self.log('元记忆：本轮暂不学入（%s）' % out.get('reason', ''))
+
+    def _meta_bootstrap_async(self, mem):
+        """后台把历史训练集灌进记忆。
+
+        只在第一次、且库是空的时候做。1828 条 embed + 建原型大约几秒，
+        放主线程会让窗口卡住——用户会以为程序坏了。
+        """
+        if getattr(self, '_meta_bootstrapped', False):
+            return
+        self._meta_bootstrapped = True
+        try:
+            if int(mem.stats().get('samples') or 0) > 0:
+                return
+        except Exception:
+            return
+
+        def work():
+            try:
+                from ai_modeler.meta import load_dataset
+                path = os.path.join(ROOT_DIR, 'datasets', '训练提示词', '全部提示词.jsonl')
+                rows = load_dataset(path)
+                summary = mem.observe_batch(rows, verified=True)
+                mem.save()
+                self.log('元记忆冷启动完成：%s' % summary)
+            except Exception as exc:
+                self.log('元记忆冷启动失败：%s' % exc)
+
+        threading.Thread(target=work, daemon=True).start()
+
+    def open_meta_panel(self):
+        """打开元增量学习面板；首次打开顺手把历史训练集灌进去。"""
+        try:
+            from ai_modeler.ui.meta_panel import MetaPanelWindow
+        except Exception as exc:
+            messagebox.showerror('元增量学习', '面板模块加载失败：\n%s' % exc)
+            return
+        win = getattr(self, '_meta_win', None)
+        try:
+            if win is not None and win.winfo_exists():
+                win.deiconify()
+                win.lift()
+                win.focus_set()
+                return
+        except Exception:
+            pass
+        mem = self.meta_memory()
+        if mem is None:
+            messagebox.showerror('元增量学习', '元增量学习模块不可用，详见日志。')
+            return
+        self._meta_bootstrap_async(mem)
+        try:
+            self._meta_win = MetaPanelWindow(self, memory=mem)
+            self.status('已打开元增量学习面板', TH.ACCENT)
+        except Exception as exc:
+            messagebox.showerror('元增量学习',
+                                 '面板打开失败：\n%s\n\n%s'
+                                 % (exc, traceback.format_exc(limit=3)))
 
     def show_about(self):
         messagebox.showinfo('关于', '%s\n\n自然语言驱动的参数化三维建模工具\n'

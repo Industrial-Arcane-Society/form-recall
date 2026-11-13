@@ -9,7 +9,7 @@
 | 界面 | tkinter 桌面程序（`python -m ai_modeler`） |
 | CATIA 通道 | V5 宏 + cscript/COM 推送；也可导出 STEP 让 CATIA 导入 |
 | 当前判据 | **几何相似度 99.8%（≥95% 498/502）**；**图像相似度 84.5%**（AI 渲染图 vs 真实照片） |
-| 自检 | `python -m ai_modeler --selftest` → 42/42 |
+| 自检 | `python -m ai_modeler --selftest` → 47/47 |
 
 ---
 
@@ -105,7 +105,7 @@ powershell -ExecutionPolicy Bypass -File scripts/01_安装依赖.ps1
 | 打包完整性 | `tools\check_share_pack.py` | 意外漏掉 0 / 关键文件缺失 0 / .gitignore 误伤 0 / 脚本编码不对 0 | 逐文件比对原项目与协作包，防"改完 .gitignore 忘了文件被静默忽略" |
 | 打包规范 | `tools\make_share_zip.py` | 599 文件 / 27.3 MB，条目全是正斜杠 | 用 Python `zipfile` 打包（`Compress-Archive` 会写反斜杠，队友在 macOS/Linux 解压会丢目录），并回读抽查关键文件 |
 | 脚本编码 | `tools\fix_script_encoding.py` | 5 个 `.ps1` 带 BOM、7 个 `.bat/.vbs` 是 GBK | `.ps1` 缺 BOM 会让 Windows PowerShell 5.1 直接解析失败（队友双击一闪而过）；`.bat/.vbs` 非 GBK 则中文路径读坏 |
-| 自检 | `python -m ai_modeler --selftest` | 42/42 | 内核/解析/MCP/CATIA/界面/工作流 |
+| 自检 | `python -m ai_modeler --selftest` | 47/47 | 内核/解析/MCP/CATIA/界面/工作流 |
 
 **规矩**：任何一次改动都必须跑全量回归，**出现绿变红立即回滚**。
 
@@ -171,6 +171,43 @@ real_cad_files_created`），人工勾选改不动它们。规则条目的 `conf
 
 接口细节见 [docs/planning/夹具工作流_接口契约.md](docs/planning/夹具工作流_接口契约.md)。
 
+### 元增量学习（核心学习机制）
+
+程序原来每轮都靠大模型从零理解提示词，**没有任何积累**：同一个「内六角螺钉」来了十次，十次都从头想。
+`ai_modeler/meta/` 补的就是这一层。
+
+**它不是外挂功能，是提示词理解链路的前置层**：`_agent_generate` 在请求模型之前先查元记忆，
+把「这族以前怎么做、典型包络多少、相似案例长什么样」拼进本轮输入；拿到结果后再回写。
+
+| 环节 | 做法 | 为什么 |
+|---|---|---|
+| 表示 | 字符 2–4 gram TF-IDF + 型号数字 + 族线索位，426 维 | 中文不依赖分词；可解释、可审计 |
+| 判决 | **原型 + exemplar kNN 混合**（w=0.6 偏 kNN） | 单纯原型会把 M5x8~M5x50 平均成一个点，丢细节；单纯 kNN 不随学习收敛 |
+| 增量 | 原型 EMA（α=1/(n+1)）+ 每族 ≤32 条 exemplar | 学得越多越稳，新样本冲不垮旧原型的骨架 |
+| 门槛 | 同族累计 ≥3 条 verified 才建原型 | 宁可行先说「不知道」，也不让噪声定义一族 |
+| 写入 | 只有 `validation.state == 'valid'` 才算 verified | **把错的学进去比不学更糟**——候选和失败只进候选池 |
+
+**评测（可复现，`python -m pytest tests/test_meta_memory.py`）**
+
+| 口径 | n_test | 混合判决 | 1-NN 基线 | 说明 |
+|---|---|---|---|---|
+| 全量 | 363 | 0.9972 | 0.9972 | 余下 1 条错在「手动夹紧气缸 vs 夹紧气缸」，1-NN 也错同一条 |
+| 带类别词组 | 216 | 0.9954 | 0.9907 | 提示词自带族名，本来就容易 |
+| **纯裸型号** | **92** | **1.0000** | **0.9891** | 去掉族名线索后的真实难度，**+1.09 pp** |
+
+> ⚠️ 别把「全量 99.7%」当成模型多强。1828 条数据里 520 条提示词直接写着「内六角螺栓」，
+> 那是泄漏不是能力。真实难度看**裸型号**那一行，所以指标一律按 variant 做消融。
+
+增量方面：契约版 forgetting = 0.00196（8.1 s）；困难版（原型全建好后按序灌 10/50/200 条/族的流，
+走 EMA + exemplar 淘汰）**max_drop = 0.0000**，没有一族掉分。
+
+**为什么不用 torch**：用户双击启动的是系统 Python，不装 CUDA 也能用。元学习模块一旦依赖 torch，
+程序就装不动了；而原型网络本来就不需要深度网络——1828 条数据也训不出来。少样本、可增量、可解释，
+这三条比「用了深度学习」重要。
+
+用法：菜单「工具 → 元增量学习面板」，首次打开会在后台把 1453 条历史灌进记忆（约 1 秒），
+面板里能看族记忆、样本数、原型是否建立，并一键跑评测。记忆存在 `kb/meta_memory.json`（不进版本库）。
+
 ## 五、协作方式
 
 * 分支：`main` 保持可发布；功能走 `feat/xxx`，修复走 `fix/xxx`；
@@ -186,7 +223,7 @@ real_cad_files_created`），人工勾选改不动它们。规则条目的 `conf
 
 ```powershell
 git pull
-python -m ai_modeler --selftest      # 应 42/42，再动手
+python -m ai_modeler --selftest      # 应 47/47，再动手
 ```
 
 **情况二："仓库 + 另一个带大数据的工作目录"**（本项目作者的用法：
