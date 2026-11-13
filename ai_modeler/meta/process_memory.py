@@ -44,6 +44,41 @@ def _cosine(a: np.ndarray, b: np.ndarray) -> float:
     return float(np.dot(a, b) / (na * nb))
 
 
+#: 工序强特征词。向量检索对付长描述还行，对「让它能转起来」这种超短口语
+#: 基本失效——实测 16 句口语只命中 7 句，还有 4 句因为词表没覆盖而变成零向量。
+#: 这层词表是兜底：命中即大幅提分，与余弦取最大值。宁可用规则补，也不让检索瞎猜。
+STEP_KEYWORDS = {
+    "S01": ["打开", "读图", "输入", "数模", "基准面", "工程图", "看图纸"],
+    "S02": ["定位点", "标点", "点位", "基准点", "布点", "标出定位"],
+    "S03": ["焊枪", "避让", "进出方向", "焊钳", "运动路径"],
+    "S04": ["布局", "排布", "怎么摆", "工位", "整体规划", "摆位"],
+    "S05": ["自制", "外购", "清单", "BOM", "件号", "自己做", "哪些件", "哪些买"],
+    "S06": ["选型", "缸径", "行程", "型号", "气缸", "定位销", "规格"],
+    "S07": ["接触块", "托块", "贴合", "曲面切", "接触面"],
+    "S08": ["支撑座", "支座", "多高", "高度", "支腿", "立柱"],
+    "S09": ["压臂", "臂长", "多长", "截面", "铰接孔"],
+    "S10": ["开孔", "打孔", "几个孔", "孔阵列", "减重槽", "钻孔"],
+    "S11": ["装配", "固定约束", "装到", "装一起", "装上", "组合"],
+    "S12": ["转动", "移动副", "转起来", "开合", "运动关系"],
+    "S13": ["螺钉", "销子", "紧固件", "配齐", "配置标准件"],
+    "S14": ["干涉", "间隙", "碰", "撞", "穿插", "检查是否"],
+    "S15": ["出图", "汇总", "输出", "正投影", "存档", "记录"],
+    "S16": ["重开", "复核", "验一遍", "重新打开", "引用完整"],
+}
+
+
+def _keyword_score(query: str, step_id: str) -> float:
+    """关键词命中打分。命中一个 0.55，两个 0.75，三个以上 0.9。
+    为什么不直接 1.0：规则命中不等于一定对，留一截给真实语义竞争。"""
+    words = STEP_KEYWORDS.get(step_id) or []
+    if not words or not query:
+        return 0.0
+    hits = sum(1 for w in words if w in query)
+    if hits <= 0:
+        return 0.0
+    return 0.55 if hits == 1 else (0.75 if hits == 2 else 0.9)
+
+
 @dataclass
 class StepRecord:
     """一道工序的记忆条目。"""
@@ -213,6 +248,12 @@ class ProcessMemory:
                 alias_score = _cosine(query, np.asarray(alias_vec, dtype=float))
                 if alias_score > score:
                     score = alias_score
+            # 关键词直通：超短口语（「让它能转起来」「这里要开几个孔」）向量
+            # 基本失效，命中强特征词就直接提分。规则与向量取最大、不叠加——
+            # 叠加会把「两个信号都弱」的组合错误放大。
+            keyword_hit = _keyword_score(text, rec.step_id)
+            if keyword_hit > score:
+                score = keyword_hit
             scored.append((score, rec))
         scored.sort(key=lambda pair: pair[0], reverse=True)
 
