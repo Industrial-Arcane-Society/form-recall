@@ -56,6 +56,11 @@ class StepRecord:
     success: int = 0             # 其中成功几次
     fail_notes: list = field(default_factory=list)
     vector: list = field(default_factory=list)
+    # 同一道工序的**别的说法**。工序表里一句抽象描述不够用：真实输入是
+    # 「在 CATIA 里打开钣金件调视角」这种口语，与「确认输入数模与定位基准」的
+    # 词面几乎不重合。企业视频逐段看出来的场景描述就存这里，检索时取最大相似度。
+    aliases: list = field(default_factory=list)
+    alias_vectors: list = field(default_factory=list)
 
     @property
     def success_rate(self) -> float:
@@ -69,6 +74,8 @@ class StepRecord:
             "step_id": self.step_id, "stage": self.stage, "text": self.text,
             "status": self.status, "trials": self.trials, "success": self.success,
             "fail_notes": list(self.fail_notes), "vector": self.vector,
+            "aliases": list(self.aliases),
+            "alias_vectors": [list(v) for v in self.alias_vectors],
         }
 
     @classmethod
@@ -82,6 +89,9 @@ class StepRecord:
             success=int(data.get("success") or 0),
             fail_notes=[str(x) for x in (data.get("fail_notes") or [])][-MAX_FAIL_NOTES:],
             vector=[float(x) for x in (data.get("vector") or [])],
+            aliases=[str(x) for x in (data.get("aliases") or [])],
+            alias_vectors=[[float(y) for y in v]
+                           for v in (data.get("alias_vectors") or [])],
         )
 
 
@@ -106,16 +116,23 @@ class ProcessMemory:
 
     # ---------------- 导入 ----------------
 
-    def learn_steps(self, rows, force: bool = False) -> dict:
+    def learn_steps(self, rows, force: bool = False, scenes=None) -> dict:
         """把工序库灌进记忆。
 
         rows 每项至少要有 step_id / stage / text（检索文本）。重复导入默认只补缺，
         不覆盖已有的 trial 统计——否则每次重灌都会把「跑过 30 次」清零。
 
-        每次导入都会用**当前全量工序文本**重建词表与向量：工序只有十几条，
+        scenes: ``{step_id: [场景描述, ...]}``，来源是企业视频的逐段观察。
+        工序表里一句抽象描述撑不住真实输入——真人说的是「在 CATIA 里打开钣金件
+        调视角」，跟「确认输入数模与定位基准」词面几乎不重合。这些场景描述既进
+        词表（让词表认识「钣金面」「结构树」「干涉」），也各自存一条向量，
+        检索时取最大值。
+
+        每次导入都会用**当前全量文本**重建词表与向量：工序只有十几条，
         重建成本可忽略，但换了一家企业的流程表之后，旧向量立刻会失效——
         维度含义变了，继续用旧向量等于拿另一套坐标去量。
         """
+        scenes = scenes or {}
         texts = []
         clean_rows = []
         for row in rows:
@@ -125,18 +142,24 @@ class ProcessMemory:
                 continue
             texts.append(text)
             clean_rows.append((row, step_id, text))
+        for group in scenes.values():
+            texts.extend(str(x).strip() for x in group if str(x).strip())
 
-        if not texts:
+        if not clean_rows:
             return {"added": 0, "updated": 0, "skipped": 0, "total": len(self.records)}
 
-        # 语料只有十几条，max_features 给 400 足够：再多就是给每条工序
-        # 各留一批只出现一次的碎片，纯占维度。
-        self.vocab = build_vocab(texts, max_features=400)
+        # 语料变大后 max_features 提到 600：场景描述比工序摘要长，400 会截掉
+        # 一部分该留的词（比如「钣金」「结构树」这种只在场景里出现的）。
+        self.vocab = build_vocab(texts, max_features=600)
 
         added = updated = skipped = 0
         for row, step_id, text in clean_rows:
             vec = embed(text, self.vocab)
             vec_list = [round(float(x), 6) for x in vec]
+            alias_list = [str(x).strip() for x in (scenes.get(step_id) or [])
+                          if str(x).strip()]
+            alias_vecs = [[round(float(y), 6) for y in embed(a, self.vocab)]
+                          for a in alias_list]
 
             old = self.records.get(step_id)
             if old is not None and not force:
@@ -145,6 +168,8 @@ class ProcessMemory:
                 old.stage = str(row.get("stage") or old.stage)
                 old.status = str(row.get("status") or old.status)
                 old.vector = vec_list
+                old.aliases = alias_list
+                old.alias_vectors = alias_vecs
                 updated += 1
                 continue
             self.records[step_id] = StepRecord(
@@ -153,11 +178,13 @@ class ProcessMemory:
                 text=text,
                 status=str(row.get("status") or ""),
                 vector=vec_list,
+                aliases=alias_list,
+                alias_vectors=alias_vecs,
             )
             added += 1
         self.updated_at = datetime.now().isoformat(timespec="seconds")
         return {"added": added, "updated": updated, "skipped": skipped,
-                "total": len(self.records)}
+                "total": len(self.records), "scenes": sum(len(v) for v in scenes.values())}
 
     # ---------------- 检索 ----------------
 
@@ -177,7 +204,16 @@ class ProcessMemory:
         for rec in self.records.values():
             if not rec.vector or len(rec.vector) != len(query):
                 continue
-            scored.append((_cosine(query, np.asarray(rec.vector, dtype=float)), rec))
+            score = _cosine(query, np.asarray(rec.vector, dtype=float))
+            # 场景别名逐条比、取最大：同一道工序在视频里有好几种说法，
+            # 命中任意一种都算命中这道工序。
+            for alias_vec in rec.alias_vectors:
+                if len(alias_vec) != len(query):
+                    continue
+                alias_score = _cosine(query, np.asarray(alias_vec, dtype=float))
+                if alias_score > score:
+                    score = alias_score
+            scored.append((score, rec))
         scored.sort(key=lambda pair: pair[0], reverse=True)
 
         # 阈值用**相对**的：只保留与最佳命中相差不到四成的候选。

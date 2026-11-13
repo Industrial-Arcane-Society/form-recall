@@ -32,12 +32,14 @@ from .models import (
 )
 from .process_library import (
     DEFAULT_PROCESS_CSV,
+    DEFAULT_SCENES_JSONL,
     STATUS_INFERRED,
     STATUS_PENDING,
     STATUS_VERIFIED,
     ProcessLibrary,
     ProcessStep,
     load_process,
+    load_scenes,
 )
 from .report import (
     SCHEMA,
@@ -83,6 +85,7 @@ __all__ = [
     'SCHEMA', 'unit_record', 'summary_markdown', 'export_unit_record',
     'export_summary',
     # 企业工序库（做法层，与骨架分离）
-    'DEFAULT_PROCESS_CSV', 'ProcessLibrary', 'ProcessStep', 'load_process',
+    'DEFAULT_PROCESS_CSV', 'DEFAULT_SCENES_JSONL', 'ProcessLibrary', 'ProcessStep',
+    'load_process', 'load_scenes',
     'STATUS_VERIFIED', 'STATUS_INFERRED', 'STATUS_PENDING',
 ]

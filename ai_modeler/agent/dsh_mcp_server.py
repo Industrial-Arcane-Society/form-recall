@@ -1206,7 +1206,7 @@ def _process_memory():
         return _PROCESS_MEMORY if _PROCESS_MEMORY is not False else None
     try:
         from ai_modeler.meta import ProcessMemory
-        from ai_modeler.workflow import load_process
+        from ai_modeler.workflow import load_process, load_scenes
         path = Path(PROJECT_ROOT) / "kb" / "process_memory.json"
         mem = ProcessMemory(str(path))
         lib = load_process()
@@ -1214,7 +1214,7 @@ def _process_memory():
             {"step_id": s.step_id, "stage": s.stage,
              "text": s.search_text(), "status": s.status}
             for s in lib.steps
-        ])
+        ], scenes=load_scenes())
         _PROCESS_MEMORY = mem
     except Exception as exc:
         print("工序记忆不可用：%s" % exc, file=sys.stderr, flush=True)

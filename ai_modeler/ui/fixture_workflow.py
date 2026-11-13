@@ -1254,7 +1254,7 @@ class FixtureWorkflowWindow(tk.Toplevel):
             try:
                 import os
                 from ai_modeler.meta import ProcessMemory
-                from ai_modeler.workflow import load_process
+                from ai_modeler.workflow import load_process, load_scenes
                 from ai_modeler.paths import PROJECT_ROOT
                 mem = ProcessMemory(os.path.join(
                     str(PROJECT_ROOT), 'kb', 'process_memory.json'))
@@ -1262,7 +1262,7 @@ class FixtureWorkflowWindow(tk.Toplevel):
                 mem.learn_steps([
                     {'step_id': s.step_id, 'stage': s.stage,
                      'text': s.search_text(), 'status': s.status}
-                    for s in lib.steps])
+                    for s in lib.steps], scenes=load_scenes())
                 self._proc_mem = mem
                 self._proc_steps = {no: [s.step_id for s in steps]
                                     for no, steps in lib.by_stage().items()}

@@ -13,6 +13,7 @@
 from __future__ import annotations
 
 import csv
+import json
 import os
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -22,6 +23,11 @@ from ai_modeler.paths import PROJECT_ROOT
 #: 企业流程表的默认位置。换一家企业时只改这里或传 path。
 DEFAULT_PROCESS_CSV = os.path.join(str(PROJECT_ROOT), "datasets",
                                    "企业流程结构化_视频实证版.csv")
+
+#: 视频场景样本。一行一个 JSON，字段 scene / step_id / evidence / status。
+#: 这些是从企业设计录屏里逐段看出来的**真实说法**，用来补工序摘要的召回。
+DEFAULT_SCENES_JSONL = os.path.join(str(PROJECT_ROOT), "datasets",
+                                    "视频场景样本.jsonl")
 
 #: 确认状态三档。语义见表头说明，程序按这三档决定「能不能当成结论用」。
 STATUS_VERIFIED = "视频证实"
@@ -148,3 +154,32 @@ def load_process(path: str | None = None) -> ProcessLibrary:
         ))
 
     return ProcessLibrary(steps=steps, source=str(target))
+
+
+def load_scenes(path: str | None = None) -> dict:
+    """读视频场景样本，按工序号分组。
+
+    每行一个 JSON：`{scene, step_id, evidence, status}`。缺字段或坏行跳过，
+    不因为一行写错就让整个工序库导不进来。
+
+    为什么需要它：工序表一行一句摘要，是"整理过的说法"；真人提问用的是
+    录屏里的原话——"在 CATIA 里打开钣金件调视角"。两者词面几乎不重合，
+    只有摘要时检索经常指错。这些场景就是补这个缺口。
+    """
+    target = Path(path) if path else Path(DEFAULT_SCENES_JSONL)
+    if not target.is_file():
+        return {}
+    grouped: dict = {}
+    for line in target.read_text(encoding="utf-8").splitlines():
+        line = line.strip()
+        if not line:
+            continue
+        try:
+            row = json.loads(line)
+        except Exception:
+            continue
+        step_id = str(row.get("step_id") or "").strip()
+        scene = str(row.get("scene") or "").strip()
+        if step_id and scene:
+            grouped.setdefault(step_id, []).append(scene)
+    return grouped

@@ -28,7 +28,7 @@ ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))
 
 from ai_modeler.meta import DEFAULT_STORE, MetaMemory, ProcessMemory  # noqa: E402
-from ai_modeler.workflow import load_process  # noqa: E402
+from ai_modeler.workflow import load_process, load_scenes  # noqa: E402
 
 OUT_REPO = ROOT / "reports" / "元增量学习观察面板.html"
 OUT_DESKTOP = Path(os.path.expanduser("~")) / "Desktop" / "元增量学习观察面板.html"
@@ -73,7 +73,7 @@ def collect() -> dict:
             {"step_id": s.step_id, "stage": s.stage,
              "text": s.search_text(), "status": s.status}
             for s in lib.steps
-        ])
+        ], scenes=load_scenes())
         stat_by_id = {r.step_id: r for r in pm.records.values()}
         for step in lib.steps:
             rec = stat_by_id.get(step.step_id)
