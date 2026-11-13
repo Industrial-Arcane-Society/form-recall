@@ -152,7 +152,7 @@ def summary_markdown(project: FixtureProject) -> str:
             lines.append('- %s · 阶段 %d · %s · %s'
                          % (event.ts, event.stage, event.action, event.detail))
     lines.append('')
-    lines.append('> 本摘要自动生成。「未运行 / 不适用」两类结论不得在研制报告中改写为通过：')
+    lines.append('> 本摘要自动生成。「未运行 / 不适用」两类结论不得改写为通过：')
     lines.append('> 前者是没做的事，后者不是本工作流的范围。')
     return '\n'.join(lines) + '\n'
 

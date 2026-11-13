@@ -210,7 +210,7 @@ def run_selftest(verbose: bool = True) -> int:
         check('界面: 模块可加载', False, str(e))
 
     # 10. 夹具单元协同设计五步工作流
-    # 这一组检查守的是研制报告里那几条红线：前置不满足不能进下一步、
+    # 这一组检查守的是设计规范里那几条红线：前置不满足不能进下一步、
     # 固定基准不能动、参数一变下游结论作废、未实现的检查不许报通过。
     try:
         from ai_modeler.workflow import (
@@ -231,7 +231,7 @@ def run_selftest(verbose: bool = True) -> int:
               ' / '.join(sorted(_st)))
 
         # 默认案例的压臂间距故意不足。走到第 4 阶段后再看第 5 阶段的门禁，
-        # 报出的必须是「检查未通过」而不是「资料没填」——这正是研制报告
+        # 报出的必须是「检查未通过」而不是「资料没填」——这正是设计规范
         # 5.2「禁止进入复核」那条要求落到代码上的样子。
         # 用独立实例跑：commit 会写 history、改 stage，别污染后面要用的 _proj。
         _gate = WorkflowEngine(build_demo_project())

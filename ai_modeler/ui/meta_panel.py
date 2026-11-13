@@ -1020,7 +1020,7 @@ class MetaPanelWindow(tk.Toplevel):
         所以基线缺失时这里会明确标出来，而不是悄悄只报准确率。
         """
         if not isinstance(result, dict):
-            return ('评测完成，但返回的不是契约 §5 的 dict（拿到了 %r）。'
+            return ('评测完成，但返回格式不符合预期（拿到了 %r）。'
                     % (type(result).__name__,))
 
         accuracy = _as_float(result.get('accuracy'))
@@ -1039,7 +1039,7 @@ class MetaPanelWindow(tk.Toplevel):
         if baseline is not None:
             parts.append('1-NN 基线 acc=%.3f' % baseline)
         else:
-            parts.append('1-NN 基线缺失（契约 §5 要求必给 baseline_nearest）')
+            parts.append('1-NN 基线缺失（评测要求同时给出基线）')
         if accuracy is not None and baseline is not None:
             parts.append('比基线 %+.1f 个百分点' % ((accuracy - baseline) * 100.0))
         if n_train is not None or n_test is not None:

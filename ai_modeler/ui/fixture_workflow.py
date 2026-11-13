@@ -1521,7 +1521,7 @@ class FixtureWorkflowWindow(tk.Toplevel):
     @_guarded
     def _on_export_summary(self):
         if export_summary is None:
-            self._status('当前领域层还没有提供摘要导出（契约 §6 未实现）。', 'warn')
+            self._status('当前版本还没有提供摘要导出。', 'warn')
             return
         unit_id = str(_get(self.project, 'unit_id', '') or 'UN200')
         path = filedialog.asksaveasfilename(

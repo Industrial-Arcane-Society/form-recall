@@ -41,7 +41,7 @@ REQUIRED_PARTS = (
 )
 
 # 演示公式常数：d = L - 62 + 4s（s = 侧向 1 / 上侧 0）
-# 注意：62 是研制报告 §5 演示案例的几何常数，**不是通用工程常数**，
+# 注意：62 是设计规范 §5 演示案例的几何常数，**不是通用工程常数**，
 # 所以每条用到它的结论都带 rule_id / detail 说明来源，不能当成通用校核公式对外宣称。
 ARM_DATUM = 62.0
 ARM_SIDE_BONUS = 4.0
@@ -148,7 +148,7 @@ class PrpPoint(_Serializable):
 class RuleSpec(_Serializable):
     """工程规则条目。
 
-    confirmed 单独存在，是因为研制报告里反复强调的一条：未经企业确认的阈值只能叫
+    confirmed 单独存在，是因为设计规范里反复强调的一条：未经企业确认的阈值只能叫
     「示例约定」。规则没确认时检查照样跑（不然演示走不下去），但结论里必须写清来源，
     不能拿它冒充企业标准。
     """
@@ -233,7 +233,7 @@ class JointSpec(_Serializable):
 class CheckResult(_Serializable):
     """检查结论。status 四分，绝不合并成一个绿灯（契约 §0.4）：
     pass / fail / not_run / not_applicable。后两者含义不同——
-    「还没算」和「不适用」，混成一个就会在研制报告里撒谎。"""
+    「还没算」和「不适用」，混成一个就会在设计规范里撒谎。"""
 
     check_id: str
     title: str
@@ -385,7 +385,7 @@ def positive_dim(value: Any) -> bool:
 
 
 # --------------------------------------------------------------------------
-# 默认案例（UN200，与案例页 / 研制报告 §5 一致）
+# 默认案例（UN200，与示例 / 设计规范 §5 一致）
 # --------------------------------------------------------------------------
 def build_demo_project() -> FixtureProject:
     """构造默认案例：一套气动夹紧单元。
@@ -400,7 +400,7 @@ def build_demo_project() -> FixtureProject:
     project = FixtureProject(
         unit_id='UN200',
         unit_name='气动夹紧单元',
-        case_note='一套气动夹紧单元的协同设计（研制报告 §3–§7 案例页）',
+        case_note='一套气动夹紧单元的协同设计',
     )
 
     # 第 1 阶段：工程输入。四项都已确认可用，否则演示连第 2 步都走不进去。
@@ -428,18 +428,18 @@ def build_demo_project() -> FixtureProject:
     # 工程规则：全部标注「示例约定」，没有一条写成已确认的企业标准。
     project.rules = [
         RuleSpec(
-            rule_id='R-GAP-01', title='压臂最小间距', source='示例约定（研制报告 §5 演示公式）',
+            rule_id='R-GAP-01', title='压臂最小间距', source='企业示例约定 · 待确认',
             applies_to='clamp_unit', unit='mm', method='formula',
             target=5.0, formula='d = L - 62 + 4s',
             severity='block', confirmed=False,
         ),
         RuleSpec(
-            rule_id='R-OFF-01', title='辅助点偏移范围', source='示例约定（案例页）',
+            rule_id='R-OFF-01', title='辅助点偏移范围', source='企业示例约定 · 待确认',
             applies_to='prp_point', unit='mm', method='range',
             target=0.0, target_max=4.0, severity='block', confirmed=False,
         ),
         RuleSpec(
-            rule_id='R-LOCK-01', title='固定点偏移锁定', source='研制报告 §0.2（硬约束）',
+            rule_id='R-LOCK-01', title='固定点偏移锁定', source='固定基准锁定 · 硬约束',
             applies_to='prp_point', unit='mm', method='max',
             target=0.0, severity='block', confirmed=True,
         ),

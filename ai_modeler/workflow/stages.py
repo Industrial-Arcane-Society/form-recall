@@ -11,7 +11,7 @@
 3. **参数一变，下游结论全部失效**：`invalidate_from()` 只把结论打成 not_run，
    不重算。重算是规则层的事，混在一起做会让人分不清「结论过期」和「重新算过」。
 4. **红线**：失效传播不碰 `not_applicable`。W-MANUF-01 是「不适用」，
-   把它打成 not_run 等于暗示「这个以后会跑」——研制报告里不能这么写。
+   把它打成 not_run 等于暗示「这个以后会跑」——设计规范里不能这么写。
 5. 本文件不 import tkinter / CATIA，UI 只是消费者。
 """
 from __future__ import annotations
@@ -171,7 +171,7 @@ def invalidate_from(project: FixtureProject, stage: int) -> int:
 def blocking_failures(project: FixtureProject) -> list:
     """返回阻断「进入复核」的未通过项。
 
-    研制报告 5.2：默认任务在检查步骤暂停、禁止进入复核；6.2：接受修正后才继续。
+    设计规范 5.2：默认任务在检查步骤暂停、禁止进入复核；6.2：接受修正后才继续。
     所以复核门槛不能只看某一条规则——任何 block 级未通过都算。
     规则表里查不到的检查项（资料缺失、部件缺失这类）一律按 block 处理：
     宁可多拦一道，也不能让有未通过项的方案进复核。
@@ -263,7 +263,7 @@ class WorkflowEngine:
                       if find_part(project, key) is None]
             if absent:
                 missing.append('缺少部件：' + '、'.join(absent))
-            # 有未通过的检查就不能进复核（研制报告 5.2 / 6.2 的硬要求）。
+            # 有未通过的检查就不能进复核（设计规范 5.2 / 6.2 的硬要求）。
             # 这一步放在最后：先报"缺什么"，再报"哪条没过"，缺项顺序才对得上。
             for failed in blocking_failures(project):
                 missing.append('检查未通过：%s（%s）' % (failed.title, failed.detail))
