@@ -29,6 +29,58 @@ APP_TITLE = 'AI 自动建模助手  v%s' % __version__
 ROOT_DIR = str(PROJECT_ROOT)
 
 
+def _clean_display_text(text):
+    """清洗模型流式输出里残留的解码垃圾。
+
+    两层处理：
+    1. 去掉替换符 U+FFFD 与孤立控制码（UTF-8 多字节被 chunk 边界切断的产物）；
+    2. 剩下的如果仍然「不像人话」（符号占比过高），返回空串——调用方据此
+       换一句安全的替代文案。
+
+    为什么第 2 层必要：实测模型流里出现过整串「◆◆◉9:-◆◆◆◆◆◆◆9」这种东西。
+    它每个字符都是合法的 Unicode，过滤规则拦不住，但人一看就是乱码。
+    与其把垃圾晾在界面上，不如承认「这段无法可靠显示」。
+    """
+    if not isinstance(text, str):
+        text = str(text)
+    cleaned = ''.join(ch for ch in text
+                      if ch != '\ufffd' and (ord(ch) >= 32 or ch in '\n\r\t'))
+    if not cleaned.strip():
+        return ''
+    if _looks_garbled(cleaned):
+        return ''
+    return cleaned
+
+
+def _looks_garbled(text, threshold=0.35):
+    """判断一段文本是不是编码错乱。
+
+    口径：中文、ASCII 可打印字符、常见中文标点以外的字符算「可疑」，
+    可疑占比超过阈值就判为乱码。阈值给 0.35 而不是 0.5——正常技术描述里
+    符号本来就少，超过三分之一已经是异常了。
+    """
+    if not text:
+        return False
+    safe_punct = '，。；：！？（）【】「」、—…·《》""\'\''
+    bad = 0
+    total = 0
+    for ch in text:
+        if ch in '\n\r\t ':
+            continue
+        total += 1
+        code = ord(ch)
+        if 0x4E00 <= code <= 0x9FFF:      # 中文
+            continue
+        if 32 <= code < 127:               # ASCII 可打印
+            continue
+        if ch in safe_punct:
+            continue
+        bad += 1
+    if total == 0:
+        return False
+    return bad / total > threshold
+
+
 def enable_dpi_awareness():
     """必须在创建 Tk 窗口之前调用。
 
@@ -1589,7 +1641,9 @@ class App(tk.Tk):
                         self._refresh_agent_wait_clock()
                         continue
                     if value.startswith('模型进展摘要：'):
-                        summary = value[len('模型进展摘要：'):].strip()
+                        summary = _clean_display_text(value[len('模型进展摘要：'):].strip())
+                        if not summary:
+                            summary = '（模型给了一段无法可靠显示的摘要）'
                         self.lbl_agent_detail.configure(text=summary[:1200])
                         self._set_agent_thinking_panel(False, '模型判断摘要（已收起）')
                         self._append_agent_event('模型判断摘要：' + summary)
@@ -1597,7 +1651,9 @@ class App(tk.Tk):
                         self._set_chat_activity('模型阶段摘要', summary[:700], active=True)
                         continue
                     if value.startswith('Agent 决策摘要：'):
-                        summary = value[len('Agent 决策摘要：'):].strip()
+                        summary = _clean_display_text(value[len('Agent 决策摘要：'):].strip())
+                        if not summary:
+                            summary = '（模型给出了一段无法可靠显示的决策摘要，已跳过）'
                         self.lbl_agent_detail.configure(text=summary[:1200])
                         self._set_agent_thinking_panel(False, '下一步：' + summary[:56])
                         self._append_agent_event('下一步：' + summary)
