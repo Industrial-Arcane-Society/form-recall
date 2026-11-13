@@ -129,6 +129,20 @@ TOOLS = [
         }, "additionalProperties": False},
     },
     {
+        "name": "meta_recall",
+        "description": (
+            "查本项目积累的「族记忆」：同一族零件以前是怎么建的、该族典型包络尺寸多少、有哪些相似历史案例。"
+            "这是从本机历史建模任务里增量学出来的经验（原型网络），不是标准件表。"
+            "命中时返回族名、置信度和该族经验包络；未命中说明这族还没积累，按常规流程做即可。"
+            "建模前查一次能少走重复路；但它不替代 cad_search_knowledge 的精确型号查询——"
+            "历史经验的尺寸只能作参考，不能用它替代用户本轮明确给的数值。"
+        ),
+        "inputSchema": {"type": "object", "properties": {
+            "query": {"type": "string", "description": "零件描述或型号，例如 内六角螺钉 M5x8、EGT型材 EGT001。"},
+            "limit": {"type": "integer", "minimum": 1, "maximum": 10},
+        }, "required": ["query"], "additionalProperties": False},
+    },
+    {
         "name": "cad_search_recipes",
         "description": "搜索本地常用建模配方库，返回螺纹、孔、沉孔和标准件的推荐特征顺序、适用条件与当前能力边界。",
         "inputSchema": {"type": "object", "properties": {
@@ -1037,8 +1051,124 @@ def _export_candidate(state: dict[str, Any], summary: str) -> dict[str, str]:
     return paths
 
 
+# ---- 元增量学习 -----------------------------------------------------------
+#
+# 本项目的核心学习机制：每次建模都在往「族记忆」里攒经验，下一次同类零件不必
+# 从零理解。它跑在 MCP 服务进程里，所以 AI Modeler 的桌面 UI 一行都不用改。
+
+_META_MEMORY: Any = None
+
+
+def _meta_memory():
+    """惰性加载族记忆；失败返回 None，绝不让记忆拖垮建模主流程。"""
+    global _META_MEMORY
+    if _META_MEMORY is not None:
+        return _META_MEMORY if _META_MEMORY is not False else None
+    try:
+        from ai_modeler.meta import MetaMemory
+        # 存项目根而不是会话目录：经验要跨会话累积，跟着会话走等于每次从零学起。
+        path = Path(PROJECT_ROOT) / "kb" / "meta_memory.json"
+        mem = MetaMemory(str(path))
+        try:
+            mem.load()
+        except Exception:
+            pass            # 首次运行没有这个文件，从空库开始是正常的
+        # 空库自举：把项目自带的历史训练集灌进去。不做这一步的话，
+        # 新装机器第一次用就是「没记忆」，跟没装这一层没区别。
+        # 1816 条约 1~2 秒，只在库为空时发生一次。
+        try:
+            if int(mem.stats().get("samples") or 0) == 0:
+                from ai_modeler.meta import load_dataset
+                rows = load_dataset(str(Path(PROJECT_ROOT) / "datasets"
+                                         / "训练提示词" / "全部提示词.jsonl"))
+                if rows:
+                    mem.observe_batch(rows, verified=True)
+                    mem.save()
+        except Exception as exc:
+            print("元记忆冷启动跳过：%s" % exc, file=sys.stderr, flush=True)
+        _META_MEMORY = mem
+    except Exception as exc:
+        print("元记忆不可用：%s" % exc, file=sys.stderr, flush=True)
+        _META_MEMORY = False
+    return _META_MEMORY or None
+
+
+def _meta_recall(args: dict[str, Any]) -> dict[str, Any]:
+    query = str(args.get("query") or "").strip()
+    if not query:
+        raise ValueError("query 不能为空。")
+    limit = max(1, min(10, int(args.get("limit") or 5)))
+    mem = _meta_memory()
+    if mem is None:
+        return _tool_result({
+            "query": query, "family": None,
+            "note": "本机元增量学习模块不可用，按常规流程建模。",
+        }, "族记忆不可用。")
+    info = mem.suggest(query, k=limit)
+    payload = {
+        "query": query,
+        "family": info.get("family"),
+        "confidence": round(float(info.get("confidence") or 0.0), 3),
+        "envelope_hint_mm": info.get("envelope_hint"),
+        "similar": info.get("similar") or [],
+        "family_scores": info.get("family_scores") or {},
+        "usage_note": ("历史经验仅供规划参考；用户本轮明确给出的数值优先，"
+                       "不得用经验包络替代 cad_search_knowledge 的精确型号查询。"),
+    }
+    if not payload["family"]:
+        payload["note"] = "该族尚无累积经验；本次建模完成后会自动学入。"
+    progress = ("族记忆命中：%s（置信度 %.2f）" % (payload["family"], payload["confidence"])
+                if payload["family"] else "族记忆未命中，按常规流程推进。")
+    return _tool_result(payload, progress)
+
+
+#: 哪些工具的结果值得写进族记忆。只收「建出了东西」的几条路——
+#: 查询类工具学了没用，失败的结果更不能学（把错的学进去比不学更糟）。
+_META_LEARN_TOOLS = {"cad_apply_recipe", "cad_create_model", "cad_finish_model"}
+
+
+def _meta_observe_tool_result(name: str, args: dict[str, Any],
+                              result: dict[str, Any]) -> None:
+    """工具调用成功后，把这一轮经验写进族记忆。
+
+    写入门禁：返回值带 isError 一律不学；cad_finish_model（完成态）与
+    cad_apply_recipe（确定性配方）才算 verified，其余只进候选池。
+    任何异常都吞掉——学习是增强，不是建模的前置条件。
+    """
+    if name not in _META_LEARN_TOOLS:
+        return
+    if not isinstance(result, dict) or result.get("isError"):
+        return
+    try:
+        mem = _meta_memory()
+        if mem is None:
+            return
+        state = _load()
+        plan = state.get("plan") or {}
+        prompt = str(plan.get("source_prompt") or args.get("source_prompt")
+                     or args.get("size") or args.get("name") or "").strip()
+        if not prompt:
+            return
+        from ai_modeler.parts.library import partlib
+        category = str(partlib.find_part(prompt) or "").strip()
+        if not category:
+            return
+        verified = name in ("cad_finish_model", "cad_apply_recipe")
+        mem.observe(prompt, category, str(plan.get("name") or "").strip(),
+                    None, verified=verified)
+        if verified:
+            mem.save()
+    except Exception as exc:
+        try:
+            print("元记忆写入跳过：%s" % exc, file=sys.stderr, flush=True)
+        except Exception:
+            pass
+
+
 def _handle_tool(name: str, args: dict[str, Any]) -> dict[str, Any]:
     state = _load()
+    if name == "meta_recall":
+        return _meta_recall(args)
     if name == "cad_search_recipes":
         rows = modeling_recipes.list_recipes(
             str(args.get("query") or ""), limit=args.get("limit", 8))
@@ -1699,6 +1829,8 @@ def _handle_message(message: dict[str, Any]) -> None:
             if not isinstance(arguments, dict):
                 raise ValueError("工具参数必须为 JSON 对象。")
             result = _handle_tool(name, arguments)
+            # 成功的结果顺手学进族记忆；失败路径不学（见 _META_LEARN_TOOLS 上方注释）。
+            _meta_observe_tool_result(name, arguments, result)
             _send({"jsonrpc": "2.0", "id": request_id, "result": result})
         except Exception as exc:
             # Persist concise tool failures so a stalled image-modeling turn
