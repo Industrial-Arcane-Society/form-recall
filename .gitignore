@@ -58,3 +58,4 @@ config.json
 #  运行时学到的族记忆：属于本机经验，每次建模都在变，绝不进版本库
 /kb/meta_memory.json
 /kb/process_memory.json
+/artifacts/model-shots/
