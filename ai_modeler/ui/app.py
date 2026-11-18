@@ -86,6 +86,11 @@ def enable_dpi_awareness():
 
     否则在 125% / 150% 缩放的屏幕上, Windows 会把窗口连同内容整体放大,
     导致窗口比屏幕还大、右侧面板被挤到屏幕外面。
+
+    只设到 System 这一级就够, 也**只该设到这一级**:
+    试过 SetProcessDpiAwarenessContext(-4) (Per-Monitor V2), Tk 8.6 在这种模式下
+    winfo_fpixels('1i') 退回 96, ui_scale 从 1.5 掉到 1.0, 整个界面缩成一半。
+    Tk 不认 PMv2, 别升。
     """
     try:
         import ctypes
@@ -185,10 +190,34 @@ SAMPLES = [
 ]
 
 
+def _fix_tk_scaling(root):
+    """把 tk 的缩放比校正到系统整数 DPI。
+
+    Tk 自己按 winfo_fpixels('1i') 算 scaling, 在 150% 屏上得到 143.86/72 = 1.998,
+    于是 9pt 字落在 23.97px —— 每个字都差一点点像素, 抗锯齿糊成一片。
+    用系统报告的整数 DPI (144) 重设, 9pt 正好 24px, 笔画落在整数像素上才清晰。
+    """
+    try:
+        import ctypes
+        dpi = int(ctypes.windll.user32.GetDpiForSystem())
+    except Exception:
+        dpi = 0
+    if not dpi:
+        try:
+            dpi = int(round(root.winfo_fpixels('1i')))
+        except Exception:
+            return
+    try:
+        root.tk.call('tk', 'scaling', dpi / 72.0)
+    except Exception:
+        pass
+
+
 class App(tk.Tk):
     def __init__(self):
         tk.Tk.__init__(self)
         self.title(APP_TITLE)
+        _fix_tk_scaling(self)
         # 按屏幕 DPI 换算界面缩放, 保证窗口在任何缩放下都不超出屏幕
         s = 1.0
         try:
@@ -459,26 +488,25 @@ class App(tk.Tk):
         TH.checkbutton(bar, text='网格', variable=self.var_grid,
                        command=self._sync_view).pack(side='left', padx=(2, 1))
 
-        self._tool_sep(bar)
-        ttk.Button(bar, text='▦ 多视图 PNG', style='Ghost.TButton',
-                   command=self.snapshot_multiview).pack(side='left', padx=1)
-        ttk.Button(bar, text='📷 模型截图', style='Ghost.TButton',
-                   command=self.snapshot).pack(side='left', padx=1)
-        ttk.Button(bar, text='导出 STL', style='Ghost.TButton',
-                   command=lambda: self.export('stl')).pack(side='left', padx=1)
-        ttk.Button(bar, text='保存工程', style='Ghost.TButton',
-                   command=self.save_project).pack(side='left', padx=1)
-        ttk.Button(bar, text='推送 CATIA', style='Ghost.TButton',
-                   command=self.push_catia).pack(side='left', padx=1)
-
-        self.lbl_busy = tk.Label(bar, text='', bg=TH.PANEL, fg=TH.ACCENT, font=TH.F['body_b'])
-        self.lbl_busy.pack(side='right', padx=(10, 0))
+        # 右侧先从最右边开始堆：停止 → 忙提示 → 分隔 → 导出类动作。
+        # side='right' 是先 pack 的贴最外，所以顺序要和视觉顺序反过来想。
         self.btn_stop = ttk.Button(bar, text='■  停止', style='Ghost.TButton',
                                    command=self.cancel_build, state='disabled')
         self.btn_stop.pack(side='right')
+        self.lbl_busy = tk.Label(bar, text='', bg=TH.PANEL, fg=TH.ACCENT, font=TH.F['body_b'])
+        self.lbl_busy.pack(side='right', padx=(10, 0))
 
-    def _tool_sep(self, parent):
-        tk.Frame(parent, bg=TH.BORDER, width=1, height=22).pack(side='left', padx=11)
+        ttk.Button(bar, text='推送 CATIA', style='Ghost.TButton',
+                   command=self.push_catia).pack(side='right', padx=1)
+        ttk.Button(bar, text='保存工程', style='Ghost.TButton',
+                   command=self.save_project).pack(side='right', padx=1)
+        ttk.Button(bar, text='导出 STL', style='Ghost.TButton',
+                   command=lambda: self.export('stl')).pack(side='right', padx=1)
+        self._tool_sep(bar, side='right')
+
+    def _tool_sep(self, parent, side='left'):
+        tk.Frame(parent, bg=TH.BORDER, width=1, height=22).pack(
+            side=side, padx=11)
 
     def _build_layout(self):
         panes = ttk.PanedWindow(self, orient='horizontal')

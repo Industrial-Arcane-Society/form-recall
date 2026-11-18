@@ -52,7 +52,7 @@ MODELER = {
     'BG': '#eef2f6', 'PANEL': '#ffffff', 'PANEL_ALT': '#f5f7f9',
     'BORDER': '#dce3e9', 'FIELD': '#ffffff', 'STRIPE': '#fafbfc',
     # 文字
-    'TEXT': '#1e2d3a', 'TEXT_DIM': '#687989', 'TEXT_MUTE': '#9aa6ad',
+    'TEXT': '#1e2d3a', 'TEXT_DIM': '#5b6b7a', 'TEXT_MUTE': '#7e8d9b',
     # 主色: --accent/--accent-dark/--accent-soft (+ 悬停亮阶)
     'ACCENT': '#416b91', 'ACCENT_HI': '#4d7ba4', 'ACCENT_DK': '#315675',
     'ACCENT_SOFT': '#eaf1f7', 'ON_ACCENT': '#ffffff',
@@ -113,16 +113,16 @@ UI = 'Microsoft YaHei UI'
 MONO = 'Consolas'
 
 F = {
-    'h1': (UI, 11, 'bold'),
-    'h2': (UI, 10, 'bold'),
+    'h1': (UI, 12, 'bold'),
+    'h2': (UI, 11, 'bold'),
     'body': (UI, 9),
     'body_b': (UI, 9, 'bold'),
-    'small': (UI, 8),
-    'tiny': (UI, 7),
+    'small': (UI, 9),
+    'tiny': (UI, 8),
     'mono': (MONO, 9),
-    'mono_s': (MONO, 8),
+    'mono_s': (MONO, 9),
     'input': (UI, 10),
-    'brand': (UI, 13, 'bold'),
+    'brand': (UI, 14, 'bold'),
     'num': (MONO, 9),
 }
 
@@ -395,7 +395,7 @@ def checkbutton(parent, text, variable, command=None, bg=None, fg=None,
         selectcolor=PANEL if selectcolor is None else selectcolor,
         disabledforeground=DISABLED,
         font=font or F['body'], bd=0, highlightthickness=0,
-        padx=0, pady=0, anchor='w', cursor='hand2')
+        padx=2, pady=2, anchor='w', cursor='hand2')
 
 
 def textbox(parent, **kw):
