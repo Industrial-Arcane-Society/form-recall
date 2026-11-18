@@ -230,6 +230,26 @@ def apply(root, scale=1.0):
            background=[('active', ACCENT_SOFT), ('pressed', BTN_DN)],
            foreground=[('active', ACCENT), ('pressed', ACCENT)])
 
+    # --- 复选框 ---
+    # clam 自带的 Checkbutton 在 125% 缩放下把「已勾选」画成一个 ×，
+    # 和「关闭/错误」的语义撞车：工具栏显示「× 辅助线」看着像没开，
+    # 设置里「× 启用多模态 AgentLoop」会让人以为自己没勾上。
+    # 这里显式给 indicator 上色，未选是浅灰空槽、选中是主色实心槽。
+    st.configure('TCheckbutton', background=PANEL, foreground=TEXT,
+                 font=F['body'], padding=(0, 0),
+                 indicatorcolor=PANEL_ALT, indicatormargin=(int(2 * k),) * 4)
+    st.map('TCheckbutton',
+           background=[('active', PANEL), ('pressed', PANEL)],
+           foreground=[('disabled', DISABLED), ('active', TEXT)],
+           indicatorcolor=[('selected', ACCENT), ('pressed', ACCENT_DK),
+                           ('active', mix(PANEL_ALT, ACCENT, 0.35)),
+                           ('!selected', PANEL_ALT)])
+    st.configure('TRadiobutton', background=PANEL, foreground=TEXT, font=F['body'],
+                 indicatorcolor=PANEL_ALT)
+    st.map('TRadiobutton',
+           background=[('active', PANEL)],
+           indicatorcolor=[('selected', ACCENT), ('!selected', PANEL_ALT)])
+
     # --- 输入 ---
     st.configure('TEntry', fieldbackground=FIELD, background=FIELD,
                  bordercolor=BORDER, lightcolor=BORDER, darkcolor=BORDER,
@@ -357,6 +377,25 @@ def hairline(parent, bg=None, pad=10):
 def chip(parent, text, fg=None, bg=None, font=None):
     return tk.Label(parent, text=text, fg=fg or ACCENT, bg=bg or ACCENT_SOFT,
                     font=font or F['tiny'], padx=7, pady=2)
+
+
+def checkbutton(parent, text, variable, command=None, bg=None, fg=None,
+                selectcolor=None, font=None):
+    """经典 tk.Checkbutton，不要用 ttk 的。
+
+    clam 主题在 125% 缩放下把「已勾选」画成一个 ×——和「关闭/错误」撞语义，
+    工具栏会显示「× 辅助线」，设置里会显示「× 启用多模态 AgentLoop」，
+    用户根本分不清自己勾没勾。经典控件由系统画标准复选框，稳定。
+    """
+    bg = PANEL if bg is None else bg
+    return tk.Checkbutton(
+        parent, text=text, variable=variable, command=command,
+        bg=bg, fg=fg or TEXT, activebackground=bg, activeforeground=ACCENT,
+        # 白底方框 + 系统勾最清楚；试过主色实心块，勾反而糊在深色里
+        selectcolor=PANEL if selectcolor is None else selectcolor,
+        disabledforeground=DISABLED,
+        font=font or F['body'], bd=0, highlightthickness=0,
+        padx=0, pady=0, anchor='w', cursor='hand2')
 
 
 def textbox(parent, **kw):

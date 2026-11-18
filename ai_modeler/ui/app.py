@@ -454,10 +454,10 @@ class App(tk.Tk):
                        command=lambda k=key: self.viewer.set_view(k)).pack(side='left', padx=1)
         ttk.Button(bar, text='适应窗口', style='Ghost.TButton',
                    command=lambda: self.viewer.fit_view()).pack(side='left', padx=1)
-        ttk.Checkbutton(bar, text='辅助线', variable=self.var_edges,
-                        command=self._sync_view).pack(side='left', padx=(9, 2))
-        ttk.Checkbutton(bar, text='网格', variable=self.var_grid,
-                        command=self._sync_view).pack(side='left', padx=(2, 1))
+        TH.checkbutton(bar, text='辅助线', variable=self.var_edges,
+                       command=self._sync_view).pack(side='left', padx=(9, 2))
+        TH.checkbutton(bar, text='网格', variable=self.var_grid,
+                       command=self._sync_view).pack(side='left', padx=(2, 1))
 
         self._tool_sep(bar)
         ttk.Button(bar, text='▦ 多视图 PNG', style='Ghost.TButton',
@@ -1307,15 +1307,17 @@ class App(tk.Tk):
         except Exception:
             pass
         effective_llm = profile or llmcfg
-        llm_ready = bool(
-            llmcfg.get('enabled') and
-            all(str(effective_llm.get(key) or '').strip()
-                for key in ('base_url', 'model', 'api_key')))
+        missing = [label for key, label in
+                   (('base_url', '接口地址'), ('model', '模型名称'), ('api_key', 'API Key'))
+                   if not str(effective_llm.get(key) or '').strip()]
+        llm_ready = bool(llmcfg.get('enabled')) and not missing
         if mode == 'agent' and not llm_ready:
-            if llmcfg.get('enabled'):
-                reason = '大模型已启用，但当前供应商的接口地址、模型名称或 API Key 不完整。'
+            if not llmcfg.get('enabled'):
+                # 只说「去配置大模型」会让人把供应商填满还是点不动——真正卡住的是那个勾。
+                reason = ('Agent 创造模式还没启用大模型：打开「工具 → AI 大模型设置」，'
+                          '勾上左上角「启用多模态 AgentLoop」，再点「保存」。')
             else:
-                reason = 'Agent 创造模式需要启用并配置支持 tools 的大模型。'
+                reason = '大模型已启用，但当前供应商还缺：%s。' % '、'.join(missing)
             self._append_chat(
                 'assistant',
                 reason + ' 输入内容仍保留；请检查「工具 → AI 大模型设置」，或切换到「快速模式」。')
@@ -3009,8 +3011,9 @@ class App(tk.Tk):
         frm = ttk.Frame(win, padding=14)
         frm.pack(fill='both', expand=True)
         frm.columnconfigure(1, weight=1)
-        ttk.Checkbutton(frm, text='启用多模态 AgentLoop',
-                        variable=v_en).grid(row=0, column=0, columnspan=3, sticky='w', pady=4)
+        TH.checkbutton(frm, text='启用多模态 AgentLoop',
+                       variable=v_en, font=TH.F['body_b']).grid(
+            row=0, column=0, columnspan=3, sticky='w', pady=4)
 
         ttk.Label(frm, text='供应商').grid(row=1, column=0, sticky='w', pady=4)
         prov_combo = ttk.Combobox(frm, textvariable=prov_var, state='readonly', width=34)
@@ -3172,6 +3175,14 @@ class App(tk.Tk):
                 p['name'] = (p['name'] or providers.host_label(p['base_url'])
                              or '未命名').strip()
             llm_cfg = providers.ensure_providers(dict(base_cfg or {}))
+            auto_enabled = False
+            ready = all(str(profiles[state['idx']].get(k) or '').strip()
+                        for k in ('base_url', 'model', 'api_key'))
+            if ready and not v_en.get():
+                # 档案填全了却没勾启用：多半是漏了左上角那个框。
+                # 不替他勾，他下次还得回来问一遍为什么用不了。
+                v_en.set(True)
+                auto_enabled = True
             llm_cfg['enabled'] = bool(v_en.get())
             llm_cfg['providers'] = [dict(p) for p in profiles]
             llm_cfg['active_provider_id'] = profiles[state['idx']]['id']
@@ -3179,8 +3190,13 @@ class App(tk.Tk):
             self.cfg['llm'] = llm_cfg
             cfgmod.save(self.cfg)
             self.btn_model.configure(text=self._model_button_text())
-            self.status('大模型设置已保存 · 当前供应商：%s'
-                        % providers.profile_label(profiles[state['idx']]))
+            if auto_enabled:
+                self.status('已启用大模型 · 当前供应商：%s（接口地址、模型、密钥齐全，'
+                            '已自动勾选「启用多模态 AgentLoop」）'
+                            % providers.profile_label(profiles[state['idx']]))
+            else:
+                self.status('大模型设置已保存 · 当前供应商：%s'
+                            % providers.profile_label(profiles[state['idx']]))
             win.destroy()
 
         refresh(select=start_idx)
