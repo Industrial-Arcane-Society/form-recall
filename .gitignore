@@ -47,3 +47,8 @@ config.json
 /src/legacy/kb/meta_memory.json
 /src/legacy/kb/process_memory.json
 /src/legacy/artifacts/model-shots/
+
+# 根目录运行时产物（旧布局残留）
+/artifacts/model-shots/
+/artifacts/selftest/
+/kb/
