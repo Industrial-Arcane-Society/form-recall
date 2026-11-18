@@ -30,11 +30,68 @@ APP_TITLE = 'AI 自动建模助手  v%s' % __version__
 ROOT_DIR = str(PROJECT_ROOT)
 
 
+def _clean_display_text(text):
+    """清洗模型流式输出里残留的解码垃圾。
+
+    两层处理：
+    1. 去掉替换符 U+FFFD 与孤立控制码（UTF-8 多字节被 chunk 边界切断的产物）；
+    2. 剩下的如果仍然「不像人话」（符号占比过高），返回空串——调用方据此
+       换一句安全的替代文案。
+
+    为什么第 2 层必要：实测模型流里出现过整串「◆◆◉9:-◆◆◆◆◆◆◆9」这种东西。
+    它每个字符都是合法的 Unicode，过滤规则拦不住，但人一看就是乱码。
+    与其把垃圾晾在界面上，不如承认「这段无法可靠显示」。
+    """
+    if not isinstance(text, str):
+        text = str(text)
+    cleaned = ''.join(ch for ch in text
+                      if ch != '\ufffd' and (ord(ch) >= 32 or ch in '\n\r\t'))
+    if not cleaned.strip():
+        return ''
+    if _looks_garbled(cleaned):
+        return ''
+    return cleaned
+
+
+def _looks_garbled(text, threshold=0.35):
+    """判断一段文本是不是编码错乱。
+
+    口径：中文、ASCII 可打印字符、常见中文标点以外的字符算「可疑」，
+    可疑占比超过阈值就判为乱码。阈值给 0.35 而不是 0.5——正常技术描述里
+    符号本来就少，超过三分之一已经是异常了。
+    """
+    if not text:
+        return False
+    safe_punct = '，。；：！？（）【】「」、—…·《》""\'\''
+    bad = 0
+    total = 0
+    for ch in text:
+        if ch in '\n\r\t ':
+            continue
+        total += 1
+        code = ord(ch)
+        if 0x4E00 <= code <= 0x9FFF:      # 中文
+            continue
+        if 32 <= code < 127:               # ASCII 可打印
+            continue
+        if ch in safe_punct:
+            continue
+        bad += 1
+    if total == 0:
+        return False
+    return bad / total > threshold
+
+
 def enable_dpi_awareness():
     """必须在创建 Tk 窗口之前调用。
 
     否则在 125% / 150% 缩放的屏幕上, Windows 会把窗口连同内容整体放大,
     导致窗口比屏幕还大、右侧面板被挤到屏幕外面。
+
+    只设到 System 这一级就够, 也**只该设到这一级**:
+    试过 SetProcessDpiAwarenessContext(-4) (Per-Monitor V2), Tk 8.6 在这种模式下
+    winfo_fpixels('1i') 退回 96, ui_scale 从 1.5 掉到 1.0, 整个界面缩成一半。
+    Tk 不认 PMv2, 别升。
     """
     try:
         import ctypes
@@ -72,6 +129,7 @@ class App(tk.Tk):
     def __init__(self):
         tk.Tk.__init__(self)
         self.title(APP_TITLE)
+        _fix_tk_scaling(self)
         # 按屏幕 DPI 换算界面缩放, 保证窗口在任何缩放下都不超出屏幕
         s = 1.0
         try:
@@ -101,6 +159,8 @@ class App(tk.Tk):
         self._q = None
         self._busy = False
         self._cancel = None
+        self._meta_mem = None          # 元增量记忆，第一次用到才加载
+        self._meta_bootstrapped = False
         self._budget_s = 30.0
         self._pending_prompt = None
         self._pending_images = []
@@ -110,6 +170,7 @@ class App(tk.Tk):
         self._agent_context_summary = ''
         self._agent_summary_through = 0
         self._agent_total_tokens = 0
+        self._agent_total_cost = 0.0
         self._last_plan = None
         self._pending_agent_plan = None
         self._active_request = None
@@ -118,11 +179,11 @@ class App(tk.Tk):
         self._last_body = []
         self._chat_photo_refs = []
         self._param_vars = {}
-        # 调色板必须在建任何控件之前定下来
+        # 调色板必须在建任何控件之前定下来；默认用 Modeler 皮肤（与 Web 版一致）
         try:
-            TH.set_mode(self.cfg.get('theme', 'light'))
+            TH.set_mode(self.cfg.get('theme', 'modeler'))
         except Exception:
-            TH.set_mode('light')
+            TH.set_mode('modeler')
         self._build_style()
         self._build_header()
         self._build_menu()
@@ -152,6 +213,9 @@ class App(tk.Tk):
         w = max(c.winfo_width(), 260)
         h = getattr(self, '_header_h', 52)
         k = self.ui_scale
+        if TH.is_modeler():
+            self._paint_header_modeler(c, w, h, k)
+            return
         TH.gradient(c, 0, 0, w, h, TH.HEAD_A, TH.HEAD_B, horizontal=True)
         cx, cy, s, t = 30.0 * k, h / 2.0, 11.0 * k, 6.0 * k
         top = [cx, cy - t * 1.5]
@@ -170,6 +234,52 @@ class App(tk.Tk):
                       fill='#b9d3f2', font=TH.F['tiny'])
         c.create_text(w - 20 * k, h / 2.0 + 1, text='用一句中文, 直接生成三维模型',
                       anchor='e', fill='#cfe0f7', font=TH.F['body'])
+
+    def _paint_header_modeler(self, c, w, h, k):
+        """Web 版顶栏：白底 + 底部 1px 细线 + 圆角方形 logo + 深色文字。
+
+        原来那套渐变+手绘三角 logo 是旧皮肤的样子，这里是照
+        ai-modeler.exe 里 index.css 的 topbar / brand-mark 还原的。
+        """
+        c.configure(bg=TH.PANEL)
+        c.create_rectangle(0, 0, w, h, fill=TH.PANEL, outline='')
+        c.create_rectangle(0, h - 1, w, h, fill=TH.BORDER, outline='')
+
+        # logo：10px 圆角方块，内嵌一个三视图风格的小立方体
+        bx, bs = 16 * k, 30 * k
+        by = (h - bs) / 2.0
+        TH.round_rect(c, bx, by, bx + bs, by + bs, TH.radius('RADIUS_CONTROL'),
+                      fill=TH.ACCENT, outline='')
+        m = bs * 0.22
+        p1 = [bx + m, by + bs * 0.40]
+        p2 = [bx + bs / 2.0, by + m]
+        p3 = [bx + bs - m, by + bs * 0.40]
+        p4 = [bx + bs / 2.0, by + bs * 0.72]
+        c.create_polygon(p1 + p2 + p4, fill='#ffffff', outline='')
+        c.create_polygon(p2 + p3 + p4, fill=TH.ACCENT_SOFT, outline='')
+
+        tx = bx + bs + 12 * k
+        c.create_text(tx, h / 2.0 - 1, text='AI Modeler', anchor='w',
+                      fill=TH.TEXT, font=TH.F['brand'])
+        try:
+            tw = tkfont.Font(font=TH.F['brand']).measure('AI Modeler')
+        except Exception:
+            tw = 74 * k
+        c.create_text(tx + tw + 9 * k, h / 2.0 + 1, text='v' + __version__, anchor='w',
+                      fill=TH.TEXT_MUTE, font=TH.F['tiny'])
+
+        # 右侧：标语 + 状态灯（灯画在文字左边，宽度要先量出来，否则会压字）
+        slogan = '参数化建模工作台'
+        c.create_text(w - 18 * k, h / 2.0 + 1, text=slogan, anchor='e',
+                      fill=TH.TEXT_MUTE, font=TH.F['body'])
+        try:
+            sw = tkfont.Font(font=TH.F['body']).measure(slogan)
+        except Exception:
+            sw = len(slogan) * 12 * k
+        r = 3.4 * k
+        cxp = w - 18 * k - sw - 11 * k
+        c.create_oval(cxp - r, h / 2.0 - r, cxp + r, h / 2.0 + r,
+                      fill=TH.OK, outline='')
 
     def _build_menu(self):
         m = tk.Menu(self)
@@ -214,12 +324,24 @@ class App(tk.Tk):
         vm.add_checkbutton(label='显示坐标轴', variable=self.var_axes, command=self._sync_view)
         vm.add_checkbutton(label='透视投影', variable=self.var_persp, command=self._sync_view)
         vm.add_separator()
-        self.var_dark = tk.BooleanVar(value=TH.is_dark())
-        vm.add_checkbutton(label='深色模式 (重启界面生效)', variable=self.var_dark,
-                           command=self.switch_theme)
+        # 三套皮肤都是整套调色板，建控件时配色就固化了，切换后要重启界面进程。
+        self.var_theme = tk.StringVar(value=TH.MODE)
+        vm.add_radiobutton(label='皮肤：Modeler（Web 版同款）', value='modeler',
+                           variable=self.var_theme, command=self.switch_theme)
+        vm.add_radiobutton(label='皮肤：浅色（经典）', value='light',
+                           variable=self.var_theme, command=self.switch_theme)
+        vm.add_radiobutton(label='皮肤：深色', value='dark',
+                           variable=self.var_theme, command=self.switch_theme)
         m.add_cascade(label='视图', menu=vm)
 
         tm = tk.Menu(m, tearoff=0)
+        tm.add_command(label='夹具单元协同设计（五步 Workflow）…',
+                       command=self.open_fixture_workflow)
+        tm.add_command(label='元增量学习面板（族记忆 / 遗忘评测）…',
+                       command=self.open_meta_panel)
+        tm.add_command(label='元增量学习观察面板（浏览器打开）…',
+                       command=self.open_learning_dashboard)
+        tm.add_separator()
         tm.add_command(label='MCP 服务配置…', command=self.show_mcp_config)
         tm.add_command(label='推送到 CATIA V5…', command=self.push_catia)
         tm.add_command(label='一键连接 CATIA（写配置 / 装插件）…', command=self.connect_catia)
@@ -257,6 +379,13 @@ class App(tk.Tk):
                    command=self.generate).pack(side='left')
         tk.Label(bar, text='Ctrl+Enter', bg=TH.PANEL, fg=TH.TEXT_MUTE,
                  font=TH.F['tiny']).pack(side='left', padx=(8, 0))
+        # 五步工作流是并行的第二条入口：对话区负责「一句话出零件」，
+        # 向导负责「一个有输入约束、可追溯记录的单元设计任务」。
+        ttk.Button(bar, text='▣  夹具单元协同设计', style='Ghost.TButton',
+                   command=self.open_fixture_workflow).pack(side='left', padx=(10, 0))
+        # 学习进度是最常被问「它到底学到什么了」的入口，放工具栏比塞进菜单好找。
+        ttk.Button(bar, text='📊 学习进度', style='Ghost.TButton',
+                   command=self.open_learning_dashboard).pack(side='left', padx=(6, 0))
 
         self._tool_sep(bar)
         tk.Label(bar, text='视角', bg=TH.PANEL, fg=TH.TEXT_MUTE,
@@ -266,31 +395,30 @@ class App(tk.Tk):
                        command=lambda k=key: self.viewer.set_view(k)).pack(side='left', padx=1)
         ttk.Button(bar, text='适应窗口', style='Ghost.TButton',
                    command=lambda: self.viewer.fit_view()).pack(side='left', padx=1)
-        ttk.Checkbutton(bar, text='辅助线', variable=self.var_edges,
-                        command=self._sync_view).pack(side='left', padx=(9, 2))
-        ttk.Checkbutton(bar, text='网格', variable=self.var_grid,
-                        command=self._sync_view).pack(side='left', padx=(2, 1))
+        TH.checkbutton(bar, text='辅助线', variable=self.var_edges,
+                       command=self._sync_view).pack(side='left', padx=(9, 2))
+        TH.checkbutton(bar, text='网格', variable=self.var_grid,
+                       command=self._sync_view).pack(side='left', padx=(2, 1))
 
-        self._tool_sep(bar)
-        ttk.Button(bar, text='▦ 多视图 PNG', style='Ghost.TButton',
-                   command=self.snapshot_multiview).pack(side='left', padx=1)
-        ttk.Button(bar, text='📷 模型截图', style='Ghost.TButton',
-                   command=self.snapshot).pack(side='left', padx=1)
-        ttk.Button(bar, text='导出 STL', style='Ghost.TButton',
-                   command=lambda: self.export('stl')).pack(side='left', padx=1)
-        ttk.Button(bar, text='保存工程', style='Ghost.TButton',
-                   command=self.save_project).pack(side='left', padx=1)
-        ttk.Button(bar, text='推送 CATIA', style='Ghost.TButton',
-                   command=self.push_catia).pack(side='left', padx=1)
-
-        self.lbl_busy = tk.Label(bar, text='', bg=TH.PANEL, fg=TH.ACCENT, font=TH.F['body_b'])
-        self.lbl_busy.pack(side='right', padx=(10, 0))
+        # 右侧先从最右边开始堆：停止 → 忙提示 → 分隔 → 导出类动作。
+        # side='right' 是先 pack 的贴最外，所以顺序要和视觉顺序反过来想。
         self.btn_stop = ttk.Button(bar, text='■  停止', style='Ghost.TButton',
                                    command=self.cancel_build, state='disabled')
         self.btn_stop.pack(side='right')
+        self.lbl_busy = tk.Label(bar, text='', bg=TH.PANEL, fg=TH.ACCENT, font=TH.F['body_b'])
+        self.lbl_busy.pack(side='right', padx=(10, 0))
 
-    def _tool_sep(self, parent):
-        tk.Frame(parent, bg=TH.BORDER, width=1, height=22).pack(side='left', padx=11)
+        ttk.Button(bar, text='推送 CATIA', style='Ghost.TButton',
+                   command=self.push_catia).pack(side='right', padx=1)
+        ttk.Button(bar, text='保存工程', style='Ghost.TButton',
+                   command=self.save_project).pack(side='right', padx=1)
+        ttk.Button(bar, text='导出 STL', style='Ghost.TButton',
+                   command=lambda: self.export('stl')).pack(side='right', padx=1)
+        self._tool_sep(bar, side='right')
+
+    def _tool_sep(self, parent, side='left'):
+        tk.Frame(parent, bg=TH.BORDER, width=1, height=22).pack(
+            side=side, padx=11)
 
     def _build_layout(self):
         panes = ttk.PanedWindow(self, orient='horizontal')
@@ -616,8 +744,10 @@ class App(tk.Tk):
     # 视图同步
     # ==================================================================
     def switch_theme(self):
-        """切换浅色/深色。配色在建控件时就固化了, 所以存盘后重启界面进程。"""
-        want = 'dark' if self.var_dark.get() else 'light'
+        """切换皮肤（modeler / light / dark）。配色在建控件时就固化了, 所以存盘后重启界面进程。"""
+        want = (self.var_theme.get() or 'modeler').strip().lower()
+        if want not in TH.SKINS:
+            want = 'modeler'
         if want == TH.MODE:
             return
         self.cfg['theme'] = want
@@ -625,9 +755,9 @@ class App(tk.Tk):
             cfgmod.save(self.cfg)
         except Exception as exc:
             self.log('主题写入配置失败: %s' % exc)
-        what = '深色' if want == 'dark' else '浅色'
-        msg = '已切换到「%s模式」。\n\n界面需要重启一次才能全部换色, 现在重启吗?' % what
-        if not messagebox.askyesno('切换主题', msg):
+        what = {'modeler': 'Modeler', 'light': '浅色', 'dark': '深色'}.get(want, want)
+        msg = '已切换到「%s」皮肤。\n\n界面需要重启一次才能全部换色, 现在重启吗?' % what
+        if not messagebox.askyesno('切换皮肤', msg):
             return
         self._relaunch()
 
@@ -983,6 +1113,7 @@ class App(tk.Tk):
         self._agent_context_summary = ''
         self._agent_summary_through = 0
         self._agent_total_tokens = 0
+        self._agent_total_cost = 0.0
         self._last_plan = None
         self._pending_agent_plan = None
         self.reference_images = []
@@ -1017,12 +1148,14 @@ class App(tk.Tk):
 
     def _refresh_modeling_mode_switch(self):
         selected = getattr(self, '_modeling_mode', 'agent')
+        # Web 皮肤用「白底选中 + 灰底未选中」的分段控件，旧皮肤沿用实心 Accent
+        seg = TH.is_modeler()
+        on_style = 'SegOn.TButton' if seg else 'Accent.TButton'
+        off_style = 'SegOff.TButton' if seg else 'Ghost.TButton'
         if hasattr(self, 'btn_quick_mode'):
-            self.btn_quick_mode.configure(
-                style='Accent.TButton' if selected == 'quick' else 'Ghost.TButton')
+            self.btn_quick_mode.configure(style=on_style if selected == 'quick' else off_style)
         if hasattr(self, 'btn_agent_mode'):
-            self.btn_agent_mode.configure(
-                style='Accent.TButton' if selected == 'agent' else 'Ghost.TButton')
+            self.btn_agent_mode.configure(style=on_style if selected == 'agent' else off_style)
         if hasattr(self, 'lbl_mode_description'):
             self.lbl_mode_description.configure(text=(
                 '内置规则 · 本地快速建模 · 文字输入'
@@ -1114,15 +1247,17 @@ class App(tk.Tk):
         except Exception:
             pass
         effective_llm = profile or llmcfg
-        llm_ready = bool(
-            llmcfg.get('enabled') and
-            all(str(effective_llm.get(key) or '').strip()
-                for key in ('base_url', 'model', 'api_key')))
+        missing = [label for key, label in
+                   (('base_url', '接口地址'), ('model', '模型名称'), ('api_key', 'API Key'))
+                   if not str(effective_llm.get(key) or '').strip()]
+        llm_ready = bool(llmcfg.get('enabled')) and not missing
         if mode == 'agent' and not llm_ready:
-            if llmcfg.get('enabled'):
-                reason = '大模型已启用，但当前供应商的接口地址、模型名称或 API Key 不完整。'
+            if not llmcfg.get('enabled'):
+                # 只说「去配置大模型」会让人把供应商填满还是点不动——真正卡住的是那个勾。
+                reason = ('Agent 创造模式还没启用大模型：打开「工具 → AI 大模型设置」，'
+                          '勾上左上角「启用多模态 AgentLoop」，再点「保存」。')
             else:
-                reason = 'Agent 创造模式需要启用并配置支持 tools 的大模型。'
+                reason = '大模型已启用，但当前供应商还缺：%s。' % '、'.join(missing)
             self._append_chat(
                 'assistant',
                 reason + ' 输入内容仍保留；请检查「工具 → AI 大模型设置」，或切换到「快速模式」。')
@@ -1256,6 +1391,38 @@ class App(tk.Tk):
     def _fmt_tokens(n):
         return '{:,}'.format(int(n or 0))
 
+    def _total_cost_cny(self, cost):
+        """把累计美元金额换算成人民币（汇率取单价表里的 usd_to_cny）。"""
+        try:
+            basis = cost.get('basis') if isinstance(cost, dict) else None
+            rate = float((basis or {}).get('usd_to_cny') or 7.2)
+        except (TypeError, ValueError, AttributeError):
+            rate = 7.2
+        return round(float(getattr(self, '_agent_total_cost', 0.0)) * rate, 4)
+
+    def _usage_label(self, run_tokens, cost, total_cost):
+        """状态栏文字：本轮/累计的 token 与估算费用。金额一律带"≈"与来源提示。"""
+        from ai_modeler.agent import usage_cost as _usage_cost
+
+        def money(item):
+            if not isinstance(item, dict) or not item.get('priced'):
+                return None
+            basis = item.get('basis') or {}
+            return _usage_cost.fmt_money(item.get('amount'), item.get('cny'),
+                                         str(basis.get('currency') or 'USD'))
+
+        txt = '用量：本轮 %s tokens' % self._fmt_tokens(run_tokens)
+        cur = money(cost)
+        if cur:
+            txt += ' ≈ ' + cur
+        txt += ' · 累计 %s tokens' % self._fmt_tokens(self._agent_total_tokens)
+        tot = money(total_cost)
+        if tot:
+            txt += ' ≈ ' + tot
+        if cur is None and run_tokens:
+            txt += '（未配单价：填 config.json 的 pricing 即显示金额）'
+        return txt
+
     def _show_agent_live_preview(self, payload):
         """Append a worker-produced preview to the conversation as soon as it is ready."""
         payload = payload if isinstance(payload, dict) else {}
@@ -1308,6 +1475,17 @@ class App(tk.Tk):
                                            float(agent_cfg.get('total_timeout_sec', 1800))))
         except (TypeError, ValueError):
             self._budget_s = 1800.0
+        # 元增量记忆：把历史经验拼进本轮输入，但**不改用户的原始文本**——
+        # request 里存的仍是 raw text，否则 source_prompt 和对话记录都会被污染。
+        agent_text = text
+        try:
+            _hint = self._meta_hint(text)
+            if _hint:
+                agent_text = text + _hint
+                self.log('元记忆已介入本轮规划')
+        except Exception as exc:
+            self.log('元记忆注入跳过：%s' % exc)
+
         self._cancel = threading.Event()
         self.lbl_busy.configure(text='AgentLoop 运行中…')
         try:
@@ -1366,7 +1544,7 @@ class App(tk.Tk):
         def work():
             try:
                 result = dsh_agent.run_dsh_agent(
-                    text, image_paths=images, cfg=cfg_snapshot,
+                    agent_text, image_paths=images, cfg=cfg_snapshot,
                     session_id=self._dsh_session_id,
                     progress=lambda message: q.put(('agent_progress', message, None)),
                     cancel_event=cancel, current_plan=current_plan,
@@ -1463,7 +1641,9 @@ class App(tk.Tk):
                         self._refresh_agent_wait_clock()
                         continue
                     if value.startswith('模型进展摘要：'):
-                        summary = value[len('模型进展摘要：'):].strip()
+                        summary = _clean_display_text(value[len('模型进展摘要：'):].strip())
+                        if not summary:
+                            summary = '（模型给了一段无法可靠显示的摘要）'
                         self.lbl_agent_detail.configure(text=summary[:1200])
                         self._set_agent_thinking_panel(False, '模型判断摘要（已收起）')
                         self._append_agent_event('模型判断摘要：' + summary)
@@ -1471,7 +1651,9 @@ class App(tk.Tk):
                         self._set_chat_activity('模型阶段摘要', summary[:700], active=True)
                         continue
                     if value.startswith('Agent 决策摘要：'):
-                        summary = value[len('Agent 决策摘要：'):].strip()
+                        summary = _clean_display_text(value[len('Agent 决策摘要：'):].strip())
+                        if not summary:
+                            summary = '（模型给出了一段无法可靠显示的决策摘要，已跳过）'
                         self.lbl_agent_detail.configure(text=summary[:1200])
                         self._set_agent_thinking_panel(False, '下一步：' + summary[:56])
                         self._append_agent_event('下一步：' + summary)
@@ -1525,19 +1707,38 @@ class App(tk.Tk):
                 text = request['text']
                 if kind == 'agent_ok':
                     result = value
+                    # 本轮结果写进元记忆。写不进去也不许影响主流程——
+                    # 学习是增强，不是建模的前置条件。
+                    try:
+                        self._meta_observe(text, result)
+                    except Exception as exc:
+                        self.log('元记忆写入跳过：%s' % exc)
                     self._agent_context_summary = result.get(
                         'conversation_summary', self._agent_context_summary)
                     self._agent_summary_through = result.get(
                         'summary_through', self._agent_summary_through)
-                    run_tokens = int(float(
-                        (result.get('llm_usage') or {}).get('total_tokens') or 0) or 0)
+                    usage = result.get('llm_usage') or {}
+                    cost = result.get('llm_cost') or {}
+                    run_tokens = int(float(usage.get('total_tokens') or 0) or 0)
                     if run_tokens:
                         self._agent_total_tokens += run_tokens
-                    self.lbl_token.configure(text='Token 估算：本轮 %s · 累计 %s' % (
-                        self._fmt_tokens(run_tokens),
-                        self._fmt_tokens(self._agent_total_tokens)))
+                    run_cost = cost.get('amount') if cost.get('priced') else None
+                    if run_cost:
+                        self._agent_total_cost = round(
+                            float(getattr(self, '_agent_total_cost', 0.0)) + float(run_cost), 6)
+                    total_cost = None
+                    if getattr(self, '_agent_total_cost', 0):
+                        total_cost = {'priced': True, 'amount': self._agent_total_cost,
+                                      'cny': self._total_cost_cny(cost), 'basis': cost.get('basis')}
+                    self.lbl_token.configure(
+                        text=self._usage_label(run_tokens, cost, total_cost))
                     reply = result.get('reply', 'AgentLoop 已结束。')
                     self._append_chat('assistant', reply)
+                    if run_tokens:
+                        # 用量小结放在回答之后：先看结果，再看这一轮花了多少
+                        from ai_modeler.agent import usage_cost as _usage_cost
+                        self._append_chat('system', _usage_cost.format_chat_lines(
+                            usage, cost, total_cost))
                     assistant_context = {'role': 'assistant', 'content': reply}
                     preview_path = (result.get('preview') or {}).get('preview_image')
                     if preview_path and os.path.isfile(preview_path):
@@ -2752,8 +2953,9 @@ class App(tk.Tk):
         frm = ttk.Frame(win, padding=14)
         frm.pack(fill='both', expand=True)
         frm.columnconfigure(1, weight=1)
-        ttk.Checkbutton(frm, text='启用多模态 AgentLoop',
-                        variable=v_en).grid(row=0, column=0, columnspan=3, sticky='w', pady=4)
+        TH.checkbutton(frm, text='启用多模态 AgentLoop',
+                       variable=v_en, font=TH.F['body_b']).grid(
+            row=0, column=0, columnspan=3, sticky='w', pady=4)
 
         ttk.Label(frm, text='供应商').grid(row=1, column=0, sticky='w', pady=4)
         prov_combo = ttk.Combobox(frm, textvariable=prov_var, state='readonly', width=34)
@@ -2915,6 +3117,14 @@ class App(tk.Tk):
                 p['name'] = (p['name'] or providers.host_label(p['base_url'])
                              or '未命名').strip()
             llm_cfg = providers.ensure_providers(dict(base_cfg or {}))
+            auto_enabled = False
+            ready = all(str(profiles[state['idx']].get(k) or '').strip()
+                        for k in ('base_url', 'model', 'api_key'))
+            if ready and not v_en.get():
+                # 档案填全了却没勾启用：多半是漏了左上角那个框。
+                # 不替他勾，他下次还得回来问一遍为什么用不了。
+                v_en.set(True)
+                auto_enabled = True
             llm_cfg['enabled'] = bool(v_en.get())
             llm_cfg['providers'] = [dict(p) for p in profiles]
             llm_cfg['active_provider_id'] = profiles[state['idx']]['id']
@@ -2922,8 +3132,13 @@ class App(tk.Tk):
             self.cfg['llm'] = llm_cfg
             cfgmod.save(self.cfg)
             self.btn_model.configure(text=self._model_button_text())
-            self.status('大模型设置已保存 · 当前供应商：%s'
-                        % providers.profile_label(profiles[state['idx']]))
+            if auto_enabled:
+                self.status('已启用大模型 · 当前供应商：%s（接口地址、模型、密钥齐全，'
+                            '已自动勾选「启用多模态 AgentLoop」）'
+                            % providers.profile_label(profiles[state['idx']]))
+            else:
+                self.status('大模型设置已保存 · 当前供应商：%s'
+                            % providers.profile_label(profiles[state['idx']]))
             win.destroy()
 
         refresh(select=start_idx)
@@ -3034,6 +3249,260 @@ class App(tk.Tk):
             self.status('已打开 CATIA 模型库')
         except Exception as e:
             messagebox.showerror('打开失败', '无法打开 CATIA 模型库：%s' % e)
+
+    def open_learning_dashboard(self):
+        """生成并打开元增量学习观察面板（自包含 HTML）。
+
+        为什么不直接在程序里画：这个面板要能发给老师、发给企业，也要能在
+        没装本程序的机器上打开，所以做成单文件网页最实用。程序这边只负责
+        「一键生成 + 打开」；生成逻辑在 tools/export_learning_report.py，
+        与命令行调用共用同一份数据源，不搞两套。
+        """
+        script = os.path.join(ROOT_DIR, 'tools', 'export_learning_report.py')
+        if not os.path.isfile(script):
+            messagebox.showerror('元增量学习', '找不到生成脚本：\n%s' % script)
+            return
+        try:
+            # CREATE_NO_WINDOW：脚本会自己拉起浏览器，不需要在界面上再弹一个黑框
+            subprocess.Popen([sys.executable, script], cwd=ROOT_DIR,
+                             creationflags=0x08000000)
+            self.status('正在生成学习进度面板，稍后会在浏览器打开…', TH.ACCENT)
+            self.log('已调用 tools/export_learning_report.py')
+        except Exception as exc:
+            messagebox.showerror('元增量学习', '启动生成脚本失败：\n%s' % exc)
+
+    def open_fixture_workflow(self):
+        """打开「夹具单元协同设计」五步向导。
+
+        定位：与左侧对话区**并存**的第二条入口。对话区解决「一句话出一个零件」，
+        向导解决「一个有输入约束、要人工复核、结论必须可追溯的单元设计任务」。
+        因此向导自己不实现任何建模逻辑——定完参数后只把提示词交回对话区，
+        真正落到 CATIA 的路径始终只有一条。
+        """
+        try:
+            from ai_modeler.ui.fixture_workflow import FixtureWorkflowWindow
+            from ai_modeler.workflow import build_demo_project
+        except Exception as e:
+            messagebox.showerror(
+                '夹具单元协同设计',
+                '五步工作流模块加载失败：\n%s' % e)
+            return
+
+        win = getattr(self, '_fixture_win', None)
+        try:
+            if win is not None and win.winfo_exists():
+                win.deiconify()
+                win.lift()
+                win.focus_set()
+                return
+        except Exception:
+            pass
+
+        try:
+            self._fixture_win = FixtureWorkflowWindow(
+                self,
+                project=build_demo_project(),
+                on_push_model=self._on_fixture_model_request)
+            self.status('已打开夹具单元协同设计（五步 Workflow）', TH.ACCENT)
+        except Exception as e:
+            messagebox.showerror(
+                '夹具单元协同设计',
+                '向导窗口打开失败：\n%s\n\n%s' % (e, traceback.format_exc(limit=3)))
+
+    def _on_fixture_model_request(self, project):
+        """把工作流里确认过的参数翻译成一条建模提示，填进对话输入框。
+
+        只填、不自动发送：工程师先看一眼再决定。向导负责流程和记录，
+        不该绕过人工确认直接改模型。
+        """
+        prompt = '气动夹紧单元'
+        try:
+            parts = {p.key: p for p in project.parts}
+            bits = ['气动夹紧单元']
+            base = parts.get('base_plate')
+            if base is not None:
+                bp = base.params or {}
+                if all(k in bp for k in ('length', 'width', 'thickness')):
+                    bits.append('基板 %gx%gx%g' % (
+                        float(bp['length']), float(bp['width']),
+                        float(bp['thickness'])))
+            arm = parts.get('clamp_arm')
+            if arm is not None and 'length' in (arm.params or {}):
+                bits.append('压臂长 %g' % float(arm.params['length']))
+            cyl = parts.get('cylinder')
+            if cyl is not None:
+                cp = cyl.params or {}
+                if 'stroke_deg' in cp:
+                    bits.append('开合角度 %g 度' % float(cp['stroke_deg']))
+            prompt = ' '.join(bits)
+        except Exception:
+            prompt = '气动夹紧单元'
+        self._set_prompt_text(prompt)
+        self.log('工作流参数已填入建模对话：%s' % prompt)
+        self.status('工作流参数已填入，确认后按 Ctrl+Enter 发送', TH.ACCENT)
+
+    # ---- 元增量学习 ---------------------------------------------------------
+
+    def meta_memory(self):
+        """惰性加载元增量记忆。
+
+        第一次用到才读盘：程序启动不该被 1828 条历史拖慢，不用这个功能的
+        用户也就不该付这份开销。加载失败要退回「没有记忆」而不是崩掉——
+        建模本身不依赖记忆，记忆只是让重复的活变快。
+        """
+        mem = getattr(self, '_meta_mem', None)
+        if mem is not None:
+            return mem
+        try:
+            from ai_modeler.meta import MetaMemory
+            mem = MetaMemory(os.path.join(ROOT_DIR, 'kb', 'meta_memory.json'))
+            try:
+                mem.load()
+            except Exception as exc:
+                self.log('元记忆读盘失败，从空库开始：%s' % exc)
+        except Exception as exc:
+            self.log('元增量模块不可用：%s' % exc)
+            mem = None
+        self._meta_mem = mem
+        return mem
+
+    def _meta_family_of(self, text):
+        """用本地规则解析器判族。
+
+        不复用 LLM 的判断：元记忆必须独立于模型存在，否则换个模型、
+        换次会话，攒下来的经验就对不上号了。规则判错了也只是少一条记忆。
+        """
+        try:
+            from ai_modeler.parts.library import partlib
+            return str(partlib.find_part(str(text)) or '').strip()
+        except Exception:
+            return ''
+
+    def _meta_hint(self, text):
+        """把元记忆的预测拼成一段提示，附给模型。
+
+        三条分寸：
+        1. 置信度低于 0.55 就什么都不加——宁可不说，也别把模型往错族上带；
+        2. 写成「历史归纳」不是「标准答案」，末尾明确以用户为准；
+        3. 只拼进 agent_text，不改 request['text']，
+           否则 source_prompt 和对话历史都会被污染。
+        """
+        if not text or not str(text).strip():
+            return ''
+        mem = self.meta_memory()
+        if mem is None:
+            return ''
+        try:
+            info = mem.suggest(str(text), k=3)
+        except Exception as exc:
+            self.log('元记忆检索失败：%s' % exc)
+            return ''
+        family = info.get('family')
+        confidence = float(info.get('confidence') or 0.0)
+        if not family or confidence < 0.55:
+            return ''
+        lines = ['', '', '【元增量记忆 · 历史经验，仅供参考】']
+        lines.append('预测零件族：%s（置信度 %.2f）' % (family, confidence))
+        env = info.get('envelope_hint')
+        if env and len(env) >= 3:
+            try:
+                lines.append('该族经验包络：%.0f × %.0f × %.0f mm' % (
+                    float(env[0]), float(env[1]), float(env[2])))
+            except (TypeError, ValueError):
+                pass
+        similar = info.get('similar') or []
+        if similar:
+            lines.append('相似历史案例：')
+            for item in similar[:3]:
+                lines.append('  - %s → %s %s' % (
+                    item.get('prompt', ''), item.get('model', ''),
+                    item.get('envelope_str', '') or ''))
+        lines.append('以上是历史归纳；若与本轮用户明确要求冲突，一律以用户为准。')
+        return '\n'.join(lines)
+
+    def _meta_observe(self, text, result):
+        """把本轮结果写进元记忆。
+
+        写入门禁是整套设计里最要紧的一条：只有 plan 通过校验
+        （validation.state == 'valid'）才算 verified，原型才会被更新；
+        候选和失败只进候选池。把错的学进去，比不学更糟。
+        """
+        mem = self.meta_memory()
+        if mem is None or not text:
+            return
+        plan = result.get('plan') if isinstance(result, dict) else None
+        if not isinstance(plan, dict):
+            return
+        validation = result.get('validation') if isinstance(result, dict) else None
+        verified = bool(isinstance(validation, dict)
+                        and str(validation.get('state') or '') == 'valid')
+        family = self._meta_family_of(text)
+        if not family:
+            return
+        model = str(plan.get('name') or '').strip()
+        out = mem.observe(str(text), family, model, None, verified=verified)
+        if out.get('accepted'):
+            self.log('元记忆：已学入「%s」，该族累计 %s 条' % (
+                family, out.get('n_samples')))
+        elif verified:
+            self.log('元记忆：本轮暂不学入（%s）' % out.get('reason', ''))
+
+    def _meta_bootstrap_async(self, mem):
+        """后台把历史训练集灌进记忆。
+
+        只在第一次、且库是空的时候做。1828 条 embed + 建原型大约几秒，
+        放主线程会让窗口卡住——用户会以为程序坏了。
+        """
+        if getattr(self, '_meta_bootstrapped', False):
+            return
+        self._meta_bootstrapped = True
+        try:
+            if int(mem.stats().get('samples') or 0) > 0:
+                return
+        except Exception:
+            return
+
+        def work():
+            try:
+                from ai_modeler.meta import load_dataset
+                path = os.path.join(ROOT_DIR, 'datasets', '训练提示词', '全部提示词.jsonl')
+                rows = load_dataset(path)
+                summary = mem.observe_batch(rows, verified=True)
+                mem.save()
+                self.log('元记忆冷启动完成：%s' % summary)
+            except Exception as exc:
+                self.log('元记忆冷启动失败：%s' % exc)
+
+        threading.Thread(target=work, daemon=True).start()
+
+    def open_meta_panel(self):
+        """打开元增量学习面板；首次打开顺手把历史训练集灌进去。"""
+        try:
+            from ai_modeler.ui.meta_panel import MetaPanelWindow
+        except Exception as exc:
+            messagebox.showerror('元增量学习', '面板模块加载失败：\n%s' % exc)
+            return
+        win = getattr(self, '_meta_win', None)
+        try:
+            if win is not None and win.winfo_exists():
+                win.deiconify()
+                win.lift()
+                win.focus_set()
+                return
+        except Exception:
+            pass
+        mem = self.meta_memory()
+        if mem is None:
+            messagebox.showerror('元增量学习', '元增量学习模块不可用，详见日志。')
+            return
+        self._meta_bootstrap_async(mem)
+        try:
+            self._meta_win = MetaPanelWindow(self, memory=mem)
+            self.status('已打开元增量学习面板', TH.ACCENT)
+        except Exception as exc:
+            messagebox.showerror('元增量学习',
+                                 '面板打开失败：\n%s\n\n%s'
+                                 % (exc, traceback.format_exc(limit=3)))
 
     def show_about(self):
         messagebox.showinfo('关于', '%s\n\n自然语言驱动的参数化三维建模工具\n'

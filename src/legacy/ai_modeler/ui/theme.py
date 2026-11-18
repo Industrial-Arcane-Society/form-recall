@@ -45,21 +45,63 @@ DARK = {
     'HEAD_TXT': '#ffffff', 'HEAD_SUB': '#9fc4ec', 'HEAD_VER': '#7ba6d6',
     'VIEW_TOP': '#222b37', 'VIEW_BOT': '#0c1015', 'GRID': '#333d4a',
 }
+# AI Modeler 皮肤 —— 取自原版前端 index.css 的设计变量 (从 ai-modeler.exe 内
+# brotli 解出的 dist 还原), 颜色值与 CSS 一一对应, 见 docs/architecture/界面皮肤对齐.md
+MODELER = {
+    # 中性色: --ink/--muted/--line/--panel/--panel-soft/--canvas
+    'BG': '#eef2f6', 'PANEL': '#ffffff', 'PANEL_ALT': '#f5f7f9',
+    'BORDER': '#dce3e9', 'FIELD': '#ffffff', 'STRIPE': '#fafbfc',
+    # 文字
+    'TEXT': '#1e2d3a', 'TEXT_DIM': '#5b6b7a', 'TEXT_MUTE': '#7e8d9b',
+    # 主色: --accent/--accent-dark/--accent-soft (+ 悬停亮阶)
+    'ACCENT': '#416b91', 'ACCENT_HI': '#4d7ba4', 'ACCENT_DK': '#315675',
+    'ACCENT_SOFT': '#eaf1f7', 'ON_ACCENT': '#ffffff',
+    # 语义色: --mint/--success/--warning/--danger
+    'OK': '#20866c', 'CUT': '#ad7625', 'WARN': '#ad7625', 'ERR': '#b84f4d',
+    'MINT': '#1f9b79',
+    'DISABLED': '#a8b4bd',
+    # 按钮
+    'BTN': '#f5f7f9', 'BTN_HI': '#eaf1f7', 'BTN_DN': '#dce3e9',
+    'BTN_OFF': '#f2f5f7', 'BTN_OFF_FG': '#a8b4bd',
+    'HEAD_HI': '#eaf1f7', 'SEL_BG': '#eaf1f7', 'SEL_FG': '#315675',
+    'TROUGH': '#e7ecf1', 'SCROLL': '#e4e9ee', 'SCROLL_HI': '#ccd6de',
+    # 顶栏用深墨而不是亮蓝, 和原版 topbar 一致
+    'HEAD_A': '#416b91', 'HEAD_B': '#2c4d6b',
+    'HEAD_TXT': '#ffffff', 'HEAD_SUB': '#cddff0', 'HEAD_VER': '#a9c4dc',
+    'VIEW_TOP': '#f7f9fb', 'VIEW_BOT': '#e8eef4', 'GRID': '#cdd7e0',
+    # 圆角/阴影: --radius-control:10px / --radius-card:12px / --shadow
+    'RADIUS_CONTROL': 10, 'RADIUS_CARD': 12,
+    'SHADOW': '#1a27322e',
+}
+
 AXIS_X, AXIS_Y, AXIS_Z = '#e0574f', '#66c05f', '#4f8fe0'
 
 MODE = 'light'
+SKINS = {'light': LIGHT, 'dark': DARK, 'modeler': MODELER}
 
 
 def set_mode(mode):
-    """切换调色板, 把颜色灌进模块全局名。必须在建界面之前调用。"""
+    """切换调色板, 把颜色灌进模块全局名。必须在建界面之前调用。
+
+    三套皮: light / dark / modeler (modeler = 原版 AI Modeler 前端的视觉)。
+    """
     global MODE
-    MODE = mode if mode in ('light', 'dark') else 'light'
-    globals().update(DARK if MODE == 'dark' else LIGHT)
+    MODE = mode if mode in SKINS else 'light'
+    globals().update(SKINS[MODE])
     return MODE
 
 
 def is_dark():
     return MODE == 'dark'
+
+
+def is_modeler():
+    return MODE == 'modeler'
+
+
+def radius(key='RADIUS_CARD'):
+    """圆角像素; 老皮没有这项就用 6。"""
+    return int(globals().get(key, 6))
 
 
 set_mode('light')
@@ -71,16 +113,16 @@ UI = 'Microsoft YaHei UI'
 MONO = 'Consolas'
 
 F = {
-    'h1': (UI, 11, 'bold'),
-    'h2': (UI, 10, 'bold'),
+    'h1': (UI, 12, 'bold'),
+    'h2': (UI, 11, 'bold'),
     'body': (UI, 9),
     'body_b': (UI, 9, 'bold'),
-    'small': (UI, 8),
-    'tiny': (UI, 7),
+    'small': (UI, 9),
+    'tiny': (UI, 8),
     'mono': (MONO, 9),
-    'mono_s': (MONO, 8),
+    'mono_s': (MONO, 9),
     'input': (UI, 10),
-    'brand': (UI, 13, 'bold'),
+    'brand': (UI, 14, 'bold'),
     'num': (MONO, 9),
 }
 
@@ -172,6 +214,42 @@ def apply(root, scale=1.0):
            background=[('active', ACCENT_SOFT), ('pressed', mix(ACCENT_SOFT, ACCENT, 0.18))],
            foreground=[('active', ACCENT), ('disabled', DISABLED)])
 
+    # --- 分段控件（模式切换）---
+    # Web 版是浅色轨道 + 选中项白底深字，未选中项透明灰字；
+    # 旧皮肤用 Accent.TButton 当选中项，会变成整条深蓝色块，很笨重。
+    st.configure('SegOn.TButton', background=PANEL, foreground=TEXT,
+                 font=F['body_b'], padding=(int(10 * k), int(5 * k)),
+                 borderwidth=0, relief='flat', anchor='center')
+    st.map('SegOn.TButton',
+           background=[('active', PANEL), ('pressed', PANEL)],
+           foreground=[('active', TEXT), ('pressed', TEXT)])
+    st.configure('SegOff.TButton', background=PANEL_ALT, foreground=TEXT_DIM,
+                 font=F['body'], padding=(int(10 * k), int(5 * k)),
+                 borderwidth=0, relief='flat', anchor='center')
+    st.map('SegOff.TButton',
+           background=[('active', ACCENT_SOFT), ('pressed', BTN_DN)],
+           foreground=[('active', ACCENT), ('pressed', ACCENT)])
+
+    # --- 复选框 ---
+    # clam 自带的 Checkbutton 在 125% 缩放下把「已勾选」画成一个 ×，
+    # 和「关闭/错误」的语义撞车：工具栏显示「× 辅助线」看着像没开，
+    # 设置里「× 启用多模态 AgentLoop」会让人以为自己没勾上。
+    # 这里显式给 indicator 上色，未选是浅灰空槽、选中是主色实心槽。
+    st.configure('TCheckbutton', background=PANEL, foreground=TEXT,
+                 font=F['body'], padding=(0, 0),
+                 indicatorcolor=PANEL_ALT, indicatormargin=(int(2 * k),) * 4)
+    st.map('TCheckbutton',
+           background=[('active', PANEL), ('pressed', PANEL)],
+           foreground=[('disabled', DISABLED), ('active', TEXT)],
+           indicatorcolor=[('selected', ACCENT), ('pressed', ACCENT_DK),
+                           ('active', mix(PANEL_ALT, ACCENT, 0.35)),
+                           ('!selected', PANEL_ALT)])
+    st.configure('TRadiobutton', background=PANEL, foreground=TEXT, font=F['body'],
+                 indicatorcolor=PANEL_ALT)
+    st.map('TRadiobutton',
+           background=[('active', PANEL)],
+           indicatorcolor=[('selected', ACCENT), ('!selected', PANEL_ALT)])
+
     # --- 输入 ---
     st.configure('TEntry', fieldbackground=FIELD, background=FIELD,
                  bordercolor=BORDER, lightcolor=BORDER, darkcolor=BORDER,
@@ -197,20 +275,42 @@ def apply(root, scale=1.0):
     # --- 树 ---
     st.configure('Treeview', background=PANEL, fieldbackground=PANEL, foreground=TEXT,
                  rowheight=int(27 * k), borderwidth=0, font=F['body'])
-    st.configure('Treeview.Heading', background=PANEL_ALT, foreground=TEXT_DIM,
-                 font=F['small'], relief='flat', padding=(int(8 * k), int(6 * k)),
-                 borderwidth=0)
-    st.map('Treeview.Heading', background=[('active', HEAD_HI)],
-           foreground=[('active', ACCENT)])
+    if is_modeler():
+        # clam 会给表头画立体边，把 lightcolor/darkcolor 压平才像 Web 的浅色表头
+        st.configure('Treeview.Heading', background=PANEL_ALT, foreground=TEXT_DIM,
+                     font=F['small'], relief='flat', padding=(int(8 * k), int(6 * k)),
+                     borderwidth=0, lightcolor=PANEL_ALT, darkcolor=PANEL_ALT)
+        st.map('Treeview.Heading',
+               background=[('active', ACCENT_SOFT)],
+               foreground=[('active', ACCENT)],
+               lightcolor=[('active', ACCENT_SOFT)],
+               darkcolor=[('active', ACCENT_SOFT)])
+    else:
+        st.configure('Treeview.Heading', background=PANEL_ALT, foreground=TEXT_DIM,
+                     font=F['small'], relief='flat', padding=(int(8 * k), int(6 * k)),
+                     borderwidth=0)
+        st.map('Treeview.Heading', background=[('active', HEAD_HI)],
+               foreground=[('active', ACCENT)])
     st.map('Treeview', background=[('selected', SEL_BG)], foreground=[('selected', SEL_FG)])
 
     # --- 选项卡 ---
     st.configure('TNotebook', background=PANEL, borderwidth=0, tabmargins=(8, 6, 8, 0))
-    st.configure('TNotebook.Tab', background=PANEL_ALT, foreground=TEXT_DIM,
-                 padding=(int(16 * k), int(8 * k)), font=F['body'], borderwidth=0)
-    st.map('TNotebook.Tab',
-           background=[('selected', PANEL), ('active', HEAD_HI)],
-           foreground=[('selected', ACCENT), ('active', TEXT)])
+    if is_modeler():
+        # 去掉 clam 自带的立体边：浅色底 + 选中变白字变主色，接近 Web 的 flat tab
+        st.configure('TNotebook.Tab', background=PANEL_ALT, foreground=TEXT_DIM,
+                     padding=(int(14 * k), int(7 * k)), font=F['body'],
+                     borderwidth=0, relief='flat',
+                     lightcolor=PANEL_ALT, darkcolor=PANEL_ALT)
+        st.map('TNotebook.Tab',
+               background=[('selected', PANEL), ('active', ACCENT_SOFT)],
+               foreground=[('selected', ACCENT), ('active', TEXT)],
+               lightcolor=[('selected', PANEL)], darkcolor=[('selected', PANEL)])
+    else:
+        st.configure('TNotebook.Tab', background=PANEL_ALT, foreground=TEXT_DIM,
+                     padding=(int(16 * k), int(8 * k)), font=F['body'], borderwidth=0)
+        st.map('TNotebook.Tab',
+               background=[('selected', PANEL), ('active', HEAD_HI)],
+               foreground=[('selected', ACCENT), ('active', TEXT)])
 
     # --- 其它 ---
     st.configure('TProgressbar', background=ACCENT, troughcolor=TROUGH,
@@ -242,7 +342,9 @@ def apply(root, scale=1.0):
 def card(parent, width=None, bg=None):
     """返回 (外层, 内容层): 外层放进布局, 内容层放控件。"""
     bg = PANEL if bg is None else bg
-    outer = tk.Frame(parent, bg=BORDER, bd=0, highlightthickness=0)
+    # Modeler 皮肤照 Web 版：面板是浮在浅灰画布上的白卡，靠留白分隔，不画边框线
+    edge = bg if is_modeler() else BORDER
+    outer = tk.Frame(parent, bg=edge, bd=0, highlightthickness=0)
     if width:
         outer.configure(width=width)
         outer.pack_propagate(False)
@@ -256,7 +358,8 @@ def section(parent, title, hint=None, bg=None):
     bg = PANEL if bg is None else bg
     head = tk.Frame(parent, bg=bg)
     head.pack(fill='x', padx=12, pady=(11, 7))
-    tk.Frame(head, bg=ACCENT, width=3, height=15).pack(side='left', padx=(0, 8))
+    if not is_modeler():
+        tk.Frame(head, bg=ACCENT, width=3, height=15).pack(side='left', padx=(0, 8))
     tk.Label(head, text=title, bg=bg, fg=TEXT, font=F['h2']).pack(side='left')
     if hint:
         tk.Label(head, text=hint, bg=bg, fg=TEXT_MUTE, font=F['small']).pack(side='right')
@@ -274,6 +377,25 @@ def hairline(parent, bg=None, pad=10):
 def chip(parent, text, fg=None, bg=None, font=None):
     return tk.Label(parent, text=text, fg=fg or ACCENT, bg=bg or ACCENT_SOFT,
                     font=font or F['tiny'], padx=7, pady=2)
+
+
+def checkbutton(parent, text, variable, command=None, bg=None, fg=None,
+                selectcolor=None, font=None):
+    """经典 tk.Checkbutton，不要用 ttk 的。
+
+    clam 主题在 125% 缩放下把「已勾选」画成一个 ×——和「关闭/错误」撞语义，
+    工具栏会显示「× 辅助线」，设置里会显示「× 启用多模态 AgentLoop」，
+    用户根本分不清自己勾没勾。经典控件由系统画标准复选框，稳定。
+    """
+    bg = PANEL if bg is None else bg
+    return tk.Checkbutton(
+        parent, text=text, variable=variable, command=command,
+        bg=bg, fg=fg or TEXT, activebackground=bg, activeforeground=ACCENT,
+        # 白底方框 + 系统勾最清楚；试过主色实心块，勾反而糊在深色里
+        selectcolor=PANEL if selectcolor is None else selectcolor,
+        disabledforeground=DISABLED,
+        font=font or F['body'], bd=0, highlightthickness=0,
+        padx=2, pady=2, anchor='w', cursor='hand2')
 
 
 def textbox(parent, **kw):

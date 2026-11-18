@@ -42,3 +42,8 @@ config.json
 /src/legacy/零件AI建模图片/
 /src/legacy/零件比对图/
 /src/legacy/零件参数/
+
+# 元增量学习的运行时记忆：属于本机经验，每次建模都在变，绝不进版本库
+/src/legacy/kb/meta_memory.json
+/src/legacy/kb/process_memory.json
+/src/legacy/artifacts/model-shots/
