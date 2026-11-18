@@ -320,11 +320,16 @@ def build_document(doc, tol: float = 0.12):
         raise RuntimeError("OCCT 不可用")
     shape = None
     cuts = []
+    # 加料特征（多个实体并成一个零件）。以前这里把所有「非第一个」实体
+    # 都当刀具体塞进 cuts，于是第二块料会把第一块切掉——想做「底座 + 立柱」
+    # 这种多体组合根本出不来。现在按 feature.op 分流：cut 才是切，其余并进去。
+    adds = []
     for f in doc.features:
         if not f.enabled:
             continue
         p = f.params
         k = f.kind
+        is_cut = getattr(f, "op", "add") == "cut"
         bb = _bbox(shape) if shape is not None else None
         if k == 'box':
             c = tuple(float(v) for v in p.get('center', (0, 0, 0)))
@@ -347,7 +352,7 @@ def build_document(doc, tol: float = 0.12):
             if shape is None:
                 shape = s
             else:
-                cuts.append(s)
+                (cuts if is_cut else adds).append(s)
         elif k == 'cylinder':
             c = tuple(float(v) for v in p.get('center', (0, 0, 0)))
             h = float(p.get('height', 10))
@@ -357,7 +362,7 @@ def build_document(doc, tol: float = 0.12):
             if shape is None:
                 shape = s
             else:
-                cuts.append(s)
+                (cuts if is_cut else adds).append(s)
         elif k == 'extrude_holes':
             sa = float(p.get('sec_a', 80)); sb = float(p.get('sec_b', 80))
             ln = float(p.get('length', 100))
@@ -391,7 +396,7 @@ def build_document(doc, tol: float = 0.12):
                     cuts.append(make_cylinder(d / 2.0, ln + 20.0, tuple(cen2),
                                               hax, base=True))
             else:
-                cuts.append(s)
+                (cuts if is_cut else adds).append(s)
         elif k == 'hole':
             if bb is None:
                 continue
@@ -409,7 +414,7 @@ def build_document(doc, tol: float = 0.12):
                 if shape is None:
                     shape = s
                 else:
-                    cuts.append(s)
+                    (cuts if is_cut else adds).append(s)
         elif k == 'pocket':
             c = tuple(float(v) for v in (p.get('x') or 0.0, p.get('y') or 0.0))
             if bb:
@@ -422,7 +427,12 @@ def build_document(doc, tol: float = 0.12):
             cuts.append(make_prism(prof, depth + 0.5,
                                    (c[0], c[1], top - depth - 0.25), 'Z'))
     if shape is None:
-        return None
+        if not adds:
+            return None
+        shape = adds[0]
+        adds = adds[1:]
+    elif adds:
+        shape = fuse_many([shape] + adds)
     if cuts:
         shape = cut_many(shape, cuts)
     return shape
