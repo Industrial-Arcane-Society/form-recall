@@ -10,6 +10,8 @@ ROOT = str(PROJECT_ROOT)
 CONFIG_PATH = os.path.join(ROOT, 'config.json')
 
 DEFAULTS = {
+    # 皮肤：modeler（与 Web 版同款，默认）/ light / dark
+    'theme': 'modeler',
     'llm': {'enabled': False, 'base_url': 'https://api.openai.com/v1',
             'model': 'gpt-4o-mini', 'api_key': ''},
     'viewer': {'edges': True, 'grid': True, 'axes': True, 'perspective': True,

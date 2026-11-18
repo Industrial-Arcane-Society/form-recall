@@ -355,39 +355,49 @@ class FixtureWorkflowWindow(tk.Toplevel):
         except Exception:  # noqa: BLE001
             height = 62
 
-        head = tk.Frame(self, bg=TH.ACCENT, height=height)
+        # Modeler 皮肤下顶栏跟主窗口一致：白底 + 深色字 + 底部细线
+        modeler = TH.is_modeler()
+        head_bg = TH.PANEL if modeler else TH.ACCENT
+        title_fg = TH.TEXT if modeler else TH.ON_ACCENT
+        sub_fg = TH.TEXT_DIM if modeler else TH.HEAD_SUB
+
+        head = tk.Frame(self, bg=head_bg, height=height)
         head.pack(fill='x')
         head.pack_propagate(False)
 
-        left = tk.Frame(head, bg=TH.ACCENT)
+        left = tk.Frame(head, bg=head_bg)
         left.pack(side='left', padx=16, pady=4)
-        tk.Label(left, text='夹具单元协同设计', bg=TH.ACCENT, fg=TH.ON_ACCENT,
+        tk.Label(left, text='夹具单元协同设计', bg=head_bg, fg=title_fg,
                  font=TH.F['brand']).pack(anchor='w')
-        tk.Label(left, text='五步向导 · 前置不满足不进下一步', bg=TH.ACCENT,
-                 fg=TH.HEAD_SUB, font=TH.F['small']).pack(anchor='w')
+        tk.Label(left, text='五步向导 · 前置不满足不进下一步', bg=head_bg,
+                 fg=sub_fg, font=TH.F['small']).pack(anchor='w')
 
-        right = tk.Frame(head, bg=TH.ACCENT)
+        right = tk.Frame(head, bg=head_bg)
         right.pack(side='right', padx=16, pady=4)
-        self._build_fact_chips(right)
-        self.lbl_head_unit = tk.Label(right, text='', bg=TH.ACCENT, fg=TH.HEAD_SUB,
+        self._build_fact_chips(right, head_bg)
+        self.lbl_head_unit = tk.Label(right, text='', bg=head_bg, fg=sub_fg,
                                       font=TH.F['small'])
         self.lbl_head_unit.pack(anchor='e')
+        if modeler:
+            tk.Frame(self, bg=TH.BORDER, height=1).pack(fill='x')
 
-    def _build_fact_chips(self, parent):
+    def _build_fact_chips(self, parent, head_bg=None):
         """事实字段只读展示。
 
         契约原则 5/6：simulated / cad_connected 是事实，不能被勾选改写，
         所以这里只有 Label，没有 Checkbutton。
         """
-        row = tk.Frame(parent, bg=TH.ACCENT)
+        head_bg = TH.ACCENT if head_bg is None else head_bg
+        row = tk.Frame(parent, bg=head_bg)
         row.pack(anchor='e')
         simulated = bool(_get(self.project, 'simulated', True))
         cad = bool(_get(self.project, 'cad_connected', False))
+        chip_bg = TH.ACCENT_SOFT if TH.is_modeler() else TH.ACCENT_DK
         specs = [
             ('模拟数据' if simulated else '真实模型',
-             TH.ACCENT_DK, TH.WARN if simulated else TH.OK),
+             chip_bg, TH.WARN if simulated else TH.OK),
             ('CATIA 已连接' if cad else 'CATIA 未连接',
-             TH.ACCENT_DK, TH.HEAD_SUB),
+             chip_bg, TH.OK if cad else (TH.TEXT_DIM if TH.is_modeler() else TH.HEAD_SUB)),
         ]
         for text, bg, fg in specs:
             tk.Label(row, text=text, bg=bg, fg=fg, font=TH.F['tiny'],

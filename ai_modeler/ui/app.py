@@ -238,11 +238,11 @@ class App(tk.Tk):
         self._last_body = []
         self._chat_photo_refs = []
         self._param_vars = {}
-        # 调色板必须在建任何控件之前定下来
+        # 调色板必须在建任何控件之前定下来；默认用 Modeler 皮肤（与 Web 版一致）
         try:
-            TH.set_mode(self.cfg.get('theme', 'light'))
+            TH.set_mode(self.cfg.get('theme', 'modeler'))
         except Exception:
-            TH.set_mode('light')
+            TH.set_mode('modeler')
         self._build_style()
         self._build_header()
         self._build_menu()
@@ -272,6 +272,9 @@ class App(tk.Tk):
         w = max(c.winfo_width(), 260)
         h = getattr(self, '_header_h', 52)
         k = self.ui_scale
+        if TH.is_modeler():
+            self._paint_header_modeler(c, w, h, k)
+            return
         TH.gradient(c, 0, 0, w, h, TH.HEAD_A, TH.HEAD_B, horizontal=True)
         cx, cy, s, t = 30.0 * k, h / 2.0, 11.0 * k, 6.0 * k
         top = [cx, cy - t * 1.5]
@@ -290,6 +293,52 @@ class App(tk.Tk):
                       fill='#b9d3f2', font=TH.F['tiny'])
         c.create_text(w - 20 * k, h / 2.0 + 1, text='用一句中文, 直接生成三维模型',
                       anchor='e', fill='#cfe0f7', font=TH.F['body'])
+
+    def _paint_header_modeler(self, c, w, h, k):
+        """Web 版顶栏：白底 + 底部 1px 细线 + 圆角方形 logo + 深色文字。
+
+        原来那套渐变+手绘三角 logo 是旧皮肤的样子，这里是照
+        ai-modeler.exe 里 index.css 的 topbar / brand-mark 还原的。
+        """
+        c.configure(bg=TH.PANEL)
+        c.create_rectangle(0, 0, w, h, fill=TH.PANEL, outline='')
+        c.create_rectangle(0, h - 1, w, h, fill=TH.BORDER, outline='')
+
+        # logo：10px 圆角方块，内嵌一个三视图风格的小立方体
+        bx, bs = 16 * k, 30 * k
+        by = (h - bs) / 2.0
+        TH.round_rect(c, bx, by, bx + bs, by + bs, TH.radius('RADIUS_CONTROL'),
+                      fill=TH.ACCENT, outline='')
+        m = bs * 0.22
+        p1 = [bx + m, by + bs * 0.40]
+        p2 = [bx + bs / 2.0, by + m]
+        p3 = [bx + bs - m, by + bs * 0.40]
+        p4 = [bx + bs / 2.0, by + bs * 0.72]
+        c.create_polygon(p1 + p2 + p4, fill='#ffffff', outline='')
+        c.create_polygon(p2 + p3 + p4, fill=TH.ACCENT_SOFT, outline='')
+
+        tx = bx + bs + 12 * k
+        c.create_text(tx, h / 2.0 - 1, text='AI Modeler', anchor='w',
+                      fill=TH.TEXT, font=TH.F['brand'])
+        try:
+            tw = tkfont.Font(font=TH.F['brand']).measure('AI Modeler')
+        except Exception:
+            tw = 74 * k
+        c.create_text(tx + tw + 9 * k, h / 2.0 + 1, text='v' + __version__, anchor='w',
+                      fill=TH.TEXT_MUTE, font=TH.F['tiny'])
+
+        # 右侧：标语 + 状态灯（灯画在文字左边，宽度要先量出来，否则会压字）
+        slogan = '参数化建模工作台'
+        c.create_text(w - 18 * k, h / 2.0 + 1, text=slogan, anchor='e',
+                      fill=TH.TEXT_MUTE, font=TH.F['body'])
+        try:
+            sw = tkfont.Font(font=TH.F['body']).measure(slogan)
+        except Exception:
+            sw = len(slogan) * 12 * k
+        r = 3.4 * k
+        cxp = w - 18 * k - sw - 11 * k
+        c.create_oval(cxp - r, h / 2.0 - r, cxp + r, h / 2.0 + r,
+                      fill=TH.OK, outline='')
 
     def _build_menu(self):
         m = tk.Menu(self)
@@ -334,9 +383,14 @@ class App(tk.Tk):
         vm.add_checkbutton(label='显示坐标轴', variable=self.var_axes, command=self._sync_view)
         vm.add_checkbutton(label='透视投影', variable=self.var_persp, command=self._sync_view)
         vm.add_separator()
-        self.var_dark = tk.BooleanVar(value=TH.is_dark())
-        vm.add_checkbutton(label='深色模式 (重启界面生效)', variable=self.var_dark,
-                           command=self.switch_theme)
+        # 三套皮肤都是整套调色板，建控件时配色就固化了，切换后要重启界面进程。
+        self.var_theme = tk.StringVar(value=TH.MODE)
+        vm.add_radiobutton(label='皮肤：Modeler（Web 版同款）', value='modeler',
+                           variable=self.var_theme, command=self.switch_theme)
+        vm.add_radiobutton(label='皮肤：浅色（经典）', value='light',
+                           variable=self.var_theme, command=self.switch_theme)
+        vm.add_radiobutton(label='皮肤：深色', value='dark',
+                           variable=self.var_theme, command=self.switch_theme)
         m.add_cascade(label='视图', menu=vm)
 
         tm = tk.Menu(m, tearoff=0)
@@ -750,8 +804,10 @@ class App(tk.Tk):
     # 视图同步
     # ==================================================================
     def switch_theme(self):
-        """切换浅色/深色。配色在建控件时就固化了, 所以存盘后重启界面进程。"""
-        want = 'dark' if self.var_dark.get() else 'light'
+        """切换皮肤（modeler / light / dark）。配色在建控件时就固化了, 所以存盘后重启界面进程。"""
+        want = (self.var_theme.get() or 'modeler').strip().lower()
+        if want not in TH.SKINS:
+            want = 'modeler'
         if want == TH.MODE:
             return
         self.cfg['theme'] = want
@@ -759,9 +815,9 @@ class App(tk.Tk):
             cfgmod.save(self.cfg)
         except Exception as exc:
             self.log('主题写入配置失败: %s' % exc)
-        what = '深色' if want == 'dark' else '浅色'
-        msg = '已切换到「%s模式」。\n\n界面需要重启一次才能全部换色, 现在重启吗?' % what
-        if not messagebox.askyesno('切换主题', msg):
+        what = {'modeler': 'Modeler', 'light': '浅色', 'dark': '深色'}.get(want, want)
+        msg = '已切换到「%s」皮肤。\n\n界面需要重启一次才能全部换色, 现在重启吗?' % what
+        if not messagebox.askyesno('切换皮肤', msg):
             return
         self._relaunch()
 
@@ -1152,12 +1208,14 @@ class App(tk.Tk):
 
     def _refresh_modeling_mode_switch(self):
         selected = getattr(self, '_modeling_mode', 'agent')
+        # Web 皮肤用「白底选中 + 灰底未选中」的分段控件，旧皮肤沿用实心 Accent
+        seg = TH.is_modeler()
+        on_style = 'SegOn.TButton' if seg else 'Accent.TButton'
+        off_style = 'SegOff.TButton' if seg else 'Ghost.TButton'
         if hasattr(self, 'btn_quick_mode'):
-            self.btn_quick_mode.configure(
-                style='Accent.TButton' if selected == 'quick' else 'Ghost.TButton')
+            self.btn_quick_mode.configure(style=on_style if selected == 'quick' else off_style)
         if hasattr(self, 'btn_agent_mode'):
-            self.btn_agent_mode.configure(
-                style='Accent.TButton' if selected == 'agent' else 'Ghost.TButton')
+            self.btn_agent_mode.configure(style=on_style if selected == 'agent' else off_style)
         if hasattr(self, 'lbl_mode_description'):
             self.lbl_mode_description.configure(text=(
                 '内置规则 · 本地快速建模 · 文字输入'
