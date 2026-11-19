@@ -2,7 +2,7 @@
 
 FormRecall 是面向机械零件和工装夹具的 Windows 参数化 CAD 工作台。它把自然语言、参考图和尺寸输入转成可检查的 CADPlan，并用本地几何内核构建和预览零件。应用窗口与部分命令仍使用 AI Modeler 名称。
 
-> **所有进入 `main` 的变更都必须通过 Pull Request。** 请从 `main` 新建工作分支，把提交推送到该分支，再向 `main` 发起 PR。代码、文档和小修复都遵循同一流程。详见[贡献指南](CONTRIBUTING.md)。
+> **所有进入 `main` 的变更都必须通过 Pull Request。** 请从 `main` 新建工作分支，把提交推送到该分支，再向 `main` 发起 PR。代码、文档和小修复都遵循同一流程。工作分支统一使用 `类型/简短描述`（如 `docs/update-build-guide`）。允许的前缀和完整命名规则见[贡献指南](CONTRIBUTING.md#分支命名)。
 
 ## 当前能力
 

@@ -2,6 +2,22 @@
 
 **所有变更通过 Pull Request 合并到 `main`。禁止直接向 `main` 推送或强制推送。** 这项约定适用于所有贡献者、维护者和自动化，涵盖代码、文档、配置和紧急修复。
 
+## 分支命名
+
+使用 `类型/简短描述`，描述只用小写英文字母、数字和单连字符。分支前缀按改动用途选择，与使用的开发工具无关。
+
+| 用途 | 前缀 |
+| --- | --- |
+| 功能与修复 | `feat/`、`fix/`、`hotfix/` |
+| 文档、重构与测试 | `docs/`、`refactor/`、`test/` |
+| 构建、CI、维护与发布 | `build/`、`ci/`、`chore/`、`release/` |
+
+例如 `feat/plate-layout`、`fix/occt-preview`、`docs/update-build-guide`。工作分支须匹配以下表达式，默认分支 `main` 单独保护。
+
+```regex
+^(feat|fix|docs|refactor|test|build|ci|chore|release|hotfix)/[a-z0-9]+(-[a-z0-9]+)*$
+```
+
 ## 从工作分支发起 PR
 
 在仓库根目录从远端最新的 `main` 创建工作分支。以下示例假设 `origin` 指向 FormRecall 官方仓库，你拥有工作分支的推送权限。
