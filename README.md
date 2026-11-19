@@ -1,86 +1,44 @@
-# AI Modeler
+# FormRecall
 
-面向 CATIA 的自然语言与参考图建模工具。当前仓库正在把桌面端和 Agent 迁到 Rust、Vue 与 DSH 原生插件；旧 Python 实现保留在 `src/legacy/`，用于迁移期间维持现有建模和 CATIA 能力。
+FormRecall 是面向机械零件和工装夹具的 Windows 参数化 CAD 工作台。它把自然语言、参考图和尺寸输入转成可检查的 CADPlan，并用本地几何内核构建和预览零件。应用窗口与部分命令仍使用 AI Modeler 名称。
 
-## 开发入口
+> **所有进入 `main` 的变更都必须通过 Pull Request。** 请从 `main` 新建工作分支，把提交推送到该分支，再向 `main` 发起 PR。代码、文档和小修复都遵循同一流程。工作分支统一使用 `类型/简短描述`（如 `docs/update-build-guide`）。允许的前缀和完整命名规则见[贡献指南](CONTRIBUTING.md#分支命名)。
 
-- 桌面应用：先在仓库根目录运行 `npm ci --prefix src/apps/desktop`，之后运行 `npm run dev` 启动 Tauri 桌面开发版。根脚本会检查本地 Tauri CLI 和平台原生绑定；缺失或安装不完整时会打印修复命令。可用 `npm run dev -- --help` 向 Tauri CLI 传递参数。也可进入 `src/apps/desktop/` 运行 `npm run tauri:dev`。
-- 仅启动无桌面窗口的 Vite 前端服务：从仓库根目录运行 `npm run dev:web`，再访问终端显示的本地地址。
-- 现有 Python CLI：进入 `src/legacy/`，运行 `python -m ai_modeler --selftest`；输入 `python -m ai_modeler --help` 查看选项。
-- 当前迁移状态、研究记录、设计规范和复现方法：从 [`docs/README.md`](docs/README.md) 进入。
-- 根目录开发启动检查的 Node 回归：`npm run test:dev-cli`（不启动桌面窗口）。
+## 当前能力
 
-`temp/` 保存迁移前的文档和实验产物归档；新的 Agent 运行日志与本地生成记录也写入这里。该目录中的历史结果不是当前版本的自动验收结论。
+| 入口 | 用途 |
+| --- | --- |
+| Quick 建模 | 根据零件参数在本地生成模型，查看特征、几何检查和三维预览 |
+| Agent 建模 | 通过自然语言和参考图生成或修改 CADPlan，由 DSH/Cordis 调用建模工具 |
+| 旧版 Python | 保留夹具设计向导、历史研究实现和 CATIA 过渡能力 |
 
-根目录保留 `.github/` 供 GitHub Actions 发现工作流，保留 `.gitignore`、`.gitattributes`、许可证和仓库入口文件。活动源码、桌面应用与过渡期 Python 代码均归入 `src/`。
+Rust/Tauri 负责原生桌面命令，Vue 提供界面，Open CASCADE（OCCT）负责本地几何构建。CATIA 导出和复核需要实际的 Windows CATIA 环境。导出文件、几何检查和参考图相似度各有独立的验收依据。
 
-## 目录
+## 开发启动
 
-```text
-docs/                 当前研究文档索引与规范
-src/apps/desktop/     Vue + Tauri 桌面应用
-src/legacy/           迁移中的旧 Python 应用、资源、脚本和测试
-temp/                 旧文档/实验归档、Agent 日志与临时生成物
-.github/              GitHub Actions（需要位于仓库根目录）
+在 Windows 上准备 Git、Node.js/npm、Rust MSVC 工具链、Visual Studio C++ 构建工具和 WebView2。桌面运行时和打包要求见[构建与运行](docs/05-operations/01-build-and-run.md)。
+
+```powershell
+git clone https://github.com/Industrial-Arcane-Society/form-recall.git
+Set-Location form-recall
+npm ci --prefix src/apps/desktop
+npm run dev
 ```
 
-## 提交约定
+只查看前端时，从仓库根目录运行 `npm run dev:web`。浏览器预览只提供前端，验证 Tauri 命令和本地建模请使用桌面版。旧版自检在 `src/legacy/` 下运行 `python -m ai_modeler --selftest`。
 
-每个独立 feature 完成并通过对应验收后单独提交。目录重构作为首个完整迁移 feature 提交到 `main`；后续功能保持各自清晰的提交边界。
+## 仓库导航
 
-## 旧 Python 实现（`src/legacy/`）
+| 路径 | 内容 |
+| --- | --- |
+| [`src/apps/desktop/`](src/apps/desktop/) | Vue/Tauri 应用与 Rust 建模核心 |
+| [`src/native/`](src/native/) | 原生几何桥接与运行时构建 |
+| [`src/legacy/`](src/legacy/) | Python 旧版应用、CATIA 适配与测试 |
+| [`docs/`](docs/README.md) | 设计、研究、复现方法与迁移路线 |
+| [`artifacts/`](artifacts/) | 已归档的几何实测与对照产物 |
 
-新版桌面端已接入 Rust Quick 和 DSH Agent 建模。迁移期间，`src/legacy/` 仍提供旧版桌面端、夹具工作流和 CATIA 过渡能力。
+本地临时模型、日志与历史资料位于 `temp/`。使用历史结果时，请核对对应的版本、输入与测试环境。
 
-- **定位**：把一句中文提示词变成能在 CATIA 里用的真实零件模型。面向汽车装备制造（焊装夹具、冲压与注塑模具、汽车零部件），夹具方向已覆盖 19 个零件族。
-- **运行**：`Set-Location src/legacy` 后 `python -m ai_modeler`（tkinter 桌面程序；核心纯标准库，可选 `cadquery-ocp`）。
-- **自检**：`python -m ai_modeler --selftest` → 50/50。
-- **判据**：几何相似度 99.8%（≥95% 498/502）、图像相似度 84.5%（AI 渲染图 vs 真实照片），脚本在 `src/legacy/tools/`。
+## 许可证
 
-### 五步夹具单元协同设计
-
-工具栏「▣ 夹具单元协同设计」或「工具」菜单打开，与对话区**并存**：对话区解决「一句话出一个零件」，向导解决「有输入约束、要人工复核、结论必须可追溯的单元设计任务」。向导自己不实现建模逻辑——定完参数后把提示词交回对话区，落到 CATIA 的路径始终只有一条。
-
-| 阶段 | 做什么 | 产物 |
-|---|---|---|
-| 1 工程输入 | 接收工件数模、PRP 定位夹紧点、项目规则 | 统一坐标系、P01/P02 点位、资料清单 |
-| 2 单元规划 | 围绕 PRP 规划基板/托块/压臂/气缸，区分自制件/外购件/标准件 | 单元结构方案 |
-| 3 参数建模 | 参数化立板、托块、压臂、连接座及安装孔/铰接孔/减重槽 | 部件参数表 |
-| 4 关联装配 | 配置气缸、定位销、铰轴、紧固件，建立固定/转动/连接关系 | 装配关系 + 机构行程 |
-| 5 校核输出 | 汇总装配范围、名义间隙、机构姿态、参数版本 | 单元记录 JSON + 复核摘要 |
-
-**四条红线**（`src/legacy/ai_modeler/workflow/` 里写死的）：① 前置不满足不进下一步，`can_enter()` 返回具体缺项；② P01 固定点偏移锁死为 0；③ 参数一改下游检查全部作废，`revision` 递增；④ **有未通过的检查就不能进复核**——默认案例压臂间距 d=3<5 会被拦下，改到 L=75 才放行。
-
-**检查结论四分法**：`pass / fail / not_run / not_applicable` 分开记，不合并成一句「通过」。完整运动轨迹恒为 `not_run`、制造与强度恒为 `not_applicable`——没有的能力不许报绿灯。
-
-### 元增量学习（`src/legacy/ai_modeler/meta/`）
-
-程序原来每轮都靠大模型从零理解提示词、没有任何积累：同一个「内六角螺钉」来了十次，十次都从头想。这一层补的就是积累，且是**提示词理解链路的前置层**——请求模型之前先查元记忆，把「这族以前怎么做、典型包络多少、相似案例长什么样」拼进本轮输入，拿到结果后再回写。
-
-| 环节 | 做法 | 为什么 |
-|---|---|---|
-| 表示 | 字符 2–4 gram TF-IDF + 型号数字 + 族线索位 | 中文不依赖分词；可解释、可审计 |
-| 判决 | 原型 + exemplar kNN 混合（w=0.6 偏 kNN） | 单纯原型会把 M5x8~M5x50 平均成一个点；单纯 kNN 不随学习收敛 |
-| 增量 | 原型 EMA（α=1/(n+1)）+ 每族 ≤32 条 exemplar | 学得越多越稳，新样本冲不垮旧原型骨架 |
-| 门槛 | 同族累计 ≥3 条 verified 才建原型 | 宁可行先说「不知道」，也不让噪声定义一族 |
-| 写入 | 只有 `validation.state == 'valid'` 才算 verified | 把错的学进去比不学更糟 |
-
-还有一层**工序记忆**（`meta/process_memory.py`）：16 道企业工序 × 79 条场景说法（从 3 小时车厂设计录屏逐段提取），回答「这类任务该走哪道工序、这道工序历史上栽在哪」。
-
-评测（`python -m pytest tests -q`）：
-
-| 口径 | n_test | 混合判决 | 1-NN 基线 | 说明 |
-|---|---|---|---|---|
-| 全量 | 363 | 0.9972 | 0.9972 | 余下 1 条错在「手动夹紧气缸 vs 夹紧气缸」 |
-| 带类别词组 | 216 | 0.9954 | 0.9907 | 提示词自带族名，本来就容易 |
-| **纯裸型号** | **92** | **1.0000** | **0.9891** | 去掉族名线索后的真实难度，+1.09 pp |
-
-> ⚠️ 别把「全量 99.7%」当成模型多强。1828 条数据里 520 条提示词直接写着「内六角螺栓」，那是泄漏不是能力。真实难度看**裸型号**那一行。
-
-增量方面：契约版 forgetting = 0.00196（8.1 s）；困难版（原型全建好后按序灌 10/50/200 条/族的流）**max_drop = 0.0000**，没有一族掉分。
-
-**为什么不用 torch**：用户双击启动的是系统 Python，不装 CUDA 也能用。元学习模块一旦依赖 torch，程序就装不动了；而原型网络本来就不需要深度网络，1828 条数据也训不出来。
-
-### 自由创作模式
-
-Agent 创造模式不限定机械零件：任意物体只要能拆成原语（box / cylinder / prism / revolve / loft / pattern 等 25 种特征）就能建。火箭、椅子、房子、杯子都在提示词里给了拆解示范。已知边界：`helix` 与 `shell` 两种特征尚未实现；圆台在 CATIA 里会以多层圆盘近似。
+见[许可证全文](LICENSE)。
