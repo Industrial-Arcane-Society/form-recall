@@ -37,6 +37,11 @@ const themeDark = ref(false)
 const documentState = ref<DocumentState>({ revision: 0, name: 'Part1', features: [], stats: {}, build_log: [] })
 const modelAcceptance = ref<ModelAcceptanceView>(modelAcceptanceView(null))
 const reviewedCasesOpen = ref(false)
+const plateLayoutOpen = ref(false)
+const plateLayoutBusy = ref(false)
+const plateLayoutNotice = ref('')
+const plateLayoutError = ref('')
+const plateLayoutDraft = ref({ group: '', length: '', width: '', thickness: '', diameter: '' })
 const reviewedCases = ref<ReviewedCase[]>([])
 const reviewedCasesBusy = ref(false)
 const reviewedCasesError = ref('')
@@ -399,6 +404,42 @@ async function startReviewedCase(row: ReviewedCase) {
   reviewedCasesOpen.value = false
   void nextTick(() => promptEl.value?.focus())
   setStatus('已填入案例描述')
+}
+
+async function runPlateLayout(action: 'learn' | 'build') {
+  const values = plateLayoutDraft.value
+  plateLayoutBusy.value = true
+  plateLayoutError.value = ''
+  plateLayoutNotice.value = ''
+  try {
+    if (action === 'learn') {
+      const result = await invoke<JsonMap>('plate_layout_learn', {
+        group: values.group,
+        generation: documentState.value.revision,
+      })
+      const [x, y] = result.sample.margins_mm
+      plateLayoutNotice.value = `已测样本 ${result.samples} 个。当前边距 X ${x.toFixed(2)} mm，Y ${y.toFixed(2)} mm。`
+    } else {
+      const dimensions = [values.length, values.width, values.thickness, values.diameter].map(Number)
+      if (dimensions.some(value => !Number.isFinite(value) || value <= 0)) throw new Error('请输入正数尺寸和孔径。')
+      if (isDirty.value && !await confirm('生成会替换当前工作区的未保存模型，继续吗？', { title: '迁移安装板布局', kind: 'warning' })) return
+      const [length, width, thickness, diameter] = dimensions
+      const document = await invoke<DocumentState & { plate_layout_learning: JsonMap }>('plate_layout_build', {
+        group: values.group, length, width, thickness, diameter,
+      })
+      nativeModelActive.value = true
+      updateDocument(document)
+      const result = document.plate_layout_learning
+      const [x, y] = result.measured_margins_mm
+      setStatus(`布局迁移完成，OCCT 已核实四孔。X ${x.toFixed(2)} mm，Y ${y.toFixed(2)} mm。`, 'success')
+      addLog(`使用 ${result.samples} 个样本。X 轴 ${result.rules[0]}，Y 轴 ${result.rules[1]}。`)
+      plateLayoutOpen.value = false
+    }
+  } catch (error) {
+    plateLayoutError.value = errorMessage(error)
+  } finally {
+    plateLayoutBusy.value = false
+  }
 }
 
 async function restoreAgentHistory() {
@@ -1206,6 +1247,7 @@ onUnmounted(() => {
         <button @click="openSettings('online'); closeMenu()">联网搜索设置</button>
         <button @click="openIntegrations(); closeMenu()">Agent 与外部接入状态</button>
         <button @click="openTools(); closeMenu()">CATIA 与本地工具</button>
+        <button :disabled="!desktop || busy" @click="plateLayoutOpen = true; closeMenu()">安装板布局学习</button>
         <button @click="runNativeSelftest(); closeMenu()">运行 Rust 原生自检</button>
         <button @click="helpOpen = true; closeMenu()">帮助与使用说明</button>
         <button @click="aboutOpen = true; closeMenu()">关于 AI Modeler</button>
@@ -1411,6 +1453,28 @@ onUnmounted(() => {
 
     <footer class="bottom-bar"><div><span class="bottom-brand">AI MODELER</span><span>{{ desktop ? '桌面建模工作区' : '浏览器预览' }}</span></div><div v-if="desktop" class="runtime-indicators"><span v-for="row in diagnosticRows" :key="row.key" :title="row.value"><i :class="{ ready: row.ready === true }"></i>{{ row.label }} {{ row.footerValue }}</span><span class="status-divider"></span><span>Rust 原生核心 · 版本 {{ handshake?.app_version || '—' }}</span></div><span v-else>本地运行时状态仅在桌面程序中检测</span><div><button @click="helpOpen = true">帮助</button><span class="status-divider"></span><span v-if="desktop">快捷键 <kbd>Ctrl</kbd>+<kbd>S</kbd> 保存 · <kbd>F</kbd> 适应视图</span><span v-else>主题、视图与面板可在浏览器中预览</span></div></footer>
 
+    <div v-if="plateLayoutOpen" class="modal-backdrop" @click.self="!plateLayoutBusy && (plateLayoutOpen = false)">
+      <section class="modal reviewed-cases-modal" role="dialog" aria-modal="true" aria-labelledby="plate-layout-heading">
+        <header class="modal-head">
+          <h2 id="plate-layout-heading">安装板布局学习</h2>
+          <button class="modal-close" :disabled="plateLayoutBusy" aria-label="关闭安装板布局学习" @click="plateLayoutOpen = false"><UiIcon name="close" /></button>
+        </header>
+        <div class="settings-body">
+          <label>样本组<input v-model="plateLayoutDraft.group" maxlength="60" :disabled="plateLayoutBusy"></label>
+          <p>把同一类四孔矩形板录入同组。两种不同长宽的实测样本可用于区分固定边距和比例规则。</p>
+          <button class="secondary-button" :disabled="plateLayoutBusy || !plateLayoutDraft.group.trim() || !documentState.features.length" @click="runPlateLayout('learn')">测量当前模型并录入</button>
+          <label v-for="[key, label] in [['length', 'X 长度 (mm)'], ['width', 'Y 宽度 (mm)'], ['thickness', '板厚 (mm)'], ['diameter', '通孔直径 (mm)']] as const" :key="key">
+            {{ label }}<input v-model="plateLayoutDraft[key]" type="number" min="0" step="any" :disabled="plateLayoutBusy">
+          </label>
+          <p v-if="plateLayoutError" role="alert">{{ plateLayoutError }}</p>
+          <p v-else-if="plateLayoutNotice" role="status">{{ plateLayoutNotice }}</p>
+        </div>
+        <footer class="modal-footer">
+          <button class="primary-button" :disabled="plateLayoutBusy || !plateLayoutDraft.group.trim()" @click="runPlateLayout('build')">{{ plateLayoutBusy ? '处理中…' : '迁移布局并生成零件' }}</button>
+        </footer>
+      </section>
+    </div>
+
     <div v-if="reviewedCasesOpen" class="modal-backdrop" @click.self="reviewedCasesOpen = false">
       <section class="modal reviewed-cases-modal" role="dialog" aria-modal="true" aria-labelledby="reviewed-cases-heading">
         <header class="modal-head">
@@ -1512,6 +1576,7 @@ onUnmounted(() => {
           <button @click="explainNativeCatiaFlow"><span><UiIcon name="network" /></span><strong>CATIA 原生接入说明</strong><small>推送时按需启动私有 COM adapter</small></button>
           <button @click="explainNativeCatiaFlow"><span><UiIcon name="wrench" /></span><strong>旧 CATScript 插件已停用</strong><small>不再安装旧 Python bridge 宏插件</small></button>
           <button @click="showCatiaLibrary"><span><UiIcon name="boxes" /></span><strong>内置常用零件知识库</strong><small>查看建模参考条目，不是 CATIA Catalog 文件</small></button>
+          <button :disabled="busy" @click="toolsOpen = false; plateLayoutOpen = true"><span><UiIcon name="scan" /></span><strong>安装板布局学习</strong><small>从四孔板样本学习边距，再生成新尺寸</small></button>
           <button @click="openLocalModelSettings"><span><UiIcon name="cpu" /></span><strong>配置本地模型 Provider</strong><small>在模型设置中配置兼容 API 地址</small></button>
           <button @click="openIntegrations"><span><UiIcon name="network" /></span><strong>查看 Agent 与外部接入状态</strong><small>分别显示 Cordis 工具定义和外部 MCP 配置</small></button>
           <button @click="runNativeSelftest"><span><UiIcon name="circle-check" /></span><strong>运行 Rust 原生自检</strong><small>检查资源、DSH Runtime、OCCT 与 Quick 解析器</small></button>

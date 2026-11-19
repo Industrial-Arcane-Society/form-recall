@@ -29,6 +29,7 @@ pub mod native_occt_runtime;
 pub mod native_online_lookup;
 pub mod native_parametric_features;
 pub mod native_parts_catalog;
+pub mod native_plate_learning;
 pub mod native_plan_geometry;
 pub mod native_proportion_gate;
 pub mod native_quick;
@@ -73,6 +74,13 @@ use tokio::sync::oneshot;
 
 const MAX_INPUT_IMAGE_BYTES: u64 = 24 * 1024 * 1024;
 fn app_data_dir(app: &AppHandle) -> Result<PathBuf, String> {
+    if let Some(path) = std::env::var_os("AIMODELER_DESKTOP_DATA_DIR") {
+        let path = PathBuf::from(path);
+        if !path.is_absolute() {
+            return Err("桌面用户数据目录覆盖必须是绝对路径。".into());
+        }
+        return Ok(path);
+    }
     app.path()
         .app_local_data_dir()
         .map_err(|error| format!("无法解析 AI Modeler 用户数据目录：{error}"))
@@ -1273,6 +1281,29 @@ fn reviewed_case_remove(app: AppHandle, id: String) -> Result<Vec<Value>, String
 }
 
 #[tauri::command]
+async fn plate_layout_learn(app: AppHandle, group: String, generation: u64) -> Result<Value, String> {
+    let manifest = native_occt_runtime::resolve_manifest(&resource_root(&app)?)?;
+    let data = app_data_dir(&app)?;
+    tokio::task::spawn_blocking(move || {
+        let root = native_active_model::root_from_data_dir(&data);
+        native_active_model::with_generation(&root, generation, |active| {
+            native_plate_learning::learn(&data, &manifest, &group, &active["cadplan"])
+        })
+    }).await.map_err(|e| e.to_string())?
+}
+
+#[tauri::command]
+async fn plate_layout_build(
+    app: AppHandle, group: String, length: f64, width: f64, thickness: f64, diameter: f64,
+) -> Result<Value, String> {
+    let manifest = native_occt_runtime::resolve_manifest(&resource_root(&app)?)?;
+    let data = app_data_dir(&app)?;
+    tokio::task::spawn_blocking(move || native_plate_learning::build_transfer(
+        &data, &manifest, &group, [length, width, thickness], diameter
+    )).await.map_err(|e| e.to_string())?
+}
+
+#[tauri::command]
 fn agent_finding_review_state(
     state: State<'_, agent_host::AgentHostState>,
 ) -> Result<Value, String> {
@@ -1460,10 +1491,7 @@ fn is_packaged_local_cache_asset(
 #[tauri::command]
 fn read_asset(app: AppHandle, path: String) -> Result<Response, String> {
     let logical_root = asset_root()?;
-    let app_data_root = app
-        .path()
-        .app_local_data_dir()
-        .map_err(|error| format!("无法解析 AI Modeler 用户数据目录：{error}"))?;
+    let app_data_root = app_data_dir(&app)?;
     let local_app_data = std::env::var_os("LOCALAPPDATA").map(PathBuf::from);
     let logical_requested = PathBuf::from(path);
     let requested = resolve_asset_path(
@@ -1595,6 +1623,8 @@ pub fn run() {
             reviewed_cases_list,
             reviewed_case_save,
             reviewed_case_remove,
+            plate_layout_learn,
+            plate_layout_build,
             agent_cancel,
             agent_reset,
             agent_history,
