@@ -5,12 +5,14 @@
 //! lexical retrieval only; scores are ranking signals, never confidence.
 
 use base64::Engine as _;
+use regex::Regex;
 use serde_json::{Value, json};
 use sha2::{Digest, Sha256};
 use std::collections::{BTreeMap, HashSet};
 use std::fs;
 use std::io::{BufRead, BufReader};
 use std::path::{Path, PathBuf};
+use std::sync::OnceLock;
 
 const SIMILARITY_THRESHOLD: f64 = 0.43;
 const MAX_VISUAL_EXAMPLES: usize = 24;
@@ -57,6 +59,8 @@ const CATEGORY_ALIASES: &[(&str, &[&str])] = &[
 struct CorpusRow {
     value: Value,
     source_file: String,
+    catalog_prompt: String,
+    catalog_model: String,
 }
 
 /// Search result and optional source images for Cordis attachment projection.
@@ -68,6 +72,22 @@ struct CorpusRow {
 pub struct KnowledgeResponse {
     pub value: Value,
     pub images: Vec<Value>,
+}
+
+/// Automatic catalog preflight for identifier-like user text. Detailed source
+/// fields remain behind the knowledge tool.
+pub(crate) fn catalog_advice(project_root: &Path, query: &str) -> Option<&'static str> {
+    if !has_model_identifier(query) {
+        return None;
+    }
+    let (matches, negatives) = search_rows(&load_corpus(project_root), query, 5);
+    if matches.is_empty() {
+        Some("本地目录未核实请求中的型号。只有独立核实的标准、用户明确给出的规格或原图证据可用于后续建模。不要挑选近似目录型号替代。")
+    } else if !negatives.is_empty() || !unverified_catalog_codes(query, &matches).is_empty() {
+        Some("请求同时包含目录命中和库外型号。使用 cad_search_knowledge 核对实际命中的型号，分别处理未核实项。")
+    } else {
+        Some("本地目录存在精确型号或完整目录别名。请使用 cad_search_knowledge 查看证据，只将来源字段用于已核实的对应型号。")
+    }
 }
 
 /// Search the canonical prompt corpus plus `kb/knowledge_sources/*.jsonl`.
@@ -88,14 +108,16 @@ pub fn search_knowledge(
         let mut value = if has_reference_images {
             json!({
                 "status": "image_only", "query": query, "matches": [],
-                "negative_examples": [], "image_query_supported": false,
+                "negative_examples": [], "catalog_model_status": "not_requested",
+                "unverified_catalog_identifiers": [], "image_query_supported": false,
                 "visual_fallback_available": true,
                 "message": "当前知识库没有为全部 520 个型号建立视觉向量索引；可提供带标签的本地图片样例供多模态 Agent 比较。"
             })
         } else {
             json!({
                 "status": "no_query", "query": query, "matches": [],
-                "negative_examples": [], "image_query_supported": false,
+                "negative_examples": [], "catalog_model_status": "not_requested",
+                "unverified_catalog_identifiers": [], "image_query_supported": false,
                 "visual_fallback_available": false, "message": "没有可检索的文字描述。"
             })
         };
@@ -108,7 +130,7 @@ pub fn search_knowledge(
     }
 
     let corpus = load_corpus(project_root);
-    let (matches, negatives) = search_rows(&corpus, query, limit);
+    let (mut matches, negatives) = search_rows(&corpus, query, limit);
     let status = if matches.iter().any(|row| row["match_type"] == "exact_model") {
         "exact_match"
     } else if matches
@@ -122,7 +144,21 @@ pub fn search_knowledge(
         "no_match"
     };
     let has_code = has_model_identifier(query);
-    let message = status_message(status, !negatives.is_empty(), has_code);
+    let unverified_codes = unverified_catalog_codes(query, &matches);
+    matches.truncate(limit);
+    let has_unverified = !negatives.is_empty() || !unverified_codes.is_empty();
+    let catalog_status = match (status, has_unverified, has_code) {
+        ("exact_match" | "exact_prompt", true, _) => "partially_matched",
+        ("exact_match", false, _) => "matched",
+        ("exact_prompt", false, _) => "known_prompt",
+        (_, true, _) | (_, _, true) => "unknown",
+        _ => "not_requested",
+    };
+    let message = if catalog_status == "partially_matched" {
+        "只确认列表中的精确型号；同一请求还有未核实的型号，需单独核对。"
+    } else {
+        status_message(status, !negatives.is_empty(), has_code)
+    };
     let recipes_path = project_root.join("kb/modeling_recipes.json");
     let mut warnings = Vec::new();
     let recipes = match list_recipes(&recipes_path, query, 4) {
@@ -138,8 +174,10 @@ pub fn search_knowledge(
         "query": query,
         "matches": matches,
         "negative_examples": negatives,
+        "catalog_model_status": catalog_status,
+        "unverified_catalog_identifiers": unverified_codes,
         "image_query_supported": false,
-        "visual_fallback_available": has_reference_images,
+        "visual_fallback_available": has_reference_images && catalog_status != "unknown",
         "score_meaning": "relevance 是词面相关度排序分数，不是准确率或置信概率。",
         "message": message,
         "modeling_recipes": recipes,
@@ -156,7 +194,7 @@ pub fn search_knowledge(
         result["recipe_provider_warning"] = json!(warnings[0]);
     }
 
-    let images = if include_visual_examples {
+    let images = if include_visual_examples && catalog_status != "unknown" {
         attach_visual_examples(project_root, &mut result)
     } else {
         Vec::new()
@@ -382,7 +420,9 @@ pub fn format_knowledge_context(result: &Value) -> String {
         .iter()
         .any(|row| row["status"] == "executable" && row["builder"].as_str().is_some());
     let matches = result["matches"].as_array().cloned().unwrap_or_default();
-    if executable {
+    if result["catalog_model_status"] == "unknown" {
+        lines.push("目录未核实该型号。下列配方仅是独立的建模方法，使用时应依据用户明确提供的尺寸或经过核实的标准表，不得作为该目录件的规格来源。".into());
+    } else if executable {
         lines.push("本次命中可执行的标准件配方；尺寸应从配方指定的标准表读取。语料中的旧包围盒和旧特征模板可能描述带垫圈组件，不作为本次单件尺寸或拓扑来源。".into());
     } else {
         for (index, row) in matches.iter().enumerate() {
@@ -701,6 +741,8 @@ fn load_corpus(project_root: &Path) -> Vec<CorpusRow> {
                     .is_some_and(|text| !text.trim().is_empty())
             {
                 rows.push(CorpusRow {
+                    catalog_prompt: catalog_text(value["prompt"].as_str().unwrap_or_default()),
+                    catalog_model: catalog_text(value["model"].as_str().unwrap_or_default()),
                     value,
                     source_file: source_file.clone(),
                 });
@@ -711,8 +753,7 @@ fn load_corpus(project_root: &Path) -> Vec<CorpusRow> {
 }
 
 fn search_rows(rows: &[CorpusRow], query: &str, limit: usize) -> (Vec<Value>, Vec<Value>) {
-    let q = normalize(query);
-    let query_tokens = tokens(query);
+    let model_query = catalog_text(query);
     let has_code = has_model_identifier(query);
     let mut positives = Vec::<Value>::new();
     let mut negatives = Vec::<Value>::new();
@@ -723,7 +764,9 @@ fn search_rows(rows: &[CorpusRow], query: &str, limit: usize) -> (Vec<Value>, Ve
         let category = row.value.get("category").filter(|value| !value.is_null());
         let model = row.value.get("model").filter(|value| !value.is_null());
         if category.is_none() || model.is_none() {
-            if normalize(prompt) == q || contains_sequence(&query_tokens, &tokens(prompt)) {
+            if row.catalog_prompt == model_query
+                || (has_model_identifier(prompt) && model_mentioned(&model_query, &row.catalog_prompt))
+            {
                 negatives.push(record_hit(
                     row,
                     1.0,
@@ -733,15 +776,14 @@ fn search_rows(rows: &[CorpusRow], query: &str, limit: usize) -> (Vec<Value>, Ve
             }
             continue;
         }
-        let model_text = model.and_then(Value::as_str).unwrap_or_default();
-        if contains_sequence(&query_tokens, &tokens(model_text)) {
+        if model_mentioned(&model_query, &row.catalog_model) {
             exact_models.push((
                 record_hit(row, 1.0, "exact_model", Some("training_prompts")),
                 prompt_fit(query, prompt),
             ));
             continue;
         }
-        if normalize(prompt) == q {
+        if row.catalog_prompt == model_query {
             exact_prompts.push((
                 record_hit(row, 1.0, "exact_prompt", Some("training_prompts")),
                 1.0,
@@ -764,6 +806,7 @@ fn search_rows(rows: &[CorpusRow], query: &str, limit: usize) -> (Vec<Value>, Ve
             ));
         }
     }
+    negatives.truncate(1);
 
     let exact = if exact_models.is_empty() {
         exact_prompts
@@ -781,7 +824,7 @@ fn search_rows(rows: &[CorpusRow], query: &str, limit: usize) -> (Vec<Value>, Ve
         for (mut row, _) in ranked {
             let key = (
                 row["category"].to_string(),
-                normalize(row["model"].as_str().unwrap_or_default()),
+                catalog_text(row["model"].as_str().unwrap_or_default()),
             );
             if !seen.insert(key) {
                 continue;
@@ -794,13 +837,13 @@ fn search_rows(rows: &[CorpusRow], query: &str, limit: usize) -> (Vec<Value>, Ve
             row["exact_identifier_match"] = json!(exact_model);
             row["relevance"] = json!(1.0);
             output.push(row);
-            if output.len() >= limit {
-                break;
-            }
         }
-        return (output, Vec::new());
+        return (output, negatives);
     }
 
+    if !negatives.is_empty() {
+        return (Vec::new(), negatives);
+    }
     positives.sort_by(|left, right| {
         right["relevance"]
             .as_f64()
@@ -822,7 +865,6 @@ fn search_rows(rows: &[CorpusRow], query: &str, limit: usize) -> (Vec<Value>, Ve
             break;
         }
     }
-    negatives.truncate(1);
     (output, negatives)
 }
 
@@ -1015,61 +1057,79 @@ fn compat_chars(ch: char) -> Vec<char> {
     }
 }
 
-fn tokens(value: &str) -> Vec<String> {
-    let expanded: String = value.chars().flat_map(compat_chars).collect();
-    let mut output = Vec::new();
-    let mut current = String::new();
-    for ch in expanded.chars() {
-        let upper = ch.to_ascii_uppercase();
-        if upper.is_ascii_alphanumeric() {
-            current.push(upper);
-        } else if matches!(ch, '×' | '✕' | '*' | '＊') {
-            current.push('X');
-        } else if !current.is_empty() {
-            output.push(std::mem::take(&mut current));
-        }
-    }
-    if !current.is_empty() {
-        output.push(current);
-    }
-    output
+// Keep identifiers joined and retain significant punctuation such as decimal points.
+// The general lexical tokenizer deliberately splits those characters for fuzzy search.
+fn catalog_text(value: &str) -> String {
+    static SIZE_SEPARATOR: OnceLock<Regex> = OnceLock::new();
+    static DASH_SEPARATOR: OnceLock<Regex> = OnceLock::new();
+    let text = value
+        .chars()
+        .flat_map(compat_chars)
+        .map(|ch| match ch {
+            '×' | '✕' | '*' => 'x',
+            '_' | '‐' | '‑' | '–' | '−' => '-',
+            _ => ch.to_ascii_lowercase(),
+        })
+        .collect::<String>();
+    let text = text.split_whitespace().collect::<Vec<_>>().join(" ");
+    let dashes = DASH_SEPARATOR.get_or_init(|| Regex::new(r"\s*-\s*").unwrap());
+    let sizes = SIZE_SEPARATOR.get_or_init(|| Regex::new(r"([0-9])\s*x\s*([0-9])").unwrap());
+    let text = dashes.replace_all(&text, "-");
+    let text = sizes.replace_all(&text, "${1}x${2}");
+    sizes.replace_all(&text, "${1}x${2}").into_owned()
 }
 
-fn contains_sequence(haystack: &[String], needle: &[String]) -> bool {
-    !needle.is_empty()
-        && needle.len() <= haystack.len()
-        && haystack
-            .windows(needle.len())
-            .any(|window| window == needle)
+fn model_mentioned(query: &str, model: &str) -> bool {
+    if model.is_empty() {
+        return false;
+    }
+    let boundary = |before: &str, after: &str| {
+        let left = before.chars().next_back();
+        let right = after.chars().next();
+        let connected = |ch: char| ch.is_ascii_alphanumeric() || matches!(ch, '-' | '/' | '°');
+        (left.is_some_and(connected) && right.is_some_and(connected))
+            || (left == Some('.') && before.trim_end_matches('.').ends_with(connected))
+            || (right == Some('.') && after.trim_start_matches('.').starts_with(connected))
+    };
+    query.match_indices(model).any(|(start, matched)| {
+        let end = start + matched.len();
+        !boundary(&query[..start], &query[start..]) && !boundary(&query[..end], &query[end..])
+    })
 }
 
 fn has_model_identifier(query: &str) -> bool {
-    let bytes = query.as_bytes();
-    let mut index = 0;
-    while index < bytes.len() {
-        if bytes[index].is_ascii_alphabetic()
-            && (index == 0 || !bytes[index - 1].is_ascii_alphanumeric())
-        {
-            let start = index;
-            let mut has_digit = false;
-            while index < bytes.len()
-                && (bytes[index].is_ascii_alphanumeric()
-                    || matches!(bytes[index], b'.' | b'_' | b'/' | b'-'))
-            {
-                has_digit |= bytes[index].is_ascii_digit();
-                index += 1;
-            }
-            if has_digit && (index == bytes.len() || !bytes[index].is_ascii_alphanumeric()) {
-                return true;
-            }
-            if index == start {
-                index += 1;
-            }
-        } else {
-            index += 1;
-        }
+    let query = catalog_text(query);
+    catalog_codes(&query).next().is_some()
+        || (["型号", "料号", "件号", "part number", "model no"]
+            .iter()
+            .any(|label| query.contains(label))
+            && query.as_bytes().iter().any(u8::is_ascii_digit))
+}
+
+fn catalog_codes(text: &str) -> impl Iterator<Item = &str> {
+    static CODE: OnceLock<Regex> = OnceLock::new();
+    CODE.get_or_init(|| Regex::new(r"[a-z0-9][a-z0-9./°-]*").unwrap())
+        .find_iter(text)
+        .map(|hit| hit.as_str().trim_end_matches('.'))
+        .filter(|code| code.starts_with(|ch: char| ch.is_ascii_alphabetic())
+            && code.as_bytes().iter().any(u8::is_ascii_digit))
+}
+
+fn unverified_catalog_codes(query: &str, matches: &[Value]) -> Vec<String> {
+    if matches.iter().any(|row| row["match_type"] == "exact_prompt") {
+        // A complete curated alias can use a different identifier spelling.
+        return Vec::new();
     }
-    false
+    let mut matched_codes = HashSet::new();
+    for row in matches.iter().filter(|row| row["match_type"] == "exact_model") {
+        let model = catalog_text(row["model"].as_str().unwrap_or_default());
+        matched_codes.extend(catalog_codes(&model).map(str::to_owned));
+    }
+    catalog_codes(&catalog_text(query))
+        .filter(|code| matched_codes.insert((*code).to_owned()))
+        .take(10)
+        .map(str::to_owned)
+        .collect()
 }
 
 fn bigrams(value: &str) -> HashSet<String> {
@@ -1172,7 +1232,7 @@ fn status_message(status: &str, has_negative: bool, has_code: bool) -> &'static 
         "exact_match" => "命中已知型号；可引用对应实测数据，仍须按当前 CADPlan 支持范围校验。",
         "exact_prompt" => "命中语料中的原提示词；语料字段不等于完整 CAD 特征树。",
         "similar_matches" => "找到相似描述示例；仅作上下文参考，不得将示例尺寸当作用户目标尺寸。",
-        _ if has_negative || has_code => "当前知识库未命中该型号；不得把邻近型号当作精确结果。",
+        _ if has_negative || has_code => "当前知识库未命中该型号；不得把邻近型号当作精确结果。若使用标准配方，需独立核实标准及其适用规格。",
         _ => "当前文字描述没有达到相似检索阈值；这不代表库外不存在对应工件。",
     }
 }
@@ -1260,5 +1320,60 @@ mod tests {
             "negative_example"
         );
         fs::remove_dir_all(root).unwrap();
+    }
+
+    #[test]
+    fn strict_catalog_normalizes_separators_but_keeps_full_identifier_boundaries() {
+        let root = fixture_root();
+        for input in ["请建ＫＸ－２０４０", "精密导向套 KX_2040", "KX - 2040."] {
+            let response = search_knowledge(&root, input, 5, false, false).value;
+            assert_eq!(response["catalog_model_status"], "matched", "{input}");
+            assert_eq!(response["matches"][0]["model"], "KX-2040");
+        }
+        for input in ["导向套 AX-KX-2040", "导向套 KX-2040.1", "KX-2040/02", "导向套型号 8040"] {
+            let response = search_knowledge(&root, input, 5, false, false).value;
+            assert_eq!(response["catalog_model_status"], "unknown", "{input}");
+            assert_eq!(response["matches"], json!([]));
+            assert!(response["measured_geometry"].is_null());
+        }
+        let mixed = search_knowledge(&root, "KX-2040 与未知导向型号 ZX-999", 5, false, false).value;
+        assert_eq!(mixed["catalog_model_status"], "partially_matched");
+        assert_eq!(mixed["matches"][0]["model"], "KX-2040");
+        assert_eq!(mixed["negative_examples"][0]["id"], "fixture:negative");
+        let mixed = search_knowledge(&root, "KX-2040 与 ZX-998", 5, false, false).value;
+        assert_eq!(mixed["catalog_model_status"], "partially_matched");
+        assert_eq!(mixed["unverified_catalog_identifiers"], json!(["zx-998"]));
+        assert!(catalog_advice(&root, "普通导向套").is_none());
+        assert!(catalog_advice(&root, "KX-2040.1").unwrap().contains("未核实"));
+        fs::remove_dir_all(root).unwrap();
+    }
+
+    #[test]
+    fn checkout_catalog_matches_all_bare_models_and_refuses_all_negative_probes() {
+        let root = Path::new(env!("CARGO_MANIFEST_DIR")).join("../../../legacy");
+        let rows = load_corpus(&root);
+        let mut bare = 0;
+        let mut negative = 0;
+        for row in &rows {
+            let prompt = row.value["prompt"].as_str().unwrap();
+            if row.value["variant"] == "裸型号" {
+                let (matches, _) = search_rows(&rows, prompt, 5);
+                assert_eq!(matches[0]["model"], row.value["model"], "{prompt}");
+                assert_eq!(matches[0]["match_type"], "exact_model", "{prompt}");
+                bare += 1;
+            } else if row.value["variant"] == "库外型号" {
+                let response = search_knowledge(&root, prompt, 5, true, true);
+                assert_eq!(response.value["catalog_model_status"], "unknown", "{prompt}");
+                assert_eq!(response.value["matches"], json!([]), "{prompt}");
+                assert!(response.images.is_empty(), "{prompt}");
+                assert!(response.value.get("visual_examples").is_none(), "{prompt}");
+                negative += 1;
+            }
+        }
+        assert_eq!((bare, negative), (447, 12));
+        let known = search_knowledge(&root, "M5x8 与 M5x10", 1, false, false).value;
+        assert_eq!(known["catalog_model_status"], "matched");
+        assert_eq!(known["unverified_catalog_identifiers"], json!([]));
+        assert_eq!(known["matches"].as_array().unwrap().len(), 1);
     }
 }

@@ -96,6 +96,7 @@ struct ActiveSession {
     id: String,
     fingerprint: String,
     cwd: PathBuf,
+    project_root: PathBuf,
     metadata_path: PathBuf,
     image_supported: bool,
     active: AtomicBool,
@@ -217,6 +218,7 @@ pub fn send_turn(
     image_paths: Vec<String>,
     llm_config: Value,
     online_enabled: bool,
+    use_reviewed_cases: bool,
     on_event: Channel<Value>,
 ) -> Result<Value, String> {
     let data_dir = super::app_data_dir(&app)?;
@@ -239,6 +241,7 @@ pub fn send_turn(
         image_paths,
         llm_config,
         online_enabled,
+        use_reviewed_cases,
         EventSink::from_channel(on_event),
     )
 }
@@ -252,6 +255,7 @@ pub(crate) fn send_turn_with_fixture(
     image_paths: Vec<String>,
     llm_config: Value,
     online_enabled: bool,
+    use_reviewed_cases: bool,
     on_event: Channel<Value>,
 ) -> Result<Value, String> {
     let TestSetup {
@@ -277,6 +281,7 @@ pub(crate) fn send_turn_with_fixture(
         image_paths,
         llm_config,
         online_enabled,
+        use_reviewed_cases,
         EventSink::from_channel(on_event),
     )
 }
@@ -290,6 +295,7 @@ fn send_turn_core(
     image_paths: Vec<String>,
     llm_config: Value,
     online_enabled: bool,
+    use_reviewed_cases: bool,
     on_event: EventSink,
 ) -> Result<Value, String> {
     let text = text.trim().to_owned();
@@ -333,6 +339,7 @@ fn send_turn_core(
         &image_paths,
         &provider,
         online_enabled,
+        use_reviewed_cases,
         &on_event,
     )
 }
@@ -906,6 +913,7 @@ fn get_or_create_session(
     write_json_atomic(&metadata_path, &saved)?;
     drop(initialize_events);
     let session = Arc::new(ActiveSession {
+        project_root: root,
         process,
         tool_bridge,
         id: session_id,
@@ -929,6 +937,7 @@ fn run_turn(
     paths: &[String],
     provider: &Provider,
     online_enabled: bool,
+    use_reviewed_cases: bool,
     events: &EventSink,
 ) -> Result<Value, String> {
     let result = run_turn_inner(
@@ -939,6 +948,7 @@ fn run_turn(
         paths,
         provider,
         online_enabled,
+        use_reviewed_cases,
         events,
     );
     let requested = session.cancel_reason.load(Ordering::Acquire);
@@ -1095,10 +1105,18 @@ fn run_turn_inner(
     paths: &[String],
     provider: &Provider,
     online_enabled: bool,
+    use_reviewed_cases: bool,
     events: &EventSink,
 ) -> Result<Value, String> {
     let active_model_root = crate::native_active_model::root_from_data_dir(data_dir);
-    let mut last_active_generation = crate::native_active_model::generation(&active_model_root)?;
+    let active = crate::native_active_model::load(&active_model_root)?;
+    let mut last_active_generation = active
+        .as_ref()
+        .and_then(|record| record["generation"].as_u64())
+        .unwrap_or(0);
+    let started_from_empty_model = active.as_ref().is_none_or(|record| record["cadplan"].is_null())
+        && read_json_optional(&session.cwd.join("cad-state.json"))
+            .is_ok_and(|state| state.is_none_or(|state| state["plan"].is_null()));
     let images = persist_images(&session.cwd, paths)?;
     if !images.is_empty() && !session.image_supported {
         return Err(
@@ -1112,6 +1130,30 @@ fn run_turn_inner(
     if total_bytes > MAX_MESSAGE_IMAGE_BYTES {
         return Err("单轮参考图片总大小超过 200 MiB。".into());
     }
+    let case_context = if use_reviewed_cases
+        && started_from_empty_model
+        && images.is_empty()
+        && !text.is_empty()
+    {
+        let no_turns = read_json_optional(&session.cwd.join(USER_TURNS_FILE))?
+            .and_then(|manifest| manifest["turns"].as_array().map(Vec::is_empty)) == Some(true);
+        let no_references = read_json_optional(&session.cwd.join(REFERENCE_FILE))?
+            .and_then(|manifest| manifest["images"].as_array().map(Vec::is_empty)) == Some(true);
+        if no_turns && no_references {
+            match crate::native_reviewed_cases::context(data_dir, text) {
+                Ok(context) => context,
+                Err(error) => {
+                    emit(events, "agent.warning", request_id,
+                        json!({"message":format!("未能读取已验收案例，本轮继续建模。{error}")}));
+                    None
+                }
+            }
+        } else {
+            None
+        }
+    } else {
+        None
+    };
     update_reference_manifest(
         &session.cwd.join(REFERENCE_FILE),
         &session.id,
@@ -1133,6 +1175,7 @@ fn run_turn_inner(
         &turn_id,
         text,
         &reference_ids,
+        started_from_empty_model,
     )?;
     append_transcript(
         session,
@@ -1148,7 +1191,17 @@ fn run_turn_inner(
     let process = Arc::clone(&session.process);
     let sid = session.id.clone();
     let (tx, rx) = mpsc::channel();
-    let params = session_prompt_params(&sid, text, &images);
+    let catalog_context = crate::native_knowledge::catalog_advice(&session.project_root, text);
+    let mut prompt_text = text.to_owned();
+    if let Some(advice) = catalog_context {
+        prompt_text.push_str("\n\n【宿主目录核对】");
+        prompt_text.push_str(advice);
+    }
+    if let Some(context) = &case_context {
+        prompt_text.push_str("\n\n");
+        prompt_text.push_str(context);
+    }
+    let params = session_prompt_params(&sid, &prompt_text, &images);
     thread::Builder::new()
         .name("ai-modeler-acp-prompt".into())
         .spawn(move || {
@@ -1165,6 +1218,11 @@ fn run_turn_inner(
         request_id,
         json!({"message":"DSH 正在处理本轮请求。", "model":provider.model, "online_enabled":online_enabled}),
     );
+    if case_context.is_some() {
+        emit(events, "agent.status", request_id,
+            json!({"message":"已引用同一文字请求的已验收案例，复用范围为特征顺序。",
+                "reviewed_case_used":true}));
+    }
     let policy = WatchdogPolicy::default();
     let started = std::time::Instant::now();
     let mut progress = ProgressClock::new(policy);
@@ -1947,9 +2005,12 @@ fn session_prompt_params(session_id: &str, text: &str, images: &[Image]) -> Valu
 }
 
 fn persist_images(cwd: &Path, paths: &[String]) -> Result<Vec<Image>, String> {
+    if paths.is_empty() {
+        return Ok(Vec::new());
+    }
     let asset_root = super::asset_root()?
         .canonicalize()
-        .map_err(|error| error.to_string())?;
+        .map_err(|error| format!("无法读取已暂存的参考图片目录：{error}"))?;
     let reference_dir = cwd.join("reference-assets");
     fs::create_dir_all(&reference_dir).map_err(|error| error.to_string())?;
     let mut images = Vec::new();
@@ -2074,10 +2135,13 @@ fn update_reference_manifest(
         }));
     }
     manifest["session_id"] = json!(session_id);
+    if manifest["images"].as_array().is_some_and(Vec::is_empty) {
+        return write_json_atomic(path, &manifest);
+    }
     let root = cwd
         .join("reference-assets")
         .canonicalize()
-        .map_err(|error| error.to_string())?;
+        .map_err(|error| format!("无法读取会话参考图目录：{error}"))?;
     for row in manifest["images"].as_array().expect("validated image list") {
         let value = row
             .get("path")
@@ -2106,6 +2170,7 @@ fn append_user_turn(
     turn_id: &str,
     prompt: &str,
     references: &[String],
+    started_from_empty_model: bool,
 ) -> Result<(), String> {
     let mut value = read_json_optional(path)?
         .unwrap_or_else(|| json!({"schema_version":1,"session_id":session_id,"turns":[]}));
@@ -2117,6 +2182,7 @@ fn append_user_turn(
     value["session_id"] = json!(session_id);
     value["turns"].as_array_mut().expect("validated turns").push(json!({
         "turn_id":turn_id,"session_id":session_id,"raw_user_prompt":prompt,"reference_ids":references,
+        "started_from_empty_model":started_from_empty_model,
         "at_epoch_ms":SystemTime::now().duration_since(UNIX_EPOCH).unwrap_or_default().as_millis(),
         "intent_source":"unclassified"
     }));

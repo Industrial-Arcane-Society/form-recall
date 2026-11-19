@@ -37,6 +37,7 @@ pub mod native_quick_egt_sw;
 pub mod native_quick_socket_bolt;
 pub mod native_render;
 pub mod native_review_findings;
+mod native_reviewed_cases;
 pub mod native_review_gate;
 pub mod native_rotor;
 pub mod native_scroll_disc;
@@ -1236,6 +1237,7 @@ async fn agent_send(
     images: Vec<String>,
     llm_config: Value,
     online_enabled: bool,
+    use_reviewed_cases: Option<bool>,
     on_event: Channel<Value>,
 ) -> Result<Value, String> {
     let host = state.inner().clone();
@@ -1248,10 +1250,26 @@ async fn agent_send(
             images,
             llm_config,
             online_enabled,
+            use_reviewed_cases.unwrap_or(true),
             on_event,
         )
     })
     .await
+}
+
+#[tauri::command]
+fn reviewed_cases_list(app: AppHandle) -> Result<Vec<Value>, String> {
+    native_reviewed_cases::list(&app_data_dir(&app)?)
+}
+
+#[tauri::command]
+fn reviewed_case_save(app: AppHandle, generation: u64) -> Result<Vec<Value>, String> {
+    native_reviewed_cases::save(&app_data_dir(&app)?, generation)
+}
+
+#[tauri::command]
+fn reviewed_case_remove(app: AppHandle, id: String) -> Result<Vec<Value>, String> {
+    native_reviewed_cases::remove(&app_data_dir(&app)?, &id)
 }
 
 #[tauri::command]
@@ -1574,6 +1592,9 @@ pub fn run() {
             native_settings::native_provider_template,
             native_settings::native_provider_fetch_models,
             agent_send,
+            reviewed_cases_list,
+            reviewed_case_save,
+            reviewed_case_remove,
             agent_cancel,
             agent_reset,
             agent_history,
@@ -1854,6 +1875,7 @@ mod agent_ipc_integration_tests {
                 images,
                 llm_config,
                 online_enabled,
+                true,
                 on_event,
             )
         })

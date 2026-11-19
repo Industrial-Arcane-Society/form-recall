@@ -117,12 +117,12 @@ try {
                 throw "Production Vue headless integration failed for scenario '$scenario' with exit code $LASTEXITCODE"
             }
         }
-        foreach ($restoreScenario in @('active-model-restore-accepted', 'active-model-restore-stale-projection', 'active-model-restore-candidate')) {
-            [Environment]::SetEnvironmentVariable('AIMODELER_UI_SCENARIO', $restoreScenario, 'Process')
+        foreach ($uiScenario in @('active-model-restore-accepted', 'active-model-restore-stale-projection', 'active-model-restore-candidate', 'reviewed-cases')) {
+            [Environment]::SetEnvironmentVariable('AIMODELER_UI_SCENARIO', $uiScenario, 'Process')
             [Environment]::SetEnvironmentVariable('AIMODELER_AGENT_IPC_CAPTURE', $null, 'Process')
             & node 'src/App.agentEvents.integration.test.mjs'
             if ($LASTEXITCODE -ne 0) {
-                throw "Production Vue active-model startup restore failed for scenario '$restoreScenario' with exit code $LASTEXITCODE"
+                throw "Production Vue headless integration failed for scenario '$uiScenario' with exit code $LASTEXITCODE"
             }
         }
     }

@@ -369,15 +369,22 @@ fn load_turns(path: &Path) -> (Vec<Value>, Option<String>) {
           "raw_user_prompt":row["raw_user_prompt"],"reference_ids":refs,
           "intent":row["intent"].as_str().map(|v|v.trim().to_ascii_lowercase()).filter(|v|!v.is_empty()),
           "intent_source":row["intent_source"].as_str().map(|v|v.trim().to_ascii_lowercase()).filter(|v|!v.is_empty()).unwrap_or_else(||"unclassified".into()),
+          "started_from_empty_model":row["started_from_empty_model"].as_bool(),
           "affects_model_target":row.get("affects_model_target").filter(|v|v.is_boolean()).cloned().unwrap_or(Value::Null),
           "created_at":get(row,"created_at"),"at_epoch_ms":get(row,"at_epoch_ms")}));
     }
     (output, None)
 }
 fn authoritative_turns(turns: &[Value]) -> Vec<Value> {
-    turns.iter().skip(turns.len().saturating_sub(12)).map(|r|json!({"turn_id":r["turn_id"],"reference_ids":r["reference_ids"],
-      "raw_user_prompt":r["raw_user_prompt"].as_str().unwrap_or_default().trim().chars().take(5000).collect::<String>(),
-      "affects_model_target":turn_affects(r),"intent_source":r["intent_source"]})).collect()
+    turns.iter().skip(turns.len().saturating_sub(12)).map(|r| {
+        let mut turn = json!({"turn_id":r["turn_id"],"reference_ids":r["reference_ids"],
+          "raw_user_prompt":r["raw_user_prompt"].as_str().unwrap_or_default().trim().chars().take(5000).collect::<String>(),
+          "affects_model_target":turn_affects(r),"intent_source":r["intent_source"]});
+        if let Some(started_empty) = r["started_from_empty_model"].as_bool() {
+            turn["started_from_empty_model"] = json!(started_empty);
+        }
+        turn
+    }).collect()
 }
 fn turn_affects(r: &Value) -> bool {
     if let Some(v) = r["affects_model_target"].as_bool() {

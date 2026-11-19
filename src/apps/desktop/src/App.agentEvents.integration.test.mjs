@@ -57,6 +57,14 @@ const expectedModelDocument = rustModelChange?.data || changedDocument
 const expectedUserText = rustChannelCapture?.events?.find(row => row.message?.event === 'agent.message')?.message?.data?.text || 'Create a bracket'
 const scenario = rustChannelCapture?.scenario || 'stale-finish'
 const uiScenario = process.env.AIMODELER_UI_SCENARIO || ''
+const localPreferences = new Map()
+const caseRow = {
+  id: 'fixture-case',
+  prompt: '创建长方体 10×8×5 mm',
+  features: [{ kind: 'box', operation: 'add' }],
+}
+let caseStore = []
+let sentWithCases
 const restoreDocument = {
   revision: 12,
   model_generation: 12,
@@ -120,6 +128,10 @@ window.isTauri = true
 window.location = { search: '' }
 window.addEventListener = () => {}
 window.removeEventListener = () => {}
+Object.defineProperty(window, 'localStorage', { configurable: true, value: {
+  getItem: key => localPreferences.get(key) ?? null,
+  setItem: (key, value) => localPreferences.set(key, value),
+}})
 window.__TAURI_INTERNALS__ = {
   transformCallback(callback) {
     const id = nextCallbackId++
@@ -134,8 +146,20 @@ window.__TAURI_INTERNALS__ = {
     if (command === 'native_runtime_status') return { appVersion: 'test', dsh: { installed: true, state: 'ready' }, occt: { state: 'ready' }, catia: { state: 'unknown' } }
     if (command === 'native_about') return { product: 'AI Modeler', version: 'test' }
     if (command === 'native_settings_load') return { llm: { providers: [] }, online: { enabled: true }, viewer: {} }
-    if (command === 'active_model_snapshot') return uiScenario.startsWith('active-model-restore') ? restoreSnapshot : null
+    if (command === 'active_model_snapshot') return uiScenario.startsWith('active-model-restore') || uiScenario === 'reviewed-cases' ? restoreSnapshot : null
     if (command === 'active_model_new') return { revision: 0, name: 'Part1', features: [], stats: {}, build_log: [] }
+    if (command === 'agent_reset') return { state: 'reset' }
+    if (command === 'reviewed_cases_list') return caseStore
+    if (command === 'reviewed_case_save') {
+      assert.equal(args.generation, 12)
+      caseStore = [caseRow]
+      return caseStore
+    }
+    if (command === 'reviewed_case_remove') {
+      assert.equal(args.id, caseRow.id)
+      caseStore = []
+      return caseStore
+    }
     if (command === 'agent_history') return { turns: [] }
     if (command === 'agent_finding_review_state') {
       initializationFinished = true
@@ -149,6 +173,7 @@ window.__TAURI_INTERNALS__ = {
     }
     if (command === 'agent_send') {
       submittedRequestId = args.requestId
+      sentWithCases = args.useReviewedCases
       const callback = tauriCallbacks.get(args.onEvent.id)
       assert.ok(callback, 'App must pass a registered Tauri Channel callback to agent_send')
       if (rustChannelCapture) {
@@ -188,7 +213,7 @@ await fs.writeFile(compiledPath, ts.transpileModule(componentModule, {
 }).outputText, 'utf8')
 
 function makeNode(type, text = '') {
-  return { type, text, props: {}, children: [], parent: null, style: {}, getRootNode() { return {} }, addEventListener() {}, removeEventListener() {} }
+  return { type, text, props: {}, children: [], parent: null, style: {}, getRootNode() { return {} }, addEventListener() {}, removeEventListener() {}, focus() {} }
 }
 function insert(child, parent, anchor) {
   if (child.parent) {
@@ -237,7 +262,36 @@ try {
     await new Promise(resolve => setTimeout(resolve, 0))
   }
   await nextTick()
-  if (uiScenario.startsWith('active-model-restore')) {
+  if (uiScenario === 'reviewed-cases') {
+    const button = (label) => descendants(root).find(node => node.type === 'button' && renderedText(node).trim() === label)
+    const openCases = async () => {
+      await button('已验收案例').props.onClick()
+      await nextTick()
+      return descendants(root).find(node => hasClass(node, 'reviewed-cases-modal'))
+    }
+    let dialog = await openCases()
+    assert.match(renderedText(dialog), /暂无已保存案例/)
+    await button('保存当前模型为案例').props.onClick()
+    await nextTick()
+    assert.match(renderedText(dialog), /创建长方体/)
+    const toggle = descendants(dialog).find(node => node.props.type === 'checkbox')
+    toggle.props['onUpdate:modelValue'](false)
+    await nextTick()
+    assert.equal(localPreferences.get('aimodeler.useReviewedCases'), 'false')
+    await button('新建并填入描述').props.onClick()
+    await nextTick()
+    assert.ok(seenCommands.includes('active_model_new'))
+    assert.ok(seenCommands.includes('agent_reset'))
+    const send = descendants(root).find(node => hasClass(node, 'send-button'))
+    await send.props.onClick()
+    assert.equal(sentWithCases, false)
+    dialog = await openCases()
+    await button('移除').props.onClick()
+    await nextTick()
+    assert.match(renderedText(dialog), /暂无已保存案例/)
+    console.log('PASS: production Vue reviewed-case save, restart, preference, send, and revoke.')
+    app.unmount()
+  } else if (uiScenario.startsWith('active-model-restore')) {
     assert.ok(seenCommands.includes('active_model_snapshot'), `startup should request the active-model snapshot: ${seenCommands.join(', ')}`)
     const summary = descendants(root).find(node => hasClass(node, 'acceptance-summary'))
     assert.ok(summary, 'startup restore renders the production acceptance summary')

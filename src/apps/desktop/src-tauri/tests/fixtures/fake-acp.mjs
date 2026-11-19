@@ -19,6 +19,8 @@ for await (const line of input) {
     write({ jsonrpc: '2.0', id, result: { protocolVersion: 1, agentCapabilities: {} } });
   } else if (method === 'session/new') {
     write({ jsonrpc: '2.0', id, result: { sessionId: 'fixture-session', configOptions: [] } });
+  } else if (method === 'session/close') {
+    write({ jsonrpc: '2.0', id, result: {} });
   } else if (method === 'session/prompt') {
     if (params.fixture_stall === true) continue;
 

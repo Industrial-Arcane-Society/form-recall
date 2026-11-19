@@ -29,6 +29,19 @@ pub fn load(root: &Path) -> Result<Option<Value>, String> {
     load_unlocked(root)
 }
 
+pub(crate) fn with_generation<T>(
+    root: &Path,
+    generation: u64,
+    operation: impl FnOnce(&Value) -> Result<T, String>,
+) -> Result<T, String> {
+    let _guard = lock()?;
+    let active = load_unlocked(root)?.ok_or("没有活动模型。")?;
+    if active["generation"].as_u64() != Some(generation) {
+        return Err("活动模型已变化，请重新确认后再保存案例。".into());
+    }
+    operation(&active)
+}
+
 /// Publish a complete model candidate only if the caller's snapshot generation
 /// is still active. Artifacts must already be fully written before this call.
 pub fn commit(root: &Path, expected_generation: u64, candidate: &Value) -> Result<Value, String> {

@@ -30,7 +30,7 @@ temp/                 旧文档/实验归档、Agent 日志与临时生成物
 
 ## 旧 Python 实现（`src/legacy/`）
 
-迁移期间 `src/legacy/` 保留完整的桌面端能力，仍是当前唯一可用的建模入口。
+新版桌面端已接入 Rust Quick 和 DSH Agent 建模。迁移期间，`src/legacy/` 仍提供旧版桌面端、夹具工作流和 CATIA 过渡能力。
 
 - **定位**：把一句中文提示词变成能在 CATIA 里用的真实零件模型。面向汽车装备制造（焊装夹具、冲压与注塑模具、汽车零部件），夹具方向已覆盖 19 个零件族。
 - **运行**：`Set-Location src/legacy` 后 `python -m ai_modeler`（tkinter 桌面程序；核心纯标准库，可选 `cadquery-ocp`）。

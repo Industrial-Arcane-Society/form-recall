@@ -21,6 +21,7 @@ type Feature = { index: number; kind: string; op?: string; name?: string; enable
 type DocumentState = { revision: number; cad_revision?: number; geometry_fingerprint?: string; acceptance_confirmed?: boolean; acceptance_source?: string; finish_status?: string; name: string; source_prompt?: string; current_path?: string | null; features: Feature[]; stats: JsonMap; build_log: string[]; mesh_path?: string | null; warnings?: any[]; finish_summary?: JsonMap | null; geometric_status?: string; visual_status?: string }
 type WireEvent = { event: string; request_id: string; data: any }
 type ChatLine = { role: 'user' | 'assistant' | 'progress' | 'thought'; text: string; images?: AttachmentItem[]; requestId?: string; toolCallId?: string; open?: boolean }
+type ReviewedCase = { id: string; prompt: string; features: { kind: string; operation: 'add' | 'cut' }[] }
 
 const desktop = isTauri()
 const needsDependencySetup = ref(import.meta.env.DEV && new URLSearchParams(window.location.search).get('setup') === 'dependencies')
@@ -35,6 +36,17 @@ const panel = ref<'tree' | 'params' | 'stats' | 'logs' | 'parts'>('tree')
 const themeDark = ref(false)
 const documentState = ref<DocumentState>({ revision: 0, name: 'Part1', features: [], stats: {}, build_log: [] })
 const modelAcceptance = ref<ModelAcceptanceView>(modelAcceptanceView(null))
+const reviewedCasesOpen = ref(false)
+const reviewedCases = ref<ReviewedCase[]>([])
+const reviewedCasesBusy = ref(false)
+const reviewedCasesError = ref('')
+const reviewedCasesPreference = 'aimodeler.useReviewedCases'
+const useReviewedCases = ref(true)
+try {
+  useReviewedCases.value = window.localStorage?.getItem(reviewedCasesPreference) !== 'false'
+} catch {
+  // Storage can be unavailable in a preview or a restricted WebView.
+}
 const pendingFindingAdjudications = ref<PendingFindingAdjudication[]>([])
 const adjudicatingFindingId = ref('')
 const turnStatus = ref(turnStatusView('idle'))
@@ -105,6 +117,9 @@ const providersDraft = computed(() => Array.isArray(llmDraft.value.providers) ? 
 const activeProvider = computed(() => providersDraft.value.find((row: any) => row.id === llmDraft.value.active_provider_id) || providersDraft.value[0] || llmDraft.value || {})
 const stats = computed(() => documentState.value.stats || {})
 const canSubmit = computed(() => desktop && !busy.value && !attachmentLoading.value && (Boolean(prompt.value.trim()) || attachments.value.length > 0))
+watch(useReviewedCases, (enabled) => {
+  try { window.localStorage?.setItem(reviewedCasesPreference, String(enabled)) } catch { /* in-memory preference */ }
+})
 const workbenchStyle = computed(() => ({
   '--chat-width': chatCollapsed.value ? '0px' : `${chatWidth.value}px`,
   '--inspector-width': inspectorCollapsed.value ? '0px' : `${inspectorWidth.value}px`,
@@ -224,6 +239,7 @@ async function handleWireEvent(event: WireEvent) {
   } else if (event.event === 'agent.status') {
     const message = String(data.message || data.sessionUpdate || '')
     if (message) setStatus(message)
+    if (message && data.reviewed_case_used === true) addLog(message)
   } else if (event.event === 'agent.warning') {
     const message = String(data.message || 'DSH 返回一条警告。')
     chat.value.push({ role: 'progress', text: message, requestId: event.request_id })
@@ -352,6 +368,37 @@ async function confirmFindingAdjudication(row: PendingFindingAdjudication) {
   } finally {
     adjudicatingFindingId.value = ''
   }
+}
+
+async function updateReviewedCases(command: string, args?: Record<string, unknown>) {
+  reviewedCasesBusy.value = true
+  reviewedCasesError.value = ''
+  try {
+    reviewedCases.value = await invoke<ReviewedCase[]>(command, args)
+  } catch (error) {
+    reviewedCasesError.value = errorMessage(error)
+  } finally {
+    reviewedCasesBusy.value = false
+  }
+}
+
+function openReviewedCases() {
+  reviewedCasesOpen.value = true
+  return updateReviewedCases('reviewed_cases_list')
+}
+
+async function startReviewedCase(row: ReviewedCase) {
+  reviewedCasesBusy.value = true
+  try {
+    if (!await newDocument() || !await resetChat()) return
+  } finally {
+    reviewedCasesBusy.value = false
+  }
+  prompt.value = row.prompt
+  mode.value = 'agent'
+  reviewedCasesOpen.value = false
+  void nextTick(() => promptEl.value?.focus())
+  setStatus('已填入案例描述')
 }
 
 async function restoreAgentHistory() {
@@ -570,6 +617,7 @@ async function submitPrompt() {
         images: imagePaths,
         llmConfig: agentLlmConfig(),
         onlineEnabled: settingsDraft.value?.online?.enabled !== false,
+        useReviewedCases: useReviewedCases.value,
         onEvent: channel,
       })
       if (result.document) updateDocument(result.document)
@@ -615,7 +663,11 @@ async function resetChat() {
     previewStage.value = ''
     clearPreview()
     setStatus('新对话已开始', 'success')
-  } catch (error) { await showMessage('新对话失败', errorMessage(error), 'error') }
+    return true
+  } catch (error) {
+    await showMessage('新对话失败', errorMessage(error), 'error')
+    return false
+  }
 }
 
 function releaseAttachmentUrls() {
@@ -727,14 +779,18 @@ async function clearFeatures() {
 
 async function newDocument() {
   try {
-    if (documentState.value.features.length && !await confirm('新建零件将替换当前工作区模型，继续吗？', { title: '新建零件', kind: 'warning' })) return
+    if (documentState.value.features.length && !await confirm('新建零件将替换当前工作区模型，继续吗？', { title: '新建零件', kind: 'warning' })) return false
     const document = await invoke<DocumentState>('active_model_new', { name: 'Part1' })
     nativeModelActive.value = true
     updateDocument(document, false)
     selectedIndex.value = -1
     isDirty.value = false
     setStatus('已新建零件', 'success')
-  } catch (error) { await showMessage('新建零件失败', errorMessage(error), 'error') }
+    return true
+  } catch (error) {
+    await showMessage('新建零件失败', errorMessage(error), 'error')
+    return false
+  }
 }
 
 async function openProject() {
@@ -1078,7 +1134,7 @@ async function openManual(path: string) {
 }
 
 function onKeydown(event: KeyboardEvent) {
-  if (event.key === 'Escape') { closeMenu(); samplesOpen.value = false; return }
+  if (event.key === 'Escape') { closeMenu(); samplesOpen.value = false; reviewedCasesOpen.value = false; return }
   if (!(event.ctrlKey || event.metaKey)) {
     if (event.key === 'f' && !(event.target instanceof HTMLInputElement) && !(event.target instanceof HTMLTextAreaElement)) fitView()
     return
@@ -1190,6 +1246,7 @@ onUnmounted(() => {
             <span>视觉：{{ modelAcceptance.visual }}</span>
           </div>
         </section>
+        <button v-if="desktop && mode === 'agent'" class="reviewed-cases-trigger" @click="openReviewedCases">已验收案例</button>
         <section v-if="pendingFindingAdjudications.length" class="finding-adjudications" aria-label="待确认的视觉 finding 来源关联">
           <div class="finding-adjudications__heading">
             <div><span class="eyebrow">MANUAL REVIEW</span><strong>待确认的 finding 来源关联</strong></div>
@@ -1353,6 +1410,33 @@ onUnmounted(() => {
     </main>
 
     <footer class="bottom-bar"><div><span class="bottom-brand">AI MODELER</span><span>{{ desktop ? '桌面建模工作区' : '浏览器预览' }}</span></div><div v-if="desktop" class="runtime-indicators"><span v-for="row in diagnosticRows" :key="row.key" :title="row.value"><i :class="{ ready: row.ready === true }"></i>{{ row.label }} {{ row.footerValue }}</span><span class="status-divider"></span><span>Rust 原生核心 · 版本 {{ handshake?.app_version || '—' }}</span></div><span v-else>本地运行时状态仅在桌面程序中检测</span><div><button @click="helpOpen = true">帮助</button><span class="status-divider"></span><span v-if="desktop">快捷键 <kbd>Ctrl</kbd>+<kbd>S</kbd> 保存 · <kbd>F</kbd> 适应视图</span><span v-else>主题、视图与面板可在浏览器中预览</span></div></footer>
+
+    <div v-if="reviewedCasesOpen" class="modal-backdrop" @click.self="reviewedCasesOpen = false">
+      <section class="modal reviewed-cases-modal" role="dialog" aria-modal="true" aria-labelledby="reviewed-cases-heading">
+        <header class="modal-head">
+          <h2 id="reviewed-cases-heading">已验收案例</h2>
+          <button class="modal-close" aria-label="关闭已验收案例" @click="reviewedCasesOpen = false"><UiIcon name="close" /></button>
+        </header>
+        <div class="reviewed-cases-body">
+          <label class="switch-line"><input v-model="useReviewedCases" type="checkbox">新建时参考已验收案例</label>
+          <p>可保存已验收的单轮纯文字 Agent 模型。新建后发送相同描述时，Agent 可参考历史特征顺序。</p>
+          <button class="secondary-button" :disabled="busy || reviewedCasesBusy || modelAcceptance.outcome !== 'accepted'" @click="updateReviewedCases('reviewed_case_save', { generation: documentState.revision })">保存当前模型为案例</button>
+          <p v-if="reviewedCasesError" role="alert">{{ reviewedCasesError }}</p>
+          <p v-else-if="reviewedCasesBusy" role="status">正在处理案例…</p>
+          <p v-else-if="!reviewedCases.length">暂无已保存案例。</p>
+          <ul v-if="reviewedCases.length" class="reviewed-cases-list">
+            <li v-for="row in reviewedCases" :key="row.id">
+              <strong>{{ row.prompt }}</strong>
+              <small>{{ row.features.map(feature => feature.kind).join(' → ') }}</small>
+              <div>
+                <button class="secondary-button" :disabled="busy || reviewedCasesBusy" @click="startReviewedCase(row)">新建并填入描述</button>
+                <button class="secondary-button" :disabled="busy || reviewedCasesBusy" @click="updateReviewedCases('reviewed_case_remove', { id: row.id })">移除</button>
+              </div>
+            </li>
+          </ul>
+        </div>
+      </section>
+    </div>
 
     <div v-if="settingsOpen" class="modal-backdrop" @click.self="settingsOpen = false">
       <section class="modal settings-modal">
