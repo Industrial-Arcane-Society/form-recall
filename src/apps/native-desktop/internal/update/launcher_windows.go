@@ -14,7 +14,15 @@ import (
 	"time"
 )
 
-const storageName = ".formrecall-updates"
+// The installed program keeps a single visible entry point and one runtime
+// directory. Everything else lives under runtime so that a portable or
+// installed copy never accumulates unrelated files in its root.
+const (
+	runtimeName  = "runtime"
+	baseName     = "base"
+	versionsName = "versions"
+	launcherFile = "launcher.json"
+)
 
 var slotPattern = regexp.MustCompile(`^release-[0-9]+$`)
 
@@ -24,20 +32,52 @@ type activeVersion struct {
 	RootVersion string `json:"root_version,omitempty"`
 }
 
+// launcherRecord publishes the protocol abilities of the launcher that owns the
+// program root. The launcher ships with a full package and an update never
+// replaces it, so the desktop must not assume newer launcher abilities.
+type launcherRecord struct {
+	Schema        int    `json:"schema"`
+	Version       string `json:"version"`
+	ChannelSwitch bool   `json:"channel_switch"`
+	Downgrade     bool   `json:"downgrade"`
+}
+
+func versionsDir(root string) string { return filepath.Join(root, runtimeName, versionsName) }
+
+func baseDir(root string) string { return filepath.Join(root, runtimeName, baseName) }
+
+// RootForBundle resolves the installed program root for the launcher, for a
+// staged payload and for the base version shipped with the package. All three
+// share the same runtime directory.
 func RootForBundle(bundle string) string {
-	slot := filepath.Dir(bundle)
-	versions := filepath.Dir(slot)
-	store := filepath.Dir(versions)
-	if filepath.Base(bundle) == "payload" && slotPattern.MatchString(filepath.Base(slot)) &&
-		filepath.Base(versions) == "versions" && filepath.Base(store) == storageName {
-		return filepath.Dir(store)
+	if filepath.Base(bundle) == "payload" && slotPattern.MatchString(filepath.Base(filepath.Dir(bundle))) {
+		versions := filepath.Dir(filepath.Dir(bundle))
+		runtimeDirectory := filepath.Dir(versions)
+		if filepath.Base(versions) == versionsName && filepath.Base(runtimeDirectory) == runtimeName {
+			return filepath.Dir(runtimeDirectory)
+		}
+		return bundle
+	}
+	if filepath.Base(bundle) == baseName && filepath.Base(filepath.Dir(bundle)) == runtimeName {
+		return filepath.Dir(filepath.Dir(bundle))
 	}
 	return bundle
 }
 
+// IsLauncher reports whether this process runs the entry point that selects and
+// starts a version instead of being that version. A plain build output has no
+// runtime directory and keeps running the desktop directly.
+func (c *Client) IsLauncher() bool {
+	if c == nil || c.Root != c.Bundle {
+		return false
+	}
+	info, err := os.Lstat(filepath.Join(c.Root, runtimeName))
+	return err == nil && info.IsDir() && info.Mode()&os.ModeSymlink == 0
+}
+
 func (c *Client) current() activeVersion {
 	var state activeVersion
-	raw, err := os.ReadFile(filepath.Join(c.Root, storageName, "active.json"))
+	raw, err := os.ReadFile(filepath.Join(versionsDir(c.Root), "active.json"))
 	if err == nil && len(raw) < 4096 {
 		_ = json.Unmarshal(raw, &state)
 	}
@@ -48,8 +88,9 @@ func (c *Client) readSlot(slot string) (Offer, string, error) {
 	if !slotPattern.MatchString(slot) {
 		return Offer{}, "", errors.New("更新目录编号无效")
 	}
-	base := filepath.Join(c.Root, storageName, "versions", slot)
-	file, err := openFile(c.Root, storageName+"/versions/"+slot+"/manifest.json")
+	versions := versionsDir(c.Root)
+	base := filepath.Join(versions, slot)
+	file, err := openFile(versions, slot+"/manifest.json")
 	if err != nil {
 		return Offer{}, "", err
 	}
@@ -65,22 +106,38 @@ func (c *Client) readSlot(slot string) (Offer, string, error) {
 	return offer, filepath.Join(base, "payload"), nil
 }
 
-func (c *Client) SupportsChannelSwitch() bool {
-	file, err := openFile(c.Root, "update-bootstrap-v2")
-	if err != nil {
-		return false
+func (c *Client) launcher() launcherRecord {
+	if c.IsLauncher() {
+		return launcherRecord{Schema: 1, Version: c.Version, ChannelSwitch: true, Downgrade: true}
 	}
-	_ = file.Close()
-	return true
+	var record launcherRecord
+	raw, err := os.ReadFile(filepath.Join(versionsDir(c.Root), launcherFile))
+	if err != nil || len(raw) > 4096 || json.Unmarshal(raw, &record) != nil || record.Schema != 1 {
+		return launcherRecord{}
+	}
+	return record
 }
 
-func (c *Client) SupportsDowngrade() bool {
-	file, err := openFile(c.Root, "update-bootstrap-v3")
-	if err != nil {
-		return false
+func (c *Client) SupportsChannelSwitch() bool { return c.launcher().ChannelSwitch }
+
+func (c *Client) SupportsDowngrade() bool { return c.launcher().Downgrade }
+
+// RecordLauncher publishes this launcher's abilities for the desktop that runs
+// from a payload. Failure is reported so verification can detect a launcher that
+// cannot describe itself.
+func (c *Client) RecordLauncher() error {
+	if !c.IsLauncher() {
+		return nil
 	}
-	_ = file.Close()
-	return true
+	directory := versionsDir(c.Root)
+	if err := makeDir(filepath.Join(c.Root, runtimeName)); err != nil {
+		return err
+	}
+	if err := makeDir(directory); err != nil {
+		return err
+	}
+	return writeUpdateState(directory, launcherFile,
+		launcherRecord{Schema: 1, Version: c.Version, ChannelSwitch: true, Downgrade: true})
 }
 
 func (c *Client) activeSlot(state activeVersion, slot string) (Offer, string, error) {
@@ -92,7 +149,7 @@ func (c *Client) activeSlot(state activeVersion, slot string) (Offer, string, er
 }
 
 func (c *Client) ActiveExecutable() string {
-	if c == nil || c.Root != c.Bundle {
+	if !c.IsLauncher() {
 		return ""
 	}
 	state := c.current()
@@ -116,6 +173,47 @@ func (c *Client) ActiveExecutable() string {
 		}
 	}
 	return ""
+}
+
+// BaseExecutable returns the version shipped with the full package while no
+// update has been activated. It carries no signed update manifest, so the
+// packaged inventory is the integrity reference.
+func (c *Client) BaseExecutable() string {
+	if !c.IsLauncher() {
+		return ""
+	}
+	base := baseDir(c.Root)
+	raw, err := os.ReadFile(filepath.Join(base, "package-manifest.json"))
+	if err != nil || len(raw) > maxManifest {
+		return ""
+	}
+	var record struct {
+		Schema int    `json:"schema"`
+		Files  []File `json:"files"`
+	}
+	if json.Unmarshal(raw, &record) != nil || record.Schema != 1 {
+		return ""
+	}
+	var expected File
+	for _, file := range record.Files {
+		if strings.EqualFold(file.Path, "FormRecall.exe") {
+			expected = file
+			break
+		}
+	}
+	if expected.Path == "" {
+		return ""
+	}
+	binary, err := openFile(base, "FormRecall.exe")
+	if err != nil {
+		return ""
+	}
+	err = matchFile(binary, io.Discard, expected)
+	_ = binary.Close()
+	if err != nil {
+		return ""
+	}
+	return filepath.Join(base, "FormRecall.exe")
 }
 
 func verifyPayload(bundle string, files []File) error {
@@ -159,6 +257,52 @@ func hiddenCommand(executable string, args ...string) *exec.Cmd {
 	return cmd
 }
 
+// pruneIncompleteSlots removes interrupted downloads. A staged slot keeps its
+// signed manifest, so this never discards a version that is waiting for the
+// restart that activates it.
+func (c *Client) pruneIncompleteSlots() {
+	directory := versionsDir(c.Root)
+	entries, err := os.ReadDir(directory)
+	if err != nil {
+		return
+	}
+	for _, entry := range entries {
+		name := entry.Name()
+		if !slotPattern.MatchString(name) || !entry.IsDir() {
+			continue
+		}
+		path := filepath.Join(directory, name)
+		if _, err := os.Stat(filepath.Join(path, "manifest.json")); err == nil {
+			continue
+		}
+		_ = os.RemoveAll(path)
+	}
+}
+
+// pruneSlots keeps the active version and the single rollback version. Older
+// copies are deleted so an installation never grows with every update.
+func (c *Client) pruneSlots(keep ...string) error {
+	directory := versionsDir(c.Root)
+	entries, err := os.ReadDir(directory)
+	if err != nil {
+		return err
+	}
+	kept := make(map[string]bool, len(keep))
+	for _, name := range keep {
+		if slotPattern.MatchString(name) {
+			kept[strings.ToLower(name)] = true
+		}
+	}
+	for _, entry := range entries {
+		name := entry.Name()
+		if !slotPattern.MatchString(name) || kept[strings.ToLower(name)] || !entry.IsDir() {
+			continue
+		}
+		_ = os.RemoveAll(filepath.Join(directory, name))
+	}
+	return nil
+}
+
 // Queue starts the fixed launcher after the caller closes its engine and window.
 func (c *Client) Queue(slot string, args []string) error {
 	if !slotPattern.MatchString(slot) {
@@ -177,10 +321,10 @@ func (c *Client) Queue(slot string, args []string) error {
 // Apply runs in the fixed launcher. The existing pointer remains valid until
 // the new desktop reports engine readiness, including during power loss.
 func (c *Client) Apply(slot string, args []string, allowDowngrade bool) (result error) {
-	if c.Root != c.Bundle {
+	if !c.IsLauncher() {
 		return errors.New("必须由安装目录的启动器应用更新")
 	}
-	store := filepath.Join(c.Root, storageName)
+	store := versionsDir(c.Root)
 	if err := makeDir(store); err != nil {
 		return err
 	}
@@ -233,12 +377,11 @@ func (c *Client) Apply(slot string, args []string, allowDowngrade bool) (result 
 	defer tick.Stop()
 	for {
 		if ready, _ := os.ReadFile(marker); string(ready) == offer.Version {
-			if err := writeUpdateState(store, "active.json", activeVersion{Current: slot, Previous: state.Current, RootVersion: c.Version}); err != nil {
+			if err := c.commit(slot, state.Current); err != nil {
 				_ = cmd.Process.Kill()
 				<-exited
 				return err
 			}
-			_ = os.Remove(filepath.Join(store, "last-error.txt"))
 			return nil
 		}
 		select {
@@ -256,17 +399,34 @@ func (c *Client) Apply(slot string, args []string, allowDowngrade bool) (result 
 	}
 }
 
+// commit records the activated version and removes everything the program no
+// longer needs. The packaged base doubles as the rollback source for the first
+// update and is dropped as soon as a second version is activated, so an
+// installation never holds more than two full copies.
+func (c *Client) commit(slot, previous string) error {
+	store := versionsDir(c.Root)
+	if err := writeUpdateState(store, "active.json", activeVersion{Current: slot, Previous: previous, RootVersion: c.Version}); err != nil {
+		return err
+	}
+	_ = os.Remove(filepath.Join(store, "last-error.txt"))
+	if previous != "" {
+		_ = os.RemoveAll(baseDir(c.Root))
+	}
+	_ = c.pruneSlots(slot, previous)
+	return nil
+}
+
 func ReportReady(root, marker, version string) {
 	dir := filepath.Dir(marker)
 	if filepath.Base(marker) == "ready" &&
-		strings.EqualFold(filepath.Dir(dir), filepath.Join(root, storageName)) &&
+		strings.EqualFold(filepath.Dir(dir), versionsDir(root)) &&
 		strings.HasPrefix(filepath.Base(dir), "startup-") {
 		_ = os.WriteFile(marker, []byte(version), 0600)
 	}
 }
 
 func (c *Client) LastError() string {
-	raw, err := os.ReadFile(filepath.Join(c.Root, storageName, "last-error.txt"))
+	raw, err := os.ReadFile(filepath.Join(versionsDir(c.Root), "last-error.txt"))
 	if err != nil || len(raw) > 4096 {
 		return ""
 	}

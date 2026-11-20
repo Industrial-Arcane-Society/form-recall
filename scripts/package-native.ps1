@@ -77,43 +77,26 @@ Invoke-NativeTool $node $resourceArguments
 $dshResources = Join-Path $script:RepositoryRoot 'temp/build-cache/dsh-runtime-package/package-resources/app/packaging/dsh-runtime'
 $preparedResources = Join-Path $script:RepositoryRoot 'temp/build-cache/dsh-runtime-package/package-resources'
 New-Item -ItemType Directory -Path $package -Force | Out-Null
+# The visible program root holds the entry point and one runtime directory. The
+# bundled version keeps the established flat layout so every relative path used
+# by the desktop and the CAD engine stays valid.
+$base = Join-Path $package 'runtime/base'
+New-Item -ItemType Directory -Path $base -Force | Out-Null
 foreach ($binary in @('FormRecall.exe', 'formrecall-engine-host.exe')) {
-    Copy-Item -LiteralPath (Join-Path $output $binary) -Destination $package
+    Copy-Item -LiteralPath (Join-Path $output $binary) -Destination $base
 }
-Copy-NativeResources (Join-Path $package 'app')
-Copy-NativeCatiaResources $preparedResources $package
+Copy-NativeResources (Join-Path $base 'app')
+Copy-NativeCatiaResources $preparedResources $base
 foreach ($resource in @('runtime-bundle-manifest.json', 'dsh-runtime-win-x64.zip')) {
-    Copy-Item -LiteralPath (Join-Path $dshResources $resource) -Destination (Join-Path $package 'app/packaging/dsh-runtime')
+    Copy-Item -LiteralPath (Join-Path $dshResources $resource) -Destination (Join-Path $base 'app/packaging/dsh-runtime')
 }
-Copy-NativeOcctRuntime $runtimeManifest (Join-Path $package 'occt-runtime')
-Copy-Item -LiteralPath (Join-Path $script:RepositoryRoot 'LICENSE') -Destination $package
-Copy-Item -LiteralPath (Join-Path $script:NativeDesktopRoot 'THIRD_PARTY_NOTICES.md') -Destination $package
-Copy-NativeGoLicenses (Join-Path $package 'licenses/go') -Offline:$Offline
-$iconLicenseDirectory = Join-Path $package 'licenses/icons'
+Copy-NativeOcctRuntime $runtimeManifest (Join-Path $base 'occt-runtime')
+Copy-Item -LiteralPath (Join-Path $script:RepositoryRoot 'LICENSE') -Destination $base
+Copy-Item -LiteralPath (Join-Path $script:NativeDesktopRoot 'THIRD_PARTY_NOTICES.md') -Destination $base
+Copy-NativeGoLicenses (Join-Path $base 'licenses/go') -Offline:$Offline
+$iconLicenseDirectory = Join-Path $base 'licenses/icons'
 New-Item -ItemType Directory -Path $iconLicenseDirectory -Force | Out-Null
 Copy-Item -LiteralPath (Join-Path $script:NativeDesktopRoot 'internal/workbench/icons/LICENSE') -Destination (Join-Path $iconLicenseDirectory 'Lucide-LICENSE')
-$start = @'
-@echo off
-setlocal DisableDelayedExpansion
-start "" "%~dp0FormRecall.exe"
-'@
-$start.Replace("`r`n", "`n").Replace("`n", "`r`n") | Set-Content -LiteralPath (Join-Path $package 'Start-FormRecall.cmd') -Encoding ascii -NoNewline
-$readme = @'
-FormRecall 原生桌面版
-
-双击 FormRecall.exe 或 Start-FormRecall.cmd 启动。适用于 Windows x64。
-界面使用 MyGo，建模由同目录的 Rust 核心进程及 OCCT 完成。
-默认用户资料保存在当前用户的本地应用数据目录。可通过 AIMODELER_DESKTOP_DATA_DIR 指定独立目录。
-Quick 本地建模使用包内资源。Agent 需在设置中安装其私有 DSH 运行时并配置模型。
-DSH 运行时已随包提供，安装过程从本地解压并校验 Node.js 和 DSH/ACP 依赖。
-CATIA 的 Python 与 pywin32 运行时随包提供，首次导出时安装到用户私有目录。CATIA 操作还需要本机已注册的 CATIA COM。
-软件及依赖许可见 LICENSE、THIRD_PARTY_NOTICES.md 和 occt-runtime/install。
-'@
-$readme | Set-Content -LiteralPath (Join-Path $package '使用说明.txt') -Encoding utf8NoBOM
-if ($Version) {
-    Set-Content -LiteralPath (Join-Path $package 'update-bootstrap-v2') -Value '2' -Encoding ascii
-    Set-Content -LiteralPath (Join-Path $package 'update-bootstrap-v3') -Value '3' -Encoding ascii
-}
 $sourceCommit = & git -C $script:RepositoryRoot rev-parse HEAD
 if ($LASTEXITCODE -ne 0) { throw 'Cannot record the source commit.' }
 $sourceStatus = @(& git -C $script:RepositoryRoot status --porcelain --untracked-files=all)
@@ -126,12 +109,15 @@ $record = @{
     source_untracked_count = @($sourceStatus | Where-Object { $_.StartsWith('?? ') }).Count
     built_at = [DateTime]::UtcNow.ToString('o')
     debug = [bool]$DebugBuild
-    files = @(Get-ChildItem -LiteralPath $package -File -Recurse | ForEach-Object {
-        @{ path = [IO.Path]::GetRelativePath($package, $_.FullName).Replace('\', '/'); bytes = $_.Length; sha256 = (Get-FileHash -LiteralPath $_.FullName -Algorithm SHA256).Hash.ToLowerInvariant() }
+    files = @(Get-ChildItem -LiteralPath $base -File -Recurse | ForEach-Object {
+        @{ path = [IO.Path]::GetRelativePath($base, $_.FullName).Replace('\', '/'); bytes = $_.Length; sha256 = (Get-FileHash -LiteralPath $_.FullName -Algorithm SHA256).Hash.ToLowerInvariant() }
     })
 }
 if ($Version) { $record.version = $Version }
-$record | ConvertTo-Json -Depth 6 | Set-Content -LiteralPath (Join-Path $package 'package-manifest.json') -Encoding utf8NoBOM
+$record | ConvertTo-Json -Depth 6 | Set-Content -LiteralPath (Join-Path $base 'package-manifest.json') -Encoding utf8NoBOM
+# The entry point is a byte-identical copy of the bundled desktop binary, so the
+# program root never carries a separately built launcher.
+Copy-Item -LiteralPath (Join-Path $base 'FormRecall.exe') -Destination $package
 Compress-Archive -LiteralPath $package -DestinationPath $archive -CompressionLevel Optimal
 & "$PSScriptRoot/verify-native-package.ps1" -PackageDirectory $package -ArchivePath $archive -InstallDshRuntime -InstallCatiaRuntime
 if ($Version) {

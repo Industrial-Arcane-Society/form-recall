@@ -10,8 +10,9 @@ const installationNotes = [
   'Windows x64 使用说明',
   '',
   '- 安装使用请选择 setup.exe 完整安装包，运行后按提示完成安装。',
-  '- 便携使用请选择 portable.zip，完整解压后运行 FormRecall.exe。',
-  '- 两种下载均包含程序、核心进程、运行库和配套资源。',
+  '- 便携使用请选择 portable.zip，完整解压后运行根目录的 FormRecall.exe。',
+  '- 两种下载均包含程序、核心进程、运行库和配套资源；程序目录只有 FormRecall.exe 和 runtime 目录。',
+  '- 从 0.3.0 及更早版本升级时，请使用完整安装包覆盖安装，或重新解压便携包；用户资料保存在用户数据目录，不受影响。',
 ].join('\n')
 
 export function normalizeVersion(value) {

@@ -21,8 +21,19 @@ New-Item -ItemType Directory -Path $out -Force | Out-Null
 $targetArchive = [IO.Compression.ZipFile]::OpenRead((Resolve-Path -LiteralPath $PortableZip).Path)
 
 function Read-Inventory($Archive, [string]$ReleaseVersion) {
-    $prefix = "FormRecall-$ReleaseVersion-windows-x64/"
+    # The visible package root holds only the entry point and runtime/base. The
+    # bundled base keeps the flat layout, so its manifest paths are exactly the
+    # payload-relative paths the update manifest publishes.
+    $packagePrefix = "FormRecall-$ReleaseVersion-windows-x64/"
+    $prefix = $packagePrefix + 'runtime/base/'
     $manifestEntry = $Archive.GetEntry($prefix + 'package-manifest.json')
+    if (-not $manifestEntry) {
+        # Baselines released before the container layout keep the flat bundle
+        # directly below the package root; their manifest paths are already
+        # payload-relative, so the same comparison stays valid.
+        $prefix = $packagePrefix
+        $manifestEntry = $Archive.GetEntry($prefix + 'package-manifest.json')
+    }
     if (-not $manifestEntry -or $manifestEntry.Length -gt 1MB) { throw 'Portable package has no valid inventory.' }
     $reader = [IO.StreamReader]::new($manifestEntry.Open())
     try { $manifest = $reader.ReadToEnd() | ConvertFrom-Json -AsHashtable }
@@ -95,6 +106,8 @@ try {
             $deltaArchive = [IO.Compression.ZipFile]::Open($targetPath, [IO.Compression.ZipArchiveMode]::Create)
             try {
                 foreach ($file in $changed) {
+                    # Delta entries keep payload-relative names because a delta is
+                    # extracted directly into the payload directory.
                     $entry = $target.entries[$file.path]
                     $new = $deltaArchive.CreateEntry($file.path, [IO.Compression.CompressionLevel]::Optimal)
                     $new.LastWriteTime = $entry.LastWriteTime

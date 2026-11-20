@@ -76,7 +76,7 @@ func TestCheckAndStageUsesDeltaOrVerifiesFullFallback(t *testing.T) {
 			delta := testZIP(t, map[string][]byte{
 				"FormRecall.exe": content["FormRecall.exe"], "package-manifest.json": content["package-manifest.json"],
 			}, "")
-			full := testZIP(t, content, "FormRecall-"+to+"-windows-x64/")
+			full := testZIP(t, content, "FormRecall-"+to+"-windows-x64/runtime/base/")
 			m := Manifest{Schema: 2, Platform: "windows-x64", Channel: "alpha", Version: to, Commit: strings.Repeat("a", 40),
 				Full:   testAsset(assetURL("form-recall", to, "FormRecall-"+to+"-windows-x64-portable.zip"), full),
 				Deltas: []Delta{{From: from, Asset: testAsset(assetURL("form-recall-release", to, "FormRecall-OTA-v"+from+"_v"+to+"-win-x64.zip"), delta)}},

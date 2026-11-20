@@ -9,10 +9,26 @@ Set-StrictMode -Version Latest
 if (-not $IsWindows) { throw 'Native release startup verification requires Windows.' }
 $repository = [IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..'))
 $package = (Resolve-Path -LiteralPath $PackageDirectory).Path
+# The packaged entry point is the launcher; it forwards to the bundled version
+# under runtime/base, which keeps the established flat bundle layout.
+$payload = Join-Path $package 'runtime/base'
 $executable = Join-Path $package 'FormRecall.exe'
-$engine = Join-Path $package 'formrecall-engine-host.exe'
-foreach ($required in @($executable, $engine, (Join-Path $package 'app'), (Join-Path $package 'occt-runtime/runtime-manifest.json'))) {
+$engine = Join-Path $payload 'formrecall-engine-host.exe'
+foreach ($required in @($executable, $payload, $engine, (Join-Path $payload 'app'), (Join-Path $payload 'occt-runtime/runtime-manifest.json'))) {
     if (-not (Test-Path -LiteralPath $required)) { throw "Required package input is missing: $required" }
+}
+# CI provisions the software OpenGL driver beside the package entry point, while the
+# desktop runs from runtime/base. Relocate those test-only files next to the process
+# that loads them, and remove them again when the check finishes.
+$startupArtifactCopies = [Collections.Generic.List[string]]::new()
+foreach ($artifact in @(Get-ChildItem -LiteralPath $package -File -Force)) {
+    if ($artifact.Name -ieq 'FormRecall.exe') { continue }
+    $target = Join-Path $payload $artifact.Name
+    if (Test-Path -LiteralPath $target) {
+        throw "A bundled version file collides with a startup test artifact: $($artifact.Name)"
+    }
+    Copy-Item -LiteralPath $artifact.FullName -Destination $target
+    $startupArtifactCopies.Add($target)
 }
 if ($Version -notmatch '^(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)(-[0-9A-Za-z-]+(\.[0-9A-Za-z-]+)*)?(\+[0-9A-Za-z-]+(\.[0-9A-Za-z-]+)*)?$') {
     throw 'Version must be a semantic version without a leading v.'
@@ -42,6 +58,7 @@ $proof = [ordered]@{
     schema = 1
     verified_at = [DateTime]::UtcNow.ToString('o')
     package = $package
+    payload_root = $payload
     expected_version = $Version
     executable_sha256 = (Get-FileHash -LiteralPath $executable).Hash.ToLowerInvariant()
     engine_sha256 = (Get-FileHash -LiteralPath $engine).Hash.ToLowerInvariant()
@@ -49,7 +66,7 @@ $proof = [ordered]@{
     data_directory = $data
     config_path = $config
     screenshot_method = 'Application initialization screenshot, which may composite the native framebuffer; this check does not verify desktop presentation.'
-    resource_resolution = 'Direct package EXE launch with only isolated --data and --config; engine, resources and OCCT use package defaults.'
+    resource_resolution = 'Program-root launcher with only isolated --data and --config; it forwards to runtime/base, whose engine, resources and OCCT use bundle defaults.'
     passed = $false
 }
 $failure = $null
@@ -75,12 +92,21 @@ function New-StartupProcessInfo {
     return $info
 }
 
+function Test-OwnedStartupExecutable {
+    param([string]$Path)
+    # Only processes from this package's own runtime tree are owned by the test.
+    $relative = [IO.Path]::GetRelativePath($package, [IO.Path]::GetFullPath($Path))
+    if ([IO.Path]::IsPathRooted($relative) -or $relative -eq '..') { return $false }
+    return -not $relative.StartsWith('..' + [IO.Path]::DirectorySeparatorChar, [StringComparison]::Ordinal)
+}
+
 function Add-OwnedStartupChildren {
-    param([int]$ParentId, [DateTime]$StartedAfter, [switch]$RequireQuery)
-    # Query only direct children of the frontend started by this script. The
-    # Quick fixture uses its packaged Rust host and the in-process OCCT bridge.
+    param([int]$ParentId, [DateTime]$StartedAfter, [string]$ExecutableName, [string]$Kind, [switch]$RequireQuery)
+    # Query only direct children started by this script: the program-root
+    # launcher starts the selected version executable and that version starts its
+    # packaged Rust host. The Quick fixture uses the in-process OCCT bridge.
     # Sampling a short-lived child is optional. The required query after frontend
-    # exit checks for leftovers even when no running host was sampled earlier.
+    # exit checks for leftovers even when no running child was sampled earlier.
     try {
         $children = @(Get-CimInstance Win32_Process -Filter "ParentProcessId = $ParentId" -OperationTimeoutSec 5)
     } catch {
@@ -90,18 +116,20 @@ function Add-OwnedStartupChildren {
     }
     foreach ($child in $children) {
         if ($tracked | Where-Object { $_.Id -eq [int]$child.ProcessId }) { continue }
-        if (-not $child.ExecutablePath -or [IO.Path]::GetFullPath($child.ExecutablePath) -ine $engine) { continue }
+        if (-not $child.ExecutablePath -or [IO.Path]::GetFileName($child.ExecutablePath) -ine $ExecutableName -or
+            -not (Test-OwnedStartupExecutable $child.ExecutablePath)) { continue }
+        $executable = [IO.Path]::GetFullPath($child.ExecutablePath)
         $process = Get-Process -Id $child.ProcessId -ErrorAction SilentlyContinue
         if (-not $process) { continue }
         try {
-            # Hold a real process handle while the host is alive so Windows can
+            # Hold a real process handle while the child is alive so Windows can
             # still supply its exit code after the parent has reaped it.
             $null = $process.Handle
             $startedAt = $process.StartTime.ToUniversalTime()
             if ($startedAt -lt $StartedAfter) { $process.Dispose(); continue }
             $tracked.Add([pscustomobject]@{
                 Id = $process.Id; StartedAt = $startedAt; Process = $process
-                Executable = $child.ExecutablePath; CommandLine = $child.CommandLine
+                Executable = $executable; CommandLine = $child.CommandLine; Kind = $Kind
             })
         } catch { $process.Dispose() }
     }
@@ -158,7 +186,7 @@ try {
         throw 'Packaged version identity does not match the requested release or has no full source commit.'
     }
     $proof['identity'] = $identity
-    $manifestPath = Join-Path $package 'package-manifest.json'
+    $manifestPath = Join-Path $payload 'package-manifest.json'
     if (Test-Path -LiteralPath $manifestPath) {
         $manifest = Get-Content -LiteralPath $manifestPath -Raw | ConvertFrom-Json -AsHashtable
         if ($manifest['source_commit'] -cne $identity['commit']) {
@@ -175,26 +203,42 @@ try {
     $proof['frontend_pid'] = $frontend.Id
     $deadline = [DateTime]::UtcNow.AddSeconds(150)
     do {
-        Add-OwnedStartupChildren $frontend.Id $frontendStartedAt
+        Add-OwnedStartupChildren $frontend.Id $frontendStartedAt 'FormRecall.exe' 'version'
+        foreach ($versionRecord in @($tracked | Where-Object { $_.Kind -ceq 'version' })) {
+            Add-OwnedStartupChildren $versionRecord.Id $versionRecord.StartedAt 'formrecall-engine-host.exe' 'host'
+        }
         if ($frontend.WaitForExit(100)) { break }
         if ([DateTime]::UtcNow -ge $deadline) { throw 'Packaged frontend startup did not finish within 150 seconds.' }
     } while ($true)
     $timer.Stop()
-    Add-OwnedStartupChildren $frontend.Id $frontendStartedAt -RequireQuery
+    Add-OwnedStartupChildren $frontend.Id $frontendStartedAt 'FormRecall.exe' 'version' -RequireQuery
     Write-StartupStreams $stdout $stderr 'frontend'
     $proof['elapsed_ms'] = $timer.ElapsedMilliseconds
     $proof['exit_code'] = $frontend.ExitCode
     if ($frontend.ExitCode -ne 0) { throw "Packaged frontend exited with code $($frontend.ExitCode)." }
     $hostObservations = @()
+    $versionObservations = @()
     foreach ($hostRecord in $tracked) {
+        if (-not $hostRecord.Process.WaitForExit(5000)) {
+            throw "A packaged process remained after the launcher exited: $($hostRecord.Executable)"
+        }
+        if ($hostRecord.Kind -ceq 'version') {
+            $versionObservations += @{
+                pid = $hostRecord.Id; executable = $hostRecord.Executable; command_line = $hostRecord.CommandLine
+                exited = $true
+            }
+            continue
+        }
         if ($hostRecord.CommandLine) {
-            foreach ($expectedPath in @((Join-Path $package 'app'), $data, $config)) {
+            # The bundled version resolves its own resources and passes them to
+            # the Rust host together with the forwarded isolated paths.
+            $resources = Join-Path ([IO.Path]::GetDirectoryName($hostRecord.Executable)) 'app'
+            foreach ($expectedPath in @($resources, $data, $config)) {
                 if (-not $hostRecord.CommandLine.Contains($expectedPath, [StringComparison]::OrdinalIgnoreCase)) {
-                    throw "The frontend did not forward its isolated or packaged path to the host: $expectedPath"
+                    throw "The packaged version did not forward its isolated or bundled path to the host: $expectedPath"
                 }
             }
         }
-        if (-not $hostRecord.Process.WaitForExit(5000)) { throw 'The packaged Rust host remained after frontend exit.' }
         $hostExitCode = $hostRecord.Process.ExitCode
         if ($null -ne $hostExitCode -and $hostExitCode -ne 0) { throw "The packaged Rust host exited with code $hostExitCode." }
         $hostObservations += @{
@@ -202,8 +246,9 @@ try {
             exited = $true; exit_code = $hostExitCode
         }
     }
+    $proof['version_observations'] = $versionObservations
     $proof['host_observations'] = $hostObservations
-    $proof['host_observation_method'] = 'Optional running-child samples plus a required child query after frontend exit. A missed short-lived host or unavailable exit code does not fail the functional startup check.'
+    $proof['host_observation_method'] = 'Optional running-child samples of the forwarded version and its Rust host plus a required child query after frontend exit. A missed short-lived child or unavailable exit code does not fail the functional startup check.'
     $proof['post_exit_child_query_succeeded'] = $true
     if (-not (Test-Path -LiteralPath $screenshot -PathType Leaf) -or -not (Test-Path -LiteralPath "$screenshot.json" -PathType Leaf)) {
         throw 'Frontend exited without both its startup screenshot and diagnostic JSON.'
@@ -259,6 +304,11 @@ try {
         }
     }
     $proof['residual_host_pids_before_cleanup'] = $residuals
+    foreach ($copy in $startupArtifactCopies) {
+        if (Test-Path -LiteralPath $copy) { Remove-Item -LiteralPath $copy -Force }
+    }
+    $proof['startup_artifacts_relocated'] = @($startupArtifactCopies | ForEach-Object { Split-Path -Leaf $_ })
+    $proof['startup_artifacts_removed'] = @($startupArtifactCopies | Where-Object { Test-Path -LiteralPath $_ }).Count -eq 0
     $proof['removed_environment_names'] = @($removedEnvironment | Sort-Object)
     foreach ($item in @(@($screenshot, 'startup.png'), @("$screenshot.json", 'startup.png.json'), @($config, 'isolated-config.json'))) {
         if (Test-Path -LiteralPath $item[0] -PathType Leaf) { Copy-Item -LiteralPath $item[0] -Destination (Join-Path $output $item[1]) -Force }
