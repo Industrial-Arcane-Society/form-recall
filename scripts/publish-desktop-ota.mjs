@@ -16,6 +16,10 @@ const key = createPublicKey({ key: { kty: 'OKP', crv: 'Ed25519', x: publicX }, f
 const pattern = /^(0|[1-9]\d{0,8})\.(0|[1-9]\d{0,8})\.(0|[1-9]\d{0,8})(?:-(alpha|beta|rc)\.([1-9]\d{0,8}))?$/
 const digestPattern = /^[a-f0-9]{64}$/
 const stableMinimum = '0.3.0'
+// The runtime container layout (FormRecall.exe plus runtime/base) shipped with
+// 0.3.1-alpha.1. Clients older than this unpack the portable archive from the
+// package root, so they cannot apply any package built this way.
+const layoutFloor = '0.3.1-alpha.1'
 
 function channel(version) {
   const match = pattern.exec(version)
@@ -124,12 +128,20 @@ async function verifyRelease(sourceAPI, release) {
   return proof.commit
 }
 
-async function stageRelease(api, release, tag, prerelease, assets, manifest) {
+async function stageRelease(api, release, tag, prerelease, assets, manifest, notes = []) {
   const groups = Map.groupBy(manifest.deltas, item => path.posix.basename(item.url))
   const routes = [...groups].map(([name, changes]) => `- \`${name}\` 可从 ${changes.map(item => `v${item.from}`).join('、')} 直达。`)
+  if (routes.length === 0) routes.push('- 本版本没有可用的增量包，客户端会下载完整便携包。')
+  const body = [
+    `FormRecall 应用内更新文件 · ${tag}`,
+    '',
+    `源码提交 \`${manifest.commit}\``,
+    '',
+    ...routes,
+    ...(notes.length > 0 ? ['', ...notes] : []),
+  ].join('\n')
   release ??= await api.request('POST', '/releases', {
-    tag_name: tag, target_commitish: 'main', name: `FormRecall OTA ${tag}`, draft: true, prerelease,
-    body: [`FormRecall 应用内更新文件 · ${tag}`, '', `源码提交 \`${manifest.commit}\``, '', ...routes].join('\n'),
+    tag_name: tag, target_commitish: 'main', name: `FormRecall OTA ${tag}`, draft: true, prerelease, body,
   })
   if (!release.draft || release.tag_name !== tag) throw new Error('Expected the matching OTA draft.')
   for (const remote of release.assets) {
@@ -221,12 +233,14 @@ async function publish() {
       const older = published.filter(item => item.published_at <= release.published_at &&
         compare(item.tag_name.slice(1), next) < 0).sort((a, b) => b.published_at.localeCompare(a.published_at) ||
           compare(b.tag_name.slice(1), a.tag_name.slice(1)))
+      const usable = older.filter(item => compare(item.tag_name.slice(1), layoutFloor) >= 0)
       const baselines = selected !== 'stable'
-        ? older.filter(item => item.prerelease).slice(0, 8)
+        ? usable.filter(item => item.prerelease).slice(0, 8)
         : [
-            ...older.filter(item => item.tag_name.startsWith(`v${next}-rc.`)).slice(0, 1),
-            ...older.filter(item => !item.prerelease && compare(item.tag_name.slice(1), stableMinimum) >= 0),
+            ...usable.filter(item => item.tag_name.startsWith(`v${next}-rc.`)).slice(0, 1),
+            ...usable.filter(item => !item.prerelease && compare(item.tag_name.slice(1), stableMinimum) >= 0),
           ].slice(0, 8)
+      const legacyBaselines = older.length - usable.length
       const results = await Promise.allSettled([
         fetchAsset(targetAsset, path.join(directory, 'target.zip')),
         ...baselines.map(item => baselineInventory(api, item, directory)),
@@ -248,7 +262,10 @@ async function publish() {
         const file = path.join(directory, name)
         return { name, path: file, ...await identity(file), contentType: name.endsWith('.zip') ? 'application/zip' : 'application/json' }
       }))
-      ota = await stageRelease(api, ota, `v${next}`, selected !== 'stable', assets, manifest)
+      const notes = legacyBaselines > 0
+        ? ['0.3.0 及更早版本使用旧的目录结构，无法应用这份更新包：请用完整安装包或便携包升级一次，之后恢复应用内更新。']
+        : []
+      ota = await stageRelease(api, ota, `v${next}`, selected !== 'stable', assets, manifest, notes)
     }
     const record = remoteAsset(ota, distribution, 'update.json')
     if (record.bytes > 1 << 20) throw new Error('Published update manifest is too large.')
