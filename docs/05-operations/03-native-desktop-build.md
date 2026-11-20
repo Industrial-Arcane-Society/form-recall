@@ -86,9 +86,20 @@ Release 提供以下文件。
 | --- | --- |
 | `FormRecall-{version}-windows-x64-setup.exe` | 完整安装包，向导安装全部运行组件并提供快捷方式和卸载入口 |
 | `FormRecall-{version}-windows-x64-portable.zip` | 完整免安装包，解压后运行目录内的 `FormRecall.exe` |
-| `FormRecall-{version}-windows-x64.sha256` | 两个下载文件的 SHA-256 校验值 |
+
+两个下载文件的 SHA-256 写在 Release 说明中。构建 artifact 仍保留独立校验文件供自动验收使用。
 
 安装包与便携包均包含桌面程序、Rust 建模引擎、OCCT 和运行资源。安装向导支持简体中文和英文，默认安装到当前用户目录，无需管理员权限，支持选择目录、开始菜单与可选桌面快捷方式，并提供系统卸载入口。安装包使用 Inno Setup 编译，Windows Actions 镜像预装编译器。本地版本打包需要可用的 Inno Setup 6，可通过 `-InstallerCompiler` 指定 `ISCC.exe`。指定 `source_commit` 时，源码需要包含完整安装包构建支持。历史已公开版本的重跑会直接跳过。
+
+### 应用内更新
+
+主仓库提供完整下载。[form-recall-release](https://github.com/Industrial-Arcane-Society/form-recall-release) 提供频道清单和 OTA 附件。Alpha、Beta 和 RC 按发布时间共享最近最多八个可升级的测试版来源。正式版从同版本线最近的 RC 和旧正式版计算增量。分发工作流复用验签通过的历史文件清单，合并内容相同的补丁。发布并验证附件后，更新签名频道清单。
+
+桌面客户端内置验签公钥，优先通过 GitHub 内容 API 检查签名清单。打开「设置 → 更新」，可选择 Alpha、Beta、RC 或 Release，并设置是否自动检测。偏好保存在用户数据目录。手动检测始终可用。选择同一版本线的较低渠道版本时，需主动选择「重启并降级」。若增量基线校验失败或没有匹配补丁，客户端改用完整便携 ZIP。两种路径都在独立版本目录组装并校验，启动器在建模引擎就绪后才提交新版本指针。启动失败时继续使用之前的版本。工程和用户设置沿用原有数据目录。
+
+分发 Release 提供一份签名的 `update.json`，每个渠道使用一条固定的清单地址。按来源和目标版本命名 OTA 附件。多个来源共享同一附件时，发布时间线中最接近的来源用于文件名，全部适用来源列在发布说明和签名清单中。
+
+Beta.3 将更新格式切换为单清单。旧版用户需要用完整包升级一次。Beta.3 可读取历史签名清单进行同版本线跨渠道降级，从使用旧格式的历史版本返回时，可将 Beta.3 便携包解压到新目录后启动。实际运行版本显示在更新页，Windows 卸载列表显示最近一次通过安装向导安装的版本。
 
 发布版本通过 Go 链接参数写入桌面程序，并记录在 `package-manifest.json`。`FormRecall.exe --version-json` 输出桌面版本与源码提交，供成品检查使用。引擎组件与兼容入口保留各自版本。发布说明优先读取 `.release-notes/v{version}.md`，其余版本使用 GitHub 自动生成说明。
 

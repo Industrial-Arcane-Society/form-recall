@@ -251,6 +251,8 @@ export async function preparePR({ env = process.env, api } = {}) {
     let candidate
     try { candidate = normalizeVersion(release.tag_name) } catch { continue }
     if (candidate.tag !== release.tag_name) continue
+    // The desktop OTA trial is independent of the maintainer's stable release sequence.
+    if (/-alpha\.[1-9]\d*$/.test(candidate.version) && !/-alpha\.[1-9]\d*$/.test(env.RELEASE_BUMP ?? '')) continue
     if (compareVersions(candidate.version, baseline) > 0) baseline = candidate.version
   }
   const target = nextVersion(baseline, env.RELEASE_BUMP)

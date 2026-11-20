@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/Industrial-Arcane-Society/form-recall/desktop/internal/engine"
+	"github.com/Industrial-Arcane-Society/form-recall/desktop/internal/update"
 	"github.com/egoist/mygo"
 	"github.com/egoist/mygo/ui"
 )
@@ -36,6 +37,9 @@ type Options struct {
 	CapturePanel           string
 	ExitAfter              time.Duration
 	Width, Height          int
+	Updater                *update.Client
+	RestartUpdate          func(string)
+	UpdateReady            func()
 }
 
 type App struct {
@@ -76,6 +80,8 @@ type App struct {
 	findings                                                               []Object
 	findingRequest                                                         uint64
 	turnStatus                                                             string
+	softwareUpdate                                                         softwareUpdate
+	updateFailure                                                          string
 }
 
 func New(service Service, scene Scene) *App {
@@ -88,6 +94,13 @@ func New(service Service, scene Scene) *App {
 func Run(options Options, scene Scene) error {
 	a := New(nil, scene)
 	a.options = options
+	updateContext, cancelUpdate := context.WithCancel(context.Background())
+	defer cancelUpdate()
+	a.softwareUpdate.ctx = updateContext
+	if options.Updater != nil {
+		a.updateFailure = options.Updater.LastError()
+		a.softwareUpdate.preferences = update.LoadPreferences(options.Engine.DataDir, options.Updater.Channel())
+	}
 	started := make(chan *engine.Client, 1)
 	launching := false
 	mygo.App.WhenReady(func() {
@@ -115,6 +128,25 @@ func Run(options Options, scene Scene) error {
 			a.requestClose()
 		})
 		a.win.OnClosed(func() { a.closed.Store(true); scene.Close(); mygo.App.Quit() })
+		if options.Updater != nil {
+			go func() {
+				timer := time.NewTimer(3 * time.Second)
+				defer timer.Stop()
+				for {
+					select {
+					case <-updateContext.Done():
+						return
+					case <-timer.C:
+						a.update(func() {
+							if a.softwareUpdate.preferences.Auto {
+								a.checkForUpdate()
+							}
+						})
+						timer.Reset(6 * time.Hour)
+					}
+				}
+			}()
+		}
 		hostOptions := options.Engine
 		hostOptions.OnEvent = func(event engine.Event) { a.update(func() { a.handleEvent(event) }) }
 		hostOptions.OnLog = func(line string) { a.update(func() { a.addLog(line) }) }
@@ -252,6 +284,9 @@ func (a *App) initialize() {
 			a.acceptSnapshot(snapshot, false)
 			a.restoreHistory(history)
 			a.status = "就绪"
+			if a.options.UpdateReady != nil && a.failure == "" {
+				a.options.UpdateReady()
+			}
 			if a.options.DemoPrompt != "" {
 				a.prompt = a.options.DemoPrompt
 				a.submit()
@@ -537,8 +572,20 @@ func (a *App) scheduleCapture() {
 			ready := false
 			if err := onUI(func() {
 				ready = idle()
-				if ready && a.options.CapturePanel == "settings" {
-					a.openSettings()
+				if ready {
+					switch a.options.CapturePanel {
+					case "settings":
+						a.openSettings()
+					case "updates":
+						if a.options.Updater != nil {
+							a.openSettings()
+							a.settingsTab = 4
+							if a.softwareUpdate.status == "" {
+								a.checkForUpdate()
+							}
+							ready = !a.softwareUpdate.working
+						}
+					}
 				}
 			}); err != nil {
 				if !a.closed.Load() {

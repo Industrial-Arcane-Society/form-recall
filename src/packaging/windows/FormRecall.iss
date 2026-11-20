@@ -59,3 +59,6 @@ Name: "{autodesktop}\FormRecall"; Filename: "{app}\FormRecall.exe"; WorkingDir: 
 
 [Run]
 Filename: "{app}\FormRecall.exe"; WorkingDir: "{app}"; Description: "{cm:LaunchProgram,FormRecall}"; Flags: nowait postinstall skipifsilent
+
+[UninstallDelete]
+Type: filesandordirs; Name: "{app}\.formrecall-updates"

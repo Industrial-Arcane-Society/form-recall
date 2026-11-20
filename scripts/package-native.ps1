@@ -95,9 +95,6 @@ Copy-Item -LiteralPath (Join-Path $script:NativeDesktopRoot 'internal/workbench/
 $start = @'
 @echo off
 setlocal DisableDelayedExpansion
-set "FORMRECALL_ENGINE=%~dp0formrecall-engine-host.exe"
-set "AIMODELER_RESOURCE_ROOT=%~dp0app"
-set "AIMODELER_OCCT_MANIFEST=%~dp0occt-runtime\runtime-manifest.json"
 start "" "%~dp0FormRecall.exe"
 '@
 $start.Replace("`r`n", "`n").Replace("`n", "`r`n") | Set-Content -LiteralPath (Join-Path $package 'Start-FormRecall.cmd') -Encoding ascii -NoNewline
@@ -113,6 +110,10 @@ CATIA 的 Python 与 pywin32 运行时随包提供，首次导出时安装到用
 软件及依赖许可见 LICENSE、THIRD_PARTY_NOTICES.md 和 occt-runtime/install。
 '@
 $readme | Set-Content -LiteralPath (Join-Path $package '使用说明.txt') -Encoding utf8NoBOM
+if ($Version) {
+    Set-Content -LiteralPath (Join-Path $package 'update-bootstrap-v2') -Value '2' -Encoding ascii
+    Set-Content -LiteralPath (Join-Path $package 'update-bootstrap-v3') -Value '3' -Encoding ascii
+}
 $sourceCommit = & git -C $script:RepositoryRoot rev-parse HEAD
 if ($LASTEXITCODE -ne 0) { throw 'Cannot record the source commit.' }
 $sourceStatus = @(& git -C $script:RepositoryRoot status --porcelain --untracked-files=all)

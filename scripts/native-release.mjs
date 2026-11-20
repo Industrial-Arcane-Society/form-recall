@@ -12,7 +12,6 @@ const installationNotes = [
   '- 安装使用请选择 setup.exe 完整安装包，运行后按提示完成安装。',
   '- 便携使用请选择 portable.zip，完整解压后运行 FormRecall.exe。',
   '- 两种下载均包含程序、核心进程、运行库和配套资源。',
-  '- 随附的 .sha256 文件提供安装包和便携 ZIP 的 SHA-256 校验值。',
 ].join('\n')
 
 export function normalizeVersion(value) {
@@ -180,6 +179,19 @@ async function requireMainAncestor(api, commit) {
   }
 }
 
+async function requirePublishSource(api, version, commit, env) {
+  if (env.GITHUB_EVENT_NAME === 'workflow_dispatch' &&
+      env.GITHUB_REF === 'refs/heads/feat/desktop-updates' &&
+      /^\d+\.\d+\.\d+-(alpha|beta)\.[1-9]\d*$/.test(version.version) &&
+      commit === env.GITHUB_SHA) {
+    const branch = await api.request('GET', '/git/ref/heads/feat/desktop-updates')
+    const head = commitSHA(branch.object?.sha)
+    const comparison = await api.request('GET', `/compare/${commit}...${head}`)
+    if (['ahead', 'identical'].includes(comparison.status) && comparison.merge_base_commit?.sha === commit) return
+  }
+  await requireMainAncestor(api, commit)
+}
+
 async function findRelease(api, tag) {
   const direct = await optionalGet(api, `/releases/tags/${encodeURIComponent(tag)}`)
   if (direct) {
@@ -266,7 +278,7 @@ export async function prepare({ env = process.env, api, cwd = process.cwd() } = 
       if (existingTag && existingTag !== commit) throw new Error('Existing tag differs from the event commit. Tags are immutable.')
     }
     if (release) checkRelease(release, version.version, commit, existingTag)
-    if (publish) await requireMainAncestor(api, commit)
+    if (publish) await requirePublishSource(api, version, commit, env)
   }
   const alreadyPublished = Boolean(release && !release.draft)
   const result = { ...version, commit, publish: publish && !alreadyPublished, already_published: alreadyPublished }
@@ -366,19 +378,20 @@ async function ensureTag(api, tag, commit) {
   if (current !== commit) throw new Error('Release tag changed or could not be created at the expected commit.')
 }
 
-async function releaseBody(api, cwd, version, commit) {
+async function releaseBody(api, cwd, version, commit, assets) {
   const generated = await api.request('POST', '/releases/generate-notes', { tag_name: version.tag, target_commitish: commit })
   let local = ''
   try { local = await readFile(path.join(cwd, '.release-notes', `${version.tag}.md`), 'utf8') } catch (error) {
     if (error.code !== 'ENOENT') throw error
   }
   const marker = `<!-- formrecall-release ${JSON.stringify({ schema: 1, version: version.version, commit })} -->`
-  return [local.trim(), generated.body?.trim(), installationNotes, marker].filter(Boolean).join('\n\n')
+  const checksums = ['SHA-256', '', ...assets.map(asset => `- \`${asset.sha256}\` · \`${asset.name}\``)].join('\n')
+  return [local.trim(), generated.body?.trim(), installationNotes, checksums, marker].filter(Boolean).join('\n\n')
 }
 
 async function writeSummary(env, result, assets = []) {
   if (!env.GITHUB_STEP_SUMMARY) return
-  const message = result.already_published ? '该版本已发布，本次跳过。' : '发布完成，三个附件均已校验。'
+  const message = result.already_published ? '该版本已发布，本次跳过。' : '发布完成，两个附件均已校验。'
   const lines = [`FormRecall ${result.tag} ${message}`, '', `提交 \`${result.commit}\``, '',
     ...assets.map(asset => `- \`${asset.name}\`，${asset.bytes} 字节，SHA-256 \`${asset.sha256}\``), '',
   ]
@@ -402,9 +415,9 @@ export async function publish({ env = process.env, api, cwd = process.cwd() } = 
       return result
     }
   }
-  const assets = await validateAssets(env.RELEASE_ASSET_DIR, version.version, commit)
-  await requireMainAncestor(api, commit)
-  const body = await releaseBody(api, cwd, version, commit)
+  const assets = (await validateAssets(env.RELEASE_ASSET_DIR, version.version, commit)).slice(0, 2)
+  await requirePublishSource(api, version, commit, env)
+  const body = await releaseBody(api, cwd, version, commit, assets)
   if (!release) {
     release = await api.request('POST', '/releases', {
       tag_name: version.tag, target_commitish: commit, name: `FormRecall ${version.tag}`,
@@ -428,7 +441,7 @@ export async function publish({ env = process.env, api, cwd = process.cwd() } = 
     await api.upload(release.id, asset)
   }
   const uploaded = await listAll(api, `/releases/${release.id}/assets`)
-  if (uploaded.length !== assets.length || new Set(uploaded.map(asset => asset.name)).size !== assets.length) throw new Error('Draft does not contain exactly three distinct release assets.')
+  if (uploaded.length !== assets.length || new Set(uploaded.map(asset => asset.name)).size !== assets.length) throw new Error('Draft does not contain exactly two distinct release assets.')
   for (const asset of assets) {
     const remote = uploaded.find(item => item.name === asset.name)
     if (!remote || !await assetMatches(api, remote, asset)) throw new Error(`Uploaded asset verification failed for ${asset.name}. Draft has been preserved.`)
