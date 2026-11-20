@@ -1,5 +1,7 @@
 package main
 
+//go:generate go run generate_icon.go
+
 import (
 	"context"
 	"encoding/json"

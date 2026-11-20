@@ -33,6 +33,7 @@ VersionInfoProductVersion={#WindowsVersion}
 VersionInfoTextVersion={#WindowsVersion}
 VersionInfoProductTextVersion={#ReleaseVersion}
 LicenseFile={#PackageDirectory}\LICENSE
+SetupIconFile=..\..\apps\native-desktop\internal\branding\formrecall.ico
 WizardStyle=modern
 Compression=lzma2
 SolidCompression=yes
@@ -54,8 +55,8 @@ Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{
 Source: "{#PackageDirectory}\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
 
 [Icons]
-Name: "{autoprograms}\FormRecall"; Filename: "{app}\FormRecall.exe"; WorkingDir: "{app}"; AppUserModelID: "FormRecall.Desktop"
-Name: "{autodesktop}\FormRecall"; Filename: "{app}\FormRecall.exe"; WorkingDir: "{app}"; AppUserModelID: "FormRecall.Desktop"; Tasks: desktopicon
+Name: "{autoprograms}\FormRecall"; Filename: "{app}\FormRecall.exe"; WorkingDir: "{app}"; IconFilename: "{app}\FormRecall.exe"; AppUserModelID: "FormRecall.Desktop"
+Name: "{autodesktop}\FormRecall"; Filename: "{app}\FormRecall.exe"; WorkingDir: "{app}"; IconFilename: "{app}\FormRecall.exe"; AppUserModelID: "FormRecall.Desktop"; Tasks: desktopicon
 
 [Run]
 Filename: "{app}\FormRecall.exe"; WorkingDir: "{app}"; Description: "{cm:LaunchProgram,FormRecall}"; Flags: nowait postinstall skipifsilent

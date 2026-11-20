@@ -11,6 +11,7 @@ import (
 	"sync/atomic"
 	"time"
 
+	"github.com/Industrial-Arcane-Society/form-recall/desktop/internal/branding"
 	"github.com/Industrial-Arcane-Society/form-recall/desktop/internal/engine"
 	"github.com/Industrial-Arcane-Society/form-recall/desktop/internal/update"
 	"github.com/egoist/mygo"
@@ -93,6 +94,9 @@ func New(service Service, scene Scene) *App {
 
 func Run(options Options, scene Scene) error {
 	a := New(nil, scene)
+	if err := branding.SetApplicationID(); err != nil {
+		a.addLog(err.Error())
+	}
 	a.options = options
 	updateContext, cancelUpdate := context.WithCancel(context.Background())
 	defer cancelUpdate()
@@ -114,6 +118,13 @@ func Run(options Options, scene Scene) error {
 		a.win = mygo.NewWindow(mygo.WindowOptions{Title: "FormRecall", Width: width, Height: height,
 			MinWidth: 980, MinHeight: 640, TitleBarStyle: mygo.TitleBarHidden, HideWindowButtons: true,
 			Content: ui.View(a.View)})
+		icon, err := branding.PNG(128)
+		if err == nil {
+			err = a.win.SetIcon(icon)
+		}
+		if err != nil {
+			a.addLog(fmt.Sprintf("设置窗口图标失败：%v", err))
+		}
 		if native, ok := scene.(interface{ SetWindow(*mygo.Window) error }); ok {
 			if err := native.SetWindow(a.win); err != nil {
 				a.fail(err)

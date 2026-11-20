@@ -7,6 +7,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/Industrial-Arcane-Society/form-recall/desktop/internal/branding"
 	"github.com/egoist/mygo/ui"
 )
 
@@ -83,7 +84,7 @@ func (a *App) titlebar(c *ui.Context) {
 	t := c.Theme()
 	ui.Row(c).Height(44).AlignItems(ui.Center).Background(t.Surface).Gap(0).Children(func() {
 		ui.Row(c).Height(44).Padding(0, 14).AlignItems(ui.Center).Gap(8).DragWindow().Children(func() {
-			glyph(c, "box", t.TextMuted)
+			ui.Image(c, branding.Icon).Size(20, 20)
 			ui.Text(c, "FormRecall").FontSize(13).FontWeight(600)
 		})
 		ui.Box(c).Width(1).Height(20).Background(t.Border)
