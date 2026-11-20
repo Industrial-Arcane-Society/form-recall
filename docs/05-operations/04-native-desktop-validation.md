@@ -2,7 +2,7 @@
 
 记录日期为 2026-11-20，迁移分支为 `feat/mygo-native-workbench`，比较基线为 `cf69659`。验证对象包括独立 Rust 核心、常驻 JSON Lines 宿主、MyGo 工作台、原生视口和 Tauri 兼容入口。研究功能按现有实现保留，本轮范围是桌面和模块构造迁移。
 
-本记录汇总已执行的检查。正式交付包、最终界面截图及其源码提交由交付步骤补充。`temp/outputs` 中的证据属于本机输出，通常受 Git 忽略规则管理，克隆仓库后需按文中的命令重新生成。
+本记录汇总已执行的检查，最终便携包、源码提交和异地启动结果见末节。`temp/outputs` 中的证据属于本机输出，通常受 Git 忽略规则管理，克隆仓库后需按文中的命令重新生成。
 
 ## 环境与模块
 
@@ -135,7 +135,7 @@ Go 客户端的写入队列支持在等待写入权时取消，已进入 Windows
 
 Rust 宿主显式接收 `--resources` 和 `--data` 时，配置路径按 `--config`、`AIMODELER_CONFIG_PATH`、`AIMODELER_DATA_DIR/config.json`、`--data/config.json` 的顺序解析。独立 Release 进程的 handshake 回归覆盖四种组合并通过，保留已有用户配置环境变量的兼容性。[配置路径测试记录](../../temp/outputs/native-host-config-path-tests.log) [测试实现](../../src/apps/engine-host/tests/config_paths.rs)
 
-包含该配置修复的 Rust release 宿主已使用 `--locked --offline --release` 重建。输出 `temp/outputs/native-desktop/release/formrecall-engine-host.exe` 为 21643776 字节，SHA-256 为 `36fd798f01d7d2c5d83d6d4c457d3e2ee649866fbc684c3f87fb05c18b8d5291`。构建仍有既有的 `standard_profile` 未使用警告。[构建记录](../../temp/outputs/native-rust-release-final.log)
+配置修复后的阶段性 Rust release 构建使用 `--locked --offline --release`，宿主为 21643776 字节，SHA-256 为 `36fd798f01d7d2c5d83d6d4c457d3e2ee649866fbc684c3f87fb05c18b8d5291`。该宿主用于前述跨进程回归与动画录屏。源码提交后重新构建的交付包见末节。构建仍有既有的 `standard_profile` 未使用警告。[构建记录](../../temp/outputs/native-rust-release-final.log)
 
 ## Rust 全量基线与 23 项失败
 
@@ -212,4 +212,24 @@ CATIA 资源接入后，`--native-resources` 完成在线准备与离线重跑�
 
 2026-11-20 18:52（UTC+8），`verify-native-catia.ps1` 使用上述 Release 宿主在独立临时数据目录中完成真实安装。先以 `长方体 20x15x8` 为输入执行 Quick，再请求 CATIA 导出到测试用扩展名，使宿主完成私有运行时准备后返回预期的扩展名错误。首次安装耗时 313 ms，安装标记中的 Python 版本、依赖清单哈希和 wheel 哈希均匹配包内清单，重复调用保持有效安装标记的写入时间。私有 Python 3.13.16 x64 成功加载 pywin32 312、`pythoncom` 和 `win32com.client`。证据记录了宿主与 CATIA 清单的 SHA-256，临时安装目录在验证后清理。[CATIA 隔离安装记录](../../temp/outputs/native-catia-verification.json)
 
-本次 CATIA 注册表查询返回 `catia_registered=false`，证据中 `catia_export_verified=false`。实际 CATPart 导出、特征映射及推送到 CATIA 窗口仍需在已注册 CATIA COM 的环境中验收。外部 provider 的真实 Agent 请求和图片传输也待实际环境验收。早期中间包 `FormRecall-20261120-150423-953` 的 DSH invalid 记录保留为历史检查结果，最终发布包仍需关联新的 manifest、源码版本和启动记录。[中间包检查](../../temp/outputs/native-package-model-check-20261120-150423/verification.json)
+本次 CATIA 注册表查询返回 `catia_registered=false`，证据中 `catia_export_verified=false`。实际 CATPart 导出、特征映射及推送到 CATIA 窗口仍需在已注册 CATIA COM 的环境中验收。外部 provider 的真实 Agent 请求和图片传输也待实际环境验收。早期中间包 `FormRecall-20261120-150423-953` 的 DSH invalid 记录保留为历史检查结果。[中间包检查](../../temp/outputs/native-package-model-check-20261120-150423/verification.json)
+
+## 最终交付包与异地启动
+
+源码提交 `7dad64c3a568fe06331f652d93e573268eb6d4ef` 后执行完整离线构建和打包。交付包为 `temp/outputs/native-package/FormRecall-20261120-190810-974`，ZIP 为同目录下的 `FormRecall-20261120-190810-974-windows-x64.zip`，大小 231487132 字节，SHA-256 为 `38bbdb4db30540a2c86fb9078b760c6e45cde3a35d0791ad76b5b4234c5e456f`。[打包日志](../../temp/outputs/native-final-package.log) [包清单](../../temp/outputs/native-package/FormRecall-20261120-190810-974/package-manifest.json)
+
+| 检查 | 实测结果 |
+| --- | --- |
+| 源码与 Go 构建信息 | `source_commit` 和 `vcs.revision` 都为 `7dad64c3a568fe06331f652d93e573268eb6d4ef` |
+| 工作区状态 | 已跟踪文件无修改，35 个既有未跟踪实验文件使 `source_dirty` 和 `vcs.modified` 为 true |
+| 目录和 ZIP | 104 个清单文件大小和 SHA-256 全部匹配，两个可执行文件为 Windows x64 |
+| Go 桌面 SHA-256 | `dcaf608390ac2c58706e50dd7aec5557778ad7388bc862a25dbcdb85f85c5772` |
+| Rust 宿主 SHA-256 | `398a64f4e2df992fb179b55abae1995bea68283933bb085d8b27ae9030a1b2a9` |
+| 包内 DSH 安装 | 干净数据目录安装耗时 25622 ms，重复安装通过 |
+| 包内 CATIA 私有运行时 | 安装耗时 355 ms，重复准备及 Python/COM 模块加载通过 |
+| 异地解压 | 在仓库外含空格和中文的临时目录解压 ZIP，包内校验通过 |
+| 实际桌面入口 | 清理相关环境变量，直接启动异地 `FormRecall.exe`，由程序定位同目录宿主和资源 |
+| 工作台与设置 | 两次独立启动均完成四孔底板建模，尺寸 100×80×10 mm，2 个特征、604 个三角形，视口错误为空 |
+| 退出 | 工作台、设置截图进程和独立宿主均返回 0，残留进程为 0，异地临时目录已清理 |
+
+最终界面截图、状态 JSON 和构建信息随异地验证保存，程序源码与构建版本以包清单中的提交为准。[验证记录](../../temp/outputs/native-final-relocation/verification.json) [工作台截图](../../temp/outputs/native-final-relocation/workbench.png) [设置截图](../../temp/outputs/native-final-relocation/settings.png)
