@@ -11,7 +11,7 @@
 | `ChineseSimplified.isl` | `Files/Languages/Unofficial/ChineseSimplified.isl` | `7d544b9bb1d142cfa11f2e5d3cc8abe2e55f8e066c5124e3772675aa236e1278` |
 | `Inno-Setup-LICENSE.txt` | `license.txt` | `2e5346868c2a18434489824e11d65c3031620f792fefc415d05f19cd441abf5c` |
 
-上游许可及再分发条件完整保存在 `Inno-Setup-LICENSE.txt`。下载内容校验值对应上游原始文件，Git 换行转换可能影响检出文件的字节校验值。
+上游许可及再分发条件完整保存在 `Inno-Setup-LICENSE.txt`。下载内容校验值对应上游原始文件，本地去除了一处注释行尾空白，Git 换行转换也可能影响检出文件的字节校验值。
 
 - [固定版本简体中文翻译](https://github.com/jrsoftware/issrc/blob/c2913c993858a781fcb455bac8b8949c1c366cb8/Files/Languages/Unofficial/ChineseSimplified.isl)
 - [固定版本 Inno Setup 许可](https://github.com/jrsoftware/issrc/blob/c2913c993858a781fcb455bac8b8949c1c366cb8/license.txt)
