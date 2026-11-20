@@ -150,18 +150,21 @@ async function publish() {
   const selected = process.env.UPDATE_CHANNEL
   if (!['alpha', 'stable'].includes(selected)) throw new Error('UPDATE_CHANNEL must be alpha or stable.')
   if (process.env.GITHUB_REPOSITORY !== distribution) throw new Error('This workflow must run in form-recall-release.')
-  const sourceAPI = createGitHubClient({ repository: source })
+  const sourceAPI = createGitHubClient({ repository: source, token: process.env.GITHUB_TOKEN })
   const api = createGitHubClient({ repository: distribution, token: process.env.GITHUB_TOKEN })
   const channelPath = `/contents/channels/${selected}.json`
   const feed = await optional(api, channelPath)
   const current = feed && envelope(Buffer.from(feed.content, 'base64'))
   if (current && (current.channel !== selected || channel(current.version) !== selected)) throw new Error('Current feed targets the wrong channel.')
 
-  const releases = await sourceAPI.request('GET', '/releases?per_page=60')
-  const candidates = releases.filter(release => !release.draft && release.tag_name.startsWith('v') &&
+  const target = process.env.UPDATE_VERSION
+  if (target && channel(target) !== selected) throw new Error('Requested version does not belong to this channel.')
+  const releases = target
+    ? [await optional(sourceAPI, `/releases/tags/v${target}`)]
+    : await sourceAPI.request('GET', '/releases?per_page=60')
+  const candidates = releases.filter(release => release && !release.draft && release.tag_name.startsWith('v') &&
     channel(release.tag_name.slice(1)) === selected && release.prerelease === (selected === 'alpha') &&
     (selected !== 'stable' || compare(release.tag_name.slice(1), stableMinimum) >= 0))
-  const target = process.env.UPDATE_VERSION
   const release = target
     ? candidates.find(candidate => candidate.tag_name === `v${target}`)
     : candidates.sort((a, b) => compare(b.tag_name.slice(1), a.tag_name.slice(1)))[0]
@@ -187,7 +190,7 @@ async function publish() {
       if (createPublicKey(privateKey).export({ format: 'jwk' }).x !== publicX) throw new Error('Signing key does not match the client public key.')
       let previous
       const jobs = [fetchAsset(targetAsset, path.join(directory, 'target.zip'))]
-      const oldRelease = current && candidates.find(item => item.tag_name === `v${current.version}`)
+      const oldRelease = current && await optional(sourceAPI, `/releases/tags/v${current.version}`)
       if (oldRelease) {
         const oldAsset = remoteAsset(oldRelease, source, packageName(current.version))
         if (oldAsset.sha256 !== current.full.sha256 || oldAsset.bytes !== current.full.bytes) throw new Error('Previous complete ZIP differs from its signed index.')
