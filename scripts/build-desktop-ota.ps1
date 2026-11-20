@@ -86,6 +86,7 @@ try {
         throw 'At most eight distinct OTA baselines are supported.'
     }
     $compiled = @{}
+    $staged = [Collections.Generic.List[string]]::new()
     $deltas = @(foreach ($baseline in $baselines) {
         $oldVersion = $baseline.version
         if ($oldVersion -cnotmatch $versionPattern -or $oldVersion -ceq $Version) { throw 'Invalid OTA baseline version.' }
@@ -102,8 +103,8 @@ try {
         })
         $key = ConvertTo-Json -InputObject $changed -Depth 4 -Compress
         if (-not $compiled.ContainsKey($key)) {
-            $targetPath = Join-Path $out "delta-$($compiled.Count).zip"
-            $deltaArchive = [IO.Compression.ZipFile]::Open($targetPath, [IO.Compression.ZipArchiveMode]::Create)
+            $stagingPath = Join-Path $out "delta-staging-$($compiled.Count).zip"
+            $deltaArchive = [IO.Compression.ZipFile]::Open($stagingPath, [IO.Compression.ZipArchiveMode]::Create)
             try {
                 foreach ($file in $changed) {
                     # Delta entries keep payload-relative names because a delta is
@@ -119,14 +120,11 @@ try {
                     } finally { $source.Dispose() }
                 }
             } finally { $deltaArchive.Dispose() }
-            $hash = (Get-FileHash -LiteralPath $targetPath -Algorithm SHA256).Hash.ToLowerInvariant()
-            $name = "FormRecall-OTA-v${oldVersion}_v$Version-win-x64.zip"
-            $bytes = (Get-Item -LiteralPath $targetPath).Length
-            $compiled[$key] = @{name=$name;sha256=$hash;bytes=$bytes}
-            if ($bytes * 10 -ge $portable.Length * 8) {
-                Remove-Item -LiteralPath $targetPath
-            } else {
-                Move-Item -LiteralPath $targetPath -Destination (Join-Path $out $name)
+            $staged.Add($stagingPath)
+            $compiled[$key] = @{
+                path = $stagingPath
+                sha256 = (Get-FileHash -LiteralPath $stagingPath -Algorithm SHA256).Hash.ToLowerInvariant()
+                bytes = (Get-Item -LiteralPath $stagingPath).Length
             }
         }
         $archive = $compiled[$key]
@@ -134,17 +132,34 @@ try {
             Write-Host "OTA from $oldVersion is too large; clients will use the full ZIP."
             continue
         }
+        # Every baseline publishes under its own asset name: the signed manifest binds
+        # FormRecall-OTA-v{from}_v{to}-win-x64.zip to the baseline it upgrades. Archive
+        # bytes are reused when two baselines change exactly the same files.
+        $name = "FormRecall-OTA-v${oldVersion}_v$Version-win-x64.zip"
+        Copy-Item -LiteralPath $archive.path -Destination (Join-Path $out $name) -Force
         # The target inventory is exhaustive. Removed old files are never
         # copied into the new directory, so no delete instructions are needed.
         $delta = [ordered]@{
             from = $oldVersion
-            url = "https://github.com/Industrial-Arcane-Society/form-recall-release/releases/download/v$Version/$($archive.name)"
+            url = "https://github.com/Industrial-Arcane-Society/form-recall-release/releases/download/v$Version/$name"
             sha256 = $archive.sha256
             bytes = $archive.bytes
         }
         Write-Host "OTA from $oldVersion contains $($changed.Count) changed files, $($delta.bytes) bytes."
         $delta
     })
+    foreach ($stagedPath in $staged) {
+        if (Test-Path -LiteralPath $stagedPath) { Remove-Item -LiteralPath $stagedPath -Force }
+    }
+    # The desktop client binds each baseline to a file name derived from that
+    # baseline version, so a wrong name invalidates the whole signed manifest.
+    foreach ($delta in $deltas) {
+        $expectedName = "FormRecall-OTA-v$($delta.from)_v$Version-win-x64.zip"
+        if ([IO.Path]::GetFileName(([Uri]$delta.url).AbsolutePath) -cne $expectedName -or
+            -not (Test-Path -LiteralPath (Join-Path $out $expectedName) -PathType Leaf)) {
+            throw "OTA delta asset does not match its baseline: $($delta.from)"
+        }
+    }
     $channel = if ($Version -cmatch '-(alpha|beta|rc)\.') { $Matches[1] } else { 'stable' }
     $payload = [ordered]@{
         schema = 2
