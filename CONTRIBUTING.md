@@ -87,4 +87,4 @@ git push -u origin docs/update-build-guide
 
 ## LGTM 审批机器人
 
-`@lycohana` 可在目标为 `main`、已打开且已进入审查状态的 PR 对话区单独发送 `lgtm`。机器人会在当前提交上留下 GitHub 的 Approve 审查，并链接原评论。新提交应重新审查并发送一条新指令。机器人只提交审批，合并由维护者在 PR 页面执行。
+`@lycohana` 可在目标为 `main` 的开放非草稿 PR 中单独发送 `lgtm`。可在对话区发表评论，也可在「提交审查」中选择「评论」并提交。机器人会在当前提交上留下 GitHub 的 Approve 审查，并链接原评论。新提交应重新审查并发送一条新指令。机器人只提交审批，合并由维护者在 PR 页面执行。
