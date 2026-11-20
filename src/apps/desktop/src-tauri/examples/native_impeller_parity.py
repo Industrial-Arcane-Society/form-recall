@@ -19,7 +19,7 @@ VOLUME_RELATIVE_TOLERANCE = 0.03
 
 def main():
     base = json.loads(
-        (TAURI / "examples/fixtures/native_geometry_plan.json").read_text(encoding="utf-8")
+        (TAURI / "../../../core/cad-engine/examples/fixtures/native_geometry_plan.json").read_text(encoding="utf-8")
     )
     executable = TAURI / "target/debug/examples/native_plan_geometry_probe.exe"
     if not executable.is_file():

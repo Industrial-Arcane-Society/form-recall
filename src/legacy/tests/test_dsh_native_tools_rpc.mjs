@@ -31,7 +31,7 @@ const repositoryRoot = path.resolve(testDirectory, '../../..')
 const pinnedDshNodeModules = path.join(repositoryRoot, 'src', 'legacy', 'packaging', 'dsh-runtime', 'node_modules')
 
 function rustNativeToolManifest() {
-  const sourcePath = path.join(repositoryRoot, 'src', 'apps', 'desktop', 'src-tauri', 'src', 'native_tool_schemas.rs')
+  const sourcePath = path.join(repositoryRoot, 'src', 'core', 'cad-engine', 'src', 'native_tool_schemas.rs')
   const source = fs.readFileSync(sourcePath, 'utf8')
   const match = /const SCHEMAS_JSON: &str = r###"([\s\S]*?)"###;/.exec(source)
   assert.ok(match, 'Rust native schema manifest raw string exists')

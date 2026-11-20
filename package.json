@@ -2,7 +2,11 @@
   "name": "ai-modeler",
   "private": true,
   "scripts": {
-    "dev": "node scripts/tauri-dev.mjs",
+    "dev": "pwsh -NoProfile -File scripts/run-native.ps1",
+    "dev:tauri": "node scripts/tauri-dev.mjs",
+    "build:native": "pwsh -NoProfile -File scripts/build-native.ps1",
+    "test:native": "pwsh -NoProfile -File scripts/test-native.ps1",
+    "package:native": "pwsh -NoProfile -File scripts/package-native.ps1",
     "dev:web": "npm --prefix src/apps/desktop run dev",
     "test:dev-cli": "node --test scripts/tauri-dev.test.mjs"
   }

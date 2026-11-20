@@ -7,9 +7,14 @@ import { stageOcctRuntime } from "./stage_occt_runtime.mjs";
 import { prepareOcctPackageInput } from "./prepare_occt_package_input.mjs";
 
 const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), "../../..");
+const dshOnly = process.argv.includes("--dsh-only");
+const nativeResources = process.argv.includes("--native-resources");
+const offline = process.argv.includes("--offline");
 const desktopRoot = join(repoRoot, "src", "apps", "desktop");
 const legacyRoot = join(repoRoot, "src", "legacy");
-const targetRoot = join(desktopRoot, "src-tauri", "target");
+const targetRoot = dshOnly || nativeResources
+  ? join(repoRoot, "temp", "build-cache", "dsh-runtime-package")
+  : join(desktopRoot, "src-tauri", "target");
 const packageRoot = join(targetRoot, "package-resources");
 const downloadRoot = join(targetRoot, "package-downloads");
 const pythonRoot = join(packageRoot, "python");
@@ -104,6 +109,7 @@ function assertRequiredPackageInputs() {
 }
 
 async function download(url, destination) {
+  if (offline) throw new Error(`Offline packaging requires a verified cached download: ${destination}`);
   const response = await fetch(url);
   if (!response.ok) throw new Error(`Download failed (${response.status}): ${url}`);
   const bytes = Buffer.from(await response.arrayBuffer());
@@ -348,6 +354,7 @@ async function buildDshBundle(info) {
       "--no-fund",
       "--no-update-notifier",
       "--progress=false",
+      ...(offline ? ["--offline"] : []),
     ], {
       cwd: dshRoot,
       env: {
@@ -433,17 +440,26 @@ async function main() {
   }
   assertRequiredPackageInputs();
 
-  const occtRuntimeRoot = join(targetRoot, "f4-occt");
-  const occtManifestPath = process.env.AIMODELER_OCCT_MANIFEST
-    ? resolve(process.env.AIMODELER_OCCT_MANIFEST)
-    : join(occtRuntimeRoot, "runtime-manifest.json");
-  const verifiedOcctManifest = prepareOcctPackageInput({
-    manifestPath: occtManifestPath,
-    runtimeRoot: occtRuntimeRoot,
-    buildScriptPath: join(repoRoot, "src", "native", "occt-bridge", "Build-Runtime.ps1"),
-  });
-  const stagedOcct = stageOcctRuntime(verifiedOcctManifest, packageRoot);
-  console.log(`Staged ${stagedOcct.dllCount} hash-verified OCCT runtime DLLs from ${stagedOcct.sourceManifestSha256}.`);
+  if (dshOnly) {
+    mkdirSync(downloadRoot, { recursive: true });
+    const dshBundle = await buildDshBundle(runtimeBuildInfo());
+    console.log(`Staged verified offline DSH Runtime at ${dshBundle.path} (${dshBundle.manifest.bundleSha256}).`);
+    return;
+  }
+
+  if (!nativeResources) {
+    const occtRuntimeRoot = join(targetRoot, "f4-occt");
+    const occtManifestPath = process.env.AIMODELER_OCCT_MANIFEST
+      ? resolve(process.env.AIMODELER_OCCT_MANIFEST)
+      : join(occtRuntimeRoot, "runtime-manifest.json");
+    const verifiedOcctManifest = prepareOcctPackageInput({
+      manifestPath: occtManifestPath,
+      runtimeRoot: occtRuntimeRoot,
+      buildScriptPath: join(repoRoot, "src", "native", "occt-bridge", "Build-Runtime.ps1"),
+    });
+    const stagedOcct = stageOcctRuntime(verifiedOcctManifest, packageRoot);
+    console.log(`Staged ${stagedOcct.dllCount} hash-verified OCCT runtime DLLs from ${stagedOcct.sourceManifestSha256}.`);
+  }
 
   mkdirSync(downloadRoot, { recursive: true });
   mkdirSync(packageRoot, { recursive: true });
@@ -519,7 +535,7 @@ async function main() {
     `Agent runtime: Node.js ${dshBundle.manifest.nodeVersion}, npm ${dshBundle.manifest.npmVersion}, DSH/ACP ${dshBundle.manifest.dshVersion}, ACP SDK ${dshBundle.manifest.acpSdkVersion}`,
     `Agent runtime bundle: app\\packaging\\dsh-runtime\\dsh-runtime-win-x64.zip (${dshBundle.manifest.bundleSize} bytes; SHA-256 ${dshBundle.manifest.bundleSha256})`,
     `Agent runtime expands to ${(dshBundle.manifest.unpackedSize / 1_048_576).toFixed(1)} MiB on first use; all Node/DSH npm dependencies are included, so no npm install is needed at runtime.`,
-    "Windows WebView2: MSI and NSIS bundle the x64 offline installer; installation does not need to download it.",
+    ...(nativeResources ? [] : ["Windows WebView2: MSI and NSIS bundle the x64 offline installer; installation does not need to download it."]),
     `CATIA-only Python: ${pythonVersion} x64 (CPython embeddable distribution)`,
     `CATIA-only COM dependency: ${pywin32Wheel} (validated by catia-bootstrap\\catia-runtime-manifest.json)`,
     "CATIA Python and pywin32 are copied into the user's private runtime only after a CATIA export or push request.",

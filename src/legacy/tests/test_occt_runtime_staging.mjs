@@ -48,7 +48,7 @@ test('packaged OCCT DLL allowlists cover every toolkit linked by the bridge', ()
   const cmake = readFileSync(join(repoRoot, 'src/native/occt-bridge/CMakeLists.txt'), 'utf8');
   const runtimeBuilder = readFileSync(join(repoRoot, 'src/native/occt-bridge/Build-Runtime.ps1'), 'utf8');
   const manifestWriter = readFileSync(join(repoRoot, 'src/native/occt-bridge/Write-RuntimeManifest.ps1'), 'utf8');
-  const rustRuntime = readFileSync(join(repoRoot, 'src/apps/desktop/src-tauri/src/native_occt_runtime.rs'), 'utf8');
+  const rustRuntime = readFileSync(join(repoRoot, 'src/core/cad-engine/src/native_occt_runtime.rs'), 'utf8');
   const staging = readFileSync(join(repoRoot, 'src/legacy/scripts/stage_occt_runtime.mjs'), 'utf8');
 
   const toolkitBlock = cmake.match(/set\(OCCT_TOOLKITS\s+([\s\S]*?)\)/);

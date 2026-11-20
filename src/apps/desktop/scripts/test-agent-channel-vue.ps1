@@ -6,8 +6,9 @@ $ErrorActionPreference = 'Stop'
 $desktopRoot = (Resolve-Path (Join-Path $PSScriptRoot '..')).Path
 $tauriRoot = Join-Path $desktopRoot 'src-tauri'
 $cargoManifest = Join-Path $tauriRoot 'Cargo.toml'
-$commonControlsManifest = Join-Path $tauriRoot 'tests\common-controls-v6.manifest'
-$acpFixture = Join-Path $tauriRoot 'tests\fixtures\fake-acp.mjs'
+$coreRoot = Join-Path $desktopRoot '../../core/cad-engine'
+$commonControlsManifest = Join-Path $coreRoot 'tests\common-controls-v6.manifest'
+$acpFixture = Join-Path $coreRoot 'tests\fixtures\fake-acp.mjs'
 $testName = 'agent_ipc_integration_tests::agent_send_routes_stale_finish_as_candidate_through_tauri_channel'
 
 if (-not (Test-Path -LiteralPath $commonControlsManifest)) {

@@ -1,51 +1,84 @@
-# 目标架构：Rust 桌面宿主、DSH Agent 与原生建模插件
+# MyGo 桌面、Rust 引擎与共享 CAD 核心
 
-## 职责边界
+2026-11-20 的桌面迁移将默认窗口入口放在 `src/apps/native-desktop`。Go/MyGo 提供工作台，`src/apps/engine-host` 提供常驻 Rust 进程，建模和会话实现集中在 `src/core/cad-engine`。Vue/Tauri 兼容桌面直接调用同一核心。[构建与运行](../05-operations/03-native-desktop-build.md)
+
+## 进程和模块边界
 
 ```mermaid
 flowchart LR
-  UI[Vue 桌面 UI] --> HOST[Rust / Tauri Host]
-  HOST -->|ACP over stdio| DSH[DSH Runtime + Agent]
-  DSH --> PLUGIN[DSH 原生 Cordis 建模插件]
-  PLUGIN --> CAD[Rust CADPlan 与模型状态]
-  CAD --> OCC[薄 Rust/C++ FFI -> OCCT]
-  CAD -->|仅 CATIA COM 操作| PY[Python CATIA Adapter]
-  KB[知识库与证据资源] --> PLUGIN
+  UI[Go / MyGo 工作台] -->|stdio JSON Lines| HOST[Rust engine-host]
+  UI --> VIEW[Win32 子窗口 / WGL 视口]
+  HOST --> CORE[共享 cad-engine]
+  VUE[Vue 兼容界面] --> TAURI[Tauri 命令适配层]
+  TAURI --> CORE
+  CORE -->|Rust / C ABI| OCC[OCCT 7.9.3]
+  CORE -->|ACP over stdio| DSH[私有 Node / DSH Runtime]
+  DSH --> PLUGIN[Cordis 建模插件]
+  PLUGIN -->|工具桥| CORE
+  CORE --> PY[Python CATIA COM adapter]
+  CORE --> STATE[活动模型 / 配置 / 会话与证据]
+  CORE --> GLB[GLB 与工程导出]
+  GLB --> VIEW
 ```
 
-- **Rust/Tauri** 管理桌面生命周期、版本化 runtime、DSH ACP 会话、取消/恢复、CADPlan 状态、资源路径和 UI 事件。Rust 作为宿主，不替代 DSH 决定 Agent 下一步。
-- **DSH** 持有 Agent 决策、模型/推理配置、会话上下文与工具调用选择。
-- **Cordis 插件** 用 DSH 原生插件接口注册 CAD、知识检索、图片/几何检查等工具。CAD 工具不再经过 MCP 转译层或 Python DSH SDK。
-- **Rust CAD domain** 持有版本化计划、特征事务、参数和几何验证。OCP/OCCT 通过范围受控的 Rust/C ABI 执行几何，不向模型暴露任意代码。
-- **Python** 最终只保留确实依赖 CATIA COM 的 Windows 适配器；迁移完成前 `src/legacy/` 仍承担旧功能。
-- **Vue** 只渲染交互界面和实时事件，不复制 Agent 决策策略。
+| 路径 | 责任 |
+| --- | --- |
+| `src/apps/native-desktop/cmd/formrecall` | 程序入口、运行路径和启动选项 |
+| `src/apps/native-desktop/internal/workbench` | 自定义窗口栏、需求输入、特征编辑、设置、案例、状态和用户操作 |
+| `src/apps/native-desktop/internal/engine` | 启动子进程、请求编号、异步响应、事件和关闭 |
+| `src/apps/native-desktop/internal/viewport` | GLB 解析、相机、原生 OpenGL 子窗口和画面捕获 |
+| `src/apps/engine-host` | JSON Lines 解析、请求调度、模型写互斥、并发取消和 shutdown |
+| `src/core/cad-engine` | CADPlan、Quick、参数编辑、OCCT、工程与验收状态、Agent、配置、目录和运行时 |
+| `src/apps/desktop/src-tauri` | Tauri 生命周期、上下文构造和命令、Channel 适配 |
+| `src/native` | OCCT C ABI 桥接和运行时构建 |
+| `src/legacy` | 保留的 Python 功能、CATIA adapter、提示与知识资源，以及 DSH 插件资源 |
 
-## Agent/runtime 连接选择
+核心 crate 默认依赖与窗口无关。原 Rust 域模块、资源和测试随实现迁入核心，Tauri 通过 path dependency 及公开导出保留现有命令和示例。MyGo 与 Tauri 各自构造 `EngineContext`，提供资源、数据、配置及打包路径。
 
-采用 DSH ACP 作为 Rust host 与 DSH runtime 的进程协议，理由是官方 DSH ACP 文档描述了独立 session 的创建、列表、恢复、关闭、取消和语义更新，并说明图片输入取决于附件存储与选定 route 的图像能力。图片验收必须实际验证本项目选定的 DSH、provider 和模型组合。[DSH ACP 说明](https://github.com/deepseek-ai/deepseek-harness/blob/master/packages/acp/acp/README.md)
+## 原生工作台
 
-DSH TypeScript SDK client 通过 stdio JSON-RPC 启动并驱动 Harness runtime，适用于 TypeScript host；本项目选择 ACP 是为了 session 生命周期与取消/恢复语义。它们是宿主进程协议，不是 CAD MCP 工具代理。[DSH TypeScript client 文档](https://github.com/deepseek-ai/deepseek-harness/blob/master/packages/sdk/client/README.md)
+Go 模块固定 MyGo v0.9.1。MyGo 管理隐藏系统标题栏后的窗口拖动区、最小化、最大化和关闭操作，工作台使用 MyGo 控件，文件与消息对话框及平台弹出菜单调用系统能力。
 
-CAD 功能作为 Cordis 原生插件执行；不能因为 ACP server 可选挂载 MCP，就把 CAD 工具重新注册为 MCP server。协议与建模工具注册是两个不同边界。
+界面采用中性深灰、蓝色选择状态和统一的 SVG 图标。设置使用分类侧栏、独立滚动表单及固定操作栏。按钮颜色反馈持续 120 ms，分类切换为 140 ms，设置进入和退出分别为 160 ms 与 120 ms。属性栏和日志栏通过实际宽高插值展开，三维子窗口跟随每帧布局更新。系统减少动画偏好会直接应用面板位置和尺寸。
 
-## 运行时固定与升级
+视口使用独立 Win32 子窗口和 WGL 上下文，提供深度测试、模型边线、网格、坐标指示、旋转、平移、缩放及视图切换。GLB 在后台加载，较新的加载结果覆盖旧请求。相机过渡在完成或隐藏时停止计时，系统减少动画偏好会直接应用目标视角。设置遮罩出现时保存真实模型帧作为背景，隐藏子视口，退出过渡结束后恢复交互。窗口截图通过 `CaptureWindow` 合成 MyGo 内容和实际 OpenGL 帧缓冲。
 
-应用发布版本携带机器可读 runtime manifest，精确列出已交付运行时的兼容版本和 SHA-256 来源。桌面端按该清单获取应用私有 Node/DSH Runtime；新版本在暂存目录安装，校验通过后切换，失败则恢复上一版。manifest 未来可扩展至 OCCT native payload 与 CATIA adapter，但这些当前不属于 DSH Runtime manifest 的已交付范围。
+视口加载自包含 GLB 三角网格，支持节点变换、法线和基础颜色。纹理、骨骼、动画、稀疏 accessor、Draco 压缩和外部 buffer 尚未实现。实际窗口、DPI 和性能验证范围记录在迁移验证文档。[验证记录](../05-operations/04-native-desktop-validation.md)
 
-截至 F1.3，Node/DSH manifest、私有安装、版本校验、暂存切换和失败恢复已有实现；Rust ACP Host、会话恢复及 Tauri Agent 事件也已接入。固定 DSH 的控制面与 Cordis 装载已经过隔离验证。已安装桌面端完整演练、真实模型请求、原图到 provider 的传输、CAD 工具实建和几何验收仍未完成，见[F1 ACP 验收卡](../06-roadmap/02-f1-acp-host.md)与[迁移 Todo](../06-roadmap/01-migration-todo.md)。
+## 桌面与核心进程协议
 
-## 会话与事件
+引擎启动参数为 `--resources PATH --data PATH [--config PATH]`。标准输出每行一个 JSON 对象，标准错误用于诊断。请求的 `id` 是 `uint64`，`method` 沿用现有命令名，`params` 使用 camelCase 字段。
 
-Rust host 为每个会话保存 DSH session id、当前 CADPlan revision、原始图片引用、用户约束、活动工具调用与最后成功的几何版本。ACP 更新经过 Rust 转换为稳定的 UI 事件：思考/消息、工具开始与完成、预览更新、取消、错误、恢复与使用量。终止一个会话必须只影响该会话，并在关闭/取消后回收其 runtime 资源。
+```json
+{"id":1,"method":"quick_build","params":{"text":"创建 100×60×20 毫米长方体","revision":1}}
+{"id":1,"result":{"state":"complete"}}
+{"id":2,"method":"active_model_snapshot","params":{}}
+{"id":2,"error":"示例错误信息"}
+{"event":"agent","request_id":3,"data":{"event":"agent.message","request_id":"native-turn-id","data":{"text":"示例消息"}}}
+```
 
-Rust 不要把整段内部链路“重新 Agent 化”；它只执行明确的宿主职责和事务约束。工具次数熔断应根据时间、资源和重复动作确定，不用小的固定调用上限替代模型决策。
+示例响应仅展示协议字段。`quick_build` 实际返回完整文档。外层事件 `request_id` 关联数字 RPC 请求，内层原有 WireEvent 使用 `event`、字符串轮次 `request_id` 和 `data`。工作台按当前轮次过滤过时事件。
 
-## 分阶段迁移原则
+`active_model_snapshot` 返回完整活动记录，包含 `document`、`generation`、`geometry_fingerprint` 和 `acceptance_projection`，无活动模型时返回 `null`。Quick、新建、更新、导入和保存命令返回文档，工作台在需要验收状态时重新获取 snapshot。尺寸、体积和网格分别取自 `document.stats.size`、`document.stats.volume` 与 `document.mesh_path`。
 
-1. 先把旧代码和证据归位，恢复并固定构建/测试入口。
-2. 构建 Rust ACP host 与运行时清单，保留现有桌面 UI 协议，验证文字、图片、取消和续话。
-3. 将 CADPlan 类型、校验和增量事务迁入 Rust，逐项切断 Agent tool 对 Python worker 的依赖。
-4. 建立 OCCT Rust/C++ thin FFI，用 golden fixtures 比较迁移前后 B-Rep、包围盒、拓扑和网格指标。
-5. 将 Quick 模式、导出和 CATIA 桥接调整到稳定的 Rust 核心；最后缩减 Python 到 CATIA COM。
+JSON Lines 宿主以互斥锁串行处理模型写请求，核心提交继续校验预期 generation。Agent 流式执行期间，取消请求可以独立调度。Go 客户端按编号匹配响应，子进程退出或协议损坏时结束挂起调用。写入排队遵循请求取消，部分写入被取消时终止连接以保护 JSON Lines 边界。关闭时请求 `shutdown`，4 秒期限后强制结束宿主，再等待最多 1 秒回收。
 
-每个阶段独立验收、独立提交。目录重构先提交到 `main`，后续 feature 保持单独提交。
+## 状态和验收
+
+活动模型由 Rust 持久化，Go 维护其展示副本和编辑草稿。界面仅在宿主投影的活动 generation、CAD revision、几何指纹与 finish summary 一致且明确确认验收时显示“已验收”。裸文档返回、过时事件或工程中的自报验收字段会经过重新核对。审核案例写入也由核心检查当前模型的验收依据。
+
+真实回归已通过 Quick、特征数值和数组编辑、保存、进程重启恢复、重新导入及文件导出。Quick 生成的有效几何在该回归中保持候选状态，验收需要相应复核证据。[跨进程回归记录](../05-operations/04-native-desktop-validation.md#真实引擎与工作台回归)
+
+默认用户数据目录为 `%LOCALAPPDATA%/com.aimodeler.desktop`。Go 将路径显式传给引擎。配置文件依次采用显式 `--config`、`AIMODELER_CONFIG_PATH`、`AIMODELER_DATA_DIR/config.json`，最后使用数据目录下的 `config.json`。资源目录兼容 `AIMODELER_RESOURCE_ROOT` 和 `AIMODELER_ROOT`。运行脚本的数据目录参数与显式配置可用于隔离验证环境。
+
+## Agent 与外部运行时
+
+Rust 核心保留 DSH ACP 会话、图片暂存、历史、流事件、取消与运行时安装能力。DSH 承担 Agent 决策与工具选择，Cordis 插件注册 CAD、检索和复核工具，Rust 执行明确的工具命令并管理模型事务。Python 继续承载保留功能与按需 CATIA COM 适配。
+
+DSH/Node 和 OCCT 各自使用运行时清单与 SHA-256 校验。原生包包含两套程序、必要资源、OCCT DLL 与许可证，DSH 由应用私有运行时安装流程准备。外部 provider 请求、图像传输和 CATIA COM 需要各自的实际环境复验。迁移中的 ACP 夹具测试只覆盖协议、流事件与取消行为。
+
+## 构建和兼容维护
+
+根目录 `npm run dev` 启动原生桌面，`build:native`、`test:native`、`package:native` 对应原生构建、检查与打包。`npm run dev:tauri` 和 `npm run dev:web` 分别保留 Tauri 桌面与 Vue 浏览器预览。具体命令以根目录 `package.json` 和脚本为准。[原生构建指南](../05-operations/03-native-desktop-build.md)
+
+核心测试与进程协议测试可独立运行。历史 Tauri 测试入口转向核心域测试，Tauri IPC 测试仍在适配 crate 中验证注册和 Channel 行为。新增功能需同时核对适用的核心、RPC 和兼容命令边界。当前全量测试仍保留 23 项已复现的基线失败，迁移验证按日志报告通过、失败和忽略数量。[迁移验证与基线](../05-operations/04-native-desktop-validation.md)

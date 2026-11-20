@@ -17,7 +17,7 @@ VOLUME_TOLERANCE_MM3 = 1e-5
 
 
 def main():
-    base = json.loads((TAURI / "examples/fixtures/native_geometry_plan.json").read_text(encoding="utf-8"))
+    base = json.loads((TAURI / "../../../core/cad-engine/examples/fixtures/native_geometry_plan.json").read_text(encoding="utf-8"))
     executable = TAURI / "target/debug/examples/native_plan_geometry_probe.exe"
     if not executable.is_file():
         raise FileNotFoundError("Build native_plan_geometry_probe with cargo build --offline --example native_plan_geometry_probe")

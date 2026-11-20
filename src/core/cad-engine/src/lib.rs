@@ -1,0 +1,1850 @@
+pub mod acp;
+pub mod agent_host;
+pub mod agent_model_config;
+pub mod cad_plan;
+pub mod cad_plan_validation;
+pub mod dsh_runtime;
+pub mod native_active_model;
+pub mod native_bevel_gear;
+pub mod native_bootstrap;
+pub mod native_bore_metrology;
+pub mod native_cad_metadata;
+pub mod native_cad_session;
+pub mod native_cad_tools;
+pub mod native_catia_adapter;
+pub mod native_catia_runtime;
+pub mod native_diagnostics;
+pub mod native_fastener_specs;
+pub mod native_feature_specs;
+pub mod native_finish_evidence;
+pub mod native_geometry_backend;
+pub mod native_geometry_evidence;
+pub mod native_helix;
+pub mod native_impeller;
+pub mod native_knowledge;
+pub mod native_loft;
+pub mod native_model_io;
+pub mod native_occt;
+pub mod native_occt_runtime;
+pub mod native_online_lookup;
+pub mod native_parametric_features;
+pub mod native_parts_catalog;
+pub mod native_plate_learning;
+pub mod native_plan_geometry;
+pub mod native_proportion_gate;
+pub mod native_quick;
+pub mod native_quick_parser;
+pub mod native_quick_egt_sw;
+pub mod native_quick_socket_bolt;
+pub mod native_render;
+pub mod native_review_findings;
+pub mod native_reviewed_cases;
+pub mod native_review_gate;
+pub mod native_rotor;
+pub mod native_scroll_disc;
+pub mod native_settings;
+pub mod native_shell;
+pub mod native_standard_features;
+pub mod native_state_summary;
+pub mod native_timing_pulley;
+pub mod native_tool_bridge;
+pub mod native_tool_executor;
+pub mod native_tool_schemas;
+pub mod native_vbelt_pulley;
+pub mod native_vision_assets;
+pub mod native_vision_domain;
+pub mod native_vision_provider;
+pub mod native_web;
+pub mod native_worm;
+
+
+use serde_json::{Value, json};
+use std::fs;
+use std::io::{BufRead, BufReader, Read};
+use std::path::{Path, PathBuf};
+use std::process::Command;
+use std::sync::{Arc, Mutex};
+use std::thread;
+use std::time::{SystemTime, UNIX_EPOCH};
+use agent_host::EventSink;
+pub mod context;
+pub mod rpc;
+pub use context::EngineContext;
+use tokio::sync::oneshot;
+
+const MAX_INPUT_IMAGE_BYTES: u64 = 24 * 1024 * 1024;
+fn app_data_dir(app: &EngineContext) -> Result<PathBuf, String> { Ok(app.data_dir.clone()) }
+
+fn resource_root(app: &EngineContext) -> Result<PathBuf, String> { Ok(app.resource_root.clone()) }
+
+fn private_python_available(data_dir: &Path) -> bool {
+    data_dir
+        .join("runtime")
+        .join("catia-python")
+        .join(if cfg!(windows) {
+            "python.exe"
+        } else {
+            "bin/python3"
+        })
+        .is_file()
+}
+
+fn send_install_event(channel: &EventSink, kind: &str, message: impl Into<String>) {
+    let _ = channel.send(json!({ "kind": kind, "message": message.into() }));
+}
+
+fn stream_install_output<R: Read + Send + 'static>(
+    stream: R,
+    label: &'static str,
+    channel: EventSink,
+    output: Arc<Mutex<Vec<String>>>,
+) -> thread::JoinHandle<()> {
+    thread::spawn(move || {
+        for line in BufReader::new(stream).lines().flatten() {
+            let line = line.trim().to_owned();
+            if line.is_empty() {
+                continue;
+            }
+            if let Ok(mut lines) = output.lock() {
+                if lines.len() >= 40 {
+                    lines.remove(0);
+                }
+                lines.push(if label.is_empty() {
+                    line.clone()
+                } else {
+                    format!("{label}: {line}")
+                });
+            }
+            send_install_event(&channel, "progress", line);
+        }
+    })
+}
+
+fn catia_com_registered() -> Option<bool> {
+    if !cfg!(windows) {
+        return None;
+    }
+    std::process::Command::new("reg.exe")
+        .args(["query", r"HKCR\CATIA.Application\CLSID"])
+        .output()
+        .ok()
+        .map(|output| output.status.success())
+}
+
+pub fn native_resource_status(app: EngineContext) -> Result<Value, String> {
+    native_bootstrap::resource_status(&resource_root(&app)?)
+}
+
+pub fn native_runtime_status(app: EngineContext) -> Result<Value, String> {
+    let data_dir = app_data_dir(&app)?;
+    let root = resource_root(&app)?;
+    let dsh = match dsh_runtime::status(&root, &data_dir) {
+        Ok(mut status) => {
+            let installed = status
+                .get("installed")
+                .and_then(Value::as_bool)
+                .unwrap_or(false);
+            status["available"] = json!(installed);
+            status["verified"] = json!(installed);
+            status["state"] = json!(if installed { "installed" } else { "missing" });
+            status
+        }
+        Err(error) => json!({
+            "available": false,
+            "installed": false,
+            "bundled": false,
+            "bundleRequired": !cfg!(debug_assertions),
+            "state": "invalid",
+            "reason": error,
+        }),
+    };
+    let occt = match native_occt_runtime::available_manifest(&root) {
+        Ok(Some(_)) => json!({
+            "available": true,
+            "verified": true,
+            "loaded": false,
+            "state": "runtime_verified",
+        }),
+        Ok(None) => json!({
+            "available": false,
+            "verified": false,
+            "loaded": false,
+            "state": "missing",
+        }),
+        Err(error) => json!({
+            "available": false,
+            "verified": false,
+            "loaded": false,
+            "state": "invalid",
+            "reason": error,
+        }),
+    };
+    let catia = native_bootstrap::catia_readiness(catia_com_registered());
+    let mut readiness =
+        native_bootstrap::runtime_readiness(private_python_available(&data_dir), dsh, occt, catia);
+    readiness["appVersion"] = json!(env!("CARGO_PKG_VERSION"));
+    let cordis_schemas = native_tool_schemas::native_tool_schemas().ok();
+    readiness["cordis"] =
+        native_diagnostics::cordis_schema_status(cordis_schemas.as_ref().map(Vec::len));
+    readiness["externalMcp"] = native_diagnostics::external_mcp_status();
+    Ok(readiness)
+}
+
+pub fn native_about() -> Value {
+    native_diagnostics::about(env!("CARGO_PKG_VERSION"))
+}
+
+pub fn native_selftest(app: EngineContext) -> Result<Value, String> {
+    let resources = native_resource_status(app.clone())?;
+    let runtime = native_runtime_status(app)?;
+    let quick_parser_ready =
+        native_quick_parser::parse("创建 100×60×20毫米 长方体")["status"] == "ready";
+    Ok(native_diagnostics::selftest(
+        env!("CARGO_PKG_VERSION"),
+        resources,
+        runtime,
+        quick_parser_ready,
+    ))
+}
+
+pub fn native_open_help_path(app: EngineContext, relative_path: String) -> Result<Value, String> {
+    let root = resource_root(&app)?;
+    let path = native_diagnostics::resolve_help_path(&root, &relative_path)?;
+    let mut command = if cfg!(windows) {
+        let mut command = Command::new("explorer.exe");
+        command.arg(&path);
+        command
+    } else if cfg!(target_os = "macos") {
+        let mut command = Command::new("open");
+        command.arg(&path);
+        command
+    } else {
+        let mut command = Command::new("xdg-open");
+        command.arg(&path);
+        command
+    };
+    command
+        .spawn()
+        .map_err(|error| format!("无法打开帮助文件（{}）：{error}", path.display()))?;
+    Ok(json!({"opened": path.to_string_lossy(), "relative_path": relative_path}))
+}
+
+pub async fn install_dsh_runtime(app: EngineContext, on_event: EventSink) -> Result<Value, String> {
+    let (sender, receiver) = oneshot::channel();
+    thread::Builder::new()
+        .name("dsh-runtime-install".into())
+        .stack_size(16 * 1024 * 1024)
+        .spawn(move || {
+            let result = (|| {
+                let root = resource_root(&app)?;
+                let data_dir = app_data_dir(&app)?;
+                let _ = dsh_runtime::install(&root, &data_dir, &on_event)?;
+                native_runtime_status(app)
+            })();
+            let _ = sender.send(result);
+        })
+        .map_err(|error| format!("无法启动 DSH Runtime 安装线程：{error}"))?;
+    receiver
+        .await
+        .map_err(|_| "DSH Runtime 安装线程意外退出。".to_owned())?
+}
+
+pub async fn quick_build(app: EngineContext, text: String, revision: i64) -> Result<Value, String> {
+    let resources = resource_root(&app)?;
+    let data_dir = app_data_dir(&app)?;
+    tokio::task::spawn_blocking(move || {
+        build_quick_active_model(&resources, &data_dir, &text, revision)
+    })
+    .await
+    .map_err(|error| format!("Quick 原生构建线程失败：{error}"))?
+}
+
+fn build_quick_active_model(
+    resources: &Path,
+    data_dir: &Path,
+    text: &str,
+    revision: i64,
+) -> Result<Value, String> {
+    let manifest = native_occt_runtime::resolve_manifest(resources)?;
+    let session_dir = data_dir.join("native-quick");
+    let active_root = native_active_model::root_from_data_dir(data_dir);
+    let expected_generation = native_active_model::generation(&active_root)?;
+    let next_generation = expected_generation
+        .checked_add(1)
+        .ok_or("活动模型 generation 已溢出。")?;
+    let document = native_quick::build(text, revision, &manifest, &session_dir)?;
+    if document["state"] == "parse_failed" {
+        return Ok(document);
+    }
+    let mut candidate = native_quick::active_model_candidate(text, &document)?;
+    candidate["cad_state"]["active_model_generation"] = json!(next_generation);
+    let active = native_active_model::commit(&active_root, expected_generation, &candidate)?;
+    Ok(active["document"].clone())
+}
+
+/// Headless production-path smoke entry used to prove that native Quick CAD
+/// starts and builds without invoking either Python or Node from PATH.
+pub fn headless_quick_smoke(resources: &Path, data_dir: &Path) -> Result<Value, String> {
+    headless_quick_smoke_with_text(resources, data_dir, "创建 100×60×20 毫米长方体")
+}
+
+/// Run arbitrary native Quick input through the same resource validation,
+/// OCCT build, file export, and active-model commit path without opening UI.
+pub fn headless_quick_smoke_with_text(
+    resources: &Path,
+    data_dir: &Path,
+    text: &str,
+) -> Result<Value, String> {
+    native_bootstrap::validate_resource_root(resources)?;
+    let mut document = build_quick_active_model(resources, data_dir, text, 1)?;
+    if document["state"] == "complete" {
+        let aimodel_path = document["output_paths"]["aimodel"]
+            .as_str()
+            .ok_or("headless Quick output is missing the AIMODEL path")?;
+        let reloaded = native_model_io::load_aimodel(Path::new(aimodel_path))?;
+        let saved_count = reloaded["features"].as_array().map(Vec::len);
+        let built_count = document["features"].as_array().map(Vec::len);
+        if saved_count != built_count {
+            return Err(format!(
+                "headless Quick AIMODEL round-trip changed the feature count: built={built_count:?}, reloaded={saved_count:?}"
+            ));
+        }
+        document["headless_smoke"] = json!({
+            "aimodel_roundtrip": "passed",
+            "reloaded_feature_count": saved_count.unwrap_or_default()
+        });
+    }
+    Ok(document)
+}
+
+pub fn active_model_snapshot(app: EngineContext) -> Result<Value, String> {
+    active_model_snapshot_value(&app)
+}
+
+/// Load the committed production active-model record and recompute its
+/// non-persistent acceptance projection. Shared with the isolated WebView
+/// smoke so startup restoration exercises the same snapshot path.
+pub fn active_model_snapshot_value(app: &EngineContext) -> Result<Value, String> {
+    let data_dir = app_data_dir(app)?;
+    let root = native_active_model::root_from_data_dir(&data_dir);
+    let Some(mut active) = native_active_model::load(&root)? else {
+        return Ok(Value::Null);
+    };
+    active["acceptance_projection"] = agent_host::active_model_acceptance_projection(&active);
+    Ok(active)
+}
+
+pub fn active_model_new(app: EngineContext, name: String) -> Result<Value, String> {
+    let data_dir = app_data_dir(&app)?;
+    let root = native_active_model::root_from_data_dir(&data_dir);
+    let expected_generation = native_active_model::generation(&root)?;
+    let next_generation = expected_generation
+        .checked_add(1)
+        .ok_or("活动模型 generation 已溢出。")?;
+    let current = native_active_model::load(&root)?;
+    let revision = current
+        .as_ref()
+        .and_then(|record| record["revision"].as_i64())
+        .unwrap_or(0)
+        .checked_add(1)
+        .ok_or("CAD revision 已溢出。")?;
+    let project = json!({"format":"ai-modeler","version":1,"name":name,"source_prompt":"",
+        "features":[],"current_path":null,"mesh_path":null,"output_paths":{},"stats":{},"build_log":["新建原生空模型"]});
+    let candidate = json!({"origin":"native_ui","revision":revision,"cadplan":null,"geometry_fingerprint":null,
+        "document":project,"output_paths":{},"cad_state":{"plan":null,"revision":revision,"actions":[],"output_paths":{},
+            "active_model_generation":next_generation},"reference_manifest":null,"user_turns_manifest":null,
+        "finish_summary":null,"geometric_status":"not_built","visual_status":"not_reviewed"});
+    let active = native_active_model::commit(&root, expected_generation, &candidate)?;
+    Ok(active["document"].clone())
+}
+
+pub fn active_model_save(app: EngineContext, path: String) -> Result<Value, String> {
+    let data_dir = app_data_dir(&app)?;
+    let root = native_active_model::root_from_data_dir(&data_dir);
+    let record = native_active_model::load(&root)?.ok_or("当前没有原生活动模型可保存。")?;
+    let committed = save_active_model_record(&root, &record, Path::new(&path))?;
+    Ok(committed["document"].clone())
+}
+
+fn save_active_model_record(root: &Path, record: &Value, path: &Path) -> Result<Value, String> {
+    let plan = record.get("cadplan").filter(|value| value.is_object());
+    let mut project = if let Some(plan) = plan {
+        native_model_io::cadplan_to_project(plan)?
+    } else {
+        json!({"format":"ai-modeler","version":1,"name":record["document"]["name"],
+            "source_prompt":record["document"]["source_prompt"],"features":[],"stats":{},"build_log":[]})
+    };
+    if let Some(legacy) = record
+        .pointer("/cad_state/legacy_source_document")
+        .filter(|value| value.is_object())
+    {
+        let reserved_root = [
+            "format",
+            "version",
+            "name",
+            "source_prompt",
+            "features",
+            "current_path",
+            "mesh_path",
+            "stats",
+            "build_log",
+            "cadplan",
+        ];
+        if let (Some(src), Some(dst)) = (legacy.as_object(), project.as_object_mut()) {
+            for (key, value) in src {
+                if !reserved_root.contains(&key.as_str()) {
+                    dst.insert(key.clone(), value.clone());
+                }
+            }
+        }
+        if let (Some(src), Some(dst)) = (
+            legacy["features"].as_array(),
+            project["features"].as_array_mut(),
+        ) {
+            let reserved_feature = [
+                "kind",
+                "params",
+                "op",
+                "name",
+                "note",
+                "feature_id",
+                "relations",
+                "enabled",
+                "provenance",
+                "index",
+                "description",
+            ];
+            for (old, new) in src.iter().zip(dst.iter_mut()) {
+                if let (Some(old), Some(new)) = (old.as_object(), new.as_object_mut()) {
+                    for (key, value) in old {
+                        if !reserved_feature.contains(&key.as_str()) {
+                            new.insert(key.clone(), value.clone());
+                        }
+                    }
+                }
+            }
+        }
+    }
+    project["current_path"] = json!(path.to_string_lossy());
+    let bytes = serialize_active_model_project(&project)?;
+    let expected_generation = record["generation"]
+        .as_u64()
+        .ok_or("活动模型 generation 无效。")?;
+    let next_generation = expected_generation
+        .checked_add(1)
+        .ok_or("活动模型 generation 已溢出。")?;
+    let mut candidate = record.clone();
+    candidate["document"]["current_path"] = json!(path.to_string_lossy());
+    candidate["document"]["output_paths"]["aimodel"] = json!(path.to_string_lossy());
+    candidate["saved_project_path"] = json!(path.to_string_lossy());
+    candidate["output_paths"]["aimodel"] = json!(path.to_string_lossy());
+    candidate["cad_state"]["output_paths"]["aimodel"] = json!(path.to_string_lossy());
+    candidate["cad_state"]["saved_project_path"] = json!(path.to_string_lossy());
+    candidate["cad_state"]["active_model_generation"] = json!(next_generation);
+    native_active_model::commit_with_file(root, expected_generation, &candidate, path, &bytes)
+}
+
+fn serialize_active_model_project(project: &Value) -> Result<Vec<u8>, String> {
+    let object = project
+        .as_object()
+        .ok_or(".aimodel 根节点必须是 JSON 对象")?;
+    if let Some(features) = object.get("features") {
+        let features = features.as_array().ok_or(".aimodel features 必须是数组")?;
+        for (index, feature) in features.iter().enumerate() {
+            if !feature.is_object() {
+                return Err(format!("feature {index} 必须是对象"));
+            }
+            if feature
+                .get("params")
+                .is_some_and(|value| !value.is_object())
+            {
+                return Err(format!("feature {index} params 必须是对象"));
+            }
+        }
+    }
+    if object.get("name").is_some_and(|value| !value.is_string()) {
+        return Err(".aimodel name 必须是字符串".into());
+    }
+    let bytes = serde_json::to_vec_pretty(project).map_err(|error| error.to_string())?;
+    if bytes.len() as u64 > 128 * 1024 * 1024 {
+        return Err(".aimodel 超过 128 MiB。".into());
+    }
+    Ok(bytes)
+}
+
+fn catia_adapter_root(app: &EngineContext) -> Result<(PathBuf, bool), String> {
+    let root = &app.resource_root;
+    if !root.join("ai_modeler/catia_com_adapter.py").is_file() { return Err("CATIA adapter 资源目录不完整。".into()); }
+    Ok((root.clone(), app.packaged))
+}
+
+fn development_catia_python(root: &Path) -> Result<PathBuf, String> {
+    let candidates = [
+        root.join(".venv").join("Scripts").join("python.exe"),
+        root.join(".venv").join("bin").join("python"),
+    ];
+    candidates
+        .into_iter()
+        .find(|path| path.is_file())
+        .ok_or_else(|| {
+            "开发版 CATIA adapter 需要项目专属 .venv；不会回退到系统 PATH Python。".into()
+        })
+}
+
+fn run_active_catia_adapter(
+    app: &EngineContext,
+    record: &Value,
+    output: &Path,
+    open_in_catia: bool,
+) -> Result<Value, String> {
+    let (root, packaged) = catia_adapter_root(app)?;
+    let data_dir = app_data_dir(app)?;
+    let (python, args) = if packaged {
+        let python_bundle = app.bundle_root.join("python");
+        let catia_bootstrap = app.bundle_root.join("catia-bootstrap");
+        (
+            native_catia_runtime::prepare(&root, &python_bundle, &catia_bootstrap, &data_dir)?,
+            Vec::new(),
+        )
+    } else {
+        (development_catia_python(&root)?, Vec::new())
+    };
+    let adapter = root.join("ai_modeler").join("catia_com_adapter.py");
+    native_catia_adapter::run(
+        &python,
+        &args,
+        &adapter,
+        &data_dir,
+        record,
+        output,
+        open_in_catia,
+    )
+}
+
+pub fn active_model_push_catia(app: EngineContext) -> Result<Value, String> {
+    let data_dir = app_data_dir(&app)?;
+    let root = native_active_model::root_from_data_dir(&data_dir);
+    let record = native_active_model::load(&root)?.ok_or("当前没有原生活动模型可推送。")?;
+    native_active_model::ensure_catpart_exportable(&record["document"])?;
+    let generation = record["generation"]
+        .as_u64()
+        .ok_or("活动模型 generation 无效。")?;
+    let raw_name = record["document"]["name"].as_str().unwrap_or("Part1");
+    let name = raw_name
+        .chars()
+        .map(|ch| {
+            if ch.is_ascii_alphanumeric() || ch == '-' || ch == '_' {
+                ch
+            } else {
+                '_'
+            }
+        })
+        .take(48)
+        .collect::<String>();
+    let export_dir = data_dir.join("catia-exports");
+    fs::create_dir_all(&export_dir).map_err(|error| format!("无法创建 CATIA 导出目录：{error}"))?;
+    let nonce = std::time::SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)
+        .map(|value| value.as_nanos())
+        .unwrap_or_default();
+    let target = export_dir.join(format!(
+        "{}-g{generation}-{nonce}.CATPart",
+        if name.is_empty() { "Part1" } else { &name }
+    ));
+    run_active_catia_adapter(&app, &record, &target, true)
+}
+
+pub fn active_model_export(app: EngineContext, kind: String, path: String) -> Result<(), String> {
+    let data_dir = app_data_dir(&app)?;
+    let root = native_active_model::root_from_data_dir(&data_dir);
+    let record = native_active_model::load(&root)?.ok_or("当前没有原生活动模型可导出。")?;
+    let source = match kind.as_str() {
+        "stl" => record["output_paths"]["stl"].as_str(),
+        "obj" => record["output_paths"]["obj"].as_str(),
+        "report" => {
+            if let Some(report_path) = record["output_paths"]["geometry_report"].as_str() {
+                return fs::copy(report_path, &path)
+                    .map(|_| ())
+                    .map_err(|error| format!("导出几何报告失败：{error}"));
+            }
+            let report = record["document"]["geometry_report"].clone();
+            if report.is_null() {
+                return Err("活动模型没有几何报告。".into());
+            }
+            return native_model_io::atomic_write(
+                Path::new(&path),
+                serde_json::to_string_pretty(&report)
+                    .map_err(|e| e.to_string())?
+                    .as_bytes(),
+            );
+        }
+        "catia" => {
+            native_active_model::ensure_catpart_exportable(&record["document"])?;
+            run_active_catia_adapter(&app, &record, Path::new(&path), false)?;
+            return Ok(());
+        }
+        _ => return Err(format!("不支持的原生导出类型：{kind}")),
+    }
+    .ok_or_else(|| format!("活动模型缺少 {kind} 输出路径。"))?;
+    fs::copy(source, &path)
+        .map(|_| ())
+        .map_err(|error| format!("导出 {kind} 失败：{error}"))
+}
+
+pub async fn active_model_export_snapshot(
+    app: EngineContext,
+    path: String,
+    view_set: String,
+) -> Result<(), String> {
+    let views: &[&str] = match view_set.as_str() {
+        "single" => &["iso"],
+        "four" => &["iso", "front", "right", "top"],
+        "three" => &["front", "right", "top"],
+        "extended" => &["iso", "front", "right", "top", "back", "left", "bottom"],
+        _ => return Err(format!("不支持的原生视图集：{view_set}")),
+    };
+    let data_dir = app_data_dir(&app)?;
+    let root = native_active_model::root_from_data_dir(&data_dir);
+    let record = native_active_model::load(&root)?.ok_or("当前没有原生活动模型可截图。")?;
+    let plan = record
+        .get("cadplan")
+        .filter(|value| value.is_object())
+        .ok_or("空模型没有原生快照。")?
+        .clone();
+    let expected_generation = record["generation"]
+        .as_u64()
+        .ok_or("活动模型 generation 无效。")?;
+    let revision = record["revision"]
+        .as_i64()
+        .ok_or("活动模型 revision 无效。")?;
+    let legacy_root = resource_root(&app)?;
+    let manifest = native_occt_runtime::resolve_manifest(&legacy_root)?;
+    let session_dir = data_dir.join("native-active-model-snapshot");
+    let plan_for_build = plan.clone();
+    let built = tokio::task::spawn_blocking(move || {
+        let cancel = std::sync::atomic::AtomicBool::new(false);
+        native_geometry_backend::build_preview(
+            &plan_for_build,
+            revision,
+            expected_generation,
+            &manifest,
+            &session_dir,
+            &cancel,
+        )
+    })
+    .await
+    .map_err(|error| format!("原生快照构建线程失败：{error}"))??;
+    if built.outcome.geometry_fingerprint != record["geometry_fingerprint"].as_str().unwrap_or("") {
+        return Err("活动模型 fingerprint 与当前 OCCT 快照不符，拒绝导出。".into());
+    }
+    if native_active_model::generation(&root)? != expected_generation {
+        return Err("快照生成期间活动模型已更新；旧 revision 图像未导出，请重试。".into());
+    }
+    let paths = built
+        .views
+        .iter()
+        .filter(|row| views.contains(&row["view"].as_str().unwrap_or("")))
+        .filter_map(|row| row["preview_image_path"].as_str())
+        .map(PathBuf::from)
+        .collect::<Vec<_>>();
+    if paths.len() != views.len() {
+        return Err("原生快照视图缺失。".into());
+    }
+    if paths.len() == 1 {
+        let bytes = fs::read(&paths[0]).map_err(|error| format!("读取原生快照失败：{error}"))?;
+        if native_active_model::generation(&root)? != expected_generation {
+            return Err("保存时活动模型已更新，旧 revision 快照未写出。".into());
+        }
+        return native_model_io::atomic_write(Path::new(&path), &bytes);
+    }
+    let tiles = paths
+        .iter()
+        .map(|path| {
+            image::open(path)
+                .map(|image| image.to_rgba8())
+                .map_err(|error| format!("无法读取原生视图图像：{error}"))
+        })
+        .collect::<Result<Vec<_>, _>>()?;
+    let tile_w = tiles[0].width();
+    let tile_h = tiles[0].height();
+    let (cols, rows) = match view_set.as_str() {
+        "four" => (2, 2),
+        "three" => (3, 1),
+        _ => (4, 2),
+    };
+    let mut canvas = image::RgbaImage::from_pixel(
+        tile_w * cols,
+        tile_h * rows,
+        image::Rgba([255, 255, 255, 255]),
+    );
+    for (index, tile) in tiles.iter().enumerate() {
+        image::imageops::overlay(
+            &mut canvas,
+            tile,
+            i64::from((index as u32 % cols) * tile_w),
+            i64::from((index as u32 / cols) * tile_h),
+        );
+    }
+    let mut bytes = Vec::new();
+    image::DynamicImage::ImageRgba8(canvas)
+        .write_to(
+            &mut std::io::Cursor::new(&mut bytes),
+            image::ImageFormat::Png,
+        )
+        .map_err(|error| format!("编码多视图 PNG 失败：{error}"))?;
+    if native_active_model::generation(&root)? != expected_generation {
+        return Err("保存时活动模型已更新，旧 revision 多视图未写出。".into());
+    }
+    native_model_io::atomic_write(Path::new(&path), &bytes)
+}
+
+pub async fn active_model_import_project(
+    app: EngineContext,
+    path: String,
+    confirmed: bool,
+) -> Result<Value, String> {
+    if !confirmed {
+        return Err("导入旧工程需要先确认显式 CADPlan 转换。".into());
+    }
+    let source_path = PathBuf::from(path);
+    let metadata =
+        fs::metadata(&source_path).map_err(|error| format!("无法读取工程文件：{error}"))?;
+    if metadata.len() > 60 * 1024 * 1024 {
+        return Err("旧工程超过 60 MiB，无法在活动记录中无损保留原始 JSON。".into());
+    }
+    let source_document = native_model_io::load_document(&source_path)?;
+    if native_model_io::egt_sw_mesh_only_plan_from_project(&source_document)?.is_some() {
+        let data_dir = app_data_dir(&app)?;
+        let active_root = native_active_model::root_from_data_dir(&data_dir);
+        let expected_generation = native_active_model::generation(&active_root)?;
+        let current_revision = native_active_model::load(&active_root)?
+            .and_then(|row| row["revision"].as_i64())
+            .unwrap_or(0);
+        let revision = current_revision
+            .checked_add(1)
+            .ok_or("CAD revision 已溢出。")?
+            .max(1);
+        let session_dir = data_dir.join("native-active-model-import");
+        let import_root = active_root.clone();
+        let imported = tokio::task::spawn_blocking(move || {
+            native_quick::import_mesh_only_egt_sw_aimodel(
+                &source_document,
+                &import_root,
+                expected_generation,
+                revision,
+                &session_dir,
+            )
+        })
+        .await
+        .map_err(|error| format!("EGT SW mesh-only 工程重建线程失败：{error}"))??;
+        return Ok(imported);
+    }
+    if native_model_io::timing_mesh_only_plan_from_project(&source_document)?.is_some() {
+        let data_dir = app_data_dir(&app)?;
+        let active_root = native_active_model::root_from_data_dir(&data_dir);
+        let expected_generation = native_active_model::generation(&active_root)?;
+        let current_revision = native_active_model::load(&active_root)?
+            .and_then(|row| row["revision"].as_i64())
+            .unwrap_or(0);
+        let revision = current_revision
+            .checked_add(1)
+            .ok_or("CAD revision 已溢出。")?
+            .max(1);
+        let session_dir = data_dir.join("native-active-model-import");
+        let import_root = active_root.clone();
+        let imported = tokio::task::spawn_blocking(move || {
+            native_quick::import_mesh_only_timing_aimodel(
+                &source_document,
+                &import_root,
+                expected_generation,
+                revision,
+                &session_dir,
+            )
+        })
+        .await
+        .map_err(|error| format!("T10 mesh-only 工程重建线程失败：{error}"))??;
+        return Ok(imported);
+    }
+    let mut plan = if source_document.get("cadplan").is_some() {
+        let plan = source_document
+            .get("cadplan")
+            .filter(|value| value.is_object())
+            .ok_or("旧工程包含非对象 CADPlan；拒绝忽略并生成不同几何。")?;
+        let validation = cad_plan_validation::validate_plan(plan);
+        if validation["valid"] != true {
+            return Err(format!(
+                "工程内已有 CADPlan 但校验失败；不会忽略它并另造模型：{validation}"
+            ));
+        }
+        let generated = native_model_io::cadplan_to_project(plan)?;
+        let original_features = source_document["features"]
+            .as_array()
+            .ok_or("带 CADPlan 的工程缺少 features 数组。")?;
+        let generated_features = generated["features"]
+            .as_array()
+            .ok_or("CADPlan 转换结果缺少 features 数组。")?;
+        if original_features.len() != generated_features.len() {
+            return Err(
+                "旧工程 features 数量与 CADPlan 映射结果不同；拒绝导入以避免静默丢失。".into(),
+            );
+        }
+        for (index, (old, new)) in original_features.iter().zip(generated_features).enumerate() {
+            for key in ["kind", "op", "params", "enabled"] {
+                if old.get(key) != new.get(key) {
+                    return Err(format!(
+                        "旧工程第 {index} 个特征的 {key} 与 CADPlan 不一致；拒绝静默改写。"
+                    ));
+                }
+            }
+        }
+        plan.clone()
+    } else {
+        legacy_document_to_cadplan(&source_document)?
+    };
+    plan["name"] = source_document
+        .get("name")
+        .cloned()
+        .unwrap_or_else(|| json!("Imported Model"));
+    let validation = cad_plan_validation::validate_plan(&plan);
+    if validation["valid"] != true {
+        return Err(format!("旧工程 CADPlan 显式转换校验失败：{validation}"));
+    }
+    let data_dir = app_data_dir(&app)?;
+    let active_root = native_active_model::root_from_data_dir(&data_dir);
+    let expected_generation = native_active_model::generation(&active_root)?;
+    let preview_generation = expected_generation
+        .checked_add(1)
+        .ok_or("活动模型 generation 已溢出。")?;
+    let current_revision = native_active_model::load(&active_root)?
+        .and_then(|row| row["revision"].as_i64())
+        .unwrap_or(0);
+    let revision = current_revision
+        .checked_add(1)
+        .ok_or("CAD revision 已溢出。")?
+        .max(1);
+    let legacy_root = resource_root(&app)?;
+    let manifest = native_occt_runtime::resolve_manifest(&legacy_root)?;
+    let session_dir = data_dir.join("native-active-model-import");
+    let plan_for_build = plan.clone();
+    let preview = tokio::task::spawn_blocking(move || {
+        let cancel = std::sync::atomic::AtomicBool::new(false);
+        native_geometry_backend::build_preview(
+            &plan_for_build,
+            revision,
+            preview_generation,
+            &manifest,
+            &session_dir,
+            &cancel,
+        )
+    })
+    .await
+    .map_err(|error| format!("旧工程原生构建线程失败：{error}"))??;
+    let state = json!({"plan":plan,"revision":revision,"preview_revision":revision,
+        "preview_generation":preview_generation,"output_paths":preview.outcome.output_paths,
+        "active_model_generation":preview_generation,
+        "last_preview":preview.outcome.preview,"actions":[{"kind":"model","tool":"explicit_legacy_import",
+        "revision":revision,"execution_engine":"rust_c_abi_occt"}],"finish_summary":null,
+        "legacy_source_document":source_document,"legacy_source_path":source_path,"saved_project_path":source_path});
+    let references = json!({"schema_version":1,"session_id":"legacy-import","images":[]});
+    let turns = json!({"schema_version":1,"session_id":"legacy-import","turns":[]});
+    let candidate = native_active_model::candidate_from_cad_state(
+        "legacy_import",
+        &state,
+        &references,
+        &turns,
+    )?;
+    let active = native_active_model::commit(&active_root, expected_generation, &candidate)?;
+    Ok(active["document"].clone())
+}
+
+fn legacy_document_to_cadplan(document: &Value) -> Result<Value, String> {
+    let features = document["features"]
+        .as_array()
+        .ok_or("旧工程 features 不是数组。")?;
+    if features.is_empty() {
+        return Err("空旧工程无需 CADPlan 几何转换；请使用新建零件。".into());
+    }
+    let mut converted = Vec::with_capacity(features.len());
+    for (index, feature) in features.iter().enumerate() {
+        let kind = feature["kind"]
+            .as_str()
+            .ok_or_else(|| format!("旧工程特征 {index} 缺少 kind，不能无损映射。"))?;
+        let spec = native_feature_specs::feature_spec(kind)
+            .map_err(|_| format!("旧工程特征 {index} 类型 {kind} 没有 CADPlan 映射。"))?;
+        let params = feature
+            .get("params")
+            .filter(|value| value.is_object())
+            .ok_or_else(|| format!("旧工程特征 {index} params 不是对象。"))?;
+        let required = spec["required_parameters"]
+            .as_array()
+            .ok_or("原生特征参数规范不完整。")?;
+        let optional = spec["optional_parameters"]
+            .as_array()
+            .ok_or("原生特征参数规范不完整。")?;
+        let allowed = required
+            .iter()
+            .chain(optional.iter())
+            .filter_map(Value::as_str)
+            .collect::<std::collections::HashSet<_>>();
+        if let Some(key) = params
+            .as_object()
+            .into_iter()
+            .flatten()
+            .map(|(key, _)| key)
+            .find(|key| !allowed.contains(key.as_str()))
+        {
+            return Err(format!(
+                "旧工程特征 {index} 含参数 {key}，CADPlan 映射会丢失它；导入已拒绝。"
+            ));
+        }
+        if let Some(key) = required
+            .iter()
+            .filter_map(Value::as_str)
+            .find(|key| !params.get(*key).is_some())
+        {
+            return Err(format!(
+                "旧工程特征 {index} 缺少必需参数 {key}，无法精确转换。"
+            ));
+        }
+        let enabled = feature
+            .get("enabled")
+            .and_then(Value::as_bool)
+            .unwrap_or(true);
+        let operation = match feature["op"].as_str().unwrap_or("add") {
+            "add" => "add",
+            "cut" => "cut",
+            other => return Err(format!("旧工程特征 {index} operation {other} 无法映射。")),
+        };
+        let id = feature["feature_id"]
+            .as_str()
+            .filter(|value| !value.is_empty())
+            .map(str::to_owned)
+            .unwrap_or_else(|| format!("legacy-{index}-{kind}"));
+        let sources = params.as_object().into_iter().flatten().map(|(key, _)| (key.clone(), json!({"type":"existing_model","note":"从旧 AIMODEL 数值字段显式导入，原始文档保存在活动模型中。"}))).collect::<serde_json::Map<_, _>>();
+        converted.push(json!({"id":id,"kind":kind,"operation":operation,"name":feature.get("name").cloned().unwrap_or_else(|| json!(kind)),
+            "parameters":params,"sources":sources,"relations":feature.get("relations").cloned().unwrap_or_else(|| json!([])),"enabled":enabled}));
+    }
+    Ok(
+        json!({"schema_version":"1.0","name":document.get("name").cloned().unwrap_or_else(|| json!("Imported Model")),
+        "source_prompt":document.get("source_prompt").and_then(Value::as_str).unwrap_or(""),"units":{"length":"mm","angle":"deg"},
+        "coordinate_system":{"type":"global_cartesian","handedness":"right","axes":["X","Y","Z"],"origin":[0,0,0]},
+        "features":converted,"pending_questions":[]}),
+    )
+}
+
+pub async fn active_model_update_feature(
+    app: EngineContext,
+    index: usize,
+    params: Value,
+    name: Option<String>,
+    action: Option<String>,
+    delta: Option<i32>,
+    enabled: Option<bool>,
+) -> Result<Value, String> {
+    if !params.is_object() {
+        return Err("特征参数必须是对象。".into());
+    }
+    let data_dir = app_data_dir(&app)?;
+    let root = native_active_model::root_from_data_dir(&data_dir);
+    let record = native_active_model::load(&root)?.ok_or("当前没有原生活动模型。")?;
+    let expected_generation = record["generation"]
+        .as_u64()
+        .ok_or("活动模型 generation 无效。")?;
+    let preview_generation = expected_generation
+        .checked_add(1)
+        .ok_or("活动模型 generation 已溢出。")?;
+    let revision = record["revision"]
+        .as_i64()
+        .ok_or("活动模型 revision 无效。")?
+        .checked_add(1)
+        .ok_or("CAD revision 已溢出。")?;
+    let mut plan = record
+        .get("cadplan")
+        .filter(|value| value.is_object())
+        .cloned()
+        .ok_or("此旧工程没有 CADPlan；必须先进行显式导入转换。")?;
+    let action = action.as_deref().unwrap_or("update");
+    if action == "toggle" && enabled.is_none() {
+        return Err("切换特征启停需要显式提供 enabled 布尔值。".into());
+    }
+    if action != "toggle" && enabled.is_some() {
+        return Err("enabled 只能用于 toggle 特征操作。".into());
+    }
+    let params_are_changed = params.as_object().is_some_and(|changes| {
+        plan.pointer(&format!("/features/{index}/parameters"))
+            .and_then(Value::as_object)
+            .is_some_and(|existing| {
+                changes
+                    .iter()
+                    .any(|(key, value)| existing.get(key) != Some(value))
+            })
+    });
+    if action == "update"
+        && params_are_changed
+        && (plan.pointer("/units/length").and_then(Value::as_str) != Some("mm")
+            || plan.pointer("/units/angle").and_then(Value::as_str) != Some("deg"))
+    {
+        return Err("UI 数值以 mm/deg 显示；当前 CADPlan 单位不同，拒绝可能失真的修改。".into());
+    }
+    let rows = plan["features"]
+        .as_array()
+        .ok_or("CADPlan features 无效。")?;
+    let row = rows
+        .get(index)
+        .ok_or("特征序号超出 CADPlan 范围。")?
+        .clone();
+    let feature_id = row["id"].as_str().ok_or("特征 id 无效。")?.to_owned();
+    let mut sources = serde_json::Map::new();
+    match action {
+        "toggle" => {
+            let enabled = enabled.expect("toggle validates enabled before edit");
+            plan = cad_plan::set_enabled(&plan, &feature_id, enabled)?;
+        }
+        "update" => {
+            for (key, value) in params.as_object().into_iter().flatten() {
+                if !row["parameters"].get(key).is_some() {
+                    return Err(format!("参数 {key} 不属于所选 CADPlan 特征。"));
+                }
+                if row["parameters"].get(key) != Some(value)
+                    && (value.is_number()
+                        || value
+                            .as_array()
+                            .is_some_and(|items| items.iter().any(Value::is_number)))
+                {
+                    sources.insert(key.clone(), json!({"type":"user","evidence":format!("用户在原生特征面板明确输入 {key}={value}")}));
+                }
+            }
+            let fields = name
+                .map(|value| json!({"name":value}))
+                .unwrap_or(Value::Null);
+            plan = crate::cad_plan::update(
+                &plan,
+                &feature_id,
+                &params,
+                &Value::Object(sources.clone()),
+                &[],
+                &fields,
+            )?;
+        }
+        "delete" => plan = crate::cad_plan::remove(&plan, &feature_id)?,
+        "move" => {
+            let rows = plan["features"]
+                .as_array_mut()
+                .ok_or("CADPlan features 无效。")?;
+            let target = index as i64 + i64::from(delta.unwrap_or(0));
+            if target < 0 || target >= rows.len() as i64 {
+                return Err("特征无法移动到列表边界之外。".into());
+            }
+            rows.swap(index, target as usize);
+        }
+        _ => return Err(format!("不支持的原生特征操作：{action}")),
+    }
+    if plan["features"].as_array().is_some_and(Vec::is_empty) {
+        let empty = json!({"format":"ai-modeler","version":1,"name":record["document"]["name"],
+            "source_prompt":record["document"]["source_prompt"],"features":[],"current_path":record["saved_project_path"],
+            "mesh_path":null,"output_paths":{},"stats":{},"build_log":["删除最后一个特征，活动模型为空"]});
+        let mut candidate = json!({"origin":record["origin"],"revision":revision,"cadplan":null,"geometry_fingerprint":null,
+            "document":empty,"output_paths":{},"cad_state":record["cad_state"],"reference_manifest":record["reference_manifest"],
+            "user_turns_manifest":record["user_turns_manifest"],"saved_project_path":record["saved_project_path"],
+            "finish_summary":null,"geometric_status":"not_built","visual_status":"not_reviewed"});
+        if candidate["cad_state"].is_object() {
+            candidate["cad_state"]["plan"] = Value::Null;
+            candidate["cad_state"]["revision"] = json!(revision);
+            candidate["cad_state"]["output_paths"] = json!({});
+            candidate["cad_state"]["active_model_generation"] = json!(preview_generation);
+        }
+        let root_for_commit = root.clone();
+        return tokio::task::spawn_blocking(move || {
+            native_active_model::commit(&root_for_commit, expected_generation, &candidate)
+        })
+        .await
+        .map_err(|error| format!("活动模型删除提交线程失败：{error}"))?
+        .map(|committed| committed["document"].clone());
+    }
+    let validation = cad_plan_validation::validate_plan(&plan);
+    if validation["valid"] != true {
+        return Err(format!("修改后的 CADPlan 校验失败：{validation}"));
+    }
+    let fingerprint = cad_plan::geometry_fingerprint(&plan)?;
+    let legacy_root = resource_root(&app)?;
+    let manifest = native_occt_runtime::resolve_manifest(&legacy_root)?;
+    let cancel = std::sync::atomic::AtomicBool::new(false);
+    let session_dir = data_dir.join("native-active-model-edit");
+    let build_plan = plan.clone();
+    let preview = tokio::task::spawn_blocking(move || {
+        native_geometry_backend::build_preview(
+            &build_plan,
+            revision,
+            preview_generation,
+            &manifest,
+            &session_dir,
+            &cancel,
+        )
+    })
+    .await
+    .map_err(|error| format!("原生特征重建线程失败：{error}"))??;
+    if preview.outcome.geometry_fingerprint != fingerprint {
+        return Err("重建后的 geometry fingerprint 不匹配，拒绝提交。".into());
+    }
+    let mut state = record
+        .get("cad_state")
+        .cloned()
+        .filter(Value::is_object)
+        .unwrap_or_else(|| json!({}));
+    state["plan"] = plan.clone();
+    state["revision"] = json!(revision);
+    state["active_model_generation"] = json!(preview_generation);
+    state["output_paths"] = preview.outcome.output_paths.clone();
+    state["preview_revision"] = json!(revision);
+    state["preview_generation"] = json!(preview_generation);
+    state["last_preview"] = preview.outcome.preview.clone();
+    state["finish_summary"] = Value::Null;
+    let turn_id = format!("ui-edit-{revision}");
+    let mut turns = record
+        .get("user_turns_manifest")
+        .cloned()
+        .filter(Value::is_object)
+        .unwrap_or_else(
+            || json!({"schema_version":1,"session_id":"native-active-model","turns":[]}),
+        );
+    turns["turns"].as_array_mut().ok_or("user turns manifest 无效。")?.push(json!({
+        "turn_id":turn_id,"raw_user_prompt":"用户在原生特征面板明确编辑模型参数。","reference_ids":[]}));
+    let mut provenance = Vec::new();
+    for (key, source) in &sources {
+        provenance.push(
+            json!({"feature_id":feature_id,"parameter":key,"turn_id":turn_id,
+            "value":plan["features"][index]["parameters"][key],"source":source}),
+        );
+    }
+    let actions = state
+        .as_object_mut()
+        .ok_or("CAD state 必须是对象。")?
+        .entry("actions")
+        .or_insert_with(|| json!([]))
+        .as_array_mut()
+        .ok_or("CAD actions 必须是数组。")?;
+    actions.push(json!({"kind":"model","tool":format!("ui_{action}"),
+        "revision":revision,"execution_engine":"rust_c_abi_occt","user_source_provenance":provenance}));
+    let candidate = native_active_model::candidate_from_cad_state(
+        record["origin"].as_str().unwrap_or("native-ui"),
+        &state,
+        &record["reference_manifest"],
+        &turns,
+    )?;
+    let root_for_commit = root.clone();
+    tokio::task::spawn_blocking(move || {
+        native_active_model::commit(&root_for_commit, expected_generation, &candidate)
+    })
+    .await
+    .map_err(|error| format!("活动模型提交线程失败：{error}"))?
+    .map(|committed| committed["document"].clone())
+}
+
+pub async fn run_agent_send<F>(send_turn: F) -> Result<Value, String>
+where
+    F: FnOnce() -> Result<Value, String> + Send + 'static,
+{
+    let (sender, receiver) = oneshot::channel();
+    thread::Builder::new()
+        .name("ai-modeler-agent-host".into())
+        .spawn(move || {
+            let _ = sender.send(send_turn());
+        })
+        .map_err(|error| format!("无法启动 Rust Agent Host 线程：{error}"))?;
+    receiver
+        .await
+        .map_err(|_| "Rust Agent Host 线程意外退出。".to_owned())?
+}
+
+pub async fn agent_send(
+    state: &agent_host::AgentHostState,
+    app: EngineContext,
+    request_id: String,
+    text: String,
+    images: Vec<String>,
+    llm_config: Value,
+    online_enabled: bool,
+    use_reviewed_cases: Option<bool>,
+    on_event: EventSink,
+) -> Result<Value, String> {
+    let host = state.clone();
+    run_agent_send(move || {
+        agent_host::send_turn(
+            &host,
+            app,
+            request_id,
+            text,
+            images,
+            llm_config,
+            online_enabled,
+            use_reviewed_cases.unwrap_or(true),
+            on_event,
+        )
+    })
+    .await
+}
+
+pub fn reviewed_cases_list(app: EngineContext) -> Result<Vec<Value>, String> {
+    native_reviewed_cases::list(&app_data_dir(&app)?)
+}
+
+pub fn reviewed_case_save(app: EngineContext, generation: u64) -> Result<Vec<Value>, String> {
+    native_reviewed_cases::save(&app_data_dir(&app)?, generation)
+}
+
+pub fn reviewed_case_remove(app: EngineContext, id: String) -> Result<Vec<Value>, String> {
+    native_reviewed_cases::remove(&app_data_dir(&app)?, &id)
+}
+
+pub async fn plate_layout_learn(app: EngineContext, group: String, generation: u64) -> Result<Value, String> {
+    let manifest = native_occt_runtime::resolve_manifest(&resource_root(&app)?)?;
+    let data = app_data_dir(&app)?;
+    tokio::task::spawn_blocking(move || {
+        let root = native_active_model::root_from_data_dir(&data);
+        native_active_model::with_generation(&root, generation, |active| {
+            native_plate_learning::learn(&data, &manifest, &group, &active["cadplan"])
+        })
+    }).await.map_err(|e| e.to_string())?
+}
+
+pub async fn plate_layout_build(
+    app: EngineContext, group: String, length: f64, width: f64, thickness: f64, diameter: f64,
+) -> Result<Value, String> {
+    let manifest = native_occt_runtime::resolve_manifest(&resource_root(&app)?)?;
+    let data = app_data_dir(&app)?;
+    tokio::task::spawn_blocking(move || native_plate_learning::build_transfer(
+        &data, &manifest, &group, [length, width, thickness], diameter
+    )).await.map_err(|e| e.to_string())?
+}
+
+pub fn agent_finding_review_state(
+    state: &agent_host::AgentHostState,
+) -> Result<Value, String> {
+    agent_host::finding_review_state(state)
+}
+
+pub fn agent_adjudicate_finding(
+    state: &agent_host::AgentHostState,
+    request: Value,
+) -> Result<Value, String> {
+    agent_host::adjudicate_finding(state, &request)
+}
+
+pub async fn native_online_ask(query: String) -> Result<Value, String> {
+    let web = native_web::NativeWeb::new(true);
+    tokio::task::spawn_blocking(move || {
+        let cancelled = std::sync::atomic::AtomicBool::new(false);
+        let mut backend = native_online_lookup::NativeLookupBackend::new(&web, &cancelled);
+        native_online_lookup::ask(&mut backend, &query)
+    })
+    .await
+    .map_err(|error| format!("联网查询任务异常退出：{error}"))?
+}
+
+pub fn agent_cancel(state: &agent_host::AgentHostState) -> Result<Value, String> {
+    agent_host::cancel(state)
+}
+
+pub async fn agent_reset(state: &agent_host::AgentHostState) -> Result<Value, String> {
+    let host = state.clone();
+    let (sender, receiver) = oneshot::channel();
+    thread::Builder::new()
+        .name("ai-modeler-agent-reset".into())
+        .spawn(move || {
+            let _ = sender.send(agent_host::reset(&host));
+        })
+        .map_err(|error| format!("无法关闭 DSH 会话：{error}"))?;
+    receiver
+        .await
+        .map_err(|_| "Rust Agent Host reset 线程意外退出。".to_owned())?
+}
+
+pub fn agent_history(app: EngineContext) -> Result<Value, String> {
+    agent_host::history(&app)
+}
+
+fn asset_root() -> Result<PathBuf, String> {
+    let base = std::env::var_os("LOCALAPPDATA")
+        .map(PathBuf::from)
+        .or_else(|| std::env::var_os("APPDATA").map(PathBuf::from))
+        .ok_or("找不到 Windows 用户数据目录。")?;
+    Ok(base.join("AI Modeler").join("ui-preview"))
+}
+
+fn input_image_extension(path: &Path) -> Result<String, String> {
+    let extension = path
+        .extension()
+        .and_then(|value| value.to_str())
+        .unwrap_or_default()
+        .to_ascii_lowercase();
+    if !["png", "jpg", "jpeg", "webp", "bmp", "gif"].contains(&extension.as_str()) {
+        return Err("图片格式不支持，请选择 PNG、JPG、WEBP、BMP 或 GIF。".into());
+    }
+    Ok(extension)
+}
+
+fn validate_input_image_size(size: u64) -> Result<(), String> {
+    if size == 0 || size > MAX_INPUT_IMAGE_BYTES {
+        return Err("图片为空或超过 24 MiB。".into());
+    }
+    Ok(())
+}
+
+fn staged_input_image_path(root: &Path, prefix: &str, extension: &str) -> Result<PathBuf, String> {
+    fs::create_dir_all(root).map_err(|error| format!("无法创建图片缓存目录：{error}"))?;
+    let nanos = SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .unwrap_or_default()
+        .as_nanos();
+    Ok(root.join(format!(
+        "{prefix}-{}-{nanos}.{extension}",
+        std::process::id()
+    )))
+}
+
+fn stage_input_image_file(source: &Path, root: &Path) -> Result<PathBuf, String> {
+    let source = source
+        .canonicalize()
+        .map_err(|error| format!("无法读取所选图片：{error}"))?;
+    if !source.is_file() {
+        return Err("所选路径不是图片文件。".into());
+    }
+    let extension = input_image_extension(&source)?;
+    let metadata = fs::metadata(&source).map_err(|error| format!("无法读取图片信息：{error}"))?;
+    validate_input_image_size(metadata.len())?;
+    let target = staged_input_image_path(root, "reference", &extension)?;
+    match fs::copy(&source, &target) {
+        Ok(copied) => {
+            if let Err(error) = validate_input_image_size(copied) {
+                let _ = fs::remove_file(&target);
+                return Err(error);
+            }
+        }
+        Err(error) => {
+            let _ = fs::remove_file(&target);
+            return Err(format!("无法暂存参考图片：{error}"));
+        }
+    }
+    Ok(target)
+}
+
+#[cfg(windows)]
+fn is_packaged_local_cache_asset(
+    canonical_local_app_data: &Path,
+    logical_root_suffix: &Path,
+    requested: &Path,
+    relative: &Path,
+) -> bool {
+    use std::path::Component;
+
+    let relative_components = relative.components().collect::<Vec<_>>();
+    if relative_components.is_empty()
+        || relative_components
+            .iter()
+            .any(|component| !matches!(component, Component::Normal(_)))
+    {
+        return false;
+    }
+
+    let requested_components = requested
+        .components()
+        .map(|component| component.as_os_str().to_string_lossy().into_owned())
+        .collect::<Vec<_>>();
+    let local_components = canonical_local_app_data
+        .components()
+        .map(|component| component.as_os_str().to_string_lossy().into_owned())
+        .collect::<Vec<_>>();
+    if requested_components.len() <= local_components.len()
+        || !requested_components
+            .iter()
+            .zip(&local_components)
+            .all(|(actual, expected)| actual.eq_ignore_ascii_case(expected))
+    {
+        return false;
+    }
+
+    let virtual_components = &requested_components[local_components.len()..];
+    if virtual_components.len() <= relative_components.len() {
+        return false;
+    }
+    let root_component_count = virtual_components.len() - relative_components.len();
+    let redirected_root = &virtual_components[..root_component_count];
+    let suffix_components = logical_root_suffix
+        .components()
+        .map(|component| component.as_os_str().to_string_lossy().into_owned())
+        .collect::<Vec<_>>();
+
+    if redirected_root.len() != 4 + suffix_components.len()
+        || !redirected_root[0].eq_ignore_ascii_case("Packages")
+        || redirected_root[1].is_empty()
+        || !redirected_root[2].eq_ignore_ascii_case("LocalCache")
+        || !redirected_root[3].eq_ignore_ascii_case("Local")
+        || !redirected_root[4..]
+            .iter()
+            .zip(&suffix_components)
+            .all(|(actual, expected)| actual.eq_ignore_ascii_case(expected))
+    {
+        return false;
+    }
+
+    let requested_relative = &virtual_components[root_component_count..];
+    requested_relative
+        .iter()
+        .zip(&relative_components)
+        .all(|(actual, expected)| {
+            actual.eq_ignore_ascii_case(&expected.as_os_str().to_string_lossy())
+        })
+}
+
+pub fn read_asset(app: EngineContext, path: String) -> Result<Vec<u8>, String> {
+    let logical_root = asset_root()?;
+    let app_data_root = app_data_dir(&app)?;
+    let local_app_data = std::env::var_os("LOCALAPPDATA").map(PathBuf::from);
+    let logical_requested = PathBuf::from(path);
+    let requested = resolve_asset_path(
+        &logical_requested,
+        &logical_root,
+        &app_data_root,
+        local_app_data.as_deref(),
+    )?;
+    let metadata = fs::metadata(&requested).map_err(|error| asset_path_io_error(error.kind()))?;
+    if metadata.len() > 256 * 1024 * 1024 {
+        return Err("预览资源超过 256 MiB 限制（asset_too_large）。".into());
+    }
+    let bytes = fs::read(requested).map_err(|error| asset_path_io_error(error.kind()))?;
+    Ok(bytes)
+}
+
+fn resolve_asset_path(
+    logical_requested: &Path,
+    logical_preview_root: &Path,
+    app_data_root: &Path,
+    local_app_data: Option<&Path>,
+) -> Result<PathBuf, String> {
+    let denied = || "拒绝读取预览目录之外的文件（asset_outside_allowed_roots）。".to_owned();
+    let requested = logical_requested
+        .canonicalize()
+        .map_err(|error| asset_path_io_error(error.kind()))?;
+    if !requested.is_file() {
+        return Err("模型预览路径不是文件（asset_not_file）。".into());
+    }
+
+    if let Ok(preview_root) = logical_preview_root.canonicalize() {
+        if requested.starts_with(&preview_root) {
+            return Ok(requested);
+        }
+    }
+
+    // Keep support for Windows packaged apps whose LocalAppData files are
+    // physically redirected into the package's LocalCache\Local directory.
+    #[cfg(windows)]
+    if let Some(local_app_data) = local_app_data {
+        if let (Ok(canonical_local_app_data), Ok(relative), Ok(logical_root_suffix)) = (
+            local_app_data.canonicalize(),
+            logical_requested.strip_prefix(logical_preview_root),
+            logical_preview_root.strip_prefix(local_app_data),
+        ) {
+            if is_packaged_local_cache_asset(
+                &canonical_local_app_data,
+                logical_root_suffix,
+                &requested,
+                relative,
+            ) {
+                return Ok(requested);
+            }
+        }
+    }
+    #[cfg(not(windows))]
+    let _ = local_app_data;
+
+    if logical_requested
+        .extension()
+        .is_some_and(|extension| extension.to_string_lossy().eq_ignore_ascii_case("glb"))
+    {
+        let app_data_root = app_data_root
+            .canonicalize()
+            .map_err(|error| asset_path_io_error(error.kind()))?;
+        if requested.starts_with(&app_data_root) {
+            return Ok(requested);
+        }
+    }
+    Err(denied())
+}
+
+fn asset_path_io_error(kind: std::io::ErrorKind) -> String {
+    let code = match kind {
+        std::io::ErrorKind::NotFound => "asset_missing",
+        std::io::ErrorKind::PermissionDenied => "asset_permission_denied",
+        _ => "asset_unavailable",
+    };
+    format!("模型预览资源不可用（{code}）。")
+}
+
+pub fn save_input_image(name: String, data: Vec<u8>) -> Result<String, String> {
+    validate_input_image_size(data.len() as u64).map_err(|error| format!("剪贴板{error}"))?;
+    let extension = input_image_extension(Path::new(&name))?;
+    let root = asset_root()?.join("incoming");
+    let target = staged_input_image_path(&root, "clipboard", &extension)?;
+    fs::write(&target, data).map_err(|error| format!("无法保存剪贴板图片：{error}"))?;
+    Ok(target.to_string_lossy().into_owned())
+}
+
+pub fn stage_input_image(source_path: String) -> Result<String, String> {
+    let source = PathBuf::from(source_path);
+    let target = stage_input_image_file(&source, &asset_root()?.join("incoming"))?;
+    Ok(target.to_string_lossy().into_owned())
+}
+
+#[cfg(test)]
+mod input_image_tests {
+    #[cfg(windows)]
+    use super::is_packaged_local_cache_asset;
+    use super::{MAX_INPUT_IMAGE_BYTES, resolve_asset_path, stage_input_image_file};
+    use std::fs;
+    use std::io::Write;
+    use std::path::{Path, PathBuf};
+    use std::time::{SystemTime, UNIX_EPOCH};
+
+    fn scratch_dir() -> PathBuf {
+        let stamp = SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .unwrap_or_default()
+            .as_nanos();
+        let path = std::env::temp_dir().join(format!(
+            "ai-modeler-image-test-{}-{stamp}",
+            std::process::id()
+        ));
+        fs::create_dir_all(&path).expect("create scratch directory");
+        path
+    }
+
+    fn asset_roots(root: &Path) -> (PathBuf, PathBuf) {
+        let preview = root.join("AI Modeler").join("ui-preview");
+        let app_data = root.join("app-data");
+        fs::create_dir_all(&preview).expect("create preview root");
+        fs::create_dir_all(&app_data).expect("create app data root");
+        (preview, app_data)
+    }
+
+    #[test]
+    fn asset_path_policy_allows_preview_files_and_app_data_glb_only() {
+        let scratch = scratch_dir();
+        let (preview, app_data) = asset_roots(&scratch);
+        let preview_png = preview.join("incoming").join("reference.png");
+        fs::create_dir_all(preview_png.parent().unwrap()).unwrap();
+        fs::write(&preview_png, b"png").unwrap();
+        let model_glb = app_data.join("native-quick").join("mesh.glb");
+        fs::create_dir_all(model_glb.parent().unwrap()).unwrap();
+        fs::write(&model_glb, b"glb").unwrap();
+        let agent_glb = app_data
+            .join("agent-host")
+            .join("workspaces")
+            .join("session-test")
+            .join("native-output")
+            .join("r9-g4-signature-nonce")
+            .join("candidate.glb");
+        fs::create_dir_all(agent_glb.parent().unwrap()).unwrap();
+        fs::write(&agent_glb, b"agent glb").unwrap();
+        let other_app_data_file = app_data.join("native-quick").join("notes.txt");
+        fs::write(&other_app_data_file, b"text").unwrap();
+        let outside_glb = scratch.join("outside.glb");
+        fs::write(&outside_glb, b"glb").unwrap();
+        let missing_glb = app_data.join("native-quick").join("missing.glb");
+
+        assert_eq!(
+            resolve_asset_path(&preview_png, &preview, &app_data, None).unwrap(),
+            preview_png.canonicalize().unwrap()
+        );
+        assert_eq!(
+            resolve_asset_path(&model_glb, &preview, &app_data, None).unwrap(),
+            model_glb.canonicalize().unwrap()
+        );
+        assert_eq!(
+            resolve_asset_path(&agent_glb, &preview, &app_data, None).unwrap(),
+            agent_glb.canonicalize().unwrap(),
+            "Agent-generated previews are stored in app-data workspaces too"
+        );
+        fs::remove_dir_all(&preview).unwrap();
+        assert_eq!(
+            resolve_asset_path(&model_glb, &preview, &app_data, None).unwrap(),
+            model_glb.canonicalize().unwrap(),
+            "app data GLB remains readable before the preview cache is created"
+        );
+        assert_eq!(
+            resolve_asset_path(&agent_glb, &preview, &app_data, None).unwrap(),
+            agent_glb.canonicalize().unwrap(),
+            "Agent workspace GLB remains readable before the preview cache is created"
+        );
+        assert!(resolve_asset_path(&other_app_data_file, &preview, &app_data, None).is_err());
+        assert!(
+            resolve_asset_path(&outside_glb, &preview, &app_data, None)
+                .unwrap_err()
+                .contains("asset_outside_allowed_roots")
+        );
+        assert!(
+            resolve_asset_path(&missing_glb, &preview, &app_data, None)
+                .unwrap_err()
+                .contains("asset_missing")
+        );
+
+        fs::remove_dir_all(scratch).unwrap();
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn asset_path_policy_rejects_symlink_escape_from_app_data() {
+        use std::os::unix::fs::symlink;
+
+        let scratch = scratch_dir();
+        let (preview, app_data) = asset_roots(&scratch);
+        let outside_glb = scratch.join("outside.glb");
+        fs::write(&outside_glb, b"glb").unwrap();
+        let escaped = app_data.join("escaped.glb");
+        symlink(&outside_glb, &escaped).unwrap();
+
+        assert!(resolve_asset_path(&escaped, &preview, &app_data, None).is_err());
+
+        fs::remove_dir_all(scratch).unwrap();
+    }
+
+    #[cfg(windows)]
+    #[test]
+    fn asset_path_policy_rejects_junction_escape_from_app_data() {
+        use std::process::Command;
+
+        let scratch = scratch_dir();
+        let (preview, app_data) = asset_roots(&scratch);
+        let outside = scratch.join("outside");
+        fs::create_dir_all(&outside).unwrap();
+        let outside_glb = outside.join("external.glb");
+        fs::write(&outside_glb, b"glb").unwrap();
+        let junction = app_data.join("escaped");
+        let result = Command::new("cmd.exe")
+            .args(["/C", "mklink", "/J"])
+            .arg(&junction)
+            .arg(&outside)
+            .output()
+            .expect("create directory junction without administrator privileges");
+        assert!(
+            result.status.success(),
+            "mklink /J failed: {}",
+            String::from_utf8_lossy(&result.stderr)
+        );
+
+        assert!(
+            resolve_asset_path(&junction.join("external.glb"), &preview, &app_data, None,).is_err()
+        );
+
+        fs::remove_dir(&junction).unwrap();
+        fs::remove_dir_all(scratch).unwrap();
+    }
+
+    #[test]
+    fn stages_image_from_unicode_path_with_spaces() {
+        let scratch = scratch_dir();
+        let source = scratch.join("参考 零件.png");
+        fs::write(&source, b"preview bytes").expect("write source image");
+        let staged_root = scratch.join("cache").join("incoming");
+
+        let staged = stage_input_image_file(&source, &staged_root).expect("stage image");
+
+        assert!(staged.starts_with(&staged_root));
+        assert_eq!(
+            staged.extension().and_then(|value| value.to_str()),
+            Some("png")
+        );
+        assert_eq!(
+            fs::read(&staged).expect("read staged image"),
+            b"preview bytes"
+        );
+        fs::remove_dir_all(scratch).expect("remove scratch directory");
+    }
+
+    #[test]
+    fn rejects_unsupported_image_extension() {
+        let scratch = scratch_dir();
+        let source = scratch.join("reference.txt");
+        fs::write(&source, b"not an image").expect("write source file");
+
+        let error = stage_input_image_file(&source, &scratch.join("cache"))
+            .expect_err("unsupported format must fail");
+
+        assert!(error.contains("格式不支持"));
+        fs::remove_dir_all(scratch).expect("remove scratch directory");
+    }
+
+    #[test]
+    fn rejects_image_larger_than_clipboard_limit() {
+        let scratch = scratch_dir();
+        let source = scratch.join("large.png");
+        let mut file = fs::File::create(&source).expect("create large image");
+        file.set_len(MAX_INPUT_IMAGE_BYTES + 1)
+            .expect("set large file length");
+        file.flush().expect("flush large image");
+
+        let error = stage_input_image_file(&source, &scratch.join("cache"))
+            .expect_err("oversized image must fail");
+
+        assert!(error.contains("24 MiB"));
+        fs::remove_dir_all(scratch).expect("remove scratch directory");
+    }
+
+    #[cfg(windows)]
+    #[test]
+    fn accepts_only_matching_packaged_local_cache_redirects() {
+        let local_app_data = PathBuf::from(r"C:\Users\tester\AppData\Local");
+        let logical_root_suffix = PathBuf::from(r"AI Modeler\ui-preview");
+        let relative = PathBuf::from(r"ai-modeler-session\mesh-r1.glb");
+        let redirected = PathBuf::from(
+            r"C:\Users\tester\AppData\Local\Packages\OpenAI.Codex_test\LocalCache\Local\AI Modeler\ui-preview\ai-modeler-session\mesh-r1.glb",
+        );
+
+        assert!(is_packaged_local_cache_asset(
+            &local_app_data,
+            &logical_root_suffix,
+            &redirected,
+            &relative,
+        ));
+
+        let outside = PathBuf::from(
+            r"C:\Users\tester\AppData\Local\Packages\OpenAI.Codex_test\LocalCache\Local\Temp\mesh-r1.glb",
+        );
+        assert!(!is_packaged_local_cache_asset(
+            &local_app_data,
+            &logical_root_suffix,
+            &outside,
+            &relative,
+        ));
+    }
+}
+
+#[cfg(test)]
+mod native_active_model_import_tests {
+    use super::legacy_document_to_cadplan;
+    use serde_json::json;
+
+    fn legacy_box() -> serde_json::Value {
+        json!({"name":"legacy box","source_prompt":"box 20 x 10 x 5 mm","features":[{
+            "kind":"box","op":"add","feature_id":"body","name":"Body",
+            "params":{"length":20,"width":10,"height":5},"enabled":true
+        }]})
+    }
+
+    #[test]
+    fn maps_supported_legacy_feature_and_marks_values_as_existing_model() {
+        let plan = legacy_document_to_cadplan(&legacy_box()).expect("supported box maps");
+        assert_eq!(plan["units"], json!({"length":"mm","angle":"deg"}));
+        assert_eq!(plan["features"][0]["id"], "body");
+        assert_eq!(
+            plan["features"][0]["parameters"],
+            json!({"length":20,"width":10,"height":5})
+        );
+        assert_eq!(
+            plan["features"][0]["sources"]["length"]["type"],
+            "existing_model"
+        );
+        assert_eq!(
+            crate::cad_plan_validation::validate_plan(&plan)["valid"],
+            true
+        );
+    }
+
+    #[test]
+    fn refuses_legacy_fields_that_cannot_be_mapped_without_loss_but_preserves_disabled_flag() {
+        let mut document = legacy_box();
+        document["features"][0]["params"]["legacy_opaque"] = json!(17);
+        assert!(
+            legacy_document_to_cadplan(&document)
+                .unwrap_err()
+                .contains("会丢失")
+        );
+        let mut disabled = legacy_box();
+        disabled["features"][0]["enabled"] = json!(false);
+        let plan = legacy_document_to_cadplan(&disabled).expect("disabled feature state maps");
+        assert_eq!(plan["features"][0]["enabled"], false);
+        assert_eq!(
+            crate::cad_plan_validation::validate_plan(&plan)["valid"],
+            true
+        );
+    }
+}
+
+#[cfg(test)]
+mod native_active_model_save_tests {
+    use super::save_active_model_record;
+    use crate::{native_active_model, native_model_io};
+    use serde_json::{Value, json};
+    use std::{
+        fs,
+        path::PathBuf,
+        time::{SystemTime, UNIX_EPOCH},
+    };
+
+    fn temp_root(label: &str) -> PathBuf {
+        let stamp = SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .unwrap()
+            .as_nanos();
+        std::env::temp_dir().join(format!(
+            "active-save-{label}-{}-{stamp}",
+            std::process::id()
+        ))
+    }
+
+    fn candidate(origin: &str) -> Value {
+        let plan = crate::cad_plan::create(
+            "save test",
+            json!({"id":"body","kind":"box","operation":"add","parameters":{"length":12,"width":8,"height":4},"sources":{
+                "length":{"type":"user","evidence":"12 mm"},"width":{"type":"user","evidence":"8 mm"},"height":{"type":"user","evidence":"4 mm"}}}),
+            "save test",
+            None,
+        );
+        let document = native_model_io::cadplan_to_project(&plan).unwrap();
+        let fingerprint = crate::cad_plan::geometry_fingerprint(&plan).unwrap();
+        json!({"origin":origin,"revision":1,"geometry_fingerprint":fingerprint,"cadplan":plan,
+            "document":document,"output_paths":{},"cad_state":{"plan":plan,"revision":1,"output_paths":{},"saved_project_path":null,"active_model_generation":1},
+            "finish_summary":null,"geometric_status":"not_built","visual_status":"not_reviewed"})
+    }
+
+    #[test]
+    fn production_save_logic_commits_project_and_rejects_stale_generation_before_target_write() {
+        let root = temp_root("transaction");
+        let destination_dir = temp_root("destination");
+        fs::create_dir_all(&destination_dir).unwrap();
+        let target = destination_dir.join("saved.aimodel");
+        let first = native_active_model::commit(&root, 0, &candidate("quick")).unwrap();
+        let written = save_active_model_record(&root, &first, &target).unwrap();
+        assert_eq!(written["generation"], 2);
+        let saved_project = native_model_io::load_aimodel(&target).unwrap();
+        assert_eq!(
+            saved_project["current_path"],
+            target.to_string_lossy().as_ref()
+        );
+        assert_eq!(
+            written["output_paths"]["aimodel"],
+            target.to_string_lossy().as_ref()
+        );
+        assert_eq!(
+            written["document"]["output_paths"]["aimodel"],
+            target.to_string_lossy().as_ref()
+        );
+        assert_eq!(
+            written["cad_state"]["output_paths"]["aimodel"],
+            target.to_string_lossy().as_ref()
+        );
+        assert_eq!(native_active_model::load(&root).unwrap().unwrap(), written);
+
+        let stale = written.clone();
+        let newer = native_active_model::commit(&root, 2, &candidate("agent")).unwrap();
+        let existing_target = destination_dir.join("existing.aimodel");
+        fs::write(&existing_target, b"keep old bytes").unwrap();
+        let error = save_active_model_record(&root, &stale, &existing_target).unwrap_err();
+        assert!(error.contains("活动模型已变化"));
+        assert_eq!(fs::read(&existing_target).unwrap(), b"keep old bytes");
+        assert_eq!(native_active_model::load(&root).unwrap().unwrap(), newer);
+        assert_eq!(fs::read_dir(&destination_dir).unwrap().count(), 2);
+
+        fs::remove_dir_all(root).unwrap();
+        fs::remove_dir_all(destination_dir).unwrap();
+    }
+}

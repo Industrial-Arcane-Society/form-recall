@@ -7,15 +7,20 @@ import { fileURLToPath } from 'node:url'
 const desktopRoot = resolve(dirname(fileURLToPath(import.meta.url)), '..')
 const repoRoot = resolve(desktopRoot, '../../..')
 const app = readFileSync(resolve(desktopRoot, 'src/App.vue'), 'utf8')
-const rust = readFileSync(resolve(desktopRoot, 'src-tauri/src/lib.rs'), 'utf8')
-const adapter = readFileSync(resolve(desktopRoot, 'src-tauri/src/native_catia_runtime.rs'), 'utf8')
-const quick = readFileSync(resolve(desktopRoot, 'src-tauri/src/native_quick.rs'), 'utf8')
-const geometry = readFileSync(resolve(desktopRoot, 'src-tauri/src/native_geometry_backend.rs'), 'utf8')
+const tauri = readFileSync(resolve(desktopRoot, 'src-tauri/src/lib.rs'), 'utf8')
+const coreRoot = resolve(repoRoot, 'src/core/cad-engine/src')
+const rust = readFileSync(resolve(coreRoot, 'lib.rs'), 'utf8')
+const adapter = readFileSync(resolve(coreRoot, 'native_catia_runtime.rs'), 'utf8')
+const quick = readFileSync(resolve(coreRoot, 'native_quick.rs'), 'utf8')
+const geometry = readFileSync(resolve(coreRoot, 'native_geometry_backend.rs'), 'utf8')
+const handlers = tauri.match(/tauri::generate_handler!\[([\s\S]*?)\]/)?.[1] ?? ''
 const pythonAdapter = readFileSync(resolve(repoRoot, 'src/legacy/ai_modeler/catia_com_adapter.py'), 'utf8')
 const config = JSON.parse(readFileSync(resolve(desktopRoot, 'src-tauri/tauri.conf.json'), 'utf8'))
 
 test('desktop UI no longer calls the Python backend bridge', () => {
   assert.doesNotMatch(app, /backendCall|backend_call|runBackendAction/)
+  assert.doesNotMatch(tauri, /async fn backend_call|fn ensure_backend|fn send_backend_call|struct BackendState/)
+  assert.doesNotMatch(tauri, /ai_modeler.*--ui-bridge|python_command|AIMODELER_PYTHON/)
   assert.doesNotMatch(rust, /async fn backend_call|fn ensure_backend|fn send_backend_call|struct BackendState/)
   assert.doesNotMatch(rust, /ai_modeler.*--ui-bridge|python_command|AIMODELER_PYTHON/)
 })
@@ -27,13 +32,18 @@ test('model operations route through Rust active-model commands', () => {
     'active_model_export',
     'active_model_export_snapshot',
     'active_model_push_catia',
-  ]) assert.ok(app.includes(`'${command}'`), `missing native route: ${command}`)
+  ]) {
+    assert.ok(app.includes(`'${command}'`), `missing native route: ${command}`)
+    assert.match(handlers, new RegExp(`\\b${command}\\b`), `missing Tauri registration: ${command}`)
+    assert.match(tauri, new RegExp(`engine::${command}\\(`), `missing core call: ${command}`)
+  }
   assert.match(app, /function cancelActive\(\)[\s\S]{0,500}快速模式正在执行单次本地构建/)
 })
 
 test('Python payload is CATIA-only, private, and installed on demand', () => {
   assert.match(rust, /\.join\("catia-python"\)/)
   assert.match(rust, /native_catia_runtime::prepare\(/)
+  assert.match(adapter, /pub fn prepare\(/)
   assert.doesNotMatch(rust, /python\.exe.*PATH|Command::new\("python/)
   assert.match(pythonAdapter, /win32com\.client|Dispatch/)
   assert.doesNotMatch(pythonAdapter, /from ai_modeler|import ai_modeler|cadquery|OCP/)
