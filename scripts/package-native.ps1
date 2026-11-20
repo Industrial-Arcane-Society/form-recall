@@ -110,6 +110,9 @@ CATIA 的 Python 与 pywin32 运行时随包提供，首次导出时安装到用
 软件及依赖许可见 LICENSE、THIRD_PARTY_NOTICES.md 和 occt-runtime/install。
 '@
 $readme | Set-Content -LiteralPath (Join-Path $package '使用说明.txt') -Encoding utf8NoBOM
+if ($Version) {
+    Set-Content -LiteralPath (Join-Path $package 'update-bootstrap-v2') -Value '2' -Encoding ascii
+}
 $sourceCommit = & git -C $script:RepositoryRoot rev-parse HEAD
 if ($LASTEXITCODE -ne 0) { throw 'Cannot record the source commit.' }
 $sourceStatus = @(& git -C $script:RepositoryRoot status --porcelain --untracked-files=all)

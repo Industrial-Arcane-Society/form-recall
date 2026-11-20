@@ -13,13 +13,14 @@ import (
 )
 
 const distribution = "https://raw.githubusercontent.com/Industrial-Arcane-Society/form-recall-release/main/channels/"
+const distributionAPI = "https://api.github.com/repos/Industrial-Arcane-Society/form-recall-release/contents/channels/"
 const downloads = "https://github.com/Industrial-Arcane-Society/"
 const publicKey = "pADH694WxPtjJAK_Auo7qo88o3kv2oAdHzi9T4yFznQ"
 const maxArchive = 1 << 30
 const maxManifest = 1 << 20
 
 var (
-	versionPattern = regexp.MustCompile(`^(0|[1-9][0-9]{0,8})\.(0|[1-9][0-9]{0,8})\.(0|[1-9][0-9]{0,8})(-alpha\.([1-9][0-9]{0,8}))?$`)
+	versionPattern = regexp.MustCompile(`^(0|[1-9][0-9]{0,8})\.(0|[1-9][0-9]{0,8})\.(0|[1-9][0-9]{0,8})(?:-(alpha|beta|rc)\.([1-9][0-9]{0,8}))?$`)
 	hashPattern    = regexp.MustCompile(`^[a-f0-9]{64}$`)
 	commitPattern  = regexp.MustCompile(`^[a-f0-9]{40}$`)
 )
@@ -58,29 +59,28 @@ type Offer struct {
 }
 
 func channelFor(version string) string {
-	if !versionPattern.MatchString(version) {
+	match := versionPattern.FindStringSubmatch(version)
+	if match == nil {
 		return ""
 	}
-	if strings.Contains(version, "-alpha.") {
-		return "alpha"
+	if match[4] != "" {
+		return match[4]
 	}
 	return "stable"
 }
 
-func versionParts(v string) [4]int {
+func versionParts(v string) [5]int {
 	m := versionPattern.FindStringSubmatch(v)
 	if m == nil {
-		return [4]int{}
+		return [5]int{}
 	}
-	var result [4]int
-	for i, value := range []string{m[1], m[2], m[3], m[5]} {
+	var result [5]int
+	for i, value := range []string{m[1], m[2], m[3], "", m[5]} {
 		for _, digit := range value {
 			result[i] = result[i]*10 + int(digit-'0')
 		}
 	}
-	if result[3] == 0 {
-		result[3] = 1_000_000_000
-	}
+	result[3] = map[string]int{"alpha": 0, "beta": 1, "rc": 2, "": 3}[m[4]]
 	return result
 }
 
@@ -133,7 +133,7 @@ func validAsset(asset Asset, expected string) bool {
 
 func (m Manifest) validate() error {
 	if m.Schema != 1 || m.Platform != "windows-x64" || !commitPattern.MatchString(m.Commit) ||
-		channelFor(m.Version) == "" || m.Channel != channelFor(m.Version) || len(m.Files) > 4096 || len(m.Deltas) > 8 {
+		channelFor(m.Version) == "" || m.Channel != channelFor(m.Version) || len(m.Files) > 4096 || len(m.Deltas) > 5 {
 		return errors.New("更新清单的版本、频道或平台无效")
 	}
 	full := "FormRecall-" + m.Version + "-windows-x64-portable.zip"

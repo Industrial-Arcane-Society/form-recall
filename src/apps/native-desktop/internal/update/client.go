@@ -18,12 +18,14 @@ import (
 )
 
 type Client struct {
-	Version string
-	Root    string
-	Bundle  string
-	http    *http.Client
-	key     ed25519.PublicKey
-	feed    string
+	Version   string
+	Root      string
+	Bundle    string
+	http      *http.Client
+	key       ed25519.PublicKey
+	feed      string
+	freshFeed string
+	channel   string
 }
 
 func NewClient(version, bundle string) *Client {
@@ -34,7 +36,8 @@ func NewClient(version, bundle string) *Client {
 	key, _ := base64.RawURLEncoding.DecodeString(publicKey)
 	return &Client{
 		Version: version, Root: RootForBundle(bundle), Bundle: bundle, key: key,
-		feed: distribution + channel + ".json",
+		channel: channel, feed: distribution + channel + ".json",
+		freshFeed: distributionAPI + channel + ".json?ref=main",
 		http: &http.Client{CheckRedirect: func(req *http.Request, via []*http.Request) error {
 			host := req.URL.Host
 			if len(via) >= 6 || req.URL.Scheme != "https" || (host != "github.com" &&
@@ -47,7 +50,15 @@ func NewClient(version, bundle string) *Client {
 	}
 }
 
-func (c *Client) Channel() string { return channelFor(c.Version) }
+func (c *Client) Channel() string { return c.channel }
+
+func (c *Client) ForChannel(channel string) *Client {
+	selected := *c
+	selected.channel = channel
+	selected.feed = distribution + channel + ".json"
+	selected.freshFeed = distributionAPI + channel + ".json?ref=main"
+	return &selected
+}
 
 func (c *Client) get(ctx context.Context, address string) (*http.Response, error) {
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, address, nil)
@@ -59,35 +70,68 @@ func (c *Client) get(ctx context.Context, address string) (*http.Response, error
 	return c.http.Do(req)
 }
 
+var ErrNoChannelRelease = errors.New("此更新渠道尚无可用版本")
+
 func (c *Client) Check(ctx context.Context) (*Offer, error) {
-	ctx, cancel := context.WithTimeout(ctx, 20*time.Second)
+	var lastErr error
+	var valid bool
+	for _, address := range []string{c.freshFeed, c.feed} {
+		if address == "" {
+			continue
+		}
+		offer, err := c.readFeed(ctx, address)
+		if err != nil {
+			if lastErr == nil || errors.Is(lastErr, ErrNoChannelRelease) {
+				lastErr = err
+			}
+			continue
+		}
+		valid = true
+		if newer(offer.Version, c.Version) {
+			return &offer, nil
+		}
+	}
+	if valid {
+		return nil, nil
+	}
+	return nil, lastErr
+}
+
+func (c *Client) readFeed(ctx context.Context, address string) (Offer, error) {
+	ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
 	defer cancel()
-	res, err := c.get(ctx, c.feed)
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, address, nil)
 	if err != nil {
-		return nil, err
+		return Offer{}, err
+	}
+	req.Header.Set("User-Agent", "FormRecall/"+c.Version)
+	req.Header.Set("Cache-Control", "no-cache")
+	if address == c.freshFeed {
+		req.Header.Set("Accept", "application/vnd.github.raw+json")
+	}
+	res, err := c.http.Do(req)
+	if err != nil {
+		return Offer{}, err
 	}
 	defer res.Body.Close()
 	if res.StatusCode == http.StatusNotFound {
-		return nil, nil
+		return Offer{}, ErrNoChannelRelease
 	}
 	if res.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("更新服务返回 HTTP %d", res.StatusCode)
+		return Offer{}, fmt.Errorf("更新服务返回 HTTP %d", res.StatusCode)
 	}
 	raw, err := io.ReadAll(io.LimitReader(res.Body, maxManifest+1))
 	if err != nil {
-		return nil, err
+		return Offer{}, err
 	}
 	offer, err := verifyEnvelope(raw, c.key)
 	if err != nil {
-		return nil, err
+		return Offer{}, err
 	}
 	if offer.Channel != c.Channel() {
-		return nil, errors.New("更新频道与当前版本不匹配")
+		return Offer{}, errors.New("更新清单与所选渠道不匹配")
 	}
-	if !newer(offer.Version, c.Version) {
-		return nil, nil
-	}
-	return &offer, nil
+	return offer, nil
 }
 
 func (c *Client) choose(offer Offer) (Asset, bool) {
@@ -179,6 +223,9 @@ func (c *Client) Stage(ctx context.Context, offer Offer, progress func(Progress)
 	}
 	if verified.Channel != c.Channel() || !newer(verified.Version, c.Version) {
 		return "", errors.New("目标版本不适用于当前安装")
+	}
+	if verified.Channel != channelFor(c.Version) && !c.SupportsChannelSwitch() {
+		return "", errors.New("请先用完整安装包或便携包换用支持跨渠道更新的启动器")
 	}
 	ctx, cancel := context.WithTimeout(ctx, 20*time.Minute)
 	defer cancel()

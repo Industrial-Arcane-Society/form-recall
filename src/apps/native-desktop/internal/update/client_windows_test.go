@@ -106,6 +106,7 @@ func TestCheckAndStageUsesDeltaOrVerifiesFullFallback(t *testing.T) {
 			raw := testSign(t, m, private)
 			c := NewClient(from, root)
 			c.key = pub
+			c.freshFeed = ""
 			fullDownloads, deltaDownloads := 0, 0
 			c.http.Transport = mockTransport(func(req *http.Request) (*http.Response, error) {
 				var data []byte
@@ -173,5 +174,28 @@ func TestManifestRejectsUnsafeWindowsPathsAndInvalidSignature(t *testing.T) {
 	}
 	if _, err := verifyEnvelope(modified, pub); err == nil || !strings.Contains(err.Error(), "签名") {
 		t.Fatalf("tamper error = %v", err)
+	}
+}
+
+func TestChannelOrderAndPersistedPreferences(t *testing.T) {
+	versions := []string{"0.3.0-alpha.4", "0.3.0-beta.1", "0.3.0-rc.1", "0.3.0", "0.3.1-alpha.1"}
+	for i := 1; i < len(versions); i++ {
+		if !newer(versions[i], versions[i-1]) || newer(versions[i-1], versions[i]) {
+			t.Fatalf("version order %v", versions)
+		}
+	}
+	dir := t.TempDir()
+	p := Preferences{Channel: "rc", Auto: false}
+	if err := p.Save(dir); err != nil {
+		t.Fatal(err)
+	}
+	if got := LoadPreferences(dir, "alpha"); got != p {
+		t.Fatalf("reloaded preferences: %+v", got)
+	}
+	if err := (Preferences{Channel: "beta", Auto: true}).Save(dir); err != nil {
+		t.Fatal(err)
+	}
+	if got := LoadPreferences(dir, "alpha"); got.Channel != "beta" || !got.Auto {
+		t.Fatalf("updated preferences: %+v", got)
 	}
 }

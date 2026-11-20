@@ -4,12 +4,13 @@ param(
     [Parameter(Mandatory)][string]$Commit,
     [Parameter(Mandatory)][string]$OutputDirectory,
     [string]$PreviousZip,
-    [string]$PreviousVersion
+    [string]$PreviousVersion,
+    [string]$PreviousList
 )
 
 $ErrorActionPreference = 'Stop'
 Set-StrictMode -Version Latest
-$versionPattern = '^(0|[1-9][0-9]{0,8})\.(0|[1-9][0-9]{0,8})\.(0|[1-9][0-9]{0,8})(-alpha\.[1-9][0-9]{0,8})?$'
+$versionPattern = '^(0|[1-9][0-9]{0,8})\.(0|[1-9][0-9]{0,8})\.(0|[1-9][0-9]{0,8})(-(alpha|beta|rc)\.[1-9][0-9]{0,8})?$'
 if ($Version -cnotmatch $versionPattern -or $Commit -cnotmatch '^[a-f0-9]{40}$' -or
     [bool]$PreviousZip -ne [bool]$PreviousVersion -or
     ($PreviousVersion -and $PreviousVersion -cnotmatch $versionPattern)) {
@@ -63,15 +64,25 @@ function Read-Inventory($Archive, [string]$ReleaseVersion) {
 try {
     $target = Read-Inventory $targetArchive $Version
     if ($target.commit -cne $Commit) { throw 'Portable ZIP was built from a different commit.' }
-    $deltas = @()
-    if ($PreviousZip) {
-        $oldArchive = [IO.Compression.ZipFile]::OpenRead((Resolve-Path -LiteralPath $PreviousZip).Path)
-        try { $previous = Read-Inventory $oldArchive $PreviousVersion }
+    $baselines = @()
+    if ($PreviousZip) { $baselines = @(@{path=$PreviousZip;version=$PreviousVersion}) }
+    if ($PreviousList) {
+        if ($PreviousZip) { throw 'Choose one way to provide baselines.' }
+        $baselines = @(Get-Content -LiteralPath $PreviousList -Raw | ConvertFrom-Json -AsHashtable)
+    }
+    if ($baselines.Count -gt 5 -or @($baselines | ForEach-Object version | Sort-Object -Unique).Count -ne $baselines.Count) {
+        throw 'At most five distinct OTA baselines are supported.'
+    }
+    $deltas = @(foreach ($baseline in $baselines) {
+        $oldVersion = $baseline.version
+        if ($oldVersion -cnotmatch $versionPattern -or $oldVersion -ceq $Version) { throw 'Invalid OTA baseline version.' }
+        $oldArchive = [IO.Compression.ZipFile]::OpenRead((Resolve-Path -LiteralPath $baseline.path).Path)
+        try { $previous = Read-Inventory $oldArchive $oldVersion }
         finally { $oldArchive.Dispose() }
         $changed = @($target.files.Values | Sort-Object path | Where-Object {
             -not $previous.files.ContainsKey($_.path) -or $previous.files[$_.path].sha256 -cne $_.sha256
         })
-        $name = "FormRecall-$PreviousVersion-to-$Version-windows-x64-ota.zip"
+        $name = "FormRecall-$oldVersion-to-$Version-windows-x64-ota.zip"
         $targetPath = Join-Path $out $name
         $deltaArchive = [IO.Compression.ZipFile]::Open($targetPath, [IO.Compression.ZipArchiveMode]::Create)
         try {
@@ -89,16 +100,17 @@ try {
         } finally { $deltaArchive.Dispose() }
         # The target inventory is exhaustive. Removed old files are never
         # copied into the new directory, so no delete instructions are needed.
-        $deltas = @([ordered]@{
-            from = $PreviousVersion
+        $delta = [ordered]@{
+            from = $oldVersion
             url = "https://github.com/Industrial-Arcane-Society/form-recall-release/releases/download/v$Version/$name"
             sha256 = (Get-FileHash -LiteralPath $targetPath -Algorithm SHA256).Hash.ToLowerInvariant()
             bytes = (Get-Item -LiteralPath $targetPath).Length
-        })
-        Write-Host "OTA contains $($changed.Count) changed files, $($deltas[0].bytes) bytes."
-    }
+        }
+        Write-Host "OTA from $oldVersion contains $($changed.Count) changed files, $($delta.bytes) bytes."
+        $delta
+    })
     $portable = Get-Item -LiteralPath $PortableZip
-    $channel = if ($Version.Contains('-alpha.')) { 'alpha' } else { 'stable' }
+    $channel = if ($Version -cmatch '-(alpha|beta|rc)\.') { $Matches[1] } else { 'stable' }
     $payload = [ordered]@{
         schema = 1
         platform = 'windows-x64'

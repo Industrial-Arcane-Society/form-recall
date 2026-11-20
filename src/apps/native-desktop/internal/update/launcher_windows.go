@@ -61,10 +61,19 @@ func (c *Client) readSlot(slot string) (Offer, string, error) {
 	if err != nil {
 		return Offer{}, "", err
 	}
-	if offer.Channel != c.Channel() || !newer(offer.Version, c.Version) {
+	if !newer(offer.Version, c.Version) {
 		return Offer{}, "", errors.New("暂存版本与引导程序不兼容")
 	}
 	return offer, filepath.Join(base, "payload"), nil
+}
+
+func (c *Client) SupportsChannelSwitch() bool {
+	file, err := openFile(c.Root, "update-bootstrap-v2")
+	if err != nil {
+		return false
+	}
+	_ = file.Close()
+	return true
 }
 
 func (c *Client) ActiveExecutable() string {
@@ -109,7 +118,7 @@ func verifyPayload(bundle string, files []File) error {
 	return nil
 }
 
-func writeActive(store string, state activeVersion) error {
+func writeUpdateState(store, name string, state any) error {
 	raw, err := json.Marshal(state)
 	if err != nil {
 		return err
@@ -126,7 +135,7 @@ func writeActive(store string, state activeVersion) error {
 	if err = errors.Join(err, f.Close()); err != nil {
 		return err
 	}
-	return os.Rename(f.Name(), filepath.Join(store, "active.json"))
+	return os.Rename(f.Name(), filepath.Join(store, name))
 }
 
 func hiddenCommand(executable string, args ...string) *exec.Cmd {
@@ -201,7 +210,7 @@ func (c *Client) Apply(slot string, args []string) (result error) {
 	defer tick.Stop()
 	for {
 		if ready, _ := os.ReadFile(marker); string(ready) == offer.Version {
-			if err := writeActive(store, activeVersion{Current: slot, Previous: state.Current}); err != nil {
+			if err := writeUpdateState(store, "active.json", activeVersion{Current: slot, Previous: state.Current}); err != nil {
 				_ = cmd.Process.Kill()
 				<-exited
 				return err

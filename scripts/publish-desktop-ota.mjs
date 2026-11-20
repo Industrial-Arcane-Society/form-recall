@@ -13,17 +13,20 @@ const source = 'Industrial-Arcane-Society/form-recall'
 const distribution = 'Industrial-Arcane-Society/form-recall-release'
 const publicX = 'pADH694WxPtjJAK_Auo7qo88o3kv2oAdHzi9T4yFznQ'
 const key = createPublicKey({ key: { kty: 'OKP', crv: 'Ed25519', x: publicX }, format: 'jwk' })
-const pattern = /^(0|[1-9]\d{0,8})\.(0|[1-9]\d{0,8})\.(0|[1-9]\d{0,8})(?:-alpha\.([1-9]\d{0,8}))?$/
+const pattern = /^(0|[1-9]\d{0,8})\.(0|[1-9]\d{0,8})\.(0|[1-9]\d{0,8})(?:-(alpha|beta|rc)\.([1-9]\d{0,8}))?$/
 const digestPattern = /^[a-f0-9]{64}$/
 const stableMinimum = '0.3.0'
 
 function channel(version) {
   const match = pattern.exec(version)
-  return match ? (match[4] ? 'alpha' : 'stable') : null
+  return match ? (match[4] ?? 'stable') : null
 }
 
 function compare(left, right) {
-  const parts = value => pattern.exec(value).slice(1).map(n => n === undefined ? 1_000_000_000 : Number(n))
+  const parts = value => {
+    const [, major, minor, patch, tier, number] = pattern.exec(value)
+    return [Number(major), Number(minor), Number(patch), ['alpha', 'beta', 'rc', undefined].indexOf(tier), Number(number ?? 0)]
+  }
   const a = parts(left)
   const b = parts(right)
   for (let i = 0; i < a.length; i++) if (a[i] !== b[i]) return a[i] - b[i]
@@ -100,11 +103,10 @@ function packageName(version) {
   return `FormRecall-${version}-windows-x64-portable.zip`
 }
 
-function buildOTA(directory, next, commit, previous) {
+function buildOTA(directory, next, commit) {
   const program = fileURLToPath(new URL('./build-desktop-ota.ps1', import.meta.url))
   const args = ['-NoProfile', '-File', program, '-PortableZip', path.join(directory, 'target.zip'), '-Version', next,
-    '-Commit', commit, '-OutputDirectory', directory]
-  if (previous) args.push('-PreviousZip', path.join(directory, 'previous.zip'), '-PreviousVersion', previous)
+    '-Commit', commit, '-OutputDirectory', directory, '-PreviousList', path.join(directory, 'baselines.json')]
   const childEnv = { ...process.env }
   delete childEnv.FORMRECALL_UPDATE_PRIVATE_KEY
   delete childEnv.GITHUB_TOKEN
@@ -148,7 +150,7 @@ async function stageRelease(api, release, tag, prerelease, assets, commit) {
 
 async function publish() {
   const selected = process.env.UPDATE_CHANNEL
-  if (!['alpha', 'stable'].includes(selected)) throw new Error('UPDATE_CHANNEL must be alpha or stable.')
+  if (!['alpha', 'beta', 'rc', 'stable'].includes(selected)) throw new Error('Unknown update channel.')
   if (process.env.GITHUB_REPOSITORY !== distribution) throw new Error('This workflow must run in form-recall-release.')
   const sourceAPI = createGitHubClient({ repository: source, token: process.env.GITHUB_TOKEN })
   const api = createGitHubClient({ repository: distribution, token: process.env.GITHUB_TOKEN })
@@ -159,15 +161,14 @@ async function publish() {
 
   const target = process.env.UPDATE_VERSION
   if (target && channel(target) !== selected) throw new Error('Requested version does not belong to this channel.')
-  const releases = target
-    ? [await optional(sourceAPI, `/releases/tags/v${target}`)]
-    : await sourceAPI.request('GET', '/releases?per_page=60')
+  const releases = await sourceAPI.request('GET', '/releases?per_page=100')
   const candidates = releases.filter(release => release && !release.draft && release.tag_name.startsWith('v') &&
-    channel(release.tag_name.slice(1)) === selected && release.prerelease === (selected === 'alpha') &&
+    channel(release.tag_name.slice(1)) === selected && release.prerelease === (selected !== 'stable') &&
     (selected !== 'stable' || compare(release.tag_name.slice(1), stableMinimum) >= 0))
+    .sort((a, b) => compare(b.tag_name.slice(1), a.tag_name.slice(1)))
   const release = target
     ? candidates.find(candidate => candidate.tag_name === `v${target}`)
-    : candidates.sort((a, b) => compare(b.tag_name.slice(1), a.tag_name.slice(1)))[0]
+    : candidates[0]
   if (target && !release) throw new Error('Requested version is not a public release in the selected channel.')
   const next = release?.tag_name.slice(1)
   if (!next || current && compare(next, current.version) <= 0) {
@@ -188,19 +189,22 @@ async function publish() {
     if (!ota || ota.draft) {
       const privateKey = createPrivateKey(process.env.FORMRECALL_UPDATE_PRIVATE_KEY ?? '')
       if (createPublicKey(privateKey).export({ format: 'jwk' }).x !== publicX) throw new Error('Signing key does not match the client public key.')
-      let previous
-      const jobs = [fetchAsset(targetAsset, path.join(directory, 'target.zip'))]
-      const oldRelease = current && await optional(sourceAPI, `/releases/tags/v${current.version}`)
-      if (oldRelease) {
-        const oldAsset = remoteAsset(oldRelease, source, packageName(current.version))
-        if (oldAsset.sha256 !== current.full.sha256 || oldAsset.bytes !== current.full.bytes) throw new Error('Previous complete ZIP differs from its signed index.')
-        previous = current.version
-        jobs.push(fetchAsset(oldAsset, path.join(directory, 'previous.zip')))
-      }
-      const results = await Promise.allSettled(jobs)
+      const baseline = candidates.filter(item => compare(item.tag_name.slice(1), next) < 0).slice(0, 5).map(item => {
+        const version = item.tag_name.slice(1)
+        const asset = remoteAsset(item, source, packageName(version))
+        if (current?.version === version && (asset.sha256 !== current.full.sha256 || asset.bytes !== current.full.bytes)) {
+          throw new Error('Previous complete ZIP differs from its signed index.')
+        }
+        return { version, path: path.join(directory, `base-${version}.zip`), asset }
+      })
+      const results = await Promise.allSettled([
+        fetchAsset(targetAsset, path.join(directory, 'target.zip')),
+        ...baseline.map(item => fetchAsset(item.asset, item.path)),
+      ])
       const failure = results.find(result => result.status === 'rejected')
       if (failure) throw failure.reason
-      buildOTA(directory, next, commit, previous)
+      await writeFile(path.join(directory, 'baselines.json'), JSON.stringify(baseline))
+      buildOTA(directory, next, commit)
       const payload = await readFile(path.join(directory, 'payload.json'))
       const manifest = JSON.parse(payload)
       if (manifest.full.sha256 !== targetAsset.sha256 || manifest.full.bytes !== targetAsset.bytes) throw new Error('Inventory was generated from the wrong portable ZIP.')
@@ -211,7 +215,7 @@ async function publish() {
         const file = path.join(directory, name)
         return { name, path: file, ...await identity(file), contentType: name.endsWith('.zip') ? 'application/zip' : 'application/json' }
       }))
-      ota = await stageRelease(api, ota, `v${next}`, selected === 'alpha', assets, commit)
+      ota = await stageRelease(api, ota, `v${next}`, selected !== 'stable', assets, commit)
     }
     const record = remoteAsset(ota, distribution, 'update.json')
     if (record.bytes > 1 << 20) throw new Error('Published update manifest is too large.')

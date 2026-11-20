@@ -99,6 +99,7 @@ func Run(options Options, scene Scene) error {
 	a.softwareUpdate.ctx = updateContext
 	if options.Updater != nil {
 		a.updateFailure = options.Updater.LastError()
+		a.softwareUpdate.preferences = update.LoadPreferences(options.Engine.DataDir, options.Updater.Channel())
 	}
 	started := make(chan *engine.Client, 1)
 	launching := false
@@ -136,7 +137,11 @@ func Run(options Options, scene Scene) error {
 					case <-updateContext.Done():
 						return
 					case <-timer.C:
-						a.update(a.checkForUpdate)
+						a.update(func() {
+							if a.softwareUpdate.preferences.Auto {
+								a.checkForUpdate()
+							}
+						})
 						timer.Reset(6 * time.Hour)
 					}
 				}
