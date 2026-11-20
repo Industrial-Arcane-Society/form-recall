@@ -72,7 +72,7 @@ CATIA 离线依赖固定为 CPython 3.13.16 x64 嵌入包和 pywin32 312 wheel�
 
 工作流复用本地原生构建和打包脚本。首次运行从固定 SHA-256 的官方源码构建 OCCT，并准备 DSH 与 CATIA 的固定运行资源。后续使用 Go、Rust、OCCT 和资源下载缓存。Go 依赖检查、vet、普通测试、包目录与 ZIP 校验、DSH/CATIA 隔离安装以及交付 EXE 的隔离启动和四孔底板检查成功后才上传 Release。启动截图检验应用初始化，实际桌面显示的回归范围见验证记录。
 
-GitHub 托管 Windows 运行器的启动检查使用 Mesa 26.0.3 的 llvmpipe 软件 OpenGL。工作流在打包完成后为临时运行器安装系统驱动，再检查原始交付目录中的程序能否创建视口并生成模型。
+GitHub 托管 Windows 运行器的启动检查使用 Mesa 26.0.3 的 llvmpipe 软件 OpenGL。工作流复制完整交付目录到运行器临时目录，为副本配置经过 SHA-256 校验的应用级 Mesa DLL，再检查视口和四孔底板。PR 检查使用相同驱动执行原生视口的帧缓冲、旋转、平移、缩放和动画测试。Release 附件由原始打包目录生成。
 
 Release 提供以下文件。
 
