@@ -1,0 +1,21 @@
+name: LGTM Review Signal
+
+run-name: LGTM review ${{ github.event.pull_request.number }}/${{ github.event.review.id }}
+
+on:
+  pull_request_review:
+    types: [submitted]
+
+permissions: {}
+
+jobs:
+  signal:
+    if: >-
+      github.actor_id == '64729945' &&
+      github.event.review.user.id == 64729945 &&
+      github.event.review.state == 'commented' &&
+      contains(github.event.review.body, 'lgtm')
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    steps:
+      - run: 'true'
