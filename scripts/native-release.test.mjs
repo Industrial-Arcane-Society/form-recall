@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict'
 import { createHash } from 'node:crypto'
-import { mkdtemp, mkdir, readFile, rm, writeFile } from 'node:fs/promises'
+import { mkdtemp, mkdir, readFile, rename, rm, writeFile } from 'node:fs/promises'
 import os from 'node:os'
 import path from 'node:path'
 import test from 'node:test'
@@ -110,13 +110,17 @@ async function fixture(t, { manifest = true, releaseVersion = version } = {}) {
   const assetDirectory = path.join(directory, 'assets')
   await mkdir(assetDirectory)
   const binaries = [
-    { name: `FormRecall-${releaseVersion}-windows-x64.exe`, contents: Buffer.from('MZ mock executable') },
+    { name: `FormRecall-${releaseVersion}-windows-x64-setup.exe`, contents: Buffer.from('MZ mock full installer') },
     { name: `FormRecall-${releaseVersion}-windows-x64-portable.zip`, contents: Buffer.from('PK\x03\x04 mock portable archive') },
   ]
   const assets = binaries.map(asset => ({ name: asset.name, bytes: asset.contents.length, sha256: hash(asset.contents) }))
   for (const binary of binaries) await writeFile(path.join(assetDirectory, binary.name), binary.contents)
   await writeFile(path.join(assetDirectory, `FormRecall-${releaseVersion}-windows-x64.sha256`), assets.map(asset => `${asset.sha256}  ${asset.name}\n`).join(''))
-  const record = { schema: 1, version: releaseVersion, source_commit: commit, source_dirty: false, source_tracked_dirty: false, assets }
+  const record = {
+    schema: 2, version: releaseVersion, source_commit: commit, source_dirty: false, source_tracked_dirty: false,
+    installer: `D:\\build output\\${assets[0].name}`, archive: `D:\\build output\\${assets[1].name}`,
+    checksums: `D:\\build output\\FormRecall-${releaseVersion}-windows-x64.sha256`, assets,
+  }
   const manifestPath = path.join(assetDirectory, `${releaseVersion}.release.json`)
   if (manifest) await writeFile(manifestPath, JSON.stringify(record))
   return {
@@ -154,6 +158,76 @@ test('manual reruns pin the existing historical tag even when main advanced', as
   assert.equal(result.publish, true)
   assert.ok(state.calls.some(call => call.route === `/compare/${commit}...${mainCommit}`))
   assert.ok(!state.calls.some(call => call.route === `/commits/${mainCommit}`))
+})
+
+test('manual source commit pins the exact merged SHA even when the dispatch head advanced', async () => {
+  const { api, state } = fakeGitHub()
+  const result = await prepare({ env: prepareEnv({ GITHUB_SHA: mainCommit, RELEASE_SOURCE_COMMIT: commit.toUpperCase() }), api })
+  assert.equal(result.commit, commit)
+  assert.equal(result.publish, true)
+  assert.ok(state.calls.some(call => call.route === `/commits/${commit}`))
+  assert.ok(state.calls.some(call => call.route === `/compare/${commit}...${mainCommit}`))
+  assert.ok(!state.calls.some(call => call.route === `/commits/${mainCommit}`))
+  assert.ok(state.calls.every(call => call.method === 'GET'))
+})
+
+test('explicit source commit permits matching historical tags and rejects conflicting tags', async () => {
+  const env = prepareEnv({ GITHUB_SHA: mainCommit, RELEASE_SOURCE_COMMIT: commit })
+  const matching = fakeGitHub({ tag: commit, annotated: true })
+  assert.equal((await prepare({ env, api: matching.api })).commit, commit)
+  assert.ok(matching.state.calls.some(call => call.route === `/commits/${commit}`))
+  for (const annotated of [false, true]) {
+    const { api, state } = fakeGitHub({ tag: otherCommit, annotated, release: publishedRelease({ target_commitish: otherCommit }) })
+    await assert.rejects(prepare({ env, api }), /Existing tag differs from RELEASE_SOURCE_COMMIT/)
+    assert.ok(state.calls.every(call => call.method === 'GET'))
+  }
+})
+
+test('explicit source commit requires a full hexadecimal SHA before any API calls', async () => {
+  for (const value of ['main', commit.slice(0, 7), 'g'.repeat(40), `${commit}\n`, ` ${commit}`, null]) {
+    const { api, state } = fakeGitHub()
+    await assert.rejects(prepare({ env: prepareEnv({ RELEASE_SOURCE_COMMIT: value }), api }), /RELEASE_SOURCE_COMMIT must be a full 40-character/)
+    assert.equal(state.calls.length, 0)
+  }
+})
+
+test('explicit source commit is rejected for push and pull request events', async () => {
+  for (const event of ['push', 'pull_request']) {
+    const { api, state } = fakeGitHub({ tag: commit })
+    await assert.rejects(prepare({ env: prepareEnv({ GITHUB_EVENT_NAME: event, RELEASE_SOURCE_COMMIT: commit }), api }), /only supported for workflow_dispatch/)
+    assert.equal(state.calls.length, 0)
+  }
+})
+
+test('explicit source commit must exist and resolve to that exact commit', async () => {
+  const env = prepareEnv({ RELEASE_SOURCE_COMMIT: commit })
+  const missing = fakeGitHub({ intercept: ({ method, route }) => {
+    if (route === `/commits/${commit}`) throw new GitHubApiError(method, route, 404)
+  } })
+  await assert.rejects(prepare({ env, api: missing.api }), error => error instanceof GitHubApiError && error.status === 404)
+  const mismatched = fakeGitHub({ intercept: ({ route }) => route === `/commits/${commit}` ? { sha: otherCommit } : undefined })
+  await assert.rejects(prepare({ env, api: mismatched.api }), /did not resolve to the requested commit/)
+  await assert.rejects(prepare({ env: prepareEnv({ RELEASE_SOURCE_COMMIT: annotation }), api: fakeGitHub().api }), /did not resolve to the requested commit/)
+})
+
+test('explicit source commit retains main ancestry checks only for publishing', async () => {
+  const env = prepareEnv({ GITHUB_SHA: mainCommit, RELEASE_SOURCE_COMMIT: commit })
+  await assert.rejects(prepare({ env, api: fakeGitHub({ mainStatus: 'diverged' }).api }), /contained in main/)
+  const { api, state } = fakeGitHub({ mainStatus: 'diverged' })
+  const result = await prepare({ env: { ...env, RELEASE_PUBLISH: 'false' }, api })
+  assert.equal(result.commit, commit)
+  assert.equal(result.publish, false)
+  assert.ok(state.calls.some(call => call.route === `/commits/${commit}`))
+  assert.ok(!state.calls.some(call => call.route.startsWith('/compare/')))
+})
+
+test('empty source commit preserves dispatch tag reuse and ordinary event selection', async () => {
+  const historical = await prepare({ env: prepareEnv({ GITHUB_SHA: mainCommit, RELEASE_SOURCE_COMMIT: '' }), api: fakeGitHub({ tag: commit }).api })
+  assert.equal(historical.commit, commit)
+  const ordinary = await prepare({ env: prepareEnv({ GITHUB_SHA: mainCommit, RELEASE_SOURCE_COMMIT: '' }), api: fakeGitHub().api })
+  assert.equal(ordinary.commit, mainCommit)
+  const pushed = await prepare({ env: prepareEnv({ GITHUB_EVENT_NAME: 'push', GITHUB_REF: `refs/tags/${tag}`, RELEASE_SOURCE_COMMIT: '' }), api: fakeGitHub({ tag: commit }).api })
+  assert.equal(pushed.commit, commit)
 })
 
 test('tag pushes derive version from ref and resolve annotated tags', async () => {
@@ -211,8 +285,9 @@ test('PR payload must contain a valid number and full head SHA', async (t) => {
   await assert.rejects(prepare({ env: { ...env, GITHUB_EVENT_NAME: 'pull_request_target' }, api: fakeGitHub().api }), /Unsupported/)
 })
 
-test('same published release is a successful no-op in prepare', async () => {
-  const { api, state } = fakeGitHub({ tag: commit, release: publishedRelease() })
+test('historical v0.2.0 release remains a successful no-op in prepare', async () => {
+  const body = `<!-- formrecall-release ${JSON.stringify({ schema: 1, version, commit })} -->`
+  const { api, state } = fakeGitHub({ tag: commit, release: publishedRelease({ body }) })
   const result = await prepare({ env: prepareEnv(), api })
   assert.equal(result.publish, false)
   assert.equal(result.already_published, true)
@@ -225,10 +300,11 @@ test('published release metadata conflicts and tag loops are rejected', async ()
   await assert.rejects(prepare({ env: prepareEnv(), api }), /resolved safely/)
 })
 
-test('assets require exact names, checksums and optional clean manifest provenance', async (t) => {
+test('installer assets require exact names, checksums and schema 2 clean manifest provenance', async (t) => {
   const f = await fixture(t)
   const assets = await validateAssets(f.assetDirectory, version, commit)
   assert.equal(assets.length, 3)
+  assert.equal(assets[0].name, 'FormRecall-0.2.0-windows-x64-setup.exe')
   assert.equal(assets[0].sha256, f.record.assets[0].sha256)
   assert.equal(assets[2].name, checksumName)
   await writeFile(f.manifestPath, JSON.stringify({ ...f.record, source_commit: otherCommit }))
@@ -246,11 +322,36 @@ test('release.json is verified locally and never becomes a fourth attachment', a
   assert.ok(state.assets.every(asset => !asset.name.endsWith('.json')))
 })
 
-test('the three checksum-verified assets can be published without a manifest', async (t) => {
+test('new releases require a schema 2 installer manifest before API writes', async (t) => {
   const f = await fixture(t, { manifest: false })
   const { api, state } = fakeGitHub()
-  await publish({ env: f.env, api, cwd: f.directory })
-  assert.equal(state.release.draft, false)
+  await assert.rejects(publish({ env: f.env, api, cwd: f.directory }), /schema 2 release manifest/)
+  await writeFile(f.manifestPath, JSON.stringify({ ...f.record, schema: 1 }))
+  await assert.rejects(publish({ env: f.env, api, cwd: f.directory }), /schema 2 release manifest/)
+  assert.equal(state.release, null)
+  assert.ok(state.calls.every(call => call.method === 'GET'))
+})
+
+test('installer manifest rejects missing or mismatched installer, archive and checksum references', async (t) => {
+  const f = await fixture(t)
+  for (const field of ['installer', 'archive', 'checksums']) {
+    for (const value of [undefined, '', 42, 'D:\\build output\\FormRecall-0.2.0-windows-x64.exe']) {
+      await writeFile(f.manifestPath, JSON.stringify({ ...f.record, [field]: value }))
+      await assert.rejects(validateAssets(f.assetDirectory, version, commit), new RegExp(`Release manifest ${field} must identify`))
+    }
+  }
+})
+
+test('bare application EXE cannot replace the setup asset even with updated checksums', async (t) => {
+  const f = await fixture(t)
+  const bareName = `FormRecall-${version}-windows-x64.exe`
+  await rename(path.join(f.assetDirectory, f.record.assets[0].name), path.join(f.assetDirectory, bareName))
+  const bareAssets = [{ ...f.record.assets[0], name: bareName }, f.record.assets[1]]
+  await writeFile(path.join(f.assetDirectory, checksumName), bareAssets.map(asset => `${asset.sha256}  ${asset.name}\n`).join(''))
+  await writeFile(f.manifestPath, JSON.stringify({ ...f.record, assets: bareAssets, installer: `D:\\build output\\${bareName}` }))
+  const { api, state } = fakeGitHub()
+  await assert.rejects(publish({ env: f.env, api, cwd: f.directory }), /Unexpected release file.*windows-x64\.exe/)
+  assert.ok(state.calls.every(call => call.method === 'GET'))
 })
 
 test('tampered binaries and checksum path substitutions fail before API writes', async (t) => {
@@ -276,7 +377,7 @@ test('extra files, duplicate checksums and duplicate manifest assets are rejecte
   await assert.rejects(validateAssets(f.assetDirectory, version, commit), /duplicate/)
   await writeFile(sums, original)
   await writeFile(f.manifestPath, JSON.stringify({ ...f.record, assets: [f.record.assets[0], f.record.assets[0]] }))
-  await assert.rejects(validateAssets(f.assetDirectory, version, commit), /exactly the EXE/)
+  await assert.rejects(validateAssets(f.assetDirectory, version, commit), /exactly the setup EXE/)
 })
 
 test('new release uploads and verifies all three assets before creating tag and publishing', async (t) => {
@@ -292,7 +393,12 @@ test('new release uploads and verifies all three assets before creating tag and 
   assert.equal(state.uploads, 3)
   assert.match(state.release.body, /首个原生桌面版本/)
   assert.match(state.release.body, /Generated change list/)
-  assert.match(state.release.body, /已有完整程序目录/)
+  assert.match(state.release.body, /setup\.exe 完整安装包/)
+  assert.match(state.release.body, /portable\.zip/)
+  assert.doesNotMatch(state.release.body, /替换同目录|单独的 EXE/)
+  assert.deepEqual(state.assets.map(asset => asset.name), [
+    'FormRecall-0.2.0-windows-x64-setup.exe', 'FormRecall-0.2.0-windows-x64-portable.zip', checksumName,
+  ])
   assert.match(state.release.body, /formrecall-release/)
   const mutations = state.calls.filter(call => call.method !== 'GET')
   assert.deepEqual(mutations.map(call => call.method), ['POST', 'POST', 'UPLOAD', 'UPLOAD', 'UPLOAD', 'POST', 'PATCH'])
@@ -301,9 +407,10 @@ test('new release uploads and verifies all three assets before creating tag and 
   assert.match(await readFile(f.env.GITHUB_STEP_SUMMARY, 'utf8'), /三个附件均已校验/)
 })
 
-test('existing published release skips with no local assets and no API writes', async (t) => {
+test('historical v0.2.0 publication skips with no installer assets and no API writes', async (t) => {
   const f = await fixture(t)
-  const { api, state } = fakeGitHub({ tag: commit, release: publishedRelease() })
+  const body = `<!-- formrecall-release ${JSON.stringify({ schema: 1, version, commit })} -->`
+  const { api, state } = fakeGitHub({ tag: commit, release: publishedRelease({ body }), assets: [{ id: 1, name: 'FormRecall-0.2.0-windows-x64.exe' }] })
   const result = await publish({ env: { ...f.env, RELEASE_ASSET_DIR: undefined }, api })
   assert.equal(result.already_published, true)
   assert.ok(state.calls.every(call => call.method === 'GET'))

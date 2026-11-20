@@ -68,9 +68,15 @@ CATIA 离线依赖固定为 CPython 3.13.16 x64 嵌入包和 pywin32 312 wheel�
 
 ## Actions 版本发布
 
-在 GitHub Actions 中选择 **Windows Release**，点击 **Run workflow**，选择 `main` 并填写 `version`，例如 `0.2.0` 或 `0.3.0-rc.1`。保持 `publish` 勾选后，工作流完成 Windows x64 构建、包校验和启动检查，再创建对应的 `v` 标签与 Release。预发布版本自动标记为 prerelease。取消 `publish` 可只构建和下载 Actions artifact。
+在 GitHub Actions 中选择 **Prepare Release**，点击 **Run workflow**，选择 `main`。`bump` 默认为 `patch`，也可填 `minor`、`major` 或具体版本，例如 `0.3.0-rc.1`。流程按根目录 `VERSION` 与已公开版本计算下一版本，创建 `Release v{version}` PR，并启动 Windows 安装包和便携包构建，供合并前下载审核。重复准备同一版本会复用已有 PR。
 
-工作流复用本地原生构建和打包脚本。首次运行从固定 SHA-256 的官方源码构建 OCCT，并准备 DSH 与 CATIA 的固定运行资源。后续使用 Go、Rust、OCCT 和资源下载缓存。Go 依赖检查、vet、普通测试、包目录与 ZIP 校验、DSH/CATIA 隔离安装以及交付 EXE 的隔离启动和四孔底板检查成功后才上传 Release。启动截图检验应用初始化，实际桌面显示的回归范围见验证记录。
+审核发布 PR 后合并到 `main`，**Publish Release PR** 自动将准确的合并提交交给 **Windows Release**。构建、安装、建模启动和卸载检查通过后才公开 Release。候选构建产物位于 Windows Release 的 Actions artifact，合并后的正式产物位于 GitHub Releases。带预发布后缀的版本自动标记为 prerelease。
+
+发布 PR 只修改 `VERSION`，可追加该版本的 `.release-notes/v{version}.md`。桌面发布版本在构建时注入 EXE，`VERSION` 用于发布准备。日常开发构建继续接受 `-Version` 参数。Actions 使用 `GITHUB_TOKEN`，仓库需要开启允许 GitHub Actions 创建 PR 的设置，默认工作流权限保持只读，各流程按需申请权限。机器人创建的 PR 由 Prepare Release 显式启动候选构建。
+
+需要直接构建时，可手动运行 **Windows Release**，填写 `version` 并选择 `main`。取消 `publish` 生成候选 artifact，保持勾选会在验证通过后发布。`source_commit` 可固定完整源码 SHA，留空使用所选分支或已有标签。合并后的自动派发失败时，可手动运行 **Publish Release PR**，填入已合并的 PR 编号重试。
+
+工作流复用本地原生构建和打包脚本。首次运行从固定 SHA-256 的官方源码构建 OCCT，并准备 DSH 与 CATIA 的固定运行资源。后续使用 Go、Rust、OCCT 和资源下载缓存。Go 依赖检查、vet、普通测试、包目录与 ZIP 校验、DSH/CATIA 隔离安装、便携程序启动，以及安装包的实际安装、文件校验、四孔底板建模和卸载检查成功后才上传 Release。启动截图检验应用初始化，实际桌面显示的回归范围见验证记录。
 
 GitHub 托管 Windows 运行器的启动检查使用 Mesa 26.0.3 的 llvmpipe 软件 OpenGL。工作流复制完整交付目录到运行器临时目录，为副本配置经过 SHA-256 校验的应用级 Mesa DLL，再检查视口和四孔底板。PR 检查使用相同驱动执行原生视口的帧缓冲、旋转、平移、缩放和动画测试。Release 附件由原始打包目录生成。
 
@@ -78,9 +84,11 @@ Release 提供以下文件。
 
 | 文件 | 用途 |
 | --- | --- |
+| `FormRecall-{version}-windows-x64-setup.exe` | 完整安装包，向导安装全部运行组件并提供快捷方式和卸载入口 |
 | `FormRecall-{version}-windows-x64-portable.zip` | 完整免安装包，解压后运行目录内的 `FormRecall.exe` |
-| `FormRecall-{version}-windows-x64.exe` | 桌面程序，可替换兼容便携目录内的 `FormRecall.exe`，运行需要引擎和资源 |
 | `FormRecall-{version}-windows-x64.sha256` | 两个下载文件的 SHA-256 校验值 |
+
+安装包与便携包均包含桌面程序、Rust 建模引擎、OCCT 和运行资源。安装向导支持简体中文和英文，默认安装到当前用户目录，无需管理员权限，支持选择目录、开始菜单与可选桌面快捷方式，并提供系统卸载入口。安装包使用 Inno Setup 编译，Windows Actions 镜像预装编译器。本地版本打包需要可用的 Inno Setup 6，可通过 `-InstallerCompiler` 指定 `ISCC.exe`。指定 `source_commit` 时，源码需要包含完整安装包构建支持。历史已公开版本的重跑会直接跳过。
 
 发布版本通过 Go 链接参数写入桌面程序，并记录在 `package-manifest.json`。`FormRecall.exe --version-json` 输出桌面版本与源码提交，供成品检查使用。引擎组件与兼容入口保留各自版本。发布说明优先读取 `.release-notes/v{version}.md`，其余版本使用 GitHub 自动生成说明。
 
@@ -97,4 +105,4 @@ $release = Get-Content 'temp/outputs/release-local/release.json' -Raw | ConvertF
 ./scripts/verify-native-release-startup.ps1 -PackageDirectory $release.package_directory -Version 0.2.0
 ```
 
-`release.json` 列出包目录、下载文件、校验文件、版本与提交。输出目录中的同名产物已存在时脚本报错，应指定新的目录保存下一次构建。成品启动检查使用仓库外的独立用户数据和配置，并核对程序正常退出。发布工作流中的验证记录随 Actions artifact 保存 14 天。[工作流](../../.github/workflows/windows-release.yml)
+`release.json` 的 schema 2 列出包目录、安装包、便携包、校验文件、版本与提交。输出目录中的同名产物已存在时脚本报错，应指定新的目录保存下一次构建。成品启动检查使用仓库外的独立用户数据和配置，并核对程序正常退出。发布工作流中的验证记录随 Actions artifact 保存 14 天。[准备发布](../../.github/workflows/prepare-release.yml) · [合并后发布](../../.github/workflows/publish-release-pr.yml) · [Windows 构建](../../.github/workflows/windows-release.yml)
