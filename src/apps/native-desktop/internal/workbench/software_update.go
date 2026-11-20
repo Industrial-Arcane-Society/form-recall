@@ -44,6 +44,8 @@ func (a *App) checkForUpdate() {
 				s.status, s.failure = "检查更新失败", err.Error()
 			} else if offer == nil {
 				s.status = "当前已是最新版本"
+			} else if update.IsChannelDowngrade(client.Version, offer.Version) {
+				s.status = "所选渠道的版本低于当前版本"
 			} else {
 				s.status = "发现新版本"
 			}
@@ -165,17 +167,28 @@ func (a *App) updateSettings(c *ui.Context) {
 			a.checkForUpdate()
 		}
 		if s.slot != "" {
-			if updateAction(c, "重启并更新", updateRestartIcon, true).Clicked() {
+			label := "重启并更新"
+			if s.offer != nil && update.IsChannelDowngrade(u.Version, s.offer.Version) {
+				label = "重启并降级"
+			}
+			if updateAction(c, label, updateRestartIcon, true).Clicked() {
 				a.restartToUpdate()
 			}
-		} else if s.offer != nil && (s.offer.Channel == a.options.Updater.Channel() || u.SupportsChannelSwitch()) {
-			if updateAction(c, "下载更新", updateDownloadIcon, true).Disabled(s.working).Clicked() {
+		} else if s.offer != nil && (s.offer.Channel == a.options.Updater.Channel() || u.SupportsChannelSwitch()) &&
+			(!update.IsChannelDowngrade(u.Version, s.offer.Version) || u.SupportsDowngrade()) {
+			label := "下载更新"
+			if update.IsChannelDowngrade(u.Version, s.offer.Version) {
+				label = "下载目标版本"
+			}
+			if updateAction(c, label, updateDownloadIcon, true).Disabled(s.working).Clicked() {
 				a.downloadUpdate()
 			}
 		}
 	})
 	if s.offer != nil && s.offer.Channel != a.options.Updater.Channel() && !u.SupportsChannelSwitch() {
 		ui.Text(c, "这个启动器需要用新版完整包升级一次，才能应用跨渠道更新。").FontSize(12).TextColor(c.Theme().TextMuted)
+	} else if s.offer != nil && update.IsChannelDowngrade(u.Version, s.offer.Version) && !u.SupportsDowngrade() {
+		ui.Text(c, "请先使用 Beta.2 或更新的完整包更换启动器，再应用跨渠道降级。").FontSize(12).TextColor(c.Theme().TextMuted)
 	}
 }
 

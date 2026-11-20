@@ -94,6 +94,15 @@ func newer(candidate, current string) bool {
 	return false
 }
 
+// Lower versions are eligible only across channels in the same release
+// series. Applying one additionally requires an explicit restart decision.
+func IsChannelDowngrade(current, target string) bool {
+	from, to := channelFor(current), channelFor(target)
+	a, b := versionParts(current), versionParts(target)
+	return from != "" && to != "" && from != to && newer(current, target) &&
+		a[0] == b[0] && a[1] == b[1] && a[2] == b[2]
+}
+
 func safeName(name string) bool {
 	if len(name) == 0 || len(name) > 240 || path.Clean(name) != name || strings.ContainsAny(name, "\\:*?\"<>|") {
 		return false
@@ -132,8 +141,12 @@ func validAsset(asset Asset, expected string) bool {
 }
 
 func (m Manifest) validate() error {
-	if m.Schema != 1 || m.Platform != "windows-x64" || !commitPattern.MatchString(m.Commit) ||
-		channelFor(m.Version) == "" || m.Channel != channelFor(m.Version) || len(m.Files) > 4096 || len(m.Deltas) > 5 {
+	limit := 5
+	if m.Schema == 2 {
+		limit = 8
+	}
+	if (m.Schema != 1 && m.Schema != 2) || m.Platform != "windows-x64" || !commitPattern.MatchString(m.Commit) ||
+		channelFor(m.Version) == "" || m.Channel != channelFor(m.Version) || len(m.Files) > 4096 || len(m.Deltas) > limit {
 		return errors.New("更新清单的版本、频道或平台无效")
 	}
 	full := "FormRecall-" + m.Version + "-windows-x64-portable.zip"
@@ -143,7 +156,14 @@ func (m Manifest) validate() error {
 	from := map[string]bool{}
 	for _, delta := range m.Deltas {
 		file := "FormRecall-" + delta.From + "-to-" + m.Version + "-windows-x64-ota.zip"
-		if from[delta.From] || channelFor(delta.From) != m.Channel || !newer(m.Version, delta.From) ||
+		source := channelFor(delta.From)
+		compatible := source == m.Channel
+		if m.Schema == 2 {
+			file = "ota-" + delta.SHA256 + ".zip"
+			compatible = source != "" && ((m.Channel != "stable" && source != "stable") ||
+				(m.Channel == "stable" && (source == "stable" || (source == "rc" && strings.HasPrefix(delta.From, m.Version+"-rc.")))))
+		}
+		if from[delta.From] || !compatible || !newer(m.Version, delta.From) ||
 			!validAsset(delta.Asset, assetURL("form-recall-release", m.Version, file)) {
 			return errors.New("增量包信息无效")
 		}

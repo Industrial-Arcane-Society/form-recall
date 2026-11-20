@@ -19,8 +19,9 @@ const storageName = ".formrecall-updates"
 var slotPattern = regexp.MustCompile(`^release-[0-9]+$`)
 
 type activeVersion struct {
-	Current  string `json:"current"`
-	Previous string `json:"previous,omitempty"`
+	Current     string `json:"current"`
+	Previous    string `json:"previous,omitempty"`
+	RootVersion string `json:"root_version,omitempty"`
 }
 
 func RootForBundle(bundle string) string {
@@ -61,9 +62,6 @@ func (c *Client) readSlot(slot string) (Offer, string, error) {
 	if err != nil {
 		return Offer{}, "", err
 	}
-	if !newer(offer.Version, c.Version) {
-		return Offer{}, "", errors.New("暂存版本与引导程序不兼容")
-	}
 	return offer, filepath.Join(base, "payload"), nil
 }
 
@@ -76,13 +74,30 @@ func (c *Client) SupportsChannelSwitch() bool {
 	return true
 }
 
+func (c *Client) SupportsDowngrade() bool {
+	file, err := openFile(c.Root, "update-bootstrap-v3")
+	if err != nil {
+		return false
+	}
+	_ = file.Close()
+	return true
+}
+
+func (c *Client) activeSlot(state activeVersion, slot string) (Offer, string, error) {
+	offer, bundle, err := c.readSlot(slot)
+	if err == nil && state.RootVersion != c.Version && !newer(offer.Version, c.Version) {
+		return Offer{}, "", errors.New("完整安装包已更换启动版本")
+	}
+	return offer, bundle, err
+}
+
 func (c *Client) ActiveExecutable() string {
 	if c == nil || c.Root != c.Bundle {
 		return ""
 	}
 	state := c.current()
 	for _, slot := range []string{state.Current, state.Previous} {
-		if offer, bundle, err := c.readSlot(slot); err == nil {
+		if offer, bundle, err := c.activeSlot(state, slot); err == nil {
 			var executable File
 			for _, file := range offer.Files {
 				if strings.EqualFold(file.Path, "FormRecall.exe") {
@@ -150,6 +165,9 @@ func (c *Client) Queue(slot string, args []string) error {
 		return errors.New("更新目录编号无效")
 	}
 	cmd := hiddenCommand(filepath.Join(c.Root, "FormRecall.exe"), append(args, "--apply-update="+slot)...)
+	if offer, _, err := c.readSlot(slot); err == nil && IsChannelDowngrade(c.Version, offer.Version) {
+		cmd.Args = append(cmd.Args, "--channel-downgrade")
+	}
 	if err := cmd.Start(); err != nil {
 		return err
 	}
@@ -158,7 +176,7 @@ func (c *Client) Queue(slot string, args []string) error {
 
 // Apply runs in the fixed launcher. The existing pointer remains valid until
 // the new desktop reports engine readiness, including during power loss.
-func (c *Client) Apply(slot string, args []string) (result error) {
+func (c *Client) Apply(slot string, args []string, allowDowngrade bool) (result error) {
 	if c.Root != c.Bundle {
 		return errors.New("必须由安装目录的启动器应用更新")
 	}
@@ -185,7 +203,12 @@ func (c *Client) Apply(slot string, args []string) (result error) {
 		return err
 	}
 	state := c.current()
-	if current, _, err := c.readSlot(state.Current); err == nil && !newer(offer.Version, current.Version) {
+	currentVersion := c.Version
+	if current, _, err := c.activeSlot(state, state.Current); err == nil {
+		currentVersion = current.Version
+	}
+	if !newer(offer.Version, currentVersion) &&
+		!(allowDowngrade && c.SupportsDowngrade() && IsChannelDowngrade(currentVersion, offer.Version)) {
 		return errors.New("目标更新已应用或已过时")
 	}
 	if err := verifyPayload(bundle, offer.Files); err != nil {
@@ -210,7 +233,7 @@ func (c *Client) Apply(slot string, args []string) (result error) {
 	defer tick.Stop()
 	for {
 		if ready, _ := os.ReadFile(marker); string(ready) == offer.Version {
-			if err := writeUpdateState(store, "active.json", activeVersion{Current: slot, Previous: state.Current}); err != nil {
+			if err := writeUpdateState(store, "active.json", activeVersion{Current: slot, Previous: state.Current, RootVersion: c.Version}); err != nil {
 				_ = cmd.Process.Kill()
 				<-exited
 				return err

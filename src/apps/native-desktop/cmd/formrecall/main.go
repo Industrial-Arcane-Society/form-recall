@@ -41,12 +41,13 @@ func main() {
 	showVersion := flag.Bool("version", false, "Print the desktop version and exit")
 	versionJSON := flag.Bool("version-json", false, "Print the desktop version and source commit as JSON and exit")
 	applyUpdate := flag.String("apply-update", "", "Activate a verified staged update")
+	allowDowngrade := flag.Bool("channel-downgrade", false, "Authorize a confirmed cross-channel downgrade")
 	updateHealth := flag.String("update-health", "", "Report startup to the launcher")
 	stageUpdate := flag.Bool("stage-update", false, "Download and verify the available update without activating it")
 	flag.Parse()
 	if *applyUpdate != "" && updater != nil {
 		args := withoutUpdateArguments(os.Args[1:])
-		if err := updater.Apply(*applyUpdate, args); err != nil {
+		if err := updater.Apply(*applyUpdate, args, *allowDowngrade); err != nil {
 			fmt.Fprintln(os.Stderr, err)
 			_ = startDesktop(executable, args, false)
 			os.Exit(1)
@@ -140,6 +141,9 @@ func withoutUpdateArguments(args []string) []string {
 	for i := 0; i < len(args); i++ {
 		arg := args[i]
 		key, _, inline := strings.Cut(strings.TrimLeft(arg, "-"), "=")
+		if key == "channel-downgrade" {
+			continue
+		}
 		if key == "apply-update" || key == "update-health" {
 			if !inline {
 				i++

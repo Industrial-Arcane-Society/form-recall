@@ -70,41 +70,55 @@ try {
         if ($PreviousZip) { throw 'Choose one way to provide baselines.' }
         $baselines = @(Get-Content -LiteralPath $PreviousList -Raw | ConvertFrom-Json -AsHashtable)
     }
-    if ($baselines.Count -gt 5 -or @($baselines | ForEach-Object version | Sort-Object -Unique).Count -ne $baselines.Count) {
-        throw 'At most five distinct OTA baselines are supported.'
+    if ($baselines.Count -gt 8 -or @($baselines | ForEach-Object version | Sort-Object -Unique).Count -ne $baselines.Count) {
+        throw 'At most eight distinct OTA baselines are supported.'
     }
+    $compiled = @{}
     $deltas = @(foreach ($baseline in $baselines) {
         $oldVersion = $baseline.version
         if ($oldVersion -cnotmatch $versionPattern -or $oldVersion -ceq $Version) { throw 'Invalid OTA baseline version.' }
-        $oldArchive = [IO.Compression.ZipFile]::OpenRead((Resolve-Path -LiteralPath $baseline.path).Path)
-        try { $previous = Read-Inventory $oldArchive $oldVersion }
-        finally { $oldArchive.Dispose() }
+        if ($baseline.Contains('files')) {
+            $previous = @{files=@{}}
+            foreach ($file in $baseline.files) { $previous.files.Add($file.path, $file) }
+        } else {
+            $oldArchive = [IO.Compression.ZipFile]::OpenRead((Resolve-Path -LiteralPath $baseline.path).Path)
+            try { $previous = Read-Inventory $oldArchive $oldVersion }
+            finally { $oldArchive.Dispose() }
+        }
         $changed = @($target.files.Values | Sort-Object path | Where-Object {
             -not $previous.files.ContainsKey($_.path) -or $previous.files[$_.path].sha256 -cne $_.sha256
         })
-        $name = "FormRecall-$oldVersion-to-$Version-windows-x64-ota.zip"
-        $targetPath = Join-Path $out $name
-        $deltaArchive = [IO.Compression.ZipFile]::Open($targetPath, [IO.Compression.ZipArchiveMode]::Create)
-        try {
-            foreach ($file in $changed) {
-                $entry = $target.entries[$file.path]
-                $new = $deltaArchive.CreateEntry($file.path, [IO.Compression.CompressionLevel]::Optimal)
-                $new.LastWriteTime = $entry.LastWriteTime
-                $source = $entry.Open()
-                try {
-                    $dest = $new.Open()
-                    try { $source.CopyTo($dest) }
-                    finally { $dest.Dispose() }
-                } finally { $source.Dispose() }
-            }
-        } finally { $deltaArchive.Dispose() }
+        $key = ConvertTo-Json -InputObject $changed -Depth 4 -Compress
+        if (-not $compiled.ContainsKey($key)) {
+            $targetPath = Join-Path $out "delta-$($compiled.Count).zip"
+            $deltaArchive = [IO.Compression.ZipFile]::Open($targetPath, [IO.Compression.ZipArchiveMode]::Create)
+            try {
+                foreach ($file in $changed) {
+                    $entry = $target.entries[$file.path]
+                    $new = $deltaArchive.CreateEntry($file.path, [IO.Compression.CompressionLevel]::Optimal)
+                    $new.LastWriteTime = $entry.LastWriteTime
+                    $source = $entry.Open()
+                    try {
+                        $dest = $new.Open()
+                        try { $source.CopyTo($dest) }
+                        finally { $dest.Dispose() }
+                    } finally { $source.Dispose() }
+                }
+            } finally { $deltaArchive.Dispose() }
+            $hash = (Get-FileHash -LiteralPath $targetPath -Algorithm SHA256).Hash.ToLowerInvariant()
+            $name = "ota-$hash.zip"
+            $bytes = (Get-Item -LiteralPath $targetPath).Length
+            Move-Item -LiteralPath $targetPath -Destination (Join-Path $out $name)
+            $compiled[$key] = @{name=$name;sha256=$hash;bytes=$bytes}
+        }
+        $archive = $compiled[$key]
         # The target inventory is exhaustive. Removed old files are never
         # copied into the new directory, so no delete instructions are needed.
         $delta = [ordered]@{
             from = $oldVersion
-            url = "https://github.com/Industrial-Arcane-Society/form-recall-release/releases/download/v$Version/$name"
-            sha256 = (Get-FileHash -LiteralPath $targetPath -Algorithm SHA256).Hash.ToLowerInvariant()
-            bytes = (Get-Item -LiteralPath $targetPath).Length
+            url = "https://github.com/Industrial-Arcane-Society/form-recall-release/releases/download/v$Version/$($archive.name)"
+            sha256 = $archive.sha256
+            bytes = $archive.bytes
         }
         Write-Host "OTA from $oldVersion contains $($changed.Count) changed files, $($delta.bytes) bytes."
         $delta
@@ -112,7 +126,7 @@ try {
     $portable = Get-Item -LiteralPath $PortableZip
     $channel = if ($Version -cmatch '-(alpha|beta|rc)\.') { $Matches[1] } else { 'stable' }
     $payload = [ordered]@{
-        schema = 1
+        schema = 2
         platform = 'windows-x64'
         channel = $channel
         version = $Version

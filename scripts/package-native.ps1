@@ -112,6 +112,7 @@ CATIA 的 Python 与 pywin32 运行时随包提供，首次导出时安装到用
 $readme | Set-Content -LiteralPath (Join-Path $package '使用说明.txt') -Encoding utf8NoBOM
 if ($Version) {
     Set-Content -LiteralPath (Join-Path $package 'update-bootstrap-v2') -Value '2' -Encoding ascii
+    Set-Content -LiteralPath (Join-Path $package 'update-bootstrap-v3') -Value '3' -Encoding ascii
 }
 $sourceCommit = & git -C $script:RepositoryRoot rev-parse HEAD
 if ($LASTEXITCODE -ne 0) { throw 'Cannot record the source commit.' }

@@ -148,6 +148,32 @@ async function stageRelease(api, release, tag, prerelease, assets, commit) {
   return result
 }
 
+function signManifest(manifest, privateKey) {
+  const payload = Buffer.from(JSON.stringify(manifest))
+  return JSON.stringify({ payload: payload.toString('base64url'), signature: sign(null, payload, privateKey).toString('base64url') })
+}
+
+async function baselineInventory(api, release, directory) {
+  const version = release.tag_name.slice(1)
+  const asset = remoteAsset(release, source, packageName(version))
+  const archived = await optional(api, `/releases/tags/${release.tag_name}`)
+  const summary = archived?.assets.find(item => item.name === 'update-v2.json' || item.name === 'update.json')
+  if (summary && !archived.draft) {
+    const record = remoteAsset(archived, distribution, summary.name)
+    if (record.bytes > 1 << 20) throw new Error('Archived inventory is too large.')
+    const file = path.join(directory, `base-${version}.json`)
+    await fetchAsset(record, file)
+    const manifest = envelope(await readFile(file))
+    if (manifest.version !== version || manifest.full.sha256 !== asset.sha256 || manifest.full.bytes !== asset.bytes ||
+        manifest.platform !== 'windows-x64' || !Array.isArray(manifest.files)) throw new Error(`Archived inventory mismatches v${version}.`)
+    console.log(`Reused signed file inventory for v${version}.`)
+    return { version, files: manifest.files }
+  }
+  const file = path.join(directory, `base-${version}.zip`)
+  await fetchAsset(asset, file)
+  return { version, path: file }
+}
+
 async function publish() {
   const selected = process.env.UPDATE_CHANNEL
   if (!['alpha', 'beta', 'rc', 'stable'].includes(selected)) throw new Error('Unknown update channel.')
@@ -155,6 +181,7 @@ async function publish() {
   const sourceAPI = createGitHubClient({ repository: source, token: process.env.GITHUB_TOKEN })
   const api = createGitHubClient({ repository: distribution, token: process.env.GITHUB_TOKEN })
   const channelPath = `/contents/channels/${selected}.json`
+  const channelV2 = `/contents/channels/v2/${selected}.json`
   const feed = await optional(api, channelPath)
   const current = feed && envelope(Buffer.from(feed.content, 'base64'))
   if (current && (current.channel !== selected || channel(current.version) !== selected)) throw new Error('Current feed targets the wrong channel.')
@@ -162,8 +189,9 @@ async function publish() {
   const target = process.env.UPDATE_VERSION
   if (target && channel(target) !== selected) throw new Error('Requested version does not belong to this channel.')
   const releases = await sourceAPI.request('GET', '/releases?per_page=100')
-  const candidates = releases.filter(release => release && !release.draft && release.tag_name.startsWith('v') &&
-    channel(release.tag_name.slice(1)) === selected && release.prerelease === (selected !== 'stable') &&
+  const published = releases.filter(release => release && !release.draft && release.published_at && release.tag_name.startsWith('v') &&
+    channel(release.tag_name.slice(1)) && release.prerelease === (channel(release.tag_name.slice(1)) !== 'stable'))
+  const candidates = published.filter(release => channel(release.tag_name.slice(1)) === selected &&
     (selected !== 'stable' || compare(release.tag_name.slice(1), stableMinimum) >= 0))
     .sort((a, b) => compare(b.tag_name.slice(1), a.tag_name.slice(1)))
   const release = target
@@ -186,31 +214,33 @@ async function publish() {
   const directory = await mkdtemp(path.join(tmpdir(), 'formrecall-ota-'))
   try {
     const manifestFile = path.join(directory, 'update.json')
+    const manifestV2File = path.join(directory, 'update-v2.json')
     if (!ota || ota.draft) {
       const privateKey = createPrivateKey(process.env.FORMRECALL_UPDATE_PRIVATE_KEY ?? '')
       if (createPublicKey(privateKey).export({ format: 'jwk' }).x !== publicX) throw new Error('Signing key does not match the client public key.')
-      const baseline = candidates.filter(item => compare(item.tag_name.slice(1), next) < 0).slice(0, 5).map(item => {
-        const version = item.tag_name.slice(1)
-        const asset = remoteAsset(item, source, packageName(version))
-        if (current?.version === version && (asset.sha256 !== current.full.sha256 || asset.bytes !== current.full.bytes)) {
-          throw new Error('Previous complete ZIP differs from its signed index.')
-        }
-        return { version, path: path.join(directory, `base-${version}.zip`), asset }
-      })
+      const older = published.filter(item => item.published_at <= release.published_at &&
+        compare(item.tag_name.slice(1), next) < 0).sort((a, b) => b.published_at.localeCompare(a.published_at) ||
+          compare(b.tag_name.slice(1), a.tag_name.slice(1)))
+      const baselines = selected !== 'stable'
+        ? older.filter(item => item.prerelease).slice(0, 8)
+        : [
+            ...older.filter(item => item.tag_name.startsWith(`v${next}-rc.`)).slice(0, 1),
+            ...older.filter(item => !item.prerelease && compare(item.tag_name.slice(1), stableMinimum) >= 0),
+          ].slice(0, 8)
       const results = await Promise.allSettled([
         fetchAsset(targetAsset, path.join(directory, 'target.zip')),
-        ...baseline.map(item => fetchAsset(item.asset, item.path)),
+        ...baselines.map(item => baselineInventory(api, item, directory)),
       ])
       const failure = results.find(result => result.status === 'rejected')
       if (failure) throw failure.reason
-      await writeFile(path.join(directory, 'baselines.json'), JSON.stringify(baseline))
+      await writeFile(path.join(directory, 'baselines.json'), JSON.stringify(results.slice(1).map(item => item.value)))
       buildOTA(directory, next, commit)
       const payload = await readFile(path.join(directory, 'payload.json'))
       const manifest = JSON.parse(payload)
       if (manifest.full.sha256 !== targetAsset.sha256 || manifest.full.bytes !== targetAsset.bytes) throw new Error('Inventory was generated from the wrong portable ZIP.')
-      const signed = JSON.stringify({ payload: payload.toString('base64url'), signature: sign(null, payload, privateKey).toString('base64url') })
-      await writeFile(manifestFile, signed)
-      const names = ['update.json', ...manifest.deltas.map(delta => path.posix.basename(delta.url))]
+      await writeFile(manifestFile, signManifest({ ...manifest, schema: 1, deltas: [] }, privateKey))
+      await writeFile(manifestV2File, signManifest(manifest, privateKey))
+      const names = ['update.json', 'update-v2.json', ...new Set(manifest.deltas.map(delta => path.posix.basename(delta.url)))]
       const assets = await Promise.all(names.map(async name => {
         const file = path.join(directory, name)
         return { name, path: file, ...await identity(file), contentType: name.endsWith('.zip') ? 'application/zip' : 'application/json' }
@@ -218,11 +248,16 @@ async function publish() {
       ota = await stageRelease(api, ota, `v${next}`, selected !== 'stable', assets, commit)
     }
     const record = remoteAsset(ota, distribution, 'update.json')
-    if (record.bytes > 1 << 20) throw new Error('Published update manifest is too large.')
-    await fetchAsset(record, manifestFile)
+    const recordV2 = remoteAsset(ota, distribution, 'update-v2.json')
+    if (record.bytes > 1 << 20 || recordV2.bytes > 1 << 20) throw new Error('Published update manifest is too large.')
+    await Promise.all([fetchAsset(record, manifestFile), fetchAsset(recordV2, manifestV2File)])
     const raw = await readFile(manifestFile)
-    const manifest = envelope(raw)
-    if (manifest.version !== next || manifest.commit !== commit || manifest.channel !== selected ||
+    const rawV2 = await readFile(manifestV2File)
+    const legacy = envelope(raw)
+    const manifest = envelope(rawV2)
+    if (legacy.schema !== 1 || manifest.schema !== 2 || legacy.deltas.length ||
+        JSON.stringify(legacy) !== JSON.stringify({ ...manifest, schema: 1, deltas: [] }) ||
+        manifest.version !== next || manifest.commit !== commit || manifest.channel !== selected ||
         manifest.full.url !== targetAsset.url || manifest.full.bytes !== targetAsset.bytes || manifest.full.sha256 !== targetAsset.sha256) {
       throw new Error('Published OTA metadata mismatches the source release.')
     }
@@ -230,6 +265,10 @@ async function publish() {
       const asset = remoteAsset(ota, distribution, path.posix.basename(delta.url))
       if (asset.url !== delta.url || asset.sha256 !== delta.sha256 || asset.bytes !== delta.bytes) throw new Error('Published OTA attachment mismatches signed metadata.')
     }
+    const feedV2 = await optional(api, channelV2)
+    await api.request('PUT', channelV2, {
+      message: `Publish FormRecall ${selected} v${next} shared OTA index`, content: rawV2.toString('base64'), ...(feedV2 ? { sha: feedV2.sha } : {}),
+    })
     await api.request('PUT', channelPath, {
       message: `Publish FormRecall ${selected} v${next}`, content: raw.toString('base64'), ...(feed ? { sha: feed.sha } : {}),
     })

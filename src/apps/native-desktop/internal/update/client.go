@@ -75,7 +75,11 @@ var ErrNoChannelRelease = errors.New("此更新渠道尚无可用版本")
 func (c *Client) Check(ctx context.Context) (*Offer, error) {
 	var lastErr error
 	var valid bool
-	for _, address := range []string{c.freshFeed, c.feed} {
+	addresses := []string{c.freshFeed, c.feed}
+	if c.SupportsDowngrade() && c.freshFeed != "" {
+		addresses = append([]string{distributionAPI + "v2/" + c.Channel() + ".json?ref=main"}, addresses...)
+	}
+	for _, address := range addresses {
 		if address == "" {
 			continue
 		}
@@ -87,7 +91,7 @@ func (c *Client) Check(ctx context.Context) (*Offer, error) {
 			continue
 		}
 		valid = true
-		if newer(offer.Version, c.Version) {
+		if newer(offer.Version, c.Version) || IsChannelDowngrade(c.Version, offer.Version) {
 			return &offer, nil
 		}
 	}
@@ -106,7 +110,7 @@ func (c *Client) readFeed(ctx context.Context, address string) (Offer, error) {
 	}
 	req.Header.Set("User-Agent", "FormRecall/"+c.Version)
 	req.Header.Set("Cache-Control", "no-cache")
-	if address == c.freshFeed {
+	if strings.HasPrefix(address, distributionAPI) {
 		req.Header.Set("Accept", "application/vnd.github.raw+json")
 	}
 	res, err := c.http.Do(req)
@@ -221,7 +225,8 @@ func (c *Client) Stage(ctx context.Context, offer Offer, progress func(Progress)
 	if err != nil {
 		return "", err
 	}
-	if verified.Channel != c.Channel() || !newer(verified.Version, c.Version) {
+	if verified.Channel != c.Channel() || (!newer(verified.Version, c.Version) &&
+		!(c.SupportsDowngrade() && IsChannelDowngrade(c.Version, verified.Version))) {
 		return "", errors.New("目标版本不适用于当前安装")
 	}
 	if verified.Channel != channelFor(c.Version) && !c.SupportsChannelSwitch() {
