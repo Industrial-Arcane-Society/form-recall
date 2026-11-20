@@ -247,3 +247,11 @@ CATIA 资源接入后，`--native-resources` 完成在线准备与离线重跑�
 修复后的实际桌面录屏包含 17 个阶段，所有目标状态和逐帧状态稳定检查通过。16 个动画阶段在前 450 ms 捕获到 5 至 8 次显著变化，初始静止阶段为 0 次。显著变化按 RGB 通道差超过 8 且达到最小变化面积计数，降低合成器细微像素变化的干扰。视频为 1598×1038，实际采集 577 帧，平均 30.01 帧/秒，完整解码得到 577 帧、19.189 秒。[实际桌面视频](../../temp/outputs/native-ui-motion/desktop-verified/native-ui-motion.mp4) [逐帧记录](../../temp/outputs/native-ui-motion/desktop-verified/recording.json) [视频解码](../../temp/outputs/native-ui-motion/desktop-verified/decoded.json)
 
 修复后 `go vet -mod=readonly ./...` 通过，普通 Go 测试 60 项通过、5 项按环境条件跳过、0 项失败。桌面显示与录屏测试按上述方式另行显式启用。既有 Rust 全量基线限制见前文。[Go 测试记录](../../temp/outputs/native-presentation/go-tests-final.jsonl)
+
+## 修复版交付与用户模型恢复
+
+修复版来自源码提交 `571aa6cbd411908f069f95aeee82c176dfde5d60`，包清单与 Go 嵌入版本一致。交付目录为 `temp/outputs/native-package/FormRecall-20261120-194334-297`，对应 ZIP 大小为 231487251 字节，SHA-256 为 `031f883bbaa4c819cddd2929df9e844977e1c1bcee5c1bce5762cf0f49a50a47`。`FormRecall.exe` 的 SHA-256 为 `26352dcaee5df64d6cb039468863cdd1b289fab60ed43e44d5d5a58d6a2bb3e9`。104 个文件和 ZIP 校验通过，DSH 离线安装及重复安装、CATIA 私有 Python 安装及模块加载通过。构建时已跟踪文件无修改，35 个既有未跟踪实验文件使构建标记 `dirty=true`。[修复包验证](../../temp/outputs/native-viewport-fix-package-20261120-194328-362/verification.json)
+
+2026-11-20 19:49（UTC+8），直接启动上述交付目录中的 `FormRecall.exe`，使用程序默认数据目录恢复用户已有的第 3 代模型。状态记录确认尺寸为 200×150×12 mm、2 个特征、604 个三角形，视口错误为空。active model 的最后写入时间早于程序启动，验证期间 active model 与 GLB 的 SHA-256 均保持一致。[交付程序启动记录](../../temp/outputs/native-presentation/final-package/verification.json)
+
+最终画面经 `DwmFlush` 后从实际桌面读取应用客户区，视口内记录到 213208 个亮像素，截图可见四角通孔、板厚、网格和坐标轴。该截图采自与交付清单哈希一致的程序进程。验收结束时程序保持运行并接受交互。另存的 `diagnostic-composite.png.json` 用于核对加载状态，最终桌面显示证据为下列 `restored-model-desktop.png`。[实际桌面截图](../../temp/outputs/native-presentation/final-package/restored-model-desktop.png) [视口截图](../../temp/outputs/native-presentation/final-package/viewport-desktop.png)
