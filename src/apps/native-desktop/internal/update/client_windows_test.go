@@ -106,13 +106,17 @@ func TestCheckAndStageUsesDeltaOrVerifiesFullFallback(t *testing.T) {
 			raw := testSign(t, m, private)
 			c := NewClient(from, root)
 			c.key = pub
-			c.freshFeed = ""
 			fullDownloads, deltaDownloads := 0, 0
 			c.http.Transport = mockTransport(func(req *http.Request) (*http.Response, error) {
 				var data []byte
 				switch req.URL.String() {
-				case c.feed:
+				case c.freshFeed:
+					if req.Header.Get("Cache-Control") != "no-cache" || req.Header.Get("Accept") != "application/vnd.github.raw+json" {
+						t.Fatal("primary channel lookup did not request fresh raw API content")
+					}
 					data = raw
+				case c.feed:
+					t.Fatal("consulted the cached Raw feed despite a newer signed API response")
 				case m.Deltas[0].URL:
 					data = delta
 					deltaDownloads++
