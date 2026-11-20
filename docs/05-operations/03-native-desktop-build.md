@@ -86,9 +86,18 @@ Release 提供以下文件。
 | --- | --- |
 | `FormRecall-{version}-windows-x64-setup.exe` | 完整安装包，向导安装全部运行组件并提供快捷方式和卸载入口 |
 | `FormRecall-{version}-windows-x64-portable.zip` | 完整免安装包，解压后运行目录内的 `FormRecall.exe` |
-| `FormRecall-{version}-windows-x64.sha256` | 两个下载文件的 SHA-256 校验值 |
+
+两个下载文件的 SHA-256 写在 Release 说明中。构建 artifact 仍保留独立校验文件供自动验收使用。
 
 安装包与便携包均包含桌面程序、Rust 建模引擎、OCCT 和运行资源。安装向导支持简体中文和英文，默认安装到当前用户目录，无需管理员权限，支持选择目录、开始菜单与可选桌面快捷方式，并提供系统卸载入口。安装包使用 Inno Setup 编译，Windows Actions 镜像预装编译器。本地版本打包需要可用的 Inno Setup 6，可通过 `-InstallerCompiler` 指定 `ISCC.exe`。指定 `source_commit` 时，源码需要包含完整安装包构建支持。历史已公开版本的重跑会直接跳过。
+
+### 应用内更新
+
+主仓库提供完整下载。[form-recall-release](https://github.com/Industrial-Arcane-Society/form-recall-release) 提供频道清单和 OTA 附件。分发工作流从主仓库已公开的 Release 读取便携 ZIP，校验其 SHA-256 和源码提交后，生成从频道上一版直达新版的文件级 OTA。发布 OTA 并验证服务器上的附件后，更新 `channels/alpha.json` 或 `channels/stable.json`。定时同步也可在分发仓库手动运行。
+
+桌面客户端内置验签公钥。稳定版只跟踪稳定频道，Alpha 版只跟踪 Alpha 频道。打开「设置 → 更新」，下载完成后选择「重启并更新」。若增量基线校验失败，客户端改用完整便携 ZIP。两种路径都在独立版本目录组装并校验，启动器在建模引擎就绪后才提交新版本指针。启动失败时继续使用之前的版本。更新应用程序文件，工程和用户设置沿用原有数据目录。
+
+升级到首个带更新器的版本需要手动安装或解压。升级后的实际运行版本显示在应用的更新页。Windows 卸载列表显示最近一次通过安装向导安装的版本。
 
 发布版本通过 Go 链接参数写入桌面程序，并记录在 `package-manifest.json`。`FormRecall.exe --version-json` 输出桌面版本与源码提交，供成品检查使用。引擎组件与兼容入口保留各自版本。发布说明优先读取 `.release-notes/v{version}.md`，其余版本使用 GitHub 自动生成说明。
 

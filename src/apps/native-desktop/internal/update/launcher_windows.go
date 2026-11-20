@@ -73,11 +73,21 @@ func (c *Client) ActiveExecutable() string {
 	}
 	state := c.current()
 	for _, slot := range []string{state.Current, state.Previous} {
-		if _, bundle, err := c.readSlot(slot); err == nil {
+		if offer, bundle, err := c.readSlot(slot); err == nil {
+			var executable File
+			for _, file := range offer.Files {
+				if strings.EqualFold(file.Path, "FormRecall.exe") {
+					executable = file
+					break
+				}
+			}
 			binary, err := openFile(bundle, "FormRecall.exe")
 			if err == nil {
+				err = matchFile(binary, io.Discard, executable)
 				_ = binary.Close()
-				return filepath.Join(bundle, "FormRecall.exe")
+				if err == nil {
+					return filepath.Join(bundle, "FormRecall.exe")
+				}
 			}
 		}
 	}

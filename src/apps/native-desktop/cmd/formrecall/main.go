@@ -67,9 +67,12 @@ func main() {
 		offer, err := updater.Check(context.Background())
 		if err == nil && offer != nil {
 			var slot string
-			slot, err = updater.Stage(context.Background(), *offer, nil)
+			var received update.Progress
+			slot, err = updater.Stage(context.Background(), *offer, func(progress update.Progress) {
+				received = progress
+			})
 			if err == nil {
-				_ = json.NewEncoder(os.Stdout).Encode(map[string]any{"slot": slot, "version": offer.Version, "bytes": updater.DownloadSize(*offer)})
+				_ = json.NewEncoder(os.Stdout).Encode(map[string]any{"slot": slot, "version": offer.Version, "bytes": received.Received, "delta": received.Delta})
 				return
 			}
 		}
