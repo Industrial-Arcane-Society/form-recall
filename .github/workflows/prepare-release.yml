@@ -1,0 +1,53 @@
+name: Prepare Release
+
+run-name: Prepare release · ${{ inputs.bump }}
+
+on:
+  workflow_dispatch:
+    inputs:
+      bump:
+        description: '版本升级，填写 patch / minor / major 或具体版本，如 0.3.0-beta.1'
+        type: string
+        required: true
+        default: patch
+
+permissions:
+  contents: write
+  pull-requests: write
+  actions: write
+
+concurrency:
+  group: prepare-release
+  cancel-in-progress: false
+
+jobs:
+  prepare:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          ref: main
+          persist-credentials: false
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
+        with:
+          node-version: '22'
+          package-manager-cache: false
+      - name: Test release preparation and publishing logic
+        run: node --test scripts/native-release.test.mjs scripts/prepare-native-release.test.mjs
+      - name: Create or reuse the release pull request
+        id: release
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          RELEASE_BUMP: ${{ inputs.bump }}
+        run: node scripts/prepare-native-release.mjs prepare-pr
+      - name: Build reviewable installers and portable archives for the release pull request
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_BRANCH: ${{ steps.release.outputs.branch }}
+          RELEASE_VERSION: ${{ steps.release.outputs.version }}
+          RELEASE_COMMIT: ${{ steps.release.outputs.commit }}
+        run: |
+          gh workflow run windows-release.yml --repo "$GITHUB_REPOSITORY" \
+            --ref "$RELEASE_BRANCH" -f version="$RELEASE_VERSION" \
+            -f source_commit="$RELEASE_COMMIT" -f publish=false

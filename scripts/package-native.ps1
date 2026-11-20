@@ -5,7 +5,8 @@ param(
     [string]$OcctManifest,
     [string]$Version,
     [string]$OutputDirectory,
-    [string]$OutputManifest
+    [string]$OutputManifest,
+    [string]$InstallerCompiler
 )
 . "$PSScriptRoot/native-common.ps1"
 
@@ -27,14 +28,14 @@ $package = Join-Path $destination $packageName
 $archive = if ($Version) { "$package-portable.zip" } else { "$package-windows-x64.zip" }
 $plannedOutputs = @($package, $archive)
 if ($Version) {
-    $releaseExecutable = "$package.exe"
+    $installer = "$package-setup.exe"
     $checksums = "$package.sha256"
     $releaseManifest = if ($OutputManifest) { [IO.Path]::GetFullPath($OutputManifest, $script:RepositoryRoot) } else { "$package.release.json" }
     $manifestRelative = [IO.Path]::GetRelativePath($package, $releaseManifest)
     if (-not [IO.Path]::IsPathRooted($manifestRelative) -and $manifestRelative -ne '..' -and -not $manifestRelative.StartsWith("..$([IO.Path]::DirectorySeparatorChar)")) {
         throw 'The release manifest must be outside the portable package directory.'
     }
-    $plannedOutputs += @($releaseExecutable, $checksums, $releaseManifest)
+    $plannedOutputs += @($installer, $checksums, $releaseManifest)
     if (@($plannedOutputs | Sort-Object -Unique).Count -ne $plannedOutputs.Count) {
         throw 'Release output paths must be distinct.'
     }
@@ -133,8 +134,10 @@ $record | ConvertTo-Json -Depth 6 | Set-Content -LiteralPath (Join-Path $package
 Compress-Archive -LiteralPath $package -DestinationPath $archive -CompressionLevel Optimal
 & "$PSScriptRoot/verify-native-package.ps1" -PackageDirectory $package -ArchivePath $archive -InstallDshRuntime -InstallCatiaRuntime
 if ($Version) {
-    Copy-Item -LiteralPath (Join-Path $package 'FormRecall.exe') -Destination $releaseExecutable
-    $assets = @($releaseExecutable, $archive) | ForEach-Object {
+    & "$PSScriptRoot/build-native-installer.ps1" -PackageDirectory $package -Version $Version `
+        -OutputDirectory $destination -CompilerPath $InstallerCompiler
+    if (-not (Test-Path -LiteralPath $installer -PathType Leaf)) { throw 'The complete Windows installer was not created.' }
+    $assets = @($installer, $archive) | ForEach-Object {
         $file = Get-Item -LiteralPath $_
         [ordered]@{
             name = $file.Name
@@ -145,14 +148,14 @@ if ($Version) {
     }
     $assets | ForEach-Object { "$($_.sha256)  $($_.name)" } | Set-Content -LiteralPath $checksums -Encoding ascii
     $release = [ordered]@{
-        schema = 1
+        schema = 2
         version = $Version
         source_commit = $sourceCommit
         source_dirty = $record.source_dirty
         source_tracked_dirty = $record.source_tracked_dirty
         built_at = $record.built_at
         package_directory = $package
-        executable = $releaseExecutable
+        installer = $installer
         archive = $archive
         checksums = $checksums
         assets = @($assets)

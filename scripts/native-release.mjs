@@ -9,9 +9,10 @@ const shaPattern = /^[0-9a-f]{40}$/i
 const installationNotes = [
   'Windows x64 使用说明',
   '',
-  '- 首次使用请下载 portable ZIP，完整解压后运行 FormRecall.exe。',
-  '- 单独的 EXE 用于更新已有完整程序目录，请关闭程序后替换同目录的 FormRecall.exe，并保留配套核心进程、运行库和资源。',
-  '- 随附的 .sha256 文件提供 EXE 和 ZIP 的 SHA-256 校验值。',
+  '- 安装使用请选择 setup.exe 完整安装包，运行后按提示完成安装。',
+  '- 便携使用请选择 portable.zip，完整解压后运行 FormRecall.exe。',
+  '- 两种下载均包含程序、核心进程、运行库和配套资源。',
+  '- 随附的 .sha256 文件提供安装包和便携 ZIP 的 SHA-256 校验值。',
 ].join('\n')
 
 export function normalizeVersion(value) {
@@ -217,6 +218,11 @@ export async function prepare({ env = process.env, api, cwd = process.cwd() } = 
   api ??= createGitHubClient({ repository: env.GITHUB_REPOSITORY, token: env.GITHUB_TOKEN })
   const event = env.GITHUB_EVENT_NAME
   if (!['push', 'workflow_dispatch', 'pull_request'].includes(event)) throw new Error('Unsupported release preparation event.')
+  let sourceCommit = null
+  if (env.RELEASE_SOURCE_COMMIT !== undefined && env.RELEASE_SOURCE_COMMIT !== '') {
+    if (event !== 'workflow_dispatch') throw new Error('RELEASE_SOURCE_COMMIT is only supported for workflow_dispatch.')
+    sourceCommit = commitSHA(env.RELEASE_SOURCE_COMMIT, 'RELEASE_SOURCE_COMMIT')
+  }
   let pullRequest
   if (event === 'pull_request') {
     if (!env.GITHUB_EVENT_PATH) throw new Error('GITHUB_EVENT_PATH is required for a pull request build.')
@@ -247,7 +253,11 @@ export async function prepare({ env = process.env, api, cwd = process.cwd() } = 
   } else {
     existingTag = await tagCommit(api, version.tag)
     release = await findRelease(api, version.tag)
-    if (event === 'workflow_dispatch' && existingTag) {
+    if (sourceCommit) {
+      commit = await resolveCommit(api, sourceCommit)
+      if (commit !== sourceCommit) throw new Error('RELEASE_SOURCE_COMMIT did not resolve to the requested commit.')
+      if (existingTag && existingTag !== commit) throw new Error('Existing tag differs from RELEASE_SOURCE_COMMIT. Tags are immutable.')
+    } else if (event === 'workflow_dispatch' && existingTag) {
       // A manual rerun of an old version always builds that tag's original SHA.
       commit = existingTag
     } else {
@@ -273,14 +283,15 @@ async function fileHash(file) {
 export async function validateAssets(directory, version, commit) {
   if (!directory) throw new Error('RELEASE_ASSET_DIR is required.')
   const base = `FormRecall-${version}-windows-x64`
-  const names = [`${base}.exe`, `${base}-portable.zip`, `${base}.sha256`]
+  const names = [`${base}-setup.exe`, `${base}-portable.zip`, `${base}.sha256`]
   const entries = await readdir(directory, { withFileTypes: true })
   const manifests = entries.filter(entry => entry.isFile() && (entry.name === 'release.json' || entry.name.endsWith('.release.json')))
   if (manifests.length > 1) throw new Error('The asset directory contains multiple release manifests.')
+  if (manifests.length === 0) throw new Error('A schema 2 release manifest describing the full installer is required.')
   for (const entry of entries) {
     if (entry.isDirectory()) continue
     if (!entry.isFile() || !names.includes(entry.name) && !manifests.includes(entry)) {
-      throw new Error(`Unexpected release file ${entry.name}. Stage only the three release assets and an optional release.json or .release.json manifest.`)
+      throw new Error(`Unexpected release file ${entry.name}. Stage only the three release assets and their release.json or .release.json manifest.`)
     }
   }
   const assets = []
@@ -300,22 +311,28 @@ export async function validateAssets(directory, version, commit) {
     if (!match || checksums.has(match[2])) throw new Error('The .sha256 file contains an invalid or duplicate entry.')
     checksums.set(match[2], match[1].toLowerCase())
   }
-  if (checksums.size !== 2) throw new Error('The .sha256 file must list exactly the EXE and portable ZIP.')
+  if (checksums.size !== 2) throw new Error('The .sha256 file must list exactly the setup EXE and portable ZIP.')
   for (const asset of assets.slice(0, 2)) {
     if (checksums.get(asset.name) !== asset.sha256) throw new Error(`The .sha256 file does not match ${asset.name}.`)
   }
-  if (manifests.length) {
-    const manifest = JSON.parse(await readFile(path.join(directory, manifests[0].name), 'utf8'))
-    if (manifest.schema !== 1 || manifest.version !== version || manifest.source_commit !== commit || manifest.source_dirty !== false || manifest.source_tracked_dirty !== false) {
-      throw new Error('Release manifest must identify this version and commit from a clean source tree.')
+  const manifest = JSON.parse(await readFile(path.join(directory, manifests[0].name), 'utf8'))
+  if (manifest?.schema !== 2) throw new Error('A schema 2 release manifest describing the full installer is required.')
+  if (manifest.version !== version || manifest.source_commit !== commit || manifest.source_dirty !== false || manifest.source_tracked_dirty !== false) {
+    throw new Error('Release manifest must identify this version and commit from a clean source tree.')
+  }
+  for (const [field, name] of [['installer', names[0]], ['archive', names[1]], ['checksums', names[2]]]) {
+    // Windows builds record original absolute paths. Publishing can run on
+    // Linux after artifact staging, so validate the recorded filenames.
+    if (typeof manifest[field] !== 'string' || path.win32.basename(manifest[field]) !== name) {
+      throw new Error(`Release manifest ${field} must identify ${name}.`)
     }
-    if (!Array.isArray(manifest.assets) || manifest.assets.length !== 2 || new Set(manifest.assets.map(asset => asset.name)).size !== 2) {
-      throw new Error('Release manifest must describe exactly the EXE and portable ZIP.')
-    }
-    for (const asset of assets.slice(0, 2)) {
-      const recorded = manifest.assets.find(entry => entry.name === asset.name)
-      if (!recorded || recorded.bytes !== asset.bytes || recorded.sha256 !== asset.sha256) throw new Error(`Release manifest does not match ${asset.name}.`)
-    }
+  }
+  if (!Array.isArray(manifest.assets) || manifest.assets.length !== 2 || new Set(manifest.assets.map(asset => asset?.name)).size !== 2) {
+    throw new Error('Release manifest must describe exactly the setup EXE and portable ZIP.')
+  }
+  for (const asset of assets.slice(0, 2)) {
+    const recorded = manifest.assets.find(entry => entry?.name === asset.name)
+    if (!recorded || recorded.bytes !== asset.bytes || recorded.sha256 !== asset.sha256) throw new Error(`Release manifest does not match ${asset.name}.`)
   }
   return assets
 }

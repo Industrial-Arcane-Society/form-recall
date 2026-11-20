@@ -6,25 +6,32 @@ on:
   workflow_dispatch:
     inputs:
       version:
-        description: Version, for example 0.2.0 or 0.3.0-rc.1
+        description: '版本号，如 0.2.1 或 0.3.0-rc.1'
         type: string
         required: true
-        default: '0.2.0'
       publish:
-        description: Publish the verified EXE and portable ZIP to GitHub Releases
+        description: '完成构建与验证后发布到 GitHub Releases'
         type: boolean
         required: true
         default: true
+      source_commit:
+        description: '指定完整提交 SHA，留空使用所选分支，由合并后的发布流程自动填写'
+        type: string
+        required: false
   push:
     tags: ['v*']
   pull_request:
     paths:
       - '.github/workflows/windows-release.yml'
+      - '.github/workflows/prepare-release.yml'
+      - '.github/workflows/publish-release-pr.yml'
+      - 'VERSION'
       - 'scripts/**'
       - 'src/apps/native-desktop/**'
       - 'src/apps/engine-host/**'
       - 'src/core/cad-engine/**'
       - 'src/native/occt-bridge/**'
+      - 'src/packaging/windows/**'
       - 'src/legacy/packaging/**'
       - 'src/legacy/scripts/**'
       - 'src/legacy/ai_modeler/agent/**'
@@ -62,12 +69,13 @@ jobs:
           node-version: '22'
           package-manager-cache: false
       - name: Test release metadata and retry handling
-        run: node --test scripts/native-release.test.mjs
+        run: node --test scripts/native-release.test.mjs scripts/prepare-native-release.test.mjs
       - name: Resolve version and immutable source commit
         id: release
         env:
           RELEASE_VERSION: ${{ inputs.version }}
           RELEASE_PUBLISH: ${{ inputs.publish }}
+          RELEASE_SOURCE_COMMIT: ${{ inputs.source_commit }}
           GITHUB_TOKEN: ${{ github.token }}
         run: node scripts/native-release.mjs prepare
 
@@ -90,7 +98,7 @@ jobs:
           cache-dependency-path: src/apps/native-desktop/go.sum
       - name: Check release PowerShell syntax
         run: |
-          foreach ($file in @('scripts/build-native.ps1', 'scripts/package-native.ps1', 'scripts/verify-native-release-startup.ps1', 'scripts/install-ci-opengl.ps1')) {
+          foreach ($file in @('scripts/build-native.ps1', 'scripts/package-native.ps1', 'scripts/build-native-installer.ps1', 'scripts/verify-native-installer.ps1', 'scripts/verify-native-release-startup.ps1', 'scripts/install-ci-opengl.ps1')) {
             $tokens = $null
             $errors = $null
             $null = [Management.Automation.Language.Parser]::ParseFile((Resolve-Path $file), [ref]$tokens, [ref]$errors)
@@ -135,6 +143,13 @@ jobs:
           ref: ${{ needs.prepare.outputs.commit }}
           fetch-depth: 0
           persist-credentials: false
+      - name: Check source supports complete installer releases
+        run: |
+          foreach ($path in @('scripts/build-native-installer.ps1', 'scripts/verify-native-installer.ps1', 'src/packaging/windows/FormRecall.iss')) {
+            if (-not (Test-Path -LiteralPath $path -PathType Leaf)) {
+              throw 'The selected source commit predates complete installer releases. Select a commit containing the installer workflow.'
+            }
+          }
       - uses: actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16 # v6
         with:
           go-version-file: src/apps/native-desktop/go.mod
@@ -196,6 +211,9 @@ jobs:
           GALLIUM_DRIVER: llvmpipe
         run: |
           $release = Get-Content -LiteralPath temp/outputs/release/release.json -Raw | ConvertFrom-Json
+          if ($release.schema -ne 2 -or -not $release.installer) {
+            throw 'The selected source must produce the complete installer release schema 2.'
+          }
           if ($release.source_commit -ne $env:RELEASE_COMMIT -or $release.source_dirty) {
             throw 'The release package does not match the selected clean source commit.'
           }
@@ -207,10 +225,18 @@ jobs:
           ./scripts/verify-native-release-startup.ps1 -PackageDirectory $probe `
             -Version $env:RELEASE_VERSION -OutputDirectory temp/outputs/release-startup
           New-Item -ItemType Directory -Path temp/outputs/release-assets -Force | Out-Null
-          foreach ($path in @($release.executable, $release.archive, $release.checksums)) {
+          foreach ($path in @($release.installer, $release.archive, $release.checksums)) {
             Copy-Item -LiteralPath $path -Destination temp/outputs/release-assets
           }
           Copy-Item -LiteralPath temp/outputs/release/release.json -Destination temp/outputs/release-assets
+      - name: Verify installation, installed modelling and uninstallation
+        env:
+          GALLIUM_DRIVER: llvmpipe
+        run: |
+          $release = Get-Content -LiteralPath temp/outputs/release/release.json -Raw | ConvertFrom-Json
+          ./scripts/verify-native-installer.ps1 -InstallerPath $release.installer `
+            -PackageDirectory $release.package_directory -Version $env:RELEASE_VERSION `
+            -OutputDirectory temp/outputs/installer-verification -UseSoftwareOpenGL
       - name: Upload release assets
         uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
         with:
@@ -228,6 +254,7 @@ jobs:
             temp/outputs/release/release.json
             temp/outputs/release/*/package-manifest.json
             temp/outputs/release-startup/
+            temp/outputs/installer-verification/
             temp/outputs/native-dsh-verification.json
             temp/outputs/native-catia-verification.json
           if-no-files-found: ignore
