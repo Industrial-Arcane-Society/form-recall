@@ -4,7 +4,9 @@ param(
     [Parameter(Mandatory)][string]$Version,
     [string]$OutputDirectory,
     [switch]$SkipStartup,
-    [switch]$UseSoftwareOpenGL
+    [switch]$UseSoftwareOpenGL,
+    [string]$ExpectedUpdateVersion,
+    [string]$ExpectedUpdateCommit
 )
 
 $ErrorActionPreference = 'Stop'
@@ -14,6 +16,9 @@ if (-not $IsWindows -or -not [Environment]::Is64BitProcess) {
 }
 if ($SkipStartup -and $UseSoftwareOpenGL) {
     throw 'UseSoftwareOpenGL requires the startup verification to run.'
+}
+if ([bool]$ExpectedUpdateVersion -ne [bool]$ExpectedUpdateCommit -or ($ExpectedUpdateVersion -and $SkipStartup)) {
+    throw 'OTA verification requires its exact target version and commit, plus a startup check.'
 }
 if (-not ('FormRecall.InstallerShellLink' -as [type])) {
     Add-Type -TypeDefinition @'
@@ -315,6 +320,12 @@ try {
     }
     Remove-OwnedOpenGL
     $driver = $null
+    if ($ExpectedUpdateVersion) {
+        $otaOutput = Join-Path $output 'ota'
+        & "$PSScriptRoot/verify-desktop-ota.ps1" -BundleDirectory $installDirectory -ExpectedVersion $ExpectedUpdateVersion `
+            -ExpectedCommit $ExpectedUpdateCommit -OutputDirectory $otaOutput -UseSoftwareOpenGL:$UseSoftwareOpenGL
+        $proof['ota'] = Get-Content -LiteralPath (Join-Path $otaOutput 'ota-verification.json') -Raw | ConvertFrom-Json -AsHashtable
+    }
     $owned = Get-OwnedRegistration
     if ($owned.executable -ine $uninstaller) { throw 'The isolated uninstaller changed during verification.' }
     $null = Invoke-OwnedInstallerProcess $uninstaller @('/VERYSILENT', '/SUPPRESSMSGBOXES', '/NORESTART', "/LOG=$(Join-Path $output 'uninstall.log')") 'uninstall'
