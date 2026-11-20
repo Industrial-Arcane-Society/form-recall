@@ -203,3 +203,36 @@ func TestChannelOrderAndPersistedPreferences(t *testing.T) {
 		t.Fatalf("updated preferences: %+v", got)
 	}
 }
+
+func TestStagePublishedChannel(t *testing.T) {
+	bundle := os.Getenv("FORMRECALL_OTA_TEST_BUNDLE")
+	if bundle == "" {
+		t.Skip("requires a fresh packaged bundle and the live update server")
+	}
+	client := NewClient(os.Getenv("FORMRECALL_OTA_TEST_VERSION"), bundle)
+	if client == nil || !client.SupportsChannelSwitch() {
+		t.Fatal("cross-channel test requires a compatible packaged launcher")
+	}
+	client = client.ForChannel(os.Getenv("FORMRECALL_OTA_TEST_CHANNEL"))
+	offer, err := client.Check(context.Background())
+	if err != nil || offer == nil {
+		t.Fatalf("published offer lookup returned %v, %v", offer, err)
+	}
+	var progress Progress
+	slot, err := client.Stage(context.Background(), *offer, func(p Progress) { progress = p })
+	if err != nil {
+		t.Fatal(err)
+	}
+	if progress.Delta || progress.Received != offer.Full.Bytes {
+		t.Fatalf("unexpected cross-channel download: %+v", progress)
+	}
+	record, err := json.Marshal(map[string]any{
+		"slot": slot, "version": offer.Version, "bytes": progress.Received, "delta": progress.Delta,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(os.Getenv("FORMRECALL_OTA_TEST_RESULT"), record, 0600); err != nil {
+		t.Fatal(err)
+	}
+}

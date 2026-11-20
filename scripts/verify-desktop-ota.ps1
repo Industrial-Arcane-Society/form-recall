@@ -56,14 +56,39 @@ function Invoke-Desktop([string[]]$Arguments, [int]$TimeoutSeconds = 150, [switc
 }
 
 $original = (Invoke-Desktop @('--version-json')).stdout | ConvertFrom-Json -AsHashtable
-$stage = Invoke-Desktop @('--stage-update') -TimeoutSeconds 240 -TraceNetwork
-$plan = $stage.stdout | ConvertFrom-Json -AsHashtable
+function Get-UpdateChannel([string]$Version) {
+    if ($Version -cmatch '-(alpha|beta|rc)\.[1-9]\d*$') { return $Matches[1] }
+    return 'stable'
+}
+$targetChannel = Get-UpdateChannel $ExpectedVersion
+$crossChannel = (Get-UpdateChannel $original.version) -cne $targetChannel
+if ($crossChannel) {
+    $env:FORMRECALL_OTA_TEST_BUNDLE = $bundle
+    $env:FORMRECALL_OTA_TEST_VERSION = $original.version
+    $env:FORMRECALL_OTA_TEST_CHANNEL = $targetChannel
+    $env:FORMRECALL_OTA_TEST_RESULT = Join-Path $output 'stage.json'
+    . "$PSScriptRoot/native-common.ps1"
+    try {
+        Invoke-NativeGo @('test', '-mod=readonly', './internal/update', '-run', '^TestStagePublishedChannel$', '-count=1', '-timeout=10m')
+        $plan = Get-Content -LiteralPath $env:FORMRECALL_OTA_TEST_RESULT -Raw | ConvertFrom-Json -AsHashtable
+    } finally {
+        Remove-Item Env:FORMRECALL_OTA_TEST_BUNDLE,Env:FORMRECALL_OTA_TEST_VERSION,Env:FORMRECALL_OTA_TEST_CHANNEL,Env:FORMRECALL_OTA_TEST_RESULT
+    }
+    $archive = "FormRecall-$ExpectedVersion-windows-x64-portable.zip"
+    $deltaRequested = $false
+    $fullRequested = -not $plan.delta
+    $actualDelta = $plan.delta
+    if (-not $fullRequested) { throw 'Expected a full ZIP for the cross-channel upgrade.' }
+} else {
+    $stage = Invoke-Desktop @('--stage-update') -TimeoutSeconds 240 -TraceNetwork
+    $plan = $stage.stdout | ConvertFrom-Json -AsHashtable
+    $archive = "FormRecall-$($original.version)-to-$ExpectedVersion-windows-x64-ota.zip"
+    $deltaRequested = $stage.network.Contains($archive)
+    $fullRequested = $stage.network.Contains("FormRecall-$ExpectedVersion-windows-x64-portable.zip")
+    $actualDelta = if ($plan.ContainsKey('delta')) { $plan.delta -eq $true } else { $deltaRequested -and -not $fullRequested }
+    if (-not $actualDelta) { throw "Expected a real OTA download without full fallback. OTA requested=$deltaRequested, full requested=$fullRequested." }
+}
 if ($plan.version -cne $ExpectedVersion -or $plan.slot -notmatch '^release-\d+$') { throw 'Unexpected staged OTA target.' }
-$archive = "FormRecall-$($original.version)-to-$ExpectedVersion-windows-x64-ota.zip"
-$deltaRequested = $stage.network.Contains($archive)
-$fullRequested = $stage.network.Contains("FormRecall-$ExpectedVersion-windows-x64-portable.zip")
-$actualDelta = if ($plan.ContainsKey('delta')) { $plan.delta -eq $true } else { $deltaRequested -and -not $fullRequested }
-if (-not $actualDelta) { throw "Expected a real OTA download without full fallback. OTA requested=$deltaRequested, full requested=$fullRequested." }
 $candidate = Join-Path $storage "versions/$($plan.slot)/payload"
 if ((Invoke-Desktop @('--version-json')).stdout | ConvertFrom-Json | Where-Object version -ne $original.version) {
     throw 'Staging changed the active version before restart.'
@@ -112,6 +137,7 @@ try {
         requested_ota = $deltaRequested
         requested_full_zip = $fullRequested
         actual_ota = $actualDelta
+        cross_channel = $crossChannel
         data_preserved = $true
         features = @($smoke.document.features).Count
     } | ConvertTo-Json -Depth 5 | Set-Content -LiteralPath (Join-Path $output 'ota-verification.json') -Encoding utf8NoBOM
