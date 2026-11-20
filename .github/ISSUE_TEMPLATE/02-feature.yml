@@ -1,0 +1,30 @@
+name: 功能提案
+description: 讨论新的产品能力、工作流或用户体验改进。
+title: "[提案] "
+body:
+  - type: textarea
+    id: scenario
+    attributes:
+      label: 使用场景和当前问题
+      description: 说明谁在什么情况下需要这项能力，当前操作卡在哪里。
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: 预期行为与范围
+      description: 描述用法、结果和本次交付边界。可以附示意图、方案或参考实现。
+    validations:
+      required: true
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: 验收条件
+      description: 写出可检查的条件，涉及交互、数据或性能时注明适用环境。
+    validations:
+      required: true
+  - type: textarea
+    id: dependencies
+    attributes:
+      label: 依赖与兼容性
+      description: 可列出关联 Issue、旧项目或旧配置的兼容要求、备选方案。

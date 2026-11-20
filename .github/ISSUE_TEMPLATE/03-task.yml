@@ -1,0 +1,23 @@
+name: 团队任务
+description: 跟踪内部开发、文档、验证、依赖维护或研究工作。
+title: "[任务] "
+body:
+  - type: textarea
+    id: context
+    attributes:
+      label: 背景与目标
+      description: 说明任务来源、预期结果和涉及的模块。
+    validations:
+      required: true
+  - type: textarea
+    id: deliverables
+    attributes:
+      label: 交付物与验收
+      description: 列出需要交付的文件或行为，以及检查它们的步骤。研究任务请写明输入、方法和结果记录位置。
+    validations:
+      required: true
+  - type: textarea
+    id: coordination
+    attributes:
+      label: 协作与依赖
+      description: 可填写上游任务、需要协调的人员、阻塞状态或已有讨论链接。

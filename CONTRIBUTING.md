@@ -2,6 +2,15 @@
 
 **所有变更通过 Pull Request 合并到 `main`。禁止直接向 `main` 推送或强制推送。** 这项约定适用于所有贡献者、维护者和自动化，涵盖代码、文档、配置和紧急修复。
 
+## 提交 Issue
+
+先在 [Issues](https://github.com/Industrial-Arcane-Society/form-recall/issues) 查找是否已有同一问题。有记录时在原 Issue 补充版本、复现条件或验证结果；新事项从 [Issue 模板](https://github.com/Industrial-Arcane-Society/form-recall/issues/new/choose) 选择缺陷报告、功能提案或团队任务。
+
+- 缺陷报告写明版本、环境、复现步骤及实际与预期结果。
+- 功能提案写明使用场景、交付范围和可验证的验收条件。
+- 团队任务写明交付物、验收方法和依赖。涉及多人或跨模块时，在 Issue 中同步负责人、依赖和进度。
+- 日志、截图和模型仅附上复现所需的脱敏内容。凭据及受限资料通过团队约定的私下渠道处理。
+
 ## 分支命名
 
 使用 `类型/简短描述`，描述只用小写英文字母、数字和单连字符。分支前缀按改动用途选择，与使用的开发工具无关。
@@ -12,7 +21,7 @@
 | 文档、重构与测试 | `docs/`、`refactor/`、`test/` |
 | 构建、CI、维护与发布 | `build/`、`ci/`、`chore/`、`release/` |
 
-例如 `feat/plate-layout`、`fix/occt-preview`、`docs/update-build-guide`。工作分支须匹配以下表达式，默认分支 `main` 单独保护。
+例如 `feat/plate-layout`、`fix/occt-preview`、`docs/update-build-guide`。工作分支须匹配以下表达式。
 
 ```regex
 ^(feat|fix|docs|refactor|test|build|ci|chore|release|hotfix)/[a-z0-9]+(-[a-z0-9]+)*$
@@ -32,12 +41,13 @@ git commit -m "docs: update the build guide"
 git push -u origin docs/update-build-guide
 ```
 
-在 GitHub 创建 PR，选择 `main` 为目标分支、工作分支为来源。只有 fork 权限时，从 fork 的工作分支发起 PR，目标仍选择官方仓库的 `main`。每个 PR 聚焦一项独立变更。
+在 GitHub 创建 PR，选择 `main` 为目标分支、工作分支为来源。只有 fork 权限时，从 fork 的工作分支发起 PR，目标仍选择官方仓库的 `main`。每个 PR 聚焦一项独立变更，标题用一句中文说明结果，例如「修复便携版启动后模型视口空白」。还在开发或缺少关键验证时，可以先开 Draft PR。
 
 ## 审查和合并
 
-- 在 PR 说明中列出改动目的、影响范围、验证命令和结果。注明未运行的检查及原因，并在适用时附上截图、模型或复现步骤。
-- 请维护者审查。处理审查意见和冲突，确认适用的检查通过后，由维护者在 GitHub 的 PR 页面合并。
+- 按 [PR 模板](.github/pull_request_template.md) 填写背景、影响、验证结果和回退方法。完成同仓库 Issue 时用 `Closes #编号`，仅关联时用 `Refs #编号`。注明未运行的检查及原因，并在适用时附上截图、模型或复现步骤。
+- 请相关模块维护者审查。审查人重点核对改动边界、兼容性、验收证据与回退方法。作者处理审查意见和冲突，确认适用的检查通过后，由维护者在 GitHub 的 PR 页面合并。
+- `release/` 分支用于发布流程。发布 PR 合并会触发发布，由维护者按发版安排单独操作。
 - 即使 GitHub 设置允许直接推送，也必须遵守 PR 流程。分支保护的目标是要求通过 PR、禁止强制推送与删除 `main`，并对维护者同样适用。
 
 ## 按改动范围验证

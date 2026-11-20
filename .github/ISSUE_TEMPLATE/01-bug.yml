@@ -1,0 +1,41 @@
+name: 缺陷报告
+description: 报告可复现的故障、异常行为或版本回归。
+title: "[缺陷] "
+body:
+  - type: input
+    id: component
+    attributes:
+      label: 受影响的模块
+      placeholder: 例如桌面工作台、建模、CATIA 导出、安装或更新
+    validations:
+      required: true
+  - type: input
+    id: environment
+    attributes:
+      label: 版本与环境
+      description: 写明 FormRecall 版本或提交 SHA、Windows 版本，以及安装版、便携版或源码运行方式。更新问题请注明渠道与起止版本。
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: 复现步骤
+      description: 列出最短操作路径。涉及建模时提供脱敏输入与关键参数，涉及更新时说明从哪里安装或升级。
+      placeholder: |
+        1. 打开……
+        2. 输入或操作……
+        3. 观察……
+    validations:
+      required: true
+  - type: textarea
+    id: behavior
+    attributes:
+      label: 实际结果与预期结果
+      description: 写清发生了什么、预期看到什么，以及是否每次都能复现。
+    validations:
+      required: true
+  - type: textarea
+    id: evidence
+    attributes:
+      label: 证据与绕过方式
+      description: 可附脱敏的报错、截图、样例、已知正常版本或可用的临时操作。
