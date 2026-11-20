@@ -3,17 +3,26 @@ name: LGTM Approval
 on:
   issue_comment:
     types: [created]
+  workflow_run:
+    workflows: [LGTM Review Signal]
+    types: [completed]
 
 permissions: {}
 
 jobs:
   approve:
     if: >-
-      github.event.issue.pull_request &&
-      github.actor_id == '64729945' &&
-      github.event.comment.user.id == 64729945 &&
       github.run_attempt == '1' &&
-      contains(github.event.comment.body, 'lgtm')
+      ((github.event_name == 'issue_comment' &&
+        github.event.issue.pull_request &&
+        github.actor_id == '64729945' &&
+        github.event.comment.user.id == 64729945 &&
+        contains(github.event.comment.body, 'lgtm')) ||
+       (github.event_name == 'workflow_run' &&
+        github.event.workflow_run.actor.id == 64729945 &&
+        github.event.workflow_run.event == 'pull_request_review' &&
+        github.event.workflow_run.run_attempt == 1 &&
+        github.event.workflow_run.conclusion == 'success'))
     runs-on: ubuntu-latest
     timeout-minutes: 5
     permissions:
@@ -23,16 +32,48 @@ jobs:
         uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd # v8.0.0
         with:
           script: |
-            const { issue, comment } = context.payload;
-            if (comment.body.trim().toLowerCase() !== 'lgtm') {
+            const command = body => body?.trim().toLowerCase() === 'lgtm';
+            let pullNumber;
+            let comment;
+            let reviewedCommit;
+            if (context.eventName === 'issue_comment') {
+              pullNumber = context.payload.issue.number;
+              comment = context.payload.comment;
+            } else {
+              // The signal ran in the PR context. Treat its title as pointers
+              // only and fetch the author, command and commit from GitHub.
+              const run = context.payload.workflow_run;
+              if (run.path !== '.github/workflows/lgtm-review-signal.yml') return;
+              const match = /^LGTM review ([1-9]\d*)\/([1-9]\d*)$/.exec(run.display_title);
+              if (!match) return;
+              pullNumber = Number(match[1]);
+              const reviewID = Number(match[2]);
+              if (!Number.isSafeInteger(pullNumber) || !Number.isSafeInteger(reviewID)) return;
+              if (run.pull_requests?.length && !run.pull_requests.some(pr => pr.number === pullNumber)) return;
+              const { data: review } = await github.rest.pulls.getReview({
+                ...context.repo,
+                pull_number: pullNumber,
+                review_id: reviewID,
+              });
+              const delay = Date.parse(run.created_at) - Date.parse(review.submitted_at);
+              if (!(delay >= 0 && delay <= 300_000) || review.state !== 'COMMENTED') return;
+              comment = review;
+              reviewedCommit = review.commit_id;
+              if (!reviewedCommit) return;
+            }
+            if (comment.user.id !== 64729945 || !command(comment.body)) {
               core.info('Ignored a comment that was not an LGTM command.');
               return;
             }
 
-            const pull = { ...context.repo, pull_number: issue.number };
+            const pull = { ...context.repo, pull_number: pullNumber };
             const { data: pr } = await github.rest.pulls.get(pull);
             if (pr.state !== 'open' || pr.draft || pr.base.ref !== 'main') {
               core.notice('LGTM applies only to open, non-draft pull requests targeting main.');
+              return;
+            }
+            if (reviewedCommit && reviewedCommit !== pr.head.sha) {
+              core.notice('The LGTM review refers to an older commit. Send a new LGTM.');
               return;
             }
 
@@ -40,5 +81,5 @@ jobs:
               ...pull,
               event: 'APPROVE',
               commit_id: pr.head.sha,
-              body: `经 @${comment.user.login} [发送 LGTM](${comment.html_url})，审批提交 \`${pr.head.sha}\`。`,
+              body: `经 @${comment.user.login} [发送 LGTM](${comment.html_url})，审批提交 ${pr.head.sha}。`,
             });
