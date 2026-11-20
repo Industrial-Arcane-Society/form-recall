@@ -15,6 +15,63 @@ if (-not $IsWindows -or -not [Environment]::Is64BitProcess) {
 if ($SkipStartup -and $UseSoftwareOpenGL) {
     throw 'UseSoftwareOpenGL requires the startup verification to run.'
 }
+if (-not ('FormRecall.InstallerShellLink' -as [type])) {
+    Add-Type -TypeDefinition @'
+using System;
+using System.ComponentModel;
+using System.IO;
+using System.Runtime.InteropServices;
+using System.Runtime.InteropServices.ComTypes;
+using System.Text;
+
+namespace FormRecall {
+    public static class InstallerShellLink {
+        [ComImport, Guid("00021401-0000-0000-C000-000000000046")]
+        private class ShellLink {}
+
+        [ComImport, Guid("000214F9-0000-0000-C000-000000000046"), InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
+        private interface IShellLinkW {
+            void GetPath([Out, MarshalAs(UnmanagedType.LPWStr)] StringBuilder path, int length, IntPtr data, uint flags);
+            void GetIDList(out IntPtr idList);
+            void SetIDList(IntPtr idList);
+            void GetDescription([Out, MarshalAs(UnmanagedType.LPWStr)] StringBuilder description, int length);
+            void SetDescription([MarshalAs(UnmanagedType.LPWStr)] string description);
+            void GetWorkingDirectory([Out, MarshalAs(UnmanagedType.LPWStr)] StringBuilder directory, int length);
+            void SetWorkingDirectory([MarshalAs(UnmanagedType.LPWStr)] string directory);
+            void GetArguments([Out, MarshalAs(UnmanagedType.LPWStr)] StringBuilder arguments, int length);
+        }
+
+        [DllImport("kernel32.dll", CharSet = CharSet.Unicode, SetLastError = true, ExactSpelling = true)]
+        private static extern uint GetLongPathNameW(string shortPath, StringBuilder longPath, uint length);
+
+        public static string[] Read(string path) {
+            object instance = new ShellLink();
+            try {
+                ((IPersistFile)instance).Load(path, 0);
+                IShellLinkW link = (IShellLinkW)instance;
+                StringBuilder target = new StringBuilder(32768);
+                StringBuilder directory = new StringBuilder(32768);
+                StringBuilder arguments = new StringBuilder(32768);
+                link.GetPath(target, target.Capacity, IntPtr.Zero, 4); // SLGP_RAWPATH
+                link.GetWorkingDirectory(directory, directory.Capacity);
+                link.GetArguments(arguments, arguments.Capacity);
+                return new[] { target.ToString(), directory.ToString(), arguments.ToString() };
+            } finally { Marshal.FinalReleaseComObject(instance); }
+        }
+
+        public static string LongPath(string path) {
+            if (String.IsNullOrWhiteSpace(path) || !Path.IsPathRooted(path))
+                throw new InvalidDataException("Shortcut paths must be absolute and nonempty.");
+            StringBuilder result = new StringBuilder(32768);
+            uint length = GetLongPathNameW(Path.GetFullPath(path), result, (uint)result.Capacity);
+            if (length == 0) throw new Win32Exception(Marshal.GetLastWin32Error());
+            if (length >= result.Capacity) throw new InvalidDataException("Shortcut path exceeds its buffer.");
+            return result.ToString().TrimEnd('\\', '/');
+        }
+    }
+}
+'@
+}
 $installer = (Resolve-Path -LiteralPath $InstallerPath).Path
 $package = (Resolve-Path -LiteralPath $PackageDirectory).Path
 if (-not (Test-Path -LiteralPath $installer -PathType Leaf)) { throw 'InstallerPath must identify a file.' }
@@ -223,19 +280,25 @@ try {
     $proof['identity'] = $identity
     if (-not (Test-Path -LiteralPath $shortcutPath -PathType Leaf)) { throw 'The installer did not create its per-user Start Menu shortcut.' }
     if (Test-Path -LiteralPath $desktopShortcut) { throw 'The installer created an unrequested desktop shortcut.' }
-    $shell = New-Object -ComObject WScript.Shell
-    try {
-        $shortcutProof = @()
-        $shortcut = $shell.CreateShortcut($shortcutPath)
-        try {
-            if ([IO.Path]::GetFullPath($shortcut.TargetPath) -ine (Join-Path $installDirectory 'FormRecall.exe') -or
-                [IO.Path]::GetFullPath($shortcut.WorkingDirectory) -ine $installDirectory -or $shortcut.Arguments) {
-                throw 'The installed Start Menu shortcut does not launch the installed frontend.'
-            }
-            $shortcutProof += @{ path = $shortcutPath; target = $shortcut.TargetPath; working_directory = $shortcut.WorkingDirectory }
-        } finally { $null = [Runtime.InteropServices.Marshal]::FinalReleaseComObject($shortcut) }
-        $proof['shortcuts'] = $shortcutProof
-    } finally { $null = [Runtime.InteropServices.Marshal]::FinalReleaseComObject($shell) }
+    # Read the shortcut through the Unicode shell interface so the check works
+    # even when the installer path contains characters outside the system code page.
+    $nativeLink = [FormRecall.InstallerShellLink]::Read($shortcutPath)
+    $shortcutProof = [ordered]@{
+        path = $shortcutPath
+        expected_target = Join-Path $installDirectory 'FormRecall.exe'
+        expected_working_directory = $installDirectory
+        target = $nativeLink[0]
+        working_directory = $nativeLink[1]
+        arguments = $nativeLink[2]
+    }
+    $proof['shortcuts'] = @($shortcutProof)
+    $shortcutProof | ConvertTo-Json -Depth 4 | Set-Content -LiteralPath (Join-Path $output 'shortcut.json') -Encoding utf8NoBOM
+    $target = [FormRecall.InstallerShellLink]::LongPath($nativeLink[0])
+    $workingDirectory = [FormRecall.InstallerShellLink]::LongPath($nativeLink[1])
+    if ($target -ine [FormRecall.InstallerShellLink]::LongPath($shortcutProof['expected_target']) -or
+        $workingDirectory -ine [FormRecall.InstallerShellLink]::LongPath($installDirectory) -or $nativeLink[2]) {
+        throw 'The installed Start Menu shortcut does not launch the installed frontend. Inspect shortcut.json.'
+    }
     if (-not $SkipStartup) {
         if ($UseSoftwareOpenGL) {
             $driver = & "$PSScriptRoot/install-ci-opengl.ps1" -DestinationDirectory $installDirectory
