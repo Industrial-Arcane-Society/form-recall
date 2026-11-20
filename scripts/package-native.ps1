@@ -1,14 +1,80 @@
-param([switch]$SkipBuild, [switch]$DebugBuild, [switch]$Offline, [string]$OcctManifest)
+param(
+    [switch]$SkipBuild,
+    [switch]$DebugBuild,
+    [switch]$Offline,
+    [string]$OcctManifest,
+    [string]$Version,
+    [string]$OutputDirectory,
+    [string]$OutputManifest
+)
 . "$PSScriptRoot/native-common.ps1"
-if (-not $SkipBuild) { & "$PSScriptRoot/build-native.ps1" -DebugBuild:$DebugBuild -Offline:$Offline }
+
+if ($Version) {
+    $Version = $Version -creplace '^v', ''
+    if ($Version -cnotmatch '^(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)(-[0-9A-Za-z-]+(\.[0-9A-Za-z-]+)*)?(\+[0-9A-Za-z-]+(\.[0-9A-Za-z-]+)*)?$') {
+        throw 'Version must be a semantic version such as 0.2.0 or 0.2.0-rc.1.'
+    }
+} elseif ($OutputManifest) {
+    throw 'OutputManifest requires Version.'
+}
+$destination = if ($OutputDirectory) {
+    [IO.Path]::GetFullPath($OutputDirectory, $script:RepositoryRoot)
+} else {
+    Join-Path $script:RepositoryRoot 'temp/outputs/native-package'
+}
+$packageName = if ($Version) { "FormRecall-$Version-windows-x64" } else { 'FormRecall-' + (Get-Date -Format 'yyyyMMdd-HHmmss-fff') }
+$package = Join-Path $destination $packageName
+$archive = if ($Version) { "$package-portable.zip" } else { "$package-windows-x64.zip" }
+$plannedOutputs = @($package, $archive)
+if ($Version) {
+    $releaseExecutable = "$package.exe"
+    $checksums = "$package.sha256"
+    $releaseManifest = if ($OutputManifest) { [IO.Path]::GetFullPath($OutputManifest, $script:RepositoryRoot) } else { "$package.release.json" }
+    $manifestRelative = [IO.Path]::GetRelativePath($package, $releaseManifest)
+    if (-not [IO.Path]::IsPathRooted($manifestRelative) -and $manifestRelative -ne '..' -and -not $manifestRelative.StartsWith("..$([IO.Path]::DirectorySeparatorChar)")) {
+        throw 'The release manifest must be outside the portable package directory.'
+    }
+    $plannedOutputs += @($releaseExecutable, $checksums, $releaseManifest)
+    if (@($plannedOutputs | Sort-Object -Unique).Count -ne $plannedOutputs.Count) {
+        throw 'Release output paths must be distinct.'
+    }
+}
+foreach ($path in $plannedOutputs) {
+    if (Test-Path -LiteralPath $path) { throw "Output already exists. Choose a new output directory: $path" }
+}
+
+$runtimeManifest = Get-NativeOcctManifest $OcctManifest
+if (-not $SkipBuild) { & "$PSScriptRoot/build-native.ps1" -DebugBuild:$DebugBuild -Offline:$Offline -Version $Version }
+$output = Get-NativeOutput -DebugBuild:$DebugBuild
+if ($Version) {
+    $startInfo = [Diagnostics.ProcessStartInfo]::new((Join-Path $output 'FormRecall.exe'))
+    $startInfo.ArgumentList.Add('--version-json')
+    $startInfo.UseShellExecute = $false
+    $startInfo.CreateNoWindow = $true
+    $startInfo.RedirectStandardOutput = $true
+    $startInfo.RedirectStandardError = $true
+    $process = [Diagnostics.Process]::Start($startInfo)
+    try {
+        $standardOutput = $process.StandardOutput.ReadToEndAsync()
+        $standardError = $process.StandardError.ReadToEndAsync()
+        if (-not $process.WaitForExit(10000)) {
+            $process.Kill($true)
+            $process.WaitForExit()
+            throw 'The desktop executable did not respond to --version-json within 10 seconds.'
+        }
+        if ($process.ExitCode -ne 0) { throw "Desktop version probe failed: $($standardError.GetAwaiter().GetResult())" }
+        $binaryVersion = $standardOutput.GetAwaiter().GetResult() | ConvertFrom-Json
+        if ($binaryVersion.version -cne $Version) {
+            throw "Desktop version mismatch. Expected $Version, got $($binaryVersion.version)."
+        }
+    } finally { $process.Dispose() }
+}
 $node = (Get-Command node -ErrorAction Stop).Source
 $resourceArguments = @((Join-Path $script:RepositoryRoot 'src/legacy/scripts/build_desktop_resources.mjs'), '--native-resources')
 if ($Offline) { $resourceArguments += '--offline' }
 Invoke-NativeTool $node $resourceArguments
 $dshResources = Join-Path $script:RepositoryRoot 'temp/build-cache/dsh-runtime-package/package-resources/app/packaging/dsh-runtime'
 $preparedResources = Join-Path $script:RepositoryRoot 'temp/build-cache/dsh-runtime-package/package-resources'
-$output = Get-NativeOutput -DebugBuild:$DebugBuild
-$package = Join-Path $script:RepositoryRoot ('temp/outputs/native-package/FormRecall-' + (Get-Date -Format 'yyyyMMdd-HHmmss-fff'))
 New-Item -ItemType Directory -Path $package -Force | Out-Null
 foreach ($binary in @('FormRecall.exe', 'formrecall-engine-host.exe')) {
     Copy-Item -LiteralPath (Join-Path $output $binary) -Destination $package
@@ -18,7 +84,7 @@ Copy-NativeCatiaResources $preparedResources $package
 foreach ($resource in @('runtime-bundle-manifest.json', 'dsh-runtime-win-x64.zip')) {
     Copy-Item -LiteralPath (Join-Path $dshResources $resource) -Destination (Join-Path $package 'app/packaging/dsh-runtime')
 }
-Copy-NativeOcctRuntime (Get-NativeOcctManifest $OcctManifest) (Join-Path $package 'occt-runtime')
+Copy-NativeOcctRuntime $runtimeManifest (Join-Path $package 'occt-runtime')
 Copy-Item -LiteralPath (Join-Path $script:RepositoryRoot 'LICENSE') -Destination $package
 Copy-Item -LiteralPath (Join-Path $script:NativeDesktopRoot 'THIRD_PARTY_NOTICES.md') -Destination $package
 Copy-NativeGoLicenses (Join-Path $package 'licenses/go') -Offline:$Offline
@@ -62,8 +128,37 @@ $record = @{
         @{ path = [IO.Path]::GetRelativePath($package, $_.FullName).Replace('\', '/'); bytes = $_.Length; sha256 = (Get-FileHash -LiteralPath $_.FullName -Algorithm SHA256).Hash.ToLowerInvariant() }
     })
 }
+if ($Version) { $record.version = $Version }
 $record | ConvertTo-Json -Depth 6 | Set-Content -LiteralPath (Join-Path $package 'package-manifest.json') -Encoding utf8NoBOM
-$archive = "$package-windows-x64.zip"
 Compress-Archive -LiteralPath $package -DestinationPath $archive -CompressionLevel Optimal
 & "$PSScriptRoot/verify-native-package.ps1" -PackageDirectory $package -ArchivePath $archive -InstallDshRuntime -InstallCatiaRuntime
+if ($Version) {
+    Copy-Item -LiteralPath (Join-Path $package 'FormRecall.exe') -Destination $releaseExecutable
+    $assets = @($releaseExecutable, $archive) | ForEach-Object {
+        $file = Get-Item -LiteralPath $_
+        [ordered]@{
+            name = $file.Name
+            path = $file.FullName
+            bytes = $file.Length
+            sha256 = (Get-FileHash -LiteralPath $file.FullName -Algorithm SHA256).Hash.ToLowerInvariant()
+        }
+    }
+    $assets | ForEach-Object { "$($_.sha256)  $($_.name)" } | Set-Content -LiteralPath $checksums -Encoding ascii
+    $release = [ordered]@{
+        schema = 1
+        version = $Version
+        source_commit = $sourceCommit
+        source_dirty = $record.source_dirty
+        source_tracked_dirty = $record.source_tracked_dirty
+        built_at = $record.built_at
+        package_directory = $package
+        executable = $releaseExecutable
+        archive = $archive
+        checksums = $checksums
+        assets = @($assets)
+    }
+    New-Item -ItemType Directory -Path (Split-Path $releaseManifest -Parent) -Force | Out-Null
+    $release | ConvertTo-Json -Depth 6 | Set-Content -LiteralPath $releaseManifest -Encoding utf8NoBOM
+    Write-Host "Release manifest $releaseManifest"
+}
 Write-Host "Packaged $archive"

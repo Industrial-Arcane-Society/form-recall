@@ -1,16 +1,20 @@
 package main
 
 import (
+	"encoding/json"
 	"flag"
 	"fmt"
 	"os"
 	"path/filepath"
+	"runtime/debug"
 	"time"
 
 	"github.com/Industrial-Arcane-Society/form-recall/desktop/internal/engine"
 	"github.com/Industrial-Arcane-Society/form-recall/desktop/internal/viewport"
 	"github.com/Industrial-Arcane-Society/form-recall/desktop/internal/workbench"
 )
+
+var version = "dev"
 
 func main() {
 	executable, err := os.Executable()
@@ -29,7 +33,28 @@ func main() {
 	exitAfter := flag.Duration("exit-after", 0*time.Second, "Close after capture for automated verification")
 	width := flag.Int("width", 1440, "Initial window width")
 	height := flag.Int("height", 900, "Initial window height")
+	showVersion := flag.Bool("version", false, "Print the desktop version and exit")
+	versionJSON := flag.Bool("version-json", false, "Print the desktop version and source commit as JSON and exit")
 	flag.Parse()
+	if *versionJSON {
+		commit := ""
+		if build, ok := debug.ReadBuildInfo(); ok {
+			for _, setting := range build.Settings {
+				if setting.Key == "vcs.revision" {
+					commit = setting.Value
+				}
+			}
+		}
+		if err := json.NewEncoder(os.Stdout).Encode(map[string]string{"version": version, "commit": commit}); err != nil {
+			fmt.Fprintln(os.Stderr, err)
+			os.Exit(1)
+		}
+		return
+	}
+	if *showVersion {
+		fmt.Println("FormRecall", version)
+		return
+	}
 	options := workbench.Options{Engine: engine.Options{Executable: absolute(*enginePath), Resources: absolute(*resources), DataDir: absolute(*data), Config: *config},
 		Screenshot: *screenshot, CapturePanel: *capturePanel, DemoPrompt: *demo, ExitAfter: *exitAfter, Width: *width, Height: *height}
 	if err := workbench.Run(options, viewport.New()); err != nil {

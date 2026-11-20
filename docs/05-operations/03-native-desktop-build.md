@@ -65,3 +65,34 @@ CATIA 离线依赖固定为 CPython 3.13.16 x64 嵌入包和 pywin32 312 wheel�
 | `AIMODELER_DESKTOP_DATA_DIR` | 独立的用户数据目录 |
 
 `run-native.ps1 -DataDirectory` 可指定验收数据目录。脚本只在启动子进程时覆盖环境，随后恢复调用终端原有值。日常数据与编译输出分别保存，构建及打包不会清理用户文档。
+
+## Actions 版本发布
+
+在 GitHub Actions 中选择 **Windows Release**，点击 **Run workflow**，选择 `main` 并填写 `version`，例如 `0.2.0` 或 `0.3.0-rc.1`。保持 `publish` 勾选后，工作流完成 Windows x64 构建、包校验和启动检查，再创建对应的 `v` 标签与 Release。预发布版本自动标记为 prerelease。取消 `publish` 可只构建和下载 Actions artifact。
+
+工作流复用本地原生构建和打包脚本。首次运行从固定 SHA-256 的官方源码构建 OCCT，并准备 DSH 与 CATIA 的固定运行资源。后续使用 Go、Rust、OCCT 和资源下载缓存。Go 依赖检查、vet、普通测试、包目录与 ZIP 校验、DSH/CATIA 隔离安装以及交付 EXE 的隔离启动和四孔底板检查成功后才上传 Release。启动截图检验应用初始化，实际桌面显示的回归范围见验证记录。
+
+Release 提供以下文件。
+
+| 文件 | 用途 |
+| --- | --- |
+| `FormRecall-{version}-windows-x64-portable.zip` | 完整免安装包，解压后运行目录内的 `FormRecall.exe` |
+| `FormRecall-{version}-windows-x64.exe` | 桌面程序，可替换兼容便携目录内的 `FormRecall.exe`，运行需要引擎和资源 |
+| `FormRecall-{version}-windows-x64.sha256` | 两个下载文件的 SHA-256 校验值 |
+
+发布版本通过 Go 链接参数写入桌面程序，并记录在 `package-manifest.json`。`FormRecall.exe --version-json` 输出桌面版本与源码提交，供成品检查使用。引擎组件与兼容入口保留各自版本。发布说明优先读取 `.release-notes/v{version}.md`，其余版本使用 GitHub 自动生成说明。
+
+构建失败可在同一 Actions run 中重跑失败任务。上传失败时保留 Release 草稿以便重试，上传完成后才公开。已有标签会固定到原提交，已公开的版本不会被覆盖。`push` 到 `v*` 标签也可触发同一流程。发布操作使用仓库提供的 `GITHUB_TOKEN`，无需另配 PAT。
+
+本地生成同样命名的版本产物可执行以下命令。
+
+```powershell
+./scripts/package-native.ps1 -Version 0.2.0 `
+  -OcctManifest 'temp/build-cache/occt-runtime/runtime-manifest.json' `
+  -OutputDirectory 'temp/outputs/release-local' `
+  -OutputManifest 'temp/outputs/release-local/release.json'
+$release = Get-Content 'temp/outputs/release-local/release.json' -Raw | ConvertFrom-Json
+./scripts/verify-native-release-startup.ps1 -PackageDirectory $release.package_directory -Version 0.2.0
+```
+
+`release.json` 列出包目录、下载文件、校验文件、版本与提交。输出目录中的同名产物已存在时脚本报错，应指定新的目录保存下一次构建。成品启动检查使用仓库外的独立用户数据和配置，并核对程序正常退出。发布工作流中的验证记录随 Actions artifact 保存 14 天。[工作流](../../.github/workflows/windows-release.yml)

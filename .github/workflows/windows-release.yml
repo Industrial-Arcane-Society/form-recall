@@ -1,0 +1,239 @@
+name: Windows Release
+
+run-name: Windows ${{ inputs.version || github.ref_name }}${{ github.event_name == 'pull_request' && ' · validation' || '' }}
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: Version, for example 0.2.0 or 0.3.0-rc.1
+        type: string
+        required: true
+        default: '0.2.0'
+      publish:
+        description: Publish the verified EXE and portable ZIP to GitHub Releases
+        type: boolean
+        required: true
+        default: true
+  push:
+    tags: ['v*']
+  pull_request:
+    paths:
+      - '.github/workflows/windows-release.yml'
+      - 'scripts/**'
+      - 'src/apps/native-desktop/**'
+      - 'src/apps/engine-host/**'
+      - 'src/core/cad-engine/**'
+      - 'src/native/occt-bridge/**'
+      - 'src/legacy/packaging/**'
+      - 'src/legacy/scripts/**'
+      - 'src/legacy/ai_modeler/agent/**'
+      - 'src/legacy/ai_modeler/catia_com_adapter.py'
+      - 'src/legacy/prompts/**'
+      - 'src/legacy/kb/**'
+      - 'src/legacy/datasets/训练提示词/全部提示词.jsonl'
+      - '.release-notes/**'
+      - 'LICENSE'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.event_name == 'pull_request' && format('windows-pr-{0}', github.event.pull_request.number) || 'windows-release' }}
+  cancel-in-progress: false
+
+jobs:
+  prepare:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    outputs:
+      version: ${{ steps.release.outputs.version }}
+      tag: ${{ steps.release.outputs.tag }}
+      commit: ${{ steps.release.outputs.commit }}
+      publish: ${{ steps.release.outputs.publish }}
+      already_published: ${{ steps.release.outputs.already_published }}
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
+        with:
+          node-version: '22'
+          package-manager-cache: false
+      - name: Test release metadata and retry handling
+        run: node --test scripts/native-release.test.mjs
+      - name: Resolve version and immutable source commit
+        id: release
+        env:
+          RELEASE_VERSION: ${{ inputs.version }}
+          RELEASE_PUBLISH: ${{ inputs.publish }}
+          GITHUB_TOKEN: ${{ github.token }}
+        run: node scripts/native-release.mjs prepare
+
+  validate:
+    needs: prepare
+    if: github.event_name == 'pull_request'
+    runs-on: windows-2022
+    timeout-minutes: 20
+    defaults:
+      run:
+        shell: pwsh
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          ref: ${{ needs.prepare.outputs.commit }}
+          persist-credentials: false
+      - uses: actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16 # v6
+        with:
+          go-version-file: src/apps/native-desktop/go.mod
+          cache-dependency-path: src/apps/native-desktop/go.sum
+      - name: Check release PowerShell syntax
+        run: |
+          foreach ($file in @('scripts/build-native.ps1', 'scripts/package-native.ps1', 'scripts/verify-native-release-startup.ps1')) {
+            $tokens = $null
+            $errors = $null
+            $null = [Management.Automation.Language.Parser]::ParseFile((Resolve-Path $file), [ref]$tokens, [ref]$errors)
+            if ($errors.Count -gt 0) { throw ($errors | Out-String) }
+          }
+      - name: Verify Go dependencies, vet and tests
+        run: ./scripts/test-native.ps1 -SkipRust
+
+  build:
+    needs: prepare
+    if: github.event_name != 'pull_request' && needs.prepare.outputs.already_published != 'true'
+    runs-on: windows-2022
+    timeout-minutes: 120
+    defaults:
+      run:
+        shell: pwsh
+    env:
+      RELEASE_VERSION: ${{ needs.prepare.outputs.version }}
+      RELEASE_COMMIT: ${{ needs.prepare.outputs.commit }}
+      CARGO_TARGET_DIR: ${{ github.workspace }}/temp/build-cache/rust-native
+      CARGO_INCREMENTAL: '0'
+      RUST_TOOLCHAIN: '1.100.0'
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          ref: ${{ needs.prepare.outputs.commit }}
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16 # v6
+        with:
+          go-version-file: src/apps/native-desktop/go.mod
+          cache-dependency-path: src/apps/native-desktop/go.sum
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
+        with:
+          node-version: '22'
+          package-manager-cache: false
+      - name: Set up the Rust MSVC toolchain
+        run: |
+          rustup toolchain install $env:RUST_TOOLCHAIN --profile minimal --target x86_64-pc-windows-msvc
+          if ($LASTEXITCODE -ne 0) { throw 'Rust installation failed.' }
+          rustup override set $env:RUST_TOOLCHAIN
+          if ($LASTEXITCODE -ne 0) { throw 'Rust toolchain selection failed.' }
+      - name: Cache Rust dependencies and build output
+        uses: actions/cache@caa296126883cff596d87d8935842f9db880ef25 # v5
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            temp/build-cache/rust-native
+          key: windows-2022-x64-rust-${{ env.RUST_TOOLCHAIN }}-${{ hashFiles('src/apps/engine-host/Cargo.lock') }}
+      - name: Restore verified OCCT runtime
+        id: occt-cache
+        uses: actions/cache/restore@caa296126883cff596d87d8935842f9db880ef25 # v5
+        with:
+          path: temp/build-cache/occt-release
+          key: windows-2022-x64-occt-7.9.3-${{ hashFiles('src/native/occt-bridge/**', 'scripts/native-common.ps1') }}
+      - name: Build and verify OCCT when the cache is empty
+        run: |
+          $manifest = 'temp/build-cache/occt-release/runtime-manifest.json'
+          if (-not (Test-Path -LiteralPath $manifest)) {
+            ./src/native/occt-bridge/Build-Runtime.ps1 -RuntimeRoot temp/build-cache/occt-runtime
+            . ./scripts/native-common.ps1
+            Copy-NativeOcctRuntime 'temp/build-cache/occt-runtime/runtime-manifest.json' 'temp/build-cache/occt-release'
+          }
+          node --input-type=module -e "import { inspectOcctRuntime } from './src/legacy/scripts/stage_occt_runtime.mjs'; inspectOcctRuntime('temp/build-cache/occt-release/runtime-manifest.json');"
+          if ($LASTEXITCODE -ne 0) { throw 'OCCT runtime verification failed.' }
+      - name: Save the verified OCCT runtime
+        if: steps.occt-cache.outputs.cache-hit != 'true'
+        uses: actions/cache/save@caa296126883cff596d87d8935842f9db880ef25 # v5
+        with:
+          path: temp/build-cache/occt-release
+          key: ${{ steps.occt-cache.outputs.cache-primary-key }}
+      - name: Cache pinned runtime downloads
+        uses: actions/cache@caa296126883cff596d87d8935842f9db880ef25 # v5
+        with:
+          path: temp/build-cache/dsh-runtime-package/package-downloads
+          key: windows-x64-desktop-resources-${{ hashFiles('src/legacy/scripts/build_desktop_resources.mjs', 'src/legacy/packaging/**') }}
+      - name: Verify Go dependencies, vet and tests
+        run: ./scripts/test-native.ps1 -SkipRust
+      - name: Build and package the versioned desktop
+        run: |
+          ./scripts/package-native.ps1 -Version $env:RELEASE_VERSION `
+            -OcctManifest temp/build-cache/occt-release/runtime-manifest.json `
+            -OutputDirectory temp/outputs/release -OutputManifest temp/outputs/release/release.json
+      - name: Verify packaged startup and collect assets
+        run: |
+          $release = Get-Content -LiteralPath temp/outputs/release/release.json -Raw | ConvertFrom-Json
+          if ($release.source_commit -ne $env:RELEASE_COMMIT -or $release.source_dirty) {
+            throw 'The release package does not match the selected clean source commit.'
+          }
+          ./scripts/verify-native-release-startup.ps1 -PackageDirectory $release.package_directory `
+            -Version $env:RELEASE_VERSION -OutputDirectory temp/outputs/release-startup
+          New-Item -ItemType Directory -Path temp/outputs/release-assets -Force | Out-Null
+          foreach ($path in @($release.executable, $release.archive, $release.checksums)) {
+            Copy-Item -LiteralPath $path -Destination temp/outputs/release-assets
+          }
+          Copy-Item -LiteralPath temp/outputs/release/release.json -Destination temp/outputs/release-assets
+      - name: Upload release assets
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
+        with:
+          name: windows-release-${{ needs.prepare.outputs.version }}
+          path: temp/outputs/release-assets/*
+          if-no-files-found: error
+          compression-level: 0
+          retention-days: 14
+      - name: Upload package verification records
+        if: always()
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
+        with:
+          name: windows-verification-${{ needs.prepare.outputs.version }}
+          path: |
+            temp/outputs/release/release.json
+            temp/outputs/release/*/package-manifest.json
+            temp/outputs/release-startup/
+            temp/outputs/native-dsh-verification.json
+            temp/outputs/native-catia-verification.json
+          if-no-files-found: ignore
+          retention-days: 14
+
+  publish:
+    needs: [prepare, build]
+    if: needs.prepare.outputs.publish == 'true' && needs.prepare.outputs.already_published != 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          ref: ${{ needs.prepare.outputs.commit }}
+          persist-credentials: false
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
+        with:
+          node-version: '22'
+          package-manager-cache: false
+      - uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7
+        with:
+          name: windows-release-${{ needs.prepare.outputs.version }}
+          path: temp/outputs/release-assets
+      - name: Upload verified assets and publish the release
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          RELEASE_VERSION: ${{ needs.prepare.outputs.version }}
+          RELEASE_COMMIT: ${{ needs.prepare.outputs.commit }}
+          RELEASE_ASSET_DIR: temp/outputs/release-assets
+        run: node scripts/native-release.mjs publish
