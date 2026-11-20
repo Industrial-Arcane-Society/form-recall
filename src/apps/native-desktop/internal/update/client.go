@@ -75,11 +75,7 @@ var ErrNoChannelRelease = errors.New("此更新渠道尚无可用版本")
 func (c *Client) Check(ctx context.Context) (*Offer, error) {
 	var lastErr error
 	var valid bool
-	addresses := []string{c.freshFeed, c.feed}
-	if c.SupportsDowngrade() && c.freshFeed != "" {
-		addresses = append([]string{distributionAPI + "v2/" + c.Channel() + ".json?ref=main"}, addresses...)
-	}
-	for _, address := range addresses {
+	for _, address := range []string{c.freshFeed, c.feed} {
 		if address == "" {
 			continue
 		}

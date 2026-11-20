@@ -124,10 +124,12 @@ async function verifyRelease(sourceAPI, release) {
   return proof.commit
 }
 
-async function stageRelease(api, release, tag, prerelease, assets, commit) {
+async function stageRelease(api, release, tag, prerelease, assets, manifest) {
+  const groups = Map.groupBy(manifest.deltas, item => path.posix.basename(item.url))
+  const routes = [...groups].map(([name, changes]) => `- \`${name}\` 可从 ${changes.map(item => `v${item.from}`).join('、')} 直达。`)
   release ??= await api.request('POST', '/releases', {
     tag_name: tag, target_commitish: 'main', name: `FormRecall OTA ${tag}`, draft: true, prerelease,
-    body: `Application update files for ${tag}. Source commit: ${commit}.`,
+    body: [`FormRecall 应用内更新文件 · ${tag}`, '', `源码提交 \`${manifest.commit}\``, '', ...routes].join('\n'),
   })
   if (!release.draft || release.tag_name !== tag) throw new Error('Expected the matching OTA draft.')
   for (const remote of release.assets) {
@@ -157,7 +159,7 @@ async function baselineInventory(api, release, directory) {
   const version = release.tag_name.slice(1)
   const asset = remoteAsset(release, source, packageName(version))
   const archived = await optional(api, `/releases/tags/${release.tag_name}`)
-  const summary = archived?.assets.find(item => item.name === 'update-v2.json' || item.name === 'update.json')
+  const summary = archived?.assets.find(item => item.name === 'update.json')
   if (summary && !archived.draft) {
     const record = remoteAsset(archived, distribution, summary.name)
     if (record.bytes > 1 << 20) throw new Error('Archived inventory is too large.')
@@ -181,7 +183,6 @@ async function publish() {
   const sourceAPI = createGitHubClient({ repository: source, token: process.env.GITHUB_TOKEN })
   const api = createGitHubClient({ repository: distribution, token: process.env.GITHUB_TOKEN })
   const channelPath = `/contents/channels/${selected}.json`
-  const channelV2 = `/contents/channels/v2/${selected}.json`
   const feed = await optional(api, channelPath)
   const current = feed && envelope(Buffer.from(feed.content, 'base64'))
   if (current && (current.channel !== selected || channel(current.version) !== selected)) throw new Error('Current feed targets the wrong channel.')
@@ -214,7 +215,6 @@ async function publish() {
   const directory = await mkdtemp(path.join(tmpdir(), 'formrecall-ota-'))
   try {
     const manifestFile = path.join(directory, 'update.json')
-    const manifestV2File = path.join(directory, 'update-v2.json')
     if (!ota || ota.draft) {
       const privateKey = createPrivateKey(process.env.FORMRECALL_UPDATE_PRIVATE_KEY ?? '')
       if (createPublicKey(privateKey).export({ format: 'jwk' }).x !== publicX) throw new Error('Signing key does not match the client public key.')
@@ -242,25 +242,20 @@ async function publish() {
       const payload = await readFile(path.join(directory, 'payload.json'))
       const manifest = JSON.parse(payload)
       if (manifest.full.sha256 !== targetAsset.sha256 || manifest.full.bytes !== targetAsset.bytes) throw new Error('Inventory was generated from the wrong portable ZIP.')
-      await writeFile(manifestFile, signManifest({ ...manifest, schema: 1, deltas: [] }, privateKey))
-      await writeFile(manifestV2File, signManifest(manifest, privateKey))
-      const names = ['update.json', 'update-v2.json', ...new Set(manifest.deltas.map(delta => path.posix.basename(delta.url)))]
+      await writeFile(manifestFile, signManifest(manifest, privateKey))
+      const names = ['update.json', ...new Set(manifest.deltas.map(delta => path.posix.basename(delta.url)))]
       const assets = await Promise.all(names.map(async name => {
         const file = path.join(directory, name)
         return { name, path: file, ...await identity(file), contentType: name.endsWith('.zip') ? 'application/zip' : 'application/json' }
       }))
-      ota = await stageRelease(api, ota, `v${next}`, selected !== 'stable', assets, commit)
+      ota = await stageRelease(api, ota, `v${next}`, selected !== 'stable', assets, manifest)
     }
     const record = remoteAsset(ota, distribution, 'update.json')
-    const recordV2 = remoteAsset(ota, distribution, 'update-v2.json')
-    if (record.bytes > 1 << 20 || recordV2.bytes > 1 << 20) throw new Error('Published update manifest is too large.')
-    await Promise.all([fetchAsset(record, manifestFile), fetchAsset(recordV2, manifestV2File)])
+    if (record.bytes > 1 << 20) throw new Error('Published update manifest is too large.')
+    await fetchAsset(record, manifestFile)
     const raw = await readFile(manifestFile)
-    const rawV2 = await readFile(manifestV2File)
-    const legacy = envelope(raw)
-    const manifest = envelope(rawV2)
-    if (legacy.schema !== 1 || manifest.schema !== 2 || legacy.deltas.length ||
-        JSON.stringify(legacy) !== JSON.stringify({ ...manifest, schema: 1, deltas: [] }) ||
+    const manifest = envelope(raw)
+    if (manifest.schema !== 2 ||
         manifest.version !== next || manifest.commit !== commit || manifest.channel !== selected ||
         manifest.full.url !== targetAsset.url || manifest.full.bytes !== targetAsset.bytes || manifest.full.sha256 !== targetAsset.sha256) {
       throw new Error('Published OTA metadata mismatches the source release.')
@@ -269,10 +264,6 @@ async function publish() {
       const asset = remoteAsset(ota, distribution, path.posix.basename(delta.url))
       if (asset.url !== delta.url || asset.sha256 !== delta.sha256 || asset.bytes !== delta.bytes) throw new Error('Published OTA attachment mismatches signed metadata.')
     }
-    const feedV2 = await optional(api, channelV2)
-    await api.request('PUT', channelV2, {
-      message: `Publish FormRecall ${selected} v${next} shared OTA index`, content: rawV2.toString('base64'), ...(feedV2 ? { sha: feedV2.sha } : {}),
-    })
     await api.request('PUT', channelPath, {
       message: `Publish FormRecall ${selected} v${next}`, content: raw.toString('base64'), ...(feed ? { sha: feed.sha } : {}),
     })

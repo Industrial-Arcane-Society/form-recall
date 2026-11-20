@@ -107,7 +107,7 @@ try {
                 }
             } finally { $deltaArchive.Dispose() }
             $hash = (Get-FileHash -LiteralPath $targetPath -Algorithm SHA256).Hash.ToLowerInvariant()
-            $name = "ota-$hash.zip"
+            $name = "FormRecall-OTA-v${oldVersion}_v$Version-win-x64.zip"
             $bytes = (Get-Item -LiteralPath $targetPath).Length
             $compiled[$key] = @{name=$name;sha256=$hash;bytes=$bytes}
             if ($bytes * 10 -ge $portable.Length * 8) {

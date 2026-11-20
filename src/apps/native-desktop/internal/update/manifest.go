@@ -141,12 +141,8 @@ func validAsset(asset Asset, expected string) bool {
 }
 
 func (m Manifest) validate() error {
-	limit := 5
-	if m.Schema == 2 {
-		limit = 8
-	}
 	if (m.Schema != 1 && m.Schema != 2) || m.Platform != "windows-x64" || !commitPattern.MatchString(m.Commit) ||
-		channelFor(m.Version) == "" || m.Channel != channelFor(m.Version) || len(m.Files) > 4096 || len(m.Deltas) > limit {
+		channelFor(m.Version) == "" || m.Channel != channelFor(m.Version) || len(m.Files) > 4096 || len(m.Deltas) > 8 {
 		return errors.New("更新清单的版本、频道或平台无效")
 	}
 	full := "FormRecall-" + m.Version + "-windows-x64-portable.zip"
@@ -154,17 +150,19 @@ func (m Manifest) validate() error {
 		return errors.New("完整包信息无效")
 	}
 	from := map[string]bool{}
+	archives := map[string]Asset{}
 	for _, delta := range m.Deltas {
-		file := "FormRecall-" + delta.From + "-to-" + m.Version + "-windows-x64-ota.zip"
-		source := channelFor(delta.From)
-		compatible := source == m.Channel
-		if m.Schema == 2 {
-			file = "ota-" + delta.SHA256 + ".zip"
-			compatible = source != "" && ((m.Channel != "stable" && source != "stable") ||
-				(m.Channel == "stable" && (source == "stable" || (source == "rc" && strings.HasPrefix(delta.From, m.Version+"-rc.")))))
+		name := "FormRecall-OTA-v" + delta.From + "_v" + m.Version + "-win-x64.zip"
+		if validAsset(delta.Asset, assetURL("form-recall-release", m.Version, name)) {
+			archives[delta.URL] = delta.Asset
 		}
+	}
+	for _, delta := range m.Deltas {
+		source := channelFor(delta.From)
+		compatible := source != "" && ((m.Channel != "stable" && source != "stable") ||
+			(m.Channel == "stable" && (source == "stable" || (source == "rc" && strings.HasPrefix(delta.From, m.Version+"-rc.")))))
 		if from[delta.From] || !compatible || !newer(m.Version, delta.From) ||
-			!validAsset(delta.Asset, assetURL("form-recall-release", m.Version, file)) {
+			archives[delta.URL] != delta.Asset {
 			return errors.New("增量包信息无效")
 		}
 		from[delta.From] = true
@@ -214,6 +212,11 @@ func verifyEnvelope(raw []byte, key ed25519.PublicKey) (Offer, error) {
 	var m Manifest
 	if err := json.Unmarshal(payload, &m); err != nil {
 		return Offer{}, err
+	}
+	// Historical signed releases remain usable as full downgrade targets.
+	// Their old patch names are never selected by the new updater.
+	if m.Schema == 1 {
+		m.Deltas = nil
 	}
 	if err := m.validate(); err != nil {
 		return Offer{}, err
