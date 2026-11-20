@@ -437,8 +437,9 @@ async function writeSummary(env, result, assets = [], ota = null, failure = null
 }
 
 // The release is already immutable when this runs, so a failed channel sync is
-// reported loudly but never rolls anything back. Rerunning the publish job takes
-// the already-published path and retries only the sync.
+// reported loudly but never rolls anything back. Recovery is a manual
+// publish-ota.yml dispatch in the distribution repository: this workflow skips
+// the publish job entirely once the release already exists.
 async function reportChannelSync(env, result, assets, version, client) {
   try {
     await writeSummary(env, result, assets, await dispatchUpdateChannel({ version, env, client }))
