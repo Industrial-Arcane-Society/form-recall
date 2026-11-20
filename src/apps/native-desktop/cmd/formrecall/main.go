@@ -56,7 +56,22 @@ func main() {
 		}
 		return
 	}
-	if active := updater.ActiveExecutable(); active != "" {
+	if updater != nil && updater.IsLauncher() {
+		// The entry point in the program root only selects a version. The
+		// packaged base version is the starting point until an update is
+		// activated, afterwards the staged payload is started instead.
+		if err := updater.RecordLauncher(); err != nil {
+			fmt.Fprintln(os.Stderr, err)
+			os.Exit(1)
+		}
+		active := updater.ActiveExecutable()
+		if active == "" {
+			active = updater.BaseExecutable()
+		}
+		if active == "" {
+			fmt.Fprintln(os.Stderr, "安装文件不完整：找不到可运行的 FormRecall 版本，请重新安装。")
+			os.Exit(1)
+		}
 		if err := startDesktop(active, os.Args[1:], true); err != nil {
 			fmt.Fprintln(os.Stderr, err)
 			os.Exit(1)

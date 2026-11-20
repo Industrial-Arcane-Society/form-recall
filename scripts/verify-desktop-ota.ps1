@@ -13,16 +13,30 @@ $ErrorActionPreference = 'Stop'
 Set-StrictMode -Version Latest
 $bundle = (Resolve-Path -LiteralPath $BundleDirectory).Path
 $launcher = Join-Path $bundle 'FormRecall.exe'
-$storage = Join-Path $bundle '.formrecall-updates'
+$runtime = Join-Path $bundle 'runtime'
+$base = Join-Path $runtime 'base'
+$storage = Join-Path $runtime 'versions'
 $output = [IO.Path]::GetFullPath($OutputDirectory)
-if ((-not $ContinueFromActive -and (Test-Path -LiteralPath $storage)) -or -not (Test-Path -LiteralPath $launcher -PathType Leaf)) {
-    throw 'OTA verification requires a fresh isolated bundle.'
+if (-not (Test-Path -LiteralPath $launcher -PathType Leaf)) {
+    throw 'OTA verification requires a packaged bundle with a root launcher.'
+}
+if (-not $ContinueFromActive) {
+    # A pristine package keeps only the entry point and the bundled version. An
+    # earlier launch may already have published launcher.json, but a previously
+    # staged or activated update means this bundle is no longer isolated.
+    if (-not (Test-Path -LiteralPath (Join-Path $base 'FormRecall.exe') -PathType Leaf)) {
+        throw 'OTA verification requires the packaged runtime/base version.'
+    }
+    if (Test-Path -LiteralPath $storage -PathType Container) {
+        $previousState = @(Get-ChildItem -LiteralPath $storage -Force | Where-Object { $_.Name -cne 'launcher.json' })
+        if ($previousState.Count -gt 0) { throw 'OTA verification requires a fresh isolated bundle.' }
+    }
 }
 $sourceBundle = $bundle
 if ($ContinueFromActive) {
     $current = Get-Content -LiteralPath (Join-Path $storage 'active.json') -Raw | ConvertFrom-Json -AsHashtable
     if ($current.current -notmatch '^release-\d+$') { throw 'Invalid active OTA slot.' }
-    $sourceBundle = Join-Path $storage "versions/$($current.current)/payload"
+    $sourceBundle = Join-Path $storage "$($current.current)/payload"
 }
 New-Item -ItemType Directory -Path $output -Force | Out-Null
 $data = Join-Path $output 'session-data'
@@ -99,7 +113,7 @@ if ($crossChannel) {
     if (-not $actualDelta) { throw "Expected a real OTA download without full fallback. OTA requested=$deltaRequested, full requested=$fullRequested." }
 }
 if ($plan.version -cne $ExpectedVersion -or $plan.slot -notmatch '^release-\d+$') { throw 'Unexpected staged OTA target.' }
-$candidate = Join-Path $storage "versions/$($plan.slot)/payload"
+$candidate = Join-Path $storage "$($plan.slot)/payload"
 if ((Invoke-Desktop @('--version-json')).stdout | ConvertFrom-Json | Where-Object version -ne $original.version) {
     throw 'Staging changed the active version before restart.'
 }
@@ -140,6 +154,35 @@ try {
     if (Get-Process -Name FormRecall -ErrorAction SilentlyContinue | Where-Object Path -EQ $targetExe) {
         throw 'Updated capture process remained open.'
     }
+    # A first activation deletes the packaged base copy, and the launcher keeps
+    # exactly the active slot plus one rollback slot under runtime/versions.
+    if (-not $ContinueFromActive -and (Test-Path -LiteralPath $base)) {
+        throw 'The activated update did not remove the packaged runtime/base version.'
+    }
+    $expectedSlots = @($active.current)
+    if ($active.ContainsKey('previous') -and $active.previous) {
+        if ($active.previous -notmatch '^release-\d+$' -or $active.previous -ceq $active.current) {
+            throw 'Launcher recorded an invalid rollback slot.'
+        }
+        $expectedSlots += $active.previous
+    }
+    $slots = @(Get-ChildItem -LiteralPath $storage -Directory -Force | ForEach-Object Name |
+        Where-Object { $_ -match '^release-\d+$' } | Sort-Object -Unique)
+    if (($slots -join ',') -cne ((@($expectedSlots | Sort-Object -Unique)) -join ',')) {
+        throw "OTA storage must keep exactly the active and rollback slots, found: $($slots -join ', ')"
+    }
+    # The launcher keeps its activation lock file beside the update state.
+    $allowedStorageFiles = @('active.json', 'launcher.json', 'last-error.txt', 'activation.lock')
+    $strayFiles = @(Get-ChildItem -LiteralPath $storage -File -Force | Where-Object { $allowedStorageFiles -notcontains $_.Name })
+    $strayDirectories = @(Get-ChildItem -LiteralPath $storage -Directory -Force | Where-Object { $_.Name -notmatch '^release-\d+$' })
+    if ($strayFiles.Count -gt 0 -or $strayDirectories.Count -gt 0) {
+        throw "OTA storage contains unexpected entries: $((@($strayFiles.Name) + @($strayDirectories.Name)) -join ', ')"
+    }
+    foreach ($slotName in $expectedSlots) {
+        if (-not (Test-Path -LiteralPath (Join-Path $storage "$slotName/payload") -PathType Container)) {
+            throw "OTA slot has no payload: $slotName"
+        }
+    }
     [ordered]@{
         passed = $true
         before = $original
@@ -152,6 +195,8 @@ try {
         cross_channel = $crossChannel
         data_preserved = $true
         features = @($smoke.document.features).Count
+        base_removed = -not (Test-Path -LiteralPath $base)
+        slots = @($slots)
     } | ConvertTo-Json -Depth 5 | Set-Content -LiteralPath (Join-Path $output 'ota-verification.json') -Encoding utf8NoBOM
 } finally {
     $env:GALLIUM_DRIVER = $previousDriver

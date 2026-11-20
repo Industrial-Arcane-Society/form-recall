@@ -1,10 +1,44 @@
 param([Parameter(Mandatory)][string]$PackageDirectory, [string]$ArchivePath, [switch]$InstallDshRuntime, [switch]$InstallCatiaRuntime)
 . "$PSScriptRoot/native-common.ps1"
 $package = (Resolve-Path -LiteralPath $PackageDirectory).Path
-$manifestPath = Join-Path $package 'package-manifest.json'
+
+# The visible program root holds one entry point and one runtime directory. Everything
+# that belongs to the program itself lives in the bundled version so an update never
+# adds files beside the entry point.
+$allowedRoot = @('FormRecall.exe', 'runtime')
+$rootEntries = @(Get-ChildItem -LiteralPath $package -Force)
+$unexpected = @($rootEntries | Where-Object { $allowedRoot -notcontains $_.Name } | ForEach-Object { $_.Name })
+if ($unexpected.Count -gt 0) { throw "The program root contains unexpected entries: $($unexpected -join ', ')" }
+if (-not (Test-Path -LiteralPath (Join-Path $package 'FormRecall.exe') -PathType Leaf)) {
+    throw 'The program root has no entry point.'
+}
+if (-not (Test-Path -LiteralPath (Join-Path $package 'runtime') -PathType Container)) {
+    throw 'The program root has no runtime directory.'
+}
+$runtimeEntries = @(Get-ChildItem -LiteralPath (Join-Path $package 'runtime') -Force)
+$unexpectedRuntime = @($runtimeEntries | Where-Object { $_.Name -ne 'base' } | ForEach-Object { $_.Name })
+if ($unexpectedRuntime.Count -gt 0) { throw "The runtime directory contains unexpected entries: $($unexpectedRuntime -join ', ')" }
+foreach ($legacy in @(
+    '使用说明.txt', 'Start-FormRecall.cmd', 'update-bootstrap-v2', 'update-bootstrap-v3',
+    '.formrecall-updates', 'app', 'occt-runtime', 'python', 'catia-bootstrap', 'licenses',
+    'LICENSE', 'THIRD_PARTY_NOTICES.md', 'package-manifest.json'
+)) {
+    if (Test-Path -LiteralPath (Join-Path $package $legacy)) {
+        throw "A superseded layout entry must not ship in the program root: $legacy"
+    }
+}
+
+$base = Join-Path $package 'runtime/base'
+if (-not (Test-Path -LiteralPath $base -PathType Container)) { throw 'The package has no bundled version.' }
+$manifestPath = Join-Path $base 'package-manifest.json'
 $record = Get-Content -LiteralPath $manifestPath -Raw | ConvertFrom-Json
 if ($record.schema -ne 1 -or $record.source_commit -notmatch '^[0-9a-f]{40}$') {
     throw 'Invalid package manifest schema or source revision.'
+}
+$packageName = Split-Path $package -Leaf
+$versionMatch = [regex]::Match($packageName, '^FormRecall-(?<version>.+)-windows-x64$')
+if ($versionMatch.Success -and $record.version -cne $versionMatch.Groups['version'].Value) {
+    throw "Bundled version '$($record.version)' does not match the package name '$packageName'."
 }
 
 function Assert-NativeExecutable {
@@ -35,8 +69,8 @@ foreach ($entry in $record.files) {
     if (-not $entry.path -or [IO.Path]::IsPathRooted($entry.path) -or $entry.sha256 -notmatch '^[0-9a-f]{64}$') {
         throw 'Package manifest contains an invalid file entry.'
     }
-    $path = [IO.Path]::GetFullPath([IO.Path]::Combine($package, $entry.path))
-    $relative = [IO.Path]::GetRelativePath($package, $path).Replace('\', '/')
+    $path = [IO.Path]::GetFullPath([IO.Path]::Combine($base, $entry.path))
+    $relative = [IO.Path]::GetRelativePath($base, $path).Replace('\', '/')
     if ($relative.StartsWith('../') -or $relative -eq '..' -or -not $entries.TryAdd($relative, $entry)) {
         throw 'Package manifest contains an escaped or duplicate file path.'
     }
@@ -48,7 +82,7 @@ foreach ($entry in $record.files) {
 }
 
 $required = @(
-    'FormRecall.exe', 'formrecall-engine-host.exe', 'Start-FormRecall.cmd',
+    'FormRecall.exe', 'formrecall-engine-host.exe',
     'LICENSE', 'THIRD_PARTY_NOTICES.md', 'licenses/go/Go-LICENSE', 'licenses/icons/Lucide-LICENSE',
     'occt-runtime/runtime-manifest.json', 'occt-runtime/install/LICENSE_LGPL_21.txt',
     'occt-runtime/install/OCCT_LGPL_EXCEPTION.txt',
@@ -62,13 +96,18 @@ $required += @(Get-NativeResourceFiles | ForEach-Object { "app/$_" })
 foreach ($relative in $required) {
     if (-not $entries.ContainsKey($relative)) { throw "Required package file is missing: $relative" }
 }
-$files = @(Get-ChildItem -LiteralPath $package -Recurse -File)
-if ($files.Count -ne $entries.Count + 1) { throw 'Package contains unlisted files.' }
-Assert-NativeExecutable (Join-Path $package 'FormRecall.exe') (-not $record.debug)
-Assert-NativeExecutable (Join-Path $package 'formrecall-engine-host.exe') $false
-Assert-NativeCatiaResources $package
+$files = @(Get-ChildItem -LiteralPath $base -Recurse -File)
+if ($files.Count -ne $entries.Count + 1) { throw 'The bundled version contains files absent from its manifest.' }
+Assert-NativeExecutable (Join-Path $base 'FormRecall.exe') (-not $record.debug)
+Assert-NativeExecutable (Join-Path $base 'formrecall-engine-host.exe') $false
+$entryPoint = Join-Path $package 'FormRecall.exe'
+if ((Get-FileHash -LiteralPath $entryPoint -Algorithm SHA256).Hash -ne
+    (Get-FileHash -LiteralPath (Join-Path $base 'FormRecall.exe') -Algorithm SHA256).Hash) {
+    throw 'The program entry point is not the bundled desktop binary.'
+}
+Assert-NativeCatiaResources $base
 
-$dshRoot = Join-Path $package 'app/packaging/dsh-runtime'
+$dshRoot = Join-Path $base 'app/packaging/dsh-runtime'
 $runtime = Get-Content -LiteralPath (Join-Path $dshRoot 'runtime-manifest.json') -Raw | ConvertFrom-Json
 $bundle = Get-Content -LiteralPath (Join-Path $dshRoot 'runtime-bundle-manifest.json') -Raw | ConvertFrom-Json
 $expectedBundleFields = @{
@@ -136,9 +175,15 @@ if ($ArchivePath) {
             if (-not $entry.FullName.StartsWith($root, [StringComparison]::Ordinal)) { throw 'Archive root does not match the package.' }
             $relative = $entry.FullName.Substring($root.Length)
             if (-not $zipped.Add($relative)) { throw "Duplicate archive entry: $relative" }
-            $expected = $entries[$relative]
-            if ($relative -eq 'package-manifest.json') {
+            if ($relative -eq 'runtime/base/package-manifest.json') {
                 $expected = @{ bytes = (Get-Item -LiteralPath $manifestPath).Length; sha256 = (Get-FileHash -LiteralPath $manifestPath).Hash }
+            } elseif ($relative -eq 'FormRecall.exe') {
+                $expected = @{ bytes = (Get-Item -LiteralPath $entryPoint).Length; sha256 = (Get-FileHash -LiteralPath $entryPoint).Hash }
+            } else {
+                if (-not $relative.StartsWith('runtime/base/', [StringComparison]::OrdinalIgnoreCase)) {
+                    throw "Archive entry is outside the bundled version: $relative"
+                }
+                $expected = $entries[$relative.Substring('runtime/base/'.Length)]
             }
             if (-not $expected -or $entry.Length -ne $expected.bytes) { throw "Unexpected archive entry: $relative" }
             $stream = $entry.Open()
@@ -146,23 +191,25 @@ if ($ArchivePath) {
             finally { $stream.Dispose() }
             if ($hash -ne $expected.sha256) { throw "Archive checksum failed: $relative" }
         }
-        if ($zipped.Count -ne $entries.Count + 1) { throw 'Archive files do not match the package manifest.' }
-    } finally { $archive.Dispose() }
+        if ($zipped.Count -ne $entries.Count + 2) { throw 'Archive files do not match the package manifest.' }
+    } finally {
+        $archive.Dispose()
+    }
 }
 
 if ($InstallDshRuntime) {
     $scratch = [IO.Path]::GetFullPath((Join-Path ([IO.Path]::GetTempPath()) ('formrecall-dsh-check-' + [Guid]::NewGuid().ToString('N'))))
     New-Item -ItemType Directory -Path $scratch | Out-Null
-    $startInfo = [Diagnostics.ProcessStartInfo]::new((Join-Path $package 'formrecall-engine-host.exe'))
+    $startInfo = [Diagnostics.ProcessStartInfo]::new((Join-Path $base 'formrecall-engine-host.exe'))
     $startInfo.UseShellExecute = $false
     $startInfo.CreateNoWindow = $true
     $startInfo.RedirectStandardInput = $true
     $startInfo.RedirectStandardOutput = $true
     $startInfo.RedirectStandardError = $true
-    foreach ($argument in @('--resources', (Join-Path $package 'app'), '--data', $scratch, '--config', (Join-Path $scratch 'config.json'))) {
+    foreach ($argument in @('--resources', (Join-Path $base 'app'), '--data', $scratch, '--config', (Join-Path $scratch 'config.json'))) {
         $startInfo.ArgumentList.Add($argument)
     }
-    $startInfo.Environment['AIMODELER_OCCT_MANIFEST'] = Join-Path $package 'occt-runtime/runtime-manifest.json'
+    $startInfo.Environment['AIMODELER_OCCT_MANIFEST'] = Join-Path $base 'occt-runtime/runtime-manifest.json'
     $process = [Diagnostics.Process]::Start($startInfo)
     $errors = $process.StandardError.ReadToEndAsync()
     $installEvents = [Collections.Generic.List[object]]::new()
@@ -202,7 +249,7 @@ if ($InstallDshRuntime) {
         $null = Invoke-PackageEngine 4 'shutdown'
         if (-not $process.WaitForExit(10000) -or $process.ExitCode -ne 0) { throw 'Packaged engine did not shut down cleanly.' }
         $proof = @{
-            schema = 1; verified_at = [DateTime]::UtcNow.ToString('o'); package = $package
+            schema = 1; verified_at = [DateTime]::UtcNow.ToString('o'); package = $package; bundled_version = $base
             bundle_sha256 = $bundle.bundleSha256; bundle_bytes = $bundle.bundleSize
             unpacked_bytes = $bundle.unpackedSize; file_count = $bundle.fileCount
             installation_ms = $timer.ElapsedMilliseconds; before = $before.dsh
@@ -225,6 +272,6 @@ if ($InstallDshRuntime) {
     }
 }
 if ($InstallCatiaRuntime) {
-    & "$PSScriptRoot/verify-native-catia.ps1" -BundleDirectory $package -OcctManifest (Join-Path $package 'occt-runtime/runtime-manifest.json')
+    & "$PSScriptRoot/verify-native-catia.ps1" -BundleDirectory $base -OcctManifest (Join-Path $base 'occt-runtime/runtime-manifest.json')
 }
-Write-Host "Verified $($entries.Count) package files and Windows x64 executables."
+Write-Host "Verified the program root layout, $($entries.Count) bundled version files and Windows x64 executables."

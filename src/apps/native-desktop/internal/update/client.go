@@ -230,13 +230,14 @@ func (c *Client) Stage(ctx context.Context, offer Offer, progress func(Progress)
 	}
 	ctx, cancel := context.WithTimeout(ctx, 20*time.Minute)
 	defer cancel()
-	root := filepath.Join(c.Root, storageName)
-	versions := filepath.Join(root, "versions")
-	for _, dir := range []string{root, versions} {
-		if err := makeDir(dir); err != nil {
-			return "", err
-		}
+	versions := versionsDir(c.Root)
+	if err := makeDir(filepath.Join(c.Root, runtimeName)); err != nil {
+		return "", err
 	}
+	if err := makeDir(versions); err != nil {
+		return "", err
+	}
+	c.pruneIncompleteSlots()
 	asset, delta := c.choose(verified)
 	slot, err := c.prepare(ctx, versions, verified, asset, delta, progress)
 	if err != nil && delta && ctx.Err() == nil {
@@ -281,7 +282,10 @@ func extract(ctx context.Context, archive, dest, installed string, m Manifest, d
 	}
 	defer reader.Close()
 	entries := make(map[string]*zip.File, len(reader.File))
-	prefix := "FormRecall-" + m.Version + "-windows-x64/"
+	// The portable package keeps the bundled version under runtime/base; only
+	// that tree becomes the staged payload. Delta archives already contain
+	// payload-relative entries.
+	prefix := "FormRecall-" + m.Version + "-windows-x64/" + runtimeName + "/" + baseName + "/"
 	if delta {
 		prefix = ""
 	}
@@ -294,7 +298,12 @@ func extract(ctx context.Context, archive, dest, installed string, m Manifest, d
 	}
 	for _, file := range reader.File {
 		if !strings.HasPrefix(file.Name, prefix) {
-			return errors.New("更新包目录不匹配")
+			if delta {
+				return errors.New("更新包目录不匹配")
+			}
+			// A full package also ships the entry point and the packaged
+			// inventory; the staged payload only needs the bundled version.
+			continue
 		}
 		name := strings.TrimPrefix(file.Name, prefix)
 		if file.FileInfo().IsDir() && (name == "" || safeName(strings.TrimSuffix(name, "/"))) {

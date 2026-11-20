@@ -37,7 +37,25 @@ OCCT 必须通过 runtime manifest 校验。可以传 `-OcctManifest`，设置 `
 ./scripts/package-native.ps1 -SkipBuild -OcctManifest '<OCCT目录>/runtime-manifest.json'
 ```
 
-每次打包生成新的目录及 ZIP，包含 Go 桌面、Rust 核心进程、必要提示与知识资源、DSH 离线包、CATIA 离线依赖、OCCT DLL 和许可证。Go 依赖许可位于 `licenses/go`，SVG 图标完整许可位于 `licenses/icons/Lucide-LICENSE`。`package-manifest.json` 记录源码提交、工作区是否有未提交变更及所有包内文件 SHA-256。
+每次打包生成新的目录及 ZIP，包含 Go 桌面、Rust 核心进程、必要提示与知识资源、DSH 离线包、CATIA 离线依赖、OCCT DLL 和许可证。Go 依赖许可位于 `licenses/go`，SVG 图标完整许可位于 `licenses/icons/Lucide-LICENSE`。
+
+### 程序目录布局
+
+打包产物、便携包解压目录和安装目录使用同一套布局：可见根目录只有启动入口和 `runtime` 目录。
+
+```text
+FormRecall/
+├─ FormRecall.exe        # 与 runtime/base/FormRecall.exe 逐字节相同
+└─ runtime/
+   ├─ base/              # 随包提供的版本：桌面、引擎、OCCT、资源、许可证
+   └─ versions/          # 首次应用更新后出现：当前版本、一个回滚版本和状态文件
+```
+
+`runtime/base` 内部仍是桌面、Rust 引擎和 OCCT 原有的相对路径，所以更新只需把整份版本目录放到 `runtime/versions`，不必改写程序内部路径。根目录启动入口只选择版本：优先启动已激活的更新版本，没有更新时启动 `runtime/base`，两者都不可用时直接报错提示重新安装。
+
+应用更新在 `runtime/versions` 下组装并验签。第一次更新成功后 `runtime/base` 作为回滚版本保留，第二次激活时连同更早的目录一起删除，因此安装目录最多保留两份完整程序，不会随更新次数持续增长。基础版本的完整性参照 `runtime/base/package-manifest.json`，更新版本继续使用签名清单。
+
+`package-manifest.json` 位于 `runtime/base`，记录源码提交、工作区是否有未提交变更及该版本全部文件 SHA-256。
 
 CATIA 离线依赖固定为 CPython 3.13.16 x64 嵌入包和 pywin32 312 wheel，下载时分别核对固定 SHA-256。`catia-bootstrap/catia-runtime-manifest.json` 记录 Python 全部文件的大小与哈希、wheel 哈希及依赖清单哈希，打包校验同时检查必需文件、路径安全和目录内额外文件。Python 许可证位于 `python/LICENSE.txt`。首次 CATIA 操作将依赖安装到当前用户数据目录的 `runtime/catia-python`，有效安装会在后续操作中复用。实际 CATIA 导出和推送需要本机已注册的 CATIA COM。
 
@@ -100,6 +118,8 @@ Release 提供以下文件。
 分发 Release 提供一份签名的 `update.json`，每个渠道使用一条固定的清单地址。按来源和目标版本命名 OTA 附件。多个来源共享同一附件时，发布时间线中最接近的来源用于文件名，全部适用来源列在发布说明和签名清单中。
 
 Beta.3 将更新格式切换为单清单。旧版用户需要用完整包升级一次。Beta.3 可读取历史签名清单进行同版本线跨渠道降级，从使用旧格式的历史版本返回时，可将 Beta.3 便携包解压到新目录后启动。实际运行版本显示在更新页，Windows 卸载列表显示最近一次通过安装向导安装的版本。
+
+新的目录布局（`FormRecall.exe` 加 `runtime` 目录）换掉了旧版把整份程序摊在根目录的做法。0.3.0 及更早的客户端在验签清单时要求根级引擎与 OCCT 路径，无法通过应用内更新进入新布局，因此本版本不写入 OTA 渠道清单。这类用户用完整安装包原地升级，或重新解压便携包即可，用户资料保存在用户数据目录不受影响。安装向导会清理旧布局的根目录文件、`.formrecall-updates` 与 `runtime/versions`，升级后同样只有启动入口和 `runtime`。
 
 发布版本通过 Go 链接参数写入桌面程序，并记录在 `package-manifest.json`。`FormRecall.exe --version-json` 输出桌面版本与源码提交，供成品检查使用。引擎组件与兼容入口保留各自版本。发布说明优先读取 `.release-notes/v{version}.md`，其余版本使用 GitHub 自动生成说明。
 

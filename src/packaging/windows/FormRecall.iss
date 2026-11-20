@@ -32,7 +32,7 @@ VersionInfoVersion={#WindowsVersion}
 VersionInfoProductVersion={#WindowsVersion}
 VersionInfoTextVersion={#WindowsVersion}
 VersionInfoProductTextVersion={#ReleaseVersion}
-LicenseFile={#PackageDirectory}\LICENSE
+LicenseFile={#PackageDirectory}\runtime\base\LICENSE
 SetupIconFile=..\..\apps\native-desktop\internal\branding\formrecall.ico
 WizardStyle=modern
 Compression=lzma2
@@ -54,6 +54,26 @@ Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{
 [Files]
 Source: "{#PackageDirectory}\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
 
+; A full installer always replaces the whole program: earlier layouts and every
+; staged update are removed so the new package starts from its bundled version.
+[InstallDelete]
+Type: filesandordirs; Name: "{app}\.formrecall-updates"
+Type: filesandordirs; Name: "{app}\runtime\versions"
+Type: filesandordirs; Name: "{app}\runtime\base"
+Type: filesandordirs; Name: "{app}\app"
+Type: filesandordirs; Name: "{app}\occt-runtime"
+Type: filesandordirs; Name: "{app}\python"
+Type: filesandordirs; Name: "{app}\catia-bootstrap"
+Type: filesandordirs; Name: "{app}\licenses"
+Type: files; Name: "{app}\formrecall-engine-host.exe"
+Type: files; Name: "{app}\package-manifest.json"
+Type: files; Name: "{app}\*.txt"
+Type: files; Name: "{app}\*.cmd"
+Type: files; Name: "{app}\update-bootstrap-v2"
+Type: files; Name: "{app}\update-bootstrap-v3"
+Type: files; Name: "{app}\LICENSE"
+Type: files; Name: "{app}\THIRD_PARTY_NOTICES.md"
+
 [Icons]
 Name: "{autoprograms}\FormRecall"; Filename: "{app}\FormRecall.exe"; WorkingDir: "{app}"; IconFilename: "{app}\FormRecall.exe"; AppUserModelID: "FormRecall.Desktop"
 Name: "{autodesktop}\FormRecall"; Filename: "{app}\FormRecall.exe"; WorkingDir: "{app}"; IconFilename: "{app}\FormRecall.exe"; AppUserModelID: "FormRecall.Desktop"; Tasks: desktopicon
@@ -62,4 +82,5 @@ Name: "{autodesktop}\FormRecall"; Filename: "{app}\FormRecall.exe"; WorkingDir: 
 Filename: "{app}\FormRecall.exe"; WorkingDir: "{app}"; Description: "{cm:LaunchProgram,FormRecall}"; Flags: nowait postinstall skipifsilent
 
 [UninstallDelete]
+Type: filesandordirs; Name: "{app}\runtime"
 Type: filesandordirs; Name: "{app}\.formrecall-updates"

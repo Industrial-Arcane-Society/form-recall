@@ -34,11 +34,14 @@ $packageItems = @($package) + @(Get-ChildItem -LiteralPath $packagePath -Force -
 if (@($packageItems | Where-Object { $_.Attributes -band [IO.FileAttributes]::ReparsePoint }).Count) {
     throw 'PackageDirectory must contain regular files and directories without symbolic links or junctions.'
 }
-$manifest = Get-Content -LiteralPath (Join-Path $packagePath 'package-manifest.json') -Raw | ConvertFrom-Json
+$manifestPath = Join-Path $packagePath 'runtime/base/package-manifest.json'
+$manifest = Get-Content -LiteralPath $manifestPath -Raw | ConvertFrom-Json
 if ($manifest.version -cne $Version) {
     throw "Package manifest version '$($manifest.version)' does not match requested version '$Version'."
 }
-if (@($packageItems | Where-Object { -not $_.PSIsContainer }).Count -ne @($manifest.files).Count + 1) {
+# The program root adds the entry point and the bundled version inventory on top
+# of the bundled version files themselves.
+if (@($packageItems | Where-Object { -not $_.PSIsContainer }).Count -ne @($manifest.files).Count + 2) {
     throw 'The package contains files absent from its manifest.'
 }
 & "$PSScriptRoot/verify-native-package.ps1" -PackageDirectory $packagePath
