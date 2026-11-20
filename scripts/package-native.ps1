@@ -95,9 +95,6 @@ Copy-Item -LiteralPath (Join-Path $script:NativeDesktopRoot 'internal/workbench/
 $start = @'
 @echo off
 setlocal DisableDelayedExpansion
-set "FORMRECALL_ENGINE=%~dp0formrecall-engine-host.exe"
-set "AIMODELER_RESOURCE_ROOT=%~dp0app"
-set "AIMODELER_OCCT_MANIFEST=%~dp0occt-runtime\runtime-manifest.json"
 start "" "%~dp0FormRecall.exe"
 '@
 $start.Replace("`r`n", "`n").Replace("`n", "`r`n") | Set-Content -LiteralPath (Join-Path $package 'Start-FormRecall.cmd') -Encoding ascii -NoNewline

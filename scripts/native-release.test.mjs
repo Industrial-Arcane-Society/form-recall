@@ -318,7 +318,7 @@ test('release.json is verified locally and never becomes a fourth attachment', a
   await writeFile(path.join(f.assetDirectory, 'release.json'), JSON.stringify(f.record))
   const { api, state } = fakeGitHub()
   await publish({ env: f.env, api, cwd: f.directory })
-  assert.equal(state.assets.length, 3)
+  assert.equal(state.assets.length, 2)
   assert.ok(state.assets.every(asset => !asset.name.endsWith('.json')))
 })
 
@@ -380,7 +380,7 @@ test('extra files, duplicate checksums and duplicate manifest assets are rejecte
   await assert.rejects(validateAssets(f.assetDirectory, version, commit), /exactly the setup EXE/)
 })
 
-test('new release uploads and verifies all three assets before creating tag and publishing', async (t) => {
+test('new release uploads and verifies both packages before creating tag and publishing', async (t) => {
   const f = await fixture(t)
   await mkdir(path.join(f.directory, '.release-notes'))
   await writeFile(path.join(f.directory, '.release-notes', `${tag}.md`), '首个原生桌面版本。')
@@ -389,22 +389,22 @@ test('new release uploads and verifies all three assets before creating tag and 
   assert.equal(result.already_published, false)
   assert.equal(state.release.draft, false)
   assert.equal(state.tag, commit)
-  assert.equal(state.assets.length, 3)
-  assert.equal(state.uploads, 3)
+  assert.equal(state.assets.length, 2)
+  assert.equal(state.uploads, 2)
   assert.match(state.release.body, /首个原生桌面版本/)
   assert.match(state.release.body, /Generated change list/)
   assert.match(state.release.body, /setup\.exe 完整安装包/)
   assert.match(state.release.body, /portable\.zip/)
   assert.doesNotMatch(state.release.body, /替换同目录|单独的 EXE/)
   assert.deepEqual(state.assets.map(asset => asset.name), [
-    'FormRecall-0.2.0-windows-x64-setup.exe', 'FormRecall-0.2.0-windows-x64-portable.zip', checksumName,
+    'FormRecall-0.2.0-windows-x64-setup.exe', 'FormRecall-0.2.0-windows-x64-portable.zip',
   ])
   assert.match(state.release.body, /formrecall-release/)
   const mutations = state.calls.filter(call => call.method !== 'GET')
-  assert.deepEqual(mutations.map(call => call.method), ['POST', 'POST', 'UPLOAD', 'UPLOAD', 'UPLOAD', 'POST', 'PATCH'])
+  assert.deepEqual(mutations.map(call => call.method), ['POST', 'POST', 'UPLOAD', 'UPLOAD', 'POST', 'PATCH'])
   assert.equal(mutations.at(-2).route, '/git/refs')
   assert.equal(mutations.at(-1).body.make_latest, 'legacy')
-  assert.match(await readFile(f.env.GITHUB_STEP_SUMMARY, 'utf8'), /三个附件均已校验/)
+  assert.match(await readFile(f.env.GITHUB_STEP_SUMMARY, 'utf8'), /两个附件均已校验/)
 })
 
 test('historical v0.2.0 publication skips with no installer assets and no API writes', async (t) => {
@@ -436,7 +436,7 @@ test('upload failure preserves a draft and rerun reuses verified assets', async 
   assert.equal(first.state.assets.length, 1)
   const second = fakeGitHub({ release: first.state.release, assets: first.state.assets })
   await publish({ env: f.env, api: second.api, cwd: f.directory })
-  assert.equal(second.state.uploads, 2)
+  assert.equal(second.state.uploads, 1)
   assert.equal(second.state.release.draft, false)
   assert.equal(second.state.calls.filter(call => call.method === 'DELETE').length, 0)
 })
@@ -444,7 +444,7 @@ test('upload failure preserves a draft and rerun reuses verified assets', async 
 test('retry replaces only an incomplete draft asset and verifies downloaded digests', async (t) => {
   const f = await fixture(t)
   const local = await validateAssets(f.assetDirectory, version, commit)
-  const remote = local.map((asset, index) => ({ id: index + 1, name: asset.name, size: asset.bytes, state: 'uploaded', digest: `sha256:${asset.sha256}` }))
+  const remote = local.slice(0, 2).map((asset, index) => ({ id: index + 1, name: asset.name, size: asset.bytes, state: 'uploaded', digest: `sha256:${asset.sha256}` }))
   remote[0].state = 'starter'
   delete remote[1].digest
   const { api, state } = fakeGitHub({ release: publishedRelease({ draft: true }), assets: remote, assetHashes: { 2: local[1].sha256 } })
@@ -487,7 +487,7 @@ test('release published externally during upload preparation is never modified',
 test('tag changed during draft upload blocks publishing and preserves the draft', async (t) => {
   const f = await fixture(t)
   const { api, state } = fakeGitHub({ tag: commit, intercept: ({ method, route, state: current }) => {
-    if (method === 'GET' && route === '/releases/10' && current.uploads === 3) current.tag = otherCommit
+    if (method === 'GET' && route === '/releases/10' && current.uploads === 2) current.tag = otherCommit
   } })
   await assert.rejects(publish({ env: f.env, api, cwd: f.directory }), /Tags are immutable/)
   assert.equal(state.release.draft, true)

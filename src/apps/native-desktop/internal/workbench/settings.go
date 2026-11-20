@@ -220,6 +220,9 @@ func (a *App) settingsPanel(c *ui.Context) {
 		{"几何计算", "box"},
 		{"运行环境", "logs"},
 	}
+	if a.options.Updater != nil {
+		categories = append(categories, struct{ label, icon string }{"更新", "export"})
+	}
 	ui.Column(c).Fill().Gap(0).Disabled(a.busy).Children(func() {
 		ui.Row(c).Height(50).Padding(0, 16, 0, 20).AlignItems(ui.Center).Children(func() {
 			ui.Text(c, "设置").FontSize(16).FontWeight(600).Grow(1)
@@ -270,6 +273,8 @@ func (a *App) settingsPanel(c *ui.Context) {
 						a.geometrySettings(c)
 					case 3:
 						a.runtimeSettings(c)
+					case 4:
+						a.updateSettings(c)
 					default:
 						a.providerSettings(c)
 					}
@@ -289,7 +294,7 @@ func (a *App) settingsPanel(c *ui.Context) {
 			if ui.Button(c, "取消").Width(76).Height(30).Clicked() {
 				a.cancelSettings()
 			}
-			if ui.PrimaryButton(c, "保存设置").Width(92).Height(30).Disabled(a.busy).Clicked() {
+			if a.settingsTab != 4 && ui.PrimaryButton(c, "保存设置").Width(92).Height(30).Disabled(a.busy).Clicked() {
 				a.saveSettings()
 			}
 		})
