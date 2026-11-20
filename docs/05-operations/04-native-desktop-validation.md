@@ -2,7 +2,7 @@
 
 记录日期为 2026-11-20，迁移分支为 `feat/mygo-native-workbench`，比较基线为 `cf69659`。验证对象包括独立 Rust 核心、常驻 JSON Lines 宿主、MyGo 工作台、原生视口和 Tauri 兼容入口。研究功能按现有实现保留，本轮范围是桌面和模块构造迁移。
 
-本记录汇总已执行的检查，最终便携包、源码提交和异地启动结果见末节。`temp/outputs` 中的证据属于本机输出，通常受 Git 忽略规则管理，克隆仓库后需按文中的命令重新生成。
+本记录汇总已执行的检查。首轮交付后的用户验收发现视口空白，后续已定位窗口层级覆盖问题，修复和桌面像素回归见末节。`temp/outputs` 中的证据属于本机输出，通常受 Git 忽略规则管理，克隆仓库后需按文中的命令重新生成。
 
 ## 环境与模块
 
@@ -61,7 +61,7 @@ Node 跳过项是固定 DSH 包的 `defineTool` 行为检查。动态 schema 的
 | 四视图 | 可完整解码的 1536×1536 PNG |
 | 验收保护 | 裸文档的自报验收字段和工程中的伪造验收投影均保持候选状态，审核案例写入被核心拒绝 |
 
-测试数据使用 `t.TempDir`，由测试清理。该回归使用无界面 UI Tester 和实际网格加载，GPU 呈现由独立窗口测试覆盖。工程伪造夹具保留原始 JSON 数值表示，只添加验收字段，以保持 CADPlan 与特征参数的一致性。
+测试数据使用 `t.TempDir`，由测试清理。该回归使用无界面 UI Tester 和实际网格加载。独立窗口测试验证 GPU 渲染，桌面像素回归验证最终呈现。工程伪造夹具保留原始 JSON 数值表示，只添加验收字段，以保持 CADPlan 与特征参数的一致性。
 
 从仓库根目录显式设置三个路径后运行。缺少 `FORMRECALL_TEST_ENGINE` 时测试跳过，已设置引擎而缺少其他必要路径时测试失败。
 
@@ -94,7 +94,7 @@ try {
 
 计时使用预热 8 帧后的 120 帧旋转，包含绘制、交换、WGL 上下文切换和 `glFinish`，衡量该设备上的同步渲染耗时。桌面实际呈现帧率与多显示器之间的物理 DPI 切换仍需对应实测。空闲 CPU 的零增量受计时精度与观察时长限制。[原始报告与限制](../../temp/outputs/native-viewport-verification.json)
 
-工作台与设置的实际原生窗口截图随动画录屏保存，使用 Release 宿主和独立数据目录生成四孔底板。[录屏和截图](../../temp/outputs/native-ui-motion/final-30fps/)
+首轮截图与录屏使用窗口内容和 WGL 帧缓冲合成，记录了模型渲染和界面布局。用户随后报告桌面视口空白，确认这类合成检查漏检了桌面窗口层级覆盖问题。历史文件保留供追溯。[首轮录屏和截图](../../temp/outputs/native-ui-motion/final-30fps/)
 
 ## 设置界面与动画回归
 
@@ -113,7 +113,7 @@ try {
 
 设置定向测试在最终布局接入后通过，测试使用 MyGo UI Tester，包含真实点击、键盘输入、滚动和图像比较。截图矩阵用于确认布局和字重。[测试记录](../../temp/outputs/native-settings-redesign-tests.log) [设置截图](../../temp/outputs/settings-redesign/) [测试实现](../../src/apps/native-desktop/internal/workbench/settings_test.go)
 
-实际窗口录屏为 1598×1038，共采集 517 帧，采样区间 19.077 秒，平均 27.10 帧/秒。17 个阶段均达到目标状态，其中 16 个动画阶段在操作后 450 ms 内分别捕获 5 至 8 个不同画面。操作涵盖特征选择、日志展开收起、属性栏伸缩、设置进入退出、四个设置分类和四个模型视角。按钮颜色过渡为 120 ms，属性栏宽度过渡为 220 ms，日志高度过渡为 200 ms。
+首轮合成录屏为 1598×1038，共采集 517 帧，采样区间 19.077 秒，平均 27.10 帧/秒。17 个阶段均达到目标状态，其中 16 个动画阶段在操作后 450 ms 内分别捕获 5 至 8 个不同画面。操作涵盖特征选择、日志展开收起、属性栏伸缩、设置进入退出、四个设置分类和四个模型视角。按钮颜色过渡为 120 ms，属性栏宽度过渡为 220 ms，日志高度过渡为 200 ms。
 
 录制进程启动独立的 MyGo 窗口，通过 PrintWindow 读取窗口内容，并在子窗口实际位置合成其 WGL 帧缓冲。操作调用生产控件使用的工作台回调和状态转换。原始像素直接交给 FFmpeg，时间戳随实际采样时间推进。该采样率只描述录屏采集速度，显示器呈现性能仍需单独测量。录屏环境使用 NVIDIA GeForce RTX 5060 Laptop GPU，模型包含 604 个三角形，桌面鼠标与其他窗口未参与采集。[动画视频](../../temp/outputs/native-ui-motion/final-30fps/native-ui-motion.mp4) [逐帧记录](../../temp/outputs/native-ui-motion/final-30fps/recording.json) [测试日志](../../temp/outputs/native-ui-motion/high-rate-test.log)
 
@@ -214,7 +214,7 @@ CATIA 资源接入后，`--native-resources` 完成在线准备与离线重跑�
 
 本次 CATIA 注册表查询返回 `catia_registered=false`，证据中 `catia_export_verified=false`。实际 CATPart 导出、特征映射及推送到 CATIA 窗口仍需在已注册 CATIA COM 的环境中验收。外部 provider 的真实 Agent 请求和图片传输也待实际环境验收。早期中间包 `FormRecall-20261120-150423-953` 的 DSH invalid 记录保留为历史检查结果。[中间包检查](../../temp/outputs/native-package-model-check-20261120-150423/verification.json)
 
-## 最终交付包与异地启动
+## 首轮交付包与异地启动
 
 源码提交 `7dad64c3a568fe06331f652d93e573268eb6d4ef` 后执行完整离线构建和打包。交付包为 `temp/outputs/native-package/FormRecall-20261120-190810-974`，ZIP 为同目录下的 `FormRecall-20261120-190810-974-windows-x64.zip`，大小 231487132 字节，SHA-256 为 `38bbdb4db30540a2c86fb9078b760c6e45cde3a35d0791ad76b5b4234c5e456f`。[打包日志](../../temp/outputs/native-final-package.log) [包清单](../../temp/outputs/native-package/FormRecall-20261120-190810-974/package-manifest.json)
 
@@ -233,3 +233,17 @@ CATIA 资源接入后，`--native-resources` 完成在线准备与离线重跑�
 | 退出 | 工作台、设置截图进程和独立宿主均返回 0，残留进程为 0，异地临时目录已清理 |
 
 最终界面截图、状态 JSON 和构建信息随异地验证保存，程序源码与构建版本以包清单中的提交为准。[验证记录](../../temp/outputs/native-final-relocation/verification.json) [工作台截图](../../temp/outputs/native-final-relocation/workbench.png) [设置截图](../../temp/outputs/native-final-relocation/settings.png)
+
+## 桌面视口空白修复
+
+用户验收首轮程序时，Quick 已生成特征和网格，桌面视口却持续空白。新增回归直接读取隔离测试窗口所在客户区的桌面像素，覆盖初始化、缩放、最大化、还原、设置隐藏恢复、模型重载和相机切换。修复前初始场景的 OpenGL 已呈现前缓冲有 142813 个模型亮像素，桌面对应区域为 0，复现了用户看到的问题。[失败证据](../../temp/outputs/native-presentation/before-fix/presentation.json) [失败截图](../../temp/outputs/native-presentation/before-fix/initial-window.png)
+
+原 WGL 子窗口挂在 MyGoSurface 下，界面的交换链呈现覆盖了其桌面显示。修复将 WGL 视口改为应用根窗口的直接子窗口，与 MyGoSurface 同级，并在布局和设置关闭恢复时维护层级。布局经 `MapWindowPoints` 映射，保留 DPI 缩放与实际客户区位置。模型解码和几何生成继续走现有入口。[实现](../../src/apps/native-desktop/internal/viewport/native_windows.go)
+
+新回归独立读取桌面像素与已呈现的 GL_FRONT，并核对 HWND 实际可见性及模型像素一致性。录屏也改为 `DwmFlush` 后从桌面读取测试窗口客户区。此前 `CaptureWindow` 合成截图的验证范围已在本记录中更正。[桌面回归](../../src/apps/native-desktop/internal/viewport/presentation_windows_test.go) [录屏实现](../../src/apps/native-desktop/internal/workbench/ui_motion_windows_test.go)
+
+使用用户已生成的 200×150×12 mm 四孔板 GLB，修复后的 8 阶段回归通过，7 个显示阶段的模型像素与对应前缓冲一致，隐藏阶段的 HWND 可见性符合预期。初始桌面捕获到 143832 个模型亮像素，最大化为 697510 个，关闭遮罩恢复后为 125942 个。测试窗口禁用外部键鼠输入，桌面与前缓冲在同一次 UI 线程调用中读取，并断言采样期间渲染帧数稳定。[用户模型回归](../../temp/outputs/native-presentation/user-model-fixed/presentation.json) [回归日志](../../temp/outputs/native-presentation/user-model-fixed-test.log)
+
+修复后的实际桌面录屏包含 17 个阶段，所有目标状态和逐帧状态稳定检查通过。16 个动画阶段在前 450 ms 捕获到 5 至 8 次显著变化，初始静止阶段为 0 次。显著变化按 RGB 通道差超过 8 且达到最小变化面积计数，降低合成器细微像素变化的干扰。视频为 1598×1038，实际采集 577 帧，平均 30.01 帧/秒，完整解码得到 577 帧、19.189 秒。[实际桌面视频](../../temp/outputs/native-ui-motion/desktop-verified/native-ui-motion.mp4) [逐帧记录](../../temp/outputs/native-ui-motion/desktop-verified/recording.json) [视频解码](../../temp/outputs/native-ui-motion/desktop-verified/decoded.json)
+
+修复后 `go vet -mod=readonly ./...` 通过，普通 Go 测试 60 项通过、5 项按环境条件跳过、0 项失败。桌面显示与录屏测试按上述方式另行显式启用。既有 Rust 全量基线限制见前文。[Go 测试记录](../../temp/outputs/native-presentation/go-tests-final.jsonl)

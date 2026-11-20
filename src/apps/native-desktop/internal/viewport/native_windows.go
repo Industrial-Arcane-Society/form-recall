@@ -25,6 +25,7 @@ var (
 	createWindow      = user32.NewProc("CreateWindowExW")
 	defaultWindowProc = user32.NewProc("DefWindowProcW")
 	findWindow        = user32.NewProc("FindWindowExW")
+	mapWindowPoints   = user32.NewProc("MapWindowPoints")
 	setPosition       = user32.NewProc("SetWindowPos")
 	showWindow        = user32.NewProc("ShowWindow")
 	destroyWindow     = user32.NewProc("DestroyWindow")
@@ -71,6 +72,7 @@ type pixelFormat struct {
 type nativeWindow struct {
 	handle, dc, context uintptr
 	parent              uintptr
+	layoutSurface       uintptr
 	owner               *Viewport
 	renderer            string
 	x, y, width, height int
@@ -170,9 +172,12 @@ func (n *nativeWindow) attach(parent uintptr, owner *Viewport) error {
 	if classError != nil {
 		return classError
 	}
-	surface, _, _ := findWindow.Call(parent, 0, uintptr(unsafe.Pointer(syscall.StringToUTF16Ptr("MyGoSurface"))), 0)
-	if surface != 0 {
-		parent = surface
+	// MyGo presents its surface through a swap chain. A WGL child of that
+	// surface is obscured by its presentation even after SwapBuffers succeeds.
+	// Keep the viewport above it as a sibling under the application's window.
+	n.layoutSurface, _, _ = findWindow.Call(parent, 0, uintptr(unsafe.Pointer(syscall.StringToUTF16Ptr("MyGoSurface"))), 0)
+	if n.layoutSurface == 0 {
+		n.layoutSurface = parent
 	}
 	n.parent, n.owner = parent, owner
 	instance, _, _ := kernel32.NewProc("GetModuleHandleW").Call(0)
@@ -235,13 +240,18 @@ func (n *nativeWindow) bounds(x, y, width, height float32) {
 	if n.handle == 0 {
 		return
 	}
-	dpi, _, _ := getDPI.Call(n.parent)
+	dpi, _, _ := getDPI.Call(n.layoutSurface)
 	scale := float64(dpi) / 96
 	if scale <= 0 {
 		scale = 1
 	}
 	px, py := int(math.Round(float64(x)*scale)), int(math.Round(float64(y)*scale))
 	w, h := int(math.Round(float64(width)*scale)), int(math.Round(float64(height)*scale))
+	// Layout coordinates belong to MyGoSurface, while the viewport is now a
+	// direct child of the application window. Map the physical client origin.
+	point := struct{ X, Y int32 }{int32(px), int32(py)}
+	mapWindowPoints.Call(n.layoutSurface, n.parent, uintptr(unsafe.Pointer(&point)), 1)
+	px, py = int(point.X), int(point.Y)
 	if w < 1 || h < 1 {
 		n.show(false)
 		return
@@ -266,6 +276,9 @@ func (n *nativeWindow) show(visible bool) {
 	}
 	showWindow.Call(n.handle, command)
 	if visible {
+		// Settings hide the HWND while their overlay is visible. Restore it
+		// above the MyGo sibling without moving focus when the overlay closes.
+		setPosition.Call(n.handle, 0, 0, 0, 0, 0, 0x0001|0x0002|0x0010)
 		n.owner.tick()
 		n.invalidate()
 		if !n.owner.animationStarted.IsZero() {

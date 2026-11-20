@@ -162,8 +162,8 @@ func TestMyGoViewportIntegrationAndPerformance(t *testing.T) {
 		user32.NewProc("GetClientRect").Call(v.native.handle, uintptr(unsafe.Pointer(&rect)))
 		nativeBounds = [4]int{v.native.x, v.native.y, v.native.width, v.native.height}
 	})
-	if v.native.parent == window.NativeHandle() {
-		t.Fatal("viewport did not attach to MyGoSurface")
+	if v.native.parent != window.NativeHandle() || v.native.layoutSurface == window.NativeHandle() {
+		t.Fatal("viewport must share the application parent with MyGoSurface")
 	}
 	if output := os.Getenv("NATIVE_VIEWPORT_REPORT"); output != "" {
 		_ = os.WriteFile(output+".png", combined, 0644)
@@ -257,7 +257,7 @@ func TestMyGoViewportIntegrationAndPerformance(t *testing.T) {
 		"timing_method":          "120 rotating frames after 8 warmup frames. Wall time includes render, swap, WGL context switch and glFinish in a shown, nonactivated, isolated MyGo window. This measures synchronous render cost, not desktop presentation FPS.",
 		"initial_surface_pixels": nativeBounds, "resized_surface_pixels": resized, "window_dpi": dpi,
 		"capture_window_api":   "(*Viewport).CaptureWindow(*mygo.Window) ([]byte,error), UI thread",
-		"capture_model_pixels": changed, "native_parent": "MyGoSurface",
+		"capture_model_pixels": changed, "native_parent": "application HWND, sibling of MyGoSurface",
 		"idle_seconds": idleDuration.Seconds(), "idle_cpu_ms": float64(cpuAfter-cpuBefore) / 10000, "idle_cpu_one_core_percent": float64(cpuAfter-cpuBefore) / 1e7 / idleDuration.Seconds() * 100, "idle_extra_frames": framesAfter - framesBefore,
 		"animation_interpolates_and_settles": true, "reduced_motion_immediate": true, "overlay_hides_surface": hidden,
 		"limits": []string{"Multi-monitor physical DPI switching was not exercised. Current desktop DPI and actual HWND client sizing were verified.", "MenuButton uses native platform menus. Overlapping Select, ComboBox and PopoverMenuButton panels require viewport hiding.", "Timing is this GPU and isolated process workload only. Windows exposure may request occasional paint frames during idle."},
