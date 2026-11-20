@@ -41,6 +41,41 @@ function booleanInput(value, fallback) {
   return value === 'true'
 }
 
+// The release repository only asks the distribution repository to sync its OTA
+// feed. The signing key and the channel files never leave that repository, so
+// this credential can do no more than start one of its workflows.
+const otaRepositoryDefault = 'Industrial-Arcane-Society/form-recall-release'
+const otaWorkflowFile = 'publish-ota.yml'
+// Keep identical to the channel rule in scripts/publish-desktop-ota.mjs.
+const otaChannelPattern = /^(?:0|[1-9]\d{0,8})\.(?:0|[1-9]\d{0,8})\.(?:0|[1-9]\d{0,8})(?:-(alpha|beta|rc)\.[1-9]\d{0,8})?$/
+
+export function updateChannel(value) {
+  const match = typeof value === 'string' ? otaChannelPattern.exec(value.trim().replace(/^v/, '')) : null
+  if (!match) throw new Error('RELEASE_VERSION cannot be published to an update channel.')
+  return match[1] ?? 'stable'
+}
+
+export async function dispatchUpdateChannel({ version, env = process.env, client } = {}) {
+  const channel = updateChannel(version?.version)
+  const token = env.RELEASE_DISPATCH_TOKEN
+  if (!token) {
+    if (env.GITHUB_ACTIONS === 'true') {
+      throw new Error('RELEASE_DISPATCH_TOKEN is required to start the update channel sync.')
+    }
+    return null
+  }
+  const repository = repositoryName(env.RELEASE_OTA_REPOSITORY ?? otaRepositoryDefault)
+  const source = typeof env.GITHUB_REPOSITORY === 'string' ? env.GITHUB_REPOSITORY.toLowerCase() : ''
+  if (source && repository.toLowerCase() === source) {
+    throw new Error('The update channel repository must differ from the release repository.')
+  }
+  client ??= createGitHubClient({ repository, token })
+  await client.request('POST', `/actions/workflows/${otaWorkflowFile}/dispatches`, {
+    ref: 'main', inputs: { channel, version: version.version },
+  })
+  return { repository, channel, version: version.version }
+}
+
 export class GitHubApiError extends Error {
   constructor(method, route, status) {
     super(`GitHub ${method} ${route} failed${status ? ` (HTTP ${status})` : ' before receiving a response'}.`)
@@ -390,16 +425,31 @@ async function releaseBody(api, cwd, version, commit, assets) {
   return [local.trim(), generated.body?.trim(), installationNotes, checksums, marker].filter(Boolean).join('\n\n')
 }
 
-async function writeSummary(env, result, assets = []) {
+async function writeSummary(env, result, assets = [], ota = null, failure = null) {
   if (!env.GITHUB_STEP_SUMMARY) return
   const message = result.already_published ? '该版本已发布，本次跳过。' : '发布完成，两个附件均已校验。'
   const lines = [`FormRecall ${result.tag} ${message}`, '', `提交 \`${result.commit}\``, '',
     ...assets.map(asset => `- \`${asset.name}\`，${asset.bytes} 字节，SHA-256 \`${asset.sha256}\``), '',
   ]
+  if (ota) lines.push(`已请求 \`${ota.repository}\` 同步 \`${ota.channel}\` 渠道的 ${ota.version}。`, '')
+  if (failure) lines.push(`更新渠道同步请求失败：${failure}`, '')
   await appendFile(env.GITHUB_STEP_SUMMARY, lines.join('\n'))
 }
 
-export async function publish({ env = process.env, api, cwd = process.cwd() } = {}) {
+// The release is already immutable when this runs, so a failed channel sync is
+// reported loudly but never rolls anything back. Rerunning the publish job takes
+// the already-published path and retries only the sync.
+async function reportChannelSync(env, result, assets, version, client) {
+  try {
+    await writeSummary(env, result, assets, await dispatchUpdateChannel({ version, env, client }))
+  } catch (error) {
+    const message = error instanceof Error ? error.message : '更新渠道同步请求失败。'
+    await writeSummary(env, result, assets, null, message)
+    throw error
+  }
+}
+
+export async function publish({ env = process.env, api, cwd = process.cwd(), dispatchApi } = {}) {
   const version = normalizeVersion(env.RELEASE_VERSION)
   const commit = commitSHA(env.RELEASE_COMMIT, 'RELEASE_COMMIT')
   repositoryName(env.GITHUB_REPOSITORY)
@@ -412,7 +462,7 @@ export async function publish({ env = process.env, api, cwd = process.cwd() } = 
     checkRelease(release, version.version, commit, currentTag)
     if (!release.draft) {
       const result = { ...version, commit, already_published: true }
-      await writeSummary(env, result)
+      await reportChannelSync(env, result, [], version, dispatchApi)
       return result
     }
   }
@@ -457,7 +507,7 @@ export async function publish({ env = process.env, api, cwd = process.cwd() } = 
   checkRelease(published, version.version, commit, await tagCommit(api, version.tag))
   if (published.draft) throw new Error('GitHub left the release in draft state.')
   const result = { ...version, commit, already_published: false }
-  await writeSummary(env, result, assets)
+  await reportChannelSync(env, result, assets, version, dispatchApi)
   return result
 }
 
@@ -468,9 +518,9 @@ if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.me
     const result = command === 'prepare' ? await prepare() : await publish()
     console.log(JSON.stringify(result))
   } catch (error) {
-    const token = process.env.GITHUB_TOKEN
+    const secrets = [process.env.GITHUB_TOKEN, process.env.RELEASE_DISPATCH_TOKEN].filter(Boolean)
     const message = error instanceof Error ? error.message : 'Native release failed.'
-    console.error(token ? message.split(token).join('[REDACTED]') : message)
+    console.error(secrets.reduce((text, secret) => text.split(secret).join('[REDACTED]'), message))
     process.exitCode = 1
   }
 }

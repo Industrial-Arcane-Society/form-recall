@@ -5,7 +5,7 @@ import os from 'node:os'
 import path from 'node:path'
 import test from 'node:test'
 
-import { createGitHubClient, GitHubApiError, normalizeVersion, prepare, publish, validateAssets } from './native-release.mjs'
+import { createGitHubClient, dispatchUpdateChannel, GitHubApiError, normalizeVersion, prepare, publish, updateChannel, validateAssets } from './native-release.mjs'
 
 const commit = 'a'.repeat(40)
 const mainCommit = 'b'.repeat(40)
@@ -568,4 +568,61 @@ test('asset download rejects redirects outside trusted asset hosts', async () =>
   } })
   await assert.rejects(api.assetHash(123), /could not be verified/)
   assert.equal(calls, 1)
+})
+
+test('update channels follow the published version tier', () => {
+  assert.equal(updateChannel('0.3.1'), 'stable')
+  assert.equal(updateChannel('v0.3.1-alpha.1'), 'alpha')
+  assert.equal(updateChannel('0.3.1-beta.2'), 'beta')
+  assert.equal(updateChannel('0.3.1-rc.3'), 'rc')
+  for (const invalid of ['', '0.3', '0.3.1-dev.1', '0.3.1-alpha', '01.3.1', '0.3.1-alpha.0', undefined]) {
+    assert.throws(() => updateChannel(invalid), /update channel/)
+  }
+})
+
+test('the channel dispatch posts to the distribution repository with its own token', async () => {
+  let request
+  const client = createGitHubClient({ repository: 'Industrial-Arcane-Society/form-recall-release', token: 'dispatch-token', fetchImpl: async (url, options) => {
+    request = { url, options }
+    return new Response(null, { status: 204 })
+  } })
+  const result = await dispatchUpdateChannel({ version: normalizeVersion('0.3.1'), env: { GITHUB_REPOSITORY: repository, RELEASE_DISPATCH_TOKEN: 'dispatch-token' }, client })
+  assert.deepEqual(result, { repository: 'Industrial-Arcane-Society/form-recall-release', channel: 'stable', version: '0.3.1' })
+  assert.equal(request.url, 'https://api.github.com/repos/Industrial-Arcane-Society/form-recall-release/actions/workflows/publish-ota.yml/dispatches')
+  assert.equal(request.options.headers.Authorization, 'Bearer dispatch-token')
+  assert.deepEqual(JSON.parse(request.options.body), { ref: 'main', inputs: { channel: 'stable', version: '0.3.1' } })
+})
+
+test('publish starts the matching update channel after the release becomes immutable', async (t) => {
+  const f = await fixture(t, { releaseVersion: '0.3.1-alpha.1' })
+  const calls = []
+  const dispatchApi = { async request(method, route, body) { calls.push({ method, route, body }); return null } }
+  const result = await publish({ env: { ...f.env, RELEASE_DISPATCH_TOKEN: 'dispatch-token' }, api: fakeGitHub().api, cwd: f.directory, dispatchApi })
+  assert.equal(result.already_published, false)
+  assert.deepEqual(calls, [{ method: 'POST', route: '/actions/workflows/publish-ota.yml/dispatches', body: { ref: 'main', inputs: { channel: 'alpha', version: '0.3.1-alpha.1' } } }])
+  assert.match(await readFile(f.env.GITHUB_STEP_SUMMARY, 'utf8'), /同步 `alpha` 渠道的 0\.3\.1-alpha\.1/)
+})
+
+test('a failed channel sync never rolls back the published release', async (t) => {
+  const f = await fixture(t)
+  const dispatchApi = { async request() { throw new GitHubApiError('POST', '/actions/workflows/publish-ota.yml/dispatches', 403) } }
+  const { api, state } = fakeGitHub()
+  await assert.rejects(publish({ env: { ...f.env, RELEASE_DISPATCH_TOKEN: 'dispatch-token' }, api, cwd: f.directory, dispatchApi }), /HTTP 403/)
+  assert.equal(state.release.draft, false)
+  assert.match(await readFile(f.env.GITHUB_STEP_SUMMARY, 'utf8'), /更新渠道同步请求失败/)
+})
+
+test('a CI release without the dispatch credential fails loudly while local runs skip the sync', async (t) => {
+  const f = await fixture(t)
+  await assert.rejects(publish({ env: { ...f.env, GITHUB_ACTIONS: 'true' }, api: fakeGitHub().api, cwd: f.directory }), /RELEASE_DISPATCH_TOKEN/)
+  const summary = path.join(f.directory, 'summary-local.md')
+  const result = await publish({ env: { ...f.env, GITHUB_STEP_SUMMARY: summary }, api: fakeGitHub().api, cwd: f.directory })
+  assert.equal(result.already_published, false)
+  assert.doesNotMatch(await readFile(summary, 'utf8'), /渠道/)
+})
+
+test('the update channel repository must differ from the release repository', async () => {
+  await assert.rejects(dispatchUpdateChannel({ version: normalizeVersion('0.3.1'), env: {
+    GITHUB_REPOSITORY: 'Industrial-Arcane-Society/form-recall-release', RELEASE_DISPATCH_TOKEN: 'dispatch-token',
+  } }), /must differ/)
 })
