@@ -33,7 +33,7 @@ func main() {
 	data := flag.String("data", envOr("AIMODELER_DESKTOP_DATA_DIR", filepath.Join(os.Getenv("LOCALAPPDATA"), "com.aimodeler.desktop")), "Local data directory")
 	config := flag.String("config", configFromEnvironment(), "Optional settings file")
 	screenshot := flag.String("screenshot", "", "Capture the native window after loading")
-	capturePanel := flag.String("capture-panel", "", "Optional capture panel: settings")
+	capturePanel := flag.String("capture-panel", "", "Optional capture panel: settings or updates")
 	demo := flag.String("demo-prompt", "", "Generate a model using the normal Quick workflow")
 	exitAfter := flag.Duration("exit-after", 0*time.Second, "Close after capture for automated verification")
 	width := flag.Int("width", 1440, "Initial window width")
@@ -102,7 +102,7 @@ func main() {
 	options := workbench.Options{Engine: engine.Options{Executable: absolute(*enginePath), Resources: absolute(*resources), DataDir: absolute(*data), Config: *config},
 		Screenshot: *screenshot, CapturePanel: *capturePanel, DemoPrompt: *demo, ExitAfter: *exitAfter, Width: *width, Height: *height}
 	if updater != nil {
-		if *screenshot == "" && *exitAfter == 0 && *demo == "" {
+		if (*screenshot == "" && *exitAfter == 0 && *demo == "") || *capturePanel == "updates" {
 			options.Updater = updater
 			options.RestartUpdate = func(slot string) { pending = slot }
 		}

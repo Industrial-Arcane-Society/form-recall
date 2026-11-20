@@ -567,8 +567,20 @@ func (a *App) scheduleCapture() {
 			ready := false
 			if err := onUI(func() {
 				ready = idle()
-				if ready && a.options.CapturePanel == "settings" {
-					a.openSettings()
+				if ready {
+					switch a.options.CapturePanel {
+					case "settings":
+						a.openSettings()
+					case "updates":
+						if a.options.Updater != nil {
+							a.openSettings()
+							a.settingsTab = 4
+							if a.softwareUpdate.status == "" {
+								a.checkForUpdate()
+							}
+							ready = !a.softwareUpdate.working
+						}
+					}
 				}
 			}); err != nil {
 				if !a.closed.Load() {

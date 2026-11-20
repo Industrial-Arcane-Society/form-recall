@@ -221,7 +221,7 @@ func (a *App) settingsPanel(c *ui.Context) {
 		{"运行环境", "logs"},
 	}
 	if a.options.Updater != nil {
-		categories = append(categories, struct{ label, icon string }{"更新", "export"})
+		categories = append(categories, struct{ label, icon string }{"更新", updateCheckIcon})
 	}
 	ui.Column(c).Fill().Gap(0).Disabled(a.busy).Children(func() {
 		ui.Row(c).Height(50).Padding(0, 16, 0, 20).AlignItems(ui.Center).Children(func() {

@@ -8,6 +8,12 @@ import (
 	"github.com/egoist/mygo/ui"
 )
 
+const (
+	updateCheckIcon    = "refresh-cw"
+	updateDownloadIcon = "download"
+	updateRestartIcon  = "rotate-cw"
+)
+
 type softwareUpdate struct {
 	ctx      context.Context
 	offer    *update.Offer
@@ -117,17 +123,32 @@ func (a *App) updateSettings(c *ui.Context) {
 		ui.Text(c, "上次更新未应用，当前版本仍可使用。"+failure).FontSize(12).TextColor(c.Theme().Danger)
 	}
 	ui.Row(c).Gap(8).Children(func() {
-		if ui.Button(c, "检查更新").Height(32).Disabled(s.working || s.slot != "").Clicked() {
+		if updateAction(c, "检查更新", updateCheckIcon, false).Disabled(s.working || s.slot != "").Clicked() {
 			a.checkForUpdate()
 		}
 		if s.slot != "" {
-			if ui.PrimaryButton(c, "重启并更新").Height(32).Clicked() {
+			if updateAction(c, "重启并更新", updateRestartIcon, true).Clicked() {
 				a.restartToUpdate()
 			}
 		} else if s.offer != nil {
-			if ui.PrimaryButton(c, "下载更新").Height(32).Disabled(s.working).Clicked() {
+			if updateAction(c, "下载更新", updateDownloadIcon, true).Disabled(s.working).Clicked() {
 				a.downloadUpdate()
 			}
 		}
+	})
+}
+
+func updateAction(c *ui.Context, label, icon string, primary bool) ui.Element {
+	var button ui.Element
+	color := c.Theme().Text
+	if primary {
+		button = ui.PrimaryButton(c, "")
+		color = c.Theme().AccentText
+	} else {
+		button = ui.Button(c, "")
+	}
+	return button.Key(label).Label(label).Height(32).Gap(7).Children(func() {
+		glyph(c, icon, color).Size(15, 15)
+		ui.Text(c, label).FontSize(12).TextColor(color)
 	})
 }

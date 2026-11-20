@@ -14,6 +14,14 @@ import (
 	"github.com/egoist/mygo/ui"
 )
 
+func TestUpdateIconsAreEmbedded(t *testing.T) {
+	for _, name := range []string{updateCheckIcon, updateDownloadIcon, updateRestartIcon} {
+		if icons()[name] == nil {
+			t.Errorf("update icon %q is missing", name)
+		}
+	}
+}
+
 func providerSettingsFixture() Object {
 	return Object{
 		"llm": Object{
