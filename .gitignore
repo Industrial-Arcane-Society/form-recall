@@ -52,3 +52,9 @@ config.json
 /artifacts/model-shots/
 /artifacts/selftest/
 /kb/
+/.tools/
+/src/core/cad-engine/target/
+/src/apps/engine-host/target/
+/src/apps/native-desktop/dist/
+/temp/native-ui-smoke/
+/src/apps/native-desktop/formrecall.exe

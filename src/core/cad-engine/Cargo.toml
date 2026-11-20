@@ -1,0 +1,22 @@
+[package]
+name = "formrecall-cad-engine"
+version = "0.1.2"
+edition = "2024"
+rust-version = "1.90"
+license = "MIT"
+
+[features]
+test-support = []
+
+[dependencies]
+base64 = "0.22.1"
+getrandom = "0.3.4"
+reqwest = { version = "0.12.26", default-features = false, features = ["blocking", "rustls-tls-webpki-roots"] }
+regex = "1"
+sha2 = "0.10.9"
+serde_json = { version = "1.0", features = ["float_roundtrip"] }
+tokio = { version = "1", features = ["sync", "time", "macros", "rt", "rt-multi-thread"] }
+zip = { version = "2.4.2", default-features = false, features = ["deflate"] }
+image = { version = "0.25", default-features = false, features = ["png", "jpeg", "webp", "gif"] }
+libloading = "0.8"
+delaunator = "1.0.2"

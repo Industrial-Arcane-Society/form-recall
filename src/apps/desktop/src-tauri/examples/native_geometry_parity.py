@@ -20,7 +20,7 @@ from ai_modeler.parts import std_pulley
 
 
 def main():
-    base = json.loads((TAURI / "examples/fixtures/native_geometry_plan.json").read_text(encoding="utf-8"))
+    base = json.loads((TAURI / "../../../core/cad-engine/examples/fixtures/native_geometry_plan.json").read_text(encoding="utf-8"))
     output = TAURI / "target/f4-occt/plan-parity"
     output.mkdir(parents=True, exist_ok=True)
     executable = TAURI / "target/debug/examples/native_plan_geometry_probe.exe"

@@ -12,6 +12,20 @@ $previousTauriConfig = $env:TAURI_CONFIG
 Push-Location $crateRoot
 
 try {
+    # Domain tests moved with the window-independent core. Keep this historical
+    # command as a compatibility entry point for the complete Rust suite.
+    if (-not $Filter -or $Filter -notlike 'agent_ipc_integration_tests*') {
+        $coreManifest = Join-Path $crateRoot '../../../core/cad-engine/Cargo.toml'
+        $coreArgs = @('test', '--manifest-path', $coreManifest, '--lib')
+        if ($Offline) { $coreArgs += '--offline' }
+        if ($Filter) { $coreArgs += $Filter }
+        $coreArgs += '--'
+        if ($Exact) { $coreArgs += '--exact' }
+        if ($Ignored) { $coreArgs += '--ignored' }
+        if ($NoCapture) { $coreArgs += '--nocapture' }
+        & cargo @coreArgs
+        if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+    }
     # Unit-test executables need Common Controls v6 for TaskDialogIndirect, but
     # Cargo's generated harness does not embed the application's activation manifest.
     # Keep the override local to this CLI test build; it skips package-only resources.
@@ -26,8 +40,8 @@ try {
         exit $LASTEXITCODE
     }
 
-    $testDirectory = Join-Path $crateRoot 'target\debug\deps'
-    $testBinary = Get-ChildItem -LiteralPath $testDirectory -Filter 'ai_modeler_ui_lib-*.exe' -File |
+    $testDirectory = Join-Path $crateRoot 'target\debug'
+    $testBinary = Get-ChildItem -LiteralPath $testDirectory -Filter 'ai_modeler_ui_lib-*.exe' -File -Recurse |
         Sort-Object LastWriteTime -Descending |
         Select-Object -First 1
     if (-not $testBinary) {

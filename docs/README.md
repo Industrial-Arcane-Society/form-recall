@@ -2,17 +2,19 @@
 
 此页是 `docs/` 唯一的根级 Markdown 索引。目录采用两位数字前缀；文档记录研究问题、实验方法、结果与局限，同时提供实现和复现入口。
 
-本页列出常用入口与阶段验收精选文档；完整 F0–F7 状态以迁移 Todo 为准，其他阶段卡与历史运行证据可从 `06-roadmap/` 查找。
+默认桌面入口已迁到 MyGo，常驻 Rust JSON Lines 进程复用独立的 CAD 核心，Vue/Tauri 继续作为兼容入口。当前启动、构建和迁移验证以原生桌面文档为准。F0–F7 阶段研究的状态可从迁移 Todo 和 `06-roadmap/` 历史记录查找。
 
 ## 从这里开始
 
 - [研究目标、问题与证据规则](00-research/01-research-charter.md)
 - [当前系统审计与迁移前基线](00-research/02-current-system-audit.md)
 - [目标架构与模块边界](01-architecture/01-target-architecture.md)
+- [原生桌面构建、默认入口与打包](05-operations/03-native-desktop-build.md)
+- [2026-11-20 原生桌面迁移验证与基线失败](05-operations/04-native-desktop-validation.md)
 - [实验和验收方法](02-methods/01-validation-protocol.md)
 - [实验记录模板](03-experiments/01-experiment-record-template.md)
 - [桌面端界面设计规范](04-design/01-frontend-design-system.md)
-- [构建、启动和验证](05-operations/01-build-and-run.md)
+- [Tauri 与旧版研究的构建、运行记录](05-operations/01-build-and-run.md)
 - [浏览器预览启动说明](05-operations/02-browser-preview-startup.md)
 - [Tauri 开发命令与启动预检](05-operations/03-tauri-dev-cli-preflight.md)
 - [完整迁移 Todo 与提交状态](06-roadmap/01-migration-todo.md)
@@ -45,5 +47,7 @@
 - [文档目录、索引与链接审查记录](06-roadmap/03-docs-index-audit.md)
 
 ## 归档说明
+
+早期运维文档中，根目录 `npm run dev` 曾表示 Tauri 启动。当前它启动 MyGo，Tauri 使用 `npm run dev:tauri`。旧目录中的 Rust 域模块和夹具已迁到 `src/core/cad-engine`，复现历史实验时需按当前模块路径核对命令。
 
 旧版说明、阶段计划和运行证据原样保存在 [`../temp/`](../temp/)；归档内容不自动代表当前实现，也不作为通过当前验收的证明。需要引用历史结果时，应回到其输入、运行记录和产物核对。

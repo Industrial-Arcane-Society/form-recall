@@ -8,7 +8,7 @@ use std::sync::{
     Arc,
     atomic::{AtomicUsize, Ordering},
 };
-use tauri::ipc::{Channel, InvokeResponseBody};
+use ai_modeler_ui_lib::agent_host::EventSink;
 
 fn read_json(path: &Path) -> Result<Value, String> {
     let bytes = fs::read(path).map_err(|error| format!("无法读取 {}：{error}", path.display()))?;
@@ -138,9 +138,8 @@ fn run(resource_root: &Path, data_dir: &Path) -> Result<Value, String> {
 
     let progress_events = Arc::new(AtomicUsize::new(0));
     let progress_counter = Arc::clone(&progress_events);
-    let channel = Channel::<Value>::new(move |_message: InvokeResponseBody| {
+    let channel = EventSink::new(move |_message| {
         progress_counter.fetch_add(1, Ordering::Relaxed);
-        Ok(())
     });
 
     let first_install = dsh_runtime::install(resource_root, data_dir, &channel)?;

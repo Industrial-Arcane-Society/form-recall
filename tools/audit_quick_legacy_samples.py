@@ -20,7 +20,7 @@ from typing import Any
 
 
 ROOT = Path(__file__).resolve().parents[1]
-CATALOG = ROOT / "src/apps/desktop/src-tauri/resources/native_parts_catalog.json"
+CATALOG = ROOT / "src/core/cad-engine/resources/native_parts_catalog.json"
 
 
 def json_safe(value: Any) -> Any:

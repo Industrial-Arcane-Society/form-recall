@@ -13,7 +13,7 @@ fn run() -> Result<(), String> {
     let output = PathBuf::from(args.next().unwrap_or_else(|| "artifacts/f5.107-egt-sw".into()));
     if args.next().is_some() { return Err("usage: f5_107_egt_sw_validate [profile-id] [output-dir]".into()); }
     fs::create_dir_all(&output).map_err(|error| error.to_string())?;
-    let catalog: Value = serde_json::from_str(include_str!("../native_quick_egt_sw_catalog.json"))
+    let catalog: Value = serde_json::from_str(include_str!("../../../../../core/cad-engine/src/native_quick_egt_sw_catalog.json"))
         .map_err(|error| error.to_string())?;
     let profile = catalog["profiles"].as_array()
         .and_then(|rows| rows.iter().find(|row| row["id"].as_str() == Some(id.as_str())))

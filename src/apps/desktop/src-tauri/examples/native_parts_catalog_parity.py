@@ -19,7 +19,7 @@ from tauri_cargo import run_cargo
 
 REPO = Path(__file__).resolve().parents[5]
 TAURI = REPO / "src" / "apps" / "desktop" / "src-tauri"
-SNAPSHOT = TAURI / "resources" / "native_parts_catalog.json"
+SNAPSHOT = REPO / "src" / "core" / "cad-engine" / "resources" / "native_parts_catalog.json"
 
 
 def legacy_bridge():

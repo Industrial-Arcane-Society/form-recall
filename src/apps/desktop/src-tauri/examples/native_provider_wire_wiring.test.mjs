@@ -3,7 +3,7 @@ import { readFileSync } from 'node:fs'
 import test from 'node:test'
 
 const runner = readFileSync(new URL('./native_agent_coldstart_acceptance.mjs', import.meta.url), 'utf8')
-const host = readFileSync(new URL('../src/agent_host.rs', import.meta.url), 'utf8')
+const host = readFileSync(new URL('../../../../core/cad-engine/src/agent_host.rs', import.meta.url), 'utf8')
 
 test('cold-start runner supplies only the selected provider route identity to the wire observer', () => {
   assert.match(runner, /AI_MODELER_PROVIDER_BASE_URL:\s*provider\.base_url/)

@@ -1,0 +1,5 @@
+Lucide icons
+https://github.com/lucide-icons/lucide
+Commit 742ea78395b4122e13fd46743caba5140f47fb66
+ISC license, see LICENSE.
+view-front.svg, view-top.svg and view-right.svg are original FormRecall artwork under the repository license.

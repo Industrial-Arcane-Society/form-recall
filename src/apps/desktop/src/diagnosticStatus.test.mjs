@@ -5,9 +5,11 @@ import { diagnosticStatusRows, nativeSelftestMessage } from './diagnosticStatus.
 
 const appSource = readFileSync(new URL('./App.vue', import.meta.url), 'utf8')
 const legacyBridge = readFileSync(new URL('../../../legacy/ai_modeler/ui/bridge.py', import.meta.url), 'utf8')
-const rustDiagnostics = readFileSync(new URL('../src-tauri/src/native_diagnostics.rs', import.meta.url), 'utf8')
-const rustLib = readFileSync(new URL('../src-tauri/src/lib.rs', import.meta.url), 'utf8')
-const agentHost = readFileSync(new URL('../src-tauri/src/agent_host.rs', import.meta.url), 'utf8')
+const rustDiagnostics = readFileSync(new URL('../../../core/cad-engine/src/native_diagnostics.rs', import.meta.url), 'utf8')
+const rustLib = readFileSync(new URL('../../../core/cad-engine/src/lib.rs', import.meta.url), 'utf8')
+const agentHost = readFileSync(new URL('../../../core/cad-engine/src/agent_host.rs', import.meta.url), 'utf8')
+const tauri = readFileSync(new URL('../src-tauri/src/lib.rs', import.meta.url), 'utf8')
+const handlers = tauri.match(/tauri::generate_handler!\[([\s\S]*?)\]/)?.[1] ?? ''
 
 test('native rows keep external MCP, Cordis, CATIA registration and runtime states separate', () => {
   const rows = diagnosticStatusRows({
@@ -40,6 +42,10 @@ test('legacy Python diagnostics contract is migrated to native commands field by
   assert.match(appSource, /invoke<any>\('native_about'\)/)
   assert.match(appSource, /invoke<any>\('native_selftest'\)/)
   assert.ok(/invoke\('native_open_help_path'/.test(appSource), 'help paths must use the Rust opener')
+  for (const command of ['native_about', 'native_selftest', 'native_open_help_path']) {
+    assert.match(handlers, new RegExp(`\\b${command}\\b`), `missing Tauri registration: ${command}`)
+    assert.match(tauri, new RegExp(`engine::${command}\\(`), `missing core call: ${command}`)
+  }
   assert.match(rustDiagnostics, /"app_version":\s*app_version/)
   assert.match(rustDiagnostics, /"lines":\s*lines/)
   assert.ok(/"opened": path\.to_string_lossy\(\)/.test(rustLib), 'Rust opener must preserve the old opened result field')

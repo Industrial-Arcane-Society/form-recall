@@ -13,9 +13,8 @@ from ai_modeler.agent import online
 
 FIXTURE_PATH = (
     Path(__file__).resolve().parents[2]
-    / "apps"
-    / "desktop"
-    / "src-tauri"
+    / "core"
+    / "cad-engine"
     / "fixtures"
     / "native_online_lookup.json"
 )
