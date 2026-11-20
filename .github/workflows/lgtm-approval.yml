@@ -40,5 +40,5 @@ jobs:
               ...pull,
               event: 'APPROVE',
               commit_id: pr.head.sha,
-              body: `经 @${comment.user.login} [发送 LGTM](${comment.html_url})，审批提交 `${pr.head.sha}`。`,
+              body: `经 @${comment.user.login} [发送 LGTM](${comment.html_url})，审批提交 \`${pr.head.sha}\`。`,
             });
