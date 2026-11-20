@@ -18,10 +18,11 @@ foreach ($required in @($executable, $payload, $engine, (Join-Path $payload 'app
     if (-not (Test-Path -LiteralPath $required)) { throw "Required package input is missing: $required" }
 }
 # CI provisions the software OpenGL driver beside the package entry point, while the
-# desktop runs from runtime/base. Relocate those test-only files next to the process
-# that loads them, and remove them again when the check finishes.
+# desktop runs from runtime/base. Relocate those shipped DLLs next to the process that
+# loads them, and remove them again when the check finishes. Other root files, such as
+# an installed copy's uninstaller, are left alone.
 $startupArtifactCopies = [Collections.Generic.List[string]]::new()
-foreach ($artifact in @(Get-ChildItem -LiteralPath $package -File -Force)) {
+foreach ($artifact in @(Get-ChildItem -LiteralPath $package -File -Force -Filter '*.dll')) {
     if ($artifact.Name -ieq 'FormRecall.exe') { continue }
     $target = Join-Path $payload $artifact.Name
     if (Test-Path -LiteralPath $target) {
