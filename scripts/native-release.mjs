@@ -182,7 +182,7 @@ async function requireMainAncestor(api, commit) {
 async function requirePublishSource(api, version, commit, env) {
   if (env.GITHUB_EVENT_NAME === 'workflow_dispatch' &&
       env.GITHUB_REF === 'refs/heads/feat/desktop-updates' &&
-      /^\d+\.\d+\.\d+-alpha\.[1-9]\d*$/.test(version.version) &&
+      /^\d+\.\d+\.\d+-(alpha|beta)\.[1-9]\d*$/.test(version.version) &&
       commit === env.GITHUB_SHA) {
     const branch = await api.request('GET', '/git/ref/heads/feat/desktop-updates')
     const head = commitSHA(branch.object?.sha)
