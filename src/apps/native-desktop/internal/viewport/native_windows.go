@@ -168,6 +168,11 @@ func (n *nativeWindow) attach(parent uintptr, owner *Viewport) error {
 	if parent == 0 {
 		return errors.New("三维视口缺少父窗口句柄")
 	}
+	// Load the selected OpenGL DLL before GDI initializes pixel formats. This
+	// keeps application-local drivers and context creation on the same driver.
+	if err := opengl32.Load(); err != nil {
+		return fmt.Errorf("加载 OpenGL 驱动失败 %w", err)
+	}
 	classOnce.Do(registerViewportClass)
 	if classError != nil {
 		return classError
@@ -199,10 +204,10 @@ func (n *nativeWindow) attach(parent uintptr, owner *Viewport) error {
 		n.close()
 		return errors.New("设置 OpenGL 像素格式失败")
 	}
-	n.context, _, _ = wglCreateContext.Call(n.dc)
+	n.context, _, err = wglCreateContext.Call(n.dc)
 	if n.context == 0 {
 		n.close()
-		return errors.New("创建 OpenGL 上下文失败")
+		return fmt.Errorf("创建 OpenGL 上下文失败（像素格式 %d）%w", format, err)
 	}
 	if err := n.gl.load(); err != nil {
 		n.close()

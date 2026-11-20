@@ -90,7 +90,7 @@ jobs:
           cache-dependency-path: src/apps/native-desktop/go.sum
       - name: Check release PowerShell syntax
         run: |
-          foreach ($file in @('scripts/build-native.ps1', 'scripts/package-native.ps1', 'scripts/verify-native-release-startup.ps1')) {
+          foreach ($file in @('scripts/build-native.ps1', 'scripts/package-native.ps1', 'scripts/verify-native-release-startup.ps1', 'scripts/install-ci-opengl.ps1')) {
             $tokens = $null
             $errors = $null
             $null = [Management.Automation.Language.Parser]::ParseFile((Resolve-Path $file), [ref]$tokens, [ref]$errors)
@@ -98,6 +98,22 @@ jobs:
           }
       - name: Verify Go dependencies, vet and tests
         run: ./scripts/test-native.ps1 -SkipRust
+      - name: Verify the native viewport with software OpenGL
+        env:
+          GALLIUM_DRIVER: llvmpipe
+          NATIVE_VIEWPORT_GPU_TESTS: '1'
+        run: |
+          $probe = Join-Path $env:RUNNER_TEMP 'formrecall-viewport-test'
+          New-Item -ItemType Directory -Path $probe | Out-Null
+          $test = Join-Path $probe 'viewport.test.exe'
+          Push-Location src/apps/native-desktop
+          try {
+            go test -mod=readonly -c -o $test ./internal/viewport
+            if ($LASTEXITCODE -ne 0) { throw 'Viewport test compilation failed.' }
+          } finally { Pop-Location }
+          ./scripts/install-ci-opengl.ps1 -DestinationDirectory $probe
+          & $test '-test.run=^TestNativeOpenGLFramebufferAndInput$' '-test.v' '-test.timeout=30s'
+          if ($LASTEXITCODE -ne 0) { throw 'Native viewport framebuffer and input checks failed.' }
 
   build:
     needs: prepare
@@ -175,12 +191,6 @@ jobs:
           ./scripts/package-native.ps1 -Version $env:RELEASE_VERSION `
             -OcctManifest temp/build-cache/occt-release/runtime-manifest.json `
             -OutputDirectory temp/outputs/release -OutputManifest temp/outputs/release/release.json
-      - name: Install software OpenGL for startup verification
-        uses: ssciwr/setup-mesa-dist-win@2dfeaebfa514f74c2b8cd8d27108c31486d33e72 # v3
-        with:
-          version: '26.0.3'
-          build-type: release-msvc
-          deployment-choice: '1'
       - name: Verify packaged startup and collect assets
         env:
           GALLIUM_DRIVER: llvmpipe
@@ -189,7 +199,12 @@ jobs:
           if ($release.source_commit -ne $env:RELEASE_COMMIT -or $release.source_dirty) {
             throw 'The release package does not match the selected clean source commit.'
           }
-          ./scripts/verify-native-release-startup.ps1 -PackageDirectory $release.package_directory `
+          $probe = Join-Path $env:RUNNER_TEMP 'formrecall-release-startup'
+          Copy-Item -LiteralPath $release.package_directory -Destination $probe -Recurse
+          New-Item -ItemType Directory -Path temp/outputs/release-startup -Force | Out-Null
+          $driver = ./scripts/install-ci-opengl.ps1 -DestinationDirectory $probe
+          $driver | ConvertTo-Json -Depth 4 | Set-Content temp/outputs/release-startup/ci-opengl.json -Encoding utf8NoBOM
+          ./scripts/verify-native-release-startup.ps1 -PackageDirectory $probe `
             -Version $env:RELEASE_VERSION -OutputDirectory temp/outputs/release-startup
           New-Item -ItemType Directory -Path temp/outputs/release-assets -Force | Out-Null
           foreach ($path in @($release.executable, $release.archive, $release.checksums)) {
