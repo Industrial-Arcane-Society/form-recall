@@ -224,11 +224,13 @@ func TestStagePublishedChannel(t *testing.T) {
 		t.Fatal(err)
 	}
 	wantDelta := os.Getenv("FORMRECALL_OTA_TEST_DELTA") == "true"
-	if progress.Delta != wantDelta || progress.Received != client.DownloadSize(*offer) {
+	asset, _ := client.choose(*offer)
+	if progress.Delta != wantDelta || progress.Received != asset.Bytes {
 		t.Fatalf("unexpected cross-channel download: %+v", progress)
 	}
 	record, err := json.Marshal(map[string]any{
 		"slot": slot, "version": offer.Version, "bytes": progress.Received, "delta": progress.Delta,
+		"archive": filepath.Base(asset.URL),
 	})
 	if err != nil {
 		t.Fatal(err)

@@ -84,7 +84,7 @@ if ($crossChannel) {
     } finally {
         Remove-Item Env:FORMRECALL_OTA_TEST_BUNDLE,Env:FORMRECALL_OTA_TEST_VERSION,Env:FORMRECALL_OTA_TEST_CHANNEL,Env:FORMRECALL_OTA_TEST_RESULT,Env:FORMRECALL_OTA_TEST_DELTA
     }
-    $archive = "FormRecall-$ExpectedVersion-windows-x64-portable.zip"
+    $archive = $plan.archive
     $deltaRequested = $plan.delta
     $fullRequested = -not $plan.delta
     $actualDelta = $plan.delta
