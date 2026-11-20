@@ -64,6 +64,7 @@ function Read-Inventory($Archive, [string]$ReleaseVersion) {
 try {
     $target = Read-Inventory $targetArchive $Version
     if ($target.commit -cne $Commit) { throw 'Portable ZIP was built from a different commit.' }
+    $portable = Get-Item -LiteralPath $PortableZip
     $baselines = @()
     if ($PreviousZip) { $baselines = @(@{path=$PreviousZip;version=$PreviousVersion}) }
     if ($PreviousList) {
@@ -108,10 +109,18 @@ try {
             $hash = (Get-FileHash -LiteralPath $targetPath -Algorithm SHA256).Hash.ToLowerInvariant()
             $name = "ota-$hash.zip"
             $bytes = (Get-Item -LiteralPath $targetPath).Length
-            Move-Item -LiteralPath $targetPath -Destination (Join-Path $out $name)
             $compiled[$key] = @{name=$name;sha256=$hash;bytes=$bytes}
+            if ($bytes * 10 -ge $portable.Length * 8) {
+                Remove-Item -LiteralPath $targetPath
+            } else {
+                Move-Item -LiteralPath $targetPath -Destination (Join-Path $out $name)
+            }
         }
         $archive = $compiled[$key]
+        if ($archive.bytes * 10 -ge $portable.Length * 8) {
+            Write-Host "OTA from $oldVersion is too large; clients will use the full ZIP."
+            continue
+        }
         # The target inventory is exhaustive. Removed old files are never
         # copied into the new directory, so no delete instructions are needed.
         $delta = [ordered]@{
@@ -123,7 +132,6 @@ try {
         Write-Host "OTA from $oldVersion contains $($changed.Count) changed files, $($delta.bytes) bytes."
         $delta
     })
-    $portable = Get-Item -LiteralPath $PortableZip
     $channel = if ($Version -cmatch '-(alpha|beta|rc)\.') { $Matches[1] } else { 'stable' }
     $payload = [ordered]@{
         schema = 2

@@ -231,9 +231,13 @@ async function publish() {
         fetchAsset(targetAsset, path.join(directory, 'target.zip')),
         ...baselines.map(item => baselineInventory(api, item, directory)),
       ])
-      const failure = results.find(result => result.status === 'rejected')
-      if (failure) throw failure.reason
-      await writeFile(path.join(directory, 'baselines.json'), JSON.stringify(results.slice(1).map(item => item.value)))
+      if (results[0].status === 'rejected') throw results[0].reason
+      const inventories = []
+      results.slice(1).forEach((entry, index) => {
+        if (entry.status === 'fulfilled') inventories.push(entry.value)
+        else console.log(`Skipping ${baselines[index].tag_name}: the old inventory could not be verified.`)
+      })
+      await writeFile(path.join(directory, 'baselines.json'), JSON.stringify(inventories))
       buildOTA(directory, next, commit)
       const payload = await readFile(path.join(directory, 'payload.json'))
       const manifest = JSON.parse(payload)
