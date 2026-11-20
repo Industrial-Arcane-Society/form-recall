@@ -223,7 +223,8 @@ func TestStagePublishedChannel(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if progress.Delta || progress.Received != offer.Full.Bytes {
+	wantDelta := os.Getenv("FORMRECALL_OTA_TEST_DELTA") == "true"
+	if progress.Delta != wantDelta || progress.Received != client.DownloadSize(*offer) {
 		t.Fatalf("unexpected cross-channel download: %+v", progress)
 	}
 	record, err := json.Marshal(map[string]any{
@@ -234,5 +235,16 @@ func TestStagePublishedChannel(t *testing.T) {
 	}
 	if err := os.WriteFile(os.Getenv("FORMRECALL_OTA_TEST_RESULT"), record, 0600); err != nil {
 		t.Fatal(err)
+	}
+}
+
+func TestOnlySameSeriesCrossChannelDowngradesAreEligible(t *testing.T) {
+	if !IsChannelDowngrade("0.3.0-beta.2", "0.3.0-alpha.4") {
+		t.Fatal("expected same-series downgrade")
+	}
+	for _, target := range []string{"0.3.0-beta.1", "0.2.9-alpha.4", "0.3.0-rc.1", "invalid"} {
+		if IsChannelDowngrade("0.3.0-beta.2", target) {
+			t.Errorf("unexpected downgrade to %s", target)
+		}
 	}
 }

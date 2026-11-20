@@ -3,7 +3,10 @@ param(
     [Parameter(Mandatory)][string]$ExpectedVersion,
     [Parameter(Mandatory)][string]$ExpectedCommit,
     [Parameter(Mandatory)][string]$OutputDirectory,
-    [switch]$UseSoftwareOpenGL
+    [switch]$UseSoftwareOpenGL,
+    [switch]$AllowDowngrade,
+    [switch]$ContinueFromActive,
+    [switch]$ExpectCrossChannelDelta
 )
 
 $ErrorActionPreference = 'Stop'
@@ -12,8 +15,14 @@ $bundle = (Resolve-Path -LiteralPath $BundleDirectory).Path
 $launcher = Join-Path $bundle 'FormRecall.exe'
 $storage = Join-Path $bundle '.formrecall-updates'
 $output = [IO.Path]::GetFullPath($OutputDirectory)
-if ((Test-Path -LiteralPath $storage) -or -not (Test-Path -LiteralPath $launcher -PathType Leaf)) {
+if ((-not $ContinueFromActive -and (Test-Path -LiteralPath $storage)) -or -not (Test-Path -LiteralPath $launcher -PathType Leaf)) {
     throw 'OTA verification requires a fresh isolated bundle.'
+}
+$sourceBundle = $bundle
+if ($ContinueFromActive) {
+    $current = Get-Content -LiteralPath (Join-Path $storage 'active.json') -Raw | ConvertFrom-Json -AsHashtable
+    if ($current.current -notmatch '^release-\d+$') { throw 'Invalid active OTA slot.' }
+    $sourceBundle = Join-Path $storage "versions/$($current.current)/payload"
 }
 New-Item -ItemType Directory -Path $output -Force | Out-Null
 $data = Join-Path $output 'session-data'
@@ -63,22 +72,23 @@ function Get-UpdateChannel([string]$Version) {
 $targetChannel = Get-UpdateChannel $ExpectedVersion
 $crossChannel = (Get-UpdateChannel $original.version) -cne $targetChannel
 if ($crossChannel) {
-    $env:FORMRECALL_OTA_TEST_BUNDLE = $bundle
+    $env:FORMRECALL_OTA_TEST_BUNDLE = $sourceBundle
     $env:FORMRECALL_OTA_TEST_VERSION = $original.version
     $env:FORMRECALL_OTA_TEST_CHANNEL = $targetChannel
     $env:FORMRECALL_OTA_TEST_RESULT = Join-Path $output 'stage.json'
+    $env:FORMRECALL_OTA_TEST_DELTA = if ($ExpectCrossChannelDelta) { 'true' } else { 'false' }
     . "$PSScriptRoot/native-common.ps1"
     try {
         Invoke-NativeGo @('test', '-mod=readonly', './internal/update', '-run', '^TestStagePublishedChannel$', '-count=1', '-timeout=10m')
         $plan = Get-Content -LiteralPath $env:FORMRECALL_OTA_TEST_RESULT -Raw | ConvertFrom-Json -AsHashtable
     } finally {
-        Remove-Item Env:FORMRECALL_OTA_TEST_BUNDLE,Env:FORMRECALL_OTA_TEST_VERSION,Env:FORMRECALL_OTA_TEST_CHANNEL,Env:FORMRECALL_OTA_TEST_RESULT
+        Remove-Item Env:FORMRECALL_OTA_TEST_BUNDLE,Env:FORMRECALL_OTA_TEST_VERSION,Env:FORMRECALL_OTA_TEST_CHANNEL,Env:FORMRECALL_OTA_TEST_RESULT,Env:FORMRECALL_OTA_TEST_DELTA
     }
     $archive = "FormRecall-$ExpectedVersion-windows-x64-portable.zip"
-    $deltaRequested = $false
+    $deltaRequested = $plan.delta
     $fullRequested = -not $plan.delta
     $actualDelta = $plan.delta
-    if (-not $fullRequested) { throw 'Expected a full ZIP for the cross-channel upgrade.' }
+    if ($actualDelta -ne [bool]$ExpectCrossChannelDelta) { throw 'Unexpected cross-channel update package type.' }
 } else {
     $stage = Invoke-Desktop @('--stage-update') -TimeoutSeconds 240 -TraceNetwork
     $plan = $stage.stdout | ConvertFrom-Json -AsHashtable
@@ -103,8 +113,10 @@ try {
     $screenshot = Join-Path $output 'updated-desktop.png'
     $config = Join-Path $data 'config.json'
     Set-Content -LiteralPath $config -Value '{"llm":{"enabled":false},"online":{"enabled":false}}' -Encoding utf8NoBOM
-    $null = Invoke-Desktop @("--apply-update=$($plan.slot)", "--data=$data", "--config=$config", "--screenshot=$screenshot", '--exit-after=700ms',
+    $applyArgs = @("--apply-update=$($plan.slot)", "--data=$data", "--config=$config", "--screenshot=$screenshot", '--exit-after=700ms',
         '--width=1040', '--height=780', '--demo-prompt=底板 长100 宽80 厚10，四角通孔 直径8 边距10')
+    if ($AllowDowngrade) { $applyArgs += '--channel-downgrade' }
+    $null = Invoke-Desktop $applyArgs
     $deadline = [DateTime]::UtcNow.AddSeconds(80)
     while ((-not (Test-Path -LiteralPath $screenshot)) -and [DateTime]::UtcNow -lt $deadline) { Start-Sleep -Milliseconds 150 }
     if (-not (Test-Path -LiteralPath $screenshot)) { throw 'Updated desktop did not finish the modelling test.' }
